@@ -1,4 +1,4 @@
-/*	$NetBSD: fstest_lfs.c,v 1.2 2010/07/29 14:47:44 pooka Exp $	*/
+/*	$NetBSD: fstest_lfs.c,v 1.3 2010/07/29 14:50:32 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -51,13 +51,13 @@
 sem_t lfs_clearnerloop;
 
 struct lfstestargs {
-        struct ufs_args ta_uargs;
+	struct ufs_args ta_uargs;
 	pthread_t ta_cleanerthread;
 	sem_t ta_cleanerloop;
-        char ta_devpath[MAXPATHLEN];
-        char ta_imgpath[MAXPATHLEN];
+	char ta_devpath[MAXPATHLEN];
+	char ta_imgpath[MAXPATHLEN];
 	char ta_mntpath[MAXPATHLEN];
-        char ta_hostpath[MAXPATHLEN];
+	char ta_hostpath[MAXPATHLEN];
 };
 
 int
