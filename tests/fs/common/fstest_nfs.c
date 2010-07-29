@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs.c,v 1.2 2010/07/28 15:16:50 pooka Exp $	*/
+/*	$NetBSD: fstest_nfs.c,v 1.1 2010/07/29 14:15:47 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.

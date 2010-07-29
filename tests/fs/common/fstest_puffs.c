@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.c,v 1.4 2010/07/26 14:53:52 pooka Exp $	*/
+/*	$NetBSD: fstest_puffs.c,v 1.1 2010/07/29 14:15:47 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
