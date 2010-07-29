@@ -1,4 +1,4 @@
-/*	$NetBSD: sysvbfs.c,v 1.5 2010/07/19 16:09:08 pooka Exp $	*/
+/*	$NetBSD: fstest_sysvbfs.c,v 1.1 2010/07/29 14:15:47 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
