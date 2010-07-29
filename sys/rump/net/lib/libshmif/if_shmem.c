@@ -1,4 +1,4 @@
-/*	$NetBSD: if_shmem.c,v 1.11 2010/07/29 18:30:39 pooka Exp $	*/
+/*	$NetBSD: if_shmem.c,v 1.12 2010/07/29 22:48:11 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.11 2010/07/29 18:30:39 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.12 2010/07/29 22:48:11 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/fcntl.h>
@@ -135,7 +135,8 @@ buswrite(struct shmif_sc *sc, uint32_t off, void *data, size_t len)
 {
 	size_t chunk;
 
-	KASSERT(len < (BUSMEM_SIZE - IFMEM_DATA) && off <= BUSMEM_SIZE);
+	KASSERT(len < (BUSMEM_SIZE - IFMEM_DATA) && off <= BUSMEM_SIZE
+	    && off >= IFMEM_DATA);
 
 	chunk = MIN(len, BUSMEM_SIZE - off);
 	memcpy(sc->sc_busmem + off, data, chunk);
@@ -229,6 +230,10 @@ rump_shmif_create(const char *path, int *ifnum)
 
 	if_attach(ifp);
 	ether_ifattach(ifp, enaddr);
+
+	aprint_verbose("shmif%d: bus %s\n", mynum, path);
+	aprint_verbose("shmif%d: Ethernet address %s\n",
+	    mynum, ether_sprintf(enaddr));
 
 	if (ifnum)
 		*ifnum = mynum;
