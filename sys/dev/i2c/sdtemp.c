@@ -1,4 +1,4 @@
-/*      $NetBSD: sdtemp.c,v 1.16 2010/07/28 18:43:10 pgoyette Exp $        */
+/*      $NetBSD: sdtemp.c,v 1.17 2010/07/29 12:01:21 njoly Exp $        */
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdtemp.c,v 1.16 2010/07/28 18:43:10 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdtemp.c,v 1.17 2010/07/29 12:01:21 njoly Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -180,8 +180,6 @@ sdtemp_attach(device_t parent, device_t self, void *aux)
 {
 	struct sdtemp_softc *sc = device_private(self);
 	struct i2c_attach_args *ia = aux;
-	sysmon_envsys_lim_t limits;
-	uint32_t props;
 	uint16_t mfgid, devid;
 	int i, error;
 
@@ -281,21 +279,23 @@ sdtemp_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	/* Retrieve and display hardware monitor limits */
-	sdtemp_get_limits(sc->sc_sme, sc->sc_sensor, &limits, &props);
+	sdtemp_get_limits(sc->sc_sme, sc->sc_sensor, &sc->sc_deflims,
+	    &sc->sc_defprops);
 	aprint_normal_dev(self, "");
 	i = 0;
-	if (props & PROP_WARNMIN) {
-		aprint_normal("low limit %dC", __UK2C(limits.sel_warnmin));
+	if (sc->sc_defprops & PROP_WARNMIN) {
+		aprint_normal("low limit %dC",
+		              __UK2C(sc->sc_deflims.sel_warnmin));
 		i++;
 	}
-	if (props & PROP_WARNMAX) {
+	if (sc->sc_defprops & PROP_WARNMAX) {
 		aprint_normal("%shigh limit %dC ", (i)?", ":"",
-			      __UK2C(limits.sel_warnmax));
+			      __UK2C(sc->sc_deflims.sel_warnmax));
 		i++;
 	}
-	if (props & PROP_CRITMAX) {
+	if (sc->sc_defprops & PROP_CRITMAX) {
 		aprint_normal("%scritical limit %dC ", (i)?", ":"",
-			      __UK2C(limits.sel_critmax));
+			      __UK2C(sc->sc_deflims.sel_critmax));
 		i++;
 	}
 	if (i == 0)
@@ -336,10 +336,6 @@ sdtemp_get_limits(struct sysmon_envsys *sme, envsys_data_t *edata,
 	iic_release_bus(sc->sc_tag, 0);
 	if (*props != 0)
 		*props |= PROP_DRIVER_LIMITS;
-	if (sc->sc_defprops == 0) {
-		sc->sc_deflims  = *limits;
-		sc->sc_defprops = *props;
-	}
 }
 
 /* Send current limit values to the device */
