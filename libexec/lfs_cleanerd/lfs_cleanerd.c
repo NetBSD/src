@@ -1,4 +1,4 @@
-/* $NetBSD: lfs_cleanerd.c,v 1.23 2010/02/16 23:13:13 mlelstv Exp $	 */
+/* $NetBSD: lfs_cleanerd.c,v 1.24 2010/07/29 14:07:39 pooka Exp $	 */
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -45,6 +45,7 @@
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <semaphore.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -1339,6 +1340,7 @@ lfs_cleaner_main(int argc, char **argv)
 {
 	int i, opt, error, r, loopcount, nodetach;
 	struct timeval tv;
+	sem_t *semaddr = NULL;
 	CLEANERINFO ci;
 #ifndef USE_CLIENT_SERVER
 	char *cp, *pidname;
@@ -1358,7 +1360,7 @@ lfs_cleaner_main(int argc, char **argv)
 	/*
 	 * Parse command-line arguments
 	 */
-	while ((opt = getopt(argc, argv, "bC:cdDfi:l:mn:qr:st:")) != -1) {
+	while ((opt = getopt(argc, argv, "bC:cdDfi:l:mn:qr:sS:t:")) != -1) {
 		switch (opt) {
 		    case 'b':	/* Use bytes written, not segments read */
 			    use_bytes = 1;
@@ -1398,6 +1400,13 @@ lfs_cleaner_main(int argc, char **argv)
 			    break;
 		    case 's':	/* Small writes */
 			    do_small = 1;
+			    break;
+		    case 'S':	/* semaphore */
+#ifndef LFS_CLEANER_AS_LIB
+			    usage();
+			    /*NOTREACHED*/
+#endif
+			    semaddr = (void*)(uintptr_t)strtoull(optarg,NULL,0);
 			    break;
 		    case 't':	/* timeout */
 			    segwait_timeout = atoi(optarg);
@@ -1530,6 +1539,8 @@ lfs_cleaner_main(int argc, char **argv)
 	 * Main cleaning loop.
 	 */
 	loopcount = 0;
+	if (semaddr)
+		sem_post(semaddr);
 	while (nfss > 0) {
 		int cleaned_one;
 		do {
