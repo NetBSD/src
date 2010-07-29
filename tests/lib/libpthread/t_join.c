@@ -1,4 +1,4 @@
-/* $NetBSD: t_join.c,v 1.3 2010/07/29 12:17:31 jruoho Exp $ */
+/* $NetBSD: t_join.c,v 1.4 2010/07/29 12:56:16 hans Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_join.c,v 1.3 2010/07/29 12:17:31 jruoho Exp $");
+__RCSID("$NetBSD: t_join.c,v 1.4 2010/07/29 12:56:16 hans Exp $");
 
 #include <errno.h>
 #include <pthread.h>
@@ -64,8 +64,8 @@ threadfunc1(void *arg)
 {
 	pthread_t thread[25];
 	pthread_t caller;
-	void *val;
-	size_t i;
+	void *val = NULL;
+	uintptr_t i;
 	int rv;
 
 	caller = pthread_self();
@@ -86,7 +86,7 @@ threadfunc1(void *arg)
 
 		error = true;
 
-		rv = pthread_create(&thread[i], NULL, threadfunc2, NULL);
+		rv = pthread_create(&thread[i], NULL, threadfunc2, (void *)i);
 
 		ATF_REQUIRE_EQ(rv, 0);
 
@@ -102,8 +102,10 @@ threadfunc1(void *arg)
 		 */
 		PTHREAD_REQUIRE(pthread_join(thread[i], &val));
 
-		ATF_REQUIRE(val == NULL);
 		ATF_REQUIRE_EQ(error, false);
+
+		ATF_REQUIRE(val != NULL);
+		ATF_REQUIRE(val == (void *)(i + 1));
 
 		/*
 		 * Once the thread has returned, ESRCH should
@@ -129,15 +131,15 @@ threadfunc1(void *arg)
 static void *
 threadfunc2(void *arg)
 {
-	static int i = 0;
-	int j;
+	static uintptr_t i = 0;
+	uintptr_t j;
 
-	j = (int)arg;
+	j = (uintptr_t)arg;
 
 	if (i++ == j)
 		error = false;
 
-	pthread_exit(NULL);
+	pthread_exit((void *)i);
 
 	return NULL;
 }
