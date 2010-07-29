@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1041 2010/07/28 00:00:11 msaitoh Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1042 2010/07/29 17:54:14 njoly Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1044 2010/07/27 23:56:29 msaitoh Exp
+ *	NetBSD: pcidevs,v 1.1045 2010/07/29 17:53:19 njoly Exp
  */
 
 /*
@@ -3043,6 +3043,7 @@
 #define	PCI_PRODUCT_MATROX_G200_AGP	0x0521		/* MGA G200 AGP */
 #define	PCI_PRODUCT_MATROX_G200E_SE	0x0522		/* MGA G200e (ServerEngines) */
 #define	PCI_PRODUCT_MATROX_G400_AGP	0x0525		/* MGA G400 AGP */
+#define	PCI_PRODUCT_MATROX_G200EW	0x0532		/* MGA G200eW */
 #define	PCI_PRODUCT_MATROX_IMPRESSION	0x0d10		/* MGA Impression */
 #define	PCI_PRODUCT_MATROX_G100_PCI	0x1000		/* MGA G100 PCI */
 #define	PCI_PRODUCT_MATROX_G100_AGP	0x1001		/* MGA G100 AGP */
