@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.100 2010/06/08 12:52:51 jruoho Exp $
+$NetBSD: acronyms.comp,v 1.101 2010/07/29 18:36:34 jruoho Exp $
 
 3WHS	three-way handshake
 ABI	application binary interface
@@ -47,6 +47,7 @@ BGP	border gateway protocol
 BIND	Berkeley Internet Name Daemon
 BIOS	basic input/output system
 BLOB	binary large object
+BMC	baseboard management controller
 BPF	Berkeley packet filter
 BPS	bits per second
 BQS	Berkeley quality software
@@ -172,11 +173,14 @@ FQDN	fully qualified domain name
 FRU	field replaceable unit
 FTP	file transfer protocol
 FTPS	file transfer protocol, secure
+FWH	firmware hub
+GAS	generic address structure
 GC	garbage collector
 GCR	group-coded recording
 GDT	global descriptor table
 GID	group identifier
 GIF	graphics interchange format
+GMCH	graphics and memory controller hub
 GNU	GNU's not Unix
 GPL	GNU/general public license
 GPU	graphics processing unit
@@ -200,6 +204,7 @@ I2O	intelligent input/output
 IANA	Internet assigned number authority
 IC	integrated circuit
 ICB	Internet citizen's band
+ICH	I/O controller hub
 ICE	internal compiler error
 ICE	in-circuit emulator
 ICMP	Internet control message protocol
@@ -216,6 +221,7 @@ IETF	Internet Engineering Task Force
 IGMP	Internet group management protocol
 IGP	interior gateway protocol
 IKE	Internet key exchange
+IMC	integrated memory controller
 IMAP	Internet mail access protocol
 INCITS	international committee on information technology standards
 IO	input/output
@@ -268,6 +274,7 @@ LKM	{Linux, loadable} kernel module
 LKML	Linux kernel mailing list
 LLC	logical link control
 LOC	lines of code
+LPC	low pin count
 LRC	longitudinal redundancy check
 LSB	least significant bit [or: byte]
 LSB	Linux standards base
@@ -281,6 +288,7 @@ MAC	medium access control
 MAC	mandatory access control
 MBR	master boot record
 MCGA	multicolor graphics adapter
+MCH	memory controller hub
 MDA	mail delivery agent
 MDA	monochrome display adapter
 MDRAM	multibank dynamic random access memory
@@ -488,6 +496,7 @@ TLS	thread local storage
 TMDS	transition minimized differential signaling
 TOS	terms of service
 TOS	type of service
+TPM	trusted platform module
 TR	token ring
 TR	task register
 TRNG	true random number generator
