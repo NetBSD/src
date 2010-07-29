@@ -1,4 +1,4 @@
-/*	$NetBSD: fstest_lfs.c,v 1.1 2010/07/29 14:15:46 pooka Exp $	*/
+/*	$NetBSD: fstest_lfs.c,v 1.2 2010/07/29 14:47:44 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -33,6 +33,8 @@
 #include <sys/stat.h>
 
 #include <atf-c.h>
+#include <pthread.h>
+#include <semaphore.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -44,11 +46,18 @@
 #include <rump/rump_syscalls.h>
 
 #include "h_fsmacros.h"
+#include "mount_lfs.h"
+
+sem_t lfs_clearnerloop;
 
 struct lfstestargs {
         struct ufs_args ta_uargs;
+	pthread_t ta_cleanerthread;
+	sem_t ta_cleanerloop;
         char ta_devpath[MAXPATHLEN];
         char ta_imgpath[MAXPATHLEN];
+	char ta_mntpath[MAXPATHLEN];
+        char ta_hostpath[MAXPATHLEN];
 };
 
 int
@@ -74,9 +83,11 @@ lfs_fstest_newfs(const atf_tc_t *tc, void **buf, const char *image, off_t size)
 	if (args == NULL)
 		return -1;
 
+	strcpy(args->ta_hostpath, image);
 	snprintf(args->ta_devpath, MAXPATHLEN, "/dev/device%d.lfs", num);
 	snprintf(args->ta_imgpath, MAXPATHLEN, "%s", image);
 	args->ta_uargs.fspec = args->ta_devpath;
+	sem_init(&args->ta_cleanerloop, 0, 0);
 
 	res = rump_pub_etfs_register(args->ta_devpath, image, RUMP_ETFS_BLK);
 	if (res != 0) {
@@ -104,18 +115,46 @@ lfs_fstest_delfs(const atf_tc_t *tc, void *buf)
 	if (res != 0)
 		return res;
 
+	pthread_join(args->ta_cleanerthread, NULL);
 	free(args);
 
 	return 0;
 }
 
+static void *
+cleaner(void *arg)
+{
+	char thepath[MAXPATHLEN];
+	struct lfstestargs *args = arg;
+	const char *the_argv[7];
+	char buf[64];
+
+	/* this inspired by the cleaner code.  fixme */
+	sprintf(thepath, "/dev/r%s", args->ta_devpath+5);
+	rump_pub_etfs_register(thepath, args->ta_hostpath, RUMP_ETFS_CHR);
+	sprintf(buf, "%p", &args->ta_cleanerloop);
+
+	the_argv[0] = "megamaid";
+	the_argv[1] = "-D"; /* don't fork() & detach */
+	the_argv[2] = "-S";
+	the_argv[3] = buf;
+	the_argv[4] = args->ta_mntpath;
+	the_argv[5] = NULL;
+
+	/* xxxatf */
+	optind = 1;
+	opterr = 1;
+
+	lfs_cleaner_main(5, __UNCONST(the_argv));
+
+	return NULL;
+}
+
 int
 lfs_fstest_mount(const atf_tc_t *tc, void *buf, const char *path, int flags)
 {
-	int res;
 	struct lfstestargs *args = buf;
-
-	/* XXX: should start cleanerd */
+	int res;
 
 	res = rump_sys_mkdir(path, 0777);
 	if (res == -1)
@@ -123,7 +162,18 @@ lfs_fstest_mount(const atf_tc_t *tc, void *buf, const char *path, int flags)
 
 	res = rump_sys_mount(MOUNT_LFS, path, flags, &args->ta_uargs,
 	    sizeof(args->ta_uargs));
-	return res;
+	if (res == -1)
+		return res;
+
+	strcpy(args->ta_mntpath, path);
+	res = pthread_create(&args->ta_cleanerthread, NULL, cleaner, args);
+	if (res)
+		return res;
+
+	/* wait for cleaner to initialize */
+	sem_wait(&args->ta_cleanerloop);
+
+	return 0;
 }
 
 int
@@ -132,8 +182,9 @@ lfs_fstest_unmount(const atf_tc_t *tc, const char *path, int flags)
 	int res;
 
 	res = rump_sys_unmount(path, flags);
-	if (res == -1)
+	if (res == -1) {
 		return res;
+	}
 
 	res = rump_sys_rmdir(path);
 	return res;
