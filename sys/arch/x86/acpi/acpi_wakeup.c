@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakeup.c,v 1.24 2010/07/28 18:10:31 jruoho Exp $	*/
+/*	$NetBSD: acpi_wakeup.c,v 1.25 2010/07/29 11:40:08 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.24 2010/07/28 18:10:31 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.25 2010/07/29 11:40:08 jruoho Exp $");
 
 /*-
  * Copyright (c) 2001 Takanori Watanabe <takawata@jp.freebsd.org>
@@ -116,12 +116,14 @@ int acpi_md_vbios_reset = 1; /* Referenced by dev/pci/vga_pci.c */
 int acpi_md_vesa_modenum = 0; /* Referenced by arch/x86/x86/genfb_machdep.c */
 static int acpi_md_beep_on_reset = 0;
 
+static int	acpi_md_s4bios(void);
 static int	sysctl_md_acpi_vbios_reset(SYSCTLFN_ARGS);
 static int	sysctl_md_acpi_beep_on_reset(SYSCTLFN_ARGS);
 
 /* Implemented in acpi_wakeup_low.S. */
 int	acpi_md_sleep_prepare(int);
-int	acpi_md_sleep_exit(int);	
+int	acpi_md_sleep_exit(int);
+
 /* Referenced by acpi_wakeup_low.S. */
 void	acpi_md_sleep_enter(int);
 
@@ -179,70 +181,29 @@ acpi_md_sleep_patch(struct cpu_info *ci)
 #undef WAKECODE_BCOPY
 }
 
-/*
- * S4 sleep using S4BIOS support, from FreeBSD.
- *
- * FreeBSD: src/sys/dev/acpica/acpica_support.c,v 1.4 2002/03/12 09:45:17 dfr Exp
- */
-
-static ACPI_STATUS
-enter_s4_with_bios(void)
+static int
+acpi_md_s4bios(void)
 {
+	ACPI_TABLE_FACS *facs;
 	ACPI_STATUS rv;
-	uint32_t val;
 
-	/*
-	 * Run the _PTS and _GTS methods.
-	 */
-	(void)acpi_eval_set_integer(NULL, "\\_PTS", ACPI_STATE_S4);
-	(void)acpi_eval_set_integer(NULL, "\\_GTS", ACPI_STATE_S4);
+	rv = AcpiGetTable(ACPI_SIG_FACS, 0, (ACPI_TABLE_HEADER **)&facs);
 
-	/*
-	 * Clear wake status.
-	 */
-	(void)AcpiWriteBitRegister(ACPI_BITREG_WAKE_STATUS, 1);
+	if (ACPI_FAILURE(rv) || facs == NULL)
+		return 0;
 
-	/*
-	 * Enable wake GPEs.
-	 */
-	(void)AcpiHwDisableAllGpes();
-	(void)AcpiHwEnableAllWakeupGpes();
+	if ((facs->Flags & ACPI_FACS_S4_BIOS_PRESENT) == 0)
+		return 0;
 
-	/*
-	 * Flush caches.
-	 */
-	ACPI_FLUSH_CPU_CACHE();
-
-	/*
-	 * Write the value to command port and wait until we enter sleep state.
-	 */
-	do {
-		AcpiOsStall(1000000);
-
-		(void)AcpiOsWritePort(AcpiGbl_FADT.SmiCommand,
-				      AcpiGbl_FADT.S4BiosRequest, 8);
-
-		rv = AcpiReadBitRegister(ACPI_BITREG_WAKE_STATUS, &val);
-
-		if (ACPI_FAILURE(rv))
-			break;
-
-	} while (val == 0);
-
-	/*
-	 * Enable runtime GPEs.
-	 */
-	(void)AcpiHwDisableAllGpes();
-	(void)AcpiHwEnableAllRuntimeGpes();
-
-	return AE_OK;
+	return 1;
 }
 
 void
 acpi_md_sleep_enter(int state)
 {
-	ACPI_STATUS			status;
-	struct cpu_info			*ci;
+	static int s4bios = -1;
+	struct cpu_info *ci;
+	ACPI_STATUS rv;
 
 	ci = curcpu();
 
@@ -262,26 +223,28 @@ acpi_md_sleep_enter(int state)
 
 	ACPI_FLUSH_CPU_CACHE();
 
-	if (state == ACPI_STATE_S4) {
-		ACPI_TABLE_FACS *facs;
-		status = AcpiGetTable(ACPI_SIG_FACS, 0, (ACPI_TABLE_HEADER **)&facs);
-		if (ACPI_FAILURE(status)) {
-			printf("acpi: S4BIOS not supported: cannot load FACS\n");
+	switch (state) {
+
+	case ACPI_STATE_S4:
+
+		if (s4bios < 0)
+			s4bios = acpi_md_s4bios();
+
+		if (s4bios == 0) {
+			aprint_error("acpi0: S4 not supported\n");
 			return;
 		}
-		if (facs == NULL ||
-		    (facs->Flags & ACPI_FACS_S4_BIOS_PRESENT) == 0) {
-			printf("acpi: S4BIOS not supported: not present");
-			return;
-		}
-		status = enter_s4_with_bios();
-	} else {
-		status = AcpiEnterSleepState(state);
+
+		rv = AcpiEnterSleepStateS4bios();
+		break;
+
+	default:
+		rv = AcpiEnterSleepState(state);
+		break;
 	}
 
-	if (ACPI_FAILURE(status)) {
-		printf("acpi: AcpiEnterSleepState failed: %s\n",
-		       AcpiFormatException(status));
+	if (ACPI_FAILURE(rv)) {
+		aprint_error("acpi0: failed to enter S%d\n", state);
 		return;
 	}
 
@@ -353,7 +316,7 @@ acpi_md_sleep(int state)
 	/* Save and suspend Application Processors */
 	x86_broadcast_ipi(X86_IPI_ACPI_CPU_SLEEP);
 	while (cpus_running != curcpu()->ci_cpumask)
-		delay(1); 
+		delay(1);
 #endif
 
 	if (acpi_md_sleep_prepare(state))
