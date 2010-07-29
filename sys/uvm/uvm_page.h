@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.h,v 1.59 2010/02/06 12:10:59 uebayasi Exp $	*/
+/*	$NetBSD: uvm_page.h,v 1.60 2010/07/29 10:54:51 hannken Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -180,12 +180,13 @@ struct vm_page {
 #define	PG_FAKE		0x0040		/* page is not yet initialized */
 #define	PG_RDONLY	0x0080		/* page must be mapped read-only */
 #define	PG_ZERO		0x0100		/* page is pre-zero'd */
+#define	PG_MARKER	0x0200		/* dummy marker page */
 
 #define PG_PAGER1	0x1000		/* pager-specific flag */
 
 #define	UVM_PGFLAGBITS \
 	"\20\1BUSY\2WANTED\3TABLED\4CLEAN\5PAGEOUT\6RELEASED\7FAKE\10RDONLY" \
-	"\11ZERO\15PAGER1"
+	"\11ZERO\12MARKER\15PAGER1"
 
 #define PQ_FREE		0x0001		/* page is on free list */
 #define PQ_ANON		0x0002		/* page is part of an anon, rather
