@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu.h,v 1.6 2010/07/27 05:11:32 jruoho Exp $ */
+/* $NetBSD: acpi_cpu.h,v 1.7 2010/07/29 22:42:58 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -120,14 +120,16 @@ struct acpicpu_object {
 struct acpicpu_softc {
 	device_t		 sc_dev;
 	struct acpi_devnode	*sc_node;
-	struct acpicpu_cstate	 sc_cstate[ACPI_C_STATE_COUNT];
 	struct acpicpu_object	 sc_object;
+	struct acpicpu_cstate	 sc_cstate[ACPI_C_STATE_COUNT];
+	kmutex_t		 sc_cstate_mtx;
 	bus_space_tag_t		 sc_iot;
 	bus_space_handle_t	 sc_ioh;
 	uint32_t		 sc_sleep;
 	uint32_t		 sc_cpuid;
 	uint32_t		 sc_cap;
 	uint32_t		 sc_flags;
+	bool			 sc_cold;
 };
 
 /*

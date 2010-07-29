@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_cstate.c,v 1.11 2010/07/27 05:11:33 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_cstate.c,v 1.12 2010/07/29 22:42:58 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,13 +27,14 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_cstate.c,v 1.11 2010/07/27 05:11:33 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_cstate.c,v 1.12 2010/07/29 22:42:58 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
 #include <sys/once.h>
+#include <sys/mutex.h>
 #include <sys/timetc.h>
 
 #include <dev/pci/pcivar.h>
@@ -63,7 +64,6 @@ static bool		 acpicpu_cstate_bm_check(void);
 static void		 acpicpu_cstate_idle_enter(struct acpicpu_softc *,int);
 
 extern struct acpicpu_softc **acpicpu_sc;
-extern int		      acpi_suspended;
 
 /*
  * XXX:	The local APIC timer (as well as TSC) is typically
@@ -101,6 +101,8 @@ acpicpu_cstate_attach(device_t self)
 
 	acpicpu_cstate_quirks(sc);
 	acpicpu_cstate_attach_print(sc);
+
+	mutex_init(&sc->sc_cstate_mtx, MUTEX_DEFAULT, IPL_NONE);
 }
 
 void
@@ -175,9 +177,19 @@ acpicpu_cstate_attach_print(struct acpicpu_softc *sc)
 int
 acpicpu_cstate_detach(device_t self)
 {
+	struct acpicpu_softc *sc = device_private(self);
 	static ONCE_DECL(once_detach);
+	int rv;
 
-	return RUN_ONCE(&once_detach, acpicpu_md_idle_stop);
+	rv = RUN_ONCE(&once_detach, acpicpu_md_idle_stop);
+
+	if (rv != 0)
+		return rv;
+
+	sc->sc_flags &= ~ACPICPU_FLAG_C;
+	mutex_destroy(&sc->sc_cstate_mtx);
+
+	return 0;
 }
 
 int
@@ -241,9 +253,9 @@ acpicpu_cstate_callback(void *aux)
 		return;
 	}
 
-	(void)acpicpu_md_idle_stop();
+	mutex_enter(&sc->sc_cstate_mtx);
 	(void)acpicpu_cstate_cst(sc);
-	(void)acpicpu_md_idle_start();
+	mutex_exit(&sc->sc_cstate_mtx);
 }
 
 static ACPI_STATUS
@@ -702,6 +714,9 @@ acpicpu_cstate_idle(void)
 	struct acpicpu_softc *sc;
 	int state;
 
+	if (__predict_false(ci->ci_want_resched) != 0)
+		return;
+
 	acpi_md_OsDisableInterrupt();
 
 	KASSERT(acpicpu_sc != NULL);
@@ -710,20 +725,19 @@ acpicpu_cstate_idle(void)
 
 	sc = acpicpu_sc[ci->ci_cpuid];
 
-	/*
-	 * If all CPUs do not have their ACPI counterparts, the softc
-	 * may be NULL. In this case fall back to normal C1 with HALT.
-	 */
-	if (__predict_false(sc == NULL)) {
-		acpicpu_md_idle_enter(ACPICPU_C_STATE_HALT, ACPI_STATE_C1);
-		return;
-	}
+	if (__predict_false(sc == NULL))
+		goto halt;
 
-	if (__predict_false(acpi_suspended != 0)) {
-		acpicpu_md_idle_enter(ACPICPU_C_STATE_HALT, ACPI_STATE_C1);
-		return;
-	}
+	if (__predict_false(sc->sc_cold != false))
+		goto halt;
 
+	if (__predict_false((sc->sc_flags & ACPICPU_FLAG_C) == 0))
+		goto halt;
+
+	if (__predict_false(mutex_tryenter(&sc->sc_cstate_mtx) == 0))
+		goto halt;
+
+	mutex_exit(&sc->sc_cstate_mtx);
 	state = acpicpu_cstate_latency(sc);
 
 	/*
@@ -780,6 +794,11 @@ acpicpu_cstate_idle(void)
 
 	if ((sc->sc_flags & ACPICPU_FLAG_C_ARB) != 0)
 		(void)AcpiWriteBitRegister(ACPI_BITREG_ARB_DISABLE, 0);
+
+	return;
+
+halt:
+	acpicpu_md_idle_enter(ACPICPU_C_STATE_HALT, ACPI_STATE_C1);
 }
 
 static void
