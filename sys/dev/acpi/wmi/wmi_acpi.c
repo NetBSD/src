@@ -1,4 +1,4 @@
-/*	$NetBSD: wmi_acpi.c,v 1.5 2010/05/31 20:32:29 pgoyette Exp $	*/
+/*	$NetBSD: wmi_acpi.c,v 1.6 2010/07/29 07:10:39 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2009, 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wmi_acpi.c,v 1.5 2010/05/31 20:32:29 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wmi_acpi.c,v 1.6 2010/07/29 07:10:39 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -71,6 +71,7 @@ static bool        acpi_wmi_input(struct wmi_t *, uint8_t, uint8_t);
 
 const char * const acpi_wmi_ids[] = {
 	"PNP0C14",
+	"pnp0c14",
 	NULL
 };
 
@@ -322,7 +323,9 @@ acpi_wmi_event_add(struct acpi_wmi_softc *sc)
 	if (acpi_register_notify(sc->sc_node, acpi_wmi_event_handler) != true)
 		return;
 
-	/* Enable possible expensive events. */
+	/*
+	 * Enable possible expensive events.
+	 */
 	SIMPLEQ_FOREACH(wmi, &sc->wmi_head, wmi_link) {
 
 		if ((wmi->guid.flags & ACPI_WMI_FLAG_EVENT) != 0 &&
@@ -336,7 +339,7 @@ acpi_wmi_event_add(struct acpi_wmi_softc *sc)
 				continue;
 			}
 
-			aprint_error_dev(sc->sc_dev, "failed to enable "
+			aprint_debug_dev(sc->sc_dev, "failed to enable "
 			    "expensive WExx: %s\n", AcpiFormatException(rv));
 		}
 	}
@@ -369,7 +372,7 @@ acpi_wmi_event_del(struct acpi_wmi_softc *sc)
 			continue;
 		}
 
-		aprint_error_dev(sc->sc_dev, "failed to disable "
+		aprint_debug_dev(sc->sc_dev, "failed to disable "
 		    "expensive WExx: %s\n", AcpiFormatException(rv));
 	}
 }
