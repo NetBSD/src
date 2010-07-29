@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.1041 2010/07/29 17:54:14 njoly Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.1042 2010/07/29 18:16:33 njoly Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1045 2010/07/29 17:53:19 njoly Exp
+ *	NetBSD: pcidevs,v 1.1046 2010/07/29 18:15:01 njoly Exp
  */
 
 /*
@@ -3758,7 +3758,7 @@ static const uint16_t pci_products[] = {
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801E_LAN_2, 
 	    16678, 4527, 6117, 0,
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801CA_LPC, 
-	    16685, 7926, 3043, 0,
+	    16685, 7926, 3043, 6220, 0,
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801CA_USB_1, 
 	    16685, 6602, 6117, 0,
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801CA_SMB, 
@@ -3776,7 +3776,7 @@ static const uint16_t pci_products[] = {
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801CA_IDE_2, 
 	    16685, 6283, 6117, 0,
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801CAM_LPC, 
-	    16693, 7926, 3043, 0,
+	    16693, 7926, 3043, 6220, 0,
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801DB_LPC, 
 	    16702, 7926, 3043, 6220, 0,
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801DB_USB_1, 
@@ -4124,7 +4124,7 @@ static const uint16_t pci_products[] = {
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801H_LPC, 
 	    17270, 7926, 3043, 6220, 0,
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801HEM_LPC, 
-	    17277, 7926, 0,
+	    17277, 7926, 3043, 6220, 0,
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801HH_LPC, 
 	    17286, 7926, 3043, 6220, 0,
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801HO_LPC, 
@@ -4393,14 +4393,14 @@ static const uint16_t pci_products[] = {
 	    17583, 17589, 0,
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ICH10_SATA2_2x1, 
 	    17583, 17603, 0,
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ICH10DO_TIMER, 
-	    17617, 15233, 13616, 0,
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ICH10R_TIMER, 
-	    17625, 15233, 13616, 0,
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ICH10_TIMER, 
-	    17583, 15233, 13616, 0,
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ICH10D_TIMER, 
-	    17632, 15233, 13616, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ICH10DO_LPC, 
+	    17617, 7926, 3043, 6220, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ICH10R_LPC, 
+	    17625, 7926, 3043, 6220, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ICH10_LPC, 
+	    17583, 7926, 3043, 6220, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ICH10D_LPC, 
+	    17632, 7926, 3043, 6220, 0,
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ICH10_SATA2_4x2, 
 	    17583, 17639, 0,
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ICH10R_AHCI, 
@@ -4412,7 +4412,7 @@ static const uint16_t pci_products[] = {
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ICH10_SMB2, 
 	    17583, 7930, 9916, 17667, 6073, 0,
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_3400_LPC, 
-	    17671, 7926, 0,
+	    17671, 7926, 3043, 6220, 0,
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_3400_SATA_1, 
 	    17671, 7955, 0,
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_3400_SATA_2, 
@@ -7872,7 +7872,7 @@ static const char pci_words[] = { "."
 	    "Milacron\0" /* 1 refs @ 3020 */
 	    "Workbit\0" /* 1 refs @ 3029 */
 	    "Force\0" /* 1 refs @ 3037 */
-	    "Interface\0" /* 56 refs @ 3043 */
+	    "Interface\0" /* 62 refs @ 3043 */
 	    "Schneider\0" /* 1 refs @ 3053 */
 	    "Koch\0" /* 1 refs @ 3063 */
 	    "Win\0" /* 2 refs @ 3068 */
@@ -8293,7 +8293,7 @@ static const char pci_words[] = { "."
 	    "ACCM\0" /* 1 refs @ 6203 */
 	    "2188\0" /* 1 refs @ 6208 */
 	    "VL-PCI\0" /* 3 refs @ 6213 */
-	    "Bridge\0" /* 512 refs @ 6220 */
+	    "Bridge\0" /* 520 refs @ 6220 */
 	    "2051\0" /* 2 refs @ 6227 */
 	    "Single\0" /* 5 refs @ 6232 */
 	    "Solution\0" /* 2 refs @ 6239 */
@@ -8524,7 +8524,7 @@ static const char pci_words[] = { "."
 	    "I/O\0" /* 34 refs @ 7913 */
 	    "Hub\0" /* 12 refs @ 7917 */
 	    "7461\0" /* 1 refs @ 7921 */
-	    "LPC\0" /* 31 refs @ 7926 */
+	    "LPC\0" /* 35 refs @ 7926 */
 	    "SMBus\0" /* 37 refs @ 7930 */
 	    "MC97\0" /* 1 refs @ 7936 */
 	    "756b\0" /* 1 refs @ 7941 */
@@ -9358,7 +9358,7 @@ static const char pci_words[] = { "."
 	    "STR1100\0" /* 1 refs @ 13592 */
 	    "HOTlink\0" /* 2 refs @ 13600 */
 	    "Counter\0" /* 1 refs @ 13608 */
-	    "Timer\0" /* 8 refs @ 13616 */
+	    "Timer\0" /* 4 refs @ 13616 */
 	    "PROFIBUS\0" /* 1 refs @ 13622 */
 	    "old\0" /* 1 refs @ 13631 */
 	    "155P-MF1\0" /* 2 refs @ 13635 */
@@ -9569,7 +9569,7 @@ static const char pci_words[] = { "."
 	    "RC32334\0" /* 1 refs @ 15206 */
 	    "RC32332\0" /* 1 refs @ 15214 */
 	    "PCI-WDT50x\0" /* 1 refs @ 15222 */
-	    "Watchdog\0" /* 8 refs @ 15233 */
+	    "Watchdog\0" /* 4 refs @ 15233 */
 	    "INIC-1622\0" /* 1 refs @ 15242 */
 	    "INIC-920\0" /* 1 refs @ 15252 */
 	    "INIC-850\0" /* 1 refs @ 15261 */
