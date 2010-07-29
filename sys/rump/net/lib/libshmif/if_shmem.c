@@ -1,4 +1,4 @@
-/*	$NetBSD: if_shmem.c,v 1.10 2009/11/30 11:14:58 pooka Exp $	*/
+/*	$NetBSD: if_shmem.c,v 1.11 2010/07/29 18:30:39 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.10 2009/11/30 11:14:58 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.11 2010/07/29 18:30:39 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/fcntl.h>
@@ -83,7 +83,7 @@ struct shmif_sc {
 
 #define BUSCTRL_ATOFF(sc, off)	((uint32_t *)(sc->sc_busmem+(off)))
 
-#define BUSMEM_SIZE 65536 /* enough? */
+#define BUSMEM_SIZE (1024*1024) /* need write throttling? */
 
 static void shmif_rcv(void *);
 
@@ -345,7 +345,8 @@ shmif_rcv(void *arg)
 		    || (busgen > sc->sc_prevgen+1)) {
 			nextpkt = lastpkt;
 			sc->sc_prevgen = busgen;
-			rumpuser_dprintf("DROPPING\n");
+			rumpuser_dprintf("shmif_rcv: generation overrun, "
+			    "skipping invalid packets\n");
 		} else {
 			nextpkt = sc->sc_nextpacket;
 		}
