@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.43 2010/07/24 08:02:46 cegger Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.44 2010/07/29 08:16:49 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -453,6 +453,9 @@
 /* AMD Family10h MSRs */
 #define	MSR_OSVW_ID_LENGTH		0xc0010140
 #define	MSR_OSVW_STATUS			0xc0010141
+
+/* X86 MSRs */
+#define	MSR_RDTSCP_AUX			0xc0000103
 
 /*
  * Constants related to MTRRs
