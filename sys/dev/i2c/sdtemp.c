@@ -1,4 +1,4 @@
-/*      $NetBSD: sdtemp.c,v 1.17 2010/07/29 12:01:21 njoly Exp $        */
+/*      $NetBSD: sdtemp.c,v 1.18 2010/07/29 13:07:14 pgoyette Exp $        */
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdtemp.c,v 1.17 2010/07/29 12:01:21 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdtemp.c,v 1.18 2010/07/29 13:07:14 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -476,11 +476,14 @@ sdtemp_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 	/* Now check for limits */
 	if ((edata->upropset & PROP_DRIVER_LIMITS) == 0)
 		edata->state = ENVSYS_SVALID;
-	else if (val & SDTEMP_ABOVE_CRIT)
+	else if ((val & SDTEMP_ABOVE_CRIT) &&
+		    (edata->upropset & PROP_CRITMAX))
 		edata->state = ENVSYS_SCRITOVER;
-	else if (val & SDTEMP_ABOVE_UPPER)
+	else if ((val & SDTEMP_ABOVE_UPPER) &&
+		    (edata->upropset & PROP_WARNMAX))
 		edata->state = ENVSYS_SWARNOVER;
-	else if (val & SDTEMP_BELOW_LOWER)
+	else if ((val & SDTEMP_BELOW_LOWER) &&
+		    (edata->upropset & PROP_WARNMIN))
 		edata->state = ENVSYS_SWARNUNDER;
 	else
 		edata->state = ENVSYS_SVALID;
