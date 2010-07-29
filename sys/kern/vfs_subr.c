@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.413 2010/07/28 11:03:47 hannken Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.414 2010/07/29 10:54:50 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.413 2010/07/28 11:03:47 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.414 2010/07/29 10:54:50 hannken Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -1136,7 +1136,7 @@ brelvp(struct buf *bp)
 	if (LIST_NEXT(bp, b_vnbufs) != NOLIST)
 		bufremvn(bp);
 
-	if (TAILQ_EMPTY(&vp->v_uobj.memq) && (vp->v_iflag & VI_ONWORKLST) &&
+	if (vp->v_uobj.uo_npages == 0 && (vp->v_iflag & VI_ONWORKLST) &&
 	    LIST_FIRST(&vp->v_dirtyblkhd) == NULL) {
 		vp->v_iflag &= ~VI_WRMAPDIRTY;
 		vn_syncer_remove_from_worklist(vp);
@@ -1176,7 +1176,7 @@ reassignbuf(struct buf *bp, struct vnode *vp)
 	 */
 	if ((bp->b_oflags & BO_DELWRI) == 0) {
 		listheadp = &vp->v_cleanblkhd;
-		if (TAILQ_EMPTY(&vp->v_uobj.memq) &&
+		if (vp->v_uobj.uo_npages == 0 &&
 		    (vp->v_iflag & VI_ONWORKLST) &&
 		    LIST_FIRST(&vp->v_dirtyblkhd) == NULL) {
 			vp->v_iflag &= ~VI_WRMAPDIRTY;
