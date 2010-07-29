@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.123 2010/07/28 21:29:16 jruoho Exp $
+# $NetBSD: mi,v 1.124 2010/07/29 16:30:26 njoly Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -197,7 +197,7 @@
 ./usr/libdata/debug/usr/tests/fs/msdosfs				tests-fs-debug
 ./usr/libdata/debug/usr/tests/fs/msdosfs/t_snapshot.debug		tests-fs-debug		debug,atf
 ./usr/libdata/debug/usr/tests/fs/nfs					tests-fs-debug
-./usr/libdata/debug/usr/tests/fs/nfs/t_mountd			tests-fs-debug		debug,atf
+./usr/libdata/debug/usr/tests/fs/nfs/t_mountd.debug			tests-fs-debug		debug,atf
 ./usr/libdata/debug/usr/tests/fs/nfs/nfsservice					tests-fs-debug
 ./usr/libdata/debug/usr/tests/fs/nfs/nfsservice/rumpnfsd.debug			tests-fs-debug		debug,atf
 ./usr/libdata/debug/usr/tests/fs/nullfs					tests-fs-debug
@@ -269,6 +269,7 @@
 ./usr/libdata/debug/usr/tests/lib/csu/h_initfini1.debug			tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/csu/h_initfini2.debug			tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/csu/h_initfini3.debug			tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/csu/libh_initfini3_dso.so.1.debug	tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc					tests-lib-debug
 ./usr/libdata/debug/usr/tests/lib/libc/hash				tests-lib-debug
 ./usr/libdata/debug/usr/tests/lib/libc/hash/t_sha2.debug		tests-lib-debug		debug,atf
