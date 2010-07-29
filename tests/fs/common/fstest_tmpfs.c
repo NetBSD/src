@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.c,v 1.7 2010/07/19 16:09:08 pooka Exp $	*/
+/*	$NetBSD: fstest_tmpfs.c,v 1.1 2010/07/29 14:15:47 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -38,33 +38,23 @@
 #include <string.h>
 #include <unistd.h>
 
-#include <ufs/ufs/ufsmount.h>
+#include <fs/tmpfs/tmpfs_args.h>
 
 #include <rump/rump.h>
 #include <rump/rump_syscalls.h>
 
 #include "h_fsmacros.h"
 
-struct lfstestargs {
-        struct ufs_args ta_uargs;
-        char ta_devpath[MAXPATHLEN];
-        char ta_imgpath[MAXPATHLEN];
+struct tmpfstestargs {
+        struct tmpfs_args ta_uargs;
 };
 
 int
-lfs_fstest_newfs(const atf_tc_t *tc, void **buf, const char *image, off_t size)
+tmpfs_fstest_newfs(const atf_tc_t *tc, void **buf, const char *image,
+    off_t size)
 {
-	char cmd[1024];
 	int res;
-	static unsigned int num = 0;
-	struct lfstestargs *args;
-
-	size /= 512;
-	snprintf(cmd, 1024, "newfs_lfs -D -F -s %"PRId64" ./%s >/dev/null",
-	    size, image);
-	res = system(cmd);
-	if (res != 0)
-		return res;
+	struct tmpfstestargs *args;
 
 	res = rump_init();
 	if (res != 0)
@@ -74,35 +64,19 @@ lfs_fstest_newfs(const atf_tc_t *tc, void **buf, const char *image, off_t size)
 	if (args == NULL)
 		return -1;
 
-	snprintf(args->ta_devpath, MAXPATHLEN, "/dev/device%d.lfs", num);
-	snprintf(args->ta_imgpath, MAXPATHLEN, "%s", image);
-	args->ta_uargs.fspec = args->ta_devpath;
-
-	res = rump_pub_etfs_register(args->ta_devpath, image, RUMP_ETFS_BLK);
-	if (res != 0) {
-		free(args);
-		return res;
-	}
+	args->ta_uargs.ta_version = TMPFS_ARGS_VERSION;
+	args->ta_uargs.ta_root_mode = 0777;
+	args->ta_uargs.ta_size_max = size;
 
 	*buf = args;
-	num++;
 
 	return 0;
 }
 
 int
-lfs_fstest_delfs(const atf_tc_t *tc, void *buf)
+tmpfs_fstest_delfs(const atf_tc_t *tc, void *buf)
 {
-	int res;
-	struct lfstestargs *args = buf;
-
-	res = rump_pub_etfs_remove(args->ta_devpath);
-	if (res != 0)
-		return res;
-
-	res = unlink(args->ta_imgpath);
-	if (res != 0)
-		return res;
+	struct tmpfstestargs *args = buf;
 
 	free(args);
 
@@ -110,24 +84,22 @@ lfs_fstest_delfs(const atf_tc_t *tc, void *buf)
 }
 
 int
-lfs_fstest_mount(const atf_tc_t *tc, void *buf, const char *path, int flags)
+tmpfs_fstest_mount(const atf_tc_t *tc, void *buf, const char *path, int flags)
 {
 	int res;
-	struct lfstestargs *args = buf;
-
-	/* XXX: should start cleanerd */
+	struct tmpfstestargs *args = buf;
 
 	res = rump_sys_mkdir(path, 0777);
 	if (res == -1)
 		return res;
 
-	res = rump_sys_mount(MOUNT_LFS, path, flags, &args->ta_uargs,
+	res = rump_sys_mount(MOUNT_TMPFS, path, flags, &args->ta_uargs,
 	    sizeof(args->ta_uargs));
 	return res;
 }
 
 int
-lfs_fstest_unmount(const atf_tc_t *tc, const char *path, int flags)
+tmpfs_fstest_unmount(const atf_tc_t *tc, const char *path, int flags)
 {
 	int res;
 
