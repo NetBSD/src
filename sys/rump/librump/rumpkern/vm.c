@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.86 2010/07/29 15:04:04 pooka Exp $	*/
+/*	$NetBSD: vm.c,v 1.87 2010/07/29 15:13:00 hannken Exp $	*/
 
 /*
  * Copyright (c) 2007-2010 Antti Kantee.  All Rights Reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.86 2010/07/29 15:04:04 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.87 2010/07/29 15:13:00 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -459,6 +459,8 @@ uvm_pagelookup(struct uvm_object *uobj, voff_t off)
 	struct vm_page *pg;
 
 	TAILQ_FOREACH(pg, &uobj->memq, listq.queue) {
+		if ((pg->flags & PG_MARKER) != 0)
+			continue;
 		if (pg->offset == off) {
 			return pg;
 		}
