@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu.c,v 1.8 2010/07/26 15:14:33 jruoho Exp $ */
+/* $NetBSD: acpi_cpu.c,v 1.9 2010/07/29 22:42:58 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu.c,v 1.8 2010/07/26 15:14:33 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu.c,v 1.9 2010/07/29 22:42:58 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -114,6 +114,7 @@ acpicpu_attach(device_t parent, device_t self, void *aux)
 	KASSERT(acpicpu_sc != NULL);
 
 	sc->sc_dev = self;
+	sc->sc_cold = false;
 	sc->sc_iot = aa->aa_iot;
 	sc->sc_node = aa->aa_node;
 	sc->sc_cpuid = acpicpu_id(sc->sc_object.ao_procid);
@@ -468,6 +469,8 @@ acpicpu_suspend(device_t self, const pmf_qual_t *qual)
 {
 	struct acpicpu_softc *sc = device_private(self);
 
+	sc->sc_cold = true;
+
 	if ((sc->sc_flags & ACPICPU_FLAG_C) != 0)
 		(void)acpicpu_cstate_suspend(self);
 
@@ -478,6 +481,8 @@ static bool
 acpicpu_resume(device_t self, const pmf_qual_t *qual)
 {
 	struct acpicpu_softc *sc = device_private(self);
+
+	sc->sc_cold = false;
 
 	if ((sc->sc_flags & ACPICPU_FLAG_C) != 0)
 		(void)acpicpu_cstate_resume(self);
