@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.229 2010/06/24 13:03:19 hannken Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.230 2010/07/29 10:54:51 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.229 2010/06/24 13:03:19 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.230 2010/07/29 10:54:51 hannken Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1848,12 +1848,16 @@ check_dirty(struct lfs *fs, struct vnode *vp,
 			 * blocks outside our area of interest or beyond
 			 * the end of file.
 			 */
+			KASSERT((curpg->flags & PG_MARKER) == 0);
 			if (pages_per_block > 1) {
 				while (curpg &&
-				       ((curpg->offset & fs->lfs_bmask) ||
-					curpg->offset >= vp->v_size ||
-					curpg->offset >= endoffset))
+				    ((curpg->offset & fs->lfs_bmask) ||
+				    curpg->offset >= vp->v_size ||
+				    curpg->offset >= endoffset)) {
 					curpg = TAILQ_NEXT(curpg, listq.queue);
+					KASSERT(curpg == NULL ||
+					    (curpg->flags & PG_MARKER) == 0);
+				}
 			}
 			if (curpg == NULL)
 				break;
