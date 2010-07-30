@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_cstate.c,v 1.12 2010/07/29 22:42:58 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_cstate.c,v 1.13 2010/07/30 06:11:14 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_cstate.c,v 1.12 2010/07/29 22:42:58 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_cstate.c,v 1.13 2010/07/30 06:11:14 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -101,8 +101,6 @@ acpicpu_cstate_attach(device_t self)
 
 	acpicpu_cstate_quirks(sc);
 	acpicpu_cstate_attach_print(sc);
-
-	mutex_init(&sc->sc_cstate_mtx, MUTEX_DEFAULT, IPL_NONE);
 }
 
 void
@@ -187,7 +185,6 @@ acpicpu_cstate_detach(device_t self)
 		return rv;
 
 	sc->sc_flags &= ~ACPICPU_FLAG_C;
-	mutex_destroy(&sc->sc_cstate_mtx);
 
 	return 0;
 }
@@ -253,9 +250,9 @@ acpicpu_cstate_callback(void *aux)
 		return;
 	}
 
-	mutex_enter(&sc->sc_cstate_mtx);
+	mutex_enter(&sc->sc_mtx);
 	(void)acpicpu_cstate_cst(sc);
-	mutex_exit(&sc->sc_cstate_mtx);
+	mutex_exit(&sc->sc_mtx);
 }
 
 static ACPI_STATUS
@@ -697,7 +694,7 @@ acpicpu_cstate_latency(struct acpicpu_softc *sc)
 		 * longer than the worst case latency of the
 		 * state times an arbitrary multiplier.
 		 */
-		if (sc->sc_sleep > cs->cs_latency * cs_factor)
+		if (sc->sc_cstate_sleep > cs->cs_latency * cs_factor)
 			return i;
 	}
 
@@ -734,10 +731,10 @@ acpicpu_cstate_idle(void)
 	if (__predict_false((sc->sc_flags & ACPICPU_FLAG_C) == 0))
 		goto halt;
 
-	if (__predict_false(mutex_tryenter(&sc->sc_cstate_mtx) == 0))
+	if (__predict_false(mutex_tryenter(&sc->sc_mtx) == 0))
 		goto halt;
 
-	mutex_exit(&sc->sc_cstate_mtx);
+	mutex_exit(&sc->sc_mtx);
 	state = acpicpu_cstate_latency(sc);
 
 	/*
@@ -828,7 +825,7 @@ acpicpu_cstate_idle_enter(struct acpicpu_softc *sc, int state)
 	cs->cs_stat++;
 
 	end = acpitimer_read_safe(NULL);
-	sc->sc_sleep = hztoms(acpitimer_delta(end, start)) * 1000;
+	sc->sc_cstate_sleep = hztoms(acpitimer_delta(end, start)) * 1000;
 
 	acpi_md_OsEnableInterrupt();
 }
