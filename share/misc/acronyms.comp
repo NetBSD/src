@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.101 2010/07/29 18:36:34 jruoho Exp $
+$NetBSD: acronyms.comp,v 1.102 2010/07/30 10:20:20 jruoho Exp $
 
 3WHS	three-way handshake
 ABI	application binary interface
@@ -19,6 +19,7 @@ ANSI	American National Standards Institute
 AP	access point
 API	application programming interface
 APIC	advanced programmable interrupt controller
+ARC	adaptive replacement cache
 ARM	Advanced RISC Machines
 ARP	address resolution protocol
 ARPA	Advanced Research Projects Agency
@@ -46,6 +47,7 @@ BFKL	big fscking kernel lock
 BGP	border gateway protocol
 BIND	Berkeley Internet Name Daemon
 BIOS	basic input/output system
+BLAS	basic linear algebra subprograms
 BLOB	binary large object
 BMC	baseboard management controller
 BPF	Berkeley packet filter
@@ -57,7 +59,10 @@ BSS	block started by symbol
 BT	Bluetooth
 BT	BitTorrent
 CAD	computer-aided design
+CAM	content addressable memory
 CARP	common address redundancy protocol
+CAS	atomic compare and swap
+CAS	computer algebra system
 CAV	constant angular velocity (as opposed to CLV)
 CCD	charge coupled device
 CD	compact disc
@@ -195,6 +200,7 @@ HCI	human-computer interaction
 HDD	hard disk drive
 HDCP	high-bandwidth digital content protection
 HID	human interface device
+HPC	high performance computing
 HT	hyper-threading
 HTML	hyper-text markup language
 HTTP	hyper-text transfer protocol
@@ -266,6 +272,7 @@ LDAP	lightweight directory access protocol
 LDT	local descriptor table
 LED	light emitting diode
 LFS	log-structured file system
+LFU	least frequently used
 LIFO	last in first out
 LILO	last in last out
 LILO	Linux loader
@@ -276,6 +283,7 @@ LLC	logical link control
 LOC	lines of code
 LPC	low pin count
 LRC	longitudinal redundancy check
+LRU	least recently used
 LSB	least significant bit [or: byte]
 LSB	Linux standards base
 LSI	large scale integration
@@ -302,6 +310,7 @@ MIT	Massachusetts Institute of Technology
 MMU	memory management unit
 MPEG	moving picture experts group
 MPLS	multiprotocol label switching
+MRU	most recently used
 MSB	most significant bit [or: byte]
 MSF	minutes seconds frames
 MSI	message signaled interrupt
@@ -453,11 +462,13 @@ SLDRAM	synchronous-link dynamic random access memory
 SMART	self-monitoring analysis and reporting technology
 SMI	system management interrupt
 SMP	symmetric multiprocessing
+SMT	simultaneous multithreading
 SMTP	simple mail transfer protocol
 SNMP	simple network management protocol
 SOA	service oriented architecture
 SOAP	simple object access protocol
 SOHO	small office / home office
+SP	stack pointer
 SPARC	scalable processor architecture
 SPARQL	SPARQL protocol and RDF query language
 SPD	security policy database
