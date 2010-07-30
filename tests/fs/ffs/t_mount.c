@@ -1,4 +1,4 @@
-/*	$NetBSD: t_mount.c,v 1.6 2010/07/19 16:22:05 pooka Exp $	*/
+/*	$NetBSD: t_mount.c,v 1.7 2010/07/30 16:15:05 pooka Exp $	*/
 
 /*
  * Adapted for rump and atf from a testcase supplied
@@ -25,7 +25,7 @@ ATF_TC_BODY(48Kimage, tc)
 {
 	void *tmp;
 
-	if (ffs_fstest_newfs(tc, &tmp, IMGNAME, IMGSIZE) != 0)
+	if (ffs_fstest_newfs(tc, &tmp, IMGNAME, IMGSIZE, NULL) != 0)
 		atf_tc_fail("newfs failed");
 
 	atf_tc_expect_fail("PR kern/43573");

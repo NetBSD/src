@@ -1,4 +1,4 @@
-/*	$NetBSD: fstest_puffs.c,v 1.1 2010/07/29 14:15:47 pooka Exp $	*/
+/*	$NetBSD: fstest_puffs.c,v 1.2 2010/07/30 16:15:05 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -50,50 +50,8 @@
 
 #include "h_fsmacros.h"
 
-struct puffstestargs {
-	uint8_t			*pta_pargs;
-	size_t			pta_pargslen;
-
-	int			pta_pflags;
-	int			pta_servfd;
-	pid_t			pta_childpid;
-
-	char			pta_dev[MAXPATHLEN];
-	char			pta_dir[MAXPATHLEN];
-
-	int			pta_mntflags;
-};
-
 #define BUFSIZE (128*1024)
 #define DTFS_DUMP "-o","dump"
-
-struct thefds {
-	int rumpfd;
-	int servfd;
-};
-
-int vfs_toserv_ops[PUFFS_VFS_MAX];
-int vn_toserv_ops[PUFFS_VN_MAX];
-
-#ifdef PUFFSDUMP
-static void __unused
-dumpopcount(void)
-{
-	size_t i;
-
-	printf("VFS OPS:\n");
-	for (i = 0; i < MIN(puffsdump_vfsop_count, PUFFS_VFS_MAX); i++) {
-		printf("\t%s: %d\n",
-		    puffsdump_vfsop_revmap[i], vfs_toserv_ops[i]);
-	}
-
-	printf("VN OPS:\n");
-	for (i = 0; i < MIN(puffsdump_vnop_count, PUFFS_VN_MAX); i++) {
-		printf("\t%s: %d\n",
-		    puffsdump_vnop_revmap[i], vn_toserv_ops[i]);
-	}
-}
-#endif
 
 /*
  * Threads which shovel data between comfd and /dev/puffs.
@@ -104,12 +62,12 @@ readshovel(void *arg)
 {
 	struct putter_hdr *phdr;
 	struct puffs_req *preq;
-	struct thefds *fds = arg;
+	struct puffstestargs *args = arg;
 	char buf[BUFSIZE];
 	int comfd, puffsfd;
 
-	comfd = fds->servfd;
-	puffsfd = fds->rumpfd;
+	comfd = args->pta_servfd;
+	puffsfd = args->pta_rumpfd;
 
 	phdr = (void *)buf;
 	preq = (void *)buf;
@@ -133,10 +91,10 @@ readshovel(void *arg)
 		/* Analyze request */
 		if (PUFFSOP_OPCLASS(preq->preq_opclass) == PUFFSOP_VFS) {
 			assert(preq->preq_optype < PUFFS_VFS_MAX);
-			vfs_toserv_ops[preq->preq_optype]++;
+			args->pta_vfs_toserv_ops[preq->preq_optype]++;
 		} else if (PUFFSOP_OPCLASS(preq->preq_opclass) == PUFFSOP_VN) {
 			assert(preq->preq_optype < PUFFS_VN_MAX);
-			vn_toserv_ops[preq->preq_optype]++;
+			args->pta_vn_toserv_ops[preq->preq_optype]++;
 		}
 
 		n = phdr->pth_framelen;
@@ -150,7 +108,7 @@ readshovel(void *arg)
 static void *
 writeshovel(void *arg)
 {
-	struct thefds *fds = arg;
+	struct puffstestargs *args = arg;
 	struct putter_hdr *phdr;
 	char buf[BUFSIZE];
 	size_t toread;
@@ -159,8 +117,8 @@ writeshovel(void *arg)
 	/* use static thread id */
 	rump_pub_lwp_alloc_and_switch(0, 11);
 
-	comfd = fds->servfd;
-	puffsfd = fds->rumpfd;
+	comfd = args->pta_servfd;
+	puffsfd = args->pta_rumpfd;
 
 	phdr = (struct putter_hdr *)buf;
 
@@ -196,22 +154,19 @@ writeshovel(void *arg)
 }
 
 static void
-rumpshovels(int rumpfd, int servfd)
+rumpshovels(struct puffstestargs *args)
 {
-	struct thefds *fds;
 	pthread_t pt;
 	int rv;
 
 	if ((rv = rump_init()) == -1)
 		err(1, "rump_init");
 
-	fds = malloc(sizeof(*fds));
-	fds->rumpfd = rumpfd;
-	fds->servfd = servfd;
-	if (pthread_create(&pt, NULL, readshovel, fds) == -1)
+	if (pthread_create(&pt, NULL, readshovel, args) == -1)
 		err(1, "read shovel");
 	pthread_detach(pt);
-	if (pthread_create(&pt, NULL, writeshovel, fds) == -1)
+
+	if (pthread_create(&pt, NULL, writeshovel, args) == -1)
 		err(1, "write shovel");
 	pthread_detach(pt);
 }
@@ -223,14 +178,17 @@ childfail(int sign)
 	atf_tc_fail("child died"); /* almost signal-safe */
 }
 
+struct puffstestargs *theargs; /* XXX */
+
 /* XXX: we don't support size */
 int
 puffs_fstest_newfs(const atf_tc_t *tc, void **argp,
-	const char *image, off_t size)
+	const char *image, off_t size, void *fspriv)
 {
 	struct puffstestargs *args;
 	char dtfs_path[MAXPATHLEN];
 	char *dtfsargv[6];
+	char **theargv;
 	pid_t childpid;
 	int *pflags;
 	char comfd[16];
@@ -250,12 +208,20 @@ puffs_fstest_newfs(const atf_tc_t *tc, void **argp,
 	/* build dtfs exec path from atf test dir */
 	sprintf(dtfs_path, "%s/../puffs/h_dtfs/h_dtfs",
 	    atf_tc_get_config_var(tc, "srcdir"));
-	dtfsargv[0] = dtfs_path;
-	dtfsargv[1] = __UNCONST("-i");
-	dtfsargv[2] = __UNCONST("-s");
-	dtfsargv[3] = __UNCONST("dtfs");
-	dtfsargv[4] = __UNCONST("fictional");
-	dtfsargv[5] = NULL;
+
+	if (fspriv) {
+		theargv = fspriv;
+		theargv[0] = dtfs_path;
+	} else {
+		dtfsargv[0] = dtfs_path;
+		dtfsargv[1] = __UNCONST("-i");
+		dtfsargv[2] = __UNCONST("-s");
+		dtfsargv[3] = __UNCONST("dtfs");
+		dtfsargv[4] = __UNCONST("fictional");
+		dtfsargv[5] = NULL;
+
+		theargv = dtfsargv;
+	}
 
 	/* Create sucketpair for communication with the real file server */
 	if (socketpair(PF_LOCAL, SOCK_STREAM, 0, sv) == -1)
@@ -270,7 +236,7 @@ puffs_fstest_newfs(const atf_tc_t *tc, void **argp,
 		if (setenv("PUFFS_COMFD", comfd, 1) == -1)
 			return errno;
 
-		if (execvp(dtfsargv[0], dtfsargv) == -1)
+		if (execvp(theargv[0], theargv) == -1)
 			return errno;
 	case -1:
 		return errno;
@@ -294,12 +260,14 @@ puffs_fstest_newfs(const atf_tc_t *tc, void **argp,
 		err(1, "fn 2");
 	if (read(sv[1], &mntflags, sizeof(mntflags)) != sizeof(mntflags))
 		err(1, "mntflags");
-	if (read(sv[1], &args->pta_pargslen, sizeof(args->pta_pargslen)) != sizeof(args->pta_pargslen))
+	if (read(sv[1], &args->pta_pargslen, sizeof(args->pta_pargslen))
+	    != sizeof(args->pta_pargslen))
 		err(1, "puffstest_args len");
 	args->pta_pargs = malloc(args->pta_pargslen);
 	if (args->pta_pargs == NULL)
 		err(1, "malloc");
-	if (read(sv[1], args->pta_pargs, args->pta_pargslen) != (ssize_t)args->pta_pargslen)
+	if (read(sv[1], args->pta_pargs, args->pta_pargslen)
+	    != (ssize_t)args->pta_pargslen)
 		err(1, "puffstest_args");
 	if (read(sv[1], pflags, sizeof(*pflags)) != sizeof(*pflags))
 		err(1, "pflags");
@@ -308,7 +276,7 @@ puffs_fstest_newfs(const atf_tc_t *tc, void **argp,
 	args->pta_servfd = sv[1];
 	strlcpy(args->pta_dev, image, sizeof(args->pta_dev));
 
-	*argp = args;
+	*argp = theargs = args;
 
 	return 0;
 }
@@ -340,7 +308,8 @@ puffs_fstest_mount(const atf_tc_t *tc, void *arg, const char *path, int flags)
 		return -1;
 	}
 
-	rumpshovels(fd, pargs->pta_servfd);
+	pargs->pta_rumpfd = fd;
+	rumpshovels(pargs);
 
 	return 0;
 }
@@ -348,25 +317,16 @@ puffs_fstest_mount(const atf_tc_t *tc, void *arg, const char *path, int flags)
 int
 puffs_fstest_delfs(const atf_tc_t *tc, void *arg)
 {
-	struct puffstestargs *pargs = arg;
-	int status;
 
-	if (waitpid(pargs->pta_childpid, &status, WNOHANG) > 0)
-		return 0;
-	kill(pargs->pta_childpid, SIGTERM);
-	usleep(10);
-	if (waitpid(pargs->pta_childpid, &status, WNOHANG) > 0)
-		return 0;
-	kill(pargs->pta_childpid, SIGKILL);
-	usleep(500);
-	if (waitpid(pargs->pta_childpid, &status, 0) == -1)
-		return errno;
+	/* useless ... */
 	return 0;
 }
 
 int
 puffs_fstest_unmount(const atf_tc_t *tc, const char *path, int flags)
 {
+	struct puffstestargs *pargs = theargs;
+	int status;
 	int rv;
 
 	/* ok, child might exit here */
@@ -376,5 +336,18 @@ puffs_fstest_unmount(const atf_tc_t *tc, const char *path, int flags)
 	if (rv)	
 		return rv;
 
-	return rump_sys_rmdir(path);
+	if ((rv = rump_sys_rmdir(path)) != 0)
+		return rv;
+
+	if (waitpid(pargs->pta_childpid, &status, WNOHANG) > 0)
+		return 0;
+	kill(pargs->pta_childpid, SIGTERM);
+	usleep(10);
+	if (waitpid(pargs->pta_childpid, &status, WNOHANG) > 0)
+		return 0;
+	kill(pargs->pta_childpid, SIGKILL);
+	usleep(500);
+	wait(&status);
+
+	return 0;
 }
