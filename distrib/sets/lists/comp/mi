@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1486 2010/07/26 16:23:31 pooka Exp $
+#	$NetBSD: mi,v 1.1487 2010/07/30 09:12:58 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -8635,6 +8635,12 @@
 ./usr/share/man/cat9/SCHED_LOCK.0		comp-obsolete		obsolete
 ./usr/share/man/cat9/SCHED_UNLOCK.0		comp-obsolete		obsolete
 ./usr/share/man/cat9/SET.0			comp-sys-catman		.cat
+./usr/share/man/cat9/STACK.0			comp-sys-catman		.cat
+./usr/share/man/cat9/STACK_ALIGN.0		comp-sys-catman		.cat
+./usr/share/man/cat9/STACK_ALLOC.0		comp-sys-catman		.cat
+./usr/share/man/cat9/STACK_GROW.0		comp-sys-catman		.cat
+./usr/share/man/cat9/STACK_MAX.0		comp-sys-catman		.cat
+./usr/share/man/cat9/STACK_SHRINK.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/TC_DENSE_TO_SPARSE.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/TC_PHYS_TO_UNCACHED.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/VATTR_NULL.0		comp-obsolete		obsolete
@@ -14435,6 +14441,12 @@
 ./usr/share/man/html9/PMC_ENABLED.html		comp-sys-htmlman	html
 ./usr/share/man/html9/RUN_ONCE.html		comp-sys-htmlman	html
 ./usr/share/man/html9/SET.html			comp-sys-htmlman	html
+./usr/share/man/html9/STACK.html		comp-sys-htmlman	html
+./usr/share/man/html9/STACK_ALIGN.html		comp-sys-htmlman	html
+./usr/share/man/html9/STACK_ALLOC.html		comp-sys-htmlman	html
+./usr/share/man/html9/STACK_GROW.html		comp-sys-htmlman	html
+./usr/share/man/html9/STACK_MAX.html		comp-sys-htmlman	html
+./usr/share/man/html9/STACK_SHRINK.html		comp-sys-htmlman	html
 ./usr/share/man/html9/TC_DENSE_TO_SPARSE.html	comp-sys-htmlman	html
 ./usr/share/man/html9/TC_PHYS_TO_UNCACHED.html	comp-sys-htmlman	html
 ./usr/share/man/html9/VATTR_NULL.html		comp-obsolete	obsolete
@@ -20328,6 +20340,12 @@
 ./usr/share/man/man9/SCHED_LOCK.9		comp-obsolete		obsolete
 ./usr/share/man/man9/SCHED_UNLOCK.9		comp-obsolete		obsolete
 ./usr/share/man/man9/SET.9			comp-sys-man		.man
+./usr/share/man/man9/STACK.9			comp-sys-man		.man
+./usr/share/man/man9/STACK_ALIGN.9		comp-sys-man		.man
+./usr/share/man/man9/STACK_ALLOC.9		comp-sys-man		.man
+./usr/share/man/man9/STACK_GROW.9		comp-sys-man		.man
+./usr/share/man/man9/STACK_MAX.9		comp-sys-man		.man
+./usr/share/man/man9/STACK_SHRINK.9		comp-sys-man		.man
 ./usr/share/man/man9/TC_DENSE_TO_SPARSE.9	comp-sys-man		.man
 ./usr/share/man/man9/TC_PHYS_TO_UNCACHED.9	comp-sys-man		.man
 ./usr/share/man/man9/VATTR_NULL.9		comp-obsolete		obsolete
