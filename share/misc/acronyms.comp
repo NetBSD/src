@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.102 2010/07/30 10:20:20 jruoho Exp $
+$NetBSD: acronyms.comp,v 1.103 2010/07/30 13:32:24 dholland Exp $
 
 3WHS	three-way handshake
 ABI	application binary interface
@@ -59,9 +59,10 @@ BSS	block started by symbol
 BT	Bluetooth
 BT	BitTorrent
 CAD	computer-aided design
+CAM	computer assisted manufacturing
 CAM	content addressable memory
 CARP	common address redundancy protocol
-CAS	atomic compare and swap
+CAS	(atomic) compare and swap
 CAS	computer algebra system
 CAV	constant angular velocity (as opposed to CLV)
 CCD	charge coupled device
@@ -279,6 +280,7 @@ LILO	Linux loader
 LIR	local Internet registry
 LKM	{Linux, loadable} kernel module
 LKML	Linux kernel mailing list
+LL/SC	load linked / store conditional
 LLC	logical link control
 LOC	lines of code
 LPC	low pin count
