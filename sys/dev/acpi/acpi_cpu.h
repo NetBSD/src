@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu.h,v 1.7 2010/07/29 22:42:58 jruoho Exp $ */
+/* $NetBSD: acpi_cpu.h,v 1.8 2010/07/30 06:11:14 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -95,6 +95,20 @@
 #define ACPICPU_FLAG_C_MWAIT	 __BIT(9)	/* MONITOR/MWAIT supported   */
 #define ACPICPU_FLAG_C_C1E	 __BIT(10)	/* AMD C1E detected	     */
 
+/*
+ * This is AML_RESOURCE_GENERIC_REGISTER,
+ * included here separately for convenience.
+ */
+struct acpicpu_reg {
+	uint8_t			 reg_desc;
+	uint16_t		 reg_reslen;
+	uint8_t			 reg_spaceid;
+	uint8_t			 reg_bitwidth;
+	uint8_t			 reg_bitoffset;
+	uint8_t			 reg_accesssize;
+	uint64_t		 reg_addr;
+} __packed;
+
 struct acpicpu_cstate {
 	uint64_t		 cs_stat;
 	uint64_t		 cs_addr;
@@ -121,30 +135,19 @@ struct acpicpu_softc {
 	device_t		 sc_dev;
 	struct acpi_devnode	*sc_node;
 	struct acpicpu_object	 sc_object;
+
 	struct acpicpu_cstate	 sc_cstate[ACPI_C_STATE_COUNT];
-	kmutex_t		 sc_cstate_mtx;
+	uint32_t		 sc_cstate_sleep;
+
+	kmutex_t		 sc_mtx;
 	bus_space_tag_t		 sc_iot;
 	bus_space_handle_t	 sc_ioh;
-	uint32_t		 sc_sleep;
-	uint32_t		 sc_cpuid;
+
 	uint32_t		 sc_cap;
 	uint32_t		 sc_flags;
+	cpuid_t			 sc_cpuid;
 	bool			 sc_cold;
 };
-
-/*
- * This is AML_RESOURCE_GENERIC_REGISTER,
- * included here separately for convenience.
- */
-struct acpicpu_reg {
-	uint8_t			 reg_desc;
-	uint16_t		 reg_reslen;
-	uint8_t			 reg_spaceid;
-	uint8_t			 reg_bitwidth;
-	uint8_t			 reg_bitoffset;
-	uint8_t			 reg_accesssize;
-	uint64_t		 reg_addr;
-} __packed;
 
 void		acpicpu_cstate_attach(device_t);
 int		acpicpu_cstate_detach(device_t);

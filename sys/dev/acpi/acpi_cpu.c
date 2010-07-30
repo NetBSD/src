@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu.c,v 1.9 2010/07/29 22:42:58 jruoho Exp $ */
+/* $NetBSD: acpi_cpu.c,v 1.10 2010/07/30 06:11:14 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,13 +27,14 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu.c,v 1.9 2010/07/29 22:42:58 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu.c,v 1.10 2010/07/30 06:11:14 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
 #include <sys/kernel.h>
 #include <sys/kmem.h>
 #include <sys/module.h>
+#include <sys/mutex.h>
 #include <sys/once.h>
 
 #include <dev/acpi/acpireg.h>
@@ -134,6 +135,8 @@ acpicpu_attach(device_t parent, device_t self, void *aux)
 	sc->sc_cap = acpicpu_cap(sc);
 	sc->sc_flags |= acpicpu_md_quirks();
 
+	mutex_init(&sc->sc_mtx, MUTEX_DEFAULT, IPL_NONE);
+
 	aprint_naive("\n");
 	aprint_normal(": ACPI CPU");
 	aprint_verbose(", cap 0x%02x, addr 0x%06x, len 0x%02x",
@@ -184,6 +187,8 @@ acpicpu_detach(device_t self, int flags)
 
 	if (sc->sc_ioh != 0)
 		bus_space_unmap(sc->sc_iot, sc->sc_ioh, addr);
+
+	mutex_destroy(&sc->sc_mtx);
 
 	return 0;
 }
