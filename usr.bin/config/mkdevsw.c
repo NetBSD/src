@@ -1,4 +1,4 @@
-/*	$NetBSD: mkdevsw.c,v 1.9 2010/04/30 20:47:18 pooka Exp $	*/
+/*	$NetBSD: mkdevsw.c,v 1.10 2010/07/30 16:23:49 cube Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -162,6 +162,12 @@ emitconv(FILE *fp)
 	fputs("\n/* device conversion table */\n"
 		  "struct devsw_conv devsw_conv0[] = {\n", fp);
 	TAILQ_FOREACH(dm, &alldevms, dm_next) {
+		if (version < 20100430) {
+			/* Emit compatible structure */
+			fprintf(fp, "\t{ \"%s\", %d, %d },\n", dm->dm_name,
+			    dm->dm_bmajor, dm->dm_cmajor);
+			continue;
+		}
 		struct nvlist *nv;
 		const char *d_class, *d_flags = "0";
 		int d_vec[2] = { 0, 0 };
