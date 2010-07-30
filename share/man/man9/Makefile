@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.336 2010/07/25 21:05:14 jruoho Exp $
+#       $NetBSD: Makefile,v 1.337 2010/07/30 09:13:00 jruoho Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -42,7 +42,7 @@ MAN=	accept_filter.9 accf_data.9 accf_http.9 \
 	pmc.9 pmf.9 pool.9 pool_cache.9 powerhook_establish.9 ppsratecheck.9 \
 	preempt.9 proc_find.9 putter.9 \
 	radio.9 ras.9 rasops.9 ratecheck.9 resettodr.9 rnd.9 roundup.9 \
-	rssadapt.9 rt_timer.9 rwlock.9 RUN_ONCE.9 \
+	rssadapt.9 rt_timer.9 rwlock.9 RUN_ONCE.9 STACK.9 \
 	sched_4bsd.9 sched_m2.9 scsipi.9 \
 	secmodel.9 secmodel_bsd44.9 secmodel_overlay.9 secmodel_securelevel.9 \
 	secmodel_suser.9 SET.9 setbit.9 setjmp.9 shutdownhook_establish.9 \
@@ -620,6 +620,11 @@ MLINKS+=rwlock.9 rw.9 rwlock.9 rw_init.9 rwlock.9 rw_destroy.9 \
 	rwlock.9 rw_tryenter.9 rwlock.9 rw_tryupgrade.9 \
 	rwlock.9 rw_downgrade.9 rwlock.9 rw_read_held.9 \
 	rwlock.9 rw_write_held.9 rwlock.9 rw_lock_held.9
+MLINKS+=STACK.9 STACK_ALLOC.9 \
+	STACK.9 STACK_MAX.9 \
+	STACK.9 STACK_ALIGN.9 \
+	STACK.9 STACK_GROW.9 \
+	STACK.9 STACK_SHRINK.9
 MAN+=	select.9
 MLINKS+=select.9 selinit.9 \
 	select.9 seldestroy.9 \
