@@ -1,4 +1,4 @@
-/*	$NetBSD: piixide.c,v 1.54 2010/02/24 22:38:01 dyoung Exp $	*/
+/*	$NetBSD: piixide.c,v 1.55 2010/07/30 15:28:09 njoly Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: piixide.c,v 1.54 2010/02/24 22:38:01 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: piixide.c,v 1.55 2010/07/30 15:28:09 njoly Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -261,24 +261,24 @@ static const struct pciide_product_desc pciide_intel_products[] =  {
 	  "Intel 631xESB/632xESB Serial ATA Controller",
 	  piixsata_chip_map,
 	},
-	{ PCI_PRODUCT_INTEL_ICH10_SATA2_2x1,
+	{ PCI_PRODUCT_INTEL_82801JD_SATA_IDE2,
 	  0,
-	  "Intel ICH10 Serial ATA 2 Controller 2x1",
+	  "Intel 82801JD Serial ATA Controller (ICH10)",
 	  piixsata_chip_map,
 	},
-	{ PCI_PRODUCT_INTEL_ICH10_SATA2_2x2,
+	{ PCI_PRODUCT_INTEL_82801JI_SATA_IDE2,
 	  0,
-	  "Intel ICH10 Serial ATA 2 Controller 2x2",
+	  "Intel 82801JI Serial ATA Controller (ICH10)",
 	  piixsata_chip_map,
 	},
-	{ PCI_PRODUCT_INTEL_ICH10_SATA2_4x1,
+	{ PCI_PRODUCT_INTEL_82801JD_SATA_IDE,
 	  0,
-	  "Intel ICH10 Serial ATA 2 Controller 4x1",
+	  "Intel 82801JD Serial ATA Controller (ICH10)",
 	  piixsata_chip_map,
 	},
-	{ PCI_PRODUCT_INTEL_ICH10_SATA2_4x2,
+	{ PCI_PRODUCT_INTEL_82801JI_SATA_IDE,
 	  0,
-	  "Intel ICH10 Serial ATA 2 Controller 4x2",
+	  "Intel 82801JI Serial ATA Controller (ICH10)",
 	  piixsata_chip_map,
 	},
 	{
