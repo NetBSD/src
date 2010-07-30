@@ -1,4 +1,4 @@
-/*	$NetBSD: h_fsmacros.h,v 1.16 2010/07/28 15:16:50 pooka Exp $	*/
+/*	$NetBSD: h_fsmacros.h,v 1.17 2010/07/30 16:15:05 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -35,10 +35,12 @@
 #include <sys/mount.h>
 
 #include <atf-c.h>
+#include <puffsdump.h>
 #include <string.h>
 
 #define FSPROTOS(_fs_)							\
-int _fs_##_fstest_newfs(const atf_tc_t *, void **, const char *, off_t);\
+int _fs_##_fstest_newfs(const atf_tc_t *, void **, const char *,	\
+			off_t, void *);					\
 int _fs_##_fstest_delfs(const atf_tc_t *, void *);			\
 int _fs_##_fstest_mount(const atf_tc_t *, void *, const char *, int);	\
 int _fs_##_fstest_unmount(const atf_tc_t *, const char *, int);
@@ -59,7 +61,16 @@ FSPROTOS(tmpfs);
 #define FSTEST_CONSTRUCTOR(_tc_, _fs_, _args_)				\
 do {									\
 	if (_fs_##_fstest_newfs(_tc_, &_args_,				\
-	    FSTEST_IMGNAME, FSTEST_IMGSIZE) != 0)			\
+	    FSTEST_IMGNAME, FSTEST_IMGSIZE, NULL) != 0)			\
+		atf_tc_fail("newfs failed");				\
+	if (_fs_##_fstest_mount(_tc_, _args_, FSTEST_MNTNAME, 0) != 0)	\
+		atf_tc_fail("mount failed");				\
+} while (/*CONSTCOND*/0);
+
+#define FSTEST_CONSTRUCTOR_FSPRIV(_tc_, _fs_, _args_, _privargs_)	\
+do {									\
+	if (_fs_##_fstest_newfs(_tc_, &_args_,				\
+	    FSTEST_IMGNAME, FSTEST_IMGSIZE, _privargs_) != 0)		\
 		atf_tc_fail("newfs failed");				\
 	if (_fs_##_fstest_mount(_tc_, _args_, FSTEST_MNTNAME, 0) != 0)	\
 		atf_tc_fail("mount failed");				\
@@ -160,11 +171,39 @@ atf_check_fstype(const atf_tc_t *tc, const char *fs)
 #define FSTYPE_TMPFS(tc)\
     (strcmp(atf_tc_get_md_var(tc, "X-fs.type"), MOUNT_TMPFS) == 0)
 
+#define FSTEST_ENTER()						\
+    if (rump_sys_chdir(FSTEST_MNTNAME) == -1)			\
+	atf_tc_fail_errno("failed to cd into test mount")
+#define FSTEST_EXIT()						\
+    if (rump_sys_chdir("/") == -1)				\
+	atf_tc_fail_errno("failed to cd out of test mount")
 
-/* file system args structures */
+/*
+ * file system args structures
+ */
+
 struct nfstestargs {
 	pid_t ta_childpid;
 	char ta_ethername[MAXPATHLEN];
+};
+
+struct puffstestargs {
+	uint8_t			*pta_pargs;
+	size_t			pta_pargslen;
+
+	int			pta_pflags;
+	pid_t			pta_childpid;
+
+	int			pta_rumpfd;
+	int			pta_servfd;
+
+	char			pta_dev[MAXPATHLEN];
+	char			pta_dir[MAXPATHLEN];
+
+	int			pta_mntflags;
+
+	int			pta_vfs_toserv_ops[PUFFS_VFS_MAX];
+	int			pta_vn_toserv_ops[PUFFS_VN_MAX];
 };
 
 #endif /* __H_FSMACROS_H_ */

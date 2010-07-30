@@ -1,4 +1,4 @@
-/*	$NetBSD: fstest_msdosfs.c,v 1.1 2010/07/29 14:15:46 pooka Exp $	*/
+/*	$NetBSD: fstest_msdosfs.c,v 1.2 2010/07/30 16:15:05 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@ struct msdosfstestargs {
 
 int
 msdosfs_fstest_newfs(const atf_tc_t *tc, void **buf, const char *image,
-    off_t size)
+    off_t size, void *fspriv)
 {
 	char cmd[1024];
 	int res;

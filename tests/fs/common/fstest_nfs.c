@@ -1,4 +1,4 @@
-/*	$NetBSD: fstest_nfs.c,v 1.2 2010/07/30 10:23:26 pooka Exp $	*/
+/*	$NetBSD: fstest_nfs.c,v 1.3 2010/07/30 16:15:05 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@ struct nfstestargs *theargs;
 /* fork rump nfsd, configure interface */
 int
 nfs_fstest_newfs(const atf_tc_t *tc, void **argp,
-	const char *image, off_t size)
+	const char *image, off_t size, void *fspriv)
 {
 	const char *srcdir;
 	char *nfsdargv[7];

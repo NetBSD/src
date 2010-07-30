@@ -1,4 +1,4 @@
-/*	$NetBSD: fstest_tmpfs.c,v 1.1 2010/07/29 14:15:47 pooka Exp $	*/
+/*	$NetBSD: fstest_tmpfs.c,v 1.2 2010/07/30 16:15:05 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@ struct tmpfstestargs {
 
 int
 tmpfs_fstest_newfs(const atf_tc_t *tc, void **buf, const char *image,
-    off_t size)
+    off_t size, void *fspriv)
 {
 	int res;
 	struct tmpfstestargs *args;

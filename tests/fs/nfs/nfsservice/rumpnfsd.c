@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpnfsd.c,v 1.1 2010/07/26 15:53:00 pooka Exp $	*/
+/*	$NetBSD: rumpnfsd.c,v 1.2 2010/07/30 16:15:06 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -93,10 +93,7 @@ main(int argc, char *argv[])
 	rump_sys_mkdir("/var/db", 0777);
 
 	fprintf(stderr, "imagename %s\n", imagename);
-	if (ffs_fstest_newfs(NULL, &fsarg, imagename, 10000 * 512))
-		errx(1, "newfs ffs");
-	if ((rv = ffs_fstest_mount(NULL, fsarg, exportpath, 0)) != 0)
-		errx(1, "mount ffs %d", rv);
+	FSTEST_CONSTRUCTOR(NULL, ffs, fsarg);
 
 #if 0
 	/*
