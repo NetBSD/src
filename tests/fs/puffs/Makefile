@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2010/07/13 21:13:23 jmmv Exp $
+#	$NetBSD: Makefile,v 1.10 2010/07/30 16:15:06 pooka Exp $
 #
 
 .include <bsd.own.mk>
@@ -8,6 +8,9 @@ SUBDIR+=	h_dtfs
 TESTSDIR=	${TESTSBASE}/fs/puffs
 
 TESTS_C=	t_basic
+
+VFSTESTDIR != cd ${.CURDIR}/../common && ${PRINTOBJDIR}
+LDADD+=-L${VFSTESTDIR} -lvfstest
 
 LDADD+=		-lrumpdev_putter -lrumpdev
 LDADD+=		-lrumpfs_syspuffs -lrumpvfs_fifofs
