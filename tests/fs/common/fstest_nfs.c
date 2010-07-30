@@ -1,4 +1,4 @@
-/*	$NetBSD: fstest_nfs.c,v 1.1 2010/07/29 14:15:47 pooka Exp $	*/
+/*	$NetBSD: fstest_nfs.c,v 1.2 2010/07/30 10:23:26 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -196,6 +196,7 @@ int
 nfs_fstest_unmount(const atf_tc_t *tc, const char *path, int flags)
 {
 	struct nfstestargs *args = theargs;
+	int status;
 
 	if (rump_sys_unmount(path, flags) == -1) {
 		return errno;
@@ -212,9 +213,11 @@ nfs_fstest_unmount(const atf_tc_t *tc, const char *path, int flags)
 	 * to send some unmount RPCs, leading to sticky situations.
 	 */
 	kill(args->ta_childpid, SIGKILL);
+	wait(&status);
 
 	/* remove ethernet bus */
-	unlink(args->ta_ethername);
+	if (unlink(args->ta_ethername) == -1)
+		atf_tc_fail_errno("unlink ethername");
 
 	return 0;
 }
