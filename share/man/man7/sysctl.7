@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.7,v 1.49 2010/07/31 02:00:49 jruoho Exp $
+.\"	$NetBSD: sysctl.7,v 1.50 2010/07/31 02:04:45 jruoho Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -68,7 +68,7 @@ sysctl variable relative to the upper level of the tree.
 See the
 .Xr sysctl 3
 manual page for programming examples.
-.Sh Top level names
+.Ss Top level names
 The top level names are defined with a CTL_ prefix in
 .In sys/sysctl.h ,
 and are as follows.
@@ -90,7 +90,7 @@ listed here, and described in separate sections below.
 .It emul	CTL_EMUL	sys/sysctl.h	Emulation settings
 .It security	CTL_SECURITY	sys/sysctl.h	Security settings
 .El
-.Sh The debug.* subtree
+.Ss The debug.* subtree
 The debugging variables vary from system to system.
 A debugging variable may be added or deleted without need to recompile
 .Nm
@@ -128,7 +128,7 @@ See
 .\" and
 .\" .Xr sysctl 9
 for more information.
-.Sh The vfs.* subtree
+.Ss The vfs.* subtree
 A distinguished second level name,
 .Li vfs.generic ( VFS_GENERIC ) ,
 is used to get general information about all filesystems.
@@ -149,7 +149,7 @@ call or from
 The third level identifiers available for each filesystem
 are given in the header file that defines the mount
 argument structure for that filesystem.
-.Sh The hw.* subtree
+.Ss The hw.* subtree
 The string and integer information available for the
 .Li hw
 level is detailed below.
@@ -229,7 +229,7 @@ The bytes of non-kernel memory as a 32-bit integer.
 .It Li hw.usermem64 ( HW_USERMEM64 )
 The bytes of non-kernel memory as a 64-bit integer.
 .El
-.Sh The kern.* subtree
+.Ss The kern.* subtree
 This subtree includes data generally related to the kernel.
 The string and integer information available for the
 .Li kern
@@ -1038,7 +1038,7 @@ followed by the vnode itself
 .Va struct vnode .
 .\" XXX: Undocumented: kern.lwp: no children?
 .El
-.Sh The machdep.* subtree
+.Ss The machdep.* subtree
 The set of variables defined is architecture dependent.
 Most architectures define at least the following variables.
 .Bl -column "machdep.booted_kernel" "Type" "Changeable" -offset indent
@@ -1046,7 +1046,7 @@ Most architectures define at least the following variables.
 .It Li machdep.booted_kernel	string	no
 .El
 .\" XXX: Document the above.
-.Sh The net.* subtree
+.Ss The net.* subtree
 The string and integer information available for the
 .Li net
 level is detailed below.
@@ -1771,7 +1771,7 @@ The value is used when the kernel creates proposal payload
 on ACQUIRE PF_KEY message.
 .El
 .El
-.Sh The proc.* subtree
+.Ss The proc.* subtree
 The string and integer information available for the
 .Li proc
 level is detailed below.
@@ -1903,7 +1903,7 @@ before it disappears.
 .Pp
 This value is also inherited by the process's children.
 .El
-.Sh The user.* subtree ( CTL_USER )
+.Ss The user.* subtree ( CTL_USER )
 The string and integer information available for the
 .Li user
 level is detailed below.
@@ -2004,7 +2004,7 @@ at any one time.
 The minimum maximum number of types supported for the name of a
 timezone.
 .El
-.Sh The vm.* subtree ( CTL_VM )
+.Ss The vm.* subtree ( CTL_VM )
 The string and integer information available for the
 .Li vm
 level is detailed below.
@@ -2085,7 +2085,7 @@ The returned data consists of a
 .Va struct uvmexp_sysctl .
 .\" XXX vm.idlezero
 .El
-.Sh The ddb.* subtree ( CTL_DDB )
+.Ss The ddb.* subtree ( CTL_DDB )
 The information available for the
 .Li ddb
 level is detailed below.
@@ -2137,7 +2137,7 @@ nodes are also available as variables from within the debugger.
 See
 .Xr ddb 4
 for more details.
-.Sh The security.* subtree ( CTL_SECURITY )
+.Ss The security.* subtree ( CTL_SECURITY )
 The
 .Li security
 level contains various security-related settings for
@@ -2279,7 +2279,7 @@ Number of seconds to suspend a user from running a faulting program when the
 limit was exceeded.
 .El
 .El
-.Sh The vendor.* subtree ( CTL_VENDOR )
+.Ss The vendor.* subtree ( CTL_VENDOR )
 The
 .Li vendor
 toplevel name is reserved to be used by vendors who wish to
