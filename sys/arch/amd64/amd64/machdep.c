@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.146 2010/07/07 01:14:52 chs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.147 2010/07/31 18:38:32 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.146 2010/07/07 01:14:52 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.147 2010/07/31 18:38:32 joerg Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -499,6 +499,21 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 		       CTLTYPE_STRUCT, "diskinfo", NULL,
 		       sysctl_machdep_diskinfo, 0, NULL, 0,
 		       CTL_MACHDEP, CPU_DISKINFO, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT | CTLFLAG_IMMEDIATE,
+		       CTLTYPE_INT, "fpu_present", NULL,
+		       NULL, 1, NULL, 0,
+		       CTL_MACHDEP, CPU_FPU_PRESENT, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT | CTLFLAG_IMMEDIATE,
+		       CTLTYPE_INT, "sse", NULL,
+		       NULL, 1, NULL, 0,
+		       CTL_MACHDEP, CPU_SSE, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT | CTLFLAG_IMMEDIATE,
+		       CTLTYPE_INT, "sse2", NULL,
+		       NULL, 1, NULL, 0,
+		       CTL_MACHDEP, CPU_SSE2, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_QUAD, "tsc_freq", NULL,
