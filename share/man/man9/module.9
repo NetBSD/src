@@ -1,4 +1,4 @@
-.\"	$NetBSD: module.9,v 1.4 2010/07/31 13:20:08 pgoyette Exp $
+.\"	$NetBSD: module.9,v 1.5 2010/07/31 13:27:29 pgoyette Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -109,8 +109,8 @@ functions must implement the
 .Dv MODULE_CMD_INIT
 and
 .Dv MODULE_CMD_FINI
-commands; the other commands are optional, and should return zero (success)
-if not implemented.
+commands; the other commands are optional, and should return ENOTTY if
+not implemented.
 The
 .Fn modcmd
 function's return value is ignored for
