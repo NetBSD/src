@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.337 2010/07/30 09:13:00 jruoho Exp $
+#       $NetBSD: Makefile,v 1.338 2010/07/31 03:14:05 pgoyette Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -34,7 +34,7 @@ MAN=	accept_filter.9 accf_data.9 accf_http.9 \
 	makeiplcookie.9 \
 	malloc.9 mb.9 mbuf.9 mca.9 memcmp.9 memcpy.9 memoryallocators.9 \
 	memmove.9 memset.9 \
-	microtime.9 microuptime.9 mi_switch.9 \
+	microtime.9 microuptime.9 mi_switch.9 module.9 \
 	mstohz.9 mutex.9 m_tag.9 namecache.9 \
 	namei.9 nullop.9 opencrypto.9 optstr.9 \
 	panic.9 pci.9 pci_configure_bus.9 pci_intr.9 pckbport.9 \
@@ -434,6 +434,12 @@ MLINKS+=microuptime.9 binuptime.9 \
 	microuptime.9 getmicrouptime.9 \
 	microuptime.9 nanouptime.9 \
 	microuptime.9 getnanouptime.9
+MLINKS+=module.9 module_autoload.9 \
+	module.9 module_hold.9 \
+	module.9 module_init_class.9 \
+	module.9 module_load.9 \
+	module.9 module_rele.9 \
+	module.9 module_unload.9
 MLINKS+=mstohz.9 hztoms.9
 MLINKS+=mutex.9 mutex_init.9 mutex.9 mutex_destroy.9 mutex.9 mutex_enter.9 \
 	mutex.9 mutex_exit.9 mutex.9 mutex_tryenter.9 mutex.9 mutex_owned.9 \
