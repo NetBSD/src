@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.common,v 1.14 2010/07/31 13:32:23 tsutsui Exp $
+#	$NetBSD: Makefile.common,v 1.15 2010/07/31 14:40:05 tsutsui Exp $
 
 # These define parts of the Xserver tree that are to be
 # conditionally compiled for different platforms.  See
@@ -40,16 +40,23 @@ XSERVER_XNEWSMIPS?=	yes
 .endif
 
 # XFree86 servers all need XFONT as well.
-.if ${MACHINE} == "i386" || ${MACHINE} == "amd64" || \
-    ${MACHINE} == "dreamcast" || \
-    ${MACHINE} == "hpcarm" || \
-    ${MACHINE} == "hpcmips" || \
-    ${MACHINE} == "hpcsh" ||\
-    ${MACHINE} == "macppc" || ${MACHINE} == "cats" || \
-    ${MACHINE} == "sgimips" || ${MACHINE} == "shark" || \
-    ${MACHINE} == "netwinder" || ${MACHINE} == "sparc64" || \
-    ${MACHINE} == "sparc" || ${MACHINE} == "alpha" || \
-    ${MACHINE} == "zaurus" || ${MACHINE} == "prep"
+.if \
+    ${MACHINE} == "alpha"	|| \
+    ${MACHINE} == "amd64"	|| \
+    ${MACHINE} == "cats"	|| \
+    ${MACHINE} == "dreamcast"	|| \
+    ${MACHINE} == "hpcarm"	|| \
+    ${MACHINE} == "hpcmips"	|| \
+    ${MACHINE} == "hpcsh"	|| \
+    ${MACHINE} == "i386"	|| \
+    ${MACHINE} == "macppc"	|| \
+    ${MACHINE} == "netwinder"	|| \
+    ${MACHINE} == "prep"	|| \
+    ${MACHINE} == "sgimips"	|| \
+    ${MACHINE} == "shark"	|| \
+    ${MACHINE} == "sparc"	|| \
+    ${MACHINE} == "sparc64"	|| \
+    ${MACHINE} == "zaurus"
 XSERVER_NEEDS_XFONT=	yes
 XSERVER_XFREE86=	yes
 .endif
