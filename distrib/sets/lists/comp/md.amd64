@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.71 2010/07/11 06:16:55 mrg Exp $
+# $NetBSD: md.amd64,v 1.72 2010/07/31 21:47:52 joerg Exp $
 ./usr/include/amd64				comp-c-include
 ./usr/include/amd64/ansi.h			comp-c-include
 ./usr/include/amd64/aout_machdep.h		comp-c-include
@@ -16,6 +16,7 @@
 ./usr/include/amd64/elf_machdep.h		comp-c-include
 ./usr/include/amd64/endian.h			comp-c-include
 ./usr/include/amd64/endian_machdep.h		comp-c-include
+./usr/include/amd64/fenv.h			comp-c-include
 ./usr/include/amd64/float.h			comp-c-include
 ./usr/include/amd64/fpu.h			comp-c-include
 ./usr/include/amd64/frame.h			comp-c-include
@@ -85,6 +86,7 @@
 ./usr/include/i386/elf_machdep.h		comp-c-include
 ./usr/include/i386/endian.h			comp-c-include
 ./usr/include/i386/endian_machdep.h		comp-c-include
+./usr/include/i386/fenv.h			comp-c-include
 ./usr/include/i386/float.h			comp-c-include
 ./usr/include/i386/frame.h			comp-c-include
 ./usr/include/i386/freebsd_machdep.h		comp-c-include
