@@ -1,4 +1,4 @@
-.\"	$NetBSD: module.9,v 1.3 2010/07/31 03:44:33 pgoyette Exp $
+.\"	$NetBSD: module.9,v 1.4 2010/07/31 13:20:08 pgoyette Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -43,7 +43,8 @@
 .In sys/module.h
 .Fn MODULE "class" "name" "required"
 .Ft int
-.Fn module_load "const char *name" "int flags" "prop_dictionary_t props" "modclass_t class"
+.Fn module_load "const char *name" "int flags" "prop_dictionary_t props" \
+"modclass_t class"
 .Ft int
 .Fn module_autoload "const char *name" "modclass_t class"
 .Ft int
@@ -59,7 +60,7 @@ Modules are sections of code that can be independantly linked and selectively
 loaded into or unloaded from a running kernel.
 This provides a mechanism to update the module without having to relink
 the kernel and reboot.
-Modules can be loaded from with the kernel image, provided by the boot
+Modules can be loaded from within the kernel image, provided by the boot
 loader, or loaded from the file system.
 .Pp
 The
@@ -68,7 +69,7 @@ type provides storage to describe a module.
 .Pp
 The
 .Vt modinfo_t
-type contains module header info.
+type resides within the module itself, and contains module header info.
 .Sh FUNCTIONS
 .Bl -tag -width abcd
 .It Fn MODULE "class" "name" "required"
@@ -77,18 +78,72 @@ The
 macro creates and initializes a
 .Vt modinfo_t
 structure.
+In addition to the explicit arguments, the
+.Fn MODULE
+macro creates a reference to the module's
+.Fn modcmd
+function.
+This function is defined as
+.Bl -tag -width abcd
+.It Ft int
+.Fn modcmd "modcmd_t cmd" "void *data"
+.El
+.Pp
+The
+.Fa cmd
+argument requests one of the following operations:
+.Bl -tag -width abcd
+.It MODULE_CMD_INIT perform module-specific initialization when the \
+module is loaded
+.It MODULE_CMD_FINI perform module-specific clean-up before the module \
+is unloaded
+.It MODULE_CMD_AUTOUNLOAD notify the module that it is about to be \
+unloaded
+.It MODULE_CMD_STAT request the module to provide status information \
+(not currently implemented)
+.El
+.Pp
+All modules'
+.Fn modcmd
+functions must implement the
+.Dv MODULE_CMD_INIT
+and
+.Dv MODULE_CMD_FINI
+commands; the other commands are optional, and should return zero (success)
+if not implemented.
+The
+.Fn modcmd
+function's return value is ignored for
+.Dv MODULE_CMD_FINI .
+.Pp
+For the
+.Dv MODULE_CMD_INIT
+command, the
+.Fa data
+argument is used to pass the module's props dictionary;  for the
+.Dv MODULE_CMD_STAT
+command, the
+.Fa data
+argument points to a buffer where the status information should be placed.
+.Pp
 The __link_set mechanism is used to enable the
 .Nm
 subsystem to locate the structure.
 .It Fn module_load "name" "flags" "props" "class"
 .Pp
-Loads a module, links it into the running kernel, and calls the module's
+Load a module, link it into the running kernel, and call the module's
 .Fn modcmd 
-routine with an argument of MODULE_CMD_INIT.
+routine with a
+.Fa cmd
+argument of
+.Dv MODULE_CMD_INIT .
 If the specified module requires other modules, they are loaded first; if
 any required module cannot be loaded or if any of their
 .Fn modcmd
-control routines returns a non-zero status, loading of this module will fail.
+control routines returns a non-zero status, loading of this module and all
+required modules will fail.
+Thus, the loading of a module and its required modules is an atomic
+operation.
 .Pp
 The loader will look first for a built-in module with the specified
 .Fa name
@@ -118,19 +173,28 @@ routine.
 .Pp
 The
 .Fa class
-argument can be any of MODULE_CLASS_ANY, MODULE_CLASS_MISC, MODULE_CLASS_VFS,
-MODULE_CLASS_DRIVER, MODULE_CLASS_EXEC, or MODULE_CLASS_SECMODEL.
-If the class is not MODULE_CLASS_ANY, the class of the module being loaded
+argument can be any of
+.Dv MODULE_CLASS_ANY ,
+.Dv MODULE_CLASS_MISC ,
+.Dv MODULE_CLASS_VFS ,
+.Dv MODULE_CLASS_DRIVER ,
+.Dv MODULE_CLASS_EXEC ,
+or
+.Dv MODULE_CLASS_SECMODEL .
+If the class is not
+.Dv MODULE_CLASS_ANY ,
+the class of the module being loaded
 must match the requested class.
 .Pp
 The
 .Fn module_load
-routine is primarily intended as the implementation of the MODCTL_LOAD
+routine is primarily intended as the implementation of the
+.Dv MODCTL_LOAD
 option of the
 .Xr modctl 2
 system call.
 .It Fn module_autoload "name" "class"
-Auto-loads a module, making it available for automatic unloading.
+Auto-load a module, making it available for automatic unloading.
 The
 .Fa name
 and
@@ -139,12 +203,15 @@ arguments are the same as for the
 .Fn module_load
 routine.
 .Pp
-The system may attempt to may unloaded modules that were loaded by
-.Fn module_autoload
-after a short period of time (currently, 10 seconds).
+The module subsystem uses a kernel thread to attempt to automatically
+unload modules a short time (currently, 10 seconds) after being loaded by
+.Fn module_autoload .
 Before the module is unloaded, its
 .Fn modcmd
-is called with MODULE_CMD_AUTOUNLOAD.
+is called with a
+.Fa cmd
+argument of
+.Dv MODULE_CMD_AUTOUNLOAD .
 A module can prevent itself from being unloaded by returning a non-zero
 value.
 .Pp
@@ -154,24 +221,29 @@ system components.
 .Fn module_autoload
 is also used to load modules that are required by other modules.
 .It Fn module_unload "name"
-.Pp
 Unload a module.
 If the module's reference count is non-zero, returns EBUSY.
 Otherwise, the module's
 .Fn modcmd
-routine is called with MODULE_CMD_FINI, and the module is unloaded.
+routine is called with a
+.Fa cmd
+argument of
+.Dv MODULE_CMD_FINI ,
+and the module is unloaded.
 The reference counts of all modules that were required by this module are
 decremented, however the required modules are not unloaded by this call to
 .Fn module_unload .
 (They may be unloaded by subsequent calls to
-.Fn module_unload .)
+.Fn module_unload
+.)
 .Pp
 Unloading a built-in module causes that module to be marked disabled.
 This prevents the module from being re-loaded, except by the
 .Fn module_load
 function with the
 .Fa flags
-argument set to MODULE_FORCE_LOAD.
+argument set to
+.Dv MODULE_FORCE_LOAD .
 .Pp
 .Fn module_unload
 may be called by the
@@ -185,7 +257,7 @@ Any built-in modules that have not been disabled, and any modules provided
 by the boot loader are loaded.
 .It Fn module_hold "name"
 Increment the reference count of a module.
-A module cannot be unload if its reference count is non-zero.
+A module cannot be unloaded if its reference count is non-zero.
 .It Fn module_rele "name"
 Decrement the reference count of a module.
 .Pp
@@ -200,7 +272,7 @@ This mutex must be acquired before calling any of these routines.
 .Fn module_load
 routine acquires the mutex itself, so one does not need to acquire it
 before calling
-.Fn module_load .)
+.Fn module_load ).
 Loading of a module and its required modules occurs as an atomic
 operation, and either completely succeeds or completely fails.
 .Sh CODE REFERENCES
