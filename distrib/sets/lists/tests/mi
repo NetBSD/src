@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.125 2010/07/31 10:42:22 jmmv Exp $
+# $NetBSD: mi,v 1.126 2010/07/31 17:12:53 pooka Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -210,6 +210,7 @@
 ./usr/libdata/debug/usr/tests/fs/puffs					tests-fs-debug
 ./usr/libdata/debug/usr/tests/fs/puffs/h_have_puffs.debug		tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/fs/puffs/t_basic.debug			tests-fs-debug		debug,atf
+./usr/libdata/debug/usr/tests/fs/puffs/t_fuzz.debug			tests-fs-debug		debug,atf
 ./usr/libdata/debug/usr/tests/fs/puffs/h_dtfs				tests-fs-debug
 ./usr/libdata/debug/usr/tests/fs/puffs/h_dtfs/h_dtfs.debug		tests-fs-debug		debug,atf
 ./usr/libdata/debug/usr/tests/fs/tmpfs					tests-fs-debug
@@ -965,6 +966,7 @@
 ./usr/tests/fs/puffs				tests-fs-tests
 ./usr/tests/fs/puffs/Atffile			tests-fs-tests		atf
 ./usr/tests/fs/puffs/t_basic			tests-fs-tests		atf
+./usr/tests/fs/puffs/t_fuzz			tests-fs-tests		atf
 ./usr/tests/fs/puffs/h_dtfs			tests-fs-tests
 ./usr/tests/fs/puffs/h_dtfs/h_dtfs		tests-fs-tests		atf
 ./usr/tests/fs/puffs/h_have_puffs		tests-obsolete		obsolete
