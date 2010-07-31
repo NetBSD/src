@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2010/07/30 16:15:06 pooka Exp $
+#	$NetBSD: Makefile,v 1.11 2010/07/31 17:11:45 pooka Exp $
 #
 
 .include <bsd.own.mk>
@@ -8,6 +8,7 @@ SUBDIR+=	h_dtfs
 TESTSDIR=	${TESTSBASE}/fs/puffs
 
 TESTS_C=	t_basic
+TESTS_C+=	t_fuzz
 
 VFSTESTDIR != cd ${.CURDIR}/../common && ${PRINTOBJDIR}
 LDADD+=-L${VFSTESTDIR} -lvfstest
