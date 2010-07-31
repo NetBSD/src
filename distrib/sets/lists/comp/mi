@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1488 2010/07/31 03:14:06 pgoyette Exp $
+#	$NetBSD: mi,v 1.1489 2010/07/31 21:47:52 joerg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -632,6 +632,7 @@
 ./usr/include/evrpc.h				comp-c-include
 ./usr/include/evutil.h				comp-c-include
 ./usr/include/fcntl.h				comp-c-include
+./usr/include/fenv.h				comp-c-include
 ./usr/include/fetch.h				comp-c-include
 ./usr/include/filecorefs/filecore_mount.h	comp-c-include
 ./usr/include/float.h				comp-c-include
@@ -5783,9 +5784,24 @@
 ./usr/share/man/cat3/fdiml.0			comp-c-catman		.cat
 ./usr/share/man/cat3/fdopen.0			comp-c-catman		.cat
 ./usr/share/man/cat3/fdopendir.0		comp-c-catman		.cat
+./usr/share/man/cat3/feclearexcept.0		comp-c-catman		.cat
+./usr/share/man/cat3/fedisableexcept.0		comp-c-catman		.cat
+./usr/share/man/cat3/feenableexcept.0		comp-c-catman		.cat
+./usr/share/man/cat3/fegetenv.0			comp-c-catman		.cat
+./usr/share/man/cat3/fegetexcept.0		comp-c-catman		.cat
+./usr/share/man/cat3/fegetexceptflag.0		comp-c-catman		.cat
+./usr/share/man/cat3/fegetround.0		comp-c-catman		.cat
+./usr/share/man/cat3/feholdexcept.0		comp-c-catman		.cat
+./usr/share/man/cat3/fenv.0			comp-c-catman		.cat
 ./usr/share/man/cat3/feof.0			comp-c-catman		.cat
+./usr/share/man/cat3/feraiseexcept.0		comp-c-catman		.cat
 ./usr/share/man/cat3/ferror.0			comp-c-catman		.cat
+./usr/share/man/cat3/feseteexcpetflag.0		comp-c-catman		.cat
+./usr/share/man/cat3/fesetenv.0			comp-c-catman		.cat
+./usr/share/man/cat3/fesetround.0		comp-c-catman		.cat
 ./usr/share/man/cat3/fetch.0			comp-c-catman		.cat
+./usr/share/man/cat3/fetestexcept.0		comp-c-catman		.cat
+./usr/share/man/cat3/feupdateenv.0		comp-c-catman		.cat
 ./usr/share/man/cat3/fflush.0			comp-c-catman		.cat
 ./usr/share/man/cat3/ffs.0			comp-c-catman		.cat
 ./usr/share/man/cat3/ffs32.0			comp-c-catman		.cat
@@ -11690,9 +11706,24 @@
 ./usr/share/man/html3/fdiml.html		comp-c-htmlman		html
 ./usr/share/man/html3/fdopen.html		comp-c-htmlman		html
 ./usr/share/man/html3/fdopendir.html		comp-c-htmlman		html
+./usr/share/man/html3/feclearexcept.html	comp-c-htmlman		html
+./usr/share/man/html3/fedisableexcept.html	comp-c-htmlman		html
+./usr/share/man/html3/feenableexcept.html	comp-c-htmlman		html
+./usr/share/man/html3/fegetenv.html		comp-c-htmlman		html
+./usr/share/man/html3/fegetexcept.html		comp-c-htmlman		html
+./usr/share/man/html3/fegetexceptflag.html	comp-c-htmlman		html
+./usr/share/man/html3/fegetround.html		comp-c-htmlman		html
+./usr/share/man/html3/feholdexcept.html		comp-c-htmlman		html
+./usr/share/man/html3/fenv.html			comp-c-htmlman		html
 ./usr/share/man/html3/feof.html			comp-c-htmlman		html
+./usr/share/man/html3/feraiseexcept.html	comp-c-htmlman		html
 ./usr/share/man/html3/ferror.html		comp-c-htmlman		html
+./usr/share/man/html3/feseteexcpetflag.html	comp-c-htmlman		html
+./usr/share/man/html3/fesetenv.html		comp-c-htmlman		html
+./usr/share/man/html3/fesetround.html		comp-c-htmlman		html
 ./usr/share/man/html3/fetch.html		comp-c-htmlman		html
+./usr/share/man/html3/fetestexcept.html		comp-c-htmlman		html
+./usr/share/man/html3/feupdateenv.html		comp-c-html		html
 ./usr/share/man/html3/fflush.html		comp-c-htmlman		html
 ./usr/share/man/html3/ffs.html			comp-c-htmlman		html
 ./usr/share/man/html3/ffs32.html		comp-c-htmlman		html
@@ -17507,8 +17538,23 @@
 ./usr/share/man/man3/fdiml.3			comp-c-man		.man
 ./usr/share/man/man3/fdopen.3			comp-c-man		.man
 ./usr/share/man/man3/fdopendir.3		comp-c-man		.man
+./usr/share/man/man3/feclearexcept.3		comp-c-man		.man
+./usr/share/man/man3/fedisableexcept.3		comp-c-man		.man
+./usr/share/man/man3/feenableexcept.3		comp-c-man		.man
+./usr/share/man/man3/fegetenv.3			comp-c-man		.man
+./usr/share/man/man3/fegetexcept.3		comp-c-man		.man
+./usr/share/man/man3/fegetexceptflag.3		comp-c-man		.man
+./usr/share/man/man3/fegetround.3		comp-c-man		.man
+./usr/share/man/man3/feholdexcept.3		comp-c-man		.man
+./usr/share/man/man3/fenv.3			comp-c-man		.man
 ./usr/share/man/man3/feof.3			comp-c-man		.man
+./usr/share/man/man3/feraiseexcept.3		comp-c-man		.man
 ./usr/share/man/man3/ferror.3			comp-c-man		.man
+./usr/share/man/man3/feseteexcpetflag.3         comp-c-man              .man
+./usr/share/man/man3/fesetenv.3                 comp-c-man              .man
+./usr/share/man/man3/fesetround.3               comp-c-man              .man
+./usr/share/man/man3/fetestexcept.3		comp-c-man		.man
+./usr/share/man/man3/feupdateenv.3		comp-c-man		.man
 ./usr/share/man/man3/fetch.3			comp-c-man		.man
 ./usr/share/man/man3/fflush.3			comp-c-man		.man
 ./usr/share/man/man3/ffs.3			comp-c-man		.man

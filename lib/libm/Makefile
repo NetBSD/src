@@ -1,4 +1,4 @@
-#  $NetBSD: Makefile,v 1.94 2010/04/23 19:17:07 drochner Exp $
+#  $NetBSD: Makefile,v 1.95 2010/07/31 21:47:53 joerg Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24
 #
@@ -51,7 +51,13 @@ USE_SHLIBDIR=	yes
 .PATH: ${.CURDIR}/arch/alpha
 ARCH_SRCS = s_copysign.S s_copysignf.S lrint.S
 .elif ((${MACHINE_ARCH} == "i386") || (${MACHINE_ARCH} == "x86_64"))
+
+.if (${MACHINE_ARCH} == "x86_64")
+.PATH: ${.CURDIR}/arch/x86_64
+.endif
 .PATH:	${.CURDIR}/arch/i387
+
+COMMON_SRCS+= fenv.c
 ARCH_SRCS = e_acos.S e_asin.S e_atan2.S e_exp.S e_expf.S e_fmod.S e_log.S \
 	    e_logf.S e_log10.S e_log10f.S e_log2.S e_log2f.S e_remainder.S \
 	    e_remainderf.S e_scalb.S e_scalbf.S e_sqrt.S e_sqrtf.S s_atan.S \
@@ -60,6 +66,7 @@ ARCH_SRCS = e_acos.S e_asin.S e_atan2.S e_exp.S e_expf.S e_fmod.S e_log.S \
 	    s_ilogbf.S s_log1p.S s_log1pf.S s_logb.S s_logbf.S s_rint.S \
 	    s_rintf.S s_scalbn.S s_scalbnf.S s_significand.S \
 	    s_significandf.S s_sin.S s_sinf.S s_tan.S s_tanf.S lrint.S
+
 .if (${MACHINE_ARCH} == "i386")
 SUBDIR=arch/i387
 .endif
@@ -108,7 +115,7 @@ COPTS+=	-fno-strict-aliasing
 CPPFLAGS+=-DLIBM_SCCS
 
 LIB=	m
-COMMON_SRCS = e_acos.c e_acosf.c e_acosh.c e_acoshf.c e_asin.c e_asinf.c \
+COMMON_SRCS+= e_acos.c e_acosf.c e_acosh.c e_acoshf.c e_asin.c e_asinf.c \
 	e_atan2.c e_atan2f.c e_atanh.c e_atanhf.c e_cosh.c e_coshf.c e_exp.c \
 	e_expf.c e_fmod.c e_fmodf.c e_hypot.c e_hypotf.c e_j0.c e_j0f.c \
 	e_j1.c e_j1f.c e_jn.c e_jnf.c e_lgamma_r.c e_lgammaf_r.c e_log.c \
@@ -187,6 +194,19 @@ MAN+=	acos.3 acosh.3 asin.3 asinh.3 atan.3 atan2.3 atanh.3 ceil.3 \
 	ieee_test.3 isinff.3 j0.3 ldexp.3 lgamma.3 lrint.3 \
 	math.3 modf.3 rint.3 round.3 sin.3 sinh.3 \
 	sqrt.3 tan.3 tanh.3 trunc.3 fmax.3 fdim.3
+
+# fenv.h interface
+MAN+=	feclearexcept.3 feenableexcept.3 fegetenv.3 fegetround.3 fenv.3
+MLINKS+=feclearexcept.3 fegetexceptflag.3	\
+	feclearexcept.3 feraiseexcept.3		\
+	feclearexcept.3 feseteexcpetflag.3	\
+	feclearexcept.3 fetestexcept.3
+MLINKS+=feenableexcept.3 fedisableexcept.3	\
+	feenableexcept.3 fegetexcept.3
+MLINKS+=fegetenv.3 feholdexcept.3		\
+	fegetenv.3 fesetenv.3			\
+	fegetenv.3 feupdateenv.3
+MLINKS+=fegetround.3 fesetround.3
 
 MLINKS+=acos.3 acosf.3
 MLINKS+=acosh.3 acoshf.3
