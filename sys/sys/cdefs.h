@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.78 2009/10/02 21:05:28 christos Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.79 2010/07/31 00:04:43 joerg Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -226,6 +226,23 @@
 #define	__used		__attribute__((__used__))
 #else
 #define	__used		__unused
+#endif
+
+/*
+ * Non-static C99 inline functions are optional bodies.  They don't
+ * create global symbols if not used, but can be replaced if desirable.
+ * This differs from the behavior of GCC before version 4.3.  The nearest
+ * equivalent for older GCC is `extern inline'.  For newer GCC, use the
+ * gnu_inline attribute additionally to get the old behavior.
+ *
+ * For C99 compilers other than GCC, the C99 behavior is expected.
+ */
+#if defined(__GNUC__) && defined(__GNUC_STDC_INLINE__)
+#define	__c99inline	extern __attribute__((__gnu_inline__)) __inline
+#elif defined(__GNUC__)
+#define	__c99inline	extern __inline
+#elif defined(__STDC_VERSION__)
+#define	__c99inline	__inline
 #endif
 
 #if defined(__lint__)
