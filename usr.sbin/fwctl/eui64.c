@@ -1,4 +1,4 @@
-/*	$NetBSD: eui64.c,v 1.2 2009/04/15 06:02:37 lukem Exp $	*/
+/*	$NetBSD: eui64.c,v 1.3 2010/07/31 07:05:32 cegger Exp $	*/
 /*
  * Copyright 2004 The Aerospace Corporation.  All rights reserved.
  *
@@ -108,7 +108,7 @@ eui64_line(const char *l, struct eui64 *e, char *hostname, size_t len)
 
 	linehead = strdup(l);
 	if (linehead == NULL)
-		return (-1);
+		return -1;
 	line = linehead;
 
 	/* Find and parse the EUI64 */
@@ -139,11 +139,11 @@ eui64_line(const char *l, struct eui64 *e, char *hostname, size_t len)
 			goto bad;
 	}
 
-	return (0);
+	return 0;
 
 bad:
 	free(linehead);
-	return (-1);
+	return -1;
 }
 
 /*
@@ -187,7 +187,7 @@ eui64_aton(const char *a, struct eui64 *e)
 		goto good;
 	}
 
-	return (-1);
+	return -1;
 
 good:
         e->octet[0]=o0;
@@ -199,7 +199,7 @@ good:
 	e->octet[6]=o6;
 	e->octet[7]=o7;
 
-        return (0);
+        return 0;
 }
 
 /*
@@ -214,8 +214,8 @@ eui64_ntoa(const struct eui64 *id, char *a, size_t len)
 	    id->octet[0], id->octet[1], id->octet[2], id->octet[3],
 	    id->octet[4], id->octet[5], id->octet[6], id->octet[7]);
         if (i < 23 || i >= (int)len)
-                return (-1);
-        return (0);
+                return -1;
+        return 0;
 }
 
 /*
@@ -235,7 +235,7 @@ eui64_ntohost(char *hostname, size_t len, const struct eui64 *id)
 	char *yp_domain;
 #endif
 	if ((fp = fopen(_PATH_EUI64, "r")) == NULL)
-		return (1);
+		return 1;
 
 	while (fgets(buf,BUFSIZ,fp)) {
 		if (buf[0] == '#')
@@ -261,12 +261,12 @@ eui64_ntohost(char *hostname, size_t len, const struct eui64 *id)
 			/* We have a match */
 				strcpy(hostname, local_host);
 				fclose(fp);
-				return(0);
+				return 0;
 			}
 		}
 	}
 	fclose(fp);
-	return (1);
+	return 1;
 }
 
 /*
@@ -285,7 +285,7 @@ eui64_hostton(const char *hostname, struct eui64 *id)
 	char *yp_domain;
 #endif
 	if ((fp = fopen(_PATH_EUI64, "r")) == NULL)
-		return (1);
+		return 1;
 
 	while (fgets(buf,BUFSIZ,fp)) {
 		if (buf[0] == '#')
@@ -309,10 +309,10 @@ eui64_hostton(const char *hostname, struct eui64 *id)
 				/* We have a match */
 				bcopy(&local_eui64, id, sizeof(struct eui64));
 				fclose(fp);
-				return(0);
+				return 0;
 			}
 		}
 	}
 	fclose(fp);
-	return (1);
+	return 1;
 }
