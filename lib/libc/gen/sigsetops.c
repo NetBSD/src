@@ -1,4 +1,4 @@
-/*	$NetBSD: sigsetops.c,v 1.15 2005/09/13 01:44:09 christos Exp $	*/
+/*	$NetBSD: sigsetops.c,v 1.16 2010/07/31 00:04:43 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -36,11 +36,11 @@
 #if 0
 static char sccsid[] = "@(#)sigsetops.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: sigsetops.c,v 1.15 2005/09/13 01:44:09 christos Exp $");
+__RCSID("$NetBSD: sigsetops.c,v 1.16 2010/07/31 00:04:43 joerg Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
-#define	_SIGINLINE
+#define	__SIGSETOPS_BODY
 
 #include <errno.h>
 #include <signal.h>
