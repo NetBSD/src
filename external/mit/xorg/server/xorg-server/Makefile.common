@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.common,v 1.13 2010/07/12 07:54:12 kiyohara Exp $
+#	$NetBSD: Makefile.common,v 1.14 2010/07/31 13:32:23 tsutsui Exp $
 
 # These define parts of the Xserver tree that are to be
 # conditionally compiled for different platforms.  See
@@ -54,10 +54,6 @@ XSERVER_NEEDS_XFONT=	yes
 XSERVER_XFREE86=	yes
 .endif
 
-#.if ${MACHINE} == "hpcarm" || ${MACHINE} == "hpcmips" || ${MACHINE} == "hpcsh"
-#XSERVER_XHPC=		yes
-#.endif
-
 .if ${MACHINE} == "mac68k"
 XSERVER_XMAC68K=	yes
 XSERVER_HAS_CFB=	yes
@@ -112,8 +108,6 @@ XSERVER_XNEWSMIPS?=	no
 XSERVER_XFREE68?=	no
 # Does this platform build XFree86 X server?
 XSERVER_XFREE86?=	no
-# Does this platform build Xhpc X servers?
-XSERVER_XHPC?=		no
 # Does this platform build the Xmac68k X server?
 XSERVER_XMAC68K?=	no
 # Does this platform build Xmacppc X server?
