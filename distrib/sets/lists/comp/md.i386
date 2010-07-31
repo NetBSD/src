@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.113 2010/07/07 00:10:14 njoly Exp $
+# $NetBSD: md.i386,v 1.114 2010/07/31 21:47:52 joerg Exp $
 ./usr/include/emmintrin.h			comp-c-include		gcccmds
 ./usr/include/i386				comp-c-include
 ./usr/include/i386/_G_config.h			comp-obsolete		obsolete
@@ -23,6 +23,7 @@
 ./usr/include/i386/elf_machdep.h		comp-c-include
 ./usr/include/i386/endian.h			comp-c-include
 ./usr/include/i386/endian_machdep.h		comp-c-include
+./usr/include/i386/fenv.h			comp-c-include
 ./usr/include/i386/float.h			comp-c-include
 ./usr/include/i386/frame.h			comp-c-include
 ./usr/include/i386/freebsd_machdep.h		comp-c-include
