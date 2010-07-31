@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.636 2010/07/31 12:54:35 tsutsui Exp $
+#	$NetBSD: bsd.own.mk,v 1.637 2010/07/31 16:23:15 tsutsui Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -737,12 +737,18 @@ ${var}?=no
 #
 # Do we default to XFree86 or Xorg for this platform?
 #
-.if ${MACHINE} == "alpha" || ${MACHINE} == "acorn32" || \
-	${MACHINE} == "amiga" || ${MACHINE} == "dreamcast" || \
-	${MACHINE} == "ews4800mips" || \
-	${MACHINE} == "mac68k" || ${MACHINE} == "newsmips" || \
-	${MACHINE} == "ofppc" || ${MACHINE} == "pmax" || \
-	${MACHINE} == "sun3" || ${MACHINE} == "x68k"
+.if \
+    ${MACHINE} == "acorn32"	|| \
+    ${MACHINE} == "alpha"	|| \
+    ${MACHINE} == "amiga"	|| \
+    ${MACHINE} == "dreamcast"	|| \
+    ${MACHINE} == "ews4800mips"	|| \
+    ${MACHINE} == "mac68k"	|| \
+    ${MACHINE} == "newsmips"	|| \
+    ${MACHINE} == "ofppc"	|| \
+    ${MACHINE} == "pmax"	|| \
+    ${MACHINE} == "sun3"	|| \
+    ${MACHINE} == "x68k"
 X11FLAVOUR?=	XFree86
 .else
 X11FLAVOUR?=	Xorg
