@@ -1,4 +1,4 @@
-/*	$NetBSD: vfwprintf.c,v 1.18 2009/10/25 20:44:13 christos Exp $	*/
+/*	$NetBSD: vfwprintf.c,v 1.19 2010/07/31 07:24:52 tnozaki Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 static char sccsid[] = "@(#)vfprintf.c	8.1 (Berkeley) 6/4/93";
 __FBSDID("$FreeBSD: src/lib/libc/stdio/vfwprintf.c,v 1.27 2007/01/09 00:28:08 imp Exp $");
 #else
-__RCSID("$NetBSD: vfwprintf.c,v 1.18 2009/10/25 20:44:13 christos Exp $");
+__RCSID("$NetBSD: vfwprintf.c,v 1.19 2010/07/31 07:24:52 tnozaki Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -163,6 +163,7 @@ __sbprintf(FILE *fp, const CHAR_T *fmt, va_list ap)
 	_DIAGASSERT(fmt != NULL);
 
 	_FILEEXT_SETUP(&fake, &fakeext);
+	memset(WCIO_GET(fp), 0, sizeof(struct wchar_io_data));
 
 	/* copy the important variables */
 	fake._flags = fp->_flags & ~__SNBF;
@@ -814,8 +815,9 @@ WDECL(__vf,printf_unlocked)(FILE *fp, const CHAR_T *fmt0, va_list ap)
 
 	/* optimise fprintf(stderr) (and other unbuffered Unix files) */
 	if ((fp->_flags & (__SNBF|__SWR|__SRW)) == (__SNBF|__SWR) &&
-	    __sfileno(fp) != -1)
+	    __sfileno(fp) != -1) {
 		return (__sbprintf(fp, fmt0, ap));
+	}
 
 	fmt = (CHAR_T *)__UNCONST(fmt0);
 	argtable = NULL;
