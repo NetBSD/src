@@ -1,4 +1,4 @@
-.\"	$NetBSD: module.9,v 1.1 2010/07/31 03:14:05 pgoyette Exp $
+.\"	$NetBSD: module.9,v 1.2 2010/07/31 03:43:00 pgoyette Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -86,7 +86,7 @@ Loads a module, links it into the running kernel, and calls the module's
 .Fn modcmd 
 routine with an argument of MODULE_CMD_INIT.
 If the specified module requires other modules, they are loaded first; if
-any required modules cannot be loaded or their
+any required module cannot be loaded or if any of their
 .Fn modcmd
 control routines returns a non-zero status, loading of this module will fail.
 .Pp
