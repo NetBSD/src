@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1487 2010/07/30 09:12:58 jruoho Exp $
+#	$NetBSD: mi,v 1.1488 2010/07/31 03:14:06 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -9350,6 +9350,13 @@
 ./usr/share/man/cat9/mi_switch.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/microtime.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/microuptime.0		comp-sys-catman		.cat
+./usr/share/man/cat9/module.0			comp-sys-catman		.cat
+./usr/share/man/cat9/module_autoload.0		comp-sys-catman		.cat
+./usr/share/man/cat9/module_hold.0		comp-sys-catman		.cat
+./usr/share/man/cat9/module_init_class.0	comp-sys-catman		.cat
+./usr/share/man/cat9/module_load.0		comp-sys-catman		.cat
+./usr/share/man/cat9/module_rele.0		comp-sys-catman		.cat
+./usr/share/man/cat9/module_unload.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/mono_time.0		comp-obsolete		obsolete
 ./usr/share/man/cat9/mstohz.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/mtocl.0			comp-sys-catman		.cat
@@ -15122,6 +15129,13 @@
 ./usr/share/man/html9/mi_switch.html		comp-sys-htmlman	html
 ./usr/share/man/html9/microtime.html		comp-sys-htmlman	html
 ./usr/share/man/html9/microuptime.html		comp-sys-htmlman	html
+./usr/share/man/html9/module.html		comp-sys-htmlman	html
+./usr/share/man/html9/module_autoload.html	comp-sys-htmlman	html
+./usr/share/man/html9/module_hold.html		comp-sys-htmlman	html
+./usr/share/man/html9/module_init_class.html	comp-sys-htmlman	html
+./usr/share/man/html9/module_load.html		comp-sys-htmlman	html
+./usr/share/man/html9/module_rele.html		comp-sys-htmlman	html
+./usr/share/man/html9/module_unload.html	comp-sys-htmlman	html
 ./usr/share/man/html9/mstohz.html		comp-sys-htmlman	html
 ./usr/share/man/html9/mtocl.html		comp-sys-htmlman	html
 ./usr/share/man/html9/mtod.html			comp-sys-htmlman	html
@@ -21055,6 +21069,13 @@
 ./usr/share/man/man9/mi_switch.9		comp-sys-man		.man
 ./usr/share/man/man9/microtime.9		comp-sys-man		.man
 ./usr/share/man/man9/microuptime.9		comp-sys-man		.man
+./usr/share/man/man9/module.9			comp-sys-man		.man
+./usr/share/man/man9/module_autoload.9		comp-sys-man		.man
+./usr/share/man/man9/module_hold.9		comp-sys-man		.man
+./usr/share/man/man9/module_init_class.9	comp-sys-man		.man
+./usr/share/man/man9/module_load.9		comp-sys-man		.man
+./usr/share/man/man9/module_rele.9		comp-sys-man		.man
+./usr/share/man/man9/module_unload.9		comp-sys-man		.man
 ./usr/share/man/man9/mono_time.9		comp-obsolete		obsolete
 ./usr/share/man/man9/mstohz.9			comp-sys-man		.man
 ./usr/share/man/man9/mtocl.9			comp-sys-man		.man
