@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.124 2010/07/29 16:30:26 njoly Exp $
+# $NetBSD: mi,v 1.125 2010/07/31 10:42:22 jmmv Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -266,6 +266,7 @@
 ./usr/libdata/debug/usr/tests/kernel/tty/t_pr.debug			tests-kernel-tests	debug,atf
 ./usr/libdata/debug/usr/tests/lib					tests-lib-debug
 ./usr/libdata/debug/usr/tests/lib/csu					tests-lib-debug
+./usr/libdata/debug/usr/tests/lib/csu/h_initfini.debug			tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/lib/csu/h_initfini1.debug			tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/csu/h_initfini2.debug			tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/csu/h_initfini3.debug			tests-lib-debug		debug,atf
@@ -1378,6 +1379,7 @@
 ./usr/tests/lib/Atffile				tests-lib-tests		atf
 ./usr/tests/lib/csu				tests-lib-tests
 ./usr/tests/lib/csu/Atffile			tests-lib-tests		atf
+./usr/tests/lib/csu/h_initfini			tests-obsolete		obsolete
 ./usr/tests/lib/csu/h_initfini1			tests-lib-tests		atf
 ./usr/tests/lib/csu/h_initfini2			tests-lib-tests		atf
 ./usr/tests/lib/csu/h_initfini3			tests-lib-tests		atf
