@@ -1,4 +1,4 @@
-#	$NetBSD: files.usb,v 1.100 2010/07/04 15:21:58 tsutsui Exp $
+#	$NetBSD: files.usb,v 1.101 2010/08/01 07:29:03 kiyohara Exp $
 #
 # Config file and device description for machine-independent USB code.
 # Included by ports that need it.  Ports that use it must provide
@@ -188,7 +188,7 @@ attach	udsbr at usbdevif
 file	dev/usb/udsbr.c			udsbr
 
 # TEMPerHUM HID
-device	uthum: hid
+device	uthum: hid, sysmon_envsys
 attach	uthum at uhidbus
 file	dev/usb/uthum.c			uthum
 
