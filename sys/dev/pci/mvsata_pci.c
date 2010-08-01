@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsata_pci.c,v 1.4 2010/07/13 12:53:43 kiyohara Exp $	*/
+/*	$NetBSD: mvsata_pci.c,v 1.5 2010/08/01 07:38:17 kiyohara Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsata_pci.c,v 1.4 2010/07/13 12:53:43 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsata_pci.c,v 1.5 2010/08/01 07:38:17 kiyohara Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -124,8 +124,6 @@ struct mvsata_product mvsata_pci_products[] = {
 	{ PCI_VP(ADP2, 1430SA),			1, 4, gen2e, 0 },
 	{ PCI_VP(TRIONES, ROCKETRAID_2310),	1, 4, gen2e, 0 },
 #undef PCI_VP
-
-	{ -1, -1,				0, 0, gen_unknown, 0 }
 };
 
 
