@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.22 2010/07/12 07:54:12 kiyohara Exp $
+#	$NetBSD: Makefile,v 1.23 2010/08/01 06:24:31 kiyohara Exp $
 
 .include "../../../Makefile.serverlib"
 .include "../../../Makefile.servermod"
@@ -32,7 +32,7 @@ CPPFLAGS.${_FN}+=	-DUSE_I386_IOPL -DPCVT_SUPPORT -DWSCONS_SUPPORT \
 .endfor
 .endif
 
-.if ${MACHINE} == "macppc" || ${MACHINE} == "prep"
+.if ${MACHINE} == "macppc" || ${MACHINE} == "prep" || ${MACHINE} == "bebox"
 SRCS.bsd+=	ppc_video.c stdResource.c pm_noop.c lnx_agp.c
 .for _FN in ${SRCS.bsd}
 CPPFLAGS.${_FN}=	-DWSCONS_SUPPORT -DUSESTDRES -DHAVE_SYSV_IPC
@@ -91,7 +91,7 @@ SRCS.bus+=	Pci.c
     ${MACHINE} == "sgimips" || ${MACHINE} == "shark" || \
     ${MACHINE} == "netwinder" || ${MACHINE_ARCH} == "sparc" || \
     ${MACHINE_ARCH} == "sparc64" || ${MACHINE_ARCH} == "alpha" || \
-    ${MACHINE} == "prep"
+    ${MACHINE} == "prep" || ${MACHINE} == "bebox"
 #SRCS.bus+=	netbsdPci.c
 .endif
 
@@ -115,7 +115,8 @@ SRCS.misc=	Delay.c
 	${MACHINE} == "sgimips" || ${MACHINE_ARCH} == "sparc64" || \
 	${MACHINE_ARCH} == "sparc" || ${MACHINE} == "netwinder" || \
 	${MACHINE} == "shark" || ${MACHINE} == "ofppc" || \
-	${MACHINE_ARCH} == "alpha" || ${MACHINE} == "prep"
+	${MACHINE_ARCH} == "alpha" || ${MACHINE} == "prep" || \
+	${MACHINE} == "bebox"
 #SRCS.misc+=     CBUSmemcpy.c CIODelay.c CSlowBcopy.c
 .endif
 

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.45 2010/07/12 07:54:12 kiyohara Exp $
+#	$NetBSD: Makefile,v 1.46 2010/08/01 06:24:31 kiyohara Exp $
 
 SUBDIR= \
 	xf86-input-keyboard \
@@ -176,6 +176,14 @@ SUBDIR+= \
 	xf86-video-cirrus_alpine \
 	xf86-video-mga \
 	xf86-video-s3 \
+	xf86-video-vga
+.elif ${MACHINE} == "bebox"
+SUBDIR+= \
+	xf86-video-cirrus \
+	xf86-video-cirrus_alpine \
+	xf86-video-mga \
+	xf86-video-s3 \
+	xf86-video-s3virge \
 	xf86-video-vga
 .endif
 
