@@ -1,4 +1,4 @@
-/*	$NetBSD: t_vnops.c,v 1.5 2010/07/26 13:37:48 njoly Exp $	*/
+/*	$NetBSD: t_vnops.c,v 1.6 2010/08/01 14:50:54 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -257,10 +257,6 @@ rename_dotdot(const atf_tc_t *tc, const char *mp)
 	if (rump_sys_mkdir("dir2", 0777) == -1)
 		atf_tc_fail_errno("mkdir 2");
 
-	/* msdosfs fails both at least currently */
-	if (FSTYPE_MSDOS(tc)) {
-		atf_tc_expect_fail("PR kern/43616");
-	}
 	if (rump_sys_rename("dir1", "dir1/..") != -1 || errno != EINVAL)
 		atf_tc_fail_errno("self-dotdot to");
 
