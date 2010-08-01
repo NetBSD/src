@@ -1,4 +1,4 @@
-/* $NetBSD: fenv.c,v 1.2 2010/07/31 22:14:18 joerg Exp $ */
+/* $NetBSD: fenv.c,v 1.3 2010/08/01 06:34:38 taca Exp $ */
 
 /*-
  * Copyright (c) 2004-2005 David Schultz <das@FreeBSD.ORG>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: fenv.c,v 1.2 2010/07/31 22:14:18 joerg Exp $");
+__RCSID("$NetBSD: fenv.c,v 1.3 2010/08/01 06:34:38 taca Exp $");
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -119,7 +119,7 @@ static void __test_sse(void) __attribute__ ((constructor));
 
 static void __test_sse(void)
 {
-	size_t oldlen = sizeof(HAS_SSE);
+	size_t oldlen = sizeof(__HAS_SSE);
 	int rv;
 
 	rv = sysctlbyname("machdep.sse", &__HAS_SSE, &oldlen, NULL, 0);
