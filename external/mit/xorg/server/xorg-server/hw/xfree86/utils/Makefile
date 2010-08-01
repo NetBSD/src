@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2010/07/12 07:54:12 kiyohara Exp $
+#	$NetBSD: Makefile,v 1.14 2010/08/01 06:24:31 kiyohara Exp $
 
 SUBDIR=	cvt gtf
 #SUBDIR=	cvt gtf xorgconfig
@@ -10,7 +10,7 @@ SUBDIR=	cvt gtf
 .if ${MACHINE} == "cats" || ${MACHINE} == "macppc" || \
     ${MACHINE} == "netwinder" || ${MACHINE_ARCH} == "sparc" || \
     ${MACHINE_ARCH} == "sparc64" || ${MACHINE_ARCH} == "alpha" || \
-    ${MACHINE} == "prep"
+    ${MACHINE} == "prep" || ${MACHINE} == "bebox"
 #SUBDIR+=pcitweak scanpci
 .endif
 
