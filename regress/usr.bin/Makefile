@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18 2010/07/18 10:12:33 jmmv Exp $
+#	$NetBSD: Makefile,v 1.19 2010/08/01 16:44:31 jmmv Exp $
 
 .include <bsd.own.mk>
 
@@ -6,6 +6,6 @@
 SUBDIR+= c++
 .endif
 
-SUBDIR+= rtld sort
+SUBDIR+= rtld
 
 .include <bsd.subdir.mk>
