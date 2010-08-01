@@ -1,4 +1,4 @@
-/*	$NetBSD: mvpex.c,v 1.1 2010/07/13 11:16:02 kiyohara Exp $	*/
+/*	$NetBSD: mvpex.c,v 1.2 2010/08/01 06:57:06 kiyohara Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvpex.c,v 1.1 2010/07/13 11:16:02 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvpex.c,v 1.2 2010/08/01 06:57:06 kiyohara Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -87,25 +87,8 @@ mvpex_match(device_t parent, struct cfdata *match, void *aux)
 {
 	struct marvell_attach_args *mva = aux;
 
-	switch (mva->mva_model) {
-#if 0
-	case MARVELL_DISCOVERY_V:
-	case MARVELL_DISCOVERY_VI:
-#endif
-	case MARVELL_ORION_1_88F1181:
-	case MARVELL_ORION_1_88F5082:
-	case MARVELL_ORION_1_88F5180N:
-	case MARVELL_ORION_1_88F5181:
-	case MARVELL_ORION_1_88F5182:
-	case MARVELL_ORION_1_88F6082:
-	case MARVELL_ORION_1_88W8660:
-	case MARVELL_ORION_2_88F1281:
-	case MARVELL_ORION_2_88F5281:
-		break;
-
-	default:
+	if (strcmp(mva->mva_name, match->cf_name) != 0)
 		return 0;
-	}
 	if (mva->mva_offset == MVA_OFFSET_DEFAULT ||
 	    mva->mva_irq == MVA_IRQ_DEFAULT)
 		return 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: gtidmac.c,v 1.5 2010/07/20 11:47:59 kiyohara Exp $	*/
+/*	$NetBSD: gtidmac.c,v 1.6 2010/08/01 06:57:06 kiyohara Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtidmac.c,v 1.5 2010/07/20 11:47:59 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtidmac.c,v 1.6 2010/08/01 06:57:06 kiyohara Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -285,10 +285,6 @@ gtidmac_match(device_t parent, struct cfdata *match, void *aux)
 
 	if (strcmp(mva->mva_name, match->cf_name) != 0)
 		return 0;
-
-	if (mva->mva_model == MARVELL_ORION_1_88F6082)
-		return 0;
-
 	if (mva->mva_offset == MVA_OFFSET_DEFAULT ||
 	    mva->mva_irq == MVA_IRQ_DEFAULT)
 		return 0;

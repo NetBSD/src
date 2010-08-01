@@ -1,4 +1,4 @@
-/*	$NetBSD: gtmpsc.c,v 1.39 2010/07/11 08:43:36 kiyohara Exp $	*/
+/*	$NetBSD: gtmpsc.c,v 1.40 2010/08/01 06:57:06 kiyohara Exp $	*/
 /*
  * Copyright (c) 2009 KIYOHARA Takashi
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtmpsc.c,v 1.39 2010/07/11 08:43:36 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtmpsc.c,v 1.40 2010/08/01 06:57:06 kiyohara Exp $");
 
 #include "opt_kgdb.h"
 
@@ -216,21 +216,7 @@ gtmpscmatch(device_t parent, cfdata_t match, void *aux)
 
 	if (strcmp(mva->mva_name, match->cf_name) != 0)
 		return 0;
-
-	switch (mva->mva_model) {
-	case MARVELL_DISCOVERY:
-	case MARVELL_DISCOVERY_II:
-	case MARVELL_DISCOVERY_III:
-#if 0
-	case MARVELL_DISCOVERY_LT:
-#endif
-		break;
-
-	default:
-		return 0;
-	}
-	if (mva->mva_offset == MVA_OFFSET_DEFAULT ||
-	    mva->mva_irq == MVA_IRQ_DEFAULT)
+	if (mva->mva_offset == MVA_OFFSET_DEFAULT)
 		return 0;
 
 	mva->mva_size = GTMPSC_SIZE;
