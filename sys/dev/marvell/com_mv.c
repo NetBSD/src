@@ -1,4 +1,4 @@
-/*	$NetBSD: com_mv.c,v 1.2 2010/07/20 11:50:18 kiyohara Exp $	*/
+/*	$NetBSD: com_mv.c,v 1.3 2010/08/01 06:47:16 kiyohara Exp $	*/
 /*
  * Copyright (c) 2007, 2010 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_mv.c,v 1.2 2010/07/20 11:50:18 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_mv.c,v 1.3 2010/08/01 06:47:16 kiyohara Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -76,41 +76,25 @@ static int
 mvuart_match(device_t parent, struct cfdata *match, void *aux)
 {
 	struct marvell_attach_args *mva = aux;
+	struct com_regs regs;
 	bus_space_handle_t ioh;
 
-	switch (mva->mva_model) {
-#if 0
-	case MARVELL_DISCOVERY_V:	/* Do we have ?? */
-	case MARVELL_DISCOVERY_VI:	/* Do we have ?? */
-#endif
-	case MARVELL_ORION_1_88F1181:
-	case MARVELL_ORION_1_88F5082:
-	case MARVELL_ORION_1_88F5180N:
-	case MARVELL_ORION_1_88F5181:
-	case MARVELL_ORION_1_88F5182:
-	case MARVELL_ORION_1_88F6082:
-	case MARVELL_ORION_1_88W8660:
-	case MARVELL_ORION_2_88F1281:
-	case MARVELL_ORION_2_88F5281:
-	case MARVELL_KIRKWOOD_88F6180:
-	case MARVELL_KIRKWOOD_88F6192:
-	case MARVELL_KIRKWOOD_88F6281:
-	case MARVELL_MV78XX0_MV78100:
-	case MARVELL_MV78XX0_MV78200:
-		break;
-
-	default:
+	if (strcmp(mva->mva_name, match->cf_name) != 0)
 		return 0;
-	}
+	if (mva->mva_offset == MVA_OFFSET_DEFAULT ||
+	    mva->mva_irq == MVA_IRQ_DEFAULT)
+		return 0;
 
 	if (com_is_console(mva->mva_iot, mva->mva_addr + mva->mva_offset, NULL))
 		return 1;
 
 	if (bus_space_subregion(mva->mva_iot, mva->mva_ioh, mva->mva_offset,
-	    mva->mva_size, &ioh))
+	    MVUART_SIZE, &ioh))
 		return 0;
-	if (!comprobe1(mva->mva_iot, ioh))
+	MVUART_INIT_REGS(regs, mva->mva_iot, ioh, mva->mva_offset, MVUART_SIZE);
+	if (!com_probe_subr(&regs))
 		return 0;
+
 	mva->mva_size = MVUART_SIZE;
 	return 1;
 }
