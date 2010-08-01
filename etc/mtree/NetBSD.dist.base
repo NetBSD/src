@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.base,v 1.42 2010/07/26 16:18:35 pooka Exp $
+#	$NetBSD: NetBSD.dist.base,v 1.43 2010/08/01 16:43:38 jmmv Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -1203,6 +1203,7 @@
 ./usr/tests/util/ps
 ./usr/tests/util/sdiff
 ./usr/tests/util/sh
+./usr/tests/util/sort
 ./usr/tests/util/xlint
 ./usr/tests/util/xlint/lint1
 ./var
