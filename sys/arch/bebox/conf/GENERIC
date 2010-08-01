@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.119 2010/05/08 22:16:26 mrg Exp $
+# $NetBSD: GENERIC,v 1.120 2010/08/01 06:13:19 kiyohara Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/bebox/conf/std.bebox"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.119 $"
+#ident 		"GENERIC-$Revision: 1.120 $"
 
 maxusers	32
 
@@ -161,6 +161,9 @@ options 	SCSIVERBOSE	# human readable SCSI error messages
 #options 	WSEMUL_SUN		# sun terminal emulation
 options 	WSEMUL_VT100		# VT100 / VT220 emulation
 options 	WS_DEFAULT_FG=WSCOL_LIGHT_WHITE
+# compatibility to other console drivers
+options 	WSDISPLAY_COMPAT_USL	# VT handling
+options 	WSDISPLAY_COMPAT_RAWKBD	# can get raw scancodes
 
 config		netbsd	root on ? type ?
 
@@ -186,6 +189,7 @@ pms*		at pckbc?		# PS/2 mouse for wsmouse
 #options	PMS_DISABLE_POWERHOOK	# Disable PS/2 reset on resume
 options		PMS_SYNAPTICS_TOUCHPAD	# Enable support for Synaptics Touchpads
 genfb*		at pci? dev ? function ?
+options 	WSFB_FAKE_VGA_FB
 vga*		at pci? dev ? function ?
 wsdisplay*	at vga? console ?
 wskbd*		at pckbd? console ?
