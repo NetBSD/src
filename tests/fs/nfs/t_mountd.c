@@ -1,4 +1,4 @@
-/*	$NetBSD: t_mountd.c,v 1.1 2010/07/28 15:24:54 pooka Exp $	*/
+/*	$NetBSD: t_mountd.c,v 1.2 2010/08/01 15:38:27 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -67,7 +67,6 @@ wrkwrkwrk(void *unused)
 				fail++;
 				break;
 			}
-			atf_tc_fail_errno("open file");
 		}
 		rump_sys_close(fd);
 		if (rump_sys_unlink("file") == -1) {
@@ -75,7 +74,6 @@ wrkwrkwrk(void *unused)
 				fail++;
 				break;
 			}
-			atf_tc_fail_errno("unlink file");
 		}
 	}
 	rump_sys_chdir("/");
@@ -108,7 +106,8 @@ ATF_TC_BODY(mountdhup, tc)
 	atf_tc_expect_fail("PR kern/5844");
 	if (fail)
 		atf_tc_fail("op failed with EACCES");
-	atf_tc_expect_pass();
+	else
+		atf_tc_fail("race did not trigger this time");
 }
 
 ATF_TP_ADD_TCS(tp)
