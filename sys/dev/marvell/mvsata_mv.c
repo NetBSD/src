@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsata_mv.c,v 1.1 2010/07/13 13:05:05 kiyohara Exp $	*/
+/*	$NetBSD: mvsata_mv.c,v 1.2 2010/08/01 06:57:06 kiyohara Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsata_mv.c,v 1.1 2010/07/13 13:05:05 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsata_mv.c,v 1.2 2010/08/01 06:57:06 kiyohara Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -90,19 +90,16 @@ struct mvsata_product mvsata_products[] = {
 	{ PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_88F5182, 1, 2, gen2e, 0 },
 	{ PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_88F6082, 1, 1, gen2e, 0 },
 
-#if 0
 	/* Kirkwood */
-							/* 88F6190 has a port */
 	{ PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_88F6192, 1, 2, gen2e, 0 },
 	{ PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_88F6281, 1, 2, gen2e, 0 },
 
+#if 0
 	/* Discovery Inovation */
 	{ PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_MV78200, 1, 2, gen2e, 0 },
 							/* MV76100 has a port */
 	{ PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_MV78100, 1, 2, gen2e, 0 },
 #endif
-
-	{ -1, -1,					0, 0, gen_unknown, 0 }
 };
 
 
@@ -113,6 +110,8 @@ mvsatahc_match(device_t parent, cfdata_t match, void *aux)
 	struct marvell_attach_args *mva = aux;
 	int i;
 
+	if (strcmp(mva->mva_name, match->cf_name) != 0)
+		return 0;
 	if (mva->mva_offset == MVA_OFFSET_DEFAULT ||
 	    mva->mva_irq == MVA_IRQ_DEFAULT)
 		    return 0;
