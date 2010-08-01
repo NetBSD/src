@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.15 2010/07/12 07:54:12 kiyohara Exp $
+# $NetBSD: Makefile,v 1.16 2010/08/01 06:24:30 kiyohara Exp $
 
 SUBDIR=		libmesa .WAIT
 
@@ -11,7 +11,7 @@ SUBDIR+=	mach64 mga r128 r200 r300 r600 radeon
 .elif ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
 SUBDIR+=	i810 i915 i965 mach64 mga r128 r200 r300 r600 radeon \
 	savage sis tdfx unichrome
-.elif ${MACHINE} == "prep"
+.elif ${MACHINE} == "prep" || ${MACHINE} == "bebox"
 SUBDIR+=	mga
 .endif
 
