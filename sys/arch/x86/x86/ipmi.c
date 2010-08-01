@@ -1,4 +1,4 @@
-/*	$NetBSD: ipmi.c,v 1.48 2010/08/01 08:16:14 mlelstv Exp $ */
+/*	$NetBSD: ipmi.c,v 1.49 2010/08/01 15:42:19 mlelstv Exp $ */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.48 2010/08/01 08:16:14 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.49 2010/08/01 15:42:19 mlelstv Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1555,6 +1555,8 @@ ipmi_get_sensor_limits(struct ipmi_softc *sc, struct ipmi_sensor *psensor,
 	bool failure;
 	int	rxlen;
 	uint8_t	data[32];
+	uint32_t prop_critmax, prop_warnmax, prop_critmin, prop_warnmin;
+	int32_t *pcritmax, *pwarnmax, *pcritmin, *pwarnmin;
 
 	*props &= ~(PROP_CRITMIN | PROP_CRITMAX | PROP_WARNMIN | PROP_WARNMAX);
 	data[0] = psensor->i_num;
@@ -1570,29 +1572,52 @@ ipmi_get_sensor_limits(struct ipmi_softc *sc, struct ipmi_sensor *psensor,
 	dbg_printf(25, "recvdata: %.2x %.2x %.2x %.2x %.2x %.2x %.2x\n",
 	    data[0], data[1], data[2], data[3], data[4], data[5], data[6]);
 
+	switch (s1->linear & 0x7f) {
+	case 7: /* 1/x sensor, exchange upper and lower limits */
+		prop_critmax = PROP_CRITMIN;
+		prop_warnmax = PROP_WARNMIN;
+		prop_critmin = PROP_CRITMAX;
+		prop_warnmin = PROP_WARNMAX;
+		pcritmax = &limits->sel_critmin;
+		pwarnmax = &limits->sel_warnmin;
+		pcritmin = &limits->sel_critmax;
+		pwarnmin = &limits->sel_warnmax;
+		break;
+	default:
+		prop_critmax = PROP_CRITMAX;
+		prop_warnmax = PROP_WARNMAX;
+		prop_critmin = PROP_CRITMIN;
+		prop_warnmin = PROP_WARNMIN;
+		pcritmax = &limits->sel_critmax;
+		pwarnmax = &limits->sel_warnmax;
+		pcritmin = &limits->sel_critmin;
+		pwarnmin = &limits->sel_warnmin;
+		break;
+	}
+
 	if (data[0] & 0x20 && data[6] != 0xff) {
-		limits->sel_critmax = ipmi_convert_sensor(&data[6], psensor);
-		*props |= PROP_CRITMAX;
+		*pcritmax = ipmi_convert_sensor(&data[6], psensor);
+		*props |= prop_critmax;
 	}
 	if (data[0] & 0x10 && data[5] != 0xff) {
-		limits->sel_critmax = ipmi_convert_sensor(&data[5], psensor);
-		*props |= PROP_CRITMAX;
+		*pcritmax = ipmi_convert_sensor(&data[5], psensor);
+		*props |= prop_critmax;
 	}
 	if (data[0] & 0x08 && data[4] != 0xff) {
-		limits->sel_warnmax = ipmi_convert_sensor(&data[4], psensor);
-		*props |= PROP_WARNMAX;
+		*pwarnmax = ipmi_convert_sensor(&data[4], psensor);
+		*props |= prop_warnmax;
 	}
 	if (data[0] & 0x04 && data[3] != 0x00) {
-		limits->sel_critmin = ipmi_convert_sensor(&data[3], psensor);
-		*props |= PROP_CRITMIN;
+		*pcritmin = ipmi_convert_sensor(&data[3], psensor);
+		*props |= prop_critmin;
 	}
 	if (data[0] & 0x02 && data[2] != 0x00) {
-		limits->sel_critmin = ipmi_convert_sensor(&data[2], psensor);
-		*props |= PROP_CRITMIN;
+		*pcritmin = ipmi_convert_sensor(&data[2], psensor);
+		*props |= prop_critmin;
 	}
 	if (data[0] & 0x01 && data[1] != 0x00) {
-		limits->sel_warnmin = ipmi_convert_sensor(&data[1], psensor);
-		*props |= PROP_WARNMIN;
+		*pwarnmin = ipmi_convert_sensor(&data[1], psensor);
+		*props |= prop_warnmin;
 	}
 	return;
 }
