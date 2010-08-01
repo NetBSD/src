@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1424 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1425 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -699,3 +699,4 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		[tsutsui 20100731]
 	bebox: Support xserver.  It tested only s3(TRIO 64V+).
 		[kiyohara 20100801]
+	tests: Convert the sort tests to ATF.  [jmmv 20100801]
