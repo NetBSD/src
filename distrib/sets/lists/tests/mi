@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.126 2010/07/31 17:12:53 pooka Exp $
+# $NetBSD: mi,v 1.127 2010/08/01 16:43:57 jmmv Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1715,6 +1715,13 @@
 ./usr/tests/util/sh/t_set_e			tests-util-tests
 ./usr/tests/util/sh/t_varquote			tests-util-tests
 ./usr/tests/util/sh/t_wait			tests-util-tests
+./usr/tests/util/sort				tests-util-tests
+./usr/tests/util/sort/Atffile			tests-util-tests
+./usr/tests/util/sort/d_any_char_dflag_out.txt	tests-util-tests
+./usr/tests/util/sort/d_any_char_fflag_out.txt	tests-util-tests
+./usr/tests/util/sort/d_any_char_iflag_out.txt	tests-util-tests
+./usr/tests/util/sort/d_any_char_in.txt		tests-util-tests
+./usr/tests/util/sort/t_sort			tests-util-tests
 ./usr/tests/util/systrace			tests-obsolete		obsolete
 ./usr/tests/util/systrace/Atffile		tests-obsolete		obsolete
 ./usr/tests/util/systrace/id.policy		tests-obsolete		obsolete
@@ -1727,7 +1734,7 @@
 ./usr/tests/util/t_expr				tests-util-tests
 ./usr/tests/util/t_gzip				tests-util-tests
 ./usr/tests/util/t_pax				tests-util-tests
-./usr/tests/util/t_sort				tests-util-tests
+./usr/tests/util/t_sort				tests-obsolete		obsolete
 ./usr/tests/util/t_tar				tests-util-tests
 ./usr/tests/util/xlint				tests-util-tests
 ./usr/tests/util/xlint/Atffile			tests-util-tests
