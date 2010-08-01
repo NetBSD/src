@@ -1,4 +1,4 @@
-/*	$NetBSD: pucdata.c,v 1.68 2010/07/13 23:46:19 msaitoh Exp $	*/
+/*	$NetBSD: pucdata.c,v 1.69 2010/08/01 18:50:24 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Christopher G. Demetriou.  All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pucdata.c,v 1.68 2010/07/13 23:46:19 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pucdata.c,v 1.69 2010/08/01 18:50:24 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -202,6 +202,118 @@ const struct puc_device_description puc_devices[] = {
 	},
 
 	/*
+	 * Comtrol
+	 */
+	{   "Comtrol RocketPort 550/8 RJ11 part A",
+	    {	PCI_VENDOR_COMTROL, 0x8010, 0, 0 },
+	    {	0xffff,	0xffff,	0,	0 },
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ * 4},
+		{ PUC_PORT_TYPE_COM, 0x10, 0x08, COM_FREQ * 4},
+		{ PUC_PORT_TYPE_COM, 0x10, 0x10, COM_FREQ * 4},
+		{ PUC_PORT_TYPE_COM, 0x10, 0x18, COM_FREQ * 4},
+	    },
+	},
+	{   "Comtrol RocketPort 550/8 RJ11 part B",
+	    {	PCI_VENDOR_COMTROL, 0x8011, 0, 0 },
+	    {	0xffff,	0xffff,	0,	0 },
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ * 4},
+		{ PUC_PORT_TYPE_COM, 0x10, 0x08, COM_FREQ * 4},
+		{ PUC_PORT_TYPE_COM, 0x10, 0x10, COM_FREQ * 4},
+		{ PUC_PORT_TYPE_COM, 0x10, 0x18, COM_FREQ * 4},
+	    },
+	},
+	{   "Comtrol RocketPort 550/8 Octa part A",
+	    {	PCI_VENDOR_COMTROL, 0x8012, 0, 0 },
+	    {	0xffff,	0xffff,	0,	0 },
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ * 4},
+		{ PUC_PORT_TYPE_COM, 0x10, 0x08, COM_FREQ * 4},
+		{ PUC_PORT_TYPE_COM, 0x10, 0x10, COM_FREQ * 4},
+		{ PUC_PORT_TYPE_COM, 0x10, 0x18, COM_FREQ * 4},
+	    },
+	},
+	{   "Comtrol RocketPort 550/8 Octa part B",
+	    {	PCI_VENDOR_COMTROL, 0x8013, 0, 0 },
+	    {	0xffff,	0xffff,	0,	0 },
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ * 4},
+		{ PUC_PORT_TYPE_COM, 0x10, 0x08, COM_FREQ * 4},
+		{ PUC_PORT_TYPE_COM, 0x10, 0x10, COM_FREQ * 4},
+		{ PUC_PORT_TYPE_COM, 0x10, 0x18, COM_FREQ * 4},
+	    },
+	},
+	{   "Comtrol RocketPort 550/4 RJ45",
+	    {	PCI_VENDOR_COMTROL, 0x8014, 0, 0 },
+	    {	0xffff,	0xffff,	0,	0 },
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ * 4},
+		{ PUC_PORT_TYPE_COM, 0x10, 0x08, COM_FREQ * 4},
+		{ PUC_PORT_TYPE_COM, 0x10, 0x10, COM_FREQ * 4},
+		{ PUC_PORT_TYPE_COM, 0x10, 0x18, COM_FREQ * 4},
+	    },
+	},
+	{   "Comtrol RocketPort 550/Quad",
+	    {	PCI_VENDOR_COMTROL, 0x8015, 0, 0 },
+	    {	0xffff,	0xffff,	0,	0 },
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ * 4},
+		{ PUC_PORT_TYPE_COM, 0x10, 0x08, COM_FREQ * 4},
+		{ PUC_PORT_TYPE_COM, 0x10, 0x10, COM_FREQ * 4},
+		{ PUC_PORT_TYPE_COM, 0x10, 0x18, COM_FREQ * 4},
+	    },
+	},
+	{   "Comtrol RocketPort 550/16 part A",
+	    {	PCI_VENDOR_COMTROL, 0x8016, 0, 0 },
+	    {	0xffff,	0xffff,	0,	0 },
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ * 4},
+		{ PUC_PORT_TYPE_COM, 0x10, 0x08, COM_FREQ * 4},
+		{ PUC_PORT_TYPE_COM, 0x10, 0x10, COM_FREQ * 4},
+		{ PUC_PORT_TYPE_COM, 0x10, 0x18, COM_FREQ * 4},
+	    },
+	},
+	{   "Comtrol RocketPort 550/16 part B",
+	    {	PCI_VENDOR_COMTROL, 0x8017, 0, 0 },
+	    {	0xffff,	0xffff,	0,	0 },
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ * 4},
+		{ PUC_PORT_TYPE_COM, 0x10, 0x08, COM_FREQ * 4},
+		{ PUC_PORT_TYPE_COM, 0x10, 0x10, COM_FREQ * 4},
+		{ PUC_PORT_TYPE_COM, 0x10, 0x18, COM_FREQ * 4},
+		{ PUC_PORT_TYPE_COM, 0x10, 0x20, COM_FREQ * 4},
+		{ PUC_PORT_TYPE_COM, 0x10, 0x28, COM_FREQ * 4},
+		{ PUC_PORT_TYPE_COM, 0x10, 0x30, COM_FREQ * 4},
+		{ PUC_PORT_TYPE_COM, 0x10, 0x38, COM_FREQ * 4},
+		{ PUC_PORT_TYPE_COM, 0x10, 0x40, COM_FREQ * 4},
+		{ PUC_PORT_TYPE_COM, 0x10, 0x48, COM_FREQ * 4},
+		{ PUC_PORT_TYPE_COM, 0x10, 0x50, COM_FREQ * 4},
+		{ PUC_PORT_TYPE_COM, 0x10, 0x58, COM_FREQ * 4},
+	    },
+	},
+	{   "Comtrol RocketPort 550/8 part A",
+	    {	PCI_VENDOR_COMTROL, 0x8018, 0, 0 },
+	    {	0xffff,	0xffff,	0,	0 },
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ * 4},
+		{ PUC_PORT_TYPE_COM, 0x10, 0x08, COM_FREQ * 4},
+		{ PUC_PORT_TYPE_COM, 0x10, 0x10, COM_FREQ * 4},
+		{ PUC_PORT_TYPE_COM, 0x10, 0x18, COM_FREQ * 4},
+	    },
+	},
+	{   "Comtrol RocketPort 550/8 part B",
+	    {	PCI_VENDOR_COMTROL, 0x8019, 0, 0 },
+	    {	0xffff,	0xffff,	0,	0 },
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ * 4},
+		{ PUC_PORT_TYPE_COM, 0x10, 0x08, COM_FREQ * 4},
+		{ PUC_PORT_TYPE_COM, 0x10, 0x10, COM_FREQ * 4},
+		{ PUC_PORT_TYPE_COM, 0x10, 0x18, COM_FREQ * 4},
+	    },
+	},
+
+	/*
 	 * Decision PCCOM PCI series. PLX 9052 with 1 or 2 16554 UARTS
 	 */
 	/* Decision Computer Inc PCCOM 2 Port RS232/422/485: 2S */
@@ -361,6 +473,26 @@ const struct puc_device_description puc_devices[] = {
 	    },
 	},
 
+	/* Lava Computers 2SP-PCI and Quattro-PCI serial ports */
+	{   "Lava Computers Quattro A",
+	    {	PCI_VENDOR_LAVA,	0x0101,	0,	0	},
+	    {	0xffff,	0xfffc,	0,	0	},
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x14, 0x00, COM_FREQ },
+	    },
+	},
+
+	/* Lava Computers 2SP-PCI and Quattro-PCI serial ports */
+	{   "Lava Computers Quattro B",
+	    {	PCI_VENDOR_LAVA,	0x0102,	0,	0	},
+	    {	0xffff,	0xfffc,	0,	0	},
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x14, 0x00, COM_FREQ },
+	    },
+	},
+
 	/* Lava Computers DSerial PCI serial ports */
 	{   "Lava Computers serial port",
 	    {	PCI_VENDOR_LAVA,	0x0110,	0,	0	},
@@ -371,8 +503,18 @@ const struct puc_device_description puc_devices[] = {
 	},
 
 	/* Lava Computers Quattro-PCI serial ports */
-	{   "Lava Quattro-PCI 4-port serial",
+	{   "Lava Quattro-PCI A 4-port serial",
 	    {   PCI_VENDOR_LAVA, 0x0120, 0,	0	},
+	    {   0xffff, 0xfffc, 0,	0	},
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x14, 0x00, COM_FREQ },
+	    },
+	},
+
+	/* Lava Computers Quattro-PCI serial ports */
+	{   "Lava Quattro-PCI B 4-port serial",
+	    {   PCI_VENDOR_LAVA, 0x0121, 0,	0	},
 	    {   0xffff, 0xfffc, 0,	0	},
 	    {
 		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
@@ -383,6 +525,18 @@ const struct puc_device_description puc_devices[] = {
 	/* Lava Computers Octopus-550 serial ports */
 	{   "Lava Computers Octopus-550 8-port serial",
 	    {	PCI_VENDOR_LAVA,	0x0180,	0,	0	},
+	    {	0xffff,	0xfffc,	0,	0	},
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x14, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x1c, 0x00, COM_FREQ },
+	    },
+	},
+
+	/* Lava Computers Octopus-550 serial ports */
+	{   "Lava Computers Octopus-550 B 8-port serial",
+	    {	PCI_VENDOR_LAVA,	0x0181,	0,	0	},
 	    {	0xffff,	0xfffc,	0,	0	},
 	    {
 		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
@@ -688,7 +842,28 @@ const struct puc_device_description puc_devices[] = {
 	    },
 	},
 
-       /* NetMos 6S PCI NM9865 : 4S */
+       /* NetMos 2S PCI NM9865 : 2S */
+       {   "NetMos NM9865 2 UART",
+	    {	PCI_VENDOR_NETMOS,	0x9865,	0xa000,	0x3002	},
+	    {	0xffff,	0xffff,	0xffff,	0xffff	},
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x14, 0x00, COM_FREQ },
+	    },
+	},
+
+       /* NetMos 3S PCI NM9865 : 3S */
+       {   "NetMos NM9865 3 UART",
+	    {	PCI_VENDOR_NETMOS,	0x9865,	0xa000,	0x3003	},
+	    {	0xffff,	0xffff,	0xffff,	0xffff	},
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x14, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x00, COM_FREQ },
+	    },
+	},
+
+       /* NetMos 4S PCI NM9865 : 4S */
        {   "NetMos NM9865 4 UART",
 	    {	PCI_VENDOR_NETMOS,	0x9865,	0xa000,	0x3004	},
 	    {	0xffff,	0xffff,	0xffff,	0xffff	},
@@ -697,6 +872,37 @@ const struct puc_device_description puc_devices[] = {
 		{ PUC_PORT_TYPE_COM, 0x14, 0x00, COM_FREQ },
 		{ PUC_PORT_TYPE_COM, 0x18, 0x00, COM_FREQ },
 		{ PUC_PORT_TYPE_COM, 0x1c, 0x00, COM_FREQ },
+	    },
+	},
+
+       /* NetMos PCI NM9865 : 1S 1P */
+       {   "NetMos NM9865 Single UART and Single LPT",
+	    {	PCI_VENDOR_NETMOS,	0x9865,	0xa000,	0x3011	},
+	    {	0xffff,	0xffff,	0xffff,	0xffff	},
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_LPT, 0x14, 0x00, 0x00 },
+	    },
+	},
+
+       /* NetMos PCI NM9865 : 2S 1P */
+       {   "NetMos NM9865 Dual UART and Single LPT",
+	    {	PCI_VENDOR_NETMOS,	0x9865,	0xa000,	0x3012	},
+	    {	0xffff,	0xffff,	0xffff,	0xffff	},
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x14, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_LPT, 0x18, 0x00, 0x00 },
+	    },
+	},
+
+       /* NetMos PCI NM9865 : 2P */
+       {   "NetMos NM9865 Dual LPT",
+	    {	PCI_VENDOR_NETMOS,	0x9865,	0xa000,	0x3020	},
+	    {	0xffff,	0xffff,	0xffff,	0xffff	},
+	    {
+		{ PUC_PORT_TYPE_LPT, 0x10, 0x00, 0x00 },
+		{ PUC_PORT_TYPE_LPT, 0x14, 0x00, 0x00 },
 	    },
 	},
 
@@ -1794,6 +2000,16 @@ const struct puc_device_description puc_devices[] = {
 		{ PUC_PORT_TYPE_COM, 0x14, 0x00, COM_FREQ * 8 },
 		{ PUC_PORT_TYPE_COM, 0x18, 0x00, COM_FREQ * 8 },
 		{ PUC_PORT_TYPE_LPT, 0x1c, 0x00, 0x00 },
+	    },
+	},
+
+	/* VScom PCI-200Li */
+	{   "VScom PCI-200Li",
+	    {	PCI_VENDOR_TITAN, PCI_PRODUCT_TITAN_VSCOM_PCI200LI,	0, 0 },
+	    {	0xffff, 0xffff,						0, 0 },
+	    {
+		{ PUC_PORT_TYPE_COM, 0x20, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x20, 0x08, COM_FREQ },
 	    },
 	},
 
