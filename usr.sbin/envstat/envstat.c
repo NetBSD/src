@@ -1,4 +1,4 @@
-/* $NetBSD: envstat.c,v 1.77 2010/02/15 22:37:14 pgoyette Exp $ */
+/* $NetBSD: envstat.c,v 1.78 2010/08/01 15:39:52 mlelstv Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: envstat.c,v 1.77 2010/02/15 22:37:14 pgoyette Exp $");
+__RCSID("$NetBSD: envstat.c,v 1.78 2010/08/01 15:39:52 mlelstv Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -895,7 +895,7 @@ do {								\
 
 				if (sensor->critmin_value) {
 					(void)printf( "%*u ", (int)ilen,
-					    sensor->warnmax_value);
+					    sensor->critmin_value);
 					ilen = 8;
 				} else
 					ilen += 9;
