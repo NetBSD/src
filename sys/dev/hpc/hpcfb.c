@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcfb.c,v 1.56 2010/06/18 09:11:44 tsutsui Exp $	*/
+/*	$NetBSD: hpcfb.c,v 1.57 2010/08/01 02:43:12 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpcfb.c,v 1.56 2010/06/18 09:11:44 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpcfb.c,v 1.57 2010/08/01 02:43:12 tsutsui Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_hpcfb.h"
@@ -156,7 +156,6 @@ struct hpcfb_softc {
 	struct	hpcfb_devconfig *sc_dc;	/* device configuration */
 	const struct hpcfb_accessops	*sc_accessops;
 	void *sc_accessctx;
-	void *sc_powerhook;	/* power management hook */
 	device_t sc_wsdisplay;
 	int sc_screen_resumed;
 	int sc_polling;
@@ -343,17 +342,6 @@ hpcfbattach(device_t parent, device_t self, void *aux)
 		    "hpcfb scroll support disabled\n");
 	}
 #endif /* HPCFB_JUMP */
-
-	/*
-	 * apmdev(4) uses dopowerhooks(9), apm(4) uses pmf(9), and the
-	 * two apm drivers are mutually exclusive.  Register power
-	 * hooks with both.
-	 */
-	sc->sc_powerhook = powerhook_establish(device_xname(sc->sc_dev),
-	    hpcfb_power, sc);
-	if (sc->sc_powerhook == NULL)
-		aprint_error_dev(self,
-				 "WARNING: unable to establish power hook\n");
 
 	if (!pmf_device_register(self, hpcfb_suspend, hpcfb_resume))
 		aprint_error_dev(self, "unable to establish power handler\n");
