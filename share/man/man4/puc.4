@@ -1,4 +1,4 @@
-.\" $NetBSD: puc.4,v 1.32 2010/07/13 23:46:19 msaitoh Exp $
+.\" $NetBSD: puc.4,v 1.33 2010/08/01 18:50:25 msaitoh Exp $
 .\"
 .\" Copyright (c) 1998 Christopher G. Demetriou
 .\" All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\" <<Id: LICENSE,v 1.2 2000/06/14 15:57:33 cgd Exp>>
 .\"
-.Dd July 14, 2010
+.Dd August 1, 2010
 .Dt PUC 4
 .Os
 .Sh NAME
@@ -72,6 +72,9 @@ The driver currently supports the following cards:
 .It Tn "Boca Research Turbo Serial 658 (8 port serial)"
 .It Tn "Chase Research / Perle PCI-FAST4 (4 port serial)"
 .It Tn "Chase Research / Perle PCI-FAST8 (8 port serial)"
+.It Tn "Comtrol RocketPort 550/4 series (4 port serial)"
+.It Tn "Comtrol RocketPort 550/8 series (8 port serial)"
+.It Tn "Comtrol RocketPort 550/16 series (16 port serial)"
 .It Tn "Decision Computer Inc PCCOM PCI 2 Port (2 port serial)"
 .It Tn "Decision Computer Inc PCCOM PCI 4 Port (4 port serial)"
 .It Tn "Decision Computer Inc PCCOM PCI 8 Port (8 port serial)"
@@ -92,6 +95,7 @@ The driver currently supports the following cards:
 .It Tn "I-O DATA RSA-PCI2/P8 (8 port serial)"
 .It Tn "Lava Computers 2SP-PCI (single parallel)"
 .It Tn "Lava Computers Octopus (8 port serial)"
+.It Tn "Lava Computers Quatro-PCI (4 port serial)"
 .It Tn "Lava Computers dual serial"
 .It Tn "Middle Digital, Inc. Weasel serial port"
 .It Tn "Moxa Technologies SmartIO C104H/PCI (4 port serial)"
@@ -112,6 +116,11 @@ The driver currently supports the following cards:
 .It Tn "NetMos 4S1P PCI NM9845 (4 port serial and single parallel)"
 .It Tn "NetMos NM9835 (dual parallel and single serial)"
 .It Tn "NetMos NM9835 UART (1 port serial)"
+.It Tn "NetMos NM9865 Single UART and Single LPT"
+.It Tn "NetMos NM9865 Dual UART and Single LPT"
+.It Tn "NetMos NM9865 Dual LPT"
+.It Tn "NetMos NM9865 2 UART (2 port serial)"
+.It Tn "NetMos NM9865 3 UART (3 port serial)"
 .It Tn "NetMos NM9865 4 UART (4 port serial)"
 .It Tn "NetMos NM9865 UART (1 port serial)"
 .It Tn "NetMos NM9901 PCIe (single parallel)"
@@ -154,6 +163,7 @@ The driver currently supports the following cards:
 .It Tn "VScom PCI-200H (dual serial)"
 .It Tn "VScom PCI-200HV2 (dual serial)"
 .It Tn "VScom PCI-200L (dual serial)"
+.It Tn "VScom PCI-200Li (dual serial)"
 .It Tn "VScom PCI-210L (2 port serial and 1 port parallel)"
 .It Tn "VScom PCI-400 (4 port serial)"
 .It Tn "VScom PCI-400L (4 port serial)"
