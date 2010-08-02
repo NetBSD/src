@@ -1,4 +1,4 @@
-/*	$NetBSD: fenv.h,v 1.1 2010/07/31 21:47:53 joerg Exp $	*/
+/*	$NetBSD: fenv.h,v 1.2 2010/08/02 17:49:04 joerg Exp $	*/
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -49,7 +49,7 @@ int	feholdexcept(fenv_t *);
 int	fesetenv(const fenv_t *);
 int	feupdateenv(const fenv_t *);
 
-#if defined(_NETBSD_SOURCE) || (_GNU_SOURCE)
+#if defined(_NETBSD_SOURCE) || defined(_GNU_SOURCE)
 
 int	feenableexcept(int mask);
 int	fedisableexcept(int mask);
