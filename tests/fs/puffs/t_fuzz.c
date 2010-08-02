@@ -1,4 +1,4 @@
-/*	$NetBSD: t_fuzz.c,v 1.1 2010/07/31 17:11:45 pooka Exp $	*/
+/*	$NetBSD: t_fuzz.c,v 1.2 2010/08/02 09:44:23 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -202,6 +202,8 @@ respondthread(void *arg)
 			pthread_mutex_lock(&damtx);
 		}
 	}
+
+	return NULL;
 }
 
 static void
