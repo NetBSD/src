@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.637 2010/07/31 16:23:15 tsutsui Exp $
+#	$NetBSD: bsd.own.mk,v 1.638 2010/08/02 07:08:26 jmmv Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -1075,5 +1075,7 @@ _MKTARGET_YACC?=	${_MKMSG_YACC} ${.CURDIR:T}/${.TARGET}
 .if ${MKMANDOC} == "yes"
 TARGETS+=	lintmanpages
 .endif
+
+TESTSBASE=	/usr/tests
 
 .endif	# !defined(_BSD_OWN_MK_)
