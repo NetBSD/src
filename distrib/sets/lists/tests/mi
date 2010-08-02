@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.127 2010/08/01 16:43:57 jmmv Exp $
+# $NetBSD: mi,v 1.128 2010/08/02 10:29:58 pooka Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -252,6 +252,7 @@
 ./usr/libdata/debug/usr/tests/kernel/kqueue/write/t_ttypty.debug	tests-kernel-tests	debug,atf
 ./usr/libdata/debug/usr/tests/kernel/t_extattrctl.debug			tests-kernel-tests	debug,atf
 ./usr/libdata/debug/usr/tests/kernel/t_extent.debug			tests-kernel-tests	debug,atf
+./usr/libdata/debug/usr/tests/kernel/t_filedesc.debug			tests-kernel-tests	debug,atf
 ./usr/libdata/debug/usr/tests/kernel/t_lock.debug			tests-kernel-tests	debug,atf
 ./usr/libdata/debug/usr/tests/kernel/t_lwpctl.debug			tests-kernel-tests	debug,atf
 ./usr/libdata/debug/usr/tests/kernel/t_mkdir.debug			tests-kernel-tests	debug,atf
@@ -1362,6 +1363,7 @@
 ./usr/tests/kernel/kqueue/write/t_ttypty	tests-kernel-tests		atf
 ./usr/tests/kernel/t_extattrctl			tests-kernel-tests		atf
 ./usr/tests/kernel/t_extent			tests-kernel-tests		atf
+./usr/tests/kernel/t_filedesc			tests-kernel-tests		atf
 ./usr/tests/kernel/t_lock			tests-kernel-tests		atf
 ./usr/tests/kernel/t_lwpctl			tests-kernel-tests		atf
 ./usr/tests/kernel/t_mkdir			tests-kernel-tests		atf
