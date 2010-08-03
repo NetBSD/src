@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ntwoc_isa.c,v 1.22 2009/11/27 20:56:28 dsl Exp $	*/
+/*	$NetBSD: if_ntwoc_isa.c,v 1.23 2010/08/03 14:06:10 jakllsch Exp $	*/
 /*
  * Copyright (c) 1999 Christian E. Hopps
  * Copyright (c) 1996 John Hay.
@@ -29,11 +29,11 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: if_ntwoc_isa.c,v 1.22 2009/11/27 20:56:28 dsl Exp $
+ * $Id: if_ntwoc_isa.c,v 1.23 2010/08/03 14:06:10 jakllsch Exp $
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ntwoc_isa.c,v 1.22 2009/11/27 20:56:28 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ntwoc_isa.c,v 1.23 2010/08/03 14:06:10 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -785,17 +785,17 @@ ntwoc_isa_setup_memory(struct sca_softc *sc)
 	for (i = 0; i < sc->sc_numports; i++) {
 		scp = &sc->sc_ports[i];
 		scp->sp_txdesc_p = (bus_addr_t)(j * sc->scu_pagesize);
-		scp->sp_txdesc = (void *)scp->sp_txdesc_p;
+		scp->sp_txdesc = (void *)(uintptr_t)scp->sp_txdesc_p;
 		scp->sp_txbuf_p = scp->sp_txdesc_p;
 		scp->sp_txbuf_p += SCA_BSIZE;
-		scp->sp_txbuf = (void *)scp->sp_txbuf_p;
+		scp->sp_txbuf = (void *)(uintptr_t)scp->sp_txbuf_p;
 		j++;
 
 		scp->sp_rxdesc_p = (bus_addr_t)(j * sc->scu_pagesize);
-		scp->sp_rxdesc = (void *)scp->sp_txdesc_p;
+		scp->sp_rxdesc = (void *)(uintptr_t)scp->sp_txdesc_p;
 		scp->sp_rxbuf_p = scp->sp_rxdesc_p;
 		scp->sp_rxbuf_p += SCA_BSIZE;
-		scp->sp_rxbuf = (void *)scp->sp_rxbuf_p;
+		scp->sp_rxbuf = (void *)(uintptr_t)scp->sp_rxbuf_p;
 		j++;
 	}
 }
