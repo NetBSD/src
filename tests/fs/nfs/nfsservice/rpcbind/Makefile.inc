@@ -1,6 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.1 2010/07/26 15:53:00 pooka Exp $
-
-.PATH: ${.PARSEDIR}
+#	$NetBSD: Makefile.inc,v 1.2 2010/08/03 17:24:45 drochner Exp $
 
 SRCS.rumpnfsd+=	check_bound.c rpcb_stat.c rpcb_svc_4.c rpcbind.c pmap_svc.c \
 		rpcb_svc.c rpcb_svc_com.c security.c util.c 
