@@ -1,4 +1,4 @@
-/* $NetBSD: hdaudioreg.h,v 1.3 2009/09/06 21:38:17 rmind Exp $ */
+/* $NetBSD: hdaudioreg.h,v 1.4 2010/08/03 04:02:21 jakllsch Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -44,6 +44,11 @@
  * High Definition Audio Memory Mapped Configuration Registers
  */
 #define	HDAUDIO_MMIO_GCAP	0x000
+#define	 HDAUDIO_GCAP_64OK(x)		((x) & 1)
+#define	 HDAUDIO_GCAP_NSDO(x)		((((x) & 6) != 0) ? ((x) & 6) : 1)
+#define	 HDAUDIO_GCAP_BSS(x)		(((x) >>  3) & 0x1f)
+#define	 HDAUDIO_GCAP_ISS(x)		(((x) >>  8) & 0x0f)
+#define	 HDAUDIO_GCAP_OSS(x)		(((x) >> 12) & 0x0f)
 #define	HDAUDIO_MMIO_VMIN	0x002
 #define	HDAUDIO_MMIO_VMAJ	0x003
 #define	HDAUDIO_MMIO_OUTPAY	0x004
