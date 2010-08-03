@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2010/07/29 14:47:44 pooka Exp $
+#	$NetBSD: Makefile,v 1.5 2010/08/03 17:24:45 drochner Exp $
 #
 
 .include <bsd.own.mk>
@@ -9,6 +9,7 @@ SRCS=	fstest_ext2fs.c fstest_ffs.c fstest_lfs.c fstest_msdosfs.c	\
 
 WARNS=	3
 
+.PATH: ${.CURDIR}/nfsrpc
 .include "nfsrpc/Makefile.inc"
 
 LIBISPRIVATE=	# yup

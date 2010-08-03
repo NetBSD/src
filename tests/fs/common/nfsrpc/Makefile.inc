@@ -1,7 +1,5 @@
-#	$NetBSD: Makefile.inc,v 1.1 2010/07/26 15:56:45 pooka Exp $
+#	$NetBSD: Makefile.inc,v 1.2 2010/08/03 17:24:45 drochner Exp $
 #
-
-.PATH:	${.PARSEDIR}
 
 # libc rpc using rump syscalls
 SRCS+=	bindresvport.c clnt_bcast.c clnt_dg.c clnt_generic.c clnt_vc.c \
