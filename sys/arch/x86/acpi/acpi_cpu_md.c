@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_md.c,v 1.3 2010/07/23 13:54:21 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_md.c,v 1.4 2010/08/04 16:16:55 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,11 +27,12 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.3 2010/07/23 13:54:21 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.4 2010/08/04 16:16:55 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
 #include <sys/kcore.h>
+#include <sys/xcall.h>
 
 #include <x86/cpu.h>
 #include <x86/cpuvar.h>
@@ -143,14 +144,13 @@ acpicpu_md_idle_start(void)
 	x86_cpu_idle_set(acpicpu_cstate_idle, "acpi");
 	x86_enable_intr();
 
-	DELAY(10000);
-
 	return 0;
 }
 
 int
 acpicpu_md_idle_stop(void)
 {
+	uint64_t xc;
 
 	KASSERT(native_idle != NULL);
 	KASSERT(native_idle_text[0] != '\0');
@@ -159,7 +159,12 @@ acpicpu_md_idle_stop(void)
 	x86_cpu_idle_set(native_idle, native_idle_text);
 	x86_enable_intr();
 
-	DELAY(10000);
+	/*
+	 * Run a cross-call to ensure that all CPUs are
+	 * out from the ACPI idle-loop before detachment.
+	 */
+	xc = xc_broadcast(0, (xcfunc_t)nullop, NULL, NULL);
+	xc_wait(xc);
 
 	return 0;
 }
