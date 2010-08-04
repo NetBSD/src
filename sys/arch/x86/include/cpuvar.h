@@ -1,4 +1,4 @@
-/* 	$NetBSD: cpuvar.h,v 1.33 2010/07/06 20:50:35 cegger Exp $ */
+/* 	$NetBSD: cpuvar.h,v 1.34 2010/08/04 10:02:11 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2000, 2007 The NetBSD Foundation, Inc.
@@ -79,6 +79,7 @@ extern const struct cpu_functions mp_cpu_funcs;
 #define CPU_ROLE_AP	2
 
 struct cpu_attach_args {
+	int cpu_id;
 	int cpu_number;
 	int cpu_role;
 	const struct cpu_functions *cpu_func;

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.23 2010/07/24 00:45:56 jym Exp $	*/
+/*	$NetBSD: cpu.h,v 1.24 2010/08/04 10:02:11 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -95,6 +95,7 @@ struct cpu_info {
 	int	ci_fpused;		/* XEN: FPU was used by curlwp */
 	cpuid_t ci_cpuid;		/* our CPU ID */
 	int	ci_cpumask;		/* (1 << CPU ID) */
+	uint32_t ci_acpiid;		/* our ACPI/MADT ID */
 	uint32_t ci_initapicid;		/* our intitial APIC ID */
 	struct cpu_data ci_data;	/* MI per-cpu data */
 
