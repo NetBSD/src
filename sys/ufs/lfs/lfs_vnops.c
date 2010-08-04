@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.230 2010/07/29 10:54:51 hannken Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.231 2010/08/04 10:43:53 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.230 2010/07/29 10:54:51 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.231 2010/08/04 10:43:53 hannken Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -275,6 +275,10 @@ lfs_fsync(void *v)
 
 	/* If we're mounted read-only, don't try to sync. */
 	if (fs->lfs_ronly)
+		return 0;
+
+	/* If a removed vnode is being cleaned, no need to sync here. */
+	if ((ap->a_flags & FSYNC_RECLAIM) != 0 && ip->i_mode == 0)
 		return 0;
 
 	/*
@@ -1074,6 +1078,14 @@ lfs_reclaim(void *v)
 	struct inode *ip = VTOI(vp);
 	struct lfs *fs = ip->i_lfs;
 	int error;
+
+	/*
+	 * The inode must be freed and updated before being removed
+	 * from its hash chain.  Other threads trying to gain a hold
+	 * on the inode will be stalled because it is locked (VI_XLOCK).
+	 */
+	if (ip->i_nlink <= 0 && (vp->v_mount->mnt_flag & MNT_RDONLY) == 0)
+		lfs_vfree(vp, ip->i_number, ip->i_omode);
 
 	mutex_enter(&lfs_lock);
 	LFS_CLR_UINO(ip, IN_ALLMOD);
