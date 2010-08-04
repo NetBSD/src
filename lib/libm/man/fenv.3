@@ -1,4 +1,4 @@
-.\"	$NetBSD: fenv.3,v 1.1 2010/07/31 21:47:53 joerg Exp $
+.\"	$NetBSD: fenv.3,v 1.2 2010/08/04 18:58:28 wiz Exp $
 .\" Copyright (c) 2004 David Schultz <das@FreeBSD.org>
 .\" All rights reserved.
 .\"
@@ -208,18 +208,18 @@ double sqrt(double n) {
 	double x = 1.0;
 	fenv_t env;
 
-	if (isnan(n) || n < 0.0) {
+	if (isnan(n) || n \*[Lt] 0.0) {
 		feraiseexcept(FE_INVALID);
 		return (NAN);
 	}
 	if (isinf(n) || n == 0.0)
 		return (n);
-	feholdexcept(&env);
-	while (fabs((x * x) - n) > DBL_EPSILON * 2 * x)
+	feholdexcept(\*[Am]env);
+	while (fabs((x * x) - n) \*[Gt] DBL_EPSILON * 2 * x)
 		x = (x / 2) + (n / (2 * x));
 	if (x * x == n)
 		feclearexcept(FE_INEXACT);
-	feupdateenv(&env);
+	feupdateenv(\*[Am]env);
 	return (x);
 }
 .Ed
@@ -238,7 +238,7 @@ double sqrt(double n) {
 .Xr fesetexceptflag 3 ,
 .Xr fesetround 3 ,
 .Xr fetestexcept 3 ,
-.Xr feupdateenv 3 ,
+.Xr feupdateenv 3
 .\"Xr fpgetprec 3 ,
 .\"Xr fpsetprec 3
 .Sh STANDARDS
