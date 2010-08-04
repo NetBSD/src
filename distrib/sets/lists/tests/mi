@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.129 2010/08/04 13:22:39 pooka Exp $
+# $NetBSD: mi,v 1.130 2010/08/04 13:41:03 pooka Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -934,7 +934,7 @@
 ./usr/tests/dev/audio/Atffile			tests-fs-tests		atf
 ./usr/tests/dev/audio/h_pad			tests-fs-tests		atf
 ./usr/tests/dev/audio/t_pad			tests-fs-tests		atf
-./usr/tests/dev/audio/t_pad_output.bz2			tests-fs-tests		atf
+./usr/tests/dev/audio/t_pad_output.bz2.uue			tests-fs-tests		atf
 ./usr/tests/fs					tests-fs-tests
 ./usr/tests/fs/Atffile				tests-fs-tests		atf
 ./usr/tests/fs/h_funcs.subr			tests-fs-tests		atf
