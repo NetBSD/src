@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.244 2010/05/07 17:35:32 christos Exp $
+#	$NetBSD: Makefile,v 1.245 2010/08/04 17:13:33 christos Exp $
 #	from: @(#)Makefile	5.20 (Berkeley) 6/12/93
 
 .include <bsd.own.mk>
@@ -23,7 +23,7 @@ SUBDIR=	ac accton acpitools altq apm apmd arp bad144 bootp \
 	spray srtconfig sti sunlabel sup syslogd tadpolectl tcpdchk \
 	tcpdmatch tcpdump tcpdrop timed tpctl traceroute trpt unlink \
 	usbdevs user videomode vipw veriexecgen vnconfig wake wiconfig \
-	wlanctl wpa \
+	wlanctl \
 	wsconscfg wsfontload wsmoused wsmuxctl zdump zic
 
 .if (${MKKERBEROS} != "no")
