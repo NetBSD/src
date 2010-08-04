@@ -1,4 +1,4 @@
-.\" $NetBSD: wpa_supplicant.conf.5,v 1.1 2010/08/04 17:12:34 christos Exp $
+.\" $NetBSD: wpa_supplicant.conf.5,v 1.2 2010/08/04 19:11:14 wiz Exp $
 .\"
 .\" Copyright (c) 2005 Sam Leffler <sam@errno.com>
 .\" All rights reserved.
@@ -99,9 +99,10 @@ If version 2 must be announced for correct operation with an
 access point, this value may be set to 2.
 .It Va ap_scan
 Access point scanning and selection control; one of 0, 1 (default), or 2.
-Only setting 1 should be used with the
-.Xr wlan 4
-module; the other settings are for use on other operating systems.
+.\" XXX: which one is good for NetBSD?
+.\"Only setting 1 should be used with the
+.\".Xr wlan 4
+.\"module; the other settings are for use on other operating systems.
 .It Va fast_reauth
 EAP fast re-authentication; either 1 (default) or 0.
 Control fast re-authentication support in EAP methods that support it.
