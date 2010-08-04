@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.771 2010/07/13 11:56:43 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.772 2010/08/04 17:15:24 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -1063,8 +1063,8 @@ Use src/lib/libc/time/tzcode2netbsd to prepare the source tree
 for import.
 
 Package:	wpa_supplicant/hostapd
-Version:	0.6.4
-Current Vers:	0.6.9
+Version:	0.7.2
+Current Vers:	0.7.2
 Maintainer:	Jouni Malinen <jkmaline@cc.hut.fi>
 Archive Site:	http://hostap.epitest.fi/releases/
 Home Page:	http://hostap.epitest.fi/wpa_supplicant/
@@ -1072,7 +1072,7 @@ Mailing List:
 Responsible:	scw, dyoung, christos
 License:	BSD or GPLv2
 Notes:
-See /usr/src/dist/wpa/NetBSD-upgrade for update instructions.
+See /usr/src/external/bsd/wpa/NetBSD-upgrade for update instructions.
 
 Package:	XFree86
 Version:	4.5.0
