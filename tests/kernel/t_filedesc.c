@@ -1,4 +1,4 @@
-/*	$NetBSD: t_filedesc.c,v 1.1 2010/08/02 10:29:48 pooka Exp $	*/
+/*	$NetBSD: t_filedesc.c,v 1.2 2010/08/04 14:26:18 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_filedesc.c,v 1.1 2010/08/02 10:29:48 pooka Exp $");
+__RCSID("$NetBSD: t_filedesc.c,v 1.2 2010/08/04 14:26:18 pooka Exp $");
 
 #include <sys/types.h>
 
@@ -89,7 +89,6 @@ ATF_TC_BODY(getfilerace, tc)
 		iters = DEFAULT_ITERATIONS;
 
 	pthread_create(&pt, NULL, wrkwrk, NULL);
-	atf_tc_expect_signal(-1, "PR kern/43694");
 	for (i = 0; i < iters; i++) {
 		rump_sys_close(fd_wrk);
 		fd_wrk = rump_sys_open("/dev/null", O_RDWR, 0);
@@ -98,9 +97,6 @@ ATF_TC_BODY(getfilerace, tc)
 
 	quit = true;
 	pthread_join(pt, NULL);
-
-	/* XXX: ridiculous */
-	abort();
 }
 
 ATF_TP_ADD_TCS(tp)
