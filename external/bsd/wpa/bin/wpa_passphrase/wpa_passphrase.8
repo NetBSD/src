@@ -1,4 +1,4 @@
-.\" $NetBSD: wpa_passphrase.8,v 1.1 2010/08/04 17:12:34 christos Exp $
+.\" $NetBSD: wpa_passphrase.8,v 1.2 2010/08/04 19:10:50 wiz Exp $
 .\"
 .Dd September 10, 2008
 .Dt WPA_PASSPHRASE 8
@@ -24,7 +24,8 @@ The following arguments must be specified on the command line:
 .It Ar ssid
 The SSID whose passphrase should be derived.
 .It Ar passphrase
-The passphrase to use. If not included on the command line,
+The passphrase to use.
+If not included on the command line,
 passphrase will be read from standard input.
 The passphrase must be 8 to 63 characters in length.
 .El
