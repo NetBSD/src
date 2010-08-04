@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.131 2010/08/04 14:59:39 joerg Exp $
+# $NetBSD: mi,v 1.132 2010/08/04 20:50:30 joerg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1398,10 +1398,10 @@
 ./usr/tests/lib/csu/h_initfini1			tests-lib-tests		atf
 ./usr/tests/lib/csu/h_initfini2			tests-lib-tests		atf
 ./usr/tests/lib/csu/h_initfini3			tests-lib-tests		atf
-./usr/tests/lib/csu/h_initfini3_dso.so		tests-obsolete		obsolete
-./usr/tests/lib/csu/h_initfini3_dso.so.1	tests-obsolete		obsolete
-./usr/tests/lib/csu/libh_initfini3_dso.so	tests-lib-tests		atf
-./usr/tests/lib/csu/libh_initfini3_dso.so.1	tests-lib-tests		atf
+./usr/tests/lib/csu/h_initfini3_dso.so		tests-lib-tests		atf
+./usr/tests/lib/csu/h_initfini3_dso.so.1	tests-lib-tests		atf
+./usr/tests/lib/csu/libh_initfini3_dso.so	tests-obsolete		obsolete
+./usr/tests/lib/csu/libh_initfini3_dso.so.1	tests-obsolete		obsolete
 ./usr/tests/lib/csu/t_crt0			tests-lib-tests		atf
 ./usr/tests/lib/libc				tests-lib-tests
 ./usr/tests/lib/libc/Atffile			tests-lib-tests		atf
