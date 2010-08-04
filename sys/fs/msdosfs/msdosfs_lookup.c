@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_lookup.c,v 1.10.2.1 2007/02/17 23:27:44 tron Exp $	*/
+/*	$NetBSD: msdosfs_lookup.c,v 1.10.2.2 2010/08/04 11:08:18 bouyer Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_lookup.c,v 1.10.2.1 2007/02/17 23:27:44 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_lookup.c,v 1.10.2.2 2010/08/04 11:08:18 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -462,7 +462,7 @@ foundroot:
 		 * Don't allow deleting the root.
 		 */
 		if (blkoff == MSDOSFSROOT_OFS)
-			return EROFS;			/* really? XXX */
+			return EINVAL;
 
 		/*
 		 * Write access to directory required to delete files.
@@ -498,7 +498,7 @@ foundroot:
 			return (EROFS);
 
 		if (blkoff == MSDOSFSROOT_OFS)
-			return EROFS;				/* really? XXX */
+			return EINVAL;
 
 		error = VOP_ACCESS(vdp, VWRITE, cnp->cn_cred, cnp->cn_lwp);
 		if (error)
