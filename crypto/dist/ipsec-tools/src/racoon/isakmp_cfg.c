@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_cfg.c,v 1.12.6.4 2008/11/27 15:25:20 vanhu Exp $	*/
+/*	$NetBSD: isakmp_cfg.c,v 1.12.6.5 2010/08/04 09:23:53 vanhu Exp $	*/
 
 /* Id: isakmp_cfg.c,v 1.55 2006/08/22 18:17:17 manubsd Exp */
 
@@ -114,6 +114,8 @@ static vchar_t *isakmp_cfg_void(struct ph1handle *, struct isakmp_data *);
 #endif
 static vchar_t *isakmp_cfg_addr4(struct ph1handle *, 
 				 struct isakmp_data *, in_addr_t *);
+static vchar_t *isakmp_cfg_addrnet4(struct ph1handle *, 
+				 struct isakmp_data *, in_addr_t *, in_addr_t *);
 static void isakmp_cfg_getaddr4(struct isakmp_data *, struct in_addr *);
 static vchar_t *isakmp_cfg_addr4_list(struct ph1handle *,
 				      struct isakmp_data *, in_addr_t *, int);
@@ -901,8 +903,15 @@ retry_source:
 		break;
 
 	case INTERNAL_IP4_SUBNET:
-		return isakmp_cfg_addr4(iph1, 
-		    attr, &isakmp_cfg_config.network4);
+		if(isakmp_cfg_config.splitnet_count > 0){
+			return isakmp_cfg_addrnet4(iph1, attr,
+						    &isakmp_cfg_config.splitnet_list->network.addr4.s_addr,
+						    &isakmp_cfg_config.splitnet_list->network.mask4.s_addr);
+		}else{
+			plog(LLV_INFO, LOCATION, NULL,
+			     "%s requested but no splitnet in configuration\n",
+			     s_isakmp_cfg_type(type));
+		}
 		break;
 
 	default:
@@ -1040,6 +1049,36 @@ isakmp_cfg_addr4(iph1, attr, addr)
 	
 	return buffer;
 }
+
+static vchar_t *
+isakmp_cfg_addrnet4(iph1, attr, addr, mask)
+	struct ph1handle *iph1;
+	struct isakmp_data *attr;
+	in_addr_t *addr;
+	in_addr_t *mask;
+{
+	vchar_t *buffer;
+	struct isakmp_data *new;
+	size_t len;
+	in_addr_t netbuff[2];
+
+	len = sizeof(netbuff);
+	if ((buffer = vmalloc(sizeof(*attr) + len)) == NULL) {
+		plog(LLV_ERROR, LOCATION, NULL, "Cannot allocate memory\n");
+		return NULL;
+	}
+
+	new = (struct isakmp_data *)buffer->v;
+
+	new->type = attr->type;
+	new->lorv = htons(len);
+	netbuff[0]=*addr;
+	netbuff[1]=*mask;
+	memcpy(new + 1, netbuff, len);
+	
+	return buffer;
+}
+
 
 static vchar_t *
 isakmp_cfg_addr4_list(iph1, attr, addr, nbr)
