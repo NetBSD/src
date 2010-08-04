@@ -58,6 +58,7 @@ struct bsd_driver_data {
 	struct l2_packet_data *sock_xmit;/* raw packet xmit socket */
 	int	route;			/* routing socket for events */
 	char	ifname[IFNAMSIZ+1];	/* interface name */
+	int	flags;
 	unsigned int ifindex;		/* interface index */
 	void	*ctx;
 	struct wpa_driver_capa capa;	/* driver capability */
@@ -893,7 +894,7 @@ wpa_driver_bsd_set_wpa_internal(void *priv, int wpa, int privacy)
 	int ret = 0;
 
 	wpa_printf(MSG_DEBUG, "%s: wpa=%d privacy=%d",
-		__FUNCTION__, wpa, privacy);
+		__func__, wpa, privacy);
 
 	if (!wpa && wpa_driver_bsd_set_wpa_ie(priv, NULL, 0) < 0)
 		ret = -1;
@@ -908,7 +909,7 @@ wpa_driver_bsd_set_wpa_internal(void *priv, int wpa, int privacy)
 static int
 wpa_driver_bsd_set_wpa(void *priv, int enabled)
 {
-	wpa_printf(MSG_DEBUG, "%s: enabled=%d", __FUNCTION__, enabled);
+	wpa_printf(MSG_DEBUG, "%s: enabled=%d", __func__, enabled);
 
 	return wpa_driver_bsd_set_wpa_internal(priv, enabled ? 3 : 0, enabled);
 }
@@ -1169,14 +1170,15 @@ wpa_driver_bsd_event_receive(int sock, void *ctx, void *sock_ctx)
 		case IFAN_DEPARTURE:
 			event.interface_status.ievent = EVENT_INTERFACE_REMOVED;
 		default:
-			return;
+			event.interface_status.ievent = EVENT_INTERFACE_ADDED;
+			break;
 		}
-		wpa_printf(MSG_DEBUG, "RTM_IFANNOUNCE: Interface '%s' %s",
+		wpa_printf(MSG_DEBUG, "RTM_IFANNOUNCE: Interface '%s' %s (%d)",
 			   event.interface_status.ifname,
 			   ifan->ifan_what == IFAN_DEPARTURE ?
-				"removed" : "added");
+				"removed" : "added", ifan->ifan_what);
 		wpa_supplicant_event(ctx, EVENT_INTERFACE_STATUS, &event);
-		break;
+		return;
 	case RTM_IEEE80211:
 		ifan = (struct if_announcemsghdr *) rtm;
 		if (ifan->ifan_index != drv->ifindex)
@@ -1186,16 +1188,22 @@ wpa_driver_bsd_event_receive(int sock, void *ctx, void *sock_ctx)
 		case RTM_IEEE80211_REASSOC:
 			if (drv->is_ap)
 				break;
+			wpa_printf(MSG_DEBUG, "RTM_IEEE80211: (re)assoc (%d)",
+			    ifan->ifan_what);
 			wpa_supplicant_event(ctx, EVENT_ASSOC, NULL);
 			break;
 		case RTM_IEEE80211_DISASSOC:
 			if (drv->is_ap)
 				break;
+			wpa_printf(MSG_DEBUG, "RTM_IEEE80211: disassoc (%d)",
+			    ifan->ifan_what);
 			wpa_supplicant_event(ctx, EVENT_DISASSOC, NULL);
 			break;
 		case RTM_IEEE80211_SCAN:
 			if (drv->is_ap)
 				break;
+			wpa_printf(MSG_DEBUG, "RTM_IEEE80211: scan result (%d)",
+			    ifan->ifan_what);
 			wpa_supplicant_event(ctx, EVENT_SCAN_RESULTS, NULL);
 			break;
 		case RTM_IEEE80211_LEAVE:
@@ -1210,6 +1218,8 @@ wpa_driver_bsd_event_receive(int sock, void *ctx, void *sock_ctx)
 			bsd_new_sta(drv, ctx, join->iev_addr);
 			break;
 		case RTM_IEEE80211_REPLAY:
+			wpa_printf(MSG_DEBUG, "RTM_IEEE80211: replay (%d)",
+			    ifan->ifan_what);
 			/* ignore */
 			break;
 		case RTM_IEEE80211_MICHAEL:
@@ -1225,20 +1235,44 @@ wpa_driver_bsd_event_receive(int sock, void *ctx, void *sock_ctx)
 			wpa_supplicant_event(ctx, EVENT_MICHAEL_MIC_FAILURE,
 				&event);
 			break;
+		default:
+			wpa_printf(MSG_DEBUG, "RTM_IEEE80211: ??? (%d)",
+			    ifan->ifan_what);
+			break;
 		}
 		break;
 	case RTM_IFINFO:
 		ifm = (struct if_msghdr *) rtm;
 		if (ifm->ifm_index != drv->ifindex)
 			break;
-		if ((rtm->rtm_flags & RTF_UP) == 0) {
+		if ((ifm->ifm_flags & IFF_UP) == 0 &&
+		    (drv->flags & IFF_UP) != 0) {
 			os_strlcpy(event.interface_status.ifname, drv->ifname,
 				   sizeof(event.interface_status.ifname));
 			event.interface_status.ievent = EVENT_INTERFACE_REMOVED;
 			wpa_printf(MSG_DEBUG, "RTM_IFINFO: Interface '%s' DOWN",
 				   event.interface_status.ifname);
 			wpa_supplicant_event(ctx, EVENT_INTERFACE_STATUS, &event);
-		}
+		} else if ((ifm->ifm_flags & IFF_UP) != 0 &&
+		    (drv->flags & IFF_UP) == 0) {
+			strlcpy(event.interface_status.ifname, drv->ifname,
+				sizeof(event.interface_status.ifname));
+			event.interface_status.ievent = EVENT_INTERFACE_ADDED;
+			wpa_printf(MSG_DEBUG, "RTM_IFINFO: Interface '%s' UP",
+				   event.interface_status.ifname);
+			wpa_supplicant_event(ctx, EVENT_INTERFACE_STATUS, &event);
+		} else {
+			wpa_printf(MSG_DEBUG, "RTM_IFINFO: Interface '%s' "
+			    "if=%x drv=%x", event.interface_status.ifname,
+			    ifm->ifm_flags, drv->flags);
+ 		}
+		drv->flags = ifm->ifm_flags;
+		break;
+	case RTM_LOSING:
+		wpa_printf(MSG_DEBUG, "RTM_LOSING: %d", rtm->rtm_type);
+		break;
+	default:
+		wpa_printf(MSG_DEBUG, "RTM_???: %d", rtm->rtm_type);
 		break;
 	}
 }

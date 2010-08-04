@@ -15,7 +15,7 @@
 #ifndef OS_H
 #define OS_H
 
-typedef long os_time_t;
+typedef time_t os_time_t;
 
 /**
  * os_sleep - Sleep (sec, usec)
