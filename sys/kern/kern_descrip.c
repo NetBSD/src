@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.203 2010/07/01 02:38:30 rmind Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.204 2010/08/04 14:25:16 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.203 2010/07/01 02:38:30 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.204 2010/08/04 14:25:16 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -853,7 +853,6 @@ fd_alloc(proc_t *p, int want, int *result)
 			KASSERT(i >= NDFDFILE);
 			dt->dt_ff[i] = pool_cache_get(fdfile_cache, PR_WAITOK);
 		}
-		KASSERT(dt->dt_ff[i]->ff_refcnt == 0);
 		KASSERT(dt->dt_ff[i]->ff_file == NULL);
 		fd_used(fdp, i);
 		if (want <= fdp->fd_freefile) {
