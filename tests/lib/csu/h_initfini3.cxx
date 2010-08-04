@@ -12,7 +12,7 @@ main(void)
 	void *handle;
 
 	write(STDOUT_FILENO, msg1, sizeof(msg1) - 1);
-	handle = dlopen("libh_initfini3_dso.so", RTLD_NOW | RTLD_LOCAL);
+	handle = dlopen("h_initfini3_dso.so", RTLD_NOW | RTLD_LOCAL);
 	if (handle == NULL)
 		err(1, "dlopen");
 	write(STDOUT_FILENO, msg2, sizeof(msg2) - 1);
