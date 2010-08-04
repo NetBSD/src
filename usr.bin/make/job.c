@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.124 2006/10/27 21:00:19 dsl Exp $	*/
+/*	$NetBSD: job.c,v 1.124.2.1 2010/08/04 11:04:59 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: job.c,v 1.124 2006/10/27 21:00:19 dsl Exp $";
+static char rcsid[] = "$NetBSD: job.c,v 1.124.2.1 2010/08/04 11:04:59 bouyer Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: job.c,v 1.124 2006/10/27 21:00:19 dsl Exp $");
+__RCSID("$NetBSD: job.c,v 1.124.2.1 2010/08/04 11:04:59 bouyer Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -693,6 +693,7 @@ JobPrintCommand(ClientData cmdp, ClientData jobp)
 	    shutUp = TRUE;
 	    break;
 	case '-':
+	    job->flags |= JOB_IGNERR;
 	    errOff = TRUE;
 	    break;
 	case '+':
@@ -741,7 +742,7 @@ JobPrintCommand(ClientData cmdp, ClientData jobp)
     }
 
     if (errOff) {
-	if ( !(job->flags & JOB_IGNERR) && !noSpecials) {
+	if (!noSpecials) {
 	    if (commandShell->hasErrCtl) {
 		/*
 		 * we don't want the error-control commands showing
@@ -999,7 +1000,7 @@ JobFinish(Job *job, int status)
 		(void)printf("*** [%s] Error code %d%s\n",
 				job->node->name,
 			       WEXITSTATUS(status),
-			       (job->flags & JOB_IGNERR) ? "(ignored)" : "");
+			       (job->flags & JOB_IGNERR) ? " (ignored)" : "");
 		if (job->flags & JOB_IGNERR)
 		    status = 0;
 	    } else if (DEBUG(JOB)) {
@@ -1203,11 +1204,11 @@ Job_CheckCommands(GNode *gn, void (*abortProc)(const char *, ...))
 	    static const char msg[] = ": don't know how to make";
 
 	    if (gn->type & OP_OPTIONAL) {
-		(void)fprintf(stdout, "%s%s %s(ignored)\n", progname,
+		(void)fprintf(stdout, "%s%s %s (ignored)\n", progname,
 		    msg, gn->name);
 		(void)fflush(stdout);
 	    } else if (keepgoing) {
-		(void)fprintf(stdout, "%s%s %s(continuing)\n", progname,
+		(void)fprintf(stdout, "%s%s %s (continuing)\n", progname,
 		    msg, gn->name);
 		(void)fflush(stdout);
   		return FALSE;
