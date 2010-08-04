@@ -1,4 +1,4 @@
-#	$NetBSD: t_pad.sh,v 1.1 2010/08/04 13:15:15 pooka Exp $
+#	$NetBSD: t_pad.sh,v 1.2 2010/08/04 13:49:48 pooka Exp $
 #
 # Copyright (c) 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -36,9 +36,9 @@ pad_output_head()
 pad_output_body()
 {
 
-	atf_check -s exit:0 -o save:expout	\
-	    bunzip2 -c $(atf_get_srcdir)/t_pad_output.bz2
-	atf_check -s exit:0 -o file:expout $(atf_get_srcdir)/h_pad
+	atf_check -s exit:0 uudecode $(atf_get_srcdir)/t_pad_output.bz2.uue
+	atf_check -s exit:0 bunzip2 t_pad_output.bz2
+	atf_check -s exit:0 -o file:t_pad_output $(atf_get_srcdir)/h_pad
 }
 
 atf_init_test_cases()
