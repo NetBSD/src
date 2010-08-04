@@ -1,4 +1,4 @@
-/*	$NetBSD: mpacpi.c,v 1.87 2010/04/27 05:34:14 jruoho Exp $	*/
+/*	$NetBSD: mpacpi.c,v 1.88 2010/08/04 10:02:12 jruoho Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.87 2010/04/27 05:34:14 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.88 2010/08/04 10:02:12 jruoho Exp $");
 
 #include "acpica.h"
 #include "opt_acpi.h"
@@ -383,6 +383,7 @@ mpacpi_config_cpu(ACPI_SUBTABLE_HEADER *hdrp, void *aux)
 				caa.cpu_role = CPU_ROLE_AP;
 			else
 				caa.cpu_role = CPU_ROLE_BP;
+			caa.cpu_id = lapic->ProcessorId;
 			caa.cpu_number = lapic->Id;
 			caa.cpu_func = &mp_cpu_funcs;
 			locs[CPUBUSCF_APID] = caa.cpu_number;
@@ -409,6 +410,7 @@ mpacpi_config_cpu(ACPI_SUBTABLE_HEADER *hdrp, void *aux)
 				caa.cpu_role = CPU_ROLE_AP;
 			else
 				caa.cpu_role = CPU_ROLE_BP;
+			caa.cpu_id = x2apic->Uid;
 			caa.cpu_number = x2apic->LocalApicId;
 			caa.cpu_func = &mp_cpu_funcs;
 			locs[CPUBUSCF_APID] = caa.cpu_number;

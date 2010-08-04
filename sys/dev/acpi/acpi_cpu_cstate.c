@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_cstate.c,v 1.13 2010/07/30 06:11:14 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_cstate.c,v 1.14 2010/08/04 10:02:12 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_cstate.c,v 1.13 2010/07/30 06:11:14 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_cstate.c,v 1.14 2010/08/04 10:02:12 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -717,10 +717,10 @@ acpicpu_cstate_idle(void)
 	acpi_md_OsDisableInterrupt();
 
 	KASSERT(acpicpu_sc != NULL);
-	KASSERT(ci->ci_cpuid < maxcpus);
+	KASSERT(ci->ci_acpiid < maxcpus);
 	KASSERT(ci->ci_ilevel == IPL_NONE);
 
-	sc = acpicpu_sc[ci->ci_cpuid];
+	sc = acpicpu_sc[ci->ci_acpiid];
 
 	if (__predict_false(sc == NULL))
 		goto halt;

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.73 2010/07/24 00:45:56 jym Exp $	*/
+/*	$NetBSD: cpu.c,v 1.74 2010/08/04 10:02:12 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.73 2010/07/24 00:45:56 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.74 2010/08/04 10:02:12 jruoho Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -330,6 +330,7 @@ cpu_attach(device_t parent, device_t self, void *aux)
 	ci->ci_self = ci;
 	sc->sc_info = ci;
 	ci->ci_dev = self;
+	ci->ci_acpiid = caa->cpu_id;
 	ci->ci_cpuid = caa->cpu_number;
 	ci->ci_func = caa->cpu_func;
 
