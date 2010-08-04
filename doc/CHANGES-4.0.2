@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.0.2,v 1.1.2.73 2010/07/22 20:36:12 riz Exp $
+#	$NetBSD: CHANGES-4.0.2,v 1.1.2.74 2010/08/04 11:14:13 bouyer Exp $
 
 A complete list of changes from the NetBSD 4.0.1 release to the NetBSD 4.0.2
 release:
@@ -1054,4 +1054,11 @@ sys/netsmb/subr_mchain.c			1.19 via patch
 	Convert sizes/lengths to unsigned (size_t) or uint32_t
 	(for binary compatibility).
 	[christos, ticket #1398]
+
+sys/coda/coda.h					1.16
+sys/coda/coda_venus.c				1.28
+sys/coda/coda_vnops.c				1.76
+
+	Correct incomplete size checks for the coda ioctls. From Dan Rosenberg.
+	[christos, ticket #1400]
 
