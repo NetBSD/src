@@ -276,10 +276,43 @@ static void wpa_cli_close_connection(void)
 	}
 }
 
+static const char *skip_priority(const char *msg)
+{
+	const char *pos = msg;
+
+	if (*msg != '<')
+		return msg;
+
+	for (pos = msg + 1; isdigit((unsigned char)*pos); pos++)
+		continue;
+
+	if (*pos != '>')
+		return msg;
+
+	return ++pos;
+}
+
+static const char *fmttime(char *buf, size_t buflen)
+{
+	struct timeval tv;
+	struct tm tm;
+	time_t t;
+
+	if (buflen <= 8)
+		return NULL;
+
+	(void)gettimeofday(&tv, NULL);
+	t = (time_t)tv.tv_sec;
+	(void)localtime_r(&t, &tm);
+	(void)strftime(buf, buflen, "%H:%M:%S", &tm);
+	(void)snprintf(buf + 8, buflen - 8, ".%.3d", (int)(tv.tv_usec / 1000));
+	return buf;
+}
 
 static void wpa_cli_msg_cb(char *msg, size_t len)
 {
-	printf("%s\n", msg);
+	char tbuf[32];
+	printf("%s: %s\n", fmttime(tbuf, sizeof(tbuf)), skip_priority(msg));
 }
 
 
@@ -305,7 +338,7 @@ static int _wpa_ctrl_command(struct wpa_ctrl *ctrl, char *cmd, int print)
 	}
 	if (print) {
 		buf[len] = '\0';
-		printf("%s", buf);
+		wpa_cli_msg_cb(buf, 0);
 	}
 	return 0;
 }
@@ -1798,31 +1831,20 @@ static int wpa_cli_exec(const char *program, const char *arg1,
 
 static void wpa_cli_action_process(const char *msg)
 {
-	const char *pos;
-	char *copy = NULL, *id, *pos2;
-
-	pos = msg;
-	if (*pos == '<') {
-		/* skip priority */
-		pos = os_strchr(pos, '>');
-		if (pos)
-			pos++;
-		else
-			pos = msg;
-	}
+ 	const char *pos = skip_priority(msg);
 
 	if (str_match(pos, WPA_EVENT_CONNECTED)) {
 		int new_id = -1;
+		char *id, *copy;
 		os_unsetenv("WPA_ID");
 		os_unsetenv("WPA_ID_STR");
 		os_unsetenv("WPA_CTRL_DIR");
 
 		pos = os_strstr(pos, "[id=");
-		if (pos)
-			copy = os_strdup(pos + 4);
+		copy = pos ? os_strdup(pos + 4) : NULL;
 
 		if (copy) {
-			pos2 = id = copy;
+			char *pos2 = id = copy;
 			while (*pos2 && *pos2 != ' ')
 				pos2++;
 			*pos2++ = '\0';
@@ -1893,7 +1915,7 @@ static void wpa_cli_recv_pending(struct wpa_ctrl *ctrl, int in_read,
 				if (in_read && first)
 					printf("\r");
 				first = 0;
-				printf("%s\n", buf);
+				wpa_cli_msg_cb(buf, 0);
 #ifdef CONFIG_READLINE
 				rl_on_new_line();
 				rl_redisplay();
@@ -2102,14 +2124,14 @@ static void wpa_cli_interactive(void)
 		HIST_ENTRY *h;
 		history_set_pos(0);
 		while ((h = current_history())) {
-			char *p = h->line;
+			const char *p = h->line;
 			while (*p == ' ' || *p == '\t')
 				p++;
 			if (cmd_has_sensitive_data(p)) {
 				h = remove_history(where_history());
 				if (h) {
-					os_free(h->line);
-					os_free(h->data);
+					os_free(__UNCONST(h->line));
+					os_free(__UNCONST(h->data));
 					os_free(h);
 				} else
 					next_history();
