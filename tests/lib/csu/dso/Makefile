@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2010/07/28 13:51:40 joerg Exp $
+# $NetBSD: Makefile,v 1.2 2010/08/04 13:52:23 joerg Exp $
 
 NOMAN=		# defined
 
@@ -7,7 +7,6 @@ NOMAN=		# defined
 LIB=		h_initfini3_dso
 SRCS=		h_initfini3_dso.cxx
 
-TESTSBASE=	/usr/tests
 LIBDIR=		${TESTSBASE}/lib/csu
 SHLIBDIR=	${TESTSBASE}/lib/csu
 SHLIB_MAJOR=	1
