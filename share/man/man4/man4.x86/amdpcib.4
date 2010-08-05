@@ -1,0 +1,42 @@
+.\"	$NetBSD: amdpcib.4,v 1.1 2010/08/05 04:58:27 jruoho Exp $
+.\"
+.\"     $OpenBSD: amdpcib.4,v 1.4 2007/10/08 12:48:21 jmc Exp $
+.\"
+.\" Marc Balmer, 2007. Public Domain.
+.\" Jukka Ruohonen, 2010. Public Domain.
+.\"
+.Dd August 8, 2010
+.Dt AMDPCIB 4 x86
+.Os
+.Sh NAME
+.Nm amdpcib
+.Nd AMD-8111 series LPC bridge and timecounter
+.Sh SYNOPSIS
+.Cd "amdpcib* at pci?"
+.Cd "hpet* at amdpcib?"
+.Cd "isa* at amdpcib?"
+.Sh DESCRIPTION
+The
+.Nm
+driver provides support for the AMD-8111
+.Tn LPC
+bridge and implements a 32/64-bit
+14.3 MHz (or variable) timecounter using the HPET timer.
+.Sh SEE ALSO
+.Xr isa 4 ,
+.Xr pci 4
+.Rs
+.%A Advanced Micro Devices
+.%T AMD-8111 HyperTransport I/O Hub
+.%N Revision 3.03
+.%D July, 2004
+.%U http://support.amd.com/us/ChipsetMotherboard_TechDocs/24674.pdf
+.Re
+.Sh HISTORY
+The
+.Nm
+driver first appeared in
+.Nx 5.0 .
+.Sh AUTHORS
+.An Nicolas Joly
+.Aq njoly@NetBSD.org
