@@ -1,6 +1,6 @@
 #!/bin/sh -e
 #
-# Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2009, 2010  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -14,20 +14,28 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: sign.sh,v 1.3 2009/11/18 23:48:07 tbox Exp
+# Id: sign.sh,v 1.3.16.4 2010/01/18 19:18:35 each Exp
 
 SYSTEMTESTTOP=../..
 . $SYSTEMTESTTOP/conf.sh
 
 RANDFILE=../random.data
 
-zone=example.
-infile=example.db.in
-zonefile=example.db
+for domain in example example.com; do
+	zone=${domain}.
+	infile=${domain}.db.in
+	zonefile=${domain}.db
 
-keyname1=`$KEYGEN -q -r $RANDFILE -a RSASHA1 -b 768 -n zone $zone`
-keyname2=`$KEYGEN -q -r $RANDFILE -a RSASHA1 -b 1024 -f KSK -n zone $zone`
+	keyname1=`$KEYGEN -q -r $RANDFILE -a NSEC3RSASHA1 -b 768 -n zone $zone`
+	keyname2=`$KEYGEN -q -r $RANDFILE -a NSEC3RSASHA1 -b 1024 -f KSK -n zone $zone`
 
-cat $infile $keyname1.key $keyname2.key >$zonefile
+	cat $infile $keyname1.key $keyname2.key > $zonefile
 
-$SIGNER -r $RANDFILE -o $zone $zonefile > /dev/null
+	$SIGNER -3 bebe -r $RANDFILE -o $zone $zonefile > /dev/null 2>&1
+done
+
+# remove "removed" record from example.com, causing the server to
+# send an apparently-invalid NXDOMAIN
+sed '/^removed/d' example.com.db.signed > example.com.db.new
+rm -f example.com.db.signed
+mv example.com.db.new example.com.db.signed

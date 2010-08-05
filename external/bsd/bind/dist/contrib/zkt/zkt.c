@@ -1,4 +1,4 @@
-/*	$NetBSD: zkt.c,v 1.1.1.1 2009/03/22 14:58:13 christos Exp $	*/
+/*	$NetBSD: zkt.c,v 1.1.1.2 2010/08/05 20:01:32 christos Exp $	*/
 
 /*****************************************************************
 **
@@ -46,6 +46,8 @@
 # include "misc.h"
 # include "strlist.h"
 # include "zconf.h"
+# include "domaincmp.h"
+# include "tcap.h"
 #define extern
 # include "zkt.h"
 #undef extern
@@ -72,6 +74,7 @@ static	void	printkeyinfo (const dki_t *dkp, const char *oldpath)
 	{
 		if ( headerflag )
 		{
+			tc_attr (stdout, TC_BOLD, 1);
 			printf ("%-33.33s %5s %3s %3.3s %-7s", "Keyname",
 				"Tag", "Typ", "Status", "Algorit");
 			if ( timeflag )
@@ -82,6 +85,7 @@ static	void	printkeyinfo (const dki_t *dkp, const char *oldpath)
 				printf (" %16s", "Age");
 			if ( lifetimeflag  )
 				printf (" %4s", "LfTm");
+			tc_attr (stdout, TC_BOLD, 0);
 			putchar ('\n');
 		}
 		return;
@@ -95,14 +99,35 @@ static	void	printkeyinfo (const dki_t *dkp, const char *oldpath)
 
 	if ( (kskflag && dki_isksk (dkp)) || (zskflag && !dki_isksk (dkp)) )
 	{
+		int	color;
+
 		if ( ljustflag )
 			printf ("%-33.33s ", dkp->name);
 		else
 			printf ("%33.33s ", dkp->name);
 		printf ("%05d ", dkp->tag);
 		printf ("%3s ", dki_isksk (dkp) ? "KSK" : "ZSK");
+
+		if ( dkp->status == DKI_ACT )
+			color = TC_GREEN;
+		else if ( dkp->status == DKI_PUB )
+			color = TC_BLUE;
+		else if ( dkp->status == DKI_DEP )
+			color = TC_RED;
+		else
+			color = TC_BLACK;
+		tc_attr (stdout, color, 1);
 		printf ("%-3.3s ", dki_statusstr (dkp) );
+		tc_attr (stdout, color, 0);
+
 		printf ("%-7s", dki_algo2sstr(dkp->algo));
+
+		if ( currtime < dkp->time + dkp->lifetime )
+			color = TC_GREEN;
+		else
+			color = TC_BOLD|TC_RED;
+		tc_attr (stdout, color, 1);
+
 		if ( timeflag )
 			printf (" %-20s", time2str (dkp->gentime ? dkp->gentime: dkp->time, 's')); 
 		if ( exptimeflag )
@@ -117,6 +142,7 @@ static	void	printkeyinfo (const dki_t *dkp, const char *oldpath)
 				putchar (' ');
 			printf ("%hdd", dki_lifetimedays (dkp)); 
 		}
+		tc_attr (stdout, color, 0);
 		putchar ('\n');
 	}
 }
@@ -169,6 +195,7 @@ void	zkt_list_keys (const dki_t *data)
 }
 
 #if defined(USE_TREE) && USE_TREE
+# if 0
 static	void	list_trustedkey (const dki_t **nodep, const VISIT which, int depth)
 {
 	const	dki_t	*dkp;
@@ -177,23 +204,54 @@ static	void	list_trustedkey (const dki_t **nodep, const VISIT which, int depth)
 		return;
 
 	dkp = *nodep;
-//fprintf (stderr, "list_trustedkey %d %d %s\n", which, depth, dkp->name);
 	if ( which == INORDER || which == LEAF )
-		while ( dkp )	/* loop through list */
+	{
+// fprintf (stderr, "list_trustedkey order=%d(pre=0,in=1,post=2,leaf=3) depth=%d %s\n", which, depth, dkp->name);
+		/* loop through list */
+		while ( dkp )
 		{
 			if ( (dki_isksk (dkp) || zskflag) &&
 			     (labellist == NULL || isinlist (dkp->name, labellist)) )
 				dki_prt_trustedkey (dkp, stdout);
 			dkp = dkp->next;
 		}
+	}
 }
+# else
+const	dki_t	*parent;
+static	void	list_trustedkey (const dki_t **nodep, const VISIT which, int depth)
+{
+	const	dki_t	*dkp;
+
+	if ( nodep == NULL )
+		return;
+
+	dkp = *nodep;
+	if ( which == INORDER || which == LEAF )
+	{
+// fprintf (stderr, "list_trustedkey order=%d(pre=0,in=1,post=2,leaf=3) depth=%d %s\n", which, depth, dkp->name);
+		if ( labellist && !isinlist (dkp->name, labellist) )
+			return;
+
+		if ( parent == NULL || !issubdomain (dkp->name, parent->name) )
+		{
+			parent = dkp;	
+			/* loop through list */
+			while ( dkp )
+			{
+				if ( (dki_isksk (dkp) || zskflag) )
+					dki_prt_trustedkey (dkp, stdout);
+				dkp = dkp->next;
+			}
+		}
+	}
+}
+# endif
 #endif
 
 void	zkt_list_trustedkeys (const dki_t *data)
 {
-#if !defined(USE_TREE) || !USE_TREE
-	const	dki_t	*dkp;
-#endif
+
 	/* print headline if list is not empty */
 	if ( data && headerflag )
 		printf ("trusted-keys {\n");
@@ -201,7 +259,6 @@ void	zkt_list_trustedkeys (const dki_t *data)
 #if defined(USE_TREE) && USE_TREE
 	twalk (data, list_trustedkey);
 #else
-
 	for ( dkp = data; dkp; dkp = dkp->next )	/* loop through list */
 		if ( (dki_isksk (dkp) || zskflag) &&
 		     (labellist == NULL || isinlist (dkp->name, labellist)) )

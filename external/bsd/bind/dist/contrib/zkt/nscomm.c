@@ -1,4 +1,4 @@
-/*	$NetBSD: nscomm.c,v 1.1.1.1 2009/10/25 00:01:53 christos Exp $	*/
+/*	$NetBSD: nscomm.c,v 1.1.1.2 2010/08/05 20:01:26 christos Exp $	*/
 
 /*****************************************************************
 **
@@ -94,17 +94,25 @@ int	dyn_update_freeze (const char *domain, const zconf_t *z, int freeze)
 
 /*****************************************************************
 **	distribute and reload a zone via "distribute_command"
+**	what is
+**		1 for zone distribution and relaod
+**		2 for key distribution (used by dynamic zoes)
 *****************************************************************/
-int	dist_and_reload (const zone_t *zp)
+int	dist_and_reload (const zone_t *zp, int what)
 {
 	char	path[MAX_PATHSIZE+1];
 	char	cmdline[254+1];
 	char	zone[254+1];
 	char	str[254+1];
+	char	*view;
 	FILE	*fp;
 
 	assert (zp != NULL);
 	assert (zp->conf->dist_cmd != NULL);
+	assert ( what == 1 || what == 2 );
+
+	if ( zp->conf->dist_cmd == NULL )
+		return 0;
 
 	if ( !is_exec_ok (zp->conf->dist_cmd) )
 	{
@@ -121,20 +129,40 @@ int	dist_and_reload (const zone_t *zp)
 		return -1;
 	}
 
+	view = "";	/* default is an empty view string */
 	if ( zp->conf->view )
+	{
 		snprintf (zone, sizeof (zone), "\"%s\" in view \"%s\"", zp->zone, zp->conf->view);
+		view = zp->conf->view;
+	}
 	else
 		snprintf (zone, sizeof (zone), "\"%s\"", zp->zone);
 
+
+	if ( what == 2 )
+	{
+		lg_mesg (LG_NOTICE, "%s: key distribution triggered", zone);
+		verbmesg (1, zp->conf, "\tDistribute keys for zone %s\n", zone);
+		snprintf (cmdline, sizeof (cmdline), "%s distkeys %s %s %s",
+					zp->conf->dist_cmd, zp->zone, path, view);
+		*str = '\0';
+		if ( zp->conf->noexec == 0 )
+		{
+			verbmesg (2, zp->conf, "\t  Run cmd \"%s\"\n", cmdline);
+			if ( (fp = popen (cmdline, "r")) == NULL || fgets (str, sizeof str, fp) == NULL )
+				return -2;
+			pclose (fp);
+			verbmesg (2, zp->conf, "\t  %s distribute return: \"%s\"\n", zp->conf->dist_cmd, str_chop (str, '\n'));
+		}
+
+		return 0;
+	}
 
 	pathname (path, sizeof (path), zp->dir, zp->sfile, NULL);
 
 	lg_mesg (LG_NOTICE, "%s: distribution triggered", zone);
 	verbmesg (1, zp->conf, "\tDistribute zone %s\n", zone);
-	if ( zp->conf->view )
-		snprintf (cmdline, sizeof (cmdline), "%s distribute %s %s %s", zp->conf->dist_cmd, zp->zone, path, zp->conf->view);
-	else
-		snprintf (cmdline, sizeof (cmdline), "%s distribute %s %s", zp->conf->dist_cmd, zp->zone, path);
+	snprintf (cmdline, sizeof (cmdline), "%s distribute %s %s %s", zp->conf->dist_cmd, zp->zone, path, view);
 
 	*str = '\0';
 	if ( zp->conf->noexec == 0 )
@@ -149,10 +177,7 @@ int	dist_and_reload (const zone_t *zp)
 
 	lg_mesg (LG_NOTICE, "%s: reload triggered", zone);
 	verbmesg (1, zp->conf, "\tReload zone %s\n", zone);
-	if ( zp->conf->view )
-		snprintf (cmdline, sizeof (cmdline), "%s reload %s %s %s", zp->conf->dist_cmd, zp->zone, path, zp->conf->view);
-	else
-		snprintf (cmdline, sizeof (cmdline), "%s reload %s %s", zp->conf->dist_cmd, zp->zone, path);
+	snprintf (cmdline, sizeof (cmdline), "%s reload %s %s %s", zp->conf->dist_cmd, zp->zone, path, view);
 
 	*str = '\0';
 	if ( zp->conf->noexec == 0 )

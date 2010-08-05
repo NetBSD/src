@@ -1,4 +1,4 @@
-/*	$NetBSD: dlz_bdbhpt_driver.c,v 1.1.1.1 2009/03/22 14:57:09 christos Exp $	*/
+/*	$NetBSD: dlz_bdbhpt_driver.c,v 1.1.1.2 2010/08/05 19:56:45 christos Exp $	*/
 
 /*
  * Copyright (C) 2002 Stichting NLnet, Netherlands, stichting@nlnet.nl.
@@ -444,7 +444,7 @@ bdbhpt_allnodes(const char *zone, void *driverarg, void *dbdata,
 		xfr_cursor->c_close(xfr_cursor);
 
 	if (dns_cursor != NULL)
-		dns_cursor->c_close(xfr_cursor);
+		dns_cursor->c_close(dns_cursor);
 
 	return result;
 }

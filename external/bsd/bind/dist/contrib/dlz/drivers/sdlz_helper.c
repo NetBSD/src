@@ -1,4 +1,4 @@
-/*	$NetBSD: sdlz_helper.c,v 1.1.1.1 2009/03/22 14:57:12 christos Exp $	*/
+/*	$NetBSD: sdlz_helper.c,v 1.1.1.2 2010/08/05 19:56:52 christos Exp $	*/
 
 /*
  * Copyright (C) 2002 Stichting NLnet, Netherlands, stichting@nlnet.nl.
@@ -168,12 +168,12 @@ build_querylist(isc_mem_t *mctx, const char *query_str, char **zone,
 		ISC_LIST_APPEND(*tql, tseg, link);
 
 		/*
-		 * split string at the first "%". set query segment to
+		 * split string at the first "$". set query segment to
 		 * left portion
 		 */
 		tseg->sql = isc_mem_strdup(mctx,
 					   isc_string_separate(&right_str,
-							       "%"));
+							       "$"));
 		if (tseg->sql == NULL) {
 			/* no memory, clean everything up. */
 			result = ISC_R_NOMEMORY;
@@ -183,7 +183,7 @@ build_querylist(isc_mem_t *mctx, const char *query_str, char **zone,
 		tseg->direct = isc_boolean_true;
 		tseg->strlen = strlen(tseg->sql);
 
-		/* check if we encountered "%zone%" token */
+		/* check if we encountered "$zone$" token */
 		if (strcasecmp(tseg->sql, "zone") == 0) {
 			/*
 			 * we don't really need, or want the "zone"
@@ -196,7 +196,7 @@ build_querylist(isc_mem_t *mctx, const char *query_str, char **zone,
 			/* tseg->sql points in-directly to a string */
 			tseg->direct = isc_boolean_false;
 			foundzone = isc_boolean_true;
-			/* check if we encountered "%record%" token */
+			/* check if we encountered "$record$" token */
 		} else if (strcasecmp(tseg->sql, "record") == 0) {
 			/*
 			 * we don't really need, or want the "record"
@@ -209,7 +209,7 @@ build_querylist(isc_mem_t *mctx, const char *query_str, char **zone,
 			/* tseg->sql points in-directly poinsts to a string */
 			tseg->direct = isc_boolean_false;
 			foundrecord = isc_boolean_true;
-			/* check if we encountered "%client%" token */
+			/* check if we encountered "$client$" token */
 		} else if (strcasecmp(tseg->sql, "client") == 0) {
 			/*
 			 * we don't really need, or want the "client"
@@ -237,7 +237,7 @@ build_querylist(isc_mem_t *mctx, const char *query_str, char **zone,
 		/* Write error message to log */
 		isc_log_write(dns_lctx, DNS_LOGCATEGORY_DATABASE,
 			      DNS_LOGMODULE_DLZ, ISC_LOG_ERROR,
-			      "Required token %%client%% not found.");
+			      "Required token $client$ not found.");
 		result = ISC_R_FAILURE;
 		goto flag_fail;
 	}
@@ -247,7 +247,7 @@ build_querylist(isc_mem_t *mctx, const char *query_str, char **zone,
 		/* Write error message to log */
 		isc_log_write(dns_lctx, DNS_LOGCATEGORY_DATABASE,
 			      DNS_LOGMODULE_DLZ, ISC_LOG_ERROR,
-			      "Required token %%record%% not found.");
+			      "Required token $record$ not found.");
 		result = ISC_R_FAILURE;
 		goto flag_fail;
 	}
@@ -257,7 +257,7 @@ build_querylist(isc_mem_t *mctx, const char *query_str, char **zone,
 		/* Write error message to log */
 		isc_log_write(dns_lctx, DNS_LOGCATEGORY_DATABASE,
 			      DNS_LOGMODULE_DLZ, ISC_LOG_ERROR,
-			      "Required token %%zone%% not found.");
+			      "Required token $zone$ not found.");
 		result = ISC_R_FAILURE;
 		goto flag_fail;
 	}

@@ -2,7 +2,7 @@
                "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd"
 	       [<!ENTITY mdash "&#8212;">]>
 <!--
- - Copyright (C) 2008, 2009  Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2008-2010  Internet Systems Consortium, Inc. ("ISC")
  -
  - Permission to use, copy, modify, and/or distribute this software for any
  - purpose with or without fee is hereby granted, provided that the above
@@ -17,7 +17,7 @@
  - PERFORMANCE OF THIS SOFTWARE.
 -->
 
-<!-- Id: dnssec-keyfromlabel.docbook,v 1.15 2009/11/03 21:44:46 each Exp -->
+<!-- Id: dnssec-keyfromlabel.docbook,v 1.15.24.2 2010/01/19 23:48:12 tbox Exp -->
 <refentry id="man.dnssec-keyfromlabel">
   <refentryinfo>
     <date>February 8, 2008</date>
@@ -38,6 +38,7 @@
     <copyright>
       <year>2008</year>
       <year>2009</year>
+      <year>2010</year>
       <holder>Internet Systems Consortium, Inc. ("ISC")</holder>
     </copyright>
   </docinfo>
@@ -63,6 +64,7 @@
       <arg><option>-R <replaceable class="parameter">date/offset</replaceable></option></arg>
       <arg><option>-t <replaceable class="parameter">type</replaceable></option></arg>
       <arg><option>-v <replaceable class="parameter">level</replaceable></option></arg>
+      <arg><option>-y</option></arg>
       <arg choice="req">name</arg>
     </cmdsynopsis>
   </refsynopsisdiv>
@@ -260,6 +262,19 @@
         <listitem>
           <para>
             Sets the debugging level.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>-y</term>
+        <listitem>
+          <para>
+            Allows DNSSEC key files to be generated even if the key ID
+	    would collide with that of an existing key, in the event of
+	    either key being revoked.  (This is only safe to use if you
+            are sure you won't be using RFC 5011 trust anchor maintenance
+            with either of the keys involved.)
           </para>
         </listitem>
       </varlistentry>

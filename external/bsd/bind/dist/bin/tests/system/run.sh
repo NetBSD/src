@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2004, 2007  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004, 2007, 2010  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 2000, 2001  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -15,7 +15,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: run.sh,v 1.42 2007/06/19 23:47:00 tbox Exp
+# Id: run.sh,v 1.42.558.2 2010/06/08 23:49:11 tbox Exp
 
 #
 # Run a system test.
@@ -66,6 +66,18 @@ then
 else
     echo "I:Prerequisites for $test missing, skipping test." >&2
     echo "R:UNTESTED" >&2
+    echo "E:$test:`date`" >&2
+    exit 0
+fi
+
+# Check for PKCS#11 support
+if
+    test ! -f $test/usepkcs11 || sh cleanpkcs11.sh
+then
+    : pkcs11 ok
+else
+    echo "I:Need PKCS#11 for $test, skipping test." >&2
+    echo "R:PKCS11ONLY" >&2
     echo "E:$test:`date`" >&2
     exit 0
 fi

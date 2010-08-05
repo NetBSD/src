@@ -1,7 +1,7 @@
-/*	$NetBSD: check.c,v 1.1.1.4 2009/12/26 22:24:23 christos Exp $	*/
+/*	$NetBSD: check.c,v 1.1.1.5 2010/08/05 20:11:24 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2001-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: check.c,v 1.114 2009/12/04 21:09:33 marka Exp */
+/* Id: check.c,v 1.114.4.5 2010/06/26 05:31:17 marka Exp */
 
 /*! \file */
 
@@ -43,6 +43,8 @@
 #include <dns/rdataclass.h>
 #include <dns/rdatatype.h>
 #include <dns/secalg.h>
+
+#include <dst/dst.h>
 
 #include <isccfg/aclconf.h>
 #include <isccfg/cfg.h>
@@ -407,7 +409,7 @@ check_viewacls(cfg_aclconfctx_t *actx, const cfg_obj_t *voptions,
 	static const char *acls[] = { "allow-query", "allow-query-on",
 		"allow-query-cache", "allow-query-cache-on",
 		"blackhole", "match-clients", "match-destinations",
-		"sortlist", NULL };
+		"sortlist", "filter-aaaa", NULL };
 
 	while (acls[i] != NULL) {
 		tresult = checkacl(acls[i++], actx, NULL, voptions, config,
@@ -489,6 +491,78 @@ check_recursionacls(cfg_aclconfctx_t *actx, const cfg_obj_t *voptions,
 		if (acl != NULL)
 			dns_acl_detach(&acl);
 	}
+
+	return (result);
+}
+
+static isc_result_t
+check_filteraaaa(cfg_aclconfctx_t *actx, const cfg_obj_t *voptions,
+		 const char *viewname, const cfg_obj_t *config,
+		 isc_log_t *logctx, isc_mem_t *mctx)
+{
+	const cfg_obj_t *options, *aclobj, *obj = NULL;
+	dns_acl_t *acl = NULL;
+	isc_result_t result = ISC_R_SUCCESS, tresult;
+	dns_v4_aaaa_t filter;
+	const char *forview = " for view ";
+
+	if (voptions != NULL)
+		cfg_map_get(voptions, "filter-aaaa-on-v4", &obj);
+	if (obj == NULL && config != NULL) {
+		options = NULL;
+		cfg_map_get(config, "options", &options);
+		if (options != NULL)
+			cfg_map_get(options, "filter-aaaa-on-v4", &obj);
+	}
+
+	if (obj == NULL)
+		filter = dns_v4_aaaa_ok;		/* default */
+	else if (cfg_obj_isboolean(obj))
+		filter = cfg_obj_asboolean(obj) ? dns_v4_aaaa_filter :
+						  dns_v4_aaaa_ok;
+	else
+		filter = dns_v4_aaaa_break_dnssec; 	/* break-dnssec */
+
+	if (viewname == NULL) {
+		viewname = "";
+		forview = "";
+	}
+
+	aclobj = options = NULL;
+	acl = NULL;
+
+	if (voptions != NULL)
+		cfg_map_get(voptions, "filter-aaaa", &aclobj);
+	if (config != NULL && aclobj == NULL) {
+		options = NULL;
+		cfg_map_get(config, "options", &options);
+		if (options != NULL)
+			cfg_map_get(options, "filter-aaaa", &aclobj);
+	}
+	if (aclobj == NULL)
+		return (result);
+
+	tresult = cfg_acl_fromconfig(aclobj, config, logctx,
+				    actx, mctx, 0, &acl);
+
+	if (tresult != ISC_R_SUCCESS) {
+		result = tresult;
+	} else if (filter != dns_v4_aaaa_ok && dns_acl_isnone(acl)) {
+		cfg_obj_log(aclobj, logctx, ISC_LOG_WARNING,
+			    "both \"filter-aaaa-on-v4 %s;\" and "
+			    "\"filter-aaaa\" is 'none;'%s%s",
+			    filter == dns_v4_aaaa_break_dnssec ?
+			    "break-dnssec" : "yes", forview, viewname);
+		result = ISC_R_FAILURE;
+	} else if (filter == dns_v4_aaaa_ok && !dns_acl_isnone(acl)) {
+		cfg_obj_log(aclobj, logctx, ISC_LOG_WARNING,
+			    "both \"filter-aaaa-on-v4 no;\" and "
+			    "\"filter-aaaa\" is set%s%s", forview, viewname);
+		result = ISC_R_FAILURE;
+	}
+
+	if (acl != NULL)
+		dns_acl_detach(&acl);
 
 	return (result);
 }
@@ -1742,13 +1816,85 @@ check_servers(const cfg_obj_t *config, const cfg_obj_t *voptions,
 }
 
 static isc_result_t
+check_trusted_key(const cfg_obj_t *key, isc_boolean_t managed,
+		  isc_log_t *logctx)
+{
+	const char *keystr, *keynamestr;
+	dns_fixedname_t fkeyname;
+	dns_name_t *keyname;
+	isc_buffer_t keydatabuf;
+	isc_region_t r;
+	isc_result_t result = ISC_R_SUCCESS;
+	isc_result_t tresult;
+	isc_uint32_t flags, proto, alg;
+	unsigned char keydata[4096];
+
+	flags = cfg_obj_asuint32(cfg_tuple_get(key, "flags"));
+	proto = cfg_obj_asuint32(cfg_tuple_get(key, "protocol"));
+	alg = cfg_obj_asuint32(cfg_tuple_get(key, "algorithm"));
+	keyname = dns_fixedname_name(&fkeyname);
+	keynamestr = cfg_obj_asstring(cfg_tuple_get(key, "name"));
+
+	if (flags > 0xffff) {
+		cfg_obj_log(key, logctx, ISC_LOG_WARNING,
+			    "flags too big: %u\n", flags);
+		result = ISC_R_FAILURE;
+	}
+	if (proto > 0xff) {
+		cfg_obj_log(key, logctx, ISC_LOG_WARNING,
+			    "protocol too big: %u\n", proto);
+		result = ISC_R_FAILURE;
+	}
+	if (alg > 0xff) {
+		cfg_obj_log(key, logctx, ISC_LOG_WARNING,
+			    "algorithm too big: %u\n", alg);
+		result = ISC_R_FAILURE;
+	}
+
+	if (managed) {
+		const char *initmethod;
+		initmethod = cfg_obj_asstring(cfg_tuple_get(key, "init"));
+
+		if (strcasecmp(initmethod, "initial-key") != 0) {
+			cfg_obj_log(key, logctx, ISC_LOG_ERROR,
+				    "managed key '%s': "
+				    "invalid initialization method '%s'",
+				    keynamestr, initmethod);
+			result = ISC_R_FAILURE;
+		}
+	}
+
+	isc_buffer_init(&keydatabuf, keydata, sizeof(keydata));
+
+	keystr = cfg_obj_asstring(cfg_tuple_get(key, "key"));
+	tresult = isc_base64_decodestring(keystr, &keydatabuf);
+
+	if (tresult != ISC_R_SUCCESS) {
+		cfg_obj_log(key, logctx, ISC_LOG_ERROR,
+			    "%s", isc_result_totext(tresult));
+		result = ISC_R_FAILURE;
+	} else {
+		isc_buffer_usedregion(&keydatabuf, &r);
+
+		if ((alg == DST_ALG_RSASHA1 || alg == DST_ALG_RSAMD5) &&
+		    r.length > 1 && r.base[0] == 1 && r.base[1] == 3)
+			cfg_obj_log(key, logctx, ISC_LOG_WARNING,
+				    "%s key '%s' has a weak exponent",
+				    managed ? "managed" : "trusted",
+				    keynamestr);
+	}
+
+	return (result);
+}
+
+static isc_result_t
 check_viewconf(const cfg_obj_t *config, const cfg_obj_t *voptions,
 	       const char *viewname, dns_rdataclass_t vclass,
 	       isc_log_t *logctx, isc_mem_t *mctx)
 {
 	const cfg_obj_t *zones = NULL;
 	const cfg_obj_t *keys = NULL;
-	const cfg_listelt_t *element;
+	const cfg_listelt_t *element, *element2;
 	isc_symtab_t *symtab = NULL;
 	isc_result_t result = ISC_R_SUCCESS;
 	isc_result_t tresult = ISC_R_SUCCESS;
@@ -1889,6 +2035,53 @@ check_viewconf(const cfg_obj_t *config, const cfg_obj_t *voptions,
 		cfg_obj_log(obj, logctx, ISC_LOG_WARNING,
 			    "'dnssec-validation yes;' and 'dnssec-enable no;'");
 
+	/*
+	 * Check trusted-keys and managed-keys.
+	 */
+	keys = NULL;
+	if (voptions != NULL)
+		(void)cfg_map_get(voptions, "trusted-keys", &keys);
+	if (keys == NULL)
+		(void)cfg_map_get(config, "trusted-keys", &keys);
+
+	for (element = cfg_list_first(keys);
+	     element != NULL;
+	     element = cfg_list_next(element))
+	{
+		const cfg_obj_t *keylist = cfg_listelt_value(element);
+		for (element2 = cfg_list_first(keylist);
+		     element2 != NULL;
+		     element2 = cfg_list_next(element2)) {
+			obj = cfg_listelt_value(element2);
+			tresult = check_trusted_key(obj, ISC_FALSE, logctx);
+			if (tresult != ISC_R_SUCCESS)
+				result = tresult;
+		}
+	}
+
+	keys = NULL;
+	if (voptions != NULL)
+		(void)cfg_map_get(voptions, "managed-keys", &keys);
+	if (keys == NULL)
+		(void)cfg_map_get(config, "managed-keys", &keys);
+
+	for (element = cfg_list_first(keys);
+	     element != NULL;
+	     element = cfg_list_next(element))
+	{
+		const cfg_obj_t *keylist = cfg_listelt_value(element);
+		for (element2 = cfg_list_first(keylist);
+		     element2 != NULL;
+		     element2 = cfg_list_next(element2)) {
+			obj = cfg_listelt_value(element2);
+			tresult = check_trusted_key(obj, ISC_TRUE, logctx);
+			if (tresult != ISC_R_SUCCESS)
+				result = tresult;
+		}
+	}
+	/*
+	 * Check options.
+	 */
 	if (voptions != NULL)
 		tresult = check_options(voptions, logctx, mctx);
 	else
@@ -1902,6 +2095,11 @@ check_viewconf(const cfg_obj_t *config, const cfg_obj_t *voptions,
 
 	tresult = check_recursionacls(&actx, voptions, viewname,
 				      config, logctx, mctx);
+	if (tresult != ISC_R_SUCCESS)
+		result = tresult;
+
+	tresult = check_filteraaaa(&actx, voptions, viewname, config,
+				   logctx, mctx);
 	if (tresult != ISC_R_SUCCESS)
 		result = tresult;
 
