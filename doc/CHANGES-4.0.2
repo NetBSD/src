@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.0.2,v 1.1.2.74 2010/08/04 11:14:13 bouyer Exp $
+#	$NetBSD: CHANGES-4.0.2,v 1.1.2.75 2010/08/05 01:48:12 riz Exp $
 
 A complete list of changes from the NetBSD 4.0.1 release to the NetBSD 4.0.2
 release:
@@ -1061,4 +1061,12 @@ sys/coda/coda_vnops.c				1.76
 
 	Correct incomplete size checks for the coda ioctls. From Dan Rosenberg.
 	[christos, ticket #1400]
+
+crypto/dist/ssh/sftp-glob.c			patch
+crypto/dist/ssh/sftp.c				patch
+lib/libc/gen/glob.3				1.37 via patch
+lib/libc/gen/glob.c				1.26 via patch
+
+	Fix globbing in libc and sftp.
+	[christos, ticket #1399]
 
