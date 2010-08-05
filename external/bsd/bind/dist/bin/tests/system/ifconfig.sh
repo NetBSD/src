@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2004, 2007-2009  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004, 2007-2010  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 2000-2003  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -15,10 +15,13 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: ifconfig.sh,v 1.57 2009/06/26 23:47:58 tbox Exp
+# Id: ifconfig.sh,v 1.57.132.2 2010/06/11 23:46:18 tbox Exp
 
 #
 # Set up interface aliases for bind9 system tests.
+#
+# IPv4: 10.53.0.{1..7}				RFC 1918
+# IPv6: fd92:7065:b8e:ffff::{1..7}		ULA
 #
 
 config_guess=""
@@ -54,6 +57,11 @@ case "$2" in
 *) base=""
 esac
 
+case "$3" in
+[0-9]|[1-9][0-9]|[1-9][0-9][0-9]) base6=$2;;
+*) base6=""
+esac
+
 case "$1" in
 
     start|up)
@@ -65,6 +73,12 @@ case "$1" in
 		else
 			int=$ns
 		fi
+		if test -n "$base6"
+		then
+			int6=`expr $ns + $base6 - 1`
+		else
+			int6=$ns
+		fi
 		case "$sys" in
 		    *-pc-solaris2.5.1)
 			ifconfig lo0:$int 10.53.0.$ns netmask 0xffffffff up
@@ -75,18 +89,28 @@ case "$1" in
 		    *-*-solaris2.[8-9]|*-*-solaris2.1[0-9])
     			/sbin/ifconfig lo0:$int plumb
 			/sbin/ifconfig lo0:$int 10.53.0.$ns up
+			if test -n "$int6"
+			then
+				/sbin/ifconfig lo0:$int6 inet6 plumb
+				/sbin/ifconfig lo0:$int6 \
+					inet6 fd92:7065:b8e:ffff::$ns up
+			fi
 			;;
 		    *-*-linux*)
 			ifconfig lo:$int 10.53.0.$ns up netmask 255.255.255.0
+			ifconfig lo inet6 add fd92:7065:b8e:ffff::$ns/64
 		        ;;
 		    *-unknown-freebsd*)
 			ifconfig lo0 10.53.0.$ns alias netmask 0xffffffff
+			ifconfig lo0 inet6 fd92:7065:b8e:ffff::$ns alias
 			;;
 		    *-unknown-netbsd*)
 			ifconfig lo0 10.53.0.$ns alias netmask 255.255.255.0
+			ifconfig lo0 inet6 fd92:7065:b8e:ffff::$ns alias
 			;;
 		    *-unknown-openbsd*)
 			ifconfig lo0 10.53.0.$ns alias netmask 255.255.255.0
+			ifconfig lo0 inet6 fd92:7065:b8e:ffff::$ns alias
 			;;
 		    *-*-bsdi[3-5].*)
 			ifconfig lo0 add 10.53.0.$ns netmask 255.255.255.0
@@ -102,15 +126,18 @@ case "$1" in
 			;;
 		    *-ibm-aix4.*|*-ibm-aix5.*)
 			ifconfig lo0 alias 10.53.0.$ns
+			ifconfig lo0 inet6 alias -dad fd92:7065:b8e:ffff::$ns/64
 			;;
 		    hpux)
-			ifconfig lo0:$int 10.53.0.$ns up
+			ifconfig lo0:$int 10.53.0.$ns netmask 255.255.255.0 up
+			ifconfig lo0:$int inet6 fd92:7065:b8e:ffff::$ns up
 		        ;;
 		    *-sco3.2v*)
 			ifconfig lo0 alias 10.53.0.$ns
 			;;
 		    *-darwin*)
 			ifconfig lo0 alias 10.53.0.$ns
+			ifconfig lo0 inet6 fd92:7065:b8e:ffff::$ns alias
 			;;
 	            *)
 			echo "Don't know how to set up interface.  Giving up."
@@ -138,18 +165,27 @@ case "$1" in
 		    *-*-solaris2.[8-9]|*-*-solaris2.1[0-9])
 			ifconfig lo0:$int 10.53.0.$ns down
 			ifconfig lo0:$int 10.53.0.$ns unplumb
+			if test -n "$int6"
+			then
+				ifconfig lo0:$int6 inet6 down
+				ifconfig lo0:$int6 inet6 unplumb
+			fi
 			;;
 		    *-*-linux*)
 			ifconfig lo:$int 10.53.0.$ns down
+			ifconfig lo inet6 del fd92:7065:b8e:ffff::$ns/64
 		        ;;
 		    *-unknown-freebsd*)
 			ifconfig lo0 10.53.0.$ns delete
+			ifconfig lo0 inet6 fd92:7065:b8e:ffff::$ns delete
 			;;
 		    *-unknown-netbsd*)
 			ifconfig lo0 10.53.0.$ns delete
+			ifconfig lo0 inet6 fd92:7065:b8e:ffff::$ns delete
 			;;
 		    *-unknown-openbsd*)
 			ifconfig lo0 10.53.0.$ns delete
+			ifconfig lo0 inet6 fd92:7065:b8e:ffff::$ns delete
 			;;
 		    *-*-bsdi[3-5].*)
 			ifconfig lo0 remove 10.53.0.$ns
@@ -165,15 +201,18 @@ case "$1" in
 			;;
 		    *-ibm-aix4.*|*-ibm-aix5.*)
 			ifconfig lo0 delete 10.53.0.$ns
+			ifconfig lo0 delete inet6 fd92:7065:b8e:ffff::$ns/64
 			;;
 		    hpux)
-			ifconfig lo0:$int 10.53.0.$ns down
+			ifconfig lo0:$int 0.0.0.0
+			ifconfig lo0:$int inet6 ::
 		        ;;
 		    *-sco3.2v*)
 			ifconfig lo0 -alias 10.53.0.$ns
 			;;
 		    *darwin*)
 			ifconfig lo0 -alias 10.53.0.$ns
+			ifconfig lo0 inet6 fd92:7065:b8e:ffff::$ns delete
 			;;
 	            *)
 			echo "Don't know how to destroy interface.  Giving up."

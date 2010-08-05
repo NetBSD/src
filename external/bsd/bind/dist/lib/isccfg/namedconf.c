@@ -1,7 +1,7 @@
-/*	$NetBSD: namedconf.c,v 1.1.1.3 2009/12/26 22:26:11 christos Exp $	*/
+/*	$NetBSD: namedconf.c,v 1.1.1.4 2010/08/05 20:16:00 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2002, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: namedconf.c,v 1.113 2009/12/04 21:09:34 marka Exp */
+/* Id: namedconf.c,v 1.113.4.9 2010/07/11 23:46:36 tbox Exp */
 
 /*! \file */
 
@@ -66,6 +66,8 @@ parse_optional_keyvalue(cfg_parser_t *pctx, const cfg_type_t *type,
 static isc_result_t
 parse_updatepolicy(cfg_parser_t *pctx, const cfg_type_t *type,
 		   cfg_obj_t **ret);
+static void
+print_updatepolicy(cfg_printer_t *pctx, const cfg_obj_t *obj);
 
 static void
 doc_updatepolicy(cfg_printer_t *pctx, const cfg_type_t *type);
@@ -101,6 +103,7 @@ static cfg_type_t cfg_type_negated;
 static cfg_type_t cfg_type_notifytype;
 static cfg_type_t cfg_type_optional_allow;
 static cfg_type_t cfg_type_optional_class;
+static cfg_type_t cfg_type_optional_qstring;
 static cfg_type_t cfg_type_optional_facility;
 static cfg_type_t cfg_type_optional_keyref;
 static cfg_type_t cfg_type_optional_port;
@@ -122,9 +125,7 @@ static cfg_type_t cfg_type_zone;
 static cfg_type_t cfg_type_zoneopts;
 static cfg_type_t cfg_type_dynamically_loadable_zones;
 static cfg_type_t cfg_type_dynamically_loadable_zones_opts;
-#ifdef ALLOW_FILTER_AAAA_ON_V4
 static cfg_type_t cfg_type_v4_aaaa;
-#endif
 
 /*
  * Clauses that can be found in a 'dynamically loadable zones' statement
@@ -344,8 +345,8 @@ static cfg_type_t cfg_type_grant = {
 };
 
 static cfg_type_t cfg_type_updatepolicy = {
-	"update_policy", parse_updatepolicy, NULL, doc_updatepolicy,
-	&cfg_rep_list, &cfg_type_grant
+	"update_policy", parse_updatepolicy, print_updatepolicy,
+	doc_updatepolicy, &cfg_rep_list, &cfg_type_grant
 };
 
 static isc_result_t
@@ -384,10 +385,18 @@ parse_updatepolicy(cfg_parser_t *pctx, const cfg_type_t *type,
 }
 
 static void
+print_updatepolicy(cfg_printer_t *pctx, const cfg_obj_t *obj) {
+	if (cfg_obj_isstring(obj))
+		cfg_print_ustring(pctx, obj);
+	else
+		cfg_print_bracketed_list(pctx, obj);
+}
+
+static void
 doc_updatepolicy(cfg_printer_t *pctx, const cfg_type_t *type) {
-	cfg_print_chars(pctx, "( local | { ", 12);
+	cfg_print_cstr(pctx, "( local | { ");
 	cfg_doc_obj(pctx, type->of);
-	cfg_print_chars(pctx, "; ... }", 7);
+	cfg_print_cstr(pctx, "; ... }");
 }
 
 /*%
@@ -614,7 +623,7 @@ static cfg_type_t cfg_type_transferformat = {
 static void
 print_none(cfg_printer_t *pctx, const cfg_obj_t *obj) {
 	UNUSED(obj);
-	cfg_print_chars(pctx, "none", 4);
+	cfg_print_cstr(pctx, "none");
 }
 
 static cfg_type_t cfg_type_none = {
@@ -643,7 +652,7 @@ parse_qstringornone(cfg_parser_t *pctx, const cfg_type_t *type,
 static void
 doc_qstringornone(cfg_printer_t *pctx, const cfg_type_t *type) {
 	UNUSED(type);
-	cfg_print_chars(pctx, "( <quoted_string> | none )", 26);
+	cfg_print_cstr(pctx, "( <quoted_string> | none )");
 }
 
 static cfg_type_t cfg_type_qstringornone = {
@@ -658,7 +667,7 @@ static cfg_type_t cfg_type_qstringornone = {
 static void
 print_hostname(cfg_printer_t *pctx, const cfg_obj_t *obj) {
 	UNUSED(obj);
-	cfg_print_chars(pctx, "hostname", 4);
+	cfg_print_cstr(pctx, "hostname");
 }
 
 static cfg_type_t cfg_type_hostname = {
@@ -691,7 +700,7 @@ parse_serverid(cfg_parser_t *pctx, const cfg_type_t *type,
 static void
 doc_serverid(cfg_printer_t *pctx, const cfg_type_t *type) {
 	UNUSED(type);
-	cfg_print_chars(pctx, "( <quoted_string> | none | hostname )", 26);
+	cfg_print_cstr(pctx, "( <quoted_string> | none | hostname )");
 }
 
 static cfg_type_t cfg_type_serverid = {
@@ -849,6 +858,7 @@ options_clauses[] = {
 	{ "interface-interval", &cfg_type_uint32, 0 },
 	{ "listen-on", &cfg_type_listenon, CFG_CLAUSEFLAG_MULTI },
 	{ "listen-on-v6", &cfg_type_listenon, CFG_CLAUSEFLAG_MULTI },
+	{ "managed-keys-directory", &cfg_type_qstring, 0 },
 	{ "match-mapped-addresses", &cfg_type_boolean, 0 },
 	{ "memstatistics-file", &cfg_type_qstring, 0 },
 	{ "memstatistics", &cfg_type_boolean, 0 },
@@ -861,6 +871,7 @@ options_clauses[] = {
 	{ "random-device", &cfg_type_qstring, 0 },
 	{ "recursive-clients", &cfg_type_uint32, 0 },
 	{ "reserved-sockets", &cfg_type_uint32, 0 },
+	{ "secroots-file", &cfg_type_qstring, 0 },
 	{ "serial-queries", &cfg_type_uint32, CFG_CLAUSEFLAG_OBSOLETE },
 	{ "serial-query-rate", &cfg_type_uint32, 0 },
 	{ "server-id", &cfg_type_serverid, 0 },
@@ -1049,8 +1060,15 @@ view_clauses[] = {
 	{ "transfer-format", &cfg_type_transferformat, 0 },
 	{ "use-queryport-pool", &cfg_type_boolean, CFG_CLAUSEFLAG_OBSOLETE },
 	{ "zero-no-soa-ttl-cache", &cfg_type_boolean, 0 },
+	{ "new-zone-file", &cfg_type_qstringornone, 0 },
 #ifdef ALLOW_FILTER_AAAA_ON_V4
+	{ "filter-aaaa", &cfg_type_bracketed_aml, 0 },
 	{ "filter-aaaa-on-v4", &cfg_type_v4_aaaa, 0 },
+#else
+	{ "filter-aaaa", &cfg_type_bracketed_aml,
+	   CFG_CLAUSEFLAG_NOTCONFIGURED },
+	{ "filter-aaaa-on-v4", &cfg_type_v4_aaaa,
+	   CFG_CLAUSEFLAG_NOTCONFIGURED },
 #endif
 	{ NULL, NULL, 0 }
 };
@@ -1089,7 +1107,7 @@ parse_optional_uint32(cfg_parser_t *pctx, const cfg_type_t *type,
 static void
 doc_optional_uint32(cfg_printer_t *pctx, const cfg_type_t *type) {
 	UNUSED(type);
-	cfg_print_chars(pctx, "[ <integer> ]", 13);
+	cfg_print_cstr(pctx, "[ <integer> ]");
 }
 
 static cfg_type_t cfg_type_optional_uint32 = {
@@ -1382,6 +1400,42 @@ static cfg_type_t cfg_type_logging = {
 	"logging", cfg_parse_map, cfg_print_map, cfg_doc_map, &cfg_rep_map, logging_clausesets };
 
 
+/*%
+ * For parsing an 'addzone' statement
+ */
+
+/*%
+ * A zone statement.
+ */
+static cfg_tuplefielddef_t addzone_fields[] = {
+	{ "filepart", &cfg_type_optional_qstring, 0 },
+	{ "name", &cfg_type_astring, 0 },
+	{ "class", &cfg_type_optional_class, 0 },
+	{ "view", &cfg_type_optional_class, 0 },
+	{ "options", &cfg_type_zoneopts, 0 },
+	{ NULL, NULL, 0 }
+};
+static cfg_type_t cfg_type_addzone = {
+	"addzone", cfg_parse_tuple, cfg_print_tuple, cfg_doc_tuple, &cfg_rep_tuple, addzone_fields };
+
+static cfg_clausedef_t
+addzoneconf_clauses[] = {
+	{ "addzone", &cfg_type_addzone, 0 },
+	{ NULL, NULL, 0 }
+};
+
+static cfg_clausedef_t *
+addzoneconf_clausesets[] = {
+	addzoneconf_clauses,
+	NULL
+};
+
+LIBISCCFG_EXTERNAL_DATA cfg_type_t cfg_type_addzoneconf = {
+	"addzoneconf", cfg_parse_mapbody, cfg_print_mapbody, cfg_doc_mapbody,
+	&cfg_rep_map, addzoneconf_clausesets
+};
+
+
 static isc_result_t
 parse_unitstring(char *str, isc_resourcevalue_t *valuep) {
 	char *endp;
@@ -1601,7 +1655,6 @@ static cfg_type_t cfg_type_ixfrdifftype = {
 	&cfg_rep_string, ixfrdiff_enums,
 };
 
-#ifdef ALLOW_FILTER_AAAA_ON_V4
 static const char *v4_aaaa_enums[] = { "break-dnssec", NULL };
 static isc_result_t
 parse_v4_aaaa(cfg_parser_t *pctx, const cfg_type_t *type,
@@ -1613,7 +1666,6 @@ static cfg_type_t cfg_type_v4_aaaa = {
 	doc_enum_or_other, &cfg_rep_string, v4_aaaa_enums,
 };
 
-#endif
 static keyword_type_t key_kw = { "key", &cfg_type_astring };
 
 LIBISCCFG_EXTERNAL_DATA cfg_type_t cfg_type_keyref = {
@@ -1786,6 +1838,30 @@ static cfg_type_t cfg_type_optional_class = {
 	NULL, NULL
 };
 
+/*%
+ * An optional string, distinguished by being in quotes
+ */
+static isc_result_t
+parse_optional_qstr(cfg_parser_t *pctx, const cfg_type_t *type,
+		    cfg_obj_t **ret)
+{
+	isc_result_t result;
+	UNUSED(type);
+	CHECK(cfg_peektoken(pctx, CFG_LEXOPT_QSTRING));
+	if (pctx->token.type == isc_tokentype_qstring)
+		CHECK(cfg_parse_obj(pctx, &cfg_type_qstring, ret));
+	else
+		CHECK(cfg_parse_obj(pctx, &cfg_type_void, ret));
+ cleanup:
+	return (result);
+}
+
+
+static cfg_type_t cfg_type_optional_qstring = {
+	"optional_quoted_string", parse_optional_qstr, NULL, cfg_doc_terminal,
+	NULL, NULL
+};
+
 static isc_result_t
 parse_querysource(cfg_parser_t *pctx, const cfg_type_t *type, cfg_obj_t **ret) {
 	isc_result_t result;
@@ -1855,9 +1931,9 @@ static void
 print_querysource(cfg_printer_t *pctx, const cfg_obj_t *obj) {
 	isc_netaddr_t na;
 	isc_netaddr_fromsockaddr(&na, &obj->value.sockaddr);
-	cfg_print_chars(pctx, "address ", 8);
+	cfg_print_cstr(pctx, "address ");
 	cfg_print_rawaddr(pctx, &na);
-	cfg_print_chars(pctx, " port ", 6);
+	cfg_print_cstr(pctx, " port ");
 	cfg_print_rawuint(pctx, isc_sockaddr_getport(&obj->value.sockaddr));
 }
 
@@ -2155,11 +2231,11 @@ static void
 print_logfile(cfg_printer_t *pctx, const cfg_obj_t *obj) {
 	cfg_print_obj(pctx, obj->value.tuple[0]); /* file */
 	if (obj->value.tuple[1]->type->print != cfg_print_void) {
-		cfg_print_chars(pctx, " versions ", 10);
+		cfg_print_cstr(pctx, " versions ");
 		cfg_print_obj(pctx, obj->value.tuple[1]);
 	}
 	if (obj->value.tuple[2]->type->print != cfg_print_void) {
-		cfg_print_chars(pctx, " size ", 6);
+		cfg_print_cstr(pctx, " size ");
 		cfg_print_obj(pctx, obj->value.tuple[2]);
 	}
 }

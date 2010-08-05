@@ -1,7 +1,7 @@
-/*	$NetBSD: sdb.c,v 1.1.1.3 2009/10/25 00:02:34 christos Exp $	*/
+/*	$NetBSD: sdb.c,v 1.1.1.4 2010/08/05 20:12:54 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: sdb.c,v 1.71 2009/10/08 23:13:07 marka Exp */
+/* Id: sdb.c,v 1.71.54.2 2010/02/25 05:25:53 tbox Exp */
 
 /*! \file */
 
@@ -1385,6 +1385,8 @@ static dns_rdatasetmethods_t methods = {
 	isc__rdatalist_count,
 	isc__rdatalist_addnoqname,
 	isc__rdatalist_getnoqname,
+	NULL,
+	NULL,
 	NULL,
 	NULL,
 	NULL,

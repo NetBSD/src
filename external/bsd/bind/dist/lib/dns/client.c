@@ -1,7 +1,7 @@
-/*	$NetBSD: client.c,v 1.1.1.2 2009/12/26 22:24:28 christos Exp $	*/
+/*	$NetBSD: client.c,v 1.1.1.3 2010/08/05 20:11:39 christos Exp $	*/
 
 /*
- * Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2009, 2010  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -16,9 +16,11 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: client.c,v 1.6 2009/10/27 22:46:13 each Exp */
+/* Id: client.c,v 1.6.32.4 2010/05/19 07:11:19 marka Exp */
 
 #include <config.h>
+
+#include <stddef.h>
 
 #include <isc/app.h>
 #include <isc/mem.h>
@@ -387,12 +389,12 @@ dns_client_create(dns_client_t **clientp, unsigned int options) {
 	return (ISC_R_SUCCESS);
 
  cleanup:
+	if (taskmgr != NULL)
+		isc_taskmgr_destroy(&taskmgr);
 	if (timermgr != NULL)
 		isc_timermgr_destroy(&timermgr);
 	if (socketmgr != NULL)
 		isc_socketmgr_destroy(&socketmgr);
-	if (taskmgr != NULL)
-		isc_taskmgr_destroy(&taskmgr);
 	if (actx != NULL)
 		isc_appctx_destroy(&actx);
 	isc_mem_detach(&mctx);
@@ -444,16 +446,22 @@ dns_client_createx(isc_mem_t *mctx, isc_appctx_t *actx, isc_taskmgr_t *taskmgr,
 	client->dispatchmgr = dispatchmgr;
 
 	/* TODO: whether to use dispatch v4 or v6 should be configurable */
+	client->dispatchv4 = NULL;
+	client->dispatchv6 = NULL;
 	result = getudpdispatch(AF_INET, dispatchmgr, socketmgr,
 				taskmgr, ISC_TRUE, &dispatchv4);
-	if (result != ISC_R_SUCCESS)
-		goto cleanup;
-	client->dispatchv4 = dispatchv4;
+	if (result == ISC_R_SUCCESS)
+		client->dispatchv4 = dispatchv4;
 	result = getudpdispatch(AF_INET6, dispatchmgr, socketmgr,
 				taskmgr, ISC_TRUE, &dispatchv6);
-	if (result != ISC_R_SUCCESS)
+	if (result == ISC_R_SUCCESS)
+		client->dispatchv6 = dispatchv6;
+
+	/* We need at least one of the dispatchers */
+	if (dispatchv4 == NULL && dispatchv6 == NULL) {
+		INSIST(result != ISC_R_SUCCESS);
 		goto cleanup;
-	client->dispatchv6 = dispatchv6;
+	}
 
 	/* Create the default view for class IN */
 	result = dns_client_createview(mctx, dns_rdataclass_in, options,
@@ -2804,9 +2812,9 @@ dns_client_cancelupdate(dns_clientupdatetrans_t *trans) {
 		if (uctx->soareq != NULL)
 			dns_request_cancel(uctx->soareq);
 		if (uctx->restrans != NULL)
-			dns_client_cancelresolve(&uctx->restrans);
+			dns_client_cancelresolve(uctx->restrans);
 		if (uctx->restrans2 != NULL)
-			dns_client_cancelresolve(&uctx->restrans2);
+			dns_client_cancelresolve(uctx->restrans2);
 	}
 
 	UNLOCK(&uctx->lock);
@@ -2874,7 +2882,7 @@ typedef struct {
 	dns_rdata_t	rdata;
 	size_t		size;
 	isc_mem_t *	mctx;
-	unsigned char	data[0];
+	unsigned char	data[FLEXIBLE_ARRAY_MEMBER];
 } dns_client_updaterec_t;
 
 isc_result_t
@@ -2884,9 +2892,8 @@ dns_client_updaterec(dns_client_updateop_t op, dns_name_t *owner,
 		     dns_rdataset_t *rdataset, dns_rdatalist_t *rdatalist,
 		     dns_rdata_t *rdata, isc_mem_t *mctx)
 {
-	dns_client_updaterec_t *updaterec;
-	size_t size = sizeof(dns_client_updaterec_t);
-	isc_buffer_t *b = NULL;
+	dns_client_updaterec_t *updaterec = NULL;
+	size_t size = offsetof(dns_client_updaterec_t, data);
 
 	REQUIRE(op < updateop_max);
 	REQUIRE(owner != NULL);
@@ -2915,16 +2922,15 @@ dns_client_updaterec(dns_client_updateop_t op, dns_name_t *owner,
 		dns_rdataset_init(rdataset);
 		dns_rdatalist_init(&updaterec->rdatalist);
 		dns_rdata_init(&updaterec->rdata);
-		isc_buffer_init(b, b + 1,
-				size - sizeof(dns_client_updaterec_t));
-		dns_name_copy(owner, target, b);
+		isc_buffer_init(&updaterec->buffer, updaterec->data,
+				size - offsetof(dns_client_updaterec_t, data));
+		dns_name_copy(owner, target, &updaterec->buffer);
 		if (source != NULL) {
 			isc_region_t r;
 			dns_rdata_clone(source, rdata);
 			dns_rdata_toregion(rdata, &r);
-			rdata->data = isc_buffer_used(b);
-			isc_buffer_copyregion(b, &r);
-
+			rdata->data = isc_buffer_used(&updaterec->buffer);
+			isc_buffer_copyregion(&updaterec->buffer, &r);
 		}
 		updaterec->mctx = NULL;
 		isc_mem_attach(mctx, &updaterec->mctx);
@@ -2964,9 +2970,9 @@ dns_client_updaterec(dns_client_updateop_t op, dns_name_t *owner,
 	ISC_LIST_APPEND(rdatalist->rdata, rdata, link);
 	dns_rdatalist_tordataset(rdatalist, rdataset);
 	ISC_LIST_APPEND(target->list, rdataset, link);
-	if (b != NULL) {
+	if (updaterec != NULL) {
 		target->attributes |= DNS_NAMEATTR_HASUPDATEREC;
-		dns_name_setbuffer(target, b);
+		dns_name_setbuffer(target, &updaterec->buffer);
 	}
 	if (op == updateop_add || op == updateop_delete)
 		target->attributes |= DNS_NAMEATTR_UPDATE;

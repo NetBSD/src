@@ -1,20 +1,20 @@
-.\"	$NetBSD: dnssec-settime.8,v 1.1.1.2 2009/12/26 22:19:00 christos Exp $
+.\"	$NetBSD: dnssec-settime.8,v 1.1.1.3 2010/08/05 19:53:01 christos Exp $
 .\"
-.\" Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
-.\"
+.\" Copyright (C) 2009, 2010 Internet Systems Consortium, Inc. ("ISC")
+.\" 
 .\" Permission to use, copy, modify, and/or distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
 .\" copyright notice and this permission notice appear in all copies.
-.\"
+.\" 
 .\" THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
 .\" REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
-.\" AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+.\" AND FITNESS. IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
 .\" INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
 .\" LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
 .\" OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 .\" PERFORMANCE OF THIS SOFTWARE.
 .\"
-.\" Id: dnssec-settime.8,v 1.9 2009/11/03 21:58:30 tbox Exp
+.\" Id: dnssec-settime.8,v 1.9.24.5 2010/05/18 04:04:36 tbox Exp
 .\"
 .hy 0
 .ad l
@@ -121,7 +121,7 @@ can also be used to print the timing metadata associated with a key.
 Print times in UNIX epoch format.
 .RE
 .PP
-\-p \fIC/P/A/R/U/D/all\fR
+\-p \fIC/P/A/R/I/D/all\fR
 .RS 4
 Print a specific metadata value or set of metadata values. The
 \fB\-p\fR
@@ -133,9 +133,9 @@ for the publication date,
 \fBA\fR
 for the activation date,
 \fBR\fR
-for the revokation date,
-\fBU\fR
-for the unpublication date, or
+for the revocation date,
+\fBI\fR
+for the inactivation date, or
 \fBD\fR
 for the deletion date. To print all of the metadata, use
 \fB\-p all\fR.
@@ -150,5 +150,5 @@ RFC 5011.
 .PP
 Internet Systems Consortium
 .SH "COPYRIGHT"
-Copyright \(co 2009 Internet Systems Consortium, Inc. ("ISC")
+Copyright \(co 2009, 2010 Internet Systems Consortium, Inc. ("ISC")
 .br

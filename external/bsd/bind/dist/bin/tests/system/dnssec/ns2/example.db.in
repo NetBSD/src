@@ -1,4 +1,4 @@
-; Copyright (C) 2004, 2007-2009  Internet Systems Consortium, Inc. ("ISC")
+; Copyright (C) 2004, 2007-2010  Internet Systems Consortium, Inc. ("ISC")
 ; Copyright (C) 2000-2002  Internet Software Consortium.
 ;
 ; Permission to use, copy, modify, and/or distribute this software for any
@@ -13,7 +13,7 @@
 ; OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 ; PERFORMANCE OF THIS SOFTWARE.
 
-; Id: example.db.in,v 1.21 2009/10/27 23:47:44 tbox Exp
+; Id: example.db.in,v 1.21.32.3 2010/01/18 23:48:01 tbox Exp
 
 $TTL 300	; 5 minutes
 @			IN SOA	mname1. . (
@@ -35,6 +35,9 @@ d			A	10.0.0.4
 ; Used for testing ANY queries
 foo			TXT	"testing"
 foo			A	10.0.1.0
+
+bad-cname		CNAME   a
+bad-dname		DNAME   @
 
 ; Used for testing CNAME queries
 cname1			CNAME	cname1-target
@@ -101,3 +104,6 @@ ns.rsasha256		A	10.53.0.3
 
 rsasha512		NS	ns.rsasha512
 ns.rsasha512		A	10.53.0.3
+
+kskonly 		NS	ns.kskonly
+ns.kskonly		A	10.53.0.3

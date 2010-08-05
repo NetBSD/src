@@ -1,7 +1,7 @@
-/*	$NetBSD: log.c,v 1.1.1.1 2009/03/22 15:01:07 christos Exp $	*/
+/*	$NetBSD: log.c,v 1.1.1.2 2010/08/05 20:12:01 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: log.c,v 1.45 2007/06/18 23:47:40 tbox Exp */
+/* Id: log.c,v 1.45.558.2 2009/12/18 23:48:18 tbox Exp */
 
 /*! \file */
 
@@ -81,6 +81,7 @@ LIBDNS_EXTERNAL_DATA isc_logmodule_t dns_modules[] = {
 	{ "dns/hints",		0 },
 	{ "dns/acache",		0 },
 	{ "dns/dlz",		0 },
+	{ "dns/dnssec",		0 },
 	{ NULL, 		0 }
 };
 

@@ -1,7 +1,7 @@
-/*	$NetBSD: ecdb.c,v 1.1.1.2 2009/12/26 22:24:33 christos Exp $	*/
+/*	$NetBSD: ecdb.c,v 1.1.1.3 2010/08/05 20:11:53 christos Exp $	*/
 
 /*
- * Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2009, 2010  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: ecdb.c,v 1.4 2009/11/06 04:19:28 marka Exp */
+/* Id: ecdb.c,v 1.4.24.2 2010/02/25 05:25:51 tbox Exp */
 
 #include "config.h"
 
@@ -101,6 +101,7 @@ static isc_result_t rdataset_next(dns_rdataset_t *rdataset);
 static void rdataset_current(dns_rdataset_t *rdataset, dns_rdata_t *rdata);
 static void rdataset_clone(dns_rdataset_t *source, dns_rdataset_t *target);
 static unsigned int rdataset_count(dns_rdataset_t *rdataset);
+static void rdataset_settrust(dns_rdataset_t *rdataset, dns_trust_t trust);
 
 static dns_rdatasetmethods_t rdataset_methods = {
 	rdataset_disassociate,
@@ -115,7 +116,9 @@ static dns_rdatasetmethods_t rdataset_methods = {
 	NULL,			/* getclosest */
 	NULL,			/* getadditional */
 	NULL,			/* setadditional */
-	NULL			/* putadditional */
+	NULL,			/* putadditional */
+	rdataset_settrust,	/* settrust */
+	NULL			/* expire */
 };
 
 typedef struct ecdb_rdatasetiter {
@@ -736,6 +739,14 @@ rdataset_count(dns_rdataset_t *rdataset) {
 	count = raw[0] * 256 + raw[1];
 
 	return (count);
+}
+
+static void
+rdataset_settrust(dns_rdataset_t *rdataset, dns_trust_t trust) {
+	rdatasetheader_t *header = rdataset->private3;
+
+	header--;
+	header->trust = rdataset->trust = trust;
 }
 
 /*

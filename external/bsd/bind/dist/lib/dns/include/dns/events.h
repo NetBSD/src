@@ -1,7 +1,7 @@
-/*	$NetBSD: events.h,v 1.1.1.3 2009/10/25 00:02:37 christos Exp $	*/
+/*	$NetBSD: events.h,v 1.1.1.4 2010/08/05 20:13:36 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2007, 2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2009, 2010  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: events.h,v 1.53 2009/09/01 00:22:26 jinmei Exp */
+/* Id: events.h,v 1.53.104.2 2010/05/10 23:49:42 tbox Exp */
 
 #ifndef DNS_EVENTS_H
 #define DNS_EVENTS_H 1
@@ -60,7 +60,7 @@
 #define DNS_EVENT_MASTERNEXTZONE		(ISC_EVENTCLASS_DNS + 28)
 #define DNS_EVENT_IOREADY			(ISC_EVENTCLASS_DNS + 29)
 #define DNS_EVENT_LOOKUPDONE			(ISC_EVENTCLASS_DNS + 30)
-/* #define DNS_EVENT_unused			(ISC_EVENTCLASS_DNS + 31) */
+#define DNS_EVENT_RBTDEADNODES			(ISC_EVENTCLASS_DNS + 31)
 #define DNS_EVENT_DISPATCHCONTROL		(ISC_EVENTCLASS_DNS + 32)
 #define DNS_EVENT_REQUESTCONTROL		(ISC_EVENTCLASS_DNS + 33)
 #define DNS_EVENT_DUMPQUANTUM			(ISC_EVENTCLASS_DNS + 34)

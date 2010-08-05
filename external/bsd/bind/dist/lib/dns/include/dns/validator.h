@@ -1,7 +1,7 @@
-/*	$NetBSD: validator.h,v 1.1.1.2 2009/10/25 00:02:39 christos Exp $	*/
+/*	$NetBSD: validator.h,v 1.1.1.3 2010/08/05 20:13:50 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: validator.h,v 1.44 2009/01/17 13:20:45 fdupont Exp */
+/* Id: validator.h,v 1.44.186.2 2010/02/25 05:25:53 tbox Exp */
 
 #ifndef DNS_VALIDATOR_H
 #define DNS_VALIDATOR_H 1
@@ -161,6 +161,8 @@ struct dns_validator {
 	isc_boolean_t			mustbesecure;
 	unsigned int			dlvlabels;
 	unsigned int			depth;
+	unsigned int			authcount;
+	unsigned int			authfail;
 };
 
 /*%

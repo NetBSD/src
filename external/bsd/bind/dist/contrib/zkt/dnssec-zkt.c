@@ -1,4 +1,4 @@
-/*	$NetBSD: dnssec-zkt.c,v 1.1.1.2 2009/10/25 00:01:53 christos Exp $	*/
+/*	$NetBSD: dnssec-zkt.c,v 1.1.1.3 2010/08/05 20:01:23 christos Exp $	*/
 
 /*****************************************************************
 **
@@ -309,6 +309,7 @@ int	main (int argc, char *argv[])
 	/* it's better to do this before we read the whole directory tree */
 	if ( action == 'Z' )
 	{
+		fprintf (stderr, "The use of -Z is deprecated. Please use zkt-conf instead\n");
 		printconfig ("stdout", config);
 		return 0;
 	}
@@ -760,7 +761,7 @@ static	int	parsedirectory (const char *dir, dki_t **listp)
 			{
 				// fprintf (stderr, "parsedir: tssearch (%d %s)\n", dkp, dkp->name);
 #if defined (USE_TREE) && USE_TREE
-				dki_tadd (listp, dkp);
+				dki_tadd (listp, dkp, 1);
 #else
 				dki_add (listp, dkp);
 #endif
@@ -782,7 +783,7 @@ static	void	parsefile (const char *file, dki_t **listp)
 	{
 		if ( (dkp = dki_read (path, file)) )	/* read DNS key file ... */
 #if defined (USE_TREE) && USE_TREE
-			dki_tadd (listp, dkp);		/* ... and add to tree */
+			dki_tadd (listp, dkp, 1);		/* ... and add to tree */
 #else
 			dki_add (listp, dkp);		/* ... and add to list */
 #endif

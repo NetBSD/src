@@ -1,7 +1,7 @@
-/*	$NetBSD: dnssec-revoke.c,v 1.1.1.2 2009/12/26 22:19:00 christos Exp $	*/
+/*	$NetBSD: dnssec-revoke.c,v 1.1.1.3 2010/08/05 19:53:00 christos Exp $	*/
 
 /*
- * Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2009, 2010  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: dnssec-revoke.c,v 1.18 2009/10/27 18:56:48 each Exp */
+/* Id: dnssec-revoke.c,v 1.18.34.4 2010/05/06 23:49:37 tbox Exp */
 
 /*! \file */
 
@@ -56,12 +56,11 @@ usage(void) {
 	fprintf(stderr, "Usage:\n");
 	fprintf(stderr,	"    %s [options] keyfile\n\n", program);
 	fprintf(stderr, "Version: %s\n", VERSION);
-	fprintf(stderr, "\t-E engine:\n");
 #ifdef USE_PKCS11
-	fprintf(stderr, "\t\tname of an OpenSSL engine to use "
-				"(default is \"pkcs11\")\n");
+	fprintf(stderr, "    -E engine:    specify OpenSSL engine "
+					   "(default \"pkcs11\")\n");
 #else
-	fprintf(stderr, "\t\tname of an OpenSSL engine to use\n");
+	fprintf(stderr, "    -E engine:    specify OpenSSL engine\n");
 #endif
 	fprintf(stderr, "    -f:	   force overwrite\n");
 	fprintf(stderr, "    -K directory: use directory for key files\n");
@@ -164,6 +163,10 @@ main(int argc, char **argv) {
 			fatal("cannot process filename %s: %s",
 			      argv[isc_commandline_index],
 			      isc_result_totext(result));
+		if (strcmp(dir, ".") == 0) {
+			isc_mem_free(mctx, dir);
+			dir = NULL;
+		}
 	}
 
 	if (ectx == NULL)
@@ -227,10 +230,8 @@ main(int argc, char **argv) {
 			      isc_result_totext(result));
 		}
 
-		printf("%s\n", newname);
-
 		isc_buffer_clear(&buf);
-		dst_key_buildfilename(key, DST_TYPE_PRIVATE, dir, &buf);
+		dst_key_buildfilename(key, 0, dir, &buf);
 		printf("%s\n", newname);
 
 		/*
@@ -262,7 +263,8 @@ cleanup:
 	cleanup_entropy(&ectx);
 	if (verbose > 10)
 		isc_mem_stats(mctx, stdout);
-	isc_mem_free(mctx, dir);
+	if (dir != NULL)
+		isc_mem_free(mctx, dir);
 	isc_mem_destroy(&mctx);
 
 	return (0);

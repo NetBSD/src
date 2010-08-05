@@ -1,4 +1,4 @@
-/*	$NetBSD: rollover.c,v 1.1.1.2 2009/10/25 00:01:53 christos Exp $	*/
+/*	$NetBSD: rollover.c,v 1.1.1.3 2010/08/05 20:01:11 christos Exp $	*/
 
 /*****************************************************************
 **
@@ -337,7 +337,7 @@ static	int	kskrollover (dki_t *ksk, zone_t *zonelist, zone_t *zp)
 #if 0
 			verbmesg (2, z, "\t\tkskrollover: we are in state 2 and  waiting for parent propagation (parentfile %d < parentprop %d + parentresig %d + parentkeyttl %d\n", parfile_age, parent_propagation, parent_resign, parent_keyttl);
 #else
-			verbmesg (2, z, "\t\tkskrollover: we are in state 2 and  waiting for parent propagation (parentfile %dsec < parentprop %dsec + parentkeyttl %dsec\n", parfile_age, parent_propagation, parent_keyttl);
+			verbmesg (2, z, "\t\tkskrollover: we are in state 2 and waiting for parent propagation (parentfile %dsec < parentprop %dsec + parentkeyttl %dsec\n", parfile_age, parent_propagation, parent_keyttl);
 #endif
 		break;
 	default:
@@ -507,16 +507,16 @@ int	kskstatus (zone_t *zonelist, zone_t *zp)
 		akey = (dki_t *)dki_findalgo (zp->keys, DKI_KSK, z->k2_algo, 'a', 1);
 		if ( akey == NULL )
 		{
-			verbmesg (1, z, "\tNo active KSK for second algorithm found: generate new one\n");
+			verbmesg (1, z, "\tNo active KSK for additional algorithm found: generate new one\n");
 			akey = genkey2 (&zp->keys, zp->dir, zp->zone, DKI_KSK, z, DKI_ACTIVE);
 			if ( !akey )
 			{
-				error ("\tcould not generate new KSK for 2nd algorithm\n");
+				error ("\tcould not generate new KSK for additional algorithm\n");
 				lg_mesg (LG_ERROR, "\"%s\": can't generate new KSK for 2nd algorithm: \"%s\"",
 									zp->zone, dki_geterrstr());
 			}
 			else
-				lg_mesg (LG_INFO, "\"%s\": generated new KSK %d for 2nd algorithm",
+				lg_mesg (LG_INFO, "\"%s\": generated new KSK %d for additional algorithm",
 										zp->zone, akey->tag);
 			return 1;	/* return value of 1 forces a resigning of the zone */
 		}

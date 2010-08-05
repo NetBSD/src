@@ -1,7 +1,7 @@
-/*	$NetBSD: globals.h,v 1.1.1.2 2009/10/25 00:01:33 christos Exp $	*/
+/*	$NetBSD: globals.h,v 1.1.1.3 2010/08/05 19:53:55 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: globals.h,v 1.86 2009/10/05 17:30:49 fdupont Exp */
+/* Id: globals.h,v 1.86.60.2 2010/06/26 23:46:27 tbox Exp */
 
 #ifndef NAMED_GLOBALS_H
 #define NAMED_GLOBALS_H 1
@@ -151,6 +151,7 @@ EXTERN int			ns_g_listen		INIT(3);
 EXTERN isc_time_t		ns_g_boottime;
 EXTERN isc_boolean_t		ns_g_memstatistics	INIT(ISC_FALSE);
 EXTERN isc_boolean_t		ns_g_clienttest		INIT(ISC_FALSE);
+EXTERN isc_boolean_t		ns_g_nosoa		INIT(ISC_FALSE);
 
 #undef EXTERN
 #undef INIT

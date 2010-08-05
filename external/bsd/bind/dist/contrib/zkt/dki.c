@@ -1,4 +1,4 @@
-/*	$NetBSD: dki.c,v 1.1.1.2 2009/10/25 00:01:53 christos Exp $	*/
+/*	$NetBSD: dki.c,v 1.1.1.3 2010/08/05 20:01:21 christos Exp $	*/
 
 /*****************************************************************
 **
@@ -229,6 +229,11 @@ void	dki_tfree (dki_t **tree)
 }
 #endif
 
+#if defined(BIND_VERSION) && BIND_VERSION >= 970
+# define	KEYGEN_COMPMODE	"-C -q "	/* this is the compability mode needed by BIND 9.7 */
+#else
+# define	KEYGEN_COMPMODE	""
+#endif
 /*****************************************************************
 **	dki_new ()
 **	create new keyfile
@@ -252,15 +257,15 @@ dki_t	*dki_new (const char *dir, const char *name, int ksk, int algo, int bitsiz
 	if ( rfile && *rfile )
 		snprintf (randfile, sizeof (randfile), "-r %.250s ", rfile);
 		
-	if ( algo == DK_ALGO_RSA || algo == DK_ALGO_RSASHA1 )
+	if ( algo == DK_ALGO_RSA || algo == DK_ALGO_RSASHA1 || algo == DK_ALGO_RSASHA256 || algo == DK_ALGO_RSASHA512 )
 		expflag = "-e ";
 
 	if ( dir && *dir )
-		snprintf (cmdline, sizeof (cmdline), "cd %s ; %s %s%s-n ZONE -a %s -b %d %s %s",
-			dir, KEYGENCMD, randfile, expflag, dki_algo2str(algo), bitsize, flag, name);
+		snprintf (cmdline, sizeof (cmdline), "cd %s ; %s %s%s%s-n ZONE -a %s -b %d %s %s",
+			dir, KEYGENCMD, KEYGEN_COMPMODE, randfile, expflag, dki_algo2str(algo), bitsize, flag, name);
 	else
-		snprintf (cmdline, sizeof (cmdline), "%s %s%s-n ZONE -a %s -b %d %s %s",
-			KEYGENCMD, randfile, expflag, dki_algo2str(algo), bitsize, flag, name);
+		snprintf (cmdline, sizeof (cmdline), "%s %s%s%s-n ZONE -a %s -b %d %s %s",
+			KEYGENCMD, KEYGEN_COMPMODE, randfile, expflag, dki_algo2str(algo), bitsize, flag, name);
 
 	dbg_msg (cmdline);
 
@@ -634,6 +639,8 @@ char	*dki_algo2str (int algo)
 	case DK_ALGO_RSASHA1:		return ("RSASHA1");
 	case DK_ALGO_NSEC3DSA:		return ("NSEC3DSA");
 	case DK_ALGO_NSEC3RSASHA1:	return ("NSEC3RSASHA1");
+	case DK_ALGO_RSASHA256:		return ("RSASHA256");
+	case DK_ALGO_RSASHA512:		return ("RSASHA512");
 	}
 	return ("unknown");
 }
@@ -653,6 +660,8 @@ char	*dki_algo2sstr (int algo)
 	case DK_ALGO_RSASHA1:		return ("RSASHA1");
 	case DK_ALGO_NSEC3DSA:		return ("N3DSA");
 	case DK_ALGO_NSEC3RSASHA1:	return ("N3RSA1");
+	case DK_ALGO_RSASHA256:		return ("RSASHA2");
+	case DK_ALGO_RSASHA512:		return ("RSASHA5");
 	}
 	return ("unknown");
 }
@@ -843,6 +852,18 @@ int	dki_namecmp (const dki_t *a, const dki_t *b)
 
 	return domaincmp (a->name, b->name);
 }
+
+/*****************************************************************
+**	dki_revnamecmp () 	return <0 | 0 | >0
+*****************************************************************/
+int	dki_revnamecmp (const dki_t *a, const dki_t *b)
+{
+	if ( a == NULL ) return -1;
+	if ( b == NULL ) return 1;
+
+	return domaincmp_dir (a->name, b->name, 0);
+}
+
 /*****************************************************************
 **	dki_tagcmp () 	return <0 | 0 | >0
 *****************************************************************/
@@ -1130,11 +1151,14 @@ const dki_t	*dki_search (const dki_t *list, int tag, const char *name)
 /*****************************************************************
 **	dki_tadd ()	add a key to the given tree
 *****************************************************************/
-dki_t	*dki_tadd (dki_t **tree, dki_t *new)
+dki_t	*dki_tadd (dki_t **tree, dki_t *new, int sub_before)
 {
 	dki_t	**p;
 
-	p = tsearch (new, tree, dki_namecmp);
+	if ( sub_before )
+		p = tsearch (new, tree, dki_namecmp);
+	else
+		p = tsearch (new, tree, dki_revnamecmp);
 	if ( *p == new )
 		dbg_val ("dki_tadd: New entry %s added\n", new->name);
 	else

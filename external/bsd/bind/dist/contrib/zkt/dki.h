@@ -1,4 +1,4 @@
-/*	$NetBSD: dki.h,v 1.1.1.2 2009/10/25 00:01:53 christos Exp $	*/
+/*	$NetBSD: dki.h,v 1.1.1.3 2010/08/05 20:01:21 christos Exp $	*/
 
 /*****************************************************************
 **
@@ -57,13 +57,17 @@
 # define	MAX_PATHSIZE	(MAX_DNAMESIZE + 1 + MAX_FNAMESIZE)
 
 /* algorithm types */
-# define	DK_ALGO_RSA	1	/* RFC2537 */
-# define	DK_ALGO_DH	2	/* RFC2539 */
-# define	DK_ALGO_DSA	3	/* RFC2536 (mandatory) */
-# define	DK_ALGO_EC	4	/* */
-# define	DK_ALGO_RSASHA1	5	/* RFC3110 */
+# define	DK_ALGO_RSA		1	/* RFC2537 */
+# define	DK_ALGO_DH		2	/* RFC2539 */
+# define	DK_ALGO_DSA		3	/* RFC2536 (mandatory) */
+# define	DK_ALGO_EC		4	/* */
+# define	DK_ALGO_RSASHA1		5	/* RFC3110 */
 # define	DK_ALGO_NSEC3DSA	6	/* symlink to alg 3 RFC5155 */
 # define	DK_ALGO_NSEC3RSASHA1	7	/* symlink to alg 5 RFC5155 */
+# define	DK_ALGO_RSASHA256	8	/* RFCxxx */
+# define	DK_ALGO_RSASHA512	10	/* RFCxxx */
+# define	DK_ALGO_NSEC3RSASHA256	DK_ALGO_RSASHA256	/* same as non nsec algorithm RFCxxx */
+# define	DK_ALGO_NSEC3RSASHA512	DK_ALGO_RSASHA512	/* same as non nsec algorithm RFCxxx */
 
 /* protocol types */
 # define	DK_PROTO_DNS	3
@@ -139,9 +143,10 @@ dki_t	**tdelete (const dki_t *dkp, dki_t **tree, int(*compar)(const dki_t *, con
 void	twalk (const dki_t *root, void (*action)(const dki_t **nodep, VISIT which, int depth));
 
 extern	void	dki_tfree (dki_t **tree);
-extern	dki_t	*dki_tadd (dki_t **tree, dki_t *new);
+extern	dki_t	*dki_tadd (dki_t **tree, dki_t *new, int sub_before);
 extern	int	dki_tagcmp (const dki_t *a, const dki_t *b);
 extern	int	dki_namecmp (const dki_t *a, const dki_t *b);
+extern	int	dki_revnamecmp (const dki_t *a, const dki_t *b);
 extern	int	dki_allcmp (const dki_t *a, const dki_t *b);
 #endif
 

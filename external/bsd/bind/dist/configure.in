@@ -1,4 +1,4 @@
-# Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 1998-2003  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -18,7 +18,7 @@ AC_DIVERT_PUSH(1)dnl
 esyscmd([sed "s/^/# /" COPYRIGHT])dnl
 AC_DIVERT_POP()dnl
 
-AC_REVISION(Revision: 1.489)
+AC_REVISION(Revision: 1.489.22.11)
 
 AC_INIT(lib/dns/name.c)
 AC_PREREQ(2.59)
@@ -282,6 +282,7 @@ AC_C_CONST
 AC_C_INLINE
 AC_C_VOLATILE
 AC_CHECK_FUNC(sysctlbyname, AC_DEFINE(HAVE_SYSCTLBYNAME))
+AC_C_FLEXIBLE_ARRAY_MEMBER
 
 #
 # Older versions of HP/UX don't define seteuid() and setegid()
@@ -521,10 +522,14 @@ case "$use_openssl" in
 		AC_MSG_RESULT(no)
 		DST_OPENSSL_INC=""
 		USE_OPENSSL=""
+		OPENSSLLINKOBJS=""
+		OPENSSLLINKSRCS=""
 		;;
 	auto)
 		DST_OPENSSL_INC=""
 		USE_OPENSSL=""
+		OPENSSLLINKOBJS=""
+		OPENSSLLINKSRCS=""
 		AC_MSG_ERROR(
 [OpenSSL was not found in any of $openssldirs; use --with-openssl=/path
 If you don't want OpenSSL, use --without-openssl])
@@ -669,6 +674,8 @@ esac
 		AC_CHECK_FUNCS(EVP_sha256 EVP_sha512)
 		CFLAGS="$saved_cflags"
 		LIBS="$saved_libs"
+		OPENSSLLINKOBJS='${OPENSSLLINKOBJS}'
+		OPENSSLLINKSRCS='${OPENSSLLINKSRCS}'
 
 		;;
 esac
@@ -680,6 +687,8 @@ esac
 
 AC_SUBST(USE_OPENSSL)
 AC_SUBST(DST_OPENSSL_INC)
+AC_SUBST(OPENSSLLINKOBJS)
+AC_SUBST(OPENSSLLINKSRCS)
 DNS_CRYPTO_LIBS="$DNS_CRYPTO_LIBS $DNS_OPENSSL_LIBS"
 
 #
@@ -784,6 +793,13 @@ case "$use_gssapi" in
 		    AC_MSG_ERROR([gssapi.h not found])
 		fi
 
+		AC_CHECK_HEADERS(krb5.h krb5/krb5.h kerberosv5/krb5.h,
+		    [ISC_PLATFORM_KRB5HEADER="#define ISC_PLATFORM_KRB5HEADER <$ac_header>"])
+
+		if test "$ISC_PLATFORM_KRB5HEADER" = ""; then
+		    AC_MSG_ERROR([krb5.h not found])
+		fi
+
 		CPPFLAGS="$saved_cppflags"
 
 		#
@@ -814,7 +830,7 @@ case "$use_gssapi" in
 		    "-lgssapi" \
 		    "-lgssapi -lkrb5 -ldes -lcrypt -lasn1 -lroken -lcom_err" \
 		    "-lgssapi -lkrb5 -lcrypto -lcrypt -lasn1 -lroken -lcom_err" \
-		    "-lgss"
+		    "-lgss -lkrb5"
 		do
 		    # Note that this does not include $saved_libs, because
 		    # on FreeBSD machines this configure script has added
@@ -823,7 +839,7 @@ case "$use_gssapi" in
 		    # when you are trying to build with KTH in /usr/lib.
 		    LIBS="-L$use_gssapi/lib $TRY_LIBS"
 		    AC_MSG_CHECKING(linking as $TRY_LIBS)
-		    AC_TRY_LINK( , [gss_acquire_cred();],
+		    AC_TRY_LINK( , [gss_acquire_cred();krb5_init_context()],
 				gssapi_linked=yes, gssapi_linked=no)
 		    case $gssapi_linked in
 		    yes) AC_MSG_RESULT(yes); break ;;
@@ -885,6 +901,7 @@ esac
 
 AC_SUBST(ISC_PLATFORM_HAVEGSSAPI)
 AC_SUBST(ISC_PLATFORM_GSSAPIHEADER)
+AC_SUBST(ISC_PLATFORM_KRB5HEADER)
 
 AC_SUBST(USE_GSSAPI)
 AC_SUBST(DST_GSSAPI_INC)
@@ -984,6 +1001,8 @@ then
 	fi
 	ALWAYS_DEFINES="-D_REENTRANT"
 	ISC_PLATFORM_USETHREADS="#define ISC_PLATFORM_USETHREADS 1"
+	THREADOPTOBJS='${THREADOPTOBJS}'
+	THREADOPTSRCS='${THREADOPTSRCS}'
 	thread_dir=pthreads
 	#
 	# We'd like to use sigwait() too
@@ -1062,11 +1081,15 @@ then
 else
 	ISC_PLATFORM_USETHREADS="#undef ISC_PLATFORM_USETHREADS"
 	thread_dir=nothreads
+	THREADOPTOBJS=""
+	THREADOPTSRCS=""
 	ALWAYS_DEFINES=""
 fi
 
 AC_SUBST(ALWAYS_DEFINES)
 AC_SUBST(ISC_PLATFORM_USETHREADS)
+AC_SUBST(THREADOPTOBJS)
+AC_SUBST(THREADOPTSRCS)
 ISC_THREAD_DIR=$thread_dir
 AC_SUBST(ISC_THREAD_DIR)
 
@@ -1162,7 +1185,7 @@ IRIX_DNSSEC_WARNINGS_HACK=""
 if test "X$GCC" = "Xyes"; then
 	AC_MSG_CHECKING(if "$CC" supports -fno-strict-aliasing)
 	SAVE_CFLAGS=$CFLAGS
-	CFLAGS=-fno-strict-aliasing
+	CFLAGS="$CFLAGS -fno-strict-aliasing"
 	AC_TRY_COMPILE(,, [FNOSTRICTALIASING=yes],[FNOSTRICTALIASING=no])
 	CFLAGS=$SAVE_CFLAGS
 	if test "$FNOSTRICTALIASING" = "yes"; then
@@ -2474,6 +2497,8 @@ case "$enable_atomic" in
 				 use_atomic=yes])
 				]
 				)
+			else
+				use_atomic=yes
 			fi
 			;;
 		*)
@@ -3257,9 +3282,12 @@ AC_CONFIG_FILES([
 	bin/tests/sockaddr/Makefile
 	bin/tests/system/Makefile
 	bin/tests/system/conf.sh
+	bin/tests/system/filter-aaaa/Makefile
 	bin/tests/system/lwresd/Makefile
 	bin/tests/system/tkey/Makefile
 	bin/tests/headerdep_test.sh
+	bin/tests/virtual-time/Makefile
+	bin/tests/virtual-time/conf.sh
 	bin/tools/Makefile
 	bin/dnssec/Makefile
 	bin/pkcs11/Makefile
@@ -3282,6 +3310,18 @@ AC_CONFIG_FILES([
 #
 
 AC_OUTPUT
+
+#
+# Now that the Makefiles exist we can ensure that everything is rebuilt.
+#
+AC_ARG_WITH(make-clean,
+[  --with-make-clean      Run "make clean" at end of configure [[yes|no]].],
+    make_clean="$withval", make_clean="yes")
+case "$make_clean" in
+yes)
+	make clean
+	;;
+esac
 
 if test "X$USE_OPENSSL" = "X"; then
 cat << \EOF                                                             

@@ -1,7 +1,7 @@
-/*	$NetBSD: named-checkconf.c,v 1.1.1.3 2009/12/26 22:18:45 christos Exp $	*/
+/*	$NetBSD: named-checkconf.c,v 1.1.1.4 2010/08/05 19:52:28 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2007, 2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2009, 2010  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: named-checkconf.c,v 1.51 2009/12/04 21:09:32 marka Exp */
+/* Id: named-checkconf.c,v 1.51.4.2 2010/03/09 23:49:55 tbox Exp */
 
 /*! \file */
 
@@ -66,7 +66,7 @@ usage(void) ISC_PLATFORM_NORETURN_POST;
 
 static void
 usage(void) {
-	fprintf(stderr, "usage: %s [-h] [-j] [-v] [-z] [-t directory] "
+	fprintf(stderr, "usage: %s [-h] [-j] [-p] [-v] [-z] [-t directory] "
 		"[named.conf]\n", program);
 	exit(1);
 }

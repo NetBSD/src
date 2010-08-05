@@ -1,7 +1,7 @@
-/*	$NetBSD: rdataslab.c,v 1.1.1.2 2009/10/25 00:02:33 christos Exp $	*/
+/*	$NetBSD: rdataslab.c,v 1.1.1.3 2010/08/05 20:12:39 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: rdataslab.c,v 1.50 2009/01/17 23:47:43 tbox Exp */
+/* Id: rdataslab.c,v 1.50.186.2 2010/02/25 05:25:52 tbox Exp */
 
 /*! \file */
 
@@ -432,6 +432,8 @@ static dns_rdatasetmethods_t rdataset_methods = {
 	rdataset_current,
 	rdataset_clone,
 	rdataset_count,
+	NULL,
+	NULL,
 	NULL,
 	NULL,
 	NULL,

@@ -1,4 +1,4 @@
-/*	$NetBSD: domaincmp.h,v 1.1.1.1 2009/03/22 14:58:19 christos Exp $	*/
+/*	$NetBSD: domaincmp.h,v 1.1.1.2 2010/08/05 20:01:23 christos Exp $	*/
 
 /*****************************************************************
 **
@@ -39,4 +39,7 @@
 #ifndef DOMAINCMP_H
 # define DOMAINCMP_H
 extern	int	domaincmp (const char *a, const char *b);
+extern	int	domaincmp_dir (const char *a, const char *b, int subdomain_above);
+extern	int	isparentdomain (const char *child, const char *parent, int level);
+extern	int	issubdomain (const char *child, const char *parent);
 #endif

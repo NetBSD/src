@@ -1,6 +1,6 @@
 #!/bin/sh -e
 #
-# Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2009, 2010  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -14,11 +14,13 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: setup.sh,v 1.3 2009/11/30 23:48:02 tbox Exp
+# Id: setup.sh,v 1.3.6.2 2010/01/18 23:48:01 tbox Exp
 
 SYSTEMTESTTOP=..
 . $SYSTEMTESTTOP/conf.sh
 . ./clean.sh
+
+echo "I:generating keys and preparing zones"
 
 ../../../tools/genrandom 400 random.data
 

@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 #
-# Copyright (C) 2004, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004, 2007, 2009, 2010  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 2000, 2001  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -15,7 +15,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: ans.pl,v 1.13 2009/11/04 02:15:30 marka Exp
+# Id: ans.pl,v 1.13.24.2 2010/05/19 09:32:36 tbox Exp
 
 #
 # Ad hoc name server
@@ -84,6 +84,11 @@ for (;;) {
 		# delegation to avoid automatic acceptance for subdomain aliases
 		$packet->push("authority", new Net::DNS::RR("example.net 300 NS ns.example.net"));
 		$packet->push("additional", new Net::DNS::RR("ns.example.net 300 A 10.53.0.3"));
+	} elsif ($qname =~ /^nodata\.example\.net$/i) {
+		$packet->header->aa(1);
+	} elsif ($qname =~ /^nxdomain\.example\.net$/i) {
+		$packet->header->aa(1);
+		$packet->header->rcode(NXDOMAIN);
 	} elsif ($qname =~ /sub\.example\.org/) {
 		# Data for CNAME/DNAME filtering.  The final answers are
 		# expected to be accepted regardless of the filter setting.

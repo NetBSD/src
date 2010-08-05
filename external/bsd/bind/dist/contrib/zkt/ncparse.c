@@ -1,4 +1,4 @@
-/*	$NetBSD: ncparse.c,v 1.1.1.2 2009/10/25 00:01:53 christos Exp $	*/
+/*	$NetBSD: ncparse.c,v 1.1.1.3 2010/08/05 20:01:25 christos Exp $	*/
 
 /*****************************************************************
 **	
@@ -175,7 +175,7 @@ static	int	gettok (FILE *fp, char *val, size_t valsize)
 		bufend = buf + sizeof (buf) - 1;
 		do
 			*p++ = tolower (c);
-		while ( (c = getc (fp)) != EOF && p < bufend && isalpha (c) );
+		while ( (c = getc (fp)) != EOF && p < bufend && (isalpha (c) || c == '-') );
 		*p = '\0';
 		ungetc (c, fp);
 

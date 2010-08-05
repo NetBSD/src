@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2004, 2007  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004, 2007, 2010  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 2000, 2001  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -15,7 +15,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: runall.sh,v 1.8 2007/06/19 23:47:00 tbox Exp
+# Id: runall.sh,v 1.8.558.2 2010/03/04 23:49:19 tbox Exp
 
 #
 # Run all the system tests.
@@ -35,7 +35,7 @@ $PERL testsock.pl || {
     cat <<EOF >&2
 I:
 I:NOTE: Many of the tests were skipped because they require that
-I:      the IP addresses 10.53.0.1 through 10.53.0.5 are configured 
+I:      the IP addresses 10.53.0.1 through 10.53.0.7 are configured 
 I:	as alias addresses on the loopback interface.  Please run
 I:	"bin/tests/system/ifconfig.sh up" as root to configure them
 I:	and rerun the tests.

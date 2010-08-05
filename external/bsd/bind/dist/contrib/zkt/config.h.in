@@ -9,11 +9,17 @@
 /* Define to 1 if the `closedir' function returns void instead of `int'. */
 #undef CLOSEDIR_VOID
 
+/* zkt-ls with colors */
+#undef COLOR_MODE
+
 /* set path of config file (defaults to /var/named) */
 #undef CONFIG_PATH
 
 /* Define to 1 if you have the `alarm' function. */
 #undef HAVE_ALARM
+
+/* Define to 1 if you have the <curses.h> header file. */
+#undef HAVE_CURSES_H
 
 /* Define to 1 if you have the <dirent.h> header file, and it defines `DIR'.
    */
@@ -40,9 +46,8 @@
 /* Define to 1 if you have the <inttypes.h> header file. */
 #undef HAVE_INTTYPES_H
 
-/* Define to 1 if your system has a GNU libc compatible `malloc' function, and
-   to 0 otherwise. */
-#undef HAVE_MALLOC
+/* Define to 1 if you have the `ncurses' library (-lncurses). */
+#undef HAVE_LIBNCURSES
 
 /* Define to 1 if you have the <memory.h> header file. */
 #undef HAVE_MEMORY_H
@@ -122,6 +127,9 @@
 /* Define to 1 if you have the <sys/types.h> header file. */
 #undef HAVE_SYS_TYPES_H
 
+/* Define to 1 if you have the <term.h> header file. */
+#undef HAVE_TERM_H
+
 /* Define to 1 if you have the `timegm' function. */
 #undef HAVE_TIMEGM
 
@@ -171,8 +179,8 @@
 /* Define to the version of this package. */
 #undef PACKAGE_VERSION
 
-/* print age of year */
-#undef PRINT_AGE_OF_YEAR
+/* print age with year */
+#undef PRINT_AGE_WITH_YEAR
 
 /* print out timezone */
 #undef PRINT_TIMEZONE
@@ -192,6 +200,9 @@
 /* Use TREE data structure for dnssec-zkt */
 #undef USE_TREE
 
+/* ZKT copyright string */
+#undef ZKT_COPYRIGHT
+
 /* ZKT version string */
 #undef ZKT_VERSION
 
@@ -200,9 +211,6 @@
 
 /* Define to `int' if <sys/types.h> doesn't define. */
 #undef gid_t
-
-/* Define to rpl_malloc if the replacement function should be used. */
-#undef malloc
 
 /* Define to `unsigned int' if <sys/types.h> does not define. */
 #undef size_t

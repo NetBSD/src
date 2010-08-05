@@ -1,7 +1,7 @@
-/*	$NetBSD: xfrout.c,v 1.1.1.2 2009/10/25 00:01:33 christos Exp $	*/
+/*	$NetBSD: xfrout.c,v 1.1.1.3 2010/08/05 19:53:53 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: xfrout.c,v 1.136 2009/06/30 02:52:32 each Exp */
+/* Id: xfrout.c,v 1.136.132.2 2010/05/27 23:49:54 tbox Exp */
 
 #include <config.h>
 
@@ -812,11 +812,13 @@ ns_xfr_start(ns_client_t *client, dns_rdatatype_t reqtype) {
 #ifdef DLZ
 	{
 		/*
-		 * Normal zone table does not have a match.  Try the DLZ database
+		 * Normal zone table does not have a match.
+		 * Try the DLZ database
 		 */
 		if (client->view->dlzdatabase != NULL) {
 			result = dns_dlzallowzonexfr(client->view,
-						     question_name, &client->peeraddr,
+						     question_name,
+						     &client->peeraddr,
 						     &db);
 
 			if (result == ISC_R_NOPERM) {
@@ -1055,9 +1057,9 @@ ns_xfr_start(ns_client_t *client, dns_rdatatype_t reqtype) {
 
 #ifdef DLZ
 	if (is_dlz)
-		CHECK(xfrout_ctx_create(mctx, client, request->id, question_name,
-					reqtype, question_class, zone, db, ver,
-					quota, stream,
+		CHECK(xfrout_ctx_create(mctx, client, request->id,
+					question_name, reqtype, question_class,
+					zone, db, ver, quota, stream,
 					dns_message_gettsigkey(request),
 					tsigbuf,
 					3600,
@@ -1067,9 +1069,9 @@ ns_xfr_start(ns_client_t *client, dns_rdatatype_t reqtype) {
 					&xfr));
 	else
 #endif
-		CHECK(xfrout_ctx_create(mctx, client, request->id, question_name,
-					reqtype, question_class, zone, db, ver,
-					quota, stream,
+		CHECK(xfrout_ctx_create(mctx, client, request->id,
+					question_name, reqtype, question_class,
+					zone, db, ver, quota, stream,
 					dns_message_gettsigkey(request),
 					tsigbuf,
 					dns_zone_getmaxxfrout(zone),

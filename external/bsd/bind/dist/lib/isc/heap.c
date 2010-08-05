@@ -1,7 +1,7 @@
-/*	$NetBSD: heap.c,v 1.1.1.1 2009/03/22 15:02:02 christos Exp $	*/
+/*	$NetBSD: heap.c,v 1.1.1.2 2010/08/05 20:14:38 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2010  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1997-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: heap.c,v 1.37 2007/10/19 17:15:53 explorer Exp */
+/* Id: heap.c,v 1.37.466.1 2010/02/24 01:46:55 marka Exp */
 
 /*! \file
  * Heap implementation of priority queues adapted from the following:
@@ -188,15 +188,17 @@ sink_down(isc_heap_t *heap, unsigned int i, void *elt) {
 
 isc_result_t
 isc_heap_insert(isc_heap_t *heap, void *elt) {
-	unsigned int i;
+	unsigned int new_last;
 
 	REQUIRE(VALID_HEAP(heap));
 
-	i = ++heap->last;
-	if (heap->last >= heap->size && !resize(heap))
+	new_last = heap->last + 1;
+	RUNTIME_CHECK(new_last > 0); /* overflow check */
+	if (new_last >= heap->size && !resize(heap))
 		return (ISC_R_NOMEMORY);
+	heap->last = new_last;
 
-	float_up(heap, i, elt);
+	float_up(heap, new_last, elt);
 
 	return (ISC_R_SUCCESS);
 }

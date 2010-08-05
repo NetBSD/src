@@ -1,4 +1,4 @@
-/*	$NetBSD: zconf.h,v 1.1.1.2 2009/10/25 00:01:53 christos Exp $	*/
+/*	$NetBSD: zconf.h,v 1.1.1.3 2010/08/05 20:01:29 christos Exp $	*/
 
 /*****************************************************************
 **
@@ -81,6 +81,7 @@
 /* # define	ZSK_ALGO	(DK_ALGO_RSASHA1)	ZSK_ALGO has to be the same as KSK, so this is no longer used (v0.99) */
 # define	ZSK_BITS	(512)
 # define	ZSK_RANDOM	"/dev/urandom"
+# define	NSEC3		0		/* by default nsec3 is off */
 # define	SALTLEN		24		/* salt length in bits (resolution is 4 bits)*/
 
 # define	ZONEDIR		"."
@@ -88,9 +89,11 @@
 # define	PRINTTIME	1
 # define	PRINTAGE	0
 # define	LJUST		0
+# define	LSCOLORTERM	NULL	/* or "" */
 # define	KEYSETDIR	NULL	/* keysets */
 # define	LOGFILE		""
 # define	LOGLEVEL	"error"
+# define	LOGDOMAINDIR	""
 # define	SYSLOGFACILITY	"none"
 # define	SYSLOGLEVEL	"notice"
 # define	VERBOSELOG	0
@@ -100,6 +103,7 @@
 # define	SIG_RANDOM	NULL	/* "/dev/urandom" */
 # define	SIG_PSEUDO	0
 # define	SIG_GENDS	1
+# define	SIG_DNSKEY_KSK	0	/* Sign DNSKEY RR with KSK only */
 # define	SIG_PARAM	""
 # define	DIST_CMD	NULL	/* default is to run "rndc reload" */
 # define	NAMED_CHROOT	NULL	/* default is none */
@@ -124,6 +128,12 @@ typedef	enum {
 } serial_form_t;
 
 typedef	enum {
+	NSEC3_OFF = 0,
+	NSEC3_ON,
+	NSEC3_OPTOUT
+} nsec3_t;
+
+typedef	enum {
 	none = 0,
 	user,
 	local0, local1, local2, local3, local4, local5, local6, local7
@@ -135,6 +145,7 @@ typedef	struct zconf	{
 	int	printtime;
 	int	printage;
 	int	ljust;
+	char	*colorterm;
 	long	sigvalidity;	/* should be less than expire time */
 	long	max_ttl;	/* should be set to the maximum used ttl in the zone */
 	long	key_ttl;
@@ -154,6 +165,7 @@ typedef	struct zconf	{
 	/* int	z_algo;		no longer used; renamed to k2_algo (v0.99) */
 	int	z_bits;
 	char	*z_random;
+	nsec3_t	nsec3;		/* 0 == off; 1 == on; 2 == on with optout */
 	int	saltbits;
 
 	char	*view;
@@ -161,6 +173,7 @@ typedef	struct zconf	{
 	// char	*errlog;
 	char	*logfile;
 	char	*loglevel;
+	char	*logdomaindir;
 	char	*syslogfacility;
 	char	*sysloglevel;
 	int	verboselog;
@@ -172,16 +185,21 @@ typedef	struct zconf	{
 	char	*sig_random;
 	int	sig_pseudo;
 	int	sig_gends;
+	int	sig_dnskeyksk;
 	char	*sig_param;
 	char	*dist_cmd;	/* cmd to run instead of "rndc reload" */
 	char	*chroot_dir;	/* chroot directory of named */
 } zconf_t;
 
+extern	const char	*timeint2str (unsigned long val);
 extern	zconf_t	*loadconfig (const char *filename, zconf_t *z);
 extern	zconf_t	*loadconfig_fromstr (const char *str, zconf_t *z);
 extern	zconf_t	*dupconfig (const zconf_t *conf);
+extern	zconf_t	*freeconfig (zconf_t *conf);
 extern	int	setconfigpar (zconf_t *conf, char *entry, const void *pval);
 extern	int	printconfig (const char *fname, const zconf_t *cp);
+extern	int	printconfigdiff (const char *fname, const zconf_t *ref, const zconf_t *z);
 extern	int	checkconfig (const zconf_t *z);
+extern	void	setconfigversion (int version);
 
 #endif

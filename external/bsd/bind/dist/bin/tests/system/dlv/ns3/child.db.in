@@ -1,4 +1,4 @@
-; Copyright (C) 2004, 2007  Internet Systems Consortium, Inc. ("ISC")
+; Copyright (C) 2004, 2007, 2010  Internet Systems Consortium, Inc. ("ISC")
 ;
 ; Permission to use, copy, modify, and/or distribute this software for any
 ; purpose with or without fee is hereby granted, provided that the above
@@ -12,7 +12,7 @@
 ; OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 ; PERFORMANCE OF THIS SOFTWARE.
 
-; Id: child.db.in,v 1.4 2007/06/19 23:47:02 tbox Exp
+; Id: child.db.in,v 1.4.558.2 2010/05/27 23:49:55 tbox Exp
 
 $TTL	120
 @		SOA	ns hostmaster.ns 1 3600 1200 604800 60
@@ -20,3 +20,5 @@ $TTL	120
 ns		A	10.53.0.3
 foo		TXT	foo
 bar		TXT	bar
+grand		NS	ns.grand
+ns.grand	A	10.53.0.6

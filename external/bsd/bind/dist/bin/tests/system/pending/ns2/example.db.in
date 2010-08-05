@@ -1,4 +1,4 @@
-; Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
+; Copyright (C) 2009, 2010  Internet Systems Consortium, Inc. ("ISC")
 ;
 ; Permission to use, copy, modify, and/or distribute this software for any
 ; purpose with or without fee is hereby granted, provided that the above
@@ -12,9 +12,10 @@
 ; OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 ; PERFORMANCE OF THIS SOFTWARE.
 
-; Id: example.db.in,v 1.2 2009/11/17 23:55:18 marka Exp
+; Id: example.db.in,v 1.2.22.2 2010/01/07 23:48:15 tbox Exp
 
 $TTL 30
+$ORIGIN example.
 @			IN SOA	mname1. . (
 				2009110300 ; serial
 				20         ; refresh (20 seconds)
@@ -26,3 +27,5 @@ $TTL 30
 			MX	10 mail
 ns2			A	10.53.0.2
 mail			A	10.0.0.2
+bad			CNAME	nice.good.
+worse                   A       6.6.6.6

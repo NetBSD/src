@@ -117,6 +117,8 @@ options {
         fake-iquery <boolean>; // obsolete
         fetch-glue <boolean>; // obsolete
         files <size>;
+        filter-aaaa { <address_match_element>; ... }; // not configured
+        filter-aaaa-on-v4 <v4_aaaa>; // not configured
         flush-zones-on-shutdown <boolean>;
         forward ( first | only );
         forwarders [ port <integer> ] { ( <ipv4_address> | <ipv6_address> )
@@ -133,6 +135,7 @@ options {
         listen-on [ port <integer> ] { <address_match_element>; ... };
         listen-on-v6 [ port <integer> ] { <address_match_element>; ... };
         maintain-ixfr-base <boolean>; // obsolete
+        managed-keys-directory <quoted_string>;
         masterfile-format ( text | raw );
         match-mapped-addresses <boolean>;
         max-acache-size <size_no_default>;
@@ -158,6 +161,7 @@ options {
         multi-master <boolean>;
         multiple-cnames <boolean>; // obsolete
         named-xfer <quoted_string>; // obsolete
+        new-zone-file ( <quoted_string> | none );
         notify <notifytype>;
         notify-delay <integer>;
         notify-source ( <ipv4_address> | * ) [ port ( <integer> | * ) ];
@@ -184,9 +188,10 @@ options {
         root-delegation-only [ exclude { <quoted_string>; ... } ];
         rrset-order { [ class <string> ] [ type <string> ] [ name
             <quoted_string> ] <string> <string>; ... };
+        secroots-file <quoted_string>;
         serial-queries <integer>; // obsolete
         serial-query-rate <integer>;
-        server-id ( <quoted_string> | none |;
+        server-id ( <quoted_string> | none | hostname );
         session-keyalg <string>;
         session-keyfile ( <quoted_string> | none );
         session-keyname <string>;
@@ -312,6 +317,8 @@ view <string> <optional_class> {
         empty-server <string>;
         empty-zones-enable <boolean>;
         fetch-glue <boolean>; // obsolete
+        filter-aaaa { <address_match_element>; ... }; // not configured
+        filter-aaaa-on-v4 <v4_aaaa>; // not configured
         forward ( first | only );
         forwarders [ port <integer> ] { ( <ipv4_address> | <ipv6_address> )
             [ port <integer> ]; ... };
@@ -348,6 +355,7 @@ view <string> <optional_class> {
         min-roots <integer>; // not implemented
         minimal-responses <boolean>;
         multi-master <boolean>;
+        new-zone-file ( <quoted_string> | none );
         notify <notifytype>;
         notify-delay <integer>;
         notify-source ( <ipv4_address> | * ) [ port ( <integer> | * ) ];

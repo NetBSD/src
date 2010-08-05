@@ -3,6 +3,7 @@
 #
 #	Introduction into the new logging feature 
 #	available since v0.96
+#	Per domain logging is enabled since v1.0
 #	
 
 In previous version of dnssec-signer every message was written
@@ -10,8 +11,8 @@ to the default stdout and stderr channels, and the logging itself
 was handled by a redirection of those chanels to the logger command
 or to a file.
 
-Now, since version v0.96, the dnssec-signer command is able to log all
-messages by itself. File and SYSLOG logging is supported.
+Since v0.96, the dnssec-signer command is able to log all messages
+by itself. File and SYSLOG logging is supported.
 
 To enable the logging into a file channel, you have to specify
 the file or directory name via the commandline option -L (--logfile)
@@ -19,7 +20,14 @@ or via the config file parameter "LogFile".
 	LogFile: ""|"<file>"|"<directory>"	(default is "")
 If a file is specified, than each run of dnssec-signer will append the
 messages to that file. If a directory is specified, than a file with a
-name of zkt-<ISOdate&timeUTC>.log" will be created on each dnssec-signer run.
+name of zkt-<ISOdate&timeUTC>+log" will be created on each dnssec-signer run.
+
+Since v1.0 per domain logging is possible.
+If the parameter "LogDomainDir:" is not empty, than the domain specific messages
+are written to a separate log file with a name like "zkt-<domainname>+log" in the
+directory specified by the parameter.
+If "LogDomainDir:" is set to ".", then the logfile will be created in the domain
+directory of the zone.
 
 Logging into the syslog channel could be enabled via the config file
 parameter "SyslogFacility".
@@ -95,5 +103,3 @@ Some recomended and useful logging settings
 	SyslogFacility: USER
 	SyslogLevel: NOTICE
 	VerboseLog: 2
-	
-- 

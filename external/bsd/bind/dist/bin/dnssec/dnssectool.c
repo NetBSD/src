@@ -1,7 +1,7 @@
-/*	$NetBSD: dnssectool.c,v 1.1.1.4 2009/12/26 22:19:04 christos Exp $	*/
+/*	$NetBSD: dnssectool.c,v 1.1.1.5 2010/08/05 19:53:09 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2009, 2010  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: dnssectool.c,v 1.58 2009/10/26 23:47:35 tbox Exp */
+/* Id: dnssectool.c,v 1.58.36.2 2010/01/19 23:48:13 tbox Exp */
 
 /*! \file */
 
@@ -39,6 +39,8 @@
 #include <isc/util.h>
 #include <isc/print.h>
 
+#include <dns/dnssec.h>
+#include <dns/keyvalues.h>
 #include <dns/log.h>
 #include <dns/name.h>
 #include <dns/rdatastruct.h>
@@ -404,3 +406,61 @@ set_keyversion(dst_key_t *key) {
 		dst_key_settime(key, DST_TIME_CREATED, now);
 	}
 }
+
+isc_boolean_t
+key_collision(isc_uint16_t id, dns_name_t *name, const char *dir,
+	      dns_secalg_t alg, isc_mem_t *mctx, isc_boolean_t *exact)
+{
+	isc_result_t result;
+	isc_boolean_t conflict = ISC_FALSE;
+	dns_dnsseckeylist_t matchkeys;
+	dns_dnsseckey_t *key = NULL;
+	isc_uint16_t oldid, diff;
+	isc_uint16_t bits = DNS_KEYFLAG_REVOKE;   /* flag bits to look for */
+
+	if (exact != NULL)
+		*exact = ISC_FALSE;
+
+	ISC_LIST_INIT(matchkeys);
+	result = dns_dnssec_findmatchingkeys(name, dir, mctx, &matchkeys);
+	if (result == ISC_R_NOTFOUND)
+		return (ISC_FALSE);
+
+	while (!ISC_LIST_EMPTY(matchkeys) && !conflict) {
+		key = ISC_LIST_HEAD(matchkeys);
+		if (dst_key_alg(key->key) != alg)
+			goto next;
+
+		oldid = dst_key_id(key->key);
+		diff = (oldid > id) ? (oldid - id) : (id - oldid);
+		if ((diff & ~bits) == 0) {
+			conflict = ISC_TRUE;
+			if (diff != 0) {
+				if (verbose > 1)
+					fprintf(stderr, "Key ID %d could "
+						"collide with %d\n",
+						id, oldid);
+			} else {
+				if (exact != NULL)
+					*exact = ISC_TRUE;
+				if (verbose > 1)
+					fprintf(stderr, "Key ID %d exists\n",
+						id);
+			}
+		}
+
+ next:
+		ISC_LIST_UNLINK(matchkeys, key, link);
+		dns_dnsseckey_destroy(mctx, &key);
+	}
+
+	/* Finish freeing the list */
+	while (!ISC_LIST_EMPTY(matchkeys)) {
+		key = ISC_LIST_HEAD(matchkeys);
+		ISC_LIST_UNLINK(matchkeys, key, link);
+		dns_dnsseckey_destroy(mctx, &key);
+	}
+
+	return (conflict);
+}
+

@@ -1,7 +1,7 @@
-/*	$NetBSD: server.h,v 1.1.1.3 2009/12/26 22:19:26 christos Exp $	*/
+/*	$NetBSD: server.h,v 1.1.1.4 2010/08/05 19:53:57 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: server.h,v 1.104 2009/11/28 15:57:37 vjs Exp */
+/* Id: server.h,v 1.104.8.4 2010/07/11 00:12:18 each Exp */
 
 #ifndef NAMED_SERVER_H
 #define NAMED_SERVER_H 1
@@ -56,9 +56,8 @@ struct ns_server {
 	dns_acl_t		*blackholeacl;
 	char *			statsfile;	/*%< Statistics file name */
 	char *			dumpfile;	/*%< Dump file name */
+	char *			secrootsfile;	/*%< Secroots file name */
 	char *			bindkeysfile;	/*%< bind.keys file name */
-	isc_boolean_t           managedkeys;    /*%< A managed-keys
-						     statement exists */
 	char *			recfile;	/*%< Recursive file name */
 	isc_boolean_t		version_set;	/*%< User has set version */
 	char *			version;	/*%< User-specified version */
@@ -249,6 +248,12 @@ isc_result_t
 ns_server_dumpdb(ns_server_t *server, char *args);
 
 /*%
+ * Dump the current security roots to the secroots file.
+ */
+isc_result_t
+ns_server_dumpsecroots(ns_server_t *server, char *args);
+
+/*%
  * Change or increment the server debug level.
  */
 isc_result_t
@@ -315,5 +320,17 @@ ns_add_reserved_dispatch(ns_server_t *server, const isc_sockaddr_t *addr);
  */
 isc_result_t
 ns_server_validation(ns_server_t *server, char *args);
+
+/*%
+ * Add a zone to a running process
+ */
+isc_result_t
+ns_server_add_zone(ns_server_t *server, char *args);
+
+/*%
+ * Deletes a zone from a running process
+ */
+isc_result_t
+ns_server_del_zone(ns_server_t *server, char *args);
 
 #endif /* NAMED_SERVER_H */
