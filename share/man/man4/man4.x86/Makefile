@@ -1,6 +1,7 @@
-#	$NetBSD: Makefile,v 1.1 2010/07/08 20:00:24 christos Exp $
+#	$NetBSD: Makefile,v 1.2 2010/08/05 04:58:27 jruoho Exp $
 
-MAN=	balloon.4
+MAN=	amdpcib.4 balloon.4
+
 MANSUBDIR=/x86
 
 .include <bsd.man.mk>
