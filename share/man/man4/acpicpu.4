@@ -1,0 +1,211 @@
+.\" $NetBSD: acpicpu.4,v 1.1 2010/08/05 17:31:10 jruoho Exp $
+.\"
+.\" Coyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Neither the name of the author nor the names of any
+.\"    contributors may be used to endorse or promote products derived
+.\"    from this software without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd July 23, 2010
+.Dt ACPICPU 4
+.Os
+.Sh NAME
+.Nm acpicpu
+.Nd ACPI CPU
+.Sh SYNOPSIS
+.Cd "acpicpu* at acpi?"
+.Sh DESCRIPTION
+The
+.Nm
+device driver supports certain processor features that are
+either only available via
+.Tn ACPI
+or that require
+.Tn ACPI
+to function properly.
+Typically the
+.Tn ACPI
+processor functionality is grouped into so-called C, P, and T -states.
+Presently,
+.Nm
+supports only C-states.
+.Ss C-states
+The processor power states, or C-states,
+are low-power modes that can be used when the
+.Tn CPU
+is idle.
+The idea is not new: already in the
+.Tn 80486
+processor a specific instruction
+.Pq Tn HLT
+was used for this purpose.
+This was later accompanied by a pair of other instructions
+.Pq Tn MONITOR , MWAIT .
+By default,
+.Nx
+may use either one; see the
+.Ic machdep.idle-mechanism
+.Xr sysctl 8
+variable.
+.Tn ACPI
+provides the latest amendment.
+.Pp
+The following C-states are typically available.
+Additional processor or vendor specific
+states (C4, ..., Cn) are handled internally by
+.Nm .
+.Pp
+.Bl -tag -width C1 -offset indent
+.It Dv C0
+This is the normal state of a processor; the
+.Tn CPU
+is busy executing instructions.
+.It Dv C1
+This is the state that is typically reached via the mentioned
+.Tn x86
+instructions.
+On a typical processor,
+.Tn C1
+turns off the main internal
+.Tn CPU
+clock, leaving
+.Tn APIC
+running at full speed.
+The
+.Tn CPU
+is free to temporarily leave the state to deal with important requests.
+.It Dv C2
+The main difference between
+.Tn C1
+and
+.Tn C2
+lies in the internal hardware entry method of the processor.
+While less power is expected to be consumed than in
+.Tn C1 ,
+the bus interface unit and
+.Tn APIC
+are still running.
+Like with
+.Tn C1 ,
+entering and exiting the state are expected to be fast operations.
+.It Dv C3
+This is the deepest conventional state.
+Parts of the
+.Tn CPU
+are actively powered down.
+The internal
+.Tn CPU
+clock is stopped.
+The
+.Tn APIC
+timer is stopped.
+Depending on the processor, additional timers such as
+.Tn TSC
+.Pq time stamp counter
+may be stopped.
+Entry and exit latencies are expected to be high; the
+.Tn CPU
+can no longer
+.Dq quickly
+respond to bus activity or other interruptions.
+.El
+.Pp
+Each state has a latency associated with entry and exit.
+Generally, the higher the state, the lower the power consumption, and
+the higher the potential performance costs.
+The
+.Nm
+driver tries to balance these latency
+constraints when choosing the appropriate state.
+One of the checks involves bus master activity;
+if such activity is detected, a lower state is used.
+It is known that particularly
+.Xr usb 4
+may cause high activity even when not in use.
+If maximum power savings are desirable,
+it may be necessary to use a custom kernel without
+.Tn USB
+support.
+And generally: to save power with C-states, one should
+avoid polling, both in userland and in the kernel.
+.Sh SEE ALSO
+.Xr acpi 4 ,
+.Xr cpu_idle 9
+.Sh HISTORY
+The
+.Nm
+device driver appeared in
+.Nx 6.0 .
+.Sh AUTHORS
+.An Jukka Ruohonen
+.Aq jruohonen@iki.fi
+.Sh CAVEATS
+The
+.Nm
+driver should be considered experimental.
+At least the following caveats can be mentioned.
+.Bl -bullet
+.It
+P-states are not currently supported.
+.It
+The C3 state is not currently supported.
+Even if the C3 state was supported,
+the power savings might be limited compared to other operating systems with a
+.Dq tickless
+kernel.
+.It
+Nor is a so-called
+.Tn AMD
+.Tn C1E
+extension supported.
+If this extension is available in a vendor
+.Tn BIOS ,
+it is recommended to turn it off, with or without
+.Nm .
+.It
+The algorithm used to choose a C-state is not yet well understood.
+Depending on the processor and firmware,
+the system may experience slowdowns with
+.Nm .
+.It
+Neither processor thermal control (see
+.Xr acpitz 4 )
+nor
+.Dq throttling
+are currently supported in
+.Nx .
+.It
+There is currently neither a well-defined, machine-independent
+.Tn API
+for processor performance management nor a
+.Dq governor
+for different policies.
+It is only possible to control the
+.Tn CPU
+frequencies from userland.
+.It
+There are currently no proper ways to export
+statistical and other information from
+.Nm .
+This applies to
+.Tn ACPI
+generally.
+.El
