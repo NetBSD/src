@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.205 2010/08/04 11:14:01 bouyer Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.206 2010/08/05 01:44:13 riz Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -4207,4 +4207,12 @@ usr.bin/make/job.c				1.152 via patch
 	whitespace so that the output is consistent, although there are two
 	separate execution logic implementations (command.c, job.c)
 	[dholland, ticket #1401]
+
+crypto/dist/ssh/sftp-glob.c			patch
+crypto/dist/ssh/sftp.c				patch
+lib/libc/gen/glob.3				1.37 via patch
+lib/libc/gen/glob.c				1.26 via patch
+
+	Fix globbing in libc and sftp.
+	[christos, ticket #1399]
 
