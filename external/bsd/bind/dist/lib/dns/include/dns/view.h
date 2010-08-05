@@ -1,7 +1,7 @@
-/*	$NetBSD: view.h,v 1.1.1.3 2009/12/26 22:25:21 christos Exp $	*/
+/*	$NetBSD: view.h,v 1.1.1.4 2010/08/05 20:13:53 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: view.h,v 1.120 2009/11/28 15:57:37 vjs Exp */
+/* Id: view.h,v 1.120.8.5 2010/07/11 00:12:19 each Exp */
 
 #ifndef DNS_VIEW_H
 #define DNS_VIEW_H 1
@@ -75,6 +75,7 @@
 
 #include <dns/acl.h>
 #include <dns/fixedname.h>
+#include <dns/rdatastruct.h>
 #include <dns/types.h>
 
 ISC_LANG_BEGINDECLS
@@ -155,9 +156,8 @@ struct dns_view {
 	dns_name_t *			dlv;
 	dns_fixedname_t			dlv_fixed;
 	isc_uint16_t			maxudp;
-#ifdef ALLOW_FILTER_AAAA_ON_V4
 	dns_v4_aaaa_t			v4_aaaa;
-#endif
+	dns_acl_t *			v4_aaaa_acl;
 
 	/*
 	 * Configurable data for server use only,
@@ -176,6 +176,8 @@ struct dns_view {
 	/* Under owner's locking control. */
 	ISC_LINK(struct dns_view)	link;
 	dns_viewlist_t *		viewlist;
+
+	dns_zone_t *			managed_keys;
 };
 
 #define DNS_VIEW_MAGIC			ISC_MAGIC('V','i','e','w')
@@ -416,7 +418,7 @@ dns_view_addzone(dns_view_t *view, dns_zone_t *zone);
 void
 dns_view_freeze(dns_view_t *view);
 /*%<
- * Freeze view.
+ * Freeze view.  No changes can be made to view configuration while frozen.
  *
  * Requires:
  *
@@ -427,6 +429,21 @@ dns_view_freeze(dns_view_t *view);
  *\li	'view' is frozen.
  */
 
+void
+dns_view_thaw(dns_view_t *view);
+/*%<
+ * Thaw view.  This allows zones to be added or removed at runtime.  This is
+ * NOT thread-safe; the caller MUST have run isc_task_exclusive() prior to
+ * thawing the view.
+ *
+ * Requires:
+ *
+ *\li	'view' is a valid, frozen view.
+ *
+ * Ensures:
+ *
+ *\li	'view' is no longer frozen.
+ */
 isc_result_t
 dns_view_find(dns_view_t *view, dns_name_t *name, dns_rdatatype_t type,
 	      isc_stdtime_t now, unsigned int options, isc_boolean_t use_hints,
@@ -964,4 +981,19 @@ dns_view_issecuredomain(dns_view_t *view, dns_name_t *name,
  *\li	ISC_R_SUCCESS
  *\li	Any other value indicates failure
  */
+
+void
+dns_view_untrust(dns_view_t *view, dns_name_t *keyname,
+		 dns_rdata_dnskey_t *dnskey, isc_mem_t *mctx);
+/*%<
+ * Remove keys that match 'keyname' and 'dnskey' from the views trust
+ * anchors.
+ *
+ * Requires:
+ * \li	'view' is valid.
+ * \li	'keyname' is valid.
+ * \li	'mctx' is valid.
+ * \li	'dnskey' is valid.
+ */
+
 #endif /* DNS_VIEW_H */

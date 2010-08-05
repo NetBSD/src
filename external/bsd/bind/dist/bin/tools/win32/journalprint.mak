@@ -271,7 +271,7 @@ SOURCE="..\named-journalprint.c"
 !ELSEIF  "$(CFG)" == "journalprint - Win32 Debug"
 
 
-"$(INTDIR)\named-journalprint.obj"	"$(INTDIR)\named-journalprint.sbr" : $(SOURCE) "$(INTDIR)"
+"$(INTDIR)\named-journalprint.obj" "$(INTDIR)\named-journalprint.sbr" : $(SOURCE) "$(INTDIR)"
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 

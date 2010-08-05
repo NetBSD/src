@@ -1,7 +1,7 @@
-/*	$NetBSD: dnssec-dsfromkey.c,v 1.1.1.2 2009/10/25 00:01:30 christos Exp $	*/
+/*	$NetBSD: dnssec-dsfromkey.c,v 1.1.1.3 2010/08/05 19:52:55 christos Exp $	*/
 
 /*
- * Copyright (C) 2008, 2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2008-2010  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: dnssec-dsfromkey.c,v 1.16 2009/10/12 20:48:10 each Exp */
+/* Id: dnssec-dsfromkey.c,v 1.16.50.1 2010/01/13 19:31:51 each Exp */
 
 /*! \file */
 
@@ -267,12 +267,12 @@ emit(unsigned int dtype, isc_boolean_t showall, char *lookaside,
 		fatal("can't print class");
 
 	isc_buffer_usedregion(&nameb, &r);
-	fwrite(r.base, 1, r.length, stdout);
+	isc_util_fwrite(r.base, 1, r.length, stdout);
 
 	putchar(' ');
 
 	isc_buffer_usedregion(&classb, &r);
-	fwrite(r.base, 1, r.length, stdout);
+	isc_util_fwrite(r.base, 1, r.length, stdout);
 
 	if (lookaside == NULL)
 		printf(" DS ");
@@ -280,7 +280,7 @@ emit(unsigned int dtype, isc_boolean_t showall, char *lookaside,
 		printf(" DLV ");
 
 	isc_buffer_usedregion(&textb, &r);
-	fwrite(r.base, 1, r.length, stdout);
+	isc_util_fwrite(r.base, 1, r.length, stdout);
 	putchar('\n');
 }
 

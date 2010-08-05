@@ -1,7 +1,7 @@
-/*	$NetBSD: rndc.c,v 1.1.1.2 2009/10/25 00:01:35 christos Exp $	*/
+/*	$NetBSD: rndc.c,v 1.1.1.3 2010/08/05 19:54:33 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: rndc.c,v 1.126 2009/09/29 15:06:06 fdupont Exp */
+/* Id: rndc.c,v 1.126.66.4 2010/07/11 00:12:18 each Exp */
 
 /*! \file */
 
@@ -119,10 +119,14 @@ command is one of the following:\n\
   notify zone [class [view]]\n\
 		Resend NOTIFY messages for the zone.\n\
   reconfig	Reload configuration file and new zones only.\n\
+  sign zone [class [view]]\n\
+		Update zone keys, and sign as needed.\n\
   stats		Write server statistics to the statistics file.\n\
   querylog	Toggle query logging.\n\
   dumpdb [-all|-cache|-zones] [view ...]\n\
 		Dump cache(s) to the dump file (named_dump.db).\n\
+  secroots [view ...]\n\
+		Write security roots to the secroots file.\n\
   stop		Save pending updates to master files and stop the server.\n\
   stop -p	Save pending updates to master files and stop the server\n\
 		reporting process id.\n\
@@ -141,6 +145,10 @@ command is one of the following:\n\
   validation newstate [view]\n\
 		Enable / disable DNSSEC validation.\n\
   *restart	Restart the server.\n\
+  addzone [\"file\"] zone [class [view]] { zone-options }\n\
+		Add zone to given view. Requires new-zone-file option.\n\
+  delzone [\"file\"] zone [class [view]]\n\
+		Removes zone from given view. Requires new-zone-file option.\n\
 \n\
 * == not yet implemented\n\
 Version: %s\n",

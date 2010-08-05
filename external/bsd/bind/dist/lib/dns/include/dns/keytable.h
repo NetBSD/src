@@ -1,7 +1,7 @@
-/*	$NetBSD: keytable.h,v 1.1.1.3 2009/12/26 22:25:15 christos Exp $	*/
+/*	$NetBSD: keytable.h,v 1.1.1.4 2010/08/05 20:13:37 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2009, 2010  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: keytable.h,v 1.20 2009/12/03 16:49:09 each Exp */
+/* Id: keytable.h,v 1.20.4.2 2010/06/25 03:51:07 marka Exp */
 
 #ifndef DNS_KEYTABLE_H
 #define DNS_KEYTABLE_H 1
@@ -175,7 +175,7 @@ dns_keytable_marksecure(dns_keytable_t *keytable, dns_name_t *name);
  * Add a null key to 'keytable' for name 'name'.  This marks the
  * name as a secure domain, but doesn't supply any key data to allow the
  * domain to be validated.  (Used when automated trust anchor management
- * has gotten broken by a zone misconfiguration; for exmaple, when the
+ * has gotten broken by a zone misconfiguration; for example, when the
  * active key has been revoked but the stand-by key was still in its 30-day
  * waiting period for validity.)
  *
@@ -410,6 +410,12 @@ dns_keytable_issecuredomain(dns_keytable_t *keytable, dns_name_t *name,
  *\li	ISC_R_SUCCESS
  *
  *\li	Any other result is an error.
+ */
+
+isc_result_t
+dns_keytable_dump(dns_keytable_t *keytable, FILE *fp);
+/*%<
+ * Dump the keytable on fp.
  */
 
 dst_key_t *

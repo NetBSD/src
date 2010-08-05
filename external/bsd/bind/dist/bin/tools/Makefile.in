@@ -1,4 +1,4 @@
-# Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2009, 2010  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -12,7 +12,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: Makefile.in,v 1.11 2009/12/05 23:31:40 each Exp
+# Id: Makefile.in,v 1.11.2.2 2010/01/07 23:48:15 tbox Exp
 
 srcdir =	@srcdir@
 VPATH =		@srcdir@
@@ -43,12 +43,14 @@ NOSYMLIBS =	${ISCNOSYMLIBS} @LIBS@
 SUBDIRS = 
 
 TARGETS =	arpaname@EXEEXT@ named-journalprint@EXEEXT@ nsec3hash@EXEEXT@ \
-		genrandom@EXEEXT@
-SRCS =		arpaname.c named-journalprint.c nsec3hash.c genrandom.c
+		genrandom@EXEEXT@ isc-hmac-fixup@EXEEXT@
+SRCS =		arpaname.c named-journalprint.c nsec3hash.c genrandom.c \
+		isc-hmac-fixup.c
 
-MANPAGES =	arpaname.1 named-journalprint.8 nsec3hash.8 genrandom.8
+MANPAGES =	arpaname.1 named-journalprint.8 nsec3hash.8 genrandom.8 \
+		isc-hmac-fixup.8
 HTMLPAGES =	arpaname.html named-journalprint.html nsec3hash.html \
-		genrandom.html
+		genrandom.html isc-hmac-fixup.html
 MANOBJS =	${MANPAGES} ${HTMLPAGES}
 
 @BIND9_MAKE_RULES@
@@ -65,6 +67,11 @@ named-journalprint@EXEEXT@: named-journalprint.@O@ ${ISCDEPLIBS} ${DNSDEPLIBS}
 nsec3hash@EXEEXT@: nsec3hash.@O@ ${ISCDEPLIBS} ${DNSDEPLIBS}
 	export BASEOBJS="nsec3hash.@O@"; \
 	export LIBS0="${DNSLIBS}"; \
+	${FINALBUILDCMD}
+
+isc-hmac-fixup@EXEEXT@: isc-hmac-fixup.@O@ ${ISCDEPLIBS}
+	export BASEOBJS="isc-hmac-fixup.@O@"; \
+	export LIBS0="${ISCLIBS}"; \
 	${FINALBUILDCMD}
 
 genrandom@EXEEXT@: genrandom.@O@
@@ -85,7 +92,9 @@ install:: ${TARGETS} installdirs
 	${LIBTOOL_MODE_INSTALL} ${INSTALL_PROGRAM} named-journalprint@EXEEXT@ ${DESTDIR}${sbindir}
 	${LIBTOOL_MODE_INSTALL} ${INSTALL_PROGRAM} nsec3hash@EXEEXT@ ${DESTDIR}${sbindir}
 	${LIBTOOL_MODE_INSTALL} ${INSTALL_PROGRAM} genrandom@EXEEXT@ ${DESTDIR}${sbindir}
+	${LIBTOOL_MODE_INSTALL} ${INSTALL_PROGRAM} isc-hmac-fixup@EXEEXT@ ${DESTDIR}${sbindir}
 	${INSTALL_DATA} ${srcdir}/arpaname.1 ${DESTDIR}${mandir}/man1
+	${INSTALL_DATA} ${srcdir}/isc-hmac-fixup.8 ${DESTDIR}${mandir}/man8
 	${INSTALL_DATA} ${srcdir}/named-journalprint.8 ${DESTDIR}${mandir}/man8
 	${INSTALL_DATA} ${srcdir}/nsec3hash.8 ${DESTDIR}${mandir}/man8
 	${INSTALL_DATA} ${srcdir}/genrandom.8 ${DESTDIR}${mandir}/man8
