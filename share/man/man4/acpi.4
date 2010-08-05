@@ -1,4 +1,4 @@
-.\" $NetBSD: acpi.4,v 1.52 2010/06/30 07:42:36 jruoho Exp $
+.\" $NetBSD: acpi.4,v 1.53 2010/08/05 17:45:44 jruoho Exp $
 .\"
 .\" Copyright (c) 2002, 2004, 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -182,81 +182,87 @@ using the in-kernel x86 emulator.
 .Tn ACPI
 supports several machine-dependent and machine-independent devices:
 .Ss Machine-independent devices
-.Bl -tag -width pcdisplay -offset indent -compact
-.It acpiacad
+.Bl -tag -width "thinkpad(4) " -offset indent -compact
+.It Xr acpiacad 4
 .Tn ACPI
 AC adapters.
-.It acpibat
+.It Xr acpibat 4
 .Tn ACPI
-Control Method Batteries.
-.It acpibut
+batteries.
+.It Xr acpibut 4
 .Tn ACPI
 power and sleep buttons.
-.It acpidalb
+.It Xr acpicpu 4
 .Tn ACPI
-Direction Application Launch Buttons.
-.It acpiec
+processors.
+.It Xr acpidalb 4
 .Tn ACPI
-Embedded Controllers.
-.It acpiecdt
+direction application launch buttons.
+.It Xr acpiec 4
 .Tn ACPI
-Embedded Controller Boot Resource Table.
-.It acpilid
+embedded controllers.
+.It Xr acpiecdt 4
+.Tn ACPI
+Embedded Controller Boot Resource Table
+.Pq Tn ECDT .
+.It Xr acpilid 4
 .Tn ACPI
 lid switches.
-.It acpismbus
+.It Xr acpismbus 4
 .Tn ACPI
-SMBus via Control Method Interface.
-.It acpitz
+SMBus via Control Method Interface
+.Pq Tn CMI .
+.It Xr acpitz 4
 .Tn ACPI
 thermal zones.
-.It acpiwmi
+.It Xr acpiwmi 4
 .Tn ACPI
 support for Windows Management Instrumentation.
-.It aibs
-ASUSTeK AI Booster ACPI ATK0110 voltage, temperature and fan sensor.
+.It Xr aibs 4
+ASUSTeK voltage, temperature and fan sensors.
 .It asus
 ASUS laptop hotkeys.
-.It attimer
+.It Xr attimer 4
 AT Timer.
-.It com
+.It Xr com 4
 NS8250-, NS16450-, and NS16550-based serial ports.
-.It fdc
+.It Xr fdc 4
 Floppy disk controllers.
 .It hpet
-High Precision Event Timer.
-.It hpqlb
+High Precision Event Timer
+.Pq Tn HPET .
+.It Xr hpqlb 4
 HP Quick Launch Buttons.
-.It joy
+.It Xr joy 4
 Joystick/Game port interface.
-.It lpt
+.It Xr lpt 4
 Standard ISA parallel port interface.
-.It mpu
+.It Xr mpu 4
 Roland MPU-401 (compatible) MIDI UART.
-.It pcppi
+.It Xr pcppi 4
 AT-style speaker sound.
-.It thinkpad
+.It Xr thinkpad 4
 IBM/Lenovo ThinkPad laptop device driver.
-.It ug
+.It Xr ug 4
 Abit uGuru Hardware monitor.
-.It vald
+.It Xr vald 4
 Toshiba Libretto device.
-.It wb
+.It Xr wb 4
 Winbond W83L518D Integrated Media Reader.
-.It wss
-Windows Sound System-compatible sound cards based on the AD1848 and compatible chips.
-.It ym
+.It Xr wss 4
+Windows Sound System-compatible sound cards
+.It Xr ym 4
 Yamaha OPL3-SA2 and OPL3-SA3 audio device driver.
 .El
 .Ss i386-dependent devices
-.Bl -tag -width pcdisplay -offset indent -compact
-.It npx
+.Bl -tag -width "thinkpad(4) " -offset indent -compact
+.It Xr npx 4
 i386 numeric processing extension coprocessor.
-.It pckbc
+.It Xr pckbc 4
 PC keyboard controllers.
-.It sony
+.It Xr sony 4
 Sony Miscellaneous Controller
-.It spic
+.It Xr spic 4
 Sony programmable I/O controller.
 .El
 .Sh DEBUGGING
@@ -511,6 +517,7 @@ is printed every time the method is called by the interpreter.
 .Xr acpiacad 4 ,
 .Xr acpibat 4 ,
 .Xr acpibut 4 ,
+.Xr acpicpu 4 ,
 .Xr acpidalb 4 ,
 .Xr acpiec 4 ,
 .Xr acpilid 4 ,
