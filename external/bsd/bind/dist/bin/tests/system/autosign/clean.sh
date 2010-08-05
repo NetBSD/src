@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2009, 2010  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -14,24 +14,31 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: clean.sh,v 1.3 2009/11/30 23:48:02 tbox Exp
+# Id: clean.sh,v 1.3.6.3 2010/05/19 07:47:11 marka Exp
 
 rm -f */K* */dsset-* */*.signed */trusted.conf */tmp* */*.jnl */*.bk
-rm -f inact.key del.key unpub.key standby.key rev.key
-rm -f ns1/root.db ns2/example.db ns3/secure.example.db
-rm -f ns3/rsasha256.example.db ns3/rsasha512.example.db
-rm -f ns2/private.secure.example.db
+rm -f active.key inact.key del.key unpub.key standby.key rev.key
+rm -f nopriv.key vanishing.key del1.key del2.key
+rm -f nsupdate.out
 rm -f */core
 rm -f */example.bk
+rm -f */named.memstats
 rm -f dig.out.*
 rm -f random.data
-rm -f ns2/dlv.db
-rm -f ns3/multiple.example.db ns3/nsec3-unknown.example.db ns3/nsec3.example.db
-rm -f ns3/optout-unknown.example.db ns3/optout.example.db
-rm -f */named.memstats
+rm -f ns1/root.db
+rm -f ns2/example.db
+rm -f ns2/private.secure.example.db ns2/bar.db
+rm -f ns3/nsec.example.db
+rm -f ns3/nsec3.example.db
 rm -f ns3/nsec3.nsec3.example.db
 rm -f ns3/nsec3.optout.example.db
+rm -f ns3/nsec3-to-nsec.example.db
+rm -f ns3/oldsigs.example.db
+rm -f ns3/optout.example.db
 rm -f ns3/optout.nsec3.example.db
 rm -f ns3/optout.optout.example.db
+rm -f ns3/rsasha256.example.db ns3/rsasha512.example.db
+rm -f ns3/secure.example.db
 rm -f ns3/secure.nsec3.example.db
 rm -f ns3/secure.optout.example.db
+rm -f ns3/secure-to-insecure.example.db

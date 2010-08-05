@@ -1,5 +1,5 @@
 <!--
- - Copyright (C) 2008, 2009 Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2008-2010 Internet Systems Consortium, Inc. ("ISC")
  - 
  - Permission to use, copy, modify, and/or distribute this software for any
  - purpose with or without fee is hereby granted, provided that the above
@@ -13,7 +13,7 @@
  - OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  - PERFORMANCE OF THIS SOFTWARE.
 -->
-<!-- Id: dnssec-keyfromlabel.html,v 1.15 2009/11/03 21:58:30 tbox Exp -->
+<!-- Id: dnssec-keyfromlabel.html,v 1.15.24.1 2010/01/20 02:08:51 tbox Exp -->
 <html>
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
@@ -28,10 +28,10 @@
 </div>
 <div class="refsynopsisdiv">
 <h2>Synopsis</h2>
-<div class="cmdsynopsis"><p><code class="command">dnssec-keyfromlabel</code>  {-l <em class="replaceable"><code>label</code></em>} [<code class="option">-3</code>] [<code class="option">-a <em class="replaceable"><code>algorithm</code></em></code>] [<code class="option">-A <em class="replaceable"><code>date/offset</code></em></code>] [<code class="option">-c <em class="replaceable"><code>class</code></em></code>] [<code class="option">-D <em class="replaceable"><code>date/offset</code></em></code>] [<code class="option">-E <em class="replaceable"><code>engine</code></em></code>] [<code class="option">-f <em class="replaceable"><code>flag</code></em></code>] [<code class="option">-G</code>] [<code class="option">-I <em class="replaceable"><code>date/offset</code></em></code>] [<code class="option">-k</code>] [<code class="option">-K <em class="replaceable"><code>directory</code></em></code>] [<code class="option">-n <em class="replaceable"><code>nametype</code></em></code>] [<code class="option">-P <em class="replaceable"><code>date/offset</code></em></code>] [<code class="option">-p <em class="replaceable"><code>protocol</code></em></code>] [<code class="option">-R <em class="replaceable"><code>date/offset</code></em></code>] [<code class="option">-t <em class="replaceable"><code>type</code></em></code>] [<code class="option">-v <em class="replaceable"><code>level</code></em></code>] {name}</p></div>
+<div class="cmdsynopsis"><p><code class="command">dnssec-keyfromlabel</code>  {-l <em class="replaceable"><code>label</code></em>} [<code class="option">-3</code>] [<code class="option">-a <em class="replaceable"><code>algorithm</code></em></code>] [<code class="option">-A <em class="replaceable"><code>date/offset</code></em></code>] [<code class="option">-c <em class="replaceable"><code>class</code></em></code>] [<code class="option">-D <em class="replaceable"><code>date/offset</code></em></code>] [<code class="option">-E <em class="replaceable"><code>engine</code></em></code>] [<code class="option">-f <em class="replaceable"><code>flag</code></em></code>] [<code class="option">-G</code>] [<code class="option">-I <em class="replaceable"><code>date/offset</code></em></code>] [<code class="option">-k</code>] [<code class="option">-K <em class="replaceable"><code>directory</code></em></code>] [<code class="option">-n <em class="replaceable"><code>nametype</code></em></code>] [<code class="option">-P <em class="replaceable"><code>date/offset</code></em></code>] [<code class="option">-p <em class="replaceable"><code>protocol</code></em></code>] [<code class="option">-R <em class="replaceable"><code>date/offset</code></em></code>] [<code class="option">-t <em class="replaceable"><code>type</code></em></code>] [<code class="option">-v <em class="replaceable"><code>level</code></em></code>] [<code class="option">-y</code>] {name}</p></div>
 </div>
 <div class="refsect1" lang="en">
-<a name="id2543483"></a><h2>DESCRIPTION</h2>
+<a name="id2543491"></a><h2>DESCRIPTION</h2>
 <p><span><strong class="command">dnssec-keyfromlabel</strong></span>
       gets keys with the given label from a crypto hardware and builds
       key files for DNSSEC (Secure DNS), as defined in RFC 2535
@@ -44,7 +44,7 @@
     </p>
 </div>
 <div class="refsect1" lang="en">
-<a name="id2543501"></a><h2>OPTIONS</h2>
+<a name="id2543509"></a><h2>OPTIONS</h2>
 <div class="variablelist"><dl>
 <dt><span class="term">-a <em class="replaceable"><code>algorithm</code></em></span></dt>
 <dd>
@@ -152,10 +152,18 @@
 <dd><p>
             Sets the debugging level.
           </p></dd>
+<dt><span class="term">-y</span></dt>
+<dd><p>
+            Allows DNSSEC key files to be generated even if the key ID
+	    would collide with that of an existing key, in the event of
+	    either key being revoked.  (This is only safe to use if you
+            are sure you won't be using RFC 5011 trust anchor maintenance
+            with either of the keys involved.)
+          </p></dd>
 </dl></div>
 </div>
 <div class="refsect1" lang="en">
-<a name="id2543852"></a><h2>TIMING OPTIONS</h2>
+<a name="id2543873"></a><h2>TIMING OPTIONS</h2>
 <p>
       Dates can be expressed in the format YYYYMMDD or YYYYMMDDHHMMSS.
       If the argument begins with a '+' or '-', it is interpreted as
@@ -202,7 +210,7 @@
 </dl></div>
 </div>
 <div class="refsect1" lang="en">
-<a name="id2544019"></a><h2>GENERATED KEY FILES</h2>
+<a name="id2544039"></a><h2>GENERATED KEY FILES</h2>
 <p>
       When <span><strong class="command">dnssec-keyfromlabel</strong></span> completes
       successfully,
@@ -241,7 +249,7 @@
     </p>
 </div>
 <div class="refsect1" lang="en">
-<a name="id2544091"></a><h2>SEE ALSO</h2>
+<a name="id2544112"></a><h2>SEE ALSO</h2>
 <p><span class="citerefentry"><span class="refentrytitle">dnssec-keygen</span>(8)</span>,
       <span class="citerefentry"><span class="refentrytitle">dnssec-signzone</span>(8)</span>,
       <em class="citetitle">BIND 9 Administrator Reference Manual</em>,
@@ -249,7 +257,7 @@
     </p>
 </div>
 <div class="refsect1" lang="en">
-<a name="id2544124"></a><h2>AUTHOR</h2>
+<a name="id2544145"></a><h2>AUTHOR</h2>
 <p><span class="corpauthor">Internet Systems Consortium</span>
     </p>
 </div>

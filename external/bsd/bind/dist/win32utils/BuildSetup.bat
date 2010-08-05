@@ -45,6 +45,7 @@ echo Copying the ARM and the Installation Notes.
 
 copy ..\COPYRIGHT ..\Build\Release
 copy ..\README ..\Build\Release
+copy ..\HISTORY ..\Build\Release
 copy readme1st.txt ..\Build\Release
 copy index.html ..\Build\Release
 copy ..\doc\arm\*.html ..\Build\Release

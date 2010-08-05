@@ -1,10 +1,11 @@
-/*	$NetBSD: domaincmp.c,v 1.1.1.1 2009/03/22 14:58:19 christos Exp $	*/
+/*	$NetBSD: domaincmp.c,v 1.1.1.2 2010/08/05 20:01:23 christos Exp $	*/
 
 /*****************************************************************
 **
 **	@(#) domaincmp.c -- compare two domain names
 **
 **	Copyright (c) Aug 2005, Karle Boss, Holger Zuleger (kaho).
+**	isparentdomain() (c) Mar 2010 by Holger Zuleger
 **	All rights reserved.
 **	
 **	This software is open source.
@@ -58,11 +59,29 @@
 *****************************************************************/
 int     domaincmp (const char *a, const char *b)
 {
+	return domaincmp_dir (a, b, 1);
+}
+
+/*****************************************************************
+**      int domaincmp_dir (a, b, subdomain_above)
+**      compare a and b as fqdns.
+**      return <0 | 0 | >0 as in strcmp
+**      A subdomain is less than the corresponding parent domain,
+**      thus domaincmp ("z.example.net", "example.net") return < 0 !!
+*****************************************************************/
+int     domaincmp_dir (const char *a, const char *b, int subdomain_above)
+{
 	register const  char    *pa;
 	register const  char    *pb;
+	int	dir;
 
 	if ( a == NULL ) return -1;
 	if ( b == NULL ) return 1;
+
+	if ( subdomain_above )
+		dir = 1;
+	else
+		dir = -1;
 
 	if ( *a == '.' )	/* skip a leading dot */
 		a++;
@@ -99,12 +118,12 @@ int     domaincmp (const char *a, const char *b)
 	{
 		if ( pa > a )
 			if ( pa[-1] == '.' )
-				return -1;
+				return -1 * dir;
 			else
 				goto_labelstart (a, pa);
 		else if ( pb > b )
 			if ( pb[-1] == '.' )
-				return 1;
+				return 1 * dir;
 			else
 				goto_labelstart (b, pb);
 		else
@@ -116,6 +135,130 @@ int     domaincmp (const char *a, const char *b)
 		pa++, pb++;
 
 	return *pa - *pb;
+}
+
+/*****************************************************************
+**
+**	int	issubdomain ("child", "parent")
+**
+**	"child" and "parent" are standardized domain names in such
+**	a way that even both domain names are ending with a dot,
+**	or none of them.
+**
+**	returns 1 if "child" is a subdomain of "parent"
+**	returns 0 if "child" is not a subdomain of "parent"
+**
+*****************************************************************/
+int	issubdomain (const char *child, const char *parent)
+{
+	const	char	*p;
+	const	char	*cdot;
+	const	char	*pdot;
+	int	ccnt;
+	int	pcnt;
+
+	if ( !child || !parent || *child == '\0' || *parent == '\0' )
+		return 0;
+
+	pdot = cdot = NULL;
+	pcnt = 0;
+	for ( p = parent; *p; p++ )
+		if ( *p == '.' )
+		{
+			if ( pcnt == 0 )
+				pdot = p;
+			pcnt++;
+		}
+
+	ccnt = 0;
+	for ( p = child; *p; p++ )
+		if ( *p == '.' )
+		{
+			if ( ccnt == 0 )
+				cdot = p;
+			ccnt++;
+		}
+	if ( ccnt == 0 )	/* child is not a fqdn or is not deep enough ? */
+		return 0;
+	if ( pcnt == 0 )	/* parent is not a fqdn ? */
+		return 0;
+
+	if ( pcnt >= ccnt )	/* parent has more levels than child ? */
+		return 0;
+
+	/* is child a (one level) subdomain of parent ? */
+	if ( strcmp (cdot+1, parent) == 0 )	/* the domains are equal ? */
+		return 1;
+
+	return 0;
+}
+
+/*****************************************************************
+**
+**	int	isparentdomain ("child", "parent", level)
+**
+**	"child" and "parent" are standardized domain names in such
+**	a way that even both domain names are ending with a dot,
+**	or none of them.
+**
+**	returns 1 if "child" is a subdomain of "parent"
+**	returns 0 if "child" is not a subdomain of "parent"
+**	returns -1 if "child" and "parent" are the same domain
+**
+*****************************************************************/
+int	isparentdomain (const char *child, const char *parent, int level)
+{
+	const	char	*p;
+	const	char	*cdot;
+	const	char	*pdot;
+	int	ccnt;
+	int	pcnt;
+
+	if ( !child || !parent || *child == '\0' || *parent == '\0' )
+		return 0;
+
+	pdot = cdot = NULL;
+	pcnt = 0;
+	for ( p = parent; *p; p++ )
+		if ( *p == '.' )
+		{
+			if ( pcnt == 0 )
+				pdot = p;
+			pcnt++;
+		}
+
+	ccnt = 0;
+	for ( p = child; *p; p++ )
+		if ( *p == '.' )
+		{
+			if ( ccnt == 0 )
+				cdot = p;
+			ccnt++;
+		}
+	if ( ccnt == 0 || ccnt < level )	/* child is not a fqdn or is not deep enough ? */
+		return 0;
+	if ( pcnt == 0 )	/* parent is not a fqdn ? */
+		return 0;
+
+	if ( pcnt > ccnt )	/* parent has more levels than child ? */
+		return 0;
+
+	if ( pcnt == ccnt )	/* both are at the same level ? */
+	{
+		/* let's check the domain part */
+		if ( strcmp (cdot, pdot) == 0 )	/* the domains are equal ? */
+			return -1;
+		return 0;
+	}
+
+	if ( pcnt > ccnt )	/* parent has more levels than child ? */
+		return 0;
+
+	/* is child a (one level) subdomain of parent ? */
+	if ( strcmp (cdot+1, parent) == 0 )	/* the domains are equal ? */
+		return 1;
+
+	return 0;
 }
 
 #ifdef DOMAINCMP_TEST
@@ -152,6 +295,8 @@ static  struct {
          { "example.de.",        "xy.example.de.",       1 },
          { "example.de.",        "ab.example.de.",       1 },
          { "example.de",        "ab.example.de",       1 },
+         { "xy.example.de.",        "example.de.",       -1 },
+         { "ab.example.de.",        "example.de.",       -1 },
          { "ab.example.de",        "example.de",       -1 },
          { "ab.mast.de",          "axt.de",             1 },
          { "ab.mast.de",          "obt.de",             -1 },
@@ -179,7 +324,9 @@ main (int argc, char *argv[])
 			c = '>'; 
 		else 
 			c = '='; 
-		printf ("%-20s %-20s ==> %c 0 ", ex[i].a, ex[i].b, c);
+		printf ("%-20s %-20s ", ex[i].a, ex[i].b);
+		printf ("%3d  ", issubdomain (ex[i].a, ex[i].b));
+		printf ("\t==> 0 %c ", c);
 		fflush (stdout);
 		res = domaincmp (ex[i].a, ex[i].b);
 		printf ("%3d  ", res);

@@ -1,7 +1,7 @@
-/*	$NetBSD: nsec3.c,v 1.1.1.4 2009/12/26 22:24:42 christos Exp $	*/
+/*	$NetBSD: nsec3.c,v 1.1.1.5 2010/08/05 20:12:16 christos Exp $	*/
 
 /*
- * Copyright (C) 2006, 2008, 2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2006, 2008-2010  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: nsec3.c,v 1.13 2009/12/01 05:28:40 marka Exp */
+/* Id: nsec3.c,v 1.13.6.5 2010/06/02 00:41:34 marka Exp */
 
 #include <config.h>
 
@@ -30,6 +30,7 @@
 #include <dst/dst.h>
 
 #include <dns/db.h>
+#include <dns/zone.h>
 #include <dns/compress.h>
 #include <dns/dbiterator.h>
 #include <dns/diff.h>
@@ -559,7 +560,7 @@ dns_nsec3_addnsec3(dns_db_t *db, dns_dbversion_t *version,
 	dns_rdataset_t rdataset;
 	int pass;
 	isc_boolean_t exists;
-	isc_boolean_t remove_unsecure = ISC_FALSE;
+	isc_boolean_t maybe_remove_unsecure = ISC_FALSE;
 	isc_uint8_t flags;
 	isc_buffer_t buffer;
 	isc_result_t result;
@@ -640,8 +641,12 @@ dns_nsec3_addnsec3(dns_db_t *db, dns_dbversion_t *version,
 			 */
 			if (!unsecure)
 				goto addnsec3;
-			else
-				remove_unsecure = ISC_TRUE;
+			else if (CREATE(nsec3param->flags) && OPTOUT(flags)) {
+				result = dns_nsec3_delnsec3(db, version, name,
+							    nsec3param, diff);
+				goto failure;
+			} else
+				maybe_remove_unsecure = ISC_TRUE;
 		} else {
 			dns_rdataset_disassociate(&rdataset);
 			if (result != ISC_R_NOMORE)
@@ -677,26 +682,19 @@ dns_nsec3_addnsec3(dns_db_t *db, dns_dbversion_t *version,
 		if (result != ISC_R_SUCCESS)
 			goto failure;
 
-		if (remove_unsecure) {
+		if (maybe_remove_unsecure) {
 			dns_rdataset_disassociate(&rdataset);
 			/*
-			 * We have found the previous NSEC3 record and can now
-			 * see if the existing NSEC3 record needs to be
-			 * updated or deleted.
+			 * If we have OPTOUT set in the previous NSEC3 record
+			 * we actually need to delete the NSEC3 record.
+			 * Otherwise we just need to replace the NSEC3 record.
 			 */
-			if (!OPTOUT(nsec3.flags)) {
-				/*
-				 * Just update the NSEC3 record.
-				 */
-				goto addnsec3;
-			} else {
-				/*
-				 * This is actually a deletion not a add.
-				 */
+			if (OPTOUT(nsec3.flags)) {
 				result = dns_nsec3_delnsec3(db, version, name,
 							    nsec3param, diff);
 				goto failure;
 			}
+			goto addnsec3;
 		} else {
 			/*
 			 * Is this is a unsecure delegation we are adding?
@@ -1009,6 +1007,169 @@ dns_nsec3param_toprivate(dns_rdata_t *src, dns_rdata_t *target,
 	ISC_LINK_INIT(target, link);
 }
 
+#ifdef BIND9
+static isc_result_t
+rr_exists(dns_db_t *db, dns_dbversion_t *ver, dns_name_t *name,
+	  const dns_rdata_t *rdata, isc_boolean_t *flag)
+{
+	dns_rdataset_t rdataset;
+	dns_dbnode_t *node = NULL;
+	isc_result_t result;
+
+	dns_rdataset_init(&rdataset);
+	if (rdata->type == dns_rdatatype_nsec3)
+		CHECK(dns_db_findnsec3node(db, name, ISC_FALSE, &node));
+	else
+		CHECK(dns_db_findnode(db, name, ISC_FALSE, &node));
+	result = dns_db_findrdataset(db, node, ver, rdata->type, 0,
+				     (isc_stdtime_t) 0, &rdataset, NULL);
+	if (result == ISC_R_NOTFOUND) {
+		*flag = ISC_FALSE;
+		result = ISC_R_SUCCESS;
+		goto failure;
+	}
+
+	for (result = dns_rdataset_first(&rdataset);
+	     result == ISC_R_SUCCESS;
+	     result = dns_rdataset_next(&rdataset)) {
+		dns_rdata_t myrdata = DNS_RDATA_INIT;
+		dns_rdataset_current(&rdataset, &myrdata);
+		if (!dns_rdata_casecompare(&myrdata, rdata))
+			break;
+	}
+	dns_rdataset_disassociate(&rdataset);
+	if (result == ISC_R_SUCCESS) {
+		*flag = ISC_TRUE;
+	} else if (result == ISC_R_NOMORE) {
+		*flag = ISC_FALSE;
+		result = ISC_R_SUCCESS;
+	}
+
+ failure:
+	if (node != NULL)
+		dns_db_detachnode(db, &node);
+	return (result);
+}
+#endif
+
+#ifdef BIND9
+isc_result_t
+dns_nsec3param_deletechains(dns_db_t *db, dns_dbversion_t *ver,
+			    dns_zone_t *zone, dns_diff_t *diff)
+{
+	dns_dbnode_t *node = NULL;
+	dns_difftuple_t *tuple = NULL;
+	dns_name_t next;
+	dns_rdata_t rdata = DNS_RDATA_INIT;
+	dns_rdataset_t rdataset;
+	isc_boolean_t flag;
+	isc_result_t result = ISC_R_SUCCESS;
+	unsigned char buf[DNS_NSEC3PARAM_BUFFERSIZE + 1];
+	dns_name_t *origin = dns_zone_getorigin(zone);
+	dns_rdatatype_t privatetype = dns_zone_getprivatetype(zone);
+
+	dns_name_init(&next, NULL);
+	dns_rdataset_init(&rdataset);
+
+	result = dns_db_getoriginnode(db, &node);
+	if (result != ISC_R_SUCCESS)
+		return (result);
+
+	/*
+	 * Cause all NSEC3 chains to be deleted.
+	 */
+	result = dns_db_findrdataset(db, node, ver, dns_rdatatype_nsec3param,
+				     0, (isc_stdtime_t) 0, &rdataset, NULL);
+	if (result == ISC_R_NOTFOUND)
+		goto try_private;
+	if (result != ISC_R_SUCCESS)
+		goto failure;
+
+	for (result = dns_rdataset_first(&rdataset);
+	     result == ISC_R_SUCCESS;
+	     result = dns_rdataset_next(&rdataset)) {
+		dns_rdata_t private = DNS_RDATA_INIT;
+
+		dns_rdataset_current(&rdataset, &rdata);
+
+		CHECK(dns_difftuple_create(diff->mctx, DNS_DIFFOP_DEL, origin,
+					   rdataset.ttl, &rdata, &tuple));
+		CHECK(do_one_tuple(&tuple, db, ver, diff));
+		INSIST(tuple == NULL);
+
+		dns_nsec3param_toprivate(&rdata, &private, privatetype,
+					 buf, sizeof(buf));
+		buf[2] = DNS_NSEC3FLAG_REMOVE | DNS_NSEC3FLAG_NONSEC;
+
+		CHECK(rr_exists(db, ver, origin, &private, &flag));
+
+		if (!flag) {
+			CHECK(dns_difftuple_create(diff->mctx, DNS_DIFFOP_ADD,
+						   origin, 0, &private,
+						   &tuple));
+			CHECK(do_one_tuple(&tuple, db, ver, diff));
+			INSIST(tuple == NULL);
+		}
+		dns_rdata_reset(&rdata);
+	}
+	if (result != ISC_R_NOMORE)
+		goto failure;
+
+	dns_rdataset_disassociate(&rdataset);
+
+ try_private:
+	if (privatetype == 0)
+		goto success;
+	result = dns_db_findrdataset(db, node, ver, privatetype, 0,
+				     (isc_stdtime_t) 0, &rdataset, NULL);
+	if (result == ISC_R_NOTFOUND)
+		goto success;
+	if (result != ISC_R_SUCCESS)
+		goto failure;
+
+	for (result = dns_rdataset_first(&rdataset);
+	     result == ISC_R_SUCCESS;
+	     result = dns_rdataset_next(&rdataset)) {
+		dns_rdataset_current(&rdataset, &rdata);
+		INSIST(rdata.length <= sizeof(buf));
+		memcpy(buf, rdata.data, rdata.length);
+
+		if (buf[0] != 0 ||
+		    buf[2] == (DNS_NSEC3FLAG_REMOVE | DNS_NSEC3FLAG_NONSEC)) {
+			dns_rdata_reset(&rdata);
+			continue;
+		}
+
+		CHECK(dns_difftuple_create(diff->mctx, DNS_DIFFOP_DEL, origin,
+					   0, &rdata, &tuple));
+		CHECK(do_one_tuple(&tuple, db, ver, diff));
+		INSIST(tuple == NULL);
+
+		buf[2] = DNS_NSEC3FLAG_REMOVE | DNS_NSEC3FLAG_NONSEC;
+
+		CHECK(rr_exists(db, ver, origin, &rdata, &flag));
+
+		if (!flag) {
+			CHECK(dns_difftuple_create(diff->mctx, DNS_DIFFOP_ADD,
+						   origin, 0, &rdata, &tuple));
+			CHECK(do_one_tuple(&tuple, db, ver, diff));
+			INSIST(tuple == NULL);
+		}
+		dns_rdata_reset(&rdata);
+	}
+	if (result != ISC_R_NOMORE)
+		goto failure;
+ success:
+	result = ISC_R_SUCCESS;
+
+ failure:
+	if (dns_rdataset_isassociated(&rdataset))
+		dns_rdataset_disassociate(&rdataset);
+	dns_db_detachnode(db, &node);
+	return (result);
+}
+#endif
+
 isc_result_t
 dns_nsec3_addnsec3sx(dns_db_t *db, dns_dbversion_t *version,
 		     dns_name_t *name, dns_ttl_t nsecttl,
@@ -1275,6 +1436,8 @@ dns_nsec3_delnsec3(dns_db_t *db, dns_dbversion_t *version, dns_name_t *name,
 		 */
 		nsec3.next = nexthash;
 		nsec3.next_length = next_length;
+		if (CREATE(nsec3param->flags))
+			nsec3.flags = nsec3param->flags & DNS_NSEC3FLAG_OPTOUT;
 		isc_buffer_init(&buffer, nsec3buf, sizeof(nsec3buf));
 		CHECK(dns_rdata_fromstruct(&rdata, rdataset.rdclass,
 					   dns_rdatatype_nsec3, &nsec3,

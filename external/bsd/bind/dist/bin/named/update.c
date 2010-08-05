@@ -1,7 +1,7 @@
-/*	$NetBSD: update.c,v 1.1.1.4 2009/12/26 22:19:24 christos Exp $	*/
+/*	$NetBSD: update.c,v 1.1.1.5 2010/08/05 19:53:51 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: update.c,v 1.176 2009/12/04 21:09:32 marka Exp */
+/* Id: update.c,v 1.176.4.6 2010/05/18 01:40:34 marka Exp */
 
 #include <config.h>
 
@@ -1943,6 +1943,7 @@ add_sigs(ns_client_t *client, dns_zone_t *zone, dns_db_t *db,
 		CHECK(update_one_rr(db, ver, diff, DNS_DIFFOP_ADDRESIGN, name,
 				    rdataset.ttl, &sig_rdata));
 		dns_rdata_reset(&sig_rdata);
+		isc_buffer_init(&buffer, data, sizeof(data));
 		added_sig = ISC_TRUE;
 	}
 	if (!added_sig) {
@@ -3036,61 +3037,62 @@ static isc_result_t
 check_dnssec(ns_client_t *client, dns_zone_t *zone, dns_db_t *db,
 	     dns_dbversion_t *ver, dns_diff_t *diff)
 {
-	dns_diff_t temp_diff;
-	dns_diffop_t op;
-	dns_difftuple_t *tuple, *newtuple = NULL, *next;
-	isc_boolean_t flag;
+	dns_difftuple_t *tuple;
+	isc_boolean_t nseconly = ISC_FALSE, nsec3 = ISC_FALSE;
 	isc_result_t result;
 	unsigned int iterations = 0, max;
 	dns_rdatatype_t privatetype = dns_zone_getprivatetype(zone);
 
-	dns_diff_init(diff->mctx, &temp_diff);
+	/* Scan the tuples for an NSEC-only DNSKEY or an NSEC3PARAM */
+	for (tuple = ISC_LIST_HEAD(diff->tuples);
+	     tuple != NULL;
+	     tuple = ISC_LIST_NEXT(tuple, link)) {
+		if (tuple->op != DNS_DIFFOP_ADD)
+			continue;
 
-	CHECK(dns_nsec_nseconly(db, ver, &flag));
+		if (tuple->rdata.type == dns_rdatatype_dnskey) {
+			isc_uint8_t alg;
+			alg = tuple->rdata.data[3];
+			if (alg == DST_ALG_RSAMD5 || alg == DST_ALG_RSASHA1 ||
+			    alg == DST_ALG_DSA || alg == DST_ALG_ECC) {
+				nseconly = ISC_TRUE;
+				break;
+			}
+		} else if (tuple->rdata.type == dns_rdatatype_nsec3param) {
+			nsec3 = ISC_TRUE;
+			break;
+		}
+	}
 
-	if (flag)
+	/* Check existing DB for NSEC-only DNSKEY */
+	if (!nseconly)
+		CHECK(dns_nsec_nseconly(db, ver, &nseconly));
+
+	/* Check existing DB for NSEC3 */
+	if (!nsec3)
 		CHECK(dns_nsec3_activex(db, ver, ISC_FALSE,
-					privatetype, &flag));
-	if (flag) {
-		update_log(client, zone, ISC_LOG_WARNING,
+					privatetype, &nsec3));
+
+	/* Refuse to allow NSEC3 with NSEC-only keys */
+	if (nseconly && nsec3) {
+		update_log(client, zone, ISC_LOG_ERROR,
 			   "NSEC only DNSKEYs and NSEC3 chains not allowed");
-	} else {
-		CHECK(get_iterations(db, ver, privatetype, &iterations));
-		CHECK(dns_nsec3_maxiterations(db, ver, client->mctx, &max));
-		if (max != 0 && iterations > max) {
-			flag = ISC_TRUE;
-			update_log(client, zone, ISC_LOG_WARNING,
-				   "too many NSEC3 iterations (%u) for "
-				   "weakest DNSKEY (%u)", iterations, max);
-		}
-	}
-	if (flag) {
-		for (tuple = ISC_LIST_HEAD(diff->tuples);
-		     tuple != NULL;
-		     tuple = next) {
-			next = ISC_LIST_NEXT(tuple, link);
-			if (tuple->rdata.type != dns_rdatatype_dnskey &&
-			    tuple->rdata.type != dns_rdatatype_nsec3param)
-				continue;
-			op = (tuple->op == DNS_DIFFOP_DEL) ?
-			     DNS_DIFFOP_ADD : DNS_DIFFOP_DEL;
-			CHECK(dns_difftuple_create(temp_diff.mctx, op,
-						   &tuple->name, tuple->ttl,
-						   &tuple->rdata, &newtuple));
-			CHECK(do_one_tuple(&newtuple, db, ver, &temp_diff));
-			INSIST(newtuple == NULL);
-		}
-		for (tuple = ISC_LIST_HEAD(temp_diff.tuples);
-		     tuple != NULL;
-		     tuple = ISC_LIST_HEAD(temp_diff.tuples)) {
-			ISC_LIST_UNLINK(temp_diff.tuples, tuple, link);
-			dns_diff_appendminimal(diff, &tuple);
-		}
+		result = DNS_R_REFUSED;
+		goto failure;
 	}
 
+	/* Verify NSEC3 params */
+	CHECK(get_iterations(db, ver, privatetype, &iterations));
+	CHECK(dns_nsec3_maxiterations(db, ver, client->mctx, &max));
+	if (max != 0 && iterations > max) {
+		update_log(client, zone, ISC_LOG_ERROR,
+			   "too many NSEC3 iterations (%u) for "
+			   "weakest DNSKEY (%u)", iterations, max);
+		result = DNS_R_REFUSED;
+		goto failure;
+	}
 
  failure:
-	dns_diff_clear(&temp_diff);
 	return (result);
 }
 
@@ -3177,6 +3179,23 @@ add_nsec3param_records(ns_client_t *client, dns_zone_t *zone, dns_db_t *db,
 			if (!flag) {
 				CHECK(dns_difftuple_create(diff->mctx,
 							   DNS_DIFFOP_ADD,
+							   name, tuple->ttl,
+							   &rdata,
+							   &newtuple));
+				CHECK(do_one_tuple(&newtuple, db, ver, diff));
+			}
+
+			/*
+			 * Remove any existing CREATE request to add an
+			 * otherwise indentical chain with a reversed
+			 * OPTOUT state.
+			 */
+			buf[2] ^= DNS_NSEC3FLAG_OPTOUT;
+			CHECK(rr_exists(db, ver, name, &rdata, &flag));
+
+			if (flag) {
+				CHECK(dns_difftuple_create(diff->mctx,
+							   DNS_DIFFOP_DEL,
 							   name, tuple->ttl,
 							   &rdata,
 							   &newtuple));
@@ -3377,125 +3396,6 @@ add_signing_records(dns_db_t *db, dns_rdatatype_t privatetype,
 		}
 	}
  failure:
-	return (result);
-}
-
-/*
- * Mark all NSEC3 chains for deletion without creating a NSEC chain as
- * a side effect of deleting the last chain.
- */
-static isc_result_t
-delete_chains(dns_db_t *db, dns_dbversion_t *ver, dns_zone_t *zone,
-	      dns_diff_t *diff)
-{
-	dns_dbnode_t *node = NULL;
-	dns_difftuple_t *tuple = NULL;
-	dns_name_t next;
-	dns_rdata_t rdata = DNS_RDATA_INIT;
-	dns_rdataset_t rdataset;
-	isc_boolean_t flag;
-	isc_result_t result = ISC_R_SUCCESS;
-	unsigned char buf[DNS_NSEC3PARAM_BUFFERSIZE + 1];
-	dns_name_t *origin = dns_zone_getorigin(zone);
-	dns_rdatatype_t privatetype = dns_zone_getprivatetype(zone);
-
-	dns_name_init(&next, NULL);
-	dns_rdataset_init(&rdataset);
-
-	result = dns_db_getoriginnode(db, &node);
-	if (result != ISC_R_SUCCESS)
-		return (result);
-
-	/*
-	 * Cause all NSEC3 chains to be deleted.
-	 */
-	result = dns_db_findrdataset(db, node, ver, dns_rdatatype_nsec3param,
-				     0, (isc_stdtime_t) 0, &rdataset, NULL);
-	if (result == ISC_R_NOTFOUND)
-		goto try_private;
-	if (result != ISC_R_SUCCESS)
-		goto failure;
-
-	for (result = dns_rdataset_first(&rdataset);
-	     result == ISC_R_SUCCESS;
-	     result = dns_rdataset_next(&rdataset)) {
-		dns_rdata_t private = DNS_RDATA_INIT;
-
-		dns_rdataset_current(&rdataset, &rdata);
-
-		CHECK(dns_difftuple_create(diff->mctx, DNS_DIFFOP_DEL, origin,
-					   rdataset.ttl, &rdata, &tuple));
-		CHECK(do_one_tuple(&tuple, db, ver, diff));
-		INSIST(tuple == NULL);
-
-		dns_nsec3param_toprivate(&rdata, &private, privatetype,
-					 buf, sizeof(buf));
-		buf[2] = DNS_NSEC3FLAG_REMOVE | DNS_NSEC3FLAG_NONSEC;
-
-		CHECK(rr_exists(db, ver, origin, &rdata, &flag));
-
-		if (!flag) {
-			CHECK(dns_difftuple_create(diff->mctx, DNS_DIFFOP_ADD,
-						   origin, 0, &rdata, &tuple));
-			CHECK(do_one_tuple(&tuple, db, ver, diff));
-			INSIST(tuple == NULL);
-		}
-		dns_rdata_reset(&rdata);
-	}
-	if (result != ISC_R_NOMORE)
-		goto failure;
-
-	dns_rdataset_disassociate(&rdataset);
-
- try_private:
-	if (privatetype == 0)
-		goto success;
-	result = dns_db_findrdataset(db, node, ver, privatetype, 0,
-				     (isc_stdtime_t) 0, &rdataset, NULL);
-	if (result == ISC_R_NOTFOUND)
-		goto success;
-	if (result != ISC_R_SUCCESS)
-		goto failure;
-
-	for (result = dns_rdataset_first(&rdataset);
-	     result == ISC_R_SUCCESS;
-	     result = dns_rdataset_next(&rdataset)) {
-		dns_rdataset_current(&rdataset, &rdata);
-		INSIST(rdata.length <= sizeof(buf));
-		memcpy(buf, rdata.data, rdata.length);
-
-		if (buf[0] != 0 ||
-		    buf[2] == (DNS_NSEC3FLAG_REMOVE | DNS_NSEC3FLAG_NONSEC)) {
-			dns_rdata_reset(&rdata);
-			continue;
-		}
-
-		CHECK(dns_difftuple_create(diff->mctx, DNS_DIFFOP_DEL, origin,
-					   0, &rdata, &tuple));
-		CHECK(do_one_tuple(&tuple, db, ver, diff));
-		INSIST(tuple == NULL);
-
-		buf[2] = DNS_NSEC3FLAG_REMOVE | DNS_NSEC3FLAG_NONSEC;
-
-		CHECK(rr_exists(db, ver, origin, &rdata, &flag));
-
-		if (!flag) {
-			CHECK(dns_difftuple_create(diff->mctx, DNS_DIFFOP_ADD,
-						   origin, 0, &rdata, &tuple));
-			CHECK(do_one_tuple(&tuple, db, ver, diff));
-			INSIST(tuple == NULL);
-		}
-		dns_rdata_reset(&rdata);
-	}
-	if (result != ISC_R_NOMORE)
-		goto failure;
- success:
-	result = ISC_R_SUCCESS;
-
- failure:
-	if (dns_rdataset_isassociated(&rdataset))
-		dns_rdataset_disassociate(&rdataset);
-	dns_db_detachnode(db, &node);
 	return (result);
 }
 
@@ -4158,7 +4058,8 @@ update_action(isc_task_t *task, isc_event_t *event) {
 			 * the last signature for the DNSKEY records are
 			 * remove any NSEC chain present will also be removed.
 			 */
-			 CHECK(delete_chains(db, ver, zone, &diff));
+			 CHECK(dns_nsec3param_deletechains(db, ver, zone,
+							   &diff));
 		} else if (has_dnskey && isdnssec(db, ver, privatetype)) {
 			isc_uint32_t interval;
 			interval = dns_zone_getsigvalidityinterval(zone);

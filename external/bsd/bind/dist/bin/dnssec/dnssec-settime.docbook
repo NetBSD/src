@@ -2,7 +2,7 @@
                "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd"
                [<!ENTITY mdash "&#8212;">]>
 <!--
- - Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2009, 2010  Internet Systems Consortium, Inc. ("ISC")
  -
  - Permission to use, copy, modify, and/or distribute this software for any
  - purpose with or without fee is hereby granted, provided that the above
@@ -17,7 +17,7 @@
  - PERFORMANCE OF THIS SOFTWARE.
 -->
 
-<!-- Id: dnssec-settime.docbook,v 1.7 2009/11/03 21:44:46 each Exp -->
+<!-- Id: dnssec-settime.docbook,v 1.7.24.3 2010/03/09 03:40:01 marka Exp -->
 <refentry id="man.dnssec-settime">
   <refentryinfo>
     <date>July 15, 2009</date>
@@ -37,6 +37,7 @@
   <docinfo>
     <copyright>
       <year>2009</year>
+      <year>2010</year>
       <holder>Internet Systems Consortium, Inc. ("ISC")</holder>
     </copyright>
   </docinfo>
@@ -231,7 +232,7 @@
       </varlistentry>
 
       <varlistentry>
-        <term>-p <replaceable class="parameter">C/P/A/R/U/D/all</replaceable></term>
+        <term>-p <replaceable class="parameter">C/P/A/R/I/D/all</replaceable></term>
         <listitem>
 	  <para>
 	    Print a specific metadata value or set of metadata values.
@@ -240,8 +241,8 @@
             <option>C</option> for the creation date,
             <option>P</option> for the publication date,
             <option>A</option> for the activation date,
-            <option>R</option> for the revokation date,
-            <option>U</option> for the unpublication date, or
+            <option>R</option> for the revocation date,
+            <option>I</option> for the inactivation date, or
             <option>D</option> for the deletion date.
             To print all of the metadata, use <option>-p all</option>.
 	  </para>

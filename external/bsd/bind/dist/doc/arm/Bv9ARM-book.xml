@@ -2,7 +2,7 @@
               "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd"
 	       [<!ENTITY mdash "&#8212;">]>
 <!--
- - Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
  - Copyright (C) 2000-2003  Internet Software Consortium.
  -
  - Permission to use, copy, modify, and/or distribute this software for any
@@ -18,7 +18,7 @@
  - PERFORMANCE OF THIS SOFTWARE.
 -->
 
-<!-- File: Id: Bv9ARM-book.xml,v 1.450 2009/12/04 21:59:23 marka Exp -->
+<!-- File: Id: Bv9ARM-book.xml,v 1.450.4.10 2010/07/09 05:14:07 each Exp -->
 <book xmlns:xi="http://www.w3.org/2001/XInclude">
   <title>BIND 9 Administrator Reference Manual</title>
 
@@ -30,6 +30,7 @@
       <year>2007</year>
       <year>2008</year>
       <year>2009</year>
+      <year>2010</year>
       <holder>Internet Systems Consortium, Inc. ("ISC")</holder>
     </copyright>
     <copyright>
@@ -1299,6 +1300,19 @@ zone "eng.example.com" {
                         the
                         dump file for the specified views.  If no view is
                         specified, all
+                        views are dumped.
+                      </para>
+                    </listitem>
+                  </varlistentry>
+
+                  <varlistentry>
+                    <term><userinput>secroots
+                        <optional><replaceable>view ...</replaceable></optional></userinput></term>
+                    <listitem>
+                      <para>
+                        Dump the server's security roots to the secroots
+                        file for the specified views.  If no view is
+                        specified, security roots for all
                         views are dumped.
                       </para>
                     </listitem>
@@ -2654,6 +2668,13 @@ options {
       </sect2>
 
     </sect1>
+
+    <xi:include href="dnssec.xml"/>
+
+    <xi:include href="managed-keys.xml"/>
+
+    <xi:include href="pkcs11.xml"/>
+
     <sect1>
       <title>IPv6 Support in <acronym>BIND</acronym> 9</title>
 
@@ -4862,6 +4883,7 @@ badresp:1,adberr:0,findfail:0,valfail:0]
     <optional> server-id <replaceable>server_id_string</replaceable>; </optional>
     <optional> directory <replaceable>path_name</replaceable>; </optional>
     <optional> key-directory <replaceable>path_name</replaceable>; </optional>
+    <optional> managed-keys-directory <replaceable>path_name</replaceable>; </optional>
     <optional> named-xfer <replaceable>path_name</replaceable>; </optional>
     <optional> tkey-gssapi-credential <replaceable>principal</replaceable>; </optional>
     <optional> tkey-domain <replaceable>domainname</replaceable>; </optional>
@@ -5008,6 +5030,7 @@ badresp:1,adberr:0,findfail:0,valfail:0]
     <optional> max-cache-size <replaceable>size_spec</replaceable> ; </optional>
     <optional> match-mapped-addresses <replaceable>yes_or_no</replaceable>; </optional>
     <optional> filter-aaaa-on-v4 ( <replaceable>yes_or_no</replaceable> | <replaceable>break-dnssec</replaceable> ); </optional>
+    <optional> filter-aaaa { <replaceable>address_match_list</replaceable> }; </optional>
     <optional> preferred-glue ( <replaceable>A</replaceable> | <replaceable>AAAA</replaceable> | <replaceable>NONE</replaceable> ); </optional>
     <optional> edns-udp-size <replaceable>number</replaceable>; </optional>
     <optional> max-udp-size <replaceable>number</replaceable>; </optional>
@@ -5183,6 +5206,19 @@ badresp:1,adberr:0,findfail:0,valfail:0]
           </varlistentry>
 
           <varlistentry>
+            <term><command>managed-keys-directory</command></term>
+            <listitem>
+              <para>
+		The directory used to hold the files used to track managed keys.
+		By default it is the working directory.  It there are no
+		views then the file <filename>managed-keys.bind</filename>
+		otherwise a SHA256 hash of the view name is used with
+		<filename>.mkeys</filename> extension added.
+              </para>
+            </listitem>
+          </varlistentry>
+
+          <varlistentry>
             <term><command>named-xfer</command></term>
 	    <listitem>
 	      <para>
@@ -5207,7 +5243,7 @@ badresp:1,adberr:0,findfail:0,valfail:0]
 		the server can acquire through the default system
 		key file, normally <filename>/etc/krb5.keytab</filename>.
 		Normally this principal is of the form
-		"<userinput>dns/</userinput><varname>server.domain</varname>".
+		"<userinput>DNS/</userinput><varname>server.domain</varname>".
 		To use GSS-TSIG, <command>tkey-domain</command>
 		must also be set.
 	      </para>
@@ -5338,6 +5374,18 @@ badresp:1,adberr:0,findfail:0,valfail:0]
 		See the discussion of <command>dnssec-lookaside</command>
 		for details.  If not specified, the default is
 		<filename>/etc/bind.keys</filename>.
+              </para>
+            </listitem>
+          </varlistentry>
+
+          <varlistentry>
+            <term><command>secroots-file</command></term>
+            <listitem>
+              <para>
+                The pathname of the file the server dumps
+                security roots to when instructed to do so with
+                <command>rndc secroots</command>.
+                If not specified, the default is <filename>named.secroots</filename>.
               </para>
             </listitem>
           </varlistentry>
@@ -6259,7 +6307,7 @@ options {
                 </para>
                 <para>
                   If <userinput>yes</userinput>,
-                  the DNS client is at an IPv4 address,
+                  the DNS client is at an IPv4 address, in <command>filter-aaaa</command>,
                   and if the response does not include DNSSEC signatures, 
                   then all AAAA records are deleted from the response.
                   This filtering applies to all responses and not only
@@ -6616,9 +6664,26 @@ options {
 	      <term><command>dnssec-secure-to-insecure</command></term>
 	      <listitem>
 	        <para>
-		  Allow a zone to transition from secure to insecure by
-		  deleting all DNSKEY records.  The default is
-		  <command>no</command>.
+		  Allow a dynamic zone to transition from secure to
+                  insecure (i.e., signed to unsigned) by deleting all
+                  of the DNSKEY records.  The default is <command>no</command>.
+                  If set to <command>yes</command>, and if the DNSKEY RRset
+                  at the zone apex is deleted, all RRSIG and NSEC records
+                  will be removed from the zone as well.
+		</para>
+	        <para>
+                  If the zone uses NSEC3, then it is also necessary to
+                  delete the NSEC3PARAM RRset from the zone apex; this will
+                  cause the removal of all corresponding NSEC3 records.
+                  (It is expected that this requirement will be eliminated
+                  in a future release.)
+		</para>
+	        <para>
+                  Note that if a zone has been configured with
+                  <command>auto-dnssec maintain</command> and the
+                  private keys remain accessible in the key repository,
+                  then the zone will be automatically signed again the
+                  next time <command>named</command> is started.
 		</para>
 	      </listitem>
 	    </varlistentry>
@@ -6931,6 +6996,17 @@ options {
                   query. Queries
                   from these addresses will not be responded to. The default
                   is <userinput>none</userinput>.
+                </para>
+              </listitem>
+            </varlistentry>
+
+            <varlistentry>
+              <term><command>filter-aaaa</command></term>
+              <listitem>
+                <para>
+                  Specifies a list of addresses to which
+		  <command>filter-aaaa-on-v4</command>
+                  is applies.  The default is <userinput>any</userinput>.
                 </para>
               </listitem>
             </varlistentry>
@@ -8151,6 +8227,13 @@ avoid-v6-udp-ports { 40000; range 50000 60000; };
                   <literal>1800</literal> (30 minutes).
                 </para>
 
+		<para>
+		  Lame-ttl also controls the amount of time DNSSEC
+		  validation failures are cached.  There is a minimum
+		  of 30 seconds applied to bad cache entries if the
+		  lame-ttl is set to less than 30 seconds.
+		</para>
+
               </listitem>
             </varlistentry>
 
@@ -8419,7 +8502,7 @@ avoid-v6-udp-ports { 40000; range 50000 60000; };
               <listitem>
                 <para>
                   The delay, in seconds, between sending sets of notify
-                  messages for a zone.  The default is zero.
+                  messages for a zone.  The default is five (5) seconds.
                 </para>
               </listitem>
             </varlistentry>
@@ -9169,7 +9252,7 @@ deny-answer-aliases { "example.net"; };
 
       </sect2>
 
-        <sect2>
+	<sect2 id="trusted-keys">
           <title><command>trusted-keys</command> Statement Grammar</title>
 
 <programlisting><command>trusted-keys</command> {
@@ -9230,7 +9313,7 @@ deny-answer-aliases { "example.net"; };
 </programlisting>
 
         </sect2>
-	<sect2>
+	<sect2 id="managed-keys">
 	  <title><command>managed-keys</command> Statement Definition
 	    and Usage</title>
 	  <para>
@@ -15632,7 +15715,11 @@ zone "example.com" {
           </bibliography>
         </sect2>
       </sect1>
+
+      <xi:include href="libdns.xml"/>
+
     </appendix>
+
 
     <reference id="Bv9ARM.ch10">
       <title>Manual pages</title>
@@ -15656,6 +15743,7 @@ zone "example.com" {
       <xi:include href="../../bin/confgen/ddns-confgen.docbook"/>
       <xi:include href="../../bin/tools/arpaname.docbook"/>
       <xi:include href="../../bin/tools/genrandom.docbook"/>
+      <xi:include href="../../bin/tools/isc-hmac-fixup.docbook"/>
       <xi:include href="../../bin/tools/nsec3hash.docbook"/>
     </reference>
 

@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 2000-2002  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -15,7 +15,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: tests.sh,v 1.55 2009/10/27 23:47:44 tbox Exp
+# Id: tests.sh,v 1.55.32.11 2010/07/15 01:26:10 jinmei Exp
 
 SYSTEMTESTTOP=..
 . $SYSTEMTESTTOP/conf.sh
@@ -34,6 +34,26 @@ ret=0
 $DIG $DIGOPTS a.example. @10.53.0.2 a > dig.out.ns2.test$n || ret=1
 $DIG $DIGOPTS a.example. @10.53.0.3 a > dig.out.ns3.test$n || ret=1
 $PERL ../digcomp.pl dig.out.ns2.test$n dig.out.ns3.test$n || ret=1
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+# test AD bit:
+#  - dig +adflag asks for authentication (ad in response)
+echo "I:checking AD bit asking for validation ($n)"
+ret=0
+$DIG $DIGOPTS +noauth +noadd +nodnssec +adflag a.example. @10.53.0.2 a > dig.out.ns2.test$n || ret=1
+$DIG $DIGOPTS +noauth +noadd +nodnssec +adflag a.example. @10.53.0.4 a > dig.out.ns4.test$n || ret=1
+$PERL ../digcomp.pl dig.out.ns2.test$n dig.out.ns4.test$n || ret=1
+grep "flags:.*ad.*QUERY" dig.out.ns4.test$n > /dev/null || ret=1
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I:checking for AD in authoritative answer ($n)"
+ret=0
+$DIG $DIGOPTS a.example. @10.53.0.2 a > dig.out.ns2.test$n || ret=1
+grep "flags:.*ad.*QUERY" dig.out.ns2.test$n > /dev/null && ret=1
 n=`expr $n + 1`
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
@@ -522,6 +542,41 @@ n=`expr $n + 1`
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
 
+echo "I:Checking that a bad CNAME signature is caught after a +CD query ($n)"
+ret=0
+#prime
+$DIG $DIGOPTS +cd bad-cname.example. @10.53.0.4 > dig.out.ns4.prime$n || ret=1
+#check: requery with +CD.  pending data should be returned even if it's bogus
+expect="a.example.
+10.0.0.1"
+ans=`$DIG $DIGOPTS +cd +nodnssec +short bad-cname.example. @10.53.0.4` || ret=1
+test "$ans" = "$expect" || ret=1
+test $ret = 0 || echo I:failed, got "'""$ans""'", expected "'""$expect""'"
+#check: requery without +CD.  bogus cached data should be rejected.
+$DIG $DIGOPTS +nodnssec bad-cname.example. @10.53.0.4 > dig.out.ns4.test$n || ret=1
+grep "SERVFAIL" dig.out.ns4.test$n > /dev/null || ret=1
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I:Checking that a bad DNAME signature is caught after a +CD query ($n)"
+ret=0
+#prime
+$DIG $DIGOPTS +cd a.bad-dname.example. @10.53.0.4 > dig.out.ns4.prime$n || ret=1
+#check: requery with +CD.  pending data should be returned even if it's bogus
+expect="example.
+a.example.
+10.0.0.1"
+ans=`$DIG $DIGOPTS +cd +nodnssec +short a.bad-dname.example. @10.53.0.4` || ret=1
+test "$ans" = "$expect" || ret=1
+test $ret = 0 || echo I:failed, got "'""$ans""'", expected "'""$expect""'"
+#check: requery without +CD.  bogus cached data should be rejected.
+$DIG $DIGOPTS +nodnssec a.bad-dname.example. @10.53.0.4 > dig.out.ns4.test$n || ret=1
+grep "SERVFAIL" dig.out.ns4.test$n > /dev/null || ret=1
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
 # Check the insecure.secure.example domain (insecurity proof)
 
 echo "I:checking 2-server insecurity proof ($n)"
@@ -621,6 +676,16 @@ echo "I:checking positive validation RSASHA512 NSEC ($n)"
 ret=0
 $DIG $DIGOPTS +noauth a.rsasha512.example. @10.53.0.3 a > dig.out.ns3.test$n || ret=1
 $DIG $DIGOPTS +noauth a.rsasha512.example. @10.53.0.4 a > dig.out.ns4.test$n || ret=1
+$PERL ../digcomp.pl dig.out.ns3.test$n dig.out.ns4.test$n || ret=1
+grep "flags:.*ad.*QUERY" dig.out.ns4.test$n > /dev/null || ret=1
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I:checking positive validation with KSK-only DNSKEY signature ($n)"
+ret=0
+$DIG $DIGOPTS +noauth a.kskonly.example. @10.53.0.3 a > dig.out.ns3.test$n || ret=1
+$DIG $DIGOPTS +noauth a.kskonly.example. @10.53.0.4 a > dig.out.ns4.test$n || ret=1
 $PERL ../digcomp.pl dig.out.ns3.test$n dig.out.ns4.test$n || ret=1
 grep "flags:.*ad.*QUERY" dig.out.ns4.test$n > /dev/null || ret=1
 n=`expr $n + 1`
@@ -806,6 +871,30 @@ n=`expr $n + 1`
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
 
+echo "I:checking a non-cachable NODATA works ($n)"
+ret=0
+$DIG $DIGOPTS +noauth a.nosoa.secure.example. txt @10.53.0.7 \
+	> dig.out.ns7.test$n || ret=1
+grep "AUTHORITY: 0" dig.out.ns7.test$n > /dev/null || ret=1
+$DIG $DIGOPTS +noauth a.nosoa.secure.example. txt @10.53.0.4 \
+	> dig.out.ns4.test$n || ret=1
+grep "status: NOERROR" dig.out.ns4.test$n > /dev/null || ret=1
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I:checking a non-cachable NXDOMAIN works ($n)"
+ret=0
+$DIG $DIGOPTS +noauth b.nosoa.secure.example. txt @10.53.0.7 \
+	> dig.out.ns7.test$n || ret=1
+grep "AUTHORITY: 0" dig.out.ns7.test$n > /dev/null || ret=1
+$DIG $DIGOPTS +noauth b.nosoa.secure.example. txt @10.53.0.4 \
+	> dig.out.ns4.test$n || ret=1
+grep "status: NXDOMAIN" dig.out.ns4.test$n > /dev/null || ret=1
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
 #
 # private.secure.example is served by the same server as its
 # grand parent and there is not a secure delegation from secure.example
@@ -839,6 +928,48 @@ n=`expr $n + 1`
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
 
+echo "I:checking that we can sign a zone with out-of-zone records ($n)"
+ret=0
+(
+cd signer
+RANDFILE=../random.data
+zone=example
+key1=`$KEYGEN -r $RANDFILE -a NSEC3RSASHA1 -b 1024 -n zone $zone`
+key2=`$KEYGEN -r $RANDFILE -f KSK -a NSEC3RSASHA1 -b 1024 -n zone $zone`
+cat example.db.in $key1.key $key2.key > example.db
+$SIGNER -o example -f example.db example.db > /dev/null 2>&1
+) || ret=1
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I:checking that we can sign a zone (NSEC3) with out-of-zone records ($n)"
+ret=0
+(
+cd signer
+RANDFILE=../random.data
+zone=example
+key1=`$KEYGEN -r $RANDFILE -a NSEC3RSASHA1 -b 1024 -n zone $zone`
+key2=`$KEYGEN -r $RANDFILE -f KSK -a NSEC3RSASHA1 -b 1024 -n zone $zone`
+cat example.db.in $key1.key $key2.key > example.db
+$SIGNER -3 - -H 10 -o example -f example.db example.db > /dev/null 2>&1
+grep "IQF9LQTLKKNFK0KVIFELRAK4IC4QLTMG.example. 0 IN NSEC3 1 0 10 - IQF9LQTLKKNFK0KVIFELRAK4IC4QLTMG A NS SOA RRSIG DNSKEY NSEC3PARAM" example.db > /dev/null 
+) || ret=1
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+# Test that "rndc secroots" is able to dump trusted keys
+echo "I:checking rndc secroots ($n)"
+ret=0
+$RNDC -c ../common/rndc.conf -s 10.53.0.4 -p 9953 secroots 2>&1 | sed 's/^/I:ns1 /'
+keyid=`cat ns1/managed.key.id`
+linecount=`grep "./RSAMD5/$keyid ; trusted" ns4/named.secroots | wc -l`
+[ "$linecount" -eq 1 ] || ret=1
+linecount=`cat ns4/named.secroots | wc -l`
+[ "$linecount" -eq 5 ] || ret=1
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
 # Run a minimal update test if possible.  This is really just
 # a regression test for RT #2399; more tests should be added.
 
@@ -849,6 +980,29 @@ then
 else
     echo "I:The DNSSEC update test requires the Net::DNS library." >&2
 fi
+
+# Check direct query for RRSIG.  If we first ask for normal (non RRSIG)
+# record, the corresponding RRSIG should be cached and subsequent query
+# for RRSIG will be returned with the cached record.
+echo "I:checking RRSIG query from cache ($n)"
+ret=0
+$DIG $DIGOPTS normalthenrrsig.secure.example. @10.53.0.4 a > /dev/null || ret=1
+ans=`$DIG $DIGOPTS +short normalthenrrsig.secure.example. @10.53.0.4 rrsig` || ret=1
+expect=`$DIG $DIGOPTS +short normalthenrrsig.secure.example. @10.53.0.3 rrsig | grep '^A' ` || ret=1
+test "$ans" = "$expect" || ret=1
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+# Check direct query for RRSIG: If it's not cached with other records,
+# it should result in an empty response.
+echo "I:checking RRSIG query not in cache ($n)"
+ret=0
+ans=`$DIG $DIGOPTS +short rrsigonly.secure.example. @10.53.0.4 rrsig` || ret=1
+test -z "$ans" || ret=1
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
 
 echo "I:exit status: $status"
 exit $status
