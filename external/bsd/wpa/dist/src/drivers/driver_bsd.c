@@ -626,6 +626,9 @@ bsd_get_seqnum(const char *ifname, void *priv, const u8 *addr, int idx,
 	}
 
 #ifdef WORDS_BIGENDIAN
+#ifndef WPA_KEY_RSC_LEN
+#define WPA_KEY_RSC_LEN 8
+#endif
 	{
 		/*
 		 * wk.ik_keytsc is in host byte order (big endian), need to
