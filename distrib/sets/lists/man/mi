@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1230 2010/08/05 04:58:26 jruoho Exp $
+# $NetBSD: mi,v 1.1231 2010/08/05 17:31:11 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -623,6 +623,7 @@
 ./usr/share/man/cat4/acpiacad.0			man-sys-catman		.cat
 ./usr/share/man/cat4/acpibat.0			man-sys-catman		.cat
 ./usr/share/man/cat4/acpibut.0			man-sys-catman		.cat
+./usr/share/man/cat4/acpicpu.0			man-sys-catman		.cat
 ./usr/share/man/cat4/acpidalb.0			man-sys-catman		.cat
 ./usr/share/man/cat4/acpiec.0			man-sys-catman		.cat
 ./usr/share/man/cat4/acpiecdt.0			man-sys-catman		.cat
@@ -3337,6 +3338,7 @@
 ./usr/share/man/html4/acpiacad.html		man-sys-htmlman		html
 ./usr/share/man/html4/acpibat.html		man-sys-htmlman		html
 ./usr/share/man/html4/acpibut.html		man-sys-htmlman		html
+./usr/share/man/html4/acpicpu.html		man-sys-htmlman		html
 ./usr/share/man/html4/acpidalb.html		man-sys-htmlman		html
 ./usr/share/man/html4/acpiec.html		man-sys-htmlman		html
 ./usr/share/man/html4/acpiecdt.html		man-sys-htmlman		html
@@ -5751,6 +5753,7 @@
 ./usr/share/man/man4/acpiacad.4			man-sys-man		.man
 ./usr/share/man/man4/acpibat.4			man-sys-man		.man
 ./usr/share/man/man4/acpibut.4			man-sys-man		.man
+./usr/share/man/man4/acpicpu.4			man-sys-man		.man
 ./usr/share/man/man4/acpidalb.4			man-sys-man		.man
 ./usr/share/man/man4/acpiec.4			man-sys-man		.man
 ./usr/share/man/man4/acpiecdt.4			man-sys-man		.man
