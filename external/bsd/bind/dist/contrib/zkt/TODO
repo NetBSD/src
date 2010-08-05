@@ -1,7 +1,9 @@
 TODO list as of zkt-0.99
 
 general:
-	Renaming of the tools to zkt-* ? 
+	Renaming to zkt-? and split of the functions of dnssec-zkt to
+	separate commands
+	Fixed in zkt-1.0 (zkt-conf command)
 
 dnssec-zkt:
  feat	option to specify the key age as remaining lifetime
@@ -23,14 +25,22 @@ dnssec-signer:
 	The dnssec maintainer is responsible for the lifeliness of the
 	data in the hosted domain.
 	In other words: It's highly recommended to use the
-	option -r when you use dnssec-signer on a production zone.
+	option -r when you use zkt-signer on a production zone.
 	Then the time of propagation is (more or less) equal to the timestamp
 	of the zone.db.signed file.
 
- bug	The max_TTL and Key_TTL parameter should be set to the value found
- 	in the zone. A mechanism for setting up a dnssec.conf file for the
-	zone specific TTL values is needed.
+ bug	The max_TTL parameter should be set to the value found
+ 	in the zone. A mechanism for setting up a dnssec.conf file
+	for the zone specific TTL values is needed.
+	Fixed in zkt-1.0 (zkt-conf command)
+
+zkt-conf:
+ port	Option -C (compability) to create older config files
+ misc	Change syntax of config parameters to a more uniq form (e.g. no "_" char)
+
+zkt-rollover:
+ feat	New command to roll keys independent of zone signing
+	(Usefull for dynamic zones managed by BIND9.7)
 
 dki:
  feat	Use dynamic memory for dname in dki_t
-

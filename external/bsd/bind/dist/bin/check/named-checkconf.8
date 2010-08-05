@@ -1,4 +1,4 @@
-.\"	$NetBSD: named-checkconf.8,v 1.1.1.2 2009/10/25 00:01:29 christos Exp $
+.\"	$NetBSD: named-checkconf.8,v 1.1.1.3 2010/08/05 19:52:26 christos Exp $
 .\"
 .\" Copyright (C) 2004, 2005, 2007, 2009 Internet Systems Consortium, Inc. ("ISC")
 .\" Copyright (C) 2000-2002 Internet Software Consortium.
@@ -15,7 +15,7 @@
 .\" OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 .\" PERFORMANCE OF THIS SOFTWARE.
 .\"
-.\" Id: named-checkconf.8,v 1.32 2009/07/14 01:13:07 tbox Exp
+.\" Id: named-checkconf.8,v 1.32.126.1 2009/12/29 02:09:32 tbox Exp
 .\"
 .hy 0
 .ad l
@@ -39,7 +39,25 @@ named\-checkconf \- named configuration file syntax checking tool
 .SH "DESCRIPTION"
 .PP
 \fBnamed\-checkconf\fR
-checks the syntax, but not the semantics, of a named configuration file.
+checks the syntax, but not the semantics, of a
+\fBnamed\fR
+configuration file. The file is parsed and checked for syntax errors, along with all files included by it. If no file is specified,
+\fI/etc/named.conf\fR
+is read by default.
+.PP
+Note: files that
+\fBnamed\fR
+reads in separate parser contexts, such as
+\fIrndc.key\fR
+and
+\fIbind.keys\fR, are not automatically read by
+\fBnamed\-checkconf\fR. Configuration errors in these files may cause
+\fBnamed\fR
+to fail to run, even if
+\fBnamed\-checkconf\fR
+was successful.
+\fBnamed\-checkconf\fR
+can be run on these files explicitly, however.
 .SH "OPTIONS"
 .PP
 \-h

@@ -1,7 +1,7 @@
-/*	$NetBSD: grammar.h,v 1.1.1.2 2009/10/25 00:02:50 christos Exp $	*/
+/*	$NetBSD: grammar.h,v 1.1.1.3 2010/08/05 20:16:04 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2002, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: grammar.h,v 1.19 2009/06/11 23:47:55 tbox Exp */
+/* Id: grammar.h,v 1.19.136.2 2010/06/23 23:46:36 tbox Exp */
 
 #ifndef ISCCFG_GRAMMAR_H
 #define ISCCFG_GRAMMAR_H 1
@@ -55,6 +55,8 @@
 #define CFG_CLAUSEFLAG_CALLBACK		0x00000020
 /*% A option that is only used in testing. */
 #define CFG_CLAUSEFLAG_TESTONLY		0x00000040
+/*% A configuration option that was not configured at compile time. */
+#define CFG_CLAUSEFLAG_NOTCONFIGURED	0x00000080
 
 typedef struct cfg_clausedef cfg_clausedef_t;
 typedef struct cfg_tuplefielddef cfg_tuplefielddef_t;

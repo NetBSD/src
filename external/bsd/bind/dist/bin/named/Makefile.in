@@ -1,4 +1,4 @@
-# Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 1998-2002  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -13,7 +13,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: Makefile.in,v 1.109 2009/12/05 23:31:40 each Exp
+# Id: Makefile.in,v 1.109.2.2 2010/06/20 23:46:24 tbox Exp
 
 srcdir =	@srcdir@
 VPATH =		@srcdir@
@@ -118,7 +118,7 @@ main.@O@: main.c
 		-DNS_LOCALSTATEDIR=\"${localstatedir}\" \
 		-DNS_SYSCONFDIR=\"${sysconfdir}\" -c ${srcdir}/main.c
 
-bind.keys.h: ${top_srcdir}/bind.keys
+bind.keys.h: ${top_srcdir}/bind.keys ${top_srcdir}/bind.keys
 	${PERL} ${srcdir}/bindkeys.pl < ${top_srcdir}/bind.keys > $@
 
 config.@O@: config.c bind.keys.h

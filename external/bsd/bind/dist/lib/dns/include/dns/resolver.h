@@ -1,7 +1,7 @@
-/*	$NetBSD: resolver.h,v 1.1.1.2 2009/10/25 00:02:38 christos Exp $	*/
+/*	$NetBSD: resolver.h,v 1.1.1.3 2010/08/05 20:13:48 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: resolver.h,v 1.64 2009/09/01 00:22:26 jinmei Exp */
+/* Id: resolver.h,v 1.64.104.3 2010/07/11 00:12:19 each Exp */
 
 #ifndef DNS_RESOLVER_H
 #define DNS_RESOLVER_H 1
@@ -182,7 +182,7 @@ dns_resolver_freeze(dns_resolver_t *res);
  *
  * Requires:
  *
- *\li	'res' is a valid, unfrozen resolver.
+ *\li	'res' is a valid resolver.
  *
  * Ensures:
  *
@@ -510,6 +510,48 @@ dns_resolver_setzeronosoattl(dns_resolver_t *resolver, isc_boolean_t state);
 
 unsigned int
 dns_resolver_getoptions(dns_resolver_t *resolver);
+
+void
+dns_resolver_addbadcache(dns_resolver_t *resolver, dns_name_t *name,
+			 dns_rdatatype_t type, isc_time_t *expire);
+/*%<
+ * Add a entry to the bad cache for <name,type> that will expire at 'expire'.
+ *
+ * Requires:
+ * \li	resolver to be valid.
+ * \li	name to be valid.
+ */
+
+isc_boolean_t
+dns_resolver_getbadcache(dns_resolver_t *resolver, dns_name_t *name,
+			 dns_rdatatype_t type, isc_time_t *now);
+/*%<
+ * Check to see if there is a unexpired entry in the bad cache for
+ * <name,type>.
+ *
+ * Requires:
+ * \li	resolver to be valid.
+ * \li	name to be valid.
+ */
+
+void
+dns_resolver_flushbadcache(dns_resolver_t *resolver, dns_name_t *name);
+/*%<
+ * Flush the bad cache of all entries at 'name' if 'name' is non NULL.
+ * Flush the entire bad cache if 'name' is NULL.
+ *
+ * Requires:
+ * \li	resolver to be valid.
+ */
+
+void
+dns_resolver_printbadcache(dns_resolver_t *resolver, FILE *fp);
+/*%
+ * Print out the contents of the bad cache to 'fp'.
+ *
+ * Requires:
+ * \li	resolver to be valid.
+ */
 
 ISC_LANG_ENDDECLS
 

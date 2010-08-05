@@ -1,7 +1,7 @@
-/*	$NetBSD: parser.c,v 1.1.1.2 2009/10/25 00:02:50 christos Exp $	*/
+/*	$NetBSD: parser.c,v 1.1.1.3 2010/08/05 20:16:03 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: parser.c,v 1.132 2009/09/02 23:43:54 each Exp */
+/* Id: parser.c,v 1.132.104.2 2010/06/23 23:46:36 tbox Exp */
 
 /*! \file */
 
@@ -1240,6 +1240,14 @@ cfg_parse_mapbody(cfg_parser_t *pctx, const cfg_type_t *type, cfg_obj_t **ret)
 		if ((clause->flags & CFG_CLAUSEFLAG_NYI) != 0)
 			cfg_parser_warning(pctx, 0, "option '%s' is "
 				       "not implemented", clause->name);
+
+		if ((clause->flags & CFG_CLAUSEFLAG_NOTCONFIGURED) != 0) {
+			cfg_parser_warning(pctx, 0, "option '%s' is not "
+					   "configured", clause->name);
+			result = ISC_R_FAILURE;
+			goto cleanup;
+		}
+
 		/*
 		 * Don't log options with CFG_CLAUSEFLAG_NEWDEFAULT
 		 * set here - we need to log the *lack* of such an option,
@@ -1481,6 +1489,7 @@ static struct flagtext {
 	{ CFG_CLAUSEFLAG_OBSOLETE, "obsolete" },
 	{ CFG_CLAUSEFLAG_NEWDEFAULT, "default changed" },
 	{ CFG_CLAUSEFLAG_TESTONLY, "test only" },
+	{ CFG_CLAUSEFLAG_NOTCONFIGURED, "not configured" },
 	{ 0, NULL }
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: log.c,v 1.1.1.1 2009/03/22 14:58:19 christos Exp $	*/
+/*	$NetBSD: log.c,v 1.1.1.2 2010/08/05 20:01:23 christos Exp $	*/
 
 /*****************************************************************
 **
@@ -62,6 +62,7 @@
 **	module internal vars & declarations
 *****************************************************************/
 static	FILE	*lg_fp;
+static	FILE	*lg_fpsave;
 static	int	lg_minfilelevel;
 static	int	lg_syslogging;
 static	int	lg_minsyslevel;
@@ -299,6 +300,47 @@ int	lg_close ()
 	}
 
 	return ret;
+}
+
+/*****************************************************************
+**	lg_zone_start (domain)
+**		-- reopen the log channel
+**	return values:
+**		 0 on success
+**		 -1 on file open error
+*****************************************************************/
+int	lg_zone_start (const char *dir, const char *domain)
+{
+	char	fname[255+1];
+
+	dbg_val2 ("lg_zone_start (%s, %s)\n", dir, domain);
+
+	snprintf (fname, sizeof (fname), LOG_DOMAINTMPL, domain);
+	if ( lg_fp )
+		lg_fpsave = lg_fp;
+	lg_fp = lg_fileopen (dir, fname);
+
+	return lg_fp != NULL;
+}
+
+/*****************************************************************
+**	lg_zone_end (domain)
+**		-- close the (reopened) log channel
+**	return values:
+**		 0 on success
+**		 -1 on file open error
+*****************************************************************/
+int	lg_zone_end ()
+{
+	if ( lg_fp && lg_fpsave )
+	{
+		lg_close ();
+		lg_fp = lg_fpsave;
+		lg_fpsave = NULL;
+		return 1;
+	}
+
+	return 0;
 }
 
 /*****************************************************************

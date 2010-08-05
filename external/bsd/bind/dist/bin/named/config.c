@@ -1,7 +1,7 @@
-/*	$NetBSD: config.c,v 1.1.1.4 2009/12/26 22:19:10 christos Exp $	*/
+/*	$NetBSD: config.c,v 1.1.1.5 2010/08/05 19:53:20 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2001-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: config.c,v 1.106 2009/12/04 21:09:32 marka Exp */
+/* Id: config.c,v 1.106.4.5 2010/06/25 03:51:06 marka Exp */
 
 /*! \file */
 
@@ -82,6 +82,7 @@ options {\n\
 	bindkeys-file \"" NS_SYSCONFDIR "/bind.keys\";\n\
 	port 53;\n\
 	recursing-file \"named.recursing\";\n\
+	secroots-file \"named.secroots\";\n\
 "
 #ifdef PATH_RANDOMDEV
 "\
@@ -163,6 +164,7 @@ options {\n\
 "
 #ifdef ALLOW_FILTER_AAAA_ON_V4
 "	filter-aaaa-on-v4 no;\n\
+	filter-aaaa { any; };\n\
 "
 #endif
 
@@ -240,18 +242,6 @@ view \"_bind\" chaos {\n\
 	};\n\
 };\n\
 "
-
-"#\n\
-#  The \"_meta\" view is for zones that are used to store internal\n\
-#  information for named, such as managed keys.  The zones are defined\n\
-#  elsewhere.\n\
-#\n\
-view \"_meta\" in {\n\
-	recursion no;\n\
-	notify no;\n\
-};\n\
-"
-
 "#\n\
 #  Default trusted key(s) for builtin DLV support\n\
 #  (used if \"dnssec-lookaside auto;\" is set and\n\

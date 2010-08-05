@@ -1,7 +1,7 @@
-/*	$NetBSD: mem.c,v 1.1.1.2 2009/10/25 00:02:43 christos Exp $	*/
+/*	$NetBSD: mem.c,v 1.1.1.3 2010/08/05 20:14:48 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1997-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: mem.c,v 1.153 2009/09/02 23:43:54 each Exp */
+/* Id: mem.c,v 1.153.104.3 2010/05/12 00:49:31 marka Exp */
 
 /*! \file */
 
@@ -77,7 +77,7 @@ struct debuglink {
 };
 
 #define FLARG_PASS	, file, line
-#define FLARG		, const char *file, int line
+#define FLARG		, const char *file, unsigned int line
 #else
 #define FLARG_PASS
 #define FLARG
@@ -396,6 +396,7 @@ add_trace_entry(isc__mem_t *mctx, const void *ptr, unsigned int size
 {
 	debuglink_t *dl;
 	unsigned int i;
+	unsigned int mysize = size;
 
 	if ((isc_mem_debugging & ISC_MEM_DEBUGTRACE) != 0)
 		fprintf(stderr, isc_msgcat_get(isc_msgcat, ISC_MSGSET_MEM,
@@ -407,10 +408,10 @@ add_trace_entry(isc__mem_t *mctx, const void *ptr, unsigned int size
 	if (mctx->debuglist == NULL)
 		return;
 
-	if (size > mctx->max_size)
-		size = mctx->max_size;
+	if (mysize > mctx->max_size)
+		mysize = mctx->max_size;
 
-	dl = ISC_LIST_HEAD(mctx->debuglist[size]);
+	dl = ISC_LIST_HEAD(mctx->debuglist[mysize]);
 	while (dl != NULL) {
 		if (dl->count == DEBUGLIST_COUNT)
 			goto next;
@@ -445,7 +446,7 @@ add_trace_entry(isc__mem_t *mctx, const void *ptr, unsigned int size
 	dl->line[0] = line;
 	dl->count = 1;
 
-	ISC_LIST_PREPEND(mctx->debuglist[size], dl, link);
+	ISC_LIST_PREPEND(mctx->debuglist[mysize], dl, link);
 	mctx->debuglistcnt++;
 }
 
@@ -1051,13 +1052,13 @@ destroy(isc__mem_t *ctx) {
 	unsigned int i;
 	isc_ondestroy_t ondest;
 
-	ctx->common.impmagic = 0;
-	ctx->common.magic = 0;
-
 	LOCK(&lock);
 	ISC_LIST_UNLINK(contexts, ctx, link);
 	totallost += ctx->inuse;
 	UNLOCK(&lock);
+
+	ctx->common.impmagic = 0;
+	ctx->common.magic = 0;
 
 	INSIST(ISC_LIST_EMPTY(ctx->pools));
 
