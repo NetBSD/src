@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_power.c,v 1.21 2010/07/01 09:28:37 jruoho Exp $ */
+/* $NetBSD: acpi_power.c,v 1.22 2010/08/06 18:10:40 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_power.c,v 1.21 2010/07/01 09:28:37 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_power.c,v 1.22 2010/08/06 18:10:40 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -115,7 +115,7 @@ static ACPI_STATUS	 acpi_power_res_deref(struct acpi_power_res *,
 static ACPI_STATUS	 acpi_power_res_sta(ACPI_OBJECT *, void *);
 
 static ACPI_OBJECT	*acpi_power_pkg_get(ACPI_HANDLE, int);
-static int		 acpi_power_sysctl(SYSCTLFN_ARGS);
+static int		 acpi_power_sysctl(SYSCTLFN_PROTO);
 static const char	*acpi_xname(ACPI_HANDLE);
 
 static struct acpi_power_res *
