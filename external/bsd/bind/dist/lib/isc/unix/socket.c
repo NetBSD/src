@@ -1,7 +1,7 @@
-/*	$NetBSD: socket.c,v 1.3 2009/12/26 23:08:23 christos Exp $	*/
+/*	$NetBSD: socket.c,v 1.4 2010/08/06 10:58:12 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: socket.c,v 1.326 2009/11/13 00:41:58 each Exp */
+/* Id: socket.c,v 1.326.20.4 2010/03/12 03:25:20 marka Exp */
 
 /*! \file */
 
@@ -808,6 +808,7 @@ watch_fd(isc__socketmgr_t *manager, int fd, int msg) {
 		event.events = EPOLLIN;
 	else
 		event.events = EPOLLOUT;
+	memset(&event.data, 0, sizeof(event.data));
 	event.data.fd = fd;
 	if (epoll_ctl(manager->epoll_fd, EPOLL_CTL_ADD, fd, &event) == -1 &&
 	    errno != EEXIST) {
@@ -875,6 +876,7 @@ unwatch_fd(isc__socketmgr_t *manager, int fd, int msg) {
 		event.events = EPOLLIN;
 	else
 		event.events = EPOLLOUT;
+	memset(&event.data, 0, sizeof(event.data));
 	event.data.fd = fd;
 	if (epoll_ctl(manager->epoll_fd, EPOLL_CTL_DEL, fd, &event) == -1 &&
 	    errno != ENOENT) {
@@ -1676,12 +1678,22 @@ doio_recv(isc__socket_t *sock, isc_socketevent_t *dev) {
 	}
 
 	/*
-	 * On TCP, zero length reads indicate EOF, while on
-	 * UDP, zero length reads are perfectly valid, although
-	 * strange.
+	 * On TCP and UNIX sockets, zero length reads indicate EOF,
+	 * while on UDP sockets, zero length reads are perfectly valid,
+	 * although strange.
 	 */
-	if ((sock->type == isc_sockettype_tcp) && (cc == 0))
-		return (DOIO_EOF);
+	switch (sock->type) {
+	case isc_sockettype_tcp:
+	case isc_sockettype_unix:
+		if (cc == 0)
+			return (DOIO_EOF);
+		break;
+	case isc_sockettype_udp:
+		break;
+	case isc_sockettype_fdwatch:
+	default:
+		INSIST(0);
+	}
 
 	if (sock->type == isc_sockettype_udp) {
 		dev->address.length = msghdr.msg_namelen;
@@ -2386,6 +2398,26 @@ opensocket(isc__socketmgr_t *manager, isc__socket_t *sock) {
 			(void)setsockopt(sock->fd, IPPROTO_IPV6,
 					 IPV6_USE_MIN_MTU,
 					 (void *)&on, sizeof(on));
+		}
+#endif
+#if defined(IPV6_MTU)
+		/*
+		 * Use minimum MTU on IPv6 sockets.
+		 */
+		if (sock->pf == AF_INET6) {
+			int mtu = 1280;
+			(void)setsockopt(sock->fd, IPPROTO_IPV6, IPV6_MTU,
+					 &mtu, sizeof(mtu));
+		}
+#endif
+#if defined(IPV6_MTU_DISCOVER) && defined(IPV6_PMTUDISC_DONT)
+		/*
+		 * Turn off Path MTU discovery on IPv6/UDP sockets.
+		 */
+		if (sock->pf == AF_INET6) {
+			int action = IPV6_PMTUDISC_DONT;
+			(void)setsockopt(sock->fd, IPPROTO_IPV6, IPV6_MTU_DISCOVER,
+					 &action, sizeof(action));
 		}
 #endif
 #endif /* ISC_PLATFORM_HAVEIPV6 */

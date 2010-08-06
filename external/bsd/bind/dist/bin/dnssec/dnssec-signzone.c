@@ -1,7 +1,7 @@
-/*	$NetBSD: dnssec-signzone.c,v 1.2 2009/12/26 23:08:21 christos Exp $	*/
+/*	$NetBSD: dnssec-signzone.c,v 1.3 2010/08/06 10:58:03 christos Exp $	*/
 
 /*
- * Portions Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
+ * Portions Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
  * Portions Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -31,7 +31,7 @@
  * IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: dnssec-signzone.c,v 1.258 2009/12/04 22:06:37 tbox Exp */
+/* Id: dnssec-signzone.c,v 1.258.4.4 2010/06/03 23:49:23 tbox Exp */
 
 /*! \file */
 
@@ -1657,6 +1657,15 @@ verifyzone(void) {
 
 		result = dns_dbiterator_current(dbiter, &node, name);
 		check_dns_dbiterator_current(result);
+		if (!dns_name_issubdomain(name, gorigin)) {
+			dns_db_detachnode(gdb, &node);
+			result = dns_dbiterator_next(dbiter);
+			if (result == ISC_R_NOMORE)
+				done = ISC_TRUE;
+			else
+				check_result(result, "dns_dbiterator_next()");
+			continue;
+		}
 		if (delegation(name, node, NULL)) {
 			zonecut = dns_fixedname_name(&fzonecut);
 			dns_name_copy(name, zonecut, NULL);
@@ -1992,6 +2001,46 @@ add_ds(dns_name_t *name, dns_dbnode_t *node, isc_uint32_t nsttl) {
 	}
 }
 
+/*
+ * Remove records of the given type and their signatures.
+ */
+static void
+remove_records(dns_dbnode_t *node, dns_rdatatype_t which) {
+	isc_result_t result;
+	dns_rdatatype_t type, covers;
+	dns_rdatasetiter_t *rdsiter = NULL;
+	dns_rdataset_t rdataset;
+
+	dns_rdataset_init(&rdataset);
+
+	/*
+	 * Delete any records of the given type at the apex.
+	 */
+	result = dns_db_allrdatasets(gdb, node, gversion, 0, &rdsiter);
+	check_result(result, "dns_db_allrdatasets()");
+	for (result = dns_rdatasetiter_first(rdsiter);
+	     result == ISC_R_SUCCESS;
+	     result = dns_rdatasetiter_next(rdsiter)) {
+		dns_rdatasetiter_current(rdsiter, &rdataset);
+		type = rdataset.type;
+		covers = rdataset.covers;
+		dns_rdataset_disassociate(&rdataset);
+		if (type == which || covers == which) {
+			if (which == dns_rdatatype_nsec && !update_chain)
+				fatal("Zone contains NSEC records.  Use -u "
+				      "to update to NSEC3.");
+			if (which == dns_rdatatype_nsec3param && !update_chain)
+				fatal("Zone contains NSEC3 chains.  Use -u "
+				      "to update to NSEC.");
+			result = dns_db_deleterdataset(gdb, node, gversion,
+						       type, covers);
+			check_result(result, "dns_db_deleterdataset()");
+			continue;
+		}
+	}
+	dns_rdatasetiter_destroy(&rdsiter);
+}
+
 /*%
  * Generate NSEC records for the zone and remove NSEC3/NSEC3PARAM records.
  */
@@ -2051,36 +2100,25 @@ nsecify(void) {
 	result = dns_dbiterator_first(dbiter);
 	check_result(result, "dns_dbiterator_first()");
 
-	result = dns_dbiterator_current(dbiter, &node, name);
-	check_dns_dbiterator_current(result);
-
-	/*
-	 * Delete any NSEC3PARAM records at the apex.
-	 */
-	result = dns_db_allrdatasets(gdb, node, gversion, 0, &rdsiter);
-	check_result(result, "dns_db_allrdatasets()");
-	for (result = dns_rdatasetiter_first(rdsiter);
-	     result == ISC_R_SUCCESS;
-	     result = dns_rdatasetiter_next(rdsiter)) {
-		dns_rdatasetiter_current(rdsiter, &rdataset);
-		type = rdataset.type;
-		covers = rdataset.covers;
-		dns_rdataset_disassociate(&rdataset);
-		if (type == dns_rdatatype_nsec3param ||
-		    covers == dns_rdatatype_nsec3param) {
-			result = dns_db_deleterdataset(gdb, node, gversion,
-						       type, covers);
-			check_result(result,
-				     "dns_db_deleterdataset(nsec3param/rrsig)");
-			continue;
-		}
-	}
-	dns_rdatasetiter_destroy(&rdsiter);
-	dns_db_detachnode(gdb, &node);
-
 	while (!done) {
 		result = dns_dbiterator_current(dbiter, &node, name);
 		check_dns_dbiterator_current(result);
+		/*
+		 * Skip out-of-zone records.
+		 */
+		if (!dns_name_issubdomain(name, gorigin)) {
+			result = dns_dbiterator_next(dbiter);
+			if (result == ISC_R_NOMORE)
+				done = ISC_TRUE;
+			else
+				check_result(result, "dns_dbiterator_next()");
+			dns_db_detachnode(gdb, &node);
+			continue;
+		}
+
+		if (dns_name_equal(name, gorigin))
+			remove_records(node, dns_rdatatype_nsec3param);
+
 		if (delegation(name, node, &nsttl)) {
 			zonecut = dns_fixedname_name(&fzonecut);
 			dns_name_copy(name, zonecut, NULL);
@@ -2453,8 +2491,6 @@ nsec3ify(unsigned int hashalg, unsigned int iterations,
 	dns_fixedname_t fname, fnextname, fzonecut;
 	dns_name_t *name, *nextname, *zonecut;
 	dns_rdataset_t rdataset;
-	dns_rdatasetiter_t *rdsiter = NULL;
-	dns_rdatatype_t type, covers;
 	int order;
 	isc_boolean_t active;
 	isc_boolean_t done = ISC_FALSE;
@@ -2479,40 +2515,25 @@ nsec3ify(unsigned int hashalg, unsigned int iterations,
 	result = dns_dbiterator_first(dbiter);
 	check_result(result, "dns_dbiterator_first()");
 
-	result = dns_dbiterator_current(dbiter, &node, name);
-	check_dns_dbiterator_current(result);
-
-	/*
-	 * Delete any NSEC records at the apex.
-	 */
-	result = dns_db_allrdatasets(gdb, node, gversion, 0, &rdsiter);
-	check_result(result, "dns_db_allrdatasets()");
-	for (result = dns_rdatasetiter_first(rdsiter);
-	     result == ISC_R_SUCCESS;
-	     result = dns_rdatasetiter_next(rdsiter)) {
-		dns_rdatasetiter_current(rdsiter, &rdataset);
-		type = rdataset.type;
-		covers = rdataset.covers;
-		dns_rdataset_disassociate(&rdataset);
-		if (type == dns_rdatatype_nsec ||
-		    covers == dns_rdatatype_nsec) {
-			if (!update_chain)
-				fatal("Zone contains NSEC records.  Use -u "
-				      "to update to NSEC3.");
-
-			result = dns_db_deleterdataset(gdb, node, gversion,
-						       type, covers);
-			check_result(result,
-				     "dns_db_deleterdataset(nsec3param/rrsig)");
-			continue;
-		}
-	}
-	dns_rdatasetiter_destroy(&rdsiter);
-	dns_db_detachnode(gdb, &node);
-
 	while (!done) {
 		result = dns_dbiterator_current(dbiter, &node, name);
 		check_dns_dbiterator_current(result);
+		/*
+		 * Skip out-of-zone records.
+		 */
+		if (!dns_name_issubdomain(name, gorigin)) {
+			result = dns_dbiterator_next(dbiter);
+			if (result == ISC_R_NOMORE)
+				done = ISC_TRUE;
+			else
+				check_result(result, "dns_dbiterator_next()");
+			dns_db_detachnode(gdb, &node);
+			continue;
+		}
+
+		if (dns_name_equal(name, gorigin))
+			remove_records(node, dns_rdatatype_nsec);
+
 		result = dns_dbiterator_next(dbiter);
 		nextnode = NULL;
 		while (result == ISC_R_SUCCESS) {
@@ -2629,6 +2650,18 @@ nsec3ify(unsigned int hashalg, unsigned int iterations,
 	while (!done) {
 		result = dns_dbiterator_current(dbiter, &node, name);
 		check_dns_dbiterator_current(result);
+		/*
+		 * Skip out-of-zone records.
+		 */
+		if (!dns_name_issubdomain(name, gorigin)) {
+			result = dns_dbiterator_next(dbiter);
+			if (result == ISC_R_NOMORE)
+				done = ISC_TRUE;
+			else
+				check_result(result, "dns_dbiterator_next()");
+			dns_db_detachnode(gdb, &node);
+			continue;
+		}
 		result = dns_dbiterator_next(dbiter);
 		nextnode = NULL;
 		while (result == ISC_R_SUCCESS) {
@@ -3258,7 +3291,7 @@ usage(void) {
 	fprintf(stderr, "use pseudorandom data (faster but less secure)\n");
 	fprintf(stderr, "\t-P:\t");
 	fprintf(stderr, "disable post-sign verification\n");
-	fprintf(stderr, "\t-T TTL:\tTTL for newly added DNSKEYs");
+	fprintf(stderr, "\t-T TTL:\tTTL for newly added DNSKEYs\n");
 	fprintf(stderr, "\t-t:\t");
 	fprintf(stderr, "print statistics\n");
 	fprintf(stderr, "\t-u:\t");
