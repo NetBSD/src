@@ -2,7 +2,7 @@
                "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd"
 	       [<!ENTITY mdash "&#8212;">]>
 <!--
- - Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
  -
  - Permission to use, copy, modify, and/or distribute this software for any
  - purpose with or without fee is hereby granted, provided that the above
@@ -17,7 +17,7 @@
  - PERFORMANCE OF THIS SOFTWARE.
 -->
 
-<!-- Id: named.conf.docbook,v 1.44 2009/12/03 23:18:16 each Exp -->
+<!-- Id: named.conf.docbook,v 1.44.4.2 2010/05/14 23:49:18 tbox Exp -->
 <refentry>
   <refentryinfo>
     <date>Aug 13, 2004</date>
@@ -42,6 +42,7 @@
       <year>2007</year>
       <year>2008</year>
       <year>2009</year>
+      <year>2010</year>
       <holder>Internet Systems Consortium, Inc. ("ISC")</holder>
     </copyright>
   </docinfo>
@@ -349,6 +350,7 @@ options {
 
 	zone-statistics <replaceable>boolean</replaceable>;
 	key-directory <replaceable>quoted_string</replaceable>;
+	managed-keys-directory <replaceable>quoted_string</replaceable>;
 	auto-dnssec <constant>allow</constant>|<constant>maintain</constant>|<constant>create</constant>|<constant>off</constant>;
 	try-tcp-refresh <replaceable>boolean</replaceable>;
 	zero-no-soa-ttl <replaceable>boolean</replaceable>;

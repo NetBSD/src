@@ -1,7 +1,7 @@
-/*	$NetBSD: dnssec-keygen.c,v 1.3 2009/12/26 23:08:21 christos Exp $	*/
+/*	$NetBSD: dnssec-keygen.c,v 1.4 2010/08/06 10:58:03 christos Exp $	*/
 
 /*
- * Portions Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
+ * Portions Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
  * Portions Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -31,7 +31,7 @@
  * IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: dnssec-keygen.c,v 1.108 2009/11/25 22:58:48 marka Exp */
+/* Id: dnssec-keygen.c,v 1.108.8.4 2010/01/19 23:48:12 tbox Exp */
 
 /*! \file */
 
@@ -49,6 +49,7 @@
 #include <isc/string.h>
 #include <isc/util.h>
 
+#include <dns/dnssec.h>
 #include <dns/fixedname.h>
 #include <dns/keyvalues.h>
 #include <dns/log.h>
@@ -68,11 +69,6 @@ int verbose;
 
 #define DEFAULT_ALGORITHM "RSASHA1"
 #define DEFAULT_NSEC3_ALGORITHM "NSEC3RSASHA1"
-
-static isc_boolean_t
-dsa_size_ok(int size) {
-	return (ISC_TF(size >= 512 && size <= 1024 && size % 64 == 0));
-}
 
 ISC_PLATFORM_NORETURN_PRE static void
 usage(void) ISC_PLATFORM_NORETURN_POST;
@@ -144,14 +140,16 @@ usage(void) {
 	fprintf(stderr, "    -m <memory debugging mode>:\n");
 	fprintf(stderr, "	usage | trace | record | size | mctx\n");
 	fprintf(stderr, "    -v <level>: set verbosity level (0 - 10)\n");
-	fprintf(stderr, "Date options:\n");
-	fprintf(stderr, "    -P date/[+-]offset: set key publication date "
+	fprintf(stderr, "Timing options:\n");
+	fprintf(stderr, "    -P date/[+-]offset/none: set key publication date "
 						"(default: now)\n");
-	fprintf(stderr, "    -A date/[+-]offset: set key activation date "
+	fprintf(stderr, "    -A date/[+-]offset/none: set key activation date "
 						"(default: now)\n");
-	fprintf(stderr, "    -R date/[+-]offset: set key revocation date\n");
-	fprintf(stderr, "    -I date/[+-]offset: set key inactivation date\n");
-	fprintf(stderr, "    -D date/[+-]offset: set key deletion date\n");
+	fprintf(stderr, "    -R date/[+-]offset/none: set key "
+						     "revocation date\n");
+	fprintf(stderr, "    -I date/[+-]offset/none: set key "
+						     "inactivation date\n");
+	fprintf(stderr, "    -D date/[+-]offset/none: set key deletion date\n");
 	fprintf(stderr, "    -G: generate key only; do not set -P or -A\n");
 	fprintf(stderr, "    -C: generate a backward-compatible key, omitting "
 			"all dates\n");
@@ -160,6 +158,11 @@ usage(void) {
 			"K<name>+<alg>+<id>.private\n");
 
 	exit (-1);
+}
+
+static isc_boolean_t
+dsa_size_ok(int size) {
+	return (ISC_TF(size >= 512 && size <= 1024 && size % 64 == 0));
 }
 
 static void
@@ -192,7 +195,7 @@ main(int argc, char **argv) {
 	char	        *algname = NULL, *nametype = NULL, *type = NULL;
 	char		*classname = NULL;
 	char		*endp;
-	dst_key_t	*key = NULL, *oldkey;
+	dst_key_t	*key = NULL;
 	dns_fixedname_t	fname;
 	dns_name_t	*name;
 	isc_uint16_t	flags = 0, kskflag = 0, revflag = 0;
@@ -730,7 +733,6 @@ main(int argc, char **argv) {
 
 	do {
 		conflict = ISC_FALSE;
-		oldkey = NULL;
 
 		if (!quiet && show_progress) {
 			fprintf(stderr, "Generating key pair.");
@@ -818,37 +820,35 @@ main(int argc, char **argv) {
 		}
 
 		/*
-		 * Try to read a key with the same name, alg and id from disk.
-		 * If there is one we must continue generating a different
-		 * key unless we were asked to generate a null key, in which
-		 * case we return failure.
+		 * Do not overwrite an existing key, or create a key
+		 * if there is a risk of ID collision due to this key
+		 * or another key being revoked.
 		 */
-		ret = dst_key_fromfile(name, dst_key_id(key), alg,
-				       DST_TYPE_PRIVATE, directory,
-				       mctx, &oldkey);
-		/* do not overwrite an existing key  */
-		if (ret == ISC_R_SUCCESS) {
-			dst_key_free(&oldkey);
+		if (key_collision(dst_key_id(key), name, directory,
+				  alg, mctx, NULL)) {
 			conflict = ISC_TRUE;
-			if (null_key)
+			if (null_key) {
+				dst_key_free(&key);
 				break;
-		}
-		if (conflict == ISC_TRUE) {
+			}
+
 			if (verbose > 0) {
 				isc_buffer_clear(&buf);
 				dst_key_buildfilename(key, 0, directory, &buf);
 				fprintf(stderr,
-					"%s: %s already exists, "
-					"generating a new key\n",
+					"%s: %s already exists, or might "
+					"collide with another key upon "
+					"revokation.  Generating a new key\n",
 					program, filename);
 			}
+
 			dst_key_free(&key);
 		}
 	} while (conflict == ISC_TRUE);
 
 	if (conflict)
-		fatal("cannot generate a null key when a key with id 0 "
-		      "already exists");
+		fatal("cannot generate a null key due to possible key ID "
+		      "collision");
 
 	ret = dst_key_tofile(key, options, directory);
 	if (ret != ISC_R_SUCCESS) {
