@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.208 2010/07/25 12:54:46 pgoyette Exp $	*/
+/*	$NetBSD: acpi.c,v 1.209 2010/08/06 18:10:40 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.208 2010/07/25 12:54:46 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.209 2010/08/06 18:10:40 jruoho Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -189,9 +189,9 @@ static void		acpi_fixed_button_pressed(void *);
 
 static void		acpi_sleep_init(struct acpi_softc *);
 
-static int		sysctl_hw_acpi_fixedstats(SYSCTLFN_ARGS);
-static int		sysctl_hw_acpi_sleepstate(SYSCTLFN_ARGS);
-static int		sysctl_hw_acpi_sleepstates(SYSCTLFN_ARGS);
+static int		sysctl_hw_acpi_fixedstats(SYSCTLFN_PROTO);
+static int		sysctl_hw_acpi_sleepstate(SYSCTLFN_PROTO);
+static int		sysctl_hw_acpi_sleepstates(SYSCTLFN_PROTO);
 
 static bool		  acpi_is_scope(struct acpi_devnode *);
 static ACPI_TABLE_HEADER *acpi_map_rsdt(void);
