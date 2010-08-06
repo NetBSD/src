@@ -1,4 +1,4 @@
-.\" $NetBSD: pthread_testcancel.3,v 1.5 2010/07/09 08:51:28 jruoho Exp $
+.\" $NetBSD: pthread_testcancel.3,v 1.6 2010/08/06 05:25:46 christos Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -23,7 +23,7 @@
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\" $FreeBSD: src/lib/libpthread/man/pthread_testcancel.3,v 1.9 2002/09/16 19:29:29 mini Exp $
-.Dd July 9, 2010
+.Dd Auguest 6, 2010
 .Dt PTHREAD_TESTCANCEL 3
 .Os
 .Sh NAME
@@ -124,21 +124,23 @@ type will be in effect.
 Cancellation points will occur when a thread is executing the following
 functions:
 .Fn accept ,
-.\".Fn aio_suspend ,
-.\".Fn clock_nanosleep ,
+.Fn aio_suspend ,
+.Fn clock_nanosleep ,
 .Fn close ,
 .Fn connect ,
 .Fn creat ,
 .Fn fcntl ,
+.Fn fdatasync ,
 .Fn fsync ,
 .Fn fsync_range ,
 .\".Fn getmsg ,
 .\".Fn getpmsg ,
+.Fn kevent ,
 .\".Fn lockf ,
-.\".Fn mq_receive ,
-.\".Fn mq_send ,
-.\".Fn mq_timedreceive ,
-.\".Fn mq_timedsend ,
+.Fn mq_receive ,
+.Fn mq_send ,
+.Fn mq_timedreceive ,
+.Fn mq_timedsend ,
 .Fn msgrcv ,
 .Fn msgsnd ,
 .Fn msync ,
@@ -146,6 +148,7 @@ functions:
 .Fn open ,
 .Fn pause ,
 .Fn poll ,
+.Fn pollts ,
 .Fn pread ,
 .Fn pselect ,
 .Fn pthread_cond_timedwait ,
@@ -176,6 +179,7 @@ functions:
 .Fn tcdrain ,
 .Fn usleep ,
 .Fn wait ,
+.Fn wait4 ,
 .Fn waitid ,
 .Fn waitpid ,
 .Fn write ,
