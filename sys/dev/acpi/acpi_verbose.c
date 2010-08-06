@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_verbose.c,v 1.4 2010/07/25 12:54:46 pgoyette Exp $ */
+/*	$NetBSD: acpi_verbose.c,v 1.5 2010/08/06 22:45:00 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_verbose.c,v 1.4 2010/07/25 12:54:46 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_verbose.c,v 1.5 2010/08/06 22:45:00 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -81,9 +81,9 @@ void	acpi_print_devnodes_real(struct acpi_softc *);
 void	acpi_print_tree_real(struct acpi_devnode *, uint32_t);
 void	acpi_print_dev_real(const char *);
 
-MODULE(MODULE_CLASS_MISC, acpiverbose, NULL);
+extern int acpi_verbose_loaded;
 
-__weak_alias(acpi_wmidump_real, acpi_null);
+MODULE(MODULE_CLASS_MISC, acpiverbose, NULL);
 
 static int
 acpiverbose_modcmd(modcmd_t cmd, void *arg)
@@ -91,25 +91,21 @@ acpiverbose_modcmd(modcmd_t cmd, void *arg)
 	static void	(*saved_print_devnodes)(struct acpi_softc *);
 	static void	(*saved_print_tree)(struct acpi_devnode *, uint32_t);
 	static void	(*saved_print_dev)(const char *);
-	static void	(*saved_wmidump)(void *);
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:
 		saved_print_devnodes = acpi_print_devnodes;
 		saved_print_tree = acpi_print_tree;
 		saved_print_dev = acpi_print_dev;
-		saved_wmidump = acpi_wmidump;
 		acpi_print_devnodes = acpi_print_devnodes_real;
 		acpi_print_tree = acpi_print_tree_real;
 		acpi_print_dev = acpi_print_dev_real;
-		acpi_wmidump = acpi_wmidump_real;
 		acpi_verbose_loaded = 1;
 		return 0;
 	case MODULE_CMD_FINI:
 		acpi_print_devnodes = saved_print_devnodes;
 		acpi_print_tree = saved_print_tree;
 		acpi_print_dev = saved_print_dev;
-		acpi_wmidump = saved_wmidump;
 		acpi_verbose_loaded = 0;
 		return 0;
 	default:
