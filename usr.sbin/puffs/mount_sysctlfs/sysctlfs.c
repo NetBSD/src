@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctlfs.c,v 1.15 2010/08/06 15:04:13 pooka Exp $	*/
+/*	$NetBSD: sysctlfs.c,v 1.16 2010/08/06 15:26:16 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: sysctlfs.c,v 1.15 2010/08/06 15:04:13 pooka Exp $");
+__RCSID("$NetBSD: sysctlfs.c,v 1.16 2010/08/06 15:26:16 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -400,6 +400,20 @@ getnodedata(struct sfsnode *sfs, struct puffs_pathobj *po,
 
 	memset(buf, 0, *bufsize);
 	switch (SYSCTL_TYPE(sfs->sysctl_flags)) {
+	case CTLTYPE_BOOL: {
+		bool b;
+		sz = sizeof(bool);
+		assert(sz <= *bufsize);
+		if (sysctl(po->po_path, po->po_len, &b, &sz, NULL, 0) == -1) {
+			error = errno;
+			break;
+		}
+		if (rflag)
+			memcpy(buf, &b, sz);
+		else
+			snprintf(buf, *bufsize, "%s", b ? "true" : "false");
+		break;
+	}
 	case CTLTYPE_INT: {
 		int i;
 		sz = sizeof(int);
@@ -458,7 +472,8 @@ getnodedata(struct sfsnode *sfs, struct puffs_pathobj *po,
 		break;
 	}
 	default:
-		snprintf(buf, *bufsize, "invalid sysctl CTLTYPE");
+		snprintf(buf, *bufsize, "invalid sysctl CTLTYPE %d",
+		    SYSCTL_TYPE(sfs->sysctl_flags));
 		break;
 	}
 
@@ -722,6 +737,7 @@ sysctlfs_node_write(struct puffs_usermount *pu, void *opc, uint8_t *buf,
 	struct sfsnode *sfs = pn->pn_data;
 	long long ll;
 	int i, rv;
+	bool b;
 
 	/*
 	 * I picked the wrong day to ... um, the wrong place to return errors
@@ -744,6 +760,16 @@ sysctlfs_node_write(struct puffs_usermount *pu, void *opc, uint8_t *buf,
 		return EINVAL;
 
 	switch (SYSCTL_TYPE(sfs->sysctl_flags)) {
+	case CTLTYPE_BOOL:
+		if (strcasestr((const char *)buf, "true"))
+			b = true;
+		else if (strcasestr((const char *)buf, "false"))
+			b = false;
+		else
+			return EINVAL;
+		rv = sysctl(PNPATH(pn), PNPLEN(pn), NULL, NULL,
+		    &b, sizeof(b));
+		break;
 	case CTLTYPE_INT:
 		if (sscanf((const char *)buf, "%d", &i) != 1)
 			return EINVAL;
