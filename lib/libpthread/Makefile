@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.69 2010/07/09 08:22:04 jruoho Exp $
+#	$NetBSD: Makefile,v 1.70 2010/08/06 05:35:42 christos Exp $
 #
 
 WARNS=	4
@@ -112,6 +112,7 @@ MAN+=	affinity.3 pthread.3 \
 	pthread_sigmask.3 pthread_spin.3 \
 	pthread_suspend_np.3 pthread_testcancel.3
 
+MLINKS+=	pthread_attr_get_np.3 pthread_getattr_np.3
 MLINKS+=	affinity.3 pthread_setaffinity_np.3
 MLINKS+=	affinity.3 pthread_getaffinity_np.3
 

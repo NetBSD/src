@@ -1,4 +1,4 @@
-.\" $NetBSD: pthread_attr_get_np.3,v 1.3 2010/07/07 09:54:07 wiz Exp $
+.\" $NetBSD: pthread_attr_get_np.3,v 1.4 2010/08/06 05:35:42 christos Exp $
 .\"
 .\" Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd July 6, 2010
+.Dd August 6, 2010
 .Dt PTHREAD_ATTR_GET_NP 3
 .Os
 .Sh NAME
@@ -37,15 +37,30 @@
 .In pthread.h
 .Ft int
 .Fn pthread_attr_get_np "pthread_t thread" "pthread_attr_t *attr"
+.Ft int
+.Fn pthread_getattr_np "pthread_t thread" "pthread_attr_t *attr"
 .Sh DESCRIPTION
 The
 .Fn pthread_attr_get_np
-function can be used to retrieve attributes of a running
+and
+.Fn pthread_getattr_np
+functions can be used to retrieve attributes of a running
 .Fa thread .
 The result is stored to
-.Fa attr ,
-which should be initialized prior to the call by using
+.Fa attr .
+.Pp
+For
+.Fn pthread_attr_get_np
+.Fa attr
+should be initialized prior to the call by using
 .Xr pthread_attr_init 3 .
+.Fn pthread_getattr_np
+does this automatically.
+.Pp
+For both functions
+.Fa attr
+should be freed when it is not in use anymore with
+.Xr pthread_attr_destroy 3 .
 .Pp
 Most fields of
 .Fa attr
@@ -78,16 +93,22 @@ is no longer needed, it should be destroyed by using
 .Sh RETURN VALUES
 Upon successful completion,
 .Fn pthread_attr_get_np
-returns 0.
+and
+.Fn pthread_getattr_np
+return 0.
 Otherwise an error number is returned to indicate the error.
 .Sh COMPATIBILITY
 The
 .Fn pthread_attr_get_np
-function is a non-standard extension.
+and
+.Fn pthread_getattr_np
+functions are non-standard extensions.
 .Sh ERRORS
 The
 .Fn pthread_attr_get_np
-function will fail if:
+and
+.Fn pthread_getattr_np
+functions will fail if:
 .Bl -tag -width Er
 .It Bq Er ENOMEM
 Insufficient memory.
