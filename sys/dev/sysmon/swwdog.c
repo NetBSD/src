@@ -1,4 +1,4 @@
-/*	$NetBSD: swwdog.c,v 1.10 2010/07/22 14:10:15 pgoyette Exp $	*/
+/*	$NetBSD: swwdog.c,v 1.11 2010/08/06 16:02:56 pooka Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Steven M. Bellovin
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: swwdog.c,v 1.10 2010/07/22 14:10:15 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: swwdog.c,v 1.11 2010/08/06 16:02:56 pooka Exp $");
 
 /*
  *
@@ -81,6 +81,9 @@ bool swwdog_reboot = false;		/* set for panic instead of reboot */
 
 CFATTACH_DECL_NEW(swwdog, sizeof(struct swwdog_softc),
 	swwdog_match, swwdog_attach, swwdog_detach, NULL);
+
+static void swwdog_sysctl_setup(void);
+static struct sysctllog *swwdog_sysctllog;
 
 void
 swwdogattach(int n __unused)
@@ -134,6 +137,8 @@ swwdog_attach(device_t parent, device_t self, void *aux)
 
 	if (!pmf_device_register(self, swwdog_suspend, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
+
+	swwdog_sysctl_setup();
 }
 
 static int
@@ -143,6 +148,7 @@ swwdog_detach(device_t self, int flags)
 
 	swwdog_disarm(sc);
 	callout_destroy(&sc->sc_c);
+	sysctl_teardown(&swwdog_sysctllog);
 
 	return 1;
 }
@@ -207,8 +213,8 @@ swwdog_panic(void *vsc)
 	struct swwdog_softc *sc = vsc;
 	bool do_panic;
 
-	do_panic = swwdog_reboot;
-	swwdog_reboot = 1;
+	do_panic = !swwdog_reboot;
+	swwdog_reboot = false;
 	callout_schedule(&sc->sc_c, 60 * hz);	/* deliberate double-panic */
 
 	printf("%s: %d second timer expired\n", device_xname(sc->sc_dev),
@@ -220,25 +226,19 @@ swwdog_panic(void *vsc)
 		cpu_reboot(0, NULL);
 }
 
-SYSCTL_SETUP(sysctl_swwdog, "swwdog subtree setup")
+static void
+swwdog_sysctl_setup(void)
 {
-	int err;
 	const struct sysctlnode *me;
 
-	err = sysctl_createv(NULL, 0, NULL, NULL, CTLFLAG_PERMANENT,
-	    CTLTYPE_NODE, "machdep", NULL,
+	KASSERT(swwdog_sysctllog == NULL);
+
+	sysctl_createv(&swwdog_sysctllog, 0, NULL, &me, CTLFLAG_READWRITE,
+	    CTLTYPE_NODE, "swwdog", NULL,
 	    NULL, 0, NULL, 0,
-	    CTL_HW, CTL_EOL);
-
-	if (err == 0)
-		err = sysctl_createv(NULL, 0, NULL, &me, CTLFLAG_READWRITE,
-		    CTLTYPE_NODE, "swwdog", NULL,
-		    NULL, 0, NULL, 0,
-		    CTL_HW, CTL_CREATE, CTL_EOL);
-
-	if (err == 0)
-		err = sysctl_createv(NULL, 0, NULL, NULL, CTLFLAG_READWRITE,
-		    CTLTYPE_BOOL, "reboot", "reboot if timer expires",
-		    NULL, 0, &swwdog_reboot, sizeof(bool),
-		    CTL_HW, me->sysctl_num, CTL_CREATE, CTL_EOL);
+	    CTL_HW, CTL_CREATE, CTL_EOL);
+	sysctl_createv(&swwdog_sysctllog, 0, NULL, NULL, CTLFLAG_READWRITE,
+	    CTLTYPE_BOOL, "reboot", "reboot if timer expires",
+	    NULL, 0, &swwdog_reboot, sizeof(bool),
+	    CTL_HW, me->sysctl_num, CTL_CREATE, CTL_EOL);
 }
