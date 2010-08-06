@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: platform.h.in,v 1.53 2009/09/29 15:06:07 fdupont Exp */
+/* Id: platform.h.in,v 1.53.66.2 2010/06/03 23:49:23 tbox Exp */
 
 #ifndef ISC_PLATFORM_H
 #define ISC_PLATFORM_H 1
@@ -221,6 +221,12 @@
 
 
 /*
+ * Defined to <krb5.h> or <krb5/krb5.h> for how to include
+ * the KRB5 header.
+ */
+
+
+/*
  * Type used for resource limits.
  */
 #define ISC_PLATFORM_RLIMITTYPE rlim_t
@@ -250,7 +256,9 @@
  * If the "xadd" operation is available on this architecture,
  * ISC_PLATFORM_HAVEXADD will be defined.
  */
+#ifdef __HAVE_ATOMIC64_OPS
 #define ISC_PLATFORM_HAVEXADD 1
+#endif
 
 /*
  * If the "xaddq" operation (64bit xadd) is available on this architecture,

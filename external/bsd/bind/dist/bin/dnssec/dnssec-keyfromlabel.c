@@ -1,7 +1,7 @@
-/*	$NetBSD: dnssec-keyfromlabel.c,v 1.3 2009/12/26 23:08:21 christos Exp $	*/
+/*	$NetBSD: dnssec-keyfromlabel.c,v 1.4 2010/08/06 10:58:03 christos Exp $	*/
 
 /*
- * Copyright (C) 2007-2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2007-2010  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: dnssec-keyfromlabel.c,v 1.29 2009/11/25 23:00:32 marka Exp */
+/* Id: dnssec-keyfromlabel.c,v 1.29.8.2 2010/01/19 23:48:12 tbox Exp */
 
 /*! \file */
 
@@ -34,6 +34,7 @@
 #include <isc/string.h>
 #include <isc/util.h>
 
+#include <dns/dnssec.h>
 #include <dns/fixedname.h>
 #include <dns/keyvalues.h>
 #include <dns/log.h>
@@ -84,13 +85,14 @@ usage(void) {
 	fprintf(stderr, "    -f keyflag: KSK | REVOKE\n");
 	fprintf(stderr, "    -K directory: directory in which to place "
 			"key files\n");
-	fprintf(stderr, "    -k : generate a TYPE=KEY key\n");
+	fprintf(stderr, "    -k: generate a TYPE=KEY key\n");
 	fprintf(stderr, "    -n nametype: ZONE | HOST | ENTITY | USER | OTHER\n");
 	fprintf(stderr, "        (DNSKEY generation defaults to ZONE\n");
 	fprintf(stderr, "    -p protocol: default: 3 [dnssec]\n");
 	fprintf(stderr, "    -t type: "
 		"AUTHCONF | NOAUTHCONF | NOAUTH | NOCONF "
 		"(default: AUTHCONF)\n");
+	fprintf(stderr, "    -y: permit keys that might collide\n");
 	fprintf(stderr, "    -v verbose level\n");
 	fprintf(stderr, "Date options:\n");
 	fprintf(stderr, "    -P date/[+-]offset: set key publication date\n");
@@ -119,7 +121,7 @@ main(int argc, char **argv) {
 #endif
 	char		*classname = NULL;
 	char		*endp;
-	dst_key_t	*key = NULL, *oldkey = NULL;
+	dst_key_t	*key = NULL;
 	dns_fixedname_t	fname;
 	dns_name_t	*name;
 	isc_uint16_t	flags = 0, kskflag = 0, revflag = 0;
@@ -148,6 +150,8 @@ main(int argc, char **argv) {
 	isc_boolean_t	unsetdel = ISC_FALSE;
 	isc_boolean_t	genonly = ISC_FALSE;
 	isc_boolean_t	use_nsec3 = ISC_FALSE;
+	isc_boolean_t   avoid_collisions = ISC_TRUE;
+	isc_boolean_t	exact;
 	unsigned char	c;
 
 	if (argc == 1)
@@ -162,7 +166,7 @@ main(int argc, char **argv) {
 	isc_stdtime_get(&now);
 
 	while ((ch = isc_commandline_parse(argc, argv,
-				"3a:Cc:E:f:K:kl:n:p:t:v:FhGP:A:R:I:D:")) != -1)
+				"3a:Cc:E:f:K:kl:n:p:t:v:yFhGP:A:R:I:D:")) != -1)
 	{
 	    switch (ch) {
 		case '3':
@@ -219,6 +223,9 @@ main(int argc, char **argv) {
 			verbose = strtol(isc_commandline_argument, &endp, 0);
 			if (*endp != '\0')
 				fatal("-v must be followed by a number");
+			break;
+		case 'y':
+			avoid_collisions = ISC_FALSE;
 			break;
 		case 'G':
 			genonly = ISC_TRUE;
@@ -504,16 +511,26 @@ main(int argc, char **argv) {
 	}
 
 	/*
-	 * Try to read a key with the same name, alg and id from disk.
-	 * If there is one we must return failure.
+	 * Do not overwrite an existing key.  Warn LOUDLY if there
+	 * is a risk of ID collision due to this key or another key
+	 * being revoked.
 	 */
-	ret = dst_key_fromfile(name, dst_key_id(key), alg,
-			       DST_TYPE_PRIVATE, directory, mctx, &oldkey);
-	/* do not overwrite an existing key  */
-	if (ret == ISC_R_SUCCESS) {
+	if (key_collision(dst_key_id(key), name, directory, alg, mctx, &exact))
+	{
 		isc_buffer_clear(&buf);
 		ret = dst_key_buildfilename(key, 0, directory, &buf);
-		fatal("%s: %s already exists\n", program, filename);
+		if (exact)
+			fatal("%s: %s already exists\n", program, filename);
+
+		if (avoid_collisions)
+			fatal("%s: %s could collide with another key upon "
+			      "revokation\n", program, filename);
+
+		fprintf(stderr, "%s: WARNING: Key %s could collide with "
+				"another key upon revokation.  If you plan "
+				"to revoke keys, destroy this key and "
+				"generate a different one.\n",
+				program, filename);
 	}
 
 	ret = dst_key_tofile(key, options, directory);
