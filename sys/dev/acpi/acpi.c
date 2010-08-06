@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.209 2010/08/06 18:10:40 jruoho Exp $	*/
+/*	$NetBSD: acpi.c,v 1.210 2010/08/06 22:45:00 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.209 2010/08/06 18:10:40 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.210 2010/08/06 22:45:00 jruoho Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -199,30 +199,22 @@ static void		  acpi_unmap_rsdt(ACPI_TABLE_HEADER *);
 
 extern struct cfdriver acpi_cd;
 
-/* Handle routine vectors and loading for acpiverbose module */
-void acpi_null(void);
+/*
+ * Handle routine vectors and loading for acpiverbose module.
+ */
+int acpi_verbose_loaded = 0;
 
 void acpi_print_devnodes_stub(struct acpi_softc *);
 void acpi_print_tree_stub(struct acpi_devnode *, uint32_t);
 void acpi_print_dev_stub(const char *);
-void acpi_wmidump_stub(void *);
 
 void (*acpi_print_devnodes)(struct acpi_softc *) = acpi_print_devnodes_stub;
-void (*acpi_print_tree)(struct acpi_devnode *, uint32_t) = acpi_print_tree_stub;
+void (*acpi_print_tree)(struct acpi_devnode *,uint32_t) = acpi_print_tree_stub;
 void (*acpi_print_dev)(const char *) = acpi_print_dev_stub;
-void (*acpi_wmidump)(void *) = acpi_wmidump_stub;
-
-int acpi_verbose_loaded = 0;
 
 /*
  * Support for ACPIVERBOSE.
  */
-void
-acpi_null(void)
-{
-	/* Nothing to do. */
-}
-
 void
 acpi_load_verbose(void)
 {
@@ -255,14 +247,6 @@ acpi_print_dev_stub(const char *pnpstr)
 	acpi_load_verbose();
 	if (acpi_verbose_loaded)
 		acpi_print_dev(pnpstr);
-}
-
-void
-acpi_wmidump_stub(void *arg)
-{
-	acpi_load_verbose();
-	if (acpi_verbose_loaded)
-		acpi_wmidump(arg);
 }
 
 CFATTACH_DECL2_NEW(acpi, sizeof(struct acpi_softc),

@@ -1,4 +1,4 @@
-/*	$NetBSD: wmi_acpi.c,v 1.6 2010/07/29 07:10:39 jruoho Exp $	*/
+/*	$NetBSD: wmi_acpi.c,v 1.7 2010/08/06 22:45:00 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2009, 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wmi_acpi.c,v 1.6 2010/07/29 07:10:39 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wmi_acpi.c,v 1.7 2010/08/06 22:45:00 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -58,6 +58,7 @@ static int         acpi_wmi_print(void *, const char *);
 static bool        acpi_wmi_init(struct acpi_wmi_softc *);
 static bool        acpi_wmi_add(struct acpi_wmi_softc *, ACPI_OBJECT *);
 static void        acpi_wmi_del(struct acpi_wmi_softc *);
+static void	   acpi_wmi_dump(struct acpi_wmi_softc *);
 
 static ACPI_STATUS acpi_wmi_guid_get(struct acpi_wmi_softc *,
                                      const char *, struct wmi_t **);
@@ -107,8 +108,7 @@ acpi_wmi_attach(device_t parent, device_t self, void *aux)
 	if (acpi_wmi_init(sc) != true)
 		return;
 
-	acpi_wmidump(sc);
-
+	acpi_wmi_dump(sc);
 	acpi_wmi_event_add(sc);
 
 	sc->sc_child = config_found_ia(self, "acpiwmibus",
@@ -241,6 +241,29 @@ acpi_wmi_del(struct acpi_wmi_softc *sc)
 		KASSERT(wmi != NULL);
 
 		kmem_free(wmi, sizeof(*wmi));
+	}
+}
+
+static void
+acpi_wmi_dump(struct acpi_wmi_softc *sc)
+{
+	struct wmi_t *wmi;
+
+	KASSERT(SIMPLEQ_EMPTY(&sc->wmi_head) == 0);
+
+	SIMPLEQ_FOREACH(wmi, &sc->wmi_head, wmi_link) {
+
+		aprint_debug_dev(sc->sc_dev, "{%08X-%04X-%04X-",
+		    wmi->guid.data1, wmi->guid.data2, wmi->guid.data3);
+
+		aprint_debug("%02X%02X-%02X%02X%02X%02X%02X%02X} ",
+		    wmi->guid.data4[0], wmi->guid.data4[1],
+		    wmi->guid.data4[2], wmi->guid.data4[3],
+		    wmi->guid.data4[4], wmi->guid.data4[5],
+		    wmi->guid.data4[6], wmi->guid.data4[7]);
+
+		aprint_debug("oid %04X count %02X flags %02X\n",
+		    UGET16(wmi->guid.oid), wmi->guid.count, wmi->guid.flags);
 	}
 }
 
