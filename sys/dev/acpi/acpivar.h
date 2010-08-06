@@ -1,4 +1,4 @@
-/*	$NetBSD: acpivar.h,v 1.58 2010/08/06 22:45:00 jruoho Exp $	*/
+/*	$NetBSD: acpivar.h,v 1.59 2010/08/06 23:38:34 jruoho Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -325,11 +325,8 @@ void acpi_debug_init(void);
 /*
  * Misc routines with vectors updated by acpiverbose module.
  */
-extern void	(*acpi_print_devnodes)(struct acpi_softc *);
-extern void	(*acpi_print_tree)(struct acpi_devnode *, uint32_t);
+extern void	(*acpi_print_verbose)(struct acpi_softc *);
 extern void	(*acpi_print_dev)(const char *);
-
-void		acpi_null(void);
 
 void		acpi_load_verbose(void);
 extern int	acpi_verbose_loaded;

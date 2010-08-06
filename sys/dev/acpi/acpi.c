@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.210 2010/08/06 22:45:00 jruoho Exp $	*/
+/*	$NetBSD: acpi.c,v 1.211 2010/08/06 23:38:34 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.210 2010/08/06 22:45:00 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.211 2010/08/06 23:38:34 jruoho Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -121,11 +121,13 @@ static int acpi_dbgr = 0x00;
 int	acpi_active;
 int	acpi_force_load;
 int	acpi_suspended = 0;
+int	acpi_verbose_loaded = 0;
 
-struct acpi_softc *acpi_softc;
-static uint64_t acpi_root_pointer;
-extern kmutex_t acpi_interrupt_list_mtx;
-static ACPI_HANDLE acpi_scopes[4];
+struct acpi_softc	*acpi_softc;
+static uint64_t		 acpi_root_pointer;
+extern kmutex_t		 acpi_interrupt_list_mtx;
+extern struct		 cfdriver acpi_cd;
+static ACPI_HANDLE	 acpi_scopes[4];
 
 /*
  * This structure provides a context for the ACPI
@@ -197,57 +199,11 @@ static bool		  acpi_is_scope(struct acpi_devnode *);
 static ACPI_TABLE_HEADER *acpi_map_rsdt(void);
 static void		  acpi_unmap_rsdt(ACPI_TABLE_HEADER *);
 
-extern struct cfdriver acpi_cd;
+void			acpi_print_verbose_stub(struct acpi_softc *);
+void			acpi_print_dev_stub(const char *);
 
-/*
- * Handle routine vectors and loading for acpiverbose module.
- */
-int acpi_verbose_loaded = 0;
-
-void acpi_print_devnodes_stub(struct acpi_softc *);
-void acpi_print_tree_stub(struct acpi_devnode *, uint32_t);
-void acpi_print_dev_stub(const char *);
-
-void (*acpi_print_devnodes)(struct acpi_softc *) = acpi_print_devnodes_stub;
-void (*acpi_print_tree)(struct acpi_devnode *,uint32_t) = acpi_print_tree_stub;
+void (*acpi_print_verbose)(struct acpi_softc *) = acpi_print_verbose_stub;
 void (*acpi_print_dev)(const char *) = acpi_print_dev_stub;
-
-/*
- * Support for ACPIVERBOSE.
- */
-void
-acpi_load_verbose(void)
-{
-	if (acpi_verbose_loaded == 0) {
-		mutex_enter(&module_lock);
-		module_autoload("acpiverbose", MODULE_CLASS_MISC);
-		mutex_exit(&module_lock);
-	}
-}
-
-void
-acpi_print_devnodes_stub(struct acpi_softc *sc)
-{
-	acpi_load_verbose();
-	if (acpi_verbose_loaded)
-		acpi_print_devnodes(sc);
-}
-
-void
-acpi_print_tree_stub(struct acpi_devnode *ad, uint32_t level)
-{
-	acpi_load_verbose();
-	if (acpi_verbose_loaded)
-		acpi_print_tree(ad, level);
-}
-
-void
-acpi_print_dev_stub(const char *pnpstr)
-{
-	acpi_load_verbose();
-	if (acpi_verbose_loaded)
-		acpi_print_dev(pnpstr);
-}
 
 CFATTACH_DECL2_NEW(acpi, sizeof(struct acpi_softc),
     acpi_match, acpi_attach, acpi_detach, NULL, acpi_rescan, acpi_childdet);
@@ -533,11 +489,14 @@ acpi_attach(device_t parent, device_t self, void *aux)
 	acpi_debug_init();
 #endif
 
+	/*
+	 * Print debug information.
+	 */
+	acpi_print_verbose(sc);
+
 	return;
 
 fail:
-	KASSERT(rv != AE_OK);
-
 	aprint_error("%s: failed to initialize ACPI: %s\n",
 	    __func__, AcpiFormatException(rv));
 }
@@ -662,9 +621,6 @@ acpi_build_tree(struct acpi_softc *sc)
 	acpi_rescan_capabilities(sc);
 
 	(void)acpi_pcidev_scan(sc->sc_root);
-
-	acpi_print_devnodes(sc);
-	acpi_print_tree(sc->sc_root, 0);
 }
 
 static ACPI_STATUS
@@ -1731,4 +1687,38 @@ acpi_unmap_rsdt(ACPI_TABLE_HEADER *rsdt)
 		return;
 
 	AcpiOsUnmapMemory(rsdt, sizeof(ACPI_TABLE_HEADER));
+}
+
+/*
+ * ACPIVERBOSE.
+ */
+void
+acpi_load_verbose(void)
+{
+
+	if (acpi_verbose_loaded == 0) {
+		mutex_enter(&module_lock);
+		module_autoload("acpiverbose", MODULE_CLASS_MISC);
+		mutex_exit(&module_lock);
+	}
+}
+
+void
+acpi_print_verbose_stub(struct acpi_softc *sc)
+{
+
+	acpi_load_verbose();
+
+	if (acpi_verbose_loaded != 0)
+		acpi_print_verbose(sc);
+}
+
+void
+acpi_print_dev_stub(const char *pnpstr)
+{
+
+	acpi_load_verbose();
+
+	if (acpi_verbose_loaded != 0)
+		acpi_print_dev(pnpstr);
 }
