@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.h,v 1.33 2009/01/11 02:46:48 christos Exp $	*/
+/*	$NetBSD: pthread.h,v 1.34 2010/08/06 05:25:02 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -191,6 +191,7 @@ int 	*pthread__errno(void);
 #if defined(_NETBSD_SOURCE)
 int	pthread_getaffinity_np(pthread_t, size_t, cpuset_t *);
 int	pthread_setaffinity_np(pthread_t, size_t, cpuset_t *);
+int	pthread_getattr_np(pthread_t, pthread_attr_t *);
 
 int	pthread_mutex_held_np(pthread_mutex_t *);
 pthread_t pthread_mutex_owner_np(pthread_mutex_t *);
