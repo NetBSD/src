@@ -1,4 +1,4 @@
-/*	$NetBSD: hppa_reloc.c,v 1.32 2010/01/14 11:57:06 skrll Exp $	*/
+/*	$NetBSD: hppa_reloc.c,v 1.33 2010/08/06 16:33:17 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2004 The NetBSD Foundation, Inc.
@@ -31,12 +31,11 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hppa_reloc.c,v 1.32 2010/01/14 11:57:06 skrll Exp $");
+__RCSID("$NetBSD: hppa_reloc.c,v 1.33 2010/08/06 16:33:17 joerg Exp $");
 #endif /* not lint */
 
 #include <stdlib.h>
 #include <sys/types.h>
-#include <sys/stat.h>
 #include <sys/queue.h>
 
 #include <string.h>
@@ -362,7 +361,7 @@ _rtld_setup_pltgot(const Obj_Entry *obj)
 }
 
 int
-_rtld_relocate_nonplt_objects(const Obj_Entry *obj)
+_rtld_relocate_nonplt_objects(Obj_Entry *obj)
 {
 	const Elf_Rela *rela;
 

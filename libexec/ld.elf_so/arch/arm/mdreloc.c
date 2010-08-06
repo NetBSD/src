@@ -1,13 +1,11 @@
-/*	$NetBSD: mdreloc.c,v 1.33 2010/01/14 12:12:07 skrll Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.34 2010/08/06 16:33:17 joerg Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mdreloc.c,v 1.33 2010/01/14 12:12:07 skrll Exp $");
+__RCSID("$NetBSD: mdreloc.c,v 1.34 2010/08/06 16:33:17 joerg Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
-#include <sys/stat.h>
-
 #include <string.h>
 
 #include "debug.h"
@@ -73,7 +71,7 @@ store_ptr(void *where, Elf_Addr val)
 }
 
 int
-_rtld_relocate_nonplt_objects(const Obj_Entry *obj)
+_rtld_relocate_nonplt_objects(Obj_Entry *obj)
 {
 	const Elf_Rel *rel;
 

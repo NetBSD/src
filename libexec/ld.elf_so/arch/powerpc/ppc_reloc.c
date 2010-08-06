@@ -1,4 +1,4 @@
-/*	$NetBSD: ppc_reloc.c,v 1.44 2010/01/13 20:17:22 christos Exp $	*/
+/*	$NetBSD: ppc_reloc.c,v 1.45 2010/08/06 16:33:18 joerg Exp $	*/
 
 /*-
  * Copyright (C) 1998	Tsubai Masanari
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ppc_reloc.c,v 1.44 2010/01/13 20:17:22 christos Exp $");
+__RCSID("$NetBSD: ppc_reloc.c,v 1.45 2010/08/06 16:33:18 joerg Exp $");
 #endif /* not lint */
 
 #include <stdarg.h>
@@ -38,7 +38,6 @@ __RCSID("$NetBSD: ppc_reloc.c,v 1.44 2010/01/13 20:17:22 christos Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
-#include <sys/stat.h>
 #include <machine/cpu.h>
 
 #include "debug.h"
@@ -131,7 +130,7 @@ _rtld_relocate_nonplt_self(Elf_Dyn *dynp, Elf_Addr relocbase)
 }
 
 int
-_rtld_relocate_nonplt_objects(const Obj_Entry *obj)
+_rtld_relocate_nonplt_objects(Obj_Entry *obj)
 {
 	const Elf_Rela *rela;
 

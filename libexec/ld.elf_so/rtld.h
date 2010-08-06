@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.h,v 1.91 2010/04/05 14:01:26 joerg Exp $	 */
+/*	$NetBSD: rtld.h,v 1.92 2010/08/06 16:33:17 joerg Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -280,7 +280,7 @@ int _rtld_sysctl(const char *, void *, size_t *);
 /* reloc.c */
 int _rtld_do_copy_relocations(const Obj_Entry *);
 int _rtld_relocate_objects(Obj_Entry *, bool);
-int _rtld_relocate_nonplt_objects(const Obj_Entry *);
+int _rtld_relocate_nonplt_objects(Obj_Entry *);
 int _rtld_relocate_plt_lazy(const Obj_Entry *);
 int _rtld_relocate_plt_objects(const Obj_Entry *);
 void _rtld_setup_pltgot(const Obj_Entry *);
@@ -309,6 +309,7 @@ void _rtld_combreloc_reset(const Obj_Entry *);
 #endif
 
 /* map_object.c */
+struct stat;
 Obj_Entry *_rtld_map_object(const char *, int, const struct stat *);
 void _rtld_obj_free(Obj_Entry *);
 Obj_Entry *_rtld_obj_new(void);
