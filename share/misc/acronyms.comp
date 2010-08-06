@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.103 2010/07/30 13:32:24 dholland Exp $
+$NetBSD: acronyms.comp,v 1.104 2010/08/06 10:46:48 jruoho Exp $
 
 3WHS	three-way handshake
 ABI	application binary interface
@@ -82,6 +82,8 @@ CJK	Chinese, Japanese, and Korean
 CLI	command line interface
 CLUT	color look-up table
 CLV	constant linear velocity (as opposed to CAV)
+CMI	control management interface
+CMI	control method interface
 CMYK	cyan magenta yellow black
 COFF	common object file format
 COW	copy-on-write
@@ -107,6 +109,8 @@ DCT	discrete cosine transform
 DDC	display data channel
 DDR	double data rate
 DDWG	digital display working group
+DE	desktop environment
+DE	debugging extensions
 DER	distinguished encoding rules
 DES	Data Encryption Standard
 DFS	depth first search
@@ -128,12 +132,14 @@ DPI	dots per inch
 DPI	deep packet inspection
 DRAM	dynamic random access memory
 DRI	direct rendering infrastructure
+DS	debug store
 DSL	digital subscriber line
 DSLAM	digital subscriber line access multiplexer
 DSSS	direct sequence spread spectrum
 DTD	document type definition
 DTE	data terminal equipment
 DTE	dumb terminal emulator
+DVB	digital video broadcasting
 DVD	digital versatile disc
 DVR	digital video recorder
 DVI	digital visual interface
@@ -159,7 +165,9 @@ EPP	enhanced parallel port
 EPRML	extended partial response, maximum likelihood
 EPROM	erasable programmable read only memory
 ESDRAM	enhanced synchronous dynamic random access memory
+EST	enhanced speedstep
 FAT	file allocation table
+FFH	functional fixed hardware
 FBRAM	frame buffer random access memory
 FCS	frame check sequence
 FDDI	fiber distributed data interface
@@ -233,9 +241,11 @@ IMAP	Internet mail access protocol
 INCITS	international committee on information technology standards
 IO	input/output
 IOCTL	input/output control
+IOMMU	input/output memory management unit
 IP	Internet Protocol
 IP	intellectual property
 IPC	interprocess communication
+IPI	interprocessor interrupt
 IPNG	Internet protocol, next generation
 IPS	intrusion prevention system
 IPSEC	Internet protocol security
@@ -297,6 +307,8 @@ LZW	Lempel Ziv Welch
 MAC	medium access control
 MAC	mandatory access control
 MBR	master boot record
+MCA	machine check architecture
+MCE	machine check exception
 MCGA	multicolor graphics adapter
 MCH	memory controller hub
 MDA	mail delivery agent
@@ -304,20 +316,26 @@ MDA	monochrome display adapter
 MDRAM	multibank dynamic random access memory
 MFC	merge from current
 MFM	modified frequency modulation
+MID	mobile internet device
 MIDI	musical instrument digital interface
 MIME	multipurpose Internet mail extensions
 MIMO	multiple input multiple output
 MIPS	million instructions per second
 MIT	Massachusetts Institute of Technology
 MMU	memory management unit
+MMX	multimedia extension
+MMX	multiple math extension
+MMX	matrix math extension
 MPEG	moving picture experts group
 MPLS	multiprotocol label switching
 MRU	most recently used
 MSB	most significant bit [or: byte]
 MSF	minutes seconds frames
 MSI	message signaled interrupt
+MSR	machine state register
 MSS	maximum segment size
 MTA	mail transfer agent
+MTRR	memory type range register
 MTU	maximum transmission unit
 MUA	mail user agent
 MWE	module width encoding
@@ -337,6 +355,7 @@ NRZ	non-return to zero
 NSA	National Security Agency
 NUMA	non-uniform memory access
 NVRAM	non-volatile random access memory
+NX	no execute
 OCL	object constraint language
 OCR	optical character recognition
 OEM	original equipment manufacturer
@@ -367,6 +386,8 @@ PAM	pulse amplitude modulation
 PAT	port address translation
 PATA	parallel ATA
 PAX	portable archive exchange
+PBE	pending break encoding
+PBE	programming by example
 PC	personal computer
 PCC	Portable C Compiler
 PCI	peripheral component interconnect
@@ -404,6 +425,7 @@ PPPOE	point-to-point protocol over ethernet
 PRML	partial response, maximum likelihood
 PRNG	pseudo random number generator
 PROM	programmable read only memory
+PSE	page size extensions
 PSK	pre-shared key
 PSTN	public switched telephone network
 PTE	page table entry
@@ -412,6 +434,7 @@ PTP	page table page
 PWM	pulse width modulation
 PXE	preboot execution environment
 QA	quality assurance
+QAM	quadrature amplitude modulation
 QOS	quality of service
 RAID	redundant array of inexpensive disks
 RAM	random access memory
@@ -433,7 +456,9 @@ ROM	read only memory
 RPC	remote procedure call
 RPM	revolutions per minute
 RSS	really simple syndication
+RT	real time
 RTC	real time clock
+RTC	real time computing
 RTF	rich text format
 RTOS	real time operating system
 RTS	request to send
@@ -454,6 +479,7 @@ SCSI	small computer system interface
 SCTP	stream control transmission protocol
 SDK	software development kit
 SDRAM	synchronous dynamic random access memory
+SFI	simple firmware interface
 SGRAM	synchronous graphics random access memory
 SIFS	short inter-frame space
 SIMD	single instruction multiple data
@@ -463,6 +489,7 @@ SIR	slow infrared
 SLDRAM	synchronous-link dynamic random access memory
 SMART	self-monitoring analysis and reporting technology
 SMI	system management interrupt
+SMM	system management mode
 SMP	symmetric multiprocessing
 SMT	simultaneous multithreading
 SMTP	simple mail transfer protocol
@@ -479,6 +506,7 @@ SPI	serial peripheral interface
 SPI	stateful packet inspection
 SQL	structured query language
 SRAM	static random access memory
+SS	stack segment
 SSD	solid state drive
 SSE	streaming SIMD extensions
 SSFDC	solid state floppy disc card
@@ -490,6 +518,8 @@ STP	spanning-tree protocol
 SUS	Single Unix Specification
 SVG	scalable vector graphics
 SVGA	super video graphics {array,adapter}
+SVM	secure virtual machine
+SVM	support vector machine
 SWF	Shockwave Flash
 TCB	trusted computing base
 TCL	tool command language
@@ -513,6 +543,7 @@ TPM	trusted platform module
 TR	token ring
 TR	task register
 TRNG	true random number generator
+TSC	time stamp counter
 TSS	task state segment
 TTL	time to live
 TTY	teletype
@@ -558,6 +589,8 @@ WEP	wired equivalent privacy
 WFI	wait for interrupt
 WIFI    wireless fidelity
 WLAN	wireless local area network
+VMX	virtual machine extensions
+VMX	vector multimedia extensions
 WPA	wi-fi protected access
 WRAM	window random access memory
 WWAN	wireless wide area network
