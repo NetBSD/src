@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.25 2009/03/14 23:51:35 dholland Exp $	*/
+/*	$NetBSD: main.c,v 1.26 2010/08/06 09:14:40 dholland Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,12 +39,14 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.25 2009/03/14 23:51:35 dholland Exp $");
+__RCSID("$NetBSD: main.c,v 1.26 2010/08/06 09:14:40 dholland Exp $");
 #endif
 #endif /* not lint */
 
+#include <ctype.h>
 #include <err.h>
 #include <fcntl.h>
+#include <pwd.h>
 #include <setjmp.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -55,12 +57,13 @@ __RCSID("$NetBSD: main.c,v 1.25 2009/03/14 23:51:35 dholland Exp $");
 #include "pathnames.h"
 #include "restart.h"
 
-int
-main(int argc, char **argv)
+static void
+initialize(void)
 {
-	char *p;
-	int a,i;
 	int fd;
+	const char *name;
+	struct passwd *pw;
+	char *s;
 
 	gid = getgid();
 	egid = getegid();
@@ -76,6 +79,43 @@ main(int argc, char **argv)
 	}
 
 	srandom((u_long)time(NULL));
+
+	name = getenv("SAILNAME");
+	if (name != NULL && *name != '\0') {
+		strlcpy(myname, name, sizeof(myname));
+	} else {
+		pw = getpwuid(getuid());
+		if (pw != NULL) {
+			strlcpy(myname, pw->pw_gecos, sizeof(myname));
+			/* trim to just the realname */
+			s = strchr(myname, ',');
+			if (s != NULL) {
+				*s = '\0';
+			}
+			/* use just the first name */
+			s = strchr(myname, ' ');
+			if (s != NULL) {
+				*s = '\0';
+			}
+			/* should really do &-expansion properly */
+			if (!strcmp(myname, "&")) {
+				strlcpy(myname, pw->pw_name, sizeof(myname));
+				myname[0] = toupper((unsigned char)myname[0]);
+			}
+		}
+	}
+	if (*myname == '\0') {
+		strlcpy(myname, "Anonymous", sizeof(myname));
+	}
+}
+
+int
+main(int argc, char **argv)
+{
+	char *p;
+	int a, i;
+
+	initialize();
 
 	if ((p = strrchr(*argv, '/')) != NULL)
 		p++;
@@ -98,13 +138,13 @@ main(int argc, char **argv)
 			mode = MODE_LOGGER;
 			break;
 		case 'x':
-			randomize++;
+			randomize = true;
 			break;
 		case 'l':
-			longfmt++;
+			longfmt = true;
 			break;
 		case 'b':
-			nobells++;
+			nobells = true;
 			break;
 		default:
 			errx(1, "Usage: %s [-bdlsx] [scenario-number]", p);
@@ -123,7 +163,10 @@ main(int argc, char **argv)
 
 	switch (mode) {
 	case MODE_PLAYER:
-		return pl_main();
+		initscreen();
+		startup();
+		cleanupscreen();
+		return 0;
 	case MODE_DRIVER:
 		return dr_main();
 	case MODE_LOGGER:

@@ -1,4 +1,4 @@
-/*	$NetBSD: lo_main.c,v 1.18 2010/01/17 22:56:32 wiz Exp $	*/
+/*	$NetBSD: lo_main.c,v 1.19 2010/08/06 09:14:40 dholland Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)lo_main.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: lo_main.c,v 1.18 2010/01/17 22:56:32 wiz Exp $");
+__RCSID("$NetBSD: lo_main.c,v 1.19 2010/08/06 09:14:40 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -45,17 +45,78 @@ __RCSID("$NetBSD: lo_main.c,v 1.18 2010/01/17 22:56:32 wiz Exp $");
  */
 
 #include <err.h>
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <pwd.h>
+#include <curses.h>
+
 #include "extern.h"
 #include "pathnames.h"
+
 
 static const char *const title[] = {
 	"Admiral", "Commodore", "Captain", "Captain",
 	"Captain", "Captain", "Captain", "Commander",
 	"Commander", "Lieutenant"
 };
+
+void
+lo_curses(void)
+{
+	FILE *fp;
+	char sbuf[32];
+	int n = 0, npeople;
+	int line;
+	struct passwd *pass;
+	struct logs log;
+	struct ship *ship;
+
+	erase();
+
+	fp = fopen(_PATH_LOGFILE, "r");
+	if (fp == NULL) {
+		mvprintw(5, 10, "%s: %s", _PATH_LOGFILE, strerror(errno));
+		mvaddstr(7, 10, "Press any key...");
+		getch();
+		return;
+	}
+	switch (fread(&npeople, sizeof npeople, 1, fp)) {
+	    case 0:
+		mvprintw(5, 10, "Nobody has sailed yet.");
+		mvaddstr(7, 10, "Press any key...");
+		getch();
+		return;
+	    case 1:
+		break;
+	    default:
+		mvprintw(5, 10, "%s: %s", _PATH_LOGFILE, strerror(errno));
+		mvaddstr(7, 10, "Press any key...");
+		getch();
+		return;
+	}
+	line = 0;
+	while (fread(&log, sizeof log, 1, fp) == 1 &&
+	       log.l_name[0] != '\0' &&
+		line < LINES - 2) {
+		if (longfmt && (pass = getpwuid(log.l_uid)) != NULL)
+			snprintf(sbuf, sizeof(sbuf),
+				"%10.10s (%s)", log.l_name, pass->pw_name);
+		else
+			snprintf(sbuf, sizeof(sbuf),
+				"%20.20s", log.l_name);
+		ship = &scene[log.l_gamenum].ship[log.l_shipnum];
+		mvprintw(line, 0,
+			"%-10s %21s of the %15s %3d points, %5.2f equiv",
+			title[n++], sbuf, ship->shipname, log.l_netpoints,
+			(float) log.l_netpoints / ship->specs->pts);
+		line++;
+	}
+	fclose(fp);
+	mvprintw(line+1, 0, "%d people have played. Press any key.", npeople);
+	getch();
+}
 
 int
 lo_main(void)
