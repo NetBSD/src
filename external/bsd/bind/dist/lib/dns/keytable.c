@@ -1,7 +1,7 @@
-/*	$NetBSD: keytable.c,v 1.3 2009/12/26 23:08:22 christos Exp $	*/
+/*	$NetBSD: keytable.c,v 1.4 2010/08/06 10:58:11 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2009, 2010  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: keytable.c,v 1.39 2009/12/03 15:40:02 each Exp */
+/* Id: keytable.c,v 1.39.4.2 2010/06/25 23:46:33 tbox Exp */
 
 /*! \file */
 
@@ -552,6 +552,44 @@ dns_keytable_issecuredomain(dns_keytable_t *keytable, dns_name_t *name,
 
 	RWUNLOCK(&keytable->rwlock, isc_rwlocktype_read);
 
+	return (result);
+}
+
+isc_result_t
+dns_keytable_dump(dns_keytable_t *keytable, FILE *fp)
+{
+	isc_result_t result;
+	dns_keynode_t *knode;
+	dns_rbtnode_t *node;
+	dns_rbtnodechain_t chain;
+
+	REQUIRE(VALID_KEYTABLE(keytable));
+
+	RWLOCK(&keytable->rwlock, isc_rwlocktype_read);
+	dns_rbtnodechain_init(&chain, keytable->mctx);
+	result = dns_rbtnodechain_first(&chain, keytable->table, NULL, NULL);
+	if (result != ISC_R_SUCCESS && result != DNS_R_NEWORIGIN)
+		goto cleanup;
+	for (;;) {
+		char pbuf[DST_KEY_FORMATSIZE];
+
+		dns_rbtnodechain_current(&chain, NULL, NULL, &node);
+		for (knode = node->data; knode != NULL; knode = knode->next) {
+			dst_key_format(knode->key, pbuf, sizeof(pbuf));
+			fprintf(fp, "%s ; %s\n", pbuf,
+				knode->managed ? "managed" : "trusted");
+		}
+		result = dns_rbtnodechain_next(&chain, NULL, NULL);
+		if (result != ISC_R_SUCCESS && result != DNS_R_NEWORIGIN) {
+			if (result == ISC_R_NOMORE)
+				result = ISC_R_SUCCESS;
+			break;
+		}
+	}
+
+   cleanup:
+	dns_rbtnodechain_invalidate(&chain);
+	RWUNLOCK(&keytable->rwlock, isc_rwlocktype_read);
 	return (result);
 }
 

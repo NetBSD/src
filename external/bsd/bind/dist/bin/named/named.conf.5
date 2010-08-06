@@ -1,6 +1,6 @@
-.\"	$NetBSD: named.conf.5,v 1.4 2009/12/26 23:08:21 christos Exp $
+.\"	$NetBSD: named.conf.5,v 1.5 2010/08/06 10:58:04 christos Exp $
 .\"
-.\" Copyright (C) 2004-2009 Internet Systems Consortium, Inc. ("ISC")
+.\" Copyright (C) 2004-2010 Internet Systems Consortium, Inc. ("ISC")
 .\" 
 .\" Permission to use, copy, modify, and/or distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -14,7 +14,7 @@
 .\" OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 .\" PERFORMANCE OF THIS SOFTWARE.
 .\"
-.\" Id: named.conf.5,v 1.41 2009/12/04 01:13:44 tbox Exp
+.\" Id: named.conf.5,v 1.41.4.1 2010/05/15 02:41:59 tbox Exp
 .\"
 .hy 0
 .ad l
@@ -312,6 +312,7 @@ options {
 	use\-alt\-transfer\-source \fIboolean\fR;
 	zone\-statistics \fIboolean\fR;
 	key\-directory \fIquoted_string\fR;
+	managed\-keys\-directory \fIquoted_string\fR;
 	auto\-dnssec \fBallow\fR|\fBmaintain\fR|\fBcreate\fR|\fBoff\fR;
 	try\-tcp\-refresh \fIboolean\fR;
 	zero\-no\-soa\-ttl \fIboolean\fR;
@@ -571,5 +572,5 @@ zone \fIstring\fR \fIoptional_class\fR {
 \fBrndc\fR(8),
 BIND 9 Administrator Reference Manual.
 .SH "COPYRIGHT"
-Copyright \(co 2004\-2009 Internet Systems Consortium, Inc. ("ISC")
+Copyright \(co 2004\-2010 Internet Systems Consortium, Inc. ("ISC")
 .br
