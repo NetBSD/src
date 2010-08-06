@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1232 2010/08/06 16:42:31 jruoho Exp $
+# $NetBSD: mi,v 1.1233 2010/08/06 17:00:12 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -946,7 +946,7 @@
 ./usr/share/man/cat4/fss.0			man-sys-catman		.cat
 ./usr/share/man/cat4/fssbs.0			man-obsolete		obsolete
 ./usr/share/man/cat4/fta.0			man-sys-catman		.cat
-./usr/share/man/cat4/fwhrng.0			man-sys-catman		.cat
+./usr/share/man/cat4/fwhrng.0			man-obsolete		obsolete
 ./usr/share/man/cat4/fwip.0			man-sys-catman		.cat
 ./usr/share/man/cat4/fwiso.0			man-obsolete		obsolete
 ./usr/share/man/cat4/fwohci.0			man-sys-catman		.cat
@@ -1096,7 +1096,7 @@
 ./usr/share/man/cat4/i4btrc.0			man-obsolete		obsolete
 ./usr/share/man/cat4/i915drm.0			man-sys-catman		.cat
 ./usr/share/man/cat4/iavc.0			man-sys-catman		.cat
-./usr/share/man/cat4/ichlpcib.0			man-sys-catman		.cat
+./usr/share/man/cat4/ichlpcib.0			man-obsolete		obsolete
 ./usr/share/man/cat4/ichsmb.0			man-sys-catman		.cat
 ./usr/share/man/cat4/icmp.0			man-sys-catman		.cat
 ./usr/share/man/cat4/icmp6.0			man-sys-catman		.cat
@@ -1734,7 +1734,9 @@
 ./usr/share/man/cat4/x68k/vs.0			man-sys-catman		.cat
 ./usr/share/man/cat4/x86/amdpcib.0		man-sys-catman		.cat
 ./usr/share/man/cat4/x86/balloon.0		man-sys-catman		.cat
+./usr/share/man/cat4/x86/fwhrng.0		man-sys-catman		.cat
 ./usr/share/man/cat4/x86/hpet.0			man-sys-catman		.cat
+./usr/share/man/cat4/x86/ichlpcib.0		man-sys-catman		.cat
 ./usr/share/man/cat4/xbox.0			man-sys-catman		.cat
 ./usr/share/man/cat4/xge.0			man-sys-catman		.cat
 ./usr/share/man/cat4/xi.0			man-sys-catman		.cat
@@ -3623,7 +3625,7 @@
 ./usr/share/man/html4/fss.html			man-sys-htmlman		html
 ./usr/share/man/html4/fssbs.html		man-obsolete		obsolete
 ./usr/share/man/html4/fta.html			man-sys-htmlman		html
-./usr/share/man/html4/fwhrng.html		man-sys-htmlman		html
+./usr/share/man/html4/fwhrng.html		man-obsolete		obsolete
 ./usr/share/man/html4/fwip.html			man-sys-htmlman		html
 ./usr/share/man/html4/fwohci.html		man-sys-htmlman		html
 ./usr/share/man/html4/fxp.html			man-sys-htmlman		html
@@ -3743,7 +3745,7 @@
 ./usr/share/man/html4/i386/vesafb.html		man-obsolete		obsolete
 ./usr/share/man/html4/i915drm.html		man-sys-htmlman		html
 ./usr/share/man/html4/iavc.html			man-sys-htmlman		html
-./usr/share/man/html4/ichlpcib.html		man-sys-htmlman		html
+./usr/share/man/html4/ichlpcib.html		man-obsolete		obsolete
 ./usr/share/man/html4/ichsmb.html		man-sys-htmlman		html
 ./usr/share/man/html4/icmp.html			man-sys-htmlman		html
 ./usr/share/man/html4/icmp6.html		man-sys-htmlman		html
@@ -4331,7 +4333,9 @@
 ./usr/share/man/html4/x68k/vs.html		man-sys-htmlman		html
 ./usr/share/man/html4/x86/amdpcib.html		man-sys-htmlman		html
 ./usr/share/man/html4/x86/balloon.html		man-sys-htmlman		html
+./usr/share/man/html4/x86/fwhrng.html		man-sys-htmlman		html
 ./usr/share/man/html4/x86/hpet.html		man-sys-htmlman		html
+./usr/share/man/html4/x86/ichlpcib.html		man-sys-htmlman		html
 ./usr/share/man/html4/xbox.html			man-sys-htmlman		html
 ./usr/share/man/html4/xge.html			man-sys-htmlman		html
 ./usr/share/man/html4/xi.html			man-sys-htmlman		html
@@ -6078,7 +6082,7 @@
 ./usr/share/man/man4/fss.4			man-sys-man		.man
 ./usr/share/man/man4/fssbs.4			man-obsolete		obsolete
 ./usr/share/man/man4/fta.4			man-sys-man		.man
-./usr/share/man/man4/fwhrng.4			man-sys-man		.man
+./usr/share/man/man4/fwhrng.4			man-obsolete		obsolete
 ./usr/share/man/man4/fwip.4			man-sys-man		.man
 ./usr/share/man/man4/fwiso.4			man-obsolete		obsolete
 ./usr/share/man/man4/fwohci.4			man-sys-man		.man
@@ -6228,7 +6232,7 @@
 ./usr/share/man/man4/i4btrc.4			man-obsolete		obsolete
 ./usr/share/man/man4/i915drm.4			man-sys-man		.man
 ./usr/share/man/man4/iavc.4			man-sys-man		.man
-./usr/share/man/man4/ichlpcib.4			man-sys-man		.man
+./usr/share/man/man4/ichlpcib.4			man-obsolete		obsolete
 ./usr/share/man/man4/ichsmb.4			man-sys-man		.man
 ./usr/share/man/man4/icmp.4			man-sys-man		.man
 ./usr/share/man/man4/icmp6.4			man-sys-man		.man
@@ -6866,7 +6870,9 @@
 ./usr/share/man/man4/x68k/vs.4			man-sys-man		.man
 ./usr/share/man/man4/x86/amdpcib.4		man-sys-man		.man
 ./usr/share/man/man4/x86/balloon.4		man-sys-man		.man
+./usr/share/man/man4/x86/fwhrng.4		man-sys-man		.man
 ./usr/share/man/man4/x86/hpet.4			man-sys-man		.man
+./usr/share/man/man4/x86/ichlpcib.4		man-sys-man		.man
 ./usr/share/man/man4/xbox.4			man-sys-man		.man
 ./usr/share/man/man4/xge.4			man-sys-man		.man
 ./usr/share/man/man4/xi.4			man-sys-man		.man
