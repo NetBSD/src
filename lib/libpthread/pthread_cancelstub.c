@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_cancelstub.c,v 1.27 2009/08/12 23:51:23 enami Exp $	*/
+/*	$NetBSD: pthread_cancelstub.c,v 1.28 2010/08/06 05:25:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_cancelstub.c,v 1.27 2009/08/12 23:51:23 enami Exp $");
+__RCSID("$NetBSD: pthread_cancelstub.c,v 1.28 2010/08/06 05:25:46 christos Exp $");
 
 #ifndef lint
 
@@ -65,10 +65,12 @@ __RCSID("$NetBSD: pthread_cancelstub.c,v 1.27 2009/08/12 23:51:23 enami Exp $");
 #include <sys/mman.h>
 #include <sys/select.h>
 #include <sys/socket.h>
+#include <sys/event.h>
 
 #include <compat/sys/mman.h>
 #include <compat/sys/poll.h>
 #include <compat/sys/select.h>
+#include <compat/sys/event.h>
 #include <compat/sys/wait.h>
 #include <compat/include/mqueue.h>
 #include <compat/include/signal.h>
@@ -89,6 +91,8 @@ int	_sys_fcntl(int, int, ...);
 int	_sys_fdatasync(int);
 int	_sys_fsync(int);
 int	_sys_fsync_range(int, int, off_t, off_t);
+int	_sys___kevent50(int, const struct kevent *, size_t, struct kevent *,
+	    size_t, const struct timespec *);
 int	_sys_mq_send(mqd_t, const char *, size_t, unsigned);
 ssize_t	_sys_mq_receive(mqd_t, char *, size_t, unsigned *);
 int	_sys___mq_timedsend50(mqd_t, const char *, size_t, unsigned,
@@ -149,6 +153,21 @@ __aio_suspend50(const struct aiocb * const list[], int nent,
 	self = pthread__self();
 	TESTCANCEL(self);
 	retval = _sys___aio_suspend50(list, nent, timeout);
+	TESTCANCEL(self);
+
+	return retval;
+}
+
+int
+__kevent50(int fd, const struct kevent *ev, size_t nev, struct kevent *rev,
+    size_t nrev, const struct timespec *ts)
+{
+	int retval;
+	pthread_t self;
+
+	self = pthread__self();
+	TESTCANCEL(self);
+	retval = _sys___kevent50(fd, ev, nev, rev, nrev, ts);
 	TESTCANCEL(self);
 
 	return retval;
