@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.7,v 1.50 2010/07/31 02:04:45 jruoho Exp $
+.\"	$NetBSD: sysctl.7,v 1.51 2010/08/06 18:36:09 jruoho Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)sysctl.3	8.4 (Berkeley) 5/9/95
 .\"
-.Dd July 31, 2010
+.Dd August 6, 2010
 .Dt SYSCTL 7
 .Os
 .Sh NAME
@@ -239,6 +239,8 @@ privilege may change the value.
 .Bl -column "kern.posix_reader_writer_locks" \
 "struct kinfo_drivers" "not applicable"
 .It Sy Second level name	Type	Changeable
+.It kern.aio_listio_max	integer	yes
+.It kern.aio_max	integer	yes
 .It kern.arandom	integer	no
 .It kern.argmax	integer	no
 .It kern.boothowto	integer	no
@@ -296,6 +298,7 @@ privilege may change the value.
 .It kern.pipe	node	not applicable
 .\" .It kern.posix	node	not applicable
 .It kern.posix1version	integer	no
+.It kern.posix_aio	integer	no
 .It kern.posix_barriers	integer	no
 .It kern.posix_reader_writer_locks	integer	no
 .\".It kern.posix_sched	integer	yes
@@ -329,6 +332,16 @@ privilege may change the value.
 .It kern.vnode	struct vnode	no
 .El
 .Bl -tag -width "123456"
+.It Li kern.aio_listio_max
+The maximum number of asynchronous
+.Tn I/O
+operations in a single list I/O call.
+Like with all variables related to
+.Xr aio 3 ,
+the variable may be created and removed dynamically
+upon loading or unloading the corresponding kernel module.
+.It Li kern.aio_max
+The maximum number of asynchronous I/O operations.
 .It Li kern.arandom
 This variable picks a random number each time it is queried.
 The used random number generator
@@ -784,6 +797,10 @@ Number of "big" pipes.
 .It Li kern.posix1version ( KERN_POSIX1 )
 The version of ISO/IEC 9945 (POSIX 1003.1) with which the system
 attempts to comply.
+.It Li kern.posix_aio
+The version of
+.St -p1003.1
+and its Asynchronous I/O option to which the system attempts to conform.
 .It Li kern.posix_barriers ( KERN_POSIX_BARRIERS )
 The version of
 .St -p1003.1
