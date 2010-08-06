@@ -1,10 +1,10 @@
-# $NetBSD: configure.ac,v 1.33 2010/07/09 05:36:28 agc Exp $
+# $NetBSD: configure.ac,v 1.34 2010/08/06 06:58:53 agc Exp $
 #
 # Process this file with autoconf to produce a configure script.
 
-AC_INIT([netpgp],[20100707],[Alistair Crooks <agc@netbsd.org> c0596823])
+AC_INIT([netpgp],[20100710],[Alistair Crooks <agc@netbsd.org> c0596823])
 AC_PREREQ(2.63)
-AC_REVISION([$Revision: 1.33 $])
+AC_REVISION([$Revision: 1.34 $])
 
 AS_SHELL_SANITIZE
 
@@ -38,6 +38,9 @@ AS_IF([test "$GCC" = "yes"],
        AC_MSG_RESULT([no])])
 AC_SUBST([WARNCFLAGS])
 
+# try to see if we need to link with -ldl
+AC_SEARCH_LIBS(dlopen, dl)
+
 # Checks for header files.
 #
 AC_HEADER_STDC
@@ -63,6 +66,12 @@ AC_TYPE_UINT16_T
 AC_TYPE_UINT32_T
 AC_TYPE_UINT64_T
 AC_TYPE_UINT8_T
+
+# check for openssl
+m4_include([ax_check_openssl.m4])
+
+AX_CHECK_OPENSSL([LIBS="$LIBS $OPENSSL_LIBS" INCLUDES="$INCLUDES $OPENSSL_INCLUDES"],
+	[AC_MSG_ERROR([Missing OpenSSL])])
 
 AC_CHECK_TYPES([SHA256_CTX],
                [],
