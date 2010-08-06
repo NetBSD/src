@@ -1,17 +1,16 @@
-/*	$NetBSD: mdreloc.c,v 1.26 2010/01/13 20:17:23 christos Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.27 2010/08/06 16:33:19 joerg Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mdreloc.c,v 1.26 2010/01/13 20:17:23 christos Exp $");
+__RCSID("$NetBSD: mdreloc.c,v 1.27 2010/08/06 16:33:19 joerg Exp $");
 #endif /* not lint */
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mdreloc.c,v 1.26 2010/01/13 20:17:23 christos Exp $");
+__RCSID("$NetBSD: mdreloc.c,v 1.27 2010/08/06 16:33:19 joerg Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
-#include <sys/stat.h>
 
 #include "debug.h"
 #include "rtld.h"
@@ -54,7 +53,7 @@ _rtld_relocate_nonplt_self(Elf_Dyn *dynp, Elf_Addr relocbase)
 }
 
 int
-_rtld_relocate_nonplt_objects(const Obj_Entry *obj)
+_rtld_relocate_nonplt_objects(Obj_Entry *obj)
 {
 	const Elf_Rela *rela;
 
