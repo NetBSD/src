@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_verbose.c,v 1.5 2010/08/06 22:45:00 jruoho Exp $ */
+/*	$NetBSD: acpi_verbose.c,v 1.6 2010/08/06 23:38:34 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_verbose.c,v 1.5 2010/08/06 22:45:00 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_verbose.c,v 1.6 2010/08/06 23:38:34 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -77,44 +77,62 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_verbose.c,v 1.5 2010/08/06 22:45:00 jruoho Exp 
 #include <dev/acpi/acpivar.h>
 #include <dev/acpi/acpidevs_data.h>
 
-void	acpi_print_devnodes_real(struct acpi_softc *);
-void	acpi_print_tree_real(struct acpi_devnode *, uint32_t);
-void	acpi_print_dev_real(const char *);
-
-extern int acpi_verbose_loaded;
+void		acpi_print_verbose_real(struct acpi_softc *);
+void		acpi_print_dev_real(const char *);
+static void	acpi_print_devnodes(struct acpi_softc *);
+static void	acpi_print_tree(struct acpi_devnode *, uint32_t);
 
 MODULE(MODULE_CLASS_MISC, acpiverbose, NULL);
 
 static int
 acpiverbose_modcmd(modcmd_t cmd, void *arg)
 {
-	static void	(*saved_print_devnodes)(struct acpi_softc *);
-	static void	(*saved_print_tree)(struct acpi_devnode *, uint32_t);
+	static void	(*saved_print_verbose)(struct acpi_softc *);
 	static void	(*saved_print_dev)(const char *);
 
 	switch (cmd) {
+
 	case MODULE_CMD_INIT:
-		saved_print_devnodes = acpi_print_devnodes;
-		saved_print_tree = acpi_print_tree;
+		saved_print_verbose = acpi_print_verbose;
 		saved_print_dev = acpi_print_dev;
-		acpi_print_devnodes = acpi_print_devnodes_real;
-		acpi_print_tree = acpi_print_tree_real;
+		acpi_print_verbose = acpi_print_verbose_real;
 		acpi_print_dev = acpi_print_dev_real;
 		acpi_verbose_loaded = 1;
 		return 0;
+
 	case MODULE_CMD_FINI:
-		acpi_print_devnodes = saved_print_devnodes;
-		acpi_print_tree = saved_print_tree;
+		acpi_print_verbose = saved_print_verbose;
 		acpi_print_dev = saved_print_dev;
 		acpi_verbose_loaded = 0;
 		return 0;
+
 	default:
 		return ENOTTY;
 	}
 }
 
 void
-acpi_print_devnodes_real(struct acpi_softc *sc)
+acpi_print_verbose_real(struct acpi_softc *sc)
+{
+
+	acpi_print_devnodes(sc);
+	acpi_print_tree(sc->sc_root, 0);
+}
+
+void
+acpi_print_dev_real(const char *pnpstr)
+{
+	int i;
+
+	for (i = 0; i < __arraycount(acpi_knowndevs); i++) {
+
+		if (strcmp(acpi_knowndevs[i].pnp, pnpstr) == 0)
+			aprint_normal("[%s] ", acpi_knowndevs[i].str);
+	}
+}
+
+static void
+acpi_print_devnodes(struct acpi_softc *sc)
 {
 	struct acpi_devnode *ad;
 	ACPI_DEVICE_INFO *di;
@@ -147,8 +165,8 @@ acpi_print_devnodes_real(struct acpi_softc *sc)
 	aprint_normal("\n");
 }
 
-void
-acpi_print_tree_real(struct acpi_devnode *ad, uint32_t level)
+static void
+acpi_print_tree(struct acpi_devnode *ad, uint32_t level)
 {
 	struct acpi_devnode *child;
 	uint32_t i;
@@ -178,15 +196,4 @@ acpi_print_tree_real(struct acpi_devnode *ad, uint32_t level)
 
 	SIMPLEQ_FOREACH(child, &ad->ad_child_head, ad_child_list)
 	    acpi_print_tree(child, level + 1);
-}
-
-void acpi_print_dev_real(const char *pnpstr)
-{
-	int i;
-
-	for (i = 0; i < __arraycount(acpi_knowndevs); i++) {
-		if (strcmp(acpi_knowndevs[i].pnp, pnpstr) == 0) {
-			aprint_normal("[%s] ", acpi_knowndevs[i].str);
-		}
-	}
 }
