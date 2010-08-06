@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.202 2009/10/20 04:41:28 jnemeth Exp $
+#	$NetBSD: Makefile.inc,v 1.203 2010/08/06 05:26:35 christos Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 10/24/94
 
 # sys sources
@@ -92,7 +92,7 @@ ASM=	access.S acct.S \
 		getpriority.S getrlimit.S __getrusage50.S getsid.S \
 		getsockname.S getsockopt.S __gettimeofday50.S \
 	ioctl.S \
-	__kevent50.S kqueue.S ktrace.S \
+	kqueue.S ktrace.S \
 		_ksem_close.S _ksem_destroy.S _ksem_getvalue.S _ksem_init.S \
 		_ksem_post.S _ksem_trywait.S _ksem_unlink.S _ksem_wait.S \
 		_ksem_open.S \
@@ -139,7 +139,7 @@ ASM_MD=	_lwp_getprivate.S mremap.S
 .endfor
 
 WEAKASM= accept.S __aio_suspend50.S close.S connect.S execve.S \
-	fcntl.S fdatasync.S fsync.S fsync_range.S \
+	fcntl.S fdatasync.S fsync.S fsync_range.S __kevent50.S \
 	kill.S mq_receive.S mq_send.S __mq_timedreceive50.S __mq_timedsend50.S \
 	msgrcv.S msgsnd.S __msync13.S  __nanosleep50.S open.S poll.S \
 	__pollts50.S __pselect50.S read.S readlink.S \
