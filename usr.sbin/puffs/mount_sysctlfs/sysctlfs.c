@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctlfs.c,v 1.14 2010/04/11 15:08:17 pooka Exp $	*/
+/*	$NetBSD: sysctlfs.c,v 1.15 2010/08/06 15:04:13 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: sysctlfs.c,v 1.14 2010/04/11 15:08:17 pooka Exp $");
+__RCSID("$NetBSD: sysctlfs.c,v 1.15 2010/08/06 15:04:13 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -49,6 +49,13 @@ __RCSID("$NetBSD: sysctlfs.c,v 1.14 2010/04/11 15:08:17 pooka Exp $");
 #include <string.h>
 #include <unistd.h>
 #include <util.h>
+
+#ifdef RUMP_ACTION
+#include <rump/rump.h>
+#include <rump/rump_syscalls.h>
+
+#define sysctl(a,b,c,d,e,f) rump_sys___sysctl(a,b,c,d,e,f)
+#endif
 
 PUFFSOP_PROTOS(sysctlfs)
 
@@ -291,6 +298,14 @@ main(int argc, char *argv[])
 	if (detach)
 		if (puffs_daemon(pu, 1, 1) == -1)
 			err(1, "puffs_daemon");
+
+#ifdef RUMP_ACTION
+	{
+	extern int puffs_fakecc;
+	puffs_fakecc = 1;
+	rump_init();
+	}
+#endif
 
 	if (puffs_mount(pu, argv[1], mntflags, puffs_getroot(pu)) == -1)
 		err(1, "puffs_mount");
