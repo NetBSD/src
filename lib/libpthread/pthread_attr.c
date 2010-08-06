@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_attr.c,v 1.13 2010/08/06 05:25:02 christos Exp $	*/
+/*	$NetBSD: pthread_attr.c,v 1.14 2010/08/06 14:23:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_attr.c,v 1.13 2010/08/06 05:25:02 christos Exp $");
+__RCSID("$NetBSD: pthread_attr.c,v 1.14 2010/08/06 14:23:06 christos Exp $");
 
 #include <errno.h>
 #include <stdio.h>
@@ -40,6 +40,12 @@ __RCSID("$NetBSD: pthread_attr.c,v 1.13 2010/08/06 05:25:02 christos Exp $");
 
 #include "pthread.h"
 #include "pthread_int.h"
+
+#ifndef __lint__
+#define pthread_attr_get_np _pthread_attr_get_np
+#endif
+
+__weak_alias(pthread_attr_get_np, _pthread_attr_get_np)
 
 static struct pthread_attr_private *pthread__attr_init_private(
     pthread_attr_t *);
