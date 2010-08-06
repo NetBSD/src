@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.35 2009/08/12 09:05:08 dholland Exp $ */
+/*	$NetBSD: extern.h,v 1.36 2010/08/06 09:14:40 dholland Exp $ */
 
 /*
  * Copyright (c) 1983, 1993
@@ -43,13 +43,15 @@ extern int mode;
 #define MODE_LOGGER	3
 
 	/* command line flags */
-extern int randomize;			/* -x, give first available ship */
-extern int longfmt;			/* -l, print score in long format */
-extern int nobells;			/* -b, don't ring bell before Signal */
+extern bool randomize;			/* -x, give first available ship */
+extern bool longfmt;			/* -l, print score in long format */
+extern bool nobells;			/* -b, don't ring bell before Signal */
 
-	/* other initial modes */
+	/* other initial data */
 extern gid_t gid;
 extern gid_t egid;
+#define MAXNAMESIZE	20
+extern char myname[MAXNAMESIZE];
 
 #define dieroll()		((random()) % 6 + 1)
 #define sqr(a)		((a) * (a))
@@ -103,7 +105,7 @@ extern gid_t egid;
 
 #define NLOG 10
 struct logs {
-	char l_name[20];
+	char l_name[MAXNAMESIZE];
 	int l_uid;
 	int l_shipnum;
 	int l_gamenum;
@@ -121,7 +123,7 @@ struct snag {
 	short sn_turn;
 };
 
-#define NSCENE	nscene
+#define NSCENE	/*nscene*/ 32
 #define NSHIP	10
 #define NBP	3
 
@@ -137,7 +139,7 @@ struct snag {
 
 struct File {
 	int index;
-	char captain[20];		/* 0 */
+	char captain[MAXNAMESIZE];	/* 0 */
 	short points;			/* 20 */
 	unsigned char loadL;		/* 22 */
 	unsigned char loadR;		/* 24 */
@@ -185,7 +187,7 @@ struct scenario {
 	const char *name;		/* 14 */
 	struct ship ship[NSHIP];	/* 16 */
 };
-extern struct scenario scene[];
+extern struct scenario scene[NSCENE];
 extern int nscene;
 
 struct shipspecs {
@@ -234,6 +236,7 @@ extern const char QUAL[9][5];
 extern const char MT[9][3];
 
 extern const char *const countryname[];
+extern const char *const shortclassname[];
 extern const char *const classname[];
 extern const char *const directionname[];
 extern const char *const qualname[];
@@ -250,6 +253,7 @@ extern int game;
 extern int alive;
 extern int people;
 extern int hasdriver;
+
 
 /* assorted.c */
 void table(struct ship *, struct ship *, int, int, int, int);
@@ -285,12 +289,14 @@ int mensent(struct ship *, struct ship *, int[3], struct ship **, int *, int);
 
 /* dr_main.c */
 int dr_main(void);
+void startdriver(void);
 
 /* game.c */
 int maxturns(struct ship *, bool *);
 int maxmove(struct ship *, int, int);
 
 /* lo_main.c */
+void lo_curses(void);
 int lo_main(void);
 
 /* misc.c */
@@ -349,9 +355,12 @@ void upview(void);
 void downview(void);
 void leftview(void);
 void rightview(void);
+void startup(void);
 
 /* pl_main.c */
-int pl_main(void);
+void pl_main_init(void);
+void pl_main_uninit(void);
+void pl_main(void);
 
 /* sync.c */
 void fmtship(char *, size_t, const char *, struct ship *);

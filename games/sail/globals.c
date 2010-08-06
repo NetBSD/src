@@ -1,4 +1,4 @@
-/*	$NetBSD: globals.c,v 1.15 2009/08/12 09:05:08 dholland Exp $	*/
+/*	$NetBSD: globals.c,v 1.16 2010/08/06 09:14:40 dholland Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)globals.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: globals.c,v 1.15 2009/08/12 09:05:08 dholland Exp $");
+__RCSID("$NetBSD: globals.c,v 1.16 2010/08/06 09:14:40 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -44,7 +44,7 @@ __RCSID("$NetBSD: globals.c,v 1.15 2009/08/12 09:05:08 dholland Exp $");
 
 static struct shipspecs specs[];
 
-struct scenario scene[] = {
+struct scenario scene[NSCENE] = {
 	/*
 	 * int winddir;
 	 * int windspeed;
@@ -526,6 +526,16 @@ const char *const classname[] = {
 	"Brig"
 };
 
+const char *const shortclassname[] = {
+	"Rowboat",
+	"Ship",
+	"Ship",
+	"Frigate",
+	"Corvette",
+	"Sloop",
+	"Brig"
+};
+
 const char *const directionname[] = {
 	"dead ahead",
 	"off the starboard bow",
@@ -555,9 +565,9 @@ const char dc[] = { 0, 0, -1, -1, -1, 0, 1, 1, 1 };
 int mode;
 jmp_buf restart;
 
-int randomize;				/* -x, give first available ship */
-int longfmt;				/* -l, print score in long format */
-int nobells;				/* -b, don't ring bell before Signal */
+bool randomize;				/* -x, give first available ship */
+bool longfmt;				/* -l, print score in long format */
+bool nobells;				/* -b, don't ring bell before Signal */
 
 gid_t gid;
 gid_t egid;

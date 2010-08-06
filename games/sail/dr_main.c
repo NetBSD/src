@@ -1,4 +1,4 @@
-/*	$NetBSD: dr_main.c,v 1.14 2009/03/14 19:36:42 dholland Exp $	*/
+/*	$NetBSD: dr_main.c,v 1.15 2010/08/06 09:14:40 dholland Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,17 +34,22 @@
 #if 0
 static char sccsid[] = "@(#)dr_main.c	8.2 (Berkeley) 4/16/94";
 #else
-__RCSID("$NetBSD: dr_main.c,v 1.14 2009/03/14 19:36:42 dholland Exp $");
+__RCSID("$NetBSD: dr_main.c,v 1.15 2010/08/06 09:14:40 dholland Exp $");
 #endif
 #endif /* not lint */
 
 #include <err.h>
+#include <setjmp.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include "extern.h"
 #include "driver.h"
+#include "player.h" /* XXX for LEAVE_FORK */
+#include "restart.h"
+
+static int driver_wait_fd = -1;
 
 int
 dr_main(void)
@@ -54,23 +59,28 @@ dr_main(void)
 	int nat[NNATION];
 	int value = 0;
 
+	/*
+	 * XXX need a way to print diagnostics back to the player
+	 * process instead of stomping on the curses screen.
+	 */
+
 	signal(SIGINT, SIG_IGN);
 	signal(SIGQUIT, SIG_IGN);
 	signal(SIGTSTP, SIG_IGN);
 	if (game < 0 || game >= NSCENE) {
-		errx(1, "driver: Bad game number %d", game);
+		errx(1, "\ndriver: Bad game number %d", game);
 	}
 	cc = &scene[game];
 	ls = SHIP(cc->vessels);
 	if (sync_open() < 0) {
-		err(1, "driver: syncfile");
+		err(1, "\ndriver: syncfile");
 	}
 	for (n = 0; n < NNATION; n++)
 		nat[n] = 0;
 	foreachship(sp) {
 		if (sp->file == NULL &&
 		    (sp->file = calloc(1, sizeof (struct File))) == NULL) {
-			fprintf(stderr, "DRIVER: Out of memory.\n");
+			fprintf(stderr, "\nDRIVER: Out of memory.\n");
 			exit(1);
 		}
 		sp->file->index = sp - SHIP(0);
@@ -86,6 +96,12 @@ dr_main(void)
 	windspeed = cc->windspeed;
 	winddir = cc->winddir;
 	people = 0;
+
+	/* report back to the player process that we've started */
+	if (driver_wait_fd >= 0) {
+		close(driver_wait_fd);
+	}
+
 	for (;;) {
 		sleep(7);
 		if (Sync() < 0) {
@@ -111,4 +127,36 @@ dr_main(void)
 	}
 	sync_close(1);
 	return value;
+}
+
+void
+startdriver(void)
+{
+	int fds[2];
+	char c;
+
+	if (pipe(fds)) {
+		warn("pipe");
+		leave(LEAVE_FORK);
+		return;
+	}
+
+	switch (fork()) {
+	    case 0:
+		close(fds[0]);
+		driver_wait_fd = fds[1];
+		longjmp(restart, MODE_DRIVER);
+		/*NOTREACHED*/
+	    case -1:
+		warn("fork");
+		close(fds[0]);
+		close(fds[1]);
+		leave(LEAVE_FORK);
+		break;
+	    default:
+		hasdriver++;
+		close(fds[1]);
+		read(fds[0], &c, 1);
+		close(fds[0]);
+	}
 }
