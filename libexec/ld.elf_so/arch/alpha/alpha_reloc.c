@@ -1,4 +1,4 @@
-/*	$NetBSD: alpha_reloc.c,v 1.36 2010/01/14 11:58:31 skrll Exp $	*/
+/*	$NetBSD: alpha_reloc.c,v 1.37 2010/08/06 16:33:17 joerg Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -62,11 +62,10 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: alpha_reloc.c,v 1.36 2010/01/14 11:58:31 skrll Exp $");
+__RCSID("$NetBSD: alpha_reloc.c,v 1.37 2010/08/06 16:33:17 joerg Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
-#include <sys/stat.h>
 #include <string.h>
 
 #include "rtld.h"
@@ -196,7 +195,7 @@ _rtld_relocate_nonplt_self(Elf_Dyn *dynp, Elf_Addr relocbase)
 }
 
 int
-_rtld_relocate_nonplt_objects(const Obj_Entry *obj)
+_rtld_relocate_nonplt_objects(Obj_Entry *obj)
 {
 	const Elf_Rela *rela;
 	Elf_Addr target = -1;

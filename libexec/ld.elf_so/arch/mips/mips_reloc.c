@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_reloc.c,v 1.58 2010/01/14 11:57:06 skrll Exp $	*/
+/*	$NetBSD: mips_reloc.c,v 1.59 2010/08/06 16:33:18 joerg Exp $	*/
 
 /*
  * Copyright 1997 Michael L. Hitch <mhitch@montana.edu>
@@ -30,11 +30,10 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mips_reloc.c,v 1.58 2010/01/14 11:57:06 skrll Exp $");
+__RCSID("$NetBSD: mips_reloc.c,v 1.59 2010/08/06 16:33:18 joerg Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
-#include <sys/stat.h>
 #include <sys/endian.h>
 
 #include <stdlib.h>
@@ -223,7 +222,7 @@ _rtld_relocate_nonplt_self(Elf_Dyn *dynp, Elf_Addr relocbase)
 }
 
 int
-_rtld_relocate_nonplt_objects(const Obj_Entry *obj)
+_rtld_relocate_nonplt_objects(Obj_Entry *obj)
 {
 	const Elf_Rel *rel;
 	Elf_Addr *got = obj->pltgot;
