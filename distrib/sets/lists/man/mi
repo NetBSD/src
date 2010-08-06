@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1231 2010/08/05 17:31:11 jruoho Exp $
+# $NetBSD: mi,v 1.1232 2010/08/06 16:42:31 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1734,6 +1734,7 @@
 ./usr/share/man/cat4/x68k/vs.0			man-sys-catman		.cat
 ./usr/share/man/cat4/x86/amdpcib.0		man-sys-catman		.cat
 ./usr/share/man/cat4/x86/balloon.0		man-sys-catman		.cat
+./usr/share/man/cat4/x86/hpet.0			man-sys-catman		.cat
 ./usr/share/man/cat4/xbox.0			man-sys-catman		.cat
 ./usr/share/man/cat4/xge.0			man-sys-catman		.cat
 ./usr/share/man/cat4/xi.0			man-sys-catman		.cat
@@ -4330,6 +4331,7 @@
 ./usr/share/man/html4/x68k/vs.html		man-sys-htmlman		html
 ./usr/share/man/html4/x86/amdpcib.html		man-sys-htmlman		html
 ./usr/share/man/html4/x86/balloon.html		man-sys-htmlman		html
+./usr/share/man/html4/x86/hpet.html		man-sys-htmlman		html
 ./usr/share/man/html4/xbox.html			man-sys-htmlman		html
 ./usr/share/man/html4/xge.html			man-sys-htmlman		html
 ./usr/share/man/html4/xi.html			man-sys-htmlman		html
@@ -6864,6 +6866,7 @@
 ./usr/share/man/man4/x68k/vs.4			man-sys-man		.man
 ./usr/share/man/man4/x86/amdpcib.4		man-sys-man		.man
 ./usr/share/man/man4/x86/balloon.4		man-sys-man		.man
+./usr/share/man/man4/x86/hpet.4			man-sys-man		.man
 ./usr/share/man/man4/xbox.4			man-sys-man		.man
 ./usr/share/man/man4/xge.4			man-sys-man		.man
 ./usr/share/man/man4/xi.4			man-sys-man		.man
