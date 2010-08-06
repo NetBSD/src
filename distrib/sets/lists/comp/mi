@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1489 2010/07/31 21:47:52 joerg Exp $
+#	$NetBSD: mi,v 1.1490 2010/08/06 05:39:43 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -7633,6 +7633,7 @@
 ./usr/share/man/cat3/pthread_equal.0		comp-c-catman		.cat
 ./usr/share/man/cat3/pthread_exit.0		comp-c-catman		.cat
 ./usr/share/man/cat3/pthread_getaffinity_np.0	comp-c-catman		.cat
+./usr/share/man/cat3/pthread_getattr_np.0	comp-c-catman		.cat
 ./usr/share/man/cat3/pthread_getname_np.0	comp-c-catman		.cat
 ./usr/share/man/cat3/pthread_getschedparam.0	comp-c-catman		.cat
 ./usr/share/man/cat3/pthread_getspecific.0	comp-c-catman		.cat
@@ -13511,6 +13512,7 @@
 ./usr/share/man/html3/pthread_equal.html	comp-c-htmlman		html
 ./usr/share/man/html3/pthread_exit.html		comp-c-htmlman		html
 ./usr/share/man/html3/pthread_getaffinity_np.html	comp-c-htmlman		html
+./usr/share/man/html3/pthread_getattr_np.html	comp-c-htmlman		html
 ./usr/share/man/html3/pthread_getname_np.html	comp-c-htmlman		html
 ./usr/share/man/html3/pthread_getschedparam.html	comp-c-htmlman		html
 ./usr/share/man/html3/pthread_getspecific.html	comp-c-htmlman		html
@@ -19387,6 +19389,7 @@
 ./usr/share/man/man3/pthread_equal.3		comp-c-man		.man
 ./usr/share/man/man3/pthread_exit.3		comp-c-man		.man
 ./usr/share/man/man3/pthread_getaffinity_np.3	comp-c-man		.man
+./usr/share/man/man3/pthread_getattr_np.3	comp-c-man		.man
 ./usr/share/man/man3/pthread_getname_np.3	comp-c-man		.man
 ./usr/share/man/man3/pthread_getschedparam.3	comp-c-man		.man
 ./usr/share/man/man3/pthread_getspecific.3	comp-c-man		.man
