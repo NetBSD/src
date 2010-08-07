@@ -1,4 +1,4 @@
-/*	$NetBSD: search.c,v 1.21 2006/03/21 17:48:10 christos Exp $	 */
+/*	$NetBSD: search.c,v 1.22 2010/08/07 19:47:34 joerg Exp $	 */
 
 /*
  * Copyright 1996 Matt Thomas <matt@3am-software.com>
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: search.c,v 1.21 2006/03/21 17:48:10 christos Exp $");
+__RCSID("$NetBSD: search.c,v 1.22 2010/08/07 19:47:34 joerg Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -80,15 +80,17 @@ _rtld_search_library_path(const char *name, size_t namelen,
 
 	for (sp = _rtld_invalid_paths; sp != NULL; sp = sp->sp_next) {
 		if (sp->sp_pathlen == pathnamelen &&
+		    sp->sp_path[dirlen] == '/' &&
 		    !memcmp(name, sp->sp_path + dirlen + 1, namelen) &&
 		    !memcmp(dir, sp->sp_path, dirlen)) {
 			return NULL;
 		}
 	}
 
-	(void)strncpy(pathname, dir, dirlen);
+	memcpy(pathname, dir, dirlen);
 	pathname[dirlen] = '/';
-	strcpy(pathname + dirlen + 1, name);
+	memcpy(pathname + dirlen + 1, name, namelen);
+	pathname[pathnamelen] = '\0';
 
 	dbg(("  Trying \"%s\"", pathname));
 	obj = _rtld_load_object(pathname, mode);
