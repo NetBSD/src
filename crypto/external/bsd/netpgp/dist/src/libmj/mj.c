@@ -44,7 +44,7 @@ strnsave(const char *s, int n, unsigned esc)
 	int	 i;
 
 	if (n < 0) {
-		n = strlen(s);
+		n = (int)strlen(s);
 	}
 	NEWARRAY(char, cp, (n * 2) + 1, "strnsave", return NULL);
 	if (esc) {
@@ -107,7 +107,7 @@ create_string(mj_t *atom, const char *s)
 {
 	atom->type = MJ_STRING;
 	atom->value.s = strnsave(s, -1, 1);
-	atom->c = strlen(atom->value.s);
+	atom->c = (unsigned)strlen(atom->value.s);
 }
 
 #define MJ_OPEN_BRACKET		(MJ_OBJECT + 1)		/* 8 */
@@ -265,11 +265,11 @@ mj_parse(mj_t *atom, const char *s, int *from, int *to, int *tok)
 	switch(atom->type = *tok = gettok(s, from, to, tok)) {
 	case MJ_NUMBER:
 		atom->value.s = strnsave(&s[*from], *to - *from, 1);
-		atom->c = atom->size = strlen(atom->value.s);
+		atom->c = atom->size = (unsigned)strlen(atom->value.s);
 		return gettok(s, from, to, tok);
 	case MJ_STRING:
 		atom->value.s = strnsave(&s[*from + 1], *to - *from - 2, 1);
-		atom->c = atom->size = strlen(atom->value.s);
+		atom->c = atom->size = (unsigned)strlen(atom->value.s);
 		return gettok(s, from, to, tok);
 	case MJ_NULL:
 	case MJ_FALSE:
@@ -351,7 +351,7 @@ mj_deepcopy(mj_t *dst, mj_t *src)
 	case MJ_NUMBER:
 		(void) memcpy(dst, src, sizeof(*dst));
 		dst->value.s = strnsave(src->value.s, -1, 0);
-		dst->c = dst->size = strlen(dst->value.s);
+		dst->c = dst->size = (unsigned)strlen(dst->value.s);
 		return 1;
 	case MJ_ARRAY:
 	case MJ_OBJECT:
