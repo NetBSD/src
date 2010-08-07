@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_verbose.c,v 1.8 2010/08/07 14:17:21 jruoho Exp $ */
+/*	$NetBSD: acpi_verbose.c,v 1.9 2010/08/07 18:59:53 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007, 2010 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_verbose.c,v 1.8 2010/08/07 14:17:21 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_verbose.c,v 1.9 2010/08/07 18:59:53 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -76,6 +76,10 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_verbose.c,v 1.8 2010/08/07 14:17:21 jruoho Exp 
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
 #include <dev/acpi/acpidevs_data.h>
+
+#include <prop/proplib.h>
+
+static bool	   acpiverbose_modcmd_prop(prop_dictionary_t);
 
 void		   acpi_print_verbose_real(struct acpi_softc *);
 void		   acpi_print_dev_real(const char *);
@@ -92,8 +96,11 @@ MODULE(MODULE_CLASS_MISC, acpiverbose, NULL);
 static int
 acpiverbose_modcmd(modcmd_t cmd, void *arg)
 {
-	static void	(*saved_print_verbose)(struct acpi_softc *);
-	static void	(*saved_print_dev)(const char *);
+	static void (*saved_print_verbose)(struct acpi_softc *);
+	static void (*saved_print_dev)(const char *);
+	bool dump;
+
+	dump = false;
 
 	switch (cmd) {
 
@@ -103,6 +110,13 @@ acpiverbose_modcmd(modcmd_t cmd, void *arg)
 		acpi_print_verbose = acpi_print_verbose_real;
 		acpi_print_dev = acpi_print_dev_real;
 		acpi_verbose_loaded = 1;
+
+		if (arg != NULL)
+			dump = acpiverbose_modcmd_prop(arg);
+
+		if (dump != false)
+			acpi_print_verbose_real(acpi_softc);
+
 		return 0;
 
 	case MODULE_CMD_FINI:
@@ -114,6 +128,19 @@ acpiverbose_modcmd(modcmd_t cmd, void *arg)
 	default:
 		return ENOTTY;
 	}
+}
+
+static bool
+acpiverbose_modcmd_prop(prop_dictionary_t dict)
+{
+	prop_object_t obj;
+
+	obj = prop_dictionary_get(dict, "dump");
+
+	if (obj == NULL || prop_object_type(obj) != PROP_TYPE_BOOL)
+		return false;
+
+	return prop_bool_true(obj);
 }
 
 void
@@ -399,7 +426,7 @@ acpi_print_devnodes(struct acpi_softc *sc)
 	SIMPLEQ_FOREACH(ad, &sc->ad_head, ad_list) {
 
 		di = ad->ad_devinfo;
-		aprint_normal_dev(sc->sc_dev, "%-5s ", ad->ad_name);
+		aprint_normal_dev(sc->sc_dev, "[%-4s] ", ad->ad_name);
 
 		aprint_normal("HID %-10s ",
 		    ((di->Valid & ACPI_VALID_HID) != 0) ?
