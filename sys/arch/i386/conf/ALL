@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.263 2010/08/07 09:53:25 jruoho Exp $
+# $NetBSD: ALL,v 1.264 2010/08/07 09:55:59 jruoho Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.263 $"
+#ident 		"ALL-$Revision: 1.264 $"
 
 maxusers	64		# estimated number of users
 
@@ -1790,7 +1790,6 @@ options ACPI_APM_DEBUG
 options ACPI_DEBUG
 options ACPI_DEBUG_ALLOC
 options ACPI_MUTEX_DEBUG
-options ACPI_FDC_DEBUG
 options ADB_DEBUG
 options ADM1030_DEBUG
 options ADT7467_DEBUG

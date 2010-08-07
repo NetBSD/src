@@ -1,4 +1,4 @@
-/* $NetBSD: fdc_acpi.c,v 1.40 2010/04/14 19:27:28 jruoho Exp $ */
+/* $NetBSD: fdc_acpi.c,v 1.41 2010/08/07 09:55:59 jruoho Exp $ */
 
 /*
  * Copyright (c) 2002 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdc_acpi.c,v 1.40 2010/04/14 19:27:28 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdc_acpi.c,v 1.41 2010/08/07 09:55:59 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -206,10 +206,8 @@ fdc_acpi_attach(device_t parent, device_t self, void *aux)
 		 * XXX if there is no _FDE control method, attempt to
 		 * probe without pnp
 		 */
-#ifdef ACPI_FDC_DEBUG
 		aprint_debug_dev(sc->sc_dev,
 		    "unable to enumerate, attempting normal probe\n");
-#endif
 	}
 
 	fdcattach(sc);
@@ -229,11 +227,10 @@ fdc_acpi_enumerate(struct fdc_acpi_softc *asc)
 	int i, drives = -1;
 
 	rv = acpi_eval_struct(asc->sc_node->ad_handle, "_FDE", &abuf);
+
 	if (ACPI_FAILURE(rv)) {
-#ifdef ACPI_FDC_DEBUG
 		aprint_normal_dev(sc->sc_dev, "failed to evaluate _FDE: %s\n",
 		    AcpiFormatException(rv));
-#endif
 		return drives;
 	}
 	fde = abuf.Pointer;
@@ -258,10 +255,8 @@ fdc_acpi_enumerate(struct fdc_acpi_softc *asc)
 	drives = 0;
 	for (i = 0; i < 4; i++) {
 		if (p[i]) drives |= (1 << i);
-#ifdef ACPI_FDC_DEBUG
 		aprint_normal_dev(sc->sc_dev, "drive %d %sattached\n", i,
 		    p[i] ? "" : "not ");
-#endif
 	}
 
 	/*
@@ -293,11 +288,9 @@ fdc_acpi_getknownfds(struct fdc_acpi_softc *asc)
 			continue;
 		rv = acpi_eval_struct(asc->sc_node->ad_handle, "_FDI", &abuf);
 		if (ACPI_FAILURE(rv)) {
-#ifdef ACPI_FDC_DEBUG
 			aprint_normal_dev(sc->sc_dev,
 			    "failed to evaluate _FDI: %s on drive %d\n",
 			    AcpiFormatException(rv), i);
-#endif
 			/* XXX if _FDI fails, assume 1.44MB floppy */
 			sc->sc_knownfds[i] = &fdc_acpi_fdtypes[0];
 			continue;
@@ -342,10 +335,8 @@ fdc_acpi_nvtotype(const char *fdc, int nvraminfo, int drive)
 	case ACPI_FDC_DISKETTE_720K:
 		return &fdc_acpi_fdtypes[4];
 	default:
-#ifdef ACPI_FDC_DEBUG
 		aprint_normal("%s: drive %d: unknown device type 0x%x\n",
 		    fdc, drive, type);
-#endif
 		return NULL;
 	}
 }
