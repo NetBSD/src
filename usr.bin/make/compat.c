@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.79 2010/06/03 15:40:15 sjg Exp $	*/
+/*	$NetBSD: compat.c,v 1.80 2010/08/07 06:44:08 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: compat.c,v 1.79 2010/06/03 15:40:15 sjg Exp $";
+static char rcsid[] = "$NetBSD: compat.c,v 1.80 2010/08/07 06:44:08 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)compat.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: compat.c,v 1.79 2010/06/03 15:40:15 sjg Exp $");
+__RCSID("$NetBSD: compat.c,v 1.80 2010/08/07 06:44:08 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -381,6 +381,8 @@ again:
     while (1) {
 
 	while ((retstat = wait(&reason)) != cpid) {
+	    if (retstat > 0)
+		JobReapChild(retstat, reason, FALSE); /* not ours? */
 	    if (retstat == -1 && errno != EINTR) {
 		break;
 	    }
