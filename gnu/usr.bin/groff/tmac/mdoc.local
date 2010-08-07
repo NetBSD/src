@@ -1,4 +1,4 @@
-.\" $NetBSD: mdoc.local,v 1.57 2010/02/21 21:16:09 wiz Exp $
+.\" $NetBSD: mdoc.local,v 1.58 2010/08/07 18:57:12 wiz Exp $
 .\"
 .\" Copyright (c) 2003, 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -77,6 +77,8 @@
 .ds doc-volume-as-ibmnws                ibmnws
 .ds doc-volume-as-iyonix                iyonix
 .ds doc-volume-as-landisk               landisk
+.ds doc-volume-as-x86                   x86
+.ds doc-volume-as-xen                   xen
 .
 .\" Local libraries not in groff
 .ds doc-str-Lb-libarchive       Reading and Writing Streaming Archives Library (libarchive, \-larchive)
