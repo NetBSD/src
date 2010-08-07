@@ -1,11 +1,11 @@
-/*	$NetBSD: acpi_verbose.c,v 1.6 2010/08/06 23:38:34 jruoho Exp $ */
+/*	$NetBSD: acpi_verbose.c,v 1.7 2010/08/07 08:59:51 jruoho Exp $ */
 
 /*-
- * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 2003, 2007, 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Charles M. Hannum of By Noon Software, Inc.
+ * by Charles M. Hannum of By Noon Software, Inc, and Jukka Ruohonen.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_verbose.c,v 1.6 2010/08/06 23:38:34 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_verbose.c,v 1.7 2010/08/07 08:59:51 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -79,6 +79,7 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_verbose.c,v 1.6 2010/08/06 23:38:34 jruoho Exp 
 
 void		acpi_print_verbose_real(struct acpi_softc *);
 void		acpi_print_dev_real(const char *);
+static void	acpi_print_fadt(struct acpi_softc *);
 static void	acpi_print_devnodes(struct acpi_softc *);
 static void	acpi_print_tree(struct acpi_devnode *, uint32_t);
 
@@ -115,6 +116,7 @@ void
 acpi_print_verbose_real(struct acpi_softc *sc)
 {
 
+	acpi_print_fadt(sc);
 	acpi_print_devnodes(sc);
 	acpi_print_tree(sc->sc_root, 0);
 }
@@ -128,6 +130,106 @@ acpi_print_dev_real(const char *pnpstr)
 
 		if (strcmp(acpi_knowndevs[i].pnp, pnpstr) == 0)
 			aprint_normal("[%s] ", acpi_knowndevs[i].str);
+	}
+}
+
+static void
+acpi_print_fadt(struct acpi_softc *sc)
+{
+	uint32_t i;
+
+	/*
+	 * See ACPI 4.0, section 5.2.9.
+	 */
+	struct acpi_fadt {
+		uint32_t	 fadt_offset;
+		const char	*fadt_name;
+		uint64_t	 fadt_value;
+	};
+
+	const struct acpi_fadt acpi_fadt_table[] = {
+
+		{ 36,	"FACS",		 AcpiGbl_FADT.Facs		},
+		{ 40,	"DSDT",		 AcpiGbl_FADT.Dsdt		},
+		{ 44,	"INT_MODEL",	 AcpiGbl_FADT.Model		},
+		{ 45,	"PM_PROFILE",	 AcpiGbl_FADT.PreferredProfile	},
+		{ 46,	"SCI_INT",	 AcpiGbl_FADT.SciInterrupt	},
+		{ 48,	"SMI_CMD",	 AcpiGbl_FADT.SmiCommand	},
+		{ 52,	"ACPI_ENABLE",	 AcpiGbl_FADT.AcpiEnable	},
+		{ 53,	"ACPI_DISABLE",	 AcpiGbl_FADT.AcpiDisable	},
+		{ 54,	"S4BIOS_REQ",	 AcpiGbl_FADT.S4BiosRequest	},
+		{ 55,	"PSTATE_CNT",	 AcpiGbl_FADT.PstateControl	},
+		{ 56,	"PM1a_EVT_BLK",	 AcpiGbl_FADT.Pm1aEventBlock	},
+		{ 60,	"PM1b_EVT_BLK",	 AcpiGbl_FADT.Pm1bEventBlock	},
+		{ 64,	"PM1a_CNT_BLK",	 AcpiGbl_FADT.Pm1aControlBlock	},
+		{ 68,	"PM1b_CNT_BLK",	 AcpiGbl_FADT.Pm1bControlBlock	},
+		{ 72,	"PM2_CNT_BLK",	 AcpiGbl_FADT.Pm2ControlBlock	},
+		{ 76,	"PM_TMR_BLK",	 AcpiGbl_FADT.PmTimerBlock	},
+		{ 80,	"GPE0_BLK",	 AcpiGbl_FADT.Gpe0Block		},
+		{ 84,	"GPE1_BLK",	 AcpiGbl_FADT.Gpe1Block		},
+		{ 88,	"PM1_EVT_LEN",	 AcpiGbl_FADT.Pm1EventLength	},
+		{ 89,	"PM1_CNT_LEN",	 AcpiGbl_FADT.Pm1ControlLength	},
+		{ 90,	"PM2_CNT_LEN",	 AcpiGbl_FADT.Pm2ControlLength	},
+		{ 91,	"PM_TMR_LEN",	 AcpiGbl_FADT.PmTimerLength	},
+		{ 92,	"GPE0_BLK_LEN",	 AcpiGbl_FADT.Gpe0BlockLength	},
+		{ 93,	"GPE1_BLK_LEN",	 AcpiGbl_FADT.Gpe1BlockLength	},
+		{ 94,	"GPE1_BASE",	 AcpiGbl_FADT.Gpe1Base		},
+		{ 95,	"CST_CNT",	 AcpiGbl_FADT.CstControl	},
+		{ 96,	"P_LVL2_LAT",	 AcpiGbl_FADT.C2Latency		},
+		{ 98,	"P_LVL3_LAT",	 AcpiGbl_FADT.C3Latency		},
+		{ 100,	"FLUSH_SIZE",	 AcpiGbl_FADT.FlushSize		},
+		{ 102,	"FLUSH_STRIDE",	 AcpiGbl_FADT.FlushStride	},
+		{ 104,	"DUTY_OFFSET",	 AcpiGbl_FADT.DutyOffset	},
+		{ 105,	"DUTY_WIDTH",	 AcpiGbl_FADT.DutyWidth		},
+		{ 106,	"DAY_ALRM",	 AcpiGbl_FADT.DayAlarm		},
+		{ 107,	"MON_ALRM",	 AcpiGbl_FADT.MonthAlarm	},
+		{ 108,	"CENTURY",	 AcpiGbl_FADT.Century		},
+		{ 109,	"IAPC_BOOT_ARCH",AcpiGbl_FADT.BootFlags		},
+		{ 128,	"RESET_VALUE",	 AcpiGbl_FADT.ResetValue	},
+	};
+
+	const struct acpi_fadt acpi_fadt_flags[] = {
+
+		{ 0,	"WBINVD",	ACPI_FADT_WBINVD		},
+		{ 1,	"WBINVD_FLUSH",	ACPI_FADT_WBINVD_FLUSH		},
+		{ 2,	"PROC_C1",	ACPI_FADT_C1_SUPPORTED		},
+		{ 3,	"P_LVL2_UP",	ACPI_FADT_C2_MP_SUPPORTED	},
+		{ 4,	"PWR_BUTTON",	ACPI_FADT_POWER_BUTTON		},
+		{ 5,	"SLP_BUTTON",	ACPI_FADT_SLEEP_BUTTON		},
+		{ 6,	"FIX_RTC",	ACPI_FADT_FIXED_RTC		},
+		{ 7,	"RTC_S4",	ACPI_FADT_S4_RTC_WAKE		},
+		{ 8,	"TMR_VAL_EXT",	ACPI_FADT_32BIT_TIMER		},
+		{ 9,	"DCK_CAP",	ACPI_FADT_DOCKING_SUPPORTED	},
+		{ 10,	"RESET_REG_SUP",ACPI_FADT_RESET_REGISTER	},
+		{ 11,	"SEALED_CASE",	ACPI_FADT_SEALED_CASE		},
+		{ 12,	"HEADLESS",	ACPI_FADT_HEADLESS		},
+		{ 13,	"CPU_SW_SLP",	ACPI_FADT_SLEEP_TYPE		},
+		{ 14,	"PCI_EXP_WAK",	ACPI_FADT_PCI_EXPRESS_WAKE	},
+		{ 15,	"PLATFORM_CLK", ACPI_FADT_PLATFORM_CLOCK	},
+		{ 16,	"S4_RTC_STS",	ACPI_FADT_S4_RTC_VALID		},
+		{ 17,	"REMOTE_POWER", ACPI_FADT_REMOTE_POWER_ON	},
+		{ 18,	"APIC_CLUSTER",	ACPI_FADT_APIC_CLUSTER		},
+		{ 19,	"APIC_PHYSICAL",ACPI_FADT_APIC_PHYSICAL		},
+	};
+
+	for (i = 0; i < __arraycount(acpi_fadt_table); i++) {
+
+		aprint_normal_dev(sc->sc_dev,
+		    "[FADT] %-15s: 0x%016" PRIX64"\n",
+		    acpi_fadt_table[i].fadt_name,
+		    acpi_fadt_table[i].fadt_value);
+	}
+
+	for (i = 0; i < __arraycount(acpi_fadt_flags); i++) {
+
+		aprint_normal_dev(sc->sc_dev,
+		    "[FADT] %-15s: 0x%016" PRIX64"\n",
+		    acpi_fadt_flags[i].fadt_name, AcpiGbl_FADT.Flags &
+		    acpi_fadt_flags[i].fadt_value);
+
+		KASSERT(i ==  acpi_fadt_flags[i].fadt_offset);
+		KASSERT(__BIT(acpi_fadt_flags[i].fadt_offset) ==
+		              acpi_fadt_flags[i].fadt_value);
 	}
 }
 
