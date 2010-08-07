@@ -12,6 +12,11 @@ while [ $# -gt 0 ]; do
 	shift
 done
 
+env USETOOLS=no MAKEOBJDIRPREFIX=/usr/obj/i386 sh -c 'cd ../libmj && \
+	make cleandir ; \
+	su root -c "make includes"; \
+	make ; \
+	su root -c "make install"'
 env USETOOLS=no MAKEOBJDIRPREFIX=/usr/obj/i386 sh -c 'cd ../lib && \
 	make cleandir ; \
 	su root -c "make includes"; \
