@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.72 2010/07/31 21:47:52 joerg Exp $
+# $NetBSD: md.amd64,v 1.73 2010/08/07 05:53:20 agc Exp $
 ./usr/include/amd64				comp-c-include
 ./usr/include/amd64/ansi.h			comp-c-include
 ./usr/include/amd64/aout_machdep.h		comp-c-include
@@ -602,6 +602,11 @@
 ./usr/lib/i386/libmenu_g.a			comp-c-proflib		compat,debuglib
 ./usr/lib/i386/libmenu_p.a			comp-c-proflib		compat,profile
 ./usr/lib/i386/libmenu_pic.a			comp-c-piclib		compat,pic
+./usr/lib/i386/libmj.a				comp-c-lib		compat
+./usr/lib/i386/libmj.so				comp-sys-shlib		compat,pic
+./usr/lib/i386/libmj_g.a			comp-c-proflib		compat,debuglib
+./usr/lib/i386/libmj_p.a			comp-c-proflib		compat,profile
+./usr/lib/i386/libmj_pic.a			comp-c-piclib		compat,pic
 ./usr/lib/i386/libnetpgp.a			comp-c-lib		compat
 ./usr/lib/i386/libnetpgp.so			comp-sys-shlib		compat,pic
 ./usr/lib/i386/libnetpgp_g.a			comp-c-proflib		compat,debuglib
@@ -885,6 +890,7 @@
 ./usr/libdata/debug/usr/lib/i386/libm.so.0.8.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libmagic.so.3.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libmenu.so.6.0.debug	comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/libmj.so.0.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libnetpgp.so.3.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libobjc.so.3.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libopcodes.so.4.0.debug	comp-compat-shlib	compat,pic,binutils,debug

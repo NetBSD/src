@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.61 2010/07/11 12:37:52 mrg Exp $
+# $NetBSD: md.sparc64,v 1.62 2010/08/07 05:53:20 agc Exp $
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/sparc				comp-c-include
 ./usr/include/sparc/_G_config.h			comp-obsolete		obsolete
@@ -425,6 +425,10 @@
 ./usr/lib/sparc/libmenu.so			base-sys-shlib		compat,pic
 ./usr/lib/sparc/libmenu_p.a			comp-c-proflib		compat,profile
 ./usr/lib/sparc/libmenu_pic.a			comp-c-piclib		compat,pic
+./usr/lib/sparc/libmj.a				comp-c-lib		compat,crypto
+./usr/lib/sparc/libmj.so			comp-sys-shlib		compat,pic,crypto
+./usr/lib/sparc/libmj_p.a			comp-c-proflib		compat,profile,crypto
+./usr/lib/sparc/libmj_pic.a			comp-c-piclib		compat,pic,crypto
 ./usr/lib/sparc/libnetpgp.a			comp-c-lib		compat,crypto
 ./usr/lib/sparc/libnetpgp.so			comp-sys-shlib		compat,pic,crypto
 ./usr/lib/sparc/libnetpgp_p.a			comp-c-proflib		compat,profile,crypto
@@ -662,6 +666,7 @@
 ./usr/libdata/debug/usr/lib/sparc/libm.so.0.8.debug			comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libmagic.so.3.0.debug			comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libmenu.so.6.0.debug			comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/sparc/libmj.so.0.0.debug			comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libnetpgp.so.3.0.debug		comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libobjc.so.3.0.debug			comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libopcodes.so.4.0.debug		comp-compat-shlib	compat,pic,binutils,debug
