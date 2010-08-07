@@ -1,4 +1,4 @@
-/*	$NetBSD: nonints.h,v 1.59 2010/06/03 15:40:16 sjg Exp $	*/
+/*	$NetBSD: nonints.h,v 1.60 2010/08/07 06:44:08 sjg Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -105,6 +105,9 @@ unsigned int Cond_save_depth(void);
 int For_Eval(char *);
 int For_Accum(char *);
 void For_Run(int);
+
+/* job.c */
+void JobReapChild(pid_t, int, Boolean);
 
 /* main.c */
 void Main_ParseArgLine(const char *);
