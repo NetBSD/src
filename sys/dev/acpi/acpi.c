@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.212 2010/08/07 09:41:19 jruoho Exp $	*/
+/*	$NetBSD: acpi.c,v 1.213 2010/08/07 17:12:55 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.212 2010/08/07 09:41:19 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.213 2010/08/07 17:12:55 jruoho Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -163,7 +163,7 @@ static uint64_t		 acpi_root_pointer;
 extern kmutex_t		 acpi_interrupt_list_mtx;
 extern struct		 cfdriver acpi_cd;
 static ACPI_HANDLE	 acpi_scopes[4];
-static ACPI_TABLE_HEADER *madt_header;
+ACPI_TABLE_HEADER	*madt_header;
 
 /*
  * This structure provides a context for the ACPI
