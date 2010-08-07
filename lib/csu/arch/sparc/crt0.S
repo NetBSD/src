@@ -1,4 +1,4 @@
-/* $NetBSD: crt0.c,v 1.17 2007/12/01 10:16:06 yamt Exp $ */
+/* $NetBSD: crt0.S,v 1.1 2010/08/07 18:01:34 joerg Exp $ */
 
 /*
  * Copyright (c) 1998 Christos Zoulas
@@ -35,71 +35,22 @@
  * <<Id: LICENSE,v 1.2 2000/06/14 15:57:33 cgd Exp>>
  */
 
-#include "common.h"
+#include <machine/asm.h>
 
-void ___start __P((int, char **, char **, void (*cleanup) __P((void)),
-    const Obj_Entry *, struct ps_strings *));
+RCSID("$NetBSD: crt0.S,v 1.1 2010/08/07 18:01:34 joerg Exp $")
 
-__asm("	.text				\n"
-"	.align	4			\n"
-"	.globl	__start			\n"
-"	.globl	_start			\n"
-"_start:				\n"
-"__start:				\n"
-"	pushl	%ebx			# ps_strings	\n"
-"	pushl	%ecx			# obj		\n"
-"	pushl	%edx			# cleanup	\n"
-"	movl	12(%esp),%eax		\n"
-"	leal	20(%esp,%eax,4),%ecx	\n"
-"	leal	16(%esp),%edx		\n"
-"	pushl	%ecx			\n"
-"	pushl	%edx			\n"
-"	pushl	%eax			\n"
-"	call	___start");
+STRONG_ALIAS(_start,__start)
 
-void
-___start(argc, argv, envp, cleanup, obj, ps_strings)
-	int argc;
-	char **argv;
-	char **envp;
-	void (*cleanup) __P((void));		/* from shared loader */
-	const Obj_Entry *obj;			/* from shared loader */
-	struct ps_strings *ps_strings;
-{
-	environ = envp;
-
-	if ((__progname = argv[0]) != NULL) {	/* NULL ptr if argc = 0 */
-		if ((__progname = _strrchr(__progname, '/')) == NULL)
-			__progname = argv[0];
-		else
-			__progname++;
-	}
-
-	if (ps_strings != (struct ps_strings *)0)
-		__ps_strings = ps_strings;
-
-#ifdef DYNAMIC
-	if (&_DYNAMIC != NULL) {
-		_rtld_setup(cleanup, obj);
-	}
-#endif
-
-#ifdef MCRT0
-	atexit(_mcleanup);
-	monstartup((u_long)&_eprol, (u_long)&_etext);
-#endif
-
-	atexit(_fini);
-	_init();
-
-	exit(main(argc, argv, environ));
-}
-
-/*
- * NOTE: Leave the RCS ID _after_ __start(), in case it gets placed in .text.
- */
-#if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: crt0.c,v 1.17 2007/12/01 10:16:06 yamt Exp $");
-#endif /* LIBC_SCCS and not lint */
-
-#include "common.c"
+_ENTRY(__start)
+	mov	0, %fp
+	ld	[%sp + 64], %o0		! get argc
+	add	%sp, 68, %o1		! get argv
+	sll	%o0, 2,	%o2		!
+	add	%o2, 4,	%o2		! envp = argv + (argc << 2) + 4
+	add	%o1, %o2, %o2		!
+	andn	%sp, 7,	%sp		! align
+	sub	%sp, 24, %sp		! expand to standard stack frame size
+	mov	%g3, %o3
+	mov	%g2, %o4
+	call	___start
+	 mov	%g1, %o5

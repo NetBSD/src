@@ -1,4 +1,4 @@
-/* $NetBSD: dot_init.h,v 1.8 2008/05/10 15:31:04 martin Exp $ */
+/* $NetBSD: crti.S,v 1.1 2010/08/07 18:01:35 joerg Exp $ */
 
 /*-
  * Copyright (c) 2001 Ross Harvey
@@ -33,33 +33,20 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
+#include <machine/asm.h>
 
-#define	MD_SECTION_PROLOGUE(sect, entry_pt)		\
-		__asm (					\
-		".section "#sect",\"ax\",@progbits	\n"\
-		".global "#entry_pt" 			\n"\
-		"	.align	16			\n"\
-		#entry_pt":				\n"\
-		"	pushl	%ebp			\n"\
-		"	movl	%esp, %ebp		\n"\
-		"	/* fall thru */			\n"\
-		".previous")
+RCSID("$NetBSD: crti.S,v 1.1 2010/08/07 18:01:35 joerg Exp $")
 
-		/* placement of the .align _after_ the label is intentional */
+#include "sysident.S"
 
-#define	MD_SECTION_EPILOGUE(sect)			\
-		__asm (					\
-		".section "#sect",\"ax\",@progbits	\n"\
-		"	leave				\n"\
-		"	ret				\n"\
-		".previous")
+	.section ".init", "ax", @progbits
+	.align 16
+	.globl _init
+_init:
+	subq	$8, %rsp
 
-#define	MD_INIT_SECTION_PROLOGUE MD_SECTION_PROLOGUE(.init, _init)
-#define	MD_FINI_SECTION_PROLOGUE MD_SECTION_PROLOGUE(.fini, _fini)
-
-#define	MD_INIT_SECTION_EPILOGUE MD_SECTION_EPILOGUE(.init)
-#define	MD_FINI_SECTION_EPILOGUE MD_SECTION_EPILOGUE(.fini)
-
-#define MD_CALL_STATIC_FUNCTION(section, func) \
-__asm(".section " #section "; call " #func "; .previous");
+	.section ".fini", "ax", @progbits
+	.align 16
+	.globl _fini
+_fini:
+	subq	$8, %rsp

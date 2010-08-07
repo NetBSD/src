@@ -1,7 +1,7 @@
-/* $NetBSD: crt0.c,v 1.5 2007/09/27 10:51:18 dogcow Exp $ */
+/* $NetBSD: crt0.S,v 1.1 2010/08/07 18:01:34 joerg Exp $ */
 
 /*
- * Copyright (c) 1998 Christos Zoulas
+ * Copyright (c) 1999 Matt Thomas
  * Copyright (c) 1995 Christopher G. Demetriou
  * All rights reserved.
  * 
@@ -35,70 +35,19 @@
  * <<Id: LICENSE,v 1.2 2000/06/14 15:57:33 cgd Exp>>
  */
 
-#include <sys/types.h>
-#include <machine/profile.h>
+#include <machine/asm.h>
 
-#include "common.h"
+RCSID("$NetBSD: crt0.S,v 1.1 2010/08/07 18:01:34 joerg Exp $")
 
-void ___start(int, char **, char **, void (*cleanup)(void),
-    const Obj_Entry *, struct ps_strings *);
+STRONG_ALIAS(_start,__start)
 
-__asm(" .text						; \
-	.align	8					; \
-	.globl	__start					; \
-	.globl	_start					; \
-_start:							; \
-__start:						; \
-	movq	%rbx,%r9				; \
-	movq	%rcx,%r8				; \
-	movq	%rdx,%rcx				; \
-	movq	(%rsp),%rdi				; \
-	leaq	16(%rsp,%rdi,8),%rdx			; \
-	leaq	8(%rsp),%rsi				; \
-	subq	$8,%rsp					; \
-	andq	$~15,%rsp				; \
-	addq	$8,%rsp					; \
-	jmp	___start				; ");
-
-void
-___start(int argc, char **argv, char **envp,
-    void (*cleanup)(void),			/* from shared loader */
-    const Obj_Entry *obj,			/* from shared loader */
-    struct ps_strings *ps_strings)
-{
-	environ = envp;
-
-	if ((__progname = argv[0]) != NULL) {	/* NULL ptr if argc = 0 */
-		if ((__progname = _strrchr(__progname, '/')) == NULL)
-			__progname = argv[0];
-		else
-			__progname++;
-	}
-
-	if (ps_strings != (struct ps_strings *)0)
-		__ps_strings = ps_strings;
-
-#ifdef DYNAMIC
-	if (&_DYNAMIC != NULL)
-		_rtld_setup(cleanup, obj);
-#endif
-
-#ifdef MCRT0
-	atexit(_mcleanup);
-	monstartup((u_long)&_eprol, (u_long)&_etext);
-#endif
-
-	atexit(_fini);
-	_init();
-
-	exit(main(argc, argv, environ));
-}
-
-/*
- * NOTE: Leave the RCS ID _after_ __start(), in case it gets placed in .text.
- */
-#if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: crt0.c,v 1.5 2007/09/27 10:51:18 dogcow Exp $");
-#endif /* LIBC_SCCS and not lint */
-
-#include "common.c"
+_ENTRY(__start)
+	.word	0x0101
+	pushl	%r9		/* ps_strings */
+	pushl	%r8		/* obj */
+	pushl	%r7		/* cleanup */
+	movl	(%r6),%r0	/* argc */
+	pushal	8(%r6)[%r0]	/* envp = &argv[argc + 1] */
+	pushal	4(%r6)		/* argv */
+	pushl	%r0		/* argc */
+	calls	$6,___start
