@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.79 2010/07/31 00:04:43 joerg Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.80 2010/08/07 21:03:18 joerg Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -61,16 +61,6 @@
 #include <sys/cdefs_elf.h>
 #else
 #include <sys/cdefs_aout.h>
-#endif
-
-#if defined(__cplusplus)
-#define	__BEGIN_DECLS		extern "C" {
-#define	__END_DECLS		}
-#define	__static_cast(x,y)	static_cast<x>(y)
-#else
-#define	__BEGIN_DECLS
-#define	__END_DECLS
-#define	__static_cast(x,y)	(x)y
 #endif
 
 /*
@@ -226,6 +216,33 @@
 #define	__used		__attribute__((__used__))
 #else
 #define	__used		__unused
+#endif
+
+#if __GNUC_PREREQ__(4, 0)
+#  define __dso_public	__attribute__((__visibility__("default")))
+#  define __dso_hidden	__attribute__((__visibility__("hidden")))
+#  define __BEGIN_PUBLIC	_Pragma("GCC visibility push(default)")
+#  define __END_PUBLIC		_Pragma("GCC visibility pop")
+#  define __BEGIN_HIDDEN	_Pragma("GCC visibility push(hidden)")
+#  define __END_HIDDEN		_Pragma("GCC visibility pop")
+#else
+#  define __dso_public
+#  define __dso_hidden
+#  define __BEGIN_PUBLIC
+#  define __END_PUBLIC
+#  define __BEGIN_HIDDEN
+#  define __END_HIDDEN
+#endif
+
+
+#if defined(__cplusplus)
+#define	__BEGIN_DECLS		__BEGIN_PUBLIC extern "C" {
+#define	__END_DECLS		} __END_PUBLIC
+#define	__static_cast(x,y)	static_cast<x>(y)
+#else
+#define	__BEGIN_DECLS		__BEGIN_PUBLIC
+#define	__END_DECLS		__END_PUBLIC
+#define	__static_cast(x,y)	(x)y
 #endif
 
 /*
