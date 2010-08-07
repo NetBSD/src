@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.49 2010/06/30 17:49:32 phx Exp $
+# $NetBSD: GENERIC,v 1.50 2010/08/07 19:18:04 phx Exp $
 #
 # machine description file for GENERIC NAS
 # 
@@ -22,7 +22,7 @@ include 	"arch/sandpoint/conf/std.sandpoint"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.49 $"
+#ident 		"GENERIC-$Revision: 1.50 $"
 
 maxusers	32
 
@@ -70,8 +70,6 @@ options 	COMPAT_LINUX	# binary compatibility with Linux
 options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 options 	MSGBUFSIZE=65536
-
-#options 	WAPBL
 
 file-system 	FFS		# UFS
 file-system 	EXT2FS		# second extended file system (linux)
@@ -122,7 +120,7 @@ options 	NFS_BOOT_BOOTPARAM,NFS_BOOT_BOOTP
 
 config		netbsd	root on ? type ?
 
-# network psuedo-devices
+# network pseudo-devices
 pseudo-device	bpfilter		# packet filter
 pseudo-device	vlan			# IEEE 802.1q encapsulation
 #pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
