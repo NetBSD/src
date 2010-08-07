@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1492 2010/08/07 18:12:45 wiz Exp $
+#	$NetBSD: mi,v 1.1493 2010/08/07 22:21:30 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -9376,6 +9376,7 @@
 ./usr/share/man/cat9/microuptime.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/module.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/module_autoload.0		comp-sys-catman		.cat
+./usr/share/man/cat9/module_find_section.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/module_hold.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/module_init_class.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/module_load.0		comp-sys-catman		.cat
@@ -15173,6 +15174,7 @@
 ./usr/share/man/html9/microuptime.html		comp-sys-htmlman	html
 ./usr/share/man/html9/module.html		comp-sys-htmlman	html
 ./usr/share/man/html9/module_autoload.html	comp-sys-htmlman	html
+./usr/share/man/html9/module_find_section.html	comp-sys-htmlman	html
 ./usr/share/man/html9/module_hold.html		comp-sys-htmlman	html
 ./usr/share/man/html9/module_init_class.html	comp-sys-htmlman	html
 ./usr/share/man/html9/module_load.html		comp-sys-htmlman	html
@@ -21131,6 +21133,7 @@
 ./usr/share/man/man9/microuptime.9		comp-sys-man		.man
 ./usr/share/man/man9/module.9			comp-sys-man		.man
 ./usr/share/man/man9/module_autoload.9		comp-sys-man		.man
+./usr/share/man/cat9/module_find_section.9	comp-sys-man		.man
 ./usr/share/man/man9/module_hold.9		comp-sys-man		.man
 ./usr/share/man/man9/module_init_class.9	comp-sys-man		.man
 ./usr/share/man/man9/module_load.9		comp-sys-man		.man
