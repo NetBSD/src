@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.165 2010/01/14 12:05:37 wiz Exp $
+# $NetBSD: mi,v 1.166 2010/08/07 20:48:54 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -822,6 +822,8 @@
 ./usr/share/examples/pppd			misc-pppd-examples
 ./usr/share/examples/pppd/cingular3G		misc-pppd-examples	share
 ./usr/share/examples/pppd/cingular3G.chat	misc-pppd-examples	share
+./usr/share/examples/pppd/cosmote3G		misc-pppd-examples	share
+./usr/share/examples/pppd/cosmote3G.chat	misc-pppd-examples	share
 ./usr/share/examples/pppd/telus			misc-pppd-examples	share
 ./usr/share/examples/pppd/telus.chat		misc-pppd-examples	share
 ./usr/share/examples/racoon/FAQ			misc-netutil-examples	crypto,share
