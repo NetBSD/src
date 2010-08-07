@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_pioctl.h,v 1.7 2005/12/11 12:19:50 christos Exp $	*/
+/*	$NetBSD: coda_pioctl.h,v 1.8 2010/08/07 20:39:33 christos Exp $	*/
 
 /*
  *
@@ -51,7 +51,7 @@
 #ifndef	_SYS_PIOCTL_H_
 #define _SYS_PIOCTL_H_
 
-/* The 2K limits above are a consequence of the size of the kernel buffer
+/* The 8K limits above are a consequence of the size of the kernel buffer
    used to buffer requests from the user to venus--2*MAXPATHLEN.
    The buffer pointers may be null, or the counts may be 0 if there
    are no input or output parameters
