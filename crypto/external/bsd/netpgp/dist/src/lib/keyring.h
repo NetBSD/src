@@ -96,6 +96,7 @@ unsigned   __ops_keyring_fileread(__ops_keyring_t *, const unsigned,
 					const char *);
 
 int __ops_keyring_list(__ops_io_t *, const __ops_keyring_t *, const int);
+int __ops_keyring_json(__ops_io_t *, const __ops_keyring_t *, mj_t *, const int);
 
 void __ops_set_seckey(__ops_contents_t *, const __ops_key_t *);
 void __ops_forget(void *, unsigned);
@@ -120,7 +121,7 @@ int __ops_sprint_keydata(__ops_io_t *, const __ops_keyring_t *,
 			const __ops_key_t *, char **, const char *,
 			const __ops_pubkey_t *, const int);
 int __ops_sprint_mj(__ops_io_t *, const __ops_keyring_t *,
-			const __ops_key_t *, char **, const char *,
+			const __ops_key_t *, mj_t *, const char *,
 			const __ops_pubkey_t *, const int);
 int __ops_hkp_sprint_keydata(__ops_io_t *, const __ops_keyring_t *,
 			const __ops_key_t *, char **,

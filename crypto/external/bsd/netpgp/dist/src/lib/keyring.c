@@ -57,7 +57,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: keyring.c,v 1.39 2010/07/09 05:35:34 agc Exp $");
+__RCSID("$NetBSD: keyring.c,v 1.40 2010/08/07 04:16:40 agc Exp $");
 #endif
 
 #ifdef HAVE_FCNTL_H
@@ -991,6 +991,44 @@ __ops_keyring_list(__ops_io_t *io, const __ops_keyring_t *keyring, const int psi
 			__ops_print_keydata(io, keyring, key, "pub", &key->key.pubkey, psigs);
 		}
 		(void) fputc('\n', io->res);
+	}
+	return 1;
+}
+
+int
+__ops_keyring_json(__ops_io_t *io, const __ops_keyring_t *keyring, mj_t *obj, const int psigs)
+{
+	__ops_key_t		*key;
+	unsigned		 n;
+
+	(void) memset(obj, 0x0, sizeof(*obj));
+	mj_create(obj, "array");
+	obj->size = keyring->keyvsize;
+	if (__ops_get_debug_level(__FILE__)) {
+		(void) fprintf(io->errs, "__ops_keyring_json: vsize %u\n", obj->size);
+	}
+	if ((obj->value.v = calloc(sizeof(*obj->value.v), obj->size)) == NULL) {
+		(void) fprintf(io->errs, "calloc failure\n");
+		return 0;
+	}
+	for (n = 0, key = keyring->keys; n < keyring->keyc; ++n, ++key) {
+		if (__ops_is_key_secret(key)) {
+			__ops_sprint_mj(io, keyring, key, &obj->value.v[obj->c],
+				"sec", &key->key.seckey.pubkey, psigs);
+		} else {
+			__ops_sprint_mj(io, keyring, key, &obj->value.v[obj->c],
+				"pub", &key->key.pubkey, psigs);
+		}
+		if (obj->value.v[obj->c].type != 0) {
+			obj->c += 1;
+		}
+	}
+	if (__ops_get_debug_level(__FILE__)) {
+		char	*s;
+
+		mj_asprint(&s, obj);
+		(void) fprintf(stderr, "__ops_keyring_json: '%s'\n", s);
+		free(s);
 	}
 	return 1;
 }
