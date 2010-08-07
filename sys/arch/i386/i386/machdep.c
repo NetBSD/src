@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.691 2010/07/24 00:45:54 jym Exp $	*/
+/*	$NetBSD: machdep.c,v 1.692 2010/08/07 20:07:26 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.691 2010/07/24 00:45:54 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.692 2010/08/07 20:07:26 jruoho Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -942,7 +942,7 @@ haltsys:
 
 	if (howto & RB_HALT) {
 #if NACPICA > 0
-		AcpiDisable();
+		acpi_disable();
 #endif
 
 		printf("\n");

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.147 2010/07/31 18:38:32 joerg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.148 2010/08/07 20:07:25 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.147 2010/07/31 18:38:32 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.148 2010/08/07 20:07:25 jruoho Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -709,7 +709,7 @@ haltsys:
 
 	if (howto & RB_HALT) {
 #if NACPICA > 0
-		AcpiDisable();
+		acpi_disable();
 #endif
 
 		printf("\n");

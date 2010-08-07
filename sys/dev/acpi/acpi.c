@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.213 2010/08/07 17:12:55 jruoho Exp $	*/
+/*	$NetBSD: acpi.c,v 1.214 2010/08/07 20:07:25 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.213 2010/08/07 17:12:55 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.214 2010/08/07 20:07:25 jruoho Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -361,6 +361,14 @@ fail:
 		(void)AcpiTerminate();
 
 	return 0;
+}
+
+void
+acpi_disable(void)
+{
+
+	if (AcpiGbl_FADT.SmiCommand != 0)
+		AcpiDisable();
 }
 
 int
