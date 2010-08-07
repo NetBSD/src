@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_verbose.c,v 1.7 2010/08/07 08:59:51 jruoho Exp $ */
+/*	$NetBSD: acpi_verbose.c,v 1.8 2010/08/07 14:17:21 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007, 2010 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_verbose.c,v 1.7 2010/08/07 08:59:51 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_verbose.c,v 1.8 2010/08/07 14:17:21 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -77,11 +77,15 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_verbose.c,v 1.7 2010/08/07 08:59:51 jruoho Exp 
 #include <dev/acpi/acpivar.h>
 #include <dev/acpi/acpidevs_data.h>
 
-void		acpi_print_verbose_real(struct acpi_softc *);
-void		acpi_print_dev_real(const char *);
-static void	acpi_print_fadt(struct acpi_softc *);
-static void	acpi_print_devnodes(struct acpi_softc *);
-static void	acpi_print_tree(struct acpi_devnode *, uint32_t);
+void		   acpi_print_verbose_real(struct acpi_softc *);
+void		   acpi_print_dev_real(const char *);
+static void	   acpi_print_madt(struct acpi_softc *);
+static ACPI_STATUS acpi_print_madt_callback(ACPI_SUBTABLE_HEADER *, void *);
+static void	   acpi_print_fadt(struct acpi_softc *);
+static void	   acpi_print_devnodes(struct acpi_softc *);
+static void	   acpi_print_tree(struct acpi_devnode *, uint32_t);
+
+extern ACPI_TABLE_HEADER *madt_header;
 
 MODULE(MODULE_CLASS_MISC, acpiverbose, NULL);
 
@@ -116,6 +120,7 @@ void
 acpi_print_verbose_real(struct acpi_softc *sc)
 {
 
+	acpi_print_madt(sc);
 	acpi_print_fadt(sc);
 	acpi_print_devnodes(sc);
 	acpi_print_tree(sc->sc_root, 0);
@@ -131,6 +136,158 @@ acpi_print_dev_real(const char *pnpstr)
 		if (strcmp(acpi_knowndevs[i].pnp, pnpstr) == 0)
 			aprint_normal("[%s] ", acpi_knowndevs[i].str);
 	}
+}
+
+static void
+acpi_print_madt(struct acpi_softc *sc)
+{
+	ACPI_TABLE_MADT *madt;
+	ACPI_STATUS rv;
+
+	rv = acpi_madt_map();
+
+	if (ACPI_FAILURE(rv) && rv != AE_ALREADY_EXISTS)
+		return;
+
+	if (madt_header == NULL)
+		return;
+
+	madt = (ACPI_TABLE_MADT *)madt_header;
+	acpi_madt_walk(acpi_print_madt_callback, sc);
+}
+
+static ACPI_STATUS
+acpi_print_madt_callback(ACPI_SUBTABLE_HEADER *hdr, void *aux)
+{
+	struct acpi_softc *sc = aux;
+	device_t self = sc->sc_dev;
+
+	/*
+	 * See ACPI 4.0, section 5.2.12.
+	 */
+	switch (hdr->Type) {
+
+	case ACPI_MADT_TYPE_LOCAL_APIC:
+
+		aprint_normal_dev(self, "[MADT] %-15s: "
+		    "CPU ID %u, LAPIC ID %u, FLAGS 0x%02X", "LAPIC",
+		    ((ACPI_MADT_LOCAL_APIC *)hdr)->ProcessorId,
+		    ((ACPI_MADT_LOCAL_APIC *)hdr)->Id,
+		    ((ACPI_MADT_LOCAL_APIC *)hdr)->LapicFlags);
+
+		break;
+
+	case ACPI_MADT_TYPE_IO_APIC:
+
+		aprint_normal_dev(self, "[MADT] %-15s: "
+		    "ID %u, GSI %u, ADDR 0x%04X", "I/O APIC",
+		    ((ACPI_MADT_IO_APIC *)hdr)->Id,
+		    ((ACPI_MADT_IO_APIC *)hdr)->GlobalIrqBase,
+		    ((ACPI_MADT_IO_APIC *)hdr)->Address);
+
+		break;
+
+	case ACPI_MADT_TYPE_INTERRUPT_OVERRIDE:
+
+		aprint_normal_dev(self, "[MADT] %-15s: "
+		    "BUS %u, IRQ %u, GSI %u, FLAGS 0x%02X", "INTR OVERRIDE",
+		    ((ACPI_MADT_INTERRUPT_OVERRIDE *)hdr)->Bus,
+		    ((ACPI_MADT_INTERRUPT_OVERRIDE *)hdr)->SourceIrq,
+		    ((ACPI_MADT_INTERRUPT_OVERRIDE *)hdr)->GlobalIrq,
+		    ((ACPI_MADT_INTERRUPT_OVERRIDE *)hdr)->IntiFlags);
+
+		break;
+
+	case ACPI_MADT_TYPE_NMI_SOURCE:
+
+		aprint_normal_dev(self, "[MADT] %-15s: "
+		    "GSI %u, FLAGS 0x%02X", "NMI SOURCE",
+		    ((ACPI_MADT_NMI_SOURCE *)hdr)->GlobalIrq,
+		    ((ACPI_MADT_NMI_SOURCE *)hdr)->IntiFlags);
+
+		break;
+
+	case ACPI_MADT_TYPE_LOCAL_APIC_NMI:
+
+		aprint_normal_dev(self, "[MADT] %-15s: "
+		    "CPU ID %u, LINT %u, FLAGS 0x%02X", "LAPIC NMI",
+		    ((ACPI_MADT_LOCAL_APIC_NMI *)hdr)->ProcessorId,
+		    ((ACPI_MADT_LOCAL_APIC_NMI *)hdr)->Lint,
+		    ((ACPI_MADT_LOCAL_APIC_NMI *)hdr)->IntiFlags);
+
+		break;
+
+	case ACPI_MADT_TYPE_LOCAL_APIC_OVERRIDE:
+
+		aprint_normal_dev(self, "[MADT] %-15s: "
+		    "ADDR 0x%016" PRIX64"", "APIC OVERRIDE",
+		    ((ACPI_MADT_LOCAL_APIC_OVERRIDE *)hdr)->Address);
+
+		break;
+
+	case ACPI_MADT_TYPE_IO_SAPIC:
+
+		aprint_normal_dev(self, "[MADT] %-15s: "
+		    "ID %u, GSI %u, ADDR 0x%016" PRIX64"", "I/O SAPIC",
+		    ((ACPI_MADT_IO_SAPIC *)hdr)->Id,
+		    ((ACPI_MADT_IO_SAPIC *)hdr)->GlobalIrqBase,
+		    ((ACPI_MADT_IO_SAPIC *)hdr)->Address);
+
+		break;
+
+	case ACPI_MADT_TYPE_LOCAL_SAPIC:
+
+		aprint_normal_dev(self, "[MADT] %-15s: "
+		    "CPU ID %u, ID %u, EID %u, UID %u, FLAGS 0x%02X", "LSAPIC",
+		    ((ACPI_MADT_LOCAL_SAPIC*)hdr)->ProcessorId,
+		    ((ACPI_MADT_LOCAL_SAPIC*)hdr)->Id,
+		    ((ACPI_MADT_LOCAL_SAPIC*)hdr)->Eid,
+		    ((ACPI_MADT_LOCAL_SAPIC*)hdr)->Uid,
+		    ((ACPI_MADT_LOCAL_SAPIC*)hdr)->LapicFlags);
+
+		break;
+
+	case ACPI_MADT_TYPE_INTERRUPT_SOURCE:
+
+		aprint_normal_dev(self, "[MADT] %-15s: ID %u, EID %u, "
+		    "TYPE %u, PMI %u, GSI %u, FLAGS 0x%02X", "INTR SOURCE",
+		    ((ACPI_MADT_INTERRUPT_SOURCE *)hdr)->Id,
+		    ((ACPI_MADT_INTERRUPT_SOURCE *)hdr)->Eid,
+		    ((ACPI_MADT_INTERRUPT_SOURCE *)hdr)->Type,
+		    ((ACPI_MADT_INTERRUPT_SOURCE *)hdr)->IoSapicVector,
+		    ((ACPI_MADT_INTERRUPT_SOURCE *)hdr)->GlobalIrq,
+		    ((ACPI_MADT_INTERRUPT_SOURCE *)hdr)->Flags);
+
+		break;
+
+	case ACPI_MADT_TYPE_LOCAL_X2APIC:
+
+		aprint_normal_dev(self, "[MADT] %-15s: "
+		    "ID %u, UID %u, FLAGS 0x%02X", "X2APIC",
+		    ((ACPI_MADT_LOCAL_X2APIC *)hdr)->LocalApicId,
+		    ((ACPI_MADT_LOCAL_X2APIC *)hdr)->Uid,
+		    ((ACPI_MADT_LOCAL_X2APIC *)hdr)->LapicFlags);
+
+		break;
+
+	case ACPI_MADT_TYPE_LOCAL_X2APIC_NMI:
+
+		aprint_normal_dev(self, "[MADT] %-15s: "
+		    "UID %u, LINT %u, FLAGS 0x%02X", "X2APIC NMI",
+		    ((ACPI_MADT_LOCAL_X2APIC_NMI *)hdr)->Uid,
+		    ((ACPI_MADT_LOCAL_X2APIC_NMI *)hdr)->Lint,
+		    ((ACPI_MADT_LOCAL_X2APIC_NMI *)hdr)->IntiFlags);
+
+		break;
+
+	default:
+		aprint_normal_dev(self, "[MADT] %-15s", "UNKNOWN");
+		break;
+	}
+
+	aprint_normal("\n");
+
+	return AE_OK;
 }
 
 static void
