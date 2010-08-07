@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1490 2010/08/06 05:39:43 christos Exp $
+#	$NetBSD: mi,v 1.1491 2010/08/07 05:53:20 agc Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1424,6 +1424,7 @@
 ./usr/include/miscfs/syncfs/syncfs.h		comp-c-include
 ./usr/include/miscfs/umapfs/umap.h		comp-c-include
 ./usr/include/miscfs/union/union.h		comp-c-include
+./usr/include/mj.h				comp-c-include		crypto
 ./usr/include/mntopts.h				comp-c-include
 ./usr/include/monetary.h			comp-c-include
 ./usr/include/mpool.h				comp-c-include
@@ -2513,6 +2514,9 @@
 ./usr/lib/libmenu_g.a				-unknown-		debuglib
 ./usr/lib/libmenu_p.a				comp-c-proflib		profile
 ./usr/lib/libmilter.a				comp-obsolete		obsolete
+./usr/lib/libmj.a				comp-c-lib		crypto
+./usr/lib/libmj_g.a				-unknown-		debuglib
+./usr/lib/libmj_p.a				comp-c-proflib		profile,crypto
 ./usr/lib/libnetpgp.a				comp-c-lib		crypto
 ./usr/lib/libnetpgp_g.a				-unknown-		debuglib
 ./usr/lib/libnetpgp_p.a				comp-c-proflib		profile,crypto
@@ -3804,6 +3808,7 @@
 ./usr/libdata/lint/llib-lmagic.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lmenu.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lmilter.ln		comp-obsolete		obsolete
+./usr/libdata/lint/llib-lmj.ln			comp-c-lintlib		lint,crypto
 ./usr/libdata/lint/llib-lnetpgp.ln		comp-c-lintlib		lint,crypto
 ./usr/libdata/lint/llib-lntp.ln			comp-obsolete		obsolete
 ./usr/libdata/lint/llib-lopenpgpsdk.ln		comp-obsolete		obsolete
@@ -7066,6 +7071,7 @@
 ./usr/share/man/cat3/libarchive_internals.0	comp-c-catman		.cat
 ./usr/share/man/cat3/libiscsi.0			comp-c-catman		iscsi,.cat
 ./usr/share/man/cat3/libmagic.0			comp-c-catman		.cat
+./usr/share/man/cat3/libmj.0			comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/libnetpgp.0		comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/libradius.0		comp-c-catman		.cat
 ./usr/share/man/cat3/libusb.0			comp-obsolete		obsolete
@@ -12963,6 +12969,7 @@
 ./usr/share/man/html3/libarchive_internals.html	comp-c-htmlman		html
 ./usr/share/man/html3/libiscsi.html		comp-c-htmlman		iscsi,html
 ./usr/share/man/html3/libmagic.html		comp-c-htmlman		html
+./usr/share/man/html3/libmj.html		comp-c-htmlman		crypto,html
 ./usr/share/man/html3/libnetpgp.html		comp-c-htmlman		crypto,html
 ./usr/share/man/html3/libradius.html		comp-c-htmlman		html
 ./usr/share/man/html3/libusbhid.html		comp-c-htmlman		html
@@ -18822,6 +18829,7 @@
 ./usr/share/man/man3/libarchive_internals.3	comp-c-man		.man
 ./usr/share/man/man3/libiscsi.3			comp-c-man		iscsi,.man
 ./usr/share/man/man3/libmagic.3			comp-c-man		.man
+./usr/share/man/man3/libmj.3			comp-c-man		crypto,.man
 ./usr/share/man/man3/libnetpgp.3		comp-c-man		crypto,.man
 ./usr/share/man/man3/libradius.3		comp-c-man		.man
 ./usr/share/man/man3/libusb.3			comp-obsolete		obsolete
