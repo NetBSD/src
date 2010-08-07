@@ -1,4 +1,4 @@
-.\" $NetBSD: evcnt.9,v 1.18 2010/06/08 08:20:37 jruoho Exp $
+.\" $NetBSD: evcnt.9,v 1.19 2010/08/07 16:15:47 jruoho Exp $
 .\"
 .\" Copyright (c) 2000 Christopher G. Demetriou
 .\" All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\" --(license Id: LICENSE.proto,v 1.1 2000/06/13 21:40:26 cgd Exp )--
 .\"
-.Dd June 8, 2010
+.Dd August 7, 2010
 .Dt EVCNT 9
 .Os
 .Sh NAME
@@ -44,7 +44,8 @@
 .Sh SYNOPSIS
 .In sys/evcnt.h
 .Ft void
-.Fn evcnt_attach_dynamic "struct evcnt *ev" "int type" "const struct evcnt *parent" "const char *group" "const char *name"
+.Fn evcnt_attach_dynamic "struct evcnt *ev" \
+"int type" "const struct evcnt *parent" "const char *group" "const char *name"
 .Ft void
 .Fn evcnt_attach_static "struct evcnt *ev"
 .Ft void
@@ -146,8 +147,7 @@ arguments must be constant strings.
 .Sh FUNCTIONS
 The following is a brief description of each function in the framework:
 .Bl -tag -width indent
-.It Fn "void evcnt_attach_dynamic" "struct evcnt *ev" "int type" "const struct evcnt *parent" "const char *group" "const char *name"
-.Pp
+.It Fn evcnt_attach_dynamic "ev" "type" "parent" "group" "name"
 Attach the event counter structure pointed to by
 .Fa ev
 to the system event list.
@@ -161,8 +161,7 @@ The strings specified as the group and
 counter names must persist (with the same value)
 throughout the life of the event counter; they are referenced by,
 not copied into, the counter.
-.It Fn "void evcnt_attach_static" "struct evcnt *ev"
-.Pp
+.It Fn evcnt_attach_static "ev"
 Attach the statically-initialized event counter structure
 pointed to by
 .Fa ev
@@ -172,8 +171,7 @@ The event counter is assumed to be statically initialized using the
 macro.
 This function simply calculates structure elements' values as appropriate
 (e.g., the string lengths), and adds the counter to the system event list.
-.It Fn "void evcnt_detach" "struct evcnt *ev"
-.Pp
+.It Fn evcnt_detach "ev"
 Detach the event counter structure pointed to by
 .Fa ev
 from the system event list.
@@ -195,7 +193,7 @@ be safe to increment every counter, regardless of actual need
 for such a mechanism where the counter is being incremented,
 would be too great.
 On some systems, it might involve a global lock and several function calls.)
-.Sh USING THE FRAMEWORK
+.Sh EXAMPLES
 This section includes a description on basic use of the framework
 and example usage of its functions.
 .Pp
