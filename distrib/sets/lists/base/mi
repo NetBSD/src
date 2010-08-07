@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.877 2010/07/11 06:16:55 mrg Exp $
+# $NetBSD: mi,v 1.878 2010/08/07 21:53:18 christos Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -3642,6 +3642,7 @@
 ./usr/share/mk/bsd.inc.mk			base-mk-share		share
 ./usr/share/mk/bsd.info.mk			base-mk-share		share
 ./usr/share/mk/bsd.init.mk			base-mk-share		share
+./usr/share/mk/bsd.ioconf.mk			base-mk-share		share
 ./usr/share/mk/bsd.kernobj.mk			base-mk-share		share
 ./usr/share/mk/bsd.kinc.mk			base-mk-share		share
 ./usr/share/mk/bsd.klinks.mk			base-mk-share		share
