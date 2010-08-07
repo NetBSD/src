@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_verbose.c,v 1.3 2010/07/25 13:19:27 pgoyette Exp $ */
+/*	$NetBSD: usb_verbose.c,v 1.4 2010/08/07 21:09:48 christos Exp $ */
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_verbose.c,v 1.3 2010/07/25 13:19:27 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_verbose.c,v 1.4 2010/08/07 21:09:48 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/module.h>
@@ -56,16 +56,16 @@ struct usb_product {
 
 #include <dev/usb/usbdevs_data.h>
 
-void get_usb_vendor_real(char *, usb_vendor_id_t);
-void get_usb_product_real(char *, usb_vendor_id_t, usb_product_id_t);
+void get_usb_vendor_real(char *, size_t, usb_vendor_id_t);
+void get_usb_product_real(char *, size_t, usb_vendor_id_t, usb_product_id_t);
 
 MODULE(MODULE_CLASS_MISC, usbverbose, NULL);
   
 static int
 usbverbose_modcmd(modcmd_t cmd, void *arg)
 {
-	static void (*saved_usb_vendor)(char *, usb_vendor_id_t);
-	static void (*saved_usb_product)(char *, usb_vendor_id_t,
+	static void (*saved_usb_vendor)(char *, size_t, usb_vendor_id_t);
+	static void (*saved_usb_product)(char *, size_t, usb_vendor_id_t,
 		usb_product_id_t);
 
 	switch (cmd) {
@@ -86,19 +86,20 @@ usbverbose_modcmd(modcmd_t cmd, void *arg)
 	}
 }
 
-void get_usb_vendor_real(char *v, usb_vendor_id_t v_id)
+void get_usb_vendor_real(char *v, size_t vl, usb_vendor_id_t v_id)
 {
 	int n;
 
 	/* There is no need for strlcpy below. */
 	for (n = 0; n < usb_nvendors; n++)
 		if (usb_vendors[n].vendor == v_id) {
-			strcpy(v, usb_vendors[n].vendorname);
+			strlcpy(v, usb_vendors[n].vendorname, vl);
 			break;
 		}
 }
 
-void get_usb_product_real(char *p, usb_vendor_id_t v_id, usb_product_id_t p_id)
+void get_usb_product_real(char *p, size_t pl, usb_vendor_id_t v_id,
+    usb_product_id_t p_id)
 {
 	int n;
 
@@ -106,7 +107,7 @@ void get_usb_product_real(char *p, usb_vendor_id_t v_id, usb_product_id_t p_id)
 	for (n = 0; n < usb_nproducts; n++)
 		if (usb_products[n].vendor == v_id &&
 		    usb_products[n].product == p_id) {
-			strcpy(p, usb_products[n].productname);
+			strlcpy(p, usb_products[n].productname, pl);
 			break;
 		}
 }
