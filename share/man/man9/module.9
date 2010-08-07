@@ -1,4 +1,4 @@
-.\"	$NetBSD: module.9,v 1.7 2010/08/04 18:52:49 wiz Exp $
+.\"	$NetBSD: module.9,v 1.8 2010/08/07 22:21:30 pgoyette Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd August 4, 2010
+.Dd August 7, 2010
 .Dt MODULE 9
 .Os
 .Sh NAME
@@ -37,7 +37,8 @@
 .Nm module_unload ,
 .Nm module_init_class ,
 .Nm module_hold ,
-.Nm module_rele
+.Nm module_rele ,
+.Nm module_find_section
 .Nd kernel module loader
 .Sh SYNOPSIS
 .In sys/module.h
@@ -55,6 +56,8 @@
 .Fn module_hold "const char *name"
 .Ft void
 .Fn module_rele "const char *"
+.Ft int
+.Fn module_find_section "const char *" "void **" "size_t *"
 .Sh DESCRIPTION
 Modules are sections of code that can be independently linked and selectively
 loaded into or unloaded from a running kernel.
@@ -282,6 +285,14 @@ Increment the reference count of a module.
 A module cannot be unloaded if its reference count is non-zero.
 .It Fn module_rele "name"
 Decrement the reference count of a module.
+.It Fn module_find_section "name" "addr" "size"
+Find the start address and size of linker section
+.Ar name
+within a module.
+The miniroot module uses this routine to find the address and size of the
+embedded filesystem image.
+This routine can only examine the linker data for the module that is
+currently being initialized;  it cannot examine data for any other module.
 .El
 .Sh LOCK PROTOCOL
 The
