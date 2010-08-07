@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.92 2010/07/11 06:16:55 mrg Exp $
+# $NetBSD: md.amd64,v 1.93 2010/08/07 05:30:58 agc Exp $
 ./dev/lms0					base-obsolete		obsolete
 ./dev/mms0					base-obsolete		obsolete
 ./libexec/ld.elf_so-i386			base-sys-shlib		compat,pic
@@ -134,6 +134,8 @@
 ./usr/lib/i386/libmagic.so.3.0			base-compat-shlib	compat,pic
 ./usr/lib/i386/libmenu.so.6			base-compat-shlib	compat,pic
 ./usr/lib/i386/libmenu.so.6.0			base-compat-shlib	compat,pic
+./usr/lib/i386/libmj.so.0			base-compat-shlib	compat,pic,crypto
+./usr/lib/i386/libmj.so.0.0			base-compat-shlib	compat,pic,crypto
 ./usr/lib/i386/libnetpgp.so.3			base-compat-shlib	compat,pic
 ./usr/lib/i386/libnetpgp.so.3.0			base-compat-shlib	compat,pic
 ./usr/lib/i386/libobjc.so.3			base-compat-shlib	compat,pic
