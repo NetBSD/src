@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips64el,v 1.19 2010/07/11 12:54:26 mrg Exp $
+# $NetBSD: ad.mips64el,v 1.20 2010/08/07 05:30:58 agc Exp $
 ./libexec/ld.elf_so-64				base-compat-shlib	compat,pic
 ./libexec/ld.elf_so-o32				base-sysutil-bin	compat,pic
 ./usr/lib/64					base-compat-lib
@@ -129,6 +129,8 @@
 ./usr/lib/64/libmagic.so.3.0			base-compat-shlib	compat,pic
 ./usr/lib/64/libmenu.so.6			base-compat-shlib	compat,pic
 ./usr/lib/64/libmenu.so.6.0			base-compat-shlib	compat,pic
+./usr/lib/64/libmj.so.0				base-compat-shlib	compat,pic,crypto
+./usr/lib/64/libmj.so.0.0			base-compat-shlib	compat,pic,crypto
 ./usr/lib/64/libnetpgp.so.3			base-compat-shlib	compat,pic,crypto
 ./usr/lib/64/libnetpgp.so.3.0			base-compat-shlib	compat,pic,crypto
 ./usr/lib/64/libobjc.so.3			base-compat-shlib	compat,pic
@@ -362,6 +364,8 @@
 ./usr/lib/o32/libmagic.so.3.0			base-compat-shlib	compat,pic
 ./usr/lib/o32/libmenu.so.6			base-compat-shlib	compat,pic
 ./usr/lib/o32/libmenu.so.6.0			base-compat-shlib	compat,pic
+./usr/lib/o32/libmj.so.3			base-compat-shlib	compat,pic,crypto
+./usr/lib/o32/libmj.so.3.0			base-compat-shlib	compat,pic,crypto
 ./usr/lib/o32/libnetpgp.so.3			base-compat-shlib	compat,pic,crypto
 ./usr/lib/o32/libnetpgp.so.3.0			base-compat-shlib	compat,pic,crypto
 ./usr/lib/o32/libobjc.so.3			base-compat-shlib	compat,pic
