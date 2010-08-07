@@ -1,4 +1,4 @@
-#  $NetBSD: Makefile,v 1.95 2010/07/31 21:47:53 joerg Exp $
+#  $NetBSD: Makefile,v 1.96 2010/08/07 18:12:46 wiz Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24
 #
@@ -199,7 +199,7 @@ MAN+=	acos.3 acosh.3 asin.3 asinh.3 atan.3 atan2.3 atanh.3 ceil.3 \
 MAN+=	feclearexcept.3 feenableexcept.3 fegetenv.3 fegetround.3 fenv.3
 MLINKS+=feclearexcept.3 fegetexceptflag.3	\
 	feclearexcept.3 feraiseexcept.3		\
-	feclearexcept.3 feseteexcpetflag.3	\
+	feclearexcept.3 fesetexceptflag.3	\
 	feclearexcept.3 fetestexcept.3
 MLINKS+=feenableexcept.3 fedisableexcept.3	\
 	feenableexcept.3 fegetexcept.3
