@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2008/10/29 12:47:08 jmcneill Exp $
+#	$NetBSD: Makefile,v 1.3 2010/08/07 20:47:27 christos Exp $
 
 NOOBJ=	# defined
 
@@ -6,6 +6,7 @@ NOOBJ=	# defined
 
 .if ${MKSHARE} != "no"
 FILES=	cingular3G cingular3G.chat
+FILES+=	cosmote3G cosmote3G.chat
 FILES+=	telus telus.chat
 FILESDIR=/usr/share/examples/pppd
 .endif
