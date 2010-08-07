@@ -1,4 +1,4 @@
-/*	$NetBSD: u3g.c,v 1.15 2010/06/19 22:41:32 kardel Exp $	*/
+/*	$NetBSD: u3g.c,v 1.16 2010/08/07 20:43:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: u3g.c,v 1.15 2010/06/19 22:41:32 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: u3g.c,v 1.16 2010/08/07 20:43:46 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -446,7 +446,8 @@ u3ginit_match(device_t parent, cfdata_t match, void *aux)
 	/*
 	 * Huawei changes product when it is configured as a modem.
 	 */
-	if (uaa->vendor == USB_VENDOR_HUAWEI) {
+	switch (uaa->vendor) {
+	case USB_VENDOR_HUAWEI:
 		if (uaa->product == USB_PRODUCT_HUAWEI_K3765)
 			return UMATCH_NONE;
 
@@ -459,9 +460,9 @@ u3ginit_match(device_t parent, cfdata_t match, void *aux)
 			return u3g_huawei_reinit(uaa->device);
 			break;
 		}
-	}
+		break;
 
-	if (uaa->vendor == USB_VENDOR_NOVATEL2) {
+	case USB_VENDOR_NOVATEL2:
 		switch (uaa->product){
 		case USB_PRODUCT_NOVATEL2_MC950D_DRIVER:
 		case USB_PRODUCT_NOVATEL2_U760_DRIVER:
@@ -470,11 +471,21 @@ u3ginit_match(device_t parent, cfdata_t match, void *aux)
 		default:
 			break;
 		}
-	}
+		break;
 
-	if (uaa->vendor == USB_VENDOR_SIERRA &&
-	    uaa->product == USB_PRODUCT_SIERRA_INSTALLER)
-		return u3g_sierra_reinit(uaa->device);
+	case USB_VENDOR_SIERRA:
+		if (uaa->product == USB_PRODUCT_SIERRA_INSTALLER)
+			return u3g_sierra_reinit(uaa->device);
+		break;
+
+	case USB_VENDOR_QUALCOMMINC:
+		if (uaa->product == USB_PRODUCT_QUALCOMMINC_ZTE_STOR)
+			return u3g_novatel_reinit(uaa->device);
+		break;
+
+	default:
+		break;
+	}
 
 	return UMATCH_NONE;
 }
