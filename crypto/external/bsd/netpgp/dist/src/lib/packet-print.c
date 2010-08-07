@@ -58,7 +58,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: packet-print.c,v 1.34 2010/07/26 06:37:35 agc Exp $");
+__RCSID("$NetBSD: packet-print.c,v 1.35 2010/08/07 04:16:40 agc Exp $");
 #endif
 
 #include <string.h>
@@ -473,22 +473,17 @@ __ops_sprint_keydata(__ops_io_t *io, const __ops_keyring_t *keyring,
 		uidbuf);
 }
 
+/* return the key info as a JSON encoded string */
 int
 __ops_sprint_mj(__ops_io_t *io, const __ops_keyring_t *keyring,
-		const __ops_key_t *key, char **buf, const char *header,
+		const __ops_key_t *key, mj_t *keyjson, const char *header,
 		const __ops_pubkey_t *pubkey, const int psigs)
 {
 	const __ops_key_t	*trustkey;
 	unsigned	 	 from;
 	unsigned		 i;
 	unsigned		 j;
-	time_t			 now;
-	mj_t			 expired_obj;
-	mj_t			 uids_array;
-	mj_t			 sig_array;
-	mj_t			 sig_obj;
-	mj_t			 key_obj;
-	char			 uidbuf[KB(64)];
+	mj_t			 sub_obj;
 	char			 keyid[OPS_KEY_ID_SIZE * 3];
 	char			 fp[(OPS_FINGERPRINT_SIZE * 3) + 1];
 	int			 r;
@@ -496,40 +491,28 @@ __ops_sprint_mj(__ops_io_t *io, const __ops_keyring_t *keyring,
 	if (key == NULL || key->revoked) {
 		return -1;
 	}
-	(void) memset(uidbuf, 0x0, sizeof(uidbuf));
-	(void) memset(&key_obj, 0x0, sizeof(key_obj));
-	mj_create(&key_obj, "object");
-	mj_append_field(&key_obj, "header", "string", header);
-	mj_append_field(&key_obj, "key bits", "integer", (int64_t) numkeybits(pubkey));
-	mj_append_field(&key_obj, "pka", "string", __ops_show_pka(pubkey->alg));
-	mj_append_field(&key_obj, "key id", "string", strhexdump(keyid, key->key_id, OPS_KEY_ID_SIZE, ""));
-	mj_append(&key_obj, "fingerprint", "string",
+	(void) memset(keyjson, 0x0, sizeof(*keyjson));
+	mj_create(keyjson, "object");
+	mj_append_field(keyjson, "header", "string", header);
+	mj_append_field(keyjson, "key bits", "integer", (int64_t) numkeybits(pubkey));
+	mj_append_field(keyjson, "pka", "string", __ops_show_pka(pubkey->alg));
+	mj_append_field(keyjson, "key id", "string", strhexdump(keyid, key->key_id, OPS_KEY_ID_SIZE, ""));
+	mj_append_field(keyjson, "fingerprint", "string",
 		strhexdump(fp, key->fingerprint.fingerprint, key->fingerprint.length, " "));
-	now = time(NULL);
-	mj_append_field(&key_obj, "birthtime", "integer", pubkey->birthtime);
-	mj_append_field(&key_obj, "duration", "integer", pubkey->duration);
-	if (pubkey->duration > 0) {
-		(void) memset(&expired_obj, 0x0, sizeof(expired_obj));
-		mj_append_field(&expired_obj, "expiry status", "string",
-			(pubkey->birthtime + pubkey->duration < now) ? "[EXPIRED]" : "[EXPIRES]");
-		mj_append_field(&expired_obj, "expiry", "integer",
-			(int64_t)(pubkey->birthtime + pubkey->duration));
-		mj_append_field(&key_obj, "expiration", "object", &expired_obj);
-	}
-	(void) memset(&uids_array, 0x0, sizeof(uids_array));
-	mj_create(&uids_array, "array");
+	mj_append_field(keyjson, "birthtime", "integer", pubkey->birthtime);
+	mj_append_field(keyjson, "duration", "integer", pubkey->duration);
 	for (i = 0; i < key->uidc; i++) {
 		if ((r = isrevoked(key, i)) >= 0 &&
 		    key->revokes[r].code == OPS_REVOCATION_COMPROMISED) {
 			continue;
 		}
-		mj_append(&uids_array, "string", key->uids[i]);
-		mj_append(&uids_array, "integer", r);
-		(void) memset(&sig_array, 0x0, sizeof(sig_array));
-		mj_create(&sig_array, "array");
+		(void) memset(&sub_obj, 0x0, sizeof(sub_obj));
+		mj_create(&sub_obj, "array");
+		mj_append(&sub_obj, "string", key->uids[i]);
+		mj_append(&sub_obj, "string", (r >= 0) ? "[REVOKED]" : "");
+		mj_append_field(keyjson, "uid", "array", &sub_obj);
+		mj_delete(&sub_obj);
 		for (j = 0 ; j < key->subsigc ; j++) {
-			(void) memset(&sig_obj, 0x0, sizeof(sig_obj));
-			mj_create(&sig_obj, "object");
 			if (psigs) {
 				if (key->subsigs[j].uid != i) {
 					continue;
@@ -541,39 +524,39 @@ __ops_sprint_mj(__ops_io_t *io, const __ops_keyring_t *keyring,
 						continue;
 				}
 			}
-			mj_append_field(&sig_obj, "pgp version", "integer", (int64_t)key->subsigs[j].sig.info.version);
+			(void) memset(&sub_obj, 0x0, sizeof(sub_obj));
+			mj_create(&sub_obj, "array");
 			if (key->subsigs[j].sig.info.version == 4 &&
 					key->subsigs[j].sig.info.type == OPS_SIG_SUBKEY) {
-				mj_append_field(&sig_obj, "header", "string", "sub");
-				mj_append_field(&sig_obj, "key size", "integer", (int64_t)numkeybits(pubkey));
-				mj_append_field(&sig_obj, "pka", "string",
+				mj_append(&sub_obj, "integer", (int64_t)numkeybits(pubkey));
+				mj_append(&sub_obj, "string",
 					(const char *)__ops_show_pka(key->subsigs[j].sig.info.key_alg));
-				mj_append_field(&sig_obj, "signer", "string",
+				mj_append(&sub_obj, "string",
 					strhexdump(keyid, key->subsigs[j].sig.info.signer_id, OPS_KEY_ID_SIZE, ""));
-				mj_append_field(&sig_obj, "signtime", "integer",
-					(int64_t)key->subsigs[j].sig.info.birthtime);
+				mj_append(&sub_obj, "integer", (int64_t)key->subsigs[j].sig.info.birthtime);
+				mj_append_field(keyjson, "sub", "array", &sub_obj);
+				mj_delete(&sub_obj);
 			} else {
-				mj_append_field(&sig_obj, "signer", "string",
+				mj_append(&sub_obj, "string",
 					strhexdump(keyid, key->subsigs[j].sig.info.signer_id, OPS_KEY_ID_SIZE, ""));
-				mj_append_field(&sig_obj, "signtime", "integer",
+				mj_append(&sub_obj, "integer",
 					(int64_t)(key->subsigs[j].sig.info.birthtime));
 				from = 0;
 				trustkey = __ops_getkeybyid(io, keyring, key->subsigs[j].sig.info.signer_id, &from);
-				mj_append_field(&sig_obj, "trustkey", "string",
+				mj_append(&sub_obj, "string",
 					(trustkey) ? (char *)trustkey->uids[trustkey->uid0] : "[unknown]");
+				mj_append_field(keyjson, "sig", "array", &sub_obj);
+				mj_delete(&sub_obj);
 			}
-			mj_append(&sig_array, "object", &sig_obj);
-			mj_delete(&sig_obj);
 		}
-		if (mj_arraycount(&sig_array) > 0) {
-			mj_append(&uids_array, "array", &sig_array);
-		}
-		mj_delete(&sig_array);
 	}
-	mj_append_field(&key_obj, "uids", "array", &uids_array);
-	mj_delete(&uids_array);
-	mj_asprint(buf, &key_obj);
-	mj_delete(&key_obj);
+	if (__ops_get_debug_level(__FILE__)) {
+		char	*buf;
+
+		mj_asprint(&buf, keyjson);
+		(void) fprintf(stderr, "__ops_sprint_mj: '%s'\n", buf);
+		free(buf);
+	}
 	return 1;
 }
 

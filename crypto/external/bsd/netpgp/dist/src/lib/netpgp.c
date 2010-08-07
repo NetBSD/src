@@ -34,7 +34,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: netpgp.c,v 1.65 2010/07/09 14:45:43 agc Exp $");
+__RCSID("$NetBSD: netpgp.c,v 1.66 2010/08/07 04:16:40 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -631,6 +631,27 @@ netpgp_list_keys(netpgp_t *netpgp, const int psigs)
 	return __ops_keyring_list(netpgp->io, netpgp->pubring, psigs);
 }
 
+/* list the keys in a keyring, returning a JSON string */
+int
+netpgp_list_keys_json(netpgp_t *netpgp, char **json, const int psigs)
+{
+	mj_t	obj;
+	int	ret;
+
+	if (netpgp->pubring == NULL) {
+		(void) fprintf(stderr, "No keyring\n");
+		return 0;
+	}
+	(void) memset(&obj, 0x0, sizeof(obj));
+	if (!__ops_keyring_json(netpgp->io, netpgp->pubring, &obj, psigs)) {
+		(void) fprintf(stderr, "No keys in keyring\n");
+		return 0;
+	}
+	ret = mj_asprint(json, &obj);
+	mj_delete(&obj);
+	return ret;
+}
+
 DEFINE_ARRAY(strings_t, char *);
 
 #ifndef HKP_VERSION
@@ -685,6 +706,48 @@ netpgp_match_keys(netpgp_t *netpgp, char *name, const char *fmt, void *vp, const
 	}
 	free(pubs.v);
 	return pubs.c;
+}
+
+/* find and list some keys in a keyring - return JSON string */
+int
+netpgp_match_keys_json(netpgp_t *netpgp, char **json, char *name, const char *fmt, const int psigs)
+{
+	const __ops_key_t	*key;
+	unsigned		 k;
+	mj_t			 id_array;
+	int			 ret;
+
+	if (name[0] == '0' && name[1] == 'x') {
+		name += 2;
+	}
+	(void) memset(&id_array, 0x0, sizeof(id_array));
+	k = 0;
+	*json = NULL;
+	mj_create(&id_array, "array");
+	do {
+		key = __ops_getnextkeybyname(netpgp->io, netpgp->pubring,
+						name, &k);
+		if (key != NULL) {
+			if (strcmp(fmt, "mr") == 0) {
+#if 0
+				__ops_hkp_sprint_keydata(netpgp->io, netpgp->pubring,
+						key, &pubs.v[pubs.c],
+						&key->key.pubkey, psigs);
+#endif
+			} else {
+				ALLOC(mj_t, id_array.value.v, id_array.size,
+					id_array.c, 10, 10, "netpgp_match_keys_json", return 0);
+				__ops_sprint_mj(netpgp->io, netpgp->pubring,
+						key, &id_array.value.v[id_array.c++],
+						"pub",
+						&key->key.pubkey, psigs);
+			}
+			k += 1;
+		}
+	} while (key != NULL);
+	ret = mj_asprint(json, &id_array);
+	mj_delete(&id_array);
+	return ret;
 }
 
 /* find and list some public keys in a keyring */
