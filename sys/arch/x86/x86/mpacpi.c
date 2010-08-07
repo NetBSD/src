@@ -1,4 +1,4 @@
-/*	$NetBSD: mpacpi.c,v 1.88 2010/08/04 10:02:12 jruoho Exp $	*/
+/*	$NetBSD: mpacpi.c,v 1.89 2010/08/07 09:41:19 jruoho Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.88 2010/08/04 10:02:12 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.89 2010/08/07 09:41:19 jruoho Exp $");
 
 #include "acpica.h"
 #include "opt_acpi.h"
@@ -71,7 +71,6 @@ __KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.88 2010/08/04 10:02:12 jruoho Exp $");
 #include <dev/acpi/acpica.h>
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
-#include <dev/acpi/acpi_madt.h>
 
 #include <dev/cons.h>
 
@@ -169,7 +168,7 @@ mpacpi_ioapicprint(void *aux, const char *pnp)
 
 /*
  * Handle special interrupt sources and overrides from the MADT.
- * This is a callback function for acpi_madt_walk().
+ * This is a callback function for acpi_madt_walk() (see acpi.c).
  */
 static ACPI_STATUS
 mpacpi_nonpci_intr(ACPI_SUBTABLE_HEADER *hdrp, void *aux)

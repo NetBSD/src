@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.211 2010/08/06 23:38:34 jruoho Exp $	*/
+/*	$NetBSD: acpi.c,v 1.212 2010/08/07 09:41:19 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -20,6 +20,41 @@
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
  * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
  * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
+
+/*
+ * Copyright (c) 2003 Wasabi Systems, Inc.
+ * All rights reserved.
+ *
+ * Written by Frank van der Linden for Wasabi Systems, Inc.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *      This product includes software developed for the NetBSD Project by
+ *      Wasabi Systems, Inc.
+ * 4. The name of Wasabi Systems, Inc. may not be used to endorse
+ *    or promote products derived from this software without specific prior
+ *    written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY WASABI SYSTEMS, INC. ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL WASABI SYSTEMS, INC
  * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
  * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
  * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
@@ -65,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.211 2010/08/06 23:38:34 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.212 2010/08/07 09:41:19 jruoho Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -128,6 +163,7 @@ static uint64_t		 acpi_root_pointer;
 extern kmutex_t		 acpi_interrupt_list_mtx;
 extern struct		 cfdriver acpi_cd;
 static ACPI_HANDLE	 acpi_scopes[4];
+static ACPI_TABLE_HEADER *madt_header;
 
 /*
  * This structure provides a context for the ACPI
@@ -1605,34 +1641,8 @@ sysctl_hw_acpi_sleepstates(SYSCTLFN_ARGS)
 }
 
 /*
- * Miscellaneous.
+ * Tables.
  */
-static bool
-acpi_is_scope(struct acpi_devnode *ad)
-{
-	int i;
-
-	/*
-	 * Return true if the node is a root scope.
-	 */
-	if (ad->ad_parent == NULL)
-		return false;
-
-	if (ad->ad_parent->ad_handle != ACPI_ROOT_OBJECT)
-		return false;
-
-	for (i = 0; i < __arraycount(acpi_scopes); i++) {
-
-		if (acpi_scopes[i] == NULL)
-			continue;
-
-		if (ad->ad_handle == acpi_scopes[i])
-			return true;
-	}
-
-	return false;
-}
-
 ACPI_PHYSICAL_ADDRESS
 acpi_OsGetRootPointer(void)
 {
@@ -1687,6 +1697,83 @@ acpi_unmap_rsdt(ACPI_TABLE_HEADER *rsdt)
 		return;
 
 	AcpiOsUnmapMemory(rsdt, sizeof(ACPI_TABLE_HEADER));
+}
+
+/*
+ * XXX: Refactor to be a generic function that maps tables.
+ */
+ACPI_STATUS
+acpi_madt_map(void)
+{
+	ACPI_STATUS  rv;
+
+	if (madt_header != NULL)
+		return AE_ALREADY_EXISTS;
+
+	rv = AcpiGetTable(ACPI_SIG_MADT, 1, &madt_header);
+
+	if (ACPI_FAILURE(rv))
+		return rv;
+
+	return AE_OK;
+}
+
+void
+acpi_madt_unmap(void)
+{
+	madt_header = NULL;
+}
+
+/*
+ * XXX: Refactor to be a generic function that walks tables.
+ */
+void
+acpi_madt_walk(ACPI_STATUS (*func)(ACPI_SUBTABLE_HEADER *, void *), void *aux)
+{
+	ACPI_SUBTABLE_HEADER *hdrp;
+	char *madtend, *where;
+
+	madtend = (char *)madt_header + madt_header->Length;
+	where = (char *)madt_header + sizeof (ACPI_TABLE_MADT);
+
+	while (where < madtend) {
+
+		hdrp = (ACPI_SUBTABLE_HEADER *)where;
+
+		if (ACPI_FAILURE(func(hdrp, aux)))
+			break;
+
+		where += hdrp->Length;
+	}
+}
+
+/*
+ * Miscellaneous.
+ */
+static bool
+acpi_is_scope(struct acpi_devnode *ad)
+{
+	int i;
+
+	/*
+	 * Return true if the node is a root scope.
+	 */
+	if (ad->ad_parent == NULL)
+		return false;
+
+	if (ad->ad_parent->ad_handle != ACPI_ROOT_OBJECT)
+		return false;
+
+	for (i = 0; i < __arraycount(acpi_scopes); i++) {
+
+		if (acpi_scopes[i] == NULL)
+			continue;
+
+		if (ad->ad_handle == acpi_scopes[i])
+			return true;
+	}
+
+	return false;
 }
 
 /*
