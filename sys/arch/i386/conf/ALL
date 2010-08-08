@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.264 2010/08/07 09:55:59 jruoho Exp $
+# $NetBSD: ALL,v 1.265 2010/08/08 20:04:54 chs Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.264 $"
+#ident 		"ALL-$Revision: 1.265 $"
 
 maxusers	64		# estimated number of users
 
@@ -740,6 +740,10 @@ spdmem* at iic? addr 0x50
 spdmem* at iic? addr 0x51
 spdmem* at iic? addr 0x52
 spdmem* at iic? addr 0x53
+spdmem* at iic? addr 0x54
+spdmem* at iic? addr 0x55
+spdmem* at iic? addr 0x56
+spdmem* at iic? addr 0x57
 sdtemp* at iic? addr 0x18
 
 # I2O devices
@@ -840,6 +844,7 @@ cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
 ch*	at scsibus? target ? lun ?	# SCSI autochangers
 ses*	at scsibus? target ? lun ?	# SCSI Enclosure Services devices
 ss*	at scsibus? target ? lun ?	# SCSI scanners
+se*	at scsibus? target ? lun ?	# SCSI ethernet adapters
 uk*	at scsibus? target ? lun ?	# SCSI unknown
 
 # SCSI NIC
