@@ -1,4 +1,4 @@
-/*	$NetBSD: fsr.h,v 1.4 2005/12/11 12:19:05 christos Exp $ */
+/*	$NetBSD: fsr.h,v 1.5 2010/08/08 18:44:15 chs Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -40,8 +40,8 @@
  *	@(#)fsr.h	8.1 (Berkeley) 6/11/93
  */
 
-#ifndef _MACHINE_FSR_H_
-#define	_MACHINE_FSR_H_
+#ifndef _SPARC_FSR_H_
+#define	_SPARC_FSR_H_
 
 /*
  * Bits in FSR.
@@ -81,8 +81,10 @@
 #define	  FSR_TT_UNIMP	3		/* unimplemented operation */
 #define	  FSR_TT_SEQ	4		/* sequence error */
 #define	  FSR_TT_HWERR	5		/* hardware error (unrecoverable) */
+#define	  FSR_TT_INVR	6		/* invalid fp register */
+#define	  FSR_TT_RESV	7		/* reserved */
 #define	FSR_FTT_SHIFT	14
-#define	FSR_FTT_MASK	0x03
+#define	FSR_FTT_MASK	0x07
 
 #define	FSR_QNE		0x00002000	/* queue not empty */
 #define	FSR_PR		0x00001000	/* partial result */
@@ -109,4 +111,29 @@
 #define	FSR_DZ	0x02			/* division by zero */
 #define	FSR_NX	0x01			/* inexact result */
 
-#endif /* _MACHINE_FSR_H_ */
+#ifdef __sparc_v9__
+
+/*
+ * The rest of these are only for sparcv9.
+ */
+
+/* These are the 3 new v9 fcc's */
+#define	FSR_FCC3	0x0000003000000000ULL	/* FP condition codes */
+#define	FSR_FCC3_SHIFT	36
+
+#define	FSR_FCC2	0x0000000c00000000ULL	/* FP condition codes */
+#define	FSR_FCC2_SHIFT	34
+
+#define	FSR_FCC1	0x0000000300000000ULL	/* FP condition codes */
+#define	FSR_FCC1_SHIFT	32
+
+/*
+ * Bits in FPRS.
+ */
+#define FPRS_FEF	0x04		/* Enable FP -- must be set to enable FP regs */
+#define FPRS_DU		0x02		/* Dirty upper -- upper fp regs are dirty */
+#define FPRS_DL		0x01		/* Dirty lower -- lower fp regs are dirty */
+
+#endif /* __sparc_v9__ */
+
+#endif /* _SPARC_FSR_H_ */
