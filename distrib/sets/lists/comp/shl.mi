@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.128 2010/07/26 16:23:32 pooka Exp $
+# $NetBSD: shl.mi,v 1.129 2010/08/08 00:23:26 joerg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -68,6 +68,7 @@
 ./usr/lib/libm_pic.a				comp-c-piclib
 ./usr/lib/libmagic_pic.a			comp-c-piclib
 ./usr/lib/libmenu_pic.a				comp-c-piclib
+./usr/lib/libmj_pic.a				comp-c-piclib
 ./usr/lib/libnetpgp_pic.a			comp-c-piclib		crypto
 ./usr/lib/libnvpair_pic.a			comp-zfs-piclib		zfs
 ./usr/lib/libobjc_pic.a				comp-objc-piclib
