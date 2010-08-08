@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu.c,v 1.11 2010/08/04 10:02:12 jruoho Exp $ */
+/* $NetBSD: acpi_cpu.c,v 1.12 2010/08/08 16:58:42 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu.c,v 1.11 2010/08/04 10:02:12 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu.c,v 1.12 2010/08/08 16:58:42 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -138,10 +138,7 @@ acpicpu_attach(device_t parent, device_t self, void *aux)
 	mutex_init(&sc->sc_mtx, MUTEX_DEFAULT, IPL_NONE);
 
 	aprint_naive("\n");
-	aprint_normal(": ACPI CPU");
-	aprint_verbose(", cap 0x%02x, addr 0x%06x, len 0x%02x",
-	    sc->sc_cap, sc->sc_object.ao_pblkaddr, sc->sc_object.ao_pblklen);
-	aprint_normal("\n");
+	aprint_normal(": ACPI CPU\n");
 
 	/*
 	 * We should claim the bus space. However, we do this only
@@ -158,10 +155,16 @@ acpicpu_attach(device_t parent, device_t self, void *aux)
 	}
 
 	acpicpu_cstate_attach(self);
+	acpicpu_pstate_attach(self);
+
+	(void)config_finalize_register(self, acpicpu_cstate_start);
+	(void)config_finalize_register(self, acpicpu_pstate_start);
 
 	(void)acpi_register_notify(sc->sc_node, acpicpu_notify);
-	(void)config_finalize_register(self, acpicpu_cstate_start);
 	(void)pmf_device_register(self, acpicpu_suspend, acpicpu_resume);
+
+	aprint_debug_dev(sc->sc_dev, "cap 0x%02x, "
+	    "flags 0x%06x\n", sc->sc_cap, sc->sc_flags);
 }
 
 static int
@@ -176,6 +179,12 @@ acpicpu_detach(device_t self, int flags)
 
 	if ((sc->sc_flags & ACPICPU_FLAG_C) != 0)
 		rv = acpicpu_cstate_detach(self);
+
+	if (rv != 0)
+		return rv;
+
+	if ((sc->sc_flags & ACPICPU_FLAG_P) != 0)
+		rv = acpicpu_pstate_detach(self);
 
 	if (rv != 0)
 		return rv;
@@ -450,7 +459,7 @@ acpicpu_notify(ACPI_HANDLE hdl, uint32_t evt, void *aux)
 		if ((sc->sc_flags & ACPICPU_FLAG_P) == 0)
 			return;
 
-		func = NULL;
+		func = acpicpu_pstate_callback;
 		break;
 
 	case ACPICPU_T_NOTIFY:
@@ -479,6 +488,9 @@ acpicpu_suspend(device_t self, const pmf_qual_t *qual)
 	if ((sc->sc_flags & ACPICPU_FLAG_C) != 0)
 		(void)acpicpu_cstate_suspend(self);
 
+	if ((sc->sc_flags & ACPICPU_FLAG_P) != 0)
+		(void)acpicpu_pstate_suspend(self);
+
 	return true;
 }
 
@@ -491,6 +503,9 @@ acpicpu_resume(device_t self, const pmf_qual_t *qual)
 
 	if ((sc->sc_flags & ACPICPU_FLAG_C) != 0)
 		(void)acpicpu_cstate_resume(self);
+
+	if ((sc->sc_flags & ACPICPU_FLAG_P) != 0)
+		(void)acpicpu_pstate_resume(self);
 
 	return true;
 }

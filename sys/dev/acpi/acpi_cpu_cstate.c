@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_cstate.c,v 1.14 2010/08/04 10:02:12 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_cstate.c,v 1.15 2010/08/08 16:58:42 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_cstate.c,v 1.14 2010/08/04 10:02:12 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_cstate.c,v 1.15 2010/08/08 16:58:42 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -55,7 +55,6 @@ static ACPI_STATUS	 acpicpu_cstate_cst(struct acpicpu_softc *);
 static ACPI_STATUS	 acpicpu_cstate_cst_add(struct acpicpu_softc *,
 						ACPI_OBJECT *);
 static void		 acpicpu_cstate_cst_bios(void);
-static ACPI_STATUS	 acpicpu_cstate_csd(ACPI_HANDLE, struct acpicpu_dep *);
 static void		 acpicpu_cstate_fadt(struct acpicpu_softc *);
 static void		 acpicpu_cstate_quirks(struct acpicpu_softc *);
 static int		 acpicpu_cstate_quirks_piix4(struct pci_attach_args *);
@@ -107,38 +106,8 @@ void
 acpicpu_cstate_attach_print(struct acpicpu_softc *sc)
 {
 	struct acpicpu_cstate *cs;
-	struct acpicpu_dep dep;
-	const char *method;
-	ACPI_STATUS rv;
+	const char *str;
 	int i;
-
-	(void)memset(&dep, 0, sizeof(struct acpicpu_dep));
-
-	rv = acpicpu_cstate_csd(sc->sc_node->ad_handle, &dep);
-
-	if (ACPI_SUCCESS(rv)) {
-		aprint_debug_dev(sc->sc_dev, "C%u:  _CSD, "
-		    "domain 0x%02x / 0x%02x, type 0x%02x\n",
-		    dep.dep_index, dep.dep_domain,
-		    dep.dep_ncpu, dep.dep_coord);
-	}
-
-	aprint_debug_dev(sc->sc_dev, "Cx: %5s",
-	    (sc->sc_flags & ACPICPU_FLAG_C_FADT) != 0 ? "FADT" : "_CST");
-
-	if ((sc->sc_flags & ACPICPU_FLAG_C_BM) != 0)
-		aprint_debug(", BM control");
-
-	if ((sc->sc_flags & ACPICPU_FLAG_C_ARB) != 0)
-		aprint_debug(", BM arbitration");
-
-	if ((sc->sc_flags & ACPICPU_FLAG_C_C1E) != 0)
-		aprint_debug(", C1E");
-
-	if ((sc->sc_flags & ACPICPU_FLAG_C_NOC3) != 0)
-		aprint_debug(", C3 disabled (quirk)");
-
-	aprint_debug("\n");
 
 	for (i = 0; i < ACPI_C_STATE_COUNT; i++) {
 
@@ -150,24 +119,24 @@ acpicpu_cstate_attach_print(struct acpicpu_softc *sc)
 		switch (cs->cs_method) {
 
 		case ACPICPU_C_STATE_HALT:
-			method = "HALT";
+			str = "HALT";
 			break;
 
 		case ACPICPU_C_STATE_FFH:
-			method = "FFH";
+			str = "FFH";
 			break;
 
 		case ACPICPU_C_STATE_SYSIO:
-			method = "SYSIO";
+			str = "SYSIO";
 			break;
 
 		default:
 			panic("NOTREACHED");
 		}
 
-		aprint_debug_dev(sc->sc_dev, "C%d: %5s, "
-		    "latency %4u, power %4u, addr 0x%06x, flags 0x%02x\n",
-		    i, method, cs->cs_latency, cs->cs_power,
+		aprint_verbose_dev(sc->sc_dev, "C%d: %5s, "
+		    "lat %3u us, pow %5u mW, addr 0x%06x, flags 0x%02x\n",
+		    i, str, cs->cs_latency, cs->cs_power,
 		    (uint32_t)cs->cs_addr, cs->cs_flags);
 	}
 }
@@ -227,8 +196,6 @@ acpicpu_cstate_resume(device_t self)
 	static const ACPI_OSD_EXEC_CALLBACK func = acpicpu_cstate_callback;
 	struct acpicpu_softc *sc = device_private(self);
 
-	KASSERT((sc->sc_flags & ACPICPU_FLAG_C) != 0);
-
 	if ((sc->sc_flags & ACPICPU_FLAG_C_CST) != 0)
 		(void)AcpiOsExecute(OSL_NOTIFY_HANDLER, func, sc->sc_dev);
 
@@ -242,8 +209,6 @@ acpicpu_cstate_callback(void *aux)
 	device_t self = aux;
 
 	sc = device_private(self);
-
-	KASSERT((sc->sc_flags & ACPICPU_FLAG_C) != 0);
 
 	if ((sc->sc_flags & ACPICPU_FLAG_C_FADT) != 0) {
 		KASSERT((sc->sc_flags & ACPICPU_FLAG_C_CST) == 0);
@@ -450,14 +415,14 @@ acpicpu_cstate_cst_add(struct acpicpu_softc *sc, ACPI_OBJECT *elm)
 
 		case ACPI_STATE_C1:
 
-			if ((sc->sc_flags & ACPICPU_FLAG_C_MWAIT) == 0)
+			if ((sc->sc_flags & ACPICPU_FLAG_C_FFH) == 0)
 				state.cs_method = ACPICPU_C_STATE_HALT;
 
 			break;
 
 		default:
 
-			if ((sc->sc_flags & ACPICPU_FLAG_C_MWAIT) == 0) {
+			if ((sc->sc_flags & ACPICPU_FLAG_C_FFH) == 0) {
 				rv = AE_AML_BAD_RESOURCE_VALUE;
 				goto out;
 			}
@@ -511,65 +476,6 @@ acpicpu_cstate_cst_bios(void)
 		return;
 
 	(void)AcpiOsWritePort(addr, val, 8);
-}
-
-static ACPI_STATUS
-acpicpu_cstate_csd(ACPI_HANDLE hdl, struct acpicpu_dep *dep)
-{
-	ACPI_OBJECT *elm, *obj;
-	ACPI_BUFFER buf;
-	ACPI_STATUS rv;
-	int i, n;
-
-	/*
-	 * Query the optional _CSD for heuristics.
-	 */
-	rv = acpi_eval_struct(hdl, "_CSD", &buf);
-
-	if (ACPI_FAILURE(rv))
-		return rv;
-
-	obj = buf.Pointer;
-
-	if (obj->Type != ACPI_TYPE_PACKAGE) {
-		rv = AE_TYPE;
-		goto out;
-	}
-
-	n = obj->Package.Count;
-
-	if (n != 6) {
-		rv = AE_LIMIT;
-		goto out;
-	}
-
-	elm = obj->Package.Elements;
-
-	for (i = 0; i < n; i++) {
-
-		if (elm[i].Type != ACPI_TYPE_INTEGER) {
-			rv = AE_TYPE;
-			goto out;
-		}
-
-		KDASSERT((uint64_t)elm[i].Integer.Value <= UINT32_MAX);
-	}
-
-	if (elm[0].Integer.Value != 6 || elm[1].Integer.Value != 0) {
-		rv = AE_BAD_DATA;
-		goto out;
-	}
-
-	dep->dep_domain = elm[2].Integer.Value;
-	dep->dep_coord  = elm[3].Integer.Value;
-	dep->dep_ncpu   = elm[4].Integer.Value;
-	dep->dep_index  = elm[5].Integer.Value;
-
-out:
-	if (buf.Pointer != NULL)
-		ACPI_FREE(buf.Pointer);
-
-	return rv;
 }
 
 static void
