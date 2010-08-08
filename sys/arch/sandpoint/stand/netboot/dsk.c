@@ -1,4 +1,4 @@
-/* $NetBSD: dsk.c,v 1.4 2010/08/08 11:54:45 phx Exp $ */
+/* $NetBSD: dsk.c,v 1.5 2010/08/08 11:58:26 phx Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -365,7 +365,6 @@ lba_read(struct disk *d, uint64_t bno, uint32_t bcnt, void *buf)
 	const char *err;
 	int error;
 
-return EIO; /*@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@*/
 	l = d->dvops;
 	n = d->unittag;
 	p = (uint16_t *)buf;
