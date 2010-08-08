@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.258 2010/07/25 19:19:06 christos Exp $	*/
+/*	$NetBSD: trap.c,v 1.259 2010/08/08 18:13:54 chs Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2005, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.258 2010/07/25 19:19:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.259 2010/08/08 18:13:54 chs Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -442,6 +442,7 @@ copyfault:
 		 * returning from a trap, syscall, or interrupt.
 		 */
 
+kernelfault:
 		KSI_INIT_TRAP(&ksi);
 		ksi.ksi_signo = SIGSEGV;
 		ksi.ksi_code = SEGV_ACCERR;
@@ -759,7 +760,7 @@ faultcommon:
 				goto copyfault;
 			printf("uvm_fault(%p, %#lx, %d) -> %#x\n",
 			    map, va, ftype, error);
-			goto we_re_toast;
+			goto kernelfault;
 		}
 		if (error == ENOMEM) {
 			ksi.ksi_signo = SIGKILL;
