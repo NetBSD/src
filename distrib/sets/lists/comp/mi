@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1493 2010/08/07 22:21:30 pgoyette Exp $
+#	$NetBSD: mi,v 1.1494 2010/08/08 00:44:38 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -21133,7 +21133,7 @@
 ./usr/share/man/man9/microuptime.9		comp-sys-man		.man
 ./usr/share/man/man9/module.9			comp-sys-man		.man
 ./usr/share/man/man9/module_autoload.9		comp-sys-man		.man
-./usr/share/man/cat9/module_find_section.9	comp-sys-man		.man
+./usr/share/man/man9/module_find_section.9	comp-sys-man		.man
 ./usr/share/man/man9/module_hold.9		comp-sys-man		.man
 ./usr/share/man/man9/module_init_class.9	comp-sys-man		.man
 ./usr/share/man/man9/module_load.9		comp-sys-man		.man
