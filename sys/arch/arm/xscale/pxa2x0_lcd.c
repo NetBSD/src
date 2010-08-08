@@ -1,4 +1,4 @@
-/* $NetBSD: pxa2x0_lcd.c,v 1.29 2010/08/08 09:33:35 kiyohara Exp $ */
+/* $NetBSD: pxa2x0_lcd.c,v 1.30 2010/08/08 11:24:52 tsutsui Exp $ */
 
 /*
  * Copyright (c) 2002  Genetec Corporation.  All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0_lcd.c,v 1.29 2010/08/08 09:33:35 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_lcd.c,v 1.30 2010/08/08 11:24:52 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,6 +77,12 @@ struct {
 	struct pxa2x0_wsscreen_descr	*descr;
 	const struct lcd_panel_geometry *geom;
 } pxa2x0_lcd_console;
+
+#ifdef PXA2X0_LCD_WRITETHROUGH
+int pxa2x0_lcd_writethrough = 1;	/* patchable */
+#else
+int pxa2x0_lcd_writethrough = 0;
+#endif
 
 int		lcdintr(void *);
 
@@ -333,6 +339,9 @@ pxa2x0_lcd_start_dma(struct pxa2x0_lcd_softc *sc,
 	iot = sc->iot;
 	ioh = sc->ioh;
 
+	bus_dmamap_sync(sc->dma_tag, scr->dma, 0, scr->buf_size,
+	    BUS_DMASYNC_PREWRITE);
+
 	save = disable_interrupts(I32_bit);
 
 	switch (scr->depth) {
@@ -536,9 +545,30 @@ pxa2x0_lcd_new_screen(struct pxa2x0_lcd_softc *sc, int depth,
 	}
 
 	error = bus_dmamem_map(dma_tag, scr->segs, scr->nsegs, size,
-	    (void **)&scr->buf_va, busdma_flag | BUS_DMA_COHERENT);
+	    (void **)&scr->buf_va,
+	    busdma_flag | (pxa2x0_lcd_writethrough ? 0 : BUS_DMA_COHERENT));
 	if (error)
 		goto bad;
+
+	/* XXX: should we have BUS_DMA_WRITETHROUGH in MI bus_dma(9) API? */
+	if (pxa2x0_lcd_writethrough) {
+		pt_entry_t *ptep;
+		vaddr_t va, eva;
+
+		va = (vaddr_t)scr->buf_va;
+		eva = va + size;
+		while (va < eva) {
+			/* taken from arm/arm32/bus_dma.c:_bus_dmamem_map() */
+			cpu_dcache_wbinv_range(va, PAGE_SIZE);
+			cpu_drain_writebuf();
+			ptep = vtopte(va);
+			*ptep &= ~L2_S_CACHE_MASK;
+			*ptep |= L2_C;
+			PTE_SYNC(ptep);
+			tlb_flush();
+			va += PAGE_SIZE;
+		}
+	}
 
 	memset(scr->buf_va, 0, scr->buf_size);
 
@@ -899,7 +929,8 @@ pxa2x0_lcd_mmap(void *v, void *vs, off_t offset, int prot)
 		return -1;
 
 	return bus_dmamem_mmap(sc->dma_tag, scr->segs, scr->nsegs,
-	    offset, prot, BUS_DMA_WAITOK|BUS_DMA_COHERENT);
+	    offset, prot,
+	    BUS_DMA_WAITOK | (pxa2x0_lcd_writethrough ? 0 : BUS_DMA_COHERENT));
 }
 
 
