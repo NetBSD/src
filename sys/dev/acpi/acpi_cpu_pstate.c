@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_pstate.c,v 1.2 2010/08/08 17:05:50 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_pstate.c,v 1.3 2010/08/08 18:10:34 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_pstate.c,v 1.2 2010/08/08 17:05:50 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_pstate.c,v 1.3 2010/08/08 18:10:34 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -53,17 +53,27 @@ void
 acpicpu_pstate_attach(device_t self)
 {
 	struct acpicpu_softc *sc = device_private(self);
+	const char *str;
 	ACPI_STATUS rv;
 
 	rv = acpicpu_pstate_pss(sc);
 
-	if (ACPI_FAILURE(rv))
-		return;
+	if (ACPI_FAILURE(rv)) {
+		str = "_PSS";
+		goto fail;
+	}
 
 	rv = acpicpu_pstate_pct(sc);
 
-	if (ACPI_FAILURE(rv))
+	if (rv == AE_SUPPORT) {
+		aprint_error_dev(sc->sc_dev, "CPU not supported\n");
 		return;
+	}
+
+	if (ACPI_FAILURE(rv)) {
+		str = "_PCT";
+		goto fail;
+	}
 
 	rv = acpicpu_pstate_max(sc);
 
@@ -74,6 +84,12 @@ acpicpu_pstate_attach(device_t self)
 
 	acpicpu_pstate_bios();
 	acpicpu_pstate_attach_print(sc);
+
+	return;
+
+fail:
+	aprint_error_dev(sc->sc_dev, "failed to evaluate "
+	    "%s: %s\n", str, AcpiFormatException(rv));
 }
 
 static void
@@ -93,7 +109,7 @@ acpicpu_pstate_attach_print(struct acpicpu_softc *sc)
 		if (ps->ps_freq == 0)
 			continue;
 
-		aprint_verbose_dev(sc->sc_dev, "P%d: %5s, "
+		aprint_debug_dev(sc->sc_dev, "P%d: %5s, "
 		    "lat %3u us, pow %5u mW, %4u MHz\n",
 		    i, str, ps->ps_latency, ps->ps_power, ps->ps_freq);
 	}
@@ -262,10 +278,6 @@ out:
 	if (buf.Pointer != NULL)
 		ACPI_FREE(buf.Pointer);
 
-	if (ACPI_FAILURE(rv))
-		aprint_error_dev(sc->sc_dev, "failed to evaluate "
-		    "_PSS: %s\n", AcpiFormatException(rv));
-
 	return rv;
 }
 
@@ -373,7 +385,7 @@ acpicpu_pstate_pct(struct acpicpu_softc *sc)
 			width = reg[i]->reg_bitwidth;
 
 			if (width != 8 && width != 16 && width != 32) {
-				rv = AE_AML_BAD_RESOURCE_VALUE;
+				rv = AE_SUPPORT;
 				goto out;
 			}
 
@@ -405,10 +417,6 @@ acpicpu_pstate_pct(struct acpicpu_softc *sc)
 out:
 	if (buf.Pointer != NULL)
 		ACPI_FREE(buf.Pointer);
-
-	if (ACPI_FAILURE(rv))
-		aprint_error_dev(sc->sc_dev, "failed to evaluate "
-		    "_PCT: %s\n", AcpiFormatException(rv));
 
 	return rv;
 }
