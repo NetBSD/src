@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.34 2010/06/26 21:45:49 phx Exp $ */
+/* $NetBSD: main.c,v 1.35 2010/08/08 11:54:45 phx Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -151,7 +151,7 @@ main(int argc, char *argv[])
 		if (i >= sizeof(bootargs) / sizeof(bootargs[0]))
 			break;	/* break on first unknown string */
 	}
-	if (n == argc)
+	if (n >= argc)
 		bname = BNAME_DEFAULT;
 	else {
 		bname = argv[n];
