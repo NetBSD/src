@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_pci.c,v 1.12 2010/06/09 04:20:10 mrg Exp $ */
+/* $NetBSD: acpi_pci.c,v 1.13 2010/08/08 16:26:47 gsutre Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_pci.c,v 1.12 2010/06/09 04:20:10 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_pci.c,v 1.13 2010/08/08 16:26:47 gsutre Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -163,11 +163,11 @@ acpi_pcidev_scan(struct acpi_devnode *ad)
 	ACPI_INTEGER val;
 	ACPI_STATUS rv;
 
+	ad->ad_pciinfo = NULL;
+
 	if (ad->ad_devinfo->Type != ACPI_TYPE_DEVICE ||
-	    !(ad->ad_devinfo->Valid & ACPI_VALID_ADR)) {
-		ad->ad_pciinfo = NULL;
+	    !(ad->ad_devinfo->Valid & ACPI_VALID_ADR))
 		goto rec;
-	}
 
 	if (ad->ad_devinfo->Flags & ACPI_PCI_ROOT_BRIDGE) {
 
@@ -200,6 +200,14 @@ acpi_pcidev_scan(struct acpi_devnode *ad)
 		ap->ap_device = ACPI_HILODWORD(ad->ad_devinfo->Address);
 		ap->ap_function = ACPI_LOLODWORD(ad->ad_devinfo->Address);
 
+		if (ap->ap_bus > 255 || ap->ap_device > 31 ||
+		    ap->ap_function > 7) {
+			aprint_error_dev(ad->ad_root,
+			    "invalid PCI address for %s\n", ad->ad_name);
+			kmem_free(ap, sizeof(*ap));
+			goto rec;
+		}
+
 		ap->ap_bridge = true;
 		ap->ap_downbus = ap->ap_bus;
 
@@ -227,6 +235,13 @@ acpi_pcidev_scan(struct acpi_devnode *ad)
 
 		ap->ap_device = ACPI_HILODWORD(ad->ad_devinfo->Address);
 		ap->ap_function = ACPI_LOLODWORD(ad->ad_devinfo->Address);
+
+		if (ap->ap_device > 31 || ap->ap_function > 7) {
+			aprint_error_dev(ad->ad_root,
+			    "invalid PCI address for %s\n", ad->ad_name);
+			kmem_free(ap, sizeof(*ap));
+			goto rec;
+		}
 
 		/*
 		 * Check whether this device is a PCI-to-PCI
@@ -256,8 +271,8 @@ rec:
  * acpi_pcidev_ppb_downbus:
  *
  *	Retrieve the secondary bus number of the PCI-to-PCI bridge having the
- *	given PCI id.  If successful, return AE_OK and fill *busp.  Otherwise,
- *	return an exception code and leave *busp unchanged.
+ *	given PCI id.  If successful, return AE_OK and fill *downbus.
+ *	Otherwise, return an exception code and leave *downbus unchanged.
  *
  * XXX	Need to deal with PCI segment groups (see also acpica/OsdHardware.c).
  */
