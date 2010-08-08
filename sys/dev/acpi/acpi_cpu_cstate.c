@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_cstate.c,v 1.15 2010/08/08 16:58:42 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_cstate.c,v 1.16 2010/08/08 18:25:06 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_cstate.c,v 1.15 2010/08/08 16:58:42 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_cstate.c,v 1.16 2010/08/08 18:25:06 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -134,7 +134,7 @@ acpicpu_cstate_attach_print(struct acpicpu_softc *sc)
 			panic("NOTREACHED");
 		}
 
-		aprint_verbose_dev(sc->sc_dev, "C%d: %5s, "
+		aprint_debug_dev(sc->sc_dev, "C%d: %5s, "
 		    "lat %3u us, pow %5u mW, addr 0x%06x, flags 0x%02x\n",
 		    i, str, cs->cs_latency, cs->cs_power,
 		    (uint32_t)cs->cs_addr, cs->cs_flags);
@@ -286,10 +286,6 @@ out:
 	if (buf.Pointer != NULL)
 		ACPI_FREE(buf.Pointer);
 
-	if (ACPI_FAILURE(rv))
-		aprint_error_dev(sc->sc_dev, "failed to evaluate "
-		    "_CST: %s\n", AcpiFormatException(rv));
-
 	return rv;
 }
 
@@ -423,7 +419,7 @@ acpicpu_cstate_cst_add(struct acpicpu_softc *sc, ACPI_OBJECT *elm)
 		default:
 
 			if ((sc->sc_flags & ACPICPU_FLAG_C_FFH) == 0) {
-				rv = AE_AML_BAD_RESOURCE_VALUE;
+				rv = AE_SUPPORT;
 				goto out;
 			}
 		}
@@ -460,8 +456,8 @@ acpicpu_cstate_cst_add(struct acpicpu_softc *sc, ACPI_OBJECT *elm)
 
 out:
 	if (ACPI_FAILURE(rv))
-		aprint_verbose_dev(sc->sc_dev,
-		    "invalid _CST: %s\n", AcpiFormatException(rv));
+		aprint_debug_dev(sc->sc_dev, "invalid "
+		    "_CST: %s\n", AcpiFormatException(rv));
 
 	return rv;
 }
