@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cdce.c,v 1.30 2010/05/19 21:10:42 jakllsch Exp $ */
+/*	$NetBSD: if_cdce.c,v 1.31 2010/08/08 01:57:24 jakllsch Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003 Bill Paul <wpaul@windriver.com>
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.30 2010/05/19 21:10:42 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.31 2010/08/08 01:57:24 jakllsch Exp $");
 #ifdef	__NetBSD__
 #include "opt_inet.h"
 #endif
@@ -292,6 +292,9 @@ cdce_attach(device_t parent, device_t self, void *aux)
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->cdce_udev,
 	    sc->cdce_dev);
 
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
+
 	return;
 }
 
@@ -301,6 +304,9 @@ cdce_detach(device_t self, int flags)
 	struct cdce_softc *sc = device_private(self);
 	struct ifnet	*ifp = GET_IFP(sc);
 	int		 s;
+
+	if (device_pmf_is_registered(self))
+		pmf_device_deregister(self);
 
 	s = splusb();
 
