@@ -1,4 +1,4 @@
-/*	$NetBSD: debug.h,v 1.9 2008/04/28 20:23:20 martin Exp $	*/
+/*	$NetBSD: debug.h,v 1.10 2010/08/08 16:27:30 chs Exp $	*/
 
 /*-
  * Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
@@ -114,8 +114,8 @@ void dbg_banner_title(const char *, size_t);
 void dbg_banner_line(void);
 #define dbg_banner_function()						\
 {									\
-	const char funcname[] = __func__;				\
-	dbg_banner_title(funcname, sizeof funcname);			\
+	const char *funcname = __func__;				\
+	dbg_banner_title(funcname, strlen (funcname));			\
 }
 
 /* HPC_DEBUG_LCD */
