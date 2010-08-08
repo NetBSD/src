@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.174 2010/07/01 19:50:11 ragge Exp $
+# $NetBSD: GENERIC,v 1.175 2010/08/08 18:19:26 chs Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/vax/conf/std.vax"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.174 $"
+#ident 		"GENERIC-$Revision: 1.175 $"
 
 # Here are all different supported CPU types listed.
 #options 	VAX8800		# VAX 8500, 8530, 8550, 8700, 8800
@@ -49,7 +49,7 @@ maxusers	8
 # Kernel compiled-in symbolic debugger & system call tracer
 makeoptions	DEBUG="-g"
 options 	DDB
-#options 	DDB_HISTORY_SIZE=100	# enable history editing in DDB
+options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 options 	KTRACE
 #options 	DIAGNOSTIC
 #options 	DEBUG
