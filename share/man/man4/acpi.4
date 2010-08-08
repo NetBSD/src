@@ -1,4 +1,4 @@
-.\" $NetBSD: acpi.4,v 1.55 2010/08/06 18:54:50 jruoho Exp $
+.\" $NetBSD: acpi.4,v 1.56 2010/08/08 05:02:59 jruoho Exp $
 .\"
 .\" Copyright (c) 2002, 2004, 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd August 6, 2010
+.Dd August 8, 2010
 .Dt ACPI 4
 .Os
 .Sh NAME
@@ -102,9 +102,9 @@ variables are directly relevant for
 .Tn ACPI .
 .Bl -tag -width "123456" -offset indent
 .It Ic hw.acpi.root
-The
+The address of the
 .Tn ACPI
-root pointer.
+root pointer in system memory.
 .It Ic hw.acpi.supported_states
 A list of the
 .Tn ACPI
@@ -152,7 +152,7 @@ speaker beeps upon resume.
 .It Ic machdep.acpi_vbios_reset
 Defines the handling of the graphics card.
 The supported values are:
-.Bl -tag -width '2' -offset indent
+.Bl -tag -width '2' -offset 2n
 .It 0
 No attempt to reset the
 .Tn VGA
@@ -176,11 +176,18 @@ Call the
 .Tn BIOS
 using the in-kernel x86 emulator.
 .El
+.Pp
+If the system has problems in resuming from the
+.Tn S3
+state, experimenting with different values may provide a solution.
 .El
 .Sh SUPPORTED DEVICES
 .Nx
 .Tn ACPI
-supports several machine-dependent and machine-independent devices:
+supports several machine-dependent and machine-independent devices,
+some specific to
+.Tn ACPI
+and some configured via it.
 .Ss Machine-independent devices
 .Bl -tag -width "thinkpad(4) " -offset indent -compact
 .It Xr acpiacad 4
@@ -283,6 +290,24 @@ In
 these are generally only available if the kernel has been compiled with the
 .Tn ACPI_DEBUG
 option.
+.Ss Verbose messages
+The
+.Tn ACPIVERBOSE
+compile time option enables some verbose
+debug messages printed during the system startup.
+In a
+.Tn MODULAR
+(see
+.Xr options 4 )
+system, the information can be printed also at runtime,
+regardless of the presence of
+.Tn ACPIVERBOSE .
+To print the messages,
+.Xr modload 8
+the
+.Ic acpiverbose
+module using the option
+.Ar -b dump=true .
 .Ss Custom DSDT
 .Tn ACPI
 interprets bytecode known as
