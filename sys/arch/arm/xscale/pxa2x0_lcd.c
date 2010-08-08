@@ -1,4 +1,4 @@
-/* $NetBSD: pxa2x0_lcd.c,v 1.28 2010/03/13 11:15:52 bsh Exp $ */
+/* $NetBSD: pxa2x0_lcd.c,v 1.29 2010/08/08 09:33:35 kiyohara Exp $ */
 
 /*
  * Copyright (c) 2002  Genetec Corporation.  All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0_lcd.c,v 1.28 2010/03/13 11:15:52 bsh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_lcd.c,v 1.29 2010/08/08 09:33:35 kiyohara Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -248,6 +248,9 @@ pxa2x0_lcd_attach_sub(struct pxa2x0_lcd_softc *sc,
 		    PXA2X0_INT_LCD);
 		return;
 	}
+
+	/* Must disable LCD Controller here, if already enabled. */
+	bus_space_write_4(iot, ioh, LCDC_LCCR0, 0);
 
 	pxa2x0_lcd_initialize(sc, geom);
 
