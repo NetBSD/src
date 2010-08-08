@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_pstate.c,v 1.3 2010/08/08 18:10:34 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_pstate.c,v 1.4 2010/08/08 18:25:06 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_pstate.c,v 1.3 2010/08/08 18:10:34 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_pstate.c,v 1.4 2010/08/08 18:25:06 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -385,7 +385,7 @@ acpicpu_pstate_pct(struct acpicpu_softc *sc)
 			width = reg[i]->reg_bitwidth;
 
 			if (width != 8 && width != 16 && width != 32) {
-				rv = AE_SUPPORT;
+				rv = AE_AML_BAD_RESOURCE_VALUE;
 				goto out;
 			}
 
@@ -394,7 +394,7 @@ acpicpu_pstate_pct(struct acpicpu_softc *sc)
 		case ACPI_ADR_SPACE_FIXED_HARDWARE:
 
 			if ((sc->sc_flags & ACPICPU_FLAG_P_FFH) == 0) {
-				rv = AE_AML_BAD_RESOURCE_VALUE;
+				rv = AE_SUPPORT;
 				goto out;
 			}
 
