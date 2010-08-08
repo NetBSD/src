@@ -1,4 +1,4 @@
-.\"	$NetBSD: module.9,v 1.9 2010/08/08 14:26:22 pgoyette Exp $
+.\"	$NetBSD: module.9,v 1.10 2010/08/08 15:23:28 wiz Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -191,7 +191,8 @@ routine.
 If a module is being loaded from the file-system, and the
 .Dv MODCTL_NO_PROP
 flag is not set, the system searches for a file with the same name as the
-module file, but with the suffix ".prop".
+module file, but with the suffix
+.Dq Pa .prop .
 If this file is found, the prop_dictionary it contains is loaded and
 passed to the module's
 .Fn modcmd
@@ -209,7 +210,7 @@ Device driver
 Executable image handler
 .It Dv MODULE_CLASS_MISC
 Miscellaneous module
-.It Dv MODULE_CLASS_SECMODEL 
+.It Dv MODULE_CLASS_SECMODEL
 Security model (see
 .Xr secmodel 9
 for more details)
