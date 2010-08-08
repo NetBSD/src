@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_pstate.c,v 1.1 2010/08/08 16:58:42 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_pstate.c,v 1.2 2010/08/08 17:05:50 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_pstate.c,v 1.1 2010/08/08 16:58:42 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_pstate.c,v 1.2 2010/08/08 17:05:50 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -54,12 +54,6 @@ acpicpu_pstate_attach(device_t self)
 {
 	struct acpicpu_softc *sc = device_private(self);
 	ACPI_STATUS rv;
-
-	/*
-	 * XXX: Only Intel is currently supported.
-	 */
-	if (sc->sc_cap == 0)
-		return;
 
 	rv = acpicpu_pstate_pss(sc);
 
