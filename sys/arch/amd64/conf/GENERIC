@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.283 2010/07/23 00:43:20 jakllsch Exp $
+# $NetBSD: GENERIC,v 1.284 2010/08/08 18:28:00 chs Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.283 $"
+#ident 		"GENERIC-$Revision: 1.284 $"
 
 maxusers	64		# estimated number of users
 
@@ -484,6 +484,10 @@ iic*	at ichsmb?
 #spdmem* at iic? addr 0x51
 #spdmem* at iic? addr 0x52
 #spdmem* at iic? addr 0x53
+#spdmem* at iic? addr 0x54
+#spdmem* at iic? addr 0x55
+#spdmem* at iic? addr 0x56
+#spdmem* at iic? addr 0x57
 
 # I2O devices
 iop*	at pci? dev ? function ?	# I/O processor
