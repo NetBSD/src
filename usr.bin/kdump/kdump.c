@@ -1,4 +1,4 @@
-/*	$NetBSD: kdump.c,v 1.104 2009/04/13 14:39:23 christos Exp $	*/
+/*	$NetBSD: kdump.c,v 1.105 2010/08/08 18:31:50 chs Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: kdump.c,v 1.104 2009/04/13 14:39:23 christos Exp $");
+__RCSID("$NetBSD: kdump.c,v 1.105 2010/08/08 18:31:50 chs Exp $");
 #endif
 #endif /* not lint */
 
@@ -532,7 +532,10 @@ ktrsyscall(struct ktr_syscall *ktr)
 		if (plain) {
 			;
 
-		} else if (strcmp(sys_name, "exit") == 0) {
+		} else if (strcmp(sys_name, "exit_group") == 0 ||
+			   (strcmp(emul->name, "linux") != 0 &&
+			    strcmp(emul->name, "linux32") != 0 &&
+			    strcmp(sys_name, "exit") == 0)) {
 			ectx_delete();
 
 		} else if (strcmp(sys_name, "ioctl") == 0 && argcount >= 2) {
