@@ -1,4 +1,4 @@
-/*	$NetBSD: est.c,v 1.15 2010/08/07 22:31:57 jym Exp $	*/
+/*	$NetBSD: est.c,v 1.16 2010/08/08 16:58:42 jruoho Exp $	*/
 /*
  * Copyright (c) 2003 Michael Eriksson.
  * All rights reserved.
@@ -81,7 +81,7 @@
 /* #define EST_DEBUG */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: est.c,v 1.15 2010/08/07 22:31:57 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: est.c,v 1.16 2010/08/08 16:58:42 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -998,20 +998,75 @@ static const struct fqlist est_cpus[] = {
 
 static const struct 	fqlist *est_fqlist;	/* not NULL if functional */
 static uint16_t		*fake_table;		/* guessed est_cpu table */
+static char		*freq_names;
 static struct fqlist    fake_fqlist;
 static int 		est_node_target, est_node_current;
 static const char 	est_desc[] = "Enhanced SpeedStep";
 static int		lvendor, bus_clock;
 
-static int		est_sysctl_helper(SYSCTLFN_PROTO);
 static int		est_init_once(void);
 static void		est_init_main(int);
+
+static int		est_sysctl_helper(SYSCTLFN_PROTO);
+static int		est_sysctl_helper_get(SYSCTLFN_PROTO);
+static int		est_sysctl_helper_set(SYSCTLFN_PROTO);
+static int		est_sysctl_helper_all(SYSCTLFN_PROTO);
+
+int (*est_sysctl_get)(SYSCTLFN_PROTO) = NULL;
+int (*est_sysctl_set)(SYSCTLFN_PROTO) = NULL;
+int (*est_sysctl_all)(SYSCTLFN_PROTO) = NULL;
+
+static int
+est_sysctl_helper_get(SYSCTLFN_ARGS)
+{
+
+	if (est_sysctl_get != NULL)
+		return (*est_sysctl_get)(SYSCTLFN_CALL(rnode));
+
+	return est_sysctl_helper(SYSCTLFN_CALL(rnode));
+}
+
+static int
+est_sysctl_helper_set(SYSCTLFN_ARGS)
+{
+
+	if (est_sysctl_set != NULL)
+		return (*est_sysctl_set)(SYSCTLFN_CALL(rnode));
+
+	return est_sysctl_helper(SYSCTLFN_CALL(rnode));
+}
+
+static int
+est_sysctl_helper_all(SYSCTLFN_ARGS)
+{
+	struct sysctlnode node;
+	int err;
+
+	if (est_sysctl_all != NULL)
+		return (*est_sysctl_all)(SYSCTLFN_CALL(rnode));
+
+	if (freq_names == NULL)
+		return ENXIO;
+
+	node = *rnode;
+	node.sysctl_data = freq_names;
+
+	err = sysctl_lookup(SYSCTLFN_CALL(&node));
+
+	if (err != 0 || newp == NULL)
+		return err;
+
+	return 0;
+}
 
 static int
 est_sysctl_helper(SYSCTLFN_ARGS)
 {
 	struct sysctlnode	node;
 	int			fq, oldfq, error;
+
+	if (freq_names == NULL)
+		return ENXIO;
 
 	if (est_fqlist == NULL)
 		return EOPNOTSUPP;
@@ -1086,7 +1141,6 @@ est_init_main(int vendor)
 	uint8_t			crhi, crlo, crcur;
 	int			i, mv, rc;
 	size_t			len, freq_len;
-	char			*freq_names;
 
 	if (CPUID2FAMILY(curcpu()->ci_signature) == 15)
 		bus_clock = p4_get_bus_clock(curcpu());
@@ -1278,24 +1332,28 @@ est_init_main(int vendor)
 
 	if ((rc = sysctl_createv(NULL, 0, &freqnode, &node,
 	    EST_TARGET_CTLFLAG, CTLTYPE_INT, "target", NULL,
-	    est_sysctl_helper, 0, NULL, 0, CTL_CREATE, CTL_EOL)) != 0)
+	    est_sysctl_helper_set, 0, NULL, 0, CTL_CREATE, CTL_EOL)) != 0)
 		goto err;
+
 	est_node_target = node->sysctl_num;
 
 	if ((rc = sysctl_createv(NULL, 0, &freqnode, &node,
 	    0, CTLTYPE_INT, "current", NULL,
-	    est_sysctl_helper, 0, NULL, 0, CTL_CREATE, CTL_EOL)) != 0)
+	    est_sysctl_helper_get, 0, NULL, 0, CTL_CREATE, CTL_EOL)) != 0)
 		goto err;
+
 	est_node_current = node->sysctl_num;
 
 	if ((rc = sysctl_createv(NULL, 0, &freqnode, &node,
-	    0, CTLTYPE_STRING, "available", NULL,
-	    NULL, 0, freq_names, freq_len, CTL_CREATE, CTL_EOL)) != 0)
+	    CTLFLAG_READONLY, CTLTYPE_STRING, "available", NULL,
+	    est_sysctl_helper_all, 0, NULL, 0, CTL_CREATE, CTL_EOL)) != 0)
 		goto err;
 
 	return;
 
  err:
 	free(freq_names, M_SYSCTLDATA);
+	freq_names = NULL;
+
 	aprint_error("%s: sysctl_createv failed (rc = %d)\n", __func__, rc);
 }
