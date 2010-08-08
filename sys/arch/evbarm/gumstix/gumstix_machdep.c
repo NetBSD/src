@@ -1,4 +1,4 @@
-/*	$NetBSD: gumstix_machdep.c,v 1.28 2010/07/10 08:26:34 kiyohara Exp $ */
+/*	$NetBSD: gumstix_machdep.c,v 1.29 2010/08/08 09:00:15 kiyohara Exp $ */
 /*
  * Copyright (C) 2005, 2006, 2007  WIDE Project and SOUM Corporation.
  * All rights reserved.
@@ -137,6 +137,7 @@
  * boards using RedBoot firmware.
  */
 
+#include "opt_evbarm_boardtype.h"
 #include "opt_cputypes.h"
 #include "opt_gumstix.h"
 #include "opt_ddb.h"
@@ -578,15 +579,9 @@ initarm(void *arg)
 #endif
 
 	/* Talk to the user */
-	printf("\nNetBSD/evbarm (%s) booting ...\n",
-#if defined(GUMSTIX)
-	    "gumstix"
-#elif defined(OVERO)
-	    "overo"
-#else
-	    "???"
-#endif
-	);
+#define BDSTR(s)	_BDSTR(s)
+#define _BDSTR(s)	#s
+	printf("\nNetBSD/evbarm (" BDSTR(EVBARM_BOARDTYPE) ") booting ...\n");
 
 	/* Read system serial */
 #if defined(GUMSTIX)
