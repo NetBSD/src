@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu.c,v 1.12 2010/08/08 16:58:42 jruoho Exp $ */
+/* $NetBSD: acpi_cpu.c,v 1.13 2010/08/08 18:47:54 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu.c,v 1.12 2010/08/08 16:58:42 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu.c,v 1.13 2010/08/08 18:47:54 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -116,6 +116,7 @@ acpicpu_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_dev = self;
 	sc->sc_cold = false;
+	sc->sc_mapped = false;
 	sc->sc_iot = aa->aa_iot;
 	sc->sc_node = aa->aa_node;
 	sc->sc_cpuid = acpicpu_id(sc->sc_object.ao_procid);
@@ -150,8 +151,8 @@ acpicpu_attach(device_t parent, device_t self, void *aux)
 		rv = bus_space_map(sc->sc_iot, sc->sc_object.ao_pblkaddr,
 		    sc->sc_object.ao_pblklen, 0, &sc->sc_ioh);
 
-		if (rv != 0)
-			sc->sc_ioh = 0;
+		if (rv == 0)
+			sc->sc_mapped = true;
 	}
 
 	acpicpu_cstate_attach(self);
@@ -194,7 +195,7 @@ acpicpu_detach(device_t self, int flags)
 	if (rv != 0)
 		return rv;
 
-	if (sc->sc_ioh != 0)
+	if (sc->sc_mapped != false)
 		bus_space_unmap(sc->sc_iot, sc->sc_ioh, addr);
 
 	mutex_destroy(&sc->sc_mtx);
