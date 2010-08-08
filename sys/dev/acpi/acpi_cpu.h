@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu.h,v 1.8 2010/07/30 06:11:14 jruoho Exp $ */
+/* $NetBSD: acpi_cpu.h,v 1.9 2010/08/08 16:58:42 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -33,8 +33,17 @@
 /*
  * The following _PDC values are based on:
  *
- *   Intel Processor-Specific ACPI Interface
- *   Specification, September 2006, Revision 005.
+ * 	Intel Corporation: Intel Processor-Specific ACPI
+ *	Interface Specification, September 2006, Revision 005.
+ *
+ *	http://download.intel.com/technology/IAPC/acpi/downloads/30222305.pdf
+ *
+ * For other relevant reading, see for instance:
+ *
+ *	Advanced Micro Devices: Using ACPI to Report APML P-State
+ *	Limit Changes to Operating Systems and VMM's. August 7, 2009.
+ *
+ *	http://developer.amd.com/Assets/ACPI-APML-PState-rev12.pdf
  */
 #define ACPICPU_PDC_REVID         0x1
 #define ACPICPU_PDC_SMP           0xA
@@ -73,11 +82,10 @@
 #define ACPICPU_C_STATE_SYSIO	 0x03
 
 /*
- * Cross-CPU dependency coordination.
+ * P-states.
  */
-#define ACPICPU_DEP_SW_ALL	 0xFC
-#define ACPICPU_DEP_SW_ANY	 0xFD
-#define ACPICPU_DEP_HW_ALL	 0xFE
+#define ACPICPU_P_STATE_RETRY	 100
+#define ACPICPU_P_STATE_UNKNOWN	 0x0
 
 /*
  * Flags.
@@ -92,8 +100,11 @@
 #define ACPICPU_FLAG_C_BM_STS	 __BIT(6)	/* Bus master check required */
 #define ACPICPU_FLAG_C_ARB	 __BIT(7)	/* Bus master arbitration    */
 #define ACPICPU_FLAG_C_NOC3	 __BIT(8)	/* C3 disabled (quirk)       */
-#define ACPICPU_FLAG_C_MWAIT	 __BIT(9)	/* MONITOR/MWAIT supported   */
+#define ACPICPU_FLAG_C_FFH	 __BIT(9)	/* MONITOR/MWAIT supported   */
 #define ACPICPU_FLAG_C_C1E	 __BIT(10)	/* AMD C1E detected	     */
+
+#define ACPICPU_FLAG_P_PPC	 __BIT(11)	/* Dynamic freq. with _PPC   */
+#define ACPICPU_FLAG_P_FFH	 __BIT(12)	/* EST etc. supported        */
 
 /*
  * This is AML_RESOURCE_GENERIC_REGISTER,
@@ -118,11 +129,14 @@ struct acpicpu_cstate {
 	int			 cs_flags;
 };
 
-struct acpicpu_dep {
-	uint32_t		 dep_domain;
-	uint32_t		 dep_coord;
-	uint32_t		 dep_ncpu;
-	uint32_t		 dep_index;
+struct acpicpu_pstate {
+	uint64_t		 ps_stat;
+	uint32_t		 ps_freq;	/* MHz */
+	uint32_t		 ps_power;	/* mW */
+	uint32_t		 ps_latency;	/* us */
+	uint32_t		 ps_latency_bm; /* us */
+	uint32_t		 ps_control;
+	uint32_t		 ps_status;
 };
 
 struct acpicpu_object {
@@ -138,6 +152,13 @@ struct acpicpu_softc {
 
 	struct acpicpu_cstate	 sc_cstate[ACPI_C_STATE_COUNT];
 	uint32_t		 sc_cstate_sleep;
+
+	struct acpicpu_pstate	*sc_pstate;
+	struct acpicpu_reg	 sc_pstate_control;
+	struct acpicpu_reg	 sc_pstate_status;
+	uint32_t		 sc_pstate_current;
+	uint32_t		 sc_pstate_count;
+	uint32_t		 sc_pstate_max;
 
 	kmutex_t		 sc_mtx;
 	bus_space_tag_t		 sc_iot;
@@ -157,6 +178,15 @@ bool		acpicpu_cstate_resume(device_t);
 void		acpicpu_cstate_callback(void *);
 void		acpicpu_cstate_idle(void);
 
+void		acpicpu_pstate_attach(device_t);
+int		acpicpu_pstate_detach(device_t);
+int		acpicpu_pstate_start(device_t);
+bool		acpicpu_pstate_suspend(device_t);
+bool		acpicpu_pstate_resume(device_t);
+void		acpicpu_pstate_callback(void *);
+int		acpicpu_pstate_get(struct acpicpu_softc *, uint32_t *);
+int		acpicpu_pstate_set(struct acpicpu_softc *, uint32_t);
+
 uint32_t	acpicpu_md_cap(void);
 uint32_t	acpicpu_md_quirks(void);
 uint32_t	acpicpu_md_cpus_running(void);
@@ -164,5 +194,9 @@ int		acpicpu_md_idle_init(void);
 int		acpicpu_md_idle_start(void);
 int		acpicpu_md_idle_stop(void);
 void		acpicpu_md_idle_enter(int, int);
+int		acpicpu_md_pstate_start(void);
+int		acpicpu_md_pstate_stop(void);
+int		acpicpu_md_pstate_get(struct acpicpu_softc *, uint32_t *);
+int		acpicpu_md_pstate_set(struct acpicpu_pstate *);
 
 #endif	/* !_SYS_DEV_ACPI_ACPI_CPU_H */
