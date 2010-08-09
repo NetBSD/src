@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_pci.c,v 1.13 2010/08/08 16:26:47 gsutre Exp $ */
+/* $NetBSD: acpi_pci.c,v 1.14 2010/08/09 09:36:42 gsutre Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_pci.c,v 1.13 2010/08/08 16:26:47 gsutre Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_pci.c,v 1.14 2010/08/09 09:36:42 gsutre Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -167,6 +167,16 @@ acpi_pcidev_scan(struct acpi_devnode *ad)
 
 	if (ad->ad_devinfo->Type != ACPI_TYPE_DEVICE ||
 	    !(ad->ad_devinfo->Valid & ACPI_VALID_ADR))
+		goto rec;
+
+	/*
+	 * We attach PCI information only to devices that are present,
+	 * enabled, and functioning properly.
+	 * Note: there is a possible race condition, because _STA may
+	 * have changed since ad->ad_devinfo->CurrentStatus was set.
+	 */
+	if ((ad->ad_devinfo->Valid & ACPI_VALID_STA) != 0 &&
+	    (ad->ad_devinfo->CurrentStatus & ACPI_STA_OK) != ACPI_STA_OK)
 		goto rec;
 
 	if (ad->ad_devinfo->Flags & ACPI_PCI_ROOT_BRIDGE) {
