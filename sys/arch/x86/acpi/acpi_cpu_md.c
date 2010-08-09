@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_md.c,v 1.8 2010/08/09 13:41:39 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_md.c,v 1.9 2010/08/09 15:46:17 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.8 2010/08/09 13:41:39 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.9 2010/08/09 15:46:17 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -47,6 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.8 2010/08/09 13:41:39 jruoho Exp $
 
 static char	  native_idle_text[16];
 void		(*native_idle)(void) = NULL;
+void		(*native_cpu_freq_init)(int) = NULL;
 
 static int	 acpicpu_md_pstate_sysctl_get(SYSCTLFN_PROTO);
 static int	 acpicpu_md_pstate_sysctl_set(SYSCTLFN_PROTO);
@@ -205,21 +206,97 @@ acpicpu_md_idle_enter(int method, int state)
 int
 acpicpu_md_pstate_start(void)
 {
+	const struct sysctlnode	*fnode, *mnode, *rnode;
+	const char *str;
+	int rv;
 
-	cpu_freq_sysctl_get = acpicpu_md_pstate_sysctl_get;
-	cpu_freq_sysctl_set = acpicpu_md_pstate_sysctl_set;
-	cpu_freq_sysctl_all = acpicpu_md_pstate_sysctl_all;
+	switch (cpu_vendor) {
+
+	case CPUVENDOR_INTEL:
+		str = "est";
+		break;
+
+	default:
+		return ENODEV;
+	}
+
+	/*
+	 * A kludge for backwards compatibility.
+	 */
+	native_cpu_freq_init = cpu_freq_init;
+
+	if (cpu_freq_sysctllog != NULL) {
+		sysctl_teardown(&cpu_freq_sysctllog);
+		cpu_freq_sysctllog = NULL;
+	}
+
+	rv = sysctl_createv(&cpu_freq_sysctllog, 0, NULL, &rnode,
+	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "machdep", NULL,
+	    NULL, 0, NULL, 0, CTL_MACHDEP, CTL_EOL);
+
+	if (rv != 0)
+		goto fail;
+
+	rv = sysctl_createv(&cpu_freq_sysctllog, 0, &rnode, &mnode,
+	    0, CTLTYPE_NODE, str, NULL,
+	    NULL, 0, NULL, 0, CTL_CREATE, CTL_EOL);
+
+	if (rv != 0)
+		goto fail;
+
+	rv = sysctl_createv(&cpu_freq_sysctllog, 0, &mnode, &fnode,
+	    0, CTLTYPE_NODE, "frequency", NULL,
+	    NULL, 0, NULL, 0, CTL_CREATE, CTL_EOL);
+
+	if (rv != 0)
+		goto fail;
+
+	rv = sysctl_createv(&cpu_freq_sysctllog, 0, &fnode, &rnode,
+	    CTLFLAG_READWRITE, CTLTYPE_INT, "target", NULL,
+	    acpicpu_md_pstate_sysctl_set, 0, NULL, 0, CTL_CREATE, CTL_EOL);
+
+	if (rv != 0)
+		goto fail;
+
+	rv = sysctl_createv(&cpu_freq_sysctllog, 0, &fnode, &rnode,
+	    CTLFLAG_READONLY, CTLTYPE_INT, "current", NULL,
+	    acpicpu_md_pstate_sysctl_get, 0, NULL, 0, CTL_CREATE, CTL_EOL);
+
+	if (rv != 0)
+		goto fail;
+
+	rv = sysctl_createv(&cpu_freq_sysctllog, 0, &fnode, &rnode,
+	    CTLFLAG_READONLY, CTLTYPE_STRING, "available", NULL,
+	    acpicpu_md_pstate_sysctl_all, 0, NULL, 0, CTL_CREATE, CTL_EOL);
+
+	if (rv != 0)
+		goto fail;
 
 	return 0;
+
+fail:
+	if (cpu_freq_sysctllog != NULL) {
+		sysctl_teardown(&cpu_freq_sysctllog);
+		cpu_freq_sysctllog = NULL;
+	}
+
+	if (native_cpu_freq_init != NULL)
+		(*native_cpu_freq_init)(cpu_vendor);
+
+	return rv;
 }
 
 int
 acpicpu_md_pstate_stop(void)
 {
 
-	cpu_freq_sysctl_get = NULL;
-	cpu_freq_sysctl_set = NULL;
-	cpu_freq_sysctl_all = NULL;
+	if (cpu_freq_sysctllog != NULL) {
+		sysctl_teardown(&cpu_freq_sysctllog);
+		cpu_freq_sysctllog = NULL;
+	}
+
+	if (native_cpu_freq_init != NULL)
+		(*native_cpu_freq_init)(cpu_vendor);
 
 	return 0;
 }
@@ -238,7 +315,7 @@ acpicpu_md_pstate_sysctl_get(SYSCTLFN_ARGS)
 	 * frequencies. In MP environments all CPUs
 	 * are mandated to support the same number of
 	 * P-states and each state must have identical
-	 * parameters across CPUs.
+	 * parameters across processors.
 	 */
 	sc = acpicpu_sc[ci->ci_acpiid];
 
