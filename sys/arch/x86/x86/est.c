@@ -1,4 +1,4 @@
-/*	$NetBSD: est.c,v 1.16 2010/08/08 16:58:42 jruoho Exp $	*/
+/*	$NetBSD: est.c,v 1.17 2010/08/09 04:18:49 jruoho Exp $	*/
 /*
  * Copyright (c) 2003 Michael Eriksson.
  * All rights reserved.
@@ -81,7 +81,7 @@
 /* #define EST_DEBUG */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: est.c,v 1.16 2010/08/08 16:58:42 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: est.c,v 1.17 2010/08/09 04:18:49 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1012,16 +1012,12 @@ static int		est_sysctl_helper_get(SYSCTLFN_PROTO);
 static int		est_sysctl_helper_set(SYSCTLFN_PROTO);
 static int		est_sysctl_helper_all(SYSCTLFN_PROTO);
 
-int (*est_sysctl_get)(SYSCTLFN_PROTO) = NULL;
-int (*est_sysctl_set)(SYSCTLFN_PROTO) = NULL;
-int (*est_sysctl_all)(SYSCTLFN_PROTO) = NULL;
-
 static int
 est_sysctl_helper_get(SYSCTLFN_ARGS)
 {
 
-	if (est_sysctl_get != NULL)
-		return (*est_sysctl_get)(SYSCTLFN_CALL(rnode));
+	if (cpu_freq_sysctl_get != NULL)
+		return (*cpu_freq_sysctl_get)(SYSCTLFN_CALL(rnode));
 
 	return est_sysctl_helper(SYSCTLFN_CALL(rnode));
 }
@@ -1030,8 +1026,8 @@ static int
 est_sysctl_helper_set(SYSCTLFN_ARGS)
 {
 
-	if (est_sysctl_set != NULL)
-		return (*est_sysctl_set)(SYSCTLFN_CALL(rnode));
+	if (cpu_freq_sysctl_set != NULL)
+		return (*cpu_freq_sysctl_set)(SYSCTLFN_CALL(rnode));
 
 	return est_sysctl_helper(SYSCTLFN_CALL(rnode));
 }
@@ -1042,8 +1038,8 @@ est_sysctl_helper_all(SYSCTLFN_ARGS)
 	struct sysctlnode node;
 	int err;
 
-	if (est_sysctl_all != NULL)
-		return (*est_sysctl_all)(SYSCTLFN_CALL(rnode));
+	if (cpu_freq_sysctl_all != NULL)
+		return (*cpu_freq_sysctl_all)(SYSCTLFN_CALL(rnode));
 
 	if (freq_names == NULL)
 		return ENXIO;
