@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.74 2010/08/04 10:02:12 jruoho Exp $	*/
+/*	$NetBSD: cpu.c,v 1.75 2010/08/09 04:18:48 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.74 2010/08/04 10:02:12 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.75 2010/08/09 04:18:48 jruoho Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -184,6 +184,10 @@ bool x86_mp_online;
 paddr_t mp_trampoline_paddr = MP_TRAMPOLINE;
 static vaddr_t cmos_data_mapping;
 struct cpu_info *cpu_starting;
+
+int (*cpu_freq_sysctl_get)(SYSCTLFN_PROTO) = NULL;
+int (*cpu_freq_sysctl_set)(SYSCTLFN_PROTO) = NULL;
+int (*cpu_freq_sysctl_all)(SYSCTLFN_PROTO) = NULL;
 
 void    	cpu_hatch(void *);
 static void    	cpu_boot_secondary(struct cpu_info *ci);
