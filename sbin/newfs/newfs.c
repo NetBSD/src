@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs.c,v 1.107 2010/08/09 17:20:57 pooka Exp $	*/
+/*	$NetBSD: newfs.c,v 1.108 2010/08/09 21:14:26 pooka Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993, 1994
@@ -78,7 +78,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.13 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: newfs.c,v 1.107 2010/08/09 17:20:57 pooka Exp $");
+__RCSID("$NetBSD: newfs.c,v 1.108 2010/08/09 21:14:26 pooka Exp $");
 #endif
 #endif /* not lint */
 
@@ -818,10 +818,11 @@ struct help_strings {
 } const help_strings[] = {
 	{ NEWFS,	"-B byteorder\tbyte order (`be' or `le')" },
 	{ NEWFS,	"-F \t\tcreate file system image in regular file" },
+	{ NEWFS,	"-G \t\tmake sanity calculations non-fatal (testing only!)" },
 	{ NEWFS,	"-I \t\tdo not check that the file system type is '4.2BSD'" },
 	{ BOTH,		"-N \t\tdo not create file system, just print out "
 			    "parameters" },
-	{ NEWFS,	"-O N\t\tfilesystem format: 0 ==> 4.3BSD, 1 ==> FFSv1, 2 ==> FFSv2" },
+	{ NEWFS,	"-O N\t\tfilesystem format: 0 => 4.3BSD, 1 => FFSv1, 2 => FFSv2" },
 	{ NEWFS,	"-S secsize\tsector size" },
 #ifdef COMPAT
 	{ NEWFS,	"-T disktype\tdisk type" },
