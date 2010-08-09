@@ -1,4 +1,4 @@
-/*	$NetBSD: netconfig.c,v 1.3 2010/07/26 14:07:04 pooka Exp $	*/
+/*	$NetBSD: netconfig.c,v 1.4 2010/08/09 15:07:51 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: netconfig.c,v 1.3 2010/07/26 14:07:04 pooka Exp $");
+__RCSID("$NetBSD: netconfig.c,v 1.4 2010/08/09 15:07:51 pooka Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -39,7 +39,11 @@ __RCSID("$NetBSD: netconfig.c,v 1.3 2010/07/26 14:07:04 pooka Exp $");
 #include <arpa/inet.h>
 
 #include <net/route.h>
+
 #include <netinet/in.h>
+#include <netinet/in_systm.h>
+#include <netinet/ip.h>
+#include <netinet/ip_icmp.h>
 
 #include <atf-c.h>
 #include <errno.h>
@@ -161,4 +165,44 @@ netcfg_rump_route(const char *dst, const char *mask, const char *gw)
 		atf_tc_fail_errno("write routing message");
 	}
 	rump_sys_close(s);
+}
+
+static bool
+netcfg_rump_pingtest(const char *dst, int ms_timo)
+{
+	struct timeval tv;
+	struct sockaddr_in sin;
+	struct icmp icmp;
+	socklen_t slen;
+	int s;
+
+	s = rump_sys_socket(PF_INET, SOCK_RAW, IPPROTO_ICMP);
+	if (s == -1)
+		return false;
+	tv.tv_sec = ms_timo / 1000;
+	tv.tv_usec = 1000 * (ms_timo % 1000);
+	if (rump_sys_setsockopt(s, SOL_SOCKET, SO_RCVTIMEO,
+	    &tv, sizeof(tv)) == -1)
+		return false;
+
+	memset(&sin, 0, sizeof(sin));
+	sin.sin_len = sizeof(sin);
+	sin.sin_family = AF_INET;
+	sin.sin_addr.s_addr = inet_addr(dst);
+
+	memset(&icmp, 0, sizeof(icmp));
+	icmp.icmp_type = ICMP_ECHO;
+	icmp.icmp_id = htons(37); 
+	icmp.icmp_cksum = htons(0xf7da); /* precalc */
+
+	slen = sizeof(sin);
+	if (rump_sys_sendto(s, &icmp, sizeof(icmp), 0,
+	    (struct sockaddr *)&sin, slen) == -1)
+		return false;
+
+	if (rump_sys_recvfrom(s, &icmp, sizeof(icmp), 0,
+	    (struct sockaddr *)&sin, &slen) == -1)
+		return false;
+
+	return true;
 }
