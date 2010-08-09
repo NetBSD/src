@@ -1,4 +1,4 @@
-.\"	$NetBSD: newfs.8,v 1.78 2010/08/09 17:20:57 pooka Exp $
+.\"	$NetBSD: newfs.8,v 1.79 2010/08/09 20:23:20 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1987, 1991, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -155,12 +155,12 @@ The default size depends upon the size of the file system:
 .It \*[Gt]= 1024 MB
 2 KB
 .El
-.It Fl g Ar avgfilesize
-The expected average file size for the file system.
 .It Fl G
 Treat garbage parameters as non-fatal.
 Using this option may result in a file system which causes a kernel
 panic and should only be used for testing.
+.It Fl g Ar avgfilesize
+The expected average file size for the file system.
 .It Fl h Ar avgfpdir
 The expected average number of files per directory on the file system.
 .It Fl I
@@ -268,9 +268,6 @@ is negative the specified size is subtracted from the default size
 Uses information for the specified disk from
 .Pa /etc/disktab
 instead of trying to get the information from the disk label.
-.It Fl v Ar volname
-This specifies that an Apple UFS filesystem should be created
-with the given volume name.
 .It Fl V Ar verbose
 This controls the amount of information written to stdout:
 .Bl -tag -width 3n -offset indent -compact
@@ -292,6 +289,9 @@ If
 is specified
 .Nm
 stops before outputting the progress bar.
+.It Fl v Ar volname
+This specifies that an Apple UFS filesystem should be created
+with the given volume name.
 .It Fl Z
 Pre-zeros the file system image created with
 .Fl F .
