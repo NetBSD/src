@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.261 2010/08/09 15:50:13 pooka Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.262 2010/08/09 17:12:18 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.261 2010/08/09 15:50:13 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.262 2010/08/09 17:12:18 pooka Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -940,7 +940,7 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 
 		/* Check that we can handle the file system blocksize */
 		if (fsbsize > MAXBSIZE) {
-			printf("ffs_mountfs: block size (%d) > MAXBSIZE (%d)",
+			printf("ffs_mountfs: block size (%d) > MAXBSIZE (%d)\n",
 			    fsbsize, MAXBSIZE);
 			continue;
 		}
