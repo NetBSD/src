@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_cstate.c,v 1.16 2010/08/08 18:25:06 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_cstate.c,v 1.17 2010/08/09 05:00:24 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_cstate.c,v 1.16 2010/08/08 18:25:06 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_cstate.c,v 1.17 2010/08/09 05:00:24 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -65,13 +65,15 @@ static void		 acpicpu_cstate_idle_enter(struct acpicpu_softc *,int);
 extern struct acpicpu_softc **acpicpu_sc;
 
 /*
- * XXX:	The local APIC timer (as well as TSC) is typically
- *	stopped in C3. For now, we cannot but disable C3.
+ * XXX:	The local APIC timer (as well as TSC) is typically stopped in C3.
+ *	For now, we cannot but disable C3. But there appears to be timer-
+ *	related interrupt issues also in C2. The only entirely safe option
+ *	at the moment is to use C1.
  */
 #ifdef ACPICPU_ENABLE_C3
 static int cs_state_max = ACPI_STATE_C3;
 #else
-static int cs_state_max = ACPI_STATE_C2;
+static int cs_state_max = ACPI_STATE_C1;
 #endif
 
 void
