@@ -1,4 +1,4 @@
-/*	$NetBSD: debug.h,v 1.4 2008/04/28 20:23:22 martin Exp $	*/
+/*	$NetBSD: debug.h,v 1.5 2010/08/09 23:08:59 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
@@ -34,6 +34,7 @@
 #include <hpc/include/debug.h>
 
 #include "debug_hpc.h"
+
 /*
  * interrupt monitor
  */
@@ -50,6 +51,5 @@ enum heart_beat {
 };
 void __dbg_heart_beat(enum heart_beat);
 #else
-#define __dbg_heart_beat(x)	((void)0)
-#endif /* HPC_DEBUG_INTERRUPT_MONITOR */
-
+#define __dbg_heart_beat(x)	do {} while (/* CONSTCOND */ 0)
+#endif
