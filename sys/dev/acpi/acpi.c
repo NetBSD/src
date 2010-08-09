@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.214 2010/08/07 20:07:25 jruoho Exp $	*/
+/*	$NetBSD: acpi.c,v 1.215 2010/08/09 09:36:42 gsutre Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.214 2010/08/07 20:07:25 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.215 2010/08/09 09:36:42 gsutre Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -963,6 +963,8 @@ acpi_rescan_nodes(struct acpi_softc *sc)
 		 * functioning properly. However, if a device is enabled,
 		 * it is decoding resources and we should claim these,
 		 * if possible. This requires changes to bus_space(9).
+		 * Note: there is a possible race condition, because _STA
+		 * may have changed since di->CurrentStatus was set.
 		 */
 		if (di->Type == ACPI_TYPE_DEVICE) {
 
