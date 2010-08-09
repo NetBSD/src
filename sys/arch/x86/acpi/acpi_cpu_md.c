@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_md.c,v 1.6 2010/08/09 04:18:48 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_md.c,v 1.7 2010/08/09 04:27:07 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.6 2010/08/09 04:18:48 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.7 2010/08/09 04:27:07 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -365,7 +365,7 @@ acpicpu_md_pstate_get(struct acpicpu_softc *sc, uint32_t *freq)
 
 		mutex_enter(&sc->sc_mtx);
 
-		for (i = sc->sc_pstate_max; i < sc->sc_pstate_count; i++) {
+		for (i = 0; i < sc->sc_pstate_count; i++) {
 
 			ps = &sc->sc_pstate[i];
 
