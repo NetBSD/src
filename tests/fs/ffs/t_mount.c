@@ -1,4 +1,4 @@
-/*	$NetBSD: t_mount.c,v 1.9 2010/08/09 19:34:59 pooka Exp $	*/
+/*	$NetBSD: t_mount.c,v 1.10 2010/08/09 19:36:30 pooka Exp $	*/
 
 /*
  * Basic tests for mounting
@@ -65,6 +65,10 @@ ATF_TC_BODY(fsbsize2big, tc)
 	struct ufs_args args;
 	struct statvfs svb;
 
+	/*
+	 * We cannot pass newfs parameters via the fstest interface,
+	 * so do things the oldfashioned manual way.
+	 */
 	snprintf(cmd, sizeof(cmd), "newfs -G -b %d -F -s 10000 "
 	    "ffs.img > /dev/null", MYBLOCKSIZE);
 	if (system(cmd))
