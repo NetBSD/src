@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_pstate.c,v 1.5 2010/08/09 04:27:07 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_pstate.c,v 1.6 2010/08/09 15:56:45 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_pstate.c,v 1.5 2010/08/09 04:27:07 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_pstate.c,v 1.6 2010/08/09 15:56:45 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -81,6 +81,7 @@ acpicpu_pstate_attach(device_t self)
 		sc->sc_flags |= ACPICPU_FLAG_P_PPC;
 
 	sc->sc_flags |= ACPICPU_FLAG_P;
+	sc->sc_pstate_current = sc->sc_pstate[0].ps_freq;
 
 	acpicpu_pstate_bios();
 	acpicpu_pstate_attach_print(sc);
