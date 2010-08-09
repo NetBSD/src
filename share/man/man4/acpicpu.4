@@ -1,4 +1,4 @@
-.\" $NetBSD: acpicpu.4,v 1.1 2010/08/05 17:31:10 jruoho Exp $
+.\" $NetBSD: acpicpu.4,v 1.2 2010/08/09 06:36:18 jruoho Exp $
 .\"
 .\" Coyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd July 23, 2010
+.Dd August 9, 2010
 .Dt ACPICPU 4
 .Os
 .Sh NAME
@@ -46,7 +46,7 @@ Typically the
 processor functionality is grouped into so-called C, P, and T -states.
 Presently,
 .Nm
-supports only C-states.
+supports C and P -states.
 .Ss C-states
 The processor power states, or C-states,
 are low-power modes that can be used when the
@@ -83,7 +83,7 @@ This is the state that is typically reached via the mentioned
 .Tn x86
 instructions.
 On a typical processor,
-.Tn C1
+.Dv C1
 turns off the main internal
 .Tn CPU
 clock, leaving
@@ -94,17 +94,18 @@ The
 is free to temporarily leave the state to deal with important requests.
 .It Dv C2
 The main difference between
-.Tn C1
+.Dv C1
 and
-.Tn C2
+.Dv C2
 lies in the internal hardware entry method of the processor.
 While less power is expected to be consumed than in
-.Tn C1 ,
-the bus interface unit and
+.Dv C1 ,
+the bus interface unit is still running.
+But depending on the processor, the local
 .Tn APIC
-are still running.
+timer may be stopped.
 Like with
-.Tn C1 ,
+.Dv C1 ,
 entering and exiting the state are expected to be fast operations.
 .It Dv C3
 This is the deepest conventional state.
@@ -114,7 +115,7 @@ are actively powered down.
 The internal
 .Tn CPU
 clock is stopped.
-The
+The local
 .Tn APIC
 timer is stopped.
 Depending on the processor, additional timers such as
@@ -129,11 +130,12 @@ respond to bus activity or other interruptions.
 .El
 .Pp
 Each state has a latency associated with entry and exit.
-Generally, the higher the state, the lower the power consumption, and
+The higher the state, the lower the power consumption, and
 the higher the potential performance costs.
+.Pp
 The
 .Nm
-driver tries to balance these latency
+driver tries to balance the latency
 constraints when choosing the appropriate state.
 One of the checks involves bus master activity;
 if such activity is detected, a lower state is used.
@@ -146,6 +148,44 @@ it may be necessary to use a custom kernel without
 support.
 And generally: to save power with C-states, one should
 avoid polling, both in userland and in the kernel.
+.Ss P-states
+The processor performance states, or P-states, are used to
+control the clock frequencies and voltages of a
+.Tn CPU .
+Underneath the abstractions of
+.Tn ACPI ,
+P-states are associated with such technologies as
+.Dq SpeedStep
+.Pq Intel ,
+.Dq PowerNow!
+.Pq Tn AMD ,
+and
+.Dq PowerSaver
+.Pq VIA .
+.Pp
+The
+.Dv P0
+state is always the highest operating frequency sypported by the processor.
+The number of additional P-states may vary across processors and vendors.
+Each higher numbered P-state represents lower
+clock frequencies and hence lower power consumption.
+.Pp
+Unlike in the conventional
+.Tn CPU
+frequency management,
+.Tn ACPI
+provides support for Dynamic Frequency and Voltage Scaling
+.Pq Tn DVFS .
+This means that the firmware may request the implementation to
+dynamically scale the presently supported maximum clock frequency.
+For example, if
+.Xr acpiacad 4
+is disconnected, the maximum available frequency may be lowered.
+Currently the
+.Nx
+implementation reacts to these events by imposing the dynamic maximum, but
+.Nm
+does not take any actions to manipulate the frequencies by itself.
 .Sh SEE ALSO
 .Xr acpi 4 ,
 .Xr cpu_idle 9
@@ -164,34 +204,30 @@ driver should be considered experimental.
 At least the following caveats can be mentioned.
 .Bl -bullet
 .It
-P-states are not currently supported.
+It is currently only safe to use
+.Dv C1
+on
+.Nx .
+All other C-states are disabled by default.
 .It
-The C3 state is not currently supported.
-Even if the C3 state was supported,
-the power savings might be limited compared to other operating systems with a
-.Dq tickless
-kernel.
-.It
-Nor is a so-called
+The
 .Tn AMD
 .Tn C1E
-extension supported.
+extension is not supported.
 If this extension is available in a vendor
 .Tn BIOS ,
 it is recommended to turn it off, with or without
 .Nm .
 .It
-The algorithm used to choose a C-state is not yet well understood.
-Depending on the processor and firmware,
-the system may experience slowdowns with
-.Nm .
+The use of native instructions in P-states
+is currently supported only on Intel
+.Tn CPUs .
 .It
 Neither processor thermal control (see
 .Xr acpitz 4 )
 nor
 .Dq throttling
-are currently supported in
-.Nx .
+are currently supported.
 .It
 There is currently neither a well-defined, machine-independent
 .Tn API
