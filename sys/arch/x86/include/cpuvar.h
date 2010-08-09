@@ -1,4 +1,4 @@
-/* 	$NetBSD: cpuvar.h,v 1.36 2010/08/09 04:18:48 jruoho Exp $ */
+/* 	$NetBSD: cpuvar.h,v 1.37 2010/08/09 15:46:17 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2000, 2007 The NetBSD Foundation, Inc.
@@ -142,9 +142,8 @@ int	p3_get_bus_clock(struct cpu_info *);
 int	p4_get_bus_clock(struct cpu_info *);
 #endif
 
-extern int (*cpu_freq_sysctl_get)(SYSCTLFN_PROTO);
-extern int (*cpu_freq_sysctl_set)(SYSCTLFN_PROTO);
-extern int (*cpu_freq_sysctl_all)(SYSCTLFN_PROTO);
+extern void (*cpu_freq_init)(int);
+extern struct sysctllog *cpu_freq_sysctllog;
 
 void	cpu_get_tsc_freq(struct cpu_info *);
 void	pat_init(struct cpu_info *);
