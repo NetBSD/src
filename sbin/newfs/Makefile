@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.35 2009/12/20 15:21:13 dsl Exp $
+#	$NetBSD: Makefile,v 1.36 2010/08/09 17:20:57 pooka Exp $
 #	@(#)Makefile	8.2 (Berkeley) 3/27/94
 
 .include <bsd.own.mk>
@@ -12,6 +12,7 @@ DISKLABEL=${NETBSDSRCDIR}/sbin/disklabel
 FSCK=${NETBSDSRCDIR}/sbin/fsck
 MOUNT=${NETBSDSRCDIR}/sbin/mount
 CPPFLAGS+=-DMFS -I${.CURDIR} -I${DISKLABEL} -I${FSCK} -I${MOUNT}
+CPPFLAGS+=-DGARBAGE
 
 DPADD+= ${LIBUTIL}
 LDADD+= -lutil

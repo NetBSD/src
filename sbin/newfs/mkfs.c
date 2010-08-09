@@ -1,4 +1,4 @@
-/*	$NetBSD: mkfs.c,v 1.107 2010/01/31 16:04:34 mlelstv Exp $	*/
+/*	$NetBSD: mkfs.c,v 1.108 2010/08/09 17:20:57 pooka Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993
@@ -73,7 +73,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.11 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: mkfs.c,v 1.107 2010/01/31 16:04:34 mlelstv Exp $");
+__RCSID("$NetBSD: mkfs.c,v 1.108 2010/08/09 17:20:57 pooka Exp $");
 #endif
 #endif /* not lint */
 
@@ -157,6 +157,18 @@ int iobuf_memsize;		/* Actual buffer size */
 
 int	fsi, fso;
 
+static void
+fserr(int num)
+{
+#ifdef GARBAGE
+	extern int Gflag;
+
+	if (Gflag)
+		return;
+#endif
+	exit(num);
+}
+
 void
 mkfs(const char *fsys, int fi, int fo,
     mode_t mfsmode, uid_t mfsuid, gid_t mfsgid)
@@ -207,12 +219,12 @@ mkfs(const char *fsys, int fi, int fo,
 	if (sblock.fs_avgfilesize <= 0) {
 		printf("illegal expected average file size %d\n",
 		    sblock.fs_avgfilesize);
-		exit(14);
+		fserr(14);
 	}
 	if (sblock.fs_avgfpdir <= 0) {
 		printf("illegal expected number of files per directory %d\n",
 		    sblock.fs_avgfpdir);
-		exit(15);
+		fserr(15);
 	}
 	/*
 	 * collect and verify the block and fragment sizes
@@ -222,32 +234,32 @@ mkfs(const char *fsys, int fi, int fo,
 	if (!powerof2(sblock.fs_bsize)) {
 		printf("block size must be a power of 2, not %d\n",
 		    sblock.fs_bsize);
-		exit(16);
+		fserr(16);
 	}
 	if (!powerof2(sblock.fs_fsize)) {
 		printf("fragment size must be a power of 2, not %d\n",
 		    sblock.fs_fsize);
-		exit(17);
+		fserr(17);
 	}
 	if (sblock.fs_fsize < sectorsize) {
 		printf("fragment size %d is too small, minimum is %d\n",
 		    sblock.fs_fsize, sectorsize);
-		exit(18);
+		fserr(18);
 	}
 	if (sblock.fs_bsize < MINBSIZE) {
 		printf("block size %d is too small, minimum is %d\n",
 		    sblock.fs_bsize, MINBSIZE);
-		exit(19);
+		fserr(19);
 	}
 	if (sblock.fs_bsize > MAXBSIZE) {
 		printf("block size %d is too large, maximum is %d\n",
 		    sblock.fs_bsize, MAXBSIZE);
-		exit(19);
+		fserr(19);
 	}
 	if (sblock.fs_bsize < sblock.fs_fsize) {
 		printf("block size (%d) cannot be smaller than fragment size (%d)\n",
 		    sblock.fs_bsize, sblock.fs_fsize);
-		exit(20);
+		fserr(20);
 	}
 
 	if (maxbsize < bsize || !powerof2(maxbsize)) {
@@ -282,7 +294,7 @@ mkfs(const char *fsys, int fi, int fo,
 			"minimum with block size %d is %d\n",
 		    sblock.fs_fsize, sblock.fs_bsize,
 		    sblock.fs_bsize / MAXFRAG);
-		exit(21);
+		fserr(21);
 	}
 	sblock.fs_fsbtodb = ilog2(sblock.fs_fsize / sectorsize);
 	sblock.fs_size = dbtofsb(&sblock, fssize);
@@ -290,7 +302,7 @@ mkfs(const char *fsys, int fi, int fo,
 		if ((uint64_t)sblock.fs_size >= 1ull << 31) {
 			printf("Too many fragments (0x%" PRIx64
 			    ") for a FFSv1 filesystem\n", sblock.fs_size);
-			exit(22);
+			fserr(22);
 		}
 		sblock.fs_magic = FS_UFS1_MAGIC;
 		sblock.fs_sblockloc = SBLOCK_UFS1;
@@ -353,7 +365,7 @@ mkfs(const char *fsys, int fi, int fo,
 	if (sblock.fs_size < sblock.fs_iblkno + 3 * sblock.fs_frag) {
 		printf("Filesystem size %lld < minimum size of %d\n",
 		    (long long)sblock.fs_size, sblock.fs_iblkno + 3 * sblock.fs_frag);
-		exit(23);
+		fserr(23);
 	}
 	if (num_inodes != 0)
 		inodeblks = howmany(num_inodes, INOPB(&sblock));
@@ -420,7 +432,7 @@ mkfs(const char *fsys, int fi, int fo,
 	if ((int)CGSIZE(&sblock) > sblock.fs_bsize) {
 		printf("CGSIZE miscalculated %d > %d\n",
 		    (int)CGSIZE(&sblock), sblock.fs_bsize);
-		exit(24);
+		fserr(24);
 	}
 
 	sblock.fs_dblkno = sblock.fs_iblkno + sblock.fs_ipg / INOPF(&sblock);
@@ -574,7 +586,7 @@ mkfs(const char *fsys, int fi, int fo,
 		 */
 		if (fssize <= 0) {
 			printf("preposterous size %lld\n", (long long)fssize);
-			exit(13);
+			fserr(13);
 		}
 		wtfs(fssize - 1, sectorsize, iobuf);
 
@@ -756,7 +768,7 @@ initcg(int cylno, const struct timeval *tv)
 		if (dupper >= cgstart(&sblock, cylno + 1)) {
 			printf("\rToo many cylinder groups to fit summary "
 				"information into first cylinder group\n");
-			exit(40);
+			fserr(40);
 		}
 	}
 	memset(&acg, 0, sblock.fs_cgsize);
@@ -809,7 +821,7 @@ initcg(int cylno, const struct timeval *tv)
 	}
 	if (acg.cg_nextfreeoff > sblock.fs_cgsize) {
 		printf("Panic: cylinder group too big\n");
-		exit(37);
+		fserr(37);
 	}
 	acg.cg_cs.cs_nifree += sblock.fs_ipg;
 	if (cylno == 0)
@@ -1228,7 +1240,7 @@ iput(union dinode *ip, ino_t ino)
 		ffs_cg_swap(&acg, &acg, &sblock);
 	if (acg.cg_magic != CG_MAGIC) {
 		printf("cg 0: bad magic number\n");
-		exit(31);
+		fserr(31);
 	}
 	acg.cg_cs.cs_nifree--;
 	setbit(cg_inosused(&acg, 0), ino);
@@ -1241,7 +1253,7 @@ iput(union dinode *ip, ino_t ino)
 	if (ino >= (ino_t)(sblock.fs_ipg * sblock.fs_ncg)) {
 		printf("fsinit: inode value out of range (%llu).\n",
 		    (unsigned long long)ino);
-		exit(32);
+		fserr(32);
 	}
 	d = fsbtodb(&sblock, ino_to_fsba(&sblock, ino));
 	rdfs(d, sblock.fs_bsize, (char *)iobuf);
