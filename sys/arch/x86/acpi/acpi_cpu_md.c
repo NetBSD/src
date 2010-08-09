@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_md.c,v 1.5 2010/08/08 16:58:41 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_md.c,v 1.6 2010/08/09 04:18:48 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.5 2010/08/08 16:58:41 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.6 2010/08/09 04:18:48 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -216,17 +216,9 @@ int
 acpicpu_md_pstate_start(void)
 {
 
-	switch (cpu_vendor) {
-
-	case CPUVENDOR_INTEL:
-		est_sysctl_get = acpicpu_md_pstate_sysctl_get;
-		est_sysctl_set = acpicpu_md_pstate_sysctl_set;
-		est_sysctl_all = acpicpu_md_pstate_sysctl_all;
-		break;
-
-	default:
-		return ENODEV;
-	}
+	cpu_freq_sysctl_get = acpicpu_md_pstate_sysctl_get;
+	cpu_freq_sysctl_set = acpicpu_md_pstate_sysctl_set;
+	cpu_freq_sysctl_all = acpicpu_md_pstate_sysctl_all;
 
 	return 0;
 }
@@ -235,17 +227,9 @@ int
 acpicpu_md_pstate_stop(void)
 {
 
-	switch (cpu_vendor) {
-
-	case CPUVENDOR_INTEL:
-		est_sysctl_get = NULL;
-		est_sysctl_set = NULL;
-		est_sysctl_all = NULL;
-		break;
-
-	default:
-		return ENODEV;
-	}
+	cpu_freq_sysctl_get = NULL;
+	cpu_freq_sysctl_set = NULL;
+	cpu_freq_sysctl_all = NULL;
 
 	return 0;
 }
