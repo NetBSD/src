@@ -1,4 +1,4 @@
-/*	$NetBSD: netconfig.c,v 1.4 2010/08/09 15:07:51 pooka Exp $	*/
+/*	$NetBSD: netconfig.c,v 1.5 2010/08/09 15:39:41 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: netconfig.c,v 1.4 2010/08/09 15:07:51 pooka Exp $");
+__RCSID("$NetBSD: netconfig.c,v 1.5 2010/08/09 15:39:41 pooka Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -167,7 +167,7 @@ netcfg_rump_route(const char *dst, const char *mask, const char *gw)
 	rump_sys_close(s);
 }
 
-static bool
+static bool __unused
 netcfg_rump_pingtest(const char *dst, int ms_timo)
 {
 	struct timeval tv;
