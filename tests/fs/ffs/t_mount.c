@@ -1,4 +1,4 @@
-/*	$NetBSD: t_mount.c,v 1.8 2010/08/09 17:42:26 pooka Exp $	*/
+/*	$NetBSD: t_mount.c,v 1.9 2010/08/09 19:34:59 pooka Exp $	*/
 
 /*
  * Basic tests for mounting
@@ -12,11 +12,7 @@
 
 #include <atf-c.h>
 
-#define IMGNAME "image.ffs"
-#define IMGSIZE (96 * 512)
-
-#define MNTDIR  "/mnt"
-
+#define FSTEST_IMGSIZE (96 * 512)
 #include "../common/h_fsmacros.h"
 
 #include <sys/types.h>
@@ -42,20 +38,11 @@ ATF_TC_BODY(48Kimage, tc)
 {
 	void *tmp;
 
-	if (ffs_fstest_newfs(tc, &tmp, IMGNAME, IMGSIZE, NULL) != 0)
-		atf_tc_fail("newfs failed");
-
 	atf_tc_expect_fail("PR kern/43573");
-	if (ffs_fstest_mount(tc, tmp, MNTDIR, 0) != 0) {
-		atf_tc_fail("mount failed");
-	}
+	FSTEST_CONSTRUCTOR(tc, ffs, tmp);
 	atf_tc_expect_pass();
 
-	if (ffs_fstest_unmount(tc, MNTDIR, 0) != 0)
-		atf_tc_fail("unmount failed");
-
-	if (ffs_fstest_delfs(tc, tmp) != 0)
-		atf_tc_fail("delfs failed");
+	FSTEST_DESTRUCTOR(tc, ffs, tmp);
 }
 
 ATF_TC(fsbsize2big);
@@ -95,6 +82,7 @@ ATF_TC_BODY(fsbsize2big, tc)
 	/* mount succeeded?  bad omen.  confirm we're in trouble.  */
 	if (rump_sys_mount(MOUNT_FFS, "/mp", 0, &args, sizeof(args)) != -1) {
 		rump_sys_statvfs1("/mp", &svb, ST_WAIT);
+		atf_tc_fail("not expecting to be alive");
 	}
 
 	/* otherwise we're do-ne */
