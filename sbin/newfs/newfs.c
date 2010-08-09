@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs.c,v 1.106 2009/12/20 15:21:13 dsl Exp $	*/
+/*	$NetBSD: newfs.c,v 1.107 2010/08/09 17:20:57 pooka Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993, 1994
@@ -78,7 +78,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.13 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: newfs.c,v 1.106 2009/12/20 15:21:13 dsl Exp $");
+__RCSID("$NetBSD: newfs.c,v 1.107 2010/08/09 17:20:57 pooka Exp $");
 #endif
 #endif /* not lint */
 
@@ -200,6 +200,7 @@ const char lmsg[] = "%s: can't read disk label";
 
 
 int	mfs;			/* run as the memory based filesystem */
+int	Gflag;			/* allow garbage parameters (for testing) */
 int	Nflag;			/* run without writing file system */
 int	Oflag = 1;		/* format as an 4.3BSD file system */
 int	verbosity;		/* amount of printf() output */
@@ -269,7 +270,7 @@ main(int argc, char *argv[])
 
 	opstring = mfs ?
 	    "NT:V:a:b:d:e:f:g:h:i:m:n:o:p:s:u:" :
-	    "B:FINO:S:T:V:Za:b:d:e:f:g:h:i:l:m:n:o:r:s:v:";
+	    "B:FGINO:S:T:V:Za:b:d:e:f:g:h:i:l:m:n:o:r:s:v:";
 	while ((ch = getopt(argc, argv, opstring)) != -1)
 		switch (ch) {
 		case 'B':
@@ -286,6 +287,11 @@ main(int argc, char *argv[])
 			break;
 		case 'F':
 			Fflag = 1;
+			break;
+		case 'G':
+			fprintf(stderr, "WARNING: -G may create file systems "
+			    "which cause kernel panics\n");
+			Gflag = 1;
 			break;
 		case 'I':
 			Iflag = 1;
@@ -781,12 +787,24 @@ strsuftoi64(const char *desc, const char *arg, int64_t min, int64_t max, int *nu
 	result = r1 << shift;
 	if (errno == ERANGE || result >> shift != r1)
 		errx(1, "%s `%s' is too large to convert.", desc, arg);
-	if (result < min)
-		errx(1, "%s `%s' (%" PRId64 ") is less than the minimum (%" PRId64 ").",
-		    desc, arg, result, min);
-	if (result > max)
-		errx(1, "%s `%s' (%" PRId64 ") is greater than the maximum (%" PRId64 ").",
-		    desc, arg, result, max);
+	if (result < min) {
+		if (Gflag) {
+			warnx("%s `%s' (%" PRId64 ") is less than the "
+			    "minimum (%" PRId64 ").", desc, arg, result, min);
+		} else {
+			errx(1, "%s `%s' (%" PRId64 ") is less than the "
+			    "minimum (%" PRId64 ").", desc, arg, result, min);
+		}
+	}
+	if (result > max) {
+		if (Gflag) {
+			warnx("%s `%s' (%" PRId64 ") is greater than the "
+			    "maximum (%" PRId64 ").", desc, arg, result, max);
+		} else {
+			errx(1, "%s `%s' (%" PRId64 ") is greater than the "
+			    "maximum (%" PRId64 ").", desc, arg, result, max);
+		}
+	}
 	return result;
 }
 
