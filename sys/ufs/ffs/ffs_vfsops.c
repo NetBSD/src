@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.260 2010/07/21 17:52:13 hannken Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.261 2010/08/09 15:50:13 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.260 2010/07/21 17:52:13 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.261 2010/08/09 15:50:13 pooka Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -828,6 +828,7 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	int32_t *lp;
 	kauth_cred_t cred;
 	u_int32_t sbsize = 8192;	/* keep gcc happy*/
+	int32_t fsbsize;
 
 	dev = devvp->v_rdev;
 	cred = l ? l->l_cred : NOCRED;
@@ -886,21 +887,25 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 		if (fs->fs_magic == FS_UFS1_MAGIC) {
 			sbsize = fs->fs_sbsize;
 			fstype = UFS1;
+			fsbsize = fs->fs_bsize;
 #ifdef FFS_EI
 			needswap = 0;
 		} else if (fs->fs_magic == bswap32(FS_UFS1_MAGIC)) {
 			sbsize = bswap32(fs->fs_sbsize);
 			fstype = UFS1;
+			fsbsize = bswap32(fs->fs_bsize);
 			needswap = 1;
 #endif
 		} else if (fs->fs_magic == FS_UFS2_MAGIC) {
 			sbsize = fs->fs_sbsize;
 			fstype = UFS2;
+			fsbsize = fs->fs_bsize;
 #ifdef FFS_EI
 			needswap = 0;
 		} else if (fs->fs_magic == bswap32(FS_UFS2_MAGIC)) {
 			sbsize = bswap32(fs->fs_sbsize);
 			fstype = UFS2;
+			fsbsize = bswap32(fs->fs_bsize);
 			needswap = 1;
 #endif
 		} else
@@ -932,6 +937,13 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 		/* Validate size of superblock */
 		if (sbsize > MAXBSIZE || sbsize < sizeof(struct fs))
 			continue;
+
+		/* Check that we can handle the file system blocksize */
+		if (fsbsize > MAXBSIZE) {
+			printf("ffs_mountfs: block size (%d) > MAXBSIZE (%d)",
+			    fsbsize, MAXBSIZE);
+			continue;
+		}
 
 		/* Ok seems to be a good superblock */
 		break;
