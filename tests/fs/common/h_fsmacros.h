@@ -1,4 +1,4 @@
-/*	$NetBSD: h_fsmacros.h,v 1.17 2010/07/30 16:15:05 pooka Exp $	*/
+/*	$NetBSD: h_fsmacros.h,v 1.18 2010/08/09 19:32:26 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -54,9 +54,15 @@ FSPROTOS(puffs);
 FSPROTOS(sysvbfs);
 FSPROTOS(tmpfs);
 
+#ifndef FSTEST_IMGNAME
 #define FSTEST_IMGNAME "image.fs"
+#endif
+#ifndef FSTEST_IMGSIZE
 #define FSTEST_IMGSIZE (10000 * 512)
+#endif
+#ifndef FSTEST_MNTNAME
 #define FSTEST_MNTNAME "/mnt"
+#endif
 
 #define FSTEST_CONSTRUCTOR(_tc_, _fs_, _args_)				\
 do {									\
