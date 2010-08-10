@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_cstate.c,v 1.20 2010/08/10 04:38:06 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_cstate.c,v 1.21 2010/08/10 05:22:07 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_cstate.c,v 1.20 2010/08/10 04:38:06 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_cstate.c,v 1.21 2010/08/10 05:22:07 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -219,7 +219,7 @@ acpicpu_cstate_start(device_t self)
 	int rv;
 
 	/*
-	 * Save the existing idle-mechanism and claim the idle_loop(9).
+	 * Save the existing idle-mechanism and claim the cpu_idle(9).
 	 * This should be called after all ACPI CPUs have been attached.
 	 */
 	rv = RUN_ONCE(&once_start, acpicpu_md_idle_start);
