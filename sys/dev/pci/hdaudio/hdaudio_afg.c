@@ -1,4 +1,4 @@
-/* $NetBSD: hdaudio_afg.c,v 1.20 2010/02/24 22:38:08 dyoung Exp $ */
+/* $NetBSD: hdaudio_afg.c,v 1.21 2010/08/10 11:14:30 joerg Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdaudio_afg.c,v 1.20 2010/02/24 22:38:08 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdaudio_afg.c,v 1.21 2010/08/10 11:14:30 joerg Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -2991,6 +2991,8 @@ hdaudio_afg_hp_switch_handler(void *opaque)
 
 	for (i = 0; i < sc->sc_nassocs; i++)
 		for (j = 0; j < HDAUDIO_MAXPINS; j++) {
+			if (as[i].as_pins[j] == 0)
+				continue;
 			w = hdaudio_afg_widget_lookup(sc, as[i].as_pins[j]);
 			if (w == NULL || w->w_enable == false)
 				continue;
@@ -3006,6 +3008,8 @@ hdaudio_afg_hp_switch_handler(void *opaque)
 
 	for (i = 0; i < sc->sc_nassocs; i++)
 		for (j = 0; j < HDAUDIO_MAXPINS; j++) {
+			if (as[i].as_pins[j] == 0)
+				continue;
 			w = hdaudio_afg_widget_lookup(sc, as[i].as_pins[j]);
 			if (w == NULL || w->w_enable == false)
 				continue;
