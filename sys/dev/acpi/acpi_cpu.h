@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu.h,v 1.11 2010/08/09 13:41:38 jruoho Exp $ */
+/* $NetBSD: acpi_cpu.h,v 1.12 2010/08/10 02:42:05 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -121,7 +121,8 @@ struct acpicpu_reg {
 } __packed;
 
 struct acpicpu_cstate {
-	uint64_t		 cs_stat;
+	struct evcnt		 cs_evcnt;
+	char			 cs_name[EVCNT_STRING_MAX];
 	uint64_t		 cs_addr;
 	uint32_t		 cs_power;	/* mW */
 	uint32_t		 cs_latency;	/* us */
@@ -130,7 +131,8 @@ struct acpicpu_cstate {
 };
 
 struct acpicpu_pstate {
-	uint64_t		 ps_stat;
+	struct evcnt		 ps_evcnt;
+	char			 ps_name[EVCNT_STRING_MAX];
 	uint32_t		 ps_freq;	/* MHz */
 	uint32_t		 ps_power;	/* mW */
 	uint32_t		 ps_latency;	/* us */

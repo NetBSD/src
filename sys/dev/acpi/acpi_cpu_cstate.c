@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_cstate.c,v 1.18 2010/08/09 13:41:38 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_cstate.c,v 1.19 2010/08/10 02:42:05 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,11 +27,12 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_cstate.c,v 1.18 2010/08/09 13:41:38 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_cstate.c,v 1.19 2010/08/10 02:42:05 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
 #include <sys/device.h>
+#include <sys/evcnt.h>
 #include <sys/kernel.h>
 #include <sys/once.h>
 #include <sys/mutex.h>
@@ -51,10 +52,13 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_cpu_cstate.c,v 1.18 2010/08/09 13:41:38 jruoho 
 ACPI_MODULE_NAME	 ("acpi_cpu_cstate")
 
 static void		 acpicpu_cstate_attach_print(struct acpicpu_softc *);
+static void		 acpicpu_cstate_attach_evcnt(struct acpicpu_softc *);
+static void		 acpicpu_cstate_detach_evcnt(struct acpicpu_softc *);
 static ACPI_STATUS	 acpicpu_cstate_cst(struct acpicpu_softc *);
 static ACPI_STATUS	 acpicpu_cstate_cst_add(struct acpicpu_softc *,
 						ACPI_OBJECT *);
 static void		 acpicpu_cstate_cst_bios(void);
+static void		 acpicpu_cstate_memset(struct acpicpu_softc *);
 static void		 acpicpu_cstate_fadt(struct acpicpu_softc *);
 static void		 acpicpu_cstate_quirks(struct acpicpu_softc *);
 static int		 acpicpu_cstate_quirks_piix4(struct pci_attach_args *);
@@ -101,6 +105,7 @@ acpicpu_cstate_attach(device_t self)
 	}
 
 	acpicpu_cstate_quirks(sc);
+	acpicpu_cstate_attach_evcnt(sc);
 	acpicpu_cstate_attach_print(sc);
 }
 
@@ -143,6 +148,36 @@ acpicpu_cstate_attach_print(struct acpicpu_softc *sc)
 	}
 }
 
+static void
+acpicpu_cstate_attach_evcnt(struct acpicpu_softc *sc)
+{
+	struct acpicpu_cstate *cs;
+	const char *str;
+	int i;
+
+	for (i = 0; i < ACPI_C_STATE_COUNT; i++) {
+
+		cs = &sc->sc_cstate[i];
+
+		if (cs->cs_method == 0)
+			continue;
+
+		str = "HALT";
+
+		if (cs->cs_method == ACPICPU_C_STATE_FFH)
+			str = "MWAIT";
+
+		if (cs->cs_method == ACPICPU_C_STATE_SYSIO)
+			str = "I/O";
+
+		(void)snprintf(cs->cs_name, sizeof(cs->cs_name),
+		    "C%d (%s)", i, str);
+
+		evcnt_attach_dynamic(&cs->cs_evcnt, EVCNT_TYPE_MISC,
+		    NULL, device_xname(sc->sc_dev), cs->cs_name);
+	}
+}
+
 int
 acpicpu_cstate_detach(device_t self)
 {
@@ -156,8 +191,24 @@ acpicpu_cstate_detach(device_t self)
 		return rv;
 
 	sc->sc_flags &= ~ACPICPU_FLAG_C;
+	acpicpu_cstate_detach_evcnt(sc);
 
 	return 0;
+}
+
+static void
+acpicpu_cstate_detach_evcnt(struct acpicpu_softc *sc)
+{
+	struct acpicpu_cstate *cs;
+	int i;
+
+	for (i = 0; i < ACPI_C_STATE_COUNT; i++) {
+
+		cs = &sc->sc_cstate[i];
+
+		if (cs->cs_method != 0)
+			evcnt_detach(&cs->cs_evcnt);
+	}
 }
 
 int
@@ -261,8 +312,7 @@ acpicpu_cstate_cst(struct acpicpu_softc *sc)
 		goto out;
 	}
 
-	(void)memset(sc->sc_cstate, 0,
-	    sizeof(*sc->sc_cstate) * ACPI_C_STATE_COUNT);
+	acpicpu_cstate_memset(sc);
 
 	CTASSERT(ACPI_STATE_C0 == 0 && ACPI_STATE_C1 == 1);
 	CTASSERT(ACPI_STATE_C2 == 2 && ACPI_STATE_C3 == 3);
@@ -471,11 +521,28 @@ acpicpu_cstate_cst_bios(void)
 }
 
 static void
+acpicpu_cstate_memset(struct acpicpu_softc *sc)
+{
+	int i = 0;
+
+	while (i < ACPI_C_STATE_COUNT) {
+
+		sc->sc_cstate[i].cs_addr = 0;
+		sc->sc_cstate[i].cs_power = 0;
+		sc->sc_cstate[i].cs_flags = 0;
+		sc->sc_cstate[i].cs_method = 0;
+		sc->sc_cstate[i].cs_latency = 0;
+
+		i++;
+	}
+}
+
+static void
 acpicpu_cstate_fadt(struct acpicpu_softc *sc)
 {
 	struct acpicpu_cstate *cs = sc->sc_cstate;
 
-	(void)memset(cs, 0, sizeof(*cs) * ACPI_C_STATE_COUNT);
+	acpicpu_cstate_memset(sc);
 
 	/*
 	 * All x86 processors should support C1 (a.k.a. HALT).
@@ -720,7 +787,7 @@ acpicpu_cstate_idle_enter(struct acpicpu_softc *sc, int state)
 		break;
 	}
 
-	cs->cs_stat++;
+	cs->cs_evcnt.ev_count++;
 
 	end = acpitimer_read_safe(NULL);
 	sc->sc_cstate_sleep = hztoms(acpitimer_delta(end, start)) * 1000;
