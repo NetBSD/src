@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.134 2010/08/09 15:10:20 pooka Exp $
+# $NetBSD: mi,v 1.135 2010/08/10 21:57:44 pooka Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -339,6 +339,8 @@
 ./usr/libdata/debug/usr/tests/net					tests-net-debug
 ./usr/libdata/debug/usr/tests/net/bpf					tests-net-debug
 ./usr/libdata/debug/usr/tests/net/bpf/t_div-by-zero.debug		tests-net-debug		debug,atf
+./usr/libdata/debug/usr/tests/net/carp					tests-net-debug
+./usr/libdata/debug/usr/tests/net/carp/t_basic.debug		tests-net-debug		debug,atf
 ./usr/libdata/debug/usr/tests/net/icmp					tests-net-debug
 ./usr/libdata/debug/usr/tests/net/icmp/t_forward.debug		tests-net-debug		debug,atf
 ./usr/libdata/debug/usr/tests/net/icmp/t_ping.debug		tests-net-debug		debug,atf
@@ -1495,6 +1497,9 @@
 ./usr/tests/net/bpf				tests-net-tests
 ./usr/tests/net/bpf/Atffile			tests-net-tests		atf
 ./usr/tests/net/bpf/t_div-by-zero		tests-net-tests		atf
+./usr/tests/net/carp				tests-net-tests
+./usr/tests/net/carp/Atffile			tests-net-tests		atf
+./usr/tests/net/carp/t_basic		tests-net-tests		atf
 ./usr/tests/net/icmp				tests-net-tests
 ./usr/tests/net/icmp/Atffile			tests-net-tests		atf
 ./usr/tests/net/icmp/t_forward		tests-net-tests		atf
