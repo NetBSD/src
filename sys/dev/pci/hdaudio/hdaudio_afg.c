@@ -1,4 +1,4 @@
-/* $NetBSD: hdaudio_afg.c,v 1.21 2010/08/10 11:14:30 joerg Exp $ */
+/* $NetBSD: hdaudio_afg.c,v 1.22 2010/08/10 13:47:38 joerg Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdaudio_afg.c,v 1.21 2010/08/10 11:14:30 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdaudio_afg.c,v 1.22 2010/08/10 13:47:38 joerg Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -285,6 +285,7 @@ struct hdaudio_afg_softc {
 	struct hdaudio_control		*sc_ctls;
 	int				sc_nmixers;
 	struct hdaudio_mixer		*sc_mixers;
+	bool				sc_has_beepgen;
 
 	int				sc_pchan, sc_rchan;
 	audio_params_t			sc_pparam, sc_rparam;
@@ -634,6 +635,7 @@ hdaudio_afg_widget_pin_parse(struct hdaudio_widget *w)
 static uint32_t
 hdaudio_afg_widget_getcaps(struct hdaudio_widget *w)
 {
+	struct hdaudio_afg_softc *sc = w->w_afg;
 	uint32_t wcap, config;
 
 	wcap = hda_get_wparam(w, AUDIO_WIDGET_CAPABILITIES);
@@ -641,7 +643,8 @@ hdaudio_afg_widget_getcaps(struct hdaudio_widget *w)
 
 	w->w_waspin = false;
 
-	if (COP_CFG_DEFAULT_DEVICE(config) == COP_DEVICE_SPEAKER &&
+	if (sc->sc_has_beepgen == false &&
+	    COP_CFG_DEFAULT_DEVICE(config) == COP_DEVICE_SPEAKER &&
 	    (wcap & (COP_AWCAP_INAMP_PRESENT|COP_AWCAP_OUTAMP_PRESENT)) == 0) {
 		wcap &= ~COP_AWCAP_TYPE_MASK;
 		wcap |= (COP_AWCAP_TYPE_BEEP_GENERATOR << COP_AWCAP_TYPE_SHIFT);
@@ -990,7 +993,7 @@ static void
 hdaudio_afg_parse(struct hdaudio_afg_softc *sc)
 {
 	struct hdaudio_widget *w;
-	uint32_t nodecnt;
+	uint32_t nodecnt, wcap;
 	int nid;
 
 	nodecnt = hda_get_param(sc, SUBORDINATE_NODE_COUNT);
@@ -1020,6 +1023,19 @@ hdaudio_afg_parse(struct hdaudio_afg_softc *sc)
 	sc->sc_widgets = kmem_zalloc(sc->sc_nwidgets * sizeof(*w), KM_SLEEP);
 	hda_debug(sc, "afg widgets %p-%p\n",
 	    sc->sc_widgets, sc->sc_widgets + sc->sc_nwidgets);
+
+	for (nid = sc->sc_startnode; nid < sc->sc_endnode; nid++) {
+		w = hdaudio_afg_widget_lookup(sc, nid);
+		if (w == NULL)
+			continue;
+		wcap = hdaudio_command(sc->sc_codec, nid, CORB_GET_PARAMETER,
+		    COP_AUDIO_WIDGET_CAPABILITIES);
+		switch (COP_AWCAP_TYPE(wcap)) {
+		case COP_AWCAP_TYPE_BEEP_GENERATOR:
+			sc->sc_has_beepgen = true;
+			break;
+		}
+	}
 
 	for (nid = sc->sc_startnode; nid < sc->sc_endnode; nid++) {
 		w = hdaudio_afg_widget_lookup(sc, nid);
