@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.30 2010/08/10 19:16:04 pooka Exp $	*/
+/*	$NetBSD: intr.c,v 1.31 2010/08/10 21:32:38 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.30 2010/08/10 19:16:04 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.31 2010/08/10 21:32:38 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -227,7 +227,7 @@ softint_init(struct cpu_info *ci)
 		    NULL, "rsi%d/%d", ci->ci_index, i);
 	}
 
-	rv = kthread_create(PRI_NONE, KTHREAD_MPSAFE | KTHREAD_INTR,
+	rv = kthread_create(PRI_NONE, KTHREAD_MPSAFE,
 	    ci, doclock, NULL, NULL, "rumpclk%d", ci->ci_index);
 	if (rv)
 		panic("clock thread creation failed: %d", rv);
