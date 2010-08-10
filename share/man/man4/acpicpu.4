@@ -1,4 +1,4 @@
-.\" $NetBSD: acpicpu.4,v 1.6 2010/08/10 02:43:50 jruoho Exp $
+.\" $NetBSD: acpicpu.4,v 1.7 2010/08/10 06:10:16 wiz Exp $
 .\"
 .\" Coyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
 .\" All rights reserved.
@@ -193,8 +193,9 @@ driver uses event counters to track the times
 a processor has entered a given state.
 It is possible to view the statistics by using
 .Xr vmstat 1
-(with the argument
-.Ar -e ) .
+(with the
+.Fl e
+flag).
 Note that valid per-CPU data is available only for C-states.
 .Sh SEE ALSO
 .Xr acpi 4 ,
