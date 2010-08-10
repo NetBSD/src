@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_pstate.c,v 1.6 2010/08/09 15:56:45 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_pstate.c,v 1.7 2010/08/10 02:42:05 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,9 +27,10 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_pstate.c,v 1.6 2010/08/09 15:56:45 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_pstate.c,v 1.7 2010/08/10 02:42:05 jruoho Exp $");
 
 #include <sys/param.h>
+#include <sys/evcnt.h>
 #include <sys/kmem.h>
 #include <sys/once.h>
 
@@ -41,6 +42,8 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_cpu_pstate.c,v 1.6 2010/08/09 15:56:45 jruoho E
 ACPI_MODULE_NAME	 ("acpi_cpu_pstate")
 
 static void		 acpicpu_pstate_attach_print(struct acpicpu_softc *);
+static void		 acpicpu_pstate_attach_evcnt(struct acpicpu_softc *);
+static void		 acpicpu_pstate_detach_evcnt(struct acpicpu_softc *);
 static ACPI_STATUS	 acpicpu_pstate_pss(struct acpicpu_softc *sc);
 static ACPI_STATUS	 acpicpu_pstate_pss_add(struct acpicpu_pstate *,
 						ACPI_OBJECT *);
@@ -84,6 +87,7 @@ acpicpu_pstate_attach(device_t self)
 	sc->sc_pstate_current = sc->sc_pstate[0].ps_freq;
 
 	acpicpu_pstate_bios();
+	acpicpu_pstate_attach_evcnt(sc);
 	acpicpu_pstate_attach_print(sc);
 
 	return;
@@ -116,6 +120,27 @@ acpicpu_pstate_attach_print(struct acpicpu_softc *sc)
 	}
 }
 
+static void
+acpicpu_pstate_attach_evcnt(struct acpicpu_softc *sc)
+{
+	struct acpicpu_pstate *ps;
+	uint32_t i;
+
+	for (i = 0; i < sc->sc_pstate_count; i++) {
+
+		ps = &sc->sc_pstate[i];
+
+		if (ps->ps_freq == 0)
+			continue;
+
+		(void)snprintf(ps->ps_name, sizeof(ps->ps_name),
+		    "P%u (%u MHz)", i, ps->ps_freq);
+
+		evcnt_attach_dynamic(&ps->ps_evcnt, EVCNT_TYPE_MISC,
+		    NULL, device_xname(sc->sc_dev), ps->ps_name);
+	}
+}
+
 int
 acpicpu_pstate_detach(device_t self)
 {
@@ -138,8 +163,24 @@ acpicpu_pstate_detach(device_t self)
 		kmem_free(sc->sc_pstate, size);
 
 	sc->sc_flags &= ~ACPICPU_FLAG_P;
+	acpicpu_pstate_detach_evcnt(sc);
 
 	return 0;
+}
+
+static void
+acpicpu_pstate_detach_evcnt(struct acpicpu_softc *sc)
+{
+	struct acpicpu_pstate *ps;
+	uint32_t i;
+
+	for (i = 0; i < sc->sc_pstate_count; i++) {
+
+		ps = &sc->sc_pstate[i];
+
+		if (ps->ps_freq != 0)
+			evcnt_detach(&ps->ps_evcnt);
+	}
 }
 
 int
@@ -647,7 +688,7 @@ acpicpu_pstate_set(struct acpicpu_softc *sc, uint32_t freq)
 		goto fail;
 	}
 
-	ps->ps_stat++;
+	ps->ps_evcnt.ev_count++;
 	sc->sc_pstate_current = freq;
 
 	return 0;
