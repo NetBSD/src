@@ -1,4 +1,4 @@
-/*	$NetBSD: if_shmem.c,v 1.12 2010/07/29 22:48:11 pooka Exp $	*/
+/*	$NetBSD: if_shmem.c,v 1.13 2010/08/10 18:17:12 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -28,9 +28,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.12 2010/07/29 22:48:11 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.13 2010/08/10 18:17:12 pooka Exp $");
 
 #include <sys/param.h>
+#include <sys/atomic.h>
 #include <sys/fcntl.h>
 #include <sys/kmem.h>
 #include <sys/kthread.h>
@@ -89,6 +90,9 @@ static void shmif_rcv(void *);
 
 static uint32_t numif;
 
+#define LOCK_UNLOCKED	0
+#define LOCK_LOCKED	1
+
 /*
  * This locking needs work and will misbehave severely if:
  * 1) the backing memory has to be paged in
@@ -98,14 +102,20 @@ static void
 lockbus(struct shmif_sc *sc)
 {
 
-	__cpu_simple_lock((__cpu_simple_lock_t *)sc->sc_busmem);
+	while (atomic_cas_uint((void *)sc->sc_busmem,
+	    LOCK_UNLOCKED, LOCK_LOCKED) == LOCK_LOCKED)
+		continue;
+	membar_enter();
 }
 
 static void
 unlockbus(struct shmif_sc *sc)
 {
+	unsigned int old;
 
-	__cpu_simple_unlock((__cpu_simple_lock_t *)sc->sc_busmem);
+	membar_exit();
+	old = atomic_swap_uint((void *)sc->sc_busmem, LOCK_UNLOCKED);
+	KASSERT(old == LOCK_LOCKED);
 }
 
 static uint32_t
@@ -221,7 +231,7 @@ rump_shmif_create(const char *path, int *ifnum)
 
 	sprintf(ifp->if_xname, "shmif%d", mynum);
 	ifp->if_softc = sc;
-	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
+	ifp->if_flags = IFF_BROADCAST | IFF_MULTICAST;
 	ifp->if_init = shmif_init;
 	ifp->if_ioctl = shmif_ioctl;
 	ifp->if_start = shmif_start;
