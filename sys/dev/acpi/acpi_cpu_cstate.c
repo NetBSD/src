@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_cstate.c,v 1.19 2010/08/10 02:42:05 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_cstate.c,v 1.20 2010/08/10 04:38:06 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_cstate.c,v 1.19 2010/08/10 02:42:05 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_cstate.c,v 1.20 2010/08/10 04:38:06 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -630,6 +630,11 @@ static int
 acpicpu_cstate_quirks_piix4(struct pci_attach_args *pa)
 {
 
+	/*
+	 * XXX: The pci_find_device(9) function only deals with
+	 *	attached devices. Change this to use something like
+	 *	pci_device_foreach(), and implement it for IA-64.
+	 */
 	if (PCI_VENDOR(pa->pa_id) != PCI_VENDOR_INTEL)
 		return 0;
 
