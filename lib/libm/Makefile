@@ -1,4 +1,4 @@
-#  $NetBSD: Makefile,v 1.96 2010/08/07 18:12:46 wiz Exp $
+#  $NetBSD: Makefile,v 1.97 2010/08/10 17:53:08 drochner Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24
 #
@@ -66,6 +66,8 @@ ARCH_SRCS = e_acos.S e_asin.S e_atan2.S e_exp.S e_expf.S e_fmod.S e_log.S \
 	    s_ilogbf.S s_log1p.S s_log1pf.S s_logb.S s_logbf.S s_rint.S \
 	    s_rintf.S s_scalbn.S s_scalbnf.S s_significand.S \
 	    s_significandf.S s_sin.S s_sinf.S s_tan.S s_tanf.S lrint.S
+# do not pick up the i387 asm version, it is incorrect
+s_modf.o s_modf.pico s_modf.po s_modf.d: s_modf.c
 
 .if (${MACHINE_ARCH} == "i386")
 SUBDIR=arch/i387
@@ -187,6 +189,11 @@ SRCS+= ${ARCH_ADDS}
 .PATH:	${.CURDIR}/arch/vax
 SRCS:=${SRCS} n_sqrt.S n_argred.S n_infnan.S n_atan2.S n_cabs.S n_cbrt.S \
 	n_support.S
+.endif
+
+.if (${MACHINE_ARCH} == "i386")
+# XXX this gets miscompiled. There should be a better fix.
+COPTS.s_tanh.c+= -O0
 .endif
 
 MAN+=	acos.3 acosh.3 asin.3 asinh.3 atan.3 atan2.3 atanh.3 ceil.3 \
