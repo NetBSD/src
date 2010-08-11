@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.153.2.52 2010/08/11 09:50:01 uebayasi Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.153.2.53 2010/08/11 13:14:55 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.153.2.52 2010/08/11 09:50:01 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.153.2.53 2010/08/11 13:14:55 uebayasi Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -873,6 +873,14 @@ uvm_page_physload_device(paddr_t start, paddr_t end, paddr_t avail_start,
 #endif
 	}
 
+	KASSERT(uvm_physseg_inited);
+
+#ifdef __HAVE_PMAP_PHYSSEG
+#ifdef __HAVE_PMAP_PHYSSEG_INIT
+	pmap_physseg_init(seg);
+#endif
+#endif
+
 	vm_nphysdev++;
 	return seg;
 }
@@ -881,6 +889,12 @@ void
 uvm_page_physunload_device(void *cookie)
 {
 	struct vm_physseg *seg = cookie;
+
+#ifdef __HAVE_PMAP_PHYSSEG
+#ifdef __HAVE_PMAP_PHYSSEG_INIT
+	pmap_physseg_fini(seg);
+#endif
+#endif
 
 	kmem_free(seg->pgs, sizeof(struct vm_page) * (seg->end - seg->start));
 	uvm_physseg_free(&vm_physdev_freelist, vm_physdev_ptrs, seg);
