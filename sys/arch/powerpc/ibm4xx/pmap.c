@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.60.2.3 2010/04/30 14:39:42 uebayasi Exp $	*/
+/*	$NetBSD: pmap.c,v 1.60.2.4 2010/08/11 13:46:28 uebayasi Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.60.2.3 2010/04/30 14:39:42 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.60.2.4 2010/08/11 13:46:28 uebayasi Exp $");
+
+#include "opt_xip.h"
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -192,10 +194,15 @@ pa_to_pv(paddr_t pa)
 {
 	int bank, pg;
 
+#ifdef XIP
+	bank = vm_physseg_find_device(atop(pa), &pg);
+	if (bank != -1)
+		return &VM_PHYSDEV_PTR(bank)->pmseg.pvent[pg];
+#endif
 	bank = vm_physseg_find(atop(pa), &pg);
-	if (bank == -1)
-		return NULL;
-	return &VM_PHYSMEM_PTR(bank)->pmseg.pvent[pg];
+	if (bank != -1)
+		return &VM_PHYSMEM_PTR(bank)->pmseg.pvent[pg];
+	return NULL;
 }
 
 static inline char *
@@ -203,10 +210,15 @@ pa_to_attr(paddr_t pa)
 {
 	int bank, pg;
 
+#ifdef XIP
+	bank = vm_physseg_find_device(atop(pa), &pg);
+	if (bank != -1)
+		return &VM_PHYSDEV_PTR(bank)->pmseg.attrs[pg];
+#endif
 	bank = vm_physseg_find(atop(pa), &pg);
-	if (bank == -1)
-		return NULL;
-	return &VM_PHYSMEM_PTR(bank)->pmseg.attrs[pg];
+	if (bank != -1)
+		return &VM_PHYSMEM_PTR(bank)->pmseg.attrs[pg];
+	return NULL;
 }
 
 /*
@@ -485,6 +497,36 @@ pmap_init(void)
 	/* Setup a pool for additional pvlist structures */
 	pool_init(&pv_pool, sizeof(struct pv_entry), 0, 0, 0, "pv_entry", NULL,
 	    IPL_VM);
+}
+
+void
+pmap_physseg_init(struct vm_physseg *seg)
+{
+	size_t npages;
+	vsize_t sz;
+	struct pv_entry *pv;
+	char *attr;
+
+	npages = seg->end - seg->start + 1;
+	sz = (vsize_t)((sizeof(struct pv_entry) + 1) * npages);
+	sz = round_page(sz);
+	pv = (void *)uvm_km_alloc(kernel_map, sz, 0, UVM_KMF_WIRED | UVM_KMF_ZERO);
+	attr = (void *)(pv + npages);
+
+	seg->pmseg.pvent = pv;
+	seg->pmseg.attrs = attr;
+}
+
+void
+pmap_physseg_fini(struct vm_physseg *seg)
+{
+	size_t npages;
+	vsize_t sz;
+
+	npages = seg->end - seg->start + 1;
+	sz = (vsize_t)((sizeof(struct pv_entry) + 1) * npages);
+	sz = round_page(sz);
+	uvm_km_free(kernel_map, (vaddr_t)seg->pmseg.pvent, sz, UVM_KMF_WIRED);
 }
 
 /*
