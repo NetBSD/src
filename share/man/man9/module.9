@@ -1,4 +1,4 @@
-.\"	$NetBSD: module.9,v 1.11 2010/08/11 18:20:09 pgoyette Exp $
+.\"	$NetBSD: module.9,v 1.12 2010/08/11 20:10:55 wiz Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -183,7 +183,7 @@ The
 argument can include:
 .Bl -tag -width MODCTL_LOAD_FORCE -offset indent
 .It Dv MODCTL_NO_PROP
-When loading a module from the file-system, do not attempt to locate a
+When loading a module from the file system, do not attempt to locate a
 corresponding prop_dictionary file.
 .It Dv MODCTL_LOAD_FORCE
 Force loading of disabled built-in modules and modules built for a
@@ -196,7 +196,7 @@ argument points to an externalized property list which is passed to the
 module's
 .Fn modcmd
 routine.
-If a module is being loaded from the file-system, and the
+If a module is being loaded from the file system, and the
 .Dv MODCTL_NO_PROP
 flag is not set, the system searches for a file with the same name as the
 module file, but with the suffix
@@ -335,10 +335,9 @@ loaded via the
 routine.
 .Fn module_start_unload_thread
 is called once the scheduler and timer functions are initialized.
-.Fn 
 .It Fn module_builtin_require_force "void"
 Mark as "disabled" any built-in modules that have not been successfully
-initialize.
+initialized.
 Modules marked "disabled" can only be loaded if the
 .Dv MODCTL_LOAD_FORCE
 is specified.
@@ -347,11 +346,11 @@ is called near the end of system initialization, after the
 .Xr init 8
 process is created.
 .It Fn module_load_vfs_init
-The module subsystem is initialized early, long before any file-systems
+The module subsystem is initialized early, long before any file systems
 are available.
-After the root file-system is mounted,
+After the root file system is mounted,
 .Fn module_load_vfs_init
-is used to enable loading modules from the file-system.
+is used to enable loading modules from the file system.
 Until this routine is called, modules can only be loaded if they were
 built-in to the kernel image or provided by the boot loader.
 .El
