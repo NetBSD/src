@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_pstate.c,v 1.10 2010/08/11 13:02:59 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_pstate.c,v 1.11 2010/08/11 16:22:18 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_pstate.c,v 1.10 2010/08/11 13:02:59 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_pstate.c,v 1.11 2010/08/11 16:22:18 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/evcnt.h>
@@ -537,6 +537,11 @@ acpicpu_pstate_get(struct acpicpu_softc *sc, uint32_t *freq)
 	uint8_t width;
 	int rv;
 
+	if (sc->sc_cold != false) {
+		rv = EBUSY;
+		goto fail;
+	}
+
 	if ((sc->sc_flags & ACPICPU_FLAG_P) == 0) {
 		rv = ENODEV;
 		goto fail;
@@ -620,6 +625,11 @@ acpicpu_pstate_set(struct acpicpu_softc *sc, uint32_t freq)
 	uint64_t addr;
 	uint8_t width;
 	int rv;
+
+	if (sc->sc_cold != false) {
+		rv = EBUSY;
+		goto fail;
+	}
 
 	if ((sc->sc_flags & ACPICPU_FLAG_P) == 0) {
 		rv = ENODEV;
