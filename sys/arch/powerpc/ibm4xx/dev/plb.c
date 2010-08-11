@@ -1,4 +1,4 @@
-/* $NetBSD: plb.c,v 1.14.98.1 2010/04/30 14:39:42 uebayasi Exp $ */
+/* $NetBSD: plb.c,v 1.14.98.2 2010/08/11 13:53:22 uebayasi Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plb.c,v 1.14.98.1 2010/04/30 14:39:42 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plb.c,v 1.14.98.2 2010/08/11 13:53:22 uebayasi Exp $");
 
 #include "locators.h"
 #include "emac.h"
@@ -100,6 +100,7 @@ const struct plb_dev plb_devs [] = {
 	{ IBM405GPR,	"ecc", },
 	{ IBM405GPR,	"opb", },
 	{ IBM405GPR,	"pchb", },
+	{ IBM405GPR,	"exb", },
 
 	/* AMCC 405EX / EXR */
 	{ AMCC405EX,	"cpu", },
