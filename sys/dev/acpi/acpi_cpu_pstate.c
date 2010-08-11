@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_pstate.c,v 1.8 2010/08/11 10:44:07 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_pstate.c,v 1.9 2010/08/11 11:48:21 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_pstate.c,v 1.8 2010/08/11 10:44:07 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_pstate.c,v 1.9 2010/08/11 11:48:21 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/evcnt.h>
@@ -281,7 +281,7 @@ acpicpu_pstate_pss(struct acpicpu_softc *sc)
 		goto out;
 	}
 
-	if (sc->sc_pstate_count > 0xFF) {
+	if (sc->sc_pstate_count > ACPICPU_P_STATE_MAX) {
 		rv = AE_LIMIT;
 		goto out;
 	}
