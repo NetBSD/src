@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu.h,v 1.12 2010/08/10 02:42:05 jruoho Exp $ */
+/* $NetBSD: acpi_cpu.h,v 1.13 2010/08/11 11:48:21 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -84,6 +84,7 @@
 /*
  * P-states.
  */
+#define ACPICPU_P_STATE_MAX	 255		/* Arbitrary upper limit     */
 #define ACPICPU_P_STATE_RETRY	 100
 #define ACPICPU_P_STATE_UNKNOWN	 0x0
 
