@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_exec.h,v 1.31.16.2 2009/05/04 08:12:24 yamt Exp $	 */
+/*	$NetBSD: mach_exec.h,v 1.31.16.3 2010/08/11 22:53:10 yamt Exp $	 */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -64,11 +64,11 @@ struct mach_lwp_emuldata {
 int exec_mach_copyargs(struct lwp *, struct exec_package *,
     struct ps_strings *, char **, void *);
 int exec_mach_probe(const char **);
-void mach_e_proc_init(struct proc *, struct vmspace *);
+void mach_e_proc_init(struct proc *);
 void mach_e_proc_exit(struct proc *);
 void mach_e_proc_exec(struct proc *, struct exec_package *);
-void mach_e_proc_fork(struct proc *, struct proc *, int);
-void mach_e_proc_fork1(struct proc *, struct proc *, int);
+void mach_e_proc_fork(struct proc *, struct lwp *, int);
+void mach_e_proc_fork1(struct proc *, struct lwp *, int);
 void mach_e_lwp_fork(struct lwp *, struct lwp *);
 void mach_e_lwp_exit(struct lwp *);
 

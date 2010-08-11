@@ -1,4 +1,4 @@
-/*	$NetBSD: platid.def,v 1.21.72.1 2009/05/04 08:11:09 yamt Exp $	*/
+/*	$NetBSD: platid.def,v 1.21.72.2 2010/08/11 22:52:03 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -166,8 +166,9 @@ CASIO {
 #endif /* hpcsh */
 }
 
-#ifdef hpcmips
+#if defined(hpcmips) || defined(hpcarm)
 Sharp {
+#if defined(hpcmips)
   Tripad {
     PV {
       CPU=MIPS_VR_4111 PV6000
@@ -191,8 +192,19 @@ Sharp {
       CPU=MIPS_TX_3912 HC1200
     }
   }
-}
 #endif /* hpcmips */
+#if defined(hpcarm)
+  WZERO3 {
+    CPU=ARM_XSCALE_PXA270
+    WS003SH -" W-ZERO3 (WS003SH)"
+    WS004SH -" W-ZERO3 (WS004SH)"
+    WS007SH -" W-ZERO3[es] (WS007SH)"
+    WS011SH -" Advanced/W-ZERO3[es] (WS011SH)"
+    WS020SH -" WILLCOM 03 (WS020SH)"
+  }
+#endif /* hpcarm */
+}
+#endif /* hpcmips || hpcarm */
 
 #ifdef hpcmips
 Fujitsu {

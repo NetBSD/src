@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.4.10.3 2010/03/11 15:02:18 yamt Exp $ */
+/* $NetBSD: machdep.c,v 1.4.10.4 2010/08/11 22:51:52 yamt Exp $ */
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.4.10.3 2010/03/11 15:02:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.4.10.4 2010/08/11 22:51:52 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -281,7 +281,7 @@ parse_args(prop_dictionary_t properties, int argc, char **argv,
 		} else if (strcmp(key, "kmac") == 0) {
 			prop_data_t pd;
 
-			ether_nonstatic_aton(enaddr, val);
+			(void)ether_aton_r(enaddr, sizeof(enaddr), val);
 			if (properties == NULL)
 				continue;
 			pd = prop_data_create_data(enaddr, sizeof(enaddr));

@@ -1,4 +1,4 @@
-/*	$NetBSD: aria.c,v 1.29.4.2 2010/03/11 15:03:37 yamt Exp $	*/
+/*	$NetBSD: aria.c,v 1.29.4.3 2010/08/11 22:53:35 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996, 1998 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aria.c,v 1.29.4.2 2010/03/11 15:03:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aria.c,v 1.29.4.3 2010/08/11 22:53:35 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -415,7 +415,7 @@ ariaattach(device_t parent, device_t self, void *aux)
 	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq[0].ir_irq,
 	    IST_EDGE, IPL_AUDIO, aria_intr, sc);
 
-	DPRINTF(("isa_intr_establish() returns (%x)\n", (unsigned) sc->sc_ih));
+	DPRINTF(("isa_intr_establish() returns (%p)\n", sc->sc_ih));
 
 	i = aria_getdspmem(sc, ARIAA_HARDWARE_A);
 
@@ -1081,7 +1081,7 @@ aria_intr(void *arg)
 	DPRINTF(("aria_intr\n"));
 
 	if ((sc->sc_open & ARIAR_OPEN_PLAY) && (pdata!=NULL)) {
-		DPRINTF(("aria_intr play=(%x)\n", (unsigned) pdata));
+		DPRINTF(("aria_intr play=(%p)\n", pdata));
 		address = 0x8000 - 2*(sc->sc_blocksize);
 		address+= aria_getdspmem(sc, ARIAA_PLAY_FIFO_A);
 		bus_space_write_2(iot, ioh, ARIADSP_DMAADDRESS, address);
@@ -1092,7 +1092,7 @@ aria_intr(void *arg)
 	}
 
 	if ((sc->sc_open & ARIAR_OPEN_RECORD) && (rdata!=NULL)) {
-		DPRINTF(("aria_intr record=(%x)\n", (unsigned) rdata));
+		DPRINTF(("aria_intr record=(%p)\n", rdata));
 		address = 0x8000 - (sc->sc_blocksize);
 		address+= aria_getdspmem(sc, ARIAA_REC_FIFO_A);
 		bus_space_write_2(iot, ioh, ARIADSP_DMAADDRESS, address);

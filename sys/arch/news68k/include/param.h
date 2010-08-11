@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.12.10.1 2010/03/11 15:02:44 yamt Exp $	*/
+/*	$NetBSD: param.h,v 1.12.10.2 2010/08/11 22:52:27 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -86,7 +86,7 @@
 #define	MACHINE		"news68k"
 
 
-#define	PGSHIFT		12		/* LOG2(NBPG) */
+#define	PGSHIFT		13		/* LOG2(NBPG) */
 #define	KERNBASE	0x00000000	/* start of kernel virtual */
 
 #define	UPAGES		2		/* pages of u-area */

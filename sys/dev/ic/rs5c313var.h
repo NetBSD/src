@@ -1,4 +1,4 @@
-/*	$NetBSD: rs5c313var.h,v 1.2 2008/03/27 02:15:29 uwe Exp $	*/
+/*	$NetBSD: rs5c313var.h,v 1.2.4.1 2010/08/11 22:53:30 yamt Exp $	*/
 
 /*
  * Copyright (c) 2006 Valeriy E. Ushakov
@@ -43,6 +43,14 @@ struct rs5c313_softc {
 	struct rs5c313_ops *sc_ops;
 
 	int sc_valid;		/* oscillation halt sensing on init */
+
+	enum {
+		MODEL_5C313 = 0,
+		MODEL_5C316,
+		MODEL_NUM
+	} sc_model;
+
+	int sc_ctrl[2];		/* ctrl registers */
 };
 
 struct rs5c313_ops {

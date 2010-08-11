@@ -1,0 +1,6 @@
+#	$NetBSD: files.computex7750,v 1.1.6.2 2010/08/11 22:51:57 yamt Exp $
+#
+#	COMPUTEX7750 configuration info
+
+file	arch/evbsh3/computex7750/computex7750.c
+file	arch/evbsh3/computex7750/clock_machdep.c

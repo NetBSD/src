@@ -8,7 +8,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2009, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2010, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -182,7 +182,7 @@ AeCtrlCHandler (
     signal (SIGINT, SIG_IGN);
     SigintCount++;
 
-    AcpiOsPrintf ("Caught a ctrl-c (#%d)\n\n", SigintCount);
+    AcpiOsPrintf ("Caught a ctrl-c (#%u)\n\n", SigintCount);
 
     if (AcpiGbl_MethodExecuting)
     {
@@ -618,7 +618,7 @@ AeInstallHandlers (void)
         if (ACPI_FAILURE (Status))
         {
             ACPI_EXCEPTION ((AE_INFO, Status,
-                "Could not install an OpRegion handler for %s space(%d)",
+                "Could not install an OpRegion handler for %s space(%u)",
                 AcpiUtGetRegionName((UINT8) SpaceId[i]), SpaceId[i]));
             return (Status);
         }
@@ -653,7 +653,7 @@ AeRegionHandler (
     UINT32                  Function,
     ACPI_PHYSICAL_ADDRESS   Address,
     UINT32                  BitWidth,
-    ACPI_INTEGER            *Value,
+    UINT64                  *Value,
     void                    *HandlerContext,
     void                    *RegionContext)
 {
@@ -877,7 +877,10 @@ AeRegionHandler (
             return AE_NO_MEMORY;
         }
 
-        ACPI_MEMSET (RegionElement->Buffer, 0, Length);
+        /* Initialize the region with the default fill value */
+
+        ACPI_MEMSET (RegionElement->Buffer, AcpiGbl_RegionFillValue, Length);
+
         RegionElement->Address      = BaseAddress;
         RegionElement->Length       = Length;
         RegionElement->SpaceId      = SpaceId;
@@ -915,11 +918,11 @@ AeRegionHandler (
      * NOTE: RegionElement->Length is in bytes, therefore it we compare against
      * ByteWidth (see above)
      */
-    if (((ACPI_INTEGER) Address + ByteWidth) >
-        ((ACPI_INTEGER)(RegionElement->Address) + RegionElement->Length))
+    if (((UINT64) Address + ByteWidth) >
+        ((UINT64)(RegionElement->Address) + RegionElement->Length))
     {
         ACPI_WARNING ((AE_INFO,
-            "Request on [%4.4s] is beyond region limit Req-%X+%X, Base=%X, Len-%X",
+            "Request on [%4.4s] is beyond region limit Req-0x%X+0x%X, Base=0x%X, Len-0x%X",
             (RegionObject->Region.Node)->Name.Ascii, (UINT32) Address,
             ByteWidth, (UINT32)(RegionElement->Address),
             RegionElement->Length));
@@ -931,7 +934,7 @@ AeRegionHandler (
      * Get BufferValue to point to the "address" in the buffer
      */
     BufferValue = ((UINT8 *) RegionElement->Buffer +
-                    ((ACPI_INTEGER) Address - (ACPI_INTEGER) RegionElement->Address));
+                    ((UINT64) Address - (UINT64) RegionElement->Address));
 
 DoFunction:
 
@@ -959,6 +962,5 @@ DoFunction:
     }
     return AE_OK;
 }
-
 
 

@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_target_linear.c,v 1.4.2.6 2010/03/11 15:03:26 yamt Exp $      */
+/*        $NetBSD: dm_target_linear.c,v 1.4.2.7 2010/08/11 22:53:21 yamt Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -139,6 +139,22 @@ dm_target_linear_strategy(dm_table_entry_t * table_en, struct buf * bp)
 
 	return 0;
 
+}
+/*
+ * Sync underlying disk caches.
+ */
+int
+dm_target_linear_sync(dm_table_entry_t * table_en)
+{
+	int cmd;
+	dm_target_linear_config_t *tlc;
+
+	tlc = table_en->target_config;
+
+	cmd = 1;
+	
+	return VOP_IOCTL(tlc->pdev->pdev_vnode,  DIOCCACHESYNC, &cmd,
+	    FREAD|FWRITE, kauth_cred_get());	
 }
 /*
  * Destroy target specific data. Decrement table pdevs.

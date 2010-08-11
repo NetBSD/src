@@ -1,5 +1,5 @@
 #
-#	$NetBSD: TISDP2420,v 1.1.20.3 2010/03/11 15:02:14 yamt Exp $
+#	$NetBSD: TISDP2420,v 1.1.20.4 2010/08/11 22:51:50 yamt Exp $
 #
 #	TISDP2420 -- TI OMAP 2420 Eval Board Kernel
 #
@@ -236,17 +236,11 @@ sm0		at gpmc? addr 0x08000300 intr 188	# (intr is GPIO92)
 ##umass*		at uhub? port ? configuration ? interface ?
 ##wd*		at umass?
 
-# Hardware clocking and power management
-
-options		HWCLOCK
-options		HWCLOCK_MACHINE="<arch/arm/omap/hwclock_omap1.h>"
-options		OMAP_CK_REF_SPEED=12000000
-
 # Pseudo-Devices
 
 # disk/mass storage pseudo-devices
 #pseudo-device	vnd			# disk-like interface to files
-#pseudo-device	fss		4	# file system snapshot device
+#pseudo-device	fss			# file system snapshot device
 
 # network pseudo-devices
 pseudo-device	bpfilter		# Berkeley packet filter

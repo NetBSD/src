@@ -1,4 +1,4 @@
-/*	$NetBSD: ess_isapnp.c,v 1.19.4.2 2010/03/11 15:03:40 yamt Exp $	*/
+/*	$NetBSD: ess_isapnp.c,v 1.19.4.3 2010/08/11 22:53:36 yamt Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ess_isapnp.c,v 1.19.4.2 2010/03/11 15:03:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ess_isapnp.c,v 1.19.4.3 2010/08/11 22:53:36 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,7 +64,7 @@ __KERNEL_RCSID(0, "$NetBSD: ess_isapnp.c,v 1.19.4.2 2010/03/11 15:03:40 yamt Exp
 int	ess_isapnp_match(device_t, cfdata_t, void *);
 void	ess_isapnp_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(ess_isapnp, sizeof(struct ess_softc),
+CFATTACH_DECL_NEW(ess_isapnp, sizeof(struct ess_softc),
     ess_isapnp_match, ess_isapnp_attach, NULL, NULL);
 
 /*
@@ -97,6 +97,7 @@ ess_isapnp_attach(device_t parent, device_t self, void *aux)
 	struct isapnp_attach_args *ipa;
 
 	sc = device_private(self);
+	sc->sc_dev = self;
 	ipa = aux;
 
 	aprint_naive("\n");

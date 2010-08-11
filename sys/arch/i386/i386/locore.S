@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.67.4.5 2010/03/11 15:02:28 yamt Exp $	*/
+/*	$NetBSD: locore.S,v 1.67.4.6 2010/08/11 22:52:11 yamt Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -129,7 +129,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.67.4.5 2010/03/11 15:02:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.67.4.6 2010/08/11 22:52:11 yamt Exp $");
 
 #include "opt_compat_oldboot.h"
 #include "opt_ddb.h"
@@ -482,29 +482,43 @@ try586:	/* Use the `cpuid' instruction. */
 	movl	$_RELOC(tmpstk),%esp	# bootstrap stack end location
 
 /*
- * Virtual address space of kernel:
+ * Virtual address space of kernel, without PAE. The page dir is 1 page long.
  *
  * text | data | bss | [syms] | [blobs] | page dir | proc0 kstack | L1 ptp
  *			                0          1       2      3
+ *
+ * Virtual address space of kernel, with PAE. We need 4 pages for the page dir
+ * and 1 page for the L3.
+ * text | data | bss | [syms] | [blobs] | L3 | page dir | proc0 kstack | L1 ptp
+ * 					0    1          5       6      7
  */
-
+#ifndef PAE
 #define	PROC0_PDIR_OFF	0
-#define	PROC0_STK_OFF	(PROC0_PDIR_OFF + PAGE_SIZE)
+#else
+#define PROC0_L3_OFF	0
+#define PROC0_PDIR_OFF	1 * PAGE_SIZE
+#endif
+
+#define	PROC0_STK_OFF	(PROC0_PDIR_OFF + PDP_SIZE * PAGE_SIZE)
 #define	PROC0_PTP1_OFF	(PROC0_STK_OFF + UPAGES * PAGE_SIZE)
 
 /*
- * fillkpt
+ * fillkpt - Fill in a kernel page table
  *	eax = pte (page frame | control | status)
  *	ebx = page table address
  *	ecx = number of pages to map
+ * 
+ * For PAE, each entry is 8 bytes long: we must set the 4 upper bytes to 0.
+ * This is done by the first instruction of fillkpt. In the non-PAE case, this
+ * instruction just clears the page table entry.
  */
 
 #define fillkpt	\
-1:	movl	%eax,(%ebx)	; 	/* store phys addr */ \
-	addl	$4,%ebx		; 	/* next pte/pde */ \
-	addl	$PAGE_SIZE,%eax	; 	/* next phys page */ \
-	loop	1b		;  \
-
+1:	movl	$0,(PDE_SIZE-4)(%ebx)	;	/* clear bits */	\
+	movl	%eax,(%ebx)		;	/* store phys addr */   \
+	addl	$PDE_SIZE,%ebx		;	/* next pte/pde */      \
+	addl	$PAGE_SIZE,%eax		;	/* next phys page */    \
+	loop	1b			;
 
 	/* Find end of kernel image. */
 	movl	$RELOC(end),%edi
@@ -538,9 +552,14 @@ try586:	/* Use the `cpuid' instruction. */
 	incl	%eax		/* one more ptp for VAs stolen by bootstrap */
 1:	movl	%eax,RELOC(nkptp)+1*4
 
-	/* tablesize = (1 + UPAGES + nkptp) << PGSHIFT; */
-	addl	$(1+UPAGES),%eax
+	/* tablesize = (PDP_SIZE + UPAGES + nkptp) << PGSHIFT; */
+	addl	$(PDP_SIZE+UPAGES),%eax
+#ifdef PAE
+	incl	%eax 		/* one more page for the L3 PD */
+	shll	$PGSHIFT+1,%eax	/* PTP tables are twice larger with PAE */
+#else
 	shll	$PGSHIFT,%eax
+#endif
 	movl	%eax,RELOC(tablesize)
 
 	/* ensure that nkptp covers bootstrap tables */
@@ -578,7 +597,10 @@ try586:	/* Use the `cpuid' instruction. */
  	 */
 	movl	$_RELOC(KERNTEXTOFF),%eax
 	movl	%eax,%ecx
- 	shrl	$(PGSHIFT-2),%ecx	/* ((n >> PGSHIFT) << 2) for # pdes */
+	shrl	$(PGSHIFT-2),%ecx	/* ((n >> PGSHIFT) << 2) for # pdes */
+#ifdef PAE
+ 	shll	$1,%ecx			/* pdes are twice larger with PAE */
+#endif
  	addl	%ecx,%ebx
 
 	/* Map the kernel text read-only. */
@@ -605,36 +627,51 @@ try586:	/* Use the `cpuid' instruction. */
  * Construct a page table directory.
  */
  	/* Set up top level entries for identity mapping */
- 	leal    (PROC0_PDIR_OFF)(%esi),%ebx
+ 	leal	(PROC0_PDIR_OFF)(%esi),%ebx
  	leal	(PROC0_PTP1_OFF)(%esi),%eax
  	orl	$(PG_V|PG_KW), %eax
  	movl	RELOC(nkptp)+1*4,%ecx
 	fillkpt
 
  	/* Set up top level entries for actual kernel mapping */
- 	leal    (PROC0_PDIR_OFF + L2_SLOT_KERNBASE*4)(%esi),%ebx
+ 	leal	(PROC0_PDIR_OFF + L2_SLOT_KERNBASE*PDE_SIZE)(%esi),%ebx
  	leal	(PROC0_PTP1_OFF)(%esi),%eax
  	orl	$(PG_V|PG_KW), %eax
  	movl	RELOC(nkptp)+1*4,%ecx
 	fillkpt
 
 	/* Install a PDE recursively mapping page directory as a page table! */
- 	leal    (PROC0_PDIR_OFF + PDIR_SLOT_PTE*4)(%esi),%ebx
- 	leal    (PROC0_PDIR_OFF)(%esi),%eax
+ 	leal	(PROC0_PDIR_OFF + PDIR_SLOT_PTE*PDE_SIZE)(%esi),%ebx
+ 	leal	(PROC0_PDIR_OFF)(%esi),%eax
  	orl	$(PG_V|PG_KW),%eax
- 	movl	%eax,(%ebx)
- 
+	movl	$PDP_SIZE,%ecx
+	fillkpt
+
+#ifdef PAE
+	/* Fill in proc0 L3 page with entries pointing to the page dirs */
+	leal	(PROC0_L3_OFF)(%esi),%ebx
+	leal	(PROC0_PDIR_OFF)(%esi),%eax
+	orl	$(PG_V),%eax
+	movl	$PDP_SIZE,%ecx
+	fillkpt
+
+	/* Enable PAE mode */
+	movl	%cr4,%eax
+	orl	$CR4_PAE,%eax
+	movl	%eax,%cr4
+#endif
 
 	/* Save phys. addr of PDP, for libkvm. */
-	movl	%esi,RELOC(PDPpaddr)
+	leal	(PROC0_PDIR_OFF)(%esi),%eax
+	movl	%eax,RELOC(PDPpaddr)
 
- 	/*
- 	 * Startup checklist:
- 	 * 1. Load %cr3 with pointer to PDIR.
- 	 */
+	/*
+	 * Startup checklist:
+	 * 1. Load %cr3 with pointer to PDIR (or L3 PD page for PAE).
+	 */
 	movl	%esi,%eax		# phys address of ptd in proc 0
 	movl	%eax,%cr3		# load ptd addr into mmu
- 
+
  	/*
  	 * 2. Enable paging and the rest of it.
  	 */
@@ -653,10 +690,11 @@ begin:
  	 * memory, remove it.
  	 */
  	movl	_C_LABEL(nkptp)+1*4,%ecx
- 	leal	(PROC0_PDIR_OFF)(%esi),%ebx	# old, phys  address of PDIR
- 	addl	$(KERNBASE), %ebx	# new, virtual address of PDIR
-1:	movl	$0,(%ebx)
- 	addl	$4,%ebx
+ 	leal	(PROC0_PDIR_OFF)(%esi),%ebx	# old, phys address of PDIR
+ 	addl	$(KERNBASE), %ebx		# new, virtual address of PDIR
+1:	movl	$0,(PDE_SIZE-4)(%ebx)		# Upper bits (for PAE)
+	movl	$0,(%ebx)
+ 	addl	$PDE_SIZE,%ebx
 	loop	1b
 
 	/* Relocate atdevbase. */
@@ -688,9 +726,13 @@ begin:
  	movl	_C_LABEL(tablesize),%eax
 	addl	%esi,%eax		# skip past stack and page tables
 
+#ifdef PAE
+	pushl	$0	# init386() expects a 64 bits paddr_t with PAE
+#endif
 	pushl	%eax
 	call	_C_LABEL(init386)	# wire 386 chip for unix operation
-	addl	$4+NGDT*8,%esp		# pop temporary gdt
+	addl	$PDE_SIZE,%esp		# pop paddr_t
+	addl	$NGDT*8,%esp		# pop temporary gdt
 
 #ifdef SAFARI_FIFO_HACK
 	movb	$5,%al
@@ -746,14 +788,12 @@ start:
 	movl	%eax,RELOC(cpuid_level)
 
 	call	xen_pmap_bootstrap
+
 	/*
 	 * First avail returned by xen_pmap_bootstrap in %eax
 	 */
 	movl	%eax, %esi;
 	movl	%esi, _C_LABEL(lwp0uarea)
-
-#define PROC0PDIR       ((0)              * PAGE_SIZE)
-#define PROC0STACK      ((1)              * PAGE_SIZE)
 
 	/* Set up bootstrap stack. */
 	leal	(KSTACK_SIZE-FRAMESIZE)(%eax),%esp
@@ -761,9 +801,13 @@ start:
 
 	addl	$USPACE, %esi
 	subl	$KERNBASE, %esi		#init386 want a physical address
+
+#ifdef PAE
+	pushl	$0	# init386() expects a 64 bits paddr_t with PAE
+#endif
 	pushl	%esi
 	call	_C_LABEL(init386)	# wire 386 chip for unix operation
-	addl	$4,%esp
+	addl	$PDE_SIZE,%esp		# pop paddr_t
 	call 	_C_LABEL(main)
 
 #if defined(XEN) && !defined(XEN_COMPAT_030001)

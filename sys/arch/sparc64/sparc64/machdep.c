@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.220.2.7 2010/03/11 15:03:01 yamt Exp $ */
+/*	$NetBSD: machdep.c,v 1.220.2.8 2010/08/11 22:52:48 yamt Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.220.2.7 2010/03/11 15:03:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.220.2.8 2010/08/11 22:52:48 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -811,7 +811,6 @@ dumpsys(void)
 			for (off = 0; off < n; off += PAGE_SIZE)
 				pmap_kenter_pa(dumpspace+off, maddr+off,
 				    VM_PROT_READ, 0);
-			pmap_update(pmap_kernel());
 			error = (*dump)(dumpdev, blkno,
 					(void *)dumpspace, (size_t)n);
 			pmap_kremove(dumpspace, n);
@@ -822,7 +821,6 @@ dumpsys(void)
 			blkno += btodb(n);
 		}
 	}
-	pmap_update(pmap_kernel());
 
 	switch (error) {
 
@@ -1456,14 +1454,13 @@ _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 	size_t size, void **kvap, int flags)
 {
 	vaddr_t va, sva;
-	int r, cbit;
+	int r;
 	size_t oversize;
 	u_long align;
 
 	if (nsegs != 1)
 		panic("_bus_dmamem_map: nsegs = %d", nsegs);
 
-	cbit = PMAP_NC;
 	align = PAGE_SIZE;
 
 	size = round_page(size);
@@ -1732,7 +1729,6 @@ sparc_bus_map(bus_space_tag_t t, bus_addr_t addr, bus_size_t size,
 		v += PAGE_SIZE;
 		pa += PAGE_SIZE;
 	} while ((size -= PAGE_SIZE) > 0);
-	pmap_update(pmap_kernel());
 	return (0);
 }
 

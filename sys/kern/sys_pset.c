@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pset.c,v 1.6.2.2 2010/03/11 15:04:19 yamt Exp $	*/
+/*	$NetBSD: sys_pset.c,v 1.6.2.3 2010/08/11 22:54:42 yamt Exp $	*/
 
 /*
  * Copyright (c) 2008, Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pset.c,v 1.6.2.2 2010/03/11 15:04:19 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pset.c,v 1.6.2.3 2010/08/11 22:54:42 yamt Exp $");
 
 #include <sys/param.h>
 
@@ -94,7 +94,7 @@ void
 psets_init(void)
 {
 
-	psets_max = max(MAXCPUS, 32);
+	psets_max = max(maxcpus, 32);
 	psets = kmem_zalloc(psets_max * sizeof(void *), KM_SLEEP);
 	psets_count = 0;
 
@@ -486,7 +486,7 @@ sys__pset_bind(struct lwp *l, const struct sys__pset_bind_args *uap,
 
 	/* Find the process */
 	mutex_enter(proc_lock);
-	p = p_find(pid, PFIND_LOCKED);
+	p = proc_find(pid);
 	if (p == NULL) {
 		mutex_exit(proc_lock);
 		error = ESRCH;

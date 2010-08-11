@@ -1,4 +1,4 @@
-/*	$NetBSD: if_qt.c,v 1.14.4.2 2010/03/11 15:04:01 yamt Exp $	*/
+/*	$NetBSD: if_qt.c,v 1.14.4.3 2010/08/11 22:54:08 yamt Exp $	*/
 /*
  * Copyright (c) 1992 Steven M. Schultz
  * All rights reserved.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_qt.c,v 1.14.4.2 2010/03/11 15:04:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_qt.c,v 1.14.4.3 2010/08/11 22:54:08 yamt Exp $");
 
 #include "opt_inet.h"
 
@@ -458,8 +458,7 @@ qtstart(struct ifnet *ifp)
 		if ((rp->tmd3 & TMD3_OWN) == 0)
 			panic("qtstart");
 
-		if (ifp->if_bpf)
-			bpf_ops->bpf_mtap(ifp->if_bpf, m);
+		bpf_mtap(ifp, m);
 
 		len = if_ubaput(&sc->sc_ifuba, &sc->sc_ifw[sc->xnext], m);
 		if (len < MINPACKETSIZE)
@@ -586,8 +585,7 @@ qtrint(struct qt_softc *sc)
 			sc->is_if.if_ierrors++;
 			goto rnext;
 		}
-		if (ifp->if_bpf)
-			bpf_ops->bpf_mtap(ifp->if_bpf, m);
+		bpf_mtap(ifp, m);
 		(*ifp->if_input)(ifp, m);
 rnext:
 		--sc->nrcv;

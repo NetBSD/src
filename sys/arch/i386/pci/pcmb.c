@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmb.c,v 1.16.4.1 2008/05/16 02:22:38 yamt Exp $	*/
+/*	$NetBSD: pcmb.c,v 1.16.4.2 2010/08/11 22:52:13 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcmb.c,v 1.16.4.1 2008/05/16 02:22:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcmb.c,v 1.16.4.2 2010/08/11 22:52:13 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -102,8 +102,8 @@ pcmb_callback(device_t self)
 	/*
 	 * Attach MCA bus behind this bridge.
 	 */
-	ma.mba_iot = X86_BUS_SPACE_IO;
-	ma.mba_memt = X86_BUS_SPACE_MEM;
+	ma.mba_iot = x86_bus_space_io;
+	ma.mba_memt = x86_bus_space_mem;
 #if NMCA > 0
 	ma.mba_dmat = &mca_bus_dma_tag;
 #endif

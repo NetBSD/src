@@ -1,4 +1,4 @@
-/*	$NetBSD: zs_hb.c,v 1.24.4.1 2008/05/16 02:22:57 yamt Exp $	*/
+/*	$NetBSD: zs_hb.c,v 1.24.4.2 2010/08/11 22:52:28 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs_hb.c,v 1.24.4.1 2008/05/16 02:22:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs_hb.c,v 1.24.4.2 2010/08/11 22:52:28 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -196,7 +196,6 @@ zs_hb_attach(device_t parent, device_t self, void *aux)
 	volatile struct zschan *zc;
 	struct zs_chanstate *cs;
 	int s, zs_unit, channel, intlevel;
-	static int didintr;
 
 	zsc->zsc_dev = self;
 	zs_unit = device_unit(self);
@@ -284,13 +283,9 @@ zs_hb_attach(device_t parent, device_t self, void *aux)
 	 * to the interrupt handlers aren't used.  Note, we only do this
 	 * once since both SCCs interrupt at the same level and vector.
 	 */
-	if (!didintr) {
-		didintr = 1;
-
-		zsc->zsc_si = softint_establish(SOFTINT_SERIAL, zssoft, zsc);
-		hb_intr_establish(intlevel, INTST1_SCC, IPL_SERIAL,
-		    zshard_hb, NULL);
-	}
+	zsc->zsc_si = softint_establish(SOFTINT_SERIAL,
+	    (void (*)(void *))zsc_intr_soft, zsc);
+	hb_intr_establish(intlevel, INTST1_SCC, IPL_SERIAL, zshard_hb, zsc);
 	/* XXX; evcnt_attach() ? */
 
 	/*

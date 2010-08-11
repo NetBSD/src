@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space_asm_generic.S,v 1.5 2005/12/11 12:16:41 christos Exp $	*/
+/*	$NetBSD: bus_space_asm_generic.S,v 1.5.80.1 2010/08/11 22:51:38 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Causality Limited.
@@ -49,7 +49,7 @@ ENTRY(generic_bs_r_1)
 	ldrb	r0, [r1, r2]
 	mov	pc, lr
 
-#if (ARM_ARCH_4 + ARM_ARCH_5 + ARM_ARCH_6) > 0
+#if (ARM_ARCH_4 + ARM_ARCH_5 + ARM_ARCH_6 + ARM_ARCH_7) > 0
 ENTRY(generic_armv4_bs_r_2)
 	ldrh	r0, [r1, r2]
 	mov	pc, lr
@@ -67,7 +67,7 @@ ENTRY(generic_bs_w_1)
 	strb	r3, [r1, r2]
 	mov	pc, lr
 
-#if (ARM_ARCH_4 + ARM_ARCH_5 + ARM_ARCH_6) > 0
+#if (ARM_ARCH_4 + ARM_ARCH_5 + ARM_ARCH_6 + ARM_ARCH_7) > 0
 ENTRY(generic_armv4_bs_w_2)
 	strh	r3, [r1, r2]
 	mov	pc, lr
@@ -95,7 +95,7 @@ ENTRY(generic_bs_rm_1)
 
 	mov	pc, lr
 
-#if (ARM_ARCH_4 + ARM_ARCH_5 + ARM_ARCH_6) > 0
+#if (ARM_ARCH_4 + ARM_ARCH_5 + ARM_ARCH_6 + ARM_ARCH_7) > 0
 ENTRY(generic_armv4_bs_rm_2)
 	add	r0, r1, r2
 	mov	r1, r3
@@ -143,7 +143,7 @@ ENTRY(generic_bs_wm_1)
 
 	mov	pc, lr
 
-#if (ARM_ARCH_4 + ARM_ARCH_5 + ARM_ARCH_6) > 0
+#if (ARM_ARCH_4 + ARM_ARCH_5 + ARM_ARCH_6 + ARM_ARCH_7) > 0
 ENTRY(generic_armv4_bs_wm_2)
 	add	r0, r1, r2
 	mov	r1, r3
@@ -191,7 +191,7 @@ ENTRY(generic_bs_rr_1)
 
 	mov	pc, lr
 
-#if (ARM_ARCH_4 + ARM_ARCH_5 + ARM_ARCH_6) > 0
+#if (ARM_ARCH_4 + ARM_ARCH_5 + ARM_ARCH_6 + ARM_ARCH_7) > 0
 ENTRY(generic_armv4_bs_rr_2)
 	add	r0, r1, r2
 	mov	r1, r3
@@ -239,7 +239,7 @@ ENTRY(generic_bs_wr_1)
 
 	mov	pc, lr
 
-#if (ARM_ARCH_4 + ARM_ARCH_5 + ARM_ARCH_6) > 0
+#if (ARM_ARCH_4 + ARM_ARCH_5 + ARM_ARCH_6 + ARM_ARCH_7) > 0
 ENTRY(generic_armv4_bs_wr_2)
 	add	r0, r1, r2
 	mov	r1, r3
@@ -286,7 +286,7 @@ ENTRY(generic_bs_sr_1)
 
 	mov	pc, lr
 
-#if (ARM_ARCH_4 + ARM_ARCH_5 + ARM_ARCH_6) > 0
+#if (ARM_ARCH_4 + ARM_ARCH_5 + ARM_ARCH_6 + ARM_ARCH_7) > 0
 ENTRY(generic_armv4_bs_sr_2)
 	add	r0, r1, r2
 	mov	r1, r3
@@ -318,7 +318,7 @@ ENTRY(generic_bs_sr_4)
  * copy region
  */
 
-#if (ARM_ARCH_4 + ARM_ARCH_5 + ARM_ARCH_6) > 0
+#if (ARM_ARCH_4 + ARM_ARCH_5 + ARM_ARCH_6 + ARM_ARCH_7) > 0
 ENTRY(generic_armv4_bs_c_2)
 	add	r0, r1, r2
 	ldr	r2, [sp, #0]

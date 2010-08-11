@@ -1,4 +1,4 @@
-/*	$NetBSD: if_udav.c,v 1.23.4.2 2010/03/11 15:04:05 yamt Exp $	*/
+/*	$NetBSD: if_udav.c,v 1.23.4.3 2010/08/11 22:54:14 yamt Exp $	*/
 /*	$nabe: if_udav.c,v 1.3 2003/08/21 16:57:19 nabe Exp $	*/
 /*
  * Copyright (c) 2003
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.23.4.2 2010/03/11 15:04:05 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.23.4.3 2010/08/11 22:54:14 yamt Exp $");
 
 #include "opt_inet.h"
 #include "rnd.h"
@@ -150,6 +150,8 @@ static const struct udav_type {
 	{{ USB_VENDOR_SHANTOU, USB_PRODUCT_SHANTOU_ST268_USB_NIC }, 0},
 	/* ShanTou ADM8515 */
 	{{ USB_VENDOR_SHANTOU, USB_PRODUCT_SHANTOU_ADM8515 }, 0},
+	/* SUNRISING SR9600 */
+	{{ USB_VENDOR_SUNRISING, USB_PRODUCT_SUNRISING_SR9600 }, 0 },
 #if 0
 	/* DAVICOM DM9601 Generic? */
 	/*  XXX: The following ids was obtained from the data sheet. */
@@ -991,8 +993,7 @@ udav_start(struct ifnet *ifp)
 
 	IFQ_DEQUEUE(&ifp->if_snd, m_head);
 
-	if (ifp->if_bpf)
-		bpf_ops->bpf_mtap(ifp->if_bpf, m_head);
+	bpf_mtap(ifp, m_head);
 
 	ifp->if_flags |= IFF_OACTIVE;
 
@@ -1175,8 +1176,7 @@ udav_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 		goto done1;
 	}
 
-	if (ifp->if_bpf)
-		bpf_ops->bpf_mtap(ifp->if_bpf, m);
+	bpf_mtap(ifp, m);
 
 	DPRINTF(("%s: %s: deliver %d\n", USBDEVNAME(sc->sc_dev),
 		 __func__, m->m_len));

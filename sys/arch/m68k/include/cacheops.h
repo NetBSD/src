@@ -1,4 +1,4 @@
-/*	$NetBSD: cacheops.h,v 1.14.20.1 2008/05/16 02:22:43 yamt Exp $	*/
+/*	$NetBSD: cacheops.h,v 1.14.20.2 2010/08/11 22:52:19 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,6 +31,8 @@
 
 #ifndef _M68K_CACHEOPS_H_
 #define	_M68K_CACHEOPS_H_
+
+#include "opt_m68k_arch.h"
 
 #if notyet /* XXX */
 #include <machine/cpuconf.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_vm.c,v 1.59.4.2 2009/05/04 08:12:24 yamt Exp $ */
+/*	$NetBSD: mach_vm.c,v 1.59.4.3 2010/08/11 22:53:10 yamt Exp $ */
 
 /*-
  * Copyright (c) 2002-2003, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_vm.c,v 1.59.4.2 2009/05/04 08:12:24 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_vm.c,v 1.59.4.3 2010/08/11 22:53:10 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -384,7 +384,7 @@ mach_sys_map_fd(struct lwp *l, const struct mach_sys_map_fd_args *uap, register_
 
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	if ((error = (*evc.ev_proc)(l, &evc)) != 0) {
-		VOP_UNLOCK(vp, 0);
+		VOP_UNLOCK(vp);
 
 #ifdef DEBUG_MACH_VM
 		printf("mach_sys_map_fd: mapping at %p failed\n", va);
@@ -435,7 +435,7 @@ mach_sys_map_fd(struct lwp *l, const struct mach_sys_map_fd_args *uap, register_
 	return 0;
 
 bad1:
-	VOP_UNLOCK(vp, 0);
+	VOP_UNLOCK(vp);
 bad2:
 	vrele(vp);
 	fd_putfile(SCARG(uap, fd));

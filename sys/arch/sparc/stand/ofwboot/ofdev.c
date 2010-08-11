@@ -1,4 +1,4 @@
-/*	$NetBSD: ofdev.c,v 1.18.20.3 2010/03/11 15:02:59 yamt Exp $	*/
+/*	$NetBSD: ofdev.c,v 1.18.20.4 2010/08/11 22:52:46 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -58,6 +58,7 @@
 #include "boot.h"
 
 extern char bootdev[];
+extern bool root_fs_quickseekable;
 
 /*
  * This is ugly.  A path on a sparc machine is something like this:
@@ -476,7 +477,10 @@ open_again:
 			     LABELSECTOR, DEV_BSIZE, b.buf, &read) != 0
 		    || read != DEV_BSIZE
 		    || (errmsg = getdisklabel(b.buf, &label))) {
-			if (errmsg) printf("devopen: getdisklabel returned %s\n", errmsg);
+			if (errmsg) {
+				DPRINTF(("devopen: getdisklabel returned %s\n",
+					errmsg));
+			}
 			/* Else try MBR partitions */
 			errmsg = search_label(&ofdev, 0, b.buf, &label, 0);
 			if (errmsg) {
@@ -545,6 +549,7 @@ open_again:
 				net_close(&ofdev);
 				goto bad;
 			}
+			root_fs_quickseekable = false;
 		} else {
 			memcpy(&file_system[0], &file_system_nfs, sizeof file_system[0]);
 			if (error = net_mountroot()) {

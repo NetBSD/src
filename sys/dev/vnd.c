@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.178.4.6 2010/03/11 15:03:21 yamt Exp $	*/
+/*	$NetBSD: vnd.c,v 1.178.4.7 2010/08/11 22:53:14 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.178.4.6 2010/03/11 15:03:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.178.4.7 2010/08/11 22:53:14 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vnd.h"
@@ -254,6 +254,8 @@ extern struct cfdriver vnd_cd;
 static struct vnd_softc	*vnd_spawn(int);
 int	vnd_destroy(device_t);
 
+static struct	dkdriver vnddkdriver = { vndstrategy, minphys };
+
 void
 vndattach(int num)
 {
@@ -282,7 +284,7 @@ vnd_attach(device_t parent, device_t self, void *aux)
 	sc->sc_comp_buff = NULL;
 	sc->sc_comp_decombuf = NULL;
 	bufq_alloc(&sc->sc_tab, "disksort", BUFQ_SORT_RAWBLOCK);
-	disk_init(&sc->sc_dkdev, device_xname(self), NULL);
+	disk_init(&sc->sc_dkdev, device_xname(self), &vnddkdriver);
 	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 }
@@ -571,7 +573,7 @@ vnode_strategy_probe(struct vnd_softc *vnd)
 	error = 0;
 	vn_lock(vnd->sc_vp, LK_EXCLUSIVE | LK_RETRY);
 	error = VOP_BMAP(vnd->sc_vp, 0, NULL, &nbn, NULL);
-	VOP_UNLOCK(vnd->sc_vp, 0);
+	VOP_UNLOCK(vnd->sc_vp);
 
 	/* Test if that worked. */
 	if (error == 0 && (long)nbn == -1)
@@ -815,7 +817,7 @@ handle_with_strategy(struct vnd_softc *vnd, const struct buf *obp,
 		nra = 0;
 		vn_lock(vnd->sc_vp, LK_EXCLUSIVE | LK_RETRY);
 		error = VOP_BMAP(vnd->sc_vp, bn / bsize, &vp, &nbn, &nra);
-		VOP_UNLOCK(vnd->sc_vp, 0);
+		VOP_UNLOCK(vnd->sc_vp);
 
 		if (error == 0 && (long)nbn == -1)
 			error = EIO;
@@ -1019,6 +1021,8 @@ vndioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 #ifdef __HAVE_OLD_DISKLABEL
 	struct disklabel newlabel;
 #endif
+	struct dkwedge_info *dkw;
+	struct dkwedge_list *dkwl;
 
 #ifdef DEBUG
 	if (vnddebug & VDB_FOLLOW)
@@ -1103,7 +1107,7 @@ vndioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 			/* File is definitely sparse, reject here */
 			error = EINVAL;
 		if (error) {
-			VOP_UNLOCK(nd.ni_vp, 0);
+			VOP_UNLOCK(nd.ni_vp);
 			goto close_and_exit;
 		}
 
@@ -1126,7 +1130,7 @@ vndioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 			  IO_UNIT|IO_NODELOCKED, l->l_cred, NULL, NULL);
 			if (error) {
 				free(ch, M_TEMP);
-				VOP_UNLOCK(nd.ni_vp, 0);
+				VOP_UNLOCK(nd.ni_vp);
 				goto close_and_exit;
 			}
  
@@ -1137,14 +1141,14 @@ vndioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 			free(ch, M_TEMP);
 			if (vnd->sc_comp_blksz == 0 ||
 			    vnd->sc_comp_blksz % DEV_BSIZE !=0) {
-				VOP_UNLOCK(nd.ni_vp, 0);
+				VOP_UNLOCK(nd.ni_vp);
 				error = EINVAL;
 				goto close_and_exit;
 			}
 			if (sizeof(struct vnd_comp_header) +
 			  sizeof(u_int64_t) * vnd->sc_comp_numoffs >
 			  vattr.va_size) {
-				VOP_UNLOCK(nd.ni_vp, 0);
+				VOP_UNLOCK(nd.ni_vp);
 				error = EINVAL;
 				goto close_and_exit;
 			}
@@ -1166,7 +1170,7 @@ vndioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 			  sizeof(struct vnd_comp_header), UIO_SYSSPACE,
 			  IO_UNIT|IO_NODELOCKED, l->l_cred, NULL, NULL);
 			if (error) {
-				VOP_UNLOCK(nd.ni_vp, 0);
+				VOP_UNLOCK(nd.ni_vp);
 				goto close_and_exit;
 			}
 			/*
@@ -1203,20 +1207,20 @@ vndioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 				if (vnd->sc_comp_stream.msg)
 					printf("vnd%d: compressed file, %s\n",
 					  unit, vnd->sc_comp_stream.msg);
-				VOP_UNLOCK(nd.ni_vp, 0);
+				VOP_UNLOCK(nd.ni_vp);
 				error = EINVAL;
 				goto close_and_exit;
 			}
  
 			vnd->sc_flags |= VNF_COMP | VNF_READONLY;
 #else /* !VND_COMPRESSION */
-			VOP_UNLOCK(nd.ni_vp, 0);
+			VOP_UNLOCK(nd.ni_vp);
 			error = EOPNOTSUPP;
 			goto close_and_exit;
 #endif /* VND_COMPRESSION */
 		}
  
-		VOP_UNLOCK(nd.ni_vp, 0);
+		VOP_UNLOCK(nd.ni_vp);
 		vnd->sc_vp = nd.ni_vp;
 		vnd->sc_size = btodb(vattr.va_size);	/* note truncation */
 
@@ -1498,8 +1502,35 @@ unlock_and_exit:
 		vn_lock(vnd->sc_vp, LK_EXCLUSIVE | LK_RETRY);
 		error = VOP_FSYNC(vnd->sc_vp, vnd->sc_cred,
 		    FSYNC_WAIT | FSYNC_DATAONLY | FSYNC_CACHE, 0, 0);
-		VOP_UNLOCK(vnd->sc_vp, 0);
+		VOP_UNLOCK(vnd->sc_vp);
 		return error;
+
+	case DIOCAWEDGE:
+		dkw = (void *) data;
+
+		if ((flag & FWRITE) == 0)
+			return EBADF;
+
+		/* If the ioctl happens here, the parent is us. */
+		strlcpy(dkw->dkw_parent, device_xname(vnd->sc_dev),
+		    sizeof(dkw->dkw_parent));
+		return dkwedge_add(dkw);
+
+	case DIOCDWEDGE:
+		dkw = (void *) data;
+
+		if ((flag & FWRITE) == 0)
+			return EBADF;
+
+		/* If the ioctl happens here, the parent is us. */
+		strlcpy(dkw->dkw_parent, device_xname(vnd->sc_dev),
+		    sizeof(dkw->dkw_parent));
+		return dkwedge_del(dkw);
+
+	case DIOCLWEDGES:
+		dkwl = (void *) data;
+
+		return dkwedge_list(&vnd->sc_dkdev, dkwl, l);
 
 	default:
 		return ENOTTY;
@@ -1547,7 +1578,7 @@ vndsetcred(struct vnd_softc *vnd, kauth_cred_t cred)
 		error = vinvalbuf(vnd->sc_vp, V_SAVE, vnd->sc_cred,
 			    curlwp, 0, 0);
 	}
-	VOP_UNLOCK(vnd->sc_vp, 0);
+	VOP_UNLOCK(vnd->sc_vp);
 
 	free(tmpbuf, M_TEMP);
 	return error;
@@ -1861,7 +1892,7 @@ compstrategy(struct buf *bp, off_t bn)
 			    NULL, NULL);
 			if (error) {
 				bp->b_error = error;
-				VOP_UNLOCK(vnd->sc_vp, 0);
+				VOP_UNLOCK(vnd->sc_vp);
 				splx(s);
 				return;
 			}
@@ -1878,12 +1909,12 @@ compstrategy(struct buf *bp, off_t bn)
 					    "compressed file, %s\n",
 					    vnd->sc_comp_stream.msg);
 				bp->b_error = EBADMSG;
-				VOP_UNLOCK(vnd->sc_vp, 0);
+				VOP_UNLOCK(vnd->sc_vp);
 				splx(s);
 				return;
 			}
 			vnd->sc_comp_buffblk = comp_block;
-			VOP_UNLOCK(vnd->sc_vp, 0);
+			VOP_UNLOCK(vnd->sc_vp);
 		}
 
 		/* transfer the usable uncompressed data */

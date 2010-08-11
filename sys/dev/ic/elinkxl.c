@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxl.c,v 1.104.4.4 2010/03/11 15:03:30 yamt Exp $	*/
+/*	$NetBSD: elinkxl.c,v 1.104.4.5 2010/08/11 22:53:25 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.104.4.4 2010/03/11 15:03:30 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.104.4.5 2010/08/11 22:53:25 yamt Exp $");
 
 #include "rnd.h"
 
@@ -180,6 +180,8 @@ ex_config(struct ex_softc *sc)
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 	int i, error, attach_stage;
+
+	pmf_self_suspensor_init(sc->sc_dev, &sc->sc_suspensor, &sc->sc_qual);
 
 	callout_init(&sc->ex_mii_callout, 0);
 
@@ -1201,8 +1203,7 @@ ex_start(struct ifnet *ifp)
 		/*
 		 * Pass packet to bpf if there is a listener.
 		 */
-		if (ifp->if_bpf)
-			bpf_ops->bpf_mtap(ifp->if_bpf, mb_head);
+		bpf_mtap(ifp, mb_head);
 	}
  out:
 	if (sc->tx_head) {
@@ -1379,9 +1380,7 @@ ex_intr(void *arg)
 					}
 					m->m_pkthdr.rcvif = ifp;
 					m->m_pkthdr.len = m->m_len = total_len;
-					if (ifp->if_bpf)
-						bpf_ops->bpf_mtap(
-						    ifp->if_bpf, m);
+					bpf_mtap(ifp, m);
 		/*
 		 * Set the incoming checksum information for the packet.
 		 */
@@ -1688,14 +1687,19 @@ ex_detach(struct ex_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct ex_rxdesc *rxd;
-	int i;
+	int i, s;
 
 	/* Succeed now if there's no work to do. */
 	if ((sc->ex_flags & EX_FLAGS_ATTACHED) == 0)
 		return (0);
 
-	/* Unhook our tick handler. */
-	callout_stop(&sc->ex_mii_callout);
+	s = splnet();
+	/* Stop the interface. Callouts are stopped in it. */
+	ex_stop(ifp, 1);
+	splx(s);
+
+	/* Destroy our callout. */
+	callout_destroy(&sc->ex_mii_callout);
 
 	if (sc->ex_conf & EX_CONF_MII) {
 		/* Detach all PHYs */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_compat.h,v 1.19.4.3 2010/03/11 15:04:10 yamt Exp $	*/
+/*	$NetBSD: ip_compat.h,v 1.19.4.4 2010/08/11 22:54:18 yamt Exp $	*/
 
 /*
  * Copyright (C) 1993-2001, 2003 by Darren Reed.
@@ -6,7 +6,7 @@
  * See the IPFILTER.LICENCE file for details on licencing.
  *
  * @(#)ip_compat.h	1.8 1/14/96
- * Id: ip_compat.h,v 2.142.2.77 2009/08/16 07:03:04 darrenr Exp
+ * Id: ip_compat.h,v 2.142.2.79 2010/01/31 16:22:54 darrenr Exp
  */
 
 #ifndef _NETINET_IP_COMPAT_H_
@@ -894,6 +894,18 @@ typedef	u_int32_t	u_32_t;
 # endif
 
 # if defined(_KERNEL)
+#  if (__FreeBSD_version >= 500024)
+#   if (__FreeBSD_version >= 500043)
+#    define     p_cred  td_ucred
+#    define     p_uid   td_ucred->cr_ruid
+#   else
+#    define     p_cred  t_proc->p_cred
+#    define     p_uid   t_proc->p_cred->p_ruid
+#   endif
+#  else
+#   define      p_uid   p_cred->p_ruid
+#  endif /* __FreeBSD_version >= 500024 */
+
 #  if (__FreeBSD_version >= 400000)
 #   define	ipf_random	arc4random
 /*
@@ -1025,6 +1037,9 @@ extern	int	in_cksum __P((struct mbuf *, int));
 #  else
 #   define	SPL_SCHED(x)	x = splhigh()
 #  endif /* __FreeBSD_version >= 500043 */
+#  if (__FreeBSD_version >= 500024)
+#   define	GET_MINOR		dev2unit
+#  endif
 #  define	MSGDSIZE(x)	mbufchainlen(x)
 #  define	M_LEN(x)	(x)->m_len
 #  define	M_DUPLICATE(x)	m_copy((x), 0, M_COPYALL)
@@ -1564,6 +1579,14 @@ typedef union {
 # endif
 #else
 # define	INLINE	__inline__
+#endif
+
+#ifndef EXTERN_INLINE
+# if defined(__GNUC__) && !defined(__GNUC_STDC_INLINE__)
+#  define	EXTERN_INLINE	inline
+# else
+#  define	EXTERN_INLINE	extern inline
+# endif
 #endif
 
 #if defined(linux) && defined(_KERNEL)

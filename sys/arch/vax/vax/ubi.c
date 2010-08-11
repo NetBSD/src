@@ -1,4 +1,4 @@
-/*	$NetBSD: ubi.c,v 1.1.6.2 2009/05/04 08:12:05 yamt Exp $ */
+/*	$NetBSD: ubi.c,v 1.1.6.3 2010/08/11 22:52:52 yamt Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubi.c,v 1.1.6.2 2009/05/04 08:12:05 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubi.c,v 1.1.6.3 2010/08/11 22:52:52 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -77,6 +77,8 @@ ubi_attach(struct device *parent, struct device *self, void *aux)
 	struct	sbi_attach_args sa;
 
 	printf("\n");
+
+        sa.sa_base = NEX730;
 
 #define NEXPAGES (sizeof(struct nexus) / VAX_NBPG)
 

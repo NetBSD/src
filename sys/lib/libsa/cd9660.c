@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660.c,v 1.23.18.1 2009/05/04 08:13:51 yamt Exp $	*/
+/*	$NetBSD: cd9660.c,v 1.23.18.2 2010/08/11 22:54:46 yamt Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -345,6 +345,8 @@ cd9660_read(struct open_file *f, void *start, size_t size, size_t *resid)
 			size -= ISO_DEFAULT_BLOCK_SIZE;
 		}
 	}
+	if(fp->off > fp->size)
+		size += fp->off - fp->size;
 	if (resid)
 		*resid = size;
 	return rc;

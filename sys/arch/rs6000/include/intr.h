@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.1.18.1 2008/05/16 02:23:04 yamt Exp $	*/
+/*	$NetBSD: intr.h,v 1.1.18.2 2010/08/11 22:52:38 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,6 @@
 #include <sys/device.h>
 
 #define	ICU_LEN			16
-extern int imask[];
 
 #endif /* _LOCORE */
 

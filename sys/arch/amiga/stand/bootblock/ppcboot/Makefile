@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5.112.2 2010/03/11 15:02:02 yamt Exp $
+#	$NetBSD: Makefile,v 1.5.112.3 2010/08/11 22:51:37 yamt Exp $
 
 ### what we need:
 
@@ -13,7 +13,7 @@ DIR_BOOT=	${.CURDIR}/../boot
 # prefer our assembler versions over assembler, and assembler over C:
 
 .SUFFIXES:
-.SUFFIXES: .out .o .po .so .s .S .c .cc .C .f .y .l .ln .m4 .sh
+.SUFFIXES: .out .o .po .pico .so .s .S .c .cc .C .f .y .l .ln .m4 .sh
 
 FILES= xxppcboot fdppcboot
 BINDIR=/usr/mdec
@@ -38,7 +38,7 @@ all: ${FILES}
 
 ### special  rules for bootblocks ###
 
-INCPATH = -I${DIR_TOP} -I${DIR_TOP}/lib/libsa -I${DIR_BOOT} -I${.CURDIR} -I${.CURDIR}/../../.. -I${.CURDIR}/../aout2bb -I${.OBJDIR}
+INCPATH = -I${DIR_TOP} -I${DIR_TOP}/lib/libsa -I${DIR_BOOT} -I${.CURDIR} -I${.CURDIR}/../../.. -I${.CURDIR}/../elf2bb -I${.OBJDIR}
 
 AFLAGS += -m68030 -l
 CAFLAGS += -Wa,-l -Wa,-m68030 ${INCPATH}

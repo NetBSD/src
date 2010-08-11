@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.h,v 1.99.18.3 2010/03/11 15:04:42 yamt Exp $	*/
+/*	$NetBSD: malloc.h,v 1.99.18.4 2010/08/11 22:55:10 yamt Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -71,7 +71,6 @@ MALLOC_DECLARE(M_IPMOPTS);
 MALLOC_DECLARE(M_IPMADDR);
 MALLOC_DECLARE(M_MRTABLE);
 MALLOC_DECLARE(M_BWMETER);
-MALLOC_DECLARE(M_1394DATA);
 #endif /* _KERNEL */
 
 /*

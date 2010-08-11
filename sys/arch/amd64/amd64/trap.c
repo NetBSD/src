@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.45.4.5 2010/03/11 15:01:58 yamt Exp $	*/
+/*	$NetBSD: trap.c,v 1.45.4.6 2010/08/11 22:51:33 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.45.4.5 2010/03/11 15:01:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.45.4.6 2010/08/11 22:51:33 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -81,7 +81,7 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.45.4.5 2010/03/11 15:01:58 yamt Exp $");
 #include <sys/acct.h>
 #include <sys/kauth.h>
 #include <sys/kernel.h>
-#include <sys/pool.h>
+#include <sys/kmem.h>
 #include <sys/ras.h>
 #include <sys/signal.h>
 #include <sys/syscall.h>
@@ -197,6 +197,7 @@ onfault_handler(const struct pcb *pcb, const struct trapframe *tf)
  * exception has been processed. Note that the effect is as if the arguments
  * were passed call by reference.
  */
+
 void
 trap(struct trapframe *frame)
 {
@@ -206,6 +207,8 @@ trap(struct trapframe *frame)
 	extern char fusuintrfailure[], kcopy_fault[],
 		    resume_iret[];
 	extern char IDTVEC(oosyscall)[];
+	extern char IDTVEC(osyscall)[];
+	extern char IDTVEC(syscall32)[];
 #if 0
 	extern char resume_pop_ds[], resume_pop_es[];
 #endif
@@ -461,13 +464,15 @@ copyfault:
 		ksi.ksi_signo = SIGFPE;
 		ksi.ksi_trap = type & ~T_USER;
 		ksi.ksi_addr = (void *)frame->tf_rip;
-		switch (type ) {
+		switch (type) {
 		case T_BOUND|T_USER:
+			ksi.ksi_code = FPE_FLTSUB;
+			break;
 		case T_OFLOW|T_USER:
-			ksi.ksi_code = FPE_FLTOVF;
+			ksi.ksi_code = FPE_INTOVF;
 			break;
 		case T_DIVIDE|T_USER:
-			ksi.ksi_code = FPE_FLTDIV;
+			ksi.ksi_code = FPE_INTDIV;
 			break;
 		default:
 #ifdef DIAGNOSTIC
@@ -642,9 +647,9 @@ faultcommon:
 
 	case T_TRCTRAP:
 		/* Check whether they single-stepped into a lcall. */
-		if (frame->tf_rip == (int)IDTVEC(oosyscall))
-			return;
-		if (frame->tf_rip == (int)IDTVEC(oosyscall) + 1) {
+		if (frame->tf_rip == (uint64_t)IDTVEC(oosyscall) ||
+		    frame->tf_rip == (uint64_t)IDTVEC(osyscall) ||
+		    frame->tf_rip == (uint64_t)IDTVEC(syscall32)) {
 			frame->tf_rflags &= ~PSL_T;
 			return;
 		}
@@ -655,6 +660,7 @@ faultcommon:
 		/*
 		 * Don't go single-stepping into a RAS.
 		 */
+
 		if (p->p_raslist == NULL ||
 		    (ras_lookup(p, (void *)frame->tf_rip) == (void *)-1)) {
 			KSI_INIT_TRAP(&ksi);
@@ -719,7 +725,8 @@ startlwp(void *arg)
 
 	error = cpu_setmcontext(l, &uc->uc_mcontext, uc->uc_flags);
 	KASSERT(error == 0);
-	pool_put(&lwp_uc_pool, uc);
+
+	kmem_free(uc, sizeof(ucontext_t));
 	userret(l);
 }
 

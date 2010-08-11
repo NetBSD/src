@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_exec.c,v 1.50.2.3 2010/03/11 15:03:13 yamt Exp $ */
+/*	$NetBSD: irix_exec.c,v 1.50.2.4 2010/08/11 22:53:03 yamt Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_exec.c,v 1.50.2.3 2010/03/11 15:03:13 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_exec.c,v 1.50.2.4 2010/08/11 22:53:03 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_syscall_debug.h"
@@ -59,9 +59,9 @@ __KERNEL_RCSID(0, "$NetBSD: irix_exec.c,v 1.50.2.3 2010/03/11 15:03:13 yamt Exp 
 extern const int native_to_svr4_signo[];
 
 static void irix_e_proc_exec(struct proc *, struct exec_package *);
-static void irix_e_proc_fork(struct proc *, struct proc *, int);
+static void irix_e_proc_fork(struct proc *, struct lwp *, int);
 static void irix_e_proc_exit(struct proc *);
-static void irix_e_proc_init(struct proc *, struct vmspace *);
+static void irix_e_proc_init(struct proc *);
 
 extern struct sysent irix_sysent[];
 extern const char * const irix_syscallnames[];
@@ -81,41 +81,40 @@ void irix_syscall_intern(struct proc *);
 char irix_sigcode[] = { 0 };
 
 struct emul emul_irix = {
-	"irix",
-	"/emul/irix",
+	.e_name =		"irix",
+	.e_path = 		"/emul/irix",
 #ifndef __HAVE_MINIMAL_EMUL
-	0,
-	native_to_irix_errno,
-	IRIX_SYS_syscall,
-	IRIX_SYS_NSYSENT,
+	.e_flags =		0,
+	.e_errno =		native_to_irix_errno,
+	.e_nosys =		IRIX_SYS_syscall,
+	.e_nsysent =		IRIX_SYS_NSYSENT,
 #endif
-	irix_sysent,
+	.e_sysent =		irix_sysent,
 #ifdef SYSCALL_DEBUG
-	irix_syscallnames,
+	.e_syscallnames =	irix_syscallnames,
 #else
-	NULL,
+	.e_syscallnames =	NULL,
 #endif
-	irix_sendsig,
-	trapsignal,
-	NULL,
-	irix_sigcode,
-	irix_sigcode,
-	NULL,
-	setregs,
-	irix_e_proc_exec,
-	irix_e_proc_fork,
-	irix_e_proc_exit,
-	NULL,
-	NULL,
+	.e_sendsig =		irix_sendsig,
+	.e_trapsignal =		trapsignal,
+	.e_tracesig =		NULL,
+	.e_sigcode =		irix_sigcode,
+	.e_esigcode =		irix_sigcode,
+	.e_sigobject =		NULL,
+	.e_setregs =		setregs,
+	.e_proc_exec =		irix_e_proc_exec,
+	.e_proc_fork =		irix_e_proc_fork,
+	.e_proc_exit =		irix_e_proc_exit,
+	.e_lwp_fork =		NULL,
+	.e_lwp_exit =		NULL,
 #ifdef __HAVE_SYSCALL_INTERN
-	irix_syscall_intern,
+	.e_syscall_intern =	irix_syscall_intern,
 #else
-	irix_syscall,
+	.e_syscall =		irix_syscall,
 #endif
-	NULL,
-	irix_vm_fault,
+	.e_fault =		irix_vm_fault,
 
-	uvm_default_mapaddr,
+	.e_vm_default_addr =	uvm_default_mapaddr,
 };
 
 /*
@@ -137,9 +136,10 @@ irix_n32_setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
  * per-process emuldata allocation
  */
 static void
-irix_e_proc_init(struct proc *p, struct vmspace *vmspace)
+irix_e_proc_init(struct proc *p)
 {
 	struct irix_emuldata *ied;
+	struct vmspace *vmspace = p->p_vmspace;
 	vaddr_t vm_min;
 	vsize_t vm_len;
 
@@ -164,7 +164,7 @@ irix_e_proc_exec(struct proc *p, struct exec_package *epp)
 {
 	int error;
 
-	irix_e_proc_init(p, p->p_vmspace);
+	irix_e_proc_init(p);
 
 	/* Initialize the process private area (PRDA) */
 	error = irix_prda_init(p);
@@ -190,8 +190,6 @@ irix_e_proc_exit(struct proc *p)
 	 */
 	mutex_enter(proc_lock);
 	PROCLIST_FOREACH(pp, &allproc) {
-		if ((pp->p_flag & PK_MARKER) != 0)
-			continue;
 		/* Select IRIX processes */
 		if (irix_check_exec(pp) == 0)
 			continue;
@@ -263,18 +261,17 @@ irix_e_proc_exit(struct proc *p)
  * fork() hook used to allocate per process structures
  */
 static void
-irix_e_proc_fork(struct proc *p, struct proc *parent, int forkflags)
+irix_e_proc_fork(struct proc *p2, struct lwp *l1, int forkflags)
 {
 	struct irix_emuldata *ied1;
 	struct irix_emuldata *ied2;
 
-        p->p_emuldata = NULL;
+        p2->p_emuldata = NULL;
 
-	/* Use parent's vmspace because our vmspace may not be setup yet */
-        irix_e_proc_init(p, parent->p_vmspace);
+        irix_e_proc_init(p2);
 
-	ied1 = p->p_emuldata;
-	ied2 = parent->p_emuldata;
+	ied1 = p2->p_emuldata;
+	ied2 = l1->l_proc->p_emuldata;
 
 	(void) memcpy(ied1, ied2, (unsigned)
 	    ((char *)&ied1->ied_endcopy - (char *)&ied1->ied_startcopy));

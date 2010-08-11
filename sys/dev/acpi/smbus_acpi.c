@@ -1,4 +1,4 @@
-/* $NetBSD: smbus_acpi.c,v 1.9.2.2 2010/03/11 15:03:23 yamt Exp $ */
+/* $NetBSD: smbus_acpi.c,v 1.9.2.3 2010/08/11 22:53:16 yamt Exp $ */
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbus_acpi.c,v 1.9.2.2 2010/03/11 15:03:23 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbus_acpi.c,v 1.9.2.3 2010/08/11 22:53:16 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -54,7 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: smbus_acpi.c,v 1.9.2.2 2010/03/11 15:03:23 yamt Exp 
 ACPI_MODULE_NAME		("smbus_acpi")
 
 /*
- * ACPI SMBus CMI protocol codes
+ * ACPI SMBus CMI protocol codes.
  */
 #define	ACPI_SMBUS_RD_QUICK	0x03
 #define	ACPI_SMBUS_RCV_BYTE	0x05
@@ -80,6 +80,7 @@ struct acpi_smbus_softc {
 static int	acpi_smbus_match(device_t, cfdata_t, void *);
 static void	acpi_smbus_attach(device_t, device_t, void *);
 static int	acpi_smbus_detach(device_t, int);
+static int	acpi_smbus_poll_alert(ACPI_HANDLE, int *);
 static int	acpi_smbus_acquire_bus(void *, int);
 static void	acpi_smbus_release_bus(void *, int);
 static int	acpi_smbus_exec(void *, i2c_op_t, i2c_addr_t, const void *,
@@ -119,26 +120,13 @@ static const char * const smbus_acpi_ids[] = {
 	NULL
 };
 
-static const char * const pcibus_acpi_ids[] = {
-	"PNP0A03",
-	"PNP0A08",
-	NULL
-};
-
 CFATTACH_DECL_NEW(acpismbus, sizeof(struct acpi_smbus_softc),
     acpi_smbus_match, acpi_smbus_attach, acpi_smbus_detach, NULL);
 
-/*
- * acpi_smbus_match: autoconf(9) match routine
- */
 static int
 acpi_smbus_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct acpi_attach_args *aa = aux;
-	int r = 0;
-	ACPI_STATUS rv;
-	ACPI_BUFFER smi_buf;
-	ACPI_OBJECT *e, *p;
 
 	if (aa->aa_node->ad_type != ACPI_TYPE_DEVICE)
 		return 0;
@@ -146,42 +134,15 @@ acpi_smbus_match(device_t parent, cfdata_t match, void *aux)
 	if (acpi_match_hid(aa->aa_node->ad_devinfo, smbus_acpi_ids) == 0)
 		return 0;
 
-	/* Ensure that device's CMI version is supported */
-	rv = acpi_eval_struct(aa->aa_node->ad_handle, "_SBI", &smi_buf);
-	if (ACPI_FAILURE(rv))
-		goto done;
-
-	p = smi_buf.Pointer;
-	if (p != NULL && p->Type == ACPI_TYPE_PACKAGE &&
-	    p->Package.Count >= 1) {
-		e = p->Package.Elements;
-		if (e[0].Type == ACPI_TYPE_INTEGER &&
-		    e[0].Integer.Value == 0x10)
-			r = 1;
-	}
-done:
-	if (smi_buf.Pointer != NULL)
-		ACPI_FREE(smi_buf.Pointer);
-
-	return r;
+	return acpi_smbus_poll_alert(aa->aa_node->ad_handle, NULL);
 }
 
-/*
- * acpitz_attach: autoconf(9) attach routine
- */
 static void
 acpi_smbus_attach(device_t parent, device_t self, void *aux)
 {
 	struct acpi_smbus_softc *sc = device_private(self);
 	struct acpi_attach_args *aa = aux;
 	struct i2cbus_attach_args iba;
-	ACPI_STATUS rv;
-	ACPI_HANDLE native_dev, native_bus;
-	ACPI_DEVICE_INFO *native_dev_info, *native_bus_info;
-	ACPI_BUFFER smi_buf;
-	ACPI_OBJECT *e, *p;
-	struct SMB_INFO *info;
-	int pci_bus, pci_dev, pci_func;
 
 	aprint_naive("\n");
 
@@ -189,106 +150,46 @@ acpi_smbus_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dv = self;
 	sc->sc_poll_alert = 2;
 
-	/* Attach I2C bus */
+	/* Attach I2C bus. */
 	mutex_init(&sc->sc_i2c_mutex, MUTEX_DEFAULT, IPL_NONE);
+
 	sc->sc_i2c_tag.ic_cookie = sc;
 	sc->sc_i2c_tag.ic_acquire_bus = acpi_smbus_acquire_bus;
 	sc->sc_i2c_tag.ic_release_bus = acpi_smbus_release_bus;
 	sc->sc_i2c_tag.ic_exec = acpi_smbus_exec;
 
-	/* Retrieve polling interval for SMBus Alerts */
-	rv = acpi_eval_struct(aa->aa_node->ad_handle, "_SBI", &smi_buf);
-	if (ACPI_SUCCESS(rv)) {
-		p = smi_buf.Pointer;
-		if (p != NULL && p->Type == ACPI_TYPE_PACKAGE &&
-		    p->Package.Count >= 2) {
-			e = p->Package.Elements;
-			if (e[1].Type == ACPI_TYPE_BUFFER) {
-				info = (struct SMB_INFO *)(e[1].Buffer.Pointer);
-				sc->sc_poll_alert = info->poll_int;
-			}
-		}
-	}
-	if (smi_buf.Pointer != NULL)
-		ACPI_FREE(smi_buf.Pointer);
+	(void)acpi_smbus_poll_alert(aa->aa_node->ad_handle,&sc->sc_poll_alert);
 
-	/* Install notify handler if possible */
-	rv = AcpiInstallNotifyHandler(sc->sc_devnode->ad_handle,
-		ACPI_DEVICE_NOTIFY, acpi_smbus_notify_handler, self);
-	if (ACPI_FAILURE(rv)) {
-		aprint_error(": unable to install DEVICE NOTIFY handler: %s\n",
-		    AcpiFormatException(rv));
-		sc->sc_poll_alert = 2;	/* If failed, fall-back to polling */
-	}
+	/* If failed, fall-back to polling. */
+	if (acpi_register_notify(sc->sc_devnode,
+		acpi_smbus_notify_handler) != true)
+		sc->sc_poll_alert = 2;
 
 	callout_init(&sc->sc_callout, 0);
 	callout_setfunc(&sc->sc_callout, acpi_smbus_tick, self);
 
-	if (!pmf_device_register(self, NULL, NULL))
-		aprint_error(": couldn't establish power handler\n");
-
 	if (sc->sc_poll_alert != 0) {
-		aprint_debug(" alert_poll %d sec", sc->sc_poll_alert);
+		aprint_debug(": alert_poll %d sec", sc->sc_poll_alert);
 		callout_schedule(&sc->sc_callout, sc->sc_poll_alert * hz);
 	}
+
 	aprint_normal("\n");
 
-	/*
-	 * Retrieve and display native controller info
-	 */
-	rv = AcpiGetParent(sc->sc_devnode->ad_handle, &native_dev);
+	(void)memset(&iba, 0, sizeof(iba));
+	(void)pmf_device_register(self, NULL, NULL);
 
-	native_bus_info = native_dev_info = NULL;
-
-	if (ACPI_SUCCESS(rv))
-		rv = AcpiGetParent(native_dev, &native_bus);
-
-	if (ACPI_SUCCESS(rv))
-		rv = AcpiGetObjectInfo(native_bus, &native_bus_info);
-
-	if (ACPI_SUCCESS(rv) &&
-	    acpi_match_hid(native_bus_info, pcibus_acpi_ids) != 0) {
-
-		rv = AcpiGetObjectInfo(native_dev, &native_dev_info);
-
-		if (ACPI_SUCCESS(rv)) {
-			pci_bus = native_bus_info->Address;
-			pci_dev = ACPI_ADR_PCI_DEV(native_dev_info->Address);
-			pci_func = ACPI_ADR_PCI_FUNC(native_dev_info->Address);
-			aprint_debug_dev(self, "Native i2c host controller"
-			    " is on PCI bus %d dev %d func %d\n",
-			    pci_bus, pci_dev, pci_func);
-			/*
-			 * XXX We really need a mechanism to prevent the
-			 * XXX native controller from attaching
-			 */
-		}
-	}
-
-	if (native_bus_info != NULL)
-		ACPI_FREE(native_bus_info);
-
-	if (native_dev_info != NULL)
-		ACPI_FREE(native_dev_info);
-
-	memset(&iba, 0, sizeof(iba));
 	iba.iba_tag = &sc->sc_i2c_tag;
-	config_found_ia(self, "i2cbus", &iba, iicbus_print);
+
+	(void)config_found_ia(self, "i2cbus", &iba, iicbus_print);
 }
 
 static int
 acpi_smbus_detach(device_t self, int flags)
 {
 	struct acpi_smbus_softc *sc = device_private(self);
-	ACPI_STATUS rv;
-
-	rv = AcpiRemoveNotifyHandler(sc->sc_devnode->ad_handle,
-	    ACPI_DEVICE_NOTIFY, acpi_smbus_notify_handler);
-
-	if (ACPI_FAILURE(rv))
-		return EBUSY;
 
 	pmf_device_deregister(self);
+	acpi_deregister_notify(sc->sc_devnode);
 
 	callout_halt(&sc->sc_callout, NULL);
 	callout_destroy(&sc->sc_callout);
@@ -299,11 +200,72 @@ acpi_smbus_detach(device_t self, int flags)
 }
 
 static int
+acpi_smbus_poll_alert(ACPI_HANDLE hdl, int *alert)
+{
+	struct SMB_INFO *info;
+	ACPI_BUFFER smi_buf;
+	ACPI_OBJECT *e, *p;
+	ACPI_STATUS rv;
+
+	/*
+	 * Retrieve polling interval for SMBus Alerts.
+	 */
+	rv = acpi_eval_struct(hdl, "_SBI", &smi_buf);
+
+	if (ACPI_FAILURE(rv))
+		return 0;
+
+	p = smi_buf.Pointer;
+
+	if (p->Type != ACPI_TYPE_PACKAGE) {
+		rv = AE_TYPE;
+		goto out;
+	}
+
+	if (p->Package.Count == 0) {
+		rv = AE_LIMIT;
+		goto out;
+	}
+
+	e = p->Package.Elements;
+
+	if (e[0].Type != ACPI_TYPE_INTEGER) {
+		rv = AE_TYPE;
+		goto out;
+	}
+
+	/* Verify CMI version. */
+	if (e[0].Integer.Value != 0x10) {
+		rv = AE_SUPPORT;
+		goto out;
+	}
+
+	if (alert != NULL) {
+
+		if (p->Package.Count < 2)
+			goto out;
+
+		if (e[1].Type != ACPI_TYPE_BUFFER)
+			goto out;
+
+		info = (struct SMB_INFO *)(e[1].Buffer.Pointer);
+		*alert = info->poll_int;
+	}
+
+out:
+	if (smi_buf.Pointer != NULL)
+		ACPI_FREE(smi_buf.Pointer);
+
+	return (ACPI_FAILURE(rv)) ? 0 : 1;
+}
+
+static int
 acpi_smbus_acquire_bus(void *cookie, int flags)
 {
         struct acpi_smbus_softc *sc = cookie;
 
         mutex_enter(&sc->sc_i2c_mutex);
+
         return 0;
 }
 
@@ -321,46 +283,71 @@ acpi_smbus_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
         struct acpi_smbus_softc *sc = cookie;
 	const uint8_t *c = cmdbuf;
 	uint8_t *b = buf, *xb;
-	int xlen;
-	int r = 0;
-	ACPI_BUFFER smbuf;
-	ACPI_STATUS rv;
+	const char *path;
 	ACPI_OBJECT_LIST args;
 	ACPI_OBJECT arg[5];
 	ACPI_OBJECT *p, *e;
+	ACPI_BUFFER smbuf;
+	ACPI_STATUS rv;
+	int i, r, xlen;
+
+	/*
+	 *	arg[0] : protocol
+	 *	arg[1] : slave address
+	 *	arg[2] : command
+	 *	arg[3] : data length
+	 *	arg[4] : data
+	 */
+	for (i = r = 0; i < __arraycount(arg); i++)
+		arg[i].Type = ACPI_TYPE_INTEGER;
+
+	args.Pointer = arg;
 
 	smbuf.Pointer = NULL;
 	smbuf.Length = ACPI_ALLOCATE_LOCAL_BUFFER;
-	args.Pointer = arg;
-	arg[0].Type = ACPI_TYPE_INTEGER;	/* Protocol */
-	arg[1].Type = ACPI_TYPE_INTEGER;	/* Slave Addr */
+
 	arg[1].Integer.Value = addr;
-	arg[2].Type = ACPI_TYPE_INTEGER;	/* Command */
+
 	if (I2C_OP_READ_P(op)) {
+
+		path = "_SBR";
 		args.Count = 3;
-		if (len == 0) {
+
+		switch (len) {
+
+		case 0:
+			arg[0].Integer.Value = (cmdlen != 0) ?
+			    ACPI_SMBUS_RCV_BYTE : ACPI_SMBUS_RD_QUICK;
+
 			arg[2].Integer.Value = 0;
-			if (cmdlen == 0)
-				arg[0].Integer.Value = ACPI_SMBUS_RD_QUICK;
-			else
-				arg[0].Integer.Value = ACPI_SMBUS_RCV_BYTE;
-		} else
-			arg[2].Integer.Value = *c;
-		if (len == 1)
+			break;
+
+		case 1:
 			arg[0].Integer.Value = ACPI_SMBUS_RD_BYTE;
-		else if (len == 2)
+			arg[2].Integer.Value = *c;
+			break;
+
+		case 2:
 			arg[0].Integer.Value = ACPI_SMBUS_RD_WORD;
-		else if (len > 2)
+			arg[2].Integer.Value = *c;
+			break;
+
+		default:
 			arg[0].Integer.Value = ACPI_SMBUS_RD_BLOCK;
-		rv = AcpiEvaluateObject(sc->sc_devnode->ad_handle, "_SBR",
-				    &args, &smbuf);
+			arg[2].Integer.Value = *c;
+			break;
+		}
+
 	} else {
+
+		path = "_SBW";
 		args.Count = 5;
-		arg[3].Type = ACPI_TYPE_INTEGER;	/* Data Len */
+
 		arg[3].Integer.Value = len;
-		arg[4].Type = ACPI_TYPE_INTEGER;	/* Data */
-		if (len == 0) {
-			arg[4].Integer.Value = 0;
+
+		switch (len) {
+
+		case 0:
 			if (cmdlen == 0) {
 				arg[2].Integer.Value = 0;
 				arg[0].Integer.Value = ACPI_SMBUS_WR_QUICK;
@@ -368,114 +355,179 @@ acpi_smbus_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
 				arg[2].Integer.Value = *c;
 				arg[0].Integer.Value = ACPI_SMBUS_SND_BYTE;
 			}
-		} else
-			arg[2].Integer.Value = *c;
-		if (len == 1) {
+
+			arg[4].Integer.Value = 0;
+			break;
+
+		case 1:
 			arg[0].Integer.Value = ACPI_SMBUS_WR_BYTE;
+			arg[2].Integer.Value = *c;
 			arg[4].Integer.Value = *b;
-		} else if (len == 2) {
+			break;
+
+		case 2:
 			arg[0].Integer.Value = ACPI_SMBUS_WR_WORD;
+			arg[2].Integer.Value = *c;
 			arg[4].Integer.Value = *b++;
 			arg[4].Integer.Value += (*b--) << 8;
-		} else if (len > 2) {
+			break;
+
+		default:
 			arg[0].Integer.Value = ACPI_SMBUS_WR_BLOCK;
+			arg[2].Integer.Value = *c;
 			arg[4].Type = ACPI_TYPE_BUFFER;
 			arg[4].Buffer.Pointer = buf;
-			arg[4].Buffer.Length = (len < 32?len:32);
+			arg[4].Buffer.Length = (len < 32) ? len : 32;
+			break;
 		}
-		rv = AcpiEvaluateObject(sc->sc_devnode->ad_handle, "_SBW",
-				    &args, &smbuf);
 	}
-	if (ACPI_FAILURE(rv))
-		r = 1;
-	else {
-		p = smbuf.Pointer;
-		if (p == NULL || p->Type != ACPI_TYPE_PACKAGE ||
-		    p->Package.Count < 1)
-			r = 1;
-		else {
-			e = p->Package.Elements;
-			if (e->Type == ACPI_TYPE_INTEGER)
-				r = e[0].Integer.Value;
-			else
-				r = 1;
-		}
-		if (r != 0)
-			r = 1;
 
-		/* For read operations, copy data to user buffer */
-		if (r == 0 && I2C_OP_READ_P(op)) {
-			if (p->Package.Count >= 3 &&
-			    e[1].Type == ACPI_TYPE_INTEGER) {
-				xlen = e[1].Integer.Value;
-				if (xlen > len)
-					xlen = len;
-				if (xlen != 0 &&
-				    e[2].Type == ACPI_TYPE_BUFFER) {
-					xb = e[2].Buffer.Pointer;
-					if (xb != NULL)
-						memcpy(b, xb, xlen);
-					else
-						r = 1;
-				} else if (e[2].Type == ACPI_TYPE_INTEGER) {
-					if (xlen > 0)
-						*b++ = e[2].Integer.Value &
-							0xff;
-					if (xlen > 1)
-						*b = (e[2].Integer.Value >> 8);
-				} else
-					r = 1;
-			} else
-				r = 1;
+	rv = AcpiEvaluateObject(sc->sc_devnode->ad_handle, path, &args,&smbuf);
+
+	if (ACPI_FAILURE(rv))
+		goto out;
+
+	p = smbuf.Pointer;
+
+	if (p->Type != ACPI_TYPE_PACKAGE) {
+		rv = AE_TYPE;
+		goto out;
+	}
+
+	if (p->Package.Count < 1) {
+		rv = AE_LIMIT;
+		goto out;
+	}
+
+	e = p->Package.Elements;
+
+	if (e->Type != ACPI_TYPE_INTEGER) {
+		rv = AE_TYPE;
+		goto out;
+	}
+
+	ACPI_DEBUG_PRINT((ACPI_DB_DEBUG_OBJECT,
+		"return status: %"PRIu64"\n", e[0].Integer.Value));
+
+	if (e[0].Integer.Value != 0) {
+		rv = AE_BAD_VALUE;
+		goto out;
+	}
+
+	/*
+	 * For read operations, copy data to user buffer.
+	 */
+	if (I2C_OP_READ_P(op)) {
+
+		if (p->Package.Count < 3) {
+			rv = AE_LIMIT;
+			goto out;
+		}
+
+		if (e[1].Type != ACPI_TYPE_INTEGER) {
+			rv = AE_TYPE;
+			goto out;
+		}
+
+		xlen = e[1].Integer.Value;
+
+		if (xlen > len)
+			xlen = len;
+
+		switch (e[2].Type) {
+
+		case ACPI_TYPE_BUFFER:
+
+			if (xlen == 0) {
+				rv = AE_LIMIT;
+				goto out;
+			}
+
+			xb = e[2].Buffer.Pointer;
+
+			if (xb == NULL) {
+				rv = AE_NULL_OBJECT;
+				goto out;
+			}
+
+			(void)memcpy(b, xb, xlen);
+			break;
+
+		case ACPI_TYPE_INTEGER:
+
+			if (xlen > 0)
+				*b++ = e[2].Integer.Value & 0xff;
+
+			if (xlen > 1)
+				*b = e[2].Integer.Value >> 8;
+
+			break;
+
+		default:
+			rv = AE_TYPE;
+			goto out;
 		}
 	}
-	if (smbuf.Pointer)
+
+out:
+	if (smbuf.Pointer != NULL)
 		ACPI_FREE(smbuf.Pointer);
 
-	return r;
+	if (ACPI_SUCCESS(rv))
+		return 0;
+
+	ACPI_DEBUG_PRINT((ACPI_DB_DEBUG_OBJECT, "failed to "
+		"evaluate %s: %s\n", path, AcpiFormatException(rv)));
+
+	return 1;
 }
 
 /*
- * acpi_smbus_alerts
- *
- * Whether triggered by periodic polling or an AcpiNotify, retrieve
- * all pending SMBus device alerts
+ * Whether triggered by periodic polling or a Notify(),
+ * retrieve all pending SMBus device alerts.
  */
 static void
 acpi_smbus_alerts(struct acpi_smbus_softc *sc)
 {
-	int status = 0;
-	uint8_t slave_addr;
-	ACPI_STATUS rv;
-	ACPI_BUFFER alert;
+	const ACPI_HANDLE hdl = sc->sc_devnode->ad_handle;
 	ACPI_OBJECT *e, *p;
+	ACPI_BUFFER alert;
+	ACPI_STATUS rv;
+	int status = 0;
+	uint8_t addr;
 
 	do {
-		rv = acpi_eval_struct(sc->sc_devnode->ad_handle, "_SBA",
-				      &alert);
+		rv = acpi_eval_struct(hdl, "_SBA", &alert);
+
 		if (ACPI_FAILURE(rv)) {
 			status = 1;
 			goto done;
 		}
 
 		p = alert.Pointer;
-		if (p != NULL && p->Type == ACPI_TYPE_PACKAGE &&
-		    p->Package.Count >= 2) {
+
+		if (p->Type == ACPI_TYPE_PACKAGE && p->Package.Count >= 2) {
+
+			status = 1;
+
 			e = p->Package.Elements;
+
 			if (e[0].Type == ACPI_TYPE_INTEGER)
 				status = e[0].Integer.Value;
-			else
-				status = 1;
-			if (status == 0x0 && e[1].Type == ACPI_TYPE_INTEGER) {
-				slave_addr = e[1].Integer.Value;
-				aprint_debug_dev(sc->sc_dv, "Alert for 0x%x\n",
-						 slave_addr);
+
+			if (status == 0 && e[1].Type == ACPI_TYPE_INTEGER) {
+				addr = e[1].Integer.Value;
+
+				aprint_debug_dev(sc->sc_dv,
+				    "alert for 0x%x\n", addr);
+
 				(void)iic_smbus_intr(&sc->sc_i2c_tag);
 			}
 		}
 done:
 		if (alert.Pointer != NULL)
 			ACPI_FREE(alert.Pointer);
+
 	} while (status == 0);
 }
 
@@ -497,5 +549,6 @@ acpi_smbus_notify_handler(ACPI_HANDLE hdl, uint32_t notify, void *opaque)
 	struct acpi_smbus_softc *sc = device_private(dv);
 
 	aprint_debug_dev(dv, "received notify message 0x%x\n", notify);
+
 	acpi_smbus_alerts(sc);
 }

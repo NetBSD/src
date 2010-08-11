@@ -1,4 +1,4 @@
-/* $NetBSD: eumbvar.h,v 1.3.2.1 2008/05/16 02:23:05 yamt Exp $ */
+/* $NetBSD: eumbvar.h,v 1.3.2.2 2010/08/11 22:52:39 yamt Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -38,5 +38,3 @@ struct eumb_attach_args {
 };
 
 int eumbcnattach(bus_space_tag_t, int, int, int, int, int);
-void iic_bootstrap_init(void);
-int iic_bootstrap_read(int, int, uint8_t *, size_t);

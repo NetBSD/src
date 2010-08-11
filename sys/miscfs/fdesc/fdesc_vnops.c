@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vnops.c,v 1.102.4.5 2010/03/11 15:04:22 yamt Exp $	*/
+/*	$NetBSD: fdesc_vnops.c,v 1.102.4.6 2010/08/11 22:54:46 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdesc_vnops.c,v 1.102.4.5 2010/03/11 15:04:22 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdesc_vnops.c,v 1.102.4.6 2010/08/11 22:54:46 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,9 +69,7 @@ __KERNEL_RCSID(0, "$NetBSD: fdesc_vnops.c,v 1.102.4.5 2010/03/11 15:04:22 yamt E
 
 #define cttyvp(p) ((p)->p_lflag & PL_CONTROLT ? (p)->p_session->s_ttyvp : NULL)
 
-#define FDL_WANT	0x01
-#define FDL_LOCKED	0x02
-static int fdcache_lock;
+static kmutex_t fdcache_lock;
 
 dev_t devctty;
 
@@ -187,6 +185,7 @@ fdesc_init(void)
 	/* locate the major number */
 	cttymajor = devsw_name2chr("ctty", NULL, 0);
 	devctty = makedev(cttymajor, 0);
+	mutex_init(&fdcache_lock, MUTEX_DEFAULT, IPL_NONE);
 	fdhashtbl = hashinit(NFDCACHE, HASH_LIST, true, &fdhash);
 }
 
@@ -197,6 +196,7 @@ void
 fdesc_done(void)
 {
 	hashdone(fdhashtbl, HASH_LIST, fdhash);
+	mutex_destroy(&fdcache_lock);
 }
 
 /*
@@ -211,29 +211,36 @@ fdesc_allocvp(fdntype ftype, int ix, struct mount *mp, struct vnode **vpp)
 
 	fc = FD_NHASH(ix);
 loop:
-	for (fd = fc->lh_first; fd != 0; fd = fd->fd_hash.le_next) {
+	mutex_enter(&fdcache_lock);
+	LIST_FOREACH(fd, fc, fd_hash) {
 		if (fd->fd_ix == ix && fd->fd_vnode->v_mount == mp) {
+			mutex_enter(&fd->fd_vnode->v_interlock);
+			mutex_exit(&fdcache_lock);
 			if (vget(fd->fd_vnode, LK_EXCLUSIVE))
 				goto loop;
 			*vpp = fd->fd_vnode;
-			return (error);
+			return 0;
 		}
 	}
-
-	/*
-	 * otherwise lock the array while we call getnewvnode
-	 * since that can block.
-	 */
-	if (fdcache_lock & FDL_LOCKED) {
-		fdcache_lock |= FDL_WANT;
-		(void) tsleep(&fdcache_lock, PINOD, "fdcache", 0);
-		goto loop;
-	}
-	fdcache_lock |= FDL_LOCKED;
+	mutex_exit(&fdcache_lock);
 
 	error = getnewvnode(VT_FDESC, mp, fdesc_vnodeop_p, vpp);
 	if (error)
-		goto out;
+		return error;
+
+	mutex_enter(&fdcache_lock);
+	LIST_FOREACH(fd, fc, fd_hash) {
+		if (fd->fd_ix == ix && fd->fd_vnode->v_mount == mp) {
+			/*
+			 * Another thread beat us, push back freshly
+			 * allocated vnode and retry.
+			 */
+			mutex_exit(&fdcache_lock);
+			ungetnewvnode(*vpp);
+			goto loop;
+		}
+	}
+
 	fd = malloc(sizeof(struct fdescnode), M_TEMP, M_WAITOK);
 	(*vpp)->v_data = fd;
 	fd->fd_vnode = *vpp;
@@ -244,16 +251,9 @@ loop:
 	uvm_vnp_setsize(*vpp, 0);
 	VOP_LOCK(*vpp, LK_EXCLUSIVE);
 	LIST_INSERT_HEAD(fc, fd, fd_hash);
+	mutex_exit(&fdcache_lock);
 
-out:;
-	fdcache_lock &= ~FDL_LOCKED;
-
-	if (fdcache_lock & FDL_WANT) {
-		fdcache_lock &= ~FDL_WANT;
-		wakeup(&fdcache_lock);
-	}
-
-	return (error);
+	return 0;
 }
 
 /*
@@ -358,7 +358,7 @@ fdesc_lookup(void *v)
 
 	case Fdevfd:
 		if (cnp->cn_namelen == 2 && memcmp(pname, "..", 2) == 0) {
-			VOP_UNLOCK(dvp, 0);
+			VOP_UNLOCK(dvp);
 			error = fdesc_root(dvp->v_mount, vpp);
 			vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY);
 			if (error)
@@ -811,7 +811,7 @@ fdesc_read(void *v)
 
 	switch (VTOFDESC(vp)->fd_type) {
 	case Fctty:
-		VOP_UNLOCK(vp, 0);
+		VOP_UNLOCK(vp);
 		error = cdev_read(devctty, ap->a_uio, ap->a_ioflag);
 		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 		break;
@@ -838,7 +838,7 @@ fdesc_write(void *v)
 
 	switch (VTOFDESC(vp)->fd_type) {
 	case Fctty:
-		VOP_UNLOCK(vp, 0);
+		VOP_UNLOCK(vp);
 		error = cdev_write(devctty, ap->a_uio, ap->a_ioflag);
 		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 		break;
@@ -942,7 +942,7 @@ fdesc_inactive(void *v)
 	 * Clear out the v_type field to avoid
 	 * nasty things happening in vgone().
 	 */
-	VOP_UNLOCK(vp, 0);
+	VOP_UNLOCK(vp);
 	vp->v_type = VNON;
 	return (0);
 }
@@ -956,9 +956,11 @@ fdesc_reclaim(void *v)
 	struct vnode *vp = ap->a_vp;
 	struct fdescnode *fd = VTOFDESC(vp);
 
+	mutex_enter(&fdcache_lock);
 	LIST_REMOVE(fd, fd_hash);
 	free(vp->v_data, M_TEMP);
 	vp->v_data = 0;
+	mutex_exit(&fdcache_lock);
 
 	return (0);
 }

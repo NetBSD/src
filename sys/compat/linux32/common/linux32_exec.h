@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_exec.h,v 1.4.16.2 2010/03/11 15:03:17 yamt Exp $ */
+/*	$NetBSD: linux32_exec.h,v 1.4.16.3 2010/08/11 22:53:09 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -43,11 +43,6 @@
 extern struct emul emul_linux32;
 
 /* XXXmanu Do a.out later... */
-
-#ifdef LINUX32_NPTL
-void linux_nptl_exit_hook(struct proc *);
-#endif
-
 
 #ifdef EXEC_ELF32
 int linux32_elf32_probe(struct lwp *, struct exec_package *, void *,

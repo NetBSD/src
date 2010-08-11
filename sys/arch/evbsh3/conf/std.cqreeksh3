@@ -1,0 +1,10 @@
+#       $NetBSD: std.cqreeksh3,v 1.1.6.2 2010/08/11 22:51:57 yamt Exp $
+#
+# standard NetBSD/evbsh3 for CQREEKSH3 options
+
+# Pull in CQREEKSH3 config definitions.
+include "arch/evbsh3/conf/files.cqreeksh3"
+
+options 	EVBSH3_BOARDTYPE="cqreeksh3"
+makeoptions	BOARDTYPE="cqreeksh3"
+makeoptions	BOARDMKFRAG="${THISSH3}/conf/mk.cqreeksh3"

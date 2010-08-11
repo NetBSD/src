@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.79.20.2 2009/05/04 08:12:06 yamt Exp $	*/
+/*	$NetBSD: fd.c,v 1.79.20.3 2010/08/11 22:52:53 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -64,11 +64,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.79.20.2 2009/05/04 08:12:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.79.20.3 2010/08/11 22:52:53 yamt Exp $");
 
 #include "rnd.h"
 #include "opt_ddb.h"
-#include "opt_m680x0.h"
+#include "opt_m68k_arch.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

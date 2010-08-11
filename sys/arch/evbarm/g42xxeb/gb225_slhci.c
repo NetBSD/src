@@ -1,4 +1,4 @@
-/*	$NetBSD: gb225_slhci.c,v 1.3.72.1 2008/05/16 02:22:10 yamt Exp $ */
+/*	$NetBSD: gb225_slhci.c,v 1.3.72.2 2010/08/11 22:51:51 yamt Exp $ */
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -129,8 +129,7 @@ slhci_opio_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Map I/O space */
 	if (bus_space_map(iot, oba->oba_addr, PORTSIZE, 0, &ioh)) {
-		printf("%s: can't map I/O space\n",
-			sc->sc_sc.sc_bus.bdev.dv_xname);
+		aprint_error_dev(self, "can't map I/O space\n");
 		return;
 	}
 
@@ -146,8 +145,7 @@ slhci_opio_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ih = obio_intr_establish(bsc, oba->oba_intr, IPL_BIO, 
 	    IST_LEVEL_HIGH, slhci_opio_intr, sc);
 	if( sc->sc_ih == NULL) {
-		printf("%s: can't establish interrupt\n",
-			sc->sc_sc.sc_bus.bdev.dv_xname);
+		aprint_error_dev(self, "can't establish interrupt\n");
 		return;
 	}
 

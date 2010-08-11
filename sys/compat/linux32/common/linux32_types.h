@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_types.h,v 1.7.4.1 2009/05/04 08:12:24 yamt Exp $ */
+/*	$NetBSD: linux32_types.h,v 1.7.4.2 2010/08/11 22:53:09 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -38,8 +38,8 @@
 #include <compat/linux32/arch/amd64/linux32_types.h>
 #endif
 
-typedef unsigned short linux32_gid16_t;
-typedef unsigned short linux32_uid16_t;
+typedef uint16_t linux32_gid16_t;
+typedef uint16_t linux32_uid16_t;
 
 typedef netbsd32_pointer_t linux32_oldmmapp;
 typedef netbsd32_pointer_t linux32_utsnamep;
@@ -64,6 +64,10 @@ typedef netbsd32_pointer_t linux32_oldselectp_t;
 typedef netbsd32_pointer_t linux32_sysinfop_t;
 typedef netbsd32_pointer_t linux32_oldutsnamep_t;
 typedef netbsd32_pointer_t linux32_timespecp_t;
+typedef netbsd32_pointer_t linux32_robust_list_headp_t;
+typedef netbsd32_pointer_t linux32_robust_list_headpp_t;
+typedef netbsd32_pointer_t linux32_sizep_t;
+typedef netbsd32_pointer_t linux32_intp_t;
 
 struct linux32_sysctl {
 	netbsd32_intp name;

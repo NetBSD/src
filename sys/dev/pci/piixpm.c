@@ -1,4 +1,4 @@
-/* $NetBSD: piixpm.c,v 1.24.4.2 2010/03/11 15:03:59 yamt Exp $ */
+/* $NetBSD: piixpm.c,v 1.24.4.3 2010/08/11 22:54:04 yamt Exp $ */
 /*	$OpenBSD: piixpm.c,v 1.20 2006/02/27 08:25:02 grange Exp $	*/
 
 /*
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: piixpm.c,v 1.24.4.2 2010/03/11 15:03:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: piixpm.c,v 1.24.4.3 2010/08/11 22:54:04 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -298,7 +298,7 @@ piixpm_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
 	u_int8_t ctl = 0, st;
 	int retries;
 
-	DPRINTF(("%s: exec: op %d, addr 0x%x, cmdlen %d, len %d, flags 0x%x\n",
+	DPRINTF(("%s: exec: op %d, addr 0x%x, cmdlen %zu, len %zu, flags 0x%x\n",
 	    device_xname(sc->sc_dev), op, addr, cmdlen, len, flags));
 
 	/* Wait for bus to be idle */

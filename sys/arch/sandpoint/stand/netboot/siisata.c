@@ -1,4 +1,4 @@
-/* $NetBSD: siisata.c,v 1.6.4.1 2008/05/16 02:23:05 yamt Exp $ */
+/* $NetBSD: siisata.c,v 1.6.4.2 2010/08/11 22:52:40 yamt Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -30,24 +30,15 @@
  */
 
 #include <sys/param.h>
-#include <sys/disklabel.h>
-
-#include <dev/ic/wdcreg.h>
-#include <dev/ata/atareg.h>
 
 #include <lib/libsa/stand.h>
+
 #include "globals.h"
 
-/*
- * - no vtophys() translation, vaddr_t == paddr_t. 
- */
-#define DEVTOV(pa) 		(uint32_t)(pa)
+static uint32_t pciiobase = PCI_XIOBASE;
 
 int siisata_match(unsigned, void *);
 void *siisata_init(unsigned, void *);
-
-static void map3112chan(unsigned, int, struct atac_channel *);
-static void map3114chan(unsigned, int, struct atac_channel *);
 
 int
 siisata_match(unsigned tag, void *data)
@@ -67,77 +58,50 @@ siisata_match(unsigned tag, void *data)
 void *
 siisata_init(unsigned tag, void *data)
 {
-	unsigned val, chvalid;
-	struct atac_softc *l;
+	unsigned val;
+	int nchan, n;
+	struct dkdev_ata *l;
+
+	l = alloc(sizeof(struct dkdev_ata));
+	memset(l, 0, sizeof(struct dkdev_ata));
+	l->iobuf = allocaligned(512, 16);
+	l->tag = tag;
+
+	l->bar[0] = pciiobase + (pcicfgread(tag, 0x10) &~ 01);
+	l->bar[1] = pciiobase + (pcicfgread(tag, 0x14) &~ 01);
+	l->bar[2] = pciiobase + (pcicfgread(tag, 0x18) &~ 01);
+	l->bar[3] = pciiobase + (pcicfgread(tag, 0x1c) &~ 01);
+	l->bar[4] = pciiobase + (pcicfgread(tag, 0x20) &~ 01);
+	l->bar[5] = pcicfgread(tag, 0x24) &~ 0x3ff;
 
 	val = pcicfgread(tag, PCI_ID_REG);
-	if ((PCI_PRODUCT(val) & 0xf) == 4)
-		chvalid = 0xf; /* 4 channel model */
-	else
-		chvalid = 0x3; /* 2 channel model */
-
-	l = alloc(sizeof(struct atac_softc));
-	memset(l, 0, sizeof(struct atac_softc));
-
 	if ((PCI_PRODUCT(val) & 0xf) == 0x2) {
-		map3112chan(tag, 0, &l->channel[0]);
-		map3112chan(tag, 1, &l->channel[1]);
+		/* 3112/3512 */
+		l->chan[0].cmd = l->bar[0];
+		l->chan[0].ctl = l->chan[0].alt = l->bar[1] | 02;
+		l->chan[0].dma = l->bar[4] + 0x0;
+		l->chan[1].cmd = l->bar[2];
+		l->chan[1].ctl = l->chan[1].alt = l->bar[3] | 02;
+		l->chan[1].dma = l->bar[4] + 0x8;
+		/* assume BA5 access is possible */
+		nchan = 2;
 	}
 	else {
-		map3114chan(tag, 0, &l->channel[0]);
-		map3114chan(tag, 1, &l->channel[1]);
-		map3114chan(tag, 2, &l->channel[2]);
-		map3114chan(tag, 3, &l->channel[3]);
+		/* 3114 */
+		l->chan[0].cmd = l->bar[5] + 0x080;
+		l->chan[0].ctl = l->chan[0].alt = (l->bar[5] + 0x088) | 02;
+		l->chan[1].cmd = l->bar[5] + 0x0c0;
+		l->chan[1].ctl = l->chan[1].alt = (l->bar[5] + 0x0c8) | 02;
+		l->chan[2].cmd = l->bar[5] + 0x280;
+		l->chan[2].ctl = l->chan[2].alt = (l->bar[5] + 0x288) | 02;
+		l->chan[3].cmd = l->bar[5] + 0x2c0;
+		l->chan[3].ctl = l->chan[3].alt = (l->bar[5] + 0x2c8) | 02;
+		nchan = 4;
 	}
-	l->chvalid = chvalid & (unsigned)data;
-	l->tag = tag;
+	for (n = 0; n < nchan; n++) {
+		l->presense[n] = satapresense(l, n);
+		if (l->presense[n])
+			printf("port %d device present\n", n);
+	}
 	return l;
-}
-
-/* BAR0-3 */
-static const struct {
-	int cmd, ctl;
-} regstd[2] = {
-	{ 0x10, 0x14 },
-	{ 0x18, 0x1c },
-};
-
-static void
-map3112chan(unsigned tag, int ch, struct atac_channel *cp)
-{
-	int i;
-
-	cp->c_cmdbase = (void *)DEVTOV(~07 & pcicfgread(tag, regstd[ch].cmd));
-	cp->c_ctlbase = (void *)DEVTOV(~03 & pcicfgread(tag, regstd[ch].ctl));
-	cp->c_data = (u_int16_t *)(cp->c_cmdbase + wd_data);
-	for (i = 0; i < 8; i++)
-		cp->c_cmdreg[i] = cp->c_cmdbase + i;
-	cp->c_cmdreg[wd_status] = cp->c_cmdreg[wd_command];
-	cp->c_cmdreg[wd_features] = cp->c_cmdreg[wd_precomp];
-}
-
-/* offset to BAR5 */
-static const struct {
-	int IDE_TF0, IDE_TF8;
-} reg3114[4] = {
-	{ 0x080, 0x091 },
-	{ 0x0c0, 0x0d1 },
-	{ 0x280, 0x291 },
-	{ 0x2c0, 0x2d1 },
-};
-
-static void
-map3114chan(unsigned tag, int ch, struct atac_channel *cp)
-{
-	int i;
-	uint8_t *ba5;
-
-	ba5 = (uint8_t *)DEVTOV(pcicfgread(tag, 0x24)); /* PCI_BAR5 */
-	cp->c_cmdbase = ba5 + reg3114[ch].IDE_TF0;
-	cp->c_ctlbase = ba5 + reg3114[ch].IDE_TF8;
-	cp->c_data = (u_int16_t *)(cp->c_cmdbase + wd_data);
-	for (i = 0; i < 8; i++)
-		cp->c_cmdreg[i] = cp->c_cmdbase + i;
-	cp->c_cmdreg[wd_status] = cp->c_cmdreg[wd_command];
-	cp->c_cmdreg[wd_features] = cp->c_cmdreg[wd_precomp];
 }

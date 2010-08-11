@@ -1,4 +1,4 @@
-/*	$NetBSD: schizo.c,v 1.8.8.3 2010/03/11 15:03:00 yamt Exp $	*/
+/*	$NetBSD: schizo.c,v 1.8.8.4 2010/08/11 22:52:47 yamt Exp $	*/
 /*	$OpenBSD: schizo.c,v 1.55 2008/08/18 20:29:37 brad Exp $	*/
 
 /*
@@ -136,12 +136,13 @@ schizo_attach(struct device *parent, struct device *self, void *aux)
 	struct schizo_softc *sc = (struct schizo_softc *)self;
 	struct mainbus_attach_args *ma = aux;
 	struct schizo_pbm *pbm;
+	struct iommu_state *is;
 	struct pcibus_attach_args pba;
 	uint64_t reg, eccctrl;
 	int *busranges = NULL, nranges;
 	char *str;
 
-	printf(": addr %" PRIx64, ma->ma_reg[0].ur_paddr);
+	aprint_normal(": addr %" PRIx64, ma->ma_reg[0].ur_paddr);
 	str = prom_getpropstring(ma->ma_node, "compatible");
 	if (strcmp(str, "pci108e,a801") == 0)
 		sc->sc_tomatillo = 1;
@@ -153,7 +154,7 @@ schizo_attach(struct device *parent, struct device *self, void *aux)
 	if (bus_space_map(sc->sc_bustag, ma->ma_reg[1].ur_paddr - 0x10000UL,
 	    sizeof(struct schizo_regs), 0,
 	    &sc->sc_ctrlh)) {
-		printf(": failed to map registers\n");
+		aprint_error(": failed to map registers\n");
 		return;
 	}
 
@@ -184,7 +185,7 @@ schizo_attach(struct device *parent, struct device *self, void *aux)
 	if (bus_space_map(sc->sc_bustag, ma->ma_reg[0].ur_paddr,
 			  ma->ma_reg[0].ur_len,
 			  BUS_SPACE_MAP_LINEAR, &pbm->sp_intrh)) {
-		printf(": failed to interrupt map registers\n");
+		aprint_error(": failed to interrupt map registers\n");
 		return;
 	}
 
@@ -196,10 +197,11 @@ schizo_attach(struct device *parent, struct device *self, void *aux)
 	    (void **)&busranges))
 		panic("schizo: can't get bus-range");
 
-	printf(": \"%s\", version %d, ign %x, bus %c %d to %d\n",
+	aprint_normal(": \"%s\", version %d, ign %x, bus %c %d to %d\n",
 	    sc->sc_tomatillo ? "Tomatillo" : "Schizo",
 	    prom_getpropint(sc->sc_node, "version#", 0), sc->sc_ign,
 	    pbm->sp_bus_a ? 'A' : 'B', busranges[0], busranges[1]);
+	aprint_naive("\n");
 
 	if (bus_space_subregion(pbm->sp_regt, sc->sc_ctrlh,
 	    pbm->sp_bus_a ? offsetof(struct schizo_regs, pbm_a) :
@@ -209,7 +211,27 @@ schizo_attach(struct device *parent, struct device *self, void *aux)
 		panic("schizo: unable to create PBM handle");
 	}
 
-	printf("%s: ", sc->sc_dv.dv_xname);
+	is = &pbm->sp_is;
+	pbm->sp_sb.sb_is = is;
+	if (prom_getproplen(sc->sc_node, "no-streaming-cache") < 0) {
+		vaddr_t va = (vaddr_t)&pbm->sp_flush[0x40];
+
+		/*
+		 * Initialize the strbuf_ctl.
+		 *
+		 * The flush sync buffer must be 64-byte aligned.
+		 */
+		is->is_sb[0] = &pbm->sp_sb;
+		is->is_sb[0]->sb_flush = (void *)(va & ~0x3f);
+
+		bus_space_subregion(pbm->sp_regt, pbm->sp_regh,
+			offsetof(struct schizo_pbm_regs, strbuf),
+			sizeof(struct iommu_strbuf), &is->is_sb[0]->sb_sb);
+	} else {
+		aprint_debug("%s: no streaming buffers\n", sc->sc_dv.dv_xname);
+	}
+
+	aprint_normal("%s: ", sc->sc_dv.dv_xname);
 	schizo_init_iommu(sc, pbm);
 
 	pbm->sp_memt = schizo_alloc_mem_tag(pbm);
@@ -378,37 +400,14 @@ schizo_init_iommu(struct schizo_softc *sc, struct schizo_pbm *pbm)
 	struct iommu_state *is = &pbm->sp_is;
 	int *vdma = NULL, nitem, tsbsize = 7;
 	u_int32_t iobase = -1;
-	vaddr_t va;
 	char *name;
-
-	if (prom_getproplen(sc->sc_node, "no-streaming-cache") < 0) {
-	}
-
-	va = (vaddr_t)pbm->sp_flush[0x40];
 
 	/* punch in our copies */
 	is->is_bustag = pbm->sp_regt;
-	if (bus_space_subregion(is->is_bustag, pbm->sp_regh,
-	    offsetof(struct schizo_pbm_regs, iommu),
-	    sizeof(struct schizo_iommureg), &is->is_iommu)) {
-		printf("schizo: unable to create streaming buffer handle\n");
-		is->is_sb[0]->sb_flush = NULL;
-	} 
-
-	/* initialize our strbuf_ctl */
-	is->is_sb[0] = &pbm->sp_sb;
-	pbm->sp_sb.sb_is = is;
-	is->is_sb[0]->sb_flush = (void *)(va & ~0x3f);
-
-	if (bus_space_subregion(is->is_bustag, pbm->sp_regh,
-	    offsetof(struct schizo_pbm_regs, strbuf),
-	    sizeof(struct iommu_strbuf), &is->is_sb[0]->sb_sb)) {
-	} 
-
-	name = (char *)malloc(32, M_DEVBUF, M_NOWAIT);
-	if (name == NULL)
-		panic("couldn't malloc iommu name");
-	snprintf(name, 32, "%s dvma", sc->sc_dv.dv_xname);
+	bus_space_subregion(is->is_bustag, pbm->sp_regh,
+		offsetof(struct schizo_pbm_regs, iommu),
+		sizeof(struct schizo_iommureg),
+		&is->is_iommu);
 
 	/*
 	 * Separate the men from the boys.  If the `virtual-dma'
@@ -433,6 +432,12 @@ schizo_init_iommu(struct schizo_softc *sc, struct schizo_pbm *pbm)
 		DPRINTF(SDB_BUSMAP, ("schizo_init_iommu: getprop failed, "
 		    "using iobase=0x%x, tsbsize=%d\n", iobase, tsbsize));
 	}
+
+	/* give us a nice name.. */
+	name = (char *)malloc(32, M_DEVBUF, M_NOWAIT);
+	if (name == NULL)
+		panic("couldn't malloc iommu name");
+	snprintf(name, 32, "%s dvma", sc->sc_dv.dv_xname);
 
 	iommu_init(name, is, tsbsize, iobase);
 }

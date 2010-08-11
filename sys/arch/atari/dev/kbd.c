@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.31.10.3 2010/03/11 15:02:09 yamt Exp $	*/
+/*	$NetBSD: kbd.c,v 1.31.10.4 2010/08/11 22:51:45 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.31.10.3 2010/03/11 15:02:09 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.31.10.4 2010/08/11 22:51:45 yamt Exp $");
 
 #include "mouse.h"
 #include "ite.h"
@@ -777,7 +777,7 @@ kbd_do_modifier(uint8_t code)
 			return 1;
 	}
 	if (mask) {
-		if(up)
+		if (up)
 			kbd_modifier &= ~mask;
 		else
 			kbd_modifier |= mask;

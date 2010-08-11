@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_misc.c,v 1.112.2.2 2010/03/11 15:03:20 yamt Exp $	*/
+/*	$NetBSD: ultrix_misc.c,v 1.112.2.3 2010/08/11 22:53:13 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995, 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ultrix_misc.c,v 1.112.2.2 2010/03/11 15:03:20 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ultrix_misc.c,v 1.112.2.3 2010/08/11 22:53:13 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -159,45 +159,48 @@ void	syscall(void);
 #endif
 
 struct emul emul_ultrix = {
-	"ultrix",
-	"/emul/ultrix",
+	.e_name =		"ultrix",
+	.e_path =		"/emul/ultrix",
 #ifndef __HAVE_MINIMAL_EMUL
-	0,
-	NULL,
-	ULTRIX_SYS_syscall,
-	ULTRIX_SYS_NSYSENT,
+	.e_flags =		0,
+	.e_errno =		NULL,
+	.e_nosys =		ULTRIX_SYS_syscall,
+	.e_nsysent =		ULTRIX_SYS_NSYSENT,
 #endif
-	ultrix_sysent,
-	ultrix_syscallnames,
-#ifdef __mips
-	sendsig_sigcontext,
-#else /* vax */
-	sendsig,
-#endif
-	trapsignal,
-	NULL,
-	ultrix_sigcode,
-	ultrix_esigcode,
-	&emul_ultrix_object,
-	setregs,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-#ifdef __HAVE_SYSCALL_INTERN
-	syscall_intern,
+	.e_sysent =		ultrix_sysent,
+#ifdef SYSCALL_DEBUG
+	.e_syscallnames =	ultrix_syscallnames,
 #else
-	syscall,
+	.e_syscallnames =	NULL,
 #endif
-	NULL,
-	NULL,
-
-	uvm_default_mapaddr,
-	NULL,
-	NULL,
-	0,
-	NULL
+#ifdef __mips
+	.e_sendsig =		sendsig_sigcontext,
+#else /* vax */
+	.e_sendsig =		sendsig,
+#endif
+	.e_trapsignal =		trapsignal,
+	.e_tracesig =		NULL,
+	.e_sigcode =		ultrix_sigcode,
+	.e_esigcode =		ultrix_esigcode,
+	.e_sigobject =		&emul_ultrix_object,
+	.e_setregs =		setregs,
+	.e_proc_exec =		NULL,
+	.e_proc_fork =		NULL,
+	.e_proc_exit =		NULL,
+	.e_lwp_fork =		NULL,
+	.e_lwp_exit =		NULL,
+#ifdef __HAVE_SYSCALL_INTERN
+	.e_syscall_intern =	syscall_intern,
+#else
+	.e_syscall_intern =	syscall,
+#endif
+	.e_sysctlovly =		NULL,
+	.e_fault =		NULL,
+	.e_vm_default_addr =	uvm_default_mapaddr,
+	.e_usertrap =		NULL,
+	.e_sa =			NULL,
+	.e_ucsize =		0,
+	.e_startlwp =		NULL
 };
 
 #define GSI_PROG_ENV 1

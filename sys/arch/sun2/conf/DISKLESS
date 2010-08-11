@@ -1,4 +1,4 @@
-# $NetBSD: DISKLESS,v 1.38.2.1 2009/05/04 08:11:59 yamt Exp $
+# $NetBSD: DISKLESS,v 1.38.2.2 2010/08/11 22:52:48 yamt Exp $
 
 # DISKLESS Sun2 (2/120, 2/170, 2/50, ...)
 # Supports root on: ie0, ec0
@@ -7,7 +7,7 @@ include "arch/sun2/conf/std.sun2"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"DISKLESS-$Revision: 1.38.2.1 $"
+#ident 		"DISKLESS-$Revision: 1.38.2.2 $"
 
 makeoptions	COPTS="-Os"	# optimize for size
 
@@ -232,6 +232,6 @@ pseudo-device	pty			# pseudo-terminals
 #pseudo-device	ccd		4	# concatenated disks
 #pseudo-device	raid		4	# RAIDframe disk driver
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
-#pseudo-device	fss		4	# file system snapshot device
+#pseudo-device	fss			# file system snapshot device
 
 pseudo-device	clockctl		# user control of clock subsystem

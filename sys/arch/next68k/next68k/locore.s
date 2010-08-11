@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.49.20.2 2010/03/11 15:02:46 yamt Exp $	*/
+/*	$NetBSD: locore.s,v 1.49.20.3 2010/08/11 22:52:30 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 Darrin B. Jewell
@@ -93,6 +93,7 @@
 #include "opt_lockdebug.h"
 #include "opt_fpu_emulate.h"
 #include "opt_useleds.h"
+#include "opt_m68k_arch.h"
 
 #include "assym.h"
 #include <machine/asm.h>

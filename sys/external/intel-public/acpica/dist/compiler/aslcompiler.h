@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2009, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2010, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -222,6 +222,10 @@ void
 CmCleanupAndExit (
     void);
 
+ACPI_STATUS
+FlCheckForAscii (
+    ASL_FILE_INFO           *FileInfo);
+
 
 /*
  * aslanalyze - semantic analysis
@@ -426,6 +430,16 @@ CgGenerateAmlOutput (
 
 
 /*
+ * aslfile
+ */
+void
+FlOpenFile (
+    UINT32                  FileId,
+    char                    *Filename,
+    char                    *Mode);
+
+
+/*
  * asllength - calculate/adjust AML package lengths
  */
 ACPI_STATUS
@@ -452,8 +466,32 @@ ACPI_OBJECT_TYPE
 AslMapNamedOpcodeToDataType (
     UINT16                  Opcode);
 
+
+/*
+ * aslpredef - ACPI predefined names support
+ */
 void
-MpDisplayReservedNames (
+ApCheckForPredefinedMethod (
+    ACPI_PARSE_OBJECT       *Op,
+    ASL_METHOD_INFO         *MethodInfo);
+
+void
+ApCheckPredefinedReturnValue (
+    ACPI_PARSE_OBJECT       *Op,
+    ASL_METHOD_INFO         *MethodInfo);
+
+UINT32
+ApCheckForPredefinedName (
+    ACPI_PARSE_OBJECT       *Op,
+    char                    *Name);
+
+void
+ApCheckForPredefinedObject (
+    ACPI_PARSE_OBJECT       *Op,
+    char                    *Name);
+
+void
+ApDisplayReservedNames (
     void);
 
 
@@ -511,7 +549,7 @@ TrCreateLeafNode (
 ACPI_PARSE_OBJECT *
 TrCreateValuedLeafNode (
     UINT32                  ParseOpcode,
-    ACPI_INTEGER            Value);
+    UINT64                  Value);
 
 ACPI_PARSE_OBJECT *
 TrLinkChildren (
@@ -556,6 +594,10 @@ AslAbort (
     void);
 
 void
+FlAddIncludeDirectory (
+    char                    *Dir);
+
+void
 FlOpenIncludeFile (
     ACPI_PARSE_OBJECT       *Op);
 
@@ -563,6 +605,10 @@ void
 FlFileError (
     UINT32                  FileId,
     UINT8                   ErrorId);
+
+UINT32
+FlGetFileSize (
+    UINT32                  FileId);
 
 ACPI_STATUS
 FlReadFile (
@@ -714,7 +760,7 @@ UtCheckIntegerRange (
     UINT32                  LowValue,
     UINT32                  HighValue);
 
-ACPI_INTEGER
+UINT64
 UtDoConstant (
     char                    *String);
 
@@ -722,6 +768,34 @@ UtDoConstant (
 /*
  * aslresource - Resource template generation utilities
  */
+void
+RsSmallAddressCheck (
+    UINT8                   Type,
+    UINT32                  Minimum,
+    UINT32                  Maximum,
+    UINT32                  Length,
+    UINT32                  Alignment,
+    ACPI_PARSE_OBJECT       *MinOp,
+    ACPI_PARSE_OBJECT       *MaxOp,
+    ACPI_PARSE_OBJECT       *LengthOp,
+    ACPI_PARSE_OBJECT       *AlignOp);
+
+void
+RsLargeAddressCheck (
+    UINT64                  Minimum,
+    UINT64                  Maximum,
+    UINT64                  Length,
+    UINT64                  Granularity,
+    UINT8                   Flags,
+    ACPI_PARSE_OBJECT       *MinOp,
+    ACPI_PARSE_OBJECT       *MaxOp,
+    ACPI_PARSE_OBJECT       *LengthOp,
+    ACPI_PARSE_OBJECT       *GranOp);
+
+UINT16
+RsGetStringDataLength (
+    ACPI_PARSE_OBJECT       *InitializerOp);
+
 ASL_RESOURCE_NODE *
 RsAllocateResourceNode (
     UINT32                  Size);
@@ -777,7 +851,7 @@ RsDoResourceTemplate (
 
 
 /*
- * aslrestype1 - generate Small descriptors
+ * aslrestype1 - Miscellaneous Small descriptors
  */
 ASL_RESOURCE_NODE *
 RsDoEndTagDescriptor (
@@ -785,32 +859,7 @@ RsDoEndTagDescriptor (
     UINT32                  CurrentByteOffset);
 
 ASL_RESOURCE_NODE *
-RsDoDmaDescriptor (
-    ACPI_PARSE_OBJECT       *Op,
-    UINT32                  CurrentByteOffset);
-
-ASL_RESOURCE_NODE *
 RsDoEndDependentDescriptor (
-    ACPI_PARSE_OBJECT       *Op,
-    UINT32                  CurrentByteOffset);
-
-ASL_RESOURCE_NODE *
-RsDoFixedIoDescriptor (
-    ACPI_PARSE_OBJECT       *Op,
-    UINT32                  CurrentByteOffset);
-
-ASL_RESOURCE_NODE *
-RsDoIoDescriptor (
-    ACPI_PARSE_OBJECT       *Op,
-    UINT32                  CurrentByteOffset);
-
-ASL_RESOURCE_NODE *
-RsDoIrqDescriptor (
-    ACPI_PARSE_OBJECT       *Op,
-    UINT32                  CurrentByteOffset);
-
-ASL_RESOURCE_NODE *
-RsDoIrqNoFlagsDescriptor (
     ACPI_PARSE_OBJECT       *Op,
     UINT32                  CurrentByteOffset);
 
@@ -846,13 +895,56 @@ RsDoVendorSmallDescriptor (
 
 
 /*
- * aslrestype2 - generate Large descriptors
+ * aslrestype1i - I/O-related Small descriptors
+ */
+ASL_RESOURCE_NODE *
+RsDoDmaDescriptor (
+    ACPI_PARSE_OBJECT       *Op,
+    UINT32                  CurrentByteOffset);
+
+ASL_RESOURCE_NODE *
+RsDoFixedIoDescriptor (
+    ACPI_PARSE_OBJECT       *Op,
+    UINT32                  CurrentByteOffset);
+
+ASL_RESOURCE_NODE *
+RsDoIoDescriptor (
+    ACPI_PARSE_OBJECT       *Op,
+    UINT32                  CurrentByteOffset);
+
+ASL_RESOURCE_NODE *
+RsDoIrqDescriptor (
+    ACPI_PARSE_OBJECT       *Op,
+    UINT32                  CurrentByteOffset);
+
+ASL_RESOURCE_NODE *
+RsDoIrqNoFlagsDescriptor (
+    ACPI_PARSE_OBJECT       *Op,
+    UINT32                  CurrentByteOffset);
+
+
+/*
+ * aslrestype2 - Large resource descriptors
  */
 ASL_RESOURCE_NODE *
 RsDoInterruptDescriptor (
     ACPI_PARSE_OBJECT       *Op,
     UINT32                  CurrentByteOffset);
 
+ASL_RESOURCE_NODE *
+RsDoVendorLargeDescriptor (
+    ACPI_PARSE_OBJECT       *Op,
+    UINT32                  CurrentByteOffset);
+
+ASL_RESOURCE_NODE *
+RsDoGeneralRegisterDescriptor (
+    ACPI_PARSE_OBJECT       *Op,
+    UINT32                  CurrentByteOffset);
+
+
+/*
+ * aslrestype2d - DWord address descriptors
+ */
 ASL_RESOURCE_NODE *
 RsDoDwordIoDescriptor (
     ACPI_PARSE_OBJECT       *Op,
@@ -868,6 +960,10 @@ RsDoDwordSpaceDescriptor (
     ACPI_PARSE_OBJECT       *Op,
     UINT32                  CurrentByteOffset);
 
+
+/*
+ * aslrestype2e - Extended address descriptors
+ */
 ASL_RESOURCE_NODE *
 RsDoExtendedIoDescriptor (
     ACPI_PARSE_OBJECT       *Op,
@@ -883,6 +979,10 @@ RsDoExtendedSpaceDescriptor (
     ACPI_PARSE_OBJECT       *Op,
     UINT32                  CurrentByteOffset);
 
+
+/*
+ * aslrestype2q - QWord address descriptors
+ */
 ASL_RESOURCE_NODE *
 RsDoQwordIoDescriptor (
     ACPI_PARSE_OBJECT       *Op,
@@ -898,6 +998,10 @@ RsDoQwordSpaceDescriptor (
     ACPI_PARSE_OBJECT       *Op,
     UINT32                  CurrentByteOffset);
 
+
+/*
+ * aslrestype2w - Word address descriptors
+ */
 ASL_RESOURCE_NODE *
 RsDoWordIoDescriptor (
     ACPI_PARSE_OBJECT       *Op,
@@ -913,15 +1017,12 @@ RsDoWordBusNumberDescriptor (
     ACPI_PARSE_OBJECT       *Op,
     UINT32                  CurrentByteOffset);
 
-ASL_RESOURCE_NODE *
-RsDoVendorLargeDescriptor (
-    ACPI_PARSE_OBJECT       *Op,
-    UINT32                  CurrentByteOffset);
-
-ASL_RESOURCE_NODE *
-RsDoGeneralRegisterDescriptor (
-    ACPI_PARSE_OBJECT       *Op,
-    UINT32                  CurrentByteOffset);
+/*
+ * Entry to data table compiler subsystem
+ */
+ACPI_STATUS
+DtDoCompile(
+    void);
 
 #endif /*  __ASLCOMPILER_H */
 

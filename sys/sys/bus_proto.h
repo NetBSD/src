@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_proto.h,v 1.1.32.2 2010/03/11 15:04:41 yamt Exp $	*/
+/*	$NetBSD: bus_proto.h,v 1.1.32.3 2010/08/11 22:55:10 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001, 2007 The NetBSD Foundation, Inc.
@@ -320,5 +320,5 @@ paddr_t	bus_dmamem_mmap(bus_dma_tag_t, bus_dma_segment_t *, int,
 int	bus_dmatag_subregion(bus_dma_tag_t, bus_addr_t, bus_addr_t,
 			     bus_dma_tag_t *, int);
 void	bus_dmatag_destroy(bus_dma_tag_t);
-                   
+
 #endif	/* _SYS_BUS_PROTO_H_ */

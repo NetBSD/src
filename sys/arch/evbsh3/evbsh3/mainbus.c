@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.6.78.1 2008/05/16 02:22:19 yamt Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.6.78.2 2010/08/11 22:51:58 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -27,45 +27,64 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.6.78.1 2008/05/16 02:22:19 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.6.78.2 2010/08/11 22:51:58 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+
 #include <machine/autoconf.h>
 
-int mainbus_match(struct device *, struct cfdata *, void *);
-void mainbus_attach(struct device *, struct device *, void *);
-int mainbus_print(void *, const char *);
+static int mainbus_match(struct device *, struct cfdata *, void *);
+static void mainbus_attach(struct device *, struct device *, void *);
 
-struct mainbus_attach_args mainbusdevs[] = {
-	{ "cpu" },
-	{ "shb" },
-	{ NULL }	/* terminator */
-};
-
-CFATTACH_DECL(mainbus, sizeof(struct device),
+CFATTACH_DECL_NEW(mainbus, sizeof(struct device),
     mainbus_match, mainbus_attach, NULL, NULL);
 
-int
-mainbus_match(struct device *parent, struct cfdata *cf, void *aux)
+static int mainbus_search(device_t, cfdata_t, const int *, void *);
+static int mainbus_print(void *, const char *);
+
+static int
+mainbus_match(device_t parent, cfdata_t cf, void *aux)
 {
 
 	return (1);
 }
 
-void
-mainbus_attach(struct device *parent, struct device *self, void *aux)
+static void
+mainbus_attach(device_t parent, device_t self, void *aux)
 {
-	struct mainbus_attach_args *ma;
+	struct mainbus_attach_args maa;
 
-	printf("\n");
+	aprint_naive("\n");
+	aprint_normal("\n");
 
-	for (ma = mainbusdevs; ma->ma_name != NULL; ma++)
-		config_found(self, ma, mainbus_print);
+	/* CPU  */
+	memset(&maa, 0, sizeof(maa));
+	maa.ma_name = "cpu";
+	config_found_ia(self, "mainbus", &maa, mainbus_print);
+
+	/* Devices */
+	config_search_ia(mainbus_search, self, "mainbus", NULL);
 }
 
-int
+static int
+mainbus_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
+{
+	struct mainbus_attach_args maa;
+
+	if (strcmp(cf->cf_name, "cpu") == 0)
+		return 0;
+
+	maa.ma_name = cf->cf_name;
+
+	if (config_match(parent, cf, &maa))
+		config_attach(parent, cf, &maa, mainbus_print);
+
+	return 0;
+}
+
+static int
 mainbus_print(void *aux, const char *pnp)
 {
 

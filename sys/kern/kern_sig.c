@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.279.2.4 2010/03/11 15:04:17 yamt Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.279.2.5 2010/08/11 22:54:40 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.279.2.4 2010/03/11 15:04:17 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.279.2.5 2010/08/11 22:54:40 yamt Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_compat_sunos.h"
@@ -879,7 +879,7 @@ killpg1(struct lwp *l, ksiginfo_t *ksi, int pgid, int all)
 			/* Zero pgid means send to my process group. */
 			pgrp = cp->p_pgrp;
 		else {
-			pgrp = pg_find(pgid, PFIND_LOCKED);
+			pgrp = pgrp_find(pgid);
 			if (pgrp == NULL)
 				goto out;
 		}
@@ -1725,9 +1725,10 @@ sigchecktrace(void)
 
 	/*
 	 * If we are no longer being traced, or the parent didn't
-	 * give us a signal, look for more signals.
+	 * give us a signal, or we're stopping, look for more signals.
 	 */
-	if ((p->p_slflag & PSL_TRACED) == 0 || p->p_xstat == 0)
+	if ((p->p_slflag & PSL_TRACED) == 0 || p->p_xstat == 0 ||
+	    (p->p_sflag & PS_STOPPING) != 0)
 		return 0;
 
 	/*

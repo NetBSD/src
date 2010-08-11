@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.1.34.2 2009/09/16 13:38:03 yamt Exp $
+#	$NetBSD: Makefile,v 1.1.34.3 2010/08/11 22:55:00 yamt Exp $
 #
 
-SUBDIR=	include librump dev fs net
+SUBDIR=	include librump dev fs kern net
 
 .include <bsd.subdir.mk>

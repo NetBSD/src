@@ -1,4 +1,4 @@
-/*	$NetBSD: if_re_cardbus.c,v 1.17.2.3 2010/03/11 15:03:25 yamt Exp $	*/
+/*	$NetBSD: if_re_cardbus.c,v 1.17.2.4 2010/08/11 22:53:19 yamt Exp $	*/
 
 /*
  * Copyright (c) 2004 Jonathan Stone
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_re_cardbus.c,v 1.17.2.3 2010/03/11 15:03:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_re_cardbus.c,v 1.17.2.4 2010/08/11 22:53:19 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,7 +95,6 @@ struct re_cardbus_softc {
 	pcireg_t sc_csr;
 	int sc_bar_reg;
 	pcireg_t sc_bar_val;
-	bus_size_t sc_mapsize;
 	cardbus_intr_line_t sc_intrline;
 };
 
@@ -170,22 +169,14 @@ re_cardbus_attach(device_t parent, device_t self, void *aux)
 	csc->sc_csr = PCI_COMMAND_MASTER_ENABLE;
 #ifdef RTK_USEIOSPACE
 	if (Cardbus_mapreg_map(ct, RTK_PCI_LOIO, PCI_MAPREG_TYPE_IO, 0,
-	    &sc->rtk_btag, &sc->rtk_bhandle, &adr, &csc->sc_mapsize) == 0) {
-#if rbus
-#else
-		(*ct->ct_cf->cardbus_io_open)(cc, 0, adr, adr+csc->sc_mapsize);
-#endif
+	    &sc->rtk_btag, &sc->rtk_bhandle, &adr, &sc->rtk_bsize) == 0) {
 		csc->sc_csr |= PCI_COMMAND_IO_ENABLE;
 		csc->sc_bar_reg = RTK_PCI_LOIO;
 		csc->sc_bar_val = adr | PCI_MAPREG_TYPE_IO;
 	}
 #else
 	if (Cardbus_mapreg_map(ct, RTK_PCI_LOMEM, PCI_MAPREG_TYPE_MEM, 0,
-	    &sc->rtk_btag, &sc->rtk_bhandle, &adr, &csc->sc_mapsize) == 0) {
-#if rbus
-#else
-		(*ct->ct_cf->cardbus_mem_open)(cc, 0, adr, adr+csc->sc_mapsize);
-#endif
+	    &sc->rtk_btag, &sc->rtk_bhandle, &adr, &sc->rtk_bsize) == 0) {
 		csc->sc_csr |= PCI_COMMAND_MEM_ENABLE;
 		csc->sc_bar_reg = RTK_PCI_LOMEM;
 		csc->sc_bar_val = adr | PCI_MAPREG_TYPE_MEM;
@@ -232,14 +223,14 @@ re_cardbus_detach(device_t self, int flags)
 	 * Unhook the interrupt handler.
 	 */
 	if (csc->sc_ih != NULL)
-		cardbus_intr_disestablish(ct->ct_cc, ct->ct_cf, csc->sc_ih);
+		Cardbus_intr_disestablish(ct, csc->sc_ih);
 
 	/*
 	 * Release bus space and close window.
 	 */
 	if (csc->sc_bar_reg != 0)
 		Cardbus_mapreg_unmap(ct, csc->sc_bar_reg,
-		    sc->rtk_btag, sc->rtk_bhandle, csc->sc_mapsize);
+		    sc->rtk_btag, sc->rtk_bhandle, sc->rtk_bsize);
 
 	return 0;
 }
@@ -316,8 +307,6 @@ re_cardbus_enable(struct rtk_softc *sc)
 {
 	struct re_cardbus_softc *csc = (struct re_cardbus_softc *)sc;
 	cardbus_devfunc_t ct = csc->sc_ct;
-	cardbus_chipset_tag_t cc = ct->ct_cc;
-	cardbus_function_tag_t cf = ct->ct_cf;
 
 	/*
 	 * Power on the socket.
@@ -332,7 +321,7 @@ re_cardbus_enable(struct rtk_softc *sc)
 	/*
 	 * Map and establish the interrupt.
 	 */
-	csc->sc_ih = cardbus_intr_establish(cc, cf, csc->sc_intrline,
+	csc->sc_ih = Cardbus_intr_establish(ct, csc->sc_intrline,
 		IPL_NET, re_intr, sc);
 	if (csc->sc_ih == NULL) {
 		aprint_error_dev(sc->sc_dev,
@@ -348,11 +337,9 @@ re_cardbus_disable(struct rtk_softc *sc)
 {
 	struct re_cardbus_softc *csc = (struct re_cardbus_softc *)sc;
 	cardbus_devfunc_t ct = csc->sc_ct;
-	cardbus_chipset_tag_t cc = ct->ct_cc;
-	cardbus_function_tag_t cf = ct->ct_cf;
 
 	/* Unhook the interrupt handler. */
-	cardbus_intr_disestablish(cc, cf, csc->sc_ih);
+	Cardbus_intr_disestablish(ct, csc->sc_ih);
 	csc->sc_ih = NULL;
 
 	/* Power down the socket. */

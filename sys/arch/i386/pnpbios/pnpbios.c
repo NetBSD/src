@@ -1,4 +1,4 @@
-/* $NetBSD: pnpbios.c,v 1.62.4.3 2010/03/11 15:02:30 yamt Exp $ */
+/* $NetBSD: pnpbios.c,v 1.62.4.4 2010/08/11 22:52:13 yamt Exp $ */
 
 /*
  * Copyright (c) 2000 Jason R. Thorpe.  All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pnpbios.c,v 1.62.4.3 2010/03/11 15:02:30 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pnpbios.c,v 1.62.4.4 2010/08/11 22:52:13 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -269,7 +269,7 @@ pnpbios_mapit(paddr_t addr, u_long len, vm_prot_t prot)
 		pmap_kenter_pa(va, pa, prot, 0);
 	pmap_update(pmap_kernel());
 
-	return ((void *)(startva + (addr - startpa)));
+	return ((void *)(startva + (vaddr_t)(addr - startpa)));
 }
 
 static void
@@ -1278,8 +1278,8 @@ pnpbios_io_map(pnpbios_tag_t pbt, struct pnpresources *resc,
 	while (idx--)
 		io = SIMPLEQ_NEXT(io, next);
 
-	*tagp = X86_BUS_SPACE_IO;
-	return (bus_space_map(X86_BUS_SPACE_IO, io->minbase, io->len,
+	*tagp = x86_bus_space_io;
+	return (bus_space_map(x86_bus_space_io, io->minbase, io->len,
 			       0, hdlp));
 }
 
@@ -1313,7 +1313,7 @@ pnpbios_getiobase(pnpbios_tag_t pbt, struct pnpresources *resc,
 		io = SIMPLEQ_NEXT(io, next);
 
 	if (tagp)
-		*tagp = X86_BUS_SPACE_IO;
+		*tagp = x86_bus_space_io;
 	if (basep)
 		*basep = io->minbase;
 	return (0);

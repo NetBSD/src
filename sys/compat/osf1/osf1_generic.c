@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_generic.c,v 1.13.10.2 2010/03/11 15:03:18 yamt Exp $ */
+/* $NetBSD: osf1_generic.c,v 1.13.10.3 2010/08/11 22:53:12 yamt Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_generic.c,v 1.13.10.2 2010/03/11 15:03:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_generic.c,v 1.13.10.3 2010/08/11 22:53:12 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,7 +66,6 @@ __KERNEL_RCSID(0, "$NetBSD: osf1_generic.c,v 1.13.10.2 2010/03/11 15:03:18 yamt 
 #include <sys/proc.h>
 #include <sys/file.h>
 #include <sys/stat.h>
-#include <sys/malloc.h>
 #include <sys/mman.h>
 #include <sys/mount.h>
 #include <sys/select.h>
@@ -82,10 +81,7 @@ __KERNEL_RCSID(0, "$NetBSD: osf1_generic.c,v 1.13.10.2 2010/03/11 15:03:18 yamt 
  * the other word of our iov_len is zero!
  */
 
-#if __GNUC_PREREQ__(3, 0)
-__attribute ((noinline))
-#endif  
-static int
+static int __noinline
 osf1_get_iov(struct osf1_iovec *uiov, unsigned int iovcnt, struct iovec **iovp)
 {
 	struct iovec *iov = *iovp;
@@ -96,7 +92,7 @@ osf1_get_iov(struct osf1_iovec *uiov, unsigned int iovcnt, struct iovec **iovp)
 		return EINVAL;
 
 	if (iovcnt > UIO_SMALLIOV) {
-		iov = malloc(iovcnt * sizeof *iov, M_IOV, M_WAITOK);
+		iov = kmem_alloc(iovcnt * sizeof(*iov), KM_SLEEP);
 		*iovp = iov;
 		/* Caller must free - even if we return an error */
 	}
@@ -133,7 +129,7 @@ osf1_sys_readv(struct lwp *l, const struct osf1_sys_readv_args *uap, register_t 
 	}
 
 	if (niov != aiov)
-		free(niov, M_IOV);
+		kmem_free(niov, SCARG(uap, iovcnt) * sizeof(*niov));
 
 	return error;
 }
@@ -153,7 +149,7 @@ osf1_sys_writev(struct lwp *l, const struct osf1_sys_writev_args *uap, register_
 	}
 
 	if (niov != aiov)
-		free(niov, M_IOV);
+		kmem_free(niov, SCARG(uap, iovcnt) * sizeof(*niov));
 
 	return error;
 }

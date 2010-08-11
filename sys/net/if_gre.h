@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.h,v 1.35.10.2 2009/05/04 08:14:15 yamt Exp $ */
+/*	$NetBSD: if_gre.h,v 1.35.10.3 2010/08/11 22:54:54 yamt Exp $ */
 
 /*
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -63,12 +63,10 @@ enum gre_state {
 	, GRE_S_DIE
 };
 
-#define	__cacheline_aligned	__aligned(CACHE_LINE_SIZE)
-
 struct gre_bufq {
 	volatile int	bq_prodidx;
 	volatile int	bq_considx;
-	size_t		bq_len __cacheline_aligned;
+	size_t		bq_len __aligned(CACHE_LINE_SIZE);
 	size_t		bq_lenmask;
 	volatile int	bq_drops;
 	struct mbuf	**bq_buf;

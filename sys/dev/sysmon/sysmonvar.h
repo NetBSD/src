@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmonvar.h,v 1.26.4.3 2010/03/11 15:04:04 yamt Exp $	*/
+/*	$NetBSD: sysmonvar.h,v 1.26.4.4 2010/08/11 22:54:12 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -86,7 +86,6 @@ struct envsys_data {
 	int32_t		value_avg;	/* avg value */
 	sysmon_envsys_lim_t limits;	/* thresholds for monitoring */
 	int		upropset;	/* userland property set? */
-	bool		monitor;	/* monitoring enabled/disabled */
 	char		desc[ENVSYS_DESCLEN];	/* sensor description */
 };
 
@@ -103,6 +102,8 @@ typedef struct envsys_data envsys_data_t;
 #define ENVSYS_FMONCRITICAL	0x00000020	/* monitor a critical state */
 #define ENVSYS_FMONLIMITS	0x00000040	/* monitor limits/thresholds */
 #define ENVSYS_FMONSTCHANGED	0x00000400	/* monitor a battery/drive state */
+#define ENVSYS_FMONANY	\
+	(ENVSYS_FMONCRITICAL | ENVSYS_FMONLIMITS | ENVSYS_FMONSTCHANGED)
 #define ENVSYS_FMONNOTSUPP	0x00000800	/* monitoring not supported */
 #define ENVSYS_FNEED_REFRESH	0x00001000	/* sensor needs refreshing */
 
@@ -203,6 +204,16 @@ int	sysmon_envsys_sensor_attach(struct sysmon_envsys *, envsys_data_t *);
 int	sysmon_envsys_sensor_detach(struct sysmon_envsys *, envsys_data_t *);
 
 uint32_t	sysmon_envsys_get_max_value(bool (*)(const envsys_data_t*), bool);
+
+void	sysmon_envsys_sensor_event(struct sysmon_envsys *, envsys_data_t *,
+				   int);
+
+typedef	bool (*sysmon_envsys_callback_t)(const struct sysmon_envsys *,
+					 const envsys_data_t *, void*);
+
+void	sysmon_envsys_foreach_sensor(sysmon_envsys_callback_t, void *, bool);
+
+int	sysmon_envsys_update_limits(struct sysmon_envsys *, envsys_data_t *);
 
 void	sysmon_envsys_init(void);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: debug.h,v 1.8.10.1 2008/05/16 02:22:23 yamt Exp $	*/
+/*	$NetBSD: debug.h,v 1.8.10.2 2010/08/11 22:52:03 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
@@ -48,75 +48,116 @@
  * #endif
  */
 #ifdef USE_HPC_DPRINTF
-#ifdef __DPRINTF_EXT
-/*
- * debug printf with Function name 
- */
-#define	PRINTF(fmt, args...)	printf("%s: " fmt, __func__ , ##args) 
+
 #ifdef DPRINTF_ENABLE
+
 #ifndef DPRINTF_DEBUG
-#error "specify unique debug symbol"
+#error "specify unique debug variable"
 #endif
+
 #ifndef DPRINTF_LEVEL
 #define DPRINTF_LEVEL	1
 #endif
-int	DPRINTF_DEBUG = DPRINTF_LEVEL;
-#define	DPRINTF(fmt, args...)	if (DPRINTF_DEBUG) PRINTF(fmt, ##args)
-#define	_DPRINTF(fmt, args...)	if (DPRINTF_DEBUG) printf(fmt, ##args)
-#define DPRINTFN(n, fmt, args...)					\
-			   	if (DPRINTF_DEBUG > (n)) PRINTF(fmt, ##args)
-#define _DPRINTFN(n, fmt, args...)					\
-			   	if (DPRINTF_DEBUG > (n)) printf(fmt, ##args)
-#else /* DPRINTF_ENABLE */
-#define	DPRINTF(args...)	((void)0)
-#define	_DPRINTF(args...)	((void)0)
-#define DPRINTFN(n, args...)	((void)0)
-#define _DPRINTFN(n, args...)	((void)0)
+
+int DPRINTF_DEBUG = DPRINTF_LEVEL;
 #endif /* DPRINTF_ENABLE */
 
-#else	/* __DPRINTF_EXT */
+
+#ifdef __DPRINTF_EXT
+/*
+ * printf with function name prepended
+ */
+
+#define	PRINTF(fmt, args...)	do {			\
+		printf("%s: " fmt, __func__ , ##args);	\
+	} while (/* CONSTCOND */0)
+
+#ifdef DPRINTF_ENABLE
+
+#define	DPRINTF(fmt, args...)	do {		\
+		if (DPRINTF_DEBUG)		\
+			PRINTF(fmt, ##args);	\
+	} while (/* CONSTCOND */0)
+
+#define	_DPRINTF(fmt, args...)	do {		\
+		if (DPRINTF_DEBUG)		\
+			printf(fmt, ##args);	\
+	} while (/* CONSTCOND */0)
+
+#define DPRINTFN(n, fmt, args...)	do {	\
+		if (DPRINTF_DEBUG > (n))	\
+			PRINTF(fmt, ##args);	\
+	} while (/* CONSTCOND */0)
+
+#define _DPRINTFN(n, fmt, args...) do {		\
+		if (DPRINTF_DEBUG > (n))	\
+			printf(fmt, ##args);	\
+	} while (/* CONSTCOND */0)
+
+#else  /* !DPRINTF_ENABLE */
+#define	DPRINTF(args...)	do {} while (/* CONSTCOND */ 0)
+#define	_DPRINTF(args...)	do {} while (/* CONSTCOND */ 0)
+#define DPRINTFN(n, args...)	do {} while (/* CONSTCOND */ 0)
+#define _DPRINTFN(n, args...)	do {} while (/* CONSTCOND */ 0)
+#endif /* !DPRINTF_ENABLE */
+
+#else  /* !__DPRINTF_EXT */
 /*
  * normal debug printf
  */
-#ifdef DPRINTF_ENABLE
-#ifndef DPRINTF_DEBUG
-#error "specify unique debug symbol"
-#endif
-#ifndef DPRINTF_LEVEL
-#define DPRINTF_LEVEL	1
-#endif
-int	DPRINTF_DEBUG = DPRINTF_LEVEL;
-#define	DPRINTF(arg)		if (DPRINTF_DEBUG) printf arg
-#define DPRINTFN(n, arg)	if (DPRINTF_DEBUG > (n)) printf arg
-#else /* DPRINTF_ENABLE */
-#define	DPRINTF(arg)		((void)0)
-#define DPRINTFN(n, arg)	((void)0)
-#endif /* DPRINTF_ENABLE */
 
-#endif /* __DPRINT_EXT */
+#ifdef DPRINTF_ENABLE
+
+#define	DPRINTF(arg)	do {			\
+		if (DPRINTF_DEBUG)		\
+			printf arg;		\
+	} while (/* CONSTCOND */0)
+
+#define DPRINTFN(n, arg)	do {		\
+		if (DPRINTF_DEBUG > (n))	\
+			printf arg;		\
+	} while (/* CONSTCOND */0)
+
+#else  /* !DPRINTF_ENABLE */
+#define	DPRINTF(arg)		do {} while (/* CONSTCOND */ 0)
+#define DPRINTFN(n, arg)	do {} while (/* CONSTCOND */ 0)
+#endif /* !DPRINTF_ENABLE */
+
+#endif /* !__DPRINT_EXT */
 #endif /* USE_HPC_DPRINTF */
+
 
 /*
  * debug print utility
  */
 #define DBG_BIT_PRINT_COUNT	(1 << 0)
 #define DBG_BIT_PRINT_QUIET	(1 << 1)
-#define dbg_bit_print(a)						\
-	__dbg_bit_print((a), sizeof(typeof(a)), 0, 0, 0, DBG_BIT_PRINT_COUNT)
-#define dbg_bit_print_msg(a, m)						\
-	__dbg_bit_print((a), sizeof(typeof(a)), 0, 0, (m), DBG_BIT_PRINT_COUNT)
-#define dbg_bit_display(a)						\
-	__dbg_bit_print((a), sizeof(typeof(a)), 0, 0, 0, DBG_BIT_PRINT_QUIET)
-void __dbg_bit_print(u_int32_t, int, int, int, const char *, int);
-void dbg_bitmask_print(u_int32_t, u_int32_t, const char *);
+
+void __dbg_bit_print(uint32_t, int, int, int, const char *, int);
+
+#define dbg_bit_print(a) do {						\
+		__dbg_bit_print((a), sizeof(typeof(a)), 0, 0, NULL,	\
+			DBG_BIT_PRINT_COUNT);				\
+	} while (/* CONSTCOND */0)
+
+#define dbg_bit_print_msg(a, m) do {					\
+		__dbg_bit_print((a), sizeof(typeof(a)), 0, 0, (m),	\
+			DBG_BIT_PRINT_COUNT);				\
+	} while (/* CONSTCOND */0)
+
+#define dbg_bit_display(a) do {						\
+		__dbg_bit_print((a), sizeof(typeof(a)), 0, 0, NULL,	\
+			DBG_BIT_PRINT_QUIET);				\
+	} while (/* CONSTCOND */0)
+
+void dbg_bitmask_print(uint32_t, uint32_t, const char *);
 void dbg_draw_line(int);
 void dbg_banner_title(const char *, size_t);
 void dbg_banner_line(void);
-#define dbg_banner_function()						\
-{									\
-	const char funcname[] = __func__;				\
-	dbg_banner_title(funcname, sizeof funcname);			\
-}
+
+#define dbg_banner_function() do {					\
+		dbg_banner_title(__func__, sizeof(__func__) - 1);	\
+	} while (/* CONSTCOND */ 0)
 
 /* HPC_DEBUG_LCD */
 #define RGB565_BLACK		0x0000

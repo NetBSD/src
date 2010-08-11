@@ -1,4 +1,4 @@
-/*	$NetBSD: rrunner.c,v 1.65.4.3 2010/03/11 15:03:34 yamt Exp $	*/
+/*	$NetBSD: rrunner.c,v 1.65.4.4 2010/08/11 22:53:30 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rrunner.c,v 1.65.4.3 2010/03/11 15:03:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rrunner.c,v 1.65.4.4 2010/08/11 22:53:30 yamt Exp $");
 
 #include "opt_inet.h"
 
@@ -1926,7 +1926,7 @@ eshstart(struct ifnet *ifp)
 			m->m_len -= 8;
 			m->m_data += 8;
 			m->m_pkthdr.len -= 8;
-			bpf_ops->bpf_mtap(ifp->if_bpf, m);
+			bpf_mtap(ifp, m);
 			m->m_len += 8;
 			m->m_data -= 8;
 			m->m_pkthdr.len += 8;
@@ -2364,14 +2364,7 @@ esh_read_snap_ring(struct esh_softc *sc, u_int16_t consumer, int error)
 				 * interface.  If so, hand off the raw packet
 				 * to BPF.
 				 */
-				if (ifp->if_bpf) {
-					/*
-					 * Incoming packets start with the FP
-					 * data, so no alignment problems
-					 * here...
-					 */
-					bpf_ops->bpf_mtap(ifp->if_bpf, m);
-				}
+				bpf_mtap(ifp, m);
 				if ((ifp->if_flags & IFF_RUNNING) == 0) {
 					m_freem(m);
 				} else {

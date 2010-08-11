@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ec.c,v 1.13.10.3 2010/03/11 15:03:02 yamt Exp $	*/
+/*	$NetBSD: if_ec.c,v 1.13.10.4 2010/08/11 22:52:49 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ec.c,v 1.13.10.3 2010/03/11 15:03:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ec.c,v 1.13.10.4 2010/08/11 22:52:49 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -330,8 +330,7 @@ ec_start(struct ifnet *ifp)
 	}
 
 	/* The BPF tap. */
-	if (ifp->if_bpf)
-		bpf_ops->bpf_mtap(ifp->if_bpf, m0);
+	bpf_mtap(ifp, m0);
 
 	/* Size the packet. */
 	count = EC_BUF_SZ - m0->m_pkthdr.len;
@@ -542,8 +541,7 @@ ec_recv(struct ec_softc *sc, int intbit)
 	 	* Check if there's a BPF listener on this interface.
 	 	* If so, hand off the raw packet to BPF.
 	 	*/
-		if (ifp->if_bpf)
-			bpf_ops->bpf_mtap(ifp->if_bpf, m0);
+		bpf_mtap(ifp, m0);
 
 		/* Pass the packet up. */
 		(*ifp->if_input)(ifp, m0);

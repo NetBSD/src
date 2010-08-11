@@ -1,4 +1,4 @@
-/*	$NetBSD: omap2_mputmr.c,v 1.1.18.2 2009/05/04 08:10:44 yamt Exp $	*/
+/*	$NetBSD: omap2_mputmr.c,v 1.1.18.3 2010/08/11 22:51:42 yamt Exp $	*/
 
 /*
  * OMAP 2430 GP timers
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap2_mputmr.c,v 1.1.18.2 2009/05/04 08:10:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap2_mputmr.c,v 1.1.18.3 2010/08/11 22:51:42 yamt Exp $");
 
 #include "opt_omap.h"
 #include "opt_cpuoptions.h"
@@ -254,7 +254,7 @@ cpu_initclocks(void)
 	tc_init(&mpu_timecounter);
 }
 
-#ifndef ARM11_PMC
+#if !(defined(ARM11_PMC) || defined(CORTEX_PMC))
 void
 delay(u_int n)
 {
@@ -288,7 +288,7 @@ delay(u_int n)
 		}
 	}
 }
-#endif /* ARM11_PMC */
+#endif /* ARM11_PMC || CORTEX_PMC */
 
 /*
  * OVF_Rate =

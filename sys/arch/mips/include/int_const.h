@@ -1,4 +1,4 @@
-/*	$NetBSD: int_const.h,v 1.2.112.1 2008/05/16 02:22:48 yamt Exp $	*/
+/*	$NetBSD: int_const.h,v 1.2.112.2 2010/08/11 22:52:23 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -47,8 +47,8 @@
 #define	INT64_C(c)	c ## LL
 #endif
 
-#define	UINT8_C(c)	c ## U
-#define	UINT16_C(c)	c ## U
+#define	UINT8_C(c)	c
+#define	UINT16_C(c)	c
 #define	UINT32_C(c)	c ## U
 #ifdef _LP64
 #define	UINT64_C(c)	c ## UL

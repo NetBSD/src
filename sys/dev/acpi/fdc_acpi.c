@@ -1,4 +1,4 @@
-/* $NetBSD: fdc_acpi.c,v 1.34.4.2 2010/03/11 15:03:23 yamt Exp $ */
+/* $NetBSD: fdc_acpi.c,v 1.34.4.3 2010/08/11 22:53:16 yamt Exp $ */
 
 /*
  * Copyright (c) 2002 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdc_acpi.c,v 1.34.4.2 2010/03/11 15:03:23 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdc_acpi.c,v 1.34.4.3 2010/08/11 22:53:16 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -206,10 +206,8 @@ fdc_acpi_attach(device_t parent, device_t self, void *aux)
 		 * XXX if there is no _FDE control method, attempt to
 		 * probe without pnp
 		 */
-#ifdef ACPI_FDC_DEBUG
 		aprint_debug_dev(sc->sc_dev,
 		    "unable to enumerate, attempting normal probe\n");
-#endif
 	}
 
 	fdcattach(sc);
@@ -225,43 +223,40 @@ fdc_acpi_enumerate(struct fdc_acpi_softc *asc)
 	ACPI_OBJECT *fde;
 	ACPI_BUFFER abuf;
 	ACPI_STATUS rv;
-	UINT32 *p;
+	uint32_t *p;
 	int i, drives = -1;
 
 	rv = acpi_eval_struct(asc->sc_node->ad_handle, "_FDE", &abuf);
+
 	if (ACPI_FAILURE(rv)) {
-#ifdef ACPI_FDC_DEBUG
 		aprint_normal_dev(sc->sc_dev, "failed to evaluate _FDE: %s\n",
 		    AcpiFormatException(rv));
-#endif
 		return drives;
 	}
-	fde = (ACPI_OBJECT *)abuf.Pointer;
+	fde = abuf.Pointer;
 	if (fde->Type != ACPI_TYPE_BUFFER) {
 		aprint_error_dev(sc->sc_dev, "expected BUFFER, got %u\n",
 		    fde->Type);
 		goto out;
 	}
-	if (fde->Buffer.Length < 5 * sizeof(UINT32)) {
+	if (fde->Buffer.Length < 5 * sizeof(uint32_t)) {
 		aprint_error_dev(sc->sc_dev,
 		    "expected buffer len of %lu, got %u\n",
-		    (unsigned long)(5 * sizeof(UINT32)), fde->Buffer.Length);
+		    (unsigned long)(5 * sizeof(uint32_t)), fde->Buffer.Length);
 		goto out;
 	}
 
-	p = (UINT32 *) fde->Buffer.Pointer;
+	p = (uint32_t *)fde->Buffer.Pointer;
 
 	/*
-	 * Indexes 0 through 3 are each UINT32 booleans. True if a drive
+	 * Indexes 0 through 3 are each uint32_t booleans. True if a drive
 	 * is present.
 	 */
 	drives = 0;
 	for (i = 0; i < 4; i++) {
 		if (p[i]) drives |= (1 << i);
-#ifdef ACPI_FDC_DEBUG
 		aprint_normal_dev(sc->sc_dev, "drive %d %sattached\n", i,
 		    p[i] ? "" : "not ");
-#endif
 	}
 
 	/*
@@ -293,16 +288,14 @@ fdc_acpi_getknownfds(struct fdc_acpi_softc *asc)
 			continue;
 		rv = acpi_eval_struct(asc->sc_node->ad_handle, "_FDI", &abuf);
 		if (ACPI_FAILURE(rv)) {
-#ifdef ACPI_FDC_DEBUG
 			aprint_normal_dev(sc->sc_dev,
 			    "failed to evaluate _FDI: %s on drive %d\n",
 			    AcpiFormatException(rv), i);
-#endif
 			/* XXX if _FDI fails, assume 1.44MB floppy */
 			sc->sc_knownfds[i] = &fdc_acpi_fdtypes[0];
 			continue;
 		}
-		fdi = (ACPI_OBJECT *)abuf.Pointer;
+		fdi = abuf.Pointer;
 		if (fdi->Type != ACPI_TYPE_PACKAGE) {
 			aprint_error_dev(sc->sc_dev,
 			    "expected PACKAGE, got %u\n", fdi->Type);
@@ -342,10 +335,8 @@ fdc_acpi_nvtotype(const char *fdc, int nvraminfo, int drive)
 	case ACPI_FDC_DISKETTE_720K:
 		return &fdc_acpi_fdtypes[4];
 	default:
-#ifdef ACPI_FDC_DEBUG
 		aprint_normal("%s: drive %d: unknown device type 0x%x\n",
 		    fdc, drive, type);
-#endif
 		return NULL;
 	}
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: cacheops.c,v 1.13.20.1 2008/05/16 02:22:44 yamt Exp $	*/
+/*	$NetBSD: cacheops.c,v 1.13.20.2 2010/08/11 22:52:19 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -29,8 +29,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "opt_m68k_arch.h"
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cacheops.c,v 1.13.20.1 2008/05/16 02:22:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cacheops.c,v 1.13.20.2 2010/08/11 22:52:19 yamt Exp $");
 
 #include <sys/types.h>
 #include <machine/cpu.h>

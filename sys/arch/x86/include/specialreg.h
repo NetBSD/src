@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.23.10.5 2010/03/11 15:03:08 yamt Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.23.10.6 2010/08/11 22:52:55 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -84,10 +84,10 @@
 #define CR4_OSXMMEXCPT	0x00000400	/* enable unmasked SSE exceptions */
 
 /*
- * CPUID "features" bits in %edx
+ * CPUID "features" bits
  */
 
-/* Fn80000001 %edx feature */
+/* Fn00000001 %edx features */
 #define	CPUID_FPU	0x00000001	/* processor has an FPU? */
 #define	CPUID_VME	0x00000002	/* has virtual mode (%cr4's VME/PVI) */
 #define	CPUID_DE	0x00000004	/* has debugging extension */
@@ -127,26 +127,20 @@
 			    "\30MMX\31FXSR\32SSE\33SSE2\34SS\35HTT\36TM" \
 			    "\37IA64\40SBF"
 
-/*
- * CPUID Intel extended features - %EDX
- */
+/* Intel Fn80000001 extended features - %edx */
 #define CPUID_SYSCALL	0x00000800	/* SYSCALL/SYSRET */
-#define CPUID_XD	0x00100000	/* Execute Disable */
+#define CPUID_XD	0x00100000	/* Execute Disable (like CPUID_NOX) */
 #define CPUID_EM64T	0x20000000	/* Intel EM64T */
 
 #define CPUID_INTEL_EXT_FLAGS	"\20\14SYSCALL/SYSRET\25XD\36EM64T"
 
-/*
- * CPUID Intel extended features - %ECX
- */
+/* Intel Fn80000001 extended features - %ecx */
 #define	CPUID_LAHF	0x00000001	/* LAHF/SAHF in IA-32e mode, 64bit sub*/
 
 #define	CPUID_INTEL_FLAGS4	"\20\1LAHF"
 
-/*
- * AMD/VIA processor specific flags.
- */
 
+/* AMD/VIA Fn80000001 extended features - %edx */
 /*	CPUID_SYSCALL			   SYSCALL/SYSRET */
 #define CPUID_MPC	0x00080000	/* Multiprocessing Capable */
 #define CPUID_NOX	0x00100000	/* No Execute Page Protection */
@@ -161,8 +155,7 @@
 #define CPUID_EXT_FLAGS	"\20\14SYSCALL/SYSRET\24MPC\25NOX\27MXX\32FFXSR" \
 			    "\33P1GB\34RDTSCP\36LONG\0373DNOW2\0403DNOW"
 
-
-/* AMD Fn80000001 %ecx features */
+/* AMD Fn80000001 extended features - %ecx */
 #define CPUID_LAHF	0x00000001	/* LAHF/SAHF instruction */
 #define CPUID_CMPLEGACY	0x00000002	/* Compare Legacy */
 #define CPUID_SVM	0x00000004	/* Secure Virtual Machine */
@@ -265,6 +258,14 @@
 #define CPUID2EXTFAMILY(cpuid)	(((cpuid) >> 20) & 0xff)
 #define CPUID2EXTMODEL(cpuid)	(((cpuid) >> 16) & 0xf)
 
+/* Blacklists of CPUID flags - used to mask certain features */
+#ifdef XEN
+/* Not on Xen */
+#define CPUID_FEAT_BLACKLIST	 (CPUID_PGE|CPUID_PSE|CPUID_MTRR|CPUID_FXSR)
+#else
+#define CPUID_FEAT_BLACKLIST	 0
+#endif /* XEN */
+
 /*
  * Model-specific registers for the i386 family
  */
@@ -342,6 +343,7 @@
 #define	MSR_MTRRfix4K_E8000	0x26d
 #define	MSR_MTRRfix4K_F0000	0x26e
 #define	MSR_MTRRfix4K_F8000	0x26f
+#define	MSR_CR_PAT		0x277
 #define MSR_MTRRdefType		0x2ff
 #define MSR_MC0_CTL		0x400
 #define MSR_MC0_STATUS		0x401
@@ -447,6 +449,13 @@
 #define		BU_CFG_THRL2IDXCMPDIS	0x0000080000000000ULL
 #define		BU_CFG_WBPFSMCCHKDIS	0x0000200000000000ULL
 #define		BU_CFG_WBENHWSBDIS	0x0001000000000000ULL
+
+/* AMD Family10h MSRs */
+#define	MSR_OSVW_ID_LENGTH		0xc0010140
+#define	MSR_OSVW_STATUS			0xc0010141
+
+/* X86 MSRs */
+#define	MSR_RDTSCP_AUX			0xc0000103
 
 /*
  * Constants related to MTRRs

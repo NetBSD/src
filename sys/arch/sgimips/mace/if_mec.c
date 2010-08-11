@@ -1,4 +1,4 @@
-/* $NetBSD: if_mec.c,v 1.18.4.5 2010/03/11 15:02:55 yamt Exp $ */
+/* $NetBSD: if_mec.c,v 1.18.4.6 2010/08/11 22:52:42 yamt Exp $ */
 
 /*-
  * Copyright (c) 2004, 2008 Izumi Tsutsui.  All rights reserved.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mec.c,v 1.18.4.5 2010/03/11 15:02:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mec.c,v 1.18.4.6 2010/08/11 22:52:42 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "rnd.h"
@@ -1329,8 +1329,7 @@ mec_start(struct ifnet *ifp)
 		/*
 		 * Pass packet to bpf if there is a listener.
 		 */
-		if (ifp->if_bpf)
-			bpf_ops->bpf_mtap(ifp->if_bpf, m0);
+		bpf_mtap(ifp, m0);
 		MEC_EVCNT_INCR(&sc->sc_ev_txpkts);
 
 		/*
@@ -1778,8 +1777,7 @@ mec_rxintr(struct mec_softc *sc)
 		 * Pass this up to any BPF listeners, but only
 		 * pass it up the stack if it's for us.
 		 */
-		if (ifp->if_bpf)
-			bpf_ops->bpf_mtap(ifp->if_bpf, m);
+		bpf_mtap(ifp, m);
 
 		/* Pass it on. */
 		(*ifp->if_input)(ifp, m);

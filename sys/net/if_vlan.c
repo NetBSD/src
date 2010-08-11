@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vlan.c,v 1.57.10.3 2010/03/11 15:04:27 yamt Exp $	*/
+/*	$NetBSD: if_vlan.c,v 1.57.10.4 2010/08/11 22:54:55 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.57.10.3 2010/03/11 15:04:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.57.10.4 2010/08/11 22:54:55 yamt Exp $");
 
 #include "opt_inet.h"
 
@@ -731,8 +731,7 @@ vlan_start(struct ifnet *ifp)
 		}
 #endif /* ALTQ */
 
-		if (ifp->if_bpf)
-			bpf_ops->bpf_mtap(ifp->if_bpf, m);
+		bpf_mtap(ifp, m);
 		/*
 		 * If the parent can insert the tag itself, just mark
 		 * the tag in the mbuf header.
@@ -913,8 +912,7 @@ vlan_input(struct ifnet *ifp, struct mbuf *m)
 	m->m_pkthdr.rcvif = &ifv->ifv_if;
 	ifv->ifv_if.if_ipackets++;
 
-	if (ifv->ifv_if.if_bpf)
-		bpf_ops->bpf_mtap(ifv->ifv_if.if_bpf, m);
+	bpf_mtap(&ifv->ifv_if, m);
 
 	/* Pass it back through the parent's input routine. */
 	(*ifp->if_input)(&ifv->ifv_if, m);

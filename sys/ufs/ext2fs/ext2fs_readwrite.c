@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_readwrite.c,v 1.51.2.3 2010/03/11 15:04:44 yamt Exp $	*/
+/*	$NetBSD: ext2fs_readwrite.c,v 1.51.2.4 2010/08/11 22:55:12 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_readwrite.c,v 1.51.2.3 2010/03/11 15:04:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_readwrite.c,v 1.51.2.4 2010/08/11 22:55:12 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -224,7 +224,6 @@ ext2fs_write(void *v)
 	struct inode *ip;
 	struct m_ext2fs *fs;
 	struct buf *bp;
-	struct proc *p;
 	struct ufsmount *ump;
 	daddr_t lbn;
 	off_t osize;
@@ -270,19 +269,6 @@ ext2fs_write(void *v)
 	if (uio->uio_offset < 0 ||
 	    (uint64_t)uio->uio_offset + uio->uio_resid > ump->um_maxfilesize)
 		return (EFBIG);
-	/*
-	 * Maybe this should be above the vnode op call, but so long as
-	 * file servers have no limits, I don't think it matters.
-	 */
-	p = curproc;
-	if (vp->v_type == VREG && p &&
-	    uio->uio_offset + uio->uio_resid >
-	    p->p_rlimit[RLIMIT_FSIZE].rlim_cur) {
-		mutex_enter(proc_lock);
-		psignal(p, SIGXFSZ);
-		mutex_exit(proc_lock);
-		return (EFBIG);
-	}
 	if (uio->uio_resid == 0)
 		return (0);
 

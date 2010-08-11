@@ -234,7 +234,7 @@ static int drm_vm_info DRM_SYSCTL_HANDLER_ARGS
 	int len = 0;
 #endif
 	drm_local_map_t *map, *tempmaps;
-	const char   *types[] = { "FB", "REG", "SHM", "AGP", "SG" };
+	const char   *types[] = { "FB", "REG", "SHM", "AGP", "SG", "GEM", "TTM" };
 	const char *type, *yesno;
 	int i, mapcount;
 	char buf[128];

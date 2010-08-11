@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_mman.c,v 1.28.6.2 2009/05/04 08:12:18 yamt Exp $ */
+/*	$NetBSD: darwin_mman.c,v 1.28.6.3 2010/08/11 22:53:02 yamt Exp $ */
 
 /*-
  * Copyright (c) 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_mman.c,v 1.28.6.2 2009/05/04 08:12:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_mman.c,v 1.28.6.3 2010/08/11 22:53:02 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -208,11 +208,11 @@ darwin_sys_load_shared_file(struct lwp *l, const struct darwin_sys_load_shared_f
 
 		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 		if ((error = (*evc.ev_proc)(l, &evc)) != 0) {
-			VOP_UNLOCK(vp, 0);
+			VOP_UNLOCK(vp);
 			DPRINTF(("Failed\n"));
 			goto bad2;
 		}
-		VOP_UNLOCK(vp, 0);
+		VOP_UNLOCK(vp);
 		DPRINTF(("Success\n"));
 	}
 bad2:

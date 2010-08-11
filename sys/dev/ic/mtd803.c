@@ -1,4 +1,4 @@
-/* $NetBSD: mtd803.c,v 1.19.4.4 2010/03/11 15:03:33 yamt Exp $ */
+/* $NetBSD: mtd803.c,v 1.19.4.5 2010/08/11 22:53:28 yamt Exp $ */
 
 /*-
  *
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mtd803.c,v 1.19.4.4 2010/03/11 15:03:33 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mtd803.c,v 1.19.4.5 2010/08/11 22:53:28 yamt Exp $");
 
 
 #include <sys/param.h>
@@ -474,8 +474,7 @@ mtd_start(struct ifnet *ifp)
 		if (m == NULL)
 			break;
 
-		if (ifp->if_bpf)
-			bpf_ops->bpf_mtap(ifp->if_bpf, m);
+		bpf_mtap(ifp, m);
 
 		/* Copy mbuf chain into tx buffer */
 		len = mtd_put(sc, sc->cur_tx, m);
@@ -682,8 +681,7 @@ mtd_rxirq(struct mtd_softc *sc)
 
 		++ifp->if_ipackets;
 
-		if (ifp->if_bpf)
-			bpf_ops->bpf_mtap(ifp->if_bpf, m);
+		bpf_mtap(ifp, m);
 		/* Pass the packet up */
 		(*ifp->if_input)(ifp, m);
 	}

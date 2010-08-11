@@ -1,4 +1,4 @@
-/*	$NetBSD: bthidev.h,v 1.4 2007/11/03 17:41:03 plunky Exp $	*/
+/*	$NetBSD: bthidev.h,v 1.4.20.1 2010/08/11 22:53:19 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -60,6 +60,8 @@ struct bthidev {
 
 /* HID device attach arguments */
 struct bthidev_attach_args {
+	int		 ba_vendor;	/* USB Forum Vendor ID */
+	int		 ba_product;	/* USB Forum Product ID */
 	const void	*ba_desc;	/* descriptor */
 	int		 ba_dlen;	/* descriptor length */
 	int		 ba_id;		/* report id */

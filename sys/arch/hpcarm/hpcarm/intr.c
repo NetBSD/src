@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.15.18.1 2009/05/04 08:11:10 yamt Exp $	*/
+/*	$NetBSD: intr.c,v 1.15.18.2 2010/08/11 22:52:06 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -36,9 +36,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.15.18.1 2009/05/04 08:11:10 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.15.18.2 2010/08/11 22:52:06 yamt Exp $");
 
 #include "opt_irqstats.h"
+#include "opt_cputypes.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,10 +73,12 @@ extern u_int sintrcnt[];
 extern void comsoft(void);
 #endif	/* NCOM > 0 */
 
+#if defined(CPU_SA1100) || defined(CPU_SA1110)
 #include "sacom.h"
 #if NSACOM > 0
 extern void sacomsoft(void);
 #endif	/* NSACOM > 0 */
+#endif
 
 /* Eventually these will become macros */
 

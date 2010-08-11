@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_exec.c,v 1.61.16.2 2009/05/04 08:12:27 yamt Exp $	 */
+/*	$NetBSD: svr4_exec.c,v 1.61.16.3 2010/08/11 22:53:13 yamt Exp $	 */
 
 /*-
  * Copyright (c) 1994, 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_exec.c,v 1.61.16.2 2009/05/04 08:12:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_exec.c,v 1.61.16.3 2010/08/11 22:53:13 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_syscall_debug.h"
@@ -39,6 +39,7 @@ __KERNEL_RCSID(0, "$NetBSD: svr4_exec.c,v 1.61.16.2 2009/05/04 08:12:27 yamt Exp
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
+#include <sys/exec.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -60,43 +61,42 @@ void syscall(void);
 struct uvm_object *emul_svr4_object;
 
 struct emul emul_svr4 = {
-	"svr4",
-	"/emul/svr4",
+	.e_name =		"svr4",
+	.e_path =		"/emul/svr4",
 #ifndef __HAVE_MINIMAL_EMUL
-	0,
-	native_to_svr4_errno,
-	SVR4_SYS_syscall,
-	SVR4_SYS_NSYSENT,
+	.e_flags =		0,
+	.e_errno =		native_to_svr4_errno,
+	.e_nosys =		SVR4_SYS_syscall,
+	.e_nsysent =		SVR4_SYS_NSYSENT,
 #endif
-	svr4_sysent,
+	.e_sysent =		svr4_sysent,
 #ifdef SYSCALL_DEBUG
-	svr4_syscallnames,
+	.e_syscallnames =	svr4_syscallnames,
 #else
-	NULL,
+	.e_syscallnames =	NULL,
 #endif
-	svr4_sendsig,
-	trapsignal,
-	NULL,
-	svr4_sigcode,
-	svr4_esigcode,
-	&emul_svr4_object,
-	svr4_setregs,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
+	.e_sendsig =		svr4_sendsig,
+	.e_trapsignal =		trapsignal,
+	.e_tracesig =		NULL,
+	.e_sigcode =		svr4_sigcode,
+	.e_esigcode =		svr4_esigcode,
+	.e_sigobject =		&emul_svr4_object,
+	.e_setregs =		setregs,
+	.e_proc_exec =		NULL,
+	.e_proc_fork =		NULL,
+	.e_proc_exit =		NULL,
+	.e_lwp_fork =		NULL,
+	.e_lwp_exit =		NULL,
 #ifdef __HAVE_SYSCALL_INTERN
-	svr4_syscall_intern,
+	.e_syscall_intern =	svr4_syscall_intern,
 #else
-	syscall,
+	.e_syscall_intern =	syscall,
 #endif
-	NULL,
-	NULL,
-
-	uvm_default_mapaddr,
-	NULL,	/* e_usertrap */
-	NULL,	/* e_sa */
-	0,	/* e_ucsize */
-	NULL,	/* e_startlwp */
+	.e_sysctlovly =		NULL,
+	.e_fault =		NULL,
+	.e_vm_default_addr =	uvm_default_mapaddr,
+	.e_usertrap =		NULL,
+	.e_sa =			NULL,
+	.e_ucsize =		0,
+	.e_startlwp =		NULL
 };

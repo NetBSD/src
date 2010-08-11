@@ -1,4 +1,4 @@
-/*	$NetBSD: uftdi.c,v 1.36.4.4 2010/03/11 15:04:06 yamt Exp $	*/
+/*	$NetBSD: uftdi.c,v 1.36.4.5 2010/08/11 22:54:15 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uftdi.c,v 1.36.4.4 2010/03/11 15:04:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uftdi.c,v 1.36.4.5 2010/08/11 22:54:15 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -426,9 +426,8 @@ uftdi_read(void *vsc, int portno, u_char **ptr, u_int32_t *count)
 		ucom_status_change(device_private(sc->sc_subdev[portno-1]));
 	}
 
-	/* Pick up status and adjust data part. */
+	/* Adjust buffer pointer to skip status prefix */
 	*ptr += 2;
-	*count -= 2;
 }
 
 Static void

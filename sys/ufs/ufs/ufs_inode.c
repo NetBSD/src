@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_inode.c,v 1.75.10.2 2010/03/11 15:04:46 yamt Exp $	*/
+/*	$NetBSD: ufs_inode.c,v 1.75.10.3 2010/08/11 22:55:15 yamt Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.75.10.2 2010/03/11 15:04:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.75.10.3 2010/08/11 22:55:15 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -92,7 +92,7 @@ ufs_inactive(void *v)
 	UFS_WAPBL_JUNLOCK_ASSERT(vp->v_mount);
 
 	transmp = vp->v_mount;
-	fstrans_start(transmp, FSTRANS_SHARED);
+	fstrans_start(transmp, FSTRANS_LAZY);
 	/*
 	 * Ignore inodes related to stale file handles.
 	 */
@@ -143,12 +143,12 @@ ufs_inactive(void *v)
 		DIP_ASSIGN(ip, rdev, 0);
 		mode = ip->i_mode;
 		ip->i_mode = 0;
+		ip->i_omode = mode;
 		DIP_ASSIGN(ip, mode, 0);
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
-		mutex_enter(&vp->v_interlock);
-		vp->v_iflag |= VI_FREEING;
-		mutex_exit(&vp->v_interlock);
-		UFS_VFREE(vp, ip->i_number, mode);
+		/*
+		 * Defer final inode free and update to ufs_reclaim().
+		 */
 	}
 
 	if (ip->i_flag & (IN_CHANGE | IN_UPDATE | IN_MODIFIED)) {
@@ -168,7 +168,7 @@ out:
 	 * so that it can be reused immediately.
 	 */
 	*ap->a_recycle = (ip->i_mode == 0);
-	VOP_UNLOCK(vp, 0);
+	VOP_UNLOCK(vp);
 	fstrans_done(transmp);
 	return (error);
 }

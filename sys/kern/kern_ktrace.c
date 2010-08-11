@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.142.2.4 2010/03/11 15:04:16 yamt Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.142.2.5 2010/08/11 22:54:39 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.142.2.4 2010/03/11 15:04:16 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.142.2.5 2010/08/11 22:54:39 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1188,7 +1188,7 @@ ktrace_common(lwp_t *curl, int ops, int facs, int pid, file_t *fp)
 		/*
 		 * by process group
 		 */
-		pg = pg_find(-pid, PFIND_LOCKED);
+		pg = pgrp_find(-pid);
 		if (pg == NULL)
 			error = ESRCH;
 		else {
@@ -1206,7 +1206,7 @@ ktrace_common(lwp_t *curl, int ops, int facs, int pid, file_t *fp)
 		/*
 		 * by pid
 		 */
-		p = p_find(pid, PFIND_LOCKED);
+		p = proc_find(pid);
 		if (p == NULL)
 			error = ESRCH;
 		else if (descend)
@@ -1295,7 +1295,7 @@ sys_ktrace(struct lwp *l, const struct sys_ktrace_args *uap, register_t *retval)
 			return (error);
 		}
 		vp = nd.ni_vp;
-		VOP_UNLOCK(vp, 0);
+		VOP_UNLOCK(vp);
 		if (vp->v_type != VREG) {
 			vn_close(vp, FREAD|FWRITE, l->l_cred);
 			ktrexit(l);

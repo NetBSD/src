@@ -8,7 +8,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2009, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2010, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -363,7 +363,7 @@ AcpiDmDumpAsf (
             break;
 
         default:
-            AcpiOsPrintf ("\n**** Unknown ASF sub-table type %X\n", SubTable->Header.Type);
+            AcpiOsPrintf ("\n**** Unknown ASF sub-table type 0x%X\n", SubTable->Header.Type);
             return;
         }
 
@@ -561,7 +561,7 @@ AcpiDmDumpDmar (
             ScopeOffset = sizeof (ACPI_DMAR_RHSA);
             break;
         default:
-            AcpiOsPrintf ("\n**** Unknown DMAR sub-table type %X\n\n", SubTable->Type);
+            AcpiOsPrintf ("\n**** Unknown DMAR sub-table type 0x%X\n\n", SubTable->Type);
             return;
         }
 
@@ -747,6 +747,8 @@ AcpiDmDumpHest (
     UINT32                  Offset = sizeof (ACPI_TABLE_HEST);
     ACPI_DMTABLE_INFO       *InfoTable;
     UINT32                  SubTableLength;
+    UINT32                  BankCount;
+    ACPI_HEST_IA_ERROR_BANK *BankTable;
 
 
     /* Main table */
@@ -762,16 +764,21 @@ AcpiDmDumpHest (
     SubTable = ACPI_ADD_PTR (ACPI_HEST_HEADER, Table, Offset);
     while (Offset < Table->Length)
     {
+        BankCount = 0;
         switch (SubTable->Type)
         {
         case ACPI_HEST_TYPE_IA32_CHECK:
             InfoTable = AcpiDmTableInfoHest0;
             SubTableLength = sizeof (ACPI_HEST_IA_MACHINE_CHECK);
+            BankCount = (ACPI_CAST_PTR (ACPI_HEST_IA_MACHINE_CHECK,
+                            SubTable))->NumHardwareBanks;
             break;
 
         case ACPI_HEST_TYPE_IA32_CORRECTED_CHECK:
             InfoTable = AcpiDmTableInfoHest1;
             SubTableLength = sizeof (ACPI_HEST_IA_CORRECTED);
+            BankCount = (ACPI_CAST_PTR (ACPI_HEST_IA_CORRECTED,
+                            SubTable))->NumHardwareBanks;
             break;
 
         case ACPI_HEST_TYPE_IA32_NMI:
@@ -802,7 +809,7 @@ AcpiDmDumpHest (
         default:
             /* Cannot continue on unknown type - no length */
 
-            AcpiOsPrintf ("\n**** Unknown HEST sub-table type %X\n", SubTable->Type);
+            AcpiOsPrintf ("\n**** Unknown HEST sub-table type 0x%X\n", SubTable->Type);
             return;
         }
 
@@ -814,9 +821,34 @@ AcpiDmDumpHest (
             return;
         }
 
-        /* Point to next sub-table (each subtable is of fixed length) */
+        /* Point to end of current subtable (each subtable above is of fixed length) */
 
         Offset += SubTableLength;
+
+        /* If there are any (fixed-length) Error Banks from above, dump them now */
+
+        if (BankCount)
+        {
+            BankTable = ACPI_ADD_PTR (ACPI_HEST_IA_ERROR_BANK, SubTable, SubTableLength);
+            SubTableLength += BankCount * sizeof (ACPI_HEST_IA_ERROR_BANK);
+
+            while (BankCount)
+            {
+                AcpiOsPrintf ("\n");
+                Status = AcpiDmDumpTable (Length, Offset, BankTable,
+                            sizeof (ACPI_HEST_IA_ERROR_BANK), AcpiDmTableInfoHestBank);
+                if (ACPI_FAILURE (Status))
+                {
+                    return;
+                }
+                Offset += sizeof (ACPI_HEST_IA_ERROR_BANK);
+                BankTable++;
+                BankCount--;
+            }
+        }
+
+        /* Point to next sub-table */
+
         SubTable = ACPI_ADD_PTR (ACPI_HEST_HEADER, SubTable, SubTableLength);
     }
 }
@@ -884,7 +916,7 @@ AcpiDmDumpIvrs (
             InfoTable = AcpiDmTableInfoIvrs1;
             break;
         default:
-            AcpiOsPrintf ("\n**** Unknown IVRS sub-table type %X\n",
+            AcpiOsPrintf ("\n**** Unknown IVRS sub-table type 0x%X\n",
                 SubTable->Type);
 
             /* Attempt to continue */
@@ -970,7 +1002,7 @@ AcpiDmDumpIvrs (
                     InfoTable = AcpiDmTableInfoIvrs4;
                     AcpiOsPrintf (
                         "\n**** Unknown IVRS device entry type/length: "
-                        "%.2X/%X at offset %.4X: (header below)\n",
+                        "0x%.2X/0x%X at offset 0x%.4X: (header below)\n",
                         EntryType, EntryLength, EntryOffset);
                     break;
                 }
@@ -1078,7 +1110,7 @@ AcpiDmDumpMadt (
             InfoTable = AcpiDmTableInfoMadt10;
             break;
         default:
-            AcpiOsPrintf ("\n**** Unknown MADT sub-table type %X\n\n", SubTable->Type);
+            AcpiOsPrintf ("\n**** Unknown MADT sub-table type 0x%X\n\n", SubTable->Type);
 
             /* Attempt to continue */
 
@@ -1142,7 +1174,7 @@ AcpiDmDumpMcfg (
     {
         if (Offset + sizeof (ACPI_MCFG_ALLOCATION) > Table->Length)
         {
-            AcpiOsPrintf ("Warning: there are %d invalid trailing bytes\n",
+            AcpiOsPrintf ("Warning: there are %u invalid trailing bytes\n",
                 sizeof (ACPI_MCFG_ALLOCATION) - (Offset - Table->Length));
             return;
         }
@@ -1346,7 +1378,7 @@ AcpiDmDumpSrat (
             InfoTable = AcpiDmTableInfoSrat2;
             break;
         default:
-            AcpiOsPrintf ("\n**** Unknown SRAT sub-table type %X\n", SubTable->Type);
+            AcpiOsPrintf ("\n**** Unknown SRAT sub-table type 0x%X\n", SubTable->Type);
 
             /* Attempt to continue */
 

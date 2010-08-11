@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.15.10.3 2010/03/11 15:02:23 yamt Exp $
+#	$NetBSD: genassym.cf,v 1.15.10.4 2010/08/11 22:52:02 yamt Exp $
 
 #	$OpenBSD: genassym.cf,v 1.18 2001/09/20 18:31:14 mickey Exp $
 
@@ -80,16 +80,18 @@ export	HPPA_BREAK_SET_PSW
 
 # hp700_int_reg fields
 struct	hp700_int_reg
-member	INT_REG_REQ	int_reg_req
-member	INT_REG_BITS_MAP int_reg_bits_map
+member	INT_REG_REQ		int_reg_req
+member	INT_REG_BITS_MAP	int_reg_bits_map
 export	INT_REG_BIT_REG
 
 # struct cpu_info fields
-#define	CI_CPL			offsetof(struct cpu_info, ci_cpl)
+define	CI_CPL			offsetof(struct cpu_info, ci_cpl)
+define	CI_IPENDING		offsetof(struct cpu_info, ci_ipending)
 #define	CI_INTR_DEPTH		offsetof(struct cpu_info, ci_intr_depth)
 #define	CI_SOFTLWPS		offsetof(struct cpu_info, ci_softlwps)
 define	CI_MTX_COUNT		offsetof(struct cpu_info, ci_mtx_count)
 #define	CI_CURLWP		offsetof(struct cpu_info, ci_curlwp)
+define	CI_TRAPSAVE		offsetof(struct cpu_info, ci_trapsave)
 
 define	MTX_IPL			offsetof(struct kmutex, mtx_ipl)
 define	MTX_LOCK		offsetof(struct kmutex, mtx_lock)
@@ -108,7 +110,6 @@ define	RW_WRITER		RW_WRITER
 # saved state fields
 struct	trapframe
 member	TF_FLAGS	tf_flags
-member	TF_PHYS		tf_sar
 member	TF_R1		tf_r1
 member	TF_R2		tf_rp
 member	TF_R3		tf_r3
@@ -189,7 +190,6 @@ struct	pcb
 member	PCB_FPREGS	pcb_fpregs
 member	PCB_ONFAULT	pcb_onfault
 member	PCB_SPACE	pcb_space
-member	PCB_UVA		pcb_uva
 member	PCB_KSP		pcb_ksp
 
 # system calls

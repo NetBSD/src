@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.112.20.3 2010/03/11 15:01:57 yamt Exp $ */
+/* $NetBSD: locore.s,v 1.112.20.4 2010/08/11 22:51:31 yamt Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <machine/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.112.20.3 2010/03/11 15:01:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.112.20.4 2010/08/11 22:51:31 yamt Exp $");
 
 #include "assym.h"
 
@@ -1275,6 +1275,104 @@ XLEAF(suswintr, 2)				/* XXX what is a 'word'? */
 	ldiq	v0, -1
 	RET
 	END(fswberr)
+
+/*
+ * int ucas_32(volatile int32_t *uptr, int32_t old, int32_t new, int32_t *ret);
+ */
+
+NESTED(ucas_32, 4, 16, ra, IM_S0 | IM_RA, 0)
+	LDGP(pv)
+	lda	sp, -16(sp)			/* set up stack frame	     */
+	stq	ra, (16-8)(sp)			/* save ra		     */
+	stq	s0, (16-16)(sp)			/* save s0		     */
+	ldiq	t0, VM_MAX_ADDRESS		/* make sure that src addr   */
+	cmpult	a0, t0, t1			/* is in user space.	     */
+	beq	t1, copyerr_efault		/* if it's not, error out.   */
+	and	a0, 3, t1			/* check if addr is aligned. */
+	bne	t1, copyerr_efault		/* if it's not, error out.   */
+	/* Note: GET_CURLWP clobbers v0, t0, t8...t11. */
+	GET_CURLWP
+	ldq	s0, 0(v0)			/* s0 = curlwp		     */
+	lda	v0, copyerr			/* set up fault handler.     */
+	.set noat
+	ldq	at_reg, L_PCB(s0)
+	stq	v0, PCB_ONFAULT(at_reg)
+	.set at
+
+3:
+	ldl_l	t0, 0(a0)			/* t0 = *uptr */
+	cmpeq	t0, a1, t1			/* does t0 = old? */
+	beq	t1, 1f				/* if not, skip */
+	mov	a2, t1
+	stl_c	t1, 0(a0)			/* *uptr ~= new */
+	beq	t1, 2f				/* did it work? */
+1:
+	stl	t0, 0(a3)			/* *ret = t0 */
+	mov	zero, v0
+
+	.set noat
+	ldq	at_reg, L_PCB(s0)		/* kill the fault handler.   */
+	stq	zero, PCB_ONFAULT(at_reg)
+	.set at
+	ldq	ra, (16-8)(sp)			/* restore ra.		     */
+	ldq	s0, (16-16)(sp)			/* restore s0.		     */
+	lda	sp, 16(sp)			/* kill stack frame.	     */
+	RET					/* v0 left over from copystr */
+
+2:
+	br	3b
+END(ucas_32)
+
+STRONG_ALIAS(ucas_int,ucas_32)
+
+/*
+ * int ucas_64(volatile int64_t *uptr, int64_t old, int64_t new, int64_t *ret);
+ */
+
+NESTED(ucas_64, 4, 16, ra, IM_S0 | IM_RA, 0)
+	LDGP(pv)
+	lda	sp, -16(sp)			/* set up stack frame	     */
+	stq	ra, (16-8)(sp)			/* save ra		     */
+	stq	s0, (16-16)(sp)			/* save s0		     */
+	ldiq	t0, VM_MAX_ADDRESS		/* make sure that src addr   */
+	cmpult	a0, t0, t1			/* is in user space.	     */
+	beq	t1, copyerr_efault		/* if it's not, error out.   */
+	and	a0, 3, t1			/* check if addr is aligned. */
+	bne	t1, copyerr_efault		/* if it's not, error out.   */
+	/* Note: GET_CURLWP clobbers v0, t0, t8...t11. */
+	GET_CURLWP
+	ldq	s0, 0(v0)			/* s0 = curlwp		     */
+	lda	v0, copyerr			/* set up fault handler.     */
+	.set noat
+	ldq	at_reg, L_PCB(s0)
+	stq	v0, PCB_ONFAULT(at_reg)
+	.set at
+
+3:
+	ldq_l	t0, 0(a0)			/* t0 = *uptr */
+	cmpeq	t0, a1, t1			/* does t0 = old? */
+	beq	t1, 1f				/* if not, skip */
+	mov	a2, t1
+	stq_c	t1, 0(a0)			/* *uptr ~= new */
+	beq	t1, 2f				/* did it work? */
+1:
+	stq	t0, 0(a3)			/* *ret = t0 */
+	mov	zero, v0
+
+	.set noat
+	ldq	at_reg, L_PCB(s0)		/* kill the fault handler.   */
+	stq	zero, PCB_ONFAULT(at_reg)
+	.set at
+	ldq	ra, (16-8)(sp)			/* restore ra.		     */
+	ldq	s0, (16-16)(sp)			/* restore s0.		     */
+	lda	sp, 16(sp)			/* kill stack frame.	     */
+	RET					/* v0 left over from copystr */
+
+2:
+	br	3b
+END(ucas_64)
+
+STRONG_ALIAS(ucas_ptr,ucas_64)
 
 /**************************************************************************/
 

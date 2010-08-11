@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64570.c,v 1.39.4.2 2010/03/11 15:03:30 yamt Exp $	*/
+/*	$NetBSD: hd64570.c,v 1.39.4.3 2010/08/11 22:53:25 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999 Christian E. Hopps
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64570.c,v 1.39.4.2 2010/03/11 15:03:30 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64570.c,v 1.39.4.3 2010/08/11 22:53:25 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"
@@ -459,8 +459,7 @@ sca_port_attach(struct sca_softc *sc, u_int port)
 	IFQ_SET_READY(&ifp->if_snd);
 	if_attach(ifp);
 	if_alloc_sadl(ifp);
-
-	bpf_ops->bpf_attach(ifp, DLT_HDLC, HDLC_HDRLEN, &ifp->if_bpf);
+	bpf_attach(ifp, DLT_HDLC, HDLC_HDRLEN);
 
 	if (sc->sc_parent == NULL)
 		printf("%s: port %d\n", ifp->if_xname, port);
@@ -1139,8 +1138,7 @@ X
 	/*
 	 * Pass packet to bpf if there is a listener.
 	 */
-	if (ifp->if_bpf)
-		bpf_ops->bpf_mtap(ifp->if_bpf, mb_head);
+	bpf_mtap(ifp, mb_head);
 
 	m_freem(mb_head);
 
@@ -1596,8 +1594,7 @@ sca_frame_process(sca_port_t *scp)
 		return;
 	}
 
-	if (scp->sp_if.if_bpf)
-		bpf_ops->bpf_mtap(scp->sp_if.if_bpf, m);
+	bpf_mtap(&scp->sp_if, m);
 
 	scp->sp_if.if_ipackets++;
 

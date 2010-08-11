@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_wdc.c,v 1.107.4.1 2010/03/11 15:04:02 yamt Exp $	*/
+/*	$NetBSD: atapi_wdc.c,v 1.107.4.2 2010/08/11 22:54:10 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.107.4.1 2010/03/11 15:04:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.107.4.2 2010/08/11 22:54:10 yamt Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -473,7 +473,7 @@ wdc_atapi_start(struct ata_channel *chp, struct ata_xfer *xfer)
 		}
 		/*
 		 * disable interrupts, all commands here should be quick
-		 * enouth to be able to poll, and we don't go here that often
+		 * enough to be able to poll, and we don't go here that often
 		 */
 		 bus_space_write_1(wdr->ctl_iot, wdr->ctl_ioh, wd_aux_ctlr,
 		     WDCTL_4BIT | WDCTL_IDS);

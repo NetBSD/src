@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.43.4.5 2010/03/11 15:03:08 yamt Exp $	*/
+/*	$NetBSD: intr.c,v 1.43.4.6 2010/08/11 22:52:57 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.43.4.5 2010/03/11 15:03:08 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.43.4.6 2010/08/11 22:52:57 yamt Exp $");
 
 #include "opt_intrdebug.h"
 #include "opt_multiprocessor.h"
@@ -983,6 +983,7 @@ cpu_intr_init(struct cpu_info *ci)
 	struct intrsource *isp;
 #if NLAPIC > 0 && defined(MULTIPROCESSOR)
 	int i;
+	static int first = 1;
 #endif
 #ifdef INTRSTACKSIZE
 	vaddr_t istack;
@@ -997,8 +998,10 @@ cpu_intr_init(struct cpu_info *ci)
 	isp->is_handlers = &fake_timer_intrhand;
 	isp->is_pic = &local_pic;
 	ci->ci_isources[LIR_TIMER] = isp;
-	evcnt_attach_dynamic(&isp->is_evcnt, EVCNT_TYPE_MISC, NULL,
+	evcnt_attach_dynamic(&isp->is_evcnt,
+	    first ? EVCNT_TYPE_INTR : EVCNT_TYPE_MISC, NULL,
 	    device_xname(ci->ci_dev), "timer");
+	first = 0;
 
 #ifdef MULTIPROCESSOR
 	isp = kmem_zalloc(sizeof(*isp), KM_SLEEP);

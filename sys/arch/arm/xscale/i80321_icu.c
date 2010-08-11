@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321_icu.c,v 1.17.10.2 2009/05/04 08:10:45 yamt Exp $	*/
+/*	$NetBSD: i80321_icu.c,v 1.17.10.3 2010/08/11 22:51:42 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2006 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i80321_icu.c,v 1.17.10.2 2009/05/04 08:10:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i80321_icu.c,v 1.17.10.3 2010/08/11 22:51:42 yamt Exp $");
 
 #ifndef EVBARM_SPL_NOINLINE
 #define	EVBARM_SPL_NOINLINE
@@ -187,7 +187,11 @@ i80321_intr_calculate_masks(void)
 		i80321_imask[ipl] = irqs;
 	}
 
-	i80321_imask[IPL_NONE] = 0;
+	KASSERT(i80321_imask[IPL_NONE] == 0);
+	KASSERT(i80321_imask[IPL_SOFTCLOCK] == 0);
+	KASSERT(i80321_imask[IPL_SOFTBIO] == 0);
+	KASSERT(i80321_imask[IPL_SOFTNET] == 0);
+	KASSERT(i80321_imask[IPL_SOFTSERIAL] == 0);
 
 	/*
 	 * Enforce a hierarchy that gives "slow" device (or devices with

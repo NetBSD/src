@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.220.2.5 2010/03/11 15:04:26 yamt Exp $	*/
+/*	$NetBSD: if.c,v 1.220.2.6 2010/08/11 22:54:53 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.220.2.5 2010/03/11 15:04:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.220.2.6 2010/08/11 22:54:53 yamt Exp $");
 
 #include "opt_inet.h"
 
@@ -792,8 +792,10 @@ again:
 	if_free_sadl(ifp);
 
 	/* Walk the routing table looking for stragglers. */
-	for (i = 0; i <= AF_MAX; i++)
-		(void)rt_walktree(i, if_rt_walktree, ifp);
+	for (i = 0; i <= AF_MAX; i++) {
+		while (rt_walktree(i, if_rt_walktree, ifp) == ERESTART)
+			;
+	}
 
 	DOMAIN_FOREACH(dp) {
 		if (dp->dom_ifdetach != NULL && ifp->if_afdata[dp->dom_family])
@@ -904,7 +906,7 @@ if_rt_walktree(struct rtentry *rt, void *v)
 	if (error != 0)
 		printf("%s: warning: unable to delete rtentry @ %p, "
 		    "error = %d\n", ifp->if_xname, rt, error);
-	return 0;
+	return ERESTART;
 }
 
 /*
@@ -1815,7 +1817,7 @@ ifioctl(struct socket *so, u_long cmd, void *data, struct lwp *l)
 	}
 #ifdef COMPAT_OIFREQ
 	if (cmd != ocmd)
-		ifreqn2o(oifr, ifr);
+		ifreqn2o(ifr, oifr);
 #endif
 
 	return error;

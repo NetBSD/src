@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.109.10.2 2010/03/11 15:04:27 yamt Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.109.10.3 2010/08/11 22:54:54 yamt Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,12 +41,17 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.109.10.2 2010/03/11 15:04:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.109.10.3 2010/08/11 22:54:54 yamt Exp $");
 
+#if defined(_KERNEL_OPT)
 #include "opt_inet.h"
 #include "opt_ipx.h"
 #include "opt_iso.h"
 #include "opt_pfil_hooks.h"
+#include "opt_modular.h"
+#include "opt_compat_netbsd.h"
+#endif
+
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -1095,6 +1100,10 @@ sppp_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	case SPPPSETAUTHFAILURE:
 	case SPPPSETDNSOPTS:
 	case SPPPSETKEEPALIVE:
+#if defined(COMPAT_50) || defined(MODULAR)
+	case __SPPPSETIDLETO50:
+	case __SPPPSETKEEPALIVE50:
+#endif /* COMPAT_50 || MODULAR */
 		error = kauth_authorize_network(l->l_cred,
 		    KAUTH_NETWORK_INTERFACE,
 		    KAUTH_REQ_NETWORK_INTERFACE_SETPRIV, ifp, (void *)cmd,
@@ -1122,6 +1131,10 @@ sppp_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	case SPPPGETDNSOPTS:
 	case SPPPGETDNSADDRS:
 	case SPPPGETKEEPALIVE:
+#if defined(COMPAT_50) || defined(MODULAR)
+	case __SPPPGETIDLETO50:
+	case __SPPPGETKEEPALIVE50:
+#endif /* COMPAT_50 || MODULAR */
 		error = sppp_params(sp, cmd, data);
 		break;
 
@@ -5327,6 +5340,36 @@ sppp_params(struct sppp *sp, u_long cmd, void *data)
 		sp->pp_max_noreceive = settings->max_noreceive;
 	    }
 	    break;
+#if defined(COMPAT_50) || defined(MODULAR)
+	case __SPPPGETIDLETO50:
+	    {
+	    	struct spppidletimeout50 *to = (struct spppidletimeout50 *)data;
+		to->idle_seconds = (uint32_t)sp->pp_idle_timeout;
+	    }
+	    break;
+	case __SPPPSETIDLETO50:
+	    {
+	    	struct spppidletimeout50 *to = (struct spppidletimeout50 *)data;
+	    	sp->pp_idle_timeout = (time_t)to->idle_seconds;
+	    }
+	    break;
+	case __SPPPGETKEEPALIVE50:
+	    {
+	    	struct spppkeepalivesettings50 *settings =
+		     (struct spppkeepalivesettings50*)data;
+		settings->maxalive = sp->pp_maxalive;
+		settings->max_noreceive = (uint32_t)sp->pp_max_noreceive;
+	    }
+	    break;
+	case __SPPPSETKEEPALIVE50:
+	    {
+	    	struct spppkeepalivesettings50 *settings =
+		     (struct spppkeepalivesettings50*)data;
+		sp->pp_maxalive = settings->maxalive;
+		sp->pp_max_noreceive = (time_t)settings->max_noreceive;
+	    }
+	    break;
+#endif /* COMPAT_50 || MODULAR */
 	default:
 		return (EINVAL);
 	}

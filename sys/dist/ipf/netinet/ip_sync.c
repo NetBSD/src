@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_sync.c,v 1.9.12.2 2009/08/19 18:47:33 yamt Exp $	*/
+/*	$NetBSD: ip_sync.c,v 1.9.12.3 2010/08/11 22:54:19 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995-1998 by Darren Reed.
@@ -103,9 +103,9 @@ struct file;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_sync.c,v 1.9.12.2 2009/08/19 18:47:33 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_sync.c,v 1.9.12.3 2010/08/11 22:54:19 yamt Exp $");
 #else
-static const char rcsid[] = "@(#)Id: ip_sync.c,v 2.40.2.16 2009/01/27 08:33:23 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_sync.c,v 2.40.2.17 2009/12/27 06:55:22 darrenr Exp";
 #endif
 #endif
 
@@ -115,7 +115,7 @@ static const char rcsid[] = "@(#)Id: ip_sync.c,v 2.40.2.16 2009/01/27 08:33:23 d
 #ifdef	IPFILTER_SYNC
 # if SOLARIS && defined(_KERNEL)
 extern	struct pollhead	iplpollhead[IPL_LOGSIZE];
-# endif 
+# endif
 
 ipfmutex_t	ipf_syncadd, ipsl_mutex;
 ipfrwlock_t	ipf_syncstate, ipf_syncnat;

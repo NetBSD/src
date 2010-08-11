@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rumpvfs,v 1.6.2.6 2010/03/11 15:04:39 yamt Exp $
+#	$NetBSD: Makefile.rumpvfs,v 1.6.2.7 2010/08/11 22:55:08 yamt Exp $
 #
 
 .include "${RUMPTOP}/Makefile.rump"
@@ -17,8 +17,6 @@ LIB=	rumpvfs
 # 
 SRCS=	rump_vfs.c devnodes.c devnull.c rumpblk.c rumpfs.c vm_vfs.c
 
-SRCS+=	fstrans_stub.c vfsops_stub.c
-
 SRCS+=	rumpvfs_if_wrappers.c
 
 # sys/kern I/O
@@ -27,10 +25,10 @@ SRCS+=	kern_physio.c
 # sys/kern vfs
 SRCS+=	vfs_bio.c vfs_cache.c vfs_cwd.c vfs_dirhash.c vfs_getcwd.c	\
 	vfs_hooks.c vfs_init.c vfs_lockf.c vfs_lookup.c vfs_subr.c	\
-	vfs_syscalls.c vfs_vnops.c vfs_wapbl.c vfs_xattr.c
+	vfs_syscalls.c vfs_trans.c vfs_vnops.c vfs_wapbl.c vfs_xattr.c
 
-# sys/kern module (and syscall)
-SRCS+=	kern_module_vfs.c subr_kobj_vfs.c sys_module.c
+# sys/kern module support
+SRCS+=	kern_module_vfs.c subr_kobj_vfs.c
 
 # sys/uvm
 SRCS+=	uvm_vnode.c

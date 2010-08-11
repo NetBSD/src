@@ -1,4 +1,4 @@
-/* $NetBSD: viac7temp.c,v 1.1.8.2 2010/03/11 15:03:09 yamt Exp $ */
+/* $NetBSD: viac7temp.c,v 1.1.8.3 2010/08/11 22:52:58 yamt Exp $ */
 
 /*-
  * Copyright (c) 2009 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: viac7temp.c,v 1.1.8.2 2010/03/11 15:03:09 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: viac7temp.c,v 1.1.8.3 2010/08/11 22:52:58 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -58,8 +58,7 @@ viac7temp_register(struct cpu_info *ci)
 	sc = kmem_zalloc(sizeof(struct viac7temp_softc), KM_SLEEP);
 
 	sc->sc_sensor.units = ENVSYS_STEMP;
-	sc->sc_sensor.flags = 0;
-	sc->sc_sensor.monitor = true;
+	sc->sc_sensor.flags = ENVSYS_FMONLIMITS;
 	strlcpy(sc->sc_sensor.desc, "temperature",
 	    sizeof(sc->sc_sensor.desc));
 

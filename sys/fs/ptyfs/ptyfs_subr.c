@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs_subr.c,v 1.15.10.2 2009/05/04 08:13:43 yamt Exp $	*/
+/*	$NetBSD: ptyfs_subr.c,v 1.15.10.3 2010/08/11 22:54:34 yamt Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ptyfs_subr.c,v 1.15.10.2 2009/05/04 08:13:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptyfs_subr.c,v 1.15.10.3 2010/08/11 22:54:34 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -148,7 +148,7 @@ ptyfs_getinfo(struct ptyfsnode *ptyfs, struct lwp *l)
 		cred = kauth_cred_alloc();
 		error = VOP_GETATTR(nd.ni_vp, &va, cred);
 		kauth_cred_free(cred);
-		VOP_UNLOCK(nd.ni_vp, 0);
+		VOP_UNLOCK(nd.ni_vp);
 		vrele(nd.ni_vp);
 		if (error)
 			goto out;
@@ -369,7 +369,7 @@ loop:
 			} else {
 				mutex_enter(&vp->v_interlock);
 				mutex_exit(&ptyfs_used_slock);
-				if (vget(vp, flags | LK_INTERLOCK))
+				if (vget(vp, flags))
 					goto loop;
 			}
 			return vp;
@@ -388,7 +388,7 @@ ptyfs_hashins(struct ptyfsnode *pp)
 	struct ptyfs_hashhead *ppp;
 
 	/* lock the ptyfsnode, then put it on the appropriate hash list */
-	vlockmgr(&pp->ptyfs_vnode->v_lock, LK_EXCLUSIVE);
+	VOP_LOCK(PTYFSTOV(pp), LK_EXCLUSIVE);
 
 	mutex_enter(&ptyfs_used_slock);
 	ppp = &ptyfs_used_tbl[PTYHASH(pp->ptyfs_type, pp->ptyfs_pty,

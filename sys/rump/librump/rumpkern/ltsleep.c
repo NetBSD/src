@@ -1,10 +1,7 @@
-/*	$NetBSD: ltsleep.c,v 1.6.10.4 2010/03/11 15:04:38 yamt Exp $	*/
+/*	$NetBSD: ltsleep.c,v 1.6.10.5 2010/08/11 22:55:06 yamt Exp $	*/
 
 /*
- * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
- *
- * Development of this software was supported by the
- * Finnish Cultural Foundation.
+ * Copyright (c) 2009, 2010 Antti Kantee.  All Rights Reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -29,13 +26,15 @@
  */
 
 /*
- * Emulate the prehistoric tsleep-style kernel interfaces.  We assume
- * only code under the biglock will be using this type of synchronization
- * and use the biglock as the cv interlock.
+ * Implementation of the ltsleep/mtsleep kernel sleep interface.  There
+ * are two sides to our implementation.  For historic spinlocks we
+ * assume the kernel is giantlocked and use kernel giantlock as the
+ * wait interlock.  For mtsleep, we use the interlock supplied by
+ * the caller.  This duality leads to some if/else messiness in the code ...
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ltsleep.c,v 1.6.10.4 2010/03/11 15:04:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ltsleep.c,v 1.6.10.5 2010/08/11 22:55:06 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -49,46 +48,76 @@ __KERNEL_RCSID(0, "$NetBSD: ltsleep.c,v 1.6.10.4 2010/03/11 15:04:38 yamt Exp $"
 
 struct ltsleeper {
 	wchan_t id;
-	struct rumpuser_cv *cv;
+	union {
+		struct rumpuser_cv *user;
+		kcondvar_t kern;
+	} u;
+	bool iskwait;
 	LIST_ENTRY(ltsleeper) entries;
 };
+#define ucv u.user
+#define kcv u.kern
 
 static LIST_HEAD(, ltsleeper) sleepers = LIST_HEAD_INITIALIZER(sleepers);
+static struct rumpuser_mtx *qlock;
 
 static int
-sleeper(struct ltsleeper *ltsp, int timo)
+sleeper(wchan_t ident, int timo, kmutex_t *kinterlock)
 {
+	struct ltsleeper lts;
 	struct timespec ts, ticks;
-	int rv, nlocks;
+	int rv;
 
-	LIST_INSERT_HEAD(&sleepers, ltsp, entries);
-	kernel_unlock_allbutone(&nlocks);
+	lts.id = ident;
+	if (kinterlock) {
+		lts.iskwait = true;
+		cv_init(&lts.kcv, "mtsleep");
+	} else {
+		lts.iskwait = false;
+		rumpuser_cv_init(&lts.ucv);
+	}
 
-	/* protected by biglock */
+	rumpuser_mutex_enter_nowrap(qlock);
+	LIST_INSERT_HEAD(&sleepers, &lts, entries);
+	rumpuser_mutex_exit(qlock);
+
 	if (timo) {
-		/*
-		 * Calculate wakeup-time.
-		 * XXX: should assert nanotime() does not block,
-		 * i.e. yield the cpu and/or biglock.
-		 */
-		ticks.tv_sec = timo / hz;
-		ticks.tv_nsec = (timo % hz) * (1000000000/hz);
-		nanotime(&ts);
-		timespecadd(&ts, &ticks, &ts);
+		if (kinterlock) {
+			rv = cv_timedwait(&lts.kcv, kinterlock, timo);
+		} else {
+			/*
+			 * Calculate wakeup-time.
+			 * XXX: should assert nanotime() does not block,
+			 * i.e. yield the cpu and/or biglock.
+			 */
+			ticks.tv_sec = timo / hz;
+			ticks.tv_nsec = (timo % hz) * (1000000000/hz);
+			nanotime(&ts);
+			timespecadd(&ts, &ticks, &ts);
 
-		if (rumpuser_cv_timedwait(ltsp->cv, rump_giantlock,
-		    ts.tv_sec, ts.tv_nsec) == 0)
-			rv = 0;
-		else
+			rv = rumpuser_cv_timedwait(lts.ucv, rump_giantlock,
+			    ts.tv_sec, ts.tv_nsec);
+		}
+
+		if (rv != 0)
 			rv = EWOULDBLOCK;
 	} else {
-		rumpuser_cv_wait(ltsp->cv, rump_giantlock);
+		if (kinterlock) {
+			cv_wait(&lts.kcv, kinterlock);
+		} else {
+			rumpuser_cv_wait(lts.ucv, rump_giantlock);
+		}
 		rv = 0;
 	}
 
-	LIST_REMOVE(ltsp, entries);
-	rumpuser_cv_destroy(ltsp->cv);
-	kernel_ununlock_allbutone(nlocks);
+	rumpuser_mutex_enter_nowrap(qlock);
+	LIST_REMOVE(&lts, entries);
+	rumpuser_mutex_exit(qlock);
+
+	if (kinterlock)
+		cv_destroy(&lts.kcv);
+	else
+		rumpuser_cv_destroy(lts.ucv);
 
 	return rv;
 }
@@ -97,16 +126,20 @@ int
 ltsleep(wchan_t ident, pri_t prio, const char *wmesg, int timo,
 	volatile struct simplelock *slock)
 {
-	struct ltsleeper lts;
-	int rv;
+	int rv, nlocks;
 
-	lts.id = ident;
-	rumpuser_cv_init(&lts.cv);
-
+	/*
+	 * Since we cannot use slock as the rumpuser interlock,
+	 * require that everyone using this prehistoric interface
+	 * is biglocked.
+	 */
+	KASSERT(rump_kernel_isbiglocked());
 	if (slock)
 		simple_unlock(slock);
 
-	rv = sleeper(&lts, timo);
+	rump_kernel_unlock_allbutone(&nlocks);
+	rv = sleeper(ident, timo, NULL);
+	rump_kernel_ununlock_allbutone(nlocks);
 
 	if (slock && (prio & PNORELOCK) == 0)
 		simple_lock(slock);
@@ -118,45 +151,58 @@ int
 mtsleep(wchan_t ident, pri_t prio, const char *wmesg, int timo,
 	kmutex_t *lock)
 {
-	struct ltsleeper lts;
 	int rv;
 
-	lts.id = ident;
-	rumpuser_cv_init(&lts.cv);
-
-	mutex_exit(lock);
-
-	rv = sleeper(&lts, timo);
-
-	if ((prio & PNORELOCK) == 0)
-		mutex_enter(lock);
+	rv = sleeper(ident, timo, lock);
+	if (prio & PNORELOCK)
+		mutex_exit(lock);
 
 	return rv;
 }
 
 static void
-do_wakeup(wchan_t ident, void (*wakeupfn)(struct rumpuser_cv *))
+do_wakeup(wchan_t ident, bool wakeup_all)
 {
 	struct ltsleeper *ltsp;
 
-	KASSERT(kernel_biglocked());
+	rumpuser_mutex_enter_nowrap(qlock);
 	LIST_FOREACH(ltsp, &sleepers, entries) {
 		if (ltsp->id == ident) {
-			wakeupfn(ltsp->cv);
+			if (wakeup_all) {
+				if (ltsp->iskwait) {
+					cv_broadcast(&ltsp->kcv);
+				} else {
+					rumpuser_cv_broadcast(ltsp->ucv);
+				}
+			} else {
+				if (ltsp->iskwait) {
+					cv_signal(&ltsp->kcv);
+				} else {
+					rumpuser_cv_signal(ltsp->ucv);
+				}
+			}
 		}
 	}
+	rumpuser_mutex_exit(qlock);
 }
 
 void
 wakeup(wchan_t ident)
 {
 
-	do_wakeup(ident, rumpuser_cv_broadcast);
+	do_wakeup(ident, true);
 }
 
 void
 wakeup_one(wchan_t ident)
 {
 
-	do_wakeup(ident, rumpuser_cv_signal);
+	do_wakeup(ident, false);
+}
+
+void
+rump_tsleep_init()
+{
+
+	rumpuser_mutex_init(&qlock);
 }

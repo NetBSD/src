@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.6.2.3 2010/03/11 15:04:22 yamt Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.6.2.4 2010/08/11 22:54:47 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.6.2.3 2010/03/11 15:04:22 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.6.2.4 2010/08/11 22:54:47 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,11 +62,12 @@ static void genfs_dio_iodone(struct buf *);
 
 static int genfs_do_io(struct vnode *, off_t, vaddr_t, size_t, int, enum uio_rw,
     void (*)(struct buf *));
-static inline void genfs_rel_pages(struct vm_page **, int);
+static void genfs_rel_pages(struct vm_page **, int);
+static void genfs_markdirty(struct vnode *);
 
 int genfs_maxdio = MAXPHYS;
 
-static inline void
+static void
 genfs_rel_pages(struct vm_page **pgs, int npages)
 {
 	int i;
@@ -83,6 +84,21 @@ genfs_rel_pages(struct vm_page **pgs, int npages)
 	mutex_enter(&uvm_pageqlock);
 	uvm_page_unbusy(pgs, npages);
 	mutex_exit(&uvm_pageqlock);
+}
+
+static void
+genfs_markdirty(struct vnode *vp)
+{
+	struct genfs_node * const gp = VTOG(vp);
+
+	KASSERT(mutex_owned(&vp->v_interlock));
+	gp->g_dirtygen++;
+	if ((vp->v_iflag & VI_ONWORKLST) == 0) {
+		vn_syncer_add_to_worklist(vp, filedelay);
+	}
+	if ((vp->v_iflag & (VI_WRMAP|VI_WRMAPDIRTY)) == VI_WRMAP) {
+		vp->v_iflag |= VI_WRMAPDIRTY;
+	}
 }
 
 /*
@@ -186,16 +202,6 @@ startover:
 		}
 	}
 
-	if (memwrite) {
-		gp->g_dirtygen++;
-		if ((vp->v_iflag & VI_ONWORKLST) == 0) {
-			vn_syncer_add_to_worklist(vp, filedelay);
-		}
-		if ((vp->v_iflag & (VI_WRMAP|VI_WRMAPDIRTY)) == VI_WRMAP) {
-			vp->v_iflag |= VI_WRMAPDIRTY;
-		}
-	}
-
 	/*
 	 * For PGO_LOCKED requests, just return whatever's in memory.
 	 */
@@ -236,6 +242,9 @@ startover:
 			genfs_node_unlock(vp);
 		}
 		error = (ap->a_m[ap->a_centeridx] == NULL ? EBUSY : 0);
+		if (error == 0 && memwrite) {
+			genfs_markdirty(vp);
+		}
 		goto out_err;
 	}
 	mutex_exit(&uobj->vmobjlock);
@@ -696,6 +705,9 @@ out:
 		}
 	}
 	mutex_exit(&uvm_pageqlock);
+	if (memwrite) {
+		genfs_markdirty(vp);
+	}
 	mutex_exit(&uobj->vmobjlock);
 	if (ap->a_m != NULL) {
 		memcpy(ap->a_m, &pgs[ridx],
@@ -708,7 +720,7 @@ out_err_free:
 out_err:
 	if (has_trans)
 		fstrans_done(vp->v_mount);
-	return (error);
+	return error;
 }
 
 /*
@@ -891,12 +903,8 @@ retry:
 	dirtygen = gp->g_dirtygen;
 	freeflag = pagedaemon ? PG_PAGEOUT : PG_RELEASED;
 	if (by_list) {
-		curmp.uobject = uobj;
-		curmp.offset = (voff_t)-1;
-		curmp.flags = PG_BUSY;
-		endmp.uobject = uobj;
-		endmp.offset = (voff_t)-1;
-		endmp.flags = PG_BUSY;
+		curmp.flags = PG_MARKER;
+		endmp.flags = PG_MARKER;
 		pg = TAILQ_FIRST(&uobj->memq);
 		TAILQ_INSERT_TAIL(&uobj->memq, &endmp, listq.queue);
 	} else {
@@ -909,13 +917,18 @@ retry:
 		 * if the current page is not interesting, move on to the next.
 		 */
 
-		KASSERT(pg == NULL || pg->uobject == uobj);
+		KASSERT(pg == NULL || pg->uobject == uobj ||
+		    (pg->flags & PG_MARKER) != 0);
 		KASSERT(pg == NULL ||
 		    (pg->flags & (PG_RELEASED|PG_PAGEOUT)) == 0 ||
-		    (pg->flags & PG_BUSY) != 0);
+		    (pg->flags & (PG_BUSY|PG_MARKER)) != 0);
 		if (by_list) {
 			if (pg == &endmp) {
 				break;
+			}
+			if (pg->flags & PG_MARKER) {
+				pg = TAILQ_NEXT(pg, listq.queue);
+				continue;
 			}
 			if (pg->offset < startoff || pg->offset >= endoff ||
 			    pg->flags & (PG_RELEASED|PG_PAGEOUT)) {
@@ -1186,6 +1199,9 @@ retry:
 	    (vp->v_iflag & VI_ONWORKLST) != 0) {
 #if defined(DEBUG)
 		TAILQ_FOREACH(pg, &uobj->memq, listq.queue) {
+			if ((pg->flags & PG_MARKER) != 0) {
+				continue;
+			}
 			if ((pg->flags & PG_CLEAN) == 0) {
 				printf("%s: %p: !CLEAN\n", __func__, pg);
 			}
@@ -1463,18 +1479,19 @@ genfs_compat_getpages(void *v)
 	orignpages = *ap->a_count;
 	pgs = ap->a_m;
 
-	if (memwrite && (vp->v_iflag & VI_ONWORKLST) == 0) {
-		vn_syncer_add_to_worklist(vp, filedelay);
-	}
 	if (ap->a_flags & PGO_LOCKED) {
 		uvn_findpages(uobj, origoffset, ap->a_count, ap->a_m,
 		    UFP_NOWAIT|UFP_NOALLOC| (memwrite ? UFP_NORDONLY : 0));
 
-		return (ap->a_m[ap->a_centeridx] == NULL ? EBUSY : 0);
+		error = ap->a_m[ap->a_centeridx] == NULL ? EBUSY : 0;
+		if (error == 0 && memwrite) {
+			genfs_markdirty(vp);
+		}
+		return error;
 	}
 	if (origoffset + (ap->a_centeridx << PAGE_SHIFT) >= vp->v_size) {
 		mutex_exit(&uobj->vmobjlock);
-		return (EINVAL);
+		return EINVAL;
 	}
 	if ((ap->a_flags & PGO_SYNCIO) == 0) {
 		mutex_exit(&uobj->vmobjlock);
@@ -1523,8 +1540,11 @@ genfs_compat_getpages(void *v)
 		uvm_page_unbusy(pgs, npages);
 	}
 	mutex_exit(&uvm_pageqlock);
+	if (error == 0 && memwrite) {
+		genfs_markdirty(vp);
+	}
 	mutex_exit(&uobj->vmobjlock);
-	return (error);
+	return error;
 }
 
 int

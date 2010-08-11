@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_hppa.c,v 1.6 2005/12/24 20:07:04 perry Exp $	*/
+/*	$NetBSD: kgdb_hppa.c,v 1.6.78.1 2010/08/11 22:52:09 yamt Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kgdb_hppa.c,v 1.6 2005/12/24 20:07:04 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kgdb_hppa.c,v 1.6.78.1 2010/08/11 22:52:09 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kgdb.h>
@@ -61,7 +61,7 @@ kgdb_acc(vaddr_t va, size_t ulen)
 {
 
 	/* Just let the trap handler deal with it. */
-	return (1);
+	return 1;
 }
 
 /*
@@ -128,7 +128,7 @@ kgdb_signal(int type)
 		sigval = SIGILL;
 		break;
 	}
-	return (sigval);
+	return sigval;
 }
 
 /*

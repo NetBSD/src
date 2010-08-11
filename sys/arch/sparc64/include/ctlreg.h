@@ -1,4 +1,4 @@
-/*	$NetBSD: ctlreg.h,v 1.44.38.2 2010/03/11 15:03:00 yamt Exp $ */
+/*	$NetBSD: ctlreg.h,v 1.44.38.3 2010/08/11 22:52:47 yamt Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -533,6 +533,7 @@ static __inline type ld(paddr_t loc, int asi)				\
 /* 32-bit kernel, MMU bypass, non-constant */
 #define SPARC64_LD_PHYS_NONCONST(ld)	\
 	__asm volatile(							\
+		"clruw %2;		"				\
 		"rdpr %%pstate,%1;	"				\
 		"sllx %3,32,%0;		"				\
 		"wrpr %1,8,%%pstate;	"				\
@@ -552,6 +553,7 @@ static __inline type ld(paddr_t loc, int asi)				\
 /* 32-bit kernel, MMU bypass, non-constant, 64-bit value */
 #define SPARC64_LD_PHYS_NONCONST64(ld)	\
 	__asm volatile(							\
+		"clruw %2;		"				\
 		"rdpr %%pstate,%1;	"				\
 		"sllx %3,32,%0;		"				\
 		"wrpr %1,8,%%pstate;	"				\
@@ -583,6 +585,7 @@ static __inline type ld(paddr_t loc, int asi)				\
 		_hi = (uint64_t)(loc) >> 32;				\
 		if (__builtin_constant_p(asi))				\
 			__asm volatile(					\
+				"clruw %2;		"		\
 				"rdpr %%pstate,%1;	"		\
 				"sllx %3,32,%0;		"		\
 				"wrpr %1,8,%%pstate;	"		\
@@ -613,6 +616,7 @@ static __inline type ld(paddr_t loc, int asi)				\
 		_hi = (uint64_t)(loc) >> 32;				\
 		if (__builtin_constant_p(asi))				\
 			__asm volatile(					\
+				"clruw %2;		"		\
 				"rdpr %%pstate,%1;	"		\
 				"sllx %3,32,%0;		"		\
 				"wrpr %1,8,%%pstate;	"		\
@@ -715,6 +719,7 @@ static __inline void st(paddr_t loc, int asi, type value)		\
 /* 32-bit kernel, MMU bypass, non-constant */
 #define SPARC64_ST_PHYS_NONCONST(st)	\
 	__asm volatile(							\
+		"clruw %3;		"				\
 		"rdpr %%pstate,%1;	"				\
 		"sllx %4,32,%0;		"				\
 		"wrpr %1,8,%%pstate;	"				\
@@ -734,6 +739,8 @@ static __inline void st(paddr_t loc, int asi, type value)		\
 /* 32-bit kernel, MMU bypass, non-constant, 64-bit value */
 #define SPARC64_ST_PHYS_NONCONST64(st)	\
 	__asm volatile(							\
+		"clruw %3;		"				\
+		"clruw %5;		"				\
 		"sllx %4,32,%1;		"				\
 		"sllx %6,32,%0; 	"				\
 		"rdpr %%pstate,%2;	"				\
@@ -749,6 +756,7 @@ static __inline void st(paddr_t loc, int asi, type value)		\
 /* 32-bit kernel, non-constant, 64-bit value */
 #define SPARC64_ST_NONCONST64(st)	\
 	__asm volatile(							\
+		"clruw %1;		"				\
 		"sllx %2,32,%0;		"				\
 		"or %0,%1,%0;		"				\
 		"wr %4,%%g0,%%asi;	"				\
@@ -766,6 +774,7 @@ static __inline void st(paddr_t loc, int asi, type value)		\
 		_hi = (uint64_t)(loc) >> 32;				\
 		if (__builtin_constant_p(asi))				\
 			__asm volatile(					\
+				"clruw %3;		"		\
 				"sllx %4,32,%0;		"		\
 				"rdpr %%pstate,%1;	"		\
 				"or %0,%3,%0;		"		\
@@ -797,6 +806,8 @@ static __inline void st(paddr_t loc, int asi, type value)		\
 		_hi = (uint64_t)(loc) >> 32;				\
 		if (__builtin_constant_p(asi))				\
 			__asm volatile(					\
+				"clruw %3;		"		\
+				"clruw %5;		"		\
 				"sllx %4,32,%1;		"		\
 				"sllx %6,32,%0; 	"		\
 				"rdpr %%pstate,%2;	"		\
@@ -814,6 +825,7 @@ static __inline void st(paddr_t loc, int asi, type value)		\
 	} else {							\
 		if (__builtin_constant_p(asi))				\
 			__asm volatile(					\
+				"clruw %1;		"		\
 				"sllx %2,32,%0;		"		\
 				"or %0,%1,%0;		"		\
 				#st " %0,[%3]%4		"		\

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_es.c,v 1.42.20.3 2010/03/11 15:02:01 yamt Exp $ */
+/*	$NetBSD: if_es.c,v 1.42.20.4 2010/08/11 22:51:36 yamt Exp $ */
 
 /*
  * Copyright (c) 1995 Michael L. Hitch
@@ -33,7 +33,7 @@
 #include "opt_ns.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_es.c,v 1.42.20.3 2010/03/11 15:02:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_es.c,v 1.42.20.4 2010/08/11 22:51:36 yamt Exp $");
 
 
 #include <sys/param.h>
@@ -723,8 +723,7 @@ esrint(struct es_softc *sc)
 	 * Check if there's a BPF listener on this interface.  If so, hand off
 	 * the raw packet to bpf.
 	 */
-	if (ifp->if_bpf)
-		bpf_ops->bpf_mtap(ifp->if_bpf, top);
+	bpf_mtap(ifp, top);
 	(*ifp->if_input)(ifp, top);
 #ifdef ESDEBUG
 	if (--sc->sc_smcbusy) {
@@ -926,8 +925,7 @@ esstart(struct ifnet *ifp)
 		if (smc->b2.pnr != active_pnr)
 			printf("%s: esstart - PNR changed %x->%x\n",
 			    sc->sc_dev.dv_xname, active_pnr, smc->b2.pnr);
-		if (sc->sc_ethercom.ec_if.if_bpf)
-			bpf_ops->bpf_mtap(sc->sc_ethercom.ec_if.if_bpf, m0);
+		bpf_mtap(&sc->sc_ethercom.ec_if, m0);
 		m_freem(m0);
 		sc->sc_ethercom.ec_if.if_opackets++;	/* move to interrupt? */
 		sc->sc_intctl |= MSK_TX_EMPTY | MSK_TX;

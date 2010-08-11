@@ -1,4 +1,4 @@
-/*	$NetBSD: copy.S,v 1.5.20.1 2010/03/11 15:02:39 yamt Exp $	*/
+/*	$NetBSD: copy.S,v 1.5.20.2 2010/08/11 22:52:23 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -100,7 +100,7 @@ END(copystr)
 LEAF(copyinstr)
 	PTR_L	v1, L_PCB(MIPS_CURLWP)
 	PTR_LA	v0, _C_LABEL(copystrerr)
-	blt	a0, zero, _C_LABEL(copystrerr)
+	blt	a0, zero, _C_LABEL(copystrefault)
 	 PTR_S	v0, PCB_ONFAULT(v1)
 	move	t0, a2
 	beq	a2, zero, 4f
@@ -134,7 +134,7 @@ END(copyinstr)
 LEAF(copyoutstr)
 	PTR_L	v1, L_PCB(MIPS_CURLWP)
 	PTR_LA	v0, _C_LABEL(copystrerr)
-	blt	a1, zero, _C_LABEL(copystrerr)
+	blt	a1, zero, _C_LABEL(copystrefault)
 	 PTR_S	v0, PCB_ONFAULT(v1)
 	move	t0, a2
 	beq	a2, zero, 4f
@@ -159,10 +159,14 @@ LEAF(copyoutstr)
 END(copyoutstr)
 
 LEAF(copystrerr)
-	PTR_S	zero, PCB_ONFAULT(v1)
 	j	ra
-	 li	v0, EFAULT			# return EFAULT
+	 PTR_S	zero, PCB_ONFAULT(v1)
 END(copystrerr)
+
+LEAF(copystrefault)
+	b	copystrerr
+	 li	v0, EFAULT
+END(copystrefault)
 
 /*
  * kcopy(const void *src, void *dst, size_t len);
@@ -203,9 +207,8 @@ LEAF(kcopyerr)
 	REG_L	ra, CALLFRAME_SIZ+CALLFRAME_RA(sp) 	# restore ra
 	PTR_S	s0, PCB_ONFAULT(v1)
 	REG_L	s0, CALLFRAME_SIZ+CALLFRAME_S0(sp) 	# restore s0
-	PTR_ADDU sp, sp, 2*CALLFRAME_SIZ	# kill stack frame
 	j	ra
-	 li	v0, EFAULT			# return EFAULT
+	 PTR_ADDU sp, sp, 2*CALLFRAME_SIZ	# kill stack frame
 END(kcopyerr)
 
 /*
@@ -218,7 +221,7 @@ NESTED(copyin, CALLFRAME_SIZ, ra)
 	PTR_SUBU sp, sp, CALLFRAME_SIZ
 	.mask	0x80000000, -4
 	REG_S	ra, CALLFRAME_RA(sp)
-	 blt	a0, zero, _C_LABEL(copyerr)
+	 blt	a0, zero, _C_LABEL(copyefault)
 	move	v0, a0				# swap a0, a1 for call to memcpy
 	move	a0, a1
 	move	a1, v0
@@ -245,7 +248,7 @@ NESTED(copyout, CALLFRAME_SIZ, ra)
 	PTR_SUBU sp, sp, CALLFRAME_SIZ
 	.mask	0x80000000, -4
 	REG_S	ra, CALLFRAME_RA(sp)
-	blt	a1, zero, _C_LABEL(copyerr)
+	blt	a1, zero, _C_LABEL(copyefault)
 	move	v0, a0				# swap a0, a1 for call to memcpy
 	move	a0, a1
 	move	a1, v0
@@ -266,10 +269,14 @@ LEAF(copyerr)
 	PTR_L	v1, L_PCB(MIPS_CURLWP)
 	REG_L	ra, CALLFRAME_RA(sp)
 	PTR_ADDU sp, sp, CALLFRAME_SIZ
-	PTR_S	zero, PCB_ONFAULT(v1)
 	j	ra
-	 li	v0, EFAULT			# return EFAULT
+	 PTR_S	zero, PCB_ONFAULT(v1)
 END(copyerr)
+
+LEAF(copyefault)
+	b	copyerr
+	 li	v0, EFAULT
+END(copyefault)
 
 /*
  * int fuswintr(void *)

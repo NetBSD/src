@@ -1,4 +1,4 @@
-/* $NetBSD: com.c,v 1.279.2.4 2010/03/11 15:03:29 yamt Exp $ */
+/* $NetBSD: com.c,v 1.279.2.5 2010/08/11 22:53:24 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2004, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.279.2.4 2010/03/11 15:03:29 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.279.2.5 2010/08/11 22:53:24 yamt Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -392,7 +392,7 @@ com_attach_subr(struct com_softc *sc)
 
 	CSR_WRITE_1(regsp, COM_REG_IER, sc->sc_ier);
 
-	if (regsp->cr_iot == comcons_info.regs.cr_iot &&
+	if (bus_space_is_equal(regsp->cr_iot, comcons_info.regs.cr_iot) &&
 	    regsp->cr_iobase == comcons_info.regs.cr_iobase) {
 		comconsattached = 1;
 
@@ -465,6 +465,8 @@ com_attach_subr(struct com_softc *sc)
 					sc->sc_fifolen = 0;
 				} else {
 					SET(sc->sc_hwflags, COM_HW_FLOW);
+					SET(sc->sc_mcr, MCR_PRESCALE);
+					sc->sc_frequency /= 4;
 					sc->sc_fifolen = 32;
 				}
 			} else
@@ -541,7 +543,7 @@ fifodone:
 	 * exclusive use.  If it's the console _and_ the
 	 * kgdb device, it doesn't.
 	 */
-	if (regsp->cr_iot == comkgdbregs.cr_iot &&
+	if (bus_space_is_equal(regsp->cr_iot, comkgdbregs.cr_iot) &&
 	    regsp->cr_iobase == comkgdbregs.cr_iobase) {
 		if (!ISSET(sc->sc_hwflags, COM_HW_CONSOLE)) {
 			com_kgdb_attached = 1;
@@ -1477,8 +1479,8 @@ com_loadchannelregs(struct com_softc *sc)
 		KASSERT(sc->sc_type != COM_TYPE_AU1x00);
 		KASSERT(sc->sc_type != COM_TYPE_16550_NOERS);
 		/* no EFR on alchemy */
-		CSR_WRITE_1(regsp, COM_REG_EFR, sc->sc_efr);
 		CSR_WRITE_1(regsp, COM_REG_LCR, LCR_EERS);
+		CSR_WRITE_1(regsp, COM_REG_EFR, sc->sc_efr);
 	}
 	if (sc->sc_type == COM_TYPE_AU1x00) {
 		/* alchemy has single separate 16-bit clock divisor register */
@@ -2302,7 +2304,7 @@ com_kgdb_attach1(struct com_regs *regsp, int rate, int frequency, int type,
 {
 	int res;
 
-	if (regsp->cr_iot == comcons_info.regs.cr_iot &&
+	if (bus_space_is_equal(regsp->cr_iot, comcons_info.regs.cr_iot) &&
 	    regsp->cr_iobase == comcons_info.regs.cr_iobase) {
 #if !defined(DDB)
 		return (EBUSY); /* cannot share with console */
@@ -2371,12 +2373,13 @@ com_is_console(bus_space_tag_t iot, bus_addr_t iobase, bus_space_handle_t *ioh)
 	bus_space_handle_t help;
 
 	if (!comconsattached &&
-	    iot == comcons_info.regs.cr_iot &&
+	    bus_space_is_equal(iot, comcons_info.regs.cr_iot) &&
 	    iobase == comcons_info.regs.cr_iobase)
 		help = comcons_info.regs.cr_ioh;
 #ifdef KGDB
 	else if (!com_kgdb_attached &&
-	    iot == comkgdbregs.cr_iot && iobase == comkgdbregs.cr_iobase)
+	    bus_space_is_equal(iot, comkgdbregs.cr_iot) &&
+	    iobase == comkgdbregs.cr_iobase)
 		help = comkgdbregs.cr_ioh;
 #endif
 	else

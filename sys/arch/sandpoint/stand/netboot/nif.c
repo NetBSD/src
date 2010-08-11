@@ -1,4 +1,4 @@
-/* $NetBSD: nif.c,v 1.4.20.3 2009/08/19 18:46:44 yamt Exp $ */
+/* $NetBSD: nif.c,v 1.4.20.4 2010/08/11 22:52:40 yamt Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,6 +37,8 @@
 #include <lib/libsa/stand.h>
 #include <lib/libsa/net.h>
 
+#include <machine/bootinfo.h>
+
 #include "globals.h"
 
 struct nifdv {
@@ -51,12 +53,13 @@ struct nifdv {
 
 static struct iodesc netdesc;
 
-static struct nifdv vnifdv[] = {
+static struct nifdv lnifdv[] = {
 	{ "fxp", fxp_match, fxp_init, fxp_send, fxp_recv },
 	{ "tlp", tlp_match, tlp_init, tlp_send, tlp_recv },
 	{ "re",  rge_match, rge_init, rge_send, rge_recv },
+	{ "sk",  skg_match, skg_init, skg_send, skg_recv },
 };
-static int nnifdv = sizeof(vnifdv)/sizeof(vnifdv[0]);
+static int nnifdv = sizeof(lnifdv)/sizeof(lnifdv[0]);
 
 int
 netif_init(unsigned tag)
@@ -65,11 +68,11 @@ netif_init(unsigned tag)
 	struct nifdv *dv;
 	int n;
 	uint8_t enaddr[6];
-	extern uint8_t en[6];
-	extern char rootdev[4];
+	extern struct btinfo_net bi_net;
+	extern struct btinfo_rootdevice bi_rdev;
 
 	for (n = 0; n < nnifdv; n++) {
-		dv = &vnifdv[n];
+		dv = &lnifdv[n];
 		if ((*dv->match)(tag, NULL) > 0)
 			goto found;
 	}
@@ -79,8 +82,13 @@ netif_init(unsigned tag)
 	s = &netdesc;
 	s->io_netif = dv;
 	memcpy(s->myea, enaddr, sizeof(s->myea));
-	memcpy(en, enaddr, sizeof(en));
-	snprintf(rootdev, sizeof(rootdev), "%s", dv->name);
+
+	/* build btinfo to identify NIF device */
+	snprintf(bi_net.devname, sizeof(bi_net.devname), dv->name);
+	memcpy(bi_net.mac_address, enaddr, sizeof(bi_net.mac_address));
+	bi_net.cookie = tag;
+	snprintf(bi_rdev.devname, sizeof(bi_rdev.devname), dv->name);
+	bi_rdev.cookie = tag;
 	return 1;
 }
 
@@ -107,7 +115,7 @@ netif_put(struct iodesc *desc, void *pkt, size_t len)
 {
 	struct nifdv *dv = desc->io_netif;
 
-	return (*dv->send)(dv->priv, pkt, len);
+	return dv ? (*dv->send)(dv->priv, pkt, len) : -1;
 }
 
 /*
@@ -120,7 +128,7 @@ netif_get(struct iodesc *desc, void *pkt, size_t maxlen, saseconds_t timo)
 	struct nifdv *dv = desc->io_netif;
 	int len;
 
-	len = (*dv->recv)(dv->priv, pkt, maxlen, timo);
+	len = dv ? (*dv->recv)(dv->priv, pkt, maxlen, timo) : -1;
 	if (len == -1)
 		printf("timeout\n");
 	return len;

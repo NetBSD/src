@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.23.4.3 2010/03/11 15:03:14 yamt Exp $
+	$NetBSD: syscalls.master,v 1.23.4.4 2010/08/11 22:53:04 yamt Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -139,7 +139,7 @@
 38	NOARGS		{ int|compat_50_sys||setitimer(u_int which, \
 			    struct itimerval50 *itv, \
 			    struct itimerval50 *oitv); }
-39	STD		{ pid_t|linux_sys||getpid(void); }
+39	STD		{ pid_t|sys||getpid(void); }
 40	UNIMPL		sendfile
 41	STD		{ int|linux_sys||socket(int domain, \
 			    int type, int protocol); }
@@ -173,12 +173,12 @@
 55	STD		{ int|linux_sys||getsockopt(int s, int level, \
 			    int optname, void *optval, int *optlen); }
 56	STD		{ int|linux_sys||clone(int flags, void *stack, \
-			    void *parent_tidptr, void *child_tidptr); }
+			    void *parent_tidptr, void *child_tidptr, void *tls); }
 57	NOARGS		{ int|sys||fork(void); }
 58	NOARGS		{ int|sys|14|vfork(void); }
 59	NOARGS		{ int|sys||execve(const char *path, char **argp, \
 			    char **envp); }
-60	NOARGS		{ int|sys||exit(int rval); }
+60	STD		{ int|linux_sys||exit(int rval); }
 61	STD		{ int|linux_sys||wait4(int pid, int *status, \
 			    int options, struct rusage50 *rusage); }
 62	STD		{ int|linux_sys||kill(int pid, int signum); }
@@ -263,7 +263,7 @@
 107	NOARGS		{ uid_t|sys||geteuid(void); }
 108	NOARGS		{ gid_t|sys||getegid(void); }
 109	NOARGS		{ int|sys||setpgid(int pid, int pgid); }
-110	STD		{ pid_t|linux_sys||getppid(void); }
+110	STD		{ pid_t|sys||getppid(void); }
 111	NOARGS		{ int|sys||getpgrp(void); }
 112	NOARGS		{ int|sys||setsid(void); }
 113	NOARGS		{ int|sys||setreuid(uid_t ruid, uid_t euid); }
@@ -490,4 +490,20 @@
 283	UNIMPL		timerfd_create
 284	UNIMPL		eventfd
 285	UNIMPL		fallocate
-286	STD		{ int|linux_sys||nosys(void); }
+286	UNIMPL		timerfd_settime
+287	UNIMPL		timerfd_gettime
+288	UNIMPL		accept4
+289	UNIMPL		signalfd4
+290	UNIMPL		eventfd2
+291	UNIMPL		epoll_create1
+292	UNIMPL		dup3
+293	UNIMPL		pipe2
+294	UNIMPL		inotify_init1
+295	UNIMPL		preadv
+296	UNIMPL		pwritev
+297	UNIMPL		rt_tgsigqueueinfo
+298	UNIMPL		perf_counter_open
+299	UNIMPL		recvmmsg
+
+; we want a "nosys" syscall, we'll just add an extra entry for it.
+300	STD		{ int|linux_sys||nosys(void); }

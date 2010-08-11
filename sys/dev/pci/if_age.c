@@ -1,4 +1,4 @@
-/*	$NetBSD: if_age.c,v 1.28.4.5 2010/03/11 15:03:44 yamt Exp $ */
+/*	$NetBSD: if_age.c,v 1.28.4.6 2010/08/11 22:53:45 yamt Exp $ */
 /*	$OpenBSD: if_age.c,v 1.1 2009/01/16 05:00:34 kevlo Exp $	*/
 
 /*-
@@ -31,7 +31,7 @@
 /* Driver for Attansic Technology Corp. L1 Gigabit Ethernet. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_age.c,v 1.28.4.5 2010/03/11 15:03:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_age.c,v 1.28.4.6 2010/08/11 22:53:45 yamt Exp $");
 
 #include "vlan.h"
 
@@ -1059,8 +1059,7 @@ age_start(struct ifnet *ifp)
 		 * If there's a BPF listener, bounce a copy of this frame
 		 * to him.
 		 */
-		if (ifp->if_bpf != NULL)
-			bpf_ops->bpf_mtap(ifp->if_bpf, m_head);
+		bpf_mtap(ifp, m_head);
 	}
 
 	if (enq) {
@@ -1480,8 +1479,7 @@ age_rxeof(struct age_softc *sc, struct rx_rdesc *rxrd)
 			}
 #endif
 
-			if (ifp->if_bpf)
-				bpf_ops->bpf_mtap(ifp->if_bpf, m);
+			bpf_mtap(ifp, m);
 			/* Pass it on. */
 			ether_input(ifp, m);
 
@@ -2237,7 +2235,7 @@ age_rxvlan(struct age_softc *sc)
 
 	reg = CSR_READ_4(sc, AGE_MAC_CFG);
 	reg &= ~MAC_CFG_VLAN_TAG_STRIP;
-	if (sc->sc_ec.ec_capabilities & ETHERCAP_VLAN_HWTAGGING)
+	if (sc->sc_ec.ec_capenable & ETHERCAP_VLAN_HWTAGGING)
 		reg |= MAC_CFG_VLAN_TAG_STRIP;
 	CSR_WRITE_4(sc, AGE_MAC_CFG, reg);
 }

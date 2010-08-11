@@ -1,4 +1,4 @@
-/* $NetBSD: hypervisor.c,v 1.36.4.3 2010/03/11 15:03:10 yamt Exp $ */
+/* $NetBSD: hypervisor.c,v 1.36.4.4 2010/08/11 22:53:00 yamt Exp $ */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -53,7 +53,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.36.4.3 2010/03/11 15:03:10 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.36.4.4 2010/08/11 22:53:00 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,7 +93,6 @@ __KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.36.4.3 2010/03/11 15:03:10 yamt Exp
 #include <dev/pci/pcivar.h>
 #if NACPICA > 0
 #include <dev/acpi/acpivar.h>
-#include <dev/acpi/acpi_madt.h>       
 #include <machine/mpconfig.h>
 #include <xen/mpacpi.h>       
 #endif
@@ -246,8 +245,8 @@ hypervisor_attach(device_t parent, device_t self, void *aux)
 #if NACPICA > 0
 	if (acpi_present) {
 		memset(&hac, 0, sizeof(hac));
-		hac.hac_acpi.aa_iot = X86_BUS_SPACE_IO;
-		hac.hac_acpi.aa_memt = X86_BUS_SPACE_MEM;
+		hac.hac_acpi.aa_iot = x86_bus_space_io;
+		hac.hac_acpi.aa_memt = x86_bus_space_mem;
 		hac.hac_acpi.aa_pc = NULL;
 		hac.hac_acpi.aa_pciflags =
 			PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED |
@@ -258,8 +257,8 @@ hypervisor_attach(device_t parent, device_t self, void *aux)
 	}
 #endif /* NACPICA */
 	memset(&hac, 0, sizeof(hac));
-	hac.hac_pba.pba_iot = X86_BUS_SPACE_IO;
-	hac.hac_pba.pba_memt = X86_BUS_SPACE_MEM;
+	hac.hac_pba.pba_iot = x86_bus_space_io;
+	hac.hac_pba.pba_memt = x86_bus_space_mem;
 	hac.hac_pba.pba_dmat = &pci_bus_dma_tag;
 #ifdef _LP64
 	hac.hac_pba.pba_dmat64 = &pci_bus_dma64_tag;
@@ -288,8 +287,8 @@ hypervisor_attach(device_t parent, device_t self, void *aux)
 	if (isa_has_been_seen == 0) {
 		memset(&hac, 0, sizeof(hac));
 		hac.hac_iba._iba_busname = "isa";
-		hac.hac_iba.iba_iot = X86_BUS_SPACE_IO;
-		hac.hac_iba.iba_memt = X86_BUS_SPACE_MEM;
+		hac.hac_iba.iba_iot = x86_bus_space_io;
+		hac.hac_iba.iba_memt = x86_bus_space_mem;
 		hac.hac_iba.iba_dmat = &isa_bus_dma_tag;
 		hac.hac_iba.iba_ic = NULL; /* No isa DMA yet */
 		config_found_ia(self, "isabus", &hac.hac_iba, isabusprint);

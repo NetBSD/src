@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.146.18.3 2010/03/11 15:03:07 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.146.18.4 2010/08/11 22:52:54 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,17 +77,17 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.146.18.3 2010/03/11 15:03:07 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.146.18.4 2010/08/11 22:52:54 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
 #include "opt_compat_netbsd.h"
-#include "opt_m680x0.h"
 #include "opt_fpu_emulate.h"
 #include "opt_m060sp.h"
 #include "opt_modular.h"
 #include "opt_panicbutton.h"
 #include "opt_extmem.h"
+#include "opt_m68k_arch.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

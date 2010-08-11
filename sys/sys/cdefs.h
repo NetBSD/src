@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.66.18.4 2010/03/11 15:04:41 yamt Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.66.18.5 2010/08/11 22:55:10 yamt Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -61,16 +61,6 @@
 #include <sys/cdefs_elf.h>
 #else
 #include <sys/cdefs_aout.h>
-#endif
-
-#if defined(__cplusplus)
-#define	__BEGIN_DECLS		extern "C" {
-#define	__END_DECLS		}
-#define	__static_cast(x,y)	static_cast<x>(y)
-#else
-#define	__BEGIN_DECLS
-#define	__END_DECLS
-#define	__static_cast(x,y)	(x)y
 #endif
 
 /*
@@ -226,6 +216,50 @@
 #define	__used		__attribute__((__used__))
 #else
 #define	__used		__unused
+#endif
+
+#if __GNUC_PREREQ__(4, 0)
+#  define __dso_public	__attribute__((__visibility__("default")))
+#  define __dso_hidden	__attribute__((__visibility__("hidden")))
+#  define __BEGIN_PUBLIC	_Pragma("GCC visibility push(default)")
+#  define __END_PUBLIC		_Pragma("GCC visibility pop")
+#  define __BEGIN_HIDDEN	_Pragma("GCC visibility push(hidden)")
+#  define __END_HIDDEN		_Pragma("GCC visibility pop")
+#else
+#  define __dso_public
+#  define __dso_hidden
+#  define __BEGIN_PUBLIC
+#  define __END_PUBLIC
+#  define __BEGIN_HIDDEN
+#  define __END_HIDDEN
+#endif
+
+
+#if defined(__cplusplus)
+#define	__BEGIN_DECLS		__BEGIN_PUBLIC extern "C" {
+#define	__END_DECLS		} __END_PUBLIC
+#define	__static_cast(x,y)	static_cast<x>(y)
+#else
+#define	__BEGIN_DECLS		__BEGIN_PUBLIC
+#define	__END_DECLS		__END_PUBLIC
+#define	__static_cast(x,y)	(x)y
+#endif
+
+/*
+ * Non-static C99 inline functions are optional bodies.  They don't
+ * create global symbols if not used, but can be replaced if desirable.
+ * This differs from the behavior of GCC before version 4.3.  The nearest
+ * equivalent for older GCC is `extern inline'.  For newer GCC, use the
+ * gnu_inline attribute additionally to get the old behavior.
+ *
+ * For C99 compilers other than GCC, the C99 behavior is expected.
+ */
+#if defined(__GNUC__) && defined(__GNUC_STDC_INLINE__)
+#define	__c99inline	extern __attribute__((__gnu_inline__)) __inline
+#elif defined(__GNUC__)
+#define	__c99inline	extern __inline
+#elif defined(__STDC_VERSION__)
+#define	__c99inline	__inline
 #endif
 
 #if defined(__lint__)

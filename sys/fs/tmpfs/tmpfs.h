@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs.h,v 1.32.10.2 2009/05/04 08:13:44 yamt Exp $	*/
+/*	$NetBSD: tmpfs.h,v 1.32.10.3 2010/08/11 22:54:36 yamt Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -35,18 +35,9 @@
 
 #include <sys/dirent.h>
 #include <sys/mount.h>
+#include <sys/pool.h>
 #include <sys/queue.h>
 #include <sys/vnode.h>
-
-/* --------------------------------------------------------------------- */
-/* For the kernel and anyone who likes peeking into kernel memory        */
-/* --------------------------------------------------------------------- */
-
-#if defined(_KERNEL)
-#include <fs/tmpfs/tmpfs_pool.h>
-#endif /* defined(_KERNEL) */
-
-/* --------------------------------------------------------------------- */
 
 /*
  * Internal representation of a tmpfs directory entry.
@@ -281,16 +272,10 @@ LIST_HEAD(tmpfs_node_list, tmpfs_node);
  * Internal representation of a tmpfs mount point.
  */
 struct tmpfs_mount {
-	/* Maximum number of memory pages available for use by the file
-	 * system, set during mount time.  This variable must never be
-	 * used directly as it may be bigger than the current amount of
-	 * free memory; in the extreme case, it will hold the SIZE_MAX
-	 * value.  Instead, use the TMPFS_PAGES_MAX macro. */
-	unsigned int		tm_pages_max;
-
-	/* Number of pages in use by the file system.  Cannot be bigger
-	 * than the value returned by TMPFS_PAGES_MAX in any case. */
-	unsigned int		tm_pages_used;
+	/* Limit and number of bytes in use by the file system. */
+	uint64_t		tm_mem_limit;
+	uint64_t		tm_bytes_used;
+	kmutex_t		tm_acc_lock;
 
 	/* Pointer to the node representing the root directory of this
 	 * file system. */
@@ -313,12 +298,10 @@ struct tmpfs_mount {
 	kmutex_t		tm_lock;
 	struct tmpfs_node_list	tm_nodes;
 
-	/* Pools used to store file system meta data.  These are not shared
-	 * across several instances of tmpfs for the reasons described in
-	 * tmpfs_pool.c. */
-	struct tmpfs_pool	tm_dirent_pool;
-	struct tmpfs_pool	tm_node_pool;
-	struct tmpfs_str_pool	tm_str_pool;
+	char			tm_dwchan[32];
+	struct pool		tm_dirent_pool;
+	char			tm_nwchan[32];
+	struct pool		tm_node_pool;
 };
 
 /* --------------------------------------------------------------------- */
@@ -361,7 +344,6 @@ int	tmpfs_dir_getdotdotdent(struct tmpfs_node *, struct uio *);
 struct tmpfs_dirent *	tmpfs_dir_lookupbycookie(struct tmpfs_node *, off_t);
 int	tmpfs_dir_getdents(struct tmpfs_node *, struct uio *, off_t *);
 int	tmpfs_reg_resize(struct vnode *, off_t);
-size_t	tmpfs_mem_info(bool);
 int	tmpfs_chflags(struct vnode *, int, kauth_cred_t, struct lwp *);
 int	tmpfs_chmod(struct vnode *, mode_t, kauth_cred_t, struct lwp *);
 int	tmpfs_chown(struct vnode *, uid_t, gid_t, kauth_cred_t, struct lwp *);
@@ -375,6 +357,29 @@ void	tmpfs_itimes(struct vnode *, const struct timespec *,
 void	tmpfs_update(struct vnode *, const struct timespec *,
 	    const struct timespec *, const struct timespec *, int);
 int	tmpfs_truncate(struct vnode *, off_t);
+
+/*
+ * Prototypes for tmpfs_mem.c.
+ */
+
+void		tmpfs_mntmem_init(struct tmpfs_mount *, uint64_t);
+void		tmpfs_mntmem_destroy(struct tmpfs_mount *);
+
+size_t		tmpfs_mem_info(bool);
+uint64_t	tmpfs_bytes_max(struct tmpfs_mount *);
+size_t		tmpfs_pages_avail(struct tmpfs_mount *);
+bool		tmpfs_mem_incr(struct tmpfs_mount *, size_t);
+void		tmpfs_mem_decr(struct tmpfs_mount *, size_t);
+
+struct tmpfs_dirent *tmpfs_dirent_get(struct tmpfs_mount *);
+void		tmpfs_dirent_put(struct tmpfs_mount *, struct tmpfs_dirent *);
+
+struct tmpfs_node *tmpfs_node_get(struct tmpfs_mount *);
+void		tmpfs_node_put(struct tmpfs_mount *, struct tmpfs_node *);
+
+char *		tmpfs_strname_alloc(struct tmpfs_mount *, size_t);
+void		tmpfs_strname_free(struct tmpfs_mount *, char *, size_t);
+bool		tmpfs_strname_neqlen(struct componentname *, struct componentname *);
 
 /* --------------------------------------------------------------------- */
 
@@ -417,36 +422,6 @@ int	tmpfs_truncate(struct vnode *, off_t);
  * tmpfs).
  * XXX: Should this be tunable through sysctl, for instance? */
 #define TMPFS_PAGES_RESERVED (4 * 1024 * 1024 / PAGE_SIZE)
-
-/* Returns the maximum size allowed for a tmpfs file system.  This macro
- * must be used instead of directly retrieving the value from tm_pages_max.
- * The reason is that the size of a tmpfs file system is dynamic: it lets
- * the user store files as long as there is enough free memory (including
- * physical memory and swap space).  Therefore, the amount of memory to be
- * used is either the limit imposed by the user during mount time or the
- * amount of available memory, whichever is lower.  To avoid consuming all
- * the memory for a given mount point, the system will always reserve a
- * minimum of TMPFS_PAGES_RESERVED pages, which is also taken into account
- * by this macro (see above). */
-static __inline size_t
-TMPFS_PAGES_MAX(struct tmpfs_mount *tmp)
-{
-	size_t freepages;
-
-	freepages = tmpfs_mem_info(false);
-	if (freepages < TMPFS_PAGES_RESERVED)
-		freepages = 0;
-	else
-		freepages -= TMPFS_PAGES_RESERVED;
-
-	return MIN(tmp->tm_pages_max, freepages + tmp->tm_pages_used);
-}
-
-/* Returns the available space for the given file system. */
-#define TMPFS_PAGES_AVAIL(tmp)		\
-    ((ssize_t)(TMPFS_PAGES_MAX(tmp) - (tmp)->tm_pages_used))
-
-/* --------------------------------------------------------------------- */
 
 /*
  * Macros/functions to convert from generic data structures to tmpfs

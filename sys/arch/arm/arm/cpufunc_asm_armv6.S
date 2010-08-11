@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm_armv6.S,v 1.1.26.1 2008/05/16 02:21:55 yamt Exp $	*/
+/*	$NetBSD: cpufunc_asm_armv6.S,v 1.1.26.2 2010/08/11 22:51:38 yamt Exp $	*/
 
 /*
  * Copyright (c) 2002, 2005 ARM Limited
@@ -37,6 +37,8 @@
 #include "assym.h"
 #include <machine/cpu.h>
 #include <machine/asm.h>
+
+	.arch	armv6
 
 /*
  * Functions to set the MMU Translation Table Base register

@@ -1,10 +1,10 @@
-#	$NetBSD: WGT624V3,v 1.1.50.2 2010/03/11 15:02:19 yamt Exp $
+#	$NetBSD: WGT624V3,v 1.1.50.3 2010/08/11 22:51:53 yamt Exp $
 
 include 	"arch/evbmips/conf/std.atheros"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"AP30-$Revision: 1.1.50.2 $"
+#ident 		"AP30-$Revision: 1.1.50.3 $"
 
 maxusers	32
 
@@ -157,7 +157,7 @@ mvphy*		at mii? phy ?
 # Disk/mass storage pseudo-devices
 #pseudo-device	ccd		4		# concatenated disk devices
 #pseudo-device	raid		4		# RAIDframe disk driver
-#pseudo-device	fss		4		# file system snapshot device
+#pseudo-device	fss				# file system snapshot device
 #pseudo-device	md		1		# memory disk device (ramdisk)
 #pseudo-device	vnd				# disk-like interface to files
 

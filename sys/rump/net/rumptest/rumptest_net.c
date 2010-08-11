@@ -1,4 +1,4 @@
-/*	$NetBSD: rumptest_net.c,v 1.10.2.3 2010/03/11 15:04:40 yamt Exp $	*/
+/*	$NetBSD: rumptest_net.c,v 1.10.2.4 2010/08/11 22:55:09 yamt Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -98,10 +98,10 @@ configure_interface(void)
 	ssize_t len;
 	struct {
 		struct rt_msghdr m_rtm;
-		uint8_t m_space;
+		uint8_t m_space[512];
 	} m_rtmsg;
 #define rtm m_rtmsg.m_rtm
-	uint8_t *bp = &m_rtmsg.m_space;
+	uint8_t *bp = m_rtmsg.m_space;
 	int s, rv;
 
 	if ((rv = rump_pub_virtif_create(0)) != 0) {
@@ -265,38 +265,13 @@ dobpfread(void)
 	struct bpf_hdr *bhdr;
 	void *buf;
 	struct ifreq ifr;
-	int bpfd, modfd;
+	int bpfd;
 	u_int bpflen, x, dlt;
 	ssize_t n;
 
 	bpfd = rump_sys_open("/dev/bpf", O_RDWR);
-
-	/* fail?  try to load kernel module */
-	if (bpfd == -1) {
-		modctl_load_t ml;
-
-		/* XXX: struct stat size */
-		modfd = open("./bpf.kmod", O_RDONLY);
-		if (modfd == -1)
-			err(1, "no bpf, no bpf kmod");
-		close(modfd);
-
-		rump_pub_etfs_register("/bpf.kmod",
-		    "./bpf.kmod", RUMP_ETFS_REG);
-		ml.ml_filename = "/bpf.kmod";
-		ml.ml_flags = 0;
-		ml.ml_props = NULL;
-		ml.ml_propslen = 0;
-
-		if (rump_sys_modctl(MODCTL_LOAD, &ml) == -1)
-			err(1, "load bpf module");
-		/* XXX: I "know" it's 256 XXX */
-		rump_sys_mknod("/dev/bpf", 0777 | S_IFCHR, makedev(256,0));
-
-		bpfd = rump_sys_open("/dev/bpf", O_RDWR);
-		if (bpfd == -1)
-			err(1, "open bpf");
-	}
+	if (bpfd == -1)
+		err(1, "open bpf");
 
 	if (rump_sys_ioctl(bpfd, BIOCGBLEN, &bpflen) == -1)
 		err(1, "BIOCGBLEN");
@@ -391,8 +366,14 @@ main(int argc, char *argv[])
 	size_t off;
 	int s;
 
+	struct timeval tv1, tv2, tvr;
+
+	gettimeofday(&tv1, NULL);
 	if (rump_init())
 		errx(1, "rump_init failed");
+	gettimeofday(&tv2, NULL);
+	timersub(&tv2, &tv1, &tvr);
+	printf("init took: %d/%d (s/us)\n", (int)tvr.tv_sec, (int)tvr.tv_usec);
 
 #ifdef FULL_NETWORK_STACK
 	configure_interface();

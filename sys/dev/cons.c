@@ -1,4 +1,4 @@
-/*	$NetBSD: cons.c,v 1.65.10.1 2010/03/11 15:03:21 yamt Exp $	*/
+/*	$NetBSD: cons.c,v 1.65.10.2 2010/08/11 22:53:14 yamt Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cons.c,v 1.65.10.1 2010/03/11 15:03:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cons.c,v 1.65.10.2 2010/08/11 22:53:14 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -157,7 +157,7 @@ cnopen(dev_t dev, int flag, int mode, struct lwp *l)
 	error = vn_lock(cn_devvp[unit], LK_EXCLUSIVE | LK_RETRY);
 	if (error == 0) {
 		error = VOP_OPEN(cn_devvp[unit], flag, kauth_cred_get());
-		VOP_UNLOCK(cn_devvp[unit], 0);
+		VOP_UNLOCK(cn_devvp[unit]);
 	}
 	return error;
 }
@@ -178,7 +178,7 @@ cnclose(dev_t dev, int flag, int mode, struct lwp *l)
 	error = vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	if (error == 0) {
 		error = VOP_CLOSE(vp, flag, kauth_cred_get());
-		VOP_UNLOCK(vp, 0);
+		VOP_UNLOCK(vp);
 	}
 	return error;
 }

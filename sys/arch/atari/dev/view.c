@@ -1,4 +1,4 @@
-/*	$NetBSD: view.c,v 1.25.4.2 2009/08/19 18:46:02 yamt Exp $	*/
+/*	$NetBSD: view.c,v 1.25.4.3 2010/08/11 22:51:45 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -38,7 +38,7 @@
  * a interface to graphics. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: view.c,v 1.25.4.2 2009/08/19 18:46:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: view.c,v 1.25.4.3 2010/08/11 22:51:45 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,16 +98,16 @@ viewprobe(void)
 {
     	int i;
 	
-	if(view_inited)
-		return(1);
+	if (view_inited)
+		return 1;
 
 	view_inited = 1;
 
-	for(i=0; i<NVIEW; i++) {
+	for (i = 0; i < NVIEW; i++) {
 		views[i].view = NULL;
 		views[i].flags = 0;
 	}
-	return(1);
+	return 1;
 }
 
 
@@ -129,7 +129,7 @@ view_display (struct view_softc *vu)
 	 * mark views that share this monitor as not displaying 
 	 */
 	for (i = 0; i < NVIEW; i++) {
-		if(views[i].flags & VUF_DISPLAY) {
+		if (views[i].flags & VUF_DISPLAY) {
 			if (vu->view && (vu->view == views[i].view)) {
 				splx(s);
 				return;
@@ -172,7 +172,7 @@ view_remove(struct view_softc *vu)
 	vu->flags &= ~VUF_ADDED;
 	if (vu->flags & VUF_DISPLAY) {
 		for (i = 0; i < NVIEW; i++) {
-			if((views[i].flags & VUF_ADDED) && &views[i] != vu) {
+			if ((views[i].flags & VUF_ADDED) && &views[i] != vu) {
 				view_display(&views[i]);
 				break;
 			}
@@ -200,21 +200,21 @@ view_setsize(struct view_softc *vu, struct view_size *vs)
 		cs = 1;
 
 	if (cs == 0 && co == 0)
-		return(0);
+		return 0;
     
 	ns.width  = vs->width;
 	ns.height = vs->height;
 
-	if((dmode = grf_get_best_mode(&ns, vs->depth)) != NULL) {
+	if ((dmode = grf_get_best_mode(&ns, vs->depth)) != NULL) {
 		/*
 		 * If we can't do better, leave it
 		 */
-		if(dmode == vu->view->mode)
-			return(0);
+		if (dmode == vu->view->mode)
+			return 0;
 	}
 	new = grf_alloc_view(dmode, &ns, vs->depth);
 	if (new == NULL)
-		return(ENOMEM);
+		return ENOMEM;
 	
 	old = vu->view;
 	vu->view = new;
@@ -233,7 +233,7 @@ view_setsize(struct view_softc *vu, struct view_size *vs)
 		view_display(vu);
 	}
 	grf_free_view(old);
-	return(0);
+	return 0;
 }
 
 static int
@@ -243,23 +243,24 @@ view_get_colormap (struct view_softc *vu, colormap_t *ucm)
 	long	*cme;
 	long	*uep;
 
-	if(ucm->size > MAX_CENTRIES)
-		return(EINVAL);
+	if (ucm->size > MAX_CENTRIES)
+		return EINVAL;
 		
 	/* add one incase of zero, ick. */
 	cme = malloc(sizeof(ucm->entry[0])*(ucm->size+1), M_TEMP,M_WAITOK);
 	if (cme == NULL)
-		return(ENOMEM);
+		return ENOMEM;
 
 	error      = 0;	
 	uep        = ucm->entry;
 	ucm->entry = cme;	  /* set entry to out alloc. */
-	if(vu->view == NULL || grf_get_colormap(vu->view, ucm))
+	if (vu->view == NULL || grf_get_colormap(vu->view, ucm))
 		error = EINVAL;
-	else error = copyout(cme, uep, sizeof(ucm->entry[0]) * ucm->size);
+	else
+		error = copyout(cme, uep, sizeof(ucm->entry[0]) * ucm->size);
 	ucm->entry = uep;	  /* set entry back to users. */
 	free(cme, M_TEMP);
-	return(error);
+	return error;
 }
 
 static int
@@ -268,13 +269,13 @@ view_set_colormap(struct view_softc *vu, colormap_t *ucm)
 	colormap_t	*cm;
 	int		error = 0;
 
-	if(ucm->size > MAX_CENTRIES)
-		return(EINVAL);
+	if (ucm->size > MAX_CENTRIES)
+		return EINVAL;
 		
-	cm = malloc(sizeof(ucm->entry[0])*ucm->size + sizeof(*cm), M_TEMP,
-								M_WAITOK);
-	if(cm == NULL)
-		return(ENOMEM);
+	cm = malloc(sizeof(ucm->entry[0])*ucm->size + sizeof(*cm),
+	    M_TEMP, M_WAITOK);
+	if (cm == NULL)
+		return ENOMEM;
 
 	memcpy(cm, ucm, sizeof(colormap_t));
 	cm->entry = (long *)&cm[1];		 /* table directly after. */
@@ -283,7 +284,7 @@ view_set_colormap(struct view_softc *vu, colormap_t *ucm)
 	    && (vu->view == NULL || grf_use_colormap(vu->view, cm)))
 		error = EINVAL;
 	free(cm, M_TEMP);
-	return(error);
+	return error;
 }
 
 /*
@@ -299,10 +300,10 @@ viewopen(dev_t dev, int flags, int mode, struct lwp *l)
 
 	vu = &views[minor(dev)];
 
-	if(minor(dev) >= NVIEW)
-		return(EXDEV);
-	if(vu->flags & VUF_OPEN)
-		return(EBUSY);
+	if (minor(dev) >= NVIEW)
+		return EXDEV;
+	if (vu->flags & VUF_OPEN)
+		return EBUSY;
 
 	vu->size.x = view_default_x;
 	vu->size.y = view_default_y;
@@ -311,7 +312,7 @@ viewopen(dev_t dev, int flags, int mode, struct lwp *l)
 	vu->size.depth = view_default_depth;
 	vu->view = grf_alloc_view(NULL, &size, vu->size.depth);
 	if (vu->view == NULL)
-		return(ENOMEM);
+		return ENOMEM;
 
 	vu->size.x = vu->view->display.x;
 	vu->size.y = vu->view->display.y;
@@ -319,7 +320,7 @@ viewopen(dev_t dev, int flags, int mode, struct lwp *l)
 	vu->size.height = vu->view->display.height;
 	vu->size.depth = vu->view->bitmap->depth;
        	vu->flags |= VUF_OPEN;
-       	return(0);
+       	return 0;
 }
 
 /*ARGSUSED*/
@@ -331,12 +332,12 @@ viewclose (dev_t dev, int flags, int mode, struct lwp *l)
 	vu = &views[minor(dev)];
 
 	if ((vu->flags & VUF_OPEN) == 0)
-		return (0); /* XXX not open? */
+		return 0; /* XXX not open? */
 	view_remove (vu);
 	grf_free_view (vu->view);
 	vu->flags = 0;
 	vu->view = NULL;
-	return (0);
+	return 0;
 }
 
 
@@ -384,7 +385,7 @@ viewioctl (dev_t dev, u_long cmd, void * data, int flag, struct lwp *l)
 		error = EPASSTHROUGH;
 		break;
 	}
-	return(error);
+	return error;
 }
 
 /*ARGSUSED*/
@@ -406,25 +407,26 @@ viewmmap(dev_t dev, off_t off, int prot)
 	 * control registers
 	 */
 	if (off >= 0 && off < bm->reg_size)
-		return(((paddr_t)bm->hw_regs + off) >> PGSHIFT);
+		return ((paddr_t)bm->hw_regs + off) >> PGSHIFT;
 
 	/*
 	 * VGA memory
 	 */
 	if (off >= bmd_vga && off < (bmd_vga + bm->vga_mappable))
-		return(((paddr_t)bm->vga_address - bmd_vga + off) >> PGSHIFT);
+		return ((paddr_t)bm->vga_address - bmd_vga + off) >> PGSHIFT;
 
 	/*
 	 * frame buffer
 	 */
 	if (off >= bmd_lin && off < (bmd_lin + bm->phys_mappable))
-		return(((paddr_t)bmd_start - bmd_lin + off) >> PGSHIFT);
+		return ((paddr_t)bmd_start - bmd_lin + off) >> PGSHIFT;
 
-	return(-1);
+	return -1;
 }
 
 view_t	*
 viewview(dev_t dev)
 {
-	return(views[minor(dev)].view);
+
+	return views[minor(dev)].view;
 }

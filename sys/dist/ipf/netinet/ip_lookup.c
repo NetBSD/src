@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_lookup.c,v 1.13.12.2 2009/08/19 18:47:31 yamt Exp $	*/
+/*	$NetBSD: ip_lookup.c,v 1.13.12.3 2010/08/11 22:54:18 yamt Exp $	*/
 
 /*
  * Copyright (C) 2002-2003 by Darren Reed.
@@ -67,9 +67,9 @@ struct file;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_lookup.c,v 1.13.12.2 2009/08/19 18:47:31 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_lookup.c,v 1.13.12.3 2010/08/11 22:54:18 yamt Exp $");
 #else
-static const char rcsid[] = "@(#)Id: ip_lookup.c,v 2.35.2.21 2009/05/13 18:31:15 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_lookup.c,v 2.35.2.22 2010/01/31 16:22:55 darrenr Exp";
 #endif
 #endif
 
@@ -595,7 +595,7 @@ void *ctx;
 	int err;
 	SPL_INT(s);
 
-	err = fr_inobj(data, &iter, IPFOBJ_LOOKUPITER);
+	err = fr_inobj(data, NULL, &iter, IPFOBJ_LOOKUPITER);
 	if (err != 0)
 		return err;
 

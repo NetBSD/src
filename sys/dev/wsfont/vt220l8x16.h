@@ -1,4 +1,4 @@
-/* 	$NetBSD: vt220l8x16.h,v 1.6 2005/12/11 12:24:12 christos Exp $	*/
+/* 	$NetBSD: vt220l8x16.h,v 1.6.74.1 2010/08/11 22:54:18 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch
@@ -46,7 +46,7 @@ static struct wsdisplay_font vt220l8x16 = {
 	16,				/* height */
 	1,				/* stride */
 	WSDISPLAY_FONTORDER_L2R,	/* bit order */
-	0,				/* byte order */
+	WSDISPLAY_FONTORDER_L2R,	/* byte order */
 	vt220l8x16_data			/* data */
 };
 

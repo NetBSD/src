@@ -1,4 +1,4 @@
-/*	$NetBSD: hfs_vfsops.c,v 1.16.10.4 2010/03/11 15:04:13 yamt Exp $	*/
+/*	$NetBSD: hfs_vfsops.c,v 1.16.10.5 2010/08/11 22:54:33 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2007 The NetBSD Foundation, Inc.
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hfs_vfsops.c,v 1.16.10.4 2010/03/11 15:04:13 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hfs_vfsops.c,v 1.16.10.5 2010/08/11 22:54:33 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -287,7 +287,7 @@ hfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 			accessmode |= VWRITE;
 		vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
 		error = genfs_can_mount(devvp, accessmode, l->l_cred);
-		VOP_UNLOCK(devvp, 0);
+		VOP_UNLOCK(devvp);
 	}
 
 	if (error != 0)

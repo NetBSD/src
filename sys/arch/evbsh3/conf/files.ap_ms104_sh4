@@ -1,0 +1,27 @@
+#	$NetBSD: files.ap_ms104_sh4,v 1.1.6.2 2010/08/11 22:51:57 yamt Exp $
+#
+#	Alpha project AP-MS104-SH4 configuration info
+
+file	arch/evbsh3/ap_ms104_sh4/ap_ms104_sh4.c
+file	arch/evbsh3/ap_ms104_sh4/ap_ms104_sh4_intr.c
+file	arch/evbsh3/ap_ms104_sh4/ap_ms104_sh4_space.c
+file	arch/evbsh3/ap_ms104_sh4/clock_machdep.c
+
+# SMC LAN91C111
+attach	sm at mainbus with sm_mainbus
+file	arch/evbsh3/ap_ms104_sh4/if_sm_mainbus.c	sm_mainbus
+
+# CF slot
+device	shpcmcia: pcmciabus
+attach	shpcmcia at mainbus
+file	arch/evbsh3/ap_ms104_sh4/shpcmcia.c		shpcmcia
+
+# Ricoh RS5C316 Real Time Clock
+device	rs5c313rtc: rs5c313
+attach	rs5c313rtc at mainbus with rs5c313_mainbus
+file	arch/evbsh3/ap_ms104_sh4/rs5c316_mainbus.c	rs5c313_mainbus
+
+#
+# Machine-independent PCMCIA drivers
+#
+include	"dev/pcmcia/files.pcmcia"

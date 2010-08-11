@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.12.10.2 2010/03/11 15:01:58 yamt Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.12.10.3 2010/08/11 22:51:32 yamt Exp $	*/
 
 /* 
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.12.10.2 2010/03/11 15:01:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.12.10.3 2010/08/11 22:51:32 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -345,7 +345,7 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 				(*pr)("trace: pid %d ", p->p_pid);
 			} else {
 				(*pr)("trace: pid %d ", (int)addr);
-				p = p_find(addr, PFIND_LOCKED);
+				p = proc_find_raw(addr);
 				if (p == NULL) {
 					(*pr)("not found\n");
 					return;

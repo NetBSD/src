@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.27.4.4 2010/03/11 15:02:23 yamt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.27.4.5 2010/08/11 22:52:02 yamt Exp $	*/
 
 /*	$OpenBSD: cpu.h,v 1.55 2008/07/23 17:39:35 kettenis Exp $	*/
 
@@ -216,41 +216,73 @@ struct clockframe {
 #define	CLKF_INTR(framep)	((framep)->cf_flags & TFF_INTR)
 #define	CLKF_USERMODE(framep)	((framep)->cf_flags & T_USER)
 
-#define	cpu_signotify(l)	(setsoftast())
-#define	cpu_need_proftick(l)	((l)->l_pflag |= LP_OWEUPC, setsoftast())
+#define	cpu_signotify(l)	(setsoftast(l))
+#define	cpu_need_proftick(l)	((l)->l_pflag |= LP_OWEUPC, setsoftast(l))
 
 #include <sys/cpu_data.h>
+
+/*
+ * Note that the alignment of ci_trap_save is important since we want to keep
+ * it within a single cache line.  As a result, it must be kept as the first
+ * entry within the cpu_info struct.
+ */
 struct cpu_info {
+	register_t	ci_trapsave[16];/* the "phys" part of frame */
+
 	struct cpu_data ci_data;	/* MI per-cpu data */
 
+#ifdef MULTIPROCESSOR
 	struct	lwp	*ci_curlwp;	/* CPU owner */
+#endif
 	int		ci_cpuid;	/* CPU index (see cpus[] array) */
 	int		ci_mtx_count;
 	int		ci_mtx_oldspl;
 	int		ci_want_resched;
-};
 
-#include <machine/intr.h>
+	volatile int	ci_cpl;
+	volatile int	ci_ipending;	/* The pending interrupts. */
+	u_int		ci_intr_depth;	/* Nonzero iff running an interrupt. */
+} __aligned(64);
 
-extern struct cpu_info cpu_info_store;
 
 /*
  * definitions of cpu-dependent requirements
  * referenced in generic code
  */
 
-#define	curcpu()			(&cpu_info_store)
-#define	cpu_number()			0
-
-#define cpu_proc_fork(p1, p2)
+#define	cpu_proc_fork(p1, p2)
 
 #ifdef MULTIPROCESSOR
-#define	CPU_IS_PRIMARY(ci)		1
+
+/* Number of CPUs in the system */
+extern int hppa_ncpus;
+
+#define	HPPA_MAXCPUS	4
+#define	cpu_number()			(curcpu()->ci_cpuid)
+
+#define	CPU_IS_PRIMARY(ci)		((ci)->ci_cpuid == 0)
 #define	CPU_INFO_ITERATOR		int
-#define	CPU_INFO_FOREACH(cii, ci)	cii = 0; ci = curcpu(), cii < 1; cii++
+#define	CPU_INFO_FOREACH(cii, ci)	cii = 0; ci =  &cpus[0], cii < hppa_ncpus; cii++, ci++
 
 void	cpu_boot_secondary_processors(void);
-#endif
+
+static __inline struct cpu_info *
+hppa_curcpu(void)
+{
+	struct cpu_info *ci;
+
+	__asm volatile("mfctl %1, %0" : "=r" (ci): "i" (CR_CURCPU));
+
+	return ci;
+}
+
+#define	curcpu()			hppa_curcpu()
+
+#else /*  MULTIPROCESSOR */
+
+#define	HPPA_MAXCPUS	1
+#define	curcpu()			(&cpus[0])
+#define	cpu_number()			0
 
 static __inline struct lwp *
 hppa_curlwp(void)
@@ -259,12 +291,16 @@ hppa_curlwp(void)
 
 	__asm volatile("mfctl %1, %0" : "=r" (l): "i" (CR_CURLWP));
 
-	return (struct lwp *)l;
+	return l;
 }
 
 #define	curlwp				hppa_curlwp()
 
-#define DELAY(x) delay(x)
+#endif /* MULTIPROCESSOR */
+
+extern struct cpu_info cpus[HPPA_MAXCPUS];
+
+#define	DELAY(x) delay(x)
 
 static __inline paddr_t
 kvtop(const void *va)
@@ -276,6 +312,20 @@ kvtop(const void *va)
 }
 
 extern int (*cpu_desidhash)(void);
+
+static __inline bool
+hppa_cpu_ispa20_p(void)
+{
+
+	return (hppa_cpu_info->hci_features & HPPA_FTRS_W32B) != 0;
+}
+
+static __inline bool
+hppa_cpu_hastlbu_p(void)
+{
+
+	return (hppa_cpu_info->hci_features & HPPA_FTRS_TLBU) != 0;
+}
 
 void	delay(u_int);
 void	hppa_init(paddr_t, void *);
@@ -289,7 +339,7 @@ void	lwp_trampoline(void);
 void	setfunc_trampoline(void);
 int	cpu_dumpsize(void);
 int	cpu_dump(void);
-#endif
+#endif	/* _KERNEL */
 
 /*
  * Boot arguments stuff
@@ -303,8 +353,20 @@ int	cpu_dump(void);
  */
 #define	CPU_CONSDEV		1	/* dev_t: console terminal device */
 #define	CPU_BOOTED_KERNEL	2	/* string: booted kernel name */
-#define	CPU_MAXID		3	/* number of valid machdep ids */
+#define CPU_LCD_BLINK           3	/* int: twiddle heartbeat LED/LCD */ 
+#define	CPU_MAXID		4	/* number of valid machdep ids */
 
-#endif
+#ifdef _KERNEL
+#include <sys/queue.h>
+
+struct blink_lcd {
+	void (*bl_func)(void *, int);
+	void *bl_arg;
+	SLIST_ENTRY(blink_lcd) bl_next;
+};
+
+extern void blink_lcd_register(struct blink_lcd *);
+#endif	/* _KERNEL */
+#endif	/* !_LOCORE */
 
 #endif /* _MACHINE_CPU_H_ */

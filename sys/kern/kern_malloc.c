@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_malloc.c,v 1.119.4.3 2010/03/11 15:04:17 yamt Exp $	*/
+/*	$NetBSD: kern_malloc.c,v 1.119.4.4 2010/08/11 22:54:39 yamt Exp $	*/
 
 /*
  * Copyright (c) 1987, 1991, 1993
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.119.4.3 2010/03/11 15:04:17 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.119.4.4 2010/08/11 22:54:39 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -371,6 +371,11 @@ kern_malloc(unsigned long size, struct malloc_type *ksp, int flags)
 			&malloc_lock);
 	}
 	ksp->ks_size |= 1 << indx;
+#ifdef DIAGNOSTIC
+	if (ksp->ks_active[indx - MINBUCKET] == USHRT_MAX)
+		panic("too many allocations in bucket");
+#endif
+	ksp->ks_active[indx - MINBUCKET]++;
 #endif
 #ifdef DIAGNOSTIC
 	copysize = 1 << indx < MAX_COPY ? 1 << indx : MAX_COPY;
@@ -604,6 +609,11 @@ kern_free(void *addr, struct malloc_type *ksp)
 #ifdef KMEMSTATS
 		size = kup->ku_pagecnt << PGSHIFT;
 		ksp->ks_memuse -= size;
+#ifdef DIAGNOSTIC
+		if (ksp->ks_active[kup->ku_indx - MINBUCKET] == 0)
+			panic("no active allocation(1), probably double free");
+#endif
+		ksp->ks_active[kup->ku_indx - MINBUCKET]--;
 		kup->ku_indx = 0;
 		kup->ku_pagecnt = 0;
 		if (ksp->ks_memuse + size >= ksp->ks_limit &&
@@ -660,6 +670,11 @@ kern_free(void *addr, struct malloc_type *ksp)
 	}
 	kbp->kb_totalfree++;
 	ksp->ks_memuse -= size;
+#ifdef DIAGNOSTIC
+	if (ksp->ks_active[kup->ku_indx - MINBUCKET] == 0)
+		panic("no active allocation(2), probably double free");
+#endif
+	ksp->ks_active[kup->ku_indx - MINBUCKET]--;
 	if (ksp->ks_memuse + size >= ksp->ks_limit &&
 	    ksp->ks_memuse < ksp->ks_limit)
 		wakeup((void *)ksp);
@@ -797,7 +812,8 @@ malloc_type_attach(struct malloc_type *type)
 		struct malloc_type *ksp;
 		for (ksp = kmemstatistics; ksp != NULL; ksp = ksp->ks_next) {
 			if (ksp == type)
-				panic("malloc_type_attach: already on list");
+				panic("%s: `%s' already on list", __func__,
+				    type->ks_shortdesc);
 		}
 	}
 #endif

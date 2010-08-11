@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_snapshot.c,v 1.66.4.2 2010/03/11 15:04:44 yamt Exp $	*/
+/*	$NetBSD: ffs_snapshot.c,v 1.66.4.3 2010/08/11 22:55:13 yamt Exp $	*/
 
 /*
  * Copyright 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.66.4.2 2010/03/11 15:04:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.66.4.3 2010/08/11 22:55:13 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -237,7 +237,7 @@ ffs_snapshot(struct mount *mp, struct vnode *vp, struct timespec *ctime)
 	error = VOP_FSYNC(vp, l->l_cred, FSYNC_WAIT, 0, 0);
 	if (error)
 		goto out;
-	VOP_UNLOCK(vp, 0);
+	VOP_UNLOCK(vp);
 	/*
 	 * All allocations are done, so we can now suspend the filesystem.
 	 */
@@ -684,6 +684,7 @@ snapshot_expunge(struct mount *mp, struct vnode *vp, struct fs *copy_fs,
 		*blkp++ = blkno + loc;
 	for (; cg < fs->fs_ncg; cg++)
 		*blkp++ = fragstoblks(fs, cgtod(fs, cg));
+	(*snaplist)[0] = blkp - &(*snaplist)[0];
 
 out:
 	if (has_wapbl)
@@ -1685,7 +1686,7 @@ ffs_snapshot_mount(struct mount *mp)
 		else
 			TAILQ_INSERT_TAIL(&si->si_snapshots, ip, i_nextsnap);
 		vp->v_vflag |= VV_SYSTEM;
-		VOP_UNLOCK(vp, 0);
+		VOP_UNLOCK(vp);
 	}
 	/*
 	 * No usable snapshots found.

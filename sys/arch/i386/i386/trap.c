@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.235.4.4 2010/03/11 15:02:29 yamt Exp $	*/
+/*	$NetBSD: trap.c,v 1.235.4.5 2010/08/11 22:52:12 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2005, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.235.4.4 2010/03/11 15:02:29 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.235.4.5 2010/08/11 22:52:12 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -86,7 +86,7 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.235.4.4 2010/03/11 15:02:29 yamt Exp $");
 #include <sys/acct.h>
 #include <sys/kauth.h>
 #include <sys/kernel.h>
-#include <sys/pool.h>
+#include <sys/kmem.h>
 #include <sys/ras.h>
 #include <sys/signal.h>
 #include <sys/syscall.h>
@@ -442,6 +442,7 @@ copyfault:
 		 * returning from a trap, syscall, or interrupt.
 		 */
 
+kernelfault:
 		KSI_INIT_TRAP(&ksi);
 		ksi.ksi_signo = SIGSEGV;
 		ksi.ksi_code = SEGV_ACCERR;
@@ -603,14 +604,16 @@ copyfault:
 			ksi.ksi_code = xmm_si_code(l);
 			break;
 		case T_BOUND|T_USER:
+			ksi.ksi_code = FPE_FLTSUB;
+			break;
 		case T_OFLOW|T_USER:
-			ksi.ksi_code = FPE_FLTOVF;
+			ksi.ksi_code = FPE_INTOVF;
 			break;
 		case T_DIVIDE|T_USER:
-			ksi.ksi_code = FPE_FLTDIV;
+			ksi.ksi_code = FPE_INTDIV;
 			break;
 		case T_ARITHTRAP|T_USER:
-			ksi.ksi_code = FPE_INTOVF;
+			ksi.ksi_code = npxtrap(l);
 			break;
 		default:
 			ksi.ksi_code = 0;
@@ -671,6 +674,8 @@ faultcommon:
 			map = &vm->vm_map;
 		if (frame->tf_err & PGEX_W)
 			ftype = VM_PROT_WRITE;
+		else if (frame->tf_err & PGEX_X)
+			ftype = VM_PROT_EXECUTE;
 		else
 			ftype = VM_PROT_READ;
 
@@ -755,7 +760,7 @@ faultcommon:
 				goto copyfault;
 			printf("uvm_fault(%p, %#lx, %d) -> %#x\n",
 			    map, va, ftype, error);
-			goto we_re_toast;
+			goto kernelfault;
 		}
 		if (error == ENOMEM) {
 			ksi.ksi_signo = SIGKILL;
@@ -860,7 +865,8 @@ startlwp(void *arg)
 
 	error = cpu_setmcontext(l, &uc->uc_mcontext, uc->uc_flags);
 	KASSERT(error == 0);
-	pool_put(&lwp_uc_pool, uc);
+
+	kmem_free(uc, sizeof(ucontext_t));
 	userret(l);
 }
 

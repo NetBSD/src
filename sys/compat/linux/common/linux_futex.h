@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_futex.h,v 1.2.76.1 2009/05/04 08:12:22 yamt Exp $ */
+/*	$NetBSD: linux_futex.h,v 1.2.76.2 2010/08/11 22:53:08 yamt Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved.
@@ -72,6 +72,9 @@ struct linux_robust_list_head {
 #define FUTEX_OWNER_DIED	0x40000000
 #define FUTEX_TID_MASK		0x3fffffff
 
-void	release_futexes(struct proc *);
+void	release_futexes(struct lwp *);
+struct linux_sys_futex_args;
+int	linux_do_futex(struct lwp *, const struct linux_sys_futex_args *,
+		       register_t *, struct timespec *);
 
 #endif /* !_LINUX_FUTEX_H */

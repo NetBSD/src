@@ -1,4 +1,4 @@
-/*	$NetBSD: device.h,v 1.2.168.1 2009/05/04 08:10:46 yamt Exp $	*/
+/*	$NetBSD: device.h,v 1.2.168.2 2010/08/11 22:51:43 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -46,8 +46,5 @@ int matchname(char *, char *);
  * false when initing for the console.
  */
 extern int atari_realconfig;
-
-
-#define getsoftc(cdnam, unit) device_lookup_private(&(cdnam), (unit))
 
 #endif /* _ATARI_DEVICE_H_ */

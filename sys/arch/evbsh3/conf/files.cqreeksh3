@@ -1,0 +1,6 @@
+#	$NetBSD: files.cqreeksh3,v 1.1.6.2 2010/08/11 22:51:57 yamt Exp $
+#
+#	CQREEKSH3 configuration info
+
+file	arch/evbsh3/cqreeksh3/cqreeksh3.c
+file	arch/evbsh3/cqreeksh3/clock_machdep.c

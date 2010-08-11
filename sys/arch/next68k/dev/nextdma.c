@@ -1,4 +1,4 @@
-/*	$NetBSD: nextdma.c,v 1.42.66.2 2010/03/11 15:02:46 yamt Exp $	*/
+/*	$NetBSD: nextdma.c,v 1.42.66.3 2010/08/11 22:52:29 yamt Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -11,11 +11,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by Darrin B. Jewell
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -30,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nextdma.c,v 1.42.66.2 2010/03/11 15:02:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nextdma.c,v 1.42.66.3 2010/08/11 22:52:29 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -209,7 +204,7 @@ nextdma_init(struct nextdma_softc *nsc)
 		char sbuf[256];
 
 		snprintb(sbuf, sizeof(sbuf), NEXT_INTR_BITS,
-		    (NEXT_I_BIT(nsc->sc_chan->nd_intr));
+		    NEXT_I_BIT(nsc->sc_chan->nd_intr));
 		printf("DMA init ipl (%ld) intr(0x%s)\n",
 			NEXT_I_IPL(nsc->sc_chan->nd_intr), sbuf);
 	}
@@ -493,7 +488,7 @@ nextdma_enet_intr(void *arg)
 		char sbuf[256];
 
 		snprintb(sbuf, sizeof(sbuf), NEXT_INTR_BITS,
-		    (NEXT_I_BIT(nsc->sc_chan->nd_intr));
+		    NEXT_I_BIT(nsc->sc_chan->nd_intr));
 		printf("DMA interrupt ipl (%ld) intr(0x%s)\n",
 		       NEXT_I_IPL(nsc->sc_chan->nd_intr), sbuf);
 	}
@@ -906,7 +901,7 @@ nextdma_print(struct nextdma_softc *nsc)
 	printf("NDMAP: dd->dd_stop         = 0x%08lx\n", dd_stop);
 
 	snprintb(sbuf, sizeof(sbuf), NEXT_INTR_BITS,
-	    (NEXT_I_BIT(nsc->sc_chan->nd_intr)));
+	    NEXT_I_BIT(nsc->sc_chan->nd_intr));
 	printf("NDMAP: interrupt ipl (%ld) intr(0x%s)\n",
 			NEXT_I_IPL(nsc->sc_chan->nd_intr), sbuf);
 }

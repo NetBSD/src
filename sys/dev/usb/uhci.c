@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.216.4.3 2010/03/11 15:04:06 yamt Exp $	*/
+/*	$NetBSD: uhci.c,v 1.216.4.4 2010/08/11 22:54:15 yamt Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.216.4.3 2010/03/11 15:04:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.216.4.4 2010/08/11 22:54:15 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1328,7 +1328,9 @@ uhci_intr1(uhci_softc_t *sc)
 		printf("%s: host controller process error\n",
 		       device_xname(sc->sc_dev));
 	}
-	if (status & UHCI_STS_HCH) {
+
+	/* When HCHalted=1 and Run/Stop=0 , it is normal */
+	if ((status & UHCI_STS_HCH) && (UREAD2(sc, UHCI_CMD) & UHCI_CMD_RS)) {
 		/* no acknowledge needed */
 		if (!sc->sc_dying) {
 			printf("%s: host controller halted\n",

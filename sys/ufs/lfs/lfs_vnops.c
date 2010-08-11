@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.215.10.4 2010/03/11 15:04:45 yamt Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.215.10.5 2010/08/11 22:55:14 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.215.10.4 2010/03/11 15:04:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.215.10.5 2010/08/11 22:55:14 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -204,45 +204,45 @@ const struct vnodeopv_desc lfs_specop_opv_desc =
 int (**lfs_fifoop_p)(void *);
 const struct vnodeopv_entry_desc lfs_fifoop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
-	{ &vop_lookup_desc, fifo_lookup },		/* lookup */
-	{ &vop_create_desc, fifo_create },		/* create */
-	{ &vop_mknod_desc, fifo_mknod },		/* mknod */
-	{ &vop_open_desc, fifo_open },			/* open */
+	{ &vop_lookup_desc, vn_fifo_bypass },		/* lookup */
+	{ &vop_create_desc, vn_fifo_bypass },		/* create */
+	{ &vop_mknod_desc, vn_fifo_bypass },		/* mknod */
+	{ &vop_open_desc, vn_fifo_bypass },		/* open */
 	{ &vop_close_desc, lfsfifo_close },		/* close */
 	{ &vop_access_desc, ufs_access },		/* access */
 	{ &vop_getattr_desc, lfs_getattr },		/* getattr */
 	{ &vop_setattr_desc, lfs_setattr },		/* setattr */
 	{ &vop_read_desc, ufsfifo_read },		/* read */
 	{ &vop_write_desc, ufsfifo_write },		/* write */
-	{ &vop_ioctl_desc, fifo_ioctl },		/* ioctl */
+	{ &vop_ioctl_desc, vn_fifo_bypass },		/* ioctl */
 	{ &vop_fcntl_desc, ufs_fcntl },			/* fcntl */
-	{ &vop_poll_desc, fifo_poll },			/* poll */
-	{ &vop_kqfilter_desc, fifo_kqfilter },		/* kqfilter */
-	{ &vop_revoke_desc, fifo_revoke },		/* revoke */
-	{ &vop_mmap_desc, fifo_mmap },			/* mmap */
-	{ &vop_fsync_desc, fifo_fsync },		/* fsync */
-	{ &vop_seek_desc, fifo_seek },			/* seek */
-	{ &vop_remove_desc, fifo_remove },		/* remove */
-	{ &vop_link_desc, fifo_link },			/* link */
-	{ &vop_rename_desc, fifo_rename },		/* rename */
-	{ &vop_mkdir_desc, fifo_mkdir },		/* mkdir */
-	{ &vop_rmdir_desc, fifo_rmdir },		/* rmdir */
-	{ &vop_symlink_desc, fifo_symlink },		/* symlink */
-	{ &vop_readdir_desc, fifo_readdir },		/* readdir */
-	{ &vop_readlink_desc, fifo_readlink },		/* readlink */
-	{ &vop_abortop_desc, fifo_abortop },		/* abortop */
+	{ &vop_poll_desc, vn_fifo_bypass },		/* poll */
+	{ &vop_kqfilter_desc, vn_fifo_bypass },		/* kqfilter */
+	{ &vop_revoke_desc, vn_fifo_bypass },		/* revoke */
+	{ &vop_mmap_desc, vn_fifo_bypass },		/* mmap */
+	{ &vop_fsync_desc, vn_fifo_bypass },		/* fsync */
+	{ &vop_seek_desc, vn_fifo_bypass },		/* seek */
+	{ &vop_remove_desc, vn_fifo_bypass },		/* remove */
+	{ &vop_link_desc, vn_fifo_bypass },		/* link */
+	{ &vop_rename_desc, vn_fifo_bypass },		/* rename */
+	{ &vop_mkdir_desc, vn_fifo_bypass },		/* mkdir */
+	{ &vop_rmdir_desc, vn_fifo_bypass },		/* rmdir */
+	{ &vop_symlink_desc, vn_fifo_bypass },		/* symlink */
+	{ &vop_readdir_desc, vn_fifo_bypass },		/* readdir */
+	{ &vop_readlink_desc, vn_fifo_bypass },		/* readlink */
+	{ &vop_abortop_desc, vn_fifo_bypass },		/* abortop */
 	{ &vop_inactive_desc, lfs_inactive },		/* inactive */
 	{ &vop_reclaim_desc, lfs_reclaim },		/* reclaim */
 	{ &vop_lock_desc, ufs_lock },			/* lock */
 	{ &vop_unlock_desc, ufs_unlock },		/* unlock */
-	{ &vop_bmap_desc, fifo_bmap },			/* bmap */
-	{ &vop_strategy_desc, fifo_strategy },		/* strategy */
+	{ &vop_bmap_desc, vn_fifo_bypass },		/* bmap */
+	{ &vop_strategy_desc, vn_fifo_bypass },		/* strategy */
 	{ &vop_print_desc, ufs_print },			/* print */
 	{ &vop_islocked_desc, ufs_islocked },		/* islocked */
-	{ &vop_pathconf_desc, fifo_pathconf },		/* pathconf */
-	{ &vop_advlock_desc, fifo_advlock },		/* advlock */
+	{ &vop_pathconf_desc, vn_fifo_bypass },		/* pathconf */
+	{ &vop_advlock_desc, vn_fifo_bypass },		/* advlock */
 	{ &vop_bwrite_desc, lfs_bwrite },		/* bwrite */
-	{ &vop_putpages_desc, fifo_putpages },		/* putpages */
+	{ &vop_putpages_desc, vn_fifo_bypass },		/* putpages */
 	{ NULL, NULL }
 };
 const struct vnodeopv_desc lfs_fifoop_opv_desc =
@@ -275,6 +275,10 @@ lfs_fsync(void *v)
 
 	/* If we're mounted read-only, don't try to sync. */
 	if (fs->lfs_ronly)
+		return 0;
+
+	/* If a removed vnode is being cleaned, no need to sync here. */
+	if ((ap->a_flags & FSYNC_RECLAIM) != 0 && ip->i_mode == 0)
 		return 0;
 
 	/*
@@ -354,7 +358,7 @@ lfs_inactive(void *v)
 		mutex_enter(&lfs_lock);
 		LFS_CLR_UINO(VTOI(ap->a_vp), IN_ALLMOD);
 		mutex_exit(&lfs_lock);
-		VOP_UNLOCK(ap->a_vp, 0);
+		VOP_UNLOCK(ap->a_vp);
 		return 0;
 	}
 
@@ -651,7 +655,7 @@ lfs_mknod(void *v)
 	 */
 	/* Used to be vput, but that causes us to call VOP_INACTIVE twice. */
 
-	VOP_UNLOCK(*vpp, 0);
+	VOP_UNLOCK(*vpp);
 	(*vpp)->v_type = VNON;
 	vgone(*vpp);
 	error = VFS_VGET(mp, ino, vpp);
@@ -1075,6 +1079,14 @@ lfs_reclaim(void *v)
 	struct lfs *fs = ip->i_lfs;
 	int error;
 
+	/*
+	 * The inode must be freed and updated before being removed
+	 * from its hash chain.  Other threads trying to gain a hold
+	 * on the inode will be stalled because it is locked (VI_XLOCK).
+	 */
+	if (ip->i_nlink <= 0 && (vp->v_mount->mnt_flag & MNT_RDONLY) == 0)
+		lfs_vfree(vp, ip->i_number, ip->i_omode);
+
 	mutex_enter(&lfs_lock);
 	LFS_CLR_UINO(ip, IN_ALLMOD);
 	mutex_exit(&lfs_lock);
@@ -1227,7 +1239,6 @@ lfs_flush_dirops(struct lfs *fs)
 	struct vnode *vp;
 	extern int lfs_dostats;
 	struct segment *sp;
-	int waslocked;
 
 	ASSERT_MAYBE_SEGLOCK(fs);
 	KASSERT(fs->lfs_nadirop == 0);
@@ -1289,7 +1300,9 @@ lfs_flush_dirops(struct lfs *fs)
 			mutex_enter(&lfs_lock);
 			continue;
 		}
-		waslocked = VOP_ISLOCKED(vp);
+		/* XXX see below
+		 * waslocked = VOP_ISLOCKED(vp);
+		 */
 		if (vp->v_type != VREG &&
 		    ((ip->i_flag & IN_ALLMOD) || !VPISEMPTY(vp))) {
 			lfs_writefile(fs, sp, vp);
@@ -1303,8 +1316,12 @@ lfs_flush_dirops(struct lfs *fs)
 		KDASSERT(ip->i_number != LFS_IFILE_INUM);
 		(void) lfs_writeinode(fs, sp, ip);
 		mutex_enter(&lfs_lock);
-		if (waslocked == LK_EXCLOTHER)
-			LFS_SET_UINO(ip, IN_MODIFIED);
+		/*
+		 * XXX
+		 * LK_EXCLOTHER is dead -- what is intended here?
+		 * if (waslocked == LK_EXCLOTHER)
+		 *	LFS_SET_UINO(ip, IN_MODIFIED);
+		 */
 	}
 	mutex_exit(&lfs_lock);
 	/* We've written all the dirops there are */
@@ -1383,7 +1400,7 @@ lfs_flush_pchain(struct lfs *fs)
 			continue;
 		mutex_exit(&lfs_lock);
 
-		if (VOP_ISLOCKED(vp)) {
+		if (vn_lock(vp, LK_EXCLUSIVE | LK_NOWAIT | LK_RETRY) != 0) {
 			lfs_vunref(vp);
 			mutex_enter(&lfs_lock);
 			continue;
@@ -1399,6 +1416,7 @@ lfs_flush_pchain(struct lfs *fs)
 		KDASSERT(ip->i_number != LFS_IFILE_INUM);
 		(void) lfs_writeinode(fs, sp, ip);
 
+		VOP_UNLOCK(vp);
 		lfs_vunref(vp);
 
 		if (error == EAGAIN) {
@@ -1842,12 +1860,16 @@ check_dirty(struct lfs *fs, struct vnode *vp,
 			 * blocks outside our area of interest or beyond
 			 * the end of file.
 			 */
+			KASSERT((curpg->flags & PG_MARKER) == 0);
 			if (pages_per_block > 1) {
 				while (curpg &&
-				       ((curpg->offset & fs->lfs_bmask) ||
-					curpg->offset >= vp->v_size ||
-					curpg->offset >= endoffset))
+				    ((curpg->offset & fs->lfs_bmask) ||
+				    curpg->offset >= vp->v_size ||
+				    curpg->offset >= endoffset)) {
 					curpg = TAILQ_NEXT(curpg, listq.queue);
+					KASSERT(curpg == NULL ||
+					    (curpg->flags & PG_MARKER) == 0);
+				}
 			}
 			if (curpg == NULL)
 				break;
@@ -2208,21 +2230,20 @@ lfs_putpages(void *v)
 		int locked;
 
 		DLOG((DLOG_PAGE, "lfs_putpages: flushing VU_DIROP\n"));
+		/* XXX VOP_ISLOCKED() may not be used for lock decisions. */
 		locked = (VOP_ISLOCKED(vp) == LK_EXCLUSIVE);
 		mutex_exit(&vp->v_interlock);
 		lfs_writer_enter(fs, "ppdirop");
 		if (locked)
-			VOP_UNLOCK(vp, 0); /* XXX why? */
+			VOP_UNLOCK(vp); /* XXX why? */
 
 		mutex_enter(&lfs_lock);
 		lfs_flush_fs(fs, sync ? SEGM_SYNC : 0);
 		mutex_exit(&lfs_lock);
 
+		if (locked)
+			VOP_LOCK(vp, LK_EXCLUSIVE);
 		mutex_enter(&vp->v_interlock);
-		if (locked) {
-			VOP_LOCK(vp, LK_EXCLUSIVE | LK_INTERLOCK);
-			mutex_enter(&vp->v_interlock);
-		}
 		lfs_writer_leave(fs);
 
 		/* XXX the flush should have taken care of this one too! */

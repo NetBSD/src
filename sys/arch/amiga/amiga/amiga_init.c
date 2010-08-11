@@ -1,4 +1,4 @@
-/*	$NetBSD: amiga_init.c,v 1.99.10.2 2010/03/11 15:01:59 yamt Exp $	*/
+/*	$NetBSD: amiga_init.c,v 1.99.10.3 2010/08/11 22:51:34 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -34,9 +34,10 @@
 #include "opt_amigaccgrf.h"
 #include "opt_p5ppc68kboard.h"
 #include "opt_devreload.h"
+#include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amiga_init.c,v 1.99.10.2 2010/03/11 15:01:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amiga_init.c,v 1.99.10.3 2010/08/11 22:51:34 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

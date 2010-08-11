@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64461.c,v 1.18.4.2 2009/05/04 08:11:13 yamt Exp $	*/
+/*	$NetBSD: hd64461.c,v 1.18.4.3 2010/08/11 22:52:08 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64461.c,v 1.18.4.2 2009/05/04 08:11:13 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64461.c,v 1.18.4.3 2010/08/11 22:52:08 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,6 +58,8 @@ STATIC const struct hd64461_module {
 	[HD64461_MODULE_FIR]		= { "hd64461fir" },
 #endif
 };
+
+int use_afeck = 0;
 
 STATIC int hd64461_match(device_t, cfdata_t, void *);
 STATIC void hd64461_attach(device_t, device_t, void *);
@@ -109,10 +111,11 @@ hd64461_attach(device_t parent, device_t self, void *aux)
 	stbcr |= HD64461_SYSSTBCR_STM0ST | HD64461_SYSSTBCR_STM1ST;
 
 	/* no drivers for FIR and AFE */
-	stbcr |= HD64461_SYSSTBCR_SIRST
-		| HD64461_SYSSTBCR_SAFEST
-		| HD64461_SYSSTBCR_SAFECKE_IST
-		| HD64461_SYSSTBCR_SAFECKE_OST;
+	stbcr |= HD64461_SYSSTBCR_SIRST | HD64461_SYSSTBCR_SAFEST;
+
+	if (!use_afeck)
+		stbcr |=
+		    HD64461_SYSSTBCR_SAFECKE_IST | HD64461_SYSSTBCR_SAFECKE_OST;
 
 	hd64461_reg_write_2(HD64461_SYSSTBCR_REG16, stbcr);
 

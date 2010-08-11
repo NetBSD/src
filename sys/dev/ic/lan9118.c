@@ -1,4 +1,4 @@
-/*	$NetBSD: lan9118.c,v 1.1.2.3 2010/03/11 15:03:32 yamt Exp $	*/
+/*	$NetBSD: lan9118.c,v 1.1.2.4 2010/08/11 22:53:27 yamt Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lan9118.c,v 1.1.2.3 2010/03/11 15:03:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lan9118.c,v 1.1.2.4 2010/08/11 22:53:27 yamt Exp $");
 
 /*
  * The LAN9118 Family
@@ -454,8 +454,7 @@ discard:
 		/*
 		 * Pass the packet to any BPF listeners.
 		 */
-		if (ifp->if_bpf)
-			bpf_ops->bpf_mtap(ifp->if_bpf, m0);
+		bpf_mtap(ifp, m0);
 
 		m_freem(m0);
 	}
@@ -1009,8 +1008,7 @@ dropit:
 		 * Pass this up to any BPF listeners, but only
 		 * pass if up the stack if it's for us.
 		 */
-		if (ifp->if_bpf)
-			bpf_ops->bpf_mtap(ifp->if_bpf, m);
+		bpf_mtap(ifp, m);
 
 		/* Pass it on. */
 		(*ifp->if_input)(ifp, m);

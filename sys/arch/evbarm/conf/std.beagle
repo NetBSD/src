@@ -1,4 +1,4 @@
-#	$NetBSD: std.beagle,v 1.1.16.2 2009/05/04 08:10:57 yamt Exp $
+#	$NetBSD: std.beagle,v 1.1.16.3 2010/08/11 22:51:51 yamt Exp $
 #
 # standard NetBSD/evbarm for BEAGLEBAORD options
 
@@ -13,8 +13,8 @@ options 	EXEC_SCRIPT
 
 # To support easy transit to ../arch/arm/arm32
 options 	ARM32
-options 	ARM11_PMC
-options 	ARM11_PMC_CCNT_HZ=500000000
+options 	CORTEX_PMC
+options 	CORTEX_PMC_CCNT_HZ=500000000
 options 	__HAVE_FAST_SOFTINTS		# should be in types.h
 #options 	PROCESS_ID_IS_CURLWP
 options 	KERNEL_BASE_EXT=0x80000000

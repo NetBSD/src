@@ -1,4 +1,4 @@
-#	$NetBSD: ixp425-fw.mk,v 1.1 2006/12/10 10:01:49 scw Exp $
+#	$NetBSD: ixp425-fw.mk,v 1.1.56.1 2010/08/11 22:51:42 yamt Exp $
 
 #
 # For IXP425 NE support, this file must be included by the board-specific
@@ -17,5 +17,5 @@ CPPFLAGS+=	-DIXP425_NPE_MICROCODE
 ixp425_fw.o:	$S/arch/arm/xscale/IxNpeMicrocode.dat
 	-rm -f ${.OBJDIR}/IxNpeMicrocode.dat
 	-ln -s $S/arch/arm/xscale/IxNpeMicrocode.dat ${.OBJDIR}
-	${LD} -b binary -d -warn-common -r -d -o ${.TARGET} IxNpeMicrocode.dat
+	${OBJCOPY} -I binary -O default -B arm IxNpeMicrocode.dat ${.TARGET}
 .endif

@@ -1,4 +1,4 @@
-/* $NetBSD: if_plip.c,v 1.21.4.2 2010/03/11 15:04:00 yamt Exp $ */
+/* $NetBSD: if_plip.c,v 1.21.4.3 2010/08/11 22:54:08 yamt Exp $ */
 
 /*-
  * Copyright (c) 1997 Poul-Henning Kamp
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_plip.c,v 1.21.4.2 2010/03/11 15:04:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_plip.c,v 1.21.4.3 2010/08/11 22:54:08 yamt Exp $");
 
 /*
  * Parallel port TCP/IP interfaces added.  I looked at the driver from
@@ -241,7 +241,7 @@ lp_attach(device_t parent, device_t self, void *aux)
 	if_attach(ifp);
 	if_alloc_sadl(ifp);
 
-	bpf_ops->bpf_attach(ifp, DLT_NULL, sizeof(u_int32_t), &ifp->if_bpf);
+	bpf_attach(ifp, DLT_NULL, sizeof(u_int32_t));
 
 	if(lp_count++ == 0)
 		lpinittables();
@@ -525,7 +525,7 @@ lptap(struct ifnet *ifp, struct mbuf *m)
 	m0.m_next = m;
 	m0.m_len = sizeof(u_int32_t);
 	m0.m_data = (char *)&af;
-	bpf_ops->bpf_mtap(ifp->if_bpf, &m0);
+	bpf_mtap(ifp, &m0);
 }
 
 /* Soft interrupt handler called by hardware interrupt handler */

@@ -1,4 +1,4 @@
-/*	$NetBSD: rgephy.c,v 1.20.4.3 2009/09/16 13:37:49 yamt Exp $	*/
+/*	$NetBSD: rgephy.c,v 1.20.4.4 2010/08/11 22:53:40 yamt Exp $	*/
 
 /*
  * Copyright (c) 2003
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rgephy.c,v 1.20.4.3 2009/09/16 13:37:49 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rgephy.c,v 1.20.4.4 2010/08/11 22:53:40 yamt Exp $");
 
 
 /*
@@ -203,9 +203,8 @@ rgephy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 
 		rgephy_reset(sc);	/* XXX hardware bug work-around */
 
-		anar = PHY_READ(sc, RGEPHY_MII_ANAR);
-		anar &= ~(RGEPHY_ANAR_TX_FD | RGEPHY_ANAR_TX |
-		    RGEPHY_ANAR_10_FD | RGEPHY_ANAR_10);
+		anar = PHY_READ(sc, MII_ANAR);
+		anar &= ~(ANAR_TX_FD | ANAR_TX | ANAR_10_FD | ANAR_10);
 
 		switch (IFM_SUBTYPE(ife->ifm_media)) {
 		case IFM_AUTO:
@@ -213,38 +212,37 @@ rgephy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 			/*
 			 * If we're already in auto mode, just return.
 			 */
-			if (PHY_READ(sc, RGEPHY_MII_BMCR) & RGEPHY_BMCR_AUTOEN)
+			if (PHY_READ(sc, MII_BMCR) & BMCR_AUTOEN)
 				return 0;
 #endif
 			(void)rgephy_mii_phy_auto(sc);
 			break;
 		case IFM_1000_T:
-			speed = RGEPHY_S1000;
+			speed = BMCR_S1000;
 			goto setit;
 		case IFM_100_TX:
-			speed = RGEPHY_S100;
-			anar |= RGEPHY_ANAR_TX_FD | RGEPHY_ANAR_TX;
+			speed = BMCR_S100;
+			anar |= ANAR_TX_FD | ANAR_TX;
 			goto setit;
 		case IFM_10_T:
-			speed = RGEPHY_S10;
-			anar |= RGEPHY_ANAR_10_FD | RGEPHY_ANAR_10;
+			speed = BMCR_S10;
+			anar |= ANAR_10_FD | ANAR_10;
  setit:
 			rgephy_loop(sc);
 			if ((ife->ifm_media & IFM_GMASK) == IFM_FDX) {
-				speed |= RGEPHY_BMCR_FDX;
-				gig = RGEPHY_1000CTL_AFD;
-				anar &= ~(RGEPHY_ANAR_TX | RGEPHY_ANAR_10);
+				speed |= BMCR_FDX;
+				gig = GTCR_ADV_1000TFDX;
+				anar &= ~(ANAR_TX | ANAR_10);
 			} else {
-				gig = RGEPHY_1000CTL_AHD;
-				anar &=
-				    ~(RGEPHY_ANAR_TX_FD | RGEPHY_ANAR_10_FD);
+				gig = GTCR_ADV_1000THDX;
+				anar &= ~(ANAR_TX_FD | ANAR_10_FD);
 			}
 
 			if (IFM_SUBTYPE(ife->ifm_media) != IFM_1000_T) {
-				PHY_WRITE(sc, RGEPHY_MII_1000CTL, 0);
-				PHY_WRITE(sc, RGEPHY_MII_ANAR, anar);
-				PHY_WRITE(sc, RGEPHY_MII_BMCR, speed |
-				    RGEPHY_BMCR_AUTOEN | RGEPHY_BMCR_STARTNEG);
+				PHY_WRITE(sc, MII_100T2CR, 0);
+				PHY_WRITE(sc, MII_ANAR, anar);
+				PHY_WRITE(sc, MII_BMCR, speed |
+				    BMCR_AUTOEN | BMCR_STARTNEG);
 				break;
 			}
 
@@ -257,14 +255,13 @@ rgephy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 			 * be a master, otherwise it's a slave.
 			 */
 			if ((mii->mii_ifp->if_flags & IFF_LINK0)) {
-				PHY_WRITE(sc, RGEPHY_MII_1000CTL,
-				    gig|RGEPHY_1000CTL_MSE|RGEPHY_1000CTL_MSC);
+				PHY_WRITE(sc, MII_100T2CR,
+				    gig|GTCR_MAN_MS|GTCR_ADV_MS);
 			} else {
-				PHY_WRITE(sc, RGEPHY_MII_1000CTL,
-				    gig|RGEPHY_1000CTL_MSE);
+				PHY_WRITE(sc, MII_100T2CR, gig|GTCR_MAN_MS);
 			}
-			PHY_WRITE(sc, RGEPHY_MII_BMCR, speed |
-			    RGEPHY_BMCR_AUTOEN | RGEPHY_BMCR_STARTNEG);
+			PHY_WRITE(sc, MII_BMCR, speed |
+			    BMCR_AUTOEN | BMCR_STARTNEG);
 			break;
 		case IFM_NONE:
 			PHY_WRITE(sc, MII_BMCR, BMCR_ISO|BMCR_PDOWN);
@@ -366,20 +363,20 @@ rgephy_status(struct mii_softc *sc)
 			mii->mii_media_status |= IFM_ACTIVE;
 	}
 
-	bmsr = PHY_READ(sc, RGEPHY_MII_BMSR);
-	bmcr = PHY_READ(sc, RGEPHY_MII_BMCR);
+	bmsr = PHY_READ(sc, MII_BMSR);
+	bmcr = PHY_READ(sc, MII_BMCR);
 
-	if ((bmcr & RGEPHY_BMCR_ISO) != 0) {
+	if ((bmcr & BMCR_ISO) != 0) {
 		mii->mii_media_active |= IFM_NONE;
 		mii->mii_media_status = 0;
 		return;
 	}
 
-	if ((bmcr & RGEPHY_BMCR_LOOP) != 0)
+	if ((bmcr & BMCR_LOOP) != 0)
 		mii->mii_media_active |= IFM_LOOP;
 
-	if ((bmcr & RGEPHY_BMCR_AUTOEN) != 0) {
-		if ((bmsr & RGEPHY_BMSR_ACOMP) == 0) {
+	if ((bmcr & BMCR_AUTOEN) != 0) {
+		if ((bmsr & BMSR_ACOMP) == 0) {
 			/* Erg, still trying, I guess... */
 			mii->mii_media_active |= IFM_NONE;
 			return;
@@ -436,15 +433,13 @@ rgephy_mii_phy_auto(struct mii_softc *mii)
 
 	anar = BMSR_MEDIA_TO_ANAR(mii->mii_capabilities) | ANAR_CSMA;
 	if (mii->mii_flags & MIIF_DOPAUSE)
-		anar |= RGEPHY_ANAR_PC | RGEPHY_ANAR_ASP;
+		anar |= ANAR_FC | ANAR_X_PAUSE_ASYM;
 
-	PHY_WRITE(mii, RGEPHY_MII_ANAR, anar);
+	PHY_WRITE(mii, MII_ANAR, anar);
 	DELAY(1000);
-	PHY_WRITE(mii, RGEPHY_MII_1000CTL,
-	    RGEPHY_1000CTL_AHD | RGEPHY_1000CTL_AFD);
+	PHY_WRITE(mii, MII_100T2CR, GTCR_ADV_1000THDX | GTCR_ADV_1000TFDX);
 	DELAY(1000);
-	PHY_WRITE(mii, RGEPHY_MII_BMCR,
-	    RGEPHY_BMCR_AUTOEN | RGEPHY_BMCR_STARTNEG);
+	PHY_WRITE(mii, MII_BMCR, BMCR_AUTOEN | BMCR_STARTNEG);
 	DELAY(100);
 
 	return EJUSTRETURN;
@@ -459,13 +454,13 @@ rgephy_loop(struct mii_softc *sc)
 
 	rsc = (struct rgephy_softc *)sc;
 	if (rsc->mii_revision < 2) {
-		PHY_WRITE(sc, RGEPHY_MII_BMCR, RGEPHY_BMCR_PDOWN);
+		PHY_WRITE(sc, MII_BMCR, BMCR_PDOWN);
 		DELAY(1000);
 	}
 
 	for (i = 0; i < 15000; i++) {
-		bmsr = PHY_READ(sc, RGEPHY_MII_BMSR);
-		if ((bmsr & RGEPHY_BMSR_LINK) == 0) {
+		bmsr = PHY_READ(sc, MII_BMSR);
+		if ((bmsr & BMSR_LINK) == 0) {
 #if 0
 			device_printf(sc->mii_dev, "looped %d\n", i);
 #endif
@@ -613,15 +608,12 @@ rgephy_reset(struct mii_softc *sc)
 	/* Reset capabilities */
 	/* Step1: write our capability */
 	/* 10/100 capability */
-	PHY_WRITE(sc, RGEPHY_MII_ANAR,
-	    RGEPHY_ANAR_TX_FD | RGEPHY_ANAR_TX |
-	    RGEPHY_ANAR_10_FD | RGEPHY_ANAR_10 | ANAR_CSMA);
+	PHY_WRITE(sc, MII_ANAR,
+	    ANAR_TX_FD | ANAR_TX | ANAR_10_FD | ANAR_10 | ANAR_CSMA);
 	/* 1000 capability */
-	PHY_WRITE(sc, RGEPHY_MII_1000CTL,
-	    RGEPHY_1000CTL_AFD | RGEPHY_1000CTL_AHD);
+	PHY_WRITE(sc, MII_100T2CR, GTCR_ADV_1000TFDX | GTCR_ADV_1000THDX);
 
 	/* Step2: Restart NWay */
 	/* NWay enable and Restart NWay */
-	PHY_WRITE(sc, RGEPHY_MII_BMCR,
-	    RGEPHY_BMCR_RESET | RGEPHY_BMCR_AUTOEN | RGEPHY_BMCR_STARTNEG);
+	PHY_WRITE(sc, MII_BMCR, BMCR_RESET | BMCR_AUTOEN | BMCR_STARTNEG);
 }

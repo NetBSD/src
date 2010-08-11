@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.37.2.2 2010/03/11 15:02:34 yamt Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.37.2.3 2010/08/11 22:52:19 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -74,8 +74,10 @@
  *	from: @(#)machdep.c	8.10 (Berkeley) 4/20/94
  */
 
+#include "opt_m68k_arch.h"
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.37.2.2 2010/03/11 15:02:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.37.2.3 2010/08/11 22:52:19 yamt Exp $");
 
 #define __M68K_SIGNAL_PRIVATE
 

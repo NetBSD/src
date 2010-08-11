@@ -8,7 +8,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2009, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2010, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -173,6 +173,7 @@ AcpiPsCompleteFinalOp (
 
 static void
 AcpiPsLinkModuleCode (
+    ACPI_PARSE_OBJECT       *ParentOp,
     UINT8                   *AmlStart,
     UINT32                  AmlLength,
     ACPI_OWNER_ID           OwnerId);
@@ -227,7 +228,7 @@ AcpiPsGetAmlOpcode (
         /* The opcode is unrecognized. Just skip unknown opcodes */
 
         ACPI_ERROR ((AE_INFO,
-             "Found unknown opcode %X at AML address %p offset %X, ignoring",
+             "Found unknown opcode 0x%X at AML address %p offset 0x%X, ignoring",
               WalkState->Opcode, WalkState->ParserState.Aml, WalkState->AmlOffset));
 
         ACPI_DUMP_BUFFER (WalkState->ParserState.Aml, 128);
@@ -593,8 +594,8 @@ AcpiPsGetArguments (
                  */
                 if (WalkState->PassNumber == ACPI_IMODE_LOAD_PASS1)
                 {
-                    AcpiPsLinkModuleCode (AmlOpStart,
-                        WalkState->ParserState.PkgEnd - AmlOpStart,
+                    AcpiPsLinkModuleCode (Op->Common.Parent, AmlOpStart,
+                        (UINT32) (WalkState->ParserState.PkgEnd - AmlOpStart),
                         WalkState->OwnerId);
                 }
 
@@ -625,7 +626,8 @@ AcpiPsGetArguments (
                             "Detected an unsupported executable opcode "
                             "at module-level: [0x%.4X] at table offset 0x%.4X",
                             Op->Common.AmlOpcode,
-                            (UINT16)((AmlOpStart - WalkState->ParserState.AmlStart) +
+                            (UINT32) (ACPI_PTR_DIFF (AmlOpStart,
+                                WalkState->ParserState.AmlStart) +
                                 sizeof (ACPI_TABLE_HEADER))));
                     }
                 }
@@ -703,7 +705,8 @@ AcpiPsGetArguments (
  *
  * FUNCTION:    AcpiPsLinkModuleCode
  *
- * PARAMETERS:  AmlStart            - Pointer to the AML
+ * PARAMETERS:  ParentOp            - Parent parser op
+ *              AmlStart            - Pointer to the AML
  *              AmlLength           - Length of executable AML
  *              OwnerId             - OwnerId of module level code
  *
@@ -717,6 +720,7 @@ AcpiPsGetArguments (
 
 static void
 AcpiPsLinkModuleCode (
+    ACPI_PARSE_OBJECT       *ParentOp,
     UINT8                   *AmlStart,
     UINT32                  AmlLength,
     ACPI_OWNER_ID           OwnerId)
@@ -724,6 +728,7 @@ AcpiPsLinkModuleCode (
     ACPI_OPERAND_OBJECT     *Prev;
     ACPI_OPERAND_OBJECT     *Next;
     ACPI_OPERAND_OBJECT     *MethodObj;
+    ACPI_NAMESPACE_NODE     *ParentNode;
 
 
     /* Get the tail of the list */
@@ -750,10 +755,26 @@ AcpiPsLinkModuleCode (
             return;
         }
 
+        if (ParentOp->Common.Node)
+        {
+            ParentNode = ParentOp->Common.Node;
+        }
+        else
+        {
+            ParentNode = AcpiGbl_RootNode;
+        }
+
         MethodObj->Method.AmlStart = AmlStart;
         MethodObj->Method.AmlLength = AmlLength;
         MethodObj->Method.OwnerId = OwnerId;
         MethodObj->Method.Flags |= AOPOBJ_MODULE_LEVEL;
+
+        /*
+         * Save the parent node in NextObject. This is cheating, but we
+         * don't want to expand the method object.
+         */
+        MethodObj->Method.NextObject =
+            ACPI_CAST_PTR (ACPI_OPERAND_OBJECT, ParentNode);
 
         if (!Prev)
         {
@@ -1128,7 +1149,6 @@ AcpiPsParseLoop (
                     {
                         ACPI_EXCEPTION ((AE_INFO, Status,
                             "Invoked method did not return a value"));
-
                     }
 
                     ACPI_EXCEPTION ((AE_INFO, Status, "GetPredicate Failed"));

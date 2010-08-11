@@ -1,4 +1,4 @@
-/*	$NetBSD: xenfunc.c,v 1.5.2.3 2010/03/11 15:03:10 yamt Exp $	*/
+/*	$NetBSD: xenfunc.c,v 1.5.2.4 2010/08/11 22:52:59 yamt Exp $	*/
 
 /*
  *
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenfunc.c,v 1.5.2.3 2010/03/11 15:03:10 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenfunc.c,v 1.5.2.4 2010/08/11 22:52:59 yamt Exp $");
 
 #include <sys/param.h>
 
@@ -58,10 +58,10 @@ invlpg(vaddr_t addr)
 	splx(s);
 }  
 
-#ifndef __x86_64__
 void
 lldt(u_short sel)
 {
+#ifndef __x86_64__
 	struct cpu_info *ci;
 
 	ci = curcpu();
@@ -75,8 +75,8 @@ lldt(u_short sel)
 		xen_set_ldt(ci->ci_gdt[IDXSELN(sel)].ld.ld_base,
 		    ci->ci_gdt[IDXSELN(sel)].ld.ld_entries);
 	ci->ci_curldt = sel;
-}
 #endif
+}
 
 void
 ltr(u_short sel)

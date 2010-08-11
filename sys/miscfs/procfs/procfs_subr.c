@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_subr.c,v 1.88.2.2 2009/05/04 08:14:05 yamt Exp $	*/
+/*	$NetBSD: procfs_subr.c,v 1.88.2.3 2010/08/11 22:54:48 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.88.2.2 2009/05/04 08:14:05 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.88.2.3 2010/08/11 22:54:48 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -601,7 +601,7 @@ loop:
 			} else {
 				mutex_enter(&vp->v_interlock);
 				mutex_exit(&pfs_ihash_lock);
-				if (vget(vp, flags | LK_INTERLOCK))
+				if (vget(vp, flags))
 					goto loop;
 			}
 			return (vp);
@@ -620,7 +620,7 @@ procfs_hashins(struct pfsnode *pp)
 	struct pfs_hashhead *ppp;
 
 	/* lock the pfsnode, then put it on the appropriate hash list */
-	vlockmgr(&pp->pfs_vnode->v_lock, LK_EXCLUSIVE);
+	VOP_LOCK(PFSTOV(pp), LK_EXCLUSIVE);
 
 	mutex_enter(&pfs_ihash_lock);
 	ppp = &pfs_hashtbl[PFSPIDHASH(pp->pfs_pid)];
@@ -681,7 +681,7 @@ procfs_proc_lock(int pid, struct proc **bunghole, int notfound)
 
 	if (pid == 0)
 		tp = &proc0;
-	else if ((tp = p_find(pid, PFIND_LOCKED)) == NULL)
+	else if ((tp = proc_find(pid)) == NULL)
 		error = notfound;
 	if (tp != NULL && !rw_tryenter(&tp->p_reflock, RW_READER))
 		error = EBUSY;

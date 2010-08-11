@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.42.4.6 2010/03/11 15:02:23 yamt Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.42.4.7 2010/08/11 22:52:02 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*	$OpenBSD: mainbus.c,v 1.13 2001/09/19 20:50:56 mickey Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.74 2009/04/20 00:42:06 oga Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -58,10 +58,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.42.4.6 2010/03/11 15:02:23 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.42.4.7 2010/08/11 22:52:02 yamt Exp $");
 
 #include "locators.h"
 #include "power.h"
+#include "lcd.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,6 +83,10 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.42.4.6 2010/03/11 15:02:23 yamt Exp $"
 #include <hp700/dev/cpudevs.h>
 
 static struct pdc_hpa pdc_hpa PDC_ALIGNMENT;
+#if NLCD > 0
+static struct pdc_chassis_info pdc_chassis_info PDC_ALIGNMENT;
+static struct pdc_chassis_lcd pdc_chassis_lcd PDC_ALIGNMENT;
+#endif
 
 #ifdef MBUSDEBUG
 
@@ -152,7 +157,6 @@ void mbus_cp_4(void *, bus_space_handle_t, bus_size_t, bus_space_handle_t, bus_s
 void mbus_cp_8(void *, bus_space_handle_t, bus_size_t, bus_space_handle_t, bus_size_t, bus_size_t);
 
 int mbus_add_mapping(bus_addr_t, bus_size_t, int, bus_space_handle_t *);
-int mbus_remove_mapping(bus_space_handle_t, bus_size_t, bus_addr_t *);
 int mbus_map(void *, bus_addr_t, bus_size_t, int, bus_space_handle_t *);
 void mbus_unmap(void *, bus_space_handle_t, bus_size_t);
 int mbus_alloc(void *, bus_addr_t, bus_addr_t, bus_size_t, bus_size_t, bus_size_t, int, bus_addr_t *, bus_space_handle_t *);
@@ -179,133 +183,55 @@ int _bus_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
     bus_size_t buflen, struct vmspace *vm, int flags, paddr_t *lastaddrp,
     int *segp, int first);
 
+extern struct pdc_btlb pdc_btlb;
+static uint32_t bmm[HPPA_FLEX_COUNT/32];
+
 int
 mbus_add_mapping(bus_addr_t bpa, bus_size_t size, int flags,
     bus_space_handle_t *bshp)
 {
-	u_int frames;
-#ifdef USE_BTLB
-	vsize_t btlb_size;
-	int error;
-#endif /* USE_BTLB */
+	vaddr_t pa, spa, epa;
+	int flex;
 
 	DPRINTF(("\n%s(%lx,%lx,%scachable,%p)\n", __func__,
 	    bpa, size, flags? "" : "non", bshp));
 
-	/*
-	 * We must be called with a page-aligned address in
-	 * I/O space, and with a multiple of the page size.
-	 */
-	KASSERT((bpa & PGOFSET) == 0);
 	KASSERT(bpa >= HPPA_IOSPACE);
-	KASSERT((size & PGOFSET) == 0);
+	KASSERT(!(flags & BUS_SPACE_MAP_CACHEABLE));
 
 	/*
-	 * Assume that this will succeed.
+	 * Mappings are established in HPPA_FLEX_SIZE units,
+	 * either with BTLB, or regular mappings of the whole area.
 	 */
+	for (pa = bpa ; size != 0; pa = epa) {
+		flex = HPPA_FLEX(pa);
+		spa = pa & HPPA_FLEX_MASK;
+		epa = spa + HPPA_FLEX_SIZE; /* may wrap to 0... */
+
+		size -= min(size, HPPA_FLEX_SIZE - (pa - spa));
+
+		/* do need a new mapping? */
+		if (bmm[flex / 32] & (1 << (flex % 32))) {
+			DPRINTF(("%s: already mapped flex=%x, mask=%x\n",
+			    __func__, flex, bmm[flex / 32]));
+			continue;
+		}
+
+		DPRINTF(("%s: adding flex=%x %lx-%lx, ", __func__, flex, spa,
+		    epa - 1));
+
+		bmm[flex / 32] |= (1 << (flex % 32));
+
+		while (spa != epa) {
+			DPRINTF(("%s: kenter 0x%lx-0x%lx", __func__, spa,
+			    epa));
+			for (; spa != epa; spa += PAGE_SIZE)
+				pmap_kenter_pa(spa, spa,
+				    VM_PROT_READ | VM_PROT_WRITE, 0);
+		}
+	}
+
 	*bshp = bpa;
-
-	/*
-	 * Loop while there is space left to map.
-	 */
-	frames = size >> PGSHIFT;
-	while (frames > 0) {
-
-		/*
-		 * If this mapping is more than eight pages long,
-		 * try to add a BTLB entry.
-		 */
-#ifdef USE_BTLB
-		if (frames > 8 &&
-		    frames >= hppa_btlb_size_min) {
-			btlb_size = frames;
-			if (btlb_size > hppa_btlb_size_max)
-				btlb_size = hppa_btlb_size_max;
-			btlb_size <<= PGSHIFT;
-			error = hppa_btlb_insert(pmap_kernel()->pmap_space,
-			    bpa, bpa, &btlb_size,
-			    pmap_kernel()->pmap_pid |
-			    pmap_prot(pmap_kernel(), VM_PROT_READ | VM_PROT_WRITE));
-			if (error == 0) {
-				bpa += btlb_size;
-				frames -= (btlb_size >> PGSHIFT);
-				continue;
-			}
-			else if (error != ENOMEM)
-				return error;
-		}
-#endif /* USE_BTLB */
-
-		/*
-		 * Enter another single-page mapping.
-		 */
-		pmap_kenter_pa(bpa, bpa, VM_PROT_READ | VM_PROT_WRITE, 0);
-		bpa += PAGE_SIZE;
-		frames--;
-	}
-
-	/* Success. */
-	return 0;
-}
-
-/*
- * This removes a mapping added by mbus_add_mapping.
- */
-int
-mbus_remove_mapping(bus_space_handle_t bsh, bus_size_t size, bus_addr_t *bpap)
-{
-	bus_addr_t bpa;
-	u_int frames;
-#ifdef USE_BTLB
-	vsize_t btlb_size;
-	int error;
-#endif /* USE_BTLB */
-
-	/*
-	 * We must be called with a page-aligned address in
-	 * I/O space, and with a multiple of the page size.
-	 */
-	bpa = *bpap = bsh;
-	KASSERT((bpa & PGOFSET) == 0);
-	KASSERT(bpa >= HPPA_IOSPACE);
-	KASSERT((size & PGOFSET) == 0);
-
-	/*
-	 * Loop while there is space left to unmap.
-	 */
-	frames = size >> PGSHIFT;
-	while (frames > 0) {
-
-		/*
-		 * If this mapping is more than eight pages long,
-		 * try to remove a BTLB entry.
-		 */
-#ifdef USE_BTLB
-		if (frames > 8 &&
-		    frames >= hppa_btlb_size_min) {
-			btlb_size = frames;
-			if (btlb_size > hppa_btlb_size_max)
-				btlb_size = hppa_btlb_size_max;
-			btlb_size <<= PGSHIFT;
-			error = hppa_btlb_purge(pmap_kernel()->pmap_space,
-						bpa, &btlb_size);
-			if (error == 0) {
-				bpa += btlb_size;
-				frames -= (btlb_size >> PGSHIFT);
-				continue;
-			}
-			else if (error != ENOENT)
-				return error;
-		}
-#endif /* USE_BTLB */
-
-		/*
-		 * Remove another single-page mapping.
-		 */
-		pmap_kremove(bpa, PAGE_SIZE);
-		bpa += PAGE_SIZE;
-		frames--;
-	}
 
 	/* Success. */
 	return 0;
@@ -316,20 +242,11 @@ mbus_map(void *v, bus_addr_t bpa, bus_size_t size, int flags,
     bus_space_handle_t *bshp)
 {
 	int error;
-	bus_size_t offset;
 
 	/*
 	 * We must only be called with addresses in I/O space.
 	 */
 	KASSERT(bpa >= HPPA_IOSPACE);
-
-	/*
-	 * Page-align the I/O address and size.
-	 */
-	offset = (bpa & PGOFSET);
-	bpa -= offset;
-	size += offset;
-	size = round_page(size);
 
 	/*
 	 * Allocate the region of I/O space.
@@ -342,7 +259,6 @@ mbus_map(void *v, bus_addr_t bpa, bus_size_t size, int flags,
 	 * Map the region of I/O space.
 	 */
 	error = mbus_add_mapping(bpa, size, flags, bshp);
-	*bshp |= offset;
 	if (error) {
 		DPRINTF(("bus_space_map: pa 0x%lx, size 0x%lx failed\n",
 		    bpa, size));
@@ -357,24 +273,8 @@ mbus_map(void *v, bus_addr_t bpa, bus_size_t size, int flags,
 void
 mbus_unmap(void *v, bus_space_handle_t bsh, bus_size_t size)
 {
-	bus_size_t offset;
-	bus_addr_t bpa;
+	bus_addr_t bpa = bsh;
 	int error;
-
-	/*
-	 * Page-align the bus_space handle and size.
-	 */
-	offset = bsh & PGOFSET;
-	bsh -= offset;
-	size += offset;
-	size = round_page(size);
-
-	/*
-	 * Unmap the region of I/O space.
-	 */
-	error = mbus_remove_mapping(bsh, size, &bpa);
-	if (error)
-		panic("mbus_unmap: can't unmap region (%d)", error);
 
 	/*
 	 * Free the region of I/O space.
@@ -398,13 +298,6 @@ mbus_alloc(void *v, bus_addr_t rstart, bus_addr_t rend, bus_size_t size,
 	if (rstart < hp700_io_extent->ex_start ||
 	    rend > hp700_io_extent->ex_end)
 		panic("bus_space_alloc: bad region start/end");
-
-	/*
-	 * Force the allocated region to be page-aligned.
-	 */
-	if (align < PAGE_SIZE)
-		align = PAGE_SIZE;
-	size = round_page(size);
 
 	/*
 	 * Allocate the region of I/O space.
@@ -954,10 +847,7 @@ mbus_dmamap_load_mbuf(void *v, bus_dmamap_t map, struct mbuf *m0,
 	map->dm_mapsize = 0;
 	map->dm_nsegs = 0;
 
-#ifdef DIAGNOSTIC
-	if ((m0->m_flags & M_PKTHDR) == 0)
-		panic("_bus_dmamap_load_mbuf: no packet header");
-#endif	/* DIAGNOSTIC */
+	KASSERT(m0->m_flags & M_PKTHDR);
 
 	if (m0->m_pkthdr.len > map->_dm_size)
 		return (EINVAL);
@@ -1115,10 +1005,6 @@ mbus_dmamap_sync(void *v, bus_dmamap_t map, bus_addr_t offset, bus_size_t len,
 		panic("mbus_dmamap_sync: bad length");
 #endif
 	
-	/* If the whole DMA map is marked as BUS_DMA_COHERENT, do nothing. */
-	if ((map->_dm_flags & BUS_DMA_COHERENT) != 0)
-		return;
-
 	/*
 	 * For a virtually-indexed write-back cache, we need to do the
 	 * following things:
@@ -1176,6 +1062,9 @@ mbus_dmamem_alloc(void *v, bus_size_t size, bus_size_t alignment,
 	int seg;
 	int error;
 
+	DPRINTF(("%s: size 0x%lx align 0x%lx bdry %0lx segs %p nsegs %d\n",
+	    __func__, size, alignment, boundary, segs, nsegs));
+
 	/* Always round the size. */
 	size = round_page(size);
 
@@ -1196,6 +1085,9 @@ mbus_dmamem_alloc(void *v, bus_size_t size, bus_size_t alignment,
 
 	/* If we don't have the pages. */
 	if (error) {
+		DPRINTF(("%s: uvm_pglistalloc(%lx, %lx, %lx, 0, 0, %p, %d, %0x)"
+		    " failed", __func__, size, low, high, mlist, nsegs,
+		    (flags & BUS_DMA_NOWAIT) == 0));
 		free(mlist, M_DEVBUF);
 		return (error);
 	}
@@ -1211,10 +1103,12 @@ mbus_dmamem_alloc(void *v, bus_size_t size, bus_size_t alignment,
 				free(mlist, M_DEVBUF);
 				return (ENOMEM);
 			}
-			segs[seg].ds_addr = 0;
-			segs[seg].ds_len = 0;
+			segs[seg].ds_addr = pa;
+			segs[seg].ds_len = PAGE_SIZE;
+			segs[seg]._ds_mlist = NULL;
 			segs[seg]._ds_va = 0;
-		}
+		} else
+			segs[seg].ds_len += PAGE_SIZE;
 		pa_next = pa + PAGE_SIZE;
 	}
 	*rsegs = seg + 1;
@@ -1258,10 +1152,11 @@ int
 mbus_dmamem_map(void *v, bus_dma_segment_t *segs, int nsegs, size_t size,
     void **kvap, int flags)
 {
-	struct vm_page *pg;
-	struct pglist *pglist;
+	bus_addr_t addr;
 	vaddr_t va;
-	paddr_t pa;
+	int curseg;
+	u_int pmflags =
+	    hppa_cpu_hastlbu_p() ? PMAP_NOCACHE : 0;
 	const uvm_flag_t kmflags =
 	    (flags & BUS_DMA_NOWAIT) != 0 ? UVM_KMF_NOWAIT : 0;
 
@@ -1272,20 +1167,21 @@ mbus_dmamem_map(void *v, bus_dma_segment_t *segs, int nsegs, size_t size,
 	if (__predict_false(va == 0))
 		return (ENOMEM);
 
-	/* Stash that in the first segment. */
-	segs[0]._ds_va = va;
 	*kvap = (void *)va;
 
-	/* Map the allocated pages into the chunk. */
-	pglist = segs[0]._ds_mlist;
-	TAILQ_FOREACH(pg, pglist, pageq.queue) {
-		KASSERT(size != 0);
-		pa = VM_PAGE_TO_PHYS(pg);
-		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE,
-		    PMAP_NOCACHE);
+	for (curseg = 0; curseg < nsegs; curseg++) {
+		segs[curseg]._ds_va = va;
+		for (addr = segs[curseg].ds_addr;
+		     addr < (segs[curseg].ds_addr + segs[curseg].ds_len); ) {
+			KASSERT(size != 0);
 
-		va += PAGE_SIZE;
-		size -= PAGE_SIZE;
+			pmap_kenter_pa(va, addr, VM_PROT_READ | VM_PROT_WRITE,
+			   pmflags);
+
+			addr += PAGE_SIZE;
+			va += PAGE_SIZE;
+			size -= PAGE_SIZE;
+		}
 	}
 	pmap_update();
 	return (0);
@@ -1318,15 +1214,10 @@ mbus_dmamem_mmap(void *v, bus_dma_segment_t *segs, int nsegs,
 	int i;
 
 	for (i = 0; i < nsegs; i++) {
-#ifdef DIAGNOSTIC
-		if (off & PGOFSET)
-			panic("_bus_dmamem_mmap: offset unaligned");
-		if (segs[i].ds_addr & PGOFSET)
-			panic("_bus_dmamem_mmap: segment unaligned");
-		if (segs[i].ds_len & PGOFSET)
-			panic("_bus_dmamem_mmap: segment size not multiple"
-			    " of page size");
-#endif	/* DIAGNOSTIC */
+		KASSERT((off & PGOFSET) == 0);
+		KASSERT((segs[i].ds_addr & PGOFSET) == 0);
+		KASSERT((segs[i].ds_len & PGOFSET) == 0);
+
 		if (off >= segs[i].ds_len) {
 			off -= segs[i].ds_len;
 			continue;
@@ -1353,7 +1244,7 @@ _bus_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 	pmap = vm_map_pmap(&vm->vm_map);
 
 	lastaddr = *lastaddrp;
-	bmask  = ~(map->_dm_boundary - 1);
+	bmask = ~(map->_dm_boundary - 1);
 
 	for (seg = *segp; buflen > 0; ) {
 		bool ok;
@@ -1515,6 +1406,24 @@ mbattach(device_t parent, device_t self, void *aux)
 	config_found(self, &nca, mbprint);
 #endif
 
+#if NLCD > 0
+	if (!pdc_call((iodcio_t)pdc, 0, PDC_CHASSIS, PDC_CHASSIS_INFO,
+	    &pdc_chassis_info, &pdc_chassis_lcd, sizeof(pdc_chassis_lcd)) &&
+	    pdc_chassis_lcd.enabled) {
+		memset(&nca, 0, sizeof(nca));
+		nca.ca_name = "lcd";
+		nca.ca_dp.dp_bc[0] = nca.ca_dp.dp_bc[1] = nca.ca_dp.dp_bc[2] = 
+		nca.ca_dp.dp_bc[3] = nca.ca_dp.dp_bc[4] = nca.ca_dp.dp_bc[5] = -1;
+		nca.ca_dp.dp_mod = -1;
+		nca.ca_irq = -1;
+		nca.ca_iot = &hppa_bustag;
+		nca.ca_hpa = pdc_chassis_lcd.cmd_addr;
+		nca.ca_pdc_iodc_read = (void *)&pdc_chassis_lcd;
+
+		config_found(self, &nca, mbprint);
+	}
+#endif	
+
 	switch (cpu_hvers) {
 	case HPPA_BOARD_HP809:
 	case HPPA_BOARD_HP819:
@@ -1599,12 +1508,15 @@ mbprint(void *aux, const char *pnp)
 		aprint_normal("\"%s\" at %s (type 0x%x, sv 0x%x)", ca->ca_name,
 		    pnp, ca->ca_type.iodc_type, ca->ca_type.iodc_sv_model);
 	if (ca->ca_hpa) {
-		aprint_normal(" hpa 0x%lx path ", ca->ca_hpa);
-		for (n = 0 ; n < 6 ; n++) {
-			if ( ca->ca_dp.dp_bc[n] >= 0)
-				printf( "%d/", ca->ca_dp.dp_bc[n]);
+		aprint_normal(" hpa 0x%lx", ca->ca_hpa);
+		if (ca->ca_dp.dp_mod >=0) {
+			aprint_normal(" path ");
+			for (n = 0; n < 6; n++) {
+				if (ca->ca_dp.dp_bc[n] >= 0)
+					aprint_normal("%d/", ca->ca_dp.dp_bc[n]);
+			}
+			aprint_normal("%d", ca->ca_dp.dp_mod);
 		}
-		aprint_normal( "%d", ca->ca_dp.dp_mod);
 		if (!pnp && ca->ca_irq >= 0) {
 			aprint_normal(" irq %d", ca->ca_irq);
 			if (ca->ca_type.iodc_type != HPPA_TYPE_BHA)

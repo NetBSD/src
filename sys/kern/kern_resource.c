@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.139.2.4 2010/03/11 15:04:17 yamt Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.139.2.5 2010/08/11 22:54:40 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.139.2.4 2010/03/11 15:04:17 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.139.2.5 2010/08/11 22:54:40 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,6 +70,8 @@ static pool_cache_t	plimit_cache;
 static pool_cache_t	pstats_cache;
 
 static kauth_listener_t	resource_listener;
+
+static void sysctl_proc_setup(void);
 
 static int
 resource_listener_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
@@ -145,6 +147,8 @@ resource_init(void)
 
 	resource_listener = kauth_listen_scope(KAUTH_SCOPE_PROCESS,
 	    resource_listener_cb, NULL);
+
+	sysctl_proc_setup();
 }
 
 /*
@@ -166,10 +170,7 @@ sys_getpriority(struct lwp *l, const struct sys_getpriority_args *uap,
 	mutex_enter(proc_lock);
 	switch (SCARG(uap, which)) {
 	case PRIO_PROCESS:
-		if (who == 0)
-			p = curp;
-		else
-			p = p_find(who, PFIND_LOCKED);
+		p = who ? proc_find(who) : curp;;
 		if (p != NULL)
 			low = p->p_nice;
 		break;
@@ -179,7 +180,7 @@ sys_getpriority(struct lwp *l, const struct sys_getpriority_args *uap,
 
 		if (who == 0)
 			pg = curp->p_pgrp;
-		else if ((pg = pg_find(who, PFIND_LOCKED)) == NULL)
+		else if ((pg = pgrp_find(who)) == NULL)
 			break;
 		LIST_FOREACH(p, &pg->pg_members, p_pglist) {
 			if (p->p_nice < low)
@@ -229,11 +230,8 @@ sys_setpriority(struct lwp *l, const struct sys_setpriority_args *uap,
 	mutex_enter(proc_lock);
 	switch (SCARG(uap, which)) {
 	case PRIO_PROCESS:
-		if (who == 0)
-			p = curp;
-		else
-			p = p_find(who, PFIND_LOCKED);
-		if (p != 0) {
+		p = who ? proc_find(who) : curp;
+		if (p != NULL) {
 			mutex_enter(p->p_lock);
 			error = donice(l, p, SCARG(uap, prio));
 			mutex_exit(p->p_lock);
@@ -246,7 +244,7 @@ sys_setpriority(struct lwp *l, const struct sys_setpriority_args *uap,
 
 		if (who == 0)
 			pg = curp->p_pgrp;
-		else if ((pg = pg_find(who, PFIND_LOCKED)) == NULL)
+		else if ((pg = pgrp_find(who)) == NULL)
 			break;
 		LIST_FOREACH(p, &pg->pg_members, p_pglist) {
 			mutex_enter(p->p_lock);
@@ -747,22 +745,33 @@ pstatsfree(struct pstats *ps)
  */
 
 /*
- * a routine for sysctl proc subtree helpers that need to pick a valid
- * process by pid.
+ * sysctl_proc_findproc: a routine for sysctl proc subtree helpers that
+ * need to pick a valid process by PID.
+ *
+ * => Hold a reference on the process, on success.
  */
 static int
-sysctl_proc_findproc(struct lwp *l, struct proc **p2, pid_t pid)
+sysctl_proc_findproc(lwp_t *l, pid_t pid, proc_t **p2)
 {
-	struct proc *ptmp;
-	int error = 0;
+	proc_t *p;
+	int error;
 
-	if (pid == PROC_CURPROC)
-		ptmp = l->l_proc;
-	else if ((ptmp = pfind(pid)) == NULL)
-		error = ESRCH;
-
-	*p2 = ptmp;
-	return (error);
+	if (pid == PROC_CURPROC) {
+		p = l->l_proc;
+	} else {
+		mutex_enter(proc_lock);
+		p = proc_find(pid);
+		if (p == NULL) {
+			mutex_exit(proc_lock);
+			return ESRCH;
+		}
+	}
+	error = rw_tryenter(&p->p_reflock, RW_READER) ? 0 : EBUSY;
+	if (pid != PROC_CURPROC) {
+		mutex_exit(proc_lock);
+	}
+	*p2 = p;
+	return error;
 }
 
 /*
@@ -775,11 +784,9 @@ sysctl_proc_corename(SYSCTLFN_ARGS)
 {
 	struct proc *ptmp;
 	struct plimit *lim;
-	int error = 0, len;
-	char *cname;
-	char *ocore;
-	char *tmp;
+	char *cname, *ocore, *tmp;
 	struct sysctlnode node;
+	int error = 0, len;
 
 	/*
 	 * is this all correct?
@@ -789,25 +796,27 @@ sysctl_proc_corename(SYSCTLFN_ARGS)
 	if (name[-1] != PROC_PID_CORENAME)
 		return (EINVAL);
 
-	/*
-	 * whom are we tweaking?
-	 */
-	error = sysctl_proc_findproc(l, &ptmp, (pid_t)name[-2]);
+	/* Find the process.  Hold a reference (p_reflock), if found. */
+	error = sysctl_proc_findproc(l, (pid_t)name[-2], &ptmp);
 	if (error)
-		return (error);
+		return error;
 
 	/* XXX-elad */
 	error = kauth_authorize_process(l->l_cred, KAUTH_PROCESS_CANSEE, ptmp,
 	    KAUTH_ARG(KAUTH_REQ_PROCESS_CANSEE_ENTRY), NULL, NULL);
-	if (error)
-		return (error);
+	if (error) {
+		rw_exit(&ptmp->p_reflock);
+		return error;
+	}
 
 	if (newp == NULL) {
 		error = kauth_authorize_process(l->l_cred,
 		    KAUTH_PROCESS_CORENAME, ptmp,
 		    KAUTH_ARG(KAUTH_REQ_PROCESS_CORENAME_GET), NULL, NULL);
-		if (error)
-			return (error);
+		if (error) {
+			rw_exit(&ptmp->p_reflock);
+			return error;
+		}
 	}
 
 	/*
@@ -833,14 +842,14 @@ sysctl_proc_corename(SYSCTLFN_ARGS)
 	mutex_enter(&lim->pl_lock);
 	error = strcmp(cname, lim->pl_corename);
 	mutex_exit(&lim->pl_lock);
-	if (error == 0)
+	if (error == 0) {
 		/* Unchanged */
 		goto done;
-
+	}
 	error = kauth_authorize_process(l->l_cred, KAUTH_PROCESS_CORENAME,
 	    ptmp, KAUTH_ARG(KAUTH_REQ_PROCESS_CORENAME_SET), cname, NULL);
 	if (error)
-		return (error);
+		goto done;
 
 	/*
 	 * no error yet and cname now has the new core name in it.
@@ -879,6 +888,7 @@ sysctl_proc_corename(SYSCTLFN_ARGS)
 		free(ocore, M_TEMP);
 
 done:
+	rw_exit(&ptmp->p_reflock);
 	PNBUF_PUT(cname);
 	return error;
 }
@@ -897,15 +907,16 @@ sysctl_proc_stop(SYSCTLFN_ARGS)
 	if (namelen != 0)
 		return (EINVAL);
 
-	error = sysctl_proc_findproc(l, &ptmp, (pid_t)name[-2]);
+	/* Find the process.  Hold a reference (p_reflock), if found. */
+	error = sysctl_proc_findproc(l, (pid_t)name[-2], &ptmp);
 	if (error)
-		return (error);
+		return error;
 
 	/* XXX-elad */
 	error = kauth_authorize_process(l->l_cred, KAUTH_PROCESS_CANSEE, ptmp,
 	    KAUTH_ARG(KAUTH_REQ_PROCESS_CANSEE_ENTRY), NULL, NULL);
 	if (error)
-		return (error);
+		goto out;
 
 	switch (rnode->sysctl_num) {
 	case PROC_PID_STOPFORK:
@@ -918,7 +929,8 @@ sysctl_proc_stop(SYSCTLFN_ARGS)
 		f = PS_STOPEXIT;
 		break;
 	default:
-		return (EINVAL);
+		error = EINVAL;
+		goto out;
 	}
 
 	i = (ptmp->p_flag & f) ? 1 : 0;
@@ -926,7 +938,7 @@ sysctl_proc_stop(SYSCTLFN_ARGS)
 	node.sysctl_data = &i;
 	error = sysctl_lookup(SYSCTLFN_CALL(&node));
 	if (error || newp == NULL)
-		return (error);
+		goto out;
 
 	mutex_enter(ptmp->p_lock);
 	error = kauth_authorize_process(l->l_cred, KAUTH_PROCESS_STOPFLAG,
@@ -939,7 +951,8 @@ sysctl_proc_stop(SYSCTLFN_ARGS)
 		}
 	}
 	mutex_exit(ptmp->p_lock);
-
+out:
+	rw_exit(&ptmp->p_reflock);
 	return error;
 }
 
@@ -970,15 +983,16 @@ sysctl_proc_plimit(SYSCTLFN_ARGS)
 	if (name[-3] != PROC_PID_LIMIT)
 		return (EINVAL);
 
-	error = sysctl_proc_findproc(l, &ptmp, (pid_t)name[-4]);
+	/* Find the process.  Hold a reference (p_reflock), if found. */
+	error = sysctl_proc_findproc(l, (pid_t)name[-4], &ptmp);
 	if (error)
-		return (error);
+		return error;
 
 	/* XXX-elad */
 	error = kauth_authorize_process(l->l_cred, KAUTH_PROCESS_CANSEE, ptmp,
 	    KAUTH_ARG(KAUTH_REQ_PROCESS_CANSEE_ENTRY), NULL, NULL);
 	if (error)
-		return (error);
+		goto out;
 
 	/* Check if we can view limits. */
 	if (newp == NULL) {
@@ -986,7 +1000,7 @@ sysctl_proc_plimit(SYSCTLFN_ARGS)
 		    ptmp, KAUTH_ARG(KAUTH_REQ_PROCESS_RLIMIT_GET), &alim,
 		    KAUTH_ARG(which));
 		if (error)
-			return (error);
+			goto out;
 	}
 
 	node = *rnode;
@@ -997,37 +1011,43 @@ sysctl_proc_plimit(SYSCTLFN_ARGS)
 		node.sysctl_data = &alim.rlim_cur;
 
 	error = sysctl_lookup(SYSCTLFN_CALL(&node));
-	if (error || newp == NULL)
-		return (error);
-
-	return (dosetrlimit(l, ptmp, limitno, &alim));
+	if (error || newp == NULL) {
+		goto out;
+	}
+	error = dosetrlimit(l, ptmp, limitno, &alim);
+out:
+	rw_exit(&ptmp->p_reflock);
+	return error;
 }
+
+static struct sysctllog *proc_sysctllog;
 
 /*
  * and finally, the actually glue that sticks it to the tree
  */
-SYSCTL_SETUP(sysctl_proc_setup, "sysctl proc subtree setup")
+static void
+sysctl_proc_setup()
 {
 
-	sysctl_createv(clog, 0, NULL, NULL,
+	sysctl_createv(&proc_sysctllog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "proc", NULL,
 		       NULL, 0, NULL, 0,
 		       CTL_PROC, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
+	sysctl_createv(&proc_sysctllog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_ANYNUMBER,
 		       CTLTYPE_NODE, "curproc",
 		       SYSCTL_DESCR("Per-process settings"),
 		       NULL, 0, NULL, 0,
 		       CTL_PROC, PROC_CURPROC, CTL_EOL);
 
-	sysctl_createv(clog, 0, NULL, NULL,
+	sysctl_createv(&proc_sysctllog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE|CTLFLAG_ANYWRITE,
 		       CTLTYPE_STRING, "corename",
 		       SYSCTL_DESCR("Core file name"),
 		       sysctl_proc_corename, 0, NULL, MAXPATHLEN,
 		       CTL_PROC, PROC_CURPROC, PROC_PID_CORENAME, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
+	sysctl_createv(&proc_sysctllog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "rlimit",
 		       SYSCTL_DESCR("Process limits"),
@@ -1035,21 +1055,21 @@ SYSCTL_SETUP(sysctl_proc_setup, "sysctl proc subtree setup")
 		       CTL_PROC, PROC_CURPROC, PROC_PID_LIMIT, CTL_EOL);
 
 #define create_proc_plimit(s, n) do {					\
-	sysctl_createv(clog, 0, NULL, NULL,				\
+	sysctl_createv(&proc_sysctllog, 0, NULL, NULL,			\
 		       CTLFLAG_PERMANENT,				\
 		       CTLTYPE_NODE, s,					\
 		       SYSCTL_DESCR("Process " s " limits"),		\
 		       NULL, 0, NULL, 0,				\
 		       CTL_PROC, PROC_CURPROC, PROC_PID_LIMIT, n,	\
 		       CTL_EOL);					\
-	sysctl_createv(clog, 0, NULL, NULL,				\
+	sysctl_createv(&proc_sysctllog, 0, NULL, NULL,			\
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE|CTLFLAG_ANYWRITE, \
 		       CTLTYPE_QUAD, "soft",				\
 		       SYSCTL_DESCR("Process soft " s " limit"),	\
 		       sysctl_proc_plimit, 0, NULL, 0,			\
 		       CTL_PROC, PROC_CURPROC, PROC_PID_LIMIT, n,	\
 		       PROC_PID_LIMIT_TYPE_SOFT, CTL_EOL);		\
-	sysctl_createv(clog, 0, NULL, NULL,				\
+	sysctl_createv(&proc_sysctllog, 0, NULL, NULL,			\
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE|CTLFLAG_ANYWRITE, \
 		       CTLTYPE_QUAD, "hard",				\
 		       SYSCTL_DESCR("Process hard " s " limit"),	\
@@ -1072,19 +1092,19 @@ SYSCTL_SETUP(sysctl_proc_setup, "sysctl proc subtree setup")
 
 #undef create_proc_plimit
 
-	sysctl_createv(clog, 0, NULL, NULL,
+	sysctl_createv(&proc_sysctllog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE|CTLFLAG_ANYWRITE,
 		       CTLTYPE_INT, "stopfork",
 		       SYSCTL_DESCR("Stop process at fork(2)"),
 		       sysctl_proc_stop, 0, NULL, 0,
 		       CTL_PROC, PROC_CURPROC, PROC_PID_STOPFORK, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
+	sysctl_createv(&proc_sysctllog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE|CTLFLAG_ANYWRITE,
 		       CTLTYPE_INT, "stopexec",
 		       SYSCTL_DESCR("Stop process at execve(2)"),
 		       sysctl_proc_stop, 0, NULL, 0,
 		       CTL_PROC, PROC_CURPROC, PROC_PID_STOPEXEC, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
+	sysctl_createv(&proc_sysctllog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE|CTLFLAG_ANYWRITE,
 		       CTLTYPE_INT, "stopexit",
 		       SYSCTL_DESCR("Stop process before completing exit"),

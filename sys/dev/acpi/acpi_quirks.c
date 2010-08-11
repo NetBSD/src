@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_quirks.c,v 1.9.14.2 2010/03/11 15:03:22 yamt Exp $	*/
+/*	$NetBSD: acpi_quirks.c,v 1.9.14.3 2010/08/11 22:53:16 yamt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: acpi_quirks.c,v 1.9.14.2 2010/03/11 15:03:22 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_quirks.c,v 1.9.14.3 2010/08/11 22:53:16 yamt Exp $");
 
 #include "opt_acpi.h"
 
@@ -47,16 +47,31 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_quirks.c,v 1.9.14.2 2010/03/11 15:03:22 yamt Ex
 
 #include <dev/acpi/acpivar.h>
 
+#define AQ_GT		0	/* > */
+#define AQ_LT		1	/* < */
+#define AQ_GTE		2	/* >= */
+#define AQ_LTE		3	/* <= */
+#define AQ_EQ		4	/* == */
+
 static int acpi_rev_cmp(uint32_t, uint32_t, int);
 
 /*
- * XXX add more
+ * XXX: Add more.
  */
 static struct acpi_quirk acpi_quirks[] = {
+
+	{ ACPI_SIG_FADT, "ASUS  ", 0x30303031, AQ_LTE, "CUV4X-D ",
+	  ACPI_QUIRK_BROKEN },
+
 	{ ACPI_SIG_FADT, "PTLTD ", 0x06040000, AQ_LTE, "  FACP  ",
 	  ACPI_QUIRK_BROKEN },
+
 	{ ACPI_SIG_FADT, "NVIDIA", 0x06040000, AQ_EQ, "CK8     ",
 	  ACPI_QUIRK_IRQ0 },
+
+	{ ACPI_SIG_DSDT, "NVIDIA", 0x00001000, AQ_EQ, "AWRDACPI",
+	  ACPI_QUIRK_BROKEN },
+
 	{ ACPI_SIG_FADT, "HP    ", 0x06040012, AQ_LTE, "HWPC20F ",
 	  ACPI_QUIRK_BROKEN },
 };
@@ -105,7 +120,7 @@ acpi_find_quirks(void)
 	struct acpi_quirk *aqp;
 	ACPI_TABLE_HEADER fadt, dsdt, xsdt, *hdr;
 
-	nquirks = sizeof(acpi_quirks) / sizeof(struct acpi_quirk);
+	nquirks = __arraycount(acpi_quirks);
 
 	if (ACPI_FAILURE(AcpiGetTableHeader(ACPI_SIG_FADT, 0, &fadt)))
 		memset(&fadt, 0, sizeof(fadt));

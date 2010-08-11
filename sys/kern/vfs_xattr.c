@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_xattr.c,v 1.17.4.3 2009/07/18 14:53:23 yamt Exp $	*/
+/*	$NetBSD: vfs_xattr.c,v 1.17.4.4 2010/08/11 22:54:45 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_xattr.c,v 1.17.4.3 2009/07/18 14:53:23 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_xattr.c,v 1.17.4.4 2010/08/11 22:54:45 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -128,7 +128,7 @@ vfs_stdextattrctl(struct mount *mp, int cmt, struct vnode *vp,
 {
 
 	if (vp != NULL)
-		VOP_UNLOCK(vp, 0);
+		VOP_UNLOCK(vp);
 	return (EOPNOTSUPP);
 }
 
@@ -161,22 +161,22 @@ sys_extattrctl(struct lwp *l, const struct sys_extattrctl_args *uap, register_t 
 			return (error);
 	}
 
+	error = namei_simple_user(SCARG(uap, path),
+				NSM_FOLLOW_NOEMULROOT, &path_vp);
+	if (error) {
+		return (error);
+	}
+
 	file_vp = NULL;
 	if (SCARG(uap, filename) != NULL) {
 		NDINIT(&file_nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE,
 		    SCARG(uap, filename));
 		error = namei(&file_nd);
-		if (error)
+		if (error) {
+			vrele(path_vp);
 			return (error);
+		}
 		file_vp = file_nd.ni_vp;
-	}
-
-	error = namei_simple_user(SCARG(uap, path),
-				NSM_FOLLOW_NOEMULROOT, &path_vp);
-	if (error) {
-		if (file_vp != NULL)
-			vput(file_vp);
-		return (error);
 	}
 
 	error = VFS_EXTATTRCTL(path_vp->v_mount, SCARG(uap, cmd), file_vp,
@@ -185,8 +185,6 @@ sys_extattrctl(struct lwp *l, const struct sys_extattrctl_args *uap, register_t 
 
 	if (file_vp != NULL)
 		vrele(file_vp);
-
-	/* XXX missing in the original code - am *I* missing something? */
 	vrele(path_vp);
 
 	return (error);
@@ -236,7 +234,7 @@ extattr_set_vp(struct vnode *vp, int attrnamespace, const char *attrname,
 	retval[0] = cnt;
 
  done:
-	VOP_UNLOCK(vp, 0);
+	VOP_UNLOCK(vp);
 	return (error);
 }
 
@@ -293,7 +291,7 @@ extattr_get_vp(struct vnode *vp, int attrnamespace, const char *attrname,
 		retval[0] = size;
 
  done:
-	VOP_UNLOCK(vp, 0);
+	VOP_UNLOCK(vp);
 	return (error);
 }
 
@@ -315,7 +313,7 @@ extattr_delete_vp(struct vnode *vp, int attrnamespace, const char *attrname,
 		error = VOP_SETEXTATTR(vp, attrnamespace, attrname, NULL,
 		    l->l_cred);
 
-	VOP_UNLOCK(vp, 0);
+	VOP_UNLOCK(vp);
 	return (error);
 }
 
@@ -366,7 +364,7 @@ extattr_list_vp(struct vnode *vp, int attrnamespace, void *data, size_t nbytes,
 		retval[0] = size;
 
  done:
-	VOP_UNLOCK(vp, 0);
+	VOP_UNLOCK(vp);
 	return (error);
 }
 

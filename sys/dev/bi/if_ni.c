@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ni.c,v 1.35.4.2 2010/03/11 15:03:24 yamt Exp $ */
+/*	$NetBSD: if_ni.c,v 1.35.4.3 2010/08/11 22:53:18 yamt Exp $ */
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ni.c,v 1.35.4.2 2010/03/11 15:03:24 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ni.c,v 1.35.4.3 2010/08/11 22:53:18 yamt Exp $");
 
 #include "opt_inet.h"
 
@@ -537,8 +537,7 @@ nistart(struct ifnet *ifp)
 		if (cnt > NTXFRAGS)
 			panic("nistart"); /* XXX */
 
-		if (ifp->if_bpf)
-			bpf_ops->bpf_mtap(ifp->if_bpf, m);
+		bpf_mtap(ifp, m);
 		bdp = &bbd[(data->bufs[0]._index & 0x7fff)];
 		for (m0 = m, i = 0, mlen = 0; m0; m0 = m0->m_next) {
 			if (m0->m_len == 0)
@@ -620,8 +619,7 @@ niintr(void *arg)
 			if (m == (void *)data->nd_cmdref)
 				break; /* Out of mbufs */
 
-			if (ifp->if_bpf)
-				bpf_ops->bpf_mtap(ifp->if_bpf, m);
+			bpf_mtap(ifp, m);
 			(*ifp->if_input)(ifp, m);
 			break;
 

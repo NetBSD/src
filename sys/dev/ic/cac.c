@@ -1,4 +1,4 @@
-/*	$NetBSD: cac.c,v 1.45.4.3 2009/05/16 10:41:22 yamt Exp $	*/
+/*	$NetBSD: cac.c,v 1.45.4.4 2010/08/11 22:53:24 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2006, 2007 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cac.c,v 1.45.4.3 2009/05/16 10:41:22 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cac.c,v 1.45.4.4 2010/08/11 22:53:24 yamt Exp $");
 
 #include "bio.h"
 
@@ -685,7 +685,6 @@ cac_create_sensors(struct cac_softc *sc)
 
 	for (i = 0; i < nsensors; i++) {
 		sc->sc_sensor[i].units = ENVSYS_DRIVE;
-		sc->sc_sensor[i].monitor = true;
 		/* Enable monitoring for drive state changes */
 		sc->sc_sensor[i].flags |= ENVSYS_FMONSTCHANGED;
 		/* logical drives */

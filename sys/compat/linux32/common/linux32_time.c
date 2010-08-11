@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_time.c,v 1.19.2.2 2009/08/19 18:46:59 yamt Exp $ */
+/*	$NetBSD: linux32_time.c,v 1.19.2.3 2010/08/11 22:53:09 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_time.c,v 1.19.2.2 2009/08/19 18:46:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_time.c,v 1.19.2.3 2010/08/11 22:53:09 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -50,7 +50,6 @@ __KERNEL_RCSID(0, "$NetBSD: linux32_time.c,v 1.19.2.2 2009/08/19 18:46:59 yamt E
 #include <sys/ucred.h>
 #include <sys/swap.h>
 #include <sys/vfs_syscalls.h>
-#include <sys/timetc.h>
 
 #include <machine/types.h>
 
@@ -79,10 +78,8 @@ __KERNEL_RCSID(0, "$NetBSD: linux32_time.c,v 1.19.2.2 2009/08/19 18:46:59 yamt E
 
 extern struct timezone linux_sys_tz;
 
-static __inline void
-native_to_linux32_timespec(struct linux32_timespec *, struct timespec *);
-static __inline void
-linux32_to_native_timespec(struct timespec *, struct linux32_timespec *);
+void native_to_linux32_timespec(struct linux32_timespec *, struct timespec *);
+void linux32_to_native_timespec(struct timespec *, struct linux32_timespec *);
 
 int
 linux32_sys_gettimeofday(struct lwp *l, const struct linux32_sys_gettimeofday_args *uap, register_t *retval)
@@ -236,14 +233,14 @@ linux32_sys_utime(struct lwp *l, const struct linux32_sys_utime_args *uap, regis
 			    tvp, UIO_SYSSPACE);
 }
 
-static __inline void
+void
 native_to_linux32_timespec(struct linux32_timespec *ltp, struct timespec *ntp)
 {
 	ltp->tv_sec = ntp->tv_sec;
 	ltp->tv_nsec = ntp->tv_nsec;
 }
 
-static __inline void
+void
 linux32_to_native_timespec(struct timespec *ntp, struct linux32_timespec *ltp)
 {
 	ntp->tv_sec = ltp->tv_sec;
@@ -287,19 +284,17 @@ linux32_sys_clock_settime(struct lwp *l,
 	int error;
 	struct timespec ts;
 	struct linux32_timespec lts;
+	clockid_t id;
 
-	switch (SCARG(uap, which)) {
-	case LINUX_CLOCK_REALTIME:
-		break;
-	default:
-		return EINVAL;
-	}
+	error = linux_to_native_clockid(&id, SCARG(uap, which));
+	if (error != 0)
+		return error;
 
 	if ((error = copyin(SCARG_P32(uap, tp), &lts, sizeof lts)))
 		return error;
 
 	linux32_to_native_timespec(&ts, &lts);
-	return settime(l->l_proc, &ts);
+	return clock_settime1(l->l_proc, id, &ts, true);
 }
 
 int
@@ -310,19 +305,18 @@ linux32_sys_clock_gettime(struct lwp *l,
 		syscallarg(clockid_t) which;
 		syscallarg(linux32_timespecp_t) tp;
 	} */
+	int error;
+	clockid_t id;
 	struct timespec ts;
 	struct linux32_timespec lts;
 
-	switch (SCARG(uap, which)) {
-	case LINUX_CLOCK_REALTIME:
-		nanotime(&ts);
-		break;
-	case LINUX_CLOCK_MONOTONIC:
-		nanouptime(&ts);
-		break;
-	default:
-		return EINVAL;
-	}
+	error = linux_to_native_clockid(&id, SCARG(uap, which));
+	if (error != 0)
+		return error;
+
+	error = clock_gettime1(id, &ts);
+	if (error != 0)
+		return error;
 
 	native_to_linux32_timespec(&lts, &ts);
 	return copyout(&lts, SCARG_P32(uap, tp), sizeof lts);
@@ -345,8 +339,10 @@ linux32_sys_clock_getres(struct lwp *l,
 	if (error != 0 || SCARG_P32(uap, tp) == NULL)
 		return error;
 
-	ts.tv_sec = 0;
-	ts.tv_nsec = 1000000000 / tc_getfrequency();
+	error = clock_getres1(id, &ts);
+	if (error != 0)
+		return error;
+
 	native_to_linux32_timespec(&lts, &ts);
 	return copyout(&lts, SCARG_P32(uap, tp), sizeof lts);
 }
@@ -364,18 +360,21 @@ linux32_sys_clock_nanosleep(struct lwp *l,
 	struct linux32_timespec lrqts, lrmts;
 	struct timespec rqts, rmts;
 	int error, error1;
+	clockid_t id;
 
 	if (SCARG(uap, flags) != 0)
 		return EINVAL;          /* XXX deal with TIMER_ABSTIME */
-	if (SCARG(uap, which) != LINUX_CLOCK_REALTIME)
-		return EINVAL;
+
+	error = linux_to_native_clockid(&id, SCARG(uap, which));
+	if (error != 0)
+		return error;
 
 	error = copyin(SCARG_P32(uap, rqtp), &lrqts, sizeof lrqts);
 	if (error != 0)
 		return error;
 	linux32_to_native_timespec(&rqts, &lrqts);
 
-	error = nanosleep1(l, &rqts, SCARG_P32(uap, rmtp) ? &rmts : 0);
+	error = nanosleep1(l, &rqts, SCARG_P32(uap, rmtp) ? &rmts : NULL);
 	if (SCARG_P32(uap, rmtp) == NULL || (error != 0 && error != EINTR))
 		return error;
 

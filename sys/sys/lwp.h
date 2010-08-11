@@ -1,7 +1,8 @@
-/*	$NetBSD: lwp.h,v 1.89.2.5 2010/03/11 15:04:42 yamt Exp $	*/
+/*	$NetBSD: lwp.h,v 1.89.2.6 2010/08/11 22:55:10 yamt Exp $	*/
 
 /*-
- * Copyright (c) 2001, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2010
+ *    The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -32,6 +33,7 @@
 #ifndef _SYS_LWP_H_
 #define _SYS_LWP_H_
 
+#include <sys/param.h>
 #include <sys/time.h>
 #include <sys/queue.h>
 #include <sys/callout.h>
@@ -57,7 +59,7 @@
  * l:	*l_mutex
  * p:	l_proc->p_lock
  * s:	spc_mutex, which may or may not be referenced by l_mutex
- * S:	l_selcpu->sc_lock
+ * S:	l_selcluster->sc_lock
  * (:	unlocked, stable
  * !:	unlocked, may only be reliably accessed by the LWP itself
  * ?:	undecided
@@ -132,10 +134,16 @@ struct lwp {
 	int		l_prflag;	/* p: process level flags */
 	u_int		l_refcnt;	/* p: reference count on this LWP */
 	lwpid_t		l_lid;		/* (: LWP identifier; local to proc */
-	int		l_selflag;	/* S: select() flags */
-	SLIST_HEAD(,selinfo) l_selwait;	/* S: descriptors waited on */
-	struct selcpu	*l_selcpu;	/* !: associated per-CPU select data */
 	char		*l_name;	/* (: name, optional */
+
+	/* State of select() or poll() */
+	int		l_selflag;	/* S: polling state flags */
+	SLIST_HEAD(,selinfo) l_selwait;	/* S: descriptors waited on */
+	int		l_selret;	/* S: return value of select/poll */
+	uintptr_t	l_selrec;	/* (: argument for selrecord() */
+	struct selcluster *l_selcluster;/* (: associated cluster data */
+	void *		l_selbits;	/* (: select() bit-field */
+	size_t		l_selni;	/* (: size of a single bit-field */
 
 	/* Signals */
 	int		l_sigrestore;	/* p: need to restore old sig mask */
@@ -210,9 +218,6 @@ LIST_HEAD(lwplist, lwp);		/* a list of LWPs */
 
 #ifdef _KERNEL
 extern struct lwplist alllwp;		/* List of all LWPs. */
-
-extern struct pool lwp_uc_pool;		/* memory pool for LWP startup args */
-
 extern lwp_t lwp0;			/* LWP for proc0 */
 #endif
 
@@ -231,7 +236,6 @@ extern lwp_t lwp0;			/* LWP for proc0 */
 #define	LW_SA_BLOCKING	0x00800000 /* Blocking in tsleep() */
 #define	LW_PENDSIG	0x01000000 /* Pending signal for us */
 #define	LW_CANCELLED	0x02000000 /* tsleep should not sleep */
-#define	LW_WUSERRET	0x04000000 /* Call proc::p_userret on return to user */
 #define	LW_WREBOOT	0x08000000 /* System is rebooting, please suspend */
 #define	LW_UNPARKED	0x10000000 /* Unpark op pending */
 #define	LW_SA_YIELD	0x40000000 /* LWP on VP is yielding */
@@ -241,6 +245,7 @@ extern lwp_t lwp0;			/* LWP for proc0 */
 #define	LP_KTRACTIVE	0x00000001 /* Executing ktrace operation */
 #define	LP_KTRCSW	0x00000002 /* ktrace context switch marker */
 #define	LP_KTRCSWUSER	0x00000004 /* ktrace context switch marker */
+#define	LP_PIDLID	0x00000008 /* free LID from PID space on exit */
 #define	LP_OWEUPC	0x00000010 /* Owe user profiling tick */
 #define	LP_MPSAFE	0x00000020 /* Starts life without kernel_lock */
 #define	LP_INTR		0x00000040 /* Soft interrupt handler */
@@ -260,7 +265,7 @@ extern lwp_t lwp0;			/* LWP for proc0 */
  * user.
  */
 #define	LW_USERRET (LW_WEXIT|LW_PENDSIG|LW_WREBOOT|LW_WSUSPEND|LW_WCORE|\
-		    LW_WUSERRET|LW_SA_BLOCKING|LW_SA_UPCALL)
+		    LW_SA_BLOCKING|LW_SA_UPCALL)
 
 /*
  * Status values.
@@ -298,6 +303,7 @@ void	lwp_relock(lwp_t *, kmutex_t *);
 int	lwp_trylock(lwp_t *);
 void	lwp_addref(lwp_t *);
 void	lwp_delref(lwp_t *);
+void	lwp_delref2(lwp_t *);
 void	lwp_drainrefs(lwp_t *);
 bool	lwp_alive(lwp_t *);
 lwp_t	*lwp_find_first(proc_t *);
@@ -305,12 +311,14 @@ lwp_t	*lwp_find_first(proc_t *);
 /* Flags for _lwp_wait1 */
 #define LWPWAIT_EXITCONTROL	0x00000001
 void	lwpinit(void);
+void	lwp0_init(void);
 int 	lwp_wait1(lwp_t *, lwpid_t, lwpid_t *, int);
 void	lwp_continue(lwp_t *);
+void	lwp_unstop(lwp_t *);
 void	cpu_setfunc(lwp_t *, void (*)(void *), void *);
 void	startlwp(void *);
 void	upcallret(lwp_t *);
-void	lwp_exit(lwp_t *) __dead;
+void	lwp_exit(lwp_t *);
 void	lwp_exit_switchaway(lwp_t *) __dead;
 int	lwp_suspend(lwp_t *, lwp_t *);
 int	lwp_create1(lwp_t *, const void *, size_t, u_long, lwpid_t *);
@@ -324,7 +332,9 @@ void	lwp_free(lwp_t *, bool, bool);
 void	lwp_sys_init(void);
 void	lwp_unsleep(lwp_t *, bool);
 uint64_t lwp_pctr(void);
+int	lwp_setprivate(lwp_t *, void *);
 
+void	lwpinit_specificdata(void);
 int	lwp_specific_key_create(specificdata_key_t *, specificdata_dtor_t);
 void	lwp_specific_key_delete(specificdata_key_t);
 void 	lwp_initspecific(lwp_t *);
@@ -495,6 +505,9 @@ KPREEMPT_ENABLE(lwp_t *l)
 /* Flags for _lwp_create(), as per Solaris. */
 #define LWP_DETACHED    0x00000040
 #define LWP_SUSPENDED   0x00000080
+
+/* Kernel-internal flags for LWP creation. */
+#define	LWP_PIDLID	0x40000000
 #define	LWP_VFORK	0x80000000
 
 #endif	/* !_SYS_LWP_H_ */

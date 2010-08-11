@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_intr.c,v 1.13.12.3 2009/09/16 13:37:36 yamt Exp $	*/
+/*	$NetBSD: pxa2x0_intr.c,v 1.13.12.4 2010/08/11 22:51:42 yamt Exp $	*/
 
 /*
  * Copyright (c) 2002  Genetec Corporation.  All rights reserved.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0_intr.c,v 1.13.12.3 2009/09/16 13:37:36 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_intr.c,v 1.13.12.4 2010/08/11 22:51:42 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -238,17 +238,13 @@ pxa2x0_update_intr_masks(int irqno, int level)
 		pxa2x0_imask[i] |= mask; /* Enable interrupt at lower level */
 
 	for( ; i < NIPL-1; ++i)
-		pxa2x0_imask[i] &= ~mask; /* Disable itnerrupt at upper level */
+		pxa2x0_imask[i] &= ~mask; /* Disable interrupt at upper level */
 
 	/*
 	 * Enforce a hierarchy that gives "slow" device (or devices with
 	 * limited input buffer space/"real-time" requirements) a better
 	 * chance at not dropping data.
 	 */
-	pxa2x0_imask[IPL_SOFTBIO] &= pxa2x0_imask[IPL_SOFTCLOCK];
-	pxa2x0_imask[IPL_SOFTNET] &= pxa2x0_imask[IPL_SOFTBIO];
-	pxa2x0_imask[IPL_SOFTSERIAL] &= pxa2x0_imask[IPL_SOFTNET];
-	pxa2x0_imask[IPL_VM] &= pxa2x0_imask[IPL_SOFTSERIAL];
 	pxa2x0_imask[IPL_SCHED] &= pxa2x0_imask[IPL_VM];
 	pxa2x0_imask[IPL_HIGH] &= pxa2x0_imask[IPL_SCHED];
 

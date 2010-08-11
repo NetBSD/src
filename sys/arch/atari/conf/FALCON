@@ -1,11 +1,11 @@
 #
-# $NetBSD: FALCON,v 1.83.20.2 2010/03/11 15:02:08 yamt Exp $
+# $NetBSD: FALCON,v 1.83.20.3 2010/08/11 22:51:43 yamt Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
 #
 # Created from:
-#		NetBSD: GENERIC.in,v 1.83 2010/02/21 17:57:03 tsutsui Exp $
+#		NetBSD: GENERIC.in,v 1.90 2010/05/08 22:16:26 mrg Exp $
 include "arch/atari/conf/std.atari"
 options INCLUDE_CONFIG_FILE # embed config file in kernel binary
 maxusers 16
@@ -25,6 +25,7 @@ options PPP_FILTER # Active filter support for PPP (requires bpf)
 options PFIL_HOOKS # pfil(9) packet filter hooks
 options IPFILTER_LOG # ipmon(8) log support
 options IPFILTER_LOOKUP # ippool(8) support
+options IPFILTER_COMPAT # Compat for IP-Filter
 file-system FFS # Berkeley fast file system
 file-system MFS # Memory based filesystem
 file-system MSDOSFS # MSDOS filesystem
@@ -40,6 +41,7 @@ file-system UMAPFS # null file system (with uid & gid remapping)
 file-system PUFFS # Userspace file systems (e.g. ntfs-3g & sshfs)
 file-system EXT2FS # second extended file system (linux)
 file-system PTYFS # /dev/pts/N support
+file-system TMPFS # Efficient memory file-system
 options WAPBL # File system journaling support - Experimental
 options NFSSERVER # Network File System server side code
 options PANICWAIT # Require keystroke to dump/reboot
@@ -91,7 +93,7 @@ pseudo-device tap # virtual Ethernet
 pseudo-device gif # IPv[46] over IPv[46] tunnel (RFC1933)
 pseudo-device stf # 6to4 IPv6 over IPv4 encapsulation
 pseudo-device ccd 4 # concatenating disk driver
-pseudo-device fss 4 # file system snapshot device
+pseudo-device fss # file system snapshot device
 pseudo-device ipfilter # IP filtering device
 pseudo-device rnd # /dev/random and in-kernel generator
 pseudo-device clockctl # user control of clock subsystem
@@ -110,6 +112,7 @@ grfcc2 at grfbus0 # 3rd graphics driver
 ite2 at grfcc2 # 3rd tty
 lp0 at mainbus0 # centronics printer
 ser0 at mainbus0 # UART on first 68901 (ttyB0)
+ne0 at mainbus0 # EtherNEC on Atari ROM cartridge slot
 wdc0 at mainbus0 # IDE-bus
 atabus* at wdc? channel ?
 wd* at atabus? drive ?

@@ -1,4 +1,4 @@
-/* $NetBSD: db_interface.c,v 1.27.20.1 2009/05/04 08:10:27 yamt Exp $ */
+/* $NetBSD: db_interface.c,v 1.27.20.2 2010/08/11 22:51:31 yamt Exp $ */
 
 /* 
  * Mach Operating System
@@ -52,7 +52,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.27.20.1 2009/05/04 08:10:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.27.20.2 2010/08/11 22:51:31 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -94,7 +94,8 @@ void	db_mach_cpu(db_expr_t, bool, db_expr_t, const char *);
 
 const struct db_command db_machine_command_table[] = {
 #if defined(MULTIPROCESSOR)
-	{ DDB_ADD_CMD("cpu",	db_mach_cpu,	0,NULL,NULL,NULL) },
+	{ DDB_ADD_CMD("cpu",	db_mach_cpu,	0,
+	  "switch to another cpu", "cpu-no", NULL) },
 #endif
 	{ DDB_ADD_CMD(NULL,     NULL,           0,NULL,NULL,NULL) },
 };

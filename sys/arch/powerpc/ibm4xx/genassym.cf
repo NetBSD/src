@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.15.4.1 2010/03/11 15:02:49 yamt Exp $
+#	$NetBSD: genassym.cf,v 1.15.4.2 2010/08/11 22:52:32 yamt Exp $
 
 #
 # Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -144,7 +144,7 @@ define	SFRAME_R31	offsetof(struct switchframe, fixreg[18])
 
 define	PCB_PM		offsetof(struct pcb, pcb_pm)
 define	PCB_SP		offsetof(struct pcb, pcb_sp)
-define	PCB_FAULT	offsetof(struct pcb, pcb_onfault)
+define	PCB_ONFAULT	offsetof(struct pcb, pcb_onfault)
 
 define	PM_CTX		offsetof(struct pmap, pm_ctx)
 

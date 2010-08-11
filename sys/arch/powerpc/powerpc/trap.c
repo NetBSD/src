@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.125.10.3 2010/03/11 15:02:51 yamt Exp $	*/
+/*	$NetBSD: trap.c,v 1.125.10.4 2010/08/11 22:52:36 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,14 +32,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.125.10.3 2010/03/11 15:02:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.125.10.4 2010/08/11 22:52:36 yamt Exp $");
 
 #include "opt_altivec.h"
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
 
 #include <sys/param.h>
-#include <sys/pool.h>
+
 #include <sys/proc.h>
 #include <sys/ras.h>
 #include <sys/reboot.h>
@@ -47,6 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.125.10.3 2010/03/11 15:02:51 yamt Exp $")
 #include <sys/savar.h>
 #include <sys/systm.h>
 #include <sys/kauth.h>
+#include <sys/kmem.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -71,6 +72,9 @@ static int fix_unaligned(struct lwp *, struct trapframe *);
 static inline vaddr_t setusr(vaddr_t, size_t *);
 static inline void unsetusr(void);
 
+extern int do_ucas_32(volatile int32_t *, int32_t, int32_t, int32_t *);
+int ucas_32(volatile int32_t *, int32_t, int32_t, int32_t *);
+
 void trap(struct trapframe *);	/* Called from locore / trap_subr */
 /* Why are these not defined in a header? */
 int badaddr(void *, size_t);
@@ -84,7 +88,6 @@ trap(struct trapframe *frame)
 	struct proc *p = l ? l->l_proc : NULL;
 	struct pcb *pcb = curpcb;
 	struct vm_map *map;
-	struct faultbuf *onfault;
 	ksiginfo_t ksi;
 	int type = frame->exc;
 	int ftype, rv;
@@ -121,7 +124,9 @@ trap(struct trapframe *frame)
 	case EXC_DSI: {
 		struct faultbuf *fb;
 		vaddr_t va = frame->dar;
+
 		ci->ci_ev_kdsi.ev_count++;
+		fb = pcb->pcb_onfault;
 
 		/*
 		 * Only query UVM if no interrupts are active.
@@ -169,10 +174,9 @@ trap(struct trapframe *frame)
 			else
 				ftype = VM_PROT_READ;
 
-			onfault = pcb->pcb_onfault;
 			pcb->pcb_onfault = NULL;
 			rv = uvm_fault(map, trunc_page(va), ftype);
-			pcb->pcb_onfault = onfault;
+			pcb->pcb_onfault = fb;
 
 			if (map != kernel_map) {
 				/*
@@ -193,7 +197,7 @@ trap(struct trapframe *frame)
 			 */
 			rv = EFAULT;
 		}
-		if ((fb = pcb->pcb_onfault) != NULL) {
+		if (fb != NULL) {
 			frame->srr0 = fb->fb_pc;
 			frame->fixreg[1] = fb->fb_sp;
 			frame->fixreg[2] = fb->fb_r2;
@@ -241,6 +245,7 @@ trap(struct trapframe *frame)
 			l->l_savp->savp_faultaddr = (vaddr_t)frame->dar;
 			l->l_pflag |= LP_SA_PAGEFAULT;
 		}
+		KASSERT(pcb->pcb_onfault == NULL);
 		rv = uvm_fault(map, trunc_page(frame->dar), ftype);
 		if (rv == 0) {
 			/*
@@ -311,6 +316,7 @@ trap(struct trapframe *frame)
 			l->l_pflag |= LP_SA_PAGEFAULT;
 		}
 		ftype = VM_PROT_EXECUTE;
+		KASSERT(pcb->pcb_onfault == NULL);
 		rv = uvm_fault(map, trunc_page(frame->srr0), ftype);
 		if (rv == 0) {
 			l->l_pflag &= ~LP_SA_PAGEFAULT;
@@ -620,6 +626,34 @@ kcopy(const void *src, void *dst, size_t len)
 }
 
 int
+ucas_32(volatile int32_t *uptr, int32_t old, int32_t new, int32_t *ret)
+{
+	vaddr_t uva = (vaddr_t)uptr;
+	vaddr_t p;
+	struct faultbuf env;
+	size_t seglen;
+	int rv;
+
+	if (uva & 3) {
+		return EFAULT;
+	}
+	if ((rv = setfault(&env)) != 0) {
+		unsetusr();
+		goto out;
+	}
+	p = setusr(uva, &seglen);
+	KASSERT(seglen >= sizeof(*uptr));
+	do_ucas_32((void *)p, old, new, ret);
+	unsetusr();
+
+out:
+	curpcb->pcb_onfault = 0;
+	return rv;
+}
+__strong_alias(ucas_ptr,ucas_32);
+__strong_alias(ucas_int,ucas_32);
+
+int
 badaddr(void *addr, size_t size)
 {
 	return badaddr_read(addr, size, NULL);
@@ -895,18 +929,15 @@ copyoutstr(const void *kaddr, void *udaddr, size_t len, size_t *done)
 void
 startlwp(void *arg)
 {
-	int err;
 	ucontext_t *uc = arg;
-	struct lwp *l = curlwp;
+	lwp_t *l = curlwp;
 	struct trapframe *frame = trapframe(l);
+	int error;
 
-	err = cpu_setmcontext(l, &uc->uc_mcontext, uc->uc_flags);
-#if DIAGNOSTIC
-	if (err) {
-		printf("Error %d from cpu_setmcontext.", err);
-	}
-#endif
-	pool_put(&lwp_uc_pool, uc);
+	error = cpu_setmcontext(l, &uc->uc_mcontext, uc->uc_flags);
+	KASSERT(error == 0);
+
+	kmem_free(uc, sizeof(ucontext_t));
 	userret(l, frame);
 }
 

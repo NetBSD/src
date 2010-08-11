@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.246.4.4 2010/03/11 15:04:03 yamt Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.246.4.5 2010/08/11 22:54:10 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.246.4.4 2010/03/11 15:04:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.246.4.5 2010/08/11 22:54:10 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -353,18 +353,18 @@ scsibusrescan(device_t sc, const char *ifattr,
 }
 
 static void
-scsidevdetached(device_t sc, device_t dev)
+scsidevdetached(device_t self, device_t child)
 {
-	struct scsibus_softc *ssc = device_private(sc);
-	struct scsipi_channel *chan = ssc->sc_channel;
+	struct scsibus_softc *sc = device_private(self);
+	struct scsipi_channel *chan = sc->sc_channel;
 	struct scsipi_periph *periph;
 	int target, lun;
 
-	target = device_locator(dev, SCSIBUSCF_TARGET);
-	lun = device_locator(dev, SCSIBUSCF_LUN);
+	target = device_locator(child, SCSIBUSCF_TARGET);
+	lun = device_locator(child, SCSIBUSCF_LUN);
 
 	periph = scsipi_lookup_periph(chan, target, lun);
-	KASSERT(periph->periph_dev == dev);
+	KASSERT(periph->periph_dev == child);
 
 	scsipi_remove_periph(chan, periph);
 	free(periph, M_DEVBUF);

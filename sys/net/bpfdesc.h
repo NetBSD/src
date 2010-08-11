@@ -1,4 +1,4 @@
-/*	$NetBSD: bpfdesc.h,v 1.28.2.2 2010/03/11 15:04:26 yamt Exp $	*/
+/*	$NetBSD: bpfdesc.h,v 1.28.2.3 2010/08/11 22:54:53 yamt Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -79,6 +79,7 @@ struct bpf_d {
 	u_char		bd_immediate;	/* true to return on packet arrival */
 	int		bd_hdrcmplt;	/* false to fill in src lladdr */
 	int		bd_seesent;	/* true if bpf should see sent packets */
+	int 		bd_feedback;	/* true to feed back sent packets */
 	int		bd_async;	/* non-zero if packet reception should generate signal */
 	pid_t		bd_pgid;	/* process or group id for signal */
 #if BSD < 199103

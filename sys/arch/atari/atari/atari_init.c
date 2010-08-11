@@ -1,4 +1,4 @@
-/*	$NetBSD: atari_init.c,v 1.67.44.4 2010/03/11 15:02:08 yamt Exp $	*/
+/*	$NetBSD: atari_init.c,v 1.67.44.5 2010/08/11 22:51:43 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -33,11 +33,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atari_init.c,v 1.67.44.4 2010/03/11 15:02:08 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atari_init.c,v 1.67.44.5 2010/08/11 22:51:43 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mbtype.h"
 #include "opt_m060sp.h"
+#include "opt_m68k_arch.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -525,7 +526,7 @@ start_c(int id, u_int ttphystart, u_int ttphysize, u_int stphysize,
 		lp = (paddr_t *)0;
 		le = (paddr_t *)pstart;
 		fp = (paddr_t *)kbase;
-		while(lp < le)
+		while (lp < le)
 			*fp++ = *lp++;
 	}
 #if defined(M68040) || defined(M68060)
@@ -747,7 +748,7 @@ map_io_areas(paddr_t ptpa, psize_t ptsize, u_int ptextra)
 #else
 	pg_proto  = STIO_PHYS | PG_RW | PG_CI | PG_V;
 #endif
-	while(pg < epg) {
+	while (pg < epg) {
 		*pg++     = pg_proto;
 		pg_proto += PAGE_SIZE;
 	}

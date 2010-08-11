@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.112.2.5 2010/03/11 15:04:07 yamt Exp $	*/
+/*	$NetBSD: usb.c,v 1.112.2.6 2010/08/11 22:54:16 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002, 2008 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.112.2.5 2010/03/11 15:04:07 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.112.2.6 2010/08/11 22:54:16 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -55,10 +55,12 @@ __KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.112.2.5 2010/03/11 15:04:07 yamt Exp $");
 #include <sys/vnode.h>
 #include <sys/signalvar.h>
 #include <sys/intr.h>
+#include <sys/module.h>
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
 #include <dev/usb/usbdi_util.h>
+#include <dev/usb/usb_verbose.h>
 
 #define USB_DEV_MINOR 255
 

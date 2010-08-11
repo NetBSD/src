@@ -1,4 +1,4 @@
-$NetBSD: version,v 1.15.20.3 2010/03/11 15:02:59 yamt Exp $
+$NetBSD: version,v 1.15.20.4 2010/08/11 22:52:46 yamt Exp $
 
 NOTE ANY CHANGES YOU MAKE TO THE BOOTBLOCKS HERE.  The format of this
 file is important - make sure the entries are appended on end, last item
@@ -19,3 +19,4 @@ is taken as the current.
 1.13:	Deal with kernels missing a separate read-only text segment
 1.14:	Make 3 attempts at BOOTP/DHCP for to allow for bridges and clear prior data read
 1.15:	Properly close the firmware handle before starting the kernel
+1.16:	Add support to boot with root on cd9660

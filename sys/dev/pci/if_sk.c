@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sk.c,v 1.48.4.4 2010/03/11 15:03:47 yamt Exp $	*/
+/*	$NetBSD: if_sk.c,v 1.48.4.5 2010/08/11 22:53:48 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -115,7 +115,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sk.c,v 1.48.4.4 2010/03/11 15:03:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sk.c,v 1.48.4.5 2010/08/11 22:53:48 yamt Exp $");
 
 #include "rnd.h"
 
@@ -1209,6 +1209,7 @@ sk_attach(device_t parent, device_t self, void *aux)
 	struct ifnet *ifp;
 	bus_dma_segment_t seg;
 	bus_dmamap_t dmamap;
+	prop_data_t data;
 	void *kva;
 	int i, rseg;
 	int mii_flags = 0;
@@ -1236,10 +1237,20 @@ sk_attach(device_t parent, device_t self, void *aux)
 	 * are operating in failover mode. Currently we don't
 	 * use this extra address.
 	 */
-	for (i = 0; i < ETHER_ADDR_LEN; i++)
-		sc_if->sk_enaddr[i] =
-			sk_win_read_1(sc, SK_MAC0_0 + (sa->skc_port * 8) + i);
-
+	data = prop_dictionary_get(device_properties(self), "mac-address");
+	if (data != NULL) {
+		/*
+		 * Try to get the station address from device properties
+		 * first, in case the ROM is missing.
+		 */
+		KASSERT(prop_object_type(data) == PROP_TYPE_DATA);
+		KASSERT(prop_data_size(data) == ETHER_ADDR_LEN);
+		memcpy(sc_if->sk_enaddr, prop_data_data_nocopy(data),
+		    ETHER_ADDR_LEN);
+	} else
+		for (i = 0; i < ETHER_ADDR_LEN; i++)
+			sc_if->sk_enaddr[i] = sk_win_read_1(sc,
+			    SK_MAC0_0 + (sa->skc_port * 8) + i);
 
 	aprint_normal(": Ethernet address %s\n",
 	    ether_sprintf(sc_if->sk_enaddr));
@@ -1586,8 +1597,8 @@ skc_attach(device_t parent, device_t self, void *aux)
                 return;
 	}
 
-	DPRINTFN(2, ("skc_attach: iobase=%lx, iosize=%lx\n", iobase,
-	    (u_long)iosize));
+	DPRINTFN(2, ("skc_attach: iobase=%#" PRIxPADDR ", iosize=%zx\n",
+	    iobase, iosize));
 #endif
 	sc->sc_dmatag = pa->pa_dmat;
 
@@ -1966,8 +1977,7 @@ sk_start(struct ifnet *ifp)
 		 * If there's a BPF listener, bounce a copy of this frame
 		 * to him.
 		 */
-		if (ifp->if_bpf)
-			bpf_ops->bpf_mtap(ifp->if_bpf, m_head);
+		bpf_mtap(ifp, m_head);
 	}
 	if (pkts == 0)
 		return;
@@ -2101,8 +2111,7 @@ sk_rxeof(struct sk_if_softc *sc_if)
 
 		ifp->if_ipackets++;
 
-		if (ifp->if_bpf)
-			bpf_ops->bpf_mtap(ifp->if_bpf, m);
+		bpf_mtap(ifp, m);
 		/* pass it on. */
 		(*ifp->if_input)(ifp, m);
 	}

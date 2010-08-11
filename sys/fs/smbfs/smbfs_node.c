@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_node.c,v 1.38.10.3 2010/03/11 15:04:14 yamt Exp $	*/
+/*	$NetBSD: smbfs_node.c,v 1.38.10.4 2010/08/11 22:54:35 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_node.c,v 1.38.10.3 2010/03/11 15:04:14 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_node.c,v 1.38.10.4 2010/08/11 22:54:35 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -112,8 +112,11 @@ smbfs_node_alloc(struct mount *mp, struct vnode *dvp,
 		if (dvp == NULL)
 			return EINVAL;
 		vp = VTOSMB(VTOSMB(dvp)->n_parent)->n_vnode;
-		if ((error = vget(vp, LK_EXCLUSIVE | LK_RETRY)) == 0)
+		vref(vp);
+		if ((error = vn_lock(vp, LK_EXCLUSIVE | LK_RETRY)) == 0)
 			*vpp = vp;
+		else
+			vrele(vp);
 		return (error);
 	}
 
@@ -134,7 +137,7 @@ retry:
 		vp = SMBTOV(np);
 		mutex_enter(&(vp)->v_interlock);
 		mutex_exit(&smp->sm_hashlock);
-		if (vget(vp, LK_EXCLUSIVE | LK_INTERLOCK) != 0)
+		if (vget(vp, LK_EXCLUSIVE) != 0)
 			goto retry;
 		*vpp = vp;
 		return (0);
@@ -305,7 +308,7 @@ smbfs_inactive(void *v)
 		np->n_flag &= ~NOPEN;
 		smbfs_attr_cacheremove(vp);
 	}
-	VOP_UNLOCK(vp, 0);
+	VOP_UNLOCK(vp);
 
 	*ap->a_recycle = false; /* XXX: should set the value properly */
 

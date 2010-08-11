@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2009, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2010, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -179,7 +179,7 @@ AcpiGetHandle (
 
     if (Parent)
     {
-        PrefixNode = AcpiNsMapHandleToNode (Parent);
+        PrefixNode = AcpiNsValidateHandle (Parent);
         if (!PrefixNode)
         {
             return (AE_BAD_PARAMETER);
@@ -201,7 +201,7 @@ AcpiGetHandle (
 
         if (!ACPI_STRCMP (UPathname, ACPI_NS_ROOT_PATH))
         {
-            *RetHandle = AcpiNsConvertEntryToHandle (AcpiGbl_RootNode);
+            *RetHandle = ACPI_CAST_PTR (ACPI_HANDLE, AcpiGbl_RootNode);
             return (AE_OK);
         }
     }
@@ -217,7 +217,7 @@ AcpiGetHandle (
     Status = AcpiNsGetNode (PrefixNode, UPathname, ACPI_NS_NO_UPSEARCH, &Node);
     if (ACPI_SUCCESS (Status))
     {
-        *RetHandle = AcpiNsConvertEntryToHandle (Node);
+        *RetHandle = ACPI_CAST_PTR (ACPI_HANDLE, Node);
     }
 
     return (Status);
@@ -283,7 +283,7 @@ AcpiGetName (
         return (Status);
     }
 
-    Node = AcpiNsMapHandleToNode (Handle);
+    Node = AcpiNsValidateHandle (Handle);
     if (!Node)
     {
         Status = AE_BAD_PARAMETER;
@@ -400,7 +400,7 @@ AcpiGetObjectInfo (
         goto Cleanup;
     }
 
-    Node = AcpiNsMapHandleToNode (Handle);
+    Node = AcpiNsValidateHandle (Handle);
     if (!Node)
     {
         (void) AcpiUtReleaseMutex (ACPI_MTX_NAMESPACE);

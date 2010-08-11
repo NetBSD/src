@@ -1,4 +1,4 @@
-/*      $NetBSD: jmide_reg.h,v 1.1.44.1 2010/03/11 15:03:49 yamt Exp $    */
+/*      $NetBSD: jmide_reg.h,v 1.1.44.2 2010/08/11 22:53:50 yamt Exp $    */
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -44,7 +44,7 @@
 #define JM_CONTROL0_SATA0_AHCI	0x00002000 /* SATA port 0 AHCI enable */
 #define JM_CONTROL0_SATA0_IDE	0x00001000 /* SATA port 0 PCIIDE enable */
 #define JM_CONTROL0_AHCI_F1	0x00000200 /* AHCI on function 1 */
-#define JM_CONTROL0_AHCI_EN	0x00000100 /* ACHI enable */
+#define JM_CONTROL0_AHCI_EN	0x00000100 /* AHCI enable */
 #define JM_CONTROL0_PATA0_RST	0x00000040 /* PATA port 0 reset */
 #define JM_CONTROL0_PATA0_EN	0x00000020 /* PATA port 0 enable */
 #define JM_CONTROL0_PATA0_SEC	0x00000010 /* PATA 0 enable on secondary chan */

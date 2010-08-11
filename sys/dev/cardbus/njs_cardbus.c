@@ -1,4 +1,4 @@
-/*	$NetBSD: njs_cardbus.c,v 1.7.4.4 2010/03/11 15:03:25 yamt Exp $	*/
+/*	$NetBSD: njs_cardbus.c,v 1.7.4.5 2010/08/11 22:53:20 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: njs_cardbus.c,v 1.7.4.4 2010/03/11 15:03:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: njs_cardbus.c,v 1.7.4.5 2010/08/11 22:53:20 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -124,10 +124,7 @@ njs_cardbus_attach(device_t parent, device_t self, void *aux)
 	struct njsc32_softc *sc = &csc->sc_njsc32;
 	const struct njsc32_cardbus_product *prod;
 	cardbus_devfunc_t ct = ca->ca_ct;
-	cardbus_chipset_tag_t cc = ct->ct_cc;
-	cardbus_function_tag_t cf = ct->ct_cf;
-	pcireg_t reg;
-	int csr;
+	pcireg_t csr, reg;
 	u_int8_t latency = 0x20;
 
 	if ((prod = njs_cardbus_lookup(ca)) == NULL)
@@ -204,7 +201,7 @@ njs_cardbus_attach(device_t parent, device_t self, void *aux)
 	/*
 	 * Establish the interrupt.
 	 */
-	sc->sc_ih = cardbus_intr_establish(cc, cf, ca->ca_intrline, IPL_BIO,
+	sc->sc_ih = Cardbus_intr_establish(ct, ca->ca_intrline, IPL_BIO,
 	    njsc32_intr, sc);
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self,
@@ -231,8 +228,7 @@ njs_cardbus_detach(device_t self, int flags)
 		return rv;
 
 	if (sc->sc_ih)
-		cardbus_intr_disestablish(csc->sc_ct->ct_cc,
-		    csc->sc_ct->ct_cf, sc->sc_ih);
+		Cardbus_intr_disestablish(csc->sc_ct, sc->sc_ih);
 
 	if (sc->sc_flags & NJSC32_IO_MAPPED)
 		Cardbus_mapreg_unmap(csc->sc_ct, NJSC32_CARDBUS_BASEADDR_IO,

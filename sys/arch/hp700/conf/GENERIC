@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.80.4.4 2010/03/11 15:02:22 yamt Exp $
+# $NetBSD: GENERIC,v 1.80.4.5 2010/08/11 22:52:01 yamt Exp $
 #
 # GENERIC machine description file
 #
@@ -23,7 +23,7 @@ include 	"arch/hp700/conf/std.hp700"
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
-#ident 		"GENERIC-$Revision: 1.80.4.4 $"
+#ident 		"GENERIC-$Revision: 1.80.4.5 $"
 
 maxusers	32		# estimated number of users
 
@@ -33,10 +33,10 @@ options 	HP7100_CPU,HP7150_CPU	# PCX-T
 options 	HP7100LC_CPU		# PCX-L
 options 	HP7200_CPU,HP7250_CPU	# PCX-T'
 options 	HP7300LC_CPU		# PCX-L2
-#options 	HP8000_CPU		# PCX-U  (in 32bit mode)
-#options 	HP8200_CPU		# PCX-V/U+ (in 32bit mode)
-#options 	HP8500_CPU		# PCX-W  (in 32bit mode)
-#options 	HP8600_CPU		# PCX-W+ (in 32bit mode)
+options 	HP8000_CPU		# PCX-U  (in 32bit mode)
+options 	HP8200_CPU		# PCX-V/U+ (in 32bit mode)
+options 	HP8500_CPU		# PCX-W  (in 32bit mode)
+options 	HP8600_CPU		# PCX-W+ (in 32bit mode)
 
 # CPU-related options.
 options 	FPEMUL		# floating point emulation XXX DO NOT REMOVE
@@ -106,7 +106,7 @@ file-system 	UMAPFS		# NULLFS + uid and gid remapping
 file-system 	UNION		# union file system
 file-system	CODA		# Coda File System; also needs vcoda (below)
 file-system	PTYFS		# /dev/pts/N support
-#file-system	TMPFS		# Efficient memory file-system
+file-system	TMPFS		# Efficient memory file-system
 #file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
 
 # File system options
@@ -138,6 +138,7 @@ options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
 options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 options 	IPFILTER_LOG	# ipmon(8) log support
 options 	IPFILTER_LOOKUP	# ippool(8) support
+options 	IPFILTER_COMPAT # Compat for IP-Filter
 #options 	IPFILTER_DEFAULT_BLOCK	# block all packets by default
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
@@ -157,6 +158,7 @@ options 	IPFILTER_LOOKUP	# ippool(8) support
 # These options enable verbose messages for several subsystems.
 # Warning, these may compile large string tables into the kernel!
 options 	GSCVERBOSE	# verbose GSC device autoconfig messages
+options 	PCIVERBOSE	# verbose PCI device autoconfig messages
 options 	EISAVERBOSE	# verbose EISA device autoconfig messages
 options 	MIIVERBOSE	# verbose PHY autoconfig messages
 options 	SCSIVERBOSE	# human readable SCSI error messages
@@ -224,6 +226,7 @@ mem*	at mainbus0		# /dev/*mem and memory controller
 # Miscellaneous
 pdc0	at mainbus0		# PDC/IODC wrapper for boot console
 power0	at mainbus0		# power/fail manager
+lcd0	at mainbus0		# LCD
 
 # STI graphics
 sti*	at mainbus0		# [H]CRX-{8,24,48}[Z] and Visualize graphics
@@ -251,10 +254,10 @@ gsc*	at wax?			# {725,715}/{64,80,100}, C*, B*, J*
 #weisa*	at gsc?			# C*, B*
 
 # Uturn/U2 IOA
-#uturn0	at mainbus0		# U2/UTurn Runway IOA
-#uturn1	at mainbus0
-#lasi*	at uturn?		# LASI on [CJ]*
-#dino*	at uturn?		# PCI bus bridge
+uturn0	at mainbus0		# U2/UTurn Runway IOA
+uturn1	at mainbus0
+lasi*	at uturn?		# LASI on [CJ]*
+dino*	at uturn?		# PCI bus bridge
 #sti*	at uturn?		#
 #wax*	at uturn?		# Wax on C*
 
@@ -264,17 +267,17 @@ gsc*	at wax?			# {725,715}/{64,80,100}, C*, B*, J*
 #wax*	at gecko?		# Wax GSC to GSC Bus Adapter
 
 # Astro memory & I/O controller 
-#astro*	at mainbus0		# Astro memory & I/O controller
-#elroy*	at astro?
+astro*	at mainbus0		# Astro memory & I/O controller
+elroy*	at astro?
 
 # PCI bus support
-#pci*	at elroy?
+pci*	at elroy?
 pci*	at dino?
 com*	at dino?
 ppb*	at pci? dev ? function ?
 pci*	at ppb?
 
-#ssio*	at pci?
+ssio*	at pci?
 
 # EISA bus support
 eisa*	at mongoose?
@@ -308,8 +311,8 @@ wsdisplay*	at sti?
 # Serial Devices
 
 # SSIO serial interfaces
-#com0	at ssio? irq 4
-#com1	at ssio? irq 3
+com0	at ssio? irq 4
+com1	at ssio? irq 3
 
 # GSC serial interfaces
 com*	at gsc?				# RS/232 serial port
@@ -323,7 +326,7 @@ cz*	at pci? dev ? function ?	# Cyclades-Z multi-port serial boards
 # Parallel Printer Interfaces
 
 # SSIO parallel printer interface
-#lpt0	at ssio?
+lpt0	at ssio?
 
 # GSC parallel printer interface
 lpt*	at gsc?
@@ -339,6 +342,7 @@ osiop*	at gsc? flags 0x00000		# NCR 53c710
 siop*	at gsc? irq 3			# NCR 53c720 (Fast/Wide)
 siop*	at mainbus0 irq 3		# NCR 53c720 (Fast/Wide)
 siop*	at phantomas? irq 3		# NCR 53c720 (Fast/Wide)
+siop*	at uturn? irq 3			# NCR 53c720 (Fast/Wide)
 
 # PCI SCSI controllers
 adv*	at pci? dev ? function ?	# AdvanSys 1200[A,B], 9xx[U,UA] SCSI
@@ -541,6 +545,164 @@ harmony* at gsc?			# Audio Type 2 (CS4215)
 #com*	at harmony?			# Telephone add-in card
 audio*	at audiobus?
 
+# USB Controller and Devices
+
+# PCI USB controllers
+ehci*	at pci?	dev ? function ?	# Enhanced Host Controller
+ohci*	at pci?	dev ? function ?	# Open Host Controller
+uhci*	at pci?	dev ? function ?	# Universal Host Controller (Intel)
+
+# USB bus support
+usb*	at ehci?
+usb*	at ohci?
+usb*	at uhci?
+
+# USB Hubs
+uhub*	at usb?
+uhub*	at uhub? port ?
+
+# USB HID device
+uhidev* at uhub? port ? configuration ? interface ?
+
+# USB Mice
+ums*	at uhidev? reportid ?
+wsmouse* at ums? mux 0
+
+# USB eGalax touch-panel
+uep*	at uhub? port ?
+wsmouse* at uep? mux 0
+
+# USB Keyboards
+ukbd*	at uhidev? reportid ?
+wskbd*	at ukbd? console ? mux 1
+
+# USB serial adapter
+ucycom* at uhidev? reportid ?
+
+# USB Generic HID devices
+uhid*	at uhidev? reportid ?
+
+# USB LCDs and USB-VGA adaptors
+udl*	at uhub? port ?		# DisplayLink DL-1x0/1x5
+wsdisplay* at udl?
+
+# USB Printer
+ulpt*	at uhub? port ? configuration ? interface ?
+
+# USB Modem
+umodem* at uhub? port ? configuration ?
+ucom*	at umodem?
+
+# Option N.V. Wireless WAN modems
+uhso*	at uhub? port ? configuration ?
+
+# USB Mass Storage
+umass*	at uhub? port ? configuration ? interface ?
+wd*	at umass?
+
+# USB audio
+uaudio* at uhub? port ? configuration ?
+
+# USB MIDI
+umidi* at uhub? port ? configuration ?
+
+# USB IrDA
+# USB-IrDA bridge spec
+uirda* at uhub? port ? configuration ? interface ?
+irframe* at uirda?
+
+stuirda* at uhub? port ? configuration ? interface ?
+irframe* at stuirda?
+
+# SigmaTel STIr4200 USB/IrDA Bridge
+ustir* at uhub? port ?
+irframe* at ustir?
+
+# USB Ethernet adapters
+aue*	at uhub? port ?		# ADMtek AN986 Pegasus based adapters
+axe*	at uhub? port ?		# ASIX AX88172 based adapters
+cdce*	at uhub? port ?		# CDC, Ethernet Networking Control Model
+cue*	at uhub? port ?		# CATC USB-EL1201A based adapters
+kue*	at uhub? port ?		# Kawasaki LSI KL5KUSB101B based adapters
+udav*	at uhub? port ?		# Davicom DM9601 based adapters
+url*	at uhub? port ?		# Realtek RTL8150L based adapters
+
+# USB 802.11 adapters
+atu*	at uhub? port ?		# Atmel AT76C50XX based adapters
+ral*	at uhub? port ?		# Ralink Technology RT25x0 802.11a/b/g
+rum*	at uhub? port ?		# Ralink Technology RT2501/RT2601 802.11a/b/g
+zyd*	at uhub? port ?		# Zydas ZD1211
+
+# Prolific PL2301/PL2302 host-to-host adapter
+upl*	at uhub? port ?
+
+# Serial adapters
+ubsa*	at uhub? port ?		# Belkin serial adapter
+ucom*	at ubsa? portno ?
+
+uchcom* at uhub? port ? 	# WinChipHead CH341/CH340 serial adapter
+ucom*	at uchcom? portno ?
+
+uftdi*	at uhub? port ?		# FTDI FT8U100AX serial adapter
+ucom*	at uftdi? portno ?
+
+uipaq*	at uhub? port ?		# iPAQ PDAs
+ucom*	at uipaq? portno ?
+
+umct*	at uhub? port ?		# MCT USB-RS232 serial adapter
+ucom*	at umct? portno ?
+
+uplcom* at uhub? port ? 	# I/O DATA USB-RSAQ2 serial adapter
+ucom*	at uplcom? portno ?
+
+uslsa*	at uhub? port ?		# Silicon Labs USB-RS232 serial adapter
+ucom*	at uslsa? portno ?
+
+uvscom* at uhub? port ? 	# SUNTAC Slipper U VS-10U serial adapter
+ucom*	at uvscom? portno ?
+
+# RIM BlackBerry
+uberry* at uhub? port ?
+
+# Diamond Multimedia Rio 500
+urio*	at uhub? port ?
+
+# USB Handspring Visor
+uvisor* at uhub? port ?
+ucom*	at uvisor?
+
+# Kyocera AIR-EDGE PHONE
+ukyopon* at uhub? port ?
+ucom*	at ukyopon? portno ?
+
+# USB scanners
+uscanner* at uhub? port ?
+
+# USB scanners that use SCSI emulation, e.g., HP5300
+usscanner* at uhub? port ?
+
+# Topfield TF5000PVR range of DVB recorders
+utoppy* at uhub? port ?
+
+# Y@P firmware loader
+uyap*	at uhub? port ?
+
+# D-Link DSB-R100 USB radio
+udsbr*	at uhub? port ?
+radio*	at udsbr?
+
+# USB Generic driver
+ugen*	at uhub? port ?
+
+# USB 3G datacards
+u3ginit* at uhub? port ?
+u3g*	at uhub? port ?
+ucom*	at u3g?
+
+# USB generic serial port (e.g., data over cellular)
+ugensa* at uhub? port ?
+ucom*	at ugensa?
+
 # Pseudo-Devices
 
 pseudo-device 	crypto			# /dev/crypto device
@@ -559,7 +721,7 @@ options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 #options 	RF_INCLUDE_INTERDECLUSTER=1
 #options 	RF_INCLUDE_PARITY_DECLUSTERING=1
 #options 	RF_INCLUDE_PARITY_DECLUSTERING_DS=1
-pseudo-device	fss		4	# file system snapshot device
+pseudo-device	fss			# file system snapshot device
 pseudo-device	md		1	# memory disk device (ramdisk)
 pseudo-device	vnd			# disk-like interface to files
 #options 	VND_COMPRESSION		# compressed vnd(4)

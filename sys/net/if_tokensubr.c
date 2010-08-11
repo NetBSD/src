@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tokensubr.c,v 1.53.10.3 2010/03/11 15:04:27 yamt Exp $	*/
+/*	$NetBSD: if_tokensubr.c,v 1.53.10.4 2010/08/11 22:54:54 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -92,7 +92,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tokensubr.c,v 1.53.10.3 2010/03/11 15:04:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tokensubr.c,v 1.53.10.4 2010/08/11 22:54:54 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -654,15 +654,14 @@ token_ifattach(struct ifnet *ifp, void *lla)
 
 	if_set_sadl(ifp, lla, ISO88025_ADDR_LEN, true);
 
-	bpf_ops->bpf_attach(ifp, DLT_IEEE802,
-	    sizeof(struct token_header), &ifp->if_bpf);
+	bpf_attach(ifp, DLT_IEEE802, sizeof(struct token_header));
 }
 
 void
 token_ifdetach(struct ifnet *ifp)
 {
 
-	bpf_ops->bpf_detach(ifp);
+	bpf_detach(ifp);
 #if 0	/* done in if_detach() */
 	if_free_sadl(ifp);
 #endif

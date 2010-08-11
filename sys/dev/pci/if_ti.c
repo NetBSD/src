@@ -1,4 +1,4 @@
-/* $NetBSD: if_ti.c,v 1.81.4.3 2010/03/11 15:03:48 yamt Exp $ */
+/* $NetBSD: if_ti.c,v 1.81.4.4 2010/08/11 22:53:48 yamt Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ti.c,v 1.81.4.3 2010/03/11 15:03:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ti.c,v 1.81.4.4 2010/08/11 22:53:48 yamt Exp $");
 
 #include "opt_inet.h"
 
@@ -1978,8 +1978,7 @@ ti_rxeof(struct ti_softc *sc)
 	 	 * a broadcast packet, multicast packet, matches our ethernet
 	 	 * address or the interface is in promiscuous mode.
 	 	 */
-		if (ifp->if_bpf)
-			bpf_ops->bpf_mtap(ifp->if_bpf, m);
+		bpf_mtap(ifp, m);
 
 		eh = mtod(m, struct ether_header *);
 		switch (ntohs(eh->ether_type)) {
@@ -2447,8 +2446,7 @@ ti_start(struct ifnet *ifp)
 		 * If there's a BPF listener, bounce a copy of this frame
 		 * to him.
 		 */
-		if (ifp->if_bpf)
-			bpf_ops->bpf_mtap(ifp->if_bpf, m_head);
+		bpf_mtap(ifp, m_head);
 	}
 
 	/* Transmit */

@@ -1,4 +1,4 @@
-# $NetBSD: VAX780,v 1.2.4.2 2009/05/04 08:12:03 yamt Exp $
+# $NetBSD: VAX780,v 1.2.4.3 2010/08/11 22:52:51 yamt Exp $
 #
 # 11/780,750,730 machine description file
 # 
@@ -317,7 +317,7 @@ pseudo-device	pty			# pseudo-terminals
 # options	RF_INCLUDE_INTERDECLUSTER=1
 # options 	RF_INCLUDE_PARITY_DECLUSTERING=1
 # options	RF_INCLUDE_PARITY_DECLUSTERING_DS=1
-#pseudo-device	fss	4		# file system snapshot device
+#pseudo-device	fss			# file system snapshot device
 pseudo-device	rnd			# /dev/random and in-kernel generator
 #pseudo-device	leds			# control the leds on vaxstations.
 pseudo-device	clockctl		# user control of clock subsystem

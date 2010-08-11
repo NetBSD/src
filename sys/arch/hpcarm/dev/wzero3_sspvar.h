@@ -1,0 +1,44 @@
+/*	$NetBSD: wzero3_sspvar.h,v 1.4.2.2 2010/08/11 22:52:05 yamt Exp $	*/
+
+/*
+ * Copyright (c) 2010 NONAKA Kimihiro <nonaka@netbsd.org>
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ */
+
+#ifndef	_HPCARM_DEV_WZERO3_SSPVAR_H_
+#define	_HPCARM_DEV_WZERO3_SSPVAR_H_
+
+enum {
+	WZERO3_SSP_IC_ADS7846,
+	WZERO3_SSP_IC_MAX1233,
+	WZERO3_SSP_IC_AK4184_TP,
+	WZERO3_SSP_IC_AK4184_KEYPAD,
+	WZERO3_SSP_IC_NUM
+};
+
+void		wzero3ssp_ic_start(int, uint32_t);
+uint32_t	wzero3ssp_ic_stop(int);
+uint32_t	wzero3ssp_ic_send(int, uint32_t, uint32_t);
+
+#endif	/* _HPCARM_DEV_WZERO3_SSPVAR_H_ */

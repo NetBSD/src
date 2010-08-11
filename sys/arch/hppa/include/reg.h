@@ -1,4 +1,4 @@
-/*	$NetBSD: reg.h,v 1.6.10.3 2010/03/11 15:02:27 yamt Exp $	*/
+/*	$NetBSD: reg.h,v 1.6.10.4 2010/08/11 22:52:09 yamt Exp $	*/
 
 /*	$OpenBSD: reg.h,v 1.7 2000/06/15 17:00:37 mickey Exp $	*/
 
@@ -82,13 +82,17 @@
 #define	CR_EIRR		23
 
 /* Temporary control registers */
+#ifdef MULTIPROCESSOR
+#define	CR_CURCPU	24	/* tr0: curcpu				*/
+#else
 #define	CR_CURLWP	24	/* tr0: curlwp				*/
+#endif
 #define	CR_VTOP		25	/* tr1: virt to phys table address	*/
 #define	CR_TR2		26	/* tr2: temporary			*/
 #define	CR_TLS		27	/* tr3: thread local storage pointer	*/
 #define	CR_HVTP		28	/* tr4: faulted HVT slot ptr on LC cpus */
 #define	CR_TR5		29	/* tr5: emu / TLB_STATS_{PRE,AFT}	*/
-#define	CR_UPADDR	30	/* tr6: paddr of U-area of curlwp	*/
+#define	CR_FPPADDR	30	/* tr6: paddr of FP regs of curlwp	*/
 #define	CR_TR7		31	/* tr7: trap temporary register		*/
 
 /*

@@ -1,4 +1,4 @@
-/* $NetBSD: isp_netbsd.c,v 1.77.4.5 2010/03/11 15:03:32 yamt Exp $ */
+/* $NetBSD: isp_netbsd.c,v 1.77.4.6 2010/08/11 22:53:27 yamt Exp $ */
 /*
  * Platform (NetBSD) dependent common attachment code for Qlogic adapters.
  */
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp_netbsd.c,v 1.77.4.5 2010/03/11 15:03:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp_netbsd.c,v 1.77.4.6 2010/08/11 22:53:27 yamt Exp $");
 
 #include <dev/ic/isp_netbsd.h>
 #include <dev/ic/isp_ioctl.h>
@@ -713,6 +713,8 @@ isprequest(struct scsipi_channel *chan, scsipi_adapter_req_t req, void *arg)
 		int dflags = 0;
 		sdparam *sdp = SDPARAM(isp, chan->chan_channel);
 
+printf("CHAN %d\n", chan->chan_channel);
+if (1) break;
 		if (xm->xm_mode & PERIPH_CAP_TQING)
 			dflags |= DPARM_TQING;
 		if (xm->xm_mode & PERIPH_CAP_WIDE16)
@@ -1519,6 +1521,20 @@ isp_prt(struct ispsoftc *isp, int level, const char *fmt, ...)
 		return;
 	}
 	printf("%s: ", device_xname(isp->isp_osinfo.dev));
+	va_start(ap, fmt);
+	vprintf(fmt, ap);
+	va_end(ap);
+	printf("\n");
+}
+
+void
+isp_xs_prt(struct ispsoftc *isp, XS_T *xs, int level, const char *fmt, ...)
+{
+	va_list ap;
+	if (level != ISP_LOGALL && (level & isp->isp_dblev) == 0) {
+		return;
+	}
+	scsipi_printaddr(xs->xs_periph);
 	va_start(ap, fmt);
 	vprintf(fmt, ap);
 	va_end(ap);

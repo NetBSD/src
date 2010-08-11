@@ -1,7 +1,7 @@
-/*	$NetBSD: kern_cpu.c,v 1.28.2.3 2010/03/11 15:04:16 yamt Exp $	*/
+/*	$NetBSD: kern_cpu.c,v 1.28.2.4 2010/08/11 22:54:38 yamt Exp $	*/
 
 /*-
- * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
+ * Copyright (c) 2007, 2008, 2009, 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.28.2.3 2010/03/11 15:04:16 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.28.2.4 2010/08/11 22:54:38 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,22 +98,23 @@ int	ncpuonline;
 bool	mp_online;
 struct	cpuqueue cpu_queue = CIRCLEQ_HEAD_INITIALIZER(cpu_queue);
 
-static struct cpu_info *cpu_infos[MAXCPUS];
+static struct cpu_info **cpu_infos;
 
 int
 mi_cpu_attach(struct cpu_info *ci)
 {
 	int error;
 
+	KASSERT(maxcpus > 0);
+
 	ci->ci_index = ncpu;
-	cpu_infos[cpu_index(ci)] = ci;
 	CIRCLEQ_INSERT_TAIL(&cpu_queue, ci, ci_data.cpu_qchain);
 	TAILQ_INIT(&ci->ci_data.cpu_ld_locks);
 	__cpu_simple_lock_init(&ci->ci_data.cpu_ld_lock);
 
 	/* This is useful for eg, per-cpu evcnt */
 	snprintf(ci->ci_data.cpu_name, sizeof(ci->ci_data.cpu_name), "cpu%d",
-		 cpu_index(ci));
+	    cpu_index(ci));
 
 	sched_cpuattach(ci);
 
@@ -139,6 +140,12 @@ mi_cpu_attach(struct cpu_info *ci)
 	ncpu++;
 	ncpuonline++;
 
+	if (cpu_infos == NULL) {
+		cpu_infos =
+		    kmem_zalloc(sizeof(cpu_infos[0]) * maxcpus, KM_SLEEP);
+	}
+	cpu_infos[cpu_index(ci)] = ci;
+
 	return 0;
 }
 
@@ -146,6 +153,7 @@ void
 cpuctlattach(int dummy)
 {
 
+	KASSERT(cpu_infos != NULL);
 }
 
 int
@@ -169,7 +177,7 @@ cpuctl_ioctl(dev_t dev, u_long cmd, void *data, int flag, lwp_t *l)
 		    NULL);
 		if (error != 0)
 			break;
-		if (cs->cs_id >= __arraycount(cpu_infos) ||
+		if (cs->cs_id >= maxcpus ||
 		    (ci = cpu_lookup(cs->cs_id)) == NULL) {
 			error = ESRCH;
 			break;
@@ -184,7 +192,7 @@ cpuctl_ioctl(dev_t dev, u_long cmd, void *data, int flag, lwp_t *l)
 		id = cs->cs_id;
 		memset(cs, 0, sizeof(*cs));
 		cs->cs_id = id;
-		if (cs->cs_id >= __arraycount(cpu_infos) ||
+		if (cs->cs_id >= maxcpus ||
 		    (ci = cpu_lookup(id)) == NULL) {
 			error = ESRCH;
 			break;
@@ -231,9 +239,16 @@ cpuctl_ioctl(dev_t dev, u_long cmd, void *data, int flag, lwp_t *l)
 struct cpu_info *
 cpu_lookup(u_int idx)
 {
-	struct cpu_info *ci = cpu_infos[idx];
+	struct cpu_info *ci;
 
-	KASSERT(idx < __arraycount(cpu_infos));
+	KASSERT(idx < maxcpus);
+
+	if (__predict_false(cpu_infos == NULL)) {
+		KASSERT(idx == 0);
+		return curcpu();
+	}
+
+	ci = cpu_infos[idx];
 	KASSERT(ci == NULL || cpu_index(ci) == idx);
 
 	return ci;

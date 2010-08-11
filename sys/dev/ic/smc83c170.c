@@ -1,4 +1,4 @@
-/*	$NetBSD: smc83c170.c,v 1.73.4.4 2010/03/11 15:03:35 yamt Exp $	*/
+/*	$NetBSD: smc83c170.c,v 1.73.4.5 2010/08/11 22:53:32 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smc83c170.c,v 1.73.4.4 2010/03/11 15:03:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smc83c170.c,v 1.73.4.5 2010/08/11 22:53:32 yamt Exp $");
 
 
 #include <sys/param.h>
@@ -494,8 +494,7 @@ epic_start(struct ifnet *ifp)
 		/*
 		 * Pass the packet to any BPF listeners.
 		 */
-		if (ifp->if_bpf)
-			bpf_ops->bpf_mtap(ifp->if_bpf, m0);
+		bpf_mtap(ifp, m0);
 	}
 
 	if (sc->sc_txpending == EPIC_NTXDESC) {
@@ -714,8 +713,7 @@ epic_intr(void *arg)
 			 * Pass this up to any BPF listeners, but only
 			 * pass it up the stack if it's for us.
 			 */
-			if (ifp->if_bpf)
-				bpf_ops->bpf_mtap(ifp->if_bpf, m);
+			bpf_mtap(ifp, m);
 
 			/* Pass it on. */
 			(*ifp->if_input)(ifp, m);

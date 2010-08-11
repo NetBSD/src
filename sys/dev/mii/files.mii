@@ -1,4 +1,4 @@
-#	$NetBSD: files.mii,v 1.41.10.1 2009/05/04 08:12:52 yamt Exp $
+#	$NetBSD: files.mii,v 1.41.10.2 2010/08/11 22:53:40 yamt Exp $
 
 defflag	opt_mii.h	MIIVERBOSE
 
@@ -12,6 +12,7 @@ define	mii_phy
 file	dev/mii/mii_physubr.c			mii_phy
 
 file	dev/mii/mii_ethersubr.c			mii & ether
+file	dev/mii/mii_verbose.c			mii & miiverbose
 
 define	ukphy_subr
 file	dev/mii/ukphy_subr.c			ukphy_subr

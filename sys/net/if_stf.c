@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stf.c,v 1.65.10.2 2010/03/11 15:04:27 yamt Exp $	*/
+/*	$NetBSD: if_stf.c,v 1.65.10.3 2010/08/11 22:54:54 yamt Exp $	*/
 /*	$KAME: if_stf.c,v 1.62 2001/06/07 22:32:16 itojun Exp $ */
 
 /*
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.65.10.2 2010/03/11 15:04:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.65.10.3 2010/08/11 22:54:54 yamt Exp $");
 
 #include "opt_inet.h"
 
@@ -212,8 +212,7 @@ stf_clone_create(struct if_clone *ifc, int unit)
 	sc->sc_if.if_dlt    = DLT_NULL;
 	if_attach(&sc->sc_if);
 	if_alloc_sadl(&sc->sc_if);
-	bpf_ops->bpf_attach(&sc->sc_if, DLT_NULL, sizeof(u_int),
-	    &sc->sc_if.if_bpf);
+	bpf_attach(&sc->sc_if, DLT_NULL, sizeof(u_int));
 	LIST_INSERT_HEAD(&stf_softc_list, sc, sc_list);
 	return (0);
 }
@@ -225,7 +224,7 @@ stf_clone_destroy(struct ifnet *ifp)
 
 	LIST_REMOVE(sc, sc_list);
 	encap_detach(sc->encap_cookie);
-	bpf_ops->bpf_detach(ifp);
+	bpf_detach(ifp);
 	if_detach(ifp);
 	rtcache_free(&sc->sc_ro);
 	free(sc, M_DEVBUF);
@@ -382,8 +381,7 @@ stf_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 		return ENETUNREACH;
 	}
 
-	if (ifp->if_bpf)
-		bpf_ops->bpf_mtap_af(ifp->if_bpf, AF_INET6, m);
+	bpf_mtap_af(ifp, AF_INET6, m);
 
 	M_PREPEND(m, sizeof(struct ip), M_DONTWAIT);
 	if (m && m->m_len < sizeof(struct ip))
@@ -624,8 +622,7 @@ in_stf_input(struct mbuf *m, ...)
 
 	m->m_pkthdr.rcvif = ifp;
 
-	if (ifp->if_bpf)
-		bpf_ops->bpf_mtap_af(ifp->if_bpf, AF_INET6, m);
+	bpf_mtap_af(ifp, AF_INET6, m);
 
 	/*
 	 * Put the packet to the network layer input queue according to the

@@ -1,4 +1,4 @@
-/*	$NetBSD: i82586.c,v 1.61.4.3 2010/03/11 15:03:31 yamt Exp $	*/
+/*	$NetBSD: i82586.c,v 1.61.4.4 2010/08/11 22:53:26 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -137,7 +137,7 @@ Mode of operation:
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82586.c,v 1.61.4.3 2010/03/11 15:03:31 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82586.c,v 1.61.4.4 2010/08/11 22:53:26 yamt Exp $");
 
 
 #include <sys/param.h>
@@ -1033,10 +1033,8 @@ ie_readframe(
 	}
 #endif
 
-	/* Check for a BPF filter; if so, hand it up. */
-	if (sc->sc_ethercom.ec_if.if_bpf != 0)
-		/* Pass it up. */
-		bpf_ops->bpf_mtap(sc->sc_ethercom.ec_if.if_bpf, m);
+	/* Pass it up. */
+	bpf_mtap(&sc->sc_ethercom.ec_if, m);
 
 	/*
 	 * Finally pass this packet up to higher layers.
@@ -1154,8 +1152,7 @@ i82586_start(struct ifnet *ifp)
 			panic("i82586_start: no header mbuf");
 
 		/* Tap off here if there is a BPF listener. */
-		if (ifp->if_bpf)
-			bpf_ops->bpf_mtap(ifp->if_bpf, m0);
+		bpf_mtap(ifp, m0);
 
 #if I82586_DEBUG
 		if (sc->sc_debug & IED_ENQ)

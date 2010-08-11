@@ -1,4 +1,4 @@
-#	$NetBSD: files.g42xxeb,v 1.5 2008/03/17 09:30:02 kiyohara Exp $
+#	$NetBSD: files.g42xxeb,v 1.5.4.1 2010/08/11 22:51:51 yamt Exp $
 #
 # Genetec corp. G4255EB evaluation board configuration info
 #
@@ -7,6 +7,9 @@ file	arch/evbarm/g42xxeb/g42xxeb_machdep.c
 
 # CPU support and integrated peripherals
 include "arch/arm/xscale/files.pxa2x0"
+
+# Machine-independent SD/MMC drivers
+include "dev/sdmmc/files.sdmmc"
 
 # G4250EBX on-board devices (including CPLD)
 device	obio {[addr=-1], [intr=-1]}
@@ -39,3 +42,6 @@ file	arch/evbarm/g42xxeb/gb225_pcic.c	opcic
 # Cypress SL811HS USB host controller
 attach	slhci at opio with slhci_opio
 file	arch/evbarm/g42xxeb/gb225_slhci.c	slhci_opio
+
+attach pxamci at obio with pxamci_obio
+file   arch/evbarm/g42xxeb/g42xxeb_mci.c	pxamci_obio

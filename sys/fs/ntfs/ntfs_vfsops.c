@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vfsops.c,v 1.65.10.5 2010/03/11 15:04:13 yamt Exp $	*/
+/*	$NetBSD: ntfs_vfsops.c,v 1.65.10.6 2010/08/11 22:54:34 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.65.10.5 2010/03/11 15:04:13 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.65.10.6 2010/08/11 22:54:34 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -277,7 +277,7 @@ ntfs_mount (
 		if (err) {
 			vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
 			(void)VOP_CLOSE(devvp, flags, NOCRED);
-			VOP_UNLOCK(devvp, 0);
+			VOP_UNLOCK(devvp);
 			goto fail;
 		}
 	}
@@ -315,7 +315,7 @@ ntfs_mountfs(struct vnode *devvp, struct mount *mp, struct ntfs_args *argsp, str
 	 */
 	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
 	error = vinvalbuf(devvp, V_SAVE, l->l_cred, l, 0, 0);
-	VOP_UNLOCK(devvp, 0);
+	VOP_UNLOCK(devvp);
 	if (error)
 		return (error);
 
@@ -539,7 +539,7 @@ ntfs_unmount(
 	error = VOP_CLOSE(ntmp->ntm_devvp, ronly ? FREAD : FREAD|FWRITE,
 		NOCRED);
 	KASSERT(error == 0);
-	VOP_UNLOCK(ntmp->ntm_devvp, 0);
+	VOP_UNLOCK(ntmp->ntm_devvp);
 
 	vrele(ntmp->ntm_devvp);
 
@@ -659,7 +659,7 @@ ntfs_fhtovp(
 	    (unsigned long long)ntfh.ntfid_ino));
 
 	error = ntfs_vgetex(mp, ntfh.ntfid_ino, ntfh.ntfid_attr, NULL,
-			LK_EXCLUSIVE | LK_RETRY, 0, vpp);
+			LK_EXCLUSIVE, 0, vpp);
 	if (error != 0) {
 		*vpp = NULLVP;
 		return (error);
@@ -726,6 +726,7 @@ ntfs_vgetex(
 	ntmp = VFSTONTFS(mp);
 	*vpp = NULL;
 
+loop:
 	/* Get ntnode */
 	error = ntfs_ntlookup(ntmp, ino, &ip);
 	if (error) {
@@ -778,22 +779,40 @@ ntfs_vgetex(
 	 * lock has to be acquired first.
 	 * ntfs_fget() bumped ntnode usecount, so ntnode won't be recycled
 	 * prematurely.
+	 * Take v_interlock before releasing ntnode lock to avoid races.
 	 */
+	vp = FTOV(fp);
+	if (vp) {
+		mutex_enter(&vp->v_interlock);
+		ntfs_ntput(ip);
+		if (vget(vp, lkflags) != 0)
+			goto loop;
+		*vpp = vp;
+		return 0;
+	}
 	ntfs_ntput(ip);
 
-	if (FTOV(fp)) {
-		/* vget() returns error if the vnode has been recycled */
-		if (vget(FTOV(fp), lkflags) == 0) {
-			*vpp = FTOV(fp);
-			return (0);
-		}
-	}
-
 	error = getnewvnode(VT_NTFS, ntmp->ntm_mountp, ntfs_vnodeop_p, &vp);
+	ntfs_ntget(ip);
 	if(error) {
 		ntfs_frele(fp);
 		ntfs_ntput(ip);
 		return (error);
+	}
+	error = ntfs_fget(ntmp, ip, attrtype, attrname, &fp);
+	if (error) {
+		printf("ntfs_vget: ntfs_fget failed\n");
+		ntfs_ntput(ip);
+		return (error);
+	}
+	if (FTOV(fp)) {
+		/*
+		 * Another thread beat us, put back freshly allocated
+		 * vnode and retry.
+		 */
+		ntfs_ntput(ip);
+		ungetnewvnode(vp);
+		goto loop;
 	}
 	dprintf(("ntfs_vget: vnode: %p for ntnode: %llu\n", vp,
 	    (unsigned long long)ino));
@@ -807,7 +826,9 @@ ntfs_vgetex(
 	if (ino == NTFS_ROOTINO)
 		vp->v_vflag |= VV_ROOT;
 
-	if (lkflags & LK_TYPE_MASK) {
+	ntfs_ntput(ip);
+
+	if (lkflags & (LK_EXCLUSIVE | LK_SHARED)) {
 		error = vn_lock(vp, lkflags);
 		if (error) {
 			vput(vp);
@@ -827,8 +848,7 @@ ntfs_vget(
 	ino_t ino,
 	struct vnode **vpp)
 {
-	return ntfs_vgetex(mp, ino, NTFS_A_DATA, NULL,
-			LK_EXCLUSIVE | LK_RETRY, 0, vpp);
+	return ntfs_vgetex(mp, ino, NTFS_A_DATA, NULL, LK_EXCLUSIVE, 0, vpp);
 }
 
 extern const struct vnodeopv_desc ntfs_vnodeop_opv_desc;
