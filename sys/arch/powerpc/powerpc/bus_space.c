@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.20.20.1 2010/04/30 14:39:45 uebayasi Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.20.20.2 2010/08/11 13:20:08 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.20.20.1 2010/04/30 14:39:45 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.20.20.2 2010/08/11 13:20:08 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -42,6 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.20.20.1 2010/04/30 14:39:45 uebayasi
 #include <sys/malloc.h>
 
 #include <uvm/uvm_extern.h>
+#include <uvm/uvm_prot.h>
 
 #define _POWERPC_BUS_SPACE_PRIVATE
 #include <machine/bus.h>
@@ -394,6 +395,13 @@ static void memio_unmap(bus_space_tag_t, bus_space_handle_t, bus_size_t);
 static int memio_alloc(bus_space_tag_t, bus_addr_t, bus_addr_t, bus_size_t,
 	bus_size_t, bus_size_t, int, bus_addr_t *, bus_space_handle_t *);
 static void memio_free(bus_space_tag_t, bus_space_handle_t, bus_size_t);
+#ifdef __BUS_SPACE_HAS_PHYSLOAD_METHODS
+static void *memio_physload(bus_space_tag_t, bus_addr_t, bus_size_t, int);
+static void memio_physunload(bus_space_tag_t, void *);
+static void *memio_physload_device(bus_space_tag_t, bus_addr_t, bus_size_t,
+	int, int);
+static void memio_physunload_device(bus_space_tag_t, void *);
+#endif
 
 static int extent_flags;
 
@@ -483,6 +491,14 @@ bus_space_init(struct powerpc_bus_space *t, const char *extent_name,
 		}
 	}
 #endif
+
+#ifdef __BUS_SPACE_HAS_PHYSLOAD_METHODS
+	t->pbs_physload = memio_physload;
+	t->pbs_physunload = memio_physunload;
+	t->pbs_physload_device = memio_physload_device;
+	t->pbs_physunload_device = memio_physunload_device;
+#endif
+
 	return 0;
 }
 
@@ -753,3 +769,36 @@ memio_free(bus_space_tag_t t, bus_space_handle_t bsh, bus_size_t size)
 	/* memio_unmap() does all that we need to do. */
 	memio_unmap(t, bsh, size);
 }
+
+#ifdef __BUS_SPACE_HAS_PHYSLOAD_METHODS
+static void *
+memio_physload(bus_space_tag_t t, bus_addr_t bpa, bus_size_t size, int freelist)
+{
+	const paddr_t start = memio_mmap(t, bpa, 0, VM_PROT_ALL, 0) >> PAGE_SHIFT;
+	const paddr_t end = memio_mmap(t, bpa + size, 0, VM_PROT_ALL, 0) >> PAGE_SHIFT;
+
+	return uvm_page_physload(start, end, start, end, freelist);
+}
+
+static void
+memio_physunload(bus_space_tag_t t, void *phys)
+{
+	uvm_page_physunload(phys);
+}
+
+static void *
+memio_physload_device(bus_space_tag_t t, bus_addr_t bpa, bus_size_t size, int prot,
+    int flags)
+{
+	const paddr_t start = memio_mmap(t, bpa, 0, prot, flags) >> PAGE_SHIFT;
+	const paddr_t end = memio_mmap(t, bpa + size, 0, prot, flags) >> PAGE_SHIFT;
+
+	return uvm_page_physload_device(start, end, start, end, prot, flags);
+}
+
+static void
+memio_physunload_device(bus_space_tag_t t, void *phys)
+{
+	uvm_page_physunload_device(phys);
+}
+#endif
