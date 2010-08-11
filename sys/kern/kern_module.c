@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.70 2010/06/26 07:23:57 pgoyette Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.71 2010/08/11 12:04:49 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.70 2010/06/26 07:23:57 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.71 2010/08/11 12:04:49 pgoyette Exp $");
 
 #define _MODULE_INTERNAL
 
@@ -333,7 +333,7 @@ module_init(void)
 		module_map = kernel_map;
 	}
 	mutex_init(&module_lock, MUTEX_DEFAULT, IPL_NONE);
-	cv_init(&module_thread_cv, "modunload");
+	cv_init(&module_thread_cv, "mod_unld");
 	mutex_init(&module_thread_lock, MUTEX_DEFAULT, IPL_NONE);
 
 #ifdef MODULAR	/* XXX */
