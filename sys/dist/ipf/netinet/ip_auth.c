@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_auth.c,v 1.14 2010/04/17 21:00:44 darrenr Exp $	*/
+/*	$NetBSD: ip_auth.c,v 1.15 2010/08/11 11:40:51 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 1998-2003 by Darren Reed & Guido van Rooij.
@@ -124,7 +124,7 @@ extern struct ifqueue   ipintrq;		/* ip packet input queue */
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_auth.c,v 1.14 2010/04/17 21:00:44 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_auth.c,v 1.15 2010/08/11 11:40:51 pgoyette Exp $");
 #else
 static const char rcsid[] = "@(#)Id: ip_auth.c,v 2.73.2.34 2010/01/31 16:22:54 darrenr Exp";
 #endif
@@ -183,7 +183,7 @@ int fr_authinit()
 	MUTEX_INIT(&ipf_authmx, "ipf auth log mutex");
 	RWLOCK_INIT(&ipf_auth, "ipf IP User-Auth rwlock");
 #if SOLARIS && defined(_KERNEL)
-	cv_init(&ipfauthwait, "ipf auth condvar", CV_DRIVER, NULL);
+	cv_init(&ipfauthwait, "ipf_auth", CV_DRIVER, NULL);
 #endif
 #if defined(linux) && defined(_KERNEL)
 	init_waitqueue_head(&fr_authnext_linux);
