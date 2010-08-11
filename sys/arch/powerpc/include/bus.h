@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.20 2008/04/28 20:23:32 martin Exp $	*/
+/*	$NetBSD: bus.h,v 1.20.20.1 2010/08/11 13:20:07 uebayasi Exp $	*/
 /*	$OpenBSD: bus.h,v 1.1 1997/10/13 10:53:42 pefo Exp $	*/
 
 /*-
@@ -110,6 +110,8 @@
  */
 typedef uint32_t bus_addr_t;
 typedef uint32_t bus_size_t;
+#define	PRIxBUSADDR	PRIx32
+#define	PRIxBUSSIZE	PRIx32
 
 #ifndef __HAVE_LOCAL_BUS_SPACE
 typedef	uint32_t bus_space_handle_t;
@@ -211,6 +213,14 @@ struct powerpc_bus_space {
 	const struct powerpc_bus_space_set *pbs_set;
 	const struct powerpc_bus_space_set *pbs_set_stream;
 	const struct powerpc_bus_space_copy *pbs_copy;
+
+#ifdef __BUS_SPACE_HAS_PHYSLOAD_METHODS
+	void *(*pbs_physload)(bus_space_tag_t, bus_addr_t, bus_size_t, int);
+	void (*pbs_physunload)(bus_space_tag_t, void *);
+	void *(*pbs_physload_device)(bus_space_tag_t, bus_addr_t, bus_size_t,
+	    int, int);
+	void (*pbs_physunload_device)(bus_space_tag_t, void *);
+#endif
 };
 
 #define _BUS_SPACE_STRIDE(t, o) \
@@ -617,6 +627,46 @@ void bus_space_mallocok(void);
 #define BUS_SPACE_ALIGNED_POINTER(p, t) ALIGNED_POINTER(p, t)
 
 #endif	/* !__HAVE_LOCAL_BUS_SPACE */
+
+#ifdef __BUS_SPACE_HAS_PHYSLOAD_METHODS
+/*
+ *	void *bus_space_physload (bus_space_tag_t t, bus_addr_t addr,
+ *	    bus_size_t size, int freelist);
+ *
+ * Allocate general purpose managed memory segment for a given bus space.
+ */
+
+#define bus_space_physload(t, a, s, fl)					\
+    ((*(t)->pbs_physload)((t), (a), (s), (fl)))
+
+/*
+ *	void *bus_space_physunload (bus_space_tag_t t, void *phys);
+ *
+ * Free general purpose managed memory segment for a given bus space.
+ */
+
+#define bus_space_physunload(t, phys)					\
+    ((*(t)->pbs_physunload)((t), (phys)))
+
+/*
+ *	void *bus_space_physload_device (bus_space_tag_t t, bus_addr_t addr,
+ *	    bus_size_t size, int freelist);
+ *
+ * Allocate managed device memory segment for a given bus space.
+ */
+
+#define bus_space_physload_device(t, a, s, prot, flags)			\
+    ((*(t)->pbs_physload_device)((t), (a), (s), (prot), (flags)))
+
+/*
+ *	void *bus_space_physunload_device (bus_space_tag_t t, void *phys);
+ *
+ * Allocate managed device memory segment for a given bus space.
+ */
+
+#define bus_space_physunload_device(t, phys)				\
+    ((*(t)->pbs_physunload_device)((t), (phys)))
+#endif
 
 /*
  * Bus DMA methods.
