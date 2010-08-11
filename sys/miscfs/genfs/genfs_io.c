@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.36.2.18 2010/07/22 07:49:46 uebayasi Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.36.2.19 2010/08/11 13:33:03 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.36.2.18 2010/07/22 07:49:46 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.36.2.19 2010/08/11 13:33:03 uebayasi Exp $");
 
 #include "opt_xip.h"
 
@@ -846,6 +846,7 @@ genfs_do_getpages_xip(void *v)
 			KASSERT(seg != NULL);
 			/* bus_space_mmap cookie -> paddr_t */
 			seg_off = (blkno << dev_bshift) + (off - (lbn << fs_bshift));
+			KASSERT((seg_off & PAGE_MASK) == 0);
 			pg = seg->pgs + (seg_off >> PAGE_SHIFT);
 			KASSERT(pg->phys_addr == pmap_phys_address(seg->start) + seg_off);
 
