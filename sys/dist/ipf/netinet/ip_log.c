@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_log.c,v 1.12 2009/08/19 08:36:11 darrenr Exp $	*/
+/*	$NetBSD: ip_log.c,v 1.13 2010/08/11 11:40:51 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 1997-2003 by Darren Reed.
@@ -9,7 +9,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_log.c,v 1.12 2009/08/19 08:36:11 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_log.c,v 1.13 2010/08/11 11:40:51 pgoyette Exp $");
 
 #include <sys/param.h>
 #if defined(KERNEL) || defined(_KERNEL)
@@ -205,7 +205,7 @@ int fr_loginit()
 	}
 
 # if SOLARIS && defined(_KERNEL)
-	cv_init(&iplwait, "ipl condvar", CV_DRIVER, NULL);
+	cv_init(&iplwait, "ipf_log", CV_DRIVER, NULL);
 # endif
 	MUTEX_INIT(&ipl_mutex, "ipf log mutex");
 
