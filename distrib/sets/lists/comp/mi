@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1495 2010/08/11 18:20:43 pgoyette Exp $
+#	$NetBSD: mi,v 1.1496 2010/08/11 18:46:32 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -15178,15 +15178,15 @@
 ./usr/share/man/html9/microuptime.html		comp-sys-htmlman	html
 ./usr/share/man/html9/module.html		comp-sys-htmlman	html
 ./usr/share/man/html9/module_autoload.html	comp-sys-htmlman	html
-./usr/share/man/html9/module_builtin_require_force.9 comp-sys-htmlman	html
+./usr/share/man/html9/module_builtin_require_force.html comp-sys-htmlman html
 ./usr/share/man/html9/module_find_section.html	comp-sys-htmlman	html
 ./usr/share/man/html9/module_hold.html		comp-sys-htmlman	html
-./usr/share/man/html9/module_init.9		comp-sys-htmlman	html
+./usr/share/man/html9/module_init.html		comp-sys-htmlman	html
 ./usr/share/man/html9/module_init_class.html	comp-sys-htmlman	html
 ./usr/share/man/html9/module_load.html		comp-sys-htmlman	html
-./usr/share/man/html9/module_load_vfs_init.9	comp-sys-htmlman	html
+./usr/share/man/html9/module_load_vfs_init.html	comp-sys-htmlman	html
 ./usr/share/man/html9/module_rele.html		comp-sys-htmlman	html
-./usr/share/man/html9/module_start_unload_thread.9 comp-sys-htmlman	html
+./usr/share/man/html9/module_start_unload_thread.html comp-sys-htmlman	html
 ./usr/share/man/html9/module_unload.html	comp-sys-htmlman	html
 ./usr/share/man/html9/mstohz.html		comp-sys-htmlman	html
 ./usr/share/man/html9/mtocl.html		comp-sys-htmlman	html
