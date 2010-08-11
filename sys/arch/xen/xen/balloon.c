@@ -1,4 +1,4 @@
-/* $NetBSD: balloon.c,v 1.4 2010/07/10 11:20:48 cherry Exp $ */
+/* $NetBSD: balloon.c,v 1.5 2010/08/11 11:32:58 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: balloon.c,v 1.4 2010/07/10 11:20:48 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: balloon.c,v 1.5 2010/08/11 11:32:58 pgoyette Exp $");
 
 #include <sys/inttypes.h>
 #include <sys/param.h>
@@ -707,7 +707,7 @@ balloon_xenbus_setup(void)
 	/* Setup flaglocks, condvars et. al */
 	mutex_init(&balloon_conf.flaglock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&balloon_conf.tgtlock, MUTEX_DEFAULT, IPL_HIGH);
-	cv_init(&balloon_conf.cv_memchanged, "ballooning");
+	cv_init(&balloon_conf.cv_memchanged, "balloon");
 
 	SLIST_INIT(&balloon_conf.balloon_page_entries);
 	balloon_conf.balloon_num_page_entries = 0;
