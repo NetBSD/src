@@ -1,4 +1,4 @@
-/*	$NetBSD: t_basic.c,v 1.1 2010/08/10 21:55:28 pooka Exp $	*/
+/*	$NetBSD: t_basic.c,v 1.2 2010/08/11 13:10:03 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: t_basic.c,v 1.1 2010/08/10 21:55:28 pooka Exp $");
+__RCSID("$NetBSD: t_basic.c,v 1.2 2010/08/11 13:10:03 pooka Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -155,6 +155,8 @@ ATF_TC_BODY(handover, tc)
 		break;
 	}
 
+	usleep(500000);
+
 	/* fork backup */
 	switch (cpid = fork()) {
 	case -1:
@@ -167,6 +169,8 @@ ATF_TC_BODY(handover, tc)
 	default:
 		break;
 	}
+
+	usleep(500000);
 
 	rump_init();
 	netcfg_rump_makeshmif(THEBUS, ifname);
