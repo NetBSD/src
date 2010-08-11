@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_cstate.c,v 1.22 2010/08/11 10:44:07 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_cstate.c,v 1.23 2010/08/11 16:41:19 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_cstate.c,v 1.22 2010/08/11 10:44:07 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_cstate.c,v 1.23 2010/08/11 16:41:19 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -113,8 +113,12 @@ void
 acpicpu_cstate_attach_print(struct acpicpu_softc *sc)
 {
 	struct acpicpu_cstate *cs;
+	static bool once = false;
 	const char *str;
 	int i;
+
+	if (once != false)
+		return;
 
 	for (i = 0; i < ACPI_C_STATE_COUNT; i++) {
 
@@ -146,6 +150,8 @@ acpicpu_cstate_attach_print(struct acpicpu_softc *sc)
 		    i, str, cs->cs_latency, cs->cs_power,
 		    (uint32_t)cs->cs_addr, cs->cs_flags);
 	}
+
+	once = true;
 }
 
 static void
