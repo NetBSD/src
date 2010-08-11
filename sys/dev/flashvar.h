@@ -1,4 +1,4 @@
-/*	$Id: flashvar.h,v 1.1.2.3 2010/04/28 13:41:41 uebayasi Exp $	*/
+/*	$Id: flashvar.h,v 1.1.2.4 2010/08/11 13:24:48 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2010 Tsubai Masanari.  All rights reserved.
@@ -53,6 +53,7 @@ struct flash_softc {
 	void *sc_phys;
 };
 
+void flash_init(struct flash_softc *);
 int flash_map(struct flash_softc *, u_long);
 void flash_unmap(struct flash_softc *);
 
