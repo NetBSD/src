@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.97 2010/08/08 18:24:34 chs Exp $	*/
+/*	$NetBSD: fd.c,v 1.98 2010/08/11 11:35:08 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2008 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.97 2010/08/08 18:24:34 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.98 2010/08/11 11:35:08 pgoyette Exp $");
 
 #include "rnd.h"
 #include "opt_ddb.h"
@@ -355,7 +355,7 @@ void
 fdcattach(struct fdc_softc *fdc)
 {
 	mutex_init(&fdc->sc_mtx, MUTEX_DEFAULT, IPL_BIO);
-	cv_init(&fdc->sc_cv, "fdcwakeup");
+	cv_init(&fdc->sc_cv, "fdcwake");
 	callout_init(&fdc->sc_timo_ch, 0);
 	callout_init(&fdc->sc_intr_ch, 0);
 
