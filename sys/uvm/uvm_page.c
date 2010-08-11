@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.153.2.51 2010/07/27 01:47:43 uebayasi Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.153.2.52 2010/08/11 09:50:01 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.153.2.51 2010/07/27 01:47:43 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.153.2.52 2010/08/11 09:50:01 uebayasi Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -1041,7 +1041,7 @@ vm_physseg_find(paddr_t pframe, int *offp)
 
 #ifdef XIP
 int
-vm_physseg_find_direct(paddr_t pframe, int *offp)
+vm_physseg_find_device(paddr_t pframe, int *offp)
 {
 
 	return VM_PHYSSEG_FIND(vm_physdev_ptrs, vm_nphysdev, VM_PHYSSEG_OP_PF,
@@ -1180,7 +1180,7 @@ uvm_phys_to_vm_page(paddr_t pa)
 	int	psi;
 
 #ifdef XIP
-	psi = vm_physseg_find_direct(pf, &off);
+	psi = vm_physseg_find_device(pf, &off);
 	if (psi != -1)
 		return(&vm_physdev_ptrs[psi]->pgs[off]);
 #endif
@@ -2194,7 +2194,7 @@ uvm_pageismanaged(paddr_t pa)
 
 	return
 #ifdef XIP
-	    (vm_physseg_find_direct(atop(pa), NULL) != -1) ||
+	    (vm_physseg_find_device(atop(pa), NULL) != -1) ||
 #endif
 	    (vm_physseg_find(atop(pa), NULL) != -1);
 }
