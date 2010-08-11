@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_pstate.c,v 1.12 2010/08/11 16:41:19 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_pstate.c,v 1.13 2010/08/11 18:15:52 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_pstate.c,v 1.12 2010/08/11 16:41:19 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_pstate.c,v 1.13 2010/08/11 18:15:52 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/evcnt.h>
@@ -305,8 +305,10 @@ acpicpu_pstate_pss(struct acpicpu_softc *sc)
 		ps = &sc->sc_pstate[i];
 		rv = acpicpu_pstate_pss_add(ps, &obj->Package.Elements[i]);
 
-		if (ACPI_FAILURE(rv))
+		if (ACPI_FAILURE(rv)) {
+			ps->ps_freq = 0;
 			continue;
+		}
 
 		for (j = 0; j < i; j++) {
 
@@ -356,9 +358,6 @@ acpicpu_pstate_pss_add(struct acpicpu_pstate *ps, ACPI_OBJECT *obj)
 		val[i] = elm[i].Integer.Value;
 	}
 
-	if (val[0] == 0 || val[0] >= 0xFFFF)
-		return AE_BAD_DECIMAL_CONSTANT;
-
 	CTASSERT(sizeof(val) == sizeof(struct acpicpu_pstate) -
 	         offsetof(struct acpicpu_pstate, ps_freq));
 
@@ -366,6 +365,9 @@ acpicpu_pstate_pss_add(struct acpicpu_pstate *ps, ACPI_OBJECT *obj)
 
 	for (i = 0; i < 6; i++, p++)
 		*p = val[i];
+
+	if (ps->ps_freq == 0 || ps->ps_freq > 9999)
+		return AE_BAD_DECIMAL_CONSTANT;
 
 	/*
 	 * The latency is typically around 10 usec
