@@ -1,4 +1,4 @@
-/*	$Id: flash.c,v 1.1.2.11 2010/07/27 01:16:21 uebayasi Exp $	*/
+/*	$Id: flash.c,v 1.1.2.12 2010/08/11 13:24:47 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2010 Tsubai Masanari.  All rights reserved.
@@ -36,8 +36,10 @@
 #include <sys/buf.h>
 #include <sys/bufq.h>
 #include <sys/disklabel.h>
+#include <sys/stat.h>
+#include <sys/mman.h>
 
-#include <dev/flash/flashvar.h>
+#include <dev/flashvar.h>
 
 static dev_type_open(flash_open);
 static dev_type_close(flash_close);
@@ -57,8 +59,10 @@ struct cdevsw flash_cdevsw = {
 static int
 flash_open(dev_t dev, int flags, int fmt, struct lwp *l)
 {
-	struct flash_softc *sc = device_lookup_private(&flash_cd, minor(dev));
+	struct flash_softc *sc = device_lookup_private(&flash_cd, DISKUNIT(dev));
 	struct disk *dk = &sc->sc_dkdev;
+	const int part = DISKUNIT(dev);
+	const int pmask = 1 << part;
 
 	if (sc == NULL)
 		return ENXIO;
@@ -87,8 +91,8 @@ flash_close(dev_t dev, int flags, int fmt, struct lwp *l)
 int
 flash_ioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
-	struct flash_softc *sc = device_lookup_private(&flash_cd, minor(dev));
-	struct flash_program *fp;
+	struct flash_softc *sc = device_lookup_private(&flash_cd, DISKUNIT(dev));
+	const int part = DISKUNIT(dev);
 	int error = 0;
 
 	if (sc == NULL)
@@ -125,7 +129,7 @@ flash_ioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 paddr_t
 flash_mmap(dev_t dev, off_t off, int prot)
 {
-	struct flash_softc *sc = device_lookup_private(&flash_cd, minor(dev));
+	struct flash_softc *sc = device_lookup_private(&flash_cd, DISKUNIT(dev));
 
 	if (sc == NULL)
 		return -1;
@@ -237,7 +241,7 @@ found:
 #endif
 
 #ifdef XIP
-#ifndef __BUS_SPACE_HAS_PHYSLOAD
+#ifndef __BUS_SPACE_HAS_PHYSLOAD_METHODS
 #error bus_space_physload_device(9) must be supported to use XIP!
 #else
 	sc->sc_phys = bus_space_physload_device(sc->sc_iot, sc->sc_addr, sc->sc_size,
@@ -247,4 +251,5 @@ found:
 
 	disk_init(&sc->sc_dkdev, device_xname(&sc->sc_dev), NULL);
 	disk_attach(&sc->sc_dkdev);
+	printf("\n");
 }
