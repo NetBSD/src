@@ -1,0 +1,13 @@
+#	$NetBSD: OPENBLOCKS266_XIP,v 1.1.2.1 2010/08/11 14:03:10 uebayasi Exp $
+#
+
+include		"arch/evbppc/conf/OPENBLOCKS266"
+#	$NetBSD: OPENBLOCKS266_XIP,v 1.1.2.1 2010/08/11 14:03:10 uebayasi Exp $
+
+exb0	at plb?
+
+# FlashROM
+flash*	at exb?
+
+options 	__BUS_SPACE_HAS_PHYSLOAD_METHODS
+options 	XIP
