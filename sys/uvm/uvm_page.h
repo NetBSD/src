@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.h,v 1.59.2.27 2010/07/22 07:49:45 uebayasi Exp $	*/
+/*	$NetBSD: uvm_page.h,v 1.59.2.28 2010/08/11 09:50:01 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -311,7 +311,7 @@ int vm_physseg_find(paddr_t, int *);
 struct vm_page *uvm_phys_to_vm_page(paddr_t);
 paddr_t uvm_vm_page_to_phys(const struct vm_page *);
 #ifdef XIP
-int vm_physseg_find_direct(paddr_t, int *);
+int vm_physseg_find_device(paddr_t, int *);
 #endif
 
 /*
