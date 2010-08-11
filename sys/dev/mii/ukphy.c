@@ -1,4 +1,4 @@
-/*	$NetBSD: ukphy.c,v 1.33.4.4 2010/03/11 15:03:41 yamt Exp $	*/
+/*	$NetBSD: ukphy.c,v 1.33.4.5 2010/08/11 22:53:40 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ukphy.c,v 1.33.4.4 2010/03/11 15:03:41 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ukphy.c,v 1.33.4.5 2010/08/11 22:53:40 yamt Exp $");
 
 #include "opt_mii.h"
 
@@ -75,16 +75,6 @@ __KERNEL_RCSID(0, "$NetBSD: ukphy.c,v 1.33.4.4 2010/03/11 15:03:41 yamt Exp $");
 
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
-
-#ifdef MIIVERBOSE
-struct mii_knowndev {
-	int oui;
-	int model;
-	const char *descr;
-};
-#include <dev/mii/miidevs.h>
-#include <dev/mii/miidevs_data.h>
-#endif
 
 static int	ukphymatch(device_t, cfdata_t, void *);
 static void	ukphyattach(device_t, device_t, void *);
@@ -118,23 +108,15 @@ ukphyattach(device_t parent, device_t self, void *aux)
 	int oui = MII_OUI(ma->mii_id1, ma->mii_id2);
 	int model = MII_MODEL(ma->mii_id2);
 	int rev = MII_REV(ma->mii_id2);
-#ifdef MIIVERBOSE
-	int i;
-#endif
+	const char *descr;
 
-#ifdef MIIVERBOSE
-	for (i = 0; mii_knowndevs[i].descr != NULL; i++)
-		if (mii_knowndevs[i].oui == oui &&
-		    mii_knowndevs[i].model == model)
-			break;
-	if (mii_knowndevs[i].descr != NULL)
+	if ((descr = mii_get_descr(oui, model)) != NULL)
 		aprint_normal(": %s (OUI 0x%06x, model 0x%04x), rev. %d\n",
-		       mii_knowndevs[i].descr,
-		       oui, model, rev);
+		       descr, oui, model, rev);
 	else
-#endif
 		aprint_normal(": OUI 0x%06x, model 0x%04x, rev. %d\n",
 		       oui, model, rev);
+	aprint_naive(": Media interface\n");
 
 	sc->mii_dev = self;
 	sc->mii_inst = mii->mii_instance;

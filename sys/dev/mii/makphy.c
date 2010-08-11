@@ -1,4 +1,4 @@
-/*	$NetBSD: makphy.c,v 1.26.4.3 2010/03/11 15:03:41 yamt Exp $	*/
+/*	$NetBSD: makphy.c,v 1.26.4.4 2010/08/11 22:53:40 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: makphy.c,v 1.26.4.3 2010/03/11 15:03:41 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: makphy.c,v 1.26.4.4 2010/08/11 22:53:40 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -109,6 +109,9 @@ static const struct mii_phydesc makphys[] = {
 
 	{ MII_OUI_xxMARVELL,		MII_MODEL_xxMARVELL_E1116,
 	  MII_STR_xxMARVELL_E1116 },
+
+	{ MII_OUI_xxMARVELL,		MII_MODEL_xxMARVELL_E1116R,
+	  MII_STR_xxMARVELL_E1116R },
 
 	{ 0,				0,
 	  NULL },

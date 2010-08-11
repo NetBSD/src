@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.S,v 1.8.2.3 2010/03/11 15:01:58 yamt Exp $	*/
+/*	$NetBSD: cpufunc.S,v 1.8.2.4 2010/08/11 22:51:32 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
@@ -34,6 +34,7 @@
  */
 
 #include <machine/asm.h>
+#include <machine/frameasm.h>
 #include <machine/specialreg.h>
 #include <machine/segments.h>
 
@@ -512,4 +513,16 @@ ENTRY(outsl)
 	movl	%edi, %edx
 	rep
 	outsl
+	ret
+
+ENTRY(setfs)
+	movw	%di, %fs
+	ret
+
+ENTRY(setusergs)
+	CLI(ax)
+	swapgs
+	movw	%di, %gs
+	swapgs
+	STI(ax)
 	ret

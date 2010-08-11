@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_intel.c,v 1.31.4.2 2010/03/11 15:03:42 yamt Exp $	*/
+/*	$NetBSD: agp_intel.c,v 1.31.4.3 2010/08/11 22:53:41 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_intel.c,v 1.31.4.2 2010/03/11 15:03:42 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_intel.c,v 1.31.4.3 2010/08/11 22:53:41 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,6 +90,7 @@ static int
 agp_intel_vgamatch(struct pci_attach_args *pa)
 {
 	switch (PCI_PRODUCT(pa->pa_id)) {
+	case PCI_PRODUCT_INTEL_82855GM_AGP:
 	case PCI_PRODUCT_INTEL_82855PM_AGP:
 	case PCI_PRODUCT_INTEL_82443LX_AGP:
 	case PCI_PRODUCT_INTEL_82443BX_AGP:
@@ -148,6 +149,7 @@ agp_intel_attach(device_t parent, device_t self, void *aux)
 	case PCI_PRODUCT_INTEL_82840_AGP:
 		isc->chiptype = CHIP_I840;
 		break;
+	case PCI_PRODUCT_INTEL_82855GM_AGP:
 	case PCI_PRODUCT_INTEL_82855PM_AGP:
 	case PCI_PRODUCT_INTEL_82845_AGP:
 		isc->chiptype = CHIP_I845;

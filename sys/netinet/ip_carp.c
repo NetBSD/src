@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_carp.c,v 1.25.2.5 2010/03/11 15:04:28 yamt Exp $	*/
+/*	$NetBSD: ip_carp.c,v 1.25.2.6 2010/08/11 22:54:56 yamt Exp $	*/
 /*	$OpenBSD: ip_carp.c,v 1.113 2005/11/04 08:11:54 mcbride Exp $	*/
 
 /*
@@ -27,8 +27,10 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "opt_inet.h"
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.25.2.5 2010/03/11 15:04:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.25.2.6 2010/08/11 22:54:56 yamt Exp $");
 
 /*
  * TODO:
@@ -800,7 +802,7 @@ carp_clone_create(struct if_clone *ifc, int unit)
 	ifp->if_broadcastaddr = etherbroadcastaddr;
 	carp_set_enaddr(sc);
 	LIST_INIT(&sc->sc_ac.ec_multiaddrs);
-	bpf_ops->bpf_attach(ifp, DLT_EN10MB, ETHER_HDR_LEN, &ifp->if_bpf);
+	bpf_attach(ifp, DLT_EN10MB, ETHER_HDR_LEN);
 	return (0);
 }
 
@@ -1366,8 +1368,7 @@ carp_input(struct mbuf *m, u_int8_t *shost, u_int8_t *dhost, u_int16_t etype)
 
 	m->m_pkthdr.rcvif = ifp;
 
-	if (ifp->if_bpf)
-		bpf_ops->bpf_mtap(ifp->if_bpf, m);
+	bpf_mtap(ifp, m);
 	ifp->if_ipackets++;
 	ether_input(ifp, m);
 	return (0);

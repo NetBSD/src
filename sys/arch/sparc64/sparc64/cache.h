@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.h,v 1.10.56.1 2010/03/11 15:03:01 yamt Exp $ */
+/*	$NetBSD: cache.h,v 1.10.56.2 2010/08/11 22:52:48 yamt Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -144,14 +144,16 @@ sp_tlb_flush_all(void)
 
 #ifdef MULTIPROCESSOR
 void smp_tlb_flush_pte(vaddr_t, struct pmap *);
-void smp_dcache_flush_page_all(paddr_t pa);
+void smp_dcache_flush_page_cpuset(paddr_t pa, sparc64_cpuset_t);
 void smp_blast_dcache(sparc64_cpuset_t);
 #define	tlb_flush_pte(va,pm	)	smp_tlb_flush_pte(va, pm)
-#define	dcache_flush_page_all(pa)	smp_dcache_flush_page_all(pa)
+#define	dcache_flush_page_all(pa)	smp_dcache_flush_page_cpuset(pa, cpus_active)
+#define	dcache_flush_page_cpuset(pa,cs)	smp_dcache_flush_page_cpuset(pa, cs)
 #define	blast_dcache()			smp_blast_dcache(cpus_active)
 #else
 #define	tlb_flush_pte(va,pm)		sp_tlb_flush_pte(va, (pm)->pm_ctx[0])
 #define	dcache_flush_page_all(pa)	dcache_flush_page(pa)
+#define	dcache_flush_page_cpuset(pa,cs)	dcache_flush_page(pa)
 #define	blast_dcache()			sp_blast_dcache(dcache_size, \
 							dcache_line_size)
 #endif

@@ -93,7 +93,7 @@
 #include <arm/omap/omap2_obioreg.h>
 #include <evbarm/beagle/beagle.h>  
 
-RCSID("$NetBSD: beagle_start.S,v 1.2.14.3 2010/03/11 15:02:13 yamt Exp $")
+RCSID("$NetBSD: beagle_start.S,v 1.2.14.4 2010/08/11 22:51:50 yamt Exp $")
 
 #define Invalidate_I_cache(reg) \
 	mcr	p15, 0, reg, c7, c5, 0	/* Invalidate Entire I cache */
@@ -178,8 +178,6 @@ _C_LABEL(beagle_start):
 
 	Invalidate_I_cache(r0)
 
-	mcr	p15, 0, r0, c7, c14, 0	/* Clean and Invalidate Entire Data Cache */
-
         ldr     r2, Lctl_ID_dis		/* Disable I+D caches */
 	mrc	p15, 0, r1, c1, c0, 0	/*  "       "   "     */
 	and	r1, r1, r2		/*  "       "   "     */
@@ -239,12 +237,8 @@ Lcontrol_set:
 	.word CPU_CONTROL_MMU_ENABLE  | \
 	      CPU_CONTROL_AFLT_ENABLE | \
 	      CPU_CONTROL_DC_ENABLE   | \
-	      CPU_CONTROL_WBUF_ENABLE | \
-	      CPU_CONTROL_32BP_ENABLE | \
-	      CPU_CONTROL_32BD_ENABLE | \
-	      CPU_CONTROL_LABT_ENABLE | \
-	      CPU_CONTROL_SYST_ENABLE | \
-	      CPU_CONTROL_IC_ENABLE
+	      CPU_CONTROL_IC_ENABLE   | \
+	      CPU_CONTROL_BPRD_ENABLE
 
 	/* bits to clear in the Control Register */
 Lcontrol_clr:
@@ -252,12 +246,10 @@ Lcontrol_clr:
 
 	/* bits to "write as existing" in the Control Register */
 Lcontrol_wax:
-	.word	(3 << 30) | \
-		(1 << 29) | \
-		(1 << 28) | \
-		(3 << 26) | \
-		(3 << 19) | \
-		(1 << 17)
+	.word	(1 << 31) | \
+		(1 << 26) | \
+		(0x7ff << 14) | \
+		(0xff << 3)
 		
 	/* bits to disable the caches */
 Lctl_ID_dis:
@@ -279,22 +271,22 @@ mmu_init_table:
 	/* Map KERNEL_BASE VA to SDRAM PA, write-back cacheable */
 	MMU_INIT(KERNEL_BASE, KERNEL_BASE,
 		(MEMSIZE * L1_S_SIZE + L1_S_SIZE - 1) / L1_S_SIZE,
-		L1_S_PROTO | L1_S_AP(AP_KRW) | L1_S_B | L1_S_C)
+		L1_S_PROTO | L1_S_AP(AP7_KRW) | L1_S_B | L1_S_C)
 
 	/* Map first 1MB of L4 CORE (so console will work) */
 	MMU_INIT(OMAP3530_L4_CORE_VBASE, OMAP3530_L4_CORE_BASE,
 		1,
-		L1_S_PROTO | L1_S_AP(AP_KRW))
+		L1_S_PROTO | L1_S_AP(AP7_KRW))
 
 	/* Map first(all) 1MB of L4 PERIPHERAL (so console will work) */
 	MMU_INIT(OMAP3530_L4_PERIPHERAL_VBASE, OMAP3530_L4_PERIPHERAL_BASE,
 		1,
-		L1_S_PROTO | L1_S_AP(AP_KRW))
+		L1_S_PROTO | L1_S_AP(AP7_KRW))
 
 	/* Map all 256KB of L4 WAKEUP (so console will work) */
 	MMU_INIT(OMAP3530_L4_WAKEUP_VBASE, OMAP3530_L4_WAKEUP_BASE,
 		1,
-		L1_S_PROTO | L1_S_AP(AP_KRW))
+		L1_S_PROTO | L1_S_AP(AP7_KRW))
 
 	/* end of table */
 	MMU_INIT(0, 0, 0, 0)

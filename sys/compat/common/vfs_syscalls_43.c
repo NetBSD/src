@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_43.c,v 1.46.4.2 2010/03/11 15:03:12 yamt Exp $	*/
+/*	$NetBSD: vfs_syscalls_43.c,v 1.46.4.3 2010/08/11 22:53:01 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_43.c,v 1.46.4.2 2010/03/11 15:03:12 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_43.c,v 1.46.4.3 2010/08/11 22:53:01 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -423,7 +423,7 @@ unionread:
 		}
 		free(dirbuf, M_TEMP);
 	}
-	VOP_UNLOCK(vp, 0);
+	VOP_UNLOCK(vp);
 	if (error)
 		goto out;
 

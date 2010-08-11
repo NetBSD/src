@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9var.h,v 1.41.2.3 2009/09/16 13:37:48 yamt Exp $	*/
+/*	$NetBSD: rtl81x9var.h,v 1.41.2.4 2010/08/11 22:53:30 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -177,12 +177,13 @@ struct rtk_tx_desc {
 };
 
 struct rtk_softc {
-	device_t sc_dev;		/* generic device structures */
+	device_t		sc_dev;
 	struct ethercom		ethercom;	/* interface info */
 	struct mii_data		mii;
 	struct callout		rtk_tick_ch;	/* tick callout */
-	bus_space_handle_t	rtk_bhandle;	/* bus space handle */
 	bus_space_tag_t		rtk_btag;	/* bus space tag */
+	bus_space_handle_t	rtk_bhandle;	/* bus space handle */
+	bus_size_t		rtk_bsize;	/* bus space mapping size */
 	u_int			sc_quirk;	/* chip quirks */
 #define RTKQ_8129		0x00000001	/* 8129 */
 #define RTKQ_8139CPLUS		0x00000002	/* 8139C+ */

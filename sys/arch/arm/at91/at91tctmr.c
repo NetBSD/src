@@ -1,4 +1,4 @@
-/*$NetBSD: at91tctmr.c,v 1.1.20.2 2010/03/11 15:02:05 yamt Exp $*/
+/*$NetBSD: at91tctmr.c,v 1.1.20.3 2010/08/11 22:51:40 yamt Exp $*/
 
 /*
  * AT91 Timer Counter (TC) based clock functions
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at91tctmr.c,v 1.1.20.2 2010/03/11 15:02:05 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at91tctmr.c,v 1.1.20.3 2010/08/11 22:51:40 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -207,7 +207,7 @@ at91tctmr_attach(device_t parent, device_t self, void *aux)
       sc->sc_timerclock = AT91_MSTCLK / 128U;
       cmr = TC_CMR_TCCLKS_MCK_DIV_128;
     } else
-      panic("%s: cannot setup timer to reach HZ", device-xname(sc->sc_dev));
+      panic("%s: cannot setup timer to reach HZ", device_xname(sc->sc_dev));
 
     sc->sc_divider = (sc->sc_timerclock + HZ - 1) / HZ; /* round up */
     sc->sc_usec_per_tick = 1000000UL / (sc->sc_timerclock / sc->sc_divider);

@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.22.4.2 2010/03/11 15:02:47 yamt Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.22.4.3 2010/08/11 22:52:31 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.22.4.2 2010/03/11 15:02:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.22.4.3 2010/08/11 22:52:31 yamt Exp $");
 
 #include "opt_interrupt.h"
 #include "opt_multiprocessor.h"
@@ -152,7 +152,7 @@ init_openpic(int node)
 	if (len < sizeof(int)*2)
 		return FALSE;
 
-	if (len == sizeof(int)*2) {	
+	if (len == sizeof(int)*2) {
 		baseaddr = (unsigned char *)mapiodev(reg[0], reg[1]);
 		aprint_verbose("Found openpic at %08x\n", reg[0]);
 #ifdef PIC_OPENPIC
@@ -179,7 +179,7 @@ init_openpic(int node)
 		return FALSE;
 	if (i > OPENPIC_MAX_ISUS)
 		aprint_error("Increase OPENPIC_MAX_ISUS to %d\n", i);
-	
+
 	baseaddr = (unsigned char *)mapiodev(reg[0], 0x40000);
 	aprint_verbose("Found openpic at %08x\n", reg[0]);
 
@@ -260,6 +260,18 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 		config_found(self, &oba, NULL);
 	}
 
+	if (strcmp(model_name, "Pegasos2") == 0) {
+		/*
+		 * Configure to System Controller MV64361.
+		 * And skip other devices.  These attached from it.
+		 */
+		ca.ca_name = "gt";
+
+		config_found(self, &ca, NULL);
+
+		goto config_fin;
+	}
+
 	/* this primarily searches for pci bridges on the root bus */
 	for (node = OF_child(OF_finddevice("/")); node; node = OF_peer(node)) {
 		memset(name, 0, sizeof(name));
@@ -273,9 +285,11 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 		ca.ca_node = node;
 		ca.ca_nreg = OF_getprop(node, "reg", reg, sizeof(reg));
 		ca.ca_reg  = reg;
-		config_found(self, &ca, NULL);
 
+		config_found(self, &ca, NULL);
 	}
+
+config_fin:
 	pic_finish_setup();
 }
 

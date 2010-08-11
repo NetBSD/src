@@ -1,8 +1,8 @@
-# 	$NetBSD: NONPLUS64,v 1.24.56.2 2010/03/11 15:02:59 yamt Exp $
+# 	$NetBSD: NONPLUS64,v 1.24.56.3 2010/08/11 22:52:46 yamt Exp $
 
 include "arch/sparc64/conf/std.sparc64"
 
-#ident		"NONPLUS64-$Revision: 1.24.56.2 $"
+#ident		"NONPLUS64-$Revision: 1.24.56.3 $"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
@@ -411,5 +411,5 @@ pseudo-device	pty			# pseudo-ttys (for network, etc.)
 pseudo-device	rnd
 
 pseudo-device	clockctl		# user control of clock subsystem
-#pseudo-device	fss		4	# file system snapshot device
+#pseudo-device	fss			# file system snapshot device
 pseudo-device	putter			# for puffs and pud

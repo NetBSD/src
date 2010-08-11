@@ -1,4 +1,4 @@
-/*	$NetBSD: ppp_tty.c,v 1.52.10.3 2010/03/11 15:04:27 yamt Exp $	*/
+/*	$NetBSD: ppp_tty.c,v 1.52.10.4 2010/08/11 22:54:55 yamt Exp $	*/
 /*	Id: ppp_tty.c,v 1.3 1996/07/01 01:04:11 paulus Exp 	*/
 
 /*
@@ -93,7 +93,7 @@
 /* from NetBSD: if_ppp.c,v 1.15.2.2 1994/07/28 05:17:58 cgd Exp */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppp_tty.c,v 1.52.10.3 2010/03/11 15:04:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppp_tty.c,v 1.52.10.4 2010/08/11 22:54:55 yamt Exp $");
 
 #include "ppp.h"
 
@@ -229,7 +229,7 @@ pppopen(dev_t dev, struct tty *tp)
 	(*sc->sc_relinq)(sc);	/* get previous owner to relinquish the unit */
 
     /* Switch DLT to PPP-over-serial. */
-    bpf_ops->bpf_change_type(&sc->sc_if, DLT_PPP_SERIAL, PPP_HDRLEN);
+    bpf_change_type(&sc->sc_if, DLT_PPP_SERIAL, PPP_HDRLEN);
 
     sc->sc_ilen = 0;
     sc->sc_m = NULL;
@@ -294,7 +294,7 @@ pppasyncrelinq(struct ppp_softc *sc)
     int s;
 
     /* Change DLT to back none. */
-    bpf_ops->bpf_change_type(&sc->sc_if, DLT_NULL, 0);
+    bpf_change_type(&sc->sc_if, DLT_NULL, 0);
 
     s = spltty();
     if (sc->sc_outm) {

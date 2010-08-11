@@ -1,4 +1,4 @@
-/*	$NetBSD: aceride.c,v 1.25.4.1 2010/03/11 15:03:42 yamt Exp $	*/
+/*	$NetBSD: aceride.c,v 1.25.4.2 2010/08/11 22:53:41 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aceride.c,v 1.25.4.1 2010/03/11 15:03:42 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aceride.c,v 1.25.4.2 2010/08/11 22:53:41 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,7 +102,7 @@ acer_pcib_match(struct pci_attach_args *pa)
 	if (PCI_CLASS(pa->pa_class) == PCI_CLASS_BRIDGE &&
 	    PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_BRIDGE_ISA &&
 	    PCI_VENDOR(pa->pa_id) == PCI_VENDOR_ALI &&
-	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_ALI_M1543)
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_ALI_M1533)
 		return 1;
 	return 0;
 }

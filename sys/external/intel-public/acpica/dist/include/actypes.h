@@ -8,7 +8,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2009, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2010, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -471,22 +471,7 @@ typedef union uint64_overlay
 
 } UINT64_OVERLAY;
 
-typedef struct uint32_struct
-{
-    UINT32                          Lo;
-    UINT32                          Hi;
 
-} UINT32_STRUCT;
-
-
-/*
- * Acpi integer width. In ACPI version 1, integers are 32 bits. In ACPI
- * version 2, integers are 64 bits. Note that this pertains to the ACPI integer
- * type only, not other integers used in the implementation of the ACPI CA
- * subsystem.
- */
-typedef UINT64                          ACPI_INTEGER;
-#define ACPI_INTEGER_MAX                ACPI_UINT64_MAX
 #define ACPI_INTEGER_BIT_SIZE           64
 #define ACPI_MAX_DECIMAL_DIGITS         20  /* 2^64 = 18,446,744,073,709,551,616 */
 #define ACPI_MAX64_DECIMAL_DIGITS       20
@@ -500,6 +485,19 @@ typedef UINT64                          ACPI_INTEGER;
 #define ACPI_ROOT_OBJECT                ACPI_ADD_PTR (ACPI_HANDLE, NULL, ACPI_MAX_PTR)
 #define ACPI_WAIT_FOREVER               0xFFFF  /* UINT16, as per ACPI spec */
 #define ACPI_DO_NOT_WAIT                0
+
+/*
+ * Obsolete: Acpi integer width. In ACPI version 1 (1996), integers are 32 bits.
+ * In ACPI version 2 (2000) and later, integers are 64 bits. Note that this
+ * pertains to the ACPI integer type only, not to other integers used in the
+ * implementation of the ACPICA subsystem.
+ *
+ * 01/2010: This type is obsolete and has been removed from the entire ACPICA
+ * code base. It remains here for compatibility with device drivers that use
+ * the type. However, it will be removed in the future.
+ */
+typedef UINT64                          ACPI_INTEGER;
+#define ACPI_INTEGER_MAX                ACPI_UINT64_MAX
 
 
 /*******************************************************************************
@@ -745,53 +743,42 @@ typedef UINT32                          ACPI_EVENT_STATUS;
 #define ACPI_GPE_MAX                    0xFF
 #define ACPI_NUM_GPE                    256
 
+/* Actions for AcpiSetGpe */
+
 #define ACPI_GPE_ENABLE                 0
 #define ACPI_GPE_DISABLE                1
 
+/* GpeTypes for AcpiEnableGpe and AcpiDisableGpe */
+
+#define ACPI_GPE_TYPE_WAKE              (UINT8) 0x01
+#define ACPI_GPE_TYPE_RUNTIME           (UINT8) 0x02
+#define ACPI_GPE_TYPE_WAKE_RUN          (UINT8) 0x03
 
 /*
  * GPE info flags - Per GPE
- * +-+-+-+---+---+-+
- * |7|6|5|4:3|2:1|0|
- * +-+-+-+---+---+-+
- *  | | |  |   |  |
- *  | | |  |   |  +--- Interrupt type: Edge or Level Triggered
- *  | | |  |   +--- Type: Wake-only, Runtime-only, or wake/runtime
- *  | | |  +--- Type of dispatch -- to method, handler, or none
- *  | | +--- Enabled for runtime?
- *  | +--- Enabled for wake?
- *  +--- Unused
+ * +-------+---+-+-+
+ * |  7:4  |3:2|1|0|
+ * +-------+---+-+-+
+ *     |     |  | |
+ *     |     |  | +--- Interrupt type: edge or level triggered
+ *     |     |  +----- GPE can wake the system
+ *     |     +-------- Type of dispatch:to method, handler, or none
+ *     +-------------- <Reserved>
  */
 #define ACPI_GPE_XRUPT_TYPE_MASK        (UINT8) 0x01
 #define ACPI_GPE_LEVEL_TRIGGERED        (UINT8) 0x01
 #define ACPI_GPE_EDGE_TRIGGERED         (UINT8) 0x00
 
-#define ACPI_GPE_TYPE_MASK              (UINT8) 0x06
-#define ACPI_GPE_TYPE_WAKE_RUN          (UINT8) 0x06
-#define ACPI_GPE_TYPE_WAKE              (UINT8) 0x02
-#define ACPI_GPE_TYPE_RUNTIME           (UINT8) 0x04    /* Default */
+#define ACPI_GPE_CAN_WAKE               (UINT8) 0x02
 
-#define ACPI_GPE_DISPATCH_MASK          (UINT8) 0x18
-#define ACPI_GPE_DISPATCH_HANDLER       (UINT8) 0x08
-#define ACPI_GPE_DISPATCH_METHOD        (UINT8) 0x10
-#define ACPI_GPE_DISPATCH_NOT_USED      (UINT8) 0x00    /* Default */
-
-#define ACPI_GPE_RUN_ENABLE_MASK        (UINT8) 0x20
-#define ACPI_GPE_RUN_ENABLED            (UINT8) 0x20
-#define ACPI_GPE_RUN_DISABLED           (UINT8) 0x00    /* Default */
-
-#define ACPI_GPE_WAKE_ENABLE_MASK       (UINT8) 0x40
-#define ACPI_GPE_WAKE_ENABLED           (UINT8) 0x40
-#define ACPI_GPE_WAKE_DISABLED          (UINT8) 0x00    /* Default */
-
-#define ACPI_GPE_ENABLE_MASK            (UINT8) 0x60    /* Both run/wake */
+#define ACPI_GPE_DISPATCH_MASK          (UINT8) 0x0C
+#define ACPI_GPE_DISPATCH_HANDLER       (UINT8) 0x04
+#define ACPI_GPE_DISPATCH_METHOD        (UINT8) 0x08
+#define ACPI_GPE_DISPATCH_NOT_USED      (UINT8) 0x00
 
 /*
  * Flags for GPE and Lock interfaces
  */
-#define ACPI_EVENT_WAKE_ENABLE          0x2             /* AcpiGpeEnable */
-#define ACPI_EVENT_WAKE_DISABLE         0x2             /* AcpiGpeDisable */
-
 #define ACPI_NOT_ISR                    0x1
 #define ACPI_ISR                        0x0
 
@@ -891,7 +878,7 @@ typedef union acpi_object
     struct
     {
         ACPI_OBJECT_TYPE                Type;       /* ACPI_TYPE_INTEGER */
-        ACPI_INTEGER                    Value;      /* The actual number */
+        UINT64                          Value;      /* The actual number */
     } Integer;
 
     struct
@@ -1095,7 +1082,7 @@ ACPI_STATUS (*ACPI_ADR_SPACE_HANDLER) (
     UINT32                          Function,
     ACPI_PHYSICAL_ADDRESS           Address,
     UINT32                          BitWidth,
-    ACPI_INTEGER                    *Value,
+    UINT64                          *Value,
     void                            *HandlerContext,
     void                            *RegionContext);
 
@@ -1113,7 +1100,7 @@ ACPI_STATUS (*ACPI_ADR_SPACE_SETUP) (
 
 typedef
 ACPI_STATUS (*ACPI_WALK_CALLBACK) (
-    ACPI_HANDLE                     ObjHandle,
+    ACPI_HANDLE                     Object,
     UINT32                          NestingLevel,
     void                            *Context,
     void                            **ReturnValue);
@@ -1165,7 +1152,7 @@ typedef struct acpi_device_info
     UINT8                           HighestDstates[4];  /* _SxD values: 0xFF indicates not valid */
     UINT8                           LowestDstates[5];   /* _SxW values: 0xFF indicates not valid */
     UINT32                          CurrentStatus;      /* _STA value */
-    ACPI_INTEGER                    Address;            /* _ADR value */
+    UINT64                          Address;            /* _ADR value */
     ACPI_DEVICE_ID                  HardwareId;         /* _HID value */
     ACPI_DEVICE_ID                  UniqueId;           /* _UID value */
     ACPI_DEVICE_ID_LIST             CompatibleIdList;   /* _CID list <must be last> */

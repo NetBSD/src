@@ -43,7 +43,7 @@ TAILQ_HEAD(sysctl_ctx_list, sysctl_ctx_entry);
 #define BUS_SPACE_MAXADDR	0xFFFFFFFF
 #endif
 #define BUS_SPACE_MAXSIZE_32BIT 0xFFFFFFFF
-#define I386_BUS_SPACE_MEM	1
+#define I386_BUS_SPACE_MEM	x86_bus_space_mem
 
 #define device_get_softc	(struct ndis_softc *)
 #define ticks			hardclock_ticks
@@ -57,7 +57,7 @@ TAILQ_HEAD(sysctl_ctx_list, sysctl_ctx_entry);
 #ifndef PAGE_SIZE
 #define PAGE_SIZE		4096
 #endif
-#define I386_BUS_SPACE_IO	0
+#define I386_BUS_SPACE_IO	x86_bus_space_io
 
 #define device_get_nameunit(dev)	device_xname(dev)
 

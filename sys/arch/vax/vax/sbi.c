@@ -1,4 +1,4 @@
-/*	$NetBSD: sbi.c,v 1.33.4.1 2009/05/04 08:12:05 yamt Exp $ */
+/*	$NetBSD: sbi.c,v 1.33.4.2 2010/08/11 22:52:52 yamt Exp $ */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -30,11 +30,15 @@
  */
 
 /*
+ * ABus code added by Johnny Billquist 2010
+ */
+
+/*
  * Still to do: Write all SBI error handling.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbi.c,v 1.33.4.1 2009/05/04 08:12:05 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbi.c,v 1.33.4.2 2010/08/11 22:52:52 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -46,10 +50,17 @@ __KERNEL_RCSID(0, "$NetBSD: sbi.c,v 1.33.4.1 2009/05/04 08:12:05 yamt Exp $");
 #include <machine/cpu.h>
 #include <machine/nexus.h>
 #include <machine/mainbus.h>
+#include <machine/ioa.h>
 
 static int sbi_print(void *, const char *);
+#if VAX780 || VAXANY
 static int sbi_mainbus_match(device_t, cfdata_t, void *);
 static void sbi_mainbus_attach(device_t, device_t, void*);
+#endif
+#if VAX8600 || VAXANY
+static int sbi_abus_match(device_t, cfdata_t, void *);
+static void sbi_abus_attach(device_t, device_t, void*);
+#endif
 
 int
 sbi_print(void *aux, const char *name)
@@ -60,22 +71,28 @@ sbi_print(void *aux, const char *name)
 	if (name) {
 		switch (sa->sa_type) {
 		case NEX_MBA:
+			aprint_naive("mba at %s", name);
 			aprint_normal("mba at %s", name);
 			break;
 		case NEX_CI:
+			aprint_naive("ci at %s", name);
 			aprint_normal("ci at %s", name);
 			unsupp++;
 			break;
 		default:
+			aprint_naive("unknown device 0x%x at %s",
+			    sa->sa_type, name);
 			aprint_normal("unknown device 0x%x at %s",
 			    sa->sa_type, name);
 			unsupp = true;
 		}		
 	}
+	aprint_naive(" tr%d", sa->sa_nexnum);
 	aprint_normal(" tr%d", sa->sa_nexnum);
 	return (unsupp ? UNSUPP : UNCONF);
 }
 
+#if VAX780 || VAXANY
 int
 sbi_mainbus_match(device_t parent, cfdata_t cf, void *aux)
 {
@@ -89,33 +106,74 @@ sbi_mainbus_attach(device_t parent, device_t self, void *aux)
 {
 	struct mainbus_attach_args * const ma = aux;
 	struct sbi_attach_args sa;
-	u_int nexnum, minnex = 0;	/* default only one SBI, as on 780 */
-	paddr_t nexbase;
+	u_int nexnum;
 
+	aprint_naive("\n");
 	aprint_normal("\n");
 
 	sa.sa_iot = ma->ma_iot;
 	sa.sa_dmat = ma->ma_dmat;
 
 #define NEXPAGES (sizeof(struct nexus) / VAX_NBPG)
-#if VAX780 || VAXANY
-	if (vax_boardtype == VAX_BTYP_780) {
-		nexbase = (paddr_t) NEX780;
-		sa.sa_sbinum = 0;
+        sa.sa_sbinum = 0;
+
+	for (nexnum = 0; nexnum < NNEXSBI; nexnum++) {
+		struct nexus *nexusP = 0;
+		volatile int tmp;
+
+		nexusP = (struct nexus *)vax_map_physmem((paddr_t)(NEX780) +
+		    sizeof(struct nexus) * nexnum, NEXPAGES);
+		if (badaddr((void *)nexusP, 4)) {
+			vax_unmap_physmem((vaddr_t)nexusP, NEXPAGES);
+		} else {
+			tmp = nexusP->nexcsr.nex_csr; /* no byte reads */
+			sa.sa_type = tmp & 255;
+
+			sa.sa_nexnum = nexnum;
+			sa.sa_ioh = (vaddr_t)nexusP;
+                        sa.sa_base = (bus_addr_t)NEX780;
+			config_found(self, (void*)&sa, sbi_print);
+		}
 	}
+}
+
+CFATTACH_DECL_NEW(sbi_mainbus, 0,
+    sbi_mainbus_match, sbi_mainbus_attach, NULL, NULL);
+
 #endif
+
 #if VAX8600 || VAXANY
-	if (vax_boardtype == VAX_BTYP_790) {
-		nexbase = (paddr_t) NEXA8600;
-		minnex = ma->ma_num * NNEXSBI;
-		sa.sa_sbinum = ma->ma_num;
-	}
-#endif
+int
+sbi_abus_match(device_t parent, cfdata_t cf, void *aux)
+{
+	struct abus_attach_args * const aa = aux;
+
+	return ((aa->aa_type & IOA_TYPMSK) == IOA_SBIA);
+}
+
+void
+sbi_abus_attach(device_t parent, device_t self, void *aux)
+{
+	struct abus_attach_args * const aa = aux;
+	struct sbi_attach_args sa;
+	u_int nexnum, minnex;
+
+	aprint_naive(": SBIA Rev. %d, base address %#x\n", aa->aa_type & 0xf, (unsigned int)aa->aa_base);
+	aprint_normal(": SBIA Rev. %d, base address %#x\n", aa->aa_type & 0xf, (unsigned int)aa->aa_base);
+
+	sa.sa_iot = aa->aa_iot;
+	sa.sa_dmat = aa->aa_dmat;
+        sa.sa_base = aa->aa_base;
+
+#define NEXPAGES (sizeof(struct nexus) / VAX_NBPG)
+        minnex = aa->aa_num * NNEXSBI;
+        sa.sa_sbinum = aa->aa_num;
+
 	for (nexnum = minnex; nexnum < minnex + NNEXSBI; nexnum++) {
 		struct nexus *nexusP = 0;
 		volatile int tmp;
 
-		nexusP = (struct nexus *)vax_map_physmem(nexbase +
+		nexusP = (struct nexus *)vax_map_physmem(sa.sa_base +
 		    sizeof(struct nexus) * nexnum, NEXPAGES);
 		if (badaddr((void *)nexusP, 4)) {
 			vax_unmap_physmem((vaddr_t)nexusP, NEXPAGES);
@@ -130,5 +188,8 @@ sbi_mainbus_attach(device_t parent, device_t self, void *aux)
 	}
 }
 
-CFATTACH_DECL_NEW(sbi_mainbus, 0,
-    sbi_mainbus_match, sbi_mainbus_attach, NULL, NULL);
+
+CFATTACH_DECL_NEW(sbi_abus, 0,
+                  sbi_abus_match, sbi_abus_attach, NULL, NULL);
+
+#endif

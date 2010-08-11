@@ -1,4 +1,4 @@
-/*	$NetBSD: if_nfe.c,v 1.34.2.4 2010/03/11 15:03:47 yamt Exp $	*/
+/*	$NetBSD: if_nfe.c,v 1.34.2.5 2010/08/11 22:53:47 yamt Exp $	*/
 /*	$OpenBSD: if_nfe.c,v 1.77 2008/02/05 16:52:50 brad Exp $	*/
 
 /*-
@@ -21,7 +21,7 @@
 /* Driver for NVIDIA nForce MCP Fast Ethernet and Gigabit Ethernet */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_nfe.c,v 1.34.2.4 2010/03/11 15:03:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_nfe.c,v 1.34.2.5 2010/08/11 22:53:47 yamt Exp $");
 
 #include "opt_inet.h"
 #include "vlan.h"
@@ -890,8 +890,7 @@ mbufcopied:
 				    device_xname(sc->sc_dev)));
 			}
 		}
-		if (ifp->if_bpf)
-			bpf_ops->bpf_mtap(ifp->if_bpf, m);
+		bpf_mtap(ifp, m);
 		ifp->if_ipackets++;
 		(*ifp->if_input)(ifp, m);
 
@@ -1152,8 +1151,7 @@ nfe_start(struct ifnet *ifp)
 		/* packet put in h/w queue, remove from s/w queue */
 		IFQ_DEQUEUE(&ifp->if_snd, m0);
 
-		if (ifp->if_bpf != NULL)
-			bpf_ops->bpf_mtap(ifp->if_bpf, m0);
+		bpf_mtap(ifp, m0);
 	}
 
 	if (sc->txq.queued != old) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.629.2.5 2010/03/11 15:02:28 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.629.2.6 2010/08/11 22:52:11 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.629.2.5 2010/03/11 15:02:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.629.2.6 2010/08/11 22:52:11 yamt Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -244,10 +244,6 @@ struct mtrr_funcs *mtrr_funcs;
 
 int	physmem;
 
-unsigned int cpu_feature;
-unsigned int cpu_feature2;
-unsigned int cpu_feature_padlock;
-
 int	cpu_class;
 int	i386_fpu_present;
 int	i386_fpu_exception;
@@ -324,7 +320,7 @@ int	biosmem_implicit;
  * boot loader.  Only be used by native_loader(). */
 struct bootinfo_source {
 	uint32_t bs_naddrs;
-	paddr_t bs_addrs[1]; /* Actually longer. */
+	void *bs_addrs[1]; /* Actually longer. */
 };
 
 /* Only called by locore.h; no need to be in a header file. */
@@ -388,10 +384,10 @@ native_loader(int bl_boothowto, int bl_bootdev,
 		for (i = 0; i < bl_bootinfo->bs_naddrs; i++) {
 			struct btinfo_common *bc;
 
-			bc = (struct btinfo_common *)(bl_bootinfo->bs_addrs[i]);
+			bc = bl_bootinfo->bs_addrs[i];
 
-			if ((paddr_t)(data + bc->len) >
-			    (paddr_t)(&bidest->bi_data[0] + BOOTINFO_MAXSIZE))
+			if ((data + bc->len) >
+			    (&bidest->bi_data[0] + BOOTINFO_MAXSIZE))
 				break;
 
 			memcpy(data, bc, bc->len);
@@ -523,8 +519,8 @@ i386_proc0_tss_ldt_init(void)
 	pcb->pcb_esp0 = uvm_lwp_getuarea(l) + KSTACK_SIZE - 16;
 	pcb->pcb_iopl = SEL_KPL;
 	l->l_md.md_regs = (struct trapframe *)pcb->pcb_esp0 - 1;
-	memcpy(pcb->pcb_fsd, &gdt[GUDATA_SEL], sizeof(pcb->pcb_fsd));
-	memcpy(pcb->pcb_gsd, &gdt[GUDATA_SEL], sizeof(pcb->pcb_gsd));
+	memcpy(&pcb->pcb_fsd, &gdt[GUDATA_SEL], sizeof(pcb->pcb_fsd));
+	memcpy(&pcb->pcb_gsd, &gdt[GUDATA_SEL], sizeof(pcb->pcb_gsd));
 
 #ifndef XEN
 	lldt(pmap_kernel()->pm_ldt_sel);
@@ -946,7 +942,7 @@ haltsys:
 
 	if (howto & RB_HALT) {
 #if NACPICA > 0
-		AcpiDisable();
+		acpi_disable();
 #endif
 
 		printf("\n");
@@ -1011,8 +1007,8 @@ setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 		pcb->pcb_savefpu.sv_xmm.sv_env.en_mxcsr = __INITIAL_MXCSR__;
 	} else
 		pcb->pcb_savefpu.sv_87.sv_env.en_cw = __NetBSD_NPXCW__;
-	memcpy(pcb->pcb_fsd, &gdt[GUDATA_SEL], sizeof(pcb->pcb_fsd));
-	memcpy(pcb->pcb_gsd, &gdt[GUDATA_SEL], sizeof(pcb->pcb_gsd));
+	memcpy(&pcb->pcb_fsd, &gdt[GUDATA_SEL], sizeof(pcb->pcb_fsd));
+	memcpy(&pcb->pcb_gsd, &gdt[GUDATA_SEL], sizeof(pcb->pcb_gsd));
 
 	tf = l->l_md.md_regs;
 #ifndef XEN
@@ -1240,7 +1236,7 @@ init386_pte0(void)
 
 	paddr = 4 * PAGE_SIZE;
 	vaddr = (vaddr_t)vtopte(0);
-	pmap_kenter_pa(vaddr, paddr, VM_PROT_READ | VM_PROT_WRITE, 0);
+	pmap_kenter_pa(vaddr, paddr, VM_PROT_ALL, 0);
 	pmap_update(pmap_kernel());
 	/* make sure it is clean before using */
 	memset((void *)vaddr, 0, PAGE_SIZE);
@@ -1298,25 +1294,32 @@ init386(paddr_t first_avail)
 	cpu_info_primary.ci_vcpu = &HYPERVISOR_shared_info->vcpu_info[0];
 #endif
 	cpu_probe(&cpu_info_primary);
-	cpu_feature = cpu_info_primary.ci_feature_flags;
-	cpu_feature2 = cpu_info_primary.ci_feature2_flags;
-	cpu_feature_padlock = cpu_info_primary.ci_padlock_flags;
 
 	uvm_lwp_setuarea(&lwp0, lwp0uarea);
 	pcb = lwp_getpcb(&lwp0);
 
+	cpu_feature[0] &= ~CPUID_FEAT_BLACKLIST;
+
+	cpu_init_msrs(&cpu_info_primary, true);
+
 #ifdef XEN
-	/* not on Xen... */
-	cpu_feature &= ~(CPUID_PGE|CPUID_PSE|CPUID_MTRR|CPUID_FXSR|CPUID_NOX);
-	pcb->pcb_cr3 = PDPpaddr - KERNBASE;
+	pcb->pcb_cr3 = PDPpaddr;
 	__PRINTK(("pcb_cr3 0x%lx cr3 0x%lx\n",
-	    PDPpaddr - KERNBASE, xpmap_ptom(PDPpaddr - KERNBASE)));
+	    PDPpaddr, xpmap_ptom(PDPpaddr)));
 	XENPRINTK(("lwp0uarea %p first_avail %p\n",
 	    lwp0uarea, (void *)(long)first_avail));
 	XENPRINTK(("ptdpaddr %p atdevbase %p\n", (void *)PDPpaddr,
 	    (void *)atdevbase));
 #endif
 
+#if defined(PAE) && !defined(XEN)
+	/*
+	 * Save VA and PA of L3 PD of boot processor (for Xen, this is done
+	 * in xen_pmap_bootstrap())
+	 */
+	cpu_info_primary.ci_pae_l3_pdirpa = rcr3();
+	cpu_info_primary.ci_pae_l3_pdir = (pd_entry_t *)(rcr3() + KERNBASE);
+#endif /* PAE && !XEN */
 
 #ifdef XBOX
 	/*
@@ -1351,7 +1354,7 @@ init386(paddr_t first_avail)
 #endif
 
 	/*
-	 * Initailize PAGE_SIZE-dependent variables.
+	 * Initialize PAGE_SIZE-dependent variables.
 	 */
 	uvm_setpagesize();
 
@@ -1462,6 +1465,9 @@ init386(paddr_t first_avail)
 		       VM_PROT_ALL, 0);		/* protection */
 	pmap_update(pmap_kernel());
 	memcpy((void *)BIOSTRAMP_BASE, biostramp_image, biostramp_image_size);
+
+	/* Needed early, for bioscall() and kvm86_call() */
+	cpu_info_primary.ci_pmap = pmap_kernel();
 #endif
 #endif /* !XEN */
 

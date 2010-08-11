@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.353.2.7 2010/03/11 15:04:15 yamt Exp $	*/
+/*	$NetBSD: init_main.c,v 1.353.2.8 2010/08/11 22:54:38 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.353.2.7 2010/03/11 15:04:15 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.353.2.8 2010/08/11 22:54:38 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipsec.h"
@@ -194,9 +194,6 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.353.2.7 2010/03/11 15:04:15 yamt Exp
 #include <sys/ktrace.h>
 #endif
 #include <sys/kauth.h>
-#ifdef WAPBL
-#include <sys/wapbl.h>
-#endif
 #ifdef KERN_SA
 #include <sys/savar.h>
 #endif
@@ -250,7 +247,6 @@ struct timeval50 boottime50;
 #include <sys/userconf.h>
 #endif
 
-extern struct proc proc0;
 extern struct lwp lwp0;
 extern time_t rootfstime;
 
@@ -270,6 +266,7 @@ static void check_console(struct lwp *l);
 static void start_init(void *);
 static void configure(void);
 static void configure2(void);
+static void configure3(void);
 void main(void);
 
 /*
@@ -390,6 +387,7 @@ main(void)
 
 	/* Create process 0. */
 	proc0_init();
+	lwp0_init();
 
 	/* Disable preemption during boot. */
 	kpreempt_disable();
@@ -433,7 +431,7 @@ main(void)
 	loginit();
 
 	/* Second part of module system initialization. */
-	module_init2();
+	module_start_unload_thread();
 
 	/* Initialize the file systems. */
 #ifdef NVNODE_IMPLICIT
@@ -581,11 +579,6 @@ main(void)
 	/* Initialize the UUID system calls. */
 	uuid_init();
 
-#ifdef WAPBL
-	/* Initialize write-ahead physical block logging. */
-	wapbl_init();
-#endif
-
 	machdep_init();
 
 	/*
@@ -602,9 +595,11 @@ main(void)
 
 	/*
 	 * Load any remaining builtin modules, and hand back temporary
-	 * storage to the VM system.
+	 * storage to the VM system.  Then require force when loading any
+	 * remaining un-init'ed built-in modules to avoid later surprises.
 	 */
 	module_init_class(MODULE_CLASS_ANY);
+	module_builtin_require_force();
 
 	/*
 	 * Finalize configuration now that all real devices have been
@@ -633,6 +628,8 @@ main(void)
 		}
 	} while (error != 0);
 	mountroothook_destroy();
+
+	configure3();
 
 	/*
 	 * Initialise the time-of-day clock, passing the time recorded
@@ -785,6 +782,20 @@ configure2(void)
 	 * devices that want interrupts enabled.
 	 */
 	config_create_interruptthreads();
+
+	/* Get the threads going and into any sleeps before continuing. */
+	yield();
+}
+
+static void
+configure3(void)
+{
+
+	/*
+	 * Create threads to call back and finish configuration for
+	 * devices that want the mounted root file system.
+	 */
+	config_create_mountrootthreads();
 
 	/* Get the threads going and into any sleeps before continuing. */
 	yield();

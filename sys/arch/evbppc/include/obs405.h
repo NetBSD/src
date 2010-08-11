@@ -1,4 +1,4 @@
-/*	$NetBSD: obs405.h,v 1.6 2005/12/11 12:17:12 christos Exp $	*/
+/*	$NetBSD: obs405.h,v 1.6.78.1 2010/08/11 22:51:54 yamt Exp $	*/
 
 /*
  * Copyright 2004 Shigeyuki Fukushima.
@@ -36,39 +36,9 @@
 #ifndef	_EVBPPC_OBS405_H_
 #define	_EVBPPC_OBS405_H_
 
-#include <sys/param.h>
-#include <sys/device.h>
-
-#include <powerpc/ibm4xx/ibm405gp.h>
-
-#include "com.h"
-#if (NCOM > 0)
-
-#include <sys/termios.h>
-
-#  ifndef CONADDR
-#  define CONADDR	IBM405GP_UART0_BASE
-#  endif
-#  ifndef CONSPEED
-#  define CONSPEED	B9600
-#  endif
-#  ifndef CONMODE
-   /* 8N1 */
-#  define CONMODE	((TTYDEF_CFLAG & ~(CSIZE | CSTOPB | PARENB)) | CS8)
-#  endif
-
-#define OBS405_CONADDR		(CONADDR)
-#define OBS405_CONSPEED		(CONSPEED)
-#define OBS405_CONMODE		(CONMODE)
-
-#endif /* NCOM */
-
-#include <dev/ic/comreg.h>
-
 /*
  * extern variables and functions
  */
-extern void obs405_consinit(int com_freq);
 extern void obs405_device_register(struct device *dev, void *aux, int com_freq);
 
 #endif	/* _EVBPPC_OBS405_H_ */

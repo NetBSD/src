@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_misc.c,v 1.159.4.3 2010/03/11 15:03:19 yamt Exp $	*/
+/*	$NetBSD: sunos_misc.c,v 1.159.4.4 2010/08/11 22:53:12 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos_misc.c,v 1.159.4.3 2010/03/11 15:03:19 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos_misc.c,v 1.159.4.4 2010/08/11 22:53:12 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -470,7 +470,7 @@ again:
 eof:
 	*retval = SCARG(uap, nbytes) - resid;
 out:
-	VOP_UNLOCK(vp, 0);
+	VOP_UNLOCK(vp);
 	free(cookiebuf, M_TEMP);
 	free(buf, M_TEMP);
  out1:

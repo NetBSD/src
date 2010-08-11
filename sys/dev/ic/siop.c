@@ -1,4 +1,4 @@
-/*	$NetBSD: siop.c,v 1.87.4.4 2010/03/11 15:03:35 yamt Exp $	*/
+/*	$NetBSD: siop.c,v 1.87.4.5 2010/08/11 22:53:31 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -28,7 +28,7 @@
 /* SYM53c7/8xx PCI-SCSI I/O Processors driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siop.c,v 1.87.4.4 2010/03/11 15:03:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siop.c,v 1.87.4.5 2010/08/11 22:53:31 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1275,6 +1275,8 @@ siop_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 				    "target %d\n", target);
 				xs->error = XS_RESOURCE_SHORTAGE;
 				scsipi_done(xs);
+				TAILQ_INSERT_TAIL(&sc->free_list,
+				    siop_cmd, next);
 				splx(s);
 				return;
 			}
@@ -1295,6 +1297,8 @@ siop_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 				    target);
 				xs->error = XS_RESOURCE_SHORTAGE;
 				scsipi_done(xs);
+				TAILQ_INSERT_TAIL(&sc->free_list,
+				    siop_cmd, next);
 				splx(s);
 				return;
 			}
@@ -1313,6 +1317,8 @@ siop_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 				    target, lun);
 				xs->error = XS_RESOURCE_SHORTAGE;
 				scsipi_done(xs);
+				TAILQ_INSERT_TAIL(&sc->free_list,
+				    siop_cmd, next);
 				splx(s);
 				return;
 			}
@@ -1330,8 +1336,11 @@ siop_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 			aprint_error_dev(sc->sc_c.sc_dev,
 			    "unable to load cmd DMA map: %d\n",
 			    error);
-			xs->error = XS_DRIVER_STUFFUP;
+			xs->error = (error == EAGAIN) ?
+			    XS_RESOURCE_SHORTAGE : XS_DRIVER_STUFFUP;
 			scsipi_done(xs);
+			siop_cmd->cmd_c.status = CMDST_FREE;
+			TAILQ_INSERT_TAIL(&sc->free_list, siop_cmd, next);
 			splx(s);
 			return;
 		}
@@ -1343,12 +1352,16 @@ siop_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 			     BUS_DMA_READ : BUS_DMA_WRITE));
 			if (error) {
 				aprint_error_dev(sc->sc_c.sc_dev,
-				    "unable to load cmd DMA map: %d",
+				    "unable to load data DMA map: %d\n",
 				    error);
-				xs->error = XS_DRIVER_STUFFUP;
+				xs->error = (error == EAGAIN) ?
+				    XS_RESOURCE_SHORTAGE : XS_DRIVER_STUFFUP;
 				scsipi_done(xs);
 				bus_dmamap_unload(sc->sc_c.sc_dmat,
 				    siop_cmd->cmd_c.dmamap_cmd);
+				siop_cmd->cmd_c.status = CMDST_FREE;
+				TAILQ_INSERT_TAIL(&sc->free_list,
+				    siop_cmd, next);
 				splx(s);
 				return;
 			}

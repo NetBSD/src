@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vfsops.c,v 1.78.10.4 2009/09/16 13:38:00 yamt Exp $	*/
+/*	$NetBSD: smbfs_vfsops.c,v 1.78.10.5 2010/08/11 22:54:35 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.78.10.4 2009/09/16 13:38:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.78.10.5 2010/08/11 22:54:35 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -309,7 +309,7 @@ smbfs_setroot(struct mount *mp)
 		smp->sm_root = VTOSMB(vp);
 
 		/* Keep reference, but unlock */
-		VOP_UNLOCK(vp, 0);
+		VOP_UNLOCK(vp);
 	}
 
 	return (0);
@@ -322,9 +322,10 @@ int
 smbfs_root(struct mount *mp, struct vnode **vpp)
 {
 	struct smbmount *smp = VFSTOSMBFS(mp);
+	int error;
 
 	if (__predict_false(!smp->sm_root)) {
-		int error = smbfs_setroot(mp);
+		error = smbfs_setroot(mp);
 		if (error)
 			return (error);
 		/* fallthrough */
@@ -332,7 +333,11 @@ smbfs_root(struct mount *mp, struct vnode **vpp)
 
 	KASSERT(smp->sm_root != NULL && SMBTOV(smp->sm_root) != NULL);
 	*vpp = SMBTOV(smp->sm_root);
-	return vget(*vpp, LK_EXCLUSIVE | LK_RETRY);
+	vref(*vpp);
+	error = vn_lock(*vpp, LK_EXCLUSIVE | LK_RETRY);
+	if (error)
+		vrele(*vpp);
+	return error;
 }
 
 /*
@@ -441,7 +446,7 @@ loop:
 			continue;
 		}
 		mutex_exit(&mntvnode_lock);
-		error = vget(vp, LK_EXCLUSIVE | LK_NOWAIT | LK_INTERLOCK);
+		error = vget(vp, LK_EXCLUSIVE | LK_NOWAIT);
 		if (error) {
 			mutex_enter(&mntvnode_lock);
 			if (error == ENOENT) {

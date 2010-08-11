@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_busclock.c,v 1.4.10.3 2010/03/11 15:03:08 yamt Exp $	*/
+/*	$NetBSD: intel_busclock.c,v 1.4.10.4 2010/08/11 22:52:57 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_busclock.c,v 1.4.10.3 2010/03/11 15:03:08 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_busclock.c,v 1.4.10.4 2010/08/11 22:52:57 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,7 +97,19 @@ p3_get_bus_clock(struct cpu_info *ci)
 	case 0x9: /* Pentium M (130 nm, Banias) */
 		bus_clock = 10000;
 		break;
-	case 0xc: /* Atom, model 1 */
+	case 0xc: /* Core i7, Atom, model 1 */
+		/*
+		 * XXX (See also case 0xe)
+		 * Some core i7 CPUs can report model 0xc.
+		 * Newer CPUs will GP when attemping to access MSR_FSB_FREQ.
+		 * In the long-term, use ACPI instead of all this.
+		 */
+		switch (CPUID2EXTMODEL(ci->ci_signature)) {
+		case 0x2:
+			aprint_debug("%s: unable to determine bus speed",
+			    device_xname(ci->ci_dev));
+			goto print_msr;
+		}
 		msr = rdmsr(MSR_FSB_FREQ);
 		bus = (msr >> 0) & 0x7;
 		switch (bus) {
@@ -128,7 +140,7 @@ p3_get_bus_clock(struct cpu_info *ci)
 		break;
 	case 0xe: /* Core Duo/Solo */
 		/*
-		 * XXX
+		 * XXX (See also case 0xc)
 		 * Newer CPUs will GP when attemping to access MSR_FSB_FREQ.
 		 * In the long-term, use ACPI instead of all this.
 		 */
@@ -186,6 +198,9 @@ p3_get_bus_clock(struct cpu_info *ci)
 			break;
 		case 2:
 			bus_clock = 10000;
+			break;
+		case 3:
+			bus_clock = 10666;
 			break;
 		default:
 			aprint_debug("%s: unknown i686 EBL_CR_POWERON "

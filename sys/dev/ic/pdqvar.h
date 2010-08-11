@@ -1,4 +1,4 @@
-/*	$NetBSD: pdqvar.h,v 1.39.10.2 2010/03/11 15:03:33 yamt Exp $	*/
+/*	$NetBSD: pdqvar.h,v 1.39.10.3 2010/08/11 22:53:30 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -249,11 +249,11 @@ extern void pdq_os_databuf_free(struct _pdq_os_ctx_t *, struct mbuf *);
 #endif
 
 #if !defined(PDQ_BPF_MTAP)
-#define	PDQ_BPF_MTAP(sc, m)	bpf_ops->bpf_mtap((sc)->sc_bpf, m)
+#define	PDQ_BPF_MTAP(sc, m)	bpf_mtap3((sc)->sc_bpf, m)
 #endif
 
 #if !defined(PDQ_BPFATTACH)
-#define	PDQ_BPFATTACH(sc, t, s)	bpf_ops->bpf_attach(&(sc)->sc_bpf, &(sc)->sc_if, t, s)
+#define	PDQ_BPFATTACH(sc, t, s)	bpf_attach(&(sc)->sc_bpf, &(sc)->sc_if, t, s)
 #endif
 
 #if !defined(PDQ_OS_SPL_RAISE)
@@ -323,6 +323,7 @@ typedef struct _pdq_os_ctx_t {
     void *sc_ats;			/* shutdown hook */
     struct ethercom sc_ec;
     bus_dma_tag_t sc_dmatag;
+    bool sc_csr_memmapped;
 #define	sc_if		sc_ec.ec_if
 #elif defined(__FreeBSD__)
     struct kern_devconf *sc_kdc;	/* freebsd cruft */

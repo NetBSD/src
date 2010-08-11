@@ -1,4 +1,4 @@
-/*	$NetBSD: ciss.c,v 1.11.4.2 2009/05/16 10:41:22 yamt Exp $	*/
+/*	$NetBSD: ciss.c,v 1.11.4.3 2010/08/11 22:53:24 yamt Exp $	*/
 /*	$OpenBSD: ciss.c,v 1.14 2006/03/13 16:02:23 mickey Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ciss.c,v 1.11.4.2 2009/05/16 10:41:22 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ciss.c,v 1.11.4.3 2010/08/11 22:53:24 yamt Exp $");
 
 #include "bio.h"
 
@@ -469,9 +469,8 @@ ciss_cmd(struct ciss_ccb *ccb, int flags, int wait)
 		cmd->sgin = dmap->dm_nsegs;
 
 		sgd = dmap->dm_segs;
-		CISS_DPRINTF(CISS_D_DMA, ("data=%p/%u<0x%lx/%lu",
-		    ccb->ccb_data, ccb->ccb_len, sgd->ds_addr,
-		    (u_long)sgd->ds_len));
+		CISS_DPRINTF(CISS_D_DMA, ("data=%p/%zu<%#" PRIxPADDR "/%zu",
+		    ccb->ccb_data, ccb->ccb_len, sgd->ds_addr, sgd->ds_len));
 
 		for (i = 0; i < dmap->dm_nsegs; sgd++, i++) {
 			cmd->sgl[i].addr_lo = htole32(sgd->ds_addr);
@@ -481,8 +480,8 @@ ciss_cmd(struct ciss_ccb *ccb, int flags, int wait)
 			cmd->sgl[i].flags = htole32(0);
 			if (i) {
 				CISS_DPRINTF(CISS_D_DMA,
-				    (",0x%lx/%lu", sgd->ds_addr,
-				    (u_long)sgd->ds_len));
+				    (",%#" PRIxPADDR "/%zu", sgd->ds_addr,
+				    sgd->ds_len));
 			}
 		}
 
@@ -1409,7 +1408,6 @@ ciss_create_sensors(struct ciss_softc *sc)
 
 	for (i = 0; i < nsensors; i++) {
 		sc->sc_sensor[i].units = ENVSYS_DRIVE;
-		sc->sc_sensor[i].monitor = true;
 		/* Enable monitoring for drive state changes */
 		sc->sc_sensor[i].flags |= ENVSYS_FMONSTCHANGED;
 		/* logical drives */

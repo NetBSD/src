@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: resource.h,v 1.8.78.2 2009/05/04 08:11:10 yamt Exp $	*/
+/* -*-C++-*-	$NetBSD: resource.h,v 1.8.78.3 2010/08/11 22:52:04 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -62,7 +62,9 @@
 #define	IDC_MAIN_ROOT_SD	102
 #define	IDC_MAIN_ROOT_MD	103
 #define	IDC_MAIN_ROOT_NFS	104
-#define	IDC_MAIN_ROOT_MD_OPS	105
+#define	IDC_MAIN_ROOT_DK	105
+#define	IDC_MAIN_ROOT_LD	106
+#define	IDC_MAIN_ROOT_MD_OPS	107
 
 #define	IDC_MAIN_OPTION_A	150
 #define	IDC_MAIN_OPTION_S	151

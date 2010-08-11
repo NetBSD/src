@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.109.4.5 2010/03/11 15:04:41 yamt Exp $ */
+/* $NetBSD: device.h,v 1.109.4.6 2010/08/11 22:55:10 yamt Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -431,6 +431,10 @@ int getdisksize(struct vnode *, uint64_t *, unsigned *);
 int config_handle_wedges(struct device *, int);
 
 void	config_init(void);
+int	config_init_component(struct cfdriver *const*,
+			      const struct cfattachinit *, struct cfdata *);
+int	config_fini_component(struct cfdriver *const*,
+			      const struct cfattachinit *, struct cfdata *);
 void	config_init_mi(void);
 void	drvctl_init(void);
 
@@ -475,9 +479,11 @@ int	config_deactivate(device_t);
 void	config_defer(device_t, void (*)(device_t));
 void	config_deferred(device_t);
 void	config_interrupts(device_t, void (*)(device_t));
+void	config_mountroot(device_t, void (*)(device_t));
 void	config_pending_incr(void);
 void	config_pending_decr(void);
 void	config_create_interruptthreads(void);
+void	config_create_mountrootthreads(void);
 
 int	config_finalize_register(device_t, int (*)(device_t));
 void	config_finalize(void);

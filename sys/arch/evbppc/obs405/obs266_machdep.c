@@ -1,4 +1,4 @@
-/*	$NetBSD: obs266_machdep.c,v 1.6.56.2 2010/03/11 15:02:20 yamt Exp $	*/
+/*	$NetBSD: obs266_machdep.c,v 1.6.56.3 2010/08/11 22:51:54 yamt Exp $	*/
 /*	Original: md_machdep.c,v 1.3 2005/01/24 18:47:37 shige Exp $	*/
 
 /*
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obs266_machdep.c,v 1.6.56.2 2010/03/11 15:02:20 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obs266_machdep.c,v 1.6.56.3 2010/08/11 22:51:54 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -90,15 +90,33 @@ __KERNEL_RCSID(0, "$NetBSD: obs266_machdep.c,v 1.6.56.2 2010/03/11 15:02:20 yamt
 #include <machine/cpu.h>
 #include <machine/obs266.h>
 #include <powerpc/spr.h>
-#include <powerpc/ibm4xx/spr.h>
-#include <powerpc/ibm4xx/dcr405gp.h>
+#include <powerpc/ibm4xx/dcr4xx.h>
+#include <powerpc/ibm4xx/dev/comopbvar.h>
+#include <powerpc/ibm4xx/ibm405gp.h>
 #include <powerpc/ibm4xx/openbios.h>
+#include <powerpc/ibm4xx/spr.h>
 
+#include <dev/ic/comreg.h>
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pciconf.h>
 
 #include "ksyms.h"
 
+#include "com.h"
+#if (NCOM > 0)
+#include <sys/termios.h>
+
+#ifndef CONADDR
+#define CONADDR		IBM405GP_UART0_BASE
+#endif
+#ifndef CONSPEED
+#define CONSPEED	B9600
+#endif
+#ifndef CONMODE
+			/* 8N1 */
+#define CONMODE		((TTYDEF_CFLAG & ~(CSIZE | CSTOPB | PARENB)) | CS8)
+#endif
+#endif	/* NCOM */
 
 #define	TLB_PG_SIZE 	(16*1024*1024)
 
@@ -123,9 +141,6 @@ initppc(u_int startkernel, u_int endkernel, char *args, void *info_block)
 	vaddr_t va;
 	u_int memsize;
 
-	/* Disable all external interrupts */
-	mtdcr(DCR_UIC0_ER, 0);
-
 	/* Setup board from OpenBIOS */
 	openbios_board_init(info_block, startkernel);
 	memsize = openbios_board_memsize_get();
@@ -135,8 +150,8 @@ initppc(u_int startkernel, u_int endkernel, char *args, void *info_block)
 		ppc4xx_tlb_reserve(va, va, TLB_PG_SIZE, TLB_EX);
 
 	/* Map console after RAM (see pmap_tlbmiss()) */
-	ppc4xx_tlb_reserve(OBS405_CONADDR, roundup(memsize, TLB_PG_SIZE),
-	    TLB_PG_SIZE, TLB_I | TLB_G);
+	ppc4xx_tlb_reserve(CONADDR, roundup(memsize, TLB_PG_SIZE), TLB_PG_SIZE,
+	    TLB_I | TLB_G);
 
 	/* Initialize IBM405GPr CPU */
 	ibm40x_memsize_init(memsize, startkernel);
@@ -177,7 +192,9 @@ void
 consinit(void)
 {
 
-	obs405_consinit(OBS266_COM_FREQ);
+#if (NCOM > 0)
+	com_opb_cnattach(OBS266_COM_FREQ, CONADDR, CONSPEED, CONMODE);
+#endif
 }
 
 int
@@ -295,6 +312,17 @@ cpu_reboot(int howto, char *what)
 	while (1)
 		/* nothing */;
 #endif
+}
+
+int
+pci_bus_maxdevs(pci_chipset_tag_t pc, int busno)
+{
+
+	/*
+	 * Bus number is irrelevant.  Configuration Mechanism 1 is in
+	 * use, can have devices 0-32 (i.e. the `normal' range).
+	 */
+	return 31;
 }
 
 int

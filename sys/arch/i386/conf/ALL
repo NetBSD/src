@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.167.2.6 2010/03/11 15:02:27 yamt Exp $
+# $NetBSD: ALL,v 1.167.2.7 2010/08/11 22:52:10 yamt Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.167.2.6 $"
+#ident 		"ALL-$Revision: 1.167.2.7 $"
 
 maxusers	64		# estimated number of users
 
@@ -27,6 +27,7 @@ makeoptions	USE_SSP=yes
 options 	VM86		# virtual 8086 emulation
 options 	USER_LDT	# user-settable LDT; used by WINE
 options 	X86EMU		# 386 Real Mode emulator
+options 	PAE		# PAE mode (36 bits physical addressing)
 
 # Enhanced SpeedStep Technology in the Pentium M
 options 	ENHANCED_SPEEDSTEP
@@ -218,6 +219,7 @@ options 	IPSEC		# IP security
 options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
 options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
+options		MPLS		# MultiProtocol Label Switching (needs ifmpls)
 options 	MROUTING	# IP multicast routing
 options 	PIM		# Protocol Independent Multicast
 options 	ISO,TPIP	# OSI
@@ -229,6 +231,7 @@ options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
 options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 options 	IPFILTER_LOG	# ipmon(8) log support
 options 	IPFILTER_LOOKUP	# ippool(8) support
+options 	IPFILTER_COMPAT # Compat for IP-Filter
 options 	IPFILTER_DEFAULT_BLOCK	# block all packets by default
 options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 options 	TCP_SIGNATURE	# RFC 2385 support, used with BGP
@@ -359,6 +362,7 @@ apm*		at acpi?		# ACPI apm emulation
 acpiacad* 	at acpi?		# ACPI AC Adapter
 acpibat* 	at acpi?		# ACPI Battery
 acpibut* 	at acpi?		# ACPI Button
+acpicpu*	at acpi?		# ACPI CPU
 acpidalb*	at acpi?		# ACPI Direct Application Launch Button
 # The ACPI Embedded Controller is generally configured via the special ECDT.
 # This is required as parts of the DSDT can reference the EC before the normal
@@ -374,7 +378,6 @@ acpitz* 	at acpi?		# ACPI Thermal Zone
 acpiwmi*	at acpi?		# ACPI WMI Mapper
 
 # Mainboard devices
-aiboost*	at acpi?		# ASUS AI Booster Hardware Monitor
 aibs*		at acpi?		# ASUSTeK AI Booster hardware monitor
 asus*		at acpi?		# ASUS hotkeys
 attimer*	at acpi?		# AT Timer
@@ -392,6 +395,8 @@ thinkpad*	at acpi?		# IBM/Lenovo Thinkpad hotkeys
 ug* 		at acpi?		# Abit uGuru Hardware monitor
 wb*		at acpi?		# Winbond W83L518D SD/MMC reader
 sdmmc*		at wb?			# SD/MMC bus
+wmidell*	at acpiwmibus?		# Dell WMI mappings
+wmihp*		at acpiwmibus?		# HP WMI mappings
 wss* 		at acpi?		# NeoMagic 256AV in wss mode
 ym* 		at acpi?		# Yamaha OPL3-SA[23] audio
 
@@ -404,6 +409,9 @@ sony* 		at acpi?		# Sony Miscellaneous Controller
 
 # Toshiba Libretto devices
 vald* at acpi?
+
+# Toshiba LCD brightness
+valz* at acpi?
 
 # Plug-and-Play BIOS and attached devices
 
@@ -658,6 +666,10 @@ rd*	at cs80bus? slave ? punit ?
 amdpm*	at pci? dev ? function ?	# RNG and SMBus 1.0 interface
 iic*	at amdpm?			# sensors below are on this bus
 
+# Acer Labs M7101 SMBus controller
+alipm*	at pci? dev ? function ?
+iic*	at alipm?
+
 # Intel Core's on-die Thermal sensor
 options 	INTEL_CORETEMP
 
@@ -728,6 +740,10 @@ spdmem* at iic? addr 0x50
 spdmem* at iic? addr 0x51
 spdmem* at iic? addr 0x52
 spdmem* at iic? addr 0x53
+spdmem* at iic? addr 0x54
+spdmem* at iic? addr 0x55
+spdmem* at iic? addr 0x56
+spdmem* at iic? addr 0x57
 sdtemp* at iic? addr 0x18
 
 # I2O devices
@@ -765,6 +781,7 @@ isp*	at pci? dev ? function ?	# Qlogic ISP [12]0x0 SCSI/FibreChannel
 mfi*	at pci? dev ? function ?	# LSI MegaRAID SAS
 mly*	at pci? dev ? function ?	# Mylex AcceleRAID and eXtremeRAID
 mpt*	at pci? dev ? function ?	# LSI Fusion SCSI/FC
+nca*	at pci? dev ? function ?	# Domex DMX-3191D
 njs*	at pci? dev ? function ?	# Workbit NinjaSCSI-32
 pcscp*	at pci? dev ? function ?	# AMD 53c974 PCscsi-PCI SCSI
 siop*	at pci? dev ? function ?	# Symbios 53c8xx SCSI
@@ -827,6 +844,7 @@ cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
 ch*	at scsibus? target ? lun ?	# SCSI autochangers
 ses*	at scsibus? target ? lun ?	# SCSI Enclosure Services devices
 ss*	at scsibus? target ? lun ?	# SCSI scanners
+se*	at scsibus? target ? lun ?	# SCSI ethernet adapters
 uk*	at scsibus? target ? lun ?	# SCSI unknown
 
 # SCSI NIC
@@ -1334,10 +1352,13 @@ sbp*	at ieee1394if? euihi ? euilo ?	# SCSI over IEEE1394
 
 # SD/MMC/SDIO Controller and Device support
 
-# SD/MMC controller
-sdhc*  at pci?				# SD Host Controller
-sdmmc* at sdhc? 			# SD/MMC bus
+# PCI SD/MMC controller
+sdhc*	at pci?				# SD Host Controller
 
+# CardBus SD/MMC controller
+sdhc*	at cardbus? function ?		# SD Host Controller
+
+sdmmc* at sdhc? 			# SD/MMC bus
 ld*	at sdmmc?
 
 
@@ -1487,6 +1508,10 @@ wsmouse* at btms? mux 0
 btkbd* at bthidev? reportid ?
 wskbd* at btkbd? console ? mux 1
 
+# Bluetooth Apple Magic Mouse
+btmagic* at bthub?
+wsmouse* at btmagic? mux 0
+
 # Bluetooth Audio support
 btsco* at bthub?
 
@@ -1561,7 +1586,7 @@ options 	RF_INCLUDE_CHAINDECLUSTER=1
 options 	RF_INCLUDE_INTERDECLUSTER=1
 options 	RF_INCLUDE_PARITY_DECLUSTERING=1
 options 	RF_INCLUDE_PARITY_DECLUSTERING_DS=1
-pseudo-device	fss		4	# file system snapshot device
+pseudo-device	fss			# file system snapshot device
 
 pseudo-device	md		1	# memory disk device (ramdisk)
 options 	MEMORY_DISK_HOOKS	# enable root ramdisk
@@ -1576,6 +1601,7 @@ pseudo-device 	dm			# device-mapper disk driver
 pseudo-device	bpfilter		# Berkeley packet filter
 pseudo-device	carp			# Common Address Redundancy Protocol
 pseudo-device	ipfilter		# IP filter (firewall) and NAT
+pseudo-device	ifmpls			# MPLS pseudo-interface
 pseudo-device	loop			# network loopback
 pseudo-device	ppp			# Point-to-Point Protocol
 pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
@@ -1769,8 +1795,6 @@ options ACPI_APM_DEBUG
 options ACPI_DEBUG
 options ACPI_DEBUG_ALLOC
 options ACPI_MUTEX_DEBUG
-options ACPI_FDC_DEBUG
-options ACPI_MADT_DEBUG
 options ADB_DEBUG
 options ADM1030_DEBUG
 options ADT7467_DEBUG

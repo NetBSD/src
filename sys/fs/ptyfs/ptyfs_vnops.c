@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs_vnops.c,v 1.27.10.4 2010/03/11 15:04:14 yamt Exp $	*/
+/*	$NetBSD: ptyfs_vnops.c,v 1.27.10.5 2010/08/11 22:54:34 yamt Exp $	*/
 
 /*
  * Copyright (c) 1993, 1995
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ptyfs_vnops.c,v 1.27.10.4 2010/03/11 15:04:14 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptyfs_vnops.c,v 1.27.10.5 2010/08/11 22:54:34 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -794,7 +794,7 @@ ptyfs_read(void *v)
 	switch (ptyfs->ptyfs_type) {
 	case PTYFSpts:
 	case PTYFSptc:
-		VOP_UNLOCK(vp, 0);
+		VOP_UNLOCK(vp);
 		error = cdev_read(vp->v_rdev, ap->a_uio, ap->a_ioflag);
 		vn_lock(vp, LK_RETRY|LK_EXCLUSIVE);
 		return error;
@@ -824,7 +824,7 @@ ptyfs_write(void *v)
 	switch (ptyfs->ptyfs_type) {
 	case PTYFSpts:
 	case PTYFSptc:
-		VOP_UNLOCK(vp, 0);
+		VOP_UNLOCK(vp);
 		error = cdev_write(vp->v_rdev, ap->a_uio, ap->a_ioflag);
 		vn_lock(vp, LK_RETRY|LK_EXCLUSIVE);
 		return error;

@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kobj.c,v 1.10.4.4 2010/03/11 15:04:18 yamt Exp $	*/
+/*	$NetBSD: subr_kobj.c,v 1.10.4.5 2010/08/11 22:54:42 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kobj.c,v 1.10.4.4 2010/03/11 15:04:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kobj.c,v 1.10.4.5 2010/08/11 22:54:42 yamt Exp $");
 
 #include "opt_modular.h"
 
@@ -332,6 +332,15 @@ kobj_load(kobj_t ko)
 	}
 	error = ko->ko_read(ko, (void *)&ko->ko_strtab, ko->ko_strtabsz,
 	    shdr[symstrindex].sh_offset, true);
+	if (error != 0) {
+		goto out;
+	}
+
+	/*
+	 * Adjust module symbol namespace, if necessary (e.g. with rump)
+	 */
+	error = kobj_renamespace(ko->ko_symtab, ko->ko_symcnt,
+	    &ko->ko_strtab, &ko->ko_strtabsz);
 	if (error != 0) {
 		goto out;
 	}

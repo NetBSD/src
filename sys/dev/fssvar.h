@@ -1,4 +1,4 @@
-/*	$NetBSD: fssvar.h,v 1.18.10.2 2009/05/04 08:12:32 yamt Exp $	*/
+/*	$NetBSD: fssvar.h,v 1.18.10.3 2010/08/11 22:53:14 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -138,7 +138,6 @@ struct fss_softc {
 	struct timeval	sc_time;	/* Time this snapshot was taken */
 	dev_t		sc_bdev;	/* Underlying block device */
 	struct vnode	*sc_bs_vp;	/* Our backing store */
-	off_t		sc_bs_size;	/* Its size in bytes */
 	int		sc_bs_bshift;	/* Shift of backing store block */
 	u_int32_t	sc_bs_bmask;	/* Mask of backing store block */
 	struct lwp	*sc_bs_lwp;	/* Our kernel thread */

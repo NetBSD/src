@@ -1,4 +1,4 @@
-/*	$NetBSD: if_we_isa.c,v 1.19.4.1 2008/05/16 02:24:27 yamt Exp $	*/
+/*	$NetBSD: if_we_isa.c,v 1.19.4.2 2010/08/11 22:53:36 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_we_isa.c,v 1.19.4.1 2008/05/16 02:24:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_we_isa.c,v 1.19.4.2 2010/08/11 22:53:36 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,6 +77,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_we_isa.c,v 1.19.4.1 2008/05/16 02:24:27 yamt Exp 
 #include <dev/ic/wereg.h>
 #include <dev/ic/wevar.h>
 
+#include "ioconf.h"
+
 #ifndef __BUS_SPACE_HAS_STREAM_METHODS
 #define	bus_space_read_region_stream_2	bus_space_read_region_2
 #define	bus_space_write_stream_2	bus_space_write_2
@@ -89,51 +91,16 @@ void	we_isa_attach(device_t, device_t, void *);
 CFATTACH_DECL_NEW(we_isa, sizeof(struct we_softc),
     we_isa_probe, we_isa_attach, NULL, NULL);
 
-extern struct cfdriver we_cd;
-
 static const char *we_params(bus_space_tag_t, bus_space_handle_t,
-		u_int8_t *, bus_size_t *, u_int8_t *, int *);
+    uint8_t *, bus_size_t *, uint8_t *, int *);
 
 static const int we_584_irq[] = {
 	9, 3, 5, 7, 10, 11, 15, 4,
 };
-#define	NWE_584_IRQ	(sizeof(we_584_irq) / sizeof(we_584_irq[0]))
 
 static const int we_790_irq[] = {
 	ISA_UNKNOWN_IRQ, 9, 3, 5, 7, 10, 11, 15,
 };
-#define	NWE_790_IRQ	(sizeof(we_790_irq) / sizeof(we_790_irq[0]))
-
-/*
- * Delay needed when switching 16-bit access to shared memory.
- */
-#define	WE_DELAY(wsc) delay(3)
-
-/*
- * Enable card RAM, and 16-bit access.
- */
-#define	WE_MEM_ENABLE(wsc) \
-do { \
-	if ((wsc)->sc_16bitp) \
-		bus_space_write_1((wsc)->sc_asict, (wsc)->sc_asich, \
-		    WE_LAAR, (wsc)->sc_laar_proto | WE_LAAR_M16EN); \
-	bus_space_write_1((wsc)->sc_asict, (wsc)->sc_asich, \
-	    WE_MSR, wsc->sc_msr_proto | WE_MSR_MENB); \
-	WE_DELAY((wsc)); \
-} while (0)
-
-/*
- * Disable card RAM, and 16-bit access.
- */
-#define	WE_MEM_DISABLE(wsc) \
-do { \
-	bus_space_write_1((wsc)->sc_asict, (wsc)->sc_asich, \
-	    WE_MSR, (wsc)->sc_msr_proto); \
-	if ((wsc)->sc_16bitp) \
-		bus_space_write_1((wsc)->sc_asict, (wsc)->sc_asich, \
-		    WE_LAAR, (wsc)->sc_laar_proto); \
-	WE_DELAY((wsc)); \
-} while (0)
 
 int
 we_isa_probe(device_t parent, cfdata_t cf, void *aux)
@@ -144,7 +111,7 @@ we_isa_probe(device_t parent, cfdata_t cf, void *aux)
 	bus_size_t memsize;
 	int asich_valid, memh_valid;
 	int i, is790, rv = 0;
-	u_int8_t x, type;
+	uint8_t x, type;
 
 	asict = ia->ia_iot;
 	memt = ia->ia_memt;
@@ -152,22 +119,22 @@ we_isa_probe(device_t parent, cfdata_t cf, void *aux)
 	asich_valid = memh_valid = 0;
 
 	if (ia->ia_nio < 1)
-		return (0);
+		return 0;
 	if (ia->ia_niomem < 1)
-		return (0);
+		return 0;
 	if (ia->ia_nirq < 1)
-		return (0);
+		return 0;
 
 	if (ISA_DIRECT_CONFIG(ia))
-		return (0);
+		return 0;
 
 	/* Disallow wildcarded i/o addresses. */
 	if (ia->ia_io[0].ir_addr == ISA_UNKNOWN_PORT)
-		return (0);
+		return 0;
 
 	/* Disallow wildcarded mem address. */
 	if (ia->ia_iomem[0].ir_addr == ISA_UNKNOWN_IOMEM)
-		return (0);
+		return 0;
 
 	/* Attempt to map the device. */
 	if (bus_space_map(asict, ia->ia_io[0].ir_addr, WE_NPORTS, 0, &asich))
@@ -235,7 +202,7 @@ we_isa_probe(device_t parent, cfdata_t cf, void *aux)
 	 * and use it.
 	 */
 	if (is790) {
-		u_int8_t hwr;
+		uint8_t hwr;
 
 		/* Assemble together the encoded interrupt number. */
 		hwr = bus_space_read_1(asict, asich, WE790_HWR);
@@ -286,7 +253,7 @@ we_isa_probe(device_t parent, cfdata_t cf, void *aux)
 		bus_space_unmap(asict, asich, WE_NPORTS);
 	if (memh_valid)
 		bus_space_unmap(memt, memh, memsize);
-	return (rv);
+	return rv;
 }
 
 void
@@ -376,13 +343,13 @@ we_isa_attach(device_t parent, device_t self, void *aux)
 }
 
 static const char *
-we_params(bus_space_tag_t asict, bus_space_handle_t asich, u_int8_t *typep,
-    bus_size_t *memsizep, u_int8_t *flagp, int *is790p)
+we_params(bus_space_tag_t asict, bus_space_handle_t asich, uint8_t *typep,
+    bus_size_t *memsizep, uint8_t *flagp, int *is790p)
 {
 	const char *typestr;
 	bus_size_t memsize;
 	int is16bit, is790;
-	u_int8_t type;
+	uint8_t type;
 
 	memsize = 8192;
 	is16bit = is790 = 0;
@@ -437,7 +404,7 @@ we_params(bus_space_tag_t asict, bus_space_handle_t asich, u_int8_t *typep,
 	case WE_TYPE_SMC8216C:
 	case WE_TYPE_SMC8216T:
 	    {
-		u_int8_t hwr;
+		uint8_t hwr;
 
 		typestr = (type == WE_TYPE_SMC8216C) ?
 		    "SMC8216/SMC8216C" : "SMC8216T";
@@ -483,7 +450,7 @@ we_params(bus_space_tag_t asict, bus_space_handle_t asich, u_int8_t *typep,
 #endif
 	default:
 		/* Not one we recognize. */
-		return (NULL);
+		return NULL;
 	}
 
 	/*
@@ -519,5 +486,5 @@ we_params(bus_space_tag_t asict, bus_space_handle_t asich, u_int8_t *typep,
 		*flagp |= WE_16BIT_ENABLE;
 	if (is790p != NULL)
 		*is790p = is790;
-	return (typestr);
+	return typestr;
 }

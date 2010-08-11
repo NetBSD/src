@@ -1,4 +1,4 @@
-/* $NetBSD: iic_eumb.c,v 1.4.2.2 2009/05/04 08:11:47 yamt Exp $ */
+/* $NetBSD: iic_eumb.c,v 1.4.2.3 2010/08/11 22:52:39 yamt Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iic_eumb.c,v 1.4.2.2 2009/05/04 08:11:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iic_eumb.c,v 1.4.2.3 2010/08/11 22:52:39 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -45,31 +45,31 @@ __KERNEL_RCSID(0, "$NetBSD: iic_eumb.c,v 1.4.2.2 2009/05/04 08:11:47 yamt Exp $"
 
 #include <sandpoint/sandpoint/eumbvar.h>
 
-void iic_bootstrap_init(void);
-int iic_bootstrap_read(int, int, uint8_t *, size_t);
-
-static int  iic_eumb_match(struct device *, struct cfdata *, void *);
-static void iic_eumb_attach(struct device *, struct device *, void *);
-
 struct iic_eumb_softc {
 	struct device		sc_dev;
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
 	struct i2c_controller	sc_i2c;
 	kmutex_t		sc_buslock;
+	bool			sc_start;
 };
+
+static int  iic_eumb_match(struct device *, struct cfdata *, void *);
+static void iic_eumb_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(iic_eumb, sizeof(struct iic_eumb_softc),
     iic_eumb_match, iic_eumb_attach, NULL, NULL);
 
-static int motoi2c_acquire_bus(void *, int);
+static int  motoi2c_acquire_bus(void *, int);
 static void motoi2c_release_bus(void *, int);
-static int motoi2c_send_start(void *, int);
-static int motoi2c_send_stop(void *, int);
-static int motoi2c_initiate_xfer(void *, uint16_t, int);
-static int motoi2c_read_byte(void *, uint8_t *, int);
-static int motoi2c_write_byte(void *, uint8_t, int);
-static void waitxferdone(int);
+static int  motoi2c_send_start(void *, int);
+static int  motoi2c_send_stop(void *, int);
+static int  motoi2c_initiate_xfer(void *, uint16_t, int);
+static int  motoi2c_read_byte(void *, uint8_t *, int);
+static int  motoi2c_write_byte(void *, uint8_t, int);
+static int  motoi2c_waitxferdone(struct iic_eumb_softc *);
+
+struct iic_eumb_softc *iic_eumb;
 
 static struct i2c_controller motoi2c = {
 	.ic_acquire_bus = motoi2c_acquire_bus,
@@ -103,9 +103,11 @@ static struct i2c_controller motoi2c = {
 #define	 SR_RXAK  0x01	/* 1 to indicate receive has completed */
 #define I2CDR	0x0010	/* data */
 
-#define	CSR_READ(r)	in8rb(0xfc003000 + (r))
-#define	CSR_WRITE(r,v)	out8rb(0xfc003000 + (r), (v))
-#define	CSR_WRITE4(r,v)	out32rb(0xfc003000 + (r), (v))
+#define	I2C_READ(r)	bus_space_read_4(sc->sc_iot, sc->sc_ioh, (r))
+#define	I2C_WRITE(r,v)	bus_space_write_4(sc->sc_iot, sc->sc_ioh, (r), (v))
+#define I2C_SETCLR(r, s, c) \
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, (r), \
+	    (bus_space_read_4(sc->sc_iot, sc->sc_ioh, (r)) | (s)) & ~(c))
 
 static int found;
 
@@ -119,74 +121,48 @@ iic_eumb_match(struct device *parent, struct cfdata *cf, void *aux)
 static void
 iic_eumb_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct iic_eumb_softc *sc = (void *)self;
-	struct eumb_attach_args *eaa = aux;
+	struct iic_eumb_softc *sc;
+	struct eumb_attach_args *eaa;
 	struct i2cbus_attach_args iba;
 	bus_space_handle_t ioh;
 
+	sc = (struct iic_eumb_softc *)self;
+	eaa = aux;
 	found = 1;
 	printf("\n");
 
 	bus_space_map(eaa->eumb_bt, 0x3000, 0x20, 0, &ioh);
 	mutex_init(&sc->sc_buslock, MUTEX_DEFAULT, IPL_NONE);
+
+	iic_eumb = sc;
 	sc->sc_i2c = motoi2c;
 	sc->sc_i2c.ic_cookie = sc;
 	sc->sc_iot = eaa->eumb_bt;
 	sc->sc_ioh = ioh;
+	sc->sc_start = false;
+	memset(&iba, 0, sizeof(iba));
 	iba.iba_tag = &sc->sc_i2c;
 
-	iic_bootstrap_init();
-#if 0
-	/* not yet */
+	I2C_WRITE(I2CCR, 0);		/* reset before changing anything */
+	I2C_WRITE(I2CFDR, 0x1031);	/* DFFSR=0x10, divider 3072 (0x31) */
+	I2C_WRITE(I2CADR, 0x7f << 1);	/* our slave address is 0x7f */
+	I2C_WRITE(I2CSR, 0);		/* clear status flags */
+	I2C_WRITE(I2CCR, CR_MEN);	/* enable the I2C module */
+
 	config_found_ia(&sc->sc_dev, "i2cbus", &iba, iicbus_print);
 
-	/* we never attempt to use I2C interrupt */
-	intr_establish(16 + 16, IST_LEVEL, IPL_BIO, iic_intr, sc);
+#if 0
+	/* we do not use the I2C interrupt yet */
+	intr_establish(16 + 16, IST_LEVEL, IPL_BIO, motoic2_intr, sc);
 #endif
-}
-
-void
-iic_bootstrap_init(void)
-{
-
-	CSR_WRITE(I2CCR, 0);
-	CSR_WRITE4(I2CFDR, 0x1031); /* XXX magic XXX */
-	CSR_WRITE(I2CADR, 0);
-	CSR_WRITE(I2CSR, 0);
-	CSR_WRITE(I2CCR, CR_MEN);
-}
-
-int
-iic_bootstrap_read(int i2caddr, int offset, uint8_t *rvp, size_t len)
-{
-	i2c_addr_t addr;
-	uint8_t cmdbuf[1];
-
-	if (motoi2c_acquire_bus(&motoi2c, I2C_F_POLL) != 0)
-		return -1;
-	while (len) {
-		addr = i2caddr + (offset >> 8);
-		cmdbuf[0] = offset & 0xff;
-		if (iic_exec(&motoi2c, I2C_OP_READ_WITH_STOP, addr,
-			     cmdbuf, 1, rvp, 1, I2C_F_POLL)) {
-			motoi2c_release_bus(&motoi2c, I2C_F_POLL);
-			return -1;
-		}
-		len--;
-		rvp++;
-		offset++;
-	}
-	motoi2c_release_bus(&motoi2c, I2C_F_POLL);
-	return 0;	
 }
 
 static int
 motoi2c_acquire_bus(void *v, int flags)
 {
-	struct iic_eumb_softc *sc = v;
+	struct iic_eumb_softc *sc;
 
-	if (flags & I2C_F_POLL)
-		return 0;
+	sc = v;
 	mutex_enter(&sc->sc_buslock);
 	return 0;
 }
@@ -194,88 +170,168 @@ motoi2c_acquire_bus(void *v, int flags)
 static void
 motoi2c_release_bus(void *v, int flags)
 {
-	struct iic_eumb_softc *sc = v;
+	struct iic_eumb_softc *sc;
 
-	if (flags & I2C_F_POLL)
-		return;
+	sc = v;
 	mutex_exit(&sc->sc_buslock);
 }
 
 static int
 motoi2c_send_start(void *v, int flags)
 {
-	int loop = 10;
+	struct iic_eumb_softc *sc;
+	int timo;
 
-	CSR_WRITE(I2CSR, 0);
-	CSR_WRITE(I2CCR, CR_MEN);
-	do {
-		DELAY(1);
-	} while (--loop > 0 && (CSR_READ(I2CSR) & SR_MBB));
+	sc = v;
+
+	if (!sc->sc_start && (I2C_READ(I2CSR) & SR_MBB) != 0) {
+		/* wait for bus becoming available */
+		timo = 100;
+		do
+			DELAY(10);
+		while (--timo > 0 && (I2C_READ(I2CSR) & SR_MBB) != 0);
+
+		if (timo == 0) {
+#ifdef DEBUG
+			printf("%s: bus is busy\n", __func__);
+#endif
+			return -1;
+		}
+	}
+	else if (sc->sc_start &&
+	    (I2C_READ(I2CSR) & (SR_MIF | SR_MAL)) == SR_MIF) {
+		sc->sc_start = false;
+#ifdef DEBUG
+		printf("%s: lost the bus\n", __func__);
+#endif
+		return -1;
+	}
+
+	/* reset interrupt and arbitration-lost flags */
+	I2C_SETCLR(I2CSR, 0, SR_MIF | SR_MAL);
+
+	if (!sc->sc_start) {
+		/* generate start condition */
+		I2C_SETCLR(I2CCR, CR_MSTA | CR_MTX, CR_TXAK | CR_RSTA);
+		sc->sc_start = true;
+	} else	/* repeated start, we still own the bus */
+		I2C_SETCLR(I2CCR, CR_RSTA | CR_MTX, CR_TXAK);
+
 	return 0;
 }
 
 static int
 motoi2c_send_stop(void *v, int flags)
 {
+	struct iic_eumb_softc *sc;
 
-	CSR_WRITE(I2CCR, CR_MEN);
+	sc = v;
+	I2C_SETCLR(I2CCR, 0, CR_MSTA | CR_RSTA | CR_TXAK);
+	sc->sc_start = false;
+	DELAY(100);
 	return 0;
 }
 
 static int
 motoi2c_initiate_xfer(void *v, i2c_addr_t addr, int flags)
 {
-	int rd_req;
+	struct iic_eumb_softc *sc;
 
-	rd_req = !!(flags & I2C_F_READ);
-	CSR_WRITE(I2CCR, CR_MIEN | CR_MEN | CR_MSTA | CR_MTX);
-	CSR_WRITE(I2CDR, (addr << 1) | rd_req);
-	if (flags & I2C_F_STOP)
-		CSR_WRITE(I2CCR, CR_MIEN | CR_MEN | CR_TXAK);
-	waitxferdone(SR_MIF);
-	return 0;
+	sc = v;
+
+	/* start condition */
+	if (motoi2c_send_start(v, flags) != 0)
+		return -1;
+
+	/* send target address and transfer direction */
+	I2C_WRITE(I2CDR, (addr << 1) | ((flags & I2C_F_READ) ? 1 : 0));
+
+	if (motoi2c_waitxferdone(sc) == 0) {
+		if (flags & I2C_F_READ) {
+			/* clear TX mode */
+			I2C_SETCLR(I2CCR, 0, CR_MTX);
+			/*
+			 * A dummy read is required to start with
+			 * receiving bytes.
+			 */
+			(void)I2C_READ(I2CDR);
+		}
+		if (flags & I2C_F_STOP)
+			return motoi2c_send_stop(v, flags);
+		return 0;
+	}
+	return -1;
 }
 
 static int
 motoi2c_read_byte(void *v, uint8_t *bytep, int flags)
 {
-	int last_byte, send_stop;
+	struct iic_eumb_softc *sc;
 
-	last_byte = (flags & I2C_F_LAST) != 0;
-	send_stop = (flags & I2C_F_STOP) != 0;
-	if (last_byte)
-		CSR_WRITE(I2CCR, CR_MIEN | CR_MEN | CR_MSTA | CR_TXAK);
-	if (send_stop)
-		CSR_WRITE(I2CCR, CR_MIEN | CR_MEN | CR_TXAK);
-	waitxferdone(SR_MIF);
-	*bytep = CSR_READ(I2CDR);
+	sc = v;
+
+	/* wait for next byte */
+	if (motoi2c_waitxferdone(sc) != 0)
+		return -1;
+
+	/* no TX-acknowledge for next byte */
+	if (flags & I2C_F_LAST)
+		I2C_SETCLR(I2CCR, CR_TXAK, 0);
+
+	*bytep = I2C_READ(I2CDR);
+
+	/*
+	 * To make the TXAK take effect we have to receive another
+	 * byte, which will be discarded.
+	 */
+	if (flags & I2C_F_LAST) {
+		(void)motoi2c_waitxferdone(sc);	/* ignore RXAK flag */
+		if (flags & I2C_F_STOP)
+			(void)motoi2c_send_stop(v, flags);
+		(void)I2C_READ(I2CDR);
+	} else if (flags & I2C_F_STOP)
+		return motoi2c_send_stop(v, flags);
+
 	return 0;
 }
 
 static int
 motoi2c_write_byte(void *v, uint8_t byte, int flags)
 {
-	int send_stop;
+	struct iic_eumb_softc *sc;
 
-	send_stop = (flags & I2C_F_STOP) != 0;
-	if (send_stop)
-		CSR_WRITE(I2CCR, CR_MEN);
-	CSR_WRITE(I2CDR, byte);
-	waitxferdone(SR_MIF);
+	sc = v;
+	I2C_WRITE(I2CDR, byte);
+	DELAY(10);
+
+	if (motoi2c_waitxferdone(sc) != 0)
+		return -1;
+
+	if (flags & I2C_F_STOP)
+		return motoi2c_send_stop(v, flags);
+
 	return 0;
 }
 
 /* busy waiting for byte data transfer completion */
-static void
-waitxferdone(int cond)
+static int
+motoi2c_waitxferdone(struct iic_eumb_softc *sc)
 {
-	int timo, sr;
+	uint32_t sr;
+	int timo;
 
-	timo = 100;
+	timo = 1000;
 	do {
-		DELAY(1);
-		sr = CSR_READ(I2CSR);
-	} while (--timo > 0 && (sr & cond) == 0);
-	sr &= ~cond;
-	CSR_WRITE(I2CSR, sr);
+		sr = I2C_READ(I2CSR);
+		DELAY(10);
+	} while (--timo > 0 && (sr & SR_MIF) == 0);
+
+#ifdef DEBUG
+	if (timo == 0)
+		printf("%s: timeout\n", __func__);
+	if (sr & SR_RXAK)
+		printf("%s: missing rx ack\n", __func__);
+#endif
+	I2C_SETCLR(I2CSR, 0, sr);
+	return (timo == 0 || (sr & SR_RXAK) != 0) ? -1 : 0;
 }

@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.34.12.1 2009/05/04 08:12:19 yamt Exp $
+	$NetBSD: syscalls.master,v 1.34.12.2 2010/08/11 22:53:02 yamt Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -161,8 +161,8 @@
 80	NOARGS		{ int|sys||mkdir(const char *path, int mode); }
 81	STD		{ int|ibcs2_sys||getdents(int fd, char *buf, \
 			    int nbytes); }
-82	UNIMPL
-83	UNIMPL
+82	UNIMPL		libattach
+83	UNIMPL		libdetach
 84	STD		{ int|ibcs2_sys||sysfs(int cmd, void *d1, char *buf); }
 85	STD		{ int|ibcs2_sys||getmsg(int fd, \
 			    struct ibcs2_stropts *ctl, \
@@ -172,8 +172,10 @@
 			    struct ibcs2_stropts *dat, int flags); }
 87	NOARGS		{ int|sys||poll(struct pollfd *fds, u_int nfds, \
 			    int timeout); }
-88	UNIMPL
-89	UNIMPL
+88	STD		{ int|ibcs2_sys||lstat(const char *path, \
+			    struct ibcs2_stat *st); }
+89	NOARGS		{ int|sys||symlink(const char *path, \
+			    const char *link); }
 90	NOARGS		{ int|sys||symlink(const char *path, \
 			    const char *link); }
 91	STD		{ int|ibcs2_sys||lstat(const char *path, \
@@ -183,37 +185,37 @@
 93	NOARGS		{ int|sys||fchmod(int fd, int mode); }
 94	NOARGS		{ int|sys||__posix_fchown(int fd, int uid, int gid); } \
 			    fchown
-95	UNIMPL
+95	UNIMPL		sigprocmask
 96	NOARGS		{ int|compat_16_sys|14|sigreturn(struct sigcontext \
 			    *sigcntxp); } sigreturn
 97	STD		{ int|ibcs2_sys||sigaltstack( \
 			    const struct ibcs2_sigaltstack *nss, \
 			    struct ibcs2_sigaltstack *oss); }
-98	UNIMPL
-99	UNIMPL
+98	UNIMPL		sigaction
+99	UNIMPL		sigpending
 100	UNIMPL		getcontext/setcontext/sigsetjmp
-101	UNIMPL
-102	UNIMPL
+101	UNIMPL		envsys
+102	UNIMP		evtrapret
 103	STD		{ int|ibcs2_sys||statvfs(const char *path, \
 			    struct ibcs2_statvfs *buf); }
 104	STD		{ int|ibcs2_sys||fstatvfs(int fd, \
 			    struct ibcs2_statvfs *buf); }
 105	UNIMPL
-106	UNIMPL
-107	UNIMPL		waitid
-108	UNIMPL		sigsendset
-109	UNIMPL
-110	UNIMPL
-111	UNIMPL
-112	UNIMPL		priocntl
-113	UNIMPL
-114	UNIMPL
+106	UNIMPL		nfssys
+107	UNIMPL		waitsys
+108	UNIMPL		sigsendsys
+109	UNIMPL		hrtsys
+110	UNIMPL		acancel
+111	UNIMPL		async
+112	UNIMPL		priocntlsys
+113	UNIMPL		pathconf
+114	UNIMPL		mincore
 115	STD		{ ibcs2_caddr_t|ibcs2_sys||mmap(ibcs2_caddr_t addr, \
 			    ibcs2_size_t len, int prot, int flags, int fd, \
 			    ibcs2_off_t off); }
 116     NOARGS          { int|sys||mprotect(void *addr, int len, int prot); }
 117     NOARGS          { int|sys||munmap(void *addr, int len); }
-118	UNIMPL
+118	UNIMPL		fpathconf
 119	UNIMPL		vfork
 120	NOARGS		{ int|sys||fchdir(int fd); }
 121	NOARGS		{ int|sys||readv(int fd, struct iovec *iovp, u_int iovcnt); }
@@ -221,8 +223,8 @@
 123	UNIMPL		xstat
 124	UNIMPL		lxstat
 125	UNIMPL		fxstat
-126	UNIMPL
-127	UNIMPL
+126	UNIMPL		xmknod
+127	UNIMPL		clocal
 128	UNIMPL		setrlimit
 129	UNIMPL		getrlimit
 130	UNIMPL		lchown
@@ -231,12 +233,12 @@
                             int attr, int mask); }
 132	UNIMPL		getpmsg
 133	UNIMPL		putpmsg
-134	UNIMPL
-135	UNIMPL
+134	UNIMPL		rename
+135	UNIMPL		uname
 136	UNIMPL		setegid
-137	UNIMPL
+137	UNIMPL		sysconfig
 138	UNIMPL		adjtime
-139	UNIMPL
+139	UNIMPL		systeminfo
 140	UNIMPL
 141	UNIMPL		seteuid
 142	UNIMPL

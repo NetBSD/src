@@ -1,3 +1,3 @@
-/*	$NetBSD: ksyms.h,v 1.1.18.2 2009/05/04 08:14:30 yamt Exp $	*/
+/*	$NetBSD: ksyms.h,v 1.1.18.3 2010/08/11 22:55:07 yamt Exp $	*/
 
-/* public domain */
+#define NKSYMS 1

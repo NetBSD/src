@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_sysctl.c,v 1.9.10.1 2009/05/04 08:12:23 yamt Exp $ */
+/*	$NetBSD: linux32_sysctl.c,v 1.9.10.2 2010/08/11 22:53:09 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -31,7 +31,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_sysctl.c,v 1.9.10.1 2009/05/04 08:12:23 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_sysctl.c,v 1.9.10.2 2010/08/11 22:53:09 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,8 +57,8 @@ __KERNEL_RCSID(0, "$NetBSD: linux32_sysctl.c,v 1.9.10.1 2009/05/04 08:12:23 yamt
 #include <compat/linux32/linux32_syscallargs.h>
 
 char linux32_sysname[128] = "Linux";
-char linux32_release[128] = "2.4.18";
-char linux32_version[128] = "#0 Wed Feb 20 20:00:02 CET 2002";
+char linux32_release[128] = "2.6.18";
+char linux32_version[128] = "#0 Wed Mar 3 03:03:03 PST 2010";
 
 struct sysctlnode linux32_sysctl_root = {
 	.sysctl_flags = SYSCTL_VERSION|

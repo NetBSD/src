@@ -1,9 +1,9 @@
-# $NetBSD: INSTALL,v 1.80.10.1 2009/05/04 08:10:34 yamt Exp $
+# $NetBSD: INSTALL,v 1.80.10.2 2010/08/11 22:51:35 yamt Exp $
 #
 # This file was automatically created.
 # Changes will be lost when make is run in this directory.
 #
-# Created from: # NetBSD: GENERIC.in,v 1.72 2009/01/12 19:11:41 mhitch Exp $
+# Created from: # NetBSD: GENERIC.in,v 1.76 2010/05/08 22:16:25 mrg Exp $
 #
 # GENERIC machine description file
 #
@@ -28,7 +28,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.80.10.1 $"
+#ident 		"GENERIC-$Revision: 1.80.10.2 $"
 
 makeoptions	COPTS="-Os"
 
@@ -76,6 +76,7 @@ options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
 options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 options 	IPFILTER_LOG	# ipmon(8) log support
 options 	IPFILTER_LOOKUP	# ippool(8) support
+options 	IPFILTER_COMPAT # Compat for IP-Filter
 #options 	IPFILTER_DEFAULT_BLOCK	# block all packets by default
 
 #options 	ALTQ		# Manipulate network interfaces' output queues
@@ -423,7 +424,7 @@ pseudo-device	bridge			# simple inter-network bridging
 pseudo-device	agr			# IEEE 802.3ad link aggregation
 #pseudo-device	pf			# PF packet filter
 #pseudo-device	pflog			# PF log if
-#pseudo-device	fss		4	# file system snapshot device
+#pseudo-device	fss			# file system snapshot device
 
 pseudo-device	view		4	# views (needed for grfcc)
 pseudo-device	pty		2	# pseudo-terminals

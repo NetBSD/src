@@ -1,5 +1,5 @@
-/*	$OpenBSD: if_iwnvar.h,v 1.8 2008/12/03 17:17:08 damien Exp $	*/
-/*	$NetBSD: if_iwnvar.h,v 1.3.16.3 2010/03/11 15:03:46 yamt Exp $	*/
+/*	$NetBSD: if_iwnvar.h,v 1.3.16.4 2010/08/11 22:53:47 yamt Exp $	*/
+/*	$OpenBSD: if_iwnvar.h,v 1.19 2010/05/05 19:47:43 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008
@@ -18,6 +18,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+/* XXX Added for NetBSD */
 #define IEEE80211_NO_HT
 
 struct iwn_rx_radiotap_header {
@@ -48,10 +49,11 @@ struct iwn_tx_radiotap_header {
 	uint8_t		wt_hwqueue;
 } __packed;
 
-#define IWN_TX_RADIOTAP_PRESENT                                      \
-        ((1 << IEEE80211_RADIOTAP_FLAGS) |                           \
-	 (1 << IEEE80211_RADIOTAP_RATE) |                            \
+#define IWN_TX_RADIOTAP_PRESENT						\
+	((1 << IEEE80211_RADIOTAP_FLAGS) |				\
+	 (1 << IEEE80211_RADIOTAP_RATE) |				\
 	 (1 << IEEE80211_RADIOTAP_CHANNEL))
+/* XXX OpenBSD also includes IEEE80211_RADIOTAP_HWQUEUE */
 
 struct iwn_dma_info {
 	bus_dma_tag_t		tag;
@@ -78,11 +80,10 @@ struct iwn_tx_ring {
 	struct iwn_tx_data	data[IWN_TX_RING_COUNT];
 	int			qid;
 	int			queued;
-	int			count;
 	int			cur;
 };
 
-#define IWN_RBUF_COUNT	(IWN_RX_RING_COUNT + 32)
+#define	IWN_RBUF_COUNT	(IWN_RX_RING_COUNT + 32)
 
 struct iwn_softc;
 
@@ -167,6 +168,7 @@ struct iwn_fw_part {
 
 struct iwn_fw_info {
 	u_char			*data;
+	size_t			size;
 	struct iwn_fw_part	init;
 	struct iwn_fw_part	main;
 	struct iwn_fw_part	boot;
@@ -176,7 +178,6 @@ struct iwn_hal {
 	int		(*load_firmware)(struct iwn_softc *);
 	void		(*read_eeprom)(struct iwn_softc *);
 	int		(*post_alive)(struct iwn_softc *);
-	int		(*apm_init)(struct iwn_softc *);
 	int		(*nic_config)(struct iwn_softc *);
 	void		(*update_sched)(struct iwn_softc *, int, int, uint8_t,
 			    uint16_t);
@@ -195,8 +196,8 @@ struct iwn_hal {
 	void		(*ampdu_tx_stop)(struct iwn_softc *, uint8_t,
 			    uint16_t);
 #endif
-	const struct	iwn_sensitivity_limits *limits;
 	int		ntxqs;
+	int		ndmachnls;
 	uint8_t		broadcast_id;
 	int		rxonsz;
 	int		schedsz;
@@ -221,11 +222,19 @@ struct iwn_softc {
 
 	u_int			sc_flags;
 #define IWN_FLAG_HAS_5GHZ	(1 << 0)
-#define IWN_FLAG_FIRST_BOOT	(1 << 1)
+#define IWN_FLAG_HAS_OTPROM	(1 << 1)
+#define IWN_FLAG_CALIB_DONE	(1 << 2)
+#define IWN_FLAG_USE_ICT	(1 << 3)
+#define IWN_FLAG_INTERNAL_PA	(1 << 4)
+/* Added for NetBSD */
+#define IWN_FLAG_SCANNING	(1 << 8)
+#define IWN_FLAG_HW_INITED	(1 << 9)
 
 	uint8_t 		hw_type;
 	const struct iwn_hal	*sc_hal;
 	const char		*fwname;
+	const struct iwn_sensitivity_limits
+				*limits;
 
 	/* TX scheduler rings. */
 	struct iwn_dma_info	sched_dma;
@@ -238,6 +247,11 @@ struct iwn_softc {
 	/* Firmware DMA transfer. */
 	struct iwn_dma_info	fw_dma;
 
+	/* ICT table. */
+	struct iwn_dma_info	ict_dma;
+	uint32_t		*ict;
+	int			ict_cur;
+
 	/* TX/RX rings. */
 	struct iwn_tx_ring	txq[IWN5000_NTXQUEUES];
 	struct iwn_rx_ring	rxq;
@@ -249,7 +263,8 @@ struct iwn_softc {
 	pcitag_t		sc_pcitag;
 	bus_size_t		sc_sz;
 	int			sc_cap_off;	/* PCIe Capabilities. */
-
+	struct sysmon_envsys	*sc_sme;
+	envsys_data_t		sc_sensor;
 	callout_t		calib_to;
 	int			calib_cnt;
 	struct iwn_calib_state	calib;
@@ -267,22 +282,26 @@ struct iwn_softc {
 	int			noise;
 	uint32_t		qfullmsk;
 
+	uint32_t		prom_base;
 	struct iwn4965_eeprom_band
 				bands[IWN_NBANDS];
 	uint16_t		rfcfg;
+	uint8_t			calib_ver;
 	char			eeprom_domain[4];
 	uint32_t		eeprom_crystal;
 	int16_t			eeprom_voltage;
 	int8_t			maxpwr2GHz;
 	int8_t			maxpwr5GHz;
 	int8_t			maxpwr[IEEE80211_CHAN_MAX];
+	int8_t			enh_maxpwr[35];
 
-	uint32_t		critical_temp;
+	int32_t			temp_off;
+	uint32_t		int_mask;
 	uint8_t			ntxchains;
 	uint8_t			nrxchains;
-	uint8_t			txantmsk;
-	uint8_t			rxantmsk;
-	uint8_t			antmsk;
+	uint8_t			txchainmask;
+	uint8_t			rxchainmask;
+	uint8_t			chainmask;
 
 	int			sc_tx_timer;
 	void			*powerhook;
@@ -302,6 +321,8 @@ struct iwn_softc {
 	} sc_txtapu;
 #define sc_txtap	sc_txtapu.th
 	int			sc_txtap_len;
-	bool		is_scanning;
-	bool		sc_radio;
+
+	kmutex_t		sc_mtx;         /* mutex for init/stop */
+
 };
+

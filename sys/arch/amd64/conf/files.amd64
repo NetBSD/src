@@ -1,4 +1,4 @@
-#	$NetBSD: files.amd64,v 1.59.4.3 2009/06/20 07:19:59 yamt Exp $
+#	$NetBSD: files.amd64,v 1.59.4.4 2010/08/11 22:51:33 yamt Exp $
 #
 # new style config file for amd64 architecture
 #
@@ -44,7 +44,6 @@ file	arch/amd64/amd64/gdt.c
 file	arch/amd64/amd64/machdep.c
 file	arch/amd64/amd64/mem.c
 file	arch/amd64/amd64/process_machdep.c
-file	arch/amd64/amd64/procfs_machdep.c	procfs
 file	arch/amd64/amd64/trap.c
 file	arch/amd64/amd64/fpu.c
 file	arch/amd64/amd64/lock_stubs.S

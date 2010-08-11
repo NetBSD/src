@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.13.18.4 2010/03/11 15:02:08 yamt Exp $	*/
+/*	$NetBSD: intr.c,v 1.13.18.5 2010/08/11 22:51:43 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.13.18.4 2010/03/11 15:02:08 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.13.18.5 2010/08/11 22:51:43 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -132,25 +132,25 @@ intr_establish(int vector, int type, int pri, hw_ifun_t ih_fun, void *ih_arg)
 	 * Do some validity checking on the 'vector' argument and determine
 	 * vector list this interrupt should be on.
 	 */
-	switch(type & (AUTO_VEC|USER_VEC)) {
-		case AUTO_VEC:
-			if (vector < AVEC_MIN || vector > AVEC_MAX)
-				return (NULL);
-			vec_list = &autovec_list[vector-1];
-			hard_vec = &autovects[vector-1];
-			ih->ih_intrcnt = &intrcnt_auto[vector-1];
-			break;
-		case USER_VEC:
-			if (vector < UVEC_MIN || vector > UVEC_MAX)
-				return (NULL);
-			vec_list = &uservec_list[vector];
-			hard_vec = &uservects[vector];
-			ih->ih_intrcnt = &intrcnt_user[vector];
-			break;
-		default:
-			printf("intr_establish: bogus vector type\n");
-			free(ih, M_DEVBUF);
-			return(NULL);
+	switch (type & (AUTO_VEC|USER_VEC)) {
+	case AUTO_VEC:
+		if (vector < AVEC_MIN || vector > AVEC_MAX)
+			return NULL;
+		vec_list = &autovec_list[vector-1];
+		hard_vec = &autovects[vector-1];
+		ih->ih_intrcnt = &intrcnt_auto[vector-1];
+		break;
+	case USER_VEC:
+		if (vector < UVEC_MIN || vector > UVEC_MAX)
+			return NULL;
+		vec_list = &uservec_list[vector];
+		hard_vec = &uservects[vector];
+		ih->ih_intrcnt = &intrcnt_user[vector];
+		break;
+	default:
+		printf("intr_establish: bogus vector type\n");
+		free(ih, M_DEVBUF);
+		return NULL;
 	}
 
 	/*
@@ -163,7 +163,7 @@ intr_establish(int vector, int type, int pri, hw_ifun_t ih_fun, void *ih_arg)
 		LIST_INSERT_HEAD(vec_list, ih, ih_link);
 		if (type & FAST_VEC)
 			*hard_vec = (u_long)ih->ih_fun;
-		else if(*hard_vec != (u_long)intr_glue) {
+		else if (*hard_vec != (u_long)intr_glue) {
 			/*
 			 * Normally, all settable vectors are already
 			 * re-routed to the intr_glue() function. The
@@ -187,7 +187,7 @@ intr_establish(int vector, int type, int pri, hw_ifun_t ih_fun, void *ih_arg)
 	if (cur_vec->ih_type & FAST_VEC) {
 		free(ih, M_DEVBUF);
 		printf("intr_establish: vector cannot be shared\n");
-		return (NULL);
+		return NULL;
 	}
 
 	/*
@@ -202,7 +202,7 @@ intr_establish(int vector, int type, int pri, hw_ifun_t ih_fun, void *ih_arg)
 			LIST_INSERT_BEFORE(cur_vec, ih, ih_link);
 			splx(s);
 
-			return (ih);
+			return ih;
 		}
 	}
 
@@ -226,22 +226,22 @@ intr_disestablish(struct intrhand *ih)
 	struct intrhand	*cur_vec;
 
 	vector = ih->ih_vector;
-	switch(ih->ih_type & (AUTO_VEC|USER_VEC)) {
-		case AUTO_VEC:
-			if (vector < AVEC_MIN || vector > AVEC_MAX)
-				return 0;
-			vec_list = &autovec_list[vector-1];
-			hard_vec = &autovects[vector-1];
-			break;
-		case USER_VEC:
-			if (vector < UVEC_MIN || vector > UVEC_MAX)
-				return 0;
-			vec_list = &uservec_list[vector];
-			hard_vec = &uservects[vector];
-			break;
-		default:
-			printf("intr_disestablish: bogus vector type\n");
-			return  0;
+	switch (ih->ih_type & (AUTO_VEC|USER_VEC)) {
+	case AUTO_VEC:
+		if (vector < AVEC_MIN || vector > AVEC_MAX)
+			return 0;
+		vec_list = &autovec_list[vector-1];
+		hard_vec = &autovects[vector-1];
+		break;
+	case USER_VEC:
+		if (vector < UVEC_MIN || vector > UVEC_MAX)
+			return 0;
+		vec_list = &uservec_list[vector];
+		hard_vec = &uservects[vector];
+		break;
+	default:
+		printf("intr_disestablish: bogus vector type\n");
+		return 0;
 	}
 
 	/*
@@ -286,27 +286,28 @@ intr_dispatch(struct clockframe frame)
 		vec_list = &autovec_list[vector - AVEC_LOC];
 	else if (vector <= (UVEC_LOC+UVEC_MAX) && vector >= UVEC_LOC)
 		vec_list = &uservec_list[vector - UVEC_LOC];
-	else panic("intr_dispatch: Bogus vector %d", vector);
+	else
+		panic("intr_dispatch: Bogus vector %d", vector);
 
 	if ((ih = vec_list->lh_first) == NULL) {
 		printf("intr_dispatch: vector %d unexpected\n", vector);
 		if (++unexpected > 10)
-		  panic("intr_dispatch: too many unexpected interrupts");
+			panic("intr_dispatch: too many unexpected interrupts");
 		return;
 	}
 	ih->ih_intrcnt[0]++;
 
 	/* Give all the handlers a chance. */
-	for ( ; ih != NULL; ih = ih->ih_link.le_next)
-		handled |= (*ih->ih_fun)((ih->ih_type & ARG_CLOCKFRAME)
-					? &frame : ih->ih_arg, frame.cf_sr);
+	for (; ih != NULL; ih = ih->ih_link.le_next)
+		handled |= (*ih->ih_fun)((ih->ih_type & ARG_CLOCKFRAME) ?
+		    &frame : ih->ih_arg, frame.cf_sr);
 
 	if (handled)
-	    straycount = 0;
+		straycount = 0;
 	else if (++straycount > 50)
-	    panic("intr_dispatch: too many stray interrupts");
+		panic("intr_dispatch: too many stray interrupts");
 	else
-	    printf("intr_dispatch: stray level %d interrupt\n", vector);
+		printf("intr_dispatch: stray level %d interrupt\n", vector);
 }
 
 bool

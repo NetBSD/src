@@ -1,4 +1,4 @@
-/*	$NetBSD: hp300spu.h,v 1.12.62.1 2008/05/16 02:22:22 yamt Exp $	*/
+/*	$NetBSD: hp300spu.h,v 1.12.62.2 2010/08/11 22:52:01 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -86,6 +86,7 @@ extern	int mmuid;		/* MMU id */
  */
 #if defined(_KERNEL_OPT)
 #include "opt_spuconf.h"
+#include "opt_m68k_arch.h"
 #endif
 
 /*

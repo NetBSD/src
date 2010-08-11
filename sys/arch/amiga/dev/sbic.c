@@ -1,4 +1,4 @@
-/*	$NetBSD: sbic.c,v 1.62.20.2 2010/03/11 15:02:01 yamt Exp $ */
+/*	$NetBSD: sbic.c,v 1.62.20.3 2010/08/11 22:51:36 yamt Exp $ */
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -76,9 +76,10 @@
  */
 
 #include "opt_ddb.h"
+#include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbic.c,v 1.62.20.2 2010/03/11 15:02:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbic.c,v 1.62.20.3 2010/08/11 22:51:36 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: bootmain.c,v 1.8.78.1 2009/05/04 08:12:07 yamt Exp $	*/
+/*	$NetBSD: bootmain.c,v 1.8.78.2 2010/08/11 22:52:54 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Takumi Nakamura.
@@ -195,6 +195,10 @@ get_scsi_host_adapter(void)
 		devstr[5] = '1';
 #endif
 	}
+
+#ifdef BOOT_DEBUG
+	B_PRINT("\r\n");
+#endif
 
 	return ha;
 }

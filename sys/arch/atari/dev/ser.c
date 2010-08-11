@@ -1,4 +1,4 @@
-/*	$NetBSD: ser.c,v 1.37.18.4 2010/03/11 15:02:09 yamt Exp $	*/
+/*	$NetBSD: ser.c,v 1.37.18.5 2010/08/11 22:51:45 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ser.c,v 1.37.18.4 2010/03/11 15:02:09 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ser.c,v 1.37.18.5 2010/08/11 22:51:45 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mbtype.h"
@@ -121,6 +121,8 @@ __KERNEL_RCSID(0, "$NetBSD: ser.c,v 1.37.18.4 2010/03/11 15:02:09 yamt Exp $");
 #include <machine/intr.h>
 #include <atari/dev/serreg.h>
 
+#include "ioconf.h"
+
 #if !defined(_MILANHW_)
 #include <atari/dev/ym2149reg.h>
 #else
@@ -128,13 +130,15 @@ __KERNEL_RCSID(0, "$NetBSD: ser.c,v 1.37.18.4 2010/03/11 15:02:09 yamt Exp $");
 #define ym2149_dtr(set) {					\
 	if (set)						\
 		single_inst_bset_b(MFP->mf_gpip, 0x08);		\
-	else single_inst_bclr_b(MFP->mf_gpip, 0x08);		\
+	else							\
+		single_inst_bclr_b(MFP->mf_gpip, 0x08);		\
 }
 
 #define ym2149_rts(set) {					\
 	if (set)						\
 		single_inst_bset_b(MFP->mf_gpip, 0x01);		\
-	else single_inst_bclr_b(MFP->mf_gpip, 0x01);		\
+	else							\
+		single_inst_bclr_b(MFP->mf_gpip, 0x01);		\
 }
 #endif /* _MILANHW_ */
 
@@ -154,7 +158,7 @@ __KERNEL_RCSID(0, "$NetBSD: ser.c,v 1.37.18.4 2010/03/11 15:02:09 yamt Exp $");
 #define RXHIWAT   (RXBUFSIZE >> 2)
 
 struct ser_softc {
-	struct device	 sc_dev;
+	device_t	 sc_dev;
 	struct tty	*sc_tty;
 
 	struct callout sc_diag_ch;
@@ -163,42 +167,42 @@ struct ser_softc {
 	int		 sc_floods;
 	int		 sc_errors;
 
-	u_char		 sc_hwflags;
-	u_char		 sc_swflags;
+	uint8_t		 sc_hwflags;
+	uint8_t		 sc_swflags;
 
 	int		 sc_ospeed;		/* delay + timer-d data	*/
-	u_char		 sc_imra;
-	u_char		 sc_imrb;
-	u_char		 sc_ucr;		/* Uart control		*/
-	u_char		 sc_msr;		/* Modem status		*/
-	u_char		 sc_tsr;		/* Tranceiver status	*/
-	u_char		 sc_rsr;		/* Receiver status	*/
-	u_char		 sc_mcr;		/* (Pseudo) Modem ctrl. */
+	uint8_t		 sc_imra;
+	uint8_t		 sc_imrb;
+	uint8_t		 sc_ucr;		/* Uart control		*/
+	uint8_t		 sc_msr;		/* Modem status		*/
+	uint8_t		 sc_tsr;		/* Tranceiver status	*/
+	uint8_t		 sc_rsr;		/* Receiver status	*/
+	uint8_t		 sc_mcr;		/* (Pseudo) Modem ctrl. */
 
-	u_char		 sc_msr_delta;
-	u_char		 sc_msr_mask;
-	u_char		 sc_mcr_active;
-	u_char		 sc_mcr_dtr, sc_mcr_rts, sc_msr_cts, sc_msr_dcd;
+	uint8_t		 sc_msr_delta;
+	uint8_t		 sc_msr_mask;
+	uint8_t		 sc_mcr_active;
+	uint8_t		 sc_mcr_dtr, sc_mcr_rts, sc_msr_cts, sc_msr_dcd;
 
 	int		 sc_r_hiwat;
  	volatile u_int	 sc_rbget;
  	volatile u_int	 sc_rbput;
 	volatile u_int	 sc_rbavail;
- 	u_char		 sc_rbuf[RXBUFSIZE];
-	u_char		 sc_lbuf[RXBUFSIZE];
+ 	uint8_t		 sc_rbuf[RXBUFSIZE];
+	uint8_t		 sc_lbuf[RXBUFSIZE];
 
-	volatile u_char	 sc_rx_blocked;
-	volatile u_char	 sc_rx_ready;
-	volatile u_char	 sc_tx_busy;
-	volatile u_char	 sc_tx_done;
-	volatile u_char	 sc_tx_stopped;
-	volatile u_char	 sc_st_check;
+	volatile uint8_t sc_rx_blocked;
+	volatile uint8_t sc_rx_ready;
+	volatile uint8_t sc_tx_busy;
+	volatile uint8_t sc_tx_done;
+	volatile uint8_t sc_tx_stopped;
+	volatile uint8_t sc_st_check;
 
- 	u_char		*sc_tba;
+ 	uint8_t		*sc_tba;
  	int		 sc_tbc;
 	int		 sc_heldtbc;
 
-	volatile u_char	 sc_heldchange;
+	volatile uint8_t sc_heldchange;
 
 	void		*sc_sicookie;
 };
@@ -208,19 +212,19 @@ struct ser_softc {
  */
 #define	SER_HW_CONSOLE	0x01
 
-void	ser_break(struct ser_softc *, int);
-void	ser_hwiflow(struct ser_softc *, int);
-void	ser_iflush(struct ser_softc *);
-void	ser_loadchannelregs(struct ser_softc *);
-void	ser_modem(struct ser_softc *, int);
-void	serdiag(void *);
-int	serhwiflow(struct tty *, int);
-void	serinit(int);
-void	serinitcons(int);
-int	sermintr(void *);
-int	sertrintr(void *);
-int	serparam(struct tty *, struct termios *);
-void	serstart(struct tty *);
+static void	ser_break(struct ser_softc *, int);
+static void	ser_hwiflow(struct ser_softc *, int);
+static void	ser_iflush(struct ser_softc *);
+static void	ser_loadchannelregs(struct ser_softc *);
+static void	ser_modem(struct ser_softc *, int);
+static void	serdiag(void *);
+static int	serhwiflow(struct tty *, int);
+static void	serinit(int);
+static void	serinitcons(int);
+static int	sermintr(void *);
+static int	sertrintr(void *);
+static int	serparam(struct tty *, struct termios *);
+static void	serstart(struct tty *);
 
 struct consdev;
 void	sercnprobe(struct consdev *);
@@ -239,13 +243,11 @@ static void sertxint(struct ser_softc *, struct tty*);
 /*
  * Autoconfig stuff
  */
-static void serattach(struct device *, struct device *, void *);
-static int  sermatch(struct device *, struct cfdata *, void *);
+static int  sermatch(device_t, cfdata_t, void *);
+static void serattach(device_t, device_t, void *);
 
-CFATTACH_DECL(ser, sizeof(struct ser_softc),
+CFATTACH_DECL_NEW(ser, sizeof(struct ser_softc),
     sermatch, serattach, NULL, NULL);
-
-extern struct cfdriver ser_cd;
 
 dev_type_open(seropen);
 dev_type_close(serclose);
@@ -261,14 +263,19 @@ const struct cdevsw ser_cdevsw = {
 	serstop, sertty, serpoll, nommap, ttykqfilter, D_TTY
 };
 
+#ifndef SERCONSOLE
+#define SERCONSOLE	0
+#endif
+int serconsole = SERCONSOLE;	/* patchable */
+
 /*ARGSUSED*/
 static	int
-sermatch(struct device *pdp, struct cfdata *cfp, void *auxp)
+sermatch(device_t parent, cfdata_t cf, void *aux)
 {
-	static int	ser_matched = 0;
+	static int ser_matched = 0;
 
 	/* Match at most one ser unit */
-	if (strcmp((char *)auxp, "ser") || ser_matched)
+	if (strcmp((char *)aux, "ser") || ser_matched)
 		return 0;
 
 	ser_matched = 1;
@@ -277,24 +284,26 @@ sermatch(struct device *pdp, struct cfdata *cfp, void *auxp)
 
 /*ARGSUSED*/
 static void
-serattach(struct device *pdp, struct device *dp, void *auxp)
+serattach(device_t parent, device_t self, void *aux)
 {
-	struct ser_softc *sc = device_private(dp);
+	struct ser_softc *sc = device_private(self);
+
+	sc->sc_dev = self;
 
 	if (intr_establish(1, USER_VEC, 0, (hw_ifun_t)sermintr, sc) == NULL)
-		printf("serattach: Can't establish interrupt (1)\n");
+		aprint_error(": Can't establish interrupt (1)\n");
 	if (intr_establish(2, USER_VEC, 0, (hw_ifun_t)sermintr, sc) == NULL)
-		printf("serattach: Can't establish interrupt (2)\n");
+		aprint_error(": Can't establish interrupt (2)\n");
 	if (intr_establish(14, USER_VEC, 0, (hw_ifun_t)sermintr, sc) == NULL)
-		printf("serattach: Can't establish interrupt (14)\n");
+		aprint_error(": Can't establish interrupt (14)\n");
 	if (intr_establish(9, USER_VEC, 0, (hw_ifun_t)sertrintr, sc) == NULL)
-		printf("serattach: Can't establish interrupt (9)\n");
+		aprint_error(": Can't establish interrupt (9)\n");
 	if (intr_establish(10, USER_VEC, 0, (hw_ifun_t)sertrintr, sc) == NULL)
-		printf("serattach: Can't establish interrupt (10)\n");
+		aprint_error(": Can't establish interrupt (10)\n");
 	if (intr_establish(11, USER_VEC, 0, (hw_ifun_t)sertrintr, sc) == NULL)
-		printf("serattach: Can't establish interrupt (11)\n");
+		aprint_error(": Can't establish interrupt (11)\n");
 	if (intr_establish(12, USER_VEC, 0, (hw_ifun_t)sertrintr, sc) == NULL)
-		printf("serattach: Can't establish interrupt (12)\n");
+		aprint_error(": Can't establish interrupt (12)\n");
 
 	sc->sc_sicookie = softint_establish(SOFTINT_SERIAL, sersoft, sc);
 
@@ -312,18 +321,18 @@ serattach(struct device *pdp, struct device *dp, void *auxp)
 
 	callout_init(&sc->sc_diag_ch, 0);
 
-#if SERCONSOLE > 0
-	/*
-	 * Activate serial console when DCD present...
-	 */
-	if (!(MFP->mf_gpip & MCR_DCD))
-		SET(sc->sc_hwflags, SER_HW_CONSOLE);
-#endif /* SERCONSOLE > 0 */
+	if (serconsole) {
+		/*
+		 * Activate serial console when DCD present...
+		 */
+		if ((MFP->mf_gpip & MCR_DCD) == 0)
+			SET(sc->sc_hwflags, SER_HW_CONSOLE);
+	}
 
-	printf("\n");
+	aprint_normal(": modem1 on 68901 MFP1 USART\n");
 	if (ISSET(sc->sc_hwflags, SER_HW_CONSOLE)) {
 		serinit(CONSBAUD);
-		printf("%s: console\n", sc->sc_dev.dv_xname);
+		aprint_normal_dev(self, "console\n");
 	}
 }
 
@@ -335,7 +344,7 @@ serstatus(struct ser_softc *sc, char *str)
 	struct tty *tp = sc->sc_tty;
 
 	printf("%s: %s %sclocal  %sdcd %sts_carr_on %sdtr %stx_stopped\n",
-	    sc->sc_dev.dv_xname, str,
+	    device_xname(sc->sc_dev), str,
 	    ISSET(tp->t_cflag, CLOCAL) ? "+" : "-",
 	    ISSET(sc->sc_msr, MCR_DCD) ? "+" : "-",
 	    ISSET(tp->t_state, TS_CARR_ON) ? "+" : "-",
@@ -343,7 +352,7 @@ serstatus(struct ser_softc *sc, char *str)
 	    sc->sc_tx_stopped ? "+" : "-");
 
 	printf("%s: %s %scrtscts %scts %sts_ttstop  %srts %srx_blocked\n",
-	    sc->sc_dev.dv_xname, str,
+	    device_xname(sc->sc_dev), str,
 	    ISSET(tp->t_cflag, CRTSCTS) ? "+" : "-",
 	    ISSET(sc->sc_msr, MCR_CTS) ? "+" : "-",
 	    ISSET(tp->t_state, TS_TTSTOP) ? "+" : "-",
@@ -363,7 +372,7 @@ seropen(dev_t dev, int flag, int mode, struct lwp *l)
  
 	sc = device_lookup_private(&ser_cd, unit);
 	if (sc == NULL)
-		return (ENXIO);
+		return ENXIO;
 
 	if (!sc->sc_tty) {
 		tp = sc->sc_tty = ttymalloc();
@@ -372,7 +381,7 @@ seropen(dev_t dev, int flag, int mode, struct lwp *l)
 		tp = sc->sc_tty;
 
 	if (kauth_authorize_device_tty(l->l_cred, KAUTH_DEVICE_TTY_OPEN, tp))
-		return (EBUSY);
+		return EBUSY;
 
 	s = spltty();
 
@@ -380,71 +389,70 @@ seropen(dev_t dev, int flag, int mode, struct lwp *l)
 	 * Do the following if this is a first open.
 	 */
 	if (!ISSET(tp->t_state, TS_ISOPEN) && tp->t_wopen == 0) {
-	    struct termios t;
+		struct termios t;
 
-	    /* Turn on interrupts. */
-	    sc->sc_imra = IA_RRDY|IA_RERR|IA_TRDY|IA_TERR;
-	    sc->sc_imrb = IB_SCTS|IB_SDCD;
-	    single_inst_bset_b(MFP->mf_imra, sc->sc_imra);
-	    single_inst_bset_b(MFP->mf_imrb, sc->sc_imrb);
+		/* Turn on interrupts. */
+		sc->sc_imra = IA_RRDY|IA_RERR|IA_TRDY|IA_TERR;
+		sc->sc_imrb = IB_SCTS|IB_SDCD;
+		single_inst_bset_b(MFP->mf_imra, sc->sc_imra);
+		single_inst_bset_b(MFP->mf_imrb, sc->sc_imrb);
 
-	    /* Fetch the current modem control status, needed later. */
-	    sc->sc_msr = ~MFP->mf_gpip & (IO_SDCD|IO_SCTS|IO_SRI);
+		/* Fetch the current modem control status, needed later. */
+		sc->sc_msr = ~MFP->mf_gpip & (IO_SDCD|IO_SCTS|IO_SRI);
 
-	    /* Add some entry points needed by the tty layer. */
-	    tp->t_oproc = serstart;
-	    tp->t_param = serparam;
-	    tp->t_hwiflow = serhwiflow;
-	    tp->t_dev = dev;
+		/* Add some entry points needed by the tty layer. */
+		tp->t_oproc = serstart;
+		tp->t_param = serparam;
+		tp->t_hwiflow = serhwiflow;
+		tp->t_dev = dev;
 
-	    /*
-	     * Initialize the termios status to the defaults.  Add in the
-	     * sticky bits from TIOCSFLAGS.
-	     */
-	    t.c_ispeed = 0;
-	    if (ISSET(sc->sc_hwflags, SER_HW_CONSOLE)) {
-		    t.c_ospeed = CONSBAUD;
-		    t.c_cflag  = CONSCFLAG;
-	    }
-	    else {
-		    t.c_ospeed = TTYDEF_SPEED;
-		    t.c_cflag = TTYDEF_CFLAG;
-	    }
-	    if (ISSET(sc->sc_swflags, TIOCFLAG_CLOCAL))
-		    SET(t.c_cflag, CLOCAL);
-	    if (ISSET(sc->sc_swflags, TIOCFLAG_CRTSCTS))
-		    SET(t.c_cflag, CRTSCTS);
-	    if (ISSET(sc->sc_swflags, TIOCFLAG_MDMBUF))
-		    SET(t.c_cflag, MDMBUF);
-	    tp->t_iflag = TTYDEF_IFLAG;
-	    tp->t_oflag = TTYDEF_OFLAG;
-	    tp->t_lflag = TTYDEF_LFLAG;
-	    ttychars(tp);
-	    (void) serparam(tp, &t);
-	    ttsetwater(tp);
+		/*
+		 * Initialize the termios status to the defaults.  Add in the
+		 * sticky bits from TIOCSFLAGS.
+		 */
+		t.c_ispeed = 0;
+		if (ISSET(sc->sc_hwflags, SER_HW_CONSOLE)) {
+			t.c_ospeed = CONSBAUD;
+			t.c_cflag  = CONSCFLAG;
+		} else {
+			t.c_ospeed = TTYDEF_SPEED;
+			t.c_cflag = TTYDEF_CFLAG;
+		}
+		if (ISSET(sc->sc_swflags, TIOCFLAG_CLOCAL))
+			SET(t.c_cflag, CLOCAL);
+		if (ISSET(sc->sc_swflags, TIOCFLAG_CRTSCTS))
+			SET(t.c_cflag, CRTSCTS);
+		if (ISSET(sc->sc_swflags, TIOCFLAG_MDMBUF))
+			SET(t.c_cflag, MDMBUF);
+		tp->t_iflag = TTYDEF_IFLAG;
+		tp->t_oflag = TTYDEF_OFLAG;
+		tp->t_lflag = TTYDEF_LFLAG;
+		ttychars(tp);
+		(void)serparam(tp, &t);
+		ttsetwater(tp);
 
-	    s2 = splhigh();
+		s2 = splhigh();
 
-	    /*
-	     * Turn on DTR.  We must always do this, even if carrier is not
-	     * present, because otherwise we'd have to use TIOCSDTR
-	     * immediately after setting CLOCAL.  We will drop DTR only on
-	     * the next high-low transition of DCD, or by explicit request.
-	     */
-	    ser_modem(sc, 1);
+		/*
+		 * Turn on DTR.  We must always do this, even if carrier is not
+		 * present, because otherwise we'd have to use TIOCSDTR
+		 * immediately after setting CLOCAL.  We will drop DTR only on
+		 * the next high-low transition of DCD, or by explicit request.
+		 */
+		ser_modem(sc, 1);
 
-	    /* Clear the input ring, and unblock. */
-	    sc->sc_rbput = sc->sc_rbget = 0;
-	    sc->sc_rbavail = RXBUFSIZE;
-	    ser_iflush(sc);
-	    sc->sc_rx_blocked = 0;
-	    ser_hwiflow(sc, 0);
+		/* Clear the input ring, and unblock. */
+		sc->sc_rbput = sc->sc_rbget = 0;
+		sc->sc_rbavail = RXBUFSIZE;
+		ser_iflush(sc);
+		sc->sc_rx_blocked = 0;
+		ser_hwiflow(sc, 0);
 
 #ifdef SER_DEBUG
-	    serstatus(sc, "seropen  ");
+		serstatus(sc, "seropen  ");
 #endif
 
-	    splx(s2);
+		splx(s2);
 	}
 
 	splx(s);
@@ -457,7 +465,7 @@ seropen(dev_t dev, int flag, int mode, struct lwp *l)
         if (error)
 		goto bad;
 
-	return (0);
+	return 0;
 
 bad:
 	if (!ISSET(tp->t_state, TS_ISOPEN) && tp->t_wopen == 0) {
@@ -468,7 +476,7 @@ bad:
 		ser_shutdown(sc);
 	}
 
-	return (error);
+	return error;
 }
  
 int
@@ -480,7 +488,7 @@ serclose(dev_t dev, int flag, int mode, struct lwp *l)
 
 	/* XXX This is for cons.c. */
 	if (!ISSET(tp->t_state, TS_ISOPEN))
-		return (0);
+		return 0;
 
 	(*tp->t_linesw->l_close)(tp, flag);
 	ttyclose(tp);
@@ -494,7 +502,7 @@ serclose(dev_t dev, int flag, int mode, struct lwp *l)
 		ser_shutdown(sc);
 	}
 
-	return (0);
+	return 0;
 }
 
 int
@@ -503,7 +511,7 @@ serread(dev_t dev, struct uio *uio, int flag)
 	struct ser_softc *sc = device_lookup_private(&ser_cd, SERUNIT(dev));
 	struct tty *tp = sc->sc_tty;
  
-	return ((*tp->t_linesw->l_read)(tp, uio, flag));
+	return (*tp->t_linesw->l_read)(tp, uio, flag);
 }
  
 int
@@ -512,7 +520,7 @@ serwrite(dev_t dev, struct uio *uio, int flag)
 	struct ser_softc *sc = device_lookup_private(&ser_cd, SERUNIT(dev));
 	struct tty *tp = sc->sc_tty;
  
-	return ((*tp->t_linesw->l_write)(tp, uio, flag));
+	return (*tp->t_linesw->l_write)(tp, uio, flag);
 }
 
 int
@@ -521,7 +529,7 @@ serpoll(dev_t dev, int events, struct lwp *l)
 	struct ser_softc *sc = device_lookup_private(&ser_cd, SERUNIT(dev));
 	struct tty *tp = sc->sc_tty;
  
-	return ((*tp->t_linesw->l_poll)(tp, events, l));
+	return (*tp->t_linesw->l_poll)(tp, events, l);
 }
 
 struct tty *
@@ -530,7 +538,7 @@ sertty(dev_t dev)
 	struct ser_softc *sc = device_lookup_private(&ser_cd, SERUNIT(dev));
 	struct tty *tp = sc->sc_tty;
 
-	return (tp);
+	return tp;
 }
 
 int
@@ -543,11 +551,11 @@ serioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 
 	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, l);
 	if (error != EPASSTHROUGH)
-		return (error);
+		return error;
 
 	error = ttioctl(tp, cmd, data, flag, l);
 	if (error != EPASSTHROUGH)
-		return (error);
+		return error;
 
 	switch (cmd) {
 	case TIOCSBRK:
@@ -574,7 +582,7 @@ serioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		error = kauth_authorize_device_tty(l->l_cred,
 		    KAUTH_DEVICE_TTY_PRIVSET, tp); 
 		if (error)
-			return (error); 
+			return error; 
 		sc->sc_swflags = *(int *)data;
 		break;
 
@@ -583,14 +591,14 @@ serioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	case TIOCMBIC:
 	case TIOCMGET:
 	default:
-		return (EPASSTHROUGH);
+		return EPASSTHROUGH;
 	}
 
 #ifdef SER_DEBUG
-		serstatus(sc, "serioctl ");
+	serstatus(sc, "serioctl ");
 #endif
 
-	return (0);
+	return 0;
 }
 
 void
@@ -643,15 +651,15 @@ serparam(struct tty *tp, struct termios *t)
 	struct ser_softc *sc =
 	    device_lookup_private(&ser_cd, SERUNIT(tp->t_dev));
 	int ospeed = serspeed(t->c_ospeed);
-	u_char ucr;
+	uint8_t ucr;
 	int s;
 
 
 	/* check requested parameters */
 	if (ospeed < 0)
-		return (EINVAL);
+		return EINVAL;
 	if (t->c_ispeed && t->c_ispeed != t->c_ospeed)
-		return (EINVAL);
+		return EINVAL;
 
 	sc->sc_rsr = RSR_ENAB;
 	sc->sc_tsr = TSR_ENAB;
@@ -769,7 +777,7 @@ serparam(struct tty *tp, struct termios *t)
 	 * CLOCAL or MDMBUF.  We don't hang up here; we only do that if we
 	 * lose carrier while carrier detection is on.
 	 */
-	(void) (*tp->t_linesw->l_modem)(tp, ISSET(sc->sc_msr, MCR_DCD));
+	(void)(*tp->t_linesw->l_modem)(tp, ISSET(sc->sc_msr, MCR_DCD));
 
 #ifdef SER_DEBUG
 	serstatus(sc, "serparam ");
@@ -792,13 +800,13 @@ serparam(struct tty *tp, struct termios *t)
 #endif
 	}
 
-	return (0);
+	return 0;
 }
 
 void
 ser_iflush(struct ser_softc *sc)
 {
-	u_char	tmp;
+	uint8_t tmp;
 
 	/* flush any pending I/O */
 	while (ISSET(MFP->mf_rsr, RSR_CIP|RSR_BFULL))
@@ -808,20 +816,21 @@ ser_iflush(struct ser_softc *sc)
 void
 ser_loadchannelregs(struct ser_softc *sc)
 {
+
 	/* XXXXX necessary? */
 	ser_iflush(sc);
 
 	/*
 	 * No interrupts please...
 	 */
-if((MFP->mf_imra & (IA_RRDY|IA_RERR|IA_TRDY|IA_TERR)) != sc->sc_imra) {
-printf("loadchannelregs: mf_imra: %x sc_imra: %x\n", (u_int)MFP->mf_imra,
-						     (u_int)sc->sc_imra);
-}
-if((MFP->mf_imrb & (IB_SCTS|IB_SDCD)) != sc->sc_imrb) {
-printf("loadchannelregs: mf_imrb: %x sc_imrb: %x\n", (u_int)MFP->mf_imrb,
-						     (u_int)sc->sc_imrb);
-}
+	if ((MFP->mf_imra & (IA_RRDY|IA_RERR|IA_TRDY|IA_TERR)) != sc->sc_imra) {
+		printf("loadchannelregs: mf_imra: %x sc_imra: %x\n",
+		    (u_int)MFP->mf_imra, (u_int)sc->sc_imra);
+	}
+	if ((MFP->mf_imrb & (IB_SCTS|IB_SDCD)) != sc->sc_imrb) {
+		printf("loadchannelregs: mf_imrb: %x sc_imrb: %x\n",
+		     (u_int)MFP->mf_imrb, (u_int)sc->sc_imrb);
+	}
 	single_inst_bclr_b(MFP->mf_imra, IA_RRDY|IA_RERR|IA_TRDY|IA_TERR);
 	single_inst_bclr_b(MFP->mf_imrb, IB_SCTS|IB_SDCD);
 
@@ -839,8 +848,7 @@ printf("loadchannelregs: mf_imrb: %x sc_imrb: %x\n", (u_int)MFP->mf_imrb,
 		/* PCB fault, wires exchanged..... */
 		ym2149_rts(!(sc->sc_mcr_active & MCR_DTR));
 		ym2149_dtr(!(sc->sc_mcr_active & MCR_RTS));
-	}
-	else {
+	} else {
 		ym2149_rts(!(sc->sc_mcr_active & MCR_RTS));
 		ym2149_dtr(!(sc->sc_mcr_active & MCR_DTR));
 	}
@@ -857,7 +865,7 @@ serhwiflow(struct tty *tp, int block)
 	int s;
 
 	if (sc->sc_mcr_rts == 0)
-		return (0);
+		return 0;
 
 	s = splhigh();
 	if (block) {
@@ -878,7 +886,7 @@ serhwiflow(struct tty *tp, int block)
 	ser_hwiflow(sc, block);
 out:
 	splx(s);
-	return (1);
+	return 1;
 }
 
 /*
@@ -887,6 +895,7 @@ out:
 void
 ser_hwiflow(struct ser_softc *sc, int block)
 {
+
 	if (sc->sc_mcr_rts == 0)
 		return;
 
@@ -926,7 +935,7 @@ serstart(struct tty *tp)
 
 	/* Grab the first contiguous region of buffer space. */
 	{
-		u_char *tba;
+		uint8_t *tba;
 		int tbc;
 
 		tba = tp->t_outq.c_cf;
@@ -1004,16 +1013,15 @@ serdiag(void *arg)
 
 	log(LOG_WARNING,
 	    "%s: %d silo overflow%s, %d ibuf flood%s\n",
-	    sc->sc_dev.dv_xname,
+	    device_xname(sc->sc_dev),
 	    overflows, overflows == 1 ? "" : "s",
 	    floods, floods == 1 ? "" : "s");
 }
 
-static
-void ser_shutdown(sc)
-	struct ser_softc *sc;
+static void
+ser_shutdown(struct ser_softc *sc)
 {
-	int	s;
+	int s;
 	struct tty *tp = sc->sc_tty;
 
 
@@ -1032,7 +1040,7 @@ void ser_shutdown(sc)
 	 */
 	if (ISSET(tp->t_cflag, HUPCL)) {
 		ser_modem(sc, 0);
-		(void) tsleep(sc, TTIPRI, ttclos, hz);
+		(void)tsleep(sc, TTIPRI, ttclos, hz);
 	}
 
 	/* Turn off interrupts. */
@@ -1046,11 +1054,11 @@ void ser_shutdown(sc)
 static void
 serrxint(struct ser_softc *sc, struct tty *tp)
 {
-	u_int	get, cc, scc;
-	int	code;
-	u_char	rsr;
-	int	s;
-	static int lsrmap[8] = {
+	u_int get, cc, scc;
+	int code;
+	uint8_t rsr;
+	int s;
+	static const int lsrmap[8] = {
 		0,      TTY_PE,
 		TTY_FE, TTY_PE|TTY_FE,
 		TTY_FE, TTY_PE|TTY_FE,
@@ -1073,8 +1081,7 @@ serrxint(struct ser_softc *sc, struct tty *tp)
 			if (ISSET(sc->sc_hwflags, SER_HW_CONSOLE))
 				Debugger();
 #endif
-		}
-		else if (ISSET(rsr, RSR_OERR)) {
+		} else if (ISSET(rsr, RSR_OERR)) {
 			sc->sc_overflows++;
 			if (sc->sc_errors++ == 0)
 				callout_reset(&sc->sc_diag_ch, 60 * hz,
@@ -1115,7 +1122,7 @@ sertxint(struct ser_softc *sc, struct tty *tp)
 static void
 sermsrint(struct ser_softc *sc, struct tty *tp)
 {
-	u_char msr, delta;
+	uint8_t msr, delta;
 	int s;
 
 	s = splhigh();
@@ -1128,7 +1135,7 @@ sermsrint(struct ser_softc *sc, struct tty *tp)
 		/*
 		 * Inform the tty layer that carrier detect changed.
 		 */
-		(void) (*tp->t_linesw->l_modem)(tp, ISSET(msr, MCR_DCD));
+		(void)(*tp->t_linesw->l_modem)(tp, ISSET(msr, MCR_DCD));
 	}
 
 	if (ISSET(delta, sc->sc_msr_cts)) {
@@ -1151,7 +1158,7 @@ void
 sersoft(void *arg)
 {
 	struct ser_softc *sc = arg;
-	struct tty	*tp;
+	struct tty *tp;
 
 	tp = sc->sc_tty;
 	if (tp == NULL)
@@ -1180,7 +1187,7 @@ int
 sermintr(void *arg)
 {
 	struct ser_softc *sc = arg;
-	u_char	msr, delta;
+	uint8_t msr, delta;
 
 	msr = ~MFP->mf_gpip;
 	delta = msr ^ sc->sc_msr;
@@ -1212,8 +1219,8 @@ int
 sertrintr(void *arg)
 {
 	struct ser_softc *sc = arg;
-	u_int	put, cc;
-	u_char	rsr, tsr;
+	u_int put, cc;
+	uint8_t rsr, tsr;
 
 	put = sc->sc_rbput;
 	cc = sc->sc_rbavail;
@@ -1226,7 +1233,8 @@ sertrintr(void *arg)
 			put = (put + 1) & RXBUFMASK;
 			if ((rsr & RSR_BREAK) && (MFP->mf_rsr & RSR_BREAK))
 				rsr = 0;
-			else rsr = MFP->mf_rsr;
+			else
+				rsr = MFP->mf_rsr;
 		}
 		/*
 		 * Current string of incoming characters ended because
@@ -1296,7 +1304,7 @@ serspeed(long speed)
 	int div, x, err;
 
 	if (speed <= 0)
-		return (-1);
+		return -1;
 
 	for (div = 4; div <= 64; div *= 4) {
 		x = divrnd((SER_FREQ / div), speed);
@@ -1305,7 +1313,7 @@ serspeed(long speed)
 		 * The value must fit in the timer-d dataregister. If
 		 * not, try another delay-mode.
 		 */
-		if ((x/2) > 255)
+		if ((x / 2) > 255)
 			continue;
 
 		/*
@@ -1313,7 +1321,7 @@ serspeed(long speed)
 		 * within tolerance.
 		 */
 		if (x <= 0)
-			return (-1);
+			return -1;
 
 		err = divrnd((SER_FREQ / div) * 1000, speed * x) - 1000;
 		if (err < 0)
@@ -1331,9 +1339,9 @@ serspeed(long speed)
 		else if (div == 64)
 			div = 5;
 
-		return ((x/2) | (div << 8));
+		return (x / 2) | (div << 8);
 	}
-	return (-1);
+	return -1;
 
 #undef	divrnd
 }
@@ -1346,6 +1354,7 @@ serspeed(long speed)
 void
 sercnprobe(struct consdev *cp)
 {
+
 	/*
 	 * Activate serial console when DCD present...
 	 */
@@ -1357,16 +1366,16 @@ sercnprobe(struct consdev *cp)
 	/* initialize required fields */
 	/* XXX: LWP What unit? */
 	cp->cn_dev = makedev(cdevsw_lookup_major(&ser_cdevsw), 0);
-#if SERCONSOLE > 0
-	cp->cn_pri = CN_REMOTE;	/* Force a serial port console */
-#else
-	cp->cn_pri = CN_NORMAL;
-#endif /* SERCONSOLE > 0 */
+	if (serconsole)
+		cp->cn_pri = CN_REMOTE;	/* Force a serial port console */
+	else
+		cp->cn_pri = CN_NORMAL;
 }
 
 void
 sercninit(struct consdev *cp)
 {
+
 	serinitcons(CONSBAUD);
 }
 
@@ -1393,6 +1402,7 @@ serinit(int baud)
 void
 serinitcons(int baud)
 {
+
 	serinit(baud);
 
 	/* Set rts/dtr */
@@ -1405,8 +1415,8 @@ serinitcons(int baud)
 int
 sercngetc(dev_t dev)
 {
-	u_char	stat, c;
-	int	s;
+	uint8_t stat, c;
+	int s;
 
 	s = splhigh();
 	while (!ISSET(stat = MFP->mf_rsr, RSR_BFULL)) {
@@ -1420,34 +1430,44 @@ sercngetc(dev_t dev)
 	return c;
 }
 
+#if 1
 u_int s_imra;
 u_int s_stat1, s_stat2, s_stat3;
+#endif
 void
 sercnputc(dev_t dev, int c)
 {
-	int	timo;
-	u_char	stat, imra;
+	int timo;
+	uint8_t stat, imra;
 
 	/* Mask serial interrupts */
 	imra  = MFP->mf_imra & (IA_RRDY|IA_RERR|IA_TRDY|IA_TERR);
 	single_inst_bclr_b(MFP->mf_imra, imra);
-s_imra = imra;
+#if 1
+	s_imra = imra;
+#endif
 
 	/* wait for any pending transmission to finish */
 	timo = 50000;
-s_stat1 = MFP->mf_tsr;
+#if 1
+	s_stat1 = MFP->mf_tsr;
+#endif
 	while (!ISSET(stat = MFP->mf_tsr, TSR_BE) && --timo)
 		;
 	MFP->mf_udr = c;
 	/* wait for this transmission to complete */
 	timo = 1500000;
-s_stat2 = MFP->mf_tsr;
+#if 1
+	s_stat2 = MFP->mf_tsr;
+#endif
 	while (!ISSET(stat = MFP->mf_tsr, TSR_BE) && --timo)
 		;
 
-s_stat3 = MFP->mf_tsr;
+#if 1
+	s_stat3 = MFP->mf_tsr;
+#endif
 	/* Clear pending serial interrupts and re-enable */
-	MFP->mf_ipra = (u_int8_t)~imra;
+	MFP->mf_ipra = (uint8_t)~imra;
 	single_inst_bset_b(MFP->mf_imra, imra);
 }
 

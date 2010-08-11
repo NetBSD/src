@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_verbose.c,v 1.28.74.1 2008/05/16 02:25:06 yamt Exp $	*/
+/*	$NetBSD: scsipi_verbose.c,v 1.28.74.2 2010/08/11 22:54:10 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_verbose.c,v 1.28.74.1 2008/05/16 02:25:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_verbose.c,v 1.28.74.2 2010/08/11 22:54:10 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/time.h>
@@ -39,14 +39,17 @@ __KERNEL_RCSID(0, "$NetBSD: scsipi_verbose.c,v 1.28.74.1 2008/05/16 02:25:06 yam
 
 #ifdef _KERNEL
 #include <sys/systm.h>
-
-#include "opt_scsi.h"
+#include <sys/module.h>
 #else
 #include <stdio.h>
 #endif
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsipiconf.h>
 #include <dev/scsipi/scsiconf.h>
+
+int		scsipi_print_sense_real(struct scsipi_xfer *, int);
+void		scsipi_print_sense_data_real(struct scsi_sense_data *, int);
+static char    *scsipi_decode_sense(void *, int);
 
 static const char *sense_keys[16] = {
 	"No Additional Sense",
@@ -597,6 +600,39 @@ static const struct {
 { 0x00, 0x00, NULL }
 };
 
+#ifdef _KERNEL
+MODULE(MODULE_CLASS_MISC, scsiverbose, NULL);
+
+static int
+scsiverbose_modcmd(modcmd_t cmd, void *arg)
+{
+	static int   (*saved_print_sense)(struct scsipi_xfer *, int);
+	static void  (*saved_print_sense_data)(struct scsi_sense_data *, int);
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		saved_print_sense = scsipi_print_sense;
+		saved_print_sense_data = scsipi_print_sense_data;
+		scsipi_print_sense = scsipi_print_sense_real;
+		scsipi_print_sense_data = scsipi_print_sense_data_real;
+		scsi_verbose_loaded = 1;
+		return 0;
+	case MODULE_CMD_FINI:
+		scsipi_print_sense = saved_print_sense;
+		scsipi_print_sense_data = saved_print_sense_data;
+		scsi_verbose_loaded = 0;
+		return 0;
+	default:
+		return ENOTTY;
+	}
+}
+#else
+int	(*scsipi_print_sense)(struct scsipi_xfer *, int) =
+		scsipi_print_sense_real;
+void	(*scsipi_print_sense_data)(struct scsi_sense_data *, int) =
+		scsipi_print_sense_data_real; 
+#endif
+
 static void
 asc2ascii(u_char asc, u_char ascq, char *result, size_t l)
 {
@@ -620,7 +656,7 @@ asc2ascii(u_char asc, u_char ascq, char *result, size_t l)
 }
 
 void
-scsipi_print_sense_data(struct scsi_sense_data *sense, int verbosity)
+scsipi_print_sense_data_real(struct scsi_sense_data *sense, int verbosity)
 {
 	int32_t info;
 	int i, j, k;
@@ -736,7 +772,7 @@ scsipi_print_sense_data(struct scsi_sense_data *sense, int verbosity)
 	printf("\n\n");
 }
 
-char *
+static char *
 scsipi_decode_sense(void *sinfo, int flag)
 {
 	unsigned char *snsbuf;
@@ -798,12 +834,13 @@ scsipi_decode_sense(void *sinfo, int flag)
 	return (NULL);
 }
 
-void
-scsipi_print_sense(struct scsipi_xfer *xs, int verbosity)
+int
+scsipi_print_sense_real(struct scsipi_xfer *xs, int verbosity)
 {
 	scsipi_printaddr(xs->xs_periph);
  	printf(" Check Condition on CDB: ");
 	scsipi_print_cdb(xs->cmd);
  	printf("\n");
 	scsipi_print_sense_data(&xs->sense.scsi_sense, verbosity);
+	return 1;
 }

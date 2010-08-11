@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_acct.c,v 1.86.2.2 2010/03/11 15:04:16 yamt Exp $	*/
+/*	$NetBSD: kern_acct.c,v 1.86.2.3 2010/08/11 22:54:38 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_acct.c,v 1.86.2.2 2010/03/11 15:04:16 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_acct.c,v 1.86.2.3 2010/08/11 22:54:38 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -310,12 +310,12 @@ sys_acct(struct lwp *l, const struct sys_acct_args *uap, register_t *retval)
 		if ((error = vn_open(&nd, FWRITE|O_APPEND, 0)) != 0)
 			return (error);
 		if (nd.ni_vp->v_type != VREG) {
-			VOP_UNLOCK(nd.ni_vp, 0);
+			VOP_UNLOCK(nd.ni_vp);
 			error = EACCES;
 			goto bad;
 		}
 		if ((error = VOP_GETATTR(nd.ni_vp, &va, l->l_cred)) != 0) {
-			VOP_UNLOCK(nd.ni_vp, 0);
+			VOP_UNLOCK(nd.ni_vp);
 			goto bad;
 		}
 
@@ -330,11 +330,11 @@ sys_acct(struct lwp *l, const struct sys_acct_args *uap, register_t *retval)
 			va.va_size = size;
 			error = VOP_SETATTR(nd.ni_vp, &va, l->l_cred);
 			if (error != 0) {
-				VOP_UNLOCK(nd.ni_vp, 0);
+				VOP_UNLOCK(nd.ni_vp);
 				goto bad;
 			}
 		}
-		VOP_UNLOCK(nd.ni_vp, 0);
+		VOP_UNLOCK(nd.ni_vp);
 	}
 
 	rw_enter(&acct_lock, RW_WRITER);

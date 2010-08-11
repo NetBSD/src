@@ -1,4 +1,4 @@
-/*	$NetBSD: arm_pxa2x0.h,v 1.1.12.1 2008/05/16 02:22:24 yamt Exp $	*/
+/*	$NetBSD: arm_pxa2x0.h,v 1.1.12.2 2010/08/11 22:52:04 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,6 +37,11 @@ private:
 	// test routine for PXA 2x0 peripherals.
 	virtual void testFramebuffer(void);
 	virtual void testUART(void);
+
+	// dump peripheral regs.
+	virtual void dumpPeripheralRegs(void);
+
+	void dumpCS0(uint32_t size);
 
 public:
 	PXA2X0Architecture(Console *&, MemoryManager *&);

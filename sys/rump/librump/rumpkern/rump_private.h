@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_private.h,v 1.8.10.2 2010/03/11 15:04:38 yamt Exp $	*/
+/*	$NetBSD: rump_private.h,v 1.8.10.3 2010/08/11 22:55:07 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -48,21 +48,23 @@
 #include "rumpkern_if_priv.h"
 
 extern kauth_cred_t rump_cred;
-extern struct vmspace rump_vmspace;
 
 extern struct rumpuser_mtx *rump_giantlock;
 
-#define UIO_VMSPACE_SYS (&rump_vmspace)
+#define UIO_VMSPACE_SYS (&vmspace0)
 
 extern int rump_threads;
 extern struct device rump_rootdev;
 
 extern struct sysent rump_sysent[];
 
+extern struct vmspace vmspace0;
+
 enum rump_component_type {
 	RUMP_COMPONENT_DEV,
 	RUMP_COMPONENT_NET, RUMP_COMPONENT_NET_ROUTE, RUMP_COMPONENT_NET_IF,
 	RUMP_COMPONENT_VFS,
+	RUMP_COMPONENT_KERN, RUMP_COMPONENT_KERN_VFS,
 	RUMP_COMPONENT_MAX,
 };
 struct rump_component {
@@ -78,11 +80,15 @@ static const struct rump_component rumpcomp = {		\
 __link_set_add_rodata(rump_components, rumpcomp);	\
 static void rumpcompinit(void)
 
+#define FLAWLESSCALL(call)						\
+do {									\
+	int att_error;							\
+	if ((att_error = call) != 0)					\
+		panic("\"%s\" failed", #call);				\
+} while (/*CONSTCOND*/0)
+
 void		rump_component_init(enum rump_component_type);
 int		rump_component_count(enum rump_component_type);
-
-void		rumpvm_init(void);
-struct vm_page	*rumpvm_makepage(struct uvm_object *, voff_t);
 
 void		rump_gettime(struct timespec *);
 void		rump_getuptime(struct timespec *);
@@ -104,23 +110,35 @@ extern void *rump_sysproxy_arg;
 int		rump_sysproxy_copyout(const void *, void *, size_t);
 int		rump_sysproxy_copyin(const void *, void *, size_t);
 
+void	rump_cpus_bootstrap(int);
 void	rump_scheduler_init(void);
 void	rump_schedule(void);
 void	rump_unschedule(void);
 void 	rump_schedule_cpu(struct lwp *);
+void 	rump_schedule_cpu_interlock(struct lwp *, void *);
 void	rump_unschedule_cpu(struct lwp *);
-void	rump_unschedule_cpu1(struct lwp *);
+void	rump_unschedule_cpu_interlock(struct lwp *, void *);
+void	rump_unschedule_cpu1(struct lwp *, void *);
 
-void	rump_user_schedule(int);
-void	rump_user_unschedule(int, int *);
+void	rump_schedlock_cv_wait(struct rumpuser_cv *);
+int	rump_schedlock_cv_timedwait(struct rumpuser_cv *,
+				    const struct timespec *);
 
-void	rump_cpu_bootstrap(struct cpu_info *);
+void	rump_user_schedule(int, void *);
+void	rump_user_unschedule(int, int *, void *);
 
-bool	kernel_biglocked(void);
-void	kernel_unlock_allbutone(int *);
-void	kernel_ununlock_allbutone(int);
+void	rump_cpu_attach(struct cpu_info *);
+
+bool	rump_kernel_isbiglocked(void);
+void	rump_kernel_unlock_allbutone(int *);
+void	rump_kernel_ununlock_allbutone(int);
+
+void	rump_tsleep_init(void);
 
 void	rump_intr_init(void);
 void	rump_softint_run(struct cpu_info *);
+
+void	*rump_hypermalloc(size_t, int, bool, const char *);
+void	rump_hyperfree(void *, size_t);
 
 #endif /* _SYS_RUMP_PRIVATE_H_ */

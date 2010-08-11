@@ -1,4 +1,4 @@
-/* $NetBSD: if_gpn.c,v 1.1.10.3 2010/03/11 15:02:06 yamt Exp $ */
+/* $NetBSD: if_gpn.c,v 1.1.10.4 2010/08/11 22:51:41 yamt Exp $ */
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include "opt_gemini.h"
 
-__KERNEL_RCSID(0, "$NetBSD: if_gpn.c,v 1.1.10.3 2010/03/11 15:02:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gpn.c,v 1.1.10.4 2010/08/11 22:51:41 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -302,8 +302,7 @@ gpn_process_data(struct gpn_softc *sc, const ipm_gpn_desc_t *gd)
 		KASSERT(((m->m_pkthdr.len + 63) >> 6) == gd->gd_pktlen64);
 		ifp->if_ipackets++;
 		ifp->if_ibytes += m->m_pkthdr.len;
-		if (ifp->if_bpf)
-			bpf_ops->bpf_mtap(ifp->if_bpf, m);
+		bpf_mtap(ifp, m);
 #ifdef GPNDEBUG
 		printf("%s: rx len=%d crc=%#x\n", ifp->if_xname,
 		    m->m_pkthdr.len, m_crc32_le(m));
@@ -407,8 +406,7 @@ gpn_ifstart(struct ifnet *ifp)
 			return;
 		}
 
-		if (ifp->if_bpf)
-			bpf_ops->bpf_mtap(ifp->if_bpf, m);
+		bpf_mtap(ifp, m);
 #ifdef GPNDEBUG
 		printf("%s: tx len=%d crc=%#x\n", ifp->if_xname,
 		    m->m_pkthdr.len, m_crc32_le(m));

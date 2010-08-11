@@ -1,4 +1,4 @@
-/* 	$NetBSD: mpbiosreg.h,v 1.4.4.1 2008/05/16 02:23:28 yamt Exp $ */
+/* 	$NetBSD: mpbiosreg.h,v 1.4.4.2 2010/08/11 22:52:55 yamt Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -94,8 +94,6 @@ struct mpbios_proc {
 	uint8_t  cpu_flags;
 #define PROCENTRY_FLAG_EN	0x01
 #define PROCENTRY_FLAG_BP	0x02
-	uint32_t  cpu_signature;
-	uint32_t  feature_flags;
 	uint32_t  reserved1;
 	uint32_t  reserved2;
 };

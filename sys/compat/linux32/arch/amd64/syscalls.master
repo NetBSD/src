@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.33.4.3 2010/03/11 15:03:17 yamt Exp $
+	$NetBSD: syscalls.master,v 1.33.4.4 2010/08/11 22:53:09 yamt Exp $
 
 ; NetBSD i386 COMPAT_LINUX32 system call name/number "master" file.
 ; (See syscalls.conf to see what it is processed into.)
@@ -60,7 +60,7 @@
 %%
 
 0	NOARGS	{ int|linux_sys||nosys(void); } syscall
-1	NOARGS	{ int|netbsd32||exit(int rval); }
+1	STD	{ int|linux32_sys||exit(int rval); }
 2	NOARGS	{ int|sys||fork(void); }
 3	NOARGS	{ netbsd32_ssize_t|netbsd32||read(int fd, \
 		    netbsd32_voidp buf, netbsd32_size_t nbyte); }
@@ -88,7 +88,7 @@
 18	OBSOL	ostat
 19	NOARGS	{ netbsd32_long|compat_43_netbsd32||olseek(int fd, \
 		    netbsd32_long offset, int chence); }
-20	STD	{ pid_t|linux_sys||getpid(void); }
+20	NOARGS 	{ pid_t|sys||getpid(void); }
 21	UNIMPL	mount
 22	UNIMPL	umount
 23	NOARGS	linux_setuid16 { int|netbsd32||setuid(uid_t uid); }
@@ -140,7 +140,7 @@
 61	NOARGS	{ int|netbsd32||chroot(netbsd32_charp path); }
 62	UNIMPL	ustat
 63	NOARGS	{ int|netbsd32||dup2(int from, int to); }
-64	STD	{ pid_t|linux_sys||getppid(void); }
+64	NOARGS	{ pid_t|sys||getppid(void); }
 65	NOARGS	{ int|sys||getpgrp(void); }
 66	NOARGS	{ int|sys||setsid(void); }
 67	UNIMPL	sigaction
@@ -223,7 +223,9 @@
 		    netbsd32_voidp ptr); }
 118	NOARGS	{ int|netbsd32||fsync(int fd); }
 119	STD	{ int|linux32_sys||sigreturn(linux32_sigcontextp_t scp); }
-120	STD	{ int|linux32_sys||clone(int flags, netbsd32_voidp stack); }
+120	STD	{ int|linux32_sys||clone(int flags, netbsd32_voidp stack, \
+		    netbsd32_voidp parent_tidptr, netbsd32_voidp tls, \
+		    netbsd32_voidp child_tidptr); }
 121	UNIMPL	setdomainname
 122	STD	{ int|linux32_sys||uname(linux32_utsnamep up); }
 123	UNIMPL	modify_ldt
@@ -269,7 +271,8 @@
 		    netbsd32_size_t len); }
 152	NOARGS	{ int|netbsd32||mlockall(int flags); }
 153	NOARGS	{ int|sys||munlockall(void); }
-154	UNIMPL	sched_setparam
+154	STD	{ int|linux32_sys||sched_setparam(pid_t pid, \
+		    const linux32_sched_paramp_t sp); }
 155	STD	{ int|linux32_sys||sched_getparam(pid_t pid, \
 		    linux32_sched_paramp_t sp); }
 156	STD	{ int|linux32_sys||sched_setscheduler(pid_t pid, \
@@ -385,7 +388,7 @@
 		    int cmd, netbsd32_voidp arg); }
 222	UNIMPL	/*	unused	*/
 223	UNIMPL	/*	unused	*/
-224	STD	{ pid_t|linux_sys||gettid(void); }
+224	NOARGS	{ pid_t|linux_sys||gettid(void); }
 225	UNIMPL	readahead
 226	UNIMPL	setxattr
 227	UNIMPL	lsetxattr
@@ -399,13 +402,17 @@
 235	UNIMPL	removexattr
 236	UNIMPL	lremovexattr
 237	UNIMPL	fremovexattr
-238	UNIMPL	tkill
+238	STD	{ int|linux32_sys||tkill(int tid, int sig); }
 239	UNIMPL	sendfile64
-240	UNIMPL	futex
-241	UNIMPL	sched_setaffinity
-242	UNIMPL	sched_getaffinity
-243	UNIMPL	set_thread_area
-244	UNIMPL	get_thread_area
+240	STD	{ int|linux32_sys||futex(linux32_intp_t uaddr, int op, int val, \
+		    linux32_timespecp_t timeout, linux32_intp_t uaddr2, \
+		    int val3); }
+241	STD	{ int|linux32_sys||sched_setaffinity(pid_t pid, \
+		    unsigned int len, linux32_ulongp_t mask); }
+242	STD	{ int|linux32_sys||sched_getaffinity(pid_t pid, \
+		    unsigned int len, linux32_ulongp_t mask); }
+243	STD	{ int|linux32_sys||set_thread_area(linux32_user_descp_t desc); }
+244	STD	{ int|linux32_sys||get_thread_area(linux32_user_descp_t desc); }
 245	UNIMPL	io_setup
 246	UNIMPL	io_destroy
 247	UNIMPL	io_getevents
@@ -419,7 +426,7 @@
 255	UNIMPL	epoll_ctl
 256	UNIMPL	epoll_wait
 257	UNIMPL	remap_file_pages
-258	UNIMPL	set_tid_address
+258	STD	{ int|linux32_sys||set_tid_address(linux32_intp_t tid); }
 259	UNIMPL	timer_create
 260	UNIMPL	timer_settime
 261	UNIMPL	timer_gettime
@@ -435,7 +442,7 @@
 		    linux32_timespecp_t rqtp, linux32_timespecp_t rmtp); }
 268	UNIMPL	statfs64
 269	UNIMPL	fstatfs64
-270	UNIMPL	tgkill
+270	STD	{ int|linux32_sys||tgkill(int tgid, int tid, int sig); }
 271	UNIMPL	utimes
 272	UNIMPL	fadvise64_64
 273	UNIMPL	vserver
@@ -449,3 +456,59 @@
 281	UNIMPL	mq_notify
 282	UNIMPL	mq_getsetattr
 283	UNIMPL	kexec_load
+284	UNIMPL	waitid
+285	UNIMPL	/* unused */
+286	UNIMPL	add_key
+287	UNIMPL	request_key
+288	UNIMPL	keyctl
+289	UNIMPL	ioprio_set
+290	UNIMPL	ioprio_get
+291	UNIMPL	inotify_init
+292	UNIMPL	inotify_add_watch
+293	UNIMPL	inotify_rm_watch
+294	UNIMPL	migrate_pages
+295	UNIMPL	openat
+296	UNIMPL	mkdirat
+297	UNIMPL	mknodat
+298	UNIMPL	fchownat
+299	UNIMPL	futimesat
+300	UNIMPL	fstatat64
+301	UNIMPL	unlinkat
+302	UNIMPL	renameat
+303	UNIMPL	linkat
+304	UNIMPL	symlinkat
+305	UNIMPL	readlinkat
+306	UNIMPL	fchmodat
+307	UNIMPL	faccessat
+308	UNIMPL	pselect6
+309	UNIMPL	ppoll
+310	UNIMPL	unshare
+311	STD	{ int|linux32_sys||set_robust_list( \
+		    linux32_robust_list_headp_t head, linux32_size_t len); }
+312	STD	{ int|linux32_sys||get_robust_list(linux32_pid_t pid, \
+		    linux32_robust_list_headpp_t head, linux32_sizep_t len); }
+313	UNIMPL	splice
+314	UNIMPL	sync_file_range
+315	UNIMPL	tee
+316	UNIMPL	vmsplice
+317	UNIMPL	move_pages
+318	UNIMPL	getcpu
+319	UNIMPL	epoll_wait
+320	UNIMPL	utimensat
+321	UNIMPL	signalfd
+322	UNIMPL	timerfd_create
+323	UNIMPL	eventfd
+324	UNIMPL	fallocate
+325	UNIMPL	timerfd_settime
+326	UNIMPL	timerfd_gettime
+327	UNIMPL	signalfd4
+328	UNIMPL	eventfd2
+329	UNIMPL	epoll_create1
+330	UNIMPL	dup3
+331	UNIMPL	pipe2
+332	UNIMPL	inotify_init1
+333	UNIMPL	preadv
+334	UNIMPL	pwritev
+335	UNIMPL	rt_tgsigqueueinfo
+336	UNIMPL	perf_counter_open
+337	UNIMPL	recvmmsg

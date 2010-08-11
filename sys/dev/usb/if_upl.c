@@ -1,4 +1,4 @@
-/*	$NetBSD: if_upl.c,v 1.30.10.3 2010/03/11 15:04:05 yamt Exp $	*/
+/*	$NetBSD: if_upl.c,v 1.30.10.4 2010/08/11 22:54:14 yamt Exp $	*/
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_upl.c,v 1.30.10.3 2010/03/11 15:04:05 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_upl.c,v 1.30.10.4 2010/08/11 22:54:14 yamt Exp $");
 
 #include "opt_inet.h"
 #include "rnd.h"
@@ -303,7 +303,7 @@ USB_ATTACH(upl)
 	if_attach(ifp);
 	if_alloc_sadl(ifp);
 
-	bpf_ops->bpf_attach(ifp, DLT_RAW, 0, &ifp->if_bpf);
+	bpf_attach(ifp, DLT_RAW, 0);
 #if NRND > 0
 	rnd_attach_source(&sc->sc_rnd_source, USBDEVNAME(sc->sc_dev),
 	    RND_TYPE_NET, 0);
@@ -340,7 +340,7 @@ USB_DETACH(upl)
 #if NRND > 0
 	rnd_detach_source(&sc->sc_rnd_source);
 #endif
-	bpf_ops->bpf_detach(ifp);
+	bpf_detach(ifp);
 
 	if_detach(ifp);
 
@@ -538,9 +538,7 @@ upl_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 	 * a broadcast packet, multicast packet, matches our ethernet
 	 * address or the interface is in promiscuous mode.
 	 */
-	if (ifp->if_bpf) {
-		bpf_ops->bpf_mtap(ifp->if_bpf, m);
-	}
+	bpf_mtap(ifp, m);
 
 	DPRINTFN(10,("%s: %s: deliver %d\n", USBDEVNAME(sc->sc_dev),
 		    __func__, m->m_len));
@@ -680,8 +678,7 @@ upl_start(struct ifnet *ifp)
 	 * If there's a BPF listener, bounce a copy of this frame
 	 * to him.
 	 */
-	if (ifp->if_bpf)
-		bpf_ops->bpf_mtap(ifp->if_bpf, m_head);
+	bpf_mtap(ifp, m_head);
 
 	ifp->if_flags |= IFF_OACTIVE;
 

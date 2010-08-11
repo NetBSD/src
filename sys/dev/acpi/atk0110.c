@@ -1,4 +1,4 @@
-/*	$NetBSD: atk0110.c,v 1.10.2.2 2010/03/11 15:03:23 yamt Exp $	*/
+/*	$NetBSD: atk0110.c,v 1.10.2.3 2010/08/11 22:53:16 yamt Exp $	*/
 /*	$OpenBSD: atk0110.c,v 1.1 2009/07/23 01:38:16 cnst Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atk0110.c,v 1.10.2.2 2010/03/11 15:03:23 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atk0110.c,v 1.10.2.3 2010/08/11 22:53:16 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -86,8 +86,7 @@ aibs_match(device_t parent, cfdata_t match, void *aux)
 	if(aa->aa_node->ad_type != ACPI_TYPE_DEVICE)
 		return 0;
 
-	/* successful match supersedes aiboost(4) */
-	return acpi_match_hid(aa->aa_node->ad_devinfo, aibs_hid) * 2;
+	return acpi_match_hid(aa->aa_node->ad_devinfo, aibs_hid);
 }
 
 static void
@@ -246,7 +245,6 @@ aibs_attach_sif(device_t self, enum envsys_units st)
 		as[i].h = oi[3].Integer.Value;
 		as[i].s.units = st;
 		as[i].s.flags |= ENVSYS_FMONLIMITS;
-		as[i].s.monitor = true;
 		aprint_verbose_dev(self, "%c%i: "
 		    "0x%08"PRIx64" %20s %5"PRIi64" / %5"PRIi64"  "
 		    "0x%"PRIx64"\n",

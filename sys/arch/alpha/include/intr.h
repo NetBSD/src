@@ -1,4 +1,4 @@
-/* $NetBSD: intr.h,v 1.65.2.2 2010/03/11 15:01:57 yamt Exp $ */
+/* $NetBSD: intr.h,v 1.65.2.3 2010/08/11 22:51:32 yamt Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -165,8 +165,9 @@ _splraise(int s)
 #define	ALPHA_IPI_SYNCH_FPU		(1UL << 5)
 #define	ALPHA_IPI_DISCARD_FPU		(1UL << 6)
 #define	ALPHA_IPI_PAUSE			(1UL << 7)
+#define	ALPHA_IPI_XCALL			(1UL << 8)
 
-#define	ALPHA_NIPIS		8	/* must not exceed 64 */
+#define	ALPHA_NIPIS		9	/* must not exceed 64 */
 
 struct cpu_info;
 struct trapframe;

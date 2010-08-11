@@ -1,4 +1,4 @@
-/* $NetBSD: pci.c,v 1.6.2.3 2009/06/20 07:20:08 yamt Exp $ */
+/* $NetBSD: pci.c,v 1.6.2.4 2010/08/11 22:52:40 yamt Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -33,18 +33,6 @@
 
 #include <lib/libsa/stand.h>
 
-/*
- * "Map B" layout
- *
- * practice direct mode configuration scheme with CONFIG_ADDR
- * (0xfec0'0000) and CONFIG_DATA (0xfee0'0000).
- */
-#define PCI_MEMBASE	0x80000000
-#define PCI_MEMLIMIT	0xfbffffff	/* EUMB is next to this */
-#define PCI_IOBASE	0x00001000	/* reserves room for via 686B */
-#define PCI_IOLIMIT	0x000fffff
-#define CONFIG_ADDR	0xfec00000
-#define CONFIG_DATA	0xfee00000
 
 #define MAXNDEVS 32
 
@@ -219,12 +207,11 @@ deviceinit(int bus, int dev, int func, unsigned long data)
 	val = 0x80 << 8 | 0x08 /* 32B cache line */;
 	cfgwrite(bus, dev, func, 0x0c, val);
 
-#if 1
-/* skip IDE controller BAR assignment */
-val = cfgread(bus, dev, func, PCI_CLASS_REG);
-if ((val >> 16) == PCI_CLASS_IDE)
-	return 0;
-#endif
+	/* skip legacy mode IDE controller BAR assignment */
+	val = cfgread(bus, dev, func, PCI_CLASS_REG);
+	if ((val >> 16) == PCI_CLASS_IDE && ((val >> 8) & 0x05) == 0)
+		return 0;
+
 	memassign(bus, dev, func);
 
 	/* descending toward PCI-PCI bridge */

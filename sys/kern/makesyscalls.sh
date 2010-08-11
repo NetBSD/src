@@ -1,5 +1,5 @@
 #! /bin/sh -
-#	$NetBSD: makesyscalls.sh,v 1.69.2.3 2010/03/11 15:04:18 yamt Exp $
+#	$NetBSD: makesyscalls.sh,v 1.69.2.4 2010/08/11 22:54:41 yamt Exp $
 #
 # Copyright (c) 1994, 1996, 2000 Christopher G. Demetriou
 # All rights reserved.
@@ -240,21 +240,23 @@ NR == 1 {
 	printf "const char *const %s[] = {\n",namesname > sysnamesbottom
 
 	printf " * created from%s\n */\n\n", $0 > sysnumhdr
+	printf "#ifndef _" constprefix "SYSCALL_H_\n" > sysnumhdr
+	printf "#define	_" constprefix "SYSCALL_H_\n\n" > sysnumhdr
 
 	printf " * created from%s\n */\n\n", $0 > sysarghdr
+	printf "#ifndef _" constprefix "SYSCALLARGS_H_\n" > sysarghdr
+	printf "#define	_" constprefix "SYSCALLARGS_H_\n\n" > sysarghdr
 
 	printf " * created from%s\n */\n\n", $0 > rumpcallshdr
-	printf "#ifdef _RUMPKERNEL\n" > rumpcallshdr
-	printf "#error Interface not supported inside rump kernel\n" > rumpcallshdr
-	printf "#endif /* _RUMPKERNEL */\n\n" > rumpcallshdr
+	printf "#ifndef _RUMP_RUMP_SYSCALLS_H_\n" > rumpcallshdr
+	printf "#define _RUMP_RUMP_SYSCALLS_H_\n\n" > rumpcallshdr
+	printf "#ifdef _KERNEL\n" > rumpcallshdr
+	printf "#error Interface not supported inside kernel\n" > rumpcallshdr
+	printf "#endif /* _KERNEL */\n\n" > rumpcallshdr
 	printf "#include <sys/types.h>\n" > rumpcallshdr
 	printf "#include <sys/select.h>\n\n" > rumpcallshdr
 	printf "#include <signal.h>\n\n" > rumpcallshdr
 
-	printf "#ifndef _" constprefix "SYSCALL_H_\n" > sysnumhdr
-	printf "#define	_" constprefix "SYSCALL_H_\n\n" > sysnumhdr
-	printf "#ifndef _" constprefix "SYSCALLARGS_H_\n" > sysarghdr
-	printf "#define	_" constprefix "SYSCALLARGS_H_\n\n" > sysarghdr
 	printf "%s", sysarghdrextra > sysarghdr
 	# Write max number of system call arguments to both headers
 	printf("#define\t%sMAXSYSARGS\t%d\n\n", constprefix, maxsysargs) \
@@ -561,8 +563,11 @@ function printproto(wrap) {
 
 function printrumpsysent(insysent, compatwrap) {
 	if (!insysent) {
-		printf("\t{ 0, 0, 0,\n\t    %s },\t\t\t/* %d = unrumped */\n", \
-		    "(sy_call_t *)rump_enosys", syscall) > rumpsysent
+		eno[0] = "rump_enosys"
+		eno[1] = "sys_nomodule"
+		printf("\t{ 0, 0, 0,\n\t    (sy_call_t *)%s },\t\t\t"	\
+		    "/* %d = unrumped */\n",				\
+		    eno[modular], syscall) > rumpsysent
 		return
 	}
 
@@ -801,6 +806,8 @@ END {
 cat $sysprotos >> $sysarghdr
 echo "#endif /* _${constprefix}SYSCALL_H_ */" >> $sysnumhdr
 echo "#endif /* _${constprefix}SYSCALLARGS_H_ */" >> $sysarghdr
+printf "\n#include <rump/rump_syscalls_compat.h>\n" >> $rumpcallshdr
+printf "\n#endif /* _RUMP_RUMP_SYSCALLS_H_ */\n" >> $rumpcallshdr
 cat $sysdcl $sysent > $syssw
 cat $sysnamesbottom >> $sysnames
 cat $rumpsysent >> $rumpcalls

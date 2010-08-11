@@ -1,4 +1,4 @@
-/*	$NetBSD: sysarch.h,v 1.6.18.2 2009/05/04 08:12:09 yamt Exp $	*/
+/*	$NetBSD: sysarch.h,v 1.6.18.3 2010/08/11 22:52:55 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -174,10 +174,12 @@ struct mtrr;
 int x86_iopl(struct lwp *, void *, register_t *);
 int x86_get_mtrr(struct lwp *, void *, register_t *);
 int x86_set_mtrr(struct lwp *, void *, register_t *);
-int x86_get_ldt(struct lwp *l, void *, register_t *);
-int x86_get_ldt1(struct lwp *l, struct x86_get_ldt_args *, union descriptor *);
-int x86_set_ldt(struct lwp *l, void *, register_t *);
-int x86_set_ldt1(struct lwp *l, struct x86_set_ldt_args *, union descriptor *);
+int x86_get_ldt(struct lwp *, void *, register_t *);
+int x86_get_ldt1(struct lwp *, struct x86_get_ldt_args *, union descriptor *);
+int x86_set_ldt(struct lwp *, void *, register_t *);
+int x86_set_ldt1(struct lwp *, struct x86_set_ldt_args *, union descriptor *);
+int x86_set_sdbase(void *, char, lwp_t *, bool);
+int x86_get_sdbase(void *, char);
 #else
 #include <sys/cdefs.h>
 __BEGIN_DECLS

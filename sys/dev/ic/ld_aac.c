@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_aac.c,v 1.18.4.3 2009/05/16 10:41:23 yamt Exp $	*/
+/*	$NetBSD: ld_aac.c,v 1.18.4.4 2010/08/11 22:53:28 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_aac.c,v 1.18.4.3 2009/05/16 10:41:23 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_aac.c,v 1.18.4.4 2010/08/11 22:53:28 yamt Exp $");
 
 #include "rnd.h"
 
@@ -212,9 +212,9 @@ ld_aac_dobio(struct ld_aac_softc *sc, void *data, int datasize, daddr_t blkno,
 			sge->SgAddress = htole32(xfer->dm_segs[i].ds_addr);
 			sge->SgByteCount = htole32(xfer->dm_segs[i].ds_len);
 			AAC_DPRINTF(AAC_D_IO,
-			    ("#%d va %p pa %lx len %lx\n", i, data,
-			    (u_long)xfer->dm_segs[i].ds_addr,
-			    (u_long)xfer->dm_segs[i].ds_len));
+			    ("#%d va %p pa %" PRIxPADDR " len %zx\n",
+			    i, data, xfer->dm_segs[i].ds_addr,
+			    xfer->dm_segs[i].ds_len));
 		}
 
 		size += xfer->dm_nsegs * sizeof(struct aac_sg_entry);
@@ -265,9 +265,9 @@ ld_aac_dobio(struct ld_aac_softc *sc, void *data, int datasize, daddr_t blkno,
 			sge->SgAddress = htole64(xfer->dm_segs[i].ds_addr);
 			sge->SgByteCount = htole32(xfer->dm_segs[i].ds_len);
 			AAC_DPRINTF(AAC_D_IO,
-			    ("#%d va %p pa %llx len %lx\n", i, data,
-			    (u_int64_t)xfer->dm_segs[i].ds_addr,
-			    (u_long)xfer->dm_segs[i].ds_len));
+			    ("#%d va %p pa %" PRIxPADDR " len %zx\n",
+			    i, data, xfer->dm_segs[i].ds_addr,
+			    xfer->dm_segs[i].ds_len));
 		}
 		size += xfer->dm_nsegs * sizeof(struct aac_sg_entry64);
 		size = sizeof(fib->Header) + size;

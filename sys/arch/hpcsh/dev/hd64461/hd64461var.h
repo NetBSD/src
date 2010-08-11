@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64461var.h,v 1.3.78.1 2008/05/16 02:22:30 yamt Exp $	*/
+/*	$NetBSD: hd64461var.h,v 1.3.78.2 2010/08/11 22:52:08 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,6 +58,8 @@ enum hd64461_module_id {
 struct hd64461_attach_args {
 	enum hd64461_module_id  ha_module_id;
 };
+
+extern int use_afeck;
 
 /*
  * Interrupt staff.

@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.15.44.3 2010/03/11 15:02:26 yamt Exp $	*/
+/*	$NetBSD: bus.h,v 1.15.44.4 2010/08/11 22:52:08 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -118,6 +118,9 @@ struct hpcsh_bus_space {
 
 	/* cookie */
 	void		*hbs_cookie;
+
+	int 		hbs_flags;
+#define HBS_FLAGS_ALLOCATED	(1 < 0)
 
 	/* mapping/unmapping */
 	int		(*hbs_map)(void *, bus_addr_t, bus_size_t,

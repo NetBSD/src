@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_dev.h,v 1.6 2006/05/14 21:20:13 elad Exp $	*/
+/*	$NetBSD: smb_dev.h,v 1.6.62.1 2010/08/11 22:54:58 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -67,9 +67,9 @@
 
 struct smbioc_ossn {
 	int		ioc_opt;
-	int		ioc_svlen;	/* size of ioc_server address */
+	uint32_t	ioc_svlen;	/* size of ioc_server address */
 	struct sockaddr*ioc_server;
-	int		ioc_lolen;	/* size of ioc_local address */
+	uint32_t	ioc_lolen;	/* size of ioc_local address */
 	struct sockaddr*ioc_local;
 	char		ioc_srvname[SMB_MAXSRVNAMELEN + 1];
 	int		ioc_timeout;

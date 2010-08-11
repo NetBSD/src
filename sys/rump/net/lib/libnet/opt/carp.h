@@ -1,3 +1,3 @@
-/*	$NetBSD: carp.h,v 1.1.18.2 2009/05/04 08:14:32 yamt Exp $	*/
+/*	$NetBSD: carp.h,v 1.1.18.3 2010/08/11 22:55:08 yamt Exp $	*/
 
-/* dummy */
+#define NCARP 1

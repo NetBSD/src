@@ -1,4 +1,4 @@
-#	$NetBSD: DEVNAMES,v 1.239.4.3 2010/03/11 15:03:21 yamt Exp $
+#	$NetBSD: DEVNAMES,v 1.239.4.4 2010/08/11 22:53:14 yamt Exp $
 #
 # This file contains all used device names and defined attributes in
 # alphabetical order. New devices added to the system somewhere should first
@@ -61,7 +61,6 @@ ahd			MI
 ahsc			amiga
 ahsc			amigappc
 ai			MI
-aiboost			MI
 aibs			MI
 aic			MI
 akbd			mac68k
@@ -488,7 +487,7 @@ gdrom			dreamcast
 gem			MI
 gentbi			MI
 geodeide		MI
-gfe			evbppc
+gfe			MI
 gio			sgimips
 giobus			sgimips		Attribute
 glxtphy			MI
@@ -536,10 +535,11 @@ grful			amigappc
 gsip			MI
 gt			cobalt
 gt			evbmips
-gt			evbppc
+gt			MI
 gten			prep
 gtidma			evbppc
-gtmpsc			evbppc
+gtmpsc			MI
+gtpci			MI
 gtsc			amiga
 gtsc			amigappc
 gus			MI
@@ -891,6 +891,7 @@ mtd			MI
 mtty			MI
 mu			vax
 mulaw			MI		Attribute
+mvgbe			MI
 mvsata			MI
 nca			MI
 ncr5380sbc		MI		Attribute
@@ -1377,6 +1378,7 @@ uu			vax
 uvisor			MI
 uvscom			MI
 uyap			MI
+uyurex			MI
 va			vax
 vcons			MI		Attribute
 veriexec		MI

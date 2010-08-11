@@ -1,0 +1,130 @@
+#	$NetBSD: AP_MS104_SH4,v 1.1.6.2 2010/08/11 22:51:56 yamt Exp $
+#
+#	Alpha project AP-MS104-SH4 config file
+#
+
+# for big endian
+#include "arch/evbsh3/conf/std.evbsh3.eb"
+# for little endian
+include "arch/evbsh3/conf/std.evbsh3.el"
+include "arch/evbsh3/conf/std.ap_ms104_sh4"
+
+#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
+
+maxusers	32
+
+# CPU releated options
+options 	SH4_CACHE_DISABLE_EMODE
+
+# kloader-related
+options 	KLOADER
+options 	KLOADER_KERNEL_PATH="\"/netbsd\""
+#options 	KLOADER_DEBUG
+
+# Standard system options
+
+options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
+options 	NTP		# NTP phase/frequency locked loop
+
+options 	KTRACE		# system call tracing via ktrace(1)
+
+options 	SYSVMSG		# System V-like message queues
+options 	SYSVSEM		# System V-like semaphores
+options 	SYSVSHM		# System V-like memory sharing
+
+options 	USERCONF	# userconf(4) support
+#options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
+
+# Development and Debugging options
+options 	DIAGNOSTIC	# expensive kernel consistency checks
+#options 	DEBUG		# expensive debugging checks/support
+#options 	LOCKDEBUG	# expensive locking checks/support
+#options 	KMEMSTATS	# kernel memory statistics (vmstat -m)
+options 	DDB		# in-kernel debugger
+#options 	DDB_ONPANIC=1	# see also sysctl(8): `ddb.onpanic'
+options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
+#options 	DDB_VERBOSE_HELP
+#makeoptions    DEBUG="-g"      # compile full symbol table
+options 	SYMTAB_SPACE=320000
+
+# Compatibility options
+options 	COMPAT_14	# NetBSD 1.4
+options 	COMPAT_15	# NetBSD 1.5
+options 	COMPAT_16	# NetBSD 1.6
+options 	COMPAT_20	# NetBSD 2.0
+options 	COMPAT_30	# NetBSD 3.0
+options 	COMPAT_40	# NetBSD 4.0
+options 	COMPAT_50	# NetBSD 5.0
+options 	COMPAT_43	# and 4.3BSD
+options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
+
+# File systems
+file-system 	FFS		# UFS
+file-system 	KERNFS		# /kern
+file-system 	MSDOSFS		# MS-DOS file system
+file-system 	NFS		# Network File System client
+file-system 	PTYFS		# /dev/ptm support
+file-system 	PROCFS		# /proc
+file-system	TMPFS		# Efficient memory file-system
+
+# File system options
+options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
+options 	WAPBL		# File system journaling support - Experimental
+
+# Networking options
+options 	INET		# IP + ICMP + TCP + UDP
+options 	INET6		# IPV6
+
+# Kernel root file system and dump configuration.
+config		netbsd	root on ? type ?
+
+options 	NFS_BOOT_DHCP,NFS_BOOT_BOOTPARAM
+
+#
+# Device configuration
+#
+mainbus0 at root
+cpu* at mainbus?
+shb* at mainbus?
+options 	SCIFCONSOLE,SCIFCN_SPEED=38400
+scif0 at shb?
+sci0 at shb?
+
+# Ricoh RS5C316 Real Time Clock
+rs5c313rtc0 at mainbus?
+
+# Network interface
+sm0	at mainbus?			# SMC LAN91C111
+sqphy*	at mii? phy ?			# Seeq 80220/80221/80223 PHYs
+
+# PCMCIA bus support
+shpcmcia0 at mainbus?
+pcmcia* at shpcmcia?
+#options 	PCMCIAVERBOSE
+#options 	PCMCIACISDEBUG
+
+# IDE and related devices
+wdc*	at pcmcia? function ?
+atabus*	at ata?
+wd*	at atabus? drive ? flags 0x0000
+
+# Pseudo-Devices
+
+# disk/mass storage pseudo-devices
+pseudo-device	md		1	# memory disk device (ramdisk)
+
+pseudo-device	vnd			# disk-like interface to files
+options 	VND_COMPRESSION		# compressed vnd(4)
+
+# network pseudo-devices
+pseudo-device	bpfilter		# Berkeley packet filter
+pseudo-device	loop			# network loopback
+
+# miscellaneous pseudo-devices
+pseudo-device	pty			# pseudo-terminals
+pseudo-device	rnd			# /dev/random and in-kernel generator
+pseudo-device	clockctl		# user control of clock subsystem
+pseudo-device	ksyms			# /dev/ksyms
+
+# userland interface to drivers, including autoconf and properties retrieval
+pseudo-device	drvctl

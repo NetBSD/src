@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: menu.cpp,v 1.10.78.1 2008/05/16 02:22:26 yamt Exp $	*/
+/* -*-C++-*-	$NetBSD: menu.cpp,v 1.10.78.2 2010/08/11 22:52:04 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -40,6 +40,11 @@
 #include <console.h>
 
 #include <menu/menu.h>
+
+#define SCALEX(x) (((x) * dpix) / 96/*DPI*/)
+#define SCALEY(y) (((y) * dpiy) / 96/*DPI*/)
+#define UNSCALEX(x) (((x) * 96) / dpix)
+#define UNSCALEY(y) (((y) * 96) / dpiy)
 
 TabWindow *
 TabWindowBase::boot(int id)
@@ -208,31 +213,39 @@ MainTabWindow::layout()
 	HDC hdc = GetDC(0);
 	int width = GetDeviceCaps(hdc, HORZRES);
 	int height = GetDeviceCaps(hdc, VERTRES);
+	int dpix = GetDeviceCaps(hdc, LOGPIXELSX);
+	int dpiy = GetDeviceCaps(hdc, LOGPIXELSY);
 	ReleaseDC(0, hdc);
 
 	// set origin
 	int x, y;
 	if (width <= 320) {
-		x = 5, y = 125;
+		x = 5, y = 140;
 	} else if (height <= 240) {
 		x = 250, y = 5;
 	} else {
-		x = 5, y = 125;
+		x = 5, y = 140;
 	}
 
 	HWND h;
 	h = GetDlgItem(_window, IDC_MAIN_OPTION_V);
-	SetWindowPos(h, 0, x, y, 120, 10, SWP_NOSIZE | SWP_NOZORDER);
+	SetWindowPos(h, 0, SCALEX(x), SCALEY(y),
+	    SCALEX(120), SCALEY(10), SWP_NOSIZE | SWP_NOZORDER);
 	h = GetDlgItem(_window, IDC_MAIN_OPTION_S);
-	SetWindowPos(h, 0, x, y + 20, 120, 10, SWP_NOSIZE | SWP_NOZORDER);
+	SetWindowPos(h, 0, SCALEX(x), SCALEY(y + 20),
+            SCALEX(120), SCALEY(10), SWP_NOSIZE | SWP_NOZORDER);
 	h = GetDlgItem(_window, IDC_MAIN_OPTION_A);
-	SetWindowPos(h, 0, x, y + 40, 120, 10, SWP_NOSIZE | SWP_NOZORDER);
+	SetWindowPos(h, 0, SCALEX(x), SCALEY(y + 40),
+	    SCALEX(120), SCALEY(10), SWP_NOSIZE | SWP_NOZORDER);
 	h = GetDlgItem(_window, IDC_MAIN_OPTION_D);
-	SetWindowPos(h, 0, x, y + 60, 120, 10, SWP_NOSIZE | SWP_NOZORDER);
+	SetWindowPos(h, 0, SCALEX(x), SCALEY(y + 60),
+	    SCALEX(120), SCALEY(10), SWP_NOSIZE | SWP_NOZORDER);
 	h = GetDlgItem(_window, IDC_MAIN_OPTION_H);
-	SetWindowPos(h, 0, x, y + 80, 120, 10, SWP_NOSIZE | SWP_NOZORDER);
+	SetWindowPos(h, 0, SCALEX(x), SCALEY(y + 80),
+	    SCALEX(120), SCALEY(10), SWP_NOSIZE | SWP_NOZORDER);
 	h = GetDlgItem(_window, IDC_MAIN_OPTION_H_SPEED);
-	SetWindowPos(h, 0, x + 100, y + 80, 120, 10, SWP_NOSIZE | SWP_NOZORDER);
+	SetWindowPos(h, 0, SCALEX(x + 100), SCALEY(y + 80),
+	    SCALEX(120), SCALEY(10), SWP_NOSIZE | SWP_NOZORDER);
 }
 
 void
@@ -259,6 +272,10 @@ MainTabWindow::get()
 		pref.rootfs = 2;
 	else if (_is_checked(IDC_MAIN_ROOT_NFS))
 		pref.rootfs = 3;
+	else if (_is_checked(IDC_MAIN_ROOT_DK))
+		pref.rootfs = 4;
+	else if (_is_checked(IDC_MAIN_ROOT_LD))
+		pref.rootfs = 5;
 
 	pref.boot_ask_for_name	= _is_checked(IDC_MAIN_OPTION_A);
 	pref.boot_debugger	= _is_checked(IDC_MAIN_OPTION_D);
@@ -287,6 +304,10 @@ MainTabWindow::command(int id, int msg)
 	case IDC_MAIN_ROOT_MD:
 		/* FALLTHROUGH */
 	case IDC_MAIN_ROOT_NFS:
+		/* FALLTHROUGH */
+	case IDC_MAIN_ROOT_DK:
+		/* FALLTHROUGH */
+	case IDC_MAIN_ROOT_LD:
 		EnableWindow(_edit_md_root, _is_checked(IDC_MAIN_ROOT_MD));
 	}
 }
@@ -298,13 +319,18 @@ void
 OptionTabWindow::init(HWND w)
 {
 	struct HpcMenuInterface::HpcMenuPreferences &pref = HPC_PREFERENCE;
+	HDC hdc = GetDC(0);
+	int dpix = GetDeviceCaps(hdc, LOGPIXELSX);
+	int dpiy = GetDeviceCaps(hdc, LOGPIXELSY);
+	ReleaseDC(0, hdc);
 
 	_window = w;
 
 	TabWindow::init(_window);
 	_spin_edit = GetDlgItem(_window, IDC_OPT_AUTO_INPUT);
 	_spin = CreateUpDownControl(WS_CHILD | WS_BORDER | WS_VISIBLE |
-	    UDS_SETBUDDYINT | UDS_ALIGNRIGHT, 80, 0, 50, 50, _window,
+	    UDS_SETBUDDYINT | UDS_ALIGNRIGHT,
+	    SCALEX(80), SCALEY(0), SCALEX(50), SCALEY(50), _window,
 	    IDC_OPT_AUTO_UPDOWN, _app._instance, _spin_edit, 60, 1, 30);
 	BOOL onoff = pref.auto_boot ? TRUE : FALSE;
 	EnableWindow(_spin_edit, onoff);
@@ -426,12 +452,18 @@ ConsoleTabWindow::print(TCHAR *buf, BOOL force_display)
 void
 ConsoleTabWindow::init(HWND w)
 {
+	HDC hdc = GetDC(0);
+	int dpix = GetDeviceCaps(hdc, LOGPIXELSX);
+	int dpiy = GetDeviceCaps(hdc, LOGPIXELSY);
+	ReleaseDC(0, hdc);
+
 	// at this time _window is NULL.
 	// use argument of window procedure.
 	TabWindow::init(w);
 	_edit = GetDlgItem(w, IDC_CONS_EDIT);
-	MoveWindow(_edit, 5, 60, _rect.right - _rect.left - 10,
-	    _rect.bottom - _rect.top - 60, TRUE);
+	MoveWindow(_edit, SCALEX(5), SCALEY(60),
+	    SCALEX(UNSCALEX(_rect.right - _rect.left) - 10),
+	    SCALEY(UNSCALEY(_rect.bottom - _rect.top) - 60), TRUE);
 	Edit_FmtLines(_edit, TRUE);
 
 	// log file.

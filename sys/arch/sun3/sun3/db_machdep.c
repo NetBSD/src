@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.25.20.1 2008/05/16 02:23:21 yamt Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.25.20.2 2010/08/11 22:52:50 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.25.20.1 2008/05/16 02:23:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.25.20.2 2010/08/11 22:52:50 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -57,10 +57,14 @@ static void db_mach_reboot (db_expr_t, bool, db_expr_t, const char *);
 static void db_mach_pagemap(db_expr_t, bool, db_expr_t, const char *);
 
 const struct db_command db_machine_command_table[] = {
-	{ DDB_ADD_CMD("abort",	db_mach_abort,	0,	NULL,NULL,NULL) },
-	{ DDB_ADD_CMD("halt",	db_mach_halt,	0,	NULL,NULL,NULL) },
-	{ DDB_ADD_CMD("pgmap",	db_mach_pagemap, 	CS_SET_DOT, NULL,NULL,NULL) },
-	{ DDB_ADD_CMD("reboot",	db_mach_reboot,	0,	NULL,NULL,NULL) },
+	{ DDB_ADD_CMD("abort",	db_mach_abort,	0,
+	  "Calls prom_abort()", NULL, NULL) },
+	{ DDB_ADD_CMD("halt",	db_mach_halt,	0,
+	  "Calls prom_halt()", NULL, NULL) },
+	{ DDB_ADD_CMD("pgmap",	db_mach_pagemap, CS_SET_DOT,
+	  "Prints the PTE and segmap values", "virtual-address", NULL) },
+	{ DDB_ADD_CMD("reboot",	db_mach_reboot,	0,
+	  "Calls prom_boot()", NULL, NULL) },
 	{ DDB_ADD_CMD(NULL,NULL,0,NULL,NULL,NULL) }
 };
 

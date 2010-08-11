@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.19.32.3 2009/08/19 18:48:20 yamt Exp $
+#	$NetBSD: Makefile.inc,v 1.19.32.4 2010/08/11 22:54:46 yamt Exp $
 #
 #	The rest of the lib routines are in machine/macros.h
 #
@@ -8,5 +8,4 @@ SRCS+=	random.S
 SRCS+=	udiv.S urem.S
 
 NO_SRCS+= imax.c imin.c lmax.c lmin.c max.c min.c ulmax.c ulmin.c
-NO_SRCS+= memset.c
 NO_SRCS+= scanc.c skpc.c

@@ -1,4 +1,4 @@
-/* $Id: isp_library.h,v 1.2.4.1 2009/07/18 14:53:01 yamt Exp $ */
+/* $Id: isp_library.h,v 1.2.4.2 2010/08/11 22:53:26 yamt Exp $ */
 /*-
  *  Copyright (c) 1997-2008 by Matthew Jacob
  *  All rights reserved.
@@ -51,10 +51,10 @@ int isp_send_cmd(ispsoftc_t *, void *, void *, uint32_t, uint32_t, isp_ddir_t);
  *
  * These handles are associate with a command.
  */
-int isp_save_xs(ispsoftc_t *, XS_T *, uint32_t *);
+int isp_allocate_xs(ispsoftc_t *, XS_T *, uint32_t *);
 XS_T * isp_find_xs(ispsoftc_t *, uint32_t);
 uint32_t isp_find_handle(ispsoftc_t *, XS_T *);
-uint32_t isp_handle_index(uint32_t);
+uint32_t isp_handle_index(ispsoftc_t *, uint32_t);
 void isp_destroy_handle(ispsoftc_t *, uint32_t);
 
 /*
@@ -116,6 +116,7 @@ void isp_put_cont64_req(ispsoftc_t *, ispcontreq64_t *, ispcontreq64_t *);
 void isp_get_response(ispsoftc_t *, ispstatusreq_t *, ispstatusreq_t *);
 void isp_get_24xx_response(ispsoftc_t *, isp24xx_statusreq_t *, isp24xx_statusreq_t *);
 void isp_get_24xx_abrt(ispsoftc_t *, isp24xx_abrt_t *, isp24xx_abrt_t *);
+void isp_get_rio1(ispsoftc_t *, isp_rio1_t *, isp_rio1_t *);
 void isp_get_rio2(ispsoftc_t *, isp_rio2_t *, isp_rio2_t *);
 void isp_put_icb(ispsoftc_t *, isp_icb_t *, isp_icb_t *);
 void isp_put_icb_2400(ispsoftc_t *, isp_icb_2400_t *, isp_icb_2400_t *);
@@ -164,9 +165,7 @@ void isp_put_ct_hdr(ispsoftc_t *isp, ct_hdr_t *, ct_hdr_t *);
 
 int isp_send_tgt_cmd(ispsoftc_t *, void *, void *, uint32_t, uint32_t, isp_ddir_t, void *, uint32_t);
 
-#define IS_TARGET_HANDLE(x)     ((x) & 0x8000)
-
-int isp_save_xs_tgt(ispsoftc_t *, void *, uint32_t *);
+int isp_allocate_xs_tgt(ispsoftc_t *, void *, uint32_t *);
 void *isp_find_xs_tgt(ispsoftc_t *, uint32_t);
 uint32_t isp_find_tgt_handle(ispsoftc_t *, void *);
 void isp_destroy_tgt_handle(ispsoftc_t *, uint32_t);

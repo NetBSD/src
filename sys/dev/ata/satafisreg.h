@@ -1,7 +1,7 @@
-/* $NetBSD: satafisreg.h,v 1.1.2.2 2009/06/20 07:20:20 yamt Exp $ */
+/* $NetBSD: satafisreg.h,v 1.1.2.3 2010/08/11 22:53:18 yamt Exp $ */
 
-/*-
- * Copyright (c) 2009 Jonathan A. Kollasch.
+/*
+ * Copyright (c) 2009, 2010 Jonathan A. Kollasch.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,7 +32,8 @@
 
 #define RHD_FISTYPE 0x27
 #define RHD_FISLEN 20
-#define rhd_cdpmp 1 /* Command bit and PM port */
+#define rhd_c 1 /* Command bit and PM port */
+#define RHD_C 0x80
 #define rhd_command 2 /* wd_command */
 #define rhd_features 3 /* wd_precomp */
 #define rhd_sector 4 /* wd_sector */
@@ -50,17 +51,18 @@
 #define RDH_FISTYPE 0x34
 #define RDH_FISLEN 20
 #define rdh_i 1
+#define RDH_I 0x40
 #define rdh_status 2
 #define rdh_error 3
 #define rdh_sector 4 /* wd_sector */
 #define rdh_cyl_lo 5 /* wd_cyl_lo */
 #define rdh_cyl_hi 6 /* wd_cyl_hi */
 #define rdh_dh 7 /* wd_sdh */
-#define rhd_sector_exp 8
-#define rhd_cyl_lo_exp 9
-#define rhd_cyl_hi_exp 10
-#define rhd_seccnt 12
-#define rhd_seccnt_exp 13
+#define rdh_sector_exp 8
+#define rdh_cyl_lo_exp 9
+#define rdh_cyl_hi_exp 10
+#define rdh_seccnt 12
+#define rdh_seccnt_exp 13
 
 #define SDB_FISTYPE 0xA1
 #define SDB_FISLEN 8

@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.35.2.1 2009/05/04 08:11:59 yamt Exp $
+# $NetBSD: INSTALL,v 1.35.2.2 2010/08/11 22:52:49 yamt Exp $
 
 # INSTALL Sun2 (2/120, 2/170, 2/50, ...)
 
@@ -6,7 +6,7 @@ include "arch/sun2/conf/std.sun2"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"INSTALL-$Revision: 1.35.2.1 $"
+#ident 		"INSTALL-$Revision: 1.35.2.2 $"
 
 makeoptions	COPTS="-Os"	# optimize for size
 
@@ -228,4 +228,4 @@ pseudo-device	pty		4	# pseudo-terminals
 #pseudo-device	ccd		4	# concatenated disks
 #pseudo-device	raid		4	# RAIDframe disk driver
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
-#pseudo-device	fss		4	# file system snapshot device
+#pseudo-device	fss			# file system snapshot device

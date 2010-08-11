@@ -1,4 +1,4 @@
-#	$NetBSD: files.mac68k,v 1.121.10.1 2009/05/04 08:11:26 yamt Exp $
+#	$NetBSD: files.mac68k,v 1.121.10.2 2010/08/11 22:52:20 yamt Exp $
 
 # mac68k-specific configuration info
 
@@ -6,6 +6,7 @@
 # (note, these are case-sensitive)
 defflag	opt_adb.h		ADB_DEBUG MRG_ADB ALTXBUTTONS
 defflag	opt_mac68k.h		DISABLE_EXT_CACHE ZS_CONSOLE_ABORT
+defflag	opt_grf_compat.h	GRF_COMPAT
 
 defflag	opt_wsdisplay_compat.h	WSDISPLAY_COMPAT_ITEFONT
 

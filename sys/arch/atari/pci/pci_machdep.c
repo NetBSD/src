@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.43.78.1 2009/05/04 08:10:48 yamt Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.43.78.2 2010/08/11 22:51:45 yamt Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.  All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.43.78.1 2009/05/04 08:10:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.43.78.2 2010/08/11 22:51:45 yamt Exp $");
 
 #include "opt_mbtype.h"
 
@@ -144,21 +144,21 @@ pcibusmatch(struct device *pdp, struct cfdata *cfp, void *auxp)
 	static int	nmatched = 0;
 
 	if (strcmp((char *)auxp, "pcib"))
-		return (0);	/* Wrong number... */
+		return 0;	/* Wrong number... */
 
-	if(atari_realconfig == 0)
-		return (1);
+	if (atari_realconfig == 0)
+		return 1;
 
 	if (machineid & (ATARI_HADES|ATARI_MILAN)) {
 		/*
 		 * Both Hades and Milan have only one pci bus
 		 */
 		if (nmatched)
-			return (0);
+			return 0;
 		nmatched++;
-		return (1);
+		return 1;
 	}
-	return (0);
+	return 0;
 }
 
 void
@@ -204,9 +204,10 @@ pcibusattach(struct device *pdp, struct device *dp, void *auxp)
 int
 ataripcibusprint(void *auxp, const char *name)
 {
-	if(name == NULL)
-		return(UNCONF);
-	return(QUIET);
+
+	if (name == NULL)
+		return UNCONF;
+	return QUIET;
 }
 
 void
@@ -598,7 +599,8 @@ enable_pci_devices(void)
 pcitag_t
 pci_make_tag(pci_chipset_tag_t pc, int bus, int device, int function)
 {
-	return ((bus << 16) | (device << 11) | (function << 8));
+
+	return (bus << 16) | (device << 11) | (function << 8);
 }
 
 void
@@ -679,7 +681,7 @@ pci_intr_string(pci_chipset_tag_t pc, pci_intr_handle_t ih)
 		panic("pci_intr_string: bogus handle 0x%x", ih);
 
 	sprintf(irqstr, "irq %d", ih);
-	return (irqstr);
+	return irqstr;
 	
 }
 

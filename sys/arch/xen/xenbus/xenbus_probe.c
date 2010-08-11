@@ -1,4 +1,4 @@
-/* $NetBSD: xenbus_probe.c,v 1.20.4.1 2009/05/04 08:12:15 yamt Exp $ */
+/* $NetBSD: xenbus_probe.c,v 1.20.4.2 2010/08/11 22:53:00 yamt Exp $ */
 /******************************************************************************
  * Talks to Xen Store to figure out what devices we have.
  *
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenbus_probe.c,v 1.20.4.1 2009/05/04 08:12:15 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenbus_probe.c,v 1.20.4.2 2010/08/11 22:53:00 yamt Exp $");
 
 #if 0
 #define DPRINTK(fmt, args...) \
@@ -54,6 +54,10 @@ __KERNEL_RCSID(0, "$NetBSD: xenbus_probe.c,v 1.20.4.1 2009/05/04 08:12:15 yamt E
 #include <xen/xenbus.h>
 #include <xen/evtchn.h>
 #include <xen/shutdown_xenbus.h>
+
+#ifdef XEN_BALLOON
+#include <xen/balloon.h>
+#endif
 
 #include "xenbus_comms.h"
 
@@ -513,6 +517,10 @@ xenbus_probe(void *unused)
 	be_watch.xbw_callback = backend_changed;
 	register_xenbus_watch(&be_watch);
 	shutdown_xenbus_setup();
+
+#ifdef XEN_BALLOON
+	balloon_xenbus_setup();
+#endif
 
 	/* Notify others that xenstore is up */
 	//notifier_call_chain(&xenstore_chain, 0, NULL);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ka860.c,v 1.31.4.1 2009/05/04 08:12:05 yamt Exp $	*/
+/*	$NetBSD: ka860.c,v 1.31.4.2 2010/08/11 22:52:52 yamt Exp $	*/
 /*
  * Copyright (c) 1986, 1988 Regents of the University of California.
  * All rights reserved.
@@ -36,10 +36,12 @@
  *
  * Todo: Set up all four console lines in a VAX8600.
  * This is: local, remote, EMM and logical.
+ *
+ * ABus code added by Johnny Billquist 2010
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ka860.c,v 1.31.4.1 2009/05/04 08:12:05 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ka860.c,v 1.31.4.2 2010/08/11 22:52:52 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -63,9 +65,11 @@ static	void	ka86_reboot(int);
 static	void	ka86_clrf(void);
 static	void	ka860_conf(void);
 static	void	ka86_attach_cpu(device_t);
-static	void	ka86_subconf(device_t, void *, cfprint_t);
+static int abus_mainbus_match(device_t, cfdata_t, void *);
+static void abus_mainbus_attach(device_t, device_t, void*);
+static int abus_print(void *, const char *);
 
-static const char * const ka86_devs[] = { "cpu", NULL };
+static const char * const ka86_devs[] = { "cpu", "abus", NULL };
 
 const struct cpu_dep ka860_calls = {
 	.cpu_mchk	= ka86_mchk,
@@ -79,7 +83,6 @@ const struct cpu_dep ka860_calls = {
 	.cpu_clrf	= ka86_clrf,
 	.cpu_devs	= ka86_devs,
 	.cpu_attach_cpu	= ka86_attach_cpu,
-	.cpu_subconf	= ka86_subconf,
 };
 
 /*
@@ -299,17 +302,32 @@ ka86_attach_cpu(device_t self)
 	struct ka86 * const ka86 = (void *)&vax_cpudata;
 	int fpa;
 
-	aprint_normal("KA86%d, S/N %d, Rev. %c, manufactured in %s.\n",
+	aprint_naive(": KA86%d, S/N %d, Rev. %c, manufactured in %s.\n",
+	    ka86->v8650 ? 5 : 0, ka86->snr, ka86->eco+64,
+	    manuf[mindex[ka86->plant]]);
+	aprint_normal(": KA86%d, S/N %d, Rev. %c, manufactured in %s.\n",
 	    ka86->v8650 ? 5 : 0, ka86->snr, ka86->eco+64,
 	    manuf[mindex[ka86->plant]]);
 	fpa = mfpr(PR_ACCS);
 	if (fpa & 255) {
+		aprint_naive_dev(self,
+		    "FPA present: type %d, serial number %d\n", 
+		    fpa & 255, fpa >> 16);
 		aprint_normal_dev(self,
-		    "FPA present: type %d, serial number %d", 
+		    "FPA present: type %d, serial number %d\n", 
 		    fpa & 255, fpa >> 16);
 		mtpr(0x8000, PR_ACCS);
-	} else
-		aprint_normal_dev(self, "no FPA");
+	} else {
+		aprint_naive_dev(self, "no FPA\n");
+		aprint_normal_dev(self, "no FPA\n");
+        }
+
+	/*
+	 * Init CPU.
+	 * Attach crl first.
+	 */
+
+	crlattach();
 }
 
 /*
@@ -360,21 +378,27 @@ ka86_reboot(int howto)
 	__asm("halt");
 }
 
-void
-ka86_subconf(device_t self, void * aux, cfprint_t cfprint)
+
+CFATTACH_DECL_NEW(abus_mainbus, 0,
+                  abus_mainbus_match, abus_mainbus_attach, NULL, NULL);
+
+int abus_mainbus_match(device_t parent, cfdata_t self, void *aux)
 {
-	struct mainbus_attach_args * const ma = aux;
-	bus_addr_t tmp;
+  return (vax_bustype == VAX_ABUS);
+}
+
+void abus_mainbus_attach(device_t parent, device_t self, void *aux)
+{
+        struct mainbus_attach_args * const ma = aux;
+        struct abus_attach_args aa;
+
+        unsigned int tmp;
 	volatile struct sbia_regs *sbiar;
-	int     type, i;
-	char	typebuf[13];
 
-	/*
-	 * Init CPU.
-	 * Attach crl first.
-	 */
+        int     type, i;
 
-	crlattach();
+        aprint_naive("\n");
+        aprint_normal("\n");
 
 	for (i = 0; i < NIOA8600; i++) {
 		sbiar = (struct sbia_regs *)vax_map_physmem((paddr_t)IOA8600(i),
@@ -384,27 +408,44 @@ ka86_subconf(device_t self, void * aux, cfprint_t cfprint)
 			    (IOAMAPSIZ / VAX_NBPG));
 			continue;
 		}
+
 		tmp = sbiar->sbi_cfg;
 		type = tmp & IOA_TYPMSK;
 
-		ma->ma_type = NULL;
-		if (type == IOA_SBIA)
-			ma->ma_type = "sbi";
+                switch (type) {
 
-		if (ma->ma_type == NULL) {
-			snprintf(typebuf, sizeof(typebuf), "%#x", type);
-			ma->ma_type = typebuf;
-		}
+                case IOA_SBIA:
 
-		ma->ma_num = i;
-		ma->ma_addr = tmp;
-		config_found(self, ma, cfprint);
+                        aa.aa_base = (bus_addr_t)(SBIA8600(i));
+                        aa.aa_num = i;
+                        aa.aa_name = "sbi";
+                        aa.aa_type = tmp;
+                        aa.aa_iot = ma->ma_iot;
+                        aa.aa_dmat = ma->ma_dmat;
 
-		if (type == IOA_SBIA) {
 			sbiar->sbi_errsum = -1;
 			sbiar->sbi_error = 0x1000;
 			sbiar->sbi_fltsts = 0xc0000;
+
+                        config_found(self, &aa, abus_print);
+                        break;
+
+                default:
+                  aprint_naive("IOAdapter %#x unsupported\n", type);
+                  aprint_normal("IOAdapter %#x unsupported\n", type);
 		}
+
 		vax_unmap_physmem((vaddr_t)sbiar, (IOAMAPSIZ / VAX_NBPG));
 	}
+}
+
+int abus_print(void *aux, const char *name)
+{
+  struct abus_attach_args *aa = aux;
+
+  if (name) {
+    aprint_naive("%s%d at %s\n", aa->aa_name, aa->aa_num, name);
+    aprint_normal("%s%d at %s\n", aa->aa_name, aa->aa_num, name);
+  }
+  return UNSUPP;
 }

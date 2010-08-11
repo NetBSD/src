@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbbvar.h,v 1.33.10.3 2010/03/11 15:03:50 yamt Exp $	*/
+/*	$NetBSD: pccbbvar.h,v 1.33.10.4 2010/08/11 22:53:50 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999 HAYAKAWA Koichi.  All rights reserved.
@@ -89,10 +89,8 @@ struct pccbb_softc {
 	bus_space_tag_t sc_memt;
 	bus_dma_tag_t sc_dmat;
 
-#if rbus
 	rbus_tag_t sc_rbus_iot;		/* rbus for i/o donated from parent */
 	rbus_tag_t sc_rbus_memt;	/* rbus for mem donated from parent */
-#endif
 
 	bus_space_tag_t sc_base_memt;
 	bus_space_handle_t sc_base_memh;
@@ -137,7 +135,8 @@ struct pccbb_softc {
 
 	/* interrupt handler list on the bridge */
 	LIST_HEAD(, pccbb_intrhand_list) sc_pil;
-	int sc_pil_intr_enable;	/* can i call intr handler for child device? */
+	/* can i call intr handler for child device? */
+	bool sc_pil_intr_enable;
 };
 
 /*

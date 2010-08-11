@@ -1,4 +1,4 @@
-/* $NetBSD: devopen.c,v 1.6.4.3 2009/08/19 18:46:44 yamt Exp $ */
+/* $NetBSD: devopen.c,v 1.6.4.4 2010/08/11 22:52:39 yamt Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -35,68 +35,62 @@
 
 #include <lib/libsa/stand.h>
 #include <lib/libsa/nfs.h>
+#include <lib/libsa/ufs.h>
+#include <lib/libsa/tftp.h>
 #include <lib/libkern/libkern.h>
 
 #include "globals.h"
 
-struct devsw devsw[] = {
-	{ "net", net_strategy, net_open, net_close, noioctl },
-};
-int ndevs = sizeof(devsw) / sizeof(devsw[0]);
+struct devsw devnet = { "net", net_strategy, net_open, net_close, noioctl };
+struct devsw devdsk = { "dsk", dsk_strategy, dsk_open, dsk_close, noioctl };
 
-struct fs_ops fssw[] = {
-	FS_OPS(nfs),
-};
-struct fs_ops file_system[1];
+struct fs_ops file_system[1] = { FS_OPS(null) };
 int nfsys = 1;
+struct fs_ops fs_nfs   = FS_OPS(nfs);
+struct fs_ops fs_tftp  = FS_OPS(tftp);
+struct fs_ops fs_ffsv2 = FS_OPS(ffsv2);
+struct fs_ops fs_ffsv1 = FS_OPS(ffsv1);
+extern char *fsmod;
+
+static void parseunit(const char *, int *, int *, char **);
 
 int
 devopen(struct open_file *of, const char *name, char **file)
 {
 	int error;
+	int unit, part;
 	extern char bootfile[]; /* handed by DHCP */
 
 	if (of->f_flags != F_READ)
 		return EPERM;
 
-	if (strcmp("net:", name) == 0) {
-		of->f_dev = &devsw[0];
-		if ((error = net_open(of, name)) != 0)
+	if (strncmp("net:", name, 4) == 0 || strncmp("nfs:", name, 4) == 0) {
+		of->f_dev = &devnet;
+		if ((error = net_open(of, &name[4], "nfs")) != 0)
 			return error;
-		file_system[0] = fssw[0];
+		file_system[0] = fs_nfs;
 		*file = bootfile;	/* resolved fname */
 		return 0;		/* NFS */
 	}
-#if 0 /* later */
+	if (strncmp("tftp:", name, 5) == 0) {
+		of->f_dev = &devnet;
+		if ((error = net_open(of, &name[5], "tftp")) != 0)
+			return error;
+		file_system[0] = fs_tftp;
+		*file = bootfile;	/* resolved fname */
+		return 0;		/* TFTP */
+	}
 	if (name[0] == 'w' && name[1] == 'd') {
 		parseunit(&name[2], &unit, &part, file);
-		of->f_dev = &devsw[1];
-		if ((error = wdopen(of, unit, part)) != 0)
+		of->f_dev = &devdsk;
+		if ((error = dsk_open(of, unit, part, *file)) != 0)
 			return error;
-		switch (parsefstype(of->f_devdata)) {
-		default:
-		case FS_BSDFFS:
-			file_system[0] = fssw[1]; break;
-		case FS_EX2FS:
-			file_system[0] = fssw[2]; break;
-		case FS_MSDOS:
-			file_system[0] = fssw[3]; break;
-		}
-		return 0;
+		file_system[0] = *dsk_fsops(of);
+		return 0;		/* FFS */
 	}
-#endif
 	return ENOENT;
 }
 
-/* ARGSUSED */
-int
-noioctl(struct open_file *f, u_long cmd, void *data)
-{
-
-	return EINVAL;
-}
-
-#if 0
 static void
 parseunit(const char *name, int *unitp, int *partp, char **pathp)
 {
@@ -115,4 +109,11 @@ parseunit(const char *name, int *unitp, int *partp, char **pathp)
 	*partp = (part == -1) ? 0 : part;
 	*pathp = (*p == ':') ? (char *)p + 1 : NULL;
 }
-#endif
+
+/* ARGSUSED */
+int
+noioctl(struct open_file *f, u_long cmd, void *data)
+{
+
+	return EINVAL;
+}

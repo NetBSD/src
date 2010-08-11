@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file64.c,v 1.46.4.4 2010/03/11 15:03:16 yamt Exp $	*/
+/*	$NetBSD: linux_file64.c,v 1.46.4.5 2010/08/11 22:53:08 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_file64.c,v 1.46.4.4 2010/03/11 15:03:16 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_file64.c,v 1.46.4.5 2010/08/11 22:53:08 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -347,7 +347,7 @@ again:
 eof:
 	*retval = nbytes - resid;
 out:
-	VOP_UNLOCK(vp, 0);
+	VOP_UNLOCK(vp);
 	if (cookiebuf)
 		free(cookiebuf, M_TEMP);
 	free(tbuf, M_TEMP);

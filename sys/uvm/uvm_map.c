@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.254.2.5 2010/03/11 15:04:47 yamt Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.254.2.6 2010/08/11 22:55:16 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.254.2.5 2010/03/11 15:04:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.254.2.6 2010/08/11 22:55:16 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -2356,6 +2356,7 @@ uvm_unmap_remove(struct vm_map *map, vaddr_t start, vaddr_t end,
 			 * and we should free any such pages immediately.
 			 * this is mostly used for kmem_map.
 			 */
+			KASSERT(vm_map_pmap(map) == pmap_kernel());
 
 			if ((entry->flags & UVM_MAP_KMAPENT) == 0) {
 				uvm_km_pgremove_intrsafe(map, entry->start,
@@ -2460,8 +2461,15 @@ uvm_unmap_remove(struct vm_map *map, vaddr_t start, vaddr_t end,
 		first_entry = entry;
 		entry = next;
 	}
+
+	/*
+	 * Note: if map is dying, leave pmap_update() for pmap_destroy(),
+	 * which will be called later.
+	 */
 	if ((map->flags & VM_MAP_DYING) == 0) {
 		pmap_update(vm_map_pmap(map));
+	} else {
+		KASSERT(vm_map_pmap(map) != pmap_kernel());
 	}
 
 	uvm_map_check(map, "unmap_remove leave");
@@ -4729,7 +4737,7 @@ again:
 	va = args.uma_start;
 
 	pmap_kenter_pa(va, VM_PAGE_TO_PHYS(pg),
-	    VM_PROT_READ|VM_PROT_WRITE|PMAP_KMPAGE, 0);
+	    VM_PROT_READ|VM_PROT_WRITE, PMAP_KMPAGE);
 	pmap_update(vm_map_pmap(map));
 
 #endif

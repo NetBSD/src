@@ -1,4 +1,4 @@
-/*	$NetBSD: beagle.h,v 1.2.14.2 2009/05/04 08:10:56 yamt Exp $	*/
+/*	$NetBSD: beagle.h,v 1.2.14.3 2010/08/11 22:51:50 yamt Exp $	*/
 /*
  * Copyright (c) 2007 Microsoft
  * All rights reserved.
@@ -34,10 +34,10 @@
 #include <arm/omap/omap2_reg.h>
 
 /*
- * Kernel VM space: 192MB at KERNEL_VM_BASE
+ * Kernel VM space: 576MB at KERNEL_VM_BASE
  */
 #define	KERNEL_VM_BASE		((KERNEL_BASE + 0x01000000) & ~(0x400000-1))
-#define KERNEL_VM_SIZE		0x0C000000
+#define KERNEL_VM_SIZE		0x24000000
 
 /*
  * We devmap IO starting at KERNEL_VM_BASE + KERNEL_VM_SIZE

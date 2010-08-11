@@ -1,4 +1,4 @@
-/*	$NetBSD: ne2000.c,v 1.58.4.4 2010/03/11 15:03:33 yamt Exp $	*/
+/*	$NetBSD: ne2000.c,v 1.58.4.5 2010/08/11 22:53:29 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ne2000.c,v 1.58.4.4 2010/03/11 15:03:33 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ne2000.c,v 1.58.4.5 2010/08/11 22:53:29 yamt Exp $");
 
 #include "opt_ipkdb.h"
 
@@ -92,16 +92,18 @@ __KERNEL_RCSID(0, "$NetBSD: ne2000.c,v 1.58.4.4 2010/03/11 15:03:33 yamt Exp $")
 
 #include <dev/ic/ax88190reg.h>
 
-int	ne2000_write_mbuf(struct dp8390_softc *, struct mbuf *, int);
-int	ne2000_ring_copy(struct dp8390_softc *, int, void *, u_short);
-void	ne2000_read_hdr(struct dp8390_softc *, int, struct dp8390_ring *);
-int	ne2000_test_mem(struct dp8390_softc *);
+static int	ne2000_write_mbuf(struct dp8390_softc *, struct mbuf *, int);
+static int	ne2000_ring_copy(struct dp8390_softc *, int, void *, u_short);
+static void	ne2000_read_hdr(struct dp8390_softc *, int,
+		    struct dp8390_ring *);
+static int	ne2000_test_mem(struct dp8390_softc *);
 
-void	ne2000_writemem(bus_space_tag_t, bus_space_handle_t,
-	    bus_space_tag_t, bus_space_handle_t, u_int8_t *, int, size_t,
-	    int, int);
-void	ne2000_readmem(bus_space_tag_t, bus_space_handle_t,
-	    bus_space_tag_t, bus_space_handle_t, int, u_int8_t *, size_t, int);
+static void	ne2000_writemem(bus_space_tag_t, bus_space_handle_t,
+		    bus_space_tag_t, bus_space_handle_t, const uint8_t *, int,
+		    size_t, int, int);
+static void	ne2000_readmem(bus_space_tag_t, bus_space_handle_t,
+		    bus_space_tag_t, bus_space_handle_t, int, uint8_t *,
+		    size_t, int);
 
 #ifdef NE2000_DETECT_8BIT
 static bool	ne2000_detect_8bit(bus_space_tag_t, bus_space_handle_t,
@@ -113,14 +115,14 @@ static bool	ne2000_detect_8bit(bus_space_tag_t, bus_space_handle_t,
 	    BUS_SPACE_BARRIER_READ | BUS_SPACE_BARRIER_WRITE)
 
 int
-ne2000_attach(struct ne2000_softc *nsc, u_int8_t *myea)
+ne2000_attach(struct ne2000_softc *nsc, uint8_t *myea)
 {
 	struct dp8390_softc *dsc = &nsc->sc_dp8390;
 	bus_space_tag_t nict = dsc->sc_regt;
 	bus_space_handle_t nich = dsc->sc_regh;
 	bus_space_tag_t asict = nsc->sc_asict;
 	bus_space_handle_t asich = nsc->sc_asich;
-	u_int8_t romdata[16];
+	uint8_t romdata[16];
 	int memstart, memsize, i, useword;
 
 	/*
@@ -138,7 +140,7 @@ ne2000_attach(struct ne2000_softc *nsc, u_int8_t *myea)
 	case NE2000_TYPE_UNKNOWN:
 	default:
 		aprint_error_dev(dsc->sc_dev, "where did the card go?\n");
-		return (1);
+		return 1;
 	case NE2000_TYPE_NE1000:
 		memstart = 8192;
 		memsize = 8192;
@@ -246,8 +248,9 @@ ne2000_attach(struct ne2000_softc *nsc, u_int8_t *myea)
 		}
 
 		if (memstart == 0) {
-			aprint_error_dev(&dsc->sc_dev, "cannot find start of RAM\n");
-			return (1);
+			aprint_error_dev(&dsc->sc_dev,
+			    "cannot find start of RAM\n");
+			return 1;
 		}
 
 		/* Search for the end of RAM. */
@@ -319,20 +322,21 @@ ne2000_attach(struct ne2000_softc *nsc, u_int8_t *myea)
 
 	if (dp8390_config(dsc)) {
 		aprint_error_dev(dsc->sc_dev, "setup failed\n");
-		return (1);
+		return 1;
 	}
 
-	return (0);
+	return 0;
 }
 
 /*
  * Detect an NE-2000 or compatible.  Returns a model code.
  */
 int
-ne2000_detect(bus_space_tag_t nict, bus_space_handle_t nich, bus_space_tag_t asict, bus_space_handle_t asich)
+ne2000_detect(bus_space_tag_t nict, bus_space_handle_t nich,
+    bus_space_tag_t asict, bus_space_handle_t asich)
 {
-	static u_int8_t test_pattern[32] = "THIS is A memory TEST pattern";
-	u_int8_t test_buffer[32], tmp;
+	const uint8_t test_pattern[32] = "THIS is A memory TEST pattern";
+	uint8_t test_buffer[32], tmp;
 	int i, rv = NE2000_TYPE_UNKNOWN;
 	int useword;
 
@@ -480,7 +484,7 @@ ne2000_detect(bus_space_tag_t nict, bus_space_handle_t nich, bus_space_tag_t asi
 	 * then we don't know what this board is.
 	 */
 	ne2000_writemem(nict, nich, asict, asich, test_pattern, 16384,
-	    sizeof(test_pattern), useword, 0);
+	    sizeof(test_pattern), useword, 1);
 	ne2000_readmem(nict, nich, asict, asich, 16384, test_buffer,
 	    sizeof(test_buffer), useword);
 
@@ -507,7 +511,7 @@ ne2000_detect(bus_space_tag_t nict, bus_space_handle_t nich, bus_space_tag_t asi
 	NIC_BARRIER(nict, nich);
 	bus_space_write_1(nict, nich, ED_P0_ISR, 0xff);
 
-	return (rv);
+	return rv;
 }
 
 #ifdef NE2000_DETECT_8BIT
@@ -594,10 +598,10 @@ ne2000_write_mbuf(struct dp8390_softc *sc, struct mbuf *m, int buf)
 	 */
 	if (nsc->sc_useword == 0) {
 		/* byte ops are easy. */
-		for (; m != 0; m = m->m_next) {
+		for (; m != NULL; m = m->m_next) {
 			if (m->m_len) {
 				bus_space_write_multi_1(asict, asich,
-				    NE2000_ASIC_DATA, mtod(m, u_int8_t *),
+				    NE2000_ASIC_DATA, mtod(m, uint8_t *),
 				    m->m_len);
 			}
 		}
@@ -608,20 +612,20 @@ ne2000_write_mbuf(struct dp8390_softc *sc, struct mbuf *m, int buf)
 		}
 	} else {
 		/* word ops are a bit trickier. */
-		u_int8_t *data, savebyte[2];
+		uint8_t *data, savebyte[2];
 		int l, leftover;
 #ifdef DIAGNOSTIC
-		u_int8_t *lim;
+		uint8_t *lim;
 #endif
 		/* Start out with no leftover data. */
 		leftover = 0;
 		savebyte[0] = savebyte[1] = 0;
 
-		for (; m != 0; m = m->m_next) {
+		for (; m != NULL; m = m->m_next) {
 			l = m->m_len;
 			if (l == 0)
 				continue;
-			data = mtod(m, u_int8_t *);
+			data = mtod(m, uint8_t *);
 #ifdef DIAGNOSTIC
 			lim = data + l;
 #endif
@@ -637,10 +641,10 @@ ne2000_write_mbuf(struct dp8390_softc *sc, struct mbuf *m, int buf)
 					l--;
 					bus_space_write_stream_2(asict, asich,
 					    NE2000_ASIC_DATA,
-					    *(u_int16_t *)savebyte);
+					    *(uint16_t *)savebyte);
 					leftover = 0;
 				} else if (BUS_SPACE_ALIGNED_POINTER(data,
-					   u_int16_t) == 0) {
+					   uint16_t) == 0) {
 					/*
 					 * Unaligned data; buffer the next
 					 * byte.
@@ -658,7 +662,7 @@ ne2000_write_mbuf(struct dp8390_softc *sc, struct mbuf *m, int buf)
 					l &= ~1;
 					bus_space_write_multi_stream_2(asict,
 					    asich, NE2000_ASIC_DATA,
-					    (u_int16_t *)data, l >> 1);
+					    (uint16_t *)data, l >> 1);
 					data += l;
 					if (leftover)
 						savebyte[0] = *data++;
@@ -675,7 +679,7 @@ ne2000_write_mbuf(struct dp8390_softc *sc, struct mbuf *m, int buf)
 		if (leftover) {
 			savebyte[1] = 0;
 			bus_space_write_stream_2(asict, asich, NE2000_ASIC_DATA,
-			    *(u_int16_t *)savebyte);
+			    *(uint16_t *)savebyte);
 		}
 		if (padlen) {
 			for(; padlen > 1; padlen -= 2)
@@ -687,7 +691,7 @@ ne2000_write_mbuf(struct dp8390_softc *sc, struct mbuf *m, int buf)
 
 	/* AX88796 doesn't seem to have remote DMA complete */
 	if (sc->sc_flags & DP8390_NO_REMOTE_DMA_COMPLETE)
-		return(savelen);
+		return savelen;
 
 	/*
 	 * Wait for remote DMA to complete.  This is necessary because on the
@@ -711,7 +715,7 @@ ne2000_write_mbuf(struct dp8390_softc *sc, struct mbuf *m, int buf)
 		dp8390_reset(sc);
 	}
 
-	return (savelen);
+	return savelen;
 }
 
 /*
@@ -737,17 +741,17 @@ ne2000_ring_copy(struct dp8390_softc *sc, int src, void *dstv, u_short amount)
 
 		/* Copy amount up to end of NIC memory. */
 		ne2000_readmem(nict, nich, asict, asich, src,
-		    (u_int8_t *)dst, tmp_amount, useword);
+		    (uint8_t *)dst, tmp_amount, useword);
 
 		amount -= tmp_amount;
 		src = sc->mem_ring;
 		dst += tmp_amount;
 	}
 
-	ne2000_readmem(nict, nich, asict, asich, src, (u_int8_t *)dst,
+	ne2000_readmem(nict, nich, asict, asich, src, (uint8_t *)dst,
 	    amount, useword);
 
-	return (src + amount);
+	return src + amount;
 }
 
 void
@@ -756,7 +760,7 @@ ne2000_read_hdr(struct dp8390_softc *sc, int buf, struct dp8390_ring *hdr)
 	struct ne2000_softc *nsc = (struct ne2000_softc *)sc;
 
 	ne2000_readmem(sc->sc_regt, sc->sc_regh, nsc->sc_asict, nsc->sc_asich,
-	    buf, (u_int8_t *)hdr, sizeof(struct dp8390_ring),
+	    buf, (uint8_t *)hdr, sizeof(struct dp8390_ring),
 	    nsc->sc_useword);
 #if BYTE_ORDER == BIG_ENDIAN
 	hdr->count = bswap16(hdr->count);
@@ -768,7 +772,7 @@ ne2000_test_mem(struct dp8390_softc *sc)
 {
 
 	/* Noop. */
-	return (0);
+	return 0;
 }
 
 /*
@@ -777,7 +781,9 @@ ne2000_test_mem(struct dp8390_softc *sc)
  * rounded up to a word - ok as long as mbufs are word sized.
  */
 void
-ne2000_readmem(bus_space_tag_t nict, bus_space_handle_t nich, bus_space_tag_t asict, bus_space_handle_t asich, int src, u_int8_t *dst, size_t amount, int useword)
+ne2000_readmem(bus_space_tag_t nict, bus_space_handle_t nich,
+    bus_space_tag_t asict, bus_space_handle_t asich,
+    int src, uint8_t *dst, size_t amount, int useword)
 {
 
 	/* Select page 0 registers. */
@@ -804,7 +810,7 @@ ne2000_readmem(bus_space_tag_t nict, bus_space_handle_t nich, bus_space_tag_t as
 	ASIC_BARRIER(asict, asich);
 	if (useword)
 		bus_space_read_multi_stream_2(asict, asich, NE2000_ASIC_DATA,
-		    (u_int16_t *)dst, amount >> 1);
+		    (uint16_t *)dst, amount >> 1);
 	else
 		bus_space_read_multi_1(asict, asich, NE2000_ASIC_DATA,
 		    dst, amount);
@@ -815,7 +821,9 @@ ne2000_readmem(bus_space_tag_t nict, bus_space_handle_t nich, bus_space_tag_t as
  * used in the probe routine to test the memory.  'len' must be even.
  */
 void
-ne2000_writemem(bus_space_tag_t nict, bus_space_handle_t nich, bus_space_tag_t asict, bus_space_handle_t asich, u_int8_t *src, int dst, size_t len, int useword, int quiet)
+ne2000_writemem(bus_space_tag_t nict, bus_space_handle_t nich,
+    bus_space_tag_t asict, bus_space_handle_t asich,
+    const uint8_t *src, int dst, size_t len, int useword, int quiet)
 {
 	int maxwait = 100;	/* about 120us */
 
@@ -846,7 +854,7 @@ ne2000_writemem(bus_space_tag_t nict, bus_space_handle_t nich, bus_space_tag_t a
 	ASIC_BARRIER(asict, asich);
 	if (useword)
 		bus_space_write_multi_stream_2(asict, asich, NE2000_ASIC_DATA,
-		    (u_int16_t *)src, len >> 1);
+		    (const uint16_t *)src, len >> 1);
 	else
 		bus_space_write_multi_1(asict, asich, NE2000_ASIC_DATA,
 		    src, len);
@@ -871,7 +879,7 @@ int
 ne2000_detach(struct ne2000_softc *sc, int flags)
 {
 
-	return (dp8390_detach(&sc->sc_dp8390, flags));
+	return dp8390_detach(&sc->sc_dp8390, flags);
 }
 
 #ifdef IPKDB_NE
@@ -971,9 +979,6 @@ ne2000_ipkdb_attach(struct ipkdb_if *kip)
 
 	if (dp8390_ipkdb_attach(kip))
 		return -1;
-
-	dp->mem_ring = dp->mem_start
-		+ ((dp->txb_cnt * ED_TXBUF_SIZE) << ED_PAGE_SHIFT);
 
 	if (!(kip->flags & IPKDB_MYHW)) {
 		char romdata[16];

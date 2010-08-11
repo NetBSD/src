@@ -1,4 +1,4 @@
-/*	$NetBSD: copy.S,v 1.6.18.5 2010/03/11 15:02:26 yamt Exp $	*/
+/*	$NetBSD: copy.S,v 1.6.18.6 2010/08/11 22:52:08 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -98,7 +98,7 @@
 LEAF_ENTRY_NOPROFILE(name)			! \
 	ldil	L%VM_MAXUSER_ADDRESS, %t1	! \
 	comb,>>= %arg0, %t1, fusubadaddr	! \
-	mfctl	CR_CURLWP, %t1			! \
+	GET_CURLWP(%t1)				! \
 	ldw	L_PCB(%t1), %t1			! \
 	ldil	L%fusufault, %t2		! \
 	ldo	R%fusufault(%t2), %t2		! \
@@ -139,14 +139,6 @@ SUX(suswintr, sth)
 
 	.align	64
 
-LEAF_ENTRY_NOPROFILE(_copy_on_fault)
-	/* reset fault handler */
-	stw	%r0, PCB_ONFAULT(%r31)
-ALTENTRY(copy_on_fault)
-	bv	0(%rp)
-	ldi	EFAULT, %ret0
-EXIT(_copy_on_fault)
-
 /*
  * int spstrcpy (pa_space_t ssp, const void *src, pa_space_t dsp, void *dst,
  *     size_t size, size_t *rsize)
@@ -157,10 +149,10 @@ EXIT(_copy_on_fault)
  */
 LEAF_ENTRY(spstrcpy)
 	/* setup fault handler */
-	mfctl	CR_CURLWP, %r31
+	GET_CURLWP(%r31)
 	ldw	L_PCB(%r31), %r31
-	ldil	L%_copy_on_fault, %t2
-	ldo	R%_copy_on_fault(%t2), %t2
+	ldil	L%L$spstrcpy_fault, %t2
+	ldo	R%L$spstrcpy_fault(%t2), %t2
 	stw	%t2, PCB_ONFAULT(%r31)
 
 	ldw	HPPA_FRAME_ARG(4)(%sp), %ret1		/* size */
@@ -177,6 +169,10 @@ L$spstrcpy_loop:
 	ldo	-1(%ret1), %ret1
 
 L$spstrcpy_exit:
+	comiclr,= 0, %t1, %ret0
+	ldi	ENAMETOOLONG,%ret0
+
+L$spstrcpy_fault:
 	/* reset fault handler */
 	stw	%r0, PCB_ONFAULT(%r31)
 	mtsp	%r0, %sr2	/* XXX need this? */
@@ -184,8 +180,6 @@ L$spstrcpy_exit:
 	ldw	HPPA_FRAME_ARG(5)(%sp), %arg0		/* rsize */
 	comiclr,= 0, %arg0, %r0
 	stw	%arg1, 0(%arg0)
-	comiclr,= 0, %t1, %ret0
-	ldi	ENAMETOOLONG,%ret0
 	bv,n	0(%rp)
 EXIT(spstrcpy)
 
@@ -228,7 +222,7 @@ EXIT(name)
 
 /* This loads curlwp's space into the given register. */
 #define SPACE_CURLWP(reg)			  \
-	mfctl	CR_CURLWP, reg			! \
+	GET_CURLWP(reg)				! \
 	ldw	L_PCB(reg), reg			! \
 	ldw	PCB_SPACE(reg), reg
 
@@ -258,9 +252,10 @@ EXIT(name)
 	_SPCOPY(namestr, CALL_SPSTRCPY, spaceargs)
 
 /*
+ * int kcopy(const void *src, void *dst, size_t len);
  * int copystr(const void *src, void *dst, size_t size, size_t *lenp);
  */
-_SPCOPY(copystr, CALL_SPSTRCPY,
+SPCOPY(kcopy, copystr,
 	SPACE_KERNEL(%arg0) ! SPACE_KERNEL(%arg2))
 
 /*
@@ -350,17 +345,17 @@ STRONG_ALIAS(ucas_ptr,ucas_32)
 /*
  * Compare-and-swap the pointer in the user-space.
  *
- * int	ucasword(volatile void *uptr, void *old, void *new, void *ret);
+ * int	ucas_32(volatile int32_t *uptr, int32_t old, int32_t new, int32_t *ret);
  */
 LEAF_ENTRY(ucas_32)
 	ldil	L%VM_MAXUSER_ADDRESS, %t1
 	comb,>>= %arg0, %t1, 1f
 
 	/* setup fault handler */
-	mfctl	CR_CURLWP, %r31
+	GET_CURLWP(%r31)
 	ldw	L_PCB(%r31), %r31
-	ldil	L%_copy_on_fault, %t2
-	ldo	R%_copy_on_fault(%t2), %t2
+	ldil	L%L$ucas_32_fault, %t2
+	ldo	R%L$ucas_32_fault(%t2), %t2
 	stw	%t2, PCB_ONFAULT(%r31)
 
 	ldw	PCB_SPACE(%r31), %t1
@@ -368,17 +363,17 @@ LEAF_ENTRY(ucas_32)
 
 ucas_ras_start:
 	ldw	0(%sr1, %arg0), %t1
-	comb,<>	%arg1, %t1, 2f
-	 copy	%t1,%ret0
-ucas_ras_end:
-	stw	%arg2, 0(%sr1, %arg0)
-	copy	%arg1, %ret0
-2:
-	stw	%ret0,	0(%sr1, %arg3)
-	bv	0(%rp)
+	comb,<>	%arg1, %t1, ucas_ras_end
 	 copy	%r0, %ret0
+	stw	%arg2, 0(%sr1, %arg0)
+ucas_ras_end:
+	stw	%t1, 0(%arg3)
+
+L$ucas_32_fault:
+	bv	0(%rp)
+	 stw	%r0, PCB_ONFAULT(%r31)
 
 1:
 	bv	0(%rp)
-	 ldi	-1, %ret0
+	 ldi	EFAULT, %ret0
 EXIT(ucas_32)

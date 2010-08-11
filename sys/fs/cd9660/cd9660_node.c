@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_node.c,v 1.23.4.1 2008/05/16 02:25:17 yamt Exp $	*/
+/*	$NetBSD: cd9660_node.c,v 1.23.4.2 2010/08/11 22:54:32 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_node.c,v 1.23.4.1 2008/05/16 02:25:17 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_node.c,v 1.23.4.2 2010/08/11 22:54:32 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -151,7 +151,7 @@ loop:
 			} else {
 				mutex_enter(&vp->v_interlock);
 				mutex_exit(&cd9660_ihash_lock);
-				if (vget(vp, flags | LK_INTERLOCK))
+				if (vget(vp, flags))
 					goto loop;
 			}
 			return (vp);
@@ -178,7 +178,7 @@ cd9660_ihashins(struct iso_node *ip)
 	LIST_INSERT_HEAD(ipp, ip, i_hash);
 	mutex_exit(&cd9660_ihash_lock);
 
-	vlockmgr(&ip->i_vnode->v_lock, LK_EXCLUSIVE);
+	VOP_LOCK(ITOV(ip), LK_EXCLUSIVE);
 }
 
 /*
@@ -213,7 +213,7 @@ cd9660_inactive(void *v)
 	 */
 	ip->i_flag = 0;
 	*ap->a_recycle = (ip->inode.iso_mode == 0);
-	VOP_UNLOCK(vp, 0);
+	VOP_UNLOCK(vp);
 	return error;
 }
 

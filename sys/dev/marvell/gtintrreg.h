@@ -1,4 +1,4 @@
-/*	$NetBSD: gtintrreg.h,v 1.4 2005/12/11 12:22:16 christos Exp $	*/
+/*	$NetBSD: gtintrreg.h,v 1.4.74.1 2010/08/11 22:53:37 yamt Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -57,8 +57,6 @@
 #ifndef _DISCOVERY_GT64260INTR_H
 #define _DISCOVERY_GT64260INTR_H
 
-#define BIT(n)  (1<<(n))
-
 
 /*
  * GT-64260 Interrupt Controller Register Map
@@ -79,51 +77,6 @@
 #define ICR_CI2M	0xe68	/* CPU int[2] mask */
 #define ICR_CI3M	0xe6c	/* CPU int[3] mask */
 
-/*
- * IRQs:
- * we define IRQs based on bit number in the
- * ICU_LEN dimensioned hardware portion of the imask_t bit vector
- * which consists of 64 bits of Main Cause and Mask register pairs
- * (ICR_MIC_LO, ICR_MIC_HI and ICR_CIM_LO, ICR_CIM_HI)
- * as well as 32 bits in GPP registers (see intr.h):
- *
- *      IRQs:
- *	31.............................0  63.............................32
- *                                     |   |                             |
- *      imask_t index:                 |   |                             |
- *      |                              |   |                             |
- *      ^--------- IM_PIC_LO ----------^   ^------ IM_PIC_HI ------------^
- *                                     |   |                             |
- *	Bitmasks:                      |   |                             |
- *      |                              |   |                             |
- *      ^--------- IML_* --------------^   ^------ IMH_* ----------------^
- *                                     |   |                             |
- *      Registers:                     |   |                             |
- *      |                              |   |                             |
- *      ^--------- ICR_MIC_LO ---------^   ^------ ICR_MIC_HI -----------^
- *      ^--------- ICR_CIM_LO ---------^   ^------ ICR_CIM_HI -----------^
- *
- *      IRQs:
- *	95............................64  127............................96
- *                                     |   |                             |
- *      imask_t index:                 |   |                             |
- *      |                              |   |                             |
- *      ^-------- IMASK_GPP  ----------^   ^-----  IMASK_SOFTINT --------^
- *                                     |   |                             |
- *	Bitmasks:                      |   |                             |
- *      |                              |   |                             |
- *      ^--------- GPP_* --------------^   ^------ SIBIT(irq) -----------^
- *                                     |   |                             |
- *      Registers:                     |   |                             |
- *      |                              |   |                             |
- *      ^--- GT_GPP_Interrupt_Cause ---^   ^-------  (none)   -----------^
- *      ^--- GT_GPP_Interrupt_Mask  ---^
- *
- *
- * Note that GPP interrupts are summarized in the Main Cause Register.
- *
- * Some IRQs are "resvered" undefined due to gaps in HW register utilization.
- */
 #define IRQ_DEV		1	/* device interface interrupt */
 #define IRQ_DMA		2	/* DMA addres error interrupt */
 #define IRQ_CPU		3	/* CPU interface interrupt */
@@ -152,87 +105,18 @@
 #define IRQ_PCI0IN_HI	27	/* PCI 0 inbound interrupt summary */
 #define IRQ_PCI1IN_LO	28	/* PCI 1 inbound interrupt summary */
 #define IRQ_PCI1IN_HI	29	/* PCI 1 inbound interrupt summary */
-#define IRQ_ETH0	(32+0)	/* Ethernet controller 0 interrupt */
-#define IRQ_ETH1	(32+1)	/* Ethernet controller 1 interrupt */
-#define IRQ_ETH2	(32+2)	/* Ethernet controller 2 interrupt */
-#define IRQ_SDMA	(32+4)	/* SDMA interrupt */
-#define IRQ_I2C		(32+5)	/* I2C interrupt */
-#define IRQ_BRG		(32+7)	/* Baud Rate Generator interrupt */
-#define IRQ_MPSC0	(32+8)	/* MPSC 0 interrupt */
-#define IRQ_MPSC1	(32+10)	/* MPSC 1 interrupt */
-#define IRQ_COMM	(32+11)	/* Comm unit interrupt */
-#define IRQ_GPP7_0	(32+24)	/* GPP[7..0] interrupt */
-#define IRQ_GPP15_8	(32+25)	/* GPP[15..8] interrupt */
-#define IRQ_GPP23_16	(32+26)	/* GPP[23..16] interrupt */
-#define IRQ_GPP31_24	(32+27)	/* GPP[31..24] interrupt */
-
-/*
- * low word interrupt mask register bits
- */
-#define IML_SUM		BIT(0)
-#define IML_DEV		BIT(IRQ_DEV)
-#define IML_DMA		BIT(IRQ_DMA)
-#define IML_CPU		BIT(IRQ_CPU)
-#define IML_IDMA0_1	BIT(IRQ_IDMA0_1)
-#define IML_IDMA2_3	BIT(IRQ_IDMA2_3)
-#define IML_IDMA4_5	BIT(IRQ_IDMA4_5)
-#define IML_IDMA6_7	BIT(IRQ_IDMA6_7)
-#define IML_TIME0_1	BIT(IRQ_TIME0_1)
-#define IML_TIME2_3	BIT(IRQ_TIME2_3)
-#define IML_TIME4_5	BIT(IRQ_TIME4_5)
-#define IML_TIME6_7	BIT(IRQ_TIME6_7)
-#define IML_PCI0_0	BIT(IRQ_PCI0_0)
-#define IML_PCI0_1	BIT(IRQ_PCI0_1)
-#define IML_PCI0_2	BIT(IRQ_PCI0_2)
-#define IML_PCI0_3	BIT(IRQ_PCI0_3)
-#define IML_PCI1_0	BIT(IRQ_PCI1_0)
-#define IML_ECC		BIT(IRQ_ECC)
-#define IML_PCI1_1	BIT(IRQ_PCI1_1)
-#define IML_PCI1_2	BIT(IRQ_PCI1_2)
-#define IML_PCI1_3	BIT(IRQ_PCI1_3)
-#define IML_PCI0OUT_LO	BIT(IRQ_PCI0OUT_LO)
-#define IML_PCI0OUT_HI	BIT(IRQ_PCI0OUT_HI)
-#define IML_PCI1OUT_LO	BIT(IRQ_PCI1OUT_LO)
-#define IML_PCI1OUT_HI	BIT(IRQ_PCI1OUT_HI)
-#define IML_PCI0IN_LO	BIT(IRQ_PCI0IN_LO)
-#define IML_PCI0IN_HI	BIT(IRQ_PCI0IN_HI)
-#define IML_PCI1IN_LO	BIT(IRQ_PCI1IN_LO)
-#define IML_PCI1IN_HI	BIT(IRQ_PCI1IN_HI)
-#define IML_RES		(BIT(25)|BIT(30)|BIT(31))
-
-/*
- * high word interrupt mask register bits
- */
-#define IMH_ETH0	BIT(IRQ_ETH0-32)
-#define IMH_ETH1	BIT(IRQ_ETH1-32)
-#define IMH_ETH2	BIT(IRQ_ETH2-32)
-#define IMH_SDMA	BIT(IRQ_SDMA-32)
-#define IMH_I2C		BIT(IRQ_I2C-32)
-#define IMH_BRG		BIT(IRQ_BRG-32)
-#define IMH_MPSC0	BIT(IRQ_MPSC0-32)
-#define IMH_MPSC1	BIT(IRQ_MPSC1-32)
-#define IMH_COMM	BIT(IRQ_COMM-32)
-#define IMH_GPP7_0	BIT(IRQ_GPP7_0-32)
-#define IMH_GPP15_8	BIT(IRQ_GPP15_8-32)
-#define IMH_GPP23_16	BIT(IRQ_GPP23_16-32)
-#define IMH_GPP31_24	BIT(IRQ_GPP31_24-32)
-#define IMH_GPP_SUM	(IMH_GPP7_0|IMH_GPP15_8|IMH_GPP23_16|IMH_GPP31_24)
-#define IMH_RES		(BIT(3) |BIT(6) |BIT(9) |BIT(12)|BIT(13)|BIT(14) \
-			|BIT(15)|BIT(16)|BIT(17)|BIT(18)|BIT(19)|BIT(20) \
-			|BIT(21)|BIT(22)|BIT(23)|BIT(28)|BIT(29)|BIT(30) \
-			|BIT(31))
-
-/*
- * ICR_CSC "Select Cause" register bits
- */
-#define CSC_SEL		BIT(30)		/* HI/LO select */
-#define CSC_STAT	BIT(31)		/* ? "irq active" : "irq none"  */
-#define CSC_CAUSE	~(CSC_SEL|CSC_STAT)
-
-
-/*
- * CPU Int[n] Mask bit(s)
- */
-#define CPUINT_SEL	0x80000000	/* HI/LO select */
+#define IRQ_ETH0	32	/* Ethernet controller 0 interrupt */
+#define IRQ_ETH1	33	/* Ethernet controller 1 interrupt */
+#define IRQ_ETH2	34	/* Ethernet controller 2 interrupt */
+#define IRQ_SDMA	36	/* SDMA interrupt */
+#define IRQ_I2C		37	/* I2C interrupt */
+#define IRQ_BRG		39	/* Baud Rate Generator interrupt */
+#define IRQ_MPSC0	40	/* MPSC 0 interrupt */
+#define IRQ_MPSC1	42	/* MPSC 1 interrupt */
+#define IRQ_COMM	43	/* Comm unit interrupt */
+#define IRQ_GPP7_0	56	/* GPP[7..0] interrupt */
+#define IRQ_GPP15_8	57	/* GPP[15..8] interrupt */
+#define IRQ_GPP23_16	58	/* GPP[23..16] interrupt */
+#define IRQ_GPP31_24	59	/* GPP[31..24] interrupt */
 
 #endif	/*  _DISCOVERY_GT64260INTR_H */

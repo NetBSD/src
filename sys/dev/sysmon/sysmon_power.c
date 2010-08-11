@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_power.c,v 1.37.4.4 2010/03/11 15:04:04 yamt Exp $	*/
+/*	$NetBSD: sysmon_power.c,v 1.37.4.5 2010/08/11 22:54:12 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_power.c,v 1.37.4.4 2010/03/11 15:04:04 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_power.c,v 1.37.4.5 2010/08/11 22:54:12 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include <sys/param.h>
@@ -201,7 +201,7 @@ sysmon_power_init(void)
 /*
  * sysmon_queue_power_event:
  *
- *	Enqueue a power event for the power mangement daemon.  Returns
+ *	Enqueue a power event for the power management daemon.  Returns
  *	non-zero if we were able to enqueue a power event.
  */
 static int
@@ -541,7 +541,7 @@ sysmonkqfilter_power(dev_t dev, struct knote *kn)
 /*
  * sysmonioctl_power:
  *
- *	Perform a power managmenet control request.
+ *	Perform a power management control request.
  */
 int
 sysmonioctl_power(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)

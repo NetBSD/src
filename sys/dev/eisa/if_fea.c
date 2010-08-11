@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fea.c,v 1.36.4.3 2010/03/11 15:03:26 yamt Exp $	*/
+/*	$NetBSD: if_fea.c,v 1.36.4.4 2010/08/11 22:53:21 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fea.c,v 1.36.4.3 2010/03/11 15:03:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fea.c,v 1.36.4.4 2010/08/11 22:53:21 yamt Exp $");
 
 #include "opt_inet.h"
 
@@ -164,7 +164,7 @@ pdq_eisa_devinit(
     data = PDQ_OS_IORD_8(sc->sc_iotag, sc->sc_iobase, PDQ_EISA_BURST_HOLDOFF);
 #if defined(__NetBSD__)
     PDQ_OS_IOWR_8(sc->sc_iotag, sc->sc_iobase, PDQ_EISA_BURST_HOLDOFF,
-		  sc->sc_iotag == sc->sc_csrtag ? data & ~1 : data | 1);
+		  !sc->sc_csr_memmapped ? data & ~1 : data | 1);
 #elif defined(PDQ_IOMAPPED)
     PDQ_OS_IOWR_8(sc->sc_iotag, sc->sc_iobase, PDQ_EISA_BURST_HOLDOFF, data & ~1);
 #else
@@ -477,6 +477,7 @@ pdq_eisa_attach(
     pdq_eisa_subprobe(sc->sc_iotag, sc->sc_iobase, &maddr, &msiz, &irq);
 
     if (maddr != 0 && msiz != 0) {
+	sc->sc_csr_memmapped = true;
 	sc->sc_csrtag = ea->ea_memt;
 	if (bus_space_map(sc->sc_csrtag, maddr, msiz, 0, &sc->sc_membase)) {
 	    bus_space_unmap(sc->sc_iotag, sc->sc_iobase, EISA_SLOT_SIZE);
@@ -486,6 +487,7 @@ pdq_eisa_attach(
 	    return;
 	}
     } else {
+	sc->sc_csr_memmapped = false;
 	sc->sc_csrtag = sc->sc_iotag;
 	sc->sc_membase = sc->sc_iobase;
     }
@@ -518,7 +520,7 @@ pdq_eisa_attach(
     sc->sc_ats = shutdownhook_establish((void (*)(void *)) pdq_hwreset, sc->sc_pdq);
     if (sc->sc_ats == NULL)
 	aprint_error_dev(self, "warning: couldn't establish shutdown hook\n");
-    if (sc->sc_csrtag != sc->sc_iotag)
+    if (sc->sc_csr_memmapped)
 	printf("%s: using iomem 0x%x-0x%x\n", device_xname(&sc->sc_dev), maddr, maddr + msiz - 1);
     if (intrstr != NULL)
 	printf("%s: interrupting at %s\n", device_xname(&sc->sc_dev), intrstr);

@@ -1,4 +1,4 @@
-#	$NetBSD: files.acpi,v 1.50.4.6 2010/03/11 15:03:23 yamt Exp $
+#	$NetBSD: files.acpi,v 1.50.4.7 2010/08/11 22:53:16 yamt Exp $
 
 include "dev/acpi/acpica/files.acpica"
 
@@ -9,22 +9,22 @@ defparam opt_acpi.h	ACPI_DSDT_FILE := "\"/dev/null\""
 define	acpiapmbus { }
 define	acpinodebus { }
 define	acpiecdtbus { }
-define	acpiwmibus { }
 
 device	acpi: acpica, acpiapmbus, acpinodebus, acpiecdtbus, sysmon_power, sysmon_taskq
 attach	acpi at acpibus
 file	dev/acpi/acpi.c			acpi
 file	dev/acpi/acpi_debug.c		acpi
-file	dev/acpi/acpi_resource.c	acpi
-file	dev/acpi/acpi_powerres.c	acpi
-file	dev/acpi/acpi_madt.c		acpi
 file	dev/acpi/acpi_pci.c		acpi
 file	dev/acpi/acpi_pci_link.c	acpi
+file	dev/acpi/acpi_power.c		acpi
 file	dev/acpi/acpi_quirks.c		acpi
-file	dev/acpi/acpi_timer.c		acpi
-file	dev/acpi/acpi_wakedev.c		acpi
+file	dev/acpi/acpi_resource.c	acpi
 file	dev/acpi/acpi_srat.c		acpi
 file	dev/acpi/acpi_slit.c		acpi
+file	dev/acpi/acpi_timer.c		acpi
+file	dev/acpi/acpi_util.c		acpi
+file	dev/acpi/acpi_wakedev.c		acpi
+file	dev/acpi/acpi_verbose.c		acpi & acpiverbose
 
 # ACPI/apm emulation.
 attach  apm at acpiapmbus with acpiapm: sysmon_envsys
@@ -56,6 +56,13 @@ file	dev/acpi/acpi_acad.c		acpiacad
 device	acpibat: sysmon_envsys
 attach	acpibat at acpinodebus
 file	dev/acpi/acpi_bat.c		acpibat
+
+# ACPI CPU
+device	acpicpu
+attach	acpicpu at acpinodebus
+file	dev/acpi/acpi_cpu.c		acpicpu
+file	dev/acpi/acpi_cpu_cstate.c	acpicpu
+file	dev/acpi/acpi_cpu_pstate.c	acpicpu
 
 # ACPI Thermal Zone
 device	acpitz: sysmon_envsys
@@ -109,11 +116,6 @@ file	dev/acpi/ym_acpi.c		ym_acpi
 attach 	hpet at acpinodebus with hpet_acpi
 file 	dev/acpi/hpet_acpi.c		hpet_acpi
 
-# ASUS AI Booster Hardware monitor
-device	aiboost: sysmon_envsys
-attach	aiboost at acpinodebus
-file	dev/acpi/aiboost.c		aiboost
-
 # ASUS hotkey device
 device	asus: sysmon_envsys, sysmon_power
 attach	asus at acpinodebus
@@ -133,6 +135,16 @@ device	sony: displaydev
 attach	sony at acpinodebus with sony_acpi
 file	dev/acpi/sony_acpi.c		sony_acpi
 
+# Toshiba hotkeys
+device	vald
+attach	vald at acpinodebus with vald_acpi
+file	dev/acpi/vald_acpi.c		vald_acpi
+
+# Toshiba backlight hotkeys
+device	valz
+attach	valz at acpinodebus
+file	dev/acpi/valz_acpi.c valz
+
 # Sony SPIC (jog dial etc.)
 attach	spic at acpinodebus with spic_acpi
 file	dev/acpi/spic_acpi.c		spic_acpi
@@ -151,11 +163,6 @@ file	dev/acpi/dalb_acpi.c		acpidalb
 attach	wb at acpinodebus with wb_acpi
 file	dev/acpi/wb_acpi.c		wb_acpi
 
-# ACPI-WMI Mapper
-device	acpiwmi: acpiwmibus
-attach	acpiwmi at acpinodebus
-file	dev/acpi/wmi_acpi.c		acpiwmi
-
 # ASUSTeK AI Booster ATK0110
 device	aibs: sysmon_envsys
 attach	aibs at acpinodebus
@@ -165,3 +172,5 @@ file	dev/acpi/atk0110.c		aibs
 device	acpismbus: i2cbus
 attach	acpismbus at acpinodebus
 file	dev/acpi/smbus_acpi.c		acpismbus
+
+include	"dev/acpi/wmi/files.wmi"

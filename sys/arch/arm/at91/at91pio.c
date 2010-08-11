@@ -1,5 +1,5 @@
-/*	$Id: at91pio.c,v 1.1.20.1 2009/05/04 08:10:39 yamt Exp $	*/
-/*	$NetBSD: at91pio.c,v 1.1.20.1 2009/05/04 08:10:39 yamt Exp $	*/
+/*	$Id: at91pio.c,v 1.1.20.2 2010/08/11 22:51:40 yamt Exp $	*/
+/*	$NetBSD: at91pio.c,v 1.1.20.2 2010/08/11 22:51:40 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007 Embedtronics Oy. All rights reserved.
@@ -30,12 +30,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at91pio.c,v 1.1.20.1 2009/05/04 08:10:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at91pio.c,v 1.1.20.2 2010/08/11 22:51:40 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
+#include <sys/gpio.h>
 #include <machine/bus.h>
 #include <machine/intr.h>
 #include <dev/gpio/gpiovar.h>

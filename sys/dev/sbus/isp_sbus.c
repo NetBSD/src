@@ -1,4 +1,4 @@
-/* $NetBSD: isp_sbus.c,v 1.73.4.5 2010/03/11 15:04:02 yamt Exp $ */
+/* $NetBSD: isp_sbus.c,v 1.73.4.6 2010/08/11 22:54:10 yamt Exp $ */
 /*
  * SBus specific probe and attach routines for Qlogic ISP SCSI adapters.
  *
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp_sbus.c,v 1.73.4.5 2010/03/11 15:04:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp_sbus.c,v 1.73.4.6 2010/08/11 22:54:10 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -347,13 +347,16 @@ isp_sbus_mbxdma(ispsoftc_t *isp)
 	if (isp->isp_rquest_dma)
 		return (0);
 
-	n = isp->isp_maxcmds * sizeof (XS_T *);
-	isp->isp_xflist = (XS_T **) malloc(n, M_DEVBUF, M_WAITOK);
+	n = isp->isp_maxcmds * sizeof (isp_hdl_t);
+	isp->isp_xflist = (isp_hdl_t *) malloc(n, M_DEVBUF, M_WAITOK);
 	if (isp->isp_xflist == NULL) {
 		isp_prt(isp, ISP_LOGERR, "cannot alloc xflist array");
 		return (1);
 	}
 	ISP_MEMZERO(isp->isp_xflist, n);
+	for (n = 0; n < isp->isp_maxcmds - 1; n++) {
+		isp->isp_xflist[n].cmd = &isp->isp_xflist[n+1];
+	}
 	n = sizeof (bus_dmamap_t) * isp->isp_maxcmds;
 	sbc->sbus_dmamap = (bus_dmamap_t *) malloc(n, M_DEVBUF, M_WAITOK);
 	if (sbc->sbus_dmamap == NULL) {
@@ -486,10 +489,15 @@ isp_sbus_dmasetup(struct ispsoftc *isp, struct scsipi_xfer *xs, void *arg)
 	ispreq_t *rq = arg;
 	bus_dmamap_t dmap;
 	bus_dma_segment_t *dm_segs;
-	uint32_t nsegs;
+	uint32_t nsegs, hidx;
 	isp_ddir_t ddir;
 
-	dmap = sbc->sbus_dmamap[isp_handle_index(rq->req_handle)];
+	hidx = isp_handle_index(isp, rq->req_handle);
+	if (hidx == ISP_BAD_HANDLE_INDEX) {
+		XS_SETERR(xs, HBA_BOTCH);
+		return (CMD_COMPLETE);
+	}
+	dmap = sbc->sbus_dmamap[hidx];
 	if (xs->datalen == 0) {
 		ddir = ISP_NOXFR;
 		nsegs = 0;
@@ -535,14 +543,14 @@ isp_sbus_dmateardown(ispsoftc_t *isp, XS_T *xs, uint32_t handle)
 {
 	struct isp_sbussoftc *sbc = (struct isp_sbussoftc *) isp;
 	bus_dmamap_t dmap;
+	uint32_t hidx;
 
-	dmap = sbc->sbus_dmamap[isp_handle_index(handle)];
-
-	if (dmap->dm_nsegs == 0) {
-		panic("%s: DMA map not already allocated",
-		    device_xname(isp->isp_osinfo.dev));
-		/* NOTREACHED */
+	hidx = isp_handle_index(isp, handle);
+	if (hidx == ISP_BAD_HANDLE_INDEX) {
+		isp_xs_prt(isp, xs, ISP_LOGERR, "bad handle on teardown");
+		return;
 	}
+	dmap = sbc->sbus_dmamap[hidx];
 	bus_dmamap_sync(isp->isp_dmatag, dmap, 0,
 	    xs->datalen, (xs->xs_control & XS_CTL_DATA_IN)?
 	    BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tap.c,v 1.42.2.5 2010/03/11 15:04:27 yamt Exp $	*/
+/*	$NetBSD: if_tap.c,v 1.42.2.6 2010/08/11 22:54:54 yamt Exp $	*/
 
 /*
  *  Copyright (c) 2003, 2004, 2008, 2009 The NetBSD Foundation.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.42.2.5 2010/03/11 15:04:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.42.2.6 2010/08/11 22:54:54 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 
@@ -481,8 +481,7 @@ tap_start(struct ifnet *ifp)
 				return;
 
 			ifp->if_opackets++;
-			if (ifp->if_bpf)
-				bpf_ops->bpf_mtap(ifp->if_bpf, m0);
+			bpf_mtap(ifp, m0);
 
 			m_freem(m0);
 		}
@@ -851,8 +850,7 @@ tap_dev_close(struct tap_softc *sc)
 				break;
 
 			ifp->if_opackets++;
-			if (ifp->if_bpf)
-				bpf_ops->bpf_mtap(ifp->if_bpf, m);
+			bpf_mtap(ifp, m);
 			m_freem(m);
 		}
 	}
@@ -946,8 +944,7 @@ tap_dev_read(int unit, struct uio *uio, int flags)
 	}
 
 	ifp->if_opackets++;
-	if (ifp->if_bpf)
-		bpf_ops->bpf_mtap(ifp->if_bpf, m);
+	bpf_mtap(ifp, m);
 
 	/*
 	 * One read is one packet.
@@ -1058,8 +1055,7 @@ tap_dev_write(int unit, struct uio *uio, int flags)
 	ifp->if_ipackets++;
 	m->m_pkthdr.rcvif = ifp;
 
-	if (ifp->if_bpf)
-		bpf_ops->bpf_mtap(ifp->if_bpf, m);
+	bpf_mtap(ifp, m);
 	s =splnet();
 	(*ifp->if_input)(ifp, m);
 	splx(s);
@@ -1395,7 +1391,7 @@ tap_sysctl_handler(SYSCTLFN_ARGS)
 		return (EINVAL);
 
 	/* Commit change */
-	if (ether_nonstatic_aton(enaddr, addr) != 0)
+	if (ether_aton_r(enaddr, sizeof(enaddr), addr) != 0)
 		return (EINVAL);
 	if_set_sadl(ifp, enaddr, ETHER_ADDR_LEN, false);
 	return (error);

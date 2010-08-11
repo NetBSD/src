@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_jobs.c,v 1.5 2007/03/04 05:59:01 christos Exp $	*/
+/*	$NetBSD: altq_jobs.c,v 1.5.40.1 2010/08/11 22:51:29 yamt Exp $	*/
 /*	$KAME: altq_jobs.c,v 1.11 2005/04/13 03:44:25 suz Exp $	*/
 /*
  * Copyright (c) 2001, the Rector and Board of Visitors of the
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_jobs.c,v 1.5 2007/03/04 05:59:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_jobs.c,v 1.5.40.1 2010/08/11 22:51:29 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"
@@ -169,11 +169,11 @@ jobs_attach(struct ifaltq *ifq, u_int bandwidth, u_int qlimit, u_int separate)
 	jif->wc_cycles_enqueue = 0;
 	jif->avg_cycles_enqueue = 0;
 	jif->avg_cycles2_enqueue = 0;
-	jif->bc_cycles_enqueue = INFINITY;
+	jif->bc_cycles_enqueue = ALTQ_INFINITY;
 	jif->wc_cycles_dequeue = 0;
 	jif->avg_cycles_dequeue = 0;
 	jif->avg_cycles2_dequeue = 0;
-	jif->bc_cycles_dequeue = INFINITY;
+	jif->bc_cycles_dequeue = ALTQ_INFINITY;
 	jif->total_enqueued = 0;
 	jif->total_dequeued = 0;
 
@@ -315,13 +315,13 @@ jobs_class_create(struct jobs_if *jif, int pri, int64_t adc, int64_t rdc,
 
 	if (adc == -1) {
 		cl->concerned_adc = 0;
-		adc = INFINITY;
+		adc = ALTQ_INFINITY;
 	} else 
 		cl->concerned_adc = 1;
 
 	if (alc == -1) {
 		cl->concerned_alc = 0;
-		alc = INFINITY;
+		alc = ALTQ_INFINITY;
 	} else 
 		cl->concerned_alc = 1;
 
@@ -1730,7 +1730,7 @@ pick_dropped_rlc(struct jobs_if *jif)
 				loss_error[i]=cl->loss_prod_others
 				    *cl->current_loss-mean;
 			else
-				loss_error[i] = INFINITY;
+				loss_error[i] = ALTQ_INFINITY;
 		}
 
 		for (i = 0; i <= jif->jif_maxpri; i++) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: sl811hsvar.h,v 1.5.4.1 2009/05/16 10:41:24 yamt Exp $	*/
+/*	$NetBSD: sl811hsvar.h,v 1.5.4.2 2010/08/11 22:53:32 yamt Exp $	*/
 
 /*
  * Not (c) 2007 Matthew Orgass
@@ -15,7 +15,6 @@
 
 #include <sys/gcq.h>
 #include <sys/simplelock.h>
-#include "opt_slhci.h"
 
 #define SC_DEV(sc)	((sc)->sc_dev)
 #define SC_NAME(sc)	(device_xname(SC_DEV(sc)))

@@ -1,4 +1,4 @@
-/*	$NetBSD: support.S,v 1.3.4.2 2010/03/11 15:02:31 yamt Exp $	*/
+/*	$NetBSD: support.S,v 1.3.4.3 2010/08/11 22:52:15 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 Doug Rabson
@@ -57,7 +57,6 @@
 
 #include <machine/asm.h>
 #include <machine/ia64_cpu.h>
-#include <machine/vmparam.h>
 
 #include "assym.h"
 
@@ -708,7 +707,7 @@ ENTRY(copyinstr, 4)
 	;;
 	cmp.geu	p6,p0=in0,loc2			// is in user space.
 	;;
-(p6)	br.cond.spnt.few copyerr		// if it's not, error out.
+(p6)	br.cond.spnt.few copyefault		// if it's not, error out.
 	movl	r14=copyerr			// set up fault handler.
 	add	r15=PC_CURLWP,r13		// find curthread
 	;;
@@ -747,7 +746,7 @@ ENTRY(copyoutstr, 4)
 	;;
 	cmp.geu	p6,p0=in1,loc2			// is in user space.
 	;;
-(p6)	br.cond.spnt.few copyerr		// if it's not, error out.
+(p6)	br.cond.spnt.few copyefault		// if it's not, error out.
 	movl	r14=copyerr			// set up fault handler.
 	add	r15=PC_CURLWP,r13		// find curthread
 	;;
@@ -898,7 +897,7 @@ ENTRY(copyin, 3)
 	;;
 	cmp.geu	p6,p0=in0,loc2			// is in user space.
 	;;
-(p6)	br.cond.spnt.few copyerr		// if it's not, error out.
+(p6)	br.cond.spnt.few copyefault		// if it's not, error out.
 	movl	r14=copyerr			// set up fault handler.
 	add	r15=PC_CURLWP,r13		// find curthread
 	;;
@@ -936,7 +935,7 @@ ENTRY(copyout, 3)
 	;;
 	cmp.geu	p6,p0=in1,loc2			// is in user space.
 	;;
-(p6)	br.cond.spnt.few copyerr		// if it's not, error out.
+(p6)	br.cond.spnt.few copyefault		// if it's not, error out.
 	movl	r14=copyerr			// set up fault handler.
 	add	r15=PC_CURLWP,r13		// find curthread
 	;;
@@ -969,9 +968,20 @@ ENTRY(copyerr, 0)
 	add	r14=PCB_ONFAULT,r14 ;;		// &curthread->td_pcb->pcb_onfault
 	st8	[r14]=r0			// reset fault handler
 
-	mov	ret0=EFAULT			// return EFAULT
 	br.ret.sptk.few rp
 END(copyerr)
+
+ENTRY(copyefault, 0)
+	add	r14=PC_CURLWP,r13 ;;		// find curthread
+	ld8	r14=[r14] ;;
+	add	r14=L_PCB,r14 ;;		// curthread->td_addr
+	ld8	r14=[r14] ;;
+	add	r14=PCB_ONFAULT,r14 ;;		// &curthread->td_pcb->pcb_onfault
+	st8	[r14]=r0			// reset fault handler
+
+	mov	ret0=EFAULT			// return EFAULT
+	br.ret.sptk.few rp
+END(copyefault)
 
 #if defined(GPROF)
 /*

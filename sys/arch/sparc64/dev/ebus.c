@@ -1,4 +1,4 @@
-/*	$NetBSD: ebus.c,v 1.51.4.1 2009/05/04 08:11:57 yamt Exp $	*/
+/*	$NetBSD: ebus.c,v 1.51.4.2 2010/08/11 22:52:46 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ebus.c,v 1.51.4.1 2009/05/04 08:11:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ebus.c,v 1.51.4.2 2010/08/11 22:52:46 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -168,10 +168,11 @@ ebus_attach(struct device *parent, struct device *self, void *aux)
 	int node, nmapmask, error;
 	char devinfo[256];
 
-	printf("\n");
+	aprint_normal("\n");
+	aprint_naive("\n");
 
 	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
-	printf("%s: %s, revision 0x%02x\n", device_xname(self), devinfo,
+	aprint_normal_dev(self, "%s, revision 0x%02x\n", devinfo,
 	    PCI_REVISION(pa->pa_class));
 
 	sc->sc_memtag = pa->pa_memt;
@@ -227,7 +228,7 @@ ebus_attach(struct device *parent, struct device *self, void *aux)
 		char *name = prom_getpropstring(node, "name");
 
 		if (ebus_setup_attach_args(sc, node, &eba) != 0) {
-			printf("ebus_attach: %s: incomplete\n", name);
+			aprint_error("ebus_attach: %s: incomplete\n", name);
 			continue;
 		} else {
 			DPRINTF(EDB_CHILD, ("- found child `%s', attaching\n",

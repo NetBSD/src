@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.173.10.5 2010/03/11 15:04:42 yamt Exp $	*/
+/*	$NetBSD: mount.h,v 1.173.10.6 2010/08/11 22:55:11 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -42,6 +42,8 @@
 #endif
 
 #ifndef _STANDALONE
+#include <sys/time.h>
+#include <sys/uio.h>
 #include <sys/ucred.h>
 #include <sys/fstypes.h>
 #include <sys/queue.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: patch.c,v 1.11.10.3 2010/03/11 15:03:09 yamt Exp $	*/
+/*	$NetBSD: patch.c,v 1.11.10.4 2010/08/11 22:52:57 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: patch.c,v 1.11.10.3 2010/03/11 15:03:09 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: patch.c,v 1.11.10.4 2010/08/11 22:52:57 yamt Exp $");
 
 #include "opt_lockdebug.h"
 #ifdef i386
@@ -174,7 +174,7 @@ x86_patch(bool early)
 			patchbytes(atomic_lockpatch[i], X86_NOP, -1, -1);
 #endif	/* !LOCKDEBUG */
 	}
-	if (!early && (cpu_feature & CPUID_SSE2) != 0) {
+	if (!early && (cpu_feature[0] & CPUID_SSE2) != 0) {
 		/* Faster memory barriers. */
 		patchfunc(
 		    sse2_lfence, sse2_lfence_end,
@@ -194,7 +194,7 @@ x86_patch(bool early)
 	 * Patch early and late.  Second time around the 'lock' prefix
 	 * may be gone.
 	 */
-	if ((cpu_feature & CPUID_CX8) != 0) {
+	if ((cpu_feature[0] & CPUID_CX8) != 0) {
 		patchfunc(
 		    _atomic_cas_cx8, _atomic_cas_cx8_end,
 		    _atomic_cas_64, _atomic_cas_64_end,
@@ -204,7 +204,7 @@ x86_patch(bool early)
 #endif	/* i386 */
 
 #if !defined(SPLDEBUG)
-	if (!early && (cpu_feature & CPUID_CX8) != 0) {
+	if (!early && (cpu_feature[0] & CPUID_CX8) != 0) {
 		/* Faster splx(), mutex_spin_exit(). */
 		patchfunc(
 		    cx8_spllower, cx8_spllower_end,

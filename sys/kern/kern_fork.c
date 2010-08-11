@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.162.2.3 2010/03/11 15:04:16 yamt Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.162.2.4 2010/08/11 22:54:39 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001, 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.162.2.3 2010/03/11 15:04:16 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.162.2.4 2010/08/11 22:54:39 yamt Exp $");
 
 #include "opt_ktrace.h"
 
@@ -217,7 +217,6 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	struct lwp	*l2;
 	int		count;
 	vaddr_t		uaddr;
-	int		tmp;
 	int		tnprocs;
 	int		error = 0;
 
@@ -413,20 +412,9 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	p2->p_stats = pstatscopy(p1->p_stats);
 
 	/*
-	 * If emulation has process fork hook, call it now.
+	 * Set up the new process address space.
 	 */
-	if (p2->p_emul->e_proc_fork)
-		(*p2->p_emul->e_proc_fork)(p2, p1, flags);
-
-	/*
-	 * ...and finally, any other random fork hooks that subsystems
-	 * might have registered.
-	 */
-	doforkhooks(p2, p1);
-
 	uvm_proc_fork(p1, p2, (flags & FORK_SHAREVM) ? true : false);
-
-	SDT_PROBE(proc,,,create, p2, p1, flags, 0, 0);
 
 	/*
 	 * Finish creating the child process.
@@ -435,6 +423,20 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	lwp_create(l1, p2, uaddr, (flags & FORK_PPWAIT) ? LWP_VFORK : 0,
 	    stack, stacksize, (func != NULL) ? func : child_return, arg, &l2,
 	    l1->l_class);
+
+	/*
+	 * If emulation has a process fork hook, call it now.
+	 */
+	if (p2->p_emul->e_proc_fork)
+		(*p2->p_emul->e_proc_fork)(p2, l1, flags);
+
+	/*
+	 * ...and finally, any other random fork hooks that subsystems
+	 * might have registered.
+	 */
+	doforkhooks(p2, p1);
+
+	SDT_PROBE(proc,,,create, p2, p1, flags, 0, 0);
 
 	/*
 	 * It's now safe for the scheduler and other processes to see the
@@ -487,7 +489,6 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	 * Make child runnable, set start time, and add to run queue except
 	 * if the parent requested the child to start in SSTOP state.
 	 */
-	tmp = (p2->p_userret != NULL ? LW_WUSERRET : 0);
 	mutex_enter(p2->p_lock);
 
 	/*
@@ -502,19 +503,18 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	getmicrotime(&p2->p_stats->p_start);
 	p2->p_acflag = AFORK;
 	lwp_lock(l2);
+	KASSERT(p2->p_nrlwps == 1);
 	if (p2->p_sflag & PS_STOPFORK) {
 		p2->p_nrlwps = 0;
 		p2->p_stat = SSTOP;
 		p2->p_waited = 0;
 		p1->p_nstopchild++;
 		l2->l_stat = LSSTOP;
-		l2->l_flag |= tmp;
 		lwp_unlock(l2);
 	} else {
 		p2->p_nrlwps = 1;
 		p2->p_stat = SACTIVE;
 		l2->l_stat = LSRUN;
-		l2->l_flag |= tmp;
 		sched_enqueue(l2, false);
 		lwp_unlock(l2);
 	}

@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.17.10.4 2009/08/19 18:46:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.17.10.5 2010/08/11 22:52:59 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_xen.h"
@@ -341,7 +341,7 @@ intr_add_pcibus(struct pcibus_attach_args *pba)
 
 static int
 intr_find_pcibridge(int bus, pcitag_t *pci_bridge_tag,
-		    pci_chipset_tag_t *pci_chipset_tag)
+		    pci_chipset_tag_t *pc)
 {
 	struct intr_extra_bus *iebp;
 	struct mp_bus *mpb;
@@ -354,7 +354,7 @@ intr_find_pcibridge(int bus, pcitag_t *pci_bridge_tag,
 		if (mpb->mb_pci_bridge_tag == NULL)
 			return ENOENT;
 		*pci_bridge_tag = *mpb->mb_pci_bridge_tag;
-		*pci_chipset_tag = mpb->mb_pci_chipset_tag;
+		*pc = mpb->mb_pci_chipset_tag;
 		return 0;
 	}
 
@@ -363,7 +363,7 @@ intr_find_pcibridge(int bus, pcitag_t *pci_bridge_tag,
 			if (iebp->pci_bridge_tag == NULL)
 				return ENOENT;
 			*pci_bridge_tag = *iebp->pci_bridge_tag;
-			*pci_chipset_tag = iebp->pci_chipset_tag;
+			*pc = iebp->pci_chipset_tag;
 			return 0;
 		}
 	}
@@ -376,18 +376,18 @@ intr_find_mpmapping(int bus, int pin, struct xen_intr_handle *handle)
 #if NPCI > 0
 	int dev, func;
 	pcitag_t pci_bridge_tag;
-	pci_chipset_tag_t pci_chipset_tag;
+	pci_chipset_tag_t pc;
 #endif
 
 #if NPCI > 0
 	while (intr_scan_bus(bus, pin, handle) != 0) {
 		if (intr_find_pcibridge(bus, &pci_bridge_tag,
-		    &pci_chipset_tag) != 0)
+		    &pc) != 0)
 			return ENOENT;
 		dev = pin >> 2;
 		pin = pin & 3;
 		pin = PPB_INTERRUPT_SWIZZLE(pin + 1, dev) - 1;
-		pci_decompose_tag(pci_chipset_tag, pci_bridge_tag, &bus,
+		pci_decompose_tag(pc, pci_bridge_tag, &bus,
 		    &dev, &func);
 		pin |= (dev << 2);
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.215.4.4 2010/03/11 15:04:17 yamt Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.215.4.5 2010/08/11 22:54:41 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.215.4.4 2010/03/11 15:04:17 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.215.4.5 2010/08/11 22:54:41 yamt Exp $");
 
 #include "opt_defcorename.h"
 #include "ksyms.h"
@@ -1522,7 +1522,7 @@ sysctl_lookup(SYSCTLFN_ARGS)
 	sz = rnode->sysctl_size;
 	switch (SYSCTL_TYPE(rnode->sysctl_flags)) {
 	case CTLTYPE_BOOL: {
-		u_char tmp;
+		bool tmp;
 		/*
 		 * these data must be *exactly* the same size coming
 		 * in.  bool may only be true or false.
@@ -1530,6 +1530,8 @@ sysctl_lookup(SYSCTLFN_ARGS)
 		if (newlen != sz)
 			return (EINVAL);
 		error = sysctl_copyin(l, newp, &tmp, sz);
+		if (tmp != true && tmp != false)
+			return EINVAL;
 		if (error)
 			break;
 		*(bool *)d = tmp;

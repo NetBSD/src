@@ -1,4 +1,4 @@
-/*	$NetBSD: pcivar.h,v 1.80.4.3 2010/03/11 15:03:58 yamt Exp $	*/
+/*	$NetBSD: pcivar.h,v 1.80.4.4 2010/08/11 22:54:04 yamt Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -45,12 +45,13 @@
 #include <sys/pmf.h>
 #include <sys/bus.h>
 #include <dev/pci/pcireg.h>
+#include <dev/pci/pci_verbose.h>
 
 /*
  * Structures and definitions needed by the machine-dependent header.
  */
-typedef u_int32_t pcireg_t;		/* configuration space register XXX */
 struct pcibus_attach_args;
+struct pci_attach_args;
 struct pci_softc;
 
 #ifdef _KERNEL
@@ -58,6 +59,37 @@ struct pci_softc;
  * Machine-dependent definitions.
  */
 #include <machine/pci_machdep.h>
+
+enum pci_override_idx {
+	  PCI_OVERRIDE_CONF_READ		= __BIT(0)
+	, PCI_OVERRIDE_CONF_WRITE		= __BIT(1)
+	, PCI_OVERRIDE_INTR_MAP			= __BIT(2)
+	, PCI_OVERRIDE_INTR_STRING		= __BIT(3)
+	, PCI_OVERRIDE_INTR_EVCNT		= __BIT(4)
+	, PCI_OVERRIDE_INTR_ESTABLISH		= __BIT(5)
+	, PCI_OVERRIDE_INTR_DISESTABLISH	= __BIT(6)
+	, PCI_OVERRIDE_MAKE_TAG			= __BIT(7)
+	, PCI_OVERRIDE_DECOMPOSE_TAG		= __BIT(8)
+};
+
+/* Only add new fields to the end of this structure! */
+struct pci_overrides {
+	pcireg_t (*ov_conf_read)(void *, pci_chipset_tag_t, pcitag_t, int);
+	void (*ov_conf_write)(void *, pci_chipset_tag_t, pcitag_t, int,
+	    pcireg_t);
+	int (*ov_intr_map)(void *, struct pci_attach_args *,
+	   pci_intr_handle_t *);
+	const char *(*ov_intr_string)(void *, pci_chipset_tag_t,
+	    pci_intr_handle_t);
+	const struct evcnt *(*ov_intr_evcnt)(void *, pci_chipset_tag_t,
+	    pci_intr_handle_t);
+	void *(*ov_intr_establish)(void *, pci_chipset_tag_t, pci_intr_handle_t,
+	    int, int (*)(void *), void *);
+	void (*ov_intr_disestablish)(void *, pci_chipset_tag_t, void *);
+	pcitag_t (*ov_make_tag)(void *, pci_chipset_tag_t, int, int, int);
+	void (*ov_decompose_tag)(void *, pci_chipset_tag_t, pcitag_t,
+	    int *, int *, int *);
+};
 
 /*
  * PCI bus attach arguments.
@@ -128,6 +160,10 @@ struct pci_attach_args {
 #define	PCI_FLAGS_MRM_OKAY	0x08		/* Memory Read Multiple okay */
 #define	PCI_FLAGS_MWI_OKAY	0x10		/* Memory Write and Invalidate
 						   okay */
+#define	PCI_FLAGS_MSI_OKAY	0x20		/* Message Signaled Interrupts
+						   okay */
+#define	PCI_FLAGS_MSIX_OKAY	0x40		/* Message Signaled Interrupts
+						   (Extended) okay */
 
 /*
  * PCI device 'quirks'.
@@ -244,8 +280,6 @@ int	pci_vpd_write(pci_chipset_tag_t, pcitag_t, int, int, pcireg_t *);
 /*
  * Misc.
  */
-const char *pci_findvendor(pcireg_t);
-const char *pci_findproduct(pcireg_t);
 int	pci_find_device(struct pci_attach_args *pa,
 			int (*match)(struct pci_attach_args *));
 int	pci_dma64_available(struct pci_attach_args *);
@@ -256,6 +290,10 @@ int	pci_set_powerstate(pci_chipset_tag_t, pcitag_t, pcireg_t);
 int	pci_activate(pci_chipset_tag_t, pcitag_t, device_t,
     int (*)(pci_chipset_tag_t, pcitag_t, device_t, pcireg_t));
 int	pci_activate_null(pci_chipset_tag_t, pcitag_t, device_t, pcireg_t);
+int	pci_chipset_tag_create(pci_chipset_tag_t, uint64_t,
+	                       const struct pci_overrides *,
+	                       void *, pci_chipset_tag_t *);
+void	pci_chipset_tag_destroy(pci_chipset_tag_t);
 
 /*
  * Device abstraction for inheritance by elanpci(4), for example.

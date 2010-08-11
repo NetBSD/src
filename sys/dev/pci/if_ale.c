@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ale.c,v 1.3.4.5 2010/03/11 15:03:44 yamt Exp $	*/
+/*	$NetBSD: if_ale.c,v 1.3.4.6 2010/08/11 22:53:45 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008, Pyun YongHyeon <yongari@FreeBSD.org>
@@ -32,7 +32,7 @@
 /* Driver for Atheros AR8121/AR8113/AR8114 PCIe Ethernet. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ale.c,v 1.3.4.5 2010/03/11 15:03:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ale.c,v 1.3.4.6 2010/08/11 22:53:45 yamt Exp $");
 
 #include "vlan.h"
 
@@ -1077,8 +1077,7 @@ ale_start(struct ifnet *ifp)
 		 * If there's a BPF listener, bounce a copy of this frame
 		 * to him.
 		 */
-		if (ifp->if_bpf != NULL)
-			bpf_ops->bpf_mtap(ifp->if_bpf, m_head);
+		bpf_mtap(ifp, m_head);
 	}
 
 	if (enq) {
@@ -1550,8 +1549,7 @@ ale_rxeof(struct ale_softc *sc)
 #endif
 
 
-		if (ifp->if_bpf)
-			bpf_ops->bpf_mtap(ifp->if_bpf, m);
+		bpf_mtap(ifp, m);
 
 		/* Pass it to upper layer. */
 		ether_input(ifp, m);
@@ -1975,12 +1973,11 @@ ale_init_rx_pages(struct ale_softc *sc)
 static void
 ale_rxvlan(struct ale_softc *sc)
 {
-	struct ifnet *ifp = &sc->sc_ec.ec_if;
 	uint32_t reg;
 
 	reg = CSR_READ_4(sc, ALE_MAC_CFG);
 	reg &= ~MAC_CFG_VLAN_TAG_STRIP;
-	if (ifp->if_capabilities & ETHERCAP_VLAN_HWTAGGING)
+	if (sc->sc_ec.ec_capenable & ETHERCAP_VLAN_HWTAGGING)
 		reg |= MAC_CFG_VLAN_TAG_STRIP;
 	CSR_WRITE_4(sc, ALE_MAC_CFG, reg);
 }

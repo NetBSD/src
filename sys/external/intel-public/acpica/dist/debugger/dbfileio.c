@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2009, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2010, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -150,9 +150,6 @@ AcpiDbCheckTextModeCorruption (
     UINT32                  TableLength,
     UINT32                  FileLength);
 
-static ACPI_STATUS
-AeLocalLoadTable (
-    ACPI_TABLE_HEADER       *TablePtr);
 #endif
 
 /*******************************************************************************
@@ -292,7 +289,7 @@ AcpiDbCheckTextModeCorruption (
      * meaning that we cannot simply replace CR/LF pairs with LFs.
      */
     AcpiOsPrintf ("Table has been corrupted by text mode conversion\n");
-    AcpiOsPrintf ("All LFs (%d) were changed to CR/LF pairs\n", Pairs);
+    AcpiOsPrintf ("All LFs (%u) were changed to CR/LF pairs\n", Pairs);
     AcpiOsPrintf ("Table cannot be repaired!\n");
     return (AE_BAD_VALUE);
 }
@@ -424,7 +421,7 @@ AcpiDbReadTable (
         {
             /* Now validate the checksum */
 
-            Status = AcpiTbChecksum ((void *) *Table,
+            Status = AcpiTbVerifyChecksum ((void *) *Table,
                         ACPI_CAST_PTR (ACPI_TABLE_HEADER, *Table)->Length);
 
             if (Status == AE_BAD_CHECKSUM)

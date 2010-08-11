@@ -1,4 +1,4 @@
-/* $NetBSD: dksubr.c,v 1.36.4.2 2009/05/04 08:12:32 yamt Exp $ */
+/* $NetBSD: dksubr.c,v 1.36.4.3 2010/08/11 22:53:14 yamt Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.36.4.2 2009/05/04 08:12:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.36.4.3 2010/08/11 22:53:14 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -652,11 +652,11 @@ dk_lookup(const char *path, struct lwp *l, struct vnode **vpp,
 
 	IFDEBUG(DKDB_VNODE, vprint("dk_lookup: vnode info", vp));
 
-	VOP_UNLOCK(vp, 0);
+	VOP_UNLOCK(vp);
 	*vpp = vp;
 	return 0;
 out:
-	VOP_UNLOCK(vp, 0);
+	VOP_UNLOCK(vp);
 	(void) vn_close(vp, FREAD | FWRITE, l->l_cred);
 	return error;
 }

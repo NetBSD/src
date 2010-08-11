@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.3.2.3 2010/03/11 15:04:39 yamt Exp $	*/
+/*	$NetBSD: compat.c,v 1.3.2.4 2010/08/11 22:55:08 yamt Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat.c,v 1.3.2.3 2010/03/11 15:04:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat.c,v 1.3.2.4 2010/08/11 22:55:08 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -39,6 +39,7 @@ __KERNEL_RCSID(0, "$NetBSD: compat.c,v 1.3.2.3 2010/03/11 15:04:39 yamt Exp $");
 #include <compat/sys/time.h>
 
 #include <rump/rump.h>
+#include <rump/rump_syscalls_compat.h>
 #include <rump/rumpuser.h>
 
 #include "rump_vfs_private.h"
@@ -80,7 +81,7 @@ struct vattr50 {
 };
 
 int
-rump_sys___stat30(const char *path, struct stat *sb)
+rump_sys_nb5_stat(const char *path, struct stat *sb)
 {
 	struct compat_50_sys___stat30_args args;
 	register_t retval = 0;
@@ -89,16 +90,18 @@ rump_sys___stat30(const char *path, struct stat *sb)
 	SPARG(&args, path) = path;
 	SPARG(&args, ub) = (struct stat30 *)sb;
 
+	rump_schedule();
 	error = compat_50_sys___stat30(curlwp, &args, &retval);
 	if (error) {
 		retval = -1;
 		rumpuser_seterrno(error);
 	}
+	rump_unschedule();
 	return retval;
 }
 
 int
-rump_sys___lstat30(const char *path, struct stat *sb)
+rump_sys_nb5_lstat(const char *path, struct stat *sb)
 {
 	struct compat_50_sys___lstat30_args args;
 	register_t retval = 0;
@@ -107,11 +110,13 @@ rump_sys___lstat30(const char *path, struct stat *sb)
 	SPARG(&args, path) = path;
 	SPARG(&args, ub) = (struct stat30 *)sb;
 
+	rump_schedule();
 	error = compat_50_sys___lstat30(curlwp, &args, &retval);
 	if (error) {
 		retval = -1;
 		rumpuser_seterrno(error);
 	}
+	rump_unschedule();
 	return retval;
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.82.4.2 2009/05/04 08:12:00 yamt Exp $	*/
+/*	$NetBSD: zs.c,v 1.82.4.3 2010/08/11 22:52:50 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.82.4.2 2009/05/04 08:12:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.82.4.3 2010/08/11 22:52:50 yamt Exp $");
 
 #include "opt_kgdb.h"
 
@@ -260,7 +260,6 @@ zs_attach(device_t parent, device_t self, void *aux)
 	volatile struct zschan *zc;
 	struct zs_chanstate *cs;
 	int s, zs_unit, channel;
-	static int didintr;
 
 	zsc->zsc_dev = self;
 	zs_unit = device_unit(self);
@@ -331,14 +330,9 @@ zs_attach(device_t parent, device_t self, void *aux)
 	}
 
 	/*
-	 * Now safe to install interrupt handlers.  Note the arguments
-	 * to the interrupt handlers aren't used.  Note, we only do this
-	 * once since both SCCs interrupt at the same level and vector.
+	 * Now safe to install interrupt handlers.
 	 */
-	if (!didintr) {
-		didintr = 1;
-		isr_add_autovect(zshard, NULL, ca->ca_intpri);
-	}
+	isr_add_autovect(zshard, zsc, ca->ca_intpri);
 	zsc->zs_si = softint_establish(SOFTINT_SERIAL,
 	    (void (*)(void *))zsc_intr_soft, zsc);
 	/* XXX; evcnt_attach() ? */
@@ -382,25 +376,18 @@ zs_print(void *aux, const char *name)
 
 /*
  * Our ZS chips all share a common, autovectored interrupt,
- * so we have to look at all of them on each interrupt.
+ * but we establish zshard handler per each ZS chip
+ * to avoid holding unnecessary locks in interrupt context.
  */
 static int 
 zshard(void *arg)
 {
-	struct zsc_softc *zsc;
-	int unit, rval, softreq;
+	struct zsc_softc *zsc = arg;
+	int rval;
 
-	rval = 0;
-	for (unit = 0; unit < zsc_cd.cd_ndevs; unit++) {
-		zsc = device_lookup_private(&zsc_cd, unit);
-		if (zsc == NULL)
-			continue;
-		rval |= zsc_intr_hard(zsc);
-		softreq  = zsc->zsc_cs[0]->cs_softreq;
-		softreq |= zsc->zsc_cs[1]->cs_softreq;
-		if (softreq)
-			softint_schedule(zsc->zs_si);
-	}
+	rval = zsc_intr_hard(zsc);
+	if (zsc->zsc_cs[0]->cs_softreq || zsc->zsc_cs[1]->cs_softreq)
+		softint_schedule(zsc->zs_si);
 
 	return (rval);
 }

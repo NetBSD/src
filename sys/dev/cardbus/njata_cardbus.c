@@ -1,4 +1,4 @@
-/*	$Id: njata_cardbus.c,v 1.6.4.3 2010/03/11 15:03:25 yamt Exp $	*/
+/*	$Id: njata_cardbus.c,v 1.6.4.4 2010/08/11 22:53:20 yamt Exp $	*/
 
 /*
  * Copyright (c) 2006 ITOH Yasufumi <itohy@NetBSD.org>.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: njata_cardbus.c,v 1.6.4.3 2010/03/11 15:03:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: njata_cardbus.c,v 1.6.4.4 2010/08/11 22:53:20 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -127,8 +127,6 @@ njata_cardbus_attach(device_t parent, device_t self, void *aux)
 	struct njata32_softc *sc = &csc->sc_njata32;
 	const struct njata32_cardbus_product *prod;
 	cardbus_devfunc_t ct = ca->ca_ct;
-	cardbus_chipset_tag_t cc = ct->ct_cc;
-	cardbus_function_tag_t cf = ct->ct_cf;
 	pcireg_t reg;
 	int csr;
 	uint8_t latency = 0x20;
@@ -211,7 +209,7 @@ njata_cardbus_attach(device_t parent, device_t self, void *aux)
 	/*
 	 * Establish the interrupt.
 	 */
-	sc->sc_ih = cardbus_intr_establish(cc, cf, ca->ca_intrline, IPL_BIO,
+	sc->sc_ih = Cardbus_intr_establish(ct, ca->ca_intrline, IPL_BIO,
 	    njata32_intr, sc);
 	if (sc->sc_ih == NULL) {
 		aprint_error("%s: unable to establish interrupt\n",
@@ -235,8 +233,7 @@ njata_cardbus_detach(device_t self, int flags)
 		return rv;
 
 	if (sc->sc_ih)
-		cardbus_intr_disestablish(csc->sc_ct->ct_cc,
-		    csc->sc_ct->ct_cf, sc->sc_ih);
+		Cardbus_intr_disestablish(csc->sc_ct, sc->sc_ih);
 
 	if (sc->sc_flags & NJATA32_IO_MAPPED)
 		Cardbus_mapreg_unmap(csc->sc_ct, NJATA32_CARDBUS_BASEADDR_IO,

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.45.78.1 2009/05/04 08:11:30 yamt Exp $
+#	$NetBSD: Makefile,v 1.45.78.2 2010/08/11 22:52:21 yamt Exp $
 
 S=	${.CURDIR}/../../../..
 
@@ -70,7 +70,7 @@ SAMISCMAKEFLAGS= SA_USE_CREAD=yes SA_USE_LOADFILE=yes
 .include "${S}/lib/libsa/Makefile.inc"
 LIBSA=		${SALIB}
 
-cleandir distclean: cleanlibdir
+cleandir distclean: .WAIT cleanlibdir
 
 cleanlibdir:
 	-rm -rf lib

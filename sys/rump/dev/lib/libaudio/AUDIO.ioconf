@@ -1,0 +1,10 @@
+#	$NetBSD: AUDIO.ioconf,v 1.1.4.2 2010/08/11 22:55:00 yamt Exp $
+#
+
+ioconf audio
+
+include "conf/files"
+
+pseudo-root audiobus*
+
+audio* at audiobus?

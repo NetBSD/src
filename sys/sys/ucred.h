@@ -1,4 +1,4 @@
-/*	$NetBSD: ucred.h,v 1.34 2007/08/29 10:32:01 pooka Exp $	*/
+/*	$NetBSD: ucred.h,v 1.34.24.1 2010/08/11 22:55:12 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -46,7 +46,7 @@ struct uucred {
 	uid_t		cr_uid;			/* effective user id */
 	gid_t		cr_gid;			/* effective group id */
 	short		cr_ngroups;		/* number of groups */
-	gid_t		cr_groups[NGROUPS];	/* groups */
+	gid_t		cr_groups[NGROUPS_MAX];	/* groups */
 };
 
 #endif /* !_SYS_UCRED_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: radeonfb.c,v 1.27.4.4 2009/08/19 18:47:17 yamt Exp $ */
+/*	$NetBSD: radeonfb.c,v 1.27.4.5 2010/08/11 22:54:04 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.27.4.4 2009/08/19 18:47:17 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.27.4.5 2010/08/11 22:54:04 yamt Exp $");
 
 #define RADEONFB_DEFAULT_DEPTH 32
 
@@ -220,7 +220,7 @@ static struct wsscreen_descr radeonfb_stdscreen = {
 	0, 0,		/* ncols, nrows */
 	NULL,		/* textops */
 	8, 16,		/* fontwidth, fontheight */
-	WSSCREEN_WSCOLORS, /* capabilities */
+	WSSCREEN_WSCOLORS | WSSCREEN_REVERSE, /* capabilities */
 	0,		/* modecookie */
 };
 
@@ -2169,7 +2169,7 @@ radeonfb_init_screen(void *cookie, struct vcons_screen *scr, int existing,
 	 * XXX: font selection should be based on properties, with some
 	 * normal/reasonable default.
 	 */
-	ri->ri_caps = WSSCREEN_WSCOLORS;
+	ri->ri_caps = WSSCREEN_WSCOLORS | WSSCREEN_REVERSE;
 
 	/* initialize and look for an initial font */
 	rasops_init(ri, dp->rd_virty/8, dp->rd_virtx/8);
@@ -2348,21 +2348,28 @@ radeonfb_putchar(void *cookie, int row, int col, u_int c, long attr)
 	struct rasops_info	*ri = cookie;
 	struct vcons_screen	*scr = ri->ri_hw;
 	struct radeonfb_display	*dp = scr->scr_cookie;
+	struct wsdisplay_font	*font = PICK_FONT(ri, c);
 	uint32_t		x, y, w, h;
-	uint32_t		bg, fg;
+	uint32_t		bg, fg, flg;
 	uint8_t			*data;
 
 	if (dp->rd_wsmode != WSDISPLAYIO_MODE_EMUL)
 		return;
 
-	if (!CHAR_IN_FONT(c, ri->ri_font))
+	if (!CHAR_IN_FONT(c, font))
 		return;
 
-	w = ri->ri_font->fontwidth;
-	h = ri->ri_font->fontheight;
+	w = font->fontwidth;
+	h = font->fontheight;
 
-	bg = ri->ri_devcmap[(attr >> 16) & 0xf];
-	fg = ri->ri_devcmap[(attr >> 24) & 0xf];
+	flg = attr & 0xff;
+	if (flg & WSATTR_REVERSE) {
+		fg = ri->ri_devcmap[(attr >> 16) & 0xf];
+		bg = ri->ri_devcmap[(attr >> 24) & 0xf];
+	} else {
+		bg = ri->ri_devcmap[(attr >> 16) & 0xf];
+		fg = ri->ri_devcmap[(attr >> 24) & 0xf];
+	}
 
 	x = ri->ri_xorigin + col * w;
 	y = ri->ri_yorigin + row * h;
@@ -2370,8 +2377,8 @@ radeonfb_putchar(void *cookie, int row, int col, u_int c, long attr)
 	if (c == 0x20) {
 		radeonfb_rectfill(dp, x, y, w, h, bg);
 	} else {
-		data = (uint8_t *)ri->ri_font->data +
-		    (c - ri->ri_font->firstchar) * ri->ri_fontscale;
+		data = (uint8_t *)font->data +
+		    (c - font->firstchar) * ri->ri_fontscale;
 
 		radeonfb_setup_mono(dp, x, y, w, h, fg, bg);
 		radeonfb_feed_bytes(dp, ri->ri_fontscale, data);

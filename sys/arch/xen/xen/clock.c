@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.46.2.4 2010/03/11 15:03:10 yamt Exp $	*/
+/*	$NetBSD: clock.c,v 1.46.2.5 2010/08/11 22:53:00 yamt Exp $	*/
 
 /*
  *
@@ -29,7 +29,7 @@
 #include "opt_xen.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.46.2.4 2010/03/11 15:03:10 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.46.2.5 2010/08/11 22:53:00 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -303,7 +303,7 @@ xen_delay(unsigned int n)
 	if (n < 500000) {
 		/*
 		 * shadow_system_time is updated every hz tick, it's not
-		 * precise enouth for short delays. Use the CPU counter
+		 * precise enough for short delays. Use the CPU counter
 		 * instead. We assume it's working at this point.
 		 */
 		uint64_t cc, cc2, when;

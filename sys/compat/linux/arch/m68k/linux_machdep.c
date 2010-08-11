@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.37.2.2 2009/05/04 08:12:21 yamt Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.37.2.3 2010/08/11 22:53:06 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.37.2.2 2009/05/04 08:12:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.37.2.3 2010/08/11 22:53:06 yamt Exp $");
 
 #define COMPAT_LINUX 1
 
@@ -88,7 +88,7 @@ void setup_linux_rt_sigframe(struct frame *frame, int sig,
  * Setup registers on program execution.
  */
 void
-linux_setregs(struct lwp *l, struct exec_package *epp, u_long stack)
+linux_setregs(struct lwp *l, struct exec_package *epp, vaddr_t stack)
 {
 
 	setregs(l, epp, stack);

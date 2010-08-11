@@ -1,0 +1,21 @@
+#	$NetBSD: files.obs266,v 1.1.6.2 2010/08/11 22:51:53 yamt Exp $
+#
+# obs266-specific configuration info
+
+file	arch/powerpc/ibm4xx/openbios/openbios.c
+file	arch/evbppc/obs405/obs266_autoconf.c
+file	arch/evbppc/obs405/obs266_machdep.c
+
+#
+# Machine-independent CardBus drivers
+#
+include "dev/cardbus/files.cardbus"
+include "dev/pcmcia/files.pcmcia"
+
+file arch/evbppc/obs405/rbus_machdep.c		cardbus
+
+include "dev/usb/files.usb"
+
+include "dev/ieee1394/files.ieee1394"
+
+include "dev/bluetooth/files.bluetooth"

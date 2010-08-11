@@ -1,4 +1,4 @@
-/*	$NetBSD: kobj.h,v 1.5.14.4 2010/03/11 15:04:42 yamt Exp $	*/
+/*	$NetBSD: kobj.h,v 1.5.14.5 2010/08/11 22:55:10 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,6 +29,10 @@
 #ifndef _SYS_KOBJ_H_
 #define	_SYS_KOBJ_H_
 
+#define ELFSIZE ARCH_ELFSIZE
+#include <sys/exec.h>
+#include <sys/exec_elf.h>
+
 typedef struct kobj *kobj_t;
 
 /* External interface. */
@@ -43,5 +47,8 @@ int		kobj_find_section(kobj_t, const char *, void **, size_t *);
 uintptr_t	kobj_sym_lookup(kobj_t, uintptr_t);
 int		kobj_reloc(kobj_t, uintptr_t, const void *, bool, bool);
 int		kobj_machdep(kobj_t, void *, size_t, bool);
+
+/* implementation interface. */
+int		kobj_renamespace(Elf_Sym *, size_t, char **, size_t *);
 
 #endif /* !_SYS_KOBJ_H_ */

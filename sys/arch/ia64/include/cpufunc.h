@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.2.4.1 2009/08/19 18:46:22 yamt Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.2.4.2 2010/08/11 22:52:16 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 Doug Rabson
@@ -225,8 +225,6 @@ intr_restore(register_t ie)
 	if (ie)
 		enable_intr();
 }
-
-void wbinvd(void);
 
 #endif /* _KERNEL */
 

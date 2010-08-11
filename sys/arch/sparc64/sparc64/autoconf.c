@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.154.2.3 2010/03/11 15:03:01 yamt Exp $ */
+/*	$NetBSD: autoconf.c,v 1.154.2.4 2010/08/11 22:52:48 yamt Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.154.2.3 2010/03/11 15:03:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.154.2.4 2010/08/11 22:52:48 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -346,17 +346,24 @@ die_old_boot_loader:
 static void
 get_bootpath_from_prom(void)
 {
+	struct btinfo_bootdev *bdev = NULL;
 	char sbuf[OFPATHLEN], *cp;
 	int chosen;
 
 	/*
 	 * Grab boot path from PROM
 	 */
-	if ((chosen = OF_finddevice("/chosen")) == -1 ||
-	    OF_getprop(chosen, "bootpath", sbuf, sizeof(sbuf)) < 0)
+	if ((chosen = OF_finddevice("/chosen")) == -1)
 		return;
 
-	strcpy(ofbootpath, sbuf);
+	bdev = lookup_bootinfo(BTINFO_BOOTDEV);
+	if (bdev != NULL) {
+		strcpy(ofbootpath, bdev->name);
+	} else {
+		if (OF_getprop(chosen, "bootpath", sbuf, sizeof(sbuf)) < 0)
+			return;
+		strcpy(ofbootpath, sbuf);
+	}
 	DPRINTF(ACDB_BOOTDEV, ("bootpath: %s\n", ofbootpath));
 	ofbootpackage = prom_finddevice(ofbootpath);
 
@@ -566,10 +573,11 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 	OF_getprop(findroot(), "name", machine_model, sizeof machine_model);
 	prom_getidprom();
 	if (i)
-		printf(": %s (%s): hostid %lx\n", machine_model,
+		aprint_normal(": %s (%s): hostid %lx\n", machine_model,
 		    machine_banner, hostid);
 	else
-		printf(": %s: hostid %lx\n", machine_model, hostid);
+		aprint_normal(": %s: hostid %lx\n", machine_model, hostid);
+	aprint_naive("\n");
 
 	/*
 	 * Locate and configure the ``early'' devices.  These must be

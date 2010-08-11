@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.35.44.2 2010/03/11 15:02:21 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.35.44.3 2010/08/11 22:51:55 yamt Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.35.44.2 2010/03/11 15:02:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.35.44.3 2010/08/11 22:51:55 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -104,9 +104,11 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.35.44.2 2010/03/11 15:02:21 yamt Exp $
 
 #include <powerpc/spr.h>
 #include <powerpc/ibm4xx/spr.h>
-#include <powerpc/ibm4xx/dcr405gp.h>
+#include <powerpc/ibm4xx/dcr4xx.h>
 
 #include <dev/cons.h>
+#include <dev/pci/pcivar.h>
+#include <dev/pci/pciconf.h>
 
 #include "ksyms.h"
 
@@ -175,7 +177,7 @@ initppc(u_int startkernel, u_int endkernel, char *args, void *info_block)
 	struct cpu_info * const ci = curcpu();
 
 	/* Disable all external interrupts */
-	mtdcr(DCR_UIC0_ER, 0);
+	mtdcr(DCR_UIC0_BASE + DCR_UIC_ER, 0);
 
         /* Initialize cache info for memcpy, etc. */
         cpu_probe_cache();
@@ -188,7 +190,7 @@ initppc(u_int startkernel, u_int endkernel, char *args, void *info_block)
 	physmemr[0].start = 0;
 	physmemr[0].size = board_data.mem_size & ~PGOFSET;
 	/* Lower memory reserved by eval board BIOS */
-	availmemr[0].start = startkernel; 
+	availmemr[0].start = startkernel;
 	availmemr[0].size = board_data.mem_size - availmemr[0].start;
 
 	/* Linear map kernel memory */
@@ -244,11 +246,11 @@ initppc(u_int startkernel, u_int endkernel, char *args, void *info_block)
 			memcpy((void *)EXC_DTMISS, &tlbdmiss4xx,
 				(size_t)&tlbdm4size);
 			break;
-		/* 
-		 * EXC_PIT, EXC_FIT, EXC_WDOG handlers 
-		 * are spaced by 0x10 bytes only.. 
+		/*
+		 * EXC_PIT, EXC_FIT, EXC_WDOG handlers
+		 * are spaced by 0x10 bytes only..
 		 */
-		case EXC_PIT:	
+		case EXC_PIT:
 			memcpy((void *)EXC_PIT, &pitfitwdog,
 				(size_t)&pitfitwdogsize);
 			break;
@@ -257,7 +259,7 @@ initppc(u_int startkernel, u_int endkernel, char *args, void *info_block)
 				(size_t)&debugsize);
 			break;
 		case EXC_DTMISS|EXC_ALI:
-                        /* PPC405GP Rev D errata item 51 */	
+                        /* PPC405GP Rev D errata item 51 */
 			memcpy((void *)(EXC_DTMISS|EXC_ALI), &errata51handler,
 				(size_t)&errata51size);
 			break;
@@ -290,7 +292,7 @@ initppc(u_int startkernel, u_int endkernel, char *args, void *info_block)
 	 * Now enable translation (and machine checks/recoverable interrupts).
 	 */
 	__asm volatile ("mfmsr %0; ori %0,%0,%1; mtmsr %0; isync"
-		      : : "r"(0), "K"(PSL_IR|PSL_DR)); 
+		      : : "r"(0), "K"(PSL_IR|PSL_DR));
 	/* XXXX PSL_ME - With ME set kernel gets stuck... */
 
 	uvm_setpagesize();
@@ -549,4 +551,71 @@ mem_regions(struct mem_region **mem, struct mem_region **avail)
 
 	*mem = physmemr;
 	*avail = availmemr;
+}
+
+
+int
+pci_bus_maxdevs(pci_chipset_tag_t pc, int busno)
+{
+
+	/*
+	 * Bus number is irrelevant.  Configuration Mechanism 1 is in
+	 * use, can have devices 0-32 (i.e. the `normal' range).
+	 */
+	return 5;
+}
+
+int
+pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
+{
+	int pin = pa->pa_intrpin;
+	int dev = pa->pa_device;
+
+	if (pin == 0)
+		/* No IRQ used. */
+		goto bad;
+
+	if (pin > 4) {
+		printf("pci_intr_map: bad interrupt pin %d\n", pin);
+		goto bad;
+	}
+
+	/*
+	 * We need to map the interrupt pin to the interrupt bit in the UIC
+	 * associated with it.  This is highly machine-dependent.
+	 */
+	switch(dev) {
+	case 1:
+	case 2:
+	case 3:
+	case 4:
+		*ihp = 27 + dev;
+		break;
+	default:
+		printf("Hmm.. PCI device %d should not exist on this board\n",
+			dev);
+		goto bad;
+	}
+	return 0;
+
+bad:
+	*ihp = -1;
+	return 1;
+}
+
+void
+pci_conf_interrupt(pci_chipset_tag_t pc, int bus, int dev, int pin,
+		   int swiz, int *iline)
+{
+
+	if (bus == 0)
+		switch(dev) {
+		case 1:
+		case 2:
+		case 3:
+		case 4:
+			*iline = 31 - dev;
+		}
+	else
+		*iline = 20 + ((swiz + dev + 1) & 3);
 }

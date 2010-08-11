@@ -1,21 +1,21 @@
-/*	$NetBSD: ofw_rascons.c,v 1.2.4.1 2009/05/04 08:11:44 yamt Exp $	*/
+/*	$NetBSD: ofw_rascons.c,v 1.2.4.2 2010/08/11 22:52:35 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
  * All rights reserved.
  *
  * Author: Chris G. Demetriou
- * 
+ *
  * Permission to use, copy, modify and distribute this software and
  * its documentation is hereby granted, provided that both the copyright
  * notice and this permission notice appear in all copies of the
  * software, derivative works or modified versions, and any portions
  * thereof, and that both notices appear in supporting documentation.
- * 
- * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS" 
- * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND 
+ *
+ * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
+ * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND
  * FOR ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
- * 
+ *
  * Carnegie Mellon requests users of this software to return to
  *
  *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_rascons.c,v 1.2.4.1 2009/05/04 08:11:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_rascons.c,v 1.2.4.2 2010/08/11 22:52:35 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -95,12 +95,12 @@ rascons_cnattach(void)
 
 	/* move (rom monitor) cursor to the lowest line - 1 */
 	OF_interpret("#lines 2 - to line#", 0, 0);
-	
+
 	wsfont_init();
 	if (copy_rom_font() == 0) {
 		romfont_loaded = 1;
 	}
-	
+
 	/* set up rasops */
 	rascons_init_rasops(console_node, ri);
 
@@ -117,7 +117,7 @@ rascons_cnattach(void)
 		crow = 0;
 	}
 #endif
-	
+
 	rascons_stdscreen.nrows = ri->ri_rows;
 	rascons_stdscreen.ncols = ri->ri_cols;
 	rascons_stdscreen.textops = &ri->ri_ops;
@@ -126,7 +126,7 @@ rascons_cnattach(void)
 	ri->ri_ops.allocattr(ri, 0, 0, 0, &defattr);
 	wsdisplay_preattach(&rascons_stdscreen, ri, 0, max(0,
 	    min(crow, ri->ri_rows - 1)), defattr);
-	
+
 #if notyet
 	rascons_init_cmap(NULL);
 #endif
@@ -154,7 +154,7 @@ copy_rom_font(void)
 	 * virtual address space.
 	 */
 	OF_call_method("translate", mmu, 1, 3, romfont, &romfont, &m, &e);
- 
+
 	/* Get character size */
 	OF_interpret("char-width", 0, 1, &char_width);
 	OF_interpret("char-height", 0, 1, &char_height);
@@ -199,7 +199,7 @@ rascons_init_rasops(int node, struct rasops_info *ri)
 	if (rascons_enable_cache) {
 		vaddr_t va;
 		/*
-		 * Let's try to find an empty BAT to use 
+		 * Let's try to find an empty BAT to use
 		 */
 		for (va = SEGMENT_LENGTH; va < (USER_SR << ADDR_SR_SHFT);
 		     va += SEGMENT_LENGTH) {
@@ -223,15 +223,15 @@ rascons_init_rasops(int node, struct rasops_info *ri)
 	ri->ri_depth = depth;
 	ri->ri_stride = linebytes;
 	ri->ri_bits = (char *)fbaddr;
-	ri->ri_flg = RI_CENTER | RI_FULLCLEAR;
+	ri->ri_flg = RI_CENTER | RI_FULLCLEAR | RI_NO_AUTO;
 
 	/* mimic firmware output if we can find the ROM font */
 	if (romfont_loaded) {
 		int cols, rows;
 
-		/* 
-		 * XXX this assumes we're the console which may or may not 
-		 * be the case 
+		/*
+		 * XXX this assumes we're the console which may or may not
+		 * be the case
 		 */
 		OF_interpret("#lines", 0, 1, &rows);
 		OF_interpret("#columns", 0, 1, &cols);
@@ -240,7 +240,7 @@ rascons_init_rasops(int node, struct rasops_info *ri)
 		rasops_init(ri, rows, cols);
 
 		ri->ri_xorigin = (width - cols * ri->ri_font->fontwidth) >> 1;
-		ri->ri_yorigin = (height - rows * ri->ri_font->fontheight) 
+		ri->ri_yorigin = (height - rows * ri->ri_font->fontheight)
 		    >> 1;
 		ri->ri_bits = (char *)fbaddr + ri->ri_xorigin +
 			      ri->ri_stride * ri->ri_yorigin;

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.205.2.5 2010/03/11 15:04:16 yamt Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.205.2.6 2010/08/11 22:54:38 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.205.2.5 2010/03/11 15:04:16 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.205.2.6 2010/08/11 22:54:38 yamt Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -768,9 +768,9 @@ find_stopped_child(struct proc *parent, pid_t pid, int options,
 		LIST_FOREACH(child, &parent->p_children, p_sibling) {
 			if (pid >= 0) {
 				if (child->p_pid != pid) {
-					child = p_find(pid, PFIND_ZOMBIE |
-					    PFIND_LOCKED);
+					child = proc_find_raw(pid);
 					if (child == NULL ||
+					    child->p_stat == SIDL ||
 					    child->p_pptr != parent) {
 						child = NULL;
 						break;
@@ -805,7 +805,7 @@ find_stopped_child(struct proc *parent, pid_t pid, int options,
 					/*
 					 * We may occasionally arrive here
 					 * after receiving a signal, but
-					 * immediatley before the child
+					 * immediately before the child
 					 * process is zombified.  The wait
 					 * will be short, so avoid returning
 					 * to userspace.
@@ -932,7 +932,7 @@ proc_free(struct proc *p, struct rusage *ru)
 	/*
 	 * Let pid be reallocated.
 	 */
-	proc_free_pid(p);
+	proc_free_pid(p->p_pid);
 
 	/*
 	 * Unlink process from its process group.

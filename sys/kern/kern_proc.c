@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.139.2.4 2010/03/11 15:04:17 yamt Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.139.2.5 2010/08/11 22:54:39 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,11 +62,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.139.2.4 2010/03/11 15:04:17 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.139.2.5 2010/08/11 22:54:39 yamt Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_kstack.h"
 #include "opt_maxuprc.h"
 #include "opt_dtrace.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -123,6 +125,7 @@ kmutex_t	*proc_lock;
 struct pid_table {
 	struct proc	*pt_proc;
 	struct pgrp	*pt_pgrp;
+	pid_t		pt_pid;
 };
 #if 1	/* strongly typed cast - should be a noop */
 static inline uint p2u(struct proc *p) { return (uint)(uintptr_t)p; }
@@ -164,7 +167,6 @@ struct plimit limit0;
 struct pstats pstat0;
 struct vmspace vmspace0;
 struct sigacts sigacts0;
-struct turnstile turnstile0;
 struct proc proc0 = {
 	.p_lwps = LIST_HEAD_INITIALIZER(&proc0.p_lwps),
 	.p_sigwaiters = LIST_HEAD_INITIALIZER(&proc0.p_sigwaiters),
@@ -187,25 +189,6 @@ struct proc proc0 = {
 	.p_vmspace = &vmspace0,
 	.p_stats = &pstat0,
 	.p_sigacts = &sigacts0,
-};
-struct lwp lwp0 __aligned(MIN_LWP_ALIGNMENT) = {
-#ifdef LWP0_CPU_INFO
-	.l_cpu = LWP0_CPU_INFO,
-#endif
-	.l_proc = &proc0,
-	.l_lid = 1,
-	.l_flag = LW_SYSTEM,
-	.l_stat = LSONPROC,
-	.l_ts = &turnstile0,
-	.l_syncobj = &sched_syncobj,
-	.l_refcnt = 1,
-	.l_priority = PRI_USER + NPRI_USER - 1,
-	.l_inheritedprio = -1,
-	.l_class = SCHED_OTHER,
-	.l_psid = PS_NONE,
-	.l_pi_lenders = SLIST_HEAD_INITIALIZER(&lwp0.l_pi_lenders),
-	.l_name = __UNCONST("swapper"),
-	.l_fd = &filedesc0,
 };
 kauth_cred_t cred0;
 
@@ -331,6 +314,7 @@ procinit(void)
 	for (i = 0; i <= pid_tbl_mask; i++) {
 		pid_table[i].pt_proc = P_FREE(LINK_EMPTY + i + 1);
 		pid_table[i].pt_pgrp = 0;
+		pid_table[i].pt_pid = 0;
 	}
 	/* slot 0 is just grabbed */
 	next_free_pt = 1;
@@ -359,16 +343,11 @@ proc0_init(void)
 {
 	struct proc *p;
 	struct pgrp *pg;
-	struct lwp *l;
 	rlim_t lim;
 	int i;
 
 	p = &proc0;
 	pg = &pgrp0;
-	l = &lwp0;
-
-	KASSERT((void *)uvm_lwp_getuarea(l) != NULL);
-	KASSERT(l->l_lid == p->p_nlwpid);
 
 	mutex_init(&p->p_stmutex, MUTEX_DEFAULT, IPL_HIGH);
 	mutex_init(&p->p_auxlock, MUTEX_DEFAULT, IPL_NONE);
@@ -378,11 +357,10 @@ proc0_init(void)
 	cv_init(&p->p_waitcv, "wait");
 	cv_init(&p->p_lwpcv, "lwpwait");
 
-	LIST_INSERT_HEAD(&p->p_lwps, l, l_sibling);
+	LIST_INSERT_HEAD(&p->p_lwps, &lwp0, l_sibling);
 
 	pid_table[0].pt_proc = p;
 	LIST_INSERT_HEAD(&allproc, p, p_list);
-	LIST_INSERT_HEAD(&alllwp, l, l_list);
 
 	pid_table[0].pt_pgrp = pg;
 	LIST_INSERT_HEAD(&pg->pg_members, p, p_pglist);
@@ -391,15 +369,9 @@ proc0_init(void)
 	(*p->p_emul->e_syscall_intern)(p);
 #endif
 
-	callout_init(&l->l_timeout_ch, CALLOUT_MPSAFE);
-	callout_setfunc(&l->l_timeout_ch, sleepq_timeout, l);
-	cv_init(&l->l_sigcv, "sigwait");
-
 	/* Create credentials. */
 	cred0 = kauth_cred_alloc();
 	p->p_cred = cred0;
-	kauth_cred_hold(cred0);
-	l->l_cred = cred0;
 
 	/* Create the CWD info. */
 	rw_init(&cwdi0.cwdi_lock);
@@ -444,12 +416,8 @@ proc0_init(void)
 	mutex_init(&p->p_sigacts->sa_mutex, MUTEX_DEFAULT, IPL_SCHED);
 	siginit(p);
 
-	kdtrace_proc_ctor(NULL, p);
-
 	proc_initspecific(p);
-	lwp_initspecific(l);
-
-	SYSCALL_TIME_LWP_INIT(l);
+	kdtrace_proc_ctor(NULL, p);
 }
 
 /*
@@ -502,22 +470,23 @@ pgid_in_session(struct proc *p, pid_t pg_id)
 
 	mutex_enter(proc_lock);
 	if (pg_id < 0) {
-		struct proc *p1 = p_find(-pg_id, PFIND_LOCKED | PFIND_UNLOCK_FAIL);
-		if (p1 == NULL)
-			return EINVAL;
+		struct proc *p1 = proc_find(-pg_id);
+		if (p1 == NULL) {
+			error = EINVAL;
+			goto fail;
+		}
 		pgrp = p1->p_pgrp;
 	} else {
-		pgrp = pg_find(pg_id, PFIND_LOCKED | PFIND_UNLOCK_FAIL);
-		if (pgrp == NULL)
-			return EINVAL;
+		pgrp = pgrp_find(pg_id);
+		if (pgrp == NULL) {
+			error = EINVAL;
+			goto fail;
+		}
 	}
 	session = pgrp->pg_session;
-	if (session != p->p_pgrp->pg_session)
-		error = EPERM;
-	else
-		error = 0;
+	error = (session != p->p_pgrp->pg_session) ? EPERM : 0;
+fail:
 	mutex_exit(proc_lock);
-
 	return error;
 }
 
@@ -537,57 +506,66 @@ p_inferior(struct proc *p, struct proc *q)
 }
 
 /*
- * Locate a process by number
+ * proc_find: locate a process by the ID.
+ *
+ * => Must be called with proc_lock held.
  */
-struct proc *
-p_find(pid_t pid, uint flags)
+proc_t *
+proc_find_raw(pid_t pid)
 {
-	struct proc *p;
-	char stat;
+	struct pid_table *pt;
+	proc_t *p;
 
-	if (!(flags & PFIND_LOCKED))
-		mutex_enter(proc_lock);
-
-	p = pid_table[pid & pid_tbl_mask].pt_proc;
-
-	/* Only allow live processes to be found by pid. */
-	/* XXXSMP p_stat */
-	if (P_VALID(p) && p->p_pid == pid && ((stat = p->p_stat) == SACTIVE ||
-	    stat == SSTOP || ((flags & PFIND_ZOMBIE) &&
-	    (stat == SZOMB || stat == SDEAD || stat == SDYING)))) {
-		if (flags & PFIND_UNLOCK_OK)
-			 mutex_exit(proc_lock);
-		return p;
+	KASSERT(mutex_owned(proc_lock));
+	pt = &pid_table[pid & pid_tbl_mask];
+	p = pt->pt_proc;
+	if (__predict_false(!P_VALID(p) || pt->pt_pid != pid)) {
+		return NULL;
 	}
-	if (flags & PFIND_UNLOCK_FAIL)
-		mutex_exit(proc_lock);
-	return NULL;
+	return p;
 }
 
-
-/*
- * Locate a process group by number
- */
-struct pgrp *
-pg_find(pid_t pgid, uint flags)
+proc_t *
+proc_find(pid_t pid)
 {
-	struct pgrp *pg;
+	proc_t *p;
 
-	if (!(flags & PFIND_LOCKED))
-		mutex_enter(proc_lock);
-	pg = pid_table[pgid & pid_tbl_mask].pt_pgrp;
-	/*
-	 * Can't look up a pgrp that only exists because the session
-	 * hasn't died yet (traditional)
-	 */
-	if (pg == NULL || pg->pg_id != pgid || LIST_EMPTY(&pg->pg_members)) {
-		if (flags & PFIND_UNLOCK_FAIL)
-			 mutex_exit(proc_lock);
+	p = proc_find_raw(pid);
+	if (__predict_false(p == NULL)) {
 		return NULL;
 	}
 
-	if (flags & PFIND_UNLOCK_OK)
-		mutex_exit(proc_lock);
+	/*
+	 * Only allow live processes to be found by PID.
+	 * XXX: p_stat might change, since unlocked.
+	 */
+	if (__predict_true(p->p_stat == SACTIVE || p->p_stat == SSTOP)) {
+		return p;
+	}
+	return NULL;
+}
+
+/*
+ * pgrp_find: locate a process group by the ID.
+ *
+ * => Must be called with proc_lock held.
+ */
+struct pgrp *
+pgrp_find(pid_t pgid)
+{
+	struct pgrp *pg;
+
+	KASSERT(mutex_owned(proc_lock));
+
+	pg = pid_table[pgid & pid_tbl_mask].pt_pgrp;
+
+	/*
+	 * Cannot look up a process group that only exists because the
+	 * session has not died yet (traditional).
+	 */
+	if (pg == NULL || pg->pg_id != pgid || LIST_EMPTY(&pg->pg_members)) {
+		return NULL;
+	}
 	return pg;
 }
 
@@ -598,12 +576,14 @@ expand_pid_table(void)
 	struct pid_table *n_pt, *new_pt;
 	struct proc *proc;
 	struct pgrp *pgrp;
-	pid_t pid;
+	pid_t pid, rpid;
 	u_int i;
+	uint new_pt_mask;
 
 	pt_size = pid_tbl_mask + 1;
 	tsz = pt_size * 2 * sizeof(struct pid_table);
 	new_pt = kmem_alloc(tsz, KM_SLEEP);
+	new_pt_mask = pt_size * 2 - 1;
 
 	mutex_enter(proc_lock);
 	if (pt_size != pid_tbl_mask + 1) {
@@ -622,7 +602,7 @@ expand_pid_table(void)
 	 * We stuff free items on the front of the freelist
 	 * because we can't write to unmodified entries.
 	 * Processing the table backwards maintains a semblance
-	 * of issueing pid numbers that increase with time.
+	 * of issuing pid numbers that increase with time.
 	 */
 	i = pt_size - 1;
 	n_pt = new_pt + i;
@@ -632,21 +612,27 @@ expand_pid_table(void)
 		if (!P_VALID(proc)) {
 			/* Up 'use count' so that link is valid */
 			pid = (P_NEXT(proc) + pt_size) & ~pt_size;
+			rpid = 0;
 			proc = P_FREE(pid);
 			if (pgrp)
 				pid = pgrp->pg_id;
-		} else
-			pid = proc->p_pid;
+		} else {
+			pid = pid_table[i].pt_pid;
+			rpid = pid;
+		}
 
 		/* Save entry in appropriate half of table */
 		n_pt[pid & pt_size].pt_proc = proc;
 		n_pt[pid & pt_size].pt_pgrp = pgrp;
+		n_pt[pid & pt_size].pt_pid = rpid;
 
 		/* Put other piece on start of free list */
 		pid = (pid ^ pt_size) & ~pid_tbl_mask;
 		n_pt[pid & pt_size].pt_proc =
-				    P_FREE((pid & ~pt_size) | next_free_pt);
+			P_FREE((pid & ~pt_size) | next_free_pt);
 		n_pt[pid & pt_size].pt_pgrp = 0;
+		n_pt[pid & pt_size].pt_pid = 0;
+
 		next_free_pt = i | (pid & pt_size);
 		if (i == 0)
 			break;
@@ -656,7 +642,7 @@ expand_pid_table(void)
 	tsz = pt_size * sizeof(struct pid_table);
 	n_pt = pid_table;
 	pid_table = new_pt;
-	pid_tbl_mask = pt_size * 2 - 1;
+	pid_tbl_mask = new_pt_mask;
 
 	/*
 	 * pid_max starts as PID_MAX (= 30000), once we have 16384
@@ -676,15 +662,22 @@ struct proc *
 proc_alloc(void)
 {
 	struct proc *p;
-	int nxt;
-	pid_t pid;
-	struct pid_table *pt;
 
 	p = pool_cache_get(proc_cache, PR_WAITOK);
 	p->p_stat = SIDL;			/* protect against others */
-
 	proc_initspecific(p);
-	/* allocate next free pid */
+	kdtrace_proc_ctor(NULL, p);
+	p->p_pid = -1;
+	proc_alloc_pid(p);
+	return p;
+}
+
+pid_t
+proc_alloc_pid(struct proc *p)
+{
+	struct pid_table *pt;
+	pid_t pid;
+	int nxt;
 
 	for (;;expand_pid_table()) {
 		if (__predict_false(pid_alloc_cnt >= pid_alloc_lim))
@@ -707,18 +700,20 @@ proc_alloc(void)
 	pid = (nxt & ~pid_tbl_mask) + pid_tbl_mask + 1 + next_free_pt;
 	if ((uint)pid > (uint)pid_max)
 		pid &= pid_tbl_mask;
-	p->p_pid = pid;
 	next_free_pt = nxt & pid_tbl_mask;
 
 	/* Grab table slot */
 	pt->pt_proc = p;
+
+	KASSERT(pt->pt_pid == 0);
+	pt->pt_pid = pid;
+	if (p->p_pid == -1) {
+		p->p_pid = pid;
+	}
 	pid_alloc_cnt++;
-
-	kdtrace_proc_ctor(NULL, p);
-
 	mutex_exit(proc_lock);
 
-	return p;
+	return pid;
 }
 
 /*
@@ -727,27 +722,25 @@ proc_alloc(void)
  * Called with the proc_lock held.
  */
 void
-proc_free_pid(struct proc *p)
+proc_free_pid(pid_t pid)
 {
-	pid_t pid = p->p_pid;
 	struct pid_table *pt;
 
 	KASSERT(mutex_owned(proc_lock));
 
 	pt = &pid_table[pid & pid_tbl_mask];
-#ifdef DIAGNOSTIC
-	if (__predict_false(pt->pt_proc != p))
-		panic("proc_free: pid_table mismatch, pid %x, proc %p",
-			pid, p);
-#endif
+
 	/* save pid use count in slot */
 	pt->pt_proc = P_FREE(pid & ~pid_tbl_mask);
+	KASSERT(pt->pt_pid == pid);
+	pt->pt_pid = 0;
 
 	if (pt->pt_pgrp == NULL) {
 		/* link last freed entry onto ours */
 		pid &= pid_tbl_mask;
 		pt = &pid_table[last_free_pt];
 		pt->pt_proc = P_FREE(P_NEXT(pt->pt_proc) | pid);
+		pt->pt_pid = 0;
 		last_free_pt = pid;
 		pid_alloc_cnt--;
 	}
@@ -802,9 +795,9 @@ proc_enterpgrp(struct proc *curp, pid_t pid, pid_t pgid, bool mksess)
 
 	/* Can only set another process under restricted circumstances. */
 	if (pid != curp->p_pid) {
-		/* must exist and be one of our children... */
-		if ((p = p_find(pid, PFIND_LOCKED)) == NULL ||
-		    !p_inferior(p, curp)) {
+		/* Must exist and be one of our children... */
+		p = proc_find(pid);
+		if (p == NULL || !p_inferior(p, curp)) {
 			rval = ESRCH;
 			goto done;
 		}
@@ -822,7 +815,7 @@ proc_enterpgrp(struct proc *curp, pid_t pid, pid_t pgid, bool mksess)
 	} else {
 		/* ... setsid() cannot re-enter a pgrp */
 		if (mksess && (curp->p_pgid == curp->p_pid ||
-		    pg_find(curp->p_pid, PFIND_LOCKED)))
+		    pgrp_find(curp->p_pid)))
 			goto done;
 		p = curp;
 	}
@@ -988,6 +981,7 @@ pg_remove(pid_t pg_id)
 		pg_id &= pid_tbl_mask;
 		pt = &pid_table[last_free_pt];
 		pt->pt_proc = P_FREE(P_NEXT(pt->pt_proc) | pg_id);
+		KASSERT(pt->pt_pid == 0);
 		last_free_pt = pg_id;
 		pid_alloc_cnt--;
 	}
@@ -1132,8 +1126,8 @@ pidtbl_dump(void)
 			continue;
 		db_printf("  id %x: ", id);
 		if (P_VALID(p))
-			db_printf("proc %p id %d (0x%x) %s\n",
-				p, p->p_pid, p->p_pid, p->p_comm);
+			db_printf("slotpid %d proc %p id %d (0x%x) %s\n",
+				pt->pt_pid, p, p->p_pid, p->p_pid, p->p_comm);
 		else
 			db_printf("next %x use %x\n",
 				P_NEXT(p) & pid_tbl_mask,
@@ -1462,4 +1456,3 @@ proc_uidmatch(kauth_cred_t cred, kauth_cred_t target)
 
 	return (r);
 }
-

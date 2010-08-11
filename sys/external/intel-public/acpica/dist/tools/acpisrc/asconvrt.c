@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2009, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2010, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -153,9 +153,9 @@ AsMatchExactWord (
     NextChar = Word[WordLength];
     PrevChar = * (Word -1);
 
-    if (isalnum (NextChar) ||
+    if (isalnum ((int) NextChar) ||
         (NextChar == '_')  ||
-        isalnum (PrevChar) ||
+        isalnum ((int) PrevChar) ||
         (PrevChar == '_'))
     {
         return (FALSE);
@@ -298,7 +298,7 @@ AsCheckForBraces (
 
                 if (!Gbl_QuietMode)
                 {
-                    printf ("Missing braces for <if>, line %d: %s\n", TotalLines, Filename);
+                    printf ("Missing braces for <if>, line %u: %s\n", TotalLines, Filename);
                 }
             }
         }
@@ -317,7 +317,7 @@ AsCheckForBraces (
 
                 if (!Gbl_QuietMode)
                 {
-                    printf ("Missing braces for <if>, line %d: %s\n", TotalLines, Filename);
+                    printf ("Missing braces for <if>, line %u: %s\n", TotalLines, Filename);
                 }
             }
         }
@@ -336,7 +336,7 @@ AsCheckForBraces (
 
                 if (!Gbl_QuietMode)
                 {
-                    printf ("Missing braces for <else>, line %d: %s\n", TotalLines, Filename);
+                    printf ("Missing braces for <else>, line %u: %s\n", TotalLines, Filename);
                 }
             }
         }
@@ -700,7 +700,7 @@ AsBracesOnSameLine (
          * Check for digit will ignore initializer lists surrounded by braces.
          * This will work until we we need more complex detection.
          */
-        if ((*SubBuffer == '{') && !isdigit (SubBuffer[1]))
+        if ((*SubBuffer == '{') && !isdigit ((int) SubBuffer[1]))
         {
             if (BlockBegin)
             {
@@ -1126,7 +1126,7 @@ AsCountLines (
 
     if (LongLineCount)
     {
-        VERBOSE_PRINT (("%d Lines longer than 80 found in %s\n", LongLineCount, Filename));
+        VERBOSE_PRINT (("%u Lines longer than 80 found in %s\n", LongLineCount, Filename));
         Gbl_LongLines += LongLineCount;
     }
 
@@ -1293,7 +1293,7 @@ AsCountSourceLines (
     Gbl_WhiteLines += WhiteCount;
     Gbl_CommentLines += CommentCount;
 
-    VERBOSE_PRINT (("%d Comment %d White %d Code %d Lines in %s\n",
+    VERBOSE_PRINT (("%u Comment %u White %u Code %u Lines in %s\n",
                 CommentCount, WhiteCount, LineCount, LineCount+WhiteCount+CommentCount, Filename));
 }
 

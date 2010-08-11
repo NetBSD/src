@@ -1,4 +1,4 @@
-/* $NetBSD: tfb.c,v 1.53.20.2 2009/09/16 13:37:57 yamt Exp $ */
+/* $NetBSD: tfb.c,v 1.53.20.3 2010/08/11 22:54:13 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tfb.c,v 1.53.20.2 2009/09/16 13:37:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tfb.c,v 1.53.20.3 2010/08/11 22:54:13 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -289,6 +289,7 @@ tfbattach(device_t parent, device_t self, void *aux)
 	console = (ta->ta_addr == tfb_consaddr);
 	if (console) {
 		sc->sc_ri = ri = &tfb_console_ri;
+		ri->ri_flg &= ~RI_NO_AUTO;
 		sc->nscreens = 1;
 	}
 	else {
@@ -337,6 +338,8 @@ tfb_common_init(struct rasops_info *ri)
 	tfbhwinit(base);
 
 	ri->ri_flg = RI_CENTER;
+	if (ri == &tfb_console_ri)
+		ri->ri_flg |= RI_NO_AUTO;
 	ri->ri_depth = 8;
 	ri->ri_width = 1280;
 	ri->ri_height = 1024;

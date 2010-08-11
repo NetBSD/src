@@ -8,7 +8,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2009, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2010, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -318,7 +318,7 @@ AcpiDsBeginMethodExecution (
             (WalkState->Thread->CurrentSyncLevel > ObjDesc->Method.Mutex->Mutex.SyncLevel))
         {
             ACPI_ERROR ((AE_INFO,
-                "Cannot acquire Mutex for method [%4.4s], current SyncLevel is too large (%d)",
+                "Cannot acquire Mutex for method [%4.4s], current SyncLevel is too large (%u)",
                 AcpiUtGetNodeName (MethodNode),
                 WalkState->Thread->CurrentSyncLevel));
 
@@ -519,7 +519,7 @@ AcpiDsCallControlMethod (
 
     if (ObjDesc->Method.MethodFlags & AML_METHOD_INTERNAL_ONLY)
     {
-        Status = ObjDesc->Method.Implementation (NextWalkState);
+        Status = ObjDesc->Method.Extra.Implementation (NextWalkState);
         if (Status == AE_OK)
         {
             Status = AE_CTRL_TERMINATE;
@@ -700,7 +700,18 @@ AcpiDsTerminateControlMethod (
          */
         if (!(MethodDesc->Method.Flags & AOPOBJ_MODULE_LEVEL))
         {
-            AcpiNsDeleteNamespaceByOwner (MethodDesc->Method.OwnerId);
+            /* Delete any direct children of (created by) this method */
+
+            AcpiNsDeleteNamespaceSubtree (WalkState->MethodNode);
+
+            /*
+             * Delete any objects that were created by this method
+             * elsewhere in the namespace (if any were created).
+             */
+            if (MethodDesc->Method.Flags & AOPOBJ_MODIFIED_NAMESPACE)
+            {
+                AcpiNsDeleteNamespaceByOwner (MethodDesc->Method.OwnerId);
+            }
         }
     }
 
@@ -725,7 +736,7 @@ AcpiDsTerminateControlMethod (
          * we immediately reuse it for the next thread executing this method
          */
         ACPI_DEBUG_PRINT ((ACPI_DB_DISPATCH,
-            "*** Completed execution of one thread, %d threads remaining\n",
+            "*** Completed execution of one thread, %u threads remaining\n",
             MethodDesc->Method.ThreadCount));
     }
     else

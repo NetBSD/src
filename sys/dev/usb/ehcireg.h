@@ -1,4 +1,4 @@
-/*	$NetBSD: ehcireg.h,v 1.26.10.2 2009/05/04 08:13:20 yamt Exp $	*/
+/*	$NetBSD: ehcireg.h,v 1.26.10.3 2010/08/11 22:54:13 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2004 The NetBSD Foundation, Inc.
@@ -192,9 +192,11 @@ typedef u_int32_t ehci_isoc_trans_t;
 typedef u_int32_t ehci_isoc_bufr_ptr_t;
 
 /* Isochronous Transfer Descriptor */
+#define EHCI_ITD_NUFRAMES USB_UFRAMES_PER_FRAME
+#define EHCI_ITD_NBUFFERS 7
 typedef struct {
 	volatile ehci_link_t		itd_next;
-	volatile ehci_isoc_trans_t	itd_ctl[8];
+	volatile ehci_isoc_trans_t	itd_ctl[EHCI_ITD_NUFRAMES];
 #define EHCI_ITD_GET_STATUS(x) (((x) >> 28) & 0xf)
 #define EHCI_ITD_SET_STATUS(x) (((x) & 0xf) << 28)
 #define EHCI_ITD_ACTIVE		0x80000000
@@ -210,7 +212,7 @@ typedef struct {
 #define EHCI_ITD_SET_PG(x) (((x) & 0x7) << 12)
 #define EHCI_ITD_GET_OFFS(x) (((x) >> 0) & 0xfff)
 #define EHCI_ITD_SET_OFFS(x) (((x) & 0xfff) << 0)
-	volatile ehci_isoc_bufr_ptr_t	itd_bufr[7];
+	volatile ehci_isoc_bufr_ptr_t	itd_bufr[EHCI_ITD_NBUFFERS];
 #define EHCI_ITD_GET_BPTR(x) ((x) & 0xfffff000)
 #define EHCI_ITD_SET_BPTR(x) ((x) & 0xfffff000)
 #define EHCI_ITD_GET_EP(x) (((x) >> 8) & 0xf)
@@ -223,7 +225,7 @@ typedef struct {
 #define EHCI_ITD_SET_MAXPKT(x) ((x) & 0x7ff)
 #define EHCI_ITD_GET_MULTI(x) ((x) & 0x3)
 #define EHCI_ITD_SET_MULTI(x) ((x) & 0x3)
-	volatile ehci_isoc_bufr_ptr_t	itd_bufr_hi[7];
+	volatile ehci_isoc_bufr_ptr_t	itd_bufr_hi[EHCI_ITD_NBUFFERS];
 } ehci_itd_t;
 #define EHCI_ITD_ALIGN 32
 
@@ -321,5 +323,36 @@ typedef struct {
 	volatile ehci_link_t	fstn_back;
 } ehci_fstn_t;
 #define EHCI_FSTN_ALIGN 32
+
+/* Debug Port */
+#define PCI_CAP_DEBUGPORT_OFFSET __BITS(28,16)
+#define PCI_CAP_DEBUGPORT_BAR	__BITS(31,29)
+/* Debug Port Registers, offset into DEBUGPORT_BAR at DEBUGPORT_OFFSET */
+#define EHCI_DEBUG_SC		0x00
+/* Status/Control Register */
+#define  EHCI_DSC_DATA_LENGTH	__BITS(3,0)
+#define  EHCI_DSC_WRITE		__BIT(4)
+#define  EHCI_DSC_GO		__BIT(5)
+#define  EHCI_DSC_ERROR		__BIT(6)
+#define  EHCI_DSC_EXCEPTION	__BITS(9,7)
+#define   EHCI_DSC_EXCEPTION_NONE	0
+#define   EHCI_DSC_EXCEPTION_XACT	1
+#define   EHCI_DSC_EXCEPTION_HW		2
+#define  EHCI_DSC_IN_USE	__BIT(10)
+#define  EHCI_DSC_DONE		__BIT(16)
+#define  EHCI_DSC_ENABLED	__BIT(28)
+#define  EHCI_DSC_OWNER		__BIT(30)
+#define EHCI_DEBUG_UPR		0x04
+/* USB PIDs Register */
+#define  EHCI_DPR_TOKEN		__BITS(7,0)
+#define  EHCI_DPR_SEND		__BITS(15,8)
+#define  EHCI_DPR_RECIEVED	__BITS(23,16)
+/* Data Registers */
+#define EHCI_DEBUG_DATA0123	0x08
+#define EHCI_DEBUG_DATA4567	0x0c
+#define EHCI_DEBUG_DAR		0x10
+/* Device Address Register */
+#define  EHCI_DAR_ENDPOINT	__BITS(3,0)
+#define  EHCI_DAR_ADDRESS	__BITS(14,8)
 
 #endif /* _DEV_PCI_EHCIREG_H_ */

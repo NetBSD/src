@@ -1,4 +1,4 @@
-/*	$NetBSD: midway.c,v 1.79.4.2 2010/03/11 15:03:33 yamt Exp $	*/
+/*	$NetBSD: midway.c,v 1.79.4.3 2010/08/11 22:53:28 yamt Exp $	*/
 /*	(sync'd to midway.c 1.68)	*/
 
 /*
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midway.c,v 1.79.4.2 2010/03/11 15:03:33 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midway.c,v 1.79.4.3 2010/08/11 22:53:28 yamt Exp $");
 
 #include "opt_natm.h"
 
@@ -229,11 +229,6 @@ __KERNEL_RCSID(0, "$NetBSD: midway.c,v 1.79.4.2 2010/03/11 15:03:33 yamt Exp $")
 #endif /*ATM_PVCEXT*/
 
 #include <net/bpf.h>
-#ifdef __FreeBSD__
-#define BPF_MTAP(ifp, m)		bpf_mtap((ifp), (m))
-#else
-#define BPF_MTAP(ifp, m)		bpf_ops->bpf_mtap((ifp)->if_bpf, (m))
-#endif
 
 /*
  * params
@@ -2197,7 +2192,7 @@ again:
       launch.t->m_data += size;
       launch.t->m_len -= size;
 
-      BPF_MTAP(ifp, launch.t);
+      bpf_mtap(ifp, launch.t);
 
       launch.t->m_data -= size;
       launch.t->m_len += size;
@@ -2777,8 +2772,7 @@ EN_INTR_TYPE en_intr(void *arg)
 	  ifp->if_ipackets++;
 #endif
 
-	  if (ifp->if_bpf)
-	    BPF_MTAP(ifp, m);
+	  bpf_mtap(ifp, m);
 
 	  atm_input(ifp, &ah, m, sc->rxslot[slot].rxhand);
 	}

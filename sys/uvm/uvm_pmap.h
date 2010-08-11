@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pmap.h,v 1.21.32.4 2010/03/11 15:04:47 yamt Exp $	*/
+/*	$NetBSD: uvm_pmap.h,v 1.21.32.5 2010/08/11 22:55:17 yamt Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -109,7 +109,28 @@ typedef struct pmap_statistics	*pmap_statistics_t;
 #define	PMAP_KMPAGE	0x00000000
 #endif /* PMAP_ENABLE_PMAP_KMPAGE */
 
-#define	PMAP_MD_MASK	0xff000000	/* Machine-dependent bits */
+#define	PMAP_MD_MASK	0xff000000	/* [BOTH] Machine-dependent bits */
+#define PMAP_PROT_MASK	0x0000000f	/* [BOTH] VM_PROT_* bit mask */
+
+/*
+ * Cache Type Encodings
+ */
+#define PMAP_CACHE_MASK		0x00000f00
+
+/* All accesses are uncacheable. No speculative accesses. */
+#define PMAP_NOCACHE		0x00000100	/* [BOTH] */
+
+/* All accesses are uncacheable. No speculative accesses.
+ * Writes are combined. */
+#define PMAP_WRITE_COMBINE	0x00000200	/* [BOTH] */
+
+/* On reads, cachelines become shared or exclusive if allocated on cache miss.
+ * On writes, cachelines become modified on a cache miss.  */
+#define PMAP_WRITE_BACK		0x00000300	/* [BOTH] */
+
+/* = PMAP_NOCACHE but overrideable (e.g. on x86 by MTRRs) */
+#define PMAP_NOCACHE_OVR	0x00000400	/* [BOTH] */
+
 
 #ifndef PMAP_EXCLUDE_DECLS	/* Used in Sparc port to virtualize pmap mod */
 #ifdef _KERNEL

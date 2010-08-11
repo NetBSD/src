@@ -1,4 +1,4 @@
-/*	$NetBSD: apmbios.c,v 1.10.4.4 2010/03/11 15:02:28 yamt Exp $ */
+/*	$NetBSD: apmbios.c,v 1.10.4.5 2010/08/11 22:52:11 yamt Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apmbios.c,v 1.10.4.4 2010/03/11 15:02:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apmbios.c,v 1.10.4.5 2010/08/11 22:52:11 yamt Exp $");
 
 #include "opt_apm.h"
 #include "opt_compat_mach.h"	/* Needed to get the right segment def */
@@ -781,7 +781,7 @@ apmbiosattach(device_t parent, device_t self, void *aux)
 		 * implementation on i386 so it can be done without
 		 * extent checking.
 		 */
-		if (_x86_memio_map(X86_BUS_SPACE_MEM,
+		if (_x86_memio_map(x86_bus_space_mem,
 		    apminfo.apm_data_seg_base,
 		    apminfo.apm_data_seg_len, 0, &memh)) {
 			aprint_error_dev(self,

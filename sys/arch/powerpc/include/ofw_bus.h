@@ -1,4 +1,4 @@
-/* $NetBSD: ofw_bus.h,v 1.2.26.1 2008/05/16 02:23:00 yamt Exp $ */
+/* $NetBSD: ofw_bus.h,v 1.2.26.2 2010/08/11 22:52:34 yamt Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -29,8 +29,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _POWERPC_OWFPPC_BUS_H_
-#define _POWERPC_OWFPPC_BUS_H_
+#ifndef _POWERPC_OFW_BUS_H_
+#define _POWERPC_OFW_BUS_H_
 
 #define RANGE_TYPE_PCI		1
 #define RANGE_TYPE_ISA		2
@@ -52,8 +52,7 @@ extern struct powerpc_bus_space genppc_isa_mem_space_tag;
 void ofwoea_bus_space_init(void);
 void ofwoea_initppc(u_int, u_int, char *);
 void ofwoea_batinit(void);
-int ofwoea_map_space(int rangetype, int iomem, int node,
-    struct powerpc_bus_space *tag, const char *name);
+int ofwoea_map_space(int, int, int, struct powerpc_bus_space *, const char *);
 #endif
 
-#endif /* _POWERPC_PREP_BUS_H_ */
+#endif /* _POWERPC_OFW_BUS_H_ */

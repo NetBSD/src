@@ -1,4 +1,4 @@
-/* $NetBSD: db_interface.c,v 1.4.20.2 2009/08/19 18:46:21 yamt Exp $ */
+/* $NetBSD: db_interface.c,v 1.4.20.3 2010/08/11 22:52:15 yamt Exp $ */
 
 /*-
  * Copyright (c) 2003-2005 Marcel Moolenaar
@@ -80,7 +80,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.4.20.2 2009/08/19 18:46:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.4.20.3 2010/08/11 22:52:15 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -112,11 +112,13 @@ db_regs_t *ddb_regp;
 
 static void db_show_vector(db_expr_t, bool, db_expr_t, const char *);
 
-
 const struct db_command db_machine_command_table[] = {
-	{  DDB_ADD_CMD("vector", db_show_vector, 0, NULL,NULL,NULL) },
+	{ DDB_ADD_CMD("vector", db_show_vector, 0,
+	  "Display information about vectors",
+	  "[vector]",
+	  "   vector:\tthe vector to show (all vectors otherwise)") },
 
-	{  DDB_ADD_CMD(NULL, NULL, 0, NULL,NULL,NULL) },
+	{ DDB_ADD_CMD(NULL, NULL, 0, NULL,NULL,NULL) },
 };
 
 static int

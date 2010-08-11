@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.c,v 1.35.32.1 2008/05/16 02:25:06 yamt Exp $	*/
+/*	$NetBSD: scsipiconf.c,v 1.35.32.2 2010/08/11 22:54:10 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -48,11 +48,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipiconf.c,v 1.35.32.1 2008/05/16 02:25:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipiconf.c,v 1.35.32.2 2010/08/11 22:54:10 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
+#include <sys/module.h>
 #include <sys/device.h>
 #include <sys/proc.h>
 
@@ -61,6 +62,29 @@ __KERNEL_RCSID(0, "$NetBSD: scsipiconf.c,v 1.35.32.1 2008/05/16 02:25:06 yamt Ex
 #include <dev/scsipi/scsipi_base.h>
 
 #define	STRVIS_ISWHITE(x) ((x) == ' ' || (x) == '\0' || (x) == (u_char)'\377')
+
+/* Function pointers and stub routines for scsiverbose module */
+int (*scsipi_print_sense)(struct scsipi_xfer *, int) = scsipi_print_sense_stub;
+void (*scsipi_print_sense_data)(struct scsi_sense_data *, int) =
+		scsipi_print_sense_data_stub;
+
+int scsi_verbose_loaded = 0; 
+
+int scsipi_print_sense_stub(struct scsipi_xfer * xs, int verbosity)
+{
+	scsipi_load_verbose();
+	if (scsi_verbose_loaded)
+		return scsipi_print_sense(xs, verbosity);
+	else
+		return 0;
+}
+
+void scsipi_print_sense_data_stub(struct scsi_sense_data *sense, int verbosity)
+{
+	scsipi_load_verbose();
+	if (scsi_verbose_loaded)
+		scsipi_print_sense_data(sense, verbosity);
+}
 
 int
 scsipi_command(struct scsipi_periph *periph, struct scsipi_generic *cmd,
@@ -75,6 +99,19 @@ scsipi_command(struct scsipi_periph *periph, struct scsipi_generic *cmd,
 		return (ENOMEM);
 
 	return (scsipi_execute_xs(xs));
+}
+
+/* 
+ * Load the scsiverbose module
+ */   
+void
+scsipi_load_verbose(void)
+{
+	if (scsi_verbose_loaded == 0) {
+		mutex_enter(&module_lock);
+		module_autoload("scsiverbose", MODULE_CLASS_MISC);
+		mutex_exit(&module_lock);
+	}
 }
 
 /*

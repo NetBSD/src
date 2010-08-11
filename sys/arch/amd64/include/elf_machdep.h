@@ -1,6 +1,6 @@
-/*	$NetBSD: elf_machdep.h,v 1.1.108.2 2009/06/20 07:19:59 yamt Exp $	*/
+/*	$NetBSD: elf_machdep.h,v 1.1.108.3 2010/08/11 22:51:34 yamt Exp $	*/
 
-#ifdef __x86_64__
+#if !defined __i386__
 
 #define	ELF32_MACHDEP_ENDIANNESS	ELFDATA2LSB
 #define	ELF32_MACHDEP_ID_CASES						\
@@ -48,8 +48,8 @@
 
 #define	R_TYPE(name)	__CONCAT(R_X86_64_,name)
 
-#else	/*	__x86_64__	*/
+#else	/*	!__i386__	*/
 
 #include <i386/elf_machdep.h>
 
-#endif	/*	__x86_64__	*/
+#endif	/*	!__i386__	*/

@@ -1,4 +1,4 @@
-/*	$NetBSD: virtex_start.S,v 1.1.54.2 2010/03/11 15:02:21 yamt Exp $ */
+/*	$NetBSD: virtex_start.S,v 1.1.54.3 2010/08/11 22:51:55 yamt Exp $ */
 
 /*
  * Copyright (c) 2006 Jachym Holecek
@@ -55,7 +55,7 @@
 
 #include <powerpc/spr.h>
 #include <powerpc/ibm4xx/spr.h>
-#include <powerpc/ibm4xx/dcr405gp.h>
+#include <powerpc/ibm4xx/dcr4xx.h>
 #include <powerpc/ibm4xx/pmap.h>
 
 

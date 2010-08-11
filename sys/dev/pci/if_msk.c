@@ -1,4 +1,4 @@
-/* $NetBSD: if_msk.c,v 1.18.4.4 2010/03/11 15:03:47 yamt Exp $ */
+/* $NetBSD: if_msk.c,v 1.18.4.5 2010/08/11 22:53:47 yamt Exp $ */
 /*	$OpenBSD: if_msk.c,v 1.42 2007/01/17 02:43:02 krw Exp $	*/
 
 /*
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.18.4.4 2010/03/11 15:03:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.18.4.5 2010/08/11 22:53:47 yamt Exp $");
 
 #include "rnd.h"
 
@@ -1601,8 +1601,7 @@ msk_start(struct ifnet *ifp)
 		 * If there's a BPF listener, bounce a copy of this frame
 		 * to him.
 		 */
-		if (ifp->if_bpf)
-			bpf_ops->bpf_mtap(ifp->if_bpf, m_head);
+		bpf_mtap(ifp, m_head);
 	}
 	if (pkts == 0)
 		return;
@@ -1747,8 +1746,7 @@ msk_rxeof(struct sk_if_softc *sc_if, u_int16_t len, u_int32_t rxstat)
 
 	ifp->if_ipackets++;
 
-	if (ifp->if_bpf)
-		bpf_ops->bpf_mtap(ifp->if_bpf, m);
+	bpf_mtap(ifp, m);
 
 	/* pass it on. */
 	(*ifp->if_input)(ifp, m);
@@ -2193,7 +2191,7 @@ msk_init(struct ifnet *ifp)
 		sk_win_write_4(sc, SK_IMTIMERINIT,
 		    SK_IM_USECS(sc->sk_int_mod));
 		aprint_verbose_dev(sc->sk_dev,
-		    "yinterrupt moderation is %d us\n", sc->sk_int_mod);
+		    "interrupt moderation is %d us\n", sc->sk_int_mod);
 	}
 
 	/* Initialize prefetch engine. */

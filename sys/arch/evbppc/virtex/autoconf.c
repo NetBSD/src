@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.1 2006/12/02 22:18:47 freza Exp $ */
+/*	$NetBSD: autoconf.c,v 1.1.54.1 2010/08/11 22:51:55 yamt Exp $ */
 
 /*
  * Copyright (c) 2006 Jachym Holecek
@@ -61,21 +61,21 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.1 2006/12/02 22:18:47 freza Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.1.54.1 2010/08/11 22:51:55 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
 #include <sys/device.h>
 #include <sys/systm.h>
 
-#include <powerpc/ibm4xx/dcr405gp.h>
+#include <powerpc/ibm4xx/spr.h>
 #include <powerpc/ibm4xx/dev/plbvar.h>
 
 
 /* List of port-specific devices to attach to the processor local bus. */
 static const struct plb_dev local_plb_devs [] = {
-	{ "xcvbus" },
-	{ NULL }
+	{ XILVIRTEX, "xcvbus" },
+	{ 0, NULL }
 };
 
 /*

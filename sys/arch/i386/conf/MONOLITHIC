@@ -1,4 +1,4 @@
-# $NetBSD: MONOLITHIC,v 1.7.2.4 2010/03/11 15:02:27 yamt Exp $
+# $NetBSD: MONOLITHIC,v 1.7.2.5 2010/08/11 22:52:10 yamt Exp $
 #
 # Non MODULAR, used mostly as a reference as to what we modularized.
 #
@@ -58,3 +58,6 @@ pseudo-device	vcoda		4	# coda minicache <-> venus comm.
 pseudo-device	nsmb		# experimental - SMB requester
 
 pseudo-device	putter		# for puffs and pud
+
+pseudo-device	pad		# pseudo audio device driver
+

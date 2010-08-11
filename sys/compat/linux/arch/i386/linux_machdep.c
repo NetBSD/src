@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.135.2.4 2010/03/11 15:03:15 yamt Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.135.2.5 2010/08/11 22:53:05 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000, 2008, 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.135.2.4 2010/03/11 15:03:15 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.135.2.5 2010/08/11 22:53:05 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -118,12 +118,13 @@ static void linux_rt_sendsig(const ksiginfo_t *, const sigset_t *);
 static void linux_old_sendsig(const ksiginfo_t *, const sigset_t *);
 
 extern char linux_sigcode[], linux_rt_sigcode[];
+
 /*
  * Deal with some i386-specific things in the Linux emulation code.
  */
 
 void
-linux_setregs(struct lwp *l, struct exec_package *epp, u_long stack)
+linux_setregs(struct lwp *l, struct exec_package *epp, vaddr_t stack)
 {
 	struct pcb *pcb = lwp_getpcb(l);
 	struct trapframe *tf;
@@ -147,7 +148,7 @@ linux_setregs(struct lwp *l, struct exec_package *epp, u_long stack)
 		pcb->pcb_savefpu.sv_87.sv_env.en_cw = __Linux_NPXCW__;
 
 	tf = l->l_md.md_regs;
-	tf->tf_gs = GSEL(GUDATA_SEL, SEL_UPL);
+	tf->tf_gs = 0;
 	tf->tf_fs = GSEL(GUDATA_SEL, SEL_UPL);
 	tf->tf_es = GSEL(GUDATA_SEL, SEL_UPL);
 	tf->tf_ds = GSEL(GUDATA_SEL, SEL_UPL);
@@ -337,7 +338,6 @@ linux_rt_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	/*
 	 * Build context to run handler in.
 	 */
-	tf->tf_gs = GSEL(GUDATA_SEL, SEL_UPL);
 	tf->tf_fs = GSEL(GUDATA_SEL, SEL_UPL);
 	tf->tf_es = GSEL(GUDATA_SEL, SEL_UPL);
 	tf->tf_ds = GSEL(GUDATA_SEL, SEL_UPL);
@@ -406,7 +406,6 @@ linux_old_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	/*
 	 * Build context to run handler in.
 	 */
-	tf->tf_gs = GSEL(GUDATA_SEL, SEL_UPL);
 	tf->tf_fs = GSEL(GUDATA_SEL, SEL_UPL);
 	tf->tf_es = GSEL(GUDATA_SEL, SEL_UPL);
 	tf->tf_ds = GSEL(GUDATA_SEL, SEL_UPL);
@@ -480,10 +479,11 @@ linux_restore_sigcontext(struct lwp *l, struct linux_sigcontext *scp,
 	struct trapframe *tf;
 	sigset_t mask;
 	ssize_t ss_gap;
+
 	/* Restore register context. */
 	tf = l->l_md.md_regs;
+	DPRINTF(("sigreturn enter esp=0x%x eip=0x%x\n", tf->tf_esp, tf->tf_eip));
 
-	DPRINTF(("sigreturn enter esp=%x eip=%x\n", tf->tf_esp, tf->tf_eip));
 #ifdef VM86
 	if (scp->sc_eflags & PSL_VM) {
 		void syscall_vm86(struct trapframe *);
@@ -546,7 +546,7 @@ linux_restore_sigcontext(struct lwp *l, struct linux_sigcontext *scp,
 	(void) sigprocmask1(l, SIG_SETMASK, &mask, 0);
 	mutex_exit(p->p_lock);
 
-	DPRINTF(("sigreturn exit esp=%x eip=%x\n", tf->tf_esp, tf->tf_eip));
+	DPRINTF(("sigreturn exit esp=0x%x eip=0x%x\n", tf->tf_esp, tf->tf_eip));
 	return EJUSTRETURN;
 }
 
@@ -1109,23 +1109,3 @@ linux_get_uname_arch(void)
 		uname_arch[1] += cpu_class;
 	return uname_arch;
 }
-
-#ifdef LINUX_NPTL
-void *
-linux_get_newtls(struct lwp *l)
-{
-#if 0
-	struct trapframe *tf = l->l_md.md_regs;
-#endif
-
-	/* XXX: Implement me */
-	return NULL;
-}
-
-int
-linux_set_newtls(struct lwp *l, void *tls)
-{
-	/* XXX: Implement me */
-	return 0;
-}
-#endif

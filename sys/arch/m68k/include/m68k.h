@@ -1,4 +1,4 @@
-/*	$NetBSD: m68k.h,v 1.13.20.2 2010/03/11 15:02:34 yamt Exp $	*/
+/*	$NetBSD: m68k.h,v 1.13.20.3 2010/08/11 22:52:19 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -170,6 +170,9 @@ int	dma_cachectl(void *, int);
 int	kvtop(void *);
 void	physaccess(void *, void *, int, int);
 void	physunaccess(void *, int);
+
+/* m68k_machdep.c */
+bool	ucas_ras_check(struct trapframe *);
 
 #endif /* _KERNEL */
 #endif /* _M68K_M68K_H_ */

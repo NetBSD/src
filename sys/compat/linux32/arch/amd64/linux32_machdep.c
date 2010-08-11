@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_machdep.c,v 1.17.2.3 2010/03/11 15:03:17 yamt Exp $ */
+/*	$NetBSD: linux32_machdep.c,v 1.17.2.4 2010/08/11 22:53:09 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -31,59 +31,46 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_machdep.c,v 1.17.2.3 2010/03/11 15:03:17 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_machdep.c,v 1.17.2.4 2010/08/11 22:53:09 yamt Exp $");
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/signalvar.h>
-#include <sys/kernel.h>
 #include <sys/proc.h>
-#include <sys/buf.h>
-#include <sys/reboot.h>
-#include <sys/conf.h>
 #include <sys/exec.h>
-#include <sys/file.h>
-#include <sys/callout.h>
-#include <sys/malloc.h>
-#include <sys/mbuf.h>
-#include <sys/msgbuf.h>
-#include <sys/mount.h>
-#include <sys/vnode.h>
-#include <sys/device.h>
-#include <sys/syscallargs.h>
-#include <sys/filedesc.h>
-#include <sys/exec_elf.h>
-#include <sys/disklabel.h>
-#include <sys/ioctl.h>
-#include <miscfs/specfs/specdev.h>
 
+#include <machine/vmparam.h>
+#include <machine/cpufunc.h>
 #include <machine/netbsd32_machdep.h>
 
 #include <compat/netbsd32/netbsd32.h>
 #include <compat/netbsd32/netbsd32_syscallargs.h>
 
+#include <compat/linux/common/linux_types.h>
+#include <compat/linux/common/linux_emuldata.h>
 #include <compat/linux/common/linux_signal.h>
 #include <compat/linux/common/linux_errno.h>
+#include <compat/linux/common/linux_exec.h>
+#include <compat/linux/common/linux_ipc.h>
+#include <compat/linux/common/linux_sem.h>
+#include <compat/linux/linux_syscallargs.h>
 
 #include <compat/linux32/common/linux32_types.h>
 #include <compat/linux32/common/linux32_errno.h>
 #include <compat/linux32/common/linux32_machdep.h>
 #include <compat/linux32/common/linux32_signal.h>
 #include <compat/linux32/common/linux32_exec.h>
+#include <compat/linux32/common/linux32_ipc.h>
+#include <compat/linux32/common/linux32_sem.h>
 #include <compat/linux32/linux32_syscallargs.h>
 
-#include <sys/cpu.h>
-#include <machine/cpufunc.h>
-#include <machine/psl.h>
-#include <machine/reg.h>
-#include <machine/segments.h>
-#include <machine/specialreg.h>
-#include <machine/sysarch.h>
-#include <machine/vmparam.h>
+#ifdef DEBUG_LINUX
+#define DPRINTF(a) uprintf a
+#else
+#define DPRINTF(a)
+#endif
 
-extern char linux32_sigcode[1];
-extern char linux32_rt_sigcode[1];
-extern char linux32_esigcode[1];
+extern char linux32_sigcode[];
+extern char linux32_rt_sigcode[];
+extern char linux32_esigcode[];
 
 extern void (osyscall_return)(void);
 
@@ -132,6 +119,9 @@ linux32_old_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 		fp = (struct linux32_sigframe *)tf->tf_rsp;
 	fp--;
 
+	DPRINTF(("old: onstack = %d, fp = %p sig = %d rip = 0x%lx\n",
+	    onstack, fp, sig, tf->tf_rip));
+
 	/* Build stack frame for signal trampoline. */
 	NETBSD32PTR32(frame.sf_handler, catcher);
 	frame.sf_sig = native_to_linux32_signo[sig];
@@ -155,7 +145,6 @@ linux32_old_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	/*
 	 * Build context to run handler in.
 	 */
-	tf->tf_gs = GSEL(GUDATA32_SEL, SEL_UPL) & 0xffffffff;
 	tf->tf_fs = GSEL(GUDATA32_SEL, SEL_UPL) & 0xffffffff;
 	tf->tf_es = GSEL(GUDATA32_SEL, SEL_UPL) & 0xffffffff;
 	tf->tf_ds = GSEL(GUDATA32_SEL, SEL_UPL) & 0xffffffff;
@@ -204,6 +193,9 @@ linux32_rt_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	frame.sf_sig = native_to_linux32_signo[sig];
 	NETBSD32PTR32(frame.sf_sip, &fp->sf_si);
 	NETBSD32PTR32(frame.sf_ucp, &fp->sf_uc);
+
+	DPRINTF(("rt: onstack = %d, fp = %p sig = %d rip = 0x%lx\n",
+	    onstack, fp, sig, tf->tf_rip));
 
 	lsi = &frame.sf_si;
 	(void)memset(lsi, 0, sizeof(frame.sf_si));
@@ -259,7 +251,6 @@ linux32_rt_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	/*
 	 * Build context to run handler in.
 	 */
-	tf->tf_gs = GSEL(GUDATA32_SEL, SEL_UPL) & 0xffffffff;
 	tf->tf_fs = GSEL(GUDATA32_SEL, SEL_UPL) & 0xffffffff;
 	tf->tf_es = GSEL(GUDATA32_SEL, SEL_UPL) & 0xffffffff;
 	tf->tf_ds = GSEL(GUDATA32_SEL, SEL_UPL) & 0xffffffff;
@@ -296,13 +287,10 @@ linux32_setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 	netbsd32_adjust_limits(p);
 
 	l->l_md.md_flags &= ~MDP_USEDFPU;
-	pcb->pcb_flags = 0;
+	pcb->pcb_flags = PCB_COMPAT32;
 	pcb->pcb_savefpu.fp_fxsave.fx_fcw = __Linux_NPXCW__;
 	pcb->pcb_savefpu.fp_fxsave.fx_mxcsr = __INITIAL_MXCSR__;
 	pcb->pcb_savefpu.fp_fxsave.fx_mxcsr_mask = __INITIAL_MXCSR_MASK__;
-	pcb->pcb_fs = 0;
-	pcb->pcb_gs = 0;
-
 
 	p->p_flag |= PK_32;
 
@@ -325,12 +313,12 @@ linux32_setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 	tf->tf_r15 = 0;
 	tf->tf_rip = pack->ep_entry & 0xffffffff;
 	tf->tf_rflags = PSL_USERSET;
-	tf->tf_cs = GSEL(GUCODE32_SEL, SEL_UPL) & 0xffffffff;
-	tf->tf_ss = GSEL(GUDATA32_SEL, SEL_UPL) & 0xffffffff;
-	tf->tf_ds = GSEL(GUDATA32_SEL, SEL_UPL) & 0xffffffff;
-	tf->tf_es = GSEL(GUDATA32_SEL, SEL_UPL) & 0xffffffff;
-	tf->tf_fs = GSEL(GUDATA32_SEL, SEL_UPL) & 0xffffffff;
-	tf->tf_gs = GSEL(GUDATA32_SEL, SEL_UPL) & 0xffffffff;
+	tf->tf_cs = GSEL(GUCODE32_SEL, SEL_UPL);
+	tf->tf_ss = GSEL(GUDATA32_SEL, SEL_UPL);
+	tf->tf_ds = GSEL(GUDATA32_SEL, SEL_UPL);
+	tf->tf_es = GSEL(GUDATA32_SEL, SEL_UPL);
+	cpu_fsgs_zero(l);
+	cpu_fsgs_reload(l, GSEL(GUDATA32_SEL, SEL_UPL), GSEL(GUDATA32_SEL, SEL_UPL));
 
 	/* XXX frob return address to return via old iret method, not sysret */
 	retaddr = (void **)tf - 1;
@@ -426,42 +414,47 @@ linux32_restore_sigcontext(struct lwp *l, struct linux32_sigcontext *scp,
 	struct trapframe *tf;
 	struct proc *p = l->l_proc;
 	struct sigaltstack *sas = &l->l_sigstk;
+	struct pcb *pcb;
 	sigset_t mask;
 	ssize_t ss_gap;
+	register_t fssel, gssel;
 
 	/* Restore register context. */
 	tf = l->l_md.md_regs;
+	pcb = lwp_getpcb(l);
+	DPRINTF(("sigreturn enter rsp=0x%lx rip=0x%lx\n", tf->tf_rsp,
+		 tf->tf_rip));
 
 	/*
-	 * Check for security violations.  If we're returning to
-	 * protected mode, the CPU will validate the segment registers
-	 * automatically and generate a trap on violations.  We handle
-	 * the trap, rather than doing all of the checking here.
+	 * Check for security violations.
 	 */
 	if (((scp->sc_eflags ^ tf->tf_rflags) & PSL_USERSTATIC) != 0 ||
 	    !USERMODE(scp->sc_cs, scp->sc_eflags))
 		return EINVAL;
 
-	if (scp->sc_fs != 0 && !VALID_USER_DSEL32(scp->sc_fs))
+	if (scp->sc_fs != 0 && !VALID_USER_DSEL32(scp->sc_fs) &&
+	    !(scp->sc_fs == GSEL(GUFS_SEL, SEL_UPL) && pcb->pcb_fs != 0))
 		return EINVAL;
 
-	if (scp->sc_gs != 0 && !VALID_USER_DSEL32(scp->sc_gs))
+	if (scp->sc_gs != 0 && !VALID_USER_DSEL32(scp->sc_gs) &&
+	    !(scp->sc_gs == GSEL(GUGS_SEL, SEL_UPL) && pcb->pcb_gs != 0))
 		return EINVAL;
 
 	if (scp->sc_es != 0 && !VALID_USER_DSEL32(scp->sc_es))
 		return EINVAL;
 
-	if (!VALID_USER_DSEL32(scp->sc_ds) || 
+	if (!VALID_USER_DSEL32(scp->sc_ds) ||
 	    !VALID_USER_DSEL32(scp->sc_ss))
 		return EINVAL;
 
 	if (scp->sc_eip >= VM_MAXUSER_ADDRESS32)
 		return EINVAL;
 
-	tf->tf_gs = (register_t)scp->sc_gs & 0xffffffff;
-	tf->tf_fs = (register_t)scp->sc_fs & 0xffffffff;
-	tf->tf_es = (register_t)scp->sc_es & 0xffffffff;
-	tf->tf_ds = (register_t)scp->sc_ds & 0xffffffff;
+	gssel = (register_t)scp->sc_gs & 0xffff;
+	fssel = (register_t)scp->sc_fs & 0xffff;
+	cpu_fsgs_reload(l, fssel, gssel);
+	tf->tf_es = (register_t)scp->sc_es & 0xffff;
+	tf->tf_ds = (register_t)scp->sc_ds & 0xffff;
 	tf->tf_rflags &= ~PSL_USER;
 	tf->tf_rflags |= ((register_t)scp->sc_eflags & PSL_USER);
 	tf->tf_rdi = (register_t)scp->sc_edi & 0xffffffff;
@@ -472,9 +465,9 @@ linux32_restore_sigcontext(struct lwp *l, struct linux32_sigcontext *scp,
 	tf->tf_rcx = (register_t)scp->sc_ecx & 0xffffffff;
 	tf->tf_rax = (register_t)scp->sc_eax & 0xffffffff;
 	tf->tf_rip = (register_t)scp->sc_eip & 0xffffffff;
-	tf->tf_cs = (register_t)scp->sc_cs & 0xffffffff;
+	tf->tf_cs = (register_t)scp->sc_cs & 0xffff;
 	tf->tf_rsp = (register_t)scp->sc_esp_at_signal & 0xffffffff;
-	tf->tf_ss = (register_t)scp->sc_ss & 0xffffffff;
+	tf->tf_ss = (register_t)scp->sc_ss & 0xffff;
 
 	mutex_enter(p->p_lock);
 
@@ -493,9 +486,30 @@ linux32_restore_sigcontext(struct lwp *l, struct linux32_sigcontext *scp,
 
 	mutex_exit(p->p_lock);
 
-#ifdef DEBUG_LINUX
-	printf("linux32_sigreturn: rip = 0x%lx, rsp = 0x%lx, flags = 0x%lx\n",
-	    tf->tf_rip, tf->tf_rsp, tf->tf_rflags);
-#endif
+	DPRINTF(("linux32_sigreturn: rip = 0x%lx, rsp = 0x%lx, flags = 0x%lx\n",
+	    tf->tf_rip, tf->tf_rsp, tf->tf_rflags));
 	return EJUSTRETURN;
+}
+
+int
+linux32_sys_set_thread_area(struct lwp *l,
+    const struct linux32_sys_set_thread_area_args *uap, register_t *retval)
+{
+	/* {
+		syscallarg(linux32_user_descp_t) desc;
+	} */
+
+	return linux_lwp_setprivate(l, SCARG_P32(uap, desc));
+}
+
+int
+linux32_sys_get_thread_area(struct lwp *l,
+    const struct linux32_sys_get_thread_area_args *uap, register_t *retval)
+{
+	/* {
+		syscallarg(linux32_user_descp_t) desc;
+	} */
+
+	/* glibc doesn't actually call this. */
+	return ENOSYS;
 }

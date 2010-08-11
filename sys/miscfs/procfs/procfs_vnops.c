@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.168.2.5 2010/03/11 15:04:23 yamt Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.168.2.6 2010/08/11 22:54:48 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.168.2.5 2010/03/11 15:04:23 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.168.2.6 2010/08/11 22:54:48 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -416,10 +416,10 @@ procfs_inactive(void *v)
 	struct pfsnode *pfs = VTOPFS(vp);
 
 	mutex_enter(proc_lock);
-	*ap->a_recycle = (p_find(pfs->pfs_pid, PFIND_LOCKED) == NULL);
+	*ap->a_recycle = (proc_find(pfs->pfs_pid) == NULL);
 	mutex_exit(proc_lock);
 
-	VOP_UNLOCK(vp, 0);
+	VOP_UNLOCK(vp);
 
 	return (0);
 }
@@ -1064,7 +1064,7 @@ procfs_lookup(void *v)
 		 * re-lock.
 		 */
 		if (cnp->cn_flags & ISDOTDOT) {
-			VOP_UNLOCK(dvp, 0);
+			VOP_UNLOCK(dvp);
 			error = procfs_root(dvp->v_mount, vpp);
 			vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY);
 			return (error);
@@ -1132,7 +1132,7 @@ procfs_lookup(void *v)
 		 * locked. Then re-lock the directory.
 		 */
 		if (cnp->cn_flags & ISDOTDOT) {
-			VOP_UNLOCK(dvp, 0);
+			VOP_UNLOCK(dvp);
 			error = procfs_allocvp(dvp->v_mount, vpp, pfs->pfs_pid,
 			    PFSproc, -1, p);
 			procfs_proc_unlock(p);
@@ -1153,8 +1153,7 @@ procfs_lookup(void *v)
 			vref(fvp);
 			closef(fp);
 			procfs_proc_unlock(p);
-			vn_lock(fvp, LK_EXCLUSIVE | LK_RETRY |
-			    (p == curproc ? LK_CANRECURSE : 0));
+			vn_lock(fvp, LK_EXCLUSIVE | LK_RETRY);
 			*vpp = fvp;
 			return 0;
 		}

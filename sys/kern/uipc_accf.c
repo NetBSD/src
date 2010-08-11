@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_accf.c,v 1.8.6.3 2010/03/11 15:04:20 yamt Exp $	*/
+/*	$NetBSD: uipc_accf.c,v 1.8.6.4 2010/08/11 22:54:43 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_accf.c,v 1.8.6.3 2010/03/11 15:04:20 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_accf.c,v 1.8.6.4 2010/08/11 22:54:43 yamt Exp $");
 
 #define ACCEPT_FILTER_MOD
 
@@ -287,6 +287,8 @@ accept_filt_setopt(struct socket *so, const struct sockopt *sopt)
 	struct accept_filter *afp;
 	struct so_accf *newaf;
 	int error;
+
+	accept_filter_init();
 
 	if (sopt == NULL || sopt->sopt_size == 0) {
 		solock(so);

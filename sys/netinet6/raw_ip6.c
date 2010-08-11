@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip6.c,v 1.98.2.4 2010/03/11 15:04:30 yamt Exp $	*/
+/*	$NetBSD: raw_ip6.c,v 1.98.2.5 2010/08/11 22:54:57 yamt Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.82 2001/07/23 18:57:56 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.98.2.4 2010/03/11 15:04:30 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.98.2.5 2010/08/11 22:54:57 yamt Exp $");
 
 #include "opt_ipsec.h"
 
@@ -396,8 +396,8 @@ rip6_ctlinput(int cmd, const struct sockaddr *sa, void *d)
  * Tack on options user may have setup with control call.
  */
 int
-rip6_output(struct mbuf *m, struct socket *so, struct sockaddr_in6 *dstsock,
-    struct mbuf *control)
+rip6_output(struct mbuf *m, struct socket * const so,
+    struct sockaddr_in6 * const dstsock, struct mbuf * const control)
 {
 	struct in6_addr *dst;
 	struct ip6_hdr *ip6;
@@ -469,7 +469,7 @@ rip6_output(struct mbuf *m, struct socket *so, struct sockaddr_in6 *dstsock,
 	 * Source address selection.
 	 */
 	if ((in6a = in6_selectsrc(dstsock, optp, in6p->in6p_moptions,
-	    (struct route *)&in6p->in6p_route, &in6p->in6p_laddr, &oifp,
+	    &in6p->in6p_route, &in6p->in6p_laddr, &oifp,
 	    &error)) == 0) {
 		if (error == 0)
 			error = EADDRNOTAVAIL;
@@ -765,7 +765,7 @@ rip6_usrreq(struct socket *so, int req, struct mbuf *m,
 
 		/* Source address selection. XXX: need pcblookup? */
 		in6a = in6_selectsrc(addr, in6p->in6p_outputopts,
-		    in6p->in6p_moptions, (struct route *)&in6p->in6p_route,
+		    in6p->in6p_moptions, &in6p->in6p_route,
 		    &in6p->in6p_laddr, &ifp, &error);
 		if (in6a == NULL) {
 			if (error == 0)

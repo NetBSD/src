@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_motorola.c,v 1.36.2.5 2010/03/11 15:02:34 yamt Exp $        */
+/*	$NetBSD: pmap_motorola.c,v 1.36.2.6 2010/08/11 22:52:19 yamt Exp $        */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -116,8 +116,10 @@
  *	and to when physical maps must be made correct.
  */
 
+#include "opt_m68k_arch.h"
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.36.2.5 2010/03/11 15:02:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.36.2.6 2010/08/11 22:52:19 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

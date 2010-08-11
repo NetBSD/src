@@ -1,4 +1,4 @@
-/*	$NetBSD: limits.h,v 1.1 2001/02/09 18:35:29 uch Exp $	*/
+/*	$NetBSD: limits.h,v 1.1.132.1 2010/08/11 22:52:04 yamt Exp $	*/
 
 /* Windows CE architecture */
 
@@ -6,7 +6,6 @@
 #define	_MACHINE_LIMITS_H_
 
 #define	CHAR_BIT	8		/* number of bits in a char */
-#define	MB_LEN_MAX	32		/* Allow 31 bit UTF2 */
 
 #define	SCHAR_MAX	127		/* min value for a signed char */
 #define	SCHAR_MIN	(-128)		/* max value for a signed char */

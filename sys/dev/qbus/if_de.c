@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.23.4.3 2010/03/11 15:04:01 yamt Exp $	*/
+/*	$NetBSD: if_de.c,v 1.23.4.4 2010/08/11 22:54:08 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989 Regents of the University of California.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.23.4.3 2010/03/11 15:04:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.23.4.4 2010/08/11 22:54:08 yamt Exp $");
 
 #include "opt_inet.h"
 
@@ -437,8 +437,7 @@ destart(struct ifnet *ifp)
 		rp = &dc->dc_xrent[sc->sc_xfree];
 		if (rp->r_flags & XFLG_OWN)
 			panic("deuna xmit in progress");
-		if (ifp->if_bpf)
-			bpf_ops->bpf_mtap(ifp->if_bpf, m);
+		bpf_mtap(ifp, m);
 
 		len = if_ubaput(&sc->sc_ifuba, &sc->sc_ifw[sc->sc_xfree], m);
 		rp->r_slen = len;
@@ -556,8 +555,7 @@ derecv(struct de_softc *sc)
 			sc->sc_if.if_ierrors++;
 			goto next;
 		}
-		if (ifp->if_bpf)
-			bpf_ops->bpf_mtap(ifp->if_bpf, m);
+		bpf_mtap(ifp, m);
 
 		(*ifp->if_input)(ifp, m);
 

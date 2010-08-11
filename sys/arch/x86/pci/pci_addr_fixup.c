@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_addr_fixup.c,v 1.4.2.2 2009/05/04 08:12:10 yamt Exp $	*/
+/*	$NetBSD: pci_addr_fixup.c,v 1.4.2.3 2010/08/11 22:52:56 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 UCHIYAMA Yasushi.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_addr_fixup.c,v 1.4.2.2 2009/05/04 08:12:10 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_addr_fixup.c,v 1.4.2.3 2010/08/11 22:52:56 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -289,7 +289,8 @@ pciaddr_do_resource_allocate(pci_chipset_tag_t pc, pcitag_t tag,
 	}
 	error = extent_alloc_subregion(ex, start, ex->ex_end, size,
 				       size, 0,
-				       EX_FAST|EX_NOWAIT|EX_MALLOCOK, addr);
+				       EX_FAST|EX_NOWAIT|EX_MALLOCOK,
+				       (u_long *)addr);
 	if (error) {
 		aprint_debug("No available resources. fixup failed\n");
 		return (1);

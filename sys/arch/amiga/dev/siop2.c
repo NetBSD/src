@@ -1,4 +1,4 @@
-/*	$NetBSD: siop2.c,v 1.30.20.2 2010/03/11 15:02:01 yamt Exp $ */
+/*	$NetBSD: siop2.c,v 1.30.20.3 2010/08/11 22:51:36 yamt Exp $ */
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -70,7 +70,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siop2.c,v 1.30.20.2 2010/03/11 15:02:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siop2.c,v 1.30.20.3 2010/08/11 22:51:36 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -149,7 +149,7 @@ int siopng_cmd_wait = SCSI_CMD_WAIT;
 int siopng_data_wait = SCSI_DATA_WAIT;
 int siopng_init_wait = SCSI_INIT_WAIT;
 
-#define DEBUG_SYNC
+/*#define DEBUG_SYNC*/
 
 #ifdef DEBUG
 /*

@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.60.20.5 2010/03/11 15:02:56 yamt Exp $
+#	$NetBSD: INSTALL,v 1.60.20.6 2010/08/11 22:52:44 yamt Exp $
 #
 # from: NetBSD: GENERIC,v 1.84 1999/06/06 13:00:03 mrg Exp
 #
@@ -43,8 +43,8 @@ options 	SUN4_MMU3L	# 3-level MMU on sun4/400
 ## Use a faster console than the PROM's slow drawing routines.  Not needed
 ## for headless (no framebuffer) machines.
 #options 	RASTERCONSOLE		# fast rasterop console
-#options 	FONT_GALLANT12x22	# the console font
-#options 	FONT_BOLD8x16		# a somewhat smaller font
+options 	FONT_GALLANT12x22	# the console font
+options 	FONT_BOLD8x16		# a somewhat smaller font
 #options 	RASTERCONSOLE_FGCOL=WSCOL_BLACK
 #options 	RASTERCONSOLE_BGCOL=WSCOL_WHITE
 
@@ -556,6 +556,11 @@ cgsix*		at sbus? slot ? offset ?
 # there can be only one
 tcx0		at sbus? slot ? offset ?
 
+## Sun CG12 / Matrox SG3 accelerated 24bit framebuffer
+## runs monochrome only for now
+## since it occupies 3 SBus slots there's no way to use more than one
+cgtwelve0	at sbus? slot ? offset ?
+
 # Sun "cgfourteen" accelerated 24-bit framebuffer.
 cgfourteen*	at obio0			# sun4m
 
@@ -589,7 +594,7 @@ pseudo-device	pty		2	# pseudo-terminals (Sysinst needs two)
 ## and generate randomness for some kernel formulae.
 
 pseudo-device	rnd
-#pseudo-device	fss		4	# file system snapshot device
+#pseudo-device	fss			# file system snapshot device
 
 pseudo-device	wsmux			# mouse and keyboard multiplexor
 pseudo-device	wsfont

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.243.10.3 2010/03/11 15:02:58 yamt Exp $	*/
+/*	$NetBSD: locore.s,v 1.243.10.4 2010/08/11 22:52:45 yamt Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -4797,7 +4797,8 @@ Ldocopy:
 	jmp	%g7 + 8
 	 clr	%o0			! return 0
 
-! Copyin or copyout fault.  Clear cpcb->pcb_onfault and return EFAULT.
+! Copyin or copyout fault.  Clear cpcb->pcb_onfault.
+! The return value was already put in %o0 by the fault handler.
 ! Note that although we were in bcopy, there is no state to clean up;
 ! the only special thing is that we have to return to [g7 + 8] rather than
 ! [o7 + 8].

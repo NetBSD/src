@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.145.10.1 2010/03/11 15:01:59 yamt Exp $	*/
+/*	$NetBSD: locore.s,v 1.145.10.2 2010/08/11 22:51:35 yamt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990 The Regents of the University of California.
@@ -94,8 +94,8 @@
 #include "opt_fpsp.h"
 #include "opt_kgdb.h"
 #include "opt_lockdebug.h"
-
 #include "opt_lev6_defer.h"
+#include "opt_m68k_arch.h"
 
 #include "assym.h"
 #include <machine/asm.h>
