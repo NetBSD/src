@@ -1,4 +1,4 @@
-.\"	$NetBSD: module.9,v 1.10 2010/08/08 15:23:28 wiz Exp $
+.\"	$NetBSD: module.9,v 1.11 2010/08/11 18:20:09 pgoyette Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd August 8, 2010
+.Dd August 11, 2010
 .Dt MODULE 9
 .Os
 .Sh NAME
@@ -58,6 +58,14 @@
 .Fn module_rele "const char *"
 .Ft int
 .Fn module_find_section "const char *" "void **" "size_t *"
+.Ft void
+.Fn module_init "void"
+.Ft void
+.Fn module_start_unload_thread "void"
+.Ft void
+.Fn module_builtin_require_force "void"
+.Ft void
+.Fn module_load_vfs_init "void"
 .Sh DESCRIPTION
 Modules are sections of code that can be independently linked and selectively
 loaded into or unloaded from a running kernel.
@@ -311,6 +319,41 @@ The miniroot module uses this routine to find the address and size of the
 embedded filesystem image.
 This routine can only examine the linker data for the module that is
 currently being initialized;  it cannot examine data for any other module.
+.It Fn module_init "void"
+Initialize the module subsystem.
+Creates and initializes various data structures, locates all built-in
+modules, and establishes the sub-system's
+.Xr sysctl 8
+tree.
+.Fn module_init
+is called early in system initialization to facilitate use of security model
+modules.
+.It Fn module_start_unload_thread "void"
+Create the thread that attempts to automatically unload modules that were
+loaded via the
+.Fn module_autoload
+routine.
+.Fn module_start_unload_thread
+is called once the scheduler and timer functions are initialized.
+.Fn 
+.It Fn module_builtin_require_force "void"
+Mark as "disabled" any built-in modules that have not been successfully
+initialize.
+Modules marked "disabled" can only be loaded if the
+.Dv MODCTL_LOAD_FORCE
+is specified.
+.Fn module_builtin_require_force
+is called near the end of system initialization, after the
+.Xr init 8
+process is created.
+.It Fn module_load_vfs_init
+The module subsystem is initialized early, long before any file-systems
+are available.
+After the root file-system is mounted,
+.Fn module_load_vfs_init
+is used to enable loading modules from the file-system.
+Until this routine is called, modules can only be loaded if they were
+built-in to the kernel image or provided by the boot loader.
 .El
 .Sh LOCK PROTOCOL
 The
