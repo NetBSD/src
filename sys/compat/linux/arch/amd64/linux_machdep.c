@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.29.2.4 2010/03/11 15:03:14 yamt Exp $ */
+/*	$NetBSD: linux_machdep.c,v 1.29.2.5 2010/08/11 22:53:04 yamt Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.29.2.4 2010/03/11 15:03:14 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.29.2.5 2010/08/11 22:53:04 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -79,7 +79,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.29.2.4 2010/03/11 15:03:14 yamt 
 static void linux_buildcontext(struct lwp *, void *, void *);
 
 void
-linux_setregs(struct lwp *l, struct exec_package *epp, u_long stack)
+linux_setregs(struct lwp *l, struct exec_package *epp, vaddr_t stack)
 {
 	struct pcb *pcb = lwp_getpcb(l);
 	struct trapframe *tf;
@@ -93,8 +93,6 @@ linux_setregs(struct lwp *l, struct exec_package *epp, u_long stack)
 	pcb->pcb_savefpu.fp_fxsave.fx_fcw = __NetBSD_NPXCW__;
 	pcb->pcb_savefpu.fp_fxsave.fx_mxcsr = __INITIAL_MXCSR__;
 	pcb->pcb_savefpu.fp_fxsave.fx_mxcsr_mask = __INITIAL_MXCSR_MASK__;
-	pcb->pcb_fs = 0;
-	pcb->pcb_gs = 0;
 
 	l->l_proc->p_flag &= ~PK_32;
 
@@ -121,8 +119,7 @@ linux_setregs(struct lwp *l, struct exec_package *epp, u_long stack)
 	tf->tf_ss = GSEL(GUDATA_SEL, SEL_UPL);
 	tf->tf_ds = 0;
 	tf->tf_es = 0;
-	tf->tf_fs = 0;
-	tf->tf_gs = 0;
+	cpu_fsgs_zero(l);
 
 	return;
 }
@@ -489,57 +486,20 @@ linux_sys_arch_prctl(struct lwp *l,
 		syscallarg(int) code;
 		syscallarg(unsigned long) addr;
 	} */
-	struct pcb *pcb = lwp_getpcb(l);
-	struct trapframe *tf = l->l_md.md_regs;
-	int error;
-	uint64_t taddr;
+	void *addr = (void *)SCARG(uap, addr);
 
 	switch(SCARG(uap, code)) {
 	case LINUX_ARCH_SET_GS:
-		taddr = SCARG(uap, addr);
-		if (taddr >= VM_MAXUSER_ADDRESS)
-			return EINVAL;
-		pcb->pcb_gs = taddr;
-		pcb->pcb_flags |= PCB_GS64;
-		if (l == curlwp)
-			wrmsr(MSR_KERNELGSBASE, taddr);
-		break;
+		return x86_set_sdbase(addr, 'g', l, true);
 
 	case LINUX_ARCH_GET_GS:
-		if (pcb->pcb_flags & PCB_GS64)
-			taddr = pcb->pcb_gs;
-		else {
-			error = memseg_baseaddr(l, tf->tf_fs, NULL, 0, &taddr);
-			if (error != 0)
-				return error;
-		}
-		error = copyout(&taddr, (char *)SCARG(uap, addr), 8);
-		if (error != 0)
-			return error;
-		break;
+		return x86_get_sdbase(addr, 'g');
 
 	case LINUX_ARCH_SET_FS:
-		taddr = SCARG(uap, addr);
-		if (taddr >= VM_MAXUSER_ADDRESS)
-			return EINVAL;
-		pcb->pcb_fs = taddr;
-		pcb->pcb_flags |= PCB_FS64;
-		if (l == curlwp)
-			wrmsr(MSR_FSBASE, taddr);
-		break;
+		return x86_set_sdbase(addr, 'f', l, true);
 
 	case LINUX_ARCH_GET_FS:
-		if (pcb->pcb_flags & PCB_FS64)
-			taddr = pcb->pcb_fs;
-		else {
-			error = memseg_baseaddr(l, tf->tf_fs, NULL, 0, &taddr);
-			if (error != 0)
-				return error;
-		}
-		error = copyout(&taddr, (char *)SCARG(uap, addr), 8);
-		if (error != 0)
-			return error;
-		break;
+		return x86_get_sdbase(addr, 'f');
 
 	default:
 #ifdef DEBUG_LINUX
@@ -548,8 +508,7 @@ linux_sys_arch_prctl(struct lwp *l,
 #endif
 		return EINVAL;
 	}
-
-	return 0;
+	/* NOTREACHED */
 }
 
 const int linux_vsyscall_to_syscall[] = {
@@ -620,24 +579,4 @@ linux_buildcontext(struct lwp *l, void *catcher, void *f)
 	tf->tf_rflags &= ~PSL_CLEARSIG;
 	tf->tf_rsp = (u_int64_t)f;
 	tf->tf_ss = GSEL(GUDATA_SEL, SEL_UPL);
-}
-
-void *
-linux_get_newtls(struct lwp *l)
-{
-	struct trapframe *tf = l->l_md.md_regs;
-
-	return (void *)tf->tf_r8;
-}
-
-int
-linux_set_newtls(struct lwp *l, void *tls)
-{
-	struct linux_sys_arch_prctl_args cup;
-	register_t retval;
-
-	SCARG(&cup, code) = LINUX_ARCH_SET_FS;
-	SCARG(&cup, addr) = (unsigned long)tls;
-
-	return linux_sys_arch_prctl(l, &cup, &retval);
 }

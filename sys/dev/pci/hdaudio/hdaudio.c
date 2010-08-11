@@ -1,4 +1,4 @@
-/* $NetBSD: hdaudio.c,v 1.4.2.3 2010/03/11 15:03:59 yamt Exp $ */
+/* $NetBSD: hdaudio.c,v 1.4.2.4 2010/08/11 22:54:07 yamt Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdaudio.c,v 1.4.2.3 2010/03/11 15:03:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdaudio.c,v 1.4.2.4 2010/08/11 22:54:07 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -125,17 +125,17 @@ hdaudio_init(struct hdaudio_softc *sc)
 #endif
 
 	gcap = hda_read2(sc, HDAUDIO_MMIO_GCAP);
-	nis = (gcap >> 8) & 0xf;
-	nos = (gcap >> 12) & 0xf;
-	nbidir = (gcap >> 3) & 0x1f;
+	nis = HDAUDIO_GCAP_ISS(gcap);
+	nos = HDAUDIO_GCAP_OSS(gcap);
+	nbidir = HDAUDIO_GCAP_BSS(gcap);
 
 	/* Initialize codecs and streams */
 	hdaudio_codec_init(sc);
 	hdaudio_stream_init(sc, nis, nos, nbidir);
 
 #if defined(HDAUDIO_DEBUG)
-	nsdo = (gcap >> 1) & 1;
-	addr64 = gcap & 1;
+	nsdo = HDAUDIO_GCAP_NSDO(gcap);
+	addr64 = HDAUDIO_GCAP_64OK(gcap);
 
 	hda_print(sc, "OSS %d ISS %d BSS %d SDO %d%s\n",
 	    nos, nis, nbidir, nsdo, addr64 ? " 64-bit" : "");
@@ -667,6 +667,10 @@ hdaudio_codec_attach(struct hdaudio_codec *co)
 	rid = hdaudio_command(co, 0, CORB_GET_PARAMETER, COP_REVISION_ID);
 	snc = hdaudio_command(co, 0, CORB_GET_PARAMETER,
 	    COP_SUBORDINATE_NODE_COUNT);
+
+	/* make sure the vendor and product IDs are valid */
+	if (vid == 0xffffffff || vid == 0x00000000)
+		return;
 
 #ifdef HDAUDIO_DEBUG
 	hda_print(sc, "Codec%02X: %04X:%04X HDA %d.%d rev %d stepping %d\n",

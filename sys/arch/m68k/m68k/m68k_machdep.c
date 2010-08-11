@@ -1,4 +1,4 @@
-/*	$NetBSD: m68k_machdep.c,v 1.6.78.1 2008/05/16 02:22:44 yamt Exp $	*/
+/*	$NetBSD: m68k_machdep.c,v 1.6.78.2 2010/08/11 22:52:19 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -27,10 +27,30 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: m68k_machdep.c,v 1.6.78.1 2008/05/16 02:22:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: m68k_machdep.c,v 1.6.78.2 2010/08/11 22:52:19 yamt Exp $");
 
 #include <sys/param.h>
+#include <m68k/m68k.h>
+#include <m68k/frame.h>
 
 /* the following is used externally (sysctl_hw) */
 char	machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
 
+extern char ucas_32_ras_start[];
+extern char ucas_32_ras_end[];
+extern short exframesize[];
+
+bool
+ucas_ras_check(struct trapframe *v)
+{
+	struct frame *f = (void *)v;
+
+	if (f->f_pc <= (vaddr_t)ucas_32_ras_start ||
+	    f->f_pc >= (vaddr_t)ucas_32_ras_end) {
+		return false;
+	}
+	f->f_pc = (vaddr_t)ucas_32_ras_start;
+	f->f_stackadj = exframesize[f->f_format];
+	f->f_format = f->f_vector = 0;
+	return true;
+}

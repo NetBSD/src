@@ -1,4 +1,4 @@
-/*	$NetBSD: copy.s,v 1.40.44.1 2008/05/16 02:22:44 yamt Exp $	*/
+/*	$NetBSD: copy.s,v 1.40.44.2 2010/08/11 22:52:19 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -66,6 +66,11 @@
  * This file contains the functions for user-space access:
  * copyin/copyout, fuword/suword, etc.
  */
+
+#include "opt_multiprocessor.h"
+#ifdef MULTIPROCESSOR
+#error need to write MP support for ucas_* functions
+#endif
 
 #include <sys/errno.h>
 #include <machine/asm.h>
@@ -159,7 +164,6 @@ Lcidone:
 Lciret:
 	rts
 Lcifault:
-	moveq	#EFAULT,%d0		| got a fault
 	bra	Lcidone
 
 /*
@@ -225,7 +229,6 @@ Lcodone:
 Lcoret:
 	rts
 Lcofault:
-	moveq	#EFAULT,%d0
 	bra	Lcodone
 
 /*
@@ -295,7 +298,6 @@ Lcisexit:
 	clrl	%a0@(PCB_ONFAULT)
 	rts
 Lcisfault:
-	moveq	#EFAULT,%d0
 	bra	Lcisdone
 
 /*
@@ -335,7 +337,6 @@ Lcosexit:
 	clrl	%a0@(PCB_ONFAULT)
 	rts
 Lcosfault:
-	moveq	#EFAULT,%d0
 	bra	Lcosdone
 
 /*
@@ -366,7 +367,6 @@ Lkcdone:
 	rts
 Lkcfault:
 	addl	#16,%sp			| pop args and return address
-	moveq	#EFAULT,%d0		| indicate a fault
 	bra	Lkcdone
 
 /*
@@ -507,3 +507,36 @@ Lserr:
 Lsdone:
 	clrl	%a1@(PCB_ONFAULT) 	| clear fault handler
 	rts
+
+/*
+ * int ucas_32(volatile int32_t *uptr, int32_t old, int32_t new, int32_t *ret);
+ * Atomically compare-and-swap an int32_t in user space.
+ */
+	.globl		_C_LABEL(ucas_32_ras_start)
+	.globl		_C_LABEL(ucas_32_ras_end)
+ENTRY(ucas_32)
+	CHECK_SFC
+	CHECK_DFC
+	movl	_C_LABEL(curpcb),%a1
+	movl	#Lucasfault,%a1@(PCB_ONFAULT)	| set fault handler
+	movl	%sp@(4),%a0		| a0 = uptr
+_C_LABEL(ucas_32_ras_start):
+	movl	%sp@(8),%d0		| d0 = old
+	movsl	%a0@,%d1		| d1 = *uptr
+	cmpl	%d0,%d1			| does *uptr == old?
+	bne	Lucasdiff		| if not, don't change it
+	movl	%sp@(12),%d0		| d0 = new
+	movsl	%d0,%a0@		| *uptr = new
+	nop				| pipeline sync
+_C_LABEL(ucas_32_ras_end):
+Lucasdiff:
+	movl	%sp@(16),%a0		| a0 = ret
+	movl	%d1,%a0@		| *ret = d1 (old *uptr)
+	clrl	%d0			| return 0
+
+Lucasfault:
+	clrl	%a1@(PCB_ONFAULT)	| clear fault handler
+	rts
+
+STRONG_ALIAS(ucas_int,ucas_32)
+STRONG_ALIAS(ucas_ptr,ucas_32)

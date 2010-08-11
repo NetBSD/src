@@ -1,4 +1,4 @@
-/*	$NetBSD: cbsc.c,v 1.28.4.1 2010/03/11 15:02:00 yamt Exp $ */
+/*	$NetBSD: cbsc.c,v 1.28.4.2 2010/08/11 22:51:36 yamt Exp $ */
 
 /*
  * Copyright (c) 1997 Michael L. Hitch
@@ -31,8 +31,10 @@
  *
  */
 
+#include "opt_m68k_arch.h"
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cbsc.c,v 1.28.4.1 2010/03/11 15:02:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cbsc.c,v 1.28.4.2 2010/08/11 22:51:36 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

@@ -1,4 +1,4 @@
-/*      $NetBSD: ip_etherip.c,v 1.9.4.2 2010/03/11 15:04:28 yamt Exp $        */
+/*      $NetBSD: ip_etherip.c,v 1.9.4.3 2010/08/11 22:54:56 yamt Exp $        */
 
 /*
  *  Copyright (c) 2006, Hans Rosenfeld <rosenfeld@grumpf.hope-2000.org>
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_etherip.c,v 1.9.4.2 2010/03/11 15:04:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_etherip.c,v 1.9.4.3 2010/08/11 22:54:56 yamt Exp $");
 
 #include "opt_inet.h"
 
@@ -254,8 +254,7 @@ ip_etherip_input(struct mbuf *m, ...)
 	m->m_pkthdr.rcvif = ifp;
 	m->m_flags &= ~(M_BCAST|M_MCAST);
 
-	if (ifp->if_bpf)
-		bpf_ops->bpf_mtap(ifp->if_bpf, m);
+	bpf_mtap(ifp, m);
 
 	ifp->if_ipackets++;
 

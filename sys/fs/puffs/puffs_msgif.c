@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.c,v 1.68.10.3 2010/03/11 15:04:14 yamt Exp $	*/
+/*	$NetBSD: puffs_msgif.c,v 1.68.10.4 2010/08/11 22:54:34 yamt Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.68.10.3 2010/03/11 15:04:14 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.68.10.4 2010/08/11 22:54:34 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -64,6 +64,9 @@ struct puffs_msgpark {
 
 	size_t			park_copylen;	/* userspace copylength	*/
 	size_t			park_maxlen;	/* max size in comeback */
+
+	struct puffs_req	*park_creq;	/* non-compat preq	*/
+	size_t			park_creqlen;	/* non-compat preq len	*/
 
 	parkdone_fn		park_done;	/* "biodone" a'la puffs	*/
 	void			*park_donearg;
@@ -124,8 +127,6 @@ puffs_msgif_destroy(void)
 	pool_cache_destroy(parkpc);
 }
 
-static int alloced;
-
 static struct puffs_msgpark *
 puffs_msgpark_alloc(int waitok)
 {
@@ -136,7 +137,7 @@ puffs_msgpark_alloc(int waitok)
 		return park;
 
 	park->park_refcount = 1;
-	park->park_preq = NULL;
+	park->park_preq = park->park_creq = NULL;
 	park->park_flags = PARKFLAG_WANTREPLY;
 
 #ifdef PUFFSDEBUG
@@ -161,6 +162,7 @@ static void
 puffs_msgpark_release1(struct puffs_msgpark *park, int howmany)
 {
 	struct puffs_req *preq = park->park_preq;
+	struct puffs_req *creq = park->park_creq;
 	int refcnt;
 
 	KASSERT(mutex_owned(&park->park_mtx));
@@ -170,9 +172,12 @@ puffs_msgpark_release1(struct puffs_msgpark *park, int howmany)
 	KASSERT(refcnt >= 0);
 
 	if (refcnt == 0) {
-		alloced--;
 		if (preq)
 			kmem_free(preq, park->park_maxlen);
+#if 1
+		if (creq)
+			kmem_free(creq, park->park_creqlen);
+#endif
 		pool_cache_put(parkpc, park);
 
 #ifdef PUFFSDEBUG
@@ -324,10 +329,24 @@ puffs_msg_enqueue(struct puffs_mount *pmp, struct puffs_msgpark *park)
 {
 	struct lwp *l = curlwp;
 	struct mount *mp;
-	struct puffs_req *preq;
+	struct puffs_req *preq, *creq;
+	ssize_t delta;
 
 	mp = PMPTOMP(pmp);
 	preq = park->park_preq;
+
+#if 1
+	/* check if we do compat adjustments */
+	if (pmp->pmp_docompat && puffs_compat_outgoing(preq, &creq, &delta)) {
+		park->park_creq = park->park_preq;
+		park->park_creqlen = park->park_maxlen;
+
+		park->park_maxlen += delta;
+		park->park_copylen += delta;
+		park->park_preq = preq = creq;
+	}
+#endif
+
 	preq->preq_buflen = park->park_maxlen;
 	KASSERT(preq->preq_id == 0
 	    || (preq->preq_opclass & PUFFSOPFLAG_ISRESPONSE));
@@ -732,13 +751,31 @@ puffsop_msg(void *this, struct puffs_req *preq)
 		DPRINTF(("puffsop_msg: bad service - waiter gone for "
 		    "park %p\n", park));
 	} else {
+#if 1
+		if (park->park_creq) {
+			struct puffs_req *creq;
+			size_t csize;
+
+			KASSERT(pmp->pmp_docompat);
+			puffs_compat_incoming(preq, park->park_creq);
+			creq = park->park_creq;
+			csize = park->park_creqlen;
+			park->park_creq = park->park_preq;
+			park->park_creqlen = park->park_maxlen;
+
+			park->park_preq = creq;
+			park->park_maxlen = csize;
+
+			memcpy(park->park_creq, preq, pth->pth_framelen);
+		} else {
+#endif
+			memcpy(park->park_preq, preq, pth->pth_framelen);
+		}
+
 		if (park->park_flags & PARKFLAG_CALL) {
 			DPRINTF(("puffsop_msg: call for %p, arg %p\n",
 			    park->park_preq, park->park_donearg));
 			park->park_done(pmp, preq, park->park_donearg);
-		} else {
-			/* XXX: yes, I know */
-			memcpy(park->park_preq, preq, pth->pth_framelen);
 		}
 	}
 

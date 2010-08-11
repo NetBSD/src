@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.27.2.3 2010/03/11 15:01:58 yamt Exp $
+#	$NetBSD: genassym.cf,v 1.27.2.4 2010/08/11 22:51:32 yamt Exp $
 
 #
 # Copyright (c) 1998, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -122,7 +122,7 @@ ifdef XEN
 include <xen/xen3-public/xen.h>
 endif  
 
-include <x86/busdefs.h>
+include <x86/bus.h>
 
 define	LSRUN			LSRUN
 define	LSONPROC		LSONPROC
@@ -188,6 +188,10 @@ define	PCB_RSP0		offsetof(struct pcb, pcb_rsp0)
 define	PCB_CR0			offsetof(struct pcb, pcb_cr0)
 define	PCB_ONFAULT		offsetof(struct pcb, pcb_onfault)
 define	PCB_FPCPU		offsetof(struct pcb, pcb_fpcpu)
+define	PCB_FLAGS		offsetof(struct pcb, pcb_flags)
+define	PCB_COMPAT32		PCB_COMPAT32
+define	PCB_FS			offsetof(struct pcb, pcb_fs)
+define	PCB_GS			offsetof(struct pcb, pcb_gs)
 
 define	TF_RDI			offsetof(struct trapframe, tf_rdi)
 define	TF_RSI			offsetof(struct trapframe, tf_rsi)
@@ -298,7 +302,7 @@ define  LINUX32_RT_SF_HANDLER	offsetof(struct linux32_rt_sigframe, sf_handler)
 define  LINUX32_RT_SF_UC	offsetof(struct linux32_rt_sigframe, sf_uc)
 define  LINUX32_SYS_rt_sigreturn	LINUX32_SYS_rt_sigreturn
 define  LINUX32_SYS_sigreturn		LINUX32_SYS_sigreturn
-define  LINUX32_SYS_exit		LINUX32_SYS_netbsd32_exit
+define  LINUX32_SYS_exit		LINUX32_SYS_exit
 endif
 
 ifdef XEN
@@ -363,6 +367,8 @@ define	EV_COUNT		offsetof(struct evcnt, ev_count)
 define	OPTERON_MSR_PASSCODE	OPTERON_MSR_PASSCODE
 
 define	X86_BUS_SPACE_IO	X86_BUS_SPACE_IO
+
+define	BST_TYPE		offsetof(struct bus_space_tag, bst_type)
 
 ifdef XEN
 define CPU_INFO_VCPU		offsetof(struct cpu_info, ci_vcpu)

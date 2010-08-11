@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.116.4.5 2010/03/11 15:03:50 yamt Exp $	*/
+/*	$NetBSD: pci.c,v 1.116.4.6 2010/08/11 22:53:50 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.116.4.5 2010/03/11 15:03:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.116.4.6 2010/08/11 22:53:50 yamt Exp $");
 
 #include "opt_pci.h"
 
@@ -107,6 +107,7 @@ pcirescan(device_t self, const char *ifattr, const int *locators)
 	KASSERT(locators);
 
 	pci_enumerate_bus(sc, locators, NULL, NULL);
+
 	return 0;
 }
 

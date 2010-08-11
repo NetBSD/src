@@ -1,4 +1,4 @@
-/*	$NetBSD: epe.c,v 1.16.10.2 2010/03/11 15:02:05 yamt Exp $	*/
+/*	$NetBSD: epe.c,v 1.16.10.3 2010/08/11 22:51:40 yamt Exp $	*/
 
 /*
  * Copyright (c) 2004 Jesse Off
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: epe.c,v 1.16.10.2 2010/03/11 15:02:05 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: epe.c,v 1.16.10.3 2010/08/11 22:51:40 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -235,8 +235,7 @@ begin:
 				sc->rxq[bi].m->m_pkthdr.rcvif = ifp;
 				sc->rxq[bi].m->m_pkthdr.len = 
 					sc->rxq[bi].m->m_len = fl;
-				if (ifp->if_bpf) 
-					bpf_ops->bpf_mtap(ifp->if_bpf, sc->rxq[bi].m);
+				bpf_mtap(ifp, sc->rxq[bi].m);
                                 (*ifp->if_input)(ifp, sc->rxq[bi].m);
 				sc->rxq[bi].m = m;
 				bus_dmamap_load(sc->sc_dmat, 
@@ -609,8 +608,7 @@ more:
 		IFQ_DEQUEUE(&ifp->if_snd, m);
 	}
 
-	if (ifp->if_bpf) 
-		bpf_ops->bpf_mtap(ifp->if_bpf, m);
+	bpf_mtap(ifp, m);
 
 	nsegs = sc->txq[bi].m_dmamap->dm_nsegs;
 	segs = sc->txq[bi].m_dmamap->dm_segs;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_dge.c,v 1.21.4.3 2010/03/11 15:03:45 yamt Exp $ */
+/*	$NetBSD: if_dge.c,v 1.21.4.4 2010/08/11 22:53:46 yamt Exp $ */
 
 /*
  * Copyright (c) 2004, SUNET, Swedish University Computer Network.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_dge.c,v 1.21.4.3 2010/03/11 15:03:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_dge.c,v 1.21.4.4 2010/08/11 22:53:46 yamt Exp $");
 
 #include "rnd.h"
 
@@ -1349,8 +1349,7 @@ dge_start(struct ifnet *ifp)
 		sc->sc_txsnext = DGE_NEXTTXS(sc->sc_txsnext);
 
 		/* Pass the packet to any BPF listeners. */
-		if (ifp->if_bpf)
-			bpf_ops->bpf_mtap(ifp->if_bpf, m0);
+		bpf_mtap(ifp, m0);
 	}
 
 	if (sc->sc_txsfree == 0 || sc->sc_txfree <= 2) {
@@ -1772,8 +1771,7 @@ dge_rxintr(struct dge_softc *sc)
 		ifp->if_ipackets++;
 
 		/* Pass this up to any BPF listeners. */
-		if (ifp->if_bpf)
-			bpf_ops->bpf_mtap(ifp->if_bpf, m);
+		bpf_mtap(ifp, m);
 
 		/* Pass it on. */
 		(*ifp->if_input)(ifp, m);

@@ -1,4 +1,4 @@
-/*      $NetBSD: cpu.h,v 1.85.4.1 2010/03/11 15:03:05 yamt Exp $      */
+/*      $NetBSD: cpu.h,v 1.85.4.2 2010/08/11 22:52:51 yamt Exp $      */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden
@@ -79,7 +79,6 @@ struct cpu_dep {
 	void	(*cpu_clrf)(void);	/* Clear cold/warm start flags */
 	const char * const *cpu_devs;	/* mainbus devices */
 	void	(*cpu_attach_cpu)(device_t);	/* print CPU info */
-	void	(*cpu_subconf)(device_t, void *, cfprint_t);	/* attach dep. dev */
 	int     cpu_flags;
 	void	(*cpu_badaddr)(void);	/* cpu-specific badaddr() */
 };
@@ -101,6 +100,7 @@ struct cpu_mp_dep {
 #define	IPI_RUNNING	3	/* This CPU just started to run */
 #define	IPI_TBIA	4	/* Flush the TLB */
 #define	IPI_DDB		5	/* Jump into the DDB loop */
+#define	IPI_XCALL	6	/* Helper for xcall(9) */
 
 #define	IPI_DEST_MASTER	-1	/* Destination is mastercpu */
 #define	IPI_DEST_ALL	-2	/* Broadcast */

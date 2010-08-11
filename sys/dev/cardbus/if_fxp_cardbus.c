@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fxp_cardbus.c,v 1.30.4.5 2010/03/11 15:03:25 yamt Exp $	*/
+/*	$NetBSD: if_fxp_cardbus.c,v 1.30.4.6 2010/08/11 22:53:19 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fxp_cardbus.c,v 1.30.4.5 2010/03/11 15:03:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fxp_cardbus.c,v 1.30.4.6 2010/08/11 22:53:19 yamt Exp $");
 
 #include "opt_inet.h"
 #include "rnd.h"
@@ -212,8 +212,7 @@ static int
 fxp_cardbus_enable(struct fxp_softc * sc)
 {
 	struct fxp_cardbus_softc *csc = (struct fxp_cardbus_softc *)sc;
-	cardbus_chipset_tag_t cc = csc->ct->ct_cc;
-	cardbus_function_tag_t cf = csc->ct->ct_cf;
+	cardbus_devfunc_t ct = csc->ct;
 
 	Cardbus_function_enable(csc->ct);
 
@@ -221,7 +220,7 @@ fxp_cardbus_enable(struct fxp_softc * sc)
 
 	/* Map and establish the interrupt. */
 
-	sc->sc_ih = cardbus_intr_establish(cc, cf, csc->intrline, IPL_NET,
+	sc->sc_ih = Cardbus_intr_establish(ct, csc->intrline, IPL_NET,
 	    fxp_intr, sc);
 	if (NULL == sc->sc_ih) {
 		aprint_error_dev(sc->sc_dev, "couldn't establish interrupt\n");
@@ -235,12 +234,10 @@ static void
 fxp_cardbus_disable(struct fxp_softc * sc)
 {
 	struct fxp_cardbus_softc *csc = (struct fxp_cardbus_softc *)sc;
-	struct cardbus_devfunc *ct = csc->ct;
-	cardbus_chipset_tag_t cc = ct->ct_cc;
-	cardbus_function_tag_t cf = ct->ct_cf;
+	cardbus_devfunc_t ct = csc->ct;
 
 	/* Remove interrupt handler. */
-	cardbus_intr_disestablish(cc, cf, sc->sc_ih);
+	Cardbus_intr_disestablish(ct, sc->sc_ih);
 
 	Cardbus_function_disable(csc->ct);
 }
@@ -263,7 +260,7 @@ fxp_cardbus_detach(device_t self, int flags)
 	/*
 	 * Unhook the interrupt handler.
 	 */
-	cardbus_intr_disestablish(ct->ct_cc, ct->ct_cf, sc->sc_ih);
+	Cardbus_intr_disestablish(ct, sc->sc_ih);
 
 	/*
 	 * release bus space and close window

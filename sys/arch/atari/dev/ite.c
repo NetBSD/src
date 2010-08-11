@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.58.18.2 2009/08/19 18:46:02 yamt Exp $	*/
+/*	$NetBSD: ite.c,v 1.58.18.3 2010/08/11 22:51:45 yamt Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.58.18.2 2009/08/19 18:46:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.58.18.3 2010/08/11 22:51:45 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -113,6 +113,8 @@ __KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.58.18.2 2009/08/19 18:46:02 yamt Exp $");
 #include <atari/dev/grfvar.h>
 #include <atari/dev/viewioctl.h>
 #include <atari/dev/viewvar.h>
+
+#include "ioconf.h"
 
 #define ITEUNIT(dev)	(minor(dev))
 
@@ -186,8 +188,6 @@ dev_type_cnputc(itecnputc);
 CFATTACH_DECL(ite, sizeof(struct ite_softc),
     itematch, iteattach, NULL, NULL);
 
-extern struct cfdriver	ite_cd;
-
 dev_type_open(iteopen);
 dev_type_close(iteclose);
 dev_type_read(iteread);
@@ -241,8 +241,8 @@ iteattach(struct device *pdp, struct device *dp, void *auxp)
 
 	if (dp) {
 		s = spltty();
-		if(con_itesoftc.grf != NULL
-			&& con_itesoftc.grf->g_unit == gp->g_unit) {
+		if (con_itesoftc.grf != NULL &&
+		    con_itesoftc.grf->g_unit == gp->g_unit) {
 			/*
 			 * console reinit copy params over.
 			 * and console always gets keyboard
@@ -278,10 +278,11 @@ iteattach(struct device *pdp, struct device *dp, void *auxp)
 static struct ite_softc *
 getitesp(dev_t dev)
 {
-	if(atari_realconfig && (con_itesoftc.grf == NULL))
+
+	if (atari_realconfig && (con_itesoftc.grf == NULL))
 		return(device_lookup_private(&ite_cd, ITEUNIT(dev)));
 
-	if(con_itesoftc.grf == NULL)
+	if (con_itesoftc.grf == NULL)
 		panic("no ite_softc for console");
 	return(&con_itesoftc);
 }
@@ -390,7 +391,8 @@ iteinit(dev_t dev)
 		ip->kbdmap = malloc(sizeof(struct kbdmap), M_DEVBUF, M_WAITOK);
 		memcpy(ip->kbdmap, &ascii_kbdmap, sizeof(struct kbdmap));
 	}
-	else ip->kbdmap = &ascii_kbdmap;
+	else
+		ip->kbdmap = &ascii_kbdmap;
 
 	ip->cursorx = 0;
 	ip->cursory = 0;
@@ -424,7 +426,8 @@ iteopen(dev_t dev, int mode, int devtype, struct lwp *l)
 		tp = ip->tp = ttymalloc();
 		tty_attach(tp);
 	}
-	else tp = ip->tp;
+	else
+		tp = ip->tp;
 
 	if (kauth_authorize_device_tty(l->l_cred, KAUTH_DEVICE_TTY_OPEN, tp))
 		return (EBUSY);
@@ -543,7 +546,7 @@ iteioctl(dev_t dev, u_long cmd, void * addr, int flag, struct lwp *l)
 	KDASSERT(tp);
 
 	error = (*tp->t_linesw->l_ioctl) (tp, cmd, addr, flag, l);
-	if(error != EPASSTHROUGH)
+	if (error != EPASSTHROUGH)
 		return (error);
 
 	error = ttioctl(tp, cmd, addr, flag, l);
@@ -797,25 +800,26 @@ ite_cnfilter(u_int c, enum caller caller)
 	/*
 	 * No special action if key released
 	 */
-	if(up) {
+	if (up) {
 		splx(s);
 		return -1;
 	}
 	
 	/* translate modifiers */
-	if(kbd_modifier & KBD_MOD_SHIFT) {
-		if(kbd_modifier & KBD_MOD_ALT)
+	if (kbd_modifier & KBD_MOD_SHIFT) {
+		if (kbd_modifier & KBD_MOD_ALT)
 			key = kbdmap->alt_shift_keys[c];
-		else key = kbdmap->shift_keys[c];
+		else
+			key = kbdmap->shift_keys[c];
 	}
-	else if(kbd_modifier & KBD_MOD_ALT)
+	else if (kbd_modifier & KBD_MOD_ALT)
 			key = kbdmap->alt_keys[c];
 	else {
 		key = kbdmap->keys[c];
 		/*
 		 * If CAPS and key is CAPable (no pun intended)
 		 */
-		if((kbd_modifier & KBD_MOD_CAPS) && (key.mode & KBD_MODE_CAPS))
+		if ((kbd_modifier & KBD_MOD_CAPS) && (key.mode & KBD_MODE_CAPS))
 			key = kbdmap->shift_keys[c];
 	}
 	code = key.code;
@@ -824,12 +828,12 @@ ite_cnfilter(u_int c, enum caller caller)
 	/*
 	 * If string return simple console filter
 	 */
-	if(key->mode & (KBD_MODE_STRING | KBD_MODE_KPAD)) {
+	if (key->mode & (KBD_MODE_STRING | KBD_MODE_KPAD)) {
 		splx(s);
 		return -1;
 	}
 	/* handle dead keys */
-	if(key->mode & KBD_MODE_DEAD) {
+	if (key->mode & KBD_MODE_DEAD) {
 		/* if entered twice, send accent itself */
 		if (last_dead == key->mode & KBD_MODE_ACCMASK)
 			last_dead = 0;
@@ -839,7 +843,7 @@ ite_cnfilter(u_int c, enum caller caller)
 			return -1;
 		}
 	}
-	if(last_dead) {
+	if (last_dead) {
 		/* can't apply dead flag to string-keys */
 		if (code >= '@' && code < 0x7f)
 			code =
@@ -847,7 +851,7 @@ ite_cnfilter(u_int c, enum caller caller)
 		last_dead = 0;
 	}
 #endif
-	if(kbd_modifier & KBD_MOD_CTRL)
+	if (kbd_modifier & KBD_MOD_CTRL)
 		code &= 0x1f;
 
 	/*
@@ -872,7 +876,7 @@ static void
 repeat_handler(void *arg)
 {
 	tout_pending = 0;
-	if(last_char) 
+	if (last_char) 
 		add_sicallback((si_farg)ite_filter, (void *)last_char,
 						    (void *)ITEFILT_REPEATER);
 }
@@ -893,7 +897,7 @@ ite_filter(u_int c, enum caller caller)
 		again = true;
 	}
 
-	if(kbd_ite == NULL)
+	if (kbd_ite == NULL)
 		return;
 
 	kbd_tty = kbd_ite->tp;
@@ -919,7 +923,7 @@ ite_filter(u_int c, enum caller caller)
 	 * Stop repeating on up event
 	 */
 	if (up) {
-		if(tout_pending) {
+		if (tout_pending) {
 			callout_stop(&repeat_ch);
 			tout_pending = 0;
 			last_char    = 0;
@@ -927,7 +931,7 @@ ite_filter(u_int c, enum caller caller)
 		splx(s);
 		return;
 	}
-	else if(tout_pending && last_char != c) {
+	else if (tout_pending && last_char != c) {
 		/*
 		 * Different character, stop also
 		 */
@@ -939,7 +943,7 @@ ite_filter(u_int c, enum caller caller)
 	/*
 	 * Handle ite-switching ALT + Fx
 	 */
-	if((kbd_modifier == KBD_MOD_ALT) && (c >= 0x3b) && (c <= 0x44)) {
+	if ((kbd_modifier == KBD_MOD_ALT) && (c >= 0x3b) && (c <= 0x44)) {
 		ite_switch(c - 0x3b);
 		splx(s);
 		return;
@@ -947,14 +951,14 @@ ite_filter(u_int c, enum caller caller)
 	/*
 	 * Safety button, switch back to ascii keymap.
 	 */
-	if(kbd_modifier == (KBD_MOD_ALT | KBD_MOD_LSHIFT) && c == 0x3b) {
+	if (kbd_modifier == (KBD_MOD_ALT | KBD_MOD_LSHIFT) && c == 0x3b) {
 		/* ALT + LSHIFT + F1 */
 		memcpy(kbdmap, &ascii_kbdmap, sizeof(struct kbdmap));
 		splx(s);
 		return;
 #ifdef DDB
-	}
-	else if(kbd_modifier == (KBD_MOD_ALT | KBD_MOD_LSHIFT) && c == 0x43) {
+	} else if (kbd_modifier == (KBD_MOD_ALT | KBD_MOD_LSHIFT) &&
+	    c == 0x43) {
 		/*
 		 * ALT + LSHIFT + F9 -> Debugger!
 		 */
@@ -967,7 +971,7 @@ ite_filter(u_int c, enum caller caller)
 	/*
 	 * The rest of the code is senseless when the device is not open.
 	 */
-	if(kbd_tty == NULL) {
+	if (kbd_tty == NULL) {
 		splx(s);
 		return;
 	}
@@ -975,19 +979,20 @@ ite_filter(u_int c, enum caller caller)
 	/*
 	 * Translate modifiers
 	 */
-	if(kbd_modifier & KBD_MOD_SHIFT) {
-		if(kbd_modifier & KBD_MOD_ALT)
+	if (kbd_modifier & KBD_MOD_SHIFT) {
+		if (kbd_modifier & KBD_MOD_ALT)
 			key = kbdmap->alt_shift_keys[c];
-		else key = kbdmap->shift_keys[c];
+		else
+			key = kbdmap->shift_keys[c];
 	}
-	else if(kbd_modifier & KBD_MOD_ALT)
-			key = kbdmap->alt_keys[c];
+	else if (kbd_modifier & KBD_MOD_ALT)
+		key = kbdmap->alt_keys[c];
 	else {
 		key = kbdmap->keys[c];
 		/*
 		 * If CAPS and key is CAPable (no pun intended)
 		 */
-		if((kbd_modifier & KBD_MOD_CAPS) && (key.mode & KBD_MODE_CAPS))
+		if ((kbd_modifier & KBD_MOD_CAPS) && (key.mode & KBD_MODE_CAPS))
 			key = kbdmap->shift_keys[c];
 	}
 	code = key.code;
@@ -999,14 +1004,13 @@ ite_filter(u_int c, enum caller caller)
 	 * overhead, since we have to do the conversion each time, but
 	 * I guess that's ok.
 	 */
-	if(!tout_pending && caller == ITEFILT_TTY && kbd_ite->key_repeat) {
+	if (!tout_pending && caller == ITEFILT_TTY && kbd_ite->key_repeat) {
 		tout_pending = 1;
 		last_char    = c;
 		callout_reset(&repeat_ch, start_repeat_timeo * hz / 100,
 		    repeat_handler, NULL);
-	}
-	else if(!tout_pending && caller==ITEFILT_REPEATER
-				&& kbd_ite->key_repeat) {
+	} else if (!tout_pending && caller==ITEFILT_REPEATER &&
+	    kbd_ite->key_repeat) {
 		tout_pending = 1;
 		last_char    = c;
 		callout_reset(&repeat_ch, next_repeat_timeo * hz / 100,
@@ -1034,14 +1038,13 @@ ite_filter(u_int c, enum caller caller)
 	/*
 	 * If not string, apply CTRL modifiers
 	 */
-	if(!(key.mode & KBD_MODE_STRING)
-	    	&& (!(key.mode & KBD_MODE_KPAD)
-		|| (kbd_ite && !kbd_ite->keypad_appmode))) {
-		if(kbd_modifier & KBD_MOD_CTRL)
+	if (!(key.mode & KBD_MODE_STRING) &&
+	    (!(key.mode & KBD_MODE_KPAD) ||
+	     (kbd_ite && !kbd_ite->keypad_appmode))) {
+		if (kbd_modifier & KBD_MOD_CTRL)
 			code &= 0x1f;
-	}
-	else if((key.mode & KBD_MODE_KPAD)
-			&& (kbd_ite && kbd_ite->keypad_appmode)) {
+	} else if ((key.mode & KBD_MODE_KPAD) &&
+	    (kbd_ite && kbd_ite->keypad_appmode)) {
 		static const char * const in  = "0123456789-+.\r()/*";
 		static const char * const out = "pqrstuvwxymlnMPQRS";
 			   char *cp  = strchr(in, code);
@@ -1070,9 +1073,9 @@ ite_filter(u_int c, enum caller caller)
 		 * keymap setting, AND we're in app-cursor mode, switch
 		 * to the above table. This is *nasty* !
 		 */
-		if(((c == 0x48) || (c == 0x4b) || (c == 0x4d) || (c == 0x50))
-			&& kbd_ite->cursor_appmode
-		    && !memcmp(str, "\x03\x1b[", 3) &&
+		if (((c == 0x48) || (c == 0x4b) ||(c == 0x4d) || (c == 0x50)) &&
+		     kbd_ite->cursor_appmode &&
+		    !memcmp(str, "\x03\x1b[", 3) &&
 		    strchr("ABCD", str[3]))
 			str = app_cursor + 4 * (str[3] - 'A');
 
@@ -2191,7 +2194,7 @@ iteputchar(register int c, struct ite_softc *ip)
 		break;
 
 	case BEL:
-		if(kbd_tty && kbd_ite && kbd_ite->tp == kbd_tty)
+		if (kbd_tty && kbd_ite && kbd_ite->tp == kbd_tty)
 			kbdbell();
 		break;
 

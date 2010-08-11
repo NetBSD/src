@@ -1,4 +1,4 @@
-/* 	$NetBSD: intr.h,v 1.7.10.1 2008/05/16 02:21:43 yamt Exp $	*/
+/* 	$NetBSD: intr.h,v 1.7.10.2 2010/08/11 22:51:30 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -41,7 +41,6 @@
 /* Hardware Interrupt Priority Levels are not mutually exclusive. */
 
 #define	IPL_NONE	0
-#ifdef __HAVE_FAST_SOFTINTS
 #define	IPL_SOFTCLOCK	1
 #define	IPL_SOFTBIO	2
 #define	IPL_SOFTNET	3
@@ -50,16 +49,6 @@
 #define	IPL_SCHED	6
 #define IPL_HIGH	7
 #define NIPL		8
-#else
-#define IPL_VM		1
-#define	IPL_SCHED	2
-#define IPL_HIGH	3
-#define	IPL_SOFTSERIAL	IPL_NONE
-#define	IPL_SOFTNET	IPL_NONE
-#define	IPL_SOFTBIO	IPL_NONE
-#define	IPL_SOFTCLOCK	IPL_NONE
-#define NIPL		4
-#endif
 
 #define	IST_UNUSABLE	-1	/* interrupt cannot be used */
 #define	IST_NONE	0	/* none (dummy) */

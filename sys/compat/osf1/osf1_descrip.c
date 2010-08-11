@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_descrip.c,v 1.26.4.2 2009/06/20 07:20:18 yamt Exp $ */
+/* $NetBSD: osf1_descrip.c,v 1.26.4.3 2010/08/11 22:53:11 yamt Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_descrip.c,v 1.26.4.2 2009/06/20 07:20:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_descrip.c,v 1.26.4.3 2010/08/11 22:53:11 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,7 +68,6 @@ __KERNEL_RCSID(0, "$NetBSD: osf1_descrip.c,v 1.26.4.2 2009/06/20 07:20:18 yamt E
 #include <sys/stat.h>
 #include <sys/filedesc.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
 #include <sys/mman.h>
 #include <sys/mount.h>
 #include <sys/signal.h>

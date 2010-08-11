@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.h,v 1.16.2.6 2010/03/11 15:04:37 yamt Exp $	*/
+/*	$NetBSD: rump.h,v 1.16.2.7 2010/08/11 22:55:05 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -43,12 +43,12 @@ struct vfsops;
 struct fid;
 struct statvfs;
 struct stat;
+struct kauth_cred;
+struct lwp;
+struct modinfo;
+struct uio;
 
 /* yetch */
-#if !defined(_RUMPKERNEL) && !defined(__NetBSD__)
-struct kauth_cred;
-typedef struct kauth_cred *kauth_cred_t;
-#endif
 #if defined(__NetBSD__)
 #include <prop/proplib.h>
 #else
@@ -59,9 +59,6 @@ typedef struct prop_dictionary *prop_dictionary_t;
 #endif
 #endif /* __NetBSD__ */
 
-struct lwp;
-struct modinfo;
-
 #include <rump/rumpvnode_if.h>
 #include <rump/rumpdefs.h>
 
@@ -69,11 +66,24 @@ struct modinfo;
 enum rump_uiorw { RUMPUIO_READ, RUMPUIO_WRITE };
 typedef int (*rump_sysproxy_t)(int, void *, uint8_t *, size_t, register_t *);
 
+enum rump_sigmodel {
+	RUMP_SIGMODEL_PANIC,
+	RUMP_SIGMODEL_IGNORE,
+	RUMP_SIGMODEL_HOST,
+	RUMP_SIGMODEL_RAISE
+};
+
 /* rumpvfs */
 #define RUMPCN_FREECRED  0x02
 #define RUMPCN_FORCEFREE 0x04
 #define RUMP_ETFS_SIZE_ENDOFF ((uint64_t)-1)
-enum rump_etfs_type { RUMP_ETFS_REG, RUMP_ETFS_BLK, RUMP_ETFS_CHR };
+enum rump_etfs_type {
+	RUMP_ETFS_REG,
+	RUMP_ETFS_BLK,
+	RUMP_ETFS_CHR,
+	RUMP_ETFS_DIR,		/* only the registered directory */
+	RUMP_ETFS_DIR_SUBDIRS	/* dir + subdirectories (recursive) */
+};
 
 /*
  * Something like rump capabilities would be nicer, but let's
@@ -89,13 +99,16 @@ _BEGIN_DECLS
 
 int	rump_boot_gethowto(void);
 void	rump_boot_sethowto(int);
+void	rump_boot_setsigmodel(enum rump_sigmodel);
 
 void	rump_schedule(void);
 void	rump_unschedule(void);
 
+void	rump_printevcnts(void);
+
 int	rump__init(int);
 
-#ifndef _RUMPKERNEL
+#ifndef _KERNEL
 #include <rump/rumpkern_if_pub.h>
 #include <rump/rumpvfs_if_pub.h>
 #include <rump/rumpnet_if_pub.h>

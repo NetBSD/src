@@ -1,4 +1,4 @@
-/*	$NetBSD: hme.c,v 1.64.4.6 2010/03/11 15:03:30 yamt Exp $	*/
+/*	$NetBSD: hme.c,v 1.64.4.7 2010/08/11 22:53:25 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.64.4.6 2010/03/11 15:03:30 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.64.4.7 2010/08/11 22:53:25 yamt Exp $");
 
 /* #define HMEDEBUG */
 
@@ -894,8 +894,7 @@ hme_read(struct hme_softc *sc, int ix, uint32_t flags)
 	 * Check if there's a BPF listener on this interface.
 	 * If so, hand off the raw packet to BPF.
 	 */
-	if (ifp->if_bpf)
-		bpf_ops->bpf_mtap(ifp->if_bpf, m);
+	bpf_mtap(ifp, m);
 
 	/* Pass the packet up. */
 	(*ifp->if_input)(ifp, m);
@@ -926,8 +925,7 @@ hme_start(struct ifnet *ifp)
 		 * If BPF is listening on this interface, let it see the
 		 * packet before we commit it to the wire.
 		 */
-		if (ifp->if_bpf)
-			bpf_ops->bpf_mtap(ifp->if_bpf, m);
+		bpf_mtap(ifp, m);
 
 #ifdef INET
 		/* collect bits for h/w csum, before hme_put frees the mbuf */

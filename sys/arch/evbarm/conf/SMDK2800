@@ -1,4 +1,4 @@
-#	$NetBSD: SMDK2800,v 1.33.10.2 2010/03/11 15:02:14 yamt Exp $
+#	$NetBSD: SMDK2800,v 1.33.10.3 2010/08/11 22:51:50 yamt Exp $
 #
 #	SMDK2800 -- Samsung's S3C2800 evaluation board.
 #
@@ -220,7 +220,7 @@ ukphy*		at mii? phy ?			# generic unknown PHYs
 # disk/mass storage pseudo-devices
 #pseudo-device	md		1	# memory disk device (ramdisk)
 #pseudo-device	vnd			# disk-like interface to files
-#pseudo-device	fss		4	# file system snapshot device
+#pseudo-device	fss			# file system snapshot device
 
 # network pseudo-devices
 pseudo-device	bpfilter		# Berkeley packet filter

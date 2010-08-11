@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ntptime.c,v 1.48.2.2 2009/05/04 08:13:46 yamt Exp $	*/
+/*	$NetBSD: kern_ntptime.c,v 1.48.2.3 2010/08/11 22:54:39 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -60,9 +60,11 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/sys/kern/kern_ntptime.c,v 1.59 2005/05/28 14:34:41 rwatson Exp $"); */
-__KERNEL_RCSID(0, "$NetBSD: kern_ntptime.c,v 1.48.2.2 2009/05/04 08:13:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ntptime.c,v 1.48.2.3 2010/08/11 22:54:39 yamt Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_ntp.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/resourcevar.h>
@@ -180,7 +182,7 @@ static long time_constant;		/* poll interval (shift) (s) */
 static long time_precision = 1;		/* clock precision (ns) */
 static long time_maxerror = MAXPHASE / 1000; /* maximum error (us) */
 static long time_esterror = MAXPHASE / 1000; /* estimated error (us) */
-static long time_reftime;		/* time at last adjustment (s) */
+static time_t time_reftime;		/* time at last adjustment (s) */
 static l_fp time_offset;		/* time offset (ns) */
 static l_fp time_freq;			/* frequency offset (ns/s) */
 #endif /* NTP */

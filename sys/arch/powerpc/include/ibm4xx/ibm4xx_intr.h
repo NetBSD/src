@@ -1,4 +1,4 @@
-/*	$NetBSD: ibm4xx_intr.h,v 1.15.18.1 2008/05/16 02:23:01 yamt Exp $	*/
+/*	$NetBSD: ibm4xx_intr.h,v 1.15.18.2 2010/08/11 22:52:34 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
@@ -57,13 +57,15 @@
 void 	*intr_establish(int, int, int, int (*)(void *), void *);
 void 	intr_disestablish(void *);
 void 	intr_init(void);
+int 	uic_add(u_int, int);
 void 	ext_intr(void); 			/* for machdep */
 int 	splraise(int);
 int 	spllower(int);
 void 	splx(int);
 void 	softintr(int);
 
-extern volatile u_int 		imask[NIPL];
+typedef u_int imask_t;
+extern volatile imask_t 	imask[NIPL];
 extern const int 		mask_clock; 		/* for clock.c */
 extern const int 		mask_statclock; 	/* for clock.c */
 

@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.41.20.1 2009/05/04 08:12:00 yamt Exp $
+# $NetBSD: INSTALL,v 1.41.20.2 2010/08/11 22:52:49 yamt Exp $
 #
 # INSTALL - Installation kernel for the Sun3
 #
@@ -199,4 +199,4 @@ pseudo-device	rnd			# /dev/random and in-kernel generator
 pseudo-device	pty		2	# pseudo-terminals (Sysinst needs two)
 #pseudo-device	vnd			# paging to files
 #pseudo-device	ccd		4	# concatenated disks
-#pseudo-device	fss		4	# file system snapshot device
+#pseudo-device	fss			# file system snapshot device

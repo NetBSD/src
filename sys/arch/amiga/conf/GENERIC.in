@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC.in,v 1.65.10.2 2010/03/11 15:02:00 yamt Exp $
+# $NetBSD: GENERIC.in,v 1.65.10.3 2010/08/11 22:51:35 yamt Exp $
 #
 # GENERIC machine description file
 #
@@ -56,7 +56,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.65.10.2 $"
+#ident 		"GENERIC-$Revision: 1.65.10.3 $"
 
 m4_ifdef(`INSTALL_CONFIGURATION', `m4_dnl
 makeoptions	COPTS="-Os"
@@ -120,6 +120,7 @@ options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
 options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 options 	IPFILTER_LOG	# ipmon(8) log support
 options 	IPFILTER_LOOKUP	# ippool(8) support
+options 	IPFILTER_COMPAT # Compat for IP-Filter
 #options 	IPFILTER_DEFAULT_BLOCK	# block all packets by default
 
 #options 	ALTQ		# Manipulate network interfaces' output queues
@@ -160,7 +161,7 @@ file-system 	UMAPFS		# NULLFS + uid and gid remapping
 file-system 	UNION		# union filesystem
 file-system	SMBFS		# experimental - CIFS; also needs nsmb (below)
 file-system	PTYFS		# /dev/pts/N support
-#file-system	TMPFS		# Efficient memory file-system
+file-system	TMPFS		# Efficient memory file-system
 #file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
 ')m4_dnl
 
@@ -591,9 +592,9 @@ pseudo-device	agr			# IEEE 802.3ad link aggregation
 #pseudo-device	pf			# PF packet filter
 #pseudo-device	pflog			# PF log if
 m4_ifdef(`INSTALL_CONFIGURATION', `m4_dnl
-#pseudo-device	fss		4	# file system snapshot device
+#pseudo-device	fss			# file system snapshot device
 ', `m4_dnl
-pseudo-device	fss		4	# file system snapshot device
+pseudo-device	fss			# file system snapshot device
 ')m4_dnl
 
 pseudo-device	view		4	# views (needed for grfcc)

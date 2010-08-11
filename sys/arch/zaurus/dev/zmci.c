@@ -1,4 +1,4 @@
-/*	$NetBSD: zmci.c,v 1.1.4.2 2009/05/04 08:12:15 yamt Exp $	*/
+/*	$NetBSD: zmci.c,v 1.1.4.3 2010/08/11 22:53:00 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006-2008 NONAKA Kimihiro <nonaka@netbsd.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zmci.c,v 1.1.4.2 2009/05/04 08:12:15 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zmci.c,v 1.1.4.3 2010/08/11 22:53:00 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -119,7 +119,7 @@ pxamci_attach(device_t parent, device_t self, void *aux)
 	sc->sc.sc_tag.set_power = zmci_set_power;
 	sc->sc.sc_tag.card_detect = zmci_card_detect;
 	sc->sc.sc_tag.write_protect = zmci_write_protect;
-	sc->sc.sc_caps = 0;
+	sc->sc.sc_caps = PMC_CAPS_4BIT;
 
 	if (pxamci_attach_sub(self, pxa)) {
 		aprint_error_dev(self, "unable to attach MMC controller\n");

@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.274.2.5 2010/03/11 15:04:42 yamt Exp $	*/
+/*	$NetBSD: proc.h,v 1.274.2.6 2010/08/11 22:55:11 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -153,7 +153,7 @@ struct emul {
 
 					/* Per-process hooks */
 	void		(*e_proc_exec)(struct proc *, struct exec_package *);
-	void		(*e_proc_fork)(struct proc *, struct proc *, int);
+	void		(*e_proc_fork)(struct proc *, struct lwp *, int);
 	void		(*e_proc_exit)(struct proc *);
 	void		(*e_lwp_fork)(struct lwp *, struct lwp *);
 	void		(*e_lwp_exit)(struct lwp *);
@@ -281,14 +281,12 @@ struct proc {
 	void		*p_tracep;	/* k: Trace private data */
 	struct vnode 	*p_textvp;	/* :: Vnode of executable */
 
-	void	     (*p_userret)(void);/* p: return-to-user hook */
 	struct emul	*p_emul;	/* :: emulation information */
 	void		*p_emuldata;	/* :: per-proc emul data, or NULL */
 	const struct execsw *p_execsw;	/* :: exec package information */
 	struct klist	p_klist;	/* p: knotes attached to proc */
 
 	LIST_HEAD(, lwp) p_sigwaiters;	/* p: LWPs waiting for signals */
-	sigstore_t	p_sigstore;	/* p: process-wide signal state */
 	sigpend_t	p_sigpend;	/* p: pending signals */
 	struct lcproc	*p_lwpctl;	/* p, a: _lwp_ctl() information */
 	pid_t		p_ppid;		/* :: cached parent pid */
@@ -458,19 +456,11 @@ extern const struct proclist_desc proclists[];
 
 extern struct pool	ptimer_pool;	/* Memory pool for ptimers */
 
-struct proc *p_find(pid_t, uint);	/* Find process by id */
-struct pgrp *pg_find(pid_t, uint);	/* Find process group by id */
-/* Flags values for p_find() and pg_find(). */
-#define PFIND_ZOMBIE		1	/* look for zombies as well */
-#define PFIND_LOCKED		2	/* proclist locked on entry */
-#define PFIND_UNLOCK_FAIL	4	/* unlock proclist on failure */
-#define PFIND_UNLOCK_OK		8	/* unlock proclist on success */
-#define PFIND_UNLOCK		(PFIND_UNLOCK_OK | PFIND_UNLOCK_FAIL)
-/* For source compatibility. but UNLOCK_OK gives a stale answer... */
-#define pfind(pid) p_find((pid), PFIND_UNLOCK)
-#define pgfind(pgid) pg_find((pgid), PFIND_UNLOCK)
-
 struct simplelock;
+
+proc_t *	proc_find_raw(pid_t);
+proc_t *	proc_find(pid_t);		/* Find process by ID */
+struct pgrp *	pgrp_find(pid_t);		/* Find process group by ID */
 
 void	procinit(void);
 int	proc_enterpgrp(struct proc *, pid_t, pid_t, bool);
@@ -488,7 +478,8 @@ void	exit1(struct lwp *, int) __dead;
 int	do_sys_wait(int *, int *, int, struct rusage *);
 struct proc *proc_alloc(void);
 void	proc0_init(void);
-void	proc_free_pid(struct proc *);
+pid_t	proc_alloc_pid(struct proc *);
+void	proc_free_pid(pid_t);
 void	proc_free_mem(struct proc *);
 void	exit_lwps(struct lwp *l);
 int	fork1(struct lwp *, int, int, void *, size_t,

@@ -1,4 +1,4 @@
-/*	$NetBSD: cs89x0.c,v 1.23.4.2 2010/03/11 15:03:29 yamt Exp $	*/
+/*	$NetBSD: cs89x0.c,v 1.23.4.3 2010/08/11 22:53:24 yamt Exp $	*/
 
 /*
  * Copyright (c) 2004 Christopher Gilbert
@@ -212,7 +212,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs89x0.c,v 1.23.4.2 2010/03/11 15:03:29 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs89x0.c,v 1.23.4.3 2010/08/11 22:53:24 yamt Exp $");
 
 #include "opt_inet.h"
 
@@ -1677,8 +1677,7 @@ cs_ether_input(struct cs_softc *sc, struct mbuf *m)
 	 * Check if there's a BPF listener on this interface.
 	 * If so, hand off the raw packet to BPF.
 	 */
-	if (ifp->if_bpf)
-		bpf_ops->bpf_mtap(ifp->if_bpf, m);
+	bpf_mtap(ifp, m);
 
 	/* Pass the packet up. */
 	(*ifp->if_input)(ifp, m);
@@ -1931,8 +1930,7 @@ cs_start_output(struct ifnet *ifp)
 	         * If BPF is listening on this interface, let it see the packet
 	         * before we commit it to the wire.
 	         */
-		if (ifp->if_bpf)
-			bpf_ops->bpf_mtap(ifp->if_bpf, pMbufChain);
+		bpf_mtap(ifp, pMbufChain);
 
 		/* Find the total length of the data to transmit */
 		Length = 0;

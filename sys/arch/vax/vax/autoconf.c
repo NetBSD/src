@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.90 2008/03/11 05:34:03 matt Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.90.4.1 2010/08/11 22:52:51 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.90 2008/03/11 05:34:03 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.90.4.1 2010/08/11 22:52:51 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_cputype.h"
@@ -120,8 +120,10 @@ int
 mainbus_print(void *aux, const char *name)
 {
 	struct mainbus_attach_args * const ma = aux;
-	if (name)
-		aprint_normal("%s at %s", ma->ma_type, name);
+	if (name) {
+		aprint_naive("%s at %s\n", ma->ma_type, name);
+		aprint_normal("%s at %s\n", ma->ma_type, name);
+        }
 	return UNCONF;
 }
 
@@ -137,6 +139,7 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 	struct mainbus_attach_args ma;
 	const char * const * devp;
 
+	aprint_naive("\n");
 	aprint_normal("\n");
 
 	for (devp = dep_call->cpu_devs; *devp != NULL; devp++) {
@@ -150,10 +153,6 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 	 * Hopefully there a master bus?
 	 * Maybe should have this as master instead of mainbus.
 	 */
-
-	if (dep_call->cpu_subconf != NULL)
-		(*dep_call->cpu_subconf)(self, &ma, mainbus_print);
-
 
 #if defined(COMPAT_14)
 	if (rpb.rpb_base == (void *)-1)
@@ -189,10 +188,13 @@ cpu_mainbus_attach(device_t parent, device_t self, void *aux)
 
 	if (dep_call->cpu_attach_cpu != NULL)
 		(*dep_call->cpu_attach_cpu)(self);
-	else if (ci->ci_cpustr)
+	else if (ci->ci_cpustr) {
+		aprint_naive(": %s\n", ci->ci_cpustr);
 		aprint_normal(": %s\n", ci->ci_cpustr);
-	else
+        } else {
+		aprint_naive("\n");
 		aprint_normal("\n");
+        }
 }
 
 CFATTACH_DECL_NEW(cpu_mainbus, 0,

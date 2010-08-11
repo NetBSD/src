@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_exec.c,v 1.22.16.2 2009/05/04 08:12:28 yamt Exp $	 */
+/*	$NetBSD: svr4_32_exec.c,v 1.22.16.3 2010/08/11 22:53:13 yamt Exp $	 */
 
 /*-
  * Copyright (c) 1994, 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_exec.c,v 1.22.16.2 2009/05/04 08:12:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_exec.c,v 1.22.16.3 2010/08/11 22:53:13 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_syscall_debug.h"
@@ -41,6 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: svr4_32_exec.c,v 1.22.16.2 2009/05/04 08:12:28 yamt 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
+#include <sys/exec.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -63,43 +64,42 @@ void syscall(void);
 struct uvm_object *emul_svr4_32_object;
 
 struct emul emul_svr4_32 = {
-	"svr4_32",
-	"/emul/svr4_32",
+	.e_name =		"svr4_32",
+	.e_path =		"/emul/svr4_32",
 #ifndef __HAVE_MINIMAL_EMUL
-	0,
-	native_to_svr4_errno,
-	SVR4_32_SYS_syscall,
-	SVR4_32_SYS_NSYSENT,
+	.e_flags =		0,
+	.e_errno =		native_to_svr4_errno,
+	.e_nosys =		SVR4_32_SYS_syscall,
+	.e_nsysent =		SVR4_32_SYS_NSYSENT,
 #endif
-	svr4_32_sysent,
+	.e_sysent =		svr4_32_sysent,
 #ifdef SYSCALL_DEBUG
-	svr4_32_syscallnames,
+	.e_syscallnames =	svr4_32_syscallnames,
 #else
-	NULL,
+	.e_syscallnames =	NULL,
 #endif
-	svr4_32_sendsig,
-	trapsignal,
-	NULL,
-	svr4_32_sigcode,
-	svr4_32_esigcode,
-	&emul_svr4_32_object,
-	svr4_32_setregs,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
+	.e_sendsig =		svr4_32_sendsig,
+	.e_trapsignal =		trapsignal,
+	.e_tracesig =		NULL,
+	.e_sigcode =		svr4_32_sigcode,
+	.e_esigcode =		svr4_32_esigcode,
+	.e_sigobject =		&emul_svr4_32_object,
+	.e_setregs =		svr4_32_setregs,
+	.e_proc_exec =		NULL,
+	.e_proc_fork =		NULL,
+	.e_proc_exit =		NULL,
+	.e_lwp_fork =		NULL,
+	.e_lwp_exit =		NULL,
 #ifdef __HAVE_SYSCALL_INTERN
-	svr4_32_syscall_intern,
+	.e_syscall_intern =	svr4_32_syscall_intern,
 #else
-	syscall,
+	.e_syscall_intern =	syscall,
 #endif
-	NULL,
-	NULL,
-
-	svr4_32_vm_default_addr,
-	NULL,
-	NULL,
-	0,
-	NULL,
+	.e_sysctlovly =		NULL,
+	.e_fault =		NULL,
+	.e_vm_default_addr =	svr4_32_vm_default_addr,
+	.e_usertrap =		NULL,
+	.e_sa =			NULL,
+	.e_ucsize =		0,
+	.e_startlwp =		NULL
 };

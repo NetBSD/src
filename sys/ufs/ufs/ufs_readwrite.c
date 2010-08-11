@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_readwrite.c,v 1.87.2.1 2009/05/04 08:14:38 yamt Exp $	*/
+/*	$NetBSD: ufs_readwrite.c,v 1.87.2.2 2010/08/11 22:55:15 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.87.2.1 2009/05/04 08:14:38 yamt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.87.2.2 2010/08/11 22:55:15 yamt Exp $");
 
 #ifdef LFS_READWRITE
 #define	FS			struct lfs
@@ -217,7 +217,6 @@ WRITE(void *v)
 	struct inode *ip;
 	FS *fs;
 	struct buf *bp;
-	struct lwp *l;
 	kauth_cred_t cred;
 	daddr_t lbn;
 	off_t osize, origoff, oldoff, preallocoff, endallocoff, nsize;
@@ -272,19 +271,6 @@ WRITE(void *v)
 	if (vp == fs->lfs_ivnode)
 		return (EPERM);
 #endif
-	/*
-	 * Maybe this should be above the vnode op call, but so long as
-	 * file servers have no limits, I don't think it matters.
-	 */
-	l = curlwp;
-	if (vp->v_type == VREG && l &&
-	    uio->uio_offset + uio->uio_resid >
-	    l->l_proc->p_rlimit[RLIMIT_FSIZE].rlim_cur) {
-		mutex_enter(proc_lock);
-		psignal(l->l_proc, SIGXFSZ);
-		mutex_exit(proc_lock);
-		return (EFBIG);
-	}
 	if (uio->uio_resid == 0)
 		return (0);
 

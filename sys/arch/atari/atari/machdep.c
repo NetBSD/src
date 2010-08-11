@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.149.10.3 2010/03/11 15:02:08 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.149.10.4 2010/08/11 22:51:43 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.149.10.3 2010/03/11 15:02:08 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.149.10.4 2010/08/11 22:51:43 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -173,7 +173,7 @@ struct cpu_info cpu_info_store;
 void
 consinit(void)
 {
-	int	i;
+	int i;
 
 	/*
 	 * Initialize error message buffer. pmap_bootstrap() has
@@ -206,7 +206,7 @@ consinit(void)
 		ksyms_addsyms_elf(*(int *)&end, ((int *)&end) + 1, esym);
 #else
 		ksyms_addsyms_elf((int)esym - (int)&end - sizeof(Elf32_Ehdr),
-			(void *)&end, esym);
+		    (void *)&end, esym);
 #endif
 	}
 #endif
@@ -223,15 +223,14 @@ consinit(void)
 void
 cpu_startup(void)
 {
-	extern	 int		iomem_malloc_safe;
-		 char		pbuf[9];
-
+	extern int iomem_malloc_safe;
+	char pbuf[9];
 #ifdef DEBUG
-	extern	 int		pmapdebug;
-		 int		opmapdebug = pmapdebug;
+	extern int pmapdebug;
+	int opmapdebug = pmapdebug;
 #endif
-		 vaddr_t	minaddr, maxaddr;
-	extern	 vsize_t	mem_size;	/* from pmap.c */
+	vaddr_t minaddr, maxaddr;
+	extern vsize_t mem_size;	/* from pmap.c */
 
 #ifdef DEBUG
 	pmapdebug = 0;
@@ -339,13 +338,13 @@ identifycpu(void)
  
 	case CPU_68060:
 		{
-			u_int32_t	pcr;
+			uint32_t	pcr;
 			char		cputxt[30];
 
 			__asm(".word 0x4e7a,0x0808;"
 			    "movl %%d0,%0" : "=d"(pcr) : : "d0");
 			sprintf(cputxt, "68%s060 rev.%d",
-				pcr & 0x10000 ? "LC/EC" : "", (pcr>>8)&0xff);
+			    pcr & 0x10000 ? "LC/EC" : "", (pcr >> 8) & 0xff);
 			cpu = cputxt;
 			mmu = "/MMU";
 		}
@@ -454,7 +453,7 @@ reserve_dumppages(vaddr_t p)
 	return p + BYTES_PER_DUMP;
 }
 
-u_int32_t	dumpmag  = 0x8fca0101;	/* magic number for savecore	*/
+uint32_t	dumpmag  = 0x8fca0101;	/* magic number for savecore	*/
 int		dumpsize = 0;		/* also for savecore (pages)	*/
 long		dumplo   = 0;		/* (disk blocks)		*/
 
@@ -571,7 +570,7 @@ dumpsys(void)
 			 * Print Mb's to go
 			 */
 			n = nbytes - i;
-			if (n && (n % (1024*1024)) == 0)
+			if (n && (n % (1024 * 1024)) == 0)
 				printf_nolog("%d ", n / (1024 * 1024));
 
 			/*
@@ -625,16 +624,16 @@ dumpsys(void)
 void
 straytrap(int pc, u_short evec)
 {
-	static int	prev_evec;
+	static int prev_evec;
 
 	printf("unexpected trap (vector offset 0x%x) from 0x%x\n",
 	    evec & 0xFFF, pc);
 
-	if(prev_evec == evec) {
+	if (prev_evec == evec) {
 		delay(1000000);
 		prev_evec = 0;
-	}
-	else prev_evec = evec;
+	} else
+		prev_evec = evec;
 }
 
 void
@@ -663,18 +662,18 @@ badbaddr(void *addr, int size)
 	}
 	switch (size) {
 	case 1:
-		i = *(volatile char *)addr;
+		i = *(volatile uint8_t *)addr;
 		break;
 	case 2:
-		i = *(volatile short *)addr;
+		i = *(volatile uint16_t *)addr;
 		break;
 	case 4:
-		i = *(volatile long *)addr;
+		i = *(volatile uint32_t *)addr;
 		break;
 	default:
 		panic("badbaddr: unknown size");
 	}
-	nofault = (int *) 0;
+	nofault = (int *)0;
 	return 0;
 }
 
@@ -714,25 +713,25 @@ init_sicallback(void)
 void
 add_sicallback(void (*function)(void *, void *), void *rock1, void *rock2)
 {
-	struct si_callback	*si;
-	int			s;
+	struct si_callback *si;
+	int s;
 
 	/*
 	 * this function may be called from high-priority interrupt handlers.
 	 * We may NOT block for  memory-allocation in here!.
 	 */
-	s  = splhigh();
+	s = splhigh();
 	if ((si = si_free) != NULL)
 		si_free = si->next;
 	splx(s);
 
-	if(si == NULL) {
+	if (si == NULL) {
 		si = malloc(sizeof(*si), M_TEMP, M_NOWAIT);
 #ifdef DIAGNOSTIC
 		if (si)
 			++ncbd;		/* count # dynamically allocated */
 #endif
-		if (!si)
+		if (si == NULL)
 			return;
 	}
 
@@ -764,8 +763,8 @@ add_sicallback(void (*function)(void *, void *), void *rock1, void *rock2)
 void
 rem_sicallback(void (*function)(void *rock1, void *rock2))
 {
-	struct si_callback	*si, *psi, *nsi;
-	int			s;
+	struct si_callback *si, *psi, *nsi;
+	int s;
 
 	s = splhigh();
 	for (psi = 0, si = si_callbacks; si; ) {
@@ -776,7 +775,7 @@ rem_sicallback(void (*function)(void *rock1, void *rock2))
 		else {
 			si->next = si_free;
 			si_free  = si;
-			if (psi)
+			if (psi != NULL)
 				psi->next = nsi;
 			else
 				si_callbacks = nsi;
@@ -790,22 +789,22 @@ rem_sicallback(void (*function)(void *rock1, void *rock2))
 static void
 call_sicallbacks(void)
 {
-	struct si_callback	*si;
-	int			s;
-	void			*rock1, *rock2;
-	void			(*function)(void *, void *);
+	struct si_callback *si;
+	int s;
+	void *rock1, *rock2;
+	void (*function)(void *, void *);
 
 	do {
-		s = splhigh ();
+		s = splhigh();
 		if ((si = si_callbacks) != NULL)
 			si_callbacks = si->next;
 		splx(s);
 
-		if (si) {
+		if (si != NULL) {
 			function = si->function;
 			rock1    = si->rock1;
 			rock2    = si->rock2;
-			s = splhigh ();
+			s = splhigh();
 			if (si_callbacks)
 				softint_schedule(si_callback_cookie);
 			si->next = si_free;
@@ -826,7 +825,7 @@ call_sicallbacks(void)
 			function(rock1, rock2);
 			splx(s);
 		}
-	} while (si);
+	} while (si != NULL);
 #ifdef DIAGNOSTIC
 	if (ncbd) {
 #ifdef DEBUG
@@ -873,7 +872,7 @@ cpu_exec_aout_makecmds(struct lwp *l, struct exec_package *epp)
 #ifdef COMPAT_NOMID
 	if (!((execp->a_midmag >> 16) & 0x0fff)
 	    && execp->a_midmag == ZMAGIC)
-		return(exec_aout_prep_zmagic(l->l_proc, epp));
+		return exec_aout_prep_zmagic(l->l_proc, epp);
 #endif
 	return error;
 }

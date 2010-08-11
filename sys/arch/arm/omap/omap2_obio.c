@@ -1,7 +1,7 @@
-/*	$Id: omap2_obio.c,v 1.1.22.2 2009/05/04 08:10:44 yamt Exp $	*/
+/*	$Id: omap2_obio.c,v 1.1.22.3 2010/08/11 22:51:42 yamt Exp $	*/
 
 /* adapted from: */
-/*	$NetBSD: omap2_obio.c,v 1.1.22.2 2009/05/04 08:10:44 yamt Exp $ */
+/*	$NetBSD: omap2_obio.c,v 1.1.22.3 2010/08/11 22:51:42 yamt Exp $ */
 
 
 /*
@@ -103,7 +103,7 @@
 
 #include "opt_omap.h"
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap2_obio.c,v 1.1.22.2 2009/05/04 08:10:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap2_obio.c,v 1.1.22.3 2010/08/11 22:51:42 yamt Exp $");
 
 #include "locators.h"
 #include "obio.h"
@@ -202,9 +202,7 @@ obio_attach(device_t parent, device_t self, void *aux)
 	aprint_normal(": On-Board IO\n");
 
 	sc->sc_ioh = 0;
-#ifdef NOTYET
 	sc->sc_dmat = &omap_bus_dma_tag;
-#endif
 	sc->sc_base = mb->mb_iobase;
 	sc->sc_size = mb->mb_iosize;
 
@@ -350,13 +348,18 @@ static const struct {
 	bus_addr_t addr;
 	bool required;
 } critical_devs[] = {
+#ifdef OMAP_3530
+	{ .name = "avic", .addr = INTC_BASE_3530, .required = true },
+#else
 	{ .name = "avic", .addr = INTC_BASE, .required = true },
+#endif
 	{ .name = "gpio1", .addr = GPIO1_BASE, .required = false },
 	{ .name = "gpio2", .addr = GPIO2_BASE, .required = false },
 	{ .name = "gpio3", .addr = GPIO3_BASE, .required = false },
 #if 0
 	{ .name = "dmac", .addr = DMAC_BASE, .required = true },
 #endif
+	{ .name = "omapmputmr0", .addr = GPT2_BASE, .required = true },
 };
 
 static void
@@ -385,15 +388,18 @@ obio_attach_critical(struct obio_softc *sc)
 		cf = config_search_ia(obio_find, sc->sc_dev, "obio", &oa);
 		if (cf == NULL) {
 			if (critical_devs[i].required)
-				panic("obio_attach_critical: failed to find %s!",
+				panic(
+				    "obio_attach_critical: failed to find %s!",
 				    critical_devs[i].name);
 			continue;
 		}
 
-		oa.obio_addr = cf->cf_loc[OBIOCF_ADDR];
-		oa.obio_size = cf->cf_loc[OBIOCF_SIZE];
-		oa.obio_intr = cf->cf_loc[OBIOCF_INTR];
-		oa.obio_intrbase = cf->cf_loc[OBIOCF_INTRBASE];
+		if (oa.obio_size == OBIOCF_SIZE_DEFAULT)
+			oa.obio_size = cf->cf_loc[OBIOCF_SIZE];
+		if (oa.obio_intr == OBIOCF_INTR_DEFAULT)
+			oa.obio_intr = cf->cf_loc[OBIOCF_INTR];
+		if (oa.obio_intrbase == OBIOCF_INTRBASE_DEFAULT)
+			oa.obio_intrbase = cf->cf_loc[OBIOCF_INTRBASE];
 		config_attach(sc->sc_dev, cf, &oa, obio_print);
 	}
 }

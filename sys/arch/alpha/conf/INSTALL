@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.94.48.1 2009/05/04 08:10:28 yamt Exp $
+# $NetBSD: INSTALL,v 1.94.48.2 2010/08/11 22:51:31 yamt Exp $
 #
 # Alpha INSTALL kernel.
 
@@ -347,4 +347,4 @@ pseudo-device	pty		2	# pseudo-terminals (Sysinst needs two)
 pseudo-device	sl		
 
 pseudo-device	rnd			# /dev/random and in-kernel generator
-#pseudo-device	fss		4	# file system snapshot device
+#pseudo-device	fss			# file system snapshot device

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.54.10.3 2010/03/11 15:02:38 yamt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.54.10.4 2010/08/11 22:52:23 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -202,7 +202,7 @@ paddr_t mips_pmap_unmap_poolpage(vaddr_t);
 #define	PMAP_CCA_FOR_PA(pa)	CCA_UNCACHED		/* uncached */
 
 #if defined(_MIPS_PADDR_T_64BIT) || defined(_LP64)
-#define PMAP_NOCACHE	0x4000000000000000ULL
+#define PGC_NOCACHE	0x4000000000000000ULL
 #endif
 
 #endif	/* _KERNEL */

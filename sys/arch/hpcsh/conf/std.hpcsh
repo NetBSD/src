@@ -1,4 +1,4 @@
-# $NetBSD: std.hpcsh,v 1.9 2008/02/02 06:09:11 uwe Exp $
+# $NetBSD: std.hpcsh,v 1.9.10.1 2010/08/11 22:52:07 yamt Exp $
 #
 # standard, required NetBSD/hpcsh 'options'
 
@@ -9,3 +9,5 @@ include		"arch/sh3/conf/std.sh3el"	# arch standard options
 options 	IOM_RAM_BEGIN=0x0c000000
 
 makeoptions	DEFTEXTADDR="0x8c001000"
+
+options 	COM_REGMAP

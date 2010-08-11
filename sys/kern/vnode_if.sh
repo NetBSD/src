@@ -29,7 +29,7 @@ copyright="\
  * SUCH DAMAGE.
  */
 "
-SCRIPT_ID='$NetBSD: vnode_if.sh,v 1.48.10.2 2010/03/11 15:04:21 yamt Exp $'
+SCRIPT_ID='$NetBSD: vnode_if.sh,v 1.48.10.3 2010/08/11 22:54:45 yamt Exp $'
 
 # Script to produce VFS front-end sugar.
 #
@@ -96,7 +96,7 @@ awk_parser='
 /^#/	{ next; }
 # First line of description
 /^vop_/	{
-	name=rump $1;
+	name=$1;
 	argc=0;
 	willmake=-1;
 	next;
@@ -143,11 +143,13 @@ awk_parser='
 	# nuke the types from the kernel, but that is a battle for
 	# another day.
 	at = $i;
-	if (length(rump) != 0) {
+	if (rump) {
 		if (at == "vm_prot_t")
 			at = "int";
 		if (at == "voff_t")
 			at = "off_t";
+		if (at == "kauth_cred_t")
+			at = "struct kauth_cred *"
 	}
 	argtype[argc] = at;
 	i++;
@@ -205,23 +207,27 @@ if [ ${lockdebug} -ne 0 ] ; then
 	echo '#include "opt_vnode_lockdebug.h"'
 	echo '#endif /* _KERNEL_OPT */'
 fi
-echo "
-extern const struct vnodeop_desc ${rump}vop_default_desc;
-"
+[ -z "${rump}" ] && echo "
+extern const struct vnodeop_desc ${rump}vop_default_desc;"
+echo
 
 # Body stuff
 # This awk program needs toupper() so define it if necessary.
 sed -e "$sed_prep" $src | $awk -v rump=${rump} "$toupper"'
 function doit() {
+	name = rump name
 	# Declare arg struct, descriptor.
-	printf("\n#define %s_DESCOFFSET %d\n", toupper(name), vop_offset++);
-	printf("struct %s_args {\n", name);
-	printf("\tconst struct vnodeop_desc * a_desc;\n");
-	for (i=0; i<argc; i++) {
-		printf("\t%s a_%s;\n", argtype[i], argname[i]);
+	if (!rump) {
+		printf("\n#define %s_DESCOFFSET %d\n",
+		    toupper(name), vop_offset++);
+		printf("struct %s_args {\n", name);
+		printf("\tconst struct vnodeop_desc * a_desc;\n");
+		for (i=0; i<argc; i++) {
+			printf("\t%s a_%s;\n", argtype[i], argname[i]);
+		}
+		printf("};\n");
+		printf("extern const struct vnodeop_desc %s_desc;\n", name);
 	}
-	printf("};\n");
-	printf("extern const struct vnodeop_desc %s_desc;\n", name);
 	# Prototype it.
 	protoarg = sprintf("int %s(", toupper(name));
 	protolen = length(protoarg);
@@ -244,26 +250,34 @@ BEGIN	{
 	arg0special="";
 	vop_offset = 1; # start at 1, to count the 'default' op
 
-	printf("\n/* Special cases: */\nstruct buf;\n");
-	printf("#ifndef _KERNEL\n#include <stdbool.h>\n#endif\n\n");
+	printf("struct buf;\n");
+	if (rump) {
+		printf("struct flock;\n");
+		printf("struct knote;\n");
+		printf("struct vm_page;\n");
+	}
+	printf("\n#ifndef _KERNEL\n#include <stdbool.h>\n#endif\n");
+	printf("\n/* Special cases: */\n");
 
 	argc=1;
 	argtype[0]="struct buf *";
 	argname[0]="bp";
 	lockstate[0] = -1;
 	arg0special="->b_vp";
-	name=rump "vop_bwrite";
+	name="vop_bwrite";
 	doit();
-	printf("/* End of special cases */\n");
+	printf("\n/* End of special cases */\n");
+	if (rump)
+		printf("\n");
 }
 END	{
-	printf("\n#define VNODE_OPS_COUNT\t%d\n", vop_offset);
+	if (!rump) {
+		printf("\n#define VNODE_OPS_COUNT\t%d\n", vop_offset);
+	}
 }
 '"$awk_parser" | sed -e "$anal_retentive"
 
 # End stuff
-echo '
-/* End of special cases. */'
 echo ''
 echo "#endif /* !_${SYS}VNODE_IF_H_ */"
 }
@@ -297,8 +311,9 @@ echo '
 [ ! -z "${rump}" ] && echo '#include <rump/rumpvnode_if.h>'		\
 	&& echo '#include "rump_private.h"'
 
-echo "
-const struct vnodeop_desc ${rump}vop_default_desc = {"
+if [ -z "${rump}" ] ; then
+	echo "
+const struct vnodeop_desc vop_default_desc = {"
 echo '	0,
 	"default",
 	0,
@@ -306,9 +321,9 @@ echo '	0,
 	VDESC_NO_OFFSET,
 	VDESC_NO_OFFSET,
 	VDESC_NO_OFFSET,
-	NULL,
 };
 '
+fi
 
 # Body stuff
 sed -e "$sed_prep" $src | $awk -v rump=${rump} -v lockdebug=${lockdebug} '
@@ -324,9 +339,9 @@ function do_offset(typematch) {
 	return -1;
 }
 
-function doit() {
+function offsets() {
 	# Define offsets array
-	printf("\nconst int %s_vp_offsets[] = {\n", name);
+	printf("const int %s_vp_offsets[] = {\n", name);
 	for (i=0; i<argc; i++) {
 		if (argtype[i] == "struct vnode *") {
 			printf ("\tVOPARG_OFFSETOF(struct %s_args,a_%s),\n",
@@ -370,16 +385,23 @@ function doit() {
 	do_offset("kauth_cred_t");
 	# componentname
 	do_offset("struct componentname *");
-	# transport layer information
-	printf ("\tNULL,\n};\n");
+	printf ("};\n");
+}
 
-	# Define function.
-	printf("int\n%s(", toupper(name));
+function bodyrump() {
+	printf("{\n\tint error;\n\n");
+	printf("\trump_schedule();\n");
+	printf("\terror = %s(", toupper(name));
 	for (i=0; i<argc; i++) {
-		printf("%s %s", argtype[i], argname[i]);
-		if (i < (argc-1)) printf(",\n    ");
+		printf("%s", argname[i]);
+		if (i < (argc-1)) printf(", ");
 	}
-	printf(")\n");
+	printf(");\n");
+	printf("\trump_unschedule();\n\n");
+	printf("\treturn error;\n}\n");
+}
+
+function bodynorm() {
 	printf("{\n\tint error;\n\tbool mpsafe;\n\tstruct %s_args a;\n", name);
 	if (lockdebug) {
 		printf("#ifdef VNODE_LOCKDEBUG\n");
@@ -403,14 +425,10 @@ function doit() {
 		}
 	}
 	printf("\tmpsafe = (%s%s->v_vflag & VV_MPSAFE);\n", argname[0], arg0special);
-	if (rump)
-		printf("\trump_schedule();\n");
 	printf("\tif (!mpsafe) { KERNEL_LOCK(1, curlwp); }\n");
 	printf("\terror = (VCALL(%s%s, VOFFSET(%s), &a));\n",
 		argname[0], arg0special, name);
 	printf("\tif (!mpsafe) { KERNEL_UNLOCK_ONE(curlwp); }\n");
-	if (rump)
-		printf("\trump_unschedule();\n");
 	if (willmake != -1) {
 		printf("#ifdef DIAGNOSTIC\n");
 		printf("\tif (error == 0)\n"				\
@@ -420,6 +438,30 @@ function doit() {
 		printf("#endif /* DIAGNOSTIC */\n");
 	}
 	printf("\treturn error;\n}\n");
+}
+
+function doit() {
+	printf("\n");
+	if (!rump)
+		offsets();
+
+	if (rump)
+		extname = "RUMP_" toupper(name);
+	else
+		extname = toupper(name);
+
+	# Define function.
+	printf("int\n%s(", extname);
+	for (i=0; i<argc; i++) {
+		printf("%s %s", argtype[i], argname[i]);
+		if (i < (argc-1)) printf(",\n    ");
+	}
+	printf(")\n");
+
+	if (rump)
+		bodyrump();
+	else
+		bodynorm();
 }
 BEGIN	{
 	printf("\n/* Special cases: */\n");
@@ -432,7 +474,7 @@ BEGIN	{
 	lockstate[0] = -1;
 	arg0special="->b_vp";
 	willrele[0]=0;
-	name=rump "vop_bwrite";
+	name="vop_bwrite";
 	doit();
 	printf("\n/* End of special cases */\n");
 
@@ -441,8 +483,7 @@ BEGIN	{
 '"$awk_parser" | sed -e "$anal_retentive"
 
 # End stuff
-echo '
-/* End of special cases. */'
+[ -n "${rump}" ] && return
 
 # Add the vfs_op_descs array to the C file.
 # Begin stuff
@@ -461,8 +502,7 @@ function doit() {
 
 # End stuff
 echo '	NULL
-};
-'
+};'
 }
 do_cfile $out_c ''
 do_cfile $out_rumpc 'rump_'

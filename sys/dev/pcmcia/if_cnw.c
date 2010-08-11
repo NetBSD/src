@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cnw.c,v 1.43.4.4 2010/03/11 15:04:00 yamt Exp $	*/
+/*	$NetBSD: if_cnw.c,v 1.43.4.5 2010/08/11 22:54:07 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cnw.c,v 1.43.4.4 2010/03/11 15:04:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cnw.c,v 1.43.4.5 2010/08/11 22:54:07 yamt Exp $");
 
 #include "opt_inet.h"
 
@@ -668,8 +668,7 @@ cnw_start(struct ifnet *ifp)
 		if (m0 == 0)
 			break;
 
-		if (ifp->if_bpf)
-			bpf_ops->bpf_mtap(ifp->if_bpf, m0);
+		bpf_mtap(ifp, m0);
 
 		cnw_transmit(sc, m0);
 		++ifp->if_opackets;
@@ -854,8 +853,7 @@ cnw_recv(struct cnw_softc *sc)
 		}
 		++ifp->if_ipackets;
 
-		if (ifp->if_bpf)
-			bpf_ops->bpf_mtap(ifp->if_bpf, m);
+		bpf_mtap(ifp, m);
 
 		/* Pass the packet up. */
 		(*ifp->if_input)(ifp, m);

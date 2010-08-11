@@ -1,4 +1,4 @@
-/*	$NetBSD: sdtemp_reg.h,v 1.1.4.3 2009/06/20 07:20:21 yamt Exp $	*/
+/*	$NetBSD: sdtemp_reg.h,v 1.1.4.4 2010/08/11 22:53:22 yamt Exp $	*/
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -92,26 +92,43 @@
  * Devices known to conform to JEDEC JC42.4
  */
 #define	MAXIM_MANUFACTURER_ID		0x004D
-#define	MAX_6604_DEVICE_ID		0x3E
+#define	MAX_6604_DEVICE_ID		0x3E00
+#define	MAX_6604_MASK			0xFFFF
 
 #define	MCP_MANUFACTURER_ID		0x0054
-#define	MCP_9805_DEVICE_ID		0x00
-#define	MCP_98242_DEVICE_ID		0x20
+#define	MCP_9805_DEVICE_ID		0x0000	/* Also matches MCP9843 */
+#define	MCP_9805_MASK			0xFFFE
+#define	MCP_98242_DEVICE_ID		0x2000
+#define	MCP_98242_MASK			0xFFFC
+#define	MCP_98243_DEVICE_ID		0x2100
+#define	MCP_98243_MASK			0xFFFC
 
 /* According to datasheets, SE97 and SE98 have same ID */
 
 #define	NXP_MANUFACTURER_ID		0x1131
-#define	NXP_SE97_DEVICE_ID		0xA1
+#define	NXP_SE98_DEVICE_ID		0xA100
+#define	NXP_SE98_MASK			0xFFFC
+#define	NXP_SE97_DEVICE_ID		0xA200
+#define	NXP_SE97_MASK			0xFFFC
 
 #define	ADT_MANUFACTURER_ID		0x11D4
-#define	ADT_7408_DEVICE_ID		0x80
+#define	ADT_7408_DEVICE_ID		0x8001
+#define	ADT_7408_MASK			0xFFFF
+
+#define	IDT_MANUFACTURER_ID		0x00B3
+#define	IDT_TS3000B3_DEVICE_ID		0x2903	/* Also matches TSE2002B3 */
+#define	IDT_TS3000B3_MASK		0xFFFF
 
 #define	STTS_MANUFACTURER_ID		0x104A
-#define	STTS_424E02_DEVICE_ID		0x00
+#define	STTS_424_DEVICE_ID		0x0101
+#define	STTS_424_MASK			0xFFFF
+#define	STTS_424E_DEVICE_ID		0x0000
+#define	STTS_424E_MASK			0xFFFE
 
 /* According to datasheets, both the CAT6095 and CAT34TS02 have the same ID */
 
 #define	CAT_MANUFACTURER_ID		0x1B09
-#define	CAT_34TS02_DEVICE_ID		0x08
+#define	CAT_34TS02_DEVICE_ID		0x0800
+#define	CAT_34TS02_MASK			0xFFE0
 
 #endif	/* _DEV_I2C_SDTEMPREG_H */

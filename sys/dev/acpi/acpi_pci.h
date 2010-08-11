@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_pci.h,v 1.3.2.2 2010/03/11 15:03:22 yamt Exp $ */
+/* $NetBSD: acpi_pci.h,v 1.3.2.3 2010/08/11 22:53:16 yamt Exp $ */
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -31,7 +31,10 @@
 #ifndef _SYS_DEV_ACPI_ACPI_PCI_H
 #define _SYS_DEV_ACPI_ACPI_PCI_H
 
-int		acpi_pcidev_scan(struct acpi_softc *);
-ACPI_STATUS	acpi_pcidev_find(u_int, u_int, u_int, u_int, ACPI_HANDLE *);
+ACPI_STATUS		 acpi_pcidev_scan(struct acpi_devnode *);
+struct acpi_devnode	*acpi_pcidev_find(uint16_t, uint16_t,
+					  uint16_t, uint16_t);
+ACPI_STATUS		 acpi_pcidev_ppb_downbus(uint16_t, uint16_t, uint16_t,
+						 uint16_t, uint16_t *);
 
 #endif	/* !_SYS_DEV_ACPI_ACPI_PCI_H */

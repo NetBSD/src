@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.96.2.4 2010/03/11 15:02:08 yamt Exp $	*/
+/*	$NetBSD: trap.c,v 1.96.2.5 2010/08/11 22:51:43 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -77,13 +77,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.96.2.4 2010/03/11 15:02:08 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.96.2.5 2010/08/11 22:51:43 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
 #include "opt_kgdb.h"
 #include "opt_compat_sunos.h"
 #include "opt_fpu_emulate.h"
+#include "opt_m68k_arch.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -129,7 +130,7 @@ extern struct emul emul_sunos;
 void trap(struct frame *, int, u_int, u_int);
 
 static void panictrap(int, u_int, u_int, struct frame *);
-static void trapcpfault(struct lwp *, struct frame *);
+static void trapcpfault(struct lwp *, struct frame *, int);
 static void userret(struct lwp *, struct frame *fp, u_quad_t, u_int, int);
 #ifdef M68040
 static int  writeback(struct frame *, int);
@@ -336,7 +337,7 @@ kgdb_cont:
  * return to fault handler
  */
 static void
-trapcpfault(struct lwp *l, struct frame *fp)
+trapcpfault(struct lwp *l, struct frame *fp, int error)
 {
 	struct pcb *pcb = lwp_getpcb(l);
 
@@ -349,6 +350,7 @@ trapcpfault(struct lwp *l, struct frame *fp)
 	fp->f_stackadj = exframesize[fp->f_format];
 	fp->f_format = fp->f_vector = 0;
 	fp->f_pc = (int)pcb->pcb_onfault;
+	fp->f_regs[D0] = error;
 }
 
 /*
@@ -394,7 +396,7 @@ trap(struct frame *fp, int type, u_int code, u_int v)
 	case T_BUSERR:
 		if (pcb->pcb_onfault == 0)
 			panictrap(type, code, v, fp);
-		trapcpfault(l, fp);
+		trapcpfault(l, fp, EFAULT);
 		return;
 	/*
 	 * User Bus/Addr error.
@@ -599,18 +601,21 @@ trap(struct frame *fp, int type, u_int code, u_int v)
 		 */
 		if (pcb->pcb_onfault == (void *)fubail ||
 		    pcb->pcb_onfault == (void *)subail) {
-			trapcpfault(l, fp);
+			trapcpfault(l, fp, EFAULT);
 			return;
 		}
 		/*FALLTHROUGH*/
 	case T_MMUFLT|T_USER:	/* page fault */
 	    {
-		register vaddr_t	va;
-		register struct vmspace *vm = p->p_vmspace;
-		register struct vm_map	*map;
-		int			rv;
-		vm_prot_t		ftype;
-		extern struct vm_map	*	kernel_map;
+		vaddr_t	va;
+		struct vmspace *vm = p->p_vmspace;
+		struct vm_map *map;
+		void *onfault;
+		int rv;
+		vm_prot_t ftype;
+		extern struct vm_map *kernel_map;
+
+		onfault = pcb->pcb_onfault;
 
 #ifdef DEBUG
 		if ((mmudebug & MDB_WBFOLLOW) || MDB_ISPID(p->p_pid))
@@ -625,8 +630,7 @@ trap(struct frame *fp, int type, u_int code, u_int v)
 		 * The last can occur during an exec() copyin where the
 		 * argument space is lazy-allocated.
 		 */
-		if (type == T_MMUFLT &&
-		    ((pcb->pcb_onfault == 0) || KDFAULT(code)))
+		if (type == T_MMUFLT && (onfault == 0 || KDFAULT(code)))
 			map = kernel_map;
 		else {
 			map = vm ? &vm->vm_map : kernel_map;
@@ -648,7 +652,9 @@ trap(struct frame *fp, int type, u_int code, u_int v)
 			panictrap(type, code, v, fp);
 		}
 #endif
+		pcb->pcb_onfault = NULL;
 		rv = uvm_fault(map, va, ftype);
+		pcb->pcb_onfault = onfault;
 #ifdef DEBUG
 		if (rv && MDB_ISPID(p->p_pid))
 			printf("vm_fault(%p, %lx, %x) -> %x\n",
@@ -666,6 +672,9 @@ trap(struct frame *fp, int type, u_int code, u_int v)
 				uvm_grow(p, va);
 
 			if (type == T_MMUFLT) {
+				if (ucas_ras_check(&fp->F_t)) {
+					return;
+				}
 #ifdef M68040
 				if (cputype == CPU_68040)
 					(void) writeback(fp, 1);
@@ -681,8 +690,8 @@ trap(struct frame *fp, int type, u_int code, u_int v)
 		} else
 			ksi.ksi_code = SEGV_MAPERR;
 		if (type == T_MMUFLT) {
-			if (pcb->pcb_onfault) {
-				trapcpfault(l, fp);
+			if (onfault) {
+				trapcpfault(l, fp, rv);
 				return;
 			}
 			printf("\nvm_fault(%p, %lx, %x) -> %x\n",
@@ -829,8 +838,8 @@ writeback(struct frame *fp, int docachepush)
 		 * Writeback #1.
 		 * Position the "memory-aligned" data and write it out.
 		 */
-		register u_int wb1d = f->f_wb1d;
-		register int off;
+		u_int wb1d = f->f_wb1d;
+		int off;
 
 #ifdef DEBUG
 		if ((mmudebug & MDB_WBFOLLOW) || MDB_ISPID(p->p_pid))
@@ -973,7 +982,7 @@ writeback(struct frame *fp, int docachepush)
 
 #ifdef DEBUG
 static void
-dumpssw(register u_short ssw)
+dumpssw(u_short ssw)
 {
 	printf(" SSW: %x: ", ssw);
 	if (ssw & SSW4_CP)
@@ -1001,7 +1010,7 @@ dumpssw(register u_short ssw)
 static void
 dumpwb(int num, u_short s, u_int a, u_int d)
 {
-	register struct proc *p = curproc;
+	struct proc *p = curproc;
 	paddr_t pa;
 
 	printf(" writeback #%d: VA %x, data %x, SZ=%s, TT=%s, TM=%s\n",

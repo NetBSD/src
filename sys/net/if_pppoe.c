@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.85.2.3 2010/03/11 15:04:27 yamt Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.85.2.4 2010/08/11 22:54:54 yamt Exp $ */
 
 /*-
  * Copyright (c) 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.85.2.3 2010/03/11 15:04:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.85.2.4 2010/08/11 22:54:54 yamt Exp $");
 
 #include "pppoe.h"
 #include "opt_pfil_hooks.h"
@@ -247,8 +247,7 @@ pppoe_clone_create(struct if_clone *ifc, int unit)
 	if_attach(&sc->sc_sppp.pp_if);
 	sppp_attach(&sc->sc_sppp.pp_if);
 
-	bpf_ops->bpf_attach(&sc->sc_sppp.pp_if, DLT_PPP_ETHER,
-	    0, &sc->sc_sppp.pp_if.if_bpf);
+	bpf_attach(&sc->sc_sppp.pp_if, DLT_PPP_ETHER, 0);
 #ifdef PFIL_HOOKS
 	if (LIST_EMPTY(&pppoe_softc_list))
 		pfil_add_hook(pppoe_ifattach_hook, NULL,
@@ -270,7 +269,7 @@ pppoe_clone_destroy(struct ifnet *ifp)
 		pfil_remove_hook(pppoe_ifattach_hook, NULL,
 		    PFIL_IFNET|PFIL_WAITOK, &if_pfil);
 #endif
-	bpf_ops->bpf_detach(ifp);
+	bpf_detach(ifp);
 	sppp_detach(&sc->sc_sppp.pp_if);
 	if_detach(ifp);
 	if (sc->sc_concentrator_name)
@@ -805,8 +804,7 @@ pppoe_data_input(struct mbuf *m)
 
 	plen = ntohs(ph->plen);
 
-	if(sc->sc_sppp.pp_if.if_bpf)
-		bpf_ops->bpf_mtap(sc->sc_sppp.pp_if.if_bpf, m);
+	bpf_mtap(&sc->sc_sppp.pp_if, m);
 
 	m_adj(m, PPPOE_HEADERLEN);
 
@@ -1488,8 +1486,7 @@ pppoe_start(struct ifnet *ifp)
 		p = mtod(m, uint8_t *);
 		PPPOE_ADD_HEADER(p, 0, sc->sc_session, len);
 
-		if(sc->sc_sppp.pp_if.if_bpf)
-			bpf_ops->bpf_mtap(sc->sc_sppp.pp_if.if_bpf, m);
+		bpf_mtap(&sc->sc_sppp.pp_if, m);
 
 		pppoe_output(sc, m);
 	}

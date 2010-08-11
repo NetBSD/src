@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.11.62.1 2009/05/04 08:10:42 yamt Exp $	*/
+/*	$NetBSD: param.h,v 1.11.62.2 2010/08/11 22:51:41 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -120,6 +120,10 @@
 #endif	/* MCLSHIFT */
 
 #define	MCLBYTES	(1 << MCLSHIFT)	/* size of a m_buf cluster */
+
+#ifndef NMBCLUSTERS_MAX
+#define	NMBCLUSTERS_MAX	(0x2000000 / MCLBYTES)	/* Limit to 64MB for clusters */
+#endif
 
 /*
  * Compatibility /dev/zero mapping.

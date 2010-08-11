@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ptrace.c,v 1.18.2.3 2010/03/11 15:03:16 yamt Exp $ */
+/*	$NetBSD: linux_ptrace.c,v 1.18.2.4 2010/08/11 22:53:07 yamt Exp $ */
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_ptrace.c,v 1.18.2.3 2010/03/11 15:03:16 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_ptrace.c,v 1.18.2.4 2010/08/11 22:53:07 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -98,7 +98,8 @@ int linux_ptrace_disabled = 1;	/* bitrotted */
 
 /* XXX Check me! (From NetBSD/i386) */
 int
-linux_sys_ptrace_arch(struct lwp *l, const struct linux_sys_ptrace_args *uap, register_t *retval)
+linux_sys_ptrace_arch(struct lwp *l, const struct linux_sys_ptrace_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(int) request;
@@ -106,76 +107,103 @@ linux_sys_ptrace_arch(struct lwp *l, const struct linux_sys_ptrace_args *uap, re
 		syscallarg(int) addr;
 		syscallarg(int) data;
 	} */
-	int request, error;
-	struct proc *p = l->l_proc;
-	struct proc *t;				/* target process */
+	struct proc *p = l->l_proc, *t;
 	struct lwp *lt;
 	struct reg *regs = NULL;
 	struct fpreg *fpregs = NULL;
 	struct linux_pt_regs *linux_regs = NULL;
 	double *linux_fpreg = NULL;  /* it's an array, not a struct */
-	int addr;
-	int i;
+	int request, error, addr, i;
 
 	if (linux_ptrace_disabled)
 		return ENOSYS;
 
-	switch (request = SCARG(uap, request)) {
-		case LINUX_PTRACE_PEEKUSR:
-		case LINUX_PTRACE_POKEUSR:
-		case LINUX_PTRACE_GETREGS:
-		case LINUX_PTRACE_SETREGS:
-		case LINUX_PTRACE_GETFPREGS:
-		case LINUX_PTRACE_SETFPREGS:
-			break;
-		default:
-			return EIO;
+	error = 0;
+	request = SCARG(uap, request);
+
+	switch (request) {
+	case LINUX_PTRACE_PEEKUSR:
+	case LINUX_PTRACE_POKEUSR:
+		regs = kmem_alloc(sizeof(struct reg), KM_SLEEP);
+		break;
+	case LINUX_PTRACE_GETREGS:
+	case LINUX_PTRACE_SETREGS:
+		regs = kmem_alloc(sizeof(struct reg), KM_SLEEP);
+		linux_regs = kmem_alloc(sizeof(*linux_regs), KM_SLEEP);
+		if (request == LINUX_PTRACE_SETREGS) {
+			error = copyin((void *)SCARG(uap, data), linux_regs,
+			    sizeof(struct linux_pt_regs));
+			if (error) {
+				goto out;
+			}
+		}
+		break;
+	case LINUX_PTRACE_GETFPREGS:
+	case LINUX_PTRACE_SETFPREGS:
+		fpregs = kmem_alloc(sizeof(struct fpreg), KM_SLEEP);
+		linux_fpreg = kmem_alloc(32 * sizeof(double), KM_SLEEP);
+		if (request == LINUX_PTRACE_SETFPREGS) {
+			error = copyin((void *)SCARG(uap, data), linux_fpreg,
+			    32 * sizeof(double));
+			if (error) {
+				goto out;
+			}
+		}
+		break;
+	default:
+		error = EIO;
+		goto out;
 	}
 
-	/* Find the process we're supposed to be operating on. */
-	if ((t = pfind(SCARG(uap, pid))) == NULL)
+	/* Find the process we are supposed to be operating on. */
+	mutex_enter(proc_lock);
+	if ((t = proc_find(SCARG(uap, pid))) == NULL) {
+		mutex_exit(proc_lock);
 		return ESRCH;
+	}
+	mutex_enter(t->p_lock);
+	mutex_exit(proc_lock);
 
 	/*
-	 * You can't do what you want to the process if:
-	 *	(1) It's not being traced at all,
+	 * You cannot do what you want to the process if:
+	 * 1. It is not being traced at all,
 	 */
-	if (!ISSET(t->p_slflag, PSL_TRACED))	/* XXXSMP */
-		return EPERM;
-
+	if (!ISSET(t->p_slflag, PSL_TRACED)) {
+		mutex_exit(t->p_lock);
+		error = EPERM;
+		goto out;
+	}
 	/*
-	 *	(2) it's being traced by procfs (which has
-	 *		 different signal delivery semantics),
+	 * 2. It is being traced by procfs (which has different signal
+	 *    delivery semantics),
+	 * 3. It is not being traced by _you_, or
+	 * 4. It is not currently stopped.
 	 */
-	if (ISSET(t->p_slflag, PSL_FSTRACE))
-		return EBUSY;
-
-	/*
-	 *	(3) it's not being traced by _you_, or
-	 */
-	if (t->p_pptr != p)
-		return EBUSY;
-
-	/*
-	 *	(4) it's not currently stopped.
-	 */
-	if (t->p_stat != SSTOP || !t->p_waited)
-		return EBUSY;
-
+	if (ISSET(t->p_slflag, PSL_FSTRACE) || t->p_pptr != p ||
+	    t->p_stat != SSTOP || !t->p_waited) {
+		mutex_exit(t->p_lock);
+		error = EBUSY;
+		goto out;
+	}
+	/* XXX: ptrace needs revamp for multi-threading support. */
+	if (t->p_nlwps > 1) {
+		mutex_exit(t->p_lock);
+		error = ENOSYS;
+		goto out;
+	}
 	lt = LIST_FIRST(&t->p_lwps);
 	*retval = 0;
 
 	switch (request) {
-	case  LINUX_PTRACE_GETREGS:
-		regs = malloc(sizeof(struct reg), M_TEMP, M_WAITOK);
-		linux_regs = malloc(sizeof(*linux_regs), M_TEMP, M_WAITOK);
-
+	case LINUX_PTRACE_GETREGS:
 		error = process_read_regs(lt, regs);
-		if (error != 0)
-			goto out;
-
-		for (i=0; i<=31; i++)
+		mutex_exit(t->p_lock);
+		if (error) {
+			break;
+		}
+		for (i = 0; i <= 31; i++) {
 			linux_regs->lgpr[i] = regs->fixreg[i];
+		}
 		linux_regs->lnip = regs->pc;
 		linux_regs->lmsr = 0;
 		/* XXX Is that right? */
@@ -191,20 +219,13 @@ linux_sys_ptrace_arch(struct lwp *l, const struct linux_sys_ptrace_args *uap, re
 		linux_regs->lresult = 0;
 
 		error = copyout(linux_regs, (void *)SCARG(uap, data),
-			 sizeof(struct linux_pt_regs));
-		goto out;
+		    sizeof(struct linux_pt_regs));
+		break;
 
-	case  LINUX_PTRACE_SETREGS:
-		regs = malloc(sizeof(struct reg), M_TEMP, M_WAITOK);
-		linux_regs = malloc(sizeof(*linux_regs), M_TEMP, M_WAITOK);
-
-		error = copyin((void *)SCARG(uap, data), linux_regs,
-			 sizeof(struct linux_pt_regs));
-		if (error != 0)
-			goto out;
-
-		for (i=0; i<=31; i++)
+	case LINUX_PTRACE_SETREGS:
+		for (i = 0; i <= 31; i++) {
 			regs->fixreg[i] = linux_regs->lgpr[i];
+		}
 		regs->lr = linux_regs->llink;
 		regs->cr = linux_regs->lccr;
 		regs->xer = linux_regs->lxer;
@@ -212,48 +233,40 @@ linux_sys_ptrace_arch(struct lwp *l, const struct linux_sys_ptrace_args *uap, re
 		regs->pc = linux_regs->lnip; /* XXX */
 
 		error = process_write_regs(lt, regs);
-		goto out;
+		mutex_exit(t->p_lock);
+		break;
 
-	case  LINUX_PTRACE_GETFPREGS:
-		fpregs = malloc(sizeof(struct fpreg), M_TEMP, M_WAITOK);
-		linux_fpreg = malloc(32*sizeof(double), M_TEMP, M_WAITOK);
-
+	case LINUX_PTRACE_GETFPREGS:
 		error = process_read_fpregs(lt, fpregs);
-		if (error != 0)
-			goto out;
-
-		/* zero the contents if NetBSD fpreg structure is smaller */
-		if (sizeof(struct fpreg) < (32*sizeof(double)))
-			memset(linux_fpreg, '\0', (32*sizeof(double)));
-
+		mutex_exit(t->p_lock);
+		if (error) {
+			break;
+		}
+		/* Zero the contents if NetBSD fpreg structure is smaller */
+		if (sizeof(struct fpreg) < (32 * sizeof(double))) {
+			memset(linux_fpreg, '\0', (32 * sizeof(double)));
+		}
 		memcpy(linux_fpreg, fpregs,
-			min(32*sizeof(double), sizeof(struct fpreg)));
+		    min(32 * sizeof(double), sizeof(struct fpreg)));
 		error = copyout(linux_fpreg, (void *)SCARG(uap, data),
-			 32*sizeof(double));
-		goto out;
+		    32 * sizeof(double));
+		break;
 
-	case  LINUX_PTRACE_SETFPREGS:
-		fpregs = malloc(sizeof(struct fpreg), M_TEMP, M_WAITOK);
-		linux_fpreg = malloc(32*sizeof(double), M_TEMP, M_WAITOK);
-		error = copyin((void *)SCARG(uap, data), linux_fpreg,
-			 32*sizeof(double));
-		if (error != 0)
-			goto out;
-
+	case LINUX_PTRACE_SETFPREGS:
 		memset(fpregs, '\0', sizeof(struct fpreg));
 		memcpy(fpregs, linux_fpreg,
-		    min(32*sizeof(double), sizeof(struct fpreg)));
-
+		    min(32 * sizeof(double), sizeof(struct fpreg)));
 		error = process_write_fpregs(lt, fpregs);
-		goto out;
+		mutex_exit(t->p_lock);
+		break;
 
-	case  LINUX_PTRACE_PEEKUSR:
+	case LINUX_PTRACE_PEEKUSR:
 		addr = SCARG(uap, addr);
-		regs = malloc(sizeof(struct reg), M_TEMP, M_WAITOK);
 		error = process_read_regs(lt, regs);
-		if (error)
-			goto out;
-
+		mutex_exit(t->p_lock);
+		if (error) {
+			break;
+		}
 		error = 0;
 		if ((addr < LUSR_OFF(lusr_startgdb)) ||
 		    (addr > LUSR_OFF(lu_comm_end)))
@@ -295,25 +308,21 @@ linux_sys_ptrace_arch(struct lwp *l, const struct linux_sys_ptrace_args *uap, re
 #endif
 			error = 1;
 		}
-
-		if (error)
-			goto out;
-
-		error = copyout (retval,
-		    (void *)SCARG(uap, data), sizeof retval);
+		if (error) {
+			break;
+		}
+		error = copyout (retval, (void *)SCARG(uap, data),
+		    sizeof(retval));
 		*retval = SCARG(uap, data);
-
-		goto out;
-
 		break;
 
 	case  LINUX_PTRACE_POKEUSR: /* XXX Not tested */
 		addr = SCARG(uap, addr);
-		regs = malloc(sizeof(struct reg), M_TEMP, M_WAITOK);
 		error = process_read_regs(lt, regs);
-		if (error)
-			goto out;
-
+		if (error) {
+			mutex_exit(t->p_lock);
+			break;
+		}
 		error = 0;
 		if ((addr < LUSR_OFF(lusr_startgdb)) ||
 		    (addr > LUSR_OFF(lu_comm_end)))
@@ -354,26 +363,21 @@ linux_sys_ptrace_arch(struct lwp *l, const struct linux_sys_ptrace_args *uap, re
 #endif
 			error = 1;
 		}
-
 		error = process_write_regs(lt,regs);
-		if (error)
-			goto out;
-
+		mutex_exit(t->p_lock);
 		break;
 	default:
-		/* never reached */
+		mutex_exit(t->p_lock);
 		break;
 	}
-	return EIO;
-
-	 out:
+out:
 	if (regs)
-		free(regs, M_TEMP);
+		kmem_free(regs, sizeof(*regs));
 	if (fpregs)
-		free(fpregs, M_TEMP);
+		kmem_free(fpregs, sizeof(*fpregs));
 	if (linux_regs)
-		free(linux_regs, M_TEMP);
+		kmem_free(linux_regs, sizeof(*linux_regs));
 	if (linux_fpreg)
-		free(linux_fpreg, M_TEMP);
-	return (error);
+		kmem_free(linux_fpreg, sizeof(*linux_fpreg));
+	return error;
 }

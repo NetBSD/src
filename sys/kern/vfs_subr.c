@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.336.4.5 2010/03/11 15:04:21 yamt Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.336.4.6 2010/08/11 22:54:44 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.336.4.5 2010/03/11 15:04:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.336.4.6 2010/08/11 22:54:44 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -100,6 +100,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.336.4.5 2010/03/11 15:04:21 yamt Exp 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/conf.h>
+#include <sys/dirent.h>
 #include <sys/proc.h>
 #include <sys/kernel.h>
 #include <sys/mount.h>
@@ -118,6 +119,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.336.4.5 2010/03/11 15:04:21 yamt Exp 
 #include <sys/atomic.h>
 #include <sys/kthread.h>
 #include <sys/wapbl.h>
+#include <sys/module.h>
 
 #include <miscfs/genfs/genfs.h>
 #include <miscfs/specfs/specdev.h>
@@ -345,15 +347,8 @@ try_nextlist:
 		}
 		if (!mutex_tryenter(&vp->v_interlock))
 			continue;
-		/*
-		 * Our lwp might hold the underlying vnode
-		 * locked, so don't try to reclaim a VI_LAYER
-		 * node if it's locked.
-		 */
-		if ((vp->v_iflag & VI_XLOCK) == 0 &&
-		    ((vp->v_iflag & VI_LAYER) == 0 || VOP_ISLOCKED(vp) == 0)) {
+		if ((vp->v_iflag & VI_XLOCK) == 0)
 			break;
-		}
 		mutex_exit(&vp->v_interlock);
 	}
 
@@ -647,7 +642,6 @@ getnewvnode(enum vtagtype tag, struct mount *mp, int (**vops)(void *),
 	KASSERT(LIST_EMPTY(&vp->v_dnclist));
 
 	vp->v_type = VNON;
-	vp->v_vnlock = &vp->v_lock;
 	vp->v_tag = tag;
 	vp->v_op = vops;
 	insmntque(vp, mp);
@@ -719,7 +713,7 @@ vnalloc(struct mount *mp)
 		vp->v_type = VBAD;
 		vp->v_iflag = VI_MARKER;
 	} else {
-		rw_init(&vp->v_lock.vl_lock);
+		rw_init(&vp->v_lock);
 	}
 
 	return vp;
@@ -735,7 +729,7 @@ vnfree(vnode_t *vp)
 	KASSERT(vp->v_usecount == 0);
 
 	if ((vp->v_iflag & VI_MARKER) == 0) {
-		rw_destroy(&vp->v_lock.vl_lock);
+		rw_destroy(&vp->v_lock);
 		mutex_enter(&vnode_free_list_lock);
 		numvnodes--;
 		mutex_exit(&vnode_free_list_lock);
@@ -1142,7 +1136,7 @@ brelvp(struct buf *bp)
 	if (LIST_NEXT(bp, b_vnbufs) != NOLIST)
 		bufremvn(bp);
 
-	if (TAILQ_EMPTY(&vp->v_uobj.memq) && (vp->v_iflag & VI_ONWORKLST) &&
+	if (vp->v_uobj.uo_npages == 0 && (vp->v_iflag & VI_ONWORKLST) &&
 	    LIST_FIRST(&vp->v_dirtyblkhd) == NULL) {
 		vp->v_iflag &= ~VI_WRMAPDIRTY;
 		vn_syncer_remove_from_worklist(vp);
@@ -1182,7 +1176,7 @@ reassignbuf(struct buf *bp, struct vnode *vp)
 	 */
 	if ((bp->b_oflags & BO_DELWRI) == 0) {
 		listheadp = &vp->v_cleanblkhd;
-		if (TAILQ_EMPTY(&vp->v_uobj.memq) &&
+		if (vp->v_uobj.uo_npages == 0 &&
 		    (vp->v_iflag & VI_ONWORKLST) &&
 		    LIST_FIRST(&vp->v_dirtyblkhd) == NULL) {
 			vp->v_iflag &= ~VI_WRMAPDIRTY;
@@ -1258,7 +1252,7 @@ vtryget(vnode_t *vp)
 	 * for vclean() by adding another reference without waiting.
 	 * This is not strictly necessary, but we'll do it anyway.
 	 */
-	if (__predict_false((vp->v_iflag & (VI_XLOCK | VI_FREEING)) != 0)) {
+	if (__predict_false((vp->v_iflag & VI_XLOCK) != 0)) {
 		return false;
 	}
 	for (use = vp->v_usecount;; use = next) {
@@ -1280,16 +1274,16 @@ vtryget(vnode_t *vp)
  * grab the vnode, so the process is awakened when the transition is
  * completed, and an error returned to indicate that the vnode is no
  * longer usable (possibly having been changed to a new file system type).
+ * Called with v_interlock held.
  */
 int
 vget(vnode_t *vp, int flags)
 {
-	int error;
+	int error = 0;
 
 	KASSERT((vp->v_iflag & VI_MARKER) == 0);
-
-	if ((flags & LK_INTERLOCK) == 0)
-		mutex_enter(&vp->v_interlock);
+	KASSERT(mutex_owned(&vp->v_interlock));
+	KASSERT((flags & ~(LK_SHARED|LK_EXCLUSIVE|LK_NOWAIT)) == 0);
 
 	/*
 	 * Before adding a reference, we must remove the vnode
@@ -1306,14 +1300,14 @@ vget(vnode_t *vp, int flags)
 	 * If the vnode is in the process of being cleaned out for
 	 * another use, we wait for the cleaning to finish and then
 	 * return failure.  Cleaning is determined by checking if
-	 * the VI_XLOCK or VI_FREEING flags are set.
+	 * the VI_XLOCK flag is set.
 	 */
-	if ((vp->v_iflag & (VI_XLOCK | VI_FREEING)) != 0) {
+	if ((vp->v_iflag & VI_XLOCK) != 0) {
 		if ((flags & LK_NOWAIT) != 0) {
 			vrelel(vp, 0);
 			return EBUSY;
 		}
-		vwait(vp, VI_XLOCK | VI_FREEING);
+		vwait(vp, VI_XLOCK);
 		vrelel(vp, 0);
 		return ENOENT;
 	}
@@ -1333,15 +1327,19 @@ vget(vnode_t *vp, int flags)
 			return ENOENT;
 		}
 	}
-	if (flags & LK_TYPE_MASK) {
-		error = vn_lock(vp, flags | LK_INTERLOCK);
+
+	/*
+	 * Ok, we got it in good shape.  Just locking left.
+	 */
+	KASSERT((vp->v_iflag & VI_CLEAN) == 0);
+	mutex_exit(&vp->v_interlock);
+	if (flags & (LK_EXCLUSIVE | LK_SHARED)) {
+		error = vn_lock(vp, flags);
 		if (error != 0) {
 			vrele(vp);
 		}
-		return error;
 	}
-	mutex_exit(&vp->v_interlock);
-	return 0;
+	return error;
 }
 
 /*
@@ -1353,7 +1351,7 @@ vput(vnode_t *vp)
 
 	KASSERT((vp->v_iflag & VI_MARKER) == 0);
 
-	VOP_UNLOCK(vp, 0);
+	VOP_UNLOCK(vp);
 	vrele(vp);
 }
 
@@ -1439,8 +1437,8 @@ vrelel(vnode_t *vp, int flags)
 			 */
 			vp->v_iflag &= ~(VI_INACTREDO|VI_INACTNOW);
 			cv_broadcast(&vp->v_cv);
-			error = vn_lock(vp, LK_EXCLUSIVE | LK_INTERLOCK |
-			    LK_RETRY);
+			mutex_exit(&vp->v_interlock);
+			error = vn_lock(vp, LK_EXCLUSIVE);
 			if (error != 0) {
 				/* XXX */
 				vpanic(vp, "vrele: unable to lock %p");
@@ -1451,7 +1449,7 @@ vrelel(vnode_t *vp, int flags)
 			 * sleeping, don't try to inactivate it yet.
 			 */
 			if (__predict_false(vtryrele(vp))) {
-				VOP_UNLOCK(vp, 0);
+				VOP_UNLOCK(vp);
 				mutex_exit(&vp->v_interlock);
 				return;
 			}
@@ -1468,8 +1466,8 @@ vrelel(vnode_t *vp, int flags)
 		} else {		
 			/* If we can't acquire the lock, then defer. */
 			vp->v_iflag &= ~VI_INACTREDO;
-			error = vn_lock(vp, LK_EXCLUSIVE | LK_INTERLOCK |
-			    LK_NOWAIT);
+			mutex_exit(&vp->v_interlock);
+			error = vn_lock(vp, LK_EXCLUSIVE | LK_NOWAIT);
 			if (error != 0) {
 				defer = true;
 				mutex_enter(&vp->v_interlock);
@@ -1895,7 +1893,8 @@ vclean(vnode_t *vp, int flags)
 	active = (vp->v_usecount > 1);
 
 	/* XXXAD should not lock vnode under layer */
-	VOP_LOCK(vp, LK_EXCLUSIVE | LK_INTERLOCK);
+	mutex_exit(&vp->v_interlock);
+	VOP_LOCK(vp, LK_EXCLUSIVE);
 
 	/*
 	 * Clean out any cached data associated with the vnode.
@@ -1925,7 +1924,7 @@ vclean(vnode_t *vp, int flags)
 		 * Any other processes trying to obtain this lock must first
 		 * wait for VI_XLOCK to clear, then call the new lock operation.
 		 */
-		VOP_UNLOCK(vp, 0);
+		VOP_UNLOCK(vp);
 	}
 
 	/* Disassociate the underlying file system from the vnode. */
@@ -1944,9 +1943,8 @@ vclean(vnode_t *vp, int flags)
 	mutex_enter(&vp->v_interlock);
 	vp->v_op = dead_vnodeop_p;
 	vp->v_tag = VT_NON;
-	vp->v_vnlock = &vp->v_lock;
 	KNOTE(&vp->v_klist, NOTE_REVOKE);
-	vp->v_iflag &= ~(VI_XLOCK | VI_FREEING);
+	vp->v_iflag &= ~VI_XLOCK;
 	vp->v_vflag &= ~VV_LOCKSWORK;
 	if ((flags & DOCLOSE) != 0) {
 		vp->v_iflag |= VI_CLEAN;
@@ -1994,24 +1992,28 @@ vgone(vnode_t *vp)
 }
 
 /*
- * Lookup a vnode by device number.
+ * Lookup a vnode by device number and return it referenced.
  */
 int
 vfinddev(dev_t dev, enum vtype type, vnode_t **vpp)
 {
 	vnode_t *vp;
-	int rc = 0;
 
 	mutex_enter(&device_lock);
 	for (vp = specfs_hash[SPECHASH(dev)]; vp; vp = vp->v_specnext) {
-		if (dev != vp->v_rdev || type != vp->v_type)
-			continue;
-		*vpp = vp;
-		rc = 1;
-		break;
+		if (dev == vp->v_rdev && type == vp->v_type)
+			break;
 	}
+	if (vp == NULL) {
+		mutex_exit(&device_lock);
+		return 0;
+	}
+	mutex_enter(&vp->v_interlock);
 	mutex_exit(&device_lock);
-	return (rc);
+	if (vget(vp, 0) != 0)
+		return 0;
+	*vpp = vp;
+	return 1;
 }
 
 /*
@@ -2040,7 +2042,7 @@ vdevgone(int maj, int minl, int minh, enum vtype type)
 				continue;
 			}
 			mutex_exit(&device_lock);
-			if (vget(vp, LK_INTERLOCK) == 0) {
+			if (vget(vp, 0) == 0) {
 				VOP_REVOKE(vp, REVOKEALL);
 				vrele(vp);
 			}
@@ -2315,6 +2317,7 @@ vfs_mountedon(vnode_t *vp)
 bool
 vfs_unmountall(struct lwp *l)
 {
+
 	printf("unmounting file systems...");
 	return vfs_unmountall1(l, true, true);
 }
@@ -2322,7 +2325,8 @@ vfs_unmountall(struct lwp *l)
 static void
 vfs_unmount_print(struct mount *mp, const char *pfx)
 {
-	printf("%sunmounted %s on %s type %s\n", pfx,
+
+	aprint_verbose("%sunmounted %s on %s type %s\n", pfx,
 	    mp->mnt_stat.f_mntfromname, mp->mnt_stat.f_mntonname,
 	    mp->mnt_stat.f_fstypename);
 }
@@ -2330,16 +2334,19 @@ vfs_unmount_print(struct mount *mp, const char *pfx)
 bool
 vfs_unmount_forceone(struct lwp *l)
 {
-	struct mount *mp, *nmp = NULL;
+	struct mount *mp, *nmp;
 	int error;
 
-	CIRCLEQ_FOREACH_REVERSE(mp, &mountlist, mnt_list) {
-		if (nmp == NULL || mp->mnt_gen > nmp->mnt_gen)
-			nmp = mp;
-	}
+	nmp = NULL;
 
-	if (nmp == NULL)
+	CIRCLEQ_FOREACH_REVERSE(mp, &mountlist, mnt_list) {
+		if (nmp == NULL || mp->mnt_gen > nmp->mnt_gen) {
+			nmp = mp;
+		}
+	}
+	if (nmp == NULL) {
 		return false;
+	}
 
 #ifdef DEBUG
 	printf("\nforcefully unmounting %s (%s)...",
@@ -2349,8 +2356,9 @@ vfs_unmount_forceone(struct lwp *l)
 	if ((error = dounmount(nmp, MNT_FORCE, l)) == 0) {
 		vfs_unmount_print(nmp, "forcefully ");
 		return true;
-	} else
-		atomic_dec_uint(&nmp->mnt_refcnt);
+	} else {
+		vfs_destroy(nmp);
+	}
 
 #ifdef DEBUG
 	printf("forceful unmount of %s failed with error %d\n",
@@ -2381,7 +2389,7 @@ vfs_unmountall1(struct lwp *l, bool force, bool verbose)
 			vfs_unmount_print(mp, "");
 			progress = true;
 		} else {
-			atomic_dec_uint(&mp->mnt_refcnt);
+			vfs_destroy(mp);
 			if (verbose) {
 				printf("unmount of %s failed with error %d\n",
 				    mp->mnt_stat.f_mntonname, error);
@@ -2389,10 +2397,12 @@ vfs_unmountall1(struct lwp *l, bool force, bool verbose)
 			any_error = true;
 		}
 	}
-	if (verbose)
+	if (verbose) {
 		printf(" done\n");
-	if (any_error && verbose)
+	}
+	if (any_error && verbose) {
 		printf("WARNING: some file systems would not unmount\n");
+	}
 	return progress;
 }
 
@@ -2597,7 +2607,7 @@ done:
 			panic("cannot find root vnode, error=%d", error);
 		cwdi0.cwdi_cdir = rootvnode;
 		vref(cwdi0.cwdi_cdir);
-		VOP_UNLOCK(rootvnode, 0);
+		VOP_UNLOCK(rootvnode);
 		cwdi0.cwdi_rdir = NULL;
 
 		/*
@@ -2608,6 +2618,11 @@ done:
 		initproc->p_cwdi->cwdi_cdir = rootvnode;
 		vref(initproc->p_cwdi->cwdi_cdir);
 		initproc->p_cwdi->cwdi_rdir = NULL;
+		/*
+		 * Enable loading of modules from the filesystem
+		 */
+		module_load_vfs_init();
+
 	}
 	return (error);
 }
@@ -2708,11 +2723,9 @@ const char vnode_flagbits[] = VNODE_FLAGBITS;
 void
 vprint(const char *label, struct vnode *vp)
 {
-	struct vnlock *vl;
 	char bf[96];
 	int flag;
 
-	vl = (vp->v_vnlock != NULL ? vp->v_vnlock : &vp->v_lock);
 	flag = vp->v_iflag | vp->v_vflag | vp->v_uflag;
 	snprintb(bf, sizeof(bf), vnode_flagbits, flag);
 
@@ -2720,11 +2733,11 @@ vprint(const char *label, struct vnode *vp)
 		printf("%s: ", label);
 	printf("vnode @ %p, flags (%s)\n\ttag %s(%d), type %s(%d), "
 	    "usecount %d, writecount %d, holdcount %d\n"
-	    "\tfreelisthd %p, mount %p, data %p lock %p recursecnt %d\n",
+	    "\tfreelisthd %p, mount %p, data %p lock %p\n",
 	    vp, bf, ARRAY_PRINT(vp->v_tag, vnode_tags), vp->v_tag,
 	    ARRAY_PRINT(vp->v_type, vnode_types), vp->v_type,
 	    vp->v_usecount, vp->v_writecount, vp->v_holdcnt,
-	    vp->v_freelisthd, vp->v_mount, vp->v_data, vl, vl->vl_recursecnt);
+	    vp->v_freelisthd, vp->v_mount, vp->v_data, &vp->v_lock);
 	if (vp->v_data != NULL) {
 		printf("\t");
 		VOP_PRINT(vp);
@@ -2903,66 +2916,24 @@ setrootfstime(time_t t)
 	rootfstime = t;
 }
 
-/*
- * Sham lock manager for vnodes.  This is a temporary measure.
- */
-int
-vlockmgr(struct vnlock *vl, int flags)
+static const uint8_t vttodt_tab[9] = {
+	DT_UNKNOWN,	/* VNON  */
+	DT_REG,		/* VREG  */
+	DT_DIR,		/* VDIR  */
+	DT_BLK,		/* VBLK  */
+	DT_CHR,		/* VCHR  */
+	DT_LNK,		/* VLNK  */
+	DT_SOCK,	/* VSUCK */
+	DT_FIFO,	/* VFIFO */
+	DT_UNKNOWN	/* VBAD  */
+};
+
+uint8_t
+vtype2dt(enum vtype vt)
 {
 
-	KASSERT((flags & ~(LK_CANRECURSE | LK_NOWAIT | LK_TYPE_MASK)) == 0);
-
-	switch (flags & LK_TYPE_MASK) {
-	case LK_SHARED:
-		if (rw_tryenter(&vl->vl_lock, RW_READER)) {
-			return 0;
-		}
-		if ((flags & LK_NOWAIT) != 0) {
-			return EBUSY;
-		}
-		rw_enter(&vl->vl_lock, RW_READER);
-		return 0;
-
-	case LK_EXCLUSIVE:
-		if (rw_tryenter(&vl->vl_lock, RW_WRITER)) {
-			return 0;
-		}
-		if ((vl->vl_canrecurse || (flags & LK_CANRECURSE) != 0) &&
-		    rw_write_held(&vl->vl_lock)) {
-			vl->vl_recursecnt++;
-			return 0;
-		}
-		if ((flags & LK_NOWAIT) != 0) {
-			return EBUSY;
-		}
-		rw_enter(&vl->vl_lock, RW_WRITER);
-		return 0;
-
-	case LK_RELEASE:
-		if (vl->vl_recursecnt != 0) {
-			KASSERT(rw_write_held(&vl->vl_lock));
-			vl->vl_recursecnt--;
-			return 0;
-		}
-		rw_exit(&vl->vl_lock);
-		return 0;
-
-	default:
-		panic("vlockmgr: flags %x", flags);
-	}
-}
-
-int
-vlockstatus(struct vnlock *vl)
-{
-
-	if (rw_write_held(&vl->vl_lock)) {
-		return LK_EXCLUSIVE;
-	}
-	if (rw_read_held(&vl->vl_lock)) {
-		return LK_SHARED;
-	}
-	return 0;
+	CTASSERT(VBAD == __arraycount(vttodt_tab) - 1);
+	return vttodt_tab[vt];
 }
 
 /*
@@ -3260,7 +3231,7 @@ vfs_vnode_print(struct vnode *vp, int full, void (*pr)(const char *, ...))
 	      ARRAY_PRINT(vp->v_type, vnode_types), vp->v_type,
 	      vp->v_mount, vp->v_mountedhere);
 
-	(*pr)("v_lock %p v_vnlock %p\n", &vp->v_lock, vp->v_vnlock);
+	(*pr)("v_lock %p\n", &vp->v_lock);
 
 	if (full) {
 		struct buf *bp;
@@ -3398,9 +3369,11 @@ rawdev_mounted(struct vnode *vp, struct vnode **bvpp)
 
 			blkdev = devsw_chr2blk(dev);
 			if (blkdev != NODEV) {
-				vfinddev(blkdev, VBLK, &bvp);
-				if (bvp != NULL)
+				if (vfinddev(blkdev, VBLK, &bvp) != 0) {
 					d_type = (cdev->d_flag & D_TYPEMASK);
+					/* XXX: what if bvp disappears? */
+					vrele(bvp);
+				}
 			}
 		}
 

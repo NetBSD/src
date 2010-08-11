@@ -1,4 +1,4 @@
-/*	$NetBSD: dalb_acpi.c,v 1.2.22.3 2010/03/11 15:03:23 yamt Exp $	*/
+/*	$NetBSD: dalb_acpi.c,v 1.2.22.4 2010/08/11 22:53:16 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008 Christoph Egger <cegger@netbsd.org>
@@ -27,7 +27,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dalb_acpi.c,v 1.2.22.3 2010/03/11 15:03:23 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dalb_acpi.c,v 1.2.22.4 2010/08/11 22:53:16 yamt Exp $");
 
 /*
  * Direct Application Launch Button:
@@ -61,7 +61,7 @@ struct acpi_dalb_softc {
 static int	acpi_dalb_match(device_t, cfdata_t, void *);
 static void	acpi_dalb_attach(device_t, device_t, void *);
 static int	acpi_dalb_detach(device_t, int);
-static void	acpi_dalb_notify_handler(ACPI_HANDLE, UINT32, void *);
+static void	acpi_dalb_notify_handler(ACPI_HANDLE, uint32_t, void *);
 static bool	acpi_dalb_resume(device_t, const pmf_qual_t *);
 
 static void	acpi_dalb_get_wakeup_hotkeys(void *opaque);
@@ -74,12 +74,6 @@ static const char * const acpi_dalb_ids[] = {
         "PNP0C32", /* Direct Application Launch Button */
         NULL
 };
-
-#ifdef DEBUG
-#define DPRINTF(x)	printf x
-#else
-#define DPRINTF(x)
-#endif
 
 #define DALB_SYSTEM_WAKEUP	0x02
 #define DALB_SYSTEM_RUNTIME	0x80
@@ -118,6 +112,7 @@ acpi_dalb_init(device_t dev)
 	ACPI_BUFFER ret;
 
 	rv = acpi_eval_struct(sc->sc_node->ad_handle, "GHID", &ret);
+
 	if (ACPI_FAILURE(rv) || ret.Pointer == NULL) {
 		aprint_error_dev(dev,
 			"couldn't enable notify handler: (%s)\n",
@@ -125,7 +120,8 @@ acpi_dalb_init(device_t dev)
 		return;
 	}
 
-	obj = (ACPI_OBJECT *)ret.Pointer;
+	obj = ret.Pointer;
+
 	if (obj->Type != ACPI_TYPE_BUFFER) {
 		sc->sc_usageid = DALB_ID_INVALID;
 		aprint_debug_dev(dev, "invalid ACPI type: %u\n", obj->Type);
@@ -158,51 +154,36 @@ acpi_dalb_attach(device_t parent, device_t self, void *aux)
 {
 	struct acpi_dalb_softc *sc = device_private(self);
 	struct acpi_attach_args *aa = aux;
-	ACPI_STATUS rv;
 
 	aprint_naive("\n");
 	aprint_normal(": Direct Application Launch Button\n");
 
-	sc->sc_node = aa->aa_node;
 	sc->sc_dev = self;
+	sc->sc_node = aa->aa_node;
 
 	config_interrupts(self, acpi_dalb_init);
 
-	/* Install notify handler */
-	rv = AcpiInstallNotifyHandler(sc->sc_node->ad_handle,
-		ACPI_ALL_NOTIFY, acpi_dalb_notify_handler, self);
-	if (ACPI_FAILURE(rv))
-		aprint_error_dev(self,
-			"couldn't install notify handler: (%s)\n",
-			AcpiFormatException(rv));
+	(void)pmf_device_register(self, NULL, acpi_dalb_resume);
+	(void)acpi_register_notify(sc->sc_node, acpi_dalb_notify_handler);
 
 	sc->sc_smpsw_valid = false;
 	acpi_dalb_sysmon_init(sc);
-
-	if (!pmf_device_register(self, NULL, acpi_dalb_resume))
-		aprint_error_dev(self, "couldn't establish power handler\n");
 }
 
 static int
 acpi_dalb_detach(device_t self, int flags)
 {
 	struct acpi_dalb_softc *sc = device_private(self);
-	ACPI_STATUS rv;
-
-	rv = AcpiRemoveNotifyHandler(sc->sc_node->ad_handle,
-	    ACPI_ALL_NOTIFY, acpi_dalb_notify_handler);
-
-	if (ACPI_FAILURE(rv))
-		return EBUSY;
 
 	pmf_device_deregister(self);
+	acpi_deregister_notify(sc->sc_node);
 	sysmon_pswitch_unregister(&sc->sc_smpsw);
 
 	return 0;
 }
 
 static void
-acpi_dalb_notify_handler(ACPI_HANDLE hdl, UINT32 notify, void *opaque)
+acpi_dalb_notify_handler(ACPI_HANDLE hdl, uint32_t notify, void *opaque)
 {
 	device_t dev = opaque;
 	struct acpi_dalb_softc *sc = device_private(dev);
@@ -238,8 +219,10 @@ acpi_dalb_get_wakeup_hotkeys(void *opaque)
 
 	if (!sc->sc_smpsw_valid)
 		return;
-	DPRINTF(("%s: %s: invoking sysmon_pswitch_event\n",
-		sc->sc_smpsw.smpsw_name, __func__));
+
+	ACPI_DEBUG_PRINT((ACPI_DB_INFO,
+		"invoking %s (wakeup)\n", sc->sc_smpsw.smpsw_name));
+
 	sysmon_pswitch_event(&sc->sc_smpsw, PSWITCH_EVENT_PRESSED);
 }
 
@@ -251,8 +234,10 @@ acpi_dalb_get_runtime_hotkeys(void *opaque)
 
 	if (!sc->sc_smpsw_valid)
 		return;
-	DPRINTF(("%s: %s: invoking sysmon_pswitch_event\n",
-		sc->sc_smpsw.smpsw_name, __func__));
+
+	ACPI_DEBUG_PRINT((ACPI_DB_INFO,
+		"invoking %s (runtime)\n", sc->sc_smpsw.smpsw_name));
+
 	sysmon_pswitch_event(&sc->sc_smpsw, PSWITCH_EVENT_PRESSED);
 }
 

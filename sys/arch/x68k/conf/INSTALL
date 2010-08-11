@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.77.4.3 2010/03/11 15:03:07 yamt Exp $
+#	$NetBSD: INSTALL,v 1.77.4.4 2010/08/11 22:52:53 yamt Exp $
 
 #
 #	INSTALL -- installation kernel.
@@ -8,7 +8,7 @@ include "arch/x68k/conf/std.x68k"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"INSTALL-$Revision: 1.77.4.3 $"
+#ident 		"INSTALL-$Revision: 1.77.4.4 $"
 
 makeoptions	COPTS="-Os"		# Optimise for space. Implies -O2
 
@@ -198,6 +198,8 @@ options 	INET6		# IPV6
 #options 	PFIL_HOOKS	# Add pfil(9) hooks, intended for custom LKMs.
 #options 	IPFILTER_LOG	# Add ipmon(8) logging for ipfilter device
 #options 	IPFILTER_LOOKUP	# ippool(8) support
+#options 	IPFILTER_COMPAT # Compat for IP-Filter
+#options 	IPFILTER_DEFAULT_BLOCK	# block all packets by default
 #options 	PPP_BSDCOMP	# Add BSD compression to ppp device
 #options 	PPP_DEFLATE	# Add deflate (libz) compression to ppp device
 #options 	PPP_FILTER	# Add active filters for ppp (via bpf)

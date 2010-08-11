@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.booters,v 1.73.20.1 2009/05/04 08:11:18 yamt Exp $
+#	$NetBSD: Makefile.booters,v 1.73.20.2 2010/08/11 22:52:14 yamt Exp $
 
 .include <bsd.own.mk>
 
@@ -91,16 +91,12 @@ I386DIR= ${I386_STAND_DIR}/lib
 .include "${I386DIR}/Makefile.inc"
 LIBI386=		${I386LIB}
 
-cleandir distclean: cleanlibdir
+cleandir distclean: .WAIT cleanlibdir
 
 cleanlibdir:
 	-rm -rf lib
 
-.if ${OBJECT_FMT} == "ELF"
 LDFLAGS+=-Wl,-M -Wl,-e,start 	# -N does not work properly.
-.else
-LDFLAGS+=-Wl,-N -Wl,-M -Wl,-e,_start 
-.endif
 
 LIBLIST=${LIBI386} ${LIBSA} ${LIBZ} ${LIBSA} ${LIBKERN} ${LIBI386} ${LIBSA}
 

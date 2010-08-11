@@ -1,4 +1,4 @@
-/*	$NetBSD: sd_at_scsibus_at_umass.c,v 1.3.2.2 2010/03/11 15:04:34 yamt Exp $	*/
+/*	$NetBSD: sd_at_scsibus_at_umass.c,v 1.3.2.3 2010/08/11 22:55:02 yamt Exp $	*/
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -12,13 +12,6 @@
 #include "rump_dev_private.h"
 #include "rump_vfs_private.h"
 
-#define FLAWLESSCALL(call)						\
-do {									\
-	int att_error;							\
-	if ((att_error = call) != 0)					\
-		panic("\"%s\" failed", #call);				\
-} while (/*CONSTCOND*/0)
-
 RUMP_COMPONENT(RUMP_COMPONENT_DEV)
 {
 	extern struct cfattach umass_ca;
@@ -27,22 +20,8 @@ RUMP_COMPONENT(RUMP_COMPONENT_DEV)
 	extern struct cdevsw sd_cdevsw, cd_cdevsw;
 	devmajor_t bmaj, cmaj;
 
-	FLAWLESSCALL(config_cfdata_attach(cfdata_umass, 0));
-
-	FLAWLESSCALL(config_cfdriver_attach(&umass_cd));
-	FLAWLESSCALL(config_cfattach_attach("umass", &umass_ca));
-
-	FLAWLESSCALL(config_cfdriver_attach(&scsibus_cd));
-	FLAWLESSCALL(config_cfattach_attach("scsibus", &scsibus_ca));
-
-	FLAWLESSCALL(config_cfdriver_attach(&atapibus_cd));
-	FLAWLESSCALL(config_cfattach_attach("atapibus", &atapibus_ca));
-
-	FLAWLESSCALL(config_cfdriver_attach(&sd_cd));
-	FLAWLESSCALL(config_cfattach_attach("sd", &sd_ca));
-
-	FLAWLESSCALL(config_cfdriver_attach(&cd_cd));
-	FLAWLESSCALL(config_cfattach_attach("cd", &cd_ca));
+	config_init_component(cfdriver_ioconf_umass,
+	    cfattach_ioconf_umass, cfdata_ioconf_umass);
 
 	bmaj = cmaj = -1;
 	FLAWLESSCALL(devsw_attach("sd", &sd_bdevsw, &bmaj, &sd_cdevsw, &cmaj));

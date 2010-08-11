@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vnops.c,v 1.81.10.6 2010/03/11 15:04:44 yamt Exp $	*/
+/*	$NetBSD: ext2fs_vnops.c,v 1.81.10.7 2010/08/11 22:55:12 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.81.10.6 2010/03/11 15:04:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.81.10.7 2010/08/11 22:55:12 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -184,7 +184,7 @@ ext2fs_mknod(void *v)
 	 * checked to see if it is an alias of an existing entry in
 	 * the inode cache.
 	 */
-	VOP_UNLOCK(*vpp, 0);
+	VOP_UNLOCK(*vpp);
 	(*vpp)->v_type = VNON;
 	vgone(*vpp);
 	error = VFS_VGET(mp, ino, vpp);
@@ -609,7 +609,7 @@ ext2fs_link(void *v)
 	PNBUF_PUT(cnp->cn_pnbuf);
 out1:
 	if (dvp != vp)
-		VOP_UNLOCK(vp, 0);
+		VOP_UNLOCK(vp);
 out2:
 	VN_KNOTE(vp, NOTE_LINK);
 	VN_KNOTE(dvp, NOTE_WRITE);
@@ -725,13 +725,13 @@ abortit:
 	dp = VTOI(fdvp);
 	ip = VTOI(fvp);
 	if ((nlink_t) ip->i_e2fs_nlink >= LINK_MAX) {
-		VOP_UNLOCK(fvp, 0);
+		VOP_UNLOCK(fvp);
 		error = EMLINK;
 		goto abortit;
 	}
 	if ((ip->i_e2fs_flags & (EXT2_IMMUTABLE | EXT2_APPEND)) ||
 		(dp->i_e2fs_flags & EXT2_APPEND)) {
-		VOP_UNLOCK(fvp, 0);
+		VOP_UNLOCK(fvp);
 		error = EPERM;
 		goto abortit;
 	}
@@ -740,7 +740,7 @@ abortit:
 		if (!error && tvp)
 			error = VOP_ACCESS(tvp, VWRITE, tcnp->cn_cred);
 		if (error) {
-			VOP_UNLOCK(fvp, 0);
+			VOP_UNLOCK(fvp);
 			error = EACCES;
 			goto abortit;
 		}
@@ -752,7 +752,7 @@ abortit:
 		    (fcnp->cn_flags & ISDOTDOT) ||
 		    (tcnp->cn_flags & ISDOTDOT) ||
 		    (ip->i_flag & IN_RENAME)) {
-			VOP_UNLOCK(fvp, 0);
+			VOP_UNLOCK(fvp);
 			error = EINVAL;
 			goto abortit;
 		}
@@ -780,7 +780,7 @@ abortit:
 	ip->i_e2fs_nlink++;
 	ip->i_flag |= IN_CHANGE;
 	if ((error = ext2fs_update(fvp, NULL, NULL, UPDATE_WAIT)) != 0) {
-		VOP_UNLOCK(fvp, 0);
+		VOP_UNLOCK(fvp);
 		goto bad;
 	}
 
@@ -795,7 +795,7 @@ abortit:
 	 * call to checkpath().
 	 */
 	error = VOP_ACCESS(fvp, VWRITE, tcnp->cn_cred);
-	VOP_UNLOCK(fvp, 0);
+	VOP_UNLOCK(fvp);
 	if (oldparent != dp->i_number)
 		newparent = dp->i_number;
 	if (doingdirectory && newparent) {
@@ -1502,6 +1502,13 @@ ext2fs_reclaim(void *v)
 	struct inode *ip = VTOI(vp);
 	int error;
 
+	/*
+	 * The inode must be freed and updated before being removed
+	 * from its hash chain.  Other threads trying to gain a hold
+	 * on the inode will be stalled because it is locked (VI_XLOCK).
+	 */
+	if (ip->i_omode == 1 && (vp->v_mount->mnt_flag & MNT_RDONLY) == 0)
+		ext2fs_vfree(vp, ip->i_number, ip->i_e2fs_mode);
 	if ((error = ufs_reclaim(vp)) != 0)
 		return (error);
 	if (ip->i_din.e2fs_din != NULL)
@@ -1612,45 +1619,45 @@ const struct vnodeopv_desc ext2fs_specop_opv_desc =
 int (**ext2fs_fifoop_p)(void *);
 const struct vnodeopv_entry_desc ext2fs_fifoop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
-	{ &vop_lookup_desc, fifo_lookup },		/* lookup */
-	{ &vop_create_desc, fifo_create },		/* create */
-	{ &vop_mknod_desc, fifo_mknod },		/* mknod */
-	{ &vop_open_desc, fifo_open },			/* open */
+	{ &vop_lookup_desc, vn_fifo_bypass },		/* lookup */
+	{ &vop_create_desc, vn_fifo_bypass },		/* create */
+	{ &vop_mknod_desc, vn_fifo_bypass },		/* mknod */
+	{ &vop_open_desc, vn_fifo_bypass },		/* open */
 	{ &vop_close_desc, ufsfifo_close },		/* close */
 	{ &vop_access_desc, ext2fs_access },		/* access */
 	{ &vop_getattr_desc, ext2fs_getattr },		/* getattr */
 	{ &vop_setattr_desc, ext2fs_setattr },		/* setattr */
 	{ &vop_read_desc, ufsfifo_read },		/* read */
 	{ &vop_write_desc, ufsfifo_write },		/* write */
-	{ &vop_ioctl_desc, fifo_ioctl },		/* ioctl */
+	{ &vop_ioctl_desc, vn_fifo_bypass },		/* ioctl */
 	{ &vop_fcntl_desc, ufs_fcntl },			/* fcntl */
-	{ &vop_poll_desc, fifo_poll },			/* poll */
-	{ &vop_kqfilter_desc, fifo_kqfilter },		/* kqfilter */
-	{ &vop_revoke_desc, fifo_revoke },		/* revoke */
-	{ &vop_mmap_desc, fifo_mmap },			/* mmap */
+	{ &vop_poll_desc, vn_fifo_bypass },		/* poll */
+	{ &vop_kqfilter_desc, vn_fifo_bypass },		/* kqfilter */
+	{ &vop_revoke_desc, vn_fifo_bypass },		/* revoke */
+	{ &vop_mmap_desc, vn_fifo_bypass },		/* mmap */
 	{ &vop_fsync_desc, ext2fs_fsync },		/* fsync */
-	{ &vop_seek_desc, fifo_seek },			/* seek */
-	{ &vop_remove_desc, fifo_remove },		/* remove */
-	{ &vop_link_desc, fifo_link },			/* link */
-	{ &vop_rename_desc, fifo_rename },		/* rename */
-	{ &vop_mkdir_desc, fifo_mkdir },		/* mkdir */
-	{ &vop_rmdir_desc, fifo_rmdir },		/* rmdir */
-	{ &vop_symlink_desc, fifo_symlink },		/* symlink */
-	{ &vop_readdir_desc, fifo_readdir },		/* readdir */
-	{ &vop_readlink_desc, fifo_readlink },		/* readlink */
-	{ &vop_abortop_desc, fifo_abortop },		/* abortop */
+	{ &vop_seek_desc, vn_fifo_bypass },		/* seek */
+	{ &vop_remove_desc, vn_fifo_bypass },		/* remove */
+	{ &vop_link_desc, vn_fifo_bypass },		/* link */
+	{ &vop_rename_desc, vn_fifo_bypass },		/* rename */
+	{ &vop_mkdir_desc, vn_fifo_bypass },		/* mkdir */
+	{ &vop_rmdir_desc, vn_fifo_bypass },		/* rmdir */
+	{ &vop_symlink_desc, vn_fifo_bypass },		/* symlink */
+	{ &vop_readdir_desc, vn_fifo_bypass },		/* readdir */
+	{ &vop_readlink_desc, vn_fifo_bypass },		/* readlink */
+	{ &vop_abortop_desc, vn_fifo_bypass },		/* abortop */
 	{ &vop_inactive_desc, ext2fs_inactive },	/* inactive */
 	{ &vop_reclaim_desc, ext2fs_reclaim },		/* reclaim */
 	{ &vop_lock_desc, ufs_lock },			/* lock */
 	{ &vop_unlock_desc, ufs_unlock },		/* unlock */
-	{ &vop_bmap_desc, fifo_bmap },			/* bmap */
-	{ &vop_strategy_desc, fifo_strategy },		/* strategy */
+	{ &vop_bmap_desc, vn_fifo_bypass },		/* bmap */
+	{ &vop_strategy_desc, vn_fifo_bypass },		/* strategy */
 	{ &vop_print_desc, ufs_print },			/* print */
 	{ &vop_islocked_desc, ufs_islocked },		/* islocked */
-	{ &vop_pathconf_desc, fifo_pathconf },		/* pathconf */
-	{ &vop_advlock_desc, fifo_advlock },		/* advlock */
+	{ &vop_pathconf_desc, vn_fifo_bypass },		/* pathconf */
+	{ &vop_advlock_desc, vn_fifo_bypass },		/* advlock */
 	{ &vop_bwrite_desc, vn_bwrite },		/* bwrite */
-	{ &vop_putpages_desc, fifo_putpages },		/* putpages */
+	{ &vop_putpages_desc, vn_fifo_bypass },		/* putpages */
 	{ NULL, NULL }
 };
 const struct vnodeopv_desc ext2fs_fifoop_opv_desc =

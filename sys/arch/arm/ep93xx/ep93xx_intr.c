@@ -1,4 +1,4 @@
-/* $NetBSD: ep93xx_intr.c,v 1.11.10.1 2008/05/16 02:21:56 yamt Exp $ */
+/* $NetBSD: ep93xx_intr.c,v 1.11.10.2 2010/08/11 22:51:40 yamt Exp $ */
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ep93xx_intr.c,v 1.11.10.1 2008/05/16 02:21:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ep93xx_intr.c,v 1.11.10.2 2010/08/11 22:51:40 yamt Exp $");
 
 /*
  * Interrupt support for the Cirrus Logic EP93XX
@@ -150,9 +150,17 @@ ep93xx_intr_calculate_masks(void)
 
 	KASSERT(vic1_imask[IPL_NONE] == 0);
 	KASSERT(vic2_imask[IPL_NONE] == 0);
+	KASSERT(vic1_imask[IPL_SOFTCLOCK] == 0);
+	KASSERT(vic2_imask[IPL_SOFTCLOCK] == 0);
+	KASSERT(vic1_imask[IPL_SOFTBIO] == 0);
+	KASSERT(vic2_imask[IPL_SOFTBIO] == 0);
+	KASSERT(vic1_imask[IPL_SOFTNET] == 0);
+	KASSERT(vic2_imask[IPL_SOFTNET] == 0);
+	KASSERT(vic1_imask[IPL_SOFTSERIAL] == 0);
+	KASSERT(vic2_imask[IPL_SOFTSERIAL] == 0);
 
 	/*
-	 * splclock() must block anything that uses the scheduler.
+	 * splsched() must block anything that uses the scheduler.
 	 */
 	vic1_imask[IPL_SCHED] |= vic1_imask[IPL_VM];
 	vic2_imask[IPL_SCHED] |= vic2_imask[IPL_VM];

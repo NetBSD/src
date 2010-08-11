@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.113.4.2 2010/03/11 15:03:06 yamt Exp $     */
+/*	$NetBSD: trap.c,v 1.113.4.3 2010/08/11 22:52:52 yamt Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -33,7 +33,7 @@
  /* All bugs are subject to removal without further notice */
 		
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.113.4.2 2010/03/11 15:03:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.113.4.3 2010/08/11 22:52:52 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -47,7 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.113.4.2 2010/03/11 15:03:06 yamt Exp $");
 #include <sys/exec.h>
 #include <sys/sa.h>
 #include <sys/savar.h>
-#include <sys/pool.h>
+#include <sys/kmem.h>
 #include <sys/kauth.h>
 
 #include <uvm/uvm_extern.h>
@@ -98,15 +98,6 @@ const char * const traptypes[]={
 int no_traps = 18;
 
 #define USERMODE_P(framep)   ((((framep)->psl) & (PSL_U)) == PSL_U)
-#define FAULTCHK(pcb)						\
-	if (pcb->iftrap) {					\
-		frame->pc = (unsigned)pcb->iftrap;		\
-		frame->psl &= ~PSL_FPD;				\
-		frame->r0 = EFAULT;/* for copyin/out */		\
-		frame->r1 = -1; /* for fetch/store */		\
-		return;						\
-	}
-
 
 void
 trap(struct trapframe *frame)
@@ -122,12 +113,14 @@ trap(struct trapframe *frame)
 	struct vmspace *vm;
 	struct vm_map *map;
 	vm_prot_t ftype;
+	void *onfault;
 
 	l = curlwp;
 	KASSERT(l != NULL);
+	pcb = lwp_getpcb(l);
+	onfault = pcb->pcb_onfault;
 	p = l->l_proc;
 	KASSERT(p != NULL);
-	pcb = lwp_getpcb(l);
 	uvmexp.traps++;
 	if (usermode) {
 		type |= T_USER;
@@ -158,7 +151,7 @@ fram:
 	case T_KSPNOTVAL:
 		panic("%d.%d (%s): KSP invalid %#x@%#x pcb %p fp %#x psl %#x)",
 		    p->p_pid, l->l_lid, l->l_name ? l->l_name : "??",
-		    mfpr(PR_KSP), (u_int)frame->pc, lwp_getpcb(l),
+		    mfpr(PR_KSP), (u_int)frame->pc, pcb,
 		    (u_int)frame->fp, (u_int)frame->psl);
 
 	case T_TRANSFLT|T_USER:
@@ -226,10 +219,17 @@ if(faultdebug)printf("trap accflt type %lx, code %lx, pc %lx, psl %lx\n",
 			l->l_pflag |= LP_SA_PAGEFAULT;
 		}
 
+		pcb->pcb_onfault = NULL;
 		rv = uvm_fault(map, addr, ftype);
+		pcb->pcb_onfault = onfault;
 		if (rv != 0) {
 			if (!usermode) {
-				FAULTCHK(pcb);
+				if (onfault) {
+					frame->pc = (unsigned)onfault;
+					frame->psl &= ~PSL_FPD;
+					frame->r0 = rv;
+					return;
+				}
 				panic("Segv in kernel mode: pc %x addr %x",
 				    (u_int)frame->pc, (u_int)frame->code);
 			}
@@ -375,19 +375,15 @@ setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 void
 startlwp(void *arg)
 {
-	int err;
 	ucontext_t *uc = arg;
-	struct lwp *l = curlwp;
+	lwp_t *l = curlwp;
 	struct pcb *pcb;
+	int error;
 
-	err = cpu_setmcontext(l, &uc->uc_mcontext, uc->uc_flags);
-#if DIAGNOSTIC
-	if (err) {
-		printf("Error %d from cpu_setmcontext.", err);
-	}
-#endif
-	pool_put(&lwp_uc_pool, uc);
+	error = cpu_setmcontext(l, &uc->uc_mcontext, uc->uc_flags);
+	KASSERT(error == 0);
 
+	kmem_free(uc, sizeof(ucontext_t));
 	/* XXX - profiling spoiled here */
 	pcb = lwp_getpcb(l);
 	userret(l, pcb->framep, l->l_proc->p_sticks);

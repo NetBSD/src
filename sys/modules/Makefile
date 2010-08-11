@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.4.5 2010/03/11 15:04:23 yamt Exp $
+#	$NetBSD: Makefile,v 1.1.4.6 2010/08/11 22:54:49 yamt Exp $
 
 .include <bsd.own.mk>
 
@@ -28,6 +28,8 @@ SUBDIR+=	ksem
 SUBDIR+=	layerfs
 SUBDIR+=	lfs
 SUBDIR+=	mfs
+SUBDIR+=	miiverbose
+SUBDIR+=	miniroot
 SUBDIR+=	mqueue
 SUBDIR+=	msdos
 SUBDIR+=	nfs
@@ -36,13 +38,15 @@ SUBDIR+=	nilfs
 SUBDIR+=	ntfs
 SUBDIR+=	null
 SUBDIR+=	overlay
+SUBDIR+=	pciverbose
+SUBDIR+=	pf
 SUBDIR+=	ppp_bsdcomp
 SUBDIR+=	ppp_deflate
 SUBDIR+=	procfs
 SUBDIR+=	ptyfs
 SUBDIR+=	puffs
 SUBDIR+=	putter
-SUBDIR+=	miniroot
+SUBDIR+=	scsiverbose
 SUBDIR+=	secmodel_bsd44
 SUBDIR+=	secmodel_overlay
 SUBDIR+=	securelevel
@@ -53,6 +57,7 @@ SUBDIR+=	tmpfs
 SUBDIR+=	udf
 SUBDIR+=	umap
 SUBDIR+=	union
+SUBDIR+=	usbverbose
 SUBDIR+=	vnd
 SUBDIR+=	tprof
 .if (defined(NOTYET))
@@ -78,6 +83,12 @@ SUBDIR+=	exec_elf64
 SUBDIR+=	tprof_pmi
 .endif
 
+.if ${MACHINE_ARCH} == "i386" || \
+    ${MACHINE_ARCH} == "ia64" || \
+    ${MACHINE_ARCH} == "x86_64"
+SUBDIR+=	acpiverbose
+.endif
+
 .if ${MACHINE_ARCH} == "x86_64"
 SUBDIR+=	azalia
 SUBDIR+=	compat_linux
@@ -85,6 +96,7 @@ SUBDIR+=	compat_linux32
 SUBDIR+=	compat_netbsd32
 SUBDIR+=	drm
 SUBDIR+=	i915drm
+SUBDIR+=	pad
 .endif
 
 .if ${MACHINE_ARCH} == "i386"
@@ -98,6 +110,7 @@ SUBDIR+=	exec_aout
 SUBDIR+=	i915drm
 SUBDIR+=	radeondrm
 SUBDIR+=	viadrm
+SUBDIR+=	pad
 .endif
 
 .include <bsd.own.mk>

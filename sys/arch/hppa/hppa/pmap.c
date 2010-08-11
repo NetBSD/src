@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.42.10.4 2010/03/11 15:02:26 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.42.10.5 2010/08/11 22:52:09 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.42.10.4 2010/03/11 15:02:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.42.10.5 2010/08/11 22:52:09 yamt Exp $");
 
 #include "opt_cputype.h"
 
@@ -225,12 +225,12 @@ void pmap_dump_table(pa_space_t, vaddr_t);
 void pmap_dump_pv(paddr_t);
 #endif
 
-void pmap_check_alias(struct vm_page *, struct pv_entry *, vaddr_t,
-    pt_entry_t *);
-static bool __changebit(struct vm_page *, u_int, u_int);
+void pmap_page_remove_locked(struct vm_page *);
+int pmap_check_alias(struct vm_page *, vaddr_t, pt_entry_t);
 
+/* un-invert PVF_REF */
 #define pmap_pvh_attrs(a) \
-	(((a) & (PVF_MOD|PVF_REF|PVF_WRITE|PVF_UNCACHEABLE)) ^ PVF_REF)
+	(((a) & (PVF_MOD|PVF_REF)) ^ PVF_REF)
 
 #define PMAP_LOCK(pm)					\
 	do {						\
@@ -425,11 +425,11 @@ pmap_pte_flush(pmap_t pmap, vaddr_t va, pt_entry_t pte)
 {
 
 	fdcache(pmap->pm_space, va, PAGE_SIZE);
-	pdtlb(pmap->pm_space, va);
 	if (pte & PTE_PROT(TLB_EXECUTE)) {
 		ficache(pmap->pm_space, va, PAGE_SIZE);
 		pitlb(pmap->pm_space, va);
 	}
+	pdtlb(pmap->pm_space, va);
 #ifdef USE_HPT
 	if (pmap_hpt) {
 		struct hpt_entry *hpt;
@@ -510,112 +510,28 @@ pmap_dump_pv(paddr_t pa)
 }
 #endif
 
-/*
- * Check for non-equiv aliases for this page and the mapping being added or
- * removed. If, when adding, we find a new non-equiv alias then mark all PTEs
- * as uncacheable including the one we're checking. If, when removing, there
- * are no non-equiv aliases left then we mark PTEs as cacheable.
- *
- * - Shouldn't be called for pages that have been marked uncacheable by
- *   pmap_kenter_pa.
- * - Must be called with pg->mdpage.pvh_lock held.
- */
-void
-pmap_check_alias(struct vm_page *pg, struct pv_entry *pve, vaddr_t va,
-    pt_entry_t *ptep)
+int
+pmap_check_alias(struct vm_page *pg, vaddr_t va, pt_entry_t pte)
 {
-	bool nonequiv = false;
-	struct pv_entry *tpve;
-	u_int attrs;
+	struct pv_entry *pve;
+	int ret = 0;
 
-	DPRINTF(PDB_FOLLOW|PDB_ALIAS,
-	    ("%s(%p, %p, 0x%lx, %p)\n", __func__, pg, pve, va, ptep));
+	/* check for non-equ aliased mappings */
+	for (pve = pg->mdpage.pvh_list; pve; pve = pve->pv_next) {
+		vaddr_t pva = pve->pv_va & PV_VAMASK;
 
-	/* we should only be looking if we're not PVF_NC */
-	KASSERT((pg->mdpage.pvh_attrs & PVF_NC) == 0);
-	KASSERT(mutex_owned(&pg->mdpage.pvh_lock));
-
-	if (ptep) {
-		attrs = pmap_pvh_attrs(*ptep);
-
-		DPRINTF(PDB_FOLLOW|PDB_ALIAS,
-		    ("%s: va 0x%08lx attrs 0x%08x (new)\n", __func__, va,
-		    attrs));
-	} else {
-		attrs = 0;
-
-		DPRINTF(PDB_FOLLOW|PDB_ALIAS,
-		    ("%s: va 0x%08lx (removed)\n", __func__, va));
-	}
-
-	/*
-	 * Add in flags for existing mappings and check if mapping we're
-	 * adding/removing is an non-equiv aliases of the other mappings.
-	 */
-	for (tpve = pve; tpve; tpve = tpve->pv_next) {
-		pt_entry_t pte;
-		vaddr_t tva = tpve->pv_va & PV_VAMASK;
-
-		/* XXX LOCK */
-		pte = pmap_vp_find(tpve->pv_pmap, tva);
-		attrs |= pmap_pvh_attrs(pte);
-
-		if (((va ^ tva) & HPPA_PGAOFF) != 0)
-			nonequiv = true;
-
-		DPRINTF(PDB_FOLLOW|PDB_ALIAS,
-		    ("%s: va 0x%08x:0x%08lx attrs 0x%08x %s\n", __func__,
-		    tpve->pv_pmap->pm_space, tpve->pv_va & PV_VAMASK,
-		    pmap_pvh_attrs(pte), nonequiv ? "alias" : ""));
-	}
-
-	if (!nonequiv) {
-		/*
-		 * Inherit uncacheable attribute if set as it means we already
-		 * have non-equiv aliases.
-		 */
-		if (ptep && (attrs & PVF_UNCACHEABLE) != 0)
-			*ptep |= PTE_PROT(TLB_UNCACHEABLE);
-
-		/* No more to be done. */
-		return;
-	}
-
-	if (ptep) {
-		if ((attrs & (PVF_WRITE|PVF_MOD)) != 0) {
-			/*
-			 * We have non-equiv aliases and the new/some 
-			 * mapping(s) is/are writable (or modified). We must
-			 * mark all mappings as uncacheable (if they're not
-			 * already marked as such).
-			 */
-			pg->mdpage.pvh_aliases++;
-
-			if ((attrs & PVF_UNCACHEABLE) == 0)
-				__changebit(pg, PVF_UNCACHEABLE, 0);
-
-			*ptep |= PTE_PROT(TLB_UNCACHEABLE);
+		pte |= pmap_vp_find(pve->pv_pmap, pva);
+		if ((va & HPPA_PGAOFF) != (pva & HPPA_PGAOFF) &&
+		    (pte & PTE_PROT(TLB_WRITE))) {
 
 			DPRINTF(PDB_FOLLOW|PDB_ALIAS,
-			    ("%s: page marked uncacheable\n", __func__));
-		}
-	} else {
-		if ((attrs & PVF_UNCACHEABLE) != 0) {
-			/*
-			 * We've removed a non-equiv aliases. We can now mark
-			 * it cacheable if all non-equiv aliases are gone.
-			 */
-
-			pg->mdpage.pvh_aliases--;
-			if (pg->mdpage.pvh_aliases == 0) {
-				__changebit(pg, 0, PVF_UNCACHEABLE);
-
-				DPRINTF(PDB_FOLLOW|PDB_ALIAS,
-				    ("%s: page re-marked cacheable\n",
-				    __func__));
-			}
+                            ("%s: aliased writable mapping 0x%x:0x%lx\n",
+                            __func__, pve->pv_pmap->pm_space, pve->pv_va));
+			ret++;
 		}
 	}
+
+        return (ret);
 }
 
 /*
@@ -1307,7 +1223,6 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 	}
 
 	if (pmap_initialized && (pg = PHYS_TO_VM_PAGE(pa))) {
-		mutex_enter(&pg->mdpage.pvh_lock);
 
 		if (!pve && !(pve = pmap_pv_alloc())) {
 			if (flags & PMAP_CANFAIL) {
@@ -1317,9 +1232,11 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 			}
 			panic("%s: no pv entries available", __func__);
 		}
+                pte |= PTE_PROT(pmap_prot(pmap, prot));
+		mutex_enter(&pg->mdpage.pvh_lock);
+		if (pmap_check_alias(pg, va, pte))
+			pmap_page_remove_locked(pg);
 		pmap_pv_enter(pg, pve, pmap, va, ptp, 0);
-		pmap_check_alias(pg, pve, va, &pte);
-
 		mutex_exit(&pg->mdpage.pvh_lock);
 	} else if (pve) {
 		pmap_pv_free(pve);
@@ -1362,15 +1279,13 @@ pmap_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 
 	PMAP_LOCK(pmap);
 
-	for (batch = 0, pdemask = 1; sva < eva; sva += PAGE_SIZE) {
-		if (pdemask != (sva & PDE_MASK)) {
-			pdemask = sva & PDE_MASK;
-			if (!(pde = pmap_pde_get(pmap->pm_pdir, sva))) {
-				sva = pdemask + PDE_SIZE - PAGE_SIZE;
-				continue;
-			}
-			batch = pdemask == sva && sva + PDE_SIZE <= eva;
+	for (batch = 0; sva < eva; sva += PAGE_SIZE) {
+		pdemask = sva & PDE_MASK;
+		if (!(pde = pmap_pde_get(pmap->pm_pdir, sva))) {
+			sva = pdemask + PDE_SIZE - PAGE_SIZE;
+			continue;
 		}
+		batch = pdemask == sva && sva + PDE_SIZE <= eva;
 
 		if ((pte = pmap_pte_get(pde, sva))) {
 
@@ -1393,10 +1308,6 @@ pmap_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 				mutex_enter(&pg->mdpage.pvh_lock);
 
 				pve = pmap_pv_remove(pg, pmap, sva);
-
-				pmap_check_alias(pg, pg->mdpage.pvh_list,
-				    sva, NULL);
-
 				pg->mdpage.pvh_attrs |= pmap_pvh_attrs(pte);
 
 				mutex_exit(&pg->mdpage.pvh_lock);
@@ -1466,6 +1377,15 @@ pmap_write_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 void
 pmap_page_remove(struct vm_page *pg)
 {
+
+	mutex_enter(&pg->mdpage.pvh_lock);
+	pmap_page_remove_locked(pg);
+	mutex_exit(&pg->mdpage.pvh_lock);
+}
+
+void
+pmap_page_remove_locked(struct vm_page *pg)
+{
 	struct pv_entry *pve, *npve, **pvp;
 
 	DPRINTF(PDB_FOLLOW|PDB_PV, ("%s(%p)\n", __func__, pg));
@@ -1473,7 +1393,6 @@ pmap_page_remove(struct vm_page *pg)
 	if (pg->mdpage.pvh_list == NULL)
 		return;
 
-	mutex_enter(&pg->mdpage.pvh_lock);
 	pvp = &pg->mdpage.pvh_list;
 	for (pve = pg->mdpage.pvh_list; pve; pve = npve) {
 		pmap_t pmap = pve->pv_pmap;
@@ -1494,22 +1413,21 @@ pmap_page_remove(struct vm_page *pg)
 		if (pve->pv_va & PV_KENTER) {
 			*pvp = pve;
 			pvp = &pve->pv_next;
-			continue;
-		}
-
-		pg->mdpage.pvh_attrs |= pmap_pvh_attrs(pte);
+		} else
+			pg->mdpage.pvh_attrs |= pmap_pvh_attrs(pte);
 
 		pmap_pte_flush(pmap, va, pte);
 		if (pte & PTE_PROT(TLB_WIRED))
 			pmap->pm_stats.wired_count--;
 		pmap->pm_stats.resident_count--;
 
-		pmap_pte_set(pde, va, 0);
-		pmap_pv_free(pve);
+		if (!(pve->pv_va & PV_KENTER)) {
+			pmap_pte_set(pde, va, 0);
+			pmap_pv_free(pve);
+		}
 		PMAP_UNLOCK(pmap);
 	}
 	*pvp = NULL;
-	mutex_exit(&pg->mdpage.pvh_lock);
 
 	DPRINTF(PDB_FOLLOW|PDB_PV, ("%s: leaving\n", __func__));
 }
@@ -1552,30 +1470,16 @@ pmap_unwire(pmap_t pmap, vaddr_t va)
 bool
 pmap_changebit(struct vm_page *pg, u_int set, u_int clear)
 {
-	bool rv;
+	struct pv_entry *pve;
+	int res;
 
 	DPRINTF(PDB_FOLLOW|PDB_BITS, 
 	    ("%s(%p, %x, %x)\n", __func__, pg, set, clear));
 
+	KASSERT((set & ~(PVF_REF|PVF_UNCACHEABLE)) == 0);
+	KASSERT((clear & ~(PVF_MOD|PVF_WRITE|PVF_UNCACHEABLE)) == 0);
+
 	mutex_enter(&pg->mdpage.pvh_lock);
-	rv = __changebit(pg, set, clear);
-	mutex_exit(&pg->mdpage.pvh_lock);
-
-	return rv;
-}
-
-/*
- * Must be called with pg->mdpage.pvh_lock held.
- */
-static bool
-__changebit(struct vm_page *pg, u_int set, u_int clear)
-{
-	struct pv_entry *pve;
-	int res;
-
-	KASSERT(mutex_owned(&pg->mdpage.pvh_lock));
-	KASSERT(((set | clear) &
-	    ~(PVF_MOD|PVF_REF|PVF_UNCACHEABLE|PVF_WRITE)) == 0);
 
 	/* preserve other bits */
 	res = pg->mdpage.pvh_attrs & (set | clear);
@@ -1611,6 +1515,7 @@ __changebit(struct vm_page *pg, u_int set, u_int clear)
 			}
 		}
 	}
+	mutex_exit(&pg->mdpage.pvh_lock);
 
 	return ((res & (clear | set)) != 0);
 }
@@ -1684,8 +1589,6 @@ pmap_activate(struct lwp *l)
 	pa_space_t space = pmap->pm_space;
 	struct pcb *pcb = lwp_getpcb(l);
 
-	KASSERT(pcb->pcb_uva == uvm_lwp_getuarea(l));
-
 	/* space is cached for the copy{in,out}'s pleasure */
 	pcb->pcb_space = space;
 	fdcache(HPPA_SID_KERNEL, (vaddr_t)pcb, sizeof(struct pcb));
@@ -1702,8 +1605,6 @@ pmap_flush_page(struct vm_page *pg, bool purge)
 
 	DPRINTF(PDB_FOLLOW|PDB_CACHE, ("%s(%p, %d)\n", __func__, pg, purge));
 
-	KASSERT(!(pg->mdpage.pvh_attrs & PVF_NC));
-
 	/* purge cache for all possible mappings for the pa */
 	for (pve = pg->mdpage.pvh_list; pve; pve = pve->pv_next) {
 		vaddr_t va = pve->pv_va & PV_VAMASK;
@@ -1715,8 +1616,8 @@ pmap_flush_page(struct vm_page *pg, bool purge)
 			fdcache(sp, va, PAGE_SIZE);
 #if defined(HP8000_CPU) || defined(HP8200_CPU) || \
     defined(HP8500_CPU) || defined(HP8600_CPU)
-		pdtlb(sp, va);
 		ficache(sp, va, PAGE_SIZE);
+		pdtlb(sp, va);
 		pitlb(sp, va);
 #endif
 	}
@@ -1737,10 +1638,11 @@ pmap_zero_page(paddr_t pa)
 
 	memset((void *)pa, 0, PAGE_SIZE);
 	fdcache(HPPA_SID_KERNEL, pa, PAGE_SIZE);
+
 #if defined(HP8000_CPU) || defined(HP8200_CPU) || \
     defined(HP8500_CPU) || defined(HP8600_CPU)
-	pdtlb(HPPA_SID_KERNEL, pa);
 	ficache(HPPA_SID_KERNEL, pa, PAGE_SIZE);
+	pdtlb(HPPA_SID_KERNEL, pa);
 	pitlb(HPPA_SID_KERNEL, pa);
 #endif
 }
@@ -1767,10 +1669,10 @@ pmap_copy_page(paddr_t spa, paddr_t dpa)
 	fdcache(HPPA_SID_KERNEL, dpa, PAGE_SIZE);
 #if defined(HP8000_CPU) || defined(HP8200_CPU) || \
     defined(HP8500_CPU) || defined(HP8600_CPU)
-	pdtlb(HPPA_SID_KERNEL, spa);
-	pdtlb(HPPA_SID_KERNEL, dpa);
 	ficache(HPPA_SID_KERNEL, spa, PAGE_SIZE);
 	ficache(HPPA_SID_KERNEL, dpa, PAGE_SIZE);
+	pdtlb(HPPA_SID_KERNEL, spa);
+	pdtlb(HPPA_SID_KERNEL, dpa);
 	pitlb(HPPA_SID_KERNEL, spa);
 	pitlb(HPPA_SID_KERNEL, dpa);
 #endif
@@ -1815,29 +1717,23 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 
 		pg = PHYS_TO_VM_PAGE(PTE_PAGE(pte));
 		if (pg != NULL) {
-
 			KASSERT(pa < HPPA_IOBEGIN);
 
-			mutex_enter(&pg->mdpage.pvh_lock);
-
-			if (flags & PMAP_NOCACHE)
-				pg->mdpage.pvh_attrs |= PVF_NC;
-			else {
-				struct pv_entry *pve;
+			struct pv_entry *pve;
 				
-				pve = pmap_pv_alloc();
-				if (!pve)
-					panic("%s: no pv entries available",
-					    __func__);
-				DPRINTF(PDB_FOLLOW|PDB_ENTER,
-				    ("%s(%lx, %lx, %x) TLB_KENTER\n", __func__,
-				    va, pa, pte));
+			pve = pmap_pv_alloc();
+			if (!pve)
+				panic("%s: no pv entries available",
+				    __func__);
+			DPRINTF(PDB_FOLLOW|PDB_ENTER,
+			    ("%s(%lx, %lx, %x) TLB_KENTER\n", __func__,
+			    va, pa, pte));
 
-				pmap_pv_enter(pg, pve, pmap_kernel(), va, NULL,
-				    PV_KENTER);
-				pmap_check_alias(pg, pve, va, &pte);
-			}
-
+			mutex_enter(&pg->mdpage.pvh_lock);
+			if (pmap_check_alias(pg, va, pte))
+				pmap_page_remove_locked(pg);
+			pmap_pv_enter(pg, pve, pmap_kernel(), va, NULL,
+			    PV_KENTER);
 			mutex_exit(&pg->mdpage.pvh_lock);
 		}
 	}
@@ -1911,12 +1807,6 @@ pmap_kremove(vaddr_t va, vsize_t size)
 			mutex_enter(&pg->mdpage.pvh_lock);
 
 			pve = pmap_pv_remove(pg, pmap, va);
-
-			if ((pg->mdpage.pvh_attrs & PVF_NC) == 0)
-				pmap_check_alias(pg, pg->mdpage.pvh_list, va,
-				    NULL);
-
-			pg->mdpage.pvh_attrs &= ~PVF_NC;
 
 			mutex_exit(&pg->mdpage.pvh_lock);
 			if (pve != NULL)

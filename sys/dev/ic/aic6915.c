@@ -1,4 +1,4 @@
-/*	$NetBSD: aic6915.c,v 1.22.4.3 2010/03/11 15:03:28 yamt Exp $	*/
+/*	$NetBSD: aic6915.c,v 1.22.4.4 2010/08/11 22:53:22 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic6915.c,v 1.22.4.3 2010/03/11 15:03:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic6915.c,v 1.22.4.4 2010/08/11 22:53:22 yamt Exp $");
 
 
 #include <sys/param.h>
@@ -460,8 +460,7 @@ sf_start(struct ifnet *ifp)
 		/*
 		 * Pass the packet to any BPF listeners.
 		 */
-		if (ifp->if_bpf)
-			bpf_ops->bpf_mtap(ifp->if_bpf, m0);
+		bpf_mtap(ifp, m0);
 	}
 
 	if (sc->sc_txpending == (SF_NTXDESC - 1)) {
@@ -791,8 +790,7 @@ sf_rxintr(struct sf_softc *sc)
 		/*
 		 * Pass this up to any BPF listeners.
 		 */
-		if (ifp->if_bpf)
-			bpf_ops->bpf_mtap(ifp->if_bpf, m);
+		bpf_mtap(ifp, m);
 
 		/* Pass it on. */
 		(*ifp->if_input)(ifp, m);

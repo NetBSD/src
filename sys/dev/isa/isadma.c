@@ -1,4 +1,4 @@
-/*	$NetBSD: isadma.c,v 1.57.4.4 2009/08/19 18:47:09 yamt Exp $	*/
+/*	$NetBSD: isadma.c,v 1.57.4.5 2010/08/11 22:53:36 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isadma.c,v 1.57.4.4 2009/08/19 18:47:09 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isadma.c,v 1.57.4.5 2010/08/11 22:53:36 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -155,7 +155,8 @@ _isa_dmainit(struct isa_dma_state *ids, bus_space_tag_t bst, bus_dma_tag_t dmat,
 		 * configuration mechanisms, the space and dma tags
 		 * must be the same!
 		 */
-		if (ids->ids_bst != bst || ids->ids_dmat != dmat)
+		if (!bus_space_is_equal(ids->ids_bst, bst) ||
+		    ids->ids_dmat != dmat)
 			panic("_isa_dmainit: inconsistent ISA tags");
 	} else {
 		ids->ids_bst = bst;
@@ -413,7 +414,7 @@ _isa_dmastart(struct isa_dma_state *ids, int chan, void *addr, bus_size_t nbytes
 	dmaaddr = dmam->dm_segs[0].ds_addr;
 
 #ifdef ISADMA_DEBUG
-	printf("     dmaaddr 0x%lx\n", dmaaddr);
+	printf("     dmaaddr %#" PRIxPADDR "\n", dmaaddr);
 
 	__asm(".globl isa_dmastart_aftersync ; isa_dmastart_aftersync:");
 #endif

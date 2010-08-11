@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.c,v 1.127.4.3 2010/03/11 15:02:29 yamt Exp $	*/
+/*	$NetBSD: npx.c,v 1.127.4.4 2010/08/11 22:52:13 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.127.4.3 2010/03/11 15:02:29 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.127.4.4 2010/08/11 22:52:13 yamt Exp $");
 
 #if 0
 #define IPRINTF(x)	printf x
@@ -123,6 +123,7 @@ __KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.127.4.3 2010/03/11 15:02:29 yamt Exp $");
 #include <uvm/uvm_extern.h>
 
 #include <machine/cpufunc.h>
+#include <machine/cpuvar.h>
 #include <machine/pcb.h>
 #include <machine/trap.h>
 #include <machine/specialreg.h>
@@ -215,7 +216,7 @@ npxprobe1(bus_space_tag_t iot, bus_space_handle_t ioh, int irq)
 	int status;
 	unsigned irqmask;
 
-	if (cpu_feature & CPUID_FPU) {
+	if (cpu_feature[0] & CPUID_FPU) {
 		i386_fpu_exception = 1;
 		return NPX_CPUID;
 	}
@@ -395,7 +396,8 @@ npxintr(void *arg, struct intrframe *frame)
 	/*
 	 * Clear the interrupt latch.
 	 */
-	bus_space_write_1(sc->sc_iot, sc->sc_ioh, 0, 0);
+	if (sc->sc_type == NPX_INTERRUPT)
+		bus_space_write_1(sc->sc_iot, sc->sc_ioh, 0, 0);
 #endif
 
 	/*
@@ -732,4 +734,235 @@ npxsave_lwp(struct lwp *l, bool save)
 		/* Ensure we restart with a clean slate. */
 	 	l->l_md.md_flags &= ~MDL_USEDFPU;
 	}
+}
+
+/* 
+ * The following mechanism is used to ensure that the FPE_... value
+ * that is passed as a trapcode to the signal handler of the user
+ * process does not have more than one bit set.
+ * 
+ * Multiple bits may be set if the user process modifies the control
+ * word while a status word bit is already set.  While this is a sign
+ * of bad coding, we have no choise than to narrow them down to one
+ * bit, since we must not send a trapcode that is not exactly one of
+ * the FPE_ macros.
+ *
+ * The mechanism has a static table with 127 entries.  Each combination
+ * of the 7 FPU status word exception bits directly translates to a
+ * position in this table, where a single FPE_... value is stored.
+ * This FPE_... value stored there is considered the "most important"
+ * of the exception bits and will be sent as the signal code.  The
+ * precedence of the bits is based upon Intel Document "Numerical
+ * Applications", Chapter "Special Computational Situations".
+ *
+ * The macro to choose one of these values does these steps: 1) Throw
+ * away status word bits that cannot be masked.  2) Throw away the bits
+ * currently masked in the control word, assuming the user isn't
+ * interested in them anymore.  3) Reinsert status word bit 7 (stack
+ * fault) if it is set, which cannot be masked but must be presered.
+ * 4) Use the remaining bits to point into the trapcode table.
+ *
+ * The 6 maskable bits in order of their preference, as stated in the
+ * above referenced Intel manual:
+ * 1  Invalid operation (FP_X_INV)
+ * 1a   Stack underflow
+ * 1b   Stack overflow
+ * 1c   Operand of unsupported format
+ * 1d   SNaN operand.
+ * 2  QNaN operand (not an exception, irrelavant here)
+ * 3  Any other invalid-operation not mentioned above or zero divide
+ *      (FP_X_INV, FP_X_DZ)
+ * 4  Denormal operand (FP_X_DNML)
+ * 5  Numeric over/underflow (FP_X_OFL, FP_X_UFL)
+ * 6  Inexact result (FP_X_IMP) 
+ */
+static const uint8_t fpetable[128] = {
+	0,
+	FPE_FLTINV,	/*  1 - INV */
+	FPE_FLTUND,	/*  2 - DNML */
+	FPE_FLTINV,	/*  3 - INV | DNML */
+	FPE_FLTDIV,	/*  4 - DZ */
+	FPE_FLTINV,	/*  5 - INV | DZ */
+	FPE_FLTDIV,	/*  6 - DNML | DZ */
+	FPE_FLTINV,	/*  7 - INV | DNML | DZ */
+	FPE_FLTOVF,	/*  8 - OFL */
+	FPE_FLTINV,	/*  9 - INV | OFL */
+	FPE_FLTUND,	/*  A - DNML | OFL */
+	FPE_FLTINV,	/*  B - INV | DNML | OFL */
+	FPE_FLTDIV,	/*  C - DZ | OFL */
+	FPE_FLTINV,	/*  D - INV | DZ | OFL */
+	FPE_FLTDIV,	/*  E - DNML | DZ | OFL */
+	FPE_FLTINV,	/*  F - INV | DNML | DZ | OFL */
+	FPE_FLTUND,	/* 10 - UFL */
+	FPE_FLTINV,	/* 11 - INV | UFL */
+	FPE_FLTUND,	/* 12 - DNML | UFL */
+	FPE_FLTINV,	/* 13 - INV | DNML | UFL */
+	FPE_FLTDIV,	/* 14 - DZ | UFL */
+	FPE_FLTINV,	/* 15 - INV | DZ | UFL */
+	FPE_FLTDIV,	/* 16 - DNML | DZ | UFL */
+	FPE_FLTINV,	/* 17 - INV | DNML | DZ | UFL */
+	FPE_FLTOVF,	/* 18 - OFL | UFL */
+	FPE_FLTINV,	/* 19 - INV | OFL | UFL */
+	FPE_FLTUND,	/* 1A - DNML | OFL | UFL */
+	FPE_FLTINV,	/* 1B - INV | DNML | OFL | UFL */
+	FPE_FLTDIV,	/* 1C - DZ | OFL | UFL */
+	FPE_FLTINV,	/* 1D - INV | DZ | OFL | UFL */
+	FPE_FLTDIV,	/* 1E - DNML | DZ | OFL | UFL */
+	FPE_FLTINV,	/* 1F - INV | DNML | DZ | OFL | UFL */
+	FPE_FLTRES,	/* 20 - IMP */
+	FPE_FLTINV,	/* 21 - INV | IMP */
+	FPE_FLTUND,	/* 22 - DNML | IMP */
+	FPE_FLTINV,	/* 23 - INV | DNML | IMP */
+	FPE_FLTDIV,	/* 24 - DZ | IMP */
+	FPE_FLTINV,	/* 25 - INV | DZ | IMP */
+	FPE_FLTDIV,	/* 26 - DNML | DZ | IMP */
+	FPE_FLTINV,	/* 27 - INV | DNML | DZ | IMP */
+	FPE_FLTOVF,	/* 28 - OFL | IMP */
+	FPE_FLTINV,	/* 29 - INV | OFL | IMP */
+	FPE_FLTUND,	/* 2A - DNML | OFL | IMP */
+	FPE_FLTINV,	/* 2B - INV | DNML | OFL | IMP */
+	FPE_FLTDIV,	/* 2C - DZ | OFL | IMP */
+	FPE_FLTINV,	/* 2D - INV | DZ | OFL | IMP */
+	FPE_FLTDIV,	/* 2E - DNML | DZ | OFL | IMP */
+	FPE_FLTINV,	/* 2F - INV | DNML | DZ | OFL | IMP */
+	FPE_FLTUND,	/* 30 - UFL | IMP */
+	FPE_FLTINV,	/* 31 - INV | UFL | IMP */
+	FPE_FLTUND,	/* 32 - DNML | UFL | IMP */
+	FPE_FLTINV,	/* 33 - INV | DNML | UFL | IMP */
+	FPE_FLTDIV,	/* 34 - DZ | UFL | IMP */
+	FPE_FLTINV,	/* 35 - INV | DZ | UFL | IMP */
+	FPE_FLTDIV,	/* 36 - DNML | DZ | UFL | IMP */
+	FPE_FLTINV,	/* 37 - INV | DNML | DZ | UFL | IMP */
+	FPE_FLTOVF,	/* 38 - OFL | UFL | IMP */
+	FPE_FLTINV,	/* 39 - INV | OFL | UFL | IMP */
+	FPE_FLTUND,	/* 3A - DNML | OFL | UFL | IMP */
+	FPE_FLTINV,	/* 3B - INV | DNML | OFL | UFL | IMP */
+	FPE_FLTDIV,	/* 3C - DZ | OFL | UFL | IMP */
+	FPE_FLTINV,	/* 3D - INV | DZ | OFL | UFL | IMP */
+	FPE_FLTDIV,	/* 3E - DNML | DZ | OFL | UFL | IMP */
+	FPE_FLTINV,	/* 3F - INV | DNML | DZ | OFL | UFL | IMP */
+	FPE_FLTSUB,	/* 40 - STK */
+	FPE_FLTSUB,	/* 41 - INV | STK */
+	FPE_FLTUND,	/* 42 - DNML | STK */
+	FPE_FLTSUB,	/* 43 - INV | DNML | STK */
+	FPE_FLTDIV,	/* 44 - DZ | STK */
+	FPE_FLTSUB,	/* 45 - INV | DZ | STK */
+	FPE_FLTDIV,	/* 46 - DNML | DZ | STK */
+	FPE_FLTSUB,	/* 47 - INV | DNML | DZ | STK */
+	FPE_FLTOVF,	/* 48 - OFL | STK */
+	FPE_FLTSUB,	/* 49 - INV | OFL | STK */
+	FPE_FLTUND,	/* 4A - DNML | OFL | STK */
+	FPE_FLTSUB,	/* 4B - INV | DNML | OFL | STK */
+	FPE_FLTDIV,	/* 4C - DZ | OFL | STK */
+	FPE_FLTSUB,	/* 4D - INV | DZ | OFL | STK */
+	FPE_FLTDIV,	/* 4E - DNML | DZ | OFL | STK */
+	FPE_FLTSUB,	/* 4F - INV | DNML | DZ | OFL | STK */
+	FPE_FLTUND,	/* 50 - UFL | STK */
+	FPE_FLTSUB,	/* 51 - INV | UFL | STK */
+	FPE_FLTUND,	/* 52 - DNML | UFL | STK */
+	FPE_FLTSUB,	/* 53 - INV | DNML | UFL | STK */
+	FPE_FLTDIV,	/* 54 - DZ | UFL | STK */
+	FPE_FLTSUB,	/* 55 - INV | DZ | UFL | STK */
+	FPE_FLTDIV,	/* 56 - DNML | DZ | UFL | STK */
+	FPE_FLTSUB,	/* 57 - INV | DNML | DZ | UFL | STK */
+	FPE_FLTOVF,	/* 58 - OFL | UFL | STK */
+	FPE_FLTSUB,	/* 59 - INV | OFL | UFL | STK */
+	FPE_FLTUND,	/* 5A - DNML | OFL | UFL | STK */
+	FPE_FLTSUB,	/* 5B - INV | DNML | OFL | UFL | STK */
+	FPE_FLTDIV,	/* 5C - DZ | OFL | UFL | STK */
+	FPE_FLTSUB,	/* 5D - INV | DZ | OFL | UFL | STK */
+	FPE_FLTDIV,	/* 5E - DNML | DZ | OFL | UFL | STK */
+	FPE_FLTSUB,	/* 5F - INV | DNML | DZ | OFL | UFL | STK */
+	FPE_FLTRES,	/* 60 - IMP | STK */
+	FPE_FLTSUB,	/* 61 - INV | IMP | STK */
+	FPE_FLTUND,	/* 62 - DNML | IMP | STK */
+	FPE_FLTSUB,	/* 63 - INV | DNML | IMP | STK */
+	FPE_FLTDIV,	/* 64 - DZ | IMP | STK */
+	FPE_FLTSUB,	/* 65 - INV | DZ | IMP | STK */
+	FPE_FLTDIV,	/* 66 - DNML | DZ | IMP | STK */
+	FPE_FLTSUB,	/* 67 - INV | DNML | DZ | IMP | STK */
+	FPE_FLTOVF,	/* 68 - OFL | IMP | STK */
+	FPE_FLTSUB,	/* 69 - INV | OFL | IMP | STK */
+	FPE_FLTUND,	/* 6A - DNML | OFL | IMP | STK */
+	FPE_FLTSUB,	/* 6B - INV | DNML | OFL | IMP | STK */
+	FPE_FLTDIV,	/* 6C - DZ | OFL | IMP | STK */
+	FPE_FLTSUB,	/* 6D - INV | DZ | OFL | IMP | STK */
+	FPE_FLTDIV,	/* 6E - DNML | DZ | OFL | IMP | STK */
+	FPE_FLTSUB,	/* 6F - INV | DNML | DZ | OFL | IMP | STK */
+	FPE_FLTUND,	/* 70 - UFL | IMP | STK */
+	FPE_FLTSUB,	/* 71 - INV | UFL | IMP | STK */
+	FPE_FLTUND,	/* 72 - DNML | UFL | IMP | STK */
+	FPE_FLTSUB,	/* 73 - INV | DNML | UFL | IMP | STK */
+	FPE_FLTDIV,	/* 74 - DZ | UFL | IMP | STK */
+	FPE_FLTSUB,	/* 75 - INV | DZ | UFL | IMP | STK */
+	FPE_FLTDIV,	/* 76 - DNML | DZ | UFL | IMP | STK */
+	FPE_FLTSUB,	/* 77 - INV | DNML | DZ | UFL | IMP | STK */
+	FPE_FLTOVF,	/* 78 - OFL | UFL | IMP | STK */
+	FPE_FLTSUB,	/* 79 - INV | OFL | UFL | IMP | STK */
+	FPE_FLTUND,	/* 7A - DNML | OFL | UFL | IMP | STK */
+	FPE_FLTSUB,	/* 7B - INV | DNML | OFL | UFL | IMP | STK */
+	FPE_FLTDIV,	/* 7C - DZ | OFL | UFL | IMP | STK */
+	FPE_FLTSUB,	/* 7D - INV | DZ | OFL | UFL | IMP | STK */
+	FPE_FLTDIV,	/* 7E - DNML | DZ | OFL | UFL | IMP | STK */
+	FPE_FLTSUB,	/* 7F - INV | DNML | DZ | OFL | UFL | IMP | STK */
+};
+
+#define GET_FPU_CW(pcb) \
+    (i386_use_fxsave ? \
+	pcb->pcb_savefpu.sv_xmm.sv_env.en_cw : \
+	pcb->pcb_savefpu.sv_87.sv_env.en_cw)
+#define GET_FPU_SW(pcb) \
+    (i386_use_fxsave ? \
+	pcb->pcb_savefpu.sv_xmm.sv_env.en_sw : \
+	pcb->pcb_savefpu.sv_87.sv_env.en_sw)
+
+/*
+ * Preserve the FP status word, clear FP exceptions, then generate a SIGFPE.
+ *
+ * Clearing exceptions is necessary mainly to avoid IRQ13 bugs.  We now
+ * depend on longjmp() restoring a usable state.  Restoring the state
+ * or examining it might fail if we didn't clear exceptions.
+ *
+ * The error code chosen will be one of the FPE_... macros. It will be
+ * sent as the second argument to old BSD-style signal handlers and as
+ * "siginfo_t->si_code" (second argument) to SA_SIGINFO signal handlers.
+ *
+ * XXX the FP state is not preserved across signal handlers.  So signal
+ * handlers cannot afford to do FP unless they preserve the state or
+ * longjmp() out.  Both preserving the state and longjmp()ing may be
+ * destroyed by IRQ13 bugs.  Clearing FP exceptions is not an acceptable
+ * solution for signals other than SIGFPE.
+ */
+int
+npxtrap(struct lwp *l)
+{
+	u_short control, status;
+	struct cpu_info *ci = curcpu();
+	struct lwp *fl = ci->ci_fpcurlwp;
+
+	if (!i386_fpu_present) {
+		printf("%s: fpcurthread = %p, curthread = %p, npx_type = %d\n",
+		    __func__, fl, l, npx_type);
+		panic("npxtrap from nowhere");
+	}
+	kpreempt_disable();
+
+	/*
+	 * Interrupt handling (for another interrupt) may have pushed the
+	 * state to memory.  Fetch the relevant parts of the state from
+	 * wherever they are.
+	 */
+	if (fl != l) {
+		struct pcb *pcb = lwp_getpcb(l);
+		control = GET_FPU_CW(pcb);
+		status = GET_FPU_SW(pcb);
+	} else {
+		fnstcw(&control);
+		fnstsw(&status);
+	}
+
+	if (fl == l)
+		fnclex();
+	kpreempt_enable();
+	return fpetable[status & ((~control & 0x3f) | 0x40)];
 }

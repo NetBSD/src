@@ -1,4 +1,4 @@
-/*  $NetBSD: if_wpi.c,v 1.37.4.5 2010/03/11 15:03:49 yamt Exp $    */
+/*  $NetBSD: if_wpi.c,v 1.37.4.6 2010/08/11 22:53:49 yamt Exp $    */
 
 /*-
  * Copyright (c) 2006, 2007
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wpi.c,v 1.37.4.5 2010/03/11 15:03:49 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wpi.c,v 1.37.4.6 2010/08/11 22:53:49 yamt Exp $");
 
 /*
  * Driver for Intel PRO/Wireless 3945ABG 802.11 network adapters.
@@ -362,7 +362,7 @@ wpi_attach(device_t parent __unused, device_t self, void *aux)
 	else
 		aprint_error_dev(self, "couldn't establish power handler\n");
 
-	bpf_ops->bpf_attach(ifp, DLT_IEEE802_11_RADIO,
+	bpf_attach2(ifp, DLT_IEEE802_11_RADIO,
 	    sizeof(struct ieee80211_frame) + IEEE80211_RADIOTAP_HDRLEN,
 	    &sc->sc_drvbpf);
 
@@ -396,7 +396,7 @@ wpi_detach(device_t self, int flags __unused)
 	wpi_stop(ifp, 1);
 
 	if (ifp != NULL)
-		bpf_ops->bpf_detach(ifp);
+		bpf_detach(ifp);
 	ieee80211_ifdetach(&sc->sc_ic);
 	if (ifp != NULL)
 		if_detach(ifp);
@@ -1508,7 +1508,7 @@ wpi_rx_intr(struct wpi_softc *sc, struct wpi_rx_desc *desc,
 		if (le16toh(head->flags) & 0x4)
 			tap->wr_flags |= IEEE80211_RADIOTAP_F_SHORTPRE;
 
-		bpf_ops->bpf_mtap2(sc->sc_drvbpf, tap, sc->sc_rxtap_len, m);
+		bpf_mtap2(sc->sc_drvbpf, tap, sc->sc_rxtap_len, m);
 	}
 
 	/* grab a reference to the source node */
@@ -1826,7 +1826,7 @@ wpi_tx_data(struct wpi_softc *sc, struct mbuf *m0, struct ieee80211_node *ni,
 		if (wh->i_fc[1] & IEEE80211_FC1_WEP)
 			tap->wt_flags |= IEEE80211_RADIOTAP_F_WEP;
 
-		bpf_ops->bpf_mtap2(sc->sc_drvbpf, tap, sc->sc_txtap_len, m0);
+		bpf_mtap2(sc->sc_drvbpf, tap, sc->sc_txtap_len, m0);
 	}
 
 	cmd = &ring->cmd[ring->cur];
@@ -1982,8 +1982,7 @@ wpi_start(struct ifnet *ifp)
 				ifp->if_oerrors++;
 				continue;
 			}
-			if (ic->ic_rawbpf != NULL)
-				bpf_ops->bpf_mtap(ic->ic_rawbpf, m0);
+			bpf_mtap3(ic->ic_rawbpf, m0);
 			if (wpi_tx_data(sc, m0, ni, 0) != 0) {
 				ifp->if_oerrors++;
 				break;
@@ -2026,16 +2025,14 @@ wpi_start(struct ifnet *ifp)
 				break;
 			}
 			IFQ_DEQUEUE(&ifp->if_snd, m0);
-			if (ifp->if_bpf != NULL)
-				bpf_ops->bpf_mtap(ifp->if_bpf, m0);
+			bpf_mtap(ifp, m0);
 			m0 = ieee80211_encap(ic, m0, ni);
 			if (m0 == NULL) {
 				ieee80211_free_node(ni);
 				ifp->if_oerrors++;
 				continue;
 			}
-			if (ic->ic_rawbpf != NULL)
-				bpf_ops->bpf_mtap(ic->ic_rawbpf, m0);
+			bpf_mtap3(ic->ic_rawbpf, m0);
 			if (wpi_tx_data(sc, m0, ni, ac) != 0) {
 				ieee80211_free_node(ni);
 				ifp->if_oerrors++;

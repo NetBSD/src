@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_at_ugenhc.c,v 1.1.2.2 2010/03/11 15:04:34 yamt Exp $	*/
+/*	$NetBSD: usb_at_ugenhc.c,v 1.1.2.3 2010/08/11 22:55:02 yamt Exp $	*/
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -12,23 +12,11 @@
 #include "rump_private.h"
 #include "rump_dev_private.h"
 
-#define FLAWLESSCALL(call)						\
-do {									\
-	int att_error;							\
-	if ((att_error = call) != 0)					\
-		panic("\"%s\" failed", #call);				\
-} while (/*CONSTCOND*/0)
-
 void tty_init(void);
 
 RUMP_COMPONENT(RUMP_COMPONENT_DEV)
 {
 
-	FLAWLESSCALL(config_cfdata_attach(cfdata_usb, 0));
-
-	FLAWLESSCALL(config_cfdriver_attach(&usb_cd));
-	FLAWLESSCALL(config_cfattach_attach("usb", &usb_ca));
-
-	FLAWLESSCALL(config_cfdriver_attach(&uhub_cd));
-	FLAWLESSCALL(config_cfattach_attach("uhub", &uroothub_ca));
+	config_init_component(cfdriver_ioconf_usb,
+	    cfattach_ioconf_usb, cfdata_ioconf_usb);
 }

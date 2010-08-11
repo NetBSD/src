@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_exec_elf32.c,v 1.19.16.1 2008/05/16 02:23:47 yamt Exp $	 */
+/*	$NetBSD: svr4_32_exec_elf32.c,v 1.19.16.2 2010/08/11 22:53:13 yamt Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_exec_elf32.c,v 1.19.16.1 2008/05/16 02:23:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_exec_elf32.c,v 1.19.16.2 2010/08/11 22:53:13 yamt Exp $");
 
 #define	ELFSIZE		32				/* XXX should die */
 
@@ -93,11 +93,9 @@ svr4_32_copyargs(struct lwp *l, struct exec_package *pack, struct ps_strings *ar
 		platform = a; /* Patch this later. */
 		a++;
 
-		if (pack->ep_ndp->ni_cnd.cn_flags & HASBUF) {
-			a->a_type = AT_SUN_EXECNAME;
-			exec = a; /* Patch this later. */
-			a++;
-		}
+		a->a_type = AT_SUN_EXECNAME;
+		exec = a; /* Patch this later. */
+		a++;
 
 		a->a_type = AT_PHDR;
 		a->a_v = ap->arg_phaddr;
@@ -173,7 +171,7 @@ svr4_32_copyargs(struct lwp *l, struct exec_package *pack, struct ps_strings *ar
 		len += strlen(machine_model) + 1;
 
 		if (exec) {
-			path = pack->ep_ndp->ni_cnd.cn_pnbuf;
+			path = pack->ep_resolvedname;
 
 			/* Copy out the file we're executing. */
 			exec->a_v = (u_long)(*stackp) + len;

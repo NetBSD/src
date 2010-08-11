@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_gsc.c,v 1.14.44.4 2010/03/11 15:02:23 yamt Exp $	*/
+/*	$NetBSD: if_ie_gsc.c,v 1.14.44.5 2010/08/11 22:52:02 yamt Exp $	*/
 
 /*	$OpenBSD: if_ie_gsc.c,v 1.6 2001/01/12 22:57:04 mickey Exp $	*/
 
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ie_gsc.c,v 1.14.44.4 2010/03/11 15:02:23 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ie_gsc.c,v 1.14.44.5 2010/08/11 22:52:02 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -419,7 +419,7 @@ ie_gsc_attach(device_t parent, device_t self, void *aux)
 	 * physical addresses.
 	 */
 	if (bus_dmamem_alloc(gsc->iemt, sc->sc_msize, PAGE_SIZE, 0,
-			     &seg, 1, &rseg, BUS_DMA_NOWAIT | BUS_DMA_24BIT)) {
+	    &seg, 1, &rseg, BUS_DMA_NOWAIT | BUS_DMA_24BIT)) {
 		printf (": can't allocate %d bytes of DMA memory\n",
 			sc->sc_msize);
 		return;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_raid.c,v 1.27.4.3 2009/05/16 10:41:18 yamt Exp $	*/
+/*	$NetBSD: ata_raid.c,v 1.27.4.4 2010/08/11 22:53:18 yamt Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_raid.c,v 1.27.4.3 2009/05/16 10:41:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_raid.c,v 1.27.4.4 2010/08/11 22:53:18 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -270,13 +270,9 @@ ata_raid_get_array_info(u_int type, u_int arrayno)
 	aai = malloc(sizeof(*aai), M_DEVBUF, M_WAITOK | M_ZERO);
 	aai->aai_type = type;
 	aai->aai_arrayno = arrayno;
+	aai->aai_curdisk = 0;
 
 	ataraid_array_info_count++;
-
-	if (TAILQ_EMPTY(&ataraid_array_info_list)) {
-		TAILQ_INSERT_TAIL(&ataraid_array_info_list, aai, aai_list);
-		goto out;
-	}
 
 	/* Sort it into the list: type first, then array number. */
 	TAILQ_FOREACH(laai, &ataraid_array_info_list, aai_list) {

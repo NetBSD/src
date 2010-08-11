@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9.c,v 1.82.2.3 2010/03/11 15:03:34 yamt Exp $	*/
+/*	$NetBSD: rtl81x9.c,v 1.82.2.4 2010/08/11 22:53:30 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtl81x9.c,v 1.82.2.3 2010/03/11 15:03:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtl81x9.c,v 1.82.2.4 2010/08/11 22:53:30 yamt Exp $");
 
 #include "rnd.h"
 
@@ -849,6 +849,9 @@ rtk_detach(struct rtk_softc *sc)
 	    RTK_RXBUFLEN + 16);
 	bus_dmamem_free(sc->sc_dmat, &sc->sc_dmaseg, sc->sc_dmanseg);
 
+	/* we don't want to run again */
+	sc->sc_flags &= ~RTK_ATTACHED;
+
 	return 0;
 }
 
@@ -1081,8 +1084,7 @@ rtk_rxeof(struct rtk_softc *sc)
 
 		ifp->if_ipackets++;
 
-		if (ifp->if_bpf)
-			bpf_ops->bpf_mtap(ifp->if_bpf, m);
+		bpf_mtap(ifp, m);
 		/* pass it on. */
 		(*ifp->if_input)(ifp, m);
 	}
@@ -1246,7 +1248,7 @@ rtk_start(struct ifnet *ifp)
 		 * fit in one DMA segment, and we need to copy.  Note,
 		 * the packet must also be aligned.
 		 * if the packet is too small, copy it too, so we're sure
-		 * so have enouth room for the pad buffer.
+		 * so have enough room for the pad buffer.
 		 */
 		if ((mtod(m_head, uintptr_t) & 3) != 0 ||
 		    m_head->m_pkthdr.len < ETHER_PAD_LEN ||
@@ -1294,8 +1296,7 @@ rtk_start(struct ifnet *ifp)
 		 * If there's a BPF listener, bounce a copy of this frame
 		 * to him.
 		 */
-		if (ifp->if_bpf)
-			bpf_ops->bpf_mtap(ifp->if_bpf, m_head);
+		bpf_mtap(ifp, m_head);
 		if (m_new != NULL) {
 			m_freem(m_head);
 			m_head = m_new;

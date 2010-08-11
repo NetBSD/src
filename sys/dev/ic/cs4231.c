@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4231.c,v 1.21.4.2 2010/03/11 15:03:29 yamt Exp $	*/
+/*	$NetBSD: cs4231.c,v 1.21.4.3 2010/08/11 22:53:24 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4231.c,v 1.21.4.2 2010/03/11 15:03:29 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4231.c,v 1.21.4.3 2010/08/11 22:53:24 yamt Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -40,9 +40,9 @@ __KERNEL_RCSID(0, "$NetBSD: cs4231.c,v 1.21.4.2 2010/03/11 15:03:29 yamt Exp $")
 #include <sys/errno.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
+#include <sys/bus.h>
 
 #include <machine/autoconf.h>
-#include <machine/bus.h>
 #include <sys/cpu.h>
 
 #include <sys/audioio.h>

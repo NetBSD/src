@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_vfsops.c,v 1.49.10.4 2010/03/11 15:04:13 yamt Exp $	*/
+/*	$NetBSD: filecore_vfsops.c,v 1.49.10.5 2010/08/11 22:54:33 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.49.10.4 2010/03/11 15:04:13 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.49.10.5 2010/08/11 22:54:33 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -96,7 +96,7 @@ __KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.49.10.4 2010/03/11 15:04:13 ya
 #include <fs/filecorefs/filecore_node.h>
 #include <fs/filecorefs/filecore_mount.h>
 
-MODULE(MODULE_CLASS_VFS, filecorefs, NULL);
+MODULE(MODULE_CLASS_VFS, filecore, NULL);
 
 MALLOC_JUSTDEFINE(M_FILECOREMNT,
     "filecore mount", "Filecore FS mount structures");
@@ -145,7 +145,7 @@ static const struct genfs_ops filecore_genfsops = {
 };
 
 static int
-filecorefs_modcmd(modcmd_t cmd, void *arg)
+filecore_modcmd(modcmd_t cmd, void *arg)
 {
 	int error;
 
@@ -289,7 +289,7 @@ filecore_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	 */
 	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
 	error = genfs_can_mount(devvp, VREAD, l->l_cred);
-	VOP_UNLOCK(devvp, 0);
+	VOP_UNLOCK(devvp);
 	if (error) {
 		vrele(devvp);
 		return (error);
@@ -428,7 +428,7 @@ out:
 	}
 	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
 	(void)VOP_CLOSE(devvp, ronly ? FREAD : FREAD|FWRITE, NOCRED);
-	VOP_UNLOCK(devvp, 0);
+	VOP_UNLOCK(devvp);
 	return error;
 }
 

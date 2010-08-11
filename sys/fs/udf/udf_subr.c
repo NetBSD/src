@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.44.10.6 2010/03/11 15:04:15 yamt Exp $ */
+/* $NetBSD: udf_subr.c,v 1.44.10.7 2010/08/11 22:54:36 yamt Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.44.10.6 2010/03/11 15:04:15 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.44.10.7 2010/08/11 22:54:36 yamt Exp $");
 #endif /* not lint */
 
 
@@ -3445,7 +3445,7 @@ loop:
 		assert(vp);
 		mutex_enter(&vp->v_interlock);
 		mutex_exit(&ump->ihash_lock);
-		if (vget(vp, LK_EXCLUSIVE | LK_INTERLOCK))
+		if (vget(vp, LK_EXCLUSIVE))
 			goto loop;
 		return udf_node;
 	}
@@ -5452,7 +5452,7 @@ udf_get_node(struct udf_mount *ump, struct long_ad *node_icb_loc,
 		/* recycle udf_node */
 		udf_dispose_node(udf_node);
 
-		vlockmgr(nvp->v_vnlock, LK_RELEASE);
+		VOP_UNLOCK(nvp);
 		nvp->v_data = NULL;
 		ungetnewvnode(nvp);
 
@@ -5548,7 +5548,7 @@ udf_get_node(struct udf_mount *ump, struct long_ad *node_icb_loc,
 		/* recycle udf_node */
 		udf_dispose_node(udf_node);
 
-		vlockmgr(nvp->v_vnlock, LK_RELEASE);
+		VOP_UNLOCK(nvp);
 		nvp->v_data = NULL;
 		ungetnewvnode(nvp);
 
@@ -5883,7 +5883,7 @@ error_out_unreserve:
 	udf_do_unreserve_space(ump, NULL, vpart_num, 1);
 
 error_out_unlock:
-	vlockmgr(nvp->v_vnlock, LK_RELEASE);
+	VOP_UNLOCK(nvp);
 
 error_out_unget:
 	nvp->v_data = NULL;
@@ -6401,7 +6401,7 @@ derailed:
 		}
 
 		mutex_exit(&mntvnode_lock);
-		error = vget(vp, LK_EXCLUSIVE | LK_NOWAIT | LK_INTERLOCK);
+		error = vget(vp, LK_EXCLUSIVE | LK_NOWAIT);
 		if (error) {
 			mutex_enter(&mntvnode_lock);
 			if (error == ENOENT)

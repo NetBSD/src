@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.185.2.3 2010/03/11 15:04:17 yamt Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.185.2.4 2010/08/11 22:54:40 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.185.2.3 2010/03/11 15:04:17 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.185.2.4 2010/08/11 22:54:40 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -103,8 +103,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.185.2.3 2010/03/11 15:04:17 yamt Exp
 #include <sys/fcntl.h>
 #include <sys/kauth.h>
 #include <sys/vnode.h>
-#include <sys/syscallvar.h>
-#include <sys/xcall.h>
 #include <sys/module.h>
 
 #include <uvm/uvm_extern.h>
@@ -722,102 +720,4 @@ trace_exit(register_t code, register_t rval[], int error)
 	    (PSL_SYSCALL|PSL_TRACED))
 		process_stoptrace();
 #endif
-}
-
-int
-syscall_establish(const struct emul *em, const struct syscall_package *sp)
-{
-	struct sysent *sy;
-	int i;
-
-	KASSERT(mutex_owned(&module_lock));
-
-	if (em == NULL) {
-		em = &emul_netbsd;
-	}
-	sy = em->e_sysent;
-
-	/*
-	 * Ensure that all preconditions are valid, since this is
-	 * an all or nothing deal.  Once a system call is entered,
-	 * it can become busy and we could be unable to remove it
-	 * on error.
-	 */
-	for (i = 0; sp[i].sp_call != NULL; i++) {
-		if (sy[sp[i].sp_code].sy_call != sys_nomodule) {
-#ifdef DIAGNOSTIC
-			printf("syscall %d is busy\n", sp[i].sp_code);
-#endif
-			return EBUSY;
-		}
-	}
-	/* Everything looks good, patch them in. */
-	for (i = 0; sp[i].sp_call != NULL; i++) {
-		sy[sp[i].sp_code].sy_call = sp[i].sp_call;
-	}
-
-	return 0;
-}
-
-int
-syscall_disestablish(const struct emul *em, const struct syscall_package *sp)
-{
-	struct sysent *sy;
-	uint64_t where;
-	lwp_t *l;
-	int i;
-
-	KASSERT(mutex_owned(&module_lock));
-
-	if (em == NULL) {
-		em = &emul_netbsd;
-	}
-	sy = em->e_sysent;
-
-	/*
-	 * First, patch the system calls to sys_nomodule to gate further
-	 * activity.
-	 */
-	for (i = 0; sp[i].sp_call != NULL; i++) {
-		KASSERT(sy[sp[i].sp_code].sy_call == sp[i].sp_call);
-		sy[sp[i].sp_code].sy_call = sys_nomodule;
-	}
-
-	/*
-	 * Run a cross call to cycle through all CPUs.  This does two
-	 * things: lock activity provides a barrier and makes our update
-	 * of sy_call visible to all CPUs, and upon return we can be sure
-	 * that we see pertinent values of l_sysent posted by remote CPUs.
-	 */
-	where = xc_broadcast(0, (xcfunc_t)nullop, NULL, NULL);
-	xc_wait(where);
-
-	/*
-	 * Now it's safe to check l_sysent.  Run through all LWPs and see
-	 * if anyone is still using the system call.
-	 */
-	for (i = 0; sp[i].sp_call != NULL; i++) {
-		mutex_enter(proc_lock);
-		LIST_FOREACH(l, &alllwp, l_list) {
-			if (l->l_sysent == &sy[sp[i].sp_code]) {
-				break;
-			}
-		}
-		mutex_exit(proc_lock);
-		if (l == NULL) {
-			continue;
-		}
-		/*
-		 * We lose: one or more calls are still in use.  Put back
-		 * the old entrypoints and act like nothing happened.
-		 * When we drop module_lock, any system calls held in
-		 * sys_nomodule() will be restarted.
-		 */
-		for (i = 0; sp[i].sp_call != NULL; i++) {
-			sy[sp[i].sp_code].sy_call = sp[i].sp_call;
-		}
-		return EBUSY;
-	}
-
-	return 0;
 }

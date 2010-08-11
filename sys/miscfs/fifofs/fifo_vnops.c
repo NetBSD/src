@@ -1,4 +1,4 @@
-/*	$NetBSD: fifo_vnops.c,v 1.65.2.1 2008/05/16 02:25:39 yamt Exp $	*/
+/*	$NetBSD: fifo_vnops.c,v 1.65.2.2 2010/08/11 22:54:46 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fifo_vnops.c,v 1.65.2.1 2008/05/16 02:25:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fifo_vnops.c,v 1.65.2.2 2010/08/11 22:54:46 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,57 +95,11 @@ struct fifoinfo {
 	int		fi_writers;
 };
 
-int (**fifo_vnodeop_p)(void *);
-const struct vnodeopv_entry_desc fifo_vnodeop_entries[] = {
-	{ &vop_default_desc, vn_default_error },
-	{ &vop_lookup_desc, fifo_lookup },		/* lookup */
-	{ &vop_create_desc, fifo_create },		/* create */
-	{ &vop_mknod_desc, fifo_mknod },		/* mknod */
-	{ &vop_open_desc, fifo_open },			/* open */
-	{ &vop_close_desc, fifo_close },		/* close */
-	{ &vop_access_desc, fifo_access },		/* access */
-	{ &vop_getattr_desc, fifo_getattr },		/* getattr */
-	{ &vop_setattr_desc, fifo_setattr },		/* setattr */
-	{ &vop_read_desc, fifo_read },			/* read */
-	{ &vop_write_desc, fifo_write },		/* write */
-	{ &vop_ioctl_desc, fifo_ioctl },		/* ioctl */
-	{ &vop_poll_desc, fifo_poll },			/* poll */
-	{ &vop_kqfilter_desc, fifo_kqfilter },		/* kqfilter */
-	{ &vop_revoke_desc, fifo_revoke },		/* revoke */
-	{ &vop_mmap_desc, fifo_mmap },			/* mmap */
-	{ &vop_fsync_desc, fifo_fsync },		/* fsync */
-	{ &vop_seek_desc, fifo_seek },			/* seek */
-	{ &vop_remove_desc, fifo_remove },		/* remove */
-	{ &vop_link_desc, fifo_link },			/* link */
-	{ &vop_rename_desc, fifo_rename },		/* rename */
-	{ &vop_mkdir_desc, fifo_mkdir },		/* mkdir */
-	{ &vop_rmdir_desc, fifo_rmdir },		/* rmdir */
-	{ &vop_symlink_desc, fifo_symlink },		/* symlink */
-	{ &vop_readdir_desc, fifo_readdir },		/* readdir */
-	{ &vop_readlink_desc, fifo_readlink },		/* readlink */
-	{ &vop_abortop_desc, fifo_abortop },		/* abortop */
-	{ &vop_inactive_desc, fifo_inactive },		/* inactive */
-	{ &vop_reclaim_desc, fifo_reclaim },		/* reclaim */
-	{ &vop_lock_desc, fifo_lock },			/* lock */
-	{ &vop_unlock_desc, fifo_unlock },		/* unlock */
-	{ &vop_bmap_desc, fifo_bmap },			/* bmap */
-	{ &vop_strategy_desc, fifo_strategy },		/* strategy */
-	{ &vop_print_desc, fifo_print },		/* print */
-	{ &vop_islocked_desc, fifo_islocked },		/* islocked */
-	{ &vop_pathconf_desc, fifo_pathconf },		/* pathconf */
-	{ &vop_advlock_desc, fifo_advlock },		/* advlock */
-	{ &vop_bwrite_desc, fifo_bwrite },		/* bwrite */
-	{ &vop_putpages_desc, fifo_putpages }, 		/* putpages */
-	{ (struct vnodeop_desc*)NULL, (int(*)(void *))NULL }
-};
-const struct vnodeopv_desc fifo_vnodeop_opv_desc =
-	{ &fifo_vnodeop_p, fifo_vnodeop_entries };
-
 /*
  * Trivial lookup routine that always fails.
  */
 /* ARGSUSED */
-int
+static int
 fifo_lookup(void *v)
 {
 	struct vop_lookup_args /* {
@@ -163,7 +117,7 @@ fifo_lookup(void *v)
  * to find an active instance of a fifo.
  */
 /* ARGSUSED */
-int
+static int
 fifo_open(void *v)
 {
 	struct vop_open_args /* {
@@ -236,7 +190,7 @@ fifo_open(void *v)
 		if (ap->a_mode & O_NONBLOCK) {
 		} else {
 			while (!soreadable(rso) && fip->fi_writers == 0) {
-				VOP_UNLOCK(vp, 0);
+				VOP_UNLOCK(vp);
 				error = cv_wait_sig(&fip->fi_rcv,
 				    wso->so_lock);
 				sounlock(wso);
@@ -256,7 +210,7 @@ fifo_open(void *v)
 			}
 		} else {
 			while (fip->fi_readers == 0) {
-				VOP_UNLOCK(vp, 0);
+				VOP_UNLOCK(vp);
 				error = cv_wait_sig(&fip->fi_wcv,
 				    wso->so_lock);
 				sounlock(wso);
@@ -278,7 +232,7 @@ fifo_open(void *v)
  * Vnode op for read
  */
 /* ARGSUSED */
-int
+static int
 fifo_read(void *v)
 {
 	struct vop_read_args /* {
@@ -301,7 +255,7 @@ fifo_read(void *v)
 	if (uio->uio_resid == 0)
 		return (0);
 	startresid = uio->uio_resid;
-	VOP_UNLOCK(ap->a_vp, 0);
+	VOP_UNLOCK(ap->a_vp);
 	if (ap->a_ioflag & IO_NDELAY) {
 		/* XXX Bogus, affects other threads. */
 		rso->so_nbio = 1;
@@ -326,7 +280,7 @@ fifo_read(void *v)
  * Vnode op for write
  */
 /* ARGSUSED */
-int
+static int
 fifo_write(void *v)
 {
 	struct vop_write_args /* {
@@ -343,7 +297,7 @@ fifo_write(void *v)
 	if (ap->a_uio->uio_rw != UIO_WRITE)
 		panic("fifo_write mode");
 #endif
-	VOP_UNLOCK(ap->a_vp, 0);
+	VOP_UNLOCK(ap->a_vp);
 	if (ap->a_ioflag & IO_NDELAY) {
 		/* XXX Bogus, affects other threads. */
 		wso->so_nbio = 1;
@@ -359,7 +313,7 @@ fifo_write(void *v)
  * Device ioctl operation.
  */
 /* ARGSUSED */
-int
+static int
 fifo_ioctl(void *v)
 {
 	struct vop_ioctl_args /* {
@@ -391,7 +345,7 @@ fifo_ioctl(void *v)
 }
 
 /* ARGSUSED */
-int
+static int
 fifo_poll(void *v)
 {
 	struct vop_poll_args /* {
@@ -417,7 +371,7 @@ fifo_poll(void *v)
 	return (revents);
 }
 
-int
+static int
 fifo_inactive(void *v)
 {
 	struct vop_inactive_args /* {
@@ -425,14 +379,14 @@ fifo_inactive(void *v)
 		struct lwp	*a_l;
 	} */ *ap = v;
 
-	VOP_UNLOCK(ap->a_vp, 0);
+	VOP_UNLOCK(ap->a_vp);
 	return (0);
 }
 
 /*
  * This is a noop, simply returning what one has been given.
  */
-int
+static int
 fifo_bmap(void *v)
 {
 	struct vop_bmap_args /* {
@@ -456,7 +410,7 @@ fifo_bmap(void *v)
  * Device close routine
  */
 /* ARGSUSED */
-int
+static int
 fifo_close(void *v)
 {
 	struct vop_close_args /* {
@@ -505,25 +459,9 @@ fifo_close(void *v)
 }
 
 /*
- * Print out the contents of a fifo vnode.
- */
-int
-fifo_print(void *v)
-{
-	struct vop_print_args /* {
-		struct vnode	*a_vp;
-	} */ *ap = v;
-
-	printf("tag VT_NON");
-	fifo_printinfo(ap->a_vp);
-	printf("\n");
-	return 0;
-}
-
-/*
  * Print out internal contents of a fifo vnode.
  */
-void
+static void
 fifo_printinfo(struct vnode *vp)
 {
 	struct fifoinfo	*fip;
@@ -534,9 +472,31 @@ fifo_printinfo(struct vnode *vp)
 }
 
 /*
+ * Print out the contents of a fifo vnode.
+ */
+static int
+fifo_print(void *v)
+{
+	struct vop_print_args /* {
+		struct vnode	*a_vp;
+	} */ *ap = v;
+
+	/*
+	 * We are most likely being called with the vnode belonging
+	 * to some file system and this is not printed.
+	 */
+	if (ap->a_vp->v_tag == VT_NON)
+		printf("tag VT_NON");
+
+	fifo_printinfo(ap->a_vp);
+	printf("\n");
+	return 0;
+}
+
+/*
  * Return POSIX pathconf information applicable to fifo's.
  */
-int
+static int
 fifo_pathconf(void *v)
 {
 	struct vop_pathconf_args /* {
@@ -640,7 +600,7 @@ static const struct filterops fifowrite_filtops =
 	{ 1, NULL, filt_fifowdetach, filt_fifowrite };
 
 /* ARGSUSED */
-int
+static int
 fifo_kqfilter(void *v)
 {
 	struct vop_kqfilter_args /* {
@@ -673,3 +633,49 @@ fifo_kqfilter(void *v)
 
 	return (0);
 }
+
+int (**fifo_vnodeop_p)(void *);
+const struct vnodeopv_entry_desc fifo_vnodeop_entries[] = {
+	{ &vop_default_desc, vn_default_error },
+	{ &vop_lookup_desc, fifo_lookup },		/* lookup */
+	{ &vop_create_desc, genfs_badop },		/* create */
+	{ &vop_mknod_desc, genfs_badop },		/* mknod */
+	{ &vop_open_desc, fifo_open },			/* open */
+	{ &vop_close_desc, fifo_close },		/* close */
+	{ &vop_access_desc, genfs_ebadf },		/* access */
+	{ &vop_getattr_desc, genfs_ebadf },		/* getattr */
+	{ &vop_setattr_desc, genfs_ebadf },		/* setattr */
+	{ &vop_read_desc, fifo_read },			/* read */
+	{ &vop_write_desc, fifo_write },		/* write */
+	{ &vop_ioctl_desc, fifo_ioctl },		/* ioctl */
+	{ &vop_poll_desc, fifo_poll },			/* poll */
+	{ &vop_kqfilter_desc, fifo_kqfilter },		/* kqfilter */
+	{ &vop_revoke_desc, genfs_revoke },		/* revoke */
+	{ &vop_mmap_desc, genfs_badop },		/* mmap */
+	{ &vop_fsync_desc, genfs_nullop },		/* fsync */
+	{ &vop_seek_desc, genfs_badop },		/* seek */
+	{ &vop_remove_desc, genfs_badop },		/* remove */
+	{ &vop_link_desc, genfs_badop },		/* link */
+	{ &vop_rename_desc, genfs_badop },		/* rename */
+	{ &vop_mkdir_desc, genfs_badop },		/* mkdir */
+	{ &vop_rmdir_desc, genfs_badop },		/* rmdir */
+	{ &vop_symlink_desc, genfs_badop },		/* symlink */
+	{ &vop_readdir_desc, genfs_badop },		/* readdir */
+	{ &vop_readlink_desc, genfs_badop },		/* readlink */
+	{ &vop_abortop_desc, genfs_badop },		/* abortop */
+	{ &vop_inactive_desc, fifo_inactive },		/* inactive */
+	{ &vop_reclaim_desc, genfs_nullop },		/* reclaim */
+	{ &vop_lock_desc, genfs_lock },			/* lock */
+	{ &vop_unlock_desc, genfs_unlock },		/* unlock */
+	{ &vop_bmap_desc, fifo_bmap },			/* bmap */
+	{ &vop_strategy_desc, genfs_badop },		/* strategy */
+	{ &vop_print_desc, fifo_print },		/* print */
+	{ &vop_islocked_desc, genfs_islocked },		/* islocked */
+	{ &vop_pathconf_desc, fifo_pathconf },		/* pathconf */
+	{ &vop_advlock_desc, genfs_einval },		/* advlock */
+	{ &vop_bwrite_desc, genfs_nullop },		/* bwrite */
+	{ &vop_putpages_desc, genfs_null_putpages },	/* putpages */
+	{ (struct vnodeop_desc*)NULL, (int(*)(void *))NULL }
+};
+const struct vnodeopv_desc fifo_vnodeop_opv_desc =
+	{ &fifo_vnodeop_p, fifo_vnodeop_entries };

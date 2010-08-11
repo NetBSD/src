@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cas.c,v 1.7.2.2 2010/03/11 15:03:45 yamt Exp $	*/
+/*	$NetBSD: if_cas.c,v 1.7.2.3 2010/08/11 22:53:46 yamt Exp $	*/
 /*	$OpenBSD: if_cas.c,v 1.29 2009/11/29 16:19:38 kettenis Exp $	*/
 
 /*
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cas.c,v 1.7.2.2 2010/03/11 15:03:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cas.c,v 1.7.2.3 2010/08/11 22:53:46 yamt Exp $");
 
 #include "opt_inet.h"
 
@@ -187,6 +187,11 @@ static const u_int8_t cas_promdat[] = {
 	PCI_VENDOR_SUN & 0xff, PCI_VENDOR_SUN >> 8,
 	PCI_PRODUCT_SUN_CASSINI & 0xff, PCI_PRODUCT_SUN_CASSINI >> 8
 };
+static const u_int8_t cas_promdat_ns[] = {
+	'P', 'C', 'I', 'R',
+	PCI_VENDOR_NS & 0xff, PCI_VENDOR_NS >> 8,
+	PCI_PRODUCT_NS_SATURN & 0xff, PCI_PRODUCT_NS_SATURN >> 8
+};
 
 static const u_int8_t cas_promdat2[] = {
 	0x18, 0x00,			/* structure length */
@@ -227,7 +232,8 @@ cas_pci_enaddr(struct cas_softc *sc, struct pci_attach_args *pa,
 		goto fail;
 
 	bus_space_read_region_1(romt, romh, dataoff, buf, sizeof(buf));
-	if (bcmp(buf, cas_promdat, sizeof(cas_promdat)) ||
+	if ((bcmp(buf, cas_promdat, sizeof(cas_promdat)) &&
+	     bcmp(buf, cas_promdat_ns, sizeof(cas_promdat_ns))) ||
 	    bcmp(buf + PROMDATA_DATA2, cas_promdat2, sizeof(cas_promdat2)))
 		goto fail;
 
@@ -335,8 +341,10 @@ cas_attach(device_t parent, device_t self, void *aux)
 	if ((data = prop_dictionary_get(device_properties(sc->sc_dev),
 	    "mac-address")) != NULL)
 		memcpy(enaddr, prop_data_data_nocopy(data), ETHER_ADDR_LEN);
-	else if (cas_pci_enaddr(sc, pa, enaddr) != 0)
+	else if (cas_pci_enaddr(sc, pa, enaddr) != 0) {
 		aprint_error_dev(sc->sc_dev, "no Ethernet address found\n");
+		memset(enaddr, 0, sizeof(enaddr));
+	}
 
 	sc->sc_burst = 16;	/* XXX */
 
@@ -498,6 +506,7 @@ cas_config(struct cas_softc *sc, const uint8_t *enaddr)
 	/* Announce ourselves. */
 	aprint_normal_dev(sc->sc_dev, "Ethernet address %s\n",
 	    ether_sprintf(enaddr));
+	aprint_naive(": Ethernet controller\n");
 
 	/* Get RX FIFO size */
 	sc->sc_rxfifosize = 16 * 1024;
@@ -782,6 +791,9 @@ cas_reset(struct cas_softc *sc)
 	DPRINTF(sc, ("%s: cas_reset\n", device_xname(sc->sc_dev)));
 	cas_reset_rx(sc);
 	cas_reset_tx(sc);
+
+	/* Disable interrupts */
+	bus_space_write_4(sc->sc_memt, sc->sc_memh, CAS_INTMASK, ~(uint32_t)0);
 
 	/* Do a full reset */
 	bus_space_write_4(t, h, CAS_RESET,
@@ -1294,8 +1306,7 @@ cas_rint(struct cas_softc *sc)
 				 * Pass this up to any BPF listeners, but only
 				 * pass it up the stack if its for us.
 				 */
-				if (ifp->if_bpf)
-					bpf_ops->bpf_mtap(ifp->if_bpf, m);
+				bpf_mtap(ifp, m);
 
 				ifp->if_ipackets++;
 				m->m_pkthdr.csum_flags = 0;
@@ -1328,8 +1339,7 @@ cas_rint(struct cas_softc *sc)
 				 * Pass this up to any BPF listeners, but only
 				 * pass it up the stack if its for us.
 				 */
-				if (ifp->if_bpf)
-					bpf_ops->bpf_mtap(ifp->if_bpf, m);
+				bpf_mtap(ifp, m);
 
 				ifp->if_ipackets++;
 				m->m_pkthdr.csum_flags = 0;
@@ -2039,8 +2049,7 @@ cas_start(struct ifnet *ifp)
 		 * If BPF is listening on this interface, let it see the
 		 * packet before we commit it to the wire.
 		 */
-		if (ifp->if_bpf)
-			bpf_ops->bpf_mtap(ifp->if_bpf, m);
+		bpf_mtap(ifp, m);
 
 		/*
 		 * Encapsulate this packet and start it going...

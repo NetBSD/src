@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_calcea.c,v 1.18.44.1 2009/05/04 08:11:25 yamt Exp $	*/
+/*	$NetBSD: fpu_calcea.c,v 1.18.44.2 2010/08/11 22:52:18 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -31,8 +31,10 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "opt_m68k_arch.h"
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_calcea.c,v 1.18.44.1 2009/05/04 08:11:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_calcea.c,v 1.18.44.2 2010/08/11 22:52:18 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/signal.h>

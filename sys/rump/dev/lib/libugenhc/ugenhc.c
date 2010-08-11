@@ -1,4 +1,4 @@
-/*	$NetBSD: ugenhc.c,v 1.8.2.2 2010/03/11 15:04:33 yamt Exp $	*/
+/*	$NetBSD: ugenhc.c,v 1.8.2.3 2010/08/11 22:55:02 yamt Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Antti Kantee.  All Rights Reserved.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugenhc.c,v 1.8.2.2 2010/03/11 15:04:33 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugenhc.c,v 1.8.2.3 2010/08/11 22:55:02 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -506,6 +506,7 @@ rumpusb_device_ctrl_start(usbd_xfer_handle xfer)
 	case C(0x22, UT_WRITE_CLASS_INTERFACE):
 	case C(0x0a, UT_WRITE_CLASS_INTERFACE):
 	case C(UR_SET_FEATURE, UT_WRITE_CLASS_OTHER):
+	case C(0x00, UT_WRITE_CLASS_DEVICE):
 	case C(UR_SET_FEATURE, UT_WRITE_DEVICE):
 	case C(UR_CLEAR_FEATURE, UT_WRITE_CLASS_OTHER):
 	case C(UR_SET_REPORT, UT_WRITE_CLASS_INTERFACE):
@@ -718,40 +719,46 @@ static usbd_status
 rumpusb_device_bulk_start(usbd_xfer_handle xfer)
 {
 	struct ugenhc_softc *sc = xfer->pipe->device->bus->hci_private;
+	usb_endpoint_descriptor_t *ed = xfer->pipe->endpoint->edesc;
 	ssize_t n;
 	ssize_t done;
 	bool isread;
 	int len, error, endpt;
 	uint8_t *buf;
 	int xfererr = USBD_NORMAL_COMPLETION;
-	int val;
+	int shortval, i;
 
-	endpt = xfer->pipe->endpoint->edesc->bEndpointAddress;
+	ed = xfer->pipe->endpoint->edesc;
+	endpt = ed->bEndpointAddress;
 	isread = UE_GET_DIR(endpt) == UE_DIR_IN;
 	endpt = UE_GET_ADDR(endpt);
 	KASSERT(endpt < UGEN_NEPTS);
 
-	KASSERT(xfer->length);
-	len = xfer->length;
 	buf = KERNADDR(&xfer->dmabuf, 0);
 	done = 0;
+	if ((ed->bmAttributes & UE_XFERTYPE) == UE_ISOCHRONOUS) {
+		for (i = 0, len = 0; i < xfer->nframes; i++)
+			len += xfer->frlengths[i];
+	} else {
+		KASSERT(xfer->length);
+		len = xfer->length;
+	}
+	shortval = (xfer->flags & USBD_SHORT_XFER_OK) != 0;
 
 	while (RUSB(xfer)->rusb_status == 0) {
 		if (isread) {
-			if (xfer->flags & USBD_SHORT_XFER_OK)
-				val = 1;
-			else
-				val = 0;
 			rumpuser_ioctl(sc->sc_ugenfd[endpt],
-			    USB_SET_SHORT_XFER, &val, &error);
+			    USB_SET_SHORT_XFER, &shortval, &error);
 			n = rumpuser_read(sc->sc_ugenfd[endpt],
 			    buf+done, len-done, &error);
 			if (n == -1) {
-				if (error == ETIMEDOUT)
-					continue;
 				n = 0;
-				xfererr = USBD_IOERROR;
-				goto out;
+				if (done == 0) {
+					if (error == ETIMEDOUT)
+						continue;
+					xfererr = USBD_IOERROR;
+					goto out;
+				}
 			}
 			done += n;
 			if (done == len)
@@ -769,8 +776,23 @@ rumpusb_device_bulk_start(usbd_xfer_handle xfer)
 			goto out;
 		}
 
-		if (xfer->flags & USBD_SHORT_XFER_OK)
-			break;
+		if (shortval) {
+			/*
+			 * Holy XXX, bitman.  I get >16byte interrupt
+			 * transfers from ugen in 16 byte chunks.
+			 * Don't know how to better fix this for now.
+			 * Of course this hack will fail e.g. if someone
+			 * sports other magic values or if the transfer
+			 * happens to be an integral multiple of 16
+			 * in size ....
+			 */
+			if ((ed->bmAttributes & UE_XFERTYPE) == UE_INTERRUPT
+			    && n == 16) {
+				continue;
+			} else {
+				break;
+			}
+		}
 	}
 
 	if (RUSB(xfer)->rusb_status == 0) {
@@ -780,6 +802,9 @@ rumpusb_device_bulk_start(usbd_xfer_handle xfer)
 		RUSB(xfer)->rusb_status = 2;
 	}
  out:
+	if ((ed->bmAttributes & UE_XFERTYPE) == UE_ISOCHRONOUS)
+		if (done != len)
+			panic("lazy bum");
 	xfer->status = xfererr;
 	usb_transfer_complete(xfer);
 	return (USBD_IN_PROGRESS);
@@ -918,6 +943,7 @@ ugenhc_open(struct usbd_pipe *pipe)
 			break;
 		case UE_INTERRUPT:
 		case UE_BULK:
+		case UE_ISOCHRONOUS:
 			pipe->methods = &rumpusb_device_bulk_methods;
 			endpt = pipe->endpoint->edesc->bEndpointAddress;
 			if (UE_GET_DIR(endpt) == UE_DIR_IN) {
@@ -926,6 +952,11 @@ ugenhc_open(struct usbd_pipe *pipe)
 				oflags = O_WRONLY;
 			}
 			endpt = UE_GET_ADDR(endpt);
+
+			if (oflags != O_RDONLY && xfertype == UE_ISOCHRONOUS) {
+				printf("WARNING: faking isoc write open\n");
+				oflags = O_RDONLY;
+			}
 
 			if (sc->sc_fdmodes[endpt] == oflags
 			    || sc->sc_fdmodes[endpt] == O_RDWR)
@@ -939,14 +970,16 @@ ugenhc_open(struct usbd_pipe *pipe)
 
 			makeugendevstr(sc->sc_devnum, endpt, buf);
 			fd = rumpuser_open(buf, oflags, &error);
-			if (fd == -1)
+			if (fd == -1) {
 				return USBD_INVAL; /* XXX: no mapping */
+			}
 			val = 100;
 			if (rumpuser_ioctl(fd, USB_SET_TIMEOUT, &val,
 			    &error) == -1)
 				panic("timeout set failed");
 			sc->sc_ugenfd[endpt] = fd;
 			sc->sc_fdmodes[endpt] = oflags;
+
 			break;
 		default:
 			panic("%d not supported", xfertype);

@@ -1,4 +1,4 @@
-/* $NetBSD: isp_pci.c,v 1.105.4.3 2009/09/16 13:37:52 yamt Exp $ */
+/* $NetBSD: isp_pci.c,v 1.105.4.4 2010/08/11 22:53:49 yamt Exp $ */
 /*
  * Copyright (C) 1997, 1998, 1999 National Aeronautics & Space Administration
  * All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp_pci.c,v 1.105.4.3 2009/09/16 13:37:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp_pci.c,v 1.105.4.4 2010/08/11 22:53:49 yamt Exp $");
 
 #include <dev/ic/isp_netbsd.h>
 #include <dev/pci/pcireg.h>
@@ -665,6 +665,7 @@ isp_pci_attach(device_t parent, device_t self, void *aux)
 			dstring = ": QLogic FC-AL and 4Gbps Fabric PCI-E HBA\n";
 		}
 		isp->isp_type = ISP_HA_FC_2400;
+		isp->isp_port = pa->pa_function;
 		mamt = sizeof (fcparam);
 		pcs->pci_poff[MBOX_BLOCK >> _BLK_REG_SHFT] =
 		    PCI_MBOX_REGS2400_OFF;
@@ -674,6 +675,7 @@ isp_pci_attach(device_t parent, device_t self, void *aux)
 		isp->isp_mdvec = &mdvec_2500;
 		dstring = ": QLogic FC-AL and 8Gbps Fabric PCI-E HBA\n";
 		isp->isp_type = ISP_HA_FC_2500;
+		isp->isp_port = pa->pa_function;
 		mamt = sizeof (fcparam);
 		pcs->pci_poff[MBOX_BLOCK >> _BLK_REG_SHFT] =
 		    PCI_MBOX_REGS2400_OFF;
@@ -904,7 +906,7 @@ isp_pci_rd_isr_2300(struct ispsoftc *isp, uint32_t *isrp,
 		return (1);
 	case ISPR2HST_RIO_16:
 		*isrp = r2hisr & 0xffff;
-		*mbox0p = ASYNC_RIO1;
+		*mbox0p = ASYNC_RIO16_1;
 		*semap = 1;
 		return (1);
 	case ISPR2HST_FPOST:
@@ -1212,13 +1214,17 @@ isp_pci_mbxdma(struct ispsoftc *isp)
 		 */
 		dbound = 0;
 	}
-	len = isp->isp_maxcmds * sizeof (XS_T *);
-	isp->isp_xflist = (XS_T **) malloc(len, M_DEVBUF, M_WAITOK);
+	len = isp->isp_maxcmds * sizeof (isp_hdl_t);
+	isp->isp_xflist = (isp_hdl_t *) malloc(len, M_DEVBUF, M_WAITOK);
 	if (isp->isp_xflist == NULL) {
 		isp_prt(isp, ISP_LOGERR, "cannot malloc xflist array");
 		return (1);
 	}
 	memset(isp->isp_xflist, 0, len);
+	for (len = 0; len < isp->isp_maxcmds - 1; len++) {
+		isp->isp_xflist[len].cmd = &isp->isp_xflist[len+1];
+	}
+	isp->isp_xffree = isp->isp_xflist;
 	len = isp->isp_maxcmds * sizeof (bus_dmamap_t);
 	pcs->pci_xfer_dmap = (bus_dmamap_t *) malloc(len, M_DEVBUF, M_WAITOK);
 	if (pcs->pci_xfer_dmap == NULL) {
@@ -1334,10 +1340,15 @@ isp_pci_dmasetup(struct ispsoftc *isp, struct scsipi_xfer *xs, void *arg)
 	ispreq_t *rq = arg;
 	bus_dmamap_t dmap;
 	bus_dma_segment_t *dm_segs;
-	uint32_t nsegs;
+	uint32_t nsegs, hidx;
 	isp_ddir_t ddir;
 
-	dmap = pcs->pci_xfer_dmap[isp_handle_index(rq->req_handle)];
+	hidx = isp_handle_index(isp, rq->req_handle);
+	if (hidx == ISP_BAD_HANDLE_INDEX) {
+		XS_SETERR(xs, HBA_BOTCH);
+		return (CMD_COMPLETE);
+	}
+	dmap = pcs->pci_xfer_dmap[hidx];
 	if (xs->datalen == 0) {
 		ddir = ISP_NOXFR;
 		nsegs = 0;
@@ -1409,7 +1420,15 @@ static void
 isp_pci_dmateardown(struct ispsoftc *isp, XS_T *xs, uint32_t handle)
 {
 	struct isp_pcisoftc *pcs = (struct isp_pcisoftc *)isp;
-	bus_dmamap_t dmap = pcs->pci_xfer_dmap[isp_handle_index(handle)];
+	uint32_t hidx;
+	bus_dmamap_t dmap;
+
+	hidx = isp_handle_index(isp, handle);
+	if (hidx == ISP_BAD_HANDLE_INDEX) {
+		isp_xs_prt(isp, xs, ISP_LOGERR, "bad handle on teardown");
+		return;
+	}
+	dmap = pcs->pci_xfer_dmap[hidx];
 	bus_dmamap_sync(isp->isp_dmatag, dmap, 0, dmap->dm_mapsize,
 	    xs->xs_control & XS_CTL_DATA_IN ?
 	    BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);

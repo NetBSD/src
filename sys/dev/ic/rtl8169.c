@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.102.2.6 2010/03/11 15:03:34 yamt Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.102.2.7 2010/08/11 22:53:30 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.102.2.6 2010/03/11 15:03:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.102.2.7 2010/08/11 22:53:30 yamt Exp $");
 /* $FreeBSD: /repoman/r/ncvs/src/sys/dev/re/if_re.c,v 1.20 2004/04/11 20:34:08 ru Exp $ */
 
 /*
@@ -570,6 +570,7 @@ re_attach(struct rtk_softc *sc)
 		case RTK_HWREV_8169S:
 		case RTK_HWREV_8110S:
 		case RTK_HWREV_8169_8110SB:
+		case RTK_HWREV_8169_8110SBL:
 		case RTK_HWREV_8169_8110SC:
 			sc->sc_quirk |= RTKQ_MACLDPS;
 			break;
@@ -954,6 +955,9 @@ re_detach(struct rtk_softc *sc)
 
 	pmf_device_deregister(sc->sc_dev);
 
+	/* we don't want to run again */
+	sc->sc_flags &= ~RTK_ATTACHED;
+
 	return 0;
 }
 
@@ -1299,8 +1303,7 @@ re_rxeof(struct rtk_softc *sc)
 			     bswap16(rxvlan & RE_RDESC_VLANCTL_DATA),
 			     continue);
 		}
-		if (ifp->if_bpf)
-			bpf_ops->bpf_mtap(ifp->if_bpf, m);
+		bpf_mtap(ifp, m);
 		(*ifp->if_input)(ifp, m);
 	}
 
@@ -1668,8 +1671,7 @@ re_start(struct ifnet *ifp)
 		 * If there's a BPF listener, bounce a copy of this frame
 		 * to him.
 		 */
-		if (ifp->if_bpf)
-			bpf_ops->bpf_mtap(ifp->if_bpf, m);
+		bpf_mtap(ifp, m);
 	}
 
 	if (sc->re_ldata.re_txq_free < ofree) {
@@ -1740,7 +1742,7 @@ re_init(struct ifnet *ifp)
 	if ((sc->sc_quirk & RTKQ_8169NONS) != 0)
 		cfg |= (0x1 << 14);
 
-	if ((ifp->if_capenable & ETHERCAP_VLAN_HWTAGGING) != 0)
+	if ((sc->ethercom.ec_capenable & ETHERCAP_VLAN_HWTAGGING) != 0)
 		cfg |= RE_CPLUSCMD_VLANSTRIP;
 	if ((ifp->if_capenable & (IFCAP_CSUM_IPv4_Rx |
 	     IFCAP_CSUM_TCPv4_Rx | IFCAP_CSUM_UDPv4_Rx)) != 0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.c,v 1.117.2.3 2010/03/11 15:04:28 yamt Exp $	*/
+/*	$NetBSD: ip_icmp.c,v 1.117.2.4 2010/08/11 22:54:56 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -94,7 +94,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.117.2.3 2010/03/11 15:04:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.117.2.4 2010/08/11 22:54:56 yamt Exp $");
 
 #include "opt_ipsec.h"
 
@@ -176,8 +176,6 @@ static struct rttimer_queue *icmp_redirect_timeout_q = NULL;
 
 static void icmp_mtudisc_timeout(struct rtentry *, struct rttimer *);
 static void icmp_redirect_timeout(struct rtentry *, struct rttimer *);
-
-static int icmp_ratelimit(const struct in_addr *, const int, const int);
 
 static void sysctl_netinet_icmp_setup(struct sysctllog **);
 
@@ -311,6 +309,10 @@ icmp_error(struct mbuf *n, int type, int code, n_long dest,
 	m->m_len = icmplen + ICMP_MINLEN;
 	if ((m->m_flags & M_EXT) == 0)
 		MH_ALIGN(m, m->m_len);
+	else {
+		m->m_data += sizeof(struct ip);
+		m->m_len -= sizeof(struct ip);
+	}
 	icp = mtod(m, struct icmp *);
 	if ((u_int)type > ICMP_MAXTYPE)
 		panic("icmp_error");
@@ -339,7 +341,8 @@ icmp_error(struct mbuf *n, int type, int code, n_long dest,
 	 * Now, copy old ip header (without options)
 	 * in front of icmp message.
 	 */
-	if (m->m_data - sizeof(struct ip) < m->m_pktdat)
+	if ((m->m_flags & M_EXT) == 0 &&
+	    m->m_data - sizeof(struct ip) < m->m_pktdat)
 		panic("icmp len");
 	m->m_data -= sizeof(struct ip);
 	m->m_len += sizeof(struct ip);
@@ -1251,7 +1254,7 @@ icmp_redirect_timeout(struct rtentry *rt, struct rttimer *r)
  *
  * XXX per-destination/type check necessary?
  */
-static int
+int
 icmp_ratelimit(const struct in_addr *dst, const int type,
     const int code)
 {

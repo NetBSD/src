@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.116.4.2 2010/03/11 15:02:46 yamt Exp $
+# $NetBSD: GENERIC,v 1.116.4.3 2010/08/11 22:52:30 yamt Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/ofppc/conf/std.ofppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.116.4.2 $"
+#ident 		"GENERIC-$Revision: 1.116.4.3 $"
 
 maxusers	32
 
@@ -98,7 +98,7 @@ file-system 	UMAPFS		# NULLFS + uid and gid remapping
 file-system 	UNION		# union file system
 file-system 	NTFS		# Windows NT file system
 file-system	PTYFS		# /dev/pts/N support
-#file-system	TMPFS		# Efficient memory file-system
+file-system	TMPFS		# Efficient memory file-system
 #file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
 
 # File system options
@@ -132,6 +132,7 @@ options 	PPP_FILTER	# Active filter support for PPP (requires BPF)
 options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 options 	IPFILTER_LOG	# ipmon(8) log support
 options 	IPFILTER_LOOKUP	# ippool(8) support
+options 	IPFILTER_COMPAT # Compat for IP-Filter
 #options 	IPFILTER_DEFAULT_BLOCK	# block all packets by default
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
@@ -179,11 +180,15 @@ cpu*		at mainbus?
 # Generic OpenFirmware console support
 rtas*		at mainbus?
 
+gt*		at mainbus?			# Marvell MV64361 Discovery II
+mvgbec* 	at gt? offset ?			# Gigabit Ethernet
+mvgbe0		at mvgbec? port 1 irq 9
+
 # PCI root nodes
 ofwpci*		at mainbus?
 pci*		at ofwpci? bus ?
-pegasospci*	at mainbus?
-pci*		at pegasospci? bus ?
+gtpci*		at gt? unit ?
+pci*		at gtpci? bus ?
 
 # PCI bridges
 pchb*		at pci? dev ? function ?
@@ -219,6 +224,10 @@ com1	at isa? port 0x2f8 irq 3
 # ISA parallel printer interfaces
 lpt0		at isa? port 0x3bc irq 7	# standard PC parallel ports
 
+# ISA floppy
+fdc0		at isa? port 0x3f0 irq 6 drq 2	# standard PC floppy controllers
+fd*		at fdc? drive ?			# the drives themselves
+
 # SCSI Controllers and Devices
 siop*		at pci? dev ? function ?	# Symbios 53c8xx SCSI
 esiop*		at pci? dev ? function ?	# Symbios 53c875 SCSI and newer
@@ -227,6 +236,7 @@ esiop*		at pci? dev ? function ?	# Symbios 53c875 SCSI and newer
 scsibus* 	at siop?
 scsibus* 	at esiop?
 scsibus* 	at umass?
+scsibus* 	at sbp?
 
 # SCSI devices
 sd*		at scsibus? target ? lun ?	# SCSI disk drives
@@ -398,7 +408,7 @@ options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 #options 	RF_INCLUDE_INTERDECLUSTER=1
 #options 	RF_INCLUDE_PARITY_DECLUSTERING=1
 #options 	RF_INCLUDE_PARITY_DECLUSTERING_DS=1
-pseudo-device	fss		4	# file system snapshot device
+pseudo-device	fss			# file system snapshot device
 pseudo-device	md		1	# memory disk device
 pseudo-device	loop			# network loopback
 pseudo-device	bpfilter		# packet filter

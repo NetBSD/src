@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.105.10.3 2010/03/11 15:02:47 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.105.10.4 2010/08/11 22:52:31 yamt Exp $	*/
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.105.10.3 2010/03/11 15:02:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.105.10.4 2010/08/11 22:52:31 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,9 +67,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.105.10.3 2010/03/11 15:02:47 yamt Exp 
 
 struct pmap ofw_pmap;
 char bootpath[256];
-
-void ofwppc_batinit(void);
-void ofppc_bootstrap_console(void);
 
 extern u_int l2cr_config;
 #if (NRTAS > 0)
@@ -391,7 +388,8 @@ copy_disp_props(struct device *dev, int node, prop_dictionary_t dict)
 	}
 	if (!of_to_uint32_prop(dict, node, "address", "address")) {
 		uint32_t fbaddr = 0;
-			OF_interpret("frame-buffer-adr", 0, 1, &fbaddr);
+
+		OF_interpret("frame-buffer-adr", 0, 1, &fbaddr);
 		if (fbaddr != 0)
 			prop_dictionary_set_uint32(dict, "address", fbaddr);
 	}

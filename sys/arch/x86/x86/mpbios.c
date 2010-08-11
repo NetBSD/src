@@ -1,4 +1,4 @@
-/*	$NetBSD: mpbios.c,v 1.41.4.4 2010/03/11 15:03:09 yamt Exp $	*/
+/*	$NetBSD: mpbios.c,v 1.41.4.5 2010/08/11 22:52:57 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpbios.c,v 1.41.4.4 2010/03/11 15:03:09 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpbios.c,v 1.41.4.5 2010/08/11 22:52:57 yamt Exp $");
 
 #include "acpica.h"
 #include "lapic.h"
@@ -717,6 +717,7 @@ mpbios_cpu(const uint8_t *ent, device_t self)
 	else
 		caa.cpu_role = CPU_ROLE_AP;
 
+	caa.cpu_id = entry->apic_id;
 	caa.cpu_number = entry->apic_id;
 	caa.cpu_func = &mp_cpu_funcs;
 	locs[CPUBUSCF_APID] = caa.cpu_number;
@@ -732,8 +733,6 @@ mpbios_cpus(device_t self)
 	/* use default addresses */
 	pe.apic_id = lapic_cpu_number();
 	pe.cpu_flags = PROCENTRY_FLAG_EN|PROCENTRY_FLAG_BP;
-	pe.cpu_signature = cpu_info_primary.ci_signature;
-	pe.feature_flags = cpu_info_primary.ci_feature_flags;
 
 	mpbios_cpu((uint8_t *)&pe, self);
 

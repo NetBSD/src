@@ -1,12 +1,12 @@
 #
-# $NetBSD: HADES,v 1.75.20.2 2010/03/11 15:02:08 yamt Exp $
+# $NetBSD: HADES,v 1.75.20.3 2010/08/11 22:51:44 yamt Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
 #
 # Created from:
-#		NetBSD: HADES.in,v 1.9 2009/01/24 00:19:47 abs Exp $
-#		NetBSD: GENERIC.in,v 1.83 2010/02/21 17:57:03 tsutsui Exp $
+#		NetBSD: HADES.in,v 1.11 2010/04/10 01:59:40 tsutsui Exp $
+#		NetBSD: GENERIC.in,v 1.90 2010/05/08 22:16:26 mrg Exp $
 include "arch/atari/conf/std.hades"
 options INCLUDE_CONFIG_FILE # embed config file in kernel binary
 maxusers 16
@@ -24,6 +24,7 @@ options PPP_FILTER # Active filter support for PPP (requires bpf)
 options PFIL_HOOKS # pfil(9) packet filter hooks
 options IPFILTER_LOG # ipmon(8) log support
 options IPFILTER_LOOKUP # ippool(8) support
+options IPFILTER_COMPAT # Compat for IP-Filter
 file-system FFS # Berkeley fast file system
 file-system MFS # Memory based filesystem
 file-system MSDOSFS # MSDOS filesystem
@@ -39,6 +40,7 @@ file-system UMAPFS # null file system (with uid & gid remapping)
 file-system PUFFS # Userspace file systems (e.g. ntfs-3g & sshfs)
 file-system EXT2FS # second extended file system (linux)
 file-system PTYFS # /dev/pts/N support
+file-system TMPFS # Efficient memory file-system
 options WAPBL # File system journaling support - Experimental
 options NFSSERVER # Network File System server side code
 options PANICWAIT # Require keystroke to dump/reboot
@@ -74,7 +76,6 @@ options TT_VIDEO # Graphics support for TT
 options MEMORY_DISK_HOOKS # Boot RAM-disk
 options DISKLABEL_NBDA # NetBSD disklabels (required)
 options DISKLABEL_AHDI # NetBSD/AHDI disklabels
-options SERCONSOLE # modem1 console support, breaks Falcon
 options RELOC_KERNEL # TT/Falcon: relocate kernel to TT-RAM
 options MSGBUFSIZE=32768 # size of kernel msg. buffer
 options TRY_SCSI_LINKED_COMMANDS=0x7f
@@ -93,7 +94,7 @@ pseudo-device tap # virtual Ethernet
 pseudo-device gif # IPv[46] over IPv[46] tunnel (RFC1933)
 pseudo-device stf # 6to4 IPv6 over IPv4 encapsulation
 pseudo-device ccd 4 # concatenating disk driver
-pseudo-device fss 4 # file system snapshot device
+pseudo-device fss # file system snapshot device
 pseudo-device ipfilter # IP filtering device
 pseudo-device rnd # /dev/random and in-kernel generator
 pseudo-device clockctl # user control of clock subsystem

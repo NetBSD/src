@@ -1,4 +1,4 @@
-/*	$NetBSD: satalink.c,v 1.37.4.2 2010/03/11 15:03:59 yamt Exp $	*/
+/*	$NetBSD: satalink.c,v 1.37.4.3 2010/08/11 22:54:04 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: satalink.c,v 1.37.4.2 2010/03/11 15:03:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: satalink.c,v 1.37.4.3 2010/08/11 22:54:04 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -273,6 +273,11 @@ static const struct pciide_product_desc pciide_satalink_products[] =  {
 	  "Silicon Image SATALink 3112",
 	  sii3112_chip_map,
 	},
+	{ PCI_PRODUCT_CMDTECH_240,
+	  0,
+	  "Silicon Image SATALink Sil240",
+	  sii3112_chip_map,
+	},
 	{ PCI_PRODUCT_CMDTECH_3512,
 	  0,
 	  "Silicon Image SATALink 3512",
@@ -287,6 +292,11 @@ static const struct pciide_product_desc pciide_satalink_products[] =  {
 	  0,
 	  "Silicon Image SATALink 3114",
 	  sii3114_chip_map,
+	},
+	{ PCI_PRODUCT_ATI_IXP_SATA_300,
+	  0,
+	  "ATI IXP 300 SATA",
+	  sii3112_chip_map,
 	},
 	{ 0,
 	  0,
@@ -469,7 +479,9 @@ sii3112_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	 * apparently hard to tickle, but we'll go ahead and play it
 	 * safe.
 	 */
-	if (PCI_REVISION(pa->pa_class) <= 0x01) {
+	if ((PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_CMDTECH_3112 ||
+	     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_CMDTECH_AAR_1210SA) &&
+	    PCI_REVISION(pa->pa_class) <= 0x01) {
 		sc->sc_dma_maxsegsz = 8192;
 		sc->sc_dma_boundary = 8192;
 	}

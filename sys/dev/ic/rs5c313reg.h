@@ -1,4 +1,4 @@
-/*	$NetBSD: rs5c313reg.h,v 1.1.62.1 2008/05/16 02:24:06 yamt Exp $	*/
+/*	$NetBSD: rs5c313reg.h,v 1.1.62.2 2010/08/11 22:53:30 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -30,24 +30,40 @@
 #define	_DEV_IC_RS5C313REG_H_
 
 /*
- * RICOH RS5C313 Real Time Clock
+ * RICOH RS5C3[12]x Real Time Clock
  */
-#define	RS5C313_SEC1	0
-#define	RS5C313_SEC10	1
-#define	RS5C313_MIN1	2
-#define	RS5C313_MIN10	3
-#define	RS5C313_HOUR1	4
-#define	RS5C313_HOUR10	5
-#define	RS5C313_WDAY	6
-#define	RS5C313_TINT	7
-#define	RS5C313_DAY1	8
-#define	RS5C313_DAY10	9
-#define	RS5C313_MON1	10
-#define	RS5C313_MON10	11
-#define	RS5C313_YEAR1	12
-#define	RS5C313_YEAR10	13
-#define	RS5C313_CTRL	14
-#define	RS5C313_TEST	15
+				/* 5c313/5c314 don't have bank1 */
+#define	RS5C313_SEC1	0	/* bank0 */
+#define	RS5C313_SEC10	1	/* bank0 */
+#define	RS5C313_MIN1	2	/* bank0 */
+#define	RS5C313_MIN10	3	/* bank0 */
+#define	RS5C313_HOUR1	4	/* bank0 */
+#define	RS5C313_HOUR10	5	/* bank0 */
+#define	RS5C313_WDAY	6	/* bank0 */
+#define	RS5C313_TINT	7	/* bank0/1 (5c313/5c314/5c316/5c317) */
+#define	RS5C313_SCRATCH	7	/* bank0/1 (5c321) */
+#define	RS5C313_DAY1	8	/* bank0 */
+#define	RS5C313_DAY10	9	/* bank0 */
+#define	RS5C313_MON1	10	/* bank0 */
+#define	RS5C313_MON10	11	/* bank0 */
+#define	RS5C313_YEAR1	12	/* bank0 */
+#define	RS5C313_YEAR10	13	/* bank0 */
+#define	RS5C313_CTRL	14	/* bank0/1 */
+#define	RS5C313_CTRL2	15	/* bank0/1 */
+
+/* Alarm register (5c316/5c317) */
+#define	RS5C313_AWOD1	0	/* bank1 */
+#define	RS5C313_AWOD2	1	/* bank1 */
+#define	RS5C313_AMIN1	2	/* bank1 */
+#define	RS5C313_AMIN10	3	/* bank1 */
+#define	RS5C313_AHOUR1	4	/* bank1 */
+#define	RS5C313_AHOUR10	5	/* bank1 */
+
+/* Timer register (5c317) */
+#define	RS5C313_TMR	9	/* bank1 */
+
+/* 32kHz control register (5c317/5c321) */
+#define	RS5C313_32KHZ	10	/* bank1 */
 
 /* TINT register */
 #define	TINT_CT0		0x01
@@ -60,9 +76,14 @@
 #define	CTRL_ADJ		0x01	/* write */
 #define	CTRL_XSTP		0x02	/* read */
 #define	CTRL_WTEN		0x02	/* write */
-#define	CTRL_24H		0x04	/* read/write */
+#define	CTRL_24H		0x04	/* read/write (5c313/5c314) */
+#define	CTRL_ALFG		0x04	/* read/write (5c316/5c317) */
 #define	CTRL_CTFG		0x08	/* read/write */
 
-#define	CTRL_BASE		CTRL_24H
+/* CTRL2 register */
+#define	CTRL2_NTEST		0x01
+#define	CTRL2_BANK		0x02	/* (5c316/5c317/5c321) */
+#define	CTRL2_TMR		0x04	/* (5c317) */
+#define	CTRL2_24H		0x08	/* (5c316/5c317/5c321) */
 
 #endif	/* _DEV_IC_RS5C313REG_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam3x.h,v 1.18.78.1 2009/05/04 08:12:00 yamt Exp $	*/
+/*	$NetBSD: vmparam3x.h,v 1.18.78.2 2010/08/11 22:52:50 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -79,11 +79,6 @@
 /*
  * Machine dependent constants for Sun3X
  */
-
-/*
- * USRSTACK is the top (end) of the user stack.
- */
-#define	USRSTACK	KERNBASE	/* High end of user stack */
 
 /*
  * Virtual memory related constants, all in bytes

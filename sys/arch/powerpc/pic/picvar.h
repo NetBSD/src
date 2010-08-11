@@ -1,4 +1,4 @@
-/*	$NetBSD: picvar.h,v 1.4.10.2 2009/08/19 18:46:41 yamt Exp $ */
+/*	$NetBSD: picvar.h,v 1.4.10.3 2010/08/11 22:52:36 yamt Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: picvar.h,v 1.4.10.2 2009/08/19 18:46:41 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: picvar.h,v 1.4.10.3 2010/08/11 22:52:36 yamt Exp $");
 
 #ifndef PIC_VAR_H
 #define PIC_VAR_H
@@ -58,7 +58,7 @@ struct intr_source {
 	int is_type;
 	int is_level;
 	int is_hwirq;
-	int is_mask;
+	imask_t is_mask;
 	struct intrhand *is_hand;
 	struct pic_ops *is_pic;
 	struct evcnt is_ev;

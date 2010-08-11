@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_mod.c,v 1.2.12.2 2009/05/04 08:12:23 yamt Exp $	*/
+/*	$NetBSD: linux32_mod.c,v 1.2.12.3 2010/08/11 22:53:09 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_mod.c,v 1.2.12.2 2009/05/04 08:12:23 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_mod.c,v 1.2.12.3 2010/08/11 22:53:09 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_execfmt.h"
@@ -44,6 +44,8 @@ __KERNEL_RCSID(0, "$NetBSD: linux32_mod.c,v 1.2.12.2 2009/05/04 08:12:23 yamt Ex
 #include <sys/module.h>
 #include <sys/exec.h>
 #include <sys/signalvar.h>
+
+#include <compat/linux/common/linux_exec.h>
 
 #include <compat/linux32/common/linux32_sysctl.h>
 #include <compat/linux32/common/linux32_exec.h>
@@ -67,7 +69,7 @@ static struct execsw linux32_execsw[] = {
           linux32_elf32_copyargs,
           NULL,
           coredump_elf32,
-          exec_setup_stack },
+          linux_exec_setup_stack },
 #endif
 };
 

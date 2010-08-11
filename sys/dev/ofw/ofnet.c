@@ -1,4 +1,4 @@
-/*	$NetBSD: ofnet.c,v 1.41.4.3 2010/03/11 15:03:42 yamt Exp $	*/
+/*	$NetBSD: ofnet.c,v 1.41.4.4 2010/08/11 22:53:41 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofnet.c,v 1.41.4.3 2010/03/11 15:03:42 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofnet.c,v 1.41.4.4 2010/08/11 22:53:41 yamt Exp $");
 
 #include "ofnet.h"
 #include "opt_inet.h"
@@ -259,8 +259,7 @@ ofnet_read(struct ofnet_softc *of)
 		if (head == 0)
 			continue;
 
-		if (ifp->if_bpf)
-			bpf_ops->bpf_mtap(ifp->if_bpf, m);
+		bpf_mtap(ifp, m);
 		ifp->if_ipackets++;
 		(*ifp->if_input)(ifp, head);
 	}
@@ -322,8 +321,7 @@ ofnet_start(struct ifnet *ifp)
 			panic("ofnet_start: no header mbuf");
 		len = m0->m_pkthdr.len;
 
-		if (ifp->if_bpf)
-			bpf_ops->bpf_mtap(ifp->if_bpf, m0);
+		bpf_mtap(ifp, m0);
 
 		if (len > ETHERMTU + sizeof(struct ether_header)) {
 			/* packet too large, toss it */
@@ -420,8 +418,6 @@ ofnet_watchdog(struct ifnet *ifp)
 static void
 ipkdbofstart(struct ipkdb_if *kip)
 {
-	int unit = kip->unit - 1;
-
 	if (ipkdb_of)
 		ipkdbattach(kip, &ipkdb_of->sc_ethercom);
 }

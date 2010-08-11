@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.54.18.1 2009/05/04 08:10:46 yamt Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.54.18.2 2010/08/11 22:51:43 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.54.18.1 2009/05/04 08:10:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.54.18.2 2010/08/11 22:51:43 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,9 +46,11 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.54.18.1 2009/05/04 08:10:46 yamt Exp 
 #include <atari/atari/device.h>
 
 static void findroot(void);
-void mbattach(struct device *, struct device *, void *);
-int mbprint(void *, const char *);
 int mbmatch(struct device *, struct cfdata *, void *);
+void mbattach(struct device *, struct device *, void *);
+#if 0
+int mbprint(void *, const char *);
+#endif
 
 int atari_realconfig;
 #include <sys/kernel.h>
@@ -59,8 +61,7 @@ int atari_realconfig;
 void
 cpu_configure(void)
 {
-	extern int atari_realconfig;
-	
+
 	atari_realconfig = 1;
 
 	init_sicallback();
@@ -98,7 +99,6 @@ atari_config_found(struct cfdata *pcfp, struct device *pdp, void *auxp,
 	struct device temp;
 	struct cfdata *cf;
 	const struct cfattach *ca;
-	extern int	atari_realconfig;
 
 	if (atari_realconfig)
 		return config_found(pdp, auxp, pfn) != NULL;
@@ -280,11 +280,13 @@ mbattach(struct device *pdp, struct device *dp, void *auxp)
 	config_found(dp, __UNCONST("nvr")     , simple_devprint);
 	config_found(dp, __UNCONST("lpt")     , simple_devprint);
 	config_found(dp, __UNCONST("wdc")     , simple_devprint);
+	config_found(dp, __UNCONST("ne")      , simple_devprint);
 	config_found(dp, __UNCONST("isab")    , simple_devprint);
 	config_found(dp, __UNCONST("pcib")    , simple_devprint);
 	config_found(dp, __UNCONST("avmebus") , simple_devprint);
 }
 
+#if 0
 int
 mbprint(void *auxp, const char *pnp)
 {
@@ -293,3 +295,4 @@ mbprint(void *auxp, const char *pnp)
 		aprint_normal("%s at %s", (char *)auxp, pnp);
 	return UNCONF;
 }
+#endif

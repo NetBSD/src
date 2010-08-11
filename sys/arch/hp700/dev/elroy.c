@@ -1,4 +1,4 @@
-/*	$NetBSD: elroy.c,v 1.2.2.4 2009/08/19 18:46:15 yamt Exp $	*/
+/*	$NetBSD: elroy.c,v 1.2.2.5 2010/08/11 22:52:02 yamt Exp $	*/
 
 /*	$OpenBSD: elroy.c,v 1.5 2009/03/30 21:24:57 kettenis Exp $	*/
 
@@ -1275,7 +1275,8 @@ elroy_attach(device_t parent, device_t self, void *aux)
 		break;
 	}
 
-	aprint_normal(": %s TR%d.%d%s", p, sc->sc_ver >> 4, sc->sc_ver & 0xf, q);
+	aprint_normal(": %s TR%d.%d%s", p, sc->sc_ver >> 4, sc->sc_ver & 0xf,
+	    q);
 	apic_attach(sc);
 	aprint_normal("\n");
 

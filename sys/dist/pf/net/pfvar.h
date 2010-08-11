@@ -1,4 +1,4 @@
-/*	$NetBSD: pfvar.h,v 1.15.26.2 2009/08/19 18:47:34 yamt Exp $	*/
+/*	$NetBSD: pfvar.h,v 1.15.26.3 2010/08/11 22:54:19 yamt Exp $	*/
 /*	$OpenBSD: pfvar.h,v 1.254 2007/07/13 09:17:48 markus Exp $ */
 
 /*
@@ -1123,7 +1123,8 @@ struct pf_pdesc {
 #define PFRES_MAXSTATES	12		/* State limit */
 #define PFRES_SRCLIMIT	13		/* Source node/conn limit */
 #define PFRES_SYNPROXY	14		/* SYN proxy */
-#define PFRES_MAX	15		/* total+1 */
+#define PFRES_STATELOCKED 15    /* state table locked */
+#define PFRES_MAX	16		/* total+1 */
 
 #define PFRES_NAMES { \
 	"match", \
@@ -1141,6 +1142,7 @@ struct pf_pdesc {
 	"state-limit", \
 	"src-limit", \
 	"synproxy", \
+	"state-locked", \
 	NULL \
 }
 
@@ -1493,7 +1495,8 @@ struct pfioc_iface {
 #define DIOCADDRULE	_IOWR('D',  4, struct pfioc_rule)
 #define DIOCGETRULES	_IOWR('D',  6, struct pfioc_rule)
 #define DIOCGETRULE	_IOWR('D',  7, struct pfioc_rule)
-/* XXX cut 8 - 17 */
+#define DIOCSETLCK  _IOWR('D', 8, uint32_t)
+/* XXX cut 9 - 17 */
 #define DIOCCLRSTATES	_IOWR('D', 18, struct pfioc_state_kill)
 #define DIOCGETSTATE	_IOWR('D', 19, struct pfioc_state)
 #define DIOCSETSTATUSIF _IOWR('D', 20, struct pfioc_if)
@@ -1523,7 +1526,8 @@ struct pfioc_iface {
 #define DIOCGETADDRS	_IOWR('D', 53, struct pfioc_pooladdr)
 #define DIOCGETADDR	_IOWR('D', 54, struct pfioc_pooladdr)
 #define DIOCCHANGEADDR	_IOWR('D', 55, struct pfioc_pooladdr)
-/* XXX cut 55 - 57 */
+#define DIOCADDSTATES   _IOWR('D', 56, struct pfioc_states)
+/* XXX cut 57 - 57 */
 #define	DIOCGETRULESETS	_IOWR('D', 58, struct pfioc_ruleset)
 #define	DIOCGETRULESET	_IOWR('D', 59, struct pfioc_ruleset)
 #define	DIOCRCLRTABLES	_IOWR('D', 60, struct pfioc_table)
@@ -1641,6 +1645,9 @@ int	pf_match_uid(u_int8_t, uid_t, uid_t, uid_t);
 int	pf_match_gid(u_int8_t, gid_t, gid_t, gid_t);
 
 void	pf_normalize_init(void);
+#ifdef _MODULE
+void	pf_normalize_destroy(void);
+#endif /* _MODULE */
 int	pf_normalize_ip(struct mbuf **, int, struct pfi_kif *, u_short *,
 	    struct pf_pdesc *);
 int	pf_normalize_ip6(struct mbuf **, int, struct pfi_kif *, u_short *,
@@ -1662,6 +1669,9 @@ int	pf_socket_lookup(int, struct pf_pdesc *);
 struct pf_state_key *
 	pf_alloc_state_key(struct pf_state *);
 void	pfr_initialize(void);
+#ifdef _MODULE
+void	pfr_destroy(void);
+#endif /* _MODULE */
 int	pfr_match_addr(struct pfr_ktable *, struct pf_addr *, sa_family_t);
 void	pfr_update_stats(struct pfr_ktable *, struct pf_addr *, sa_family_t,
 	    u_int64_t, int, int, int);
@@ -1701,6 +1711,9 @@ int	pfr_ina_define(struct pfr_table *, struct pfr_addr *, int, int *,
 extern struct pfi_kif		*pfi_all;
 
 void		 pfi_initialize(void);
+#ifdef _MODULE
+void		 pfi_destroy(void);
+#endif /* _MODULE */
 struct pfi_kif	*pfi_kif_get(const char *);
 void		 pfi_kif_ref(struct pfi_kif *, enum pfi_kif_refs);
 void		 pfi_kif_unref(struct pfi_kif *, enum pfi_kif_refs);
@@ -1803,6 +1816,9 @@ struct pf_osfp_enlist *
 void	pf_osfp_flush(void);
 int	pf_osfp_get(struct pf_osfp_ioctl *);
 void	pf_osfp_initialize(void);
+#ifdef _MODULE
+void	pf_osfp_destroy(void);
+#endif /* _MODULE */
 int	pf_osfp_match(struct pf_osfp_enlist *, pf_osfp_t);
 struct pf_os_fingerprint *
 	pf_osfp_validate(void);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ugensa.c,v 1.18.4.3 2010/03/11 15:04:06 yamt Exp $	*/
+/*	$NetBSD: ugensa.c,v 1.18.4.4 2010/08/11 22:54:15 yamt Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugensa.c,v 1.18.4.3 2010/03/11 15:04:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugensa.c,v 1.18.4.4 2010/08/11 22:54:15 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,10 +93,11 @@ struct ugensa_type {
 
 static const struct ugensa_type ugensa_devs[] = {
 	{{ USB_VENDOR_AIRPRIME, USB_PRODUCT_AIRPRIME_PC5220 }, 0 },
+	{{ USB_VENDOR_DELL, USB_PRODUCT_DELL_HSDPA }, 0 },
 	{{ USB_VENDOR_NOVATEL, USB_PRODUCT_NOVATEL_FLEXPACKGPS }, 0 },
 	{{ USB_VENDOR_QUALCOMM_K, USB_PRODUCT_QUALCOMM_K_CDMA_MSM_K }, 0 },
-	{{ USB_VENDOR_DELL, USB_PRODUCT_DELL_HSDPA }, 0 },
 	{{ USB_VENDOR_QUALCOMMINC, USB_PRODUCT_QUALCOMMINC_AC8700 }, 0 },
+	{{ USB_VENDOR_SIERRA, USB_PRODUCT_SIERRA_USB305 }, 0 },
 
 	/*
 	 * The following devices are untested, but they are purported to
@@ -106,8 +107,8 @@ static const struct ugensa_type ugensa_devs[] = {
         {{ USB_VENDOR_ANYDATA, USB_PRODUCT_ANYDATA_ADU_500A }, UNTESTED },
         {{ USB_VENDOR_NOVATEL2, USB_PRODUCT_NOVATEL2_EXPRESSCARD }, UNTESTED },
 	{{ USB_VENDOR_QUALCOMM, USB_PRODUCT_QUALCOMM_MSM_HSDPA }, UNTESTED },
-	{{ USB_VENDOR_SIERRA, USB_PRODUCT_SIERRA_EM5625 }, UNTESTED },
 	{{ USB_VENDOR_SIERRA, USB_PRODUCT_SIERRA_AIRCARD875 }, UNTESTED },
+	{{ USB_VENDOR_SIERRA, USB_PRODUCT_SIERRA_EM5625 }, UNTESTED },
 };
 #define ugensa_lookup(v, p) \
 	((const struct ugensa_type *)usb_lookup(ugensa_devs, v, p))

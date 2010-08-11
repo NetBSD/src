@@ -1,4 +1,4 @@
-/*	$NetBSD: alipm.c,v 1.3.2.3 2009/05/16 10:41:32 yamt Exp $ */
+/*	$NetBSD: alipm.c,v 1.3.2.4 2010/08/11 22:53:42 yamt Exp $ */
 /*	$OpenBSD: alipm.c,v 1.13 2007/05/03 12:19:01 dlg Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: alipm.c,v 1.3.2.3 2009/05/16 10:41:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: alipm.c,v 1.3.2.4 2010/08/11 22:53:42 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -200,6 +200,7 @@ alipm_attach(device_t parent, device_t self, void *aux)
 		aprint_normal(" unknown clock speed\n");
 		break;
 	}
+	aprint_naive("\n");
 
 	/* Attach I2C bus */
 	rw_init(&sc->sc_smb_lock);

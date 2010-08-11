@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_futex.c,v 1.12.2.2 2009/05/04 08:12:22 yamt Exp $ */
+/*	$NetBSD: linux_futex.c,v 1.12.2.3 2010/08/11 22:53:08 yamt Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: linux_futex.c,v 1.12.2.2 2009/05/04 08:12:22 yamt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: linux_futex.c,v 1.12.2.3 2010/08/11 22:53:08 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/time.h>
@@ -52,9 +52,8 @@ __KERNEL_RCSID(1, "$NetBSD: linux_futex.c,v 1.12.2.2 2009/05/04 08:12:22 yamt Ex
 #include <compat/linux/common/linux_exec.h>
 #include <compat/linux/common/linux_signal.h>
 #include <compat/linux/common/linux_futex.h>
-#include <compat/linux/common/linux_ipc.h>
 #include <compat/linux/common/linux_sched.h>
-#include <compat/linux/common/linux_sem.h>
+#include <compat/linux/common/linux_machdep.h>
 #include <compat/linux/linux_syscallargs.h>
 
 void linux_to_native_timespec(struct timespec *, struct linux_timespec *);
@@ -66,28 +65,29 @@ struct waiting_proc {
 	struct futex *wp_new_futex;
 	kcondvar_t wp_futex_cv;
 	TAILQ_ENTRY(waiting_proc) wp_list;
+	TAILQ_ENTRY(waiting_proc) wp_rqlist;
 };
 struct futex {
 	void *f_uaddr;
 	int f_refcount;
 	LIST_ENTRY(futex) f_list;
-	TAILQ_HEAD(lf_waiting_proc, waiting_proc) f_waiting_proc;
+	TAILQ_HEAD(, waiting_proc) f_waiting_proc;
+	TAILQ_HEAD(, waiting_proc) f_requeue_proc;
 };
 
 static LIST_HEAD(futex_list, futex) futex_list;
 static kmutex_t futex_lock;
 
-#define FUTEX_LOCK	mutex_enter(&futex_lock);
-#define FUTEX_UNLOCK	mutex_exit(&futex_lock);
+#define FUTEX_LOCK	mutex_enter(&futex_lock)
+#define FUTEX_UNLOCK	mutex_exit(&futex_lock)
+#define FUTEX_LOCKASSERT	KASSERT(mutex_owned(&futex_lock))
 
-#define FUTEX_LOCKED	1
-#define FUTEX_UNLOCKED	0
-
-#define FUTEX_SYSTEM_LOCK	KERNEL_LOCK(1, NULL);
-#define FUTEX_SYSTEM_UNLOCK	KERNEL_UNLOCK_ONE(0);
+#define FUTEX_SYSTEM_LOCK	KERNEL_LOCK(1, NULL)
+#define FUTEX_SYSTEM_UNLOCK	KERNEL_UNLOCK_ONE(0)
 
 #ifdef DEBUG_LINUX_FUTEX
-#define FUTEXPRINTF(a) printf a
+int debug_futex = 1;
+#define FUTEXPRINTF(a) do { if (debug_futex) printf a; } while (0)
 #else
 #define FUTEXPRINTF(a)
 #endif
@@ -102,9 +102,12 @@ futex_init(void)
 	return 0;
 }
 
-static struct futex *futex_get(void *, int);
+static struct waiting_proc *futex_wp_alloc(void);
+static void futex_wp_free(struct waiting_proc *);
+static struct futex *futex_get(void *);
+static void futex_ref(struct futex *);
 static void futex_put(struct futex *);
-static int futex_sleep(struct futex *, lwp_t *, unsigned long);
+static int futex_sleep(struct futex **, lwp_t *, int, struct waiting_proc *);
 static int futex_wake(struct futex *, int, struct futex *, int);
 static int futex_atomic_op(lwp_t *, int, void *);
 
@@ -119,15 +122,40 @@ linux_sys_futex(struct lwp *l, const struct linux_sys_futex_args *uap, register_
 		syscallarg(int *) uaddr2;
 		syscallarg(int) val3;
 	} */
+	struct linux_timespec lts;
+	struct timespec ts = { 0, 0 };
+	int error;
+
+	if ((SCARG(uap, op) & ~LINUX_FUTEX_PRIVATE_FLAG) == LINUX_FUTEX_WAIT &&
+	    SCARG(uap, timeout) != NULL) {
+		if ((error = copyin(SCARG(uap, timeout), 
+		    &lts, sizeof(lts))) != 0) {
+			return error;
+		}
+		linux_to_native_timespec(&ts, &lts);
+	}
+	return linux_do_futex(l, uap, retval, &ts);
+}
+
+int
+linux_do_futex(struct lwp *l, const struct linux_sys_futex_args *uap, register_t *retval, struct timespec *ts)
+{
+	/* {
+		syscallarg(int *) uaddr;
+		syscallarg(int) op;
+		syscallarg(int) val;
+		syscallarg(const struct linux_timespec *) timeout;
+		syscallarg(int *) uaddr2;
+		syscallarg(int) val3;
+	} */
 	int val;
 	int ret;
-	struct linux_timespec timeout = { 0, 0 };
 	int error = 0;
 	struct futex *f;
 	struct futex *newf;
 	int timeout_hz;
-	struct timespec ts;
 	struct futex *f2;
+	struct waiting_proc *wp;
 	int op_ret;
 
 	RUN_ONCE(&futex_once, futex_init);
@@ -154,26 +182,17 @@ linux_sys_futex(struct lwp *l, const struct linux_sys_futex_args *uap, register_
 			return EWOULDBLOCK;
 		}
 
-		if (SCARG(uap, timeout) != NULL) {
-			if ((error = copyin(SCARG(uap, timeout), 
-			    &timeout, sizeof(timeout))) != 0) {
-				FUTEX_SYSTEM_UNLOCK;
-				return error;
-			}
-		}
-
 		FUTEXPRINTF(("FUTEX_WAIT %d.%d: val = %d, uaddr = %p, "
 		    "*uaddr = %d, timeout = %lld.%09ld\n", 
 		    l->l_proc->p_pid, l->l_lid, SCARG(uap, val), 
-		    SCARG(uap, uaddr), val, (long long)timeout.tv_sec,
-		    timeout.tv_nsec));
+		    SCARG(uap, uaddr), val, (long long)ts->tv_sec,
+		    ts->tv_nsec));
 
-		linux_to_native_timespec(&ts, &timeout);
-		if ((error = itimespecfix(&ts)) != 0) {
+		if ((error = itimespecfix(ts)) != 0) {
 			FUTEX_SYSTEM_UNLOCK;
 			return error;
 		}
-		timeout_hz = tstohz(&ts);
+		timeout_hz = tstohz(ts);
 
 		/*
 		 * If the user process requests a non null timeout,
@@ -186,9 +205,13 @@ linux_sys_futex(struct lwp *l, const struct linux_sys_futex_args *uap, register_
 		if (SCARG(uap, timeout) != NULL && timeout_hz == 0)
 			timeout_hz = 1;
 
-		f = futex_get(SCARG(uap, uaddr), FUTEX_UNLOCKED);
-		ret = futex_sleep(f, l, timeout_hz);
+		wp = futex_wp_alloc();
+		FUTEX_LOCK;
+		f = futex_get(SCARG(uap, uaddr));
+		ret = futex_sleep(&f, l, timeout_hz, wp);
 		futex_put(f);
+		FUTEX_UNLOCK;
+		futex_wp_free(wp);
 
 		FUTEXPRINTF(("FUTEX_WAIT %d.%d: uaddr = %p, "
 		    "ret = %d\n", l->l_proc->p_pid, l->l_lid, 
@@ -216,7 +239,6 @@ linux_sys_futex(struct lwp *l, const struct linux_sys_futex_args *uap, register_
 		break;
 		
 	case LINUX_FUTEX_WAKE:
-		FUTEX_SYSTEM_LOCK;
 		/* 
 		 * XXX: Linux is able cope with different addresses 
 		 * corresponding to the same mapped memory in the sleeping 
@@ -226,10 +248,12 @@ linux_sys_futex(struct lwp *l, const struct linux_sys_futex_args *uap, register_
 		    l->l_proc->p_pid, l->l_lid,
 		    SCARG(uap, uaddr), SCARG(uap, val)));
 
-		f = futex_get(SCARG(uap, uaddr), FUTEX_UNLOCKED);
+		FUTEX_SYSTEM_LOCK;
+		FUTEX_LOCK;
+		f = futex_get(SCARG(uap, uaddr));
 		*retval = futex_wake(f, SCARG(uap, val), NULL, 0);
 		futex_put(f);
-
+		FUTEX_UNLOCK;
 		FUTEX_SYSTEM_UNLOCK;
 
 		break;
@@ -248,12 +272,20 @@ linux_sys_futex(struct lwp *l, const struct linux_sys_futex_args *uap, register_
 			return EAGAIN;
 		}
 
-		f = futex_get(SCARG(uap, uaddr), FUTEX_UNLOCKED);
-		newf = futex_get(SCARG(uap, uaddr2), FUTEX_UNLOCKED);
+		FUTEXPRINTF(("FUTEX_CMP_REQUEUE %d.%d: uaddr = %p, val = %d, "
+		    "uaddr2 = %p, val2 = %d\n",
+		    l->l_proc->p_pid, l->l_lid,
+		    SCARG(uap, uaddr), SCARG(uap, val), SCARG(uap, uaddr2),
+		    (int)(unsigned long)SCARG(uap, timeout)));
+
+		FUTEX_LOCK;
+		f = futex_get(SCARG(uap, uaddr));
+		newf = futex_get(SCARG(uap, uaddr2));
 		*retval = futex_wake(f, SCARG(uap, val), newf,
 		    (int)(unsigned long)SCARG(uap, timeout));
 		futex_put(f);
 		futex_put(newf);
+		FUTEX_UNLOCK;
 
 		FUTEX_SYSTEM_UNLOCK;
 		break;
@@ -261,12 +293,20 @@ linux_sys_futex(struct lwp *l, const struct linux_sys_futex_args *uap, register_
 	case LINUX_FUTEX_REQUEUE:
 		FUTEX_SYSTEM_LOCK;
 
-		f = futex_get(SCARG(uap, uaddr), FUTEX_UNLOCKED);
-		newf = futex_get(SCARG(uap, uaddr2), FUTEX_UNLOCKED);
+		FUTEXPRINTF(("FUTEX_REQUEUE %d.%d: uaddr = %p, val = %d, "
+		    "uaddr2 = %p, val2 = %d\n",
+		    l->l_proc->p_pid, l->l_lid,
+		    SCARG(uap, uaddr), SCARG(uap, val), SCARG(uap, uaddr2),
+		    (int)(unsigned long)SCARG(uap, timeout)));
+
+		FUTEX_LOCK;
+		f = futex_get(SCARG(uap, uaddr));
+		newf = futex_get(SCARG(uap, uaddr2));
 		*retval = futex_wake(f, SCARG(uap, val), newf,
 		    (int)(unsigned long)SCARG(uap, timeout));
 		futex_put(f);
 		futex_put(newf);
+		FUTEX_UNLOCK;
 
 		FUTEX_SYSTEM_UNLOCK;
 		break;
@@ -277,25 +317,31 @@ linux_sys_futex(struct lwp *l, const struct linux_sys_futex_args *uap, register_
 		return ENOSYS;
 	case LINUX_FUTEX_WAKE_OP:
 		FUTEX_SYSTEM_LOCK;
-		f = futex_get(SCARG(uap, uaddr), FUTEX_UNLOCKED);
-		f2 = futex_get(SCARG(uap, uaddr2), FUTEX_UNLOCKED);
+
+		FUTEXPRINTF(("FUTEX_WAKE_OP %d.%d: uaddr = %p, op = %d, "
+		    "val = %d, uaddr2 = %p, val2 = %d\n",
+		    l->l_proc->p_pid, l->l_lid,
+		    SCARG(uap, uaddr), SCARG(uap, op), SCARG(uap, val),
+		    SCARG(uap, uaddr2),
+		    (int)(unsigned long)SCARG(uap, timeout)));
+
+		FUTEX_LOCK;
+		f = futex_get(SCARG(uap, uaddr));
+		f2 = futex_get(SCARG(uap, uaddr2));
+		FUTEX_UNLOCK;
+
 		/*
 		 * This function returns positive number as results and
 		 * negative as errors
 		 */
 		op_ret = futex_atomic_op(l, SCARG(uap, val3), SCARG(uap, uaddr2));
+		FUTEX_LOCK;
 		if (op_ret < 0) {
-			/* XXX: We don't handle EFAULT yet */
-			if (op_ret != -EFAULT) {
-				futex_put(f);
-				futex_put(f2);
-				FUTEX_SYSTEM_UNLOCK;
-				return -op_ret;
-			}
 			futex_put(f);
 			futex_put(f2);
+			FUTEX_UNLOCK;
 			FUTEX_SYSTEM_UNLOCK;
-			return EFAULT;
+			return -op_ret;
 		}
 
 		ret = futex_wake(f, SCARG(uap, val), NULL, 0);
@@ -311,8 +357,9 @@ linux_sys_futex(struct lwp *l, const struct linux_sys_futex_args *uap, register_
 			ret += op_ret;
 		}
 		futex_put(f2);
-		*retval = ret;
+		FUTEX_UNLOCK;
 		FUTEX_SYSTEM_UNLOCK;
+		*retval = ret;
 		break;
 	default:
 		FUTEXPRINTF(("linux_sys_futex: unknown op %d\n", 
@@ -322,19 +369,34 @@ linux_sys_futex(struct lwp *l, const struct linux_sys_futex_args *uap, register_
 	return 0;
 }
 
+static struct waiting_proc *
+futex_wp_alloc(void)
+{
+	struct waiting_proc *wp;
+
+	wp = kmem_zalloc(sizeof(*wp), KM_SLEEP);
+	cv_init(&wp->wp_futex_cv, "futex");
+	return wp;
+}
+
+static void
+futex_wp_free(struct waiting_proc *wp)
+{
+
+	cv_destroy(&wp->wp_futex_cv);
+	kmem_free(wp, sizeof(*wp));
+}
+
 static struct futex *
-futex_get(void *uaddr, int locked)
+futex_get(void *uaddr)
 {
 	struct futex *f;
 
-	if (locked == FUTEX_UNLOCKED)
-		FUTEX_LOCK;
+	FUTEX_LOCKASSERT;
 
 	LIST_FOREACH(f, &futex_list, f_list) {
 		if (f->f_uaddr == uaddr) {
 			f->f_refcount++;
-			if (locked == FUTEX_UNLOCKED)
-				FUTEX_UNLOCK;
 			return f;
 		}
 	}
@@ -344,85 +406,140 @@ futex_get(void *uaddr, int locked)
 	f->f_uaddr = uaddr;
 	f->f_refcount = 1;
 	TAILQ_INIT(&f->f_waiting_proc);
+	TAILQ_INIT(&f->f_requeue_proc);
 	LIST_INSERT_HEAD(&futex_list, f, f_list);
-	if (locked == FUTEX_UNLOCKED)
-		FUTEX_UNLOCK;
 
 	return f;
+}
+
+static void
+futex_ref(struct futex *f)
+{
+
+	FUTEX_LOCKASSERT;
+
+	f->f_refcount++;
 }
 
 static void 
 futex_put(struct futex *f)
 {
 
-	FUTEX_LOCK;
+	FUTEX_LOCKASSERT;
+
 	f->f_refcount--;
 	if (f->f_refcount == 0) {
 		KASSERT(TAILQ_EMPTY(&f->f_waiting_proc));
+		KASSERT(TAILQ_EMPTY(&f->f_requeue_proc));
 		LIST_REMOVE(f, f_list);
 		kmem_free(f, sizeof(*f));
 	}
-	FUTEX_UNLOCK;
-
-	return;
 }
 
 static int 
-futex_sleep(struct futex *f, lwp_t *l, unsigned long timeout)
+futex_sleep(struct futex **fp, lwp_t *l, int timeout, struct waiting_proc *wp)
 {
-	struct waiting_proc *wp;
+	struct futex *f, *newf;
 	int ret;
 
-	wp = kmem_zalloc(sizeof(*wp), KM_SLEEP);
+	FUTEX_LOCKASSERT;
+
+	f = *fp;
 	wp->wp_l = l;
 	wp->wp_new_futex = NULL;
-	cv_init(&wp->wp_futex_cv, "futex");
 
-	FUTEX_LOCK;
+requeue:
 	TAILQ_INSERT_TAIL(&f->f_waiting_proc, wp, wp_list);
 	ret = cv_timedwait_sig(&wp->wp_futex_cv, &futex_lock, timeout);
 	TAILQ_REMOVE(&f->f_waiting_proc, wp, wp_list);
-	FUTEX_UNLOCK;
 
-	/* if we got woken up in futex_wake */
-	if ((ret == 0) && (wp->wp_new_futex != NULL)) {
-		/* suspend us on the new futex */
-		ret = futex_sleep(wp->wp_new_futex, l, timeout);
-		/* and release the old one */
-		futex_put(wp->wp_new_futex);
+	/* if futex_wake() tells us to requeue ... */
+	newf = wp->wp_new_futex;
+	if (ret == 0 && newf != NULL) {
+		/* ... requeue ourselves on the new futex */
+		futex_put(f);
+		wp->wp_new_futex = NULL;
+		TAILQ_REMOVE(&newf->f_requeue_proc, wp, wp_rqlist);
+		*fp = f = newf;
+		goto requeue;
 	}
-
-	cv_destroy(&wp->wp_futex_cv);
-	kmem_free(wp, sizeof(*wp));
 	return ret;
 }
 
 static int
 futex_wake(struct futex *f, int n, struct futex *newf, int n2)
 {
-	struct waiting_proc *wp;
+	struct waiting_proc *wp, *wpnext;
 	int count;
+
+	FUTEX_LOCKASSERT;
 
 	count = newf ? 0 : 1;
 
-	FUTEX_LOCK;
+	/*
+	 * first, wake up any threads sleeping on this futex.
+	 * note that sleeping threads are not in the process of requeueing.
+	 */
+
 	TAILQ_FOREACH(wp, &f->f_waiting_proc, wp_list) {
+		KASSERT(wp->wp_new_futex == NULL);
+
+		FUTEXPRINTF(("futex_wake: signal f %p l %p ref %d\n",
+			     f, wp->wp_l, f->f_refcount));
+		cv_signal(&wp->wp_futex_cv);
 		if (count <= n) {
-			cv_signal(&wp->wp_futex_cv);
 			count++;
 		} else {
 			if (newf == NULL)
-				continue;
-			/* futex_put called after tsleep */
-			wp->wp_new_futex = futex_get(newf->f_uaddr,
-			    FUTEX_LOCKED);
-			cv_signal(&wp->wp_futex_cv);
+				break;
+
+			/* matching futex_put() is called by the other thread. */
+			futex_ref(newf);
+			wp->wp_new_futex = newf;
+			TAILQ_INSERT_TAIL(&newf->f_requeue_proc, wp, wp_rqlist);
+			FUTEXPRINTF(("futex_wake: requeue newf %p l %p ref %d\n",
+				     newf, wp->wp_l, newf->f_refcount));
+			if (count - n >= n2)
+				goto out;
+		}
+	}
+
+	/*
+	 * next, deal with threads that are requeuing to this futex.
+	 * we don't need to signal these threads, any thread on the
+	 * requeue list has already been signaled but hasn't had a chance
+	 * to run and requeue itself yet.  if we would normally wake
+	 * a thread, just remove the requeue info.  if we would normally
+	 * requeue a thread, change the requeue target.
+	 */
+
+	TAILQ_FOREACH_SAFE(wp, &f->f_requeue_proc, wp_rqlist, wpnext) {
+		KASSERT(wp->wp_new_futex == f);
+
+		FUTEXPRINTF(("futex_wake: unrequeue f %p l %p ref %d\n",
+			     f, wp->wp_l, f->f_refcount));
+		wp->wp_new_futex = NULL;
+		TAILQ_REMOVE(&f->f_requeue_proc, wp, wp_rqlist);
+		futex_put(f);
+
+		if (count <= n) {
+			count++;
+		} else {
+			if (newf == NULL)
+				break;
+
+			/* matching futex_put() is called by the other thread. */
+			futex_ref(newf);
+			wp->wp_new_futex = newf;
+			TAILQ_INSERT_TAIL(&newf->f_requeue_proc, wp, wp_rqlist);
+			FUTEXPRINTF(("futex_wake: rerequeue newf %p l %p ref %d\n",
+				     newf, wp->wp_l, newf->f_refcount));
 			if (count - n >= n2)
 				break;
 		}
 	}
-	FUTEX_UNLOCK;
 
+out:
 	return count;
 }
 
@@ -498,12 +615,16 @@ int
 linux_sys_set_robust_list(struct lwp *l,
     const struct linux_sys_set_robust_list_args *uap, register_t *retval)
 {
-	struct proc *p = l->l_proc;
-	struct linux_emuldata *led = p->p_emuldata;
+	/* {
+		syscallarg(struct linux_robust_list_head *) head;
+		syscallarg(size_t) len;
+	} */
+	struct linux_emuldata *led;
 
-	if (SCARG(uap, len) != sizeof(*(led->robust_futexes)))
+	if (SCARG(uap, len) != sizeof(struct linux_robust_list_head))
 		return EINVAL;
-	led->robust_futexes = SCARG(uap, head);
+	led = l->l_emuldata;
+	led->led_robust_head = SCARG(uap, head);
 	*retval = 0;
 	return 0;
 }
@@ -512,32 +633,51 @@ int
 linux_sys_get_robust_list(struct lwp *l,
     const struct linux_sys_get_robust_list_args *uap, register_t *retval)
 {
+	/* {
+		syscallarg(int) pid;
+		syscallarg(struct linux_robust_list_head **) head;
+		syscallarg(size_t *) len;
+	} */
+	struct proc *p;
 	struct linux_emuldata *led;
-	struct linux_robust_list_head **head;
-	size_t len = sizeof(*led->robust_futexes);
+	struct linux_robust_list_head *head;
+	size_t len;
 	int error = 0;
 
+	p = l->l_proc;
 	if (!SCARG(uap, pid)) {
-		led = l->l_proc->p_emuldata;
-		head = &led->robust_futexes;
+		led = l->l_emuldata;
+		head = led->led_robust_head;
 	} else {
-		struct proc *p;
-
-		mutex_enter(proc_lock); 
-		if ((p = p_find(SCARG(uap, pid), PFIND_LOCKED)) == NULL ||
-		    p->p_emul != &emul_linux) {
-			mutex_exit(proc_lock);
+		mutex_enter(p->p_lock);
+		l = lwp_find(p, SCARG(uap, pid));
+		if (l != NULL) {
+			led = l->l_emuldata;
+			head = led->led_robust_head;
+		}
+		mutex_exit(p->p_lock);
+		if (l == NULL) {
 			return ESRCH;
 		}
-		led = p->p_emuldata;
-		head = &led->robust_futexes;
-		mutex_exit(proc_lock);
 	}
+#ifdef __arch64__
+	if (p->p_flag & PK_32) {
+		uint32_t u32;
 
+		u32 = 12;
+		error = copyout(&u32, SCARG(uap, len), sizeof(u32));
+		if (error)
+			return error;
+		u32 = (uint32_t)(uintptr_t)head;
+		return copyout(&u32, SCARG(uap, head), sizeof(u32));
+	}
+#endif
+
+	len = sizeof(*head);
 	error = copyout(&len, SCARG(uap, len), sizeof(len));
 	if (error)
 		return error;
-	return copyout(head, SCARG(uap, head), sizeof(*head));
+	return copyout(&head, SCARG(uap, head), sizeof(head));
 }
 
 static int
@@ -547,7 +687,7 @@ handle_futex_death(void *uaddr, pid_t pid, int pi)
 	struct futex *f;
 
 retry:
-	if (copyin(uaddr, &uval, 4))
+	if (copyin(uaddr, &uval, sizeof(uval)))
 		return EFAULT;
 
 	if ((uval & FUTEX_TID_MASK) == pid) {
@@ -561,8 +701,10 @@ retry:
 			goto retry;
 
 		if (!pi && (uval & FUTEX_WAITERS)) {
-			f = futex_get(uaddr, FUTEX_UNLOCKED);
+			FUTEX_LOCK;
+			f = futex_get(uaddr);
 			futex_wake(f, 1, NULL, 0);
+			FUTEX_UNLOCK;
 		}
 	}
 
@@ -570,12 +712,23 @@ retry:
 }
 
 static int
-fetch_robust_entry(struct linux_robust_list **entry,
+fetch_robust_entry(struct lwp *l, struct linux_robust_list **entry,
     struct linux_robust_list **head, int *pi)
 {
+	struct linux_emuldata *led;
 	unsigned long uentry;
 
-	if (copyin((const void *)head, &uentry, sizeof(unsigned long)))
+	led = l->l_emuldata;
+#ifdef __arch64__
+	if (l->l_proc->p_flag & PK_32) {
+		uint32_t u32;
+
+		if (copyin(head, &u32, sizeof(u32)))
+			return EFAULT;
+		uentry = (unsigned long)u32;
+	} else
+#endif
+	if (copyin(head, &uentry, sizeof(uentry)))
 		return EFAULT;
 
 	*entry = (void *)(uentry & ~1UL);
@@ -586,7 +739,7 @@ fetch_robust_entry(struct linux_robust_list **entry,
 
 /* This walks the list of robust futexes, releasing them. */
 void
-release_futexes(struct proc *p)
+release_futexes(struct lwp *l)
 {
 	struct linux_robust_list_head head;
 	struct linux_robust_list *entry, *next_entry = NULL, *pending;
@@ -595,28 +748,50 @@ release_futexes(struct proc *p)
 	unsigned long futex_offset;
 	int rc;
 
-	led = p->p_emuldata;
-	if (led->robust_futexes == NULL)
+	led = l->l_emuldata;
+	if (led->led_robust_head == NULL)
 		return;
 
-	if (copyin(led->robust_futexes, &head, sizeof(head)))
+#ifdef __arch64__
+	if (l->l_proc->p_flag & PK_32) {
+		uint32_t u32s[3];
+
+		if (copyin(led->led_robust_head, u32s, sizeof(u32s)))
+			return;
+
+		head.list.next = (void *)(uintptr_t)u32s[0];
+		head.futex_offset = (unsigned long)u32s[1];
+		head.pending_list = (void *)(uintptr_t)u32s[2];
+	} else
+#endif
+	if (copyin(led->led_robust_head, &head, sizeof(head)))
 		return;
 
-	if (fetch_robust_entry(&entry, &head.list.next, &pi))
+	if (fetch_robust_entry(l, &entry, &head.list.next, &pi))
 		return;
 
+#ifdef __arch64__
+	if (l->l_proc->p_flag & PK_32) {
+		uint32_t u32;
+
+		if (copyin(led->led_robust_head, &u32, sizeof(u32)))
+			return;
+
+		head.futex_offset = (unsigned long)u32;
+	} else
+#endif
 	if (copyin(&head.futex_offset, &futex_offset, sizeof(unsigned long)))
 		return;
 
-	if (fetch_robust_entry(&pending, &head.pending_list, &pip))
+	if (fetch_robust_entry(l, &pending, &head.pending_list, &pip))
 		return;
 
 	while (entry != &head.list) {
-		rc = fetch_robust_entry(&next_entry, &entry->next, &next_pi);
+		rc = fetch_robust_entry(l, &next_entry, &entry->next, &next_pi);
 
 		if (entry != pending)
 			if (handle_futex_death((char *)entry + futex_offset,
-			    p->p_pid, pi))
+			    l->l_lid, pi))
 				return;
 
 		if (rc)
@@ -633,5 +808,5 @@ release_futexes(struct proc *p)
 
 	if (pending)
 		handle_futex_death((char *)pending + futex_offset,
-		    p->p_pid, pip);
+		    l->l_lid, pip);
 }

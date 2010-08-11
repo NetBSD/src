@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.7 2006/11/14 14:03:12 drochner Exp $
+# $NetBSD: Makefile,v 1.7.56.1 2010/08/11 22:52:14 yamt Exp $
 
 SUBDIR= biosboot
 
@@ -8,7 +8,7 @@ LIBOBJ= ${.OBJDIR}
 .include <bsd.subdir.mk>
 .include <bsd.obj.mk>
 
-cleandir distclean: cleanlibdir
+cleandir distclean: .WAIT cleanlibdir
 
 cleanlibdir:
 	-rm -rf lib

@@ -1,0 +1,13 @@
+#	$NetBSD: INSTALL_KURO,v 1.1.4.2 2010/08/11 22:52:38 yamt Exp $
+#
+# GENERIC install kernel for KuroBox / LinkStation
+#
+
+include "arch/sandpoint/conf/KUROBOX"
+
+options 	MEMORY_DISK_HOOKS
+options 	MEMORY_DISK_IS_ROOT	# Force root on RAM disk
+options 	MEMORY_DISK_ROOT_SIZE=4096	# 2 MB
+options 	MEMORY_DISK_RBFLAGS=RB_SINGLE	# boot in single-user mode
+
+pseudo-device	md		1

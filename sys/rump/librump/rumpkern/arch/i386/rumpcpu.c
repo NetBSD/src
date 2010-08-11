@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpcpu.c,v 1.3.2.3 2010/03/11 15:04:38 yamt Exp $	*/
+/*	$NetBSD: rumpcpu.c,v 1.3.2.4 2010/08/11 22:55:07 yamt Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpcpu.c,v 1.3.2.3 2010/03/11 15:04:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpcpu.c,v 1.3.2.4 2010/08/11 22:55:07 yamt Exp $");
 
 #include <sys/param.h>
 
@@ -40,9 +40,14 @@ __KERNEL_RCSID(0, "$NetBSD: rumpcpu.c,v 1.3.2.3 2010/03/11 15:04:38 yamt Exp $")
 struct cpu_info *cpu_info_list;
 
 void
-rump_cpu_bootstrap(struct cpu_info *ci)
+rump_cpu_attach(struct cpu_info *ci)
 {
 
+	if (cpu_info_list == NULL)
+		ci->ci_flags |= CPUF_PRIMARY;
+
+	/* XXX: wrong order, but ... */
+	ci->ci_next = cpu_info_list;
 	cpu_info_list = ci;
 }
 

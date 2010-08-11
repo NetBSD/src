@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.113.2.5 2010/03/11 15:04:20 yamt Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.113.2.6 2010/08/11 22:54:44 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004, 2008, 2009 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.113.2.5 2010/03/11 15:04:20 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.113.2.6 2010/08/11 22:54:44 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -923,7 +923,7 @@ unp_bind(struct socket *so, struct mbuf *nam, struct lwp *l)
 	unp->unp_connid.unp_euid = kauth_cred_geteuid(l->l_cred);
 	unp->unp_connid.unp_egid = kauth_cred_getegid(l->l_cred);
 	unp->unp_flags |= UNP_EIDSBIND;
-	VOP_UNLOCK(vp, 0);
+	VOP_UNLOCK(vp);
 	unp->unp_flags &= ~UNP_BUSY;
 	return (0);
 

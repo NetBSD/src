@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.19.20.2 2010/03/11 15:02:45 yamt Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.19.20.3 2010/08/11 22:52:27 yamt Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -38,8 +38,10 @@
  *	news68k/pmap_bootstrap.c - from hp300 and mvme68k
  */
 
+#include "opt_m68k_arch.h"
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.19.20.2 2010/03/11 15:02:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.19.20.3 2010/08/11 22:52:27 yamt Exp $");
 
 #include <sys/param.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: bivideo.c,v 1.28.4.1 2009/05/16 10:41:21 yamt Exp $	*/
+/*	$NetBSD: bivideo.c,v 1.28.4.2 2010/08/11 22:53:21 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bivideo.c,v 1.28.4.1 2009/05/16 10:41:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bivideo.c,v 1.28.4.2 2010/08/11 22:53:21 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_hpcfb.h"
@@ -88,7 +88,6 @@ struct bivideo_softc {
 	struct device		sc_dev;
 	struct hpcfb_fbconf	sc_fbconf;
 	struct hpcfb_dspconf	sc_dspconf;
-	void			*sc_powerhook;	/* power management hook */
 	int			sc_powerstate;
 #define PWRSTAT_SUSPEND		(1<<0)
 #define PWRSTAT_VIDEOOFF	(1<<1)
@@ -110,6 +109,8 @@ struct bivideo_softc {
 static int bivideo_init(struct hpcfb_fbconf *);
 static void bivideo_power(int, void *);
 static void bivideo_update_powerstate(struct bivideo_softc *, int);
+static bool bivideo_suspend(device_t, const pmf_qual_t *);
+static bool bivideo_resume(device_t, const pmf_qual_t *);
 void	bivideo_init_backlight(struct bivideo_softc *, int);
 void	bivideo_init_brightness(struct bivideo_softc *, int);
 void	bivideo_init_contrast(struct bivideo_softc *, int);
@@ -178,10 +179,8 @@ bivideoattach(device_t parent, device_t self, void *aux)
 
 	/* Add a suspend hook to power saving */
 	sc->sc_powerstate = 0;
-	sc->sc_powerhook = powerhook_establish(device_xname(&sc->sc_dev),
-	    bivideo_power, sc);
-	if (sc->sc_powerhook == NULL)
-		aprint_error_dev(&sc->sc_dev, "WARNING: unable to establish power hook\n");
+	if (!pmf_device_register(self, bivideo_suspend, bivideo_resume))
+		aprint_error_dev(self, "unable to establish power handler\n");
 
 	/* initialize backlight brightness and lcd contrast */
 	sc->sc_lcd_inited = 0;
@@ -370,6 +369,24 @@ bivideo_update_powerstate(struct bivideo_softc *sc, int updates)
 		    (void*)(!(sc->sc_powerstate &
 				(PWRSTAT_VIDEOOFF|PWRSTAT_SUSPEND)) &&
 			     (sc->sc_powerstate & PWRSTAT_BACKLIGHT)));
+}
+
+static bool
+bivideo_suspend(device_t self, const pmf_qual_t *qual)
+{
+	struct bivideo_softc *sc = device_private(self);
+
+	bivideo_power(PWR_SUSPEND, sc);
+	return true;
+}
+
+static bool
+bivideo_resume(device_t self, const pmf_qual_t *qual)
+{
+	struct bivideo_softc *sc = device_private(self);
+
+	bivideo_power(PWR_RESUME, sc);
+	return true;
 }
 
 int

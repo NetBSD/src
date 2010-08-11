@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2009, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2010, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -389,7 +389,7 @@ AcpiNsLocal (
     {
         /* Type code out of range  */
 
-        ACPI_WARNING ((AE_INFO, "Invalid Object Type %X", Type));
+        ACPI_WARNING ((AE_INFO, "Invalid Object Type 0x%X", Type));
         return_UINT32 (ACPI_NS_NORMAL);
     }
 
@@ -857,25 +857,26 @@ AcpiNsExternalizeName (
 
 /*******************************************************************************
  *
- * FUNCTION:    AcpiNsMapHandleToNode
+ * FUNCTION:    AcpiNsValidateHandle
  *
- * PARAMETERS:  Handle          - Handle to be converted to an Node
+ * PARAMETERS:  Handle          - Handle to be validated and typecast to a
+ *                                namespace node.
  *
- * RETURN:      A Name table entry pointer
+ * RETURN:      A pointer to a namespace node
  *
- * DESCRIPTION: Convert a namespace handle to a real Node
+ * DESCRIPTION: Convert a namespace handle to a namespace node. Handles special
+ *              cases for the root node.
  *
- * Note: Real integer handles would allow for more verification
+ * NOTE: Real integer handles would allow for more verification
  *       and keep all pointers within this subsystem - however this introduces
- *       more (and perhaps unnecessary) overhead.
- *
- * The current implemenation is basically a placeholder until such time comes
- * that it is needed.
+ *       more overhead and has not been necessary to this point. Drivers
+ *       holding handles are typically notified before a node becomes invalid
+ *       due to a table unload.
  *
  ******************************************************************************/
 
 ACPI_NAMESPACE_NODE *
-AcpiNsMapHandleToNode (
+AcpiNsValidateHandle (
     ACPI_HANDLE             Handle)
 {
 
@@ -897,48 +898,6 @@ AcpiNsMapHandleToNode (
     }
 
     return (ACPI_CAST_PTR (ACPI_NAMESPACE_NODE, Handle));
-}
-
-
-/*******************************************************************************
- *
- * FUNCTION:    AcpiNsConvertEntryToHandle
- *
- * PARAMETERS:  Node          - Node to be converted to a Handle
- *
- * RETURN:      A user handle
- *
- * DESCRIPTION: Convert a real Node to a namespace handle
- *
- ******************************************************************************/
-
-ACPI_HANDLE
-AcpiNsConvertEntryToHandle (
-    ACPI_NAMESPACE_NODE         *Node)
-{
-
-
-    /*
-     * Simple implementation for now;
-     */
-    return ((ACPI_HANDLE) Node);
-
-
-/* Example future implementation ---------------------
-
-    if (!Node)
-    {
-        return (NULL);
-    }
-
-    if (Node == AcpiGbl_RootNode)
-    {
-        return (ACPI_ROOT_OBJECT);
-    }
-
-
-    return ((ACPI_HANDLE) Node);
-------------------------------------------------------*/
 }
 
 
@@ -1006,7 +965,7 @@ AcpiNsOpensScope (
     {
         /* type code out of range  */
 
-        ACPI_WARNING ((AE_INFO, "Invalid Object Type %X", Type));
+        ACPI_WARNING ((AE_INFO, "Invalid Object Type 0x%X", Type));
         return_UINT32 (ACPI_NS_NORMAL);
     }
 
@@ -1098,128 +1057,3 @@ Cleanup:
     ACPI_FREE (InternalPath);
     return_ACPI_STATUS (Status);
 }
-
-
-/*******************************************************************************
- *
- * FUNCTION:    AcpiNsGetParentNode
- *
- * PARAMETERS:  Node       - Current table entry
- *
- * RETURN:      Parent entry of the given entry
- *
- * DESCRIPTION: Obtain the parent entry for a given entry in the namespace.
- *
- ******************************************************************************/
-
-ACPI_NAMESPACE_NODE *
-AcpiNsGetParentNode (
-    ACPI_NAMESPACE_NODE     *Node)
-{
-    ACPI_FUNCTION_ENTRY ();
-
-
-    if (!Node)
-    {
-        return (NULL);
-    }
-
-    /*
-     * Walk to the end of this peer list. The last entry is marked with a flag
-     * and the peer pointer is really a pointer back to the parent. This saves
-     * putting a parent back pointer in each and every named object!
-     */
-    while (!(Node->Flags & ANOBJ_END_OF_PEER_LIST))
-    {
-        Node = Node->Peer;
-    }
-
-    return (Node->Peer);
-}
-
-
-/*******************************************************************************
- *
- * FUNCTION:    AcpiNsGetNextValidNode
- *
- * PARAMETERS:  Node       - Current table entry
- *
- * RETURN:      Next valid Node in the linked node list. NULL if no more valid
- *              nodes.
- *
- * DESCRIPTION: Find the next valid node within a name table.
- *              Useful for implementing NULL-end-of-list loops.
- *
- ******************************************************************************/
-
-ACPI_NAMESPACE_NODE *
-AcpiNsGetNextValidNode (
-    ACPI_NAMESPACE_NODE     *Node)
-{
-
-    /* If we are at the end of this peer list, return NULL */
-
-    if (Node->Flags & ANOBJ_END_OF_PEER_LIST)
-    {
-        return NULL;
-    }
-
-    /* Otherwise just return the next peer */
-
-    return (Node->Peer);
-}
-
-
-#ifdef ACPI_OBSOLETE_FUNCTIONS
-/*******************************************************************************
- *
- * FUNCTION:    AcpiNsFindParentName
- *
- * PARAMETERS:  *ChildNode             - Named Obj whose name is to be found
- *
- * RETURN:      The ACPI name
- *
- * DESCRIPTION: Search for the given obj in its parent scope and return the
- *              name segment, or "????" if the parent name can't be found
- *              (which "should not happen").
- *
- ******************************************************************************/
-
-ACPI_NAME
-AcpiNsFindParentName (
-    ACPI_NAMESPACE_NODE     *ChildNode)
-{
-    ACPI_NAMESPACE_NODE     *ParentNode;
-
-
-    ACPI_FUNCTION_TRACE (NsFindParentName);
-
-
-    if (ChildNode)
-    {
-        /* Valid entry.  Get the parent Node */
-
-        ParentNode = AcpiNsGetParentNode (ChildNode);
-        if (ParentNode)
-        {
-            ACPI_DEBUG_PRINT ((ACPI_DB_EXEC,
-                "Parent of %p [%4.4s] is %p [%4.4s]\n",
-                ChildNode,  AcpiUtGetNodeName (ChildNode),
-                ParentNode, AcpiUtGetNodeName (ParentNode)));
-
-            if (ParentNode->Name.Integer)
-            {
-                return_VALUE ((ACPI_NAME) ParentNode->Name.Integer);
-            }
-        }
-
-        ACPI_DEBUG_PRINT ((ACPI_DB_EXEC,
-            "Unable to find parent of %p (%4.4s)\n",
-            ChildNode, AcpiUtGetNodeName (ChildNode)));
-    }
-
-    return_VALUE (ACPI_UNKNOWN_NAME);
-}
-#endif
-
-

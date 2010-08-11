@@ -1,4 +1,4 @@
-/*	$NetBSD: dbcool_reg.h,v 1.3.4.2 2009/05/04 08:12:39 yamt Exp $ */
+/*	$NetBSD: dbcool_reg.h,v 1.3.4.3 2010/08/11 22:53:22 yamt Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 #define DBCOOLREG_H
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbcool_reg.h,v 1.3.4.2 2009/05/04 08:12:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbcool_reg.h,v 1.3.4.3 2010/08/11 22:53:22 yamt Exp $");
 
 #define DBCOOL_ADDRMASK		0x7c
 #define	DBCOOL_ADDR		0x2c	/* Some chips have multiple addrs */
@@ -321,6 +321,10 @@ __KERNEL_RCSID(0, "$NetBSD: dbcool_reg.h,v 1.3.4.2 2009/05/04 08:12:39 yamt Exp 
 /*
  * Even though it's not really a member of the dbCool family, we also
  * support the ADM1030 chip.  It has a different register set.
+ * the ADM1030 is in fact a cut down ADM1031 - the register set is identical
+ * except the registers used for the extra temperature and fan control sensors
+ * DBCOOL_ADM1030_* are present in both chips with identical functionality
+ * DBCOOL_ADM1031_* are ADM1031 only
  */
 #define	DBCOOL_ADM1030_CFG1		0x00
 #define	DBCOOL_ADM1030_CFG2		0x01
@@ -329,22 +333,31 @@ __KERNEL_RCSID(0, "$NetBSD: dbcool_reg.h,v 1.3.4.2 2009/05/04 08:12:39 yamt Exp 
 #define	DBCOOL_ADM1030_TEMP_EXTRES	0x06
 #define	DBCOOL_ADM1030_TEST_REG		0x07
 #define	DBCOOL_ADM1030_FAN_TACH		0x08
+#define	DBCOOL_ADM1031_FAN2_TACH	0x09
 #define	DBCOOL_ADM1030_L_TEMP		0x0A
 #define	DBCOOL_ADM1030_R_TEMP		0x0B
+#define	DBCOOL_ADM1031_R2_TEMP		0x0C
 #define	DBCOOL_ADM1030_L_OFFSET		0x0D
 #define	DBCOOL_ADM1030_R_OFFSET		0x0E
+#define	DBCOOL_ADM1031_R2_OFFSET	0x0F
 #define	DBCOOL_ADM1030_FAN_LO_LIM	0x10
+#define	DBCOOL_ADM1031_FAN2_LO_LIM	0x11
 #define	DBCOOL_ADM1030_L_HI_LIM		0x14
 #define	DBCOOL_ADM1030_L_LO_LIM		0x15
 #define	DBCOOL_ADM1030_L_TTHRESH	0x16
 #define	DBCOOL_ADM1030_R_HI_LIM		0x18
 #define	DBCOOL_ADM1030_R_LO_LIM		0x19
 #define	DBCOOL_ADM1030_R_TTHRESH	0x1A
+#define	DBCOOL_ADM1031_R2_HI_LIM	0x1C
+#define	DBCOOL_ADM1031_R2_LO_LIM	0x1D
+#define	DBCOOL_ADM1031_R2_TTHRESH	0x1E
 #define	DBCOOL_ADM1030_FAN_CHAR		0x20
+#define	DBCOOL_ADM1031_FAN2_CHAR	0x21
 #define	DBCOOL_ADM1030_FAN_SPEED_CFG	0x22
 #define	DBCOOL_ADM1030_FAN_FILTER	0x23
 #define	DBCOOL_ADM1030_L_TMIN		0x24
 #define	DBCOOL_ADM1030_R_TMIN		0x25
+#define	DBCOOL_ADM1031_R2_TMIN		0x26
 #define	DBCOOL_ADM1030_DEVICEID		DBCOOL_DEVICEID_REG
 #define	DBCOOL_ADM1030_COMPANYID	DBCOOL_COMPANYID_REG
 #define	DBCOOL_ADM1030_REVISION		DBCOOL_REVISION_REG
@@ -374,6 +387,7 @@ __KERNEL_RCSID(0, "$NetBSD: dbcool_reg.h,v 1.3.4.2 2009/05/04 08:12:39 yamt Exp 
 
 #define	ADM1027_DEVICEID	0x27
 #define	ADM1030_DEVICEID	0x30
+#define	ADM1031_DEVICEID	0x31
 #define	ADT7463_DEVICEID	0x27
 #define	ADT7466_DEVICEID	0x66
 #define	ADT7467_DEVICEID	0x68	/* The ADT7467/7468 cannot be */

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.35.20.1 2010/03/11 15:02:40 yamt Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.35.20.2 2010/08/11 22:52:23 yamt Exp $	*/
 
 /*
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.35.20.1 2010/03/11 15:02:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.35.20.2 2010/08/11 22:52:23 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -143,6 +143,9 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 	struct pcb *pcb;
 	struct proc *p;
 	struct lwp *l;
+	const char *cp = modif;
+	char c;
+	bool lwpaddr = false;
 
 	if (!have_addr) {
 		stacktrace_subr(ddb_regs.f_regs[_R_A0],
@@ -158,14 +161,26 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 		return;
 	}
 
-	/* "trace/t" */
-	(*pr)("pid %d ", (int)addr);
-	p = p_find(addr, PFIND_LOCKED);
-	if (p == NULL) {
-		(*pr)("not found\n");
-		return;
-	}	
-	l = LIST_FIRST(&p->p_lwps); /* XXX NJWLWP */
+	while ((c = *cp++) != 0) {
+		if (c == 'a') {
+			lwpaddr = true;
+		}
+	}
+
+	if (lwpaddr) {
+		l = (struct lwp *)addr;
+		(*pr)("pid %d.%d ", l->l_proc->p_pid, l->l_lid);
+	} else {
+		/* "trace/t" */
+
+		(*pr)("pid %d ", (int)addr);
+		p = proc_find_raw(addr);
+		if (p == NULL) {
+			(*pr)("not found\n");
+			return;
+		}	
+		l = LIST_FIRST(&p->p_lwps); /* XXX NJWLWP */
+	}
 	pcb = lwp_getpcb(l);
 	(*pr)("at %p\n", pcb);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_exec_elf32.c,v 1.7.32.2 2009/05/04 08:12:23 yamt Exp $ */
+/*	$NetBSD: linux32_exec_elf32.c,v 1.7.32.3 2010/08/11 22:53:09 yamt Exp $ */
 
 /*-                     
  * Copyright (c) 1995, 1998, 2000, 2001,2006 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_exec_elf32.c,v 1.7.32.2 2009/05/04 08:12:23 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_exec_elf32.c,v 1.7.32.3 2010/08/11 22:53:09 yamt Exp $");
 
 #define	ELFSIZE		32
 
@@ -53,6 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux32_exec_elf32.c,v 1.7.32.2 2009/05/04 08:12:23 
 #include <compat/netbsd32/netbsd32_exec.h>
 #include <compat/linux32/common/linux32_exec.h>
 
+#include <machine/cpuvar.h>
 #include <machine/frame.h>
 
 #ifdef DEBUG_LINUX
@@ -98,10 +99,6 @@ ELFNAME2(linux32,probe)(struct lwp *l, struct exec_package *epp,
 	return 0;
 }
 
-/* round up and down to page boundaries. */
-#define	ELF_ROUND(a, b)		(((a) + (b) - 1) & ~((b) - 1))
-#define	ELF_TRUNC(a, b)		((a) & ~((b) - 1))
-
 /*
  * Copy arguments onto the stack in the normal way, but add some
  * extra information in case of dynamic binding.
@@ -110,131 +107,114 @@ int
 linux32_elf32_copyargs(struct lwp *l, struct exec_package *pack,
     struct ps_strings *arginfo, char **stackp, void *argp)
 {
-	struct linux32_extra_stack_data *esdp, esd;
+	Aux32Info ai[LINUX32_ELF_AUX_ENTRIES], *a;
 	struct elf_args *ap;
 	struct vattr *vap;
-	Elf_Ehdr *eh;
-	Elf_Phdr *ph;
-	Elf_Addr phdr = 0;
-	u_long phsize;
+	size_t len;
 	int error;
-	int i;
 
 	if ((error = netbsd32_copyargs(l, pack, arginfo, stackp, argp)) != 0)
 		return error;
+
+	a = ai;
 
 	/*
 	 * Push extra arguments on the stack needed by dynamically
 	 * linked binaries and static binaries as well.
 	 */
-	memset(&esd, 0, sizeof(esd));
-	esdp = (struct linux32_extra_stack_data *)(*stackp);
-	ap = (struct elf_args *)pack->ep_emul_arg;
+
+	a->a_type = AT_PAGESZ;
+	a->a_v = PAGE_SIZE;
+	a++;
+
+	if ((ap = (struct elf_args *)pack->ep_emul_arg)) {
+
+		a->a_type = AT_PHDR;
+		a->a_v = ap->arg_phaddr;
+		a++;
+
+		a->a_type = AT_PHENT;
+		a->a_v = ap->arg_phentsize;
+		a++;
+
+		a->a_type = AT_PHNUM;
+		a->a_v = ap->arg_phnum;
+		a++;
+
+		a->a_type = AT_BASE;
+		a->a_v = ap->arg_interp;
+		a++;
+
+		a->a_type = AT_FLAGS;
+		a->a_v = 0;
+		a++;
+
+		a->a_type = AT_ENTRY;
+		a->a_v = ap->arg_entry;
+		a++;
+
+		free(ap, M_TEMP);
+		pack->ep_emul_arg = NULL;
+	}
+
+	/* Linux-specific items */
+	a->a_type = LINUX_AT_CLKTCK;
+	a->a_v = hz;
+	a++;
+
 	vap = pack->ep_vap;
-	eh = (Elf_Ehdr *)pack->ep_hdr;
 
-	/*
-	 * We forgot this, so we ned to reload it now. XXX keep track of it?
-	 */
-	if (ap == NULL) {
-		phsize = eh->e_phnum * sizeof(Elf_Phdr);
-		ph = (Elf_Phdr *)malloc(phsize, M_TEMP, M_WAITOK);
-		error = exec_read_from(l, pack->ep_vp, eh->e_phoff, ph, phsize);
-		if (error != 0) {
-			for (i = 0; i < eh->e_phnum; i++) {
-				if (ph[i].p_type == PT_PHDR) {
-					phdr = ph[i].p_vaddr;
-					break;
-				}
-			}
-		}
-		free(ph, M_TEMP);
-	}
+	a->a_type = LINUX_AT_UID;
+	a->a_v = kauth_cred_getuid(l->l_cred);
+	a++;
 
-
-	/*
-	 * The exec_package doesn't have a proc pointer and it's not
-	 * exactly trivial to add one since the credentials are
-	 * changing. XXX Linux uses curlwp's credentials.
-	 * Why can't we use them too? XXXad we do now; what's different
-	 * about Linux's LWP creds?
-	 */
-
-	i = 0;
-	esd.ai[i].a_type = LINUX_AT_SYSINFO;
-	esd.ai[i++].a_v = NETBSD32PTR32I(&esdp->kernel_vsyscall[0]);
-
-	esd.ai[i].a_type = LINUX_AT_SYSINFO_EHDR;
-	esd.ai[i++].a_v = NETBSD32PTR32I(&esdp->elfhdr);
-
-	esd.ai[i].a_type = LINUX_AT_HWCAP;
-	esd.ai[i++].a_v = LINUX32_CPUCAP;
-
-	esd.ai[i].a_type = AT_PAGESZ;
-	esd.ai[i++].a_v = PAGE_SIZE;
-
-	esd.ai[i].a_type = LINUX_AT_CLKTCK;
-	esd.ai[i++].a_v = hz;
-
-	esd.ai[i].a_type = AT_PHDR;
-	esd.ai[i++].a_v = (ap ? ap->arg_phaddr: phdr);
-
-	esd.ai[i].a_type = AT_PHENT;
-	esd.ai[i++].a_v = (ap ? ap->arg_phentsize : eh->e_phentsize);
-
-	esd.ai[i].a_type = AT_PHNUM;
-	esd.ai[i++].a_v = (ap ? ap->arg_phnum : eh->e_phnum);
-
-	esd.ai[i].a_type = AT_BASE;
-	esd.ai[i++].a_v = (ap ? ap->arg_interp : 0);
-
-	esd.ai[i].a_type = AT_FLAGS;
-	esd.ai[i++].a_v = 0;
-
-	esd.ai[i].a_type = AT_ENTRY;
-	esd.ai[i++].a_v = (ap ? ap->arg_entry : eh->e_entry);
-
-	esd.ai[i].a_type = LINUX_AT_EGID;
-	esd.ai[i++].a_v = ((vap->va_mode & S_ISGID) ?
-	    vap->va_gid : kauth_cred_getegid(l->l_cred));
-
-	esd.ai[i].a_type = LINUX_AT_GID;
-	esd.ai[i++].a_v = kauth_cred_getgid(l->l_cred);
-
-	esd.ai[i].a_type = LINUX_AT_EUID;
-	esd.ai[i++].a_v = ((vap->va_mode & S_ISUID) ?
+	a->a_type = LINUX_AT_EUID;
+	a->a_v = ((vap->va_mode & S_ISUID) ?
 	    vap->va_uid : kauth_cred_geteuid(l->l_cred));
+	a++;
 
-	esd.ai[i].a_type = LINUX_AT_UID;
-	esd.ai[i++].a_v = kauth_cred_getuid(l->l_cred);
+	a->a_type = LINUX_AT_GID;
+	a->a_v = kauth_cred_getgid(l->l_cred);
+	a++;
 
-	esd.ai[i].a_type = LINUX_AT_SECURE;
-	esd.ai[i++].a_v = 0;
+	a->a_type = LINUX_AT_EGID;
+	a->a_v = ((vap->va_mode & S_ISGID) ?
+	    vap->va_gid : kauth_cred_getegid(l->l_cred));
+	a++;
 
-	esd.ai[i].a_type = LINUX_AT_PLATFORM;
-	esd.ai[i++].a_v = NETBSD32PTR32I(&esdp->hw_platform[0]);
+	a->a_type = LINUX_AT_SECURE;
+	a->a_v = 0;
+	a++;
 
-	esd.ai[i].a_type = AT_NULL;
-	esd.ai[i++].a_v = 0;
+#if 0
+	a->a_type = LINUX_AT_SYSINFO;
+	a->a_v = NETBSD32PTR32I(&esdp->kernel_vsyscall[0]);
+	a++;
 
-#ifdef DEBUG_LINUX
-	if (i != LINUX32_ELF_AUX_ENTRIES) {
-		printf("linux32_elf32_copyargs: %d Aux entries\n", i);
-		return EINVAL;
-	}
+	a->a_type = LINUX_AT_SYSINFO_EHDR;
+	a->a_v = NETBSD32PTR32I(&esdp->elfhdr);
+	a++;
+
+	a->a_type = LINUX_AT_HWCAP;
+	a->a_v = LINUX32_CPUCAP;
+	a++;
+
+	a->a_type = LINUX_AT_PLATFORM;
+	a->a_v = NETBSD32PTR32I(&esdp->hw_platform[0]);
+	a++;
 #endif
-		
-	memcpy(esd.kernel_vsyscall, linux32_kernel_vsyscall, 
+
+	a->a_type = AT_NULL;
+	a->a_v = 0;
+	a++;
+
+#if 0
+	memcpy(esd.kernel_vsyscall, linux32_kernel_vsyscall,
 	    sizeof(linux32_kernel_vsyscall));
 
 	memcpy(&esd.elfhdr, eh, sizeof(*eh));
 
-	strcpy(esd.hw_platform, LINUX32_PLATFORM); 
-
-	if (ap) {
-		free((char *)ap, M_TEMP);
-		pack->ep_emul_arg = NULL;
-	}
+	strcpy(esd.hw_platform, LINUX32_PLATFORM);
 	
 	/*
 	 * Copy out the ELF auxiliary table and hw platform name
@@ -242,6 +222,13 @@ linux32_elf32_copyargs(struct lwp *l, struct exec_package *pack,
 	if ((error = copyout(&esd, esdp, sizeof(esd))) != 0)
 		return error;
 	*stackp += sizeof(esd);
+#endif
+
+	len = (a - ai) * sizeof(AuxInfo);
+	if ((error = copyout(ai, *stackp, len)) != 0)
+		return error;
+	*stackp += len;
+
 	return 0;
 }
 

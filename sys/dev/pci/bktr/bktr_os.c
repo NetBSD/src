@@ -1,6 +1,6 @@
 /* $SourceForge: bktr_os.c,v 1.5 2003/03/11 23:11:25 thomasklausner Exp $ */
 
-/*	$NetBSD: bktr_os.c,v 1.51.4.2 2009/05/16 10:41:40 yamt Exp $	*/
+/*	$NetBSD: bktr_os.c,v 1.51.4.3 2010/08/11 22:54:05 yamt Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_os.c,v 1.20 2000/10/20 08:16:53 roger Exp$ */
 
 /*
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bktr_os.c,v 1.51.4.2 2009/05/16 10:41:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bktr_os.c,v 1.51.4.3 2010/08/11 22:54:05 yamt Exp $");
 
 #ifdef __FreeBSD__
 #include "bktr.h"
@@ -1470,9 +1470,8 @@ bktr_attach(device_t parent, device_t self, void *aux)
 				| PCI_MAPREG_MEM_TYPE_32BIT, 0,
 				&bktr->memt, &bktr->memh, NULL,
 				&bktr->obmemsz);
-	DPR(("pci_mapreg_map: memt %lx, memh %x, size %x\n",
-	     (unsigned long)bktr->memt, (u_int)bktr->memh,
-	     (u_int)bktr->obmemsz));
+	DPR(("pci_mapreg_map: size %lx\n",
+	     (unsigned long)bktr->obmemsz));
 	if (retval) {
 		printf("%s: couldn't map memory\n", bktr_name(bktr));
 		return;

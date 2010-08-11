@@ -1,4 +1,4 @@
-/*	$NetBSD: cardslot.c,v 1.40.4.4 2010/03/11 15:03:25 yamt Exp $	*/
+/*	$NetBSD: cardslot.c,v 1.40.4.5 2010/08/11 22:53:19 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999 and 2000
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cardslot.c,v 1.40.4.4 2010/03/11 15:03:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cardslot.c,v 1.40.4.5 2010/08/11 22:53:19 yamt Exp $");
 
 #include "opt_cardslot.h"
 
@@ -382,7 +382,7 @@ cardslot_event_thread(void *arg)
 			}
 			if (sc->sc_16_softc) {
 				CARDSLOT_SET_CARDTYPE(sc->sc_status, CARDSLOT_STATUS_CARD_16);
-				if (pcmcia_card_attach((device_t)sc->sc_16_softc)) {
+				if (pcmcia_card_attach(sc->sc_16_softc)) {
 					/* Do not attach */
 					CARDSLOT_SET_WORK(sc->sc_status,
 					    CARDSLOT_STATUS_NOTWORK);

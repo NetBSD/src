@@ -1,4 +1,4 @@
-/*	$NetBSD: gpio_opb.c,v 1.6 2007/02/06 04:48:15 simonb Exp $	*/
+/*	$NetBSD: gpio_opb.c,v 1.6.48.1 2010/08/11 22:52:33 yamt Exp $	*/
 
 /*
  * Copyright (c) 2004 Shigeyuki Fukushima.
@@ -41,7 +41,6 @@
 #include <sys/gpio.h>
 #include <dev/gpio/gpiovar.h>
 
-#include <powerpc/ibm4xx/dcr405gp.h>
 #include <powerpc/ibm4xx/dev/opbvar.h>
 #include <powerpc/ibm4xx/dev/gpioreg.h>
 

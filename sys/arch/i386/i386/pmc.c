@@ -1,4 +1,4 @@
-/*	$NetBSD: pmc.c,v 1.15.20.1 2008/05/16 02:22:34 yamt Exp $	*/
+/*	$NetBSD: pmc.c,v 1.15.20.2 2010/08/11 22:52:12 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -38,13 +38,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmc.c,v 1.15.20.1 2008/05/16 02:22:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmc.c,v 1.15.20.2 2010/08/11 22:52:12 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
 
 #include <machine/cpufunc.h>
+#include <machine/cpuvar.h>
 #include <machine/specialreg.h>
 #include <machine/sysarch.h>
 #include <machine/pmc.h>
@@ -122,7 +123,7 @@ pmc_init(void)
 		break;
 	}
 
-	if (pmc_type != PMC_TYPE_NONE && (cpu_feature & CPUID_TSC) != 0)
+	if (pmc_type != PMC_TYPE_NONE && cpu_hascounter())
 		pmc_flags |= PMC_INFO_HASTSC;
 
 #ifdef MULTIPROCESSOR

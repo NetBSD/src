@@ -1,4 +1,4 @@
-# 	$NetBSD: INSTALL64,v 1.2.4.2 2010/03/11 15:02:48 yamt Exp $
+# 	$NetBSD: INSTALL64,v 1.2.4.3 2010/08/11 22:52:31 yamt Exp $
 #
 # Distribution	install kernel (any model)
 #    netbsd:	cut-down kernel for miniroots.
@@ -152,7 +152,7 @@ pseudo-device	pty		2	# pseudo-terminals (Sysinst needs two)
 pseudo-device	bpfilter		# packet filter ports
 pseudo-device	loop
 pseudo-device	ccd		 4	# concatenated disks
-#pseudo-device	fss		 4	# file system snapshot device
+#pseudo-device	fss		 	# file system snapshot device
 pseudo-device	rnd			# /dev/random and in-kernel generator
 #pseudo-device	wsfont			# wsfont control device
 pseudo-device	wsmux			# wsmux control device

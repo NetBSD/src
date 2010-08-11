@@ -1,7 +1,7 @@
-#	$NetBSD: files,v 1.899.2.8 2010/03/11 15:03:20 yamt Exp $
+#	$NetBSD: files,v 1.899.2.9 2010/08/11 22:53:14 yamt Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
-version 	20090313
+version 	20100430
 
 #
 # device classes
@@ -109,6 +109,7 @@ defparam opt_pax.h		PAX_MPROTECT
  				PAX_ASLR_DELTA_STACK_LSB
  				PAX_ASLR_DELTA_STACK_LEN
  				PAX_ASLR_DELTA_PROG_LEN
+				PAX_ASLR_DEBUG
 
 defflag	opt_fileassoc.h		FILEASSOC
 
@@ -139,7 +140,7 @@ defflag				COMPAT_FREEBSD: COMPAT_30
 defflag				COMPAT_IBCS2
 defflag				COMPAT_IRIX
 defflag				COMPAT_LINUX: COMPAT_16
-defflag				COMPAT_LINUX32
+defflag				COMPAT_LINUX32 : COMPAT_LINUX
 defflag				COMPAT_OSF1
 defflag				COMPAT_SUNOS: COMPAT_30
 defflag	opt_compat_svr4.h	COMPAT_SVR4 COMPAT_SVR4_32 SVR4_COMPAT_SOLARIS2
@@ -192,6 +193,7 @@ include "netinet6/files.netinet6"
 include "netinet6/files.ipsec"
 include "netipsec/files.netipsec"
 include "netiso/files.netiso"
+include "netmpls/files.netmpls"
 include "netnatm/files.netnatm"
 include "netsmb/files.netsmb"
 include "net/files.pf"
@@ -326,6 +328,13 @@ attach	video at videobus
 
 device	lm: sysmon_envsys
 file	dev/ic/nslm7x.c			lm			needs-flag
+
+# JEDEC standard SPD EPROM
+#
+# (included here so files.i2c can define an attachment)
+
+device	spdmem
+file	dev/ic/spdmem.c			spdmem
 
 # I2C device support
 include "dev/i2c/files.i2c"
@@ -1035,6 +1044,10 @@ file	dev/ic/lm700x.c			lm700x
 define	pcf8584
 file	dev/ic/pcf8584.c		pcf8584
 
+# PCA9564 i2c controller
+define	pca9564
+file	dev/ic/pca9564.c		pca9564
+
 # ACPI power management timer (hardware access, independent of ACPI)
 #
 define acpipmtimer
@@ -1261,6 +1274,7 @@ defpseudo strip:	ifnet
 defpseudo gre:		ifnet
 defpseudo gif:		ifnet
 defpseudo faith:	ifnet
+defpseudo ifmpls:	ifnet
 defpseudo srt:		ifnet
 defpseudo stf:		ifnet
 defpseudodev tap:	ifnet, ether, arp
@@ -1382,7 +1396,7 @@ file	dev/dkwedge/dkwedge_bsdlabel.c	dkwedge_method_bsdlabel
 file	dev/dkwedge/dkwedge_gpt.c	dkwedge_method_gpt
 file	dev/dkwedge/dkwedge_mbr.c	dkwedge_method_mbr
 file	dev/firmload.c			firmload
-file	dev/fss.c			fss			needs-count
+file	dev/fss.c			fss
 file	dev/keylock.c			keylock
 file	dev/lockstat.c			lockstat		needs-flag
 file	dev/md.c			md			needs-count
@@ -1424,6 +1438,7 @@ file	kern/kern_clock.c
 file	kern/kern_condvar.c
 file	kern/kern_core.c		coredump
 file	kern/kern_cpu.c
+file	kern/kern_ctf.c			kdtrace_hooks
 file	kern/kern_descrip.c
 file	kern/kern_event.c
 file	kern/kern_exec.c
@@ -1464,6 +1479,7 @@ file	kern/kern_ssp.c
 file	kern/kern_stub.c
 file	kern/kern_subr.c
 file	kern/kern_synch.c
+file	kern/kern_syscall.c
 file	kern/kern_sysctl.c
 file	kern/kern_tc.c
 file	kern/kern_time.c
@@ -1497,6 +1513,7 @@ file	kern/subr_kobj.c
 file	kern/subr_kobj_vfs.c
 file	kern/subr_lockdebug.c
 file	kern/subr_log.c
+file	kern/subr_lwp_specificdata.c
 file	kern/subr_once.c
 file	kern/subr_optstr.c
 file	kern/subr_percpu.c
@@ -1596,6 +1613,7 @@ file	net/if_hippisubr.c		hippi			needs-flag
 file	net/if_ieee1394subr.c		ieee1394
 file	net/if_loop.c			loop			needs-flag
 file	net/if_media.c
+file	net/if_mpls.c			ifmpls			needs-flag
 file	net/if_ppp.c			ppp			needs-flag
 file	net/if_srt.c			srt
 file	net/if_stf.c			stf & inet & inet6	needs-flag

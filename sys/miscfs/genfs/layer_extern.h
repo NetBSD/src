@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_extern.h,v 1.24 2008/01/28 14:31:18 dholland Exp $	*/
+/*	$NetBSD: layer_extern.h,v 1.24.10.1 2010/08/11 22:54:47 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -32,6 +32,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
 /*
  * Copyright (c) 1992, 1993, 1995
  *	The Regents of the University of California.  All rights reserved.
@@ -65,23 +66,26 @@
  *
  */
 
+#ifndef _MISCFS_GENFS_LAYER_EXTERN_H_
+#define _MISCFS_GENFS_LAYER_EXTERN_H_
+
 /*
  * Routines defined by layerfs
  */
 
-/* misc routines in layer_subr.c */
+/* Routines to manage nodes. */
 void	layerfs_init(void);
 void	layerfs_done(void);
 int	layer_node_alloc(struct mount *, struct vnode *, struct vnode **);
 int	layer_node_create(struct mount *, struct vnode *, struct vnode **);
-struct vnode *
-	layer_node_find(struct mount *, struct vnode *);
+struct vnode *layer_node_find(struct mount *, struct vnode *);
+
 #define LOG2_SIZEVNODE	7		/* log2(sizeof struct vnode) */
 #define LAYER_NHASH(lmp, vp) \
 	(&((lmp)->layerm_node_hashtbl[(((u_long)vp)>>LOG2_SIZEVNODE) & \
 		(lmp)->layerm_node_hash]))
 
-/* vfs routines */
+/* VFS routines */
 int	layerfs_start(struct mount *, int);
 int	layerfs_root(struct mount *, struct vnode **);
 int	layerfs_quotactl(struct mount *, int, uid_t, void *);
@@ -90,8 +94,7 @@ int	layerfs_sync(struct mount *, int, struct kauth_cred *);
 int	layerfs_vget(struct mount *, ino_t, struct vnode **);
 int	layerfs_fhtovp(struct mount *, struct fid *, struct vnode **);
 int	layerfs_vptofh(struct vnode *, struct fid *, size_t *);
-int	layerfs_snapshot(struct mount *, struct vnode *,
-			    struct timespec *);
+int	layerfs_snapshot(struct mount *, struct vnode *, struct timespec *);
 int	layerfs_renamelock_enter(struct mount *);
 void	layerfs_renamelock_exit(struct mount *);
 
@@ -103,9 +106,6 @@ int	layer_reclaim(void *);
 int	layer_print(void *);
 int	layer_bwrite(void *);
 int	layer_bmap(void *);
-int	layer_lock(void *);
-int	layer_unlock(void *);
-int	layer_islocked(void *);
 int	layer_fsync(void *);
 int	layer_lookup(void *);
 int	layer_setattr(void *);
@@ -116,3 +116,5 @@ int	layer_rename(void *);
 int	layer_rmdir(void *);
 int	layer_getpages(void *);
 int	layer_putpages(void *);
+
+#endif /* _MISCFS_GENFS_LAYER_EXTERN_H_ */

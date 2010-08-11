@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_exec.c,v 1.67.10.3 2009/06/20 07:20:17 yamt Exp $	 */
+/*	$NetBSD: mach_exec.c,v 1.67.10.4 2010/08/11 22:53:10 yamt Exp $	 */
 
 /*-
  * Copyright (c) 2001-2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_exec.c,v 1.67.10.3 2009/06/20 07:20:17 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_exec.c,v 1.67.10.4 2010/08/11 22:53:10 yamt Exp $");
 
 #include "opt_syscall_debug.h"
 
@@ -59,6 +59,7 @@ static int mach_cold = 1; /* Have we initialized COMPAT_MACH structures? */
 static void mach_init(void);
 
 extern struct sysent sysent[];
+extern const char * const mach_syscallnames[];
 #ifndef __HAVE_SYSCALL_INTERN
 void syscall(void);
 #else
@@ -71,51 +72,50 @@ struct uvm_object *emul_mach_object;
 #endif
 
 struct emul emul_mach = {
-	"mach",
-	"/emul/mach",
+	.e_name =		"mach",
+	.e_path =		"/emul/mach",
 #ifndef __HAVE_MINIMAL_EMUL
-	0,
-	0,
-	SYS_syscall,
-	SYS_NSYSENT,
+	.e_flags =		0,
+	.e_errno =		NULL,
+	.e_nosys =		SYS_syscall,
+	.e_nsysent =		SYS_NSYSENT,
 #endif
-	sysent,
+	.e_sysent =		sysent,
 #ifdef SYSCALL_DEBUG
-	syscallnames,
+	.e_syscallnames =	mach_syscallnames,
 #else
-	NULL,
+	.e_syscallnames =	NULL,
 #endif
-	sendsig,
-	mach_trapsignal,
-	NULL,
+	.e_sendsig =		sendsig,
+	.e_trapsignal =		mach_trapsignal,
+	.e_tracesig =		NULL,
 #ifdef COMPAT_16
-	sigcode,
-	esigcode,
-	&emul_mach_object,
+	.e_sigcode =		sigcode,
+	.e_esigcode =		esigcode,
+	.e_sigobject =		&emul_mach_object,
 #else
-	NULL,
-	NULL,
-	NULL,
+	.e_sigcode =		NULL,
+	.e_esigcode =		NULL,
+	.e_sigobject =		NULL,
 #endif
-	setregs,
-	mach_e_proc_exec,
-	mach_e_proc_fork,
-	mach_e_proc_exit,
-	mach_e_lwp_fork,
-	mach_e_lwp_exit,
+	.e_setregs =		setregs,
+	.e_proc_exec =		mach_e_proc_exec,
+	.e_proc_fork =		mach_e_proc_fork,
+	.e_proc_exit =		mach_e_proc_exit,
+	.e_lwp_fork =		mach_e_lwp_fork,
+	.e_lwp_exit =		mach_e_lwp_exit,
 #ifdef __HAVE_SYSCALL_INTERN
-	mach_syscall_intern,
+	.e_syscall_intern =	mach_syscall_intern,
 #else
-	syscall,
+	.e_syscall_intern =	syscall,
 #endif
-	NULL,	/* e_fault */
-	NULL,	/* e_vm_default_addr */
-
-	uvm_default_mapaddr,
-	NULL,	/* e_usertrap */
-	NULL,	/* e_sa */
-	0,	/* e_ucsize */
-	NULL,	/* e_startlwp */
+	.e_sysctlovly =		NULL,
+	.e_fault =		NULL,
+	.e_vm_default_addr =	uvm_default_mapaddr,
+	.e_usertrap =		NULL,
+	.e_sa =			NULL,
+	.e_ucsize =		0,
+	.e_startlwp =		NULL
 };
 
 /*
@@ -186,7 +186,7 @@ exec_mach_probe(const char **path)
 void
 mach_e_proc_exec(struct proc *p, struct exec_package *epp)
 {
-	mach_e_proc_init(p, p->p_vmspace);
+	mach_e_proc_init(p);
 
 	if (p->p_emul != epp->ep_esch->es_emul) {
 		struct lwp *l = LIST_FIRST(&p->p_lwps);
@@ -198,31 +198,30 @@ mach_e_proc_exec(struct proc *p, struct exec_package *epp)
 }
 
 void
-mach_e_proc_fork(struct proc *p, struct proc *parent, int forkflags)
+mach_e_proc_fork(struct proc *p2, struct lwp *l1, int forkflags)
 {
-	mach_e_proc_fork1(p, parent, 1);
+	mach_e_proc_fork1(p2, l1, 1);
 	return;
 }
 
 void
-mach_e_proc_fork1(struct proc *p, struct proc *parent, int allocate)
+mach_e_proc_fork1(struct proc *p2, struct lwp *l1, int allocate)
 {
 	struct mach_emuldata *med1;
 	struct mach_emuldata *med2;
 	int i;
 
 	/*
-	 * For Darwin binaries, p->p_emuldata has already been
+	 * For Darwin binaries, p2->p_emuldata has already been
 	 * allocated, no need to throw it away and allocate it again.
 	 */
 	if (allocate)
-		p->p_emuldata = NULL;
+		p2->p_emuldata = NULL;
 
-	/* Use parent's vmspace because our vmspace may not be set up yet */
-	mach_e_proc_init(p, parent->p_vmspace);
+	mach_e_proc_init(p2);
 
-	med1 = p->p_emuldata;
-	med2 = parent->p_emuldata;
+	med1 = p2->p_emuldata;
+	med2 = l1->l_proc->p_emuldata;
 
 	/*
 	 * Exception ports are inherited between forks,
@@ -244,7 +243,7 @@ mach_e_proc_fork1(struct proc *p, struct proc *parent, int allocate)
 }
 
 void
-mach_e_proc_init(struct proc *p, struct vmspace *vmspace)
+mach_e_proc_init(struct proc *p)
 {
 	struct mach_emuldata *med;
 	struct mach_right *mr;

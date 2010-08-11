@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.12.20.1 2008/05/16 02:22:56 yamt Exp $	*/
+/*	$NetBSD: intr.h,v 1.12.20.2 2010/08/11 22:52:26 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,6 @@
 void enable_intr(void);
 void disable_intr(void);
 
-extern int imask[];
 extern vaddr_t mvmeppc_intr_reg;
 
 #define	ICU_LEN		32

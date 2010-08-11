@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_10.c,v 1.22.10.1 2009/05/04 08:12:25 yamt Exp $	*/
+/*	$NetBSD: netbsd32_compat_10.c,v 1.22.10.2 2010/08/11 22:53:10 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994 Adam Glass and Charles M. Hannum.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_10.c,v 1.22.10.1 2009/05/04 08:12:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_10.c,v 1.22.10.2 2010/08/11 22:53:10 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sysv.h"
@@ -42,7 +42,6 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_10.c,v 1.22.10.1 2009/05/04 08:12:25
 #include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/sem.h>
-#include <sys/malloc.h>
 
 #include <sys/mount.h>
 #include <sys/syscallargs.h>

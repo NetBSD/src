@@ -1,4 +1,4 @@
-/*	$NetBSD: component.c,v 1.3.2.2 2010/03/11 15:04:34 yamt Exp $	*/
+/*	$NetBSD: component.c,v 1.3.2.3 2010/08/11 22:55:02 yamt Exp $	*/
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -12,25 +12,13 @@
 #include "rump_dev_private.h"
 #include "rump_vfs_private.h"
 
-#define FLAWLESSCALL(call)						\
-do {									\
-	int att_error;							\
-	if ((att_error = call) != 0)					\
-		panic("\"%s\" failed", #call);				\
-} while (/*CONSTCOND*/0)
-
 RUMP_COMPONENT(RUMP_COMPONENT_DEV)
 {
 	extern struct cdevsw wskbd_cdevsw, wsmouse_cdevsw;
 	devmajor_t bmaj, cmaj;
 
-	FLAWLESSCALL(config_cfdata_attach(cfdata_wscons, 0));
-
-	FLAWLESSCALL(config_cfdriver_attach(&wskbd_cd));
-	FLAWLESSCALL(config_cfattach_attach("wskbd", &wskbd_ca));
-
-	FLAWLESSCALL(config_cfdriver_attach(&wsmouse_cd));
-	FLAWLESSCALL(config_cfattach_attach("wsmouse", &wsmouse_ca));
+	config_init_component(cfdriver_ioconf_wscons,
+	    cfattach_ioconf_wscons, cfdata_ioconf_wscons);
 
 	bmaj = cmaj = -1;
 	FLAWLESSCALL(devsw_attach("wskbd", NULL, &bmaj, &wskbd_cdevsw, &cmaj));

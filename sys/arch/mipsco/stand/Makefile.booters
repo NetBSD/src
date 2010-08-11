@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.booters,v 1.12.78.1 2009/05/04 08:11:33 yamt Exp $
+#	$NetBSD: Makefile.booters,v 1.12.78.2 2010/08/11 22:52:25 yamt Exp $
 
 .include <bsd.sys.mk>		# for HOST_SH
 
@@ -139,7 +139,7 @@ ${PROG}: machine-links ${LDSCRIPT} ${OBJS} ${LIBS}
 
 CLEANFILES+=	${PROG}.map ${PROG}.elf
 
-cleandir distclean: cleanlibdir
+cleandir distclean: .WAIT cleanlibdir
 
 cleanlibdir:
 	-rm -rf lib

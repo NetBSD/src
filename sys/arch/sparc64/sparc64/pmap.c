@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.217.4.3 2010/03/11 15:03:02 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.217.4.4 2010/08/11 22:52:48 yamt Exp $	*/
 /*
  *
  * Copyright (C) 1996-1999 Eduardo Horvath.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.217.4.3 2010/03/11 15:03:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.217.4.4 2010/08/11 22:52:48 yamt Exp $");
 
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
@@ -323,11 +323,12 @@ int	pmap_pages_stolen = 0;
 
 #define pv_check()
 
-static int pmap_get_page(paddr_t *p);
-static void pmap_free_page(paddr_t pa);
+static int pmap_get_page(paddr_t *);
+static void pmap_free_page(paddr_t, sparc64_cpuset_t);
+static void pmap_free_page_noflush(paddr_t);
 
 /*
- * Global pmap lock.
+ * Global pmap locks.
  */
 static kmutex_t pmap_lock;
 static bool lock_available = false;
@@ -483,12 +484,11 @@ static int pmap_calculate_colors(void)
 
 static void pmap_alloc_bootargs(void)
 {
-/*	extern struct cpu_bootargs *cpu_args; */
 	char *v;
 
 	v = OF_claim(NULL, 2*PAGE_SIZE, PAGE_SIZE);
 	if ((v == NULL) || (v == (void*)-1))
-		panic("Can't claim a page of memory.");
+		panic("Can't claim two pages of memory.");
 
 	memset(v, 0, 2*PAGE_SIZE);
 
@@ -1217,14 +1217,17 @@ cpu_pmap_prepare(struct cpu_info *ci, bool initial)
 }
 
 /*
- * Initialize the per CPU parts for the cpu running this code (despite the
- * passed cpuinfo).
+ * Initialize the per CPU parts for the cpu running this code.
  */
 void
 cpu_pmap_init(struct cpu_info *ci)
 {
 	size_t ctxsize;
 
+	/*
+	 * We delay initialising ci_ctx_lock here as LOCKDEBUG isn't
+	 * running for cpu0 yet..
+	 */
 	ci->ci_pmap_next_ctx = 1;
 #ifdef SUN4V
 #error find out if we have 16 or 13 bit context ids
@@ -1408,6 +1411,9 @@ pmap_destroy(struct pmap *pm)
 {
 #ifdef MULTIPROCESSOR
 	struct cpu_info *ci;
+	sparc64_cpuset_t pmap_cpus_active;
+#else
+#define pmap_cpus_active 0
 #endif
 	struct vm_page *pg, *nextpg;
 
@@ -1415,26 +1421,37 @@ pmap_destroy(struct pmap *pm)
 		return;
 	}
 	DPRINTF(PDB_DESTROY, ("pmap_destroy: freeing pmap %p\n", pm));
-	mutex_enter(&pmap_lock);
 #ifdef MULTIPROCESSOR
+	CPUSET_CLEAR(pmap_cpus_active);
 	for (ci = cpus; ci != NULL; ci = ci->ci_next) {
-		if (CPUSET_HAS(cpus_active, ci->ci_index))
-			ctx_free(pm, ci);
+		/* XXXMRG: Move the lock inside one or both tests? */
+		mutex_enter(&ci->ci_ctx_lock);
+		if (CPUSET_HAS(cpus_active, ci->ci_index)) {
+			if (pm->pm_ctx[ci->ci_index] > 0) {
+				CPUSET_ADD(pmap_cpus_active, ci->ci_index);
+				ctx_free(pm, ci);
+			}
+		}
+		mutex_exit(&ci->ci_ctx_lock);
 	}
 #else
-	ctx_free(pm, curcpu());
+	if (pmap_ctx(pm)) {
+		mutex_enter(&curcpu()->ci_ctx_lock);
+		ctx_free(pm, curcpu());
+		mutex_exit(&curcpu()->ci_ctx_lock);
+	}
 #endif
-	mutex_exit(&pmap_lock);
 
 	/* we could be a little smarter and leave pages zeroed */
 	for (pg = TAILQ_FIRST(&pm->pm_obj.memq); pg != NULL; pg = nextpg) {
+		KASSERT((pg->flags & PG_MARKER) == 0);
 		nextpg = TAILQ_NEXT(pg, listq.queue);
 		TAILQ_REMOVE(&pm->pm_obj.memq, pg, listq.queue);
 		KASSERT(pg->mdpage.mdpg_pvh.pv_pmap == NULL);
-		dcache_flush_page_all(VM_PAGE_TO_PHYS(pg));
+		dcache_flush_page_cpuset(VM_PAGE_TO_PHYS(pg), pmap_cpus_active);
 		uvm_pagefree(pg);
 	}
-	pmap_free_page((paddr_t)(u_long)pm->pm_segs);
+	pmap_free_page((paddr_t)(u_long)pm->pm_segs, pmap_cpus_active);
 	UVM_OBJ_DESTROY(&pm->pm_obj);
 	pool_cache_put(&pmap_cache, pm);
 }
@@ -1553,7 +1570,7 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 		/* We allocated a spare page but didn't use it.  Free it. */
 		printf("pmap_kenter_pa: freeing unused page %llx\n",
 		       (long long)ptp);
-		pmap_free_page(ptp);
+		pmap_free_page_noflush(ptp);
 	}
 #ifdef DEBUG
 	i = ptelookup_va(va);
@@ -1824,7 +1841,7 @@ pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 		/* We allocated a spare page but didn't use it.  Free it. */
 		printf("pmap_enter: freeing unused page %llx\n",
 		       (long long)ptp);
-		pmap_free_page(ptp);
+		pmap_free_page_noflush(ptp);
 	}
 	if (dopv) {
 		pmap_enter_pv(pm, va, pa, pg, npv);
@@ -1922,22 +1939,36 @@ pmap_remove_all(struct pmap *pm)
 	write_user_windows();
 	pm->pm_refs = 0;
 
-	mutex_enter(&pmap_lock);
+	/*
+	 * XXXMRG: pmap_destroy() does exactly the same dance here.
+	 * surely one of them isn't necessary?
+	 */
 #ifdef MULTIPROCESSOR
 	CPUSET_CLEAR(pmap_cpus_active);
 	for (ci = cpus; ci != NULL; ci = ci->ci_next) {
+		/* XXXMRG: Move the lock inside one or both tests? */
+		mutex_enter(&ci->ci_ctx_lock);
 		if (CPUSET_HAS(cpus_active, ci->ci_index)) {
-			if (pm->pm_ctx[ci->ci_index] > 0)
+			if (pm->pm_ctx[ci->ci_index] > 0) {
 				CPUSET_ADD(pmap_cpus_active, ci->ci_index);
-			ctx_free(pm, ci);
+				ctx_free(pm, ci);
+			}
 		}
+		mutex_exit(&ci->ci_ctx_lock);
 	}
 #else
-	ctx_free(pm, curcpu());
+	if (pmap_ctx(pm)) {
+		mutex_enter(&curcpu()->ci_ctx_lock);
+		ctx_free(pm, curcpu());
+		mutex_exit(&curcpu()->ci_ctx_lock);
+	}
 #endif
-	mutex_exit(&pmap_lock);
 
 	REMOVE_STAT(flushes);
+	/*
+	 * XXXMRG: couldn't we do something less severe here, and
+	 * only flush the right context on each CPU?
+	 */
 #ifdef MULTIPROCESSOR
 	smp_blast_dcache(pmap_cpus_active);
 #else
@@ -2019,7 +2050,8 @@ pmap_remove(struct pmap *pm, vaddr_t va, vaddr_t endva)
 			continue;
 
 		/*
-		 * if the pmap is being torn down, don't bother flushing.
+		 * if the pmap is being torn down, don't bother flushing,
+		 * we already have done so.
 		 */
 
 		if (!pm->pm_refs)
@@ -2164,9 +2196,6 @@ pmap_extract(struct pmap *pm, vaddr_t va, paddr_t *pap)
 			*pap = pa;
 		return TRUE;
 	} else {
-		if (pm != pmap_kernel()) {
-			mutex_enter(&pmap_lock);
-		}
 		data = pseg_get(pm, va);
 		pa = data & TLB_PA_MASK;
 #ifdef DEBUG
@@ -2198,9 +2227,6 @@ pmap_extract(struct pmap *pm, vaddr_t va, paddr_t *pap)
 			printf(" pseg_get: %lx\n", (long)pa);
 		}
 #endif
-		if (pm != pmap_kernel()) {
-			mutex_exit(&pmap_lock);
-		}
 	}
 	if ((data & TLB_V) == 0)
 		return (FALSE);
@@ -2621,8 +2647,6 @@ pmap_is_modified(struct vm_page *pg)
 	pv_entry_t pv, npv;
 	bool res = false;
 
-	KASSERT(!mutex_owned(&pmap_lock));
-
 	/* Check if any mapping has been modified */
 	pv = &pg->mdpage.mdpg_pvh;
 	if (pv->pv_va & PV_MOD)
@@ -2724,8 +2748,6 @@ pmap_is_referenced(struct vm_page *pg)
 {
 	pv_entry_t pv;
 	bool res = false;
-
-	KASSERT(!mutex_owned(&pmap_lock));
 
 	/* Check if any mapping has been referenced */
 	pv = &pg->mdpage.mdpg_pvh;
@@ -3075,7 +3097,7 @@ ctx_alloc(struct pmap *pm)
 
 	KASSERT(pm != pmap_kernel());
 	KASSERT(pm == curproc->p_vmspace->vm_map.pmap);
-	mutex_enter(&pmap_lock);
+	mutex_enter(&curcpu()->ci_ctx_lock);
 	ctx = curcpu()->ci_pmap_next_ctx++;
 
 	/*
@@ -3110,7 +3132,7 @@ ctx_alloc(struct pmap *pm)
 	curcpu()->ci_ctxbusy[ctx] = pm->pm_physaddr;
 	LIST_INSERT_HEAD(&curcpu()->ci_pmap_ctxlist, pm, pm_list[cpu_number()]);
 	pmap_ctx(pm) = ctx;
-	mutex_exit(&pmap_lock);
+	mutex_exit(&curcpu()->ci_ctx_lock);
 	DPRINTF(PDB_CTX_ALLOC, ("ctx_alloc: cpu%d allocated ctx %d\n",
 		cpu_number(), ctx));
 	return ctx;
@@ -3125,7 +3147,7 @@ ctx_free(struct pmap *pm, struct cpu_info *ci)
 	int oldctx;
 	int cpunum;
 
-	KASSERT(mutex_owned(&pmap_lock));
+	KASSERT(mutex_owned(&ci->ci_ctx_lock));
 
 #ifdef MULTIPROCESSOR
 	cpunum = ci->ci_index;
@@ -3361,7 +3383,9 @@ pmap_page_cache(struct pmap *pm, paddr_t pa, int mode)
 	}
 }
 
-
+/*
+ * Some routines to allocate and free PTPs.
+ */
 static int
 pmap_get_page(paddr_t *p)
 {
@@ -3384,14 +3408,21 @@ pmap_get_page(paddr_t *p)
 }
 
 static void
-pmap_free_page(paddr_t pa)
+pmap_free_page(paddr_t pa, sparc64_cpuset_t cs)
 {
 	struct vm_page *pg = PHYS_TO_VM_PAGE(pa);
 
-	dcache_flush_page_all(pa);
+	dcache_flush_page_cpuset(pa, cs);
 	uvm_pagefree(pg);
 }
 
+static void
+pmap_free_page_noflush(paddr_t pa)
+{
+	struct vm_page *pg = PHYS_TO_VM_PAGE(pa);
+
+	uvm_pagefree(pg);
+}
 
 #ifdef DDB
 
@@ -3611,7 +3642,7 @@ pmap_testout(void)
 
 	pmap_remove(pmap_kernel(), va, va+1);
 	pmap_update(pmap_kernel());
-	pmap_free_page(pa);
+	pmap_free_page(pa, cpus_active);
 }
 #endif
 

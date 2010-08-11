@@ -1,4 +1,4 @@
-/* 	$NetBSD: intr.h,v 1.11.18.1 2008/05/16 02:22:27 yamt Exp $	*/
+/* 	$NetBSD: intr.h,v 1.11.18.2 2010/08/11 22:52:06 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -36,7 +36,8 @@
 #ifndef _HPCARM_INTR_H_
 #define _HPCARM_INTR_H_
 
-#ifdef __HAVE_FAST_SOFTINTS
+#ifdef _KERNEL
+
 #define IPL_NONE	0
 #define IPL_SOFTCLOCK	1
 #define IPL_SOFTBIO	2
@@ -47,18 +48,6 @@
 #define IPL_HIGH	7
 
 #define NIPL		8
-#else
-#define IPL_NONE	0
-#define IPL_SOFTCLOCK	IPL_NONE
-#define IPL_SOFTBIO	IPL_NONE
-#define IPL_SOFTNET	IPL_NONE
-#define IPL_SOFTSERIAL	IPL_NONE
-#define IPL_VM		1
-#define IPL_SCHED	2
-#define IPL_HIGH	3
-
-#define NIPL		4
-#endif
 
 #define	IST_UNUSABLE	-1	/* interrupt cannot be used */
 #define	IST_NONE	0	/* none (dummy) */
@@ -66,7 +55,110 @@
 #define	IST_EDGE	2	/* edge-triggered */
 #define	IST_LEVEL	3	/* level-triggered */
 
+#define	IST_LEVEL_LOW	IST_LEVEL
+#define	IST_LEVEL_HIGH	4
+#define	IST_EDGE_FALLING IST_EDGE
+#define	IST_EDGE_RISING	5
+#define	IST_EDGE_BOTH	6
+
+#ifdef __OLD_INTERRUPT_CODE	/* XXX XXX XXX */
+
 #include <machine/irqhandler.h>
 #include <arm/arm32/psl.h>
+
+#else	/* !__OLD_INTERRUPT_CODE */
+
+#define	__NEWINTR	/* enables new hooks in cpu_fork()/cpu_switch() */
+
+#ifndef _LOCORE
+
+#include <sys/device.h>
+#include <sys/queue.h>
+
+#if defined(_LKM)
+
+int	_splraise(int);
+int	_spllower(int);
+void	splx(int);
+void	_setsoftintr(int);
+
+#else	/* _LKM */
+
+#include "opt_arm_intr_impl.h"
+
+#if defined(ARM_INTR_IMPL)
+
+/*
+ * Each board needs to define the following functions:
+ *
+ * int	_splraise(int);
+ * int	_spllower(int);
+ * void	splx(int);
+ * void	_setsoftintr(int);
+ *
+ * These may be defined as functions, static inline functions, or macros,
+ * but there must be a _spllower() and splx() defined as functions callable
+ * from assembly language (for cpu_switch()).  However, since it's quite
+ * useful to be able to inline splx(), you could do something like the
+ * following:
+ *
+ * in <boardtype>_intr.h:
+ * 	static inline int
+ *	boardtype_splx(int spl)
+ *	{...}
+ *
+ *	#define splx(nspl)	boardtype_splx(nspl)
+ *	...
+ * and in boardtype's machdep code:
+ *
+ *	...
+ *	#undef splx
+ *	int
+ *	splx(int spl)
+ *	{
+ *		return boardtype_splx(spl);
+ *	}
+ */
+
+#include ARM_INTR_IMPL
+
+#else	/* ARM_INTR_IMPL */
+
+#error ARM_INTR_IMPL not defined.
+
+#endif	/* ARM_INTR_IMPL */
+
+#endif	/* _LKM */
+
+#define splsoft()	_splraise(IPL_SOFT)
+
+typedef uint8_t ipl_t;
+typedef struct {
+	ipl_t _ipl;
+} ipl_cookie_t;
+
+static inline ipl_cookie_t
+makeiplcookie(ipl_t ipl)
+{
+
+	return (ipl_cookie_t){._ipl = ipl};
+}
+
+static inline int
+splraiseipl(ipl_cookie_t icookie)
+{
+
+	return _splraise(icookie._ipl);
+}
+
+#define	spl0()		_spllower(IPL_NONE)
+
+#include <sys/spl.h>
+
+#endif	/* ! _LOCORE */
+
+#endif	/* __OLD_INTERRUPT_CODE */
+
+#endif	/* _KERNEL */
 
 #endif	/* _HPCARM_INTR_H */

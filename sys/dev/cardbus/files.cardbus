@@ -1,4 +1,4 @@
-#	$NetBSD: files.cardbus,v 1.34.56.1 2009/08/19 18:47:04 yamt Exp $
+#	$NetBSD: files.cardbus,v 1.34.56.2 2010/08/11 22:53:19 yamt Exp $
 #
 # files.cardbus
 #
@@ -137,3 +137,9 @@ file	dev/cardbus/njata_cardbus.c	njata_cardbus
 #
 attach	siisata at cardbus with siisata_cardbus
 file	dev/cardbus/siisata_cardbus.c	siisata_cardbus
+
+#
+# SD Host Controller
+#
+attach	sdhc at cardbus with sdhc_cardbus
+file	dev/cardbus/sdhc_cardbus.c	sdhc_cardbus

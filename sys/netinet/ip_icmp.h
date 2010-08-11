@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.h,v 1.24.10.1 2009/05/04 08:14:17 yamt Exp $	*/
+/*	$NetBSD: ip_icmp.h,v 1.24.10.2 2010/08/11 22:54:56 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -184,6 +184,7 @@ void	icmp_send(struct mbuf *, struct mbuf *);
 int	icmp_sysctl(int *, u_int, void *, size_t *, void *, size_t);
 
 void	icmp_mtudisc_callback_register(void (*)(struct in_addr));
+int	icmp_ratelimit(const struct in_addr *, const int, const int);
 #endif
 
 

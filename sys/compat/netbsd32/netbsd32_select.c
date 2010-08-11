@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_select.c,v 1.14.10.2 2010/03/11 15:03:18 yamt Exp $	*/
+/*	$NetBSD: netbsd32_select.c,v 1.14.10.3 2010/08/11 22:53:11 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,11 +27,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_select.c,v 1.14.10.2 2010/03/11 15:03:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_select.c,v 1.14.10.3 2010/08/11 22:53:11 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/malloc.h>
 #include <sys/mount.h>
 #include <sys/time.h>
 #include <sys/vnode.h>

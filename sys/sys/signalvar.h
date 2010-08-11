@@ -1,4 +1,4 @@
-/*	$NetBSD: signalvar.h,v 1.73.12.2 2010/03/11 15:04:43 yamt Exp $	*/
+/*	$NetBSD: signalvar.h,v 1.73.12.3 2010/08/11 22:55:11 yamt Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -129,8 +129,6 @@ struct vnode;
  */
 int	coredump_netbsd(struct lwp *, void *);
 void	execsigs(struct proc *);
-void	gsignal(int, int);
-void	kgsignal(int, struct ksiginfo *, void *);
 int	issignal(struct lwp *);
 void	pgsignal(struct pgrp *, int, int);
 void	kpgsignal(struct pgrp *, struct ksiginfo *, void *, int);

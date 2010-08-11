@@ -8,7 +8,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2009, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2010, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -163,7 +163,7 @@ AcpiDmMethodFlags (
 
     /* 1) Method argument count */
 
-    AcpiOsPrintf (", %d, ", Args);
+    AcpiOsPrintf (", %u, ", Args);
 
     /* 2) Serialize rule */
 
@@ -178,7 +178,7 @@ AcpiDmMethodFlags (
 
     if (Flags & 0xF0)
     {
-        AcpiOsPrintf (", %d", Flags >> 4);
+        AcpiOsPrintf (", %u", Flags >> 4);
     }
 }
 
@@ -473,8 +473,8 @@ AcpiDmDisassembleOneOp (
 
     case AML_QWORD_OP:
 
-        AcpiOsPrintf ("0x%8.8X%8.8X", Op->Common.Value.Integer64.Hi,
-                                      Op->Common.Value.Integer64.Lo);
+        AcpiOsPrintf ("0x%8.8X%8.8X",
+            ACPI_FORMAT_UINT64 (Op->Common.Value.Integer));
         break;
 
 
@@ -550,7 +550,7 @@ AcpiDmDisassembleOneOp (
     case AML_INT_NAMEDFIELD_OP:
 
         Length = AcpiDmDumpName (Op->Named.Name);
-        AcpiOsPrintf (",%*.s  %d", (int) (5 - Length), " ",
+        AcpiOsPrintf (",%*.s  %u", (unsigned) (5 - Length), " ",
             (UINT32) Op->Common.Value.Integer);
         AcpiDmCommaIfFieldMember (Op);
 
@@ -571,7 +571,7 @@ AcpiDmDisassembleOneOp (
         }
         else
         {
-            AcpiOsPrintf ("    ,   %d", Offset);
+            AcpiOsPrintf ("    ,   %u", Offset);
         }
 
         AcpiDmCommaIfFieldMember (Op);

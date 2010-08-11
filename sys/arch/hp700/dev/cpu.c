@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.10.78.2 2009/05/16 10:41:12 yamt Exp $	*/
+/*	$NetBSD: cpu.c,v 1.10.78.3 2010/08/11 22:52:02 yamt Exp $	*/
 
 /*	$OpenBSD: cpu.c,v 1.28 2004/12/28 05:18:25 mickey Exp $	*/
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.10.78.2 2009/05/16 10:41:12 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.10.78.3 2010/08/11 22:52:02 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,6 +50,10 @@ struct cpu_softc {
 	hppa_hpa_t sc_hpa;
 	void *sc_ih;
 };
+
+#ifdef MULTIPROCESSOR
+int hppa_ncpus;
+#endif
 
 int	cpumatch(device_t, cfdata_t, void *);
 void	cpuattach(device_t, device_t, void *);
@@ -149,7 +153,7 @@ cpuattach(device_t parent, device_t self, void *aux)
 	/* sanity against luser amongst config editors */
 	if (ca->ca_irq == 31) {
 		sc->sc_ih = hp700_intr_establish(sc->sc_dev, IPL_CLOCK,
-		    clock_intr, NULL /*trapframe*/, &int_reg_cpu,
+		    clock_intr, NULL /*clockframe*/, &int_reg_cpu,
 		    ca->ca_irq);
 	} else {
 		aprint_error_dev(self, "bad irq number %d\n", ca->ca_irq);

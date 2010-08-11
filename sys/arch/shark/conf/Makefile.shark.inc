@@ -1,10 +1,9 @@
-#	$NetBSD: Makefile.shark.inc,v 1.10.10.2 2009/09/16 13:37:42 yamt Exp $
+#	$NetBSD: Makefile.shark.inc,v 1.10.10.3 2010/08/11 22:52:43 yamt Exp $
 
 MACHINE_ARCH=		arm
 CPPFLAGS+=		-D${MACHINE}
 GENASSYM_EXTRAS+=	${THISARM}/shark/genassym.cf
 
-.if (${OBJECT_FMT} == "ELF")
 # Need to convert the kernel from ELF to a.out so that OpenFirmware
 # can load it.
 
@@ -32,5 +31,3 @@ SYSTEM_LD_TAIL_EXTRA+=; \
 		$@ $@.aout
 
 KERNIMAGES=	netbsd netbsd.aout
-
-.endif

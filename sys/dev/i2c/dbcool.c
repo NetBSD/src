@@ -1,4 +1,4 @@
-/*	$NetBSD: dbcool.c,v 1.11.2.4 2010/03/11 15:03:27 yamt Exp $ */
+/*	$NetBSD: dbcool.c,v 1.11.2.5 2010/08/11 22:53:22 yamt Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbcool.c,v 1.11.2.4 2010/03/11 15:03:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbcool.c,v 1.11.2.5 2010/08/11 22:53:22 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -529,7 +529,7 @@ struct dbcool_sensor ADM1030_sensor_table[] = {
 	{ DBC_CTL,  {	DBCOOL_ADM1030_R_TMIN,
 			DBCOOL_NO_REG,
 			DBCOOL_NO_REG },		1,  8, 0 },
-	{ DBC_CTL,  {	DBCOOL_ADM1030_L_TTHRESH,
+	{ DBC_CTL,  {	DBCOOL_ADM1030_R_TTHRESH,
 			DBCOOL_NO_REG,
 			DBCOOL_NO_REG },		1,  9, 0 },
 	{ DBC_CTL,  {	DBCOOL_ADM1030_R_TTHRESH,
@@ -545,6 +545,61 @@ struct dbcool_power_control ADM1030_power_table[] = {
 	{ { 0, 0, 0, 0 }, NULL }
 };
 
+struct dbcool_sensor ADM1031_sensor_table[] = {
+	{ DBC_TEMP, {	DBCOOL_ADM1030_L_TEMP,
+			DBCOOL_ADM1030_L_HI_LIM,
+			DBCOOL_ADM1030_L_LO_LIM },	0,  0, 0 },
+	{ DBC_TEMP, {	DBCOOL_ADM1030_R_TEMP,
+			DBCOOL_ADM1030_R_HI_LIM,
+			DBCOOL_ADM1030_R_LO_LIM },	1,  0, 0 },
+	{ DBC_TEMP, {	DBCOOL_ADM1031_R2_TEMP,
+			DBCOOL_ADM1031_R2_HI_LIM,
+			DBCOOL_ADM1031_R2_LO_LIM },	2,  0, 0 },
+	{ DBC_FAN,  {	DBCOOL_ADM1030_FAN_TACH,
+			DBCOOL_NO_REG,
+			DBCOOL_ADM1030_FAN_LO_LIM },	5,  0, 0 },
+	{ DBC_FAN,  {	DBCOOL_ADM1031_FAN2_TACH,
+			DBCOOL_NO_REG,
+			DBCOOL_ADM1031_FAN2_LO_LIM },	6,  0, 0 },
+	{ DBC_CTL,  {	DBCOOL_ADM1030_L_TMIN,
+			DBCOOL_NO_REG,
+			DBCOOL_NO_REG },		0,  8, 0 },
+	{ DBC_CTL,  {	DBCOOL_ADM1030_L_TTHRESH,
+			DBCOOL_NO_REG,
+			DBCOOL_NO_REG },		0,  9, 0 },
+	{ DBC_CTL,  {	DBCOOL_ADM1030_L_TTHRESH,
+			DBCOOL_NO_REG,
+			DBCOOL_NO_REG },		0,  6, 0 },
+	{ DBC_CTL,  {	DBCOOL_ADM1030_R_TMIN,
+			DBCOOL_NO_REG,
+			DBCOOL_NO_REG },		1,  8, 0 },
+	{ DBC_CTL,  {	DBCOOL_ADM1030_R_TTHRESH,
+			DBCOOL_NO_REG,
+			DBCOOL_NO_REG },		1,  9, 0 },
+	{ DBC_CTL,  {	DBCOOL_ADM1030_R_TTHRESH,
+			DBCOOL_NO_REG,
+			DBCOOL_NO_REG },		1,  6, 0 },
+	{ DBC_CTL,  {	DBCOOL_ADM1031_R2_TMIN,
+			DBCOOL_NO_REG,
+			DBCOOL_NO_REG },		2,  8, 0 },
+	{ DBC_CTL,  {	DBCOOL_ADM1031_R2_TTHRESH,
+			DBCOOL_NO_REG,
+			DBCOOL_NO_REG },		2,  9, 0 },
+	{ DBC_CTL,  {	DBCOOL_ADM1031_R2_TTHRESH,
+			DBCOOL_NO_REG,
+			DBCOOL_NO_REG },		2,  6, 0 },
+	{ DBC_EOF,  {0, 0, 0 }, 0, 0, 0 }
+};
+
+struct dbcool_power_control ADM1031_power_table[] = {   
+	{ { DBCOOL_ADM1030_CFG1,  DBCOOL_NO_REG, DBCOOL_NO_REG,
+	    DBCOOL_ADM1030_FAN_SPEED_CFG },
+	  "fan_control_1" },
+	{ { DBCOOL_ADM1030_CFG1,  DBCOOL_NO_REG, DBCOOL_NO_REG,
+	    DBCOOL_ADM1030_FAN_SPEED_CFG },
+	  "fan_control_2" },
+	{ { 0, 0, 0, 0 }, NULL }
+};
 struct chip_id chip_table[] = {
 	{ DBCOOL_COMPANYID, ADT7490_DEVICEID, ADT7490_REV_ID,
 		ADT7490_sensor_table, ADT7475_power_table,
@@ -592,6 +647,10 @@ struct chip_id chip_table[] = {
 		ADM1030_sensor_table, ADM1030_power_table,
 		DBCFLAG_ADM1030 | DBCFLAG_NO_READBYTE,
 		11250 * 60, "ADM1030" },
+	{ DBCOOL_COMPANYID, ADM1031_DEVICEID, 0xff,
+		ADM1031_sensor_table, ADM1030_power_table,
+		DBCFLAG_ADM1030 | DBCFLAG_NO_READBYTE,
+		11250 * 60, "ADM1031" },
 	{ 0, 0, 0, NULL, NULL, 0, 0, NULL }
 };
 
@@ -790,6 +849,8 @@ dbcool_read_temp(struct dbcool_softc *sc, uint8_t reg, bool extres)
 			ext = sc->sc_dc.dc_readreg(&sc->sc_dc, DBCOOL_ADM1030_TEMP_EXTRES);
 			if (reg == DBCOOL_ADM1030_L_TEMP)
 				ext >>= 6;
+			else if (reg == DBCOOL_ADM1031_R2_TEMP)
+				ext >>= 4;
 			else
 				ext >>= 1;
 			ext &= 0x03;
@@ -861,7 +922,8 @@ dbcool_read_rpm(struct dbcool_softc *sc, uint8_t reg)
 	if (rpm == 0xffff)
 		return 0;	/* 0xffff indicates stalled/failed fan */
 
-	return (sc->sc_dc.dc_chip->rpm_dividend / rpm);
+	/* don't divide by zero */
+	return (rpm == 0)? 0 : (sc->sc_dc.dc_chip->rpm_dividend / rpm);
 }
 
 /* Provide chip's supply voltage, in microvolts */
@@ -1377,6 +1439,12 @@ dbcool_setup(device_t self)
 	else
 		sc->sc_root_sysctl_num = 0;
 
+	aprint_debug_dev(self,
+		"Supply voltage %"PRId64".%06"PRId64"V, %s temp range\n",
+		sc->sc_supply_voltage / 1000000,
+		sc->sc_supply_voltage % 1000000,
+		sc->sc_temp_offset ? "extended" : "normal");
+
 	/* Create the sensors for this device */
 	sc->sc_sme = sysmon_envsys_create();
 	if (dbcool_setup_sensors(sc))
@@ -1722,6 +1790,7 @@ dbcool_get_limits(struct sysmon_envsys *sme, envsys_data_t *edata,
 	int index = edata->sensor;
 	struct dbcool_softc *sc = sme->sme_cookie;
 
+	*props &= ~(PROP_CRITMIN | PROP_CRITMAX);
 	switch (edata->units) {
 	    case ENVSYS_STEMP:
 		dbcool_get_temp_limits(sc, index, limits, props);
@@ -1737,6 +1806,21 @@ dbcool_get_limits(struct sysmon_envsys *sme, envsys_data_t *edata,
 		break;
 	}
 	*props &= ~PROP_DRIVER_LIMITS;
+
+	/* If both limits provided, make sure they're sane */
+	if ((*props & PROP_CRITMIN) &&
+	    (*props & PROP_CRITMAX) &&
+	    (limits->sel_critmin >= limits->sel_critmax)) 
+		*props &= ~(PROP_CRITMIN | PROP_CRITMAX);
+
+	/*
+	 * If this is the first time through, save these values
+	 * in case user overrides them and then requests a reset.
+	 */
+	if (sc->sc_defprops[index] == 0) {
+		sc->sc_defprops[index] = *props | PROP_DRIVER_LIMITS;
+		sc->sc_deflims[index]  = *limits;
+	}
 }
 
 static void
@@ -1744,37 +1828,37 @@ dbcool_get_temp_limits(struct dbcool_softc *sc, int idx,
 		       sysmon_envsys_lim_t *lims, uint32_t *props)
 {
 	struct reg_list *reg = sc->sc_regs[idx];
-	int32_t	limit;
+	uint8_t	lo_lim, hi_lim;
+
+	lo_lim = sc->sc_dc.dc_readreg(&sc->sc_dc, reg->lo_lim_reg);
+	hi_lim = sc->sc_dc.dc_readreg(&sc->sc_dc, reg->hi_lim_reg);
 
 	if (sc->sc_temp_offset) {
-		limit = sc->sc_dc.dc_readreg(&sc->sc_dc, reg->lo_lim_reg);
-		limit -= sc->sc_temp_offset;
-	} else
-		limit = (int8_t)sc->sc_dc.dc_readreg(&sc->sc_dc,
-						     reg->lo_lim_reg);
+		if (lo_lim > 0x01) {
+			lims->sel_critmin = lo_lim - sc->sc_temp_offset;
+			*props |= PROP_CRITMIN;
+		}
+		if (hi_lim != 0xff) {
+			lims->sel_critmax = hi_lim - sc->sc_temp_offset;
+			*props |= PROP_CRITMAX;
+		}
+	} else {
+		if (lo_lim != 0x80 && lo_lim != 0x81) {
+			lims->sel_critmin = (int8_t)lo_lim;
+			*props |= PROP_CRITMIN;
+		}
 
-	if (limit) {
-		limit *= 1000000;
-		limit += 273150000;
-		lims->sel_critmin = limit;
-		*props |= PROP_CRITMIN;
-	} else
-		*props &= ~PROP_CRITMIN;
+		if (hi_lim != 0x7f) {
+			lims->sel_critmax = (int8_t)hi_lim;
+			*props |= PROP_CRITMAX;
+		}
+	}
 
-	if (sc->sc_temp_offset) {
-		limit = sc->sc_dc.dc_readreg(&sc->sc_dc, reg->hi_lim_reg);
-		limit -= sc->sc_temp_offset;
-	} else
-		limit = (int8_t)sc->sc_dc.dc_readreg(&sc->sc_dc,
-						     reg->hi_lim_reg);
-	if (limit) {
-		limit *= 1000000;
-		limit += 273150000;
-		lims->sel_critmax = limit;
-		*props |= PROP_CRITMAX;
-	} else
-		*props &= ~PROP_CRITMAX;
-
+	/* Convert temp limits to microKelvin */
+	lims->sel_critmin *= 1000000;
+	lims->sel_critmin += 273150000;
+	lims->sel_critmax *= 1000000;
+	lims->sel_critmax += 273150000;
 }
 
 static void
@@ -1791,18 +1875,14 @@ dbcool_get_volt_limits(struct dbcool_softc *sc, int idx,
 	nom *= 1000000;		/* scale for microvolts */
 
 	limit = sc->sc_dc.dc_readreg(&sc->sc_dc, reg->lo_lim_reg);
-	if (limit == 0x00 || limit == 0xff)
-		*props &= ~PROP_CRITMIN;
-	else {
+	if (limit != 0x00 && limit != 0xff) {
 		limit *= nom;
 		limit /= 0xc0;
 		lims->sel_critmin = limit;
 		*props |= PROP_CRITMIN;
 	}
 	limit = sc->sc_dc.dc_readreg(&sc->sc_dc, reg->hi_lim_reg);
-	if (limit == 0x00 || limit == 0xff)
-		*props &= ~PROP_CRITMAX;
-	else {
+	if (limit != 0x00 && limit != 0xff) {
 		limit *= nom;
 		limit /= 0xc0;
 		lims->sel_critmax = limit;
@@ -1821,8 +1901,7 @@ dbcool_get_fan_limits(struct dbcool_softc *sc, int idx,
 	if (limit) {
 		lims->sel_critmin = limit;
 		*props |= PROP_CRITMIN;
-	} else
-		*props &= ~PROP_CRITMIN;
+	}
 }
 
 /*
@@ -1835,6 +1914,10 @@ dbcool_set_limits(struct sysmon_envsys *sme, envsys_data_t *edata,
 	int index = edata->sensor;
 	struct dbcool_softc *sc = sme->sme_cookie;
 
+	if (limits == NULL) {
+		limits = &sc->sc_deflims[index];
+		props  = &sc->sc_defprops[index];
+	}
 	switch (edata->units) {
 	    case ENVSYS_STEMP:
 		dbcool_set_temp_limits(sc, index, limits, props);
@@ -1862,26 +1945,54 @@ dbcool_set_temp_limits(struct dbcool_softc *sc, int idx,
 	if (*props & PROP_CRITMIN) {
 		limit = lims->sel_critmin - 273150000;
 		limit /= 1000000;
-		limit += sc->sc_temp_offset;
-		if (limit < 0)
-			limit = 0;
-		else if (limit > 0xff)
-			limit = 0xff;
-	} else
-		limit = 0;
-	sc->sc_dc.dc_writereg(&sc->sc_dc, reg->lo_lim_reg, (uint8_t)limit);
+		if (sc->sc_temp_offset) {
+			limit += sc->sc_temp_offset;
+			if (limit < 0)
+				limit = 0;
+			else if (limit > 255)
+				limit = 255;
+		} else {
+			if (limit < -127)
+				limit = -127;
+			else if (limit > 127)
+				limit = 127;
+		}
+		sc->sc_dc.dc_writereg(&sc->sc_dc, reg->lo_lim_reg,
+				      (uint8_t)limit);
+	} else if (*props & PROP_DRIVER_LIMITS) {
+		if (sc->sc_temp_offset)
+			limit = 0x00;
+		else
+			limit = 0x80;
+		sc->sc_dc.dc_writereg(&sc->sc_dc, reg->lo_lim_reg,
+				      (uint8_t)limit);
+	}
 
 	if (*props & PROP_CRITMAX) {
 		limit = lims->sel_critmax - 273150000;
 		limit /= 1000000;
-		limit += sc->sc_temp_offset;
-		if (limit < 0)
-			limit = 0;
-		else if (limit > 0xff)
+		if (sc->sc_temp_offset) {
+			limit += sc->sc_temp_offset;
+			if (limit < 0)
+				limit = 0;
+			else if (limit > 255)
+				limit = 255;
+		} else {
+			if (limit < -127)
+				limit = -127;
+			else if (limit > 127)
+				limit = 127;
+		}
+		sc->sc_dc.dc_writereg(&sc->sc_dc, reg->hi_lim_reg,
+				      (uint8_t)limit);
+	} else if (*props & PROP_DRIVER_LIMITS) {
+		if (sc->sc_temp_offset)
 			limit = 0xff;
-	} else
-		limit = 0xff;
-	sc->sc_dc.dc_writereg(&sc->sc_dc, reg->hi_lim_reg, (uint8_t)limit);
+		else
+			limit = 0x7f;
+		sc->sc_dc.dc_writereg(&sc->sc_dc, reg->hi_lim_reg,
+				      (uint8_t)limit);
+	}
 }
 
 static void
@@ -1905,9 +2016,9 @@ dbcool_set_volt_limits(struct dbcool_softc *sc, int idx,
 			limit = 0xff;
 		else if (limit < 0)
 			limit = 0;
-	} else
-		limit = 0;
-	sc->sc_dc.dc_writereg(&sc->sc_dc, reg->lo_lim_reg, limit);
+		sc->sc_dc.dc_writereg(&sc->sc_dc, reg->lo_lim_reg, limit);
+	} else if (*props & PROP_DRIVER_LIMITS)
+		sc->sc_dc.dc_writereg(&sc->sc_dc, reg->lo_lim_reg, 0);
 
 	if (*props & PROP_CRITMAX) {
 		limit = lims->sel_critmax;
@@ -1917,9 +2028,9 @@ dbcool_set_volt_limits(struct dbcool_softc *sc, int idx,
 			limit = 0xff;
 		else if (limit < 0)
 			limit = 0;
-	} else
-		limit = 0xff;
-	sc->sc_dc.dc_writereg(&sc->sc_dc, reg->hi_lim_reg, limit);
+		sc->sc_dc.dc_writereg(&sc->sc_dc, reg->hi_lim_reg, limit);
+	} else if (*props & PROP_DRIVER_LIMITS)
+		sc->sc_dc.dc_writereg(&sc->sc_dc, reg->hi_lim_reg, 0xff);
 }
 
 static void
@@ -1942,9 +2053,13 @@ dbcool_set_fan_limits(struct dbcool_softc *sc, int idx,
 			if (limit > 0xffff)
 				limit = 0xffff;
 		}
-	} else
-		limit = 0xffff;
-	sc->sc_dc.dc_writereg(&sc->sc_dc, reg->lo_lim_reg, limit & 0xff);
-	limit >>= 8;
-	sc->sc_dc.dc_writereg(&sc->sc_dc, reg->lo_lim_reg + 1, limit & 0xff);
+		sc->sc_dc.dc_writereg(&sc->sc_dc, reg->lo_lim_reg,
+				      limit & 0xff);
+		limit >>= 8;
+		sc->sc_dc.dc_writereg(&sc->sc_dc, reg->lo_lim_reg + 1,
+				      limit & 0xff);
+	} else if (*props & PROP_DRIVER_LIMITS) {
+		sc->sc_dc.dc_writereg(&sc->sc_dc, reg->lo_lim_reg, 0xff);
+		sc->sc_dc.dc_writereg(&sc->sc_dc, reg->lo_lim_reg + 1, 0xff);
+	}
 }

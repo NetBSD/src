@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time_50.c,v 1.1.6.3 2010/03/11 15:03:12 yamt Exp $	*/
+/*	$NetBSD: kern_time_50.c,v 1.1.6.4 2010/08/11 22:53:01 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time_50.c,v 1.1.6.3 2010/03/11 15:03:12 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time_50.c,v 1.1.6.4 2010/08/11 22:53:01 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_aio.h"
@@ -54,7 +54,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_time_50.c,v 1.1.6.3 2010/03/11 15:03:12 yamt Ex
 #include <sys/kauth.h>
 #include <sys/time.h>
 #include <sys/timex.h>
-#include <sys/timetc.h>
 #include <sys/aio.h>
 #include <sys/poll.h>
 #include <sys/syscallargs.h>
@@ -114,21 +113,14 @@ compat_50_sys_clock_gettime(struct lwp *l,
 		syscallarg(clockid_t) clock_id;
 		syscallarg(struct timespec50 *) tp;
 	} */
-	clockid_t clock_id;
+	int error;
 	struct timespec ats;
 	struct timespec50 ats50;
 
-	clock_id = SCARG(uap, clock_id);
-	switch (clock_id) {
-	case CLOCK_REALTIME:
-		nanotime(&ats);
-		break;
-	case CLOCK_MONOTONIC:
-		nanouptime(&ats);
-		break;
-	default:
-		return (EINVAL);
-	}
+	error = clock_gettime1(SCARG(uap, clock_id), &ats);
+	if (error != 0)
+		return error;
+
 	timespec_to_timespec50(&ats, &ats50);
 
 	return copyout(&ats50, SCARG(uap, tp), sizeof(ats50));
@@ -165,26 +157,18 @@ compat_50_sys_clock_getres(struct lwp *l,
 		syscallarg(clockid_t) clock_id;
 		syscallarg(struct timespec50 *) tp;
 	} */
-	clockid_t clock_id;
 	struct timespec50 ats50;
+	struct timespec ats;
 	int error = 0;
 
-	clock_id = SCARG(uap, clock_id);
-	switch (clock_id) {
-	case CLOCK_REALTIME:
-	case CLOCK_MONOTONIC:
-		ats50.tv_sec = 0;
-		if (tc_getfrequency() > 1000000000)
-			ats50.tv_nsec = 1;
-		else
-			ats50.tv_nsec = 1000000000 / tc_getfrequency();
-		break;
-	default:
-		return (EINVAL);
-	}
+	error = clock_getres1(SCARG(uap, clock_id), &ats);
+	if (error != 0)
+		return error;
 
-	if (SCARG(uap, tp))
-		error = copyout(&ats50, SCARG(uap, tp), sizeof(*SCARG(uap, tp)));
+	if (SCARG(uap, tp)) {
+		timespec_to_timespec50(&ats, &ats50);
+		error = copyout(&ats50, SCARG(uap, tp), sizeof(ats50));
+	}
 
 	return error;
 }
@@ -628,10 +612,14 @@ int
 compat_50_sys___sigtimedwait(struct lwp *l,
     const struct compat_50_sys___sigtimedwait_args *uap, register_t *retval)
 {
+	int res;
 
-	return sigtimedwait1(l,
+	res = sigtimedwait1(l,
 	    (const struct sys_____sigtimedwait50_args *)uap, retval, copyout,
 	    tscopyin, tscopyout);
+	if (!res)
+		*retval = 0; /* XXX NetBSD<=5 was not POSIX compliant */
+	return res;
 }
 
 void

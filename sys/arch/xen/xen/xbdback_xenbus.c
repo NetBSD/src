@@ -1,4 +1,4 @@
-/*      $NetBSD: xbdback_xenbus.c,v 1.16.4.2 2010/03/11 15:03:11 yamt Exp $      */
+/*      $NetBSD: xbdback_xenbus.c,v 1.16.4.3 2010/08/11 22:53:00 yamt Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.16.4.2 2010/03/11 15:03:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.16.4.3 2010/08/11 22:53:00 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -720,7 +720,7 @@ xbdback_backend_changed(struct xenbus_watch *watch,
 		vput(xbdi->xbdi_vp);
 		return;
 	}
-	VOP_UNLOCK(xbdi->xbdi_vp, 0);
+	VOP_UNLOCK(xbdi->xbdi_vp);
 
 	/* dk device; get wedge data */
 	struct dkwedge_info wi;

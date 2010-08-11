@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13.62.1 2009/05/04 08:12:07 yamt Exp $
+#	$NetBSD: Makefile,v 1.13.62.2 2010/08/11 22:52:54 yamt Exp $
 
 NOMAN=		# defined
 
@@ -36,13 +36,8 @@ CPPFLAGS+= -DBOOT=\"$(BOOT)\" -DBOOT_VERS=\"$(VERSION)\"
 CPPFLAGS+= -I${COMMONDIR} -I${LIBIOCS} -I${S} -I. -D_STANDALONE
 AFLAGS=	   ${CFLAGS:M-[ID]*}
 AFLAGS+=   -Wa,-mc68000
-.if ${OBJECT_FMT} == "ELF"
 LINKFLAGS=   -n -Bstatic -T ${.CURDIR}/${BOOT}.ldscript -M
 LINKFLAGS+=  -noinhibit-exec	# XXX
-.else
-LINKFLAGS=   -n -Bstatic -Ttext ${TEXT} -M
-OBJCOPY?=  objcopy
-.endif
 
 .include "${.CURDIR}/../Makefile.booters"
 .include "${S}/../common/lib/libc/Makefile.inc"
@@ -54,7 +49,6 @@ ${PROG}: $(OBJS)
 	${_MKTARGET_LINK}
 	$(LD) $(LINKFLAGS) -o ${PROG} $(OBJS) $(LDADD) > $(PROG).map
 	@grep first_kbyte $(PROG).map
-.if ${OBJECT_FMT} == "ELF"
 	@if [ `(echo ibase=16; 						   \
 	    ${TOOL_SED} -n						   \
 		's/^.*0x\([0-9a-f]*\).* first_kbyte$$/\1-$(TEXT)-400/p'    \
@@ -71,26 +65,5 @@ ${PROG}: $(OBJS)
 	then echo '$(BOOT): text+data is too large';			   \
 	    rm $(PROG) ; exit 1; 					   \
 	fi
-.else
-	mv $(PROG) $(PROG).x
-	$(OBJCOPY) -I a.out-m68k-netbsd -O binary $(PROG).x $(PROG)
-	@rm -f $(PROG).x
-	@if [ `(echo ibase=16; 						   \
-	    ${TOOL_SED} -n						   \
-		's/  first_kbyte:.*0x\(.*\),.*$$/\1-$(TEXT)-400/p'	   \
-		$(PROG).map | 						   \
-	    tr a-f A-F) | bc` -gt 0 ]; 					   \
-	then echo '$(BOOT): first_kbyte exceeds the first killobyte';	   \
-	    rm $(PROG) ; exit 1; 					   \
-	fi
-	@if [ `(echo ibase=16; 						   \
-	    ${TOOL_SED} -n						   \
-		's/  _edata:.*0x\(.*\),.*$$/\1-$(TEXT)-2000/p'		   \
-		$(PROG).map | 						   \
-	    tr a-f A-F) | bc` -gt 0 ]; 					   \
-	then echo '$(BOOT): text+data is too large';			   \
-	    rm $(PROG) ; exit 1; 					   \
-	fi
-.endif
 
 .include <bsd.prog.mk>

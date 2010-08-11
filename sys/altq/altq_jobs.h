@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_jobs.h,v 1.3.54.1 2009/05/04 08:10:22 yamt Exp $	*/
+/*	$NetBSD: altq_jobs.h,v 1.3.54.2 2010/08/11 22:51:29 yamt Exp $	*/
 /*	$KAME: altq_jobs.h,v 1.6 2003/07/10 12:07:48 kjc Exp $	*/
 /*
  * Copyright (c) 2001, Rector and Visitors of the University of 
@@ -69,9 +69,7 @@ extern "C" {
 #define SCALE_LOSS	32
 #define SCALE_SHARE	16
 #define GRANULARITY	1000000 /* microseconds */
-#ifndef INFINITY
-#define INFINITY	LLONG_MAX
-#endif
+#define ALTQ_INFINITY	LLONG_MAX	/* not infinite, just large */
 
 /* list of packet arrival times */
 struct _tsentry;

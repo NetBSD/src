@@ -1,4 +1,4 @@
-/*	$NetBSD: est.c,v 1.8.4.3 2010/03/11 15:03:08 yamt Exp $	*/
+/*	$NetBSD: est.c,v 1.8.4.4 2010/08/11 22:52:57 yamt Exp $	*/
 /*
  * Copyright (c) 2003 Michael Eriksson.
  * All rights reserved.
@@ -81,7 +81,7 @@
 /* #define EST_DEBUG */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: est.c,v 1.8.4.3 2010/03/11 15:03:08 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: est.c,v 1.8.4.4 2010/08/11 22:52:57 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1087,9 +1087,6 @@ est_init_main(int vendor)
 	int			i, mv, rc;
 	size_t			len, freq_len;
 	char			*freq_names;
-	const char *cpuname;
-       
-	cpuname	= device_xname(curcpu()->ci_dev);
 
 	if (CPUID2FAMILY(curcpu()->ci_signature) == 15)
 		bus_clock = p4_get_bus_clock(curcpu());
@@ -1125,25 +1122,23 @@ est_init_main(int vendor)
 	if (idhi == 0 || idlo == 0 || cur == 0 ||
 	    ((cur >> 8) & 0xff) < ((idlo >> 8) & 0xff) ||
 	    ((cur >> 8) & 0xff) > ((idhi >> 8) & 0xff)) {
-		aprint_debug("%s: strange msr value 0x%016llx\n", __func__, msr);
+		aprint_debug("%s: strange msr value 0x%016llx\n",
+		    __func__, msr);
 		return;
 	}
 #endif
 
 #ifdef __amd64__
-	if (crlo == 0 || crhi == crlo) {
-		aprint_debug("%s: crlo == 0 || crhi == crlo\n", __func__);
-		return;
-	}
-
-	if (crhi == 0 || crcur == 0 || crlo > crhi ||
-	    crcur < crlo || crcur > crhi) {
+	if (crlo == 0 || crhi == 0 || crcur == 0 || crhi == crlo ||
+	    crlo > crhi || crcur < crlo || crcur > crhi) {
 		/*
 		 * Do complain about other weirdness, because we first want to
 		 * know about it, before we decide what to do with it
 		 */
 		aprint_debug("%s: strange msr value 0x%" PRIu64 "\n",
 		    __func__, msr);
+		aprint_debug("%s: crhi=%" PRIu8 ", crlo=%" PRIu8 ", crcur=%"
+		    PRIu8 "\n", __func__, crhi, crlo, crcur);
 		return;
 	}
 #endif
@@ -1260,41 +1255,48 @@ est_init_main(int vendor)
 		    i < est_fqlist->n - 1 ? " " : "");
 	}
 
-	aprint_debug("%s: %s (%d mV) ", cpuname, est_desc, mv);
+	aprint_debug_dev(curcpu()->ci_dev, "%s (%d mV) ", est_desc, mv);
 	aprint_debug("%d (MHz): %s\n", MSR2MHZ(msr, bus_clock), freq_names);
 
 	/*
 	 * Setup the sysctl sub-tree machdep.est.*
 	 */
-	if ((rc = sysctl_createv(NULL, 0, NULL, &node,
+	if (cpu_freq_sysctllog != NULL) {
+		rc = EALREADY;
+		goto err;
+	}
+
+	cpu_freq_init = est_init_main;
+
+	if ((rc = sysctl_createv(&cpu_freq_sysctllog, 0, NULL, &node,
 	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "machdep", NULL,
 	    NULL, 0, NULL, 0, CTL_MACHDEP, CTL_EOL)) != 0)
 		goto err;
 
-	if ((rc = sysctl_createv(NULL, 0, &node, &estnode,
+	if ((rc = sysctl_createv(&cpu_freq_sysctllog, 0, &node, &estnode,
 	    0, CTLTYPE_NODE, "est", NULL,
 	    NULL, 0, NULL, 0, CTL_CREATE, CTL_EOL)) != 0)
 		goto err;
 
-	if ((rc = sysctl_createv(NULL, 0, &estnode, &freqnode,
+	if ((rc = sysctl_createv(&cpu_freq_sysctllog, 0, &estnode, &freqnode,
 	    0, CTLTYPE_NODE, "frequency", NULL,
 	    NULL, 0, NULL, 0, CTL_CREATE, CTL_EOL)) != 0)
 		goto err;
 
-	if ((rc = sysctl_createv(NULL, 0, &freqnode, &node,
+	if ((rc = sysctl_createv(&cpu_freq_sysctllog, 0, &freqnode, &node,
 	    EST_TARGET_CTLFLAG, CTLTYPE_INT, "target", NULL,
 	    est_sysctl_helper, 0, NULL, 0, CTL_CREATE, CTL_EOL)) != 0)
 		goto err;
 	est_node_target = node->sysctl_num;
 
-	if ((rc = sysctl_createv(NULL, 0, &freqnode, &node,
+	if ((rc = sysctl_createv(&cpu_freq_sysctllog, 0, &freqnode, &node,
 	    0, CTLTYPE_INT, "current", NULL,
 	    est_sysctl_helper, 0, NULL, 0, CTL_CREATE, CTL_EOL)) != 0)
 		goto err;
 	est_node_current = node->sysctl_num;
 
-	if ((rc = sysctl_createv(NULL, 0, &freqnode, &node,
-	    0, CTLTYPE_STRING, "available", NULL,
+	if ((rc = sysctl_createv(&cpu_freq_sysctllog, 0, &freqnode, &node,
+	    CTLFLAG_READONLY, CTLTYPE_STRING, "available", NULL,
 	    NULL, 0, freq_names, freq_len, CTL_CREATE, CTL_EOL)) != 0)
 		goto err;
 
@@ -1302,5 +1304,11 @@ est_init_main(int vendor)
 
  err:
 	free(freq_names, M_SYSCTLDATA);
+
+	if (cpu_freq_sysctllog != NULL)
+		sysctl_teardown(&cpu_freq_sysctllog);
+
+	cpu_freq_init = NULL;
+
 	aprint_error("%s: sysctl_createv failed (rc = %d)\n", __func__, rc);
 }

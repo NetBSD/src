@@ -1,4 +1,4 @@
-/*	$NetBSD: if_virt.c,v 1.8.2.4 2010/03/11 15:04:40 yamt Exp $	*/
+/*	$NetBSD: if_virt.c,v 1.8.2.5 2010/08/11 22:55:09 yamt Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_virt.c,v 1.8.2.4 2010/03/11 15:04:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_virt.c,v 1.8.2.5 2010/08/11 22:55:09 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>
@@ -110,7 +110,8 @@ rump_virtif_create(int num)
 	snprintf(tapdev, sizeof(tapdev), "/dev/tap%d", num);
 	fd = rumpuser_open(tapdev, O_RDWR, &error);
 	if (fd == -1) {
-		printf("virtif_create: can't open /dev/tap %d\n", error);
+		printf("virtif_create: can't open /dev/tap%d: %d\n",
+		    num, error);
 		return error;
 	}
 	KASSERT(num < 0x100);
@@ -212,7 +213,7 @@ virtif_worker(void *arg)
  again:
 		n = rumpuser_read(sc->sc_tapfd, mtod(m, void *), plen, &error);
 		KASSERT(n < ETHER_MAX_LEN_JUMBO);
-		if (n <= 0) {
+		if (__predict_false(n < 0)) {
 			/*
 			 * work around tap bug: /dev/tap is opened in
 			 * non-blocking mode if it previously was
@@ -227,14 +228,18 @@ virtif_worker(void *arg)
 				rumpuser_poll(&pfd, 1, INFTIM, &error);
 				goto again;
 			}
+
 			m_freem(m);
 			break;
 		}
+
+		/* tap sometimes returns EOF.  don't sweat it and plow on */
+		if (__predict_false(n == 0))
+			goto again;
+
 		m->m_len = m->m_pkthdr.len = n;
 		m->m_pkthdr.rcvif = ifp;
-		if (ifp->if_bpf) {
-			bpf_ops->bpf_mtap(ifp->if_bpf, m);
-		}
+		bpf_mtap(ifp, m);
 		ether_input(ifp, m);
 	}
 
@@ -269,9 +274,7 @@ virtif_sender(void *arg)
 		}
 		if (i == LB_SH)
 			panic("lazy bum");
-		if (ifp->if_bpf) {
-			bpf_ops->bpf_mtap(ifp->if_bpf, m0);
-		}
+		bpf_mtap(ifp, m0);
 		rumpuser_writev(sc->sc_tapfd, io, i, &error);
 		m_freem(m0);
 		mutex_enter(&sc->sc_sendmtx);

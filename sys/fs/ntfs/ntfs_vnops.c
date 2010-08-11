@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vnops.c,v 1.40.10.4 2010/03/11 15:04:13 yamt Exp $	*/
+/*	$NetBSD: ntfs_vnops.c,v 1.40.10.5 2010/08/11 22:54:34 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vnops.c,v 1.40.10.4 2010/03/11 15:04:13 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vnops.c,v 1.40.10.5 2010/08/11 22:54:34 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -215,7 +215,7 @@ ntfs_inactive(void *v)
 	dprintf(("ntfs_inactive: vnode: %p, ntnode: %llu\n", vp,
 	    (unsigned long long)ip->i_number));
 
-	VOP_UNLOCK(vp, 0);
+	VOP_UNLOCK(vp);
 
 	/* XXX since we don't support any filesystem changes
 	 * right now, nothing more needs to be done
@@ -699,7 +699,7 @@ ntfs_lookup(void *v)
 		dprintf(("ntfs_lookup: faking .. directory in %llu\n",
 		    (unsigned long long)dip->i_number));
 
-		VOP_UNLOCK(dvp, 0);
+		VOP_UNLOCK(dvp);
 		error = ntfs_ntvattrget(ntmp, dip, NTFS_A_NAME, NULL, 0, &vap);
 		if (error) {
 			vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY);

@@ -1,4 +1,4 @@
-/*  $NetBSD: ufs_wapbl.c,v 1.7.2.3 2010/03/11 15:04:46 yamt Exp $ */
+/*  $NetBSD: ufs_wapbl.c,v 1.7.2.4 2010/08/11 22:55:15 yamt Exp $ */
 
 /*-
  * Copyright (c) 2003,2006,2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_wapbl.c,v 1.7.2.3 2010/03/11 15:04:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_wapbl.c,v 1.7.2.4 2010/08/11 22:55:15 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -239,13 +239,13 @@ wapbl_ufs_rename(void *v)
 	fdp = VTOI(fdvp);
 	ip = VTOI(fvp);
 	if ((nlink_t) ip->i_nlink >= LINK_MAX) {
-		VOP_UNLOCK(fvp, 0);
+		VOP_UNLOCK(fvp);
 		error = EMLINK;
 		goto abortit;
 	}
 	if ((ip->i_flags & (IMMUTABLE | APPEND)) ||
 		(fdp->i_flags & APPEND)) {
-		VOP_UNLOCK(fvp, 0);
+		VOP_UNLOCK(fvp);
 		error = EPERM;
 		goto abortit;
 	}
@@ -258,7 +258,7 @@ wapbl_ufs_rename(void *v)
 		    (fcnp->cn_flags & ISDOTDOT) ||
 		    (tcnp->cn_flags & ISDOTDOT) ||
 		    (ip->i_flag & IN_RENAME)) {
-			VOP_UNLOCK(fvp, 0);
+			VOP_UNLOCK(fvp);
 			error = EINVAL;
 			goto abortit;
 		}
@@ -291,7 +291,7 @@ wapbl_ufs_rename(void *v)
 	 * call to checkpath().
 	 */
 	error = VOP_ACCESS(fvp, VWRITE, tcnp->cn_cred);
-	VOP_UNLOCK(fvp, 0);
+	VOP_UNLOCK(fvp);
 	if (oldparent != tdp->i_number)
 		newparent = tdp->i_number;
 	if (doingdirectory && newparent) {
@@ -371,6 +371,10 @@ wapbl_ufs_rename(void *v)
 		error = ENOENT;	/* XXX ufs_rename sets "0" here */
 		goto out2;
 	}
+	/*
+	 * XXX: if fvp != a_fvp, a_fvp can now have 0 references and yet we
+	 * access a_fvp->inode via ip later.  boom.
+	 */
 	vrele(ap->a_fvp);
 
 	/* save directory lookup information in case tdvp == fdvp */

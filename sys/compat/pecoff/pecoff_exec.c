@@ -1,4 +1,4 @@
-/*	$NetBSD: pecoff_exec.c,v 1.38 2007/12/08 18:36:22 dsl Exp $	*/
+/*	$NetBSD: pecoff_exec.c,v 1.38.16.1 2010/08/11 22:53:12 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 Masaru OKI
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pecoff_exec.c,v 1.38 2007/12/08 18:36:22 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pecoff_exec.c,v 1.38.16.1 2010/08/11 22:53:12 yamt Exp $");
 
 /*#define DEBUG_PECOFF*/
 
@@ -182,7 +182,7 @@ pecoff_load_file(struct lwp *l, struct exec_package *epp, const char *path, stru
 	if ((error = vn_marktext(vp)))
 		goto badunlock;
 
-	VOP_UNLOCK(vp, 0);
+	VOP_UNLOCK(vp);
 	/*
 	 * Read header.
 	 */
@@ -240,7 +240,7 @@ pecoff_load_file(struct lwp *l, struct exec_package *epp, const char *path, stru
 	return 0;
 
 badunlock:
-	VOP_UNLOCK(vp, 0);
+	VOP_UNLOCK(vp);
 
 bad:
 	if (fp != 0)

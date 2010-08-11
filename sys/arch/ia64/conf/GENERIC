@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.1.2.2 2009/08/19 18:46:20 yamt Exp $
+# $NetBSD: GENERIC,v 1.1.2.3 2010/08/11 22:52:15 yamt Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/ia64/conf/std.ia64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.1.2.2 $"
+#ident 		"GENERIC-$Revision: 1.1.2.3 $"
 
 maxusers	32		# estimated number of users
 
@@ -51,7 +51,8 @@ makeoptions	DEBUG="-g"	# compile full symbol table
 
 # File systems
 file-system	FFS		# UFS
-#file-system 	MFS		# memory file system
+file-system 	MFS		# memory file system
+file-system	TMPFS		# Efficient memory file-system
 
 # These options enable verbose messages for several subsystems.
 # Warning, these may compile large string tables into the kernel!
@@ -67,13 +68,14 @@ config		netbsd	root on ? type ?
 
 mainbus0 at root
 
-cpu* at mainbus?
+cpu*		at mainbus?
 
 # Advanced Configuration and Power Interface
 
-acpi0		at mainbus0
+acpi0		at mainbus?
 
 # ACPI devices
+acpitz*		at acpi?		# ACPI Thermal Zone
 com*		at acpi?		# Serial communications interface
 
 # PCI bus support

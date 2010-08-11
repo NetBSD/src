@@ -1,4 +1,4 @@
-#	$NetBSD: COMPUTEX7750,v 1.25.56.1 2009/05/04 08:11:03 yamt Exp $
+#	$NetBSD: COMPUTEX7750,v 1.25.56.2 2010/08/11 22:51:57 yamt Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -7,6 +7,7 @@
 include "arch/evbsh3/conf/std.evbsh3.eb"
 # for little endian
 #include "arch/evbsh3/conf/std.evbsh3.el"
+include "arch/evbsh3/conf/std.computex7750"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 

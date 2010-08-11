@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rump,v 1.6.10.4 2010/03/11 15:04:32 yamt Exp $
+#	$NetBSD: Makefile.rump,v 1.6.10.5 2010/08/11 22:55:00 yamt Exp $
 #
 
 WARNS?=		3	# XXX: src/sys won't compile with -Wsign-compare yet
@@ -10,11 +10,13 @@ NOLINT=		# kernel code
 # use rump ABI instead of the NetBSD kernel ABI.
 .ifndef RUMPKMOD
 CPPFLAGS:=	-I${RUMPTOP}/include ${CPPFLAGS}
+CPPFLAGS+=	-D_RUMPKERNEL
+.else
+CPPFLAGS+=	-D_RUMP_NATIVE_ABI
 .endif
 
 CFLAGS+=	-ffreestanding -fno-strict-aliasing
 CWARNFLAGS+=	-Wno-format-zero-length -Wno-pointer-sign
-CPPFLAGS+=	-D_RUMPKERNEL
 CPPFLAGS+=	-D_KERNEL -DMULTIPROCESSOR -D_MODULE -DMODULAR
 CPPFLAGS+=	-DMAXUSERS=32
 CPPFLAGS+=	-DDIAGNOSTIC
@@ -69,6 +71,23 @@ DPSRCS+=	${RUMPTOP}/Makefile.rump
 _SYMQUIRK='|_gp_disp'
 .elif ${MACHINE_CPU} == "hppa"
 _SYMQUIRK='|\$$\$$'
+.elif ${MACHINE_ARCH} == "powerpc64"
+_SYMQUIRK="|PF_funcs"
+.endif
+
+#
+# Prefix quirks.  At least one toolchain generates global
+# symbols with prefixes which really need to remain as prefixes
+# (i.e. the '.' on the front of some ppc64 globals).  The
+# way to know if you have the problem is if you get later
+# complaints about symbols like 'rumpns_XrumpBLAH' or 'XrumpBLAH';
+# the 'X' part was added by the toolchain and will need to
+# be mentioned here.
+# 
+.if ${MACHINE_ARCH} == "powerpc64"
+_PQ="\.?"
+.else
+_PQ=
 .endif
 
 rump_symren: __archivebuild
@@ -92,8 +111,8 @@ __archivebuild: .USE
 	${AR} ${_ARFL} ${.TARGET} `NM=${NM} ${LORDER} ${.ALLSRC:M*o} | ${TSORT}`
 .endif
 	${NM} -go ${RUMP_SYMREN:U${.TARGET}} | ${TOOL_AWK} '	\
-	    $$NF!~/^(rump|RUMP|__|_GLOBAL_OFFSET_TABLE'${_SYMQUIRK}')/ \
-	      {printf "%s rumpns_%s\n", $$NF, $$NF}' \
+	    $$NF!~/^'${_PQ}'(rump|RUMP|__|_GLOBAL_OFFSET_TABLE'${_SYMQUIRK}')/ \
+	      {s = $$NF; sub(/^'${_PQ}'/, "&rumpns_", s); print $$NF, s}' \
 	    | sort | uniq  > renametab.${.TARGET}
 	${OBJCOPY} --preserve-dates --redefine-syms \
 	    renametab.${.TARGET} ${RUMP_SYMREN:U${.TARGET}}
@@ -102,21 +121,8 @@ __archivebuild: .USE
 	${AR} ${_ARRANFL} ${.TARGET}
 .endif
 
-# If IOCONF is defined, autocreate ioconf.c and locators.h.
-# This is useful mainly for devices.
-.if !empty(IOCONF)
-ioconf.c: ${IOCONF}
-	${TOOL_CONFIG} -b ${.OBJDIR} -s ${RUMPTOP}/.. ${.CURDIR}/${IOCONF}
-	# config doesn't change the files if they're unchanged.  however,
-	# here we want to satisfy our make dependency, so force a
-	# timestamp update
-	touch ioconf.c locators.h
-
-locators.h: ioconf.c
-
-CLEANFILES+= ioconf.c locators.h
-DPSRCS+= ioconf.c locators.h
-.endif
+_BSD_IOCONF_MK_USER_=1
+.include <bsd.ioconf.mk>
 
 .-include "${NETBSDSRCDIR}/sys/arch/${MACHINE_CPU}/include/Makefile.inc"
 .-include "${NETBSDSRCDIR}/sys/arch/${MACHINE}/include/Makefile.inc"

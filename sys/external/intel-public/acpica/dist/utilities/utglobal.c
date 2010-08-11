@@ -8,7 +8,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2009, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2010, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -331,7 +331,7 @@ static const char           AcpiGbl_HexToAscii[] =
 
 char
 AcpiUtHexToAsciiChar (
-    ACPI_INTEGER            Integer,
+    UINT64                  Integer,
     UINT32                  Position)
 {
 
@@ -625,7 +625,7 @@ AcpiUtGetNodeName (
 
 static const char           *AcpiGbl_DescTypeNames[] =
 {
-    /* 00 */ "Invalid",
+    /* 00 */ "Not a Descriptor",
     /* 01 */ "Cached",
     /* 02 */ "State-Generic",
     /* 03 */ "State-Update",
@@ -644,19 +644,19 @@ static const char           *AcpiGbl_DescTypeNames[] =
 };
 
 
-char *
+const char *
 AcpiUtGetDescriptorName (
     void                    *Object)
 {
 
     if (!Object)
     {
-        return __UNCONST("NULL OBJECT");
+        return ("NULL OBJECT");
     }
 
     if (ACPI_GET_DESCRIPTOR_TYPE (Object) > ACPI_DESC_TYPE_MAX)
     {
-        return (ACPI_CAST_PTR (char, AcpiGbl_BadType));
+        return ("Not a Descriptor");
     }
 
     return (ACPI_CAST_PTR (char,
@@ -916,6 +916,7 @@ AcpiUtInitGlobals (
 
     /* Miscellaneous variables */
 
+    AcpiGbl_DSDT                        = NULL;
     AcpiGbl_CmSingleStep                = FALSE;
     AcpiGbl_DbTerminateThreads          = FALSE;
     AcpiGbl_Shutdown                    = FALSE;
@@ -943,11 +944,15 @@ AcpiUtInitGlobals (
     AcpiGbl_RootNodeStruct.Name.Integer = ACPI_ROOT_NAME;
     AcpiGbl_RootNodeStruct.DescriptorType = ACPI_DESC_TYPE_NAMED;
     AcpiGbl_RootNodeStruct.Type         = ACPI_TYPE_DEVICE;
+    AcpiGbl_RootNodeStruct.Parent       = NULL;
     AcpiGbl_RootNodeStruct.Child        = NULL;
     AcpiGbl_RootNodeStruct.Peer         = NULL;
     AcpiGbl_RootNodeStruct.Object       = NULL;
-    AcpiGbl_RootNodeStruct.Flags        = ANOBJ_END_OF_PEER_LIST;
 
+
+#ifdef ACPI_DISASSEMBLER
+    AcpiGbl_ExternalList                = NULL;
+#endif
 
 #ifdef ACPI_DEBUG_OUTPUT
     AcpiGbl_LowestStackPointer          = ACPI_CAST_PTR (ACPI_SIZE, ACPI_SIZE_MAX);
@@ -955,6 +960,7 @@ AcpiUtInitGlobals (
 
 #ifdef ACPI_DBG_TRACK_ALLOCATIONS
     AcpiGbl_DisplayFinalMemStats        = FALSE;
+    AcpiGbl_DisableMemTracking          = FALSE;
 #endif
 
     return_ACPI_STATUS (AE_OK);

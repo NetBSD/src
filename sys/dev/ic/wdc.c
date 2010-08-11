@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.253.4.3 2010/03/11 15:03:36 yamt Exp $ */
+/*	$NetBSD: wdc.c,v 1.253.4.4 2010/08/11 22:53:33 yamt Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.253.4.3 2010/03/11 15:03:36 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.253.4.4 2010/08/11 22:53:33 yamt Exp $");
 
 #include "opt_ata.h"
 
@@ -115,7 +115,7 @@ __KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.253.4.3 2010/03/11 15:03:36 yamt Exp $");
 /*
  * timeout when waiting for BSY to deassert when probing.
  * set to 5s. From the standards this could be up to 31, but we can't
- * wait that much at boot time, and 5s seems to be enouth.
+ * wait that much at boot time, and 5s seems to be enough.
  */
 #define WDC_PROBE_WAIT 5
 

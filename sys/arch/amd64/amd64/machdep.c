@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.89.2.4 2010/03/11 15:01:58 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.89.2.5 2010/08/11 22:51:33 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.89.2.4 2010/03/11 15:01:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.89.2.5 2010/08/11 22:51:33 yamt Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -500,6 +500,21 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 		       sysctl_machdep_diskinfo, 0, NULL, 0,
 		       CTL_MACHDEP, CPU_DISKINFO, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT | CTLFLAG_IMMEDIATE,
+		       CTLTYPE_INT, "fpu_present", NULL,
+		       NULL, 1, NULL, 0,
+		       CTL_MACHDEP, CPU_FPU_PRESENT, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT | CTLFLAG_IMMEDIATE,
+		       CTLTYPE_INT, "sse", NULL,
+		       NULL, 1, NULL, 0,
+		       CTL_MACHDEP, CPU_SSE, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT | CTLFLAG_IMMEDIATE,
+		       CTLTYPE_INT, "sse2", NULL,
+		       NULL, 1, NULL, 0,
+		       CTL_MACHDEP, CPU_SSE2, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_QUAD, "tsc_freq", NULL,
 		       NULL, 0, &tsc_freq, 0,
@@ -694,7 +709,7 @@ haltsys:
 
 	if (howto & RB_HALT) {
 #if NACPICA > 0
-		AcpiDisable();
+		acpi_disable();
 #endif
 
 		printf("\n");
@@ -999,8 +1014,6 @@ setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 
 	l->l_md.md_flags &= ~MDP_USEDFPU;
 	pcb->pcb_flags = 0;
-	pcb->pcb_fs = 0;
-	pcb->pcb_gs = 0;
 	pcb->pcb_savefpu.fp_fxsave.fx_fcw = __NetBSD_NPXCW__;
 	pcb->pcb_savefpu.fp_fxsave.fx_mxcsr = __INITIAL_MXCSR__;
 	pcb->pcb_savefpu.fp_fxsave.fx_mxcsr_mask = __INITIAL_MXCSR_MASK__;
@@ -1010,8 +1023,7 @@ setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 	tf = l->l_md.md_regs;
 	tf->tf_ds = LSEL(LUDATA_SEL, SEL_UPL);
 	tf->tf_es = LSEL(LUDATA_SEL, SEL_UPL);
-	tf->tf_fs = LSEL(LUDATA_SEL, SEL_UPL);
-	tf->tf_gs = LSEL(LUDATA_SEL, SEL_UPL);
+	cpu_fsgs_zero(l);
 	tf->tf_rdi = 0;
 	tf->tf_rsi = 0;
 	tf->tf_rbp = 0;
@@ -1061,7 +1073,7 @@ setgate(struct gate_descriptor *gd, void *func, int ist, int type, int dpl, int 
 }
 
 void
-unsetgate( struct gate_descriptor *gd)
+unsetgate(struct gate_descriptor *gd)
 {
 
 	kpreempt_disable();
@@ -1241,21 +1253,23 @@ init_x86_64(paddr_t first_avail)
 #if !defined(REALEXTMEM) && !defined(REALBASEMEM)
 	struct btinfo_memmap *bim;
 #endif
+#endif /* !XEN */
+
 	cpu_probe(&cpu_info_primary);
-#else /* XEN */
-	cpu_probe(&cpu_info_primary);
+
+#ifdef XEN
 	KASSERT(HYPERVISOR_shared_info != NULL);
 	cpu_info_primary.ci_vcpu = &HYPERVISOR_shared_info->vcpu_info[0];
 
 	__PRINTK(("init_x86_64(0x%lx)\n", first_avail));
-	cpu_feature = cpu_info_primary.ci_feature_flags;
-	/* not on Xen... */
-	cpu_feature &= ~(CPUID_PGE|CPUID_PSE|CPUID_MTRR|CPUID_FXSR|CPUID_NOX);
 #endif /* XEN */
+
+	cpu_feature[0] &= ~CPUID_FEAT_BLACKLIST;
 
 	cpu_init_msrs(&cpu_info_primary, true);
 
 	pcb = lwp_getpcb(&lwp0);
+
 #ifdef XEN
 	pcb->pcb_cr3 = xen_start_info.pt_base - KERNBASE;
 	__PRINTK(("pcb_cr3 0x%lx\n", xen_start_info.pt_base - KERNBASE));
@@ -1348,6 +1362,7 @@ init_x86_64(paddr_t first_avail)
 	pmap_kenter_pa(idt_vaddr, idt_paddr, VM_PROT_READ|VM_PROT_WRITE, 0);
 	pmap_update(pmap_kernel());
 	memset((void *)idt_vaddr, 0, PAGE_SIZE);
+
 #ifndef XEN
 	pmap_changeprot_local(idt_vaddr, VM_PROT_READ);
 #endif
@@ -1409,6 +1424,12 @@ init_x86_64(paddr_t first_avail)
 	    x86_btop(VM_MAXUSER_ADDRESS32) - 1, SDT_MEMERA, SEL_UPL, 1, 1, 0);
 
 	set_mem_segment(GDT_ADDR_MEM(gdtstore, GUDATA32_SEL), 0,
+	    x86_btop(VM_MAXUSER_ADDRESS32) - 1, SDT_MEMRWA, SEL_UPL, 1, 1, 0);
+
+	set_mem_segment(GDT_ADDR_MEM(gdtstore, GUFS_SEL), 0,
+	    x86_btop(VM_MAXUSER_ADDRESS32) - 1, SDT_MEMRWA, SEL_UPL, 1, 1, 0);
+
+	set_mem_segment(GDT_ADDR_MEM(gdtstore, GUGS_SEL), 0,
 	    x86_btop(VM_MAXUSER_ADDRESS32) - 1, SDT_MEMRWA, SEL_UPL, 1, 1, 0);
 
 	/*
@@ -1797,3 +1818,105 @@ valid_user_selector(struct lwp *l, uint64_t seg, char *ldtp, int len)
 {
 	return memseg_baseaddr(l, seg, ldtp, len, NULL);
 }
+
+/*
+ * Zero out an LWP's TLS context (%fs and %gs and associated stuff).
+ * Used when exec'ing a new program.
+ */
+
+void
+cpu_fsgs_zero(struct lwp *l)
+{
+	struct trapframe *tf;
+	struct pcb *pcb;
+	uint64_t zero = 0;
+
+	pcb = lwp_getpcb(l);
+	if (l == curlwp) {
+		tf = l->l_md.md_regs;
+		kpreempt_disable();
+		tf->tf_fs = 0;
+		tf->tf_gs = 0;
+		if (l->l_proc->p_flag & PK_32) {
+			setfs(0);
+#ifndef XEN
+			setusergs(0);
+#else
+			HYPERVISOR_set_segment_base(SEGBASE_GS_USER_SEL, 0);
+#endif
+		} else {
+#ifndef XEN
+			wrmsr(MSR_FSBASE, 0);
+			wrmsr(MSR_KERNELGSBASE, 0);
+#else
+			HYPERVISOR_set_segment_base(SEGBASE_FS, 0);
+			HYPERVISOR_set_segment_base(SEGBASE_GS_USER, 0);
+#endif
+		}
+		pcb->pcb_fs = 0;
+		pcb->pcb_gs = 0;
+		update_descriptor(&curcpu()->ci_gdt[GUFS_SEL], &zero);
+		update_descriptor(&curcpu()->ci_gdt[GUGS_SEL], &zero);
+		kpreempt_enable();
+	} else {
+		pcb->pcb_fs = 0;
+		pcb->pcb_gs = 0;
+	}
+
+}
+
+/*
+ * Load an LWP's TLS context, possibly changing the %fs and %gs selectors.
+ * Used only for 32-bit processes.
+ */
+
+void
+cpu_fsgs_reload(struct lwp *l, int fssel, int gssel)
+{
+	struct trapframe *tf;
+	struct pcb *pcb;
+
+	KASSERT(l->l_proc->p_flag & PK_32);
+	tf = l->l_md.md_regs;
+	if (l == curlwp) {
+		pcb = lwp_getpcb(l);
+		kpreempt_disable();
+		update_descriptor(&curcpu()->ci_gdt[GUFS_SEL], &pcb->pcb_fs);
+		update_descriptor(&curcpu()->ci_gdt[GUGS_SEL], &pcb->pcb_gs);
+		setfs(fssel);
+#ifndef XEN
+		setusergs(gssel);
+#else
+		HYPERVISOR_set_segment_base(SEGBASE_GS_USER_SEL, gssel);
+#endif
+		tf->tf_fs = fssel;
+		tf->tf_gs = gssel;
+		kpreempt_enable();
+	} else {
+		tf->tf_fs = fssel;
+		tf->tf_gs = gssel;
+	}
+}
+
+#ifdef XEN
+void x86_64_tls_switch(struct lwp *);
+
+void
+x86_64_tls_switch(struct lwp *l)
+{
+	struct pcb *pcb = lwp_getpcb(l);
+	struct trapframe *tf = l->l_md.md_regs;
+
+	if (pcb->pcb_flags & PCB_COMPAT32) {
+		update_descriptor(&curcpu()->ci_gdt[GUFS_SEL], &pcb->pcb_fs);
+		update_descriptor(&curcpu()->ci_gdt[GUGS_SEL], &pcb->pcb_gs);
+		setfs(tf->tf_fs);
+		HYPERVISOR_set_segment_base(SEGBASE_GS_USER_SEL, tf->tf_gs);
+	} else {
+		setfs(0);
+		HYPERVISOR_set_segment_base(SEGBASE_GS_USER_SEL, 0);
+		HYPERVISOR_set_segment_base(SEGBASE_FS, pcb->pcb_fs);
+		HYPERVISOR_set_segment_base(SEGBASE_GS_USER, pcb->pcb_gs);
+	}
+}
+#endif

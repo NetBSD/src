@@ -1,4 +1,4 @@
-/*	$NetBSD: puccn.c,v 1.9 2007/01/13 18:59:31 cube Exp $ */
+/*	$NetBSD: puccn.c,v 1.9.44.1 2010/08/11 22:54:04 yamt Exp $ */
 
 /*
  * Derived from  pci.c
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puccn.c,v 1.9 2007/01/13 18:59:31 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puccn.c,v 1.9.44.1 2010/08/11 22:54:04 yamt Exp $");
 
 #include "opt_kgdb.h"
 
@@ -76,7 +76,7 @@ int
 cpu_comcnprobe(struct consdev *cn, struct pci_attach_args *pa)
 {
 	pci_mode_detect();
-	pa->pa_iot = X86_BUS_SPACE_IO;
+	pa->pa_iot = x86_bus_space_io;
 	pa->pa_pc = 0;
 	pa->pa_tag = pci_make_tag(0, 0, 31, 0);
 	return 0;

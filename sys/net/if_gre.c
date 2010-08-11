@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.130.2.4 2010/03/11 15:04:27 yamt Exp $ */
+/*	$NetBSD: if_gre.c,v 1.130.2.5 2010/08/11 22:54:53 yamt Exp $ */
 
 /*
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -45,11 +45,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.130.2.4 2010/03/11 15:04:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.130.2.5 2010/08/11 22:54:53 yamt Exp $");
 
 #include "opt_atalk.h"
 #include "opt_gre.h"
 #include "opt_inet.h"
+#include "opt_mpls.h"
 
 #include <sys/param.h>
 #include <sys/file.h>
@@ -93,6 +94,11 @@ __KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.130.2.4 2010/03/11 15:04:27 yamt Exp $"
 
 #ifdef INET6
 #include <netinet6/in6_var.h>
+#endif
+
+#ifdef MPLS
+#include <netmpls/mpls.h>
+#include <netmpls/mpls_var.h>
 #endif
 
 #ifdef NETATALK
@@ -355,8 +361,7 @@ gre_clone_create(struct if_clone *ifc, int unit)
 	sc->sc_if.if_flags |= IFF_LINK0;
 	if_attach(&sc->sc_if);
 	if_alloc_sadl(&sc->sc_if);
-	bpf_ops->bpf_attach(&sc->sc_if, DLT_NULL,
-	    sizeof(uint32_t), &sc->sc_if.if_bpf);
+	bpf_attach(&sc->sc_if, DLT_NULL, sizeof(uint32_t));
 	sc->sc_state = GRE_S_IDLE;
 	return 0;
 }
@@ -369,7 +374,7 @@ gre_clone_destroy(struct ifnet *ifp)
 
 	GRE_DPRINTF(sc, "\n");
 
-	bpf_ops->bpf_detach(ifp);
+	bpf_detach(ifp);
 	s = splnet();
 	if_detach(ifp);
 
@@ -900,6 +905,13 @@ gre_input(struct gre_softc *sc, struct mbuf *m, int hlen,
 		af = AF_INET6;
 		break;
 #endif
+#ifdef MPLS
+	case ETHERTYPE_MPLS:
+		ifq = &mplsintrq;
+		isr = NETISR_MPLS;
+		af = AF_MPLS;
+		break;
+#endif
 	default:	   /* others not yet supported */
 		GRE_DPRINTF(sc, "unhandled ethertype 0x%04x\n",
 		    ntohs(gh->ptype));
@@ -914,8 +926,7 @@ gre_input(struct gre_softc *sc, struct mbuf *m, int hlen,
 	}
 	m_adj(m, hlen);
 
-	if (sc->sc_if.if_bpf != NULL)
-		bpf_ops->bpf_mtap_af(sc->sc_if.if_bpf, af, m);
+	bpf_mtap_af(&sc->sc_if, af, m);
 
 	m->m_pkthdr.rcvif = &sc->sc_if;
 
@@ -952,8 +963,7 @@ gre_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 		goto end;
 	}
 
-	if (ifp->if_bpf != NULL)
-		bpf_ops->bpf_mtap_af(ifp->if_bpf, dst->sa_family, m);
+	bpf_mtap_af(ifp, dst->sa_family, m);
 
 	m->m_flags &= ~(M_BCAST|M_MCAST);
 
@@ -983,6 +993,15 @@ gre_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 		error = EAFNOSUPPORT;
 		goto end;
 	}
+
+#ifdef MPLS
+		if (rt != NULL && rt_gettag(rt) != NULL) {
+			union mpls_shim msh;
+			msh.s_addr = MPLS_GETSADDR(rt);
+			if (msh.shim.label != MPLS_LABEL_IMPLNULL)
+				etype = htons(ETHERTYPE_MPLS);
+		}
+#endif
 
 	M_PREPEND(m, sizeof(*gh), M_DONTWAIT);
 

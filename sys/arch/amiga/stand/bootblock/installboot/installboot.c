@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.c,v 1.4 2007/03/26 23:08:29 hubertf Exp $	*/
+/*	$NetBSD: installboot.c,v 1.4.38.1 2010/08/11 22:51:37 yamt Exp $	*/
 
 #include <err.h>
 #include <fcntl.h>
@@ -7,7 +7,7 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "../aout2bb/chksum.h"
+#include "../elf2bb/chksum.h"
 
 /* XXX Must be kept in sync with bbstart.s! */
 #define CMDLN_LOC 0x10

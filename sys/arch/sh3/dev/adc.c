@@ -1,4 +1,4 @@
-/*	$NetBSD: adc.c,v 1.9.4.1 2009/05/04 08:11:51 yamt Exp $ */
+/*	$NetBSD: adc.c,v 1.9.4.2 2010/08/11 22:52:42 yamt Exp $ */
 
 /*
  * Copyright (c) 2003 Valeriy E. Ushakov
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adc.c,v 1.9.4.1 2009/05/04 08:11:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adc.c,v 1.9.4.2 2010/08/11 22:52:42 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -141,11 +141,11 @@ adc_sample_channel(int chan)
 	csr = ADC_(CSR);
 	if ((csr & SH7709_ADCSR_ADST) != 0) {
 		/* another conversion is in progress?! */
-	        snprintb(bits, sizeof(buts), SH7709_ADCSR_BITS, csr);
+	        snprintb(bits, sizeof(bits), SH7709_ADCSR_BITS, csr);
 		printf("adc_sample_channel(%d): CSR=%s", chan, bits);
 		cr = ADC_(CR);
 		cr &= ~0x07;	/* three lower bits always read as 1s */
-	        snprintb(bits, sizeof(buts), SH7709_ADCR_BITS, cr);
+	        snprintb(bits, sizeof(bits), SH7709_ADCR_BITS, cr);
 		printf(", CR=%s\n", bits);
 		return (-1);
 	}

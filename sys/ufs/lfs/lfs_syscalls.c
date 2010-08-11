@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.129.2.4 2010/03/11 15:04:45 yamt Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.129.2.5 2010/08/11 22:55:14 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007, 2008
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.129.2.4 2010/03/11 15:04:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.129.2.5 2010/08/11 22:55:14 yamt Exp $");
 
 #ifndef LFS
 # define LFS		/* for prototypes in syscallargs.h */
@@ -760,7 +760,7 @@ lfs_bmapv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 					continue;
 				} else {
 					KASSERT(VOP_ISLOCKED(vp));
-					VOP_UNLOCK(vp, 0);
+					VOP_UNLOCK(vp);
 					numrefed++;
 				}
 			}
@@ -1140,7 +1140,7 @@ lfs_fastvget(struct mount *mp, ino_t ino, daddr_t daddr, struct vnode **vpp,
 			ufs_ihashrem(ip);
 
 			/* Unlock and discard unneeded inode. */
-			vlockmgr(&vp->v_lock, LK_RELEASE);
+			VOP_UNLOCK(vp);
 			lfs_vunref(vp);
 			*vpp = NULL;
 			return (error);
@@ -1163,7 +1163,7 @@ lfs_fastvget(struct mount *mp, ino_t ino, daddr_t daddr, struct vnode **vpp,
 			ufs_ihashrem(ip);
 
 			/* Unlock and discard unneeded inode. */
-			vlockmgr(&vp->v_lock, LK_RELEASE);
+			VOP_UNLOCK(vp);
 			lfs_vunref(vp);
 			brelse(bp, 0);
 			*vpp = NULL;
@@ -1188,7 +1188,7 @@ lfs_fastvget(struct mount *mp, ino_t ino, daddr_t daddr, struct vnode **vpp,
 	*vpp = vp;
 
 	KASSERT(VOP_ISLOCKED(vp));
-	VOP_UNLOCK(vp, 0);
+	VOP_UNLOCK(vp);
 
 	return (0);
 }

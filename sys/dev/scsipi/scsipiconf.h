@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.h,v 1.110.32.4 2010/03/11 15:04:03 yamt Exp $	*/
+/*	$NetBSD: scsipiconf.h,v 1.110.32.5 2010/08/11 22:54:11 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2004 The NetBSD Foundation, Inc.
@@ -623,6 +623,7 @@ struct scsi_quirk_inquiry_pattern {
 
 #ifdef _KERNEL
 void	scsipi_init(void);
+void	scsipi_load_verbose(void);
 int	scsipi_command(struct scsipi_periph *, struct scsipi_generic *, int,
 	    u_char *, int, int, int, struct buf *, int);
 void	scsipi_create_completion_thread(void *);
@@ -650,11 +651,16 @@ int	scsipi_interpret_sense(struct scsipi_xfer *);
 void	scsipi_wait_drain(struct scsipi_periph *);
 void	scsipi_kill_pending(struct scsipi_periph *);
 struct scsipi_periph *scsipi_alloc_periph(int);
-#ifdef SCSIVERBOSE
-void	scsipi_print_sense(struct scsipi_xfer *, int);
-void	scsipi_print_sense_data(struct scsi_sense_data *, int);
-char   *scsipi_decode_sense(void *, int);
-#endif
+
+/* Function pointers for scsiverbose module */
+extern int	(*scsipi_print_sense)(struct scsipi_xfer *, int);
+extern void	(*scsipi_print_sense_data)(struct scsi_sense_data *, int);
+
+int     scsipi_print_sense_stub(struct scsipi_xfer *, int);
+void    scsipi_print_sense_data_stub(struct scsi_sense_data *, int);
+
+extern int	scsi_verbose_loaded;
+
 void	scsipi_print_cdb(struct scsipi_generic *cmd);
 int	scsipi_thread_call_callback(struct scsipi_channel *,
 	    void (*callback)(struct scsipi_channel *, void *),

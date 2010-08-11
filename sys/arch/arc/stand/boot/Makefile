@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.6.60.1 2009/05/04 08:10:37 yamt Exp $
+# $NetBSD: Makefile,v 1.6.60.2 2010/08/11 22:51:38 yamt Exp $
 
 .include <bsd.own.mk>
 .include <bsd.sys.mk>	# for ${HOST_SH}
@@ -59,7 +59,7 @@ LIBZ=    ${ZLIB}
 
 LIBS=  ${LIBSA} ${LIBKERN} ${LIBZ}
 
-cleandir distclean: cleanlibdir
+cleandir distclean: .WAIT cleanlibdir
 cleanlibdir:
 	-rm -rf lib
 

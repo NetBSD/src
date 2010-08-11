@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.15.16.3 2010/03/11 15:02:23 yamt Exp $	*/
+/*	$NetBSD: mem.c,v 1.15.16.4 2010/08/11 22:52:02 yamt Exp $	*/
 
 /*	$OpenBSD: mem.c,v 1.30 2007/09/22 16:21:32 krw Exp $	*/
 /*
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.15.16.3 2010/03/11 15:02:23 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.15.16.4 2010/08/11 22:52:02 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -368,13 +368,13 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 		case DEV_NULL:				/*  /dev/null  */
 			if (uio->uio_rw == UIO_WRITE)
 				uio->uio_resid = 0;
-			return (0);
+			return 0;
 
 		case DEV_ZERO:			/*  /dev/zero  */
 			/* Write to /dev/zero is ignored. */
 			if (uio->uio_rw == UIO_WRITE) {
 				uio->uio_resid = 0;
-				return (0);
+				return 0;
 			}
 			/*
 			 * On the first call, allocate and zero a page
@@ -390,26 +390,33 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 			break;
 
 		default:
-			return (ENXIO);
+			return ENXIO;
 		}
 	}
-	return (error);
+	return error;
 }
 
 paddr_t
 mmmmap(dev_t dev, off_t off, int prot)
 {
 
-	if (minor(dev) != 0)
-		return (-1);
+        /*
+         * /dev/mem is the only one that makes sense through this
+         * interface.  For /dev/kmem any physaddr we return here
+         * could be transient and hence incorrect or invalid at
+         * a later time.  /dev/null just doesn't make any sense
+         * and /dev/zero is a hack that is handled via the default
+         * pager in mmap().
+         */
+
+	if (minor(dev) != DEV_MEM)
+		return -1;
 
 	/*
 	 * Allow access only in RAM.
 	 */
-#if 0
-	if (off < ptoa(firstusablepage) ||
-	    off >= ptoa(lastusablepage + 1))
-		return (-1);
-#endif
-	return (btop(off));
+	if (off > ptoa(physmem))
+		return -1;
+
+	return btop(off);
 }

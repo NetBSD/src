@@ -1,4 +1,4 @@
-/*	$NetBSD: if_kuereg.h,v 1.11 2001/01/21 02:35:31 augustss Exp $	*/
+/*	$NetBSD: if_kuereg.h,v 1.11.128.1 2010/08/11 22:54:14 yamt Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -69,13 +69,13 @@ struct kue_ether_desc {
 };
 
 #define KUE_ETHERSTATS(x)	\
-	(*(u_int32_t *)&(x)->kue_desc.kue_etherstats)
+	le32dec((x)->kue_desc.kue_etherstats)
 #define KUE_MAXSEG(x)		\
-	(*(u_int16_t *)&(x)->kue_desc.kue_maxseg)
+	le16dec((x)->kue_desc.kue_maxseg)
 #define KUE_MCFILTCNT(x)	\
-	((*(u_int16_t *)&(x)->kue_desc.kue_mcastfilt) & 0x7FFF)
+	(le16dec((x)->kue_desc.kue_mcastfilt) & 0x7FFF)
 #define KUE_MCFILT(x, y)	\
-	(char *)&(sc->kue_mcfilters[y * ETHER_ADDR_LEN])
+	(uint8_t *)&(sc->kue_mcfilters[y * ETHER_ADDR_LEN])
 
 #define KUE_STAT_TX_OK			0x00000001
 #define KUE_STAT_RX_OK			0x00000002

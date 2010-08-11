@@ -1,4 +1,4 @@
-/*	$NetBSD: adm1021.c,v 1.1.16.5 2010/03/11 15:03:27 yamt Exp $ */
+/*	$NetBSD: adm1021.c,v 1.1.16.6 2010/08/11 22:53:22 yamt Exp $ */
 /*	$OpenBSD: adm1021.c,v 1.27 2007/06/24 05:34:35 dlg Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adm1021.c,v 1.1.16.5 2010/03/11 15:03:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adm1021.c,v 1.1.16.6 2010/08/11 22:53:22 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -105,6 +105,7 @@ admtemp_attach(device_t parent, device_t self, void *aux)
 	sc->sc_addr = ia->ia_addr;
 
 	aprint_normal(": ADM1021 or compatible environmental sensor\n");
+	aprint_naive(": Environmental sensor\n");
 
 	iic_acquire_bus(sc->sc_tag, 0);
 	cmd = ADM1021_CONFIG_READ;

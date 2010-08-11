@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_i810.c,v 1.52.4.4 2010/03/11 15:03:42 yamt Exp $	*/
+/*	$NetBSD: agp_i810.c,v 1.52.4.5 2010/08/11 22:53:41 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.52.4.4 2010/03/11 15:03:42 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.52.4.5 2010/08/11 22:53:41 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -171,6 +171,7 @@ agp_i810_vgamatch(struct pci_attach_args *pa)
 	case PCI_PRODUCT_INTEL_82945GM_IGD:
 	case PCI_PRODUCT_INTEL_82945GM_IGD_1:
 	case PCI_PRODUCT_INTEL_82945GME_IGD:
+	case PCI_PRODUCT_INTEL_E7221_IGD:
 	case PCI_PRODUCT_INTEL_82965Q_IGD:
 	case PCI_PRODUCT_INTEL_82965Q_IGD_1:
 	case PCI_PRODUCT_INTEL_82965PM_IGD:
@@ -179,6 +180,7 @@ agp_i810_vgamatch(struct pci_attach_args *pa)
 	case PCI_PRODUCT_INTEL_82G33_IGD_1:
 	case PCI_PRODUCT_INTEL_82965G_IGD:
 	case PCI_PRODUCT_INTEL_82965G_IGD_1:
+	case PCI_PRODUCT_INTEL_82965GME_IGD:
 	case PCI_PRODUCT_INTEL_82Q35_IGD:
 	case PCI_PRODUCT_INTEL_82Q35_IGD_1:
 	case PCI_PRODUCT_INTEL_82Q33_IGD:
@@ -191,6 +193,10 @@ agp_i810_vgamatch(struct pci_attach_args *pa)
 	case PCI_PRODUCT_INTEL_82IGD_E_IGD:
 	case PCI_PRODUCT_INTEL_82Q45_IGD:
 	case PCI_PRODUCT_INTEL_82G45_IGD:
+	case PCI_PRODUCT_INTEL_82G41_IGD:
+	case PCI_PRODUCT_INTEL_82B43_IGD:
+	case PCI_PRODUCT_INTEL_IRONLAKE_D_IGD:
+	case PCI_PRODUCT_INTEL_IRONLAKE_M_IGD:
 		return (1);
 	}
 
@@ -241,6 +247,7 @@ agp_i810_attach(device_t parent, device_t self, void *aux)
 		case PCI_PRODUCT_INTEL_82865_HB:
 		case PCI_PRODUCT_INTEL_82845G_DRAM:
 		case PCI_PRODUCT_INTEL_82815_FULL_HUB:
+		case PCI_PRODUCT_INTEL_82855GM_MCH:
 			return agp_intel_attach(parent, self, aux);
 		}
 #endif
@@ -273,6 +280,7 @@ agp_i810_attach(device_t parent, device_t self, void *aux)
 	case PCI_PRODUCT_INTEL_82945GM_IGD:
 	case PCI_PRODUCT_INTEL_82945GM_IGD_1:
 	case PCI_PRODUCT_INTEL_82945GME_IGD:
+	case PCI_PRODUCT_INTEL_E7221_IGD:
 		isc->chiptype = CHIP_I915;
 		break;
 	case PCI_PRODUCT_INTEL_82965Q_IGD:
@@ -281,6 +289,7 @@ agp_i810_attach(device_t parent, device_t self, void *aux)
 	case PCI_PRODUCT_INTEL_82965PM_IGD_1:
 	case PCI_PRODUCT_INTEL_82965G_IGD:
 	case PCI_PRODUCT_INTEL_82965G_IGD_1:
+	case PCI_PRODUCT_INTEL_82965GME_IGD:
 	case PCI_PRODUCT_INTEL_82946GZ_IGD:
 	case PCI_PRODUCT_INTEL_82G35_IGD:
 	case PCI_PRODUCT_INTEL_82G35_IGD_1:
@@ -299,6 +308,10 @@ agp_i810_attach(device_t parent, device_t self, void *aux)
 	case PCI_PRODUCT_INTEL_82IGD_E_IGD:
 	case PCI_PRODUCT_INTEL_82Q45_IGD:
 	case PCI_PRODUCT_INTEL_82G45_IGD:
+	case PCI_PRODUCT_INTEL_82G41_IGD:
+	case PCI_PRODUCT_INTEL_82B43_IGD:
+	case PCI_PRODUCT_INTEL_IRONLAKE_D_IGD:
+	case PCI_PRODUCT_INTEL_IRONLAKE_M_IGD:
 		isc->chiptype = CHIP_G4X;
 		break;
 	}

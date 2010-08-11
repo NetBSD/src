@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3.2.2 2009/05/04 08:12:16 yamt Exp $
+#	$NetBSD: Makefile,v 1.3.2.3 2010/08/11 22:53:01 yamt Exp $
 
 PROG=		zboot
 
@@ -53,7 +53,7 @@ ${PROG}: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
 .include <bsd.klinks.mk>
 .include <bsd.prog.mk>
 
-cleandir distclean: cleanlibdir
+cleandir distclean: .WAIT cleanlibdir
 
 cleanlibdir:
 	-rm -rf lib

@@ -1,4 +1,4 @@
-/*	$NetBSD: dkio.h,v 1.14.26.1 2010/03/11 15:04:41 yamt Exp $	*/
+/*	$NetBSD: dkio.h,v 1.14.26.2 2010/08/11 22:55:10 yamt Exp $	*/
 
 /*
  * Copyright (c) 1987, 1988, 1993
@@ -104,5 +104,8 @@
 
 		/* get disk-info dictionary */
 #define	DIOCGDISKINFO	_IOR('d', 127, struct plistref)
+
+
+#define	DIOCTUR		_IOR('d', 128, int)	/* test unit ready */
 
 #endif /* _SYS_DKIO_H_ */

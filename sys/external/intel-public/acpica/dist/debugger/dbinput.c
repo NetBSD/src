@@ -8,7 +8,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2009, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2010, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -613,7 +613,7 @@ AcpiDbCommandDispatch (
 
     if (ParamCount < AcpiGbl_DbCommands[CommandIndex].MinArgs)
     {
-        AcpiOsPrintf ("%d parameters entered, [%s] requires %d parameters\n",
+        AcpiOsPrintf ("%u parameters entered, [%s] requires %u parameters\n",
             ParamCount, AcpiGbl_DbCommands[CommandIndex].Name,
             AcpiGbl_DbCommands[CommandIndex].MinArgs);
 
@@ -644,7 +644,7 @@ AcpiDbCommandDispatch (
         break;
 
     case CMD_BATCH:
-        AcpiDbBatchExecute ();
+        AcpiDbBatchExecute (AcpiGbl_DbArgs[1]);
         break;
 
     case CMD_BREAKPOINT:

@@ -1,11 +1,9 @@
-#	$NetBSD: files.x68k,v 1.65.10.2 2009/09/16 13:37:43 yamt Exp $
+#	$NetBSD: files.x68k,v 1.65.10.3 2010/08/11 22:52:53 yamt Exp $
 #
 # new style config file for x68k architecture
 #
 
 defflag				M060SP
-
-defflag	opt_m680x0.h		M68020 M68030 M68040 M68060
 
 defflag				JUPITER
 defflag				PANICBUTTON

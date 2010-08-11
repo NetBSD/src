@@ -1,4 +1,4 @@
-/*	$NetBSD: omap2_gpmcvar.h,v 1.1.18.2 2009/05/04 08:10:44 yamt Exp $	*/
+/*	$NetBSD: omap2_gpmcvar.h,v 1.1.18.3 2010/08/11 22:51:42 yamt Exp $	*/
 /*
  * Copyright (c) 2007 Microsoft
  * All rights reserved.
@@ -38,6 +38,7 @@ struct gpmc_attach_args {
 	int		gpmc_intr;
 	bus_dma_tag_t	gpmc_dmac;
 	unsigned int	gpmc_mult;
+	int		gpmc_cs;
 };
 
 #endif /* _OMAP2430GPMCVAR_H */

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.libkern,v 1.2.2.5 2010/03/11 15:04:21 yamt Exp $
+#	$NetBSD: Makefile.libkern,v 1.2.2.6 2010/08/11 22:54:45 yamt Exp $
 
 # 
 # Variable definitions for libkern.  
@@ -9,7 +9,7 @@
 # You *may* set:
 #   LIBKERN_ARCH: architecture subdir to be used
 #   KERNCPPFLAGS: see Makefile.inc
-#   KERNMICPPFLAGS: see Makefile.inc
+#   KERNMISCCPPFLAGS: see Makefile.inc
 #
 
 .include <bsd.own.mk>

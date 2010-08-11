@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbus_map.c,v 1.26.4.2 2010/03/11 15:03:25 yamt Exp $	*/
+/*	$NetBSD: cardbus_map.c,v 1.26.4.3 2010/08/11 22:53:19 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999 and 2000
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cardbus_map.c,v 1.26.4.2 2010/03/11 15:03:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cardbus_map.c,v 1.26.4.3 2010/08/11 22:53:19 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -335,56 +335,4 @@ cardbus_mapreg_unmap(struct cardbus_softc *sc, int func, int reg, bus_space_tag_
 	(*cf->cardbus_space_free)(cc, rbustag, handle, size);
 
 	return st;
-}
-
-
-
-
-
-/*
- * int cardbus_save_bar(cardbus_devfunc_t);
- *
- *   This function saves the Base Address Registers at the CardBus
- *   function denoted by the argument.
- */
-int cardbus_save_bar(cardbus_devfunc_t ct)
-{
-	pcitag_t tag = Cardbus_make_tag(ct);
-	cardbus_chipset_tag_t cc = ct->ct_cc;
-	cardbus_function_tag_t cf = ct->ct_cf;
-
-	ct->ct_bar[0] = cardbus_conf_read(cc, cf, tag, PCI_BAR0);
-	ct->ct_bar[1] = cardbus_conf_read(cc, cf, tag, PCI_BAR1);
-	ct->ct_bar[2] = cardbus_conf_read(cc, cf, tag, PCI_BAR2);
-	ct->ct_bar[3] = cardbus_conf_read(cc, cf, tag, PCI_BAR3);
-	ct->ct_bar[4] = cardbus_conf_read(cc, cf, tag, PCI_BAR4);
-	ct->ct_bar[5] = cardbus_conf_read(cc, cf, tag, PCI_BAR5);
-
-	DPRINTF(("cardbus_save_bar: %x %x\n", ct->ct_bar[0], ct->ct_bar[1]));
-
-	return 0;
-}
-
-
-
-/*
- * int cardbus_restore_bar(cardbus_devfunc_t);
- *
- *   This function saves the Base Address Registers at the CardBus
- *   function denoted by the argument.
- */
-int cardbus_restore_bar(cardbus_devfunc_t ct)
-{
-	pcitag_t tag = Cardbus_make_tag(ct);
-	cardbus_chipset_tag_t cc = ct->ct_cc;
-	cardbus_function_tag_t cf = ct->ct_cf;
-
-	cardbus_conf_write(cc, cf, tag, PCI_BAR0, ct->ct_bar[0]);
-	cardbus_conf_write(cc, cf, tag, PCI_BAR1, ct->ct_bar[1]);
-	cardbus_conf_write(cc, cf, tag, PCI_BAR2, ct->ct_bar[2]);
-	cardbus_conf_write(cc, cf, tag, PCI_BAR3, ct->ct_bar[3]);
-	cardbus_conf_write(cc, cf, tag, PCI_BAR4, ct->ct_bar[4]);
-	cardbus_conf_write(cc, cf, tag, PCI_BAR5, ct->ct_bar[5]);
-
-	return 0;
 }

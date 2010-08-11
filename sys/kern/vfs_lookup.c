@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.104.10.5 2010/03/11 15:04:21 yamt Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.104.10.6 2010/08/11 22:54:44 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.104.10.5 2010/03/11 15:04:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.104.10.6 2010/08/11 22:54:44 yamt Exp $");
 
 #include "opt_magiclinks.h"
 
@@ -861,7 +861,7 @@ lookup_once(struct namei_state *state)
 			if (ndp->ni_rootdir != rootvnode) {
 				int retval;
 
-				VOP_UNLOCK(state->dp, 0);
+				VOP_UNLOCK(state->dp);
 				retval = vn_isunder(state->dp, ndp->ni_rootdir, l);
 				vn_lock(state->dp, LK_EXCLUSIVE | LK_RETRY);
 				if (!retval) {
@@ -988,7 +988,7 @@ unionlookup:
 			return error;
 		}
 		KASSERT(ndp->ni_dvp != state->dp);
-		VOP_UNLOCK(ndp->ni_dvp, 0);
+		VOP_UNLOCK(ndp->ni_dvp);
 		vput(state->dp);
 		error = VFS_ROOT(mp, &tdp);
 		vfs_unbusy(mp, false, NULL);
@@ -996,7 +996,7 @@ unionlookup:
 			vn_lock(ndp->ni_dvp, LK_EXCLUSIVE | LK_RETRY);
 			return error;
 		}
-		VOP_UNLOCK(tdp, 0);
+		VOP_UNLOCK(tdp);
 		ndp->ni_vp = state->dp = tdp;
 		vn_lock(ndp->ni_dvp, LK_EXCLUSIVE | LK_RETRY);
 		vn_lock(ndp->ni_vp, LK_EXCLUSIVE | LK_RETRY);
@@ -1139,7 +1139,7 @@ terminal:
 		}
 	}
 	if ((cnp->cn_flags & LOCKLEAF) == 0) {
-		VOP_UNLOCK(state->dp, 0);
+		VOP_UNLOCK(state->dp);
 	}
 	return (0);
 

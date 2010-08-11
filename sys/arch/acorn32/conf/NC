@@ -1,4 +1,4 @@
-#	$NetBSD: NC,v 1.46.10.2 2010/03/11 15:01:55 yamt Exp $
+#	$NetBSD: NC,v 1.46.10.3 2010/08/11 22:51:30 yamt Exp $
 #
 #	NC - with wscons
 #
@@ -271,7 +271,7 @@ pseudo-device	loop			# network loopback
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	vnd			# disk-like interface to files
 #pseudo-device	ccd	2		# concatenated disk devices
-#pseudo-device	fss	4		# file system snapshot device
+#pseudo-device	fss			# file system snapshot device
 pseudo-device	md	1		# Ramdisk driver
 pseudo-device	rnd			# /dev/random and /dev/urandom
 pseudo-device	clockctl		# user control of clock subsystem

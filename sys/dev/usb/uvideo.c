@@ -1,4 +1,4 @@
-/*	$NetBSD: uvideo.c,v 1.29.2.3 2010/03/11 15:04:09 yamt Exp $	*/
+/*	$NetBSD: uvideo.c,v 1.29.2.4 2010/08/11 22:54:17 yamt Exp $	*/
 
 /*
  * Copyright (c) 2008 Patrick Mahoney
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.29.2.3 2010/03/11 15:04:09 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.29.2.4 2010/08/11 22:54:17 yamt Exp $");
 
 #ifdef _MODULE
 #include <sys/module.h>
@@ -75,7 +75,7 @@ __KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.29.2.3 2010/03/11 15:04:09 yamt Exp $")
 
 #include <dev/usb/uvideoreg.h>
 
-#if !defined(_MODULE)
+#if defined(_KERNEL_OPT)
 #include "opt_uvideo.h"
 #endif
 
@@ -2342,7 +2342,7 @@ static struct cfdata uvideo_cfdata[] = {
 		.cf_flags = 0,
 		.cf_pspec = &uhubparent,
 	},
-	{ NULL }
+	{ NULL, NULL, 0, 0, NULL, 0, NULL },
 };
 
 static int

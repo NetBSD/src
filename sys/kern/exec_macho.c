@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_macho.c,v 1.41.10.1 2008/05/16 02:25:24 yamt Exp $	*/
+/*	$NetBSD: exec_macho.c,v 1.41.10.2 2010/08/11 22:54:37 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_macho.c,v 1.41.10.1 2008/05/16 02:25:24 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_macho.c,v 1.41.10.2 2010/08/11 22:54:37 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -328,7 +328,7 @@ exec_macho_load_file(struct lwp *l, struct exec_package *epp,
 #ifdef notyet /* XXX cgd 960926 */
 	XXX cgd 960926: (maybe) VOP_OPEN it (and VOP_CLOSE in copyargs?)
 #endif
-	VOP_UNLOCK(vp, 0);
+	VOP_UNLOCK(vp);
 
 	if ((error = exec_read_from(l, vp, 0, &fat, sizeof(fat))) != 0)
 		goto bad;
@@ -341,7 +341,7 @@ exec_macho_load_file(struct lwp *l, struct exec_package *epp,
 	return 0;
 
 badunlock:
-	VOP_UNLOCK(vp, 0);
+	VOP_UNLOCK(vp);
 
 bad:
 #ifdef notyet /* XXX cgd 960926 */

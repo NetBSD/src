@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.101.18.2 2010/03/11 15:02:08 yamt Exp $	*/
+/*	$NetBSD: locore.s,v 1.101.18.3 2010/08/11 22:51:43 yamt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990 The Regents of the University of California.
@@ -91,6 +91,8 @@
 #include "opt_kgdb.h"
 #include "opt_lockdebug.h"
 #include "opt_mbtype.h"
+#include "opt_m68k_arch.h"
+
 #include "kbd.h"
 #include "ncrscsi.h"
 #include "zs.h"
@@ -755,23 +757,6 @@ ASENTRY_NOPROFILE(mfp2_5380)
 	subql	#1,_C_LABEL(idepth)
 	jra	_ASM_LABEL(rei)
 #endif /* NNCRSCSI > 0 */
-
-#if NZS > 0
-	/* SCC Interrupt --- modem2/serial2 --- */
-ASENTRY_NOPROFILE(sccint)
-	addql	#1,_C_LABEL(idepth)
-	addql	#1,_C_LABEL(intrcnt)+32	|  add another SCC interrupt
-
-	moveml	%d0-%d1/%a0-%a1,%sp@-	|  Save scratch registers
-	movw	%sp@(16),%sp@-		|  push previous SR value
-	clrw	%sp@-			|     padded to longword
-	jbsr	_C_LABEL(zshard)	|  handle interrupt
-	addql	#4,%sp			|  pop SR
-	moveml	%sp@+,%d0-%d1/%a0-%a1
-	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
-	subql	#1,_C_LABEL(idepth)
-	jra	_ASM_LABEL(rei)
-#endif /* NZS > 0 */
 
 #ifdef _ATARIHW_
 	/* Level 1 (Software) interrupt handler */

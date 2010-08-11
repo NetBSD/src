@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.44.10.2 2009/05/04 08:11:17 yamt Exp $	*/
+/*	$NetBSD: pcb.h,v 1.44.10.3 2010/08/11 22:52:12 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2009 The NetBSD Foundation, Inc.
@@ -94,8 +94,8 @@ struct pcb {
 	/* floating point state for FPU */
 	union	savefpu pcb_savefpu __aligned(16);
 
-	int	pcb_fsd[2];		/* %fs descriptor */
-	int	pcb_gsd[2];		/* %gs descriptor */
+	struct segment_descriptor pcb_fsd;	/* %fs descriptor */
+	struct segment_descriptor pcb_gsd; 	/* %gs descriptor */
 	void *	pcb_onfault;		/* copyin/out fault recovery */
 	int	vm86_eflags;		/* virtual eflags for vm86 mode */
 	int	vm86_flagmask;		/* flag mask for vm86 mode */

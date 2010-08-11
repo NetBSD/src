@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.12.10.4 2010/03/11 15:02:31 yamt Exp $	*/
+/*	$NetBSD: main.c,v 1.12.10.5 2010/08/11 22:52:15 yamt Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -64,6 +64,7 @@ void	command_quit(char *);
 void	command_boot(char *);
 void	command_consdev(char *);
 void	command_modules(char *);
+void	command_multiboot(char *);
 
 const struct bootblk_command commands[] = {
 	{ "help",	command_help },
@@ -72,6 +73,7 @@ const struct bootblk_command commands[] = {
 	{ "boot",	command_boot },
 	{ "consdev",	command_consdev },
 	{ "modules",    command_modules },
+	{ "multiboot",  command_multiboot },
 	{ "load",	module_add },
 	{ "vesa",	command_vesa },
 	{ NULL,		NULL },
@@ -193,6 +195,7 @@ command_help(char *arg)
 	       "     (ex. \"netbsd.old -s\"\n"
 	       "consdev {pc|com[0123]|com[0123]kbd|auto}\n"
 	       "vesa {enabled|disabled|list|modenum}\n"
+	       "multiboot [filename] [<args>]\n"
 	       "modules {enabled|disabled}\n"
 	       "load {path_to_module}\n"
 	       "help|?\n"
@@ -263,4 +266,17 @@ command_modules(char *arg)
 		boot_modules_enabled = false;
 	else
 		printf("invalid flag, must be 'enabled' or 'disabled'.\n");
+}
+
+void
+command_multiboot(char *arg)
+{
+	char *filename;
+
+	filename = arg;
+	if (exec_multiboot(filename, gettrailer(arg)) < 0)
+		printf("multiboot: %s: %s\n", filename,
+		  strerror(errno));
+	else
+		printf("boot returned\n");
 }

@@ -1,4 +1,4 @@
-#	$NetBSD: files.drm,v 1.2.2.2 2009/07/18 14:53:12 yamt Exp $
+#	$NetBSD: files.drm,v 1.2.2.3 2010/08/11 22:54:20 yamt Exp $
 
 # direct rendering modules
 define	drmbase
@@ -79,7 +79,7 @@ file	external/bsd/drm/dist/shared-core/mga_warp.c		mgadrm
 #file	external/bsd/drm/dist/shared-core/nv04_instmem.c	nouveaudrm
 #file	external/bsd/drm/dist/shared-core/nv50_instmem.c	nouveaudrm
 
-device	r128drm: drmbase, drmpci
+device	r128drm: drmbase, drmpci, firmload
 attach	r128drm at drm
 file	external/bsd/drm/dist/bsd-core/ati_pcigart.c		(r128drm | radeondrm)
 file	external/bsd/drm/dist/bsd-core/r128_drv.c		r128drm
@@ -87,12 +87,14 @@ file	external/bsd/drm/dist/shared-core/r128_cce.c		r128drm
 file	external/bsd/drm/dist/shared-core/r128_irq.c		r128drm
 file	external/bsd/drm/dist/shared-core/r128_state.c		r128drm
 
-device	radeondrm: drmbase, drmpci
+device	radeondrm: drmbase, drmpci, firmload
 attach	radeondrm at drm
 file	external/bsd/drm/dist/bsd-core/radeon_drv.c		radeondrm
 file	external/bsd/drm/dist/shared-core/r300_cmdbuf.c		radeondrm
 file	external/bsd/drm/dist/shared-core/r600_cp.c		radeondrm
+file	external/bsd/drm/dist/shared-core/r600_blit.c		radeondrm
 file	external/bsd/drm/dist/shared-core/radeon_cp.c		radeondrm
+file	external/bsd/drm/dist/shared-core/radeon_cs.c		radeondrm
 file	external/bsd/drm/dist/shared-core/radeon_irq.c		radeondrm
 file	external/bsd/drm/dist/shared-core/radeon_mem.c		radeondrm
 file	external/bsd/drm/dist/shared-core/radeon_state.c	radeondrm

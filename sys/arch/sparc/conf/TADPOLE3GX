@@ -1,4 +1,4 @@
-# 	$NetBSD: TADPOLE3GX,v 1.42.20.3 2010/03/11 15:02:56 yamt Exp $
+# 	$NetBSD: TADPOLE3GX,v 1.42.20.4 2010/08/11 22:52:44 yamt Exp $
 
 include "arch/sparc/conf/std.sparc"
 
@@ -183,6 +183,8 @@ options 	NTP		# Network Time Protocol in-kernel support
 options 	PFIL_HOOKS	# Add pfil(9) hooks, intended for custom LKMs.
 options 	IPFILTER_LOG	# Add ipmon(8) logging for ipfilter device
 options 	IPFILTER_LOOKUP	# ippool(8) support
+options 	IPFILTER_COMPAT # Compat for IP-Filter
+#options 	IPFILTER_DEFAULT_BLOCK	# block all packets by default
 options 	PPP_BSDCOMP	# Add BSD compression to ppp device
 options 	PPP_DEFLATE	# Add deflate (libz) compression to ppp device
 options 	PPP_FILTER	# Add active filters for ppp (via bpf)
@@ -368,7 +370,7 @@ pseudo-device	pty			# pseudo-ttys (for network, etc.)
 pseudo-device	rnd
 
 pseudo-device	clockctl		# user control of clock subsystem
-#pseudo-device	fss		4	# file system snapshot device
+#pseudo-device	fss			# file system snapshot device
 
 pseudo-device	wsmux			# mouse and keyboard multiplexor
 pseudo-device	wsfont

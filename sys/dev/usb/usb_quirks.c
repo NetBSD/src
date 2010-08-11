@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_quirks.c,v 1.58.4.3 2009/08/19 18:47:21 yamt Exp $	*/
+/*	$NetBSD: usb_quirks.c,v 1.58.4.4 2010/08/11 22:54:16 yamt Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_quirks.c,v 1.30 2003/01/02 04:15:55 imp Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_quirks.c,v 1.58.4.3 2009/08/19 18:47:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_quirks.c,v 1.58.4.4 2010/08/11 22:54:16 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -111,6 +111,7 @@ Static const struct usbd_quirk_entry {
  { USB_VENDOR_HP, USB_PRODUCT_HP_840C,		    ANY,   { UQ_BROKEN_BIDIR }},
  { USB_VENDOR_HP, USB_PRODUCT_HP_816C,		    ANY,   { UQ_BROKEN_BIDIR }},
  { USB_VENDOR_HP, USB_PRODUCT_HP_959C,		    ANY,   { UQ_BROKEN_BIDIR }},
+ { USB_VENDOR_MTK, USB_PRODUCT_MTK_GPS_RECEIVER,    ANY,   { UQ_NO_UNION_NRM }},
  { USB_VENDOR_NEC, USB_PRODUCT_NEC_PICTY900,	    ANY,   { UQ_BROKEN_BIDIR }},
  { USB_VENDOR_NEC, USB_PRODUCT_NEC_PICTY760,	    ANY,   { UQ_BROKEN_BIDIR }},
  { USB_VENDOR_NEC, USB_PRODUCT_NEC_PICTY920,	    ANY,   { UQ_BROKEN_BIDIR }},
@@ -124,6 +125,8 @@ Static const struct usbd_quirk_entry {
  { USB_VENDOR_APPLE, USB_PRODUCT_APPLE_IPOD_TOUCH,
 	ANY, { UQ_HID_IGNORE | UQ_BAD_AUDIO }},
  { USB_VENDOR_APPLE, USB_PRODUCT_APPLE_IPHONE_3G,
+	ANY, { UQ_HID_IGNORE | UQ_BAD_AUDIO }},
+ { USB_VENDOR_APPLE, USB_PRODUCT_APPLE_IPHONE_3GS,
 	ANY, { UQ_HID_IGNORE | UQ_BAD_AUDIO }},
 
  { USB_VENDOR_QUALCOMM, USB_PRODUCT_QUALCOMM_CDMA_MSM,

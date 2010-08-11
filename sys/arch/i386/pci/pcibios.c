@@ -1,4 +1,4 @@
-/*	$NetBSD: pcibios.c,v 1.35.10.2 2010/03/11 15:02:30 yamt Exp $	*/
+/*	$NetBSD: pcibios.c,v 1.35.10.3 2010/08/11 22:52:13 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcibios.c,v 1.35.10.2 2010/03/11 15:02:30 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcibios.c,v 1.35.10.3 2010/08/11 22:52:13 yamt Exp $");
 
 #include "opt_pcibios.h"
 #include "opt_pcifixup.h"
@@ -166,7 +166,7 @@ pcibios_init(void)
 		return;
 	}
 
-	aprint_normal("PCI BIOS rev. %d.%d found at 0x%lx\n",
+	aprint_normal("PCI BIOS rev. %d.%d found at %#" PRIxPADDR "\n",
 	    rev_maj, rev_min >> 4, ei.bei_entry);
 	aprint_verbose("pcibios: config mechanism %s%s, special cycles %s%s, "
 	    "last bus %d\n",
@@ -197,7 +197,7 @@ pcibios_init(void)
 		/*
 		 * Fixup interrupt routing.
 		 */
-		rv = pci_intr_fixup(NULL, X86_BUS_SPACE_IO, &pciirq);
+		rv = pci_intr_fixup(NULL, x86_bus_space_io, &pciirq);
 		switch (rv) {
 		case -1:
 			/* Non-fatal error. */
@@ -250,8 +250,8 @@ pcibios_pir_init(void)
 			cksum += *(unsigned char *)(p + i);
 
 		aprint_normal(
-		    "PCI IRQ Routing Table rev. %d.%d found at 0x%lx, "
-		    "size %d bytes (%d entries)\n", rev_maj, rev_min, pa,
+		    "PCI IRQ Routing Table rev. %d.%d found at %#" PRIxPADDR
+		    ", size %d bytes (%d entries)\n", rev_maj, rev_min, pa,
 		    tablesize, (tablesize - 32) / 16);
 
 		if (cksum != 0) {

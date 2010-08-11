@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam3.h,v 1.34.20.1 2009/05/04 08:12:00 yamt Exp $	*/
+/*	$NetBSD: vmparam3.h,v 1.34.20.2 2010/08/11 22:52:50 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -90,11 +90,6 @@
  * that consume portions of kernel virtual (KV) space matter,
  * and those things should be chosen to conserve KV space.
  */
-
-/*
- * USRSTACK is the top (end) of the user stack.
- */
-#define	USRSTACK	KERNBASE	/* High end of user stack */
 
 /*
  * Virtual memory related constants, all in bytes.

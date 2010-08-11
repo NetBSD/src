@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.84.4.5 2010/03/11 15:03:37 yamt Exp $	*/
+/*	$NetBSD: fd.c,v 1.84.4.6 2010/08/11 22:53:35 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2008 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.84.4.5 2010/03/11 15:03:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.84.4.6 2010/08/11 22:53:35 yamt Exp $");
 
 #include "rnd.h"
 #include "opt_ddb.h"
@@ -93,7 +93,7 @@ __KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.84.4.5 2010/03/11 15:03:37 yamt Exp $");
 #if !defined(alpha) && !defined(algor) && !defined(atari) && \
     !defined(bebox) && !defined(evbmips) && !defined(i386) && \
     !defined(prep) && !defined(sandpoint) && !defined(x86_64) && \
-    !defined(mvmeppc)
+    !defined(mvmeppc) && !defined(ofppc)
 #error platform not supported by this driver, yet
 #endif
 
@@ -1625,7 +1625,7 @@ fdformat(dev_t dev, struct ne7_fd_formb *finfo, struct lwp *l)
 	bp->b_bcount = sizeof(struct fd_idfield_data) * finfo->fd_formb_nsecs;
 	bp->b_data = (void *)finfo;
 
-#ifdef DEBUG
+#ifdef FD_DEBUG
 	printf("fdformat: blkno %" PRIx64 " count %x\n",
 	    bp->b_blkno, bp->b_bcount);
 #endif

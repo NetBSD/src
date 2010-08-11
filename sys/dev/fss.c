@@ -1,4 +1,4 @@
-/*	$NetBSD: fss.c,v 1.44.4.4 2010/03/11 15:03:21 yamt Exp $	*/
+/*	$NetBSD: fss.c,v 1.44.4.5 2010/08/11 22:53:14 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.44.4.4 2010/03/11 15:03:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.44.4.5 2010/08/11 22:53:14 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -196,8 +196,10 @@ fss_open(dev_t dev, int flags, int mode, struct lwp *l)
 		cf->cf_unit = minor(dev);
 		cf->cf_fstate = FSTATE_STAR;
 		sc = device_private(config_attach_pseudo(cf));
-		if (sc == NULL)
+		if (sc == NULL) {
+			mutex_exit(&fss_device_lock);
 			return ENOMEM;
+		}
 	}
 
 	mutex_enter(&sc->sc_slock);
@@ -473,9 +475,9 @@ fss_softc_free(struct fss_softc *sc)
 		while (sc->sc_bs_lwp != NULL)
 			kpause("fssdetach", false, 1, &sc->sc_slock);
 		mutex_exit(&sc->sc_slock);
-	}
 
-	disk_detach(sc->sc_dkdev);
+		disk_detach(sc->sc_dkdev);
+	}
 
 	if (sc->sc_copied != NULL)
 		kmem_free(sc->sc_copied, howmany(sc->sc_clcount, NBBY));
@@ -579,7 +581,6 @@ fss_create_files(struct fss_softc *sc, struct fss_set *fss,
 	int error, bits, fsbsize;
 	struct timespec ts;
 	struct partinfo dpart;
-	struct vattr va;
 	/* nd -> nd2 to reduce mistakes while updating only some namei calls */
 	struct nameidata nd2;
 	struct vnode *vp;
@@ -628,7 +629,7 @@ fss_create_files(struct fss_softc *sc, struct fss_set *fss,
 			if (FSS_FSBSIZE(sc) == fsbsize)
 				break;
 		if (sc->sc_bs_bshift >= bits) {
-			VOP_UNLOCK(sc->sc_bs_vp, 0);
+			VOP_UNLOCK(sc->sc_bs_vp);
 			return EINVAL;
 		}
 
@@ -638,7 +639,7 @@ fss_create_files(struct fss_softc *sc, struct fss_set *fss,
 		error = VFS_SNAPSHOT(sc->sc_mount, sc->sc_bs_vp, &ts);
 		TIMESPEC_TO_TIMEVAL(&sc->sc_time, &ts);
 
-		VOP_UNLOCK(sc->sc_bs_vp, 0);
+		VOP_UNLOCK(sc->sc_bs_vp);
 
 		return error;
 	}
@@ -678,7 +679,7 @@ fss_create_files(struct fss_softc *sc, struct fss_set *fss,
 	NDINIT(&nd2, LOOKUP, FOLLOW, UIO_USERSPACE, fss->fss_bstore);
 	if ((error = vn_open(&nd2, FREAD|FWRITE, 0)) != 0)
 		return error;
-	VOP_UNLOCK(nd2.ni_vp, 0);
+	VOP_UNLOCK(nd2.ni_vp);
 
 	sc->sc_bs_vp = nd2.ni_vp;
 
@@ -686,10 +687,6 @@ fss_create_files(struct fss_softc *sc, struct fss_set *fss,
 		return EINVAL;
 
 	if (sc->sc_bs_vp->v_type == VREG) {
-		error = VOP_GETATTR(sc->sc_bs_vp, &va, l->l_cred);
-		if (error != 0)
-			return error;
-		sc->sc_bs_size = va.va_size;
 		fsbsize = sc->sc_bs_vp->v_mount->mnt_stat.f_iosize;
 		if (fsbsize & (fsbsize-1))	/* No power of two */
 			return EINVAL;
@@ -969,7 +966,7 @@ fss_bs_io(struct fss_softc *sc, fss_io_type rw,
 		    round_page(off+len), PGO_CLEANIT|PGO_SYNCIO|PGO_FREE);
 	}
 
-	VOP_UNLOCK(sc->sc_bs_vp, 0);
+	VOP_UNLOCK(sc->sc_bs_vp);
 
 	return error;
 }
@@ -1253,6 +1250,8 @@ fss_modcmd(modcmd_t cmd, void *arg)
 		}
 		error = devsw_attach(fss_cd.cd_name,
 		    &fss_bdevsw, &bmajor, &fss_cdevsw, &cmajor);
+		if (error == EEXIST)
+			error = 0;
 		if (error) {
 			config_cfattach_detach(fss_cd.cd_name, &fss_ca);
 			config_cfdriver_detach(&fss_cd);

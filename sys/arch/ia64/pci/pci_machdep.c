@@ -1,6 +1,6 @@
-/*	$NetBSD: pci_machdep.c,v 1.1.2.2 2009/08/19 18:46:24 yamt Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.1.2.3 2010/08/11 22:52:16 yamt Exp $	*/
 /*
- * Copyright (c) 2009 KIYOHARA Takashi
+ * Copyright (c) 2009, 2010 KIYOHARA Takashi
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -25,30 +25,71 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.1.2.2 2009/08/19 18:46:24 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.1.2.3 2010/08/11 22:52:16 yamt Exp $");
 
 #include <machine/bus.h>
+#include <machine/sal.h>
+
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcidevs.h>
 
 
+void
+pci_attach_hook(device_t parent, device_t self, struct pcibus_attach_args *pba)
+{
+
+	/* Nothing */
+}
+
+int
+pci_bus_maxdevs(pci_chipset_tag_t pc, int busno)
+{
+
+	 return 32;	/* 32 device/bus */
+}
+
 pcitag_t
 pci_make_tag(pci_chipset_tag_t pc, int bus, int device, int function)
 {
-printf("%s: not yet\n", __func__);
-	return 0;
+
+#if DIAGNOSTIC
+	if (bus >= 256 || device >= 32 || function >= 8)
+		panic("%s: bad request", __func__);
+#endif
+
+	return (bus << 16) | (device << 11) | (function << 8);
+}
+
+void
+pci_decompose_tag(pci_chipset_tag_t pc, pcitag_t tag, int *bp, int *dp, int *fp)
+{
+
+	if (bp != NULL)
+		*bp = (tag >> 16) & 0xff;
+	if (dp != NULL)
+		*dp = (tag >> 11) & 0x1f;
+	if (fp != NULL)
+		*fp = (tag >> 8) & 0x07;
 }
 
 pcireg_t
 pci_conf_read(pci_chipset_tag_t pc, pcitag_t tag, int reg)
 {
-printf("%s: not yet\n", __func__);
-	return 0;
+	struct ia64_sal_result res;
+
+	res = ia64_sal_entry(SAL_PCI_CONFIG_READ,
+	    tag | reg, sizeof(pcireg_t), 0, 0, 0, 0, 0);
+	if (res.sal_status < 0)
+		return -1;
+	else
+		return res.sal_result[0];
 }
 
 void
 pci_conf_write(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t val)
 {
-printf("%s: not yet\n", __func__);
+
+	(void) ia64_sal_entry(SAL_PCI_CONFIG_WRITE,
+	    tag | reg, sizeof(pcireg_t), val, 0, 0, 0, 0);
 }

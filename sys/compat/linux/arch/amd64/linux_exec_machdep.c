@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec_machdep.c,v 1.10.20.2 2010/03/11 15:03:14 yamt Exp $ */
+/*	$NetBSD: linux_exec_machdep.c,v 1.10.20.3 2010/08/11 22:53:04 yamt Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved
@@ -32,11 +32,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_exec_machdep.c,v 1.10.20.2 2010/03/11 15:03:14 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_exec_machdep.c,v 1.10.20.3 2010/08/11 22:53:04 yamt Exp $");
 
-#ifdef __amd64__
 #define ELFSIZE 64
-#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -251,17 +249,3 @@ ELFNAME2(linux,copyargs)(struct lwp *l, struct exec_package *pack,
 
 	return 0;
 }
-
-#ifdef LINUX_NPTL
-int
-linux_init_thread_area(struct lwp *l, struct lwp *l2)
-{
-	register_t retval;
-	struct linux_sys_arch_prctl_args uap;
-	struct trapframe *tf = l2->l_md.md_regs;
-
-	SCARG(&uap, code) = LINUX_ARCH_SET_FS;
-	SCARG(&uap, addr) = tf->tf_r8;
-	return linux_sys_arch_prctl(l2, &uap, &retval);
-}
-#endif

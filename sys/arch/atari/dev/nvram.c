@@ -1,4 +1,4 @@
-/*	$NetBSD: nvram.c,v 1.11.78.2 2010/03/11 15:02:09 yamt Exp $	*/
+/*	$NetBSD: nvram.c,v 1.11.78.3 2010/08/11 22:51:45 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvram.c,v 1.11.78.2 2010/03/11 15:02:09 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvram.c,v 1.11.78.3 2010/08/11 22:51:45 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -46,6 +46,8 @@ __KERNEL_RCSID(0, "$NetBSD: nvram.c,v 1.11.78.2 2010/03/11 15:02:09 yamt Exp $")
 
 #include <atari/dev/clockreg.h>
 #include <atari/dev/nvramvar.h>
+
+#include "ioconf.h"
 
 #include "nvr.h"
 
@@ -64,8 +66,6 @@ static int	nvr_match(struct device *, struct cfdata *, void *);
 
 CFATTACH_DECL(nvr, sizeof(struct nvr_softc),
     nvr_match, nvr_attach, NULL, NULL);
-
-extern struct cfdriver nvr_cd;
 
 /*ARGSUSED*/
 static	int

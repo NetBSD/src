@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_syssgi.c,v 1.47.4.3 2010/03/11 15:03:14 yamt Exp $ */
+/*	$NetBSD: irix_syssgi.c,v 1.47.4.4 2010/08/11 22:53:03 yamt Exp $ */
 
 /*-
  * Copyright (c) 2001, 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_syssgi.c,v 1.47.4.3 2010/03/11 15:03:14 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_syssgi.c,v 1.47.4.4 2010/08/11 22:53:03 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -209,16 +209,20 @@ irix_sys_syssgi(struct lwp *l, const struct irix_sys_syssgi_args *uap, register_
 		arg1 = SCARG(uap, arg1); /* PID of the process */
 		arg2 = SCARG(uap, arg2); /* Address of user buffer */
 		arg3 = SCARG(uap, arg3); /* Length of user buffer */
-		tp = pfind((pid_t)(intptr_t)arg1);
-		if (tp == NULL || \
-		    tp->p_psstr == NULL || \
-		    tp->p_psstr->ps_argvstr == NULL || \
-		    tp->p_psstr->ps_argvstr[0] == NULL)
+		mutex_enter(proc_lock);
+		tp = proc_find((pid_t)(intptr_t)arg1);
+		if (tp == NULL ||
+		    tp->p_psstr == NULL ||
+		    tp->p_psstr->ps_argvstr == NULL ||
+		    tp->p_psstr->ps_argvstr[0] == NULL) {
+			mutex_exit(proc_lock);
 			return 0;
+		}
+		mutex_exit(proc_lock);
 
+		/* XXX: Unlocked! */
 		*retval = (register_t)copyout(tp->p_psstr->ps_argvstr[0],
 		    (void *)arg2, (size_t)arg3);
-
 		break;
 	}
 	case IRIX_SGI_TUNE:	/* Tune system variables */

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_kq.c,v 1.21.4.4 2010/03/21 13:06:36 yamt Exp $	*/
+/*	$NetBSD: nfs_kq.c,v 1.21.4.5 2010/08/11 22:54:59 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_kq.c,v 1.21.4.4 2010/03/21 13:06:36 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_kq.c,v 1.21.4.5 2010/08/11 22:54:59 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -140,7 +140,7 @@ nfs_kqpoll(void *arg)
 
 			vn_lock(ke->vp, LK_SHARED | LK_RETRY);
 			(void) VOP_GETATTR(ke->vp, &attr, l->l_cred);
-			VOP_UNLOCK(ke->vp, 0);
+			VOP_UNLOCK(ke->vp);
 
 			/* following is a bit fragile, but about best
 			 * we can get */
@@ -322,7 +322,7 @@ nfs_kqfilter(void *v)
 	memset(&attr, 0, sizeof(attr));
 	vn_lock(vp, LK_SHARED | LK_RETRY);
 	(void) VOP_GETATTR(vp, &attr, l->l_cred);
-	VOP_UNLOCK(vp, 0);
+	VOP_UNLOCK(vp);
 
 	mutex_enter(&nfskq_lock);
 

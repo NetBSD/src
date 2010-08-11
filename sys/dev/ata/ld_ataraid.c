@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_ataraid.c,v 1.26.4.3 2009/05/16 10:41:19 yamt Exp $	*/
+/*	$NetBSD: ld_ataraid.c,v 1.26.4.4 2010/08/11 22:53:18 yamt Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_ataraid.c,v 1.26.4.3 2009/05/16 10:41:19 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_ataraid.c,v 1.26.4.4 2010/08/11 22:53:18 yamt Exp $");
 
 #include "bio.h"
 #include "rnd.h"
@@ -90,6 +90,12 @@ struct ld_ataraid_softc {
 	struct vnode *sc_vnodes[ATA_RAID_MAX_DISKS];
 
 	void	(*sc_iodone)(struct buf *);
+
+       pool_cache_t sc_cbufpool;
+
+       SIMPLEQ_HEAD(, cbuf) sc_cbufq;
+
+       void    *sc_sih_cookie;
 };
 
 static int	ld_ataraid_match(device_t, cfdata_t, void *);
@@ -97,6 +103,10 @@ static void	ld_ataraid_attach(device_t, device_t, void *);
 
 static int	ld_ataraid_dump(struct ld_softc *, void *, int, int);
 
+static int     cbufpool_ctor(void *, void *, int);
+static void    cbufpool_dtor(void *, void *);
+
+static void    ld_ataraid_start_vstrategy(void *);
 static int	ld_ataraid_start_span(struct ld_softc *, struct buf *);
 
 static int	ld_ataraid_start_raid0(struct ld_softc *, struct buf *);
@@ -113,9 +123,6 @@ static int	ld_ataraid_biodisk(struct ld_ataraid_softc *,
 CFATTACH_DECL_NEW(ld_ataraid, sizeof(struct ld_ataraid_softc),
     ld_ataraid_match, ld_ataraid_attach, NULL, NULL);
 
-static int ld_ataraid_initialized;
-static struct pool ld_ataraid_cbufpl;
-
 struct cbuf {
 	struct buf	cb_buf;		/* new I/O buf */
 	struct buf	*cb_obp;	/* ptr. to original I/O buf */
@@ -127,8 +134,8 @@ struct cbuf {
 #define	CBUF_IODONE	0x00000001	/* I/O is already successfully done */
 };
 
-#define	CBUF_GET()	pool_get(&ld_ataraid_cbufpl, PR_NOWAIT);
-#define	CBUF_PUT(cbp)	pool_put(&ld_ataraid_cbufpl, (cbp))
+#define        CBUF_GET()      pool_cache_get(sc->sc_cbufpool, PR_NOWAIT);
+#define        CBUF_PUT(cbp)   pool_cache_put(sc->sc_cbufpool, (cbp))
 
 static int
 ld_ataraid_match(device_t parent, cfdata_t match, void *aux)
@@ -151,11 +158,10 @@ ld_ataraid_attach(device_t parent, device_t self, void *aux)
 
 	ld->sc_dv = self;
 
-	if (ld_ataraid_initialized == 0) {
-		ld_ataraid_initialized = 1;
-		pool_init(&ld_ataraid_cbufpl, sizeof(struct cbuf), 0,
-		    0, 0, "ldcbuf", NULL, IPL_BIO);
-	}
+       sc->sc_cbufpool = pool_cache_init(sizeof(struct cbuf), 0,
+           0, 0, "ldcbuf", NULL, IPL_BIO, cbufpool_ctor, cbufpool_dtor, sc);
+       sc->sc_sih_cookie = softint_establish(SOFTINT_BIO,
+           ld_ataraid_start_vstrategy, sc);
 
 	sc->sc_aai = aai;	/* this data persists */
 
@@ -246,7 +252,31 @@ ld_ataraid_attach(device_t parent, device_t self, void *aux)
 		panic("%s: bioctl registration failed\n",
 		    device_xname(ld->sc_dv));
 #endif
+       SIMPLEQ_INIT(&sc->sc_cbufq);
 	ldattach(ld);
+}
+
+static int
+cbufpool_ctor(void *arg, void *obj, int flags)
+{
+       struct ld_ataraid_softc *sc = arg;
+       struct ld_softc *ld = &sc->sc_ld;
+       struct cbuf *cbp = obj;
+
+       /* We release/reacquire the spinlock before calling buf_init() */
+       mutex_exit(&ld->sc_mutex);
+       buf_init(&cbp->cb_buf);
+       mutex_enter(&ld->sc_mutex);
+
+       return 0;
+}
+
+static void
+cbufpool_dtor(void *arg, void *obj)
+{
+       struct cbuf *cbp = obj;
+
+       buf_destroy(&cbp->cb_buf);
 }
 
 static struct cbuf *
@@ -257,8 +287,7 @@ ld_ataraid_make_cbuf(struct ld_ataraid_softc *sc, struct buf *bp,
 
 	cbp = CBUF_GET();
 	if (cbp == NULL)
-		return (NULL);
-	buf_init(&cbp->cb_buf);
+               return NULL;
 	cbp->cb_buf.b_flags = bp->b_flags;
 	cbp->cb_buf.b_oflags = bp->b_oflags;
 	cbp->cb_buf.b_cflags = bp->b_cflags;
@@ -277,7 +306,24 @@ ld_ataraid_make_cbuf(struct ld_ataraid_softc *sc, struct buf *bp,
 	cbp->cb_other = NULL;
 	cbp->cb_flags = 0;
 
-	return (cbp);
+       return cbp;
+}
+
+static void
+ld_ataraid_start_vstrategy(void *arg)
+{
+       struct ld_ataraid_softc *sc = arg;
+       struct cbuf *cbp;
+
+       while ((cbp = SIMPLEQ_FIRST(&sc->sc_cbufq)) != NULL) {
+               SIMPLEQ_REMOVE_HEAD(&sc->sc_cbufq, cb_q);
+               if ((cbp->cb_buf.b_flags & B_READ) == 0) {
+                       mutex_enter(&cbp->cb_buf.b_vp->v_interlock);
+                       cbp->cb_buf.b_vp->v_numoutput++;
+                       mutex_exit(&cbp->cb_buf.b_vp->v_interlock);
+               }
+               VOP_STRATEGY(cbp->cb_buf.b_vp, &cbp->cb_buf);
+       }
 }
 
 static int
@@ -286,7 +332,6 @@ ld_ataraid_start_span(struct ld_softc *ld, struct buf *bp)
 	struct ld_ataraid_softc *sc = (void *) ld;
 	struct ataraid_array_info *aai = sc->sc_aai;
 	struct ataraid_disk_info *adi;
-	SIMPLEQ_HEAD(, cbuf) cbufq;
 	struct cbuf *cbp;
 	char *addr;
 	daddr_t bn;
@@ -294,7 +339,6 @@ ld_ataraid_start_span(struct ld_softc *ld, struct buf *bp)
 	u_int comp;
 
 	/* Allocate component buffers. */
-	SIMPLEQ_INIT(&cbufq);
 	addr = bp->b_data;
 
 	/* Find the first component. */
@@ -316,12 +360,11 @@ ld_ataraid_start_span(struct ld_softc *ld, struct buf *bp)
 		cbp = ld_ataraid_make_cbuf(sc, bp, comp, bn, addr, rcount);
 		if (cbp == NULL) {
 			/* Free the already allocated component buffers. */
-			while ((cbp = SIMPLEQ_FIRST(&cbufq)) != NULL) {
-				SIMPLEQ_REMOVE_HEAD(&cbufq, cb_q);
-				buf_destroy(&cbp->cb_buf);
+                       while ((cbp = SIMPLEQ_FIRST(&sc->sc_cbufq)) != NULL) {
+                               SIMPLEQ_REMOVE_HEAD(&sc->sc_cbufq, cb_q);
 				CBUF_PUT(cbp);
 			}
-			return (EAGAIN);
+                       return EAGAIN;
 		}
 
 		/*
@@ -331,31 +374,22 @@ ld_ataraid_start_span(struct ld_softc *ld, struct buf *bp)
 		adi = &aai->aai_disks[++comp];
 		bn = 0;
 
-		SIMPLEQ_INSERT_TAIL(&cbufq, cbp, cb_q);
+               SIMPLEQ_INSERT_TAIL(&sc->sc_cbufq, cbp, cb_q);
 		addr += rcount;
 	}
 
 	/* Now fire off the requests. */
-	while ((cbp = SIMPLEQ_FIRST(&cbufq)) != NULL) {
-		SIMPLEQ_REMOVE_HEAD(&cbufq, cb_q);
-		if ((cbp->cb_buf.b_flags & B_READ) == 0) {
-			mutex_enter(&cbp->cb_buf.b_vp->v_interlock);
-			cbp->cb_buf.b_vp->v_numoutput++;
-			mutex_exit(&cbp->cb_buf.b_vp->v_interlock);
-		}
-		VOP_STRATEGY(cbp->cb_buf.b_vp, &cbp->cb_buf);
-	}
+       softint_schedule(sc->sc_sih_cookie);
 
-	return (0);
+       return 0;
 }
 
 static int
 ld_ataraid_start_raid0(struct ld_softc *ld, struct buf *bp)
 {
-	struct ld_ataraid_softc *sc = (void *) ld;
+       struct ld_ataraid_softc *sc = (void *)ld;
 	struct ataraid_array_info *aai = sc->sc_aai;
 	struct ataraid_disk_info *adi;
-	SIMPLEQ_HEAD(, cbuf) cbufq;
 	struct cbuf *cbp, *other_cbp;
 	char *addr;
 	daddr_t bn, cbn, tbn, off;
@@ -363,10 +397,9 @@ ld_ataraid_start_raid0(struct ld_softc *ld, struct buf *bp)
 	u_int comp;
 	const int read = bp->b_flags & B_READ;
 	const int mirror = aai->aai_level & AAI_L_RAID1;
-	int error;
+       int error = 0;
 
 	/* Allocate component buffers. */
-	SIMPLEQ_INIT(&cbufq);
 	addr = bp->b_data;
 	bn = bp->b_rawblkno;
 
@@ -417,14 +450,13 @@ resource_shortage:
 			error = EAGAIN;
 free_and_exit:
 			/* Free the already allocated component buffers. */
-			while ((cbp = SIMPLEQ_FIRST(&cbufq)) != NULL) {
-				SIMPLEQ_REMOVE_HEAD(&cbufq, cb_q);
-				buf_destroy(&cbp->cb_buf);
+                       while ((cbp = SIMPLEQ_FIRST(&sc->sc_cbufq)) != NULL) {
+                               SIMPLEQ_REMOVE_HEAD(&sc->sc_cbufq, cb_q);
 				CBUF_PUT(cbp);
 			}
-			return (error);
+                       return error;
 		}
-		SIMPLEQ_INSERT_TAIL(&cbufq, cbp, cb_q);
+               SIMPLEQ_INSERT_TAIL(&sc->sc_cbufq, cbp, cb_q);
 		if (mirror && !read && comp < aai->aai_width) {
 			comp += aai->aai_width;
 			adi = &aai->aai_disks[comp];
@@ -433,7 +465,8 @@ free_and_exit:
 				    comp, cbn, addr, rcount);
 				if (other_cbp == NULL)
 					goto resource_shortage;
-				SIMPLEQ_INSERT_TAIL(&cbufq, other_cbp, cb_q);
+                               SIMPLEQ_INSERT_TAIL(&sc->sc_cbufq,
+                                   other_cbp, cb_q);
 				other_cbp->cb_other = cbp;
 				cbp->cb_other = other_cbp;
 			}
@@ -443,17 +476,9 @@ free_and_exit:
 	}
 
 	/* Now fire off the requests. */
-	while ((cbp = SIMPLEQ_FIRST(&cbufq)) != NULL) {
-		SIMPLEQ_REMOVE_HEAD(&cbufq, cb_q);
-		if ((cbp->cb_buf.b_flags & B_READ) == 0) {
-			mutex_enter(&cbp->cb_buf.b_vp->v_interlock);
-			cbp->cb_buf.b_vp->v_numoutput++;
-			mutex_exit(&cbp->cb_buf.b_vp->v_interlock);
-		}
-		VOP_STRATEGY(cbp->cb_buf.b_vp, &cbp->cb_buf);
-	}
+       softint_schedule(sc->sc_sih_cookie);
 
-	return (0);
+       return error;
 }
 
 /*
@@ -530,7 +555,6 @@ ld_ataraid_iodone_raid0(struct buf *vbp)
 			other_cbp->cb_flags |= CBUF_IODONE;
 	}
 	count = cbp->cb_buf.b_bcount;
-	buf_destroy(&cbp->cb_buf);
 	CBUF_PUT(cbp);
 
 	if (other_cbp != NULL)
@@ -597,6 +621,7 @@ ld_ataraid_biovol(struct ld_ataraid_softc *sc, struct bioc_vol *bv)
 {
 	struct ataraid_array_info *aai = sc->sc_aai;
 	struct ld_softc *ld = &sc->sc_ld;
+#define	to_kibytes(ld,s)	(ld->sc_secsize*(s)/1024)
 
 	/* Fill in data for _this_ volume */
 	bv->bv_percent = -1;
@@ -616,7 +641,7 @@ ld_ataraid_biovol(struct ld_ataraid_softc *sc, struct bioc_vol *bv)
 	switch (aai->aai_level) {
 	case AAI_L_SPAN:
 	case AAI_L_RAID0:
-		bv->bv_stripe_size = aai->aai_interleave;
+		bv->bv_stripe_size = to_kibytes(ld, aai->aai_interleave);
 		bv->bv_level = 0;
 		break;
 	case AAI_L_RAID1:
@@ -624,7 +649,7 @@ ld_ataraid_biovol(struct ld_ataraid_softc *sc, struct bioc_vol *bv)
 		bv->bv_level = 1;
 		break;
 	case AAI_L_RAID5:
-		bv->bv_stripe_size = aai->aai_interleave;
+		bv->bv_stripe_size = to_kibytes(ld, aai->aai_interleave);
 		bv->bv_level = 5;
 		break;
 	}

@@ -1,20 +1,21 @@
-#	$NetBSD: JORNADA820,v 1.10.10.2 2010/03/11 15:02:24 yamt Exp $
+#	$NetBSD: JORNADA820,v 1.10.10.3 2010/08/11 22:52:05 yamt Exp $
 #
 #	JORNADA -- Windows-CE based jornada 820
 #
 
-include	"arch/hpcarm/conf/std.hpcarm"
+include	"arch/hpcarm/conf/std.sa11x0"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.10.10.2 $"
+#ident 		"GENERIC-$Revision: 1.10.10.3 $"
 
 # estimated number of users
 maxusers	32
 
 # Standard system options
 
-options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
+#options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
+				# (default timezone is passed from hpcboot)
 #options 	NTP		# NTP phase/frequency locked loop
 
 # CPU options
@@ -260,7 +261,7 @@ pseudo-device	pty			# pseudo-terminals
 #pseudo-device	cgd	2		# cryptographic disk devices
 #pseudo-device	raid	4		# RAIDframe disk driver
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
-#pseudo-device	fss	4		# file system snapshot device
+#pseudo-device	fss			# file system snapshot device
 
 #pseudo-device	biconsdev 1		# build-in console device
 #pseudo-device	wsmux

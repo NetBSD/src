@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.5.62.1 2009/05/04 08:11:43 yamt Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.5.62.2 2010/08/11 22:52:33 yamt Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.5.62.1 2009/05/04 08:11:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.5.62.2 2010/08/11 22:52:33 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -98,17 +98,6 @@ pci_attach_hook(struct device *parent, struct device *self,
 #ifdef PCI_CONFIGURE_VERBOSE
 	ibm4xx_show_pci_map();
 #endif
-}
-
-int
-pci_bus_maxdevs(pci_chipset_tag_t pc, int busno)
-{
-
-	/*
-	 * Bus number is irrelevant.  Configuration Mechanism 1 is in
-	 * use, can have devices 0-32 (i.e. the `normal' range).
-	 */
-	return 31;
 }
 
 pcitag_t

@@ -1,4 +1,4 @@
-/* 	$NetBSD: wsfont.c,v 1.44.44.1 2008/05/16 02:25:17 yamt Exp $	*/
+/* 	$NetBSD: wsfont.c,v 1.44.44.2 2010/08/11 22:54:18 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsfont.c,v 1.44.44.1 2008/05/16 02:25:17 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsfont.c,v 1.44.44.2 2010/08/11 22:54:18 yamt Exp $");
 
 #include "opt_wsfont.h"
 
@@ -76,6 +76,11 @@ __KERNEL_RCSID(0, "$NetBSD: wsfont.c,v 1.44.44.1 2008/05/16 02:25:17 yamt Exp $"
 #ifdef FONT_VT220L8x16
 #define HAVE_FONT 1
 #include <dev/wsfont/vt220l8x16.h>
+#endif
+
+#ifdef FONT_VT220ISO8x8
+#define HAVE_FONT 1
+#include <dev/wsfont/vt220iso8x8.h>
 #endif
 
 #ifdef FONT_VT220ISO8x16
@@ -169,6 +174,9 @@ static struct font builtin_fonts[] = {
 #ifdef FONT_VT220L8x16
 	{ { NULL, NULL }, &vt220l8x16, 0, 0, WSFONT_STATIC | WSFONT_BUILTIN },
 #endif
+#ifdef FONT_VT220ISO8x8
+	{ { NULL, NULL }, &vt220iso8x8, 0, 0, WSFONT_STATIC | WSFONT_BUILTIN },
+#endif
 #ifdef FONT_VT220ISO8x16
 	{ { NULL, NULL }, &vt220iso8x16, 0, 0, WSFONT_STATIC | WSFONT_BUILTIN },
 #endif
@@ -186,6 +194,9 @@ static struct font builtin_fonts[] = {
 #endif
 #ifdef FONT_OMRON12x20
 	{ { NULL, NULL }, &omron12x20, 0, 0, WSFONT_STATIC | WSFONT_BUILTIN },
+#endif
+#ifdef FONT_TERMINUS8x16
+	{ { NULL, NULL }, &terminus8x16, 0, 0, WSFONT_STATIC | WSFONT_BUILTIN },
 #endif
 	{ { NULL, NULL }, NULL, 0, 0, 0 },
 };
@@ -297,14 +308,15 @@ wsfont_enum(void (*cb)(const char *, int, int, int))
 
 #if NRASOPS_ROTATION > 0
 
-struct wsdisplay_font *wsfont_rotate_internal(struct wsdisplay_font *);
+struct wsdisplay_font *wsfont_rotate_cw_internal(struct wsdisplay_font *);
+struct wsdisplay_font *wsfont_rotate_ccw_internal(struct wsdisplay_font *);
 
 struct wsdisplay_font *
-wsfont_rotate_internal(struct wsdisplay_font *font)
+wsfont_rotate_cw_internal(struct wsdisplay_font *font)
 {
-	int b, n, r, newstride;
+	int b, n, r, namelen, newstride;
 	struct wsdisplay_font *newfont;
-	char *newbits;
+	char *newname, *newbits;
 
 	/* Duplicate the existing font... */
 	newfont = malloc(sizeof(*font), M_DEVBUF, M_WAITOK);
@@ -312,6 +324,12 @@ wsfont_rotate_internal(struct wsdisplay_font *font)
 		return (NULL);
 
 	*newfont = *font;
+
+	namelen = strlen(font->name) + 4;
+	newname = malloc(namelen, M_DEVBUF, M_WAITOK);
+	strlcpy(newname, font->name, namelen);
+	strlcat(newname, "cw", namelen);
+	newfont->name = newname;
 
 	/* Allocate a buffer big enough for the rotated font. */
 	newstride = (font->fontheight + 7) / 8;
@@ -321,8 +339,6 @@ wsfont_rotate_internal(struct wsdisplay_font *font)
 		free(newfont, M_DEVBUF);
 		return (NULL);
 	}
-
-
 
 	/* Rotate the font a bit at a time. */
 	for (n = 0; n < font->numchars; n++) {
@@ -366,8 +382,80 @@ wsfont_rotate_internal(struct wsdisplay_font *font)
 	return (newfont);
 }
 
+struct wsdisplay_font *
+wsfont_rotate_ccw_internal(struct wsdisplay_font *font)
+{
+	int b, n, r, namelen, newstride;
+	struct wsdisplay_font *newfont;
+	char *newname, *newbits;
+
+	/* Duplicate the existing font... */
+	newfont = malloc(sizeof(*font), M_DEVBUF, M_WAITOK);
+	if (newfont == NULL)
+		return (NULL);
+
+	*newfont = *font;
+
+	namelen = strlen(font->name) + 4;
+	newname = malloc(namelen, M_DEVBUF, M_WAITOK);
+	strlcpy(newname, font->name, namelen);
+	strlcat(newname, "ccw", namelen);
+	newfont->name = newname;
+
+	/* Allocate a buffer big enough for the rotated font. */
+	newstride = (font->fontheight + 7) / 8;
+	newbits = malloc(newstride * font->fontwidth * font->numchars,
+	    M_DEVBUF, M_WAITOK|M_ZERO);
+	if (newbits == NULL) {
+		free(newfont, M_DEVBUF);
+		return (NULL);
+	}
+
+	/* Rotate the font a bit at a time. */
+	for (n = 0; n < font->numchars; n++) {
+		unsigned char *ch = (unsigned char *)font->data +
+		    (n * font->stride * font->fontheight);
+
+		for (r = 0; r < font->fontheight; r++) {
+			for (b = 0; b < font->fontwidth; b++) {
+				unsigned char *rb;
+
+				rb = ch + (font->stride * r) + (b / 8);
+				if (*rb & (0x80 >> (b % 8))) {
+					unsigned char *rrb;
+					int w = font->fontwidth;
+
+					rrb = newbits + (r / 8)
+					    + (n * newstride * w)
+					    + (newstride * (w - 1 - b));
+					*rrb |= (0x80 >> (r % 8));
+				}
+			}
+		}
+	}
+
+	newfont->data = newbits;
+
+	/* Update font sizes. */
+	newfont->stride = newstride;
+	newfont->fontwidth = font->fontheight;
+	newfont->fontheight = font->fontwidth;
+
+	if (wsfont_add(newfont, 0) != 0) {
+		/*
+		 * If we seem to have rotated this font already, drop the
+		 * new one...
+		 */
+		free(newbits, M_DEVBUF);
+		free(newfont, M_DEVBUF);
+		newfont = NULL;
+	}
+
+	return (newfont);
+}
+
 int
-wsfont_rotate(int cookie)
+wsfont_rotate(int cookie, int rotate)
 {
 	int s, ncookie;
 	struct wsdisplay_font *font;
@@ -377,9 +465,23 @@ wsfont_rotate(int cookie)
 	origfont = wsfont_find0(cookie, 0xffffffff);
 	splx(s);
 
-	font = wsfont_rotate_internal(origfont->font);
-	if (font == NULL)
+	switch (rotate) {
+	case WSFONT_ROTATE_CW:
+		font = wsfont_rotate_cw_internal(origfont->font);
+		if (font == NULL)
+			return (-1);
+		break;
+
+	case WSFONT_ROTATE_CCW:
+		font = wsfont_rotate_ccw_internal(origfont->font);
+		if (font == NULL)
+			return (-1);
+		break;
+
+	case WSFONT_ROTATE_UD:
+	default:
 		return (-1);
+	}
 
 	ncookie = wsfont_find(font->name, font->fontwidth, font->fontheight, 
 	    font->stride, 0, 0);
@@ -756,6 +858,39 @@ static const u_int8_t iso7_chars_3[] = {
 	 0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, 181
 };
 
+/* 
+ * map all variants of the box drawing characters to the same basic shapes for
+ * now, encoded like this:
+ *
+ *    1
+ *    1
+ * 888 222
+ *    4
+ *    4
+ *
+ * so an upright line would be 0x05
+ */
+#define FL |WSFONT_FLAG_OPT
+static const u_int32_t netbsd_boxes[] = {
+/*00*/ 0x0a FL, 0x0a FL, 0x05 FL, 0x05 FL, 0x0a FL, 0x0a FL, 0x05 FL, 0x05 FL,
+/*08*/ 0x0a FL, 0x0a FL, 0x05 FL, 0x05 FL, 0x06 FL, 0x06 FL, 0x06 FL, 0x06 FL,
+/*10*/ 0x0c FL, 0x0c FL, 0x0c FL, 0x0c FL, 0x03 FL, 0x03 FL, 0x03 FL, 0x03 FL,
+/*18*/ 0x09 FL, 0x09 FL, 0x09 FL, 0x09 FL, 0x07 FL, 0x07 FL, 0x07 FL, 0x07 FL,
+/*20*/ 0x07 FL, 0x07 FL, 0x07 FL, 0x07 FL, 0x0d FL, 0x0d FL, 0x0d FL, 0x0d FL,
+/*28*/ 0x0d FL, 0x0d FL, 0x0d FL, 0x0d FL, 0x0e FL, 0x0e FL, 0x0e FL, 0x0e FL,
+/*30*/ 0x0e FL, 0x0e FL, 0x0e FL, 0x0e FL, 0x0b FL, 0x0b FL, 0x0b FL, 0x0b FL,
+/*38*/ 0x0b FL, 0x0b FL, 0x0b FL, 0x0b FL, 0x0f FL, 0x0f FL, 0x0f FL, 0x0f FL,
+/*40*/ 0x0f FL, 0x0f FL, 0x0f FL, 0x0f FL, 0x0f FL, 0x0f FL, 0x0f FL, 0x0f FL,
+/*48*/ 0x0f FL, 0x0f FL, 0x0f FL, 0x0f FL, 0x0a FL, 0x0a FL, 0x05 FL, 0x05 FL,
+/*50*/ 0x0a FL, 0x05 FL, 0x06 FL, 0x06 FL, 0x06 FL, 0x0c FL, 0x0c FL, 0x0c FL,
+/*58*/ 0x03 FL, 0x03 FL, 0x03 FL, 0x09 FL, 0x09 FL, 0x09 FL, 0x07 FL, 0x07 FL,
+/*60*/ 0x07 FL, 0x0d FL, 0x0d FL, 0x0d FL, 0x0e FL, 0x0e FL, 0x0e FL, 0x0b FL,
+/*68*/ 0x0b FL, 0x0b FL, 0x0f FL, 0x0f FL, 0x0f FL, 0x06 FL, 0x0c FL, 0x09 FL,
+/*70*/ 0x03 FL,    0 FL,    0 FL,    0 FL, 0x08 FL, 0x01 FL, 0x02 FL, 0x04 FL,
+/*78*/ 0x08 FL, 0x01 FL, 0x02 FL, 0x04 FL, 0x0a FL, 0x05 FL, 0x0a FL, 0x05 FL
+};
+#undef FL
+
 static const u_int8_t iso7_chars_32[] = {
 	175, 0,  0,  0,  0, 162, 0, 161
 };
@@ -769,6 +904,9 @@ static const struct wsfont_level2_glyphmap iso7_level2_3 =
 static const struct wsfont_level2_glyphmap iso7_level2_32 =
     { 20, 8, iso7_chars_32, 1 };
 
+static const struct wsfont_level2_glyphmap netbsd_box_drawing =
+    { 0, 128, netbsd_boxes, 4 };
+
 static const struct wsfont_level2_glyphmap *iso7_level1[] = {
 	&iso7_level2_0, NULL, NULL, &iso7_level2_3,
 	NULL, NULL, NULL, NULL,
@@ -778,14 +916,28 @@ static const struct wsfont_level2_glyphmap *iso7_level1[] = {
 	NULL, NULL, NULL, NULL,
 	NULL, NULL, NULL, NULL,
 	NULL, NULL, NULL, NULL,
-	&iso7_level2_32
+	&iso7_level2_32, NULL, NULL, NULL,
+	NULL, &netbsd_box_drawing
+};
+
+static const struct wsfont_level2_glyphmap *iso_level1[] = {
+	NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL,
+	NULL, &netbsd_box_drawing
 };
 
 static const struct wsfont_level1_glyphmap encodings[] = {
-	{ NULL, 0, 0 },			/* WSDISPLAY_FONTENC_ISO */
+	{ iso_level1, 0, 0x26 },	/* WSDISPLAY_FONTENC_ISO */
 	{ ibm437_level1, 0, 38 },	/* WSDISPLAY_FONTENC_IBM */
 	{ NULL, 0, 0 },			/* WSDISPLAY_FONTENC_PCVT */
-	{ iso7_level1, 0, 33 },		/* WSDISPLAY_FONTENC_ISO7 */
+	{ iso7_level1, 0, 0x26 },	/* WSDISPLAY_FONTENC_ISO7 */
 };
 
 #define MAX_ENCODING (sizeof(encodings) / sizeof(encodings[0]))
@@ -800,9 +952,6 @@ wsfont_map_unichar(struct wsdisplay_font *font, int c)
 	const struct wsfont_level2_glyphmap *map2;
 	int hi, lo;
 
-	if (font->encoding == WSDISPLAY_FONTENC_ISO)
-		return (c);
-
 	if (font->encoding < 0 || font->encoding >= MAX_ENCODING)
 		return (-1);
 
@@ -815,6 +964,10 @@ wsfont_map_unichar(struct wsdisplay_font *font, int c)
 
 	map2 = map1->level2[hi - map1->base];
 
+	/* so we don't need an identical level 2 table for hi == 0 */
+	if (hi == 0 && font->encoding == WSDISPLAY_FONTENC_ISO)
+		return lo;
+ 
 	if (map2 == NULL || lo < map2->base || lo >= map2->base + map2->size)
 		return (-1);
 

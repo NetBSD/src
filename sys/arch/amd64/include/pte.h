@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.4.4.1 2010/03/11 15:01:59 yamt Exp $	*/
+/*	$NetBSD: pte.h,v 1.4.4.2 2010/08/11 22:51:34 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -37,6 +37,8 @@
 
 #ifndef _AMD64_PTE_H_
 #define _AMD64_PTE_H_
+
+#ifdef __x86_64__
 
 /*
  * amd64 MMU hardware structure:
@@ -105,18 +107,23 @@ typedef uint64_t pt_entry_t;		/* PTE */
 #define	PG_RW		0x0000000000000002	/* read-write */
 #define	PG_u		0x0000000000000004	/* user accessible */
 #define	PG_PROT		0x0000000000000006
-#define	PG_N		0x0000000000000018	/* non-cacheable */
+#define PG_WT		0x0000000000000008	/* write-through */
+#define	PG_N		0x0000000000000010	/* non-cacheable */
 #define	PG_U		0x0000000000000020	/* used */
 #define	PG_M		0x0000000000000040	/* modified */
-#define PG_PS		0x0000000000000080	/* 2MB page size */
+#define PG_PAT		0x0000000000000080	/* PAT (on pte) */
+#define PG_PS		0x0000000000000080	/* 2MB page size (on pde) */
 #define PG_G		0x0000000000000100	/* not flushed */
 #define PG_AVAIL1	0x0000000000000200
 #define PG_AVAIL2	0x0000000000000400
 #define PG_AVAIL3	0x0000000000000800
+#define PG_LGPAT	0x0000000000001000	/* PAT on large pages */
 #define	PG_FRAME	0x000ffffffffff000
 #define	PG_NX		0x8000000000000000
 
-#define	PG_LGFRAME	0x000fffffffe00000	/* large (2M) page frame mask */
+#define PG_2MFRAME	0x000fffffffe00000	/* large (2M) page frame mask */
+#define PG_1GFRAME	0x000fffffc0000000	/* large (1G) page frame mask */
+#define	PG_LGFRAME	PG_2MFRAME
 
 /*
  * short forms of protection codes
@@ -125,13 +132,12 @@ typedef uint64_t pt_entry_t;		/* PTE */
 #define	PG_KR		0x0000000000000000	/* kernel read-only */
 #define	PG_KW		0x0000000000000002	/* kernel read-write */
 
-/*
- * page protection exception bits
- */
+#include <x86/pte.h>
 
-#define PGEX_P		0x01	/* protection violation (vs. no mapping) */
-#define PGEX_W		0x02	/* exception during a write cycle */
-#define PGEX_U		0x04	/* exception while in user mode (upl) */
-#define PGEX_X		0x10	/* exception during instruction fetch */
+#else   /*      !__x86_64__      */
+
+#include <i386/pte.h>
+
+#endif  /*      !__x86_64__      */
 
 #endif /* _AMD64_PTE_H_ */

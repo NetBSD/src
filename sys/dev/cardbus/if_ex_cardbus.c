@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ex_cardbus.c,v 1.44.4.2 2010/03/11 15:03:25 yamt Exp $	*/
+/*	$NetBSD: if_ex_cardbus.c,v 1.44.4.3 2010/08/11 22:53:19 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 and 1999
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ex_cardbus.c,v 1.44.4.2 2010/03/11 15:03:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ex_cardbus.c,v 1.44.4.3 2010/08/11 22:53:19 yamt Exp $");
 
 /* #define EX_DEBUG 4 */	/* define to report information for debugging */
 
@@ -114,8 +114,9 @@ struct ex_cardbus_softc {
 
 };
 
-CFATTACH_DECL_NEW(ex_cardbus, sizeof(struct ex_cardbus_softc),
-    ex_cardbus_match, ex_cardbus_attach, ex_cardbus_detach, ex_activate);
+CFATTACH_DECL3_NEW(ex_cardbus, sizeof(struct ex_cardbus_softc),
+    ex_cardbus_match, ex_cardbus_attach, ex_cardbus_detach, ex_activate,
+    NULL, NULL, DVF_DETACH_SHUTDOWN);
 
 const struct ex_cardbus_product {
 	uint32_t	ecp_prodid;	/* CardBus product ID */
@@ -215,16 +216,11 @@ ex_cardbus_attach(device_t parent, device_t self, void *aux)
 	struct ex_softc *sc = &csc->sc_softc;
 	struct cardbus_attach_args *ca = aux;
 	cardbus_devfunc_t ct = ca->ca_ct;
-#if rbus
-#else
-	cardbus_chipset_tag_t cc = ct->ct_cc;
-#endif
 	const struct ex_cardbus_product *ecp;
 	bus_addr_t adr, adr1;
 
 	sc->sc_dev = self;
 
-	sc->ex_bustype = EX_BUS_CARDBUS;
 	sc->sc_dmat = ca->ca_dmat;
 	csc->sc_ct = ca->ca_ct;
 	csc->sc_intrline = ca->ca_intrline;
@@ -244,10 +240,6 @@ ex_cardbus_attach(device_t parent, device_t self, void *aux)
 
 	if (Cardbus_mapreg_map(ct, PCI_BAR0, PCI_MAPREG_TYPE_IO, 0,
 		&sc->sc_iot, &sc->sc_ioh, &adr, &csc->sc_mapsize) == 0) {
-#if rbus
-#else
-		(*ct->ct_cf->cardbus_io_open)(cc, 0, adr, adr + csc->sc_mapsize);
-#endif
 		csc->sc_bar_reg = PCI_BAR0;
 		csc->sc_bar_val = adr | PCI_MAPREG_TYPE_IO;
 
@@ -308,7 +300,7 @@ ex_cardbus_intr_ack(struct ex_softc *sc)
 }
 
 int
-ex_cardbus_detach(device_t self, int arg)
+ex_cardbus_detach(device_t self, int flags)
 {
 	struct ex_cardbus_softc *csc = device_private(self);
 	struct ex_softc *sc = &csc->sc_softc;
@@ -321,36 +313,34 @@ ex_cardbus_detach(device_t self, int arg)
 	}
 #endif
 
-	rv = ex_detach(sc);
-	if (rv == 0) {
-		/*
-		 * Unhook the interrupt handler.
-		 */
-		cardbus_intr_disestablish(ct->ct_cc, ct->ct_cf, sc->sc_ih);
+	if ((rv = ex_detach(sc)) != 0)
+		return rv;
 
-		if (csc->sc_cardtype == EX_CB_CYCLONE) {
-			Cardbus_mapreg_unmap(ct,
-			    CARDBUS_3C575BTX_FUNCSTAT_PCIREG,
-			    csc->sc_funct, csc->sc_funch, csc->sc_funcsize);
-		}
+	/*
+	 * Unhook the interrupt handler.
+	 */
+	Cardbus_intr_disestablish(ct, sc->sc_ih);
 
-		Cardbus_mapreg_unmap(ct, PCI_BAR0, sc->sc_iot,
-		    sc->sc_ioh, csc->sc_mapsize);
+	if (csc->sc_cardtype == EX_CB_CYCLONE) {
+		Cardbus_mapreg_unmap(ct,
+		    CARDBUS_3C575BTX_FUNCSTAT_PCIREG,
+		    csc->sc_funct, csc->sc_funch, csc->sc_funcsize);
 	}
-	return (rv);
+
+	Cardbus_mapreg_unmap(ct, PCI_BAR0, sc->sc_iot,
+	    sc->sc_ioh, csc->sc_mapsize);
+	return 0;
 }
 
 int
 ex_cardbus_enable(struct ex_softc *sc)
 {
 	struct ex_cardbus_softc *csc = (struct ex_cardbus_softc *)sc;
-	cardbus_function_tag_t cf = csc->sc_ct->ct_cf;
-	cardbus_chipset_tag_t cc = csc->sc_ct->ct_cc;
 
 	Cardbus_function_enable(csc->sc_ct);
 	ex_cardbus_setup(csc);
 
-	sc->sc_ih = cardbus_intr_establish(cc, cf, csc->sc_intrline,
+	sc->sc_ih = Cardbus_intr_establish(csc->sc_ct, csc->sc_intrline,
 	    IPL_NET, ex_intr, sc);
 	if (NULL == sc->sc_ih) {
 		aprint_error_dev(sc->sc_dev, "couldn't establish interrupt\n");
@@ -364,11 +354,11 @@ void
 ex_cardbus_disable(struct ex_softc *sc)
 {
 	struct ex_cardbus_softc *csc = (struct ex_cardbus_softc *)sc;
-	cardbus_function_tag_t cf = csc->sc_ct->ct_cf;
-	cardbus_chipset_tag_t cc = csc->sc_ct->ct_cc;
 
-	cardbus_intr_disestablish(cc, cf, sc->sc_ih);
-	sc->sc_ih = NULL;
+	if (sc->sc_ih != NULL) {
+		Cardbus_intr_disestablish(csc->sc_ct, sc->sc_ih);
+		sc->sc_ih = NULL;
+	}
 
  	Cardbus_function_disable(csc->sc_ct);
 

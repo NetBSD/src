@@ -1,4 +1,4 @@
-/* $NetBSD: mcclock.c,v 1.21.4.3 2010/03/11 15:03:25 yamt Exp $ */
+/* $NetBSD: mcclock.c,v 1.21.4.4 2010/08/11 22:53:20 yamt Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mcclock.c,v 1.21.4.3 2010/03/11 15:03:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcclock.c,v 1.21.4.4 2010/08/11 22:53:20 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -232,7 +232,7 @@ mcclock_set(todr_chip_handle_t tch, struct timeval *tvp)
 	regs[MC_DOW] = dt.dt_wday;
 	regs[MC_DOM] = dt.dt_day;
 	regs[MC_MONTH] = dt.dt_mon;
-	regs[MC_YEAR] = dt.dt_year;
+	regs[MC_YEAR] = dt.dt_year - 1900;	/* rt clock wants 2 digits */
 
 	s = splclock();
 	MC146818_PUTTOD(sc, &regs);

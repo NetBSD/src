@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.74.4.3 2010/03/11 15:03:50 yamt Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.74.4.4 2010/08/11 22:53:51 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.74.4.3 2010/03/11 15:03:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.74.4.4 2010/08/11 22:53:51 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -51,6 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.74.4.3 2010/03/11 15:03:50 yamt Exp $
 #ifdef _KERNEL
 #include <sys/systm.h>
 #include <sys/intr.h>
+#include <sys/module.h>
 #else
 #include <pci.h>
 #include <stdbool.h>
@@ -60,9 +61,6 @@ __KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.74.4.3 2010/03/11 15:03:50 yamt Exp $
 #include <dev/pci/pcireg.h>
 #ifdef _KERNEL
 #include <dev/pci/pcivar.h>
-#endif
-#ifdef PCIVERBOSE
-#include <dev/pci/pcidevs.h>
 #endif
 
 /*
@@ -295,78 +293,61 @@ static const struct pci_class pci_class[] = {
 	    NULL,						},
 };
 
-#ifdef PCIVERBOSE
+void pci_load_verbose(void);
+
+#if defined(_KERNEL)
 /*
- * Descriptions of of known vendors and devices ("products").
+ * In kernel, these routines are provided and linked via the
+ * pciverbose module.
  */
+const char *pci_findvendor_stub(pcireg_t);
+const char *pci_findproduct_stub(pcireg_t);
 
-#include <dev/pci/pcidevs_data.h>
-#endif /* PCIVERBOSE */
-
-#ifdef PCIVERBOSE
-#ifndef _KERNEL
-#include <string.h>
+const char *(*pci_findvendor)(pcireg_t) = pci_findvendor_stub;
+const char *(*pci_findproduct)(pcireg_t) = pci_findproduct_stub;
+const char *pci_unmatched = "";
+#else
+/*
+ * For userland we just set the vectors here.
+ */
+const char *(*pci_findvendor)(pcireg_t id_reg) = pci_findvendor_real;
+const char *(*pci_findproduct)(pcireg_t id_reg) = pci_findproduct_real;
+const char *pci_unmatched = "unmatched ";
 #endif
-static const char *
-pci_untokenstring(const uint16_t *token, char *buf, size_t len)
+
+int pciverbose_loaded = 0;
+
+#if defined(_KERNEL)
+/*
+ * Routine to load the pciverbose kernel module as needed
+ */
+void pci_load_verbose(void)
 {
-	char *cp = buf;
-
-	buf[0] = '\0';
-	for (; *token != 0; token++) {
-		cp = buf + strlcat(buf, pci_words + *token, len - 2);
-		cp[0] = ' ';
-		cp[1] = '\0';
+	if (pciverbose_loaded == 0) {
+		mutex_enter(&module_lock);
+		module_autoload("pciverbose", MODULE_CLASS_MISC);
+		mutex_exit(&module_lock);
 	}
-	*cp = '\0';
-	return cp != buf ? buf : NULL;
-}
-#endif /* PCIVERBOSE */
-
-const char *
-pci_findvendor(pcireg_t id_reg)
-{
-#ifdef PCIVERBOSE
-	static char buf[256];
-	pci_vendor_id_t vendor = PCI_VENDOR(id_reg);
-	size_t n;
-
-	for (n = 0; n < __arraycount(pci_vendors); n++) {
-		if (pci_vendors[n] == vendor)
-			return pci_untokenstring(&pci_vendors[n+1], buf,
-			    sizeof(buf));
-
-		/* Skip Tokens */
-		n++;
-		while (pci_vendors[n] != 0 && n < __arraycount(pci_vendors))
-			n++;
-	}
-#endif
-	return (NULL);
 }
 
-const char *
-pci_findproduct(pcireg_t id_reg)
+const char *pci_findvendor_stub(pcireg_t id_reg)
 {
-#ifdef PCIVERBOSE
-	static char buf[256];
-	pci_vendor_id_t vendor = PCI_VENDOR(id_reg);
-	pci_product_id_t product = PCI_PRODUCT(id_reg);
-	size_t n;
-
-	for (n = 0; n < __arraycount(pci_products); n++) {
-		if (pci_products[n] == vendor && pci_products[n+1] == product)
-			return pci_untokenstring(&pci_products[n+2], buf,
-			    sizeof(buf));
-
-		/* Skip Tokens */
-		n += 2;
-		while (pci_products[n] != 0 && n < __arraycount(pci_products))
-			n++;
-	}
-#endif
-	return (NULL);
+	pci_load_verbose();
+	if (pciverbose_loaded)
+		return pci_findvendor(id_reg);
+	else
+		return NULL;
 }
+
+const char *pci_findproduct_stub(pcireg_t id_reg)
+{
+	pci_load_verbose();
+	if (pciverbose_loaded)
+		return pci_findproduct(id_reg);
+	else
+		return NULL;
+}
+#endif
 
 void
 pci_devinfo(pcireg_t id_reg, pcireg_t class_reg, int showclass, char *cp,
@@ -378,13 +359,9 @@ pci_devinfo(pcireg_t id_reg, pcireg_t class_reg, int showclass, char *cp,
 	pci_subclass_t subclass;
 	pci_interface_t interface;
 	pci_revision_t revision;
+	const char *unmatched = pci_unmatched;
 	const char *vendor_namep, *product_namep;
 	const struct pci_class *classp, *subclassp;
-#ifdef PCIVERBOSE
-	const char *unmatched = "unknown ";
-#else
-	const char *unmatched = "";
-#endif
 	char *ep;
 
 	ep = cp + l;

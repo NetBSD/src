@@ -1,4 +1,4 @@
-/*	$NetBSD: ess_isa.c,v 1.20.4.3 2010/03/11 15:03:37 yamt Exp $	*/
+/*	$NetBSD: ess_isa.c,v 1.20.4.4 2010/08/11 22:53:35 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ess_isa.c,v 1.20.4.3 2010/03/11 15:03:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ess_isa.c,v 1.20.4.4 2010/08/11 22:53:35 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,7 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: ess_isa.c,v 1.20.4.3 2010/03/11 15:03:37 yamt Exp $"
 int ess_isa_probe(device_t, cfdata_t, void *);
 void ess_isa_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(ess_isa, sizeof(struct ess_softc),
+CFATTACH_DECL_NEW(ess_isa, sizeof(struct ess_softc),
     ess_isa_probe, ess_isa_attach, NULL, NULL);
 
 int
@@ -127,6 +127,8 @@ ess_isa_attach(device_t parent, device_t self, void *aux)
 	int enablejoy;
 
 	sc = device_private(self);
+
+	sc->sc_dev = self;
 	ia = aux;
 	enablejoy = 0;
 

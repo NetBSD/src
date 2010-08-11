@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wmreg.h,v 1.24.10.3 2010/03/11 15:03:49 yamt Exp $	*/
+/*	$NetBSD: if_wmreg.h,v 1.24.10.4 2010/08/11 22:53:49 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -231,7 +231,8 @@ struct livengood_tcpip_ctxdesc {
 #define	STATUS_PCIXSPD_66_100  STATUS_PCIXSPD(1)
 #define	STATUS_PCIXSPD_100_133 STATUS_PCIXSPD(2)
 #define	STATUS_PCIXSPD_MASK    STATUS_PCIXSPD(3)
-#define	STATUS_GIO_M_ENA (1U << 16)	/* PCIX master enable */
+#define	STATUS_GIO_M_ENA (1U << 19)	/* GIO master enable */
+#define	STATUS_DEV_RST_SET (1U << 20)	/* Device Reset Set */
 
 #define	WMREG_EECD	0x0010	/* EEPROM Control Register */
 #define	EECD_SK		(1U << 0)	/* clock */
@@ -280,6 +281,7 @@ struct livengood_tcpip_ctxdesc {
 #define	EEPROM_OFF_K1_CONFIG	0x1b	/* NVM K1 Config */
 #define	EEPROM_OFF_SWDPIN	0x20	/* SWD Pins (Cordova) */
 #define	EEPROM_OFF_CFG3_PORTA	0x24	/* config word 3 */
+#define EEPROM_ALT_MAC_ADDR_PTR	0x37	/* to the alternative MAC addresses */
 
 #define	EEPROM_CFG1_LVDID	(1U << 0)
 #define	EEPROM_CFG1_LSSID	(1U << 1)
@@ -323,6 +325,18 @@ struct livengood_tcpip_ctxdesc {
 
 #define EEPROM_CFG3_APME	(1U << 10)	
 
+#define	EEPROM_OFF_MACADDR_LAN1	3	/* macaddr offset from PTR (port 1) */
+#define	EEPROM_OFF_MACADDR_LAN2	6	/* macaddr offset from PTR (port 2) */
+#define	EEPROM_OFF_MACADDR_LAN3	9	/* macaddr offset from PTR (port 3) */
+
+/*
+ * EEPROM Partitioning. See Table 6-1, "EEPROM Top Level Partitioning"
+ * in 82580's datasheet.
+ */
+#define EEPROM_OFF_LAN1	0x0080	/* Offset for LAN1 (82580)*/
+#define EEPROM_OFF_LAN2	0x00c0	/* Offset for LAN2 (82580)*/
+#define EEPROM_OFF_LAN3	0x0100	/* Offset for LAN3 (82580)*/
+
 #define	WMREG_EERD	0x0014	/* EEPROM read */
 #define	EERD_DONE	0x02    /* done bit */
 #define	EERD_START	0x01	/* First bit for telling part to start operation */
@@ -333,10 +347,13 @@ struct livengood_tcpip_ctxdesc {
 #define	CTRL_EXT_GPI_EN(x)	(1U << (x)) /* gpin interrupt enable */
 #define	CTRL_EXT_SWDPINS_SHIFT	4
 #define	CTRL_EXT_SWDPINS_MASK	0x0d
-#define	CTRL_EXT_SWDPIN(x)	(1U << (CTRL_EXT_SWDPINS_SHIFT + (x) - 4))
+/* The bit order of the SW Definable pin is not 6543 but 3654! */
+#define	CTRL_EXT_SWDPIN(x)	(1U << (CTRL_EXT_SWDPINS_SHIFT \
+		+ ((x) == 3 ? 3 : ((x) - 4))))
 #define	CTRL_EXT_SWDPIO_SHIFT	8
 #define	CTRL_EXT_SWDPIO_MASK	0x0d
-#define	CTRL_EXT_SWDPIO(x)	(1U << (CTRL_EXT_SWDPIO_SHIFT + (x) - 4))
+#define	CTRL_EXT_SWDPIO(x)	(1U << (CTRL_EXT_SWDPIO_SHIFT \
+		+ ((x) == 3 ? 3 : ((x) - 4))))
 #define	CTRL_EXT_ASDCHK		(1U << 12) /* ASD check */
 #define	CTRL_EXT_EE_RST		(1U << 13) /* EEPROM reset */
 #define	CTRL_EXT_IPS		(1U << 14) /* invert power state bit 0 */
@@ -611,11 +628,11 @@ struct livengood_tcpip_ctxdesc {
 
 #define	WMREG_TDFPC	0x3430	/* Transmit Data FIFO Packet Count */
 
-#define	WMREG_OLD_TBDAL	0x0420	/* Transmit Descriptor Base Lo */
-#define	WMREG_TBDAL	0x3800
+#define	WMREG_OLD_TDBAL	0x0420	/* Transmit Descriptor Base Lo */
+#define	WMREG_TDBAL	0x3800
 
-#define	WMREG_OLD_TBDAH	0x0424	/* Transmit Descriptor Base Hi */
-#define	WMREG_TBDAH	0x3804
+#define	WMREG_OLD_TDBAH	0x0424	/* Transmit Descriptor Base Hi */
+#define	WMREG_TDBAH	0x3804
 
 #define	WMREG_OLD_TDLEN	0x0428	/* Transmit Descriptor Length */
 #define	WMREG_TDLEN	0x3808

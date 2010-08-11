@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file.c,v 1.95.2.3 2009/08/19 18:46:58 yamt Exp $	*/
+/*	$NetBSD: linux_file.c,v 1.95.2.4 2010/08/11 22:53:08 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.95.2.3 2009/08/19 18:46:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.95.2.4 2010/08/11 22:53:08 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -355,12 +355,14 @@ linux_sys_fcntl(struct lwp *l, const struct linux_sys_fcntl_args *uap, register_
 		if ((long)arg <= 0) {
 			pgid = -(long)arg;
 		} else {
-			struct proc *p1 = p_find((long)arg, PFIND_LOCKED | PFIND_UNLOCK_FAIL);
-			if (p1 == NULL)
+			struct proc *p1 = proc_find((long)arg);
+			if (p1 == NULL) {
+				mutex_exit(proc_lock);
 				return (ESRCH);
+			}
 			pgid = (long)p1->p_pgrp->pg_id;
 		}
-		pgrp = pg_find(pgid, PFIND_LOCKED);
+		pgrp = pgrp_find(pgid);
 		if (pgrp == NULL || pgrp->pg_session != p->p_session) {
 			mutex_exit(proc_lock);
 			return EPERM;

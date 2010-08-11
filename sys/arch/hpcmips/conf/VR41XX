@@ -1,4 +1,4 @@
-# $NetBSD: VR41XX,v 1.43.10.2 2010/03/11 15:02:25 yamt Exp $
+# $NetBSD: VR41XX,v 1.43.10.3 2010/08/11 22:52:06 yamt Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include		"arch/hpcmips/conf/std.hpcmips"
 include		"arch/hpcmips/conf/std.hpcmips.vr41"
-#ident 		"GENERIC-$Revision: 1.43.10.2 $"
+#ident 		"GENERIC-$Revision: 1.43.10.3 $"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
@@ -102,6 +102,11 @@ options 	INET6		# IPV6
 #options 	ISO		# OSI networking
 #options 	TPIP		# TPIP
 #options 	EON		# OSI tunneling over IP
+options 	PFIL_HOOKS	# pfil(9) packet filter hooks
+options 	IPFILTER_LOG	# ipmon(8) log support
+options 	IPFILTER_LOOKUP	# ippool(8) support
+options 	IPFILTER_COMPAT # Compat for IP-Filter
+#options 	IPFILTER_DEFAULT_BLOCK	# block all packets by default
 
 # NetBSD backwards compatibility
 options 	COMPAT_43
@@ -527,7 +532,7 @@ pseudo-device	wsmux			# mouse & keyboard multiplexor
 
 #pseudo-device	raid		4	# RAIDframe disk driver
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
-#pseudo-device	fss		4	# file system snapshot device
+#pseudo-device	fss			# file system snapshot device
 
 # for IPv6
 pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)

@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.47.10.3 2010/03/11 15:02:32 yamt Exp $
+#	$NetBSD: GENERIC,v 1.47.10.4 2010/08/11 22:52:16 yamt Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/iyonix/conf/std.iyonix"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.47.10.3 $"
+#ident 		"GENERIC-$Revision: 1.47.10.4 $"
 
 maxusers	32		# estimated number of users
 
@@ -751,6 +751,10 @@ midi*	at midibus?
 #btkbd* at bthidev? reportid ?
 #wskbd* at btkbd? console ? mux 1
 
+# Bluetooth Apple Magic Mouse
+#btmagic* at bthub?
+#wsmouse* at btmagic? mux 0
+
 # Bluetooth Audio support
 #btsco* at bthub?
 
@@ -788,7 +792,7 @@ com0	at obio? addr 0x900002f8 xint 1 # on-board UART
 #options 	RF_INCLUDE_INTERDECLUSTER=1
 #options 	RF_INCLUDE_PARITY_DECLUSTERING=1
 #options 	RF_INCLUDE_PARITY_DECLUSTERING_DS=1
-pseudo-device	fss		4	# file system snapshot device
+pseudo-device	fss			# file system snapshot device
 
 pseudo-device	md		1	# memory disk device (ramdisk)
 #pseudo-device	vnd			# disk-like interface to files

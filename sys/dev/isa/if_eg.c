@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eg.c,v 1.76.4.3 2010/03/11 15:03:37 yamt Exp $	*/
+/*	$NetBSD: if_eg.c,v 1.76.4.4 2010/08/11 22:53:36 yamt Exp $	*/
 
 /*
  * Copyright (c) 1993 Dean Huxley <dean@fsa.ca>
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_eg.c,v 1.76.4.3 2010/03/11 15:03:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_eg.c,v 1.76.4.4 2010/08/11 22:53:36 yamt Exp $");
 
 #include "opt_inet.h"
 #include "rnd.h"
@@ -597,8 +597,7 @@ loop:
 	}
 	len = max(m0->m_pkthdr.len, ETHER_MIN_LEN - ETHER_CRC_LEN);
 
-	if (ifp->if_bpf)
-		bpf_ops->bpf_mtap(ifp->if_bpf, m0);
+	bpf_mtap(ifp, m0);
 
 	sc->eg_pcb[0] = EG_CMD_SENDPACKET;
 	sc->eg_pcb[1] = 0x06;
@@ -751,8 +750,7 @@ egread(struct eg_softc *sc, void *buf, int len)
 	 * Check if there's a BPF listener on this interface.
 	 * If so, hand off the raw packet to BPF.
 	 */
-	if (ifp->if_bpf)
-		bpf_ops->bpf_mtap(ifp->if_bpf, m);
+	bpf_mtap(ifp, m);
 
 	(*ifp->if_input)(ifp, m);
 }

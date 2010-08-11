@@ -1,4 +1,4 @@
-/*	$NetBSD: if_shmem.c,v 1.6.2.4 2010/03/11 15:04:40 yamt Exp $	*/
+/*	$NetBSD: if_shmem.c,v 1.6.2.5 2010/08/11 22:55:09 yamt Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -28,9 +28,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.6.2.4 2010/03/11 15:04:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.6.2.5 2010/08/11 22:55:09 yamt Exp $");
 
 #include <sys/param.h>
+#include <sys/atomic.h>
 #include <sys/fcntl.h>
 #include <sys/kmem.h>
 #include <sys/kthread.h>
@@ -83,11 +84,14 @@ struct shmif_sc {
 
 #define BUSCTRL_ATOFF(sc, off)	((uint32_t *)(sc->sc_busmem+(off)))
 
-#define BUSMEM_SIZE 65536 /* enough? */
+#define BUSMEM_SIZE (1024*1024) /* need write throttling? */
 
 static void shmif_rcv(void *);
 
 static uint32_t numif;
+
+#define LOCK_UNLOCKED	0
+#define LOCK_LOCKED	1
 
 /*
  * This locking needs work and will misbehave severely if:
@@ -98,14 +102,20 @@ static void
 lockbus(struct shmif_sc *sc)
 {
 
-	__cpu_simple_lock((__cpu_simple_lock_t *)sc->sc_busmem);
+	while (atomic_cas_uint((void *)sc->sc_busmem,
+	    LOCK_UNLOCKED, LOCK_LOCKED) == LOCK_LOCKED)
+		continue;
+	membar_enter();
 }
 
 static void
 unlockbus(struct shmif_sc *sc)
 {
+	unsigned int old;
 
-	__cpu_simple_unlock((__cpu_simple_lock_t *)sc->sc_busmem);
+	membar_exit();
+	old = atomic_swap_uint((void *)sc->sc_busmem, LOCK_UNLOCKED);
+	KASSERT(old == LOCK_LOCKED);
 }
 
 static uint32_t
@@ -135,7 +145,8 @@ buswrite(struct shmif_sc *sc, uint32_t off, void *data, size_t len)
 {
 	size_t chunk;
 
-	KASSERT(len < (BUSMEM_SIZE - IFMEM_DATA) && off <= BUSMEM_SIZE);
+	KASSERT(len < (BUSMEM_SIZE - IFMEM_DATA) && off <= BUSMEM_SIZE
+	    && off >= IFMEM_DATA);
 
 	chunk = MIN(len, BUSMEM_SIZE - off);
 	memcpy(sc->sc_busmem + off, data, chunk);
@@ -220,7 +231,7 @@ rump_shmif_create(const char *path, int *ifnum)
 
 	sprintf(ifp->if_xname, "shmif%d", mynum);
 	ifp->if_softc = sc;
-	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
+	ifp->if_flags = IFF_BROADCAST | IFF_MULTICAST;
 	ifp->if_init = shmif_init;
 	ifp->if_ioctl = shmif_ioctl;
 	ifp->if_start = shmif_start;
@@ -229,6 +240,10 @@ rump_shmif_create(const char *path, int *ifnum)
 
 	if_attach(ifp);
 	ether_ifattach(ifp, enaddr);
+
+	aprint_verbose("shmif%d: bus %s\n", mynum, path);
+	aprint_verbose("shmif%d: Ethernet address %s\n",
+	    mynum, ether_sprintf(enaddr));
 
 	if (ifnum)
 		*ifnum = mynum;
@@ -345,7 +360,8 @@ shmif_rcv(void *arg)
 		    || (busgen > sc->sc_prevgen+1)) {
 			nextpkt = lastpkt;
 			sc->sc_prevgen = busgen;
-			rumpuser_dprintf("DROPPING\n");
+			rumpuser_dprintf("shmif_rcv: generation overrun, "
+			    "skipping invalid packets\n");
 		} else {
 			nextpkt = sc->sc_nextpacket;
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.h,v 1.17.16.1 2008/05/16 02:23:42 yamt Exp $	*/
+/*	$NetBSD: linux_machdep.h,v 1.17.16.2 2010/08/11 22:53:08 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -54,17 +54,15 @@
 #define LINUX_UNAME_ARCH machine
 #endif
 
+#ifndef LINUX_LWP_SETPRIVATE
+#define LINUX_LWP_SETPRIVATE lwp_setprivate
+#endif
+
 #ifdef _KERNEL
 __BEGIN_DECLS
 void linux_sendsig(const ksiginfo_t *, const sigset_t *);
 dev_t linux_fakedev(dev_t, int);
 __END_DECLS
-#ifdef LINUX_NPTL
-__BEGIN_DECLS
-void *linux_get_newtls(struct lwp *);
-int linux_set_newtls(struct lwp *, void *);
-__END_DECLS
-#endif /* !LINUX_NPTL */
 #endif /* !_KERNEL */
 
 #endif /* !_LINUX_MACHDEP_H */

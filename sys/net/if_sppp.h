@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sppp.h,v 1.25.10.1 2008/05/16 02:25:41 yamt Exp $	*/
+/*	$NetBSD: if_sppp.h,v 1.25.10.2 2010/08/11 22:54:54 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -101,8 +101,16 @@ struct spppidletimeout {
 					 * disconnect, 0 to disable idle-timeout */
 };
 
+struct spppidletimeout50 {
+	char	ifname[IFNAMSIZ];	/* pppoe interface name */
+	uint32_t idle_seconds;		/* number of seconds idle before
+					 * disconnect, 0 to disable idle-timeout */
+};
+
 #define	SPPPGETIDLETO	_IOWR('i', 125, struct spppidletimeout)
 #define	SPPPSETIDLETO	_IOW('i', 126, struct spppidletimeout)
+#define	__SPPPGETIDLETO50	_IOWR('i', 125, struct spppidletimeout50)
+#define	__SPPPSETIDLETO50	_IOW('i', 126, struct spppidletimeout50)
 
 struct spppauthfailurestats {
 	char	ifname[IFNAMSIZ];	/* pppoe interface name */
@@ -141,8 +149,16 @@ struct spppkeepalivesettings {
 	time_t	max_noreceive;		/* (sec.) grace period before we start
 					   sending LCP echo requests. */
 };
+struct spppkeepalivesettings50 {
+	char	ifname[IFNAMSIZ];	/* pppoe interface name */
+	u_int	maxalive;		/* number of LCP echo req. w/o reply */
+	uint32_t max_noreceive;		/* (sec.) grace period before we start
+					   sending LCP echo requests. */
+};
 #define	SPPPSETKEEPALIVE	_IOW('i', 132, struct spppkeepalivesettings)
 #define	SPPPGETKEEPALIVE	_IOWR('i', 133, struct spppkeepalivesettings)
+#define	__SPPPSETKEEPALIVE50	_IOW('i', 132, struct spppkeepalivesettings50)
+#define	__SPPPGETKEEPALIVE50	_IOWR('i', 133, struct spppkeepalivesettings50)
 
 /* 134 already used! */
 

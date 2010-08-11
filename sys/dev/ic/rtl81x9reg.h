@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9reg.h,v 1.30.4.4 2009/09/16 13:37:48 yamt Exp $	*/
+/*	$NetBSD: rtl81x9reg.h,v 1.30.4.5 2010/08/11 22:53:30 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -181,6 +181,7 @@
 #define RTK_HWREV_8139CPLUS	0x74800000
 #define RTK_HWREV_8101		0x74c00000
 #define RTK_HWREV_8100		0x78800000
+#define RTK_HWREV_8169_8110SBL	0x7cc00000
 
 #define RTK_TXDMA_16BYTES	0x00000000
 #define RTK_TXDMA_32BYTES	0x00000100

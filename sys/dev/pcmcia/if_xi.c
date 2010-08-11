@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xi.c,v 1.64.4.3 2010/03/11 15:04:00 yamt Exp $ */
+/*	$NetBSD: if_xi.c,v 1.64.4.4 2010/08/11 22:54:07 yamt Exp $ */
 /*	OpenBSD: if_xe.c,v 1.9 1999/09/16 11:28:42 niklas Exp 	*/
 
 /*
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.64.4.3 2010/03/11 15:04:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.64.4.4 2010/08/11 22:54:07 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipx.h"
@@ -485,8 +485,7 @@ xi_get(struct xi_softc *sc)
 
 	ifp->if_ipackets++;
 
-	if (ifp->if_bpf)
-		bpf_ops->bpf_mtap(ifp->if_bpf, top);
+	bpf_mtap(ifp, top);
 
 	(*ifp->if_input)(ifp, top);
 	return (recvcount);
@@ -806,8 +805,7 @@ xi_start(struct ifnet *ifp)
 
 	IFQ_DEQUEUE(&ifp->if_snd, m0);
 
-	if (ifp->if_bpf)
-		bpf_ops->bpf_mtap(ifp->if_bpf, m0);
+	bpf_mtap(ifp, m0);
 
 	/*
 	 * Do the output at splhigh() so that an interrupt from another device

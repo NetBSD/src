@@ -1,4 +1,4 @@
-/* $NetBSD: pckbc.c,v 1.44.2.3 2010/03/11 15:03:33 yamt Exp $ */
+/* $NetBSD: pckbc.c,v 1.44.2.4 2010/08/11 22:53:29 yamt Exp $ */
 
 /*
  * Copyright (c) 2004 Ben Harris.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc.c,v 1.44.2.3 2010/03/11 15:03:33 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc.c,v 1.44.2.4 2010/08/11 22:53:29 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -238,7 +238,7 @@ int
 pckbc_is_console(bus_space_tag_t iot, bus_addr_t addr)
 {
 	if (pckbc_console && !pckbc_console_attached &&
-	    pckbc_consdata.t_iot == iot &&
+	    bus_space_is_equal(pckbc_consdata.t_iot, iot) &&
 	    pckbc_consdata.t_addr == addr)
 		return (1);
 	return (0);
@@ -461,14 +461,14 @@ pckbc_set_poll(void *self, pckbc_slot_t slot, int on)
 		t->t_slotdata[slot]->poll_data = -1;
 		t->t_slotdata[slot]->poll_stat = -1;
 	} else {
-                int s;
+		int s;
 
-                /*
-                 * If disabling polling on a device that's been configured,
-                 * make sure there are no bytes left in the FIFO, holding up
-                 * the interrupt line.  Otherwise we won't get any further
-                 * interrupts.
-                 */
+		/*
+		 * If disabling polling on a device that's been configured,
+		 * make sure there are no bytes left in the FIFO, holding up
+		 * the interrupt line.  Otherwise we won't get any further
+		 * interrupts.
+		 */
 		if (t->t_sc) {
 			s = spltty();
 			pckbcintr(t->t_sc);
@@ -621,10 +621,10 @@ pckbc_cnattach(bus_space_tag_t iot, bus_addr_t addr,
 	int res = 0;
 
 	if (bus_space_map(iot, addr + KBDATAP, 1, 0, &ioh_d))
-                return (ENXIO);
+		return (ENXIO);
 	if (bus_space_map(iot, addr + cmd_offset, 1, 0, &ioh_c)) {
 		bus_space_unmap(iot, ioh_d, 1);
-                return (ENXIO);
+		return (ENXIO);
 	}
 
 	memset(&pckbc_consdata, 0, sizeof(pckbc_consdata));

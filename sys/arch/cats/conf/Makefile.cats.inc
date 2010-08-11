@@ -1,9 +1,7 @@
-#	$NetBSD: Makefile.cats.inc,v 1.20.10.2 2009/09/16 13:37:37 yamt Exp $
+#	$NetBSD: Makefile.cats.inc,v 1.20.10.3 2010/08/11 22:51:48 yamt Exp $
 
 MACHINE_ARCH=	arm
 CPPFLAGS+=	-D${MACHINE}
-
-.if (${OBJECT_FMT} == "ELF")
 
 .if defined(ABLEELF) && (${ABLEELF} == "1")
 # use a standard ELF format, adjusted to align areas
@@ -35,5 +33,4 @@ SYSTEM_LD_TAIL_EXTRA+=; \
 		-R .debug_frame -R .debug_loc -R .debug_pubnames \
 		-R .debug_aranges -R .ARM.attributes \
 		$@ $@.aout
-.endif
 .endif

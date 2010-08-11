@@ -1,4 +1,4 @@
-/*	$NetBSD: msc.c,v 1.40.18.1 2009/05/04 08:10:35 yamt Exp $ */
+/*	$NetBSD: msc.c,v 1.40.18.2 2010/08/11 22:51:36 yamt Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msc.c,v 1.40.18.1 2009/05/04 08:10:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msc.c,v 1.40.18.2 2010/08/11 22:51:36 yamt Exp $");
 
 #include "msc.h"
 
@@ -1202,7 +1202,7 @@ mscinitcard(struct zbus_args *zap)
 	(void)mlm->ResetBoard;
 
 	/* wait until speed detector has finished */
-	for (bcount = 0; bcount < 200; bcount++) {
+	for (bcount = 0; bcount < 2000; bcount++) {
 		delay(10000);
 		if (mlm->Common.Crystal)
 			break;

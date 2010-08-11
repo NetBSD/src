@@ -1,4 +1,4 @@
-/* 	$NetBSD: if_temac.c,v 1.4.10.1 2010/03/11 15:02:21 yamt Exp $ */
+/* 	$NetBSD: if_temac.c,v 1.4.10.2 2010/08/11 22:51:55 yamt Exp $ */
 
 /*
  * Copyright (c) 2006 Jachym Holecek
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_temac.c,v 1.4.10.1 2010/03/11 15:02:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_temac.c,v 1.4.10.2 2010/08/11 22:51:55 yamt Exp $");
 
 
 #include <sys/param.h>
@@ -1208,8 +1208,7 @@ temac_rxreap(struct temac_softc *sc)
 			continue;
  		}
 
-		if (ifp->if_bpf != NULL)
-			bpf_ops->bpf_mtap(ifp->if_bpf, m);
+		bpf_mtap(ifp, m);
 
 		ifp->if_ipackets++;
 		(ifp->if_input)(ifp, m);

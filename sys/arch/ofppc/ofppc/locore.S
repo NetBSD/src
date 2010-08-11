@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.39.4.2 2010/03/11 15:02:47 yamt Exp $	*/
+/*	$NetBSD: locore.S,v 1.39.4.3 2010/08/11 22:52:31 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -129,7 +129,7 @@ __start:
 	bl	_C_LABEL(initppc)
 	bl	_C_LABEL(main)
 	b	_C_LABEL(OF_exit)
-	
+
 /*
  * Pull in common OFW code.
  */

@@ -1,4 +1,4 @@
-/*	$NetBSD: bfs.c,v 1.10.10.2 2009/05/04 08:13:44 yamt Exp $	*/
+/*	$NetBSD: bfs.c,v 1.10.10.3 2010/08/11 22:54:35 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: bfs.c,v 1.10.10.2 2009/05/04 08:13:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bfs.c,v 1.10.10.3 2010/08/11 22:54:35 yamt Exp $");
 #define	BFS_DEBUG
 
 #include <sys/param.h>
@@ -337,10 +337,6 @@ bfs_file_rename(struct bfs *bfs, const char *from_name, const char *to_name)
 	struct bfs_dirent *dirent;
 	int err = 0;
 
-	if (strlen(to_name) > BFS_FILENAME_MAXLEN) {
-		err =  ENAMETOOLONG;
-		goto out;
-	}
 	if (!bfs_dirent_lookup_by_name(bfs, from_name, &dirent)) {
 		err = ENOENT;
 		goto out;

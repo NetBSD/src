@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2009, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2010, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -127,8 +127,8 @@
 #define IntelAcpiCA                 "Intel ACPI Component Architecture"
 #define CompilerId                  "ASL Optimizing Compiler"
 #define DisassemblerId              "AML Disassembler"
-#define CompilerCopyright           "Copyright (C) 2000 - 2009 Intel Corporation"
-#define CompilerCompliance          "Supports ACPI Specification Revision 4.0"
+#define CompilerCopyright           "Copyright (c) 2000 - 2010 Intel Corporation"
+#define CompilerCompliance          "Supports ACPI Specification Revision 4.0a"
 #define CompilerName                "iasl"
 #define CompilerCreatorId           "INTL"
 
@@ -182,6 +182,13 @@
 #define FILE_SUFFIX_DISASSEMBLY     "dsl"
 #define FILE_SUFFIX_ASM_INCLUDE     "inc"
 #define FILE_SUFFIX_C_INCLUDE       "h"
+
+
+/* Types for input files */
+
+#define ASL_INPUT_TYPE_BINARY       0
+#define ASL_INPUT_TYPE_ASCII_ASL    1
+#define ASL_INPUT_TYPE_ASCII_DATA   2
 
 
 /* Misc */

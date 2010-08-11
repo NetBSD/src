@@ -1,4 +1,4 @@
-/*	$NetBSD: bthidev.c,v 1.15.2.3 2009/09/16 13:37:46 yamt Exp $	*/
+/*	$NetBSD: bthidev.c,v 1.15.2.4 2010/08/11 22:53:19 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bthidev.c,v 1.15.2.3 2009/09/16 13:37:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bthidev.c,v 1.15.2.4 2010/08/11 22:53:19 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -181,6 +181,7 @@ bthidev_attach(device_t parent, device_t self, void *aux)
 	const void *desc;
 	int locs[BTHIDBUSCF_NLOCS];
 	int maxid, rep, dlen;
+	int vendor, product;
 
 	/*
 	 * Init softc
@@ -204,6 +205,12 @@ bthidev_attach(device_t parent, device_t self, void *aux)
 
 	obj = prop_dictionary_get(dict, BTDEVraddr);
 	bdaddr_copy(&sc->sc_raddr, prop_data_data_nocopy(obj));
+
+	obj = prop_dictionary_get(dict, BTDEVvendor);
+	vendor = (int)prop_number_integer_value(obj);
+
+	obj = prop_dictionary_get(dict, BTDEVproduct);
+	product = (int)prop_number_integer_value(obj);
 
 	obj = prop_dictionary_get(dict, BTDEVmode);
 	if (prop_object_type(obj) == PROP_TYPE_STRING) {
@@ -279,6 +286,8 @@ bthidev_attach(device_t parent, device_t self, void *aux)
 		    && hid_report_size(desc, dlen, hid_output, rep) == 0)
 			continue;
 
+		bha.ba_vendor = vendor;
+		bha.ba_product = product;
 		bha.ba_desc = desc;
 		bha.ba_dlen = dlen;
 		bha.ba_input = bthidev_null;

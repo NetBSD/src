@@ -1,4 +1,4 @@
-# $NetBSD: ENCPP1,v 1.4.4.3 2010/03/11 15:02:53 yamt Exp $
+# $NetBSD: ENCPP1,v 1.4.4.4 2010/08/11 22:52:38 yamt Exp $
 #
 # Ampro EnCorePP1 machine description file
 # 
@@ -23,7 +23,7 @@ options 	PIC_I8259
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ENCPP1-$Revision: 1.4.4.3 $"
+#ident 		"ENCPP1-$Revision: 1.4.4.4 $"
 
 maxusers	32
 
@@ -122,6 +122,8 @@ pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
 #pseudo-device	pf			# PF packet filter
 #pseudo-device	pflog			# PF log if
+pseudo-device	fss			# file system snapshot device
+
 #
 # device
 #

@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsysvar.h,v 1.27.4.3 2010/03/11 15:04:04 yamt Exp $ */
+/* $NetBSD: sysmon_envsysvar.h,v 1.27.4.4 2010/08/11 22:54:12 yamt Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -100,6 +100,7 @@ struct sme_description_table {
  * common stuff.
  */
 extern	kmutex_t sme_global_mtx; 	/* for the sme linked list and dict */
+extern	prop_dictionary_t sme_propd;	/* the global sensor dictionary */
 
 /* 
  * linked list for the sysmon envsys devices.
@@ -109,10 +110,6 @@ LIST_HEAD(, sysmon_envsys) sysmon_envsys_list;
 /* 
  * functions to handle sysmon envsys devices.
  */
-sme_event_drv_t *sme_add_sensor_dictionary(struct sysmon_envsys *,
-					   prop_array_t,
-			    	  	   prop_dictionary_t,
-					   envsys_data_t *);
 int	sme_update_dictionary(struct sysmon_envsys *);
 int	sme_userset_dictionary(struct sysmon_envsys *,
 			       prop_dictionary_t, prop_array_t);
@@ -133,7 +130,9 @@ void	sme_event_drvadd(void *);
 int	sme_events_init(struct sysmon_envsys *);
 void	sme_events_destroy(struct sysmon_envsys *);
 void	sme_events_check(void *);
-void 	sme_events_worker(struct work *, void *);
+void	sme_events_worker(struct work *, void *);
+void	sme_deliver_event(sme_event_t *);
+int	sme_update_limits(struct sysmon_envsys *, envsys_data_t *);
 
 /* 
  * common functions to create/update objects in a dictionary.

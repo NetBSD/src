@@ -1,4 +1,4 @@
-/*	$NetBSD: gumstix_start.S,v 1.5.20.1 2009/08/19 18:46:06 yamt Exp $ */
+/*	$NetBSD: gumstix_start.S,v 1.5.20.2 2010/08/11 22:51:51 yamt Exp $ */
 /*
  * Copyright (C) 2005, 2006 WIDE Project and SOUM Corporation.
  * All rights reserved.
@@ -59,14 +59,14 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "opt_cputypes.h"
+#include "opt_gumstix.h"
+
 #include <machine/asm.h>
+#include <machine/vmparam.h>
 #include <arm/armreg.h>
 #include <arm/arm32/pte.h>
 #include <arm/arm32/pmap.h>		/* for PMAP_DOMAIN_KERNEL */
-
-#ifndef SDRAM_START
-#define SDRAM_START	0xa0000000
-#endif
 
 /*
  * CPWAIT -- Canonical method to wait for CP15 update.
@@ -74,12 +74,16 @@
  * copied from arm/arm/cpufunc_asm_xscale.S
  * XXX: better be in a common header file.
  */
-#define	CPWAIT_BRANCH							 \
+#if defined(CPU_XSCALE_PXA250) || defined(CPU_XSCALE_PXA270)
+#define	CPWAIT_BRANCH							  \
 	sub	pc, pc, #4
+#else
+#define	CPWAIT_BRANCH
+#endif
 
-#define	CPWAIT(tmp)							 \
-	mrc	p15, 0, tmp, c2, c0, 0	/* arbitrary read of CP15 */	;\
-	mov	tmp, tmp		/* wait for it to complete */	;\
+#define	CPWAIT(tmp)							  \
+	mrc	p15, 0, tmp, c2, c0, 0	/* arbitrary read of CP15 */	; \
+	mov	tmp, tmp		/* wait for it to complete */	; \
 	CPWAIT_BRANCH			/* branch to next insn */
 
 /*
@@ -91,11 +95,21 @@
 
 	.global	_C_LABEL(gumstix_start)
 _C_LABEL(gumstix_start):
-	/* gumstix's loader is u-boot.  it's running on RAM */
+	/*
+	 * gumstix's loader is U-boot.  it's running on RAM
+	 */
+
+	/* Our page table might be cached.  Disable D-cache beforehand. */
+	mrc	p15, 0, r4, c1, c0, 0
+	bic	r4, r4, #CPU_CONTROL_DC_ENABLE
+	mcr	p15, 0, r4, c1, c0, 0
+
 	/*
 	 *  Kernel is loaded in SDRAM (0xa0200000..), and is expected to run
-	 *  in VA 0xc0200000..
+	 *  in VA 0xc0200000.. (GUMSTIX)
+	 *  VA == PA if OVERO.
 	 */
+
 	/* save u-boot's args */
 	adr	r4, u_boot_args
 	nop
@@ -108,29 +122,48 @@ _C_LABEL(gumstix_start):
 
 	/* Calculate RAM size */
 	adr	r4, ram_size
+#if defined(GUMSTIX)
 	ldr	r0, [r4]
+
+	mrc	p15, 0, r1, c0, c0, 0
+	and	r1, r1, #CPU_ID_XSCALE_COREGEN_MASK
+	cmp	r1, #0x4000
+	bne	3f			/* goto 3f, if basix or connex */
 0:
+	/* check memory size, if verdex or verdex-pro */
 	add	r3, r4, r0
 	ldr	r1, [r3]
 	cmp	r0, r1
 	beq	2f
 1:
-	add	r0, r0, r0	/* r0 <<= 1 */
+	add	r0, r0, r0		/* r0 <<= 1 */
 	str	r0, [r4]
 	b	0b
 2:
-	mvn	r1, r1		/* r1 ^= 0xffffffff */
+	mvn	r1, r1			/* r1 ^= 0xffffffff */
 	str	r1, [r3]
 	ldr	r2, [r4]
 	cmp	r1, r2
 	beq	3f
-	str	r0, [r3]	/* restore */
+	str	r0, [r3]		/* restore */
 	b	1b
 3:
+#elif defined(OVERO)
+	mov	r1, #0x7f000000		/* mask */
+	orr	r1, r1, #0x00e00000	/* mask */
+	mov	r3, #0x6d000000		/* OMAP34xx SDRC */
+	add	r3, r3, #0x0080		/* CS0 MCFG */
+	ldr	r2, [r3]
+	and	r0, r1, r2, lsl #13
+	add	r3, r3, #0x0030		/* CS1 MCFG */
+	ldr	r2, [r3]
+	and	r2, r1, r2, lsl #13
+	add	r0, r0, r2
+#endif
 	str	r0, [r4]
 
-	/* build page table from scratch */
-	ldr	r0, Lstartup_pagetable		/* pagetable */
+	/* Build page table from scratch */
+	ldr	r0, Lstartup_pagetable	/* pagetable */
 	adr	r4, mmu_init_table
 	b	5f
 
@@ -145,18 +178,31 @@ _C_LABEL(gumstix_start):
 	cmp	r1, #0
 	bne	4b
 
-	mcr	p15, 0, r0, c2, c0, 0	/* Set TTB */
 	mcr	p15, 0, r0, c8, c7, 0	/* Flush TLB */
+	mcr	p15, 0, r0, c2, c0, 0	/* Set TTB */
 
-	/* Set the Domain Access register.  Very important! */
-        mov     r0, #((DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2)) | DOMAIN_CLIENT)
+	/*
+	 * Set the Domain Access register.  Very important!
+	 * startup_pagetable puts to domain 0 now.
+	 */
+#define KERNEL_DOMAIN(x)	((x) << (PMAP_DOMAIN_KERNEL << 1))
+	mov	r0, #(KERNEL_DOMAIN(DOMAIN_CLIENT) | DOMAIN_CLIENT)
 	mcr	p15, 0, r0, c3, c0, 0
 
-	/* Enable MMU */
+	/* Enable MMU and etc. */
 	mrc	p15, 0, r0, c1, c0, 0
+#if defined(CPU_XSCALE_PXA250) || defined(CPU_XSCALE_PXA270)
 	orr	r0, r0, #CPU_CONTROL_SYST_ENABLE
+#endif
+#if defined(CPU_CORTEXA8)
+	orr	r0, r0, #CPU_CONTROL_AFLT_ENABLE | CPU_CONTROL_DC_ENABLE
+	orr	r0, r0, #CPU_CONTROL_BPRD_ENABLE | CPU_CONTROL_IC_ENABLE
+#endif
 	orr	r0, r0, #CPU_CONTROL_MMU_ENABLE
 	mcr	p15, 0, r0, c1, c0, 0
+	/*
+	 * Ensure that the coprocessor has finished turning on the MMU.
+	 */
 	CPWAIT(r0)
 
 	/* Jump to kernel code in TRUE VA */
@@ -167,7 +213,11 @@ Lstart:
 	.word	start
 
 #ifndef STARTUP_PAGETABLE_ADDR
+#if defined(GUMSTIX)
 #define STARTUP_PAGETABLE_ADDR 0xa0000000	/* aligned 16kByte */
+#elif defined(OVERO)
+#define STARTUP_PAGETABLE_ADDR 0x80000000	/* aligned 16kByte */
+#endif
 #endif
 Lstartup_pagetable:
 	.word	STARTUP_PAGETABLE_ADDR
@@ -181,22 +231,33 @@ ram_size:
 	.word	0x04000000		/* 64Mbyte */
 
 
-#define MMU_INIT(va,pa,n_sec,attr) \
-	.word	n_sec					    ; \
-	.word	4 * ((va) >> L1_S_SHIFT)		    ; \
-	.word	(pa) | (attr)				    ;
+#define MMU_INIT(va, pa, n_sec, attr)	  \
+	.word	n_sec			; \
+	.word	4 * ((va) >> L1_S_SHIFT); \
+	.word	(pa) | (attr)		;
 
 mmu_init_table:
 	/* fill all table VA==PA */
 	MMU_INIT(0x00000000, 0x00000000,
-	    1 << (32 - L1_S_SHIFT), L1_TYPE_S | L1_S_AP(AP_KRW))
+	    1 << (32 - L1_S_SHIFT), L1_S_PROTO | L1_S_AP(AP_KRW))
 
-	/* map SDRAM VA==PA, WT cacheable */
+#if defined(GUMSTIX)
+#define SDRAM_START	0xa0000000
+
+	/* map SDRAM VA==PA, write-back cacheable (first 64M only)*/
 	MMU_INIT(SDRAM_START, SDRAM_START,
-	    64, L1_TYPE_S | L1_S_C | L1_S_AP(AP_KRW))
+	    64, L1_S_PROTO | L1_S_C | L1_S_AP(AP_KRW))
 
 	/* map VA 0xc0000000..0xc3ffffff to PA 0xa0000000..0xa3ffffff */
 	MMU_INIT(0xc0000000, SDRAM_START,
-	    64, L1_TYPE_S | L1_S_C | L1_S_AP(AP_KRW))
+	    64, L1_S_PROTO | L1_S_C | L1_S_AP(AP_KRW))
 
-	.word	0			/* end of table */
+#elif defined(OVERO)
+#define SDRAM_START	0x80000000
+
+	/* Map VA to PA, write-back cacheable (first 64M only) */
+	MMU_INIT(KERNEL_BASE, SDRAM_START,
+	    64, L1_S_PROTO | L1_S_B | L1_S_C | L1_S_AP(AP_KRW))
+#endif
+
+	MMU_INIT(0, 0, 0, 0)		/* end of table */

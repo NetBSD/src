@@ -1,4 +1,4 @@
-/*	$NetBSD: xcall.h,v 1.2.28.1 2008/05/16 02:25:52 yamt Exp $	*/
+/*	$NetBSD: xcall.h,v 1.2.28.2 2010/08/11 22:55:12 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -40,6 +40,9 @@ typedef void (*xcfunc_t)(void *, void *);
 struct cpu_info;
 
 void		xc_init_cpu(struct cpu_info *);
+void		xc_send_ipi(struct cpu_info *);
+void		xc_ipi_handler(void);
+
 uint64_t	xc_broadcast(u_int, xcfunc_t, void *, void *);
 uint64_t	xc_unicast(u_int, xcfunc_t, void *, void *, struct cpu_info *);
 void		xc_wait(uint64_t);

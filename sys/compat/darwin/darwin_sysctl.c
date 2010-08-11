@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_sysctl.c,v 1.58.2.2 2009/05/04 08:12:18 yamt Exp $ */
+/*	$NetBSD: darwin_sysctl.c,v 1.58.2.3 2010/08/11 22:53:02 yamt Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_sysctl.c,v 1.58.2.2 2009/05/04 08:12:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_sysctl.c,v 1.58.2.3 2010/08/11 22:53:02 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -897,13 +897,21 @@ darwin_sysctl_procargs(SYSCTLFN_ARGS)
 	char *arg;
 	char *tmp;
 
+	/*
+	 * FIXME: Locking is totaly broken here.
+	 */
+
 	if (namelen != 1)
 		return (EINVAL);
 	pid = name[0];
 
 	/* check pid */
-	if ((p = pfind(pid)) == NULL)
+	mutex_enter(proc_lock);
+	if ((p = proc_find(pid)) == NULL) {
+		mutex_exit(proc_lock);
 		return (EINVAL);
+	}
+	mutex_exit(proc_lock);
 
 	/* only root or same user change look at the environment */
 	if (kauth_cred_geteuid(l->l_cred) != 0) {

@@ -1,8 +1,8 @@
-/*	$NetBSD: fwdma.h,v 1.5 2007/03/04 06:02:05 christos Exp $	*/
+/*	$NetBSD: fwdma.h,v 1.5.40.1 2010/08/11 22:53:34 yamt Exp $	*/
 /*-
  * Copyright (C) 2003
  * 	Hidetoshi Shimokawa. All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -19,7 +19,7 @@
  * 4. Neither the name of the author nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -31,12 +31,15 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- * 
+ *
  * $FreeBSD: /repoman/r/ncvs/src/sys/dev/firewire/fwdma.h,v 1.3 2005/01/06 01:42:41 imp Exp $
  */
 
+#ifndef _FWDMA_H_
+#define _FWDMA_H_
+
 struct fwdma_alloc {
-	fw_bus_dma_tag_t	fw_dma_tag;
+	bus_dma_tag_t	dma_tag;
 	bus_dmamap_t	dma_map;
 	void *		v_addr;
 	bus_addr_t	bus_addr;
@@ -52,7 +55,7 @@ struct fwdma_alloc_multi {
 	bus_size_t	ssize;
 	bus_size_t	esize;
 	int		nseg;
-	fw_bus_dma_tag_t	fw_dma_tag;
+	bus_dma_tag_t	dma_tag;
 	struct fwdma_seg seg[0];
 };
 
@@ -62,7 +65,7 @@ fwdma_v_addr(struct fwdma_alloc_multi *am, int index)
 	bus_size_t ssize = am->ssize;
 	int offset = am->esize * index;
 
-	return ((char *)am->seg[offset / ssize].v_addr + (offset % ssize));
+	return (char *)am->seg[offset / ssize].v_addr + (offset % ssize);
 }
 
 static __inline bus_addr_t
@@ -71,44 +74,56 @@ fwdma_bus_addr(struct fwdma_alloc_multi *am, int index)
 	bus_size_t ssize = am->ssize;
 	int offset = am->esize * index;
 
-	return (am->seg[offset / ssize].bus_addr + (offset % ssize));
+	return am->seg[offset / ssize].bus_addr + (offset % ssize);
 }
 
 static __inline void
-fwdma_sync(struct fwdma_alloc *dma, bus_dmasync_op_t op)  
-{
-	fw_bus_dmamap_sync(dma->fw_dma_tag, dma->dma_map, op);
-}
-
-static __inline void
-fwdma_sync_multiseg(struct fwdma_alloc_multi *am,
-			int start, int end, bus_dmasync_op_t op)
+fwdma_sync_multiseg(struct fwdma_alloc_multi *am, int start, int end, int op)
 {
 	struct fwdma_seg *seg, *eseg;
+	bus_addr_t off, eoff;
 
+	off = (am->esize * start) % am->ssize;
+	eoff = (am->esize * end) % am->ssize;
 	seg = &am->seg[am->esize * start / am->ssize];
 	eseg = &am->seg[am->esize * end / am->ssize];
-	for (; seg <= eseg; seg ++)
-		fw_bus_dmamap_sync(am->fw_dma_tag, seg->dma_map, op);
+
+	if (start > end) {
+		for (; seg < &am->seg[am->nseg]; seg++) {
+			bus_dmamap_sync(am->dma_tag, seg->dma_map,
+			    off, seg->dma_map->dm_mapsize - off, op);
+			off = 0;
+		}
+		seg = am->seg;
+	}
+	for (; seg < eseg; seg++) {
+		bus_dmamap_sync(am->dma_tag, seg->dma_map,
+		    off, seg->dma_map->dm_mapsize - off, op);
+		off = 0;
+	}
+	bus_dmamap_sync(am->dma_tag, seg->dma_map,
+	    off, eoff - off + am->esize, op);
 }
 
 static __inline void
-fwdma_sync_multiseg_all(struct fwdma_alloc_multi *am, bus_dmasync_op_t op)
+fwdma_sync_multiseg_all(struct fwdma_alloc_multi *am, int op)
 {
 	struct fwdma_seg *seg;
 	int i;
 
-	seg = &am->seg[0];
+	seg = am->seg;
 	for (i = 0; i < am->nseg; i++, seg++)
-		fw_bus_dmamap_sync(am->fw_dma_tag, seg->dma_map, op);
+		bus_dmamap_sync(am->dma_tag, seg->dma_map,
+		    0, seg->dma_map->dm_mapsize, op);
 }
 
-void *fwdma_malloc(struct firewire_comm *, int, bus_size_t, struct fwdma_alloc *, int);
-void fwdma_free(struct firewire_comm *, struct fwdma_alloc *);
-void *fwdma_malloc_size(
-	fw_bus_dma_tag_t, bus_dmamap_t *, bus_size_t, bus_addr_t *, int);
-void fwdma_free_size(fw_bus_dma_tag_t, bus_dmamap_t, void *, bus_size_t);
+void *fwdma_malloc(device_t, bus_dma_tag_t, bus_dmamap_t *, bus_size_t, int,
+		   int);
+void fwdma_free(bus_dma_tag_t, bus_dmamap_t, void *);
+void *fwdma_alloc_setup(device_t, bus_dma_tag_t, bus_size_t,
+			struct fwdma_alloc *, int, int);
 struct fwdma_alloc_multi *fwdma_malloc_multiseg(struct firewire_comm *,
-	int, int, int, int);
+						int, int, int, int);
 void fwdma_free_multiseg(struct fwdma_alloc_multi *);
 
+#endif	/* _FWDMA_H_ */

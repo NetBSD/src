@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.40.20.1 2010/03/11 15:02:38 yamt Exp $	*/
+/*	$NetBSD: asm.h,v 1.40.20.2 2010/08/11 22:52:23 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -615,7 +615,7 @@ _C_LABEL(x):
 #endif
 
 /* See lock_stubs.S. */
-#define	MIPS_LOCK_RAS_SIZE	128
+#define	MIPS_LOCK_RAS_SIZE	256
 
 #define	CPUVAR(off) _C_LABEL(cpu_info_store)+__CONCAT(CPU_INFO_,off)
 

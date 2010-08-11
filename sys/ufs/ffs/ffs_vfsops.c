@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.223.4.6 2010/03/11 15:04:44 yamt Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.223.4.7 2010/08/11 22:55:13 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.223.4.6 2010/03/11 15:04:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.223.4.7 2010/08/11 22:55:13 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -391,7 +391,7 @@ ffs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 			accessmode |= VWRITE;
 		vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
 		error = genfs_can_mount(devvp, accessmode, l->l_cred);
-		VOP_UNLOCK(devvp, 0);
+		VOP_UNLOCK(devvp);
 	}
 
 	if (error) {
@@ -422,7 +422,7 @@ ffs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 		if (error) {
 			vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
 			(void)VOP_CLOSE(devvp, xflags, NOCRED);
-			VOP_UNLOCK(devvp, 0);
+			VOP_UNLOCK(devvp);
 			goto fail;
 		}
 
@@ -599,7 +599,7 @@ ffs_reload(struct mount *mp, kauth_cred_t cred, struct lwp *l)
 	devvp = ump->um_devvp;
 	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
 	error = vinvalbuf(devvp, 0, cred, l, 0, 0);
-	VOP_UNLOCK(devvp, 0);
+	VOP_UNLOCK(devvp);
 	if (error)
 		panic("ffs_reload: dirty1");
 	/*
@@ -774,7 +774,7 @@ ffs_reload(struct mount *mp, kauth_cred_t cred, struct lwp *l)
 		 */
 		mutex_enter(&vp->v_interlock);
 		mutex_exit(&mntvnode_lock);
-		if (vget(vp, LK_EXCLUSIVE | LK_INTERLOCK)) {
+		if (vget(vp, LK_EXCLUSIVE)) {
 			(void)vunmark(mvp);
 			goto loop;
 		}
@@ -828,6 +828,7 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	int32_t *lp;
 	kauth_cred_t cred;
 	u_int32_t sbsize = 8192;	/* keep gcc happy*/
+	int32_t fsbsize;
 
 	dev = devvp->v_rdev;
 	cred = l ? l->l_cred : NOCRED;
@@ -835,7 +836,7 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	/* Flush out any old buffers remaining from a previous use. */
 	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
 	error = vinvalbuf(devvp, V_SAVE, cred, l, 0, 0);
-	VOP_UNLOCK(devvp, 0);
+	VOP_UNLOCK(devvp);
 	if (error)
 		return (error);
 
@@ -886,21 +887,25 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 		if (fs->fs_magic == FS_UFS1_MAGIC) {
 			sbsize = fs->fs_sbsize;
 			fstype = UFS1;
+			fsbsize = fs->fs_bsize;
 #ifdef FFS_EI
 			needswap = 0;
 		} else if (fs->fs_magic == bswap32(FS_UFS1_MAGIC)) {
 			sbsize = bswap32(fs->fs_sbsize);
 			fstype = UFS1;
+			fsbsize = bswap32(fs->fs_bsize);
 			needswap = 1;
 #endif
 		} else if (fs->fs_magic == FS_UFS2_MAGIC) {
 			sbsize = fs->fs_sbsize;
 			fstype = UFS2;
+			fsbsize = fs->fs_bsize;
 #ifdef FFS_EI
 			needswap = 0;
 		} else if (fs->fs_magic == bswap32(FS_UFS2_MAGIC)) {
 			sbsize = bswap32(fs->fs_sbsize);
 			fstype = UFS2;
+			fsbsize = bswap32(fs->fs_bsize);
 			needswap = 1;
 #endif
 		} else
@@ -932,6 +937,13 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 		/* Validate size of superblock */
 		if (sbsize > MAXBSIZE || sbsize < sizeof(struct fs))
 			continue;
+
+		/* Check that we can handle the file system blocksize */
+		if (fsbsize > MAXBSIZE) {
+			printf("ffs_mountfs: block size (%d) > MAXBSIZE (%d)\n",
+			    fsbsize, MAXBSIZE);
+			continue;
+		}
 
 		/* Ok seems to be a good superblock */
 		break;
@@ -1470,7 +1482,7 @@ ffs_flushfiles(struct mount *mp, int flags, struct lwp *l)
 	 */
 	vn_lock(ump->um_devvp, LK_EXCLUSIVE | LK_RETRY);
 	error = VOP_FSYNC(ump->um_devvp, l->l_cred, FSYNC_WAIT, 0, 0);
-	VOP_UNLOCK(ump->um_devvp, 0);
+	VOP_UNLOCK(ump->um_devvp);
 	if (flags & FORCECLOSE) /* XXXDBJ */
 		error = 0;
 
@@ -1555,9 +1567,9 @@ ffs_sync(struct mount *mp, int waitfor, kauth_cred_t cred)
 	 * threads waiting on fstrans may have locked vnodes.
 	 */
 	if (is_suspending)
-		lk_flags = LK_INTERLOCK;
+		lk_flags = 0;
 	else
-		lk_flags = LK_EXCLUSIVE | LK_NOWAIT | LK_INTERLOCK;
+		lk_flags = LK_EXCLUSIVE | LK_NOWAIT;
 	/*
 	 * Write back each (modified) inode.
 	 */
@@ -1660,7 +1672,7 @@ loop:
 		    (waitfor == MNT_WAIT ? FSYNC_WAIT : 0) | FSYNC_NOLOG,
 		    0, 0)) != 0)
 			allerror = error;
-		VOP_UNLOCK(ump->um_devvp, 0);
+		VOP_UNLOCK(ump->um_devvp);
 		if (allerror == 0 && waitfor == MNT_WAIT && !mp->mnt_wapbl) {
 			mutex_enter(&mntvnode_lock);
 			goto loop;

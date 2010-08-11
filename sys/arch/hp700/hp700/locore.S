@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.29.4.4 2010/03/11 15:02:23 yamt Exp $	*/
+/*	$NetBSD: locore.S,v 1.29.4.5 2010/08/11 22:52:02 yamt Exp $	*/
 /*	$OpenBSD: locore.S,v 1.158 2008/07/28 19:08:46 miod Exp $	*/
 
 /*
@@ -142,6 +142,16 @@
 #define	MTCPU_U(x,r)	.word	0x14001840 | ((r) << 21) | ((x) << 16)
 #endif
 
+#ifdef MULTIPROCESSOR
+#define	GET_CURCPU(r)	mfctl	CR_CURCPU, r
+#define	GET_CURLWP(r)	mfctl	CR_CURCPU, r ! ldw	CI_CURLWP(r), r
+#define	SET_CURLWP(r,s)	mfctl	CR_CURCPU, s ! stw	r, CI_CURLWP(s)
+#else
+#define	GET_CURCPU(r)	mfctl	CR_CURLWP, r ! ldw	L_CPU(r), r
+#define	GET_CURLWP(r)	mfctl	CR_CURLWP, r
+#define	SET_CURLWP(r,s)	mtctl	r, CR_CURLWP
+#endif
+
 	.import	$global$, data
 	.import pdc, data
 	.import	boothowto, data
@@ -230,12 +240,11 @@ L$start_zero_tf:
 	 * kernel stack starts a page and a trapframe above uarea address.
 	 */
 	ldo	NBPG+TRAPFRAME_SIZEOF(%t3), %sp
-	mtctl	%t3, CR_UPADDR
+	mtctl	%t3, CR_FPPADDR
 
 	/* initialize the pcb */
 	stw	%r0, PCB_ONFAULT(%t3)
 	stw	%r0, PCB_SPACE(%t3)	/* XXX HPPA_SID_KERNEL == 0 */
-	stw	%t3, PCB_UVA(%t3)
 
 	/*
 	 * Setup various pointers.
@@ -535,15 +544,26 @@ pdc_call_unmapped3:
 EXIT(pdc_call)
 
 /*
+ * int splraise(int ncpl);
+ */
+LEAF_ENTRY(splraise)
+	GET_CURCPU(%t1)
+	ldw	CI_CPL(%t1), %ret0
+	or	%ret0, %arg0, %arg0
+	bv	%r0(%rp)
+	stw	%arg0, CI_CPL(%t1)
+EXIT(splraise)
+	
+/*
  * int spllower(int ncpl);
  */
-ENTRY(spllower,64)
-	ldil	L%ipending, %r1
-	ldw	R%ipending(%r1), %r1	; load ipending
-	ldil	L%cpl, %t1
+ENTRY(spllower,HPPA_FRAME_SIZE)
+	GET_CURCPU(%t1)
+
+	ldw	CI_IPENDING(%t1), %r1	; load ipending
 	andcm,<> %r1, %arg0, %r1	; and with complement of new cpl
 	bv	%r0(%rp)
-	stw	%arg0, R%cpl(%t1)	; store new cpl
+	stw	%arg0, CI_CPL(%t1)	; store new cpl
 
 	/*
 	 * Dispatch interrupts.  There's a chance
@@ -556,8 +576,7 @@ ENTRY(spllower,64)
 	mfctl	%eiem, %arg1
 	mtctl	%r0, %eiem		; disable interrupts
 
-	ldil	L%ipending, %r1
-	ldw	R%ipending(%r1), %r1	; load ipending
+	ldw	CI_IPENDING(%t1), %r1	; load ipending
 	andcm,<> %r1, %arg0, %r1	; and with complement of new cpl
 	b,n	spllower_out		; branch if we got beaten
 	
@@ -604,14 +623,13 @@ EXIT(spllower)
  * void hp700_intr_schedule(int mask);
  */
 ENTRY(hp700_intr_schedule,0)
-	ldil	L%ipending, %t1
-	ldil	L%cpl, %t2
+	GET_CURCPU(%t2)
 	mfctl	%eiem, %arg1
 	mtctl	%r0, %eiem			; disable interrupts
-	ldw	R%ipending(%t1), %r1		; load ipending
+	ldw	CI_IPENDING(%t2), %r1		; load ipending
 	or	%r1, %arg0, %r1			; or in mask
-	stw	%r1, R%ipending(%t1)		; store ipending
-	ldw	R%cpl(%t2), %arg0		; load cpl
+	stw	%r1, CI_IPENDING(%t2)		; store ipending
+	ldw	CI_CPL(%t2), %arg0		; load cpl
 	andcm,= %r1, %arg0, %r1			; and ipending with ~cpl
 	b,n	spllower_dispatch		; dispatch if we can
 	bv	%r0(%rp)
@@ -857,14 +875,9 @@ switch_exited:
 	mtctl	%t3, %pidr2			/* pmap_activate? */
 #endif
 	ldw	TF_CR30(%t1), %t2		/* pmap_activate? */
-	mtctl	%t2, CR_UPADDR			/* pmap_activate? */
+	mtctl	%t2, CR_FPPADDR			/* pmap_activate? */
 
-	mtctl	%arg1, CR_CURLWP
-
-#ifdef MULTIPROCESSOR
-	ldw	L_CPU(%arg1),%t2		; %t2 = curcpu()
-	stw	%arg1, CI_CURLWP(%t2)
-#endif
+	SET_CURLWP(%arg1, %t2)
 
 	ldo	-(HPPA_FRAME_SIZE+16*4)(%sp), %r3
 
@@ -930,7 +943,7 @@ ALTENTRY(hppa_fpu_nop1)
 	 */
 	ldil	L%fpu_cur_uspace, %t1
 	mfctl	%ccr, %r1
-	mfctl	CR_UPADDR, %t2
+	mfctl	CR_FPPADDR, %t2
 	ldw	R%fpu_cur_uspace(%t1), %t1
 	depi	0, 25, 2, %r1		; disables the FPU
 	comb,<>,n %t1, %t2, 0		; nullify if LWPs different
@@ -980,7 +993,7 @@ ALTENTRY(setfunc_trampoline)
 	 * this LWP was created by the fork()
 	 * syscall, which we now return from.
 	 */
-	mfctl	CR_CURLWP, %t2
+	GET_CURLWP(%t2)
 	.call
 	b	syscall_return
 	ldw	L_MD(%t2), %t3

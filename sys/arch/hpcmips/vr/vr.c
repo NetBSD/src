@@ -1,4 +1,4 @@
-/*	$NetBSD: vr.c,v 1.51.4.3 2010/03/11 15:02:25 yamt Exp $	*/
+/*	$NetBSD: vr.c,v 1.51.4.4 2010/08/11 22:52:07 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999-2002
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vr.c,v 1.51.4.3 2010/03/11 15:02:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vr.c,v 1.51.4.4 2010/08/11 22:52:07 yamt Exp $");
 
 #include "opt_vr41xx.h"
 #include "opt_tx39xx.h"
@@ -344,8 +344,11 @@ vr_find_dram(paddr_t addr, paddr_t end)
 	for (; addr < end; addr += PAGE_SIZE) {
 
 		page = (char *)MIPS_PHYS_TO_KSEG1(addr);
+/*
+ XXX see port-hpcmips/42934
 		if (badaddr(page, 4))
 			goto bad;
+ */
 
 		/* stop memory probing at first memory image */
 		if (memcmp(page, (void *)MIPS_PHYS_TO_KSEG0(0), 128) == 0)

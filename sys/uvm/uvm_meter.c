@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_meter.c,v 1.48.2.2 2010/03/11 15:04:47 yamt Exp $	*/
+/*	$NetBSD: uvm_meter.c,v 1.48.2.3 2010/08/11 22:55:16 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_meter.c,v 1.48.2.2 2010/03/11 15:04:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_meter.c,v 1.48.2.3 2010/08/11 22:55:16 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -59,71 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_meter.c,v 1.48.2.2 2010/03/11 15:04:47 yamt Exp 
 int maxslp = MAXSLP;	/* patchable ... */
 struct loadavg averunnable;
 
-/*
- * constants for averages over 1, 5, and 15 minutes when sampling at
- * 5 second intervals.
- */
-
-static const fixpt_t cexp[3] = {
-	0.9200444146293232 * FSCALE,	/* exp(-1/12) */
-	0.9834714538216174 * FSCALE,	/* exp(-1/60) */
-	0.9944598480048967 * FSCALE,	/* exp(-1/180) */
-};
-
-/*
- * prototypes
- */
-
-static void uvm_loadav(struct loadavg *);
 static void uvm_total(struct vmtotal *);
-
-/*
- * uvm_meter: calculate load average.
- */
-void
-uvm_meter(void)
-{
-	static int count;
-
-	if (++count >= 5) {
-		count = 0;
-		uvm_loadav(&averunnable);
-	}
-}
-
-/*
- * uvm_loadav: compute a tenex style load average of a quantity on
- * 1, 5, and 15 minute intervals.
- */
-static void
-uvm_loadav(struct loadavg *avg)
-{
-	int i, nrun;
-	struct lwp *l;
-
-	nrun = 0;
-
-	mutex_enter(proc_lock);
-	LIST_FOREACH(l, &alllwp, l_list) {
-		if ((l->l_flag & (LW_SINTR | LW_SYSTEM)) != 0)
-			continue;
-		switch (l->l_stat) {
-		case LSSLEEP:
-			if (l->l_slptime > 1)
-				continue;
-		/* fall through */
-		case LSRUN:
-		case LSONPROC:
-		case LSIDL:
-			nrun++;
-		}
-	}
-	mutex_exit(proc_lock);
-
-	for (i = 0; i < 3; i++)
-		avg->ldavg[i] = (cexp[i] * avg->ldavg[i] +
-		    nrun * FSCALE * (FSCALE - cexp[i])) >> FSHIFT;
-}
 
 /*
  * sysctl helper routine for the vm.vmmeter node.
@@ -337,7 +273,7 @@ SYSCTL_SETUP(sysctl_vm_setup, "sysctl vm subtree setup")
 		       CTL_VM, VM_USPACE, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "idlezero",
+		       CTLTYPE_BOOL, "idlezero",
 		       SYSCTL_DESCR("Whether try to zero pages in idle loop"),
 		       NULL, 0, &vm_page_zero_enable, 0,
 		       CTL_VM, CTL_CREATE, CTL_EOL);

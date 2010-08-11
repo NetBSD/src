@@ -1,4 +1,4 @@
-/* $NetBSD: dm_ioctl.c,v 1.11.2.5 2010/03/11 15:03:26 yamt Exp $      */
+/* $NetBSD: dm_ioctl.c,v 1.11.2.6 2010/08/11 22:53:20 yamt Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  * To access table entries dm_table_* routines must be used.
  *
  * dm_table_get_entry will increment table users reference
- * counter. It will return active or inactive table depedns
+ * counter. It will return active or inactive table depends
  * on uint8_t argument.
  *
  * dm_table_release must be called for every table_entry from

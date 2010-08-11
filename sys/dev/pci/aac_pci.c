@@ -1,4 +1,4 @@
-/*	$NetBSD: aac_pci.c,v 1.23.4.4 2010/03/11 15:03:42 yamt Exp $	*/
+/*	$NetBSD: aac_pci.c,v 1.23.4.5 2010/08/11 22:53:41 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aac_pci.c,v 1.23.4.4 2010/03/11 15:03:42 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aac_pci.c,v 1.23.4.5 2010/08/11 22:53:41 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -397,6 +397,14 @@ static struct aac_ident {
 		AAC_HWIF_STRONGARM,
 		0,
 		"HP NetRAID-4M"
+	},
+	{	0x9005,
+		0x0285,
+		0x108e,
+		0x286,
+		AAC_HWIF_I960RX,
+		0,
+		"SG-XPCIESAS-R-IN"
 	},
 };
 

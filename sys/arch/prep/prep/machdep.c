@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.67.20.2 2010/03/11 15:02:52 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.67.20.3 2010/08/11 22:52:37 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.67.20.2 2010/03/11 15:02:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.67.20.3 2010/08/11 22:52:37 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_openpic.h"
@@ -443,8 +443,6 @@ prep_init(void)
 		if (ppc_dev[i].DeviceId.DevId == 0x244d000d) { /* MPIC */
 			foundmpic = prep_setup_openpic(&ppc_dev[i]);
 		}
-#else
-		;
 #endif
 
 	}
@@ -467,7 +465,10 @@ static void
 init_intr(void)
 {
         int i;
+
+#if defined(PIC_OPENPIC)
         openpic_base = 0;
+#endif
 
 	pic_init();
         i = find_platform_quirk(res->VitalProductData.PrintableModel);

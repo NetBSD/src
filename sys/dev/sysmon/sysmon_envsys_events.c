@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsys_events.c,v 1.54.4.4 2010/03/11 15:04:04 yamt Exp $ */
+/* $NetBSD: sysmon_envsys_events.c,v 1.54.4.5 2010/08/11 22:54:12 yamt Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.54.4.4 2010/03/11 15:04:04 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.54.4.5 2010/08/11 22:54:12 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -113,8 +113,9 @@ sme_event_register(prop_dictionary_t sdict, envsys_data_t *edata,
 	 * even if its ENVSYS_FPERCENT flag and value_max are set.
 	 */
 
-	DPRINTF(("%s: units %d props 0x%04x edata-flags 0x%04x\n",
-		__func__, edata->units, props, edata->flags));
+	DPRINTF(("%s: units %d props 0x%04x upropset 0x%04x max_val %d"
+		" edata-flags 0x%04x\n", __func__, edata->units, props,
+		edata->upropset, edata->value_max, edata->flags));
 
 	if (props && edata->units == ENVSYS_INDICATOR)
 		return ENOTSUP;
@@ -124,10 +125,10 @@ sme_event_register(prop_dictionary_t sdict, envsys_data_t *edata,
 	     !(edata->flags & ENVSYS_FPERCENT) ||
 	     (props & PROP_VAL_LIMITS) ||
 	     (edata->upropset & PROP_VAL_LIMITS)))
-		return ENOTSUP;
+		props = 0;
 
 	if ((props & PROP_VAL_LIMITS) && (edata->upropset & PROP_CAP_LIMITS))
-		return ENOTSUP;
+		props = 0;
 
 	/* 
 	 * check if the event is already on the list and return
@@ -451,18 +452,10 @@ do {									\
 							  sed_t->sed_edata,
 							  &lims, &props);
 	/*
-	 * If no values returned, don't create the event monitor at
-	 * this time.  We'll get another chance later when the user
-	 * provides us with limits.
-	 */
-	if (props == 0)
-		sed_t->sed_edata->flags &= ~ENVSYS_FMONLIMITS;
-
-	/*
 	 * If driver doesn't provide a way to "absorb" user-specified
 	 * limit values, we must monitor all limits ourselves
 	 */
-	else if (sed_t->sed_sme->sme_set_limits == NULL)
+	if (sed_t->sed_sme->sme_set_limits == NULL)
 		props &= ~PROP_DRIVER_LIMITS;
 
 	/* Register the events that were specified */
@@ -541,6 +534,78 @@ sme_events_destroy(struct sysmon_envsys *sme)
 }
 
 /*
+ * sysmon_envsys_update_limits
+ *
+ *	+ If a driver needs to update the limits that it is providing,
+ *	  we need to update the dictionary data as well as the limits.
+ *	  This only makes sense if the driver is capable of providing
+ *	  its limits, and if there is a limits event-monitor.
+ */
+int
+sysmon_envsys_update_limits(struct sysmon_envsys *sme, envsys_data_t *edata)
+{
+	int err;
+
+	if (sme->sme_get_limits == NULL ||
+	    (edata->flags & ENVSYS_FMONLIMITS) == 0)
+		return EINVAL;
+
+	sysmon_envsys_acquire(sme, false);
+	err = sme_update_limits(sme, edata);
+	sysmon_envsys_release(sme, false);
+
+	return err;
+}
+
+/*
+ * sme_update_limits
+ *
+ *	+ Internal version of sysmon_envsys_update_limits() to be used
+ *	  when the device has already been sysmon_envsys_acquire()d.
+ */
+
+int
+sme_update_limits(struct sysmon_envsys *sme, envsys_data_t *edata)
+{
+	prop_dictionary_t sdict = NULL;
+	prop_array_t array = NULL;
+	sysmon_envsys_lim_t lims;
+	sme_event_t *see;
+	uint32_t props = 0;
+
+	/* Find the dictionary for this sensor */
+	array = prop_dictionary_get(sme_propd, sme->sme_name);
+	if (array == NULL ||
+	    prop_object_type(array) != PROP_TYPE_ARRAY) {
+		DPRINTF(("%s: array device failed\n", __func__));
+		return EINVAL;
+	}
+	
+	sdict = prop_array_get(array, edata->sensor);
+	if (sdict == NULL) {
+		return EINVAL;
+	}
+
+	/* Find the event definition to get its powertype */
+	LIST_FOREACH(see, &sme->sme_events_list, see_list) {
+		if (edata == see->see_edata &&
+		    see->see_type == PENVSYS_EVENT_LIMITS)
+			break;
+	}
+	if (see == NULL)
+		return EINVAL;
+
+	/* Get new limit values */
+	(*sme->sme_get_limits)(sme, edata, &lims, &props);
+
+	/* Update event and dictionary */
+	sme_event_register(sdict, edata, sme, &lims, props,
+			   PENVSYS_EVENT_LIMITS, see->see_pes.pes_type);
+
+	return 0;
+}
+
+/*
  * sme_events_check:
  *
  * 	+ Passes the events to the workqueue thread and stops
@@ -578,19 +643,15 @@ sme_events_check(void *arg)
 void
 sme_events_worker(struct work *wk, void *arg)
 {
-	const struct sme_description_table *sdt = NULL;
-	const struct sme_sensor_event *sse = sme_sensor_event;
 	sme_event_t *see = (void *)wk;
 	struct sysmon_envsys *sme = see->see_sme;
 	envsys_data_t *edata = see->see_edata;
-	int i, state = 0;
 
 	KASSERT(wk == &see->see_wk);
 	KASSERT(sme != NULL || edata != NULL);
 
 	mutex_enter(&sme->sme_mtx);
-	if ((see->see_flags & SEE_EVENT_WORKING) == 0)
-		see->see_flags |= SEE_EVENT_WORKING;
+	see->see_flags |= SEE_EVENT_WORKING;
 	/* 
 	 * sme_events_check marks the sensors to make us refresh them here.
 	 * Don't refresh if the driver uses its own method for refreshing.
@@ -612,38 +673,91 @@ sme_events_worker(struct work *wk, void *arg)
 	if (edata->state == ENVSYS_SINVALID)
 		goto out;
 
-	switch (see->see_type) {
 	/*
 	 * For range limits, if the driver claims responsibility for
 	 * limit/range checking, just user driver-supplied status.
 	 * Else calculate our own status.  Note that driver must
 	 * relinquish responsibility for ALL limits if there is even
 	 * one limit that it cannot handle!
+	 *
+	 * If this is a CAPACITY monitor, but the sensor's max_value
+	 * is not set, treat it as though the monitor does not exist.
 	 */
+	if ((see->see_type == PENVSYS_EVENT_LIMITS ||
+	     see->see_type == PENVSYS_EVENT_CAPACITY) &&
+	    (edata->upropset & PROP_DRIVER_LIMITS) == 0) {
+		if ((see->see_type == PENVSYS_EVENT_CAPACITY) &&
+		    (edata->value_max == 0))
+			edata->state = ENVSYS_SVALID;
+		else if ((edata->upropset & (PROP_CRITMIN | PROP_BATTCAP)) &&
+		    (edata->value_cur < edata->limits.sel_critmin))
+			edata->state = ENVSYS_SCRITUNDER;
+		else if ((edata->upropset & (PROP_WARNMIN | PROP_BATTWARN)) &&
+			 (edata->value_cur < edata->limits.sel_warnmin))
+			edata->state = ENVSYS_SWARNUNDER;
+		else if ((edata->upropset & (PROP_CRITMAX | PROP_BATTMAX)) &&
+			 (edata->value_cur > edata->limits.sel_critmax))
+			edata->state = ENVSYS_SCRITOVER;
+		else if ((edata->upropset & (PROP_WARNMAX | PROP_BATTHIGH)) &&
+			 (edata->value_cur > edata->limits.sel_warnmax))
+			edata->state = ENVSYS_SWARNOVER;
+		else
+			edata->state = ENVSYS_SVALID;
+	}
+	sme_deliver_event(see);
+
+out:
+	see->see_flags &= ~SEE_EVENT_WORKING;
+	cv_broadcast(&sme->sme_condvar);
+	mutex_exit(&sme->sme_mtx);
+}
+
+/*
+ * sysmon_envsys_sensor_event
+ *
+ *	+ Find the monitor event of a particular type for a given sensor
+ *	  on a device and deliver the event if one is required.  If
+ *	  no event type is specified, deliver all events for the sensor.
+ */
+void
+sysmon_envsys_sensor_event(struct sysmon_envsys *sme, envsys_data_t *edata, 
+			   int ev_type)
+{
+	sme_event_t *see;
+
+	mutex_enter(&sme->sme_mtx);
+	LIST_FOREACH(see, &sme->sme_events_list, see_list) {
+		if (edata != see->see_edata)
+			continue;
+		if (ev_type == 0 ||
+		    ev_type == see->see_type) {
+			sme_deliver_event(see);
+			if (ev_type != 0)
+				break;
+		}
+	}
+	mutex_exit(&sme->sme_mtx);
+}
+
+/*
+ * sme_deliver_event:
+ *
+ * 	+ If new sensor state requires it, send an event to powerd
+ *
+ *	  Must be called with the device's sysmon mutex held
+ *		see->see_sme->sme_mtx
+ */
+void
+sme_deliver_event(sme_event_t *see)
+{
+	envsys_data_t *edata = see->see_edata;
+	const struct sme_description_table *sdt = NULL;
+	const struct sme_sensor_event *sse = sme_sensor_event;
+	int i, state = 0;
+
+	switch (see->see_type) {
 	case PENVSYS_EVENT_LIMITS:
 	case PENVSYS_EVENT_CAPACITY:
-#define	__EXCEED_LIM(valid, lim, rel) \
-		((edata->upropset & (valid)) && \
-		 (edata->value_cur rel (edata->limits.lim)))
-
-		if ((edata->upropset & PROP_DRIVER_LIMITS) == 0) {
-			if __EXCEED_LIM(PROP_CRITMIN | PROP_BATTCAP,
-					sel_critmin, <)
-				edata->state = ENVSYS_SCRITUNDER;
-			else if __EXCEED_LIM(PROP_WARNMIN | PROP_BATTWARN, 
-					sel_warnmin, <)
-				edata->state = ENVSYS_SWARNUNDER;
-			else if __EXCEED_LIM(PROP_CRITMAX | PROP_BATTMAX,
-					sel_critmax, >)
-				edata->state = ENVSYS_SCRITOVER;
-			else if __EXCEED_LIM(PROP_WARNMAX | PROP_BATTHIGH,
-					sel_warnmax, >)
-				edata->state = ENVSYS_SWARNOVER;
-			else
-				edata->state = ENVSYS_SVALID;
-		}
-#undef	__EXCEED_LIM
-
 		/*
 		 * Send event if state has changed
 		 */
@@ -763,7 +877,7 @@ sme_events_worker(struct work *wk, void *arg)
 			 * Stop the callout and send the 'low-power' event.
 			 */
 			sysmon_low_power = true;
-			callout_stop(&sme->sme_callout);
+			callout_stop(&see->see_sme->sme_callout);
 			pes.pes_type = PENVSYS_TYPE_BATTERY;
 			sysmon_penvsys_event(&pes, PENVSYS_EVENT_LOW_POWER);
 		}
@@ -771,11 +885,6 @@ sme_events_worker(struct work *wk, void *arg)
 	default:
 		panic("%s: invalid event type %d", __func__, see->see_type);
 	}
-
-out:
-	see->see_flags &= ~SEE_EVENT_WORKING;
-	cv_broadcast(&sme->sme_condvar);
-	mutex_exit(&sme->sme_mtx);
 }
 
 /*

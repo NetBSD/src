@@ -1,4 +1,4 @@
-/*	$NetBSD: brgphy.c,v 1.37.4.6 2010/03/11 15:03:41 yamt Exp $	*/
+/*	$NetBSD: brgphy.c,v 1.37.4.7 2010/08/11 22:53:40 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: brgphy.c,v 1.37.4.6 2010/03/11 15:03:41 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: brgphy.c,v 1.37.4.7 2010/08/11 22:53:40 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,8 +90,8 @@ static void	brgphyattach(device_t, device_t, void *);
 
 struct brgphy_softc {
 	struct mii_softc sc_mii;
-	int sc_isbge;
-	int sc_isbnx;
+	bool sc_isbge;
+	bool sc_isbnx;
 	int sc_bge_flags;
 	int sc_bnx_flags;
 };
@@ -134,14 +134,14 @@ static const struct mii_phydesc brgphys[] = {
 	{ MII_OUI_BROADCOM,		MII_MODEL_BROADCOM_BCM5421,
 	  MII_STR_BROADCOM_BCM5421 },
 
-	{ MII_OUI_BROADCOM,		MII_MODEL_BROADCOM_BCM54K2,
-	  MII_STR_BROADCOM_BCM54K2 },
+	{ MII_OUI_BROADCOM,		MII_MODEL_BROADCOM_BCM5462,
+	  MII_STR_BROADCOM_BCM5462 },
 
 	{ MII_OUI_BROADCOM,		MII_MODEL_BROADCOM_BCM5461,
 	  MII_STR_BROADCOM_BCM5461 },
 
-	{ MII_OUI_BROADCOM,		MII_MODEL_BROADCOM_BCM5462,
-	  MII_STR_BROADCOM_BCM5462 },
+	{ MII_OUI_BROADCOM,		MII_MODEL_BROADCOM_BCM54K2,
+	  MII_STR_BROADCOM_BCM54K2 },
 
 	{ MII_OUI_BROADCOM,		MII_MODEL_BROADCOM_BCM5464,
 	  MII_STR_BROADCOM_BCM5464 },
@@ -173,6 +173,12 @@ static const struct mii_phydesc brgphys[] = {
 	{ MII_OUI_BROADCOM,		MII_MODEL_BROADCOM_BCM5708C,
 	  MII_STR_BROADCOM_BCM5708C },
 
+	{ MII_OUI_BROADCOM2,		MII_MODEL_BROADCOM2_BCM5481,
+	  MII_STR_BROADCOM2_BCM5481 },
+
+	{ MII_OUI_BROADCOM2,		MII_MODEL_BROADCOM2_BCM5482,
+	  MII_STR_BROADCOM2_BCM5482 },
+
 	{ MII_OUI_BROADCOM2,		MII_MODEL_BROADCOM2_BCM5709C,
 	  MII_STR_BROADCOM2_BCM5709C },
 
@@ -182,14 +188,14 @@ static const struct mii_phydesc brgphys[] = {
 	{ MII_OUI_BROADCOM2,		MII_MODEL_BROADCOM2_BCM5722,
 	  MII_STR_BROADCOM2_BCM5722 },
 
+	{ MII_OUI_BROADCOM2,		MII_MODEL_BROADCOM2_BCM5754,
+	  MII_STR_BROADCOM2_BCM5754 },
+
 	{ MII_OUI_BROADCOM2,		MII_MODEL_BROADCOM2_BCM5755,
 	  MII_STR_BROADCOM2_BCM5755 },
 
 	{ MII_OUI_BROADCOM2,		MII_MODEL_BROADCOM2_BCM5761,
 	  MII_STR_BROADCOM2_BCM5761 },
-
-	{ MII_OUI_BROADCOM2,		MII_MODEL_BROADCOM2_BCM5754,
-	  MII_STR_BROADCOM2_BCM5754 },
 
 	{ MII_OUI_BROADCOM2,		MII_MODEL_BROADCOM2_BCM5784,
 	  MII_STR_BROADCOM2_BCM5784 },
@@ -252,13 +258,13 @@ brgphyattach(device_t parent, device_t self, void *aux)
 	aprint_normal("\n");
 
 	if (device_is_a(parent, "bge")) {
-		bsc->sc_isbge = 1;
+		bsc->sc_isbge = true;
 		dict = device_properties(parent);
 		if (!prop_dictionary_get_uint32(dict, "phyflags",
 			&bsc->sc_bge_flags))
 			aprint_error("failed to get phyflags");
 	} else if (device_is_a(parent, "bnx")) {
-		bsc->sc_isbnx = 1;
+		bsc->sc_isbnx = true;
 		dict = device_properties(parent);
 		prop_dictionary_get_uint32(dict, "phyflags",
 		    &bsc->sc_bnx_flags);
@@ -537,7 +543,7 @@ brgphy_reset(struct mii_softc *sc)
 	}
 
 	/* Handle any bge (NetXtreme/NetLink) workarounds. */
-	if (bsc->sc_isbge != 0) {
+	if (bsc->sc_isbge) {
 		if (!(sc->mii_flags & MIIF_HAVEFIBER)) {
 
 			if (bsc->sc_bge_flags & BGE_PHY_ADC_BUG)
@@ -589,7 +595,7 @@ brgphy_reset(struct mii_softc *sc)
 		}
 #if 0 /* not yet */
 	/* Handle any bnx (NetXtreme II) workarounds. */
-	} else if (sc->sc_isbnx != 0) {
+	} else if (sc->sc_isbnx) {
 		bnx_sc = sc->mii_pdata->mii_ifp->if_softc;
 
 		if (sc->mii_mpd_model == MII_MODEL_xxBROADCOM2_BCM5708S) {

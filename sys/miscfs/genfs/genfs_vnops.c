@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.166.2.5 2010/03/11 15:04:22 yamt Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.166.2.6 2010/08/11 22:54:47 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.166.2.5 2010/03/11 15:04:22 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.166.2.6 2010/08/11 22:54:47 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -170,7 +170,8 @@ genfs_einval(void *v)
 
 /*
  * Called when an fs doesn't support a particular vop.
- * This takes care to vrele, vput, or vunlock passed in vnodes.
+ * This takes care to vrele, vput, or vunlock passed in vnodes
+ * and calls VOP_ABORTOP for a componentname (in non-rename VOP).
  */
 int
 genfs_eopnotsupp(void *v)
@@ -181,14 +182,35 @@ genfs_eopnotsupp(void *v)
 	} */ *ap = v;
 	struct vnodeop_desc *desc = ap->a_desc;
 	struct vnode *vp, *vp_last = NULL;
-	int flags, i, j, offset;
+	int flags, i, j, offset_cnp, offset_vp;
+
+	KASSERT(desc->vdesc_offset != VOP_LOOKUP_DESCOFFSET);
+	KASSERT(desc->vdesc_offset != VOP_ABORTOP_DESCOFFSET);
+
+	/*
+	 * Free componentname that lookup potentially SAVENAMEd.
+	 *
+	 * As is logical, componentnames for VOP_RENAME are handled by
+	 * the caller of VOP_RENAME.  Yay, rename!
+	 */
+	if (desc->vdesc_offset != VOP_RENAME_DESCOFFSET &&
+	    (offset_vp = desc->vdesc_vp_offsets[0]) != VDESC_NO_OFFSET &&
+	    (offset_cnp = desc->vdesc_componentname_offset) != VDESC_NO_OFFSET){
+		struct componentname *cnp;
+		struct vnode *dvp;
+
+		dvp = *VOPARG_OFFSETTO(struct vnode **, offset_vp, ap);
+		cnp = *VOPARG_OFFSETTO(struct componentname **, offset_cnp, ap);
+
+		VOP_ABORTOP(dvp, cnp);
+	}
 
 	flags = desc->vdesc_flags;
 	for (i = 0; i < VDESC_MAX_VPS; flags >>=1, i++) {
-		if ((offset = desc->vdesc_vp_offsets[i]) == VDESC_NO_OFFSET)
+		if ((offset_vp = desc->vdesc_vp_offsets[i]) == VDESC_NO_OFFSET)
 			break;	/* stop at end of list */
 		if ((j = flags & VDESC_VP0_WILLPUT)) {
-			vp = *VOPARG_OFFSETTO(struct vnode **, offset, ap);
+			vp = *VOPARG_OFFSETTO(struct vnode **, offset_vp, ap);
 
 			/* Skip if NULL */
 			if (!vp)
@@ -205,7 +227,7 @@ genfs_eopnotsupp(void *v)
 				}
 				break;
 			case VDESC_VP0_WILLUNLOCK:
-				VOP_UNLOCK(vp, 0);
+				VOP_UNLOCK(vp);
 				break;
 			case VDESC_VP0_WILLRELE:
 				vrele(vp);
@@ -266,13 +288,18 @@ genfs_lock(void *v)
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	int flags = ap->a_flags;
+	krw_t op;
 
-	if ((flags & LK_INTERLOCK) != 0) {
-		flags &= ~LK_INTERLOCK;
-		mutex_exit(&vp->v_interlock);
-	}
+	KASSERT((flags & ~(LK_EXCLUSIVE | LK_SHARED | LK_NOWAIT)) == 0);
 
-	return (vlockmgr(vp->v_vnlock, flags));
+	op = ((flags & LK_EXCLUSIVE) != 0 ? RW_WRITER : RW_READER);
+
+	if ((flags & LK_NOWAIT) != 0)
+		return (rw_tryenter(&vp->v_lock, op) ? 0 : EBUSY);
+
+	rw_enter(&vp->v_lock, op);
+
+	return 0;
 }
 
 /*
@@ -283,13 +310,12 @@ genfs_unlock(void *v)
 {
 	struct vop_unlock_args /* {
 		struct vnode *a_vp;
-		int a_flags;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 
-	KASSERT(ap->a_flags == 0);
+	rw_exit(&vp->v_lock);
 
-	return (vlockmgr(vp->v_vnlock, LK_RELEASE));
+	return 0;
 }
 
 /*
@@ -303,7 +329,13 @@ genfs_islocked(void *v)
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 
-	return (vlockstatus(vp->v_vnlock));
+	if (rw_write_held(&vp->v_lock))
+		return LK_EXCLUSIVE;
+
+	if (rw_read_held(&vp->v_lock))
+		return LK_SHARED;
+
+	return 0;
 }
 
 /*
@@ -312,18 +344,7 @@ genfs_islocked(void *v)
 int
 genfs_nolock(void *v)
 {
-	struct vop_lock_args /* {
-		struct vnode *a_vp;
-		int a_flags;
-		struct lwp *a_l;
-	} */ *ap = v;
 
-	/*
-	 * Since we are not using the lock manager, we must clear
-	 * the interlock here.
-	 */
-	if (ap->a_flags & LK_INTERLOCK)
-		mutex_exit(&ap->a_vp->v_interlock);
 	return (0);
 }
 

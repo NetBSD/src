@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.26.18.1 2009/05/04 08:11:43 yamt Exp $	*/
+/*	$NetBSD: cpu.c,v 1.26.18.2 2010/08/11 22:52:32 yamt Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.26.18.1 2009/05/04 08:11:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.26.18.2 2010/08/11 22:52:32 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,6 +68,7 @@ static struct cputab models[] = {
 	{ PVR_405GPR, 	0xffff0000,	"405GPr" 	},
 	{ PVR_405D5X1, 	0xfffff000, 	"Xilinx Virtex II Pro" 	},
 	{ PVR_405D5X2, 	0xfffff000, 	"Xilinx Virtex 4 FX" 	},
+	{ PVR_405EX, 	0xffff0000, 	"405EX" 	},
 	{ 0, 		0,		NULL 		}
 };
 
@@ -164,12 +165,22 @@ cpuattach(struct device *parent, struct device *self, void *aux)
 void
 cpu_probe_cache(void)
 {
+	struct cputab *cp = models;
+	u_int pvr;
+
+	pvr = mfpvr();
+	while (cp->name) {
+		if ((pvr & cp->mask) == cp->version)
+			break;
+		cp++;
+	}
+
 	/*
 	 * First we need to identify the CPU and determine the
 	 * cache line size, or things like memset/memcpy may lose
 	 * badly.
 	 */
-	switch (mfpvr() & 0xffff0000) {
+	switch (cp->version) {
 	case PVR_401A1:
 		curcpu()->ci_ci.dcache_size = 1024;
 		curcpu()->ci_ci.dcache_line_size = 16;
@@ -227,6 +238,7 @@ cpu_probe_cache(void)
 	case PVR_405GPR:
 	case PVR_405D5X1:
 	case PVR_405D5X2:
+	case PVR_405EX:
 		curcpu()->ci_ci.dcache_size = 16384;
 		curcpu()->ci_ci.dcache_line_size = 32;
 		curcpu()->ci_ci.icache_size = 16384;
@@ -242,7 +254,6 @@ cpu_probe_cache(void)
 		curcpu()->ci_ci.icache_line_size = 4;
 		break;
 	}
-
 }
 
 /*

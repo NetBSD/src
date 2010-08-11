@@ -1,4 +1,4 @@
-/* $NetBSD: seeq8005.c,v 1.43.4.1 2010/03/11 15:03:35 yamt Exp $ */
+/* $NetBSD: seeq8005.c,v 1.43.4.2 2010/08/11 22:53:31 yamt Exp $ */
 
 /*
  * Copyright (c) 2000, 2001 Ben Harris
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: seeq8005.c,v 1.43.4.1 2010/03/11 15:03:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: seeq8005.c,v 1.43.4.2 2010/08/11 22:53:31 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -915,8 +915,7 @@ eatxpacket(struct seeq8005_softc *sc)
 	}
 
 	/* Give the packet to the bpf, if any. */
-	if (ifp->if_bpf)
-		bpf_ops->bpf_mtap(ifp->if_bpf, m0);
+	bpf_mtap(ifp, m0);
 
 	DPRINTF(SEEQ_DEBUG_TX, ("Tx new packet\n"));
 
@@ -1252,8 +1251,7 @@ ea_read(struct seeq8005_softc *sc, int addr, int len)
 	 * Check if there's a BPF listener on this interface.
 	 * If so, hand off the raw packet to bpf.
 	 */
-	if (ifp->if_bpf)
-		bpf_ops->bpf_mtap(ifp->if_bpf, m);
+	bpf_mtap(ifp, m);
 
 	(*ifp->if_input)(ifp, m);
 }

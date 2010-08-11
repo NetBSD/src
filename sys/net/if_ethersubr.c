@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.164.4.4 2010/03/11 15:04:26 yamt Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.164.4.5 2010/08/11 22:54:53 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,13 +61,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.164.4.4 2010/03/11 15:04:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.164.4.5 2010/08/11 22:54:53 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
 #include "opt_iso.h"
 #include "opt_ipx.h"
 #include "opt_mbuftrace.h"
+#include "opt_mpls.h"
 #include "opt_gateway.h"
 #include "opt_pfil_hooks.h"
 #include "opt_pppoe.h"
@@ -178,6 +179,11 @@ extern u_char	at_org_code[3];
 extern u_char	aarp_org_code[3];
 #endif /* NETATALK */
 
+#ifdef MPLS
+#include <netmpls/mpls.h>
+#include <netmpls/mpls_var.h>
+#endif
+
 static struct timeval bigpktppslim_last;
 static int bigpktppslim = 2;	/* XXX */
 static int bigpktpps_count;
@@ -198,7 +204,8 @@ static	int ether_output(struct ifnet *, struct mbuf *,
  * Assumes that ifp is actually pointer to ethercom structure.
  */
 static int
-ether_output(struct ifnet *ifp0, struct mbuf *m0, const struct sockaddr *dst,
+ether_output(struct ifnet * const ifp0, struct mbuf * const m0,
+	const struct sockaddr * const dst,
 	struct rtentry *rt0)
 {
 	uint16_t etype = 0;
@@ -446,6 +453,16 @@ ether_output(struct ifnet *ifp0, struct mbuf *m0, const struct sockaddr *dst,
 		senderr(EAFNOSUPPORT);
 	}
 
+#ifdef MPLS
+		if (rt0 != NULL && rt_gettag(rt0) != NULL &&
+		    rt_gettag(rt0)->sa_family == AF_MPLS) {
+			union mpls_shim msh;
+			msh.s_addr = MPLS_GETSADDR(rt0);
+			if (msh.shim.label != MPLS_LABEL_IMPLNULL)
+				etype = htons(ETHERTYPE_MPLS);
+		}
+#endif
+
 	if (mcopy)
 		(void)looutput(ifp, mcopy, dst, rt);
 
@@ -507,7 +524,6 @@ ether_output(struct ifnet *ifp0, struct mbuf *m0, const struct sockaddr *dst,
 	if (ALTQ_IS_ENABLED(&ifp->if_snd))
 		altq_etherclassify(&ifp->if_snd, m, &pktattr);
 #endif
-
 	return ifq_enqueue(ifp, m ALTQ_COMMA ALTQ_DECL(&pktattr));
 
 bad:
@@ -639,7 +655,7 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 	/*
 	 * Determine if the packet is within its size limits.
 	 */
-	if (m->m_pkthdr.len >
+	if (etype != ETHERTYPE_MPLS && m->m_pkthdr.len >
 	    ETHER_MAX_FRAME(ifp, etype, m->m_flags & M_HASFCS)) {
 		if (ppsratecheck(&bigpktppslim_last, &bigpktpps_count,
 			    bigpktppslim)) {
@@ -904,6 +920,12 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 			aarpinput(ifp, m); /* XXX */
 			return;
 #endif /* NETATALK */
+#ifdef MPLS
+		case ETHERTYPE_MPLS:
+			schednetisr(NETISR_MPLS);
+			inq = &mplsintrq;
+			break;
+#endif
 		default:
 			m_freem(m);
 			return;
@@ -1081,8 +1103,7 @@ ether_ifattach(struct ifnet *ifp, const uint8_t *lla)
 
 	LIST_INIT(&ec->ec_multiaddrs);
 	ifp->if_broadcastaddr = etherbroadcastaddr;
-	bpf_ops->bpf_attach(ifp, DLT_EN10MB,
-	    sizeof(struct ether_header), &ifp->if_bpf);
+	bpf_attach(ifp, DLT_EN10MB, sizeof(struct ether_header));
 #ifdef MBUFTRACE
 	strlcpy(ec->ec_tx_mowner.mo_name, ifp->if_xname,
 	    sizeof(ec->ec_tx_mowner.mo_name));
@@ -1110,7 +1131,7 @@ ether_ifdetach(struct ifnet *ifp)
 		bridge_ifdetach(ifp);
 #endif
 
-	bpf_ops->bpf_detach(ifp);
+	bpf_detach(ifp);
 
 #if NVLAN > 0
 	if (ec->ec_nvlans)
@@ -1224,40 +1245,41 @@ const uint8_t ether_ip6multicast_max[ETHER_ADDR_LEN] =
  * ether_aton implementation, not using a static buffer.
  */
 int
-ether_nonstatic_aton(u_char *dest, char *str)
+ether_aton_r(u_char *dest, size_t len, const char *str)
 {
-        int i;
-        char *cp = str;
-        u_char val[6];
+        const u_char *cp = (const void *)str;
+	u_char *ep;
 
-#define set_value                       \
-        if (*cp > '9' && *cp < 'a')     \
-                *cp -= 'A' - 10;        \
-        else if (*cp > '9')             \
-                *cp -= 'a' - 10;        \
-        else                            \
-                *cp -= '0'
+#define atox(c)	(((c) < '9') ? ((c) - '0') : ((toupper(c) - 'A') + 10))
 
-        for (i = 0; i < 6; i++, cp++) {
+	if (len < ETHER_ADDR_LEN)
+		return ENOSPC;
+
+	ep = dest + ETHER_ADDR_LEN;
+	 
+	while (*cp) {
                 if (!isxdigit(*cp))
-                        return (1);
-                set_value;
-                val[i] = *cp++;
+                        return EINVAL;
+		*dest = atox(*cp);
+		cp++;
                 if (isxdigit(*cp)) {
-                        set_value;
-                        val[i] *= 16;
-                        val[i] += *cp++;
-                }
-                if (*cp == ':' || i == 5)
-                        continue;
-                else
-                        return 1;
+                        *dest = (*dest << 4) | atox(*cp);
+			dest++;
+			cp++;
+                } else
+			dest++;
+		if (dest == ep)
+			return *cp == '\0' ? 0 : ENAMETOOLONG;
+		switch (*cp) {
+		case ':':
+		case '-':
+		case '.':
+			cp++;
+			break;
+		}
         }
-        memcpy(dest, val, 6);
-
-        return 0;
+	return ENOBUFS;
 }
-
 
 /*
  * Convert a sockaddr into an Ethernet address or range of Ethernet

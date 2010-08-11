@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_exec.c,v 1.53.10.4 2010/03/11 15:03:12 yamt Exp $ */
+/*	$NetBSD: darwin_exec.c,v 1.53.10.5 2010/08/11 22:53:02 yamt Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include "opt_compat_darwin.h" /* For COMPAT_DARWIN in mach_port.h */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_exec.c,v 1.53.10.4 2010/03/11 15:03:12 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_exec.c,v 1.53.10.5 2010/08/11 22:53:02 yamt Exp $");
 
 #include "opt_syscall_debug.h"
 #include "wsdisplay.h"
@@ -76,9 +76,9 @@ extern const struct cdevsw wsdisplay_cdevsw;
 #endif
 
 static void darwin_e_proc_exec(struct proc *, struct exec_package *);
-static void darwin_e_proc_fork(struct proc *, struct proc *, int);
+static void darwin_e_proc_fork(struct proc *, struct lwp *, int);
 static void darwin_e_proc_exit(struct proc *);
-static void darwin_e_proc_init(struct proc *, struct vmspace *);
+static void darwin_e_proc_init(struct proc *);
 
 extern struct sysent darwin_sysent[];
 #ifdef SYSCALL_DEBUG
@@ -91,45 +91,42 @@ void mach_syscall_intern(struct proc *);
 #endif
 
 struct emul emul_darwin = {
-	"darwin",
-	"/emul/darwin",
+	.e_name =		"darwin",
+	.e_path =		"/emul/darwin",
 #ifndef __HAVE_MINIMAL_EMUL
-	0,
-	0,
-	DARWIN_SYS_syscall,
-	DARWIN_SYS_NSYSENT,
+	.e_flags =		0,
+	.e_errno =		NULL
+	.e_nosys =		DARWIN_SYS_syscall,
+	.e_nsysent =		DARWIN_SYS_NSYSENT,
 #endif
-	darwin_sysent,
+	.e_sysent =		darwin_sysent,
 #ifdef SYSCALL_DEBUG
-	darwin_syscallnames,
-#else
-	NULL,
+	.e_syscallnames =	darwin_syscallnames,
 #endif
-	darwin_sendsig,
-	darwin_trapsignal,
-	darwin_tracesig,
-	NULL,
-	NULL,
-	NULL,
-	setregs,
-	darwin_e_proc_exec,
-	darwin_e_proc_fork,
-	darwin_e_proc_exit,
-	mach_e_lwp_fork,
-	mach_e_lwp_exit,
+	.e_sendsig =		darwin_sendsig,
+	.e_trapsignal =		darwin_trapsignal,
+	.e_tracesig =		darwin_tracesig,
+	.e_sigcode =		NULL,
+	.e_esigcode =		NULL,
+	.e_sigobject =		NULL,
+	.e_setregs =		setregs,
+	.e_proc_exec =		darwin_e_proc_exec,
+	.e_proc_fork =		darwin_e_proc_fork,
+	.e_proc_exit =		darwin_e_proc_exit,
+	.e_lwp_fork =		mach_e_lwp_fork,
+	.e_lwp_exit =		mach_e_lwp_exit,
 #ifdef __HAVE_SYSCALL_INTERN
-	mach_syscall_intern,
+	.e_syscall_intern =	mach_syscall_intern,
 #else
-	syscall,
+	.e_syscall_intern =	syscall,
 #endif
-	NULL,
-	NULL,
-
-	uvm_default_mapaddr,
-	NULL,
-	NULL,
-	0,
-	NULL,
+	.e_sysctlovly =		NULL,
+	.e_fault =		NULL,
+	.e_vm_default_addr =	uvm_default_mapaddr,
+	.e_usertrap =		NULL,
+	.e_sa =			NULL,
+	.e_ucsize =		0,
+	.e_startlwp =		NULL
 };
 
 /*
@@ -229,7 +226,7 @@ darwin_e_proc_exec(struct proc *p, struct exec_package *epp)
 {
 	struct darwin_emuldata *ded;
 
-	darwin_e_proc_init(p, p->p_vmspace);
+	darwin_e_proc_init(p);
 
 	/* Setup the mach_emuldata part of darwin_emuldata */
 	mach_e_proc_exec(p, epp);
@@ -245,27 +242,25 @@ darwin_e_proc_exec(struct proc *p, struct exec_package *epp)
 }
 
 static void
-darwin_e_proc_fork(struct proc *p, struct proc *parent, int forkflags)
+darwin_e_proc_fork(struct proc *p2, struct lwp *l1, int forkflags)
 {
 	struct darwin_emuldata *ded1;
 	struct darwin_emuldata *ded2;
 	char *ed1, *ed2;
 	size_t len;
 
-	p->p_emuldata = NULL;
-
-	/* Use parent's vmspace because our vmspace may not be setup yet */
-	darwin_e_proc_init(p, parent->p_vmspace);
+	p2->p_emuldata = NULL;
+	darwin_e_proc_init(p2);
 
 	/*
 	 * Setup the mach_emuldata part of darwin_emuldata
 	 * The null third argument asks to not re-allocate
 	 * p->p_emuldata again.
 	 */
-	mach_e_proc_fork1(p, parent, 0);
+	mach_e_proc_fork1(p2, l1, 0);
 
-	ded1 = p->p_emuldata;
-	ded2 = parent->p_emuldata;
+	ded1 = p2->p_emuldata;
+	ded2 = l1->l_proc->p_emuldata;
 
 	ed1 = (char *)ded1 + sizeof(struct mach_emuldata);
 	ed2 = (char *)ded2 + sizeof(struct mach_emuldata);
@@ -280,14 +275,14 @@ darwin_e_proc_fork(struct proc *p, struct proc *parent, int forkflags)
 		ded1->ded_fakepid = 0;
 	}
 #ifdef DEBUG_DARWIN
-	printf("pid %d fork'd: fakepid = %d\n", p->p_pid, ded1->ded_fakepid);
+	printf("pid %d fork'd: fakepid = %d\n", p2->p_pid, ded1->ded_fakepid);
 #endif
 
 	return;
 }
 
 static void
-darwin_e_proc_init(struct proc *p, struct vmspace *vmspace)
+darwin_e_proc_init(struct proc *p)
 {
 	struct darwin_emuldata *ded;
 
@@ -302,7 +297,7 @@ darwin_e_proc_init(struct proc *p, struct vmspace *vmspace)
 	ded->ded_vramoffset = NULL;
 
 	/* Initalize the mach_emuldata part of darwin_emuldata */
-	mach_e_proc_init(p, vmspace);
+	mach_e_proc_init(p);
 
 	return;
 }

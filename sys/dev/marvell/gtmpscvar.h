@@ -1,4 +1,4 @@
-/*	$NetBSD: gtmpscvar.h,v 1.7 2006/03/06 08:13:58 he Exp $	*/
+/*	$NetBSD: gtmpscvar.h,v 1.7.66.1 2010/08/11 22:53:37 yamt Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -81,57 +81,75 @@ typedef struct {
 	gtmpsc_pollrx_t rx[GTMPSC_NRXDESC];
 } gtmpsc_poll_sdma_t;
 
-/* Size of the Rx FIFO */
-#define	GTMPSC_RXFIFOSZ   (GTMPSC_NRXDESC * GTMPSC_RXBUFSZ * 2)
 
-/* Flags in sc->gtmpsc_flags */
-#define	GTMPSCF_KGDB      1
+#include <sys/timepps.h>
+#include <sys/tty.h>
 
 typedef struct gtmpsc_softc {
-	struct device gtmpsc_dev;
-	bus_space_tag_t gtmpsc_memt;
-	bus_space_handle_t gtmpsc_memh;
-	bus_dma_tag_t gtmpsc_dmat;
+	device_t sc_dev;
+	int sc_unit;
+	bus_space_tag_t sc_iot;
+	bus_space_handle_t sc_mpsch;
+	bus_space_handle_t sc_sdmah;
+	bus_dma_tag_t sc_dmat;
+	gtmpsc_poll_sdma_t *sc_poll_sdmapage;
+	bus_dmamap_t sc_rxdma_map;
+	bus_dmamap_t sc_txdma_map;
+	int sc_brg;				/* using Baud Rate Generator */
+	int sc_baudrate;
+	tcflag_t sc_cflag;
 	void *sc_si;				/* softintr cookie */
-	struct tty *gtmpsc_tty;			/* our tty */
-	int gtmpsc_unit;
-	unsigned int gtmpsc_flags;
-	unsigned int gtmpsc_baud_rate;
-	bus_dma_segment_t gtmpsc_dma_segs[1];
-	bus_dmamap_t gtmpsc_dma_map;
-	gtmpsc_poll_sdma_t *gtmpsc_poll_sdmapage;
-	unsigned int gtmpsc_poll_txix;		/* "current" tx xfer index */
-	unsigned int gtmpsc_poll_rxix;		/* "current" rx xfer index */
-	unsigned int gtmpsc_cx;			/* data index in gtmpsc_rxbuf */
-	unsigned int gtmpsc_nc;			/* data count in gtmpsc_rxbuf */
-	unsigned int gtmpsc_chr2;                 /* soft copy of CHR2 */
-	unsigned int gtmpsc_chr3;                 /* soft copy of CHR3 */
-	unsigned int gtmpsc_brg_bcr;              /* soft copy of BRG_BCR */
-	volatile u_char sc_heldchange;          /* new params wait for output */
+	struct tty *sc_tty;			/* our tty */
+	uint32_t sc_flags;
+#define	GTMPSC_CONSOLE		(1 << 0)
+#define	GTMPSC_KGDB		(1 << 1)
+
+	volatile int sc_rcvcnt;			/* byte count of RX buffer */
+	volatile int sc_roffset;		/* offset of RX buffer */
+	volatile int sc_rcvrx;			/* receive rx xfer index */
+	volatile int sc_rcvdrx;			/* received rx xfer index */
+	volatile int sc_readrx;			/* read rx xfer index */
+	volatile int sc_nexttx;			/* "next" tx xfer index */
+	volatile int sc_lasttx;			/* "last" tx xfer index */
+	volatile u_char sc_rx_ready;
 	volatile u_char sc_tx_busy;
 	volatile u_char sc_tx_done;
 	volatile u_char sc_tx_stopped;
-	u_char  *sc_tba;                        /* Tx buf ptr */
-	u_int   sc_tbc;                         /* Tx buf cnt */
-	u_int   sc_heldtbc;
-	unsigned char gtmpsc_rxbuf[GTMPSC_RXBUFSZ];	/* polling read buffer */
-	volatile unsigned int gtmpsc_rxfifo_navail;
-						/* available count in fifo */
-	unsigned int gtmpsc_rxfifo_putix;		/* put index in fifo */
-	unsigned int gtmpsc_rxfifo_getix;		/* get index in fifo */
-	unsigned char gtmpsc_rxfifo[GTMPSC_RXFIFOSZ];
-	unsigned int cnt_rx_from_sdma;
-	unsigned int cnt_rx_to_fifo;
-	unsigned int cnt_rx_from_fifo;
-	unsigned int cnt_tx_from_ldisc;
-	unsigned int cnt_tx_to_sdma;
+	volatile u_char sc_heldchange;		/* new params wait for output */
+	u_char *sc_tba;				/* Tx buf ptr */
+	u_int sc_tbc;				/* Tx buf cnt */
+	u_int sc_heldtbc;
+
+	kmutex_t sc_lock;
+	struct pps_state sc_pps_state;
 } gtmpsc_softc_t;
 
 /* Make receiver interrupt 8 times a second */
-#define	GTMPSC_MAXIDLE(baudrate)  ((baudrate) / (10 * 8)) /* There are 10 bits
-							   in a frame */
+/* There are 10 bits in a frame */
+#define	GTMPSC_MAXIDLE(baudrate) ((baudrate) / (10 * 8))
 
-int gtmpsccnattach(bus_space_tag_t, bus_space_handle_t, int, int, tcflag_t);
-int gtmpsc_is_console(bus_space_tag_t, int);
+
+static __inline int
+compute_cdv(unsigned int baud)
+{
+	unsigned int cdv;
+
+	if (baud == 0)
+		return 0;
+	cdv = (GT_MPSC_FREQUENCY / (baud * GTMPSC_CLOCK_DIVIDER) + 1) / 2 - 1;
+	if (cdv > BRG_BCR_CDV_MAX)
+		return -1;
+	return cdv;
+}
+
+
+int  gtmpsc_intr(void *);
+
+#ifdef MPSC_CONSOLE
+extern gtmpsc_softc_t gtmpsc_cn_softc;
+
+int gtmpsccnattach(bus_space_tag_t, bus_dma_tag_t, bus_addr_t, int, int, int,
+		   tcflag_t);
+#endif
 
 #endif /* _DEV_MARVELL_GTPSCVAR_H */

@@ -1,20 +1,20 @@
-#	$NetBSD: Makefile,v 1.5.122.1 2009/09/16 13:37:36 yamt Exp $
+#	$NetBSD: Makefile,v 1.5.122.2 2010/08/11 22:51:46 yamt Exp $
 
 BINDIR?= /sbin
 WARNS?=	4
+NOMAN=
+
+.include <bsd.own.mk>
 
 PROG=	binpatch
 SRCS=	binpatch.c
 SRCS+=	exec_aout.c exec_ecoff.c exec_elf32.c exec_elf64.c exec_coff.c
 
 #MAN=	binpatch.8	# currently it's in src/share/man/man8/man8.atari
-NOMAN=
 
 MDSETIMAGE=${NETBSDSRCDIR}/usr.sbin/mdsetimage
 CPPFLAGS+= -I${MDSETIMAGE}
 .PATH:	${MDSETIMAGE}
-
-.include <bsd.own.mk>	# for ${MACHINE_CPU}
 
 .if	${MACHINE_ARCH} == "alpha"
 CPPFLAGS+=-DNLIST_ECOFF

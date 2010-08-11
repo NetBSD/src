@@ -1,4 +1,4 @@
-/* $NetBSD: gpio.c,v 1.15.4.5 2010/03/11 15:03:26 yamt Exp $ */
+/* $NetBSD: gpio.c,v 1.15.4.6 2010/08/11 22:53:21 yamt Exp $ */
 /*	$OpenBSD: gpio.c,v 1.6 2006/01/14 12:33:49 grange Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.15.4.5 2010/03/11 15:03:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.15.4.6 2010/08/11 22:53:21 yamt Exp $");
 
 /*
  * General Purpose Input/Output framework.
@@ -218,7 +218,7 @@ gpiobus_print(void *aux, const char *pnp)
 	struct gpiobus_attach_args *gba = aux;
 #endif
 	if (pnp != NULL)
-		printf("gpiobus at %s", pnp);
+		aprint_normal("gpiobus at %s", pnp);
 
 	return UNCONF;
 }

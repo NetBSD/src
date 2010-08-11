@@ -1,4 +1,4 @@
-/* $NetBSD: ixp12x0_intr.c,v 1.17.10.1 2008/05/16 02:22:01 yamt Exp $ */
+/* $NetBSD: ixp12x0_intr.c,v 1.17.10.2 2010/08/11 22:51:42 yamt Exp $ */
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp12x0_intr.c,v 1.17.10.1 2008/05/16 02:22:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp12x0_intr.c,v 1.17.10.2 2010/08/11 22:51:42 yamt Exp $");
 
 /*
  * Interrupt support for the Intel ixp12x0
@@ -206,21 +206,29 @@ ixp12x0_intr_calculate_masks(void)
 
 	KASSERT(imask[IPL_NONE] == 0);
 	KASSERT(pci_imask[IPL_NONE] == 0);
+	KASSERT(imask[IPL_SOFTCLOCK] == 0);
+	KASSERT(pci_imask[IPL_SOFTCLOCK] == 0);
+	KASSERT(imask[IPL_SOFTBIO] == 0);
+	KASSERT(pci_imask[IPL_SOFTBIO] == 0);
+	KASSERT(imask[IPL_SOFTNET] == 0);
+	KASSERT(pci_imask[IPL_SOFTNET] == 0);
+	KASSERT(imask[IPL_SOFTSERIAL] == 0);
+	KASSERT(pci_imask[IPL_SOFTSERIAL] == 0);
 
 	KASSERT(imask[IPL_VM] != 0);
 	KASSERT(pci_imask[IPL_VM] != 0);
 
 	/*
-	 * splclock() must block anything that uses the scheduler.
+	 * splsched() must block anything that uses the scheduler.
 	 */
-	imask[IPL_CLOCK] |= imask[IPL_VM];
-	pci_imask[IPL_CLOCK] |= pci_imask[IPL_VM];
+	imask[IPL_SCHED] |= imask[IPL_VM];
+	pci_imask[IPL_SCHED] |= pci_imask[IPL_VM];
 
 	/*
 	 * splhigh() must block "everything".
 	 */
-	imask[IPL_HIGH] |= imask[IPL_CLOCK];
-	pci_imask[IPL_HIGH] |= pci_imask[IPL_CLOCK];
+	imask[IPL_HIGH] |= imask[IPL_SCHED];
+	pci_imask[IPL_HIGH] |= pci_imask[IPL_SCHED];
 
 	/*
 	 * Now compute which IRQs must be blocked when servicing any

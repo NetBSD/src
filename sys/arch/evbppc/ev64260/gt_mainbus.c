@@ -1,4 +1,4 @@
-/*	$NetBSD: gt_mainbus.c,v 1.14 2007/02/22 05:27:47 thorpej Exp $	*/
+/*	$NetBSD: gt_mainbus.c,v 1.14.46.1 2010/08/11 22:51:54 yamt Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -36,15 +36,17 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gt_mainbus.c,v 1.14 2007/02/22 05:27:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gt_mainbus.c,v 1.14.46.1 2010/08/11 22:51:54 yamt Exp $");
 
 #include "opt_ev64260.h"
+#include "opt_pci.h"
+#include "pci.h"
 
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/device.h>
+#include <sys/errno.h>
 #include <sys/extent.h>
-#include <sys/malloc.h>
 
 #define _POWERPC_BUS_DMA_PRIVATE
 #include <machine/bus.h>
@@ -56,205 +58,197 @@ __KERNEL_RCSID(0, "$NetBSD: gt_mainbus.c,v 1.14 2007/02/22 05:27:47 thorpej Exp 
 #include "opt_marvell.h"
 #include <dev/marvell/gtreg.h>
 #include <dev/marvell/gtvar.h>
+#include <dev/marvell/gtintrreg.h>
 #include <dev/marvell/gtpcireg.h>
 #include <dev/marvell/gtpcivar.h>
-
-extern struct powerpc_bus_space gt_mem_bs_tag;
-extern struct powerpc_bus_space gt_pci0_mem_bs_tag;
-extern struct powerpc_bus_space gt_pci0_io_bs_tag;
-extern struct powerpc_bus_space gt_pci1_mem_bs_tag;
-extern struct powerpc_bus_space gt_pci1_io_bs_tag;
-
-struct powerpc_bus_dma_tag gt_bus_dma_tag = {
-	0,			/* _bounce_thresh */
-	_bus_dmamap_create,
-	_bus_dmamap_destroy,
-	_bus_dmamap_load,
-	_bus_dmamap_load_mbuf,
-	_bus_dmamap_load_uio,
-	_bus_dmamap_load_raw,
-	_bus_dmamap_unload,
-	_bus_dmamap_sync,
-	_bus_dmamem_alloc,
-	_bus_dmamem_free,
-	_bus_dmamem_map,
-	_bus_dmamem_unmap,
-	_bus_dmamem_mmap,
-	gt_dma_phys_to_bus_mem,
-	gt_dma_bus_mem_to_phys,
-};
-
-const int gtpci_skipmask[2] = {
-#ifdef PCI0_SKIPMASK
-	PCI0_SKIPMASK,
-#else
-	0,
+#include <dev/marvell/marvellvar.h>
+#include <dev/marvell/gtsdmareg.h>
+#include <dev/marvell/gtmpscreg.h>
+#ifdef MPSC_CONSOLE
+#include <dev/marvell/gtmpscvar.h>
 #endif
-#ifdef PCI1_SKIPMASK
-	PCI1_SKIPMASK,
-#else
+
+#include <evbppc/ev64260/ev64260.h>
+
+#include <powerpc/pic/picvar.h>
+
+
+static int gt_match(device_t, cfdata_t, void *);
+static void gt_attach(device_t, device_t, void *);
+
+void gtpci_md_conf_interrupt(void *, int, int, int, int, int *);
+int gtpci_md_conf_hook(void *, int, int, int, pcireg_t);
+
+CFATTACH_DECL_NEW(gt, sizeof(struct gt_softc), gt_match, gt_attach, NULL, NULL);
+
+struct gtpci_prot gtpci_prot = {
+	GTPCI_GT64260_ACBL_PCISWAP_NOSWAP	|
+	GTPCI_GT64260_ACBL_WBURST_8_QW		|
+	GTPCI_GT64260_ACBL_RDMULPREFETCH	|
+	GTPCI_GT64260_ACBL_RDLINEPREFETCH	|
+	GTPCI_GT64260_ACBL_RDPREFETCH		|
+	GTPCI_GT64260_ACBL_PREFETCHEN,
 	0,
-#endif
 };
-
-static int	gt_match(struct device *, struct cfdata *, void *);
-static void	gt_attach(struct device *, struct device *, void *);
-
-CFATTACH_DECL(gt, sizeof(struct gt_softc), gt_match, gt_attach, NULL, NULL);
-
-extern struct cfdriver gt_cd;
-extern bus_space_handle_t gt_memh;
-
-static int gt_found;
 
 int
-gt_match(struct device *parent, struct cfdata *cf, void *aux)
+gt_match(device_t parent, cfdata_t cf, void *aux)
 {
-	const char **busname = aux;
+	struct mainbus_attach_args *mba = aux;
 
-	if (strcmp(*busname, gt_cd.cd_name) != 0)
-		return 0;
-
-	if (gt_found)
+	if (strcmp(mba->mba_name, "gt") != 0)
 		return 0;
 
 	return 1;
 }
 
 void
-gt_attach(struct device *parent, struct device *self, void *aux)
+gt_attach(device_t parent, device_t self, void *aux)
 {
-	struct gt_softc *gt = (struct gt_softc *) self;
+	extern struct powerpc_bus_space ev64260_gt_bs_tag;
+	extern struct powerpc_bus_dma_tag ev64260_bus_dma_tag;
+	struct mainbus_attach_args *mba = aux;
+	struct gt_softc *sc = device_private(self);
+	uint32_t cpumstr, cr, r;
 
-	gt->gt_dmat = &gt_bus_dma_tag;
-	gt->gt_memt = &gt_mem_bs_tag;
-	gt->gt_pci0_memt = &gt_pci0_mem_bs_tag;
-	gt->gt_pci0_iot =  &gt_pci0_io_bs_tag;
-	gt->gt_pci0_host = true;
-	gt->gt_pci1_memt = &gt_pci1_mem_bs_tag;
-	gt->gt_pci1_iot =  &gt_pci1_io_bs_tag;
-	gt->gt_pci1_host = true;
+	sc->sc_dev = self;
+	sc->sc_addr = mba->mba_addr;
+	sc->sc_iot = &ev64260_gt_bs_tag;
+	sc->sc_dmat = &ev64260_bus_dma_tag;
 
-	gt->gt_memh = gt_memh;
+#ifdef MPSC_CONSOLE
+	{
+		/* First, unmap already mapped console space. */
+		gtmpsc_softc_t *gtmpsc = &gtmpsc_cn_softc;
 
-#if 0
-	GT_DecodeAddr_SET(gt, GT_PCI0_IO_Low_Decode,
-	    gt_pci0_io_bs_tag.pbs_offset + gt_pci0_io_bs_tag.pbs_base);
-	GT_DecodeAddr_SET(gt, GT_PCI0_IO_High_Decode,
-	    gt_pci0_io_bs_tag.pbs_offset + gt_pci0_io_bs_tag.pbs_limit - 1);
-
-	GT_DecodeAddr_SET(gt, GT_PCI1_IO_Low_Decode,
-	    gt_pci1_io_bs_tag.pbs_offset + gt_pci1_io_bs_tag.pbs_base);
-	GT_DecodeAddr_SET(gt, GT_PCI1_IO_High_Decode,
-	    gt_pci1_io_bs_tag.pbs_offset + gt_pci1_io_bs_tag.pbs_limit - 1);
-
-	GT_DecodeAddr_SET(gt, GT_PCI0_Mem0_Low_Decode,
-	    gt_pci0_mem_bs_tag.pbs_offset + gt_pci0_mem_bs_tag.pbs_base);
-	GT_DecodeAddr_SET(gt, GT_PCI0_Mem0_High_Decode,
-	    gt_pci1_mem_bs_tag.pbs_offset + gt_pci1_mem_bs_tag.pbs_limit - 1);
-
-	GT_DecodeAddr_SET(gt, GT_PCI1_Mem0_Low_Decode,
-	    gt_pci1_mem_bs_tag.pbs_offset + gt_pci1_mem_bs_tag.pbs_base);
-	GT_DecodeAddr_SET(gt, GT_PCI1_Mem0_High_Decode,
-	    gt_pci1_mem_bs_tag.pbs_offset + gt_pci1_mem_bs_tag.pbs_limit - 1);
-#endif
-
-	gt_attach_common(gt);
-}
-
-void
-gtpci_bus_configure(struct gtpci_chipset *gtpc)
-{
-#ifdef PCI_NETBSD_CONFIGURE
-	struct extent *ioext, *memext;
-#if 0
-	extern int pci_conf_debug;
-	pci_conf_debug = 1;
-#endif
-
-	switch (gtpc->gtpc_busno) {
-	case 0:
-		ioext  = extent_create("pci0-io",  0x00000600, 0x0000ffff,
-		    M_DEVBUF, NULL, 0, EX_NOWAIT);
-		memext = extent_create("pci0-mem",
-		    gt_pci0_mem_bs_tag.pbs_base,
-		    gt_pci0_mem_bs_tag.pbs_limit-1,
-		    M_DEVBUF, NULL, 0, EX_NOWAIT);
-		break;
-	case 1:
-		ioext  = extent_create("pci1-io",  0x00000600, 0x0000ffff,
-		    M_DEVBUF, NULL, 0, EX_NOWAIT);
-		memext = extent_create("pci1-mem",
-		    gt_pci1_mem_bs_tag.pbs_base,
-		    gt_pci1_mem_bs_tag.pbs_limit-1,
-		    M_DEVBUF, NULL, 0, EX_NOWAIT);
-		break;
-	default:
-		panic("gtpci_bus_configure: unknown bus %d", gtpc->gtpc_busno);
+		bus_space_unmap(gtmpsc->sc_iot, gtmpsc->sc_mpsch, GTMPSC_SIZE);
+		bus_space_unmap(gtmpsc->sc_iot, gtmpsc->sc_sdmah, GTSDMA_SIZE);
 	}
+#endif
+	if (bus_space_map(sc->sc_iot, sc->sc_addr, GT_SIZE, 0, &sc->sc_ioh) !=
+	    0) {
+		aprint_error_dev(self, "registers map failed\n");
+		return;
+	}
+#ifdef MPSC_CONSOLE
+	{
+		/* Next, remap console space. */
+		gtmpsc_softc_t *gtmpsc = &gtmpsc_cn_softc;
 
-	pci_configure_bus(&gtpc->gtpc_pc, ioext, memext, NULL, 0, 32);
+		if (bus_space_subregion(sc->sc_iot, sc->sc_ioh,
+		    GTMPSC_BASE(gtmpsc->sc_unit), GTMPSC_SIZE,
+		    &gtmpsc->sc_mpsch)) {
+			aprint_error_dev(self, "Cannot map MPSC registers\n");
+			return;
+		}
+		if (bus_space_subregion(sc->sc_iot, sc->sc_ioh,
+		    GTSDMA_BASE(gtmpsc->sc_unit), GTSDMA_SIZE,
+		    &gtmpsc->sc_sdmah)) {
+			aprint_error_dev(self, "Cannot map SDMA registers\n");
+			return;
+		}
+	}
+#endif
 
-	extent_destroy(ioext);
-	extent_destroy(memext);
-#endif /* PCI_NETBSD_CONFIGURE */
+	/*
+	 * Set MPSC Routing:
+	 *	MR0 --> Serial Port 0
+	 *	MR1 --> Serial Port 1
+	 */
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, GTMPSC_MRR, GTMPSC_MRR_RES);
+
+	/*
+	 * RX and TX Clock Routing:
+	 *	CRR0 --> BRG0
+	 *	CRR1 --> BRG1
+	 */
+	cr = GTMPSC_CRR(0, GTMPSC_CRR_BRG0) | GTMPSC_CRR(1, GTMPSC_CRR_BRG1);
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, GTMPSC_RCRR, cr);
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, GTMPSC_TCRR, cr);
+
+	/*
+	 * Setup Multi-Purpose Pins (MPP).
+	 *   Change to GPP.
+	 *     GPP 21 (DUART channel A intr)
+	 *     GPP 22 (DUART channel B intr)
+	 *     GPP 26 (RTC INT)
+	 *     GPP 27 (PCI 0 INTA)
+	 *     GPP 29 (PCI 1 INTA)
+	 */
+#define PIN2SHIFT(pin)	((pin % 8) * 4)
+	r = bus_space_read_4(sc->sc_iot, sc->sc_ioh, GT_MPP_Control2);
+	r |= ((0xf << PIN2SHIFT(21)) | (0xf << PIN2SHIFT(22)));
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, GT_MPP_Control2, r);
+	r = bus_space_read_4(sc->sc_iot, sc->sc_ioh, GT_MPP_Control3);
+	r |= ((0xf << PIN2SHIFT(26)));
+	r |= ((0xf << PIN2SHIFT(27)) | (0xf << PIN2SHIFT(29)));
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, GT_MPP_Control3, r);
+
+	/* Also configure GPP. */
+#define GPP_EXTERNAL_INTERRUPS \
+	    ((1 << 21) | (1 << 22) | (1 << 26) | (1 << 27) | (1 << 29))
+	r = bus_space_read_4(sc->sc_iot, sc->sc_ioh, GT_GPP_IO_Control);
+	r &= ~GPP_EXTERNAL_INTERRUPS;
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, GT_GPP_IO_Control, r);
+	r = bus_space_read_4(sc->sc_iot, sc->sc_ioh, GT_GPP_Level_Control);
+	r |= GPP_EXTERNAL_INTERRUPS;
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, GT_GPP_Level_Control, r);
+
+	/* clear interrupts */
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, ICR_CIM_LO, 0);
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, ICR_CIM_HI, 0);
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, GT_GPP_Interrupt_Cause,
+	    ~GPP_EXTERNAL_INTERRUPS);
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, GT_GPP_Interrupt_Mask,
+	    GPP_EXTERNAL_INTERRUPS);
+
+	discovery_pic->pic_cookie = sc;
+	intr_establish(IRQ_GPP7_0, IST_LEVEL, IPL_NONE,
+	    pic_handle_intr, discovery_gpp_pic[0]);
+	intr_establish(IRQ_GPP15_8, IST_LEVEL, IPL_NONE,
+	    pic_handle_intr, discovery_gpp_pic[1]);
+	intr_establish(IRQ_GPP23_16, IST_LEVEL, IPL_NONE,
+	    pic_handle_intr, discovery_gpp_pic[2]);
+	intr_establish(IRQ_GPP31_24, IST_LEVEL, IPL_NONE,
+	    pic_handle_intr, discovery_gpp_pic[3]);
+
+	cpumstr = bus_space_read_4(sc->sc_iot, sc->sc_ioh, GT_CPU_Master_Ctl);
+	cpumstr &= ~(GT_CPUMstrCtl_CleanBlock|GT_CPUMstrCtl_FlushBlock);
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, GT_CPU_Master_Ctl, cpumstr);
+
+	gt_attach_common(sc);
 }
 
+
 void
-gtpci_md_conf_interrupt(pci_chipset_tag_t pc, int bus, int dev, int pin,
-	int swiz, int *iline)
+gtpci_md_conf_interrupt(void *v, int bus, int dev, int pin, int swiz,
+			int *iline)
 {
 #ifdef PCI_NETBSD_CONFIGURE
-	struct gtpci_chipset *gtpc = (struct gtpci_chipset *)pc;
-	int line = (gtpc->gtpc_busno == 0 ? PCI0_GPPINTS : PCI1_GPPINTS);
-	*iline = (line >> (8 * ((pin + swiz - 1) & 3))) & 0xff;
+	struct gtpci_softc *sc = v;
+
+	*iline = (sc->sc_unit == 0 ? 27 : 29);
+
+#define IRQ_GPP_BASE	(discovery_pic->pic_numintrs);
+
 	if (*iline != 0xff)
 		*iline += IRQ_GPP_BASE;
 #endif /* PCI_NETBSD_CONFIGURE */
 }
 
-void
-gtpci_md_bus_devorder(pci_chipset_tag_t pc, int busno, char devs[])
+int
+gtpci_md_conf_hook(void *v, int bus, int dev, int func, pcireg_t id)
 {
-	struct gtpci_chipset *gtpc = (struct gtpci_chipset *)pc;
-	int dev;
+	struct gtpci_softc *sc = v;
 
-	/*
-	 * Don't bother probing the GT itself.
-	 */
-	for (dev = 0; dev < 32; dev++) {
-                if (PCI_CFG_GET_BUSNO(gtpc->gtpc_self) == busno &&
-		    (PCI_CFG_GET_DEVNO(gtpc->gtpc_self) == dev ||
-			(gtpci_skipmask[gtpc->gtpc_busno] & (1 << dev))))
-			continue;
-
-		*devs++ = dev;
-	}
-	*devs = -1;
+	return gtpci_conf_hook(sc->sc_pc, bus, dev, func, id);
 }
 
-int
-gtpci_md_conf_hook(pci_chipset_tag_t pc, int bus, int dev, int func,
-	pcireg_t id)
+
+void *
+marvell_intr_establish(int irq, int ipl, int (*func)(void *), void *arg)
 {
-	if (bus == 0 && dev == 0)	/* don't configure GT */
-		return 0;
 
-	return PCI_CONF_DEFAULT;
-}
-
-int
-gtpci_md_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
-{
-	int	pin = pa->pa_intrpin;
-	int	line = pa->pa_intrline;
-
-	if (pin > 4 || line >= NIRQ) {
-		printf("pci_intr_map: bad interrupt pin %d\n", pin);
-		*ihp = -1;
-		return 1;
-	}
-
-	*ihp = line;
-	return 0;
+	/* pass through */
+	return intr_establish(irq, IST_LEVEL, ipl, func, arg);
 }

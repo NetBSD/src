@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci_pci.c,v 1.31.4.3 2010/03/11 15:03:44 yamt Exp $	*/
+/*	$NetBSD: fwohci_pci.c,v 1.31.4.4 2010/08/11 22:53:45 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,21 +30,19 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwohci_pci.c,v 1.31.4.3 2010/03/11 15:03:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwohci_pci.c,v 1.31.4.4 2010/08/11 22:53:45 yamt Exp $");
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/socket.h>
-#include <sys/device.h>
-#include <sys/select.h>
-
 #include <sys/bus.h>
+#include <sys/device.h>
 #include <sys/intr.h>
+#include <sys/select.h>
+#include <sys/socket.h>
+#include <sys/systm.h>
 
+#include <dev/pci/pcidevs.h>
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
-#include <dev/pci/pcidevs.h>
-#include <dev/ieee1394/fw_port.h>
 #include <dev/ieee1394/firewire.h>
 #include <dev/ieee1394/firewirereg.h>
 #include <dev/ieee1394/fwdma.h>
@@ -62,12 +60,13 @@ struct fwohci_pci_softc {
 
 static int fwohci_pci_match(device_t, cfdata_t, void *);
 static void fwohci_pci_attach(device_t, device_t, void *);
+static int fwohci_pci_detach(device_t, int);
 
 static bool fwohci_pci_suspend(device_t, const pmf_qual_t *);
 static bool fwohci_pci_resume(device_t, const pmf_qual_t *);
 
 CFATTACH_DECL_NEW(fwohci_pci, sizeof(struct fwohci_pci_softc),
-    fwohci_pci_match, fwohci_pci_attach, NULL, NULL);
+    fwohci_pci_match, fwohci_pci_attach, fwohci_pci_detach, NULL);
 
 static int
 fwohci_pci_match(device_t parent, cfdata_t match,
@@ -100,7 +99,7 @@ fwohci_pci_attach(device_t parent, device_t self, void *aux)
 	char devinfo[256];
 	char const *intrstr;
 	pci_intr_handle_t ih;
-	u_int32_t csr;
+	uint32_t csr;
 
 	aprint_naive(": IEEE 1394 Controller\n");
 
@@ -122,12 +121,21 @@ fwohci_pci_attach(device_t parent, device_t self, void *aux)
 	}
 
 	/* Disable interrupts, so we don't get any spurious ones. */
-	OHCI_CSR_WRITE(&psc->psc_sc, FWOHCI_INTMASKCLR, OHCI_INT_EN);
+	OWRITE(&psc->psc_sc, FWOHCI_INTMASKCLR, OHCI_INT_EN);
 
 	/* Enable the device. */
 	csr = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
-	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
-	    csr | PCI_COMMAND_MASTER_ENABLE);
+	csr |= PCI_COMMAND_MASTER_ENABLE | PCI_COMMAND_MEM_ENABLE;
+	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG, csr);
+
+	/*
+	 * Some Sun FireWire controllers have their intpin register
+	 * bogusly set to 0, although it should be 3. Correct that.
+	 */
+	if ((PCI_VENDOR(pa->pa_id) == PCI_VENDOR_SUN) &&
+	    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_SUN_FIREWIRE))
+		if (pa->pa_intrpin == 0)
+			pa->pa_intrpin = 3;
 
 	/* Map and establish the interrupt. */
 	if (pci_intr_map(pa, &ih)) {
@@ -135,7 +143,7 @@ fwohci_pci_attach(device_t parent, device_t self, void *aux)
 		goto fail;
 	}
 	intrstr = pci_intr_string(pa->pa_pc, ih);
-	psc->psc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_BIO, fwohci_filt,
+	psc->psc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_BIO, fwohci_intr,
 	    &psc->psc_sc);
 	if (psc->psc_ih == NULL) {
 		aprint_error_dev(self, "couldn't establish interrupt");
@@ -149,7 +157,7 @@ fwohci_pci_attach(device_t parent, device_t self, void *aux)
 	if (!pmf_device_register(self, fwohci_pci_suspend, fwohci_pci_resume))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 
-	if (fwohci_init(&(psc->psc_sc), psc->psc_sc.fc.dev) != 0) {
+	if (fwohci_init(&psc->psc_sc) != 0) {
 		pci_intr_disestablish(pa->pa_pc, psc->psc_ih);
 		bus_space_unmap(psc->psc_sc.bst, psc->psc_sc.bsh,
 		    psc->psc_sc.bssize);
@@ -165,6 +173,29 @@ fail:
 	return;
 }
 
+static int
+fwohci_pci_detach(device_t self, int flags)
+{
+	struct fwohci_pci_softc *psc = device_private(self);
+	int rv;
+
+	pmf_device_deregister(self);
+	rv = fwohci_detach(&psc->psc_sc, flags);
+	if (rv)
+		return rv;
+
+	if (psc->psc_ih != NULL) {
+		pci_intr_disestablish(psc->psc_pc, psc->psc_ih);
+		psc->psc_ih = NULL;
+	}
+	if (psc->psc_sc.bssize) {
+		bus_space_unmap(psc->psc_sc.bst, psc->psc_sc.bsh,
+		    psc->psc_sc.bssize);
+		psc->psc_sc.bssize = 0;
+	}
+	return 0;
+}
+
 static bool
 fwohci_pci_suspend(device_t dv, const pmf_qual_t *qual)
 {
@@ -172,7 +203,7 @@ fwohci_pci_suspend(device_t dv, const pmf_qual_t *qual)
 	int s;
 
 	s = splbio();
-	fwohci_stop(&psc->psc_sc, psc->psc_sc.fc.dev);
+	fwohci_stop(&psc->psc_sc);
 	splx(s);
 
 	return true;
@@ -185,7 +216,7 @@ fwohci_pci_resume(device_t dv, const pmf_qual_t *qual)
 	int s;
 
 	s = splbio();
-	fwohci_resume(&psc->psc_sc, psc->psc_sc.fc.dev);
+	fwohci_resume(&psc->psc_sc);
 	splx(s);
 
 	return true;

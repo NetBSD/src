@@ -8,7 +8,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2009, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2010, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -422,11 +422,11 @@ AcpiUtCopyIelementToEelement (
  * RETURN:      Status
  *
  * DESCRIPTION: This function is called to place a package object in a user
- *              buffer.  A package object by definition contains other objects.
+ *              buffer. A package object by definition contains other objects.
  *
  *              The buffer is assumed to have sufficient space for the object.
- *              The caller must have verified the buffer length needed using the
- *              AcpiUtGetObjectSize function before calling this function.
+ *              The caller must have verified the buffer length needed using
+ *              the AcpiUtGetObjectSize function before calling this function.
  *
  ******************************************************************************/
 
@@ -485,12 +485,12 @@ AcpiUtCopyIpackageToEpackage (
  * FUNCTION:    AcpiUtCopyIobjectToEobject
  *
  * PARAMETERS:  InternalObject      - The internal object to be converted
- *              BufferPtr           - Where the object is returned
+ *              RetBuffer           - Where the object is returned
  *
  * RETURN:      Status
  *
- * DESCRIPTION: This function is called to build an API object to be returned to
- *              the caller.
+ * DESCRIPTION: This function is called to build an API object to be returned
+ *              to the caller.
  *
  ******************************************************************************/
 
@@ -742,7 +742,7 @@ AcpiUtCopyEpackageToIpackage (
  * PARAMETERS:  ExternalObject      - The external object to be converted
  *              InternalObject      - Where the internal object is returned
  *
- * RETURN:      Status              - the status of the call
+ * RETURN:      Status
  *
  * DESCRIPTION: Converts an external object to an internal object.
  *
@@ -784,7 +784,7 @@ AcpiUtCopyEobjectToIobject (
  *
  * RETURN:      Status
  *
- * DESCRIPTION: Simple copy of one internal object to another.  Reference count
+ * DESCRIPTION: Simple copy of one internal object to another. Reference count
  *              of the destination object is preserved.
  *
  ******************************************************************************/
@@ -797,6 +797,7 @@ AcpiUtCopySimpleObject (
     UINT16                  ReferenceCount;
     ACPI_OPERAND_OBJECT     *NextObject;
     ACPI_STATUS             Status;
+    ACPI_SIZE               CopySize;
 
 
     /* Save fields from destination that we don't want to overwrite */
@@ -804,10 +805,18 @@ AcpiUtCopySimpleObject (
     ReferenceCount = DestDesc->Common.ReferenceCount;
     NextObject = DestDesc->Common.NextObject;
 
-    /* Copy the entire source object over the destination object*/
+    /*
+     * Copy the entire source object over the destination object.
+     * Note: Source can be either an operand object or namespace node.
+     */
+    CopySize = sizeof (ACPI_OPERAND_OBJECT);
+    if (ACPI_GET_DESCRIPTOR_TYPE (SourceDesc) == ACPI_DESC_TYPE_NAMED)
+    {
+        CopySize = sizeof (ACPI_NAMESPACE_NODE);
+    }
 
-    ACPI_MEMCPY ((char *) DestDesc, (char *) SourceDesc,
-                    sizeof (ACPI_OPERAND_OBJECT));
+    ACPI_MEMCPY (ACPI_CAST_PTR (char, DestDesc),
+        ACPI_CAST_PTR (char, SourceDesc), CopySize);
 
     /* Restore the saved fields */
 
@@ -841,8 +850,7 @@ AcpiUtCopySimpleObject (
             /* Copy the actual buffer data */
 
             ACPI_MEMCPY (DestDesc->Buffer.Pointer,
-                    SourceDesc->Buffer.Pointer,
-                    SourceDesc->Buffer.Length);
+                SourceDesc->Buffer.Pointer, SourceDesc->Buffer.Length);
         }
         break;
 
@@ -864,7 +872,7 @@ AcpiUtCopySimpleObject (
             /* Copy the actual string data */
 
             ACPI_MEMCPY (DestDesc->String.Pointer, SourceDesc->String.Pointer,
-                         (ACPI_SIZE) SourceDesc->String.Length + 1);
+                (ACPI_SIZE) SourceDesc->String.Length + 1);
         }
         break;
 
@@ -1034,10 +1042,11 @@ ErrorExit:
  *
  * FUNCTION:    AcpiUtCopyIpackageToIpackage
  *
- * PARAMETERS:  *SourceObj      - Pointer to the source package object
- *              *DestObj        - Where the internal object is returned
+ * PARAMETERS:  SourceObj       - Pointer to the source package object
+ *              DestObj         - Where the internal object is returned
+ *              WalkState       - Current Walk state descriptor
  *
- * RETURN:      Status          - the status of the call
+ * RETURN:      Status
  *
  * DESCRIPTION: This function is called to copy an internal package object
  *              into another internal package object.
@@ -1093,9 +1102,9 @@ AcpiUtCopyIpackageToIpackage (
  *
  * FUNCTION:    AcpiUtCopyIobjectToIobject
  *
- * PARAMETERS:  WalkState           - Current walk state
- *              SourceDesc          - The internal object to be copied
+ * PARAMETERS:  SourceDesc          - The internal object to be copied
  *              DestDesc            - Where the copied object is returned
+ *              WalkState           - Current walk state
  *
  * RETURN:      Status
  *

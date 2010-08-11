@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.175.2.1 2009/05/04 08:14:22 yamt Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.175.2.2 2010/08/11 22:54:58 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.175.2.1 2009/05/04 08:14:22 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.175.2.2 2010/08/11 22:54:58 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -480,6 +480,19 @@ nfs_write(void *v)
 		if (error)
 			return (error);
 		uio->uio_offset = np->n_size;
+
+		/*
+		 * This is already checked above VOP_WRITE, but recheck
+		 * the append case here to make sure our idea of the
+		 * file size is as fresh as possible.
+		 */
+		if (uio->uio_offset + uio->uio_resid >
+		      l->l_proc->p_rlimit[RLIMIT_FSIZE].rlim_cur) {
+			mutex_enter(proc_lock);
+			psignal(l->l_proc, SIGXFSZ);
+			mutex_exit(proc_lock);
+			return (EFBIG);
+		}
 	}
 	if (uio->uio_offset < 0)
 		return (EINVAL);
@@ -487,17 +500,6 @@ nfs_write(void *v)
 		return (EFBIG);
 	if (uio->uio_resid == 0)
 		return (0);
-	/*
-	 * Maybe this should be above the vnode op call, but so long as
-	 * file servers have no limits, i don't think it matters
-	 */
-	if (l && l->l_proc && uio->uio_offset + uio->uio_resid >
-	      l->l_proc->p_rlimit[RLIMIT_FSIZE].rlim_cur) {
-		mutex_enter(proc_lock);
-		psignal(l->l_proc, SIGXFSZ);
-		mutex_exit(proc_lock);
-		return (EFBIG);
-	}
 
 	origoff = uio->uio_offset;
 	do {
@@ -1047,7 +1049,7 @@ again:
 				pgs[i]->flags &= ~(PG_NEEDCOMMIT | PG_RDONLY);
 			}
 			mutex_exit(&uobj->vmobjlock);
-			return 0;
+			goto out;
 		} else if (error == NFSERR_STALEWRITEVERF) {
 			nfs_clearcommit(vp->v_mount);
 			goto again;

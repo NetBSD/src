@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.15.20.2 2009/05/04 08:12:09 yamt Exp $	*/
+/*	$NetBSD: bus.h,v 1.15.20.3 2010/08/11 22:52:55 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -80,8 +80,17 @@
 typedef paddr_t bus_addr_t;
 typedef size_t bus_size_t;
 
-typedef	int bus_space_tag_t;
+struct bus_space_tag {
+	int bst_type;
+};
+
+typedef	struct bus_space_tag *bus_space_tag_t;
 typedef	vaddr_t bus_space_handle_t;
+
+extern bus_space_tag_t x86_bus_space_mem;
+extern bus_space_tag_t x86_bus_space_io;
+
+bool	bus_space_is_equal(bus_space_tag_t, bus_space_tag_t);
 
 int	_x86_memio_map(bus_space_tag_t t, bus_addr_t addr,
 	    bus_size_t size, int flags, bus_space_handle_t *bshp);

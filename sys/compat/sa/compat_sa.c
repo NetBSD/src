@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_sa.c,v 1.10.2.4 2010/03/11 15:03:19 yamt Exp $	*/
+/*	$NetBSD: compat_sa.c,v 1.10.2.5 2010/08/11 22:53:12 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2004, 2005, 2006 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 #include "opt_ktrace.h"
 #include "opt_multiprocessor.h"
 #include "opt_sa.h"
-__KERNEL_RCSID(0, "$NetBSD: compat_sa.c,v 1.10.2.4 2010/03/11 15:03:19 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_sa.c,v 1.10.2.5 2010/08/11 22:53:12 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1837,9 +1837,6 @@ sa_newcachelwp(struct lwp *l, struct sadata_vp *targ_vp)
 	 * newlwp helpfully puts it there. Unclear if newlwp should
 	 * be tweaked.
 	 */
-	mutex_enter(p->p_lock);
-	p->p_nrlwps++;
-	mutex_exit(p->p_lock);
 
 	vp = (targ_vp) ? targ_vp : l->l_savp;
 	mutex_enter(&vp->savp_mutex);
@@ -2559,12 +2556,13 @@ debug_print_proc(int pid)
 {
 	struct proc *p;
 
-	p = pfind(pid);
+	mutex_enter(proc_lock);
+	p = proc_find(pid);
 	if (p == NULL)
 		printf("No process %d\n", pid);
 	else
 		debug_print_sa(p);
-
+	mutex_exit(proc_lock);
 	return 0;
 }
 

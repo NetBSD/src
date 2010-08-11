@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.26.20.4 2010/03/11 15:02:40 yamt Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.26.20.5 2010/08/11 22:52:23 yamt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -342,13 +342,20 @@ VECTOR(MIPSX(TLBMiss), unknown)
 	_MFC0	k0, MIPS_COP_0_BAD_VADDR	#00: k0=bad address
 	lui	k1, %hi(segbase)		#01: k1=hi of segbase
 	bltz	k0, 4f				#02: k0<0 -> 4f (kernel fault)
-	PTR_SRL	k0, (2*PGSHIFT-2-PTR_SCALESHIFT)#03: k0=seg offset (almost)
+	PTR_SRL	k0, 2*PGSHIFT-2-PTR_SCALESHIFT	#03: k0=seg offset (almost)
 	PTR_L	k1, %lo(segbase)(k1)		#04: k1=segment tab base
-	andi	k0, k0, (NBPG-(1<<PTR_SCALESHIFT))#05: k0=seg offset (mask 0x3)
+	andi	k0, NBPG-(1<<PTR_SCALESHIFT)	#05: k0=seg offset (mask 0x3)
 	PTR_ADDU k1, k0, k1			#06: k1=seg entry address
 	PTR_L	k1, 0(k1)			#07: k1=seg entry
 	_MFC0	k0, MIPS_COP_0_BAD_VADDR	#08: k0=bad address (again)
 	beq	k1, zero, 5f			#09: ==0 -- no page table
+	PTR_SRL	k0, (PGSHIFT-2)			#0a: k0=VPN (aka va>>10)
+	andi	k0, k0, (NBPG-8)		#0b: k0=page tab offset
+	PTR_ADDU k1, k1, k0			#0c: k1=pte address
+	INT_L	k0, 0(k1)			#0d: k0=lo0 pte
+	INT_L	k1, 4(k1)			#0e: k1=lo1 pte
+	_SLL	k0, WIRED_SHIFT			#0f: chop top 2 bits (part 1a)
+	_SRL	k0, WIRED_SHIFT			#10: chop top 2 bits (part 1b)
 #ifdef MIPS3_5900
 	_MTC0	k0, MIPS_COP_0_TLB_LO0		#11: lo0 is loaded
 	sync.p					#12: R5900 cop0 hazard

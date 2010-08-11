@@ -1,4 +1,4 @@
-/* $NetBSD: nilfs_vfsops.c,v 1.1.4.2 2009/08/19 18:48:14 yamt Exp $ */
+/* $NetBSD: nilfs_vfsops.c,v 1.1.4.3 2010/08/11 22:54:34 yamt Exp $ */
 
 /*
  * Copyright (c) 2008, 2009 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: nilfs_vfsops.c,v 1.1.4.2 2009/08/19 18:48:14 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nilfs_vfsops.c,v 1.1.4.3 2010/08/11 22:54:34 yamt Exp $");
 #endif /* not lint */
 
 
@@ -333,7 +333,7 @@ nilfs_read_superblock(struct nilfs_device *nilfsdev)
 	struct nilfs_super_block *super, tmp_super;
 	struct buf *bp;
 	uint64_t sb1off, sb2off;
-	uint64_t time1, time2;
+	uint64_t last_cno1, last_cno2;
 	uint64_t dev_blk;
 	int dev_bsize, dev_blks;
 	int sb1ok, sb2ok, swp;
@@ -377,9 +377,9 @@ nilfs_read_superblock(struct nilfs_device *nilfsdev)
 	sb1ok = nilfs_check_superblock_crc(&nilfsdev->super);
 	sb2ok = nilfs_check_superblock_crc(&nilfsdev->super2);
 
-	time1 = nilfs_rw64(nilfsdev->super.s_wtime);
-	time2 = nilfs_rw64(nilfsdev->super2.s_wtime);
-	swp = sb2ok && (time2 > time1);
+	last_cno1 = nilfs_rw64(nilfsdev->super.s_last_cno);
+	last_cno2 = nilfs_rw64(nilfsdev->super2.s_last_cno);
+	swp = sb2ok && (last_cno2 > last_cno1);
 
 	if (swp) {
 		printf("nilfs warning: broken superblock, using spare\n");
@@ -607,7 +607,7 @@ nilfs_mount_device(struct vnode *devvp, struct mount *mp, struct nilfs_args *arg
 		accessmode |= VWRITE;
 	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
 	error = genfs_can_mount(devvp, accessmode, l->l_cred);
-	VOP_UNLOCK(devvp, 0);
+	VOP_UNLOCK(devvp);
 	if (error) {
 		vrele(devvp);
 		return error;

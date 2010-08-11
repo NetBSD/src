@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.99.4.2 2010/03/11 15:02:59 yamt Exp $
+# $NetBSD: GENERIC,v 1.99.4.3 2010/08/11 22:52:46 yamt Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.99.4.2 $"
+#ident 		"GENERIC-$Revision: 1.99.4.3 $"
 
 maxusers	64
 
@@ -208,6 +208,7 @@ options 	NTP		# Network Time Protocol in-kernel support
 options 	PFIL_HOOKS	# Add pfil(9) hooks, intended for custom LKMs.
 options 	IPFILTER_LOG	# Add ipmon(8) logging for ipfilter device
 options 	IPFILTER_LOOKUP	# ippool(8) support
+options 	IPFILTER_COMPAT # Compat for IP-Filter
 #options 	IPFILTER_DEFAULT_BLOCK	# block all packets by default
 options 	PPP_BSDCOMP	# Add BSD compression to ppp device
 options 	PPP_DEFLATE	# Add deflate (libz) compression to ppp device
@@ -228,9 +229,10 @@ options 	PPP_FILTER	# Add active filters for ppp (via bpf)
 #options 	ALTQ_WFQ	# Weighted Fair Queueing
 
 
-#### Main bus and CPU .. all systems.
+#### Main bus and CPUs .. all systems.
 mainbus0 at root
-cpu0	at mainbus0
+options 	MULTIPROCESSOR		# include multiprocessor support
+cpu* 		at mainbus0		# declare additional CPUs
 
 #### Bus types found on SPARC systems.
 
@@ -338,6 +340,7 @@ ahc*	at pci? dev ? function ?	# Adaptec [23]94x, aic78x0 SCSI
 bha*	at pci? dev ? function ?	# BusLogic 9xx SCSI UT
 dpt*	at pci? dev ? function ?	# DPT SmartCache/SmartRAID UT
 iha*	at pci? dev ? function ?	# Initio INIC-940/950 SCSI
+mpt*	at pci? dev ? function ?	# LSILogic 9x9 and 53c1030
 njs*	at pci? dev ? function ?	# Workbit NinjaSCSI-32
 pcscp*	at pci? dev ? function ?	# AMD 53c974 PCscsi-PCI SCSI
 trm*	at pci? dev ? function ?	# Tekram DC-395U/UW/F, DC-315/U SCSI
@@ -389,10 +392,7 @@ atapibus* at atapi?
 # 0x0fac means 'use PIO mode 4, DMA mode 2, disable UltraDMA'.
 # (0xc=1100, 0xa=1010, 0xf=1111)
 # 0x0000 means "use whatever the drive claims to support".
-
-## Disable UDMA 4 which causes data corruption on the Acer Labs
-## chipset on Sun Blade 100 and Netra X1 machines.
-wd*     at atabus? drive ? flags 0x0000
+wd*	at atabus? drive ? flags 0x0000
 
 cd*	at atapibus? drive ? flags 0x0000	# ATAPI CD-ROM drives
 sd*	at atapibus? drive ? flags 0x0000	# ATAPI disk drives
@@ -835,6 +835,10 @@ wsmouse* at btms? mux 0
 btkbd* at bthidev? reportid ?
 wskbd* at btkbd? console ? mux 1
 
+## Bluetooth Apple Magic Mouse
+btmagic* at bthub?
+wsmouse* at btmagic? mux 0
+
 ## Bluetooth Audio support
 btsco* at bthub?
 
@@ -851,13 +855,9 @@ audio*		at audiobus?
 midi*		at midibus?
 
 
-## Sun "bwtwo" black and white framebuffer, found on sun4, sun4c, and sun4m
-## systems.  If your sun4 system has a cgfour installed in the P4 slot,
-## the P4 entries for "bwtwo" will attach to the overlay plane of the
-## "cgfour".
-
-#bwtwo0		at sbus? slot ? offset ?	# sun4c and sun4m
-#bwtwo*		at sbus? slot ? offset ?
+## Sun "bwtwo" black and white framebuffer
+bwtwo0		at sbus? slot ? offset ?
+bwtwo*		at sbus? slot ? offset ?
 
 ## Sun "cgthree" Sbus color framebuffer
 cgthree0	at sbus? slot ? offset ?
@@ -901,7 +901,8 @@ wskbd0 at kbd0
 
 # various options for wscons - we try to look as much like a standard
 # sun console as possible
-options 	WSEMUL_SUN		# sun terminal emulation
+#options	WSEMUL_SUN              # sun terminal emulation
+options 	WSEMUL_VT100		# allow us to be wsvt25
 options 	WS_DEFAULT_FG=WSCOL_BLACK
 options 	WS_DEFAULT_BG=WSCOL_LIGHT_WHITE
 options 	WSDISPLAY_COMPAT_USL		# VT handling
@@ -947,7 +948,7 @@ pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
 #pseudo-device	pf			# PF packet filter
 #pseudo-device	pflog			# PF log if
-pseudo-device	fss		4	# file system snapshot device
+pseudo-device	fss			# file system snapshot device
 #pseudo-device	bcsp			# BlueCore Serial Protocol
 #pseudo-device	btuart			# Bluetooth HCI UART (H4)
 pseudo-device	lockstat		# lock profiling

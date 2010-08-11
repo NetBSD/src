@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530var.h,v 1.9 2008/03/29 19:15:35 tsutsui Exp $	*/
+/*	$NetBSD: z8530var.h,v 1.9.4.1 2010/08/11 22:52:44 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -54,6 +54,7 @@ struct zsc_softc {
 	int			zsc_node;	/* PROM node, if any */
 	struct evcnt		zsc_intrcnt;	/* count interrupts */
 	struct zs_chanstate	zsc_cs_store[2];
+	void			*zsc_sicookie;	/* softint(9) cookie */
 };
 
 /*

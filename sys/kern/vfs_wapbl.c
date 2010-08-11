@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_wapbl.c,v 1.25.2.4 2010/03/11 15:04:21 yamt Exp $	*/
+/*	$NetBSD: vfs_wapbl.c,v 1.25.2.5 2010/08/11 22:54:45 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2008, 2009 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #define WAPBL_INTERNAL
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.25.2.4 2010/03/11 15:04:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.25.2.5 2010/08/11 22:54:45 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/bitops.h>
@@ -49,6 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.25.2.4 2010/03/11 15:04:21 yamt Exp 
 #include <sys/vnode.h>
 #include <sys/file.h>
 #include <sys/malloc.h>
+#include <sys/module.h>
 #include <sys/resourcevar.h>
 #include <sys/conf.h>
 #include <sys/mount.h>
@@ -256,13 +257,6 @@ struct wapbl_ops wapbl_ops = {
 	/* XXX: the following is only used to say "this is a wapbl buf" */
 	.wo_wapbl_biodone	= wapbl_biodone,
 };
-
-void
-wapbl_init(void)
-{
-
-	malloc_type_attach(M_WAPBL);
-}
 
 static int
 wapbl_start_flush_inodes(struct wapbl *wl, struct wapbl_replay *wr)
@@ -2712,3 +2706,26 @@ wapbl_replay_read(struct wapbl_replay *wr, void *data, daddr_t blk, long len)
 	}
 	return 0;
 }
+
+#ifdef _KERNEL
+/*
+ * This is not really a module now, but maybe on it's way to
+ * being one some day.
+ */
+MODULE(MODULE_CLASS_VFS, wapbl, NULL);
+
+static int
+wapbl_modcmd(modcmd_t cmd, void *arg)
+{
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		malloc_type_attach(M_WAPBL);
+		return 0;
+	case MODULE_CMD_FINI:
+		return EOPNOTSUPP;
+	default:
+		return ENOTTY;
+	}
+}
+#endif /* _KERNEL */

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.208.10.3 2010/03/11 15:01:59 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.208.10.4 2010/08/11 22:51:35 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -84,9 +84,10 @@
 #include "opt_m060sp.h"
 #include "opt_modular.h"
 #include "opt_panicbutton.h"
+#include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.208.10.3 2010/03/11 15:01:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.208.10.4 2010/08/11 22:51:35 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

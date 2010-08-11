@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.13.10.2 2009/05/04 08:11:16 yamt Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.13.10.3 2010/08/11 22:52:11 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -30,12 +30,12 @@
  */
 
 /*
- * Where possible we make * each routine fit into an assumed 64-byte cache
- * line.  Please check * alignment with 'objdump -d' after making changes. 
+ * Where possible we make each routine fit into an assumed 64-byte cache
+ * line.  Please check alignment with 'objdump -d' after making changes. 
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: lock_stubs.S,v 1.13.10.2 2009/05/04 08:11:16 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lock_stubs.S,v 1.13.10.3 2010/08/11 22:52:11 yamt Exp $");
 
 #include "opt_lockdebug.h"
 

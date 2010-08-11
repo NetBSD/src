@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.16.2.2 2010/03/11 15:02:26 yamt Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.16.2.3 2010/08/11 22:52:08 yamt Exp $	*/
 
 /*	$OpenBSD: db_interface.c,v 1.16 2001/03/22 23:31:45 mickey Exp $	*/
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.16.2.2 2010/03/11 15:02:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.16.2.3 2010/08/11 22:52:08 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -129,7 +129,7 @@ const struct db_variable * const db_eregs = db_regs + sizeof(db_regs)/sizeof(db_
 int db_active = 0;
 
 void
-Debugger(void)
+cpu_Debugger(void)
 {
 	__asm volatile ("break	%0, %1"
 			  :: "i" (HPPA_BREAK_KERNEL), "i" (HPPA_BREAK_KGDB));
@@ -187,7 +187,7 @@ kdb_trap(int type, int code, db_regs_t *regs)
 	splx(s);
 
 	*regs = ddb_regs;
-	return (1);
+	return 1;
 }
 
 /*
@@ -197,5 +197,5 @@ kdb_trap(int type, int code, db_regs_t *regs)
 int
 db_valid_breakpoint(db_addr_t addr)
 {
-	return (1);
+	return 1;
 }

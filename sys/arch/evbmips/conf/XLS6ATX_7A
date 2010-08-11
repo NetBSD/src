@@ -1,11 +1,11 @@
 #
-#	$NetBSD: XLS6ATX_7A,v 1.2.4.2 2010/03/11 15:02:19 yamt Exp $
+#	$NetBSD: XLS6ATX_7A,v 1.2.4.3 2010/08/11 22:51:53 yamt Exp $
 
 include 	"arch/evbmips/conf/std.rmixl"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"XLS6ATX_7A-$Revision: 1.2.4.2 $"
+#ident 		"XLS6ATX_7A-$Revision: 1.2.4.3 $"
 
 maxusers	32
 
@@ -112,6 +112,8 @@ options 	INET		# Internet protocols
 #options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 #options 	IPFILTER_LOG	# ipmon(8) log support
 #options 	IPFILTER_LOOKUP	# ippool(8) support
+#options 	IPFILTER_COMPAT # Compat for IP-Filter
+#options 	IPFILTER_DEFAULT_BLOCK	# block all packets by default
 
 # Compatibility with 4.2BSD implementation of TCP/IP.  Not recommended.
 #options 	TCP_COMPAT_42
@@ -162,7 +164,7 @@ ukphy*		at mii? phy ?			# unknown PHY
 #pseudo-device	ccd		4		# concatenated disk devices
 #pseudo-device	raid		4		# RAIDframe disk driver
 #options 	RAID_AUTOCONFIG			# auto-configuration of RAID
-#pseudo-device	fss		4		# file system snapshot device
+#pseudo-device	fss				# file system snapshot device
 #pseudo-device	md		1		# memory disk device (ramdisk)
 pseudo-device	vnd				# disk-like interface to files
 

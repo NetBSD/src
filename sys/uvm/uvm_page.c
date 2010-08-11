@@ -1,4 +1,30 @@
-/*	$NetBSD: uvm_page.c,v 1.131.4.3 2010/03/11 15:04:47 yamt Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.131.4.4 2010/08/11 22:55:17 yamt Exp $	*/
+
+/*
+ * Copyright (c) 2010 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.131.4.3 2010/03/11 15:04:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.131.4.4 2010/08/11 22:55:17 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -105,11 +131,7 @@ int vm_nphysseg = 0;				/* XXXCDC: uvm.nphysseg */
 /*
  * Some supported CPUs in a given architecture don't support all
  * of the things necessary to do idle page zero'ing efficiently.
- * We therefore provide a way to disable it from machdep code here.
- */
-/*
- * XXX disabled until we can find a way to do this without causing
- * problems for either CPU caches or DMA latency.
+ * We therefore provide a way to enable it from machdep code here.
  */
 bool vm_page_zero_enable = false;
 
@@ -339,6 +361,7 @@ uvm_page_init_buckets(struct pgfreelist *pgfl)
 void
 uvm_page_init(vaddr_t *kvm_startp, vaddr_t *kvm_endp)
 {
+	static struct uvm_cpu boot_cpu;
 	psize_t freepages, pagecount, bucketcount, n;
 	struct pgflbucket *bucketarray, *cpuarray;
 	struct vm_page *pagearray;
@@ -355,7 +378,8 @@ uvm_page_init(vaddr_t *kvm_startp, vaddr_t *kvm_endp)
 	 * structures).
 	 */
 
-	curcpu()->ci_data.cpu_uvm = &uvm.cpus[0];
+	uvm.cpus[0] = &boot_cpu;
+	curcpu()->ci_data.cpu_uvm = &boot_cpu;
 	uvm_reclaim_init();
 	uvmpdpol_init();
 	mutex_init(&uvm_pageqlock, MUTEX_DRIVER, IPL_NONE);
@@ -419,9 +443,9 @@ uvm_page_init(vaddr_t *kvm_startp, vaddr_t *kvm_endp)
 		uvm.page_free[lcv].pgfl_buckets =
 		    (bucketarray + (lcv * uvmexp.ncolors));
 		uvm_page_init_buckets(&uvm.page_free[lcv]);
-		uvm.cpus[0].page_free[lcv].pgfl_buckets =
+		uvm.cpus[0]->page_free[lcv].pgfl_buckets =
 		    (cpuarray + (lcv * uvmexp.ncolors));
-		uvm_page_init_buckets(&uvm.cpus[0].page_free[lcv]);
+		uvm_page_init_buckets(&uvm.cpus[0]->page_free[lcv]);
 	}
 	memset(pagearray, 0, pagecount * sizeof(struct vm_page));
 
@@ -481,7 +505,7 @@ uvm_page_init(vaddr_t *kvm_startp, vaddr_t *kvm_endp)
 	 * determine if we should zero pages in the idle loop.
 	 */
 
-	uvm.cpus[0].page_idle_zero = vm_page_zero_enable;
+	uvm.cpus[0]->page_idle_zero = vm_page_zero_enable;
 
 	/*
 	 * done!
@@ -974,7 +998,8 @@ uvm_cpu_attach(struct cpu_info *ci)
 	bucketcount = uvmexp.ncolors * VM_NFREELIST;
 	bucketarray = malloc(bucketcount * sizeof(struct pgflbucket),
 	    M_VMPAGE, M_WAITOK);
-	ucpu = &uvm.cpus[cpu_index(ci)];
+	ucpu = kmem_zalloc(sizeof(*ucpu), KM_SLEEP);
+	uvm.cpus[cpu_index(ci)] = ucpu;
 	ci->ci_data.cpu_uvm = ucpu;
 	for (lcv = 0; lcv < VM_NFREELIST; lcv++) {
 		pgfl.pgfl_buckets = (bucketarray + (lcv * uvmexp.ncolors));

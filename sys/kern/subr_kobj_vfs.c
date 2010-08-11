@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kobj_vfs.c,v 1.2.4.2 2010/03/11 15:04:18 yamt Exp $	*/
+/*	$NetBSD: subr_kobj_vfs.c,v 1.2.4.3 2010/08/11 22:54:42 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -72,13 +72,13 @@
 #include <sys/vnode.h>
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kobj_vfs.c,v 1.2.4.2 2010/03/11 15:04:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kobj_vfs.c,v 1.2.4.3 2010/08/11 22:54:42 yamt Exp $");
 
 static void
 kobj_close_vfs(kobj_t ko)
 {
 
-	VOP_UNLOCK(ko->ko_source, 0);
+	VOP_UNLOCK(ko->ko_source);
 	vn_close(ko->ko_source, FREAD, kauth_cred_get());
 }
 

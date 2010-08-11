@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.99.20.2 2010/03/11 15:02:43 yamt Exp $	*/
+/*	$NetBSD: locore.s,v 1.99.20.3 2010/08/11 22:52:25 yamt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -83,6 +83,7 @@
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
 #include "opt_lockdebug.h"
+#include "opt_m68k_arch.h"
 
 #include "assym.h"
 #include <machine/asm.h>

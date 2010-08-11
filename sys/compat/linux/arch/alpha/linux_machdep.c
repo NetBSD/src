@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.42.2.3 2010/03/11 15:03:14 yamt Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.42.2.4 2010/08/11 22:53:03 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.42.2.3 2010/03/11 15:03:14 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.42.2.4 2010/08/11 22:53:03 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,7 +91,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.42.2.3 2010/03/11 15:03:14 yamt 
  */
 
 void
-linux_setregs(struct lwp *l, struct exec_package *epp, u_long stack)
+linux_setregs(struct lwp *l, struct exec_package *epp, vaddr_t stack)
 {
 #ifdef DEBUG
 	struct trapframe *tfp = l->l_md.md_tf;

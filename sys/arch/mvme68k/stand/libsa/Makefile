@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.29.72.2 2010/03/11 15:02:43 yamt Exp $
+#	$NetBSD: Makefile,v 1.29.72.3 2010/08/11 22:52:26 yamt Exp $
 
 LIB=sa
 
@@ -28,7 +28,7 @@ SRC_sa= alloc.c \
 	open.c \
 	panic.c printf.c \
 	read.c \
-	snprintf.c sprintf.c strerror.c subr_prf.c \
+	snprintf.c sprintf.c strerror.c strncmp.c subr_prf.c \
 	twiddle.c \
 	udp.c ufs.c
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.62.10.2 2010/03/11 15:02:56 yamt Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.62.10.3 2010/08/11 22:52:43 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.62.10.2 2010/03/11 15:02:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.62.10.3 2010/08/11 22:52:43 yamt Exp $");
 
 #include "opt_kstack_debug.h"
 
@@ -268,7 +268,6 @@ child_return(void *arg)
 	ktrsysret(SYS_fork, 0, 0);
 }
 
-
 /*
  * struct emul e_startlwp (for _lwp_create(2))
  */
@@ -276,19 +275,15 @@ void
 startlwp(void *arg)
 {
 	ucontext_t *uc = arg;
-	struct lwp *l = curlwp;
+	lwp_t *l = curlwp;
 	int error;
 
 	error = cpu_setmcontext(l, &uc->uc_mcontext, uc->uc_flags);
-#ifdef DIAGNOSTIC
-	if (error)
-		printf("startlwp: error %d from cpu_setmcontext()", error);
-#endif
-	pool_put(&lwp_uc_pool, uc);
+	KASSERT(error == 0);
 
+	kmem_free(uc, sizeof(ucontext_t));
 	userret(l);
 }
-
 
 /*
  * Exit hook

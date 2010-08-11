@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_prctl.c,v 1.46.2.3 2010/03/11 15:03:13 yamt Exp $ */
+/*	$NetBSD: irix_prctl.c,v 1.46.2.4 2010/08/11 22:53:03 yamt Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_prctl.c,v 1.46.2.3 2010/03/11 15:03:13 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_prctl.c,v 1.46.2.4 2010/08/11 22:53:03 yamt Exp $");
 
 #include <sys/errno.h>
 #include <sys/types.h>
@@ -101,15 +101,17 @@ irix_sys_prctl(struct lwp *l, const struct irix_sys_prctl_args *uap, register_t 
 		int shmask = 0;
 		struct irix_emuldata *ied;
 
-		p2 = pfind((pid_t)(uintptr_t)SCARG(uap, arg1));
-
+		mutex_enter(proc_lock);
+		p2 = proc_find((pid_t)(uintptr_t)SCARG(uap, arg1));
 		if (p2 == p || SCARG(uap, arg1) == NULL) {
+			mutex_exit(proc_lock);
 			/* XXX return our own shmask */
 			return 0;
 		}
-
-		if (p2 == NULL)
+		if (p2 == NULL) {
+			mutex_exit(proc_lock);
 			return EINVAL;
+		}
 
 		ied = (struct irix_emuldata *)p->p_emuldata;
 		if (ied->ied_shareaddr)
@@ -118,6 +120,7 @@ irix_sys_prctl(struct lwp *l, const struct irix_sys_prctl_args *uap, register_t 
 			shmask |= IRIX_PR_SFDS;
 		if (p->p_cwdi == p2->p_cwdi)
 			shmask |= (IRIX_PR_SDIR|IRIX_PR_SUMASK);
+		mutex_exit(proc_lock);
 
 		*retval = (register_t)shmask;
 		return 0;
@@ -167,19 +170,24 @@ irix_sys_prctl(struct lwp *l, const struct irix_sys_prctl_args *uap, register_t 
 		if (pid == 0)
 			pid = p->p_pid;
 
-		if ((target = pfind(pid)) == NULL)
+		mutex_enter(proc_lock);
+		if ((target = proc_find(pid)) == NULL) {
+			mutex_exit(proc_lock);
 			return ESRCH;
-
-		if (irix_check_exec(target) == 0)
+		}
+		if (irix_check_exec(target) == 0) {
+			mutex_exit(proc_lock);
 			return 0;
-
+		}
 		if (kauth_authorize_process(l->l_cred, KAUTH_PROCESS_CANSEE,
 		    target, KAUTH_ARG(KAUTH_REQ_PROCESS_CANSEE_ENTRY), NULL,
-		    NULL) != 0)
+		    NULL) != 0) {
+			mutex_exit(proc_lock);
 			return EPERM;
-
+		}
 		ied = (struct irix_emuldata *)(target->p_emuldata);
 		*retval = (ied->ied_procblk_count < 0);
+		mutex_exit(proc_lock);
 		return 0;
 		break;
 	}
@@ -533,9 +541,17 @@ irix_sys_procblk(struct lwp *l, const struct irix_sys_procblk_args *uap, registe
 	int error, last_error;
 	struct irix_sys_procblk_args cup;
 
+	/*
+	 * FIXME: Locking is totally broken all here.
+	 */
+
 	/* Find the process */
-	if ((target = pfind(SCARG(uap, pid))) == NULL)
+	mutex_enter(proc_lock);
+	if ((target = proc_find(SCARG(uap, pid))) == NULL) {
+		mutex_exit(proc_lock);
 		return ESRCH;
+	}
+	mutex_exit(proc_lock);
 
 	/* May we stop it? */
 	/* XXX-elad: Is hardcoding SIGSTOP here correct? */
@@ -609,11 +625,13 @@ irix_sys_procblk(struct lwp *l, const struct irix_sys_procblk_args *uap, registe
 	 * signals. This is not very accurate, since on IRIX theses way
 	 * of blocking a process are completely separated.
 	 */
+	mutex_enter(proc_lock);
 	if (oldcount >= 0 && ied->ied_procblk_count < 0) /* blocked */
 		psignal(target, SIGSTOP);
 
 	if (oldcount < 0 && ied->ied_procblk_count >= 0) /* unblocked */
 		psignal(target, SIGCONT);
+	mutex_exit(proc_lock);
 
 	return 0;
 }

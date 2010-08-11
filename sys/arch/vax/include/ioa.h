@@ -1,4 +1,4 @@
-/*	$NetBSD: ioa.h,v 1.12 2007/03/04 06:00:57 christos Exp $	*/
+/*	$NetBSD: ioa.h,v 1.12.44.1 2010/08/11 22:52:51 yamt Exp $	*/
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -30,6 +30,10 @@
  *	@(#)ioa.h	7.3 (Berkeley) 5/9/91
  */
 
+/*
+ * ABus support added by Johnny Billquist 2010
+ */
+
 /****************************************************************
  *                                                              *
  *        Licensed from Digital Equipment Corporation           *
@@ -57,9 +61,10 @@
 #include "opt_cputype.h"
 #if VAX8600 || VAXANY
 #define	NIOA8600	2	/* Number of SBI possible on a VAX86x0 */
-#define IOASIZE		0x2000000
+#define IOASIZE		0x2000000 /* Size of one SBI memory area */
 #define IOAMAPSIZ 	512		/* Map one page to get at SBIA regs */
-#define	IOA8600(i)	((void *)(0x20080000+IOASIZE*i))
+#define SBIA8600(i)     ((void *)(0x20000000+IOASIZE*i)) /* Base address for SBI */
+#define	IOA8600(i)	((void *)((bus_addr_t)(SBIA8600(i))+0x80000)) /* Address of SBIA registers */
 
 struct	sbia_regs
 {
@@ -102,7 +107,7 @@ struct	sbia_regs
 	int sbi_unused2[17];
 };
 
-#define IOA_TYPMSK 0xf0
-#define IOA_SBIA	0x10
+#define IOA_TYPMSK 0xf0         /* Mask for type information in sbi_cfg */
+#define IOA_SBIA	0x10    /* Value for SBIA type on ABus */
 
 #endif /* VAX8600 */

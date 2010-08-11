@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpkern_if_wrappers.c,v 1.6.2.2 2010/03/11 15:04:38 yamt Exp $	*/
+/*	$NetBSD: rumpkern_if_wrappers.c,v 1.6.2.3 2010/08/11 22:55:07 yamt Exp $	*/
 
 /*
  * Automatically generated.  DO NOT EDIT.
@@ -128,10 +128,10 @@ rump_pub_uio_free(struct uio *arg1)
 	return rv;
 }
 
-kauth_cred_t
+struct kauth_cred*
 rump_pub_cred_create(uid_t arg1, gid_t arg2, size_t arg3, gid_t *arg4)
 {
-	kauth_cred_t rv;
+	struct kauth_cred* rv;
 
 	rump_schedule();
 	rv = rump_cred_create(arg1, arg2, arg3, arg4);
@@ -140,10 +140,10 @@ rump_pub_cred_create(uid_t arg1, gid_t arg2, size_t arg3, gid_t *arg4)
 	return rv;
 }
 
-kauth_cred_t
+struct kauth_cred*
 rump_pub_cred_suserget(void)
 {
-	kauth_cred_t rv;
+	struct kauth_cred* rv;
 
 	rump_schedule();
 	rv = rump_cred_suserget();
@@ -153,7 +153,7 @@ rump_pub_cred_suserget(void)
 }
 
 void
-rump_pub_cred_put(kauth_cred_t arg1)
+rump_pub_cred_put(struct kauth_cred *arg1)
 {
 
 	rump_schedule();

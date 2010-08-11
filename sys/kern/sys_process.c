@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.138.2.4 2010/03/11 15:04:19 yamt Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.138.2.5 2010/08/11 22:54:42 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.138.2.4 2010/03/11 15:04:19 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.138.2.5 2010/08/11 22:54:42 yamt Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_ktrace.h"
@@ -228,6 +228,9 @@ sys_ptrace(struct lwp *l, const struct sys_ptrace_args *uap, register_t *retval)
 	} */
 	struct proc *p = l->l_proc;
 	struct lwp *lt;
+#ifdef PT_STEP
+	struct lwp *lt2;
+#endif
 	struct proc *t;				/* target process */
 	struct uio uio;
 	struct iovec iov;
@@ -235,7 +238,8 @@ sys_ptrace(struct lwp *l, const struct sys_ptrace_args *uap, register_t *retval)
 	struct ptrace_lwpinfo pl;
 	struct vmspace *vm;
 	int error, write, tmp, req, pheld;
-	int signo;
+	int signo = 0;
+	int resume_all;
 	ksiginfo_t ksi;
 	char *path;
 	int len;
@@ -255,7 +259,8 @@ sys_ptrace(struct lwp *l, const struct sys_ptrace_args *uap, register_t *retval)
 		mutex_enter(t->p_lock);
 	} else {
 		/* Find the process we're supposed to be operating on. */
-		if ((t = p_find(SCARG(uap, pid), PFIND_LOCKED)) == NULL) {
+		t = proc_find(SCARG(uap, pid));
+		if (t == NULL) {
 			mutex_exit(proc_lock);
 			return (ESRCH);
 		}
@@ -463,6 +468,7 @@ sys_ptrace(struct lwp *l, const struct sys_ptrace_args *uap, register_t *retval)
 	write = 0;
 	*retval = 0;
 	tmp = 0;
+	resume_all = 1;
 
 	switch (req) {
 	case  PT_TRACE_ME:
@@ -597,6 +603,44 @@ sys_ptrace(struct lwp *l, const struct sys_ptrace_args *uap, register_t *retval)
 		p->p_trace_enabled = trace_is_enabled(p);
 
 		/*
+		 * Pick up the LWPID, if supplied.  There are two cases:
+		 * data < 0 : step or continue single thread, lwp = -data
+		 * data > 0 in PT_STEP : step this thread, continue others
+		 * For operations other than PT_STEP, data > 0 means
+		 * data is the signo to deliver to the process.
+		 */
+		tmp = SCARG(uap, data);
+		if (tmp >= 0) {
+#ifdef PT_STEP
+			if (req == PT_STEP)
+				signo = 0;
+			else
+#endif
+			{
+				signo = tmp;
+				tmp = 0;	/* don't search for LWP */
+			}
+		}
+		else
+			tmp = -tmp;
+		
+		if (tmp > 0) {
+			if (req == PT_DETACH) {
+				error = EINVAL;
+				break;
+			}
+			lwp_delref2 (lt);
+			lt = lwp_find(t, tmp);
+			if (lt == NULL) {
+				error = ESRCH;
+				break;
+			}
+			lwp_addref(lt);
+			resume_all = 0;
+			signo = 0;
+		}
+			
+		/*
 		 * From the 4.4BSD PRM:
 		 * "The data argument is taken as a signal number and the
 		 * child's execution continues at location addr as if it
@@ -609,7 +653,7 @@ sys_ptrace(struct lwp *l, const struct sys_ptrace_args *uap, register_t *retval)
 		 */
 
 		/* Check that the data is a valid signal number or zero. */
-		if (SCARG(uap, data) < 0 || SCARG(uap, data) >= NSIG) {
+		if (signo < 0 || signo >= NSIG) {
 			error = EINVAL;
 			break;
 		}
@@ -623,7 +667,17 @@ sys_ptrace(struct lwp *l, const struct sys_ptrace_args *uap, register_t *retval)
 #ifdef PT_STEP
 		/*
 		 * Arrange for a single-step, if that's requested and possible.
+		 * More precisely, set the single step status as requested for
+		 * the requested thread, and clear it for other threads.
 		 */
+		LIST_FOREACH(lt2, &t->p_lwps, l_sibling) {
+			if (lt != lt2) 
+			{
+				lwp_lock(lt2);
+				process_sstep(lt2, 0);
+				lwp_unlock(lt2);
+			}
+		}
 		error = process_sstep(lt, req == PT_STEP);
 		if (error)
 			break;
@@ -640,8 +694,6 @@ sys_ptrace(struct lwp *l, const struct sys_ptrace_args *uap, register_t *retval)
 			/* not being traced any more */
 			t->p_opptr = NULL;
 		}
-
-		signo = SCARG(uap, data);
 	sendsig:
 		/* Finally, deliver the requested signal (or none). */
 		if (t->p_stat == SSTOP) {
@@ -651,7 +703,10 @@ sys_ptrace(struct lwp *l, const struct sys_ptrace_args *uap, register_t *retval)
 			 * an LWP runs to see it.
 			 */
 			t->p_xstat = signo;
-			proc_unstop(t);
+			if (resume_all)
+				proc_unstop(t);
+			else
+				lwp_unstop(lt);
 		} else if (signo != 0) {
 			KSI_INIT_EMPTY(&ksi);
 			ksi.ksi_signo = signo;

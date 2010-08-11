@@ -1,4 +1,4 @@
-/*	$NetBSD: libi386.h,v 1.23.78.2 2009/09/16 13:37:39 yamt Exp $	*/
+/*	$NetBSD: libi386.h,v 1.23.78.3 2010/08/11 22:52:14 yamt Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -69,6 +69,7 @@ void initio(int);
 #define CONSDEV_AUTO (-1)
 int iskey(int);
 char awaitkey(int, int);
+void wait_sec(int);
 
 /* this is in "user code"! */
 int parsebootfile(const char *, char **, char **, int *, int *, const char **);

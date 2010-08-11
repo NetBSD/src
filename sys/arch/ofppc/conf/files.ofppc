@@ -1,4 +1,4 @@
-#	$NetBSD: files.ofppc,v 1.40 2008/04/08 02:33:03 garbled Exp $
+#	$NetBSD: files.ofppc,v 1.40.4.1 2010/08/11 22:52:30 yamt Exp $
 #
 # NetBSD/ofppc configuration info
 #
@@ -89,9 +89,11 @@ device ofwpci: pcibus
 attach ofwpci at mainbus
 file	arch/ofppc/pci/ofwpci.c			ofwpci
 
-device pegasospci: pcibus
-attach pegasospci at mainbus
-file	arch/ofppc/pci/pegasospci.c		pegasospci
+# Marvell System-Controller MV64361(Discovery II) (on PegasosII)
+include "dev/marvell/files.discovery"
+attach	gt at mainbus
+file	arch/ofppc/pci/gt_mainbus.c		gt
+file	arch/powerpc/marvell/pci_machdep.c	gtpci
 
 device pchb: pcibus
 attach pchb at pci
@@ -111,6 +113,16 @@ file	arch/ofppc/isa/isa_machdep.c		isa
 file	arch/powerpc/isa/isadma_machdep.c	isa
 
 include "dev/pckbport/files.pckbport"
+
+# Floppy disk controller
+device	fdc {drive = -1}: isadma
+file	dev/isa/fd.c				fdc needs-flag
+
+attach	fdc at isa with fdc_isa
+file	dev/isa/fdc_isa.c			fdc_isa
+
+device	fd: disk
+attach	fd at fdc
 
 device	cpu
 attach	cpu at mainbus

@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.10 2007/10/17 19:54:00 garbled Exp $	*/
+/*	$NetBSD: param.h,v 1.10.20.1 2010/08/11 22:51:48 yamt Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -49,3 +49,6 @@
 #define	KERNBASE	0x3100
 
 #include <powerpc/param.h>
+
+/* at this offset we mmap() the PCI IO range in display drivers */
+#define PCI_MAGIC_IO_RANGE	0xf2000000

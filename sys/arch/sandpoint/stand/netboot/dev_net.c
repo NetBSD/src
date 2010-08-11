@@ -1,4 +1,4 @@
-/* $NetBSD: dev_net.c,v 1.5.22.2 2009/05/04 08:11:47 yamt Exp $ */
+/* $NetBSD: dev_net.c,v 1.5.22.3 2010/08/11 22:52:39 yamt Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -38,8 +38,10 @@
 #include <lib/libsa/net.h>
 #include <lib/libsa/bootp.h>
 #include <lib/libsa/nfs.h>
-
 #include <lib/libkern/libkern.h>
+
+#include <machine/bootinfo.h>
+#include <machine/stdarg.h>
 
 #include "globals.h"
 
@@ -48,51 +50,66 @@ static int netdev_opens;
 
 int
 net_open(struct open_file *f, ...)
+
 {
-	int error = 0;
+	va_list ap;
+	char *file, *proto;
+	int error;
+	extern struct btinfo_bootpath bi_path;
 	
-	if (netdev_opens == 0) {
-		if ((netdev_sock = netif_open(NULL)) < 0) {
-			error = errno;
-			goto bad;
-		}
+	va_start(ap, f);
+	file = va_arg(ap, char *);
+	proto = va_arg(ap, char *);
+	va_end(ap);
 
-		/* send DHCP request */
-		bootp(netdev_sock);
+	if (netdev_opens > 0)
+		return 0;
 
-		/* IP address was not found */
-		if (myip.s_addr == 0) {
-			error = ENOENT;
-			goto bad;
-		}
+	if ((netdev_sock = netif_open(NULL)) < 0)
+		return ENXIO;	/* never fails indeed */
 
-		/* XXX always to use "netbsd" kernel filename */
-		strcpy(bootfile, "/netbsd");
-
-		if (nfs_mount(netdev_sock, rootip, rootpath) != 0) {
-			error = errno;
-			goto bad;
-		}
+	error = 0;
+	bootp(netdev_sock);	/* send DHCP request */
+	if (myip.s_addr == 0) {
+		error = ENOENT;	/* IP address was not found */
+		goto bad;
 	}
+
+	if (file[0] != '\0') 
+		snprintf(bootfile, sizeof(bootfile), file);
+	else if (bootfile[0] == '\0')
+		snprintf(bootfile, sizeof(bootfile), "netbsd");
+
+	if (strcmp(proto, "nfs") == 0
+	    && (error = nfs_mount(netdev_sock, rootip, rootpath)) != 0)
+		goto bad;
+
+	snprintf(bi_path.bootpath, sizeof(bi_path.bootpath), bootfile);
+	f->f_devdata = &netdev_sock;
 	netdev_opens++;
-bad:
-	return (error);
+	return 0;
+ bad:
+	netif_close(netdev_sock);
+	netdev_sock = -1;
+	return error;
 }
 
 int
 net_close(struct open_file *f)
 	
 {
+	f->f_devdata = NULL;
 	if (--netdev_opens > 0)
-		return (0);
+		return 0;
 	netif_close(netdev_sock);
 	netdev_sock = -1;
-	return (0);
+	return 0;
 }
 
 int
-net_strategy(void *d, int f, daddr_t b, size_t s, void *buf, size_t *r)
+net_strategy(void *devdata, int rw, daddr_t dblk, size_t size,
+	void *p, size_t *rsize)
 {
 
-	return (EIO);
+	return EIO;
 }

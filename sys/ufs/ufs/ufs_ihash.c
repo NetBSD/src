@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_ihash.c,v 1.25.10.1 2008/05/16 02:26:01 yamt Exp $	*/
+/*	$NetBSD: ufs_ihash.c,v 1.25.10.2 2010/08/11 22:55:15 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_ihash.c,v 1.25.10.1 2008/05/16 02:26:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_ihash.c,v 1.25.10.2 2010/08/11 22:55:15 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -150,7 +150,7 @@ ufs_ihashget(dev_t dev, ino_t inum, int flags)
 			} else {
 				mutex_enter(&vp->v_interlock);
 				mutex_exit(&ufs_ihash_lock);
-				if (vget(vp, flags | LK_INTERLOCK))
+				if (vget(vp, flags))
 					goto loop;
 			}
 			return (vp);
@@ -171,7 +171,7 @@ ufs_ihashins(struct inode *ip)
 	KASSERT(mutex_owned(&ufs_hashlock));
 
 	/* lock the inode, then put it on the appropriate hash list */
-	vlockmgr(&ip->i_vnode->v_lock, LK_EXCLUSIVE);
+	VOP_LOCK(ITOV(ip), LK_EXCLUSIVE);
 
 	mutex_enter(&ufs_ihash_lock);
 	ipp = &ihashtbl[INOHASH(ip->i_dev, ip->i_number)];

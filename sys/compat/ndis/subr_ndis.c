@@ -35,7 +35,7 @@
 __FBSDID("$FreeBSD: src/sys/compat/ndis/subr_ndis.c,v 1.67.2.7 2005/03/31 21:50:11 wpaul Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: subr_ndis.c,v 1.13.10.3 2009/07/18 14:52:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_ndis.c,v 1.13.10.4 2010/08/11 22:53:10 yamt Exp $");
 #endif
 
 /*
@@ -1552,10 +1552,10 @@ NdisMRegisterIoPortRange(
     switch (sc->ndis_iftype){
         case PCIBus:
         case CBus:	/* CardBus */
-            *offset = (void*)sc->ndis_res_io->res_base;
+            *offset = (void*)(u_long)sc->ndis_res_io->res_base;
             break;
         case PCMCIABus:
-            *offset = (void*)sc->ndis_res_pcioh.addr;
+            *offset = (void*)(u_long)sc->ndis_res_pcioh.addr;
             break;
         default:
             return(NDIS_STATUS_FAILURE);

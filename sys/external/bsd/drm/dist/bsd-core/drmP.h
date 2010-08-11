@@ -294,7 +294,7 @@ enum {
 
 #elif   defined(__NetBSD__)
 
-#define PAGE_ALIGN(addr)    ALIGN(addr)
+#define PAGE_ALIGN(addr)	round_page(addr)
 #define DRM_SUSER(p)    (kauth_cred_getsvuid((p)->p_cred) == 0)
 #define DRM_AGP_FIND_DEVICE()	agp_find_device(0)
 #ifdef MTRR_TYPE_WC
@@ -355,53 +355,6 @@ typedef uint8_t u8;
 #define DRM_WRITEMEMORYBARRIER()	__asm __volatile("" : : : "memory");
 #define DRM_MEMORYBARRIER()		__asm __volatile( \
 					"lock; addl $0,0(%%rsp)" : : : "memory");
-#endif
-
-#if defined(__FreeBSD__)
-
-#define DRM_READ8(map, offset)						\
-	*(volatile u_int8_t *)(((vm_offset_t)(map)->handle) +		\
-	    (vm_offset_t)(offset))
-#define DRM_READ16(map, offset)						\
-	*(volatile u_int16_t *)(((vm_offset_t)(map)->handle) +		\
-	    (vm_offset_t)(offset))
-#define DRM_READ32(map, offset)						\
-	*(volatile u_int32_t *)(((vm_offset_t)(map)->handle) +		\
-	    (vm_offset_t)(offset))
-#define DRM_WRITE8(map, offset, val)					\
-	*(volatile u_int8_t *)(((vm_offset_t)(map)->handle) +		\
-	    (vm_offset_t)(offset)) = val
-#define DRM_WRITE16(map, offset, val)					\
-	*(volatile u_int16_t *)(((vm_offset_t)(map)->handle) +		\
-	    (vm_offset_t)(offset)) = val
-#define DRM_WRITE32(map, offset, val)					\
-	*(volatile u_int32_t *)(((vm_offset_t)(map)->handle) +		\
-	    (vm_offset_t)(offset)) = val
-
-#define DRM_VERIFYAREA_READ( uaddr, size )		\
-	(!useracc(__DECONST(caddr_t, uaddr), size, VM_PROT_READ))
-
-#elif   defined(__NetBSD__)
-
-typedef vaddr_t vm_offset_t;
-
-#define DRM_READ8(map, offset)		\
-	bus_space_read_1( (map)->bst, (map)->bsh, (offset))
-#define DRM_READ16(map, offset)		\
-	bus_space_read_2( (map)->bst, (map)->bsh, (offset))
-#define DRM_READ32(map, offset)		\
-	bus_space_read_4( (map)->bst, (map)->bsh, (offset))
-#define DRM_WRITE8(map, offset, val)	\
-	bus_space_write_1((map)->bst, (map)->bsh, (offset), (val))
-#define DRM_WRITE16(map, offset, val)	\
-	bus_space_write_2((map)->bst, (map)->bsh, (offset), (val))
-#define DRM_WRITE32(map, offset, val)	\
-	bus_space_write_4((map)->bst, (map)->bsh, (offset), (val))
-
-#define DRM_VERIFYAREA_READ( uaddr, size )		\
-	(!uvm_map_checkprot(&(curproc->p_vmspace->vm_map),              \
-		(vaddr_t)uaddr, (vaddr_t)uaddr+size, UVM_PROT_READ))
-
 #endif
 
 #define DRM_COPY_TO_USER(user, kern, size) \
@@ -668,6 +621,9 @@ typedef struct {
 	int			flags;
 	void *			vaddr;
 } pci_map_data_t;
+
+/* XXX */
+#define readl(va) (*(volatile u_int32_t *) (va))
 #endif
 
 typedef struct drm_local_map {
@@ -927,6 +883,97 @@ static inline int drm_core_has_AGP(struct drm_device *dev)
 }
 #else
 #define drm_core_has_AGP(dev) (0)
+#endif
+
+#if defined(__FreeBSD__)
+
+#define DRM_READ8(map, offset)						\
+	*(volatile u_int8_t *)(((vm_offset_t)(map)->handle) +		\
+	    (vm_offset_t)(offset))
+#define DRM_READ16(map, offset)						\
+	*(volatile u_int16_t *)(((vm_offset_t)(map)->handle) +		\
+	    (vm_offset_t)(offset))
+#define DRM_READ32(map, offset)						\
+	*(volatile u_int32_t *)(((vm_offset_t)(map)->handle) +		\
+	    (vm_offset_t)(offset))
+#define DRM_WRITE8(map, offset, val)					\
+	*(volatile u_int8_t *)(((vm_offset_t)(map)->handle) +		\
+	    (vm_offset_t)(offset)) = val
+#define DRM_WRITE16(map, offset, val)					\
+	*(volatile u_int16_t *)(((vm_offset_t)(map)->handle) +		\
+	    (vm_offset_t)(offset)) = val
+#define DRM_WRITE32(map, offset, val)					\
+	*(volatile u_int32_t *)(((vm_offset_t)(map)->handle) +		\
+	    (vm_offset_t)(offset)) = val
+
+#define DRM_VERIFYAREA_READ( uaddr, size )		\
+	(!useracc(__DECONST(caddr_t, uaddr), size, VM_PROT_READ))
+
+#elif   defined(__NetBSD__)
+
+typedef vaddr_t vm_offset_t;
+
+#define DRM_IS_BUS_SPACE(map)	((map)->type == _DRM_REGISTERS || \
+				 (map)->type == _DRM_CONSISTENT)
+
+static __inline__ u_int8_t
+DRM_READ8(drm_local_map_t *map, bus_size_t offset)
+{
+	if (DRM_IS_BUS_SPACE(map))
+		return bus_space_read_1(map->bst, map->bsh, offset);
+	else
+		return *(volatile u_int8_t *)((vaddr_t)map->handle + offset);
+}
+
+static __inline__ u_int16_t
+DRM_READ16(drm_local_map_t *map, bus_size_t offset)
+{
+	if (DRM_IS_BUS_SPACE(map))
+		return bus_space_read_2(map->bst, map->bsh, offset);
+	else
+		return *(volatile u_int16_t *)((vaddr_t)map->handle + offset);
+}
+
+static __inline__ u_int32_t
+DRM_READ32(drm_local_map_t *map, bus_size_t offset)
+{
+	if (DRM_IS_BUS_SPACE(map))
+		return bus_space_read_4(map->bst, map->bsh, offset);
+	else
+		return *(volatile u_int32_t *)((vaddr_t)map->handle + offset);
+}
+
+static __inline__ void
+DRM_WRITE8(drm_local_map_t *map, bus_size_t offset, u_int8_t val)
+{
+	if (DRM_IS_BUS_SPACE(map))
+		bus_space_write_1(map->bst, map->bsh, offset, val);
+	else
+		*(volatile u_int8_t *)((vaddr_t)map->handle + offset) = val;
+}
+
+static __inline__ void
+DRM_WRITE16(drm_local_map_t *map, bus_size_t offset, u_int16_t val)
+{
+	if (DRM_IS_BUS_SPACE(map))
+		bus_space_write_2(map->bst, map->bsh, offset, val);
+	else
+		*(volatile u_int16_t *)((vaddr_t)map->handle + offset) = val;
+}
+
+static __inline__ void
+DRM_WRITE32(drm_local_map_t *map, bus_size_t offset, u_int32_t val)
+{
+	if (DRM_IS_BUS_SPACE(map))
+		bus_space_write_4(map->bst, map->bsh, offset, val);
+	else
+		*(volatile u_int32_t *)((vaddr_t)map->handle + offset) = val;
+}
+
+#define DRM_VERIFYAREA_READ( uaddr, size )		\
+	(!uvm_map_checkprot(&(curproc->p_vmspace->vm_map),              \
+		(vaddr_t)uaddr, (vaddr_t)uaddr+size, UVM_PROT_READ))
+
 #endif
 
 extern int	drm_debug_flag;

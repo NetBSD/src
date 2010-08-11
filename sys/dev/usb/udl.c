@@ -1,4 +1,4 @@
-/*	$NetBSD: udl.c,v 1.2.2.2 2010/03/11 15:04:06 yamt Exp $	*/
+/*	$NetBSD: udl.c,v 1.2.2.3 2010/08/11 22:54:15 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2009 FUKAUMI Naoki.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udl.c,v 1.2.2.2 2010/03/11 15:04:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udl.c,v 1.2.2.3 2010/08/11 22:54:15 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -299,6 +299,7 @@ static struct wsdisplay_accessops udl_accessops = {
  */
 static const struct usb_devno udl_devs[] = {
 	{ USB_VENDOR_DISPLAYLINK, USB_PRODUCT_DISPLAYLINK_LD220 },
+	{ USB_VENDOR_DISPLAYLINK, USB_PRODUCT_DISPLAYLINK_LD190 },
 	{ USB_VENDOR_DISPLAYLINK, USB_PRODUCT_DISPLAYLINK_U70 },
 	{ USB_VENDOR_DISPLAYLINK, USB_PRODUCT_DISPLAYLINK_VCUD60 },
 	{ USB_VENDOR_DISPLAYLINK, USB_PRODUCT_DISPLAYLINK_DLDVI },

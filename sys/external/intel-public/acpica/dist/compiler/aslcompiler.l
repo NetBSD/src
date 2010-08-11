@@ -10,7 +10,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2009, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2010, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -725,7 +725,7 @@ InsertLineBuffer (
              * Warning if we have split a long source line.
              * <Probably overkill>
              */
-            sprintf (MsgBuffer, "Max %d", ASL_LINE_BUFFER_SIZE);
+            sprintf (MsgBuffer, "Max %u", ASL_LINE_BUFFER_SIZE);
             AslCommonError (ASL_WARNING, ASL_MSG_LONG_LINE,
                             Gbl_CurrentLineNumber, Gbl_LogicalLineNumber,
                             Gbl_CurrentLineOffset, Gbl_CurrentColumn,

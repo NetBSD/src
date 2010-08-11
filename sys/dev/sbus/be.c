@@ -1,4 +1,4 @@
-/*	$NetBSD: be.c,v 1.57.4.4 2010/03/11 15:04:02 yamt Exp $	*/
+/*	$NetBSD: be.c,v 1.57.4.5 2010/08/11 22:54:09 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: be.c,v 1.57.4.4 2010/03/11 15:04:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: be.c,v 1.57.4.5 2010/08/11 22:54:09 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -576,8 +576,7 @@ be_read(struct be_softc *sc, int idx, int len)
 	 * Check if there's a BPF listener on this interface.
 	 * If so, hand off the raw packet to BPF.
 	 */
-	if (ifp->if_bpf)
-		bpf_ops->bpf_mtap(ifp->if_bpf, m);
+	bpf_mtap(ifp, m);
 	/* Pass the packet up. */
 	(*ifp->if_input)(ifp, m);
 }
@@ -614,8 +613,7 @@ bestart(struct ifnet *ifp)
 		 * If BPF is listening on this interface, let it see the
 		 * packet before we commit it to the wire.
 		 */
-		if (ifp->if_bpf)
-			bpf_ops->bpf_mtap(ifp->if_bpf, m);
+		bpf_mtap(ifp, m);
 
 		/*
 		 * Copy the mbuf chain into the transmit buffer.

@@ -1,0 +1,18 @@
+#	$NetBSD: files.wmi,v 1.6.2.2 2010/08/11 22:53:17 yamt Exp $
+
+define	acpiwmibus { }
+
+# ACPI WMI mapper
+device	acpiwmi: acpiwmibus
+attach	acpiwmi at acpinodebus
+file	dev/acpi/wmi/wmi_acpi.c		acpiwmi
+
+# Dell WMI mappings
+device	wmidell: sysmon_power
+attach	wmidell at acpiwmibus
+file	dev/acpi/wmi/wmi_dell.c		wmidell
+
+# HP WMI mappings
+device	wmihp: sysmon_envsys
+attach	wmihp at acpiwmibus
+file	dev/acpi/wmi/wmi_hp.c		wmihp

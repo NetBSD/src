@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_50.c,v 1.1.6.2 2009/08/19 18:46:57 yamt Exp $	*/
+/*	$NetBSD: vfs_syscalls_50.c,v 1.1.6.3 2010/08/11 22:53:01 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_50.c,v 1.1.6.2 2009/08/19 18:46:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_50.c,v 1.1.6.3 2010/08/11 22:53:01 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,6 +93,7 @@ cvtstat(struct stat30 *ost, const struct stat *st)
 	ost->st_blksize = st->st_blksize;
 	ost->st_flags = st->st_flags;
 	ost->st_gen = st->st_gen;
+	memset(ost->st_spare, 0, sizeof(ost->st_spare));
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.37.2.2 2010/03/11 15:03:16 yamt Exp $ */
+/*	$NetBSD: linux_machdep.c,v 1.37.2.3 2010/08/11 22:53:06 yamt Exp $ */
 
 /*-
  * Copyright (c) 1995, 2000, 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.37.2.2 2010/03/11 15:03:16 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.37.2.3 2010/08/11 22:53:06 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,11 +90,9 @@ __KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.37.2.2 2010/03/11 15:03:16 yamt 
 
 /*
  * Set set up registers on exec.
- * XXX not used at the moment since in sys/kern/exec_conf, LINUX_COMPAT
- * entry uses NetBSD's native setregs instead of linux_setregs
  */
 void
-linux_setregs(struct lwp *l, struct exec_package *pack, u_long stack)
+linux_setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 {
 	setregs(l, pack, stack);
 	return;
@@ -278,7 +276,7 @@ linux_sys_sigreturn(struct lwp *l, const struct linux_sys_sigreturn_args *uap, r
 
 
 int
-linux_sys_rt_sigreturn(struct lwp *l, const void *v, register_t *retval)
+linux_sys_rt_sigreturn(struct lwp *l, const struct linux_sys_rt_sigreturn_args *v, register_t *retval)
 {
 	return (ENOSYS);
 }
@@ -383,14 +381,12 @@ linux_sys_cacheflush(struct lwp *l, const struct linux_sys_cacheflush_args *uap,
 int
 linux_sys_sysmips(struct lwp *l, const struct linux_sys_sysmips_args *uap, register_t *retval)
 {
-#if 0
-	struct linux_sys_sysmips_args {
+	/* {
 		syscallarg(int) cmd;
 		syscallarg(int) arg1;
 		syscallarg(int) arg2;
 		syscallarg(int) arg3;
-	} *uap = v;
-#endif
+	} */
 	int error;
 
 	switch (SCARG(uap, cmd)) {
@@ -455,4 +451,14 @@ int
 linux_usertrap(struct lwp *l, vaddr_t trapaddr, void *arg)
 {
 	return 0;
+}
+
+int
+linux_sys_set_thread_area(struct lwp *l, const struct linux_sys_set_thread_area_args *uap, register_t *retval)
+{
+	/* {
+		syscallarg(void *) tls;
+	} */
+
+	return lwp_setprivate(l, SCARG(uap, tls));
 }

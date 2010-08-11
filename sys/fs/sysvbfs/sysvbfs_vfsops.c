@@ -1,4 +1,4 @@
-/*	$NetBSD: sysvbfs_vfsops.c,v 1.22.10.4 2010/03/11 15:04:14 yamt Exp $	*/
+/*	$NetBSD: sysvbfs_vfsops.c,v 1.22.10.5 2010/08/11 22:54:36 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vfsops.c,v 1.22.10.4 2010/03/11 15:04:14 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vfsops.c,v 1.22.10.5 2010/08/11 22:54:36 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -202,6 +202,7 @@ sysvbfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	mp->mnt_stat.f_fsidx.__fsid_val[0] = (long)devvp->v_rdev;
 	mp->mnt_stat.f_fsidx.__fsid_val[1] = makefstype(MOUNT_SYSVBFS);
 	mp->mnt_stat.f_fsid = mp->mnt_stat.f_fsidx.__fsid_val[0];
+	mp->mnt_stat.f_namemax = BFS_FILENAME_MAXLEN;
 	mp->mnt_flag |= MNT_LOCAL;
 	mp->mnt_dev_bshift = BFS_BSHIFT;
 	mp->mnt_fs_bshift = BFS_BSHIFT;
@@ -212,7 +213,7 @@ sysvbfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
  out:
 	if (devopen && error)
 		VOP_CLOSE(devvp, oflags, NOCRED);
-	VOP_UNLOCK(devvp, 0);
+	VOP_UNLOCK(devvp);
 	return error;
 }
 
@@ -313,7 +314,7 @@ sysvbfs_sync(struct mount *mp, int waitfor, kauth_cred_t cred)
 		v = bnode->vnode;
 	    	mutex_enter(&v->v_interlock);
 		mutex_exit(&mntvnode_lock);
-		err = vget(v, LK_EXCLUSIVE | LK_NOWAIT | LK_INTERLOCK);
+		err = vget(v, LK_EXCLUSIVE | LK_NOWAIT);
 		if (err == 0) {
 			err = VOP_FSYNC(v, cred, FSYNC_WAIT, 0, 0);
 			vput(v);
@@ -352,7 +353,7 @@ sysvbfs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 			vp = bnode->vnode;
 			mutex_enter(&vp->v_interlock);
 			mutex_exit(&mntvnode_lock);
-			if (vget(vp, LK_EXCLUSIVE|LK_RETRY|LK_INTERLOCK) == 0) {
+			if (vget(vp, LK_EXCLUSIVE) == 0) {
 				*vpp = vp;
 				return 0;
 			} else {

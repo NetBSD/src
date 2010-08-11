@@ -1,4 +1,4 @@
-#	$NetBSD: files.omap2,v 1.1.22.2 2009/05/04 08:10:43 yamt Exp $
+#	$NetBSD: files.omap2,v 1.1.22.3 2010/08/11 22:51:42 yamt Exp $
 #
 # Configuration info for Texas Instruments OMAP2/OMAP3 CPU support
 # Based on xscale/files.pxa2x0
@@ -7,6 +7,7 @@
 include "arch/arm/pic/files.pic"
 
 file	arch/arm/arm32/irq_dispatch.S
+file	arch/arm/omap/omap_dma.c
 
 # Memory size in megabytes
 defparam opt_omap.h				MEMSIZE
@@ -83,6 +84,9 @@ file	arch/arm/omap/omap2_gpmc.c		gpmc
 attach	ohci at obio with obioohci
 file	arch/arm/omap/obio_ohci.c		obioohci
 
+device omapfb: rasops16, rasops8, wsemuldisplaydev, vcons
+attach omapfb at obio
+file	arch/arm/omap/omapfb.c			omapfb
 
 # these bus space methods are not bus-specific ...
 #

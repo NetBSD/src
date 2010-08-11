@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay_compat_usl.c,v 1.45.2.1 2010/03/11 15:04:09 yamt Exp $ */
+/* $NetBSD: wsdisplay_compat_usl.c,v 1.45.2.2 2010/08/11 22:54:17 yamt Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay_compat_usl.c,v 1.45.2.1 2010/03/11 15:04:09 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay_compat_usl.c,v 1.45.2.2 2010/08/11 22:54:17 yamt Exp $");
 
 #include "opt_compat_freebsd.h"
 #include "opt_compat_netbsd.h"
@@ -142,7 +142,7 @@ usl_sync_check_sig(struct usl_syncdata *sd, int sig, int flags)
 {
 
 	mutex_enter(proc_lock);
-	if (sd->s_proc == p_find(sd->s_pid, PFIND_LOCKED)) {
+	if (sd->s_proc == proc_find(sd->s_pid)) {
 		sd->s_flags |= flags;
 		if (sig)
 			psignal(sd->s_proc, sig);

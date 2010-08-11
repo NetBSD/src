@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.11.20.1 2008/05/16 02:22:42 yamt Exp $	*/
+/*	$NetBSD: intr.h,v 1.11.20.2 2010/08/11 22:52:16 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -44,7 +44,6 @@ void openpic_init(unsigned char *);
 void enable_intr(void);
 void disable_intr(void);
 
-extern int imask[];
 extern vaddr_t prep_intr_reg;
 extern uint32_t prep_intr_reg_off;
 

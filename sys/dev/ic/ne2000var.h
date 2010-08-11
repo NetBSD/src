@@ -1,4 +1,4 @@
-/*	$NetBSD: ne2000var.h,v 1.18.58.4 2010/03/11 15:03:33 yamt Exp $	*/
+/*	$NetBSD: ne2000var.h,v 1.18.58.5 2010/08/11 22:53:29 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@ struct ne2000_softc {
 #define	NE2000_QUIRK_8BIT	0x0001	/* force 8bit mode even on NE2000 */
 };
 
-int	ne2000_attach(struct ne2000_softc *, u_int8_t *);
+int	ne2000_attach(struct ne2000_softc *, uint8_t *);
 int	ne2000_detect(bus_space_tag_t, bus_space_handle_t,
 	    bus_space_tag_t, bus_space_handle_t);
 int	ne2000_detach(struct ne2000_softc *, int);

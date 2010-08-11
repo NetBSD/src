@@ -1,4 +1,4 @@
-/* $NetBSD: g42xxeb_lcd.c,v 1.8.44.1 2009/05/04 08:10:57 yamt Exp $ */
+/* $NetBSD: g42xxeb_lcd.c,v 1.8.44.2 2010/08/11 22:51:51 yamt Exp $ */
 
 /*-
  * Copyright (c) 2001, 2002, 2005 Genetec corp.
@@ -127,7 +127,7 @@ dev_type_ioctl(lcdioctl);
 dev_type_mmap(lcdmmap);
 const struct cdevsw lcd_cdevsw = {
 	lcdopen, lcdclose, noread, nowrite,
-	lcdioctl, nostop, notty, nopoll, lcdmmap, D_TTY
+	lcdioctl, nostop, notty, nopoll, lcdmmap, nokqfilter, D_TTY
 };
 
 #endif
@@ -188,11 +188,19 @@ const struct lcd_panel_geometry toshiba_LTM035 =
 };
 #endif /* G4250_LCD_TOSHIBA_LTM035 */
 
-void lcd_attach( device_t parent, device_t self, void *aux )
+void lcd_attach(device_t parent, device_t self, void *aux)
 {
 	struct pxa2x0_lcd_softc *sc = device_private(self);
+	struct pxaip_attach_args paa;
+	struct obio_attach_args *oba = aux;
 
 	sc->dev = self;
+
+	paa.pxa_name = "obio";
+	paa.pxa_iot = oba->oba_iot;
+	paa.pxa_addr = oba->oba_addr;
+	paa.pxa_size = 0;		/* XXX */
+	paa.pxa_intr = oba->oba_intr;
 
 #ifdef G4250_LCD_TOSHIBA_LTM035
 # define PANEL	toshiba_LTM035
@@ -200,7 +208,7 @@ void lcd_attach( device_t parent, device_t self, void *aux )
 # define PANEL	nec_NL3224BC35
 #endif
 
-	pxa2x0_lcd_attach_sub(sc, aux, &PANEL);
+	pxa2x0_lcd_attach_sub(sc, &paa, &PANEL);
 
 
 #if NWSDISPLAY > 0
@@ -218,8 +226,6 @@ void lcd_attach( device_t parent, device_t self, void *aux )
 		aa.accessops = &lcd_accessops;
 		aa.accesscookie = sc;
 
-		printf("\n");
-
 		(void) config_found(self, &aa, wsemuldisplaydevprint);
 	}
 #else
@@ -232,8 +238,6 @@ void lcd_attach( device_t parent, device_t self, void *aux )
 			sc->active = screen;
 			pxa2x0_lcd_start_dma(sc, screen);
 		}
-
-		printf("\n");
 	}
 #endif
 
@@ -246,8 +250,9 @@ void lcd_attach( device_t parent, device_t self, void *aux )
 int
 lcd_ioctl(void *v, void *vs, u_long cmd, void *data, int flag, struct lwp *l)
 {
+	struct pxa2x0_lcd_softc *sc = v;
 	struct obio_softc *osc = 
-	    (struct obio_softc *) device_parent((struct device *)v);
+	    device_private(device_parent(sc->dev));
 	uint16_t reg;
 
 	switch (cmd) {
@@ -273,8 +278,9 @@ int
 lcd_show_screen(void *v, void *cookie, int waitok,
     void (*cb)(void *, int, int), void *cbarg)
 {
+	struct pxa2x0_lcd_softc *sc = v;
 	struct obio_softc *osc = 
-	    (struct obio_softc *) device_parent((struct device *)v);
+	    device_private(device_parent(sc->dev));
 	uint16_t reg;
 
 	pxa2x0_lcd_show_screen(v,cookie,waitok,cb,cbarg);
@@ -295,6 +301,19 @@ lcd_show_screen(void *v, void *cookie, int waitok,
 int
 lcdopen(dev_t dev, int oflags, int devtype, struct lwp *l)
 {
+	struct pxa2x0_lcd_softc *sc =
+		device_lookup_private(&lcd_cd, minor(dev));
+	struct obio_softc *osc = 
+	    device_private(device_parent(sc->dev));
+	uint16_t reg;
+
+	/* Turn on LCD backlight.
+	   XXX: with fixed blightness. want new ioctl to set blightness. */
+	reg = bus_space_read_2(osc->sc_iot, osc->sc_obioreg_ioh, G42XXEB_LCDCTL);
+	bus_space_write_2(osc->sc_iot, osc->sc_obioreg_ioh, G42XXEB_LCDCTL,
+	    (reg & ~LCDCTL_BL_PWN) | 0x4000 | LCDCTL_BL_ON);
+
+
 	return 0;
 }
 

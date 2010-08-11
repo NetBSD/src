@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_srvsubs.c,v 1.3.2.3 2010/03/11 15:04:31 yamt Exp $	*/
+/*	$NetBSD: nfs_srvsubs.c,v 1.3.2.4 2010/08/11 22:54:59 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_srvsubs.c,v 1.3.2.3 2010/03/11 15:04:31 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_srvsubs.c,v 1.3.2.4 2010/08/11 22:54:59 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -347,7 +347,7 @@ nfsrv_fhtovp(nfsrvfh_t *nsfh, int lockflag, struct vnode **vpp,
 	else
 		*rdonlyp = 0;
 	if (!lockflag)
-		VOP_UNLOCK(*vpp, 0);
+		VOP_UNLOCK(*vpp);
 	return (0);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_tty.c,v 1.37 2008/04/24 15:35:30 ad Exp $	*/
+/*	$NetBSD: tty_tty.c,v 1.37.2.1 2010/08/11 22:54:43 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993, 1995
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_tty.c,v 1.37 2008/04/24 15:35:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_tty.c,v 1.37.2.1 2010/08/11 22:54:43 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,7 +75,7 @@ cttyopen(dev_t dev, int flag, int mode, struct lwp *l)
 	if (!error)
 #endif /* PARANOID */
 		error = VOP_OPEN(ttyvp, flag, NOCRED);
-	VOP_UNLOCK(ttyvp, 0);
+	VOP_UNLOCK(ttyvp);
 	return (error);
 }
 
@@ -90,7 +90,7 @@ cttyread(dev_t dev, struct uio *uio, int flag)
 		return (EIO);
 	vn_lock(ttyvp, LK_EXCLUSIVE | LK_RETRY);
 	error = VOP_READ(ttyvp, uio, flag, NOCRED);
-	VOP_UNLOCK(ttyvp, 0);
+	VOP_UNLOCK(ttyvp);
 	return (error);
 }
 
@@ -105,7 +105,7 @@ cttywrite(dev_t dev, struct uio *uio, int flag)
 		return (EIO);
 	vn_lock(ttyvp, LK_EXCLUSIVE | LK_RETRY);
 	error = VOP_WRITE(ttyvp, uio, flag, NOCRED);
-	VOP_UNLOCK(ttyvp, 0);
+	VOP_UNLOCK(ttyvp);
 	return (error);
 }
 

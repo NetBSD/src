@@ -1,4 +1,4 @@
-/*	$NetBSD: pas.c,v 1.67 2008/03/15 21:09:02 cube Exp $	*/
+/*	$NetBSD: pas.c,v 1.67.4.1 2010/08/11 22:53:36 yamt Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -57,7 +57,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pas.c,v 1.67 2008/03/15 21:09:02 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pas.c,v 1.67.4.1 2010/08/11 22:53:36 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -287,7 +287,7 @@ pasprobe(device_t parent, cfdata_t match, void *aux)
 		return 0;
 
 	memset(sc, 0, sizeof *sc);
-	return pasfind(match, sc, aux, PASPROBE);
+	return pasfind(match, sc, ia, PASPROBE);
 }
 
 /*
@@ -309,7 +309,7 @@ pasfind(cfdata_t match, struct pas_softc *sc,
 		return 0;
 	}
 
-	if (bus_space_map(sc->sc_sbdsp.sc_iot, PAS_DEFAULT_BASE, 1, 0,
+	if (bus_space_map(ia->ia_iot, PAS_DEFAULT_BASE, 1, 0,
 	    &sc->pas_port_handle)) {
 		printf("pas: can't map base register %x in probe\n",
 		    PAS_DEFAULT_BASE);
@@ -395,7 +395,7 @@ pasfind(cfdata_t match, struct pas_softc *sc,
 	sc->sc_sbdsp.sc_iot = ia->ia_iot;
 
 	/* Map i/o space [we map 24 ports which is the max of the sb and pro */
-	if (bus_space_map(sc->sc_sbdsp.sc_iot, ia->ia_io[0].ir_addr,
+	if (bus_space_map(ia->ia_iot, ia->ia_io[0].ir_addr,
 	    SBP_NPORT, 0, &sc->sc_sbdsp.sc_ioh)) {
 		printf("pas: can't map i/o space 0x%x/%d in probe\n",
 		    ia->ia_io[0].ir_addr, SBP_NPORT);
@@ -444,11 +444,11 @@ pasfind(cfdata_t match, struct pas_softc *sc,
 
  unmap:
 	if (rc == 0 || probing)
-		bus_space_unmap(sc->sc_sbdsp.sc_iot, sc->sc_sbdsp.sc_ioh,
+		bus_space_unmap(ia->ia_iot, sc->sc_sbdsp.sc_ioh,
 		    SBP_NPORT);
  unmap1:
 	if (rc == 0 || probing)
-		bus_space_unmap(sc->sc_sbdsp.sc_iot, PAS_DEFAULT_BASE, 1);
+		bus_space_unmap(ia->ia_iot, PAS_DEFAULT_BASE, 1);
 	return rc;
 }
 

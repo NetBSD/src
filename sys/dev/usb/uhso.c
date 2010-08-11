@@ -1,4 +1,4 @@
-/*	$NetBSD: uhso.c,v 1.1.2.2 2010/03/11 15:04:06 yamt Exp $	*/
+/*	$NetBSD: uhso.c,v 1.1.2.3 2010/08/11 22:54:15 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2009 Iain Hibbert
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhso.c,v 1.1.2.2 2010/03/11 15:04:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhso.c,v 1.1.2.3 2010/08/11 22:54:15 yamt Exp $");
 
 #include "opt_inet.h"
 
@@ -1931,7 +1931,7 @@ uhso_ifnet_attach(struct uhso_softc *sc, usbd_interface_handle ifh, int index)
 
 	if_attach(ifp);
 	if_alloc_sadl(ifp);
-	bpf_ops->bpf_attach(ifp, DLT_RAW, 0, &ifp->if_bpf);
+	bpf_attach(ifp, DLT_RAW, 0);
 
 	aprint_normal_dev(sc->sc_dev, "%s (port %d) attached as ifnet\n",
 	    uhso_port_name[index], index);
@@ -1955,7 +1955,7 @@ uhso_ifnet_detach(struct uhso_port *hp)
 	int s;
 
 	s = splnet();
-	bpf_ops->bpf_detach(ifp);
+	bpf_detach(ifp);
 	if_detach(ifp);
 	splx(s);
 
@@ -2142,8 +2142,7 @@ uhso_ifnet_input(struct ifnet *ifp, struct mbuf **mb, uint8_t *cp, size_t cc)
 
 		s = splnet();
 
-		if (ifp->if_bpf)
-			bpf_ops->bpf_mtap(ifp->if_bpf, m);
+		bpf_mtap(ifp, m);
 
 		ifp->if_ipackets++;
 		ifp->if_ibytes += m->m_pkthdr.len;
@@ -2334,8 +2333,7 @@ uhso_ifnet_start(struct ifnet *ifp)
 		hp->hp_wlen = hp->hp_wsize;
 	}
 
-	if (ifp->if_bpf)
-		bpf_ops->bpf_mtap(ifp->if_bpf, m);
+	bpf_mtap(ifp, m);
 
 	m_copydata(m, 0, hp->hp_wlen, hp->hp_wbuf);
 	m_freem(m);

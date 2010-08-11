@@ -1,4 +1,4 @@
-#	$NetBSD: majors.evbsh3,v 1.17.10.1 2009/05/04 08:11:03 yamt Exp $
+#	$NetBSD: majors.evbsh3,v 1.17.10.2 2010/08/11 22:51:57 yamt Exp $
 #
 # Device majors for evbsh3
 #
@@ -29,7 +29,6 @@ device-major	filedesc	char 22
 device-major	bpf		char 23			bpfilter
 device-major	md		char 24  block 17	md
 
-
 device-major	tun		char 40			tun
 device-major	vnd		char 41  block 14	vnd
 device-major	audio		char 42			audio
@@ -45,6 +44,8 @@ device-major	wdog		char 51			wdog
 device-major	clockctl	char 52			clockctl
 device-major	cgd		char 54  block 19	cgd
 device-major	ksyms		char 55			ksyms
+
+device-major	ld		char 69  block 20	ld
 
 device-major	nsmb		char 98			nsmb
 

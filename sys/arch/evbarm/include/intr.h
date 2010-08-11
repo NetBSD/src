@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.19.10.1 2008/05/16 02:22:13 yamt Exp $	*/
+/*	$NetBSD: intr.h,v 1.19.10.2 2010/08/11 22:51:52 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2003 Wasabi Systems, Inc.
@@ -41,7 +41,6 @@
 #ifdef _KERNEL
 
 /* Interrupt priority "levels". */
-#ifdef __HAVE_FAST_SOFTINTS
 #define	IPL_NONE	0		/* nothing */
 #define	IPL_SOFTCLOCK	1		/* clock */
 #define	IPL_SOFTBIO	2		/* block I/O */
@@ -52,18 +51,6 @@
 #define	IPL_HIGH	7		/* everything */
 
 #define	NIPL		8
-#else
-#define	IPL_NONE	0		/* nothing */
-#define	IPL_SOFTCLOCK	IPL_NONE	/* clock */
-#define	IPL_SOFTBIO	IPL_NONE	/* block I/O */
-#define	IPL_SOFTNET	IPL_NONE	/* software network interrupt */
-#define	IPL_SOFTSERIAL	IPL_NONE	/* software serial interrupt */
-#define	IPL_VM		1		/* memory allocation */
-#define	IPL_SCHED	2		/* clock interrupt */
-#define	IPL_HIGH	3		/* everything */
-
-#define	NIPL		4
-#endif
 
 /* Interrupt sharing types. */
 #define	IST_NONE	0	/* none */

@@ -1,4 +1,4 @@
-/*	$NetBSD: mb86960.c,v 1.70.4.4 2010/03/11 15:03:32 yamt Exp $	*/
+/*	$NetBSD: mb86960.c,v 1.70.4.5 2010/08/11 22:53:28 yamt Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mb86960.c,v 1.70.4.4 2010/03/11 15:03:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mb86960.c,v 1.70.4.5 2010/08/11 22:53:28 yamt Exp $");
 
 /*
  * Device driver for Fujitsu MB86960A/MB86965A based Ethernet cards.
@@ -754,8 +754,7 @@ mb86960_start(struct ifnet *ifp)
 		}
 
 		/* Tap off here if there is a BPF listener. */
-		if (ifp->if_bpf)
-			bpf_ops->bpf_mtap(ifp->if_bpf, m);
+		bpf_mtap(ifp, m);
 
 		/*
 		 * Copy the mbuf chain into the transmission buffer.
@@ -1341,8 +1340,7 @@ mb86960_get_packet(struct mb86960_softc *sc, u_int len)
 	 * Check if there's a BPF listener on this interface.  If so, hand off
 	 * the raw packet to bpf.
 	 */
-	if (ifp->if_bpf)
-		bpf_ops->bpf_mtap(ifp->if_bpf, m);
+	bpf_mtap(ifp, m);
 
 	(*ifp->if_input)(ifp, m);
 	return 1;

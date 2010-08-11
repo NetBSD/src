@@ -1,4 +1,4 @@
-/*	$NetBSD: pm.c,v 1.5.44.2 2009/05/04 08:11:41 yamt Exp $	*/
+/*	$NetBSD: pm.c,v 1.5.44.3 2010/08/11 22:52:32 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pm.c,v 1.5.44.2 2009/05/04 08:11:41 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pm.c,v 1.5.44.3 2010/08/11 22:52:32 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -171,9 +171,10 @@ pm_attach(struct device *parent, struct device *self, void *aux)
 	ri = &pm_ri;
 	console = (ri->ri_bits != NULL);
 
-	if (console)
+	if (console) {
 		sc->sc_nscreens = 1;
-	else
+		ri->ri_flg &= ~RI_NO_AUTO;
+	} else
 		pm_common_init();
 
 	printf(": %dx%d, %dbpp\n", ri->ri_width, ri->ri_height, ri->ri_depth);
@@ -243,6 +244,8 @@ pm_common_init(void)
 	ri = &pm_ri;
 
 	ri->ri_flg = RI_CENTER;
+	if (ri->ri_bits == NULL)
+		ri->ri_flg |= RI_NO_AUTO;
 	ri->ri_depth = ((kn01csr & KN01_CSR_MONO) != 0 ? 1 : 8);
 	ri->ri_width = 1024;
 	ri->ri_height = 864;

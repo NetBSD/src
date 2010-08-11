@@ -1,4 +1,4 @@
-/*	$NetBSD: arm_machdep.c,v 1.18.4.3 2010/03/11 15:02:03 yamt Exp $	*/
+/*	$NetBSD: arm_machdep.c,v 1.18.4.4 2010/08/11 22:51:38 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -79,12 +79,12 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: arm_machdep.c,v 1.18.4.3 2010/03/11 15:02:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm_machdep.c,v 1.18.4.4 2010/08/11 22:51:38 yamt Exp $");
 
 #include <sys/exec.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
-#include <sys/pool.h>
+#include <sys/kmem.h>
 #include <sys/ucontext.h>
 #include <sys/evcnt.h>
 #include <sys/cpu.h>
@@ -190,17 +190,14 @@ setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 void
 startlwp(void *arg)
 {
-	int err;
 	ucontext_t *uc = arg; 
-	struct lwp *l = curlwp;
+	lwp_t *l = curlwp;
+	int error;
 
-	err = cpu_setmcontext(l, &uc->uc_mcontext, uc->uc_flags);
-#ifdef DIAGNOSTIC
-	if (err)
-		printf("Error %d from cpu_setmcontext.", err);
-#endif
-	pool_put(&lwp_uc_pool, uc);
+	error = cpu_setmcontext(l, &uc->uc_mcontext, uc->uc_flags);
+	KASSERT(error == 0);
 
+	kmem_free(uc, sizeof(ucontext_t));
 	userret(l);
 }
 
@@ -279,4 +276,16 @@ bool
 cpu_intr_p(void)
 {
 	return curcpu()->ci_intr_depth != 0;
+}
+
+void
+ucas_ras_check(trapframe_t *tf)
+{
+	extern char ucas_32_ras_start[];
+	extern char ucas_32_ras_end[];
+
+	if (tf->tf_pc > (vaddr_t)ucas_32_ras_start &&
+	    tf->tf_pc < (vaddr_t)ucas_32_ras_end) {
+		tf->tf_pc = (vaddr_t)ucas_32_ras_start;
+	}
 }

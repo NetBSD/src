@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.81.44.2 2010/03/11 15:03:00 yamt Exp $	*/
+/*	$NetBSD: iommu.c,v 1.81.44.3 2010/08/11 22:52:47 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.81.44.2 2010/03/11 15:03:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.81.44.3 2010/08/11 22:52:47 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -204,15 +204,16 @@ iommu_init(char *name, struct iommu_state *is, int tsbsize, uint32_t iovabase)
 	/*
 	 * Now all the hardware's working we need to allocate a dvma map.
 	 */
-	printf("DVMA map: %x to %x\n",
+	aprint_debug("DVMA map: %x to %x\n",
 		(unsigned int)is->is_dvmabase,
 		(unsigned int)is->is_dvmaend);
-	printf("IOTSB: %llx to %llx\n",
+	aprint_debug("IOTSB: %llx to %llx\n",
 		(unsigned long long)is->is_ptsb,
 		(unsigned long long)(is->is_ptsb + size - 1));
 	is->is_dvmamap = extent_create(name,
 	    is->is_dvmabase, is->is_dvmaend,
 	    M_DEVBUF, 0, 0, EX_NOWAIT);
+	/* XXXMRG Check is_dvmamap is valid. */
 }
 
 /*
@@ -349,6 +350,7 @@ iommu_remove(struct iommu_state *is, vaddr_t va, size_t len)
 		else
 			len -= PAGE_SIZE;
 
+#if 0
 		/*
 		 * XXX Zero-ing the entry would not require RMW
 		 *
@@ -360,6 +362,7 @@ iommu_remove(struct iommu_state *is, vaddr_t va, size_t len)
 		 */
 		is->is_tsb[IOTSBSLOT(va,is->is_tsbsize)] &= ~IOTTE_V;
 		membar_storestore();
+#endif
 		bus_space_write_8(is->is_bustag, is->is_iommu,
 			IOMMUREG(iommu_flush), va);
 		va += PAGE_SIZE;
@@ -415,7 +418,7 @@ iommu_strbuf_flush_done(struct strbuf_ctl *sb)
 
 	/* Bypass non-coherent D$ */
 	while ((!ldxa(sb->sb_flushpa, ASI_PHYS_CACHED)) &&
-		timercmp(&cur, &flushtimeout, <=))
+	       timercmp(&cur, &flushtimeout, <=))
 		microtime(&cur);
 
 #ifdef DIAGNOSTIC
@@ -638,10 +641,6 @@ iommu_dvmamap_unload(bus_dma_tag_t t, bus_dmamap_t map)
 
 	/* Flush the caches */
 	bus_dmamap_unload(t->_parent, map);
-
-	/* Mark the mappings as invalid. */
-	map->dm_mapsize = 0;
-	map->dm_nsegs = 0;
 
 	s = splhigh();
 	error = extent_free(is->is_dvmamap, map->_dm_dvmastart,

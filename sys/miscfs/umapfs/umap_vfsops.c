@@ -1,4 +1,4 @@
-/*	$NetBSD: umap_vfsops.c,v 1.75.10.2 2009/05/04 08:14:06 yamt Exp $	*/
+/*	$NetBSD: umap_vfsops.c,v 1.75.10.3 2010/08/11 22:54:49 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umap_vfsops.c,v 1.75.10.2 2009/05/04 08:14:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umap_vfsops.c,v 1.75.10.3 2010/08/11 22:54:49 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,7 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: umap_vfsops.c,v 1.75.10.2 2009/05/04 08:14:06 yamt E
 #include <miscfs/umapfs/umap.h>
 #include <miscfs/genfs/layer_extern.h>
 
-MODULE(MODULE_CLASS_VFS, umapfs, "layerfs");
+MODULE(MODULE_CLASS_VFS, umap, "layerfs");
 
 VFS_PROTOS(umapfs);
 
@@ -215,7 +215,7 @@ umapfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	 * Unlock the node (either the lower or the alias)
 	 */
 	vp->v_vflag |= VV_ROOT;
-	VOP_UNLOCK(vp, 0);
+	VOP_UNLOCK(vp);
 
 	/*
 	 * Keep a held reference to the root vnode.
@@ -308,7 +308,7 @@ struct vfsops umapfs_vfsops = {
 };
 
 static int
-umapfs_modcmd(modcmd_t cmd, void *arg)
+umap_modcmd(modcmd_t cmd, void *arg)
 {
 	int error;
 

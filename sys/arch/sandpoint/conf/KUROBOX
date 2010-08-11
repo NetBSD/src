@@ -1,0 +1,12 @@
+#	$NetBSD: KUROBOX,v 1.3.2.2 2010/08/11 22:52:38 yamt Exp $
+#
+# KuroBox/LinkStation support
+#
+
+include "arch/sandpoint/conf/GENERIC"
+
+no com0
+no satmgr0
+com0	at eumb? unit 1			# console at 0x4600
+#com1	at eumb? unit 0
+satmgr0 at eumb? unit 0			# satmgr at 0x4500

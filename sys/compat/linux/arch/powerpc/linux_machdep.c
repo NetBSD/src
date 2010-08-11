@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.38.2.2 2010/03/11 15:03:16 yamt Exp $ */
+/*	$NetBSD: linux_machdep.c,v 1.38.2.3 2010/08/11 22:53:07 yamt Exp $ */
 
 /*-
  * Copyright (c) 1995, 2000, 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.38.2.2 2010/03/11 15:03:16 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.38.2.3 2010/08/11 22:53:07 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,11 +85,9 @@ __KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.38.2.2 2010/03/11 15:03:16 yamt 
 
 /*
  * Set set up registers on exec.
- * XXX not used at the moment since in sys/kern/exec_conf, LINUX_COMPAT
- * entry uses NetBSD's native setregs instead of linux_setregs
  */
 void
-linux_setregs(struct lwp *l, struct exec_package *pack, u_long stack)
+linux_setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 {
 	setregs(l, pack, stack);
 }
@@ -441,22 +439,6 @@ linux_sys_sigreturn(struct lwp *l, const struct linux_sys_sigreturn_args *uap, r
 	return (EJUSTRETURN);
 }
 
-
-#if 0
-int
-linux_sys_modify_ldt(struct proc *p, void *v, register_t *retval)
-{
-	/*
-	 * This syscall is not implemented in Linux/PowerPC: we should not
-	 * be here
-	 */
-#ifdef DEBUG_LINUX
-	printf("linux_sys_modify_ldt: should not be here.\n");
-#endif
-  return 0;
-}
-#endif
-
 /*
  * major device numbers remapping
  */
@@ -493,40 +475,6 @@ linux_machdepioctl(struct lwp *l, const struct linux_sys_ioctl_args *uap, regist
 	SCARG(&bia, com) = com;
 	/* XXX NJWLWP */
 	return sys_ioctl(curlwp, &bia, retval);
-}
-#if 0
-/*
- * Set I/O permissions for a process. Just set the maximum level
- * right away (ignoring the argument), otherwise we would have
- * to rely on I/O permission maps, which are not implemented.
- */
-int
-linux_sys_iopl(struct lwp *l, const void *v, register_t *retval)
-{
-	/*
-	 * This syscall is not implemented in Linux/PowerPC: we should not be here
-	 */
-#ifdef DEBUG_LINUX
-	printf("linux_sys_iopl: should not be here.\n");
-#endif
-	return 0;
-}
-#endif
-
-/*
- * See above. If a root process tries to set access to an I/O port,
- * just let it have the whole range.
- */
-int
-linux_sys_ioperm(struct lwp *l, const struct linux_sys_ioperm_args *uap, register_t *retval)
-{
-	/*
-	 * This syscall is not implemented in Linux/PowerPC: we should not be here
-	 */
-#ifdef DEBUG_LINUX
-	printf("linux_sys_ioperm: should not be here.\n");
-#endif
-	return 0;
 }
 
 /*

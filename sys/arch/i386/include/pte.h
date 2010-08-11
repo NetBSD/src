@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.17.10.2 2010/03/11 15:02:29 yamt Exp $	*/
+/*	$NetBSD: pte.h,v 1.17.10.3 2010/08/11 22:52:12 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -164,10 +164,10 @@
  *
  * The PAE extension extends the size of the PTE to 64 bits (52bits physical
  * address) and is compatible with the amd64 PTE format. The first level
- * maps 2M, the second 1G, so a third level page table is intruduced to
+ * maps 2M, the second 1G, so a third level page table is introduced to
  * map the 4GB virtual address space. This PD has only 4 entries.
- * We can't use recursive mapping at level 3 to map the PD pages, as
- * this would eat one GB of address space. In addition, Xen impose restrictions
+ * We can't use recursive mapping at level 3 to map the PD pages, as this
+ * would eat one GB of address space. In addition, Xen imposes restrictions
  * on the entries we put in the L3 page (for example, the page pointed to by
  * the last slot can't be shared among different L3 pages), which makes 
  * handling this L3 page in the same way we do for L2 on i386 (or L4 on amd64)
@@ -218,7 +218,9 @@ typedef uint32_t pt_entry_t;		/* PTE */
 /* macros to get real L2 and L3 index, from our "extended" L2 index */
 #define l2tol3(idx)	((idx) >> (L3_SHIFT - L2_SHIFT))
 #define l2tol2(idx)	((idx) & (L2_REALMASK >>  L2_SHIFT))
+
 #else /* PAE */
+
 #define	L1_SHIFT	12
 #define	L2_SHIFT	22
 #define	NBPD_L1		(1UL << L1_SHIFT) /* # bytes mapped by L1 ent (4K) */
@@ -245,14 +247,17 @@ typedef uint32_t pt_entry_t;		/* PTE */
 #define	PG_RW		0x00000002	/* read-write page */
 #define	PG_u		0x00000004	/* user accessible page */
 #define	PG_PROT		0x00000806	/* all protection bits */
-#define	PG_N		0x00000018	/* non-cacheable */
+#define PG_WT		0x00000008	/* write through */
+#define	PG_N		0x00000010	/* non-cacheable */
 #define	PG_U		0x00000020	/* has been used */
 #define	PG_M		0x00000040	/* has been modified */
+#define PG_PAT		0x00000080	/* PAT (on pte) */
 #define PG_PS		0x00000080	/* 4MB page size */
 #define PG_G		0x00000100	/* global, don't TLB flush */
 #define PG_AVAIL1	0x00000200	/* ignored by hardware */
 #define PG_AVAIL2	0x00000400	/* ignored by hardware */
 #define PG_AVAIL3	0x00000800	/* ignored by hardware */
+#define PG_LGPAT	0x00001000	/* PAT on large pages */
 
 /*
  * various short-hand protection codes
@@ -267,12 +272,6 @@ typedef uint32_t pt_entry_t;		/* PTE */
 #define	PG_NX		0		/* dummy */
 #endif
 
-/*
- * page protection exception bits
- */
-
-#define PGEX_P		0x01	/* protection violation (vs. no mapping) */
-#define PGEX_W		0x02	/* exception during a write cycle */
-#define PGEX_U		0x04	/* exception while in user mode (upl) */
+#include <x86/pte.h>
 
 #endif /* _I386_PTE_H_ */

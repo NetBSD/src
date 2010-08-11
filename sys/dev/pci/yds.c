@@ -1,4 +1,4 @@
-/*	$NetBSD: yds.c,v 1.42.4.3 2010/03/11 15:03:59 yamt Exp $	*/
+/*	$NetBSD: yds.c,v 1.42.4.4 2010/08/11 22:54:05 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 Kazuki Sakamoto and Minoura Makoto.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: yds.c,v 1.42.4.3 2010/03/11 15:03:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: yds.c,v 1.42.4.4 2010/08/11 22:54:05 yamt Exp $");
 
 #include "mpu.h"
 
@@ -285,18 +285,18 @@ yds_dump_play_slot(struct yds_softc *sc, int bank)
 	int i, j;
 	uint32_t *p;
 	uint32_t num;
-	char *pa;
+	bus_addr_t pa;
 
 	for (i = 0; i < N_PLAY_SLOTS; i++) {
 		printf("pbankp[%d] = %p,", i*2, sc->pbankp[i*2]);
 		printf("pbankp[%d] = %p\n", i*2+1, sc->pbankp[i*2+1]);
 	}
 
-	pa = (char *)DMAADDR(&sc->sc_ctrldata) + sc->pbankoff;
-	p = (uint32_t *)sc->ptbl;
+	pa = DMAADDR(&sc->sc_ctrldata) + sc->pbankoff;
+	p = sc->ptbl;
 	printf("ptbl + 0: %d\n", *p++);
 	for (i = 0; i < N_PLAY_SLOTS; i++) {
-		printf("ptbl + %d: 0x%x, should be %p\n",
+		printf("ptbl + %d: %#x, should be %#" PRIxPADDR "\n",
 		       i+1, *p,
 		       pa + i * sizeof(struct play_slot_ctrl_bank) *
 				N_PLAY_SLOT_CTRL_BANK);
@@ -449,8 +449,8 @@ yds_allocate_slots(struct yds_softc *sc)
 	mp = KERNADDR(p);
 	da = DMAADDR(p);
 
-	DPRINTF(("mp:%p, DMA addr:%p\n",
-		 mp, (void *)sc->sc_ctrldata.map->dm_segs[0].ds_addr));
+	DPRINTF(("mp:%p, DMA addr:%#" PRIxPADDR "\n",
+		 mp, sc->sc_ctrldata.map->dm_segs[0].ds_addr));
 
 	memset(mp, 0, memsize);
 

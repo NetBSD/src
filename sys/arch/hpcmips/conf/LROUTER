@@ -1,5 +1,5 @@
 #
-# 	$NetBSD: LROUTER,v 1.36.10.2 2010/03/11 15:02:24 yamt Exp $
+# 	$NetBSD: LROUTER,v 1.36.10.3 2010/08/11 22:52:06 yamt Exp $
 # 	From: NetBSD: MPC303,v 1.4 2001/11/21 11:28:09 uch Exp
 #
 # Kernel configuration file for LASER5 L-Router
@@ -91,6 +91,11 @@ options 	INET6		# IPV6
 #options 	ISO		# OSI networking
 #options 	TPIP		# TPIP
 #options 	EON		# OSI tunneling over IP
+options 	PFIL_HOOKS	# pfil(9) packet filter hooks
+options 	IPFILTER_LOG	# ipmon(8) log support
+options 	IPFILTER_LOOKUP	# ippool(8) support
+options 	IPFILTER_COMPAT # Compat for IP-Filter
+#options 	IPFILTER_DEFAULT_BLOCK	# block all packets by default
 
 # NetBSD backwards compatibility
 options 	COMPAT_43
@@ -173,7 +178,7 @@ pseudo-device	ipfilter		# IP filter, NAT
 
 pseudo-device	vnd			# virtual disk ick
 #pseudo-device	ccd		4	# concatenated disks
-#pseudo-device	fss		4	# file system snapshot device
+#pseudo-device	fss			# file system snapshot device
 pseudo-device	rnd			# /dev/random and in-kernel generator
 pseudo-device	clockctl		# user control of clock subsystem
 

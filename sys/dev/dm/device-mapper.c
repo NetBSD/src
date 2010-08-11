@@ -1,4 +1,4 @@
-/*        $NetBSD: device-mapper.c,v 1.6.2.5 2010/03/11 15:03:26 yamt Exp $ */
+/*        $NetBSD: device-mapper.c,v 1.6.2.6 2010/08/11 22:53:20 yamt Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -45,8 +45,6 @@
 #include <sys/ioctl.h>
 #include <sys/ioccom.h>
 #include <sys/kmem.h>
-#include <sys/module.h>
-#include <sys/once.h>
 
 #include "netbsd-dm.h"
 #include "dm.h"
@@ -61,10 +59,11 @@ static dev_type_size(dmsize);
 
 /* attach and detach routines */
 void dmattach(int);
-int dmdestroy(void);
+#ifdef _MODULE
+static int dmdestroy(void);
+#endif
 
-static ONCE_DECL(doinit_control);
-static int doinit(void);
+static void dm_doinit(void);
 
 static int dm_cmd_to_fun(prop_dictionary_t);
 static int disk_ioctl_switch(dev_t, u_long, void *);
@@ -105,11 +104,6 @@ const struct dkdriver dmdkdriver = {
 	.d_strategy = dmstrategy
 };
 
-#ifdef _MODULE
-/* Autoconf defines */
-CFDRIVER_DECL(dm, DV_DISK, NULL);
-#endif
-
 CFATTACH_DECL3_NEW(dm, 0,
      dm_match, dm_attach, dm_detach, NULL, NULL, NULL,
      DVF_DETACH_SHUTDOWN);
@@ -146,12 +140,19 @@ struct cmd_function cmd_fn[] = {
 		{NULL, NULL}	
 };
 
+#ifdef _MODULE
+#include <sys/module.h>
+
+/* Autoconf defines */
+CFDRIVER_DECL(dm, DV_DISK, NULL);
+
 MODULE(MODULE_CLASS_DRIVER, dm, NULL);
 
 /* New module handle routine */
 static int
 dm_modcmd(modcmd_t cmd, void *arg)
 {
+#ifdef _MODULE
 	int error, bmajor, cmajor;
 
 	error = 0;
@@ -164,10 +165,11 @@ dm_modcmd(modcmd_t cmd, void *arg)
 		if (error)
 			break;
 
-		error = RUN_ONCE(&doinit_control, doinit);
+		error = config_cfattach_attach(dm_cd.cd_name, &dm_ca);
 		if (error) {
-			config_cfdriver_detach(&dm_cd);
-			break;
+			aprint_error("%s: unable to register cfattach\n",
+			    dm_cd.cd_name);
+			return error;
 		}
 
 		error = devsw_attach(dm_cd.cd_name, &dm_bdevsw, &bmajor,
@@ -177,6 +179,9 @@ dm_modcmd(modcmd_t cmd, void *arg)
 			config_cfdriver_detach(&dm_cd);
 			break;
 		}
+
+		dm_doinit();
+
 		break;
 
 	case MODULE_CMD_FINI:
@@ -205,8 +210,11 @@ dm_modcmd(modcmd_t cmd, void *arg)
 	}
 
 	return error;
+#else
+	return ENOTTY;
+#endif
 }
-
+#endif /* _MODULE */
 
 /*
  * dm_match:
@@ -272,34 +280,32 @@ dm_detach(device_t self, int flags)
 	return 0;
 }
 
-static int
-doinit(void)
+static void
+dm_doinit(void)
 {
-	int error;
-	
-	error = config_cfattach_attach(dm_cd.cd_name, &dm_ca);
-	if (error) {
-		aprint_error("%s: unable to register cfattach\n",
-		    dm_cd.cd_name);
-		return error;
-	}
-	
 	dm_target_init();
 	dm_dev_init();
 	dm_pdev_init();
-
-	return 0;
 }
 
 /* attach routine */
 void
 dmattach(int n)
 {
-	RUN_ONCE(&doinit_control, doinit);
+	int error;
+
+	error = config_cfattach_attach(dm_cd.cd_name, &dm_ca);
+	if (error) {
+		aprint_error("%s: unable to register cfattach\n",
+		    dm_cd.cd_name);
+	} else {
+		dm_doinit();
+	}
 }
 
+#ifdef _MODULE
 /* Destroy routine */
-int
+static int
 dmdestroy(void)
 {
 	int error;
@@ -314,6 +320,7 @@ dmdestroy(void)
 
 	return 0;
 }
+#endif /* _MODULE */
 
 static int
 dmopen(dev_t dev, int flags, int mode, struct lwp *l)
@@ -424,6 +431,10 @@ disk_ioctl_switch(dev_t dev, u_long cmd, void *data)
 {
 	dm_dev_t *dmv;
 
+	/* disk ioctls make sense only on block devices */
+	if (minor(dev) == 0)
+		return ENOTTY;
+	
 	switch(cmd) {
 	case DIOCGWEDGEINFO:
 	{
@@ -463,6 +474,32 @@ disk_ioctl_switch(dev_t dev, u_long cmd, void *data)
 		dm_dev_unbusy(dmv);
 		break;
 	}
+
+	case DIOCCACHESYNC:
+	{
+		dm_table_entry_t *table_en;
+		dm_table_t *tbl;
+		int err;
+		
+		if ((dmv = dm_dev_lookup(NULL, NULL, minor(dev))) == NULL)
+			return ENODEV;
+
+		/* Select active table */
+		tbl = dm_table_get_entry(&dmv->table_head, DM_TABLE_ACTIVE);
+
+		/*
+		 * Call sync target routine for all table entries. Target sync
+		 * routine basically call DIOCCACHESYNC on underlying devices.
+		 */
+		SLIST_FOREACH(table_en, tbl, next)
+		{
+			err = table_en->target->sync(table_en);
+		}
+		dm_table_release(&dmv->table_head, DM_TABLE_ACTIVE);
+		dm_dev_unbusy(dmv);
+		break;
+	}
+		
 	
 	default:
 		aprint_debug("unknown disk_ioctl called\n");

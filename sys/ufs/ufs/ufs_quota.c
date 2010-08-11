@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_quota.c,v 1.59.4.5 2010/03/11 15:04:46 yamt Exp $	*/
+/*	$NetBSD: ufs_quota.c,v 1.59.4.6 2010/08/11 22:55:15 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.59.4.5 2010/03/11 15:04:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.59.4.6 2010/08/11 22:55:15 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -430,7 +430,7 @@ quotaon(struct lwp *l, struct mount *mp, int type, void *fname)
 	if ((error = vn_open(&nd, FREAD|FWRITE, 0)) != 0)
 		return (error);
 	vp = nd.ni_vp;
-	VOP_UNLOCK(vp, 0);
+	VOP_UNLOCK(vp);
 	if (vp->v_type != VREG) {
 		(void) vn_close(vp, FREAD|FWRITE, l->l_cred);
 		return (EACCES);
@@ -482,7 +482,7 @@ again:
 			continue;
 		}
 		mutex_exit(&mntvnode_lock);
-		if (vget(vp, LK_EXCLUSIVE | LK_INTERLOCK)) {
+		if (vget(vp, LK_EXCLUSIVE)) {
 			mutex_enter(&mntvnode_lock);
 			(void)vunmark(mvp);
 			goto again;
@@ -552,7 +552,7 @@ again:
 			continue;
 		}
 		mutex_exit(&mntvnode_lock);
-		if (vget(vp, LK_EXCLUSIVE | LK_INTERLOCK)) {
+		if (vget(vp, LK_EXCLUSIVE)) {
 			mutex_enter(&mntvnode_lock);
 			(void)vunmark(mvp);
 			goto again;
@@ -738,7 +738,7 @@ qsync(struct mount *mp)
 			continue;
 		}
 		mutex_exit(&mntvnode_lock);
-		error = vget(vp, LK_EXCLUSIVE | LK_NOWAIT | LK_INTERLOCK);
+		error = vget(vp, LK_EXCLUSIVE | LK_NOWAIT);
 		if (error) {
 			mutex_enter(&mntvnode_lock);
 			if (error == ENOENT) {
@@ -913,7 +913,7 @@ dqget(struct vnode *vp, u_long id, struct ufsmount *ump, int type,
 	error = VOP_READ(dqvp, &auio, 0, ump->um_cred[type]);
 	if (auio.uio_resid == sizeof(struct dqblk) && error == 0)
 		memset((void *)&dq->dq_dqb, 0, sizeof(struct dqblk));
-	VOP_UNLOCK(dqvp, 0);
+	VOP_UNLOCK(dqvp);
 	/*
 	 * I/O error in reading quota file, release
 	 * quota structure and reflect problem to caller.
@@ -1020,7 +1020,7 @@ dqsync(struct vnode *vp, struct dquot *dq)
 	if (auio.uio_resid && error == 0)
 		error = EIO;
 	dq->dq_flags &= ~DQ_MOD;
-	VOP_UNLOCK(dqvp, 0);
+	VOP_UNLOCK(dqvp);
 	return (error);
 }
 

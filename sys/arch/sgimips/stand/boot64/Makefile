@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5.4.1 2009/05/04 08:11:51 yamt Exp $
+#	$NetBSD: Makefile,v 1.5.4.2 2010/08/11 22:52:42 yamt Exp $
 
 PROG=	ip30boot
 
@@ -73,7 +73,7 @@ ip30boot: ${OBJS} ${LIBS}
 	${LD} -m elf64btsmip -Map boot.map -x -Ttext ${LOAD_ADDRESS_IP30} \
 		${LDBUG} -e start -o ${.TARGET} ${OBJS} ${LIBS}
 
-cleandir distclean: cleanlibdir
+cleandir distclean: .WAIT cleanlibdir
 cleanlibdir:
 	-rm -rf lib
 

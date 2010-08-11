@@ -1,4 +1,4 @@
-/*	$NetBSD: devnull.c,v 1.1.4.2 2010/03/11 15:04:39 yamt Exp $	*/
+/*	$NetBSD: devnull.c,v 1.1.4.3 2010/08/11 22:55:08 yamt Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: devnull.c,v 1.1.4.2 2010/03/11 15:04:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: devnull.c,v 1.1.4.3 2010/08/11 22:55:08 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -41,8 +41,6 @@ __KERNEL_RCSID(0, "$NetBSD: devnull.c,v 1.1.4.2 2010/03/11 15:04:39 yamt Exp $")
 #include <sys/stat.h>
 
 #include "rump_vfs_private.h"
-
-static devmajor_t null_bmaj, null_cmaj;
 
 static dev_type_open(rump_devnullopen);
 static dev_type_read(rump_devnullrw);
@@ -55,14 +53,14 @@ static struct cdevsw null_cdevsw = {
 int
 rump_devnull_init()
 {
+	devmajor_t null_bmaj, null_cmaj;
 	int error;
 
 	null_bmaj = null_cmaj = NODEVMAJOR;
 	error = devsw_attach("null", NULL, &null_bmaj, &null_cdevsw,&null_cmaj);
-	if (error != 0)
-		return error;
+	KASSERT(error || null_cmaj == 2);
 
-	return rump_vfs_makeonedevnode(S_IFCHR, "/dev/null", null_cmaj, 0);
+	return error;
 }
 
 static int

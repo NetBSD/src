@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.40.20.1 2010/03/11 15:02:46 yamt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.40.20.2 2010/08/11 22:52:29 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -84,6 +84,7 @@
 
 #if defined(_KERNEL_OPT)
 #include "opt_lockdebug.h"
+#include "opt_m68k_arch.h"
 #endif
 
 /*

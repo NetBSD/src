@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_misc.c,v 1.82.2.1 2010/03/11 15:03:18 yamt Exp $ */
+/* $NetBSD: osf1_misc.c,v 1.82.2.2 2010/08/11 22:53:12 yamt Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_misc.c,v 1.82.2.1 2010/03/11 15:03:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_misc.c,v 1.82.2.2 2010/08/11 22:53:12 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_syscall_debug.h"
@@ -72,7 +72,6 @@ __KERNEL_RCSID(0, "$NetBSD: osf1_misc.c,v 1.82.2.1 2010/03/11 15:03:18 yamt Exp 
 #include <sys/stat.h>
 #include <sys/filedesc.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
 #include <sys/mman.h>
 #include <sys/mount.h>
 #include <sys/signal.h>

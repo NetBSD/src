@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.59.10.4 2010/03/11 15:02:21 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.59.10.5 2010/08/11 22:51:58 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -65,12 +65,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.59.10.4 2010/03/11 15:02:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.59.10.5 2010/08/11 22:51:58 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
 #include "opt_memsize.h"
 #include "opt_initbsc.h"
+#include "opt_kloader.h"
+#include "opt_kloader_kernel_path.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -99,11 +101,19 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.59.10.4 2010/03/11 15:02:21 yamt Exp $
 #include <ddb/db_extern.h>
 #endif
 
+#ifdef KLOADER
+#include <machine/kloader.h>
+#endif
+
 #include "ksyms.h"
 
 /* the following is used externally (sysctl_hw) */
 char machine[] = MACHINE;		/* evbsh3 */
 char machine_arch[] = MACHINE_ARCH;	/* sh3eb or sh3el */
+
+#ifdef KLOADER
+struct kloader_bootinfo kbootinfo;
+#endif
 
 void initSH3(void *);
 void LoadAndReset(const char *);
@@ -176,6 +186,19 @@ cpu_reboot(int howto, char *bootstr)
 		goto haltsys;
 	}
 
+#ifdef KLOADER
+	if ((howto & RB_HALT) == 0) {
+		if ((howto & RB_STRING) && (bootstr != NULL)) {
+			kloader_reboot_setup(bootstr);
+		}
+#ifdef KLOADER_KERNEL_PATH
+		else {
+			kloader_reboot_setup(KLOADER_KERNEL_PATH);
+		}
+#endif
+	}
+#endif
+
 	boothowto = howto;
 	if ((howto & RB_NOSYNC) == 0 && waittime < 0) {
 		waittime = 0;
@@ -205,11 +228,21 @@ haltsys:
 		printf("Please press any key to reboot.\n\n");
 		cngetc();
 	}
+#ifdef KLOADER
+	else {
+		delay(1 * 1000 * 1000);
+		kloader_reboot();
+		printf("\n");
+		printf("Failed to load a new kernel.\n");
+		printf("Please press any key to reboot.\n\n");
+		cngetc();
+	}
+#endif
 
 	printf("rebooting...\n");
 	cpu_reset();
 	for(;;)
-		;
+		continue;
 	/*NOTREACHED*/
 }
 
@@ -261,6 +294,11 @@ initSH3(void *pc)	/* XXX return address */
 	/* Console */
 	consinit();
 
+#ifdef KLOADER
+	/* copy boot parameter for kloader */
+	kloader_bootinfo_set(&kbootinfo, 0, NULL, NULL, true);
+#endif
+
 	/* Load memory to UVM */
 	kernend = atop(round_page(SH3_P1SEG_TO_PHYS(end)));
 	physmem = atop(IOM_RAM_SIZE);
@@ -302,219 +340,6 @@ consinit(void)
 
 	cninit();
 }
-
-int
-bus_space_map (bus_space_tag_t t, bus_addr_t addr, bus_size_t size, int flags, bus_space_handle_t *bshp)
-{
-
-	*bshp = (bus_space_handle_t)addr;
-
-	return 0;
-}
-
-int
-sh_memio_subregion(bus_space_tag_t t, bus_space_handle_t bsh, bus_size_t offset, bus_size_t size, bus_space_handle_t *nbshp)
-{
-
-	*nbshp = bsh + offset;
-	return (0);
-}
-
-int
-sh_memio_alloc(t, rstart, rend, size, alignment, boundary, flags,
-	       bpap, bshp)
-	bus_space_tag_t t;
-	bus_addr_t rstart, rend;
-	bus_size_t size, alignment, boundary;
-	int flags;
-	bus_addr_t *bpap;
-	bus_space_handle_t *bshp;
-{
-	*bshp = *bpap = rstart;
-
-	return (0);
-}
-
-void
-sh_memio_free(bus_space_tag_t t, bus_space_handle_t bsh, bus_size_t size)
-{
-
-}
-
-void
-sh_memio_unmap(bus_space_tag_t t, bus_space_handle_t bsh, bus_size_t size)
-{
-	return;
-}
-
-#ifdef SH4_PCMCIA
-
-int
-shpcmcia_memio_map(bus_space_tag_t t, bus_addr_t bpa, bus_size_t size, int flags, bus_space_handle_t *bshp)
-{
-	int error;
-	struct extent *ex;
-	bus_space_tag_t pt = t & ~SH3_BUS_SPACE_PCMCIA_8BIT;
-
-	if (pt != SH3_BUS_SPACE_PCMCIA_IO && 
-	    pt != SH3_BUS_SPACE_PCMCIA_MEM &&
-	    pt != SH3_BUS_SPACE_PCMCIA_ATT) {
-		*bshp = (bus_space_handle_t)bpa;
-
-		return 0;
-	}
-
-	ex = iomem_ex;
-
-#if 0
-	/*
-	 * Before we go any further, let's make sure that this
-	 * region is available.
-	 */
-	error = extent_alloc_region(ex, bpa, size,
-				    EX_NOWAIT | EX_MALLOCOK );
-	if (error){
-		printf("sh3_pcmcia_memio_map:extent_alloc_region error\n");
-		return (error);
-	}
-#endif
-
-	/*
-	 * For memory space, map the bus physical address to
-	 * a kernel virtual address.
-	 */
-	error = shpcmcia_mem_add_mapping(bpa, size, (int)t, bshp );
-#if 0
-	if (error) {
-		if (extent_free(ex, bpa, size, EX_NOWAIT | EX_MALLOCOK )) {
-			printf("sh3_pcmcia_memio_map: pa 0x%lx, size 0x%lx\n",
-			       bpa, size);
-			printf("sh3_pcmcia_memio_map: can't free region\n");
-		}
-	}
-#endif
-
-	return (error);
-}
-
-int
-shpcmcia_mem_add_mapping(bus_addr_t bpa, bus_size_t size, int type, bus_space_handle_t *bshp)
-{
-	u_long pa, endpa;
-	vaddr_t va;
-	pt_entry_t *pte;
-	unsigned int m = 0;
-	int io_type = type & ~SH3_BUS_SPACE_PCMCIA_8BIT;
-
-	pa = sh3_trunc_page(bpa);
-	endpa = sh3_round_page(bpa + size);
-
-#ifdef DIAGNOSTIC
-	if (endpa <= pa)
-		panic("sh3_pcmcia_mem_add_mapping: overflow");
-#endif
-
-	va = uvm_km_alloc(kernel_map, endpa - pa, 0,
-	    UVM_KMF_VAONLY | UVM_KMF_NOWAIT);
-	if (va == 0){
-		printf("shpcmcia_add_mapping: nomem \n");
-		return (ENOMEM);
-	}
-
-	*bshp = (bus_space_handle_t)(va + (bpa & PGOFSET));
-
-#define MODE(t, s)							\
-	(t) & SH3_BUS_SPACE_PCMCIA_8BIT ?				\
-		_PG_PCMCIA_ ## s ## 8 :					\
-		_PG_PCMCIA_ ## s ## 16
-	switch (io_type) {
-	default:
-		panic("unknown pcmcia space.");
-		/* NOTREACHED */
-	case SH3_BUS_SPACE_PCMCIA_IO:
-		m = MODE(type, IO);
-		break;
-	case SH3_BUS_SPACE_PCMCIA_MEM:
-		m = MODE(type, MEM);
-		break;
-	case SH3_BUS_SPACE_PCMCIA_ATT:
-		m = MODE(type, ATTR);
-		break;
-	}
-#undef MODE
-
-	for (; pa < endpa; pa += PAGE_SIZE, va += PAGE_SIZE) {
-		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE, 0);
-		pte = __pmap_kpte_lookup(va);
-		KDASSERT(pte);
-		*pte |= m;  /* PTEA PCMCIA assistant bit */
-		sh_tlb_update(0, va, *pte);
-	}
-
-	return 0;
-}
-
-void
-shpcmcia_memio_unmap(bus_space_tag_t t, bus_space_handle_t bsh, bus_size_t size)
-{
-	struct extent *ex;
-	u_long va, endva;
-	bus_addr_t bpa;
-	bus_space_tag_t pt = t & ~SH3_BUS_SPACE_PCMCIA_8BIT;
-
-	if (pt != SH3_BUS_SPACE_PCMCIA_IO && 
-	    pt != SH3_BUS_SPACE_PCMCIA_MEM &&
-	    pt != SH3_BUS_SPACE_PCMCIA_ATT) {
-		return ;
-	}
-
-	ex = iomem_ex;
-
-	va = sh3_trunc_page(bsh);
-	endva = sh3_round_page(bsh + size);
-
-#ifdef DIAGNOSTIC
-	if (endva <= va)
-		panic("sh3_pcmcia_memio_unmap: overflow");
-#endif
-
-	pmap_extract(pmap_kernel(), va, &bpa);
-	bpa += bsh & PGOFSET;
-
-	/*
-	 * Free the kernel virtual mapping.
-	 */
-	pmap_kremove(va, endva - va);
-	pmap_update(pmap_kernel());
-	uvm_km_free(kernel_map, va, endva - va, UVM_KMF_VAONLY);
-
-#if 0
-	if (extent_free(ex, bpa, size,
-			EX_NOWAIT | EX_MALLOCOK)) {
-		printf("sh3_pcmcia_memio_unmap: %s 0x%lx, size 0x%lx\n",
-		       "pa", bpa, size);
-		printf("sh3_pcmcia_memio_unmap: can't free region\n");
-	}
-#endif
-}
-
-void    
-shpcmcia_memio_free(bus_space_tag_t t, bus_space_handle_t bsh, bus_size_t size)
-{
-
-	/* sh3_pcmcia_memio_unmap() does all that we need to do. */
-	shpcmcia_memio_unmap(t, bsh, size);
-}
-
-int
-shpcmcia_memio_subregion(bus_space_tag_t t, bus_space_handle_t bsh, bus_size_t offset, bus_size_t size, bus_space_handle_t *nbshp)
-{
-
-	*nbshp = bsh + offset;
-	return (0);
-}
-
-#endif /* SH4_PCMCIA */
 
 #if !defined(DONT_INIT_BSC)
 /*
@@ -755,4 +580,3 @@ intc_intr(int ssr, int spc, int ssp)
 		break;
 	}
 }
-

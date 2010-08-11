@@ -1,4 +1,4 @@
-/*	$NetBSD: ksyms.h,v 1.14.40.2 2010/03/11 15:04:42 yamt Exp $	*/
+/*	$NetBSD: ksyms.h,v 1.14.40.3 2010/08/11 22:55:10 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2003 Anders Magnusson (ragge@ludd.luth.se).
@@ -31,6 +31,11 @@
 #define _SYS_KSYMS_H_
 
 #ifdef _KSYMS_PRIVATE
+
+#if defined(_KERNEL_OPT)
+#include "opt_dtrace.h"
+#endif
+
 #define	ELFSIZE	ARCH_ELFSIZE
 #include <sys/exec_elf.h>
 #include <sys/queue.h>
@@ -47,8 +52,12 @@ struct ksyms_symtab {
 	int sd_strsize;		/* Size of string table */
 	int sd_nglob;		/* Number of global symbols */
 	bool sd_gone;		/* dead but around for open() */
+#ifdef KDTRACE_HOOKS
 	void *sd_ctfstart;	/* Address of CTF contents */
 	int sd_ctfsize;		/* Size in bytes of CTF contents */
+	uint32_t *sd_nmap;	/* Name map for sorted symbols */
+	int sd_nmapsize;	/* Total span of map */
+#endif
 };
 
 /*
@@ -59,8 +68,12 @@ struct ksyms_symtab {
 #define	STRTAB		2
 #define	SHSTRTAB	3
 #define	SHBSS		4
+#ifdef KDTRACE_HOOKS
 #define	SHCTF		5
 #define NSECHDR		6
+#else
+#define NSECHDR		5
+#endif
 
 #define	NPRGHDR		1
 #define	SHSTRSIZ	42
@@ -101,12 +114,18 @@ struct ksyms_gsymbol {
 #define KSYMS_PROC	0100	/* Procedures only */
 #define KSYMS_ANY	0200	/* Also local symbols (DDB use only) */
 
+typedef int (*ksyms_callback_t)(const char *, int, void *,
+	uint32_t, int, void *);
+
 /*
  * Prototypes
  */
+
 int ksyms_getname(const char **, const char **, vaddr_t, int);
 int ksyms_getval(const char *, const char *, unsigned long *, int);
 int ksyms_getval_unlocked(const char *, const char *, unsigned long *, int);
+struct ksyms_symtab *ksyms_get_mod(const char *);
+int ksyms_mod_foreach(const char *mod, ksyms_callback_t, void *);
 int ksyms_addsymtab(const char *, void *, vsize_t, char *, vsize_t);
 int ksyms_delsymtab(const char *);
 void ksyms_init(void);

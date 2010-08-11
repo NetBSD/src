@@ -1,4 +1,4 @@
-/* $NetBSD: sbmac.c,v 1.28.10.3 2010/03/11 15:02:42 yamt Exp $ */
+/* $NetBSD: sbmac.c,v 1.28.10.4 2010/08/11 22:52:24 yamt Exp $ */
 
 /*
  * Copyright 2000, 2001, 2004
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbmac.c,v 1.28.10.3 2010/03/11 15:02:42 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbmac.c,v 1.28.10.4 2010/08/11 22:52:24 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -941,8 +941,7 @@ sbdma_rx_process(struct sbmac_softc *sc, sbmacdma_t *d)
 			 * interface is in promiscuous mode.
 			 */
 
-			if (ifp->if_bpf)
-				bpf_ops->bpf_mtap(ifp->if_bpf, m);
+			bpf_mtap(ifp, m);
 			/*
 			 * Pass the buffer to the kernel
 			 */
@@ -1812,8 +1811,7 @@ sbmac_start(struct ifnet *ifp)
 			 * If there's a BPF listener, bounce a copy of this
 			 * frame to it.
 			 */
-			if (ifp->if_bpf)
-				bpf_ops->bpf_mtap(ifp->if_bpf, m_head);
+			bpf_mtap(ifp, m_head);
 			if (!sc->sbm_pass3_dma) {
 				/*
 				 * Don't free mbuf if we're not copying to new

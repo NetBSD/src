@@ -1,8 +1,8 @@
-/*	$NetBSD: fwmem.h,v 1.3 2007/03/04 06:02:05 christos Exp $	*/
+/*	$NetBSD: fwmem.h,v 1.3.40.1 2010/08/11 22:53:34 yamt Exp $	*/
 /*-
  * Copyright (C) 2002-2003
  * 	Hidetoshi Shimokawa. All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -19,7 +19,7 @@
  * 4. Neither the name of the author nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -31,35 +31,26 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- * 
+ *
  * $FreeBSD: /repoman/r/ncvs/src/sys/dev/firewire/fwmem.h,v 1.8 2005/01/06 01:42:41 imp Exp $
  */
+#ifndef _FWMEM_H_
+#define _FWMEM_H_
 
-struct fw_xfer *fwmem_read_quad(struct fw_device *, void *, uint8_t,
-	uint16_t, uint32_t, void *, void (*)(struct fw_xfer *));
-struct fw_xfer *fwmem_write_quad(struct fw_device *, void *, uint8_t,
-	uint16_t, uint32_t, void *, void (*)(struct fw_xfer *));
-struct fw_xfer *fwmem_read_block(struct fw_device *, void *, uint8_t,
-	uint16_t, uint32_t, int, void *, void (*)(struct fw_xfer *));
-struct fw_xfer *fwmem_write_block(struct fw_device *, void *, uint8_t,
-	uint16_t, uint32_t, int, void *, void (*)(struct fw_xfer *));
+struct fw_xfer *fwmem_read_quad(struct fw_device *, void *, uint8_t, uint16_t,
+				uint32_t, void *, void (*)(struct fw_xfer *));
+struct fw_xfer *fwmem_write_quad(struct fw_device *, void *, uint8_t, uint16_t,
+				 uint32_t, void *, void (*)(struct fw_xfer *));
+struct fw_xfer *fwmem_read_block(struct fw_device *, void *, uint8_t, uint16_t,
+				 uint32_t, int, void *,
+				 void (*)(struct fw_xfer *));
+struct fw_xfer *fwmem_write_block(struct fw_device *, void *, uint8_t, uint16_t,
+				  uint32_t, int, void *,
+				  void (*)(struct fw_xfer *));
 
-#if defined(__FreeBSD__)
-d_open_t	fwmem_open;
-d_close_t	fwmem_close;
-d_ioctl_t	fwmem_ioctl;
-d_read_t	fwmem_read;
-d_write_t	fwmem_write;
-d_poll_t	fwmem_poll;
-d_mmap_t	fwmem_mmap;
-d_strategy_t	fwmem_strategy;
-#elif defined(__NetBSD__)
 dev_type_open(fwmem_open);
 dev_type_close(fwmem_close);
 dev_type_ioctl(fwmem_ioctl);
-dev_type_read(fwmem_read);
-dev_type_write(fwmem_write);
-dev_type_poll(fwmem_poll);
-dev_type_mmap(fwmem_mmap);
 dev_type_strategy(fwmem_strategy);
-#endif
+
+#endif	/* _FWMEM_H_ */

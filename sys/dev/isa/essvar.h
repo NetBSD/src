@@ -1,4 +1,4 @@
-/*	$NetBSD: essvar.h,v 1.24 2005/12/11 12:22:02 christos Exp $	*/
+/*	$NetBSD: essvar.h,v 1.24.74.1 2010/08/11 22:53:35 yamt Exp $	*/
 /*
  * Copyright 1997
  * Digital Equipment Corporation. All rights reserved.
@@ -33,7 +33,7 @@
  */
 
 /*
-** @(#) $RCSfile: essvar.h,v $ $Revision: 1.24 $ (SHARK) $Date: 2005/12/11 12:22:02 $
+** @(#) $RCSfile: essvar.h,v $ $Revision: 1.24.74.1 $ (SHARK) $Date: 2010/08/11 22:53:35 $
 **
 **++
 **
@@ -123,7 +123,7 @@ struct ess_audio_channel
 
 struct ess_softc
 {
-	struct	device sc_dev;		/* base device */
+	device_t sc_dev;		/* base device */
 	isa_chipset_tag_t sc_ic;
 	bus_space_tag_t sc_iot;		/* tag */
 	bus_space_handle_t sc_ioh;	/* handle */

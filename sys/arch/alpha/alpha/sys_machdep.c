@@ -1,4 +1,4 @@
-/* $NetBSD: sys_machdep.c,v 1.17.10.1 2008/05/16 02:21:44 yamt Exp $ */
+/* $NetBSD: sys_machdep.c,v 1.17.10.2 2010/08/11 22:51:31 yamt Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -58,12 +58,13 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.17.10.1 2008/05/16 02:21:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.17.10.2 2010/08/11 22:51:31 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/proc.h>
+#include <sys/cpu.h>
 
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
@@ -228,4 +229,14 @@ sys_sysarch(struct lwp *l, const struct sys_sysarch_args *uap, register_t *retva
 	}
 
 	return (error);
+}
+
+int
+cpu_lwp_setprivate(lwp_t *l, void *addr)
+{
+	struct pcb *pcb;
+
+	pcb = lwp_getpcb(l);
+	pcb->pcb_hw.apcb_unique = (unsigned long)addr;
+	return 0;
 }

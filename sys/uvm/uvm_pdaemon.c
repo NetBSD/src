@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdaemon.c,v 1.92.4.3 2010/03/11 15:04:47 yamt Exp $	*/
+/*	$NetBSD: uvm_pdaemon.c,v 1.92.4.4 2010/08/11 22:55:17 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.92.4.3 2010/03/11 15:04:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.92.4.4 2010/08/11 22:55:17 yamt Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -107,7 +107,7 @@ static void	uvmpd_scan(void);
 static void	uvmpd_scan_queue(void);
 static void	uvmpd_tune(void);
 
-unsigned int uvm_pagedaemon_waiters;
+static unsigned int uvm_pagedaemon_waiters;
 
 /*
  * XXX hack to avoid hangs when large processes fork.
