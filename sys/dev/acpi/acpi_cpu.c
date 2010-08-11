@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu.c,v 1.13 2010/08/08 18:47:54 jruoho Exp $ */
+/* $NetBSD: acpi_cpu.c,v 1.14 2010/08/11 16:22:18 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu.c,v 1.13 2010/08/08 18:47:54 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu.c,v 1.14 2010/08/11 16:22:18 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -176,6 +176,7 @@ acpicpu_detach(device_t self, int flags)
 	static ONCE_DECL(once_detach);
 	int rv = 0;
 
+	sc->sc_cold = true;
 	acpi_deregister_notify(sc->sc_node);
 
 	if ((sc->sc_flags & ACPICPU_FLAG_C) != 0)
@@ -500,13 +501,13 @@ acpicpu_resume(device_t self, const pmf_qual_t *qual)
 {
 	struct acpicpu_softc *sc = device_private(self);
 
-	sc->sc_cold = false;
-
 	if ((sc->sc_flags & ACPICPU_FLAG_C) != 0)
 		(void)acpicpu_cstate_resume(self);
 
 	if ((sc->sc_flags & ACPICPU_FLAG_P) != 0)
 		(void)acpicpu_pstate_resume(self);
+
+	sc->sc_cold = false;
 
 	return true;
 }
