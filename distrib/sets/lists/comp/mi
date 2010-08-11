@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1494 2010/08/08 00:44:38 pgoyette Exp $
+#	$NetBSD: mi,v 1.1495 2010/08/11 18:20:43 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -9376,11 +9376,15 @@
 ./usr/share/man/cat9/microuptime.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/module.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/module_autoload.0		comp-sys-catman		.cat
+./usr/share/man/cat9/module_builtin_require_force.0 comp-sys-catman	.cat
 ./usr/share/man/cat9/module_find_section.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/module_hold.0		comp-sys-catman		.cat
+./usr/share/man/cat9/module_init.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/module_init_class.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/module_load.0		comp-sys-catman		.cat
+./usr/share/man/cat9/module_load_vfs_init.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/module_rele.0		comp-sys-catman		.cat
+./usr/share/man/cat9/module_start_unload_thread.0 comp-sys-catman	.cat
 ./usr/share/man/cat9/module_unload.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/mono_time.0		comp-obsolete		obsolete
 ./usr/share/man/cat9/mstohz.0			comp-sys-catman		.cat
@@ -15174,11 +15178,15 @@
 ./usr/share/man/html9/microuptime.html		comp-sys-htmlman	html
 ./usr/share/man/html9/module.html		comp-sys-htmlman	html
 ./usr/share/man/html9/module_autoload.html	comp-sys-htmlman	html
+./usr/share/man/html9/module_builtin_require_force.9 comp-sys-htmlman	html
 ./usr/share/man/html9/module_find_section.html	comp-sys-htmlman	html
 ./usr/share/man/html9/module_hold.html		comp-sys-htmlman	html
+./usr/share/man/html9/module_init.9		comp-sys-htmlman	html
 ./usr/share/man/html9/module_init_class.html	comp-sys-htmlman	html
 ./usr/share/man/html9/module_load.html		comp-sys-htmlman	html
+./usr/share/man/html9/module_load_vfs_init.9	comp-sys-htmlman	html
 ./usr/share/man/html9/module_rele.html		comp-sys-htmlman	html
+./usr/share/man/html9/module_start_unload_thread.9 comp-sys-htmlman	html
 ./usr/share/man/html9/module_unload.html	comp-sys-htmlman	html
 ./usr/share/man/html9/mstohz.html		comp-sys-htmlman	html
 ./usr/share/man/html9/mtocl.html		comp-sys-htmlman	html
@@ -21133,11 +21141,15 @@
 ./usr/share/man/man9/microuptime.9		comp-sys-man		.man
 ./usr/share/man/man9/module.9			comp-sys-man		.man
 ./usr/share/man/man9/module_autoload.9		comp-sys-man		.man
+./usr/share/man/man9/module_builtin_require_force.9 comp-sys-man	.man
 ./usr/share/man/man9/module_find_section.9	comp-sys-man		.man
 ./usr/share/man/man9/module_hold.9		comp-sys-man		.man
+./usr/share/man/man9/module_init.9		comp-sys-man		.man
 ./usr/share/man/man9/module_init_class.9	comp-sys-man		.man
 ./usr/share/man/man9/module_load.9		comp-sys-man		.man
+./usr/share/man/man9/module_load_vfs_init.9	comp-sys-man		.man
 ./usr/share/man/man9/module_rele.9		comp-sys-man		.man
+./usr/share/man/man9/module_start_unload_thread.9 comp-sys-man		.man
 ./usr/share/man/man9/module_unload.9		comp-sys-man		.man
 ./usr/share/man/man9/mono_time.9		comp-obsolete		obsolete
 ./usr/share/man/man9/mstohz.9			comp-sys-man		.man
