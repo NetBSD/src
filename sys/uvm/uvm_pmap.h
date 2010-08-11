@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pmap.h,v 1.32.2.2 2010/04/27 07:17:25 uebayasi Exp $	*/
+/*	$NetBSD: uvm_pmap.h,v 1.32.2.3 2010/08/11 13:14:55 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -184,6 +184,14 @@ vaddr_t		pmap_steal_memory(vsize_t, vaddr_t *, vaddr_t *);
 
 #if defined(PMAP_FORK)
 void		pmap_fork(pmap_t, pmap_t);
+#endif
+
+#if defined(__HAVE_PMAP_PHYSSEG)
+#if defined(__HAVE_PMAP_PHYSSEG_INIT)
+struct vm_physseg;
+void pmap_physseg_init(struct vm_physseg *);
+void pmap_physseg_fini(struct vm_physseg *);
+#endif
 #endif
 __END_DECLS
 #endif	/* kernel*/
