@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_carp.c,v 1.43 2010/08/11 09:36:44 pooka Exp $	*/
+/*	$NetBSD: ip_carp.c,v 1.44 2010/08/11 11:06:42 pooka Exp $	*/
 /*	$OpenBSD: ip_carp.c,v 1.113 2005/11/04 08:11:54 mcbride Exp $	*/
 
 /*
@@ -30,7 +30,7 @@
 #include "opt_inet.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.43 2010/08/11 09:36:44 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.44 2010/08/11 11:06:42 pooka Exp $");
 
 /*
  * TODO:
@@ -1151,7 +1151,7 @@ carp_send_arp(struct carp_softc *sc)
 		arprequest(sc->sc_carpdev, in, in, CLLADDR(sc->sc_if.if_sadl));
 
 		/* XXX: why does this need to delay? */
-		kpause("carpdel", false, MIN(1, mstohz(1)), NULL);
+		kpause("carpdel", false, MAX(1, mstohz(1)), NULL);
 	}
 	splx(s);
 }
@@ -1175,7 +1175,7 @@ carp_send_na(struct carp_softc *sc)
 		    ND_NA_FLAG_OVERRIDE, 1, NULL);
 
 		/* XXX: why does this need to delay? */
-		kpause("carpdel6", false, MIN(1, mstohz(1)), NULL);
+		kpause("carpdel6", false, MAX(1, mstohz(1)), NULL);
 	}
 	splx(s);
 }
