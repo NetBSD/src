@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_cstate.c,v 1.21 2010/08/10 05:22:07 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_cstate.c,v 1.22 2010/08/11 10:44:07 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_cstate.c,v 1.21 2010/08/10 05:22:07 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_cstate.c,v 1.22 2010/08/11 10:44:07 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -126,7 +126,7 @@ acpicpu_cstate_attach_print(struct acpicpu_softc *sc)
 		switch (cs->cs_method) {
 
 		case ACPICPU_C_STATE_HALT:
-			str = "HALT";
+			str = "HLT";
 			break;
 
 		case ACPICPU_C_STATE_FFH:
@@ -134,14 +134,14 @@ acpicpu_cstate_attach_print(struct acpicpu_softc *sc)
 			break;
 
 		case ACPICPU_C_STATE_SYSIO:
-			str = "SYSIO";
+			str = "I/O";
 			break;
 
 		default:
 			panic("NOTREACHED");
 		}
 
-		aprint_debug_dev(sc->sc_dev, "C%d: %5s, "
+		aprint_debug_dev(sc->sc_dev, "C%d: %3s, "
 		    "lat %3u us, pow %5u mW, addr 0x%06x, flags 0x%02x\n",
 		    i, str, cs->cs_latency, cs->cs_power,
 		    (uint32_t)cs->cs_addr, cs->cs_flags);
