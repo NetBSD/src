@@ -1,4 +1,4 @@
-#	$NetBSD: files.ibm4xx,v 1.10.88.2 2010/08/11 13:53:22 uebayasi Exp $
+#	$NetBSD: files.ibm4xx,v 1.10.88.3 2010/08/11 13:56:28 uebayasi Exp $
 #
 # IBM 4xx specific configuration info
 
@@ -74,3 +74,7 @@ file	arch/powerpc/ibm4xx/dev/gpiic_opb.c	gpiic
 device	exb {[addr = -1]}
 attach	exb at plb
 file	arch/powerpc/ibm4xx/dev/exb.c		exb
+
+# FlashROM on external bus
+attach	flash at exb with flash_exb
+file	arch/powerpc/ibm4xx/dev/flash_exb.c	flash_exb
