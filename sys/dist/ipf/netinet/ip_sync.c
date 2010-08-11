@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_sync.c,v 1.14 2010/08/11 11:40:51 pgoyette Exp $	*/
+/*	$NetBSD: ip_sync.c,v 1.15 2010/08/11 11:57:36 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 1995-1998 by Darren Reed.
@@ -103,7 +103,7 @@ struct file;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_sync.c,v 1.14 2010/08/11 11:40:51 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_sync.c,v 1.15 2010/08/11 11:57:36 pgoyette Exp $");
 #else
 static const char rcsid[] = "@(#)Id: ip_sync.c,v 2.40.2.17 2009/12/27 06:55:22 darrenr Exp";
 #endif
@@ -157,7 +157,7 @@ int ipfsync_init()
 	MUTEX_INIT(&ipf_syncadd, "add things to sync table");
 	MUTEX_INIT(&ipsl_mutex, "add things to sync table");
 # if SOLARIS && defined(_KERNEL)
-	cv_init(&ipslwait, "ipf_syn", CV_DRIVER, NULL);
+	cv_init(&ipslwait, "ipsl condvar", CV_DRIVER, NULL);
 # endif
 
 	bzero((char *)syncnattab, sizeof(syncnattab));
