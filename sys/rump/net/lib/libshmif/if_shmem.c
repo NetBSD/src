@@ -1,4 +1,4 @@
-/*	$NetBSD: if_shmem.c,v 1.13 2010/08/10 18:17:12 pooka Exp $	*/
+/*	$NetBSD: if_shmem.c,v 1.14 2010/08/11 10:30:30 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.13 2010/08/10 18:17:12 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.14 2010/08/11 10:30:30 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -76,11 +76,11 @@ struct shmif_sc {
 	uint32_t sc_nextpacket;
 	uint32_t sc_prevgen;
 };
-#define IFMEM_LOCK		(0)
-#define IFMEM_GENERATION	(8)
-#define IFMEM_LASTPACKET	(12)
-#define IFMEM_WAKEUP		(16)
-#define IFMEM_DATA		(20)
+#define IFMEM_LOCK		(0x00)
+#define IFMEM_GENERATION	(0x04)
+#define IFMEM_LASTPACKET	(0x08)
+#define IFMEM_WAKEUP		(0x0c)
+#define IFMEM_DATA		(0x10)
 
 #define BUSCTRL_ATOFF(sc, off)	((uint32_t *)(sc->sc_busmem+(off)))
 
@@ -102,7 +102,7 @@ static void
 lockbus(struct shmif_sc *sc)
 {
 
-	while (atomic_cas_uint((void *)sc->sc_busmem,
+	while (atomic_cas_32((uint32_t *)sc->sc_busmem,
 	    LOCK_UNLOCKED, LOCK_LOCKED) == LOCK_LOCKED)
 		continue;
 	membar_enter();
@@ -114,7 +114,7 @@ unlockbus(struct shmif_sc *sc)
 	unsigned int old;
 
 	membar_exit();
-	old = atomic_swap_uint((void *)sc->sc_busmem, LOCK_UNLOCKED);
+	old = atomic_swap_32((uint32_t *)sc->sc_busmem, LOCK_UNLOCKED);
 	KASSERT(old == LOCK_LOCKED);
 }
 
