@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_pstate.c,v 1.7 2010/08/10 02:42:05 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_pstate.c,v 1.8 2010/08/11 10:44:07 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_pstate.c,v 1.7 2010/08/10 02:42:05 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_pstate.c,v 1.8 2010/08/11 10:44:07 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/evcnt.h>
@@ -105,7 +105,7 @@ acpicpu_pstate_attach_print(struct acpicpu_softc *sc)
 	const char *str;
 	uint32_t i;
 
-	str = (method != ACPI_ADR_SPACE_SYSTEM_IO) ? "FFH" : "SYSIO";
+	str = (method != ACPI_ADR_SPACE_SYSTEM_IO) ? "FFH" : "I/O";
 
 	for (i = 0; i < sc->sc_pstate_count; i++) {
 
@@ -114,7 +114,7 @@ acpicpu_pstate_attach_print(struct acpicpu_softc *sc)
 		if (ps->ps_freq == 0)
 			continue;
 
-		aprint_debug_dev(sc->sc_dev, "P%d: %5s, "
+		aprint_debug_dev(sc->sc_dev, "P%d: %3s, "
 		    "lat %3u us, pow %5u mW, %4u MHz\n",
 		    i, str, ps->ps_latency, ps->ps_power, ps->ps_freq);
 	}
