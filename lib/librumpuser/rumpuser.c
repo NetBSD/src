@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.c,v 1.8 2010/06/09 14:08:17 pooka Exp $	*/
+/*	$NetBSD: rumpuser.c,v 1.9 2010/08/11 10:25:59 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2010 Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser.c,v 1.8 2010/06/09 14:08:17 pooka Exp $");
+__RCSID("$NetBSD: rumpuser.c,v 1.9 2010/08/11 10:25:59 pooka Exp $");
 #endif /* !lint */
 
 /* thank the maker for this */
@@ -556,8 +556,11 @@ rumpuser_writewatchfile_wait(int kq, intptr_t *opaque, int *error)
 	struct kevent kev;
 	int rv;
 
+ again:
 	KLOCK_WRAP(rv = kevent(kq, NULL, 0, &kev, 1, NULL));
 	if (rv == -1) {
+		if (errno == EINTR)
+			goto again;
 		*error = errno;
 		return -1;
 	}
@@ -577,7 +580,7 @@ rumpuser_dprintf(const char *format, ...)
 	int rv;
 
 	va_start(ap, format);
-	rv = vprintf(format, ap);
+	rv = vfprintf(stderr, format, ap);
 	va_end(ap);
 
 	return rv;
