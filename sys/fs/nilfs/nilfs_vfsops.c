@@ -1,4 +1,4 @@
-/* $NetBSD: nilfs_vfsops.c,v 1.4 2010/08/11 11:43:13 pgoyette Exp $ */
+/* $NetBSD: nilfs_vfsops.c,v 1.5 2010/08/11 13:26:25 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2008, 2009 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: nilfs_vfsops.c,v 1.4 2010/08/11 11:43:13 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nilfs_vfsops.c,v 1.5 2010/08/11 13:26:25 pgoyette Exp $");
 #endif /* not lint */
 
 
@@ -632,7 +632,7 @@ nilfs_mount_device(struct vnode *devvp, struct mount *mp, struct nilfs_args *arg
 	nilfsdev->refcnt        = 1;
 	nilfsdev->devvp         = devvp;
 	nilfsdev->uncomitted_bl = 0;
-	cv_init(&nilfsdev->sync_cv, "nilfsisyn");
+	cv_init(&nilfsdev->sync_cv, "nilfssyn");
 	STAILQ_INIT(&nilfsdev->mounts);
 
 	/* get our device's size */
