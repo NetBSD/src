@@ -1,4 +1,4 @@
-/*	$NetBSD: if_shmem.c,v 1.14 2010/08/11 10:30:30 pooka Exp $	*/
+/*	$NetBSD: if_shmem.c,v 1.15 2010/08/11 12:10:39 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.14 2010/08/11 10:30:30 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.15 2010/08/11 12:10:39 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -80,11 +80,16 @@ struct shmif_sc {
 #define IFMEM_GENERATION	(0x04)
 #define IFMEM_LASTPACKET	(0x08)
 #define IFMEM_WAKEUP		(0x0c)
+#define IFMEM_BUSVERSION	IFMEM_WAKEUP
 #define IFMEM_DATA		(0x10)
 
 #define BUSCTRL_ATOFF(sc, off)	((uint32_t *)(sc->sc_busmem+(off)))
 
 #define BUSMEM_SIZE (1024*1024) /* need write throttling? */
+#define PKTLEN_SIZE 4
+
+/* just in case ... */
+static const uint32_t busversion = 1;
 
 static void shmif_rcv(void *);
 
@@ -185,10 +190,10 @@ nextpktoff(struct shmif_sc *sc, uint32_t oldoff)
 {
 	uint32_t oldlen;
 
-	busread(sc, &oldlen, oldoff, 4);
+	busread(sc, &oldlen, oldoff, PKTLEN_SIZE);
 	KASSERT(oldlen < BUSMEM_SIZE - IFMEM_DATA);
 
-	return advance(oldoff, 4 + oldlen);
+	return advance(oldoff, PKTLEN_SIZE + oldlen);
 }
 
 int
@@ -202,7 +207,7 @@ rump_shmif_create(const char *path, int *ifnum)
 	int error;
 
 	randnum = arc4random();
-	memcpy(&enaddr[2], &randnum, 4);
+	memcpy(&enaddr[2], &randnum, sizeof(randnum));
 	mynum = atomic_inc_uint_nv(&numif)-1;
 
 	sc = kmem_zalloc(sizeof(*sc), KM_SLEEP);
@@ -304,14 +309,14 @@ shmif_start(struct ifnet *ifp)
 		lastoff = *BUSCTRL_ATOFF(sc, IFMEM_LASTPACKET);
 
 		npktlenoff = nextpktoff(sc, lastoff);
-		dataoff = advance(npktlenoff, 4);
+		dataoff = advance(npktlenoff, PKTLEN_SIZE);
 
 		for (m = m0; m != NULL; m = m->m_next) {
 			pktsize += m->m_len;
 			dataoff = buswrite(sc, dataoff, mtod(m, void *),
 			    m->m_len);
 		}
-		buswrite(sc, npktlenoff, &pktsize, 4);
+		buswrite(sc, npktlenoff, &pktsize, PKTLEN_SIZE);
 		*BUSCTRL_ATOFF(sc, IFMEM_LASTPACKET) = npktlenoff;
 		unlockbus(sc);
 
@@ -323,7 +328,8 @@ shmif_start(struct ifnet *ifp)
 	}
 	/* wakeup */
 	if (wrote)
-		rumpuser_pwrite(sc->sc_memfd, &error, 4, IFMEM_WAKEUP, &error);
+		rumpuser_pwrite(sc->sc_memfd,
+		    &busversion, sizeof(busversion), IFMEM_WAKEUP, &error);
 }
 
 static void
@@ -376,8 +382,9 @@ shmif_rcv(void *arg)
 			continue;
 		}
 
-		busread(sc, &pktlen, nextpkt, 4);
-		busread(sc, mtod(m, void *), advance(nextpkt, 4), pktlen);
+		busread(sc, &pktlen, nextpkt, PKTLEN_SIZE);
+		busread(sc, mtod(m, void *),
+		    advance(nextpkt, PKTLEN_SIZE), pktlen);
 
 		DPRINTF(("shmif_rcv: read packet of length %d at %d\n",
 		    pktlen, nextpkt));
