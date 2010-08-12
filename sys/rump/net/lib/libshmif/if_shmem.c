@@ -1,4 +1,4 @@
-/*	$NetBSD: if_shmem.c,v 1.15 2010/08/11 12:10:39 pooka Exp $	*/
+/*	$NetBSD: if_shmem.c,v 1.16 2010/08/12 17:33:55 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.15 2010/08/11 12:10:39 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.16 2010/08/12 17:33:55 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -66,27 +66,20 @@ static int	shmif_ioctl(struct ifnet *, u_long, void *);
 static void	shmif_start(struct ifnet *);
 static void	shmif_stop(struct ifnet *, int);
 
+#include "shmifvar.h"
+
 struct shmif_sc {
 	struct ethercom sc_ec;
 	uint8_t sc_myaddr[6];
-	uint8_t *sc_busmem;
+	struct shmif_mem *sc_busmem;
 	int sc_memfd;
 	int sc_kq;
 
 	uint32_t sc_nextpacket;
 	uint32_t sc_prevgen;
 };
-#define IFMEM_LOCK		(0x00)
-#define IFMEM_GENERATION	(0x04)
-#define IFMEM_LASTPACKET	(0x08)
-#define IFMEM_WAKEUP		(0x0c)
-#define IFMEM_BUSVERSION	IFMEM_WAKEUP
-#define IFMEM_DATA		(0x10)
-
-#define BUSCTRL_ATOFF(sc, off)	((uint32_t *)(sc->sc_busmem+(off)))
 
 #define BUSMEM_SIZE (1024*1024) /* need write throttling? */
-#define PKTLEN_SIZE 4
 
 /* just in case ... */
 static const uint32_t busversion = 1;
@@ -107,7 +100,7 @@ static void
 lockbus(struct shmif_sc *sc)
 {
 
-	while (atomic_cas_32((uint32_t *)sc->sc_busmem,
+	while (atomic_cas_32(&sc->sc_busmem->shm_lock,
 	    LOCK_UNLOCKED, LOCK_LOCKED) == LOCK_LOCKED)
 		continue;
 	membar_enter();
@@ -119,7 +112,7 @@ unlockbus(struct shmif_sc *sc)
 	unsigned int old;
 
 	membar_exit();
-	old = atomic_swap_32((uint32_t *)sc->sc_busmem, LOCK_UNLOCKED);
+	old = atomic_swap_32(&sc->sc_busmem->shm_lock, LOCK_UNLOCKED);
 	KASSERT(old == LOCK_LOCKED);
 }
 
@@ -130,7 +123,7 @@ busread(struct shmif_sc *sc, void *dest, uint32_t off, size_t len)
 
 	KASSERT(len < (BUSMEM_SIZE - IFMEM_DATA) && off <= BUSMEM_SIZE);
 	chunk = MIN(len, BUSMEM_SIZE - off);
-	memcpy(dest, sc->sc_busmem + off, chunk);
+	memcpy(dest, (uint8_t *)sc->sc_busmem + off, chunk);
 	len -= chunk;
 
 	if (len == 0)
@@ -138,10 +131,10 @@ busread(struct shmif_sc *sc, void *dest, uint32_t off, size_t len)
 
 	/* else, wraps around */
 	off = IFMEM_DATA;
-	sc->sc_prevgen = *BUSCTRL_ATOFF(sc, IFMEM_GENERATION);
+	sc->sc_prevgen = sc->sc_busmem->shm_gen;
 
 	/* finish reading */
-	memcpy((uint8_t *)dest + chunk, sc->sc_busmem + off, len);
+	memcpy((uint8_t *)dest + chunk, (uint8_t *)sc->sc_busmem + off, len);
 	return off + len;
 }
 
@@ -154,7 +147,7 @@ buswrite(struct shmif_sc *sc, uint32_t off, void *data, size_t len)
 	    && off >= IFMEM_DATA);
 
 	chunk = MIN(len, BUSMEM_SIZE - off);
-	memcpy(sc->sc_busmem + off, data, chunk);
+	memcpy((uint8_t *)sc->sc_busmem + off, data, chunk);
 	len -= chunk;
 
 	if (len == 0)
@@ -165,11 +158,11 @@ buswrite(struct shmif_sc *sc, uint32_t off, void *data, size_t len)
 
 	/* else, wraps around */
 	off = IFMEM_DATA;
-	(*BUSCTRL_ATOFF(sc, IFMEM_GENERATION))++;
-	sc->sc_prevgen = *BUSCTRL_ATOFF(sc, IFMEM_GENERATION);
+	sc->sc_prevgen = sc->sc_busmem->shm_gen;
+	sc->sc_busmem->shm_gen++;
 
 	/* finish writing */
-	memcpy(sc->sc_busmem + off, (uint8_t *)data + chunk, len);
+	memcpy((uint8_t *)sc->sc_busmem + off, (uint8_t *)data + chunk, len);
 	return off + len;
 }
 
@@ -224,10 +217,10 @@ rump_shmif_create(const char *path, int *ifnum)
 		goto fail;
 
 	lockbus(sc);
-	if (*BUSCTRL_ATOFF(sc, IFMEM_LASTPACKET) == 0)
-		*BUSCTRL_ATOFF(sc, IFMEM_LASTPACKET) = IFMEM_DATA;
-	sc->sc_nextpacket = *BUSCTRL_ATOFF(sc, IFMEM_LASTPACKET);
-	sc->sc_prevgen = *BUSCTRL_ATOFF(sc, IFMEM_GENERATION);
+	if (sc->sc_busmem->shm_last == 0)
+		sc->sc_busmem->shm_last = IFMEM_DATA;
+	sc->sc_nextpacket = sc->sc_busmem->shm_last;
+	sc->sc_prevgen = sc->sc_busmem->shm_gen;
 	unlockbus(sc);
 
 	sc->sc_kq = rumpuser_writewatchfile_setup(-1, sc->sc_memfd, 0, &error);
@@ -306,7 +299,7 @@ shmif_start(struct ifnet *ifp)
 		}
 
 		lockbus(sc);
-		lastoff = *BUSCTRL_ATOFF(sc, IFMEM_LASTPACKET);
+		lastoff = sc->sc_busmem->shm_last;
 
 		npktlenoff = nextpktoff(sc, lastoff);
 		dataoff = advance(npktlenoff, PKTLEN_SIZE);
@@ -317,7 +310,7 @@ shmif_start(struct ifnet *ifp)
 			    m->m_len);
 		}
 		buswrite(sc, npktlenoff, &pktsize, PKTLEN_SIZE);
-		*BUSCTRL_ATOFF(sc, IFMEM_LASTPACKET) = npktlenoff;
+		sc->sc_busmem->shm_last = npktlenoff;
 		unlockbus(sc);
 
 		m_freem(m0);
@@ -359,8 +352,8 @@ shmif_rcv(void *arg)
 
 		KASSERT(m->m_flags & M_EXT);
 		lockbus(sc);
-		lastpkt = *BUSCTRL_ATOFF(sc, IFMEM_LASTPACKET);
-		busgen = *BUSCTRL_ATOFF(sc, IFMEM_GENERATION);
+		lastpkt = sc->sc_busmem->shm_last;
+		busgen = sc->sc_busmem->shm_gen;
 		lastnext = nextpktoff(sc, lastpkt);
 		if ((lastnext > sc->sc_nextpacket && busgen > sc->sc_prevgen)
 		    || (busgen > sc->sc_prevgen+1)) {

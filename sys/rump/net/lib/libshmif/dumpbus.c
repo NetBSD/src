@@ -1,4 +1,4 @@
-/*	$NetBSD: dumpbus.c,v 1.2 2010/08/12 17:00:41 pooka Exp $	*/
+/*	$NetBSD: dumpbus.c,v 1.3 2010/08/12 17:33:55 pooka Exp $	*/
 
 /*
  * Little utility to convert shmif bus traffic to a pcap file
@@ -9,6 +9,7 @@
 #include <sys/mman.h>
 #include <sys/stat.h>
 
+#include <assert.h>
 #include <err.h>
 #include <fcntl.h>
 #include <pcap.h>
@@ -17,13 +18,7 @@
 #include <string.h>
 #include <unistd.h>
 
-/* XXX: sync with driver */
-struct bushdr {
-	uint32_t lock;
-	uint32_t gen;
-	uint32_t last;
-	uint32_t version;
-};
+#include "shmifvar.h"
 
 static void
 usage(void)
@@ -40,8 +35,9 @@ main(int argc, char *argv[])
 	void *busmem;
 	const char *pcapfile = NULL;
 	uint8_t *curbus, *buslast;
-	struct bushdr *bhdr;
+	struct shmif_mem *bmem;
 	int fd, pfd, i, ch;
+	uint32_t pktlen;
 
 	while ((ch = getopt(argc, argv, "p:")) != -1) {
 		switch (ch) {
@@ -70,13 +66,13 @@ main(int argc, char *argv[])
 	if (busmem == MAP_FAILED)
 		err(1, "mmap");
 
-	bhdr = busmem;
-	if (bhdr->version != 1)
-		errx(1, "cannot handle bus version %d", bhdr->version);
+	bmem = busmem;
+	if (bmem->shm_version != 1)
+		errx(1, "cannot handle bus version %d", bmem->shm_version);
 	printf("bus version %d, lock: %d, generation: %d, lastoff: 0x%x\n",
-	    bhdr->version, bhdr->lock, bhdr->gen, bhdr->last);
+	    bmem->shm_version, bmem->shm_lock, bmem->shm_gen, bmem->shm_last);
 
-	if (bhdr->gen != 0) {
+	if (bmem->shm_gen != 0) {
 		printf("this dumper can manage only generation 0, sorry\n");
 		exit(0);
 	}
@@ -99,13 +95,12 @@ main(int argc, char *argv[])
 			err(1, "phdr write");
 	}
 	
-	curbus = busmem;
-	buslast = curbus + bhdr->last;
-	curbus += sizeof(*bhdr);
+	curbus = bmem->shm_data;
+	buslast = bmem->shm_data + bmem->shm_last;
+	assert(sizeof(pktlen) == PKTLEN_SIZE);
 
 	i = 0;
 	while (curbus <= buslast) {
-		uint32_t pktlen;
 		struct pcap_pkthdr packhdr;
 
 		pktlen = *(uint32_t *)curbus;
@@ -116,7 +111,7 @@ main(int argc, char *argv[])
 			continue;
 
 		printf("packet %d, offset 0x%x, length 0x%x\n",
-		    i++, curbus - (uint8_t *)(bhdr + 1), pktlen);
+		    i++, curbus - (uint8_t *)(bmem + 1), pktlen);
 
 		if (!pcapfile || pktlen == 0) {
 			curbus += pktlen;
