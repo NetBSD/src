@@ -1,4 +1,4 @@
-/*	$NetBSD: t_vfsops.c,v 1.4 2010/07/19 16:00:45 pooka Exp $	*/
+/*	$NetBSD: t_vfsops.c,v 1.5 2010/08/12 09:34:16 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -126,10 +126,49 @@ tfilehandle(const atf_tc_t *tc, const char *path)
 	rump_sys_close(fd);
 }
 
+#define FNAME "a_file"
+static void
+tfhremove(const atf_tc_t *tc, const char *path)
+{
+	size_t fhsize;
+	void *fhp;
+	int fd;
+
+	/* should repeat above, but ... */
+	if (FSTYPE_TMPFS(tc))
+		atf_tc_skip("file handles broken (PR kern/43605)");
+
+	RL(rump_sys_chdir(path));
+	RL(fd = rump_sys_open(FNAME, O_RDWR | O_CREAT, 0777));
+	RL(rump_sys_close(fd));
+
+	fhsize = 0;
+	if (rump_sys_getfh(FNAME, NULL, &fhsize) == -1) {
+		if (errno == EOPNOTSUPP) {
+			atf_tc_skip("file handles not supported");
+		} else if (errno != E2BIG) {
+			atf_tc_fail_errno("getfh size");
+		}
+	}
+
+	fhp = malloc(fhsize);
+	RL(rump_sys_getfh(FNAME, fhp, &fhsize));
+	RL(rump_sys_unlink(FNAME));
+
+	if (FSTYPE_MSDOS(tc) || FSTYPE_LFS(tc))
+		atf_tc_expect_fail("fhopen() for removed file succeeds (PR coming soon)");
+	ATF_REQUIRE_ERRNO(ESTALE, rump_sys_fhopen(fhp, fhsize, O_RDONLY) == -1);
+	atf_tc_expect_pass();
+
+	RL(rump_sys_chdir("/"));
+}
+#undef FNAME
+
 ATF_TC_FSAPPLY(tmount, "mount/unmount");
 ATF_TC_FSAPPLY(tstatvfs, "statvfs");
 ATF_TC_FSAPPLY(tsync, "sync");
 ATF_TC_FSAPPLY(tfilehandle, "file handles");
+ATF_TC_FSAPPLY(tfhremove, "fhtovp for removed file");
 
 ATF_TP_ADD_TCS(tp)
 {
@@ -138,6 +177,7 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_FSAPPLY(tstatvfs);
 	ATF_TP_FSAPPLY(tsync);
 	ATF_TP_FSAPPLY(tfilehandle);
+	ATF_TP_FSAPPLY(tfhremove);
 
 	return atf_no_error();
 }
