@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.166.2.20 2010/07/22 07:49:45 uebayasi Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.166.2.21 2010/08/12 03:41:55 uebayasi Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.166.2.20 2010/07/22 07:49:45 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.166.2.21 2010/08/12 03:41:55 uebayasi Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_xip.h"
@@ -2049,7 +2049,7 @@ uvm_fault_lower_promote(
 	 * if we are going to promote the data to an anon we
 	 * allocate a blank anon here and plug it into our amap.
 	 */
-#if DIAGNOSTIC
+#ifdef DIAGNOSTIC
 	if (amap == NULL)
 		panic("uvm_fault: want to promote data, but no anon");
 #endif
