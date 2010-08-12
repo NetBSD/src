@@ -1,4 +1,4 @@
-/*	$NetBSD: dumpbus.c,v 1.1 2010/08/11 12:41:09 pooka Exp $	*/
+/*	$NetBSD: dumpbus.c,v 1.2 2010/08/12 17:00:41 pooka Exp $	*/
 
 /*
  * Little utility to convert shmif bus traffic to a pcap file
@@ -13,6 +13,8 @@
 #include <fcntl.h>
 #include <pcap.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 
 /* XXX: sync with driver */
@@ -130,4 +132,6 @@ main(int argc, char *argv[])
 			err(1, "write packet");
 		curbus += pktlen;
 	}
+
+	return 0;
 }
