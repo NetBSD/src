@@ -1,4 +1,4 @@
-/*	$NetBSD: dumpbus.c,v 1.4 2010/08/12 18:17:23 pooka Exp $	*/
+/*	$NetBSD: dumpbus.c,v 1.5 2010/08/12 18:22:40 pooka Exp $	*/
 
 /*
  * Little utility to convert shmif bus traffic to a pcap file
@@ -83,9 +83,13 @@ main(int argc, char *argv[])
 	if (pcapfile) {
 		struct pcap_file_header phdr;
 
-		pfd = open(pcapfile, O_RDWR | O_CREAT, 0777);
-		if (pfd == -1)
-			err(1, "create pcap dump");
+		if (strcmp(pcapfile, "-") == 0) {
+			pfd = STDOUT_FILENO;
+		} else {
+			pfd = open(pcapfile, O_RDWR | O_CREAT, 0777);
+			if (pfd == -1)
+				err(1, "create pcap dump");
+		}
 
 		memset(&phdr, 0, sizeof(phdr));
 		phdr.magic = 0xa1b2c3d4; /* tcpdump magic */
