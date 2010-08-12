@@ -1,4 +1,4 @@
-/*	$NetBSD: shmifvar.h,v 1.1 2010/08/12 17:33:55 pooka Exp $	*/
+/*	$NetBSD: shmifvar.h,v 1.2 2010/08/12 18:17:23 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -30,11 +30,20 @@
 #ifndef _RUMP_NET_SHMIFVAR_H_
 #define _RUMP_NET_SHMIFVAR_H_
 
+#define SHMIF_MAGIC 0xca11d054
+#define SHMIF_VERSION 1
+
 struct shmif_mem {
-	uint32_t shm_lock;
-	uint32_t shm_gen;
-	uint32_t shm_last;
+	uint32_t shm_magic;
 	uint32_t shm_version;
+
+	uint32_t shm_gen;
+	uint32_t shm_first;
+	uint32_t shm_last;
+
+	uint32_t shm_lock;
+	uint32_t shm_spare[2];
+
 	uint8_t shm_data[0];
 };
 
