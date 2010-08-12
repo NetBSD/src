@@ -1,4 +1,4 @@
-/*	$NetBSD: dtfs_vfsops.c,v 1.1 2010/07/06 14:16:44 pooka Exp $	*/
+/*	$NetBSD: dtfs_vfsops.c,v 1.2 2010/08/12 09:22:14 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -248,11 +248,11 @@ dtfs_fs_fhtonode(struct puffs_usermount *pu, void *fid, size_t fidsize,
 
 	pn = puffs_pn_nodewalk(pu, addrcmp, dfid->dfid_addr);
 	if (pn == NULL)
-		return EINVAL;
+		return ESTALE;
 
 	if (pn->pn_va.va_fileid != dfid->dfid_fileid
 	    || pn->pn_va.va_gen != dfid->dfid_gen)
-		return EINVAL;
+		return ESTALE;
 	
 	puffs_newinfo_setcookie(pni, pn);
 	puffs_newinfo_setvtype(pni, pn->pn_va.va_type);
