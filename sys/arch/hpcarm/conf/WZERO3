@@ -1,4 +1,4 @@
-#	$NetBSD: WZERO3,v 1.14 2010/08/08 11:25:53 tsutsui Exp $
+#	$NetBSD: WZERO3,v 1.15 2010/08/12 17:23:23 tsutsui Exp $
 #
 #	WZERO3 -- Sharp Windows Mobile 5 based PDA
 #
@@ -7,7 +7,7 @@ include	"arch/hpcarm/conf/std.pxa2x0"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.14 $"
+#ident 		"GENERIC-$Revision: 1.15 $"
 
 # estimated number of users
 maxusers	32
@@ -242,6 +242,7 @@ kue*	at uhub? port ?		# Kawasaki LSI KL5KUSB101B based adapters
 udav*	at uhub? port ?	 	# Davicom DM9601 based adapters
 url*	at uhub? port ?		# Realtek RTL8150L based adapters
 
+acphy*	at mii? phy ?		# Altima AC101 and AMD Am79c874 PHYs
 rlphy*	at mii? phy ?		# Realtek 8139/8201L PHYs
 ukphy*  at mii? phy ?		# generic unknown PHYs
 urlphy* at mii? phy ?		# Realtek RTL8150L internal PHYs
