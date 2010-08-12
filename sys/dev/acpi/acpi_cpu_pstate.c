@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_pstate.c,v 1.13 2010/08/11 18:15:52 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_pstate.c,v 1.14 2010/08/12 06:17:14 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_pstate.c,v 1.13 2010/08/11 18:15:52 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_pstate.c,v 1.14 2010/08/12 06:17:14 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/evcnt.h>
@@ -242,20 +242,21 @@ acpicpu_pstate_callback(void *aux)
 
 	mutex_exit(&sc->sc_mtx);
 
-#if 0
 	if (old != new) {
 
+		aprint_debug_dev(sc->sc_dev, "maximum frequency "
+		    "changed from P%u (%u MHz) to P%u (%u MHz)\n",
+		    old, sc->sc_pstate[old].ps_freq, new,
+		    sc->sc_pstate[sc->sc_pstate_max].ps_freq);
+#if 0
 		/*
 		 * If the maximum changed, proactively
 		 * raise or lower the target frequency.
 		 */
 		acpicpu_pstate_set(sc, sc->sc_pstate[new].ps_freq);
 
-		ACPI_DEBUG_PRINT((ACPI_DB_INFO, "frequency changed from "
-			"%u MHz to %u MHz\n", sc->sc_pstate[old].ps_freq,
-			sc->sc_pstate[sc->sc_pstate_max].ps_freq));
-	}
 #endif
+	}
 }
 
 ACPI_STATUS
@@ -494,13 +495,13 @@ acpicpu_pstate_max(struct acpicpu_softc *sc)
 	if (ACPI_FAILURE(rv))
 		return 1;
 
-	if (val > (uint64_t)sc->sc_pstate_count)
+	if (val > sc->sc_pstate_count - 1)
 		return 1;
 
 	if (sc->sc_pstate[val].ps_freq == 0)
 		return 1;
 
-	sc->sc_pstate_max = val;		/* XXX: sysctl(8) knob?  */
+	sc->sc_pstate_max = val;
 
 	return 0;
 }
@@ -555,10 +556,15 @@ acpicpu_pstate_get(struct acpicpu_softc *sc, uint32_t *freq)
 		goto fail;
 	}
 
+	mutex_enter(&sc->sc_mtx);
+
 	if (sc->sc_pstate_current != ACPICPU_P_STATE_UNKNOWN) {
 		*freq = sc->sc_pstate_current;
+		mutex_exit(&sc->sc_mtx);
 		return 0;
 	}
+
+	mutex_exit(&sc->sc_mtx);
 
 	switch (method) {
 
@@ -611,7 +617,9 @@ acpicpu_pstate_get(struct acpicpu_softc *sc, uint32_t *freq)
 		goto fail;
 	}
 
+	mutex_enter(&sc->sc_mtx);
 	sc->sc_pstate_current = *freq;
+	mutex_exit(&sc->sc_mtx);
 
 	return 0;
 
@@ -619,7 +627,9 @@ fail:
 	aprint_error_dev(sc->sc_dev, "failed "
 	    "to get frequency (err %d)\n", rv);
 
+	mutex_enter(&sc->sc_mtx);
 	*freq = sc->sc_pstate_current = ACPICPU_P_STATE_UNKNOWN;
+	mutex_exit(&sc->sc_mtx);
 
 	return rv;
 }
@@ -712,7 +722,10 @@ acpicpu_pstate_set(struct acpicpu_softc *sc, uint32_t freq)
 	}
 
 	ps->ps_evcnt.ev_count++;
+
+	mutex_enter(&sc->sc_mtx);
 	sc->sc_pstate_current = freq;
+	mutex_exit(&sc->sc_mtx);
 
 	return 0;
 
@@ -720,7 +733,9 @@ fail:
 	aprint_error_dev(sc->sc_dev, "failed to set "
 	    "frequency to %u (err %d)\n", freq, rv);
 
+	mutex_enter(&sc->sc_mtx);
 	sc->sc_pstate_current = ACPICPU_P_STATE_UNKNOWN;
+	mutex_exit(&sc->sc_mtx);
 
 	return rv;
 }
