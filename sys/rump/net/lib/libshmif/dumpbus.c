@@ -1,4 +1,4 @@
-/*	$NetBSD: dumpbus.c,v 1.3 2010/08/12 17:33:55 pooka Exp $	*/
+/*	$NetBSD: dumpbus.c,v 1.4 2010/08/12 18:17:23 pooka Exp $	*/
 
 /*
  * Little utility to convert shmif bus traffic to a pcap file
@@ -67,8 +67,11 @@ main(int argc, char *argv[])
 		err(1, "mmap");
 
 	bmem = busmem;
-	if (bmem->shm_version != 1)
-		errx(1, "cannot handle bus version %d", bmem->shm_version);
+	if (bmem->shm_magic != SHMIF_MAGIC)
+		errx(1, "%s not a shmif bus", argv[0]);
+	if (bmem->shm_version != SHMIF_VERSION)
+		errx(1, "bus vesrsion %d, program %d",
+		    bmem->shm_version, SHMIF_VERSION);
 	printf("bus version %d, lock: %d, generation: %d, lastoff: 0x%x\n",
 	    bmem->shm_version, bmem->shm_lock, bmem->shm_gen, bmem->shm_last);
 
@@ -106,12 +109,11 @@ main(int argc, char *argv[])
 		pktlen = *(uint32_t *)curbus;
 		curbus += sizeof(pktlen);
 
-		/* quirk */
 		if (pktlen == 0)
 			continue;
 
 		printf("packet %d, offset 0x%x, length 0x%x\n",
-		    i++, curbus - (uint8_t *)(bmem + 1), pktlen);
+		    i++, curbus - bmem->shm_data, pktlen);
 
 		if (!pcapfile || pktlen == 0) {
 			curbus += pktlen;

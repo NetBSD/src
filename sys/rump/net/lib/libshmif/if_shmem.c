@@ -1,4 +1,4 @@
-/*	$NetBSD: if_shmem.c,v 1.16 2010/08/12 17:33:55 pooka Exp $	*/
+/*	$NetBSD: if_shmem.c,v 1.17 2010/08/12 18:17:23 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.16 2010/08/12 17:33:55 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.17 2010/08/12 18:17:23 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -81,8 +81,7 @@ struct shmif_sc {
 
 #define BUSMEM_SIZE (1024*1024) /* need write throttling? */
 
-/* just in case ... */
-static const uint32_t busversion = 1;
+static const uint32_t busversion = SHMIF_VERSION;
 
 static void shmif_rcv(void *);
 
@@ -123,18 +122,18 @@ busread(struct shmif_sc *sc, void *dest, uint32_t off, size_t len)
 
 	KASSERT(len < (BUSMEM_SIZE - IFMEM_DATA) && off <= BUSMEM_SIZE);
 	chunk = MIN(len, BUSMEM_SIZE - off);
-	memcpy(dest, (uint8_t *)sc->sc_busmem + off, chunk);
+	memcpy(dest, sc->sc_busmem->shm_data + off, chunk);
 	len -= chunk;
 
 	if (len == 0)
 		return off + chunk;
 
 	/* else, wraps around */
-	off = IFMEM_DATA;
+	off = 0;
 	sc->sc_prevgen = sc->sc_busmem->shm_gen;
 
 	/* finish reading */
-	memcpy((uint8_t *)dest + chunk, (uint8_t *)sc->sc_busmem + off, len);
+	memcpy((uint8_t *)dest + chunk, sc->sc_busmem->shm_data + off, len);
 	return off + len;
 }
 
@@ -143,26 +142,25 @@ buswrite(struct shmif_sc *sc, uint32_t off, void *data, size_t len)
 {
 	size_t chunk;
 
-	KASSERT(len < (BUSMEM_SIZE - IFMEM_DATA) && off <= BUSMEM_SIZE
-	    && off >= IFMEM_DATA);
+	KASSERT(len < (BUSMEM_SIZE - IFMEM_DATA) && off <= BUSMEM_SIZE);
 
 	chunk = MIN(len, BUSMEM_SIZE - off);
-	memcpy((uint8_t *)sc->sc_busmem + off, data, chunk);
+	memcpy(sc->sc_busmem->shm_data + off, data, chunk);
 	len -= chunk;
 
 	if (len == 0)
 		return off + chunk;
 
-	DPRINTF(("buswrite wrap: wrote %d bytes to %d, left %d to %d",
-	    chunk, off, len, IFMEM_DATA));
+	DPRINTF(("buswrite wrap: wrote %d bytes to %d, left %d to 0",
+	    chunk, off, len));
 
 	/* else, wraps around */
-	off = IFMEM_DATA;
+	off = 0;
 	sc->sc_prevgen = sc->sc_busmem->shm_gen;
 	sc->sc_busmem->shm_gen++;
 
 	/* finish writing */
-	memcpy((uint8_t *)sc->sc_busmem + off, (uint8_t *)data + chunk, len);
+	memcpy(sc->sc_busmem->shm_data + off, (uint8_t *)data + chunk, len);
 	return off + len;
 }
 
@@ -216,9 +214,11 @@ rump_shmif_create(const char *path, int *ifnum)
 	if (error)
 		goto fail;
 
+	if (sc->sc_busmem->shm_magic && sc->sc_busmem->shm_magic != SHMIF_MAGIC)
+		panic("bus is not magical");
+	sc->sc_busmem->shm_magic = SHMIF_MAGIC;
+
 	lockbus(sc);
-	if (sc->sc_busmem->shm_last == 0)
-		sc->sc_busmem->shm_last = IFMEM_DATA;
 	sc->sc_nextpacket = sc->sc_busmem->shm_last;
 	sc->sc_prevgen = sc->sc_busmem->shm_gen;
 	unlockbus(sc);
