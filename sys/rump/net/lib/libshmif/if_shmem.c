@@ -1,4 +1,4 @@
-/*	$NetBSD: if_shmem.c,v 1.17 2010/08/12 18:17:23 pooka Exp $	*/
+/*	$NetBSD: if_shmem.c,v 1.18 2010/08/12 18:39:54 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.17 2010/08/12 18:17:23 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.18 2010/08/12 18:39:54 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -79,7 +79,8 @@ struct shmif_sc {
 	uint32_t sc_prevgen;
 };
 
-#define BUSMEM_SIZE (1024*1024) /* need write throttling? */
+#define BUSMEM_SIZE (1024*1024)
+#define BUSMEM_DATASIZE (BUSMEM_SIZE - sizeof(struct shmif_mem))
 
 static const uint32_t busversion = SHMIF_VERSION;
 
@@ -120,8 +121,8 @@ busread(struct shmif_sc *sc, void *dest, uint32_t off, size_t len)
 {
 	size_t chunk;
 
-	KASSERT(len < (BUSMEM_SIZE - IFMEM_DATA) && off <= BUSMEM_SIZE);
-	chunk = MIN(len, BUSMEM_SIZE - off);
+	KASSERT(len < (BUSMEM_DATASIZE) && off <= BUSMEM_DATASIZE);
+	chunk = MIN(len, BUSMEM_DATASIZE - off);
 	memcpy(dest, sc->sc_busmem->shm_data + off, chunk);
 	len -= chunk;
 
@@ -142,9 +143,9 @@ buswrite(struct shmif_sc *sc, uint32_t off, void *data, size_t len)
 {
 	size_t chunk;
 
-	KASSERT(len < (BUSMEM_SIZE - IFMEM_DATA) && off <= BUSMEM_SIZE);
+	KASSERT(len < (BUSMEM_DATASIZE) && off <= BUSMEM_DATASIZE);
 
-	chunk = MIN(len, BUSMEM_SIZE - off);
+	chunk = MIN(len, BUSMEM_DATASIZE - off);
 	memcpy(sc->sc_busmem->shm_data + off, data, chunk);
 	len -= chunk;
 
@@ -170,8 +171,8 @@ advance(uint32_t oldoff, uint32_t delta)
 	uint32_t newoff;
 
 	newoff = oldoff + delta;
-	if (newoff >= BUSMEM_SIZE)
-		newoff -= (BUSMEM_SIZE - IFMEM_DATA);
+	if (newoff >= BUSMEM_DATASIZE)
+		newoff -= (BUSMEM_DATASIZE);
 	return newoff;
 
 }
@@ -182,7 +183,7 @@ nextpktoff(struct shmif_sc *sc, uint32_t oldoff)
 	uint32_t oldlen;
 
 	busread(sc, &oldlen, oldoff, PKTLEN_SIZE);
-	KASSERT(oldlen < BUSMEM_SIZE - IFMEM_DATA);
+	KASSERT(oldlen < BUSMEM_DATASIZE);
 
 	return advance(oldoff, PKTLEN_SIZE + oldlen);
 }
