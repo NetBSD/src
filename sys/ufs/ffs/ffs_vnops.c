@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vnops.c,v 1.115 2010/07/28 11:03:48 hannken Exp $	*/
+/*	$NetBSD: ffs_vnops.c,v 1.116 2010/08/12 07:41:49 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.115 2010/07/28 11:03:48 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.116 2010/08/12 07:41:49 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -594,7 +594,8 @@ ffs_reclaim(void *v)
 		fstrans_done(mp);
 		return error;
 	}
-	if (ip->i_nlink <= 0 && (vp->v_mount->mnt_flag & MNT_RDONLY) == 0)
+	if (ip->i_nlink <= 0 && ip->i_omode != 0 &&
+	    (vp->v_mount->mnt_flag & MNT_RDONLY) == 0)
 		ffs_vfree(vp, ip->i_number, ip->i_omode);
 	UFS_WAPBL_END(mp);
 	if ((error = ufs_reclaim(vp)) != 0) {
