@@ -1,4 +1,4 @@
-/*	$NetBSD: dumpbus.c,v 1.5 2010/08/12 18:22:40 pooka Exp $	*/
+/*	$NetBSD: dumpbus.c,v 1.6 2010/08/12 21:41:47 pooka Exp $	*/
 
 /*
  * Little utility to convert shmif bus traffic to a pcap file
@@ -13,12 +13,14 @@
 #include <err.h>
 #include <fcntl.h>
 #include <pcap.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
 #include "shmifvar.h"
+#include "shmif_busops.c"
 
 static void
 usage(void)
@@ -28,16 +30,19 @@ usage(void)
 	exit(1);
 }
 
+#define BUFSIZE 64*1024
 int
 main(int argc, char *argv[])
 {
 	struct stat sb;
 	void *busmem;
 	const char *pcapfile = NULL;
-	uint8_t *curbus, *buslast;
+	uint32_t curbus, buslast;
 	struct shmif_mem *bmem;
 	int fd, pfd, i, ch;
 	uint32_t pktlen;
+	int bonus;
+	char *buf;
 
 	while ((ch = getopt(argc, argv, "p:")) != -1) {
 		switch (ch) {
@@ -54,6 +59,10 @@ main(int argc, char *argv[])
 
 	if (argc != 1)
 		usage();
+
+	buf = malloc(BUFSIZE);
+	if (buf == NULL)
+		err(1, "malloc");
 
 	fd = open(argv[0], O_RDONLY);
 	if (fd == -1)
@@ -72,13 +81,10 @@ main(int argc, char *argv[])
 	if (bmem->shm_version != SHMIF_VERSION)
 		errx(1, "bus vesrsion %d, program %d",
 		    bmem->shm_version, SHMIF_VERSION);
-	printf("bus version %d, lock: %d, generation: %d, lastoff: 0x%x\n",
-	    bmem->shm_version, bmem->shm_lock, bmem->shm_gen, bmem->shm_last);
-
-	if (bmem->shm_gen != 0) {
-		printf("this dumper can manage only generation 0, sorry\n");
-		exit(0);
-	}
+	printf("bus version %d, lock: %d, generation: %" PRIu64
+	    ", firstoff: 0x%04x, lastoff: 0x%04x\n",
+	    bmem->shm_version, bmem->shm_lock, bmem->shm_gen,
+	    bmem->shm_first, bmem->shm_last);
 
 	if (pcapfile) {
 		struct pcap_file_header phdr;
@@ -102,25 +108,41 @@ main(int argc, char *argv[])
 			err(1, "phdr write");
 	}
 	
-	curbus = bmem->shm_data;
-	buslast = bmem->shm_data + bmem->shm_last;
+	curbus = bmem->shm_first;
+	buslast = bmem->shm_last;
+	if (curbus == BUSMEM_DATASIZE)
+		curbus = 0;
+
+	bonus = 0;
+	if (buslast < curbus)
+		bonus = 1;
+
 	assert(sizeof(pktlen) == PKTLEN_SIZE);
 
 	i = 0;
-	while (curbus <= buslast) {
+	while (curbus <= buslast || bonus) {
 		struct pcap_pkthdr packhdr;
+		uint32_t oldoff;
+		bool wrap;
 
-		pktlen = *(uint32_t *)curbus;
-		curbus += sizeof(pktlen);
+		wrap = false;
+		oldoff = curbus;
+		curbus = shmif_busread(bmem,
+		    &pktlen, oldoff, PKTLEN_SIZE, &wrap);
+		if (wrap)
+			bonus = 0;
 
 		if (pktlen == 0)
 			continue;
 
-		printf("packet %d, offset 0x%x, length 0x%x\n",
-		    i++, curbus - bmem->shm_data, pktlen);
+		printf("packet %d, offset 0x%04x, length 0x%04x\n",
+		    i++, curbus, pktlen);
 
 		if (!pcapfile || pktlen == 0) {
-			curbus += pktlen;
+			curbus = shmif_busread(bmem,
+			    buf, curbus, pktlen, &wrap);
+			if (wrap)
+				bonus = 0;
 			continue;
 		}
 
@@ -129,9 +151,11 @@ main(int argc, char *argv[])
 
 		if (write(pfd, &packhdr, sizeof(packhdr)) != sizeof(packhdr))
 			err(1, "error writing packethdr");
-		if (write(pfd, curbus, pktlen) != pktlen)
+		curbus = shmif_busread(bmem, buf, curbus, pktlen, &wrap);
+		if (write(pfd, buf, pktlen) != pktlen)
 			err(1, "write packet");
-		curbus += pktlen;
+		if (wrap)
+			bonus = 0;
 	}
 
 	return 0;
