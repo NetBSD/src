@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.1 2009/02/28 15:28:46 pooka Exp $
+#	$NetBSD: Makefile,v 1.2 2010/08/12 21:41:47 pooka Exp $
 #
 
 LIB=	rumpnet_shmif
 
-SRCS=	if_shmem.c
+SRCS=	if_shmem.c shmif_busops.c
 
 CPPFLAGS+=	-I${.CURDIR}/../../../librump/rumpkern
 

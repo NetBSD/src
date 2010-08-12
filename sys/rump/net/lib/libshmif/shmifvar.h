@@ -1,4 +1,4 @@
-/*	$NetBSD: shmifvar.h,v 1.2 2010/08/12 18:17:23 pooka Exp $	*/
+/*	$NetBSD: shmifvar.h,v 1.3 2010/08/12 21:41:47 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -37,12 +37,13 @@ struct shmif_mem {
 	uint32_t shm_magic;
 	uint32_t shm_version;
 
-	uint32_t shm_gen;
+	uint64_t shm_gen;
+
 	uint32_t shm_first;
 	uint32_t shm_last;
 
 	uint32_t shm_lock;
-	uint32_t shm_spare[2];
+	uint32_t shm_spare[1];
 
 	uint8_t shm_data[0];
 };
@@ -50,5 +51,28 @@ struct shmif_mem {
 #define IFMEM_DATA	(offsetof(struct shmif_mem, shm_data))
 #define IFMEM_WAKEUP	(offsetof(struct shmif_mem, shm_version))
 #define PKTLEN_SIZE 	(sizeof(uint32_t))
+
+#define BUSMEM_SIZE (1024*1024)
+#define BUSMEM_DATASIZE (BUSMEM_SIZE - sizeof(struct shmif_mem))
+
+#if 0
+#ifdef _KERNEL
+#define DPRINTF(x) rumpuser_dprintf x
+#else
+#define DPRINTF(x) printf x
+#endif
+#else
+#define DPRINTF(x)
+#endif
+
+void		shmif_lockbus(struct shmif_mem *);
+void		shmif_unlockbus(struct shmif_mem *);
+uint32_t	shmif_advance(uint32_t, uint32_t);
+uint32_t	shmif_busread(struct shmif_mem *,
+			      void *, uint32_t, size_t, bool *);
+void		shmif_advancefirst(struct shmif_mem *, uint32_t, size_t);
+uint32_t	shmif_buswrite(struct shmif_mem *, uint32_t,
+			       void *, size_t, bool *);
+uint32_t	shmif_nextpktoff(struct shmif_mem *, uint32_t);
 
 #endif
