@@ -1,4 +1,4 @@
-/*	$NetBSD: t_vfsops.c,v 1.5 2010/08/12 09:34:16 pooka Exp $	*/
+/*	$NetBSD: t_vfsops.c,v 1.6 2010/08/12 09:42:53 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -156,7 +156,8 @@ tfhremove(const atf_tc_t *tc, const char *path)
 	RL(rump_sys_unlink(FNAME));
 
 	if (FSTYPE_MSDOS(tc) || FSTYPE_LFS(tc))
-		atf_tc_expect_fail("fhopen() for removed file succeeds (PR coming soon)");
+		atf_tc_expect_fail("fhopen() for removed file succeeds "
+		    "(PR kern/43745)");
 	ATF_REQUIRE_ERRNO(ESTALE, rump_sys_fhopen(fhp, fhsize, O_RDONLY) == -1);
 	atf_tc_expect_pass();
 
