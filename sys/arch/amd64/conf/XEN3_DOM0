@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOM0,v 1.56 2010/07/06 15:00:09 cherry Exp $
+# $NetBSD: XEN3_DOM0,v 1.57 2010/08/12 20:16:27 haad Exp $
 
 include 	"arch/amd64/conf/std.xen"
 
@@ -786,6 +786,7 @@ pseudo-device	fss			# file system snapshot device
 pseudo-device	md		1	# memory disk device (ramdisk)
 pseudo-device	vnd			# disk-like interface to files
 pseudo-device	putter			# for puffs and pud
+pseudo-device	dm			# device-mapper driver for LVM
 
 # network pseudo-devices
 pseudo-device	bpfilter		# Berkeley packet filter
