@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_pstate.c,v 1.16 2010/08/13 18:44:24 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_pstate.c,v 1.17 2010/08/13 19:48:25 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_pstate.c,v 1.16 2010/08/13 18:44:24 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_pstate.c,v 1.17 2010/08/13 19:48:25 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/evcnt.h>
@@ -362,9 +362,6 @@ acpicpu_pstate_pss_add(struct acpicpu_pstate *ps, ACPI_OBJECT *obj)
 
 		val[i] = elm[i].Integer.Value;
 	}
-
-	CTASSERT(sizeof(val) == sizeof(struct acpicpu_pstate) -
-	         offsetof(struct acpicpu_pstate, ps_freq));
 
 	p = &ps->ps_freq;
 

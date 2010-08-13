@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_tstate.c,v 1.2 2010/08/13 18:44:24 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_tstate.c,v 1.3 2010/08/13 19:48:25 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_tstate.c,v 1.2 2010/08/13 18:44:24 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_tstate.c,v 1.3 2010/08/13 19:48:25 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -388,9 +388,6 @@ acpicpu_tstate_tss_add(struct acpicpu_tstate *ts, ACPI_OBJECT *obj)
 
 		val[i] = elm[i].Integer.Value;
 	}
-
-	CTASSERT(sizeof(val) == sizeof(struct acpicpu_tstate) -
-	         offsetof(struct acpicpu_tstate, ts_percent));
 
 	p = &ts->ts_percent;
 
