@@ -58,7 +58,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: packet-print.c,v 1.35 2010/08/07 04:16:40 agc Exp $");
+__RCSID("$NetBSD: packet-print.c,v 1.36 2010/08/13 18:29:40 agc Exp $");
 #endif
 
 #include <string.h>
@@ -362,16 +362,16 @@ ptimestr(char *dest, size_t size, time_t t)
 
 /* print the sub key binding signature info */
 static int
-psubkeybinding(char *buf, size_t size, __ops_subsig_t *subsig, const __ops_pubkey_t *pubkey, const char *expired)
+psubkeybinding(char *buf, size_t size, const __ops_key_t *key, const char *expired)
 {
 	char	keyid[512];
 	char	t[32];
 
-	return snprintf(buf, size, "sub %d/%s %s %s %s\n",
-		numkeybits(pubkey),
-		__ops_show_pka(subsig->sig.info.key_alg),
-		strhexdump(keyid, subsig->sig.info.signer_id, OPS_KEY_ID_SIZE, ""),
-		ptimestr(t, sizeof(t), subsig->sig.info.birthtime),
+	return snprintf(buf, size, "encryption %d/%s %s %s %s\n",
+		numkeybits(&key->enckey),
+		__ops_show_pka(key->enckey.alg),
+		strhexdump(keyid, key->encid, OPS_KEY_ID_SIZE, ""),
+		ptimestr(t, sizeof(t), key->enckey.birthtime),
 		expired);
 }
 
@@ -452,7 +452,7 @@ __ops_sprint_keydata(__ops_io_t *io, const __ops_keyring_t *keyring,
 			trustkey = __ops_getkeybyid(io, keyring, key->subsigs[j].sig.info.signer_id, &from);
 			if (key->subsigs[j].sig.info.version == 4 &&
 					key->subsigs[j].sig.info.type == OPS_SIG_SUBKEY) {
-				psubkeybinding(&uidbuf[n], sizeof(uidbuf) - n, &key->subsigs[j], pubkey, expired);
+				psubkeybinding(&uidbuf[n], sizeof(uidbuf) - n, key, expired);
 			} else {
 				n += snprintf(&uidbuf[n], sizeof(uidbuf) - n,
 					"sig        %s  %s  %s\n",
@@ -466,10 +466,10 @@ __ops_sprint_keydata(__ops_io_t *io, const __ops_keyring_t *keyring,
 		header,
 		numkeybits(pubkey),
 		__ops_show_pka(pubkey->alg),
-		strhexdump(keyid, key->key_id, OPS_KEY_ID_SIZE, ""),
+		strhexdump(keyid, key->sigid, OPS_KEY_ID_SIZE, ""),
 		ptimestr(t, sizeof(t), pubkey->birthtime),
 		expired,
-		strhexdump(fp, key->fingerprint.fingerprint, key->fingerprint.length, " "),
+		strhexdump(fp, key->sigfingerprint.fingerprint, key->sigfingerprint.length, " "),
 		uidbuf);
 }
 
@@ -496,9 +496,9 @@ __ops_sprint_mj(__ops_io_t *io, const __ops_keyring_t *keyring,
 	mj_append_field(keyjson, "header", "string", header);
 	mj_append_field(keyjson, "key bits", "integer", (int64_t) numkeybits(pubkey));
 	mj_append_field(keyjson, "pka", "string", __ops_show_pka(pubkey->alg));
-	mj_append_field(keyjson, "key id", "string", strhexdump(keyid, key->key_id, OPS_KEY_ID_SIZE, ""));
+	mj_append_field(keyjson, "key id", "string", strhexdump(keyid, key->sigid, OPS_KEY_ID_SIZE, ""));
 	mj_append_field(keyjson, "fingerprint", "string",
-		strhexdump(fp, key->fingerprint.fingerprint, key->fingerprint.length, " "));
+		strhexdump(fp, key->sigfingerprint.fingerprint, key->sigfingerprint.length, " "));
 	mj_append_field(keyjson, "birthtime", "integer", pubkey->birthtime);
 	mj_append_field(keyjson, "duration", "integer", pubkey->duration);
 	for (i = 0; i < key->uidc; i++) {
@@ -528,13 +528,13 @@ __ops_sprint_mj(__ops_io_t *io, const __ops_keyring_t *keyring,
 			mj_create(&sub_obj, "array");
 			if (key->subsigs[j].sig.info.version == 4 &&
 					key->subsigs[j].sig.info.type == OPS_SIG_SUBKEY) {
-				mj_append(&sub_obj, "integer", (int64_t)numkeybits(pubkey));
+				mj_append(&sub_obj, "integer", (int64_t)numkeybits(&key->enckey));
 				mj_append(&sub_obj, "string",
-					(const char *)__ops_show_pka(key->subsigs[j].sig.info.key_alg));
+					(const char *)__ops_show_pka(key->enckey.alg));
 				mj_append(&sub_obj, "string",
-					strhexdump(keyid, key->subsigs[j].sig.info.signer_id, OPS_KEY_ID_SIZE, ""));
-				mj_append(&sub_obj, "integer", (int64_t)key->subsigs[j].sig.info.birthtime);
-				mj_append_field(keyjson, "sub", "array", &sub_obj);
+					strhexdump(keyid, key->encid, OPS_KEY_ID_SIZE, ""));
+				mj_append(&sub_obj, "integer", (int64_t)key->enckey.birthtime);
+				mj_append_field(keyjson, "encryption", "array", &sub_obj);
 				mj_delete(&sub_obj);
 			} else {
 				mj_append(&sub_obj, "string",
@@ -615,7 +615,7 @@ __ops_hkp_sprint_keydata(__ops_io_t *io, const __ops_keyring_t *keyring,
 		}
 	}
 	return __ops_asprintf(buf, "pub:%s:%d:%d:%lld:%lld\n%s",
-		strhexdump(fp, key->fingerprint.fingerprint, OPS_FINGERPRINT_SIZE, ""),
+		strhexdump(fp, key->sigfingerprint.fingerprint, OPS_FINGERPRINT_SIZE, ""),
 		pubkey->alg,
 		numkeybits(pubkey),
 		(long long)pubkey->birthtime,
@@ -689,7 +689,7 @@ __ops_sprint_pubkey(const __ops_key_t *key, char *out, size_t outsize)
 	int	cc;
 
 	cc = snprintf(out, outsize, "key:%s:%d:%lld:%lld:%d:\n",
-		strhexdump(fp, key->fingerprint.fingerprint, OPS_FINGERPRINT_SIZE, ""),
+		strhexdump(fp, key->sigfingerprint.fingerprint, OPS_FINGERPRINT_SIZE, ""),
 		key->key.pubkey.version,
 		(long long)key->key.pubkey.birthtime,
 		(long long)key->key.pubkey.days_valid,
