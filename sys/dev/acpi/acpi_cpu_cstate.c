@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_cstate.c,v 1.23 2010/08/11 16:41:19 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_cstate.c,v 1.24 2010/08/13 16:21:50 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_cstate.c,v 1.23 2010/08/11 16:41:19 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_cstate.c,v 1.24 2010/08/13 16:21:50 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -94,7 +94,6 @@ acpicpu_cstate_attach(device_t self)
 	switch (rv) {
 
 	case AE_OK:
-		sc->sc_flags |= ACPICPU_FLAG_C_CST;
 		acpicpu_cstate_cst_bios();
 		break;
 
@@ -146,9 +145,8 @@ acpicpu_cstate_attach_print(struct acpicpu_softc *sc)
 		}
 
 		aprint_debug_dev(sc->sc_dev, "C%d: %3s, "
-		    "lat %3u us, pow %5u mW, addr 0x%06x, flags 0x%02x\n",
-		    i, str, cs->cs_latency, cs->cs_power,
-		    (uint32_t)cs->cs_addr, cs->cs_flags);
+		    "lat %3u us, pow %5u mW, flags 0x%02x\n", i, str,
+		    cs->cs_latency, cs->cs_power, cs->cs_flags);
 	}
 
 	once = true;
@@ -249,7 +247,7 @@ acpicpu_cstate_resume(device_t self)
 	static const ACPI_OSD_EXEC_CALLBACK func = acpicpu_cstate_callback;
 	struct acpicpu_softc *sc = device_private(self);
 
-	if ((sc->sc_flags & ACPICPU_FLAG_C_CST) != 0)
+	if ((sc->sc_flags & ACPICPU_FLAG_C_FADT) == 0)
 		(void)AcpiOsExecute(OSL_NOTIFY_HANDLER, func, sc->sc_dev);
 
 	return true;
@@ -263,10 +261,8 @@ acpicpu_cstate_callback(void *aux)
 
 	sc = device_private(self);
 
-	if ((sc->sc_flags & ACPICPU_FLAG_C_FADT) != 0) {
-		KASSERT((sc->sc_flags & ACPICPU_FLAG_C_CST) == 0);
+	if ((sc->sc_flags & ACPICPU_FLAG_C_FADT) != 0)
 		return;
-	}
 
 	mutex_enter(&sc->sc_mtx);
 	(void)acpicpu_cstate_cst(sc);
@@ -556,9 +552,14 @@ acpicpu_cstate_fadt(struct acpicpu_softc *sc)
 	if ((AcpiGbl_FADT.Flags & ACPI_FADT_C1_SUPPORTED) != 0)
 		cs[ACPI_STATE_C1].cs_method = ACPICPU_C_STATE_HALT;
 
-	if ((acpicpu_md_cpus_running() > 1) &&
-	    (AcpiGbl_FADT.Flags & ACPI_FADT_C2_MP_SUPPORTED) == 0)
+	if (sc->sc_object.ao_pblkaddr == 0)
 		return;
+
+	if (acpicpu_md_cpus_running() > 1) {
+
+		if ((AcpiGbl_FADT.Flags & ACPI_FADT_C2_MP_SUPPORTED) == 0)
+			return;
+	}
 
 	cs[ACPI_STATE_C2].cs_method = ACPICPU_C_STATE_SYSIO;
 	cs[ACPI_STATE_C3].cs_method = ACPICPU_C_STATE_SYSIO;
