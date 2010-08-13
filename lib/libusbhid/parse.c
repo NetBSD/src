@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.6 2010/01/05 17:57:06 jakllsch Exp $	*/
+/*	$NetBSD: parse.c,v 1.7 2010/08/13 19:56:34 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 1999, 2001 Lennart Augustsson <augustss@NetBSD.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: parse.c,v 1.6 2010/01/05 17:57:06 jakllsch Exp $");
+__RCSID("$NetBSD: parse.c,v 1.7 2010/08/13 19:56:34 jakllsch Exp $");
 
 #include <assert.h>
 #include <stdlib.h>
@@ -50,6 +50,7 @@ struct hid_data {
 	int nusage;
 	int minset;
 	int logminsize;
+	int phyminsize;
 	int multi;
 	int multimax;
 	int kindset;
@@ -173,6 +174,14 @@ hid_get_item_raw(hid_data_t s, hid_item_t *h)
 				c->logical_minimum =(int8_t)c->logical_minimum;
 			else if (s->logminsize == 2)
 				c->logical_minimum =(int16_t)c->logical_minimum;
+		}
+		if (c->physical_minimum >= c->physical_maximum) {
+			if (s->phyminsize == 1)
+				c->physical_minimum =
+					(int8_t)c->physical_minimum;
+			else if (s->phyminsize == 2)
+				c->physical_minimum =
+					(int16_t)c->physical_minimum;
 		}
 		if (s->multi < s->multimax) {
 			c->usage = s->usages[min(s->multi, s->nusage-1)];
@@ -334,12 +343,16 @@ hid_get_item_raw(hid_data_t s, hid_item_t *h)
 				break;
 			case 3:
 				c->physical_minimum = dval;
+				s->phyminsize = bSize;
 				break;
 			case 4:
 				c->physical_maximum = dval;
 				break;
 			case 5:
-				c->unit_exponent = dval;
+				if ( dval > 7 && dval < 0x10)
+					c->unit_exponent = -16 + dval;
+				else
+					c->unit_exponent = dval;
 				break;
 			case 6:
 				c->unit = dval;
