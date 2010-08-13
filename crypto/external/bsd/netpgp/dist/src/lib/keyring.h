@@ -143,7 +143,7 @@ int __ops_list_packets(__ops_io_t *,
 
 char *__ops_export_key(__ops_io_t *, const __ops_key_t *, uint8_t *);
 
-int __ops_add_to_pubring(__ops_keyring_t *, const __ops_pubkey_t *);
+int __ops_add_to_pubring(__ops_keyring_t *, const __ops_pubkey_t *, __ops_content_enum tag);
 int __ops_add_to_secring(__ops_keyring_t *, const __ops_seckey_t *);
 
 int __ops_append_keyring(__ops_keyring_t *, __ops_keyring_t *);

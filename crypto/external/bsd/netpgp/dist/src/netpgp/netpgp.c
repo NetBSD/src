@@ -1,4 +1,4 @@
-/* $NetBSD: netpgp.c,v 1.12 2010/07/01 04:27:21 agc Exp $ */
+/* $NetBSD: netpgp.c,v 1.13 2010/08/13 18:29:41 agc Exp $ */
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -35,6 +35,7 @@
 #include <sys/stat.h>
 
 #include <getopt.h>
+#include <regex.h>
 #include <netpgp.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -69,7 +70,7 @@ static const char *usage =
 
 enum optdefs {
 	/* commands */
-	ENCRYPT,
+	ENCRYPT = 260,
 	DECRYPT,
 	SIGN,
 	CLEARSIGN,
@@ -333,6 +334,162 @@ netpgp_cmd(netpgp_t *netpgp, prog_t *p, char *f)
 	}
 }
 
+/* set an option */
+static int
+setoption(netpgp_t *netpgp, prog_t *p, int val, char *arg, int *homeset)
+{
+	switch (val) {
+	case COREDUMPS:
+		netpgp_setvar(netpgp, "coredumps", "allowed");
+		break;
+	case ENCRYPT:
+	case SIGN:
+	case CLEARSIGN:
+		/* for encryption and signing, we need a userid */
+		netpgp_setvar(netpgp, "need userid", "1");
+		p->cmd = val;
+		break;
+	case DECRYPT:
+	case VERIFY:
+	case VERIFY_CAT:
+	case LIST_PACKETS:
+	case SHOW_KEYS:
+	case HELP_CMD:
+		p->cmd = val;
+		break;
+	case VERSION_CMD:
+		printf(
+"%s\nAll bug reports, praise and chocolate, please, to:\n%s\n",
+			netpgp_get_info("version"),
+			netpgp_get_info("maintainer"));
+		exit(EXIT_SUCCESS);
+		/* options */
+	case SSHKEYS:
+		netpgp_setvar(netpgp, "ssh keys", "1");
+		break;
+	case KEYRING:
+		if (arg == NULL) {
+			(void) fprintf(stderr,
+				"No keyring argument provided\n");
+			exit(EXIT_ERROR);
+		}
+		snprintf(p->keyring, sizeof(p->keyring), "%s", arg);
+		break;
+	case USERID:
+		if (arg == NULL) {
+			(void) fprintf(stderr,
+				"No userid argument provided\n");
+			exit(EXIT_ERROR);
+		}
+		netpgp_setvar(netpgp, "userid", arg);
+		break;
+	case ARMOUR:
+		p->armour = 1;
+		break;
+	case DETACHED:
+		p->detached = 1;
+		break;
+	case VERBOSE:
+		netpgp_incvar(netpgp, "verbose", 1);
+		break;
+	case HOMEDIR:
+		if (arg == NULL) {
+			(void) fprintf(stderr,
+			"No home directory argument provided\n");
+			exit(EXIT_ERROR);
+		}
+		netpgp_set_homedir(netpgp, arg, NULL, 0);
+		*homeset = 1;
+		break;
+	case HASH_ALG:
+		if (arg == NULL) {
+			(void) fprintf(stderr,
+			"No hash algorithm argument provided\n");
+			exit(EXIT_ERROR);
+		}
+		netpgp_setvar(netpgp, "hash", arg);
+		break;
+	case PASSWDFD:
+		if (arg == NULL) {
+			(void) fprintf(stderr,
+			"No pass-fd argument provided\n");
+			exit(EXIT_ERROR);
+		}
+		netpgp_setvar(netpgp, "pass-fd", arg);
+		break;
+	case OUTPUT:
+		if (arg == NULL) {
+			(void) fprintf(stderr,
+			"No output filename argument provided\n");
+			exit(EXIT_ERROR);
+		}
+		if (p->output) {
+			(void) free(p->output);
+		}
+		p->output = strdup(arg);
+		break;
+	case RESULTS:
+		if (arg == NULL) {
+			(void) fprintf(stderr,
+			"No output filename argument provided\n");
+			exit(EXIT_ERROR);
+		}
+		netpgp_setvar(netpgp, "results", arg);
+		break;
+	case SSHKEYFILE:
+		netpgp_setvar(netpgp, "sshkeyfile", arg);
+		break;
+	case MAX_MEM_ALLOC:
+		netpgp_setvar(netpgp, "max mem alloc", arg);
+		break;
+	case DURATION:
+		netpgp_setvar(netpgp, "duration", arg);
+		break;
+	case BIRTHTIME:
+		netpgp_setvar(netpgp, "birthtime", arg);
+		break;
+	case OPS_DEBUG:
+		netpgp_set_debug(arg);
+		break;
+	default:
+		p->cmd = HELP_CMD;
+		break;
+	}
+	return 1;
+}
+
+/* we have -o option=value -- parse, and process */
+static int
+parse_option(netpgp_t *netpgp, prog_t *p, const char *s, int *homeset)
+{
+	static regex_t	 opt;
+	struct option	*op;
+	static int	 compiled;
+	regmatch_t	 matches[10];
+	char		 option[128];
+	char		 value[128];
+
+	if (!compiled) {
+		compiled = 1;
+		(void) regcomp(&opt, "([^=]{1,128})(=(.*))?", REG_EXTENDED);
+	}
+	if (regexec(&opt, s, 10, matches, 0) == 0) {
+		(void) snprintf(option, sizeof(option), "%.*s",
+			(int)(matches[1].rm_eo - matches[1].rm_so), &s[matches[1].rm_so]);
+		if (matches[2].rm_so > 0) {
+			(void) snprintf(value, sizeof(value), "%.*s",
+				(int)(matches[3].rm_eo - matches[3].rm_so), &s[matches[3].rm_so]);
+		} else {
+			value[0] = 0x0;
+		}
+		for (op = options ; op->name ; op++) {
+			if (strcmp(op->name, option) == 0) {
+				return setoption(netpgp, p, op->val, value, homeset);
+			}
+		}
+	}
+	return 0;
+}
 
 int
 main(int argc, char **argv)
@@ -360,124 +517,45 @@ main(int argc, char **argv)
 	netpgp_setvar(&netpgp, "max mem alloc", "4194304");
 	homeset = 0;
 	optindex = 0;
-	while ((ch = getopt_long(argc, argv, "", options, &optindex)) != -1) {
-		switch (options[optindex].val) {
-		case COREDUMPS:
-			netpgp_setvar(&netpgp, "coredumps", "allowed");
-			p.cmd = options[optindex].val;
-			break;
-		case ENCRYPT:
-		case SIGN:
-		case CLEARSIGN:
-			/* for encryption and signing, we need a userid */
-			netpgp_setvar(&netpgp, "need userid", "1");
-			p.cmd = options[optindex].val;
-			break;
-		case DECRYPT:
-		case VERIFY:
-		case VERIFY_CAT:
-		case LIST_PACKETS:
-		case SHOW_KEYS:
-		case HELP_CMD:
-			p.cmd = options[optindex].val;
-			break;
-		case VERSION_CMD:
-			printf(
-"%s\nAll bug reports, praise and chocolate, please, to:\n%s\n",
-				netpgp_get_info("version"),
-				netpgp_get_info("maintainer"));
-			exit(EXIT_SUCCESS);
-			/* options */
-		case SSHKEYS:
-			netpgp_setvar(&netpgp, "ssh keys", "1");
-			break;
-		case KEYRING:
-			if (optarg == NULL) {
-				(void) fprintf(stderr,
-					"No keyring argument provided\n");
-				exit(EXIT_ERROR);
+	while ((ch = getopt_long(argc, argv, "Vdeo:sv", options, &optindex)) != -1) {
+		if (ch >= ENCRYPT) {
+			/* getopt_long returns 0 for long options */
+			if (!setoption(&netpgp, &p, options[optindex].val, optarg, &homeset)) {
+				(void) fprintf(stderr, "Bad option\n");
 			}
-			snprintf(p.keyring, sizeof(p.keyring), "%s", optarg);
-			break;
-		case USERID:
-			if (optarg == NULL) {
-				(void) fprintf(stderr,
-					"No userid argument provided\n");
-				exit(EXIT_ERROR);
+		} else {
+			switch (ch) {
+			case 'V':
+				printf(
+	"%s\nAll bug reports, praise and chocolate, please, to:\n%s\n",
+					netpgp_get_info("version"),
+					netpgp_get_info("maintainer"));
+				exit(EXIT_SUCCESS);
+			case 'd':
+				p.cmd = DECRYPT;
+				break;
+			case 'e':
+				/* for encryption and signing, we need a userid */
+				netpgp_setvar(&netpgp, "need userid", "1");
+				p.cmd = ENCRYPT;
+				break;
+			case 'o':
+				if (!parse_option(&netpgp, &p, optarg, &homeset)) {
+					(void) fprintf(stderr, "Bad option\n");
+				}
+				break;
+			case 's':
+				/* for encryption and signing, we need a userid */
+				netpgp_setvar(&netpgp, "need userid", "1");
+				p.cmd = SIGN;
+				break;
+			case 'v':
+				p.cmd = VERIFY;
+				break;
+			default:
+				p.cmd = HELP_CMD;
+				break;
 			}
-			netpgp_setvar(&netpgp, "userid", optarg);
-			break;
-		case ARMOUR:
-			p.armour = 1;
-			break;
-		case DETACHED:
-			p.detached = 1;
-			break;
-		case VERBOSE:
-			netpgp_incvar(&netpgp, "verbose", 1);
-			break;
-		case HOMEDIR:
-			if (optarg == NULL) {
-				(void) fprintf(stderr,
-				"No home directory argument provided\n");
-				exit(EXIT_ERROR);
-			}
-			netpgp_set_homedir(&netpgp, optarg, NULL, 0);
-			homeset = 1;
-			break;
-		case HASH_ALG:
-			if (optarg == NULL) {
-				(void) fprintf(stderr,
-				"No hash algorithm argument provided\n");
-				exit(EXIT_ERROR);
-			}
-			netpgp_setvar(&netpgp, "hash", optarg);
-			break;
-		case PASSWDFD:
-			if (optarg == NULL) {
-				(void) fprintf(stderr,
-				"No pass-fd argument provided\n");
-				exit(EXIT_ERROR);
-			}
-			netpgp_setvar(&netpgp, "pass-fd", optarg);
-			break;
-		case OUTPUT:
-			if (optarg == NULL) {
-				(void) fprintf(stderr,
-				"No output filename argument provided\n");
-				exit(EXIT_ERROR);
-			}
-			if (p.output) {
-				(void) free(p.output);
-			}
-			p.output = strdup(optarg);
-			break;
-		case RESULTS:
-			if (optarg == NULL) {
-				(void) fprintf(stderr,
-				"No output filename argument provided\n");
-				exit(EXIT_ERROR);
-			}
-			netpgp_setvar(&netpgp, "results", optarg);
-			break;
-		case SSHKEYFILE:
-			netpgp_setvar(&netpgp, "sshkeyfile", optarg);
-			break;
-		case MAX_MEM_ALLOC:
-			netpgp_setvar(&netpgp, "max mem alloc", optarg);
-			break;
-		case DURATION:
-			netpgp_setvar(&netpgp, "duration", optarg);
-			break;
-		case BIRTHTIME:
-			netpgp_setvar(&netpgp, "birthtime", optarg);
-			break;
-		case OPS_DEBUG:
-			netpgp_set_debug(optarg);
-			break;
-		default:
-			p.cmd = HELP_CMD;
-			break;
 		}
 	}
 	if (!homeset) {

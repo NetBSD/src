@@ -54,7 +54,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: crypto.c,v 1.25 2010/07/09 05:35:34 agc Exp $");
+__RCSID("$NetBSD: crypto.c,v 1.26 2010/08/13 18:29:40 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -264,7 +264,7 @@ unsigned
 __ops_encrypt_file(__ops_io_t *io,
 			const char *infile,
 			const char *outfile,
-			const __ops_key_t *pubkey,
+			const __ops_key_t *key,
 			const unsigned use_armour,
 			const unsigned allow_overwrite)
 {
@@ -289,7 +289,7 @@ __ops_encrypt_file(__ops_io_t *io,
 	}
 
 	/* Push the encrypted writer */
-	if (!__ops_push_enc_se_ip(output, pubkey)) {
+	if (!__ops_push_enc_se_ip(output, key)) {
 		__ops_memory_free(inmem);
 		return 0;
 	}

@@ -33,6 +33,7 @@
 #include <sys/stat.h>
 
 #include <getopt.h>
+#include <regex.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -70,7 +71,7 @@ static const char *usage =
 
 enum optdefs {
 	/* commands */
-	LIST_KEYS = 1,
+	LIST_KEYS = 260,
 	LIST_SIGS,
 	FIND_KEY,
 	EXPORT_KEY,
@@ -276,9 +277,9 @@ formatobj(FILE *fp, mj_t *obj, const int psigs)
 			pobj(fp, &sub->value.v[0], (psigs) ? 4 : 14); /* human name */
 			pobj(fp, &sub->value.v[1], 1); /* any revocation */
 			p(fp, "\n", NULL);
-		} else if (strcmp(obj->value.v[i].value.s, "sub") == 0) {
+		} else if (strcmp(obj->value.v[i].value.s, "encryption") == 0) {
 			sub = &obj->value.v[i + 1];
-			p(fp, "sub", NULL);
+			p(fp, "encryption", NULL);
 			pobj(fp, &sub->value.v[0], 1);	/* size */
 			p(fp, "/", NULL);
 			pobj(fp, &sub->value.v[1], 0); /* alg */
@@ -381,6 +382,142 @@ netpgp_cmd(netpgp_t *netpgp, prog_t *p, char *f)
 	}
 }
 
+/* set the option */
+static int
+setoption(netpgp_t *netpgp, prog_t *p, int val, char *arg, int *homeset)
+{
+	switch (val) {
+	case COREDUMPS:
+		netpgp_setvar(netpgp, "coredumps", "allowed");
+		break;
+	case GENERATE_KEY:
+		netpgp_setvar(netpgp, "userid checks", "skip");
+		p->cmd = val;
+		break;
+	case LIST_KEYS:
+	case LIST_SIGS:
+	case FIND_KEY:
+	case EXPORT_KEY:
+	case IMPORT_KEY:
+	case GET_KEY:
+	case HELP_CMD:
+		p->cmd = val;
+		break;
+	case VERSION_CMD:
+		printf(
+"%s\nAll bug reports, praise and chocolate, please, to:\n%s\n",
+			netpgp_get_info("version"),
+			netpgp_get_info("maintainer"));
+		exit(EXIT_SUCCESS);
+		/* options */
+	case SSHKEYS:
+		netpgp_setvar(netpgp, "ssh keys", "1");
+		break;
+	case KEYRING:
+		if (arg == NULL) {
+			(void) fprintf(stderr,
+				"No keyring argument provided\n");
+			exit(EXIT_ERROR);
+		}
+		snprintf(p->keyring, sizeof(p->keyring), "%s", arg);
+		break;
+	case USERID:
+		if (optarg == NULL) {
+			(void) fprintf(stderr,
+				"no userid argument provided\n");
+			exit(EXIT_ERROR);
+		}
+		netpgp_setvar(netpgp, "userid", arg);
+		break;
+	case VERBOSE:
+		netpgp_incvar(netpgp, "verbose", 1);
+		break;
+	case HOMEDIR:
+		if (arg == NULL) {
+			(void) fprintf(stderr,
+			"no home directory argument provided\n");
+			exit(EXIT_ERROR);
+		}
+		netpgp_set_homedir(netpgp, arg, NULL, 0);
+		*homeset = 1;
+		break;
+	case NUMBITS:
+		if (arg == NULL) {
+			(void) fprintf(stderr,
+			"no number of bits argument provided\n");
+			exit(EXIT_ERROR);
+		}
+		p->numbits = atoi(arg);
+		break;
+	case HASH_ALG:
+		if (arg == NULL) {
+			(void) fprintf(stderr,
+			"No hash algorithm argument provided\n");
+			exit(EXIT_ERROR);
+		}
+		netpgp_setvar(netpgp, "hash", arg);
+		break;
+	case PASSWDFD:
+		if (arg == NULL) {
+			(void) fprintf(stderr,
+			"no pass-fd argument provided\n");
+			exit(EXIT_ERROR);
+		}
+		netpgp_setvar(netpgp, "pass-fd", arg);
+		break;
+	case RESULTS:
+		if (arg == NULL) {
+			(void) fprintf(stderr,
+			"No output filename argument provided\n");
+			exit(EXIT_ERROR);
+		}
+		netpgp_setvar(netpgp, "res", arg);
+		break;
+	case SSHKEYFILE:
+		netpgp_setvar(netpgp, "sshkeyfile", arg);
+		break;
+	case OPS_DEBUG:
+		netpgp_set_debug(arg);
+		break;
+	default:
+		p->cmd = HELP_CMD;
+		break;
+	}
+}
+
+/* we have -o option=value -- parse, and process */
+static int
+parse_option(netpgp_t *netpgp, prog_t *p, const char *s, int *homeset)
+{
+	static regex_t	 opt;
+	struct option	*op;
+	static int	 compiled;
+	regmatch_t	 matches[10];
+	char		 option[128];
+	char		 value[128];
+
+	if (!compiled) {
+		compiled = 1;
+		(void) regcomp(&opt, "([^=]{1,128})(=(.*))?", REG_EXTENDED);
+	}
+	if (regexec(&opt, s, 10, matches, 0) == 0) {
+		(void) snprintf(option, sizeof(option), "%.*s",
+			(int)(matches[1].rm_eo - matches[1].rm_so), &s[matches[1].rm_so]);
+		if (matches[2].rm_so > 0) {
+			(void) snprintf(value, sizeof(value), "%.*s",
+				(int)(matches[3].rm_eo - matches[3].rm_so), &s[matches[3].rm_so]);
+		} else {
+			value[0] = 0x0;
+		}
+		for (op = options ; op->name ; op++) {
+			if (strcmp(op->name, option) == 0) {
+				return setoption(netpgp, p, op->val, value, homeset);
+			}
+		}
+	}
+	return 0;
+}
+
 int
 main(int argc, char **argv)
 {
@@ -407,108 +544,38 @@ main(int argc, char **argv)
 	netpgp_setvar(&netpgp, "res", "<stdout>");
 	netpgp_setvar(&netpgp, "hash", DEFAULT_HASH_ALG);
 	optindex = 0;
-	while ((ch = getopt_long(argc, argv, "", options, &optindex)) != -1) {
-		switch (options[optindex].val) {
-		case COREDUMPS:
-			netpgp_setvar(&netpgp, "coredumps", "allowed");
-			p.cmd = options[optindex].val;
-			break;
-		case GENERATE_KEY:
-			netpgp_setvar(&netpgp, "userid checks", "skip");
-			p.cmd = options[optindex].val;
-			break;
-		case LIST_KEYS:
-		case LIST_SIGS:
-		case FIND_KEY:
-		case EXPORT_KEY:
-		case IMPORT_KEY:
-		case GET_KEY:
-		case HELP_CMD:
-			p.cmd = options[optindex].val;
-			break;
-		case VERSION_CMD:
-			printf(
-"%s\nAll bug reports, praise and chocolate, please, to:\n%s\n",
-				netpgp_get_info("version"),
-				netpgp_get_info("maintainer"));
-			exit(EXIT_SUCCESS);
-			/* options */
-		case SSHKEYS:
-			netpgp_setvar(&netpgp, "ssh keys", "1");
-			break;
-		case KEYRING:
-			if (optarg == NULL) {
-				(void) fprintf(stderr,
-					"%s: No keyring argument provided\n",
-					*argv);
-				exit(EXIT_ERROR);
+	while ((ch = getopt_long(argc, argv, "Vglo:s", options, &optindex)) != -1) {
+		if (ch >= LIST_KEYS) {
+			/* getopt_long returns 0 for long options */
+			if (!setoption(&netpgp, &p, options[optindex].val, optarg, &homeset)) {
+				(void) fprintf(stderr, "Bad option\n");
 			}
-			snprintf(p.keyring, sizeof(p.keyring), "%s", optarg);
-			break;
-		case USERID:
-			if (optarg == NULL) {
-				(void) fprintf(stderr,
-					"%s: no userid argument provided\n",
-					*argv);
-				exit(EXIT_ERROR);
+		} else {
+			switch (ch) {
+			case 'V':
+				printf(
+	"%s\nAll bug reports, praise and chocolate, please, to:\n%s\n",
+					netpgp_get_info("version"),
+					netpgp_get_info("maintainer"));
+				exit(EXIT_SUCCESS);
+			case 'g':
+				p.cmd = GENERATE_KEY;
+				break;
+			case 'l':
+				p.cmd = LIST_KEYS;
+				break;
+			case 'o':
+				if (!parse_option(&netpgp, &p, optarg, &homeset)) {
+					(void) fprintf(stderr, "Bad option\n");
+				}
+				break;
+			case 's':
+				p.cmd = LIST_SIGS;
+				break;
+			default:
+				p.cmd = HELP_CMD;
+				break;
 			}
-			netpgp_setvar(&netpgp, "userid", optarg);
-			break;
-		case VERBOSE:
-			netpgp_incvar(&netpgp, "verbose", 1);
-			break;
-		case HOMEDIR:
-			if (optarg == NULL) {
-				(void) fprintf(stderr,
-				"%s: no home directory argument provided\n",
-				*argv);
-				exit(EXIT_ERROR);
-			}
-			netpgp_set_homedir(&netpgp, optarg, NULL, 0);
-			homeset = 1;
-			break;
-		case NUMBITS:
-			if (optarg == NULL) {
-				(void) fprintf(stderr,
-				"%s: no number of bits argument provided\n",
-				*argv);
-				exit(EXIT_ERROR);
-			}
-			p.numbits = atoi(optarg);
-			break;
-		case HASH_ALG:
-			if (optarg == NULL) {
-				(void) fprintf(stderr,
-				"No hash algorithm argument provided\n");
-				exit(EXIT_ERROR);
-			}
-			netpgp_setvar(&netpgp, "hash", optarg);
-			break;
-		case PASSWDFD:
-			if (optarg == NULL) {
-				(void) fprintf(stderr,
-				"%s: no pass-fd argument provided\n", *argv);
-				exit(EXIT_ERROR);
-			}
-			netpgp_setvar(&netpgp, "pass-fd", optarg);
-			break;
-		case RESULTS:
-			if (optarg == NULL) {
-				(void) fprintf(stderr,
-				"No output filename argument provided\n");
-				exit(EXIT_ERROR);
-			}
-			netpgp_setvar(&netpgp, "res", optarg);
-			break;
-		case SSHKEYFILE:
-			netpgp_setvar(&netpgp, "sshkeyfile", optarg);
-			break;
-		case OPS_DEBUG:
-			netpgp_set_debug(optarg);
-			break;
-		default:
-			p.cmd = HELP_CMD;
-			break;
 		}
 	}
 	if (!homeset) {

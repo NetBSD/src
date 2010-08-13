@@ -949,13 +949,17 @@ struct __ops_key_t {
 	DYNARRAY(__ops_subpacket_t, packet);	/* array of raw subpackets */
 	DYNARRAY(__ops_subsig_t, subsig);	/* array of signature subkeys */
 	DYNARRAY(__ops_revoke_t, revoke);	/* array of signature revocations */
-	uint8_t			key_id[OPS_KEY_ID_SIZE];
-	__ops_fingerprint_t	fingerprint;	/* pgp fingerprint */
 	__ops_content_enum	type;		/* type of key */
 	__ops_keydata_key_t	key;		/* pubkey/seckey data */
+	__ops_pubkey_t		sigkey;		/* signature key */
+	uint8_t			sigid[OPS_KEY_ID_SIZE];
+	__ops_fingerprint_t	sigfingerprint;	/* pgp signature fingerprint */
+	__ops_pubkey_t		enckey;		/* encryption key */
+	uint8_t			encid[OPS_KEY_ID_SIZE];
+	__ops_fingerprint_t	encfingerprint;	/* pgp encryption id fingerprint */
 	uint32_t		uid0;		/* primary uid index in uids array */
-	uint8_t			revoked;
-	__ops_revoke_t		revocation;
+	uint8_t			revoked;	/* key has been revoked */
+	__ops_revoke_t		revocation;	/* revocation reason */
 };
 
 #define MDC_PKT_TAG	0xd3

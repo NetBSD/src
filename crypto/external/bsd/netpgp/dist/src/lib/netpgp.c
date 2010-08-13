@@ -34,7 +34,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: netpgp.c,v 1.66 2010/08/07 04:16:40 agc Exp $");
+__RCSID("$NetBSD: netpgp.c,v 1.67 2010/08/13 18:29:40 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -319,7 +319,7 @@ set_first_pubring(__ops_keyring_t *pubring, char *id, size_t len, int last)
 	int	 n;
 
 	(void) memset(id, 0x0, len);
-	src = pubring->keys[(last) ? pubring->keyc - 1 : 0].key_id;
+	src = pubring->keys[(last) ? pubring->keyc - 1 : 0].sigid;
 	for (i = 0, n = 0 ; i < OPS_KEY_ID_SIZE ; i += 2) {
 		n += snprintf(&id[n], len - n, "%02x%02x", src[i], src[i + 1]);
 	}
@@ -739,7 +739,7 @@ netpgp_match_keys_json(netpgp_t *netpgp, char **json, char *name, const char *fm
 					id_array.c, 10, 10, "netpgp_match_keys_json", return 0);
 				__ops_sprint_mj(netpgp->io, netpgp->pubring,
 						key, &id_array.value.v[id_array.c++],
-						"pub",
+						"signature ",
 						&key->key.pubkey, psigs);
 			}
 			k += 1;
@@ -930,7 +930,7 @@ netpgp_encrypt_file(netpgp_t *netpgp,
 			char *out,
 			int armored)
 {
-	const __ops_key_t	*keypair;
+	const __ops_key_t	*key;
 	const unsigned		 overwrite = 1;
 	const char		*suffix;
 	__ops_io_t		*io;
@@ -944,14 +944,14 @@ netpgp_encrypt_file(netpgp_t *netpgp,
 	}
 	suffix = (armored) ? ".asc" : ".gpg";
 	/* get key with which to sign */
-	if ((keypair = resolve_userid(netpgp, netpgp->pubring, userid)) == NULL) {
+	if ((key = resolve_userid(netpgp, netpgp->pubring, userid)) == NULL) {
 		return 0;
 	}
 	if (out == NULL) {
 		(void) snprintf(outname, sizeof(outname), "%s%s", f, suffix);
 		out = outname;
 	}
-	return (int)__ops_encrypt_file(io, f, out, keypair, (unsigned)armored,
+	return (int)__ops_encrypt_file(io, f, out, key, (unsigned)armored,
 					overwrite);
 }
 
@@ -1015,10 +1015,11 @@ netpgp_sign_file(netpgp_t *netpgp,
 			if (pubkey == NULL) {
 				(void) fprintf(io->errs,
 					"netpgp: warning - using pubkey from secring\n");
-				__ops_print_keydata(io, netpgp->pubring, keypair, "pub",
+				__ops_print_keydata(io, netpgp->pubring, keypair, "signature ",
 					&keypair->key.seckey.pubkey, 0);
 			} else {
-				__ops_print_keydata(io, netpgp->pubring, pubkey, "pub", &pubkey->key.pubkey, 0);
+				__ops_print_keydata(io, netpgp->pubring, pubkey, "signature ",
+					&pubkey->key.pubkey, 0);
 			}
 		}
 		if (netpgp_getvar(netpgp, "ssh keys") == NULL) {

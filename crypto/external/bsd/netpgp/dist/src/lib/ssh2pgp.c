@@ -317,9 +317,9 @@ __ops_ssh2pubkey(__ops_io_t *io, const char *f, __ops_key_t *key, __ops_hash_alg
 						hostname,
 						f,
 						owner);
-		__ops_keyid(key->key_id, sizeof(key->key_id), pubkey, hashtype);
+		__ops_keyid(key->sigid, sizeof(key->sigid), pubkey, hashtype);
 		__ops_add_userid(key, userid);
-		__ops_fingerprint(&key->fingerprint, pubkey, hashtype);
+		__ops_fingerprint(&key->sigfingerprint, pubkey, hashtype);
 		free(userid);
 		if (__ops_get_debug_level(__FILE__)) {
 			/*__ops_print_keydata(io, keyring, key, "pub", pubkey, 0);*/
@@ -415,8 +415,8 @@ __ops_ssh2seckey(__ops_io_t *io, const char *f, __ops_key_t *key, __ops_pubkey_t
 	crypted.set_crypt_key(&crypted, sesskey);
 	__ops_encrypt_init(&crypted);
 	key->key.seckey.pubkey.alg = OPS_PKA_RSA;
-	__ops_fingerprint(&key->fingerprint, pubkey, hashtype);
-	__ops_keyid(key->key_id, sizeof(key->key_id), pubkey, hashtype);
+	__ops_fingerprint(&key->sigfingerprint, pubkey, hashtype);
+	__ops_keyid(key->sigid, sizeof(key->sigid), pubkey, hashtype);
 	return 1;
 }
 
