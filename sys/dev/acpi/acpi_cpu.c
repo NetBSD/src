@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu.c,v 1.14 2010/08/11 16:22:18 jruoho Exp $ */
+/* $NetBSD: acpi_cpu.c,v 1.15 2010/08/13 16:21:50 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu.c,v 1.14 2010/08/11 16:22:18 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu.c,v 1.15 2010/08/13 16:21:50 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -157,9 +157,11 @@ acpicpu_attach(device_t parent, device_t self, void *aux)
 
 	acpicpu_cstate_attach(self);
 	acpicpu_pstate_attach(self);
+	acpicpu_tstate_attach(self);
 
 	(void)config_finalize_register(self, acpicpu_cstate_start);
 	(void)config_finalize_register(self, acpicpu_pstate_start);
+	(void)config_finalize_register(self, acpicpu_tstate_start);
 
 	(void)acpi_register_notify(sc->sc_node, acpicpu_notify);
 	(void)pmf_device_register(self, acpicpu_suspend, acpicpu_resume);
@@ -187,6 +189,12 @@ acpicpu_detach(device_t self, int flags)
 
 	if ((sc->sc_flags & ACPICPU_FLAG_P) != 0)
 		rv = acpicpu_pstate_detach(self);
+
+	if (rv != 0)
+		return rv;
+
+	if ((sc->sc_flags & ACPICPU_FLAG_T) != 0)
+		rv = acpicpu_tstate_detach(self);
 
 	if (rv != 0)
 		return rv;
@@ -469,7 +477,7 @@ acpicpu_notify(ACPI_HANDLE hdl, uint32_t evt, void *aux)
 		if ((sc->sc_flags & ACPICPU_FLAG_T) == 0)
 			return;
 
-		func = NULL;
+		func = acpicpu_tstate_callback;
 		break;
 
 	default:
@@ -493,6 +501,9 @@ acpicpu_suspend(device_t self, const pmf_qual_t *qual)
 	if ((sc->sc_flags & ACPICPU_FLAG_P) != 0)
 		(void)acpicpu_pstate_suspend(self);
 
+	if ((sc->sc_flags & ACPICPU_FLAG_T) != 0)
+		(void)acpicpu_tstate_suspend(self);
+
 	return true;
 }
 
@@ -506,6 +517,9 @@ acpicpu_resume(device_t self, const pmf_qual_t *qual)
 
 	if ((sc->sc_flags & ACPICPU_FLAG_P) != 0)
 		(void)acpicpu_pstate_resume(self);
+
+	if ((sc->sc_flags & ACPICPU_FLAG_T) != 0)
+		(void)acpicpu_tstate_resume(self);
 
 	sc->sc_cold = false;
 

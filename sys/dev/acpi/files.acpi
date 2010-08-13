@@ -1,4 +1,4 @@
-#	$NetBSD: files.acpi,v 1.78 2010/08/08 17:21:14 jruoho Exp $
+#	$NetBSD: files.acpi,v 1.79 2010/08/13 16:21:50 jruoho Exp $
 
 include "dev/acpi/acpica/files.acpica"
 
@@ -63,6 +63,7 @@ attach	acpicpu at acpinodebus
 file	dev/acpi/acpi_cpu.c		acpicpu
 file	dev/acpi/acpi_cpu_cstate.c	acpicpu
 file	dev/acpi/acpi_cpu_pstate.c	acpicpu
+file	dev/acpi/acpi_cpu_tstate.c	acpicpu
 
 # ACPI Thermal Zone
 device	acpitz: sysmon_envsys

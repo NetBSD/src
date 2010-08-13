@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_md.c,v 1.9 2010/08/09 15:46:17 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_md.c,v 1.10 2010/08/13 16:21:50 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.9 2010/08/09 15:46:17 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.10 2010/08/13 16:21:50 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -52,6 +52,7 @@ void		(*native_cpu_freq_init)(int) = NULL;
 static int	 acpicpu_md_pstate_sysctl_get(SYSCTLFN_PROTO);
 static int	 acpicpu_md_pstate_sysctl_set(SYSCTLFN_PROTO);
 static int	 acpicpu_md_pstate_sysctl_all(SYSCTLFN_PROTO);
+static int	 acpicpu_md_tstate_get_status(uint64_t *);
 
 extern uint32_t cpus_running;
 extern struct acpicpu_softc **acpicpu_sc;
@@ -78,10 +79,13 @@ acpicpu_md_cap(void)
 		val |= ACPICPU_PDC_C_C1_FFH | ACPICPU_PDC_C_C2C3_FFH;
 
 	/*
-	 * Set native P-states if EST is available.
+	 * Set native P- and T-states, if available.
 	 */
         if ((ci->ci_feat_val[1] & CPUID2_EST) != 0)
 		val |= ACPICPU_PDC_P_FFH;
+
+	if ((ci->ci_feat_val[0] & CPUID_ACPI) != 0)
+		val |= ACPICPU_PDC_T_FFH;
 
 	return val;
 }
@@ -107,6 +111,9 @@ acpicpu_md_quirks(void)
 		if ((ci->ci_feat_val[1] & CPUID2_EST) != 0)
 			val |= ACPICPU_FLAG_P_FFH;
 
+		if ((ci->ci_feat_val[0] & CPUID_ACPI) != 0)
+			val |= ACPICPU_FLAG_T_FFH;
+
 		/*
 		 * Bus master arbitration is not
 		 * needed on some recent Intel CPUs.
@@ -123,7 +130,7 @@ acpicpu_md_quirks(void)
 	case CPUVENDOR_AMD:
 
 		/*
-		 * XXX: Deal with the AMD C1E extension here.
+		 * XXX: Deal with PowerNow! and C1E here.
 		 */
 		break;
 	}
@@ -310,13 +317,6 @@ acpicpu_md_pstate_sysctl_get(SYSCTLFN_ARGS)
 	uint32_t freq;
 	int err;
 
-	/*
-	 * We can use any ACPI CPU to manipulate the
-	 * frequencies. In MP environments all CPUs
-	 * are mandated to support the same number of
-	 * P-states and each state must have identical
-	 * parameters across processors.
-	 */
 	sc = acpicpu_sc[ci->ci_acpiid];
 
 	if (sc == NULL)
@@ -489,6 +489,96 @@ acpicpu_md_pstate_set(struct acpicpu_pstate *ps)
 			return 0;
 
 		DELAY(ps->ps_latency);
+	}
+
+	return EAGAIN;
+}
+
+int
+acpicpu_md_tstate_get(struct acpicpu_softc *sc, uint32_t *percent)
+{
+	struct acpicpu_tstate *ts;
+	uint64_t val;
+	uint32_t i;
+	int rv;
+
+	rv = acpicpu_md_tstate_get_status(&val);
+
+	if (rv != 0)
+		return rv;
+
+	mutex_enter(&sc->sc_mtx);
+
+	for (i = 0; i < sc->sc_tstate_count; i++) {
+
+		ts = &sc->sc_tstate[i];
+
+		if (ts->ts_percent == 0)
+			continue;
+
+		if (val == ts->ts_control || val == ts->ts_status) {
+			mutex_exit(&sc->sc_mtx);
+			*percent = ts->ts_percent;
+			return 0;
+		}
+	}
+
+	mutex_exit(&sc->sc_mtx);
+
+	return EIO;
+}
+
+static int
+acpicpu_md_tstate_get_status(uint64_t *val)
+{
+
+	switch (cpu_vendor) {
+
+	case CPUVENDOR_INTEL:
+		*val = rdmsr(MSR_THERM_CONTROL);
+		break;
+
+	default:
+		return ENODEV;
+	}
+
+	return 0;
+}
+
+int
+acpicpu_md_tstate_set(struct acpicpu_tstate *ts)
+{
+	struct msr_rw_info msr;
+	uint64_t xc, val;
+	int i;
+
+	switch (cpu_vendor) {
+
+	case CPUVENDOR_INTEL:
+		msr.msr_read  = true;
+		msr.msr_type  = MSR_THERM_CONTROL;
+		msr.msr_value = ts->ts_control;
+		msr.msr_mask = __BITS(1, 4);
+		break;
+
+	default:
+		return ENODEV;
+	}
+
+	xc = xc_broadcast(0, (xcfunc_t)x86_msr_xcall, &msr, NULL);
+	xc_wait(xc);
+
+	if (ts->ts_status == 0)
+		return 0;
+
+	for (i = val = 0; i < ACPICPU_T_STATE_RETRY; i++) {
+
+		(void)acpicpu_md_tstate_get_status(&val);
+
+		if (val == ts->ts_status)
+			return 0;
+
+		DELAY(ts->ts_latency);
 	}
 
 	return EAGAIN;
