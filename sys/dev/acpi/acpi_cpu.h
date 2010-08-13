@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu.h,v 1.13 2010/08/11 11:48:21 jruoho Exp $ */
+/* $NetBSD: acpi_cpu.h,v 1.14 2010/08/13 16:21:50 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -35,15 +35,6 @@
  *
  * 	Intel Corporation: Intel Processor-Specific ACPI
  *	Interface Specification, September 2006, Revision 005.
- *
- *	http://download.intel.com/technology/IAPC/acpi/downloads/30222305.pdf
- *
- * For other relevant reading, see for instance:
- *
- *	Advanced Micro Devices: Using ACPI to Report APML P-State
- *	Limit Changes to Operating Systems and VMM's. August 7, 2009.
- *
- *	http://developer.amd.com/Assets/ACPI-APML-PState-rev12.pdf
  */
 #define ACPICPU_PDC_REVID         0x1
 #define ACPICPU_PDC_SMP           0xA
@@ -89,23 +80,31 @@
 #define ACPICPU_P_STATE_UNKNOWN	 0x0
 
 /*
+ * T-states.
+ */
+#define ACPICPU_T_STATE_MAX	 0x8
+#define ACPICPU_T_STATE_RETRY	 0xA
+#define ACPICPU_T_STATE_UNKNOWN	 255
+
+/*
  * Flags.
  */
 #define ACPICPU_FLAG_C		 __BIT(0)	/* C-states supported        */
 #define ACPICPU_FLAG_P		 __BIT(1)	/* P-states supported        */
 #define ACPICPU_FLAG_T		 __BIT(2)	/* T-states supported        */
 
-#define ACPICPU_FLAG_C_CST	 __BIT(3)	/* C-states with _CST	     */
+#define ACPICPU_FLAG_C_FFH	 __BIT(3)	/* Native C-states           */
 #define ACPICPU_FLAG_C_FADT	 __BIT(4)	/* C-states with FADT        */
 #define ACPICPU_FLAG_C_BM	 __BIT(5)	/* Bus master control        */
 #define ACPICPU_FLAG_C_BM_STS	 __BIT(6)	/* Bus master check required */
 #define ACPICPU_FLAG_C_ARB	 __BIT(7)	/* Bus master arbitration    */
 #define ACPICPU_FLAG_C_NOC3	 __BIT(8)	/* C3 disabled (quirk)       */
-#define ACPICPU_FLAG_C_FFH	 __BIT(9)	/* MONITOR/MWAIT supported   */
-#define ACPICPU_FLAG_C_C1E	 __BIT(10)	/* AMD C1E detected	     */
+#define ACPICPU_FLAG_C_C1E	 __BIT(9)	/* AMD C1E detected	     */
 
-#define ACPICPU_FLAG_P_PPC	 __BIT(11)	/* Dynamic freq. with _PPC   */
-#define ACPICPU_FLAG_P_FFH	 __BIT(12)	/* EST etc. supported        */
+#define ACPICPU_FLAG_P_FFH	 __BIT(10)	/* Native P-states           */
+
+#define ACPICPU_FLAG_T_FFH	 __BIT(11)	/* Native throttling         */
+#define ACPICPU_FLAG_T_FADT	 __BIT(12)	/* Throttling with FADT      */
 
 /*
  * This is AML_RESOURCE_GENERIC_REGISTER,
@@ -142,6 +141,16 @@ struct acpicpu_pstate {
 	uint32_t		 ps_status;
 };
 
+struct acpicpu_tstate {
+	struct evcnt		 ts_evcnt;
+	char			 ts_name[EVCNT_STRING_MAX];
+	uint32_t		 ts_percent;	/* % */
+	uint32_t		 ts_power;	/* mW */
+	uint32_t		 ts_latency;	/* us */
+	uint32_t		 ts_control;
+	uint32_t		 ts_status;
+};
+
 struct acpicpu_object {
 	uint32_t		 ao_procid;
 	uint32_t		 ao_pblklen;
@@ -162,6 +171,14 @@ struct acpicpu_softc {
 	uint32_t		 sc_pstate_current;
 	uint32_t		 sc_pstate_count;
 	uint32_t		 sc_pstate_max;
+
+	struct acpicpu_tstate	*sc_tstate;
+	struct acpicpu_reg	 sc_tstate_control;
+	struct acpicpu_reg	 sc_tstate_status;
+	uint32_t		 sc_tstate_current;
+	uint32_t		 sc_tstate_count;
+	uint32_t		 sc_tstate_max;
+	uint32_t		 sc_tstate_min;
 
 	kmutex_t		 sc_mtx;
 	bus_space_tag_t		 sc_iot;
@@ -191,6 +208,15 @@ void		acpicpu_pstate_callback(void *);
 int		acpicpu_pstate_get(struct acpicpu_softc *, uint32_t *);
 int		acpicpu_pstate_set(struct acpicpu_softc *, uint32_t);
 
+void		acpicpu_tstate_attach(device_t);
+int		acpicpu_tstate_detach(device_t);
+int		acpicpu_tstate_start(device_t);
+bool		acpicpu_tstate_suspend(device_t);
+bool		acpicpu_tstate_resume(device_t);
+void		acpicpu_tstate_callback(void *);
+int		acpicpu_tstate_get(struct acpicpu_softc *, uint32_t *);
+int		acpicpu_tstate_set(struct acpicpu_softc *, uint32_t);
+
 uint32_t	acpicpu_md_cap(void);
 uint32_t	acpicpu_md_quirks(void);
 uint32_t	acpicpu_md_cpus_running(void);
@@ -201,5 +227,7 @@ int		acpicpu_md_pstate_start(void);
 int		acpicpu_md_pstate_stop(void);
 int		acpicpu_md_pstate_get(struct acpicpu_softc *, uint32_t *);
 int		acpicpu_md_pstate_set(struct acpicpu_pstate *);
+int		acpicpu_md_tstate_get(struct acpicpu_softc *, uint32_t *);
+int		acpicpu_md_tstate_set(struct acpicpu_tstate *);
 
 #endif	/* !_SYS_DEV_ACPI_ACPI_CPU_H */

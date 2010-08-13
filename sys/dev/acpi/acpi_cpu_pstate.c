@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_pstate.c,v 1.14 2010/08/12 06:17:14 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_pstate.c,v 1.15 2010/08/13 16:21:50 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_pstate.c,v 1.14 2010/08/12 06:17:14 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_pstate.c,v 1.15 2010/08/13 16:21:50 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/evcnt.h>
@@ -59,6 +59,10 @@ acpicpu_pstate_attach(device_t self)
 	const char *str;
 	ACPI_STATUS rv;
 
+	/*
+	 * Three control methods are mandatory
+	 * for P-states; _PSS, _PCT, and _PPC.
+	 */
 	rv = acpicpu_pstate_pss(sc);
 
 	if (ACPI_FAILURE(rv)) {
@@ -68,11 +72,6 @@ acpicpu_pstate_attach(device_t self)
 
 	rv = acpicpu_pstate_pct(sc);
 
-	if (rv == AE_SUPPORT) {
-		aprint_error_dev(sc->sc_dev, "CPU not supported\n");
-		return;
-	}
-
 	if (ACPI_FAILURE(rv)) {
 		str = "_PCT";
 		goto fail;
@@ -80,8 +79,10 @@ acpicpu_pstate_attach(device_t self)
 
 	rv = acpicpu_pstate_max(sc);
 
-	if (rv == 0)
-		sc->sc_flags |= ACPICPU_FLAG_P_PPC;
+	if (rv != 0) {
+		str = "_PPC";
+		goto fail;
+	}
 
 	sc->sc_flags |= ACPICPU_FLAG_P;
 	sc->sc_pstate_current = sc->sc_pstate[0].ps_freq;
@@ -93,8 +94,19 @@ acpicpu_pstate_attach(device_t self)
 	return;
 
 fail:
-	aprint_error_dev(sc->sc_dev, "failed to evaluate "
-	    "%s: %s\n", str, AcpiFormatException(rv));
+	switch (rv) {
+
+	case AE_NOT_FOUND:
+		return;
+
+	case AE_SUPPORT:
+		aprint_verbose_dev(sc->sc_dev, "P-states not supported\n");
+		return;
+
+	default:
+		aprint_error_dev(sc->sc_dev, "failed to evaluate "
+		    "%s: %s\n", str, AcpiFormatException(rv));
+	}
 }
 
 static void
@@ -119,8 +131,8 @@ acpicpu_pstate_attach_print(struct acpicpu_softc *sc)
 			continue;
 
 		aprint_debug_dev(sc->sc_dev, "P%d: %3s, "
-		    "lat %3u us, pow %5u mW, %4u MHz\n",
-		    i, str, ps->ps_latency, ps->ps_power, ps->ps_freq);
+		    "lat %3u us, pow %5u mW, %4u MHz\n", i, str,
+		    ps->ps_latency, ps->ps_power, ps->ps_freq);
 	}
 
 	once = true;
@@ -214,10 +226,7 @@ acpicpu_pstate_resume(device_t self)
 	static const ACPI_OSD_EXEC_CALLBACK func = acpicpu_pstate_callback;
 	struct acpicpu_softc *sc = device_private(self);
 
-	KASSERT((sc->sc_flags & ACPICPU_FLAG_P) != 0);
-
-	if ((sc->sc_flags & ACPICPU_FLAG_P_PPC) != 0)
-		(void)AcpiOsExecute(OSL_NOTIFY_HANDLER, func, sc->sc_dev);
+	(void)AcpiOsExecute(OSL_NOTIFY_HANDLER, func, sc->sc_dev);
 
 	return true;
 }
@@ -230,9 +239,6 @@ acpicpu_pstate_callback(void *aux)
 	uint32_t old, new;
 
 	sc = device_private(self);
-
-	if ((sc->sc_flags & ACPICPU_FLAG_P_PPC) == 0)
-		return;
 
 	mutex_enter(&sc->sc_mtx);
 
@@ -467,8 +473,8 @@ acpicpu_pstate_pct(struct acpicpu_softc *sc)
 		goto out;
 	}
 
-	(void)memcpy(&sc->sc_pstate_control, reg[0], size); /* PERF_CTRL   */
-	(void)memcpy(&sc->sc_pstate_status,  reg[1], size); /* PERF_STATUS */
+	(void)memcpy(&sc->sc_pstate_control, reg[0], size);
+	(void)memcpy(&sc->sc_pstate_status,  reg[1], size);
 
 out:
 	if (buf.Pointer != NULL)
@@ -604,7 +610,7 @@ acpicpu_pstate_get(struct acpicpu_softc *sc, uint32_t *freq)
 
 		mutex_exit(&sc->sc_mtx);
 
-		if (ps == NULL) {
+		if (__predict_false(ps == NULL)) {
 			rv = EIO;
 			goto fail;
 		}
@@ -669,7 +675,7 @@ acpicpu_pstate_set(struct acpicpu_softc *sc, uint32_t freq)
 
 	mutex_exit(&sc->sc_mtx);
 
-	if (ps == NULL) {
+	if (__predict_false(ps == NULL)) {
 		rv = EINVAL;
 		goto fail;
 	}
