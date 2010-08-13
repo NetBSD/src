@@ -1,4 +1,4 @@
-/*	$NetBSD: dumpbus.c,v 1.6 2010/08/12 21:41:47 pooka Exp $	*/
+/*	$NetBSD: dumpbus.c,v 1.7 2010/08/13 10:13:44 pooka Exp $	*/
 
 /*
  * Little utility to convert shmif bus traffic to a pcap file
@@ -40,7 +40,6 @@ main(int argc, char *argv[])
 	uint32_t curbus, buslast;
 	struct shmif_mem *bmem;
 	int fd, pfd, i, ch;
-	uint32_t pktlen;
 	int bonus;
 	char *buf;
 
@@ -117,42 +116,42 @@ main(int argc, char *argv[])
 	if (buslast < curbus)
 		bonus = 1;
 
-	assert(sizeof(pktlen) == PKTLEN_SIZE);
-
 	i = 0;
 	while (curbus <= buslast || bonus) {
 		struct pcap_pkthdr packhdr;
+		struct shmif_pkthdr sp;
 		uint32_t oldoff;
 		bool wrap;
 
 		wrap = false;
 		oldoff = curbus;
-		curbus = shmif_busread(bmem,
-		    &pktlen, oldoff, PKTLEN_SIZE, &wrap);
+		curbus = shmif_busread(bmem, &sp, oldoff, sizeof(sp), &wrap);
 		if (wrap)
 			bonus = 0;
 
-		if (pktlen == 0)
+		if (sp.sp_len == 0)
 			continue;
 
-		printf("packet %d, offset 0x%04x, length 0x%04x\n",
-		    i++, curbus, pktlen);
+		printf("packet %d, offset 0x%04x, length 0x%04x, ts %d/%06d\n",
+		    i++, curbus, sp.sp_len, sp.sp_sec, sp.sp_usec);
 
-		if (!pcapfile || pktlen == 0) {
+		if (!pcapfile || sp.sp_len == 0) {
 			curbus = shmif_busread(bmem,
-			    buf, curbus, pktlen, &wrap);
+			    buf, curbus, sp.sp_len, &wrap);
 			if (wrap)
 				bonus = 0;
 			continue;
 		}
 
 		memset(&packhdr, 0, sizeof(packhdr));
-		packhdr.caplen = packhdr.len = pktlen;
+		packhdr.caplen = packhdr.len = sp.sp_len;
+		packhdr.ts.tv_sec = sp.sp_sec;
+		packhdr.ts.tv_usec = sp.sp_usec;
 
 		if (write(pfd, &packhdr, sizeof(packhdr)) != sizeof(packhdr))
 			err(1, "error writing packethdr");
-		curbus = shmif_busread(bmem, buf, curbus, pktlen, &wrap);
-		if (write(pfd, buf, pktlen) != pktlen)
+		curbus = shmif_busread(bmem, buf, curbus, sp.sp_len, &wrap);
+		if (write(pfd, buf, sp.sp_len) != sp.sp_len)
 			err(1, "write packet");
 		if (wrap)
 			bonus = 0;

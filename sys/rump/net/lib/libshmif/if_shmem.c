@@ -1,4 +1,4 @@
-/*	$NetBSD: if_shmem.c,v 1.19 2010/08/12 21:41:47 pooka Exp $	*/
+/*	$NetBSD: if_shmem.c,v 1.20 2010/08/13 10:13:44 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.19 2010/08/12 21:41:47 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.20 2010/08/13 10:13:44 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -191,6 +191,9 @@ shmif_start(struct ifnet *ifp)
 	int error;
 
 	for (;;) {
+		struct shmif_pkthdr sp;
+		struct timeval tv;
+
 		IF_DEQUEUE(&ifp->if_snd, m0);
 		if (m0 == NULL) {
 			break;
@@ -204,8 +207,14 @@ shmif_start(struct ifnet *ifp)
 		lastoff = sc->sc_busmem->shm_last;
 		npktlenoff = shmif_nextpktoff(sc->sc_busmem, lastoff);
 
+		getmicrouptime(&tv);
+
+		sp.sp_len = pktsize;
+		sp.sp_sec = tv.tv_sec;
+		sp.sp_usec = tv.tv_usec;
+
 		dataoff = shmif_buswrite(sc->sc_busmem,
-		    npktlenoff, &pktsize, PKTLEN_SIZE, &wrap);
+		    npktlenoff, &sp, sizeof(sp), &wrap);
 		for (m = m0; m != NULL; m = m->m_next) {
 			dataoff = shmif_buswrite(sc->sc_busmem, dataoff,
 			    mtod(m, void *), m->m_len, &wrap);
@@ -242,11 +251,13 @@ shmif_rcv(void *arg)
 	struct shmif_sc *sc = ifp->if_softc;
 	struct mbuf *m = NULL;
 	struct ether_header *eth;
-	uint32_t nextpkt, pktlen, lastpkt, busgen, lastnext;
+	uint32_t nextpkt, lastpkt, busgen, lastnext;
 	bool wrap = false;
 	int error;
 
 	for (;;) {
+		struct shmif_pkthdr sp;
+
 		if (m == NULL) {
 			m = m_gethdr(M_WAIT, MT_DATA);
 			MCLGET(m, M_WAIT);
@@ -280,20 +291,20 @@ shmif_rcv(void *arg)
 		}
 
 		shmif_busread(sc->sc_busmem,
-		    &pktlen, nextpkt, PKTLEN_SIZE, &wrap);
+		    &sp, nextpkt, sizeof(sp), &wrap);
 		shmif_busread(sc->sc_busmem, mtod(m, void *),
-		    shmif_advance(nextpkt, PKTLEN_SIZE), pktlen, &wrap);
+		    shmif_advance(nextpkt, sizeof(sp)), sp.sp_len, &wrap);
 		if (wrap)
 			sc->sc_prevgen = sc->sc_busmem->shm_gen;
 
 		DPRINTF(("shmif_rcv: read packet of length %d at %d\n",
-		    pktlen, nextpkt));
+		    sp.sp_len, nextpkt));
 
 		sc->sc_nextpacket = shmif_nextpktoff(sc->sc_busmem, nextpkt);
 		sc->sc_prevgen = busgen;
 		shmif_unlockbus(sc->sc_busmem);
 
-		m->m_len = m->m_pkthdr.len = pktlen;
+		m->m_len = m->m_pkthdr.len = sp.sp_len;
 		m->m_pkthdr.rcvif = ifp;
 
 		/* if it's from us, don't pass up and reuse storage space */
