@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_md.c,v 1.10 2010/08/13 16:21:50 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_md.c,v 1.11 2010/08/13 18:44:24 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.10 2010/08/13 16:21:50 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.11 2010/08/13 18:44:24 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -430,8 +430,6 @@ acpicpu_md_pstate_get(struct acpicpu_softc *sc, uint32_t *freq)
 		val = rdmsr(MSR_PERF_STATUS);
 		val = val & 0xffff;
 
-		mutex_enter(&sc->sc_mtx);
-
 		for (i = 0; i < sc->sc_pstate_count; i++) {
 
 			ps = &sc->sc_pstate[i];
@@ -440,13 +438,10 @@ acpicpu_md_pstate_get(struct acpicpu_softc *sc, uint32_t *freq)
 				continue;
 
 			if (val == ps->ps_status) {
-				mutex_exit(&sc->sc_mtx);
 				*freq = ps->ps_freq;
 				return 0;
 			}
 		}
-
-		mutex_exit(&sc->sc_mtx);
 
 		return EIO;
 
@@ -507,8 +502,6 @@ acpicpu_md_tstate_get(struct acpicpu_softc *sc, uint32_t *percent)
 	if (rv != 0)
 		return rv;
 
-	mutex_enter(&sc->sc_mtx);
-
 	for (i = 0; i < sc->sc_tstate_count; i++) {
 
 		ts = &sc->sc_tstate[i];
@@ -517,13 +510,10 @@ acpicpu_md_tstate_get(struct acpicpu_softc *sc, uint32_t *percent)
 			continue;
 
 		if (val == ts->ts_control || val == ts->ts_status) {
-			mutex_exit(&sc->sc_mtx);
 			*percent = ts->ts_percent;
 			return 0;
 		}
 	}
-
-	mutex_exit(&sc->sc_mtx);
 
 	return EIO;
 }
