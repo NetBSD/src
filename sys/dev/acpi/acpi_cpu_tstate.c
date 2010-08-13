@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_tstate.c,v 1.3 2010/08/13 19:48:25 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_tstate.c,v 1.4 2010/08/13 19:51:54 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,9 +27,10 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_tstate.c,v 1.3 2010/08/13 19:48:25 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_tstate.c,v 1.4 2010/08/13 19:51:54 jruoho Exp $");
 
 #include <sys/param.h>
+#include <sys/evcnt.h>
 #include <sys/kmem.h>
 
 #include <dev/acpi/acpireg.h>
