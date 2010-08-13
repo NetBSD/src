@@ -57,7 +57,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: misc.c,v 1.33 2010/07/09 05:35:34 agc Exp $");
+__RCSID("$NetBSD: misc.c,v 1.34 2010/08/13 18:29:40 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -118,7 +118,8 @@ accumulate_cb(const __ops_packet_t *pkt, __ops_cbdata_t *cbinfo)
 	keyring = accumulate->keyring;
 	switch (pkt->tag) {
 	case OPS_PTAG_CT_PUBLIC_KEY:
-		__ops_add_to_pubring(keyring, &content->pubkey);
+	case OPS_PTAG_CT_PUBLIC_SUBKEY:
+		__ops_add_to_pubring(keyring, &content->pubkey, pkt->tag);
 		return OPS_KEEP_MEMORY;
 	case OPS_PTAG_CT_SECRET_KEY:
 	case OPS_PTAG_CT_ENCRYPTED_SECRET_KEY:

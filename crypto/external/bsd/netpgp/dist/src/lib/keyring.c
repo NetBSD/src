@@ -57,7 +57,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: keyring.c,v 1.40 2010/08/07 04:16:40 agc Exp $");
+__RCSID("$NetBSD: keyring.c,v 1.41 2010/08/13 18:29:40 agc Exp $");
 #endif
 
 #ifdef HAVE_FCNTL_H
@@ -338,7 +338,7 @@ __ops_set_seckey(__ops_contents_t *cont, const __ops_key_t *key)
 const uint8_t *
 __ops_get_key_id(const __ops_key_t *key)
 {
-	return key->key_id;
+	return key->sigid;
 }
 
 /**
@@ -509,7 +509,7 @@ __ops_add_selfsigned_userid(__ops_key_t *key, uint8_t *userid)
 	sig = __ops_create_sig_new();
 	__ops_sig_start_key_sig(sig, &key->key.seckey.pubkey, userid, OPS_CERT_POSITIVE);
 	__ops_add_birthtime(sig, time(NULL));
-	__ops_add_issuer_keyid(sig, key->key_id);
+	__ops_add_issuer_keyid(sig, key->sigid);
 	__ops_add_primary_userid(sig, 1);
 	__ops_end_hashed_subpkts(sig);
 
@@ -823,15 +823,16 @@ __ops_getkeybyid(__ops_io_t *io, const __ops_keyring_t *keyring,
 {
 	for ( ; keyring && *from < keyring->keyc; *from += 1) {
 		if (__ops_get_debug_level(__FILE__)) {
-			hexdump(io->errs, "keyring keyid", keyring->keys[*from].key_id, OPS_KEY_ID_SIZE);
+			hexdump(io->errs, "keyring keyid", keyring->keys[*from].sigid, OPS_KEY_ID_SIZE);
 			hexdump(io->errs, "keyid", keyid, OPS_KEY_ID_SIZE);
 		}
-		if (memcmp(keyring->keys[*from].key_id, keyid,
-				OPS_KEY_ID_SIZE) == 0) {
+		if (memcmp(keyring->keys[*from].sigid, keyid, OPS_KEY_ID_SIZE) == 0 ||
+		    memcmp(&keyring->keys[*from].sigid[OPS_KEY_ID_SIZE / 2],
+				keyid, OPS_KEY_ID_SIZE / 2) == 0) {
 			return &keyring->keys[*from];
 		}
-		if (memcmp(&keyring->keys[*from].key_id[OPS_KEY_ID_SIZE / 2],
-				keyid, OPS_KEY_ID_SIZE / 2) == 0) {
+		if (memcmp(&keyring->keys[*from].encid, keyid, OPS_KEY_ID_SIZE) == 0 ||
+		    memcmp(&keyring->keys[*from].encid[OPS_KEY_ID_SIZE / 2], keyid, OPS_KEY_ID_SIZE / 2) == 0) {
 			return &keyring->keys[*from];
 		}
 	}
@@ -1017,7 +1018,7 @@ __ops_keyring_json(__ops_io_t *io, const __ops_keyring_t *keyring, mj_t *obj, co
 				"sec", &key->key.seckey.pubkey, psigs);
 		} else {
 			__ops_sprint_mj(io, keyring, key, &obj->value.v[obj->c],
-				"pub", &key->key.pubkey, psigs);
+				"signature ", &key->key.pubkey, psigs);
 		}
 		if (obj->value.v[obj->c].type != 0) {
 			obj->c += 1;
@@ -1057,24 +1058,37 @@ __ops_export_key(__ops_io_t *io, const __ops_key_t *keydata, uint8_t *passphrase
 
 /* add a key to a public keyring */
 int
-__ops_add_to_pubring(__ops_keyring_t *keyring, const __ops_pubkey_t *pubkey)
+__ops_add_to_pubring(__ops_keyring_t *keyring, const __ops_pubkey_t *pubkey, __ops_content_enum tag)
 {
 	__ops_key_t	*key;
 	time_t		 duration;
 
 	if (__ops_get_debug_level(__FILE__)) {
-		fprintf(stderr, "__ops_add_to_pubring\n");
+		fprintf(stderr, "__ops_add_to_pubring (type %u)\n", tag);
 	}
-	EXPAND_ARRAY(keyring, key);
-	key = &keyring->keys[keyring->keyc++];
-	duration = key->key.pubkey.duration;
-	(void) memset(key, 0x0, sizeof(*key));
-	__ops_keyid(key->key_id, OPS_KEY_ID_SIZE, pubkey, keyring->hashtype);
-	__ops_fingerprint(&key->fingerprint, pubkey, keyring->hashtype);
-	key->type = OPS_PTAG_CT_PUBLIC_KEY;
-	key->key.pubkey = *pubkey;
-	key->key.pubkey.duration = duration;
-	return 1;
+	switch(tag) {
+	case OPS_PTAG_CT_PUBLIC_KEY:
+		EXPAND_ARRAY(keyring, key);
+		key = &keyring->keys[keyring->keyc++];
+		duration = key->key.pubkey.duration;
+		(void) memset(key, 0x0, sizeof(*key));
+		key->type = tag;
+		__ops_keyid(key->sigid, OPS_KEY_ID_SIZE, pubkey, keyring->hashtype);
+		__ops_fingerprint(&key->sigfingerprint, pubkey, keyring->hashtype);
+		key->key.pubkey = *pubkey;
+		key->key.pubkey.duration = duration;
+		return 1;
+	case OPS_PTAG_CT_PUBLIC_SUBKEY:
+		/* subkey is not the first */
+		key = &keyring->keys[keyring->keyc - 1];
+		__ops_keyid(key->encid, OPS_KEY_ID_SIZE, pubkey, keyring->hashtype);
+		duration = key->key.pubkey.duration;
+		(void) memcpy(&key->enckey, pubkey, sizeof(key->enckey));
+		key->enckey.duration = duration;
+		return 1;
+	default:
+		return 0;
+	}
 }
 
 /* add a key to a secret keyring */
@@ -1099,8 +1113,8 @@ __ops_add_to_secring(__ops_keyring_t *keyring, const __ops_seckey_t *seckey)
 	key = &keyring->keys[keyring->keyc++];
 	(void) memset(key, 0x0, sizeof(*key));
 	pubkey = &seckey->pubkey;
-	__ops_keyid(key->key_id, OPS_KEY_ID_SIZE, pubkey, keyring->hashtype);
-	__ops_fingerprint(&key->fingerprint, pubkey, keyring->hashtype);
+	__ops_keyid(key->sigid, OPS_KEY_ID_SIZE, pubkey, keyring->hashtype);
+	__ops_fingerprint(&key->sigfingerprint, pubkey, keyring->hashtype);
 	key->type = OPS_PTAG_CT_SECRET_KEY;
 	key->key.seckey = *seckey;
 	if (__ops_get_debug_level(__FILE__)) {
