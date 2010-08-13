@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_tstate.c,v 1.1 2010/08/13 16:21:50 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_tstate.c,v 1.2 2010/08/13 18:44:24 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_tstate.c,v 1.1 2010/08/13 16:21:50 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_tstate.c,v 1.2 2010/08/13 18:44:24 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -655,8 +655,6 @@ acpicpu_tstate_get(struct acpicpu_softc *sc, uint32_t *percent)
 
 		val = (val >> offset) & 0x0F;
 
-		mutex_enter(&sc->sc_mtx);
-
 		for (i = 0; i < sc->sc_tstate_count; i++) {
 
 			if (sc->sc_tstate[i].ts_percent == 0)
@@ -676,8 +674,6 @@ acpicpu_tstate_get(struct acpicpu_softc *sc, uint32_t *percent)
 				break;
 			}
 		}
-
-		mutex_exit(&sc->sc_mtx);
 
 		if (__predict_false(ts == NULL)) {
 			rv = EIO;
@@ -816,9 +812,8 @@ acpicpu_tstate_set(struct acpicpu_softc *sc, uint32_t percent)
 		goto fail;
 	}
 
-	ts->ts_evcnt.ev_count++;
-
 	mutex_enter(&sc->sc_mtx);
+	ts->ts_evcnt.ev_count++;
 	sc->sc_tstate_current = percent;
 	mutex_exit(&sc->sc_mtx);
 
