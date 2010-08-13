@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_pstate.c,v 1.15 2010/08/13 16:21:50 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_pstate.c,v 1.16 2010/08/13 18:44:24 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_pstate.c,v 1.15 2010/08/13 16:21:50 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_pstate.c,v 1.16 2010/08/13 18:44:24 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/evcnt.h>
@@ -241,11 +241,9 @@ acpicpu_pstate_callback(void *aux)
 	sc = device_private(self);
 
 	mutex_enter(&sc->sc_mtx);
-
 	old = sc->sc_pstate_max;
 	acpicpu_pstate_change(sc);
 	new = sc->sc_pstate_max;
-
 	mutex_exit(&sc->sc_mtx);
 
 	if (old != new) {
@@ -595,8 +593,6 @@ acpicpu_pstate_get(struct acpicpu_softc *sc, uint32_t *freq)
 			goto fail;
 		}
 
-		mutex_enter(&sc->sc_mtx);
-
 		for (i = 0; i < sc->sc_pstate_count; i++) {
 
 			if (sc->sc_pstate[i].ps_freq == 0)
@@ -607,8 +603,6 @@ acpicpu_pstate_get(struct acpicpu_softc *sc, uint32_t *freq)
 				break;
 			}
 		}
-
-		mutex_exit(&sc->sc_mtx);
 
 		if (__predict_false(ps == NULL)) {
 			rv = EIO;
@@ -727,9 +721,8 @@ acpicpu_pstate_set(struct acpicpu_softc *sc, uint32_t freq)
 		goto fail;
 	}
 
-	ps->ps_evcnt.ev_count++;
-
 	mutex_enter(&sc->sc_mtx);
+	ps->ps_evcnt.ev_count++;
 	sc->sc_pstate_current = freq;
 	mutex_exit(&sc->sc_mtx);
 
