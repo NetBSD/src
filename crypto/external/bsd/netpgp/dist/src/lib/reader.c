@@ -54,7 +54,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: reader.c,v 1.38 2010/07/09 05:35:35 agc Exp $");
+__RCSID("$NetBSD: reader.c,v 1.39 2010/08/13 18:29:41 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -2204,7 +2204,8 @@ __ops_get_seckey_cb(const __ops_packet_t *pkt, __ops_cbdata_t *cbinfo)
 		}
 		do {
 			/* print out the user id */
-			__ops_print_keydata(io, cbinfo->cryptinfo.pubring, pubkey, "pub", &pubkey->key.pubkey, 0);
+			__ops_print_keydata(io, cbinfo->cryptinfo.pubring, pubkey,
+				"signature ", &pubkey->key.pubkey, 0);
 			/* now decrypt key */
 			secret = __ops_decrypt_seckey(keypair, cbinfo->passfp);
 			if (secret == NULL) {
@@ -2240,7 +2241,8 @@ get_passphrase_cb(const __ops_packet_t *pkt, __ops_cbdata_t *cbinfo)
 	if (cbinfo->cryptinfo.keydata == NULL) {
 		(void) fprintf(io->errs, "get_passphrase_cb: NULL keydata\n");
 	} else {
-		__ops_print_keydata(io, cbinfo->cryptinfo.pubring, cbinfo->cryptinfo.keydata, "pub",
+printf("get_passphrase_cb\n");
+		__ops_print_keydata(io, cbinfo->cryptinfo.pubring, cbinfo->cryptinfo.keydata, "signature ",
 			&cbinfo->cryptinfo.keydata->key.pubkey, 0);
 	}
 	switch (pkt->tag) {

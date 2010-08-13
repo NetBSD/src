@@ -57,7 +57,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: create.c,v 1.31 2010/07/09 05:35:34 agc Exp $");
+__RCSID("$NetBSD: create.c,v 1.32 2010/08/13 18:29:40 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -961,11 +961,18 @@ __ops_create_pk_sesskey(const __ops_key_t *key)
 
 	const __ops_pubkey_t	*pubkey;
 	__ops_pk_sesskey_t	*sesskey;
+	const uint8_t		*id;
 	uint8_t			 unencoded_m_buf[SZ_UNENCODED_M_BUF];
 	uint8_t			*encoded_m_buf;
 	size_t			 sz_encoded_m_buf;
 
-	pubkey = __ops_get_pubkey(key);
+	if (memcmp(key->encid, "\0\0\0\0\0\0\0\0", 8) == 0) {
+		pubkey = __ops_get_pubkey(key);
+		id = key->sigid;
+	} else {
+		pubkey = &key->enckey;
+		id = key->encid;
+	}
 	sz_encoded_m_buf = BN_num_bytes(pubkey->key.rsa.n);
 	if ((encoded_m_buf = calloc(1, sz_encoded_m_buf)) == NULL) {
 		(void) fprintf(stderr,
@@ -986,13 +993,12 @@ __ops_create_pk_sesskey(const __ops_key_t *key)
 		return NULL;
 	}
 	sesskey->version = OPS_PKSK_V3;
-	(void) memcpy(sesskey->key_id, key->key_id,
-			sizeof(sesskey->key_id));
+	(void) memcpy(sesskey->key_id, id, sizeof(sesskey->key_id));
 
 	if (__ops_get_debug_level(__FILE__)) {
-		hexdump(stderr, "Encrypting for RSA keyid", key->key_id, sizeof(sesskey->key_id));
+		hexdump(stderr, "Encrypting for RSA keyid", id, sizeof(sesskey->key_id));
 	}
-	switch (key->key.pubkey.alg) {
+	switch (pubkey->alg) {
 	case OPS_PKA_RSA:
 	case OPS_PKA_DSA:
 	case OPS_PKA_ELGAMAL:
@@ -1004,7 +1010,7 @@ __ops_create_pk_sesskey(const __ops_key_t *key)
 		free(sesskey);
 		return NULL;
 	}
-	sesskey->alg = key->key.pubkey.alg;
+	sesskey->alg = pubkey->alg;
 
 	/* \todo allow user to specify other algorithm */
 	sesskey->symm_alg = OPS_SA_CAST5;

@@ -58,7 +58,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: packet-parse.c,v 1.38 2010/07/09 05:35:34 agc Exp $");
+__RCSID("$NetBSD: packet-parse.c,v 1.39 2010/08/13 18:29:40 agc Exp $");
 #endif
 
 #ifdef HAVE_OPENSSL_CAST_H
@@ -1237,8 +1237,10 @@ parse_pubkey(__ops_content_enum tag, __ops_region_t *region,
 {
 	__ops_packet_t pkt;
 
-	if (!parse_pubkey_data(&pkt.u.pubkey, region, stream))
+	if (!parse_pubkey_data(&pkt.u.pubkey, region, stream)) {
+		(void) fprintf(stderr, "parse_pubkey: parse_pubkey_data failed\n");
 		return 0;
+	}
 
 	/* XXX: this test should be done for all packets, surely? */
 	if (region->readc != region->length) {
