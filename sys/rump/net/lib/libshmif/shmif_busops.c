@@ -1,4 +1,4 @@
-/*	$NetBSD: shmif_busops.c,v 1.1 2010/08/12 21:41:47 pooka Exp $	*/
+/*	$NetBSD: shmif_busops.c,v 1.2 2010/08/13 10:13:44 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: shmif_busops.c,v 1.1 2010/08/12 21:41:47 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: shmif_busops.c,v 1.2 2010/08/13 10:13:44 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -109,7 +109,7 @@ void
 shmif_advancefirst(struct shmif_mem *busmem, uint32_t off, size_t len)
 {
 
-	while (off <= busmem->shm_first + PKTLEN_SIZE
+	while (off <= busmem->shm_first + sizeof(struct shmif_pkthdr)
 	    && off+len > busmem->shm_first) {
 		DPRINTF(("advancefirst: old offset %d, ", busmem->shm_first));
 		busmem->shm_first = shmif_nextpktoff(busmem, busmem->shm_first);
@@ -155,11 +155,11 @@ shmif_buswrite(struct shmif_mem *busmem, uint32_t off, void *data, size_t len,
 uint32_t
 shmif_nextpktoff(struct shmif_mem *busmem, uint32_t oldoff)
 {
-	uint32_t oldlen;
+	struct shmif_pkthdr sp;
 	bool dummy;
 
-	shmif_busread(busmem, &oldlen, oldoff, PKTLEN_SIZE, &dummy);
-	KASSERT(oldlen < BUSMEM_DATASIZE);
+	shmif_busread(busmem, &sp, oldoff, sizeof(sp), &dummy);
+	KASSERT(sp.sp_len < BUSMEM_DATASIZE);
 
-	return shmif_advance(oldoff, PKTLEN_SIZE + oldlen);
+	return shmif_advance(oldoff, sizeof(sp) + sp.sp_len);
 }

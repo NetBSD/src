@@ -1,4 +1,4 @@
-/*	$NetBSD: shmifvar.h,v 1.3 2010/08/12 21:41:47 pooka Exp $	*/
+/*	$NetBSD: shmifvar.h,v 1.4 2010/08/13 10:13:44 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -31,7 +31,7 @@
 #define _RUMP_NET_SHMIFVAR_H_
 
 #define SHMIF_MAGIC 0xca11d054
-#define SHMIF_VERSION 1
+#define SHMIF_VERSION 2
 
 struct shmif_mem {
 	uint32_t shm_magic;
@@ -50,7 +50,13 @@ struct shmif_mem {
 
 #define IFMEM_DATA	(offsetof(struct shmif_mem, shm_data))
 #define IFMEM_WAKEUP	(offsetof(struct shmif_mem, shm_version))
-#define PKTLEN_SIZE 	(sizeof(uint32_t))
+
+struct shmif_pkthdr {
+	uint32_t sp_len;
+
+	uint32_t sp_sec;
+	uint32_t sp_usec;
+};
 
 #define BUSMEM_SIZE (1024*1024)
 #define BUSMEM_DATASIZE (BUSMEM_SIZE - sizeof(struct shmif_mem))
