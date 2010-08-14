@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axe.c,v 1.45 2010/08/14 10:47:57 tsutsui Exp $	*/
+/*	$NetBSD: if_axe.c,v 1.46 2010/08/14 12:11:46 tsutsui Exp $	*/
 /*	$OpenBSD: if_axe.c,v 1.96 2010/01/09 05:33:08 jsg Exp $ */
 
 /*
@@ -89,7 +89,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.45 2010/08/14 10:47:57 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.46 2010/08/14 12:11:46 tsutsui Exp $");
 
 #if defined(__NetBSD__)
 #include "opt_inet.h"
@@ -1132,7 +1132,6 @@ axe_encap(struct axe_softc *sc, struct mbuf *m, int idx)
 		m_copydata(m, 0, m->m_pkthdr.len, c->axe_buf);
 		length = m->m_pkthdr.len;
 	}
-	m_freem(m);
 
 	usbd_setup_xfer(c->axe_xfer, sc->axe_ep[AXE_ENDPT_TX],
 	    c, c->axe_buf, length, USBD_FORCE_SHORT_XFER | USBD_NO_COPY, 10000,
@@ -1154,7 +1153,7 @@ static void
 axe_start(struct ifnet *ifp)
 {
 	struct axe_softc *sc;
-	struct mbuf *m_head = NULL;
+	struct mbuf *m;
 
 	sc = ifp->if_softc;
 
@@ -1164,22 +1163,23 @@ axe_start(struct ifnet *ifp)
 	if ((ifp->if_flags & (IFF_OACTIVE|IFF_RUNNING)) != IFF_RUNNING)
 		return;
 
-	IFQ_POLL(&ifp->if_snd, m_head);
-	if (m_head == NULL) {
+	IFQ_POLL(&ifp->if_snd, m);
+	if (m == NULL) {
 		return;
 	}
 
-	if (axe_encap(sc, m_head, 0)) {
+	if (axe_encap(sc, m, 0)) {
 		ifp->if_flags |= IFF_OACTIVE;
 		return;
 	}
-	IFQ_DEQUEUE(&ifp->if_snd, m_head);
+	IFQ_DEQUEUE(&ifp->if_snd, m);
 
 	/*
 	 * If there's a BPF listener, bounce a copy of this frame
 	 * to him.
 	 */
-	bpf_mtap(ifp, m_head);
+	bpf_mtap(ifp, m);
+	m_freem(m);
 
 	ifp->if_flags |= IFF_OACTIVE;
 
