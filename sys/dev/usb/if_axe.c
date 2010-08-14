@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axe.c,v 1.41 2010/08/14 08:42:15 tsutsui Exp $	*/
+/*	$NetBSD: if_axe.c,v 1.42 2010/08/14 09:02:17 tsutsui Exp $	*/
 /*	$OpenBSD: if_axe.c,v 1.96 2010/01/09 05:33:08 jsg Exp $ */
 
 /*
@@ -89,7 +89,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.41 2010/08/14 08:42:15 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.42 2010/08/14 09:02:17 tsutsui Exp $");
 
 #if defined(__NetBSD__)
 #include "opt_inet.h"
@@ -926,7 +926,7 @@ axe_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 	struct ifnet *ifp;
 	uint8_t *buf;
 	uint32_t total_len;
-	uint16_t pktlen = 0;
+	u_int rxlen, pktlen;
 	struct mbuf *m;
 	struct axe_sframe_hdr hdr;
 	int s;
@@ -963,31 +963,28 @@ axe_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 				ifp->if_ierrors++;
 				goto done;
 			}
-			buf += pktlen;
 
 			memcpy(&hdr, buf, sizeof(hdr));
 			total_len -= sizeof(hdr);
+			buf += sizeof(hdr);
 
 			if ((hdr.len ^ hdr.ilen) != 0xffff) {
 				ifp->if_ierrors++;
 				goto done;
 			}
-			pktlen = le16toh(hdr.len);
-			if (pktlen > total_len) {
-				ifp->if_ierrors++;
-				goto done;
-			}
 
-			buf += sizeof(hdr);
-
-			pktlen = roundup2(pktlen, 2);
-
-			if (total_len < pktlen)
+			rxlen = le16toh(hdr.len);
+			if (total_len < rxlen) {
+				pktlen = total_len;
 				total_len = 0;
-			else
-				total_len -= pktlen;
+			} else {
+				total_len -= rxlen;
+				pktlen = rxlen;
+			}
+			rxlen = roundup2(rxlen, 2);
+
 		} else { /* AX172 */
-			pktlen = total_len;
+			pktlen = rxlen = total_len;
 			total_len = 0;
 		}
 
@@ -1004,6 +1001,7 @@ axe_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 		m->m_pkthdr.len = m->m_len = pktlen;
 
 		memcpy(mtod(m, char *), buf, pktlen);
+		buf += rxlen;
 
 		s = splnet();
 
