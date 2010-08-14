@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_cstate.c,v 1.24 2010/08/13 16:21:50 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_cstate.c,v 1.25 2010/08/14 05:13:21 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_cstate.c,v 1.24 2010/08/13 16:21:50 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_cstate.c,v 1.25 2010/08/14 05:13:21 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -37,9 +37,6 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_cpu_cstate.c,v 1.24 2010/08/13 16:21:50 jruoho 
 #include <sys/once.h>
 #include <sys/mutex.h>
 #include <sys/timetc.h>
-
-#include <dev/pci/pcivar.h>
-#include <dev/pci/pcidevs.h>
 
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
@@ -61,7 +58,6 @@ static void		 acpicpu_cstate_cst_bios(void);
 static void		 acpicpu_cstate_memset(struct acpicpu_softc *);
 static void		 acpicpu_cstate_fadt(struct acpicpu_softc *);
 static void		 acpicpu_cstate_quirks(struct acpicpu_softc *);
-static int		 acpicpu_cstate_quirks_piix4(struct pci_attach_args *);
 static int		 acpicpu_cstate_latency(struct acpicpu_softc *);
 static bool		 acpicpu_cstate_bm_check(void);
 static void		 acpicpu_cstate_idle_enter(struct acpicpu_softc *,int);
@@ -596,60 +592,40 @@ acpicpu_cstate_quirks(struct acpicpu_softc *sc)
 {
 	const uint32_t reg = AcpiGbl_FADT.Pm2ControlBlock;
 	const uint32_t len = AcpiGbl_FADT.Pm2ControlLength;
-	struct pci_attach_args pa;
+
+	/*
+	 * Disable C3 for PIIX4.
+	 */
+	if ((sc->sc_flags & ACPICPU_FLAG_PIIX4) != 0) {
+		sc->sc_cstate[ACPI_STATE_C3].cs_method = 0;
+		return;
+	}
 
 	/*
 	 * Check bus master arbitration. If ARB_DIS
 	 * is not available, processor caches must be
 	 * flushed before C3 (ACPI 4.0, section 8.2).
 	 */
-	if (reg != 0 && len != 0)
+	if (reg != 0 && len != 0) {
 		sc->sc_flags |= ACPICPU_FLAG_C_ARB;
-	else {
-		/*
-		 * Disable C3 entirely if WBINVD is not present.
-		 */
-		if ((AcpiGbl_FADT.Flags & ACPI_FADT_WBINVD) == 0)
-			sc->sc_flags |= ACPICPU_FLAG_C_NOC3;
-		else {
-			/*
-			 * If WBINVD is present and functioning properly,
-			 * flush all processor caches before entering C3.
-			 */
-			if ((AcpiGbl_FADT.Flags & ACPI_FADT_WBINVD_FLUSH) == 0)
-				sc->sc_flags &= ~ACPICPU_FLAG_C_BM;
-			else
-				sc->sc_flags |= ACPICPU_FLAG_C_NOC3;
-		}
+		return;
 	}
 
 	/*
-	 * There are several erratums for PIIX4.
+	 * Disable C3 entirely if WBINVD is not present.
 	 */
-	if (pci_find_device(&pa, acpicpu_cstate_quirks_piix4) != 0)
-		sc->sc_flags |= ACPICPU_FLAG_C_NOC3;
-
-	if ((sc->sc_flags & ACPICPU_FLAG_C_NOC3) != 0)
+	if ((AcpiGbl_FADT.Flags & ACPI_FADT_WBINVD) == 0)
 		sc->sc_cstate[ACPI_STATE_C3].cs_method = 0;
-}
-
-static int
-acpicpu_cstate_quirks_piix4(struct pci_attach_args *pa)
-{
-
-	/*
-	 * XXX: The pci_find_device(9) function only deals with
-	 *	attached devices. Change this to use something like
-	 *	pci_device_foreach(), and implement it for IA-64.
-	 */
-	if (PCI_VENDOR(pa->pa_id) != PCI_VENDOR_INTEL)
-		return 0;
-
-	if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEL_82371AB_ISA ||
-	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEL_82440MX_PMC)
-		return 1;
-
-	return 0;
+	else {
+		/*
+		 * If WBINVD is present and functioning properly,
+		 * flush all processor caches before entering C3.
+		 */
+		if ((AcpiGbl_FADT.Flags & ACPI_FADT_WBINVD_FLUSH) == 0)
+			sc->sc_flags &= ~ACPICPU_FLAG_C_BM;
+		else
+			sc->sc_cstate[ACPI_STATE_C3].cs_method = 0;
+	}
 }
 
 static int
