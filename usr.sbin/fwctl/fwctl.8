@@ -1,4 +1,4 @@
-.\"	$NetBSD: fwctl.8,v 1.8 2009/05/18 11:57:30 wiz Exp $
+.\"	$NetBSD: fwctl.8,v 1.9 2010/08/14 16:23:49 cegger Exp $
 .\"
 .\" Copyright (c) 2005 KIYOHARA Takashi
 .\" All rights reserved.
@@ -161,7 +161,7 @@ For PAL, replace
 with
 .Dq Li bs=144000 .
 .Pp
-.Dl "fwcontrol -R file.m2t"
+.Dl "fwctl -R file.m2t"
 .Pp
 Receive an MPEG TS stream from a camera producing MPEG transport stream.
 This has been tested with SONY HDR-FX1E camera that produces HD
@@ -169,7 +169,7 @@ MPEG-2 stream at 25 Mbps bandwidth.
 .Pp
 To send the stream from the camera over the network using TCP (which
 supprisingly works better with vlc), you can use
-.Dl "fwcontrol -R - | nc 192.168.10.11 9000"
+.Dl "fwctl -R - | nc 192.168.10.11 9000"
 with
 .Pa pkgsrc/net/netcat
 and to receive the stream, use
@@ -180,7 +180,7 @@ To netcast via UDP, you need to use
 since vlc is not fast enough to read UDP packets from
 buffers and thus it experiences dropouts when run directly.
 The sending side can use
-.Dl "fwcontrol -R - | nc 192.168.10.11 9000"
+.Dl "fwctl -R - | nc 192.168.10.11 9000"
 and to receive the stream, use
 .Dl nc -l -u -p 9000 | buffer -s 10k -b 1000 -m 20m -p 5 | vlc -
 .Pp
