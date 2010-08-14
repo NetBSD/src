@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_cstate.c,v 1.26 2010/08/14 05:41:22 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_cstate.c,v 1.27 2010/08/14 17:27:34 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_cstate.c,v 1.26 2010/08/14 05:41:22 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_cstate.c,v 1.27 2010/08/14 17:27:34 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -511,7 +511,7 @@ acpicpu_cstate_cst_bios(void)
 	const uint8_t val = AcpiGbl_FADT.CstControl;
 	const uint32_t addr = AcpiGbl_FADT.SmiCommand;
 
-	if (addr == 0)
+	if (addr == 0 || val == 0)
 		return;
 
 	(void)AcpiOsWritePort(addr, val, 8);
