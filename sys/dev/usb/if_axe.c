@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axe.c,v 1.44 2010/08/14 10:30:11 tsutsui Exp $	*/
+/*	$NetBSD: if_axe.c,v 1.45 2010/08/14 10:47:57 tsutsui Exp $	*/
 /*	$OpenBSD: if_axe.c,v 1.96 2010/01/09 05:33:08 jsg Exp $ */
 
 /*
@@ -89,7 +89,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.44 2010/08/14 10:30:11 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.45 2010/08/14 10:47:57 tsutsui Exp $");
 
 #if defined(__NetBSD__)
 #include "opt_inet.h"
@@ -732,7 +732,7 @@ axe_attach(device_t parent, device_t self, void *aux)
 	callout_init(&sc->axe_stat_ch, 0);
 	callout_setfunc(&sc->axe_stat_ch, axe_tick, sc);
 
-	sc->axe_attached = 1;
+	sc->axe_attached = true;
 	splx(s);
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->axe_udev, sc->axe_dev);
@@ -751,7 +751,7 @@ axe_detach(device_t self, int flags)
 	if (!sc->axe_attached)
 		return 0;
 
-	sc->axe_dying = 1;
+	sc->axe_dying = true;
 
 	/*
 	 * Remove any pending tasks.  They cannot be executing because they run
@@ -781,7 +781,7 @@ axe_detach(device_t self, int flags)
 		aprint_debug_dev(self, "detach has active endpoints\n");
 #endif
 
-	sc->axe_attached = 0;
+	sc->axe_attached = false;
 
 	if (--sc->axe_refcnt >= 0) {
 		/* Wait for processes to go away. */
@@ -804,7 +804,7 @@ axe_activate(device_t self, devact_t act)
 	switch (act) {
 	case DVACT_DEACTIVATE:
 		if_deactivate(&sc->axe_ec.ec_if);
-		sc->axe_dying = 1;
+		sc->axe_dying = true;
 		return 0;
 	default:
 		return EOPNOTSUPP;
@@ -965,7 +965,7 @@ axe_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 		m->m_pkthdr.rcvif = ifp;
 		m->m_pkthdr.len = m->m_len = pktlen;
 
-		memcpy(mtod(m, char *), buf, pktlen);
+		memcpy(mtod(m, uint8_t *), buf, pktlen);
 		buf += rxlen;
 
 		s = splnet();
