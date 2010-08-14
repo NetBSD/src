@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_tstate.c,v 1.6 2010/08/14 05:41:22 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_tstate.c,v 1.7 2010/08/14 17:50:57 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_tstate.c,v 1.6 2010/08/14 05:41:22 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_tstate.c,v 1.7 2010/08/14 17:50:57 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/evcnt.h>
@@ -39,8 +39,6 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_cpu_tstate.c,v 1.6 2010/08/14 05:41:22 jruoho E
 
 #define _COMPONENT	 ACPI_BUS_COMPONENT
 ACPI_MODULE_NAME	 ("acpi_cpu_tstate")
-
-#define			 ACPI_ADR_SPACE_FADT 0xFF
 
 static void		 acpicpu_tstate_attach_print(struct acpicpu_softc *);
 static void		 acpicpu_tstate_attach_evcnt(struct acpicpu_softc *);
@@ -555,9 +553,10 @@ acpicpu_tstate_fadt(struct acpicpu_softc *sc)
 	 */
 	sc->sc_tstate_control.reg_bitwidth = width;
 	sc->sc_tstate_control.reg_bitoffset = offset;
-	sc->sc_tstate_control.reg_spaceid = ACPI_ADR_SPACE_FADT;
+	sc->sc_tstate_control.reg_spaceid = ACPI_ADR_SPACE_SYSTEM_IO;
 
-	CTASSERT(ACPI_ADR_SPACE_FADT > ACPI_ADR_SPACE_FIXED_HARDWARE);
+	sc->sc_tstate_status.reg_addr = sc->sc_object.ao_pblkaddr;
+	sc->sc_tstate_control.reg_addr = sc->sc_object.ao_pblkaddr;
 
 	return AE_OK;
 }
@@ -646,14 +645,10 @@ acpicpu_tstate_get(struct acpicpu_softc *sc, uint32_t *percent)
 
 		break;
 
-	case ACPI_ADR_SPACE_FADT:
 	case ACPI_ADR_SPACE_SYSTEM_IO:
 
 		addr   = sc->sc_tstate_status.reg_addr;
 		offset = sc->sc_tstate_status.reg_bitoffset;
-
-		if (method == ACPI_ADR_SPACE_FADT)
-			addr = sc->sc_object.ao_pblkaddr;
 
 		(void)AcpiOsReadPort(addr, &val, 8);
 
@@ -760,14 +755,10 @@ acpicpu_tstate_set(struct acpicpu_softc *sc, uint32_t percent)
 
 		break;
 
-	case ACPI_ADR_SPACE_FADT:
 	case ACPI_ADR_SPACE_SYSTEM_IO:
 
 		addr   = sc->sc_tstate_control.reg_addr;
 		offset = sc->sc_tstate_control.reg_bitoffset;
-
-		if (method == ACPI_ADR_SPACE_FADT)
-			addr = sc->sc_object.ao_pblkaddr;
 
 		val = (ts->ts_control & 0x0F) << offset;
 
@@ -788,9 +779,6 @@ acpicpu_tstate_set(struct acpicpu_softc *sc, uint32_t percent)
 
 		addr   = sc->sc_tstate_status.reg_addr;
 		offset = sc->sc_tstate_status.reg_bitoffset;
-
-		if (method == ACPI_ADR_SPACE_FADT)
-			addr = sc->sc_object.ao_pblkaddr;
 
 		for (i = val = 0; i < ACPICPU_T_STATE_RETRY; i++) {
 
