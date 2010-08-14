@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu.c,v 1.15 2010/08/13 16:21:50 jruoho Exp $ */
+/* $NetBSD: acpi_cpu.c,v 1.16 2010/08/14 11:16:14 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu.c,v 1.15 2010/08/13 16:21:50 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu.c,v 1.16 2010/08/14 11:16:14 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -453,6 +453,9 @@ acpicpu_notify(ACPI_HANDLE hdl, uint32_t evt, void *aux)
 	device_t self = aux;
 
 	sc = device_private(self);
+
+	if (sc->sc_cold != false)
+		return;
 
 	switch (evt) {
 
