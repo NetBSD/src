@@ -1,4 +1,4 @@
-/*	$NetBSD: obs266_machdep.c,v 1.10.2.2 2010/08/11 14:02:45 uebayasi Exp $	*/
+/*	$NetBSD: obs266_machdep.c,v 1.10.2.3 2010/08/14 02:09:57 uebayasi Exp $	*/
 /*	Original: md_machdep.c,v 1.3 2005/01/24 18:47:37 shige Exp $	*/
 
 /*
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obs266_machdep.c,v 1.10.2.2 2010/08/11 14:02:45 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obs266_machdep.c,v 1.10.2.3 2010/08/14 02:09:57 uebayasi Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -149,11 +149,6 @@ initppc(u_int startkernel, u_int endkernel, char *args, void *info_block)
 	/* Linear map kernel memory */
 	for (va = 0; va < endkernel; va += TLB_PG_SIZE)
 		ppc4xx_tlb_reserve(va, va, TLB_PG_SIZE, TLB_EX);
-
-#ifdef XIP
-	/* Map NOR FlashROM as managed. */
-	ppc4xx_tlb_reserve(0xff000000, 0xff000000, TLB_PG_SIZE, TLB_I);
-#endif
 
 	/* Map console after RAM (see pmap_tlbmiss()) */
 	ppc4xx_tlb_reserve(CONADDR, roundup(memsize, TLB_PG_SIZE), TLB_PG_SIZE,
