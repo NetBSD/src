@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_tstate.c,v 1.5 2010/08/14 05:13:21 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_tstate.c,v 1.6 2010/08/14 05:41:22 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_tstate.c,v 1.5 2010/08/14 05:13:21 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_tstate.c,v 1.6 2010/08/14 05:41:22 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/evcnt.h>
@@ -213,10 +213,10 @@ acpicpu_tstate_suspend(device_t self)
 bool
 acpicpu_tstate_resume(device_t self)
 {
-	static const ACPI_OSD_EXEC_CALLBACK func = acpicpu_tstate_callback;
 	struct acpicpu_softc *sc = device_private(self);
 
-	(void)AcpiOsExecute(OSL_NOTIFY_HANDLER, func, sc->sc_dev);
+	if ((sc->sc_flags & ACPICPU_FLAG_T_FADT) == 0)
+		acpicpu_tstate_callback(self);
 
 	return true;
 }
