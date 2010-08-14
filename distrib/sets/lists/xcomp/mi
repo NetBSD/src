@@ -1,4 +1,4 @@
-#	 $NetBSD: mi,v 1.112 2010/07/18 10:58:06 mrg Exp $
+#	 $NetBSD: mi,v 1.113 2010/08/14 08:51:32 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -5641,14 +5641,14 @@
 ./usr/X11R7/include/X11/extensions/shape.h		-unknown-	xorg
 ./usr/X11R7/include/X11/extensions/shapeconst.h		-unknown-	xorg
 ./usr/X11R7/include/X11/extensions/shapeproto.h		-unknown-	xorg
-./usr/X11R7/include/X11/extensions/shapestr.h		-unknown-	obsolete
+./usr/X11R7/include/X11/extensions/shapestr.h		-unknown-	xorg
 ./usr/X11R7/include/X11/extensions/shm.h		-unknown-	xorg
 ./usr/X11R7/include/X11/extensions/shmproto.h		-unknown-	xorg
 ./usr/X11R7/include/X11/extensions/shmstr.h		-unknown-	xorg
 ./usr/X11R7/include/X11/extensions/sync.h		-unknown-	xorg
 ./usr/X11R7/include/X11/extensions/syncconst.h		-unknown-	xorg
 ./usr/X11R7/include/X11/extensions/syncproto.h		-unknown-	xorg
-./usr/X11R7/include/X11/extensions/syncstr.h		-unknown-	obsolete
+./usr/X11R7/include/X11/extensions/syncstr.h		-unknown-	xorg
 ./usr/X11R7/include/X11/extensions/vldXvMC.h		-unknown-	xorg
 ./usr/X11R7/include/X11/extensions/xcmiscproto.h	-unknown-	xorg
 ./usr/X11R7/include/X11/extensions/xcmiscstr.h		-unknown-	xorg
