@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axe.c,v 1.39 2010/08/14 08:06:54 tsutsui Exp $	*/
+/*	$NetBSD: if_axe.c,v 1.40 2010/08/14 08:10:49 tsutsui Exp $	*/
 /*	$OpenBSD: if_axe.c,v 1.96 2010/01/09 05:33:08 jsg Exp $ */
 
 /*
@@ -89,7 +89,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.39 2010/08/14 08:06:54 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.40 2010/08/14 08:10:49 tsutsui Exp $");
 
 #if defined(__NetBSD__)
 #include "opt_inet.h"
@@ -1004,6 +1004,9 @@ axe_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 		m->m_pkthdr.len = m->m_len = pktlen;
 
 		memcpy(mtod(m, char *), buf, pktlen);
+
+		/* No errors; receive the packet. */
+		pktlen -= ETHER_CRC_LEN + 4;
 
 		s = splnet();
 
