@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2010/05/22 05:44:08 mrg Exp $
+#	$NetBSD: Makefile,v 1.5 2010/08/14 08:51:32 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -35,7 +35,7 @@ INCS=	EVI.h \
 	xtestext1proto.h \
 	xtestproto.h
 # XXX XXX XXX xorg-server 1.7 won't need this
-INCS+=	shmstr.h
+INCS+=	shapestr.h shmstr.h syncstr.h
 #
 INCSDIR=${X11INCDIR}/X11/extensions
 
