@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu.h,v 1.14 2010/08/13 16:21:50 jruoho Exp $ */
+/* $NetBSD: acpi_cpu.h,v 1.15 2010/08/14 05:13:21 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -93,12 +93,13 @@
 #define ACPICPU_FLAG_P		 __BIT(1)	/* P-states supported        */
 #define ACPICPU_FLAG_T		 __BIT(2)	/* T-states supported        */
 
-#define ACPICPU_FLAG_C_FFH	 __BIT(3)	/* Native C-states           */
-#define ACPICPU_FLAG_C_FADT	 __BIT(4)	/* C-states with FADT        */
-#define ACPICPU_FLAG_C_BM	 __BIT(5)	/* Bus master control        */
-#define ACPICPU_FLAG_C_BM_STS	 __BIT(6)	/* Bus master check required */
-#define ACPICPU_FLAG_C_ARB	 __BIT(7)	/* Bus master arbitration    */
-#define ACPICPU_FLAG_C_NOC3	 __BIT(8)	/* C3 disabled (quirk)       */
+#define ACPICPU_FLAG_PIIX4	 __BIT(3)	/* Broken (quirk)	     */
+
+#define ACPICPU_FLAG_C_FFH	 __BIT(4)	/* Native C-states           */
+#define ACPICPU_FLAG_C_FADT	 __BIT(5)	/* C-states with FADT        */
+#define ACPICPU_FLAG_C_BM	 __BIT(6)	/* Bus master control        */
+#define ACPICPU_FLAG_C_BM_STS	 __BIT(7)	/* Bus master check required */
+#define ACPICPU_FLAG_C_ARB	 __BIT(8)	/* Bus master arbitration    */
 #define ACPICPU_FLAG_C_C1E	 __BIT(9)	/* AMD C1E detected	     */
 
 #define ACPICPU_FLAG_P_FFH	 __BIT(10)	/* Native P-states           */
