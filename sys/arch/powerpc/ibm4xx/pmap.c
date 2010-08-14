@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.60.2.4 2010/08/11 13:46:28 uebayasi Exp $	*/
+/*	$NetBSD: pmap.c,v 1.60.2.5 2010/08/14 02:09:57 uebayasi Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.60.2.4 2010/08/11 13:46:28 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.60.2.5 2010/08/14 02:09:57 uebayasi Exp $");
 
 #include "opt_xip.h"
 
@@ -1517,7 +1517,8 @@ pmap_tlbmiss(vaddr_t va, int ctx)
 	 * to not clobber 0 upto ${physmem} with device mappings in machdep
 	 * code.
 	 */
-	if (ctx != KERNEL_PID || va >= VM_MIN_KERNEL_ADDRESS) {
+	if (ctx != KERNEL_PID ||
+	    (va >= VM_MIN_KERNEL_ADDRESS && va < VM_MAX_KERNEL_ADDRESS)) {
 		pte = pte_find((struct pmap *)__UNVOLATILE(ctxbusy[ctx]), va);
 		if (pte == NULL) {
 			/* Map unmanaged addresses directly for kernel access */
