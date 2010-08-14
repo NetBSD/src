@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_md.c,v 1.11 2010/08/13 18:44:24 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_md.c,v 1.12 2010/08/14 05:13:20 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.11 2010/08/13 18:44:24 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.12 2010/08/14 05:13:20 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -45,10 +45,14 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.11 2010/08/13 18:44:24 jruoho Exp 
 #include <dev/acpi/acpica.h>
 #include <dev/acpi/acpi_cpu.h>
 
+#include <dev/pci/pcivar.h>
+#include <dev/pci/pcidevs.h>
+
 static char	  native_idle_text[16];
 void		(*native_idle)(void) = NULL;
 void		(*native_cpu_freq_init)(int) = NULL;
 
+static int	 acpicpu_md_quirks_piix4(struct pci_attach_args *);
 static int	 acpicpu_md_pstate_sysctl_get(SYSCTLFN_PROTO);
 static int	 acpicpu_md_pstate_sysctl_set(SYSCTLFN_PROTO);
 static int	 acpicpu_md_pstate_sysctl_all(SYSCTLFN_PROTO);
@@ -94,6 +98,7 @@ uint32_t
 acpicpu_md_quirks(void)
 {
 	struct cpu_info *ci = curcpu();
+	struct pci_attach_args pa;
 	uint32_t val = 0;
 
 	if (acpicpu_md_cpus_running() == 1)
@@ -106,13 +111,13 @@ acpicpu_md_quirks(void)
 
 	case CPUVENDOR_INTEL:
 
-		val |= ACPICPU_FLAG_C_BM | ACPICPU_FLAG_C_ARB;
-
 		if ((ci->ci_feat_val[1] & CPUID2_EST) != 0)
 			val |= ACPICPU_FLAG_P_FFH;
 
 		if ((ci->ci_feat_val[0] & CPUID_ACPI) != 0)
 			val |= ACPICPU_FLAG_T_FFH;
+
+		val |= ACPICPU_FLAG_C_BM | ACPICPU_FLAG_C_ARB;
 
 		/*
 		 * Bus master arbitration is not
@@ -135,7 +140,32 @@ acpicpu_md_quirks(void)
 		break;
 	}
 
+	/*
+	 * There are several erratums for PIIX4.
+	 */
+	if (pci_find_device(&pa, acpicpu_md_quirks_piix4) != 0)
+		val |= ACPICPU_FLAG_PIIX4;
+
 	return val;
+}
+
+static int
+acpicpu_md_quirks_piix4(struct pci_attach_args *pa)
+{
+
+	/*
+	 * XXX: The pci_find_device(9) function only
+	 *	deals with attached devices. Change this
+	 *	to use something like pci_device_foreach().
+	 */
+	if (PCI_VENDOR(pa->pa_id) != PCI_VENDOR_INTEL)
+		return 0;
+
+	if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEL_82371AB_ISA ||
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEL_82440MX_PMC)
+		return 1;
+
+	return 0;
 }
 
 uint32_t

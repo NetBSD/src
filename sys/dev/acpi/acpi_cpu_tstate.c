@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_tstate.c,v 1.4 2010/08/13 19:51:54 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_tstate.c,v 1.5 2010/08/14 05:13:21 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_tstate.c,v 1.4 2010/08/13 19:51:54 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_tstate.c,v 1.5 2010/08/14 05:13:21 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/evcnt.h>
@@ -58,6 +58,12 @@ acpicpu_tstate_attach(device_t self)
 	struct acpicpu_softc *sc = device_private(self);
 	const char *str;
 	ACPI_STATUS rv;
+
+	/*
+	 * Disable T-states for PIIX4.
+	 */
+	if ((sc->sc_flags & ACPICPU_FLAG_PIIX4) != 0)
+		return;
 
 	/*
 	 * If either _TSS, _PTC, or _TPC is not
