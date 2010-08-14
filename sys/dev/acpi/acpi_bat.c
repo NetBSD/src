@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_bat.c,v 1.103 2010/06/30 15:38:27 jruoho Exp $	*/
+/*	$NetBSD: acpi_bat.c,v 1.104 2010/08/14 05:41:22 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.103 2010/06/30 15:38:27 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.104 2010/08/14 05:41:22 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>
@@ -784,8 +784,8 @@ static bool
 acpibat_resume(device_t dv, const pmf_qual_t *qual)
 {
 
-	(void)AcpiOsExecute(OSL_NOTIFY_HANDLER, acpibat_update_info, dv);
-	(void)AcpiOsExecute(OSL_NOTIFY_HANDLER, acpibat_update_status, dv);
+	acpibat_update_info(dv);
+	acpibat_update_status(dv);
 
 	return true;
 }
