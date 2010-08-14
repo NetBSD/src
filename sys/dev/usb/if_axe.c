@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axe.c,v 1.42 2010/08/14 09:02:17 tsutsui Exp $	*/
+/*	$NetBSD: if_axe.c,v 1.43 2010/08/14 09:57:13 tsutsui Exp $	*/
 /*	$OpenBSD: if_axe.c,v 1.96 2010/01/09 05:33:08 jsg Exp $ */
 
 /*
@@ -89,7 +89,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.42 2010/08/14 09:02:17 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.43 2010/08/14 09:57:13 tsutsui Exp $");
 
 #if defined(__NetBSD__)
 #include "opt_inet.h"
@@ -978,10 +978,10 @@ axe_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 				pktlen = total_len;
 				total_len = 0;
 			} else {
-				total_len -= rxlen;
 				pktlen = rxlen;
+				rxlen = roundup2(rxlen, 2);
+				total_len -= rxlen;
 			}
-			rxlen = roundup2(rxlen, 2);
 
 		} else { /* AX172 */
 			pktlen = rxlen = total_len;
