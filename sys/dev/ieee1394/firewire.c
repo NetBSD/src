@@ -1,4 +1,4 @@
-/*	$NetBSD: firewire.c,v 1.35 2010/05/23 18:56:58 christos Exp $	*/
+/*	$NetBSD: firewire.c,v 1.36 2010/08/14 18:28:59 jym Exp $	*/
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
  * Copyright (c) 1998-2002 Katsushi Kobayashi and Hidetoshi Shimokawa
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: firewire.c,v 1.35 2010/05/23 18:56:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: firewire.c,v 1.36 2010/08/14 18:28:59 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -907,7 +907,7 @@ fw_xfer_free(struct fw_xfer* xfer)
 {
 
 	if (xfer == NULL) {
-		aprint_error_dev(xfer->fc->bdev, "xfer == NULL\n");
+		aprint_error("fw_xfer_free: xfer == NULL\n");
 		return;
 	}
 	fw_xfer_unload(xfer);
@@ -920,7 +920,7 @@ fw_xfer_free_buf(struct fw_xfer* xfer)
 {
 
 	if (xfer == NULL) {
-		aprint_error_dev(xfer->fc->bdev, "xfer == NULL\n");
+		aprint_error("fw_xfer_free_buf: xfer == NULL\n");
 		return;
 	}
 	fw_xfer_unload(xfer);
