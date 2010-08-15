@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_tstate.c,v 1.8 2010/08/15 04:35:16 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_tstate.c,v 1.9 2010/08/15 08:53:19 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_tstate.c,v 1.8 2010/08/15 04:35:16 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_tstate.c,v 1.9 2010/08/15 08:53:19 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/evcnt.h>
@@ -399,7 +399,10 @@ acpicpu_tstate_tss_add(struct acpicpu_tstate *ts, ACPI_OBJECT *obj)
 	for (i = 0; i < 5; i++, p++)
 		*p = val[i];
 
-        if (ts->ts_percent < 1 || ts->ts_percent > 100)
+	/*
+	 * The minimum should be around 100 / 8 = 12.5 %.
+	 */
+        if (ts->ts_percent < 10 || ts->ts_percent > 100)
 		return AE_BAD_DECIMAL_CONSTANT;
 
 	if (ts->ts_latency < 1)
@@ -519,6 +522,10 @@ acpicpu_tstate_fadt(struct acpicpu_softc *sc)
 	if (sc->sc_object.ao_pblkaddr == 0)
 		return AE_AML_ILLEGAL_ADDRESS;
 
+	/*
+	 * A zero DUTY_WIDTH is used announce that
+	 * T-states are not available via FADT.
+	 */
 	if (width == 0 || width + offset > 4)
 		return AE_AML_BAD_RESOURCE_VALUE;
 
