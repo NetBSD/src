@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.x11.mk,v 1.87 2010/07/18 07:05:39 mrg Exp $
+#	$NetBSD: bsd.x11.mk,v 1.88 2010/08/15 06:48:56 mrg Exp $
 
 .include <bsd.init.mk>
 
@@ -252,10 +252,6 @@ pkgconfig-install: ${_PKGDEST.${_pkg}}
 # And yes, it has to be splitted in two otherwise it's too long
 # for sed to handle.
 
-# missing transforms: 
-#   @GLU_PC_REQ@
-#   @GLW_PC_REQ_PRIV@
-#   @GLW_PC_LIB_PRIV@
 # hacky transforms:
 #   @XCBPROTO_VERSION@
 
@@ -288,6 +284,10 @@ pkgconfig-install: ${_PKGDEST.${_pkg}}
 		s,@RANDR_VERSION@,$${_pkg_version%.*},; \
 		s,@RENDER_VERSION@,$${_pkg_version%.*}," \
 		-e "s,@LIBS@,,; \
+		s,@Z_LIBS@,-lz,; \
+		s,@xkb_base@,\\$$\{libdir\}/X11/xkb,; \
+		s,@xcbincludedir@,\\$$\{prefix\}/include/xcb,; \
+		s,@fontrootdir@,\\$$\{libdir\}/X11/fonts,; \
 		s,@NEEDED@,," \
 		-e "s,@moduledir@,\\$$\{libdir\}/modules,; \
 		s,@sdkdir@,\\$$\{includedir\}/xorg,; \
@@ -296,7 +296,7 @@ pkgconfig-install: ${_PKGDEST.${_pkg}}
 		s,@INSTALL_LIB_DIR@,\\$$\{prefix\}/lib,; \
 		s,@INSTALL_INC_DIR@,\\$$\{prefix\}/include,; \
 		s,@XKBPROTO_REQUIRES@,kbproto,; \
-		s,@XCBPROTO_VERSION@,1.6,; \
+		s,@XCBPROTO_VERSION@,1.7,; \
 		s,@FREETYPE_REQUIRES@,freetype2,; \
 		s,@EXPAT_LIBS@,-lexpat,; \
 		s,@FREETYPE_LIBS@,-lfreetype,; \
@@ -310,6 +310,7 @@ pkgconfig-install: ${_PKGDEST.${_pkg}}
 		s,@GL_PC_LIB_PRIV@,-lm -lpthread,; \
 		s,@GL_PC_CFLAGS@,,; \
 		s,@GLU_LIB@,GLU,; \
+		s,@GLU_PC_REQ@,osmesa,; \
 		s,@GLU_PC_REQ_PRIV@,,; \
 		s,@GLU_PC_LIB_PRIV@,-lGLU,; \
 		s,@GLU_PC_CFLAGS@,,; \
@@ -318,6 +319,8 @@ pkgconfig-install: ${_PKGDEST.${_pkg}}
 		s,@GLUT_PC_LIB_PRIV@,-lglut,; \
 		s,@GLUT_PC_CFLAGS@,,; \
 		s,@GLW_PC_CFLAGS@,,; \
+		s,@GLW_PC_REQ_PRIV@,x11 xt,; \
+		s,@GLW_PC_LIB_PRIV@,,; \
 		s,@GLW_LIB@,GLw,; \
 		s,@abi_ansic@,0.4,; \
 		s,@abi_videodrv@,5.0,; \
