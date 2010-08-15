@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_cstate.c,v 1.27 2010/08/14 17:27:34 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_cstate.c,v 1.28 2010/08/15 08:53:19 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_cstate.c,v 1.27 2010/08/14 17:27:34 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_cstate.c,v 1.28 2010/08/15 08:53:19 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -568,7 +568,6 @@ acpicpu_cstate_fadt(struct acpicpu_softc *sc)
 	/*
 	 * The P_BLK length should always be 6. If it
 	 * is not, reduce functionality accordingly.
-	 * Sanity check also FADT's latency levels.
 	 */
 	if (sc->sc_object.ao_pblklen < 5)
 		cs[ACPI_STATE_C2].cs_method = 0;
@@ -576,6 +575,11 @@ acpicpu_cstate_fadt(struct acpicpu_softc *sc)
 	if (sc->sc_object.ao_pblklen < 6)
 		cs[ACPI_STATE_C3].cs_method = 0;
 
+	/*
+	 * Sanity check the latency levels in FADT.
+	 * Values above the thresholds are used to
+	 * inform that C-states are not supported.
+	 */
 	CTASSERT(ACPICPU_C_C2_LATENCY_MAX == 100);
 	CTASSERT(ACPICPU_C_C3_LATENCY_MAX == 1000);
 
