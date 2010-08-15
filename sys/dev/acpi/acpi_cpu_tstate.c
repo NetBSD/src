@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_tstate.c,v 1.7 2010/08/14 17:50:57 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_tstate.c,v 1.8 2010/08/15 04:35:16 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_tstate.c,v 1.7 2010/08/14 17:50:57 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_tstate.c,v 1.8 2010/08/15 04:35:16 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/evcnt.h>
@@ -549,14 +549,20 @@ acpicpu_tstate_fadt(struct acpicpu_softc *sc)
 		sc->sc_tstate[i].ts_control = (count - i) | __BIT(3);
 
 	/*
-	 * Fake values for THROTTLE_CTLR.
+	 * Fake values for throttling registers.
 	 */
+	(void)memset(&sc->sc_tstate_status, 0, sizeof(struct acpicpu_reg));
+	(void)memset(&sc->sc_tstate_control, 0, sizeof(struct acpicpu_reg));
+
+	sc->sc_tstate_status.reg_bitwidth = width;
+	sc->sc_tstate_status.reg_bitoffset = offset;
+	sc->sc_tstate_status.reg_addr = sc->sc_object.ao_pblkaddr;
+	sc->sc_tstate_status.reg_spaceid = ACPI_ADR_SPACE_SYSTEM_IO;
+
 	sc->sc_tstate_control.reg_bitwidth = width;
 	sc->sc_tstate_control.reg_bitoffset = offset;
-	sc->sc_tstate_control.reg_spaceid = ACPI_ADR_SPACE_SYSTEM_IO;
-
-	sc->sc_tstate_status.reg_addr = sc->sc_object.ao_pblkaddr;
 	sc->sc_tstate_control.reg_addr = sc->sc_object.ao_pblkaddr;
+	sc->sc_tstate_control.reg_spaceid = ACPI_ADR_SPACE_SYSTEM_IO;
 
 	return AE_OK;
 }
