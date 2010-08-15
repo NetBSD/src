@@ -1,4 +1,4 @@
-/*	$NetBSD: if_shmem.c,v 1.23 2010/08/15 18:55:03 pooka Exp $	*/
+/*	$NetBSD: if_shmem.c,v 1.24 2010/08/15 21:41:39 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.23 2010/08/15 18:55:03 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.24 2010/08/15 21:41:39 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -227,7 +227,7 @@ shmif_start(struct ifnet *ifp)
 	uint32_t lastoff, dataoff, npktlenoff;
 	uint32_t pktsize = 0;
 	bool wrote = false;
-	bool wrap = false;
+	bool wrap;
 	int error;
 
 	for (;;) {
@@ -253,6 +253,7 @@ shmif_start(struct ifnet *ifp)
 		lastoff = sc->sc_busmem->shm_last;
 		npktlenoff = shmif_nextpktoff(sc->sc_busmem, lastoff);
 
+		wrap = false;
 		dataoff = shmif_buswrite(sc->sc_busmem,
 		    npktlenoff, &sp, sizeof(sp), &wrap);
 		for (m = m0; m != NULL; m = m->m_next) {
@@ -292,7 +293,7 @@ shmif_rcv(void *arg)
 	struct mbuf *m = NULL;
 	struct ether_header *eth;
 	uint32_t nextpkt, lastpkt, busgen, lastnext;
-	bool wrap = false;
+	bool wrap;
 	int error;
 
 	for (;;) {
@@ -330,8 +331,10 @@ shmif_rcv(void *arg)
 			continue;
 		}
 
+		wrap = false;
 		shmif_busread(sc->sc_busmem,
 		    &sp, nextpkt, sizeof(sp), &wrap);
+		KASSERT(sp.sp_len <= MCLBYTES);
 		shmif_busread(sc->sc_busmem, mtod(m, void *),
 		    shmif_advance(nextpkt, sizeof(sp)), sp.sp_len, &wrap);
 		if (wrap)
