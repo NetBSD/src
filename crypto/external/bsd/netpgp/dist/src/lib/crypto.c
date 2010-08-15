@@ -54,7 +54,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: crypto.c,v 1.26 2010/08/13 18:29:40 agc Exp $");
+__RCSID("$NetBSD: crypto.c,v 1.27 2010/08/15 07:52:26 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -295,7 +295,7 @@ __ops_encrypt_file(__ops_io_t *io,
 	}
 
 	/* This does the writing */
-	__ops_write(output, __ops_mem_data(inmem), __ops_mem_len(inmem));
+	__ops_write(output, __ops_mem_data(inmem), (unsigned)__ops_mem_len(inmem));
 
 	/* tidy up */
 	__ops_memory_free(inmem);
@@ -333,7 +333,7 @@ __ops_encrypt_buf(__ops_io_t *io,
 	__ops_push_enc_se_ip(output, pubkey);
 
 	/* This does the writing */
-	__ops_write(output, input, insize);
+	__ops_write(output, input, (unsigned)insize);
 
 	/* tidy up */
 	__ops_writer_close(output);
@@ -395,7 +395,7 @@ __ops_decrypt_file(__ops_io_t *io,
 
 		if (strcmp(suffix, ".gpg") == 0 ||
 		    strcmp(suffix, ".asc") == 0) {
-			filenamelen = strlen(infile) - strlen(suffix);
+			filenamelen = (unsigned)(strlen(infile) - strlen(suffix));
 			if ((filename = calloc(1, filenamelen + 1)) == NULL) {
 				(void) fprintf(stderr, "can't allocate %" PRIsize "d bytes\n",
 					(size_t)(filenamelen + 1));

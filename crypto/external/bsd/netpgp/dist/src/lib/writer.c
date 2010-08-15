@@ -58,7 +58,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: writer.c,v 1.25 2010/07/09 05:35:35 agc Exp $");
+__RCSID("$NetBSD: writer.c,v 1.26 2010/08/15 07:52:27 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -510,8 +510,8 @@ __ops_writer_push_clearsigned(__ops_output_t *output, __ops_create_sig_t *sig)
 		OPS_ERROR(&output->errors, OPS_E_W, "Bad alloc");
 		return 0;
 	}
-	ret = (__ops_write(output, header, sizeof(header) - 1) &&
-		__ops_write(output, hash, strlen(hash)) &&
+	ret = (__ops_write(output, header, (unsigned)(sizeof(header) - 1)) &&
+		__ops_write(output, hash, (unsigned)strlen(hash)) &&
 		__ops_write(output, "\r\n\r\n", 4));
 
 	if (ret == 0) {
@@ -632,7 +632,7 @@ sig_finaliser(__ops_error_t **errors, __ops_writer_t *writer)
 		return 0;
 	}
 
-	return stacked_write(writer, trail, sizeof(trail) - 1, errors);
+	return stacked_write(writer, trail, (unsigned)(sizeof(trail) - 1), errors);
 }
 
 /**
@@ -688,7 +688,7 @@ __ops_writer_use_armored_sig(__ops_output_t *output)
 	base64_t   	*base64;
 
 	__ops_writer_pop(output);
-	if (__ops_write(output, header, sizeof(header) - 1) == 0) {
+	if (__ops_write(output, header, (unsigned)(sizeof(header) - 1)) == 0) {
 		OPS_ERROR(&output->errors, OPS_E_W,
 			"Error switching to armoured signature");
 		return 0;
@@ -750,7 +750,7 @@ armoured_message_finaliser(__ops_error_t **errors, __ops_writer_t *writer)
 		return 0;
 	}
 
-	return stacked_write(writer, trailer, strlen(trailer), errors);
+	return stacked_write(writer, trailer, (unsigned)strlen(trailer), errors);
 }
 
 /**
@@ -765,7 +765,7 @@ __ops_writer_push_armor_msg(__ops_output_t *output)
 	linebreak_t		*linebreak;
 	base64_t		*base64;
 
-	__ops_write(output, header, sizeof(header) - 1);
+	__ops_write(output, header, (unsigned)(sizeof(header) - 1));
 	__ops_write(output, "\r\n", 2);
 	if ((linebreak = calloc(1, sizeof(*linebreak))) == NULL) {
 		(void) fprintf(stderr,
@@ -1101,11 +1101,11 @@ encrypt_se_ip_writer(const uint8_t *src,
 	}
 
 	/* create compressed packet from literal data packet */
-	__ops_writez(zoutput, __ops_mem_data(litmem), __ops_mem_len(litmem));
+	__ops_writez(zoutput, __ops_mem_data(litmem), (unsigned)__ops_mem_len(litmem));
 
 	/* create SE IP packet set from this compressed literal data */
 	__ops_write_se_ip_pktset(output, __ops_mem_data(zmem),
-			       __ops_mem_len(zmem),
+			       (unsigned)__ops_mem_len(zmem),
 			       se_ip->crypt);
 	if (__ops_mem_len(localmem) <= __ops_mem_len(zmem)) {
 		(void) fprintf(stderr,
@@ -1115,7 +1115,7 @@ encrypt_se_ip_writer(const uint8_t *src,
 
 	/* now write memory to next writer */
 	ret = stacked_write(writer, __ops_mem_data(localmem),
-				__ops_mem_len(localmem), errors);
+				(unsigned)__ops_mem_len(localmem), errors);
 
 	__ops_memory_free(localmem);
 	__ops_memory_free(zmem);
@@ -1156,7 +1156,7 @@ __ops_write_se_ip_pktset(__ops_output_t *output,
 	bufsize = preamblesize + len + mdcsize;
 
 	if (!__ops_write_ptag(output, OPS_PTAG_CT_SE_IP_DATA) ||
-	    !__ops_write_length(output, 1 + bufsize) ||
+	    !__ops_write_length(output, (unsigned)(1 + bufsize)) ||
 	    !__ops_write_scalar(output, OPS_SE_IP_DATA_VERSION, 1)) {
 		free(preamble);
 		return 0;
@@ -1186,9 +1186,9 @@ __ops_write_se_ip_pktset(__ops_output_t *output,
 			"writing %" PRIsize "u + %u + %" PRIsize "u\n",
 			preamblesize, len, __ops_mem_len(mdc));
 	}
-	if (!__ops_write(output, preamble, preamblesize) ||
+	if (!__ops_write(output, preamble, (unsigned)preamblesize) ||
 	    !__ops_write(output, data, len) ||
-	    !__ops_write(output, __ops_mem_data(mdc), __ops_mem_len(mdc))) {
+	    !__ops_write(output, __ops_mem_data(mdc), (unsigned)__ops_mem_len(mdc))) {
 		/* \todo fix cleanup here and in old code functions */
 		return 0;
 	}
@@ -1215,7 +1215,7 @@ fd_writer(const uint8_t *src, unsigned len,
 	int              n;
 
 	writerfd = __ops_writer_get_arg(writer);
-	n = write(writerfd->fd, src, len);
+	n = (int)write(writerfd->fd, src, len);
 	if (n == -1) {
 		OPS_SYSTEM_ERROR_1(errors, OPS_E_W_WRITE_FAILED, "write",
 				   "file descriptor %d", writerfd->fd);
@@ -1514,10 +1514,10 @@ stream_write_litdata(__ops_output_t *output,
 
 	while (len > 0) {
 		pdlen = __ops_partial_data_len(len);
-		write_partial_len(output, pdlen);
-		__ops_write(output, data, pdlen);
+		write_partial_len(output, (unsigned)pdlen);
+		__ops_write(output, data, (unsigned)pdlen);
 		data += pdlen;
-		len -= pdlen;
+		len -= (unsigned)pdlen;
 	}
 	return 1;
 }
@@ -1536,23 +1536,23 @@ stream_write_litdata_first(__ops_output_t *output,
 	size_t          sz_pd;
 
 	sz_towrite = 1 + 1 + 4 + len;
-	sz_pd = __ops_partial_data_len(sz_towrite);
+	sz_pd = (size_t)__ops_partial_data_len(sz_towrite);
 	if (sz_pd < 512) {
 		(void) fprintf(stderr,
 			"stream_write_litdata_first: bad sz_pd\n");
 		return 0;
 	}
 	__ops_write_ptag(output, OPS_PTAG_CT_LITDATA);
-	write_partial_len(output, sz_pd);
+	write_partial_len(output, (unsigned)sz_pd);
 	__ops_write_scalar(output, (unsigned)type, 1);
 	__ops_write_scalar(output, 0, 1);
 	__ops_write_scalar(output, 0, 4);
-	__ops_write(output, data, sz_pd - 6);
+	__ops_write(output, data, (unsigned)(sz_pd - 6));
 
 	data += (sz_pd - 6);
 	sz_towrite -= sz_pd;
 
-	return stream_write_litdata(output, data, sz_towrite);
+	return stream_write_litdata(output, data, (unsigned)sz_towrite);
 }
 
 static unsigned
@@ -1574,13 +1574,13 @@ stream_write_se_ip(__ops_output_t *output,
 
 	while (len > 0) {
 		pdlen = __ops_partial_data_len(len);
-		write_partial_len(output, pdlen);
+		write_partial_len(output, (unsigned)pdlen);
 
 		__ops_push_enc_crypt(output, se_ip->crypt);
-		__ops_write(output, data, pdlen);
+		__ops_write(output, data, (unsigned)pdlen);
 		__ops_writer_pop(output);
 
-		se_ip->hash.add(&se_ip->hash, data, pdlen);
+		se_ip->hash.add(&se_ip->hash, data, (unsigned)pdlen);
 
 		data += pdlen;
 		len -= pdlen;
@@ -1608,7 +1608,7 @@ stream_write_se_ip_first(__ops_output_t *output,
 			"stream_write_se_ip_first: bad alloc\n");
 		return 0;
 	}
-	sz_pd = __ops_partial_data_len(sz_towrite);
+	sz_pd = (size_t)__ops_partial_data_len(sz_towrite);
 	if (sz_pd < 512) {
 		free(preamble);
 		(void) fprintf(stderr,
@@ -1616,7 +1616,7 @@ stream_write_se_ip_first(__ops_output_t *output,
 		return 0;
 	}
 	__ops_write_ptag(output, OPS_PTAG_CT_SE_IP_DATA);
-	write_partial_len(output, sz_pd);
+	write_partial_len(output, (unsigned)sz_pd);
 	__ops_write_scalar(output, OPS_SE_IP_DATA_VERSION, 1);
 	__ops_push_enc_crypt(output, se_ip->crypt);
 
@@ -1630,14 +1630,14 @@ stream_write_se_ip_first(__ops_output_t *output,
 			"stream_write_se_ip_first: bad hash init\n");
 		return 0;
 	}
-	__ops_write(output, preamble, preamblesize);
-	se_ip->hash.add(&se_ip->hash, preamble, preamblesize);
-	__ops_write(output, data, sz_pd - preamblesize - 1);
-	se_ip->hash.add(&se_ip->hash, data, sz_pd - preamblesize - 1);
+	__ops_write(output, preamble, (unsigned)preamblesize);
+	se_ip->hash.add(&se_ip->hash, preamble, (unsigned)preamblesize);
+	__ops_write(output, data, (unsigned)(sz_pd - preamblesize - 1));
+	se_ip->hash.add(&se_ip->hash, data, (unsigned)(sz_pd - preamblesize - 1));
 	data += (sz_pd - preamblesize - 1);
 	sz_towrite -= sz_pd;
 	__ops_writer_pop(output);
-	stream_write_se_ip(output, data, sz_towrite, se_ip);
+	stream_write_se_ip(output, data, (unsigned)sz_towrite, se_ip);
 	free(preamble);
 	return 1;
 }
@@ -1672,13 +1672,13 @@ stream_write_se_ip_last(__ops_output_t *output,
 	__ops_write_mdc(mdcoutput, hashed);
 
 	/* write length of last se_ip chunk */
-	__ops_write_length(output, bufsize);
+	__ops_write_length(output, (unsigned)bufsize);
 
 	/* encode everting */
 	__ops_push_enc_crypt(output, se_ip->crypt);
 
 	__ops_write(output, data, len);
-	__ops_write(output, __ops_mem_data(mdcmem), __ops_mem_len(mdcmem));
+	__ops_write(output, __ops_mem_data(mdcmem), (unsigned)__ops_mem_len(mdcmem));
 
 	__ops_writer_pop(output);
 
@@ -1715,22 +1715,22 @@ str_enc_se_ip_writer(const uint8_t *src,
 				&se_ip->litmem, datalength + 32);
 		stream_write_litdata_first(se_ip->litoutput,
 				__ops_mem_data(se_ip->mem_data),
-				datalength,
+				(unsigned)datalength,
 				OPS_LDT_BINARY);
 
 		stream_write_se_ip_first(se_ip->se_ip_out,
 				__ops_mem_data(se_ip->litmem),
-				__ops_mem_len(se_ip->litmem), se_ip);
+				(unsigned)__ops_mem_len(se_ip->litmem), se_ip);
 	} else {
 		stream_write_litdata(se_ip->litoutput, src, len);
 		stream_write_se_ip(se_ip->se_ip_out,
 				__ops_mem_data(se_ip->litmem),
-				__ops_mem_len(se_ip->litmem), se_ip);
+				(unsigned)__ops_mem_len(se_ip->litmem), se_ip);
 	}
 
 	/* now write memory to next writer */
 	ret = stacked_write(writer, __ops_mem_data(se_ip->se_ip_mem),
-				__ops_mem_len(se_ip->se_ip_mem), errors);
+				(unsigned)__ops_mem_len(se_ip->se_ip_mem), errors);
 
 	__ops_memory_clear(se_ip->litmem);
 	__ops_memory_clear(se_ip->se_ip_mem);
@@ -1761,7 +1761,7 @@ str_enc_se_ip_finaliser(__ops_error_t **errors, __ops_writer_t *writer)
 		/* create SE IP packet set from this literal data */
 		__ops_write_se_ip_pktset(se_ip->se_ip_out,
 				__ops_mem_data(se_ip->litmem),
-				__ops_mem_len(se_ip->litmem),
+				(unsigned)__ops_mem_len(se_ip->litmem),
 				se_ip->crypt);
 
 	} else {
@@ -1769,12 +1769,12 @@ str_enc_se_ip_finaliser(__ops_error_t **errors, __ops_writer_t *writer)
 		stream_write_litdata_last(se_ip->litoutput, NULL, 0);
 		stream_write_se_ip_last(se_ip->se_ip_out,
 				__ops_mem_data(se_ip->litmem),
-				__ops_mem_len(se_ip->litmem), se_ip);
+				(unsigned)__ops_mem_len(se_ip->litmem), se_ip);
 	}
 
 	/* now write memory to next writer */
 	return stacked_write(writer, __ops_mem_data(se_ip->se_ip_mem),
-				 __ops_mem_len(se_ip->se_ip_mem), errors);
+				 (unsigned)__ops_mem_len(se_ip->se_ip_mem), errors);
 }
 
 static void 

@@ -58,7 +58,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: packet-print.c,v 1.36 2010/08/13 18:29:40 agc Exp $");
+__RCSID("$NetBSD: packet-print.c,v 1.37 2010/08/15 07:52:27 agc Exp $");
 #endif
 
 #include <string.h>
@@ -153,7 +153,7 @@ print_tagname(int indent, const char *str)
 static void 
 print_data(int indent, const char *name, const __ops_data_t *data)
 {
-	print_hexdump(indent, name, data->contents, data->len);
+	print_hexdump(indent, name, data->contents, (unsigned)data->len);
 }
 
 static void 
@@ -278,7 +278,7 @@ print_headers(const __ops_headers_t *h)
 static void 
 print_block(int indent, const char *name, const uint8_t *str, size_t length)
 {
-	int             o = length;
+	int             o = (int)length;
 
 	print_indent(indent);
 	printf(">>>>> %s >>>>>\n", name);
@@ -449,7 +449,7 @@ __ops_sprint_keydata(__ops_io_t *io, const __ops_keyring_t *keyring,
 				}
 			}
 			from = 0;
-			trustkey = __ops_getkeybyid(io, keyring, key->subsigs[j].sig.info.signer_id, &from);
+			trustkey = __ops_getkeybyid(io, keyring, key->subsigs[j].sig.info.signer_id, &from, NULL);
 			if (key->subsigs[j].sig.info.version == 4 &&
 					key->subsigs[j].sig.info.type == OPS_SIG_SUBKEY) {
 				psubkeybinding(&uidbuf[n], sizeof(uidbuf) - n, key, expired);
@@ -542,7 +542,7 @@ __ops_sprint_mj(__ops_io_t *io, const __ops_keyring_t *keyring,
 				mj_append(&sub_obj, "integer",
 					(int64_t)(key->subsigs[j].sig.info.birthtime));
 				from = 0;
-				trustkey = __ops_getkeybyid(io, keyring, key->subsigs[j].sig.info.signer_id, &from);
+				trustkey = __ops_getkeybyid(io, keyring, key->subsigs[j].sig.info.signer_id, &from, NULL);
 				mj_append(&sub_obj, "string",
 					(trustkey) ? (char *)trustkey->uids[trustkey->uid0] : "[unknown]");
 				mj_append_field(keyjson, "sig", "array", &sub_obj);
@@ -596,7 +596,7 @@ __ops_hkp_sprint_keydata(__ops_io_t *io, const __ops_keyring_t *keyring,
 				}
 			}
 			from = 0;
-			trustkey = __ops_getkeybyid(io, keyring, key->subsigs[j].sig.info.signer_id, &from);
+			trustkey = __ops_getkeybyid(io, keyring, key->subsigs[j].sig.info.signer_id, &from, NULL);
 			if (key->subsigs[j].sig.info.version == 4 &&
 					key->subsigs[j].sig.info.type == OPS_SIG_SUBKEY) {
 				n += snprintf(&uidbuf[n], sizeof(uidbuf) - n, "sub:%d:%d:%s:%lld:%lld\n",
@@ -749,7 +749,7 @@ __ops_print_seckey_verbose(const __ops_content_enum type,
 		       __ops_show_hash_alg((uint8_t)seckey->hash_alg));
 		if (seckey->s2k_specifier != OPS_S2KS_SIMPLE) {
 			print_hexdump(0, "Salt", seckey->salt,
-					sizeof(seckey->salt));
+					(unsigned)sizeof(seckey->salt));
 		}
 		if (seckey->s2k_specifier == OPS_S2KS_ITERATED_AND_SALTED) {
 			printf("Octet count: %u\n", seckey->octetc);
@@ -799,7 +799,7 @@ __ops_print_pk_sesskey(__ops_content_enum tag,
 		"PUBLIC KEY SESSION KEY" :
 		"ENCRYPTED PUBLIC KEY SESSION KEY");
 	printf("Version: %d\n", key->version);
-	print_hexdump(0, "Key ID", key->key_id, sizeof(key->key_id));
+	print_hexdump(0, "Key ID", key->key_id, (unsigned)sizeof(key->key_id));
 	printf("Algorithm: %d (%s)\n", key->alg,
 	       __ops_show_pka(key->alg));
 	switch (key->alg) {
@@ -948,7 +948,7 @@ __ops_print_packet(__ops_printstate_t *print, const __ops_packet_t *pkt)
 		if (content->sig.info.signer_id_set) {
 			hexdump_data(print->indent, "Signer ID",
 					   content->sig.info.signer_id,
-				  sizeof(content->sig.info.signer_id));
+				  (unsigned)sizeof(content->sig.info.signer_id));
 		}
 
 		print_string_and_value(print->indent, "Public Key Algorithm",
@@ -959,7 +959,7 @@ __ops_print_packet(__ops_printstate_t *print, const __ops_packet_t *pkt)
 				content->sig.info.hash_alg),
 			(uint8_t)content->sig.info.hash_alg);
 		print_uint(print->indent, "Hashed data len",
-			content->sig.info.v4_hashlen);
+			(unsigned)content->sig.info.v4_hashlen);
 		print_indent(print->indent);
 		hexdump_data(print->indent, "hash2", &content->sig.hash2[0], 2);
 		switch (content->sig.info.key_alg) {
@@ -1010,7 +1010,7 @@ __ops_print_packet(__ops_printstate_t *print, const __ops_packet_t *pkt)
 			content->one_pass_sig.key_alg);
 		hexdump_data(print->indent, "Signer ID",
 				   content->one_pass_sig.keyid,
-				   sizeof(content->one_pass_sig.keyid));
+				   (unsigned)sizeof(content->one_pass_sig.keyid));
 		print_uint(print->indent, "Nested", content->one_pass_sig.nested);
 		break;
 
@@ -1018,7 +1018,7 @@ __ops_print_packet(__ops_printstate_t *print, const __ops_packet_t *pkt)
 		print_tagname(print->indent, "USER ATTRIBUTE");
 		print_hexdump(print->indent, "User Attribute",
 			      content->userattr.contents,
-			      content->userattr.len);
+			      (unsigned)content->userattr.len);
 		break;
 
 	case OPS_PTAG_RAW_SS:
@@ -1032,7 +1032,7 @@ __ops_print_packet(__ops_printstate_t *print, const __ops_packet_t *pkt)
 		   	(unsigned)OPS_PTAG_SIG_SUBPKT_BASE));
 		print_hexdump(print->indent, "Raw Data",
 			      content->ss_raw.raw,
-			      content->ss_raw.length);
+			      (unsigned)content->ss_raw.length);
 		break;
 
 	case OPS_PTAG_SS_CREATION_TIME:
@@ -1085,7 +1085,7 @@ __ops_print_packet(__ops_printstate_t *print, const __ops_packet_t *pkt)
 	case OPS_PTAG_SS_ISSUER_KEY_ID:
 		start_subpacket(&print->indent, pkt->tag);
 		print_hexdump(print->indent, "Issuer Key Id",
-			      content->ss_issuer, sizeof(content->ss_issuer));
+			      content->ss_issuer, (unsigned)sizeof(content->ss_issuer));
 		end_subpacket(&print->indent);
 		break;
 
@@ -1182,7 +1182,7 @@ __ops_print_packet(__ops_printstate_t *print, const __ops_packet_t *pkt)
 		start_subpacket(&print->indent, pkt->tag);
 		print_hexdump(print->indent, "Regular Expression",
 			      (uint8_t *) content->ss_regexp,
-			      strlen(content->ss_regexp));
+			      (unsigned)strlen(content->ss_regexp));
 		print_string(print->indent, NULL, content->ss_regexp);
 		end_subpacket(&print->indent);
 		break;
@@ -1224,7 +1224,7 @@ __ops_print_packet(__ops_printstate_t *print, const __ops_packet_t *pkt)
 		start_subpacket(&print->indent, pkt->tag);
 		print_hexdump(print->indent, "Internal or user-defined",
 			      content->ss_userdef.contents,
-			      content->ss_userdef.len);
+			      (unsigned)content->ss_userdef.len);
 		end_subpacket(&print->indent);
 		break;
 
@@ -1232,7 +1232,7 @@ __ops_print_packet(__ops_printstate_t *print, const __ops_packet_t *pkt)
 		start_subpacket(&print->indent, pkt->tag);
 		print_hexdump(print->indent, "Reserved",
 			      content->ss_userdef.contents,
-			      content->ss_userdef.len);
+			      (unsigned)content->ss_userdef.len);
 		end_subpacket(&print->indent);
 		break;
 
@@ -1285,7 +1285,7 @@ __ops_print_packet(__ops_printstate_t *print, const __ops_packet_t *pkt)
 		if (content->sig.info.signer_id_set) {
 			hexdump_data(print->indent, "Signer ID",
 				content->sig.info.signer_id,
-				sizeof(content->sig.info.signer_id));
+				(unsigned)sizeof(content->sig.info.signer_id));
 		}
 		print_string_and_value(print->indent, "Public Key Algorithm",
 			__ops_show_pka(content->sig.info.key_alg),
@@ -1294,7 +1294,7 @@ __ops_print_packet(__ops_printstate_t *print, const __ops_packet_t *pkt)
 			__ops_show_hash_alg((uint8_t)content->sig.info.hash_alg),
 			(uint8_t)content->sig.info.hash_alg);
 		print_uint(print->indent, "Hashed data len",
-			content->sig.info.v4_hashlen);
+			(unsigned)content->sig.info.v4_hashlen);
 
 		break;
 

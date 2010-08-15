@@ -102,8 +102,7 @@ __ops_hash_t *__ops_sig_get_hash(__ops_create_sig_t *);
 unsigned   __ops_end_hashed_subpkts(__ops_create_sig_t *);
 unsigned __ops_write_sig(__ops_output_t *, __ops_create_sig_t *,
 			const __ops_pubkey_t *, const __ops_seckey_t *);
-unsigned   __ops_add_birthtime(__ops_create_sig_t *, time_t);
-unsigned __ops_add_expiration(__ops_create_sig_t *, time_t);
+unsigned   __ops_add_time(__ops_create_sig_t *, int64_t, const char *);
 unsigned __ops_add_issuer_keyid(__ops_create_sig_t *,
 			const uint8_t *);
 void __ops_add_primary_userid(__ops_create_sig_t *, unsigned);
