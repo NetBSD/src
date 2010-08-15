@@ -1,4 +1,4 @@
-/*	$NetBSD: if_shmem.c,v 1.20 2010/08/13 10:13:44 pooka Exp $	*/
+/*	$NetBSD: if_shmem.c,v 1.21 2010/08/15 18:40:41 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.20 2010/08/13 10:13:44 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.21 2010/08/15 18:40:41 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -203,15 +203,15 @@ shmif_start(struct ifnet *ifp)
 			pktsize += m->m_len;
 		}
 
-		shmif_lockbus(sc->sc_busmem);
-		lastoff = sc->sc_busmem->shm_last;
-		npktlenoff = shmif_nextpktoff(sc->sc_busmem, lastoff);
-
 		getmicrouptime(&tv);
 
 		sp.sp_len = pktsize;
 		sp.sp_sec = tv.tv_sec;
 		sp.sp_usec = tv.tv_usec;
+
+		shmif_lockbus(sc->sc_busmem);
+		lastoff = sc->sc_busmem->shm_last;
+		npktlenoff = shmif_nextpktoff(sc->sc_busmem, lastoff);
 
 		dataoff = shmif_buswrite(sc->sc_busmem,
 		    npktlenoff, &sp, sizeof(sp), &wrap);
