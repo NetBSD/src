@@ -1,4 +1,4 @@
-.\" $NetBSD: acpicpu.4,v 1.11 2010/08/15 05:38:35 jruoho Exp $
+.\" $NetBSD: acpicpu.4,v 1.12 2010/08/15 19:34:50 jruoho Exp $
 .\"
 .\" Coyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
 .\" All rights reserved.
@@ -171,7 +171,7 @@ Unlike conventional
 .Tn CPU
 frequency management,
 .Tn ACPI
-provides support for Dynamic Frequency and Voltage Scaling
+provides support for Dynamic Voltage and Frequency Scaling
 .Pq Tn DVFS .
 This means that the firmware may request the implementation to
 dynamically scale the presently supported maximum clock frequency.
@@ -190,10 +190,9 @@ can be used to actively modulate the
 time a processor is allowed to execute.
 Outside the
 .Tn ACPI
-nomenclature, throttling may refer to
+nomenclature, throttling may be known as
 .Dq on-demand clock modulation
-.Pq Tn ODCM ,
-among others.
+.Pq Tn ODCM .
 .Pp
 The concept of
 .Dq duty cycle
@@ -277,28 +276,6 @@ may however remove the system control variables without further notice.
 .Xr acpi 4 ,
 .Xr acpitz 4 ,
 .Xr cpu_idle 9
-.Rs
-.%A Advanced Micro Devices
-.%B BIOS and Kernel Developer's Guide for
-.%B AMD Athlon 64 and AMD Opteron Processors
-.%N Revision 3.30
-.%D February, 2006
-.%U http://support.amd.com/us/Processor_TechDocs/26094.PDF
-.Re
-.Rs
-.%A Intel Corporation
-.%T Intel Processor Vendor-Specific ACPI, Interface Specification
-.%N Revision 005
-.%D September, 2006
-.%U http://download.intel.com/technology/IAPC/acpi/downloads/30222305.pdf
-.Re
-.Rs
-.%A Intel Corporation
-.%B Intel 64 and IA-32 Architectures, Software Developer's Manual
-.%V Volume 3A: System Programming Guide, Part 1
-.%D June, 2010
-.%U http://www.intel.com/Assets/PDF/manual/253668.pdf
-.Re
 .Sh HISTORY
 The
 .Nm
