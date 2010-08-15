@@ -1,4 +1,4 @@
-/* $NetBSD: hdaudio_afg.c,v 1.23 2010/08/15 16:21:46 jmcneill Exp $ */
+/* $NetBSD: hdaudio_afg.c,v 1.24 2010/08/15 19:39:56 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdaudio_afg.c,v 1.23 2010/08/15 16:21:46 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdaudio_afg.c,v 1.24 2010/08/15 19:39:56 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -94,6 +94,8 @@ static int hdaudio_afg_debug = 0;
 
 #define	hda_debug(sc, ...)		\
 	if (hdaudio_afg_debug) hda_print(sc, __VA_ARGS__)
+#define	hda_debug1(sc, ...)		\
+	if (hdaudio_afg_debug) hda_print1(sc, __VA_ARGS__)
 
 #define HDAUDIO_MIXER_CLASS_OUTPUTS	0
 #define	HDAUDIO_MIXER_CLASS_INPUTS	1
@@ -700,49 +702,123 @@ hdaudio_afg_widget_parse(struct hdaudio_widget *w)
 	}
 }
 
+static int
+hdaudio_afg_assoc_count_channels(struct hdaudio_afg_softc *sc,
+    struct hdaudio_assoc *as, enum hdaudio_pindir dir)
+{
+	struct hdaudio_widget *w;
+	int *dacmap;
+	int i, dacmapsz = sizeof(*dacmap) * sc->sc_endnode;
+	int nchans = 0;
+
+	if (as->as_enable == false || as->as_dir != dir)
+		return 0;
+
+	dacmap = kmem_zalloc(dacmapsz, KM_SLEEP);
+	if (dacmap == NULL)
+		return 0;
+
+	for (i = 0; i < HDAUDIO_MAXPINS; i++)
+		if (as->as_dacs[i])
+			dacmap[as->as_dacs[i]] = 1;
+
+	for (i = 1; i < sc->sc_endnode; i++) {
+		if (!dacmap[i])
+			continue;
+		w = hdaudio_afg_widget_lookup(sc, i);
+		if (w == NULL || w->w_enable == false)
+			continue;
+		nchans += (w->w_p.aw_cap & COP_AWCAP_STEREO) ? 2 : 1;
+	}
+
+	kmem_free(dacmap, dacmapsz);
+
+	return nchans;
+}
+
 static void
 hdaudio_afg_assoc_dump(struct hdaudio_afg_softc *sc)
 {
 	struct hdaudio_assoc *as = sc->sc_assocs;
 	struct hdaudio_widget *w;
-	uint32_t conn, color, defdev;
+	uint32_t conn, color, defdev, curdev, curport;
 	int maxassocs = sc->sc_nassocs;
 	int i, j;
 
 	for (i = 0; i < maxassocs; i++) {
-		int ndacs = 0;
+		uint32_t devmask = 0, portmask = 0;
+		bool firstdev = true;
+		int nchan;
 
 		if (as[i].as_enable == false)
 			continue;
 
+		hda_print(sc, "%s%02X",
+		    as[i].as_dir == HDAUDIO_PINDIR_IN ? "ADC" : "DAC", i);
+		hda_trace1(sc, " %s",
+		    as[i].as_digital ? "[DIGITAL]" : "[ANALOG]");
+
+		nchan = hdaudio_afg_assoc_count_channels(sc, &as[i],
+		    as[i].as_dir);
+		hda_print1(sc, " %dch:", nchan);
+
 		for (j = 0; j < HDAUDIO_MAXPINS; j++) {
 			if (as[i].as_dacs[j] == 0)
 				continue;
-			++ndacs;
-			hda_print(sc, "%s%d:%02X, %s ",
-			    as[i].as_dir == HDAUDIO_PINDIR_IN ? "ADC" : "DAC",
-			    i, as[i].as_dacs[j],
-			    as[i].as_digital ? "Digital" : "Analog");
-
 			w = hdaudio_afg_widget_lookup(sc, as[i].as_pins[j]);
-			if (w == NULL) {
-				hda_print1(sc, "<none>\n");
+			if (w == NULL)
 				continue;
-			}
 			conn = COP_CFG_PORT_CONNECTIVITY(w->w_pin.config);
-			color = COP_CFG_COLOR(w->w_pin.config);
 			defdev = COP_CFG_DEFAULT_DEVICE(w->w_pin.config);
-			if (conn != 1) {
-				hda_print1(sc, "%s: %s (%s, %02X)\n",
-				    hdaudio_afg_default_device[defdev],
-				    hdaudio_afg_port_connectivity[conn],
-				    hdaudio_afg_color[color], w->w_nid);
-			} else {
-				hda_print1(sc, "<unknown>\n");
+			if (conn != COP_PORT_NONE) {
+				devmask |= (1 << defdev);
+				portmask |= (1 << conn);
 			}
 		}
-		if (ndacs == 0)
-			hda_print1(sc, "<none>\n");
+		for (curdev = 0; curdev < 16; curdev++) {
+			bool firstport = true;
+			if ((devmask & (1 << curdev)) == 0)
+				continue;
+
+			if (firstdev == false)
+				hda_print1(sc, ",");
+			firstdev = false;
+			hda_print1(sc, " %s",
+			    hdaudio_afg_default_device[curdev]);
+
+			for (curport = 0; curport < 4; curport++) {
+				if ((portmask & (1 << curport)) == 0)
+					continue;
+
+				hda_print1(sc, " [%s",
+				    hdaudio_afg_port_connectivity[curport]);
+				for (j = 0; j < HDAUDIO_MAXPINS; j++) {
+					if (as[i].as_dacs[j] == 0)
+						continue;
+
+					w = hdaudio_afg_widget_lookup(sc,
+					    as[i].as_pins[j]);
+					if (w == NULL)
+						continue;
+					conn = COP_CFG_PORT_CONNECTIVITY(w->w_pin.config);
+					color = COP_CFG_COLOR(w->w_pin.config);
+					defdev = COP_CFG_DEFAULT_DEVICE(w->w_pin.config);
+					if (conn != curport || defdev != curdev)
+						continue;
+
+					if (firstport == false)
+						hda_trace1(sc, ",");
+					else
+						hda_trace1(sc, " ");
+					firstport = false;
+					hda_trace1(sc, "%s",
+					    hdaudio_afg_color[color]);
+					hda_trace1(sc, "(%02X)", w->w_nid);
+				}
+				hda_print1(sc, "]");
+			}
+		}
+		hda_print1(sc, "\n");
 	}
 }
 
@@ -2764,40 +2840,6 @@ hdaudio_afg_stream_intr(struct hdaudio_stream *st)
 	//}
 
 	return handled;
-}
-
-static int
-hdaudio_afg_assoc_count_channels(struct hdaudio_afg_softc *sc,
-    struct hdaudio_assoc *as, enum hdaudio_pindir dir)
-{
-	struct hdaudio_widget *w;
-	int *dacmap;
-	int i, dacmapsz = sizeof(*dacmap) * sc->sc_endnode;
-	int nchans = 0;
-
-	if (as->as_enable == false || as->as_dir != dir)
-		return 0;
-
-	dacmap = kmem_zalloc(dacmapsz, KM_SLEEP);
-	if (dacmap == NULL)
-		return 0;
-
-	for (i = 0; i < HDAUDIO_MAXPINS; i++)
-		if (as->as_dacs[i])
-			dacmap[as->as_dacs[i]] = 1;
-
-	for (i = 1; i < sc->sc_endnode; i++) {
-		if (!dacmap[i])
-			continue;
-		w = hdaudio_afg_widget_lookup(sc, i);
-		if (w == NULL || w->w_enable == false)
-			continue;
-		nchans += (w->w_p.aw_cap & COP_AWCAP_STEREO) ? 2 : 1;
-	}
-
-	kmem_free(dacmap, dacmapsz);
-
-	return nchans;
 }
 
 static bool
