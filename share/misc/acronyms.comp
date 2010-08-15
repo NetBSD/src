@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.104 2010/08/06 10:46:48 jruoho Exp $
+$NetBSD: acronyms.comp,v 1.105 2010/08/15 19:30:33 jruoho Exp $
 
 3WHS	three-way handshake
 ABI	application binary interface
@@ -44,6 +44,7 @@ BER	basic encoding rules
 BER	bit error rate
 BFD	binary formats descriptor
 BFKL	big fscking kernel lock
+BGA	ball grid array
 BGP	border gateway protocol
 BIND	Berkeley Internet Name Daemon
 BIOS	basic input/output system
@@ -133,6 +134,7 @@ DPI	deep packet inspection
 DRAM	dynamic random access memory
 DRI	direct rendering infrastructure
 DS	debug store
+DSDT	differentiated system descriptor table
 DSL	digital subscriber line
 DSLAM	digital subscriber line access multiplexer
 DSSS	direct sequence spread spectrum
@@ -141,6 +143,7 @@ DTE	data terminal equipment
 DTE	dumb terminal emulator
 DVB	digital video broadcasting
 DVD	digital versatile disc
+DVFS	dynamic voltage and frequency scaling
 DVR	digital video recorder
 DVI	digital visual interface
 E-XER	extended XML encoding rules
@@ -185,6 +188,7 @@ FPM	fast page mode
 FPU	floating point unit
 FQDN	fully qualified domain name
 FRU	field replaceable unit
+FSB	front side bus
 FTP	file transfer protocol
 FTPS	file transfer protocol, secure
 FWH	firmware hub
@@ -196,9 +200,11 @@ GID	group identifier
 GIF	graphics interchange format
 GMCH	graphics and memory controller hub
 GNU	GNU's not Unix
+GPE	general purpose event
 GPL	GNU/general public license
 GPU	graphics processing unit
 GRE	generic routing encapsulation
+GSI	global system interrupt
 GUI	graphics user interface
 GUID	globally unique identifier
 HA	high availability
@@ -208,8 +214,10 @@ HCI	host controller interface
 HCI	human-computer interaction
 HDD	hard disk drive
 HDCP	high-bandwidth digital content protection
+HFM	highest frequency mode
 HID	human interface device
 HPC	high performance computing
+HPET	high precision event timer
 HT	hyper-threading
 HTML	hyper-text markup language
 HTTP	hyper-text transfer protocol
@@ -276,12 +284,14 @@ KVM	kernel virtual memory
 KVM	keyboard, video, mouse switch
 LAMP	Linux Apache MySQL {Perl,PHP,Python}
 LAN	local area network
+LAPIC	local advanced programmable interrupt controller
 LBA	logical block addressing
 LCD	liquid crystal display
 LCP	link control protocol
 LDAP	lightweight directory access protocol
 LDT	local descriptor table
 LED	light emitting diode
+LFM	lowest frequency mode
 LFS	log-structured file system
 LFU	least frequently used
 LIFO	last in first out
@@ -306,6 +316,7 @@ LVM	logical volume management
 LZW	Lempel Ziv Welch
 MAC	medium access control
 MAC	mandatory access control
+MADT	multiple APIC descriptor table
 MBR	master boot record
 MCA	machine check architecture
 MCE	machine check exception
@@ -322,12 +333,15 @@ MIME	multipurpose Internet mail extensions
 MIMO	multiple input multiple output
 MIPS	million instructions per second
 MIT	Massachusetts Institute of Technology
+MMIO	memory mapped input/output
 MMU	memory management unit
 MMX	multimedia extension
 MMX	multiple math extension
 MMX	matrix math extension
 MPEG	moving picture experts group
 MPLS	multiprotocol label switching
+MPS	multiprocessor specification
+MPS	memory pool system
 MRU	most recently used
 MSB	most significant bit [or: byte]
 MSF	minutes seconds frames
@@ -356,8 +370,11 @@ NSA	National Security Agency
 NUMA	non-uniform memory access
 NVRAM	non-volatile random access memory
 NX	no execute
+OBO	off by one
+OBOE	off by one error
 OCL	object constraint language
 OCR	optical character recognition
+ODCM	on-demand clock modulation
 OEM	original equipment manufacturer
 OFDM	orthogonal frequency division multiplexing
 OO	object oriented
@@ -410,6 +427,7 @@ PIN	personal identification number
 PIO	programmed input/output
 PKI	public key infrastructure
 PLL	phase locked loop
+PMI	platform management interrupt
 PMT	photo-multiplier tube
 PNG	portable network graphics
 POE	power over ethernet
@@ -468,6 +486,7 @@ SACD	super audio compact disc
 SAD	security association database
 SAM	serial access memory
 SAN	storage area network
+SAPIC	streamlined advanced programmable interrupt controller
 SASI	shugart associates system interface (predecessor to SCSI)
 SATA	serial advanced technology attachment
 SB	sound blaster
@@ -522,10 +541,12 @@ SVM	secure virtual machine
 SVM	support vector machine
 SWF	Shockwave Flash
 TCB	trusted computing base
+TCC	thermal control circuit
 TCL	tool command language
 TCP	transmission control protocol
 TCQ	tagged command queueing
 TDD	test driven development
+TDP	thermal design power
 TFT	thin film transistor
 TFTP	trivial file transfer protocol
 TIAS	try it and see
