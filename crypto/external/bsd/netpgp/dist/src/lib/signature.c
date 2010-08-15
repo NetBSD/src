@@ -57,7 +57,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: signature.c,v 1.30 2010/08/15 07:52:27 agc Exp $");
+__RCSID("$NetBSD: signature.c,v 1.31 2010/08/15 16:10:56 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -834,13 +834,13 @@ __ops_write_sig(__ops_output_t *output,
 unsigned 
 __ops_add_time(__ops_create_sig_t *sig, int64_t when, const char *type)
 {
-	unsigned	tag;
+	__ops_content_enum	tag;
 
 	tag = (strcmp(type, "birth") == 0) ?
 		OPS_PTAG_SS_CREATION_TIME : OPS_PTAG_SS_EXPIRATION_TIME;
 	/* just do 32-bit timestamps for just now - it's in the protocol */
 	return __ops_write_ss_header(sig->output, 5, tag) &&
-		__ops_write_scalar(sig->output, (int32_t)when, sizeof(int32_t));
+		__ops_write_scalar(sig->output, (uint32_t)when, sizeof(uint32_t));
 }
 
 /**
@@ -1144,7 +1144,7 @@ __ops_sign_buf(__ops_io_t *io,
 		/* - creation time */
 		/* - key id */
 		ret = __ops_writer_push_clearsigned(output, sig) &&
-			__ops_write(output, input, insize) &&
+			__ops_write(output, input, (unsigned)insize) &&
 			__ops_writer_use_armored_sig(output) &&
 			__ops_add_time(sig, from, "birth") &&
 			__ops_add_time(sig, (int64_t)duration, "expiration");
@@ -1165,7 +1165,7 @@ __ops_sign_buf(__ops_io_t *io,
 
 		/* hash memory */
 		hash = __ops_sig_get_hash(sig);
-		hash->add(hash, input, insize);
+		hash->add(hash, input, (unsigned)insize);
 
 		/* output file contents as Literal Data packet */
 		if (__ops_get_debug_level(__FILE__)) {
