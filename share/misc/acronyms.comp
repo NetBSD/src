@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.105 2010/08/15 19:30:33 jruoho Exp $
+$NetBSD: acronyms.comp,v 1.106 2010/08/15 19:43:03 cegger Exp $
 
 3WHS	three-way handshake
 ABI	application binary interface
@@ -391,6 +391,7 @@ OSI	open-source initiative
 OSPF	open shortest path first
 OSS	open source software
 OSS	open sound system
+OSVW	operating system visible workarounds
 OTP	one time password
 OUI	organizationally unique identifier
 OWL	Web ontology language
@@ -400,6 +401,7 @@ PA	physical address
 PAE	physical address extension
 PAM	pluggable authentication modules
 PAM	pulse amplitude modulation
+PAT	page attribute table
 PAT	port address translation
 PATA	parallel ATA
 PAX	portable archive exchange
