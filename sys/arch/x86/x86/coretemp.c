@@ -1,4 +1,4 @@
-/* $NetBSD: coretemp.c,v 1.14 2010/03/14 18:04:29 pgoyette Exp $ */
+/* $NetBSD: coretemp.c,v 1.15 2010/08/15 08:45:20 mrg Exp $ */
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coretemp.c,v 1.14 2010/03/14 18:04:29 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coretemp.c,v 1.15 2010/08/15 08:45:20 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -68,6 +68,12 @@ coretemp_register(struct cpu_info *ci)
 	uint32_t regs[4];
 	uint64_t msr;
 	int cpumodel, cpuextmodel, cpumask;
+
+	/*
+	 * Don't attach on anything but the first SMT ID.
+	 */
+	if (ci->ci_smt_id != 0)
+		return;
 
 	/*
 	 * CPUID 0x06 returns 1 if the processor has on-die thermal
