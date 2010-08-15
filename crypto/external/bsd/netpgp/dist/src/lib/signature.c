@@ -57,7 +57,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: signature.c,v 1.31 2010/08/15 16:10:56 agc Exp $");
+__RCSID("$NetBSD: signature.c,v 1.32 2010/08/15 16:36:24 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -840,7 +840,7 @@ __ops_add_time(__ops_create_sig_t *sig, int64_t when, const char *type)
 		OPS_PTAG_SS_CREATION_TIME : OPS_PTAG_SS_EXPIRATION_TIME;
 	/* just do 32-bit timestamps for just now - it's in the protocol */
 	return __ops_write_ss_header(sig->output, 5, tag) &&
-		__ops_write_scalar(sig->output, (uint32_t)when, sizeof(uint32_t));
+		__ops_write_scalar(sig->output, (uint32_t)when, (unsigned)sizeof(uint32_t));
 }
 
 /**

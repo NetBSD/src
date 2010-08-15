@@ -54,7 +54,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: reader.c,v 1.41 2010/08/15 07:52:27 agc Exp $");
+__RCSID("$NetBSD: reader.c,v 1.42 2010/08/15 16:36:24 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -1806,7 +1806,7 @@ mem_reader(void *dest, size_t length, __ops_error_t **errors,
 	__OPS_USED(errors);
 
 	if (reader->offset + length > reader->length)
-		n = reader->length - reader->offset;
+		n = (unsigned)(reader->length - reader->offset);
 	else
 		n = (unsigned)length;
 

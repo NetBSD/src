@@ -58,7 +58,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: writer.c,v 1.27 2010/08/15 16:10:56 agc Exp $");
+__RCSID("$NetBSD: writer.c,v 1.28 2010/08/15 16:36:24 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -1550,7 +1550,7 @@ stream_write_litdata_first(__ops_output_t *output,
 	__ops_write(output, data, (unsigned)(sz_pd - 6));
 
 	data += (sz_pd - 6);
-	sz_towrite -= sz_pd;
+	sz_towrite -= (unsigned)sz_pd;
 
 	return stream_write_litdata(output, data, (unsigned)sz_towrite);
 }
@@ -1583,7 +1583,7 @@ stream_write_se_ip(__ops_output_t *output,
 		se_ip->hash.add(&se_ip->hash, data, (unsigned)pdlen);
 
 		data += pdlen;
-		len -= pdlen;
+		len -= (unsigned)pdlen;
 	}
 	return 1;
 }

@@ -57,7 +57,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: misc.c,v 1.35 2010/08/15 07:52:27 agc Exp $");
+__RCSID("$NetBSD: misc.c,v 1.36 2010/08/15 16:36:24 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -1026,7 +1026,7 @@ __ops_mem_readfile(__ops_memory_t *mem, const char *f)
 		}
 		/* read into contents of mem */
 		for (mem->length = 0 ;
-		     (cc = read(fileno(fp), &mem->buf[mem->length],
+		     (cc = (int)read(fileno(fp), &mem->buf[mem->length],
 					(size_t)(mem->allocated - mem->length))) > 0 ;
 		     mem->length += (size_t)cc) {
 		}
