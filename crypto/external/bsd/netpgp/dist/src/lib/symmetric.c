@@ -54,7 +54,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: symmetric.c,v 1.10 2010/03/05 16:01:10 agc Exp $");
+__RCSID("$NetBSD: symmetric.c,v 1.11 2010/08/15 07:52:27 agc Exp $");
 #endif
 
 #include "crypto.h"
@@ -489,7 +489,7 @@ __ops_block_size(__ops_symm_alg_t alg)
 {
 	const __ops_crypt_t *p = get_proto(alg);
 
-	return (p == NULL) ? 0 : p->blocksize;
+	return (p == NULL) ? 0 : (unsigned)p->blocksize;
 }
 
 unsigned 
@@ -497,7 +497,7 @@ __ops_key_size(__ops_symm_alg_t alg)
 {
 	const __ops_crypt_t *p = get_proto(alg);
 
-	return (p == NULL) ? 0 : p->keysize;
+	return (p == NULL) ? 0 : (unsigned)p->keysize;
 }
 
 void 
@@ -522,7 +522,7 @@ __ops_decrypt_se(__ops_crypt_t *decrypt, void *outvoid, const void *invoid,
 {
 	const uint8_t	*in = invoid;
 	uint8_t		*out = outvoid;
-	int              saved = count;
+	int              saved = (int)count;
 
 	/*
 	 * in order to support v3's weird resyncing we have to implement CFB
@@ -551,7 +551,7 @@ __ops_encrypt_se(__ops_crypt_t *encrypt, void *outvoid, const void *invoid,
 {
 	const uint8_t	*in = invoid;
 	uint8_t		*out = outvoid;
-	int              saved = count;
+	int              saved = (int)count;
 
 	/*
 	 * in order to support v3's weird resyncing we have to implement CFB

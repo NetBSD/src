@@ -13,7 +13,6 @@ separate from libcrypto?
 64-bit offsets
 thresholds
 default compression when signing?
-json/yaml output
 
 Done
 ====
@@ -97,3 +96,4 @@ add revocation information to public key display
 hkp to include sigs too
 make netpgpkeys work - add, import, commit, update, sign, passphrase
 fix ssh fingerprints not matching netpgp
+json/yaml output

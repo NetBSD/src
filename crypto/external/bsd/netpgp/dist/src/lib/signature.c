@@ -57,7 +57,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: signature.c,v 1.29 2010/06/25 03:37:27 agc Exp $");
+__RCSID("$NetBSD: signature.c,v 1.30 2010/08/15 07:52:27 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -354,8 +354,8 @@ hash_add_key(__ops_hash_t *hash, const __ops_pubkey_t *key)
 	__ops_build_pubkey(mem, key, dontmakepacket);
 	len = __ops_mem_len(mem);
 	__ops_hash_add_int(hash, 0x99, 1);
-	__ops_hash_add_int(hash, len, 2);
-	hash->add(hash, __ops_mem_data(mem), len);
+	__ops_hash_add_int(hash, (unsigned)len, 2);
+	hash->add(hash, __ops_mem_data(mem), (unsigned)len);
 	__ops_memory_free(mem);
 }
 
@@ -386,11 +386,11 @@ hash_add_trailer(__ops_hash_t *hash, const __ops_sig_t *sig,
 	if (sig->info.version == OPS_V4) {
 		if (raw_packet) {
 			hash->add(hash, raw_packet + sig->v4_hashstart,
-				  sig->info.v4_hashlen);
+				  (unsigned)sig->info.v4_hashlen);
 		}
 		__ops_hash_add_int(hash, (unsigned)sig->info.version, 1);
 		__ops_hash_add_int(hash, 0xff, 1);
-		__ops_hash_add_int(hash, sig->info.v4_hashlen, 4);
+		__ops_hash_add_int(hash, (unsigned)sig->info.v4_hashlen, 4);
 	} else {
 		__ops_hash_add_int(hash, (unsigned)sig->info.type, 1);
 		__ops_hash_add_int(hash, (unsigned)sig->info.birthtime, 4);
@@ -485,9 +485,9 @@ __ops_check_useridcert_sig(const __ops_pubkey_t *key,
 	init_key_sig(&hash, sig, key);
 	if (sig->info.version == OPS_V4) {
 		__ops_hash_add_int(&hash, 0xb4, 1);
-		__ops_hash_add_int(&hash, userid_len, 4);
+		__ops_hash_add_int(&hash, (unsigned)userid_len, 4);
 	}
-	hash.add(&hash, id, userid_len);
+	hash.add(&hash, id, (unsigned)userid_len);
 	return finalise_sig(&hash, sig, signer, raw_packet);
 }
 
@@ -515,9 +515,9 @@ __ops_check_userattrcert_sig(const __ops_pubkey_t *key,
 	init_key_sig(&hash, sig, key);
 	if (sig->info.version == OPS_V4) {
 		__ops_hash_add_int(&hash, 0xd1, 1);
-		__ops_hash_add_int(&hash, attribute->len, 4);
+		__ops_hash_add_int(&hash, (unsigned)attribute->len, 4);
 	}
-	hash.add(&hash, attribute->contents, attribute->len);
+	hash.add(&hash, attribute->contents, (unsigned)attribute->len);
 	return finalise_sig(&hash, sig, signer, raw_packet);
 }
 
@@ -612,7 +612,7 @@ start_sig_in_mem(__ops_create_sig_t *sig)
 	__ops_write_scalar(sig->output, (unsigned)sig->sig.info.hash_alg, 1);
 
 	/* dummy hashed subpacket count */
-	sig->hashoff = __ops_mem_len(sig->mem);
+	sig->hashoff = (unsigned)__ops_mem_len(sig->mem);
 	__ops_write_scalar(sig->output, 0, 2);
 }
 
@@ -644,8 +644,8 @@ __ops_sig_start_key_sig(__ops_create_sig_t *sig,
 	sig->hashlen = (unsigned)-1;
 	init_key_sig(&sig->hash, &sig->sig, key);
 	__ops_hash_add_int(&sig->hash, 0xb4, 1);
-	__ops_hash_add_int(&sig->hash, strlen((const char *) id), 4);
-	sig->hash.add(&sig->hash, id, strlen((const char *) id));
+	__ops_hash_add_int(&sig->hash, (unsigned)strlen((const char *) id), 4);
+	sig->hash.add(&sig->hash, id, (unsigned)strlen((const char *) id));
 	start_sig_in_mem(sig);
 }
 
@@ -697,7 +697,7 @@ __ops_start_sig(__ops_create_sig_t *sig,
 void 
 __ops_sig_add_data(__ops_create_sig_t *sig, const void *buf, size_t length)
 {
-	sig->hash.add(&sig->hash, buf, length);
+	sig->hash.add(&sig->hash, buf, (unsigned)length);
 }
 
 /**
@@ -711,10 +711,10 @@ __ops_sig_add_data(__ops_create_sig_t *sig, const void *buf, size_t length)
 unsigned 
 __ops_end_hashed_subpkts(__ops_create_sig_t *sig)
 {
-	sig->hashlen = __ops_mem_len(sig->mem) - sig->hashoff - 2;
+	sig->hashlen = (unsigned)(__ops_mem_len(sig->mem) - sig->hashoff - 2);
 	__ops_memory_place_int(sig->mem, sig->hashoff, sig->hashlen, 2);
 	/* dummy unhashed subpacket count */
-	sig->unhashoff = __ops_mem_len(sig->mem);
+	sig->unhashoff = (unsigned)__ops_mem_len(sig->mem);
 	return __ops_write_scalar(sig->output, 0, 2);
 }
 
@@ -770,7 +770,7 @@ __ops_write_sig(__ops_output_t *output,
 	}
 
 	__ops_memory_place_int(sig->mem, sig->unhashoff,
-			     len - sig->unhashoff - 2, 2);
+			     (unsigned)(len - sig->unhashoff - 2), 2);
 
 	/* add the packet from version number to end of hashed subpackets */
 	if (__ops_get_debug_level(__FILE__)) {
@@ -819,8 +819,8 @@ __ops_write_sig(__ops_output_t *output,
 	ret = __ops_write_ptag(output, OPS_PTAG_CT_SIGNATURE);
 	if (ret) {
 		len = __ops_mem_len(sig->mem);
-		ret = __ops_write_length(output, len) &&
-			__ops_write(output, __ops_mem_data(sig->mem), len);
+		ret = __ops_write_length(output, (unsigned)len) &&
+			__ops_write(output, __ops_mem_data(sig->mem), (unsigned)len);
 	}
 	__ops_memory_free(sig->mem);
 
@@ -830,35 +830,17 @@ __ops_write_sig(__ops_output_t *output,
 	return ret;
 }
 
-/**
- * \ingroup Core_Signature
- *
- * __ops_add_birthtime() adds a creation time to the signature.
- *
- * \param sig
- * \param when
- */
+/* add a time stamp to the output */
 unsigned 
-__ops_add_birthtime(__ops_create_sig_t *sig, time_t when)
+__ops_add_time(__ops_create_sig_t *sig, int64_t when, const char *type)
 {
-	return __ops_write_ss_header(sig->output, 5,
-					OPS_PTAG_SS_CREATION_TIME) &&
-		__ops_write_scalar(sig->output, (unsigned)when, 4);
-}
+	unsigned	tag;
 
-/**
- * __ops_add_expiry() adds an expiration amount (duration) to the signature.
- *
- */
-unsigned 
-__ops_add_expiration(__ops_create_sig_t *sig, time_t duration)
-{
-	uint32_t	d;
-
-	d = (uint32_t)duration;
-	return __ops_write_ss_header(sig->output, 5,
-					OPS_PTAG_SS_EXPIRATION_TIME) &&
-		__ops_write_scalar(sig->output, (unsigned)d, 4);
+	tag = (strcmp(type, "birth") == 0) ?
+		OPS_PTAG_SS_CREATION_TIME : OPS_PTAG_SS_EXPIRATION_TIME;
+	/* just do 32-bit timestamps for just now - it's in the protocol */
+	return __ops_write_ss_header(sig->output, 5, tag) &&
+		__ops_write_scalar(sig->output, (int32_t)when, sizeof(int32_t));
 }
 
 /**
@@ -922,7 +904,7 @@ open_output_file(__ops_output_t **output,
 	if (outname) {
 		fd = __ops_setup_file_write(output, outname, overwrite);
 	} else {
-		unsigned        flen = strlen(inname) + 4 + 1;
+		unsigned        flen = (unsigned)(strlen(inname) + 4 + 1);
 		char           *f = NULL;
 
 		if ((f = calloc(1, flen)) == NULL) {
@@ -1016,15 +998,15 @@ __ops_sign_file(__ops_io_t *io,
 		}
 
 		/* Do the signing */
-		__ops_write(output, __ops_mem_data(infile), __ops_mem_len(infile));
+		__ops_write(output, __ops_mem_data(infile), (unsigned)__ops_mem_len(infile));
 		__ops_memory_free(infile);
 
 		/* add signature with subpackets: */
 		/* - creation time */
 		/* - key id */
 		ret = __ops_writer_use_armored_sig(output) &&
-				__ops_add_birthtime(sig, (long long)from) &&
-				__ops_add_expiration(sig, (long long)duration);
+				__ops_add_time(sig, (int64_t)from, "birth") &&
+				__ops_add_time(sig, (int64_t)duration, "expiration");
 		if (ret == 0) {
 			__ops_teardown_file_write(output, fd_out);
 			return 0;
@@ -1052,7 +1034,7 @@ __ops_sign_file(__ops_io_t *io,
 
 		/* hash file contents */
 		hash = __ops_sig_get_hash(sig);
-		hash->add(hash, __ops_mem_data(infile), __ops_mem_len(infile));
+		hash->add(hash, __ops_mem_data(infile), (unsigned)__ops_mem_len(infile));
 
 #if 1
 		/* output file contents as Literal Data packet */
@@ -1070,8 +1052,8 @@ __ops_sign_file(__ops_io_t *io,
 #endif
 
 		/* add creation time to signature */
-		__ops_add_birthtime(sig, (long long)from);
-		__ops_add_expiration(sig, (long long)duration);
+		__ops_add_time(sig, (int64_t)from, "birth");
+		__ops_add_time(sig, (int64_t)duration, "expiration");
 		/* add key id to signature */
 		__ops_keyid(keyid, OPS_KEY_ID_SIZE, &seckey->pubkey, hash_alg);
 		__ops_add_issuer_keyid(sig, keyid);
@@ -1164,8 +1146,8 @@ __ops_sign_buf(__ops_io_t *io,
 		ret = __ops_writer_push_clearsigned(output, sig) &&
 			__ops_write(output, input, insize) &&
 			__ops_writer_use_armored_sig(output) &&
-			__ops_add_birthtime(sig, from) &&
-			__ops_add_expiration(sig, (long long)duration);
+			__ops_add_time(sig, from, "birth") &&
+			__ops_add_time(sig, (int64_t)duration, "expiration");
 		if (ret == 0) {
 			return NULL;
 		}
@@ -1195,8 +1177,8 @@ __ops_sign_buf(__ops_io_t *io,
 		}
 
 		/* add creation time to signature */
-		__ops_add_birthtime(sig, from);
-		__ops_add_expiration(sig, (long long)duration);
+		__ops_add_time(sig, from, "birth");
+		__ops_add_time(sig, (int64_t)duration, "expiration");
 		/* add key id to signature */
 		__ops_keyid(keyid, OPS_KEY_ID_SIZE, &seckey->pubkey, hash_alg);
 		__ops_add_issuer_keyid(sig, keyid);
@@ -1263,8 +1245,8 @@ __ops_sign_detached(__ops_io_t *io,
 	__ops_memory_free(mem);
 
 	/* calculate the signature */
-	__ops_add_birthtime(sig, from);
-	__ops_add_expiration(sig, (long long)duration);
+	__ops_add_time(sig, from, "birth");
+	__ops_add_time(sig, (int64_t)duration, "expiration");
 	__ops_keyid(keyid, sizeof(keyid), &seckey->pubkey, hash_alg);
 	__ops_add_issuer_keyid(sig, keyid);
 	__ops_end_hashed_subpkts(sig);
