@@ -1,4 +1,4 @@
-/*	$NetBSD: if_shmem.c,v 1.21 2010/08/15 18:40:41 pooka Exp $	*/
+/*	$NetBSD: if_shmem.c,v 1.22 2010/08/15 18:48:38 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.21 2010/08/15 18:40:41 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.22 2010/08/15 18:48:38 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -310,7 +310,9 @@ shmif_rcv(void *arg)
 		/* if it's from us, don't pass up and reuse storage space */
 		eth = mtod(m, struct ether_header *);
 		if (memcmp(eth->ether_shost, sc->sc_myaddr, 6) != 0) {
+			KERNEL_LOCK(1, NULL);
 			ifp->if_input(ifp, m);
+			KERNEL_UNLOCK_ONE(NULL);
 			m = NULL;
 		}
 	}
