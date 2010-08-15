@@ -1,4 +1,4 @@
-.\"	$NetBSD: fwctl.8,v 1.11 2010/08/15 21:52:30 cegger Exp $
+.\"	$NetBSD: fwctl.8,v 1.12 2010/08/15 22:01:57 cegger Exp $
 .\"
 .\" Copyright (c) 2005 KIYOHARA Takashi
 .\" All rights reserved.
@@ -71,12 +71,21 @@ register on all supported nodes.
 Show the configuration ROM on the node.
 .It Fl d Ar node
 Hex dump of the configuration ROM.
+.It Fl f Ar node
+Force specified
+.Ar node
+to be the root node on the next bus reset by sending a PHY config packet.
+Valid values are 0 - 63.
 .It Fl g Ar gap_count
 Broadcast new
 .Ar gap_count
 by phy_config packet.
 By default this value is 63 on all nodes.
 Valid values are 0 - 63.
+.It Fl i Ar pri_req
+Set the
+.Dv PRIORITY_BUDGET
+register on all supported nodes.
 .It Fl l Ar file
 Load hex dump file of the configuration ROM and parse it.
 .It Fl M Ar mode
@@ -172,7 +181,7 @@ This has been tested with SONY HDR-FX1E camera that produces HD
 MPEG-2 stream at 25 Mbps bandwidth.
 .Pp
 To send the stream from the camera over the network using TCP (which
-supprisingly works better with vlc), you can use
+surprisingly works better with vlc), you can use
 .Dl "fwctl -R - | nc 192.168.10.11 9000"
 with
 .Pa pkgsrc/net/netcat
