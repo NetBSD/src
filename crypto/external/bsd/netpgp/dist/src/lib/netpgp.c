@@ -34,7 +34,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: netpgp.c,v 1.68 2010/08/15 07:52:27 agc Exp $");
+__RCSID("$NetBSD: netpgp.c,v 1.69 2010/08/15 16:10:56 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -367,7 +367,7 @@ get_duration(char *s)
 	if (s == NULL) {
 		return 0;
 	}
-	now = strtoull(s, NULL, 10);
+	now = (uint64_t)strtoull(s, NULL, 10);
 	if ((mult = strchr("hdwmy", s[strlen(s) - 1])) != NULL) {
 		switch(*mult) {
 		case 'h':
@@ -459,7 +459,7 @@ isarmoured(__ops_io_t *io, const char *f, const void *memory, const char *text)
 			(void) fprintf(io->errs, "isarmoured: can't open '%s'\n", f);
 			return 0;
 		}
-		if (fgets(buf, sizeof(buf), fp) != NULL) {
+		if (fgets(buf, (int)sizeof(buf), fp) != NULL) {
 			armoured = (strncmp(buf, text, strlen(text)) == 0);
 		}
 		(void) fclose(fp);

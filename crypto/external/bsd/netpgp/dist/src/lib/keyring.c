@@ -57,7 +57,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: keyring.c,v 1.42 2010/08/15 07:52:26 agc Exp $");
+__RCSID("$NetBSD: keyring.c,v 1.43 2010/08/15 16:10:56 agc Exp $");
 #endif
 
 #ifdef HAVE_FCNTL_H
@@ -858,22 +858,22 @@ str2keyid(const char *userid, uint8_t *keyid, size_t len)
 	size_t			 j;
 	int			 i;
 
-	for (i = j = 0 ; j < len && userid[i] && userid[i + 1] ; i += 2, j++) {
+	for (i = 0, j = 0 ; j < len && userid[i] && userid[i + 1] ; i += 2, j++) {
 		if ((hi = strchr(uppers, userid[i])) == NULL) {
 			if ((hi = strchr(lowers, userid[i])) == NULL) {
 				break;
 			}
-			hichar = (hi - lowers);
+			hichar = (uint8_t)(hi - lowers);
 		} else {
-			hichar = (hi - uppers);
+			hichar = (uint8_t)(hi - uppers);
 		}
 		if ((lo = strchr(uppers, userid[i + 1])) == NULL) {
 			if ((lo = strchr(lowers, userid[i + 1])) == NULL) {
 				break;
 			}
-			lochar = (lo - lowers);
+			lochar = (uint8_t)(lo - lowers);
 		} else {
-			lochar = (lo - uppers);
+			lochar = (uint8_t)(lo - uppers);
 		}
 		keyid[j] = (hichar << 4) | (lochar);
 	}
