@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.79 2010/06/29 05:51:53 mrg Exp $
+#	$NetBSD: Makefile,v 1.80 2010/08/15 07:27:33 mrg Exp $
 
 # The `all' target must appear before bsd.own.mk is pulled in.
 all:
@@ -7,6 +7,12 @@ all:
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
+
+.if ${USE_PIGZGZIP} != "no"
+COMPRESS_PROGRAM=${TOOL_PIGZ:Q}
+.else
+COMPRESS_PROGRAM=gzip
+.endif
 
 SETSENV=	DESTDIR=${DESTDIR:Q} \
 		MACHINE=${MACHINE:Q} \
@@ -19,7 +25,7 @@ SETSENV=	DESTDIR=${DESTDIR:Q} \
 		MKTEMP=${TOOL_MKTEMP:Q} \
 		MTREE=${TOOL_MTREE:Q} \
 		PAX=${TOOL_PAX:Q} \
-		PIGZ=${TOOL_PIGZ:Q} \
+		COMPRESS_PROGRAM=${COMPRESS_PROGRAM:Q} \
 		PKG_CREATE=${TOOL_PKG_CREATE:Q} \
 		SED=${TOOL_SED:Q} \
 		TSORT=${TSORT:Q}

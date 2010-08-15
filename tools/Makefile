@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.139 2010/06/18 18:57:27 jmcneill Exp $
+#	$NetBSD: Makefile,v 1.140 2010/08/15 07:27:33 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -72,6 +72,10 @@ SUBDIR+=	mandoc
 
 .if ${MKMAINTAINERTOOLS:Uno} != "no"
 SUBDIR+=	autoconf .WAIT gettext
+.endif
+
+.if ${USE_PIGZGZIP} != "no"
+SUBDIR+=	pigz
 .endif
 
 .if ${MACHINE} == "hp700"

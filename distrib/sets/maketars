@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: maketars,v 1.73 2009/12/10 02:22:57 uebayasi Exp $
+# $NetBSD: maketars,v 1.74 2010/08/15 07:27:33 mrg Exp $
 #
 # Make release tar files for some or all lists.  Usage:
 # maketars [-b] [-x] [-i installdir] [-a arch] [-m machine] [-s setsdir]
@@ -217,6 +217,7 @@ for setname in ${lists:-${nlists}}; do
 		TMPFILES="${TMPFILES} ${tars}/${out}.tmp"
 		( cd "${dest}"; \
 		    ${PAX} -O -w -d -z -N"${etcdir}" ${metalog:+-M} \
+			--use-compress-program ${COMPRESS_PROGRAM} \
 			< "${setlistdir}/set.${setname}" ) \
 			> "${tars}/${out}.tmp" &&
 		mv "${tars}/${out}.tmp" "${tars}/${out}"

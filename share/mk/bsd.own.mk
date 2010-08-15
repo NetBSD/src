@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.638 2010/08/02 07:08:26 jmmv Exp $
+#	$NetBSD: bsd.own.mk,v 1.639 2010/08/15 07:27:34 mrg Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -869,9 +869,10 @@ ${var}?= yes
 #
 # USE_* options which default to "no".
 #
-#.for var in
-#${var}?= no
-#.endfor
+# For now, disable pigz as compressor by default
+.for var in USE_PIGZGZIP
+${var}?= no
+.endfor
 
 #
 # Where X11 sources are and where it is installed to.
