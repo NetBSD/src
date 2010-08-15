@@ -1,4 +1,4 @@
-/*	$NetBSD: if_shmem.c,v 1.24 2010/08/15 21:41:39 pooka Exp $	*/
+/*	$NetBSD: if_shmem.c,v 1.25 2010/08/15 21:57:58 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.24 2010/08/15 21:41:39 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.25 2010/08/15 21:57:58 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -225,7 +225,7 @@ shmif_start(struct ifnet *ifp)
 	struct shmif_sc *sc = ifp->if_softc;
 	struct mbuf *m, *m0;
 	uint32_t lastoff, dataoff, npktlenoff;
-	uint32_t pktsize = 0;
+	uint32_t pktsize;
 	bool wrote = false;
 	bool wrap;
 	int error;
@@ -239,6 +239,7 @@ shmif_start(struct ifnet *ifp)
 			break;
 		}
 
+		pktsize = 0;
 		for (m = m0; m != NULL; m = m->m_next) {
 			pktsize += m->m_len;
 		}
