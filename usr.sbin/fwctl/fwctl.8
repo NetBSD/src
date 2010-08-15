@@ -1,4 +1,4 @@
-.\"	$NetBSD: fwctl.8,v 1.10 2010/08/14 16:32:26 pgoyette Exp $
+.\"	$NetBSD: fwctl.8,v 1.11 2010/08/15 21:52:30 cegger Exp $
 .\"
 .\" Copyright (c) 2005 KIYOHARA Takashi
 .\" All rights reserved.
@@ -72,9 +72,11 @@ Show the configuration ROM on the node.
 .It Fl d Ar node
 Hex dump of the configuration ROM.
 .It Fl g Ar gap_count
-Broadcast
+Broadcast new
 .Ar gap_count
 by phy_config packet.
+By default this value is 63 on all nodes.
+Valid values are 0 - 63.
 .It Fl l Ar file
 Load hex dump file of the configuration ROM and parse it.
 .It Fl M Ar mode
@@ -87,9 +89,9 @@ Only meaningful in case of and must precede the
 .Fl R
 option.
 If not specified, the program will try to guess.
-If you get an error complaining about
-.Dq format 0x20 ,
-try to force the
+In case of
+.Dq format 0x20
+error, try to force the
 .Ar mpeg
 mode.
 .It Fl m Ar EUI64 | hostname
@@ -100,8 +102,8 @@ Send a link-on PHY packet to the node.
 .It Fl p
 Dump PHY registers.
 .It Fl R Ar filename
-Receive DV or MPEG TS stream and dump it to a file.
-Use Ctrl-C to stop receiving.
+Recieve DV or MPEG TS stream and dump it to a file.
+Use Ctrl-C to stop recieving.
 Some DV cameras seem not to send the stream if a bus manager exits.
 If you cannot get the stream, try the following commands:
 .Bd -literal -offset indent
@@ -133,6 +135,7 @@ register on the node.
 Show the topology map.
 .It Fl u Ar bus_num
 Specify the IEEE1394 bus number to be operated on.
+The default is bus 0.
 .El
 .Sh FILES
 .Bl -tag
