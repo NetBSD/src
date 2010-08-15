@@ -75,7 +75,8 @@ typedef struct __ops_keyring_t {
 const __ops_key_t *__ops_getkeybyid(__ops_io_t *,
 					const __ops_keyring_t *,
 					const uint8_t *,
-					unsigned *);
+					unsigned *,
+					__ops_pubkey_t **);
 const __ops_key_t *__ops_getkeybyname(__ops_io_t *,
 					const __ops_keyring_t *,
 					const char *);

@@ -57,7 +57,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: keyring.c,v 1.41 2010/08/13 18:29:40 agc Exp $");
+__RCSID("$NetBSD: keyring.c,v 1.42 2010/08/15 07:52:26 agc Exp $");
 #endif
 
 #ifdef HAVE_FCNTL_H
@@ -246,7 +246,7 @@ decrypt_cb(const __ops_packet_t *pkt, __ops_cbdata_t *cbinfo)
 	case OPS_GET_PASSPHRASE:
 		(void) __ops_getpassphrase(decrypt->passfp, pass, sizeof(pass));
 		*content->skey_passphrase.passphrase = netpgp_strdup(pass);
-		__ops_forget(pass, sizeof(pass));
+		__ops_forget(pass, (unsigned)sizeof(pass));
 		return OPS_KEEP_MEMORY;
 
 	case OPS_PARSER_ERRCODE:
@@ -508,7 +508,7 @@ __ops_add_selfsigned_userid(__ops_key_t *key, uint8_t *userid)
 	/* create sig for this pkt */
 	sig = __ops_create_sig_new();
 	__ops_sig_start_key_sig(sig, &key->key.seckey.pubkey, userid, OPS_CERT_POSITIVE);
-	__ops_add_birthtime(sig, time(NULL));
+	__ops_add_time(sig, (int64_t)time(NULL), "birth");
 	__ops_add_issuer_keyid(sig, key->sigid);
 	__ops_add_primary_userid(sig, 1);
 	__ops_end_hashed_subpkts(sig);
@@ -819,7 +819,7 @@ __ops_keyring_free(__ops_keyring_t *keyring)
 */
 const __ops_key_t *
 __ops_getkeybyid(__ops_io_t *io, const __ops_keyring_t *keyring,
-			   const uint8_t *keyid, unsigned *from)
+			   const uint8_t *keyid, unsigned *from, __ops_pubkey_t **pubkey)
 {
 	for ( ; keyring && *from < keyring->keyc; *from += 1) {
 		if (__ops_get_debug_level(__FILE__)) {
@@ -829,10 +829,16 @@ __ops_getkeybyid(__ops_io_t *io, const __ops_keyring_t *keyring,
 		if (memcmp(keyring->keys[*from].sigid, keyid, OPS_KEY_ID_SIZE) == 0 ||
 		    memcmp(&keyring->keys[*from].sigid[OPS_KEY_ID_SIZE / 2],
 				keyid, OPS_KEY_ID_SIZE / 2) == 0) {
+			if (pubkey) {
+				*pubkey = &keyring->keys[*from].key.pubkey;
+			}
 			return &keyring->keys[*from];
 		}
 		if (memcmp(&keyring->keys[*from].encid, keyid, OPS_KEY_ID_SIZE) == 0 ||
 		    memcmp(&keyring->keys[*from].encid[OPS_KEY_ID_SIZE / 2], keyid, OPS_KEY_ID_SIZE / 2) == 0) {
+			if (pubkey) {
+				*pubkey = &keyring->keys[*from].enckey;
+			}
 			return &keyring->keys[*from];
 		}
 	}
@@ -905,7 +911,7 @@ getkeybyname(__ops_io_t *io,
 		hexdump(io->outs, "keyid", keyid, 4);
 	}
 	savedstart = *from;
-	if ((kp = __ops_getkeybyid(io, keyring, keyid, from)) != NULL) {
+	if ((kp = __ops_getkeybyid(io, keyring, keyid, from, NULL)) != NULL) {
 		return kp;
 	}
 	*from = savedstart;

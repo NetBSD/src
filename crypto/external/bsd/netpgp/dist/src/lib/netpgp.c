@@ -34,7 +34,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: netpgp.c,v 1.67 2010/08/13 18:29:40 agc Exp $");
+__RCSID("$NetBSD: netpgp.c,v 1.68 2010/08/15 07:52:27 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -101,7 +101,7 @@ conffile(netpgp_t *netpgp, char *homedir, char *userid, size_t length)
 	(void) memset(&keyre, 0x0, sizeof(keyre));
 	(void) regcomp(&keyre, "^[ \t]*default-key[ \t]+([0-9a-zA-F]+)",
 		REG_EXTENDED);
-	while (fgets(buf, sizeof(buf), fp) != NULL) {
+	while (fgets(buf, (int)sizeof(buf), fp) != NULL) {
 		if (regexec(&keyre, buf, 10, matchv, 0) == 0) {
 			(void) memcpy(userid, &buf[(int)matchv[1].rm_so],
 				MIN((unsigned)(matchv[1].rm_eo -
@@ -141,7 +141,8 @@ resultp(__ops_io_t *io,
 	__ops_validation_t *res,
 	__ops_keyring_t *ring)
 {
-	const __ops_key_t	*pubkey;
+	const __ops_key_t	*key;
+	__ops_pubkey_t		*sigkey;
 	unsigned		 from;
 	unsigned		 i;
 	time_t			 t;
@@ -161,10 +162,15 @@ resultp(__ops_io_t *io,
 			__ops_show_pka(res->valid_sigs[i].key_alg),
 			userid_to_id(res->valid_sigs[i].signer_id, id));
 		from = 0;
-		pubkey = __ops_getkeybyid(io, ring,
+		key = __ops_getkeybyid(io, ring,
 			(const uint8_t *) res->valid_sigs[i].signer_id,
-			&from);
-		__ops_print_keydata(io, ring, pubkey, "pub", &pubkey->key.pubkey, 0);
+			&from, &sigkey);
+		if (sigkey == &key->enckey) {
+			(void) fprintf(io->res,
+				"WARNING: signature for %s made with encryption key\n",
+				(f) ? f : "<stdin>");
+		}
+		__ops_print_keydata(io, ring, key, "pub", &key->key.pubkey, 0);
 	}
 }
 
@@ -1053,7 +1059,7 @@ netpgp_sign_file(netpgp_t *netpgp,
 				(unsigned)armored, (unsigned)cleartext,
 				overwrite);
 	}
-	__ops_forget(seckey, sizeof(*seckey));
+	__ops_forget(seckey, (unsigned)sizeof(*seckey));
 	return ret;
 }
 
@@ -1163,7 +1169,7 @@ netpgp_sign_memory(netpgp_t *netpgp,
 	} else {
 		ret = 0;
 	}
-	__ops_forget(seckey, sizeof(*seckey));
+	__ops_forget(seckey, (unsigned)sizeof(*seckey));
 	return ret;
 }
 

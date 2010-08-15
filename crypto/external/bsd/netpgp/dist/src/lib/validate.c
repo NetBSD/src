@@ -54,7 +54,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: validate.c,v 1.36 2010/06/25 03:37:28 agc Exp $");
+__RCSID("$NetBSD: validate.c,v 1.37 2010/08/15 07:52:27 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -119,9 +119,9 @@ keydata_reader(void *dest, size_t length, __ops_error_t **errors,
 	(void) memcpy(dest,
 		&reader->key->packets[reader->packet].raw[reader->offset],
 		length);
-	reader->offset += length;
+	reader->offset += (unsigned)length;
 
-	return length;
+	return (int)length;
 }
 
 static void 
@@ -207,14 +207,14 @@ check_binary_sig(const uint8_t *data,
 			hexdump(stderr, "v4 hash", sig->info.v4_hashed,
 					sig->info.v4_hashlen);
 		}
-		hash.add(&hash, sig->info.v4_hashed, sig->info.v4_hashlen);
+		hash.add(&hash, sig->info.v4_hashed, (unsigned)sig->info.v4_hashlen);
 		trailer[0] = 0x04;	/* version */
 		trailer[1] = 0xFF;
-		hashedlen = sig->info.v4_hashlen;
-		trailer[2] = hashedlen >> 24;
-		trailer[3] = hashedlen >> 16;
-		trailer[4] = hashedlen >> 8;
-		trailer[5] = hashedlen;
+		hashedlen = (unsigned)sig->info.v4_hashlen;
+		trailer[2] = (uint8_t)(hashedlen >> 24);
+		trailer[3] = (uint8_t)(hashedlen >> 16);
+		trailer[4] = (uint8_t)(hashedlen >> 8);
+		trailer[5] = (uint8_t)(hashedlen);
 		hash.add(&hash, trailer, 6);
 		break;
 
@@ -237,6 +237,7 @@ __ops_validate_key_cb(const __ops_packet_t *pkt, __ops_cbdata_t *cbinfo)
 	const __ops_contents_t	 *content = &pkt->u;
 	const __ops_key_t	 *signer;
 	validate_key_cb_t	 *key;
+	__ops_pubkey_t		 *sigkey;
 	__ops_error_t		**errors;
 	__ops_io_t		 *io;
 	unsigned		  from;
@@ -299,7 +300,7 @@ __ops_validate_key_cb(const __ops_packet_t *pkt, __ops_cbdata_t *cbinfo)
 		from = 0;
 		signer = __ops_getkeybyid(io, key->keyring,
 					 content->sig.info.signer_id,
-					 &from);
+					 &from, &sigkey);
 		if (!signer) {
 			if (!add_sig_to_list(&content->sig.info,
 				&key->result->unknown_sigs,
@@ -309,6 +310,10 @@ __ops_validate_key_cb(const __ops_packet_t *pkt, __ops_cbdata_t *cbinfo)
 					return OPS_FINISHED;
 			}
 			break;
+		}
+		if (sigkey == &signer->enckey) {
+			(void) fprintf(io->errs,
+				"WARNING: signature made with encryption key\n");
 		}
 		switch (content->sig.info.type) {
 		case OPS_CERT_GENERIC:
@@ -421,6 +426,7 @@ validate_data_cb(const __ops_packet_t *pkt, __ops_cbdata_t *cbinfo)
 	const __ops_contents_t	 *content = &pkt->u;
 	const __ops_key_t	 *signer;
 	validate_data_cb_t	 *data;
+	__ops_pubkey_t		 *sigkey;
 	__ops_error_t		**errors;
 	__ops_io_t		 *io;
 	unsigned		  from;
@@ -473,7 +479,7 @@ validate_data_cb(const __ops_packet_t *pkt, __ops_cbdata_t *cbinfo)
 		}
 		from = 0;
 		signer = __ops_getkeybyid(io, data->keyring,
-					 content->sig.info.signer_id, &from);
+					 content->sig.info.signer_id, &from, &sigkey);
 		if (!signer) {
 			OPS_ERROR(errors, OPS_E_V_UNKNOWN_SIGNER,
 					"Unknown Signer");
@@ -484,6 +490,10 @@ validate_data_cb(const __ops_packet_t *pkt, __ops_cbdata_t *cbinfo)
 					"Can't add unknown sig to list");
 			}
 			break;
+		}
+		if (sigkey == &signer->enckey) {
+			(void) fprintf(io->errs,
+				"WARNING: signature made with encryption key\n");
 		}
 		if (content->sig.info.birthtime_set) {
 			data->result->birthtime = content->sig.info.birthtime;

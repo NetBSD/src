@@ -57,7 +57,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: create.c,v 1.32 2010/08/13 18:29:40 agc Exp $");
+__RCSID("$NetBSD: create.c,v 1.33 2010/08/15 07:52:26 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -138,8 +138,8 @@ unsigned
 __ops_write_struct_userid(__ops_output_t *output, const uint8_t *id)
 {
 	return __ops_write_ptag(output, OPS_PTAG_CT_USER_ID) &&
-		__ops_write_length(output, strlen((const char *) id)) &&
-		__ops_write(output, id, strlen((const char *) id));
+		__ops_write_length(output, (unsigned)strlen((const char *) id)) &&
+		__ops_write(output, id, (unsigned)strlen((const char *) id));
 }
 
 /**
@@ -389,7 +389,7 @@ write_seckey_body(const __ops_seckey_t *key,
 			if (key->s2k_specifier == OPS_S2KS_SALTED) {
 				hash.add(&hash, key->salt, OPS_SALT_SIZE);
 			}
-			hash.add(&hash, passphrase, pplen);
+			hash.add(&hash, passphrase, (unsigned)pplen);
 			hash.finish(&hash, hashed);
 
 			/*
@@ -525,7 +525,7 @@ __ops_write_xfer_pubkey(__ops_output_t *output,
 			return 0;
 		}
 		for (j = 0; j < key->packetc; j++) {
-			if (!__ops_write(output, key->packets[j].raw, key->packets[j].length)) {
+			if (!__ops_write(output, key->packets[j].raw, (unsigned)key->packets[j].length)) {
 				return 0;
 			}
 		}
@@ -584,7 +584,7 @@ __ops_write_xfer_seckey(__ops_output_t *output,
 			return 0;
 		}
 		for (j = 0; j < key->packetc; j++) {
-			if (!__ops_write(output, key->packets[j].raw, key->packets[j].length)) {
+			if (!__ops_write(output, key->packets[j].raw, (unsigned)key->packets[j].length)) {
 				return 0;
 			}
 		}
@@ -1160,7 +1160,7 @@ __ops_fileread_litdata(const char *filename,
 		(void) fprintf(stderr, "__ops_mem_readfile of '%s' failed\n", filename);
 		return 0;
 	}
-	len = (size_t)__ops_mem_len(mem);
+	len = (int)__ops_mem_len(mem);
 	ret = __ops_write_litdata(output, __ops_mem_data(mem), len, type);
 	__ops_memory_free(mem);
 	return ret;
@@ -1237,7 +1237,7 @@ __ops_write_symm_enc_data(const uint8_t *data,
 		return 0;
 	}
 
-	done = __ops_encrypt_se(&crypt_info, encrypted, data, (unsigned)len);
+	done = (int)__ops_encrypt_se(&crypt_info, encrypted, data, (unsigned)len);
 	if (done != len) {
 		(void) fprintf(stderr,
 			"__ops_write_symm_enc_data: done != len\n");
@@ -1245,7 +1245,7 @@ __ops_write_symm_enc_data(const uint8_t *data,
 	}
 
 	return __ops_write_ptag(output, OPS_PTAG_CT_SE_DATA) &&
-		__ops_write_length(output, 1 + encrypted_sz) &&
+		__ops_write_length(output, (unsigned)(1 + encrypted_sz)) &&
 		__ops_write(output, data, (unsigned)len);
 }
 

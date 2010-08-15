@@ -57,7 +57,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: openssl_crypto.c,v 1.26 2010/08/13 18:29:40 agc Exp $");
+__RCSID("$NetBSD: openssl_crypto.c,v 1.27 2010/08/15 07:52:27 agc Exp $");
 #endif
 
 #ifdef HAVE_OPENSSL_DSA_H
@@ -159,9 +159,6 @@ __ops_hash_md5(__ops_hash_t *hash)
 static int 
 sha1_init(__ops_hash_t *hash)
 {
-	if (__ops_get_debug_level(__FILE__)) {
-		fprintf(stderr, "***\n***\nsha1_init\n***\n");
-	}
 	if (hash->data) {
 		(void) fprintf(stderr, "sha1_init: hash data non-null\n");
 	}
@@ -177,18 +174,7 @@ static void
 sha1_add(__ops_hash_t *hash, const uint8_t *data, unsigned length)
 {
 	if (__ops_get_debug_level(__FILE__)) {
-		unsigned    i;
-
-		(void) fprintf(stderr, "adding %u to hash:\n ", length);
-		for (i = 0; i < length; i++) {
-			(void) fprintf(stderr, "0x%02x ", data[i]);
-			if (!((i + 1) % 16)) {
-				(void) fprintf(stderr, "\n");
-			} else if (!((i + 1) % 8)) {
-				(void) fprintf(stderr, "  ");
-			}
-		}
-		(void) fprintf(stderr, "\n");
+		hexdump(stderr, "sha1_add", data, length);
 	}
 	SHA1_Update(hash->data, data, length);
 }
@@ -198,12 +184,7 @@ sha1_finish(__ops_hash_t *hash, uint8_t *out)
 {
 	SHA1_Final(out, hash->data);
 	if (__ops_get_debug_level(__FILE__)) {
-		unsigned        i;
-
-		(void) fprintf(stderr, "***\n***\nsha1_finish\n***\n");
-		for (i = 0; i < OPS_SHA1_HASH_SIZE; i++)
-			(void) fprintf(stderr, "0x%02x ", out[i]);
-		(void) fprintf(stderr, "\n");
+		hexdump(stderr, "sha1_finish", out, OPS_SHA1_HASH_SIZE);
 	}
 	free(hash->data);
 	hash->data = NULL;
@@ -234,9 +215,6 @@ __ops_hash_sha1(__ops_hash_t *hash)
 static int 
 sha256_init(__ops_hash_t *hash)
 {
-	if (__ops_get_debug_level(__FILE__)) {
-		fprintf(stderr, "***\n***\nsha256_init\n***\n");
-	}
 	if (hash->data) {
 		(void) fprintf(stderr, "sha256_init: hash data non-null\n");
 	}
@@ -252,17 +230,7 @@ static void
 sha256_add(__ops_hash_t *hash, const uint8_t *data, unsigned length)
 {
 	if (__ops_get_debug_level(__FILE__)) {
-		unsigned    i;
-
-		(void) fprintf(stderr, "adding %d to hash:\n ", length);
-		for (i = 0; i < length; i++) {
-			(void) fprintf(stderr, "0x%02x ", data[i]);
-			if (!((i + 1) % 16))
-				(void) fprintf(stderr, "\n");
-			else if (!((i + 1) % 8))
-				(void) fprintf(stderr, "  ");
-		}
-		(void) fprintf(stderr, "\n");
+		hexdump(stderr, "sha256_add", data, length);
 	}
 	SHA256_Update(hash->data, data, length);
 }
@@ -272,12 +240,7 @@ sha256_finish(__ops_hash_t *hash, uint8_t *out)
 {
 	SHA256_Final(out, hash->data);
 	if (__ops_get_debug_level(__FILE__)) {
-		unsigned        i;
-
-		(void) fprintf(stderr, "***\n***\nsha1_finish\n***\n");
-		for (i = 0; i < SHA256_DIGEST_LENGTH; i++)
-			(void) fprintf(stderr, "0x%02x ", out[i]);
-		(void) fprintf(stderr, "\n");
+		hexdump(stderr, "sha1_finish", out, SHA256_DIGEST_LENGTH);
 	}
 	free(hash->data);
 	hash->data = NULL;
@@ -306,14 +269,11 @@ __ops_hash_sha256(__ops_hash_t *hash)
 static int 
 sha384_init(__ops_hash_t *hash)
 {
-	if (__ops_get_debug_level(__FILE__)) {
-		(void) fprintf(stderr, "***\n***\nsha384_init\n***\n");
-	}
 	if (hash->data) {
 		(void) fprintf(stderr, "sha384_init: hash data non-null\n");
 	}
 	if ((hash->data = calloc(1, sizeof(SHA512_CTX))) == NULL) {
-		(void) fprintf(stderr, "sha512_init: bad alloc\n");
+		(void) fprintf(stderr, "sha384_init: bad alloc\n");
 		return 0;
 	}
 	SHA384_Init(hash->data);
@@ -324,17 +284,7 @@ static void
 sha384_add(__ops_hash_t *hash, const uint8_t *data, unsigned length)
 {
 	if (__ops_get_debug_level(__FILE__)) {
-		unsigned    i;
-
-		(void) fprintf(stderr, "adding %u to hash:\n ", length);
-		for (i = 0; i < length; i++) {
-			(void) fprintf(stderr, "0x%02x ", data[i]);
-			if (!((i + 1) % 16))
-				(void) fprintf(stderr, "\n");
-			else if (!((i + 1) % 8))
-				(void) fprintf(stderr, "  ");
-		}
-		(void) fprintf(stderr, "\n");
+		hexdump(stderr, "sha384_add", data, length);
 	}
 	SHA384_Update(hash->data, data, length);
 }
@@ -344,12 +294,7 @@ sha384_finish(__ops_hash_t *hash, uint8_t *out)
 {
 	SHA384_Final(out, hash->data);
 	if (__ops_get_debug_level(__FILE__)) {
-		unsigned        i;
-
-		(void) fprintf(stderr, "***\n***\nsha1_finish\n***\n");
-		for (i = 0; i < SHA384_DIGEST_LENGTH; i++)
-			(void) fprintf(stderr, "0x%02x ", out[i]);
-		(void) fprintf(stderr, "\n");
+		hexdump(stderr, "sha384_finish", out, SHA384_DIGEST_LENGTH);
 	}
 	free(hash->data);
 	hash->data = NULL;
@@ -378,9 +323,6 @@ __ops_hash_sha384(__ops_hash_t *hash)
 static int 
 sha512_init(__ops_hash_t *hash)
 {
-	if (__ops_get_debug_level(__FILE__)) {
-		(void) fprintf(stderr, "***\n***\nsha512_init\n***\n");
-	}
 	if (hash->data) {
 		(void) fprintf(stderr, "sha512_init: hash data non-null\n");
 	}
@@ -396,17 +338,7 @@ static void
 sha512_add(__ops_hash_t *hash, const uint8_t *data, unsigned length)
 {
 	if (__ops_get_debug_level(__FILE__)) {
-		unsigned    i;
-
-		(void) fprintf(stderr, "adding %u to hash:\n ", length);
-		for (i = 0; i < length; i++) {
-			(void) fprintf(stderr, "0x%02x ", data[i]);
-			if (!((i + 1) % 16))
-				(void) fprintf(stderr, "\n");
-			else if (!((i + 1) % 8))
-				(void) fprintf(stderr, "  ");
-		}
-		(void) fprintf(stderr, "\n");
+		hexdump(stderr, "sha512_add", data, length);
 	}
 	SHA512_Update(hash->data, data, length);
 }
@@ -416,12 +348,7 @@ sha512_finish(__ops_hash_t *hash, uint8_t *out)
 {
 	SHA512_Final(out, hash->data);
 	if (__ops_get_debug_level(__FILE__)) {
-		unsigned        i;
-
-		(void) fprintf(stderr, "***\n***\nsha1_finish\n***\n");
-		for (i = 0; i < SHA512_DIGEST_LENGTH; i++)
-			(void) fprintf(stderr, "0x%02x ", out[i]);
-		(void) fprintf(stderr, "\n");
+		hexdump(stderr, "sha512_finish", out, SHA512_DIGEST_LENGTH);
 	}
 	free(hash->data);
 	hash->data = NULL;
@@ -451,9 +378,6 @@ __ops_hash_sha512(__ops_hash_t *hash)
 static int 
 sha224_init(__ops_hash_t *hash)
 {
-	if (__ops_get_debug_level(__FILE__)) {
-		(void) fprintf(stderr, "***\n***\nsha1_init\n***\n");
-	}
 	if (hash->data) {
 		(void) fprintf(stderr, "sha224_init: hash data non-null\n");
 	}
@@ -469,17 +393,7 @@ static void
 sha224_add(__ops_hash_t *hash, const uint8_t *data, unsigned length)
 {
 	if (__ops_get_debug_level(__FILE__)) {
-		unsigned    i;
-
-		(void) fprintf(stderr, "adding %u to hash:\n ", length);
-		for (i = 0; i < length; i++) {
-			(void) fprintf(stderr, "0x%02x ", data[i]);
-			if (!((i + 1) % 16))
-				(void) fprintf(stderr, "\n");
-			else if (!((i + 1) % 8))
-				(void) fprintf(stderr, "  ");
-		}
-		(void) fprintf(stderr, "\n");
+		hexdump(stderr, "sha224_add", data, length);
 	}
 	SHA224_Update(hash->data, data, length);
 }
@@ -489,12 +403,7 @@ sha224_finish(__ops_hash_t *hash, uint8_t *out)
 {
 	SHA224_Final(out, hash->data);
 	if (__ops_get_debug_level(__FILE__)) {
-		unsigned        i;
-
-		(void) fprintf(stderr, "***\n***\nsha1_finish\n***\n");
-		for (i = 0; i < SHA224_DIGEST_LENGTH; i++)
-			(void) fprintf(stderr, "0x%02x ", out[i]);
-		(void) fprintf(stderr, "\n");
+		hexdump(stderr, "sha224_finish", out, SHA224_DIGEST_LENGTH);
 	}
 	free(hash->data);
 	hash->data = NULL;

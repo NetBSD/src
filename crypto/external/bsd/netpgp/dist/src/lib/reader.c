@@ -54,7 +54,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: reader.c,v 1.40 2010/08/15 02:39:46 agc Exp $");
+__RCSID("$NetBSD: reader.c,v 1.41 2010/08/15 07:52:27 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -482,7 +482,7 @@ flush(dearmour_t *dearmour, __ops_cbdata_t *cbinfo)
 
 	if (dearmour->unarmoredc > 0) {
 		content.u.unarmoured_text.data = dearmour->unarmoured;
-		content.u.unarmoured_text.length = dearmour->unarmoredc;
+		content.u.unarmoured_text.length = (unsigned)dearmour->unarmoredc;
 		CALLBACK(OPS_PTAG_CT_UNARMOURED_TEXT, cbinfo, &content);
 		dearmour->unarmoredc = 0;
 	}
@@ -866,7 +866,7 @@ __ops_crc24(unsigned checksum, uint8_t c)
 		if (checksum & 0x1000000)
 			checksum ^= CRC24_POLY;
 	}
-	return checksum & 0xffffffL;
+	return (unsigned)(checksum & 0xffffffL);
 }
 
 static int 
@@ -1037,7 +1037,7 @@ armoured_data_reader(void *dest_, size_t length, __ops_error_t **errors,
 	int              ret;
 
 	dearmour = __ops_reader_get_arg(readinfo);
-	saved = length;
+	saved = (int)length;
 	if (dearmour->eof64 && !dearmour->buffered) {
 		if (dearmour->state != OUTSIDE_BLOCK &&
 		    dearmour->state != AT_TRAILER_NAME) {
@@ -1386,7 +1386,7 @@ encrypted_data_reader(void *dest,
 	int		 saved;
 
 	encrypted = __ops_reader_get_arg(readinfo);
-	saved = length;
+	saved = (int)length;
 	/*
 	 * V3 MPIs have the count plain and the cipher is reset after each
 	 * count
@@ -1417,7 +1417,7 @@ encrypted_data_reader(void *dest,
 					"encrypted_data_reader: bad v3 read\n");
 				return 0;
 			}
-			n = MIN(length, encrypted->c);
+			n = (int)MIN(length, encrypted->c);
 			(void) memcpy(dest,
 				encrypted->decrypted + encrypted->off, n);
 			encrypted->c -= n;
@@ -1436,7 +1436,7 @@ encrypted_data_reader(void *dest,
 			if (!encrypted->region->indeterminate) {
 				n -= encrypted->region->readc;
 				if (n == 0) {
-					return saved - length;
+					return (int)(saved - length);
 				}
 				if (n > sizeof(buffer)) {
 					n = sizeof(buffer);
@@ -1451,7 +1451,7 @@ encrypted_data_reader(void *dest,
 			 * unencrypted!  */
 			if ((readinfo->parent->reading_v3_secret ||
 			     readinfo->parent->exact_read) && n > length) {
-				n = length;
+				n = (unsigned)length;
 			}
 
 			if (!__ops_stacked_limited_read(buffer, n,
@@ -1631,7 +1631,7 @@ se_ip_data_reader(void *dest_,
 			hexdump(stderr, "mdc", mdc, sz_mdc);
 		}
 		__ops_calc_mdc_hash(preamble, sz_preamble, plaintext,
-				sz_plaintext, hashed);
+				(unsigned)sz_plaintext, hashed);
 
 		if (memcmp(mdc_hash, hashed, OPS_SHA1_HASH_SIZE) != 0) {
 			OPS_ERROR(errors, OPS_E_V_BAD_HASH,
@@ -1658,9 +1658,9 @@ se_ip_data_reader(void *dest_,
 
 		free(buf);
 	}
-	n = len;
+	n = (unsigned)len;
 	if (n > se_ip->plaintext_available) {
-		n = se_ip->plaintext_available;
+		n = (unsigned)se_ip->plaintext_available;
 	}
 
 	memcpy(dest_, se_ip->plaintext + se_ip->plaintext_offset, n);
@@ -1747,10 +1747,12 @@ static int
 fd_reader(void *dest, size_t length, __ops_error_t **errors,
 	  __ops_reader_t *readinfo, __ops_cbdata_t *cbinfo)
 {
-	mmap_reader_t *reader = __ops_reader_get_arg(readinfo);
-	int             n = read(reader->fd, dest, length);
+	mmap_reader_t	*reader;
+	int		 n;
 
 	__OPS_USED(cbinfo);
+	reader = __ops_reader_get_arg(readinfo);
+	n = (int)read(reader->fd, dest, length);
 	if (n == 0)
 		return 0;
 	if (n < 0) {
@@ -1806,9 +1808,9 @@ mem_reader(void *dest, size_t length, __ops_error_t **errors,
 	if (reader->offset + length > reader->length)
 		n = reader->length - reader->offset;
 	else
-		n = length;
+		n = (unsigned)length;
 
-	if (n == 0)
+	if (n == (unsigned)0)
 		return 0;
 
 	memcpy(dest, reader->buffer + reader->offset, n);
@@ -2140,7 +2142,7 @@ __ops_pk_sesskey_cb(const __ops_packet_t *pkt, __ops_cbdata_t *cbinfo)
 		from = 0;
 		cbinfo->cryptinfo.keydata =
 			__ops_getkeybyid(io, cbinfo->cryptinfo.secring,
-				content->pk_sesskey.key_id, &from);
+				content->pk_sesskey.key_id, &from, NULL);
 		if (!cbinfo->cryptinfo.keydata) {
 			break;
 		}
@@ -2187,13 +2189,13 @@ __ops_get_seckey_cb(const __ops_packet_t *pkt, __ops_cbdata_t *cbinfo)
 		from = 0;
 		pubkey = __ops_getkeybyid(io, cbinfo->cryptinfo.pubring,
 				content->get_seckey.pk_sesskey->key_id,
-				&from);
+				&from, NULL);
 		/* validate key from secring */
 		from = 0;
 		cbinfo->cryptinfo.keydata =
 			__ops_getkeybyid(io, cbinfo->cryptinfo.secring,
 				content->get_seckey.pk_sesskey->key_id,
-				&from);
+				&from, NULL);
 		if (!cbinfo->cryptinfo.keydata ||
 		    !__ops_is_key_secret(cbinfo->cryptinfo.keydata)) {
 			return (__ops_cb_ret_t)0;
@@ -2317,12 +2319,12 @@ mmap_reader(void *dest, size_t length, __ops_error_t **errors,
 
 	__OPS_USED(errors);
 	__OPS_USED(cbinfo);
-	n = MIN(length, (unsigned)(mem->size - mem->offset));
+	n = (unsigned)MIN(length, (unsigned)(mem->size - mem->offset));
 	if (n > 0) {
 		(void) memcpy(dest, &cmem[(int)mem->offset], (unsigned)n);
 		mem->offset += n;
 	}
-	return n;
+	return (int)n;
 }
 
 /* tear down the mmap, close the fd */

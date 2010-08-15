@@ -57,7 +57,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: compress.c,v 1.15 2010/03/05 16:01:09 agc Exp $");
+__RCSID("$NetBSD: compress.c,v 1.16 2010/08/15 07:52:26 agc Exp $");
 #endif
 
 #ifdef HAVE_ZLIB_H
@@ -199,7 +199,7 @@ zlib_compressed_data_reader(void *dest, size_t length,
 		z->offset += len;
 	}
 
-	return length;
+	return (int)length;
 }
 
 /* \todo remove code duplication between this and zlib_compressed_data_reader */
@@ -283,7 +283,7 @@ bzip2_compressed_data_reader(void *dest, size_t length,
 		bz->offset += len;
 	}
 
-	return length;
+	return (int)length;
 }
 
 /**
@@ -346,11 +346,11 @@ __ops_decompress(__ops_region_t *region, __ops_stream_t *stream,
 
 	switch (type) {
 	case OPS_C_ZIP:
-		ret = inflateInit2(&z.zstream, -15);
+		ret = (int)inflateInit2(&z.zstream, -15);
 		break;
 
 	case OPS_C_ZLIB:
-		ret = inflateInit(&z.zstream);
+		ret = (int)inflateInit(&z.zstream);
 		break;
 
 	case OPS_C_BZIP2:
@@ -434,7 +434,7 @@ __ops_writez(__ops_output_t *out, const uint8_t *data, const unsigned len)
 
 	/* all other fields set to zero by use of calloc */
 
-	if (deflateInit(&zip->stream, level) != Z_OK) {
+	if ((int)deflateInit(&zip->stream, level) != Z_OK) {
 		(void) fprintf(stderr, "__ops_writez: can't initialise\n");
 		return 0;
 	}
@@ -462,11 +462,11 @@ __ops_writez(__ops_output_t *out, const uint8_t *data, const unsigned len)
 
 	/* setup stream */
 	zip->stream.next_in = zip->src;
-	zip->stream.avail_in = sz_in;
+	zip->stream.avail_in = (unsigned)sz_in;
 	zip->stream.total_in = 0;
 
 	zip->stream.next_out = zip->dst;
-	zip->stream.avail_out = sz_out;
+	zip->stream.avail_out = (unsigned)sz_out;
 	zip->stream.total_out = 0;
 
 	do {

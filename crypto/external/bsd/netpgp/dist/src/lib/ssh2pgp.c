@@ -436,7 +436,7 @@ __ops_ssh2_readkeys(__ops_io_t *io, __ops_keyring_t *pubring,
 		if (__ops_get_debug_level(__FILE__)) {
 			(void) fprintf(io->errs, "__ops_ssh2_readkeys: pubfile '%s'\n", pubfile);
 		}
-		if (!__ops_ssh2pubkey(io, pubfile, &key, hashtype)) {
+		if (!__ops_ssh2pubkey(io, pubfile, &key, (__ops_hash_alg_t)hashtype)) {
 			(void) fprintf(io->errs, "__ops_ssh2_readkeys: can't read pubkeys '%s'\n", pubfile);
 			return 0;
 		}
@@ -452,7 +452,7 @@ __ops_ssh2_readkeys(__ops_io_t *io, __ops_keyring_t *pubring,
 		if (pubkey == NULL) {
 			pubkey = &pubring->keys[0];
 		}
-		if (!__ops_ssh2seckey(io, secfile, &key, &pubkey->key.pubkey, hashtype)) {
+		if (!__ops_ssh2seckey(io, secfile, &key, &pubkey->key.pubkey, (__ops_hash_alg_t)hashtype)) {
 			(void) fprintf(io->errs, "__ops_ssh2_readkeys: can't read seckeys '%s'\n", secfile);
 			return 0;
 		}

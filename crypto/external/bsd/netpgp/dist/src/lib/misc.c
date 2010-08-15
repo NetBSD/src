@@ -57,7 +57,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: misc.c,v 1.34 2010/08/13 18:29:40 agc Exp $");
+__RCSID("$NetBSD: misc.c,v 1.35 2010/08/15 07:52:27 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -404,7 +404,7 @@ hash_uint32(__ops_hash_t *hash, uint32_t n)
 	ibuf[1] = (uint8_t)(n >> 16) & 0xff;
 	ibuf[2] = (uint8_t)(n >> 8) & 0xff;
 	ibuf[3] = (uint8_t)n & 0xff;
-	(*hash->add)(hash, (const uint8_t *)(void *)ibuf, sizeof(ibuf));
+	(*hash->add)(hash, (const uint8_t *)(void *)ibuf, (unsigned)sizeof(ibuf));
 	return sizeof(ibuf);
 }
 
@@ -417,7 +417,7 @@ hash_string(__ops_hash_t *hash, const uint8_t *buf, uint32_t len)
 	}
 	hash_uint32(hash, len);
 	(*hash->add)(hash, buf, len);
-	return sizeof(len) + (int)len;
+	return (int)(sizeof(len) + len);
 }
 
 /* hash a bignum, possibly padded - first length, then string itself */
@@ -443,9 +443,9 @@ hash_bignum(__ops_hash_t *hash, BIGNUM *bignum)
 	BN_bn2bin(bignum, bn + 1);
 	bn[0] = 0x0;
 	padbyte = (bn[1] & 0x80) ? 1 : 0;
-	hash_string(hash, bn + 1 - padbyte, len + padbyte);
+	hash_string(hash, bn + 1 - padbyte, (unsigned)(len + padbyte));
 	free(bn);
-	return sizeof(len) + len + padbyte;
+	return (int)(sizeof(len) + len + padbyte);
 }
 
 /** \file
@@ -494,7 +494,7 @@ __ops_fingerprint(__ops_fingerprint_t *fp, const __ops_pubkey_t *key, __ops_hash
 			return 0;
 		}
 		type = (key->alg == OPS_PKA_RSA) ? "ssh-rsa" : "ssh-dss";
-		hash_string(&hash, (const uint8_t *)(const void *)type, strlen(type));
+		hash_string(&hash, (const uint8_t *)(const void *)type, (unsigned)strlen(type));
 		switch(key->alg) {
 		case OPS_PKA_RSA:
 			hash_bignum(&hash, key->key.rsa.e);
@@ -521,7 +521,7 @@ __ops_fingerprint(__ops_fingerprint_t *fp, const __ops_pubkey_t *key, __ops_hash
 				"__ops_fingerprint: bad sha1 alloc\n");
 			return 0;
 		}
-		len = __ops_mem_len(mem);
+		len = (unsigned)__ops_mem_len(mem);
 		__ops_hash_add_int(&hash, 0x99, 1);
 		__ops_hash_add_int(&hash, len, 2);
 		hash.add(&hash, __ops_mem_data(mem), len);
@@ -719,7 +719,7 @@ __ops_hash(uint8_t *out, __ops_hash_alg_t alg, const void *in, size_t length)
 		/* we'll just continue here - don't want to return a 0 hash */
 		/* XXX - agc - no way to return failure */
 	}
-	hash.add(&hash, in, length);
+	hash.add(&hash, in, (unsigned)length);
 	return hash.finish(&hash, out);
 }
 
@@ -755,7 +755,7 @@ __ops_calc_mdc_hash(const uint8_t *preamble,
 	}
 
 	/* preamble */
-	hash.add(&hash, preamble, sz_preamble);
+	hash.add(&hash, preamble, (unsigned)sz_preamble);
 	/* plaintext */
 	hash.add(&hash, plaintext, sz_plaintext);
 	/* MDC packet tag */
@@ -934,16 +934,16 @@ __ops_memory_make_packet(__ops_memory_t *out, __ops_content_enum tag)
 	out->buf[0] = OPS_PTAG_ALWAYS_SET | OPS_PTAG_NEW_FORMAT | tag;
 
 	if (out->length < 192) {
-		out->buf[1] = out->length;
+		out->buf[1] = (uint8_t)out->length;
 	} else if (out->length < 8192 + 192) {
-		out->buf[1] = ((out->length - 192) >> 8) + 192;
-		out->buf[2] = out->length - 192;
+		out->buf[1] = (uint8_t)((out->length - 192) >> 8) + 192;
+		out->buf[2] = (uint8_t)(out->length - 192);
 	} else {
 		out->buf[1] = 0xff;
-		out->buf[2] = out->length >> 24;
-		out->buf[3] = out->length >> 16;
-		out->buf[4] = out->length >> 8;
-		out->buf[5] = out->length;
+		out->buf[2] = (uint8_t)(out->length >> 24);
+		out->buf[3] = (uint8_t)(out->length >> 16);
+		out->buf[4] = (uint8_t)(out->length >> 8);
+		out->buf[5] = (uint8_t)(out->length);
 	}
 
 	out->length += extra + 1;
@@ -1027,7 +1027,7 @@ __ops_mem_readfile(__ops_memory_t *mem, const char *f)
 		/* read into contents of mem */
 		for (mem->length = 0 ;
 		     (cc = read(fileno(fp), &mem->buf[mem->length],
-					mem->allocated - mem->length)) > 0 ;
+					(size_t)(mem->allocated - mem->length))) > 0 ;
 		     mem->length += (size_t)cc) {
 		}
 	} else {
