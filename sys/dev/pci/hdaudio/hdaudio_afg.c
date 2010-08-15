@@ -1,4 +1,4 @@
-/* $NetBSD: hdaudio_afg.c,v 1.22 2010/08/10 13:47:38 joerg Exp $ */
+/* $NetBSD: hdaudio_afg.c,v 1.23 2010/08/15 16:21:46 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdaudio_afg.c,v 1.22 2010/08/10 13:47:38 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdaudio_afg.c,v 1.23 2010/08/15 16:21:46 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -3350,7 +3350,7 @@ hdaudio_afg_round_blocksize(void *opaque, int blksize, int mode,
 	}
 
 	/* Multiple of 128 */
-	blksize &= ~128;
+	blksize &= ~127;
 	if (blksize <= 0)
 		blksize = 128;
 
@@ -3358,7 +3358,7 @@ hdaudio_afg_round_blocksize(void *opaque, int blksize, int mode,
 	if (bufsize > HDAUDIO_BDL_MAX * blksize) {
 		blksize = bufsize / HDAUDIO_BDL_MAX;
 		if (blksize & 128)
-			blksize = (blksize + 128) & ~128;
+			blksize = (blksize + 128) & ~127;
 	}
 
 	return blksize;
@@ -3572,7 +3572,7 @@ static size_t
 hdaudio_afg_round_buffersize(void *opaque, int direction, size_t bufsize)
 {
 	/* Multiple of 128 */
-	bufsize &= ~128;
+	bufsize &= ~127;
 	if (bufsize <= 0)
 		bufsize = 128;
 	return bufsize;
