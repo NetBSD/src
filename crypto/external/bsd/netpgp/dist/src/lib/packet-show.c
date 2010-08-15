@@ -60,7 +60,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: packet-show.c,v 1.16 2010/05/25 01:05:11 agc Exp $");
+__RCSID("$NetBSD: packet-show.c,v 1.17 2010/08/15 16:36:24 agc Exp $");
 #endif
 
 #include <stdlib.h>
@@ -465,7 +465,7 @@ add_bitmap_entry(__ops_text_t *map, const char *str, uint8_t bit)
 		 * be replaced in the output by 2 chars of hex, so the length
 		 * will be correct
 		 */
-		unsigned         len = strlen(fmt_unknown) + 1;
+		unsigned         len = (unsigned)(strlen(fmt_unknown) + 1);
 		char		*newstr;
 
 		if ((newstr = calloc(1, len)) == NULL) {

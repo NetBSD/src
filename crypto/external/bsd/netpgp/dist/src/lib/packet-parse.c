@@ -58,7 +58,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: packet-parse.c,v 1.40 2010/08/15 16:10:56 agc Exp $");
+__RCSID("$NetBSD: packet-parse.c,v 1.41 2010/08/15 16:36:24 agc Exp $");
 #endif
 
 #ifdef HAVE_OPENSSL_CAST_H
@@ -2436,7 +2436,7 @@ parse_seckey(__ops_region_t *region, __ops_stream_t *stream)
 					(const uint8_t *) "", 1);
 			}
 		}
-		passlen = strlen(passphrase);
+		passlen = (unsigned)strlen(passphrase);
 		for (n = 0; n * hashsize < keysize; ++n) {
 			unsigned        i;
 
@@ -2799,7 +2799,7 @@ __ops_decrypt_se_data(__ops_content_enum tag, __ops_region_t *region,
 	decrypt = __ops_get_decrypt(stream);
 	if (decrypt) {
 		__ops_region_t	encregion;
-		unsigned	b = decrypt->blocksize;
+		unsigned	b = (unsigned)decrypt->blocksize;
 		uint8_t		buf[OPS_MAX_BLOCK_SIZE + 2] = "";
 
 		__ops_reader_push_decrypt(stream, decrypt, region);
