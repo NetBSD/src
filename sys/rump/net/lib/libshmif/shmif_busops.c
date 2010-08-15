@@ -1,4 +1,4 @@
-/*	$NetBSD: shmif_busops.c,v 1.3 2010/08/15 18:47:38 pooka Exp $	*/
+/*	$NetBSD: shmif_busops.c,v 1.4 2010/08/15 18:55:03 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: shmif_busops.c,v 1.3 2010/08/15 18:47:38 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: shmif_busops.c,v 1.4 2010/08/15 18:55:03 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -41,46 +41,6 @@ __KERNEL_RCSID(0, "$NetBSD: shmif_busops.c,v 1.3 2010/08/15 18:47:38 pooka Exp $
 #else
 #include <rump/rumpuser.h>
 #endif
-
-#define LOCK_UNLOCKED	0
-#define LOCK_LOCKED	1
-#define LOCK_COOLDOWN	1001
-
-/*
- * This locking needs work and will misbehave severely if:
- * 1) the backing memory has to be paged in
- * 2) some lockholder exits while holding the lock
- */
-void
-shmif_lockbus(struct shmif_mem *busmem)
-{
-	int i = 0;
-
-	while (__predict_false(atomic_cas_32(&busmem->shm_lock,
-	    LOCK_UNLOCKED, LOCK_LOCKED) == LOCK_LOCKED)) {
-		if (__predict_false(++i > LOCK_COOLDOWN)) {
-			uint64_t sec, nsec;
-			int error;
-
-			sec = 0;
-			nsec = 1000*1000; /* 1ms */
-			rumpuser_nanosleep(&sec, &nsec, &error);
-			i = 0;
-		}
-		continue;
-	}
-	membar_enter();
-}
-
-void
-shmif_unlockbus(struct shmif_mem *busmem)
-{
-	unsigned int old;
-
-	membar_exit();
-	old = atomic_swap_32(&busmem->shm_lock, LOCK_UNLOCKED);
-	KASSERT(old == LOCK_LOCKED);
-}
 
 uint32_t
 shmif_advance(uint32_t oldoff, uint32_t delta)

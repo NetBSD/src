@@ -1,4 +1,4 @@
-/*	$NetBSD: shmifvar.h,v 1.4 2010/08/13 10:13:44 pooka Exp $	*/
+/*	$NetBSD: shmifvar.h,v 1.5 2010/08/15 18:55:03 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -71,8 +71,6 @@ struct shmif_pkthdr {
 #define DPRINTF(x)
 #endif
 
-void		shmif_lockbus(struct shmif_mem *);
-void		shmif_unlockbus(struct shmif_mem *);
 uint32_t	shmif_advance(uint32_t, uint32_t);
 uint32_t	shmif_busread(struct shmif_mem *,
 			      void *, uint32_t, size_t, bool *);
