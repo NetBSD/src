@@ -1,4 +1,4 @@
-/* $NetBSD: bufgap.c,v 1.3 2009/12/14 23:29:56 agc Exp $ */
+/* $NetBSD: bufgap.c,v 1.4 2010/08/15 16:10:56 agc Exp $ */
 
 /*-
  * Copyright (c) 1996-2009 The NetBSD Foundation, Inc.
@@ -117,7 +117,7 @@ strnsave(char *s, int n)
 	char	*cp;
 
 	if (n < 0) {
-		n = strlen(s);
+		n = (int)strlen(s);
 	}
 	NEWARRAY(char, cp, n + 1, "strnsave", return NULL);
 	(void) memcpy(cp, s, (size_t)n);
@@ -413,7 +413,7 @@ bufgap_insert(bufgap_t *bp, const char *s, int n)
 	int	i;
 
 	if (n < 0) {
-		n = strlen(s);
+		n = (int)strlen(s);
 	}
 	for (i = 0 ; i < n ; i += rlen) {
 		if (bp->bbc + bp->abc == bp->size) {

@@ -58,7 +58,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: packet-parse.c,v 1.39 2010/08/13 18:29:40 agc Exp $");
+__RCSID("$NetBSD: packet-parse.c,v 1.40 2010/08/15 16:10:56 agc Exp $");
 #endif
 
 #ifdef HAVE_OPENSSL_CAST_H
@@ -254,7 +254,7 @@ sub_base_read(void *dest, size_t length, __ops_error_t **errors,
 		if (readinfo->alength + n > readinfo->asize) {
 			uint8_t	*temp;
 
-			readinfo->asize = (readinfo->asize * 2) + n;
+			readinfo->asize = (readinfo->asize * 2) + (unsigned)n;
 			temp = realloc(readinfo->accumulated, readinfo->asize);
 			if (temp == NULL) {
 				(void) fprintf(stderr,
@@ -271,11 +271,11 @@ sub_base_read(void *dest, size_t length, __ops_error_t **errors,
 				n);
 	}
 	/* we track length anyway, because it is used for packet offsets */
-	readinfo->alength += n;
+	readinfo->alength += (unsigned)n;
 	/* and also the position */
-	readinfo->position += n;
+	readinfo->position += (unsigned)n;
 
-	return n;
+	return (int)n;
 }
 
 int 
@@ -415,9 +415,9 @@ __ops_limited_read(uint8_t *dest,
 		OPS_ERROR(errors, OPS_E_R_READ_FAILED, "Read failed");
 		return 0;
 	}
-	region->last_read = r;
+	region->last_read = (unsigned)r;
 	do {
-		region->readc += r;
+		region->readc += (unsigned)r;
 		if (region->parent && region->length > region->parent->length) {
 			(void) fprintf(stderr,
 				"ops_limited_read: bad length\n");
@@ -1528,7 +1528,7 @@ parse_one_sig_subpacket(__ops_sig_t *sig,
 			(void) fprintf(stderr, "parse_one_sig_subpacket: bad alloc\n");
 			return 0;
 		}
-		if (!limread(pkt.u.ss_raw.raw, pkt.u.ss_raw.length,
+		if (!limread(pkt.u.ss_raw.raw, (unsigned)pkt.u.ss_raw.length,
 				&subregion, stream)) {
 			return 0;
 		}
@@ -1643,12 +1643,12 @@ parse_one_sig_subpacket(__ops_sig_t *sig,
 			return 0;
 		}
 		if (!limread_data(&pkt.u.ss_notation.name,
-				pkt.u.ss_notation.name.len,
+				(unsigned)pkt.u.ss_notation.name.len,
 				&subregion, stream)) {
 			return 0;
 		}
 		if (!limread_data(&pkt.u.ss_notation.value,
-			   pkt.u.ss_notation.value.len,
+			   (unsigned)pkt.u.ss_notation.value.len,
 			   &subregion, stream)) {
 			return 0;
 		}
@@ -2125,7 +2125,8 @@ parse_one_pass(__ops_region_t * region, __ops_stream_t * stream)
 	pkt.u.one_pass_sig.key_alg = (__ops_pubkey_alg_t)c;
 
 	if (!limread(pkt.u.one_pass_sig.keyid,
-			  sizeof(pkt.u.one_pass_sig.keyid), region, stream)) {
+			  (unsigned)sizeof(pkt.u.one_pass_sig.keyid),
+			  region, stream)) {
 		return 0;
 	}
 
@@ -2163,7 +2164,7 @@ parse_hash_data(__ops_stream_t *stream, const void *data,
 	size_t          n;
 
 	for (n = 0; n < stream->hashc; ++n) {
-		stream->hashes[n].hash.add(&stream->hashes[n].hash, data, length);
+		stream->hashes[n].hash.add(&stream->hashes[n].hash, data, (unsigned)length);
 	}
 }
 
@@ -2365,8 +2366,8 @@ parse_seckey(__ops_region_t *region, __ops_stream_t *stream)
 	if (crypted) {
 		__ops_packet_t	seckey;
 		__ops_hash_t	hashes[(OPS_MAX_KEY_SIZE + OPS_MIN_HASH_SIZE - 1) / OPS_MIN_HASH_SIZE];
+		unsigned	passlen;
 		uint8_t   	key[OPS_MAX_KEY_SIZE + OPS_MAX_HASH_SIZE];
-		size_t          passlen;
 		char           *passphrase;
 		int             hashsize;
 		int             keysize;
@@ -2447,7 +2448,7 @@ parse_seckey(__ops_region_t *region, __ops_stream_t *stream)
 				/* FALLTHROUGH */
 			case OPS_S2KS_SIMPLE:
 				hashes[n].add(&hashes[n],
-					(uint8_t *) passphrase, passlen);
+					(uint8_t *)passphrase, (unsigned)passlen);
 				break;
 
 			case OPS_S2KS_ITERATED_AND_SALTED:
@@ -2668,7 +2669,7 @@ parse_pk_sesskey(__ops_region_t *region,
 		return 0;
 	}
 	if (!limread(pkt.u.pk_sesskey.key_id,
-			  sizeof(pkt.u.pk_sesskey.key_id), region, stream)) {
+			  (unsigned)sizeof(pkt.u.pk_sesskey.key_id), region, stream)) {
 		return 0;
 	}
 	if (__ops_get_debug_level(__FILE__)) {
@@ -2718,8 +2719,8 @@ parse_pk_sesskey(__ops_region_t *region,
 			&pkt);
 		return 1;
 	}
-	n = __ops_decrypt_decode_mpi(unencoded_m_buf, sizeof(unencoded_m_buf),
-			enc_m, secret);
+	n = __ops_decrypt_decode_mpi(unencoded_m_buf,
+			(unsigned)sizeof(unencoded_m_buf), enc_m, secret);
 	if (n < 1) {
 		ERRP(&stream->cbinfo, pkt, "decrypted message too short");
 		return 0;
@@ -2797,11 +2798,9 @@ __ops_decrypt_se_data(__ops_content_enum tag, __ops_region_t *region,
 
 	decrypt = __ops_get_decrypt(stream);
 	if (decrypt) {
-		uint8_t   buf[OPS_MAX_BLOCK_SIZE + 2] = "";
-		size_t          b = decrypt->blocksize;
-		/* __ops_packet_t pkt; */
-		__ops_region_t    encregion;
-
+		__ops_region_t	encregion;
+		unsigned	b = decrypt->blocksize;
+		uint8_t		buf[OPS_MAX_BLOCK_SIZE + 2] = "";
 
 		__ops_reader_push_decrypt(stream, decrypt, region);
 
@@ -3057,7 +3056,7 @@ __ops_parse_packet(__ops_stream_t *stream, uint32_t *pktlen)
 
 	case OPS_PTAG_CT_PUBLIC_KEY:
 	case OPS_PTAG_CT_PUBLIC_SUBKEY:
-		ret = parse_pubkey(pkt.u.ptag.type, &region, stream);
+		ret = parse_pubkey((__ops_content_enum)pkt.u.ptag.type, &region, stream);
 		break;
 
 	case OPS_PTAG_CT_TRUST:

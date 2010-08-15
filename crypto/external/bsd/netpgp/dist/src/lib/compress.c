@@ -57,7 +57,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: compress.c,v 1.16 2010/08/15 07:52:26 agc Exp $");
+__RCSID("$NetBSD: compress.c,v 1.17 2010/08/15 16:10:56 agc Exp $");
 #endif
 
 #ifdef HAVE_ZLIB_H
@@ -346,10 +346,12 @@ __ops_decompress(__ops_region_t *region, __ops_stream_t *stream,
 
 	switch (type) {
 	case OPS_C_ZIP:
+		/* LINTED */ /* this is a lint problem in zlib.h header */
 		ret = (int)inflateInit2(&z.zstream, -15);
 		break;
 
 	case OPS_C_ZLIB:
+		/* LINTED */ /* this is a lint problem in zlib.h header */
 		ret = (int)inflateInit(&z.zstream);
 		break;
 
@@ -434,6 +436,7 @@ __ops_writez(__ops_output_t *out, const uint8_t *data, const unsigned len)
 
 	/* all other fields set to zero by use of calloc */
 
+	/* LINTED */ /* this is a lint problem in zlib.h header */
 	if ((int)deflateInit(&zip->stream, level) != Z_OK) {
 		(void) fprintf(stderr, "__ops_writez: can't initialise\n");
 		return 0;

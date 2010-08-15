@@ -58,7 +58,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: writer.c,v 1.26 2010/08/15 07:52:27 agc Exp $");
+__RCSID("$NetBSD: writer.c,v 1.27 2010/08/15 16:10:56 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -464,7 +464,7 @@ dash_esc_writer(const uint8_t *src,
 		if (src[n] == ' ' || src[n] == '\t') {
 			__ops_memory_add(dash->trailing, &src[n], 1);
 		} else {
-			if ((l = __ops_mem_len(dash->trailing)) != 0) {
+			if ((l = (unsigned)__ops_mem_len(dash->trailing)) != 0) {
 				if (!dash->seen_nl && !dash->seen_cr) {
 					__ops_sig_add_data(dash->sig,
 					__ops_mem_data(dash->trailing), l);
@@ -1532,8 +1532,8 @@ stream_write_litdata_first(__ops_output_t *output,
 	/* \todo add date */
 	/* \todo do we need to check text data for <cr><lf> line endings ? */
 
-	size_t          sz_towrite;
-	size_t          sz_pd;
+	unsigned	sz_towrite;
+	size_t		sz_pd;
 
 	sz_towrite = 1 + 1 + 4 + len;
 	sz_pd = (size_t)__ops_partial_data_len(sz_towrite);
@@ -1608,7 +1608,7 @@ stream_write_se_ip_first(__ops_output_t *output,
 			"stream_write_se_ip_first: bad alloc\n");
 		return 0;
 	}
-	sz_pd = (size_t)__ops_partial_data_len(sz_towrite);
+	sz_pd = (size_t)__ops_partial_data_len((unsigned)sz_towrite);
 	if (sz_pd < 512) {
 		free(preamble);
 		(void) fprintf(stderr,

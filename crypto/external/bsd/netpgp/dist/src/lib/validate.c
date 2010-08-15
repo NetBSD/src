@@ -54,7 +54,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: validate.c,v 1.37 2010/08/15 07:52:27 agc Exp $");
+__RCSID("$NetBSD: validate.c,v 1.38 2010/08/15 16:10:56 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -519,7 +519,7 @@ validate_data_cb(const __ops_packet_t *pkt, __ops_cbdata_t *cbinfo)
 					sizeof(content->sig));
 			}
 			valid = check_binary_sig(__ops_mem_data(data->mem),
-					__ops_mem_len(data->mem),
+					(const unsigned)__ops_mem_len(data->mem),
 					&content->sig,
 					__ops_get_pubkey(signer));
 			break;
@@ -881,10 +881,10 @@ __ops_validate_file(__ops_io_t *io,
 			char		*cp;
 			int		 i;
 
-			len = __ops_mem_len(validation.mem);
+			len = (unsigned)__ops_mem_len(validation.mem);
 			cp = __ops_mem_data(validation.mem);
 			for (i = 0 ; i < (int)len ; i += cc) {
-				cc = write(outfd, &cp[i], len - i);
+				cc = write(outfd, &cp[i], (unsigned)(len - i));
 				if (cc < 0) {
 					(void) fprintf(io->errs,
 						"netpgp: short write\n");
