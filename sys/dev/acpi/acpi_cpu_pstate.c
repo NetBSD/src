@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_pstate.c,v 1.23 2010/08/16 10:23:25 jmcneill Exp $ */
+/* $NetBSD: acpi_cpu_pstate.c,v 1.24 2010/08/16 17:58:42 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_pstate.c,v 1.23 2010/08/16 10:23:25 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_pstate.c,v 1.24 2010/08/16 17:58:42 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/evcnt.h>
@@ -62,13 +62,6 @@ acpicpu_pstate_attach(device_t self)
 	const char *str;
 	ACPI_STATUS rv;
 
-	/*
-	 * The ACPI 3.0 and 4.0 specifications mandate three
-	 * objects for P-states: _PSS, _PCT, and _PPC. A less
-	 * strict wording is however used in the earlier 2.0
-	 * standard, and some systems conforming to ACPI 2.0
-	 * do not have _PPC, the method for dynamic maximum.
-	 */
 	rv = acpicpu_pstate_pss(sc);
 
 	if (ACPI_FAILURE(rv)) {
@@ -102,6 +95,13 @@ acpicpu_pstate_attach(device_t self)
 		goto fail;
 	}
 
+	/*
+	 * The ACPI 3.0 and 4.0 specifications mandate three
+	 * objects for P-states: _PSS, _PCT, and _PPC. A less
+	 * strict wording is however used in the earlier 2.0
+	 * standard, and some systems conforming to ACPI 2.0
+	 * do not have _PPC, the method for dynamic maximum.
+	 */
 	(void)acpicpu_pstate_max(sc);
 
 	sc->sc_flags |= ACPICPU_FLAG_P;
@@ -221,16 +221,19 @@ acpicpu_pstate_detach_evcnt(struct acpicpu_softc *sc)
 	}
 }
 
-int
+void
 acpicpu_pstate_start(device_t self)
 {
 	struct acpicpu_softc *sc = device_private(self);
-	static ONCE_DECL(once_start);
+	int rv;
 
-	if ((sc->sc_flags & ACPICPU_FLAG_P) == 0)
-		return 0;
+	rv = acpicpu_md_pstate_start();
 
-	return RUN_ONCE(&once_start, acpicpu_md_pstate_start);
+	if (rv == 0)
+		return;
+
+	sc->sc_flags &= ~ACPICPU_FLAG_P;
+	aprint_error_dev(self, "failed to start P-states (err %d)\n", rv);
 }
 
 bool
