@@ -1,4 +1,4 @@
-/*	$NetBSD: t_vfsops.c,v 1.6 2010/08/12 09:42:53 pooka Exp $	*/
+/*	$NetBSD: t_vfsops.c,v 1.7 2010/08/16 10:47:16 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -165,11 +165,49 @@ tfhremove(const atf_tc_t *tc, const char *path)
 }
 #undef FNAME
 
+/*
+ * This test only checks the file system doesn't crash.  We *might*
+ * try a valid file handle.
+ */
+static void
+tfhinval(const atf_tc_t *tc, const char *path)
+{
+	size_t fhsize;
+	void *fhp;
+	unsigned long seed;
+	int fd;
+
+	if (FSTYPE_TMPFS(tc))
+		atf_tc_skip("file handles broken (PR kern/43605)");
+
+	srandom(seed = time(NULL));
+	printf("RNG seed %lu\n", seed);
+
+	RL(rump_sys_chdir(path));
+	fhsize = 0;
+	if (rump_sys_getfh(".", NULL, &fhsize) == -1) {
+		if (errno == EOPNOTSUPP) {
+			atf_tc_skip("file handles not supported");
+		} else if (errno != E2BIG) {
+			atf_tc_fail_errno("getfh size");
+		}
+	}
+
+	fhp = malloc(fhsize);
+	tests_makegarbage(fhp, fhsize);
+	fd = rump_sys_fhopen(fhp, fhsize, O_RDWR);
+	if (fd != -1)
+		rump_sys_close(fd);
+
+	RL(rump_sys_chdir("/"));
+}
+
 ATF_TC_FSAPPLY(tmount, "mount/unmount");
 ATF_TC_FSAPPLY(tstatvfs, "statvfs");
 ATF_TC_FSAPPLY(tsync, "sync");
 ATF_TC_FSAPPLY(tfilehandle, "file handles");
 ATF_TC_FSAPPLY(tfhremove, "fhtovp for removed file");
+ATF_TC_FSAPPLY(tfhinval, "fhopen invalid filehandle");
 
 ATF_TP_ADD_TCS(tp)
 {
@@ -179,6 +217,7 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_FSAPPLY(tsync);
 	ATF_TP_FSAPPLY(tfilehandle);
 	ATF_TP_FSAPPLY(tfhremove);
+	ATF_TP_FSAPPLY(tfhinval);
 
 	return atf_no_error();
 }
