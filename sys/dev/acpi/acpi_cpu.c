@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu.c,v 1.17 2010/08/16 17:58:42 jruoho Exp $ */
+/* $NetBSD: acpi_cpu.c,v 1.18 2010/08/16 20:07:57 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu.c,v 1.17 2010/08/16 17:58:42 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu.c,v 1.18 2010/08/16 20:07:57 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -519,8 +519,6 @@ acpicpu_suspend(device_t self, const pmf_qual_t *qual)
 {
 	struct acpicpu_softc *sc = device_private(self);
 
-	sc->sc_cold = true;
-
 	if ((sc->sc_flags & ACPICPU_FLAG_C) != 0)
 		(void)acpicpu_cstate_suspend(self);
 
@@ -530,6 +528,8 @@ acpicpu_suspend(device_t self, const pmf_qual_t *qual)
 	if ((sc->sc_flags & ACPICPU_FLAG_T) != 0)
 		(void)acpicpu_tstate_suspend(self);
 
+	sc->sc_cold = true;
+
 	return true;
 }
 
@@ -537,6 +537,8 @@ static bool
 acpicpu_resume(device_t self, const pmf_qual_t *qual)
 {
 	struct acpicpu_softc *sc = device_private(self);
+
+	sc->sc_cold = false;
 
 	if ((sc->sc_flags & ACPICPU_FLAG_C) != 0)
 		(void)acpicpu_cstate_resume(self);
@@ -546,8 +548,6 @@ acpicpu_resume(device_t self, const pmf_qual_t *qual)
 
 	if ((sc->sc_flags & ACPICPU_FLAG_T) != 0)
 		(void)acpicpu_tstate_resume(self);
-
-	sc->sc_cold = false;
 
 	return true;
 }
