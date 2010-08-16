@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_pstate.c,v 1.20 2010/08/16 04:31:21 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_pstate.c,v 1.21 2010/08/16 07:38:38 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_pstate.c,v 1.20 2010/08/16 04:31:21 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_pstate.c,v 1.21 2010/08/16 07:38:38 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/evcnt.h>
@@ -44,9 +44,12 @@ ACPI_MODULE_NAME	 ("acpi_cpu_pstate")
 static void		 acpicpu_pstate_attach_print(struct acpicpu_softc *);
 static void		 acpicpu_pstate_attach_evcnt(struct acpicpu_softc *);
 static void		 acpicpu_pstate_detach_evcnt(struct acpicpu_softc *);
-static ACPI_STATUS	 acpicpu_pstate_pss(struct acpicpu_softc *sc);
+static ACPI_STATUS	 acpicpu_pstate_pss(struct acpicpu_softc *);
 static ACPI_STATUS	 acpicpu_pstate_pss_add(struct acpicpu_pstate *,
 						ACPI_OBJECT *);
+static ACPI_STATUS	 acpicpu_pstate_xpss(struct acpicpu_softc *);
+static ACPI_STATUS	 acpicpu_pstate_xpss_add(struct acpicpu_pstate *,
+						 ACPI_OBJECT *);
 static ACPI_STATUS	 acpicpu_pstate_pct(struct acpicpu_softc *);
 static int		 acpicpu_pstate_max(struct acpicpu_softc *);
 static void		 acpicpu_pstate_change(struct acpicpu_softc *);
@@ -71,6 +74,25 @@ acpicpu_pstate_attach(device_t self)
 	if (ACPI_FAILURE(rv)) {
 		str = "_PSS";
 		goto fail;
+	}
+
+	/*
+	 * Check the availability of extended _PSS.
+	 * If present, this will override the data.
+	 * Note that XPSS can not be used on Intel
+	 * systems where _PDC or _OSC may be used.
+	 */
+	if (sc->sc_cap == 0) {
+
+		rv = acpicpu_pstate_xpss(sc);
+
+		if (ACPI_SUCCESS(rv))
+			sc->sc_flags |= ACPICPU_FLAG_P_XPSS;
+
+		if (ACPI_FAILURE(rv) && rv != AE_NOT_FOUND) {
+			str = "XPSS";
+			goto fail;
+		}
 	}
 
 	rv = acpicpu_pstate_pct(sc);
@@ -336,8 +358,6 @@ static ACPI_STATUS
 acpicpu_pstate_pss_add(struct acpicpu_pstate *ps, ACPI_OBJECT *obj)
 {
 	ACPI_OBJECT *elm;
-	uint32_t val[6];
-	uint32_t *p;
 	int i;
 
 	if (obj->Type != ACPI_TYPE_PACKAGE)
@@ -355,14 +375,14 @@ acpicpu_pstate_pss_add(struct acpicpu_pstate *ps, ACPI_OBJECT *obj)
 
 		if (elm[i].Integer.Value > UINT32_MAX)
 			return AE_AML_NUMERIC_OVERFLOW;
-
-		val[i] = elm[i].Integer.Value;
 	}
 
-	p = &ps->ps_freq;
-
-	for (i = 0; i < 6; i++, p++)
-		*p = val[i];
+	ps->ps_freq       = elm[0].Integer.Value;
+	ps->ps_power      = elm[1].Integer.Value;
+	ps->ps_latency    = elm[2].Integer.Value;
+	ps->ps_latency_bm = elm[3].Integer.Value;
+	ps->ps_control    = elm[4].Integer.Value;
+	ps->ps_status     = elm[5].Integer.Value;
 
 	if (ps->ps_freq == 0 || ps->ps_freq > 9999)
 		return AE_BAD_DECIMAL_CONSTANT;
@@ -377,16 +397,154 @@ acpicpu_pstate_pss_add(struct acpicpu_pstate *ps, ACPI_OBJECT *obj)
 	return AE_OK;
 }
 
+static ACPI_STATUS
+acpicpu_pstate_xpss(struct acpicpu_softc *sc)
+{
+	static const size_t size = sizeof(struct acpicpu_pstate);
+	struct acpicpu_pstate *ps;
+	ACPI_OBJECT *obj;
+	ACPI_BUFFER buf;
+	ACPI_STATUS rv;
+	uint32_t count;
+	uint32_t i, j;
+
+	rv = acpi_eval_struct(sc->sc_node->ad_handle, "XPSS", &buf);
+
+	if (ACPI_FAILURE(rv))
+		return rv;
+
+	obj = buf.Pointer;
+
+	if (obj->Type != ACPI_TYPE_PACKAGE) {
+		rv = AE_TYPE;
+		goto out;
+	}
+
+	count = obj->Package.Count;
+
+	if (count == 0) {
+		rv = AE_NOT_EXIST;
+		goto out;
+	}
+
+	if (count > ACPICPU_P_STATE_MAX) {
+		rv = AE_LIMIT;
+		goto out;
+	}
+
+	if (sc->sc_pstate != NULL)
+		kmem_free(sc->sc_pstate, sc->sc_pstate_count * size);
+
+	sc->sc_pstate = kmem_zalloc(count * size, KM_SLEEP);
+
+	if (sc->sc_pstate == NULL) {
+		rv = AE_NO_MEMORY;
+		goto out;
+	}
+
+	sc->sc_pstate_count = count;
+
+	for (count = i = 0; i < sc->sc_pstate_count; i++) {
+
+		ps = &sc->sc_pstate[i];
+		rv = acpicpu_pstate_xpss_add(ps, &obj->Package.Elements[i]);
+
+		if (ACPI_FAILURE(rv)) {
+			ps->ps_freq = 0;
+			continue;
+		}
+
+		for (j = 0; j < i; j++) {
+
+			if (ps->ps_freq >= sc->sc_pstate[j].ps_freq) {
+				ps->ps_freq = 0;
+				break;
+			}
+		}
+
+		if (ps->ps_freq != 0)
+			count++;
+	}
+
+	rv = (count != 0) ? AE_OK : AE_NOT_EXIST;
+
+out:
+	if (buf.Pointer != NULL)
+		ACPI_FREE(buf.Pointer);
+
+	return rv;
+}
+
+static ACPI_STATUS
+acpicpu_pstate_xpss_add(struct acpicpu_pstate *ps, ACPI_OBJECT *obj)
+{
+	static const size_t size = sizeof(uint64_t);
+	ACPI_OBJECT *elm;
+	int i;
+
+	if (obj->Type != ACPI_TYPE_PACKAGE)
+		return AE_TYPE;
+
+	if (obj->Package.Count != 8)
+		return AE_BAD_DATA;
+
+	elm = obj->Package.Elements;
+
+	for (i = 0; i < 4; i++) {
+
+		if (elm[i].Type != ACPI_TYPE_INTEGER)
+			return AE_TYPE;
+
+		if (elm[i].Integer.Value > UINT32_MAX)
+			return AE_AML_NUMERIC_OVERFLOW;
+	}
+
+	for (; i < 8; i++) {
+
+		if (elm[i].Type != ACPI_TYPE_BUFFER)
+			return AE_TYPE;
+
+		if (elm[i].Buffer.Length > size)
+			return AE_LIMIT;
+	}
+
+	ps->ps_freq       = elm[0].Integer.Value;
+	ps->ps_power      = elm[1].Integer.Value;
+	ps->ps_latency    = elm[2].Integer.Value;
+	ps->ps_latency_bm = elm[3].Integer.Value;
+
+	if (ps->ps_freq == 0 || ps->ps_freq > 9999)
+		return AE_BAD_DECIMAL_CONSTANT;
+
+	(void)memcpy(&ps->ps_control, elm[4].Buffer.Pointer, size);
+	(void)memcpy(&ps->ps_status,  elm[5].Buffer.Pointer, size);
+
+	(void)memcpy(&ps->ps_control_mask, elm[6].Buffer.Pointer, size);
+	(void)memcpy(&ps->ps_status_mask,  elm[7].Buffer.Pointer, size);
+
+	/*
+	 * The latency is often defined to be
+	 * zero on AMD systems. Raise that to 1.
+	 */
+	if (ps->ps_latency == 0)
+		ps->ps_latency = 1;
+
+	ps->ps_flags |= ACPICPU_FLAG_P_XPSS;
+
+	return AE_OK;
+}
+
 ACPI_STATUS
 acpicpu_pstate_pct(struct acpicpu_softc *sc)
 {
 	static const size_t size = sizeof(struct acpicpu_reg);
 	struct acpicpu_reg *reg[2];
+	struct acpicpu_pstate *ps;
 	ACPI_OBJECT *elm, *obj;
 	ACPI_BUFFER buf;
 	ACPI_STATUS rv;
 	uint8_t width;
-	int i;
+	uint32_t i;
 
 	rv = acpi_eval_struct(sc->sc_node->ad_handle, "_PCT", &buf);
 
@@ -446,6 +604,30 @@ acpicpu_pstate_pct(struct acpicpu_softc *sc)
 
 		case ACPI_ADR_SPACE_FIXED_HARDWARE:
 
+			/*
+			 * With XPSS the _PCT registers incorporate
+			 * the addresses of the appropriate MSRs.
+			 */
+			if ((sc->sc_flags & ACPICPU_FLAG_P_XPSS) != 0) {
+
+				if (reg[i]->reg_addr == 0) {
+					rv = AE_AML_ILLEGAL_ADDRESS;
+					goto out;
+				}
+
+				if (reg[i]->reg_bitwidth != 64) {
+					rv = AE_AML_BAD_RESOURCE_VALUE;
+					goto out;
+				}
+
+				if (reg[i]->reg_bitoffset != 0) {
+					rv = AE_AML_BAD_RESOURCE_VALUE;
+					goto out;
+				}
+
+				break;
+			}
+
 			if ((sc->sc_flags & ACPICPU_FLAG_P_FFH) == 0) {
 				rv = AE_SUPPORT;
 				goto out;
@@ -466,6 +648,24 @@ acpicpu_pstate_pct(struct acpicpu_softc *sc)
 
 	(void)memcpy(&sc->sc_pstate_control, reg[0], size);
 	(void)memcpy(&sc->sc_pstate_status,  reg[1], size);
+
+	/*
+	 * If XPSS is present, copy the MSR addresses
+	 * to the P-state structures for convenience.
+	 */
+	if ((sc->sc_flags & ACPICPU_FLAG_P_XPSS) == 0)
+		goto out;
+
+	for (i = 0; i < sc->sc_pstate_count; i++) {
+
+		ps = &sc->sc_pstate[i];
+
+		if (ps->ps_freq == 0)
+			continue;
+
+		ps->ps_status_addr  = sc->sc_pstate_status.reg_addr;
+		ps->ps_control_addr = sc->sc_pstate_control.reg_addr;
+	}
 
 out:
 	if (buf.Pointer != NULL)

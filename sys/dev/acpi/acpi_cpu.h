@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu.h,v 1.15 2010/08/14 05:13:21 jruoho Exp $ */
+/* $NetBSD: acpi_cpu.h,v 1.16 2010/08/16 07:38:38 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -103,9 +103,10 @@
 #define ACPICPU_FLAG_C_C1E	 __BIT(9)	/* AMD C1E detected	     */
 
 #define ACPICPU_FLAG_P_FFH	 __BIT(10)	/* Native P-states           */
+#define ACPICPU_FLAG_P_XPSS	 __BIT(11)	/* Microsoft XPSS in use     */
 
-#define ACPICPU_FLAG_T_FFH	 __BIT(11)	/* Native throttling         */
-#define ACPICPU_FLAG_T_FADT	 __BIT(12)	/* Throttling with FADT      */
+#define ACPICPU_FLAG_T_FFH	 __BIT(12)	/* Native throttling         */
+#define ACPICPU_FLAG_T_FADT	 __BIT(13)	/* Throttling with FADT      */
 
 /*
  * This is AML_RESOURCE_GENERIC_REGISTER,
@@ -125,29 +126,41 @@ struct acpicpu_cstate {
 	struct evcnt		 cs_evcnt;
 	char			 cs_name[EVCNT_STRING_MAX];
 	uint64_t		 cs_addr;
-	uint32_t		 cs_power;	/* mW */
-	uint32_t		 cs_latency;	/* us */
+	uint32_t		 cs_power;
+	uint32_t		 cs_latency;
 	int			 cs_method;
 	int			 cs_flags;
 };
 
+/*
+ * This structure supports both the conventional _PSS and the
+ * so-called extended _PSS (XPSS). For the latter, refer to:
+ *
+ *	Microsoft Corporation: Extended PSS ACPI
+ *	Method Specification, April 2, 2007.
+ */
 struct acpicpu_pstate {
 	struct evcnt		 ps_evcnt;
 	char			 ps_name[EVCNT_STRING_MAX];
-	uint32_t		 ps_freq;	/* MHz */
-	uint32_t		 ps_power;	/* mW */
-	uint32_t		 ps_latency;	/* us */
-	uint32_t		 ps_latency_bm; /* us */
-	uint32_t		 ps_control;
-	uint32_t		 ps_status;
+	uint32_t		 ps_freq;
+	uint32_t		 ps_power;
+	uint32_t		 ps_latency;
+	uint32_t		 ps_latency_bm;
+	uint64_t		 ps_control;
+	uint64_t		 ps_control_addr;
+	uint64_t		 ps_control_mask;
+	uint64_t		 ps_status;
+	uint64_t		 ps_status_addr;
+	uint64_t		 ps_status_mask;
+	int			 ps_flags;
 };
 
 struct acpicpu_tstate {
 	struct evcnt		 ts_evcnt;
 	char			 ts_name[EVCNT_STRING_MAX];
-	uint32_t		 ts_percent;	/* % */
-	uint32_t		 ts_power;	/* mW */
-	uint32_t		 ts_latency;	/* us */
+	uint32_t		 ts_percent;
+	uint32_t		 ts_power;
+	uint32_t		 ts_latency;
 	uint32_t		 ts_control;
 	uint32_t		 ts_status;
 };
