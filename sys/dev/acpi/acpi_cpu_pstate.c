@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_pstate.c,v 1.22 2010/08/16 10:07:09 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_pstate.c,v 1.23 2010/08/16 10:23:25 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_pstate.c,v 1.22 2010/08/16 10:07:09 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_pstate.c,v 1.23 2010/08/16 10:23:25 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/evcnt.h>
@@ -654,7 +654,7 @@ acpicpu_pstate_pct(struct acpicpu_softc *sc)
 	 * check during the P-state (FFH) transition.
 	 */
 	if (sc->sc_pstate_control.reg_addr == 0) {
-		rv = AE_BAD_RESOURCE_VALUE;
+		rv = AE_AML_BAD_RESOURCE_LENGTH;
 		goto out;
 	}
 
