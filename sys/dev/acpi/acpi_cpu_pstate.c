@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_pstate.c,v 1.25 2010/08/16 20:07:57 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_pstate.c,v 1.26 2010/08/16 20:20:44 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_pstate.c,v 1.25 2010/08/16 20:07:57 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_pstate.c,v 1.26 2010/08/16 20:20:44 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/evcnt.h>
@@ -670,10 +670,6 @@ acpicpu_pstate_pct(struct acpicpu_softc *sc)
 
 		case ACPI_ADR_SPACE_FIXED_HARDWARE:
 
-			/*
-			 * With XPSS the _PCT registers incorporate
-			 * the addresses of the appropriate MSRs.
-			 */
 			if ((sc->sc_flags & ACPICPU_FLAG_P_XPSS) != 0) {
 
 				if (reg[i]->reg_bitwidth != 64) {
@@ -715,8 +711,8 @@ acpicpu_pstate_pct(struct acpicpu_softc *sc)
 
 	/*
 	 * In XPSS the control address can not be zero,
-	 * but the status address may be. Comparable to
-	 * T-states, in this we can ignore the status
+	 * but the status address may be. In this case,
+	 * comparable to T-states, we can ignore the status
 	 * check during the P-state (FFH) transition.
 	 */
 	if (sc->sc_pstate_control.reg_addr == 0) {
