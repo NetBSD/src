@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_pstate.c,v 1.24 2010/08/16 17:58:42 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_pstate.c,v 1.25 2010/08/16 20:07:57 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_pstate.c,v 1.24 2010/08/16 17:58:42 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_pstate.c,v 1.25 2010/08/16 20:07:57 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/evcnt.h>
@@ -54,6 +54,8 @@ static ACPI_STATUS	 acpicpu_pstate_pct(struct acpicpu_softc *);
 static int		 acpicpu_pstate_max(struct acpicpu_softc *);
 static void		 acpicpu_pstate_change(struct acpicpu_softc *);
 static void		 acpicpu_pstate_bios(void);
+
+static uint32_t		 acpicpu_pstate_saved;
 
 void
 acpicpu_pstate_attach(device_t self)
@@ -105,7 +107,6 @@ acpicpu_pstate_attach(device_t self)
 	(void)acpicpu_pstate_max(sc);
 
 	sc->sc_flags |= ACPICPU_FLAG_P;
-	sc->sc_pstate_current = sc->sc_pstate[0].ps_freq;
 
 	acpicpu_pstate_bios();
 	acpicpu_pstate_attach_evcnt(sc);
@@ -225,13 +226,35 @@ void
 acpicpu_pstate_start(device_t self)
 {
 	struct acpicpu_softc *sc = device_private(self);
+	struct acpicpu_pstate *ps;
+	uint32_t i;
 	int rv;
 
 	rv = acpicpu_md_pstate_start();
 
-	if (rv == 0)
-		return;
+	if (rv != 0)
+		goto fail;
 
+	/*
+	 * Initialize the state to the maximum.
+	 */
+	for (i = 0, rv = ENXIO; i < sc->sc_pstate_count; i++) {
+
+		ps = &sc->sc_pstate[i];
+
+		if (ps->ps_freq != 0) {
+			sc->sc_cold = false;
+			rv = acpicpu_pstate_set(sc, ps->ps_freq);
+			break;
+		}
+	}
+
+	if (rv != 0)
+		goto fail;
+
+	return;
+
+fail:
 	sc->sc_flags &= ~ACPICPU_FLAG_P;
 	aprint_error_dev(self, "failed to start P-states (err %d)\n", rv);
 }
@@ -239,6 +262,40 @@ acpicpu_pstate_start(device_t self)
 bool
 acpicpu_pstate_suspend(device_t self)
 {
+	struct acpicpu_softc *sc = device_private(self);
+	struct acpicpu_pstate *ps = NULL;
+	int32_t i;
+
+	if (acpicpu_pstate_saved != 0)
+		return true;
+
+	/*
+	 * Following design notes for Windows, we set the highest
+	 * P-state when entering any of the system sleep states.
+	 * When resuming, the saved P-state will be restored.
+	 *
+	 *	Microsoft Corporation: Windows Native Processor
+	 *	Performance Control. Version 1.1a, November, 2002.
+	 */
+	for (i = sc->sc_pstate_count - 1; i >= 0; i--) {
+
+		if (sc->sc_pstate[i].ps_freq != 0) {
+			ps = &sc->sc_pstate[i];
+			break;
+		}
+	}
+
+	if (__predict_false(ps == NULL))
+		return true;
+
+	mutex_enter(&sc->sc_mtx);
+	acpicpu_pstate_saved = sc->sc_pstate_current;
+	mutex_exit(&sc->sc_mtx);
+
+	if (acpicpu_pstate_saved == ps->ps_freq)
+		return true;
+
+	(void)acpicpu_pstate_set(sc, ps->ps_freq);
 
 	return true;
 }
@@ -246,6 +303,12 @@ acpicpu_pstate_suspend(device_t self)
 bool
 acpicpu_pstate_resume(device_t self)
 {
+	struct acpicpu_softc *sc = device_private(self);
+
+	if (acpicpu_pstate_saved != 0) {
+		(void)acpicpu_pstate_set(sc, acpicpu_pstate_saved);
+		acpicpu_pstate_saved = 0;
+	}
 
 	acpicpu_pstate_callback(self);
 
@@ -278,7 +341,7 @@ acpicpu_pstate_callback(void *aux)
 		 * If the maximum changed, proactively
 		 * raise or lower the target frequency.
 		 */
-		acpicpu_pstate_set(sc, sc->sc_pstate[new].ps_freq);
+		(void)acpicpu_pstate_set(sc, sc->sc_pstate[new].ps_freq);
 
 #endif
 	}
