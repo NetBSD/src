@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_pstate.c,v 1.21 2010/08/16 07:38:38 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_pstate.c,v 1.22 2010/08/16 10:07:09 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_pstate.c,v 1.21 2010/08/16 07:38:38 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_pstate.c,v 1.22 2010/08/16 10:07:09 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/evcnt.h>
@@ -610,11 +610,6 @@ acpicpu_pstate_pct(struct acpicpu_softc *sc)
 			 */
 			if ((sc->sc_flags & ACPICPU_FLAG_P_XPSS) != 0) {
 
-				if (reg[i]->reg_addr == 0) {
-					rv = AE_AML_ILLEGAL_ADDRESS;
-					goto out;
-				}
-
 				if (reg[i]->reg_bitwidth != 64) {
 					rv = AE_AML_BAD_RESOURCE_VALUE;
 					goto out;
@@ -649,13 +644,24 @@ acpicpu_pstate_pct(struct acpicpu_softc *sc)
 	(void)memcpy(&sc->sc_pstate_control, reg[0], size);
 	(void)memcpy(&sc->sc_pstate_status,  reg[1], size);
 
+	if ((sc->sc_flags & ACPICPU_FLAG_P_XPSS) == 0)
+		goto out;
+
+	/*
+	 * In XPSS the control address can not be zero,
+	 * but the status address may be. Comparable to
+	 * T-states, in this we can ignore the status
+	 * check during the P-state (FFH) transition.
+	 */
+	if (sc->sc_pstate_control.reg_addr == 0) {
+		rv = AE_BAD_RESOURCE_VALUE;
+		goto out;
+	}
+
 	/*
 	 * If XPSS is present, copy the MSR addresses
 	 * to the P-state structures for convenience.
 	 */
-	if ((sc->sc_flags & ACPICPU_FLAG_P_XPSS) == 0)
-		goto out;
-
 	for (i = 0; i < sc->sc_pstate_count; i++) {
 
 		ps = &sc->sc_pstate[i];
