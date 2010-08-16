@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips3.S,v 1.93.38.9 2010/05/14 22:26:00 matt Exp $	*/
+/*	$NetBSD: locore_mips3.S,v 1.93.38.10 2010/08/16 17:57:10 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -175,7 +175,8 @@ LEAF(mips_wait_idle)
 	bnez	v1, 2f
 	nop
 1:
-	PANIC("mips_wait_idle: interrupts disabled")
+	move	a1, v0
+	PANIC("mips_wait_idle: interrupts disabled status=%#x")
 
 2:	wait
 	nop
