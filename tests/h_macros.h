@@ -1,4 +1,4 @@
-/* $NetBSD: h_macros.h,v 1.3 2010/07/25 22:29:15 pooka Exp $ */
+/* $NetBSD: h_macros.h,v 1.4 2010/08/16 10:46:19 pooka Exp $ */
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -59,6 +59,20 @@ atf_tc_fail_errno(const char *fmt, ...)
 	strlcat(buf, strerror(sverrno), sizeof(buf));
 
 	atf_tc_fail(buf);
+}
+
+static __inline void
+tests_makegarbage(void *space, size_t len)
+{
+	uint16_t *sb = space;
+	uint16_t randval;
+
+	while (len >= sizeof(randval)) {
+		*sb++ = (random() & 0xffff);
+		len -= sizeof(*sb);
+	}
+	randval = (uint16_t)random();
+	memcpy(sb, &randval, len);
 }
 
 #endif

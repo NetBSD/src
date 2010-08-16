@@ -1,4 +1,4 @@
-/*	$NetBSD: t_fuzz.c,v 1.2 2010/08/02 09:44:23 pooka Exp $	*/
+/*	$NetBSD: t_fuzz.c,v 1.3 2010/08/16 10:46:20 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -58,20 +58,6 @@
 #include "../../h_macros.h"
 
 #define ITERATIONS 100
-
-static void
-makegarbage(void *space, size_t len)
-{
-	long *sb = space;
-	long randval;
-
-	while (len >= sizeof(long)) {
-		*sb++ = random();
-		len -= sizeof(long);
-	}
-	randval = random();
-	memcpy(sb, &randval, len);
-}
 
 static void
 fixversion(struct puffs_kargs *kargs)
@@ -226,7 +212,7 @@ testbody(int nfix)
 	ATF_REQUIRE(rump_sys_mkdir("/mnt", 0777) == 0);
 
 	for (i = 0; i < ITERATIONS; i++) {
-		makegarbage(&kargs, sizeof(kargs));
+		tests_makegarbage(&kargs, sizeof(kargs));
 		fixup(nfix, &kargs);
 		if (rump_sys_mount(MOUNT_PUFFS, "/mnt", 0,
 		    &kargs, sizeof(kargs)) == 0) {
@@ -251,7 +237,7 @@ testbody(int nfix)
 #define MAKETEST(_n_)							\
 ATF_TC(mountfuzz##_n_);							\
 ATF_TC_HEAD(mountfuzz##_n_, tc)						\
-{atf_tc_set_md_var(tc, "descr", "garbage kargs, " # _n_ " fix");}	\
+{atf_tc_set_md_var(tc, "descr", "garbage kargs, " # _n_ " fix(es)");}	\
 ATF_TC_BODY(mountfuzz##_n_, tc) {testbody(_n_);}
 
 MAKETEST(0);
