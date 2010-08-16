@@ -1,4 +1,4 @@
-/*	$NetBSD: dir-index-bozo.c,v 1.8 2010/05/10 03:37:45 mrg Exp $	*/
+/*	$NetBSD: dir-index-bozo.c,v 1.9 2010/08/16 10:00:56 dogcow Exp $	*/
 
 /*	$eterna: dir-index-bozo.c,v 1.17 2010/05/10 02:51:28 mrg Exp $	*/
 
@@ -61,13 +61,13 @@ bozo_dir_index(bozo_httpreq_t *request, const char *dirname, int isindex)
 {
 	bozohttpd_t *httpd = request->hr_httpd;
 	struct stat sb;
-	struct dirent *de;
+	struct dirent **de;
 	struct tm *tm;
 	DIR *dp;
 	char buf[MAXPATHLEN];
 	char spacebuf[48];
 	char *file = NULL;
-	int l, i;
+	int l, j, i;
 
 	if (!isindex || !httpd->dir_indexing)
 		return 0;
@@ -123,11 +123,11 @@ bozo_dir_index(bozo_httpreq_t *request, const char *dirname, int isindex)
 	directory_hr(httpd);
 	bozo_printf(httpd, "<pre>");
 
-	while ((de = readdir(dp)) != NULL) {
+	for (j = scandir(dirname, &de, NULL, alphasort); j--; de++) {
 		int nostat = 0;
-		char *name = de->d_name;
+		char *name = (*de)->d_name;
 
-		if (strcmp(name, ".") == 0 || 
+		if (strcmp(name, ".") == 0 ||
 		    (strcmp(name, "..") != 0 &&
 		     httpd->hide_dots && name[0] == '.'))
 			continue;
@@ -183,15 +183,18 @@ bozo_dir_index(bozo_httpreq_t *request, const char *dirname, int isindex)
 		bozo_printf(httpd, "\r\n");
 	}
 
+	if (de)
+		free(de);
 	closedir(dp);
 	bozo_printf(httpd, "</pre>");
 	directory_hr(httpd);
 	bozo_printf(httpd, "</body></html>\r\n\r\n");
 	bozo_flush(httpd, stdout);
-	
+
 done:
 	if (file)
 		free(file);
 	return 1;
 }
 #endif /* NO_DIRINDEX_SUPPORT */
+
