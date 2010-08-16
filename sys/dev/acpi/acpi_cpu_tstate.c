@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_tstate.c,v 1.9 2010/08/15 08:53:19 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_tstate.c,v 1.10 2010/08/16 04:31:21 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_tstate.c,v 1.9 2010/08/15 08:53:19 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_tstate.c,v 1.10 2010/08/16 04:31:21 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/evcnt.h>
@@ -63,10 +63,6 @@ acpicpu_tstate_attach(device_t self)
 	if ((sc->sc_flags & ACPICPU_FLAG_PIIX4) != 0)
 		return;
 
-	/*
-	 * If either _TSS, _PTC, or _TPC is not
-	 * available, we have to resort to FADT.
-	 */
 	rv  = acpicpu_tstate_tss(sc);
 
 	if (ACPI_FAILURE(rv)) {
@@ -81,12 +77,12 @@ acpicpu_tstate_attach(device_t self)
 		goto out;
 	}
 
-	rv = acpicpu_tstate_change(sc);
-
-	if (ACPI_FAILURE(rv)) {
-		str = "_TPC";
-		goto out;
-	}
+	/*
+	 * Comparable to P-states, the _TPC object may
+	 * be absent in some systems, even though it is
+	 * required by ACPI 3.0 along with _TSS and _PTC.
+	 */
+	(void)acpicpu_tstate_change(sc);
 
 out:
 	if (ACPI_FAILURE(rv)) {
