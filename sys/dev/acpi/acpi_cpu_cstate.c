@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_cstate.c,v 1.28 2010/08/15 08:53:19 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_cstate.c,v 1.29 2010/08/16 17:58:42 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_cstate.c,v 1.28 2010/08/15 08:53:19 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_cstate.c,v 1.29 2010/08/16 17:58:42 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -98,6 +98,8 @@ acpicpu_cstate_attach(device_t self)
 		acpicpu_cstate_fadt(sc);
 		break;
 	}
+
+	sc->sc_flags |= ACPICPU_FLAG_C;
 
 	acpicpu_cstate_quirks(sc);
 	acpicpu_cstate_attach_evcnt(sc);
@@ -211,23 +213,11 @@ acpicpu_cstate_detach_evcnt(struct acpicpu_softc *sc)
 	}
 }
 
-int
+void
 acpicpu_cstate_start(device_t self)
 {
-	struct acpicpu_softc *sc = device_private(self);
-	static ONCE_DECL(once_start);
-	int rv;
 
-	/*
-	 * Save the existing idle-mechanism and claim the cpu_idle(9).
-	 * This should be called after all ACPI CPUs have been attached.
-	 */
-	rv = RUN_ONCE(&once_start, acpicpu_md_idle_start);
-
-	if (rv == 0)
-		sc->sc_flags |= ACPICPU_FLAG_C;
-
-	return rv;
+	(void)acpicpu_md_idle_start();
 }
 
 bool
@@ -675,6 +665,7 @@ acpicpu_cstate_idle(void)
 	KASSERT(acpicpu_sc != NULL);
 	KASSERT(ci->ci_acpiid < maxcpus);
 	KASSERT(ci->ci_ilevel == IPL_NONE);
+	KASSERT((sc->sc_flags & ACPICPU_FLAG_C) != 0);
 
 	sc = acpicpu_sc[ci->ci_acpiid];
 
@@ -682,9 +673,6 @@ acpicpu_cstate_idle(void)
 		goto halt;
 
 	if (__predict_false(sc->sc_cold != false))
-		goto halt;
-
-	if (__predict_false((sc->sc_flags & ACPICPU_FLAG_C) == 0))
 		goto halt;
 
 	if (__predict_false(mutex_tryenter(&sc->sc_mtx) == 0))
