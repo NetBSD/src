@@ -1,4 +1,4 @@
-.\"	$NetBSD: forward.5,v 1.1 2005/07/16 09:10:02 rtr Exp $
+.\"	$NetBSD: forward.5,v 1.2 2010/08/16 12:54:20 pooka Exp $
 .\"
 .\" Copyright (c) 1996
 .\"	Mike Pritchard <mpp@FreeBSD.org>.  All rights reserved.
@@ -62,12 +62,12 @@ For example, if a
 .Nm .forward
 file contained the following lines:
 .Bd -literal -offset indent
-nobody@FreeBSD.org
+nobody@NetBSD.org
 "|/usr/bin/vacation nobody"
 .Ed
 .Pp
 Mail would be forwarded to
-.Aq nobody@FreeBSD.org
+.Aq nobody@NetBSD.org
 and to the program
 .Pa /usr/bin/vacation
 with the single argument
