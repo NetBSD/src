@@ -1,4 +1,4 @@
-/* $NetBSD: h_macros.h,v 1.4 2010/08/16 10:46:19 pooka Exp $ */
+/* $NetBSD: h_macros.h,v 1.5 2010/08/16 17:01:43 pooka Exp $ */
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -32,6 +32,7 @@
 #include <errno.h>
 #include <stdarg.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include <atf-c.h>
