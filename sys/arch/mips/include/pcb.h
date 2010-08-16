@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.20.62.4 2010/08/16 18:01:13 matt Exp $	*/
+/*	$NetBSD: pcb.h,v 1.20.62.5 2010/08/16 23:38:01 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -88,7 +88,7 @@ struct pcb_faultinfo {
 	u_int pfi_repeats;
 	pid_t pfi_lastpid;
 	uint8_t pfi_faulttype;
-}
+};
 
 /*
  * MIPS process control block

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.217.12.29 2010/08/16 23:26:28 matt Exp $	*/
+/*	$NetBSD: trap.c,v 1.217.12.30 2010/08/16 23:38:01 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.217.12.29 2010/08/16 23:26:28 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.217.12.30 2010/08/16 23:38:01 matt Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_ddb.h"
@@ -391,7 +391,7 @@ trap(unsigned int status, unsigned int cause, vaddr_t vaddr, vaddr_t opc,
 		 * cpu's cpu_info but not other cpu's) so we need to detect
 		 * and fix this here.
 		 */
-		if ((va >> 31) == 0 &&
+		if ((va >> XSEGSHIFT) == 0 &&
 		    __predict_false(ci->ci_pmap_seg0tab == NULL
 				&& ci->ci_pmap_segtab->seg_seg[0] != NULL)) {
 			ci->ci_pmap_seg0tab = ci->ci_pmap_segtab->seg_seg[0];
@@ -455,11 +455,13 @@ trap(unsigned int status, unsigned int cause, vaddr_t vaddr, vaddr_t opc,
 		}
 		l->l_pflag &= ~LP_SA_PAGEFAULT;
 		if (rv == 0) {
+#ifdef PMAP_FAULTINFO
 			if (pfi->pfi_repeats == 0) {
 				pfi->pfi_faultpte =
 				    pmap_pte_lookup(map->pmap, va);
 			}
 			KASSERT(((pt_entry_t *)(pfi->pfi_faultpte))->pt_entry);
+#endif
 			if (type & T_USER) {
 				userret(l);
 			}
