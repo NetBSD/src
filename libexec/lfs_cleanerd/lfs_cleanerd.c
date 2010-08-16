@@ -1,4 +1,4 @@
-/* $NetBSD: lfs_cleanerd.c,v 1.25 2010/07/29 14:09:45 pooka Exp $	 */
+/* $NetBSD: lfs_cleanerd.c,v 1.26 2010/08/16 22:11:55 pooka Exp $	 */
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -1543,6 +1543,7 @@ lfs_cleaner_main(int argc, char **argv)
 	if (semaddr)
 		sem_post(semaddr);
 #endif
+	error = 0;
 	while (nfss > 0) {
 		int cleaned_one;
 		do {
@@ -1581,11 +1582,17 @@ lfs_cleaner_main(int argc, char **argv)
 					handle_error(fsp, i);
 					assert(nfss == 0);
 				}
-			} else
+			} else {
+#ifdef LFS_CLEANER_AS_LIB
+				error = ESHUTDOWN;
+				break;
+#else
 				err(1, "LFCNSEGWAITALL");
+#endif
+			}
 		}
 	}
 
 	/* NOTREACHED */
-	return 0;
+	return error;
 }
