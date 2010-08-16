@@ -1,4 +1,4 @@
-/*	$NetBSD: if_kuereg.h,v 1.12 2010/06/27 11:53:59 tsutsui Exp $	*/
+/*	$NetBSD: if_kuereg.h,v 1.13 2010/08/16 09:34:43 tsutsui Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -162,16 +162,11 @@ struct kue_cdata {
 struct kue_softc {
 	USBBASEDEVICE		kue_dev;
 
-#if defined(__FreeBSD__) || defined(__OpenBSD__)
-	struct arpcom		arpcom;
-#define GET_IFP(sc) (&(sc)->arpcom.ac_if)
-#elif defined(__NetBSD__)
 	struct ethercom		kue_ec;
 #if NRND > 0
 	rndsource_element_t	rnd_source;
 #endif
 #define GET_IFP(sc) (&(sc)->kue_ec.ec_if)
-#endif
 
 	usbd_device_handle	kue_udev;
 	usbd_interface_handle	kue_iface;

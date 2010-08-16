@@ -1,4 +1,4 @@
-/*	$NetBSD: if_kue.c,v 1.69 2010/04/05 07:21:48 joerg Exp $	*/
+/*	$NetBSD: if_kue.c,v 1.70 2010/08/16 09:34:43 tsutsui Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -70,14 +70,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_kue.c,v 1.69 2010/04/05 07:21:48 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_kue.c,v 1.70 2010/08/16 09:34:43 tsutsui Exp $");
 
-#if defined(__NetBSD__)
 #include "opt_inet.h"
 #include "rnd.h"
-#elif defined(__OpenBSD__)
-#include "bpfilter.h"
-#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,30 +90,16 @@ __KERNEL_RCSID(0, "$NetBSD: if_kue.c,v 1.69 2010/04/05 07:21:48 joerg Exp $");
 #endif
 
 #include <net/if.h>
-#if defined(__NetBSD__)
 #include <net/if_arp.h>
-#endif
 #include <net/if_dl.h>
 
 #include <net/bpf.h>
 
-#if defined(__NetBSD__)
 #include <net/if_ether.h>
 #ifdef INET
 #include <netinet/in.h>
 #include <netinet/if_inarp.h>
 #endif
-#endif /* defined (__NetBSD__) */
-
-#if defined(__OpenBSD__)
-#ifdef INET
-#include <netinet/in.h>
-#include <netinet/in_systm.h>
-#include <netinet/in_var.h>
-#include <netinet/ip.h>
-#include <netinet/if_ether.h>
-#endif
-#endif /* defined (__OpenBSD__) */
 
 
 #include <dev/usb/usb.h>
@@ -348,11 +330,7 @@ allmulti:
 	sc->kue_rxfilt &= ~KUE_RXFILT_ALLMULTI;
 
 	i = 0;
-#if defined (__NetBSD__)
 	ETHER_FIRST_MULTI(step, &sc->kue_ec, enm);
-#else
-	ETHER_FIRST_MULTI(step, &sc->arpcom, enm);
-#endif
 	while (enm != NULL) {
 		if (i == KUE_MCFILTCNT(sc) ||
 		    memcmp(enm->enm_addrlo, enm->enm_addrhi,
@@ -514,9 +492,6 @@ USB_ATTACH(kue)
 	ifp->if_ioctl = kue_ioctl;
 	ifp->if_start = kue_start;
 	ifp->if_watchdog = kue_watchdog;
-#if defined(__OpenBSD__)
-	ifp->if_snd.ifq_maxlen = IFQ_MAXLEN;
-#endif
 	strncpy(ifp->if_xname, USBDEVNAME(sc->kue_dev), IFNAMSIZ);
 
 	IFQ_SET_READY(&ifp->if_snd);
@@ -560,12 +535,10 @@ USB_DETACH(kue)
 	if (ifp->if_flags & IFF_RUNNING)
 		kue_stop(sc);
 
-#if defined(__NetBSD__)
 #if NRND > 0
 	rnd_detach_source(&sc->rnd_source);
 #endif
 	ether_ifdetach(ifp);
-#endif /* __NetBSD__ */
 
 	if_detach(ifp);
 
@@ -1064,11 +1037,7 @@ kue_ioctl(struct ifnet *ifp, u_long command, void *data)
 		switch (ifa->ifa_addr->sa_family) {
 #ifdef INET
 		case AF_INET:
-#if defined(__NetBSD__)
 			arp_ifinit(ifp, ifa);
-#else
-			arp_ifinit(&sc->arpcom, ifa);
-#endif
 			break;
 #endif /* INET */
 		}
