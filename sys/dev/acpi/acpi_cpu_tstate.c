@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_tstate.c,v 1.10 2010/08/16 04:31:21 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_tstate.c,v 1.11 2010/08/16 17:58:42 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_tstate.c,v 1.10 2010/08/16 04:31:21 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_tstate.c,v 1.11 2010/08/16 17:58:42 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/evcnt.h>
@@ -190,11 +190,10 @@ acpicpu_tstate_detach_evcnt(struct acpicpu_softc *sc)
 	}
 }
 
-int
+void
 acpicpu_tstate_start(device_t self)
 {
-
-	return 0;
+	/* Nothing. */
 }
 
 bool

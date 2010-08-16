@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu.c,v 1.16 2010/08/14 11:16:14 jruoho Exp $ */
+/* $NetBSD: acpi_cpu.c,v 1.17 2010/08/16 17:58:42 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu.c,v 1.16 2010/08/14 11:16:14 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu.c,v 1.17 2010/08/16 17:58:42 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -51,6 +51,7 @@ static void		  acpicpu_attach(device_t, device_t, void *);
 static int		  acpicpu_detach(device_t, int);
 static int		  acpicpu_once_attach(void);
 static int		  acpicpu_once_detach(void);
+static void		  acpicpu_start(device_t);
 
 static int		  acpicpu_object(ACPI_HANDLE, struct acpicpu_object *);
 static cpuid_t		  acpicpu_id(uint32_t);
@@ -112,10 +113,8 @@ acpicpu_attach(device_t parent, device_t self, void *aux)
 	if (rv != 0)
 		return;
 
-	KASSERT(acpicpu_sc != NULL);
-
 	sc->sc_dev = self;
-	sc->sc_cold = false;
+	sc->sc_cold = true;
 	sc->sc_mapped = false;
 	sc->sc_iot = aa->aa_iot;
 	sc->sc_node = aa->aa_node;
@@ -159,15 +158,9 @@ acpicpu_attach(device_t parent, device_t self, void *aux)
 	acpicpu_pstate_attach(self);
 	acpicpu_tstate_attach(self);
 
-	(void)config_finalize_register(self, acpicpu_cstate_start);
-	(void)config_finalize_register(self, acpicpu_pstate_start);
-	(void)config_finalize_register(self, acpicpu_tstate_start);
-
+	(void)config_defer(self, acpicpu_start);
 	(void)acpi_register_notify(sc->sc_node, acpicpu_notify);
 	(void)pmf_device_register(self, acpicpu_suspend, acpicpu_resume);
-
-	aprint_debug_dev(sc->sc_dev, "cap 0x%02x, "
-	    "flags 0x%06x\n", sc->sc_cap, sc->sc_flags);
 }
 
 static int
@@ -234,12 +227,42 @@ acpicpu_once_detach(void)
 {
 	struct acpicpu_softc *sc;
 
-	KASSERT(acpicpu_sc != NULL);
-
-	kmem_free(acpicpu_sc, maxcpus * sizeof(*sc));
-	acpicpu_sc = NULL;
+	if (acpicpu_sc != NULL)
+		kmem_free(acpicpu_sc, maxcpus * sizeof(*sc));
 
 	return 0;
+}
+
+static void
+acpicpu_start(device_t self)
+{
+	struct acpicpu_softc *sc = device_private(self);
+	static bool once = false;
+
+	if (once != false) {
+		sc->sc_cold = false;
+		return;
+	}
+
+	/*
+	 * Run the state-specific initialization
+	 * routines. These should be called only
+	 * once, after all ACPI CPUs have attached.
+	 */
+	if ((sc->sc_flags & ACPICPU_FLAG_C) != 0)
+		acpicpu_cstate_start(self);
+
+	if ((sc->sc_flags & ACPICPU_FLAG_P) != 0)
+		acpicpu_pstate_start(self);
+
+	if ((sc->sc_flags & ACPICPU_FLAG_T) != 0)
+		acpicpu_tstate_start(self);
+
+	aprint_debug_dev(sc->sc_dev, "ACPI CPUs started (cap "
+	    "0x%02x, flags 0x%06x)\n", sc->sc_cap, sc->sc_flags);
+
+	once = true;
+	sc->sc_cold = false;
 }
 
 static int
