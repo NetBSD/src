@@ -1,4 +1,4 @@
-/*	$NetBSD: route.h,v 1.70.16.1.4.2 2010/05/13 05:34:58 matt Exp $	*/
+/*	$NetBSD: route.h,v 1.70.16.1.4.3 2010/08/16 18:42:58 matt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -67,16 +67,16 @@ struct route {
  * retransmission behavior and are included in the routing structure.
  */
 struct rt_metrics {
-	u_quad_t rmx_locks;	/* Kernel must leave these values alone */
-	u_quad_t rmx_mtu;	/* MTU for this path */
-	u_quad_t rmx_hopcount;	/* max hops expected */
-	u_quad_t rmx_expire;	/* lifetime for route, e.g. redirect */
-	u_quad_t rmx_recvpipe;	/* inbound delay-bandwidth product */
-	u_quad_t rmx_sendpipe;	/* outbound delay-bandwidth product */
-	u_quad_t rmx_ssthresh;	/* outbound gateway buffer limit */
-	u_quad_t rmx_rtt;	/* estimated round trip time */
-	u_quad_t rmx_rttvar;	/* estimated rtt variance */
-	u_quad_t rmx_pksent;	/* packets sent using this route */
+	uint64_t rmx_locks;	/* Kernel must leave these values alone */
+	uint64_t rmx_mtu;	/* MTU for this path */
+	uint64_t rmx_hopcount;	/* max hops expected */
+	uint64_t rmx_expire;	/* lifetime for route, e.g. redirect */
+	uint64_t rmx_recvpipe;	/* inbound delay-bandwidth product */
+	uint64_t rmx_sendpipe;	/* outbound delay-bandwidth product */
+	uint64_t rmx_ssthresh;	/* outbound gateway buffer limit */
+	uint64_t rmx_rtt;	/* estimated round trip time */
+	uint64_t rmx_rttvar;	/* estimated rtt variance */
+	uint64_t rmx_pksent;	/* packets sent using this route */
 };
 
 /*
@@ -159,11 +159,11 @@ struct ortentry {
  * Routing statistics.
  */
 struct	rtstat {
-	u_quad_t rts_badredirect;	/* bogus redirect calls */
-	u_quad_t rts_dynamic;		/* routes created by redirects */
-	u_quad_t rts_newgateway;	/* routes modified by redirects */
-	u_quad_t rts_unreach;		/* lookups which failed */
-	u_quad_t rts_wildcard;		/* lookups satisfied by a wildcard */
+	uint64_t rts_badredirect;	/* bogus redirect calls */
+	uint64_t rts_dynamic;		/* routes created by redirects */
+	uint64_t rts_newgateway;	/* routes modified by redirects */
+	uint64_t rts_unreach;		/* lookups which failed */
+	uint64_t rts_wildcard;		/* lookups satisfied by a wildcard */
 };
 /*
  * Structures for routing messages.
@@ -179,7 +179,7 @@ struct rt_msghdr {
 	int	rtm_seq;	/* for sender to identify action */
 	int	rtm_errno;	/* why failed */
 	int	rtm_use;	/* from rtentry */
-	u_quad_t rtm_inits;	/* which metrics we are initializing */
+	uint64_t rtm_inits;	/* which metrics we are initializing */
 	struct	rt_metrics rtm_rmx; /* metrics themselves */
 };
 
@@ -244,7 +244,7 @@ struct rt_msghdr {
 			  "ifp", "ifa", "author", "brd" }
 
 #define RT_ROUNDUP(a) \
-	((a) > 0 ? (1 + (((a) - 1) | (sizeof(u_quad_t) - 1))) : sizeof(u_quad_t))
+	((a) > 0 ? (1 + (((a) - 1) | (sizeof(uint64_t) - 1))) : sizeof(uint64_t))
 #define RT_ADVANCE(x, n) (x += RT_ROUNDUP((n)->sa_len))
 
 struct rt_addrinfo {
