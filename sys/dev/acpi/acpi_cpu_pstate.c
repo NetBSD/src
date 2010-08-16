@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_pstate.c,v 1.19 2010/08/14 17:27:34 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_pstate.c,v 1.20 2010/08/16 04:31:21 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_pstate.c,v 1.19 2010/08/14 17:27:34 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_pstate.c,v 1.20 2010/08/16 04:31:21 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/evcnt.h>
@@ -60,8 +60,11 @@ acpicpu_pstate_attach(device_t self)
 	ACPI_STATUS rv;
 
 	/*
-	 * Three control methods are mandatory
-	 * for P-states; _PSS, _PCT, and _PPC.
+	 * The ACPI 3.0 and 4.0 specifications mandate three
+	 * objects for P-states: _PSS, _PCT, and _PPC. A less
+	 * strict wording is however used in the earlier 2.0
+	 * standard, and some systems conforming to ACPI 2.0
+	 * do not have _PPC, the method for dynamic maximum.
 	 */
 	rv = acpicpu_pstate_pss(sc);
 
@@ -77,12 +80,7 @@ acpicpu_pstate_attach(device_t self)
 		goto fail;
 	}
 
-	rv = acpicpu_pstate_max(sc);
-
-	if (rv != 0) {
-		str = "_PPC";
-		goto fail;
-	}
+	(void)acpicpu_pstate_max(sc);
 
 	sc->sc_flags |= ACPICPU_FLAG_P;
 	sc->sc_pstate_current = sc->sc_pstate[0].ps_freq;
