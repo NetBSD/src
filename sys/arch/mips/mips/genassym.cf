@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.44.12.22 2010/05/16 00:40:51 matt Exp $
+#	$NetBSD: genassym.cf,v 1.44.12.23 2010/08/16 18:01:13 matt Exp $
 #
 # Copyright (c) 1992, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -288,7 +288,10 @@ define	CPU_INFO_IDLELWP	offsetof(struct cpu_info, ci_data.cpu_idlelwp)
 ifndef NOFPU
 define	CPU_INFO_FPCURLWP	offsetof(struct cpu_info, ci_fpcurlwp)
 endif
-define	CPU_INFO_PMAP_SEGBASE	offsetof(struct cpu_info, ci_pmap_segbase)
+define	CPU_INFO_PMAP_SEG0TAB	offsetof(struct cpu_info, ci_pmap_seg0tab)
+ifdef _LP64
+define	CPU_INFO_PMAP_SEGTAB	offsetof(struct cpu_info, ci_pmap_segtab)
+endif
 define	CPU_INFO_DIVISOR_DELAY	offsetof(struct cpu_info, ci_divisor_delay)
 define	CPU_INFO_MTX_COUNT	offsetof(struct cpu_info, ci_mtx_count)
 define	CPU_INFO_MTX_OLDSPL	offsetof(struct cpu_info, ci_mtx_oldspl)

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_segtab.c,v 1.1.2.7 2010/05/04 17:14:47 matt Exp $	*/
+/*	$NetBSD: pmap_segtab.c,v 1.1.2.8 2010/08/16 18:01:13 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_segtab.c,v 1.1.2.7 2010/05/04 17:14:47 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_segtab.c,v 1.1.2.8 2010/08/16 18:01:13 matt Exp $");
 
 /*
  *	Manages physical address maps.
@@ -135,9 +135,9 @@ __KERNEL_RCSID(0, "$NetBSD: pmap_segtab.c,v 1.1.2.7 2010/05/04 17:14:47 matt Exp
 #include <mips/locore.h>
 #include <mips/pte.h>
 
-CTASSERT(NBPG >= sizeof(struct segtab));
+CTASSERT(NBPG >= sizeof(union segtab));
 
-struct segtab * volatile free_segtab;		/* free list kept locally */
+union segtab * volatile free_segtab;		/* free list kept locally */
 #ifdef DEBUG
 uint32_t nget_segtab;
 uint32_t nput_segtab;
@@ -156,13 +156,17 @@ pmap_pte_pagealloc(void)
 static inline pt_entry_t * 
 pmap_segmap(struct pmap *pmap, vaddr_t va)
 {
-	struct segtab *stp = pmap->pm_segtab;
+	union segtab *stp = pmap->pm_segtab;
 	KASSERT(!MIPS_KSEG0_P(va));
 	KASSERT(!MIPS_KSEG1_P(va));
 #ifdef _LP64
 	KASSERT(!MIPS_XKPHYS_P(va));
+	stp = stp->seg_seg[(va >> XSEGSHIFT) & (NSEGPG - 1)];
+	if (stp == NULL)
+		return NULL;
 #endif
-	return stp->seg_tab[va >> SEGSHIFT];
+	
+	return stp->seg_tab[(va >> SEGSHIFT) & (PMAP_SEGTABSIZE - 1)];
 }
 
 pt_entry_t *
@@ -175,101 +179,38 @@ pmap_pte_lookup(pmap_t pmap, vaddr_t va)
 	return pte + ((va >> PGSHIFT) & (NPTEPG - 1));
 }
 
-/*
- *	Create and return a physical map.
- *
- *	If the size specified for the map
- *	is zero, the map is an actual physical
- *	map, and may be referenced by the
- *	hardware.
- *
- *	If the size specified is non-zero,
- *	the map will be used in software only, and
- *	is bounded by that size.
- */
-void
-pmap_segtab_alloc(pmap_t pmap)
+static void
+pmap_segtab_free(union segtab *stp)
 {
-	struct segtab *stp;
- again:
-	stp = NULL;
-	while (__predict_true(free_segtab != NULL)) {
-		struct segtab *next_stp;
-		stp = free_segtab;
-		next_stp = (struct segtab *)stp->seg_tab[0];
-		if (stp == atomic_cas_ptr(&free_segtab, stp, next_stp)) {
-			SEGTAB_ADD(nget, 1);
+	/*
+	 * Insert the the segtab into the segtab freelist.
+	 */
+	for (;;) {
+		void *tmp = free_segtab;
+		stp->seg_tab[0] = tmp;
+		if (tmp == atomic_cas_ptr(&free_segtab, tmp, stp)) {
+			SEGTAB_ADD(nput, 1);
 			break;
 		}
 	}
-	
-	if (__predict_true(stp != NULL)) {
-		stp->seg_tab[0] = NULL;
-	} else {
-		struct vm_page * const stp_pg = pmap_pte_pagealloc();
-
-		if (__predict_false(stp_pg == NULL)) {
-			/*
-			 * XXX What else can we do?  Could we deadlock here?
-			 */
-			uvm_wait("pmap_create");
-			goto again;
-		}
-		SEGTAB_ADD(npage, 1);
-		const paddr_t stp_pa = VM_PAGE_TO_PHYS(stp_pg);
-
-#ifdef _LP64
-		KASSERT(mips_options.mips3_xkphys_cached);
-		stp = (struct segtab *)MIPS_PHYS_TO_XKPHYS_CACHED(stp_pa);
-#else
-		stp = (struct segtab *)MIPS_PHYS_TO_KSEG0(stp_pa);
-#endif
-		const size_t n = NBPG / sizeof(struct segtab);
-		if (n > 1) {
-			/*
-			 * link all the segtabs in this page together
-			 */
-			for (size_t i = 1; i < n - 1; i++) {
-				stp[i].seg_tab[0] = (void *)&stp[i+1];
-			}
-			/*
-			 * Now link the new segtabs into the free segtab list.
-			 */
-			for (;;) {
-				void *tmp = free_segtab;
-				stp[n-1].seg_tab[0] = tmp;
-				if (tmp == atomic_cas_ptr(&free_segtab, tmp, stp+1))
-					break;
-			}
-			SEGTAB_ADD(nput, n - 1);
-		}
-	}
-
-#ifdef PARANOIADIAG
-	for (i = 0; i < PMAP_SEGTABSIZE; i++) {
-		if (stp->seg_tab[i] != 0)
-			panic("pmap_create: pm_segtab.seg_tab[%zu] != 0");
-	}
-#endif
-
-	pmap->pm_segtab = stp;
 }
 
-/*
- *	Retire the given physical map from service.
- *	Should only be called if the map contains
- *	no valid mappings.
- */
-void
-pmap_segtab_free(pmap_t pmap)
+static void
+pmap_segtab_release(union segtab *stp, u_int level)
 {
-	struct segtab *stp = pmap->pm_segtab;
-
-	if (stp == NULL)
-		return;
 
 	for (size_t i = 0; i < PMAP_SEGTABSIZE; i++) {
 		paddr_t pa;
+#ifdef _LP64
+		if (level > 0) {
+			if (stp->seg_seg[i] != NULL) {
+				pmap_segtab_release(stp->seg_seg[i], level - 1);
+				stp->seg_seg[i] = NULL;
+			}
+			continue;
+		}
+#endif
+
 		/* get pointer to segment map */
 		pt_entry_t *pte = stp->seg_tab[i];
 		if (pte == NULL)
@@ -304,17 +245,116 @@ pmap_segtab_free(pmap_t pmap)
 		stp->seg_tab[i] = NULL;
 	}
 
-	/*
-	 * Insert the the segtab into the segtab freelist.
-	 */
-	for (;;) {
-		void *tmp = free_segtab;
-		stp->seg_tab[0] = tmp;
-		if (tmp == atomic_cas_ptr(&free_segtab, tmp, stp)) {
-			SEGTAB_ADD(nput, 1);
+	pmap_segtab_free(stp);
+}
+
+/*
+ *	Create and return a physical map.
+ *
+ *	If the size specified for the map
+ *	is zero, the map is an actual physical
+ *	map, and may be referenced by the
+ *	hardware.
+ *
+ *	If the size specified is non-zero,
+ *	the map will be used in software only, and
+ *	is bounded by that size.
+ */
+static union segtab *
+pmap_segtab_alloc(void)
+{
+	union segtab *stp;
+ again:
+	stp = NULL;
+	while (__predict_true(free_segtab != NULL)) {
+		union segtab *next_stp;
+		stp = free_segtab;
+		next_stp = (union segtab *)stp->seg_tab[0];
+		if (stp == atomic_cas_ptr(&free_segtab, stp, next_stp)) {
+			SEGTAB_ADD(nget, 1);
 			break;
 		}
 	}
+	
+	if (__predict_true(stp != NULL)) {
+		stp->seg_tab[0] = NULL;
+	} else {
+		struct vm_page * const stp_pg = pmap_pte_pagealloc();
+
+		if (__predict_false(stp_pg == NULL)) {
+			/*
+			 * XXX What else can we do?  Could we deadlock here?
+			 */
+			uvm_wait("pmap_create");
+			goto again;
+		}
+		SEGTAB_ADD(npage, 1);
+		const paddr_t stp_pa = VM_PAGE_TO_PHYS(stp_pg);
+
+#ifdef _LP64
+		KASSERT(mips_options.mips3_xkphys_cached);
+		stp = (union segtab *)MIPS_PHYS_TO_XKPHYS_CACHED(stp_pa);
+#else
+		stp = (union segtab *)MIPS_PHYS_TO_KSEG0(stp_pa);
+#endif
+		const size_t n = NBPG / sizeof(union segtab);
+		if (n > 1) {
+			/*
+			 * link all the segtabs in this page together
+			 */
+			for (size_t i = 1; i < n - 1; i++) {
+				stp[i].seg_tab[0] = (void *)&stp[i+1];
+			}
+			/*
+			 * Now link the new segtabs into the free segtab list.
+			 */
+			for (;;) {
+				void *tmp = free_segtab;
+				stp[n-1].seg_tab[0] = tmp;
+				if (tmp == atomic_cas_ptr(&free_segtab, tmp, stp+1))
+					break;
+			}
+			SEGTAB_ADD(nput, n - 1);
+		}
+	}
+
+#ifdef PARANOIADIAG
+	for (i = 0; i < PMAP_SEGTABSIZE; i++) {
+		if (stp->seg_tab[i] != 0)
+			panic("pmap_create: pm_segtab.seg_tab[%zu] != 0");
+	}
+#endif
+	return stp;
+}
+
+/*
+ * Allocate the top segment table for the pmap.
+ */
+void
+pmap_segtab_init(pmap_t pmap)
+{
+
+	pmap->pm_segtab = pmap_segtab_alloc();
+}
+
+/*
+ *	Retire the given physical map from service.
+ *	Should only be called if the map contains
+ *	no valid mappings.
+ */
+void
+pmap_segtab_destroy(pmap_t pmap)
+{
+	union segtab *stp = pmap->pm_segtab;
+
+	if (stp == NULL)
+		return;
+
+#ifdef _LP64
+	pmap_segtab_release(stp, 1);
+#else
+	pmap_segtab_release(stp, 0);
+#endif
 }
 
 /*
@@ -325,7 +365,16 @@ pmap_segtab_activate(struct pmap *pm, struct lwp *l)
 {
 	if (l == curlwp) {
 		KASSERT(pm == l->l_proc->p_vmspace->vm_map.pmap);
-		l->l_cpu->ci_pmap_segbase = pm->pm_segtab;
+#ifdef _LP64
+		l->l_cpu->ci_pmap_segtab = pm->pm_segtab;
+		if (pm != pmap_kernel()) {
+			l->l_cpu->ci_pmap_seg0tab = pm->pm_segtab->seg_seg[0];
+		} else {
+			l->l_cpu->ci_pmap_seg0tab = NULL;
+		}
+#else
+		l->l_cpu->ci_pmap_seg0tab = pm->pm_segtab;
+#endif
 	}
 }
 
@@ -375,11 +424,29 @@ pmap_pte_process(pmap_t pmap, vaddr_t sva, vaddr_t eva,
 pt_entry_t *
 pmap_pte_reserve(pmap_t pmap, vaddr_t va, int flags)
 {
-	struct segtab *stp = pmap->pm_segtab;
+	union segtab *stp = pmap->pm_segtab;
 	pt_entry_t *pte;
 
 	pte = pmap_pte_lookup(pmap, va);
 	if (__predict_false(pte == NULL)) {
+#ifdef _LP64
+		union segtab ** const stp_p =
+		    &stp->seg_seg[(va >> XSEGSHIFT) & (NSEGPG - 1)];
+		if (__predict_false((stp = *stp_p) == NULL)) {
+			union segtab *nstp = pmap_segtab_alloc();
+#ifdef MULTIPROCESSOR
+			union segtab *ostp = atomic_cas_ptr(stp_p, NULL, nstp);
+			if (__predict_false(ostp != NULL)) {
+				pmap_segtab_free(nstp);
+				stp = ostp;
+			}
+#else
+			*stp_p = nstp;
+#endif /* MULTIPROCESSOR */
+			stp = nstp;
+		}
+		KASSERT(stp == pmap->pm_segtab->seg_seg[(va >> XSEGSHIFT) & (NSEGPG - 1)]);
+#endif /* _LP64 */
 		struct vm_page * const pg = pmap_pte_pagealloc();
 		if (pg == NULL) {
 			if (flags & PMAP_CANFAIL)
@@ -395,9 +462,10 @@ pmap_pte_reserve(pmap_t pmap, vaddr_t va, int flags)
 #else
 		pte = (pt_entry_t *)MIPS_PHYS_TO_KSEG0(pa);
 #endif
+		pt_entry_t ** const pte_p =
+		    &stp->seg_tab[(va >> SEGSHIFT) & (PMAP_SEGTABSIZE - 1)];
 #ifdef MULTIPROCESSOR
-		pt_entry_t *opte = atomic_cas_ptr(
-		    &stp->seg_tab[va >> SEGSHIFT], NULL, pte);
+		pt_entry_t *opte = atomic_cas_ptr(pte_p, NULL, pte);
 		/*
 		 * If another thread allocated the segtab needed for this va
 		 * free the page we just allocated.
@@ -407,8 +475,9 @@ pmap_pte_reserve(pmap_t pmap, vaddr_t va, int flags)
 			pte = opte;
 		}
 #else
-		stp->seg_tab[va >> SEGSHIFT] = pte;
+		*pte_p = pte;
 #endif
+		KASSERT(pte == stp->seg_tab[(va >> SEGSHIFT) & (PMAP_SEGTABSIZE - 1)]);
 
 		pte += (va >> PGSHIFT) & (NPTEPG - 1);
 #ifdef PARANOIADIAG

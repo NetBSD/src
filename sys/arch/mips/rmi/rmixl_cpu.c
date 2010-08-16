@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_cpu.c,v 1.1.2.12 2010/06/10 01:11:26 cliff Exp $	*/
+/*	$NetBSD: rmixl_cpu.c,v 1.1.2.13 2010/08/16 18:01:13 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -38,7 +38,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_cpu.c,v 1.1.2.12 2010/06/10 01:11:26 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_cpu.c,v 1.1.2.13 2010/08/16 18:01:13 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -418,9 +418,13 @@ rmixl_cpuinfo_print(cpuid_t cpuid)
 			printf("ci_softlwps[%d] %p\n", i, ci->ci_softlwps[i]);
 		printf("ci_tlb_slot %d\n", ci->ci_tlb_slot);
 		printf("ci_tlb_info %p\n", ci->ci_tlb_info);
-		printf("ci_pmap_segbase %p\n", ci->ci_pmap_segbase);
+		printf("ci_pmap_seg0tab %p\n", ci->ci_pmap_seg0tab);
+#ifdef _LP64
+		printf("ci_pmap_segtab %p\n", ci->ci_pmap_segtab);
+#else
 		printf("ci_pmap_srcbase %#"PRIxVADDR"\n", ci->ci_pmap_srcbase);
 		printf("ci_pmap_dstbase %#"PRIxVADDR"\n", ci->ci_pmap_dstbase);
+#endif
 #ifdef MULTIPROCESSOR
 		printf("ci_flags %#lx\n", ci->ci_flags);
 		printf("ci_request_ipis %#"PRIx64"\n", ci->ci_request_ipis);

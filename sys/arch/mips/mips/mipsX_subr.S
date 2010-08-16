@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.26.36.1.2.32 2010/06/10 00:37:12 cliff Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.26.36.1.2.33 2010/08/16 18:01:13 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -299,7 +299,7 @@
 	.set	noreorder
 
 /*
- * TLB handling data.   'CPUVAR(PMAP_SEGBASE)' points to the base of the segment
+ * TLB handling data.   'CPUVAR(PMAP_SEG0TAB)' points to the base of the segment
  * table.   this is read and written by C code in mips_machdep.c.
  *
  * XXX: use linear mapped PTs at fixed VA in kseg2 in the future?
@@ -347,42 +347,47 @@
 VECTOR(MIPSX(tlb_miss), unknown)
 	.set	noat
 	_MFC0	k0, MIPS_COP_0_BAD_VADDR	#00: k0=bad address
-	lui	k1, %hi(CPUVAR(PMAP_SEGBASE))	#01: k1=hi of segbase
+	lui	k1, %hi(CPUVAR(PMAP_SEG0TAB))	#01: k1=hi of segbase
 	bltz	k0, MIPSX(kernelfault)		#02: k0<0 -> 4f (kernel fault)
-	 PTR_SRL k0, (2*PGSHIFT-2-PTR_SCALESHIFT)#03: k0=seg offset (almost)
-	PTR_L	k1, %lo(CPUVAR(PMAP_SEGBASE))(k1)#04: k1=segment tab base
-	andi	k0, (NBPG-(1<<PTR_SCALESHIFT))	#05: k0=seg offset (mask 0x3)
-	PTR_ADDU k1, k0				#06: k1=seg entry address
-	PTR_L	k1, 0(k1)			#07: k1=seg entry
-	_MFC0	k0, MIPS_COP_0_BAD_VADDR	#08: k0=bad address (again)
-	beqz	k1, MIPSX(nopagetable)		#09: ==0 -- no page table
-	 PTR_SRL k0, (PGSHIFT-2)		#0a: k0=VPN (aka va>>10)
-	andi	k0, (NBPG-8)			#0b: k0=page tab offset
-	PTR_ADDU k1, k0				#0c: k1=pte address
-	INT_L	k0, 0(k1)			#0d: k0=lo0 pte
-	INT_L	k1, 4(k1)			#0e: k1=lo1 pte
-	_SLL	k0, WIRED_SHIFT			#0f: chop top 2 bits (part 1a)
-	_SRL	k0, WIRED_SHIFT			#10: chop top 2 bits (part 1b)
+	 PTR_SRL k0, 1*(PGSHIFT-PTR_SCALESHIFT)+(PGSHIFT-2)#03: k0=seg offset (almost)
+	PTR_L	k1, %lo(CPUVAR(PMAP_SEG0TAB))(k1)#04: k1=segment tab base
+MIPSX(tlb_miss_common):
+#ifdef _LP64
+	beqz	k1, MIPSX(nopagetable)		#05: is there a pagetable?
+	 nop					#06
+#endif
+	andi	k0, (NBPG-(1<<PTR_SCALESHIFT))	#07: k0=seg offset (mask 0x3)
+	PTR_ADDU k1, k0				#08: k1=seg entry address
+	PTR_L	k1, 0(k1)			#09: k1=seg entry
+	_MFC0	k0, MIPS_COP_0_BAD_VADDR	#0a: k0=bad address (again)
+	beqz	k1, MIPSX(nopagetable)		#0b: ==0 -- no page table
+	 PTR_SRL k0, (PGSHIFT-2)		#0c: k0=VPN (aka va>>10)
+	andi	k0, (NBPG-8)			#0d: k0=page tab offset
+	PTR_ADDU k1, k0				#0e: k1=pte address
+	INT_L	k0, 0(k1)			#0f: k0=lo0 pte
+	INT_L	k1, 4(k1)			#10: k1=lo1 pte
+	_SLL	k0, WIRED_SHIFT			#11: chop top 2 bits (part 1a)
+	_SRL	k0, WIRED_SHIFT			#12: chop top 2 bits (part 1b)
 #ifdef MIPS3_5900
-	_MTC0	k0, MIPS_COP_0_TLB_LO0		#11: lo0 is loaded
-	sync.p					#12: R5900 cop0 hazard
-	_SLL	k1, WIRED_SHIFT			#13: chop top 2 bits (part 2a)
-	_SRL	k1, WIRED_SHIFT			#14: chop top 2 bits (part 2b)
-	_MTC0	k1, MIPS_COP_0_TLB_LO1		#15: lo1 is loaded
-	sync.p					#16: R5900 cop0 hazard
+	_MTC0	k0, MIPS_COP_0_TLB_LO0		#13: lo0 is loaded
+	sync.p					#14: R5900 cop0 hazard
+	_SLL	k1, WIRED_SHIFT			#15: chop top 2 bits (part 2a)
+	_SRL	k1, WIRED_SHIFT			#16: chop top 2 bits (part 2b)
+	_MTC0	k1, MIPS_COP_0_TLB_LO1		#17: lo1 is loaded
+	sync.p					#18: R5900 cop0 hazard
 #else /* MIPS3_5900 */
-	_MTC0	k0, MIPS_COP_0_TLB_LO0		#11: lo0 is loaded
-	_SLL	k1, WIRED_SHIFT			#12: chop top 2 bits (part 2a)
-	_SRL	k1, WIRED_SHIFT			#13: chop top 2 bits (part 2b)
-	_MTC0	k1, MIPS_COP_0_TLB_LO1		#14: lo1 is loaded
-	nop					#15: standard nop
-	nop					#16: extra nop for QED5230
+	_MTC0	k0, MIPS_COP_0_TLB_LO0		#13: lo0 is loaded
+	_SLL	k1, WIRED_SHIFT			#14: chop top 2 bits (part 2a)
+	_SRL	k1, WIRED_SHIFT			#15: chop top 2 bits (part 2b)
+	_MTC0	k1, MIPS_COP_0_TLB_LO1		#16: lo1 is loaded
+	nop					#17: standard nop
+	nop					#18: extra nop for QED5230
 #endif /* MIPS3_5900 */
-	tlbwr					#17: write to tlb
-	nop					#18: standard nop
-	nop					#19: needed by R4000/4400
-	nop					#1a: needed by R4000/4400
-	eret					#1b: return from exception
+	tlbwr					#19: write to tlb
+	nop					#1a: standard nop
+	nop					#1b: needed by R4000/4400
+	nop					#1c: needed by R4000/4400
+	eret					#1d: return from exception
 	.set	at
 _VECTOR_END(MIPSX(tlb_miss))
 
@@ -405,33 +410,26 @@ _VECTOR_END(MIPSX(tlb_miss))
 VECTOR(MIPSX(xtlb_miss), unknown)
 	.set	noat
 	dmfc0	k0, MIPS_COP_0_BAD_VADDR	#00: k0=bad address
-	lui	k1, %hi(CPUVAR(PMAP_SEGBASE))	#01: k1=hi of segbase
+#ifdef _LP64
+	lui	k1, %hi(CPUVAR(PMAP_SEGTAB))	#01: k1=hi of segtab
 	bltz	k0, MIPSX(kernelfault)		#02: k0<0 -> 4f (kernel fault)
-	 PTR_SRL k0, 2*PGSHIFT-2-PTR_SCALESHIFT	#03: k0=seg offset (almost)
-	PTR_L	k1, %lo(CPUVAR(PMAP_SEGBASE))(k1)#04: k1=segment tab base
-	andi	k0, NBPG-(1<<PTR_SCALESHIFT)	#05: k0=seg offset (mask 0x3)
+	 PTR_SRL k0, 2*(PGSHIFT-PTR_SCALESHIFT)+(PGSHIFT-2) #03: k0=seg offset (almost)
+	andi	k0, NBPG-(1<<PTR_SCALESHIFT)	#04: k0=seg offset (mask 0x3)
+	PTR_L	k1, %lo(CPUVAR(PMAP_SEGTAB))(k1)#05: k1=segment tab
 	PTR_ADDU k1, k0				#06: k1=seg entry address
 	PTR_L	k1, 0(k1)			#07: k1=seg entry
+#else
+	lui	k1, %hi(CPUVAR(PMAP_SEG0TAB))	#01: k1=hi of segbase
+	bltz	k0, MIPSX(kernelfault)		#02: k0<0 -> 4f (kernel fault)
+	 dsrl	k0, 31				#03: clear low 31 bits
+	bnez	k0, MIPSX(nopagetable)		#04: not legal address
+	 nop
+	PTR_L	k1, %lo(CPUVAR(PMAP_SEG0TAB))(k1)#05: k1=segment tab base
+#endif /* _LP64 */
 	dmfc0	k0, MIPS_COP_0_BAD_VADDR	#08: k0=bad address (again)
-	beqz	k1, MIPSX(nopagetable)		#09: ==0 -- no page table
-	 PTR_SRL k0, (PGSHIFT-2)		#0a: k0=VPN (aka va>>10)
-	andi	k0, (NBPG-8)			#0b: k0=page tab offset
-	PTR_ADDU k1, k0				#0c: k1=pte address
-	INT_L	k0, 0(k1)			#0d: k0=lo0 pte
-	INT_L	k1, 4(k1)			#0e: k1=lo1 pte
-	_SLL	k0, WIRED_SHIFT			#0f: chop top 2 bits (part 1a)
-	_SRL	k0, WIRED_SHIFT			#10: chop top 2 bits (part 1b)
-	_MTC0	k0, MIPS_COP_0_TLB_LO0		#11: lo0 is loaded
-	_SLL	k1, WIRED_SHIFT			#12: chop top 2 bits (part 2a)
-	_SRL	k1, WIRED_SHIFT			#13: chop top 2 bits (part 2b)
-	_MTC0	k1, MIPS_COP_0_TLB_LO1		#14: lo1 is loaded
-	nop					#15: standard nop
-	nop					#16: extra nop for QED5230
-	tlbwr					#17: write to tlb
-	nop					#18: standard nop
-	nop					#19: needed by R4000/4400
-	nop					#1a: needed by R4000/4400
-	eret					#1b: return from exception
+	PTR_SRL	k0, 1*(PGSHIFT-PTR_SCALESHIFT)+(PGSHIFT-2) #09: k0=seg offset (almost)
+	b	MIPSX(tlb_miss_common)		#0a
+	 nop
 	.set	at
 _VECTOR_END(MIPSX(xtlb_miss))
 #else
@@ -2455,6 +2453,7 @@ LEAF_NOPROFILE(MIPSX(tlb_invalidate_globals))
 	mtc0	zero, MIPS_COP_0_STATUS		# disable interrupts
 	COP0_SYNC
 
+	_MFC0	t0, MIPS_COP_0_TLB_HI		# save current ASID
 	mfc0	t1, MIPS_COP_0_TLB_WIRED
 	li	v0, MIPS_KSEG0_START		# invalid address
 	INT_L	t2, _C_LABEL(mips_options) + MO_NUM_TLB_ENTRIES
@@ -2498,6 +2497,7 @@ LEAF_NOPROFILE(MIPSX(tlb_invalidate_globals))
 	bne	t1, t2, 1b
 	nop
 
+	_MTC0	t0, MIPS_COP_0_TLB_HI		# restore current ASID
 	mtc0	t3, MIPS_COP_0_TLB_PG_MASK	# restore pgMask
 	COP0_SYNC
 	/* XXX simonb: lose these nops for mips32/64? */
@@ -2564,11 +2564,11 @@ END(MIPSX(tlb_invalidate_all))
  */
 LEAF(MIPSX(tlb_enter))
 	.set	noat
-	mfc0	ta0, MIPS_COP_0_TLB_HI		# save EntryHi
+	_MFC0	ta0, MIPS_COP_0_TLB_HI		# save EntryHi
 
 	and	a3, a1, MIPS3_PG_ODDPG		# select odd page bit
 	xor	a3, a1				# clear it.
-	mtc0	a3, MIPS_COP_0_TLB_HI		# set the VA for tlbp
+	_MTC0	a3, MIPS_COP_0_TLB_HI		# set the VA for tlbp
 	COP0_SYNC
 	nop
 	nop
@@ -2603,7 +2603,7 @@ LEAF(MIPSX(tlb_enter))
 	sll	t1, 1 + PGSHIFT			# make a fake addr for the entry
 	lui	v1, %hi(MIPS_KSEG0_START)
 	or	t1, v1
-	mtc0	t1, MIPS_COP_0_TLB_HI
+	_MTC0	t1, MIPS_COP_0_TLB_HI
 	COP0_SYNC
 	nop
 	nop
@@ -2617,7 +2617,7 @@ LEAF(MIPSX(tlb_enter))
 	tlbwi					# now write the invalid TLB
 	COP0_SYNC
 
-	mtc0	a3, MIPS_COP_0_TLB_HI		# restore the addr for new TLB
+	_MTC0	a3, MIPS_COP_0_TLB_HI		# restore the addr for new TLB
 	COP0_SYNC
 	nop
 	nop
@@ -2648,7 +2648,7 @@ LEAF(MIPSX(tlb_enter))
 	nop
 	nop
 
-	mtc0	ta1, MIPS_COP_0_TLB_HI		# restore EntryHi
+	_MTC0	ta1, MIPS_COP_0_TLB_HI		# restore EntryHi
 	COP0_SYNC
 
 	j	ra
@@ -2700,8 +2700,8 @@ _C_LABEL(MIPSX(locoresw)):
 	PTR_WORD _C_LABEL(MIPSX(setfunc_trampoline))
 	PTR_WORD _C_LABEL(nullop)	# send ipi
 	PTR_WORD _C_LABEL(nullop)	# cpu_offline_md
-	PTR_WORD _C_LABEL(nullop)	# spare
-	PTR_WORD _C_LABEL(nullop)	# spare
+	PTR_WORD _C_LABEL(nullop)	# cpu_init_md
+	PTR_WORD _C_LABEL(nullop)	# lsw_bus_error
 
 MIPSX(excpt_sw):
 	####

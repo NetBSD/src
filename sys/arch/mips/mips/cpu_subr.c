@@ -32,7 +32,7 @@
 #include "opt_multiprocessor.h"
 #include "opt_sa.h"
 
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.1.2.8 2010/04/30 16:10:42 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.1.2.9 2010/08/16 18:01:13 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -69,7 +69,10 @@ struct cpu_info cpu_info_store
 	.ci_fpcurlwp = &lwp0,
 #endif
 	.ci_tlb_info = &pmap_tlb0_info,
-	.ci_pmap_segbase = (void *)(MIPS_KSEG2_START + 0x1eadbeef),
+	.ci_pmap_seg0tab = (void *)(MIPS_KSEG2_START + 0x1eadbeef),
+#ifdef _LP64
+	.ci_pmap_segtab = (void *)(MIPS_KSEG2_START + 0x1eadbeef),
+#endif
 	.ci_cpl = IPL_HIGH,
 	.ci_tlb_slot = -1,
 #ifdef MULTIPROCESSOR

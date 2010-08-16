@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.41.28.15 2010/05/29 18:04:11 matt Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.41.28.16 2010/08/16 18:01:13 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -190,11 +190,7 @@
  */
 #define VM_MIN_ADDRESS		((vaddr_t)0x00000000)
 #ifdef _LP64
-#if 1
-#define VM_MAXUSER_ADDRESS	((vaddr_t) 1L << 31)	/* 0x0000000080000000 */
-#else
-#define VM_MAXUSER_ADDRESS	((vaddr_t) 1L << 62)	/* 0x4000000000000000 */
-#endif
+#define VM_MAXUSER_ADDRESS	((vaddr_t) 1L << 40)	/* 0x0000010000000000 */
 #define VM_MAX_ADDRESS		VM_MAXUSER_ADDRESS
 #define VM_MIN_KERNEL_ADDRESS	((vaddr_t) 3L << 62)	/* 0xC000000000000000 */
 #define VM_MAX_KERNEL_ADDRESS	((vaddr_t) -1L << 31)	/* 0xFFFFFFFF80000000 */
