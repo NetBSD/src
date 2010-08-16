@@ -1,4 +1,4 @@
-/*	$NetBSD: table.c,v 1.22 2004/07/06 23:36:24 mycroft Exp $	*/
+/*	$NetBSD: table.c,v 1.22.38.1 2010/08/16 18:43:55 matt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -36,7 +36,7 @@
 #include "defs.h"
 
 #ifdef __NetBSD__
-__RCSID("$NetBSD: table.c,v 1.22 2004/07/06 23:36:24 mycroft Exp $");
+__RCSID("$NetBSD: table.c,v 1.22.38.1 2010/08/16 18:43:55 matt Exp $");
 #elif defined(__FreeBSD__)
 __RCSID("$FreeBSD$");
 #else
@@ -1092,8 +1092,8 @@ flush_kern(void)
 		rtm = (struct rt_msghdr *)next;
 		if (rtm->rtm_msglen == 0) {
 			msglog("zero length kernel route at "
-			       " %#lx in buffer %#lx before %#lx",
-			       (u_long)rtm, (u_long)sysctl_buf, (u_long)lim);
+			       " %p in buffer %p before %p",
+			       rtm, sysctl_buf, lim);
 			break;
 		}
 

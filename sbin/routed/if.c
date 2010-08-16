@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.26 2007/08/14 03:39:19 dyoung Exp $	*/
+/*	$NetBSD: if.c,v 1.26.20.1 2010/08/16 18:43:55 matt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,7 +37,7 @@
 #include "pathnames.h"
 
 #ifdef __NetBSD__
-__RCSID("$NetBSD: if.c,v 1.26 2007/08/14 03:39:19 dyoung Exp $");
+__RCSID("$NetBSD: if.c,v 1.26.20.1 2010/08/16 18:43:55 matt Exp $");
 #elif defined(__FreeBSD__)
 __RCSID("$FreeBSD$");
 #else
@@ -83,6 +83,19 @@ static struct timeval last_ifinit;
 
 int	have_ripv1_out;			/* have a RIPv1 interface */
 int	have_ripv1_in;
+
+#ifdef sgi
+#define ROUNDUP(a) ((a) > 0 ? (1 + (((a) - 1) | (sizeof(__uint64_t) - 1))) \
+		    : sizeof(__uint64_t))
+#define	ROUNDUPMSG(a)	(a)
+#elif defined(__NetBSD__)
+#define ROUNDUP(a)	RT_ROUNDUP(a)
+#define	ROUNDUPMSG(a)	RT_ROUNDUP(a)
+#else
+#define ROUNDUP(a) ((a) > 0 ? (1 + (((a) - 1) | (sizeof(long) - 1))) \
+		    : sizeof(long))
+#define	ROUNDUPMSG(a)	(a)
+#endif
 
 
 static struct interface**
@@ -641,14 +654,6 @@ rt_xaddrs(struct rt_addrinfo *info,
 #ifdef _HAVE_SA_LEN
 	static struct sockaddr sa_zero;
 #endif
-#ifdef sgi
-#define ROUNDUP(a) ((a) > 0 ? (1 + (((a) - 1) | (sizeof(__uint64_t) - 1))) \
-		    : sizeof(__uint64_t))
-#else
-#define ROUNDUP(a) ((a) > 0 ? (1 + (((a) - 1) | (sizeof(long) - 1))) \
-		    : sizeof(long))
-#endif
-
 
 	memset(info, 0, sizeof(*info));
 	info->rti_addrs = addrs;
@@ -742,7 +747,7 @@ ifinit(void)
 	     ifam < ifam_lim;
 	     ifam = ifam2) {
 
-		ifam2 = (struct ifa_msghdr*)((char*)ifam + ifam->ifam_msglen);
+		ifam2 = (struct ifa_msghdr*)((uintptr_t)ifam + ROUNDUPMSG(ifam->ifam_msglen));
 
 #ifdef RTM_OIFINFO
 		if (ifam->ifam_type == RTM_OIFINFO)
@@ -769,7 +774,8 @@ ifinit(void)
 #ifdef sgi
 			ifs0.int_data.odrops = ifm->ifm_data.ifi_odrops;
 #endif
-			sdl = (const struct sockaddr_dl *)(ifm + 1);
+			sdl = (const struct sockaddr_dl *)
+			    ((uintptr_t)ifm + ROUNDUP(sizeof(*ifm)));
 			/* NUL-termination by memset, above. */
 			memcpy(ifs0.int_name, sdl->sdl_data,
 				MIN(sizeof(ifs0.int_name) - 1, sdl->sdl_nlen));
