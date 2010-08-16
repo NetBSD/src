@@ -1,8 +1,8 @@
-#	$NetBSD: XLSATX,v 1.1.2.10 2010/05/18 19:51:43 cliff Exp $
+#	$NetBSD: XLSATX,v 1.1.2.11 2010/08/16 18:44:45 matt Exp $
 
 include 	"arch/evbmips/conf/std.rmixl"
 
-#ident 		"XLSATX-$Revision: 1.1.2.10 $"
+#ident 		"XLSATX-$Revision: 1.1.2.11 $"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
@@ -35,6 +35,7 @@ options 	NTP		# network time protocol
 options 	DIAGNOSTIC	# extra kernel sanity checking
 options 	DEBUG		# extra kernel debugging support
 #options 	KMEMSTATS	# kernel memory statistics (vmstat -m)
+options 	MSGBUFSIZE=65536 # kernel dmesg buffer
 options 	USERCONF	# userconf(4) support
 #options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 options 	DDB		# kernel dynamic debugger
@@ -201,6 +202,7 @@ pseudo-device	loop				# network loopback
 #pseudo-device	stf				# 6to4 IPv6 over IPv4 encapsulation
 #pseudo-device	vlan				# IEEE 802.1q encapsulation
 #pseudo-device	bridge				# simple inter-network bridging
+pseudo-device	kttcp				# kernel ttcp
 
 # Miscellaneous pseudo-devices
 pseudo-device	pty				# pseudo-terminals
