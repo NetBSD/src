@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.167.38.18 2010/05/16 05:00:12 matt Exp $	*/
+/*	$NetBSD: locore.S,v 1.167.38.19 2010/08/16 17:58:43 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -57,6 +57,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
+#include <sys/errno.h>
 
 #include <machine/param.h>
 #include <mips/asm.h>
@@ -406,6 +407,28 @@ NESTED(softint_fast_dispatch, CALLFRAME_SIZ, ra)
 	 PTR_ADDU sp, CALLFRAME_SIZ
 END(softint_fast_dispatch)
 #endif /* __HAVE_FAST_SOFTINTS */
+
+/*
+ * int lwp_oncpu(lwp_t *);
+ */
+LEAF(lwp_oncpu)
+	PTR_L	t0, L_ADDR(MIPS_CURLWP)		# get curpcb
+	li	v0, EFAULT			# assume failure
+	PTR_LA	t1, 1f				# load addr of cleanup
+	PTR_S	t1, U_PCB_ONFAULT(t0)		# save onfault handler
+	PTR_L	t2, L_CPU(a0)			# grab cpu of supplied lwp
+	PTR_L	t3, CPU_INFO_CURLWP(t2)		# grab curlwp of that cpu
+	li	v0, ESRCH			# assume the lwp isn't curlwp
+	bne	a0, t3, 1f			# branch if true (not equal)
+	 nop
+	PTR_S	t2, 0(a1)			# return the cpu_info
+	li	v0, 0				# load success
+1:
+	PTR_S	zero, U_PCB_ONFAULT(t0)		# reset fault handler
+	j	ra				# and return.
+	 nop
+END(lwp_oncpu)
+	
 
 /*
  * savectx(struct user *up)
