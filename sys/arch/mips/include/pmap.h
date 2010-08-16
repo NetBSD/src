@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.54.26.13 2010/05/04 17:15:53 matt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.54.26.14 2010/08/16 18:01:13 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -102,11 +102,18 @@
 #define mips_trunc_seg(x)	((vaddr_t)(x) & ~SEGOFSET)
 #define mips_round_seg(x)	(((vaddr_t)(x) + SEGOFSET) & ~SEGOFSET)
 
+#ifdef _LP64
+#define PMAP_SEGTABSIZE		NSEGPG
+#else
 #define PMAP_SEGTABSIZE		(1 << (31 - SEGSHIFT))
+#endif
 
 union pt_entry;
 
-struct segtab {
+union segtab {
+#ifdef _LP64
+	union segtab	*seg_seg[PMAP_SEGTABSIZE];
+#endif
 	union pt_entry	*seg_tab[PMAP_SEGTABSIZE];
 };
 
@@ -135,8 +142,8 @@ union pt_entry *pmap_pte_reserve(struct pmap *, vaddr_t, int);
 void pmap_pte_process(struct pmap *, vaddr_t, vaddr_t, pte_callback_t,
 	uintptr_t);
 void pmap_segtab_activate(struct pmap *, struct lwp *);
-void pmap_segtab_alloc(struct pmap *);
-void pmap_segtab_free(struct pmap *);
+void pmap_segtab_init(struct pmap *);
+void pmap_segtab_destroy(struct pmap *);
 #endif /* _KERNEL */
 
 /*
@@ -164,7 +171,7 @@ typedef struct pmap {
 	volatile uint32_t	pm_onproc;	/* pmap is active on ... */
 	volatile u_int		pm_shootdown_pending;
 #endif
-	struct segtab		*pm_segtab;	/* pointers to pages of PTEs */
+	union segtab		*pm_segtab;	/* pointers to pages of PTEs */
 	u_int			pm_count;	/* pmap reference count */
 	u_int			pm_flags;
 #define	PMAP_DEFERRED_ACTIVATE	0x0001

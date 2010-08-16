@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.179.16.26 2010/06/10 05:45:50 cliff Exp $	*/
+/*	$NetBSD: pmap.c,v 1.179.16.27 2010/08/16 18:01:13 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.179.16.26 2010/06/10 05:45:50 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.179.16.27 2010/08/16 18:01:13 matt Exp $");
 
 /*
  *	Manages physical address maps.
@@ -518,6 +518,10 @@ pmap_bootstrap(void)
 	Sysmapsize += poolpage.size;
 #endif
 #ifdef _LP64
+	/*
+	 * If we are using tmpfs, then we might want to use a great deal of
+	 * our memory with it.  Make sure we have enough VM to do that.
+	 */
 	Sysmapsize += physmem;
 #else
 	/* XXX: else runs out of space on 256MB sbmips!! */
@@ -775,7 +779,7 @@ pmap_create(void)
 
 	pmap->pm_count = 1;
 
-	pmap_segtab_alloc(pmap);
+	pmap_segtab_init(pmap);
 
 	return pmap;
 }
@@ -801,7 +805,7 @@ pmap_destroy(pmap_t pmap)
 	PMAP_COUNT(destroy);
 	kpreempt_disable();
 	pmap_tlb_asid_release_all(pmap);
-	pmap_segtab_free(pmap);
+	pmap_segtab_destroy(pmap);
 
 	pool_put(&pmap_pmap_pool, pmap);
 	kpreempt_enable();
@@ -851,7 +855,12 @@ pmap_deactivate(struct lwp *l)
 	PMAP_COUNT(deactivate);
 
 	kpreempt_disable();
-	curcpu()->ci_pmap_segbase = (void *)(MIPS_KSEG2_START + 0x1eadbeef);
+#ifdef _LP64
+	curcpu()->ci_pmap_segtab = (void *)(MIPS_KSEG2_START + 0x1eadbeef);
+	curcpu()->ci_pmap_seg0tab = NULL;
+#else
+	curcpu()->ci_pmap_seg0tab = (void *)(MIPS_KSEG2_START + 0x1eadbeef);
+#endif
 	pmap_tlb_asid_deactivate(l->l_proc->p_vmspace->vm_map.pmap);
 	kpreempt_enable();
 }
@@ -981,6 +990,11 @@ pmap_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 			    asid, pai->pai_asid);
 		}
 	}
+#endif
+#ifdef PMAP_FAULTINFO
+	curpcb->pcb_faultinfo.pfi_faultaddr = 0;
+	curpcb->pcb_faultinfo.pfi_repeats = 0;
+	curpcb->pcb_faultinfo.pfi_faultpte = NULL;
 #endif
 	pmap_pte_process(pmap, sva, eva, pmap_pte_remove, 0);
 	kpreempt_enable();
@@ -1526,13 +1540,28 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 
 	if (mips_pg_v(pte->pt_entry) &&
 	    mips_tlbpfn_to_paddr(pte->pt_entry) != pa) {
+#ifdef PMAP_FAULTINFO
+		struct pcb_faultinfo tmp_fi = curpcb->pcb_faultinfo;
+#endif
 		pmap_remove(pmap, va, va + NBPG);
+#ifdef PMAP_FAULTINFO
+		curpcb->pcb_faultinfo = tmp_fi;
+#endif
 		PMAP_COUNT(user_mappings_changed);
 	}
 
+	KASSERT(mips_pg_v(npte));
 	bool resident = mips_pg_v(pte->pt_entry);
 	if (!resident)
 		pmap->pm_stats.resident_count++;
+#ifdef PMAP_FAULTINFO
+	if (curpcb->pcb_faultinfo.pfi_faultpte == pte
+	    && curpcb->pcb_faultinfo.pfi_repeats > 1) {
+		printf("%s(%#"PRIxVADDR", %#"PRIxPADDR"): changing pte@%p from %#x to %#x\n",
+		    __func__, va, pa, pte, pte->pt_entry, npte);
+		cpu_Debugger();
+	}
+#endif
 	pte->pt_entry = npte;
 
 	pmap_tlb_update_addr(pmap, va, npte, resident);
@@ -1647,6 +1676,12 @@ pmap_remove_all(struct pmap *pmap)
 	pmap_tlb_asid_deactivate(pmap);
 	pmap_tlb_asid_release_all(pmap);
 	pmap->pm_flags |= PMAP_DEFERRED_ACTIVATE;
+
+#ifdef PMAP_FAULTINFO
+	curpcb->pcb_faultinfo.pfi_faultaddr = 0;
+	curpcb->pcb_faultinfo.pfi_repeats = 0;
+	curpcb->pcb_faultinfo.pfi_faultpte = NULL;
+#endif
 	kpreempt_enable();
 }
 /*
@@ -2054,7 +2089,7 @@ again:
 		 */
 #ifdef DEBUG
 		if (pmapdebug & PDB_PVENTRY)
-			printf("pmap_enter: first pv: pmap %p va %#"PRIxVADDR"\n",
+			printf("pmap_enter_pv: first pv: pmap %p va %#"PRIxVADDR"\n",
 			    pmap, va);
 #endif
 		PMAP_COUNT(primary_mappings);
@@ -2146,7 +2181,7 @@ again:
 				    mips_tlbpfn_to_paddr(pt_entry) !=
 				    VM_PAGE_TO_PHYS(pg))
 					printf(
-		"pmap_enter: found va %#"PRIxVADDR" pa %#"PRIxPADDR" in pv_table but != %x\n",
+		"pmap_enter_pv: found va %#"PRIxVADDR" pa %#"PRIxPADDR" in pv_table but != %x\n",
 					    va, VM_PAGE_TO_PHYS(pg),
 					    pt_entry);
 #endif
@@ -2159,7 +2194,7 @@ again:
 		}
 #ifdef DEBUG
 		if (pmapdebug & PDB_PVENTRY)
-			printf("pmap_enter: new pv: pmap %p va %#"PRIxVADDR"\n",
+			printf("pmap_enter_pv: new pv: pmap %p va %#"PRIxVADDR"\n",
 			    pmap, va);
 #endif
 		if (__predict_true(apv == NULL)) {

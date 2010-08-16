@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.217.12.27 2010/06/10 00:33:50 cliff Exp $	*/
+/*	$NetBSD: trap.c,v 1.217.12.28 2010/08/16 18:01:13 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.217.12.27 2010/06/10 00:33:50 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.217.12.28 2010/08/16 18:01:13 matt Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_ddb.h"
@@ -202,13 +202,14 @@ trap(unsigned int status, unsigned int cause, vaddr_t vaddr, vaddr_t opc,
 	struct lwp * const l = curlwp;
 	struct proc * const p = curproc;
 	struct trapframe * const utf = l->l_md.md_utf;
+	struct cpu_info * const ci = curcpu();
 	vm_prot_t ftype;
 	ksiginfo_t ksi;
 	extern void fswintrberr(void);
 
 	KSI_INIT_TRAP(&ksi);
 
-	curcpu()->ci_data.cpu_ntrap++;
+	ci->ci_data.cpu_ntrap++;
 	type = TRAPTYPE(cause);
 	if (USERMODE(status)) {
 		tf = utf;
@@ -374,14 +375,53 @@ trap(unsigned int status, unsigned int cause, vaddr_t vaddr, vaddr_t opc,
 		ftype = VM_PROT_WRITE;
 	pagefault: ;
 	    {
-		vaddr_t va;
-		struct vmspace *vm;
-		struct vm_map *map;
-		int rv;
+		const vaddr_t va = trunc_page(vaddr);
+		struct vmspace * const vm = p->p_vmspace;
+		struct vm_map * const map = &vm->vm_map;
+#ifdef PMAP_FAULTINFO
+		struct pcb_faultinfo * const pfi = &curpcb->pcb_faultinfo;
+#endif
+		int rv = 0;
 
-		vm = p->p_vmspace;
-		map = &vm->vm_map;
-		va = trunc_page(vaddr);
+#ifdef _LP64
+		/*
+		 * If the pmap has been activated and we allocated the segtab
+		 * for the low 4GB, seg0tab may still be NULL.  We can't
+		 * really fix this in pmap_enter (we can only update the local
+		 * cpu's cpu_info but not other cpu's) so we need to detect
+		 * and fix this here.
+		 */
+		if (__predict_false(ci->ci_pmap_seg0tab == NULL &&
+		    ci->ci_pmap_segtab->seg_seg[0] != NULL)) {
+			ci->ci_pmap_seg0tab = ci->ci_pmap_segtab->seg_seg[0];
+			if (type & T_USER) {
+				userret(l);
+			}
+			return; /* GEN */
+		}
+#endif
+
+#ifdef PMAP_FAULTINFO
+		if (p->p_pid == pfi->pfi_lastpid && va == pfi->pfi_faultaddr) {
+			if (++pfi->pfi_repeats > 1) {
+				register_t tlb_hi;
+				pt_entry_t *pte = pfi->pfi_faultpte;
+				__asm("dmfc0 %0,$%1" : "=r"(tlb_hi) : "n"(MIPS_COP_0_TLB_HI));
+				printf("trap: fault #%u (%s/%s) for %#"PRIxVADDR" (%#"PRIxVADDR") at pc %#"PRIxVADDR" curpid=%u/%u pte@%p=%#x)\n", pfi->pfi_repeats, trap_type[TRAPTYPE(cause)], trap_type[pfi->pfi_faulttype], va, vaddr, opc, map->pmap->pm_pai[0].pai_asid, (uint8_t)tlb_hi, pte, pte ? pte->pt_entry : 0);
+				if (pfi->pfi_repeats >= 4) {
+					cpu_Debugger();
+				} else {
+					pfi->pfi_faulttype = TRAPTYPE(cause);       
+				}
+			}
+		} else {
+			pfi->pfi_lastpid = p->p_pid;
+			pfi->pfi_faultaddr = va;
+			pfi->pfi_repeats = 0;
+			pfi->pfi_faultpte = NULL;
+			pfi->pfi_faulttype = TRAPTYPE(cause);
+		}
+#endif /* PMAP_FAULTINFO */
 
 		if ((l->l_flag & LW_SA) && (~l->l_pflag & LP_SA_NOBLOCK)) {
 			l->l_savp->savp_faultaddr = (vaddr_t)vaddr;
@@ -392,6 +432,7 @@ trap(unsigned int status, unsigned int cause, vaddr_t vaddr, vaddr_t opc,
 			rv = (*p->p_emul->e_fault)(p, va, ftype);
 		else
 			rv = uvm_fault(map, va, ftype);
+
 #ifdef VMFAULT_TRACE
 		printf(
 		    "uvm_fault(%p (pmap %p), %#"PRIxVADDR
@@ -413,6 +454,11 @@ trap(unsigned int status, unsigned int cause, vaddr_t vaddr, vaddr_t opc,
 		}
 		l->l_pflag &= ~LP_SA_PAGEFAULT;
 		if (rv == 0) {
+			if (pfi->pfi_repeats == 0) {
+				pfi->pfi_faultpte =
+				    pmap_pte_lookup(map->pmap, va);
+			}
+			KASSERT(((pt_entry_t *)(pfi->pfi_faultpte))->pt_entry);
 			if (type & T_USER) {
 				userret(l);
 			}
