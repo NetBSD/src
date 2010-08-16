@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.90.16.29 2010/06/09 14:20:00 matt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.90.16.30 2010/08/16 18:01:13 matt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -87,9 +87,13 @@ struct cpu_info {
 	 */
 	int ci_tlb_slot;		/* reserved tlb entry for cpu_info */
 	struct pmap_tlb_info *ci_tlb_info; /* tlb information for this cpu */
-	struct segtab *ci_pmap_segbase;
+	union segtab *ci_pmap_seg0tab;
+#ifdef _LP64
+	union segtab *ci_pmap_segtab;
+#else
 	vaddr_t ci_pmap_srcbase;	/* starting VA of ephemeral src space */
 	vaddr_t ci_pmap_dstbase;	/* starting VA of ephemeral dst space */
+#endif
 
 
 #ifdef MULTIPROCESSOR
