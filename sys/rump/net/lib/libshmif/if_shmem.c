@@ -1,4 +1,4 @@
-/*	$NetBSD: if_shmem.c,v 1.26 2010/08/16 17:33:52 pooka Exp $	*/
+/*	$NetBSD: if_shmem.c,v 1.27 2010/08/17 11:35:23 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.26 2010/08/16 17:33:52 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.27 2010/08/17 11:35:23 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -267,16 +267,17 @@ shmif_start(struct ifnet *ifp)
 			    mtod(m, void *), m->m_len, &wrap);
 		}
 		KASSERT(pktwrote == pktsize);
-
-		if (wrap)
+		if (wrap) {
 			busmem->shm_gen++;
+			DPRINTF(("bus generation now %d\n", busmem->shm_gen));
+		}
 		shmif_unlockbus(busmem);
 
 		m_freem(m0);
 		wrote = true;
 
 		DPRINTF(("shmif_start: send %d bytes at off %d\n",
-		    pktsize, npktlenoff));
+		    pktsize, busmem->shm_last));
 	}
 
 	ifp->if_flags &= ~IFF_OACTIVE;
@@ -294,6 +295,44 @@ shmif_stop(struct ifnet *ifp, int disable)
 	panic("%s: unimpl", __func__);
 }
 
+
+/*
+ * Check if we have been sleeping too long.  Basically,
+ * our in-sc nextpkt must by first <= nextpkt <= last"+1".
+ * We use the fact that first is guaranteed to never overlap
+ * with the last frame in the ring.
+ */
+static __inline bool
+stillvalid_p(struct shmif_sc *sc)
+{
+	struct shmif_mem *busmem = sc->sc_busmem;
+	unsigned gendiff = busmem->shm_gen - sc->sc_devgen;
+	uint32_t lastoff, devoff;
+
+	KASSERT(busmem->shm_first != busmem->shm_last);
+
+	/* normalize onto a 2x busmem chunk */
+	devoff = sc->sc_nextpacket;
+	lastoff = shmif_nextpktoff(busmem, busmem->shm_last);
+
+	/* trivial case */
+	if (gendiff > 1)
+		return false;
+	KASSERT(gendiff <= 1);
+
+	/* Normalize onto 2x busmem chunk */
+	if (busmem->shm_first >= lastoff) {
+		lastoff += BUSMEM_DATASIZE;
+		if (gendiff == 0)
+			devoff += BUSMEM_DATASIZE;
+	} else {
+		if (gendiff)
+			return false;
+	}
+
+	return devoff >= busmem->shm_first && devoff <= lastoff;
+}
+
 static void
 shmif_rcv(void *arg)
 {
@@ -302,7 +341,7 @@ shmif_rcv(void *arg)
 	struct shmif_mem *busmem = sc->sc_busmem;
 	struct mbuf *m = NULL;
 	struct ether_header *eth;
-	uint32_t nextpkt, busgen;
+	uint32_t nextpkt;
 	bool wrap;
 	int error;
 
@@ -318,12 +357,11 @@ shmif_rcv(void *arg)
 		KASSERT(m->m_flags & M_EXT);
 
 		shmif_lockbus(busmem);
-		busgen = busmem->shm_gen;
 		KASSERT(busmem->shm_magic == SHMIF_MAGIC);
-		KASSERT(busgen >= sc->sc_devgen);
+		KASSERT(busmem->shm_gen >= sc->sc_devgen);
 
 		/* need more data? */
-		if (sc->sc_devgen == busgen && 
+		if (sc->sc_devgen == busmem->shm_gen && 
 		    shmif_nextpktoff(busmem, busmem->shm_last)
 		     == sc->sc_nextpacket) {
 			shmif_unlockbus(busmem);
@@ -334,23 +372,17 @@ shmif_rcv(void *arg)
 			continue;
 		}
 
-		/*
-		 * Check if we have been sleeping too long.  There are
-		 * basically two scenarios:
-		 *  1) our next packet is behind the first packet and
-		 *     we are a generation behind
-		 *  2) we are over two generations behind
-		 */
-		if ((sc->sc_nextpacket < busmem->shm_first
-		  && sc->sc_devgen < busgen) || (sc->sc_devgen+1 < busgen)) {
-			KASSERT(busgen > 0);
+		if (stillvalid_p(sc)) {
+			nextpkt = sc->sc_nextpacket;
+		} else {
+			KASSERT(busmem->shm_gen > 0);
 			nextpkt = busmem->shm_first;
 			if (busmem->shm_first > busmem->shm_last)
-				sc->sc_devgen = busgen - 1;
+				sc->sc_devgen = busmem->shm_gen - 1;
 			else
-				sc->sc_devgen = busgen;
-		} else {
-			nextpkt = sc->sc_nextpacket;
+				sc->sc_devgen = busmem->shm_gen;
+			DPRINTF(("dev %p overrun, new data: %d/%d\n",
+			    sc, nextpkt, sc->sc_devgen));
 		}
 
 		/*
@@ -358,7 +390,7 @@ shmif_rcv(void *arg)
 		 * generation must be one behind.
 		 */
 		KASSERT(!(nextpkt > busmem->shm_last
-		    && sc->sc_devgen == busgen));
+		    && sc->sc_devgen == busmem->shm_gen));
 
 		wrap = false;
 		nextpkt = shmif_busread(busmem, &sp,
@@ -373,8 +405,11 @@ shmif_rcv(void *arg)
 		sc->sc_nextpacket = nextpkt;
 		shmif_unlockbus(sc->sc_busmem);
 
-		if (wrap)
+		if (wrap) {
 			sc->sc_devgen++;
+			DPRINTF(("dev %p generation now %d\n",
+			    sc, sc->sc_devgen));
+		}
 
 		m->m_len = m->m_pkthdr.len = sp.sp_len;
 		m->m_pkthdr.rcvif = ifp;
