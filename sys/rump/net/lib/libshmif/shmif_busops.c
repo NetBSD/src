@@ -1,4 +1,4 @@
-/*	$NetBSD: shmif_busops.c,v 1.6 2010/08/17 11:35:23 pooka Exp $	*/
+/*	$NetBSD: shmif_busops.c,v 1.7 2010/08/17 12:59:53 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: shmif_busops.c,v 1.6 2010/08/17 11:35:23 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: shmif_busops.c,v 1.7 2010/08/17 12:59:53 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -93,20 +93,23 @@ shmif_buswrite(struct shmif_mem *busmem, uint32_t off, void *data, size_t len,
 	bool *wrap)
 {
 	size_t chunk;
+	bool filledbus;
 
 	KASSERT(len < (BUSMEM_DATASIZE/2) && off <= BUSMEM_DATASIZE);
 
 	chunk = MIN(len, BUSMEM_DATASIZE - off);
 	len -= chunk;
+	filledbus = (off+chunk == BUSMEM_DATASIZE);
 
-	shmif_advancefirst(busmem, off, chunk + (len ? 1 : 0));
+	shmif_advancefirst(busmem, off, chunk + (filledbus ? 1 : 0));
 
 	memcpy(busmem->shm_data + off, data, chunk);
 
 	DPRINTF(("buswrite: wrote %d bytes to %d", chunk, off));
 
-	if (off + chunk == BUSMEM_DATASIZE)
+	if (filledbus) {
 		*wrap = true;
+	}
 
 	if (len == 0) {
 		DPRINTF(("\n"));
