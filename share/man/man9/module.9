@@ -1,4 +1,4 @@
-.\"	$NetBSD: module.9,v 1.15 2010/08/17 04:09:07 jnemeth Exp $
+.\"	$NetBSD: module.9,v 1.16 2010/08/17 06:44:25 wiz Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -317,7 +317,7 @@ Find the start address and size of linker section
 .Ar name
 within a module.
 The miniroot module uses this routine to find the address and size of the
-embedded filesystem image.
+embedded file system image.
 This routine can only examine the linker data for the module that is
 currently being initialized;  it cannot examine data for any other module.
 .It Fn module_init "void"
@@ -385,7 +385,7 @@ and
 The routines for linking the module are in
 .Pa sys/kern/subr_kobj.c .
 .Pp
-The routines for reading a module from the filesystem are in
+The routines for reading a module from the file system are in
 .Pa sys/kern/subr_kobj_vfs.c .
 .Pp
 The header file
