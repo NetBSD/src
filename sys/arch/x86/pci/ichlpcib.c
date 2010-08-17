@@ -1,4 +1,4 @@
-/*	$NetBSD: ichlpcib.c,v 1.26 2010/07/23 02:23:58 jakllsch Exp $	*/
+/*	$NetBSD: ichlpcib.c,v 1.27 2010/08/17 01:45:51 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ichlpcib.c,v 1.26 2010/07/23 02:23:58 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ichlpcib.c,v 1.27 2010/08/17 01:45:51 jakllsch Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -177,6 +177,7 @@ static struct lpcib_device {
 	int has_ich5_hpet;
 } lpcib_devices[] = {
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801AA_LPC, 0, 0 },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801AB_LPC, 0, 0 },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801BA_LPC, 0, 0 },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801BAM_LPC, 0, 0 },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801CA_LPC, 0, 0 },
