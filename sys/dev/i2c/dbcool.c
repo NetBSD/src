@@ -1,4 +1,4 @@
-/*	$NetBSD: dbcool.c,v 1.24 2010/04/10 19:02:39 pgoyette Exp $ */
+/*	$NetBSD: dbcool.c,v 1.25 2010/08/17 23:36:51 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbcool.c,v 1.24 2010/04/10 19:02:39 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbcool.c,v 1.25 2010/08/17 23:36:51 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1647,7 +1647,7 @@ dbcool_attach_temp_control(struct dbcool_softc *sc, int idx,
 	ret = sysctl_createv(NULL, 0, NULL,
 			     (const struct sysctlnode **)&node, rw_flag,
 			     CTLTYPE_INT, name,
-			     dbc_sysctl_table[sysctl_index].desc,
+			     SYSCTL_DESCR(dbc_sysctl_table[sysctl_index].desc),
 			     dbc_sysctl_table[sysctl_index].helper,
 			     0, sc, sizeof(int),
 			     CTL_HW, sc->sc_root_sysctl_num,
@@ -1694,7 +1694,7 @@ dbcool_setup_controllers(struct dbcool_softc *sc)
 				(j == DBC_PWM_BEHAVIOR)?
 					CTLTYPE_STRING:CTLTYPE_INT,
 				name,
-				dbc_sysctl_table[j].desc,
+				SYSCTL_DESCR(dbc_sysctl_table[j].desc),
 				dbc_sysctl_table[j].helper,
 				0, sc, 
 				( j == DBC_PWM_BEHAVIOR)?
