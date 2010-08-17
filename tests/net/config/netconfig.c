@@ -1,4 +1,4 @@
-/*	$NetBSD: netconfig.c,v 1.5 2010/08/09 15:39:41 pooka Exp $	*/
+/*	$NetBSD: netconfig.c,v 1.6 2010/08/17 12:04:34 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: netconfig.c,v 1.5 2010/08/09 15:39:41 pooka Exp $");
+__RCSID("$NetBSD: netconfig.c,v 1.6 2010/08/17 12:04:34 pooka Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -54,7 +54,7 @@ __RCSID("$NetBSD: netconfig.c,v 1.5 2010/08/09 15:39:41 pooka Exp $");
 
 #include "../../h_macros.h"
 
-static void
+static void __unused
 netcfg_rump_makeshmif(const char *busname, char *ifname)
 {
 	int rv, ifnum;
@@ -65,7 +65,18 @@ netcfg_rump_makeshmif(const char *busname, char *ifname)
 	sprintf(ifname, "shmif%d", ifnum);
 }
 
-static void
+static void __unused
+netcfg_rump_makevirtif(int ifnum, char *ifname)
+{
+	int rv;
+
+	if ((rv = rump_pub_virtif_create(ifnum)) != 0) {
+		atf_tc_fail("makeshmif: rump_pub_virtif_create %d", rv);
+	}
+	sprintf(ifname, "virt%d", ifnum);
+}
+
+static void __unused
 netcfg_rump_if(const char *ifname, const char *addr, const char *mask)
 {
 	struct ifaliasreq ia;
@@ -175,6 +186,7 @@ netcfg_rump_pingtest(const char *dst, int ms_timo)
 	struct icmp icmp;
 	socklen_t slen;
 	int s;
+	bool rv = false;
 
 	s = rump_sys_socket(PF_INET, SOCK_RAW, IPPROTO_ICMP);
 	if (s == -1)
@@ -183,7 +195,7 @@ netcfg_rump_pingtest(const char *dst, int ms_timo)
 	tv.tv_usec = 1000 * (ms_timo % 1000);
 	if (rump_sys_setsockopt(s, SOL_SOCKET, SO_RCVTIMEO,
 	    &tv, sizeof(tv)) == -1)
-		return false;
+		goto out;
 
 	memset(&sin, 0, sizeof(sin));
 	sin.sin_len = sizeof(sin);
@@ -197,12 +209,16 @@ netcfg_rump_pingtest(const char *dst, int ms_timo)
 
 	slen = sizeof(sin);
 	if (rump_sys_sendto(s, &icmp, sizeof(icmp), 0,
-	    (struct sockaddr *)&sin, slen) == -1)
-		return false;
+	    (struct sockaddr *)&sin, slen) == -1) {
+		goto out;
+	}
 
 	if (rump_sys_recvfrom(s, &icmp, sizeof(icmp), 0,
 	    (struct sockaddr *)&sin, &slen) == -1)
-		return false;
+		goto out;
 
-	return true;
+	rv = true;
+ out:
+	rump_sys_close(s);
+	return rv;
 }
