@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_pstate.c,v 1.27 2010/08/17 10:17:52 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_pstate.c,v 1.28 2010/08/17 10:35:22 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_pstate.c,v 1.27 2010/08/17 10:17:52 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_pstate.c,v 1.28 2010/08/17 10:35:22 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/evcnt.h>
@@ -54,6 +54,7 @@ static ACPI_STATUS	 acpicpu_pstate_pct(struct acpicpu_softc *);
 static int		 acpicpu_pstate_max(struct acpicpu_softc *);
 static int		 acpicpu_pstate_min(struct acpicpu_softc *);
 static void		 acpicpu_pstate_change(struct acpicpu_softc *);
+static void		 acpicpu_pstate_reset(struct acpicpu_softc *);
 static void		 acpicpu_pstate_bios(void);
 
 static uint32_t		 acpicpu_pstate_saved;
@@ -111,12 +112,10 @@ acpicpu_pstate_attach(device_t self)
 	if (ACPI_FAILURE(rv))
 		aprint_debug_dev(self, "_PPC missing\n");
 
-	sc->sc_pstate_max = 0;
-	sc->sc_pstate_min = sc->sc_pstate_count - 1;
-
 	sc->sc_flags |= ACPICPU_FLAG_P;
 
 	acpicpu_pstate_bios();
+	acpicpu_pstate_reset(sc);
 	acpicpu_pstate_attach_evcnt(sc);
 	acpicpu_pstate_attach_print(sc);
 
@@ -274,6 +273,8 @@ acpicpu_pstate_suspend(device_t self)
 	struct acpicpu_pstate *ps = NULL;
 	int32_t i;
 
+	acpicpu_pstate_reset(sc);
+
 	if (acpicpu_pstate_saved != 0)
 		return true;
 
@@ -317,8 +318,6 @@ acpicpu_pstate_resume(device_t self)
 		(void)acpicpu_pstate_set(sc, acpicpu_pstate_saved);
 		acpicpu_pstate_saved = 0;
 	}
-
-	acpicpu_pstate_callback(self);
 
 	return true;
 }
@@ -809,8 +808,7 @@ acpicpu_pstate_change(struct acpicpu_softc *sc)
 	ACPI_OBJECT_LIST arg;
 	ACPI_OBJECT obj[2];
 
-	sc->sc_pstate_max = 0;
-	sc->sc_pstate_min = sc->sc_pstate_count - 1;
+	acpicpu_pstate_reset(sc);
 
 	arg.Count = 2;
 	arg.Pointer = obj;
@@ -828,6 +826,15 @@ acpicpu_pstate_change(struct acpicpu_softc *sc)
 		return;
 
 	rv = AcpiEvaluateObject(sc->sc_node->ad_handle, "_OST", &arg, NULL);
+}
+
+static void
+acpicpu_pstate_reset(struct acpicpu_softc *sc)
+{
+
+	sc->sc_pstate_max = 0;
+	sc->sc_pstate_min = sc->sc_pstate_count - 1;
+
 }
 
 static void
