@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_pstate.c,v 1.26 2010/08/16 20:20:44 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_pstate.c,v 1.27 2010/08/17 10:17:52 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_pstate.c,v 1.26 2010/08/16 20:20:44 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_pstate.c,v 1.27 2010/08/17 10:17:52 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/evcnt.h>
@@ -52,6 +52,7 @@ static ACPI_STATUS	 acpicpu_pstate_xpss_add(struct acpicpu_pstate *,
 						 ACPI_OBJECT *);
 static ACPI_STATUS	 acpicpu_pstate_pct(struct acpicpu_softc *);
 static int		 acpicpu_pstate_max(struct acpicpu_softc *);
+static int		 acpicpu_pstate_min(struct acpicpu_softc *);
 static void		 acpicpu_pstate_change(struct acpicpu_softc *);
 static void		 acpicpu_pstate_bios(void);
 
@@ -62,6 +63,7 @@ acpicpu_pstate_attach(device_t self)
 {
 	struct acpicpu_softc *sc = device_private(self);
 	const char *str;
+	ACPI_HANDLE tmp;
 	ACPI_STATUS rv;
 
 	rv = acpicpu_pstate_pss(sc);
@@ -104,7 +106,13 @@ acpicpu_pstate_attach(device_t self)
 	 * standard, and some systems conforming to ACPI 2.0
 	 * do not have _PPC, the method for dynamic maximum.
 	 */
-	(void)acpicpu_pstate_max(sc);
+	rv = AcpiGetHandle(sc->sc_node->ad_handle, "_PPC", &tmp);
+
+	if (ACPI_FAILURE(rv))
+		aprint_debug_dev(self, "_PPC missing\n");
+
+	sc->sc_pstate_max = 0;
+	sc->sc_pstate_min = sc->sc_pstate_count - 1;
 
 	sc->sc_flags |= ACPICPU_FLAG_P;
 
@@ -236,7 +244,7 @@ acpicpu_pstate_start(device_t self)
 		goto fail;
 
 	/*
-	 * Initialize the state to the maximum.
+	 * Initialize the state to P0.
 	 */
 	for (i = 0, rv = ENXIO; i < sc->sc_pstate_count; i++) {
 
@@ -752,30 +760,57 @@ acpicpu_pstate_max(struct acpicpu_softc *sc)
 	 * Evaluate the currently highest P-state that can be used.
 	 * If available, we can use either this state or any lower
 	 * power (i.e. higher numbered) state from the _PSS object.
+	 * Note that the return value must match the _OST parameter.
 	 */
 	rv = acpi_eval_integer(sc->sc_node->ad_handle, "_PPC", &val);
 
-	sc->sc_pstate_max = 0;
+	if (ACPI_SUCCESS(rv) && val < sc->sc_pstate_count) {
 
-	if (ACPI_FAILURE(rv))
-		return 1;
+		if (sc->sc_pstate[val].ps_freq != 0) {
+			sc->sc_pstate_max = val;
+			return 0;
+		}
+	}
 
-	if (val > sc->sc_pstate_count - 1)
-		return 1;
+	return 1;
+}
 
-	if (sc->sc_pstate[val].ps_freq == 0)
-		return 1;
+static int
+acpicpu_pstate_min(struct acpicpu_softc *sc)
+{
+	ACPI_INTEGER val;
+	ACPI_STATUS rv;
 
-	sc->sc_pstate_max = val;
+	/*
+	 * The _PDL object defines the minimum when passive cooling
+	 * is being performed. If available, we can use the returned
+	 * state or any higher power (i.e. lower numbered) state.
+	 */
+	rv = acpi_eval_integer(sc->sc_node->ad_handle, "_PDL", &val);
 
-	return 0;
+	if (ACPI_SUCCESS(rv) && val < sc->sc_pstate_count) {
+
+		if (sc->sc_pstate[val].ps_freq == 0)
+			return 1;
+
+		if (val >= sc->sc_pstate_max) {
+			sc->sc_pstate_min = val;
+			return 0;
+		}
+	}
+
+	return 1;
 }
 
 static void
 acpicpu_pstate_change(struct acpicpu_softc *sc)
 {
+	static ACPI_STATUS rv = AE_OK;
 	ACPI_OBJECT_LIST arg;
 	ACPI_OBJECT obj[2];
+
+	sc->sc_pstate_max = 0;
+	sc->sc_pstate_min = sc->sc_pstate_count - 1;
 
 	arg.Count = 2;
 	arg.Pointer = obj;
@@ -786,7 +821,13 @@ acpicpu_pstate_change(struct acpicpu_softc *sc)
 	obj[0].Integer.Value = ACPICPU_P_NOTIFY;
 	obj[1].Integer.Value = acpicpu_pstate_max(sc);
 
-	(void)AcpiEvaluateObject(sc->sc_node->ad_handle, "_OST", &arg, NULL);
+	if (sc->sc_passive != false)
+		(void)acpicpu_pstate_min(sc);
+
+	if (ACPI_FAILURE(rv))
+		return;
+
+	rv = AcpiEvaluateObject(sc->sc_node->ad_handle, "_OST", &arg, NULL);
 }
 
 static void
@@ -917,7 +958,7 @@ acpicpu_pstate_set(struct acpicpu_softc *sc, uint32_t freq)
 
 	mutex_enter(&sc->sc_mtx);
 
-	for (i = sc->sc_pstate_max; i < sc->sc_pstate_count; i++) {
+	for (i = sc->sc_pstate_max; i <= sc->sc_pstate_min; i++) {
 
 		if (sc->sc_pstate[i].ps_freq == 0)
 			continue;

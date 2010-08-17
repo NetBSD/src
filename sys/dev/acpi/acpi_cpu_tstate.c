@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_tstate.c,v 1.11 2010/08/16 17:58:42 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_tstate.c,v 1.12 2010/08/17 10:17:52 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_tstate.c,v 1.11 2010/08/16 17:58:42 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_tstate.c,v 1.12 2010/08/17 10:17:52 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/evcnt.h>
@@ -55,6 +55,7 @@ acpicpu_tstate_attach(device_t self)
 {
 	struct acpicpu_softc *sc = device_private(self);
 	const char *str;
+	ACPI_HANDLE tmp;
 	ACPI_STATUS rv;
 
 	/*
@@ -82,7 +83,12 @@ acpicpu_tstate_attach(device_t self)
 	 * be absent in some systems, even though it is
 	 * required by ACPI 3.0 along with _TSS and _PTC.
 	 */
-	(void)acpicpu_tstate_change(sc);
+	rv = AcpiGetHandle(sc->sc_node->ad_handle, "_TPC", &tmp);
+
+	if (ACPI_FAILURE(rv)) {
+		aprint_debug_dev(self, "_TPC missing\n");
+		rv = AE_OK;
+	}
 
 out:
 	if (ACPI_FAILURE(rv)) {
@@ -98,6 +104,9 @@ out:
 
 		sc->sc_flags |= ACPICPU_FLAG_T_FADT;
 	}
+
+	sc->sc_tstate_max = 0;
+	sc->sc_tstate_min = sc->sc_tstate_count - 1;
 
 	sc->sc_flags |= ACPICPU_FLAG_T;
 
@@ -591,14 +600,14 @@ acpicpu_tstate_change(struct acpicpu_softc *sc)
 	 */
 	rv = acpi_eval_integer(sc->sc_node->ad_handle, "_TPC", &val);
 
-	if (ACPI_FAILURE(rv))
-		return rv;
-
-	if (val < sc->sc_tstate_count) {
+	if (ACPI_SUCCESS(rv) && val < sc->sc_tstate_count) {
 
 		if (sc->sc_tstate[val].ts_percent != 0)
 			sc->sc_tstate_max = val;
 	}
+
+	if (sc->sc_passive != true)
+		return AE_OK;
 
 	rv = acpi_eval_integer(sc->sc_node->ad_handle, "_TDL", &val);
 

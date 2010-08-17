@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu.c,v 1.18 2010/08/16 20:07:57 jruoho Exp $ */
+/* $NetBSD: acpi_cpu.c,v 1.19 2010/08/17 10:17:52 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu.c,v 1.18 2010/08/16 20:07:57 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu.c,v 1.19 2010/08/17 10:17:52 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -116,6 +116,7 @@ acpicpu_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dev = self;
 	sc->sc_cold = true;
 	sc->sc_mapped = false;
+	sc->sc_passive = false;
 	sc->sc_iot = aa->aa_iot;
 	sc->sc_node = aa->aa_node;
 	sc->sc_cpuid = acpicpu_id(sc->sc_object.ao_procid);
