@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ping.c,v 1.1 2010/08/09 15:08:43 pooka Exp $	*/
+/*	$NetBSD: t_ping.c,v 1.2 2010/08/17 15:51:11 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -29,12 +29,14 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: t_ping.c,v 1.1 2010/08/09 15:08:43 pooka Exp $");
+__RCSID("$NetBSD: t_ping.c,v 1.2 2010/08/17 15:51:11 pooka Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
+#include <sys/resource.h>
 
 #include <atf-c.h>
+#include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -58,7 +60,6 @@ ATF_TC_BODY(simpleping, tc)
 {
 	char ifname[IFNAMSIZ];
 	pid_t cpid;
-	int status;
 	bool win, win2;
 
 	cpid = fork();
@@ -92,10 +93,87 @@ ATF_TC_BODY(simpleping, tc)
 		atf_tc_fail("non-existent host responded");
 }
 
+ATF_TC(floodping);
+ATF_TC_HEAD(floodping, tc)
+{
+
+	atf_tc_set_md_var(tc, "descr", "see how kernel responds to floodping");
+	atf_tc_set_md_var(tc, "use.fs", "true");
+}
+
+#define PERLOOP 100
+#define LOOPS 100
+ATF_TC_BODY(floodping, tc)
+{
+	char buf[8192];
+	char ifname[IFNAMSIZ];
+	pid_t cpid;
+	int loop, i, succ;
+	struct sockaddr_in dst, pingee;
+	struct icmp icmp;
+	socklen_t slen;
+	ssize_t n;
+	int x, xnon, s;
+
+	cpid = fork();
+	rump_init();
+	netcfg_rump_makeshmif("thank-you-driver-for-getting-me-here", ifname);
+
+	switch (cpid) {
+	case -1:
+		atf_tc_fail_errno("fork failed");
+	case 0:
+		netcfg_rump_if(ifname, "1.1.1.10", "255.255.255.0");
+		pause();
+		break;
+	default:
+		break;
+	}
+
+	netcfg_rump_if(ifname, "1.1.1.20", "255.255.255.0");
+
+	RL(s = rump_sys_socket(PF_INET, SOCK_RAW, IPPROTO_ICMP));
+	RL(x = rump_sys_fcntl(s, F_GETFL, 0));
+	xnon = x | O_NONBLOCK;
+
+	memset(&dst, 0, sizeof(dst));
+	dst.sin_len = sizeof(dst);
+	dst.sin_family = AF_INET;
+	dst.sin_addr.s_addr = inet_addr("1.1.1.10");
+
+	memset(&icmp, 0, sizeof(icmp));
+	icmp.icmp_type = ICMP_ECHO;
+	icmp.icmp_id = htons(37);
+	icmp.icmp_cksum = htons(0xf7da);
+
+	slen = sizeof(pingee);
+	succ = 0;
+	for (loop = 0; loop < LOOPS; loop++) {
+		RL(rump_sys_fcntl(s, F_SETFL, x));
+		for (i = 0; i < PERLOOP; i++) {
+			RL(rump_sys_sendto(s, &icmp, sizeof(icmp), 0,
+			    (struct sockaddr *)&dst, sizeof(dst)));
+		}
+		RL(rump_sys_fcntl(s, F_SETFL, xnon));
+		while ((n = rump_sys_recvfrom(s, buf, sizeof(buf), 0,
+		    (struct sockaddr *)&pingee, &slen)) > 0) {
+			succ++;
+		}
+		if (n == -1 && errno == EAGAIN)
+			continue;
+		atf_tc_fail_errno("recv failed");
+	}
+
+	printf("got %d/%d\n", succ, LOOPS * PERLOOP);
+
+	kill(cpid, SIGKILL);
+}
+
 ATF_TP_ADD_TCS(tp)
 {
 
 	ATF_TP_ADD_TC(tp, simpleping);
+	ATF_TP_ADD_TC(tp, floodping);
 
 	return atf_no_error();
 }
