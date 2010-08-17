@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.693 2010/08/16 19:39:06 jym Exp $	*/
+/*	$NetBSD: machdep.c,v 1.694 2010/08/17 22:24:04 jym Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.693 2010/08/16 19:39:06 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.694 2010/08/17 22:24:04 jym Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -693,7 +693,8 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 		       CTL_MACHDEP, CTL_CREATE, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
-		       CTLTYPE_INT, "pae", "Whether the kernel uses PAE",
+		       CTLTYPE_INT, "pae", 
+		       SYSCTL_DESCR("Whether the kernel uses PAE"),
 		       NULL, 0, &i386_use_pae, 0,
 		       CTL_MACHDEP, CTL_CREATE, CTL_EOL);
 }
