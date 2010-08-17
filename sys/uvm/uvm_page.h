@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.h,v 1.59.2.28 2010/08/11 09:50:01 uebayasi Exp $	*/
+/*	$NetBSD: uvm_page.h,v 1.59.2.29 2010/08/17 05:54:01 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -185,7 +185,7 @@ struct vm_page {
 
 #define	UVM_PGFLAGBITS \
 	"\20\1BUSY\2WANTED\3TABLED\4CLEAN\5PAGEOUT\6RELEASED\7FAKE\10RDONLY" \
-	"\11ZERO\12DIRECT\15PAGER1"
+	"\11ZERO\15PAGER1"
 
 #define PQ_FREE		0x0001		/* page is on free list */
 #define PQ_ANON		0x0002		/* page is part of an anon, rather
