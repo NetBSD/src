@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.23.2.2 2010/04/30 14:39:27 uebayasi Exp $	*/
+/*	$NetBSD: pmap.h,v 1.23.2.3 2010/08/17 06:44:33 uebayasi Exp $	*/
 
 /*	$OpenBSD: pmap.h,v 1.35 2007/12/14 18:32:23 deraadt Exp $	*/
 
@@ -63,6 +63,7 @@ struct pmap {
 #define	PVF_MOD		PTE_PROT(TLB_DIRTY)	/* pg/mp is modified */
 #define	PVF_REF		PTE_PROT(TLB_REFTRAP)	/* pg/mp (inv) is referenced */
 #define	PVF_WRITE	PTE_PROT(TLB_WRITE)	/* pg/mp is writable */
+#define	PVF_UNCACHEABLE	PTE_PROT(TLB_UNCACHEABLE)	/* pg/mp is uncacheable */
 
 #define	HPPA_MAX_PID	0xfffa
 #define	HPPA_SID_MAX	0x7ffd
@@ -190,11 +191,6 @@ pmap_protect(struct pmap *pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 #define	pmap_sid(pmap, va) \
 	((((va) & 0xc0000000) != 0xc0000000) ? \
 	 (pmap)->pm_space : HPPA_SID_KERNEL)
-
-/*
- * MD flags that we use for pmap_kenter_pa:
- */
-#define	PMAP_NOCACHE	0x01000000	/* set the non-cacheable bit */
 
 #endif /* _KERNEL */
 

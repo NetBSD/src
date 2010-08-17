@@ -1,9 +1,9 @@
-#	$NetBSD: files.tmpfs,v 1.2.98.1 2010/04/30 14:44:07 uebayasi Exp $
+#	$NetBSD: files.tmpfs,v 1.2.98.2 2010/08/17 06:47:21 uebayasi Exp $
 
 deffs	TMPFS
 
 file	fs/tmpfs/tmpfs_fifoops.c	tmpfs
-file	fs/tmpfs/tmpfs_pool.c		tmpfs
+file	fs/tmpfs/tmpfs_mem.c		tmpfs
 file	fs/tmpfs/tmpfs_specops.c	tmpfs
 file	fs/tmpfs/tmpfs_subr.c		tmpfs
 file	fs/tmpfs/tmpfs_vfsops.c		tmpfs

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.22.2.1 2010/04/30 14:39:50 uebayasi Exp $
+#	$NetBSD: Makefile,v 1.22.2.2 2010/08/17 06:45:16 uebayasi Exp $
 
 CURDIR=	${.CURDIR}
 S=	${CURDIR}/../../../..
@@ -87,7 +87,7 @@ LIBSA=		${SALIB}
 .endif
 CLEANFILES+= machine sparc64 sparc
 
-cleandir distclean: cleanlibdir
+cleandir distclean: .WAIT cleanlibdir
 
 cleanlibdir:
 	-rm -rf lib

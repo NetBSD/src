@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.3 2009/07/20 04:41:37 kiyohara Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.3.2.1 2010/08/17 06:44:42 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1998 Doug Rabson
@@ -225,8 +225,6 @@ intr_restore(register_t ie)
 	if (ie)
 		enable_intr();
 }
-
-void wbinvd(void);
 
 #endif /* _KERNEL */
 

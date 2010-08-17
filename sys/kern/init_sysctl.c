@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.172.2.1 2010/04/30 14:44:08 uebayasi Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.172.2.2 2010/08/17 06:47:25 uebayasi Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.172.2.1 2010/04/30 14:44:08 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.172.2.2 2010/08/17 06:47:25 uebayasi Exp $");
 
 #include "opt_sysv.h"
 #include "opt_compat_netbsd32.h"
@@ -1779,7 +1779,7 @@ sysctl_kern_lwp(SYSCTLFN_ARGS)
 		mutex_exit(proc_lock);
 	} else {
 		mutex_enter(proc_lock);
-		p = p_find(pid, PFIND_LOCKED);
+		p = proc_find(pid);
 		if (p == NULL) {
 			error = ESRCH;
 			mutex_exit(proc_lock);
@@ -2427,7 +2427,7 @@ sysctl_kern_proc_args(SYSCTLFN_ARGS)
 
 	/* check pid */
 	mutex_enter(proc_lock);
-	if ((p = p_find(pid, PFIND_LOCKED)) == NULL) {
+	if ((p = proc_find(pid)) == NULL) {
 		error = EINVAL;
 		goto out_locked;
 	}
@@ -3104,6 +3104,8 @@ fill_lwp(struct lwp *l, struct kinfo_lwp *kl)
 	struct timeval tv;
 
 	KASSERT(lwp_locked(l, NULL));
+
+	memset(kl, 0, sizeof(*kl));
 
 	kl->l_forw = 0;
 	kl->l_back = 0;

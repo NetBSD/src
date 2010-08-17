@@ -1,8 +1,8 @@
-/*	$NetBSD: rumpkern_if_pub.h,v 1.5.2.1 2010/04/30 14:44:29 uebayasi Exp $	*/
+/*	$NetBSD: rumpkern_if_pub.h,v 1.5.2.2 2010/08/17 06:47:58 uebayasi Exp $	*/
 
 /*
  * Automatically generated.  DO NOT EDIT.
- * from: NetBSD: rumpkern.ifspec,v 1.4 2010/03/05 18:41:46 pooka Exp 
+ * from: NetBSD: rumpkern.ifspec,v 1.5 2010/04/14 14:12:48 pooka Exp 
  * by:   NetBSD: makerumpif.sh,v 1.4 2009/10/15 00:29:19 pooka Exp 
  */
 

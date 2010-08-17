@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.213.2.1 2010/04/30 14:42:59 uebayasi Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.213.2.2 2010/08/17 06:45:48 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.213.2.1 2010/04/30 14:42:59 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.213.2.2 2010/08/17 06:45:48 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -107,8 +107,6 @@ __KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.213.2.1 2010/04/30 14:42:59 uebayas
 #include <compat/linux/common/linux_ipc.h>
 #include <compat/linux/common/linux_sem.h>
 
-#include <compat/linux/linux_syscallargs.h>
-
 #include <compat/linux/common/linux_fcntl.h>
 #include <compat/linux/common/linux_mmap.h>
 #include <compat/linux/common/linux_dirent.h>
@@ -121,6 +119,8 @@ __KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.213.2.1 2010/04/30 14:42:59 uebayas
 #include <compat/linux/common/linux_ptrace.h>
 #include <compat/linux/common/linux_reboot.h>
 #include <compat/linux/common/linux_emuldata.h>
+
+#include <compat/linux/linux_syscallargs.h>
 
 #ifndef COMPAT_LINUX32
 const int linux_ptrace_request_map[] = {
@@ -270,8 +270,7 @@ linux_sys_wait4(struct lwp *l, const struct linux_sys_wait4_args *uap, register_
 }
 
 /*
- * Linux brk(2). The check if the new address is >= the old one is
- * done in the kernel in Linux. NetBSD does it in the library.
+ * Linux brk(2).  Like native, but always return the new break value.
  */
 int
 linux_sys_brk(struct lwp *l, const struct linux_sys_brk_args *uap, register_t *retval)
@@ -280,20 +279,13 @@ linux_sys_brk(struct lwp *l, const struct linux_sys_brk_args *uap, register_t *r
 		syscallarg(char *) nsize;
 	} */
 	struct proc *p = l->l_proc;
-	char *nbrk = SCARG(uap, nsize);
-	struct sys_obreak_args oba;
 	struct vmspace *vm = p->p_vmspace;
-	struct linux_emuldata *ed = (struct linux_emuldata*)p->p_emuldata;
+	struct sys_obreak_args oba;
 
-	SCARG(&oba, nsize) = nbrk;
+	SCARG(&oba, nsize) = SCARG(uap, nsize);
 
-	if ((void *) nbrk > vm->vm_daddr && sys_obreak(l, &oba, retval) == 0)
-		ed->s->p_break = (char*)nbrk;
-	else
-		nbrk = ed->s->p_break;
-
-	retval[0] = (register_t)nbrk;
-
+	(void) sys_obreak(l, &oba, retval);
+	retval[0] = (register_t)((char *)vm->vm_daddr + ptoa(vm->vm_dsize));
 	return 0;
 }
 
@@ -817,7 +809,7 @@ again:
 eof:
 	*retval = nbytes - resid;
 out:
-	VOP_UNLOCK(vp, 0);
+	VOP_UNLOCK(vp);
 	if (cookiebuf)
 		free(cookiebuf, M_TEMP);
 	free(tbuf, M_TEMP);
@@ -1333,5 +1325,4 @@ linux_sys_getpriority(struct lwp *l, const struct linux_sys_getpriority_args *ua
 
         return 0;
 }
-
 #endif /* !COMPAT_LINUX32 */

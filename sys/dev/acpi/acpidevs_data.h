@@ -1,10 +1,10 @@
-/*	$NetBSD: acpidevs_data.h,v 1.12.2.1 2010/04/30 14:43:06 uebayasi Exp $	*/
+/*	$NetBSD: acpidevs_data.h,v 1.12.2.2 2010/08/17 06:46:01 uebayasi Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	# NetBSD: acpidevs,v 1.19 2010/04/18 10:22:01 jruoho Exp
+ *	# NetBSD: acpidevs,v 1.23 2010/06/16 06:17:48 jruoho Exp
  */
 
 const struct { const char *pnp, *str; } acpi_knowndevs[] = {
@@ -179,14 +179,6 @@ const struct { const char *pnp, *str; } acpi_knowndevs[] = {
 	{
 	    "PNP0502",
 	    "Multiport serial device (non-intelligent 16550)",
-	},
-	{
-	    "PNP0510",
-	    "Generic IRDA-compatible device",
-	},
-	{
-	    "PNP0511",
-	    "Generic IRDA-compatible device",
 	},
 	{
 	    "PNP0600",
@@ -418,7 +410,7 @@ const struct { const char *pnp, *str; } acpi_knowndevs[] = {
 	},
 	{
 	    "PNP0C08",
-	    "ACPI system board hardware",
+	    "ACPI System Board Hardware",
 	},
 	{
 	    "PNP0C09",
@@ -434,27 +426,27 @@ const struct { const char *pnp, *str; } acpi_knowndevs[] = {
 	},
 	{
 	    "PNP0C0C",
-	    "ACPI power button device",
+	    "ACPI Power Button Device",
 	},
 	{
 	    "PNP0C0D",
-	    "ACPI lid device",
+	    "ACPI Lid Device",
 	},
 	{
 	    "PNP0C0E",
-	    "ACPI sleep button device",
+	    "ACPI Sleep Button Device",
 	},
 	{
 	    "PNP0C0F",
-	    "PCI interrupt link device",
+	    "PCI Interrupt Link Device",
 	},
 	{
 	    "PNP0C10",
-	    "ACPI system indicator device",
+	    "ACPI System Indicator Device",
 	},
 	{
 	    "PNP0C11",
-	    "ACPI thermal zone",
+	    "ACPI Thermal Zone",
 	},
 	{
 	    "PNP0C12",
@@ -466,15 +458,19 @@ const struct { const char *pnp, *str; } acpi_knowndevs[] = {
 	},
 	{
 	    "PNP0C14",
-	    "WMI mapper device",
+	    "WMI Mapper Device",
 	},
 	{
 	    "PNP0C15",
-	    "ACPI docking station",
+	    "ACPI Docking Station",
+	},
+	{
+	    "PNP0C33",
+	    "ACPI Hardware Error Device",
 	},
 	{
 	    "PNP0C80",
-	    "Memory Device",
+	    "Hotplug Memory Device",
 	},
 	{
 	    "PNP0E00",
@@ -1089,10 +1085,6 @@ const struct { const char *pnp, *str; } acpi_knowndevs[] = {
 	    "AMD PCNet32 (VL version)",
 	},
 	{
-	    "PNP8294",
-	    "IrDA Infrared NDIS driver (Microsoft-supplied)",
-	},
-	{
 	    "PNP82BD",
 	    "IBM PCMCIA-NIC",
 	},
@@ -1137,12 +1129,32 @@ const struct { const char *pnp, *str; } acpi_knowndevs[] = {
 	    "Reserved for Microsoft Networking components",
 	},
 	{
+	    "PNP8390",
+	    "Generic network adapter",
+	},
+	{
+	    "PNP0510",
+	    "Generic IrDA-compatible device",
+	},
+	{
+	    "PNP0511",
+	    "Generic IrDA-compatible device",
+	},
+	{
+	    "PNP8294",
+	    "IrDA Infrared NDIS driver (Microsoft-supplied)",
+	},
+	{
 	    "PNP8389",
 	    "Peer IrLAN infrared driver (Microsoft-supplied)",
 	},
 	{
-	    "PNP8390",
-	    "Generic network adapter",
+	    "HWPC224",
+	    "NSC SuperIO chip (inc. IrDA device)",
+	},
+	{
+	    "IBM0071",
+	    "NSC SuperIO chip (inc. IrDA device)",
 	},
 	{
 	    "ITE8708",
@@ -1150,7 +1162,7 @@ const struct { const char *pnp, *str; } acpi_knowndevs[] = {
 	},
 	{
 	    "NSC6001",
-	    "NSC IrDA Fast Infrared Port",
+	    "NSC SuperIO chip (inc. IrDA device)",
 	},
 	{
 	    "PNPA002",
@@ -1291,6 +1303,18 @@ const struct { const char *pnp, *str; } acpi_knowndevs[] = {
 	{
 	    "PNPB02F",
 	    "Joystick/Game port",
+	},
+	{
+	    "CSC0000",
+	    "Crystal PnP Audio (codec)",
+	},
+	{
+	    "CSC0003",
+	    "Crystal PnP Audio (MPU-401)",
+	},
+	{
+	    "CSC0010",
+	    "Crystal PnP Audio (registers)",
 	},
 	{
 	    "PNPC000",

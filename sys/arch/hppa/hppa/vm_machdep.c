@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.40.2.1 2010/04/30 14:39:27 uebayasi Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.40.2.2 2010/08/17 06:44:33 uebayasi Exp $	*/
 
 /*	$OpenBSD: vm_machdep.c,v 1.64 2008/09/30 18:54:26 miod Exp $	*/
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.40.2.1 2010/04/30 14:39:27 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.40.2.2 2010/08/17 06:44:33 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -111,6 +111,10 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	pcb2->pcb_fpregs->fpr_regs[1] = 0;
 	pcb2->pcb_fpregs->fpr_regs[2] = 0;
 	pcb2->pcb_fpregs->fpr_regs[3] = 0;
+
+	l2->l_md.md_bpva = l1->l_md.md_bpva;
+	l2->l_md.md_bpsave[0] = l1->l_md.md_bpsave[0];
+	l2->l_md.md_bpsave[1] = l1->l_md.md_bpsave[1];
 
 	uv = uvm_lwp_getuarea(l2);
 	sp = (register_t)uv + PAGE_SIZE;

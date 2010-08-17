@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.c,v 1.52 2010/01/31 14:32:56 hubertf Exp $ */
+/*	$NetBSD: cryptodev.c,v 1.52.2.1 2010/08/17 06:47:52 uebayasi Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.c,v 1.4.2.4 2003/06/03 00:09:02 sam Exp $	*/
 /*	$OpenBSD: cryptodev.c,v 1.53 2002/07/10 22:21:30 mickey Exp $	*/
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.52 2010/01/31 14:32:56 hubertf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.52.2.1 2010/08/17 06:47:52 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -422,7 +422,8 @@ cryptodev_op(struct csession *cse, struct crypt_op *cop, struct lwp *l)
 			return EINVAL;
 	}
 
-	DPRINTF(("cryptodev_op[%d]: iov_len %d\n", (uint32_t)cse->sid, iov_len));
+	DPRINTF(("cryptodev_op[%u]: iov_len %d\n",
+		CRYPTO_SESID2LID(cse->sid), iov_len));
 	if ((cse->tcomp) && cop->dst_len) {
 		if (iov_len < cop->dst_len) {
 			/* Need larger iov to deal with decompress */
@@ -444,15 +445,17 @@ cryptodev_op(struct csession *cse, struct crypt_op *cop, struct lwp *l)
 	cse->uio.uio_iov[0].iov_len = iov_len;
 	cse->uio.uio_iov[0].iov_base = kmem_alloc(iov_len, KM_SLEEP);
 	cse->uio.uio_resid = cse->uio.uio_iov[0].iov_len;
-	DPRINTF(("cryptodev_op[%d]: uio.iov_base %p malloced %d bytes\n",
-		(uint32_t)cse->sid, cse->uio.uio_iov[0].iov_base, iov_len));
+	DPRINTF(("cryptodev_op[%u]: uio.iov_base %p malloced %d bytes\n",
+		CRYPTO_SESID2LID(cse->sid),
+		cse->uio.uio_iov[0].iov_base, iov_len));
 
 	crp = crypto_getreq((cse->tcomp != NULL) + (cse->txform != NULL) + (cse->thash != NULL));
 	if (crp == NULL) {
 		error = ENOMEM;
 		goto bail;
 	}
-	DPRINTF(("cryptodev_op[%d]: crp %p\n", (uint32_t)cse->sid, crp));
+	DPRINTF(("cryptodev_op[%u]: crp %p\n",
+		CRYPTO_SESID2LID(cse->sid), crp));
 
 	/* crds are always ordered tcomp, thash, then txform */
 	/* with optional missing links */
@@ -478,8 +481,8 @@ cryptodev_op(struct csession *cse, struct crypt_op *cop, struct lwp *l)
 		}
 	}
 
-	DPRINTF(("ocf[%d]: iov_len %d, cop->len %d\n",
-			(uint32_t)cse->sid,
+	DPRINTF(("ocf[%u]: iov_len %zu, cop->len %u\n",
+			CRYPTO_SESID2LID(cse->sid),
 			cse->uio.uio_iov[0].iov_len, 
 			cop->len));
 
@@ -510,8 +513,8 @@ cryptodev_op(struct csession *cse, struct crypt_op *cop, struct lwp *l)
 		crdc->crd_alg = cse->comp_alg;
 		crdc->crd_key = NULL;
 		crdc->crd_klen = 0;
-		DPRINTF(("cryptodev_op[%d]: crdc setup for comp_alg %d.\n",
-					(uint32_t)cse->sid, crdc->crd_alg));
+		DPRINTF(("cryptodev_op[%u]: crdc setup for comp_alg %d.\n",
+			CRYPTO_SESID2LID(cse->sid), crdc->crd_alg));
 	}
 
 	if (crda) {
@@ -632,9 +635,8 @@ eagain:
 	}
 
 	while (!(crp->crp_flags & CRYPTO_F_DONE)) {
-		DPRINTF(("cryptodev_op[%d]: sleeping on cv %08x for crp %08x\n",
-			(uint32_t)cse->sid, (uint32_t)&crp->crp_cv,
-			(uint32_t)crp));
+		DPRINTF(("cryptodev_op[%d]: sleeping on cv %p for crp %p\n",
+			(uint32_t)cse->sid, &crp->crp_cv, crp));
 		cv_wait(&crp->crp_cv, &crypto_mtx);	/* XXX cv_wait_sig? */
 	}
 	if (crp->crp_flags & CRYPTO_F_ONRETQ) {

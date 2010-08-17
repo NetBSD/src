@@ -1,4 +1,4 @@
-/*	$NetBSD: null.h,v 1.18 2008/06/28 01:34:06 rumble Exp $	*/
+/*	$NetBSD: null.h,v 1.18.16.1 2010/08/17 06:47:38 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -68,6 +68,9 @@
  *	@(#)null.h	8.2 (Berkeley) 1/21/94
  */
 
+#ifndef _MISCFS_NULLFS_H_
+#define _MISCFS_NULLFS_H_
+
 #include <miscfs/genfs/layer.h>
 
 struct null_args {
@@ -104,18 +107,7 @@ struct null_node {
 #define	null_vnode	ln.layer_vnode
 #define	null_flags	ln.layer_flags
 
-int	null_node_create(struct mount *, struct vnode *,
-	    struct vnode **);
-
 #define	MOUNTTONULLMOUNT(mp) ((struct null_mount *)((mp)->mnt_data))
-#define	VTONULL(vp) ((struct null_node *)(vp)->v_data)
-#define	NULLTOV(xp) ((xp)->null_vnode)
-#ifdef NULLFS_DIAGNOSTIC
-struct vnode *layer_checkvp(struct vnode *, char *, int);
-#define	NULLVPTOLOWERVP(vp) layer_checkvp((vp), __FILE__, __LINE__)
-#else
-#define	NULLVPTOLOWERVP(vp) (VTONULL(vp)->null_lowervp)
-#endif
 
 extern int (**null_vnodeop_p)(void *);
 extern struct vfsops nullfs_vfsops;
@@ -123,3 +115,4 @@ extern struct vfsops nullfs_vfsops;
 void nullfs_init(void);
 
 #endif /* _KERNEL */
+#endif /* _MISCFS_NULLFS_H_ */

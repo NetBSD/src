@@ -1,4 +1,4 @@
-#	$NetBSD: files.bebox,v 1.53 2008/05/30 16:03:01 kiyohara Exp $
+#	$NetBSD: files.bebox,v 1.53.18.1 2010/08/17 06:44:10 uebayasi Exp $
 #
 # First try for bebox specific configuration info
 #
@@ -7,8 +7,6 @@ maxpartitions 8
 maxusers 2 8 64
 
 include "arch/powerpc/pic/files.pic"
-
-defflag	XSERVER
 
 file	arch/bebox/bebox/autoconf.c
 file	arch/bebox/bebox/machdep.c

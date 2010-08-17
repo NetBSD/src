@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.21.2.1 2010/04/30 14:39:22 uebayasi Exp $	*/
+/*	$NetBSD: machdep.c,v 1.21.2.2 2010/08/17 06:44:21 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2004, 2005 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.21.2.1 2010/04/30 14:39:22 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.21.2.2 2010/08/17 06:44:21 uebayasi Exp $");
 
 #include "opt_ddb.h"
 
@@ -88,7 +88,6 @@ void
 mach_init(int argc, char *argv[], struct bootinfo *bi)
 {
 	extern char kernel_text[], edata[], end[];
-	struct pcb *pcb0;
 	vaddr_t v;
 	int i;
 
@@ -116,8 +115,8 @@ mach_init(int argc, char *argv[], struct bootinfo *bi)
 	sbd_init();
 
 	__asm volatile("move %0, $29" : "=r"(v));
-	printf("kernel_text=%p edata=%p end=%p sp=%lx\n", kernel_text, edata,
-	    end, v);
+	printf("kernel_text=%p edata=%p end=%p sp=%" PRIxVADDR "\n",
+	    kernel_text, edata, end, v);
 
 	option(argc, argv, bi);
 

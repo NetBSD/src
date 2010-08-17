@@ -1,4 +1,4 @@
-/*        $NetBSD: device-mapper.c,v 1.15.2.1 2010/04/30 14:43:10 uebayasi Exp $ */
+/*        $NetBSD: device-mapper.c,v 1.15.2.2 2010/08/17 06:46:06 uebayasi Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -152,6 +152,7 @@ MODULE(MODULE_CLASS_DRIVER, dm, NULL);
 static int
 dm_modcmd(modcmd_t cmd, void *arg)
 {
+#ifdef _MODULE
 	int error, bmajor, cmajor;
 
 	error = 0;
@@ -209,6 +210,9 @@ dm_modcmd(modcmd_t cmd, void *arg)
 	}
 
 	return error;
+#else
+	return ENOTTY;
+#endif
 }
 #endif /* _MODULE */
 
@@ -470,6 +474,32 @@ disk_ioctl_switch(dev_t dev, u_long cmd, void *data)
 		dm_dev_unbusy(dmv);
 		break;
 	}
+
+	case DIOCCACHESYNC:
+	{
+		dm_table_entry_t *table_en;
+		dm_table_t *tbl;
+		int err;
+		
+		if ((dmv = dm_dev_lookup(NULL, NULL, minor(dev))) == NULL)
+			return ENODEV;
+
+		/* Select active table */
+		tbl = dm_table_get_entry(&dmv->table_head, DM_TABLE_ACTIVE);
+
+		/*
+		 * Call sync target routine for all table entries. Target sync
+		 * routine basically call DIOCCACHESYNC on underlying devices.
+		 */
+		SLIST_FOREACH(table_en, tbl, next)
+		{
+			err = table_en->target->sync(table_en);
+		}
+		dm_table_release(&dmv->table_head, DM_TABLE_ACTIVE);
+		dm_dev_unbusy(dmv);
+		break;
+	}
+		
 	
 	default:
 		aprint_debug("unknown disk_ioctl called\n");

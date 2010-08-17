@@ -1,4 +1,4 @@
-# $NetBSD: SANDPOINT,v 1.6 2009/12/05 20:11:16 pooka Exp $
+# $NetBSD: SANDPOINT,v 1.6.2.1 2010/08/17 06:45:06 uebayasi Exp $
 #
 # Sandpoint X3/X2 machine description file
 # 
@@ -23,7 +23,7 @@ options 	PIC_I8259
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"SANDPOINT-$Revision: 1.6 $"
+#ident 		"SANDPOINT-$Revision: 1.6.2.1 $"
 
 maxusers	32
 
@@ -124,6 +124,8 @@ pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
 #pseudo-device	pf			# PF packet filter
 #pseudo-device	pflog			# PF log if
+pseudo-device	fss			# file system snapshot device
+
 #
 # device
 #

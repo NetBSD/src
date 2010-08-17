@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_pty.c,v 1.121 2010/01/24 19:56:26 dholland Exp $	*/
+/*	$NetBSD: tty_pty.c,v 1.121.2.1 2010/08/17 06:47:32 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.121 2010/01/24 19:56:26 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.121.2.1 2010/08/17 06:47:32 uebayasi Exp $");
 
 #include "opt_ptm.h"
 
@@ -449,7 +449,7 @@ ptswrite(dev_t dev, struct uio *uio, int flag)
 	struct pt_softc *pti = pt_softc[minor(dev)];
 	struct tty *tp = pti->pt_tty;
 
-	if (tp->t_oproc == 0)
+	if (tp->t_oproc == NULL)
 		return (EIO);
 	return ((*tp->t_linesw->l_write)(tp, uio, flag));
 }
@@ -463,7 +463,7 @@ ptspoll(dev_t dev, int events, struct lwp *l)
 	struct pt_softc *pti = pt_softc[minor(dev)];
 	struct tty *tp = pti->pt_tty;
 
-	if (tp->t_oproc == 0)
+	if (tp->t_oproc == NULL)
 		return (POLLHUP);
 
 	return ((*tp->t_linesw->l_poll)(tp, events, l));
@@ -577,7 +577,7 @@ ptcclose(dev_t dev, int flag, int devtype, struct lwp *l)
 	(void)(*tp->t_linesw->l_modem)(tp, 0);
 	mutex_spin_enter(&tty_lock);
 	CLR(tp->t_state, TS_CARR_ON);
-	tp->t_oproc = 0;		/* mark closed */
+	tp->t_oproc = NULL;		/* mark closed */
 	mutex_spin_exit(&tty_lock);
 	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.12.2.1 2010/04/30 14:39:17 uebayasi Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.12.2.2 2010/08/17 06:44:20 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.12.2.1 2010/04/30 14:39:17 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.12.2.2 2010/08/17 06:44:20 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -59,6 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.12.2.1 2010/04/30 14:39:17 uebayasi E
 
 #include <machine/pci_machdep.h>
 
+#include <dev/marvell/gtpcivar.h>
 #include <dev/marvell/gtreg.h>
 #include <dev/marvell/marvellvar.h>
 
@@ -156,6 +157,7 @@ device_register(struct device *dev, void *aux)
 		prop_object_release(mac);
 	}
 	if (device_is_a(dev, "gtpci")) {
+		extern struct gtpci_prot gtpci_prot;
 		extern struct powerpc_bus_space
 		    ev64260_pci0_io_bs_tag, ev64260_pci0_mem_bs_tag,
 		    ev64260_pci1_io_bs_tag, ev64260_pci1_mem_bs_tag;
@@ -165,7 +167,7 @@ device_register(struct device *dev, void *aux)
 		struct marvell_attach_args *mva = aux;
 		struct powerpc_bus_space *pci_io_bs_tag, *pci_mem_bs_tag;
 		struct genppc_pci_chipset *genppc_gtpci_chipset;
-		prop_data_t io_bs_tag, mem_bs_tag, pc;
+		prop_data_t prot, io_bs_tag, mem_bs_tag, pc;
 
 		if (mva->mva_unit == 0) {
 			pci_io_bs_tag = &ev64260_pci0_io_bs_tag;
@@ -177,6 +179,11 @@ device_register(struct device *dev, void *aux)
 			genppc_gtpci_chipset = &genppc_gtpci1_chipset;
 		}
 
+		prot = prop_data_create_data_nocopy(
+		    &gtpci_prot, sizeof(struct gtpci_prot));
+		KASSERT(prot != NULL);
+		prop_dictionary_set(dict, "prot", prot);
+		prop_object_release(prot);
 		io_bs_tag = prop_data_create_data_nocopy(
 		    pci_io_bs_tag, sizeof(struct powerpc_bus_space));
 		KASSERT(io_bs_tag != NULL);

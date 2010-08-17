@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.148.4.1 2010/04/30 14:39:54 uebayasi Exp $
+# $NetBSD: GENERIC,v 1.148.4.2 2010/08/17 06:45:21 uebayasi Exp $
 #
 # GENERIC machine description file
 # 
@@ -25,7 +25,7 @@ include 	"arch/sun3/conf/std.sun3"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.148.4.1 $"
+#ident		"GENERIC-$Revision: 1.148.4.2 $"
 
 makeoptions	COPTS="-Os"		# bootloader has size limit (~2MB)
 
@@ -60,7 +60,7 @@ options 	DDB
 #options 	KGDB_DEV=0x0C01	# ttya=0C00 ttyb=0C01
 
 # Other debugging options
-#options 	DDB_HISTORY_SIZE=100	# enable history editing in DDB
+options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 #options 	DEBUG		# kernel debugging code
 #options 	DIAGNOSTIC	# extra kernel sanity checking
 #options 	KMEMSTATS	# kernel memory statistics (vmstat -m)
@@ -101,7 +101,7 @@ file-system	PROCFS		# /proc
 #file-system	UNION		# union file system
 file-system	MFS		# memory-based filesystem
 file-system	PTYFS		# /dev/pts/N support
-#file-system	TMPFS		# Efficient memory file-system
+file-system	TMPFS		# Efficient memory file-system
 #file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
 
 options 	NFSSERVER	# nfs server support

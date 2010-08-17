@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_usema.c,v 1.33 2008/05/10 12:57:18 tnn Exp $ */
+/*	$NetBSD: irix_usema.c,v 1.33.18.1 2010/08/17 06:45:40 uebayasi Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_usema.c,v 1.33 2008/05/10 12:57:18 tnn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_usema.c,v 1.33.18.1 2010/08/17 06:45:40 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -353,7 +353,7 @@ irix_usema_inactive(void *v)
 		struct vnode    *a_vp;
 	} */ *ap = v;
 
-	VOP_UNLOCK(ap->a_vp, 0);
+	VOP_UNLOCK(ap->a_vp);
 	vrecycle(ap->a_vp, NULL, curlwp);
 
 	return 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: intvec.S,v 1.17 2009/03/05 01:38:12 msaitoh Exp $   */
+/*	$NetBSD: intvec.S,v 1.17.2.1 2010/08/17 06:45:26 uebayasi Exp $   */
 
 /*
  * Copyright (c) 1994, 1997 Ludd, University of Lule}, Sweden.
@@ -297,7 +297,6 @@ TRAPCALL(astintr, T_ASTFLT)
 TRAPCALL(ddbtrap, T_KDBTRAP)
 
 SCBENTRY(hardclock)
-	mtpr	$0xc1,$PR_ICCS		# Reset interrupt flag
 #ifdef DDB
 	tstl	0x80000100		# rpb wait element
 	beql	1f			# set, jmp to debugger
@@ -306,6 +305,12 @@ SCBENTRY(hardclock)
 	jbr	Xtrap
 #endif
 1:	pushr	$0x3f
+        mfpr    $PR_ICCS,%r0
+        tstl    %r0
+        bgeq    2f
+	incl    _C_LABEL(clock_misscnt)+EV_COUNT
+        adwc    $0,_C_LABEL(clock_misscnt)+EV_COUNT+4
+2:      mtpr	$0x800000c1,$PR_ICCS		# Reset interrupt flag
 	incl	_C_LABEL(clock_intrcnt)+EV_COUNT	# count the number of clock interrupts
 	adwc	$0,_C_LABEL(clock_intrcnt)+EV_COUNT+4
 	incl	_C_LABEL(uvmexp)+UVME_INTRS

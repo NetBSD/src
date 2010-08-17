@@ -1,4 +1,4 @@
-/*	$NetBSD: uba_sbi.c,v 1.27 2009/03/14 15:36:14 dsl Exp $	   */
+/*	$NetBSD: uba_sbi.c,v 1.27.2.1 2010/08/17 06:45:25 uebayasi Exp $	   */
 /*
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -67,8 +67,15 @@
  *	@(#)autoconf.c	7.20 (Berkeley) 5/9/91
  */
 
+/*
+ * Abus support added by Johnny Billquist 2010
+ * Changed UBA code to need to know less of the innards of the
+ * actual machine at the same time. Information passed down from
+ * the SBI bus instead.
+ */
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uba_sbi.c,v 1.27 2009/03/14 15:36:14 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uba_sbi.c,v 1.27.2.1 2010/08/17 06:45:25 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -92,8 +99,7 @@ __KERNEL_RCSID(0, "$NetBSD: uba_sbi.c,v 1.27 2009/03/14 15:36:14 dsl Exp $");
 
 /* Some SBI-specific defines */
 #define UBASIZE		(UBAPAGES * VAX_NBPG)
-#define UMEMA8600(i)   	(0x20100000+(i)*0x40000)
-#define	UMEMB8600(i)	(0x22100000+(i)*0x40000)
+#define UMEM(sa,i) ((sa->sa_base)+0x100000+(i)*0x40000)
 
 /*
  * Some status registers.
@@ -169,6 +175,7 @@ dw780_attach(device_t parent, device_t self, void *aux)
 	struct sbi_attach_args * const sa = aux;
 	int ubaddr = sa->sa_type & 3;
 
+	aprint_naive(": DW780\n");
 	aprint_normal(": DW780\n");
 
 	/*
@@ -214,8 +221,7 @@ dw780_attach(device_t parent, device_t self, void *aux)
 	sc->uv_size = UBASIZE;		/* Size in bytes of Unibus space */
 
 	uba_dma_init(sc);
-	uba_attach(&sc->uv_sc, (sa->sa_sbinum ? UMEMB8600(ubaddr) :
-	    UMEMA8600(ubaddr)) + (UBAPAGES * VAX_NBPG));
+	uba_attach(&sc->uv_sc, UMEM(sa,ubaddr) + (UBAPAGES * VAX_NBPG));
 }
 
 void

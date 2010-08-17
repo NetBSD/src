@@ -1,4 +1,4 @@
-/* $NetBSD: nilfs_vnops.c,v 1.4 2010/01/08 11:35:08 pooka Exp $ */
+/* $NetBSD: nilfs_vnops.c,v 1.4.2.1 2010/08/17 06:47:17 uebayasi Exp $ */
 
 /*
  * Copyright (c) 2008, 2009 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: nilfs_vnops.c,v 1.4 2010/01/08 11:35:08 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nilfs_vnops.c,v 1.4.2.1 2010/08/17 06:47:17 uebayasi Exp $");
 #endif /* not lint */
 
 
@@ -81,7 +81,7 @@ nilfs_inactive(void *v)
 
 	if (nilfs_node == NULL) {
 		DPRINTF(NODE, ("nilfs_inactive: inactive NULL NILFS node\n"));
-		VOP_UNLOCK(vp, 0);
+		VOP_UNLOCK(vp);
 		return 0;
 	}
 
@@ -90,7 +90,7 @@ nilfs_inactive(void *v)
 	 * referenced anymore in a directory we ought to free up the resources
 	 * on disc if applicable.
 	 */
-	VOP_UNLOCK(vp, 0);
+	VOP_UNLOCK(vp);
 
 	return 0;
 }
@@ -318,9 +318,8 @@ return EIO;
 /* --------------------------------------------------------------------- */
 
 /*
- * `Special' bmap functionality that translates all incomming requests to
- * translate to vop_strategy() calls with the same blocknumbers effectively
- * not translating at all.
+ * bmap functionality that translates logical block numbers to the virtual
+ * block numbers to be stored on the vnode itself.
  */
 
 int
@@ -339,23 +338,51 @@ nilfs_trivial_bmap(void *v)
 	daddr_t  bn   = ap->a_bn;	/* origional	*/
 	int     *runp = ap->a_runp;
 	struct nilfs_node *node = VTOI(vp);
+	uint64_t *l2vmap;
 	uint32_t blocksize;
+	int blks, run, error;
 
 	DPRINTF(TRANSLATE, ("nilfs_bmap() called\n"));
 	/* XXX could return `-1' to indicate holes/zero's */
 
 	blocksize = node->nilfsdev->blocksize;
+	blks = MAXPHYS / blocksize;
 
-	/* translate 1:1 */
-	*bnp = bn;
+	/* get mapping memory */
+	l2vmap = malloc(sizeof(uint64_t) * blks, M_TEMP, M_WAITOK);
+
+	/* get virtual block numbers for the vnode's buffer span */
+	error = nilfs_btree_nlookup(node, bn, blks, l2vmap);
+	if (error) {
+		free(l2vmap, M_TEMP);
+		return error;
+	}
+
+	/* store virtual blocks on our own vp */
 	if (vpp)
 		*vpp = vp;
 
-	/* set runlength to maximum */
+	/* start at virt[0] */
+	*bnp = l2vmap[0];
+
+	/* get runlength */
+	run = 1;
+	while ((run < blks) && (l2vmap[run] == *bnp + run))
+		run++;
+	
+	/* set runlength */
 	if (runp)
-		*runp = MAXPHYS / blocksize;
+		*runp = run;
+
+	DPRINTF(TRANSLATE, ("\tstart %"PRIu64" -> %"PRIu64" run %d\n",
+		bn, *bnp, run));
+
+	/* mark not translated on virtual block number 0 */
+	if (*bnp == 0)
+		*bnp = -1;
 
 	/* return success */
+	free(l2vmap, M_TEMP);
 	return 0;
 }
 
@@ -395,9 +422,8 @@ nilfs_read_filebuf(struct nilfs_node *node, struct buf *bp)
 	v2pmap = malloc(sizeof(uint64_t) * blks, M_TEMP, M_WAITOK);
 
 	/* get virtual block numbers for the vnode's buffer span */
-	error = nilfs_btree_nlookup(node, from, blks, l2vmap);
-	if (error)
-		goto out;
+	for (i = 0; i < blks; i++)
+		l2vmap[i] = from + i;
 
 	/* translate virtual block numbers to physical block numbers */
 	error = nilfs_nvtop(node, blks, l2vmap, v2pmap);
@@ -666,7 +692,7 @@ nilfs_lookup(void *v)
 			error = ENOENT;
 
 		/* first unlock parent */
-		VOP_UNLOCK(dvp, 0);
+		VOP_UNLOCK(dvp);
 
 		if (error == 0) {
 			DPRINTF(LOOKUP, ("\tfound '..'\n"));
@@ -1161,14 +1187,22 @@ nilfs_do_link(struct vnode *dvp, struct vnode *vp, struct componentname *cnp)
 	nilfs_node = VTOI(vp);
 
 	error = VOP_GETATTR(vp, &vap, FSCRED);
-	if (error)
+	if (error) {
+		VOP_UNLOCK(vp);
 		return error;
+	}
 
 	/* check link count overflow */
-	if (vap.va_nlink >= (1<<16)-1)	/* uint16_t */
+	if (vap.va_nlink >= (1<<16)-1) {	/* uint16_t */
+		VOP_UNLOCK(vp);
 		return EMLINK;
+	}
 
-	return nilfs_dir_attach(dir_node->ump, dir_node, nilfs_node, &vap, cnp);
+	error = nilfs_dir_attach(dir_node->ump, dir_node, nilfs_node,
+	    &vap, cnp);
+	if (error)
+		VOP_UNLOCK(vp);
+	return error;
 }
 
 int
@@ -1187,9 +1221,6 @@ nilfs_link(void *v)
 	error = nilfs_do_link(dvp, vp, cnp);
 	if (error)
 		VOP_ABORTOP(dvp, cnp);
-
-	if ((vp != dvp) && (VOP_ISLOCKED(vp) == LK_EXCLUSIVE))
-		VOP_UNLOCK(vp, 0);
 
 	VN_KNOTE(vp, NOTE_LINK);
 	VN_KNOTE(dvp, NOTE_WRITE);
@@ -1374,7 +1405,7 @@ nilfs_rename(void *v)
 
 out:
         if (fdnode != tdnode)
-                VOP_UNLOCK(fdvp, 0);
+                VOP_UNLOCK(fdvp);
 
 out_unlocked:
 	VOP_ABORTOP(tdvp, tcnp);

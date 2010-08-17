@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.149.2.1 2010/04/30 14:44:38 uebayasi Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.149.2.2 2010/08/17 06:48:16 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 2009 Matthew R. Green
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.149.2.1 2010/04/30 14:44:38 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.149.2.2 2010/08/17 06:48:16 uebayasi Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_compat_netbsd.h"
@@ -276,7 +276,7 @@ uvm_swap_init(void)
 		panic("%s: can't lock swap device", __func__);
 	if (VOP_OPEN(swapdev_vp, FREAD | FWRITE, NOCRED))
 		panic("%s: can't open swap device", __func__);
-	VOP_UNLOCK(swapdev_vp, 0);
+	VOP_UNLOCK(swapdev_vp);
 
 	/*
 	 * create swap block resource map to map /dev/drum.   the range
@@ -552,7 +552,9 @@ sys_swapctl(struct lwp *l, const struct sys_swapctl_args *uap, register_t *retva
 	 */
 	if (SCARG(uap, arg) == NULL) {
 		vp = rootvp;		/* miniroot */
-		if (vget(vp, LK_EXCLUSIVE)) {
+		vref(vp);
+		if (vn_lock(vp, LK_EXCLUSIVE)) {
+			vrele(vp);
 			error = EBUSY;
 			goto out;
 		}

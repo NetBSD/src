@@ -1,4 +1,4 @@
-/*	$NetBSD: fifo_vnops.c,v 1.66.20.1 2010/04/30 14:44:15 uebayasi Exp $	*/
+/*	$NetBSD: fifo_vnops.c,v 1.66.20.2 2010/08/17 06:47:36 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fifo_vnops.c,v 1.66.20.1 2010/04/30 14:44:15 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fifo_vnops.c,v 1.66.20.2 2010/08/17 06:47:36 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -190,7 +190,7 @@ fifo_open(void *v)
 		if (ap->a_mode & O_NONBLOCK) {
 		} else {
 			while (!soreadable(rso) && fip->fi_writers == 0) {
-				VOP_UNLOCK(vp, 0);
+				VOP_UNLOCK(vp);
 				error = cv_wait_sig(&fip->fi_rcv,
 				    wso->so_lock);
 				sounlock(wso);
@@ -210,7 +210,7 @@ fifo_open(void *v)
 			}
 		} else {
 			while (fip->fi_readers == 0) {
-				VOP_UNLOCK(vp, 0);
+				VOP_UNLOCK(vp);
 				error = cv_wait_sig(&fip->fi_wcv,
 				    wso->so_lock);
 				sounlock(wso);
@@ -255,7 +255,7 @@ fifo_read(void *v)
 	if (uio->uio_resid == 0)
 		return (0);
 	startresid = uio->uio_resid;
-	VOP_UNLOCK(ap->a_vp, 0);
+	VOP_UNLOCK(ap->a_vp);
 	if (ap->a_ioflag & IO_NDELAY) {
 		/* XXX Bogus, affects other threads. */
 		rso->so_nbio = 1;
@@ -297,7 +297,7 @@ fifo_write(void *v)
 	if (ap->a_uio->uio_rw != UIO_WRITE)
 		panic("fifo_write mode");
 #endif
-	VOP_UNLOCK(ap->a_vp, 0);
+	VOP_UNLOCK(ap->a_vp);
 	if (ap->a_ioflag & IO_NDELAY) {
 		/* XXX Bogus, affects other threads. */
 		wso->so_nbio = 1;
@@ -379,7 +379,7 @@ fifo_inactive(void *v)
 		struct lwp	*a_l;
 	} */ *ap = v;
 
-	VOP_UNLOCK(ap->a_vp, 0);
+	VOP_UNLOCK(ap->a_vp);
 	return (0);
 }
 

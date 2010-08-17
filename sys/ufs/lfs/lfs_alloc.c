@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_alloc.c,v 1.109 2010/01/08 11:35:12 pooka Exp $	*/
+/*	$NetBSD: lfs_alloc.c,v 1.109.2.1 2010/08/17 06:48:11 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.109 2010/01/08 11:35:12 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.109.2.1 2010/08/17 06:48:11 uebayasi Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -236,7 +236,7 @@ lfs_valloc(struct vnode *pvp, int mode, kauth_cred_t cred,
 	if (fs->lfs_freehd == LFS_UNUSED_INUM) {
 		if ((error = lfs_extend_ifile(fs, cred)) != 0) {
 			LFS_PUT_HEADFREE(fs, cip, cbp, new_ino);
-			VOP_UNLOCK(fs->lfs_ivnode, 0);
+			VOP_UNLOCK(fs->lfs_ivnode);
 			lfs_segunlock(fs);
 			return error;
 		}
@@ -252,7 +252,7 @@ lfs_valloc(struct vnode *pvp, int mode, kauth_cred_t cred,
 	mutex_exit(&lfs_lock);
 	++fs->lfs_nfiles;
 
-	VOP_UNLOCK(fs->lfs_ivnode, 0);
+	VOP_UNLOCK(fs->lfs_ivnode);
 	lfs_segunlock(fs);
 
 	return lfs_ialloc(fs, pvp, new_ino, new_gen, vpp);
@@ -575,7 +575,7 @@ lfs_vfree(struct vnode *vp, ino_t ino, int mode)
 	mutex_exit(&lfs_lock);
 	--fs->lfs_nfiles;
 
-	VOP_UNLOCK(fs->lfs_ivnode, 0);
+	VOP_UNLOCK(fs->lfs_ivnode);
 	lfs_segunlock(fs);
 
 	return (0);

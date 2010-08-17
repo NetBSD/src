@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_power.c,v 1.11.2.2 2010/04/30 14:43:05 uebayasi Exp $ */
+/* $NetBSD: acpi_power.c,v 1.11.2.3 2010/08/17 06:46:00 uebayasi Exp $ */
 
 /*-
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_power.c,v 1.11.2.2 2010/04/30 14:43:05 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_power.c,v 1.11.2.3 2010/08/17 06:46:00 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -104,15 +104,10 @@ static const struct sysctlnode	*anode = NULL;
 static struct acpi_power_res	*acpi_power_res_init(ACPI_HANDLE);
 static struct acpi_power_res	*acpi_power_res_get(ACPI_HANDLE);
 
-#if 0
 static ACPI_STATUS	 acpi_power_get_direct(struct acpi_devnode *);
-#endif
-
 static ACPI_STATUS	 acpi_power_get_indirect(struct acpi_devnode *);
 static ACPI_STATUS	 acpi_power_switch(struct acpi_devnode *,
 						   int, bool);
-static ACPI_STATUS	 acpi_power_res_on(ACPI_OBJECT *, void *);
-static ACPI_STATUS	 acpi_power_res_off(ACPI_OBJECT *, void *);
 static ACPI_STATUS	 acpi_power_res_ref(struct acpi_power_res *,
 					    ACPI_HANDLE);
 static ACPI_STATUS	 acpi_power_res_deref(struct acpi_power_res *,
@@ -120,23 +115,8 @@ static ACPI_STATUS	 acpi_power_res_deref(struct acpi_power_res *,
 static ACPI_STATUS	 acpi_power_res_sta(ACPI_OBJECT *, void *);
 
 static ACPI_OBJECT	*acpi_power_pkg_get(ACPI_HANDLE, int);
-static int		 acpi_power_sysctl(SYSCTLFN_ARGS);
+static int		 acpi_power_sysctl(SYSCTLFN_PROTO);
 static const char	*acpi_xname(ACPI_HANDLE);
-
-void
-acpi_power_res_add(struct acpi_devnode *ad)
-{
-	struct acpi_power_res *res;
-
-	KASSERT(ad != NULL && ad->ad_root != NULL);
-	KASSERT(ad->ad_devinfo->Type == ACPI_TYPE_POWER);
-
-	res = acpi_power_res_init(ad->ad_handle);
-
-	if (res == NULL)
-		aprint_error_dev(ad->ad_root, "failed to "
-		    "add power resource %s\n", ad->ad_name);
-}
 
 static struct acpi_power_res *
 acpi_power_res_init(ACPI_HANDLE hdl)
@@ -193,6 +173,9 @@ acpi_power_res_init(ACPI_HANDLE hdl)
 	if (tmp == NULL)
 		TAILQ_INSERT_TAIL(&res_head, res, res_list);
 
+	ACPI_DEBUG_PRINT((ACPI_DB_INFO, "%s added to the "
+		"power resource queue\n", res->res_name));
+
 out:
 	if (buf.Pointer != NULL)
 		ACPI_FREE(buf.Pointer);
@@ -215,10 +198,12 @@ acpi_power_res_get(ACPI_HANDLE hdl)
 }
 
 bool
-acpi_power_register(struct acpi_devnode *ad)
+acpi_power_register(ACPI_HANDLE hdl)
 {
+	struct acpi_devnode *ad = acpi_get_node(hdl);
 
-	KASSERT(ad != NULL && ad->ad_root != NULL);
+	if (ad == NULL)
+		return false;
 
 	if ((ad->ad_flags & ACPI_DEVICE_POWER) == 0)
 		return false;
@@ -227,11 +212,13 @@ acpi_power_register(struct acpi_devnode *ad)
 }
 
 void
-acpi_power_deregister(struct acpi_devnode *ad)
+acpi_power_deregister(ACPI_HANDLE hdl)
 {
+	struct acpi_devnode *ad = acpi_get_node(hdl);
 	struct acpi_power_res *res;
 
-	KASSERT(ad != NULL && ad->ad_root != NULL);
+	if (ad == NULL)
+		return;
 
 	if ((ad->ad_flags & ACPI_DEVICE_POWER) == 0)
 		return;
@@ -243,31 +230,33 @@ acpi_power_deregister(struct acpi_devnode *ad)
 	    (void)acpi_power_res_deref(res, ad->ad_handle);
 }
 
-void
-acpi_power_deregister_from_handle(ACPI_HANDLE hdl)
-{
-	struct acpi_devnode *ad = acpi_get_node(hdl);
-
-	if (ad == NULL)
-		return;
-
-	acpi_power_deregister(ad);
-}
-
 /*
  * Get the D-state of an ACPI device node.
  */
 bool
-acpi_power_get(struct acpi_devnode *ad, int *state)
+acpi_power_get(ACPI_HANDLE hdl, int *state)
 {
+	struct acpi_devnode *ad = acpi_get_node(hdl);
 	ACPI_STATUS rv;
+
+	if (ad == NULL)
+		return false;
 
 	if ((ad->ad_flags & ACPI_DEVICE_POWER) == 0) {
 		rv = AE_SUPPORT;
 		goto fail;
 	}
 
+	/*
+	 * Because the _PSC control method, like _STA,
+	 * is known to be implemented incorrectly in
+	 * some systems, we first try to retrieve the
+	 * power state indirectly via power resources.
+	 */
 	rv = acpi_power_get_indirect(ad);
+
+	if (ACPI_FAILURE(rv))
+		rv = acpi_power_get_direct(ad);
 
 	if (ACPI_FAILURE(rv))
 		goto fail;
@@ -296,11 +285,6 @@ fail:
 	return false;
 }
 
-#if 0
-/*
- * Unfortunately, comparable to _STA, there are systems
- * where the convenient _PSC is implemented incorrectly.
- */
 static ACPI_STATUS
 acpi_power_get_direct(struct acpi_devnode *ad)
 {
@@ -315,7 +299,6 @@ acpi_power_get_direct(struct acpi_devnode *ad)
 
 	return rv;
 }
-#endif
 
 static ACPI_STATUS
 acpi_power_get_indirect(struct acpi_devnode *ad)
@@ -370,25 +353,27 @@ out:
  * Set the D-state of an ACPI device node.
  */
 bool
-acpi_power_set(struct acpi_devnode *ad, int state)
+acpi_power_set(ACPI_HANDLE hdl, int state)
 {
+	struct acpi_devnode *ad = acpi_get_node(hdl);
 	ACPI_STATUS rv;
 	char path[5];
 	int old;
 
-	KASSERT(ad != NULL && ad->ad_root != NULL);
-
-	if (state < ACPI_STATE_D0 || state > ACPI_STATE_D3) {
-		rv = AE_BAD_PARAMETER;
-		goto fail;
-	}
+	if (ad == NULL)
+		return false;
 
 	if ((ad->ad_flags & ACPI_DEVICE_POWER) == 0) {
 		rv = AE_SUPPORT;
 		goto fail;
 	}
 
-	if (acpi_power_get(ad, &old) != true) {
+	if (state < ACPI_STATE_D0 || state > ACPI_STATE_D3) {
+		rv = AE_BAD_PARAMETER;
+		goto fail;
+	}
+
+	if (acpi_power_get(ad->ad_handle, &old) != true) {
 		rv = AE_NOT_FOUND;
 		goto fail;
 	}
@@ -410,141 +395,138 @@ acpi_power_set(struct acpi_devnode *ad, int state)
 	}
 
 	/*
-	 * We first sweep through the resources required
-	 * for the target state, turning things on and
-	 * building references. After this we dereference
-	 * the resources required for the current state,
+	 * As noted in ACPI 4.0 (appendix A.2.1), the bus power state
+	 * should never be lower than the highest state of one of its
+	 * devices. Consequently, we cannot set the state to a lower
+	 * (i.e. higher power) state than the parent device's state.
+	 */
+	if ((ad->ad_parent != NULL) &&
+	    (ad->ad_parent->ad_flags & ACPI_DEVICE_POWER) != 0) {
+
+		if (ad->ad_parent->ad_state > state) {
+			rv = AE_ABORT_METHOD;
+			goto fail;
+		}
+	}
+
+	/*
+	 * We first sweep through the resources required for the target
+	 * state, turning things on and building references. After this
+	 * we dereference the resources required for the current state,
 	 * turning the resources off as we go.
 	 */
 	rv = acpi_power_switch(ad, state, true);
 
-	if (ACPI_FAILURE(rv))
+	if (ACPI_FAILURE(rv) && rv != AE_CTRL_CONTINUE)
 		goto fail;
 
 	rv = acpi_power_switch(ad, ad->ad_state, false);
 
-	if (ACPI_FAILURE(rv))
+	if (ACPI_FAILURE(rv) && rv != AE_CTRL_CONTINUE)
 		goto fail;
 
-	ad->ad_state = state;
-
 	/*
-	 * Last but not least, invoke the power
-	 * state switch method, if available.
+	 * Last but not least, invoke the power state switch method,
+	 * if available. Because some systems use only _PSx for the
+	 * power state transitions, we do this even if there is no _PRx.
 	 */
 	(void)snprintf(path, sizeof(path), "_PS%d", state);
 	(void)AcpiEvaluateObject(ad->ad_handle, path, NULL, NULL);
 
-	aprint_debug_dev(ad->ad_root, "%s turned from "
-	    "D%d to D%d\n", ad->ad_name, old, state);
+	ACPI_DEBUG_PRINT((ACPI_DB_INFO, "%s turned from "
+		"D%d to D%d\n", ad->ad_name, old, state));
+
+	ad->ad_state = state;
 
 	return true;
 
 fail:
 	ad->ad_state = ACPI_STATE_ERROR;
 
-	aprint_error_dev(ad->ad_root, "failed to set power state to D%d "
-	    "for %s: %s\n", state, ad->ad_name, AcpiFormatException(rv));
+	ACPI_DEBUG_PRINT((ACPI_DB_INFO, "failed to set power state to D%d "
+		"for %s: %s\n", state, ad->ad_name, AcpiFormatException(rv)));
 
 	return false;
-}
-
-/*
- * Set the D-state of an ACPI device node from a handle.
- */
-bool
-acpi_power_set_from_handle(ACPI_HANDLE hdl, int state)
-{
-	struct acpi_devnode *ad = acpi_get_node(hdl);
-
-	if (ad == NULL)
-		return false;
-
-	return acpi_power_set(ad, state);
 }
 
 static ACPI_STATUS
 acpi_power_switch(struct acpi_devnode *ad, int state, bool on)
 {
-	ACPI_OBJECT *pkg;
-	ACPI_STATUS rv;
+	ACPI_OBJECT *elm, *pkg;
+	ACPI_STATUS rv = AE_OK;
+	ACPI_HANDLE hdl;
+	uint32_t i, n;
 
+	/*
+	 * For each element in the _PRx package, fetch
+	 * the reference handle, search for this handle
+	 * from the power resource queue, and turn the
+	 * resource behind the handle on or off.
+	 */
 	pkg = acpi_power_pkg_get(ad->ad_handle, state);
 
 	if (pkg == NULL)
-		return AE_NOT_EXIST;
+		return AE_CTRL_CONTINUE;
 
-	if (on != false)
-		rv = acpi_foreach_package_object(pkg, acpi_power_res_on, ad);
-	else
-		rv = acpi_foreach_package_object(pkg, acpi_power_res_off, ad);
+	n = pkg->Package.Count;
+
+	for (i = 0; i < n; i++) {
+
+		elm = &pkg->Package.Elements[i];
+		rv = acpi_eval_reference_handle(elm, &hdl);
+
+		if (ACPI_FAILURE(rv))
+			continue;
+
+		(void)acpi_power_res(hdl, ad->ad_handle, on);
+	}
 
 	ACPI_FREE(pkg);
 
 	return rv;
 }
 
-static ACPI_STATUS
-acpi_power_res_on(ACPI_OBJECT *elm, void *arg)
+ACPI_STATUS
+acpi_power_res(ACPI_HANDLE hdl, ACPI_HANDLE ref, bool on)
 {
-	struct acpi_devnode *ad = arg;
 	struct acpi_power_res *res;
-	ACPI_HANDLE hdl;
+	const char *str;
 	ACPI_STATUS rv;
 
 	/*
-	 * For each element in the _PRx package, first
-	 * fetch the reference handle and then search
-	 * for this handle from the power resource list.
+	 * Search for the resource.
 	 */
-	rv = acpi_eval_reference_handle(elm, &hdl);
-
-	if (ACPI_FAILURE(rv))
-		return rv;
-
 	res = acpi_power_res_get(hdl);
 
 	if (res == NULL)
 		return AE_NOT_FOUND;
 
 	/*
-	 * Reference the resource.
+	 * (De)reference the resource.
 	 */
-	rv = acpi_power_res_ref(res, ad->ad_handle);
+	switch (on) {
+
+	case true:
+		rv = acpi_power_res_ref(res, ref);
+		str = "_ON";
+		break;
+
+	case false:
+		rv = acpi_power_res_deref(res, ref);
+		str = "_OFF";
+		break;
+
+	default:
+		return AE_BAD_PARAMETER;
+	}
 
 	if (ACPI_FAILURE(rv))
 		return rv;
 
 	/*
-	 * Turn the resource on.
+	 * Turn the resource on or off.
 	 */
-	return AcpiEvaluateObject(res->res_handle, "_ON", NULL, NULL);
-}
-
-static ACPI_STATUS
-acpi_power_res_off(ACPI_OBJECT *elm, void *arg)
-{
-	struct acpi_devnode *ad = arg;
-	struct acpi_power_res *res;
-	ACPI_HANDLE hdl;
-	ACPI_STATUS rv;
-
-	rv = acpi_eval_reference_handle(elm, &hdl);
-
-	if (ACPI_FAILURE(rv))
-		return rv;
-
-	res = acpi_power_res_get(hdl);
-
-	if (res == NULL)
-		return AE_NOT_FOUND;
-
-	rv = acpi_power_res_deref(res, ad->ad_handle);
-
-	if (ACPI_FAILURE(rv))
-		return rv;
-
-	return AcpiEvaluateObject(res->res_handle, "_OFF", NULL, NULL);
+	return AcpiEvaluateObject(res->res_handle, str, NULL, NULL);
 }
 
 static ACPI_STATUS
@@ -570,7 +552,7 @@ acpi_power_res_ref(struct acpi_power_res *res, ACPI_HANDLE hdl)
 	mutex_exit(&res->res_mutex);
 
 	ACPI_DEBUG_PRINT((ACPI_DB_INFO, "%s referenced "
-		"by %s?\n", res->res_name, acpi_xname(hdl)));
+		"by %s\n", res->res_name, acpi_xname(hdl)));
 
 	return AE_OK;
 
@@ -621,7 +603,7 @@ acpi_power_res_deref(struct acpi_power_res *res, ACPI_HANDLE hdl)
 	mutex_exit(&res->res_mutex);
 
 	ACPI_DEBUG_PRINT((ACPI_DB_INFO, "%s dereferenced "
-		"by %s?\n", res->res_name, acpi_xname(hdl)));
+		"by %s\n", res->res_name, acpi_xname(hdl)));
 
 	return AE_OK;
 }
@@ -779,7 +761,7 @@ acpi_power_sysctl(SYSCTLFN_ARGS)
 	node = *rnode;
 	ad = rnode->sysctl_data;
 
-	if (acpi_power_get(ad, &state) != true)
+	if (acpi_power_get(ad->ad_handle, &state) != true)
 		state = 0;
 
 	(void)memset(t, '\0', sizeof(t));

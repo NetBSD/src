@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.22.2.2 2010/04/30 14:39:31 uebayasi Exp $	*/
+/*	$NetBSD: machdep.c,v 1.22.2.3 2010/08/17 06:44:41 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2003,2004 Marcel Moolenaar
@@ -133,10 +133,7 @@ vsize_t ia64_unwindtablen;
 struct vm_map *phys_map = NULL;
 
 void *msgbufaddr;
-int	physmem;
-
-char	cpu_model[64];
-char	cpu_family[64];
+int physmem;
 
 vaddr_t kernstart, kernend;
 
@@ -159,78 +156,6 @@ extern vaddr_t kernel_text, end;
 
 struct fpswa_iface *fpswa_iface;
 
-#define Mhz     1000000L
-#define Ghz     (1000L*Mhz)
-
-static void
-identifycpu(void)
-{
-	uint64_t vendor[3];
-	const char *family_name, *model_name;
-	uint64_t features, tmp;
-	int number, revision, model, family, archrev;
-
-	/*
-	 * Assumes little-endian.
-	 */
-	vendor[0] = ia64_get_cpuid(0);
-	vendor[1] = ia64_get_cpuid(1);
-	vendor[2] = '\0';
-
-	tmp = ia64_get_cpuid(3);
-	number = (tmp >> 0) & 0xff;
-	revision = (tmp >> 8) & 0xff;
-	model = (tmp >> 16) & 0xff;
-	family = (tmp >> 24) & 0xff;
-	archrev = (tmp >> 32) & 0xff;
-
-	family_name = model_name = "unknown";
-	switch (family) {
-	case 0x07:
-		family_name = "Itanium";
-		model_name = "Merced";
-		break;
-	case 0x1f:
-		family_name = "Itanium 2";
-		switch (model) {
-		case 0x00:
-			model_name = "McKinley";
-			break;
-		case 0x01:
-			/*
-			 * Deerfield is a low-voltage variant based on the
-			 * Madison core. We need circumstantial evidence
-			 * (i.e. the clock frequency) to identify those.
-			 * Allow for roughly 1% error margin.
-			 */
-			tmp = processor_frequency >> 7;
-			if ((processor_frequency - tmp) < 1*Ghz &&
-			    (processor_frequency + tmp) >= 1*Ghz)
-				model_name = "Deerfield";
-			else
-				model_name = "Madison";
-			break;
-		case 0x02:
-			model_name = "Madison II";
-			break;
-		}
-		break;
-	}
-	snprintf(cpu_family, sizeof(cpu_family), "%s", family_name);
-	snprintf(cpu_model, sizeof(cpu_model), "%s", model_name);
-
-	features = ia64_get_cpuid(4);
-
-	printf("CPU: %s (", model_name);
-	if (processor_frequency) {
-		printf("%ld.%02ld-MHz ", (processor_frequency + 4999) / Mhz,
-		    ((processor_frequency + 4999) / (Mhz/100)) % 100);
-	}
-	printf("%s)\n", family_name);
-	printf("  Origin = \"%s\"  Revision = %d\n", (char *) vendor, revision);
-	printf("  Features = 0x%x\n", (uint32_t) features);
-
-}
 
 /*
  * Machine-dependent startup code
@@ -239,11 +164,6 @@ void
 cpu_startup(void)
 {
 	vaddr_t minaddr, maxaddr;
-
-	/*
-	 * Good {morning,afternoon,evening,night}.
-	 */
-	identifycpu();
 
 	/* XXX: startrtclock(); */
 #ifdef PERFMON

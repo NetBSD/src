@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.c,v 1.12.2.1 2010/04/30 14:44:08 uebayasi Exp $	*/
+/*	$NetBSD: exec_elf.c,v 1.12.2.2 2010/08/17 06:47:24 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1994, 2000, 2005 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.12.2.1 2010/04/30 14:44:08 uebayasi Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.12.2.2 2010/08/17 06:47:24 uebayasi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pax.h"
@@ -460,7 +460,7 @@ elf_load_file(struct lwp *l, struct exec_package *epp, char *path,
 	if (error)
 		goto badunlock;
 
-	VOP_UNLOCK(vp, 0);
+	VOP_UNLOCK(vp);
 
 	if ((error = exec_read_from(l, vp, 0, &eh, sizeof(eh))) != 0)
 		goto bad;
@@ -610,7 +610,7 @@ elf_load_file(struct lwp *l, struct exec_package *epp, char *path,
 	return 0;
 
 badunlock:
-	VOP_UNLOCK(vp, 0);
+	VOP_UNLOCK(vp);
 
 bad:
 	if (ph != NULL)
@@ -882,7 +882,7 @@ bad:
 #ifdef DIAGNOSTIC
 				printf("%s: bad tag %d: "
 				    "[%d %d, %d %d, %*.*s %*.*s]\n",
-				    epp->ep_name,
+				    epp->ep_kname,
 				    np->n_type,
 				    np->n_namesz, ELF_NOTE_PAX_NAMESZ,
 				    np->n_descsz, ELF_NOTE_PAX_DESCSZ,
@@ -902,7 +902,7 @@ bad:
 
 		default:
 #ifdef DIAGNOSTIC
-			printf("%s: unknown note type %d\n", epp->ep_name,
+			printf("%s: unknown note type %d\n", epp->ep_kname,
 			    np->n_type);
 #endif
 			break;

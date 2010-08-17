@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.121 2009/11/03 00:30:11 dyoung Exp $	*/
+/*	$NetBSD: route.c,v 1.121.2.1 2010/08/17 06:47:45 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -93,7 +93,7 @@
 #include "opt_route.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.121 2009/11/03 00:30:11 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.121.2.1 2010/08/17 06:47:45 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -490,6 +490,7 @@ rtredirect(const struct sockaddr *dst, const struct sockaddr *gateway,
 			if (rt != NULL)
 				rtfree(rt);
 			flags |=  RTF_GATEWAY | RTF_DYNAMIC;
+			memset(&info, 0, sizeof(info));
 			info.rti_info[RTAX_DST] = dst;
 			info.rti_info[RTAX_GATEWAY] = gateway;
 			info.rti_info[RTAX_NETMASK] = netmask;
@@ -702,7 +703,7 @@ rtrequest1(int req, struct rt_addrinfo *info, struct rtentry **ret_nrt)
 	struct rtentry *rt, *crt;
 	struct radix_node *rn;
 	struct radix_node_head *rnh;
-	struct ifaddr *ifa;
+	struct ifaddr *ifa, *ifa2;
 	struct sockaddr_storage maskeddst;
 	const struct sockaddr *dst = info->rti_info[RTAX_DST];
 	const struct sockaddr *gateway = info->rti_info[RTAX_GATEWAY];
@@ -803,8 +804,15 @@ rtrequest1(int req, struct rt_addrinfo *info, struct rtentry **ret_nrt)
 			RT_DPRINTF("rt->_rt_key = %p\n", (void *)rt->_rt_key);
 		}
 		rt_set_ifa(rt, ifa);
+		if (info->rti_info[RTAX_TAG] != NULL)
+			rt_settag(rt, info->rti_info[RTAX_TAG]);
 		RT_DPRINTF("rt->_rt_key = %p\n", (void *)rt->_rt_key);
-		rt->rt_ifp = ifa->ifa_ifp;
+		if (info->rti_info[RTAX_IFP] != NULL &&
+		    (ifa2 = ifa_ifwithnet(info->rti_info[RTAX_IFP])) != NULL &&
+		    ifa2->ifa_ifp != NULL)
+			rt->rt_ifp = ifa2->ifa_ifp;
+		else
+			rt->rt_ifp = ifa->ifa_ifp;
 		if (req == RTM_RESOLVE) {
 			rt->rt_rmx = (*ret_nrt)->rt_rmx; /* copy metrics */
 			rt->rt_parent = *ret_nrt;
@@ -1406,4 +1414,21 @@ rt_walktree(sa_family_t family, int (*f)(struct rtentry *, void *), void *v)
 	rw.rw_v = v;
 
 	return rn_walktree(rnh, rt_walktree_visitor, &rw);
+}
+
+const struct sockaddr *
+rt_settag(struct rtentry *rt, const struct sockaddr *tag)
+{
+	if (rt->rt_tag != tag) {
+		if (rt->rt_tag != NULL)
+			sockaddr_free(rt->rt_tag);
+		rt->rt_tag = sockaddr_dup(tag, M_NOWAIT);
+	}
+	return rt->rt_tag; 
+}
+
+struct sockaddr *
+rt_gettag(struct rtentry *rt)
+{
+	return rt->rt_tag;
 }

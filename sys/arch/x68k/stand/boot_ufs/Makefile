@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.23 2008/10/25 22:27:38 apb Exp $
+#	$NetBSD: Makefile,v 1.23.14.1 2010/08/17 06:45:28 uebayasi Exp $
 
 NOMAN=		# defined
 
@@ -45,13 +45,8 @@ CPPFLAGS+= -DSCSI_ADHOC_BOOTPART
 CPPFLAGS+= -DUSE_FFS -DUSE_LFS -DUSE_UFS1 -DUSE_UFS2 -D__daddr_t=int32_t
 CPPFLAGS+= -I${COMMONDIR} -I${LIBIOCS} -I${S} -I. -D_STANDALONE
 AFLAGS=	   ${CFLAGS:M-[ID]*}
-.if ${OBJECT_FMT} == "ELF"
 LINKFLAGS=   -n -Bstatic -T ${.CURDIR}/${BOOT}.ldscript -M
 LINKFLAGS+=  -noinhibit-exec	# XXX
-.else
-LINKFLAGS=   -n -Bstatic -Ttext ${TEXT} -M
-OBJCOPY?=  objcopy
-.endif
 
 .include "${.CURDIR}/../Makefile.booters"
 .include "${S}/../common/lib/libc/Makefile.inc"
@@ -61,12 +56,10 @@ CLEANFILES+=	$(PROG).x $(PROG).map
 
 $(PROG): $(OBJS)
 	${_MKTARGET_LINK}
-.if ${OBJECT_FMT} == "ELF"
 	:
 	: Note:	"relocation truncated to fit: R_68K_16" messages are expected.
 	:	Other errors are fatal.
 	:
-.endif
 	$(LD) $(LINKFLAGS) -o $(PROG).x $(OBJS) $(LDADD) >$(PROG).map
 	@grep first_kbyte $(PROG).map
 	@if [ `(echo ibase=16;						\
@@ -77,10 +70,6 @@ $(PROG): $(OBJS)
 	then echo '$(BOOT): first_kbyte exceeds the first killobyte';	\
 		exit 1;							\
 	fi
-.if ${OBJECT_FMT} == "ELF"
 	mv -f $(PROG).x $(PROG)
-.else
-	$(OBJCOPY) -O binary $(PROG).x $(PROG)
-.endif
 
 .include <bsd.prog.mk>

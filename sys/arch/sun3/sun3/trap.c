@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.137.2.1 2010/04/30 14:39:55 uebayasi Exp $	*/
+/*	$NetBSD: trap.c,v 1.137.2.2 2010/08/17 06:45:23 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.137.2.1 2010/04/30 14:39:55 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.137.2.2 2010/08/17 06:45:23 uebayasi Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -571,6 +571,9 @@ trap(struct trapframe *tf, int type, u_int code, u_int v)
 
 			if ((type & T_USER) != 0)
 				l->l_pflag &= ~LP_SA_PAGEFAULT;
+			else if (ucas_ras_check(tf)) {
+				return;
+			}
 			goto finish;
 		}
 		if (rv == EACCES) {

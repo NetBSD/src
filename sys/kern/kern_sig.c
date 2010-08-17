@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.302.2.1 2010/04/30 14:44:10 uebayasi Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.302.2.2 2010/08/17 06:47:28 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.302.2.1 2010/04/30 14:44:10 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.302.2.2 2010/08/17 06:47:28 uebayasi Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_compat_sunos.h"
@@ -879,7 +879,7 @@ killpg1(struct lwp *l, ksiginfo_t *ksi, int pgid, int all)
 			/* Zero pgid means send to my process group. */
 			pgrp = cp->p_pgrp;
 		else {
-			pgrp = pg_find(pgid, PFIND_LOCKED);
+			pgrp = pgrp_find(pgid);
 			if (pgrp == NULL)
 				goto out;
 		}

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC.MP,v 1.6.2.1 2010/04/30 14:39:40 uebayasi Exp $
+# $NetBSD: GENERIC.MP,v 1.6.2.2 2010/08/17 06:45:00 uebayasi Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/ofppc/conf/std.ofppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.6.2.1 $"
+#ident 		"GENERIC-$Revision: 1.6.2.2 $"
 
 maxusers	32
 
@@ -103,7 +103,7 @@ file-system 	UMAPFS		# NULLFS + uid and gid remapping
 file-system 	UNION		# union file system
 file-system 	NTFS		# Windows NT file system
 file-system	PTYFS		# /dev/pts/N support
-#file-system	TMPFS		# Efficient memory file-system
+file-system	TMPFS		# Efficient memory file-system
 #file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
 
 # File system options
@@ -137,6 +137,7 @@ options 	PPP_FILTER	# Active filter support for PPP (requires BPF)
 options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 options 	IPFILTER_LOG	# ipmon(8) log support
 options 	IPFILTER_LOOKUP	# ippool(8) support
+options 	IPFILTER_COMPAT # Compat for IP-Filter
 #options 	IPFILTER_DEFAULT_BLOCK	# block all packets by default
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 

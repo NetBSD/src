@@ -1,4 +1,4 @@
-/*	$NetBSD: if_agrvar_impl.h,v 1.8.2.1 2010/04/30 14:44:20 uebayasi Exp $	*/
+/*	$NetBSD: if_agrvar_impl.h,v 1.8.2.2 2010/08/17 06:47:45 uebayasi Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -107,11 +107,11 @@ struct agr_softc {
 	kmutex_t sc_lock;
 	kcondvar_t sc_ports_cv;
 	kcondvar_t sc_insc_cv;
-	int sc_noentry;
-	int sc_insc;
-	int sc_wrports;
-	int sc_rdports;
-	int sc_paused;
+	volatile int sc_noentry;
+	volatile int sc_insc;
+	volatile bool sc_wrports;
+	volatile int sc_rdports;
+	volatile int sc_paused;
 	struct callout sc_callout;
 	int sc_nports;
 	TAILQ_HEAD(, agr_port) sc_ports;

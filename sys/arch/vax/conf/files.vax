@@ -1,4 +1,4 @@
-#	$NetBSD: files.vax,v 1.116 2009/02/16 23:55:31 christos Exp $
+#	$NetBSD: files.vax,v 1.116.2.1 2010/08/17 06:45:24 uebayasi Exp $
 #
 # new style config file for vax architecture
 #
@@ -35,18 +35,21 @@ device	nmi { slot=-1 }: bus
 attach	nmi at mainbus with nmi_mainbus
 file	arch/vax/vax/nmi_mainbus.c	nmi
 
+# Abus and related devices
+device  abus {}: bus
+attach  abus at mainbus with abus_mainbus
+file	arch/vax/vax/ka860.c		vax8600
+file	arch/vax/vax/crl.c		vax8600
+
 # SBI and related devices
 device	sbi { tr=-1 }: bus
 attach	sbi at mainbus with sbi_mainbus
+attach  sbi at abus with sbi_abus
 file	arch/vax/vax/sbi.c		sbi
 
 attach	mem at sbi with mem_sbi
 file	arch/vax/vax/ka780.c		vax780 | mem_sbi | vaxany
 file	arch/vax/vax/cfl.c		vax780 | mem_sbi | vaxany
-
-# Abus and related devices
-file	arch/vax/vax/ka860.c		vax8600
-file	arch/vax/vax/crl.c		vax8600
 
 # CMI and related devices
 device	cmi { tr=-1 }: bus

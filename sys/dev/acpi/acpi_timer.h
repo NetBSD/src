@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_timer.h,v 1.2.2.1 2010/04/30 14:43:06 uebayasi Exp $ */
+/* $NetBSD: acpi_timer.h,v 1.2.2.2 2010/08/17 06:46:00 uebayasi Exp $ */
 
 /*-
  * Copyright (c) 2006 Matthias Drochner <drochner@NetBSD.org>
@@ -29,7 +29,10 @@
 #ifndef _SYS_DEV_ACPI_ACPI_TIMER_H
 #define _SYS_DEV_ACPI_ACPI_TIMER_H
 
-int	acpitimer_init(void);
-int	acpitimer_detach(void);
+int		acpitimer_init(struct acpi_softc *);
+int		acpitimer_detach(void);
+u_int		acpitimer_read_safe(struct timecounter *);
+u_int		acpitimer_read_fast(struct timecounter *);
+uint32_t	acpitimer_delta(uint32_t, uint32_t);
 
 #endif	/* !_SYS_DEV_ACPI_ACPI_TIMER_H */

@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsatavar.h,v 1.1 2009/07/27 12:34:14 kiyohara Exp $	*/
+/*	$NetBSD: mvsatavar.h,v 1.1.4.1 2010/08/17 06:46:10 uebayasi Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -27,6 +27,15 @@
 
 #ifndef _MVSATAVAR_H_
 #define _MVSATAVAR_H_
+
+struct mvsata_product {
+	int vendor;
+	int model;
+	int hc;
+	int port;
+	int generation;
+	int flags;
+};
 
 #define MVSATA_EDMAQ_LEN	32	/* keep compatibility to gen1 */
 #define MVSATA_EDMAQ_INC(i)	((i) = ((i) + 1) % MVSATA_EDMAQ_LEN)
@@ -128,7 +137,7 @@ struct mvsata_softc {
 	void (*sc_enable_intr)(struct mvsata_port *, int);
 };
 
-int mvsata_attach(struct mvsata_softc *,
+int mvsata_attach(struct mvsata_softc *, struct mvsata_product *,
 		  int (*mvsata_sreset)(struct mvsata_softc *),
 		  int (*mvsata_misc_reset)(struct mvsata_softc *), int);
 int mvsata_intr(struct mvsata_hc *);

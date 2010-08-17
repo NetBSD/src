@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_conn.c,v 1.25 2009/03/18 16:00:24 cegger Exp $	*/
+/*	$NetBSD: smb_conn.c,v 1.25.2.1 2010/08/17 06:47:49 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_conn.c,v 1.25 2009/03/18 16:00:24 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_conn.c,v 1.25.2.1 2010/08/17 06:47:49 uebayasi Exp $");
 
 /*
  * Connection engine.
@@ -135,7 +135,7 @@ smb_sm_done(void)
 }
 
 static int
-smb_sm_lockvclist(int flags)
+smb_sm_lockvclist(void)
 {
 	int error;
 
@@ -223,7 +223,7 @@ smb_sm_lookup(struct smb_vcspec *vcspec, struct smb_sharespec *shspec,
 
 	*vcpp = vcp = NULL;
 
-	error = smb_sm_lockvclist(LK_EXCLUSIVE);
+	error = smb_sm_lockvclist();
 	if (error)
 		return error;
 	fail = smb_sm_lookupint(vcspec, shspec, scred, vcpp);

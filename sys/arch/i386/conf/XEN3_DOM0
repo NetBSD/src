@@ -1,4 +1,4 @@
-#	$NetBSD: XEN3_DOM0,v 1.27.2.1 2010/04/30 14:39:28 uebayasi Exp $
+#	$NetBSD: XEN3_DOM0,v 1.27.2.2 2010/08/17 06:44:35 uebayasi Exp $
 #
 #	XEN3_0: Xen 3.0 domain0 kernel
 
@@ -23,6 +23,7 @@ options 	DOM0OPS
 # making MCLBYTES = PAGE_SIZE avoids a copy when a mbuf cluster is sent
 # to a domU, at the expense of a higher memory usage by the network stack.
 #options 	MCLSHIFT=12
+#options         XEN_BALLOON     # Xen memory ballooning - Experimental
 
 makeoptions 	CPUFLAGS="-march=i686"
 
@@ -105,6 +106,13 @@ options 	COMPAT_FREEBSD	# binary compatibility with FreeBSD
 #options 	COMPAT_PECOFF	# kernel support to run Win32 apps
 options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
+# Wedge support
+options 	DKWEDGE_AUTODISCOVER	# Automatically add dk(4) instances
+options 	DKWEDGE_METHOD_GPT	# Supports GPT partitions as wedges
+# The following two options can break /etc/fstab, so handle with care
+#options 	DKWEDGE_METHOD_BSDLABEL	# Support disklabel entries as wedges
+#options 	DKWEDGE_METHOD_MBR	# Support MBR partitions as wedges
+
 # File systems
 file-system 	FFS		# UFS
 file-system 	EXT2FS		# second extended file system (linux)
@@ -174,11 +182,11 @@ options 	IPFILTER_LOOKUP	# ippool(8) support
 
 # These options enable verbose messages for several subsystems.
 # Warning, these may compile large string tables into the kernel!
-options 	MIIVERBOSE	# verbose PHY autoconfig messages
-options 	PCIVERBOSE	# verbose PCI device autoconfig messages
+#options 	MIIVERBOSE	# verbose PHY autoconfig messages
+#options 	PCIVERBOSE	# verbose PCI device autoconfig messages
 #options 	PCI_CONFIG_DUMP	# verbosely dump PCI config space
 options 	SCSIVERBOSE	# human readable SCSI error messages
-options 	USBVERBOSE	# verbose USB device autoconfig messages
+#options 	USBVERBOSE	# verbose USB device autoconfig messages
 
 options 	NFS_BOOT_DHCP,NFS_BOOT_BOOTPARAM
 #options 	NFS_BOOT_BOOTSTATIC
@@ -716,6 +724,10 @@ wsmouse* at btms? mux 0
 btkbd* at bthidev? reportid ?
 wskbd* at btkbd? console ? mux 1
 
+# Bluetooth Apple Magic Mouse
+btmagic* at bthub?
+wsmouse* at btmagic? mux 0
+
 # Bluetooth Audio support
 btsco* at bthub?
 
@@ -750,6 +762,7 @@ pseudo-device	fss			# file system snapshot device
 
 pseudo-device	md		1	# memory disk device (ramdisk)
 pseudo-device	vnd			# disk-like interface to files
+pseudo-device	dm			# device-mapper driver for LVM
 
 # network pseudo-devices
 pseudo-device	bpfilter		# Berkeley packet filter

@@ -1,4 +1,4 @@
-/*	$NetBSD: example.c,v 1.5 2009/10/20 05:33:30 jnemeth Exp $	*/
+/*	$NetBSD: example.c,v 1.5.2.1 2010/08/17 06:47:41 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -27,64 +27,73 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: example.c,v 1.5 2009/10/20 05:33:30 jnemeth Exp $");
+__KERNEL_RCSID(0, "$NetBSD: example.c,v 1.5.2.1 2010/08/17 06:47:41 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/module.h>
 
 /*
- * Last parameter of MODULE macro is name of modules on
- * which defined module depends.
+ * Last parameter of MODULE macro is a list of names (as string; names are
+ * separated by commas) of dependencies.  If module has no dependencies,
+ * then NULL should be passed.
  */
 
 MODULE(MODULE_CLASS_MISC, example, NULL);
 
-static
-void
+static int
 handle_props(prop_dictionary_t props)
 {
+	const char *msg;
 	prop_string_t str;
 
-	if (props != NULL) {
-		str = prop_dictionary_get(props, "msg");
-	} else {
-		str = NULL;
-	}
-	if (str == NULL)
+	if (props == NULL)
+		return EINVAL;
+
+	str = prop_dictionary_get(props, "msg");
+	if (str == NULL) {
 		printf("The 'msg' property was not given.\n");
-	else if (prop_object_type(str) != PROP_TYPE_STRING)
-		printf("The 'msg' property is not a string.\n");
-	else {
-		const char *msg = prop_string_cstring_nocopy(str);
-		if (msg == NULL)
-			printf("Failed to process the 'msg' property.\n");
-		else
-			printf("The 'msg' property is: %s\n", msg);
+		return EINVAL;
 	}
+
+	if (prop_object_type(str) != PROP_TYPE_STRING) {
+		printf("The 'msg' property is not a string.\n");
+		return EINVAL;
+	}
+
+	msg = prop_string_cstring_nocopy(str);
+	if (msg == NULL) {
+		printf("Failed to process the 'msg' property.\n");
+	} else {
+		printf("The 'msg' property is: %s\n", msg);
+	}
+	return 0;
 }
 
 static int
 example_modcmd(modcmd_t cmd, void *arg)
 {
+	int error;
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:
 		printf("Example module loaded.\n");
-		handle_props(arg);
+		error = handle_props(arg);
 		break;
 
 	case MODULE_CMD_FINI:
 		printf("Example module unloaded.\n");
+		error = 0;
 		break;
 
 	case MODULE_CMD_STAT:
 		printf("Example module status queried.\n");
-		return ENOTTY;
+		error = ENOTTY;
+		break;
 
 	default:
-		return ENOTTY;
+		error = ENOTTY;
 	}
 
-	return 0;
+	return error;
 }

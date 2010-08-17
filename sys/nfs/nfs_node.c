@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_node.c,v 1.110 2009/03/15 17:20:10 cegger Exp $	*/
+/*	$NetBSD: nfs_node.c,v 1.110.2.1 2010/08/17 06:47:51 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.110 2009/03/15 17:20:10 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.110.2.1 2010/08/17 06:47:51 uebayasi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -178,7 +178,7 @@ loop:
 		vp = NFSTOV(np);
 		mutex_enter(&vp->v_interlock);
 		rw_exit(&nmp->nm_rbtlock);
-		error = vget(vp, LK_EXCLUSIVE | LK_INTERLOCK | lkflags);
+		error = vget(vp, LK_EXCLUSIVE | lkflags);
 		if (error == EBUSY)
 			return error;
 		if (error)
@@ -231,7 +231,7 @@ loop:
 	kauth_cred_hold(np->n_rcred);
 	np->n_wcred = curlwp->l_cred;
 	kauth_cred_hold(np->n_wcred);
-	vlockmgr(&vp->v_lock, LK_EXCLUSIVE);
+	VOP_LOCK(vp, LK_EXCLUSIVE);
 	NFS_INVALIDATE_ATTRCACHE(np);
 	uvm_vnp_setsize(vp, 0);
 	rb_tree_insert_node(&nmp->nm_rbtree, &np->n_rbnode);
@@ -268,7 +268,7 @@ nfs_inactive(void *v)
 		nfs_invaldircache(vp,
 		    NFS_INVALDIRCACHE_FORCE | NFS_INVALDIRCACHE_KEEPEOF);
 
-	VOP_UNLOCK(vp, 0);
+	VOP_UNLOCK(vp);
 
 	if (sp != NULL) {
 		workqueue_enqueue(nfs_sillyworkq, &sp->s_work, NULL);

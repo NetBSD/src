@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.83 2008/04/28 20:24:10 martin Exp $	*/
+/*	$NetBSD: lock.h,v 1.83.20.1 2010/08/17 06:48:07 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2006, 2007 The NetBSD Foundation, Inc.
@@ -72,18 +72,6 @@
 #include <sys/mutex.h>
 
 #include <machine/lock.h>
-
-#define	LK_TYPE_MASK	0x0000000f	/* type of lock sought */
-#define	LK_SHARED	0x00000001	/* shared lock */
-#define	LK_EXCLUSIVE	0x00000002	/* exclusive lock */
-#define	LK_RELEASE	0x00000006	/* release any type of lock */
-#define	LK_EXCLOTHER	0x00000008	/* other process holds lock */
-
-#define	LK_NOWAIT	0x00000010	/* do not sleep to await lock */
-#define	LK_CANRECURSE	0x00000040	/* this may be recursive lock attempt */
-#define	LK_INTERLOCK	0x00010000	/* unlock passed simple lock after
-					   getting lk_interlock */
-#define	LK_RETRY	0x00020000	/* vn_lock: retry until locked */
 
 #ifdef _KERNEL
 

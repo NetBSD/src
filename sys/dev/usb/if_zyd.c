@@ -1,5 +1,5 @@
 /*	$OpenBSD: if_zyd.c,v 1.52 2007/02/11 00:08:04 jsg Exp $	*/
-/*	$NetBSD: if_zyd.c,v 1.24.2.1 2010/04/30 14:43:51 uebayasi Exp $	*/
+/*	$NetBSD: if_zyd.c,v 1.24.2.2 2010/08/17 06:46:44 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2006 by Damien Bergamini <damien.bergamini@free.fr>
@@ -22,7 +22,7 @@
  * ZyDAS ZD1211/ZD1211B USB WLAN driver.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_zyd.c,v 1.24.2.1 2010/04/30 14:43:51 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_zyd.c,v 1.24.2.2 2010/08/17 06:46:44 uebayasi Exp $");
 
 
 #include <sys/param.h>
@@ -156,7 +156,7 @@ extern struct cfdriver zyd_cd;
 CFATTACH_DECL_NEW(zyd, sizeof(struct zyd_softc), zyd_match,
     zyd_attach, zyd_detach, zyd_activate);
 
-Static int	zyd_attachhook(void *);
+Static void	zyd_attachhook(device_t);
 Static int	zyd_complete_attach(struct zyd_softc *);
 Static int	zyd_open_pipes(struct zyd_softc *);
 Static void	zyd_close_pipes(struct zyd_softc *);
@@ -245,10 +245,10 @@ zyd_match(device_t parent, cfdata_t match, void *aux)
 	    UMATCH_VENDOR_PRODUCT : UMATCH_NONE;
 }
 
-Static int
-zyd_attachhook(void *xsc)
+Static void
+zyd_attachhook(device_t self)
 {
-	struct zyd_softc *sc = xsc;
+	struct zyd_softc *sc = device_private(self);
 	firmware_handle_t fwh;
 	const char *fwname;
 	u_char *fw;
@@ -259,7 +259,7 @@ zyd_attachhook(void *xsc)
 	if ((error = firmware_open("zyd", fwname, &fwh)) != 0) {
 		aprint_error_dev(sc->sc_dev,
 		    "failed to open firmware %s (error=%d)\n", fwname, error);
-		return error;
+		return;
 	}
 	size = firmware_get_size(fwh);
 	fw = firmware_malloc(size);
@@ -267,7 +267,7 @@ zyd_attachhook(void *xsc)
 		aprint_error_dev(sc->sc_dev,
 		    "failed to allocate firmware memory\n");
 		firmware_close(fwh);
-		return ENOMEM;
+		return;
 	}
 	error = firmware_read(fwh, 0, fw, size);
 	firmware_close(fwh);
@@ -275,7 +275,7 @@ zyd_attachhook(void *xsc)
 		aprint_error_dev(sc->sc_dev,
 		    "failed to read firmware (error %d)\n", error);
 		firmware_free(fw, 0);
-		return error;
+		return;
 	}
 
 	error = zyd_loadfirmware(sc, fw, size);
@@ -283,7 +283,7 @@ zyd_attachhook(void *xsc)
 		aprint_error_dev(sc->sc_dev,
 		    "could not load firmware (error=%d)\n", error);
 		firmware_free(fw, 0);
-		return ENXIO;
+		return;
 	}
 
 	firmware_free(fw, 0);
@@ -292,7 +292,7 @@ zyd_attachhook(void *xsc)
 	/* complete the attach process */
 	if ((error = zyd_complete_attach(sc)) == 0)
 		sc->attached = 1;
-	return error;
+	return;
 }
 
 void
@@ -334,13 +334,10 @@ zyd_attach(device_t parent, device_t self, void *aux)
 	IFQ_SET_READY(&ifp->if_snd);
 	memcpy(ifp->if_xname, device_xname(sc->sc_dev), IFNAMSIZ);
 
-	if_attach(ifp);
-	/* XXXX: alloc temporarily until the layer2 can be configured. */
-	if_alloc_sadl(ifp);
-
 	SIMPLEQ_INIT(&sc->sc_rqh);
 
-	return;
+	/* defer configrations after file system is ready to load firmware */
+	config_mountroot(self, zyd_attachhook);
 }
 
 Static int
@@ -424,7 +421,7 @@ zyd_complete_attach(struct zyd_softc *sc)
 		    IEEE80211_CHAN_DYN | IEEE80211_CHAN_2GHZ;
 	}
 
-	if_free_sadl(ifp);
+	if_attach(ifp);
 	ieee80211_ifattach(ic);
 	ic->ic_node_alloc = zyd_node_alloc;
 	ic->ic_newassoc = zyd_newassoc;
@@ -461,11 +458,8 @@ zyd_detach(device_t self, int flags)
 	struct ifnet *ifp = &sc->sc_if;
 	int s;
 
-	if (!sc->attached) {
-		if_free_sadl(ifp);
-		if_detach(ifp);
+	if (!sc->attached)
 		return 0;
-	}
 
 	s = splusb();
 
@@ -2449,10 +2443,6 @@ zyd_init(struct ifnet *ifp)
 	struct zyd_softc *sc = ifp->if_softc;
 	struct ieee80211com *ic = &sc->sc_ic;
 	int i, error;
-
-	if ((sc->sc_flags & ZD1211_FWLOADED) == 0)
-		if ((error = zyd_attachhook(sc)) != 0)
-			return error;
 
 	zyd_stop(ifp, 0);
 

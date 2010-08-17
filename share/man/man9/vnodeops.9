@@ -1,4 +1,4 @@
-.\"     $NetBSD: vnodeops.9,v 1.77 2009/05/04 20:08:07 wiz Exp $
+.\"     $NetBSD: vnodeops.9,v 1.77.2.1 2010/08/17 06:40:06 uebayasi Exp $
 .\"
 .\" Copyright (c) 2001, 2005, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd August 5, 2008
+.Dd June 24, 2010
 .Dt VNODEOPS 9
 .Os
 .Sh NAME
@@ -76,7 +76,8 @@
 .Nm VOP_BWRITE ,
 .Nm VOP_GETEXTATTR ,
 .Nm VOP_SETEXTATTR ,
-.Nm VOP_LISTEXTATTR
+.Nm VOP_LISTEXTATTR ,
+.Nm VOP_DELETEEXTATTR
 .Nd vnode operations
 .Sh SYNOPSIS
 .In sys/param.h
@@ -168,7 +169,7 @@
 .Ft int
 .Fn VOP_LOCK "struct vnode *vp" "int flags"
 .Ft int
-.Fn VOP_UNLOCK "struct vnode *vp" "int flags"
+.Fn VOP_UNLOCK "struct vnode *vp"
 .Ft int
 .Fn VOP_ISLOCKED "struct vnode *vp"
 .Ft int
@@ -206,6 +207,9 @@
 .Ft int
 .Fn VOP_LISTEXTATTR "struct vnode *vp" "int attrnamespace" "struct uio *uio" \
 "size_t *size" "kauth_cred_t cred"
+.Ft int
+.Fn VOP_DELETEEXTATTR "struct vnode *vp" "int attrnamespace" \
+"const char *name" "kauth_cred_t cred"
 .Pp
 Not all header files are required for each function.
 .Sh DESCRIPTION
@@ -222,56 +226,56 @@ associated with the operation being invoked.
 .Pp
 Functions in the vnode operations vector are invoked using specialized
 macros.
-The following table lists the elements of the vnode operations vector,
-the corresponding invocation macro, and a description of the element.
+The following table gives a summary of the operations.
 .Pp
-.Bl -column "int (*vop_strategy)()" "VOP_LISTEXTATTR" "Wake up process sleeping on lock" -compact
-.It Sy Vector element Ta Sy Macro Ta Sy Description
-.It int (*vop_lookup)()	VOP_LOOKUP	Lookup file name in name cache
-.It int (*vop_create)()	VOP_CREATE	Create a new file
-.It int (*vop_mknod)()	VOP_MKNOD	Make a new device
-.It int (*vop_open)()	VOP_OPEN	Open a file
-.It int (*vop_close)()	VOP_CLOSE	Close a file
-.It int (*vop_access)()	VOP_ACCESS	Determine file accessibility
-.It int (*vop_getattr)()	VOP_GETATTR	Get file attributes
-.It int (*vop_setattr)()	VOP_SETATTR	Set file attributes
-.It int (*vop_read)()	VOP_READ	Read from a file
-.It int (*vop_write)()	VOP_WRITE	Write to a file
-.It int (*vop_ioctl)()	VOP_IOCTL	Perform device-specific I/O
-.It int (*vop_fcntl)()	VOP_FCNTL	Perform file control
-.It int (*vop_poll)()	VOP_POLL	Test if poll event has occurred
-.It int (*vop_kqfilter)()	VOP_KQFILTER	Register a knote
-.It int (*vop_revoke)()	VOP_REVOKE	Eliminate vode activity
-.It int (*vop_mmap)()	VOP_MMAP	Map file into user address space
-.It int (*vop_fsync)()	VOP_FSYNC	Flush pending data to disk
-.It int (*vop_seek)()	VOP_SEEK	Test if file is seekable
-.It int (*vop_remove)()	VOP_REMOVE	Remove a file
-.It int (*vop_link)()	VOP_LINK	Link a file
-.It int (*vop_rename)()	VOP_RENAME	Rename a file
-.It int (*vop_mkdir)()	VOP_MKDIR	Make a new directory
-.It int (*vop_rmdir)()	VOP_RMDIR	Remove a directory
-.It int (*vop_symlink)()	VOP_SYMLINK	Create a symbolic link
-.It int (*vop_readdir)()	VOP_READDIR	Read directory entry
-.It int (*vop_readlink)()	VOP_READLINK	Read contents of a symlink
-.It int (*vop_abortop)()	VOP_ABORTOP	Abort pending operation
-.It int (*vop_inactive)()	VOP_INACTIVE	Release the inactive vnode
-.It int (*vop_reclaim)()	VOP_RECLAIM	Reclaim vnode for another file
-.It int (*vop_lock)()	VOP_LOCK	Sleep until vnode lock is free
-.It int (*vop_unlock)()	VOP_UNLOCK	Wake up process sleeping on lock
-.It int (*vop_islocked)()	VOP_ISLOCKED	Test if vnode is locked
-.It int (*vop_bmap)()	VOP_BMAP	Logical block number conversion
-.It int (*vop_print)()	VOP_PRINT	Print debugging information
-.It int (*vop_pathconf)()	VOP_PATHCONF	Return POSIX pathconf data
-.It int (*vop_advlock)()	VOP_ADVLOCK	Advisory record locking
-.It int (*vop_lease)()	VOP_LEASE	Validate vnode credentials
-.It int (*vop_whiteout)()	VOP_WHITEOUT	Whiteout vnode
-.It int (*vop_getpages)()	VOP_GETPAGES	Read VM pages from file
-.It int (*vop_putpages)()	VOP_PUTPAGES	Write VM pages to file
-.It int (*vop_strategy)()	VOP_STRATEGY	Read/write a file system buffer
-.It int (*vop_bwrite)()	VOP_BWRITE	Write a file system buffer
-.It int (*vop_getextattr)()	VOP_GETEXTATTR	Get extended attribute
-.It int (*vop_setextattr)()	VOP_SETEXTATTR	Set extended attribute
-.It int (*vop_listextattr)()	VOP_LISTEXTATTR	List extended attributes
+.Bl -column "VOP_DELETEEXTATTR" "Wake up process sleeping on lock" -compact
+.It Sy Macro Ta Sy Description
+.It VOP_LOOKUP	Lookup file name in name cache
+.It VOP_CREATE	Create a new file
+.It VOP_MKNOD	Make a new device
+.It VOP_OPEN	Open a file
+.It VOP_CLOSE	Close a file
+.It VOP_ACCESS	Determine file accessibility
+.It VOP_GETATTR	Get file attributes
+.It VOP_SETATTR	Set file attributes
+.It VOP_READ	Read from a file
+.It VOP_WRITE	Write to a file
+.It VOP_IOCTL	Perform device-specific I/O
+.It VOP_FCNTL	Perform file control
+.It VOP_POLL	Test if poll event has occurred
+.It VOP_KQFILTER	Register a knote
+.It VOP_REVOKE	Eliminate vode activity
+.It VOP_MMAP	Map file into user address space
+.It VOP_FSYNC	Flush pending data to disk
+.It VOP_SEEK	Test if file is seekable
+.It VOP_REMOVE	Remove a file
+.It VOP_LINK	Link a file
+.It VOP_RENAME	Rename a file
+.It VOP_MKDIR	Make a new directory
+.It VOP_RMDIR	Remove a directory
+.It VOP_SYMLINK	Create a symbolic link
+.It VOP_READDIR	Read directory entry
+.It VOP_READLINK	Read contents of a symlink
+.It VOP_ABORTOP	Abort pending operation
+.It VOP_INACTIVE	Release the inactive vnode
+.It VOP_RECLAIM	Reclaim vnode for another file
+.It VOP_LOCK	Sleep until vnode lock is free
+.It VOP_UNLOCK	Wake up process sleeping on lock
+.It VOP_ISLOCKED	Test if vnode is locked
+.It VOP_BMAP	Logical block number conversion
+.It VOP_PRINT	Print debugging information
+.It VOP_PATHCONF	Return POSIX pathconf data
+.It VOP_ADVLOCK	Advisory record locking
+.It VOP_LEASE	Validate vnode credentials
+.It VOP_WHITEOUT	Whiteout vnode
+.It VOP_GETPAGES	Read VM pages from file
+.It VOP_PUTPAGES	Write VM pages to file
+.It VOP_STRATEGY	Read/write a file system buffer
+.It VOP_BWRITE	Write a file system buffer
+.It VOP_GETEXTATTR	Get extended attribute
+.It VOP_SETEXTATTR	Set extended attribute
+.It VOP_LISTEXTATTR	List extended attributes
+.It VOP_DELETEEXTATTR	Remove extended attribute
 .El
 .Pp
 The implementation details of the vnode operations vector are not
@@ -1059,9 +1063,16 @@ The argument
 is the vnode of the file to be locked.
 The argument
 .Fa flags
-is a set of
-.Xr lockmgr 9
-flags.
+is
+.Dv LK_EXCLUSIVE
+to take the lock exclusively or
+.Dv LK_SHARED
+to take a shared lock.
+If
+.Fa flags
+contains
+.Dv LK_NOWAIT
+and the lock is busy, the operation will return immediately with an error code.
 If the operation is successful zero is returned, otherwise an
 appropriate error code is returned.
 .Fn VOP_LOCK
@@ -1072,16 +1083,11 @@ Kernel code should use
 to lock a vnode rather than calling
 .Fn VOP_LOCK
 directly.
-.It Fn VOP_UNLOCK "vp" "flags"
+.It Fn VOP_UNLOCK "vp"
 Wake up process sleeping on lock.
 The argument
 .Fa vp
 is the vnode of the file to be unlocked.
-The argument
-.Fa flags
-is a set of
-.Xr lockmgr 9
-flags.
 If the operation is successful zero is returned, otherwise an
 appropriate error code is returned.
 .Fn VOP_UNLOCK
@@ -1096,6 +1102,9 @@ Possible return values are
 .Dv LK_SHARED
 or 0 for lock held exclusively by the calling thread, shared lock held
 by anyone or unlocked, respectively.
+.Pp
+This function must never be used to make locking decisions at run time:
+it is provided only for diagnostic purposes.
 .It Fn VOP_BMAP "vp" "bn" "vpp" "bnp" "runp"
 Convert the logical block number
 .Fa bn
@@ -1401,6 +1410,18 @@ is not, and vice versa.
 The argument
 .Fa cred
 specifies the user credentials to use when authorizing the request.
+.It Fn VOP_DELETEEXTATTR "vp" "attrnamespace" "name" "cred"
+Remove attribute
+.Fa name
+from file associated with
+.Fa vp .
+The argument
+.Fa attrnamespace
+specifies the extended attribute namespace.
+If full removal is not supported, the file system should return
+.Er EOPNOTSUPP
+to allow the caller to zero out the value with
+.Fn VOP_SETEXTATTR .
 .El
 .Sh ERRORS
 .Bl -tag -width Er

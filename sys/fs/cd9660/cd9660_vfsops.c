@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vfsops.c,v 1.70 2010/01/26 21:29:48 mlelstv Exp $	*/
+/*	$NetBSD: cd9660_vfsops.c,v 1.70.2.1 2010/08/17 06:47:14 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.70 2010/01/26 21:29:48 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.70.2.1 2010/08/17 06:47:14 uebayasi Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -265,7 +265,7 @@ cd9660_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	 */
 	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
 	error = genfs_can_mount(devvp, VREAD, l->l_cred);
-	VOP_UNLOCK(devvp, 0);
+	VOP_UNLOCK(devvp);
 	if (error) {
 		vrele(devvp);
 		return (error);
@@ -278,7 +278,7 @@ cd9660_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 		if (error) {
 			vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
 			(void)VOP_CLOSE(devvp, FREAD, NOCRED);
-			VOP_UNLOCK(devvp, 0);
+			VOP_UNLOCK(devvp);
 			goto fail;
 		}
 	} else {

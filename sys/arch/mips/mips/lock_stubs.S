@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.11 2010/01/09 11:49:16 simonb Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.11.2.1 2010/08/17 06:44:52 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -33,6 +33,7 @@
 #include "opt_lockdebug.h"
 #include "opt_multiprocessor.h"
 
+#include <sys/errno.h>
 #include <machine/asm.h>
 #include <machine/cpu.h>
 
@@ -137,6 +138,56 @@ STRONG_ALIAS(atomic_cas_32_ni,_atomic_cas_uint)
 STRONG_ALIAS(_atomic_cas_uint_ni,_atomic_cas_uint)
 STRONG_ALIAS(atomic_cas_uint_ni,_atomic_cas_uint)
 
+/*
+ * int ucas_int(volatile int *uptr, int old, int new, int *ret);
+ */
+LEAF(ucas_int)
+	blt	a0, zero, 4f
+	 PTR_L	v1, L_PCB(MIPS_CURLWP)
+	PTR_LA	v0, 3f
+	PTR_S	v0, PCB_ONFAULT(v1)
+1:
+	INT_LL	t0, (a0)
+	bne	t0, a1, 2f
+	 move	t1, a2
+	INT_SC	t1, (a0)
+	beq	t1, zero, 1b
+2:
+	 INT_S	t0, (a3)
+	move	v0, zero
+3:
+	j	ra
+	 PTR_S	zero, PCB_ONFAULT(v1)
+4:
+	b	3b
+	 li	v0, EFAULT
+END(ucas_int)
+
+/*
+ * int ucas_ptr(volatile void **uptr, void *old, void *new, void **ret);
+ */
+LEAF(ucas_ptr)
+	blt	a0, zero, 4f
+	 PTR_L	v1, L_PCB(MIPS_CURLWP)
+	PTR_LA	v0, 3f
+	PTR_S	v0, PCB_ONFAULT(v1)
+1:
+	PTR_LL	t0, (a0)
+	bne	t0, a1, 2f
+	 move	t1, a2
+	PTR_SC	t1, (a0)
+	beq	t1, zero, 1b
+2:
+	 PTR_S	t0, (a3)
+	move	v0, zero
+3:
+	j	ra
+	 PTR_S	zero, PCB_ONFAULT(v1)
+4:
+	b	3b
+	 li	v0, EFAULT
+END(ucas_ptr)
+
 #ifndef LOCKDEBUG
 
 /*
@@ -237,11 +288,11 @@ END(mutex_spin_enter)
  *   top of _lock_ras() for why).  The entry is defined here as the
  *   point after where a restart occurs if we trap within the section.
  *
- * o The entire code block is aligned on a 128 byte boundary, and is
- *   128 bytes in size.  This is to allow us to do an pessimistic check
+ * o The entire code block is aligned on a 256 byte boundary, and is
+ *   256 bytes in size.  This is to allow us to do an pessimistic check
  *   after taking a trap with:
  *
- *	if ((addr & ~127) == _lock_ras_start)
+ *	if ((addr & ~255) == _lock_ras_start)
  *		addr = _lock_ras(addr);
  *
  *   See definition of MIPS_LOCK_RAS_SIZE in asm.h.
@@ -259,7 +310,7 @@ END(mutex_spin_enter)
  *     unsigned long old, unsigned long new);
  */
 	.text
-	.align	7
+	.align	8
 
 EXPORT(_lock_ras_start)
 
@@ -296,12 +347,42 @@ STRONG_ALIAS(atomic_cas_uint_ni,_atomic_cas_ulong)
 STRONG_ALIAS(_atomic_cas_ptr_ni,_atomic_cas_ulong)
 STRONG_ALIAS(atomic_cas_ptr_ni,_atomic_cas_ulong)
 
+/*
+ * int ucas_32(volatile int32_t *uptr, int32_t old, int32_t new, int32_t *ret);
+ */
+	nop
+	nop
+LEAF_NOPROFILE(ucas_32)
+	blt	a0, zero, 4f
+	 PTR_L	v1, L_PCB(MIPS_CURLWP)
+	PTR_LA	v0, 3f
+	PTR_S	v0, PCB_ONFAULT(v1)
+	lw	t0, (a0)		/* <- critical section start */
+_ucas_32_start:
+	nop
+	bne	t0, a1, 2f
+	 nop
+	sw	a2, (a0)		/* <- critical section end */
+2:
+	sw	t0, (a3)
+	move	v0, zero
+3:
+	j	ra
+	 PTR_S	zero, PCB_ONFAULT(v1)
+4:
+	b	3b
+	 li	v0, EFAULT
+END(ucas_32)
+STRONG_ALIAS(ucas_int,ucas_32)
+#ifdef _LP64
+#else
+STRONG_ALIAS(ucas_ptr,ucas_32)
+#endif
+
 #ifndef LOCKDEBUG
 /*
  * int mutex_enter(kmutex_t *mtx);
  */
-	nop
-	nop
 	nop
 LEAF_NOPROFILE(mutex_enter)
 	PTR_L	t0, (a0)	/* <- critical section start */
@@ -335,7 +416,7 @@ _mutex_exit_start:
 END(mutex_exit)
 	 nop
 
-	.align	7			/* Get out of the RAS block */
+	.align	8			/* Get out of the RAS block */
 
 /*
  * void	mutex_spin_enter(kmutex_t *mtx);
@@ -405,8 +486,11 @@ LEAF_NOPROFILE(_lock_ras)
 	la	t0, _atomic_cas_start
 	beq	t2, t0, 1f
 	 nop
+	addiu	t0, _ucas_32_start - _atomic_cas_start
+	beq	t2, t0, 1f
+	 nop
 #ifndef LOCKDEBUG
-	addiu	t0, _mutex_enter_start - _atomic_cas_start
+	addiu	t0, _mutex_enter_start - _ucas_32_start
 	beq	t2, t0, 1f
 	 nop
 	addiu	t0, _mutex_exit_start - _mutex_enter_start

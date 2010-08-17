@@ -1,4 +1,4 @@
-/* $NetBSD: pci_machdep_ofw.c,v 1.12.20.1 2010/04/30 14:39:44 uebayasi Exp $ */
+/* $NetBSD: pci_machdep_ofw.c,v 1.12.20.2 2010/08/17 06:45:03 uebayasi Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep_ofw.c,v 1.12.20.1 2010/04/30 14:39:44 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep_ofw.c,v 1.12.20.2 2010/08/17 06:45:03 uebayasi Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -486,7 +486,7 @@ genofw_pci_conf_hook(pci_chipset_tag_t pct, int bus, int dev, int func,
 
 		/* never reconfigure the MV64361 host bridge */
 		if (PCI_VENDOR(id) == PCI_VENDOR_MARVELL &&
-		    PCI_PRODUCT(id) == PCI_PRODUCT_MARVELL_GT64360)
+		    PCI_PRODUCT(id) == PCI_PRODUCT_MARVELL_MV64360)
 			return 0;
 
 		/* we want to leave viaide(4) alone */

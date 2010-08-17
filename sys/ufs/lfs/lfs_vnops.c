@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.226.2.1 2010/04/30 14:44:36 uebayasi Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.226.2.2 2010/08/17 06:48:12 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.226.2.1 2010/04/30 14:44:36 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.226.2.2 2010/08/17 06:48:12 uebayasi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -277,6 +277,10 @@ lfs_fsync(void *v)
 	if (fs->lfs_ronly)
 		return 0;
 
+	/* If a removed vnode is being cleaned, no need to sync here. */
+	if ((ap->a_flags & FSYNC_RECLAIM) != 0 && ip->i_mode == 0)
+		return 0;
+
 	/*
 	 * Trickle sync simply adds this vnode to the pager list, as if
 	 * the pagedaemon had requested a pageout.
@@ -354,7 +358,7 @@ lfs_inactive(void *v)
 		mutex_enter(&lfs_lock);
 		LFS_CLR_UINO(VTOI(ap->a_vp), IN_ALLMOD);
 		mutex_exit(&lfs_lock);
-		VOP_UNLOCK(ap->a_vp, 0);
+		VOP_UNLOCK(ap->a_vp);
 		return 0;
 	}
 
@@ -651,7 +655,7 @@ lfs_mknod(void *v)
 	 */
 	/* Used to be vput, but that causes us to call VOP_INACTIVE twice. */
 
-	VOP_UNLOCK(*vpp, 0);
+	VOP_UNLOCK(*vpp);
 	(*vpp)->v_type = VNON;
 	vgone(*vpp);
 	error = VFS_VGET(mp, ino, vpp);
@@ -1075,6 +1079,14 @@ lfs_reclaim(void *v)
 	struct lfs *fs = ip->i_lfs;
 	int error;
 
+	/*
+	 * The inode must be freed and updated before being removed
+	 * from its hash chain.  Other threads trying to gain a hold
+	 * on the inode will be stalled because it is locked (VI_XLOCK).
+	 */
+	if (ip->i_nlink <= 0 && (vp->v_mount->mnt_flag & MNT_RDONLY) == 0)
+		lfs_vfree(vp, ip->i_number, ip->i_omode);
+
 	mutex_enter(&lfs_lock);
 	LFS_CLR_UINO(ip, IN_ALLMOD);
 	mutex_exit(&lfs_lock);
@@ -1227,7 +1239,6 @@ lfs_flush_dirops(struct lfs *fs)
 	struct vnode *vp;
 	extern int lfs_dostats;
 	struct segment *sp;
-	int waslocked;
 
 	ASSERT_MAYBE_SEGLOCK(fs);
 	KASSERT(fs->lfs_nadirop == 0);
@@ -1289,7 +1300,9 @@ lfs_flush_dirops(struct lfs *fs)
 			mutex_enter(&lfs_lock);
 			continue;
 		}
-		waslocked = VOP_ISLOCKED(vp);
+		/* XXX see below
+		 * waslocked = VOP_ISLOCKED(vp);
+		 */
 		if (vp->v_type != VREG &&
 		    ((ip->i_flag & IN_ALLMOD) || !VPISEMPTY(vp))) {
 			lfs_writefile(fs, sp, vp);
@@ -1303,8 +1316,12 @@ lfs_flush_dirops(struct lfs *fs)
 		KDASSERT(ip->i_number != LFS_IFILE_INUM);
 		(void) lfs_writeinode(fs, sp, ip);
 		mutex_enter(&lfs_lock);
-		if (waslocked == LK_EXCLOTHER)
-			LFS_SET_UINO(ip, IN_MODIFIED);
+		/*
+		 * XXX
+		 * LK_EXCLOTHER is dead -- what is intended here?
+		 * if (waslocked == LK_EXCLOTHER)
+		 *	LFS_SET_UINO(ip, IN_MODIFIED);
+		 */
 	}
 	mutex_exit(&lfs_lock);
 	/* We've written all the dirops there are */
@@ -1383,7 +1400,7 @@ lfs_flush_pchain(struct lfs *fs)
 			continue;
 		mutex_exit(&lfs_lock);
 
-		if (VOP_ISLOCKED(vp)) {
+		if (vn_lock(vp, LK_EXCLUSIVE | LK_NOWAIT | LK_RETRY) != 0) {
 			lfs_vunref(vp);
 			mutex_enter(&lfs_lock);
 			continue;
@@ -1399,6 +1416,7 @@ lfs_flush_pchain(struct lfs *fs)
 		KDASSERT(ip->i_number != LFS_IFILE_INUM);
 		(void) lfs_writeinode(fs, sp, ip);
 
+		VOP_UNLOCK(vp);
 		lfs_vunref(vp);
 
 		if (error == EAGAIN) {
@@ -1842,12 +1860,16 @@ check_dirty(struct lfs *fs, struct vnode *vp,
 			 * blocks outside our area of interest or beyond
 			 * the end of file.
 			 */
+			KASSERT((curpg->flags & PG_MARKER) == 0);
 			if (pages_per_block > 1) {
 				while (curpg &&
-				       ((curpg->offset & fs->lfs_bmask) ||
-					curpg->offset >= vp->v_size ||
-					curpg->offset >= endoffset))
+				    ((curpg->offset & fs->lfs_bmask) ||
+				    curpg->offset >= vp->v_size ||
+				    curpg->offset >= endoffset)) {
 					curpg = TAILQ_NEXT(curpg, listq.queue);
+					KASSERT(curpg == NULL ||
+					    (curpg->flags & PG_MARKER) == 0);
+				}
 			}
 			if (curpg == NULL)
 				break;
@@ -2208,21 +2230,20 @@ lfs_putpages(void *v)
 		int locked;
 
 		DLOG((DLOG_PAGE, "lfs_putpages: flushing VU_DIROP\n"));
+		/* XXX VOP_ISLOCKED() may not be used for lock decisions. */
 		locked = (VOP_ISLOCKED(vp) == LK_EXCLUSIVE);
 		mutex_exit(&vp->v_interlock);
 		lfs_writer_enter(fs, "ppdirop");
 		if (locked)
-			VOP_UNLOCK(vp, 0); /* XXX why? */
+			VOP_UNLOCK(vp); /* XXX why? */
 
 		mutex_enter(&lfs_lock);
 		lfs_flush_fs(fs, sync ? SEGM_SYNC : 0);
 		mutex_exit(&lfs_lock);
 
+		if (locked)
+			VOP_LOCK(vp, LK_EXCLUSIVE);
 		mutex_enter(&vp->v_interlock);
-		if (locked) {
-			VOP_LOCK(vp, LK_EXCLUSIVE | LK_INTERLOCK);
-			mutex_enter(&vp->v_interlock);
-		}
 		lfs_writer_leave(fs);
 
 		/* XXX the flush should have taken care of this one too! */

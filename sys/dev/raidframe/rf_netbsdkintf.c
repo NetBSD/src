@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.271.2.1 2010/04/30 14:43:47 uebayasi Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.271.2.2 2010/08/17 06:46:36 uebayasi Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -139,7 +139,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.271.2.1 2010/04/30 14:43:47 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.271.2.2 2010/08/17 06:46:36 uebayasi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -385,7 +385,7 @@ raidattach(int num)
 		raidPtrs[i] = NULL;
 	rc = rf_BootRaidframe();
 	if (rc == 0)
-		aprint_normal("Kernelized RAIDframe activated\n");
+		aprint_verbose("Kernelized RAIDframe activated\n");
 	else
 		panic("Serious error booting RAID!!");
 

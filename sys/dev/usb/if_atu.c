@@ -1,4 +1,4 @@
-/*	$NetBSD: if_atu.c,v 1.35.2.1 2010/04/30 14:43:51 uebayasi Exp $ */
+/*	$NetBSD: if_atu.c,v 1.35.2.2 2010/08/17 06:46:42 uebayasi Exp $ */
 /*	$OpenBSD: if_atu.c,v 1.48 2004/12/30 01:53:21 dlg Exp $ */
 /*
  * Copyright (c) 2003, 2004
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.35.2.1 2010/04/30 14:43:51 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.35.2.2 2010/08/17 06:46:42 uebayasi Exp $");
 
 
 #include <sys/param.h>
@@ -897,7 +897,7 @@ atu_internal_firmware(device_t arg)
 
 	DPRINTFN(15, ("%s: sending remap\n", USBDEVNAME(sc->atu_dev)));
 	err = atu_usb_request(sc, DFU_REMAP, 0, 0, 0, NULL);
-	if ((err) && (! sc->atu_quirk & ATU_QUIRK_NO_REMAP)) {
+	if ((err) && !(sc->atu_quirk & ATU_QUIRK_NO_REMAP)) {
 		DPRINTF(("%s: remap failed!\n", USBDEVNAME(sc->atu_dev)));
 		return;
 	}

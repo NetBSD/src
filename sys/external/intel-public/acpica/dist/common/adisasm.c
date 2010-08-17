@@ -282,8 +282,8 @@ AdInitialize (
 
     /* Setup the Table Manager (cheat - there is no RSDT) */
 
-    AcpiGbl_RootTableList.Size = 1;
-    AcpiGbl_RootTableList.Count = 0;
+    AcpiGbl_RootTableList.MaxTableCount = 1;
+    AcpiGbl_RootTableList.CurrentTableCount = 0;
     AcpiGbl_RootTableList.Tables = LocalTables;
 
     return (Status);
@@ -502,7 +502,7 @@ AdAmlDisassemble (
         if (AcpiDmGetExternalMethodCount ())
         {
             fprintf (stderr,
-                "\nFound %d external control methods, reparsing with new information\n",
+                "\nFound %u external control methods, reparsing with new information\n",
                 AcpiDmGetExternalMethodCount ());
 
             /*
@@ -515,10 +515,11 @@ AdAmlDisassemble (
             AcpiGbl_RootNodeStruct.Name.Integer = ACPI_ROOT_NAME;
             AcpiGbl_RootNodeStruct.DescriptorType = ACPI_DESC_TYPE_NAMED;
             AcpiGbl_RootNodeStruct.Type         = ACPI_TYPE_DEVICE;
+            AcpiGbl_RootNodeStruct.Parent       = NULL;
             AcpiGbl_RootNodeStruct.Child        = NULL;
             AcpiGbl_RootNodeStruct.Peer         = NULL;
             AcpiGbl_RootNodeStruct.Object       = NULL;
-            AcpiGbl_RootNodeStruct.Flags        = ANOBJ_END_OF_PEER_LIST;
+            AcpiGbl_RootNodeStruct.Flags        = 0;
 
             Status = AcpiNsRootInitialize ();
             AcpiDmAddExternalsToNamespace ();
@@ -706,7 +707,7 @@ AdCreateTableHeader (
     /* Open the ASL definition block */
 
     AcpiOsPrintf (
-        "DefinitionBlock (\"%s\", \"%4.4s\", %hd, \"%.6s\", \"%.8s\", 0x%8.8X)\n",
+        "DefinitionBlock (\"%s\", \"%4.4s\", %hu, \"%.6s\", \"%.8s\", 0x%8.8X)\n",
         NewFilename, Table->Signature, Table->Revision,
         Table->OemId, Table->OemTableId, Table->OemRevision);
 
@@ -1018,7 +1019,7 @@ AdGetLocalTables (
          * is architecture-dependent.
          */
         NumTables = (NewTable->Length - sizeof (ACPI_TABLE_HEADER)) / PointerSize;
-        AcpiOsPrintf ("There are %d tables defined in the %4.4s\n\n",
+        AcpiOsPrintf ("There are %u tables defined in the %4.4s\n\n",
             NumTables, NewTable->Signature);
 
         /* Get the FADT */
@@ -1156,7 +1157,7 @@ AdParseTable (
 
     /* If LoadTable is FALSE, we are parsing the last loaded table */
 
-    TableIndex = AcpiGbl_RootTableList.Count - 1;
+    TableIndex = AcpiGbl_RootTableList.CurrentTableCount - 1;
 
     /* Pass 2 */
 

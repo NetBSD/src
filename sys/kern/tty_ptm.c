@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_ptm.c,v 1.26 2009/01/22 14:38:35 yamt Exp $	*/
+/*	$NetBSD: tty_ptm.c,v 1.26.4.1 2010/08/17 06:47:32 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_ptm.c,v 1.26 2009/01/22 14:38:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_ptm.c,v 1.26.4.1 2010/08/17 06:47:32 uebayasi Exp $");
 
 #include "opt_ptm.h"
 
@@ -174,7 +174,7 @@ retry:
 	fp->f_type = DTYPE_VNODE;
 	fp->f_ops = &vnops;
 	fp->f_data = vp;
-	VOP_UNLOCK(vp, 0);
+	VOP_UNLOCK(vp);
 	fd_affix(curproc, fp, *fd);
 	return 0;
 bad:
@@ -209,12 +209,12 @@ pty_grant_slave(struct lwp *l, dev_t dev)
 		error = VOP_SETATTR(vp, &vattr, lwp0.l_cred);
 		if (error) {
 			DPRINTF(("setattr %d\n", error));
-			VOP_UNLOCK(vp, 0);
+			VOP_UNLOCK(vp);
 			vrele(vp);
 			return error;
 		}
 	}
-	VOP_UNLOCK(vp, 0);
+	VOP_UNLOCK(vp);
 	VOP_REVOKE(vp, REVOKEALL);
 
 	/*
@@ -251,7 +251,7 @@ pty_alloc_slave(struct lwp *l, int *fd, dev_t dev)
 	fp->f_type = DTYPE_VNODE;
 	fp->f_ops = &vnops;
 	fp->f_data = vp;
-	VOP_UNLOCK(vp, 0);
+	VOP_UNLOCK(vp);
 	fd_affix(curproc, fp, *fd);
 	return 0;
 bad:

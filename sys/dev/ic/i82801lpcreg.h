@@ -1,4 +1,4 @@
-/*	$NetBSD: i82801lpcreg.h,v 1.10 2009/09/27 17:55:32 jakllsch Exp $	*/
+/*	$NetBSD: i82801lpcreg.h,v 1.10.2.1 2010/08/17 06:46:10 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -34,8 +34,8 @@
  *   register definitions.
  */
 
-#ifndef _DEV_IC_I82801LPGREG_H_
-#define _DEV_IC_I82801LPGREG_H_
+#ifndef _DEV_IC_I82801LPCREG_H_
+#define _DEV_IC_I82801LPCREG_H_
 /*
  * PCI configuration registers
  */
@@ -45,7 +45,9 @@
 /* GPIO config registers ICH6+ */
 #define LPCIB_PCI_GPIO_BASE_ICH6	0x48
 #define LPCIB_PCI_GPIO_CNTL_ICH6	0x4c
-#define LPCIB_PCI_BIOS_CNTL	0x4e
+#define LPCIB_PCI_BIOS_CNTL	0x4c /* actually 0x4e */
+#define LPCIB_PCI_BIOS_CNTL_BWE	(0x0001 << 16) /* write enable */
+#define LPCIB_PCI_BIOS_CNTL_BLE	(0x0002 << 16) /* lock enable */
 #define LPCIB_PCI_TCO_CNTL	0x54
 /* GPIO config registers ICH0-ICH5 */
 #define LPCIB_PCI_GPIO_BASE	0x58
@@ -297,4 +299,4 @@ lpcib_tcotimer_second_to_tick(int ltick)
 #define LPCIB_TCOTIMER_MAX_TICK 	0x3f 	/* 39 seconds max */
 #define LPCIB_TCOTIMER2_MAX_TICK 	0x265	/* 613 seconds max */
 
-#endif /*  _DEV_IC_I82801LPGREG_H_ */
+#endif /*  _DEV_IC_I82801LPCREG_H_ */

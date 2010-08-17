@@ -1,4 +1,4 @@
-/*	$NetBSD: sysvbfs.h,v 1.8 2008/09/04 12:07:30 pooka Exp $	*/
+/*	$NetBSD: sysvbfs.h,v 1.8.14.1 2010/08/17 06:47:21 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -52,6 +52,7 @@ struct sysvbfs_node {
 	int update_ctime;
 	int update_atime;
 	int update_mtime;
+	int removed;
 
 	LIST_ENTRY(sysvbfs_node) link;
 };

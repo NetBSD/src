@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_misc.c,v 1.148.2.1 2010/04/30 14:43:02 uebayasi Exp $	 */
+/*	$NetBSD: svr4_misc.c,v 1.148.2.2 2010/08/17 06:45:55 uebayasi Exp $	 */
 
 /*-
  * Copyright (c) 1994, 2008 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_misc.c,v 1.148.2.1 2010/04/30 14:43:02 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_misc.c,v 1.148.2.2 2010/08/17 06:45:55 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,7 +103,6 @@ static void svr4_setinfo(int, struct rusage *, int, svr4_siginfo_t *);
 struct svr4_hrtcntl_args;
 static int svr4_hrtcntl(struct lwp *, const struct svr4_hrtcntl_args *,
     register_t *);
-#define svr4_pfind(pid) p_find((pid), PFIND_UNLOCK | PFIND_ZOMBIE)
 
 static int svr4_mknod(struct lwp *, register_t *, const char *,
     svr4_mode_t, svr4_dev_t);
@@ -315,7 +314,7 @@ again:
 eof:
 	*retval = SCARG(uap, nbytes) - resid;
 out:
-	VOP_UNLOCK(vp, 0);
+	VOP_UNLOCK(vp);
 	if (cookiebuf)
 		free(cookiebuf, M_TEMP);
 	free(tbuf, M_TEMP);
@@ -440,7 +439,7 @@ again:
 eof:
 	*retval = SCARG(uap, nbytes) - resid;
 out:
-	VOP_UNLOCK(vp, 0);
+	VOP_UNLOCK(vp);
 	if (cookiebuf)
 		free(cookiebuf, M_TEMP);
 	free(tbuf, M_TEMP);
@@ -813,6 +812,7 @@ int
 svr4_sys_pgrpsys(struct lwp *l, const struct svr4_sys_pgrpsys_args *uap, register_t *retval)
 {
 	struct proc *p = l->l_proc;
+	pid_t pid;
 
 	switch (SCARG(uap, cmd)) {
 	case 1:			/* setpgrp() */
@@ -834,8 +834,8 @@ svr4_sys_pgrpsys(struct lwp *l, const struct svr4_sys_pgrpsys_args *uap, registe
 
 	case 2:			/* getsid(pid) */
 		mutex_enter(proc_lock);
-		if (SCARG(uap, pid) != 0 &&
-		    (p = p_find(SCARG(uap, pid), PFIND_LOCKED | PFIND_ZOMBIE)) == NULL) {
+		pid = SCARG(uap, pid);
+		if (pid && (p = proc_find(pid)) == NULL) {
 			mutex_exit(proc_lock);
 			return ESRCH;
 		}
@@ -852,8 +852,8 @@ svr4_sys_pgrpsys(struct lwp *l, const struct svr4_sys_pgrpsys_args *uap, registe
 
 	case 4:			/* getpgid(pid) */
 		mutex_enter(proc_lock);
-		if (SCARG(uap, pid) != 0 &&
-		    (p = p_find(SCARG(uap, pid), PFIND_LOCKED | PFIND_ZOMBIE)) == NULL) {
+		pid = SCARG(uap, pid);
+		if (pid && (p = proc_find(pid)) == NULL) {
 			mutex_exit(proc_lock);
 			return ESRCH;
 		}

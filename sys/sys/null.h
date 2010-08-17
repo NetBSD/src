@@ -1,4 +1,9 @@
-/*	$NetBSD: null.h,v 1.8 2009/10/13 17:19:00 dsl Exp $	*/
+/*	$NetBSD: null.h,v 1.8.2.1 2010/08/17 06:48:08 uebayasi Exp $	*/
+
+/*
+ * Written by Klaus Klein <kleink@NetBSD.org>, December 22, 1999.
+ * Public domain.
+ */
 
 #ifndef _SYS_NULL_H_
 #define _SYS_NULL_H_

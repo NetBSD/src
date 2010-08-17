@@ -1,4 +1,4 @@
-#	$NetBSD: GUMSTIX,v 1.43.2.1 2010/04/30 14:39:15 uebayasi Exp $
+#	$NetBSD: GUMSTIX,v 1.43.2.2 2010/08/17 06:44:15 uebayasi Exp $
 #
 #	GUMSTIX -- Gumstix. Inc. gumstix platforms kernel
 #
@@ -23,6 +23,7 @@ makeoptions	CPUFLAGS="-mcpu=xscale"
 options 	XSCALE_CACHE_READ_WRITE_ALLOCATE
 
 # Gumstix options
+options 	GUMSTIX
 # if not specfied 'busheader=' in args from u-boot, use GXIO_DEFAULT_EXPANSION.
 options 	GUMSTIX_NETBSD_ARGS_BUSHEADER
 options 	GUMSTIX_NETBSD_ARGS_CONSOLE	# dynamically configure console
@@ -90,6 +91,7 @@ options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
 #options 	IPFILTER_LOG	# ipmon(8) log support
 #options 	IPFILTER_LOOKUP	# ippool(8) support
+options 	IPFILTER_COMPAT # Compat for IP-Filter
 #options 	IPFILTER_DEFAULT_BLOCK  # block all packets by default
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
@@ -337,6 +339,10 @@ wsmouse* at btms? mux 0
 btkbd*	at bthidev? reportid ?
 wskbd*	at btkbd? console ? mux 1
 
+# Bluetooth Apple Magic Mouse
+btmagic* at bthub?
+wsmouse* at btmagic? mux 0
+
 # Bluetooth Audio support
 btsco*	at bthub?
 
@@ -373,6 +379,7 @@ pseudo-device	ipfilter		# IP filter (firewall) and NAT
 pseudo-device	loop			# network loopback
 pseudo-device	ppp			# Point-to-Point Protocol
 #pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
+#options 	PPPOE_SERVER		# Enable PPPoE server via link0
 #pseudo-device	sl			# Serial Line IP
 #pseudo-device	strip			# Starmode Radio IP (Metricom)
 #pseudo-device	irframetty		# IrDA frame line discipline

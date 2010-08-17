@@ -1,4 +1,4 @@
-/*	$NetBSD: psycho.c,v 1.100 2010/01/06 05:55:01 mrg Exp $	*/
+/*	$NetBSD: psycho.c,v 1.100.2.1 2010/08/17 06:45:18 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psycho.c,v 1.100 2010/01/06 05:55:01 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: psycho.c,v 1.100.2.1 2010/08/17 06:45:18 uebayasi Exp $");
 
 #include "opt_ddb.h"
 
@@ -1475,11 +1475,18 @@ static void
 psycho_sabre_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 	bus_size_t len, int ops)
 {
-	struct psycho_pbm *pp = (struct psycho_pbm *)t->_cookie;
-	struct psycho_softc *sc = pp->pp_sc;
+	struct psycho_pbm *pp;
+	struct psycho_softc *sc;
 
-	if (ops & BUS_DMASYNC_POSTREAD)
+	/* If len is 0, then there is nothing to do. */
+	if (len == 0)
+		return;
+
+	if (ops & BUS_DMASYNC_POSTREAD) {
+		pp = (struct psycho_pbm *)t->_cookie;
+		sc = pp->pp_sc;
 		bus_space_read_8(sc->sc_bustag, sc->sc_bh,
-			offsetof(struct psychoreg, pci_dma_write_sync));
+		    offsetof(struct psychoreg, pci_dma_write_sync));
+	}
 	bus_dmamap_sync(t->_parent, map, offset, len, ops);
 }

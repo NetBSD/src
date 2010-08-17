@@ -1,4 +1,4 @@
-.\"	$NetBSD: RUN_ONCE.9,v 1.7 2008/10/03 16:19:46 pooka Exp $
+.\"	$NetBSD: RUN_ONCE.9,v 1.7.10.1 2010/08/17 06:40:04 uebayasi Exp $
 .\"
 .\" Copyright (c)2005 YAMAMOTO Takashi,
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\" ------------------------------------------------------------
-.Dd October 3, 2008
+.Dd July 7, 2010
 .Dt RUN_ONCE 9
 .Os
 .\" ------------------------------------------------------------
@@ -45,7 +45,7 @@
 .Sh DESCRIPTION
 .Fn RUN_ONCE
 provides a functionality similar to
-.Fn pthread_once 3 .
+.Xr pthread_once 3 .
 It ensures that, for a given
 .Fa control ,
 .Fn init_func

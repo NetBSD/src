@@ -1,4 +1,4 @@
-/*	$NetBSD: component.c,v 1.2.2.1 2010/04/30 14:44:31 uebayasi Exp $	*/
+/*	$NetBSD: component.c,v 1.2.2.2 2010/08/17 06:48:04 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: component.c,v 1.2.2.1 2010/04/30 14:44:31 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: component.c,v 1.2.2.2 2010/08/17 06:48:04 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/domain.h>
@@ -46,6 +46,6 @@ RUMP_COMPONENT(RUMP_COMPONENT_NET_ROUTE)
 
 	ifinit1();
 	ifinit();
-	loopattach(0);
+	loopattach(1);
 	DOMAINADD(routedomain);
 }

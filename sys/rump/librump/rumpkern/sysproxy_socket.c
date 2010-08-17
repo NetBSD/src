@@ -1,4 +1,4 @@
-/*	$NetBSD: sysproxy_socket.c,v 1.5.2.1 2010/04/30 14:44:30 uebayasi Exp $	*/
+/*	$NetBSD: sysproxy_socket.c,v 1.5.2.2 2010/08/17 06:48:02 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysproxy_socket.c,v 1.5.2.1 2010/04/30 14:44:30 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysproxy_socket.c,v 1.5.2.2 2010/08/17 06:48:02 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -270,7 +270,7 @@ wrkenqueue(void (*wfn)(void *), void *arg)
 			printf("syscall proxy warning: over 30 workers\n");
 		mutex_exit(&wrkmtx);
 		wrk = kmem_zalloc(sizeof(*wrk), KM_SLEEP);
-		cv_init(&wrk->wrkcv, "sproxywrk");
+		cv_init(&wrk->wrkcv, "sproxywk");
  retry:
 		error = kthread_create(PRI_NONE, KTHREAD_MPSAFE, NULL,
 		    wrkthread, wrk, NULL, "spw_%d", nwrk);

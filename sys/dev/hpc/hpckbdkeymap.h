@@ -1,4 +1,4 @@
-/*	$NetBSD: hpckbdkeymap.h,v 1.48.20.1 2010/04/30 14:43:11 uebayasi Exp $	*/
+/*	$NetBSD: hpckbdkeymap.h,v 1.48.20.2 2010/08/17 06:46:07 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
@@ -902,7 +902,7 @@ static const keysym_t ws003sh_jp_keydesc[] = {
 };
 
 /*
- * WS011SH/WS020SH keyscan map
+ * WS011SH keyscan map
 	Ctrl	(none)	Tab	(none)	(none)	(none)	(none)
 	(none)	(none)	Q	W	A	Z	MOJI
 	(none)	(none)	E	S	D	X	HAN/ZEN
@@ -911,7 +911,7 @@ static const keysym_t ws003sh_jp_keydesc[] = {
 	(none)	(none)	U	H	N	/	,
 	(none)	I	J	M	.	(none)	LEFT
 	(none)	O	K	L	(none)	UP	DOWN
-	Del	(none)	(none)	(none)	Enter	(none)	RIGHT
+	Del	P	(none)	(none)	Enter	(none)	RIGHT
 	(none)	(none)	(none)	(none)	(none)	(none)	(none)
 	ROTATE	(none)	(none)	SHIFT	(none)	(none)	(none)
 	(none)	(none)	(none)	(none)	(none)	FN	(none)
@@ -975,6 +975,89 @@ static const keysym_t ws011sh_jp_keydesc[] = {
     KC(51),	KS_comma,	KS_less,	KS_semicolon,
     KC(52),	KS_period,	KS_greater,	KS_colon,
     KC(53),	KS_slash,	KS_question,	KS_0,
+    KC(57),	KS_space,
+    KC(184),	KS_Mode_switch,	KS_Multi_key,
+    KC(200),	KS_Up,		KS_Up,		KS_Prior,
+    KC(203),	KS_Left,	KS_Left,	KS_Home,
+    KC(205),	KS_Right,	KS_Right,	KS_End,
+    KC(208),	KS_Down,	KS_Down,	KS_Next,
+};
+
+/*
+ * WS020SH keyscan map
+	Ctrl	(none)	Tab	(none)	(none)	(none)	(none)
+	(none)	(none)	Q	W	A	Z	MOJI
+	(none)	(none)	E	S	D	X	HAN/ZEN
+	(none)	R	T	F	C	-	OK
+	(none)	Y	G	V	B	Space	(none)
+	(none)	(none)	U	H	N	/	,
+	(none)	I	J	M	.	(none)	LEFT
+	(none)	O	K	L	(none)	UP	(none)
+	Del	P	(none)	(none)	Enter	(none)	RIGHT
+	(none)	(none)	(none)	(none)	(none)	DOWN	(none)
+	ROTATE	MEDIA	(none)	LSHIFT	RSHIFT	(none)	(none)
+	(none)	(none)	(none)	(none)	(none)	FN	(none)
+*/
+/* Japanese */
+const uint8_t ws020sh_jp_keytrans[] = {
+/*	row#0,	row#1,	row#2,	row#3,	row#4,	row#5,	row#6,	*/
+/*00*/	29,	UNK,	15,	UNK,	UNK,	UNK,	UNK,
+/*01*/	UNK,	UNK,	16,	17,	30,	44,	1,
+/*02*/	UNK,	UNK,	18,	31,	32,	45,	41,
+/*03*/	UNK,	19,	20,	33,	46,	12,	3,
+/*04*/	UNK,	21,	34,	47,	48,	57,	UNK,
+/*05*/	UNK,	UNK,	22,	35,	49,	53,	51,
+/*06*/	UNK,	23,	36,	50,	52,	UNK,	203,
+/*07*/	UNK,	24,	37,	38,	UNK,	200,	UNK,
+/*08*/	14,	25,	UNK,	UNK,	28,	UNK,	205,
+/*09*/	UNK,	UNK,	UNK,	UNK,	UNK,	208,	UNK,
+/*10*/	IGN,	IGN,	UNK,	42,	54,	UNK,	UNK,
+/*11*/	UNK,	UNK,	UNK,	UNK,	UNK,	184,	SPL,
+};
+
+const int ws020sh_special_keymap[] = {
+	[KEY_SPECIAL_OFF]	= 83,
+	[KEY_SPECIAL_LIGHT]	= -1
+};
+
+static const keysym_t ws020sh_jp_keydesc[] = {
+/*  pos		normal		shifted		altgr	*/
+    KC(3),	KS_grave,	KS_braceleft,	KS_braceright,
+    KC(12),	KS_minus,	KS_equal,	KS_backslash,
+    KC(14),	KS_Delete,	KS_Delete,	KS_BackSpace,
+    KC(15),	KS_Tab,		KS_Tab,		KS_Escape,
+    KC(16),	KS_q,		KS_Q,		KS_quotedbl,	
+    KC(17),	KS_w,		KS_W,		KS_numbersign,
+    KC(18),	KS_e,		KS_E,		KS_dollar,
+    KC(19),	KS_r,		KS_R,		KS_percent,
+    KC(20),	KS_t,		KS_T,		KS_ampersand,
+    KC(21),	KS_y,		KS_Y,		KS_underscore,
+    KC(22),	KS_u,		KS_U,		KS_1,
+    KC(23),	KS_i,		KS_I,		KS_2,
+    KC(24),	KS_o,		KS_O,		KS_3,
+    KC(25),	KS_p,		KS_P,		KS_at,
+    KC(30),	KS_a,		KS_A,		KS_bracketleft,
+    KC(31),	KS_s,		KS_S,		KS_apostrophe,
+    KC(32),	KS_d,		KS_D,		KS_parenleft,
+    KC(33),	KS_f,		KS_F,		KS_parenright,
+    KC(34),	KS_g,		KS_G,		KS_asterisk,
+    KC(35),	KS_h,		KS_H,		KS_4,
+    KC(36),	KS_j,		KS_J,		KS_5,
+    KC(37),	KS_k,		KS_K,		KS_6,
+    KC(38),	KS_l,		KS_L,		KS_plus,
+    KC(41),	KS_Zenkaku_Hankaku, KS_Zenkaku_Hankaku, KS_exclam,
+    KC(42),	KS_Shift_L,	KS_Shift_L,	KS_Shift_Lock,
+    KC(44),	KS_z,		KS_Z,		KS_bracketright,
+    KC(45),	KS_x,		KS_X,		KS_asciicircum,
+    KC(46),	KS_c,		KS_C,		KS_asciitilde,
+    KC(47),	KS_v,		KS_V,		KS_bar,
+    KC(48),	KS_b,		KS_B,		KS_7,
+    KC(49),	KS_n,		KS_N,		KS_8,
+    KC(50),	KS_m,		KS_M,		KS_9,
+    KC(51),	KS_comma,	KS_less,	KS_semicolon,
+    KC(52),	KS_period,	KS_greater,	KS_colon,
+    KC(53),	KS_slash,	KS_question,	KS_0,
+    KC(54),	KS_Shift_R,	KS_Shift_R,	KS_Shift_Lock,
     KC(57),	KS_space,
     KC(184),	KS_Mode_switch,	KS_Multi_key,
     KC(200),	KS_Up,		KS_Up,		KS_Prior,
@@ -1452,9 +1535,9 @@ const struct hpckbd_keymap_table {
 		KB_JP },
 	/* WS020SH */
 	{	&platid_mask_MACH_SHARP_WZERO3_WS020SH,
-		ws011sh_jp_keytrans,
-		ws011sh_special_keymap,
-		CMDMAP(ws011sh_jp_keydesc),
+		ws020sh_jp_keytrans,
+		ws020sh_special_keymap,
+		CMDMAP(ws020sh_jp_keydesc),
 		KB_JP },
 #endif /* hpcarm */
 

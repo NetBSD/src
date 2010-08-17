@@ -1,4 +1,4 @@
-/*	$NetBSD: pecoff_emul.c,v 1.23 2009/06/02 23:21:38 pooka Exp $	*/
+/*	$NetBSD: pecoff_emul.c,v 1.23.2.1 2010/08/17 06:45:54 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2000 Masaru OKI
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pecoff_emul.c,v 1.23 2009/06/02 23:21:38 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pecoff_emul.c,v 1.23.2.1 2010/08/17 06:45:54 uebayasi Exp $");
 
 /*#define DEBUG_PECOFF*/
 
@@ -78,49 +78,42 @@ void	syscall(void);
 #endif
 
 struct emul emul_pecoff = {
-	"pecoff",
-	"/emul/pecoff",
+	.e_name =		"pecoff",
+	.e_path =		"/emul/pecoff",
 #ifndef __HAVE_MINIMAL_EMUL
-	EMUL_HAS_SYS___syscall,
-	0,
-	SYS_syscall,
-	SYS_NSYSENT,
+	.e_flags =		EMUL_HAS_SYS___syscall,
+	.e_errno =		NULL
+	.e_nosys =		SYS_syscall,
+	.e_nsysent =		SYS_NSYSENT,
 #endif
-	sysent,
+	.e_sysent =		sysent,
 #ifdef SYSCALL_DEBUG
-	syscallnames,
-#else
-	NULL,
+	.e_syscallnames =	syscallnames,
 #endif
-	sendsig,
-	trapsignal,
-	NULL,
+	.e_sendsig =		sendsig,
+	.e_trapsignal =		trapsignal,
+	.e_tracesig =		NULL,
 #ifdef COMPAT_16
-	sigcode,
-	esigcode,
-	&emul_pecoff_object,
-#else
-	NULL,
-	NULL,
-	NULL,
+	.e_sigcode =		sigcode,
+	.e_esigcode =		esigcode,
+	.e_sigobject =		&emul_pecoff_object,
 #endif
-	setregs,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
+	.e_setregs =		setregs,
+	.e_proc_exec =		NULL,
+	.e_proc_fork =		NULL,
+	.e_proc_exit =		NULL,
+	.e_lwp_fork =		NULL,
+	.e_lwp_exit =		NULL,
 #ifdef __HAVE_SYSCALL_INTERN
-	syscall_intern,
+	.e_syscall_intern =	syscall_intern,
 #else
-	syscall,
+	.e_syscall_intern =	syscall,
 #endif
-	NULL,
-	NULL,
-
-	uvm_default_mapaddr,
-	NULL,
-	NULL,
-	sizeof(ucontext_t),
-	NULL,
+	.e_sysctlovly =		NULL,
+	.e_fault =		NULL,
+	.e_vm_default_addr =	uvm_default_mapaddr,
+	.e_usertrap =		NULL,
+	.e_sa =			NULL,
+	.e_ucsize =		sizeof(ucontext_t),
+	.e_startlwp =		NULL
 };

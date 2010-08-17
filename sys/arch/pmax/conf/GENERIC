@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.162.2.1 2010/04/30 14:39:41 uebayasi Exp $
+# $NetBSD: GENERIC,v 1.162.2.2 2010/08/17 06:45:01 uebayasi Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/pmax/conf/std.pmax"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.162.2.1 $"
+#ident		"GENERIC-$Revision: 1.162.2.2 $"
 
 maxusers	64
 
@@ -44,7 +44,7 @@ options 	DEC_3MAXPLUS	# DECstation 5000/240 (kn03), 5000/260 (kn05)
 
 # Standard system options
 options 	DDB			# in-kernel debugger
-#options 	DDB_HISTORY_SIZE=100	# enable history editing in DDB
+options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 options 	DDB_ONPANIC=0		# don't enter debugger on panic
 #options 	DIAGNOSTIC		# extra kernel debugging checks
 #options 	DEBUG			# extra kernel debugging support
@@ -92,7 +92,7 @@ file-system	PROCFS		# /proc
 file-system	UMAPFS		# NULLFS + uid and gid remapping
 file-system	UNION
 file-system	PTYFS		# /dev/pts/N support
-#file-system	TMPFS		# Efficient memory file-system
+file-system	TMPFS		# Efficient memory file-system
 #file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
 
 options 	NFSSERVER	# Sun NFS-compatible filesystem (server)
@@ -122,6 +122,7 @@ options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
 options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 options 	IPFILTER_LOG	# ipmon(8) log support
 options 	IPFILTER_LOOKUP	# ippool(8) support
+options 	IPFILTER_COMPAT # Compat for IP-Filter
 #options 	IPFILTER_DEFAULT_BLOCK	# block all packets by default
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 

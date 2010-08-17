@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.94.2.1 2010/04/30 14:43:26 uebayasi Exp $	*/
+/*	$NetBSD: fd.c,v 1.94.2.2 2010/08/17 06:46:14 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2008 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.94.2.1 2010/04/30 14:43:26 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.94.2.2 2010/08/17 06:46:14 uebayasi Exp $");
 
 #include "rnd.h"
 #include "opt_ddb.h"
@@ -355,7 +355,7 @@ void
 fdcattach(struct fdc_softc *fdc)
 {
 	mutex_init(&fdc->sc_mtx, MUTEX_DEFAULT, IPL_BIO);
-	cv_init(&fdc->sc_cv, "fdcwakeup");
+	cv_init(&fdc->sc_cv, "fdcwake");
 	callout_init(&fdc->sc_timo_ch, 0);
 	callout_init(&fdc->sc_intr_ch, 0);
 
@@ -1625,7 +1625,7 @@ fdformat(dev_t dev, struct ne7_fd_formb *finfo, struct lwp *l)
 	bp->b_bcount = sizeof(struct fd_idfield_data) * finfo->fd_formb_nsecs;
 	bp->b_data = (void *)finfo;
 
-#ifdef DEBUG
+#ifdef FD_DEBUG
 	printf("fdformat: blkno %" PRIx64 " count %x\n",
 	    bp->b_blkno, bp->b_bcount);
 #endif

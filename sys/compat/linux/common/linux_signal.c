@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_signal.c,v 1.69 2009/06/08 13:23:16 njoly Exp $	*/
+/*	$NetBSD: linux_signal.c,v 1.69.2.1 2010/08/17 06:45:50 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_signal.c,v 1.69 2009/06/08 13:23:16 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_signal.c,v 1.69.2.1 2010/08/17 06:45:50 uebayasi Exp $");
 
 #define COMPAT_LINUX 1
 
@@ -69,9 +69,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_signal.c,v 1.69 2009/06/08 13:23:16 njoly Exp 
 
 #include <compat/linux/common/linux_types.h>
 #include <compat/linux/common/linux_signal.h>
-#include <compat/linux/common/linux_exec.h> /* For emul_linux */
-#include <compat/linux/common/linux_machdep.h> /* For LINUX_NPTL */
-#include <compat/linux/common/linux_emuldata.h> /* for linux_emuldata */
+#include <compat/linux/common/linux_emuldata.h>
 #include <compat/linux/common/linux_siginfo.h>
 #include <compat/linux/common/linux_sigevent.h>
 #include <compat/linux/common/linux_util.h>
@@ -609,39 +607,41 @@ linux_sys_sigaltstack(struct lwp *l, const struct linux_sys_sigaltstack_args *ua
 }
 #endif /* LINUX_SS_ONSTACK */
 
-#ifdef LINUX_NPTL
 static int
 linux_do_tkill(struct lwp *l, int tgid, int tid, int signum)
 {
 	struct proc *p;
-	int error;
+	struct lwp *t;
 	ksiginfo_t ksi;
-	struct linux_emuldata *led;
+	int error;
 
 	if (signum < 0 || signum >= LINUX__NSIG)
 		return EINVAL;
 	signum = linux_to_native_signo[signum];
+
+	if (tgid == -1) {
+		tgid = tid;
+	}
 
 	KSI_INIT(&ksi);
 	ksi.ksi_signo = signum;
 	ksi.ksi_code = SI_LWP;
 	ksi.ksi_pid = l->l_proc->p_pid;
 	ksi.ksi_uid = kauth_cred_geteuid(l->l_cred);
+	ksi.ksi_lid = tid;
 
 	mutex_enter(proc_lock);
-	if ((p = p_find(tid, PFIND_LOCKED)) == NULL) {
-		mutex_exit(proc_lock);
-		return ESRCH;
-	}
-	led = p->p_emuldata;
-	if (tgid > 0 && led->s->group_pid != tgid) {
+	p = proc_find(tgid);
+	if (p == NULL) {
 		mutex_exit(proc_lock);
 		return ESRCH;
 	}
 	mutex_enter(p->p_lock);
 	error = kauth_authorize_process(l->l_cred,
 	    KAUTH_PROCESS_SIGNAL, p, KAUTH_ARG(signum), NULL, NULL);
-	if (!error && signum)
+	if ((t = lwp_find(p, ksi.ksi_lid)) == NULL)
+		error = ESRCH;
+	else if (signum != 0)
 		kpsignal2(p, &ksi);
 	mutex_exit(p->p_lock);
 	mutex_exit(proc_lock);
@@ -660,7 +660,7 @@ linux_sys_tkill(struct lwp *l, const struct linux_sys_tkill_args *uap, register_
 	if (SCARG(uap, tid) <= 0)
 		return EINVAL;
 
-	return linux_do_tkill(l, 0, SCARG(uap, tid), SCARG(uap, sig));
+	return linux_do_tkill(l, -1, SCARG(uap, tid), SCARG(uap, sig));
 }
 
 int
@@ -672,12 +672,11 @@ linux_sys_tgkill(struct lwp *l, const struct linux_sys_tgkill_args *uap, registe
 		syscallarg(int) sig;
 	} */
 
-	if (SCARG(uap, tid) <= 0 || SCARG(uap, tgid) <= 0)
+	if (SCARG(uap, tid) <= 0 || SCARG(uap, tgid) < -1)
 		return EINVAL;
 
 	return linux_do_tkill(l, SCARG(uap, tgid), SCARG(uap, tid), SCARG(uap, sig));
 }
-#endif /* LINUX_NPTL */
 
 int
 native_to_linux_si_code(int code)

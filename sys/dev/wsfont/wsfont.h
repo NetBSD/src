@@ -1,4 +1,4 @@
-/* 	$NetBSD: wsfont.h,v 1.19.20.1 2010/04/30 14:43:55 uebayasi Exp $	*/
+/* 	$NetBSD: wsfont.h,v 1.19.20.2 2010/08/17 06:46:49 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -31,6 +31,9 @@
 
 #ifndef _WSFONT_H_
 #define _WSFONT_H_ 1
+
+#define WSFONT_FLAGS_MASK	0x7f000000
+#define WSFONT_FLAG_OPT		0x01000000	/* use alternate font */
 
 /*
  * Example:

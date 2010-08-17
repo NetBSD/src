@@ -1,12 +1,12 @@
 #
-# $NetBSD: MILAN-PCIIDE,v 1.65.2.1 2010/04/30 14:39:10 uebayasi Exp $
+# $NetBSD: MILAN-PCIIDE,v 1.65.2.2 2010/08/17 06:44:08 uebayasi Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
 #
 # Created from:
 #		NetBSD: MILAN.in,v 1.25 2010/04/10 01:59:40 tsutsui Exp $
-#		NetBSD: GENERIC.in,v 1.87 2010/04/16 13:48:29 pooka Exp $
+#		NetBSD: GENERIC.in,v 1.90 2010/05/08 22:16:26 mrg Exp $
 include "arch/atari/conf/std.milan"
 options INCLUDE_CONFIG_FILE # embed config file in kernel binary
 maxusers 16
@@ -24,6 +24,7 @@ options PPP_FILTER # Active filter support for PPP (requires bpf)
 options PFIL_HOOKS # pfil(9) packet filter hooks
 options IPFILTER_LOG # ipmon(8) log support
 options IPFILTER_LOOKUP # ippool(8) support
+options IPFILTER_COMPAT # Compat for IP-Filter
 file-system FFS # Berkeley fast file system
 file-system MFS # Memory based filesystem
 file-system MSDOSFS # MSDOS filesystem
@@ -39,6 +40,7 @@ file-system UMAPFS # null file system (with uid & gid remapping)
 file-system PUFFS # Userspace file systems (e.g. ntfs-3g & sshfs)
 file-system EXT2FS # second extended file system (linux)
 file-system PTYFS # /dev/pts/N support
+file-system TMPFS # Efficient memory file-system
 options WAPBL # File system journaling support - Experimental
 options NFSSERVER # Network File System server side code
 options PANICWAIT # Require keystroke to dump/reboot

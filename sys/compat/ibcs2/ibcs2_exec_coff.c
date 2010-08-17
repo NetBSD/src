@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_exec_coff.c,v 1.24 2009/06/29 05:08:16 dholland Exp $	*/
+/*	$NetBSD: ibcs2_exec_coff.c,v 1.24.2.1 2010/08/17 06:45:39 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1998 Scott Bartram
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_exec_coff.c,v 1.24 2009/06/29 05:08:16 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_exec_coff.c,v 1.24.2.1 2010/08/17 06:45:39 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -120,11 +120,15 @@ exec_ibcs2_coff_makecmds(struct lwp *l, struct exec_package *epp)
 		error = exec_ibcs2_coff_prep_zmagic(l, epp, fp, ap);
 		break;
 	default:
+		DPRINTF(("ibcs2: bad coff magic %x\n", ap->a_magic));
 		return ENOEXEC;
 	}
 
-	if (error)
+	if (error) {
 		kill_vmcmds(&epp->ep_vmcmds);
+		DPRINTF(("ibcs2: error loading magic %x (%d)\n", ap->a_magic,
+		    error));
+	}
 
 	return error;
 }

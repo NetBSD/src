@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: daic.c,v 1.29 2009/05/12 14:25:17 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: daic.c,v 1.29.2.1 2010/08/17 06:46:09 uebayasi Exp $");
 
 /*
  * daic.c: MI driver for Diehl active ISDN cards (S, SX, SXn, SCOM, QUADRO)
@@ -325,7 +325,7 @@ check_ind:
 	TAILQ_FOREACH(assoc, &sc->sc_outcalls[port], queue) {
 		if (indid == assoc->dchan_id) {
 			printf("%s: D-Channel indication 0x%02x for outgoing call with cdid %d\n",
-				sc-device_xname(&>sc_dev), ind, assoc->cdid);
+				device_xname(&sc->sc_dev), ind, assoc->cdid);
 			goto ind_done;
 		}
 	}
@@ -520,8 +520,8 @@ daic_reset(bus_space_tag_t bus, bus_space_handle_t io, int port, int *memsize)
 		return -1;
 	}
 	if (bus_space_read_1(bus, io, DAIC_BOOT_EBIT+off)) {
-		if (!quiet) printf(": on board memory test failed at %p\n",
-			(void*)bus_space_read_2(bus, io, DAIC_BOOT_ELOC+off));
+		if (!quiet) printf(": on board memory test failed at %x\n",
+			bus_space_read_2(bus, io, DAIC_BOOT_ELOC+off));
 		return -1;
 	}
 

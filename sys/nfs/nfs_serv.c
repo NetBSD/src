@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_serv.c,v 1.150 2010/01/08 11:35:11 pooka Exp $	*/
+/*	$NetBSD: nfs_serv.c,v 1.150.2.1 2010/08/17 06:47:51 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.150 2010/01/08 11:35:11 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.150.2.1 2010/08/17 06:47:51 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -423,7 +423,7 @@ nfsrv_lookup(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp, struct lwp *l
 			 * in a kernel.. Ugh.
 			 */
 			ind = nd;
-			VOP_UNLOCK(nd.ni_vp, 0);
+			VOP_UNLOCK(nd.ni_vp);
 			ind.ni_pathlen = strlen(nfs_pub.np_index);
 			ind.ni_cnd.cn_nameptr = ind.ni_cnd.cn_pnbuf =
 			    nfs_pub.np_index;
@@ -1878,7 +1878,7 @@ nfsrv_rename(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp, struct lwp *l
 		return (0);
 	}
 	if (fromnd.ni_dvp != fromnd.ni_vp) {
-		VOP_UNLOCK(fromnd.ni_dvp, 0);
+		VOP_UNLOCK(fromnd.ni_dvp);
 	}
 	fvp = fromnd.ni_vp;
 
@@ -1910,15 +1910,15 @@ nfsrv_rename(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp, struct lwp *l
 	error = relookup(fromnd.ni_dvp, &fromnd.ni_vp, &fromnd.ni_cnd);
 	fromnd.ni_cnd.cn_flags |= saveflag;
 	if (error) {
-		VOP_UNLOCK(fromnd.ni_dvp, 0);
+		VOP_UNLOCK(fromnd.ni_dvp);
 		VFS_RENAMELOCK_EXIT(localfs);
 		VOP_ABORTOP(fromnd.ni_dvp, &fromnd.ni_cnd);
 		vrele(fromnd.ni_dvp);
 		goto out1;
 	}
-	VOP_UNLOCK(fromnd.ni_vp, 0);
+	VOP_UNLOCK(fromnd.ni_vp);
 	if (fromnd.ni_dvp != fromnd.ni_vp)
-		VOP_UNLOCK(fromnd.ni_dvp, 0);
+		VOP_UNLOCK(fromnd.ni_dvp);
 	fvp = fromnd.ni_vp;
 
 	nfsm_srvmtofh(&tnsfh);
@@ -2617,7 +2617,7 @@ nfsrv_readdir(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp, struct lwp *
 		nfsm_srvpostop_attr(getret, &at);
 		return (0);
 	}
-	VOP_UNLOCK(vp, 0);
+	VOP_UNLOCK(vp);
 	rbuf = malloc(siz, M_TEMP, M_WAITOK);
 again:
 	iv.iov_base = rbuf;
@@ -2642,7 +2642,7 @@ again:
 			error = getret;
 	}
 
-	VOP_UNLOCK(vp, 0);
+	VOP_UNLOCK(vp);
 	if (error) {
 		vrele(vp);
 		free((void *)rbuf, M_TEMP);
@@ -2870,7 +2870,7 @@ nfsrv_readdirplus(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp, struct l
 		nfsm_srvpostop_attr(getret, &at);
 		return (0);
 	}
-	VOP_UNLOCK(vp, 0);
+	VOP_UNLOCK(vp);
 
 	rbuf = malloc(siz, M_TEMP, M_WAITOK);
 again:
@@ -2891,7 +2891,7 @@ again:
 	off = (u_quad_t)io.uio_offset;
 	getret = VOP_GETATTR(vp, &at, cred);
 
-	VOP_UNLOCK(vp, 0);
+	VOP_UNLOCK(vp);
 
 	/*
 	 * If the VGET operation doesn't work for this filesystem,

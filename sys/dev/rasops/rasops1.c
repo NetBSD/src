@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops1.c,v 1.20.2.1 2010/04/30 14:43:47 uebayasi Exp $	*/
+/* 	$NetBSD: rasops1.c,v 1.20.2.2 2010/08/17 06:46:37 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops1.c,v 1.20.2.1 2010/04/30 14:43:47 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops1.c,v 1.20.2.2 2010/08/17 06:46:37 uebayasi Exp $");
 
 #include "opt_rasops.h"
 
@@ -89,11 +89,10 @@ rasops1_putchar(void *cookie, int row, int col, u_int uc, long attr)
 {
 	u_int fs, rs, fb, bg, fg, lmask, rmask;
 	u_int32_t height, width;
-	struct rasops_info *ri;
+	struct rasops_info *ri = (struct rasops_info *)cookie;
+	struct wsdisplay_font *font = PICK_FONT(ri, uc);
 	int32_t *rp, *hrp = NULL, tmp, tmp2;
 	u_char *fr;
-
-	ri = (struct rasops_info *)cookie;
 
 #ifdef RASOPS_CLIPPING
 	/* Catches 'row < 0' case too */
@@ -109,8 +108,8 @@ rasops1_putchar(void *cookie, int row, int col, u_int uc, long attr)
 	if (ri->ri_hwbits)
 		hrp = (int32_t *)(ri->ri_hwbits + row * ri->ri_yscale +
 		    ((col >> 3) & ~3));
-	height = ri->ri_font->fontheight;
-	width = ri->ri_font->fontwidth;
+	height = font->fontheight;
+	width = font->fontwidth;
 	col = col & 31;
 	rs = ri->ri_stride;
 
@@ -123,9 +122,9 @@ rasops1_putchar(void *cookie, int row, int col, u_int uc, long attr)
 		fr = 0;		/* shutup gcc */
 		fs = 0;		/* shutup gcc */
 	} else {
-		uc -= ri->ri_font->firstchar;
-		fr = (u_char *)ri->ri_font->data + uc * ri->ri_fontscale;
-		fs = ri->ri_font->stride;
+		uc -= font->firstchar;
+		fr = (u_char *)font->data + uc * ri->ri_fontscale;
+		fs = font->stride;
 	}
 
 	/* Single word, one mask */
@@ -281,10 +280,9 @@ static void
 rasops1_putchar8(void *cookie, int row, int col, u_int uc, long attr)
 {
 	int height, fs, rs, bg, fg;
-	struct rasops_info *ri;
+	struct rasops_info *ri = (struct rasops_info *)cookie;
+	struct wsdisplay_font *font = PICK_FONT(ri, uc);
 	u_char *fr, *rp, *hrp = NULL;
-
-	ri = (struct rasops_info *)cookie;
 
 #ifdef RASOPS_CLIPPING
 	/* Catches 'row < 0' case too */
@@ -298,7 +296,7 @@ rasops1_putchar8(void *cookie, int row, int col, u_int uc, long attr)
 	rp = ri->ri_bits + row * ri->ri_yscale + col * ri->ri_xscale;
 	if (ri->ri_hwbits)
 		hrp = ri->ri_hwbits + row * ri->ri_yscale + col * ri->ri_xscale;
-	height = ri->ri_font->fontheight;
+	height = font->fontheight;
 	rs = ri->ri_stride;
 
 	bg = (attr & 0x000f0000) ? ri->ri_devcmap[1] : ri->ri_devcmap[0];
@@ -315,9 +313,9 @@ rasops1_putchar8(void *cookie, int row, int col, u_int uc, long attr)
 			}
 		}
 	} else {
-		uc -= ri->ri_font->firstchar;
-		fr = (u_char *)ri->ri_font->data + uc * ri->ri_fontscale;
-		fs = ri->ri_font->stride;
+		uc -= font->firstchar;
+		fr = (u_char *)font->data + uc * ri->ri_fontscale;
+		fs = font->stride;
 
 		/* NOT fontbits if bg is white */
 		if (bg) {
@@ -361,10 +359,9 @@ static void
 rasops1_putchar16(void *cookie, int row, int col, u_int uc, long attr)
 {
 	int height, fs, rs, bg, fg;
-	struct rasops_info *ri;
+	struct rasops_info *ri = (struct rasops_info *)cookie;
+	struct wsdisplay_font *font = PICK_FONT(ri, uc);
 	u_char *fr, *rp, *hrp = NULL;
-
-	ri = (struct rasops_info *)cookie;
 
 #ifdef RASOPS_CLIPPING
 	/* Catches 'row < 0' case too */
@@ -378,7 +375,7 @@ rasops1_putchar16(void *cookie, int row, int col, u_int uc, long attr)
 	rp = ri->ri_bits + row * ri->ri_yscale + col * ri->ri_xscale;
 	if (ri->ri_hwbits)
 		hrp = ri->ri_hwbits + row * ri->ri_yscale + col * ri->ri_xscale;
-	height = ri->ri_font->fontheight;
+	height = font->fontheight;
 	rs = ri->ri_stride;
 
 	bg = (attr & 0x000f0000) ? ri->ri_devcmap[1] : ri->ri_devcmap[0];
@@ -396,9 +393,9 @@ rasops1_putchar16(void *cookie, int row, int col, u_int uc, long attr)
 			}
 		}
 	} else {
-		uc -= ri->ri_font->firstchar;
-		fr = (u_char *)ri->ri_font->data + uc * ri->ri_fontscale;
-		fs = ri->ri_font->stride;
+		uc -= font->firstchar;
+		fr = (u_char *)font->data + uc * ri->ri_fontscale;
+		fs = font->stride;
 
 		/* NOT fontbits if bg is white */
 		if (bg) {
@@ -429,11 +426,13 @@ rasops1_putchar16(void *cookie, int row, int col, u_int uc, long attr)
 	}
 
 	/* Do underline */
-	if ((attr & 1) != 0)
+	if ((attr & 1) != 0) {
 		/* XXX alignment?! */
 		*(int16_t *)(rp - (ri->ri_stride << 1)) = fg;
-		if (ri->ri_hwbits)
+		if (ri->ri_hwbits) {
 			*(int16_t *)(hrp - (ri->ri_stride << 1)) = fg;
+		}
+	}
 }
 #endif	/* !RASOPS_SMALL */
 

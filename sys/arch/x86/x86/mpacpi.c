@@ -1,4 +1,4 @@
-/*	$NetBSD: mpacpi.c,v 1.84.2.1 2010/04/30 14:39:59 uebayasi Exp $	*/
+/*	$NetBSD: mpacpi.c,v 1.84.2.2 2010/08/17 06:45:33 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.84.2.1 2010/04/30 14:39:59 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.84.2.2 2010/08/17 06:45:33 uebayasi Exp $");
 
 #include "acpica.h"
 #include "opt_acpi.h"
@@ -71,7 +71,6 @@ __KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.84.2.1 2010/04/30 14:39:59 uebayasi Exp
 #include <dev/acpi/acpica.h>
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
-#include <dev/acpi/acpi_madt.h>
 
 #include <dev/cons.h>
 
@@ -169,7 +168,7 @@ mpacpi_ioapicprint(void *aux, const char *pnp)
 
 /*
  * Handle special interrupt sources and overrides from the MADT.
- * This is a callback function for acpi_madt_walk().
+ * This is a callback function for acpi_madt_walk() (see acpi.c).
  */
 static ACPI_STATUS
 mpacpi_nonpci_intr(ACPI_SUBTABLE_HEADER *hdrp, void *aux)
@@ -383,6 +382,7 @@ mpacpi_config_cpu(ACPI_SUBTABLE_HEADER *hdrp, void *aux)
 				caa.cpu_role = CPU_ROLE_AP;
 			else
 				caa.cpu_role = CPU_ROLE_BP;
+			caa.cpu_id = lapic->ProcessorId;
 			caa.cpu_number = lapic->Id;
 			caa.cpu_func = &mp_cpu_funcs;
 			locs[CPUBUSCF_APID] = caa.cpu_number;
@@ -409,6 +409,7 @@ mpacpi_config_cpu(ACPI_SUBTABLE_HEADER *hdrp, void *aux)
 				caa.cpu_role = CPU_ROLE_AP;
 			else
 				caa.cpu_role = CPU_ROLE_BP;
+			caa.cpu_id = x2apic->Uid;
 			caa.cpu_number = x2apic->LocalApicId;
 			caa.cpu_func = &mp_cpu_funcs;
 			locs[CPUBUSCF_APID] = caa.cpu_number;

@@ -1,4 +1,4 @@
-/*	$NetBSD: fwdev.c,v 1.17.2.1 2010/04/30 14:43:24 uebayasi Exp $	*/
+/*	$NetBSD: fwdev.c,v 1.17.2.2 2010/08/17 06:46:13 uebayasi Exp $	*/
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
  * Copyright (c) 1998-2002 Katsushi Kobayashi and Hidetoshi Shimokawa
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwdev.c,v 1.17.2.1 2010/04/30 14:43:24 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwdev.c,v 1.17.2.2 2010/08/17 06:46:13 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -248,7 +248,9 @@ readloop:
 		if (slept == 0) {
 			slept = 1;
 			ir->flag |= FWXFERQ_WAKEUP;
+			mutex_exit(&fc->fc_mtx);
 			err = tsleep(ir, FWPRI, "fw_read", hz);
+			mutex_enter(&fc->fc_mtx);
 			ir->flag &= ~FWXFERQ_WAKEUP;
 			if (err == 0)
 				goto readloop;
@@ -324,7 +326,9 @@ isoloop:
 			if (err)
 				goto out;
 #endif
+			mutex_exit(&fc->fc_mtx);
 			err = tsleep(it, FWPRI, "fw_write", hz);
+			mutex_enter(&fc->fc_mtx);
 			if (err)
 				goto out;
 			goto isoloop;

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.20.2.1 2010/04/30 14:39:57 uebayasi Exp $	*/
+/*	$NetBSD: cpu.h,v 1.20.2.2 2010/08/17 06:45:30 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -50,6 +50,7 @@
  * Definitions unique to x86 cpu support.
  */
 #include <machine/frame.h>
+#include <machine/pte.h>
 #include <machine/segments.h>
 #include <machine/tss.h>
 #include <machine/intrdefs.h>
@@ -94,10 +95,8 @@ struct cpu_info {
 	int	ci_fpused;		/* XEN: FPU was used by curlwp */
 	cpuid_t ci_cpuid;		/* our CPU ID */
 	int	ci_cpumask;		/* (1 << CPU ID) */
+	uint32_t ci_acpiid;		/* our ACPI/MADT ID */
 	uint32_t ci_initapicid;		/* our intitial APIC ID */
-	uint8_t ci_packageid;
-	uint8_t ci_coreid;
-	uint8_t ci_smtid;
 	struct cpu_data ci_data;	/* MI per-cpu data */
 
 	/*
@@ -165,6 +164,17 @@ struct cpu_info {
 	struct i386tss	ci_doubleflt_tss;
 	struct i386tss	ci_ddbipi_tss;
 #endif
+
+#ifdef PAE
+	uint32_t	ci_pae_l3_pdirpa; /* PA of L3 PD */
+	pd_entry_t *	ci_pae_l3_pdir; /* VA pointer to L3 PD */
+#endif
+
+#if defined(XEN) && defined(__x86_64__)
+	/* Currently active user PGD (can't use rcr3() with Xen) */
+	paddr_t		ci_xen_current_user_pgd;
+#endif
+
 	char *ci_doubleflt_stack;
 	char *ci_ddbipi_stack;
 
@@ -279,6 +289,7 @@ lwp_t   *x86_curlwp(void);
 void cpu_boot_secondary_processors(void);
 void cpu_init_idle_lwps(void);
 void cpu_init_msrs(struct cpu_info *, bool);
+void cpu_load_pmap(struct pmap *);
 
 extern uint32_t cpus_attached;
 #ifndef XEN

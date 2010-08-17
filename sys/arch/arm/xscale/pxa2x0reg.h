@@ -1,4 +1,4 @@
-/* $NetBSD: pxa2x0reg.h,v 1.18 2009/03/16 11:32:27 nonaka Exp $ */
+/* $NetBSD: pxa2x0reg.h,v 1.18.2.1 2010/08/17 06:44:06 uebayasi Exp $ */
 
 /*
  * Copyright (c) 2002  Genetec Corporation.  All rights reserved.
@@ -278,18 +278,30 @@ struct pxa2x0_dma_desc {
 #define CKEN_PWM1	(1<<1)
 #define CKEN_AC97	(1<<2)
 #define CKEN_SSP	(1<<3)
+#define CKEN_SSP2	(1<<3)	/* PXA270 */
+#define CKEN_SSP3	(1<<4)	/* PXA270 */
 #define CKEN_HWUART	(1<<4)
 #define CKEN_STUART	(1<<5)
 #define CKEN_FFUART	(1<<6)
 #define CKEN_BTUART	(1<<7)
 #define CKEN_I2S	(1<<8)
 #define CKEN_NSSP	(1<<9)
+#define CKEN_OST	(1<<9)	/* PXA270 */
 #define CKEN_USBHC	(1<<10)
 #define CKEN_USBDC	(1<<11)
 #define CKEN_MMC	(1<<12)
 #define CKEN_FICP	(1<<13)
 #define CKEN_I2C	(1<<14)
+#define CKEN_PI2C	(1<<15)	/* PXA270 */
 #define CKEN_LCD	(1<<16)
+#define CKEN_MSLI	(1<<17)	/* PXA270 */
+#define CKEN_USIM	(1<<18)	/* PXA270 */
+#define CKEN_KPI	(1<<19)	/* PXA270 */
+#define CKEN_INTMEM	(1<<20)	/* PXA270 */
+#define CKEN_MSHC	(1<<21)	/* PXA270 */
+#define CKEN_MEMCTL	(1<<22)	/* PXA270 */
+#define CKEN_SSP1	(1<<23)	/* PXA270 */
+#define CKEN_QCAP	(1<<24)	/* PXA270 */
 
 #define OSCC_OOK	(1<<0)	/* 32.768 kHz oscillator status */
 #define OSCC_OON	(1<<1)	/* 32.768 kHz oscillator */
@@ -974,6 +986,8 @@ struct pxa2x0_dma_desc {
 #define  UHCRHDA_PSM	(1<<8)	/* Power switching mode */
 #define  UHCRHDA_NDP_MASK	0xff	/* Number downstream ports */
 #define USBHC_UHCRHDB	0x004c	/* UHC Root Hub Descriptor B */
+#define  UHCRHDB_PPCM(p) ((1<<(p))<<16)	/* Port Power Control Mask [1:3] */
+#define  UHCRHDB_DNR(p)	 ((1<<(p))<<0)	/* Device Not Removable [1:3] */
 #define USBHC_UHCRHS	0x0050	/* UHC Root Hub Stauts */
 #define USBHC_UHCHR	0x0064	/* UHC Reset Register */
 #define  UHCHR_SSEP3	(1<<11)	/* Sleep standby enable for port3 */
@@ -1058,6 +1072,133 @@ struct pxa2x0_dma_desc {
 #define SSP_SSSR	0x08
 #define  SSSR_TNF	(1<<2)
 #define  SSSR_RNE	(1<<3)
+#define  SSSR_BUSY	(1<<4)
+#define  SSSR_TFS	(1<<5)
+#define  SSSR_RFS	(1<<6)
+#define  SSSR_ROR	(1<<7)
+#define  SSSR_TFL	(0xf<<8)
+#define  SSSR_RFL	(0xf<<12)
+#define  SSSR_PINT	(1<<18)
+#define  SSSR_TINT	(1<<19)
+#define  SSSR_EOC	(1<<20)
+#define  SSSR_TUR	(1<<21)
+#define  SSSR_CSS	(1<<22)
+#define  SSSR_BCE	(1<<23)
 #define SSP_SSDR	0x10
+
+/*
+ * Power Manager
+ */
+#define POWMAN_PMCR	0x00	/* Power Manager Control Register */
+#define  POWMAN_BIDAE	(1<<0)	/* Imprecise-Data Abort Enable for nBATT_FAULT*/
+#define  POWMAN_BIDAS	(1<<1)	/* Imprecise-Data Abort Status for nBATT_FAULT*/
+#define  POWMAN_VIDAE	(1<<2)	/* Imprecise-Data Abort Enable for nVDD_FAULT */
+#define  POWMAN_VIDAS	(1<<3)	/* Imprecise-Data Abort Status for nVDD_FAULT */
+#define  POWMAN_IAS	(1<<4)	/* Interrupt/Abort Select */
+#define  POWMAN_INTRS	(1<<5)	/* Interrupt Status */
+#define POWMAN_PSSR	0x04	/* Power Manager Sleep Status Register */
+#define  POWMAN_SSS	(1<<0)	/* Software Sleep Status */
+#define  POWMAN_BFS	(1<<1)	/* Battery Fault Status */
+#define  POWMAN_VFS	(1<<2)	/* VCC Fault Status */
+#define  POWMAN_STS	(1<<3)	/* Standby Mode Status */
+#define  POWMAN_PH	(1<<4)	/* Peripheral Control Hold */
+#define  POWMAN_RDH	(1<<5)	/* Read Disable Hold */
+#define  POWMAN_OTGPH	(1<<6)	/* OTG Peripheral Control Hold */
+#define POWMAN_PSPR	0x08	/* Power Manager Scratch-Pad Register */
+#define  POWMAN_SP(n)	(1<<(n)) /* Scratch Pad Register bit n */
+#define POWMAN_PWER	0x0c	/* Power Manager Wake-Up Enable Register */
+#define  POWMAN_WE(n)	(1<<(n)) /* Wake-up Enable for GPIO<n>[0,1,3,4,9..15] */
+#define  POWMAN_WEMUX2_38  (1<<16) /* Wake-up Enable for GPIO<38> */
+#define  POWMAN_WEMUX2_53  (2<<16) /* Wake-up Enable for GPIO<53> */
+#define  POWMAN_WEMUX2_40  (3<<16) /* Wake-up Enable for GPIO<40> */
+#define  POWMAN_WEMUX2_36  (4<<16) /* Wake-up Enable for GPIO<36> */
+#define  POWMAN_WEMUX3_31  (1<<19) /* Wake-up Enable for GPIO<31> */
+#define  POWMAN_WEMUX3_113 (2<<19) /* Wake-up Enable for GPIO<113> */
+#define  POWMAN_WEUSIM	(1<<23)	/* Wake-up Enable for Rise/Fall Edge from UDET*/
+#define  POWMAN_WE35	(1<<24)	/* Wake-up Enable for GPIO<35> */
+#define  POWMAN_WBB	(1<<25)	/* Wake-up Enable for Rising Edge from MSL */
+#define  POWMAN_WEUSBC	(1<<26)	/* Wake-up Enable for USB Client Port */
+#define  POWMAN_WEUSBH1	(1<<27)	/* Wake-up Enable for USB Host Port 1 */
+#define  POWMAN_WEUSBH2	(1<<28)	/* Wake-up Enable for USB Host Port 2 */
+#define  POWMAN_WEP1	(1<<30)	/* Wake-up Enable for PI */
+#define  POWMAN_WERTC	(1<<31)	/* Wake-up Enable for RTC */
+#define POWMAN_PRER	0x10	/* Power Manager Rising-Edge Detect Enable */
+#define  POWMAN_RE(n)	(1<<(n)) /* Rising-Edge W-u GPIO<n> [0,1,3,4,9..15] */
+#define  POWMAN_RE35	(1<<35)	 /* Rising-Edge W-u GPIO<35> */
+#define POWMAN_PFER	0x14	/* Power Manager Falling-Edge Detect Enable */
+#define  POWMAN_FE(n)	(1<<(n)) /* Falling-Edge W-u GPIO<n>[0,1,3,4,9..15] */
+#define  POWMAN_FE35	(1<<35)	 /* Falling-Edge W-u GPIO<35> */
+#define POWMAN_PEDR	0x18	/* Power Manager Edge Detect Status Register */
+				/*  Use bits definitions of POWMAN_PWER */
+#define POWMAN_PCFR	0x1c	/* Power Manager General Configuration */
+#define  POWMAN_OPDE	(1<<0)	/* 13MHz Processor Oscillator Power-Down Ena */
+#define  POWMAN_FP	(1<<1)	/* Float PC Card Pins During Sleep/Deep-Sleep */
+#define  POWMAN_FS	(1<<2)	/* Float Static Chip Selects (nCS<5:1>) Sleep */
+#define  POWMAN_GPR_EN	(1<<4)	/* nRESET_GPIO Pin Enable */
+#define  POWMAN_PI2C_EN	(1<<6)	/* Power Manager I2C Enable */
+#define  POWMAN_DC_EN	(1<<7)	/* Sleep/Deep-Sleep DC-DC Converter Enable */
+#define  POWMAN_FVC	(1<<10)	/* Frequency/Voltage Change */
+#define  POWMAN_L1_EN	(1<<11)	/* Sleep/Deep-Sleep Linear Regulator Enable */
+#define  POWMAN_GPROD	(1<<12)	/* GPIO nRESET_OUT Disable */
+#define  POWMAN_PO	(1<<14)	/* PH Override */
+#define  POWMAN_RO	(1<<15)	/* RDH Override */
+#define POWMAN_PGSR(x)	(0x20+((x)<<2))	/* Power Manager GPIO Sleep-State */
+#define  POWMAN_SS_REG(n) ((n)>>5)   /* Register of Sleep State of GPIO<n> */
+#define  POWMAN_SS_BIT(n) ((n)&0x1f) /* Bit      of Sleep State of GPIO<n> */
+#define POWMAN_RCSR	0x30	/* Reset Controller Status Register */
+#define  POWMAN_HWR	(1<<0)	/* Hardware/Power-On Reset */
+#define  POWMAN_WDR	(1<<1)	/* Watchdog Reset */
+#define  POWMAN_SMR	(1<<2)	/* Sleep-Exit Reset from Sleep/Deep-Sleep */
+#define  POWMAN_GPR	(1<<3)	/* GPIO Reset */
+#define POWMAN_PSLR	0x34	/* Power Manager Sleep Configuration Register */
+#define  POWMAN_SL_PI(x) ((x)<<2) /* PI Power Domain */
+#define  POWMAN_SL_R0	(1<<8)	/* Internal SRAM Bank 0 */
+#define  POWMAN_SL_R1	(1<<9)	/* Internal SRAM Bank 1 */
+#define  POWMAN_SL_R2	(1<<10)	/* Internal SRAM Bank 2 */
+#define  POWMAN_SL_R3	(1<<11)	/* Internal SRAM Bank 3 */
+#define  POWMAN_SL_ROD	(1<<20)	/* Sleep/Deep-Sleep Mode nRESET_OUT Disable */
+#define  POWMAN_IVF	(1<<22)	/* Ignore nVDD_FAULT in Sleep/Deep-Sleep Mode */
+#define  POWMAN_PSSD	(1<<23)	/* Sleep-Mode Shorten Wake-up Delay Disable */
+#define POWMAN_PSTR	0x38	/* Power Manager Standby Configuration */
+				/*  Use bits definitions of POWMAN_PSLR */
+#define POWMAN_PVCR	0x40	/* Power Manager Voltage Control Register */
+#define  POWMAN_CMD_DELAY(n) ((n)<<7) /* Command Delay */
+#define  POWMAN_READPTR(x) ((x)<<20) /* Read Pointer */
+#define  POWMAN_VCSA	(1<<14)	/* Voltage-Change Sequencer Active */
+#define POWMAN_PUCR	0x4c	/* Power Manager USIM Card Control/Status */
+#define  POWMAN_EN_UDET	(1<<0)	/* Enable USIM Card Detect */
+#define  POWMAN_USIM114	(1<<2)	/* Allow UVS/UEN Functionality for GPIO<114> */
+#define  POWMAN_USIM115	(1<<3)	/* Allow UVS/UEN Functionality for GPIO<115> */
+#define  POWMAN_UDETS	(1<<5)	/* USIM Detect Status */
+#define POWMAN_PKWR	0x50	/* Power Manager Keyboard Wake-Up Enable */
+#define  POWMAN_WE13	(1<<0)
+#define  POWMAN_WE16	(1<<1)
+#define  POWMAN_WE17	(1<<2)
+#define  POWMAN_WE34	(1<<3)
+#define  POWMAN_WE36	(1<<4)
+#define  POWMAN_WE37	(1<<5)
+#define  POWMAN_WE38	(1<<6)
+#define  POWMAN_WE39	(1<<7)
+#define  POWMAN_WE90	(1<<8)
+#define  POWMAN_WE91	(1<<9)
+#define  POWMAN_WE93	(1<<10)
+#define  POWMAN_WE94	(1<<11)
+#define  POWMAN_WE95	(1<<12)
+#define  POWMAN_WE96	(1<<13)
+#define  POWMAN_WE97	(1<<14)
+#define  POWMAN_WE98	(1<<15)
+#define  POWMAN_WE99	(1<<16)
+#define  POWMAN_WE100	(1<<17)
+#define  POWMAN_WE101	(1<<18)
+#define  POWMAN_WE102	(1<<19)
+#define POWMAN_PKSR	0x54	/* Power Manager Keyboard Level-Detect Status */
+				/*  Use bits definitions of POWMAN_PKWR */
+#define POWMAN_PCMD(x)	(0x80+((x)<<2)	/* Power Manager I2C Command Reg File */
+#define  POWMAN_CD_MASK	0x0f	/* I2C Command Data Mask */
+#define  POWMAN_SQC_CNTINUE (0<<8) /* Sequence Configuration: Continue */
+#define  POWMAN_SQC_PAUSE   (1<<8) /* Sequence Configuration: Pause */
+#define  POWMAN_LC	(1<<10)	/* Last Command */
+#define  POWMAN_DCE	(1<<11)	/* Delay Command Execution */
+#define  POWMAN_MBC	(1<<12)	/* Multi-Byte Command */
 
 #endif /* _ARM_XSCALE_PXA2X0REG_H_ */

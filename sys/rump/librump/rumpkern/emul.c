@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.121.2.1 2010/04/30 14:44:29 uebayasi Exp $	*/
+/*	$NetBSD: emul.c,v 1.121.2.2 2010/08/17 06:48:00 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.121.2.1 2010/04/30 14:44:29 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.121.2.2 2010/08/17 06:48:00 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/null.h>
@@ -42,7 +42,6 @@ __KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.121.2.1 2010/04/30 14:44:29 uebayasi Exp 
 #include <sys/device.h>
 #include <sys/queue.h>
 #include <sys/file.h>
-#include <sys/filedesc.h>
 #include <sys/cpu.h>
 #include <sys/kmem.h>
 #include <sys/poll.h>
@@ -62,11 +61,11 @@ __KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.121.2.1 2010/04/30 14:44:29 uebayasi Exp 
 
 #include "rump_private.h"
 
-kmutex_t *proc_lock;
 struct lwp lwp0;
 struct vnode *rootvp;
 dev_t rootdev = NODEV;
 int physmem = 256*256; /* 256 * 1024*1024 / 4k, PAGE_SIZE not always set */
+int nkmempages = 256*256/2; /* from le chapeau */
 const int schedppq = 1;
 int hardclock_ticks;
 bool mp_online = false;
@@ -75,19 +74,16 @@ int cold = 1;
 int boothowto = AB_SILENT;
 struct tty *constty;
 
-const struct bdevsw *bdevsw0[1];
+const struct bdevsw *bdevsw0[255];
 const struct bdevsw **bdevsw = bdevsw0;
-const int sys_cdevsws = 0;
-int max_cdevsws = 1;
+const int sys_cdevsws = 255;
+int max_cdevsws = 255;
 
-const struct cdevsw *cdevsw0[1];
+const struct cdevsw *cdevsw0[255];
 const struct cdevsw **cdevsw = cdevsw0;
-const int sys_bdevsws = 0;
-int max_bdevsws = 1;
+const int sys_bdevsws = 255;
+int max_bdevsws = 255;
 
-struct devsw_conv devsw_conv0;
-struct devsw_conv *devsw_conv = &devsw_conv0;
-int max_devsw_convs = 0;
 int mem_no = 2;
 
 struct device *booted_device;
@@ -100,9 +96,16 @@ krwlock_t exec_lock;
 
 struct lwplist alllwp = LIST_HEAD_INITIALIZER(alllwp);
 
-/* sparc doesn't sport constant page size */
+/* sparc doesn't sport constant page size, pretend we have 4k pages */
 #ifdef __sparc__
 int nbpg = 4096;
+int pgofset = 4096-1;
+int pgshift = 12;
+#endif
+
+/* sun3 is sun3 with broken kernel modules */
+#ifdef sun3
+char KERNBASE[1]; /* this is completely random ... */
 #endif
 
 struct loadavg averunnable = {
@@ -116,28 +119,12 @@ struct emul emul_netbsd = {
 	.e_name = "netbsd-rump",
 	.e_sysent = rump_sysent,
 	.e_vm_default_addr = uvm_default_mapaddr,
+#ifdef __HAVE_SYSCALL_INTERN
+	.e_syscall_intern = syscall_intern,
+#endif
 };
 
-struct proc *
-p_find(pid_t pid, uint flags)
-{
-
-	panic("%s: not implemented", __func__);
-}
-
-struct pgrp *
-pg_find(pid_t pid, uint flags)
-{
-
-	panic("%s: not implemented", __func__);
-}
-
-int
-pgid_in_session(struct proc *p, pid_t pg_id)
-{
-
-	panic("%s: not implemented", __func__);
-}
+u_int nprocs = 1;
 
 int
 kpause(const char *wmesg, bool intr, int timeo, kmutex_t *mtx)
@@ -190,27 +177,6 @@ assert_sleepable(void)
 	/* always sleepable, although we should improve this */
 }
 
-int
-proc_uidmatch(kauth_cred_t cred, kauth_cred_t target)
-{
-
-	panic("%s: not implemented", __func__);
-}
-
-void
-proc_crmod_enter(void)
-{
-
-	panic("%s: not implemented", __func__);
-}
-
-void
-proc_crmod_leave(kauth_cred_t c1, kauth_cred_t c2, bool sugid)
-{
-
-	panic("%s: not implemented", __func__);
-}
-
 void
 module_init_md(void)
 {
@@ -238,35 +204,29 @@ rump_delay(unsigned int us)
 }
 void (*delay_func)(unsigned int) = rump_delay;
 
-void
-proc_sesshold(struct session *ss)
-{
+/*
+ * Provide weak aliases for tty routines used by printf.
+ * They will be used unless the rumpkern_tty component is present.
+ */
 
-	panic("proc_sesshold() impossible, session %p", ss);
-}
-
-void
-proc_sessrele(struct session *ss)
-{
-
-	panic("proc_sessrele() impossible, session %p", ss);
-}
-
+int rump_ttycheckoutq(struct tty *, int);
 int
-proc_vmspace_getref(struct proc *p, struct vmspace **vm)
-{
-
-	/* XXX */
-	*vm = p->p_vmspace;
-	return 0;
-}
-
-int
-ttycheckoutq(struct tty *tp, int wait)
+rump_ttycheckoutq(struct tty *tp, int wait)
 {
 
 	return 1;
 }
+__weak_alias(ttycheckoutq,rump_ttycheckoutq);
+
+int rump_tputchar(int, int, struct tty *);
+int
+rump_tputchar(int c, int flags, struct tty *tp)
+{
+
+	cnputc(c);
+	return 0;
+}
+__weak_alias(tputchar,rump_tputchar);
 
 void
 cnputc(int c)
@@ -283,14 +243,6 @@ cnflush(void)
 	/* done */
 }
 
-int
-tputchar(int c, int flags, struct tty *tp)
-{
-
-	cnputc(c);
-	return 0;
-}
-
 void
 cpu_reboot(int howto, char *bootstr)
 {
@@ -299,4 +251,21 @@ cpu_reboot(int howto, char *bootstr)
 
 	/* this function is __dead, we must exit */
 	rumpuser_exit(0);
+}
+
+#ifdef __HAVE_SYSCALL_INTERN
+void
+syscall_intern(struct proc *p)
+{
+
+	/* no you don't */
+}
+#endif
+
+void
+xc_send_ipi(struct cpu_info *ci)
+{
+
+	/* I'll think about the implementation if this is ever used */
+	panic("not implemented");
 }

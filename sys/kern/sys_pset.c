@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pset.c,v 1.13.2.1 2010/04/30 14:44:12 uebayasi Exp $	*/
+/*	$NetBSD: sys_pset.c,v 1.13.2.2 2010/08/17 06:47:31 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2008, Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pset.c,v 1.13.2.1 2010/04/30 14:44:12 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pset.c,v 1.13.2.2 2010/08/17 06:47:31 uebayasi Exp $");
 
 #include <sys/param.h>
 
@@ -486,7 +486,7 @@ sys__pset_bind(struct lwp *l, const struct sys__pset_bind_args *uap,
 
 	/* Find the process */
 	mutex_enter(proc_lock);
-	p = p_find(pid, PFIND_LOCKED);
+	p = proc_find(pid);
 	if (p == NULL) {
 		mutex_exit(proc_lock);
 		error = ESRCH;

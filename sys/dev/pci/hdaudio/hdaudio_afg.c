@@ -1,4 +1,4 @@
-/* $NetBSD: hdaudio_afg.c,v 1.19.2.1 2010/04/30 14:43:45 uebayasi Exp $ */
+/* $NetBSD: hdaudio_afg.c,v 1.19.2.2 2010/08/17 06:46:36 uebayasi Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdaudio_afg.c,v 1.19.2.1 2010/04/30 14:43:45 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdaudio_afg.c,v 1.19.2.2 2010/08/17 06:46:36 uebayasi Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -94,6 +94,8 @@ static int hdaudio_afg_debug = 0;
 
 #define	hda_debug(sc, ...)		\
 	if (hdaudio_afg_debug) hda_print(sc, __VA_ARGS__)
+#define	hda_debug1(sc, ...)		\
+	if (hdaudio_afg_debug) hda_print1(sc, __VA_ARGS__)
 
 #define HDAUDIO_MIXER_CLASS_OUTPUTS	0
 #define	HDAUDIO_MIXER_CLASS_INPUTS	1
@@ -107,6 +109,11 @@ static int hdaudio_afg_debug = 0;
 #define	HDAUDIO_UNSOLTAG_EVENT_HP	0x00
 
 #define	HDAUDIO_HP_SENSE_PERIOD		hz
+
+const u_int hdaudio_afg_possible_rates[] = {
+	8000, 11025, 16000, 22050, 32000, 44100,
+	48000, 88200, 96000, 176500, 192000, /* 384000, */
+};
 
 static const char *hdaudio_afg_mixer_names[] = HDAUDIO_DEVICE_NAMES;
 
@@ -285,6 +292,7 @@ struct hdaudio_afg_softc {
 	struct hdaudio_control		*sc_ctls;
 	int				sc_nmixers;
 	struct hdaudio_mixer		*sc_mixers;
+	bool				sc_has_beepgen;
 
 	int				sc_pchan, sc_rchan;
 	audio_params_t			sc_pparam, sc_rparam;
@@ -634,6 +642,7 @@ hdaudio_afg_widget_pin_parse(struct hdaudio_widget *w)
 static uint32_t
 hdaudio_afg_widget_getcaps(struct hdaudio_widget *w)
 {
+	struct hdaudio_afg_softc *sc = w->w_afg;
 	uint32_t wcap, config;
 
 	wcap = hda_get_wparam(w, AUDIO_WIDGET_CAPABILITIES);
@@ -641,7 +650,8 @@ hdaudio_afg_widget_getcaps(struct hdaudio_widget *w)
 
 	w->w_waspin = false;
 
-	if (COP_CFG_DEFAULT_DEVICE(config) == COP_DEVICE_SPEAKER &&
+	if (sc->sc_has_beepgen == false &&
+	    COP_CFG_DEFAULT_DEVICE(config) == COP_DEVICE_SPEAKER &&
 	    (wcap & (COP_AWCAP_INAMP_PRESENT|COP_AWCAP_OUTAMP_PRESENT)) == 0) {
 		wcap &= ~COP_AWCAP_TYPE_MASK;
 		wcap |= (COP_AWCAP_TYPE_BEEP_GENERATOR << COP_AWCAP_TYPE_SHIFT);
@@ -697,49 +707,123 @@ hdaudio_afg_widget_parse(struct hdaudio_widget *w)
 	}
 }
 
+static int
+hdaudio_afg_assoc_count_channels(struct hdaudio_afg_softc *sc,
+    struct hdaudio_assoc *as, enum hdaudio_pindir dir)
+{
+	struct hdaudio_widget *w;
+	int *dacmap;
+	int i, dacmapsz = sizeof(*dacmap) * sc->sc_endnode;
+	int nchans = 0;
+
+	if (as->as_enable == false || as->as_dir != dir)
+		return 0;
+
+	dacmap = kmem_zalloc(dacmapsz, KM_SLEEP);
+	if (dacmap == NULL)
+		return 0;
+
+	for (i = 0; i < HDAUDIO_MAXPINS; i++)
+		if (as->as_dacs[i])
+			dacmap[as->as_dacs[i]] = 1;
+
+	for (i = 1; i < sc->sc_endnode; i++) {
+		if (!dacmap[i])
+			continue;
+		w = hdaudio_afg_widget_lookup(sc, i);
+		if (w == NULL || w->w_enable == false)
+			continue;
+		nchans += (w->w_p.aw_cap & COP_AWCAP_STEREO) ? 2 : 1;
+	}
+
+	kmem_free(dacmap, dacmapsz);
+
+	return nchans;
+}
+
 static void
 hdaudio_afg_assoc_dump(struct hdaudio_afg_softc *sc)
 {
 	struct hdaudio_assoc *as = sc->sc_assocs;
 	struct hdaudio_widget *w;
-	uint32_t conn, color, defdev;
+	uint32_t conn, color, defdev, curdev, curport;
 	int maxassocs = sc->sc_nassocs;
 	int i, j;
 
 	for (i = 0; i < maxassocs; i++) {
-		int ndacs = 0;
+		uint32_t devmask = 0, portmask = 0;
+		bool firstdev = true;
+		int nchan;
 
 		if (as[i].as_enable == false)
 			continue;
 
+		hda_print(sc, "%s%02X",
+		    as[i].as_dir == HDAUDIO_PINDIR_IN ? "ADC" : "DAC", i);
+		hda_trace1(sc, " %s",
+		    as[i].as_digital ? "[DIGITAL]" : "[ANALOG]");
+
+		nchan = hdaudio_afg_assoc_count_channels(sc, &as[i],
+		    as[i].as_dir);
+		hda_print1(sc, " %dch:", nchan);
+
 		for (j = 0; j < HDAUDIO_MAXPINS; j++) {
 			if (as[i].as_dacs[j] == 0)
 				continue;
-			++ndacs;
-			hda_print(sc, "%s%d:%02X, %s ",
-			    as[i].as_dir == HDAUDIO_PINDIR_IN ? "ADC" : "DAC",
-			    i, as[i].as_dacs[j],
-			    as[i].as_digital ? "Digital" : "Analog");
-
 			w = hdaudio_afg_widget_lookup(sc, as[i].as_pins[j]);
-			if (w == NULL) {
-				hda_print1(sc, "<none>\n");
+			if (w == NULL)
 				continue;
-			}
 			conn = COP_CFG_PORT_CONNECTIVITY(w->w_pin.config);
-			color = COP_CFG_COLOR(w->w_pin.config);
 			defdev = COP_CFG_DEFAULT_DEVICE(w->w_pin.config);
-			if (conn != 1) {
-				hda_print1(sc, "%s: %s (%s, %02X)\n",
-				    hdaudio_afg_default_device[defdev],
-				    hdaudio_afg_port_connectivity[conn],
-				    hdaudio_afg_color[color], w->w_nid);
-			} else {
-				hda_print1(sc, "<unknown>\n");
+			if (conn != COP_PORT_NONE) {
+				devmask |= (1 << defdev);
+				portmask |= (1 << conn);
 			}
 		}
-		if (ndacs == 0)
-			hda_print1(sc, "<none>\n");
+		for (curdev = 0; curdev < 16; curdev++) {
+			bool firstport = true;
+			if ((devmask & (1 << curdev)) == 0)
+				continue;
+
+			if (firstdev == false)
+				hda_print1(sc, ",");
+			firstdev = false;
+			hda_print1(sc, " %s",
+			    hdaudio_afg_default_device[curdev]);
+
+			for (curport = 0; curport < 4; curport++) {
+				if ((portmask & (1 << curport)) == 0)
+					continue;
+
+				hda_print1(sc, " [%s",
+				    hdaudio_afg_port_connectivity[curport]);
+				for (j = 0; j < HDAUDIO_MAXPINS; j++) {
+					if (as[i].as_dacs[j] == 0)
+						continue;
+
+					w = hdaudio_afg_widget_lookup(sc,
+					    as[i].as_pins[j]);
+					if (w == NULL)
+						continue;
+					conn = COP_CFG_PORT_CONNECTIVITY(w->w_pin.config);
+					color = COP_CFG_COLOR(w->w_pin.config);
+					defdev = COP_CFG_DEFAULT_DEVICE(w->w_pin.config);
+					if (conn != curport || defdev != curdev)
+						continue;
+
+					if (firstport == false)
+						hda_trace1(sc, ",");
+					else
+						hda_trace1(sc, " ");
+					firstport = false;
+					hda_trace1(sc, "%s",
+					    hdaudio_afg_color[color]);
+					hda_trace1(sc, "(%02X)", w->w_nid);
+				}
+				hda_print1(sc, "]");
+			}
+		}
+		hda_print1(sc, "\n");
 	}
 }
 
@@ -990,7 +1074,7 @@ static void
 hdaudio_afg_parse(struct hdaudio_afg_softc *sc)
 {
 	struct hdaudio_widget *w;
-	uint32_t nodecnt;
+	uint32_t nodecnt, wcap;
 	int nid;
 
 	nodecnt = hda_get_param(sc, SUBORDINATE_NODE_COUNT);
@@ -1020,6 +1104,19 @@ hdaudio_afg_parse(struct hdaudio_afg_softc *sc)
 	sc->sc_widgets = kmem_zalloc(sc->sc_nwidgets * sizeof(*w), KM_SLEEP);
 	hda_debug(sc, "afg widgets %p-%p\n",
 	    sc->sc_widgets, sc->sc_widgets + sc->sc_nwidgets);
+
+	for (nid = sc->sc_startnode; nid < sc->sc_endnode; nid++) {
+		w = hdaudio_afg_widget_lookup(sc, nid);
+		if (w == NULL)
+			continue;
+		wcap = hdaudio_command(sc->sc_codec, nid, CORB_GET_PARAMETER,
+		    COP_AUDIO_WIDGET_CAPABILITIES);
+		switch (COP_AWCAP_TYPE(wcap)) {
+		case COP_AWCAP_TYPE_BEEP_GENERATOR:
+			sc->sc_has_beepgen = true;
+			break;
+		}
+	}
 
 	for (nid = sc->sc_startnode; nid < sc->sc_endnode; nid++) {
 		w = hdaudio_afg_widget_lookup(sc, nid);
@@ -2750,40 +2847,6 @@ hdaudio_afg_stream_intr(struct hdaudio_stream *st)
 	return handled;
 }
 
-static int
-hdaudio_afg_assoc_count_channels(struct hdaudio_afg_softc *sc,
-    struct hdaudio_assoc *as, enum hdaudio_pindir dir)
-{
-	struct hdaudio_widget *w;
-	int *dacmap;
-	int i, dacmapsz = sizeof(*dacmap) * sc->sc_endnode;
-	int nchans = 0;
-
-	if (as->as_enable == false || as->as_dir != dir)
-		return 0;
-
-	dacmap = kmem_zalloc(dacmapsz, KM_SLEEP);
-	if (dacmap == NULL)
-		return 0;
-
-	for (i = 0; i < HDAUDIO_MAXPINS; i++)
-		if (as->as_dacs[i])
-			dacmap[as->as_dacs[i]] = 1;
-
-	for (i = 1; i < sc->sc_endnode; i++) {
-		if (!dacmap[i])
-			continue;
-		w = hdaudio_afg_widget_lookup(sc, i);
-		if (w == NULL || w->w_enable == false)
-			continue;
-		nchans += (w->w_p.aw_cap & COP_AWCAP_STEREO) ? 2 : 1;
-	}
-
-	kmem_free(dacmap, dacmapsz);
-
-	return nchans;
-}
-
 static bool
 hdaudio_afg_rate_supported(struct hdaudio_afg_softc *sc, u_int frequency)
 {
@@ -2845,9 +2908,10 @@ hdaudio_afg_bits_supported(struct hdaudio_afg_softc *sc, u_int bits)
 
 static bool
 hdaudio_afg_probe_encoding(struct hdaudio_afg_softc *sc,
-    u_int minrate, u_int maxrate, u_int validbits, u_int precision, bool force)
+    u_int validbits, u_int precision, bool force)
 {
 	struct audio_format f;
+	int i;
 
 	if (!force && hdaudio_afg_bits_supported(sc, validbits) == false)
 		return false;
@@ -2861,8 +2925,11 @@ hdaudio_afg_probe_encoding(struct hdaudio_afg_softc *sc,
 	f.channels = 0;
 	f.channel_mask = 0;
 	f.frequency_type = 0;
-	f.frequency[0] = minrate;
-	f.frequency[1] = maxrate;
+	for (i = 0; i < __arraycount(hdaudio_afg_possible_rates); i++) {
+		u_int rate = hdaudio_afg_possible_rates[i];
+		if (hdaudio_afg_rate_supported(sc, rate))
+			f.frequency[f.frequency_type++] = rate;
+	}
 
 #define HDAUDIO_INITFMT(ch, chmask)			\
 	do {						\
@@ -2895,17 +2962,11 @@ hdaudio_afg_probe_encoding(struct hdaudio_afg_softc *sc,
 static void
 hdaudio_afg_configure_encodings(struct hdaudio_afg_softc *sc)
 {
-	const u_int possible_rates[] = {
-		8000, 11025, 16000, 22050, 32000, 44100,
-		48000, 88200, 96000, 176500, 192000, /* 384000, */
-	};
 	struct hdaudio_assoc *as = sc->sc_assocs;
 	struct audio_format f;
-	u_int minrate, maxrate;
 	int nchan, i;
 
 	sc->sc_pchan = sc->sc_rchan = 0;
-	minrate = maxrate = 0;
 
 	for (nchan = 0, i = 0; i < sc->sc_nassocs; i++) {
 		nchan = hdaudio_afg_assoc_count_channels(sc, &as[i],
@@ -2921,34 +2982,24 @@ hdaudio_afg_configure_encodings(struct hdaudio_afg_softc *sc)
 	}
 	hda_print(sc, "%dch/%dch", sc->sc_pchan, sc->sc_rchan);
 
-	for (i = 0; __arraycount(possible_rates); i++)
-		if (hdaudio_afg_rate_supported(sc, possible_rates[i])) {
-			minrate = possible_rates[i];
-			break;
-		}
-	for (i = __arraycount(possible_rates) - 1; i >= 0; i--)
-		if (hdaudio_afg_rate_supported(sc, possible_rates[i])) {
-			maxrate = possible_rates[i];
-			break;
-		}
-	KASSERT(minrate > 0 && maxrate > 0);	/* impossible */
-	hda_print1(sc, " %uHz", minrate);
-	if (minrate != maxrate)
-		hda_print1(sc, "-%uHz", maxrate);
+	for (i = 0; i < __arraycount(hdaudio_afg_possible_rates); i++)
+		if (hdaudio_afg_rate_supported(sc,
+		    hdaudio_afg_possible_rates[i]))
+			hda_print1(sc, " %uHz", hdaudio_afg_possible_rates[i]);
 
-	if (hdaudio_afg_probe_encoding(sc, minrate, maxrate, 8, 16, false))
+	if (hdaudio_afg_probe_encoding(sc, 8, 16, false))
 		hda_print1(sc, " 8/16");
-	if (hdaudio_afg_probe_encoding(sc, minrate, maxrate, 16, 16, false))
+	if (hdaudio_afg_probe_encoding(sc, 16, 16, false))
 		hda_print1(sc, " 16/16");
-	if (hdaudio_afg_probe_encoding(sc, minrate, maxrate, 20, 32, false))
+	if (hdaudio_afg_probe_encoding(sc, 20, 32, false))
 		hda_print1(sc, " 20/32");
-	if (hdaudio_afg_probe_encoding(sc, minrate, maxrate, 24, 32, false))
+	if (hdaudio_afg_probe_encoding(sc, 24, 32, false))
 		hda_print1(sc, " 24/32");
-	if (hdaudio_afg_probe_encoding(sc, minrate, maxrate, 32, 32, false))
+	if (hdaudio_afg_probe_encoding(sc, 32, 32, false))
 		hda_print1(sc, " 32/32");
 
 	if (sc->sc_audiodev.ad_nformats == 0) {
-		hdaudio_afg_probe_encoding(sc, minrate, maxrate, 16, 16, true);
+		hdaudio_afg_probe_encoding(sc, 16, 16, true);
 		hda_print1(sc, " 16/16*");
 	}
 
@@ -2991,6 +3042,8 @@ hdaudio_afg_hp_switch_handler(void *opaque)
 
 	for (i = 0; i < sc->sc_nassocs; i++)
 		for (j = 0; j < HDAUDIO_MAXPINS; j++) {
+			if (as[i].as_pins[j] == 0)
+				continue;
 			w = hdaudio_afg_widget_lookup(sc, as[i].as_pins[j]);
 			if (w == NULL || w->w_enable == false)
 				continue;
@@ -3006,6 +3059,8 @@ hdaudio_afg_hp_switch_handler(void *opaque)
 
 	for (i = 0; i < sc->sc_nassocs; i++)
 		for (j = 0; j < HDAUDIO_MAXPINS; j++) {
+			if (as[i].as_pins[j] == 0)
+				continue;
 			w = hdaudio_afg_widget_lookup(sc, as[i].as_pins[j]);
 			if (w == NULL || w->w_enable == false)
 				continue;
@@ -3330,7 +3385,7 @@ hdaudio_afg_round_blocksize(void *opaque, int blksize, int mode,
 	}
 
 	/* Multiple of 128 */
-	blksize &= ~128;
+	blksize &= ~127;
 	if (blksize <= 0)
 		blksize = 128;
 
@@ -3338,7 +3393,7 @@ hdaudio_afg_round_blocksize(void *opaque, int blksize, int mode,
 	if (bufsize > HDAUDIO_BDL_MAX * blksize) {
 		blksize = bufsize / HDAUDIO_BDL_MAX;
 		if (blksize & 128)
-			blksize = (blksize + 128) & ~128;
+			blksize = (blksize + 128) & ~127;
 	}
 
 	return blksize;
@@ -3552,7 +3607,7 @@ static size_t
 hdaudio_afg_round_buffersize(void *opaque, int direction, size_t bufsize)
 {
 	/* Multiple of 128 */
-	bufsize &= ~128;
+	bufsize &= ~127;
 	if (bufsize <= 0)
 		bufsize = 128;
 	return bufsize;

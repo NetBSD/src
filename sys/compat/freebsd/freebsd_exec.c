@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_exec.c,v 1.36 2008/11/19 18:36:02 ad Exp $	*/
+/*	$NetBSD: freebsd_exec.c,v 1.36.6.1 2010/08/17 06:45:38 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_exec.c,v 1.36 2008/11/19 18:36:02 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_exec.c,v 1.36.6.1 2010/08/17 06:45:38 uebayasi Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_syscall_debug.h"
@@ -63,43 +63,42 @@ void	syscall(void);
 #endif
 
 struct emul emul_freebsd = {
-	"freebsd",
-	"/emul/freebsd",
+	.e_name =		"freebsd",
+	.e_path =		"/emul/freebsd",
 #ifndef __HAVE_MINIMAL_EMUL
-	EMUL_HAS_SYS___syscall,
-	NULL,
-	FREEBSD_SYS_syscall,
-	FREEBSD_SYS_NSYSENT,
+	.e_flags =		EMUL_HAS_SYS___syscall,
+	.e_errno =		NULL,
+	.e_nosys =		FREEBSD_SYS_syscall,
+	.e_nsysent =		FREEBSD_SYS_NSYSENT,
 #endif
-	freebsd_sysent,
+	.e_sysent =		freebsd_sysent,
 #ifdef SYSCALL_DEBUG
-	freebsd_syscallnames,
+	.e_syscallnames =	freebsd_syscallnames,
 #else
-	NULL,
+	.e_syscallnames =	NULL,
 #endif
-	freebsd_sendsig,
-	trapsignal,
-	NULL,
-	freebsd_sigcode,
-	freebsd_esigcode,
-	&emul_freebsd_object,
-	freebsd_setregs,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
+	.e_sendsig =		freebsd_sendsig,
+	.e_trapsignal =		trapsignal,
+	.e_tracesig =		NULL,
+	.e_sigcode =		freebsd_sigcode,
+	.e_esigcode =		freebsd_esigcode,
+	.e_sigobject =		&emul_freebsd_object,
+	.e_setregs =		freebsd_setregs,
+	.e_proc_exec =		NULL,
+	.e_proc_fork =		NULL,
+	.e_proc_exit =		NULL,
+	.e_lwp_fork =		NULL,
+	.e_lwp_exit =		NULL,
 #ifdef __HAVE_SYSCALL_INTERN
-	freebsd_syscall_intern,
+	.e_syscall_intern =	freebsd_syscall_intern,
 #else
-	syscall,
+	.e_syscall_intern =	syscall,
 #endif
-	NULL,
-	NULL,
-
-	uvm_default_mapaddr,
-	NULL,			/* e_usertrap */
-	NULL,			/* e_sa */
-	0,			/* e_ucsize */
-	NULL,			/* e_startlwp */
+	.e_sysctlovly =		NULL,
+	.e_fault =		NULL,
+	.e_vm_default_addr =	uvm_default_mapaddr,
+	.e_usertrap =		NULL,
+	.e_sa =			NULL,
+	.e_ucsize =		0,
+	.e_startlwp =		NULL
 };

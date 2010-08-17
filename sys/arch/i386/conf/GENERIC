@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.963.2.1 2010/04/30 14:39:28 uebayasi Exp $
+# $NetBSD: GENERIC,v 1.963.2.2 2010/08/17 06:44:34 uebayasi Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.963.2.1 $"
+#ident 		"GENERIC-$Revision: 1.963.2.2 $"
 
 maxusers	64		# estimated number of users
 
@@ -35,6 +35,7 @@ no options 	COREDUMP
 # CPU-related options.
 options 	VM86		# virtual 8086 emulation
 options 	USER_LDT	# user-settable LDT; used by WINE
+#options 	PAE		# PAE mode (36 bits physical addressing)
 
 # Enhanced SpeedStep Technology in the Pentium M
 options 	ENHANCED_SPEEDSTEP
@@ -213,6 +214,7 @@ options 	INET6		# IPv6
 #options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
 #options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
+#options	MPLS		# MultiProtocol Label Switching (needs ifmpls)
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
 #options 	ISO,TPIP	# OSI
@@ -224,6 +226,7 @@ options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
 options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 options 	IPFILTER_LOG	# ipmon(8) log support
 options 	IPFILTER_LOOKUP	# ippool(8) support
+options 	IPFILTER_COMPAT # Compat for IP-Filter
 #options 	IPFILTER_DEFAULT_BLOCK	# block all packets by default
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
@@ -351,6 +354,7 @@ apm*		at acpi?		# ACPI apm emulation
 acpiacad*	at acpi?		# ACPI AC Adapter
 acpibat*	at acpi?		# ACPI Battery
 acpibut*	at acpi?		# ACPI Button
+#acpicpu*	at acpi?		# ACPI CPU
 acpidalb*	at acpi?		# ACPI Direct Application Launch Button
 # The ACPI Embedded Controller is generally configured via the special ECDT.
 # This is required as parts of the DSDT can reference the EC before the normal
@@ -454,8 +458,9 @@ amdtemp* at pci? dev ? function ?	# AMD CPU Temperature sensors
 # PCI bridges
 #amdpcib* at pci? dev ? function ?	# AMD 8111 PCI-ISA w/ HPET
 #hpet* 	at amdpcib?
-ichlpcib* at pci? dev ? function ?	# Intel ICH PCI-ISA w/ timecounter,
+ichlpcib* at pci? dev ? function ?	# Intel ICH PCI-LPC w/ timecounter,
 					# watchdog, SpeedStep and HPET
+fwhrng* at ichlpcib?		# Intel 82802 FWH Random Number Generator
 #hpet* 	at ichlpcib?
 gcscpcib* at pci? dev ? function ?	# AMD CS5535/CS5536 PCI-ISA w/
 gpio* 	at gcscpcib?			# timecounter, watchdog and GPIO
@@ -554,6 +559,16 @@ attimer0	at isa?
 pcppi0		at isa?
 sysbeep0	at pcppi?
 
+# DRI driver
+i915drm*	at vga?		# Intel i915, i945 DRM driver
+mach64drm*	at vga?		# mach64 (3D Rage Pro, Rage) DRM driver
+mgadrm*		at vga?		# Matrox G[24]00, G[45]50 DRM driver
+r128drm*	at vga?		# ATI Rage 128 DRM driver
+radeondrm*	at vga?		# ATI Radeon DRM driver
+savagedrm*	at vga?		# S3 Savage DRM driver
+sisdrm*		at vga?		# SiS DRM driver
+tdfxdrm*	at vga?		# 3dfx (voodoo) DRM driver
+
 # Serial Devices
 
 # PCI serial interfaces
@@ -614,7 +629,11 @@ lpt2	at isa? port 0x3bc
 
 # AMD 768 and 8111 power/ACPI controllers
 amdpm*	at pci? dev ? function ?	# RNG and SMBus 1.0 interface
-#iic*	at amdpm?			# sensors below are on this bus
+iic*	at amdpm?
+
+# Acer Labs M7101 SMBus controller
+alipm*	at pci? dev ? function ?
+iic*	at alipm?
 
 # Intel Core's on-die Thermal sensor
 options 	INTEL_CORETEMP
@@ -680,6 +699,10 @@ iic*	at piixpm?			# SMBus on PIIX4
 #spdmem* at iic? addr 0x51
 #spdmem* at iic? addr 0x52
 #spdmem* at iic? addr 0x53
+#spdmem* at iic? addr 0x54
+#spdmem* at iic? addr 0x55
+#spdmem* at iic? addr 0x56
+#spdmem* at iic? addr 0x57
 
 # I2O devices
 iop*	at pci? dev ? function ?	# I/O processor
@@ -1429,6 +1452,10 @@ wsmouse* at btms? mux 0
 btkbd* at bthidev? reportid ?
 wskbd* at btkbd? console ? mux 1
 
+# Bluetooth Apple Magic Mouse
+btmagic* at bthub?
+wsmouse* at btmagic? mux 0
+
 # Bluetooth Audio support
 btsco* at bthub?
 
@@ -1517,6 +1544,7 @@ pseudo-device	bpfilter		# Berkeley packet filter
 #pseudo-device	carp			# Common Address Redundancy Protocol
 pseudo-device	ipfilter		# IP filter (firewall) and NAT
 pseudo-device	loop			# network loopback
+#pseudo-device	ifmpls			# MPLS pseudo-interface
 pseudo-device	ppp			# Point-to-Point Protocol
 pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
 #options	PPPOE_SERVER            # Enable PPPoE server via link0

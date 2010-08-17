@@ -1,4 +1,4 @@
-/*	$NetBSD: pvr.c,v 1.25 2008/05/26 10:31:22 nisimura Exp $	*/
+/*	$NetBSD: pvr.c,v 1.25.18.1 2010/08/17 06:44:14 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pvr.c,v 1.25 2008/05/26 10:31:22 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pvr.c,v 1.25.18.1 2010/08/17 06:44:14 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -238,6 +238,8 @@ pvr_getdevconfig(struct fb_devconfig *dc)
 	pvrinit(dc);
 
 	dc->rinfo.ri_flg = 0;
+	if (dc == &pvr_console_dc)
+		dc->rinfo.ri_flg |= RI_NO_AUTO;
 	dc->rinfo.ri_depth = dc->dc_depth;
 	dc->rinfo.ri_bits = (void *) dc->dc_videobase;
 	dc->rinfo.ri_width = dc->dc_wid;
@@ -287,6 +289,7 @@ pvr_attach(struct device *parent, struct device *self, void *aux)
 	console = pvr_is_console;
 	if (console) {
 		sc->sc_dc = &pvr_console_dc;
+		sc->sc_dc->rinfo.ri_flg &= ~RI_NO_AUTO;
 		sc->nscreens = 1;
 	} else {
 		sc->sc_dc = malloc(sizeof(struct fb_devconfig), M_DEVBUF,
@@ -327,6 +330,10 @@ pvrioctl(void *v, void *vs, u_long cmd, void *data, int flag, struct lwp *l)
 		wsd_fbip->depth = sc->sc_dc->dc_depth;
 		wsd_fbip->cmsize = 0;	/* XXX Colormap */
 #undef wsd_fbip
+		return 0;
+
+	case WSDISPLAYIO_LINEBYTES:
+		*(u_int *)data = sc->sc_dc->rinfo.ri_stride;
 		return 0;
 
 	case WSDISPLAYIO_GETCMAP:

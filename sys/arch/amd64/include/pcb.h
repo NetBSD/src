@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.16 2009/10/27 03:05:28 rmind Exp $	*/
+/*	$NetBSD: pcb.h,v 1.16.2.1 2010/08/17 06:43:54 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -88,8 +88,7 @@
 struct pcb {
 	int	  pcb_flags;
 #define	PCB_USER_LDT	0x01		/* has user-set LDT */
-#define PCB_GS64	0x02
-#define PCB_FS64	0x04
+#define	PCB_COMPAT32	0x02
 	u_int	  pcb_cr0;		/* saved image of CR0 */
 	uint64_t pcb_rsp0;
 	uint64_t pcb_cr2;		/* page fault address (CR2) */
@@ -101,8 +100,8 @@ struct pcb {
 	struct	savefpu pcb_savefpu __aligned(16); /* floating point state */
 	void     *pcb_onfault;		/* copyin/out fault recovery */
 	struct cpu_info *pcb_fpcpu;	/* cpu holding our fp state. */
-	uint64_t  pcb_gs;
 	uint64_t  pcb_fs;
+	uint64_t  pcb_gs;
 	int pcb_iopl;
 };
 

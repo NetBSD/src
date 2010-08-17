@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.66.2.2 2010/04/30 14:39:58 uebayasi Exp $	*/
+/*	$NetBSD: cpu.c,v 1.66.2.3 2010/08/17 06:45:33 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.66.2.2 2010/04/30 14:39:58 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.66.2.3 2010/08/17 06:45:33 uebayasi Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -186,6 +186,9 @@ paddr_t mp_trampoline_paddr = MP_TRAMPOLINE;
 static vaddr_t cmos_data_mapping;
 struct cpu_info *cpu_starting;
 
+void (*cpu_freq_init)(int) = NULL;
+struct sysctllog *cpu_freq_sysctllog = NULL;
+
 void    	cpu_hatch(void *);
 static void    	cpu_boot_secondary(struct cpu_info *ci);
 static void    	cpu_start_secondary(struct cpu_info *ci);
@@ -301,10 +304,9 @@ cpu_attach(device_t parent, device_t self, void *aux)
 			return;
 		}
 		aprint_naive(": Application Processor\n");
-		ptr = (uintptr_t)kmem_alloc(sizeof(*ci) + CACHE_LINE_SIZE - 1,
+		ptr = (uintptr_t)kmem_zalloc(sizeof(*ci) + CACHE_LINE_SIZE - 1,
 		    KM_SLEEP);
 		ci = (struct cpu_info *)roundup2(ptr, CACHE_LINE_SIZE);
-		memset(ci, 0, sizeof(*ci));
 		ci->ci_curldt = -1;
 #ifdef TRAPLOG
 		ci->ci_tlog_base = kmem_zalloc(sizeof(struct tlog), KM_SLEEP);
@@ -332,6 +334,7 @@ cpu_attach(device_t parent, device_t self, void *aux)
 	ci->ci_self = ci;
 	sc->sc_info = ci;
 	ci->ci_dev = self;
+	ci->ci_acpiid = caa->cpu_id;
 	ci->ci_cpuid = caa->cpu_number;
 	ci->ci_func = caa->cpu_func;
 
@@ -425,6 +428,7 @@ cpu_attach(device_t parent, device_t self, void *aux)
 		panic("unknown processor type??\n");
 	}
 
+	pat_init(ci);
 	atomic_or_32(&cpus_attached, ci->ci_cpumask);
 
 	if (!pmf_device_register(self, cpu_suspend, cpu_resume))
@@ -718,9 +722,18 @@ cpu_hatch(void *v)
 
 	KASSERT((ci->ci_flags & CPUF_RUNNING) == 0);
 
-	lcr3(pmap_kernel()->pm_pdirpa);
+#ifdef PAE
+	pd_entry_t * l3_pd = ci->ci_pae_l3_pdir;
+	for (i = 0 ; i < PDP_SIZE; i++) {
+		l3_pd[i] = pmap_kernel()->pm_pdirpa[i] | PG_V;
+	}
+	lcr3(ci->ci_pae_l3_pdirpa);
+#else
+	lcr3(pmap_pdirpa(pmap_kernel(), 0));
+#endif
+
 	pcb = lwp_getpcb(curlwp);
-	pcb->pcb_cr3 = pmap_kernel()->pm_pdirpa;
+	pcb->pcb_cr3 = rcr3();
 	pcb = lwp_getpcb(ci->ci_data.cpu_idlelwp);
 	lcr0(pcb->pcb_cr0);
 
@@ -813,6 +826,8 @@ cpu_copy_trampoline(void)
 static void
 tss_init(struct i386tss *tss, void *stack, void *func)
 {
+	KASSERT(curcpu()->ci_pmap == pmap_kernel());
+
 	memset(tss, 0, sizeof *tss);
 	tss->tss_esp0 = tss->tss_esp = (int)((char *)stack + USPACE - 16);
 	tss->tss_ss0 = GSEL(GDATA_SEL, SEL_KPL);
@@ -820,7 +835,8 @@ tss_init(struct i386tss *tss, void *stack, void *func)
 	tss->tss_fs = GSEL(GCPU_SEL, SEL_KPL);
 	tss->tss_gs = tss->__tss_es = tss->__tss_ds =
 	    tss->__tss_ss = GSEL(GDATA_SEL, SEL_KPL);
-	tss->tss_cr3 = pmap_kernel()->pm_pdirpa;
+	/* %cr3 contains the value associated to pmap_kernel */
+	tss->tss_cr3 = rcr3();
 	tss->tss_esp = (int)((char *)stack + USPACE - 16);
 	tss->tss_ldt = GSEL(GLDT_SEL, SEL_KPL);
 	tss->__tss_eflags = PSL_MBO | PSL_NT;	/* XXX not needed? */
@@ -1094,4 +1110,27 @@ x86_cpu_idle_halt(void)
 	} else {
 		x86_enable_intr();
 	}
+}
+
+/*
+ * Loads pmap for the current CPU.
+ */
+void
+cpu_load_pmap(struct pmap *pmap)
+{
+#ifdef PAE
+	int i, s;
+	struct cpu_info *ci;
+
+	s = splvm(); /* just to be safe */
+	ci = curcpu();
+	pd_entry_t *l3_pd = ci->ci_pae_l3_pdir;
+	for (i = 0 ; i < PDP_SIZE; i++) {
+		l3_pd[i] = pmap->pm_pdirpa[i] | PG_V;
+	}
+	splx(s);
+	tlbflush();
+#else /* PAE */
+	lcr3(pmap_pdirpa(pmap, 0));
+#endif /* PAE */
 }

@@ -1,4 +1,4 @@
-$NetBSD: README,v 1.52 2009/12/05 16:29:12 pooka Exp $
+$NetBSD: README,v 1.52.2.1 2010/08/17 06:43:48 uebayasi Exp $
 
 acorn26:	Acorn ARM2- and ARM3-based machines (arm, 20000509)
 acorn32:	Acorn computers Ltd. ARM 6/7/SA based machines (arm, 20011118)
@@ -25,6 +25,7 @@ hpcarm:		ARM based handheld PCs (arm, 20010220)
 hpcmips:	MIPS based handheld PCs (mips, 19990925)
 hpcsh:		Hitachi SuperH(TM) based handheld PCs (sh3, 20010117)
 i386:		Intel/AMD etc. x86 processor line (i386, 19930321)
+ia64:		Intel Itanium/Itanium2 processor based workstations (ia64, -)
 ibmnws:		IBM Network Station Thin Clients (powerpc, -)
 iyonix:		Castle Technology xscale based workstations (arm, 20040713)
 landisk:	SH4 processor based NAS appliances by I-O DATA (sh3, 20060901)
@@ -74,3 +75,4 @@ sun68k:		Sun Microsystems Motorola 680x0 CPU based platform files
 
 Single port cpu families
 alpha:		Digital Equipment Alpha processor
+ia64:		Intel Itanium/Itanium2 processor

@@ -1,4 +1,4 @@
-.\" $NetBSD: iwn.4,v 1.7 2009/05/18 02:41:23 snj Exp $
+.\" $NetBSD: iwn.4,v 1.7.2.1 2010/08/17 06:40:02 uebayasi Exp $
 .\"
 .\" Copyright (c) 2007,2008
 .\"	Damien Bergamini <damien.bergamini@free.fr>. All rights reserved.
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd May 18, 2009
+.Dd May 27, 2010
 .Dt IWN 4
 .Os
 .Sh NAME
@@ -182,6 +182,11 @@ Make sure the laptop radio switch is on.
 For some reason, the driver was unable to read the firmware image from the
 filesystem.
 The file might be missing or corrupted.
+.It "iwn%d: could not get firmware handle %s"
+.It "iwn%d: could not read firmware"
+The driver was unable to find the file with the proper firmware image.
+It should be located in
+.Pa /libdata/firmware/if_iwn .
 .It "iwn%d: firmware file too short: %d bytes"
 The firmware image is corrupted and can't be loaded into the adapter.
 .It "iwn%d: could not load firmware"

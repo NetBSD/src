@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_raidvar.h,v 1.11 2009/05/12 14:16:53 cegger Exp $	*/
+/*	$NetBSD: ata_raidvar.h,v 1.11.2.1 2010/08/17 06:46:03 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -67,8 +67,8 @@
 struct ataraid_disk_info {
 	device_t adi_dev;		/* disk's device */
 	int	adi_status;		/* disk's status */
-	u_int	adi_sectors;
-	u_int	adi_compsize;		/* in sectors */
+	uint64_t	adi_sectors;
+	uint64_t	adi_compsize;		/* in sectors */
 };
 
 /* adi_status */
@@ -94,12 +94,13 @@ struct ataraid_array_info {
 	u_int	aai_heads;		/* tracks/cyl */
 	u_int	aai_sectors;		/* secs/track */
 	u_int	aai_cylinders;		/* cyl/unit */
-	u_int	aai_capacity;		/* in sectors */
-	u_int	aai_offset;		/* component start offset */
-	u_int	aai_reserved;		/* component reserved sectors */
+	uint64_t	aai_capacity;		/* in sectors */
+	daddr_t		aai_offset;		/* component start offset */
+	uint64_t	aai_reserved;		/* component reserved sectors */
 
 	char	aai_name[32];		/* array volume name */
 
+	uint aai_curdisk;	/* to enumerate component disks */
 	struct ataraid_disk_info aai_disks[ATA_RAID_MAX_DISKS];
 };
 

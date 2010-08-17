@@ -1,4 +1,4 @@
-/* $NetBSD: pad.c,v 1.12.2.1 2010/04/30 14:43:29 uebayasi Exp $ */
+/* $NetBSD: pad.c,v 1.12.2.2 2010/08/17 06:46:21 uebayasi Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pad.c,v 1.12.2.1 2010/04/30 14:43:29 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pad.c,v 1.12.2.2 2010/08/17 06:46:21 uebayasi Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -359,8 +359,10 @@ pad_read(dev_t dev, struct uio *uio, int flags)
 			    hz/100);
 			if (err != 0 && err != EWOULDBLOCK) {
 				mutex_exit(&sc->sc_mutex);
-				aprint_error_dev(sc->sc_dev,
-				    "cv_timedwait_sig returned %d\n", err);
+				if (err != ERESTART)
+					aprint_error_dev(sc->sc_dev,
+					    "cv_timedwait_sig returned %d\n",
+					    err);
 				return EINTR;
 			}
 			intr = sc->sc_intr;
@@ -593,7 +595,7 @@ static struct cfdata pad_cfdata[] = {
 		.cf_flags = 0,
 		.cf_pspec = NULL,
 	},
-	{ NULL }
+	{ NULL, NULL, 0, 0, NULL, 0, NULL }
 };
 
 static int

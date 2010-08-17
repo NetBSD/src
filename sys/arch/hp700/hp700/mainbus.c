@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.58.2.1 2010/04/30 14:39:23 uebayasi Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.58.2.2 2010/08/17 06:44:24 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,10 +58,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.58.2.1 2010/04/30 14:39:23 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.58.2.2 2010/08/17 06:44:24 uebayasi Exp $");
 
 #include "locators.h"
 #include "power.h"
+#include "lcd.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,6 +83,10 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.58.2.1 2010/04/30 14:39:23 uebayasi Ex
 #include <hp700/dev/cpudevs.h>
 
 static struct pdc_hpa pdc_hpa PDC_ALIGNMENT;
+#if NLCD > 0
+static struct pdc_chassis_info pdc_chassis_info PDC_ALIGNMENT;
+static struct pdc_chassis_lcd pdc_chassis_lcd PDC_ALIGNMENT;
+#endif
 
 #ifdef MBUSDEBUG
 
@@ -1000,10 +1005,6 @@ mbus_dmamap_sync(void *v, bus_dmamap_t map, bus_addr_t offset, bus_size_t len,
 		panic("mbus_dmamap_sync: bad length");
 #endif
 	
-	/* If the whole DMA map is marked as BUS_DMA_COHERENT, do nothing. */
-	if ((map->_dm_flags & BUS_DMA_COHERENT) != 0)
-		return;
-
 	/*
 	 * For a virtually-indexed write-back cache, we need to do the
 	 * following things:
@@ -1061,6 +1062,9 @@ mbus_dmamem_alloc(void *v, bus_size_t size, bus_size_t alignment,
 	int seg;
 	int error;
 
+	DPRINTF(("%s: size 0x%lx align 0x%lx bdry %0lx segs %p nsegs %d\n",
+	    __func__, size, alignment, boundary, segs, nsegs));
+
 	/* Always round the size. */
 	size = round_page(size);
 
@@ -1081,6 +1085,9 @@ mbus_dmamem_alloc(void *v, bus_size_t size, bus_size_t alignment,
 
 	/* If we don't have the pages. */
 	if (error) {
+		DPRINTF(("%s: uvm_pglistalloc(%lx, %lx, %lx, 0, 0, %p, %d, %0x)"
+		    " failed", __func__, size, low, high, mlist, nsegs,
+		    (flags & BUS_DMA_NOWAIT) == 0));
 		free(mlist, M_DEVBUF);
 		return (error);
 	}
@@ -1096,10 +1103,12 @@ mbus_dmamem_alloc(void *v, bus_size_t size, bus_size_t alignment,
 				free(mlist, M_DEVBUF);
 				return (ENOMEM);
 			}
-			segs[seg].ds_addr = 0;
-			segs[seg].ds_len = 0;
+			segs[seg].ds_addr = pa;
+			segs[seg].ds_len = PAGE_SIZE;
+			segs[seg]._ds_mlist = NULL;
 			segs[seg]._ds_va = 0;
-		}
+		} else
+			segs[seg].ds_len += PAGE_SIZE;
 		pa_next = pa + PAGE_SIZE;
 	}
 	*rsegs = seg + 1;
@@ -1143,10 +1152,11 @@ int
 mbus_dmamem_map(void *v, bus_dma_segment_t *segs, int nsegs, size_t size,
     void **kvap, int flags)
 {
-	struct vm_page *pg;
-	struct pglist *pglist;
+	bus_addr_t addr;
 	vaddr_t va;
-	paddr_t pa;
+	int curseg;
+	u_int pmflags =
+	    hppa_cpu_hastlbu_p() ? PMAP_NOCACHE : 0;
 	const uvm_flag_t kmflags =
 	    (flags & BUS_DMA_NOWAIT) != 0 ? UVM_KMF_NOWAIT : 0;
 
@@ -1157,20 +1167,21 @@ mbus_dmamem_map(void *v, bus_dma_segment_t *segs, int nsegs, size_t size,
 	if (__predict_false(va == 0))
 		return (ENOMEM);
 
-	/* Stash that in the first segment. */
-	segs[0]._ds_va = va;
 	*kvap = (void *)va;
 
-	/* Map the allocated pages into the chunk. */
-	pglist = segs[0]._ds_mlist;
-	TAILQ_FOREACH(pg, pglist, pageq.queue) {
-		KASSERT(size != 0);
-		pa = VM_PAGE_TO_PHYS(pg);
-		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE,
-		    PMAP_NOCACHE);
+	for (curseg = 0; curseg < nsegs; curseg++) {
+		segs[curseg]._ds_va = va;
+		for (addr = segs[curseg].ds_addr;
+		     addr < (segs[curseg].ds_addr + segs[curseg].ds_len); ) {
+			KASSERT(size != 0);
 
-		va += PAGE_SIZE;
-		size -= PAGE_SIZE;
+			pmap_kenter_pa(va, addr, VM_PROT_READ | VM_PROT_WRITE,
+			   pmflags);
+
+			addr += PAGE_SIZE;
+			va += PAGE_SIZE;
+			size -= PAGE_SIZE;
+		}
 	}
 	pmap_update();
 	return (0);
@@ -1395,6 +1406,24 @@ mbattach(device_t parent, device_t self, void *aux)
 	config_found(self, &nca, mbprint);
 #endif
 
+#if NLCD > 0
+	if (!pdc_call((iodcio_t)pdc, 0, PDC_CHASSIS, PDC_CHASSIS_INFO,
+	    &pdc_chassis_info, &pdc_chassis_lcd, sizeof(pdc_chassis_lcd)) &&
+	    pdc_chassis_lcd.enabled) {
+		memset(&nca, 0, sizeof(nca));
+		nca.ca_name = "lcd";
+		nca.ca_dp.dp_bc[0] = nca.ca_dp.dp_bc[1] = nca.ca_dp.dp_bc[2] = 
+		nca.ca_dp.dp_bc[3] = nca.ca_dp.dp_bc[4] = nca.ca_dp.dp_bc[5] = -1;
+		nca.ca_dp.dp_mod = -1;
+		nca.ca_irq = -1;
+		nca.ca_iot = &hppa_bustag;
+		nca.ca_hpa = pdc_chassis_lcd.cmd_addr;
+		nca.ca_pdc_iodc_read = (void *)&pdc_chassis_lcd;
+
+		config_found(self, &nca, mbprint);
+	}
+#endif	
+
 	switch (cpu_hvers) {
 	case HPPA_BOARD_HP809:
 	case HPPA_BOARD_HP819:
@@ -1479,12 +1508,15 @@ mbprint(void *aux, const char *pnp)
 		aprint_normal("\"%s\" at %s (type 0x%x, sv 0x%x)", ca->ca_name,
 		    pnp, ca->ca_type.iodc_type, ca->ca_type.iodc_sv_model);
 	if (ca->ca_hpa) {
-		aprint_normal(" hpa 0x%lx path ", ca->ca_hpa);
-		for (n = 0; n < 6; n++) {
-			if (ca->ca_dp.dp_bc[n] >= 0)
-				aprint_normal("%d/", ca->ca_dp.dp_bc[n]);
+		aprint_normal(" hpa 0x%lx", ca->ca_hpa);
+		if (ca->ca_dp.dp_mod >=0) {
+			aprint_normal(" path ");
+			for (n = 0; n < 6; n++) {
+				if (ca->ca_dp.dp_bc[n] >= 0)
+					aprint_normal("%d/", ca->ca_dp.dp_bc[n]);
+			}
+			aprint_normal("%d", ca->ca_dp.dp_mod);
 		}
-		aprint_normal("%d", ca->ca_dp.dp_mod);
 		if (!pnp && ca->ca_irq >= 0) {
 			aprint_normal(" irq %d", ca->ca_irq);
 			if (ca->ca_type.iodc_type != HPPA_TYPE_BHA)

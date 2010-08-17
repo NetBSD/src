@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.176.2.1 2010/04/30 14:44:15 uebayasi Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.176.2.2 2010/08/17 06:47:37 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.176.2.1 2010/04/30 14:44:15 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.176.2.2 2010/08/17 06:47:37 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -227,7 +227,7 @@ genfs_eopnotsupp(void *v)
 				}
 				break;
 			case VDESC_VP0_WILLUNLOCK:
-				VOP_UNLOCK(vp, 0);
+				VOP_UNLOCK(vp);
 				break;
 			case VDESC_VP0_WILLRELE:
 				vrele(vp);
@@ -288,13 +288,18 @@ genfs_lock(void *v)
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	int flags = ap->a_flags;
+	krw_t op;
 
-	if ((flags & LK_INTERLOCK) != 0) {
-		flags &= ~LK_INTERLOCK;
-		mutex_exit(&vp->v_interlock);
-	}
+	KASSERT((flags & ~(LK_EXCLUSIVE | LK_SHARED | LK_NOWAIT)) == 0);
 
-	return (vlockmgr(vp->v_vnlock, flags));
+	op = ((flags & LK_EXCLUSIVE) != 0 ? RW_WRITER : RW_READER);
+
+	if ((flags & LK_NOWAIT) != 0)
+		return (rw_tryenter(&vp->v_lock, op) ? 0 : EBUSY);
+
+	rw_enter(&vp->v_lock, op);
+
+	return 0;
 }
 
 /*
@@ -305,13 +310,12 @@ genfs_unlock(void *v)
 {
 	struct vop_unlock_args /* {
 		struct vnode *a_vp;
-		int a_flags;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 
-	KASSERT(ap->a_flags == 0);
+	rw_exit(&vp->v_lock);
 
-	return (vlockmgr(vp->v_vnlock, LK_RELEASE));
+	return 0;
 }
 
 /*
@@ -325,7 +329,13 @@ genfs_islocked(void *v)
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 
-	return (vlockstatus(vp->v_vnlock));
+	if (rw_write_held(&vp->v_lock))
+		return LK_EXCLUSIVE;
+
+	if (rw_read_held(&vp->v_lock))
+		return LK_SHARED;
+
+	return 0;
 }
 
 /*
@@ -334,18 +344,7 @@ genfs_islocked(void *v)
 int
 genfs_nolock(void *v)
 {
-	struct vop_lock_args /* {
-		struct vnode *a_vp;
-		int a_flags;
-		struct lwp *a_l;
-	} */ *ap = v;
 
-	/*
-	 * Since we are not using the lock manager, we must clear
-	 * the interlock here.
-	 */
-	if (ap->a_flags & LK_INTERLOCK)
-		mutex_exit(&ap->a_vp->v_interlock);
 	return (0);
 }
 

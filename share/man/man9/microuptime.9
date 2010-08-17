@@ -1,4 +1,4 @@
-.\" $NetBSD: microuptime.9,v 1.8 2008/11/28 10:52:22 tsutsui Exp $
+.\" $NetBSD: microuptime.9,v 1.8.4.1 2010/08/17 06:40:05 uebayasi Exp $
 .\"
 .\" Copyright (c) 2000 Kelly Yancey
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\"
 .\" $FreeBSD: src/share/man/man9/microuptime.9,v 1.7 2005/01/12 21:48:25 ru Exp $
 .\"
-.Dd November 24, 2008
+.Dd June 8, 2010
 .Dt MICROUPTIME 9
 .Os
 .Sh NAME
@@ -73,6 +73,8 @@ and
 .Fn getnanouptime
 functions store the elapsed time as a
 .Vt "struct timespec" .
+The used structures are described in
+.Xr timeval 3 .
 .Pp
 The
 .Fn binuptime ,
@@ -105,13 +107,7 @@ machine, see
 .Xr hz 9 )
 is acceptable or where performance is priority.
 .Sh SEE ALSO
-.Xr bintime 9 ,
-.Xr getbintime 9 ,
-.Xr getmicrotime 9 ,
-.Xr getnanotime 9 ,
-.Xr hz 9 ,
 .Xr microtime 9 ,
-.Xr nanotime 9 ,
 .Xr timecounter 9 ,
 .Xr tvtohz 9
 .Sh AUTHORS
