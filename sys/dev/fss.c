@@ -1,4 +1,4 @@
-/*	$NetBSD: fss.c,v 1.65.2.1 2010/04/30 14:43:04 uebayasi Exp $	*/
+/*	$NetBSD: fss.c,v 1.65.2.2 2010/08/17 06:45:57 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.65.2.1 2010/04/30 14:43:04 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.65.2.2 2010/08/17 06:45:57 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -629,7 +629,7 @@ fss_create_files(struct fss_softc *sc, struct fss_set *fss,
 			if (FSS_FSBSIZE(sc) == fsbsize)
 				break;
 		if (sc->sc_bs_bshift >= bits) {
-			VOP_UNLOCK(sc->sc_bs_vp, 0);
+			VOP_UNLOCK(sc->sc_bs_vp);
 			return EINVAL;
 		}
 
@@ -639,7 +639,7 @@ fss_create_files(struct fss_softc *sc, struct fss_set *fss,
 		error = VFS_SNAPSHOT(sc->sc_mount, sc->sc_bs_vp, &ts);
 		TIMESPEC_TO_TIMEVAL(&sc->sc_time, &ts);
 
-		VOP_UNLOCK(sc->sc_bs_vp, 0);
+		VOP_UNLOCK(sc->sc_bs_vp);
 
 		return error;
 	}
@@ -679,7 +679,7 @@ fss_create_files(struct fss_softc *sc, struct fss_set *fss,
 	NDINIT(&nd2, LOOKUP, FOLLOW, UIO_USERSPACE, fss->fss_bstore);
 	if ((error = vn_open(&nd2, FREAD|FWRITE, 0)) != 0)
 		return error;
-	VOP_UNLOCK(nd2.ni_vp, 0);
+	VOP_UNLOCK(nd2.ni_vp);
 
 	sc->sc_bs_vp = nd2.ni_vp;
 
@@ -966,7 +966,7 @@ fss_bs_io(struct fss_softc *sc, fss_io_type rw,
 		    round_page(off+len), PGO_CLEANIT|PGO_SYNCIO|PGO_FREE);
 	}
 
-	VOP_UNLOCK(sc->sc_bs_vp, 0);
+	VOP_UNLOCK(sc->sc_bs_vp);
 
 	return error;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: ofnet.c,v 1.49.2.1 2010/04/30 14:43:28 uebayasi Exp $	*/
+/*	$NetBSD: ofnet.c,v 1.49.2.2 2010/08/17 06:46:21 uebayasi Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofnet.c,v 1.49.2.1 2010/04/30 14:43:28 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofnet.c,v 1.49.2.2 2010/08/17 06:46:21 uebayasi Exp $");
 
 #include "ofnet.h"
 #include "opt_inet.h"
@@ -418,8 +418,6 @@ ofnet_watchdog(struct ifnet *ifp)
 static void
 ipkdbofstart(struct ipkdb_if *kip)
 {
-	int unit = kip->unit - 1;
-
 	if (ipkdb_of)
 		ipkdbattach(kip, &ipkdb_of->sc_ethercom);
 }

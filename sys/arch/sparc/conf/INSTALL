@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.72.2.1 2010/04/30 14:39:49 uebayasi Exp $
+#	$NetBSD: INSTALL,v 1.72.2.2 2010/08/17 06:45:13 uebayasi Exp $
 #
 # from: NetBSD: GENERIC,v 1.84 1999/06/06 13:00:03 mrg Exp
 #
@@ -43,8 +43,8 @@ options 	SUN4_MMU3L	# 3-level MMU on sun4/400
 ## Use a faster console than the PROM's slow drawing routines.  Not needed
 ## for headless (no framebuffer) machines.
 #options 	RASTERCONSOLE		# fast rasterop console
-#options 	FONT_GALLANT12x22	# the console font
-#options 	FONT_BOLD8x16		# a somewhat smaller font
+options 	FONT_GALLANT12x22	# the console font
+options 	FONT_BOLD8x16		# a somewhat smaller font
 #options 	RASTERCONSOLE_FGCOL=WSCOL_BLACK
 #options 	RASTERCONSOLE_BGCOL=WSCOL_WHITE
 

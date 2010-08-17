@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.h,v 1.35.2.1 2010/04/30 14:44:29 uebayasi Exp $	*/
+/*	$NetBSD: rump.h,v 1.35.2.2 2010/08/17 06:47:57 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -46,6 +46,7 @@ struct stat;
 struct kauth_cred;
 struct lwp;
 struct modinfo;
+struct uio;
 
 /* yetch */
 #if defined(__NetBSD__)
@@ -103,9 +104,11 @@ void	rump_boot_setsigmodel(enum rump_sigmodel);
 void	rump_schedule(void);
 void	rump_unschedule(void);
 
+void	rump_printevcnts(void);
+
 int	rump__init(int);
 
-#ifndef _RUMPKERNEL
+#ifndef _KERNEL
 #include <rump/rumpkern_if_pub.h>
 #include <rump/rumpvfs_if_pub.h>
 #include <rump/rumpnet_if_pub.h>

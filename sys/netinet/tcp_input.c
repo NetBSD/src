@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.300.2.1 2010/04/30 14:44:21 uebayasi Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.300.2.2 2010/08/17 06:47:47 uebayasi Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -145,7 +145,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.300.2.1 2010/04/30 14:44:21 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.300.2.2 2010/08/17 06:47:47 uebayasi Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -4207,6 +4207,11 @@ syn_cache_add(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 		syn_cache_insert(sc, tp);
 	} else {
 		s = splsoftnet();
+		/*
+		 * syn_cache_put() will try to schedule the timer, so
+		 * we need to initialize it
+		 */
+		SYN_CACHE_TIMER_ARM(sc);
 		syn_cache_put(sc);
 		splx(s);
 		TCP_STATINC(TCP_STAT_SC_DROPPED);

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_subr.S,v 1.39 2009/12/10 05:10:03 rmind Exp $	*/
+/*	$NetBSD: locore_subr.S,v 1.39.2.1 2010/08/17 06:45:04 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -340,3 +340,19 @@ ENTRY(cpu_spinstart)
 	b	_C_LABEL(idle_loop)
 
 #endif /*MULTIPROCESSOR + OEA*/
+
+/*
+ * int do_ucas_32(int32_t *uptr, int32_t old, int32_t new, int32_t *ret);
+ */	
+ENTRY(do_ucas_32)
+1:
+	lwarx	%r10,0,%r3
+	cmpw	%r10, %r4
+	bne	2f
+	stwcx.	%r5,0,%r3
+	bne	1b
+	mr	%r5,%r10
+2:
+	li	%r3,0
+	stw	%r10,0(%r6)
+	blr

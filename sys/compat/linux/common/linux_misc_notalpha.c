@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc_notalpha.c,v 1.106 2009/06/02 13:00:23 njoly Exp $	*/
+/*	$NetBSD: linux_misc_notalpha.c,v 1.106.2.1 2010/08/17 06:45:49 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc_notalpha.c,v 1.106 2009/06/02 13:00:23 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc_notalpha.c,v 1.106.2.1 2010/08/17 06:45:49 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,7 +79,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_misc_notalpha.c,v 1.106 2009/06/02 13:00:23 nj
 #endif
 
 #ifndef COMPAT_LINUX32
-#if !defined(__m68k__) && !defined(__amd64__)
+#if !defined(__amd64__)
 static void bsd_to_linux_statfs64(const struct statvfs *,
 	struct linux_statfs64  *);
 #endif
@@ -403,7 +403,7 @@ linux_sys_stime(struct lwp *l, const struct linux_sys_stime_args *uap, register_
 }
 #endif /* !amd64 */
 
-#if !defined(__m68k__) && !defined(__amd64__)
+#if !defined(__amd64__)
 /*
  * Convert NetBSD statvfs structure to Linux statfs64 structure.
  * See comments in bsd_to_linux_statfs() for further background.

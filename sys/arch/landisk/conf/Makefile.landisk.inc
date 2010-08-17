@@ -1,5 +1,3 @@
-#	$NetBSD: Makefile.landisk.inc,v 1.4 2008/02/02 05:53:40 uwe Exp $
+#	$NetBSD: Makefile.landisk.inc,v 1.4.30.1 2010/08/17 06:44:44 uebayasi Exp $
 
-.if ${OBJECT_FMT} == "ELF"
 LINKFORMAT=	-N
-.endif

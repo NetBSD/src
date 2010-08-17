@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_machdep.c,v 1.1 2009/07/20 04:41:36 kiyohara Exp $	*/
+/*	$NetBSD: acpi_machdep.c,v 1.1.4.1 2010/08/17 06:44:41 uebayasi Exp $	*/
 /*
  * Copyright (c) 2009 KIYOHARA Takashi
  * All rights reserved.
@@ -28,7 +28,7 @@
  * Machine-dependent routines for ACPICA.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.1 2009/07/20 04:41:36 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.1.4.1 2010/08/17 06:44:41 uebayasi Exp $");
 
 #include <sys/param.h>
 
@@ -198,10 +198,4 @@ acpi_md_sleep(int state)
 {
 printf("%s: not yet...\n", __func__);
 	return 0;
-}
-
-void
-wbinvd(void)
-{
-printf("%s: not yet...\n", __func__);
 }

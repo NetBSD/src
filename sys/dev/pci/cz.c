@@ -1,4 +1,4 @@
-/*	$NetBSD: cz.c,v 1.53 2009/11/26 15:17:09 njoly Exp $	*/
+/*	$NetBSD: cz.c,v 1.53.2.1 2010/08/17 06:46:23 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cz.c,v 1.53 2009/11/26 15:17:09 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cz.c,v 1.53.2.1 2010/08/17 06:46:23 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -613,8 +613,8 @@ cz_load_firmware(struct cz_softc *cz)
 	cz->cz_fwctl = bus_space_read_4(cz->cz_win_st, cz->cz_win_sh,
 	    ZFIRM_CTRLADDR_OFF);
 #ifdef CZ_DEBUG
-	aprint_debug_dev(&cz->cz_dev, "FWCTL structure at offset 0x%08lx\n",
-	    cz->cz_fwctl);
+	aprint_debug_dev(&cz->cz_dev, "FWCTL structure at offset "
+	    "%#08" PRIxPADDR "\n", cz->cz_fwctl);
 #endif
 
 	CZ_FWCTL_WRITE(cz, BRDCTL_C_OS, C_OS_BSD);

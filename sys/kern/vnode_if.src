@@ -1,4 +1,4 @@
-#	$NetBSD: vnode_if.src,v 1.58 2008/11/15 19:08:12 pooka Exp $
+#	$NetBSD: vnode_if.src,v 1.58.6.1 2010/08/17 06:47:35 uebayasi Exp $
 #
 # Copyright (c) 1992, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -396,7 +396,6 @@ vop_lock {
 #
 vop_unlock {
 	IN LOCKED=YES struct vnode *vp;
-	IN int flags;
 };
 
 #

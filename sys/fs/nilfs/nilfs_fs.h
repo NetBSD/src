@@ -1,4 +1,4 @@
-/* $NetBSD: nilfs_fs.h,v 1.1 2009/07/18 16:31:42 reinoud Exp $ */
+/* $NetBSD: nilfs_fs.h,v 1.1.6.1 2010/08/17 06:47:17 uebayasi Exp $ */
 
 /*
  * Copyright (c) 2008, 2009 Reinoud Zandijk
@@ -276,8 +276,7 @@ struct nilfs_super_block {
          uint16_t s_segment_usage_size;    /* size of a segment usage        */
 
          uint8_t  s_uuid[16];              /* 128-bit uuid for volume        */
-         char     s_volume_name[16];       /* volume name                    */
-         char     s_last_mounted[64];      /* directory where last mounted   */
+         char     s_volume_name[80];       /* volume name                    */
 
          uint32_t s_c_interval;            /* commit interval of segment     */
          uint32_t s_c_block_max;           /* threshold of data amount for
@@ -423,6 +422,7 @@ struct nilfs_segment_summary {
          uint32_t ss_nfinfo;		/* number of finfo structures follow */
          uint32_t ss_sumbytes;		/* total size of segment summary     */
          uint32_t ss_pad;
+	 uint64_t ss_cno;		/* latest checkpoint number known    */
          /* stream of finfo structures */
 };
 

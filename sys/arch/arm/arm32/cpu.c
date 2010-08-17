@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.72 2010/01/23 15:58:13 mrg Exp $	*/
+/*	$NetBSD: cpu.c,v 1.72.2.1 2010/08/17 06:44:01 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -46,7 +46,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.72 2010/01/23 15:58:13 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.72.2.1 2010/08/17 06:44:01 uebayasi Exp $");
 
 #include <sys/systm.h>
 #include <sys/malloc.h>
@@ -184,6 +184,7 @@ enum cpu_class {
 	CPU_CLASS_XSCALE,
 	CPU_CLASS_ARM11J,
 	CPU_CLASS_ARMV4,
+	CPU_CLASS_CORTEX,
 };
 
 static const char * const generic_steppings[16] = {
@@ -406,9 +407,16 @@ const struct cpuidtab cpuids[] = {
 	  pN_steppings },
 	{ CPU_ID_ARM1176JS,	CPU_CLASS_ARM11J,	"ARM1176J-S r0",
 	  pN_steppings },
-	{ CPU_ID_CORTEXA8R1,	CPU_CLASS_ARM11J,	"Cortex-A8 r1",
+
+	{ CPU_ID_CORTEXA8R1,	CPU_CLASS_CORTEX,	"Cortex-A8 r1",
 	  pN_steppings },
-	{ CPU_ID_CORTEXA8R2,	CPU_CLASS_ARM11J,	"Cortex-A8 r2",
+	{ CPU_ID_CORTEXA8R2,	CPU_CLASS_CORTEX,	"Cortex-A8 r2",
+	  pN_steppings },
+	{ CPU_ID_CORTEXA8R3,	CPU_CLASS_CORTEX,	"Cortex-A8 r3",
+	  pN_steppings },
+	{ CPU_ID_CORTEXA9R1,	CPU_CLASS_CORTEX,	"Cortex-A9 r1",
+	  pN_steppings },
+	{ CPU_ID_CORTEXA8R3,	CPU_CLASS_ARM11J,	"Cortex-A8 r3",
 	  pN_steppings },
 
 	{ CPU_ID_FA526,		CPU_CLASS_ARMV4,	"FA526",
@@ -423,23 +431,24 @@ struct cpu_classtab {
 };
 
 const struct cpu_classtab cpu_classes[] = {
-	{ "unknown",	NULL },			/* CPU_CLASS_NONE */
-	{ "ARM2",	"CPU_ARM2" },		/* CPU_CLASS_ARM2 */
-	{ "ARM2as",	"CPU_ARM250" },		/* CPU_CLASS_ARM2AS */
-	{ "ARM3",	"CPU_ARM3" },		/* CPU_CLASS_ARM3 */
-	{ "ARM6",	"CPU_ARM6" },		/* CPU_CLASS_ARM6 */
-	{ "ARM7",	"CPU_ARM7" },		/* CPU_CLASS_ARM7 */
-	{ "ARM7TDMI",	"CPU_ARM7TDMI" },	/* CPU_CLASS_ARM7TDMI */
-	{ "ARM8",	"CPU_ARM8" },		/* CPU_CLASS_ARM8 */
-	{ "ARM9TDMI",	NULL },			/* CPU_CLASS_ARM9TDMI */
-	{ "ARM9E-S",	"CPU_ARM9E" },		/* CPU_CLASS_ARM9ES */
-	{ "ARM9EJ-S",	"CPU_ARM9E" },		/* CPU_CLASS_ARM9EJS */
-	{ "ARM10E",	"CPU_ARM10" },		/* CPU_CLASS_ARM10E */
-	{ "ARM10EJ",	"CPU_ARM10" },		/* CPU_CLASS_ARM10EJ */
-	{ "SA-1",	"CPU_SA110" },		/* CPU_CLASS_SA1 */
-	{ "XScale",	"CPU_XSCALE_..." },	/* CPU_CLASS_XSCALE */
-	{ "ARM11J",	"CPU_ARM11" },		/* CPU_CLASS_ARM11J */
-	{ "ARMv4",	"CPU_ARMV4" },		/* CPU_CLASS_ARMV4 */
+	[CPU_CLASS_NONE] =	{ "unknown",	NULL },
+	[CPU_CLASS_ARM2] =	{ "ARM2",	"CPU_ARM2" },
+	[CPU_CLASS_ARM2AS] =	{ "ARM2as",	"CPU_ARM250" },
+	[CPU_CLASS_ARM3] =	{ "ARM3",	"CPU_ARM3" },
+	[CPU_CLASS_ARM6] =	{ "ARM6",	"CPU_ARM6" },
+	[CPU_CLASS_ARM7] =	{ "ARM7",	"CPU_ARM7" },
+	[CPU_CLASS_ARM7TDMI] =	{ "ARM7TDMI",	"CPU_ARM7TDMI" },
+	[CPU_CLASS_ARM8] =	{ "ARM8",	"CPU_ARM8" },
+	[CPU_CLASS_ARM9TDMI] =	{ "ARM9TDMI",	NULL },
+	[CPU_CLASS_ARM9ES] =	{ "ARM9E-S",	"CPU_ARM9E" },
+	[CPU_CLASS_ARM9EJS] =	{ "ARM9EJ-S",	"CPU_ARM9E" },
+	[CPU_CLASS_ARM10E] =	{ "ARM10E",	"CPU_ARM10" },
+	[CPU_CLASS_ARM10EJ] =	{ "ARM10EJ",	"CPU_ARM10" },
+	[CPU_CLASS_SA1] =	{ "SA-1",	"CPU_SA110" },
+	[CPU_CLASS_XSCALE] =	{ "XScale",	"CPU_XSCALE_..." },
+	[CPU_CLASS_ARM11J] =	{ "ARM11J",	"CPU_ARM11" },
+	[CPU_CLASS_ARMV4] =	{ "ARMv4",	"CPU_ARMV4" },
+	[CPU_CLASS_CORTEX] =	{ "Cortex",	"CPU_CORTEX" },
 };
 
 /*
@@ -522,6 +531,7 @@ identify_arm_cpu(struct device *dv, struct cpu_info *ci)
 	case CPU_CLASS_XSCALE:
 	case CPU_CLASS_ARM11J:
 	case CPU_CLASS_ARMV4:
+	case CPU_CLASS_CORTEX:
 		if ((ci->ci_ctrl & CPU_CONTROL_DC_ENABLE) == 0)
 			aprint_normal(" DC disabled");
 		else
@@ -613,6 +623,9 @@ identify_arm_cpu(struct device *dv, struct cpu_info *ci)
 #endif
 #if defined(CPU_ARM11)
 	case CPU_CLASS_ARM11J:
+#endif
+#if defined(CPU_CORTEX)
+	case CPU_CLASS_CORTEX:
 #endif
 #if defined(CPU_FA526)
 	case CPU_CLASS_ARMV4:

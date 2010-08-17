@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.15 2008/05/25 15:56:12 chs Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.15.18.1 2010/08/17 06:45:26 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 The NetBSD Foundation, Inc.
@@ -27,6 +27,12 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
+ */
+
+/*
+ * Bugfix for mutex_spin_enter, which wasn't reentrant.
+ *
+ * Fixed by Johnny Billquist and Chuck Silvers
  */
 
 #include "opt_lockdebug.h"
@@ -93,10 +99,10 @@ ENTRY(mutex_spin_enter, 0)
 	mtpr	%r3, $PR_IPL			/*   yes, raise IPL */
 1:	mfpr	$PR_SSP, %r4			/* get curlwp */
 	movl	L_CPU(%r4),%r4			/* get cpu_info */
-	tstl	CI_MTX_COUNT(%r4)		/* any spin mutexes active? */
-	bneq	3f				/*   yep, don't save IPL */
+	decl	CI_MTX_COUNT(%r4)		/* decr muntex count */
+	bcc	3f				/* previous active - don't save IPL */
 	movl	%r2, CI_MTX_OLDSPL(%r4)		/*   nope, save old IPL */
-3:	decl	CI_MTX_COUNT(%r4)		/* decr mutex count */
+3:
 #if defined(DIAGNOSTIC) || defined(MULTIPROCESSOR)
 	bbssi	$0, MTX_LOCK(%r0), 4f		/* take out mutex */
 	ret

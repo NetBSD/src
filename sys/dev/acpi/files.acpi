@@ -1,4 +1,4 @@
-#	$NetBSD: files.acpi,v 1.66.2.1 2010/04/30 14:43:06 uebayasi Exp $
+#	$NetBSD: files.acpi,v 1.66.2.2 2010/08/17 06:46:02 uebayasi Exp $
 
 include "dev/acpi/acpica/files.acpica"
 
@@ -14,7 +14,6 @@ device	acpi: acpica, acpiapmbus, acpinodebus, acpiecdtbus, sysmon_power, sysmon_
 attach	acpi at acpibus
 file	dev/acpi/acpi.c			acpi
 file	dev/acpi/acpi_debug.c		acpi
-file	dev/acpi/acpi_madt.c		acpi
 file	dev/acpi/acpi_pci.c		acpi
 file	dev/acpi/acpi_pci_link.c	acpi
 file	dev/acpi/acpi_power.c		acpi
@@ -25,6 +24,7 @@ file	dev/acpi/acpi_slit.c		acpi
 file	dev/acpi/acpi_timer.c		acpi
 file	dev/acpi/acpi_util.c		acpi
 file	dev/acpi/acpi_wakedev.c		acpi
+file	dev/acpi/acpi_verbose.c		acpi & acpiverbose
 
 # ACPI/apm emulation.
 attach  apm at acpiapmbus with acpiapm: sysmon_envsys
@@ -56,6 +56,14 @@ file	dev/acpi/acpi_acad.c		acpiacad
 device	acpibat: sysmon_envsys
 attach	acpibat at acpinodebus
 file	dev/acpi/acpi_bat.c		acpibat
+
+# ACPI CPU
+device	acpicpu
+attach	acpicpu at acpinodebus
+file	dev/acpi/acpi_cpu.c		acpicpu
+file	dev/acpi/acpi_cpu_cstate.c	acpicpu
+file	dev/acpi/acpi_cpu_pstate.c	acpicpu
+file	dev/acpi/acpi_cpu_tstate.c	acpicpu
 
 # ACPI Thermal Zone
 device	acpitz: sysmon_envsys

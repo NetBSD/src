@@ -1,0 +1,402 @@
+.\"	$NetBSD: module.9,v 1.15.2.2 2010/08/17 06:41:05 uebayasi Exp $
+.\"
+.\" Copyright (c) 2010 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This code is derived from software contributed to The NetBSD Foundation
+.\" by Andrew Doran.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd August 11, 2010
+.Dt MODULE 9
+.Os
+.Sh NAME
+.Nm module ,
+.Nm module_load ,
+.Nm module_autoload ,
+.Nm module_unload ,
+.Nm module_init_class ,
+.Nm module_hold ,
+.Nm module_rele ,
+.Nm module_find_section
+.Nd kernel module loader
+.Sh SYNOPSIS
+.In sys/module.h
+.Fn MODULE "class" "name" "required"
+.Ft int
+.Fn module_load "const char *name" "int flags" "prop_dictionary_t props" \
+"modclass_t class"
+.Ft int
+.Fn module_autoload "const char *name" "modclass_t class"
+.Ft int
+.Fn module_unload "const char *name"
+.Ft void
+.Fn module_init_class "modclass_t class"
+.Ft int
+.Fn module_hold "const char *name"
+.Ft void
+.Fn module_rele "const char *"
+.Ft int
+.Fn module_find_section "const char *" "void **" "size_t *"
+.Ft void
+.Fn module_init "void"
+.Ft void
+.Fn module_start_unload_thread "void"
+.Ft void
+.Fn module_builtin_require_force "void"
+.Ft void
+.Fn module_load_vfs_init "void"
+.Sh DESCRIPTION
+Modules are sections of code that can be independently linked and selectively
+loaded into or unloaded from a running kernel.
+This provides a mechanism to update the module without having to relink
+the kernel and reboot.
+Modules can be loaded from within the kernel image, provided by the boot
+loader, or loaded from the file system.
+.Pp
+Two data types are relevant for
+.Nm :
+.Bl -enum -offset indent
+.It
+The
+.Vt module_t
+type provides storage to describe a module.
+.It
+The
+.Vt modinfo_t
+type resides within the module itself, and contains module header info.
+.El
+.Sh FUNCTIONS
+.Bl -tag -width abcd
+.It Fn MODULE "class" "name" "required"
+The
+.Fn MODULE
+macro creates and initializes a
+.Vt modinfo_t
+structure.
+In addition to the explicit arguments, the
+.Fn MODULE
+macro creates a reference to the module's
+.Fn modcmd
+function.
+This function is defined as:
+.Bl -tag -width modcmd -offset indent
+.It Ft int
+.Fn modcmd "modcmd_t cmd" "void *data"
+.El
+.Pp
+The
+.Fa cmd
+argument requests one of the following operations:
+.Bl -tag -width MODULE_CMD_AUTOUNLOAD -offset indent
+.It Dv MODULE_CMD_INIT
+Perform module-specific initialization when the module is loaded.
+.It Dv MODULE_CMD_FINI
+Perform module-specific clean-up before the module is unloaded.
+.It Dv MODULE_CMD_AUTOUNLOAD
+Notify the module that it is about to be unloaded.
+.It Dv MODULE_CMD_STAT
+Request the module to provide status information (not currently implemented).
+.El
+.Pp
+All modules'
+.Fn modcmd
+functions must implement the
+.Dv MODULE_CMD_INIT
+and
+.Dv MODULE_CMD_FINI
+commands.
+The other commands are optional,
+and should return
+.Er ENOTTY
+if not implemented.
+The return values from
+.Fn modcmd
+are ignored for
+.Dv MODULE_CMD_FINI .
+.Pp
+For the
+.Dv MODULE_CMD_INIT
+command, the
+.Fa data
+argument is used to pass a pointer to the module's
+.Xr prop_dictionary 3 .
+For the
+.Dv MODULE_CMD_STAT
+command, the
+.Fa data
+argument points to a buffer where the status information should be placed.
+.Pp
+The __link_set mechanism is used to enable the
+.Nm
+subsystem to locate the
+.Vt modinfo_t
+structure.
+.It Fn module_load "name" "flags" "props" "class"
+Load a module, link it into the running kernel, and call the module's
+.Fn modcmd
+routine with a
+.Fa cmd
+argument of
+.Dv MODULE_CMD_INIT .
+If the specified module requires other modules, they are loaded first; if
+any required module cannot be loaded or if any of their
+.Fn modcmd
+control routines returns a non-zero status, loading of this module and all
+required modules will fail.
+Thus, the loading of a module and its required modules is an atomic
+operation.
+.Pp
+The loader will look first for a built-in module with the specified
+.Fa name
+that has not been disabled (see
+.Fn module_unload
+below).
+If a built-in module with that
+.Fa name
+is not found, the list of modules prepared by the boot loader is searched.
+If the named module is still not found, an attempt is made to locate the
+module within the file system.
+.Pp
+The
+.Fa flags
+argument can include:
+.Bl -tag -width MODCTL_LOAD_FORCE -offset indent
+.It Dv MODCTL_NO_PROP
+When loading a module from the file system, do not attempt to locate a
+corresponding prop_dictionary file.
+.It Dv MODCTL_LOAD_FORCE
+Force loading of disabled built-in modules and modules built for a
+different version of the operating system.
+.El
+.Pp
+The
+.Fa props
+argument points to an externalized property list which is passed to the
+module's
+.Fn modcmd
+routine.
+If a module is being loaded from the file system, and the
+.Dv MODCTL_NO_PROP
+flag is not set, the system searches for a file with the same name as the
+module file, but with the suffix
+.Dq Pa .prop .
+If this file is found, the prop_dictionary it contains is loaded and
+passed to the module's
+.Fn modcmd
+routine.
+.Pp
+The
+.Fa class
+argument can be any of:
+.Pp
+.Bl -tag -width MODULE_CLASS_SECMODEL -offset indent -compact
+.It Dv MODULE_CLASS_ANY
+.It Dv MODULE_CLASS_DRIVER
+Device driver
+.It Dv MODULE_CLASS_EXEC
+Executable image handler
+.It Dv MODULE_CLASS_MISC
+Miscellaneous module
+.It Dv MODULE_CLASS_SECMODEL
+Security model (see
+.Xr secmodel 9
+for more details)
+.It Dv MODULE_CLASS_VFS
+Virtual file system
+.El
+.Pp
+If the class is not
+.Dv MODULE_CLASS_ANY ,
+the class of the module being loaded
+must match the requested
+.Fa class .
+Except when verifying a module's class when it is being loaded, module
+classes are transparent to the module subsystem.
+They are provided only for the benefit of the subsystem's clients.
+.Pp
+The
+.Fn module_load
+routine is primarily intended as the implementation of the
+.Dv MODCTL_LOAD
+option of the
+.Xr modctl 2
+system call.
+.It Fn module_autoload "name" "class"
+Auto-load a module, making it available for automatic unloading.
+The
+.Fa name
+and
+.Fa class
+arguments are the same as for the
+.Fn module_load
+routine.
+.Pp
+The module subsystem uses a kernel thread to attempt to automatically
+unload modules a short time (currently, 10 seconds) after being loaded by
+.Fn module_autoload .
+Before the module is unloaded, its
+.Fn modcmd
+is called with the
+.Fa cmd
+argument specified as
+.Dv MODULE_CMD_AUTOUNLOAD .
+A module can prevent itself from being unloaded by returning a non-zero
+value.
+.Pp
+The
+.Fn module_autoload
+function is intended for use by kernel components to locate and load optional
+system components.
+The function is also used to load modules that are required by other modules.
+.It Fn module_unload "name"
+Unload a module.
+If the module's reference count is non-zero, the function returns
+.Er EBUSY .
+Otherwise, the module's
+.Fn modcmd
+routine is called with a
+.Fa cmd
+argument of
+.Dv MODULE_CMD_FINI ,
+and the module is unloaded.
+.Pp
+The reference counts of all modules that were required by this module are
+decremented, but the required modules are not unloaded by the call to
+.Fn module_unload .
+Instead, the required modules may be unloaded by subsequent calls to
+.Fn module_unload .
+.Pp
+Unloading a built-in module causes the module to be marked as disabled.
+This prevents the module from being re-loaded, except by the
+.Fn module_load
+function with the
+.Fa flags
+argument set to
+.Dv MODULE_FORCE_LOAD .
+.Pp
+The
+.Fn module_unload
+function may be called by the
+.Xr modctl 2
+system call, by the module subsystem's internal auto-unload thread, or by
+other kernel facilities.
+.It Fn module_init_class "class"
+Load and initialize all available modules of the specified
+.Fa class .
+Any built-in modules that have not been disabled, and any modules provided
+by the boot loader are loaded.
+.It Fn module_hold "name"
+Increment the reference count of a module.
+A module cannot be unloaded if its reference count is non-zero.
+.It Fn module_rele "name"
+Decrement the reference count of a module.
+.It Fn module_find_section "name" "addr" "size"
+Find the start address and size of linker section
+.Ar name
+within a module.
+The miniroot module uses this routine to find the address and size of the
+embedded filesystem image.
+This routine can only examine the linker data for the module that is
+currently being initialized;  it cannot examine data for any other module.
+.It Fn module_init "void"
+Initialize the module subsystem.
+Creates and initializes various data structures, locates all built-in
+modules, and establishes the sub-system's
+.Xr sysctl 8
+tree.
+.Fn module_init
+is called early in system initialization to facilitate use of security model
+modules.
+.It Fn module_start_unload_thread "void"
+Create the thread that attempts to automatically unload modules that were
+loaded via the
+.Fn module_autoload
+routine.
+.Fn module_start_unload_thread
+is called once the scheduler and timer functions are initialized.
+.It Fn module_builtin_require_force "void"
+Mark as "disabled" any built-in modules that have not been successfully
+initialized.
+Modules marked "disabled" can only be loaded if the
+.Dv MODCTL_LOAD_FORCE
+is specified.
+.Fn module_builtin_require_force
+is called near the end of system initialization, after the
+.Xr init 8
+process is created.
+.It Fn module_load_vfs_init
+The module subsystem is initialized early, long before any file systems
+are available.
+After the root file system is mounted,
+.Fn module_load_vfs_init
+is used to enable loading modules from the file system.
+Until this routine is called, modules can only be loaded if they were
+built-in to the kernel image or provided by the boot loader.
+.El
+.Sh LOCK PROTOCOL
+The
+.Nm
+subsystem is protected with the global
+.Vt module_mutex .
+This
+.Xr mutex 9
+must be acquired before calling any of these routines.
+As an exception, the
+.Fn module_load
+routine acquires the mutex itself, so one does not need to acquire it
+before calling
+.Fn module_load .
+Loading of a module and its required modules occurs as an atomic
+operation, and either completely succeeds or completely fails.
+.Sh CODE REFERENCES
+This section describes places within the
+.Nx
+source tree where code implementing the kernel module loader can be found.
+All pathnames are relative to
+.Pa /usr/src .
+.Pp
+The core of the kernel module implementation is in
+.Pa sys/kern/kern_module.c
+and
+.Pa sys/kern/kern_module_vfs.c .
+.Pp
+The header file
+.In sys/sys/module.h
+describes the public interface.
+.Sh SEE ALSO
+.Xr modctl 2
+.Sh HISTORY
+The kernel module subsystem first appeared in
+.Nx 5.0 .
+It replaces the
+.Dq Tn LKM
+subsystem from earlier releases.
+.Sh AUTHORS
+.An -nosplit
+The
+.Nm
+system was written by
+.An Andrew Doran Aq ad@NetBSD.org .
+This manual page was written by
+.An Paul Goyette Aq pgoyette@NetBSD.org .

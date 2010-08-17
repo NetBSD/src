@@ -1,4 +1,4 @@
-/* $NetBSD: hdaudio_pci.c,v 1.4.2.1 2010/04/30 14:43:45 uebayasi Exp $ */
+/* $NetBSD: hdaudio_pci.c,v 1.4.2.2 2010/08/17 06:46:36 uebayasi Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdaudio_pci.c,v 1.4.2.1 2010/04/30 14:43:45 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdaudio_pci.c,v 1.4.2.2 2010/08/17 06:46:36 uebayasi Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -49,6 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: hdaudio_pci.c,v 1.4.2.1 2010/04/30 14:43:45 uebayasi
 
 #include <dev/pci/hdaudio/hdaudioreg.h>
 #include <dev/pci/hdaudio/hdaudiovar.h>
+#include <dev/pci/hdaudio/hdaudio_pci.h>
 
 struct hdaudio_pci_softc {
 	struct hdaudio_softc	sc_hdaudio;	/* must be first */
@@ -152,6 +153,18 @@ hdaudio_pci_attach(device_t parent, device_t self, void *opaque)
 
 	if (!pmf_device_register(self, NULL, hdaudio_pci_resume))
 		aprint_error_dev(self, "couldn't establish power handler\n");
+
+	switch (PCI_VENDOR(pa->pa_id)) {
+	case PCI_VENDOR_NVIDIA:
+		/* enable snooping */
+		csr = pci_conf_read(sc->sc_pc, sc->sc_tag,
+		    HDAUDIO_NV_REG_SNOOP);
+		csr &= ~HDAUDIO_NV_SNOOP_MASK;
+		csr |= HDAUDIO_NV_SNOOP_ENABLE;
+		pci_conf_write(sc->sc_pc, sc->sc_tag,
+		    HDAUDIO_NV_REG_SNOOP, csr);
+		break;
+	}
 
 	/* Attach bus-independent HD audio layer */
 	hdaudio_attach(self, &sc->sc_hdaudio);

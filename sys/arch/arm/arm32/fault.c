@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.75.2.1 2010/04/30 14:39:07 uebayasi Exp $	*/
+/*	$NetBSD: fault.c,v 1.75.2.2 2010/08/17 06:44:01 uebayasi Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
 #include "opt_sa.h"
 
 #include <sys/types.h>
-__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.75.2.1 2010/04/30 14:39:07 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.75.2.2 2010/08/17 06:44:01 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -480,6 +480,8 @@ data_abort_handler(trapframe_t *tf)
 	if (__predict_true(error == 0)) {
 		if (user)
 			uvm_grow(l->l_proc, va); /* Record any stack growth */
+		else
+			ucas_ras_check(tf);
 		UVMHIST_LOG(maphist, " <- uvm", 0, 0, 0, 0);
 		goto out;
 	}

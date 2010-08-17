@@ -1,4 +1,4 @@
-/*	$NetBSD: zs_ap.c,v 1.25 2008/04/28 20:23:30 martin Exp $	*/
+/*	$NetBSD: zs_ap.c,v 1.25.20.1 2010/08/17 06:44:57 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs_ap.c,v 1.25 2008/04/28 20:23:30 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs_ap.c,v 1.25.20.1 2010/08/17 06:44:57 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -213,7 +213,6 @@ zs_ap_attach(device_t parent, device_t self, void *aux)
 	volatile u_int *portBctl = (void *)(apa->apa_hwbase + PORTB_OFFSET);
 	volatile u_int *portActl = (void *)(apa->apa_hwbase + PORTA_OFFSET);
 	volatile u_int *esccregs = (void *)(apa->apa_hwbase + ESCC_REG);
-	static int didintr;
 
 	zsc->zsc_dev = self;
 	zs_unit = device_unit(self);
@@ -295,20 +294,13 @@ zs_ap_attach(device_t parent, device_t self, void *aux)
 	}
 
 	/*
-	 * Now safe to install interrupt handlers.  Note the arguments
-	 * to the interrupt handlers aren't used.  Note, we only do this
-	 * once since both SCCs interrupt at the same level and vector.
+	 * Now safe to install interrupt handlers.
 	 */
-	if (!didintr) {
-		didintr = 1;
-
-		zsc->zsc_si = softint_establish(SOFTINT_SERIAL, zssoft, zsc);
-		apbus_intr_establish(1, /* interrupt level ( 0 or 1 ) */
-				     NEWS5000_INT1_SCC,
-				     0, /* priority */
-				     zshard_ap, zsc,
-				     apa->apa_name, apa->apa_ctlnum);
-	}
+	zsc->zsc_si = softint_establish(SOFTINT_SERIAL,
+	    (void (*)(void *))zsc_intr_soft, zsc);
+	apbus_intr_establish(1, /* interrupt level ( 0 or 1 ) */
+	    NEWS5000_INT1_SCC, 0, /* priority */
+	    zshard_ap, zsc, apa->apa_name, apa->apa_ctlnum);
 	/* XXX; evcnt_attach() ? */
 
 #if 0

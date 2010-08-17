@@ -1,4 +1,4 @@
-/*	$NetBSD: comreg.h,v 1.15 2008/04/28 22:00:01 matt Exp $	*/
+/*	$NetBSD: comreg.h,v 1.15.20.1 2010/08/17 06:46:09 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -98,6 +98,7 @@
 #define	LCR_5BITS	0x00	/* 5 bits */
 
 /* modem control register */
+#define MCR_PRESCALE	0x80	/* 16650/16950: Baud rate prescaler select */
 #define MCR_TCR_TLR	0x40	/* OMAP: enables access to the TCR & TLR regs */
 #define MCR_XONENABLE	0x20	/* OMAP XON_EN */
 #define	MCR_LOOPBACK	0x10	/* Loop test: echos from TX to RX */

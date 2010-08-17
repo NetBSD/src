@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.135 2009/11/06 20:41:22 dyoung Exp $	*/
+/*	$NetBSD: nd6.c,v 1.135.2.1 2010/08/17 06:47:47 uebayasi Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.135 2009/11/06 20:41:22 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.135.2.1 2010/08/17 06:47:47 uebayasi Exp $");
 
 #include "opt_ipsec.h"
 
@@ -1232,9 +1232,13 @@ nd6_rtrequest(int req, struct rtentry *rt, const struct rt_addrinfo *info)
 			 * treated as on-link but is currently not
 			 * (RTF_LLINFO && ln == NULL case).
 			 */
-			sockaddr_dl_init(&u.sdl, sizeof(u.ss),
+			if (sockaddr_dl_init(&u.sdl, sizeof(u.ss),
 			    ifp->if_index, ifp->if_type,
-			    NULL, namelen, NULL, addrlen);
+			    NULL, namelen, NULL, addrlen) == NULL) {
+				printf("%s.%d: sockaddr_dl_init(, %zu, ) "
+				    "failed on %s\n", __func__, __LINE__,
+				    sizeof(u.ss), if_name(ifp));
+			}
 			rt_setgate(rt, &u.sa);
 			gate = rt->rt_gateway;
 			RT_DPRINTF("rt->_rt_key = %p\n", (void *)rt->_rt_key);
@@ -1351,8 +1355,15 @@ nd6_rtrequest(int req, struct rtentry *rt, const struct rt_addrinfo *info)
 			ln->ln_byhint = 0;
 			if ((mac = nd6_ifptomac(ifp)) != NULL) {
 				/* XXX check for error */
-				(void)sockaddr_dl_setaddr(satosdl(gate),
-				    gate->sa_len, mac, ifp->if_addrlen);
+				if (sockaddr_dl_setaddr(satosdl(gate),
+				    gate->sa_len, mac,
+				    ifp->if_addrlen) == NULL) {
+					printf("%s.%d: "
+					    "sockaddr_dl_setaddr(, %d, ) "
+					    "failed on %s\n", __func__,
+					    __LINE__, gate->sa_len,
+					    if_name(ifp));
+				}
 			}
 			if (nd6_useloopback) {
 				ifp = rt->rt_ifp = lo0ifp;	/* XXX */
@@ -1777,8 +1788,12 @@ fail:
 		 * XXX is it dependent to ifp->if_type?
 		 */
 		/* XXX check for error */
-		(void)sockaddr_dl_setaddr(sdl, sdl->sdl_len, lladdr,
-		    ifp->if_addrlen);
+		if (sockaddr_dl_setaddr(sdl, sdl->sdl_len, lladdr,
+		    ifp->if_addrlen) == NULL) {
+			printf("%s.%d: sockaddr_dl_setaddr(, %d, ) "
+			    "failed on %s\n", __func__, __LINE__,
+			    sdl->sdl_len, if_name(ifp));
+		}
 	}
 
 	if (!is_newentry) {
@@ -2197,8 +2212,9 @@ nd6_storelladdr(const struct ifnet *ifp, const struct rtentry *rt,
 	sdl = satocsdl(rt->rt_gateway);
 	if (sdl->sdl_alen == 0 || sdl->sdl_alen > dstsize) {
 		/* this should be impossible, but we bark here for debugging */
-		printf("%s: sdl_alen == 0, dst=%s, if=%s\n", __func__,
-		    ip6_sprintf(&satocsin6(dst)->sin6_addr), if_name(ifp));
+		printf("%s: sdl_alen == %" PRIu8 ", dst=%s, if=%s\n", __func__,
+		    sdl->sdl_alen, ip6_sprintf(&satocsin6(dst)->sin6_addr),
+		    if_name(ifp));
 		m_freem(m);
 		return 0;
 	}

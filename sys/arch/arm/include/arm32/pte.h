@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.8 2008/04/27 18:58:44 matt Exp $	*/
+/*	$NetBSD: pte.h,v 1.8.20.1 2010/08/17 06:44:04 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -227,6 +227,9 @@ typedef uint32_t	pt_entry_t;	/* L2 table entry */
 #define	AP_W		0x01		/* writable */
 #define	AP_U		0x02		/* user */
 
+#define	AP_R		0x01		/* readable (ARMv7 only) */
+#define	AP_RO		0x20		/* read-only (ARMv7 only) */
+
 /*
  * Short-hand for common AP_* constants.
  *
@@ -247,6 +250,15 @@ typedef uint32_t	pt_entry_t;	/* L2 table entry */
 #define	APX_KRW(APX)	(    0x01)	/* kernel read/write */
 #define	APX_KRWUR(APX)	(    0x02)	/* kernel read/write user read */
 #define	APX_KRWURW(APX)	(    0x03)	/* kernel read/write user read/write */
+
+/*
+ * Note: These values are for the simplified access permissions model
+ * of ARMv7. Assumes that AFE is clear in CP15 register 1.
+ */
+#define	AP7_KR		0x21		/* kernel read */
+#define	AP7_KRUR	0x23		/* kernel read usr read */
+#define	AP7_KRW		0x01		/* kernel read/write */
+#define	AP7_KRWURW	0x03		/* kernel read/write usr read/write */
 
 /*
  * Domain Types for the Domain Access Control Register.

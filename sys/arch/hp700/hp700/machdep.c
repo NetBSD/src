@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.77.2.1 2010/04/30 14:39:23 uebayasi Exp $	*/
+/*	$NetBSD: machdep.c,v 1.77.2.2 2010/08/17 06:44:24 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.77.2.1 2010/04/30 14:39:23 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.77.2.2 2010/08/17 06:44:24 uebayasi Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -130,6 +130,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.77.2.1 2010/04/30 14:39:23 uebayasi Ex
 #endif
 
 #include "ksyms.h"
+#include "lcd.h"
 
 /*
  * Different kinds of flags used throughout the kernel.
@@ -205,6 +206,10 @@ enum hppa_cpu_type cpu_type;
 int	cpu_hvers;
 int	cpu_revision;
 
+#if NLCD > 0
+int	lcd_blink_p;
+#endif
+
 /*
  * exported methods for cpus
  */
@@ -251,11 +256,13 @@ struct fpreg lwp0_fpregs;
 /* Virtual page frame for /dev/mem (see mem.c) */
 vaddr_t vmmap;
 
-/* Our exported CPU info; we can have only one. */
-struct cpu_info cpu_info_store = {
+/* Our exported CPU info */
+struct cpu_info cpus[HPPA_MAXCPUS] = {
+	{
 #ifdef MULTIPROCESSOR
-	.ci_curlwp = &lwp0
+		.ci_curlwp = &lwp0,
 #endif
+	},
 };
 
 struct vm_map *phys_map = NULL;
@@ -265,6 +272,9 @@ static inline void fall(int, int, int, int, int);
 void dumpsys(void);
 void cpuid(void);
 enum hppa_cpu_type cpu_model_cpuid(int);
+#if NLCD > 0
+void blink_lcd_timeout(void *);
+#endif
 
 /*
  * wide used hardware params
@@ -310,79 +320,92 @@ int desidhash_u(void);
 const struct hppa_cpu_info cpu_types[] = {
 #ifdef HP7000_CPU
 	{ "PA7000", NULL, "PCX",
-	  hpcx,  0, 0, "1.0",
+	  hpcx,  0,
+	  0, "1.0",
 	  desidhash_x, itlb_x, dtlb_x, itlbna_x, dtlbna_x, tlbd_x,
 	  ibtlb_g, NULL, pbtlb_g }, /* XXXNH check */
 #endif
 #ifdef HP7000_CPU
 	{ "PA7000", NULL, "PCXS",
-	  hpcxs,  0, 0, "1.1a",
+	  hpcxs,  0,
+	  0, "1.1a",
 	  desidhash_s, itlb_x, dtlb_x, itlbna_x, dtlbna_x, tlbd_x,
 	  ibtlb_g, NULL, pbtlb_g }, /* XXXNH check */
 #endif
 #ifdef HP7100_CPU
 	{ "PA7100", "T-Bird", "PCXT",
-	  hpcxt, 0, HPPA_FTRS_BTLBU, "1.1b",
+	  hpcxt, 0,
+	  HPPA_FTRS_BTLBU, "1.1b",
 	  desidhash_t, itlb_t, dtlb_t, itlbna_t, dtlbna_t, tlbd_t,
 	  ibtlb_g, NULL, pbtlb_g },
 #endif
 #ifdef HP7100LC_CPU
 	{ "PA7100LC", "Hummingbird", "PCXL",
-	  hpcxl, HPPA_CPU_PCXL, HPPA_FTRS_BTLBU|HPPA_FTRS_HVT, "1.1c",
+	  hpcxl, HPPA_CPU_PCXL,
+	  HPPA_FTRS_TLBU | HPPA_FTRS_BTLBU | HPPA_FTRS_HVT, "1.1c",
 	  desidhash_l, itlb_l, dtlb_l, itlbna_l, dtlbna_l, tlbd_l,
 	  ibtlb_g, NULL, pbtlb_g, hpti_g },
 #endif
 #ifdef HP7200_CPU
 	{ "PA7200", "T-Bird", "PCXT'",
-	  hpcxtp, HPPA_CPU_PCXT2, HPPA_FTRS_BTLBU, "1.1d",
+	  hpcxtp, HPPA_CPU_PCXT2,
+	  HPPA_FTRS_BTLBU, "1.1d",
 	  desidhash_t, itlb_t, dtlb_t, itlbna_t, dtlbna_t, tlbd_t,
 	  ibtlb_g, NULL, pbtlb_g },
 #endif
 #ifdef HP7300LC_CPU
 	{ "PA7300LC", "Velociraptor", "PCXL2",
-	  hpcxl2, HPPA_CPU_PCXL2, HPPA_FTRS_BTLBU|HPPA_FTRS_HVT, "1.1e",
+	  hpcxl2, HPPA_CPU_PCXL2,
+	  HPPA_FTRS_TLBU | HPPA_FTRS_BTLBU | HPPA_FTRS_HVT, "1.1e",
 	  desidhash_l, itlb_l, dtlb_l, itlbna_l, dtlbna_l, tlbd_l,
 	  ibtlb_g, NULL, pbtlb_g, hpti_g },
 #endif
 #ifdef HP8000_CPU
 	{ "PA8000", "Onyx", "PCXU",
-	  hpcxu, HPPA_CPU_PCXU, HPPA_FTRS_W32B, "2.0",
+	  hpcxu, HPPA_CPU_PCXU,
+	  HPPA_FTRS_W32B, "2.0",
 	  desidhash_u, itlb_u, dtlb_u, itlbna_u, dtlbna_u, tlbd_u,
  	  ibtlb_u, NULL, pbtlb_u },
 #endif
 #ifdef HP8200_CPU
 	{ "PA8200", "Vulcan", "PCXU+",
-	  hpcxup, HPPA_CPU_PCXUP, HPPA_FTRS_W32B, "2.0",
+	  hpcxup, HPPA_CPU_PCXUP,
+	  HPPA_FTRS_W32B, "2.0",
 	  desidhash_u, itlb_u, dtlb_u, itlbna_u, dtlbna_u, tlbd_u,
  	  ibtlb_u, NULL, pbtlb_u },
 #endif
 #ifdef HP8500_CPU
 	{ "PA8500", "Barra'Cuda", "PCXW",
-	  hpcxw, HPPA_CPU_PCXW, HPPA_FTRS_W32B, "2.0",
+	  hpcxw, HPPA_CPU_PCXW,
+	  HPPA_FTRS_W32B, "2.0",
 	  desidhash_u, itlb_u, dtlb_u, itlbna_u, dtlbna_u, tlbd_u,
  	  ibtlb_u, NULL, pbtlb_u },
 #endif
 #ifdef HP8600_CPU
 	{ "PA8600", "Landshark", "PCXW+",
-	  hpcxwp, HPPA_CPU_PCXW2 /*XXX NH */, HPPA_FTRS_W32B, "2.0",
+	  hpcxwp, HPPA_CPU_PCXW2 /*XXX NH */,
+	  HPPA_FTRS_W32B, "2.0",
 	  desidhash_u, itlb_u, dtlb_u, itlbna_u, dtlbna_u, tlbd_u,
  	  ibtlb_u, NULL, pbtlb_u },
 #endif
 #ifdef HP8700_CPU
 	{ "PA8700", "Piranha", "PCXW2",
-	  hpcxw2, HPPA_CPU_PCXW2, HPPA_FTRS_W32B, "2.0",
+	  hpcxw2, HPPA_CPU_PCXW2,
+	  HPPA_FTRS_W32B, "2.0",
 	  desidhash_u, itlb_u, dtlb_u, itlbna_u, dtlbna_u, tlbd_u,
  	  ibtlb_u, NULL, pbtlb_u },
 #endif
 #ifdef HP8800_CPU
 	{ "PA8800", "Mako", "Make",
-	  mako, HPPA_CPU_PCXW2, HPPA_FTRS_W32B, "2.0",
+	  mako, HPPA_CPU_PCXW2,
+	  HPPA_FTRS_W32B, "2.0",
 	  desidhash_u, itlb_u, dtlb_u, itlbna_u, dtlbna_u, tlbd_u,
  	  ibtlb_u, NULL, pbtlb_u },
 #endif
 #ifdef HP8900_CPU
 	{ "PA8900", "Shortfin", "Shortfin",
-	  mako, HPPA_CPU_PCXW2, HPPA_FTRS_W32B, "2.0",
+	  mako, HPPA_CPU_PCXW2,
+	  HPPA_FTRS_W32B, "2.0",
 	  desidhash_u, itlb_u, dtlb_u, itlbna_u, dtlbna_u, tlbd_u,
  	  ibtlb_u, NULL, pbtlb_u },
 #endif
@@ -406,8 +429,12 @@ hppa_init(paddr_t start, void *bi)
 #ifdef KGDB
 	boothowto |= RB_KDB;	/* go to kgdb early if compiled in. */
 #endif
-	/* Setup curlwp early for LOCKDEBUG */
+	/* Setup curlwp/curcpu early for LOCKDEBUG */
+#ifdef MULTIPROCESSOR
+	mtctl(&cpus[0], CR_CURCPU);
+#else
 	mtctl(&lwp0, CR_CURLWP);
+#endif
 
 	/* Copy bootinfo */
 	if (bi != NULL)
@@ -1859,6 +1886,8 @@ setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 	pcb->pcb_fpregs->fpr_regs[2] = 0;
 	pcb->pcb_fpregs->fpr_regs[3] = 0;
 
+	l->l_md.md_bpva = 0;
+
 	/* setup terminal stack frame */
 	stack = (u_long)STACK_ALIGN(stack, 63);
 	tf->tf_r3 = stack;
@@ -1897,6 +1926,29 @@ sysctl_machdep_boot(SYSCTLFN_ARGS)
 	return (sysctl_lookup(SYSCTLFN_CALL(&node)));
 }
 
+#if NLCD > 0
+static int
+sysctl_machdep_heartbeat(SYSCTLFN_ARGS)
+{
+	int oldval, error;
+	struct sysctlnode node = *rnode;
+	
+	oldval = lcd_blink_p;
+	/*
+	 * If we were false and are now true, start the timer.
+	 */
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+
+	if (error || newp == NULL)
+		return (error);
+
+	if (!oldval && lcd_blink_p > oldval)
+		blink_lcd_timeout(NULL);
+
+	return 0;
+}
+#endif
+
 /*
  * machine dependent system variables.
  */
@@ -1920,6 +1972,13 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 		       CTLTYPE_STRING, "booted_kernel", NULL,
 		       sysctl_machdep_boot, 0, NULL, 0,
 		       CTL_MACHDEP, CPU_BOOTED_KERNEL, CTL_EOL);
+#if NLCD > 0
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_BOOL, "lcd_blink", "Display heartbeat on the LCD display",
+		       sysctl_machdep_heartbeat, 0, &lcd_blink_p, 0,
+		       CTL_MACHDEP, CPU_LCD_BLINK, CTL_EOL);
+#endif
 }
 
 /*
@@ -1959,6 +2018,56 @@ consinit(void)
 		cninit();
 	}
 }
+
+#if NLCD > 0
+struct blink_lcd_softc {
+	SLIST_HEAD(, blink_lcd) bls_head;
+	int bls_on;
+	struct callout bls_to;
+} blink_sc = { SLIST_HEAD_INITIALIZER(bls_head), 0 };
+
+void
+blink_lcd_register(struct blink_lcd *l)
+{
+	if (SLIST_EMPTY(&blink_sc.bls_head)) {
+		callout_init(&blink_sc.bls_to, 0);
+		callout_setfunc(&blink_sc.bls_to, blink_lcd_timeout, &blink_sc);
+		blink_sc.bls_on = 0;
+		if (lcd_blink_p)
+			callout_schedule(&blink_sc.bls_to, 1);
+	}
+	SLIST_INSERT_HEAD(&blink_sc.bls_head, l, bl_next);
+}
+
+void
+blink_lcd_timeout(void *vsc)
+{
+	struct blink_lcd_softc *sc = &blink_sc;
+	struct blink_lcd *l;
+	int t;
+
+	if (SLIST_EMPTY(&sc->bls_head))
+		return;
+
+	SLIST_FOREACH(l, &sc->bls_head, bl_next) {
+		(*l->bl_func)(l->bl_arg, sc->bls_on);
+	}
+	sc->bls_on = !sc->bls_on;
+
+	if (!lcd_blink_p)
+		return;
+
+	/*
+	 * Blink rate is:
+	 *      full cycle every second if completely idle (loadav = 0)
+	 *      full cycle every 2 seconds if loadav = 1
+	 *      full cycle every 3 seconds if loadav = 2
+	 * etc.
+	 */
+	t = (((averunnable.ldavg[0] + FSCALE) * hz) >> (FSHIFT + 1));
+	callout_schedule(&sc->bls_to, t);
+}
+#endif
 
 #ifdef MODULAR
 /*

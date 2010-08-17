@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.42 2009/09/14 11:56:27 jmcneill Exp $	 */
+/*	$NetBSD: exec.c,v 1.42.2.1 2010/08/17 06:44:40 uebayasi Exp $	 */
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -125,7 +125,7 @@
 #define	PAGE_SIZE	4096
 #endif
 
-#define MODULE_WARNING_DELAY	5000000
+#define MODULE_WARNING_SEC	5
 
 extern struct btinfo_console btinfo_console;
 
@@ -486,7 +486,7 @@ module_init(const char *kernel_path)
 	btinfo_modulelist = alloc(len);
 	if (btinfo_modulelist == NULL) {
 		printf("WARNING: couldn't allocate module list\n");
-		delay(MODULE_WARNING_DELAY);
+		wait_sec(MODULE_WARNING_SEC);
 		return;
 	}
 	memset(btinfo_modulelist, 0, len);
@@ -530,7 +530,7 @@ module_init(const char *kernel_path)
 		printf("WARNING: %d module%s failed to load\n",
 		    nfail, nfail == 1 ? "" : "s");
 #if notyet
-		delay(MODULE_WARNING_DELAY);
+		wait_sec(MODULE_WARNING_SEC);
 #endif
 	}
 }

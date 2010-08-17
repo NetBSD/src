@@ -1,4 +1,4 @@
-/* $NetBSD: omap2_reg.h,v 1.1 2008/08/27 11:03:10 matt Exp $ */
+/* $NetBSD: omap2_reg.h,v 1.1.22.1 2010/08/17 06:44:05 uebayasi Exp $ */
 
 /*
  * Copyright (c) 2007 Microsoft
@@ -414,6 +414,20 @@
 /*
  * GPT - General Purpose Timers
  */
+#ifdef OMAP_3530
+#define	GPT1_BASE			0x48318000
+#define	GPT2_BASE			0x49032000
+#define	GPT3_BASE			0x49034000
+#define	GPT4_BASE			0x49036000
+#define	GPT5_BASE			0x49038000
+#define	GPT6_BASE			0x4903A000
+#define	GPT7_BASE			0x4903C000
+#define	GPT8_BASE			0x4903E000
+#define	GPT9_BASE			0x49040000
+#define	GPT10_BASE			0x48086000
+#define	GPT11_BASE			0x48088000
+#define	GPT12_BASE			0x48304000
+#else
 #define	GPT1_BASE			0x48028000
 #define	GPT2_BASE			0x4802a000
 #define	GPT3_BASE			0x48078000
@@ -426,6 +440,7 @@
 #define	GPT10_BASE			0x48086000
 #define	GPT11_BASE			0x48088000
 #define	GPT12_BASE			0x4808a000
+#endif
 
 /*
  * GPIO

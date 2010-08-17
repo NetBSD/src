@@ -1,4 +1,4 @@
-/*	$NetBSD: gxio.c,v 1.13.2.1 2010/04/30 14:39:15 uebayasi Exp $ */
+/*	$NetBSD: gxio.c,v 1.13.2.2 2010/08/17 06:44:17 uebayasi Exp $ */
 /*
  * Copyright (C) 2005, 2006, 2007 WIDE Project and SOUM Corporation.
  * All rights reserved.
@@ -31,8 +31,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gxio.c,v 1.13.2.1 2010/04/30 14:39:15 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gxio.c,v 1.13.2.2 2010/08/17 06:44:17 uebayasi Exp $");
 
+#include "opt_cputypes.h"
+#include "opt_gumstix.h"
 #include "opt_gxio.h"
 
 #include <sys/param.h>
@@ -44,13 +46,19 @@ __KERNEL_RCSID(0, "$NetBSD: gxio.c,v 1.13.2.1 2010/04/30 14:39:15 uebayasi Exp $
 
 #include <machine/bootconfig.h>
 
+#include <arm/omap/omap2_reg.h>
+#include <arm/omap/omap_var.h>
+#if defined(CPU_XSCALE_PXA270) || defined(CPU_XSCALE_PXA250)
 #include <arm/xscale/pxa2x0cpu.h>
+#endif
 #include <arm/xscale/pxa2x0reg.h>
 #include <arm/xscale/pxa2x0var.h>
 #include <arm/xscale/pxa2x0_gpio.h>
 #include <evbarm/gumstix/gumstixvar.h>
 
+#if !defined(OVERO)	/* XXXXX */
 #include "locators.h"
+#endif
 
 
 struct gxioconf {
@@ -58,14 +66,17 @@ struct gxioconf {
 	void (*config)(void);
 };
 
+#if !defined(OVERO)	/* XXXXX */
 static int gxiomatch(device_t, cfdata_t, void *);
 static void gxioattach(device_t, device_t, void *);
 static int gxiosearch(device_t, cfdata_t, const int *, void *);
 static int gxioprint(void *, const char *);
+#endif
 
 void gxio_config_pin(void);
 void gxio_config_expansion(char *);
 static void gxio_config_gpio(const struct gxioconf *, char *);
+#if defined(CPU_XSCALE_PXA270) || defined(CPU_XSCALE_PXA250)
 static void basix_config(void);
 static void cfstix_config(void);
 static void etherstix_config(void);
@@ -78,9 +89,12 @@ static void netwifimicrosd_config(void);
 static void netmmc_config(void);
 static void wifistix_config(void);
 static void wifistix_cf_config(void);
+#endif
 
+#if !defined(OVERO)	/* XXXXX */
 CFATTACH_DECL_NEW(
     gxio, sizeof(struct gxio_softc), gxiomatch, gxioattach, NULL, NULL);
+#endif
 
 char busheader[MAX_BOOT_STRING];
 
@@ -147,6 +161,7 @@ static struct pxa2x0_gpioconf verdexdep_gpioconf[] = {
 #endif
 
 static const struct gxioconf busheader_conf[] = {
+#if defined(CPU_XSCALE_PXA270) || defined(CPU_XSCALE_PXA250)
 	{ "basix",		basix_config },
 	{ "cfstix",		cfstix_config },
 	{ "etherstix",		etherstix_config },
@@ -161,6 +176,7 @@ static const struct gxioconf busheader_conf[] = {
 	{ "netpro-vx",		netwifimicrosd_config },
 	{ "wifistix-cf",	wifistix_cf_config },
 	{ "wifistix",		wifistix_config },
+#endif
 	{ NULL }
 };
 
@@ -168,6 +184,7 @@ int gxpcic_gpio_reset;
 struct gxpcic_slot_irqs gxpcic_slot_irqs[2] = { { 0, -1, -1 }, { 0, -1, -1 } };
 
 
+#if !defined(OVERO)	/* XXXXX */
 /* ARGSUSED */
 static int
 gxiomatch(device_t parent, cfdata_t match, void *aux)
@@ -241,6 +258,7 @@ gxioprint(void *aux, const char *name)
 		printf(" gpirq %d", gxa->gxa_gpirq);
 	return (UNCONF);
 }
+#endif
 
 
 /*
@@ -283,12 +301,14 @@ gxio_config_pin(void)
 #elif defined(CPU_XSCALE_PXA270)
 	pxa2x0_gpio_set_function(12, GPIO_OUT | GPIO_CLR);
 #endif
+#if !defined(OVERO)	/* XXXXX */
 	delay(100);
+#endif
 
 #if defined(CPU_XSCALE_PXA270) && defined(CPU_XSCALE_PXA250)
 	pxa2x0_gpio_config(
 	    (CPU_IS_PXA250) ? gumstix_gpioconf : verdex_gpioconf);
-#else
+#elif defined(CPU_XSCALE_PXA270) || defined(CPU_XSCALE_PXA250)
 #if defined(CPU_XSCALE_PXA270)
 	pxa2x0_gpio_config(verdex_gpioconf);
 #else
@@ -332,6 +352,7 @@ gxio_config_gpio(const struct gxioconf *gxioconflist, char *expansion)
 }
 
 
+#if defined(CPU_XSCALE_PXA270) || defined(CPU_XSCALE_PXA250)
 static void
 basix_config(void)
 {
@@ -550,3 +571,4 @@ wifistix_cf_config(void)
 	/* Power to Marvell 88W8385 */
 	pxa2x0_gpio_set_function(80, GPIO_OUT | GPIO_SET);
 }
+#endif

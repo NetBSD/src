@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.17 2009/07/30 05:57:27 nisimura Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.17.2.1 2010/08/17 06:45:07 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.17 2009/07/30 05:57:27 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.17.2.1 2010/08/17 06:45:07 uebayasi Exp $");
 
 #include "opt_pci.h"
 
@@ -87,7 +87,7 @@ struct powerpc_bus_dma_tag pci_bus_dma_tag = {
 	_bus_dmamem_mmap,
 };
 
-#define	EPIC_DEBUGIRQ
+/*#define EPIC_DEBUGIRQ*/
 
 static int brdtype;
 #define BRD_SANDPOINTX2		2
@@ -241,7 +241,7 @@ pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 		goto bad;
 	}
 #ifdef EPIC_DEBUGIRQ
-printf("line %d, pin %c", line, pin + '@');
+	printf("line %d, pin %c", line, pin + '@');
 #endif
 	switch (brdtype) {
 	/* Sandpoint has 4 PCI slots in a weird order.
@@ -322,8 +322,8 @@ printf("line %d, pin %c", line, pin + '@');
 		*ihp = (line == 13) ? 4 : line - 11;
 		break;
 	case BRD_QNAPTS101:
-		/* map line 12-15 to EPIC IRQ0-3 */
-		*ihp = line - 12;
+		/* map line 13-16 to EPIC IRQ0-3 */
+		*ihp = line - 13;
 		break;
 	case BRD_SYNOLOGY:
 		/* map line 12,13-15 to EPIC IRQ4,0-2 */
@@ -335,7 +335,7 @@ printf("line %d, pin %c", line, pin + '@');
 		break;
 	}
 #ifdef EPIC_DEBUGIRQ
-printf(" = EPIC %d\n", *ihp);
+	printf(" = EPIC %d\n", *ihp);
 #endif
 	return 0;
   bad:

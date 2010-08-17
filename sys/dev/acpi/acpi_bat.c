@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_bat.c,v 1.81.2.1 2010/04/30 14:43:05 uebayasi Exp $	*/
+/*	$NetBSD: acpi_bat.c,v 1.81.2.2 2010/08/17 06:45:58 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.81.2.1 2010/04/30 14:43:05 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.81.2.2 2010/08/17 06:45:58 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>
@@ -149,6 +149,7 @@ struct acpibat_softc {
 	struct acpi_devnode	*sc_node;
 	struct sysmon_envsys	*sc_sme;
 	envsys_data_t		*sc_sensor;
+	char			 sc_serial[64];
 	kmutex_t		 sc_mutex;
 	kcondvar_t		 sc_condvar;
 	int32_t			 sc_lcapacity;
@@ -237,6 +238,7 @@ acpibat_attach(device_t parent, device_t self, void *aux)
 	cv_init(&sc->sc_condvar, device_xname(self));
 
 	(void)pmf_device_register(self, NULL, acpibat_resume);
+	(void)memset(sc->sc_serial, '\0', sizeof(sc->sc_serial));
 	(void)acpi_register_notify(sc->sc_node, acpibat_notify_handler);
 
 	sc->sc_sensor = kmem_zalloc(ACPIBAT_COUNT *
@@ -427,7 +429,8 @@ out:
 static void
 acpibat_print_info(device_t dv, ACPI_OBJECT *elm)
 {
-	const char *tech, *unit;
+	struct acpibat_softc *sc = device_private(dv);
+	const char *model, *serial, *tech, *unit;
 	int i;
 
 	for (i = ACPIBAT_BIF_OEM; i > ACPIBAT_BIF_GRANULARITY2; i--) {
@@ -437,6 +440,25 @@ acpibat_print_info(device_t dv, ACPI_OBJECT *elm)
 
 		if (elm[i].String.Pointer == NULL)
 			return;
+
+		if (elm[i].String.Pointer[0] == '\0')
+			return;
+	}
+
+	model = elm[ACPIBAT_BIF_MODEL].String.Pointer;
+	serial = elm[ACPIBAT_BIF_SERIAL].String.Pointer;
+
+	if (elm[ACPIBAT_BIF_SERIAL].String.Length > sizeof(sc->sc_serial))
+		return;
+
+	if (sc->sc_serial[0] == '\0')
+		(void)strlcpy(sc->sc_serial, serial, sizeof(sc->sc_serial));
+	else {
+		if (strcmp(sc->sc_serial, serial) == 0)
+			return;
+
+		(void)memset(sc->sc_serial, '\0', sizeof(sc->sc_serial));
+		(void)strlcpy(sc->sc_serial, serial, sizeof(sc->sc_serial));
 	}
 
 	tech = (elm[ACPIBAT_BIF_TECHNOLOGY].Integer.Value != 0) ?
@@ -446,24 +468,8 @@ acpibat_print_info(device_t dv, ACPI_OBJECT *elm)
 	    elm[ACPIBAT_BIF_OEM].String.Pointer,
 	    elm[ACPIBAT_BIF_TYPE].String.Pointer, tech);
 
-	if (elm[ACPIBAT_BIF_SERIAL].String.Pointer[0] ||
-	    elm[ACPIBAT_BIF_MODEL].String.Pointer[0]) {
-		int comma;
-		aprint_verbose_dev(dv, "");
-
-		if (elm[ACPIBAT_BIF_SERIAL].String.Pointer[0]) {
-			aprint_verbose("serial number %s",
-			    elm[ACPIBAT_BIF_SERIAL].String.Pointer);
-			comma = 1;
-		} else
-			comma = 0;
-
-		if (elm[ACPIBAT_BIF_MODEL].String.Pointer[0])
-			aprint_verbose("%smodel number %s",
-			    comma ? ", " : "",
-			    elm[ACPIBAT_BIF_MODEL].String.Pointer);
-		aprint_verbose("\n");
-	}
+	aprint_verbose_dev(dv, "model number %s, serial number %s\n",
+	    model, serial);
 
 #define SCALE(x) (((int)x) / 1000000), ((((int)x) % 1000000) / 1000)
 
@@ -482,8 +488,9 @@ acpibat_print_info(device_t dv, ACPI_OBJECT *elm)
 		unit = "Ah";
 	else
 		unit = "Wh";
-	aprint_verbose_dev(dv, "low->warn granularity: %d.%03d%s, "
-	    "warn->full granularity: %d.%03d%s\n",
+
+	aprint_verbose_dev(dv, "granularity: "
+	    "low->warn %d.%03d %s, warn->full %d.%03d %s\n",
 	    SCALE(elm[ACPIBAT_BIF_GRANULARITY1].Integer.Value * 1000), unit,
 	    SCALE(elm[ACPIBAT_BIF_GRANULARITY2].Integer.Value * 1000), unit);
 }
@@ -777,8 +784,8 @@ static bool
 acpibat_resume(device_t dv, const pmf_qual_t *qual)
 {
 
-	(void)AcpiOsExecute(OSL_NOTIFY_HANDLER, acpibat_update_info, dv);
-	(void)AcpiOsExecute(OSL_NOTIFY_HANDLER, acpibat_update_status, dv);
+	acpibat_update_info(dv);
+	acpibat_update_status(dv);
 
 	return true;
 }

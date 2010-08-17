@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.44 2009/11/24 10:42:44 njoly Exp $  
+	$NetBSD: syscalls.master,v 1.44.2.1 2010/08/17 06:45:47 uebayasi Exp $  
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -80,7 +80,7 @@
 %%
 
 0	NOARGS		{ int|linux_sys||nosys(void); } syscall
-1	NOARGS		{ int|sys||exit(int rval); }
+1	STD		{ int|linux_sys||exit(int rval); }
 2	NOARGS		{ int|sys||fork(void); }
 3	NOARGS		{ int|sys||read(int fd, char *buf, u_int nbyte); }
 4	NOARGS		{ int|sys||write(int fd, char *buf, u_int nbyte); }
@@ -216,8 +216,7 @@
 			    struct linux_statfs *sp); }
 100	STD		{ int|linux_sys||fstatfs(int fd, \
 			    struct linux_statfs *sp); }
-101	STD		{ int|linux_sys||ioperm(unsigned int lo, \
-			    unsigned int hi, int val); }
+101	UNIMPL		ioperm
 102	STD		{ int|linux_sys||socketcall(int what, void *args); }
 103	UNIMPL		syslog
 104	NOARGS		{ int|compat_50_sys||setitimer(u_int which, \
@@ -243,7 +242,8 @@
 			    void *ptr); }
 118	NOARGS		{ int|sys||fsync(int fd); }
 119	STD		{ int|linux_sys||sigreturn(struct linux_sigcontext *scp); }
-120	STD		{ int|linux_sys||clone(int flags, void *stack); }
+120	STD		{ int|linux_sys||clone(int flags, void *stack, \
+			    void *parent_tidptr, void *tls, void *child_tidptr); }
 121	STD		{ int|linux_sys||setdomainname(char *domainname, \
 			    int len); }
 122	STD		{ int|linux_sys||new_uname(struct linux_utsname *up); }
@@ -377,8 +377,8 @@
 204	STD		{ int|linux_sys||fcntl64(int fd, int cmd, void *arg); }
 205	NOARGS		{ int|sys||mincore(void *addr, size_t len, char *vec); }
 206	NOARGS		{ int|sys||madvise(void *addr, size_t len, int behav); }
-207	UNIMPL		gettid
-208	UNIMPL		tkill
+207	NOARGS		{ pid_t|linux_sys||gettid(void); }
+208	STD		{ int|linux_sys||tkill(int tid, int sig); }
 209	STD		{ int|linux_sys||setxattr(char *path, char *name, \
 			    void *value, size_t size, int flags); }
 210	STD		{ int|linux_sys||lsetxattr(char *path, char *name, \
@@ -400,9 +400,13 @@
 218	STD		{ int|linux_sys||removexattr(char *path, char *name); }
 219	STD		{ int|linux_sys||lremovexattr(char *path, char *name); }
 220	STD		{ int|linux_sys||fremovexattr(int fd, char *name); }
-221	UNIMPL		futex
-222	UNIMPL		sched_setaffinity
-223	UNIMPL		sched_getaffinity
+221	STD		{ int|linux_sys||futex(int *uaddr, int op, int val, \
+			    const struct linux_timespec *timeout, int *uaddr2, \
+			    int val3); }
+222	STD		{ int|linux_sys||sched_setaffinity(pid_t pid, \
+			    unsigned int len, unsigned long *mask); }
+223	STD		{ int|linux_sys||sched_getaffinity(pid_t pid, \
+			    unsigned int len, unsigned long *mask); }
 224	UNIMPL		/* unused */
 225	UNIMPL		tuxcall
 226	UNIMPL		sendfile64
@@ -411,7 +415,7 @@
 229	UNIMPL		io_getevents
 230	UNIMPL		io_submit
 231	UNIMPL		io_cancel
-232	UNIMPL		set_tid_address
+232	STD		{ int|linux_sys||set_tid_address(int *tid); }
 233	UNIMPL		fadvise64
 234	STD		{ int|linux_sys||exit_group(int error_code); }
 235	UNIMPL		lookup_dcookie
@@ -434,7 +438,7 @@
 			    int flags, struct linux_timespec *rqtp, \
 			    struct linux_timespec *rmtp); }
 249	UNIMPL		swapcontext
-250	UNIMPL		tgkill
+250	STD		{ int|linux_sys||tgkill(int tgid, int tid, int sig); }
 251	UNIMPL		utimes
 252	STD		{ int|linux_sys||statfs64(const char *path, \
 			    size_t sz, struct linux_statfs64 *sp); }
@@ -455,3 +459,60 @@
 266	UNIMPL		mq_notify
 267	UNIMPL		mq_getsetattr
 268	UNIMPL		kexec_load
+269	UNIMPL		add_key
+270	UNIMPL		request_key
+271	UNIMPL		keyctl
+272	UNIMPL		waitid
+273	UNIMPL		ioprio_set
+274	UNIMPL		ioprio_get
+275	UNIMPL		inotify_init
+276	UNIMPL		inotify_add_watch
+277	UNIMPL		inotify_rm_watch
+278	UNIMPL		spu_run
+279	UNIMPL		spu_create
+280	UNIMPL		pselect6
+281	UNIMPL		ppoll
+282	UNIMPL		unshare
+283	UNIMPL		splice
+284	UNIMPL		tee
+285	UNIMPL		vmsplice
+286	UNIMPL		openat
+287	UNIMPL		mkdirat
+288	UNIMPL		mknodat
+289	UNIMPL		fchownat
+290	UNIMPL		futimesat
+291	UNIMPL		fstatat64
+292	UNIMPL		unlinkat
+293	UNIMPL		renameat
+294	UNIMPL		linkat
+295	UNIMPL		symlinkat
+296	UNIMPL		readlinkat
+297	UNIMPL		fchmodat
+298	UNIMPL		faccessat
+299	STD		{ int|linux_sys||set_robust_list( \
+			    struct linux_robust_list_head *head, size_t len); }
+300	STD		{ int|linux_sys||get_robust_list(int pid, \
+			    struct linux_robust_list_head **head, \
+			    size_t *len); }
+301	UNIMPL		move_pages
+302	UNIMPL		getcpu
+303	UNIMPL		epoll_wait
+304	UNIMPL		utimensat
+305	UNIMPL		signalfd
+306	UNIMPL		timerfd_create
+307	UNIMPL		eventfd
+308	UNIMPL		sync_file_range2
+309	UNIMPL		fallocate
+310	UNIMPL		subpage_prot
+311	UNIMPL		timerfd_settime
+312	UNIMPL		timerfd_gettime
+313	UNIMPL		signalfd4
+314	UNIMPL		eventfd2
+315	UNIMPL		epoll_create1
+316	UNIMPL		dup3
+317	UNIMPL		pipe2
+318	UNIMPL		inotify_init1
+319	UNIMPL		perf_event_open
+320	UNIMPL		preadv
+321	UNIMPL		pwritev
+322	UNIMPL		rt_tgsigqueueinfo

@@ -1,4 +1,4 @@
-/*	$NetBSD: gtmpsc.c,v 1.37.2.1 2010/04/30 14:43:27 uebayasi Exp $	*/
+/*	$NetBSD: gtmpsc.c,v 1.37.2.2 2010/08/17 06:46:16 uebayasi Exp $	*/
 /*
  * Copyright (c) 2009 KIYOHARA Takashi
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtmpsc.c,v 1.37.2.1 2010/04/30 14:43:27 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtmpsc.c,v 1.37.2.2 2010/08/17 06:46:16 uebayasi Exp $");
 
 #include "opt_kgdb.h"
 
@@ -216,21 +216,7 @@ gtmpscmatch(device_t parent, cfdata_t match, void *aux)
 
 	if (strcmp(mva->mva_name, match->cf_name) != 0)
 		return 0;
-
-	switch (mva->mva_model) {
-	case MARVELL_DISCOVERY:
-	case MARVELL_DISCOVERY_II:
-	case MARVELL_DISCOVERY_III:
-#if 0
-	case MARVELL_DISCOVERY_LT:
-#endif
-		break;
-
-	default:
-		return 0;
-	}
-	if (mva->mva_offset == GTCF_OFFSET_DEFAULT ||
-	    mva->mva_irq == GTCF_IRQ_DEFAULT)
+	if (mva->mva_offset == MVA_OFFSET_DEFAULT)
 		return 0;
 
 	mva->mva_size = GTMPSC_SIZE;
@@ -251,7 +237,7 @@ gtmpscattach(device_t parent, device_t self, void *aux)
 	aprint_naive("\n");
 	aprint_normal(": Multi-Protocol Serial Controller\n");
 
-	if (mva->mva_unit != GTCF_UNIT_DEFAULT)
+	if (mva->mva_unit != MVA_UNIT_DEFAULT)
 		unit = mva->mva_unit;
 	else
 		unit = (mva->mva_offset == GTMPSC_BASE(0)) ? 0 : 1;

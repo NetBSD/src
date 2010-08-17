@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_machdep.c,v 1.38.2.1 2010/04/30 14:40:00 uebayasi Exp $	*/
+/*	$NetBSD: x86_machdep.c,v 1.38.2.2 2010/08/17 06:45:34 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 YAMAMOTO Takashi,
@@ -31,9 +31,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.38.2.1 2010/04/30 14:40:00 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.38.2.2 2010/08/17 06:45:34 uebayasi Exp $");
 
 #include "opt_modular.h"
+#include "opt_physmem.h"
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -336,19 +337,32 @@ x86_cpu_idle_init(void)
 {
 #ifndef XEN
 	if ((cpu_feature[1] & CPUID2_MONITOR) == 0 ||
-	    cpu_vendor == CPUVENDOR_AMD) {
-		strlcpy(x86_cpu_idle_text, "halt", sizeof(x86_cpu_idle_text));
-		x86_cpu_idle = x86_cpu_idle_halt;
-	} else {
-		strlcpy(x86_cpu_idle_text, "mwait", sizeof(x86_cpu_idle_text));
-		x86_cpu_idle = x86_cpu_idle_mwait;
-	}
+	    cpu_vendor == CPUVENDOR_AMD)
+		x86_cpu_idle_set(x86_cpu_idle_halt, "halt");
+	else
+		x86_cpu_idle_set(x86_cpu_idle_mwait, "mwait");
 #else
-	strlcpy(x86_cpu_idle_text, "xen", sizeof(x86_cpu_idle_text));
-	x86_cpu_idle = x86_cpu_idle_xen;
+	x86_cpu_idle_set(x86_cpu_idle_xen, "xen");
 #endif
 }
 
+void
+x86_cpu_idle_get(void (**func)(void), char *text, size_t len)
+{
+
+	*func = x86_cpu_idle;
+
+	(void)strlcpy(text, x86_cpu_idle_text, len);
+}
+
+void
+x86_cpu_idle_set(void (*func)(void), const char *text)
+{
+
+	x86_cpu_idle = func;
+
+	(void)strlcpy(x86_cpu_idle_text, text, sizeof(x86_cpu_idle_text));
+}
 
 #ifndef XEN
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.13.2.1 2010/04/30 14:39:22 uebayasi Exp $	*/
+/*	$NetBSD: cpu.c,v 1.13.2.2 2010/08/17 06:44:23 uebayasi Exp $	*/
 
 /*	$OpenBSD: cpu.c,v 1.28 2004/12/28 05:18:25 mickey Exp $	*/
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.13.2.1 2010/04/30 14:39:22 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.13.2.2 2010/08/17 06:44:23 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,6 +50,10 @@ struct cpu_softc {
 	hppa_hpa_t sc_hpa;
 	void *sc_ih;
 };
+
+#ifdef MULTIPROCESSOR
+int hppa_ncpus;
+#endif
 
 int	cpumatch(device_t, cfdata_t, void *);
 void	cpuattach(device_t, device_t, void *);

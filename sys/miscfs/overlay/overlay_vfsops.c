@@ -1,4 +1,4 @@
-/*	$NetBSD: overlay_vfsops.c,v 1.54 2008/12/05 13:05:38 ad Exp $	*/
+/*	$NetBSD: overlay_vfsops.c,v 1.54.6.1 2010/08/17 06:47:38 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 National Aeronautics & Space Administration
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: overlay_vfsops.c,v 1.54 2008/12/05 13:05:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: overlay_vfsops.c,v 1.54.6.1 2010/08/17 06:47:38 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -136,8 +136,11 @@ ov_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	 * Find lower node
 	 */
 	lowerrootvp = mp->mnt_vnodecovered;
-	if ((error = vget(lowerrootvp, LK_EXCLUSIVE | LK_RETRY)))
+	vref(lowerrootvp);
+	if ((error = vn_lock(lowerrootvp, LK_EXCLUSIVE | LK_RETRY))) {
+		vrele(lowerrootvp);
 		return (error);
+	}
 
 	/*
 	 * First cut at fixing up upper mount point
@@ -182,7 +185,7 @@ ov_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	/*
 	 * Unlock the node
 	 */
-	VOP_UNLOCK(vp, 0);
+	VOP_UNLOCK(vp);
 
 	/*
 	 * Keep a held reference to the root vnode.

@@ -1,4 +1,4 @@
-/*	$NetBSD: advnops.c,v 1.36 2009/08/30 12:36:38 phx Exp $	*/
+/*	$NetBSD: advnops.c,v 1.36.2.1 2010/08/17 06:47:14 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: advnops.c,v 1.36 2009/08/30 12:36:38 phx Exp $");
+__KERNEL_RCSID(0, "$NetBSD: advnops.c,v 1.36.2.1 2010/08/17 06:47:14 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -852,7 +852,7 @@ adosfs_inactive(void *v)
 #ifdef ADOSFS_DIAGNOSTIC
 	advopprint(sp);
 #endif
-	VOP_UNLOCK(vp, 0);
+	VOP_UNLOCK(vp);
 	/* XXX this needs to check if file was deleted */
 	*sp->a_recycle = true;
 

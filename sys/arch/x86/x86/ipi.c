@@ -1,4 +1,4 @@
-/*	$NetBSD: ipi.c,v 1.16.2.1 2010/04/30 14:39:59 uebayasi Exp $	*/
+/*	$NetBSD: ipi.c,v 1.16.2.2 2010/08/17 06:45:33 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2008, 2009 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipi.c,v 1.16.2.1 2010/04/30 14:39:59 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipi.c,v 1.16.2.2 2010/08/17 06:45:33 uebayasi Exp $");
 
 #include "opt_mtrr.h"
 
@@ -42,6 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: ipi.c,v 1.16.2.1 2010/04/30 14:39:59 uebayasi Exp $"
 #include <sys/atomic.h>
 #include <sys/intr.h>
 #include <sys/cpu.h>
+#include <sys/xcall.h>
  
 #ifdef MULTIPROCESSOR
 
@@ -71,6 +72,7 @@ static void	x86_ipi_synch_fpu(struct cpu_info *);
 
 static void	x86_ipi_halt(struct cpu_info *);
 static void	x86_ipi_kpreempt(struct cpu_info *);
+static void	x86_ipi_xcall(struct cpu_info *);
 
 #ifdef MTRR
 static void	x86_ipi_reload_mtrr(struct cpu_info *);
@@ -92,7 +94,7 @@ void (*ipifunc[X86_NIPI])(struct cpu_info *) =
 	x86_ipi_synch_fpu,
 	x86_ipi_reload_mtrr,
 	gdt_reload_cpu,
-	NULL,
+	x86_ipi_xcall,
 	acpi_cpu_sleep,
 	x86_ipi_kpreempt
 };
@@ -207,6 +209,33 @@ x86_ipi_kpreempt(struct cpu_info *ci)
 {
 
 	softint_trigger(1 << SIR_PREEMPT);
+}
+
+/*
+ * MD support for xcall(9) interface.
+ */
+
+static void
+x86_ipi_xcall(struct cpu_info *ci)
+{
+
+	xc_ipi_handler();
+}
+
+void
+xc_send_ipi(struct cpu_info *ci)
+{
+
+	KASSERT(kpreempt_disabled());
+	KASSERT(curcpu() != ci);
+
+	if (ci) {
+		/* Unicast: remote CPU. */
+		x86_send_ipi(ci, X86_IPI_XCALL);
+	} else {
+		/* Broadcast: all, but local CPU (caller will handle it). */
+		x86_broadcast_ipi(X86_IPI_XCALL);
+	}
 }
 
 #else

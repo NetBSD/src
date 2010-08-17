@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_subr.c,v 1.56 2009/11/11 09:59:41 rmind Exp $	*/
+/*	$NetBSD: tmpfs_subr.c,v 1.56.2.1 2010/08/17 06:47:22 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.56 2009/11/11 09:59:41 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.56.2.1 2010/08/17 06:47:22 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -107,7 +107,7 @@ tmpfs_alloc_node(struct tmpfs_mount *tmp, enum vtype type,
 		return ENOSPC;
 	}
 
-	nnode = (struct tmpfs_node *)TMPFS_POOL_GET(&tmp->tm_node_pool, 0);
+	nnode = tmpfs_node_get(tmp);
 	if (nnode == NULL) {
 		atomic_dec_uint(&tmp->tm_nodes_cnt);
 		return ENOSPC;
@@ -164,10 +164,10 @@ tmpfs_alloc_node(struct tmpfs_mount *tmp, enum vtype type,
 		KASSERT(strlen(target) < MAXPATHLEN);
 		nnode->tn_size = strlen(target);
 		nnode->tn_spec.tn_lnk.tn_link =
-		    tmpfs_str_pool_get(&tmp->tm_str_pool, nnode->tn_size, 0);
+		    tmpfs_strname_alloc(tmp, nnode->tn_size);
 		if (nnode->tn_spec.tn_lnk.tn_link == NULL) {
 			atomic_dec_uint(&tmp->tm_nodes_cnt);
-			TMPFS_POOL_PUT(&tmp->tm_node_pool, nnode);
+			tmpfs_node_put(tmp, nnode);
 			return ENOSPC;
 		}
 		memcpy(nnode->tn_spec.tn_lnk.tn_link, target, nnode->tn_size);
@@ -215,33 +215,37 @@ tmpfs_alloc_node(struct tmpfs_mount *tmp, enum vtype type,
 void
 tmpfs_free_node(struct tmpfs_mount *tmp, struct tmpfs_node *node)
 {
+	size_t objsz;
 
-	if (node->tn_type == VREG) {
-		atomic_add_int(&tmp->tm_pages_used,
-		    -node->tn_spec.tn_reg.tn_aobj_pages);
-	}
-	atomic_dec_uint(&tmp->tm_nodes_cnt);
 	mutex_enter(&tmp->tm_lock);
 	LIST_REMOVE(node, tn_entries);
 	mutex_exit(&tmp->tm_lock);
+	atomic_dec_uint(&tmp->tm_nodes_cnt);
 
 	switch (node->tn_type) {
 	case VLNK:
-		tmpfs_str_pool_put(&tmp->tm_str_pool,
-		    node->tn_spec.tn_lnk.tn_link, node->tn_size);
+		tmpfs_strname_free(tmp, node->tn_spec.tn_lnk.tn_link,
+		    node->tn_size);
 		break;
-
 	case VREG:
-		if (node->tn_spec.tn_reg.tn_aobj != NULL)
+		/*
+		 * Calculate the size of node data, decrease the used-memory
+		 * counter, and destroy the memory object (if any).
+		 */
+		objsz = PAGE_SIZE * node->tn_spec.tn_reg.tn_aobj_pages;
+		if (objsz != 0) {
+			tmpfs_mem_decr(tmp, objsz);
+		}
+		if (node->tn_spec.tn_reg.tn_aobj != NULL) {
 			uao_detach(node->tn_spec.tn_reg.tn_aobj);
+		}
 		break;
-
 	default:
 		break;
 	}
 
 	mutex_destroy(&node->tn_vlock);
-	TMPFS_POOL_PUT(&tmp->tm_node_pool, node);
+	tmpfs_node_put(tmp, node);
 }
 
 /* --------------------------------------------------------------------- */
@@ -262,13 +266,13 @@ tmpfs_alloc_dirent(struct tmpfs_mount *tmp, struct tmpfs_node *node,
 {
 	struct tmpfs_dirent *nde;
 
-	nde = (struct tmpfs_dirent *)TMPFS_POOL_GET(&tmp->tm_dirent_pool, 0);
+	nde = tmpfs_dirent_get(tmp);
 	if (nde == NULL)
 		return ENOSPC;
 
-	nde->td_name = tmpfs_str_pool_get(&tmp->tm_str_pool, len, 0);
+	nde->td_name = tmpfs_strname_alloc(tmp, len);
 	if (nde->td_name == NULL) {
-		TMPFS_POOL_PUT(&tmp->tm_dirent_pool, nde);
+		tmpfs_dirent_put(tmp, nde);
 		return ENOSPC;
 	}
 	nde->td_namelen = len;
@@ -317,8 +321,8 @@ tmpfs_free_dirent(struct tmpfs_mount *tmp, struct tmpfs_dirent *de,
 			    NOTE_LINK);
 	}
 
-	tmpfs_str_pool_put(&tmp->tm_str_pool, de->td_name, de->td_namelen);
-	TMPFS_POOL_PUT(&tmp->tm_dirent_pool, de);
+	tmpfs_strname_free(tmp, de->td_name, de->td_namelen);
+	tmpfs_dirent_put(tmp, de);
 }
 
 /* --------------------------------------------------------------------- */
@@ -342,7 +346,7 @@ tmpfs_alloc_vp(struct mount *mp, struct tmpfs_node *node, struct vnode **vpp)
 		if ((vp = node->tn_vnode) != NULL) {
 			mutex_enter(&vp->v_interlock);
 			mutex_exit(&node->tn_vlock);
-			error = vget(vp, LK_EXCLUSIVE | LK_INTERLOCK);
+			error = vget(vp, LK_EXCLUSIVE);
 			if (error == ENOENT) {
 				/* vnode was reclaimed. */
 				continue;
@@ -532,6 +536,7 @@ tmpfs_dir_attach(struct vnode *vp, struct tmpfs_dirent *de)
 {
 	struct tmpfs_node *dnode;
 
+	KASSERT(VOP_ISLOCKED(vp));
 	dnode = VP_TO_TMPFS_DIR(vp);
 
 	TAILQ_INSERT_TAIL(&dnode->tn_spec.tn_dir.tn_dir, de, td_entries);
@@ -559,7 +564,6 @@ tmpfs_dir_detach(struct vnode *vp, struct tmpfs_dirent *de)
 	struct tmpfs_node *dnode;
 
 	KASSERT(VOP_ISLOCKED(vp));
-
 	dnode = VP_TO_TMPFS_DIR(vp);
 
 	if (dnode->tn_spec.tn_dir.tn_readdir_lastp == de) {
@@ -855,8 +859,7 @@ tmpfs_dir_getdents(struct tmpfs_node *node, struct uio *uio, off_t *cntp)
 int
 tmpfs_reg_resize(struct vnode *vp, off_t newsize)
 {
-	int error;
-	unsigned int newpages, oldpages;
+	size_t newpages, oldpages;
 	struct tmpfs_mount *tmp;
 	struct tmpfs_node *node;
 	off_t oldsize;
@@ -867,29 +870,20 @@ tmpfs_reg_resize(struct vnode *vp, off_t newsize)
 	node = VP_TO_TMPFS_NODE(vp);
 	tmp = VFS_TO_TMPFS(vp->v_mount);
 
-	/* Convert the old and new sizes to the number of pages needed to
-	 * store them.  It may happen that we do not need to do anything
-	 * because the last allocated page can accommodate the change on
-	 * its own. */
 	oldsize = node->tn_size;
-	oldpages = round_page(oldsize) / PAGE_SIZE;
+	oldpages = round_page(oldsize) >> PAGE_SHIFT;
+	newpages = round_page(newsize) >> PAGE_SHIFT;
 	KASSERT(oldpages == node->tn_spec.tn_reg.tn_aobj_pages);
-	newpages = round_page(newsize) / PAGE_SIZE;
 
-	if (newpages > oldpages &&
-	    (ssize_t)(newpages - oldpages) > TMPFS_PAGES_AVAIL(tmp)) {
-		error = ENOSPC;
-		goto out;
-	}
-	atomic_add_int(&tmp->tm_pages_used, newpages - oldpages);
-
-	if (newsize < oldsize) {
+	if (newpages > oldpages) {
+		/* Increase the used-memory counter if getting extra pages. */
+		if (!tmpfs_mem_incr(tmp, (newpages - oldpages) << PAGE_SHIFT)) {
+			return ENOSPC;
+		}
+	} else if (newsize < oldsize) {
 		int zerolen = MIN(round_page(newsize), node->tn_size) - newsize;
 
-		/*
-		 * zero out the truncated part of the last page.
-		 */
-
+		/* Zero out the truncated part of the last page. */
 		uvm_vnp_zerorange(vp, newsize, zerolen);
 	}
 
@@ -898,9 +892,8 @@ tmpfs_reg_resize(struct vnode *vp, off_t newsize)
 	uvm_vnp_setsize(vp, newsize);
 
 	/*
-	 * free "backing store"
+	 * Free "backing store".
 	 */
-
 	if (newpages < oldpages) {
 		struct uvm_object *uobj;
 
@@ -909,53 +902,16 @@ tmpfs_reg_resize(struct vnode *vp, off_t newsize)
 		mutex_enter(&uobj->vmobjlock);
 		uao_dropswap_range(uobj, newpages, oldpages);
 		mutex_exit(&uobj->vmobjlock);
-	}
 
-	error = 0;
+		/* Decrease the used-memory counter. */
+		tmpfs_mem_decr(tmp, (oldpages - newpages) << PAGE_SHIFT);
+	}
 
 	if (newsize > oldsize)
 		VN_KNOTE(vp, NOTE_EXTEND);
 
-out:
-	return error;
+	return 0;
 }
-
-/* --------------------------------------------------------------------- */
-
-/*
- * Returns information about the number of available memory pages,
- * including physical and virtual ones.
- *
- * If 'total' is true, the value returned is the total amount of memory
- * pages configured for the system (either in use or free).
- * If it is FALSE, the value returned is the amount of free memory pages.
- *
- * Remember to remove TMPFS_PAGES_RESERVED from the returned value to avoid
- * excessive memory usage.
- *
- */
-size_t
-tmpfs_mem_info(bool total)
-{
-	size_t size;
-
-	size = 0;
-	size += uvmexp.swpgavail;
-	if (!total) {
-		size -= uvmexp.swpgonly;
-	}
-	size += uvmexp.free;
-	size += uvmexp.filepages;
-	if (size > uvmexp.wired) {
-		size -= uvmexp.wired;
-	} else {
-		size = 0;
-	}
-
-	return size;
-}
-
-/* --------------------------------------------------------------------- */
 
 /*
  * Change flags of the given vnode.

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4.6.2 2010/04/30 14:44:24 uebayasi Exp $
+#	$NetBSD: Makefile,v 1.4.6.3 2010/08/17 06:47:56 uebayasi Exp $
 #
 
 .PATH:	${.CURDIR}/../../../../dev/usb ${.CURDIR}/../../../../kern
@@ -9,7 +9,6 @@ IOCONF= UCOM.ioconf
 SRCS=	ucom.c uplcom.c u3g.c
 
 SRCS+=	ucom_at_usb.c
-SRCS+=	tty.c tty_conf.c tty_tty.c tty_subr.c
 
 CPPFLAGS+=	-I${RUMPTOP}/librump/rumpvfs
 

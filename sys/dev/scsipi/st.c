@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.216 2009/12/06 22:48:17 dyoung Exp $ */
+/*	$NetBSD: st.c,v 1.216.2.1 2010/08/17 06:46:39 uebayasi Exp $ */
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.216 2009/12/06 22:48:17 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.216.2.1 2010/08/17 06:46:39 uebayasi Exp $");
 
 #include "opt_scsi.h"
 
@@ -2270,9 +2270,12 @@ st_interpret_sense(struct scsipi_xfer *xs)
 		doprint = 0;
 
 	if (doprint) {
-#ifdef	SCSIVERBOSE
-		scsipi_print_sense(xs, 0);
-#else
+
+		/* Print verbose sense info if possible */
+		if (scsipi_print_sense(xs, 0) != 0)
+			return (retval);
+
+		/* Print less-verbose sense info */
 		scsipi_printaddr(periph);
 		printf("Sense Key 0x%02x", key);
 		if ((sense->response_code & SSD_RCODE_VALID) != 0) {
@@ -2303,7 +2306,6 @@ st_interpret_sense(struct scsipi_xfer *xs)
 				printf(" %02x", sense->csi[n]);
 		}
 		printf("\n");
-#endif
 	}
 	return (retval);
 }

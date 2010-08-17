@@ -1,4 +1,4 @@
-# 	$NetBSD: Makefile,v 1.13 2008/05/11 15:32:20 ad Exp $
+# 	$NetBSD: Makefile,v 1.13.18.1 2010/08/17 06:45:30 uebayasi Exp $
 
 INCSDIR=/usr/include/x86
 
@@ -17,6 +17,7 @@ INCS=	aout_machdep.h \
 	pmap.h \
 	pmap_pv.h \
 	psl.h \
+	pte.h \
 	rwlock.h \
 	specialreg.h \
 	sysarch.h \

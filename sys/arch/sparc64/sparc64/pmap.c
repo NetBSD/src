@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.250.2.3 2010/04/30 14:39:53 uebayasi Exp $	*/
+/*	$NetBSD: pmap.c,v 1.250.2.4 2010/08/17 06:45:20 uebayasi Exp $	*/
 /*
  *
  * Copyright (C) 1996-1999 Eduardo Horvath.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.250.2.3 2010/04/30 14:39:53 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.250.2.4 2010/08/17 06:45:20 uebayasi Exp $");
 
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
@@ -1217,15 +1217,17 @@ cpu_pmap_prepare(struct cpu_info *ci, bool initial)
 }
 
 /*
- * Initialize the per CPU parts for the cpu running this code (despite the
- * passed cpuinfo).
+ * Initialize the per CPU parts for the cpu running this code.
  */
 void
 cpu_pmap_init(struct cpu_info *ci)
 {
 	size_t ctxsize;
 
-	mutex_init(&ci->ci_ctx_lock, MUTEX_SPIN, IPL_VM);
+	/*
+	 * We delay initialising ci_ctx_lock here as LOCKDEBUG isn't
+	 * running for cpu0 yet..
+	 */
 	ci->ci_pmap_next_ctx = 1;
 #ifdef SUN4V
 #error find out if we have 16 or 13 bit context ids
@@ -1445,7 +1447,7 @@ pmap_destroy(struct pmap *pm)
 #ifdef DIAGNOSTIC
 		struct vm_page_md * const md = VM_PAGE_TO_MD(pg);
 #endif
-
+		KASSERT((pg->flags & PG_MARKER) == 0);
 		nextpg = TAILQ_NEXT(pg, listq.queue);
 		TAILQ_REMOVE(&pm->pm_obj.memq, pg, listq.queue);
 		KASSERT(md->mdpg_pvh.pv_pmap == NULL);

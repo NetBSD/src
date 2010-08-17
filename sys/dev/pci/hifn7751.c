@@ -1,4 +1,4 @@
-/*	$NetBSD: hifn7751.c,v 1.44 2010/02/01 22:34:29 hubertf Exp $	*/
+/*	$NetBSD: hifn7751.c,v 1.44.2.1 2010/08/17 06:46:23 uebayasi Exp $	*/
 /*	$FreeBSD: hifn7751.c,v 1.5.2.7 2003/10/08 23:52:00 sam Exp $ */
 /*	$OpenBSD: hifn7751.c,v 1.140 2003/08/01 17:55:54 deraadt Exp $	*/
 
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hifn7751.c,v 1.44 2010/02/01 22:34:29 hubertf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hifn7751.c,v 1.44.2.1 2010/08/17 06:46:23 uebayasi Exp $");
 
 #include "rnd.h"
 
@@ -2395,7 +2395,7 @@ hifn_process(void *arg, struct cryptop *crp, int hint)
 		 */
 #ifdef HIFN_DEBUG
 		if (hifn_debug)
-			printf(device_xname(&sc->sc_dv), "requeue request\n");
+			printf("%s: requeue request\n", device_xname(&sc->sc_dv));
 #endif
 		free(cmd, M_DEVBUF);
 		sc->sc_needwakeup |= CRYPTO_SYMQ;

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.55.2.1 2010/04/30 14:39:03 uebayasi Exp $	*/
+/*	$NetBSD: locore.S,v 1.55.2.2 2010/08/17 06:43:51 uebayasi Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -887,7 +887,7 @@ ENTRY(dumpsys)
 	ret
 
 /*
- * struct lwp *cpu_switchto(struct lwp *oldlwp, struct newlwp,
+ * struct lwp *cpu_switchto(struct lwp *oldlwp, struct lwp *newlwp,
  *			    bool returning)
  *
  *	1. if (oldlwp != NULL), save its context.
@@ -976,10 +976,58 @@ ENTRY(cpu_switchto)
 
 	/* Reloading CR0 is very expensive - avoid if possible. */
 3:	cmpq	%rdx,%rcx
-	je	4f
+	je	6f
 	movq	%rcx,%cr0
-#endif
 
+6:	testl   $PCB_COMPAT32, PCB_FLAGS(%r14)
+	jne	32f
+
+	/* Zero out %fs/%gs registers and GDT descriptors. */
+	xorq	%rax, %rax
+	movw	%ax, %fs
+	CLI(cx)
+	swapgs
+	movw	%ax, %gs
+	swapgs
+	STI(cx)
+
+	movq	CPUVAR(GDT),%rcx
+	movq	%rax, (GUFS_SEL*8)(%rcx)
+	movq	%rax, (GUGS_SEL*8)(%rcx)
+
+	/* Reload 64-bit %fs/%gs MSRs. */
+	movl	$MSR_FSBASE, %ecx
+	movl	PCB_FS(%r14), %eax
+	movl	4+PCB_FS(%r14), %edx
+	wrmsr
+	movl	$MSR_KERNELGSBASE, %ecx
+	movl	PCB_GS(%r14), %eax
+	movl	4+PCB_GS(%r14), %edx
+	wrmsr
+	jmp	4f
+
+32:
+	/* Reload %fs/%gs GDT descriptors. */
+	movq	CPUVAR(GDT),%rcx
+	movq	PCB_FS(%r14), %rax
+	movq	%rax, (GUFS_SEL*8)(%rcx)
+	movq	PCB_GS(%r14), %rax
+	movq	%rax, (GUGS_SEL*8)(%rcx)
+
+	/* Reload %fs and %gs */
+	movq	L_MD_REGS(%r12), %rbx
+	movw	TF_FS(%rbx), %fs
+	CLI(ax)
+	swapgs
+	movw	TF_GS(%rbx), %gs
+	swapgs
+	STI(ax)
+
+#else
+	movq	%r12,%rdi
+	callq	_C_LABEL(x86_64_tls_switch)
+#endif
+	
 	/* Return to the new LWP, returning 'oldlwp' in %rax. */
 4:	movq	%r13,%rax
 	popq	%r15
@@ -1078,9 +1126,6 @@ IDTVEC(syscall)
 	movl	L_MD_ASTPENDING(%r14), %eax
 	orl	CPUVAR(WANT_PMAPLOAD), %eax
 	jnz	9f
-#ifdef XEN
-	STI(si)					/* wtf is this? */
-#endif
 	testl	$MDP_IRET, L_MD_FLAGS(%r14)
 	jne	iret_return;
 syscall_return:
@@ -1088,13 +1133,9 @@ syscall_return:
 	cmpl	$IPL_NONE,CPUVAR(ILEVEL)
 	jne	3f
 #endif
+	movw	TF_ES(%rsp),%es
 #ifndef XEN
 	swapgs
-#endif
-	movw	TF_ES(%rsp),%es
-	movw	TF_FS(%rsp),%fs
-#ifndef XEN
-	movw	TF_GS(%rsp),%gs
 #endif
 	INTR_RESTORE_GPRS
 	movw	$(LSEL(LUDATA_SEL, SEL_UPL)),%r11

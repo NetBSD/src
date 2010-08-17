@@ -1,5 +1,5 @@
-/*	$NetBSD: if_iwnvar.h,v 1.8.2.1 2010/04/30 14:43:35 uebayasi Exp $	*/
-/*	$OpenBSD: if_iwnvar.h,v 1.17 2010/02/17 18:23:00 damien Exp $	*/
+/*	$NetBSD: if_iwnvar.h,v 1.8.2.2 2010/08/17 06:46:25 uebayasi Exp $	*/
+/*	$OpenBSD: if_iwnvar.h,v 1.19 2010/05/05 19:47:43 damien Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008
@@ -168,7 +168,7 @@ struct iwn_fw_part {
 
 struct iwn_fw_info {
 	u_char			*data;
-	uint32_t		datasz;
+	size_t			size;
 	struct iwn_fw_part	init;
 	struct iwn_fw_part	main;
 	struct iwn_fw_part	boot;
@@ -228,6 +228,7 @@ struct iwn_softc {
 #define IWN_FLAG_INTERNAL_PA	(1 << 4)
 /* Added for NetBSD */
 #define IWN_FLAG_SCANNING	(1 << 8)
+#define IWN_FLAG_HW_INITED	(1 << 9)
 
 	uint8_t 		hw_type;
 	const struct iwn_hal	*sc_hal;
@@ -320,5 +321,8 @@ struct iwn_softc {
 	} sc_txtapu;
 #define sc_txtap	sc_txtapu.th
 	int			sc_txtap_len;
+
+	kmutex_t		sc_mtx;         /* mutex for init/stop */
+
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: sleepq.c,v 1.6 2009/11/17 15:23:42 pooka Exp $	*/
+/*	$NetBSD: sleepq.c,v 1.6.2.1 2010/08/17 06:48:02 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sleepq.c,v 1.6 2009/11/17 15:23:42 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sleepq.c,v 1.6.2.1 2010/08/17 06:48:02 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>
@@ -85,6 +85,7 @@ sleepq_block(int timo, bool catch)
 	int biglocks = l->l_biglocks;
 
 	while (l->l_wchan) {
+		l->l_mutex = mp;
 		if ((error=cv_timedwait(&sq_cv, mp, timo)) == EWOULDBLOCK) {
 			TAILQ_REMOVE(l->l_sleepq, l, l_sleepchain);
 			l->l_wchan = NULL;
@@ -112,6 +113,7 @@ sleepq_wake(sleepq_t *sq, wchan_t wchan, u_int expected, kmutex_t *mp)
 		if (l->l_wchan == wchan) {
 			found = true;
 			l->l_wchan = NULL;
+			l->l_mutex = NULL;
 			TAILQ_REMOVE(sq, l, l_sleepchain);
 		}
 	}
@@ -127,6 +129,7 @@ sleepq_unsleep(struct lwp *l, bool cleanup)
 {
 
 	l->l_wchan = NULL;
+	l->l_mutex = NULL;
 	TAILQ_REMOVE(l->l_sleepq, l, l_sleepchain);
 	cv_broadcast(&sq_cv);
 

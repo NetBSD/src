@@ -1,9 +1,11 @@
-/*	$NetBSD: vm.c,v 1.70.2.2 2010/04/30 14:44:30 uebayasi Exp $	*/
+/*	$NetBSD: vm.c,v 1.70.2.3 2010/08/17 06:48:02 uebayasi Exp $	*/
 
 /*
- * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
+ * Copyright (c) 2007-2010 Antti Kantee.  All Rights Reserved.
  *
- * Development of this software was supported by Google Summer of Code.
+ * Development of this software was supported by
+ * The Finnish Cultural Foundation and the Research Foundation of
+ * The Helsinki University of Technology.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -41,15 +43,16 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.70.2.2 2010/04/30 14:44:30 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.70.2.3 2010/08/17 06:48:02 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
+#include <sys/buf.h>
+#include <sys/kernel.h>
 #include <sys/kmem.h>
 #include <sys/mman.h>
 #include <sys/null.h>
 #include <sys/vnode.h>
-#include <sys/buf.h>
 
 #include <machine/pmap.h>
 
@@ -76,7 +79,6 @@ kmutex_t uvm_pageqlock;
 struct uvmexp uvmexp;
 struct uvm uvm;
 
-struct vmspace rump_vmspace;
 struct vm_map rump_vmmap;
 static struct vm_map_kernel kmem_map_store;
 struct vm_map *kmem_map = &kmem_map_store.vmk_map;
@@ -85,13 +87,22 @@ const struct rb_tree_ops uvm_page_tree_ops;
 static struct vm_map_kernel kernel_map_store;
 struct vm_map *kernel_map = &kernel_map_store.vmk_map;
 
+static unsigned int pdaemon_waiters;
+static kmutex_t pdaemonmtx;
+static kcondvar_t pdaemoncv, oomwait;
+
+#define RUMPMEM_UNLIMITED ((unsigned long)-1)
+static unsigned long physmemlimit = RUMPMEM_UNLIMITED;
+static unsigned long curphysmem;
+
 /*
  * vm pages 
  */
 
 /* called with the object locked */
 struct vm_page *
-rumpvm_makepage(struct uvm_object *uobj, voff_t off)
+uvm_pagealloc_strat(struct uvm_object *uobj, voff_t off, struct vm_anon *anon,
+	int flags, int strat, int free_list)
 {
 	struct vm_page *pg;
 
@@ -99,21 +110,15 @@ rumpvm_makepage(struct uvm_object *uobj, voff_t off)
 	pg->offset = off;
 	pg->uobject = uobj;
 
-	pg->uanon = (void *)kmem_zalloc(PAGE_SIZE, KM_SLEEP);
+	pg->uanon = (void *)kmem_alloc(PAGE_SIZE, KM_SLEEP);
+	if (flags & UVM_PGA_ZERO)
+		memset(pg->uanon, 0, PAGE_SIZE);
 	pg->flags = PG_CLEAN|PG_BUSY|PG_FAKE;
 
 	TAILQ_INSERT_TAIL(&uobj->memq, pg, listq.queue);
 	uobj->uo_npages++;
 
 	return pg;
-}
-
-struct vm_page *
-uvm_pagealloc_strat(struct uvm_object *uobj, voff_t off, struct vm_anon *anon,
-	int flags, int strat, int free_list)
-{
-
-	return rumpvm_makepage(uobj, off);
 }
 
 /*
@@ -173,7 +178,8 @@ ao_get(struct uvm_object *uobj, voff_t off, struct vm_page **pgs,
 			pg->flags |= PG_BUSY;
 			pgs[i] = pg;
 		} else {
-			pg = rumpvm_makepage(uobj, off + (i << PAGE_SHIFT));
+			pg = uvm_pagealloc(uobj,
+			    off + (i << PAGE_SHIFT), NULL, UVM_PGA_ZERO);
 			pgs[i] = pg;
 		}
 	}
@@ -231,15 +237,33 @@ uao_detach(struct uvm_object *uobj)
 static kmutex_t pagermtx;
 
 void
-rumpvm_init(void)
+uvm_init(void)
 {
+	char buf[64];
+	int error;
 
-	uvmexp.free = 1024*1024; /* XXX */
-	uvm.pagedaemon_lwp = NULL; /* doesn't match curlwp */
-	rump_vmspace.vm_map.pmap = pmap_kernel();
+	if (rumpuser_getenv("RUMP_MEMLIMIT", buf, sizeof(buf), &error) == 0) {
+		physmemlimit = strtoll(buf, NULL, 10);
+		/* it's not like we'd get far with, say, 1 byte, but ... */
+		if (physmemlimit == 0)
+			panic("uvm_init: no memory available");
+#define HUMANIZE_BYTES 9
+		CTASSERT(sizeof(buf) >= HUMANIZE_BYTES);
+		format_bytes(buf, HUMANIZE_BYTES, physmemlimit);
+#undef HUMANIZE_BYTES
+	} else {
+		strlcpy(buf, "unlimited (host limit)", sizeof(buf));
+	}
+	aprint_verbose("total memory = %s\n", buf);
+
+	uvmexp.free = 1024*1024; /* XXX: arbitrary & not updated */
 
 	mutex_init(&pagermtx, MUTEX_DEFAULT, 0);
 	mutex_init(&uvm_pageqlock, MUTEX_DEFAULT, 0);
+
+	mutex_init(&pdaemonmtx, MUTEX_DEFAULT, 0);
+	cv_init(&pdaemoncv, "pdaemon");
+	cv_init(&oomwait, "oomwait");
 
 	kernel_map->pmap = pmap_kernel();
 	callback_head_init(&kernel_map_store.vmk_reclaim_callback, IPL_VM);
@@ -247,6 +271,13 @@ rumpvm_init(void)
 	callback_head_init(&kmem_map_store.vmk_reclaim_callback, IPL_VM);
 }
 
+void
+uvmspace_init(struct vmspace *vm, struct pmap *pmap, vaddr_t vmin, vaddr_t vmax)
+{
+
+	vm->vm_map.pmap = pmap_kernel();
+	vm->vm_refcnt = 1;
+}
 
 void
 uvm_pagewire(struct vm_page *pg)
@@ -261,6 +292,21 @@ uvm_pageunwire(struct vm_page *pg)
 
 	/* nada */
 }
+
+/* where's your schmonz now? */
+#define PUNLIMIT(a)	\
+p->p_rlimit[a].rlim_cur = p->p_rlimit[a].rlim_max = RLIM_INFINITY;
+void
+uvm_init_limits(struct proc *p)
+{
+
+	PUNLIMIT(RLIMIT_STACK);
+	PUNLIMIT(RLIMIT_DATA);
+	PUNLIMIT(RLIMIT_RSS);
+	PUNLIMIT(RLIMIT_AS);
+	/* nice, cascade */
+}
+#undef PUNLIMIT
 
 /*
  * This satisfies the "disgusting mmap hack" used by proplib.
@@ -283,7 +329,7 @@ uvm_mmap(struct vm_map *map, vaddr_t *addr, vsize_t size, vm_prot_t prot,
 	if (*addr != 0)
 		panic("uvm_mmap() variant unsupported");
 
-	uaddr = rumpuser_anonmmap(size, 0, 0, &error);
+	uaddr = rumpuser_anonmmap(NULL, size, 0, 0, &error);
 	if (uaddr == NULL)
 		return error;
 
@@ -413,6 +459,8 @@ uvm_pagelookup(struct uvm_object *uobj, voff_t off)
 	struct vm_page *pg;
 
 	TAILQ_FOREACH(pg, &uobj->memq, listq.queue) {
+		if ((pg->flags & PG_MARKER) != 0)
+			continue;
 		if (pg->offset == off) {
 			return pg;
 		}
@@ -462,31 +510,10 @@ bool
 vm_map_starved_p(struct vm_map *map)
 {
 
+	if (map->flags & VM_MAP_WANTVA)
+		return true;
+
 	return false;
-}
-
-void
-uvm_pageout_start(int npages)
-{
-
-	uvmexp.paging += npages;
-}
-
-void
-uvm_pageout_done(int npages)
-{
-
-	uvmexp.paging -= npages;
-
-	/*
-	 * wake up either of pagedaemon or LWPs waiting for it.
-	 */
-
-	if (uvmexp.free <= uvmexp.reserve_kernel) {
-		wakeup(&uvm.pagedaemon);
-	} else {
-		wakeup(&uvmexp.free);
-	}
 }
 
 int
@@ -511,13 +538,15 @@ uvm_loanuobjpages(struct uvm_object *uobj, voff_t pgoff, int orignpages,
 	return EBUSY;
 }
 
+#ifdef DEBUGPRINT
 void
 uvm_object_printit(struct uvm_object *uobj, bool full,
 	void (*pr)(const char *, ...))
 {
 
-	/* nada for now */
+	pr("VM OBJECT at %p, refs %d", uobj, uobj->uo_refs);
 }
+#endif
 
 vaddr_t
 uvm_default_mapaddr(struct proc *p, vaddr_t base, vsize_t sz)
@@ -541,15 +570,40 @@ uvm_map_protect(struct vm_map *map, vaddr_t start, vaddr_t end,
 vaddr_t
 uvm_km_alloc(struct vm_map *map, vsize_t size, vsize_t align, uvm_flag_t flags)
 {
-	void *rv;
+	void *rv, *desired = NULL;
 	int alignbit, error;
+
+#ifdef __x86_64__
+	/*
+	 * On amd64, allocate all module memory from the lowest 2GB.
+	 * This is because NetBSD kernel modules are compiled
+	 * with -mcmodel=kernel and reserve only 4 bytes for
+	 * offsets.  If we load code compiled with -mcmodel=kernel
+	 * anywhere except the lowest or highest 2GB, it will not
+	 * work.  Since userspace does not have access to the highest
+	 * 2GB, use the lowest 2GB.
+	 * 
+	 * Note: this assumes the rump kernel resides in
+	 * the lowest 2GB as well.
+	 *
+	 * Note2: yes, it's a quick hack, but since this the only
+	 * place where we care about the map we're allocating from,
+	 * just use a simple "if" instead of coming up with a fancy
+	 * generic solution.
+	 */
+	extern struct vm_map *module_map;
+	if (map == module_map) {
+		desired = (void *)(0x80000000 - size);
+	}
+#endif
 
 	alignbit = 0;
 	if (align) {
 		alignbit = ffs(align)-1;
 	}
 
-	rv = rumpuser_anonmmap(size, alignbit, flags & UVM_KMF_EXEC, &error);
+	rv = rumpuser_anonmmap(desired, size, alignbit, flags & UVM_KMF_EXEC,
+	    &error);
 	if (rv == NULL) {
 		if (flags & (UVM_KMF_CANFAIL | UVM_KMF_NOWAIT))
 			return 0;
@@ -582,34 +636,36 @@ vaddr_t
 uvm_km_alloc_poolpage(struct vm_map *map, bool waitok)
 {
 
-	return (vaddr_t)rumpuser_malloc(PAGE_SIZE, !waitok);
+	return (vaddr_t)rump_hypermalloc(PAGE_SIZE, PAGE_SIZE,
+	    waitok, "kmalloc");
 }
 
 void
 uvm_km_free_poolpage(struct vm_map *map, vaddr_t addr)
 {
 
-	rumpuser_unmap((void *)addr, PAGE_SIZE);
+	rump_hyperfree((void *)addr, PAGE_SIZE);
 }
 
 vaddr_t
 uvm_km_alloc_poolpage_cache(struct vm_map *map, bool waitok)
 {
-	void *rv;
-	int error;
 
-	rv = rumpuser_anonmmap(PAGE_SIZE, PAGE_SHIFT, 0, &error);
-	if (rv == NULL && waitok)
-		panic("fixme: poolpage alloc failed");
-
-	return (vaddr_t)rv;
+	return uvm_km_alloc_poolpage(map, waitok);
 }
 
 void
 uvm_km_free_poolpage_cache(struct vm_map *map, vaddr_t vaddr)
 {
 
-	rumpuser_unmap((void *)vaddr, PAGE_SIZE);
+	uvm_km_free_poolpage(map, vaddr);
+}
+
+void
+uvm_km_va_drain(struct vm_map *map, uvm_flag_t flags)
+{
+
+	/* we eventually maybe want some model for available memory */
 }
 
 /*
@@ -620,7 +676,7 @@ int
 uvm_vslock(struct vmspace *vs, void *addr, size_t len, vm_prot_t access)
 {
 
-	KASSERT(vs == &rump_vmspace);
+	KASSERT(vs == &vmspace0);
 	return 0;
 }
 
@@ -628,7 +684,7 @@ void
 uvm_vsunlock(struct vmspace *vs, void *addr, size_t len)
 {
 
-	KASSERT(vs == &rump_vmspace);
+	KASSERT(vs == &vmspace0);
 }
 
 void
@@ -647,10 +703,13 @@ vunmapbuf(struct buf *bp, vsize_t len)
 }
 
 void
-uvm_wait(const char *msg)
+uvmspace_addref(struct vmspace *vm)
 {
 
-	/* nothing to wait for */
+	/*
+	 * there is only vmspace0.  we're not planning on
+	 * feeding it to the fishes.
+	 */
 }
 
 void
@@ -701,6 +760,157 @@ uvm_pageenqueue(struct vm_page *pg)
 {
 
 	/* nada */
+}
+
+/*
+ * Routines related to the Page Baroness.
+ */
+
+void
+uvm_wait(const char *msg)
+{
+
+	if (__predict_false(curlwp == uvm.pagedaemon_lwp))
+		panic("pagedaemon out of memory");
+	if (__predict_false(rump_threads == 0))
+		panic("pagedaemon missing (RUMP_THREADS = 0)");
+
+	mutex_enter(&pdaemonmtx);
+	pdaemon_waiters++;
+	cv_signal(&pdaemoncv);
+	cv_wait(&oomwait, &pdaemonmtx);
+	mutex_exit(&pdaemonmtx);
+}
+
+void
+uvm_pageout_start(int npages)
+{
+
+	/* we don't have the heuristics */
+}
+
+void
+uvm_pageout_done(int npages)
+{
+
+	/* could wakeup waiters, but just let the pagedaemon do it */
+}
+
+/*
+ * Under-construction page mistress.  This is lacking vfs support, namely:
+ *
+ *  1) draining vfs buffers
+ *  2) paging out pages in vm vnode objects
+ *     (we will not page out anon memory on the basis that
+ *     that's the task of the host)
+ */
+
+void
+uvm_pageout(void *arg)
+{
+	struct pool *pp, *pp_first;
+	uint64_t where;
+	int timo = 0;
+	bool succ;
+
+	mutex_enter(&pdaemonmtx);
+	for (;;) {
+		cv_timedwait(&pdaemoncv, &pdaemonmtx, timo);
+		uvmexp.pdwoke++;
+		kernel_map->flags |= VM_MAP_WANTVA;
+		mutex_exit(&pdaemonmtx);
+
+		succ = false;
+		pool_drain_start(&pp_first, &where);
+		pp = pp_first;
+		for (;;) {
+			succ = pool_drain_end(pp, where);
+			if (succ)
+				break;
+			pool_drain_start(&pp, &where);
+			if (pp == pp_first) {
+				succ = pool_drain_end(pp, where);
+				break;
+			}
+		}
+		mutex_enter(&pdaemonmtx);
+
+		if (!succ) {
+			rumpuser_dprintf("pagedaemoness: failed to reclaim "
+			    "memory ... sleeping (deadlock?)\n");
+			timo = hz;
+			continue;
+		}
+		kernel_map->flags &= ~VM_MAP_WANTVA;
+		timo = 0;
+
+		if (pdaemon_waiters) {
+			pdaemon_waiters = 0;
+			cv_broadcast(&oomwait);
+		}
+	}
+
+	panic("you can swap out any time you like, but you can never leave");
+}
+
+/*
+ * In a regular kernel the pagedaemon is activated when memory becomes
+ * low.  In a virtual rump kernel we do not know exactly how much memory
+ * we have available -- it depends on the conditions on the host.
+ * Therefore, we cannot preemptively kick the pagedaemon.  Rather, we
+ * wait until things we desperate and we're forced to uvm_wait().
+ *
+ * The alternative would be to allocate a huge chunk of memory at
+ * startup, but that solution has a number of problems including
+ * being a resource hog, failing anyway due to host memory overcommit
+ * and core dump size.
+ */
+
+void
+uvm_kick_pdaemon()
+{
+
+	/* nada */
+}
+
+void *
+rump_hypermalloc(size_t howmuch, int alignment, bool waitok, const char *wmsg)
+{
+	unsigned long newmem;
+	void *rv;
+
+	/* first we must be within the limit */
+ limitagain:
+	if (physmemlimit != RUMPMEM_UNLIMITED) {
+		newmem = atomic_add_long_nv(&curphysmem, howmuch);
+		if (newmem > physmemlimit) {
+			newmem = atomic_add_long_nv(&curphysmem, -howmuch);
+			if (!waitok)
+				return NULL;
+			uvm_wait(wmsg);
+			goto limitagain;
+		}
+	}
+
+	/* second, we must get something from the backend */
+ again:
+	rv = rumpuser_malloc(howmuch, alignment);
+	if (__predict_false(rv == NULL && waitok)) {
+		uvm_wait(wmsg);
+		goto again;
+	}
+
+	return rv;
+}
+
+void
+rump_hyperfree(void *what, size_t size)
+{
+
+	if (physmemlimit != RUMPMEM_UNLIMITED) {
+		atomic_add_long(&curphysmem, -size);
+	}
+	rumpuser_free(what);
 }
 
 paddr_t

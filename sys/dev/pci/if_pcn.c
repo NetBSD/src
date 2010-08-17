@@ -1,4 +1,4 @@
-/*	$NetBSD: if_pcn.c,v 1.49.2.1 2010/04/30 14:43:36 uebayasi Exp $	*/
+/*	$NetBSD: if_pcn.c,v 1.49.2.2 2010/08/17 06:46:25 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.49.2.1 2010/04/30 14:43:36 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.49.2.2 2010/08/17 06:46:25 uebayasi Exp $");
 
 #include "rnd.h"
 
@@ -2033,12 +2033,12 @@ pcn_79c970_mediainit(struct pcn_softc *sc)
 
 #define	ADD(str, m, d)							\
 do {									\
-	printf("%s%s", sep, str);					\
+	aprint_normal("%s%s", sep, str);					\
 	ifmedia_add(&sc->sc_mii.mii_media, IFM_ETHER|(m), (d), NULL);	\
 	sep = ", ";							\
 } while (/*CONSTCOND*/0)
 
-	printf("%s: ", device_xname(sc->sc_dev));
+	aprint_normal("%s: ", device_xname(sc->sc_dev));
 	ADD("10base5", IFM_10_5, PORTSEL_AUI);
 	if (sc->sc_variant->pcv_chipid == PARTID_Am79c970A)
 		ADD("10base5-FDX", IFM_10_5|IFM_FDX, PORTSEL_AUI);
@@ -2048,7 +2048,7 @@ do {									\
 	ADD("auto", IFM_AUTO, 0);
 	if (sc->sc_variant->pcv_chipid == PARTID_Am79c970A)
 		ADD("auto-FDX", IFM_AUTO|IFM_FDX, 0);
-	printf("\n");
+	aprint_normal("\n");
 
 	ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_AUTO);
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: spdmem.c,v 1.1.2.2 2010/04/30 14:43:23 uebayasi Exp $ */
+/* $NetBSD: spdmem.c,v 1.1.2.3 2010/08/17 06:46:13 uebayasi Exp $ */
 
 /*
  * Copyright (c) 2007 Nicolas Joly
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spdmem.c,v 1.1.2.2 2010/04/30 14:43:23 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spdmem.c,v 1.1.2.3 2010/08/17 06:46:13 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -177,7 +177,7 @@ spdmem_common_probe(struct spdmem_softc *sc)
 	/* For DDR3 and FBDIMM, verify the CRC */
 	else if (spd_type <= SPDMEM_MEMTYPE_DDR3SDRAM) {
 		spd_len = (sc->sc_read)(sc, 0);
-		if (spd_len && SPDMEM_SPDCRC_116)
+		if (spd_len & SPDMEM_SPDCRC_116)
 			spd_crc_cover = 116;
 		else
 			spd_crc_cover = 125;

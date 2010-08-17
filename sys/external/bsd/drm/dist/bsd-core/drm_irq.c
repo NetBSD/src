@@ -543,9 +543,12 @@ void drm_vbl_send_signals(struct drm_device *dev, int crtc )
 		drm_vbl_sig_t *next = TAILQ_NEXT(vbl_sig, link);
 
 		if ((vbl_seq - vbl_sig->sequence) <= (1 << 23)) {
-			p = pfind(vbl_sig->pid);
-			if (p != NULL)
+			mutex_enter(proc_lock);
+			p = proc_find(vbl_sig->pid);
+			if (p != NULL) {
 				psignal(p, vbl_sig->signo);
+			}
+			mutex_exit(proc_lock);
 
 			TAILQ_REMOVE(&dev->vbl_sig_list, vbl_sig, link);
 			DRM_FREE(vbl_sig,sizeof(*vbl_sig));

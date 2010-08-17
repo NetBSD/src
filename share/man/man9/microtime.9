@@ -1,4 +1,4 @@
-.\"     $NetBSD: microtime.9,v 1.15 2008/11/28 10:55:41 tsutsui Exp $
+.\"     $NetBSD: microtime.9,v 1.15.4.1 2010/08/17 06:40:05 uebayasi Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -53,7 +53,7 @@
 .\"
 .\" $FreeBSD: src/share/man/man9/microtime.9,v 1.11 2005/10/13 16:01:28 jhb Exp $
 .\"
-.Dd November 24, 2008
+.Dd June 8, 2010
 .Dt MICROTIME 9
 .Os
 .Sh NAME
@@ -112,6 +112,8 @@ and
 .Fn getnanotime
 functions store the time as a
 .Vt "struct timespec" .
+The structures are described in
+.Xr timeval 3 .
 .Pp
 The
 .Fn bintime ,
@@ -148,19 +150,13 @@ The system realtime clock is guaranteed to be monotonically increasing
 at all times.
 As such, all calls to these functions are guaranteed to return a system time
 greater than or equal to the system time returned in any previous calls.
+Comparable functions exist to retrieve the time elapsed since boot; see
+.Xr microuptime 9 .
 .Sh SEE ALSO
 .Xr settimeofday 2 ,
-.Xr binuptime 9 ,
-.Xr getbinuptime 9 ,
-.Xr getmicrouptime 9 ,
-.Xr getnanouptime 9 ,
-.Xr hardclock 9 ,
-.Xr hz 9 ,
+.Xr bintime_add 9 ,
 .Xr inittodr 9 ,
-.Xr microuptime 9 ,
-.Xr nanouptime 9 ,
 .Xr time_second 9 ,
-.Xr timecounter 9 ,
 .Xr tvtohz 9
 .Sh CODE REFERENCES
 The implementation of the

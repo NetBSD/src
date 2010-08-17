@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.167.2.1 2010/04/30 14:43:53 uebayasi Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.167.2.2 2010/08/17 06:46:46 uebayasi Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.167.2.1 2010/04/30 14:43:53 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.167.2.2 2010/08/17 06:46:46 uebayasi Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_usbverbose.h"
@@ -46,6 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.167.2.1 2010/04/30 14:43:53 uebayasi 
 #include <sys/proc.h>
 
 #include <sys/bus.h>
+#include <sys/module.h>
 
 #include <dev/usb/usb.h>
 
@@ -54,6 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.167.2.1 2010/04/30 14:43:53 uebayasi 
 #include <dev/usb/usbdivar.h>
 #include <dev/usb/usbdevs.h>
 #include <dev/usb/usb_quirks.h>
+#include <dev/usb/usb_verbose.h>
 
 #include "locators.h"
 
@@ -68,38 +70,18 @@ extern int usbdebug;
 
 Static usbd_status usbd_set_config(usbd_device_handle, int);
 Static void usbd_devinfo(usbd_device_handle, int, char *, size_t);
-Static void usbd_devinfo_vp(usbd_device_handle dev, char *v, char *p,
-			    int usedev, int useencoded);
-Static int usbd_getnewaddr(usbd_bus_handle bus);
+Static void usbd_devinfo_vp(usbd_device_handle, char *, size_t, char *, size_t,
+    int, int);
+Static int usbd_getnewaddr(usbd_bus_handle);
 Static int usbd_print(void *, const char *);
 Static int usbd_ifprint(void *, const char *);
-Static void usbd_free_iface_data(usbd_device_handle dev, int ifcno);
+Static void usbd_free_iface_data(usbd_device_handle, int);
 Static void usbd_kill_pipe(usbd_pipe_handle);
 usbd_status usbd_attach_roothub(device_t, usbd_device_handle);
-Static usbd_status usbd_probe_and_attach(device_t parent,
-                                 usbd_device_handle dev, int port, int addr);
+Static usbd_status usbd_probe_and_attach(device_t, usbd_device_handle, int,
+    int);
 
 Static u_int32_t usb_cookie_no = 0;
-
-#ifdef USBVERBOSE
-typedef u_int16_t usb_vendor_id_t;
-typedef u_int16_t usb_product_id_t;
-
-/*
- * Descriptions of of known vendors and devices ("products").
- */
-struct usb_vendor {
-	usb_vendor_id_t		vendor;
-	const char		*vendorname;
-};
-struct usb_product {
-	usb_vendor_id_t		vendor;
-	usb_product_id_t	product;
-	const char		*productname;
-};
-
-#include <dev/usb/usbdevs_data.h>
-#endif /* USBVERBOSE */
 
 Static const char * const usbd_error_strs[] = {
 	"NORMAL_COMPLETION",
@@ -123,6 +105,44 @@ Static const char * const usbd_error_strs[] = {
 	"INTERRUPTED",
 	"XXX",
 };
+
+void usb_load_verbose(void);
+
+void get_usb_vendor_stub(char *, size_t, usb_vendor_id_t);
+void get_usb_product_stub(char *, size_t, usb_vendor_id_t, usb_product_id_t);
+
+void (*get_usb_vendor)(char *, size_t, usb_vendor_id_t) = get_usb_vendor_stub;
+void (*get_usb_product)(char *, size_t, usb_vendor_id_t, usb_product_id_t) =
+	get_usb_product_stub;
+
+int usb_verbose_loaded = 0;
+
+/*
+ * Load the usbverbose module
+ */
+void usb_load_verbose(void)
+{
+	if (usb_verbose_loaded == 0) {
+		mutex_enter(&module_lock);
+		module_autoload("usbverbose", MODULE_CLASS_MISC);
+		mutex_exit(&module_lock);
+	}
+}
+
+void get_usb_vendor_stub(char *v, size_t l, usb_vendor_id_t v_id)
+{
+	usb_load_verbose();
+	if (usb_verbose_loaded)
+		get_usb_vendor(v, l, v_id);
+}
+
+void get_usb_product_stub(char *p, size_t l, usb_vendor_id_t v_id,
+    usb_product_id_t p_id)
+{
+	usb_load_verbose();
+	if (usb_verbose_loaded)
+		get_usb_product(p, l, v_id, p_id);
+}
 
 const char *
 usbd_errstr(usbd_status err)
@@ -188,17 +208,14 @@ usbd_trim_spaces(char *p)
 }
 
 Static void
-usbd_devinfo_vp(usbd_device_handle dev, char *v, char *p, int usedev,
-		int useencoded)
+usbd_devinfo_vp(usbd_device_handle dev, char *v, size_t vl, char *p,
+    size_t pl, int usedev, int useencoded)
 {
 	usb_device_descriptor_t *udd = &dev->ddesc;
-#ifdef USBVERBOSE
-	int n;
-#endif
-
-	v[0] = p[0] = '\0';
 	if (dev == NULL)
 		return;
+
+	v[0] = p[0] = '\0';
 
 	if (usedev) {
 		if (usbd_get_string0(dev, udd->iManufacturer, v, useencoded) ==
@@ -208,32 +225,22 @@ usbd_devinfo_vp(usbd_device_handle dev, char *v, char *p, int usedev,
 		    USBD_NORMAL_COMPLETION)
 			usbd_trim_spaces(p);
 	}
-	/* There is no need for strlcpy & snprintf below. */
-#ifdef USBVERBOSE
 	if (v[0] == '\0')
-		for (n = 0; n < usb_nvendors; n++)
-			if (usb_vendors[n].vendor == UGETW(udd->idVendor)) {
-				strcpy(v, usb_vendors[n].vendorname);
-				break;
-			}
+		get_usb_vendor(v, vl, UGETW(udd->idVendor));
 	if (p[0] == '\0')
-		for (n = 0; n < usb_nproducts; n++)
-			if (usb_products[n].vendor == UGETW(udd->idVendor) &&
-			    usb_products[n].product == UGETW(udd->idProduct)) {
-				strcpy(p, usb_products[n].productname);
-				break;
-			}
-#endif
+		get_usb_product(p, pl, UGETW(udd->idVendor),
+		    UGETW(udd->idProduct));
+
 	if (v[0] == '\0')
-		sprintf(v, "vendor 0x%04x", UGETW(udd->idVendor));
+		snprintf(v, vl, "vendor 0x%04x", UGETW(udd->idVendor));
 	if (p[0] == '\0')
-		sprintf(p, "product 0x%04x", UGETW(udd->idProduct));
+		snprintf(p, pl, "product 0x%04x", UGETW(udd->idProduct));
 }
 
 int
 usbd_printBCD(char *cp, size_t l, int bcd)
 {
-	return (snprintf(cp, l, "%x.%02x", bcd >> 8, bcd & 0xff));
+	return snprintf(cp, l, "%x.%02x", bcd >> 8, bcd & 0xff);
 }
 
 Static void
@@ -253,7 +260,8 @@ usbd_devinfo(usbd_device_handle dev, int showclass, char *cp, size_t l)
 
 	ep = cp + l;
 
-	usbd_devinfo_vp(dev, vendor, product, 1, 1);
+	usbd_devinfo_vp(dev, vendor, USB_MAX_ENCODED_STRING_LEN,
+	    product, USB_MAX_ENCODED_STRING_LEN, 1, 1);
 	cp += snprintf(cp, ep - cp, "%s %s", vendor, product);
 	if (showclass)
 		cp += snprintf(cp, ep - cp, ", class %d/%d",
@@ -586,8 +594,10 @@ usbd_set_config_index(usbd_device_handle dev, int index, int msg)
 
 	/* Get the short descriptor. */
 	err = usbd_get_config_desc(dev, index, &cd);
-	if (err)
+	if (err) {
+		DPRINTF(("usbd_set_config_index: get_config_desc=%d\n", err));
 		return (err);
+	}
 	len = UGETW(cd.wTotalLength);
 	cdp = malloc(len, M_USB, M_NOWAIT);
 	if (cdp == NULL)
@@ -600,9 +610,10 @@ usbd_set_config_index(usbd_device_handle dev, int index, int msg)
 			break;
 		usbd_delay_ms(dev, 200);
 	}
-	if (err)
+	if (err) {
+		DPRINTF(("usbd_set_config_index: get_desc=%d\n", err));
 		goto bad;
-
+	}
 	if (cdp->bDescriptorType != UDESC_CONFIG) {
 		DPRINTFN(-1,("usbd_set_config_index: bad desc %d\n",
 			     cdp->bDescriptorType));
@@ -1016,6 +1027,34 @@ usbd_reattach_device(device_t parent, usbd_device_handle dev,
 }
 
 /*
+ * Get the first 8 bytes of the device descriptor.
+ * Do as Windows does: try to read 64 bytes -- there are devices which
+ * recognize the initial descriptor fetch (before the control endpoint's
+ * MaxPacketSize is known by the host) by exactly this length.
+ */
+static usbd_status
+usbd_get_initial_ddesc(usbd_device_handle dev, usb_device_descriptor_t *desc)
+{
+	usb_device_request_t req;
+	char buf[64];
+	int res, actlen;
+
+	req.bmRequestType = UT_READ_DEVICE;
+	req.bRequest = UR_GET_DESCRIPTOR;
+	USETW2(req.wValue, UDESC_DEVICE, 0);
+	USETW(req.wIndex, 0);
+	USETW(req.wLength, 64);
+	res = usbd_do_request_flags(dev, &req, buf, USBD_SHORT_XFER_OK,
+		&actlen, USBD_DEFAULT_TIMEOUT);
+	if (res)
+		return res;
+	if (actlen < 8)
+		return USBD_SHORT_XFER;
+	memcpy(desc, buf, 8);
+	return USBD_NORMAL_COMPLETION;
+}
+
+/*
  * Called when a new device has been put in the powered state,
  * but not yet in the addressed state.
  * Get initial descriptor, set the address, get full descriptor,
@@ -1057,10 +1096,12 @@ usbd_new_device(device_t parent, usbd_bus_handle bus, int depth,
 	dev->def_ep_desc.bDescriptorType = UDESC_ENDPOINT;
 	dev->def_ep_desc.bEndpointAddress = USB_CONTROL_ENDPOINT;
 	dev->def_ep_desc.bmAttributes = UE_CONTROL;
-	if (speed == USB_SPEED_HIGH)
-		USETW(dev->def_ep_desc.wMaxPacketSize, 64);
-	else
-		USETW(dev->def_ep_desc.wMaxPacketSize, USB_MAX_IPACKET);
+	/*
+	 * temporary, will be fixed after first descriptor fetch
+	 * (which uses 64 bytes so it shouldn't be less),
+	 * highspeed devices must support 64 byte packets anyway
+	 */
+	USETW(dev->def_ep_desc.wMaxPacketSize, 64);
 	dev->def_ep_desc.bInterval = 0;
 
 	dev->quirks = &usbd_no_quirk;
@@ -1106,11 +1147,7 @@ usbd_new_device(device_t parent, usbd_bus_handle bus, int depth,
 	/* Try a few times in case the device is slow (i.e. outside specs.) */
 	for (i = 0; i < 10; i++) {
 		/* Get the first 8 bytes of the device descriptor. */
-		err = usbd_get_desc(dev, UDESC_DEVICE, 0, 
-			(speed == USB_SPEED_HIGH) ? USB_DEVICE_DESCRIPTOR_SIZE
-						  : USB_MAX_IPACKET,
-			 dd);
-
+		err = usbd_get_initial_ddesc(dev, dd);
 		if (!err)
 			break;
 		usbd_delay_ms(dev, 200);
@@ -1123,6 +1160,10 @@ usbd_new_device(device_t parent, usbd_bus_handle bus, int depth,
 		usbd_remove_device(dev, up);
 		return (err);
 	}
+
+	/* Windows resets the port here, do likewise */
+	if (up->parent)
+		usbd_reset_port(up->parent, port, &ps);
 
 	if (speed == USB_SPEED_HIGH) {
 		/* Max packet size must be 64 (sec 5.5.3). */
@@ -1314,7 +1355,8 @@ usbd_fill_deviceinfo(usbd_device_handle dev, struct usb_device_info *di,
 	di->udi_bus = device_unit(dev->bus->usbctl);
 	di->udi_addr = dev->address;
 	di->udi_cookie = dev->cookie;
-	usbd_devinfo_vp(dev, di->udi_vendor, di->udi_product, usedev, 1);
+	usbd_devinfo_vp(dev, di->udi_vendor, sizeof(di->udi_vendor),
+	    di->udi_product, sizeof(di->udi_product), usedev, 1);
 	usbd_printBCD(di->udi_release, sizeof(di->udi_release),
 	    UGETW(dev->ddesc.bcdDevice));
 	di->udi_serial[0] = 0;
@@ -1384,7 +1426,8 @@ usbd_fill_deviceinfo_old(usbd_device_handle dev, struct usb_device_info_old *di,
 	di->udi_bus = device_unit(dev->bus->usbctl);
 	di->udi_addr = dev->address;
 	di->udi_cookie = dev->cookie;
-	usbd_devinfo_vp(dev, di->udi_vendor, di->udi_product, usedev, 0);
+	usbd_devinfo_vp(dev, di->udi_vendor, sizeof(di->udi_vendor),
+	    di->udi_product, sizeof(di->udi_product), usedev, 0);
 	usbd_printBCD(di->udi_release, sizeof(di->udi_release),
 	    UGETW(dev->ddesc.bcdDevice));
 	di->udi_vendorNo = UGETW(dev->ddesc.idVendor);

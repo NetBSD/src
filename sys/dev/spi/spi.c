@@ -1,4 +1,4 @@
-/* $NetBSD: spi.c,v 1.3 2008/05/04 14:21:56 xtraeme Exp $ */
+/* $NetBSD: spi.c,v 1.3.20.1 2010/08/17 06:46:39 uebayasi Exp $ */
 
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spi.c,v 1.3 2008/05/04 14:21:56 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spi.c,v 1.3.20.1 2010/08/17 06:46:39 uebayasi Exp $");
 
 #include "locators.h"
 
@@ -271,7 +271,7 @@ spi_wait(struct spi_transfer *st)
 
 	s = splserial();
 	simple_lock(&st->st_lock);
-	while (!st->st_flags & SPI_F_DONE) {
+	while (!(st->st_flags & SPI_F_DONE)) {
 		ltsleep(st, PWAIT, "spi_wait", 0, &st->st_lock);
 	}
 	simple_unlock(&st->st_lock);

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_types.h,v 1.6 2009/06/08 14:42:10 njoly Exp $ */
+/*	$NetBSD: linux32_types.h,v 1.6.2.1 2010/08/17 06:45:51 uebayasi Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,13 +33,17 @@
 #ifndef _AMD64_LINUX32_TYPES_H
 #define _AMD64_LINUX32_TYPES_H
 
-typedef unsigned short linux32_uid_t;
-typedef unsigned short linux32_gid_t;
-typedef int linux32_pid_t;
+typedef uint16_t linux32_uid_t;
+typedef uint16_t linux32_gid_t;
+typedef int32_t linux32_pid_t;
 typedef int32_t linux32_clock_t;
 typedef int32_t linux32_time_t;
 typedef int32_t linux32_off_t;
 typedef uint32_t linux32_ino_t;
+typedef uint32_t linux32_size_t;
+typedef netbsd32_pointer_t linux32_ulongp_t;
+
+typedef netbsd32_pointer_t linux32_user_descp_t;
 
 #define LINUX32_STAT64_HAS_NSEC   1
 struct linux32_stat64 {

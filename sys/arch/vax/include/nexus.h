@@ -1,4 +1,4 @@
-/*	$NetBSD: nexus.h,v 1.25 2008/03/11 05:34:02 matt Exp $	*/
+/*	$NetBSD: nexus.h,v 1.25.24.1 2010/08/17 06:45:25 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -31,6 +31,10 @@
  *	@(#)nexus.h	7.3 (Berkeley) 5/9/91
  */
 
+/*
+ * ABus support added by Johnny Billquist 2010.
+ */
+
 #ifndef _VAX_NEXUS_H_
 #define _VAX_NEXUS_H_
 
@@ -46,7 +50,7 @@ enum bustypes {
 	VAX_SBIBUS,		/* SBI parent (780) */
 	VAX_CMIBUS,		/* CMI backplane (750) */
 	VAX_UNIBUS,		/* Direct backplane (730) */
-	VAX_ABUS,		/* SBI placeholder (8600) */
+	VAX_ABUS,		/* ABus (8600) */
 	VAX_BIBUS,		/* BI bus (8200) */
 	VAX_NMIBUS,		/* NMI backplane (8800) */
 	VAX_VSBUS,		/* Virtual vaxstation bus */
@@ -61,16 +65,13 @@ enum bustypes {
  * byte of the first word of the adapter address space.
  * At boot time the system looks through the array of available
  * slots and finds the interconnects for the machine.
+ *
+ * VAX8600 nexus information is located in ioa.h
  */
 #define IO_CMI750       2
 #define MAXNMCR         1
 
 #define	NNEXSBI		16
-#if VAX8600 || VAXANY
-#define	NNEX8600	NNEXSBI
-#define	NEXA8600	((struct nexus *)(0x20000000))
-#define	NEXB8600	((struct nexus *)(0x22000000))
-#endif
 #if VAX780 || VAXANY
 #define	NNEX780	NNEXSBI
 #define	NEX780	((struct nexus *)0x20000000)
@@ -80,12 +81,6 @@ enum bustypes {
 #define	NEX730	((struct nexus *)0xf20000)
 #endif
 #define	NEXSIZE	0x2000
-
-#if VAX8600 || VAXANY
-#define	MAXNNEXUS (2 * NNEXSBI)
-#else 
-#define	MAXNNEXUS NNEXSBI
-#endif
 
 #ifdef _KERNEL
 
@@ -97,6 +92,16 @@ struct	nexus {
 	long	nex_pad[NEXSIZE / sizeof (long) - 1];
 };
 
+struct abus_attach_args {
+        const char *aa_name;
+        int aa_type;
+        bus_addr_t aa_base;
+        int aa_num;
+	bus_space_tag_t aa_iot;
+	bus_space_handle_t aa_ioh;
+	bus_dma_tag_t aa_dmat;
+};
+
 struct sbi_attach_args {
 	int sa_nexnum; 		/* This nexus TR number */
 	int sa_type;		/* This nexus type */
@@ -104,6 +109,7 @@ struct sbi_attach_args {
 	bus_space_tag_t sa_iot;
 	bus_space_handle_t sa_ioh;
 	bus_dma_tag_t sa_dmat;
+        bus_addr_t sa_base;
 };
 
 /* Memory device struct. This should be somewhere else */

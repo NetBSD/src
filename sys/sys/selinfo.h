@@ -1,4 +1,4 @@
-/*	$NetBSD: selinfo.h,v 1.6.20.1 2010/04/30 14:44:33 uebayasi Exp $	*/
+/*	$NetBSD: selinfo.h,v 1.6.20.2 2010/08/17 06:48:08 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
@@ -74,6 +74,7 @@ struct selinfo {
 	struct klist	sel_klist;	/* knotes attached to this selinfo */
 	void		*sel_cluster;	/* current cluster association */
 	struct lwp	*sel_lwp;	/* first LWP to be notified */
+	uintptr_t	sel_fdinfo;	/* selected descriptor by first LWP */
 	SLIST_ENTRY(selinfo) sel_chain;	/* entry on LWP's list of selinfo */
 	uint32_t	sel_collision;	/* mask of colliding cpus */
 	uint32_t	sel_reserved[3];/* reserved for future expansion */

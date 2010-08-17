@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.87.2.1 2010/04/30 14:39:26 uebayasi Exp $
+# $NetBSD: GENERIC,v 1.87.2.2 2010/08/17 06:44:29 uebayasi Exp $
 #
 # GENERIC machine description file
 #
@@ -31,6 +31,7 @@ options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 maxusers	32			# estimated number of users
 
+options 	HZ=64			# default clock rate
 
 # System options specific to hpcsh
 
@@ -67,9 +68,9 @@ options 	KLOADER
 
 options 	KTRACE		# system call tracing via ktrace(1)
 
-#options 	SYSVMSG		# System V-like message queues
-#options 	SYSVSEM		# System V-like semaphores
-#options 	SYSVSHM		# System V-like memory sharing
+options 	SYSVMSG		# System V-like message queues
+options 	SYSVSEM		# System V-like semaphores
+options 	SYSVSHM		# System V-like memory sharing
 #options 	P1003_1B_SEMAPHORE # p1003.1b semaphore support
 
 #options 	MODULAR		# new style module framework
@@ -112,7 +113,7 @@ options 	EXEC_COFF	# 32-bit COFF executables
 
 # File systems
 file-system 	FFS		# UFS
-#file-system 	MFS		# memory file system (requires FFS)
+file-system 	MFS		# memory file system (requires FFS)
 #file-system 	EXT2FS		# second extended file system (linux)
 file-system 	MSDOSFS		# MS-DOS file system
 file-system	NFS		# Sun NFS-compatible filesystem client
@@ -331,6 +332,10 @@ bthub*	at btuart?
 # Bluetooth Keyboard
 #btkbd*	at bthidev? reportid ?
 #wskbd*	at btkbd? console ? mux 1
+
+# Bluetooth Apple Magic Mouse
+#btmagic* at bthub?
+#wsmouse* at btmagic? mux 0
 
 # Bluetooth Audio support
 #btsco*	at bthub?

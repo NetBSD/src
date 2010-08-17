@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39io.c,v 1.21 2008/04/28 20:23:21 martin Exp $ */
+/*	$NetBSD: tx39io.c,v 1.21.20.1 2010/08/17 06:44:29 uebayasi Exp $ */
 
 /*-
  * Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tx39io.c,v 1.21 2008/04/28 20:23:21 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tx39io.c,v 1.21.20.1 2010/08/17 06:44:29 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,7 +86,7 @@ static int tx392x_io_intr_map(int *, int, int);
 #endif
 #if defined TX391X && defined TX392X
 #define	tx39_io_intr_map(t, s, p, m)					\
-	(IS_TX391X(t)
+	(IS_TX391X(t)							\
 	    ? tx391x_io_intr_map(s, p, m) : tx392x_io_intr_map(s, p, m))
 #elif defined TX391X
 #define	tx39io_intr_map(t, s, p, m)	tx391x_io_intr_map(s, p, m)

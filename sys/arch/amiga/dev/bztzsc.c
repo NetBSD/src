@@ -1,4 +1,4 @@
-/*	$NetBSD: bztzsc.c,v 1.33 2009/11/23 00:11:43 rmind Exp $ */
+/*	$NetBSD: bztzsc.c,v 1.33.2.1 2010/08/17 06:43:56 uebayasi Exp $ */
 
 /*
  * Copyright (c) 1997 Michael L. Hitch
@@ -37,8 +37,10 @@
  * 53c9x MI driver by Michael L. Hitch (mhitch@montana.edu).
  */
 
+#include "opt_m68k_arch.h"
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bztzsc.c,v 1.33 2009/11/23 00:11:43 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bztzsc.c,v 1.33.2.1 2010/08/17 06:43:56 uebayasi Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

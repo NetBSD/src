@@ -1,5 +1,5 @@
-/*	$Id: at91dbgu.c,v 1.3 2009/03/14 15:36:01 dsl Exp $	*/
-/*	$NetBSD: at91dbgu.c,v 1.3 2009/03/14 15:36:01 dsl Exp $ */
+/*	$Id: at91dbgu.c,v 1.3.2.1 2010/08/17 06:44:02 uebayasi Exp $	*/
+/*	$NetBSD: at91dbgu.c,v 1.3.2.1 2010/08/17 06:44:02 uebayasi Exp $ */
 
 /*
  *
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at91dbgu.c,v 1.3 2009/03/14 15:36:01 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at91dbgu.c,v 1.3.2.1 2010/08/17 06:44:02 uebayasi Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -270,7 +270,7 @@ at91dbgu_attach(device_t parent, device_t self, void *aux)
 
 		cn_tab->cn_dev = makedev(maj, device_unit(sc->sc_dev));
 
-		aprint_normal("%s: console (maj %u  min %u  cn_dev %u)\n",
+		aprint_normal("%s: console (maj %u min %u cn_dev %#"PRIx64")\n",
 		    device_xname(sc->sc_dev), maj, device_unit(sc->sc_dev),
 		    cn_tab->cn_dev);
 	}

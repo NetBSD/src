@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_cas.S,v 1.6 2009/01/16 10:28:24 bjh21 Exp $	*/
+/*	$NetBSD: lock_cas.S,v 1.6.4.1 2010/08/17 06:44:01 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -29,9 +29,16 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "opt_multiprocessor.h"
+#if defined(MULTIPROCESSOR)
+#error need to write MP support for ucas_* functions
+#endif
+
 #include "opt_arm_debug.h"
 
+#include "assym.h"
 #include <machine/asm.h>
+#include <machine/cpu.h>
 
 	.text
 	.align	0
@@ -67,8 +74,6 @@ ENTRY_NP(_lock_cas)
         strex	r3, r2, [ip]
         cmp	r3, #0
         bne	1b
-        RET
-        END(_lock_cas)
 #else
 	ldr	r3, [r0]
 	teq	r3, r1
@@ -88,8 +93,9 @@ _C_LABEL(_lock_cas_end):
 #endif /* __ARMEB__ */
 	stmia	r3, {r1-r2}		/* store ev_count */
 #endif /* ARM_LOCK_CAS_DEBUG */
-	RET
 #endif
+	RET
+END(_lock_cas)
 
 STRONG_ALIAS(_atomic_cas_ulong,_lock_cas)
 STRONG_ALIAS(atomic_cas_ulong,_lock_cas)
@@ -108,3 +114,44 @@ STRONG_ALIAS(_atomic_cas_uint_ni,_lock_cas)
 STRONG_ALIAS(atomic_cas_uint_ni,_lock_cas)
 STRONG_ALIAS(_atomic_cas_ptr_ni,_lock_cas)
 STRONG_ALIAS(atomic_cas_ptr_ni,_lock_cas)
+
+#ifdef __PROG32
+#define SAVE_REGS	stmfd	sp!, {r4-r6}
+#define RESTORE_REGS	ldmfd	sp!, {r4-r6}
+#else
+/* Need to save R14_svc because it'll get trampled if we take a page fault. */
+#define SAVE_REGS	stmfd	sp!, {r4-r6, r14}
+#define RESTORE_REGS	ldmfd	sp!, {r4-r6, r14}
+#endif
+
+/*
+ * int ucas_32(volatile int32_t *uptr, int32_t old, int32_t new, int32_t *ret);
+ */
+ENTRY(ucas_32)
+	SAVE_REGS
+	GET_CURPCB(r4)
+	adr	r5, .Lucasfault
+	str	r5, [r4, #PCB_ONFAULT]
+
+	.globl	_C_LABEL(ucas_32_ras_start)
+_C_LABEL(ucas_32_ras_start):
+	ldrt	r5, [r0]
+	cmp	r1, r5
+	streqt	r2, [r0]
+	.globl _C_LABEL(ucas_32_ras_end)
+_C_LABEL(ucas_32_ras_end):
+
+	str	r5, [r3]
+	mov	r0, #0
+	str	r0, [r4, #PCB_ONFAULT]
+	RESTORE_REGS
+	RET
+
+.Lucasfault:
+	mov	r5, #0
+	str	r5, [r4, #PCB_ONFAULT]
+	RESTORE_REGS
+	RET
+END(ucas_32)
+STRONG_ALIAS(ucas_int,ucas_32)
+STRONG_ALIAS(ucas_ptr,ucas_32)

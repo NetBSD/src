@@ -1,7 +1,7 @@
 #
 # kernel config file for debugging.
 #
-# 	$NetBSD: DEBUG,v 1.4 2005/12/11 12:17:36 christos Exp $
+# 	$NetBSD: DEBUG,v 1.4.98.1 2010/08/17 06:44:29 uebayasi Exp $
 #
 
 include 	"arch/hpcsh/conf/GENERIC"
@@ -21,5 +21,4 @@ options 	DDB			# in-kernel debugger
 #options 	KSTACK_DEBUG
 options 	DIAGNOSTIC		# extra kernel debugging checks
 options 	DEBUG			# extra kernel debugging support
-options 	KTRACE			# system call tracing support
 options 	PCMCIAVERBOSE	# verbose PCMCIA configuration messages

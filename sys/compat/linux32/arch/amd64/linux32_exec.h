@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_exec.h,v 1.2.82.1 2010/04/30 14:42:59 uebayasi Exp $ */
+/*	$NetBSD: linux32_exec.h,v 1.2.82.2 2010/08/17 06:45:50 uebayasi Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -41,7 +41,9 @@
 
 #define LINUX32_DEBUGLINK_SIGNATURE	1
 
-#define LINUX32_ELF_AUX_ENTRIES 18
+#define LINUX32_ELF_AUX_ENTRIES 14
+
+#if 0
 
 /* Hardware platform identifier string */
 #define LINUX32_PLATFORM "i686" 
@@ -53,7 +55,7 @@ static char linux32_kernel_vsyscall[] = {
 	0x55,				/* push   %ebp */		\
 	0x89, 0xcd,			/* mov    %ecx,%ebp */ 		\
 	0x0f, 0x05,			/* syscall */			\
-	0xb9, 0x2b, 0x00, 0x00, 0x00,	/* mov    $0x2b,%ecx */		\
+	0xb9, 0x7b, 0x00, 0x00, 0x00,	/* mov    $0x7b,%ecx */		\
 	0x8e, 0xd1,			/* movl   %ecx,%ss */		\
 	0x89, 0xe9,			/* mov    %ebp,%ecx */		\
 	0x5d,				/* pop    %ebp */		\
@@ -69,6 +71,11 @@ struct linux32_extra_stack_data {
 	char kernel_vsyscall[sizeof(linux32_kernel_vsyscall)];
 };      
 #define LINUX32_ELF_AUX_ARGSIZ sizeof(struct linux32_extra_stack_data)
+
+#endif
+
+#define LINUX32_ELF_AUX_ARGSIZ \
+	(howmany(LINUX32_ELF_AUX_ENTRIES * sizeof(Aux32Info), sizeof(Elf32_Addr)))
 
 #ifdef _KERNEL
 int linux32_exec_setup_stack(struct lwp *, struct exec_package *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ctf.c,v 1.2.4.2 2010/04/30 14:44:09 uebayasi Exp $	*/
+/*	$NetBSD: kern_ctf.c,v 1.2.4.3 2010/08/17 06:47:26 uebayasi Exp $	*/
 /*-
  * Copyright (c) 2008 John Birrell <jb@freebsd.org>
  * All rights reserved.
@@ -82,8 +82,9 @@ mod_ctf_get(struct module *mod, mod_ctf_t *mc)
 	uint8_t *ctfaddr;
 	size_t ctfsize;
 
-	if (mc == NULL)
+	if (mc == NULL) {
 		return EINVAL;
+	}
 
 	/* Set the defaults for no CTF present. That's not a crime! */
 	memset(mc, 0, sizeof(*mc));
@@ -116,8 +117,9 @@ mod_ctf_get(struct module *mod, mod_ctf_t *mc)
 		mc->strcnt = 0;		/* XXX TBD */
 		mc->nsym   = st->sd_symsize / sizeof(Elf_Sym);
 	} else {
-		if (kobj_find_section(mod->mod_kobj, ".SUNW_ctf", (void **)&ctfaddr, &ctfsize))
+		if (kobj_find_section(mod->mod_kobj, ".SUNW_ctf", (void **)&ctfaddr, &ctfsize)) {
 			return ENOENT;
+		}
 
 		mc->symtab = mod->mod_kobj->ko_symtab;
 		mc->strtab = mod->mod_kobj->ko_strtab;
@@ -126,17 +128,21 @@ mod_ctf_get(struct module *mod, mod_ctf_t *mc)
 	}
 
 	if (ctfaddr == NULL) {
+	    	error = ENOENT;
 		goto out;
 	}
 
 	/* Check the CTF magic number. (XXX check for big endian!) */
 	if (ctfaddr[0] != 0xf1 || ctfaddr[1] != 0xcf) {
+	    	error = EINVAL;
 		goto out;
 	}
 
 	/* Check if version 2. */
-	if (ctfaddr[2] != 2)
+	if (ctfaddr[2] != 2) {
+	    	error = EINVAL;
 		goto out;
+	}
 
 	/* Check if the data is compressed. */
 	if ((ctfaddr[3] & 0x1) != 0) {

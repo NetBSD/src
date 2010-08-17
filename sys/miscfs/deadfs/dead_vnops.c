@@ -1,4 +1,4 @@
-/*	$NetBSD: dead_vnops.c,v 1.48 2009/03/14 21:04:24 dsl Exp $	*/
+/*	$NetBSD: dead_vnops.c,v 1.48.2.1 2010/08/17 06:47:36 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dead_vnops.c,v 1.48 2009/03/14 21:04:24 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dead_vnops.c,v 1.48.2.1 2010/08/17 06:47:36 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,7 +70,7 @@ int	dead_print(void *);
 int	dead_getpages(void *);
 #define dead_putpages	genfs_null_putpages
 
-int	chkvnlock(struct vnode *, bool);
+int	chkvnlock(struct vnode *);
 int	dead_default_error(void *);
 
 int (**dead_vnodeop_p)(void *);
@@ -135,7 +135,7 @@ dead_read(void *v)
 		kauth_cred_t a_cred;
 	} */ *ap = v;
 
-	if (chkvnlock(ap->a_vp, false))
+	if (chkvnlock(ap->a_vp))
 		panic("dead_read: lock");
 	/*
 	 * Return EOF for tty devices, EIO for others
@@ -159,7 +159,7 @@ dead_write(void *v)
 		kauth_cred_t a_cred;
 	} */ *ap = v;
 
-	if (chkvnlock(ap->a_vp, false))
+	if (chkvnlock(ap->a_vp))
 		panic("dead_write: lock");
 	return (EIO);
 }
@@ -180,7 +180,7 @@ dead_ioctl(void *v)
 		struct lwp *a_l;
 	} */ *ap = v;
 
-	if (!chkvnlock(ap->a_vp, false))
+	if (!chkvnlock(ap->a_vp))
 		return (EBADF);
 	return (VCALL(ap->a_vp, VOFFSET(vop_ioctl), ap));
 }
@@ -213,7 +213,7 @@ dead_strategy(void *v)
 		struct buf *a_bp;
 	} */ *ap = v;
 	struct buf *bp;
-	if (ap->a_vp == NULL || !chkvnlock(ap->a_vp, false)) {
+	if (ap->a_vp == NULL || !chkvnlock(ap->a_vp)) {
 		bp = ap->a_bp;
 		bp->b_error = EIO;
 		bp->b_resid = bp->b_bcount;
@@ -234,14 +234,8 @@ dead_lock(void *v)
 		int a_flags;
 		struct proc *a_p;
 	} */ *ap = v;
-	bool interlock;
 
-	if (ap->a_flags & LK_INTERLOCK) {
-		interlock = true;
-		ap->a_flags &= ~LK_INTERLOCK;
-	} else
-		interlock = false;
-	if (!chkvnlock(ap->a_vp, interlock))
+	if (!chkvnlock(ap->a_vp))
 		return (0);
 	return (VCALL(ap->a_vp, VOFFSET(vop_lock), ap));
 }
@@ -260,7 +254,7 @@ dead_bmap(void *v)
 		int *a_runp;
 	} */ *ap = v;
 
-	if (!chkvnlock(ap->a_vp, false))
+	if (!chkvnlock(ap->a_vp))
 		return (EIO);
 	return (VOP_BMAP(ap->a_vp, ap->a_bn, ap->a_vpp, ap->a_bnp, ap->a_runp));
 }
@@ -301,12 +295,11 @@ dead_getpages(void *v)
  * in a state of change.
  */
 int
-chkvnlock(struct vnode *vp, bool interlock)
+chkvnlock(struct vnode *vp)
 {
 	int locked = 0;
 
-	if (!interlock)
-		mutex_enter(&vp->v_interlock);
+	mutex_enter(&vp->v_interlock);
 	while (vp->v_iflag & VI_XLOCK) {
 		vwait(vp, VI_XLOCK);
 		locked = 1;

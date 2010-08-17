@@ -1,4 +1,4 @@
-/*	$NetBSD: copy.S,v 1.8.2.1 2010/04/30 14:39:36 uebayasi Exp $	*/
+/*	$NetBSD: copy.S,v 1.8.2.2 2010/08/17 06:44:51 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -100,7 +100,7 @@ END(copystr)
 LEAF(copyinstr)
 	PTR_L	v1, L_PCB(MIPS_CURLWP)
 	PTR_LA	v0, _C_LABEL(copystrerr)
-	blt	a0, zero, _C_LABEL(copystrerr)
+	blt	a0, zero, _C_LABEL(copystrefault)
 	 PTR_S	v0, PCB_ONFAULT(v1)
 	move	t0, a2
 	beq	a2, zero, 4f
@@ -134,7 +134,7 @@ END(copyinstr)
 LEAF(copyoutstr)
 	PTR_L	v1, L_PCB(MIPS_CURLWP)
 	PTR_LA	v0, _C_LABEL(copystrerr)
-	blt	a1, zero, _C_LABEL(copystrerr)
+	blt	a1, zero, _C_LABEL(copystrefault)
 	 PTR_S	v0, PCB_ONFAULT(v1)
 	move	t0, a2
 	beq	a2, zero, 4f
@@ -162,6 +162,11 @@ LEAF(copystrerr)
 	j	ra
 	 PTR_S	zero, PCB_ONFAULT(v1)
 END(copystrerr)
+
+LEAF(copystrefault)
+	b	copystrerr
+	 li	v0, EFAULT
+END(copystrefault)
 
 /*
  * kcopy(const void *src, void *dst, size_t len);
@@ -216,7 +221,7 @@ NESTED(copyin, CALLFRAME_SIZ, ra)
 	PTR_SUBU sp, sp, CALLFRAME_SIZ
 	.mask	0x80000000, -4
 	REG_S	ra, CALLFRAME_RA(sp)
-	 blt	a0, zero, _C_LABEL(copyerr)
+	 blt	a0, zero, _C_LABEL(copyefault)
 	move	v0, a0				# swap a0, a1 for call to memcpy
 	move	a0, a1
 	move	a1, v0
@@ -243,7 +248,7 @@ NESTED(copyout, CALLFRAME_SIZ, ra)
 	PTR_SUBU sp, sp, CALLFRAME_SIZ
 	.mask	0x80000000, -4
 	REG_S	ra, CALLFRAME_RA(sp)
-	blt	a1, zero, _C_LABEL(copyerr)
+	blt	a1, zero, _C_LABEL(copyefault)
 	move	v0, a0				# swap a0, a1 for call to memcpy
 	move	a0, a1
 	move	a1, v0
@@ -267,6 +272,11 @@ LEAF(copyerr)
 	j	ra
 	 PTR_S	zero, PCB_ONFAULT(v1)
 END(copyerr)
+
+LEAF(copyefault)
+	b	copyerr
+	 li	v0, EFAULT
+END(copyefault)
 
 /*
  * int fuswintr(void *)

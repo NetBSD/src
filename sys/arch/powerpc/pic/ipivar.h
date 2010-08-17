@@ -1,4 +1,4 @@
-/* $NetBSD: ipivar.h,v 1.3 2008/04/28 20:23:32 martin Exp $ */
+/* $NetBSD: ipivar.h,v 1.3.20.1 2010/08/17 06:45:04 uebayasi Exp $ */
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipivar.h,v 1.3 2008/04/28 20:23:32 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipivar.h,v 1.3.20.1 2010/08/17 06:45:04 uebayasi Exp $");
 
 #ifndef _IPI_VAR_H_
 #define _IPI_VAR_H_
@@ -51,6 +51,7 @@ struct ipi_ops {
 #define PPC_IPI_HALT		0x0001
 #define PPC_IPI_FLUSH_FPU	0x0002
 #define PPC_IPI_FLUSH_VEC	0x0004
+#define PPC_IPI_XCALL		0x0008
 
 /* OpenPIC */
 void setup_openpic_ipi(void);

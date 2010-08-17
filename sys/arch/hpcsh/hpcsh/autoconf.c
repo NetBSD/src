@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.22 2009/03/18 10:22:30 cegger Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.22.2.1 2010/08/17 06:44:31 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.22 2009/03/18 10:22:30 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.22.2.1 2010/08/17 06:44:31 uebayasi Exp $");
 
 #include "opt_md.h"
 
@@ -93,6 +93,8 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.22 2009/03/18 10:22:30 cegger Exp $")
 
 #include <machine/config_hook.h>
 #include <machine/autoconf.h>
+#include <machine/platid.h>
+#include <machine/platid_mask.h>
 
 #include <hpcsh/dev/hd64461/hd64461var.h>
 #include <hpcsh/dev/hd64465/hd64465var.h>
@@ -146,6 +148,32 @@ makebootdev(const char *cp)
 {
 
 	strncpy(booted_device_name, cp, 16);
+}
+
+void
+device_register(device_t dev, void *aux)
+{
+	device_t parent;
+
+	parent = device_parent(dev);
+
+	if (device_is_a(dev, "rtc") &&
+	    parent != NULL && device_is_a(parent, "shb") &&
+	    platid_match(&platid, &platid_mask_MACH_HITACHI_PERSONA_HPW50PAD)) {
+		prop_number_t rtc_baseyear;
+
+#define HPW50PAD_RTC_BASE	1996
+
+		rtc_baseyear = prop_number_create_integer(HPW50PAD_RTC_BASE);
+		KASSERT(rtc_baseyear != NULL);
+
+		if (prop_dictionary_set(device_properties(dev),
+		    "sh3_rtc_baseyear", rtc_baseyear) == false)
+			printf("WARNING: unable to set sh3_rtc_baseyear "
+			    "property for %s\n", device_xname(dev));
+		prop_object_release(rtc_baseyear);
+		return;
+	}
 }
 
 #ifndef MEMORY_DISK_IS_ROOT

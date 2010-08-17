@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vnops.c,v 1.74 2010/01/08 11:35:09 pooka Exp $	*/
+/*	$NetBSD: smbfs_vnops.c,v 1.74.2.1 2010/08/17 06:47:20 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_vnops.c,v 1.74 2010/01/08 11:35:09 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_vnops.c,v 1.74.2.1 2010/08/17 06:47:20 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1322,7 +1322,7 @@ smbfs_lookup(void *v)
 		if (isdot)
 			return (EISDIR);
 		if (flags & ISDOTDOT)
-			VOP_UNLOCK(dvp, 0);
+			VOP_UNLOCK(dvp);
 		error = smbfs_nget(mp, dvp, name, nmlen, &fattr, vpp);
 		if (flags & ISDOTDOT)
 			vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY);
@@ -1344,7 +1344,7 @@ smbfs_lookup(void *v)
 		/*
 		 * ".." lookup
 		 */
-		VOP_UNLOCK(dvp, 0);
+		VOP_UNLOCK(dvp);
 		error = smbfs_nget(mp, dvp, name, nmlen, NULL, vpp);
 		vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY);
 		if (error) {

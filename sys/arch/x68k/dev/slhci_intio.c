@@ -1,4 +1,4 @@
-/*	$NetBSD: slhci_intio.c,v 1.12 2008/12/18 05:56:42 isaki Exp $	*/
+/*	$NetBSD: slhci_intio.c,v 1.12.4.1 2010/08/17 06:45:27 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: slhci_intio.c,v 1.12 2008/12/18 05:56:42 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: slhci_intio.c,v 1.12.4.1 2010/08/17 06:45:27 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,6 +87,10 @@ slhci_intio_match(device_t parent, cfdata_t cf, void *aux)
 	       ia->ia_intr == SLHCI_INTIO_INTR2   ) )
 		return 0;
 
+	/* Whether the SL811 port is accessible or not */
+	if (badaddr((void *)IIOV(ia->ia_addr)))
+		return 0;
+
 	/* Whether the control port is accessible or not */
 	nc_addr = ia->ia_addr + NEREID_ADDR_OFFSET;
 	nc_size = 0x02;
@@ -121,7 +125,7 @@ slhci_intio_attach(device_t parent, device_t self, void *aux)
 	int nc_size;
 
 	sc->sc_dev = self;
-	sc->sc_bus.hci_private = self;
+	sc->sc_bus.hci_private = sc;
 
 	printf(": Nereid USB\n");
 

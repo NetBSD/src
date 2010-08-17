@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.70.2.1 2010/04/30 14:39:26 uebayasi Exp $	*/
+/*	$NetBSD: machdep.c,v 1.70.2.2 2010/08/17 06:44:31 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.70.2.1 2010/04/30 14:39:26 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.70.2.2 2010/08/17 06:44:31 uebayasi Exp $");
 
 #include "opt_md.h"
 #include "opt_ddb.h"
@@ -38,11 +38,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.70.2.1 2010/04/30 14:39:26 uebayasi Ex
 #include "hd64465if.h"
 
 #include "opt_kloader.h"
-#ifdef KLOADER
-#if !defined(KLOADER_KERNEL_PATH)
-#define KLOADER_KERNEL_PATH	"/netbsd"
-#endif
-#endif
+#include "opt_kloader_kernel_path.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -169,6 +165,12 @@ extern void main(void) __attribute__((__noreturn__));
 void machine_startup(int, char *[], struct bootinfo *)
 	__attribute__((__noreturn__));
 
+#ifdef KLOADER
+#if !defined(KLOADER_KERNEL_PATH)
+#define KLOADER_KERNEL_PATH	"/netbsd"
+#endif /* !KLOADER_KERNEL_PATH */
+static const char kernel_path[] = KLOADER_KERNEL_PATH;
+#endif /* KLOADER */
 
 void
 machine_startup(int argc, char *argv[], struct bootinfo *bi)
@@ -377,8 +379,12 @@ cpu_reboot(int howto, char *bootstr)
 	}
 
 #ifdef KLOADER
-	if ((howto & RB_HALT) == 0)
-		kloader_reboot_setup(KLOADER_KERNEL_PATH);
+	if ((howto & RB_HALT) == 0) {
+		if ((howto & RB_STRING) != 0)
+			kloader_reboot_setup(bootstr);
+		else
+			kloader_reboot_setup(kernel_path);
+	}
 #endif
 
 	boothowto = howto;
@@ -411,14 +417,14 @@ cpu_reboot(int howto, char *bootstr)
 	pmf_system_shutdown(boothowto);
 
 	/* Finally, halt/reboot the system. */
+	if ((howto & RB_HALT) != 0) {
+		printf("halted.\n");
+	} else {
 #ifdef KLOADER
-	if ((howto & RB_HALT) == 0) {
 		kloader_reboot();
 		/* NOTREACHED */
-	}
 #endif
-
-	printf("halted.\n");
+	}
 
 #if NHD64465IF > 0
 	hd64465_shutdown();

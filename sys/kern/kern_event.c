@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.69 2009/12/22 20:50:46 dsl Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.69.2.1 2010/08/17 06:47:26 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.69 2009/12/22 20:50:46 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.69.2.1 2010/08/17 06:47:26 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -457,7 +457,7 @@ filt_procattach(struct knote *kn)
 	curp = curl->l_proc;
 
 	mutex_enter(proc_lock);
-	p = p_find(kn->kn_id, PFIND_LOCKED);
+	p = proc_find(kn->kn_id);
 	if (p == NULL) {
 		mutex_exit(proc_lock);
 		return ESRCH;

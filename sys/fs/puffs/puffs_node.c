@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_node.c,v 1.15 2009/11/05 19:42:44 pooka Exp $	*/
+/*	$NetBSD: puffs_node.c,v 1.15.2.1 2010/08/17 06:47:19 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_node.c,v 1.15 2009/11/05 19:42:44 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_node.c,v 1.15.2.1 2010/08/17 06:47:19 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/hash.h>
@@ -315,7 +315,7 @@ puffs_makeroot(struct puffs_mount *pmp)
 	if (vp) {
 		mutex_enter(&vp->v_interlock);
 		mutex_exit(&pmp->pmp_lock);
-		if (vget(vp, LK_INTERLOCK) == 0)
+		if (vget(vp, 0) == 0)
 			return 0;
 	} else
 		mutex_exit(&pmp->pmp_lock);
@@ -397,9 +397,9 @@ puffs_cookie2vnode(struct puffs_mount *pmp, puffs_cookie_t ck, int lock,
 	mutex_enter(&vp->v_interlock);
 	mutex_exit(&pmp->pmp_lock);
 
-	vgetflags = LK_INTERLOCK;
+	vgetflags = 0;
 	if (lock)
-		vgetflags |= LK_EXCLUSIVE | LK_RETRY;
+		vgetflags |= LK_EXCLUSIVE;
 	if ((rv = vget(vp, vgetflags)))
 		return rv;
 

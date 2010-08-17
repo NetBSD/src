@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.37.2.1 2010/04/30 14:39:58 uebayasi Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.37.2.2 2010/08/17 06:45:32 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.37.2.1 2010/04/30 14:39:58 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.37.2.2 2010/08/17 06:45:32 uebayasi Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -269,9 +269,21 @@ pci_conf_lock(struct pci_conf_lock *ocl, uint32_t sel)
 	if (cpuno == cl->cl_cpuno) {
 		ocl->cl_cpuno = cpuno;
 	} else {
+		u_int spins;
+
 		ocl->cl_cpuno = 0;
-		while (atomic_cas_32(&cl->cl_cpuno, 0, cpuno) != 0)
-			;
+
+		spins = SPINLOCK_BACKOFF_MIN;
+		while (atomic_cas_32(&cl->cl_cpuno, 0, cpuno) != 0) {
+			SPINLOCK_BACKOFF(spins);
+#ifdef LOCKDEBUG
+			if (SPINLOCK_SPINOUT(spins)) {
+				panic("%s: cpu %" PRId32
+				    " spun out waiting for cpu %" PRId32,
+				    __func__, cpuno, cl->cl_cpuno);
+			}
+#endif	/* LOCKDEBUG */
+		}
 	}
 
 	/* Only one CPU can be here, so an interlocked atomic_swap(3)

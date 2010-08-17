@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos32_misc.c,v 1.67.2.1 2010/04/30 14:43:02 uebayasi Exp $	*/
+/*	$NetBSD: sunos32_misc.c,v 1.67.2.2 2010/08/17 06:45:55 uebayasi Exp $	*/
 /* from :NetBSD: sunos_misc.c,v 1.107 2000/12/01 19:25:10 jdolecek Exp	*/
 
 /*
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos32_misc.c,v 1.67.2.1 2010/04/30 14:43:02 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos32_misc.c,v 1.67.2.2 2010/08/17 06:45:55 uebayasi Exp $");
 
 #define COMPAT_SUNOS 1
 
@@ -707,7 +707,7 @@ again:
 eof:
 	*retval = SCARG(uap, nbytes) - resid;
 out:
-	VOP_UNLOCK(vp, 0);
+	VOP_UNLOCK(vp);
 	free(cookiebuf, M_TEMP);
 	free(sbuf, M_TEMP);
  out1:

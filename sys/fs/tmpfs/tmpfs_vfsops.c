@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vfsops.c,v 1.44 2008/07/29 09:10:09 pooka Exp $	*/
+/*	$NetBSD: tmpfs_vfsops.c,v 1.44.14.1 2010/08/17 06:47:22 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vfsops.c,v 1.44 2008/07/29 09:10:09 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vfsops.c,v 1.44.14.1 2010/08/17 06:47:22 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -81,13 +81,12 @@ static int	tmpfs_snapshot(struct mount *, struct vnode *,
 static int
 tmpfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 {
-	struct lwp *l = curlwp;
-	int error;
-	ino_t nodes;
-	size_t pages;
 	struct tmpfs_mount *tmp;
 	struct tmpfs_node *root;
 	struct tmpfs_args *args = data;
+	uint64_t memlimit;
+	ino_t nodes;
+	int error;
 
 	if (*data_len < sizeof *args)
 		return EINVAL;
@@ -100,14 +99,14 @@ tmpfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 
 		args->ta_version = TMPFS_ARGS_VERSION;
 		args->ta_nodes_max = tmp->tm_nodes_max;
-		args->ta_size_max = tmp->tm_pages_max * PAGE_SIZE;
+		args->ta_size_max = tmp->tm_mem_limit;
 
 		root = tmp->tm_root;
 		args->ta_root_uid = root->tn_uid;
 		args->ta_root_gid = root->tn_gid;
 		args->ta_root_mode = root->tn_mode;
 
-		*data_len = sizeof *args;
+		*data_len = sizeof(*args);
 		return 0;
 	}
 
@@ -126,25 +125,20 @@ tmpfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	if (tmpfs_mem_info(true) < TMPFS_PAGES_RESERVED)
 		return EINVAL;
 
-	/* Get the maximum number of memory pages this file system is
-	 * allowed to use, based on the maximum size the user passed in
-	 * the mount structure.  A value of zero is treated as if the
-	 * maximum available space was requested. */
-	if (args->ta_size_max < PAGE_SIZE || args->ta_size_max >= SIZE_MAX)
-		pages = SIZE_MAX;
-	else
-		pages = args->ta_size_max / PAGE_SIZE +
-		    (args->ta_size_max % PAGE_SIZE == 0 ? 0 : 1);
-	if (pages > INT_MAX)
-		pages = INT_MAX;
-	KASSERT(pages > 0);
+	/* Get the memory usage limit for this file-system. */
+	if (args->ta_size_max < PAGE_SIZE) {
+		memlimit = UINT64_MAX;
+	} else {
+		memlimit = args->ta_size_max;
+	}
+	KASSERT(memlimit > 0);
 
-	if (args->ta_nodes_max <= 3)
-		nodes = 3 + pages * PAGE_SIZE / 1024;
-	else
+	if (args->ta_nodes_max <= 3) {
+		nodes = 3 + (memlimit / 1024);
+	} else {
 		nodes = args->ta_nodes_max;
-	if (nodes > INT_MAX)
-		nodes = INT_MAX;
+	}
+	nodes = MIN(nodes, INT_MAX);
 	KASSERT(nodes >= 3);
 
 	/* Allocate the tmpfs mount structure and fill it. */
@@ -157,14 +151,7 @@ tmpfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	LIST_INIT(&tmp->tm_nodes);
 
 	mutex_init(&tmp->tm_lock, MUTEX_DEFAULT, IPL_NONE);
-
-	tmp->tm_pages_max = pages;
-	tmp->tm_pages_used = 0;
-	tmpfs_pool_init(&tmp->tm_dirent_pool, sizeof(struct tmpfs_dirent),
-	    "dirent", tmp);
-	tmpfs_pool_init(&tmp->tm_node_pool, sizeof(struct tmpfs_node),
-	    "node", tmp);
-	tmpfs_str_pool_init(&tmp->tm_str_pool, tmp);
+	tmpfs_mntmem_init(tmp, memlimit);
 
 	/* Allocate the root node. */
 	error = tmpfs_alloc_node(tmp, VDIR, args->ta_root_uid,
@@ -183,7 +170,7 @@ tmpfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	vfs_getnewfsid(mp);
 
 	return set_statvfs_info(path, UIO_USERSPACE, "tmpfs", UIO_SYSSPACE,
-	    mp->mnt_op->vfs_name, mp, l);
+	    mp->mnt_op->vfs_name, mp, curlwp);
 }
 
 /* --------------------------------------------------------------------- */
@@ -245,13 +232,8 @@ tmpfs_unmount(struct mount *mp, int mntflags)
 		node = next;
 	}
 
-	tmpfs_pool_destroy(&tmp->tm_dirent_pool);
-	tmpfs_pool_destroy(&tmp->tm_node_pool);
-	tmpfs_str_pool_destroy(&tmp->tm_str_pool);
-
-	KASSERT(tmp->tm_pages_used == 0);
-
 	/* Throw away the tmpfs_mount structure. */
+	tmpfs_mntmem_destroy(tmp);
 	mutex_destroy(&tmp->tm_lock);
 	kmem_free(tmp, sizeof(*tmp));
 	mp->mnt_data = NULL;
@@ -340,27 +322,30 @@ tmpfs_vptofh(struct vnode *vp, struct fid *fhp, size_t *fh_size)
 
 /* --------------------------------------------------------------------- */
 
-/* ARGSUSED2 */
 static int
 tmpfs_statvfs(struct mount *mp, struct statvfs *sbp)
 {
-	fsfilcnt_t freenodes;
 	struct tmpfs_mount *tmp;
+	fsfilcnt_t freenodes;
+	size_t avail;
 
 	tmp = VFS_TO_TMPFS(mp);
 
 	sbp->f_iosize = sbp->f_frsize = sbp->f_bsize = PAGE_SIZE;
 
-	sbp->f_blocks = TMPFS_PAGES_MAX(tmp);
-	sbp->f_bavail = sbp->f_bfree = TMPFS_PAGES_AVAIL(tmp);
+	mutex_enter(&tmp->tm_acc_lock);
+	avail =  tmpfs_pages_avail(tmp);
+	sbp->f_blocks = (tmpfs_bytes_max(tmp) >> PAGE_SHIFT);
+	sbp->f_bavail = sbp->f_bfree = avail;
 	sbp->f_bresvd = 0;
 
 	freenodes = MIN(tmp->tm_nodes_max - tmp->tm_nodes_cnt,
-	    TMPFS_PAGES_AVAIL(tmp) * PAGE_SIZE / sizeof(struct tmpfs_node));
+	    avail * PAGE_SIZE / sizeof(struct tmpfs_node));
 
 	sbp->f_files = tmp->tm_nodes_cnt + freenodes;
 	sbp->f_favail = sbp->f_ffree = freenodes;
 	sbp->f_fresvd = 0;
+	mutex_exit(&tmp->tm_acc_lock);
 
 	copy_statvfs_info(sbp, mp);
 

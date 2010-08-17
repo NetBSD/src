@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.S,v 1.38.2.1 2010/04/30 14:39:27 uebayasi Exp $	*/
+/*	$NetBSD: trap.S,v 1.38.2.2 2010/08/17 06:44:33 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -203,7 +203,7 @@ syscall_entry:
 	 */
 
 	/* t2 = curlwp PCB */
-	mfctl	CR_CURLWP, %t3 
+	GET_CURLWP(%t3)
 	ldw	L_PCB(%sr1, %t3), %t2			/* XXX can use ,sl */
 
 	/*
@@ -399,7 +399,7 @@ syscall_entry:
 	CALL(syscall, %r1)
 
 	/* load curlwp's trapframe pointer */
-	mfctl	CR_CURLWP, %r1
+	GET_CURLWP(%r1)
 	ldw	L_MD(%r1), %t3
 
 	.exit
@@ -421,8 +421,7 @@ syscall_return:
 	 * a note for trapall).  Hopefully no page fault would happen on or after
 	 * the copy, and interrupts are disabled.
 	 */
-	mfctl	CR_CURLWP, %t2
-	ldw	L_CPU(%t2), %t2
+	GET_CURCPU(%t2)
 	ldo	CI_TRAPSAVE(%t2), %t2
 
 	ldw  0(%t3), %r1 ! ldw  4(%t3), %t1 ! stw %r1,  0(%t2) ! stw %t1,  4(%t2)
@@ -508,8 +507,13 @@ syscall_return:
 	ldw	TF_CR30(%sr3, %t3), %t1
 	mtctl	%t1, CR_FPPADDR
 
+#ifdef MULTIPROCESSOR
+	mfctl	CR_CURCPU, %t3
+#else
 	mfctl	CR_CURLWP, %t3
 	ldw	L_CPU(%sr3, %t3), %t3
+#endif
+
 	/*
 	 * Clear the system mask, this puts us back into physical mode.  Reload
 	 * the trapframe pointer with the correspondent PA value.  %sp will be
@@ -1910,8 +1914,7 @@ ENTRY_NOPROFILE(TLABEL(all),0)
 	/* do not overwrite %tr4(%cr28) it contains the contents of r24 */
 	mtctl	%t3, %tr2
 
-	mfctl	CR_CURLWP, %t3
-	ldw	L_CPU(%t3), %t3
+	GET_CURCPU(%t3)
 
 	stw	%t1, CI_TRAPSAVE + TF_R22(%t3)	/* use ,bc */
 	stw	%t2, CI_TRAPSAVE + TF_R21(%t3)
@@ -2119,8 +2122,7 @@ trapnowvirt:
 	/*
 	 * Copy partially saved state from the store into the frame
 	 */
-	mfctl	CR_CURLWP, %t2
-	ldw	L_CPU(%t2), %t2
+	GET_CURCPU(%t2)
 	ldo	CI_TRAPSAVE(%t2), %t2
 
 	/* use ,bc each line */
@@ -2222,7 +2224,7 @@ trapnowvirt:
 	bb,>=,n	%arg0, TFF_LAST_POS, L$trap_return
 	nop
 
-	mfctl	CR_CURLWP, %t2
+	GET_CURLWP(%t2)
 	ldw	L_MD(%t2), %t3
 
 L$trap_return:

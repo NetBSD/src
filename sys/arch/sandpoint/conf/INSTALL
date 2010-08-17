@@ -1,6 +1,6 @@
-#	$NetBSD: INSTALL,v 1.6 2009/02/06 18:50:28 jym Exp $
+#	$NetBSD: INSTALL,v 1.6.4.1 2010/08/17 06:45:06 uebayasi Exp $
 #
-# GENERIC for Motorola Sandpoint
+# GENERIC install kernel for SandPoint NAS
 #
 
 include "arch/sandpoint/conf/GENERIC"

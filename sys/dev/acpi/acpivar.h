@@ -1,4 +1,4 @@
-/*	$NetBSD: acpivar.h,v 1.40.2.1 2010/04/30 14:43:06 uebayasi Exp $	*/
+/*	$NetBSD: acpivar.h,v 1.40.2.2 2010/08/17 06:46:01 uebayasi Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -57,18 +57,12 @@
  * This structure is used to attach the ACPI "bus".
  */
 struct acpibus_attach_args {
-	bus_space_tag_t aa_iot;		/* PCI I/O space tag */
-	bus_space_tag_t aa_memt;	/* PCI MEM space tag */
-	pci_chipset_tag_t aa_pc;	/* PCI chipset */
-	int aa_pciflags;		/* PCI bus flags */
-	isa_chipset_tag_t aa_ic;	/* ISA chipset */
+	bus_space_tag_t		 aa_iot;	/* PCI I/O space tag */
+	bus_space_tag_t		 aa_memt;	/* PCI MEM space tag */
+	pci_chipset_tag_t	 aa_pc;		/* PCI chipset */
+	int			 aa_pciflags;	/* PCI bus flags */
+	isa_chipset_tag_t	 aa_ic;		/* ISA chipset */
 };
-
-/*
- * ACPI driver capabilities.
- */
-#define ACPI_DEVICE_POWER		__BIT(0)
-#define ACPI_DEVICE_WAKEUP		__BIT(1)
 
 /*
  * PCI information for ACPI device nodes that correspond to PCI devices.
@@ -94,6 +88,9 @@ struct acpi_pci_info {
  *	ad_notify	NULL if there is no notify handler
  *	ad_devinfo	never NULL
  *	ad_handle	never NULL
+ *
+ * Each ACPI device node is associated with its handle. The function
+ * acpi_get_node() can be used to get the node structure from a handle.
  */
 struct acpi_devnode {
 	device_t		 ad_device;	/* Device */
@@ -113,6 +110,13 @@ struct acpi_devnode {
 	SIMPLEQ_ENTRY(acpi_devnode)	ad_child_list;
 	SIMPLEQ_HEAD(, acpi_devnode)	ad_child_head;
 };
+
+/*
+ * ACPI driver capabilities.
+ */
+#define ACPI_DEVICE_POWER	__BIT(0)	/* Support for D-states  */
+#define ACPI_DEVICE_WAKEUP	__BIT(1)	/* Support for wake-up */
+#define ACPI_DEVICE_EJECT	__BIT(2)	/* Support for "ejection" */
 
 /*
  * Software state of the ACPI subsystem.
@@ -166,7 +170,6 @@ struct acpi_attach_args {
  *	acpi_irq	Interrupt Request
  *	acpi_drq	DMA request
  */
-
 struct acpi_io {
 	SIMPLEQ_ENTRY(acpi_io) ar_list;
 	int		ar_index;
@@ -263,6 +266,7 @@ extern int acpi_active;
 extern const struct acpi_resource_parse_ops acpi_resource_parse_ops_default;
 
 int		acpi_probe(void);
+void		acpi_disable(void);
 int		acpi_check(device_t, const char *);
 
 ACPI_PHYSICAL_ADDRESS	acpi_OsGetRootPointer(void);
@@ -297,6 +301,18 @@ struct acpi_drq		*acpi_res_drq(struct acpi_resources *, int);
 void			acpi_enter_sleep_state(struct acpi_softc *, int);
 
 /*
+ * MADT.
+ */
+#define ACPI_PLATFORM_INT_PMI	1
+#define ACPI_PLATFORM_INT_INIT	2
+#define ACPI_PLATFORM_INT_CERR	3
+
+ACPI_STATUS		acpi_madt_map(void);
+void			acpi_madt_unmap(void);
+void			acpi_madt_walk(ACPI_STATUS (*)(ACPI_SUBTABLE_HEADER *,
+				       void *), void *);
+
+/*
  * Quirk handling.
  */
 struct acpi_quirk {
@@ -318,5 +334,14 @@ int acpi_find_quirks(void);
 #ifdef ACPI_DEBUG
 void acpi_debug_init(void);
 #endif
+
+/*
+ * Misc routines with vectors updated by acpiverbose module.
+ */
+extern void	(*acpi_print_verbose)(struct acpi_softc *);
+extern void	(*acpi_print_dev)(const char *);
+
+void		acpi_load_verbose(void);
+extern int	acpi_verbose_loaded;
 
 #endif	/* !_SYS_DEV_ACPI_ACPIVAR_H */

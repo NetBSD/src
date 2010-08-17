@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.63.2.6 2010/07/07 16:35:25 uebayasi Exp $	*/
+/*	$NetBSD: pmap.c,v 1.63.2.7 2010/08/17 06:44:32 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.63.2.6 2010/07/07 16:35:25 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.63.2.7 2010/08/17 06:44:32 uebayasi Exp $");
 
 #include "opt_xip.h"
 
@@ -1493,8 +1493,8 @@ pmap_changebit(struct vm_page *pg, u_int set, u_int clear)
 	DPRINTF(PDB_FOLLOW|PDB_BITS, 
 	    ("%s(%p, %x, %x)\n", __func__, pg, set, clear));
 
-	KASSERT((set & ~(PVF_REF)) == 0);
-	KASSERT((clear & ~(PVF_MOD|PVF_WRITE)) == 0);
+	KASSERT((set & ~(PVF_REF|PVF_UNCACHEABLE)) == 0);
+	KASSERT((clear & ~(PVF_MOD|PVF_WRITE|PVF_UNCACHEABLE)) == 0);
 
 	mutex_enter(&md->pvh_lock);
 

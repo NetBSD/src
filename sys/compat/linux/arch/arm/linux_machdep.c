@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.28 2009/11/23 00:46:06 rmind Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.28.2.1 2010/08/17 06:45:43 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.28 2009/11/23 00:46:06 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.28.2.1 2010/08/17 06:45:43 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,7 +67,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.28 2009/11/23 00:46:06 rmind Exp
 #include <compat/linux/linux_syscallargs.h>
 
 void
-linux_setregs(struct lwp *l, struct exec_package *epp, u_long stack)
+linux_setregs(struct lwp *l, struct exec_package *epp, vaddr_t stack)
 {
 
 	setregs(l, epp, stack);

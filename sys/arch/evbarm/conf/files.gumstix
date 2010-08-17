@@ -1,10 +1,11 @@
-#	$NetBSD: files.gumstix,v 1.14.2.1 2010/04/30 14:39:15 uebayasi Exp $
+#	$NetBSD: files.gumstix,v 1.14.2.2 2010/08/17 06:44:16 uebayasi Exp $
 #
 # Gumstix. Inc. Gumstix boards configuration info
 #
 
 file	arch/evbarm/gumstix/gumstix_machdep.c
-defflag opt_gumstix.h				GUMSTIX_NETBSD_ARGS_BUSHEADER
+defflag opt_gumstix.h				GUMSTIX
+						GUMSTIX_NETBSD_ARGS_BUSHEADER
 						GUMSTIX_NETBSD_ARGS_CONSOLE
 
 # CPU support and integrated peripherals

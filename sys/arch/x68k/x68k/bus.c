@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.34 2009/08/21 04:12:27 thorpej Exp $	*/
+/*	$NetBSD: bus.c,v 1.34.2.1 2010/08/17 06:45:29 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -34,8 +34,10 @@
  * These are default implementations; some buses may use their own.
  */
 
+#include "opt_m68k_arch.h"
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.34 2009/08/21 04:12:27 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.34.2.1 2010/08/17 06:45:29 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

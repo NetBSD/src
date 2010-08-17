@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.234 2009/10/11 17:20:48 dsl Exp $	*/
+/*	$NetBSD: tty.c,v 1.234.2.1 2010/08/17 06:47:32 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.234 2009/10/11 17:20:48 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.234.2.1 2010/08/17 06:47:32 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -208,15 +208,18 @@ uint64_t tk_rawcc;
 
 static kauth_listener_t tty_listener;
 
-SYSCTL_SETUP(sysctl_kern_tkstat_setup, "sysctl kern.tkstat subtree setup")
+static struct sysctllog *kern_tkstat_sysctllog;
+
+static void
+sysctl_kern_tkstat_setup(void)
 {
 
-	sysctl_createv(clog, 0, NULL, NULL,
+	sysctl_createv(&kern_tkstat_sysctllog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "kern", NULL,
 		       NULL, 0, NULL, 0,
 		       CTL_KERN, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
+	sysctl_createv(&kern_tkstat_sysctllog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "tkstat",
 		       SYSCTL_DESCR("Number of characters sent and and "
@@ -224,25 +227,25 @@ SYSCTL_SETUP(sysctl_kern_tkstat_setup, "sysctl kern.tkstat subtree setup")
 		       NULL, 0, NULL, 0,
 		       CTL_KERN, KERN_TKSTAT, CTL_EOL);
 
-	sysctl_createv(clog, 0, NULL, NULL,
+	sysctl_createv(&kern_tkstat_sysctllog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_QUAD, "nin",
 		       SYSCTL_DESCR("Total number of tty input characters"),
 		       NULL, 0, &tk_nin, 0,
 		       CTL_KERN, KERN_TKSTAT, KERN_TKSTAT_NIN, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
+	sysctl_createv(&kern_tkstat_sysctllog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_QUAD, "nout",
 		       SYSCTL_DESCR("Total number of tty output characters"),
 		       NULL, 0, &tk_nout, 0,
 		       CTL_KERN, KERN_TKSTAT, KERN_TKSTAT_NOUT, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
+	sysctl_createv(&kern_tkstat_sysctllog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_QUAD, "cancc",
 		       SYSCTL_DESCR("Number of canonical tty input characters"),
 		       NULL, 0, &tk_cancc, 0,
 		       CTL_KERN, KERN_TKSTAT, KERN_TKSTAT_CANCC, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
+	sysctl_createv(&kern_tkstat_sysctllog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_QUAD, "rawcc",
 		       SYSCTL_DESCR("Number of raw tty input characters"),
@@ -1187,14 +1190,18 @@ ttioctl(struct tty *tp, u_long cmd, void *data, int flag, struct lwp *l)
 		}
 
 		if (pgid < 0) {
-			pgrp = pg_find(-pgid, PFIND_LOCKED | PFIND_UNLOCK_FAIL);
-			if (pgrp == NULL)
+			pgrp = pgrp_find(-pgid);
+			if (pgrp == NULL) {
+				mutex_exit(proc_lock);
 				return (EINVAL);
+			}
 		} else {
 			struct proc *p1;
-			p1 = p_find(pgid, PFIND_LOCKED | PFIND_UNLOCK_FAIL);
-			if (!p1)
+			p1 = proc_find(pgid);
+			if (!p1) {
+				mutex_exit(proc_lock);
 				return (ESRCH);
+			}
 			pgrp = p1->p_pgrp;
 		}
 
@@ -1216,9 +1223,11 @@ ttioctl(struct tty *tp, u_long cmd, void *data, int flag, struct lwp *l)
 			mutex_exit(proc_lock);
 			return (ENOTTY);
 		}
-		pgrp = pg_find(*(int *)data, PFIND_LOCKED | PFIND_UNLOCK_FAIL);
-		if (pgrp == NULL)
+		pgrp = pgrp_find(*(pid_t *)data);
+		if (pgrp == NULL) {
+			mutex_exit(proc_lock);
 			return (EINVAL);
+		}
 		if (pgrp->pg_session != p->p_session) {
 			mutex_exit(proc_lock);
 			return (EPERM);
@@ -2572,8 +2581,8 @@ out:
 
 /*
  * Sleep on chan, returning ERESTART if tty changed while we napped and
- * returning any errors (e.g. EINTR/ETIMEDOUT) reported by tsleep.  If
- * the tty is revoked, restarting a pending call will redo validation done
+ * returning any errors (e.g. EINTR/ETIMEDOUT) reported by cv_timedwait(_sig).
+ * If the tty is revoked, restarting a pending call will redo validation done
  * at the start of the call.
  *
  * Must be called with the tty lock held.
@@ -2766,6 +2775,8 @@ tty_init(void)
 
 	tty_listener = kauth_listen_scope(KAUTH_SCOPE_DEVICE,
 	    tty_listener_cb, NULL);
+
+	sysctl_kern_tkstat_setup();
 }
 
 /*

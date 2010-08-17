@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365_isapnp.c,v 1.30 2009/09/17 18:14:41 tsutsui Exp $	*/
+/*	$NetBSD: i82365_isapnp.c,v 1.30.2.1 2010/08/17 06:46:16 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1998 Bill Sommerfeld.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82365_isapnp.c,v 1.30 2009/09/17 18:14:41 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82365_isapnp.c,v 1.30.2.1 2010/08/17 06:46:16 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -153,7 +153,7 @@ pcic_isapnp_attach(device_t parent, device_t self, void *aux)
 		printf(": can't alloc mem space\n");
 		return;
 	}
-	printf(": using iomem 0x%lx iosiz 0x%x", maddr, msize);
+	printf(": using iomem %#" PRIxPADDR " iosiz %#x", maddr, msize);
 	sc->membase = maddr;
 	sc->subregionmask = (1 << (msize / PCIC_MEM_PAGESIZE)) - 1;
 

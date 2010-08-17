@@ -1,4 +1,4 @@
-/*	$NetBSD: component.c,v 1.1.4.1 2010/04/30 14:44:31 uebayasi Exp $	*/
+/*	$NetBSD: component.c,v 1.1.4.2 2010/08/17 06:48:04 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: component.c,v 1.1.4.1 2010/04/30 14:44:31 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: component.c,v 1.1.4.2 2010/08/17 06:48:04 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/domain.h>
@@ -37,6 +37,8 @@ __KERNEL_RCSID(0, "$NetBSD: component.c,v 1.1.4.1 2010/04/30 14:44:31 uebayasi E
 #include "rump_private.h"
 #include "rump_net_private.h"
 
+int carpattach(int);
+
 RUMP_COMPONENT(RUMP_COMPONENT_NET)
 {
 	extern struct domain arpdomain, inetdomain, inet6domain;
@@ -44,4 +46,6 @@ RUMP_COMPONENT(RUMP_COMPONENT_NET)
 	DOMAINADD(arpdomain);
 	DOMAINADD(inetdomain);
 	DOMAINADD(inet6domain);
+
+	carpattach(1);
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vnops.c,v 1.57 2010/01/08 11:35:09 pooka Exp $ */
+/* $NetBSD: udf_vnops.c,v 1.57.2.1 2010/08/17 06:47:23 uebayasi Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.57 2010/01/08 11:35:09 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.57.2.1 2010/08/17 06:47:23 uebayasi Exp $");
 #endif /* not lint */
 
 
@@ -87,7 +87,7 @@ udf_inactive(void *v)
 
 	if (udf_node == NULL) {
 		DPRINTF(NODE, ("udf_inactive: inactive NULL UDF node\n"));
-		VOP_UNLOCK(vp, 0);
+		VOP_UNLOCK(vp);
 		return 0;
 	}
 
@@ -115,7 +115,7 @@ udf_inactive(void *v)
 		DPRINTF(NODE, ("udf_inactive deleting unlinked file\n"));
 		*ap->a_recycle = true;
 		udf_delete_node(udf_node);
-		VOP_UNLOCK(vp, 0);
+		VOP_UNLOCK(vp);
 		vrecycle(vp, NULL, curlwp);
 		return 0;
 	}
@@ -123,7 +123,7 @@ udf_inactive(void *v)
 	/* write out its node */
 	if (udf_node->i_flags & (IN_CHANGE | IN_UPDATE | IN_MODIFIED))
 		udf_update(vp, NULL, NULL, NULL, 0);
-	VOP_UNLOCK(vp, 0);
+	VOP_UNLOCK(vp);
 
 	return 0;
 }
@@ -722,7 +722,7 @@ udf_lookup(void *v)
 			error = ENOENT;
 
 		/* first unlock parent */
-		VOP_UNLOCK(dvp, 0);
+		VOP_UNLOCK(dvp);
 
 		if (error == 0) {
 			DPRINTF(LOOKUP, ("\tfound '..'\n"));
@@ -1509,14 +1509,21 @@ udf_do_link(struct vnode *dvp, struct vnode *vp, struct componentname *cnp)
 	udf_node = VTOI(vp);
 
 	error = VOP_GETATTR(vp, &vap, FSCRED);
-	if (error)
+	if (error) {
+		VOP_UNLOCK(vp);
 		return error;
+	}
 
 	/* check link count overflow */
-	if (vap.va_nlink >= (1<<16)-1)	/* uint16_t */
+	if (vap.va_nlink >= (1<<16)-1) {	/* uint16_t */
+		VOP_UNLOCK(vp);
 		return EMLINK;
+	}
 
-	return udf_dir_attach(dir_node->ump, dir_node, udf_node, &vap, cnp);
+	error = udf_dir_attach(dir_node->ump, dir_node, udf_node, &vap, cnp);
+	if (error)
+		VOP_UNLOCK(vp);
+	return error;
 }
 
 int
@@ -1535,9 +1542,6 @@ udf_link(void *v)
 	error = udf_do_link(dvp, vp, cnp);
 	if (error)
 		VOP_ABORTOP(dvp, cnp);
-
-	if ((vp != dvp) && (VOP_ISLOCKED(vp) == LK_EXCLUSIVE))
-		VOP_UNLOCK(vp, 0);
 
 	VN_KNOTE(vp, NOTE_LINK);
 	VN_KNOTE(dvp, NOTE_WRITE);
@@ -2086,7 +2090,7 @@ udf_rename(void *v)
 
 out:
         if (fdnode != tdnode)
-                VOP_UNLOCK(fdvp, 0);
+                VOP_UNLOCK(fdvp);
 
 out_unlocked:
 	VOP_ABORTOP(tdvp, tcnp);

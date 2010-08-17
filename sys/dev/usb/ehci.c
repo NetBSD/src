@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.165.2.1 2010/04/30 14:43:50 uebayasi Exp $ */
+/*	$NetBSD: ehci.c,v 1.165.2.2 2010/08/17 06:46:42 uebayasi Exp $ */
 
 /*
  * Copyright (c) 2004-2008 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.165.2.1 2010/04/30 14:43:50 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.165.2.2 2010/08/17 06:46:42 uebayasi Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -811,12 +811,12 @@ ehci_check_itd_intr(ehci_softc_t *sc, struct ehci_xfer *ex) {
 		    sizeof(itd->itd.itd_ctl), BUS_DMASYNC_POSTWRITE |
 		    BUS_DMASYNC_POSTREAD);
 
-	for (i = 0; i < 8; i++) {
+	for (i = 0; i < EHCI_ITD_NUFRAMES; i++) {
 		if (le32toh(itd->itd.itd_ctl[i]) & EHCI_ITD_ACTIVE)
 			break;
 	}
 
-	if (i == 8) {
+	if (i == EHCI_ITD_NUFRAMES) {
 		goto done; /* All 8 descriptors inactive, it's done */
 	}
 
@@ -879,21 +879,15 @@ ehci_idone(struct ehci_xfer *ex)
 		nframes = 0;
 		actlen = 0;
 
-		switch (xfer->pipe->endpoint->edesc->bInterval) {
-		case 0:
-			panic("ehci: isoc xfer suddenly has 0 bInterval, invalid\n");
-		case 1: uframes = 1; break;
-		case 2: uframes = 2; break;
-		case 3: uframes = 4; break;
-		default: uframes = 8; break;
-		}
+		i = xfer->pipe->endpoint->edesc->bInterval;
+		uframes = min(1 << (i - 1), USB_UFRAMES_PER_FRAME);
 
 		for (itd = ex->itdstart; itd != NULL; itd = itd->xfer_next) {
 			usb_syncmem(&itd->dma,itd->offs + offsetof(ehci_itd_t,itd_ctl),
 			    sizeof(itd->itd.itd_ctl), BUS_DMASYNC_POSTWRITE |
 			    BUS_DMASYNC_POSTREAD);
 
-			for (i = 0; i < 8; i += uframes) {
+			for (i = 0; i < EHCI_ITD_NUFRAMES; i += uframes) {
 				/* XXX - driver didn't fill in the frame full
 				 *   of uframes. This leads to scheduling
 				 *   inefficiencies, but working around
@@ -1483,7 +1477,7 @@ ehci_dump_itd(struct ehci_soft_itd *itd)
 
 	printf("ITD: next phys=%X\n", itd->itd.itd_next);
 
-	for (i = 0; i < 8;i++) {
+	for (i = 0; i < EHCI_ITD_NUFRAMES; i++) {
 		t = le32toh(itd->itd.itd_ctl[i]);
 		printf("ITDctl %d: stat=%X len=%X ioc=%X pg=%X offs=%X\n", i,
 		    EHCI_ITD_GET_STATUS(t), EHCI_ITD_GET_LEN(t),
@@ -1491,7 +1485,7 @@ ehci_dump_itd(struct ehci_soft_itd *itd)
 		    EHCI_ITD_GET_OFFS(t));
 	}
 	printf("ITDbufr: ");
-	for (i = 0; i < 7; i++)
+	for (i = 0; i < EHCI_ITD_NBUFFERS; i++)
 		printf("%X,", EHCI_ITD_GET_BPTR(le32toh(itd->itd.itd_bufr[i])));
 
 	b = le32toh(itd->itd.itd_bufr[0]);
@@ -1587,7 +1581,13 @@ ehci_open(usbd_pipe_handle pipe)
 		return USBD_INVAL;
 	}
 
-	naks = 8;		/* XXX */
+	/*
+	 * For interrupt transfer, nak throttling must be disabled, but for
+	 * the other transfer type, nak throttling should be enabled from the
+	 * veiwpoint that avoids the memory thrashing.
+	 */
+	naks = (xfertype == UE_INTERRUPT) ? 0
+	    : ((speed == EHCI_QH_SPEED_HIGH) ? 4 : 0);
 
 	/* Allocate sqh for everything, save isoc xfers */
 	if (xfertype != UE_ISOCHRONOUS) {
@@ -1607,11 +1607,14 @@ ehci_open(usbd_pipe_handle pipe)
 		    );
 		sqh->qh.qh_endphub = htole32(
 		    EHCI_QH_SET_MULT(1) |
-		    EHCI_QH_SET_HUBA(hshubaddr) |
-		    EHCI_QH_SET_PORT(hshubport) |
-		    EHCI_QH_SET_CMASK(0x08) | /* XXX */
 		    EHCI_QH_SET_SMASK(xfertype == UE_INTERRUPT ? 0x02 : 0)
 		    );
+		if (speed != EHCI_QH_SPEED_HIGH)
+			sqh->qh.qh_endphub |= htole32(
+			    EHCI_QH_SET_PORT(hshubport) |
+			    EHCI_QH_SET_HUBA(hshubaddr) |
+			    EHCI_QH_SET_CMASK(0x08) /* XXX */
+			);
 		sqh->qh.qh_curqtd = EHCI_NULL;
 		/* Fill the overlay qTD */
 		sqh->qh.qh_qtd.qtd_next = EHCI_NULL;
@@ -3854,22 +3857,9 @@ ehci_device_isoc_start(usbd_xfer_handle xfer)
 		return USBD_INVAL;
 	}
 
-	switch (i) {
-	case 1:
-		ufrperframe = 8;
-		break;
-	case 2:
-		ufrperframe = 4;
-		break;
-	case 3:
-		ufrperframe = 2;
-		break;
-	default:
-		ufrperframe = 1;
-		break;
-	}
+	ufrperframe = max(1, USB_UFRAMES_PER_FRAME / (1 << (i - 1)));
 	frames = (xfer->nframes + (ufrperframe - 1)) / ufrperframe;
-	uframes = 8 / ufrperframe;
+	uframes = USB_UFRAMES_PER_FRAME / ufrperframe;
 
 	if (frames == 0) {
 		DPRINTF(("ehci_device_isoc_start: frames == 0\n"));
@@ -3898,7 +3888,7 @@ ehci_device_isoc_start(usbd_xfer_handle xfer)
 		/*
 		 * Step 1.5, initialize uframes
 		 */
-		for (j = 0; j < 8; j += uframes) {
+		for (j = 0; j < EHCI_ITD_NUFRAMES; j += uframes) {
 			/* Calculate which page in the list this starts in */
 			int addr = DMAADDR(dma_buf, froffs);
 			addr = EHCI_PAGE_OFFSET(addr);
@@ -3932,7 +3922,7 @@ ehci_device_isoc_start(usbd_xfer_handle xfer)
 		 * and what to not.
 		 */
 
-		for (j=0; j < 7; j++) {
+		for (j = 0; j < EHCI_ITD_NBUFFERS; j++) {
 			/*
 			 * Don't try to lookup a page that's past the end
 			 * of buffer
@@ -4003,12 +3993,12 @@ ehci_device_isoc_start(usbd_xfer_handle xfer)
 	if (frindex >= sc->sc_flsize)
 		frindex &= (sc->sc_flsize - 1);
 
-	/* Whats the frame interval? */
-	i = (1 << epipe->pipe.endpoint->edesc->bInterval);
-	if (i / 8 == 0)
+	/* What's the frame interval? */
+	i = (1 << (epipe->pipe.endpoint->edesc->bInterval - 1));
+	if (i / USB_UFRAMES_PER_FRAME == 0)
 		i = 1;
 	else
-		i /= 8;
+		i /= USB_UFRAMES_PER_FRAME;
 
 	itd = start;
 	for (j = 0; j < frames; j++) {

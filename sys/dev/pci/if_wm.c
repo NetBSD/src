@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.197.2.1 2010/04/30 14:43:38 uebayasi Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.197.2.2 2010/08/17 06:46:26 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.197.2.1 2010/04/30 14:43:38 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.197.2.2 2010/08/17 06:46:26 uebayasi Exp $");
 
 #include "rnd.h"
 
@@ -252,6 +252,7 @@ struct wm_softc {
 	bus_size_t sc_ss;		/* bus space size */
 	bus_space_tag_t sc_iot;		/* I/O space tag */
 	bus_space_handle_t sc_ioh;	/* I/O space handle */
+	bus_size_t sc_ios;		/* I/O space size */
 	bus_space_tag_t sc_flasht;	/* flash registers space tag */
 	bus_space_handle_t sc_flashh;	/* flash registers space handle */
 	bus_dma_tag_t sc_dmat;		/* bus DMA tag */
@@ -498,6 +499,7 @@ do {									\
 
 static void	wm_start(struct ifnet *);
 static void	wm_watchdog(struct ifnet *);
+static int	wm_ifflags_cb(struct ethercom *);
 static int	wm_ioctl(struct ifnet *, u_long, void *);
 static int	wm_init(struct ifnet *);
 static void	wm_stop(struct ifnet *, int);
@@ -510,6 +512,7 @@ static int	wm_add_rxbuf(struct wm_softc *, int);
 static int	wm_read_eeprom(struct wm_softc *, int, int, u_int16_t *);
 static int	wm_read_eeprom_eerd(struct wm_softc *, int, int, u_int16_t *);
 static int	wm_validate_eeprom_checksum(struct wm_softc *);
+static int	wm_read_mac_addr(struct wm_softc *, uint8_t *);
 static void	wm_tick(void *);
 
 static void	wm_set_filter(struct wm_softc *);
@@ -784,7 +787,7 @@ static const struct wm_product {
 	  WM_T_82572,		WMP_F_1000T },
 
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82571GB_QUAD_COPPER,
-	  "Intel® PRO/1000 PT Quad Port Server Adapter",
+	  "Intel PRO/1000 PT Quad Port Server Adapter",
 	  WM_T_82571,		WMP_F_1000T, },
 
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82572EI_FIBER,
@@ -908,10 +911,10 @@ static const struct wm_product {
 	  "82567V-2 LAN Controller",
 	  WM_T_ICH10,		WMP_F_1000T },
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_PCH_M_LM,
-	  "PCH LAN (82578LM) Controller",
+	  "PCH LAN (82577LM) Controller",
 	  WM_T_PCH,		WMP_F_1000T },
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_PCH_M_LC,
-	  "PCH LAN (82578LC) Controller",
+	  "PCH LAN (82577LC) Controller",
 	  WM_T_PCH,		WMP_F_1000T },
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_PCH_D_DM,
 	  "PCH LAN (82578DM) Controller",
@@ -1098,7 +1101,7 @@ wm_attach(device_t parent, device_t self, void *aux)
 	prop_data_t ea;
 	prop_number_t pn;
 	uint8_t enaddr[ETHER_ADDR_LEN];
-	uint16_t myea[ETHER_ADDR_LEN / 2], cfg1, cfg2, swdpin, io3;
+	uint16_t cfg1, cfg2, swdpin, io3;
 	pcireg_t preg, memtype;
 	uint16_t eeprom_data, apme_mask;
 	uint32_t reg;
@@ -1199,7 +1202,7 @@ wm_attach(device_t parent, device_t self, void *aux)
 				    "WARNING: I/O BAR at zero.\n");
 			} else if (pci_mapreg_map(pa, i, PCI_MAPREG_TYPE_IO,
 					0, &sc->sc_iot, &sc->sc_ioh,
-					NULL, NULL) == 0) {
+					NULL, &sc->sc_ios) == 0) {
 				sc->sc_flags |= WM_F_IOH_VALID;
 			} else {
 				aprint_error_dev(sc->sc_dev,
@@ -1246,7 +1249,8 @@ wm_attach(device_t parent, device_t self, void *aux)
 	 */
 	if ((sc->sc_type == WM_T_82546) || (sc->sc_type == WM_T_82546_3)
 	    || (sc->sc_type ==  WM_T_82571) || (sc->sc_type == WM_T_80003)
-	    || (sc->sc_type == WM_T_82575) || (sc->sc_type == WM_T_82576))
+	    || (sc->sc_type == WM_T_82575) || (sc->sc_type == WM_T_82576)
+	    || (sc->sc_type == WM_T_82580) || (sc->sc_type == WM_T_82580ER))
 		sc->sc_funcid = (CSR_READ(sc, WMREG_STATUS)
 		    >> STATUS_FUNCID_SHIFT) & STATUS_FUNCID_MASK;
 	else
@@ -1605,29 +1609,11 @@ wm_attach(device_t parent, device_t self, void *aux)
 		KASSERT(prop_data_size(ea) == ETHER_ADDR_LEN);
 		memcpy(enaddr, prop_data_data_nocopy(ea), ETHER_ADDR_LEN);
 	} else {
-		if (wm_read_eeprom(sc, EEPROM_OFF_MACADDR,
-		    sizeof(myea) / sizeof(myea[0]), myea)) {
+		if (wm_read_mac_addr(sc, enaddr) != 0) {
 			aprint_error_dev(sc->sc_dev,
 			    "unable to read Ethernet address\n");
 			return;
 		}
-		enaddr[0] = myea[0] & 0xff;
-		enaddr[1] = myea[0] >> 8;
-		enaddr[2] = myea[1] & 0xff;
-		enaddr[3] = myea[1] >> 8;
-		enaddr[4] = myea[2] & 0xff;
-		enaddr[5] = myea[2] >> 8;
-	}
-
-	/*
-	 * Toggle the LSB of the MAC address on the second port
-	 * of the dual port controller.
-	 */
-	if ((sc->sc_type == WM_T_82546) || (sc->sc_type == WM_T_82546_3)
-	    || (sc->sc_type ==  WM_T_82571) || (sc->sc_type == WM_T_80003)
-	    || (sc->sc_type == WM_T_82575) || (sc->sc_type == WM_T_82576)) {
-		if (sc->sc_funcid == 1)
-			enaddr[5] ^= 1;
 	}
 
 	aprint_normal_dev(sc->sc_dev, "Ethernet address %s\n",
@@ -1940,6 +1926,7 @@ wm_attach(device_t parent, device_t self, void *aux)
 	 */
 	if_attach(ifp);
 	ether_ifattach(ifp, enaddr);
+	ether_set_ifflags_cb(&sc->sc_ethercom, wm_ifflags_cb);
 #if NRND > 0
 	rnd_attach_source(&sc->rnd_source, xname, RND_TYPE_NET, 0);
 #endif
@@ -2054,6 +2041,7 @@ wm_detach(device_t self, int flags __unused)
 
 	/* Tell the firmware about the release */
 	wm_release_manageability(sc);
+	wm_release_hw_control(sc);
 
 	mii_detach(&sc->sc_mii, MII_PHY_ANY, MII_OFFSET_ANY);
 
@@ -2090,13 +2078,16 @@ wm_detach(device_t self, int flags __unused)
 		sc->sc_ih = NULL;
 	}
 
-	/* Unmap the register */
+	/* Unmap the registers */
 	if (sc->sc_ss) {
 		bus_space_unmap(sc->sc_st, sc->sc_sh, sc->sc_ss);
 		sc->sc_ss = 0;
 	}
 
-	wm_release_hw_control(sc);
+	if (sc->sc_ios) {
+		bus_space_unmap(sc->sc_iot, sc->sc_ioh, sc->sc_ios);
+		sc->sc_ios = 0;
+	}
 
 	return 0;
 }
@@ -2636,10 +2627,10 @@ wm_start(struct ifnet *ifp)
 				lasttx = nexttx;
 
 				DPRINTF(WM_DEBUG_TX,
-				    ("%s: TX: desc %d: low 0x%08lx, "
-				     "len 0x%04x\n",
+				    ("%s: TX: desc %d: low %#" PRIxPADDR ", "
+				     "len %#04zx\n",
 				    device_xname(sc->sc_dev), nexttx,
-				    curaddr & 0xffffffffUL, (unsigned)curlen));
+				    curaddr & 0xffffffffUL, curlen));
 			}
 		}
 
@@ -2740,6 +2731,24 @@ wm_watchdog(struct ifnet *ifp)
 	wm_start(ifp);
 }
 
+static int
+wm_ifflags_cb(struct ethercom *ec)
+{
+	struct ifnet *ifp = &ec->ec_if;
+	struct wm_softc *sc = ifp->if_softc;
+	int change = ifp->if_flags ^ sc->sc_if_flags;
+
+	if ((change & ~(IFF_CANTCHANGE|IFF_DEBUG)) != 0)
+		return ENETRESET;
+	else if ((change & (IFF_PROMISC | IFF_ALLMULTI)) == 0)
+		return 0;
+
+	wm_set_filter(sc);
+
+	sc->sc_if_flags = ifp->if_flags;
+	return 0;
+}
+
 /*
  * wm_ioctl:		[ifnet interface function]
  *
@@ -2752,40 +2761,11 @@ wm_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	struct ifreq *ifr = (struct ifreq *) data;
 	struct ifaddr *ifa = (struct ifaddr *)data;
 	struct sockaddr_dl *sdl;
-	int diff, s, error;
+	int s, error;
 
 	s = splnet();
 
 	switch (cmd) {
-	case SIOCSIFFLAGS:
-		if ((error = ifioctl_common(ifp, cmd, data)) != 0)
-			break;
-		if (ifp->if_flags & IFF_UP) {
-			diff = (ifp->if_flags ^ sc->sc_if_flags)
-			    & (IFF_PROMISC | IFF_ALLMULTI);
-			if ((diff & (IFF_PROMISC | IFF_ALLMULTI)) != 0) {
-				/*
-				 * If the difference bettween last flag and
-				 * new flag is only IFF_PROMISC or
-				 * IFF_ALLMULTI, set multicast filter only
-				 * (don't reset to prevent link down).
-				 */
-				wm_set_filter(sc);
-			} else {
-				/*
-				 * Reset the interface to pick up changes in
-				 * any other flags that affect the hardware
-				 * state.
-				 */
-				wm_init(ifp);
-			}
-		} else {
-			if (ifp->if_flags & IFF_RUNNING)
-				wm_stop(ifp, 1);
-		}
-		sc->sc_if_flags = ifp->if_flags;
-		error = 0;
-		break;
 	case SIOCSIFMEDIA:
 	case SIOCGIFMEDIA:
 		/* Flow control requires full-duplex mode. */
@@ -3595,6 +3575,8 @@ wm_reset(struct wm_softc *sc)
 	case WM_T_82574:
 	case WM_T_82575:
 	case WM_T_82576:
+	case WM_T_82580:
+	case WM_T_82580ER:
 	case WM_T_82583:
 	default:
 		/* Everything else can safely use the documented method. */
@@ -3653,6 +3635,8 @@ wm_reset(struct wm_softc *sc)
 		break;
 	case WM_T_82575:
 	case WM_T_82576:
+	case WM_T_82580:
+	case WM_T_82580ER:
 	case WM_T_80003:
 	case WM_T_ICH8:
 	case WM_T_ICH9:
@@ -3671,18 +3655,29 @@ wm_reset(struct wm_softc *sc)
 	switch (sc->sc_type) {
 	case WM_T_82575:
 	case WM_T_82576:
+#if 0 /* XXX */
 	case WM_T_82580:
+	case WM_T_82580ER:
+#endif
 	case WM_T_ICH8:
 	case WM_T_ICH9:
 		if ((CSR_READ(sc, WMREG_EECD) & EECD_EE_PRES) == 0) {
 			/* Not found */
 			sc->sc_flags |= WM_F_EEPROM_INVALID;
-			if (sc->sc_type == WM_T_82575) /* 82575 only */
+			if ((sc->sc_type == WM_T_82575)
+			    || (sc->sc_type == WM_T_82576)
+			    || (sc->sc_type == WM_T_82580)
+			    || (sc->sc_type == WM_T_82580ER))
 				wm_reset_init_script_82575(sc);
 		}
 		break;
 	default:
 		break;
+	}
+
+	if ((sc->sc_type == WM_T_82580) || (sc->sc_type == WM_T_82580ER)) {
+		/* clear global device reset status bit */
+		CSR_WRITE(sc, WMREG_STATUS, STATUS_DEV_RST_SET);
 	}
 
 	/* Clear any pending interrupt events. */
@@ -3787,26 +3782,30 @@ wm_init(struct ifnet *ifp)
 	sc->sc_txnext = 0;
 
 	if (sc->sc_type < WM_T_82543) {
-		CSR_WRITE(sc, WMREG_OLD_TBDAH, WM_CDTXADDR_HI(sc, 0));
-		CSR_WRITE(sc, WMREG_OLD_TBDAL, WM_CDTXADDR_LO(sc, 0));
+		CSR_WRITE(sc, WMREG_OLD_TDBAH, WM_CDTXADDR_HI(sc, 0));
+		CSR_WRITE(sc, WMREG_OLD_TDBAL, WM_CDTXADDR_LO(sc, 0));
 		CSR_WRITE(sc, WMREG_OLD_TDLEN, WM_TXDESCSIZE(sc));
 		CSR_WRITE(sc, WMREG_OLD_TDH, 0);
 		CSR_WRITE(sc, WMREG_OLD_TDT, 0);
 		CSR_WRITE(sc, WMREG_OLD_TIDV, 128);
 	} else {
-		CSR_WRITE(sc, WMREG_TBDAH, WM_CDTXADDR_HI(sc, 0));
-		CSR_WRITE(sc, WMREG_TBDAL, WM_CDTXADDR_LO(sc, 0));
+		CSR_WRITE(sc, WMREG_TDBAH, WM_CDTXADDR_HI(sc, 0));
+		CSR_WRITE(sc, WMREG_TDBAL, WM_CDTXADDR_LO(sc, 0));
 		CSR_WRITE(sc, WMREG_TDLEN, WM_TXDESCSIZE(sc));
 		CSR_WRITE(sc, WMREG_TDH, 0);
-		CSR_WRITE(sc, WMREG_TDT, 0);
 		CSR_WRITE(sc, WMREG_TIDV, 375);		/* ITR / 4 */
 		CSR_WRITE(sc, WMREG_TADV, 375);		/* should be same */
 
 		if ((sc->sc_flags & WM_F_NEWQUEUE) != 0)
+			/*
+			 * Don't write TDT before TCTL.EN is set.
+			 * See the document.
+			 */
 			CSR_WRITE(sc, WMREG_TXDCTL, TXDCTL_QUEUE_ENABLE
 			    | TXDCTL_PTHRESH(0) | TXDCTL_HTHRESH(0)
 			    | TXDCTL_WTHRESH(0));
 		else {
+			CSR_WRITE(sc, WMREG_TDT, 0);
 			CSR_WRITE(sc, WMREG_TXDCTL, TXDCTL_PTHRESH(0) |
 			    TXDCTL_HTHRESH(0) | TXDCTL_WTHRESH(0));
 			CSR_WRITE(sc, WMREG_RXDCTL, RXDCTL_PTHRESH(0) |
@@ -3878,6 +3877,11 @@ wm_init(struct ifnet *ifp)
 		} else {
 			if ((sc->sc_flags & WM_F_NEWQUEUE) == 0)
 				WM_INIT_RXDESC(sc, i);
+			/*
+			 * For 82575 and newer device, the RX descriptors
+			 * must be initialized after the setting of RCTL.EN in
+			 * wm_set_filter()
+			 */
 		}
 	}
 	sc->sc_rxptr = 0;
@@ -3923,7 +3927,7 @@ wm_init(struct ifnet *ifp)
 	else
 		sc->sc_ctrl &= ~CTRL_VME;
 
-	/* Write the control registers. */
+	/* Write the control register. */
 	CSR_WRITE(sc, WMREG_CTRL, sc->sc_ctrl);
 
 	if (sc->sc_flags & WM_F_HAS_MII) {
@@ -4046,6 +4050,14 @@ wm_init(struct ifnet *ifp)
 		sc->sc_tctl |= TCTL_MULR;
 	CSR_WRITE(sc, WMREG_TCTL, sc->sc_tctl);
 
+	if ((sc->sc_flags & WM_F_NEWQUEUE) != 0) {
+		/*
+		 * Write TDT after TCTL.EN is set.
+		 * See the document.
+		 */
+		CSR_WRITE(sc, WMREG_TDT, 0);
+	}
+
 	if (sc->sc_type == WM_T_80003) {
 		reg = CSR_READ(sc, WMREG_TCTL_EXT);
 		reg &= ~TCTL_EXT_GCEX_MASK;
@@ -4104,7 +4116,7 @@ wm_init(struct ifnet *ifp)
 	/* Set the receive filter. */
 	wm_set_filter(sc);
 
-	/* On 575 and later set RDT only if RX enabled... */
+	/* On 575 and later set RDT only if RX enabled */
 	if ((sc->sc_flags & WM_F_NEWQUEUE) != 0)
 		for (i = 0; i < WM_NRXDESC; i++)
 			WM_INIT_RXDESC(sc, i);
@@ -4117,6 +4129,7 @@ wm_init(struct ifnet *ifp)
 	ifp->if_flags &= ~IFF_OACTIVE;
 
  out:
+	sc->sc_if_flags = ifp->if_flags;
 	if (error)
 		log(LOG_ERR, "%s: interface not running\n",
 		    device_xname(sc->sc_dev));
@@ -4224,6 +4237,8 @@ wm_get_auto_rd_done(struct wm_softc *sc)
 	case WM_T_82583:
 	case WM_T_82575:
 	case WM_T_82576:
+	case WM_T_82580:
+	case WM_T_82580ER:
 	case WM_T_80003:
 	case WM_T_ICH8:
 	case WM_T_ICH9:
@@ -4309,7 +4324,12 @@ wm_get_cfg_done(struct wm_softc *sc)
 	case WM_T_82575:
 	case WM_T_82576:
 	case WM_T_82580:
-		mask = EEMNGCTL_CFGDONE_0 << sc->sc_funcid;
+	case WM_T_82580ER:
+		if (sc->sc_type == WM_T_82571) {
+			/* Only 82571 shares port 0 */
+			mask = EEMNGCTL_CFGDONE_0;
+		} else
+			mask = EEMNGCTL_CFGDONE_0 << sc->sc_funcid;
 		for (i = 0; i < WM_PHY_CFG_TIMEOUT; i++) {
 			if (CSR_READ(sc, WMREG_EEMNGCTL) & mask)
 				break;
@@ -4690,6 +4710,99 @@ wm_poll_eerd_eewr_done(struct wm_softc *sc, int rw)
 	}
 
 	return done;
+}
+
+static int
+wm_read_mac_addr(struct wm_softc *sc, uint8_t *enaddr)
+{
+	uint16_t myea[ETHER_ADDR_LEN / 2];
+	uint16_t offset = EEPROM_OFF_MACADDR;
+	int do_invert = 0;
+
+	if (sc->sc_funcid != 0)
+		switch (sc->sc_type) {
+		case WM_T_82580:
+		case WM_T_82580ER:
+			switch (sc->sc_funcid) {
+			case 1:
+				offset = EEPROM_OFF_LAN1;
+				break;
+			case 2:
+				offset = EEPROM_OFF_LAN2;
+				break;
+			case 3:
+				offset = EEPROM_OFF_LAN3;
+				break;
+			default:
+				goto bad;
+				/* NOTREACHED */
+				break;
+			}
+			break;
+		case WM_T_82571:
+		case WM_T_82575:
+		case WM_T_82576:
+		case WM_T_80003:
+			if (wm_read_eeprom(sc, EEPROM_ALT_MAC_ADDR_PTR, 1,
+				&offset) != 0) {
+				goto bad;
+			}
+
+			/* no pointer */
+			if (offset == 0xffff) {
+				/* reset the offset to LAN0 */
+				offset = EEPROM_OFF_MACADDR;
+				do_invert = 1;
+				goto do_read;
+			}
+
+			switch (sc->sc_funcid) {
+			case 1:
+				offset += EEPROM_OFF_MACADDR_LAN1;
+				break;
+			case 2:
+				offset += EEPROM_OFF_MACADDR_LAN2;
+				break;
+			case 3:
+				offset += EEPROM_OFF_MACADDR_LAN3;
+				break;
+			default:
+				goto bad;
+				/* NOTREACHED */
+				break;
+			}
+			break;
+		default:
+			do_invert = 1;
+			break;
+		}
+
+ do_read:
+	if (wm_read_eeprom(sc, offset, sizeof(myea) / sizeof(myea[0]),
+		myea) != 0) {
+		goto bad;
+	}
+
+	enaddr[0] = myea[0] & 0xff;
+	enaddr[1] = myea[0] >> 8;
+	enaddr[2] = myea[1] & 0xff;
+	enaddr[3] = myea[1] >> 8;
+	enaddr[4] = myea[2] & 0xff;
+	enaddr[5] = myea[2] >> 8;
+
+	/*
+	 * Toggle the LSB of the MAC address on the second port
+	 * of some dual port cards.
+	 */
+	if (do_invert != 0)
+		enaddr[5] ^= 1;
+
+	return 0;
+
+ bad:
+	aprint_error_dev(sc->sc_dev, "unable to read Ethernet address\n");
+
+	return -1;
 }
 
 /*
@@ -5320,7 +5433,7 @@ wm_gmii_reset(struct wm_softc *sc)
 	case WM_T_82573:
 	case WM_T_82574:
 	case WM_T_82583:
-		 /* XXX sould put sw semaphore, too */
+		 /* XXX should put sw semaphore, too */
 		wm_put_swsm_semaphore(sc);
 		break;
 	case WM_T_82575:
@@ -5494,8 +5607,35 @@ wm_gmii_mediainit(struct wm_softc *sc, pci_product_id_t prodid)
 	ifmedia_init(&sc->sc_mii.mii_media, IFM_IMASK, wm_gmii_mediachange,
 	    wm_gmii_mediastatus);
 
-	mii_attach(sc->sc_dev, &sc->sc_mii, 0xffffffff, MII_PHY_ANY,
-	    MII_OFFSET_ANY, MIIF_DOPAUSE);
+	if ((sc->sc_type == WM_T_82575) || (sc->sc_type == WM_T_82576)
+	    || (sc->sc_type == WM_T_82580) || (sc->sc_type == WM_T_82580ER)) {
+		if ((sc->sc_flags & WM_F_SGMII) == 0) {
+			/* Attach only one port */
+			mii_attach(sc->sc_dev, &sc->sc_mii, 0xffffffff, 1,
+			    MII_OFFSET_ANY, MIIF_DOPAUSE);
+		} else {
+			int i;
+			uint32_t ctrl_ext;
+
+			/* Power on sgmii phy if it is disabled */
+			ctrl_ext = CSR_READ(sc, WMREG_CTRL_EXT);
+			CSR_WRITE(sc, WMREG_CTRL_EXT,
+			    ctrl_ext &~ CTRL_EXT_SWDPIN(3));
+			CSR_WRITE_FLUSH(sc);
+			delay(300*1000); /* XXX too long */
+
+			/* from 1 to 8 */
+			for (i = 1; i < 8; i++)
+				mii_attach(sc->sc_dev, &sc->sc_mii, 0xffffffff,
+				    i, MII_OFFSET_ANY, MIIF_DOPAUSE);
+
+			/* restore previous sfp cage power state */
+			CSR_WRITE(sc, WMREG_CTRL_EXT, ctrl_ext);
+		}
+	} else {
+		mii_attach(sc->sc_dev, &sc->sc_mii, 0xffffffff, MII_PHY_ANY,
+		    MII_OFFSET_ANY, MIIF_DOPAUSE);
+	}
 
 	if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
 		/* if failed, retry with *_bm_* */
@@ -7290,6 +7430,10 @@ wm_get_wakeup(struct wm_softc *sc)
 	case WM_T_82574:
 	case WM_T_82575:
 	case WM_T_82576:
+#if 0 /* XXX */
+	case WM_T_82580:
+	case WM_T_82580ER:
+#endif
 		if ((CSR_READ(sc, WMREG_FWSM) & FWSM_MODE_MASK) != 0)
 			sc->sc_flags |= WM_F_ARC_SUBSYS_VALID;
 		sc->sc_flags |= WM_F_ASF_FIRMWARE_PRES;

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_prot.c,v 1.109 2009/04/25 15:06:31 rmind Exp $	*/
+/*	$NetBSD: kern_prot.c,v 1.109.2.1 2010/08/17 06:47:28 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_prot.c,v 1.109 2009/04/25 15:06:31 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_prot.c,v 1.109.2.1 2010/08/17 06:47:28 uebayasi Exp $");
 
 #include "opt_compat_43.h"
 
@@ -128,7 +128,7 @@ sys_getsid(struct lwp *l, const struct sys_getsid_args *uap, register_t *retval)
 	mutex_enter(proc_lock);
 	if (pid == 0)
 		*retval = l->l_proc->p_session->s_sid;
-	else if ((p = p_find(pid, PFIND_LOCKED)) != NULL)
+	else if ((p = proc_find(pid)) != NULL)
 		*retval = p->p_session->s_sid;
 	else
 		error = ESRCH;
@@ -150,7 +150,7 @@ sys_getpgid(struct lwp *l, const struct sys_getpgid_args *uap, register_t *retva
 	mutex_enter(proc_lock);
 	if (pid == 0)
 		*retval = l->l_proc->p_pgid;
-	else if ((p = p_find(pid, PFIND_LOCKED)) != NULL)
+	else if ((p = proc_find(pid)) != NULL)
 		*retval = p->p_pgid;
 	else
 		error = ESRCH;

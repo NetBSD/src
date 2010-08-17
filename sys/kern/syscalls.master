@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.231.2.1 2010/04/30 14:44:13 uebayasi Exp $
+	$NetBSD: syscalls.master,v 1.231.2.2 2010/08/17 06:47:32 uebayasi Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -368,8 +368,8 @@
 189	COMPAT_12 MODULAR { int|sys||fstat(int fd, struct stat12 *sb); } fstat12
 190	COMPAT_12 MODULAR { int|sys||lstat(const char *path, \
 			    struct stat12 *ub); } lstat12
-191	STD 		{ long|sys||pathconf(const char *path, int name); }
-192	STD 		{ long|sys||fpathconf(int fd, int name); }
+191	STD 	RUMP	{ long|sys||pathconf(const char *path, int name); }
+192	STD 	RUMP	{ long|sys||fpathconf(int fd, int name); }
 193	UNIMPL
 194	STD 	RUMP	{ int|sys||getrlimit(int which, \
 			    struct rlimit *rlp); }
@@ -480,17 +480,17 @@
 			    struct timespec50 *timeout); }
 245	UNIMPL		sys_sigqueue
 246	STD RUMP 	{ int|sys||modctl(int cmd, void *arg); }
-247	STD MODULAR 	{ int|sys||_ksem_init(unsigned int value, intptr_t *idp); }
-248	STD MODULAR 	{ int|sys||_ksem_open(const char *name, int oflag, \
+247	STD MODULAR RUMP { int|sys||_ksem_init(unsigned int value, intptr_t *idp); }
+248	STD MODULAR RUMP { int|sys||_ksem_open(const char *name, int oflag, \
 			    mode_t mode, unsigned int value, intptr_t *idp); }
-249	STD MODULAR 	{ int|sys||_ksem_unlink(const char *name); }
-250	STD MODULAR 	{ int|sys||_ksem_close(intptr_t id); }
-251	STD MODULAR 	{ int|sys||_ksem_post(intptr_t id); }
-252	STD MODULAR 	{ int|sys||_ksem_wait(intptr_t id); }
-253	STD MODULAR 	{ int|sys||_ksem_trywait(intptr_t id); }
-254	STD MODULAR 	{ int|sys||_ksem_getvalue(intptr_t id, \
+249	STD MODULAR RUMP { int|sys||_ksem_unlink(const char *name); }
+250	STD MODULAR RUMP { int|sys||_ksem_close(intptr_t id); }
+251	STD MODULAR RUMP { int|sys||_ksem_post(intptr_t id); }
+252	STD MODULAR RUMP { int|sys||_ksem_wait(intptr_t id); }
+253	STD MODULAR RUMP { int|sys||_ksem_trywait(intptr_t id); }
+254	STD MODULAR RUMP { int|sys||_ksem_getvalue(intptr_t id, \
 			    unsigned int *value); }
-255	STD MODULAR 	{ int|sys||_ksem_destroy(intptr_t id); }
+255	STD MODULAR RUMP { int|sys||_ksem_destroy(intptr_t id); }
 256	UNIMPL		sys__ksem_timedwait
 257	STD MODULAR	{ mqd_t|sys||mq_open(const char * name, int oflag, \
 			    mode_t mode, struct mq_attr *attr); }

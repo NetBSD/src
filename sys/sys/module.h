@@ -1,4 +1,4 @@
-/*	$NetBSD: module.h,v 1.18.2.1 2010/04/30 14:44:32 uebayasi Exp $	*/
+/*	$NetBSD: module.h,v 1.18.2.2 2010/08/17 06:48:08 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -90,6 +90,9 @@ typedef struct module {
 	time_t			mod_autotime;
 	void 			*mod_ctf;
 	u_int			mod_fbtentries;	/* DTrace FBT entrie count */
+	int			mod_flags;
+#define MODFLG_MUST_FORCE	0x01
+
 } module_t;
 
 /*
@@ -120,7 +123,8 @@ extern struct modlist	module_builtins;
 extern u_int		module_gen;
 
 void	module_init(void);
-void	module_init2(void);
+void	module_start_unload_thread(void);
+void	module_builtin_require_force(void);
 void	module_init_md(void);
 void	module_init_class(modclass_t);
 int	module_prime(void *, size_t);
@@ -135,11 +139,15 @@ int	module_hold(const char *);
 void	module_rele(const char *);
 int	module_find_section(const char *, void **, size_t *);
 void	module_thread_kick(void);
+void	module_load_vfs_init(void);
 
 void	module_whatis(uintptr_t, void (*)(const char *, ...));
 void	module_print_list(void (*)(const char *, ...));
 
 #ifdef _MODULE_INTERNAL
+extern
+int	(*module_load_vfs_vec)(const char *, int, bool, module_t *,
+			       prop_dictionary_t *);
 int	module_load_vfs(const char *, int, bool, module_t *,
 			prop_dictionary_t *);
 void	module_error(const char *, ...)

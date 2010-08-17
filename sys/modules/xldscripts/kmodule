@@ -1,4 +1,4 @@
-/*	$NetBSD: kmodule,v 1.1 2009/11/10 14:47:52 skrll Exp $	*/
+/*	$NetBSD: kmodule,v 1.1.2.1 2010/08/17 06:47:43 uebayasi Exp $	*/
 
 SECTIONS
 {
@@ -6,11 +6,15 @@ SECTIONS
    .data 0 :
    {
      *(.data)
-     *(.data.*)
      *(.bss)
      *(.bss.*)
      *(COMMON)
    }
+   . = ALIGN(64);	/* COHERENCY_UNIT */
+   .data.cacheline_aligned	: { *(.data.cacheline_aligned) }
+   . = ALIGN(64);	/* COHERENCY_UNIT */
+   .data.read_mostly		: { *(.data.read_mostly) }
+   . = ALIGN(64);	/* COHERENCY_UNIT */
    /* Pre-loaded modules do not need the following. */
    /DISCARD/ :
    {

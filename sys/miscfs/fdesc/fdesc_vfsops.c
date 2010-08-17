@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vfsops.c,v 1.84 2010/01/08 11:35:10 pooka Exp $	*/
+/*	$NetBSD: fdesc_vfsops.c,v 1.84.2.1 2010/08/17 06:47:36 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdesc_vfsops.c,v 1.84 2010/01/08 11:35:10 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdesc_vfsops.c,v 1.84.2.1 2010/08/17 06:47:36 uebayasi Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -104,7 +104,7 @@ fdesc_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 
 	error = set_statvfs_info(path, UIO_USERSPACE, "fdesc", UIO_SYSSPACE,
 	    mp->mnt_op->vfs_name, mp, l);
-	VOP_UNLOCK(rvp, 0);
+	VOP_UNLOCK(rvp);
 	return error;
 }
 

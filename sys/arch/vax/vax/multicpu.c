@@ -1,4 +1,4 @@
-/*	$NetBSD: multicpu.c,v 1.28 2009/11/26 00:19:23 matt Exp $	*/
+/*	$NetBSD: multicpu.c,v 1.28.2.1 2010/08/17 06:45:26 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: multicpu.c,v 1.28 2009/11/26 00:19:23 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: multicpu.c,v 1.28.2.1 2010/08/17 06:45:26 uebayasi Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -44,6 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: multicpu.c,v 1.28 2009/11/26 00:19:23 matt Exp $");
 #include <sys/malloc.h>
 #include <sys/proc.h>
 #include <sys/device.h>
+#include <sys/xcall.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -195,9 +196,32 @@ cpu_handle_ipi(void)
 		case IPI_DDB:
 			Debugger();
 			break;
+		case IPI_XCALL:
+			xc_ipi_handler();
+			break;
 		default:
 			panic("cpu_handle_ipi: bad bit %x", bitno);
 		}
 	}
 	splx(s);
+}
+
+/*
+ * MD support for xcall(9) interface.
+ */
+
+void
+xc_send_ipi(struct cpu_info *ci)
+{
+
+	KASSERT(kpreempt_disabled());
+	KASSERT(curcpu() != ci);
+
+	if (ci) {
+		/* Unicast: remote CPU. */
+		cpu_send_ipi(ci->ci_cpuid, IPI_XCALL);
+	} else {
+		/* Broadcast: all, but local CPU (caller will handle it). */
+		cpu_send_ipi(IPI_DEST_ALL, IPI_XCALL);
+	}
 }

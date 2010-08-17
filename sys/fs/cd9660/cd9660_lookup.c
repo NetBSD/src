@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_lookup.c,v 1.17 2010/01/08 11:35:08 pooka Exp $	*/
+/*	$NetBSD: cd9660_lookup.c,v 1.17.2.1 2010/08/17 06:47:14 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993, 1994
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_lookup.c,v 1.17 2010/01/08 11:35:08 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_lookup.c,v 1.17.2.1 2010/08/17 06:47:14 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/namei.h>
@@ -381,7 +381,7 @@ found:
 	 */
 	brelse(bp, 0);
 	if (flags & ISDOTDOT) {
-		VOP_UNLOCK(pdp, 0);	/* race to get the inode */
+		VOP_UNLOCK(pdp);	/* race to get the inode */
 		error = cd9660_vget_internal(vdp->v_mount, dp->i_ino, &tdp,
 					     dp->i_ino != ino, ep);
 		vn_lock(pdp, LK_EXCLUSIVE | LK_RETRY);

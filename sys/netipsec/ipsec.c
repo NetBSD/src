@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.47 2010/01/31 00:43:38 hubertf Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.47.2.1 2010/08/17 06:47:48 uebayasi Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec.c,v 1.2.2.2 2003/07/01 01:38:13 sam Exp $	*/
 /*	$KAME: ipsec.c,v 1.103 2001/05/24 07:14:18 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.47 2010/01/31 00:43:38 hubertf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.47.2.1 2010/08/17 06:47:48 uebayasi Exp $");
 
 /*
  * IPsec controller part.
@@ -2280,7 +2280,6 @@ ipsec_attach(void)
 
 	ipsecstat_percpu = percpu_alloc(sizeof(uint64_t) * IPSEC_NSTATS);
 
-	aprint_verbose("initializing IPsec...");
 	ah_attach();
 	esp_attach();
 	ipcomp_attach();
@@ -2288,6 +2287,5 @@ ipsec_attach(void)
 #ifdef TCP_SIGNATURE
 	tcpsignature_attach();
 #endif
-	aprint_verbose(" done\n");
 }
 #endif	/* __NetBSD__ */

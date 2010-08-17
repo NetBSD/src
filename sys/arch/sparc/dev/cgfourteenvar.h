@@ -1,4 +1,4 @@
-/*	$NetBSD: cgfourteenvar.h,v 1.11 2008/12/12 18:52:40 macallan Exp $ */
+/*	$NetBSD: cgfourteenvar.h,v 1.11.4.1 2010/08/17 06:45:14 uebayasi Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -66,6 +66,8 @@ struct cg14_cursor {		/* cg14 hardware cursor status */
 	union	cg14cursor_cmap cc_color; /* cursor colormap */
 };
 
+#define CG14_SET_PIXELMODE	_IOW('M', 3, int)
+
 /*
  * per-cg14 variables/state
  */
@@ -109,4 +111,24 @@ struct cgfourteen_softc {
 	struct	cg14clut *sc_clut3;
 	uint	*sc_clutincr;
 	int	sc_opens;
+	off_t	sc_regaddr, sc_fbaddr;
 };
+
+/* Various offsets in virtual (ie. mmap()) spaces Linux and Solaris support. */
+#define CG14_REGS_VOFF		0x00000000	/* registers */
+#define CG14_XLUT_VOFF		0x00003000	/* X Look Up Table */
+#define CG14_CLUT1_VOFF		0x00004000	/* Color Look Up Table */
+#define CG14_CLUT2_VOFF		0x00005000	/* Color Look Up Table */
+#define CG14_CLUT3_VOFF		0x00006000	/* Color Look Up Table */
+#define CG14_DIRECT_VOFF	0x10000000
+#define CG14_CTLREG_VOFF	0x20000000
+#define CG14_CURSOR_VOFF	0x30000000
+#define CG14_SHDW_VRT_VOFF	0x40000000
+#define CG14_XBGR_VOFF		0x50000000
+#define CG14_BGR_VOFF		0x60000000
+#define CG14_X16_VOFF		0x70000000
+#define CG14_C16_VOFF		0x80000000
+#define CG14_X32_VOFF		0x90000000
+#define CG14_B32_VOFF		0xa0000000
+#define CG14_G32_VOFF		0xb0000000
+#define CG14_R32_VOFF		0xc0000000

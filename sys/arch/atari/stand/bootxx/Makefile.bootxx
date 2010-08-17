@@ -1,8 +1,7 @@
-#	$NetBSD: Makefile.bootxx,v 1.9 2009/03/31 11:42:07 tsutsui Exp $
+#	$NetBSD: Makefile.bootxx,v 1.9.2.1 2010/08/17 06:44:08 uebayasi Exp $
 
 NOMAN=	# defined
 
-# for OBJECT_FMT
 .include <bsd.own.mk>
 
 PROG=	bootxx
@@ -35,11 +34,7 @@ LIBKERN=${S_MACHSAOBJ}/lib/kern/libkern.a
 BOOTXX_MAXSIZE=		6656
 
 CPPFLAGS+=	-I. -I${S_LIBTOS} -I${S_MACHSA} -I${S_KERN} -I${S_SA} -I${S}
-.if ${OBJECT_FMT} == "ELF"
 LINKFLAGS=	-static -N -e start -Ttext ${LOADADDR}
-.else
-LINKFLAGS=	-static -N -Ttext ${LOADADDR}
-.endif
 
 .PATH: ${.CURDIR}/.. ${S_LIBTOS}
 

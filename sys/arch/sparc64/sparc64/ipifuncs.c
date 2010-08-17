@@ -1,4 +1,4 @@
-/*	$NetBSD: ipifuncs.c,v 1.30.2.1 2010/04/30 14:39:52 uebayasi Exp $ */
+/*	$NetBSD: ipifuncs.c,v 1.30.2.2 2010/08/17 06:45:20 uebayasi Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -27,14 +27,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.30.2.1 2010/04/30 14:39:52 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.30.2.2 2010/08/17 06:45:20 uebayasi Exp $");
 
 #include "opt_ddb.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
-#include <sys/simplelock.h>
+#include <sys/xcall.h>
 
 #include <machine/db_machdep.h>
 
@@ -65,21 +65,22 @@ static void	sparc64_ipi_error(const char *, sparc64_cpuset_t, sparc64_cpuset_t);
 
  
 /*
- * These are the "function" entry points in locore.s to handle IPI's.
+ * These are the "function" entry points in locore.s/mp_subr.s to handle IPI's.
  */
-void	sparc64_ipi_halt(void *);
-void	sparc64_ipi_pause(void *);
-void	sparc64_ipi_flush_pte_us(void *);
-void	sparc64_ipi_flush_pte_usiii(void *);
-void	sparc64_ipi_dcache_flush_page_us(void *);
-void	sparc64_ipi_dcache_flush_page_usiii(void *);
-void	sparc64_ipi_blast_dcache(void *);
+void	sparc64_ipi_halt(void *, void *);
+void	sparc64_ipi_pause(void *, void *);
+void	sparc64_ipi_flush_pte_us(void *, void *);
+void	sparc64_ipi_flush_pte_usiii(void *, void *);
+void	sparc64_ipi_dcache_flush_page_us(void *, void *);
+void	sparc64_ipi_dcache_flush_page_usiii(void *, void *);
+void	sparc64_ipi_blast_dcache(void *, void *);
+void	sparc64_ipi_ccall(void *, void *);
 
 /*
  * Process cpu stop-self event.
  */
 void
-sparc64_ipi_halt_thiscpu(void *arg)
+sparc64_ipi_halt_thiscpu(void *arg, void *arg2)
 {
 	extern void prom_printf(const char *fmt, ...);
 
@@ -460,4 +461,30 @@ sparc64_ipi_error(const char *s, sparc64_cpuset_t cpus_succeeded,
 	}
 
 	printf("\n");
+}
+
+/*
+ * MD support for xcall(9) interface.
+ */
+
+void
+sparc64_generic_xcall(struct cpu_info *target, ipi_c_call_func_t func,
+	void *arg)
+{
+	/* if target == NULL broadcast to everything but curcpu */
+	if (target)
+		sparc64_send_ipi(target->ci_cpuid, sparc64_ipi_ccall,
+		    (uint64_t)(uintptr_t)func, (uint64_t)(uintptr_t)arg);
+	else {
+		
+		sparc64_multicast_ipi(cpus_active, sparc64_ipi_ccall,
+		    (uint64_t)(uintptr_t)func, (uint64_t)(uintptr_t)arg);
+	}
+}
+
+void
+xc_send_ipi(struct cpu_info *target)
+{
+
+	sparc64_generic_xcall(target, (ipi_c_call_func_t)xc_ipi_handler, NULL);
 }

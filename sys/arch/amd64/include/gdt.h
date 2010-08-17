@@ -1,4 +1,4 @@
-/*	$NetBSD: gdt.h,v 1.6 2009/03/14 14:45:54 dsl Exp $	*/
+/*	$NetBSD: gdt.h,v 1.6.2.1 2010/08/17 06:43:54 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -45,10 +45,7 @@ void tss_free(int);
 void ldt_alloc(struct pmap *, char *, size_t);
 void ldt_free(struct pmap *);
 
-void set_mem_gdt(struct mem_segment_descriptor *, void *, size_t,
-		 int, int, int, int, int);
-void set_sys_gdt(struct sys_segment_descriptor *, void *, size_t, int, int,
-		 int);
+void set_sys_gdt(int, void *, size_t, int, int, int);
 #endif
 
 #define MINGDTSIZ       PAGE_SIZE

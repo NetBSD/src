@@ -1,4 +1,4 @@
-/* $NetBSD: wskbd.c,v 1.126.2.1 2010/04/30 14:43:55 uebayasi Exp $ */
+/* $NetBSD: wskbd.c,v 1.126.2.2 2010/08/17 06:46:48 uebayasi Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.126.2.1 2010/04/30 14:43:55 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.126.2.2 2010/08/17 06:46:48 uebayasi Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -1507,7 +1507,7 @@ static int
 internal_command(struct wskbd_softc *sc, u_int *type, keysym_t ksym,
 	keysym_t ksym2)
 {
-#ifdef WSDISPLAY_SCROLLSUPPORT
+#if NWSDISPLAY > 0 && defined(WSDISPLAY_SCROLLSUPPORT)
 	u_int state = 0;
 #endif
 	switch (ksym) {
@@ -1523,7 +1523,7 @@ internal_command(struct wskbd_softc *sc, u_int *type, keysym_t ksym,
 		if (*type == WSCONS_EVENT_KEY_DOWN)
 			pmf_event_inject(NULL, PMFE_AUDIO_VOLUME_DOWN);
 		break;
-#ifdef WSDISPLAY_SCROLLSUPPORT
+#if NWSDISPLAY > 0 && defined(WSDISPLAY_SCROLLSUPPORT)
 	case KS_Cmd_ScrollFastUp:
 	case KS_Cmd_ScrollFastDown:
 		if (*type == WSCONS_EVENT_KEY_DOWN) {
@@ -1845,6 +1845,9 @@ wskbd_translate(struct wskbd_internal *id, u_int type, int value)
 				res = KS_Escape + (res - KS_3);
 			else if (res == KS_8)
 				res = KS_Delete;
+			/* convert CTL-/ to ^_ as xterm does (undo in emacs) */
+			else if (res == KS_slash)
+				res = KS_underscore & 0x1f;
 		}
 		if (MOD_ONESET(id, MOD_ANYMETA)) {
 			if (id->t_flags & WSKFL_METAESC) {

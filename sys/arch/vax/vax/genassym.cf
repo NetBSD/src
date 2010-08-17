@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.44.2.1 2010/04/30 14:39:56 uebayasi Exp $
+#	$NetBSD: genassym.cf,v 1.44.2.2 2010/08/17 06:45:25 uebayasi Exp $
 #
 # Copyright (c) 1997 Ludd, University of Lule}, Sweden.
 # All rights reserved.
@@ -163,6 +163,7 @@ define	IPL_NONE	IPL_NONE
 define	VC_DIAGTIMM	offsetof(struct vs_cpu, vc_diagtimm)
 
 define	PSL_IS		PSL_IS
+define	PSL_HIGHIPL	PSL_HIGHIPL
 
 define	MTX_OWNER	offsetof(struct kmutex, mtx_owner)
 define	MTX_LOCK	offsetof(struct kmutex, mtx_lock)

@@ -1,9 +1,13 @@
-#	$NetBSD: Makefile,v 1.1 2008/06/28 16:11:36 rumble Exp $
+#	$NetBSD: Makefile,v 1.1.24.1 2010/08/17 06:47:41 uebayasi Exp $
 
 .include "../Makefile.inc"
 
 .PATH:	${S}/miscfs/procfs ${S} ${S}/arch/${MACHINE}/${MACHINE} \
 	${S}/arch/${MACHINE_CPU}/${MACHINE_CPU}
+
+.if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
+.PATH:  ${S}/arch/x86/x86
+.endif
 
 KMOD=	procfs
 SRCS=	procfs_ctl.c procfs_note.c procfs_status.c procfs_subr.c \

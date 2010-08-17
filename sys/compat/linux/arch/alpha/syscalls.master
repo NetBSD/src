@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.71 2009/11/24 10:42:43 njoly Exp $
+	$NetBSD: syscalls.master,v 1.71.2.1 2010/08/17 06:45:41 uebayasi Exp $
 ;
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -82,7 +82,7 @@
 %%
 
 0	NOARGS		{ int|linux_sys||nosys(void); } syscall
-1	NOARGS		{ int|sys||exit(int rval); }
+1	STD		{ int|linux_sys||exit(int rval); }
 2	NOARGS		{ int|sys||fork(void); }
 3	NOARGS		{ int|sys||read(int fd, void *buf, size_t nbyte); }
 4	NOARGS		{ int|sys||write(int fd, const void *buf, size_t nbyte); }
@@ -498,7 +498,8 @@
 310	UNIMPL		syslog
 311	STD		{ int|linux_sys||reboot(int magic1, int magic2, \
 			    int cmd, void *arg); }
-312	STD		{ int|linux_sys||clone(int flags, void *stack); }
+312	STD		{ int|linux_sys||clone(int flags, void *stack, \
+			    void *parent_tidptr, void *child_tidptr, void *tls); }
 #ifdef EXEC_AOUT
 313	STD		{ int|linux_sys||uselib(const char *path); }
 #else
@@ -603,10 +604,10 @@
 376	UNIMPL		pciconfig_iobase
 377	STD		{ int|linux_sys||getdents64(int fd, \
 			    struct linux_dirent64 *dent, unsigned int count); }
-378	UNIMPL		gettid
+378	NOARGS		{ pid_t|linux_sys||gettid(void); }
 379	UNIMPL		readahead
 380	UNIMPL		/* unused */
-381	UNIMPL		tkill
+381	STD		{ int|linux_sys||tkill(int tid, int sig); }
 382	STD		{ int|linux_sys||setxattr(char *path, char *name, \
 			    void *value, size_t size, int flags); }
 383	STD		{ int|linux_sys||lsetxattr(char *path, char *name, \
@@ -628,9 +629,13 @@
 391	STD		{ int|linux_sys||removexattr(char *path, char *name); }
 392	STD		{ int|linux_sys||lremovexattr(char *path, char *name); }
 393	STD		{ int|linux_sys||fremovexattr(int fd, char *name); }
-394	UNIMPL		futex
-395	UNIMPL		sched_setaffinity
-396	UNIMPL		sched_getaffinity
+394	STD		{ int|linux_sys||futex(int *uaddr, int op, int val, \
+			    const struct linux_timespec *timeout, int *uaddr2, \
+			    int val3); }
+395	STD		{ int|linux_sys||sched_setaffinity(pid_t pid, \
+			    unsigned int len, unsigned long *mask); }
+396	STD		{ int|linux_sys||sched_getaffinity(pid_t pid, \
+			    unsigned int len, unsigned long *mask); }
 397	UNIMPL		tuxcall
 398	UNIMPL		io_setup
 399	UNIMPL		io_destroy
@@ -645,7 +650,7 @@
 408	UNIMPL		sys_epoll_ctl
 409	UNIMPL		sys_epoll_wait
 410	UNIMPL		remap_file_pages
-411	UNIMPL		set_tid_address
+411	STD		{ int|linux_sys||set_tid_address(int *tid); }
 412	UNIMPL		restart_syscall
 413	UNIMPL		fadvise64
 414	UNIMPL		timer_create
@@ -663,7 +668,7 @@
 			    int flags, struct linux_timespec *rqtp, \
 			    struct linux_timespec *rmtp); }
 423	UNIMPL		semtimedop
-424	UNIMPL		tgkill
+424	STD		{ int|linux_sys||tgkill(int tgid, int tid, int sig); }
 425	UNIMPL		stat64
 426	UNIMPL		lstat64
 427	UNIMPL		fstat64
@@ -677,3 +682,62 @@
 435	UNIMPL		mq_timedreceive
 436	UNIMPL		mq_notify
 437	UNIMPL		mq_getsetattr
+438	UNIMPL		waitid
+439	UNIMPL		add_key
+440	UNIMPL		request_key
+441	UNIMPL		keyctl
+442	UNIMPL		ioprio_set
+443	UNIMPL		ioprio_get
+444	UNIMPL		inotify_init
+445	UNIMPL		inotify_add_watch
+446	UNIMPL		inotify_rm_watch
+447	UNIMPL		fdatasync
+448	UNIMPL		kexec_load
+449	UNIMPL		migrate_pages
+450	UNIMPL		openat
+451	UNIMPL		mkdirat
+452	UNIMPL		mknodat
+453	UNIMPL		fchownat
+454	UNIMPL		futimesat
+455	UNIMPL		fstatat64
+456	UNIMPL		unlinkat
+457	UNIMPL		renameat
+458	UNIMPL		linkat
+459	UNIMPL		symlinkat
+460	UNIMPL		readlinkat
+461	UNIMPL		fchmodat
+462	UNIMPL		faccessat
+463	UNIMPL		pselect6
+464	UNIMPL		ppoll
+465	UNIMPL		unshare
+466	STD		{ int|linux_sys||set_robust_list( \
+			    struct linux_robust_list_head *head, size_t len); }
+467	STD		{ int|linux_sys||get_robust_list(int pid, \
+			    struct linux_robust_list_head **head, \
+			    size_t *len); }
+468	UNIMPL		splice
+469	UNIMPL		sync_file_range
+470	UNIMPL		tee
+471	UNIMPL		vmsplice
+472	UNIMPL		move_pages
+473	UNIMPL		getcpu
+474	UNIMPL		epoll_wait
+475	UNIMPL		utimensat
+476	UNIMPL		signalfd
+477	UNIMPL		timerfd
+478	UNIMPL		eventfd
+479	UNIMPL		recvmmsg
+480	UNIMPL		fallocate
+481	UNIMPL		timerfd_create
+482	UNIMPL		timerfd_settime
+483	UNIMPL		timerfd_gettime
+484	UNIMPL		signalfd4
+485	UNIMPL		eventfd2
+486	UNIMPL		epoll_create1
+487	UNIMPL		dup3
+488	UNIMPL		pipe2
+489	UNIMPL		inotify_init1
+490	UNIMPL		preadv
+491	UNIMPL		pwritev
+492	UNIMPL		rt_tgsigqueueinfo
+493	UNIMPL		perf_counter_open

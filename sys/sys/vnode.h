@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.213.2.2 2010/04/30 14:44:33 uebayasi Exp $	*/
+/*	$NetBSD: vnode.h,v 1.213.2.3 2010/08/17 06:48:09 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -122,12 +122,6 @@ struct buf;
 LIST_HEAD(buflists, buf);
 TAILQ_HEAD(vnodelst, vnode);
 
-struct vnlock {
-	krwlock_t	vl_lock;
-	u_int		vl_canrecurse;
-	u_int		vl_recursecnt;
-};
-
 /*
  * Reading or writing any of these items requires holding the appropriate
  * lock.  Field markings and the corresponding locks:
@@ -139,7 +133,7 @@ struct vnlock {
  *	n	namecache_lock
  *	s	syncer_data_lock
  *	u	locked by underlying filesystem
- *	v	v_vnlock
+ *	v	vnode lock
  *	x	v_interlock + bufcache_lock to modify, either to inspect
  *
  * Each underlying filesystem allocates its own private area and hangs
@@ -176,8 +170,7 @@ struct vnode {
 	} v_un;
 	enum vtype	v_type;			/* :: vnode type */
 	enum vtagtype	v_tag;			/* :: type of underlying data */
-	struct vnlock	v_lock;			/* v: lock for this vnode */
-	struct vnlock	*v_vnlock;		/* v: pointer to lock */
+	krwlock_t	v_lock;			/* v: lock for this vnode */
 	void 		*v_data;		/* :: private data for fs */
 	struct klist	v_klist;		/* i: notes attached to vnode */
 };
@@ -193,20 +186,7 @@ typedef struct vnodelst vnodelst_t;
 typedef struct vnode vnode_t;
 
 /*
- * All vnode locking operations should use vp->v_vnlock. For leaf filesystems
- * (such as ffs, lfs, msdosfs, etc), vp->v_vnlock = &vp->v_lock. For
- * stacked filesystems, vp->v_vnlock may equal lowervp->v_vnlock.
- *
- * vp->v_vnlock may also be NULL, which indicates that a leaf node does not
- * export a struct lock for vnode locking. Stacked filesystems (such as
- * nullfs) must call the underlying fs for locking. See layerfs_ routines
- * for examples.
- *
- * All filesystems must (pretend to) understand lockmanager flags.
- */
-
-/*
- * Vnode flags.  The first set are locked by vp->v_vnlock or are stable.
+ * Vnode flags.  The first set are locked by vnode lock or are stable.
  * VSYSTEM is only used to skip vflush()ing quota files.  VISTTY is used
  * when reading dead vnodes.
  */
@@ -232,7 +212,6 @@ typedef struct vnode vnode_t;
 #define	VI_CLEAN	0x00080000	/* has been reclaimed */
 #define	VI_INACTPEND	0x00100000	/* inactivation is pending */
 #define	VI_INACTREDO	0x00200000	/* need to redo VOP_INACTIVE() */
-#define	VI_FREEING	0x00400000	/* vnode is being freed */
 #define	VI_INACTNOW	0x00800000	/* VOP_INACTIVE() in progress */
 
 /*
@@ -243,7 +222,7 @@ typedef struct vnode vnode_t;
 #define	VNODE_FLAGBITS \
     "\20\1ROOT\2SYSTEM\3ISTTY\4MAPPED\5MPSAFE\6LOCKSWORK\11TEXT\12EXECMAP" \
     "\13WRMAP\14WRMAPDIRTY\15XLOCK\17ONWORKLST\20MARKER" \
-    "\22LAYER\24CLEAN\25INACTPEND\26INACTREDO\27FREEING" \
+    "\22LAYER\24CLEAN\25INACTPEND\26INACTREDO" \
     "\30INACTNOW\31DIROP" 
 
 #define	VSIZENOTSET	((voff_t)-1)
@@ -253,6 +232,14 @@ typedef struct vnode vnode_t;
  */
 #define	VC_XLOCK	0x80000000
 #define	VC_MASK		0x7fffffff
+
+/*
+ * vnode lock flags
+ */
+#define	LK_SHARED	0x00000001	/* shared lock */
+#define	LK_EXCLUSIVE	0x00000002	/* exclusive lock */
+#define	LK_NOWAIT	0x00000010	/* do not sleep to await lock */
+#define	LK_RETRY	0x00020000	/* vn_lock: retry until locked */
 
 /*
  * Vnode attributes.  A field value of VNOVAL represents a field whose value
@@ -625,8 +612,6 @@ int 	vn_rdwr(enum uio_rw, struct vnode *, void *, int, off_t, enum uio_seg,
     int, kauth_cred_t, size_t *, struct lwp *);
 int	vn_readdir(struct file *, char *, int, u_int, int *, struct lwp *,
     off_t **, int *);
-void	vn_restorerecurse(struct vnode *, u_int);
-u_int	vn_setrecurse(struct vnode *);
 int	vn_stat(struct vnode *, struct stat *);
 int	vn_kqfilter(struct file *, struct knote *);
 int	vn_writechk(struct vnode *);
@@ -647,9 +632,8 @@ void	vn_syncer_add_to_worklist(struct vnode *, int);
 void	vn_syncer_remove_from_worklist(struct vnode *);
 int	speedup_syncer(void);
 int	dorevoke(struct vnode *, kauth_cred_t);
-int	vlockmgr(struct vnlock *, int);
-int	vlockstatus(struct vnlock *);
 int	rawdev_mounted(struct vnode *, struct vnode **);
+uint8_t	vtype2dt(enum vtype);
 
 /* see vfssubr(9) */
 void	vfs_getnewfsid(struct mount *);

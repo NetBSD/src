@@ -1,4 +1,4 @@
-/* $NetBSD: piixpcib.c,v 1.17.2.1 2010/04/30 14:39:30 uebayasi Exp $ */
+/* $NetBSD: piixpcib.c,v 1.17.2.2 2010/08/17 06:44:38 uebayasi Exp $ */
 
 /*-
  * Copyright (c) 2004, 2006 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: piixpcib.c,v 1.17.2.1 2010/04/30 14:39:30 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: piixpcib.c,v 1.17.2.2 2010/08/17 06:44:38 uebayasi Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -214,7 +214,7 @@ static int
 piixpcib_set_ownership(struct piixpcib_softc *sc)
 {
 	int rv;
-	paddr_t pmagic;
+	u_long pmagic;
 	static char magic[] = "Copyright (c) 1999 Intel Corporation";
 
 	pmagic = vtophys((vaddr_t)magic);

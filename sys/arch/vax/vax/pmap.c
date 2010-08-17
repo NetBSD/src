@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.175.2.2 2010/05/27 14:47:30 uebayasi Exp $	   */
+/*	$NetBSD: pmap.c,v 1.175.2.3 2010/08/17 06:45:26 uebayasi Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999, 2003 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.175.2.2 2010/05/27 14:47:30 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.175.2.3 2010/08/17 06:45:26 uebayasi Exp $");
 
 #include "opt_ddb.h"
 #include "opt_cputype.h"
@@ -326,7 +326,7 @@ pmap_bootstrap(void)
 	scratch = istack + USPACE;
 
 	/* Physical-to-virtual translation table */
-	pv_table = (struct pv_entry *)(scratch + 3 * VAX_NBPG);
+	pv_table = (struct pv_entry *)(scratch + SCRATCHPAGES * VAX_NBPG);
 
 	avail_start = (vaddr_t)pv_table + (round_page(avail_end >> PGSHIFT)) *
 	    sizeof(struct pv_entry) - KERNBASE;

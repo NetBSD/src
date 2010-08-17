@@ -1,4 +1,4 @@
-/*	$NetBSD: atk0110.c,v 1.11.4.2 2010/04/30 14:43:06 uebayasi Exp $	*/
+/*	$NetBSD: atk0110.c,v 1.11.4.3 2010/08/17 06:46:01 uebayasi Exp $	*/
 /*	$OpenBSD: atk0110.c,v 1.1 2009/07/23 01:38:16 cnst Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atk0110.c,v 1.11.4.2 2010/04/30 14:43:06 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atk0110.c,v 1.11.4.3 2010/08/17 06:46:01 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -86,8 +86,7 @@ aibs_match(device_t parent, cfdata_t match, void *aux)
 	if(aa->aa_node->ad_type != ACPI_TYPE_DEVICE)
 		return 0;
 
-	/* successful match supersedes aiboost(4) */
-	return acpi_match_hid(aa->aa_node->ad_devinfo, aibs_hid) * 2;
+	return acpi_match_hid(aa->aa_node->ad_devinfo, aibs_hid);
 }
 
 static void

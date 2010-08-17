@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_exec_ecoff.c,v 1.21 2008/11/15 00:49:53 njoly Exp $ */
+/* $NetBSD: osf1_exec_ecoff.c,v 1.21.6.1 2010/08/17 06:45:54 uebayasi Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_exec_ecoff.c,v 1.21 2008/11/15 00:49:53 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_exec_ecoff.c,v 1.21.6.1 2010/08/17 06:45:54 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,16 +73,8 @@ osf1_exec_ecoff_probe(struct lwp *l, struct exec_package *epp)
 	epp->ep_emul_arg = emul_arg;
 
 	emul_arg->flags = 0;
-	if (epp->ep_ndp->ni_segflg == UIO_SYSSPACE)
-		error = copystr(epp->ep_ndp->ni_dirp, emul_arg->exec_name,
-		    MAXPATHLEN + 1, NULL);
-	else
-		error = copyinstr(epp->ep_ndp->ni_dirp, emul_arg->exec_name,
-		    MAXPATHLEN + 1, NULL);
-#ifdef DIAGNOSTIC
-	if (error != 0)
-		panic("osf1_exec_ecoff_probe: copyinstr failed");
-#endif
+	/* this cannot overflow because both are size PATH_MAX */
+	strcpy(emul_arg->exec_name, epp->ep_kname);
 
 	/* do any special object file handling */
 	switch (execp->f.f_flags & ECOFF_FLAG_OBJECT_TYPE_MASK) {
@@ -241,7 +233,7 @@ osf1_exec_ecoff_dynamic(struct lwp *l, struct exec_package *epp)
         if (ldr_vp->v_mount->mnt_flag & MNT_NOSUID)
                 epp->ep_vap->va_mode &= ~(S_ISUID | S_ISGID);
 
-	VOP_UNLOCK(ldr_vp, 0);
+	VOP_UNLOCK(ldr_vp);
 
 	/*
 	 * read the header, and make sure we got all of it.
@@ -297,7 +289,7 @@ osf1_exec_ecoff_dynamic(struct lwp *l, struct exec_package *epp)
 	return (0);
 
 badunlock:
-	VOP_UNLOCK(ldr_vp, 0);
+	VOP_UNLOCK(ldr_vp);
 bad:
 	vrele(ldr_vp);
 	return (error);

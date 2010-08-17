@@ -1,4 +1,4 @@
-/*	$NetBSD: igsfb.c,v 1.48 2009/12/24 19:16:28 elad Exp $ */
+/*	$NetBSD: igsfb.c,v 1.48.2.1 2010/08/17 06:46:10 uebayasi Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Valeriy E. Ushakov
@@ -31,7 +31,7 @@
  * Integraphics Systems IGA 168x and CyberPro series.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igsfb.c,v 1.48 2009/12/24 19:16:28 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igsfb.c,v 1.48.2.1 2010/08/17 06:46:10 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -279,10 +279,6 @@ igsfb_init_video(struct igsfb_devconfig *dc)
 		}
 	}
 
-	/*
-	 * XXX: TODO: make it possible to select the desired video mode.
-	 * For now - hardcode to 1024x768/8bpp.  This is what Krups OFW uses.
-	 */
 	igsfb_hw_setup(dc);
 
 	/*
@@ -408,11 +404,17 @@ igsfb_init_wsdisplay(void *cookie, struct vcons_screen *scr, int existing,
 	struct rasops_info *ri = &scr->scr_ri;
 	int wsfcookie;
 
-	if ((scr == &dc->dc_console) && (dc->dc_vd.active != NULL))
-		return;
+	if (scr == &dc->dc_console) {
+		if (ri->ri_flg == 0) {
+			/* first time, need to set RI_NO_AUTO */
+			ri->ri_flg |= RI_NO_AUTO;
+		} else {
+			/* clear it on 2nd run */
+			ri->ri_flg &= ~RI_NO_AUTO;
+		}
+	}
+	ri->ri_flg |= RI_CENTER | RI_FULLCLEAR;
 
-
-	ri->ri_flg = RI_CENTER | RI_FULLCLEAR;
 	if (IGSFB_HW_SOFT_BSWAP(dc))
 		ri->ri_flg |= RI_BSWAP;
 

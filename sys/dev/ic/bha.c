@@ -1,4 +1,4 @@
-/*	$NetBSD: bha.c,v 1.72 2009/11/23 02:13:46 rmind Exp $	*/
+/*	$NetBSD: bha.c,v 1.72.2.1 2010/08/17 06:46:08 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bha.c,v 1.72 2009/11/23 02:13:46 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bha.c,v 1.72.2.1 2010/08/17 06:46:08 uebayasi Exp $");
 
 #include "opt_ddb.h"
 
@@ -937,7 +937,7 @@ bha_find(bus_space_tag_t iot, bus_space_handle_t ioh)
 	 */
 	if (i) {
 #ifdef BHADEBUG
-		printf("bha_find: board returned %d instead of %d to %s\n",
+		printf("bha_find: board returned %d instead of %zu to %s\n",
 		       i, sizeof(inquire.reply), "INQUIRE_EXTENDED");
 #endif
 		return (0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ptrace.c,v 1.14 2008/12/17 20:51:33 cegger Exp $	*/
+/*	$NetBSD: linux_ptrace.c,v 1.14.4.1 2010/08/17 06:45:43 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_ptrace.c,v 1.14 2008/12/17 20:51:33 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_ptrace.c,v 1.14.4.1 2010/08/17 06:45:43 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -90,7 +90,8 @@ struct linux_reg {
 int linux_ptrace_disabled = 1;	/* bitrotted */
 
 int
-linux_sys_ptrace_arch(struct lwp *l, const struct linux_sys_ptrace_args *uap, register_t *retval)
+linux_sys_ptrace_arch(struct lwp *l, const struct linux_sys_ptrace_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(int) request;
@@ -98,77 +99,86 @@ linux_sys_ptrace_arch(struct lwp *l, const struct linux_sys_ptrace_args *uap, re
 		syscallarg(int) addr;
 		syscallarg(int) data;
 	} */
-	struct proc *p = l->l_proc;
-	int request, error;
-	struct proc *t;				/* target process */
+	struct proc *p = l->l_proc, *t;
 	struct lwp *lt;
+#ifdef _ARM_ARCH_6
+	struct pcb *pcb;
+	void *val;
+#endif
 	struct reg *regs = NULL;
-	struct fpreg *fpregs = NULL;
 	struct linux_reg *linux_regs = NULL;
-	struct linux_fpreg *linux_fpregs = NULL;
+	int request, error;
 
 	if (linux_ptrace_disabled)
 		return ENOSYS;
 
+	error = 0;
 	request = SCARG(uap, request);
+	regs = kmem_alloc(sizeof(struct reg), KM_SLEEP);
+	linux_regs = kmem_alloc(sizeof(struct linux_reg), KM_SLEEP);
 
-	if ((request != LINUX_PTRACE_GETREGS) &&
-	    (request != LINUX_PTRACE_SETREGS))
-		return EIO;
+	switch (request) {
+	case LINUX_PTRACE_GETREGS:
+		break;
+	case LINUX_PTRACE_SETREGS:
+		error = copyin((void *)SCARG(uap, data), linux_regs,
+		    sizeof(struct linux_reg));
+		if (error) {
+			goto out;
+		}
+		break;
+	default:
+		error = EIO;
+		goto out;
+	}
 
-	/* Find the process we're supposed to be operating on. */
-	if ((t = pfind(SCARG(uap, pid))) == NULL)
-		return ESRCH;
+	/* Find the process we are supposed to be operating on. */
+	mutex_enter(proc_lock);
+	if ((t = proc_find(SCARG(uap, pid))) == NULL) {
+		mutex_exit(proc_lock);
+		error = ESRCH;
+		goto out;
+	}
+	mutex_enter(t->p_lock);
+	mutex_exit(proc_lock);
 
 	/*
-	 * You can't do what you want to the process if:
-	 *	(1) It's not being traced at all,
+	 * You cannot do what you want to the process if:
+	 * 1. It is not being traced at all,
 	 */
-	if (!ISSET(t->p_slflag, PSL_TRACED))
-		return EPERM;
-
+	if (!ISSET(t->p_slflag, PSL_TRACED)) {
+		mutex_exit(t->p_lock);
+		error = EPERM;
+		goto out;
+	}
 	/*
-	 *	(2) it's being traced by procfs (which has
-	 *	    different signal delivery semantics),
+	 * 2. It is being traced by procfs (which has different signal
+	 *    delivery semantics),
+	 * 3. It is not being traced by _you_, or
+	 * 4. It is not currently stopped.
 	 */
-	if (ISSET(t->p_slflag, PSL_FSTRACE))
-		return EBUSY;
-
-	/*
-	 *	(3) it's not being traced by _you_, or
-	 */
-	if (t->p_pptr != p)
-		return EBUSY;
-
-	/*
-	 *	(4) it's not currently stopped.
-	 */
-	if (t->p_stat != SSTOP || !t->p_waited)
-		return EBUSY;
-
-	/* XXX NJWLWP
-	 * The entire ptrace interface needs work to be useful to
-	 * a process with multiple LWPs. For the moment, we'll
-	 * just kluge this and fail on others.
-	 */
-
-	if (p->p_nlwps > 1)
-		return (ENOSYS);
-
+	if (ISSET(t->p_slflag, PSL_FSTRACE) || t->p_pptr != p ||
+	    t->p_stat != SSTOP || !t->p_waited) {
+		mutex_exit(t->p_lock);
+		error = EBUSY;
+		goto out;
+	}
+	/* XXX: ptrace needs revamp for multi-threading support. */
+	if (t->p_nlwps > 1) {
+		mutex_exit(t->p_lock);
+		error = ENOSYS;
+		goto out;
+	}
 	lt = LIST_FIRST(&t->p_lwps);
-
 	*retval = 0;
 
 	switch (request) {
-	case  LINUX_PTRACE_GETREGS:
-		regs = malloc(sizeof(struct reg), M_TEMP, M_WAITOK);
-		linux_regs = malloc(sizeof(struct linux_reg),
-			M_TEMP, M_WAITOK);
-
+	case LINUX_PTRACE_GETREGS:
 		error = process_read_regs(lt, regs);
-		if (error != 0)
-			goto out;
-
+		mutex_exit(t->p_lock);
+		if (error) {
+			break;
+		}
 		memcpy(linux_regs->uregs, regs->r, 13 * sizeof(register_t));
 		linux_regs->uregs[LINUX_REG_SP] = regs->r_sp;
 		linux_regs->uregs[LINUX_REG_LR] = regs->r_lr;
@@ -178,43 +188,36 @@ linux_sys_ptrace_arch(struct lwp *l, const struct linux_sys_ptrace_args *uap, re
 
 		error = copyout(linux_regs, (void *)SCARG(uap, data),
 		    sizeof(struct linux_reg));
-		goto out;
+		break;
 
-	case  LINUX_PTRACE_SETREGS:
-		regs = malloc(sizeof(struct reg), M_TEMP, M_WAITOK);
-		linux_regs = malloc(sizeof(struct linux_reg),
-			M_TEMP, M_WAITOK);
-
-		error = copyin((void *)SCARG(uap, data), linux_regs,
-		    sizeof(struct linux_reg));
-		if (error != 0)
-			goto out;
-
+	case LINUX_PTRACE_SETREGS:
 		memcpy(regs->r, linux_regs->uregs, 13 * sizeof(register_t));
 		regs->r_sp = linux_regs->uregs[LINUX_REG_SP];
 		regs->r_lr = linux_regs->uregs[LINUX_REG_LR];
 		regs->r_pc = linux_regs->uregs[LINUX_REG_PC];
 		regs->r_cpsr = linux_regs->uregs[LINUX_REG_CPSR];
-
 		error = process_write_regs(lt, regs);
-		goto out;
+		mutex_exit(t->p_lock);
+		break;
+
+#ifdef _ARM_ARCH_6
+#define LINUX_PTRACE_GET_THREAD_AREA	22
+	case LINUX_PTRACE_GET_THREAD_AREA:
+		mutex_exit(t->p_lock);
+		pcb = lwp_getpcb(l);
+		val = (void *)pcb->pcb_un.un_32.pcb32_user_pid_ro;
+		error = copyout(&val, (void *)SCARG(uap, data), sizeof(val));
+		break;
+#endif
 
 	default:
-		/* never reached */
-		break;
+		mutex_exit(t->p_lock);
 	}
-
-	return EIO;
-
-    out:
+out:
 	if (regs)
-		free(regs, M_TEMP);
-	if (fpregs)
-		free(fpregs, M_TEMP);
+		kmem_free(regs, sizeof(*regs));
 	if (linux_regs)
-		free(linux_regs, M_TEMP);
-	if (linux_fpregs)
-		free(linux_fpregs, M_TEMP);
-	return (error);
+		kmem_free(linux_regs, sizeof(*linux_regs));
+	return error;
 
 }

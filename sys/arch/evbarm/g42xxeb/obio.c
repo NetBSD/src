@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.7.20.1 2010/04/30 14:39:15 uebayasi Exp $ */
+/*	$NetBSD: obio.c,v 1.7.20.2 2010/08/17 06:44:17 uebayasi Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2005  Genetec corp.  All rights reserved.
@@ -265,7 +265,7 @@ obio_attach(device_t parent, device_t self, void *aux)
 	return;
 
  fail:
-	aprint_error( "%s: can't map FPGA registers\n", self->dv_xname );
+	aprint_error_dev(self, "can't map FPGA registers\n");
 }
 
 int
@@ -369,8 +369,7 @@ obio_intr_disestablish(struct obio_softc *sc, int irq, int (* func)(void *))
 	restore_interrupts(save);
 
 	if (error)
-		aprint_error("%s: bad intr_disestablish\n", 
-		    device_xname(sc->sc_dev));
+		aprint_error_dev(sc->sc_dev, "bad intr_disestablish\n");
 }
 
 void

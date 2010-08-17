@@ -1,4 +1,4 @@
-/*	$NetBSD: gtpci.c,v 1.21.2.1 2010/04/30 14:43:27 uebayasi Exp $	*/
+/*	$NetBSD: gtpci.c,v 1.21.2.2 2010/08/17 06:46:17 uebayasi Exp $	*/
 /*
  * Copyright (c) 2008, 2009 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtpci.c,v 1.21.2.1 2010/04/30 14:43:27 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtpci.c,v 1.21.2.2 2010/08/17 06:46:17 uebayasi Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -36,7 +36,6 @@ __KERNEL_RCSID(0, "$NetBSD: gtpci.c,v 1.21.2.1 2010/04/30 14:43:27 uebayasi Exp 
 #include <sys/device.h>
 #include <sys/errno.h>
 #include <sys/extent.h>
-#include <sys/gpio.h>
 #include <sys/malloc.h>
 
 #include <prop/proplib.h>
@@ -66,9 +65,9 @@ __KERNEL_RCSID(0, "$NetBSD: gtpci.c,v 1.21.2.1 2010/04/30 14:43:27 uebayasi Exp 
 static int gtpci_match(device_t, struct cfdata *, void *);
 static void gtpci_attach(device_t, device_t, void *);
 
-static void gtpci_init(struct gtpci_softc *);
+static void gtpci_init(struct gtpci_softc *, struct gtpci_prot *);
 static void gtpci_barinit(struct gtpci_softc *);
-static void gtpci_protinit(struct gtpci_softc *);
+static void gtpci_protinit(struct gtpci_softc *, struct gtpci_prot *);
 #if NPCI > 0
 static void gtpci_pci_config(struct gtpci_softc *, bus_space_tag_t,
 			     bus_space_tag_t, bus_dma_tag_t, pci_chipset_tag_t,
@@ -91,6 +90,8 @@ gtpci_match(device_t parent, struct cfdata *match, void *aux)
 	if (strcmp(mva->mva_name, match->cf_name) != 0)
 		return 0;
 
+	if (mva->mva_unit == MVA_UNIT_DEFAULT)
+		return 0;
 	switch (mva->mva_model) {
 	case MARVELL_DISCOVERY:
 	case MARVELL_DISCOVERY_II:
@@ -100,23 +101,8 @@ gtpci_match(device_t parent, struct cfdata *match, void *aux)
 	case MARVELL_DISCOVERY_V:
 	case MARVELL_DISCOVERY_VI:
 #endif
-		if (mva->mva_unit == GTCF_UNIT_DEFAULT ||
-		    mva->mva_offset != GTCF_OFFSET_DEFAULT)
+		if (mva->mva_offset != MVA_OFFSET_DEFAULT)
 			return 0;
-		break;
-
-	case MARVELL_ORION_1_88F5180N:
-	case MARVELL_ORION_1_88F5181:
-	case MARVELL_ORION_1_88F5182:
-	case MARVELL_ORION_2_88F5281:
-	case MARVELL_ORION_1_88W8660:
-		if (mva->mva_offset == GTCF_OFFSET_DEFAULT)
-			return 0;
-		mva->mva_unit = 0;	/* unit 0 only */
-		break;
-
-	default:
-		return 0;
 	}
 
 	mva->mva_size = GTPCI_SIZE;
@@ -129,8 +115,10 @@ gtpci_attach(device_t parent, device_t self, void *aux)
 {
 	struct gtpci_softc *sc = device_private(self);
 	struct marvell_attach_args *mva = aux;
-#if NPCI > 0
+	struct gtpci_prot *gtpci_prot;
 	prop_dictionary_t dict = device_properties(self);
+	prop_object_t prot;
+#if NPCI > 0
 	prop_object_t pc, iot, memt;
 	prop_array_t int2gpp;
 	prop_object_t gpp;
@@ -143,17 +131,31 @@ gtpci_attach(device_t parent, device_t self, void *aux)
 	aprint_normal(": Marvell PCI Interface\n");
 	aprint_naive("\n");
 
+	prot = prop_dictionary_get(dict, "prot");
+	if (prot != NULL) {
+		KASSERT(prop_object_type(prot) == PROP_TYPE_DATA);
+		gtpci_prot = __UNCONST(prop_data_data_nocopy(prot));
+	} else {
+		aprint_verbose_dev(self, "no protection property\n");
+		gtpci_prot = NULL;
+	}
 #if NPCI > 0
 	iot = prop_dictionary_get(dict, "io-bus-tag");
-	if (iot == NULL)
+	if (iot != NULL) {
+		KASSERT(prop_object_type(iot) == PROP_TYPE_DATA);
+		gtpci_io_bs_tag = __UNCONST(prop_data_data_nocopy(iot));
+	} else {
 		aprint_error_dev(self, "no io-bus-tag property\n");
-	KASSERT(prop_object_type(iot) == PROP_TYPE_DATA);
-	gtpci_io_bs_tag = __UNCONST(prop_data_data_nocopy(iot));
+		gtpci_io_bs_tag = NULL;
+	}
 	memt = prop_dictionary_get(dict, "mem-bus-tag");
-	if (memt == NULL)
+	if (memt != NULL) {
+		KASSERT(prop_object_type(memt) == PROP_TYPE_DATA);
+		gtpci_mem_bs_tag = __UNCONST(prop_data_data_nocopy(memt));
+	} else {
 		aprint_error_dev(self, "no mem-bus-tag property\n");
-	KASSERT(prop_object_type(memt) == PROP_TYPE_DATA);
-	gtpci_mem_bs_tag = __UNCONST(prop_data_data_nocopy(memt));
+		gtpci_mem_bs_tag = NULL;
+	}
 	pc = prop_dictionary_get(dict, "pci-chipset");
 	if (pc == NULL) {
 		aprint_error_dev(self, "no pci-chipset property\n");
@@ -191,13 +193,13 @@ gtpci_attach(device_t parent, device_t self, void *aux)
 	sc->sc_unit = mva->mva_unit;
 	sc->sc_iot = mva->mva_iot;
 	if (bus_space_subregion(mva->mva_iot, mva->mva_ioh,
-	    (mva->mva_offset != GTCF_OFFSET_DEFAULT) ? mva->mva_offset : 0,
+	    (mva->mva_offset != MVA_OFFSET_DEFAULT) ? mva->mva_offset : 0,
 	    mva->mva_size, &sc->sc_ioh)) {
 		aprint_error_dev(self, "can't map registers\n");
 		return;
 	}
 	sc->sc_pc = gtpci_chipset;
-	gtpci_init(sc);
+	gtpci_init(sc, gtpci_prot);
 
 #if NPCI > 0
 	int2gpp = prop_dictionary_get(dict, "int2gpp");
@@ -229,7 +231,7 @@ gtpci_attach(device_t parent, device_t self, void *aux)
 }
 
 static void
-gtpci_init(struct gtpci_softc *sc)
+gtpci_init(struct gtpci_softc *sc, struct gtpci_prot *prot)
 {
 	uint32_t reg;
 
@@ -242,7 +244,8 @@ gtpci_init(struct gtpci_softc *sc)
 	GTPCI_WRITE(sc, GTPCI_AC, reg);
 
 	gtpci_barinit(sc);
-	gtpci_protinit(sc);
+	if (prot != NULL)
+		gtpci_protinit(sc, prot);
 
 	reg = GTPCI_READ(sc, GTPCI_ADC);
 	reg |= GTPCI_ADC_REMAPWRDIS;
@@ -350,57 +353,20 @@ gtpci_barinit(struct gtpci_softc *sc)
 }
 
 static void
-gtpci_protinit(struct gtpci_softc *sc)
+gtpci_protinit(struct gtpci_softc *sc, struct gtpci_prot *ac_flags)
 {
 	enum {
-		gt64260 = 0,
-		mv64360,
-		soc,
+		gt642xx = 0,
+		mv643xx,
+		arm_soc,
 	};
-	const struct gtpci_prot {
-		uint32_t acbl_flags;
-		uint32_t acbl_base_rshift;
-		uint32_t acs_flags;
-		uint32_t acs_size_rshift;
-	} gtpci_prots[] = {
-		{	/* GT64260 */
-#if 0
-			GTPCI_GT64260_ACBL_PCISWAP_NOSWAP	|
-			GTPCI_GT64260_ACBL_WBURST_4_QW		|
-			GTPCI_GT64260_ACBL_RDMULPREFETCH	|
-			GTPCI_GT64260_ACBL_RDLINEPREFETCH	|
-			GTPCI_GT64260_ACBL_RDPREFETCH		|
-			GTPCI_GT64260_ACBL_DREADEN,
-#else
-			GTPCI_GT64260_ACBL_PCISWAP_NOSWAP	|
-			GTPCI_GT64260_ACBL_WBURST_8_QW		|
-			GTPCI_GT64260_ACBL_RDMULPREFETCH	|
-			GTPCI_GT64260_ACBL_RDLINEPREFETCH	|
-			GTPCI_GT64260_ACBL_RDPREFETCH		|
-			GTPCI_GT64260_ACBL_PREFETCHEN,
-#endif
-			20,
-			0,
-			20
-		},
-		{	/* MV64360 and after */
-			GTPCI_ACBL_RDSIZE_256BYTE	|
-			GTPCI_ACBL_RDMBURST_128BYTE	|
-			GTPCI_ACBL_PCISWAP_NOSWAP	|
-			GTPCI_ACBL_SNOOP_NONE		|
-			GTPCI_ACBL_EN,
-			0,
-			0,
-			0
-		},
-		{	/* Orion */
-			GTPCI_ACBL_RDSIZE_256BYTE	|
-			GTPCI_ACBL_RDMBURST_128BYTE	|
-			GTPCI_ACBL_PCISWAP_BYTESWAP,
-			0,
-			GTPCI_ACS_WRMBURST_128BYTE,
-			0
-		},
+	const struct gtpci_ac_rshift {
+		uint32_t base_rshift;
+		uint32_t size_rshift;
+	} ac_rshifts[] = {
+		{ 20, 20, },	/* GT642xx */
+		{  0,  0, },	/* MV643xx and after */
+		{  0,  0, },	/* ARM SoC */
 	};
 	const uint32_t prot_tags[] = {
 		MARVELL_TAG_SDRAM_CS0,
@@ -412,12 +378,12 @@ gtpci_protinit(struct gtpci_softc *sc)
 	device_t pdev = device_parent(sc->sc_dev);
 	uint64_t acbase, base;
 	uint32_t acsize, size;
-	int acbl_base_rshift, acbl_flags, acs_size_rshift, acs_flags;
+	int base_rshift, size_rshift, acbl_flags, acs_flags;
 	int prot, rv, p, t;
 
 	switch (sc->sc_model) {
 	case MARVELL_DISCOVERY:
-		p = gt64260;
+		p = gt642xx;
 		break;
 
 	case MARVELL_DISCOVERY_II:
@@ -427,17 +393,17 @@ gtpci_protinit(struct gtpci_softc *sc)
 	case MARVELL_DISCOVERY_V:
 	case MARVELL_DISCOVERY_VI:
 #endif
-		p = mv64360;
+		p = mv643xx;
 		break;
 
 	default:
-		p = soc;
+		p = arm_soc;
 		break;
 	}
-	acbl_base_rshift = gtpci_prots[p].acbl_base_rshift;
-	acbl_flags = gtpci_prots[p].acbl_flags;
-	acs_size_rshift = gtpci_prots[p].acs_size_rshift;
-	acs_flags = gtpci_prots[p].acs_flags;
+	base_rshift = ac_rshifts[p].base_rshift;
+	size_rshift = ac_rshifts[p].size_rshift;
+	acbl_flags = ac_flags->acbl_flags;
+	acs_flags = ac_flags->acs_flags;
 
 	t = 0;
 	for (prot = 0; prot < GTPCI_NPCIAC; prot++) {
@@ -458,12 +424,11 @@ gtpci_protinit(struct gtpci_softc *sc)
 
 		if (acsize != 0) {
 			GTPCI_WRITE_AC(sc, GTPCI_ACBL, prot,
-			    ((acbase & 0xffffffff) >> acbl_base_rshift) |
-			   					 acbl_flags);
+			   ((acbase & 0xffffffff) >> base_rshift) | acbl_flags);
 			GTPCI_WRITE_AC(sc, GTPCI_ACBH, prot,
 			    (acbase >> 32) & 0xffffffff);
 			GTPCI_WRITE_AC(sc, GTPCI_ACS, prot,
-			    ((acsize - 1) >> acs_size_rshift) | acs_flags);
+			    ((acsize - 1) >> size_rshift) | acs_flags);
 		} else {
 			GTPCI_WRITE_AC(sc, GTPCI_ACBL, prot, 0);
 			GTPCI_WRITE_AC(sc, GTPCI_ACBH, prot, 0);

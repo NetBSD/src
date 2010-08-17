@@ -1,4 +1,4 @@
-#	$NetBSD: files.acpica,v 1.1.4.1 2010/04/30 14:43:57 uebayasi Exp $
+#	$NetBSD: files.acpica,v 1.1.4.2 2010/08/17 06:46:54 uebayasi Exp $
 
 define		acpica
 makeoptions	acpi	CPPFLAGS+="-I$S/external/intel-public/acpica/dist/include"
@@ -42,6 +42,8 @@ file	external/intel-public/acpica/dist/dispatcher/dswstate.c		acpica
 file	external/intel-public/acpica/dist/events/evevent.c		acpica
 file	external/intel-public/acpica/dist/events/evgpe.c		acpica
 file	external/intel-public/acpica/dist/events/evgpeblk.c		acpica
+file	external/intel-public/acpica/dist/events/evgpeinit.c		acpica
+file	external/intel-public/acpica/dist/events/evgpeutil.c		acpica
 file	external/intel-public/acpica/dist/events/evmisc.c		acpica
 file	external/intel-public/acpica/dist/events/evregion.c		acpica
 file	external/intel-public/acpica/dist/events/evrgnini.c		acpica
@@ -54,6 +56,7 @@ file	external/intel-public/acpica/dist/events/evxfregn.c		acpica
 file	external/intel-public/acpica/dist/executer/exconfig.c		acpica
 file	external/intel-public/acpica/dist/executer/exconvrt.c		acpica
 file	external/intel-public/acpica/dist/executer/excreate.c		acpica
+file	external/intel-public/acpica/dist/executer/exdebug.c		acpica
 file	external/intel-public/acpica/dist/executer/exdump.c		acpica
 file	external/intel-public/acpica/dist/executer/exfield.c		acpica
 file	external/intel-public/acpica/dist/executer/exfldio.c		acpica

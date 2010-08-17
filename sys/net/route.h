@@ -1,4 +1,4 @@
-/*	$NetBSD: route.h,v 1.74 2009/11/03 00:30:31 dyoung Exp $	*/
+/*	$NetBSD: route.h,v 1.74.2.1 2010/08/17 06:47:45 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -126,7 +126,8 @@ struct rtentry {
 	struct	rtentry *rt_gwroute;	/* implied entry for gatewayed routes */
 	LIST_HEAD(, rttimer) rt_timer;  /* queue of timeouts for misc funcs */
 	struct	rtentry *rt_parent;	/* parent of cloned route */
-	struct sockaddr *_rt_key;
+	struct	sockaddr *_rt_key;
+	struct	sockaddr *rt_tag;	/* route tagging info */
 };
 
 static inline const struct sockaddr *
@@ -243,6 +244,7 @@ struct rt_msghdr {
 #define RTA_IFA		0x20	/* interface addr sockaddr present */
 #define RTA_AUTHOR	0x40	/* sockaddr for author of redirect */
 #define RTA_BRD		0x80	/* for NEWADDR, broadcast or p-p dest addr */
+#define RTA_TAG		0x100	/* route tag */
 
 /*
  * Index offsets for sockaddr array for alternate internal encoding.
@@ -255,7 +257,8 @@ struct rt_msghdr {
 #define RTAX_IFA	5	/* interface addr sockaddr present */
 #define RTAX_AUTHOR	6	/* sockaddr for author of redirect */
 #define RTAX_BRD	7	/* for NEWADDR, broadcast or p-p dest addr */
-#define RTAX_MAX	8	/* size of array to allocate */
+#define RTAX_TAG	8	/* route tag */
+#define RTAX_MAX	9	/* size of array to allocate */
 
 #define RT_ROUNDUP(a) \
 	((a) > 0 ? (1 + (((a) - 1) | (sizeof(long) - 1))) : sizeof(long))
@@ -276,6 +279,7 @@ struct route_cb {
 	int	ipx_count;
 	int	ns_count;
 	int	iso_count;
+	int	mpls_count;
 	int	any_count;
 };
 
@@ -383,6 +387,9 @@ int	 rtrequest1(int, struct rt_addrinfo *, struct rtentry **);
 struct ifaddr	*rt_get_ifa(struct rtentry *);
 void	rt_replace_ifa(struct rtentry *, struct ifaddr *);
 
+const struct sockaddr *rt_settag(struct rtentry *, const struct sockaddr *);
+struct sockaddr *rt_gettag(struct rtentry *);
+
 static inline void
 rt_destroy(struct rtentry *rt)
 {
@@ -390,7 +397,9 @@ rt_destroy(struct rtentry *rt)
 		sockaddr_free(rt->_rt_key);
 	if (rt->rt_gateway != NULL)
 		sockaddr_free(rt->rt_gateway);
-	rt->_rt_key = rt->rt_gateway = NULL;
+	if (rt_gettag(rt) != NULL)
+		sockaddr_free(rt_gettag(rt));
+	rt->_rt_key = rt->rt_gateway = rt->rt_tag = NULL;
 }
 
 static inline const struct sockaddr *

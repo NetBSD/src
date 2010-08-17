@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile.cmachflags,v 1.1 2009/01/25 22:25:08 abs Exp $
+#	$NetBSD: Makefile.cmachflags,v 1.1.8.1 2010/08/17 06:44:45 uebayasi Exp $
 
 # Set CMACHFLAGS best target the specific CPU combination, based on
-# -DM68020, -DM68030, -DM68040, and -DM68060
+# their "options" setting.
 
 # This should typically be included iff the config file has not already set
 # CMACHFLAGS, eg:
@@ -31,19 +31,24 @@
 # 030             -m68030
 # 020             -m68020
 
-.if !empty(IDENT:M-DM68060)
-.if empty(IDENT:M-DM68020) && empty(IDENT:M-DM68030) && empty(IDENT:M-DM68040)
-CMACHFLAGS=	-m68060
-.else
+HAVE_M68020!=	grep '\#define[ 	]*M68020' opt_m68k_arch.h 2>/dev/null || echo no
+HAVE_M68030!=	grep '\#define[ 	]*M68030' opt_m68k_arch.h 2>/dev/null || echo no
+HAVE_M68040!=	grep '\#define[ 	]*M68040' opt_m68k_arch.h 2>/dev/null || echo no
+HAVE_M68060!=	grep '\#define[ 	]*M68060' opt_m68k_arch.h 2>/dev/null || echo no
+
+.if ${HAVE_M68060} != "no"
+. if ${HAVE_M68020} != "no" || ${HAVE_M68030} != "no" || ${HAVE_M68040} != "no"
 CMACHFLAGS=	-m68020-60
-.endif
-.elif !empty(IDENT:M-DM68040)
-.if empty(IDENT:M-DM68020) && empty(IDENT:M-DM68030)
-CMACHFLAGS=	-m68040
-.else /* !-DM68060 */
+. else
+CMACHFLAGS=	-m68060
+. endif
+.elif ${HAVE_M68040} != "no"
+. if ${HAVE_M68020} != "no" || ${HAVE_M68030} != "no"
 CMACHFLAGS=	-m68020-40
-.endif
-.elif !empty(IDENT:M-DM68020)
+. else /* !-DM68060 */
+CMACHFLAGS=	-m68040
+. endif
+.elif ${HAVE_M68020} != "no"
 CMACHFLAGS=	-m68020
 .else
 CMACHFLAGS=	-m68030

@@ -1,4 +1,4 @@
-/* $NetBSD: siisatavar.h,v 1.5 2009/10/19 18:41:13 bouyer Exp $ */
+/* $NetBSD: siisatavar.h,v 1.5.2.1 2010/08/17 06:46:12 uebayasi Exp $ */
 
 /* from ahcisatavar.h */
 
@@ -91,8 +91,10 @@ struct siisata_softc {
 		bus_space_handle_t sch_sstatus;
 		bus_space_handle_t sch_serror;
 
-		/* command activation PRBs */
+		bus_dma_segment_t sch_prb_seg;
+		int sch_prb_nseg;
 		bus_dmamap_t sch_prbd;
+		/* command activation PRBs */
 		struct siisata_prb *sch_prb[SIISATA_MAX_SLOTS];
 		bus_addr_t sch_bus_prb[SIISATA_MAX_SLOTS];
 

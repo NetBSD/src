@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.h,v 1.35.2.1 2010/04/30 14:44:29 uebayasi Exp $	*/
+/*	$NetBSD: rumpuser.h,v 1.35.2.2 2010/08/17 06:47:58 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -36,12 +36,15 @@
 #include <stdint.h>
 #endif
 
+#define RUMPUSER_VERSION 1
+int rumpuser_getversion(void);
+
 struct msghdr;
 struct pollfd;
 struct sockaddr;
 
-typedef void (*kernel_lockfn)(int);
-typedef void (*kernel_unlockfn)(int, int *);
+typedef void (*kernel_lockfn)(int, void *);
+typedef void (*kernel_unlockfn)(int, int *, void *);
 
 int rumpuser_getfileinfo(const char *, uint64_t *, int *, int *);
 #define RUMPUSER_FT_OTHER 0
@@ -51,14 +54,11 @@ int rumpuser_getfileinfo(const char *, uint64_t *, int *, int *);
 #define RUMPUSER_FT_CHR 4
 int rumpuser_nanosleep(uint64_t *, uint64_t *, int *);
 
-#define rumpuser_malloc(a,b) rumpuser__malloc(a,b,__func__,__LINE__);
-#define rumpuser_realloc(a,b,c) rumpuser__realloc(a,b,c,__func__,__LINE__);
-
-void *rumpuser__malloc(size_t, int, const char *, int);
-void *rumpuser__realloc(void *, size_t, int, const char *, int);
+void *rumpuser_malloc(size_t, int);
+void *rumpuser_realloc(void *, size_t);
 void rumpuser_free(void *);
 
-void *rumpuser_anonmmap(size_t, int, int, int *);
+void *rumpuser_anonmmap(void *, size_t, int, int, int *);
 #define RUMPUSER_FILEMMAP_READ		0x01
 #define RUMPUSER_FILEMMAP_WRITE		0x02
 #define RUMPUSER_FILEMMAP_TRUNCATE	0x04
@@ -115,8 +115,10 @@ int rumpuser_getnhostcpu(void);
 void rumpuser_thrinit(kernel_lockfn, kernel_unlockfn, int);
 void rumpuser_biothread(void *);
 
-int  rumpuser_thread_create(void *(*f)(void *), void *, const char *);
+int  rumpuser_thread_create(void *(*f)(void *), void *, const char *, int,
+			    void **);
 void rumpuser_thread_exit(void);
+int  rumpuser_thread_join(void *);
 
 struct rumpuser_mtx;
 

@@ -1,4 +1,4 @@
-/* $NetBSD: vga_post.c,v 1.14 2009/11/07 07:27:49 cegger Exp $ */
+/* $NetBSD: vga_post.c,v 1.14.2.1 2010/08/17 06:45:34 uebayasi Exp $ */
 
 /*-
  * Copyright (c) 2007 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga_post.c,v 1.14 2009/11/07 07:27:49 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga_post.c,v 1.14.2.1 2010/08/17 06:45:34 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -160,7 +160,6 @@ vga_post_init(int bus, int device, int function)
 	if (err) {
 		uvm_km_free(kernel_map, sc->sys_image, 1024 * 1024,
 				UVM_KMF_VAONLY);
-		pmap_kremove(sc->sys_image, 1024 * 1024);
 		kmem_free(sc, sizeof(*sc));
 		return NULL;
 	}
@@ -170,8 +169,11 @@ vga_post_init(int bus, int device, int function)
 
 	pmap_kenter_pa(sys_bios_data, 0, VM_PROT_READ, 0);
 	pmap_update(pmap_kernel());
+
 	memcpy((void *)sc->bios_data, (void *)sys_bios_data, PAGE_SIZE);
+
 	pmap_kremove(sys_bios_data, PAGE_SIZE);
+	pmap_update(pmap_kernel());
 	uvm_km_free(kernel_map, sys_bios_data, PAGE_SIZE, UVM_KMF_VAONLY);
 
 	iter = 0;
@@ -237,10 +239,11 @@ vga_post_set_vbe(struct vga_post *sc, uint16_t vbemode)
 void
 vga_post_free(struct vga_post *sc)
 {
+
 	uvm_pglistfree(&sc->ram_backing);
 	pmap_kremove(sc->sys_image, 1024 * 1024);
-	uvm_km_free(kernel_map, sc->sys_image, 1024 * 1024, UVM_KMF_VAONLY);
 	pmap_update(pmap_kernel());
+	uvm_km_free(kernel_map, sc->sys_image, 1024 * 1024, UVM_KMF_VAONLY);
 	kmem_free(sc, sizeof(*sc));
 }
 

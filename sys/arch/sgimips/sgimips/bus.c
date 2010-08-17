@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.59 2009/12/17 03:59:31 macallan Exp $	*/
+/*	$NetBSD: bus.c,v 1.59.2.1 2010/08/17 06:45:11 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.59 2009/12/17 03:59:31 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.59.2.1 2010/08/17 06:45:11 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1116,6 +1116,7 @@ _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 	int curseg;
 	const uvm_flag_t kmflags =
 	    (flags & BUS_DMA_NOWAIT) != 0 ? UVM_KMF_NOWAIT : 0;
+	u_int pmapflags;
 
 	/*
 	 * If we're only mapping 1 segment, use KSEG0 or KSEG1, to avoid
@@ -1139,21 +1140,19 @@ _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 
 	*kvap = (void *)va;
 
+	pmapflags = VM_PROT_READ | VM_PROT_WRITE | PMAP_WIRED;
+	if (flags & BUS_DMA_COHERENT)
+		pmapflags |= PMAP_NOCACHE;
+
 	for (curseg = 0; curseg < nsegs; curseg++) {
 		for (addr = segs[curseg].ds_addr;
 		    addr < (segs[curseg].ds_addr + segs[curseg].ds_len);
 		    addr += PAGE_SIZE, va += PAGE_SIZE, size -= PAGE_SIZE) {
 			if (size == 0)
 				panic("_bus_dmamem_map: size botch");
-			pmap_enter(pmap_kernel(), va, 
-#if defined(_MIPS_PADDR_T_64BIT) || defined(_LP64)
-			    (flags & BUS_DMA_COHERENT) ?
-			      addr | PMAP_NOCACHE : addr,
-#else
-			    addr,
-#endif
+			pmap_enter(pmap_kernel(), va, addr,
 			    VM_PROT_READ | VM_PROT_WRITE,
-			    VM_PROT_READ | VM_PROT_WRITE | PMAP_WIRED);
+			    pmapflags);
 		}
 	}
 	pmap_update(pmap_kernel());

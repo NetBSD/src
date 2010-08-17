@@ -1,4 +1,4 @@
-# 	$NetBSD: Makefile.sparc64,v 1.68 2008/12/11 05:27:42 alc Exp $
+# 	$NetBSD: Makefile.sparc64,v 1.68.4.1 2010/08/17 06:45:16 uebayasi Exp $
 
 #=========================================================================
 #
@@ -85,11 +85,18 @@ AFLAGS+=	-x assembler-with-cpp -traditional-cpp
 ##
 ## (4) local objects, compile rules, and dependencies
 ##
-MD_OBJS=	locore.o
+MD_OBJS=	locore.o copy.o mp_subr.o
 MD_CFILES=
-MD_SFILES=	${SPARC64}/sparc64/locore.s
+MD_SFILES=	${SPARC64}/sparc64/locore.s ${SPARC64}/sparc64/copy.S \
+	 ${SPARC64}/sparc64/mp_subr.S
 
 locore.o: ${SPARC64}/sparc64/locore.s assym.h
+	${NORMAL_S}
+
+copy.o:	${SPARC64}/sparc64/copy.S assym.h
+	${NORMAL_S}
+
+mp_subr.o:	${SPARC64}/sparc64/mp_subr.S assym.h
 	${NORMAL_S}
 
 ##

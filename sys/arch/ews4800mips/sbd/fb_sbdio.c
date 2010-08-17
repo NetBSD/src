@@ -1,4 +1,4 @@
-/*	$NetBSD: fb_sbdio.c,v 1.8 2009/11/07 07:27:43 cegger Exp $	*/
+/*	$NetBSD: fb_sbdio.c,v 1.8.2.1 2010/08/17 06:44:21 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #define WIRED_FB_TLB
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fb_sbdio.c,v 1.8 2009/11/07 07:27:43 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fb_sbdio.c,v 1.8.2.1 2010/08/17 06:44:21 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -141,6 +141,7 @@ fb_sbdio_attach(device_t parent, device_t self, void *aux)
 	if (console) {
 		/* already initialized in fb_cnattach() */
 		sc->sc_ri = ri = &fb_console_ri;
+		ri->ri_flg &= ~RI_NO_AUTO;
 		sc->sc_ga = &fb_console_ga;
 		sc->sc_nscreens = 1;
 	} else {
@@ -202,6 +203,8 @@ fb_common_init(struct rasops_info *ri, struct ga *ga)
 	ri->ri_flg = RI_CENTER | RI_CLEAR;
 	if (!ga_active)
 		ri->ri_flg |= RI_FORCEMONO;
+	if (ri == &fb_console_ri)
+		ri->ri_flg |= RI_NO_AUTO;
 
 	ri->ri_depth = 8;
 	ri->ri_width = 1280;

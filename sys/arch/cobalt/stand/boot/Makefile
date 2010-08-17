@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.20 2010/01/19 15:28:51 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.20.2.1 2010/08/17 06:44:13 uebayasi Exp $
 
 NOMAN= # defined
 
@@ -107,7 +107,7 @@ ${PROG}: ${LDSCRIPT} ${OBJS} ${LIBS}
 
 CLEANFILES+=	${PROG}.map ${PROG}.elf ${PROG}.gz
 
-cleandir distclean: cleanlibdir
+cleandir distclean: .WAIT cleanlibdir
 
 cleanlibdir:
 	-rm -rf lib

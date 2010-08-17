@@ -409,7 +409,7 @@ extern unsigned armv5_dcache_index_max;
 extern unsigned armv5_dcache_index_inc;
 #endif
 
-#if defined(CPU_ARM11)
+#if defined(CPU_ARM11) || defined(CPU_CORTEX)
 void	arm11_setttb		(u_int);
 
 void	arm11_tlb_flushID_SE	(u_int);
@@ -444,6 +444,25 @@ void	armv6_idcache_wbinv_all	(void);
 void	armv6_idcache_wbinv_range (vaddr_t, vsize_t);
 #endif
 
+#if defined(CPU_CORTEX)
+void	armv7_setttb(u_int);
+
+void	armv7_icache_sync_range(vaddr_t, vsize_t);
+void	armv7_dcache_wb_range(vaddr_t, vsize_t);
+void	armv7_dcache_wbinv_range(vaddr_t, vsize_t);
+void	armv7_dcache_inv_range(vaddr_t, vsize_t);
+void	armv7_idcache_wbinv_range(vaddr_t, vsize_t);
+
+void 	armv7_dcache_wbinv_all (void);
+void	armv7_idcache_wbinv_all(void);
+void	armv7_icache_sync_all(void);
+void	armv7_cpu_sleep(int);
+void	armv7_context_switch(u_int);
+void	armv7_tlb_flushID_SE(u_int);
+void	armv7_setup		(char *string);
+#endif
+
+
 #if defined(CPU_ARM1136)
 void	arm1136_setttb			(u_int);
 void	arm1136_idcache_wbinv_all	(void);
@@ -461,7 +480,8 @@ void	arm1136_sleep_rev0		(int);	/* for errata 336501 */
     defined(CPU_SA110) || defined(CPU_SA1100) || defined(CPU_SA1110) || \
     defined(CPU_FA526) || \
     defined(CPU_XSCALE_80200) || defined(CPU_XSCALE_80321) || \
-    defined(__CPU_XSCALE_PXA2XX) || defined(CPU_XSCALE_IXP425)
+    defined(__CPU_XSCALE_PXA2XX) || defined(CPU_XSCALE_IXP425) || \
+    defined(CPU_CORTEX)
 
 void	armv4_tlb_flushID	(void);
 void	armv4_tlb_flushI	(void);
@@ -478,7 +498,8 @@ void	ixp12x0_setup		(char *);
 #endif
 
 #if defined(CPU_XSCALE_80200) || defined(CPU_XSCALE_80321) || \
-    defined(__CPU_XSCALE_PXA2XX) || defined(CPU_XSCALE_IXP425)
+    defined(__CPU_XSCALE_PXA2XX) || defined(CPU_XSCALE_IXP425) || \
+    defined(CPU_CORTEX)
 
 void	xscale_cpwait		(void);
 #define	cpu_cpwait()		cpufuncs.cf_cpwait()
@@ -518,7 +539,7 @@ void	xscale_cache_flushD_rng	(vaddr_t, vsize_t);
 void	xscale_context_switch	(u_int);
 
 void	xscale_setup		(char *);
-#endif	/* CPU_XSCALE_80200 || CPU_XSCALE_80321 || __CPU_XSCALE_PXA2XX || CPU_XSCALE_IXP425 */
+#endif	/* CPU_XSCALE_80200 || CPU_XSCALE_80321 || __CPU_XSCALE_PXA2XX || CPU_XSCALE_IXP425 || CPU_CORTEX */
 
 #define tlb_flush	cpu_tlb_flushID
 #define setttb		cpu_setttb

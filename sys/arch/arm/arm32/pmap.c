@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.211.2.14 2010/07/07 16:35:25 uebayasi Exp $	*/
+/*	$NetBSD: pmap.c,v 1.211.2.15 2010/08/17 06:44:02 uebayasi Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -212,7 +212,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.211.2.14 2010/07/07 16:35:25 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.211.2.15 2010/08/17 06:44:02 uebayasi Exp $");
 
 #ifdef PMAP_DEBUG
 
@@ -2221,7 +2221,7 @@ pmap_clearbit(struct vm_page *pg, u_int maskbits)
 					pv->pv_flags &= ~PVF_NC;
 				}
 			} else
-			if (opte & L2_S_PROT_W) {
+			if (l2pte_writable_p(opte)) {
 				/* 
 				 * Entry is writable/cacheable: check if pmap
 				 * is current if it is flush it, otherwise it
@@ -2239,7 +2239,7 @@ pmap_clearbit(struct vm_page *pg, u_int maskbits)
 #endif
 
 			/* make the pte read only */
-			npte &= ~L2_S_PROT_W;
+			npte = l2pte_set_readonly(npte);
 
 			if (maskbits & oflags & PVF_WRITE) {
 				/*
@@ -2843,7 +2843,7 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 			 * - The physical page has already been referenced
 			 *   so no need to re-do referenced emulation here.
 			 */
-			npte |= L2_S_PROTO;
+			npte |= l2pte_set_readonly(L2_S_PROTO);
 
 			nflags |= PVF_REF;
 
@@ -2856,7 +2856,7 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 				 * already been modified. Make it
 				 * writable from the outset.
 				 */
-				npte |= L2_S_PROT_W;
+				npte = l2pte_set_writable(npte);
 				nflags |= PVF_MOD;
 			}
 		} else {
@@ -2885,7 +2885,7 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 			 */
 			if (pm->pm_cstate.cs_cache_d &&
 			    (oflags & PVF_NC) == 0 &&
-			    (opte & L2_S_PROT_W) != 0 &&
+			    l2pte_writable_p(opte) &&
 			    (prot & VM_PROT_WRITE) == 0)
 				cpu_dcache_wb_range(va, PAGE_SIZE);
 #endif
@@ -2953,9 +2953,9 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 		 * These are always readable, and possibly writable, from
 		 * the get go as we don't need to track ref/mod status.
 		 */
-		npte |= L2_S_PROTO;
+		npte |= l2pte_set_readonly(L2_S_PROTO);
 		if (prot & VM_PROT_WRITE)
-			npte |= L2_S_PROT_W;
+			npte = l2pte_set_writable(npte);
 
 		/*
 		 * Make sure the vector table is mapped cacheable
@@ -3335,7 +3335,7 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 	struct l2_bucket *l2b;
 	pt_entry_t *ptep, opte;
 #ifdef PMAP_CACHE_VIVT
-	struct vm_page *pg = (prot & PMAP_KMPAGE) ? PHYS_TO_VM_PAGE(pa) : NULL;
+	struct vm_page *pg = (flags & PMAP_KMPAGE) ? PHYS_TO_VM_PAGE(pa) : NULL;
 #endif
 #ifdef PMAP_CACHE_VIPT
 	struct vm_page *pg = PHYS_TO_VM_PAGE(pa);
@@ -3365,7 +3365,7 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 		if (opg) {
 			KASSERT(opg != pg);
 			KASSERT((omd->pvh_attrs & PVF_KMPAGE) == 0);
-			KASSERT((prot & PMAP_KMPAGE) == 0);
+			KASSERT((flags & PMAP_KMPAGE) == 0);
 			simple_lock(&omd->pvh_slock);
 			pv = pmap_kremove_pg(opg, va);
 			simple_unlock(&omd->pvh_slock);
@@ -3385,7 +3385,7 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 	PTE_SYNC(ptep);
 
 	if (pg) {
-		if (prot & PMAP_KMPAGE) {
+		if (flags & PMAP_KMPAGE) {
 			simple_lock(&md->pvh_slock);
 			KASSERT(md->urw_mappings == 0);
 			KASSERT(md->uro_mappings == 0);
@@ -3624,7 +3624,7 @@ pmap_protect(pmap_t pm, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 
 		while (sva < next_bucket) {
 			pte = *ptep;
-			if (l2pte_valid(pte) != 0 && (pte & L2_S_PROT_W) != 0) {
+			if (l2pte_valid(pte) != 0 && l2pte_writable_p(pte)) {
 				struct vm_page *pg;
 				u_int f;
 
@@ -3639,7 +3639,7 @@ pmap_protect(pmap_t pm, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 #endif
 
 				pg = PHYS_TO_VM_PAGE(l2pte_pa(pte));
-				pte &= ~L2_S_PROT_W;
+				pte = l2pte_set_readonly(pte);
 				*ptep = pte;
 				PTE_SYNC(ptep);
 
@@ -3866,7 +3866,7 @@ pmap_fault_fixup(pmap_t pm, vaddr_t va, vm_prot_t ftype, int user)
 
 	pa = l2pte_pa(pte);
 
-	if ((ftype & VM_PROT_WRITE) && (pte & L2_S_PROT_W) == 0) {
+	if ((ftype & VM_PROT_WRITE) && !l2pte_writable_p(pte)) {
 		/*
 		 * This looks like a good candidate for "page modified"
 		 * emulation...
@@ -3923,7 +3923,7 @@ pmap_fault_fixup(pmap_t pm, vaddr_t va, vm_prot_t ftype, int user)
 		 * changing. We've already set the cacheable bits based on
 		 * the assumption that we can write to this page.
 		 */
-		*ptep = (pte & ~L2_TYPE_MASK) | L2_S_PROTO | L2_S_PROT_W;
+		*ptep = l2pte_set_writable((pte & ~L2_TYPE_MASK) | L2_S_PROTO);
 		PTE_SYNC(ptep);
 		rv = 1;
 	} else
@@ -3958,7 +3958,7 @@ pmap_fault_fixup(pmap_t pm, vaddr_t va, vm_prot_t ftype, int user)
 		    printf("pmap_fault_fixup: ref emul. pm %p, va 0x%08lx, pa 0x%08lx\n",
 		    pm, va, VM_PAGE_TO_PHYS(pg)));
 
-		*ptep = (pte & ~L2_TYPE_MASK) | L2_S_PROTO;
+		*ptep = l2pte_set_readonly((pte & ~L2_TYPE_MASK) | L2_S_PROTO);
 		PTE_SYNC(ptep);
 		rv = 1;
 	}
@@ -4386,7 +4386,7 @@ pmap_reference(pmap_t pm)
 	mutex_exit(&pm->pm_lock);
 }
 
-#if ARM_MMU_V6 > 0
+#if (ARM_MMU_V6 + ARM_MMU_V7) > 0
 
 static struct evcnt pmap_prefer_nochange_ev =
     EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "pmap prefer", "nochange");
@@ -4411,7 +4411,7 @@ pmap_prefer(vaddr_t hint, vaddr_t *vap, int td)
 		*vap = va + diff;
 	}
 }
-#endif /* ARM_MMU_V6 */
+#endif /* ARM_MMU_V6 | ARM_MMU_V7 */
 
 /*
  * pmap_zero_page()
@@ -4421,7 +4421,7 @@ pmap_prefer(vaddr_t hint, vaddr_t *vap, int td)
  * StrongARM accesses to non-cached pages are non-burst making writing
  * _any_ bulk data very slow.
  */
-#if (ARM_MMU_GENERIC + ARM_MMU_SA1 + ARM_MMU_V6) != 0
+#if (ARM_MMU_GENERIC + ARM_MMU_SA1 + ARM_MMU_V6 + ARM_MMU_V7) != 0
 void
 pmap_zero_page_generic(paddr_t phys)
 {
@@ -4605,7 +4605,7 @@ pmap_pageidlezero(paddr_t phys)
  * hook points. The same comment regarding cachability as in
  * pmap_zero_page also applies here.
  */
-#if (ARM_MMU_GENERIC + ARM_MMU_SA1 + ARM_MMU_V6) != 0
+#if (ARM_MMU_GENERIC + ARM_MMU_SA1 + ARM_MMU_V6 + ARM_MMU_V7) != 0
 void
 pmap_copy_page_generic(paddr_t src, paddr_t dst)
 {
@@ -4805,7 +4805,7 @@ pmap_grow_map(vaddr_t va, pt_entry_t cache_mode, paddr_t *pap)
 		 */
 		KASSERT(SLIST_EMPTY(&md->pvh_list));
 		pmap_kenter_pa(va, pa,
-		    VM_PROT_READ|VM_PROT_WRITE|PMAP_KMPAGE, 0);
+		    VM_PROT_READ|VM_PROT_WRITE, PMAP_KMPAGE);
 #endif
 	}
 
@@ -5493,7 +5493,7 @@ pmap_postinit(void)
 			paddr_t pa = VM_PAGE_TO_PHYS(m);
 
 			pmap_kenter_pa(va, pa,
-			    VM_PROT_READ|VM_PROT_WRITE|PMAP_KMPAGE, 0);
+			    VM_PROT_READ|VM_PROT_WRITE, PMAP_KMPAGE);
 
 			/*
 			 * Make sure the L1 descriptor table is mapped
@@ -5921,9 +5921,20 @@ pt_entry_t	pte_l2_s_cache_mode;
 pt_entry_t	pte_l2_s_cache_mode_pt;
 pt_entry_t	pte_l2_s_cache_mask;
 
+pt_entry_t	pte_l1_s_prot_u;
+pt_entry_t	pte_l1_s_prot_w;
+pt_entry_t	pte_l1_s_prot_ro;
+pt_entry_t	pte_l1_s_prot_mask;
+
 pt_entry_t	pte_l2_s_prot_u;
 pt_entry_t	pte_l2_s_prot_w;
+pt_entry_t	pte_l2_s_prot_ro;
 pt_entry_t	pte_l2_s_prot_mask;
+
+pt_entry_t	pte_l2_l_prot_u;
+pt_entry_t	pte_l2_l_prot_w;
+pt_entry_t	pte_l2_l_prot_ro;
+pt_entry_t	pte_l2_l_prot_mask;
 
 pt_entry_t	pte_l1_s_proto;
 pt_entry_t	pte_l1_c_proto;
@@ -5932,7 +5943,7 @@ pt_entry_t	pte_l2_s_proto;
 void		(*pmap_copy_page_func)(paddr_t, paddr_t);
 void		(*pmap_zero_page_func)(paddr_t);
 
-#if (ARM_MMU_GENERIC + ARM_MMU_SA1 + ARM_MMU_V6) != 0
+#if (ARM_MMU_GENERIC + ARM_MMU_SA1 + ARM_MMU_V6 + ARM_MMU_V7) != 0
 void
 pmap_pte_init_generic(void)
 {
@@ -5967,9 +5978,20 @@ pmap_pte_init_generic(void)
 #endif
 	}
 
+	pte_l1_s_prot_u = L1_S_PROT_U_generic;
+	pte_l1_s_prot_w = L1_S_PROT_W_generic;
+	pte_l1_s_prot_ro = L1_S_PROT_RO_generic;
+	pte_l1_s_prot_mask = L1_S_PROT_MASK_generic;
+
 	pte_l2_s_prot_u = L2_S_PROT_U_generic;
 	pte_l2_s_prot_w = L2_S_PROT_W_generic;
+	pte_l2_s_prot_ro = L2_S_PROT_RO_generic;
 	pte_l2_s_prot_mask = L2_S_PROT_MASK_generic;
+
+	pte_l2_l_prot_u = L2_L_PROT_U_generic;
+	pte_l2_l_prot_w = L2_L_PROT_W_generic;
+	pte_l2_l_prot_ro = L2_L_PROT_RO_generic;
+	pte_l2_l_prot_mask = L2_L_PROT_MASK_generic;
 
 	pte_l1_s_proto = L1_S_PROTO_generic;
 	pte_l1_c_proto = L1_C_PROTO_generic;
@@ -6165,9 +6187,20 @@ pmap_pte_init_xscale(void)
 	xscale_use_minidata = 1;
 #endif
 
+	pte_l1_s_prot_u = L1_S_PROT_U_xscale;
+	pte_l1_s_prot_w = L1_S_PROT_W_xscale;
+	pte_l1_s_prot_ro = L1_S_PROT_RO_xscale;
+	pte_l1_s_prot_mask = L1_S_PROT_MASK_xscale;
+
 	pte_l2_s_prot_u = L2_S_PROT_U_xscale;
 	pte_l2_s_prot_w = L2_S_PROT_W_xscale;
+	pte_l2_s_prot_ro = L2_S_PROT_RO_xscale;
 	pte_l2_s_prot_mask = L2_S_PROT_MASK_xscale;
+
+	pte_l2_l_prot_u = L2_L_PROT_U_xscale;
+	pte_l2_l_prot_w = L2_L_PROT_W_xscale;
+	pte_l2_l_prot_ro = L2_L_PROT_RO_xscale;
+	pte_l2_l_prot_mask = L2_L_PROT_MASK_xscale;
 
 	pte_l1_s_proto = L1_S_PROTO_xscale;
 	pte_l1_c_proto = L1_C_PROTO_xscale;
@@ -6289,6 +6322,43 @@ pmap_uarea(vaddr_t va)
 	cpu_cpwait();
 }
 #endif /* ARM_MMU_XSCALE == 1 */
+
+#if ARM_MMU_V7 == 1
+void
+pmap_pte_init_armv7(void)
+{
+	/*
+	 * The ARMv7-A MMU is mostly compatible with generic. If the
+	 * AP field is zero, that now means "no access" rather than
+	 * read-only. The prototypes are a little different because of
+	 * the XN bit.
+	 */
+	pmap_pte_init_generic();
+
+	pte_l1_s_cache_mask = L1_S_CACHE_MASK_armv7;
+	pte_l2_l_cache_mask = L2_L_CACHE_MASK_armv7;
+	pte_l2_s_cache_mask = L2_S_CACHE_MASK_armv7;
+
+	pte_l1_s_prot_u = L1_S_PROT_U_armv7;
+	pte_l1_s_prot_w = L1_S_PROT_W_armv7;
+	pte_l1_s_prot_ro = L1_S_PROT_RO_armv7;
+	pte_l1_s_prot_mask = L1_S_PROT_MASK_armv7;
+
+	pte_l2_s_prot_u = L2_S_PROT_U_armv7;
+	pte_l2_s_prot_w = L2_S_PROT_W_armv7;
+	pte_l2_s_prot_ro = L2_S_PROT_RO_armv7;
+	pte_l2_s_prot_mask = L2_S_PROT_MASK_armv7;
+
+	pte_l2_l_prot_u = L2_L_PROT_U_armv7;
+	pte_l2_l_prot_w = L2_L_PROT_W_armv7;
+	pte_l2_l_prot_ro = L2_L_PROT_RO_armv7;
+	pte_l2_l_prot_mask = L2_L_PROT_MASK_armv7;
+
+	pte_l1_s_proto = L1_S_PROTO_armv7;
+	pte_l1_c_proto = L1_C_PROTO_armv7;
+	pte_l2_s_proto = L2_S_PROTO_armv7;
+}
+#endif /* ARM_MMU_V7 */
 
 /*
  * return the PA of the current L1 table, for use when handling a crash dump

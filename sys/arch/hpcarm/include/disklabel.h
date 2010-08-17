@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.7 2009/11/23 13:40:09 pooka Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.7.2.1 2010/08/17 06:44:27 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -33,10 +33,24 @@
 #ifndef _MACHINE_DISKLABEL_H_
 #define _MACHINE_DISKLABEL_H_
 
-#define	LABELSECTOR	1		/* sector containing label */
-#define	LABELOFFSET	0		/* offset of label in sector */
-#define	MAXPARTITIONS	8		/* number of partitions */
-#define	RAW_PART	3		/* raw partition: XX?d (XXX) */
+#define	LABELSECTOR		1	/* sector containing label */
+#define	LABELOFFSET		0	/* offset of label in sector */
+#define	MAXPARTITIONS		16	/* number of partitions */
+#define	OLDMAXPARTITIONS 	8	/* number of partitions before 1.6 */
+#define	RAW_PART		3	/* raw partition: XX?d (XXX) */
+
+/*
+ * We use the highest bit of the minor number for the partition number.
+ * This maintains backward compatibility with device nodes created before
+ * MAXPARTITIONS was increased.
+ */
+#define	__HPCARM_MAXDISKS	((1 << 20) / MAXPARTITIONS)
+#define	DISKUNIT(dev)	((minor(dev) / OLDMAXPARTITIONS) % __HPCARM_MAXDISKS)
+#define	DISKPART(dev)	((minor(dev) % OLDMAXPARTITIONS) + \
+    ((minor(dev) / (__HPCARM_MAXDISKS * OLDMAXPARTITIONS)) * OLDMAXPARTITIONS))
+#define	DISKMINOR(unit, part) \
+    (((unit) * OLDMAXPARTITIONS) + ((part) % OLDMAXPARTITIONS) + \
+     ((part) / OLDMAXPARTITIONS) * (__HPCARM_MAXDISKS * OLDMAXPARTITIONS))
 
 /* Pull in MBR partition definitions. */
 #if HAVE_NBTOOL_CONFIG_H

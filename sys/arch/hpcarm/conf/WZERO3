@@ -1,4 +1,4 @@
-#	$NetBSD: WZERO3,v 1.2.2.2 2010/04/30 14:39:25 uebayasi Exp $
+#	$NetBSD: WZERO3,v 1.2.2.3 2010/08/17 06:44:26 uebayasi Exp $
 #
 #	WZERO3 -- Sharp Windows Mobile 5 based PDA
 #
@@ -7,14 +7,15 @@ include	"arch/hpcarm/conf/std.pxa2x0"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.2.2.2 $"
+#ident 		"GENERIC-$Revision: 1.2.2.3 $"
 
 # estimated number of users
 maxusers	32
 
 # Standard system options
 
-options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
+#options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
+				# (default timezone is passed from hpcboot)
 #options 	NTP		# NTP phase/frequency locked loop
 
 # CPU options
@@ -117,7 +118,9 @@ options 	NFS_BOOT_DHCP
 options 	WSEMUL_VT100
 # allocate a number of virtual screens at autoconfiguration time
 #options 	WSDISPLAY_DEFAULTSCREENS=2
-
+# The X server requires theses two options
+options 	WSDISPLAY_COMPAT_USL
+options 	WSDISPLAY_COMPAT_RAWKBD
 # customization of console and kernel output - see dev/wscons/wsdisplayvar.h
 #options 	WSDISPLAY_CUSTOM_OUTPUT	# color customization from wsconsctl(8)
 #options 	WS_DEFAULT_FG=WSCOL_WHITE
@@ -129,6 +132,8 @@ options 	WS_KERNEL_FG=WSCOL_GREEN
 #options 	WS_KERNEL_COLATTR=""
 #options 	WS_KERNEL_MONOATTR=""
 
+options 	FONT_VT220L8x16
+
 # Development and Debugging options
 
 #options 	VERBOSE_INIT_ARM
@@ -136,7 +141,7 @@ options 	WS_KERNEL_FG=WSCOL_GREEN
 options 	DIAGNOSTIC	# internal consistency checks
 #options 	DEBUG		# expensive debugging checks/support
 #options 	PMAP_DEBUG	# Enable pmap_debug_level code
-#options 	DDB		# in-kernel debugger
+options 	DDB		# in-kernel debugger
 #options 	DDB_HISTORY_SIZE=512	# Enable history editing in DDB
 #makeoptions	DEBUG="-g"	# compile full symbol table
 
@@ -171,12 +176,24 @@ saost*	at pxaip? addr 0x40a00000 size 0x20
 
 # Physical console
 lcd* at pxaip?
+options 	PXA2X0_LCD_WRITETHROUGH
 wsdisplay* at lcd? console ?
 
-# Keyboard
+# for touchpad, keypad
+wzero3ssp0 at pxaip?
+
+# touchpad
+wzero3tp0 at pxaip?
+wsmouse* at wzero3tp? mux 0
+
+# keyboard
 wzero3kbd0 at pxaip?
 hpckbd*	at wzero3kbd?
 wskbd0 at hpckbd? mux 1
+
+# keypad
+wzero3keypad0 at pxaip?
+wskbd1 at wzero3keypad? mux 1
 
 # integrated MMC/SD contoller
 pxamci0 at pxaip? addr 0x41100000 size 0x48
@@ -211,6 +228,41 @@ uhid* at uhidev? reportid ?
 # USB Mass Storage
 umass* at uhub? port ? configuration ? interface ?
 wd* at umass?
+
+# USB audio
+uaudio* at uhub? port ? configuration ?
+audio*	at audiobus?
+
+# USB Ethernet adapters
+aue*	at uhub? port ?		# ADMtek AN986 Pegasus based adapters
+axe*	at uhub? port ?		# ASIX AX88172 based adapters
+cdce*	at uhub? port ?		# CDC, Ethernet Networking Control Model
+cue*	at uhub? port ?		# CATC USB-EL1201A based adapters
+kue*	at uhub? port ?		# Kawasaki LSI KL5KUSB101B based adapters
+udav*	at uhub? port ?	 	# Davicom DM9601 based adapters
+url*	at uhub? port ?		# Realtek RTL8150L based adapters
+
+acphy*	at mii? phy ?		# Altima AC101 and AMD Am79c874 PHYs
+rlphy*	at mii? phy ?		# Realtek 8139/8201L PHYs
+ukphy*  at mii? phy ?		# generic unknown PHYs
+urlphy* at mii? phy ?		# Realtek RTL8150L internal PHYs
+
+# USB 802.11 adapters
+atu*	at uhub? port ?		# Atmel AT76C50XX based adapters
+#ral*	at uhub? port ?		# Ralink Technology RT25x0 802.11a/b/g
+rum*	at uhub? port ?		# Ralink Technology RT2501/RT2601 802.11a/b/g
+upgt*	at uhub? port ?		# Intersil PrismGT
+zyd*	at uhub? port ?		# Zydas ZD1211
+
+# ATAPI bus support
+atapibus* at atapi?
+
+# ATAPI devices
+# flags have the same meaning as for IDE drives.
+cd*	at atapibus? drive ? flags 0x0000	# ATAPI CD-ROM drives
+sd*	at atapibus? drive ? flags 0x0000	# ATAPI disk drives
+#st*	at atapibus? drive ? flags 0x0000	# ATAPI tape drives
+uk*	at atapibus? drive ? flags 0x0000	# ATAPI unknown
 
 # SCSI bus support
 scsibus* at scsi?

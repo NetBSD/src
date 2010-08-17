@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.149 2009/12/12 13:10:36 phx Exp $	*/
+/*	$NetBSD: locore.s,v 1.149.2.1 2010/08/17 06:43:54 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990 The Regents of the University of California.
@@ -94,8 +94,8 @@
 #include "opt_fpsp.h"
 #include "opt_kgdb.h"
 #include "opt_lockdebug.h"
-
 #include "opt_lev6_defer.h"
+#include "opt_m68k_arch.h"
 
 #include "assym.h"
 #include <machine/asm.h>

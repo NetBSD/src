@@ -1,4 +1,4 @@
-/*	$NetBSD: gtidmacreg.h,v 1.1.2.2 2010/04/30 14:43:27 uebayasi Exp $	*/
+/*	$NetBSD: gtidmacreg.h,v 1.1.2.3 2010/08/17 06:46:16 uebayasi Exp $	*/
 /*
  * Copyright (c) 2008, 2009 KIYOHARA Takashi
  * All rights reserved.
@@ -226,6 +226,7 @@
 
 
 struct gtidmac_desc {
+#if BYTE_ORDER == LITTLE_ENDIAN
 	union {
 		struct {
 			uint16_t rbc;	/* Remind BC */
@@ -238,6 +239,20 @@ struct gtidmac_desc {
 	uint32_t srcaddr;	/* Source Address */
 	uint32_t dstaddr;	/* Destination Address */
 	uint32_t nextdp;	/* Next Descriptor Pointer */
+#else
+	uint32_t srcaddr;	/* Source Address */
+	union {
+		struct {
+			uint16_t rbc;	/* Remind BC */
+			uint16_t bcnt;
+		} mode64k;
+		struct {
+			uint32_t bcnt;
+		} mode16m;
+	} bc;			/* Byte Count */
+	uint32_t nextdp;	/* Next Descriptor Pointer */
+	uint32_t dstaddr;	/* Destination Address */
+#endif
 } __packed;
 
 #define GTIDMAC_DESC_BYTECOUNT_MASK	0x00ffffff

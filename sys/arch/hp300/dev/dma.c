@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.c,v 1.42 2008/06/22 16:29:36 tsutsui Exp $	*/
+/*	$NetBSD: dma.c,v 1.42.16.1 2010/08/17 06:44:22 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -64,8 +64,10 @@
  * DMA driver
  */
 
+#include "opt_m68k_arch.h"
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dma.c,v 1.42 2008/06/22 16:29:36 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dma.c,v 1.42.16.1 2010/08/17 06:44:22 uebayasi Exp $");
 
 #include <machine/hp300spu.h>	/* XXX param.h includes cpu.h */
 

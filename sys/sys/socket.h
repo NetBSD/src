@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.h,v 1.97 2009/12/05 20:11:18 pooka Exp $	*/
+/*	$NetBSD: socket.h,v 1.97.2.1 2010/08/17 06:48:09 uebayasi Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -210,8 +210,8 @@ struct	accept_filter_arg {
 #endif
 #define AF_BLUETOOTH	31		/* Bluetooth: HCI, SCO, L2CAP, RFCOMM */
 #define	AF_IEEE80211	32		/* IEEE80211 */
-
-#define	AF_MAX		33
+#define	AF_MPLS		33		/* MultiProtocol Label Switching */
+#define	AF_MAX		34
 
 /*
  * Structure used by kernel to store most
@@ -300,6 +300,7 @@ struct sockaddr_storage {
 #define PF_KEY 		pseudo_AF_KEY	/* like PF_ROUTE, only for key mgmt */
 #endif
 #define PF_BLUETOOTH	AF_BLUETOOTH
+#define	PF_MPLS		AF_MPLS
 
 #define	PF_MAX		AF_MAX
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_rascons.c,v 1.3.2.1 2010/04/30 14:39:44 uebayasi Exp $	*/
+/*	$NetBSD: ofw_rascons.c,v 1.3.2.2 2010/08/17 06:45:03 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_rascons.c,v 1.3.2.1 2010/04/30 14:39:44 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_rascons.c,v 1.3.2.2 2010/08/17 06:45:03 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -223,7 +223,7 @@ rascons_init_rasops(int node, struct rasops_info *ri)
 	ri->ri_depth = depth;
 	ri->ri_stride = linebytes;
 	ri->ri_bits = (char *)fbaddr;
-	ri->ri_flg = RI_CENTER | RI_FULLCLEAR;
+	ri->ri_flg = RI_CENTER | RI_FULLCLEAR | RI_NO_AUTO;
 
 	/* mimic firmware output if we can find the ROM font */
 	if (romfont_loaded) {

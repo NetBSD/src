@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365_isasubr.c,v 1.45.2.1 2010/04/30 14:43:26 uebayasi Exp $	*/
+/*	$NetBSD: i82365_isasubr.c,v 1.45.2.2 2010/08/17 06:46:15 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2000 Christian E. Hopps.  All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82365_isasubr.c,v 1.45.2.1 2010/04/30 14:43:26 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82365_isasubr.c,v 1.45.2.2 2010/08/17 06:46:15 uebayasi Exp $");
 
 #define	PCICISADEBUG
 
@@ -430,7 +430,7 @@ void pcic_isa_bus_width_probe(struct pcic_softc *sc, bus_space_tag_t iot,
 
 	DPRINTF(("%s: bus_space_alloc range 0x%04lx-0x%04lx (probed)\n",
 	    device_xname(&sc->dev), (long) sc->iobase,
-	    (long) sc->iobase + sc->iosize));
+	    (long)(sc->iobase + sc->iosize)));
 
 	if (pcic_isa_alloc_iobase && pcic_isa_alloc_iosize) {
 		sc->iobase = pcic_isa_alloc_iobase;
@@ -438,7 +438,7 @@ void pcic_isa_bus_width_probe(struct pcic_softc *sc, bus_space_tag_t iot,
 
 		DPRINTF(("%s: bus_space_alloc range 0x%04lx-0x%04lx "
 		    "(config override)\n", device_xname(&sc->dev),
-		    (long) sc->iobase, (long) sc->iobase + sc->iosize));
+		    (long) sc->iobase, (long)(sc->iobase + sc->iosize)));
 	}
 }
 

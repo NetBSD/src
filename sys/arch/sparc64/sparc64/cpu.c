@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.88.2.2 2010/05/27 14:47:30 uebayasi Exp $ */
+/*	$NetBSD: cpu.c,v 1.88.2.3 2010/08/17 06:45:19 uebayasi Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.88.2.2 2010/05/27 14:47:30 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.88.2.3 2010/08/17 06:45:19 uebayasi Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -105,6 +105,8 @@ static const char *ipi_evcnt_names[IPI_EVCNT_NUM] = IPI_EVCNT_NAMES;
 #endif
 
 static void cpu_reset_fpustate(void);
+
+volatile int sync_tick = 0;
 
 /* The CPU configuration driver. */
 void cpu_attach(struct device *, struct device *, void *);
@@ -281,6 +283,7 @@ cpu_attach(struct device *parent, struct device *dev, void *aux)
 #endif
 	evcnt_attach_dynamic(&ci->ci_tick_evcnt, EVCNT_TYPE_INTR, NULL,
 			     device_xname(dev), "timer");
+	mutex_init(&ci->ci_ctx_lock, MUTEX_SPIN, IPL_VM);
 
 	clk = prom_getpropint(node, "clock-frequency", 0);
 	if (clk == 0) {
@@ -411,6 +414,8 @@ cpu_boot_secondary_processors(void)
 	int i, pstate;
 	struct cpu_info *ci;
 
+	sync_tick = 0;
+
 	sparc64_ipi_init();
 
 	if (boothowto & RB_MD1) {
@@ -440,6 +445,13 @@ cpu_boot_secondary_processors(void)
 				break;
 			delay(10000);
 		}
+
+		/* synchronize %tick ( to some degree at least ) */
+		delay(1000);
+		sync_tick = 1;
+		membar_sync();
+		settick(0);
+
 		setpstate(pstate);
 
 		if (!CPUSET_HAS(cpus_active, ci->ci_index))
@@ -461,7 +473,13 @@ cpu_hatch(void)
 	cpu_reset_fpustate();
 	curlwp = curcpu()->ci_data.cpu_idlelwp;
 	membar_sync();
+
+	/* wait for the boot CPU to flip the switch */
+	while (sync_tick == 0) {
+		/* we do nothing here */
+	}
 	settick(0);
+
 	tickintr_establish(PIL_CLOCK, tickintr);
 	spl0();
 }

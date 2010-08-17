@@ -1,7 +1,9 @@
-# $NetBSD: acpidevs,v 1.14.2.1 2010/04/30 14:43:06 uebayasi Exp $
+# $NetBSD: acpidevs,v 1.14.2.2 2010/08/17 06:46:01 uebayasi Exp $
 #
-# Extracted from:
+# Originally extracted from:
+
 # http://download.microsoft.com/download/1/6/1/161ba512-40e2-4cc9-843a-923143f3456c/devids.txt
+#
 # XXX we should rig it up to make importation simpler, though we
 # probably need to add IDs that are not in that file, too. The list is
 # far from comprehensive :(
@@ -59,8 +61,6 @@ PNP0401	ECP printer port
 PNP0500	Standard PC COM port
 PNP0501	16550A-compatible COM port
 PNP0502	Multiport serial device (non-intelligent 16550)
-PNP0510	Generic IRDA-compatible device
-PNP0511	Generic IRDA-compatible device
 # --Disk Controllers--
 PNP0600	Generic ESDI/IDE/ATA compatible hard disk controller
 PNP0601	Plus Hardcard II
@@ -115,29 +115,32 @@ PNP0A08	PCI Express/PCI-X Mode-2 Host Bridge
 #-- Real Time Clock, BIOS, System board devices--
 PNP0800	AT-style speaker sound
 PNP0B00	AT Real-Time Clock
-PNP0C00	Plug and Play BIOS (only created by the root enumerator)
+PNP0B01 AT Real-Time Clock (PIIX4)
+PNP0B02 AT Real-Time Clock (Dallas Semiconductor)
+PNP0C00	Plug and Play BIOS
 PNP0C01	System Board
-PNP0C02	Plug and Play motherboard register resources
-PNP0C03	Plug and Play BIOS Event Notification Interrupt
+PNP0C02	Motherboard Register Resources
+PNP0C03	BIOS Event Notification Interrupt
 PNP0C04	Math Coprocessor
-PNP0C05	APM BIOS (Version independent)
-PNP0C06	Reserved for identification of early Plug and Play BIOS implementation
-PNP0C07	Reserved for identification of early Plug and Play BIOS implementation
-PNP0C08	ACPI system board hardware
+PNP0C05	APM BIOS
+PNP0C06	Reserved
+PNP0C07	Reserved
+PNP0C08	ACPI System Board Hardware
 PNP0C09	ACPI Embedded Controller
 PNP0C0A	ACPI Control Method Battery
 PNP0C0B	ACPI Fan
-PNP0C0C	ACPI power button device
-PNP0C0D	ACPI lid device
-PNP0C0E	ACPI sleep button device
-PNP0C0F	PCI interrupt link device
-PNP0C10	ACPI system indicator device
-PNP0C11	ACPI thermal zone
+PNP0C0C	ACPI Power Button Device
+PNP0C0D	ACPI Lid Device
+PNP0C0E	ACPI Sleep Button Device
+PNP0C0F	PCI Interrupt Link Device
+PNP0C10	ACPI System Indicator Device
+PNP0C11	ACPI Thermal Zone
 PNP0C12	Device Bay Controller
-PNP0C13	Plug and Play BIOS (used when ACPI mode cannot be used)
-PNP0C14	WMI mapper device
-PNP0C15	ACPI docking station
-PNP0C80	Memory Device
+PNP0C13	Plug and Play BIOS (for non-ACPI)
+PNP0C14	WMI Mapper Device
+PNP0C15	ACPI Docking Station
+PNP0C33	ACPI Hardware Error Device
+PNP0C80	Hotplug Memory Device
 #--PCMCIA Controller Chipsets--
 PNP0E00	Intel 82365-Compatible PCMCIA Controller
 PNP0E01	Cirrus Logic CL-PD6720 PCMCIA Controller
@@ -294,7 +297,6 @@ PNP828A	Intel '595 based Ethernet
 PNP828B	TI2000-style Token Ring
 PNP828C	AMD PCNet Family cards
 PNP828D	AMD PCNet32 (VL version)
-PNP8294	IrDA Infrared NDIS driver (Microsoft-supplied)
 PNP82bd	IBM PCMCIA-NIC
 PNP82C2	Xircom CE10
 PNP82C3	Xircom CEM2
@@ -306,10 +308,16 @@ PNP8327	IBM Token Ring (All Types)
 PNP8385	Remote Network Access Driver
 PNP8387	RNA Point-to-point Protocol Driver
 PNP8388	Reserved for Microsoft Networking components
-PNP8389	Peer IrLAN infrared driver (Microsoft-supplied)
 PNP8390	Generic network adapter
+# ***** Infrared Devices **********
+PNP0510	Generic IrDA-compatible device
+PNP0511	Generic IrDA-compatible device
+PNP8294	IrDA Infrared NDIS driver (Microsoft-supplied)
+PNP8389	Peer IrLAN infrared driver (Microsoft-supplied)
+HWPC224	NSC SuperIO chip (inc. IrDA device)
+IBM0071	NSC SuperIO chip (inc. IrDA device)
 ITE8708	ITE Tech IrDA Infrared device
-NSC6001	NSC IrDA Fast Infrared Port
+NSC6001	NSC SuperIO chip (inc. IrDA device)
 # ***** SCSI, Proprietary CD Adapters - PNPAxxx **********
 PNPA002	Future Domain 16-700 compatible controller
 PNPA003	Panasonic proprietary CD-ROM adapter (SBPro/SB16)
@@ -336,17 +344,20 @@ PNPB006	MPU401 compatible
 PNPB007	Microsoft Windows Sound System-compatible sound device
 PNPB008	Compaq Business Audio
 PNPB009	Plug and Play Microsoft Windows Sound System Device
-PNPB00A	MediaVision Pro Audio Spectrum (Trantor SCSI enabled, Thunder Chip Disabled)
+PNPB00A	MediaVision Pro Audio Spectrum (SCSI)
 PNPB00B	MediaVision Pro Audio 3D
 PNPB00C	MusicQuest MQX-32M
-PNPB00D	MediaVision Pro Audio Spectrum Basic (No Trantor SCSI, Thunder Chip Enabled)
-PNPB00E	MediaVision Pro Audio Spectrum (Trantor SCSI enabled, Thunder Chip Enabled)
+PNPB00D	MediaVision Pro Audio Spectrum Basic (Thunder Chip)
+PNPB00E	MediaVision Pro Audio Spectrum (SCSI, Thunder Chip)
 PNPB00F	MediaVision Jazz-16 chipset (OEM Versions)
 PNPB010	Auravision VxP500 chipset - Orchid Videola
 PNPB018	MediaVision Pro Audio Spectrum 8-bit
-PNPB019	MediaVision Pro Audio Spectrum Basic (no Trantor SCSI, Thunder chip Disabled)
+PNPB019	MediaVision Pro Audio Spectrum Basic
 PNPB020	Yamaha OPL3-compatible FM synthesizer device
 PNPB02F	Joystick/Game port
+CSC0000	Crystal PnP Audio (codec)
+CSC0003	Crystal PnP Audio (MPU-401)
+CSC0010	Crystal PnP Audio (registers)
 # ***** Modems - PNPCxxx-Dxxx****************************
 PNPC000	Compaq 14400 Modem (TBD)
 PNPC001	Compaq 2400/9600 Modem (TBD)
@@ -370,4 +381,5 @@ ACPI000C	Processor Aggregator
 ACPI000D	Power Meter
 ACPI000E	Wake Alarm Device
 # **** Others ****
+HPQ0004	Hewlett-Packard 3D DriveGuard accelerometer
 INT0800	Intel Firmware Hub Device

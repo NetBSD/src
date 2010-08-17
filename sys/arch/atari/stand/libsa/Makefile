@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.30 2009/03/31 11:42:07 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.30.2.1 2010/08/17 06:44:10 uebayasi Exp $
 
 # Logically src/sys
 S!=	cd ${.CURDIR}/../../../..; pwd
@@ -24,7 +24,7 @@ LIBS=	${LIBSA} ${LIBKERN}
 
 realall: ${LIBS}
 
-cleandir distclean: cleanlibdir
+cleandir distclean: .WAIT cleanlibdir
 
 cleanlibdir:
 	-rm -rf lib

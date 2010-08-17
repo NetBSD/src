@@ -1,4 +1,4 @@
-/*	$NetBSD: copypage.s,v 1.13 2008/04/28 20:23:27 martin Exp $	*/
+/*	$NetBSD: copypage.s,v 1.13.20.1 2010/08/17 06:44:47 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -33,6 +33,8 @@
 /*
  * Optimized functions for copying/clearing a whole page.
  */
+
+#include "opt_m68k_arch.h"
 
 #include <machine/asm.h>
 #include "assym.h"

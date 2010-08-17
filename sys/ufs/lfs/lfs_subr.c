@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_subr.c,v 1.73.20.1 2010/04/30 14:44:36 uebayasi Exp $	*/
+/*	$NetBSD: lfs_subr.c,v 1.73.20.2 2010/08/17 06:48:12 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.73.20.1 2010/04/30 14:44:36 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.73.20.2 2010/08/17 06:48:12 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -361,8 +361,6 @@ lfs_unmark_dirop(struct lfs *fs)
 	for (ip = TAILQ_FIRST(&fs->lfs_dchainhd); ip != NULL; ip = nip) {
 		nip = TAILQ_NEXT(ip, i_lfs_dchain);
 		vp = ITOV(ip);
-		if (VOP_ISLOCKED(vp) == LK_EXCLOTHER)
-			continue;
 		if ((VTOI(vp)->i_flag & (IN_ADIROP | IN_ALLMOD)) == 0) {
 			--lfs_dirvcount;
 			--fs->lfs_dirvcount;

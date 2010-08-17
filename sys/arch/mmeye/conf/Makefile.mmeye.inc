@@ -1,5 +1,3 @@
-#	$NetBSD: Makefile.mmeye.inc,v 1.7 2008/02/02 17:54:17 uwe Exp $
+#	$NetBSD: Makefile.mmeye.inc,v 1.7.30.1 2010/08/17 06:44:53 uebayasi Exp $
 
-.if ${OBJECT_FMT} == "ELF"
 LINKFORMAT=	-N
-.endif

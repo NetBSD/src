@@ -1,4 +1,4 @@
-/* 	$NetBSD: intr.h,v 1.12.20.1 2010/04/30 14:39:25 uebayasi Exp $	*/
+/* 	$NetBSD: intr.h,v 1.12.20.2 2010/08/17 06:44:27 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -38,7 +38,6 @@
 
 #ifdef _KERNEL
 
-#ifdef __HAVE_FAST_SOFTINTS
 #define IPL_NONE	0
 #define IPL_SOFTCLOCK	1
 #define IPL_SOFTBIO	2
@@ -49,18 +48,6 @@
 #define IPL_HIGH	7
 
 #define NIPL		8
-#else
-#define IPL_NONE	0
-#define IPL_SOFTCLOCK	IPL_NONE
-#define IPL_SOFTBIO	IPL_NONE
-#define IPL_SOFTNET	IPL_NONE
-#define IPL_SOFTSERIAL	IPL_NONE
-#define IPL_VM		1
-#define IPL_SCHED	2
-#define IPL_HIGH	3
-
-#define NIPL		4
-#endif
 
 #define	IST_UNUSABLE	-1	/* interrupt cannot be used */
 #define	IST_NONE	0	/* none (dummy) */

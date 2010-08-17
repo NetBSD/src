@@ -8,7 +8,7 @@ echo Generating rumpdefs.h
 rm -f rumpdefs.h
 exec > rumpdefs.h
 
-printf '/*	$NetBSD: makerumpdefs.sh,v 1.5 2009/11/03 18:22:44 pooka Exp $	*/\n\n'
+printf '/*	$NetBSD: makerumpdefs.sh,v 1.5.2.1 2010/08/17 06:47:57 uebayasi Exp $	*/\n\n'
 printf '/*\n *\tAUTOMATICALLY GENERATED.  DO NOT EDIT.\n */\n\n'
 printf '#ifndef _RUMP_RUMPDEFS_H_\n'
 printf '#define _RUMP_RUMPDEFS_H_\n\n'
@@ -27,15 +27,13 @@ fromvers ../../../sys/vnode.h
 printf '#ifndef __VTYPE_DEFINED\n#define __VTYPE_DEFINED\n'
 sed -n '/enum vtype.*{/p' < ../../../sys/vnode.h
 printf '#endif /* __VTYPE_DEFINED */\n'
+sed -n '/#define.*LK_[A-Z]/s/LK_/RUMP_LK_/gp' <../../../sys/vnode.h	\
+    | sed 's,/\*.*$,,'
 
 fromvers ../../../sys/errno.h
 printf '#ifndef EJUSTRETURN\n'
 sed -n '/EJUSTRETURN/p'	< ../../../sys/errno.h
 printf '#endif /* EJUSTRETURN */\n'
-
-fromvers ../../../sys/lock.h
-sed -n '/#define.*LK_[A-Z]/s/LK_/RUMP_LK_/gp' <../../../sys/lock.h	\
-    | sed 's,/\*.*$,,'
 
 fromvers ../../../sys/reboot.h
 sed -n '/#define.*RB_[A-Z]/s/RB_/RUMP_RB_/gp' <../../../sys/reboot.h	\

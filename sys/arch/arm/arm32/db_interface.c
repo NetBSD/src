@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.47 2009/03/14 15:36:01 dsl Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.47.2.1 2010/08/17 06:44:01 uebayasi Exp $	*/
 
 /* 
  * Copyright (c) 1996 Scott K. Stevens
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.47 2009/03/14 15:36:01 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.47.2.1 2010/08/17 06:44:01 uebayasi Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -248,7 +248,7 @@ db_write_text(vaddr_t addr, size_t size, const char *data)
 			pgva = (vaddr_t)dst & L1_S_FRAME;
 			limit = L1_S_SIZE - ((vaddr_t)dst & L1_S_OFFSET);
 
-			tmppde = oldpde | L1_S_PROT_W;
+			tmppde = l1pte_set_writable(oldpde);
 			*pde = tmppde;
 			PTE_SYNC(pde);
 			break;
@@ -260,7 +260,7 @@ db_write_text(vaddr_t addr, size_t size, const char *data)
 			if (pte == NULL)
 				goto no_mapping;
 			oldpte = *pte;
-			tmppte = oldpte | L2_S_PROT_W;
+			tmppte = l2pte_set_writable(oldpte);
 			*pte = tmppte;
 			PTE_SYNC(pte);
 			break;

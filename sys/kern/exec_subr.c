@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_subr.c,v 1.63 2009/12/10 14:13:54 matt Exp $	*/
+/*	$NetBSD: exec_subr.c,v 1.63.2.1 2010/08/17 06:47:25 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1996 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_subr.c,v 1.63 2009/12/10 14:13:54 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_subr.c,v 1.63.2.1 2010/08/17 06:47:25 uebayasi Exp $");
 
 #include "opt_pax.h"
 
@@ -191,7 +191,7 @@ vmcmd_map_pagedvn(struct lwp *l, struct exec_vmcmd *cmd)
 	if ((vp->v_vflag & VV_MAPPED) == 0) {
 		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 		vp->v_vflag |= VV_MAPPED;
-		VOP_UNLOCK(vp, 0);
+		VOP_UNLOCK(vp);
 	}
 
 	/*

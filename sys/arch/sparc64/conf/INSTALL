@@ -1,12 +1,12 @@
-# 	$NetBSD: INSTALL,v 1.25.4.1 2010/04/30 14:39:50 uebayasi Exp $
+# 	$NetBSD: INSTALL,v 1.25.4.2 2010/08/17 06:45:16 uebayasi Exp $
 #
 #	NOTE: this file only needs *additional* things for the install
-#	kernel, that are not already included in GENERIC32!
+#	kernel, that are not already included in GENERIC!
 #	See the include below...
 
 include "arch/sparc64/conf/GENERIC"
 
-#ident 		"INSTALL-$Revision: 1.25.4.1 $"
+#ident 		"INSTALL-$Revision: 1.25.4.2 $"
 
 makeoptions	COPTS="-Os"
 

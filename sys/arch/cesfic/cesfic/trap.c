@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.49.2.1 2010/04/30 14:39:13 uebayasi Exp $	*/
+/*	$NetBSD: trap.c,v 1.49.2.2 2010/08/17 06:44:12 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.49.2.1 2010/04/30 14:39:13 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.49.2.2 2010/08/17 06:44:12 uebayasi Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -85,6 +85,7 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.49.2.1 2010/04/30 14:39:13 uebayasi Exp $
 #include "opt_compat_netbsd.h"
 #include "opt_compat_sunos.h"
 #include "opt_compat_linux.h"
+#include "opt_m68k_arch.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -627,6 +628,9 @@ trap(struct frame *fp, int type, unsigned code, unsigned v)
 				uvm_grow(p, va);
 
 			if (type == T_MMUFLT) {
+				if (ucas_ras_check(&fp->F_t)) {
+					return;
+				}
 #ifdef M68040
 				if (cputype == CPU_68040)
 					(void) writeback(fp, 1);

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.164.2.2 2010/04/30 14:39:57 uebayasi Exp $	*/
+/*	$NetBSD: machdep.c,v 1.164.2.3 2010/08/17 06:45:29 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,17 +77,17 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.164.2.2 2010/04/30 14:39:57 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.164.2.3 2010/08/17 06:45:29 uebayasi Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
 #include "opt_compat_netbsd.h"
-#include "opt_m680x0.h"
 #include "opt_fpu_emulate.h"
 #include "opt_m060sp.h"
 #include "opt_modular.h"
 #include "opt_panicbutton.h"
 #include "opt_extmem.h"
+#include "opt_m68k_arch.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

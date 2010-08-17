@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_subr.c,v 1.20 2009/03/15 17:22:38 cegger Exp $	*/
+/*	$NetBSD: kernfs_subr.c,v 1.20.2.1 2010/08/17 06:47:37 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kernfs_subr.c,v 1.20 2009/03/15 17:22:38 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kernfs_subr.c,v 1.20.2.1 2010/08/17 06:47:37 uebayasi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -176,8 +176,10 @@ kernfs_allocvp(struct mount *mp, struct vnode **vpp, kfstype kfs_type, const str
 			return (ENOENT);
 		}
 		vp = fvp;
-		if (vget(fvp, LK_EXCLUSIVE))
+		if (vn_lock(fvp, LK_EXCLUSIVE)) {
+			vrele(fvp);
 			goto loop;
+		}
 		*vpp = vp;
 		mutex_exit(&kfs_hashlock);
 		return (0);
@@ -315,7 +317,7 @@ kernfs_hashget(kfstype type, struct mount *mp, const struct kern_target *kt, u_i
 		    pp->kfs_kt == kt && pp->kfs_value == value) {
 			mutex_enter(&vp->v_interlock);
 			mutex_exit(&kfs_ihash_lock);
-			if (vget(vp, LK_EXCLUSIVE | LK_INTERLOCK))
+			if (vget(vp, LK_EXCLUSIVE))
 				goto loop;
 			return (vp);
 		}
@@ -333,7 +335,7 @@ kernfs_hashins(struct kernfs_node *pp)
 	struct kfs_hashhead *ppp;
 
 	/* lock the kfsnode, then put it on the appropriate hash list */
-	vlockmgr(&pp->kfs_vnode->v_lock, LK_EXCLUSIVE);
+	VOP_LOCK(KERNFSTOV(pp), LK_EXCLUSIVE);
 
 	mutex_enter(&kfs_ihash_lock);
 	ppp = &kfs_hashtbl[KFSVALUEHASH(pp->kfs_value)];

@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_vnops.c,v 1.71 2009/11/23 02:13:44 rmind Exp $	*/
+/*	$NetBSD: coda_vnops.c,v 1.71.2.1 2010/08/17 06:45:37 uebayasi Exp $	*/
 
 /*
  *
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.71 2009/11/23 02:13:44 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.71.2.1 2010/08/17 06:45:37 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -290,7 +290,7 @@ coda_open(void *v)
      * Drop the lock on the container, after we have done VOP_OPEN
      * (which requires a locked vnode).
      */
-    VOP_UNLOCK(container_vp, 0);
+    VOP_UNLOCK(container_vp);
     return(error);
 }
 
@@ -436,7 +436,7 @@ coda_rdwr(struct vnode *vp, struct uio *uiop, enum uio_rw rw, int ioflag,
 	     * Drop lock. 
 	     * XXX Where is reference released.
 	     */
-	    VOP_UNLOCK(cfvp, 0);
+	    VOP_UNLOCK(cfvp);
 	}
 	else {
 	    printf("coda_rdwr: internal VOP_OPEN\n");
@@ -539,7 +539,7 @@ coda_ioctl(void *v)
 	return(EINVAL);
     }
 
-    if (iap->vi.in_size > VC_MAXDATASIZE) {
+    if (iap->vi.in_size > VC_MAXDATASIZE || iap->vi.out_size > VC_MAXDATASIZE) {
 	vrele(tvp);
 	return(EINVAL);
     }
@@ -859,7 +859,7 @@ coda_inactive(void *v)
 		   vp, vp->v_usecount);
 	if (cp->c_ovp != NULL)
 	    printf("coda_inactive: %p ovp != NULL\n", vp);
-	VOP_UNLOCK(vp, 0);
+	VOP_UNLOCK(vp);
     } else {
         /* Sanity checks that perhaps should be panic. */
 	if (vp->v_usecount) {
@@ -868,7 +868,7 @@ coda_inactive(void *v)
 	if (cp->c_ovp != NULL) {
 	    printf("coda_inactive: %p ovp != NULL\n", vp);
 	}
-	VOP_UNLOCK(vp, 0);
+	VOP_UNLOCK(vp);
 	*ap->a_recycle = true;
     }
 
@@ -1028,7 +1028,7 @@ coda_lookup(void *v)
 	if (*ap->a_vpp && (*ap->a_vpp != dvp)) {
 	    if (flags & ISDOTDOT)
 		/* ..: unlock parent */
-		VOP_UNLOCK(dvp, 0);
+		VOP_UNLOCK(dvp);
 	    /* all but .: lock child */
 	    vn_lock(*ap->a_vpp, LK_EXCLUSIVE | LK_RETRY);
 	    if (flags & ISDOTDOT)
@@ -1273,7 +1273,7 @@ coda_link(void *v)
 	goto exit;
     }
     error = venus_link(vtomi(vp), &cp->c_fid, &dcp->c_fid, nm, len, cred, l);
-    VOP_UNLOCK(vp, 0);
+    VOP_UNLOCK(vp);
 
     /* Invalidate parent's attr cache (the modification time has changed). */
     VTOC(dvp)->c_flags &= ~C_VATTR;
@@ -1775,7 +1775,6 @@ coda_lock(void *v)
     struct vop_lock_args *ap = v;
     struct vnode *vp = ap->a_vp;
     struct cnode *cp = VTOC(vp);
-    int flags  = ap->a_flags;
 /* upcall decl */
 /* locals */
 
@@ -1786,12 +1785,7 @@ coda_lock(void *v)
 		  coda_f2s(&cp->c_fid)));
     }
 
-    if ((flags & LK_INTERLOCK) != 0) {
-    	mutex_exit(&vp->v_interlock);
-    	flags &= ~LK_INTERLOCK;
-    }
-
-    return (vlockmgr(&vp->v_lock, flags));
+    return genfs_lock(v);
 }
 
 int
@@ -1810,17 +1804,16 @@ coda_unlock(void *v)
 		  coda_f2s(&cp->c_fid)));
     }
 
-    return (vlockmgr(&vp->v_lock, ap->a_flags | LK_RELEASE));
+    return genfs_unlock(v);
 }
 
 int
 coda_islocked(void *v)
 {
 /* true args */
-    struct vop_islocked_args *ap = v;
     ENTRY;
 
-    return (vlockstatus(&ap->a_vp->v_lock));
+    return genfs_islocked(v);
 }
 
 /*
@@ -2018,6 +2011,7 @@ coda_getpages(void *v)
 	 * lock, and if we should serialize getpages calls by some
 	 * mechanism.
 	 */
+	/* XXX VOP_ISLOCKED() may not be used for lock decisions. */
 	waslocked = VOP_ISLOCKED(vp);
 
 	/* Drop the vmobject lock. */
@@ -2054,7 +2048,7 @@ coda_getpages(void *v)
 			printf("coda_getpages: cannot open vnode %p => %d\n",
 			       vp, cerror);
 			if (waslocked == 0)
-				VOP_UNLOCK(vp, 0);
+				VOP_UNLOCK(vp);
 			return cerror;
 		}
 
@@ -2086,7 +2080,7 @@ coda_getpages(void *v)
 
 		/* If we obtained a lock, drop it. */
 		if (waslocked == 0)
-			VOP_UNLOCK(vp, 0);
+			VOP_UNLOCK(vp);
 	}
 
 	return error;

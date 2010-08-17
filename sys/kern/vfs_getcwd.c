@@ -1,4 +1,4 @@
-/* $NetBSD: vfs_getcwd.c,v 1.44 2010/01/08 11:35:10 pooka Exp $ */
+/* $NetBSD: vfs_getcwd.c,v 1.44.2.1 2010/08/17 06:47:33 uebayasi Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_getcwd.c,v 1.44 2010/01/08 11:35:10 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_getcwd.c,v 1.44.2.1 2010/08/17 06:47:33 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -281,7 +281,6 @@ getcwd_getcache(struct vnode **lvpp, struct vnode **uvpp, char **bpp,
     char *bufp)
 {
 	struct vnode *lvp, *uvp = NULL;
-	char *obp = *bpp;
 	int error;
 
 	lvp = *lvpp;
@@ -306,25 +305,8 @@ getcwd_getcache(struct vnode **lvpp, struct vnode **uvpp, char **bpp,
 	 * before we take the parent lock.
 	 */
 
-	VOP_UNLOCK(lvp, 0);
-	error = vget(uvp, LK_EXCLUSIVE | LK_RETRY);
-
-	/*
-	 * Verify that vget succeeded while we were waiting for the
-	 * lock.
-	 */
-	if (error) {
-
-		/*
-		 * Oops, we missed.  If the vget failed, get our lock back
-		 * then rewind the `bp' and tell the caller to try things
-		 * the hard way.
-		 */
-		*uvpp = NULL;
-		vn_lock(lvp, LK_EXCLUSIVE | LK_RETRY);
-		*bpp = obp;
-		return -1;
-	}
+	VOP_UNLOCK(lvp);
+	vn_lock(uvp, LK_EXCLUSIVE | LK_RETRY);
 	vrele(lvp);
 	*lvpp = NULL;
 
@@ -558,7 +540,8 @@ out:
 /*
  * Try to find a pathname for a vnode. Since there is no mapping
  * vnode -> parent directory, this needs the NAMECACHE_ENTER_REVERSE
- * option to work (to make cache_revlookup succeed).
+ * option to work (to make cache_revlookup succeed). Caller holds a
+ * reference to the vnode.
  */
 int
 vnode_to_path(char *path, size_t len, struct vnode *vp, struct lwp *curl,
@@ -569,23 +552,23 @@ vnode_to_path(char *path, size_t len, struct vnode *vp, struct lwp *curl,
 	char *bp, *bend;
 	struct vnode *dvp;
 
+	KASSERT(vp->v_usecount > 0);
+
 	bp = bend = &path[len];
 	*(--bp) = '\0';
 
-	error = vget(vp, LK_EXCLUSIVE | LK_RETRY);
+	error = vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	if (error != 0)
 		return error;
 	error = cache_revlookup(vp, &dvp, &bp, path);
-	vput(vp);
+	VOP_UNLOCK(vp);
 	if (error != 0)
 		return (error == -1 ? ENOENT : error);
 
-	error = vget(dvp, 0);
-	if (error != 0)
-		return error;
 	*(--bp) = '/';
-	/* XXX GETCWD_CHECK_ACCESS == 0x0001 */
-	error = getcwd_common(dvp, NULL, &bp, path, len / 2, 1, curl);
+	error = getcwd_common(dvp, NULL, &bp, path, len / 2,
+	    GETCWD_CHECK_ACCESS, curl);
+	vrele(dvp);
 
 	/*
 	 * Strip off emulation path for emulated processes looking at

@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_vnops.c,v 1.53 2009/01/13 13:35:54 yamt Exp $	*/
+/*	$NetBSD: mfs_vnops.c,v 1.53.4.1 2010/08/17 06:48:13 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfs_vnops.c,v 1.53 2009/01/13 13:35:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfs_vnops.c,v 1.53.4.1 2010/08/17 06:48:13 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -278,7 +278,7 @@ mfs_inactive(void *v)
 	if (bufq_peek(mfsp->mfs_buflist) != NULL)
 		panic("mfs_inactive: not inactive (mfs_buflist %p)",
 			bufq_peek(mfsp->mfs_buflist));
-	VOP_UNLOCK(vp, 0);
+	VOP_UNLOCK(vp);
 	return (0);
 }
 

@@ -1,4 +1,4 @@
-/* $NetBSD: com.c,v 1.294.2.1 2010/04/30 14:43:14 uebayasi Exp $ */
+/* $NetBSD: com.c,v 1.294.2.2 2010/08/17 06:46:09 uebayasi Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2004, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.294.2.1 2010/04/30 14:43:14 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.294.2.2 2010/08/17 06:46:09 uebayasi Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -465,6 +465,8 @@ com_attach_subr(struct com_softc *sc)
 					sc->sc_fifolen = 0;
 				} else {
 					SET(sc->sc_hwflags, COM_HW_FLOW);
+					SET(sc->sc_mcr, MCR_PRESCALE);
+					sc->sc_frequency /= 4;
 					sc->sc_fifolen = 32;
 				}
 			} else
@@ -1477,8 +1479,8 @@ com_loadchannelregs(struct com_softc *sc)
 		KASSERT(sc->sc_type != COM_TYPE_AU1x00);
 		KASSERT(sc->sc_type != COM_TYPE_16550_NOERS);
 		/* no EFR on alchemy */
-		CSR_WRITE_1(regsp, COM_REG_EFR, sc->sc_efr);
 		CSR_WRITE_1(regsp, COM_REG_LCR, LCR_EERS);
+		CSR_WRITE_1(regsp, COM_REG_EFR, sc->sc_efr);
 	}
 	if (sc->sc_type == COM_TYPE_AU1x00) {
 		/* alchemy has single separate 16-bit clock divisor register */

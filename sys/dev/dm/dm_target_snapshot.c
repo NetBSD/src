@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_target_snapshot.c,v 1.12 2010/01/04 00:12:22 haad Exp $      */
+/*        $NetBSD: dm_target_snapshot.c,v 1.12.2.1 2010/08/17 06:46:06 uebayasi Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -85,6 +85,23 @@
 
 #include "dm.h"
 
+/* dm_target_snapshot.c */
+int dm_target_snapshot_init(dm_dev_t *, void**, char *);
+char * dm_target_snapshot_status(void *);
+int dm_target_snapshot_strategy(dm_table_entry_t *, struct buf *);
+int dm_target_snapshot_deps(dm_table_entry_t *, prop_array_t);
+int dm_target_snapshot_destroy(dm_table_entry_t *);
+int dm_target_snapshot_upcall(dm_table_entry_t *, struct buf *);
+
+/* dm snapshot origin driver */
+int dm_target_snapshot_orig_init(dm_dev_t *, void**, char *);
+char * dm_target_snapshot_orig_status(void *);
+int dm_target_snapshot_orig_strategy(dm_table_entry_t *, struct buf *);
+int dm_target_snapshot_orig_sync(dm_table_entry_t *);
+int dm_target_snapshot_orig_deps(dm_table_entry_t *, prop_array_t);
+int dm_target_snapshot_orig_destroy(dm_table_entry_t *);
+int dm_target_snapshot_orig_upcall(dm_table_entry_t *, struct buf *);
+
 #ifdef DM_TARGET_MODULE
 /*
  * Every target can be compiled directly to dm driver or as a
@@ -140,6 +157,7 @@ dm_target_snapshot_modcmd(modcmd_t cmd, void *arg)
 		dmt1->init = &dm_target_snapshot_orig_init;
 		dmt1->status = &dm_target_snapshot_orig_status;
 		dmt1->strategy = &dm_target_snapshot_orig_strategy;
+		dmt1->sync = &dm_target_snapshot_orig_sync;
 		dmt1->deps = &dm_target_snapshot_orig_deps;
 		dmt1->destroy = &dm_target_snapshot_orig_destroy;
 		dmt1->upcall = &dm_target_snapshot_orig_upcall;
@@ -381,8 +399,7 @@ dm_target_snapshot_upcall(dm_table_entry_t * table_en, struct buf * bp)
  * argv: /dev/mapper/my_data_real
  */
 int
-dm_target_snapshot_orig_init(dm_dev_t * dmv, void **target_config,
-    prop_dictionary_t dict)
+dm_target_snapshot_orig_init(dm_dev_t * dmv, void **target_config, char *params)
 {
 	dm_target_snapshot_origin_config_t *tsoc;
 	dm_pdev_t *dmp_real;
@@ -455,6 +472,21 @@ dm_target_snapshot_orig_strategy(dm_table_entry_t * table_en, struct buf * bp)
 	biodone(bp);
 
 	return 0;
+}
+/*
+ * Sync underlying disk caches.
+ */
+int
+dm_target_snapshot_orig_sync(dm_table_entry_t * table_en)
+{
+	int cmd;
+	dm_target_snapshot_origin_config_t *tsoc;
+
+	tsoc = table_en->target_config;
+
+	cmd = 1;
+
+	return VOP_IOCTL(tsoc->tsoc_real_dev->pdev_vnode,  DIOCCACHESYNC, &cmd, FREAD|FWRITE, kauth_cred_get());
 }
 /* Decrement pdev and free allocated space. */
 int
