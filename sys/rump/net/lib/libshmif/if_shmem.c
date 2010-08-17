@@ -1,4 +1,4 @@
-/*	$NetBSD: if_shmem.c,v 1.27 2010/08/17 11:35:23 pooka Exp $	*/
+/*	$NetBSD: if_shmem.c,v 1.28 2010/08/17 20:42:47 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.27 2010/08/17 11:35:23 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.28 2010/08/17 20:42:47 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -49,6 +49,16 @@ __KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.27 2010/08/17 11:35:23 pooka Exp $");
 
 #include "rump_private.h"
 #include "rump_net_private.h"
+
+/*
+ * Do r/w prefault for backend pages when attaching the interface.
+ * This works aroud the most likely kernel/ffs/x86pmap bug described
+ * in http://mail-index.netbsd.org/tech-kern/2010/08/17/msg008749.html
+ *
+ * NOTE: read prefaulting is not enough (that's done always)!
+ */
+
+#define PREFAULT_RW
 
 /*
  * A virtual ethernet interface which uses shared memory from a
@@ -127,6 +137,8 @@ rump_shmif_create(const char *path, int *ifnum)
 	uint8_t enaddr[ETHER_ADDR_LEN] = { 0xb2, 0xa0, 0x00, 0x00, 0x00, 0x00 };
 	uint32_t randnum;
 	unsigned mynum;
+	volatile uint8_t v;
+	volatile uint8_t *p;
 	int error;
 
 	randnum = arc4random();
@@ -149,6 +161,13 @@ rump_shmif_create(const char *path, int *ifnum)
 	if (sc->sc_busmem->shm_magic && sc->sc_busmem->shm_magic != SHMIF_MAGIC)
 		panic("bus is not magical");
 
+
+	/* Prefault in pages to minimize runtime penalty with buslock */
+	for (p = (uint8_t *)sc->sc_busmem;
+	    p < (uint8_t *)sc->sc_busmem + BUSMEM_SIZE;
+	    p += PAGE_SIZE)
+		v = *p;
+
 	shmif_lockbus(sc->sc_busmem);
 	/* we're first?  initialize bus */
 	if (sc->sc_busmem->shm_magic == 0) {
@@ -158,6 +177,15 @@ rump_shmif_create(const char *path, int *ifnum)
 
 	sc->sc_nextpacket = sc->sc_busmem->shm_last;
 	sc->sc_devgen = sc->sc_busmem->shm_gen;
+
+#ifdef PREFAULT_RW
+	for (p = (uint8_t *)sc->sc_busmem;
+	    p < (uint8_t *)sc->sc_busmem + BUSMEM_SIZE;
+	    p += PAGE_SIZE) {
+		v = *p;
+		*p = v;
+	}
+#endif
 	shmif_unlockbus(sc->sc_busmem);
 
 	sc->sc_kq = rumpuser_writewatchfile_setup(-1, sc->sc_memfd, 0, &error);
