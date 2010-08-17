@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu.h,v 1.17 2010/08/16 17:58:42 jruoho Exp $ */
+/* $NetBSD: acpi_cpu.h,v 1.18 2010/08/17 10:17:52 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -185,6 +185,7 @@ struct acpicpu_softc {
 	uint32_t		 sc_pstate_current;
 	uint32_t		 sc_pstate_count;
 	uint32_t		 sc_pstate_max;
+	uint32_t		 sc_pstate_min;
 
 	struct acpicpu_tstate	*sc_tstate;
 	struct acpicpu_reg	 sc_tstate_control;
@@ -203,6 +204,7 @@ struct acpicpu_softc {
 	cpuid_t			 sc_cpuid;
 	bool			 sc_cold;
 	bool			 sc_mapped;
+	bool			 sc_passive;
 };
 
 void		acpicpu_cstate_attach(device_t);
