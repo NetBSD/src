@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_tstate.c,v 1.12 2010/08/17 10:17:52 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_tstate.c,v 1.13 2010/08/17 10:35:22 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_tstate.c,v 1.12 2010/08/17 10:17:52 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_tstate.c,v 1.13 2010/08/17 10:35:22 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/evcnt.h>
@@ -49,6 +49,7 @@ static ACPI_STATUS	 acpicpu_tstate_tss_add(struct acpicpu_tstate *,
 static ACPI_STATUS	 acpicpu_tstate_ptc(struct acpicpu_softc *);
 static ACPI_STATUS	 acpicpu_tstate_fadt(struct acpicpu_softc *);
 static ACPI_STATUS	 acpicpu_tstate_change(struct acpicpu_softc *);
+static void		 acpicpu_tstate_reset(struct acpicpu_softc *);
 
 void
 acpicpu_tstate_attach(device_t self)
@@ -105,11 +106,9 @@ out:
 		sc->sc_flags |= ACPICPU_FLAG_T_FADT;
 	}
 
-	sc->sc_tstate_max = 0;
-	sc->sc_tstate_min = sc->sc_tstate_count - 1;
-
 	sc->sc_flags |= ACPICPU_FLAG_T;
 
+	acpicpu_tstate_reset(sc);
 	acpicpu_tstate_attach_evcnt(sc);
 	acpicpu_tstate_attach_print(sc);
 }
@@ -208,6 +207,9 @@ acpicpu_tstate_start(device_t self)
 bool
 acpicpu_tstate_suspend(device_t self)
 {
+	struct acpicpu_softc *sc = device_private(self);
+
+	acpicpu_tstate_reset(sc);
 
 	return true;
 }
@@ -215,10 +217,6 @@ acpicpu_tstate_suspend(device_t self)
 bool
 acpicpu_tstate_resume(device_t self)
 {
-	struct acpicpu_softc *sc = device_private(self);
-
-	if ((sc->sc_flags & ACPICPU_FLAG_T_FADT) == 0)
-		acpicpu_tstate_callback(self);
 
 	return true;
 }
@@ -584,8 +582,7 @@ acpicpu_tstate_change(struct acpicpu_softc *sc)
 	ACPI_INTEGER val;
 	ACPI_STATUS rv;
 
-	sc->sc_tstate_max = 0;
-	sc->sc_tstate_min = sc->sc_tstate_count - 1;
+	acpicpu_tstate_reset(sc);
 
 	/*
 	 * Evaluate the available T-state window:
@@ -619,6 +616,14 @@ acpicpu_tstate_change(struct acpicpu_softc *sc)
 	}
 
 	return AE_OK;
+}
+
+static void
+acpicpu_tstate_reset(struct acpicpu_softc *sc)
+{
+
+	sc->sc_tstate_max = 0;
+	sc->sc_tstate_min = sc->sc_tstate_count - 1;
 }
 
 int
