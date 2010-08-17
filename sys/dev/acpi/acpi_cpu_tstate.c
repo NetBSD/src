@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_tstate.c,v 1.13 2010/08/17 10:35:22 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_tstate.c,v 1.14 2010/08/17 10:57:30 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_tstate.c,v 1.13 2010/08/17 10:35:22 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_tstate.c,v 1.14 2010/08/17 10:57:30 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/evcnt.h>
@@ -209,7 +209,9 @@ acpicpu_tstate_suspend(device_t self)
 {
 	struct acpicpu_softc *sc = device_private(self);
 
+	mutex_enter(&sc->sc_mtx);
 	acpicpu_tstate_reset(sc);
+	mutex_exit(&sc->sc_mtx);
 
 	return true;
 }
