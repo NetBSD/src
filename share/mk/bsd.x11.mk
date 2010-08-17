@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.x11.mk,v 1.88 2010/08/15 06:48:56 mrg Exp $
+#	$NetBSD: bsd.x11.mk,v 1.89 2010/08/17 08:40:57 christos Exp $
 
 .include <bsd.init.mk>
 
@@ -396,6 +396,7 @@ _X11MANTRANSFORM+= \
 	__vendorversion__	${XORGVERSION:C/ /%/gW} \
 	__XCONFIGFILE__		xorg.conf \
 	__xconfigfile__		xorg.conf \
+	__XCONFIGFILEMAN__	'__XCONFIGFILE__%(__filemansuffix__)' \
 	__xorgversion__		${XORGVERSION:C/ /%/gW} \
 	__XSERVERNAME__		Xorg \
 	__xservername__		Xorg
