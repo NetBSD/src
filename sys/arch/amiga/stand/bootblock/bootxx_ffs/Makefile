@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12.2.1 2010/04/30 14:39:06 uebayasi Exp $
+#	$NetBSD: Makefile,v 1.12.2.2 2010/08/17 06:43:58 uebayasi Exp $
 
 ### what we need:
 
@@ -49,7 +49,7 @@ CLEANFILES += bootxx_ffs bootxx_fd x.out f.out xxstart.o fdstart.o libboot.a ver
 
 INCPATH = -nostdinc -I${DIR_TOP} -I${DIR_TOP}/lib/libsa -I${.CURDIR}
 INCPATH += -I${.CURDIR}/../boot -I${.CURDIR}/../../..
-INCPATH += -I${.CURDIR}/../aout2bb -I${.OBJDIR}
+INCPATH += -I${.CURDIR}/../elf2bb -I${.OBJDIR}
 
 AFLAGS += -m68030 -l
 CAFLAGS += -Wa,-l -Wa,-m68030 ${INCPATH} -D_PRIMARY_BOOT

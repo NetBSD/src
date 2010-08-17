@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bah_zbus.c,v 1.11 2008/04/28 20:23:12 martin Exp $ */
+/*	$NetBSD: if_bah_zbus.c,v 1.11.20.1 2010/08/17 06:43:56 uebayasi Exp $ */
 
 /*-
  * Copyright (c) 1994, 1995, 1998 The NetBSD Foundation, Inc.
@@ -29,8 +29,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "opt_m68k_arch.h"
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bah_zbus.c,v 1.11 2008/04/28 20:23:12 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bah_zbus.c,v 1.11.20.1 2010/08/17 06:43:56 uebayasi Exp $");
 
 /*
  * Driver frontend for the Commodore Busines Machines and the

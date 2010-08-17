@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_inode.c,v 1.71 2010/02/07 17:12:40 bouyer Exp $	*/
+/*	$NetBSD: ext2fs_inode.c,v 1.71.2.1 2010/08/17 06:48:10 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_inode.c,v 1.71 2010/02/07 17:12:40 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_inode.c,v 1.71.2.1 2010/08/17 06:48:10 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -156,10 +156,7 @@ ext2fs_inactive(void *v)
 		}
 		ip->i_e2fs_dtime = time_second;
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
-		mutex_enter(&vp->v_interlock);
-		vp->v_iflag |= VI_FREEING;
-		mutex_exit(&vp->v_interlock);
-		ext2fs_vfree(vp, ip->i_number, ip->i_e2fs_mode);
+		ip->i_omode = 1;
 	}
 	if (ip->i_flag & (IN_CHANGE | IN_UPDATE | IN_MODIFIED)) {
 		ext2fs_update(vp, NULL, NULL, 0);
@@ -170,7 +167,7 @@ out:
 	 * so that it can be reused immediately.
 	 */
 	*ap->a_recycle = (ip->i_e2fs_dtime != 0);
-	VOP_UNLOCK(vp, 0);
+	VOP_UNLOCK(vp);
 	return (error);
 }
 

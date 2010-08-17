@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_tz.c,v 1.57.2.1 2010/04/30 14:43:06 uebayasi Exp $ */
+/* $NetBSD: acpi_tz.c,v 1.57.2.2 2010/08/17 06:46:00 uebayasi Exp $ */
 
 /*
  * Copyright (c) 2003 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.57.2.1 2010/04/30 14:43:06 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.57.2.2 2010/08/17 06:46:00 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -240,7 +240,7 @@ acpitz_detach(device_t self, int flags)
 		rv = acpi_eval_reference_handle(al.Pointer, &hdl);
 
 		if (ACPI_SUCCESS(rv))
-			acpi_power_deregister_from_handle(hdl);
+			acpi_power_deregister(hdl);
 
 		ACPI_FREE(sc->sc_zone.al[i].Pointer);
 	}
@@ -406,7 +406,7 @@ acpitz_switch_cooler(ACPI_OBJECT *obj, void *arg)
 	if (ACPI_FAILURE(rv))
 		return rv;
 
-	(void)acpi_power_set_from_handle(cooler, pwr_state);
+	(void)acpi_power_set(cooler, pwr_state);
 
 	return AE_OK;
 }
@@ -499,8 +499,8 @@ acpitz_get_zone(void *opaque, int verbose)
 		}
 
 		if (sc->sc_first != false)
-			aprint_normal(" active cooling level %d: %sC", i,
-			    acpitz_celcius_string(sc->sc_zone.ac[i]));
+			aprint_normal_dev(dv, "active cooling level %d: %sC\n",
+			    i, acpitz_celcius_string(sc->sc_zone.ac[i]));
 
 		valid_levels++;
 	}
@@ -554,7 +554,7 @@ acpitz_get_zone(void *opaque, int verbose)
 		}
 
 		if (sc->sc_zone.psv != ATZ_TMP_INVALID) {
-			aprint_normal("%spassive %s C", comma ? ", " : "",
+			aprint_verbose("%spassive %s C", comma ? ", " : "",
 			    acpitz_celcius_string(sc->sc_zone.psv));
 			comma = 1;
 		}

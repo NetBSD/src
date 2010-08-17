@@ -1,4 +1,4 @@
-#	$NetBSD: files.arm,v 1.97.2.1 2010/04/28 14:56:13 uebayasi Exp $
+#	$NetBSD: files.arm,v 1.97.2.2 2010/08/17 06:44:03 uebayasi Exp $
 
 # temporary define to allow easy moving to ../arch/arm/arm32
 defflag				ARM32
@@ -8,13 +8,14 @@ defflag	opt_cputypes.h		CPU_ARM2 CPU_ARM250 CPU_ARM3
 defflag	opt_cputypes.h		CPU_ARM6 CPU_ARM7 CPU_ARM7TDMI CPU_ARM8
 				CPU_ARM9 CPU_ARM9E CPU_ARM10 CPU_ARM11
 				CPU_SA110 CPU_SA1100 CPU_SA1110 CPU_IXP12X0
-				CPU_FA526
+				CPU_FA526 CPU_CORTEX
 				CPU_XSCALE_80200 CPU_XSCALE_80321
 				CPU_XSCALE_PXA250 CPU_XSCALE_PXA270
-				CPU_XSCALE_IXP425
+				CPU_XSCALE_IXP425 
 defflag	opt_cputypes.h		CPU_ARM1136: CPU_ARM11
 defflag	opt_cputypes.h		CPU_ARM1176: CPU_ARM11
-defflag	opt_cputypes.h		CPU_CORTEXA8: CPU_ARM11
+defflag	opt_cputypes.h		CPU_CORTEXA8: CPU_CORTEX
+defflag	opt_cputypes.h		CPU_CORTEXA9: CPU_CORTEX
 defflag opt_cputypes.h		FPU_VFP
 
 defparam opt_cpuoptions.h	XSCALE_CCLKCFG
@@ -26,7 +27,7 @@ defflag  opt_cpuoptions.h	ARM32_DISABLE_ALIGNMENT_FAULTS
 defflag  opt_cpuoptions.h	ARM9_CACHE_WRITE_THROUGH
 defflag  opt_cpuoptions.h	PROCESS_ID_IS_CURLWP
 defflag  opt_cpuoptions.h	PROCESS_ID_IS_CURCPU
-defflag  opt_cpuoptions.h	ARM11_PMC
+defflag  opt_cpuoptions.h	ARM11_PMC CORTEX_PMC
 defflag  opt_cpuoptions.h	ARM11_CACHE_WRITE_THROUGH
 
 # Interrupt implementation header definition.
@@ -106,7 +107,7 @@ file	arch/arm/arm/cpufunc_asm_arm7tdmi.S	cpu_arm7tdmi
 file	arch/arm/arm/cpufunc_asm_arm8.S		cpu_arm8
 file	arch/arm/arm/cpufunc_asm_arm9.S		cpu_arm9
 file	arch/arm/arm/cpufunc_asm_arm10.S	cpu_arm9e | cpu_arm10
-file	arch/arm/arm/cpufunc_asm_arm11.S	cpu_arm11
+file	arch/arm/arm/cpufunc_asm_arm11.S	cpu_arm11 | cpu_cortex
 file	arch/arm/arm/cpufunc_asm_arm1136.S	cpu_arm1136
 file	arch/arm/arm/cpufunc_asm_armv4.S	cpu_arm9 | cpu_arm9e |
 							cpu_arm10 |
@@ -119,11 +120,12 @@ file	arch/arm/arm/cpufunc_asm_armv4.S	cpu_arm9 | cpu_arm9e |
 							cpu_xscale_80321 |
 							cpu_xscale_ixp425 |
 							cpu_xscale_pxa250 |
-							cpu_xscale_pxa270
+							cpu_xscale_pxa270 |
+							cpu_cortex
 file	arch/arm/arm/cpufunc_asm_armv5.S	cpu_arm10
 file	arch/arm/arm/cpufunc_asm_armv5_ec.S	cpu_arm9e | cpu_arm10
-file	arch/arm/arm/cpufunc_asm_armv6.S	cpu_arm11
-makeoptions	cpu_arm11	"AOPTS.cpufunc_asm_armv6.S"+="-Wa,-march=armv6"
+file	arch/arm/arm/cpufunc_asm_armv6.S	cpu_arm11 | cpu_cortex
+file	arch/arm/arm/cpufunc_asm_armv7.S	cpu_cortex
 file	arch/arm/arm/cpufunc_asm_sa1.S		cpu_sa110 | cpu_sa1100 |
 							cpu_sa1110 |
 							cpu_ixp12x0
@@ -133,7 +135,8 @@ file	arch/arm/arm/cpufunc_asm_xscale.S	cpu_xscale_80200 |
 						    cpu_xscale_80321 |
 						    cpu_xscale_ixp425 |
 						    cpu_xscale_pxa250 |
-						    cpu_xscale_pxa270
+						    cpu_xscale_pxa270 |
+						    cpu_cortex
 file	arch/arm/arm/cpufunc_asm_ixp12x0.S	cpu_ixp12x0
 file	arch/arm/arm/fusu.S
 file	arch/arm/arm/idle_machdep.c
@@ -168,6 +171,7 @@ file	arch/arm/arm32/atomic.S			arm32
 # files less common to arm32 implementations...
 file	kern/kern_cctr.c			arm11
 file	arch/arm/arm32/arm11_pmc.c		arm11_pmc
+file	arch/arm/arm32/cortex_pmc.c		cortex_pmc
 
 # arm32 library functions
 file	arch/arm/arm32/bcopy_page.S		arm32

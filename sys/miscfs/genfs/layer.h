@@ -1,4 +1,4 @@
-/*	$NetBSD: layer.h,v 1.13 2008/01/30 09:50:23 ad Exp $	*/
+/*	$NetBSD: layer.h,v 1.13.30.1 2010/08/17 06:47:37 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -116,33 +116,6 @@ struct layer_node {
 
 #define	LAYERFS_RESFLAGS	0x00000fff	/* flags reserved for layerfs */
 #define	LAYERFS_REMOVED 	0x00000001	/* Did a remove on this node */
-
-/*
- * The following macros handle upperfs-specific locking. They are needed
- * when the lowerfs does not export a struct lock for locking use by the
- * upper layers. These macros are inteded for adjusting the upperfs
- * struct lock to reflect changes in the underlying vnode's lock state.
- */
-#define	LAYERFS_UPPERLOCK(v, f, r)	do { \
-	if ((v)->v_vnlock == NULL) \
-		r = vlockmgr(&(v)->v_lock, (f)); \
-	else \
-		r = 0; \
-	} while (0)
-
-#define	LAYERFS_UPPERUNLOCK(v, f, r)	do { \
-	if ((v)->v_vnlock == NULL) \
-	    r = vlockmgr(&(v)->v_lock, (f) | LK_RELEASE); \
-	else \
-		r = 0; \
-	} while (0)
-
-#define	LAYERFS_UPPERISLOCKED(v, r)	do { \
-	if ((v)->v_vnlock == NULL) \
-		r = vlockstatus(&(v)->v_lock); \
-	else \
-		r = -1; \
-	} while (0)
 
 #define	LAYERFS_DO_BYPASS(vp, ap)	\
 	(*MOUNTTOLAYERMOUNT((vp)->v_mount)->layerm_bypass)((ap))

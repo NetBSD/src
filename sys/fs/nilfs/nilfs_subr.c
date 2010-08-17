@@ -1,4 +1,4 @@
-/* $NetBSD: nilfs_subr.c,v 1.4 2009/07/29 17:06:57 reinoud Exp $ */
+/* $NetBSD: nilfs_subr.c,v 1.4.4.1 2010/08/17 06:47:17 uebayasi Exp $ */
 
 /*
  * Copyright (c) 2008, 2009 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: nilfs_subr.c,v 1.4 2009/07/29 17:06:57 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nilfs_subr.c,v 1.4.4.1 2010/08/17 06:47:17 uebayasi Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -59,6 +59,10 @@ __KERNEL_RCSID(0, "$NetBSD: nilfs_subr.c,v 1.4 2009/07/29 17:06:57 reinoud Exp $
 
 
 #define VTOI(vnode) ((struct nilfs_node *) (vnode)->v_data)
+
+/* forwards */
+static int nilfs_btree_lookup(struct nilfs_node *node, uint64_t lblocknr,
+	uint64_t *vblocknr);
 
 /* basic calculators */
 uint64_t nilfs_get_segnum_of_block(struct nilfs_device *nilfsdev,
@@ -145,7 +149,13 @@ int
 nilfs_bread(struct nilfs_node *node, uint64_t blocknr,
 	struct kauth_cred *cred, int flags, struct buf **bpp)
 {
-	return bread(node->vnode, blocknr, node->nilfsdev->blocksize,
+	uint64_t vblocknr;
+	int error;
+
+	error = nilfs_btree_lookup(node, blocknr, &vblocknr);
+	if (error)
+		return error;
+	return bread(node->vnode, vblocknr, node->nilfsdev->blocksize,
 		cred, flags, bpp);
 }
 
@@ -481,14 +491,6 @@ nilfs_load_segsum(struct nilfs_device *nilfsdev,
 	/* TODO check segment summary checksum */
 	/* TODO check data checksum */
 
-	/* adjust our walking point if we have an odd size */
-	if (segsum_struct_size != nilfs_rw32(ri->segsum.ss_bytes)) {
-		printf("nilfs: WARNING encountered segsum_struct size %d in "
-			"pseg %"PRIu64"\n",
-			nilfs_rw32(ri->segsum.ss_bytes), ri->pseg);
-		/* XXX report as an error? */
-	}
-
 out:
 	if (bp)
 		brelse(bp, BC_AGE);
@@ -782,7 +784,7 @@ loop:
 			assert(vp);
 			mutex_enter(&vp->v_interlock);
 			mutex_exit(&ump->ihash_lock);
-			if (vget(vp, LK_EXCLUSIVE | LK_INTERLOCK))
+			if (vget(vp, LK_EXCLUSIVE))
 				goto loop;
 			return node;
 		}
@@ -839,7 +841,7 @@ nilfs_get_node_raw(struct nilfs_device *nilfsdev, struct nilfs_mount *ump,
 
 	/* needed? */
 	mutex_init(&node->node_mutex, MUTEX_DEFAULT, IPL_NONE);
-	cv_init(&node->node_lock, "nilfs_nlk");
+	cv_init(&node->node_lock, "nilfsnlk");
 
 	/* initialise genfs */
 	genfs_node_init(nvp, &nilfs_genfsops);

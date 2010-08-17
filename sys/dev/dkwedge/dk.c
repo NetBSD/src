@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.55 2010/02/07 16:04:31 mlelstv Exp $	*/
+/*	$NetBSD: dk.c,v 1.55.2.1 2010/08/17 06:46:05 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.55 2010/02/07 16:04:31 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.55.2.1 2010/08/17 06:46:05 uebayasi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dkwedge.h"
@@ -511,14 +511,14 @@ dkwedge_begindetach(struct dkwedge_softc *sc, int flags)
 
 	rc = 0;
 	mutex_enter(&dk->dk_openlock);
-	mutex_enter(&sc->sc_parent->dk_rawlock);
 	if (dk->dk_openmask == 0)
 		;	/* nothing to do */
 	else if ((flags & DETACH_FORCE) == 0)
 		rc = EBUSY;
-	else
-		rc = dklastclose(sc);
-	mutex_exit(&sc->sc_parent->dk_rawlock);
+	else {
+		mutex_enter(&sc->sc_parent->dk_rawlock);
+		rc = dklastclose(sc); /* releases dk_rawlock */
+	}
 	mutex_exit(&dk->dk_openlock);
 
 	return rc;
@@ -577,17 +577,18 @@ dkwedge_detach(device_t self, int flags)
 
 	/* Clean up the parent. */
 	mutex_enter(&sc->sc_dk.dk_openlock);
-	mutex_enter(&sc->sc_parent->dk_rawlock);
 	if (sc->sc_dk.dk_openmask) {
+		mutex_enter(&sc->sc_parent->dk_rawlock);
 		if (sc->sc_parent->dk_rawopens-- == 1) {
 			KASSERT(sc->sc_parent->dk_rawvp != NULL);
+			mutex_exit(&sc->sc_parent->dk_rawlock);
 			(void) vn_close(sc->sc_parent->dk_rawvp, FREAD | FWRITE,
 			    NOCRED);
 			sc->sc_parent->dk_rawvp = NULL;
-		}
+		} else
+			mutex_exit(&sc->sc_parent->dk_rawlock);
 		sc->sc_dk.dk_openmask = 0;
 	}
-	mutex_exit(&sc->sc_parent->dk_rawlock);
 	mutex_exit(&sc->sc_dk.dk_openlock);
 
 	/* Announce our departure. */
@@ -903,7 +904,7 @@ dkwedge_discover(struct disk *pdk)
 		vput(vp);
 		goto out;
 	}
-	VOP_UNLOCK(vp, 0);
+	VOP_UNLOCK(vp);
 
 	/*
 	 * For each supported partition map type, look to see if
@@ -1022,7 +1023,7 @@ dkopen(dev_t dev, int flags, int fmt, struct lwp *l)
 			mutex_enter(&vp->v_interlock);
 			vp->v_writecount++;
 			mutex_exit(&vp->v_interlock);
-			VOP_UNLOCK(vp, 0);
+			VOP_UNLOCK(vp);
 			sc->sc_parent->dk_rawvp = vp;
 		}
 		sc->sc_parent->dk_rawopens++;
@@ -1050,10 +1051,12 @@ dklastclose(struct dkwedge_softc *sc)
 
 	if (sc->sc_parent->dk_rawopens-- == 1) {
 		KASSERT(sc->sc_parent->dk_rawvp != NULL);
+		mutex_exit(&sc->sc_parent->dk_rawlock);
 		error = vn_close(sc->sc_parent->dk_rawvp,
 		    FREAD | FWRITE, NOCRED);
 		sc->sc_parent->dk_rawvp = NULL;
-	}
+	} else
+		mutex_exit(&sc->sc_parent->dk_rawlock);
 	return error;
 }
 
@@ -1081,9 +1084,10 @@ dkclose(dev_t dev, int flags, int fmt, struct lwp *l)
 	    sc->sc_dk.dk_copenmask | sc->sc_dk.dk_bopenmask;
 
 	if (sc->sc_dk.dk_openmask == 0)
-		error = dklastclose(sc);
+		error = dklastclose(sc); /* releases dk_rawlock */
+	else 
+		mutex_exit(&sc->sc_parent->dk_rawlock);
 
-	mutex_exit(&sc->sc_parent->dk_rawlock);
 	mutex_exit(&sc->sc_dk.dk_openlock);
 
 	return (error);

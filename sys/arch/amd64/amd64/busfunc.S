@@ -1,4 +1,4 @@
-/*	$NetBSD: busfunc.S,v 1.7.18.1 2010/04/30 14:39:03 uebayasi Exp $	*/
+/*	$NetBSD: busfunc.S,v 1.7.18.2 2010/08/17 06:43:51 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -32,14 +32,6 @@
 #include <machine/asm.h>
 
 #include "assym.h"
-
-/* XXX */
-#undef	_ALIGN_TEXT
-#define	_ALIGN_TEXT	.align 16
-
-#if X86_BUS_SPACE_IO != 0
-#error depends on X86_BUS_SPACE_IO == 0
-#endif
 
 .Ldopanic:
 	movq	$.Lpstr, %rdi

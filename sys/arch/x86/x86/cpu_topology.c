@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_topology.c,v 1.3.2.1 2010/04/30 14:39:58 uebayasi Exp $	*/
+/*	$NetBSD: cpu_topology.c,v 1.3.2.2 2010/08/17 06:45:33 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2009 Mindaugas Rasiukevicius <rmind at NetBSD org>,
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_topology.c,v 1.3.2.1 2010/04/30 14:39:58 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_topology.c,v 1.3.2.2 2010/08/17 06:45:33 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/bitops.h>
@@ -51,7 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: cpu_topology.c,v 1.3.2.1 2010/04/30 14:39:58 uebayas
 void
 x86_cpu_topology(struct cpu_info *ci)
 {
-	u_int lp_max;		/* Logical processors per package */
+	u_int lp_max;		/* Logical processors per package (node) */
 	u_int core_max;		/* Core per package */
 	int n, cpu_family, apic_id, smt_bits, core_bits = 0;
 	uint32_t descs[4], lextmode;
@@ -60,9 +60,9 @@ x86_cpu_topology(struct cpu_info *ci)
 	cpu_family = CPUID2FAMILY(ci->ci_signature);
 
 	/* Initial values. */
-	ci->ci_packageid = apic_id;
-	ci->ci_coreid = 0;
-	ci->ci_smtid = 0;
+	ci->ci_package_id = apic_id;
+	ci->ci_core_id = 0;
+	ci->ci_smt_id = 0;
 
 	switch (cpu_vendor) {
 	case CPUVENDOR_INTEL:
@@ -161,14 +161,14 @@ x86_cpu_topology(struct cpu_info *ci)
 	}
 
 	if (smt_bits + core_bits) {
-		ci->ci_packageid = apic_id >> (smt_bits + core_bits);
+		ci->ci_package_id = apic_id >> (smt_bits + core_bits);
 	}
 	if (core_bits) {
 		u_int core_mask = __BITS(smt_bits, smt_bits + core_bits - 1);
-		ci->ci_coreid = __SHIFTOUT(apic_id, core_mask);
+		ci->ci_core_id = __SHIFTOUT(apic_id, core_mask);
 	}
 	if (smt_bits) {
 		u_int smt_mask = __BITS(0, smt_bits - 1);
-		ci->ci_smtid = __SHIFTOUT(apic_id, smt_mask);
+		ci->ci_smt_id = __SHIFTOUT(apic_id, smt_mask);
 	}
 }

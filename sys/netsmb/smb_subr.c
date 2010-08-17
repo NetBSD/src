@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_subr.c,v 1.34 2009/04/18 14:58:07 tsutsui Exp $	*/
+/*	$NetBSD: smb_subr.c,v 1.34.2.1 2010/08/17 06:47:50 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_subr.c,v 1.34 2009/04/18 14:58:07 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_subr.c,v 1.34.2.1 2010/08/17 06:47:50 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,7 +96,7 @@ char *
 smb_strdup(const char *s)
 {
 	char *p;
-	int len;
+	size_t len;
 
 	len = s ? strlen(s) + 1 : 1;
 	p = malloc(len, M_SMBSTR, M_WAITOK);
@@ -111,10 +111,10 @@ smb_strdup(const char *s)
  * duplicate string from a user space.
  */
 char *
-smb_strdupin(char *s, int maxlen)
+smb_strdupin(char *s, size_t maxlen)
 {
 	char *p, bt;
-	int len = 0;
+	size_t len = 0;
 
 	for (p = s; ;p++) {
 		if (copyin(p, &bt, 1))
@@ -134,7 +134,7 @@ smb_strdupin(char *s, int maxlen)
  * duplicate memory block from a user space.
  */
 void *
-smb_memdupin(void *umem, int len)
+smb_memdupin(void *umem, size_t len)
 {
 	char *p;
 
@@ -160,7 +160,7 @@ smb_memfree(void *s)
 }
 
 void *
-smb_zmalloc(unsigned long size, struct malloc_type *type, int flags)
+smb_zmalloc(size_t size, struct malloc_type *type, int flags)
 {
 
 	return malloc(size, type, flags | M_ZERO);
@@ -179,12 +179,12 @@ smb_strtouni(u_int16_t *dst, const char *src)
 void
 m_dumpm(struct mbuf *m) {
 	char *p;
-	int len;
+	size_t len;
 	printf("d=");
 	while(m) {
-		p=mtod(m,char *);
-		len=m->m_len;
-		printf("(%d)",len);
+		p = mtod(m,char *);
+		len = m->m_len;
+		printf("(%zu)", len);
 		while(len--){
 			printf("%02x ",((int)*(p++)) & 0xff);
 		}
@@ -315,7 +315,7 @@ smb_copy_iconv(struct mbchain *mbp, const char *src, char *dst, size_t len)
 
 int
 smb_put_dmem(struct mbchain *mbp, struct smb_vc *vcp, const char *src,
-	int size, int caseopt)
+	size_t size, int caseopt)
 {
 	struct iconv_drv *dp = vcp->vc_toserver;
 

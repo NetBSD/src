@@ -1,4 +1,4 @@
-/*	$NetBSD: rt2560.c,v 1.22.2.1 2010/04/30 14:43:20 uebayasi Exp $	*/
+/*	$NetBSD: rt2560.c,v 1.22.2.2 2010/08/17 06:46:11 uebayasi Exp $	*/
 /*	$OpenBSD: rt2560.c,v 1.15 2006/04/20 20:31:12 miod Exp $  */
 /*	$FreeBSD: rt2560.c,v 1.3 2006/03/21 21:15:43 damien Exp $*/
 
@@ -24,7 +24,7 @@
  * http://www.ralinktech.com/
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rt2560.c,v 1.22.2.1 2010/04/30 14:43:20 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rt2560.c,v 1.22.2.2 2010/08/17 06:46:11 uebayasi Exp $");
 
 
 #include <sys/param.h>
@@ -61,10 +61,6 @@ __KERNEL_RCSID(0, "$NetBSD: rt2560.c,v 1.22.2.1 2010/04/30 14:43:20 uebayasi Exp
 
 #include <dev/ic/rt2560reg.h>
 #include <dev/ic/rt2560var.h>
-
-#include <dev/pci/pcireg.h>
-#include <dev/pci/pcivar.h>
-#include <dev/pci/pcidevs.h>
 
 #ifdef RAL_DEBUG
 #define DPRINTF(x)	do { if (rt2560_debug > 0) printf x; } while (0)

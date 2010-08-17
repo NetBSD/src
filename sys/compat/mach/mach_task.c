@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_task.c,v 1.71 2008/04/28 20:23:44 martin Exp $ */
+/*	$NetBSD: mach_task.c,v 1.71.20.1 2010/08/17 06:45:53 uebayasi Exp $ */
 
 /*-
  * Copyright (c) 2002-2003, 2008 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include "opt_compat_darwin.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_task.c,v 1.71 2008/04/28 20:23:44 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_task.c,v 1.71.20.1 2010/08/17 06:45:53 uebayasi Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -665,33 +665,43 @@ mach_sys_task_for_pid(struct lwp *l, const struct mach_sys_task_for_pid_args *ua
 	    l, MACH_PORT_TYPE_ALL_RIGHTS)) == NULL)
 		return EPERM;
 
-	if ((t = pfind(SCARG(uap, pid))) == NULL)
+	mutex_enter(proc_lock);
+	if ((t = proc_find(SCARG(uap, pid))) == NULL) {
+		mutex_exit(proc_lock);
 		return ESRCH;
+	}
+	mutex_enter(t->p_lock);
+	mutex_exit(proc_lock);
 
 	/* Allowed only if the UID match, if setuid, or if superuser */
 	if ((kauth_cred_getuid(t->p_cred) != kauth_cred_getuid(l->l_cred) ||
 	    ISSET(t->p_flag, PK_SUGID)) && (error = kauth_authorize_generic(l->l_cred,
-	    KAUTH_GENERIC_ISSUSER, NULL)) != 0)
-			    return (error);
+	    KAUTH_GENERIC_ISSUSER, NULL)) != 0) {
+		mutex_exit(t->p_lock);
+		return (error);
+	}
 
 	/* This will only work on a Mach process */
 	if ((t->p_emul != &emul_mach) &&
 #ifdef COMPAT_DARWIN
 	    (t->p_emul != &emul_darwin) &&
 #endif
-	    1)
+	    1) {
+		mutex_exit(t->p_lock);
 		return EINVAL;
+	}
+	mutex_exit(t->p_lock);
 
+	/* XXX: Unlocked, broken. */
 	med = t->p_emuldata;
+	mr = mach_right_get(med->med_kernel, l, MACH_PORT_TYPE_SEND, 0);
+	if (mr) {
+		error = copyout(&mr->mr_name, SCARG(uap, t),
+		    sizeof(mr->mr_name));
+	} else {
+		error = EINVAL;
+	}
 
-	if ((mr = mach_right_get(med->med_kernel, l,
-	    MACH_PORT_TYPE_SEND, 0)) == NULL)
-		return EINVAL;
-
-	if ((error = copyout(&mr->mr_name, SCARG(uap, t),
-	    sizeof(mr->mr_name))) != 0)
-		return error;
-
-	return 0;
+	return error;
 }
 

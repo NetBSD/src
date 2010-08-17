@@ -1,4 +1,4 @@
-/*	$NetBSD: psh3tp.c,v 1.13 2009/12/19 07:08:23 kiyohara Exp $	*/
+/*	$NetBSD: psh3tp.c,v 1.13.2.1 2010/08/17 06:44:30 uebayasi Exp $	*/
 /*
  * Copyright (c) 2005 KIYOHARA Takashi
  * All rights reserved.
@@ -213,7 +213,7 @@ static void
 psh3tp_enable(struct psh3tp_softc *sc __unused)
 {
 
-	DPRINTFN(2, ("%s: enable\n", sc->sc_dev.dv_xname));
+	DPRINTFN(2, ("%s: enable\n", device_xname(sc->sc_dev)));
 	intc_intr_enable(SH7709_INTEVT2_IRQ2);
 }
 
@@ -226,7 +226,7 @@ static void
 psh3tp_disable(struct psh3tp_softc *sc)
 {
 
-	DPRINTFN(2, ("%s: disable\n", sc->sc_dev.dv_xname));
+	DPRINTFN(2, ("%s: disable\n", device_xname(sc->sc_dev)));
 	intc_intr_disable(SH7709_INTEVT2_IRQ2);
 	callout_stop(&sc->sc_touch_ch);
 }
@@ -253,29 +253,29 @@ psh3tp_set_enable(struct psh3tp_softc *sc, int on, int child)
 
 
 static int
-psh3tp_wsmouse_enable(void *self)
+psh3tp_wsmouse_enable(void *cookie)
 {
-	struct psh3tp_softc *sc = (struct psh3tp_softc *)self;
+	struct psh3tp_softc *sc = (struct psh3tp_softc *)cookie;
 
-	DPRINTFN(1, ("%s: wsmouse enable\n", sc->sc_dev.dv_xname));
+	DPRINTFN(1, ("%s: wsmouse enable\n", device_xname(sc->sc_dev)));
 	return psh3tp_set_enable(sc, 1, PSH3TP_WSMOUSE_ENABLED);
 }
 
 
 static void
-psh3tp_wsmouse_disable(void *self)
+psh3tp_wsmouse_disable(void *cookie)
 {
-	struct psh3tp_softc *sc = (struct psh3tp_softc *)self;
+	struct psh3tp_softc *sc = (struct psh3tp_softc *)cookie;
 
-	DPRINTFN(1, ("%s: wsmouse disable\n", sc->sc_dev.dv_xname));
+	DPRINTFN(1, ("%s: wsmouse disable\n", device_xname(sc->sc_dev)));
 	psh3tp_set_enable(sc, 0, PSH3TP_WSMOUSE_ENABLED);
 }
 
 
 static int
-psh3tp_intr(void *self)
+psh3tp_intr(void *arg)
 {
-	struct psh3tp_softc *sc = (struct psh3tp_softc *)self;
+	struct psh3tp_softc *sc = (struct psh3tp_softc *)arg;
 
 	uint8_t irr0;
 	uint8_t phdr, touched;
@@ -284,13 +284,13 @@ psh3tp_intr(void *self)
 	irr0 = _reg_read_1(SH7709_IRR0);
 	if ((irr0 & IRR0_IRQ2) == 0) {
 #ifdef DIAGNOSTIC
-		printf("%s: irr0 %02x?\n", sc->sc_dev.dv_xname, irr0);
+		printf("%s: irr0 %02x?\n", device_xname(sc->sc_dev), irr0);
 #endif
 		return 0;
 	}
 
 	if (!sc->sc_enabled) {
-		DPRINTFN(1, ("%s: intr: !sc_enabled\n", sc->sc_dev.dv_xname));
+		DPRINTFN(1, ("%s: intr: !sc_enabled\n", device_xname(sc->sc_dev)));
 		intc_intr_disable(SH7709_INTEVT2_IRQ2);
 		goto served;
 	}
@@ -318,7 +318,8 @@ psh3tp_intr(void *self)
 		}
 
 		if (--tremor_timeout == 0) {
-			DPRINTF(("%s: tremor timeout!\n", sc->sc_dev.dv_xname));
+			DPRINTF(("%s: tremor timeout!\n",
+			    device_xname(sc->sc_dev)));
 			goto served;
 		}
 	} while (steady < TREMOR_THRESHOLD);
@@ -334,7 +335,7 @@ psh3tp_intr(void *self)
 		callout_reset(&sc->sc_touch_ch,
 		    hz/32, psh3tp_start_polling, sc);
 	} else
-		DPRINTFN(1, ("%s: tremor\n", sc->sc_dev.dv_xname));
+		DPRINTFN(1, ("%s: tremor\n", device_xname(sc->sc_dev)));
 served:
 	/* clear the interrupt */
 	_reg_write_1(SH7709_IRR0, irr0 & ~IRR0_IRQ2);
@@ -348,23 +349,23 @@ served:
  * Decide if we are going to report this touch as a mouse click/drag.
  */
 static void
-psh3tp_start_polling(void *self)
+psh3tp_start_polling(void *arg)
 {
-	struct psh3tp_softc *sc = (struct psh3tp_softc *)self;
+	struct psh3tp_softc *sc = (struct psh3tp_softc *)arg;
 	uint8_t phdr;
 	int rawx, rawy;
 
 	phdr = _reg_read_1(SH7709_PHDR);
 	if ((phdr & PHDR_TP_PEN_UP) == PHDR_TP_PEN_UP) {
 		DPRINTFN(2, ("%s: start: pen is not down\n",
-		    sc->sc_dev.dv_xname));
+		    device_xname(sc->sc_dev)));
 		psh3tp_stop_polling(sc);
 		return;
 	}
 
 	psh3tp_get_raw_xy(&rawx, &rawy);
 	DPRINTFN(2, ("%s: start: %4d %4d -> ",
-	    sc->sc_dev.dv_xname, rawx, rawy));
+	    device_xname(sc->sc_dev), rawx, rawy));
 
 	if (sc->sc_enabled & PSH3TP_WSMOUSE_ENABLED) {
 		DPRINTFN(2, ("mouse\n"));
@@ -388,7 +389,7 @@ psh3tp_stop_polling(struct psh3tp_softc *sc __unused)
 {
 	uint8_t irr0;
 
-	DPRINTFN(2, ("%s: stop\n", sc->sc_dev.dv_xname));
+	DPRINTFN(2, ("%s: stop\n", device_xname(sc->sc_dev)));
 
 	/* clear pending interrupt signal before re-enabling the interrupt */
 	irr0 = _reg_read_1(SH7709_IRR0);
@@ -403,9 +404,9 @@ psh3tp_stop_polling(struct psh3tp_softc *sc __unused)
  * We are reporting this touch as a mouse click/drag.
  */
 static void
-psh3tp_callout_wsmouse(void *self)
+psh3tp_callout_wsmouse(void *arg)
 {
-	struct psh3tp_softc *sc = (struct psh3tp_softc *)self;
+	struct psh3tp_softc *sc = (struct psh3tp_softc *)arg;
 	uint8_t phdr;
 	int rawx, rawy;
 	int s;
@@ -414,7 +415,7 @@ psh3tp_callout_wsmouse(void *self)
 
 	if (!sc->sc_enabled) {
 		DPRINTFN(1, ("%s: wsmouse callout: !sc_enabled\n",
-		    sc->sc_dev.dv_xname));
+		    device_xname(sc->sc_dev)));
 		splx(s);
 		return;
 	}
@@ -444,7 +445,7 @@ psh3tp_wsmouse_input(struct psh3tp_softc *sc, int rawx, int rawy)
 	tpcalib_trans(&sc->sc_tpcalib, rawx, rawy, &x, &y);
 		
 	DPRINTFN(3, ("%s: %4d %4d -> %3d %3d\n",
-	     sc->sc_dev.dv_xname, rawx, rawy, x, y));
+	     device_xname(sc->sc_dev), rawx, rawy, x, y));
 
 	wsmouse_input(sc->sc_wsmousedev,
 	    1,	/* button */
@@ -488,10 +489,10 @@ psh3tp_get_raw_xy(int *rawxp, int *rawyp)
 
 
 static int
-psh3tp_wsmouse_ioctl(void *self, u_long cmd, void *data, int flag,
+psh3tp_wsmouse_ioctl(void *cookie, u_long cmd, void *data, int flag,
 		     struct lwp *l)
 {
-	struct psh3tp_softc *sc = (struct psh3tp_softc *)self;
+	struct psh3tp_softc *sc = (struct psh3tp_softc *)cookie;
 
 	return hpc_tpanel_ioctl(&sc->sc_tpcalib, cmd, data, flag, l);
 }

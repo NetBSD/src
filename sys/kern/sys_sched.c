@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_sched.c,v 1.34 2009/10/03 22:32:56 elad Exp $	*/
+/*	$NetBSD: sys_sched.c,v 1.34.2.1 2010/08/17 06:47:31 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2008, Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_sched.c,v 1.34 2009/10/03 22:32:56 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_sched.c,v 1.34.2.1 2010/08/17 06:47:31 uebayasi Exp $");
 
 #include <sys/param.h>
 
@@ -132,7 +132,7 @@ do_sched_setparam(pid_t pid, lwpid_t lid, int policy,
 	if (pid != 0) {
 		/* Find the process */
 		mutex_enter(proc_lock);
-		p = p_find(pid, PFIND_LOCKED);
+		p = proc_find(pid);
 		if (p == NULL) {
 			mutex_exit(proc_lock);
 			return ESRCH;
@@ -382,7 +382,7 @@ sys__sched_setaffinity(struct lwp *l,
 	if (SCARG(uap, pid) != 0) {
 		/* Find the process */
 		mutex_enter(proc_lock);
-		p = p_find(SCARG(uap, pid), PFIND_LOCKED);
+		p = proc_find(SCARG(uap, pid));
 		if (p == NULL) {
 			mutex_exit(proc_lock);
 			error = ESRCH;

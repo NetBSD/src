@@ -1,4 +1,4 @@
-/*	$NetBSD: if_se.c,v 1.80.2.1 2010/04/30 14:43:49 uebayasi Exp $	*/
+/*	$NetBSD: if_se.c,v 1.80.2.2 2010/08/17 06:46:38 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1997 Ian W. Dall <ian.dall@dsto.defence.gov.au>
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_se.c,v 1.80.2.1 2010/04/30 14:43:49 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_se.c,v 1.80.2.2 2010/08/17 06:46:38 uebayasi Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -443,7 +443,7 @@ se_ifstart(struct ifnet *ifp)
 	if (len < SEMINSIZE) {
 #ifdef SEDEBUG
 		if (sc->sc_debug)
-			printf("se: packet size %d (%d) < %d\n", len,
+			printf("se: packet size %d (%zu) < %d\n", len,
 			    cp - (u_char *)sc->sc_tbuf, SEMINSIZE);
 #endif
 		memset(cp, 0, SEMINSIZE - len);

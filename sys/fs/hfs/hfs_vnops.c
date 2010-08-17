@@ -1,4 +1,4 @@
-/*	$NetBSD: hfs_vnops.c,v 1.16.2.1 2010/04/30 14:44:06 uebayasi Exp $	*/
+/*	$NetBSD: hfs_vnops.c,v 1.16.2.2 2010/08/17 06:47:16 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2007 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hfs_vnops.c,v 1.16.2.1 2010/04/30 14:44:06 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hfs_vnops.c,v 1.16.2.2 2010/08/17 06:47:16 uebayasi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -385,7 +385,7 @@ hfs_vop_lookup(void *v)
 	pdp = vdp;
 	if (flags & ISDOTDOT) {
 /*printf("DOTDOT ");*/
-		VOP_UNLOCK(pdp, 0);	/* race to get the inode */
+		VOP_UNLOCK(pdp);	/* race to get the inode */
 		error = VFS_VGET(vdp->v_mount, dp->h_parent, &tdp);
 		vn_lock(pdp, LK_EXCLUSIVE | LK_RETRY);
 		if (error != 0)

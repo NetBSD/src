@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.151.2.1 2010/04/30 14:39:22 uebayasi Exp $
+# $NetBSD: GENERIC,v 1.151.2.2 2010/08/17 06:44:22 uebayasi Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/hp300/conf/std.hp300"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.151.2.1 $"
+#ident 		"GENERIC-$Revision: 1.151.2.2 $"
 
 maxusers	32		# estimated number of users
 
@@ -67,7 +67,7 @@ options 	P1003_1B_SEMAPHORE # p1003.1b semaphore support
 #options 	DEBUG		# Enable misc. kernel debugging code
 #options 	KMEMSTATS	# kernel memory statistics (vmstat -m)
 options 	DDB		# Kernel Dynamic Debugger
-#options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
+options 	DDB_HISTORY_SIZE=512	# Enable history editing in DDB
 #options 	KGDB		# remote debugger
 #makeoptions	DEBUG="-g"	# netbsd.gdb with full debugging symbols
 
@@ -113,7 +113,7 @@ file-system	UMAPFS		# NULLFS + uid and gid remapping
 file-system	UNION		# Union filesystem (req. for FDESC)
 file-system	CODA		# Coda File System; also needs vcoda (below)
 file-system	PTYFS		# /dev/pts/N support
-#file-system	TMPFS		# Efficient memory file-system
+file-system	TMPFS		# Efficient memory file-system
 #file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
 
 # Filesystem options
@@ -145,6 +145,7 @@ options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
 options 	PFIL_HOOKS	# packet filter hooks
 options 	IPFILTER_LOG	# ipmon(8) log support
 options 	IPFILTER_LOOKUP	# ippool(8) support
+options 	IPFILTER_COMPAT # Compat for IP-Filter
 #options 	IPFILTER_DEFAULT_BLOCK	# block all packets by default
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 

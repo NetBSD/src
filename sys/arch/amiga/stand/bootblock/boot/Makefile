@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.41.2.1 2010/04/30 14:39:06 uebayasi Exp $
+#	$NetBSD: Makefile,v 1.41.2.2 2010/08/17 06:43:58 uebayasi Exp $
 
 .include <bsd.sys.mk>		# for HOST_SH
 
@@ -77,7 +77,7 @@ INCPATH = -nostdinc -I${DIR_TOP} -I${DIR_TOP}/lib/libsa
 INCPATH += -I${DIR_TOP}/../common/dist/zlib
 INCPATH += -I${.CURDIR}
 INCPATH += -I${.CURDIR}/../../.. -I${.OBJDIR}
-INCPATH += -I${.CURDIR}/../aout2bb
+INCPATH += -I${.CURDIR}/../elf2bb
 
 AFLAGS += -m68030 -l
 CAFLAGS += -Wa,-l -Wa,-m68030 ${INCPATH}
@@ -89,7 +89,7 @@ CFLAGS+= -Wall -Wmissing-prototypes -Wstrict-prototypes -Wpointer-arith
 
 .c.o:
 	${CC} ${CFLAGS} -S $< -o $*.s
-	${TXLT} < $*.s | ${AS} ${AFLAGS} -o $*.o
+	${TXLT} < $*.s | ${AS} ${AFLAGS} -o $@
 	rm $*.s
 
 .s.o: ; ${CC} ${CAFLAGS} ${COPTS} -x assembler-with-cpp -o $@ -c $<
@@ -111,7 +111,7 @@ xxstart.o: ${.CURDIR}/bbstart.s
 libboot.a: ${OBJS}
 	${AR} r $@ $> && ${RANLIB} $@
 
-.PHONY:	vers.c
+vers.o: vers.c
 vers.c:	${.CURDIR}/version
 	${HOST_SH} ${DIR_TOP}/conf/newvers_stand.sh -N ${.CURDIR}/version "amiga"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_exec.c,v 1.73 2009/03/29 01:02:49 mrg Exp $	*/
+/*	$NetBSD: ibcs2_exec.c,v 1.73.2.1 2010/08/17 06:45:39 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1998 Scott Bartram
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_exec.c,v 1.73 2009/03/29 01:02:49 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_exec.c,v 1.73.2.1 2010/08/17 06:45:39 uebayasi Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_syscall_debug.h"
@@ -70,52 +70,51 @@ extern char ibcs2_sigcode[], ibcs2_esigcode[];
 void syscall(void);
 #endif
 
-#ifdef IBCS2_DEBUG
+#ifdef DEBUG_IBCS2
 int ibcs2_debug = 1;
 #endif
 
 struct uvm_object *emul_ibcs2_object;
 
 struct emul emul_ibcs2 = {
-	"ibcs2",
-	"/emul/ibcs2",
+	.e_name =		"ibcs2",
+	.e_path =		"/emul/ibcs2",
 #ifndef __HAVE_MINIMAL_EMUL
-	0,
-	native_to_ibcs2_errno,
-	IBCS2_SYS_syscall,
-	IBCS2_SYS_NSYSENT,
+	.e_flags =		0,
+	.e_errno =		native_to_ibcs2_errno,
+	.e_nosys =		IBCS2_SYS_syscall,
+	.e_nsysent =		IBCS2_SYS_NSYSENT,
 #endif
-	ibcs2_sysent,
+	.e_sysent =		ibcs2_sysent,
 #ifdef SYSCALL_DEBUG
-	ibcs2_syscallnames,
+	.e_syscallnames =	ibcs2_syscallnames,
 #else
-	NULL,
+	.e_syscallnames =	NULL,
 #endif
-	ibcs2_sendsig,
-	trapsignal,
-	NULL,	/* e_tracesig */
-	ibcs2_sigcode,
-	ibcs2_esigcode,
-	&emul_ibcs2_object,
-	ibcs2_setregs,
-	ibcs2_e_proc_exec,
-	NULL,	/* e_proc_fork */
-	NULL,	/* e_proc_exit */
-	NULL,	/* e_lwp_fork */
-	NULL,	/* e_lwp_exec */
+	.e_sendsig =		ibcs2_sendsig,
+	.e_trapsignal =		trapsignal,
+	.e_tracesig =		NULL,
+	.e_sigcode =		ibcs2_sigcode,
+	.e_esigcode =		ibcs2_esigcode,
+	.e_sigobject =		&emul_ibcs2_object,
+	.e_setregs =		ibcs2_setregs,
+	.e_proc_exec =		ibcs2_e_proc_exec,
+	.e_proc_fork =		NULL,
+	.e_proc_exit =		NULL,
+	.e_lwp_fork =		NULL,
+	.e_lwp_exit =		NULL,
 #ifdef __HAVE_SYSCALL_INTERN
-	ibcs2_syscall_intern,
+	.e_syscall_intern =	ibcs2_syscall_intern,
 #else
-	syscall,
+	.e_syscall_intern =	syscall,
 #endif
-	NULL,	/* e_sysctlovly */
-	NULL,	/* e_fault */
-
-	uvm_default_mapaddr,
-	NULL,	/* e_usertrap */
-	NULL,	/* e_sa */
-	0,	/* e_ucsize */
-	NULL,	/* e_startlwp */
+	.e_sysctlovly =		NULL,
+	.e_fault =		NULL,
+	.e_vm_default_addr =	uvm_default_mapaddr,
+	.e_usertrap =		NULL,
+	.e_sa =			NULL,
+	.e_ucsize =		0,
+	.e_startlwp =		NULL
 };
 
 /*

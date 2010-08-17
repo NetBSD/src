@@ -259,4 +259,38 @@ radeondrm_modcmd(modcmd_t cmd, void *arg)
 }
 #endif /* _MODULE */
 
+
+#include <dev/firmload.h>
+
+int radeon_load_a_microcode(const char *fmt, const char *chip_name, void **codep, size_t *sizep)
+{
+	firmware_handle_t fh;
+	char fw_name[30];
+	int error;
+
+	snprintf(fw_name, sizeof(fw_name), fmt, chip_name);
+	if ((error = firmware_open("radeon", fw_name, &fh)) != 0) {
+		DRM_ERROR("Cannot open radeon/%s firmware: %d\n", fw_name, error);
+		return error;
+	}
+	*sizep = firmware_get_size(fh);
+	if ((*codep = firmware_malloc(*sizep)) == NULL) {
+		DRM_ERROR("Cannot alloc memory for radeon/%s firmware\n", chip_name);
+		firmware_close(fh);
+		return ENOMEM;
+	}
+	if ((error = firmware_read(fh, 0, *codep, *sizep)) != 0) {
+		DRM_ERROR("Cannot read radeon/%s firmware: %d\n", chip_name, error);
+		firmware_free(*codep, *sizep);
+	}
+	firmware_close(fh);
+
+	return error;
+}
+
+void radeon_free_a_microcode(void *code, size_t size)
+{
+	firmware_free(code, size);
+}
+
 #endif

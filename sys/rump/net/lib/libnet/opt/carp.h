@@ -1,3 +1,3 @@
-/*	$NetBSD: carp.h,v 1.1 2008/10/06 00:27:06 pooka Exp $	*/
+/*	$NetBSD: carp.h,v 1.1.22.1 2010/08/17 06:48:04 uebayasi Exp $	*/
 
-/* dummy */
+#define NCARP 1

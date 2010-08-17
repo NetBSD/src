@@ -1,4 +1,4 @@
-/*	$NetBSD: gumstixreg.h,v 1.4 2009/08/09 07:10:13 kiyohara Exp $  */
+/*	$NetBSD: gumstixreg.h,v 1.4.2.1 2010/08/17 06:44:17 uebayasi Exp $  */
 /*
  * Copyright (C) 2005, 2006 WIDE Project and SOUM Corporation.
  * All rights reserved.
@@ -33,22 +33,21 @@
 #ifndef _EVBARM_GUMSTIXREG_H_
 #define _EVBARM_GUMSTIXREG_H_
 
-#include <arm/xscale/pxa2x0reg.h>
-
-
 /*
  * Logical mapping for onboard/integrated peripherals
  * that are used while bootstrapping.
  */
-#define GUMSTIX_IO_AREA_VBASE	0xfd000000
-#define GUMSTIX_INTCTL_VBASE	0xfd000000
-#define GUMSTIX_CLKMAN_VBASE	0xfd100000
-#define GUMSTIX_GPIO_VBASE	0xfd200000
-#define GUMSTIX_FFUART_VBASE	0xfd300000
-#define GUMSTIX_STUART_VBASE	0xfd400000
-#define GUMSTIX_BTUART_VBASE	0xfd500000
-#define GUMSTIX_HWUART_VBASE	0xfd600000
-#define GUMSTIX_LCDC_VBASE	0xfd700000
+#define GUMSTIX_IO_AREA_VBASE		0xfd000000
+#define GUMSTIX_INTCTL_VBASE		0xfd000000
+#define GUMSTIX_CLKMAN_VBASE		0xfd100000
+#define GUMSTIX_GPIO_VBASE		0xfd200000
+#define GUMSTIX_FFUART_VBASE		0xfd300000
+#define GUMSTIX_STUART_VBASE		0xfd400000
+#define GUMSTIX_BTUART_VBASE		0xfd500000
+#define GUMSTIX_HWUART_VBASE		0xfd600000
+#define GUMSTIX_LCDC_VBASE		0xfd700000
+
+#define OVERO_L4_PERIPHERAL_VBASE	0x90000000
 
 
 #define ioreg_read(a)		(*(volatile unsigned *)(a))

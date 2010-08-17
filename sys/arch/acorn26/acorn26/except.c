@@ -1,4 +1,4 @@
-/* $NetBSD: except.c,v 1.23.2.1 2010/04/30 14:39:01 uebayasi Exp $ */
+/* $NetBSD: except.c,v 1.23.2.2 2010/08/17 06:43:49 uebayasi Exp $ */
 /*-
  * Copyright (c) 1998, 1999, 2000 Ben Harris
  * All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: except.c,v 1.23.2.1 2010/04/30 14:39:01 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: except.c,v 1.23.2.2 2010/08/17 06:43:49 uebayasi Exp $");
 
 #include "opt_ddb.h"
 
@@ -202,15 +202,17 @@ do_fault(struct trapframe *tf, struct lwp *l,
 	int error;
 	struct pcb *pcb;
 	void *onfault;
+	bool user;
 
 	if (pmap_fault(map->pmap, va, atype))
 		return;
 
 	pcb = lwp_getpcb(l);
 	onfault = pcb->pcb_onfault;
+	user = (tf->tf_r15 & R15_MODE) == R15_MODE_USR;
 
 	if (cpu_intr_p()) {
-		KASSERT((tf->tf_r15 & R15_MODE) != R15_MODE_USR);
+		KASSERT(!user);
 		error = EFAULT;
 	} else {
 		pcb->pcb_onfault = NULL;
@@ -234,7 +236,7 @@ do_fault(struct trapframe *tf, struct lwp *l,
 			return;
 		}
 #endif
-		if ((tf->tf_r15 & R15_MODE) != R15_MODE_USR) {
+		if (!user) {
 #ifdef DDB
 			db_printf("Unhandled data abort in kernel mode\n");
 			kdb_trap(T_FAULT, tf);
@@ -260,6 +262,8 @@ do_fault(struct trapframe *tf, struct lwp *l,
 		ksi.ksi_code = (error == EPERM) ? SEGV_ACCERR : SEGV_MAPERR;
 		ksi.ksi_addr = (void *) va;
 		trapsignal(l, &ksi);
+	} else if (!user) {
+		ucas_ras_check(tf);
 	}
 }
 

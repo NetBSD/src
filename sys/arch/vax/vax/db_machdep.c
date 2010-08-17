@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.54 2009/11/26 00:19:23 matt Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.54.2.1 2010/08/17 06:45:25 uebayasi Exp $	*/
 
 /* 
  * :set tabs=4
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.54 2009/11/26 00:19:23 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.54.2.1 2010/08/17 06:45:25 uebayasi Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -440,7 +440,7 @@ db_stack_trace_print(
 	 */
 	if (have_addr) {
 		if (trace_proc) {
-			p = p_find((int)addr, PFIND_LOCKED);
+			p = proc_find_raw((int)addr);
 			/* Try to be helpful by looking at it as if it were decimal */
 			if (p == NULL) {
 				u_int	tpid = 0;
@@ -455,7 +455,7 @@ db_stack_trace_print(
 					tpid = tpid * 10 + digit;
 					foo = foo << 4;
 				}
-				p = p_find(tpid, PFIND_LOCKED);
+				p = proc_find_raw(tpid);
 				if (p == NULL) {
 					(*pr)("	 No such process.\n");
 					return;
@@ -632,7 +632,8 @@ db_mach_cpu(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 
 const struct db_command db_machine_command_table[] = {
 #ifdef MULTIPROCESSOR
-	{ DDB_ADD_CMD("cpu",	db_mach_cpu,	0,	NULL,NULL,NULL) },
+	{ DDB_ADD_CMD("cpu",	db_mach_cpu,	0,
+	  "switch to another cpu", "cpu-no", NULL) },
 #endif
 	{ DDB_ADD_CMD(NULL,NULL,0,NULL,NULL,NULL) },
 };

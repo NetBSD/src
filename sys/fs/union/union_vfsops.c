@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vfsops.c,v 1.61 2010/01/08 11:35:09 pooka Exp $	*/
+/*	$NetBSD: union_vfsops.c,v 1.61.2.1 2010/08/17 06:47:23 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1994 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.61 2010/01/08 11:35:09 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.61.2.1 2010/08/17 06:47:23 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,7 +96,7 @@ __KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.61 2010/01/08 11:35:09 pooka Exp 
 
 #include <fs/union/union.h>
 
-MODULE(MODULE_CLASS_VFS, union, "layerfs");
+MODULE(MODULE_CLASS_VFS, union, NULL);
 
 VFS_PROTOS(union);
 
@@ -208,7 +208,10 @@ union_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	 * supports whiteout operations
 	 */
 	if ((mp->mnt_flag & MNT_RDONLY) == 0) {
-		error = VOP_WHITEOUT(um->um_uppervp, (struct componentname *) 0, LOOKUP);
+		vn_lock(um->um_uppervp, LK_EXCLUSIVE | LK_RETRY);
+		error = VOP_WHITEOUT(um->um_uppervp,
+		    (struct componentname *) 0, LOOKUP);
+		VOP_UNLOCK(um->um_uppervp);
 		if (error)
 			goto bad;
 	}

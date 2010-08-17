@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vnops.c,v 1.140.2.1 2010/04/30 14:44:15 uebayasi Exp $	*/
+/*	$NetBSD: kernfs_vnops.c,v 1.140.2.2 2010/08/17 06:47:37 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.140.2.1 2010/04/30 14:44:15 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.140.2.2 2010/08/17 06:47:37 uebayasi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -1168,6 +1168,7 @@ kernfs_readdir(void *v)
 				if (*dp == NODEV ||
 				    !vfinddev(*dp, kt->kt_vtype, &fvp))
 					continue;
+				vrele(fvp);
 			}
 			if (kt->kt_tag == KFSmsgbuf) {
 				if (!msgbufenabled
@@ -1250,6 +1251,7 @@ kernfs_readdir(void *v)
 				if (*dp == NODEV ||
 				    !vfinddev(*dp, kt->kt_vtype, &fvp))
 					continue;
+				vrele(fvp);
 			}
 			d.d_namlen = kt->kt_namlen;
 			if ((error = kernfs_setdirentfileno(&d, i, kfs,
@@ -1462,7 +1464,7 @@ kernfs_inactive(void *v)
 	default:
 		break;
 	}
-	VOP_UNLOCK(vp, 0);
+	VOP_UNLOCK(vp);
 	return (0);
 }
 

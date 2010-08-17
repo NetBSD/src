@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.388.2.2 2010/07/29 09:47:40 uebayasi Exp $
+.\"	$NetBSD: options.4,v 1.388.2.3 2010/08/17 06:40:02 uebayasi Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -900,15 +900,12 @@ See
 .Xr mount_tmpfs 8
 for details.
 .It Cd file-system PUFFS
-.Bq Em EXPERIMENTAL
 Includes kernel support for the pass-to-userspace framework file system.
 It can be used to implement file system functionality in userspace.
 See
 .Xr puffs 3
-and
-.Xr puffs 4
 for more details.
-This option is required for sshfs:
+This enables for example sshfs:
 .Xr mount_psshfs 8 .
 .El
 .Ss File System Options
@@ -1477,14 +1474,6 @@ even if
 reports false.
 Useful for systems where the cycle counter doesn't run at a constant rate
 (e.g. Soekris boxes).
-.It Cd options XSERVER
-Compiles in kernel support for
-.Tn X11
-on architectures that still use (or can use) the legacy
-.Em pccons
-console drivers rather than
-.Xr wscons 4 .
-These include bebox, i386, shark.
 .It Cd options XSERVER_DDB
 A supplement to XSERVER that adds support for entering
 .Xr ddb 4
@@ -1529,9 +1518,7 @@ is not invoked directly.
 has no impact on protocols other than
 .Tn IP ,
 such as
-.Tn CLNP
-or
-.Tn XNS ) .
+.Tn CLNP ) .
 .Em GATEWAY
 option also compiles IPv4 and IPv6 fast forwarding code into the kernel.
 .It Cd options ICMPPRINTFS
@@ -1840,14 +1827,6 @@ may perform better with
 .Em MCLSHIFT
 set to 12 or 13, giving mbuf cluster sizes of 4096 and 8192 bytes,
 respectively.
-.It Cd options NS
-Include support for the
-.Tn Xerox
-.Tn XNS
-protocol stack.
-See
-.Xr ns 4
-for details.
 .It Cd options ISO,TPIP
 Include support for the ubiquitous
 .Tn OSI
@@ -1943,10 +1922,17 @@ This option assumes
 .It Cd options IPFILTER_LOG
 This option, in conjunction with
 .Em pseudo-device ipfilter ,
-enables logging of IP packets using ip-filter.
+enables logging of IP packets using IP-Filter.
+.It Cd options IPFILTER_LOOKUP
+This option enables the
+IP-Filter
+.Xr ippool 8
+functionality to be enabled.
+.It Cd options IPFILTER_COMPAT
+This option enables older IP-Filter binaries to work.
 .It Cd options IPFILTER_DEFAULT_BLOCK
-This option sets the default policy of ip-filter.
-If it is set, ip-filter will block packets by default.
+This option sets the default policy of IP-Filter.
+If it is set, IP-Filter will block packets by default.
 .It Cd options BRIDGE_IPF
 This option causes
 .Em bridge
@@ -2514,6 +2500,20 @@ emulators and X servers to run BIOS code, e.g., for some VESA routines.
 .It Cd options USER_LDT
 Include i386-specific system calls for modifying the local descriptor table,
 used by Windows emulators.
+.It Cd options PAE
+Enable
+.Tn PAE (Physical Address Extension)
+mode.
+.Tn PAE
+permits up to 36 bits physical addressing (64GB of physical memory), and
+turns physical addresses to 64 bits entities in the memory management
+subsystem.
+Userland virtual address space remains at 32 bits (4GB).
+.Tn PAE
+mode is required to enable the
+.Tn NX/XD (No-eXecute/eXecute Disable)
+bit for pages, which allows marking certain ones as not being executable.
+Any attempt to execute code from such a page will raise an exception.
 .It Cd options REALBASEMEM=integer
 Overrides the base memory size passed in from the boot block.
 (Value given in kilobytes.)
@@ -2800,7 +2800,6 @@ bolded
 .Xr inet 4 ,
 .Xr iso 4 ,
 .Xr md 4 ,
-.Xr ns 4 ,
 .Xr pcibios 4 ,
 .Xr pcmcia 4 ,
 .Xr ppp 4 ,

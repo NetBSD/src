@@ -1,4 +1,4 @@
-/*	$NetBSD: marvellvar.h,v 1.1.2.2 2010/04/30 14:43:28 uebayasi Exp $	*/
+/*	$NetBSD: marvellvar.h,v 1.1.2.3 2010/08/17 06:46:17 uebayasi Exp $	*/
 /*
  * Copyright (c) 2009 KIYOHARA Takashi
  * All rights reserved.
@@ -34,6 +34,8 @@ enum marvell_tags {
 	MARVELL_TAG_SDRAM_CS2,
 	MARVELL_TAG_SDRAM_CS3,
 
+	MARVELL_TAG_MAX,
+
 	MARVELL_TAG_UNDEFINED = -1,
 };
 
@@ -53,6 +55,13 @@ struct marvell_attach_args {
 	bus_dma_tag_t mva_dmat;
 	int mva_irq;
 };
+
+#include "locators.h"
+
+#define MVA_UNIT_DEFAULT	GTCF_UNIT_DEFAULT
+#define MVA_OFFSET_DEFAULT	GTCF_OFFSET_DEFAULT
+#define MVA_IRQ_DEFAULT		GTCF_IRQ_DEFAULT
+
 
 void *marvell_intr_establish(int, int, int (*)(void *), void *);
 int marvell_winparams_by_tag(device_t, int, int *, int *, uint64_t *,

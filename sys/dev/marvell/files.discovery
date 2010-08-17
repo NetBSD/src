@@ -1,4 +1,4 @@
-#	$NetBSD: files.discovery,v 1.10.96.1 2010/04/30 14:43:27 uebayasi Exp $
+#	$NetBSD: files.discovery,v 1.10.96.2 2010/08/17 06:46:16 uebayasi Exp $
 #
 # Config file and device description for machine-independent support for
 # the Marvell (formerly Galileo Technology) Discovery system controllers.
@@ -28,16 +28,14 @@ device	gt: gt
 file	dev/marvell/gt.c		gt
 
 # PCI Interface
-define	gtpci
-file	dev/marvell/gtpci.c		gtpci & gtpci_gt needs-flag
 device	gtpci: pcibus
+file	dev/marvell/gtpci.c		gtpci & (gtpci_gt|gtpci_mbus) needs-flag
 attach	gtpci at gt with gtpci_gt
 
 # PCI Express Interface
-#define	mvpex
-#file	dev/marvell/mvpex.c		mvpex & (mvpex_gt|mvpex_mbus) needs-flag
-#device	mvpex: pcibus
-#attach	mvpex at gt with mvpex_gt
+device	mvpex: pcibus
+file	dev/marvell/mvpex.c		mvpex & (mvpex_gt|mvpex_mbus) needs-flag
+attach	mvpex at gt with mvpex_gt
 
 # Fast ethernet
 define	gfec { [port = -1], [irq = -1] }
@@ -58,39 +56,36 @@ attach	obio at gt
 file	dev/marvell/obio.c		obio
 
 # Serial-ATA II Host Controller (SATAHC)
-#attach	mvsata at gt with mvsata_gt
-#file	dev/marvell/mvsata_mv.c		mvsata_gt | mvsata_mbus
+attach	mvsata at gt with mvsata_gt
+file	dev/marvell/mvsata_mv.c		mvsata_gt | mvsata_mbus
 
 # Gigabit Ethernet Controller Interface
-#define	mvgbec { [port = -1], [irq = -1] }
-#device	mvgbec: mvgbec
-#attach	mvgbec at gt with mvgbec_gt
-#device	mvgbe: ether, ifnet, arp, mii
-#attach	mvgbe at mvgbec
-#file	dev/marvell/if_mvgbe.c		mvgbec | mvgbe
+define	mvgbec { [port = -1], [irq = -1] }
+device	mvgbec: mvgbec
+attach	mvgbec at gt with mvgbec_gt
+device	mvgbe: ether, ifnet, arp, mii
+attach	mvgbe at mvgbec
+file	dev/marvell/if_mvgbe.c		mvgbec | mvgbe
 
 # USB 2.0 Interface
 #attach	ehci at gt with mvusb_gt
 #file	dev/marvell/ehci_mv.c		mvusb_gt | mvusb_mbus
 
 # Cryptographic Engines and Security Accelerator
-#define	mvcesa
+#device	mvcesa: opencrypto
 #file	dev/marvell/mvcesa.c		mvcesa
-#device  mvcesa: opencrypto
-#attach  mvcesa at gt with mvcesa_gt
+#attach	mvcesa at gt with mvcesa_gt
 
 # Two-Wire Serial Interface
-define	gttwsi
+device	gttwsi: i2cbus
 file	dev/marvell/gttwsi.c		gttwsi
-device	gttwsi: i2cbus, gttwsi
 attach	gttwsi at gt with gttwsi_gt
 
 # UART Interface
-#attach	com at gt with mvuart_gt
-#file	dev/marvell/com_mv.c		mvuart_gt | mvuart_mbus
+attach	com at gt with mvuart_gt
+file	dev/marvell/com_mv.c		mvuart_gt | mvuart_mbus
 
 # IDMA Controller and XOR Engine
-#define	gtidmac
-#file	dev/marvell/gtidmac.c		gtidmac
-#device	gtidmac: dmover_service
-#attach	gtidmac at gt with gtidmac_gt
+device	gtidmac: dmover_service
+file	dev/marvell/gtidmac.c		gtidmac
+attach	gtidmac at gt with gtidmac_gt

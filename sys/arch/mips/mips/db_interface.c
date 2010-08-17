@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.66 2009/12/14 00:46:06 matt Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.66.2.1 2010/08/17 06:44:52 uebayasi Exp $	*/
 
 /*
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.66 2009/12/14 00:46:06 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.66.2.1 2010/08/17 06:44:52 uebayasi Exp $");
 
 #include "opt_cputype.h"	/* which mips CPUs do we support? */
 #include "opt_ddb.h"
@@ -72,11 +72,6 @@ void db_mfcr_cmd(db_expr_t, bool, db_expr_t, const char *);
 void db_mtcr_cmd(db_expr_t, bool, db_expr_t, const char *);
 #endif
 
-static void	kdbpoke_4(vaddr_t addr, int newval);
-static void	kdbpoke_2(vaddr_t addr, short newval);
-static void	kdbpoke_1(vaddr_t addr, char newval);
-static short	kdbpeek_2(vaddr_t addr);
-static char	kdbpeek_1(vaddr_t addr);
 vaddr_t		MachEmulateBranch(struct frame *, vaddr_t, unsigned, int);
 
 paddr_t kvtophys(vaddr_t);
@@ -89,63 +84,6 @@ kdbpeek(vaddr_t addr)
 	if (addr == 0 || (addr & 3))
 		return 0;
 	return *(int *)addr;
-}
-#endif
-
-static short
-kdbpeek_2(vaddr_t addr)
-{
-
-	return *(short *)addr;
-}
-
-static char
-kdbpeek_1(vaddr_t addr)
-{
-
-	return *(char *)addr;
-}
-
-/*
- * kdbpoke -- write a value to a kernel virtual address.
- *    XXX should handle KSEG2 addresses and check for unmapped pages.
- *    XXX user-space addresess?
- */
-static void
-kdbpoke_4(vaddr_t addr, int newval)
-{
-
-	*(int*) addr = newval;
-	wbflush();
-}
-
-static void
-kdbpoke_2(vaddr_t addr, short newval)
-{
-
-	*(short*) addr = newval;
-	wbflush();
-}
-
-static void
-kdbpoke_1(vaddr_t addr, char newval)
-{
-	*(char*) addr = newval;
-	wbflush();
-}
-
-#if 0 /* UNUSED */
-/*
- * Received keyboard interrupt sequence.
- */
-void
-kdb_kbd_trap(int *tf)
-{
-
-	if (db_active == 0 && (boothowto & RB_KDB)) {
-		printf("\n\nkernel: keyboard interrupt\n");
-		ddb_trap(-1, tf);
-	}
 }
 #endif
 
@@ -283,15 +221,10 @@ db_set_ddb_regs(int type, mips_reg_t *tfp)
 void
 db_read_bytes(vaddr_t addr, size_t size, char *data)
 {
-	int *ip;
-	short *sp;
+	char *src = (char *)addr;
 
-	while (size >= 4)
-		ip = (int*)data, *ip = kdbpeek(addr), data += 4, addr += 4, size -= 4;
-	while (size >= 2)
-		sp = (short *)data, *sp = kdbpeek_2(addr), data += 2, addr += 2, size -= 2;
-	if (size == 1)
-		*data = kdbpeek_1(addr);
+	while (size--)
+		*data++ = *src++;
 }
 
 /*
@@ -300,31 +233,14 @@ db_read_bytes(vaddr_t addr, size_t size, char *data)
 void
 db_write_bytes(vaddr_t addr, size_t size, const char *data)
 {
-	vaddr_t p = addr;
+	char *p = (char *)addr;
 	size_t n = size;
 
-#ifdef DEBUG_DDB
-	printf("db_write_bytes(%lx, %d, %p, val %x)\n", addr, size, data,
-	       	(addr &3 ) == 0? *(u_int*)addr: -1);
-#endif
+	while (n--)
+		*p++ = *data++;
 
-	while (n >= 4) {
-		kdbpoke_4(p, *(const int *)data);
-		p += 4;
-		data += 4;
-		n -= 4;
-	}
-	if (n >= 2) {
-		kdbpoke_2(p, *(const short *)data);
-		p += 2;
-		data += 2;
-		n -= 2;
-	}
-	if (n == 1) {
-		kdbpoke_1(p, *(const char *)data);
-	}
-
-	mips_icache_sync_range((vaddr_t) addr, size);
+	wbflush();
+	mips_icache_sync_range(addr, size);
 }
 
 #ifndef KGDB

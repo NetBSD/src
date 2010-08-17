@@ -1,4 +1,4 @@
-/*	$NetBSD: umodem_common.c,v 1.17 2009/11/12 19:58:27 dyoung Exp $	*/
+/*	$NetBSD: umodem_common.c,v 1.17.2.1 2010/08/17 06:46:46 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umodem_common.c,v 1.17 2009/11/12 19:58:27 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umodem_common.c,v 1.17.2.1 2010/08/17 06:46:46 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -371,6 +371,11 @@ umodem_get_caps(usbd_device_handle dev, int *cm, int *acm,
 	const usb_cdc_union_descriptor_t *cud;
 
 	*cm = *acm = 0;
+
+	if (usbd_get_quirks(dev)->uq_flags & UQ_NO_UNION_NRM) {
+		DPRINTF(("umodem_get_caps: NO_UNION_NRM quirk - returning 0\n"));
+		return 0;
+	}
 
 	cmd = (const usb_cdc_cm_descriptor_t *)usb_find_desc_if(dev,
 							  UDESC_CS_INTERFACE,

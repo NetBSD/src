@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.166.2.21 2010/08/12 03:41:55 uebayasi Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.166.2.22 2010/08/17 06:48:14 uebayasi Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.166.2.21 2010/08/12 03:41:55 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.166.2.22 2010/08/17 06:48:14 uebayasi Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_xip.h"
@@ -1497,10 +1497,11 @@ uvm_fault_upper_enter(
 	 * done case 1!  finish up by unlocking everything and returning success
 	 */
 
-	if (anon != oanon)
+	if (anon != oanon) {
 		mutex_exit(&anon->an_lock);
-	uvmfault_unlockall(ufi, amap, uobj, oanon);
+	}
 	pmap_update(ufi->orig_map->pmap);
+	uvmfault_unlockall(ufi, amap, uobj, oanon);
 	return 0;
 }
 
@@ -1513,6 +1514,8 @@ uvm_fault_upper_done(
 	struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
 	struct uvm_object *uobj, struct vm_anon *anon, struct vm_page *pg)
 {
+	const bool wire_paging = flt->wire_paging;
+
 	UVMHIST_FUNC("uvm_fault_upper_done"); UVMHIST_CALLED(maphist);
 
 	/*
@@ -1520,7 +1523,7 @@ uvm_fault_upper_done(
 	 */
 
 	mutex_enter(&uvm_pageqlock);
-	if (flt->wire_paging) {
+	if (wire_paging) {
 		uvm_pagewire(pg);
 
 		/*
@@ -1531,11 +1534,15 @@ uvm_fault_upper_done(
 		 */
 
 		pg->flags &= ~(PG_CLEAN);
-		uvm_anon_dropswap(anon);
+
 	} else {
 		uvm_pageactivate(pg);
 	}
 	mutex_exit(&uvm_pageqlock);
+
+	if (wire_paging) {
+		uvm_anon_dropswap(anon);
+	}
 }
 
 /*
@@ -2198,8 +2205,9 @@ uvm_fault_lower_enter(
 	pg->flags &= ~(PG_BUSY|PG_FAKE|PG_WANTED);
 	UVM_PAGE_OWN(pg, NULL);
 
-	uvmfault_unlockall(ufi, amap, uobj, anon);
 	pmap_update(ufi->orig_map->pmap);
+	uvmfault_unlockall(ufi, amap, uobj, anon);
+
 	UVMHIST_LOG(maphist, "<- done (SUCCESS!)",0,0,0,0);
 	return 0;
 }
@@ -2213,6 +2221,8 @@ uvm_fault_lower_done(
 	struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
 	struct uvm_object *uobj, struct vm_anon *anon, struct vm_page *pg)
 {
+	bool dropswap = false;
+
 	UVMHIST_FUNC("uvm_fault_lower_done"); UVMHIST_CALLED(maphist);
 
 	mutex_enter(&uvm_pageqlock);
@@ -2229,13 +2239,16 @@ uvm_fault_lower_done(
 
 			KASSERT(uobj != NULL);
 			pg->flags &= ~(PG_CLEAN);
-			uao_dropswap(uobj, pg->offset >> PAGE_SHIFT);
+			dropswap = true;
 		}
 	} else {
 		uvm_pageactivate(pg);
 	}
 	mutex_exit(&uvm_pageqlock);
 
+	if (dropswap) {
+		uao_dropswap(uobj, pg->offset >> PAGE_SHIFT);
+	}
 	if (pg->flags & PG_WANTED)
 		wakeup(pg);
 

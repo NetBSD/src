@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_aobj.c,v 1.108 2009/10/21 21:12:07 rmind Exp $	*/
+/*	$NetBSD: uvm_aobj.c,v 1.108.2.1 2010/08/17 06:48:14 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers, Charles D. Cranor and
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.108 2009/10/21 21:12:07 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.108.2.1 2010/08/17 06:48:14 uebayasi Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -318,6 +318,8 @@ uao_set_swslot(struct uvm_object *uobj, int pageidx, int slot)
 	UVMHIST_FUNC("uao_set_swslot"); UVMHIST_CALLED(pdhist);
 	UVMHIST_LOG(pdhist, "aobj %p pageidx %d slot %d",
 	    aobj, pageidx, slot, 0);
+
+	KASSERT(mutex_owned(&uobj->vmobjlock) || uobj->uo_refs == 0);
 
 	/*
 	 * if noswap flag is set, then we can't set a non-zero slot.
@@ -787,12 +789,8 @@ uao_put(struct uvm_object *uobj, voff_t start, voff_t stop, int flags)
 	 * genfs_putpages() also.
 	 */
 
-	curmp.uobject = uobj;
-	curmp.offset = (voff_t)-1;
-	curmp.flags = PG_BUSY;
-	endmp.uobject = uobj;
-	endmp.offset = (voff_t)-1;
-	endmp.flags = PG_BUSY;
+	curmp.flags = PG_MARKER;
+	endmp.flags = PG_MARKER;
 
 	/*
 	 * now do it.  note: we must update nextpg in the body of loop or we
@@ -815,6 +813,8 @@ uao_put(struct uvm_object *uobj, voff_t start, voff_t stop, int flags)
 			if (pg == &endmp)
 				break;
 			nextpg = TAILQ_NEXT(pg, listq.queue);
+			if (pg->flags & PG_MARKER)
+				continue;
 			if (pg->offset < start || pg->offset >= stop)
 				continue;
 		} else {

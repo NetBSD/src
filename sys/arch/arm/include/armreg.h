@@ -1,4 +1,4 @@
-/*	$NetBSD: armreg.h,v 1.41 2008/08/27 11:04:23 matt Exp $	*/
+/*	$NetBSD: armreg.h,v 1.41.14.1 2010/08/17 06:44:03 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Ben Harris
@@ -200,6 +200,8 @@
 #define CPU_ID_ARM1176JS	0x410fb760
 #define CPU_ID_CORTEXA8R1	0x411fc080
 #define CPU_ID_CORTEXA8R2	0x412fc080
+#define CPU_ID_CORTEXA8R3	0x413fc080
+#define CPU_ID_CORTEXA9R1	0x411fc090
 #define CPU_ID_SA110		0x4401a100
 #define CPU_ID_SA1100		0x4401a110
 #define	CPU_ID_TI925T		0x54029250
@@ -344,7 +346,7 @@
 #define	CPU_CSID_CTYPE_WB	0x40000000	/* write-back avail */ 
 #define	CPU_CSID_CTYPE_RA	0x20000000	/* read-allocation avail */ 
 #define	CPU_CSID_CTYPE_WA	0x10000000	/* write-allocation avail */ 
-#define	CPU_CSID_NUMSETS(x)	(((x) >> 12) & 0xffff)
+#define	CPU_CSID_NUMSETS(x)	(((x) >> 13) & 0x7fff)
 #define	CPU_CSID_ASSOC(x)	(((x) >> 3) & 0x1ff)
 #define	CPU_CSID_LEN(x)		((x) & 0x03)
 
@@ -445,5 +447,10 @@
 #define	ARM11_PMCEVT_RETURN_HIT		37	/* return address predicted */
 #define	ARM11_PMCEVT_RETURN_MISS	38	/* return addr. mispredicted */
 #define	ARM11_PMCEVT_CYCLE		255	/* Increment each cycle */
+
+/* Defines for ARM CORTEX performance counters */
+#define CORTEX_CNTENS_C __BIT(31)	/* Enables the cycle counter */
+#define CORTEX_CNTENC_C __BIT(31)	/* Disables the cycle counter */
+#define CORTEX_CNTOFL_C __BIT(31)	/* Cycle counter overflow flag */
 
 #endif	/* _ARM_ARMREG_H */

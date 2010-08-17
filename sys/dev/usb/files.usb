@@ -1,4 +1,4 @@
-#	$NetBSD: files.usb,v 1.95.2.1 2010/04/30 14:43:51 uebayasi Exp $
+#	$NetBSD: files.usb,v 1.95.2.2 2010/08/17 06:46:42 uebayasi Exp $
 #
 # Config file and device description for machine-independent USB code.
 # Included by ports that need it.  Ports that use it must provide
@@ -22,6 +22,7 @@ file	dev/usb/usbdi_util.c		usb
 file	dev/usb/usb_mem.c		usb
 file	dev/usb/usb_subr.c		usb
 file	dev/usb/usb_quirks.c		usb
+file	dev/usb/usb_verbose.c		usb & usbverbose
 
 # Hub driver
 device	uhub: usbdevif, usbifif
@@ -187,7 +188,7 @@ attach	udsbr at usbdevif
 file	dev/usb/udsbr.c			udsbr
 
 # TEMPerHUM HID
-device	uthum: hid
+device	uthum: hid, sysmon_envsys
 attach	uthum at uhidbus
 file	dev/usb/uthum.c			uthum
 
@@ -288,6 +289,11 @@ device	ukyopon: ucombus, umodem_common
 attach	ukyopon at usbifif
 file	dev/usb/ukyopon.c		ukyopon
 
+# ArkMicroChips 3116 based serial (used with some Nokia USB cables too)
+device	uark: ucombus
+attach	uark at usbdevif
+file	dev/usb/uark.c		uark
+
 # Silicon Labs CP210x serial driver
 device	uslsa: ucombus
 attach	uslsa at usbdevif
@@ -313,6 +319,11 @@ file	dev/usb/usscanner.c		usscanner
 device	atu: ether, ifnet, arp, wlan
 attach	atu at usbdevif
 file	dev/usb/if_atu.c		atu
+
+# Intersil PrismGT
+device	upgt: ether, ifnet, arp, wlan, firmload
+attach	upgt at usbdevif
+file	dev/usb/if_upgt.c		upgt
 
 # Ralink Technology RT2500USB
 attach	ral at usbdevif with ural

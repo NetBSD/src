@@ -1,4 +1,4 @@
-/* $NetBSD: bbstart.s,v 1.12 2008/04/28 20:23:13 martin Exp $ */
+/* $NetBSD: bbstart.s,v 1.12.20.1 2010/08/17 06:43:58 uebayasi Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <machine/asm.h>
-#include "aout2bb.h"
+#include "elf2bb.h"
 
 #define LVOAllocMem	-0x0c6
 #define LVODoIO		-0x1c8
@@ -51,7 +51,7 @@ Lzero:	.asciz "DOS"			| "DOS type"
 Lzero:	.ascii	"BOOT"			| Secondary Boot
 #endif
 	/*
-	 * We put the relocator version here, for aout2bb, which replaces
+	 * We put the relocator version here, for elf2bb, which replaces
 	 * it with the bootblock checksum.
 	 */
 Chksum:	.long RELVER_RELATIVE_BYTES_FORWARD
@@ -70,7 +70,7 @@ ENTRY_NOPROFILE(start)
 #endif
 
 Lreltab:
-	.word 0			| aout2bb puts the reloc table address here
+	.word 0			| elf2bb puts the reloc table address here
 
 	.globl _C_LABEL(default_command)
 _C_LABEL(default_command):

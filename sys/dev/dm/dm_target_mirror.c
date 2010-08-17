@@ -1,4 +1,4 @@
-/*$NetBSD: dm_target_mirror.c,v 1.8 2010/01/04 00:12:22 haad Exp $*/
+/*$NetBSD: dm_target_mirror.c,v 1.8.2.1 2010/08/17 06:46:06 uebayasi Exp $*/
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -39,6 +39,15 @@
 
 #include "dm.h"
 
+/* dm_target_mirror.c */
+int dm_target_mirror_init(dm_dev_t *, void**, char *);
+char * dm_target_mirror_status(void *);
+int dm_target_mirror_strategy(dm_table_entry_t *, struct buf *);
+int dm_target_mirror_sync(dm_table_entry_t *);
+int dm_target_mirror_deps(dm_table_entry_t *, prop_array_t);
+int dm_target_mirror_destroy(dm_table_entry_t *);
+int dm_target_mirror_upcall(dm_table_entry_t *, struct buf *);
+
 #ifdef DM_TARGET_MODULE
 /*
  * Every target can be compiled directly to dm driver or as a
@@ -74,6 +83,7 @@ dm_target_mirror_modcmd(modcmd_t cmd, void *arg)
 		dmt->init = &dm_target_mirror_init;
 		dmt->status = &dm_target_mirror_status;
 		dmt->strategy = &dm_target_mirror_strategy;
+		dmt->sync = &dm_target_mirror_sync;
 		dmt->deps = &dm_target_mirror_deps;
 		dmt->destroy = &dm_target_mirror_destroy;
 		dmt->upcall = &dm_target_mirror_upcall;
@@ -131,6 +141,13 @@ dm_target_mirror_strategy(dm_table_entry_t * table_en, struct buf * bp)
 	bp->b_resid = 0;
 
 	biodone(bp);
+
+	return 0;
+}
+/* Sync underlying disk caches. */
+int
+dm_target_mirror_sync(dm_table_entry_t * table_en)
+{
 
 	return 0;
 }

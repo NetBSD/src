@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.51.2.2 2010/05/27 14:47:29 uebayasi Exp $	*/
+/*	$NetBSD: bus.c,v 1.51.2.3 2010/08/17 06:44:06 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,8 +30,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "opt_m68k_arch.h"
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.51.2.2 2010/05/27 14:47:29 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.51.2.3 2010/08/17 06:44:06 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

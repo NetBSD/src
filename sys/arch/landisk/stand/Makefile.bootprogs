@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.bootprogs,v 1.3 2009/05/03 15:12:12 tsutsui Exp $
+# $NetBSD: Makefile.bootprogs,v 1.3.2.1 2010/08/17 06:44:44 uebayasi Exp $
 
 S=		${.CURDIR}/../../../../..
 
@@ -57,7 +57,7 @@ Z_AS= library
 .include "${S}/lib/libz/Makefile.inc"
 LIBZ= ${ZLIB}
 
-cleandir distclean: cleanlibdir
+cleandir distclean: .WAIT cleanlibdir
 
 cleanlibdir:
 	-rm -rf lib

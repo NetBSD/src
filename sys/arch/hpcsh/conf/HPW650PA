@@ -1,4 +1,4 @@
-#	$NetBSD: HPW650PA,v 1.26.30.1 2010/04/30 14:39:26 uebayasi Exp $
+#	$NetBSD: HPW650PA,v 1.26.30.2 2010/08/17 06:44:29 uebayasi Exp $
 #
 #	HITACHI PERSONA HPW650PA
 #
@@ -8,6 +8,8 @@ include 	"arch/hpcsh/conf/std.hpcsh"
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 maxusers	32			# estimated number of users
+
+options 	HZ=64			# default clock rate                  
 
 # in-kernel bootloader, see kloader(4)
 options 	KLOADER
@@ -40,6 +42,7 @@ options 	EXEC_COFF	# 32-bit COFF executables
 
 # File systems
 file-system 	FFS		# UFS
+file-system 	MFS		# memory file system (requires FFS)
 file-system 	MSDOSFS		# MS-DOS file system
 file-system	NFS		# Sun NFS-compatible filesystem client
 options 	FFS_NO_SNAPSHOT	# No FFS snapshot support

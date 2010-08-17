@@ -1,4 +1,4 @@
-/*	$NetBSD: adlookup.c,v 1.13 2010/01/08 11:35:08 pooka Exp $	*/
+/*	$NetBSD: adlookup.c,v 1.13.2.1 2010/08/17 06:47:14 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adlookup.c,v 1.13 2010/01/08 11:35:08 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adlookup.c,v 1.13.2.1 2010/08/17 06:47:14 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -142,7 +142,7 @@ adosfs_lookup(void *v)
 		 * and fail. Otherwise we have succeded.
 		 *
 		 */
-		VOP_UNLOCK(vdp, 0); /* race */
+		VOP_UNLOCK(vdp); /* race */
 		error = VFS_VGET(vdp->v_mount, (ino_t)adp->pblock, vpp);
 		vn_lock(vdp, LK_EXCLUSIVE | LK_RETRY);
 		if (error) {

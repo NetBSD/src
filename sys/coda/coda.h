@@ -1,4 +1,4 @@
-/* $NetBSD: coda.h,v 1.15 2009/09/28 10:51:35 blymn Exp $ */
+/* $NetBSD: coda.h,v 1.15.2.1 2010/08/17 06:45:37 uebayasi Exp $ */
 
 /*
 
@@ -793,8 +793,8 @@ union coda_downcalls {
 #define PIOCPARM_MASK 0x0000ffff
 struct ViceIoctl {
         void *in, *out;		/* Data to be transferred in, or out */
-        short in_size;          /* Size of input buffer <= 2K */
-        short out_size;         /* Maximum size of output buffer, <= 2K */
+        unsigned short in_size; /* Size of input buffer <= 8K */
+        unsigned short out_size;/* Maximum size of output buffer, <= 8K */
 };
 
 struct PioctlData {

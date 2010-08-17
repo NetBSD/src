@@ -1,15 +1,6 @@
-#	$NetBSD: Makefile.booters,v 1.6 2005/12/11 12:16:36 christos Exp $
+#	$NetBSD: Makefile.booters,v 1.6.98.1 2010/08/17 06:43:57 uebayasi Exp $
 
 .include <bsd.own.mk>
 
-.if ${OBJECT_FMT} == "ELF"
-
 RELOC2BB=	${TOOL_AMIGAELF2BB}
-
-.else
-
-RELOC2BB=	${TOOL_AMIGAAOUT2BB}
-
-.endif
-
 TXLT=		${TOOL_AMIGATXLT}

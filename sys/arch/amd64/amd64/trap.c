@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.60.2.1 2010/04/30 14:39:04 uebayasi Exp $	*/
+/*	$NetBSD: trap.c,v 1.60.2.2 2010/08/17 06:43:52 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.60.2.1 2010/04/30 14:39:04 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.60.2.2 2010/08/17 06:43:52 uebayasi Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -197,6 +197,7 @@ onfault_handler(const struct pcb *pcb, const struct trapframe *tf)
  * exception has been processed. Note that the effect is as if the arguments
  * were passed call by reference.
  */
+
 void
 trap(struct trapframe *frame)
 {
@@ -206,6 +207,8 @@ trap(struct trapframe *frame)
 	extern char fusuintrfailure[], kcopy_fault[],
 		    resume_iret[];
 	extern char IDTVEC(oosyscall)[];
+	extern char IDTVEC(osyscall)[];
+	extern char IDTVEC(syscall32)[];
 #if 0
 	extern char resume_pop_ds[], resume_pop_es[];
 #endif
@@ -461,13 +464,15 @@ copyfault:
 		ksi.ksi_signo = SIGFPE;
 		ksi.ksi_trap = type & ~T_USER;
 		ksi.ksi_addr = (void *)frame->tf_rip;
-		switch (type ) {
+		switch (type) {
 		case T_BOUND|T_USER:
+			ksi.ksi_code = FPE_FLTSUB;
+			break;
 		case T_OFLOW|T_USER:
-			ksi.ksi_code = FPE_FLTOVF;
+			ksi.ksi_code = FPE_INTOVF;
 			break;
 		case T_DIVIDE|T_USER:
-			ksi.ksi_code = FPE_FLTDIV;
+			ksi.ksi_code = FPE_INTDIV;
 			break;
 		default:
 #ifdef DIAGNOSTIC
@@ -642,9 +647,9 @@ faultcommon:
 
 	case T_TRCTRAP:
 		/* Check whether they single-stepped into a lcall. */
-		if (frame->tf_rip == (int)IDTVEC(oosyscall))
-			return;
-		if (frame->tf_rip == (int)IDTVEC(oosyscall) + 1) {
+		if (frame->tf_rip == (uint64_t)IDTVEC(oosyscall) ||
+		    frame->tf_rip == (uint64_t)IDTVEC(osyscall) ||
+		    frame->tf_rip == (uint64_t)IDTVEC(syscall32)) {
 			frame->tf_rflags &= ~PSL_T;
 			return;
 		}
@@ -655,6 +660,7 @@ faultcommon:
 		/*
 		 * Don't go single-stepping into a RAS.
 		 */
+
 		if (p->p_raslist == NULL ||
 		    (ras_lookup(p, (void *)frame->tf_rip) == (void *)-1)) {
 			KSI_INIT_TRAP(&ksi);

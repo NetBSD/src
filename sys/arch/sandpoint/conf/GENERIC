@@ -1,6 +1,6 @@
-# $NetBSD: GENERIC,v 1.45 2009/12/05 20:11:16 pooka Exp $
+# $NetBSD: GENERIC,v 1.45.2.1 2010/08/17 06:45:06 uebayasi Exp $
 #
-# GENERIC machine description file
+# machine description file for GENERIC NAS
 # 
 # This machine description file is used to generate the default NetBSD
 # kernel.  The generic kernel does not include all options, subsystems
@@ -19,15 +19,14 @@
 # device.
 
 include 	"arch/sandpoint/conf/std.sandpoint"
-options 	PIC_I8259
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.45 $"
+#ident 		"GENERIC-$Revision: 1.45.2.1 $"
 
 maxusers	32
 
-options 	ALTIVEC		# Include AltiVec support
+#options 	ALTIVEC		# Include AltiVec support
 
 #options 	IPKDBUSERHACK	# Allow access to mapped memory via kgdb
 #options 	DEBUG_BY_TOOLS	# Allow debugging from toolsnet
@@ -79,12 +78,12 @@ file-system 	MFS		# memory file system
 file-system 	NFS		# Network File System client
 #file-system 	NTFS		# Windows/NT file system (experimental)
 #file-system 	CD9660		# ISO 9660 + Rock Ridge file system
-#file-system 	MSDOSFS		# MS-DOS file system
+file-system 	MSDOSFS		# MS-DOS file system
 file-system 	FDESC		# /dev/fd
 file-system 	KERNFS		# /kern
 file-system 	NULLFS		# loopback file system
 #file-system 	OVERLAY		# overlay file system
-#file-system 	PROCFS		# /proc
+file-system 	PROCFS		# /proc
 #file-system 	UMAPFS		# NULLFS + uid and gid remapping
 #file-system 	UNION		# union file system
 #file-system	CODA		# Coda File System; also needs vcoda (below)
@@ -101,6 +100,7 @@ options 	NFSSERVER	# Network File System server
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
 
 options 	INET
+options		INET6		# IPV6
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
 #options 	ALTQ		# Manipulate network interfaces' output queues
@@ -120,7 +120,7 @@ options 	NFS_BOOT_BOOTPARAM,NFS_BOOT_BOOTP
 
 config		netbsd	root on ? type ?
 
-# network psuedo-devices
+# network pseudo-devices
 pseudo-device	bpfilter		# packet filter
 pseudo-device	vlan			# IEEE 802.1q encapsulation
 #pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
@@ -128,14 +128,6 @@ pseudo-device	vlan			# IEEE 802.1q encapsulation
 #options	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
 #pseudo-device	ipfilter
 pseudo-device	loop
-
-# mouse & keyboard multiplexor pseudo-devices
-#pseudo-device	wsmux
-
-#
-# accept filters
-pseudo-device   accf_data		# "dataready" accept filter
-pseudo-device   accf_http		# "httpready" accept filter
 
 # miscellaneous pseudo-devices
 pseudo-device	rnd			# /dev/random and in-kernel generator
@@ -147,15 +139,16 @@ pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
 #pseudo-device	pf			# PF packet filter
 #pseudo-device	pflog			# PF log if
+pseudo-device	fss			# file system snapshot device
 
 #
 # device
 #
 options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 
-options 	PCIVERBOSE	# verbose PCI device messages
+#options 	PCIVERBOSE	# verbose PCI device messages
 #options 	PCI_CONFIG_DUMP	# verbosely dump PCI config space
-options 	PCI_NETBSD_CONFIGURE	# Have NetBSD configure PCI I/O & Mem
+#options 	PCI_NETBSD_CONFIGURE	# Have NetBSD configure PCI I/O & Mem
 
 mainbus0 at root
 
@@ -163,21 +156,16 @@ cpu*	at mainbus0
 pci*	at mainbus0 bus ?
 
 pchb*	at pci? dev ? function ?	# PCI host bridge
-pcib*	at pci? dev ? function ?	# Winbond 83C553 PCI-ISA bridges
 
 eumb*	at mainbus0
-com*	at eumb?
+com0	at eumb? unit 0			# console at 0x4500
+#com1	at eumb? unit 1
+satmgr0 at eumb? unit 1			# satmgr at 0x4600
 ociic*	at eumb?
 iic*	at ociic?
-
-isa*	at pcib?			# ISA on PCI-ISA bridge
-
-mcclock0 at isa? port 0x70		# time-of-day clock
+rs5c372rtc* at iic? addr 0x32
 
 # PCI IDE controllers - see pciide(4) for supported hardware.
-#pciide*	at pci? dev ? function ? flags 0x0000	# GENERIC pciide driver
-slide*		at pci? dev ? function ?	# 83C533 IDE controllers
-viaide*		at pci? dev ? function ?	# VIA/AMD/Nvidia IDE controllers
 cmdide*		at pci? dev ? function ?	# CMD tech IDE controllers
 iteide*		at pci? dev ? function ?	# IT Express IDE controllers
 satalink*	at pci? dev ? function ?	# SiI SATALink controllers
@@ -188,15 +176,13 @@ atabus* at ata?
 # IDE drives
 wd*		at atabus? drive ? flags 0x0000	# the drives themselves
 
-#vga*	at pci? dev ? function ?
-
 # PCI network interfaces
-fxp*	at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B
 tlp*	at pci? dev ? function ?	# DEC Tulip and similar
 re*	at pci? dev ? function ?	# Realtek 8139C+/8169/8169S/8110S
-mskc*	at pci? dev ? function ?	# Marvell Yukon 2 Gigabit Ethernet
-msk*	at mskc?			# Marvell Yukon 2 Gigabit Ethernet
+skc*	at pci? dev ? function ?	# Marvell Yukon Gigabit Ethernet
+sk*	at skc?				# Marvell Yukon Gigabit Ethernet
 wm*	at pci? dev ? function ?	# Intel 8254x gigabit
+fxp*	at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B
 
 inphy*	at mii? phy ?			# Intel 82555 PHYs
 nsphy*	at mii? phy ?			# NS83840 PHYs
@@ -207,12 +193,10 @@ ukphy*	at mii? phy ?			# generic unknown PHYs
 # USB Controller and Devices
 ehci*	at pci?	dev ? function ?	# Enhanced Host Controller
 ohci*	at pci?	dev ? function ?	# Open Host Controller
-uhci*	at pci?	dev ? function ?	# Universal Host Controller (Intel)
 
 # USB bus support
 usb*	at ehci?
 usb*	at ohci?
-usb*	at uhci?
 
 # USB Hubs
 uhub*	at usb?
@@ -222,27 +206,7 @@ uhub*	at uhub? port ?
 umass*	at uhub? port ? configuration ? interface ?
 wd*	at umass?
 
-pckbc0		at isa?			# PS/2 keyboard controller
-pckbd*		at pckbc?		# PC keyboard
-pms*		at pckbc?		# PS/2 mouse for wsmouse
-#wsdisplay*	at vga? console ?
-wskbd*	 	at pckbd? console ?
-wsmouse* 	at pms? mux 0
-
-attimer0	at isa?
-pcppi0		at isa?
-midi*		at pcppi?		# MIDI interface to the PC speaker
-#sysbeep0	at pcppi?
-
-com0	at isa? port 0x3f8 irq 4	# standard PC serial ports
-com1	at isa? port 0x2f8 irq 3
-
-#lpt0	at isa? port 0x278 irq 7	# standard PC parallel ports
-#fdc0	at isa? port 0x3f0 irq 6 drq 2	# standard PC floppy controllers
-#fd*	at fdc? drive ?			# the drives themselves
-
 scsibus* at umass?
-
 sd*	at scsibus? target ? lun ?	# SCSI disk drives
 
 # Veriexec

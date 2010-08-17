@@ -1,4 +1,4 @@
-/* $NetBSD: xcfb.c,v 1.51 2009/08/22 17:38:06 tsutsui Exp $ */
+/* $NetBSD: xcfb.c,v 1.51.2.1 2010/08/17 06:46:41 uebayasi Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xcfb.c,v 1.51 2009/08/22 17:38:06 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xcfb.c,v 1.51.2.1 2010/08/17 06:46:41 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -223,6 +223,7 @@ xcfbattach(device_t parent, device_t self, void *aux)
 	console = (ta->ta_addr == xcfb_consaddr);
 	if (console) {
 		sc->sc_ri = ri = &xcfb_console_ri;
+		ri->ri_flg &= ~RI_NO_AUTO;
 		sc->nscreens = 1;
 	}
 	else {
@@ -280,6 +281,8 @@ xcfb_common_init(struct rasops_info *ri)
 	xcfbhwinit((void *)ri->ri_hw);
 
 	ri->ri_flg = RI_CENTER;
+	if (ri == &xcfb_console_ri)
+		ri->ri_flg |= RI_NO_AUTO;
 	ri->ri_depth = 8;
 	ri->ri_width = 1024;
 	ri->ri_height = 768;

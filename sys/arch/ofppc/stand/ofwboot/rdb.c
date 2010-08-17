@@ -1,4 +1,4 @@
-/*	$NetBSD: rdb.c,v 1.1 2009/09/11 12:00:12 phx Exp $	*/
+/*	$NetBSD: rdb.c,v 1.1.4.1 2010/08/17 06:45:01 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2009 Frank Wille.
@@ -98,6 +98,10 @@ getadostype(u_long dostype)
 	case DOST_RAID:
 		adt.archtype = ADT_RAID;
 		adt.fstype = FS_RAID;
+		return adt;
+	case DOST_MSD:
+		adt.archtype = ADT_MSD;
+		adt.fstype = FS_MSDOS;
 		return adt;
 	default:
 		adt.archtype = ADT_UNKNOWN;

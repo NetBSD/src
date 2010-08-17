@@ -1,4 +1,4 @@
-/*	$NetBSD: pcibios.c,v 1.36.20.1 2010/04/30 14:39:30 uebayasi Exp $	*/
+/*	$NetBSD: pcibios.c,v 1.36.20.2 2010/08/17 06:44:38 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcibios.c,v 1.36.20.1 2010/04/30 14:39:30 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcibios.c,v 1.36.20.2 2010/08/17 06:44:38 uebayasi Exp $");
 
 #include "opt_pcibios.h"
 #include "opt_pcifixup.h"
@@ -166,7 +166,7 @@ pcibios_init(void)
 		return;
 	}
 
-	aprint_normal("PCI BIOS rev. %d.%d found at 0x%lx\n",
+	aprint_normal("PCI BIOS rev. %d.%d found at %#" PRIxPADDR "\n",
 	    rev_maj, rev_min >> 4, ei.bei_entry);
 	aprint_verbose("pcibios: config mechanism %s%s, special cycles %s%s, "
 	    "last bus %d\n",
@@ -250,8 +250,8 @@ pcibios_pir_init(void)
 			cksum += *(unsigned char *)(p + i);
 
 		aprint_normal(
-		    "PCI IRQ Routing Table rev. %d.%d found at 0x%lx, "
-		    "size %d bytes (%d entries)\n", rev_maj, rev_min, pa,
+		    "PCI IRQ Routing Table rev. %d.%d found at %#" PRIxPADDR
+		    ", size %d bytes (%d entries)\n", rev_maj, rev_min, pa,
 		    tablesize, (tablesize - 32) / 16);
 
 		if (cksum != 0) {

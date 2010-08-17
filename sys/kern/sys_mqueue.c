@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_mqueue.c,v 1.29 2009/12/20 09:36:05 dsl Exp $	*/
+/*	$NetBSD: sys_mqueue.c,v 1.29.2.1 2010/08/17 06:47:31 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2007-2009 Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_mqueue.c,v 1.29 2009/12/20 09:36:05 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_mqueue.c,v 1.29.2.1 2010/08/17 06:47:31 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -87,9 +87,11 @@ static u_int			mq_max_maxmsg = 16 * 32;
 static kmutex_t			mqlist_mtx;
 static pool_cache_t		mqmsg_cache;
 static LIST_HEAD(, mqueue)	mqueue_head;
+static struct sysctllog		*mqsysctl_log;
 
 static int	mqueue_sysinit(void);
 static int	mqueue_sysfini(bool);
+static int	mqueue_sysctl_init(void);
 static int	mq_poll_fop(file_t *, int);
 static int	mq_stat_fop(file_t *, struct stat *);
 static int	mq_close_fop(file_t *);
@@ -134,6 +136,11 @@ mqueue_sysinit(void)
 	mutex_init(&mqlist_mtx, MUTEX_DEFAULT, IPL_NONE);
 	LIST_INIT(&mqueue_head);
 
+	error = mqueue_sysctl_init();
+	if (error) {
+		(void)mqueue_sysfini(false);
+		return error;
+	}
 	error = syscall_establish(NULL, mqueue_syscalls);
 	if (error) {
 		(void)mqueue_sysfini(false);
@@ -166,6 +173,10 @@ mqueue_sysfini(bool interface)
 			return EBUSY;
 		}
 	}
+
+	if (mqsysctl_log != NULL)
+		sysctl_teardown(&mqsysctl_log);
+
 	mutex_destroy(&mqlist_mtx);
 	pool_cache_destroy(mqmsg_cache);
 	return 0;
@@ -1119,17 +1130,19 @@ error:
 /*
  * System control nodes.
  */
-
-SYSCTL_SETUP(sysctl_mqueue_setup, "sysctl mqueue setup")
+static int
+mqueue_sysctl_init(void)
 {
 	const struct sysctlnode *node = NULL;
 
-	sysctl_createv(clog, 0, NULL, NULL,
+	mqsysctl_log = NULL;
+
+	sysctl_createv(&mqsysctl_log, 0, NULL, NULL,
 		CTLFLAG_PERMANENT,
 		CTLTYPE_NODE, "kern", NULL,
 		NULL, 0, NULL, 0,
 		CTL_KERN, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
+	sysctl_createv(&mqsysctl_log, 0, NULL, NULL,
 		CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
 		CTLTYPE_INT, "posix_msg",
 		SYSCTL_DESCR("Version of IEEE Std 1003.1 and its "
@@ -1137,7 +1150,7 @@ SYSCTL_SETUP(sysctl_mqueue_setup, "sysctl mqueue setup")
 			     "system attempts to conform"),
 		NULL, _POSIX_MESSAGE_PASSING, NULL, 0,
 		CTL_KERN, CTL_CREATE, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, &node,
+	sysctl_createv(&mqsysctl_log, 0, NULL, &node,
 		CTLFLAG_PERMANENT,
 		CTLTYPE_NODE, "mqueue",
 		SYSCTL_DESCR("Message queue options"),
@@ -1145,39 +1158,41 @@ SYSCTL_SETUP(sysctl_mqueue_setup, "sysctl mqueue setup")
 		CTL_KERN, CTL_CREATE, CTL_EOL);
 
 	if (node == NULL)
-		return;
+		return ENXIO;
 
-	sysctl_createv(clog, 0, &node, NULL,
+	sysctl_createv(&mqsysctl_log, 0, &node, NULL,
 		CTLFLAG_PERMANENT | CTLFLAG_READWRITE,
 		CTLTYPE_INT, "mq_open_max",
 		SYSCTL_DESCR("Maximal number of message queue descriptors "
 			     "that process could open"),
 		NULL, 0, &mq_open_max, 0,
 		CTL_CREATE, CTL_EOL);
-	sysctl_createv(clog, 0, &node, NULL,
+	sysctl_createv(&mqsysctl_log, 0, &node, NULL,
 		CTLFLAG_PERMANENT | CTLFLAG_READWRITE,
 		CTLTYPE_INT, "mq_prio_max",
 		SYSCTL_DESCR("Maximal priority of the message"),
 		NULL, 0, &mq_prio_max, 0,
 		CTL_CREATE, CTL_EOL);
-	sysctl_createv(clog, 0, &node, NULL,
+	sysctl_createv(&mqsysctl_log, 0, &node, NULL,
 		CTLFLAG_PERMANENT | CTLFLAG_READWRITE,
 		CTLTYPE_INT, "mq_max_msgsize",
 		SYSCTL_DESCR("Maximal allowed size of the message"),
 		NULL, 0, &mq_max_msgsize, 0,
 		CTL_CREATE, CTL_EOL);
-	sysctl_createv(clog, 0, &node, NULL,
+	sysctl_createv(&mqsysctl_log, 0, &node, NULL,
 		CTLFLAG_PERMANENT | CTLFLAG_READWRITE,
 		CTLTYPE_INT, "mq_def_maxmsg",
 		SYSCTL_DESCR("Default maximal message count"),
 		NULL, 0, &mq_def_maxmsg, 0,
 		CTL_CREATE, CTL_EOL);
-	sysctl_createv(clog, 0, &node, NULL,
+	sysctl_createv(&mqsysctl_log, 0, &node, NULL,
 		CTLFLAG_PERMANENT | CTLFLAG_READWRITE,
 		CTLTYPE_INT, "mq_max_maxmsg",
 		SYSCTL_DESCR("Maximal allowed message count"),
 		NULL, 0, &mq_max_maxmsg, 0,
 		CTL_CREATE, CTL_EOL);
+
+	return 0;
 }
 
 /*

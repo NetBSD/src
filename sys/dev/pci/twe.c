@@ -1,4 +1,4 @@
-/*	$NetBSD: twe.c,v 1.90 2009/05/12 08:23:01 cegger Exp $	*/
+/*	$NetBSD: twe.c,v 1.90.2.1 2010/08/17 06:46:35 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.90 2009/05/12 08:23:01 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.90.2.1 2010/08/17 06:46:35 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1762,7 +1762,7 @@ tweioctl(dev_t dev, u_long cmd, void *data, int flag,
 			 */
 			if (tu->tu_size > TWE_SECTOR_SIZE) {
 #ifdef TWE_DEBUG
-				printf("%s: TWEIO_COMMAND: tu_size = %d\n",
+				printf("%s: TWEIO_COMMAND: tu_size = %zu\n",
 				    device_xname(&twe->sc_dv), tu->tu_size);
 #endif
 				return EINVAL;

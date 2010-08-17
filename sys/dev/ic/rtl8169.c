@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.129.2.1 2010/04/30 14:43:21 uebayasi Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.129.2.2 2010/08/17 06:46:12 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.129.2.1 2010/04/30 14:43:21 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.129.2.2 2010/08/17 06:46:12 uebayasi Exp $");
 /* $FreeBSD: /repoman/r/ncvs/src/sys/dev/re/if_re.c,v 1.20 2004/04/11 20:34:08 ru Exp $ */
 
 /*
@@ -955,6 +955,9 @@ re_detach(struct rtk_softc *sc)
 
 	pmf_device_deregister(sc->sc_dev);
 
+	/* we don't want to run again */
+	sc->sc_flags &= ~RTK_ATTACHED;
+
 	return 0;
 }
 
@@ -1739,7 +1742,7 @@ re_init(struct ifnet *ifp)
 	if ((sc->sc_quirk & RTKQ_8169NONS) != 0)
 		cfg |= (0x1 << 14);
 
-	if ((ifp->if_capenable & ETHERCAP_VLAN_HWTAGGING) != 0)
+	if ((sc->ethercom.ec_capenable & ETHERCAP_VLAN_HWTAGGING) != 0)
 		cfg |= RE_CPLUSCMD_VLANSTRIP;
 	if ((ifp->if_capenable & (IFCAP_CSUM_IPv4_Rx |
 	     IFCAP_CSUM_TCPv4_Rx | IFCAP_CSUM_UDPv4_Rx)) != 0)

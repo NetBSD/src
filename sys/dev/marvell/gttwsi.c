@@ -1,4 +1,4 @@
-/*	$NetBSD: gttwsi.c,v 1.1.2.2 2010/04/30 14:43:27 uebayasi Exp $	*/
+/*	$NetBSD: gttwsi.c,v 1.1.2.3 2010/08/17 06:46:17 uebayasi Exp $	*/
 /*
  * Copyright (c) 2008 Eiji Kawauchi.
  * All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gttwsi.c,v 1.1.2.2 2010/04/30 14:43:27 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gttwsi.c,v 1.1.2.3 2010/08/17 06:46:17 uebayasi Exp $");
 #include "locators.h"
 
 #include <sys/param.h>
@@ -157,9 +157,8 @@ gttwsi_match(device_t parent, cfdata_t match, void *aux)
 
 	if (strcmp(mva->mva_name, match->cf_name) != 0)
 		return 0;
-
-	if (mva->mva_offset == GTCF_OFFSET_DEFAULT ||
-	    mva->mva_irq == GTCF_IRQ_DEFAULT)
+	if (mva->mva_offset == MVA_OFFSET_DEFAULT ||
+	    mva->mva_irq == MVA_IRQ_DEFAULT)
 		return 0;
 
 	mva->mva_size = GTTWSI_SIZE;

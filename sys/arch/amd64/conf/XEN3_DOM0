@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOM0,v 1.48.2.1 2010/04/30 14:39:04 uebayasi Exp $
+# $NetBSD: XEN3_DOM0,v 1.48.2.2 2010/08/17 06:43:53 uebayasi Exp $
 
 include 	"arch/amd64/conf/std.xen"
 
@@ -12,6 +12,8 @@ maxusers	32		# estimated number of users
 
 #
 options 	DOM0OPS
+#options         XEN_BALLOON     # Xen memory ballooning - Experimental
+
 # boot messages with MPBIOS, acpi and ioapic can be quite large
 options 	MSGBUFSIZE=24576
 
@@ -75,6 +77,13 @@ options 	COMPAT_LINUX
 options 	COMPAT_LINUX32	# req. COMPAT_LINUX and COMPAT_NETBSD32
 options 	EXEC_ELF32
 options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
+
+# Wedge support
+options 	DKWEDGE_AUTODISCOVER	# Automatically add dk(4) instances
+options 	DKWEDGE_METHOD_GPT	# Supports GPT partitions as wedges
+# The following two options can break /etc/fstab, so handle with care
+#options 	DKWEDGE_METHOD_BSDLABEL	# Support disklabel entries as wedges
+#options 	DKWEDGE_METHOD_MBR	# Support MBR partitions as wedges
 
 # File systems
 file-system 	FFS		# UFS
@@ -733,6 +742,10 @@ wsmouse* at btms? mux 0
 btkbd* at bthidev? reportid ?
 wskbd* at btkbd? console ? mux 1
 
+# Bluetooth Apple Magic Mouse
+btmagic* at bthub?
+wsmouse* at btmagic? mux 0
+
 # Bluetooth Audio support
 btsco* at bthub?
 
@@ -773,6 +786,7 @@ pseudo-device	fss			# file system snapshot device
 pseudo-device	md		1	# memory disk device (ramdisk)
 pseudo-device	vnd			# disk-like interface to files
 pseudo-device	putter			# for puffs and pud
+pseudo-device	dm			# device-mapper driver for LVM
 
 # network pseudo-devices
 pseudo-device	bpfilter		# Berkeley packet filter

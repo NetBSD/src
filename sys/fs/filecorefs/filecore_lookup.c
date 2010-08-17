@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_lookup.c,v 1.12 2010/01/08 11:35:08 pooka Exp $	*/
+/*	$NetBSD: filecore_lookup.c,v 1.12.2.1 2010/08/17 06:47:15 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993, 1994 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_lookup.c,v 1.12 2010/01/08 11:35:08 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_lookup.c,v 1.12.2.1 2010/08/17 06:47:15 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/namei.h>
@@ -292,7 +292,7 @@ found:
 	if (flags & ISDOTDOT) {
 		ino_t pin = filecore_getparent(dp);
 
-		VOP_UNLOCK(pdp, 0);	/* race to get the inode */
+		VOP_UNLOCK(pdp);	/* race to get the inode */
 		error = VFS_VGET(vdp->v_mount, pin, &tdp);
 		vn_lock(pdp, LK_EXCLUSIVE | LK_RETRY);
 		if (error) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_hpc_machdep.c,v 1.5.2.2 2010/04/30 14:39:25 uebayasi Exp $	*/
+/*	$NetBSD: pxa2x0_hpc_machdep.c,v 1.5.2.3 2010/08/17 06:44:27 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0_hpc_machdep.c,v 1.5.2.2 2010/04/30 14:39:25 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_hpc_machdep.c,v 1.5.2.3 2010/08/17 06:44:27 uebayasi Exp $");
 
 #include "opt_ddb.h"
 #include "opt_dram_pages.h"
@@ -265,6 +265,12 @@ const struct pmap_devmap pxa2x0_devmap[] = {
 static void
 ws003sh_cpu_reset(void)
 {
+	uint32_t rv;
+
+	rv = pxa2x0_memctl_read(MEMCTL_MSC0);
+	if ((rv & 0xffff0000) == 0x7ff00000) {
+		pxa2x0_memctl_write(MEMCTL_MSC0, (rv & 0xffff) | 0x7ee00000);
+	}
 
 	pxa2x0_gpio_set_function(89, GPIO_OUT | GPIO_SET);
 	for (;;)
@@ -272,13 +278,41 @@ ws003sh_cpu_reset(void)
 }
 
 static struct pxa2x0_gpioconf ws003sh_boarddep_gpioconf[] = {
-	{  41, GPIO_ALT_FN_1_IN },	/* FFRXD */
-	{  99, GPIO_ALT_FN_3_OUT },	/* FFTXD */
+	/* FFUART */
 	{  98, GPIO_ALT_FN_3_OUT },	/* FFRTS */
-#if 0
-	{  40, GPIO_ALT_FN_2_OUT },	/* FFDTR */
-	{  100, GPIO_ALT_FN_1_IN },	/* FFCTS */
-#endif
+	{  99, GPIO_ALT_FN_3_OUT },	/* FFTXD */
+	/* SSP3 */
+	{  34, GPIO_ALT_FN_3_OUT },	/* SSPSCLK3 */
+	{  38, GPIO_ALT_FN_1_OUT },	/* SSPTXD3 */
+	{  82, GPIO_ALT_FN_1_IN },	/* SSPRXD3 */
+
+	{ -1 }
+};
+
+static struct pxa2x0_gpioconf ws007sh_boarddep_gpioconf[] = {
+	/* FFUART */
+	{  98, GPIO_ALT_FN_3_OUT },	/* FFRTS */
+	{  99, GPIO_ALT_FN_3_OUT },	/* FFTXD */
+	/* SSP2 */
+	{  19, GPIO_ALT_FN_1_OUT },	/* SSPSCLK2 */
+	{  86, GPIO_ALT_FN_1_IN },	/* SSPRXD2 */
+	{  87, GPIO_ALT_FN_1_OUT },	/* SSPTXD2 */
+	/* SSP3 */
+	{  38, GPIO_ALT_FN_1_OUT },	/* SSPTXD3 */
+	{  52, GPIO_ALT_FN_2_OUT },	/* SSPSCLK3 */
+	{  89, GPIO_ALT_FN_1_IN },	/* SSPRXD3 */
+
+	{ -1 }
+};
+
+static struct pxa2x0_gpioconf ws011sh_boarddep_gpioconf[] = {
+	/* FFUART */
+	{  98, GPIO_ALT_FN_3_OUT },	/* FFRTS */
+	{  99, GPIO_ALT_FN_3_OUT },	/* FFTXD */
+	/* SSP2 */
+	{  19, GPIO_ALT_FN_1_OUT },	/* SSPSCLK2 */
+	{  86, GPIO_ALT_FN_1_IN },	/* SSPRXD2 */
+	{  87, GPIO_ALT_FN_1_OUT },	/* SSPTXD2 */
 
 	{ -1 }
 };
@@ -295,6 +329,7 @@ static struct pxa2x0_gpioconf *ws007sh_gpioconf[] = {
 	pxa27x_com_ffuart_gpioconf,
 	pxa27x_pxamci_gpioconf,
 	pxa27x_ohci_gpioconf,
+	ws007sh_boarddep_gpioconf,
 	NULL
 };
 
@@ -302,6 +337,7 @@ static struct pxa2x0_gpioconf *ws011sh_gpioconf[] = {
 	pxa27x_com_ffuart_gpioconf,
 	pxa27x_pxamci_gpioconf,
 	pxa27x_ohci_gpioconf,
+	ws011sh_boarddep_gpioconf,
 	NULL
 };
 
@@ -382,6 +418,16 @@ initarm(int argc, char **argv, struct bootinfo *bi)
 		platid.dw.dw1 = bootinfo->platid_machine;
 	}
 
+#ifndef RTC_OFFSET
+	/*
+	 * rtc_offset from bootinfo.timezone set by hpcboot.exe
+	 */
+	if (rtc_offset == 0 &&
+	    (bootinfo->timezone > (-12 * 60) &&
+	     bootinfo->timezone <= (12 * 60)))
+		rtc_offset = bootinfo->timezone;
+#endif
+
 	/*
 	 * Heads up ... Setup the CPU / MMU / TLB functions.
 	 */
@@ -411,7 +457,7 @@ initarm(int argc, char **argv, struct bootinfo *bi)
 			pxa2x0_gpio_config(ws011sh_gpioconf);
 		}
 		pxa2x0_clkman_config(CKEN_FFUART, 1);
-		pxa2x0_clkman_config(CKEN_NSSP, 1); /* XXXOST */
+		pxa2x0_clkman_config(CKEN_OST, 1);
 		pxa2x0_clkman_config(CKEN_USBHC, 0);
 		pxa2x0_clkman_config(CKEN_USBDC, 0);
 		pxa2x0_clkman_config(CKEN_AC97, 0);

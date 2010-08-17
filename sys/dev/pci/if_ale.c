@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ale.c,v 1.10.2.1 2010/04/30 14:43:33 uebayasi Exp $	*/
+/*	$NetBSD: if_ale.c,v 1.10.2.2 2010/08/17 06:46:24 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2008, Pyun YongHyeon <yongari@FreeBSD.org>
@@ -32,7 +32,7 @@
 /* Driver for Atheros AR8121/AR8113/AR8114 PCIe Ethernet. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ale.c,v 1.10.2.1 2010/04/30 14:43:33 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ale.c,v 1.10.2.2 2010/08/17 06:46:24 uebayasi Exp $");
 
 #include "vlan.h"
 
@@ -1973,12 +1973,11 @@ ale_init_rx_pages(struct ale_softc *sc)
 static void
 ale_rxvlan(struct ale_softc *sc)
 {
-	struct ifnet *ifp = &sc->sc_ec.ec_if;
 	uint32_t reg;
 
 	reg = CSR_READ_4(sc, ALE_MAC_CFG);
 	reg &= ~MAC_CFG_VLAN_TAG_STRIP;
-	if (ifp->if_capabilities & ETHERCAP_VLAN_HWTAGGING)
+	if (sc->sc_ec.ec_capenable & ETHERCAP_VLAN_HWTAGGING)
 		reg |= MAC_CFG_VLAN_TAG_STRIP;
 	CSR_WRITE_4(sc, ALE_MAC_CFG, reg);
 }

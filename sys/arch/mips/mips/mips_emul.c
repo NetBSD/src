@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_emul.c,v 1.17 2009/12/14 00:46:06 matt Exp $ */
+/*	$NetBSD: mips_emul.c,v 1.17.2.1 2010/08/17 06:44:52 uebayasi Exp $ */
 
 /*
  * Copyright (c) 1999 Shuichiro URATA.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mips_emul.c,v 1.17 2009/12/14 00:46:06 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_emul.c,v 1.17.2.1 2010/08/17 06:44:52 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,6 +54,7 @@ void	MachEmulateInst(uint32_t, uint32_t, vaddr_t, struct frame *);
 void	MachEmulateLWC0(uint32_t, struct frame *, uint32_t);
 void	MachEmulateSWC0(uint32_t, struct frame *, uint32_t);
 void	MachEmulateSpecial(uint32_t, struct frame *, uint32_t);
+void	MachEmulateSpecial3(uint32_t, struct frame *, uint32_t);
 void	MachEmulateLWC1(uint32_t, struct frame *, uint32_t);
 void	MachEmulateLDC1(uint32_t, struct frame *, uint32_t);
 void	MachEmulateSWC1(uint32_t, struct frame *, uint32_t);
@@ -98,7 +99,7 @@ vaddr_t
 MachEmulateBranch(struct frame *f, vaddr_t instpc, unsigned fpuCSR,
     int allowNonBranch)
 {
-#define	BRANCHTARGET(i) (4 + ((i).word) + ((short)(i).IType.imm << 2))
+#define	BRANCHTARGET(p, i) (4 + (p) + ((short)(i).IType.imm << 2))
 	InstFmt inst;
 	vaddr_t nextpc;
 
@@ -125,7 +126,7 @@ MachEmulateBranch(struct frame *f, vaddr_t instpc, unsigned fpuCSR,
 		case OP_BLTZL:		/* squashed */
 		case OP_BLTZALL:	/* squashed */
 			if ((int)(f->f_regs[inst.RType.rs]) < 0)
-				nextpc = BRANCHTARGET(inst);
+				nextpc = BRANCHTARGET(instpc, inst);
 			else
 				nextpc = instpc + 8;
 			break;
@@ -135,7 +136,7 @@ MachEmulateBranch(struct frame *f, vaddr_t instpc, unsigned fpuCSR,
 		case OP_BGEZL:		/* squashed */
 		case OP_BGEZALL:	/* squashed */
 			if ((int)(f->f_regs[inst.RType.rs]) >= 0)
-				nextpc = BRANCHTARGET(inst);
+				nextpc = BRANCHTARGET(instpc, inst);
 			else
 				nextpc = instpc + 8;
 			break;
@@ -154,7 +155,7 @@ MachEmulateBranch(struct frame *f, vaddr_t instpc, unsigned fpuCSR,
 	case OP_BEQ:
 	case OP_BEQL:	/* squashed */
 		if (f->f_regs[inst.RType.rs] == f->f_regs[inst.RType.rt])
-			nextpc = BRANCHTARGET(inst);
+			nextpc = BRANCHTARGET(instpc, inst);
 		else
 			nextpc = instpc + 8;
 		break;
@@ -162,7 +163,7 @@ MachEmulateBranch(struct frame *f, vaddr_t instpc, unsigned fpuCSR,
 	case OP_BNE:
 	case OP_BNEL:	/* squashed */
 		if (f->f_regs[inst.RType.rs] != f->f_regs[inst.RType.rt])
-			nextpc = BRANCHTARGET(inst);
+			nextpc = BRANCHTARGET(instpc, inst);
 		else
 			nextpc = instpc + 8;
 		break;
@@ -170,7 +171,7 @@ MachEmulateBranch(struct frame *f, vaddr_t instpc, unsigned fpuCSR,
 	case OP_BLEZ:
 	case OP_BLEZL:	/* squashed */
 		if ((int)(f->f_regs[inst.RType.rs]) <= 0)
-			nextpc = BRANCHTARGET(inst);
+			nextpc = BRANCHTARGET(instpc, inst);
 		else
 			nextpc = instpc + 8;
 		break;
@@ -178,7 +179,7 @@ MachEmulateBranch(struct frame *f, vaddr_t instpc, unsigned fpuCSR,
 	case OP_BGTZ:
 	case OP_BGTZL:	/* squashed */
 		if ((int)(f->f_regs[inst.RType.rs]) > 0)
-			nextpc = BRANCHTARGET(inst);
+			nextpc = BRANCHTARGET(instpc, inst);
 		else
 			nextpc = instpc + 8;
 		break;
@@ -189,7 +190,7 @@ MachEmulateBranch(struct frame *f, vaddr_t instpc, unsigned fpuCSR,
 			if ((inst.RType.rt & COPz_BC_TF_MASK) != COPz_BC_TRUE)
 				condition = !condition;
 			if (condition)
-				nextpc = BRANCHTARGET(inst);
+				nextpc = BRANCHTARGET(instpc, inst);
 			else
 				nextpc = instpc + 8;
 		}
@@ -236,6 +237,9 @@ MachEmulateInst(uint32_t status, uint32_t cause, vaddr_t opc,
 		break;
 	case OP_SPECIAL:
 		MachEmulateSpecial(inst, frame, cause);
+		break;
+	case OP_SPECIAL3:
+		MachEmulateSpecial3(inst, frame, cause);
 		break;
 	case OP_COP1:
 		MachEmulateFP(inst, frame, cause);
@@ -389,6 +393,7 @@ void
 MachEmulateSpecial(uint32_t inst, struct frame *frame, uint32_t cause)
 {
 	ksiginfo_t ksi;
+
 	switch (((InstFmt)inst).RType.func) {
 	case OP_SYNC:
 		/* nothing */
@@ -405,6 +410,37 @@ MachEmulateSpecial(uint32_t inst, struct frame *frame, uint32_t cause)
 		break;
 	}
 
+	update_pc(frame, cause);
+}
+
+void
+MachEmulateSpecial3(uint32_t inst, struct frame *frame, uint32_t cause)
+{
+	ksiginfo_t ksi;
+	InstFmt instfmt = (InstFmt)inst;
+
+	switch (instfmt.RType.func) {
+	case OP_RDHWR:
+		switch (instfmt.RType.rd) {
+		case 29:
+			frame->f_regs[instfmt.RType.rt] =
+				(mips_reg_t)curlwp->l_private;
+			goto out;
+		}
+		/* FALLTHROUGH */
+	default:
+		frame->f_regs[_R_CAUSE] = cause;
+		frame->f_regs[_R_BADVADDR] = frame->f_regs[_R_PC];
+		KSI_INIT_TRAP(&ksi);
+		ksi.ksi_signo = SIGILL;
+		ksi.ksi_trap = cause;
+		ksi.ksi_code = ILL_ILLOPC;
+		ksi.ksi_addr = (void *)(intptr_t)frame->f_regs[_R_PC];
+		(*curproc->p_emul->e_trapsignal)(curlwp, &ksi);
+		break;
+	}
+
+out:
 	update_pc(frame, cause);
 }
 

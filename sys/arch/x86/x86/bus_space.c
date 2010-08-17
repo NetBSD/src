@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.26.2.1 2010/04/30 14:39:58 uebayasi Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.26.2.2 2010/08/17 06:45:32 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.26.2.1 2010/04/30 14:39:58 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.26.2.2 2010/08/17 06:45:32 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,9 +48,6 @@ __KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.26.2.1 2010/04/30 14:39:58 uebayasi 
 
 #ifdef XEN
 #include <xen/hypervisor.h>
-#include <xen/xenpmap.h>
-
-#define	pmap_extract(a, b, c)	pmap_extract_ma(a, b, c)
 #endif
 
 /*
@@ -66,7 +63,7 @@ __KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.26.2.1 2010/04/30 14:39:58 uebayasi 
 #define	BUS_SPACE_ADDRESS_SANITY(p, t, d)				\
 ({									\
 	if (BUS_SPACE_ALIGNED_ADDRESS((p), t) == 0) {			\
-		printf("%s 0x%lx not aligned to %d bytes %s:%d\n",	\
+		printf("%s 0x%lx not aligned to %zu bytes %s:%d\n",	\
 		    d, (u_long)(p), sizeof(t), __FILE__, __LINE__);	\
 	}								\
 	(void) 0;							\
@@ -202,8 +199,7 @@ bus_space_map(bus_space_tag_t t, bus_addr_t bpa, bus_size_t size,
 	 * For memory space, map the bus physical address to
 	 * a kernel virtual address.
 	 */
-	error = x86_mem_add_mapping(bpa, size,
-		(flags & BUS_SPACE_MAP_CACHEABLE) != 0, bshp);
+	error = x86_mem_add_mapping(bpa, size, flags, bshp);
 	if (error) {
 		if (extent_free(ex, bpa, size, EX_NOWAIT |
 		    (ioport_malloc_safe ? EX_MALLOCOK : 0))) {
@@ -235,8 +231,7 @@ _x86_memio_map(bus_space_tag_t t, bus_addr_t bpa, bus_size_t size,
 	 * For memory space, map the bus physical address to
 	 * a kernel virtual address.
 	 */
-	return (x86_mem_add_mapping(bpa, size,
-	    (flags & BUS_SPACE_MAP_CACHEABLE) != 0, bshp));
+	return x86_mem_add_mapping(bpa, size, flags, bshp);
 }
 
 int
@@ -289,8 +284,7 @@ bus_space_alloc(bus_space_tag_t t, bus_addr_t rstart, bus_addr_t rend,
 	 * For memory space, map the bus physical address to
 	 * a kernel virtual address.
 	 */
-	error = x86_mem_add_mapping(bpa, size,
-	    (flags & BUS_SPACE_MAP_CACHEABLE) != 0, bshp);
+	error = x86_mem_add_mapping(bpa, size, flags, bshp);
 	if (error) {
 		if (extent_free(iomem_ex, bpa, size, EX_NOWAIT |
 		    (ioport_malloc_safe ? EX_MALLOCOK : 0))) {
@@ -307,17 +301,20 @@ bus_space_alloc(bus_space_tag_t t, bus_addr_t rstart, bus_addr_t rend,
 
 int
 x86_mem_add_mapping(bus_addr_t bpa, bus_size_t size,
-		int cacheable, bus_space_handle_t *bshp)
+		int flags, bus_space_handle_t *bshp)
 {
 	paddr_t pa, endpa;
 	vaddr_t va, sva;
-	u_int pmapflags = 0;
+	u_int pmapflags;
 
 	pa = x86_trunc_page(bpa);
 	endpa = x86_round_page(bpa + size);
 
-	if (!cacheable)
-		pmapflags |= PMAP_NOCACHE;
+	pmapflags = PMAP_NOCACHE;
+	if ((flags & BUS_SPACE_MAP_CACHEABLE) != 0)
+		pmapflags = 0;
+	else if (flags & BUS_SPACE_MAP_PREFETCHABLE)
+		pmapflags = PMAP_WRITE_COMBINE;
 
 #ifdef DIAGNOSTIC
 	if (endpa != 0 && endpa <= pa)
@@ -339,11 +336,7 @@ x86_mem_add_mapping(bus_addr_t bpa, bus_size_t size,
 	*bshp = (bus_space_handle_t)(sva + (bpa & PGOFSET));
 
 	for (va = sva; pa != endpa; pa += PAGE_SIZE, va += PAGE_SIZE) {
-#ifdef XEN
 		pmap_kenter_ma(va, pa, VM_PROT_READ | VM_PROT_WRITE, pmapflags);
-#else
-		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE, pmapflags);
-#endif /* XEN */
 	}
 	pmap_update(pmap_kernel());
 
@@ -395,7 +388,7 @@ _x86_memio_unmap(bus_space_tag_t t, bus_space_handle_t bsh,
 			}
 #endif
 
-			if (pmap_extract(pmap_kernel(), va, &bpa) == FALSE) {
+			if (pmap_extract_ma(pmap_kernel(), va, &bpa) == FALSE) {
 				panic("_x86_memio_unmap:"
 				    " wrong virtual address");
 			}
@@ -447,7 +440,7 @@ bus_space_unmap(bus_space_tag_t t, bus_space_handle_t bsh, bus_size_t size)
 			panic("x86_memio_unmap: overflow");
 #endif
 
-		(void) pmap_extract(pmap_kernel(), va, &bpa);
+		(void) pmap_extract_ma(pmap_kernel(), va, &bpa);
 		bpa += (bsh & PGOFSET);
 
 		pmap_kremove(va, endva - va);

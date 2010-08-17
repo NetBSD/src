@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_mchain.c,v 1.18 2009/04/18 14:58:07 tsutsui Exp $	*/
+/*	$NetBSD: subr_mchain.c,v 1.18.2.1 2010/08/17 06:47:50 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_mchain.c,v 1.18 2009/04/18 14:58:07 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_mchain.c,v 1.18.2.1 2010/08/17 06:47:50 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,11 +52,9 @@ __KERNEL_RCSID(0, "$NetBSD: subr_mchain.c,v 1.18 2009/04/18 14:58:07 tsutsui Exp
 
 #ifdef __NetBSD__
 static struct mbuf *
-m_getm(struct mbuf *m, int len, int how, int type)
+m_getm(struct mbuf *m, size_t len, int how, int type)
 {
         struct mbuf *top, *tail, *mp, *mtail = NULL;
-
-        KASSERT(len >= 0);
 
         mp = m_get(how, type);
         if (mp == NULL)
@@ -112,7 +110,7 @@ int
 m_fixhdr(struct mbuf *m0)
 {
 	struct mbuf *m = m0;
-	int len = 0;
+	size_t len = 0;
 
 	while (m) {
 		len += m->m_len;
@@ -175,13 +173,13 @@ mb_fixhdr(struct mbchain *mbp)
  * Note: size should be <= MLEN
  */
 void *
-mb_reserve(struct mbchain *mbp, int size)
+mb_reserve(struct mbchain *mbp, size_t size)
 {
 	struct mbuf *m, *mn;
 	void *bpos;
 
 	if (size > MLEN)
-		panic("mb_reserve: size = %d", size);
+		panic("mb_reserve: size = %zu", size);
 	m = mbp->mb_cur;
 	if (mbp->mb_mleft < size) {
 		mn = m_get(M_WAIT, MT_DATA);
@@ -248,12 +246,13 @@ mb_put_int64le(struct mbchain *mbp, int64_t x)
 }
 
 int
-mb_put_mem(struct mbchain *mbp, const char *source, int size, int type)
+mb_put_mem(struct mbchain *mbp, const char *source, size_t size, int type)
 {
 	struct mbuf *m;
 	char *dst;
 	const char *src;
-	int cplen, error, mleft, count;
+	int error;
+	size_t cplen, mleft, count;
 
 	m = mbp->mb_cur;
 	mleft = mbp->mb_mleft;
@@ -323,9 +322,9 @@ mb_put_mbuf(struct mbchain *mbp, struct mbuf *m)
  * copies a uio scatter/gather list to an mbuf chain.
  */
 int
-mb_put_uio(struct mbchain *mbp, struct uio *uiop, int size)
+mb_put_uio(struct mbchain *mbp, struct uio *uiop, size_t size)
 {
-	long left;
+	size_t left;
 	int mtype, error;
 
 	mtype = VMSPACE_IS_KERNEL_P(uiop->uio_vmspace) ? MB_MSYSTEM : MB_MUSER;
@@ -514,12 +513,12 @@ md_get_int64le(struct mdchain *mdp, int64_t *x)
 }
 
 int
-md_get_mem(struct mdchain *mdp, void *targetv, int size, int type)
+md_get_mem(struct mdchain *mdp, void *targetv, size_t size, int type)
 {
 	char *target = targetv;
 	struct mbuf *m = mdp->md_cur;
 	int error;
-	u_int count;
+	size_t count;
 	u_char *s;
 
 	while (size > 0) {
@@ -576,10 +575,10 @@ md_get_mbuf(struct mdchain *mdp, int size, struct mbuf **ret)
 }
 
 int
-md_get_uio(struct mdchain *mdp, struct uio *uiop, int size)
+md_get_uio(struct mdchain *mdp, struct uio *uiop, size_t size)
 {
 	char *uiocp;
-	long left;
+	size_t left;
 	int mtype, error;
 
 	mtype = VMSPACE_IS_KERNEL_P(uiop->uio_vmspace) ? MB_MSYSTEM : MB_MUSER;

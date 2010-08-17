@@ -1,4 +1,4 @@
-#	$NetBSD: files.sandpoint,v 1.25 2008/04/09 01:56:19 nisimura Exp $
+#	$NetBSD: files.sandpoint,v 1.25.24.1 2010/08/17 06:45:06 uebayasi Exp $
 #
 # Motorola's "SandPoint" evaluation board and multiplied descendents.
 #
@@ -94,14 +94,20 @@ file	arch/sandpoint/isa/mcclock_isa.c	mcclock_isa
 
 # Floppy disk controller
 device	fdc {drive = -1}: isadma
-file	dev/isa/fd.c			fdc needs-flag
+file	dev/isa/fd.c				fdc needs-flag
 
 attach	fdc at isa with fdc_isa
-file	dev/isa/fdc_isa.c		fdc_isa
+file	dev/isa/fdc_isa.c			fdc_isa
 
 device	fd: disk
 attach	fd at fdc
 
 include	"dev/usb/files.usb"
 
+device	satmgr: sysmon_power, sysmon_taskq
+attach	satmgr at eumb
+file	arch/sandpoint/sandpoint/satmgr.c	satmgr
+
 include "arch/powerpc/conf/majors.powerpc"
+
+device-major	satmgr		char 100	satmgr

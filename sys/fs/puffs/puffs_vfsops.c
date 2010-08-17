@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vfsops.c,v 1.86.2.1 2010/04/30 14:44:07 uebayasi Exp $	*/
+/*	$NetBSD: puffs_vfsops.c,v 1.86.2.2 2010/08/17 06:47:20 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.86.2.1 2010/04/30 14:44:07 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.86.2.2 2010/08/17 06:47:20 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -78,6 +78,16 @@ static struct putter_ops puffs_putter = {
 	.pop_close	= puffs_msgif_close,
 };
 
+/*
+ * Try to ensure data structures used by the puffs protocol
+ * do not unexpectedly change.
+ */
+#ifdef __i386__
+CTASSERT(sizeof(struct puffs_kargs) == 3928);
+CTASSERT(sizeof(struct vattr) == 136);
+CTASSERT(sizeof(struct puffs_req) == 44);
+#endif
+
 int
 puffs_vfsop_mount(struct mount *mp, const char *path, void *data,
 	size_t *data_len)
@@ -111,11 +121,9 @@ puffs_vfsop_mount(struct mount *mp, const char *path, void *data,
 
 	args = (struct puffs_kargs *)data;
 
-	/* devel phase */
-	if (args->pa_vers != (PUFFSVERSION | PUFFSDEVELVERS)) {
+	if (args->pa_vers != PUFFSVERSION) {
 		printf("puffs_mount: development version mismatch: "
-		    "kernel %d, lib %d\n",
-		    PUFFSVERSION, args->pa_vers & ~PUFFSDEVELVERS);
+		    "kernel %d, lib %d\n", PUFFSVERSION, args->pa_vers);
 		error = EINVAL;
 		goto out;
 	}
@@ -129,6 +137,15 @@ puffs_vfsop_mount(struct mount *mp, const char *path, void *data,
 		printf("puffs_mount: invalid FHFLAGs 0x%x\n", args->pa_fhflags);
 		error = EINVAL;
 		goto out;
+	}
+
+	for (i = 0; i < __arraycount(args->pa_spare); i++) {
+		if (args->pa_spare[i] != 0) {
+			printf("puffs_mount: pa_spare[%d] = 0x%x\n",
+			    i, args->pa_spare[i]);
+			error = EINVAL;
+			goto out;
+		}
 	}
 
 	/* use dummy value for passthrough */
@@ -206,6 +223,7 @@ puffs_vfsop_mount(struct mount *mp, const char *path, void *data,
 	if (error)
 		goto out;
 	mp->mnt_stat.f_iosize = DEV_BSIZE;
+	mp->mnt_stat.f_namemax = args->pa_svfsb.f_namemax;
 
 	/*
 	 * We can't handle the VFS_STATVFS() mount_domount() does
@@ -275,6 +293,7 @@ puffs_vfsop_mount(struct mount *mp, const char *path, void *data,
 	pmp->pmp_root_vtype = args->pa_root_vtype;
 	pmp->pmp_root_vsize = args->pa_root_vsize;
 	pmp->pmp_root_rdev = args->pa_root_rdev;
+	pmp->pmp_docompat = args->pa_time32;
 
 	mutex_init(&pmp->pmp_lock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&pmp->pmp_sopmtx, MUTEX_DEFAULT, IPL_NONE);
@@ -539,7 +558,7 @@ pageflush(struct mount *mp, kauth_cred_t cred, int waitfor)
 		 * vnodes through other routes in any case.  So there,
 		 * sync() doesn't actually sync.  Happy now?
 		 */
-		rv = vget(vp, LK_EXCLUSIVE | LK_NOWAIT | LK_INTERLOCK);
+		rv = vget(vp, LK_EXCLUSIVE | LK_NOWAIT);
 		if (rv) {
 			mutex_enter(&mntvnode_lock);
 			if (rv == ENOENT) {
@@ -758,6 +777,56 @@ puffs_vfsop_snapshot(struct mount *mp, struct vnode *vp, struct timespec *ts)
 	return EOPNOTSUPP;
 }
 
+int
+puffs_vfsop_extattrctl(struct mount *mp, int cmd, struct vnode *vp,
+	int attrnamespace, const char *attrname)
+{
+	PUFFS_MSG_VARS(vfs, extattrctl);
+	struct puffs_mount *pmp = MPTOPUFFSMP(mp);
+	struct puffs_node *pnp;
+	puffs_cookie_t pnc;
+	int error, flags;
+
+	if (vp) {
+		/* doesn't make sense for puffs servers */
+		if (vp->v_mount != mp)
+			return EXDEV;
+		pnp = vp->v_data;
+		pnc = pnp->pn_cookie;
+		flags = PUFFS_EXTATTRCTL_HASNODE;
+	} else {
+		pnp = pnc = NULL;
+		flags = 0;
+	}
+
+	PUFFS_MSG_ALLOC(vfs, extattrctl);
+	extattrctl_msg->pvfsr_cmd = cmd;
+	extattrctl_msg->pvfsr_attrnamespace = attrnamespace;
+	extattrctl_msg->pvfsr_flags = flags;
+	if (attrname) {
+		strlcpy(extattrctl_msg->pvfsr_attrname, attrname,
+		    sizeof(extattrctl_msg->pvfsr_attrname));
+		extattrctl_msg->pvfsr_flags |= PUFFS_EXTATTRCTL_HASATTRNAME;
+	}
+	puffs_msg_setinfo(park_extattrctl,
+	    PUFFSOP_VFS, PUFFS_VFS_EXTATTRCTL, pnc);
+
+	puffs_msg_enqueue(pmp, park_extattrctl);
+	if (vp) {
+		mutex_enter(&pnp->pn_mtx);
+		puffs_referencenode(pnp);
+		mutex_exit(&pnp->pn_mtx);
+		VOP_UNLOCK(vp);
+	}
+	error = puffs_msg_wait2(pmp, park_extattrctl, pnp, NULL);
+	PUFFS_MSG_RELEASE(extattrctl);
+	if (vp) {
+		puffs_releasenode(pnp);
+	}
+
+	return checkerr(pmp, error, __func__);
+}
+
 const struct vnodeopv_desc * const puffs_vnodeopv_descs[] = {
 	&puffs_vnodeop_opv_desc,
 	&puffs_specop_opv_desc,
@@ -784,7 +853,7 @@ struct vfsops puffs_vfsops = {
 	puffs_vfsop_done,		/* done		*/
 	NULL,				/* mountroot	*/
 	puffs_vfsop_snapshot,		/* snapshot	*/
-	vfs_stdextattrctl,		/* extattrctl	*/
+	puffs_vfsop_extattrctl,		/* extattrctl	*/
 	(void *)eopnotsupp,		/* suspendctl	*/
 	genfs_renamelock_enter,
 	genfs_renamelock_exit,

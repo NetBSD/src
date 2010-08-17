@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_data.h,v 1.28.2.1 2010/04/30 14:44:32 uebayasi Exp $	*/
+/*	$NetBSD: cpu_data.h,v 1.28.2.2 2010/08/17 06:48:06 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -70,7 +70,11 @@ struct cpu_data {
 	int		cpu_xcall_pending;	/* cross-call support */
 	lwp_t		*cpu_onproc;		/* bottom level LWP */
 	CIRCLEQ_ENTRY(cpu_info) cpu_qchain;	/* circleq of all CPUs */
-	
+
+	cpuid_t		cpu_package_id;
+	cpuid_t		cpu_core_id;
+	cpuid_t		cpu_smt_id;
+
 	/*
 	 * This section is mostly CPU-private.
 	 */
@@ -109,6 +113,10 @@ struct cpu_data {
 #define	ci_lockstat		ci_data.cpu_lockstat
 #define	ci_spin_locks2		ci_data.cpu_spin_locks2
 #define	ci_lkdebug_recurse	ci_data.cpu_lkdebug_recurse
+
+#define	ci_package_id		ci_data.cpu_package_id
+#define	ci_core_id		ci_data.cpu_core_id
+#define	ci_smt_id		ci_data.cpu_smt_id
 
 int mi_cpu_attach(struct cpu_info *ci);
 

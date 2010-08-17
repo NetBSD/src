@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_dirent.c,v 1.9.2.1 2010/04/30 14:42:59 uebayasi Exp $ */
+/*	$NetBSD: linux32_dirent.c,v 1.9.2.2 2010/08/17 06:45:51 uebayasi Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_dirent.c,v 1.9.2.1 2010/04/30 14:42:59 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_dirent.c,v 1.9.2.2 2010/08/17 06:45:51 uebayasi Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -243,7 +243,7 @@ again:
 eof:
 	*retval = nbytes - resid;
 out:
-	VOP_UNLOCK(vp, 0);
+	VOP_UNLOCK(vp);
 	if (cookiebuf)
 		free(cookiebuf, M_TEMP);
 	free(tbuf, M_TEMP);

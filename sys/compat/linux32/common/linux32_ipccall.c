@@ -1,4 +1,4 @@
-/* $NetBSD: linux32_ipccall.c,v 1.10 2010/01/05 13:22:41 mbalmer Exp $ */
+/* $NetBSD: linux32_ipccall.c,v 1.10.2.1 2010/08/17 06:45:52 uebayasi Exp $ */
 
 /*
  * Copyright (c) 2008 Nicolas Joly
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_ipccall.c,v 1.10 2010/01/05 13:22:41 mbalmer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_ipccall.c,v 1.10.2.1 2010/08/17 06:45:52 uebayasi Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -160,6 +160,7 @@ linux32_sys_ipc(struct lwp *l, const struct linux32_sys_ipc_args *uap,
 
 }
 
+#if defined(SYSVSEM) || defined (SYSVMSG) || defined(SYSVSHM)
 static void
 bsd_to_linux32_ipc_perm(struct ipc_perm *bpp, struct linux32_ipc_perm *lpp)
 {
@@ -207,6 +208,7 @@ linux32_to_bsd_ipc64_perm(struct linux32_ipc64_perm *lpp, struct ipc_perm *bpp)
 	bpp->mode = lpp->l_mode;
 	bpp->_seq = lpp->l_seq;
 }
+#endif /* SYSVSEM, SYSVMSG, or SYSVSHM */
 
 #ifdef SYSVSEM
 static void

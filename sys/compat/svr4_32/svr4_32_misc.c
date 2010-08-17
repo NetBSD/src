@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_misc.c,v 1.67.2.1 2010/04/30 14:43:03 uebayasi Exp $	 */
+/*	$NetBSD: svr4_32_misc.c,v 1.67.2.2 2010/08/17 06:45:56 uebayasi Exp $	 */
 
 /*-
  * Copyright (c) 1994, 2008 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_misc.c,v 1.67.2.1 2010/04/30 14:43:03 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_misc.c,v 1.67.2.2 2010/08/17 06:45:56 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -100,8 +100,6 @@ static int svr4_to_bsd_mmap_flags(int);
 
 static inline clock_t timeval_to_clock_t(struct timeval *);
 static int svr4_32_setinfo(int, struct rusage *, int, svr4_32_siginfo_tp);
-
-#define svr4_32_pfind(pid) p_find((pid), PFIND_UNLOCK | PFIND_ZOMBIE)
 
 static int svr4_32_mknod(struct lwp *, register_t *, const char *,
     svr4_32_mode_t, svr4_32_dev_t);
@@ -315,7 +313,7 @@ again:
 eof:
 	*retval = SCARG(uap, nbytes) - resid;
 out:
-	VOP_UNLOCK(vp, 0);
+	VOP_UNLOCK(vp);
 	if (cookiebuf)
 		free(cookiebuf, M_TEMP);
 	free(sbuf, M_TEMP);
@@ -440,7 +438,7 @@ again:
 eof:
 	*retval = SCARG(uap, nbytes) - resid;
 out:
-	VOP_UNLOCK(vp, 0);
+	VOP_UNLOCK(vp);
 	if (cookiebuf)
 		free(cookiebuf, M_TEMP);
 	free(sbuf, M_TEMP);
@@ -828,6 +826,7 @@ int
 svr4_32_sys_pgrpsys(struct lwp *l, const struct svr4_32_sys_pgrpsys_args *uap, register_t *retval)
 {
 	struct proc *p = l->l_proc;
+	pid_t pid;
 
 	switch (SCARG(uap, cmd)) {
 	case 1:			/* setpgrp() */
@@ -846,9 +845,13 @@ svr4_32_sys_pgrpsys(struct lwp *l, const struct svr4_32_sys_pgrpsys_args *uap, r
 		return 0;
 
 	case 2:			/* getsid(pid) */
-		if (SCARG(uap, pid) != 0 &&
-		    (p = svr4_32_pfind(SCARG(uap, pid))) == NULL)
+		mutex_enter(proc_lock);
+		pid = SCARG(uap, pid);
+		if (pid && (p = proc_find(pid)) == NULL) {
+			mutex_exit(proc_lock);
 			return ESRCH;
+		}
+		mutex_exit(proc_lock);
 		/*
 		 * This has already been initialized to the pid of
 		 * the session leader.
@@ -860,12 +863,14 @@ svr4_32_sys_pgrpsys(struct lwp *l, const struct svr4_32_sys_pgrpsys_args *uap, r
 		return sys_setsid(l, NULL, retval);
 
 	case 4:			/* getpgid(pid) */
-
-		if (SCARG(uap, pid) != 0 &&
-		    (p = svr4_32_pfind(SCARG(uap, pid))) == NULL)
+		mutex_enter(proc_lock);
+		pid = SCARG(uap, pid);
+		if (pid && (p = proc_find(pid)) == NULL) {
+			mutex_exit(proc_lock);
 			return ESRCH;
-
+		}
 		*retval = (int) p->p_pgrp->pg_id;
+		mutex_exit(proc_lock);
 		return 0;
 
 	case 5:			/* setpgid(pid, pgid); */

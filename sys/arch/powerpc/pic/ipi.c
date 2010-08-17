@@ -1,4 +1,4 @@
-/* $NetBSD: ipi.c,v 1.4 2008/04/28 20:23:32 martin Exp $ */
+/* $NetBSD: ipi.c,v 1.4.20.1 2010/08/17 06:45:03 uebayasi Exp $ */
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipi.c,v 1.4 2008/04/28 20:23:32 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipi.c,v 1.4.20.1 2010/08/17 06:45:03 uebayasi Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_pic.h"
@@ -37,8 +37,8 @@ __KERNEL_RCSID(0, "$NetBSD: ipi.c,v 1.4 2008/04/28 20:23:32 martin Exp $");
 #include "opt_altivec.h"
 
 #include <sys/param.h>
-#include <sys/malloc.h>
 #include <sys/kernel.h>
+#include <sys/xcall.h>
 
 #include <powerpc/atomic.h>
 #include <powerpc/fpu.h>
@@ -76,6 +76,9 @@ ppcipi_intr(void *v)
 		save_vec_cpu();
 #endif
 
+	if (ipi & PPC_IPI_XCALL)
+		xc_ipi_handler();
+
 	if (ipi & PPC_IPI_HALT) {
 		aprint_normal("halting CPU %d\n", cpu_id);
 		msr = (mfmsr() & ~PSL_EE) | PSL_POW;
@@ -84,7 +87,28 @@ ppcipi_intr(void *v)
 			mtmsr(msr);
 		}
 	}
+
 	return 1;
+}
+
+/*
+ * MD support for xcall(9) interface.
+ */
+
+void
+xc_send_ipi(struct cpu_info *ci)
+{
+
+	KASSERT(kpreempt_disabled());
+	KASSERT(curcpu() != ci);
+
+	if (ci) {
+		/* Unicast: remote CPU. */
+		ppc_send_ipi(ci->ci_cpuid, PPC_IPI_XCALL);
+	} else {
+		/* Broadcast: all, but local CPU (caller will handle it). */
+		ppc_send_ipi(IPI_T_NOTME, PPC_IPI_XCALL);
+	}
 }
 
 #endif /*MULTIPROCESSOR*/

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.booters,v 1.3 2009/07/20 04:59:03 kiyohara Exp $
+#	$NetBSD: Makefile.booters,v 1.3.2.1 2010/08/17 06:44:43 uebayasi Exp $
 
 .include <bsd.own.mk>
 
@@ -63,7 +63,7 @@ SAMISCMAKEFLAGS+="SA_USE_LOADFILE=yes" "SA_INCLUDE_NET=no"
 LIBSA=		${SALIB}
 
 
-cleandir distclean: cleanlibdir
+cleandir distclean: .WAIT cleanlibdir
 
 cleanlibdir:
 	-rm -rf lib

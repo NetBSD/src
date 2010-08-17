@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.282.2.1 2010/04/30 14:44:36 uebayasi Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.282.2.2 2010/08/17 06:48:12 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.282.2.1 2010/04/30 14:44:36 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.282.2.2 2010/08/17 06:48:12 uebayasi Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -655,7 +655,7 @@ lfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 			accessmode |= VWRITE;
 		vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
 		error = genfs_can_mount(devvp, accessmode, l->l_cred);
-		VOP_UNLOCK(devvp, 0);
+		VOP_UNLOCK(devvp);
 	}
 
 	if (error) {
@@ -677,7 +677,7 @@ lfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 		if (error) {
 			vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
 			(void)VOP_CLOSE(devvp, flags, NOCRED);
-			VOP_UNLOCK(devvp, 0);
+			VOP_UNLOCK(devvp);
 			goto fail;
 		}
 
@@ -752,7 +752,7 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	 */
 	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
 	error = vinvalbuf(devvp, V_SAVE, cred, l, 0, 0);
-	VOP_UNLOCK(devvp, 0);
+	VOP_UNLOCK(devvp);
 	if (error)
 		return (error);
 
@@ -2139,7 +2139,7 @@ lfs_resize_fs(struct lfs *fs, int newnsegs)
 	VOP_BWRITE(bp);
 
 	/* Let Ifile accesses proceed */
-	VOP_UNLOCK(ivp, 0);
+	VOP_UNLOCK(ivp);
 	rw_exit(&fs->lfs_iflock);
 
     out:

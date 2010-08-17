@@ -1,4 +1,4 @@
-/*	$NetBSD: osiop.c,v 1.37 2008/12/09 14:11:11 tsutsui Exp $	*/
+/*	$NetBSD: osiop.c,v 1.37.4.1 2010/08/17 06:46:10 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2001 Izumi Tsutsui.  All rights reserved.
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osiop.c,v 1.37 2008/12/09 14:11:11 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osiop.c,v 1.37.4.1 2010/08/17 06:46:10 uebayasi Exp $");
 
 /* #define OSIOP_DEBUG */
 
@@ -124,23 +124,23 @@ __KERNEL_RCSID(0, "$NetBSD: osiop.c,v 1.37 2008/12/09 14:11:11 tsutsui Exp $");
 /* 53C710 script */
 #include <dev/microcode/siop/osiop.out>
 
-void osiop_attach(struct osiop_softc *);
-void osiop_minphys(struct buf *);
-void osiop_scsipi_request(struct scsipi_channel *, scsipi_adapter_req_t,
+static void osiop_minphys(struct buf *);
+static void osiop_scsipi_request(struct scsipi_channel *, scsipi_adapter_req_t,
     void *);
-void osiop_poll(struct osiop_softc *, struct osiop_acb *);
-void osiop_sched(struct osiop_softc *);
-void osiop_scsidone(struct osiop_acb *, int);
-void osiop_abort(struct osiop_softc *, const char *);
-void osiop_init(struct osiop_softc *);
-void osiop_reset(struct osiop_softc *);
-void osiop_resetbus(struct osiop_softc *);
-void osiop_start(struct osiop_softc *);
-int osiop_checkintr(struct osiop_softc *, uint8_t, uint8_t, uint8_t, int *);
-void osiop_select(struct osiop_softc *);
-void osiop_update_xfer_mode(struct osiop_softc *, int);
-void scsi_period_to_osiop(struct osiop_softc *, int);
-void osiop_timeout(void *);
+static void osiop_poll(struct osiop_softc *, struct osiop_acb *);
+static void osiop_sched(struct osiop_softc *);
+static void osiop_scsidone(struct osiop_acb *, int);
+static void osiop_abort(struct osiop_softc *, const char *);
+static void osiop_init(struct osiop_softc *);
+static void osiop_reset(struct osiop_softc *);
+static void osiop_resetbus(struct osiop_softc *);
+static void osiop_start(struct osiop_softc *);
+static int osiop_checkintr(struct osiop_softc *, uint8_t, uint8_t, uint8_t,
+    int *);
+static void osiop_select(struct osiop_softc *);
+static void osiop_update_xfer_mode(struct osiop_softc *, int);
+static void scsi_period_to_osiop(struct osiop_softc *, int);
+static void osiop_timeout(void *);
 
 int osiop_reset_delay = 250;	/* delay after reset, in milliseconds */
 

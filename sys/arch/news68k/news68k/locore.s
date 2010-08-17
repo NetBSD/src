@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.52.2.1 2010/04/30 14:39:39 uebayasi Exp $	*/
+/*	$NetBSD: locore.s,v 1.52.2.2 2010/08/17 06:44:56 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -88,6 +88,7 @@
 #include "opt_kgdb.h"
 #include "opt_lockdebug.h"
 #include "opt_fpu_emulate.h"
+#include "opt_m68k_arch.h"
 
 #include "assym.h"
 #include <machine/asm.h>

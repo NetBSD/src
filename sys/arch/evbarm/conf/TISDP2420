@@ -1,5 +1,5 @@
 #
-#	$NetBSD: TISDP2420,v 1.11.2.1 2010/04/30 14:39:15 uebayasi Exp $
+#	$NetBSD: TISDP2420,v 1.11.2.2 2010/08/17 06:44:16 uebayasi Exp $
 #
 #	TISDP2420 -- TI OMAP 2420 Eval Board Kernel
 #
@@ -235,12 +235,6 @@ sm0		at gpmc? addr 0x08000300 intr 188	# (intr is GPIO92)
 ##uhub*		at usb?
 ##umass*		at uhub? port ? configuration ? interface ?
 ##wd*		at umass?
-
-# Hardware clocking and power management
-
-options		HWCLOCK
-options		HWCLOCK_MACHINE="<arch/arm/omap/hwclock_omap1.h>"
-options		OMAP_CK_REF_SPEED=12000000
 
 # Pseudo-Devices
 

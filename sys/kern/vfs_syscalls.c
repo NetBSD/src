@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.403.2.3 2010/05/31 03:29:43 uebayasi Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.403.2.4 2010/08/17 06:47:34 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.403.2.3 2010/05/31 03:29:43 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.403.2.4 2010/08/17 06:47:34 uebayasi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -290,11 +290,12 @@ mount_get_vfsops(const char *fstype, struct vfsops **vfsops)
 
 static int
 mount_domount(struct lwp *l, struct vnode **vpp, struct vfsops *vfsops,
-    const char *path, int flags, void *data, size_t *data_len, u_int recurse)
+    const char *path, int flags, void *data, size_t *data_len)
 {
 	struct mount *mp;
 	struct vnode *vp = *vpp;
 	struct vattr va;
+	struct nameidata nd;
 	int error;
 
 	error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_MOUNT,
@@ -327,19 +328,6 @@ mount_domount(struct lwp *l, struct vnode **vpp, struct vfsops *vfsops,
 		return EINVAL;
 	}
 
-	if ((error = vinvalbuf(vp, V_SAVE, l->l_cred, l, 0, 0)) != 0) {
-		vfs_delref(vfsops);
-		return error;
-	}
-
-	/*
-	 * Check if a file-system is not already mounted on this vnode.
-	 */
-	if (vp->v_mountedhere != NULL) {
-		vfs_delref(vfsops);
-		return EBUSY;
-	}
-
 	if ((mp = vfs_mountalloc(vfsops, vp)) == NULL) {
 		vfs_delref(vfsops);
 		return ENOMEM;
@@ -363,30 +351,55 @@ mount_domount(struct lwp *l, struct vnode **vpp, struct vfsops *vfsops,
 	error = VFS_MOUNT(mp, path, data, data_len);
 	mp->mnt_flag &= ~MNT_OP_FLAGS;
 
+	if (error != 0)
+		goto err_unmounted;
+
+	/*
+	 * Validate and prepare the mount point.
+	 */
+	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF | TRYEMULROOT,
+	    UIO_USERSPACE, path);
+	error = namei(&nd);
+	if (error != 0) {
+		goto err_mounted;
+	}
+	if (nd.ni_vp != vp) {
+		vput(nd.ni_vp);
+		error = EINVAL;
+		goto err_mounted;
+	}
+	if (vp->v_mountedhere != NULL) {
+		vput(nd.ni_vp);
+		error = EBUSY;
+		goto err_mounted;
+	}
+	error = vinvalbuf(vp, V_SAVE, l->l_cred, l, 0, 0);
+	if (error != 0) {
+		vput(nd.ni_vp);
+		goto err_mounted;
+	}
+
 	/*
 	 * Put the new filesystem on the mount list after root.
 	 */
 	cache_purge(vp);
-	if (error != 0) {
-		vp->v_mountedhere = NULL;
-		mutex_exit(&mp->mnt_updating);
-		vfs_unbusy(mp, false, NULL);
-		vfs_destroy(mp);
-		return error;
-	}
-
 	mp->mnt_iflag &= ~IMNT_WANTRDWR;
+
 	mutex_enter(&mountlist_lock);
-	vp->v_mountedhere = mp;
 	CIRCLEQ_INSERT_TAIL(&mountlist, mp, mnt_list);
 	mutex_exit(&mountlist_lock);
-    	vn_restorerecurse(vp, recurse);
-	VOP_UNLOCK(vp, 0);
-	checkdirs(vp);
 	if ((mp->mnt_flag & (MNT_RDONLY | MNT_ASYNC)) == 0)
 		error = vfs_allocate_syncvnode(mp);
-	/* Hold an additional reference to the mount across VFS_START(). */
+	if (error == 0)
+		vp->v_mountedhere = mp;
+	vput(nd.ni_vp);
+	if (error != 0)
+		goto err_onmountlist;
+
+	checkdirs(vp);
 	mutex_exit(&mp->mnt_updating);
+
+	/* Hold an additional reference to the mount across VFS_START(). */
 	vfs_unbusy(mp, true, NULL);
 	(void) VFS_STATVFS(mp, &mp->mnt_stat);
 	error = VFS_START(mp, 0);
@@ -395,6 +408,24 @@ mount_domount(struct lwp *l, struct vnode **vpp, struct vfsops *vfsops,
 	/* Drop reference held for VFS_START(). */
 	vfs_destroy(mp);
 	*vpp = NULL;
+	return error;
+
+err_onmountlist:
+	mutex_enter(&mountlist_lock);
+	CIRCLEQ_REMOVE(&mountlist, mp, mnt_list);
+	mp->mnt_iflag |= IMNT_GONE;
+	mutex_exit(&mountlist_lock);
+
+err_mounted:
+	if (VFS_UNMOUNT(mp, MNT_FORCE) != 0)
+		panic("Unmounting fresh file system failed");
+
+err_unmounted:
+	vp->v_mountedhere = NULL;
+	mutex_exit(&mp->mnt_updating);
+	vfs_unbusy(mp, false, NULL);
+	vfs_destroy(mp);
+
 	return error;
 }
 
@@ -457,7 +488,6 @@ do_sys_mount(struct lwp *l, struct vfsops *vfsops, const char *type,
 {
 	struct vnode *vp;
 	void *data_buf = data;
-	u_int recurse;
 	bool vfsopsrele = false;
 	int error;
 
@@ -470,33 +500,20 @@ do_sys_mount(struct lwp *l, struct vfsops *vfsops, const char *type,
 	 */
 	error = namei_simple_user(path, NSM_FOLLOW_TRYEMULROOT, &vp);
 	if (error != 0) {
-		/* XXXgcc */
 		vp = NULL;
-		recurse = 0;
 		goto done;
 	}
 
-	/*
-	 * A lookup in VFS_MOUNT might result in an attempt to
-	 * lock this vnode again, so make the lock recursive.
-	 */
 	if (vfsops == NULL) {
 		if (flags & (MNT_GETARGS | MNT_UPDATE)) {
-			vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
-			recurse = vn_setrecurse(vp);
 			vfsops = vp->v_mount->mnt_op;
 		} else {
 			/* 'type' is userspace */
 			error = mount_get_vfsops(type, &vfsops);
-			vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
-			recurse = vn_setrecurse(vp);
 			if (error != 0)
 				goto done;
 			vfsopsrele = true;
 		}
-	} else {
-		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
-		recurse = vn_setrecurse(vp);
 	}
 
 	if (data != NULL && data_seg == UIO_USERSPACE) {
@@ -540,7 +557,7 @@ do_sys_mount(struct lwp *l, struct vfsops *vfsops, const char *type,
 		/* Locking is handled internally in mount_domount(). */
 		KASSERT(vfsopsrele == true);
 		error = mount_domount(l, &vp, vfsops, path, flags, data_buf,
-		    &data_len, recurse);
+		    &data_len);
 		vfsopsrele = false;
 	}
 
@@ -548,8 +565,7 @@ do_sys_mount(struct lwp *l, struct vfsops *vfsops, const char *type,
 	if (vfsopsrele)
 		vfs_delref(vfsops);
     	if (vp != NULL) {
-	    	vn_restorerecurse(vp, recurse);
-	    	vput(vp);
+	    	vrele(vp);
 	}
 	if (data_buf != data)
 		kmem_free(data_buf, data_len);
@@ -650,7 +666,7 @@ sys_unmount(struct lwp *l, const struct sys_unmount_args *uap, register_t *retva
 	vp = nd.ni_vp;
 	mp = vp->v_mount;
 	atomic_inc_uint(&mp->mnt_refcnt);
-	VOP_UNLOCK(vp, 0);
+	VOP_UNLOCK(vp);
 
 	error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_MOUNT,
 	    KAUTH_REQ_SYSTEM_MOUNT_UNMOUNT, mp, NULL, NULL);
@@ -1120,7 +1136,7 @@ sys_fchdir(struct lwp *l, const struct sys_fchdir_args *uap, register_t *retval)
 			goto out;
 		vp = tdp;
 	}
-	VOP_UNLOCK(vp, 0);
+	VOP_UNLOCK(vp);
 
 	/*
 	 * Disallow changing to a directory not under the process's
@@ -1166,7 +1182,7 @@ sys_fchroot(struct lwp *l, const struct sys_fchroot_args *uap, register_t *retva
 		error = ENOTDIR;
 	else
 		error = VOP_ACCESS(vp, VEXEC, l->l_cred);
-	VOP_UNLOCK(vp, 0);
+	VOP_UNLOCK(vp);
 	if (error)
 		goto out;
 	vref(vp);
@@ -1282,7 +1298,7 @@ chdir_lookup(const char *path, int where, struct vnode **vpp, struct lwp *l)
 	if (error)
 		vput(*vpp);
 	else
-		VOP_UNLOCK(*vpp, 0);
+		VOP_UNLOCK(*vpp);
 	return (error);
 }
 
@@ -1348,7 +1364,7 @@ sys_open(struct lwp *l, const struct sys_open_args *uap, register_t *retval)
 		type = F_FLOCK;
 		if ((flags & FNONBLOCK) == 0)
 			type |= F_WAIT;
-		VOP_UNLOCK(vp, 0);
+		VOP_UNLOCK(vp);
 		error = VOP_ADVLOCK(vp, fp, F_SETLK, &lf, type);
 		if (error) {
 			(void) vn_close(vp, fp->f_flag, fp->f_cred);
@@ -1358,7 +1374,7 @@ sys_open(struct lwp *l, const struct sys_open_args *uap, register_t *retval)
 		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 		atomic_or_uint(&fp->f_flag, FHASLOCK);
 	}
-	VOP_UNLOCK(vp, 0);
+	VOP_UNLOCK(vp);
 	*retval = indx;
 	fd_affix(p, fp, indx);
 	return (0);
@@ -1648,7 +1664,7 @@ dofhopen(struct lwp *l, const void *ufhp, size_t fhsize, int oflags,
 	if (error != 0)
 		goto bad;
 	if (flags & O_TRUNC) {
-		VOP_UNLOCK(vp, 0);			/* XXX */
+		VOP_UNLOCK(vp);			/* XXX */
 		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);   /* XXX */
 		vattr_null(&va);
 		va.va_size = 0;
@@ -1681,7 +1697,7 @@ dofhopen(struct lwp *l, const void *ufhp, size_t fhsize, int oflags,
 		type = F_FLOCK;
 		if ((flags & FNONBLOCK) == 0)
 			type |= F_WAIT;
-		VOP_UNLOCK(vp, 0);
+		VOP_UNLOCK(vp);
 		error = VOP_ADVLOCK(vp, fp, F_SETLK, &lf, type);
 		if (error) {
 			(void) vn_close(vp, fp->f_flag, fp->f_cred);
@@ -1691,7 +1707,7 @@ dofhopen(struct lwp *l, const void *ufhp, size_t fhsize, int oflags,
 		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 		atomic_or_uint(&fp->f_flag, FHASLOCK);
 	}
-	VOP_UNLOCK(vp, 0);
+	VOP_UNLOCK(vp);
 	*retval = indx;
 	fd_affix(p, fp, indx);
 	vfs_copyinfh_free(fh);
@@ -2008,29 +2024,24 @@ out:
 	return (error);
 }
 
-/*
- * Make a symbolic link.
- */
-/* ARGSUSED */
 int
-sys_symlink(struct lwp *l, const struct sys_symlink_args *uap, register_t *retval)
+do_sys_symlink(const char *patharg, const char *link, enum uio_seg seg)
 {
-	/* {
-		syscallarg(const char *) path;
-		syscallarg(const char *) link;
-	} */
-	struct proc *p = l->l_proc;
+	struct proc *p = curproc;
 	struct vattr vattr;
 	char *path;
 	int error;
 	struct nameidata nd;
 
 	path = PNBUF_GET();
-	error = copyinstr(SCARG(uap, path), path, MAXPATHLEN, NULL);
-	if (error)
-		goto out;
-	NDINIT(&nd, CREATE, LOCKPARENT | TRYEMULROOT, UIO_USERSPACE,
-	    SCARG(uap, link));
+	if (seg == UIO_USERSPACE) {
+		if ((error = copyinstr(patharg, path, MAXPATHLEN, NULL)) != 0)
+			goto out;
+	} else {
+		KASSERT(strlen(patharg) < MAXPATHLEN);
+		strcpy(path, patharg);
+	}
+	NDINIT(&nd, CREATE, LOCKPARENT | TRYEMULROOT, seg, link);
 	if ((error = namei(&nd)) != 0)
 		goto out;
 	if (nd.ni_vp) {
@@ -2053,6 +2064,22 @@ sys_symlink(struct lwp *l, const struct sys_symlink_args *uap, register_t *retva
 out:
 	PNBUF_PUT(path);
 	return (error);
+}
+
+/*
+ * Make a symbolic link.
+ */
+/* ARGSUSED */
+int
+sys_symlink(struct lwp *l, const struct sys_symlink_args *uap, register_t *retval)
+{
+	/* {
+		syscallarg(const char *) path;
+		syscallarg(const char *) link;
+	} */
+
+	return do_sys_symlink(SCARG(uap, path), SCARG(uap, link),
+	    UIO_USERSPACE);
 }
 
 /*
@@ -2560,7 +2587,7 @@ sys_fchflags(struct lwp *l, const struct sys_fchflags_args *uap, register_t *ret
 		return (error);
 	vp = fp->f_data;
 	error = change_flags(vp, SCARG(uap, flags), l);
-	VOP_UNLOCK(vp, 0);
+	VOP_UNLOCK(vp);
 	fd_putfile(SCARG(uap, fd));
 	return (error);
 }
@@ -2702,7 +2729,7 @@ change_mode(struct vnode *vp, int mode, struct lwp *l)
 	vattr_null(&vattr);
 	vattr.va_mode = mode & ALLPERMS;
 	error = VOP_SETATTR(vp, &vattr, l->l_cred);
-	VOP_UNLOCK(vp, 0);
+	VOP_UNLOCK(vp);
 	return (error);
 }
 
@@ -2910,7 +2937,7 @@ change_owner(struct vnode *vp, uid_t uid, gid_t gid, struct lwp *l,
 #undef CHANGED
 
 out:
-	VOP_UNLOCK(vp, 0);
+	VOP_UNLOCK(vp);
 	return (error);
 }
 
@@ -3035,7 +3062,7 @@ do_sys_utimes(struct lwp *l, struct vnode *vp, const char *path, int flag,
 	if (vanull)
 		vattr.va_vaflags |= VA_UTIMES_NULL;
 	error = VOP_SETATTR(vp, &vattr, l->l_cred);
-	VOP_UNLOCK(vp, 0);
+	VOP_UNLOCK(vp);
 
 	if (dorele != 0)
 		vrele(vp);
@@ -3109,7 +3136,7 @@ sys_ftruncate(struct lwp *l, const struct sys_ftruncate_args *uap, register_t *r
 		vattr.va_size = SCARG(uap, length);
 		error = VOP_SETATTR(vp, &vattr, fp->f_cred);
 	}
-	VOP_UNLOCK(vp, 0);
+	VOP_UNLOCK(vp);
  out:
 	fd_putfile(SCARG(uap, fd));
 	return (error);
@@ -3135,7 +3162,7 @@ sys_fsync(struct lwp *l, const struct sys_fsync_args *uap, register_t *retval)
 	vp = fp->f_data;
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	error = VOP_FSYNC(vp, fp->f_cred, FSYNC_WAIT, 0, 0);
-	VOP_UNLOCK(vp, 0);
+	VOP_UNLOCK(vp);
 	fd_putfile(SCARG(uap, fd));
 	return (error);
 }
@@ -3203,7 +3230,7 @@ sys_fsync_range(struct lwp *l, const struct sys_fsync_range_args *uap, register_
 	vp = fp->f_data;
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	error = VOP_FSYNC(vp, fp->f_cred, nflags, s, e);
-	VOP_UNLOCK(vp, 0);
+	VOP_UNLOCK(vp);
 out:
 	fd_putfile(SCARG(uap, fd));
 	return (error);
@@ -3233,7 +3260,7 @@ sys_fdatasync(struct lwp *l, const struct sys_fdatasync_args *uap, register_t *r
 	vp = fp->f_data;
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	error = VOP_FSYNC(vp, fp->f_cred, FSYNC_WAIT|FSYNC_DATAONLY, 0, 0);
-	VOP_UNLOCK(vp, 0);
+	VOP_UNLOCK(vp);
 	fd_putfile(SCARG(uap, fd));
 	return (error);
 }
@@ -3294,7 +3321,7 @@ do_sys_rename(const char *from, const char *to, enum uio_seg seg, int retain)
 	if ((error = namei(&fromnd)) != 0)
 		return (error);
 	if (fromnd.ni_dvp != fromnd.ni_vp)
-		VOP_UNLOCK(fromnd.ni_dvp, 0);
+		VOP_UNLOCK(fromnd.ni_dvp);
 	fvp = fromnd.ni_vp;
 
 	fs = fvp->v_mount;
@@ -3341,15 +3368,15 @@ do_sys_rename(const char *from, const char *to, enum uio_seg seg, int retain)
 	error = relookup(fromnd.ni_dvp, &fromnd.ni_vp, &fromnd.ni_cnd);
 	fromnd.ni_cnd.cn_flags |= saveflag;
 	if (error) {
-		VOP_UNLOCK(fromnd.ni_dvp, 0);
+		VOP_UNLOCK(fromnd.ni_dvp);
 		VFS_RENAMELOCK_EXIT(fs);
 		VOP_ABORTOP(fromnd.ni_dvp, &fromnd.ni_cnd);
 		vrele(fromnd.ni_dvp);
 		goto out1;
 	}
-	VOP_UNLOCK(fromnd.ni_vp, 0);
+	VOP_UNLOCK(fromnd.ni_vp);
 	if (fromnd.ni_dvp != fromnd.ni_vp)
-		VOP_UNLOCK(fromnd.ni_dvp, 0);
+		VOP_UNLOCK(fromnd.ni_dvp);
 	fvp = fromnd.ni_vp;
 
 	NDINIT(&tond, RENAME,

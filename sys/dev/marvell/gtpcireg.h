@@ -1,4 +1,4 @@
-/*	$NetBSD: gtpcireg.h,v 1.4.96.1 2010/04/30 14:43:27 uebayasi Exp $	*/
+/*	$NetBSD: gtpcireg.h,v 1.4.96.2 2010/08/17 06:46:17 uebayasi Exp $	*/
 /*
  * Copyright (c) 2008, 2009 KIYOHARA Takashi
  * All rights reserved.
@@ -156,8 +156,6 @@
 #define GTPCI_GT64260_ACBL_WBURST_4_QW	(0 << 20)
 #define GTPCI_GT64260_ACBL_WBURST_8_QW	(1 << 20)
 #define GTPCI_GT64260_ACBL_WBURST_16_QW	(2 << 20)
-#define PCI_ACCCTLBASEL_PCISwap         PCI__EXT(v, 24, 2)
-#define PCI_ACCCTLBASEL_PCISwap_NoSwap  PCI__INS(24, PCI_PCISWAP_NoSwap)
 #define GTPCI_GT64260_ACBL_PCISWAP_BYTESWAP     (0 << 24)
 #define GTPCI_GT64260_ACBL_PCISWAP_NOSWAP       (1 << 24)
 #define GTPCI_GT64260_ACBL_PCISWAP_BYTEWORDSWAP (3 << 24)

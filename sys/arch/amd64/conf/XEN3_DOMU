@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOMU,v 1.21.2.1 2010/04/30 14:39:04 uebayasi Exp $
+# $NetBSD: XEN3_DOMU,v 1.21.2.2 2010/08/17 06:43:53 uebayasi Exp $
 
 include 	"arch/amd64/conf/std.xen"
 
@@ -13,6 +13,7 @@ maxusers	32		# estimated number of users
 #
 options 	MAXPHYS=32768   #xbd doesn't handle 64k transfers
 #options 	DOM0OPS
+#options         XEN_BALLOON	# Xen memory ballooning - Experimental
 
 #options 	VM86		# virtual 8086 emulation
 #options 	USER_LDT	# user-settable LDT; used by WINE
@@ -119,6 +120,7 @@ options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
 options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 options 	IPFILTER_LOG	# ipmon(8) log support
 options 	IPFILTER_LOOKUP	# ippool(8) support
+options 	IPFILTER_COMPAT # Compat for IP-Filter
 #options 	IPFILTER_DEFAULT_BLOCK	# block all packets by default
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
@@ -193,6 +195,7 @@ pseudo-device	putter			# for puffs and pud
 
 pseudo-device	md		1	# memory disk device (ramdisk)
 pseudo-device	vnd			# disk-like interface to files
+pseudo-device	dm			# device-mapper driver for LVM
 
 # network pseudo-devices
 pseudo-device	bpfilter		# Berkeley packet filter

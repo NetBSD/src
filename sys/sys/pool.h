@@ -1,4 +1,4 @@
-/*	$NetBSD: pool.h,v 1.68 2009/12/30 18:57:16 elad Exp $	*/
+/*	$NetBSD: pool.h,v 1.68.2.1 2010/08/17 06:48:08 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000, 2007 The NetBSD Foundation, Inc.
@@ -42,6 +42,7 @@
 #endif
 
 #ifdef __POOL_EXPOSE
+#include <sys/param.h>
 #include <sys/mutex.h>
 #include <sys/condvar.h>
 #include <sys/queue.h>
@@ -294,7 +295,7 @@ void		pool_setlowat(struct pool *, int);
 void		pool_sethiwat(struct pool *, int);
 void		pool_sethardlimit(struct pool *, int, const char *, int);
 void		pool_drain_start(struct pool **, uint64_t *);
-void		pool_drain_end(struct pool *, uint64_t);
+bool		pool_drain_end(struct pool *, uint64_t);
 
 /*
  * Debugging and diagnostic aides.

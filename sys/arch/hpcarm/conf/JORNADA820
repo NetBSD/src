@@ -1,4 +1,4 @@
-#	$NetBSD: JORNADA820,v 1.16.2.1 2010/04/30 14:39:25 uebayasi Exp $
+#	$NetBSD: JORNADA820,v 1.16.2.2 2010/08/17 06:44:26 uebayasi Exp $
 #
 #	JORNADA -- Windows-CE based jornada 820
 #
@@ -7,14 +7,15 @@ include	"arch/hpcarm/conf/std.sa11x0"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.16.2.1 $"
+#ident 		"GENERIC-$Revision: 1.16.2.2 $"
 
 # estimated number of users
 maxusers	32
 
 # Standard system options
 
-options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
+#options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
+				# (default timezone is passed from hpcboot)
 #options 	NTP		# NTP phase/frequency locked loop
 
 # CPU options

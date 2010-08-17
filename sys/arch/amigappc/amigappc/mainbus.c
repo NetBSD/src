@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.1 2009/07/21 09:49:15 phx Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.1.4.1 2010/08/17 06:43:59 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2008,2009 Frank Wille.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.1 2009/07/21 09:49:15 phx Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.1.4.1 2010/08/17 06:43:59 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -86,14 +86,11 @@ int mbmatch(struct device *, struct cfdata *, void *);
 CFATTACH_DECL(mainbus, sizeof(struct device),
     mbmatch, mbattach, NULL, NULL);
 
-static int mainbus_print (void *, const char *);
-
-
 int
 mbmatch(struct device *parent, struct cfdata *cfp, void *aux)
 {
 
-	return (1);
+	return 1;
 }
 
 void
@@ -105,7 +102,7 @@ mbattach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * Always find the CPU
 	 */
-	config_found_ia(self, "mainbus", __UNCONST("cpu"), mainbus_print);
+	config_found_ia(self, "mainbus", __UNCONST("cpu"), mbprint);
 
 	/*
 	 * "find" all the things that should be there.
@@ -121,10 +118,8 @@ mbattach(struct device *parent, struct device *self, void *aux)
 	config_found(self, __UNCONST("grfcc"), simple_devprint);
 	config_found(self, __UNCONST("amidisplaycc"), simple_devprint);
 	config_found(self, __UNCONST("fdc"), simple_devprint);
-	if (is_a4000() || is_a1200()) {
+	if (is_a4000() || is_a1200())
 		config_found(self, __UNCONST("wdc"), simple_devprint);
-		config_found(self, __UNCONST("idesc"), simple_devprint);
-	}
 	if (is_a4000())			/* Try to configure A4000T SCSI */
 		config_found(self, __UNCONST("afsc"), simple_devprint);
 	if (is_a3000())
@@ -142,14 +137,5 @@ mbprint(void *aux, const char *pnp)
 
 	if (pnp)
 		aprint_normal("%s at %s", (char *)aux, pnp);
-	return (UNCONF);
-}
-
-static int
-mainbus_print(void *aux, const char *pnp)
-{
-
-	if (pnp)
-		aprint_normal("cpu0 at %s", pnp);
-	return (UNCONF);
+	return UNCONF;
 }

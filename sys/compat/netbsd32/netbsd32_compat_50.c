@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_50.c,v 1.9.2.1 2010/04/30 14:43:00 uebayasi Exp $	*/
+/*	$NetBSD: netbsd32_compat_50.c,v 1.9.2.2 2010/08/17 06:45:53 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_50.c,v 1.9.2.1 2010/04/30 14:43:00 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_50.c,v 1.9.2.2 2010/08/17 06:45:53 uebayasi Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -494,16 +494,19 @@ compat_50_netbsd32___sigtimedwait(struct lwp *l,
 		syscallarg(netbsd32_timespec50p_t) timeout;
 	} */
 	struct sys_____sigtimedwait50_args ua;
+	int res;
 
 	NETBSD32TOP_UAP(set, const sigset_t);
 	NETBSD32TOP_UAP(info, siginfo_t);
 	NETBSD32TOP_UAP(timeout, struct timespec);
 
-	return sigtimedwait1(l, &ua, retval,
+	res = sigtimedwait1(l, &ua, retval,
 	    compat_50_netbsd32_sigtimedwait_put_info,
 	    compat_50_netbsd32_sigtimedwait_fetch_timeout,
 	    compat_50_netbsd32_sigtimedwait_put_timeout);
-	return 0;
+	if (!res)
+		*retval = 0; /* XXX NetBSD<=5 was not POSIX compliant */
+	return res;
 }
 
 int

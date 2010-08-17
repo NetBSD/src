@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.180.2.1 2010/04/30 14:43:33 uebayasi Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.180.2.2 2010/08/17 06:46:24 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.180.2.1 2010/04/30 14:43:33 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.180.2.2 2010/08/17 06:46:24 uebayasi Exp $");
 
 #include "vlan.h"
 #include "rnd.h"
@@ -150,7 +150,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.180.2.1 2010/04/30 14:43:33 uebayasi Ex
  * such that moving from one pair to the succeeding pair was observed
  * to roughly halve interrupt rate under sustained input packet load.
  * The values were empirically chosen to avoid overflowing internal
- * limits on the  bcm5700: inreasing rx_ticks much beyond 600
+ * limits on the  bcm5700: increasing rx_ticks much beyond 600
  * results in internal wrapping and higher interrupt rates.
  * The limit of 46 frames was chosen to match NFS workloads.
  *
@@ -208,6 +208,7 @@ static int bge_encap(struct bge_softc *, struct mbuf *, uint32_t *);
 
 static int bge_intr(void *);
 static void bge_start(struct ifnet *);
+static int bge_ifflags_cb(struct ethercom *);
 static int bge_ioctl(struct ifnet *, u_long, void *);
 static int bge_init(struct ifnet *);
 static void bge_stop(struct ifnet *, int);
@@ -1300,7 +1301,7 @@ bge_jfree(struct mbuf *m, void *buf, size_t size, void *arg)
 
 
 /*
- * Intialize a standard receive ring descriptor.
+ * Initialize a standard receive ring descriptor.
  */
 static int
 bge_newbuf_std(struct bge_softc *sc, int i, struct mbuf *m,
@@ -1842,7 +1843,7 @@ bge_chipinit(struct bge_softc *sc)
 		/* Conventional PCI bus: 256 bytes for read and write. */
 	  	DPRINTFN(4, ("(%s: PCI 2.2 DMA setting)\n",
 		    device_xname(sc->bge_dev)));
-		dma_rw_ctl = (0x7 << BGE_PCIDMARWCTL_RD_WAT_SHIFT) |
+		dma_rw_ctl |= (0x7 << BGE_PCIDMARWCTL_RD_WAT_SHIFT) |
 		   (0x7 << BGE_PCIDMARWCTL_WR_WAT_SHIFT);
 		if (BGE_ASICREV(sc->bge_chipid) != BGE_ASICREV_BCM5705 &&
 		    BGE_ASICREV(sc->bge_chipid) != BGE_ASICREV_BCM5750)
@@ -2449,7 +2450,7 @@ bge_setpowerstate(struct bge_softc *sc, int powerlevel)
 	/*
 	 * Entering ACPI power states D1-D3 is achieved by wiggling
 	 * GMII gpio pins. Example code assumes all hardware vendors
-	 * followed Broadom's sample pcb layout. Until we verify that
+	 * followed Broadcom's sample pcb layout. Until we verify that
 	 * for all supported OEM cards, states D1-D3 are  unsupported.
 	 */
 	aprint_error_dev(sc->bge_dev,
@@ -3014,6 +3015,7 @@ bge_attach(device_t parent, device_t self, void *aux)
 	if_attach(ifp);
 	DPRINTFN(5, ("ether_ifattach\n"));
 	ether_ifattach(ifp, eaddr);
+	ether_set_ifflags_cb(&sc->ethercom, bge_ifflags_cb);
 #if NRND > 0
 	rnd_attach_source(&sc->rnd_source, device_xname(sc->bge_dev),
 		RND_TYPE_NET, 0);
@@ -3204,7 +3206,7 @@ bge_reset(struct bge_softc *sc)
 		marbmode = CSR_READ_4(sc, BGE_MARB_MODE);
 	CSR_WRITE_4(sc, BGE_MARB_MODE, BGE_MARBMODE_ENABLE | marbmode);
 
-	/* Step 17: Poll until the firmware iitializeation is complete */
+	/* Step 17: Poll until the firmware initialization is complete */
 	bge_poll_fw(sc);
 
 	/* XXX 5721, 5751 and 5752 */
@@ -3301,7 +3303,7 @@ bge_reset(struct bge_softc *sc)
  * on the receive return list.
  *
  * Note: we have to be able to handle two possibilities here:
- * 1) the frame is from the jumbo recieve ring
+ * 1) the frame is from the jumbo receive ring
  * 2) the frame is from the standard receive ring
  */
 
@@ -4371,6 +4373,7 @@ bge_init(struct ifnet *ifp)
 	callout_reset(&sc->bge_timeout, hz, bge_tick, sc);
 
 out:
+	sc->bge_if_flags = ifp->if_flags;
 	splx(s);
 
 	return error;
@@ -4481,6 +4484,29 @@ bge_ifmedia_sts(struct ifnet *ifp, struct ifmediareq *ifmr)
 }
 
 static int
+bge_ifflags_cb(struct ethercom *ec)
+{
+	struct ifnet *ifp = &ec->ec_if;
+	struct bge_softc *sc = ifp->if_softc;
+	int change = ifp->if_flags ^ sc->bge_if_flags;
+
+	if ((change & ~(IFF_CANTCHANGE|IFF_DEBUG)) != 0)
+		return ENETRESET;
+	else if ((change & (IFF_PROMISC | IFF_ALLMULTI)) == 0)
+		return 0;
+
+	if ((ifp->if_flags & IFF_PROMISC) == 0)
+		BGE_CLRBIT(sc, BGE_RX_MODE, BGE_RXMODE_RX_PROMISC);
+	else
+		BGE_SETBIT(sc, BGE_RX_MODE, BGE_RXMODE_RX_PROMISC);
+
+	bge_setmulti(sc);
+
+	sc->bge_if_flags = ifp->if_flags;
+	return 0;
+}
+
+static int
 bge_ioctl(struct ifnet *ifp, u_long command, void *data)
 {
 	struct bge_softc *sc = ifp->if_softc;
@@ -4491,37 +4517,6 @@ bge_ioctl(struct ifnet *ifp, u_long command, void *data)
 	s = splnet();
 
 	switch (command) {
-	case SIOCSIFFLAGS:
-		if ((error = ifioctl_common(ifp, command, data)) != 0)
-			break;
-		if (ifp->if_flags & IFF_UP) {
-			/*
-			 * If only the state of the PROMISC flag changed,
-			 * then just use the 'set promisc mode' command
-			 * instead of reinitializing the entire NIC. Doing
-			 * a full re-init means reloading the firmware and
-			 * waiting for it to start up, which may take a
-			 * second or two.
-			 */
-			if (ifp->if_flags & IFF_RUNNING &&
-			    ifp->if_flags & IFF_PROMISC &&
-			    !(sc->bge_if_flags & IFF_PROMISC)) {
-				BGE_SETBIT(sc, BGE_RX_MODE,
-				    BGE_RXMODE_RX_PROMISC);
-			} else if (ifp->if_flags & IFF_RUNNING &&
-			    !(ifp->if_flags & IFF_PROMISC) &&
-			    sc->bge_if_flags & IFF_PROMISC) {
-				BGE_CLRBIT(sc, BGE_RX_MODE,
-				    BGE_RXMODE_RX_PROMISC);
-			} else if (!(sc->bge_if_flags & IFF_UP))
-				bge_init(ifp);
-		} else {
-			if (ifp->if_flags & IFF_RUNNING)
-				bge_stop(ifp, 1);
-		}
-		sc->bge_if_flags = ifp->if_flags;
-		error = 0;
-		break;
 	case SIOCSIFMEDIA:
 		/* XXX Flow control is not supported for 1000BASE-SX */
 		if (sc->bge_flags & BGE_PHY_FIBER_TBI) {

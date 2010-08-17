@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.169.2.1 2010/04/30 14:44:14 uebayasi Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.169.2.2 2010/08/17 06:47:34 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.169.2.1 2010/04/30 14:44:14 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.169.2.2 2010/08/17 06:47:34 uebayasi Exp $");
 
 #include "veriexec.h"
 
@@ -215,7 +215,7 @@ vn_open(struct nameidata *ndp, int fmode, int cmode)
 	}
 
 	if (fmode & O_TRUNC) {
-		VOP_UNLOCK(vp, 0);			/* XXX */
+		VOP_UNLOCK(vp);			/* XXX */
 
 		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);	/* XXX */
 		vattr_null(&va);
@@ -426,7 +426,7 @@ vn_rdwr(enum uio_rw rw, struct vnode *vp, void *base, int len, off_t offset,
 
  out:
 	if ((ioflg & IO_NODELOCKED) == 0) {
-		VOP_UNLOCK(vp, 0);
+		VOP_UNLOCK(vp);
 	}
 	return (error);
 }
@@ -465,7 +465,7 @@ unionread:
 	mutex_enter(&fp->f_lock);
 	fp->f_offset = auio.uio_offset;
 	mutex_exit(&fp->f_lock);
-	VOP_UNLOCK(vp, 0);
+	VOP_UNLOCK(vp);
 	if (error)
 		return (error);
 
@@ -521,7 +521,7 @@ vn_read(file_t *fp, off_t *offset, struct uio *uio, kauth_cred_t cred,
 	error = VOP_READ(vp, uio, ioflag, cred);
 	if (flags & FOF_UPDATE_OFFSET)
 		*offset += count - uio->uio_resid;
-	VOP_UNLOCK(vp, 0);
+	VOP_UNLOCK(vp);
 	return (error);
 }
 
@@ -575,7 +575,7 @@ vn_write(file_t *fp, off_t *offset, struct uio *uio, kauth_cred_t cred,
 	}
 
  out:
-	VOP_UNLOCK(vp, 0);
+	VOP_UNLOCK(vp);
 	return (error);
 }
 
@@ -590,7 +590,7 @@ vn_statfile(file_t *fp, struct stat *sb)
 
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	error = vn_stat(vp, sb);
-	VOP_UNLOCK(vp, 0);
+	VOP_UNLOCK(vp);
 	return error;
 }
 
@@ -601,6 +601,7 @@ vn_stat(struct vnode *vp, struct stat *sb)
 	int error;
 	mode_t mode;
 
+	memset(&va, 0, sizeof(va));
 	error = VOP_GETATTR(vp, &va, kauth_cred_get());
 	if (error)
 		return (error);
@@ -649,6 +650,7 @@ vn_stat(struct vnode *vp, struct stat *sb)
 	sb->st_flags = va.va_flags;
 	sb->st_gen = 0;
 	sb->st_blocks = va.va_bytes / S_BLKSIZE;
+	memset(sb->st_spare, 0, sizeof(sb->st_spare));
 	return (0);
 }
 
@@ -768,13 +770,10 @@ vn_lock(struct vnode *vp, int flags)
 	int error;
 
 #if 0
-	KASSERT(vp->v_usecount > 0 || (flags & LK_INTERLOCK) != 0
-	    || (vp->v_iflag & VI_ONWORKLST) != 0);
+	KASSERT(vp->v_usecount > 0 || (vp->v_iflag & VI_ONWORKLST) != 0);
 #endif
-	KASSERT((flags &
-	    ~(LK_INTERLOCK|LK_SHARED|LK_EXCLUSIVE|LK_NOWAIT|LK_RETRY|
-	    LK_CANRECURSE))
-	    == 0);
+	KASSERT((flags & ~(LK_SHARED|LK_EXCLUSIVE|LK_NOWAIT|LK_RETRY)) == 0);
+	KASSERT(!mutex_owned(&vp->v_interlock));
 
 #ifdef DIAGNOSTIC
 	if (wapbl_vphaswapbl(vp))
@@ -786,11 +785,8 @@ vn_lock(struct vnode *vp, int flags)
 		 * XXX PR 37706 forced unmount of file systems is unsafe.
 		 * Race between vclean() and this the remaining problem.
 		 */
+		mutex_enter(&vp->v_interlock);
 		if (vp->v_iflag & VI_XLOCK) {
-			if ((flags & LK_INTERLOCK) == 0) {
-				mutex_enter(&vp->v_interlock);
-			}
-			flags &= ~LK_INTERLOCK;
 			if (flags & LK_NOWAIT) {
 				mutex_exit(&vp->v_interlock);
 				return EBUSY;
@@ -799,10 +795,7 @@ vn_lock(struct vnode *vp, int flags)
 			mutex_exit(&vp->v_interlock);
 			error = ENOENT;
 		} else {
-			if ((flags & LK_INTERLOCK) != 0) {
-				mutex_exit(&vp->v_interlock);
-			}
-			flags &= ~LK_INTERLOCK;
+			mutex_exit(&vp->v_interlock);
 			error = VOP_LOCK(vp, (flags & ~LK_RETRY));
 			if (error == 0 || error == EDEADLK || error == EBUSY)
 				return (error);
@@ -819,32 +812,6 @@ vn_closefile(file_t *fp)
 {
 
 	return vn_close(fp->f_data, fp->f_flag, fp->f_cred);
-}
-
-/*
- * Enable LK_CANRECURSE on lock. Return prior status.
- */
-u_int
-vn_setrecurse(struct vnode *vp)
-{
-	struct vnlock *lkp;
-
-	lkp = (vp->v_vnlock != NULL ? vp->v_vnlock : &vp->v_lock);
-	atomic_inc_uint(&lkp->vl_canrecurse);
-
-	return 0;
-}
-
-/*
- * Called when done with locksetrecurse.
- */
-void
-vn_restorerecurse(struct vnode *vp, u_int flags)
-{
-	struct vnlock *lkp;
-
-	lkp = (vp->v_vnlock != NULL ? vp->v_vnlock : &vp->v_lock);
-	atomic_dec_uint(&lkp->vl_canrecurse);
 }
 
 /*
@@ -876,7 +843,7 @@ vn_extattr_get(struct vnode *vp, int ioflg, int attrnamespace,
 	error = VOP_GETEXTATTR(vp, attrnamespace, attrname, &auio, NULL, NULL);
 
 	if ((ioflg & IO_NODELOCKED) == 0)
-		VOP_UNLOCK(vp, 0);
+		VOP_UNLOCK(vp);
 
 	if (error == 0)
 		*buflen = *buflen - auio.uio_resid;
@@ -912,7 +879,7 @@ vn_extattr_set(struct vnode *vp, int ioflg, int attrnamespace,
 	error = VOP_SETEXTATTR(vp, attrnamespace, attrname, &auio, NULL);
 
 	if ((ioflg & IO_NODELOCKED) == 0) {
-		VOP_UNLOCK(vp, 0);
+		VOP_UNLOCK(vp);
 	}
 
 	return (error);
@@ -933,7 +900,7 @@ vn_extattr_rm(struct vnode *vp, int ioflg, int attrnamespace,
 		error = VOP_SETEXTATTR(vp, attrnamespace, attrname, NULL, NULL);
 
 	if ((ioflg & IO_NODELOCKED) == 0) {
-		VOP_UNLOCK(vp, 0);
+		VOP_UNLOCK(vp);
 	}
 
 	return (error);

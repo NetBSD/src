@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_opcode.h,v 1.13 2009/08/06 04:34:50 msaitoh Exp $	*/
+/*	$NetBSD: mips_opcode.h,v 1.13.2.1 2010/08/17 06:44:51 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -147,6 +147,7 @@ typedef union {
 #define OP_LDR		033		/* MIPS-II, for r4000 port */
 
 #define OP_SPECIAL2	034		/* QED opcodes */
+#define OP_SPECIAL3	037
 
 #define OP_LB		040
 #define OP_LH		041
@@ -255,6 +256,11 @@ typedef union {
 #define OP_MAD		000		/* QED */
 #define OP_MADU		001		/* QED */
 #define OP_MUL		002		/* QED */
+
+/*
+ * Values for the 'func' field when 'op' == OP_SPECIAL3.
+ */
+#define OP_RDHWR	073		/* MIPS32r2 */
 
 /*
  * Values for the 'func' field when 'op' == OP_BCOND.

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.24 2008/08/07 04:18:21 matt Exp $	*/
+/*	$NetBSD: locore.S,v 1.24.14.1 2010/08/17 06:44:02 uebayasi Exp $	*/
 
 /*
  * Copyright (C) 1994-1997 Mark Brinicombe
@@ -42,7 +42,7 @@
 /* What size should this really be ? It is only used by init_arm() */
 #define INIT_ARM_STACK_SIZE	2048
 
-	RCSID("$NetBSD: locore.S,v 1.24 2008/08/07 04:18:21 matt Exp $")
+	RCSID("$NetBSD: locore.S,v 1.24.14.1 2010/08/17 06:44:02 uebayasi Exp $")
 
 /*
  * This is for kvm_mkdb, and should be the address of the beginning
@@ -58,8 +58,13 @@ ASENTRY_NP(start)
 	adr	r1, .Lstart
 	ldmia	r1, {r1, r2, sp}	/* Set initial stack and */
 	sub	r2, r2, r1		/* get zero init data */
-	mov	r3, #0
 
+#ifdef PROCESS_ID_IS_CURCPU
+	ldr	r3, .Lcpu_info_store
+	mcr	p15, 0, r3, c13, c0, 4
+#endif
+
+	mov	r3, #0
 .L1:
 	str	r3, [r1], #0x0004	/* Zero the bss */
 	subs	r2, r2, #4
@@ -81,6 +86,11 @@ ASENTRY_NP(start)
 	adr	r0, .Lmainreturned
 	b	_C_LABEL(panic)
 	/* NOTREACHED */
+
+#ifdef PROCESS_ID_IS_CURCPU
+.Lcpu_info_store:	
+	.word	_C_LABEL(cpu_info_store)
+#endif
 
 .Lstart:
 	.word	_edata

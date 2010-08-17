@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC64,v 1.2.2.1 2010/04/30 14:39:41 uebayasi Exp $
+# $NetBSD: GENERIC64,v 1.2.2.2 2010/08/17 06:45:01 uebayasi Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/pmax/conf/std.pmax64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.2.2.1 $"
+#ident		"GENERIC-$Revision: 1.2.2.2 $"
 
 maxusers	64
 
@@ -83,7 +83,7 @@ file-system	PROCFS		# /proc
 file-system	UMAPFS		# NULLFS + uid and gid remapping
 file-system	UNION
 file-system	PTYFS		# /dev/pts/N support
-#file-system	TMPFS		# Efficient memory file-system
+file-system	TMPFS		# Efficient memory file-system
 #file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
 
 options 	NFSSERVER	# Sun NFS-compatible filesystem (server)

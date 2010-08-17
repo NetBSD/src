@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.210.2.1 2010/04/30 14:44:22 uebayasi Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.210.2.2 2010/08/17 06:47:51 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.210.2.1 2010/04/30 14:44:22 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.210.2.2 2010/08/17 06:47:51 uebayasi Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfs.h"
@@ -234,7 +234,7 @@ nfs_statvfs(struct mount *mp, struct statvfs *sbp)
 		sbp->f_ffree = tquad;
 		sbp->f_favail = tquad;
 		sbp->f_fresvd = 0;
-		sbp->f_namemax = MAXNAMLEN;
+		sbp->f_namemax = NFS_MAXNAMLEN;
 	} else {
 		sbp->f_bsize = NFS_FABLKSIZE;
 		sbp->f_frsize = fxdr_unsigned(int32_t, sfp->sf_bsize);
@@ -246,7 +246,7 @@ nfs_statvfs(struct mount *mp, struct statvfs *sbp)
 		sbp->f_ffree = 0;
 		sbp->f_favail = 0;
 		sbp->f_fresvd = 0;
-		sbp->f_namemax = MAXNAMLEN;
+		sbp->f_namemax = NFS_MAXNAMLEN;
 	}
 	copy_statvfs_info(sbp, mp);
 	nfsm_reqdone;
@@ -819,7 +819,7 @@ mountnfs(struct nfs_args *argp, struct mount *mp, struct mbuf *nam, const char *
 	if (vp->v_type == VNON)
 		vp->v_type = VDIR;
 	vp->v_vflag |= VV_ROOT;
-	VOP_UNLOCK(vp, 0);
+	VOP_UNLOCK(vp);
 	*vpp = vp;
 
 	snprintf(iosname, sizeof(iosname), "nfs%u", nfs_mount_count++);
@@ -864,22 +864,21 @@ nfs_unmount(struct mount *mp, int mntflags)
 	 */
 	/*
 	 * We need to decrement the ref. count on the nfsnode representing
-	 * the remote root.  See comment in mountnfs().  The VFS unmount()
-	 * has done vput on this vnode, otherwise we would get deadlock!
+	 * the remote root.  See comment in mountnfs().
 	 */
 	vp = nmp->nm_vnode;
-	error = vget(vp, LK_EXCLUSIVE | LK_RETRY);
+	error = vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	if (error != 0)
 		return error;
 
-	if ((mntflags & MNT_FORCE) == 0 && vp->v_usecount > 2) {
-		vput(vp);
+	if ((mntflags & MNT_FORCE) == 0 && vp->v_usecount > 1) {
+		VOP_UNLOCK(vp);
 		return (EBUSY);
 	}
 
 	error = vflush(mp, vp, flags);
 	if (error) {
-		vput(vp);
+		VOP_UNLOCK(vp);
 		return (error);
 	}
 
@@ -898,10 +897,10 @@ nfs_unmount(struct mount *mp, int mntflags)
 	iostat_free(nmp->nm_stats);
 
 	/*
-	 * There are two reference counts to get rid of here
+	 * There is one reference count to get rid of here
 	 * (see comment in mountnfs()).
 	 */
-	vput(vp);
+	VOP_UNLOCK(vp);
 	vgone(vp);
 	nfs_disconnect(nmp);
 	m_freem(nmp->nm_nam);
@@ -929,9 +928,12 @@ nfs_root(struct mount *mp, struct vnode **vpp)
 
 	nmp = VFSTONFS(mp);
 	vp = nmp->nm_vnode;
-	error = vget(vp, LK_EXCLUSIVE | LK_RETRY);
-	if (error != 0)
+	vref(vp);
+	error = vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+	if (error != 0) {
+		vrele(vp);
 		return error;
+	}
 	*vpp = vp;
 	return (0);
 }
@@ -965,14 +967,19 @@ loop:
 			continue;
 		mutex_enter(&vp->v_interlock);
 		/* XXX MNT_LAZY cannot be right? */
-		if (waitfor == MNT_LAZY || VOP_ISLOCKED(vp) ||
+		if (waitfor == MNT_LAZY ||
 		    (LIST_EMPTY(&vp->v_dirtyblkhd) &&
 		     UVM_OBJ_IS_CLEAN(&vp->v_uobj))) {
 			mutex_exit(&vp->v_interlock);
 			continue;
 		}
 		mutex_exit(&mntvnode_lock);
-		if (vget(vp, LK_EXCLUSIVE | LK_INTERLOCK)) {
+		error = vget(vp, LK_EXCLUSIVE | LK_NOWAIT);
+		if (error != 0) {
+			if (error != ENOENT) {
+				mutex_enter(&mntvnode_lock);
+				continue;
+			}
 			(void)vunmark(mvp);
 			goto loop;
 		}
@@ -1097,6 +1104,7 @@ nfs_fhtovp(struct mount *mp, struct fid *fid, struct vnode **vpp)
 	error = VOP_GETATTR(*vpp, &va, kauth_cred_get());
 	if (error != 0) {
 		vput(*vpp);
+		*vpp = NULLVP;
 	}
 	return error;
 }

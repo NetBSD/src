@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cache.c,v 1.84 2009/02/18 13:36:11 yamt Exp $	*/
+/*	$NetBSD: vfs_cache.c,v 1.84.2.1 2010/08/17 06:47:33 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.84 2009/02/18 13:36:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.84.2.1 2010/08/17 06:47:33 uebayasi Exp $");
 
 #include "opt_ddb.h"
 #include "opt_revcache.h"
@@ -372,7 +372,7 @@ cache_lookup(struct vnode *dvp, struct vnode **vpp, struct componentname *cnp)
 		mutex_enter(&vp->v_interlock);
 		mutex_exit(&ncp->nc_lock);
 		mutex_exit(&cpup->cpu_lock);
-		error = vget(vp, LK_NOWAIT | LK_INTERLOCK);
+		error = vget(vp, LK_NOWAIT);
 		if (error) {
 			KASSERT(error == EBUSY);
 			/*
@@ -396,7 +396,7 @@ cache_lookup(struct vnode *dvp, struct vnode **vpp, struct componentname *cnp)
 	if (vp == dvp) {	/* lookup on "." */
 		error = 0;
 	} else if (cnp->cn_flags & ISDOTDOT) {
-		VOP_UNLOCK(dvp, 0);
+		VOP_UNLOCK(dvp);
 		error = vn_lock(vp, LK_EXCLUSIVE);
 		vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY);
 	} else {
@@ -470,7 +470,7 @@ cache_lookup_raw(struct vnode *dvp, struct vnode **vpp,
 		mutex_enter(&vp->v_interlock);
 		mutex_exit(&ncp->nc_lock);
 		mutex_exit(&cpup->cpu_lock);
-		error = vget(vp, LK_NOWAIT | LK_INTERLOCK);
+		error = vget(vp, LK_NOWAIT);
 		if (error) {
 			KASSERT(error == EBUSY);
 			/*
@@ -492,7 +492,7 @@ cache_lookup_raw(struct vnode *dvp, struct vnode **vpp,
 /*
  * Scan cache looking for name of directory entry pointing at vp.
  *
- * Fill in dvpp.
+ * If the lookup succeeds the vnode is referenced and stored in dvpp.
  *
  * If bufp is non-NULL, also place the name in the buffer which starts
  * at bufp, immediately before *bpp, and move bpp backwards to point
@@ -508,6 +508,7 @@ cache_revlookup(struct vnode *vp, struct vnode **dvpp, char **bpp, char *bufp)
 	struct vnode *dvp;
 	struct ncvhashhead *nvcpp;
 	char *bp;
+	int error, nlen;
 
 	if (!doingcache)
 		goto out;
@@ -532,24 +533,38 @@ cache_revlookup(struct vnode *vp, struct vnode **dvpp, char **bpp, char *bufp)
 				panic("cache_revlookup: found entry for ..");
 #endif
 			COUNT(nchstats, ncs_revhits);
+			nlen = ncp->nc_nlen;
 
 			if (bufp) {
 				bp = *bpp;
-				bp -= ncp->nc_nlen;
+				bp -= nlen;
 				if (bp <= bufp) {
 					*dvpp = NULL;
 					mutex_exit(&ncp->nc_lock);
 					mutex_exit(namecache_lock);
 					return (ERANGE);
 				}
-				memcpy(bp, ncp->nc_name, ncp->nc_nlen);
+				memcpy(bp, ncp->nc_name, nlen);
 				*bpp = bp;
 			}
 
-			/* XXX MP: how do we know dvp won't evaporate? */
+			if (vtryget(dvp)) {
+				mutex_exit(&ncp->nc_lock); 
+				mutex_exit(namecache_lock);
+			} else {
+				mutex_enter(&dvp->v_interlock);
+				mutex_exit(&ncp->nc_lock); 
+				mutex_exit(namecache_lock);
+				error = vget(dvp, LK_NOWAIT);
+				if (error) {
+					KASSERT(error == EBUSY);
+					if (bufp)
+						(*bpp) += nlen;
+					*dvpp = NULL;
+					return -1;
+				}
+			}
 			*dvpp = dvp;
-			mutex_exit(&ncp->nc_lock);
-			mutex_exit(namecache_lock);
 			return (0);
 		}
 		mutex_exit(&ncp->nc_lock);

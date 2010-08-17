@@ -1,4 +1,4 @@
-/*	$NetBSD: kern32.ldscript,v 1.9 2007/10/17 19:57:28 garbled Exp $	*/
+/*	$NetBSD: kern32.ldscript,v 1.9.40.1 2010/08/17 06:45:17 uebayasi Exp $	*/
 
 /*
  * Kernel linker script for NetBSD/sparc.  This script is based on
@@ -75,6 +75,11 @@ SECTIONS
     CONSTRUCTORS
   }
   .data1   : { *(.data1) }
+  . = ALIGN(64);	/* COHERENCY_UNIT */
+  .data.cacheline_aligned : { *(.data_cacheline_aligned) }
+  . = ALIGN(64);	/* COHERENCY_UNIT */
+  .data.read_mostly : { *(.data.read_mostly) }
+  . = ALIGN(64);	/* COHERENCY_UNIT */
   .ctors         :
   {
     *(.ctors)

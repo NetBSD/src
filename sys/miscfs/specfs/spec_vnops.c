@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.127 2009/11/14 18:36:57 elad Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.127.2.1 2010/08/17 06:47:39 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.127 2009/11/14 18:36:57 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.127.2.1 2010/08/17 06:47:39 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -438,7 +438,7 @@ spec_open(void *v)
 		mutex_exit(&device_lock);
 		if (cdev_type(dev) == D_TTY)
 			vp->v_vflag |= VV_ISTTY;
-		VOP_UNLOCK(vp, 0);
+		VOP_UNLOCK(vp);
 		do {
 			const struct cdevsw *cdev;
 
@@ -509,7 +509,7 @@ spec_open(void *v)
 			if ((name = bdevsw_getname(major(dev))) == NULL)
 				break;
 
-			VOP_UNLOCK(vp, 0);
+			VOP_UNLOCK(vp);
 
                         /* Try to autoload device module */
 			mutex_enter(&module_lock);
@@ -594,7 +594,7 @@ spec_read(void *v)
 	switch (vp->v_type) {
 
 	case VCHR:
-		VOP_UNLOCK(vp, 0);
+		VOP_UNLOCK(vp);
 		error = cdev_read(vp->v_rdev, uio, ap->a_ioflag);
 		vn_lock(vp, LK_SHARED | LK_RETRY);
 		return (error);
@@ -666,7 +666,7 @@ spec_write(void *v)
 	switch (vp->v_type) {
 
 	case VCHR:
-		VOP_UNLOCK(vp, 0);
+		VOP_UNLOCK(vp);
 		error = cdev_write(vp->v_rdev, uio, ap->a_ioflag);
 		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 		return (error);
@@ -919,7 +919,7 @@ spec_inactive(void *v)
 		struct proc *a_l;
 	} */ *ap = v;
 
-	VOP_UNLOCK(ap->a_vp, 0);
+	VOP_UNLOCK(ap->a_vp);
 	return (0);
 }
 
@@ -1065,7 +1065,7 @@ spec_close(void *v)
 	 * set, don't release the lock as we won't be able to regain it.
 	 */
 	if (!(flags1 & FNONBLOCK))
-		VOP_UNLOCK(vp, 0);
+		VOP_UNLOCK(vp);
 
 	if (vp->v_type == VBLK)
 		error = bdev_close(dev, flags1, mode, curlwp);

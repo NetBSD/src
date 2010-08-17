@@ -1,4 +1,4 @@
-/*	$NetBSD: netdb.h,v 1.62.2.1 2010/04/30 14:36:17 uebayasi Exp $	*/
+/*	$NetBSD: netdb.h,v 1.62.2.2 2010/08/17 06:40:01 uebayasi Exp $	*/
 
 /*
  * ++Copyright++ 1980, 1983, 1988, 1993
@@ -337,9 +337,9 @@ void		sethostent(int);
 #endif
 void		setnetent(int);
 void		setprotoent(int);
+void		setservent(int);
 #if (_POSIX_C_SOURCE - 0) >= 200112L || (_XOPEN_SOURCE - 0) >= 520 || \
     defined(_NETBSD_SOURCE)
-void		setservent(int);
 int		getaddrinfo(const char * __restrict, const char * __restrict,
 				 const struct addrinfo * __restrict,
 				 struct addrinfo ** __restrict);
@@ -350,7 +350,6 @@ struct addrinfo *allocaddrinfo(socklen_t);
 void		freeaddrinfo(struct addrinfo *);
 const char	*gai_strerror(int);
 #endif
-void		setservent(int);
 __END_DECLS
 
 #endif /* !_NETDB_H_ */

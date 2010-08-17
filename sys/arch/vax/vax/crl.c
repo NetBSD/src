@@ -1,4 +1,4 @@
-/*	$NetBSD: crl.c,v 1.27 2009/11/21 04:45:39 rmind Exp $	*/
+/*	$NetBSD: crl.c,v 1.27.2.1 2010/08/17 06:45:25 uebayasi Exp $	*/
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -31,12 +31,16 @@
  */
 
 /*
+ * Bugfix by Johnny Billquist 2010
+ */
+
+/*
  * TO DO (tef  7/18/85):
  *	1) change printf's to log() instead???
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crl.c,v 1.27 2009/11/21 04:45:39 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crl.c,v 1.27.2.1 2010/08/17 06:45:25 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -149,7 +153,8 @@ crlrw(dev_t dev, struct uio *uio, int flag)
 		}
 		s = splconsmedia(); 
 		crlstart();
-		biowait(bp);
+                while ((bp->b_oflags & BO_DONE) == 0)
+                  (void) tsleep(bp, PRIBIO, "crlxfer", 0);
 		splx(s);
 		if (bp->b_error != 0) {
 			error = bp->b_error;
@@ -223,7 +228,7 @@ crlintr(void *arg)
 			bp->b_oflags |= BO_DONE;
 		}
 		crltab.crl_active = 0;
-		wakeup((void *)bp);
+		wakeup(bp);
 		break;
 
 	case CRL_S_XCONT:

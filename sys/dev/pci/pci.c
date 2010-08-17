@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.125.2.1 2010/04/30 14:43:40 uebayasi Exp $	*/
+/*	$NetBSD: pci.c,v 1.125.2.2 2010/08/17 06:46:27 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.125.2.1 2010/04/30 14:43:40 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.125.2.2 2010/08/17 06:46:27 uebayasi Exp $");
 
 #include "opt_pci.h"
 
@@ -107,6 +107,7 @@ pcirescan(device_t self, const char *ifattr, const int *locators)
 	KASSERT(locators);
 
 	pci_enumerate_bus(sc, locators, NULL, NULL);
+
 	return 0;
 }
 

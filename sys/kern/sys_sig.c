@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_sig.c,v 1.26 2010/01/19 22:28:31 pooka Exp $	*/
+/*	$NetBSD: sys_sig.c,v 1.26.2.1 2010/08/17 06:47:32 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.26 2010/01/19 22:28:31 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.26.2.1 2010/08/17 06:47:32 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -235,7 +235,8 @@ sys_kill(struct lwp *l, const struct sys_kill_args *uap, register_t *retval)
 	if (SCARG(uap, pid) > 0) {
 		/* kill single process */
 		mutex_enter(proc_lock);
-		if ((p = p_find(SCARG(uap, pid), PFIND_LOCKED)) == NULL) {
+		p = proc_find(SCARG(uap, pid));
+		if (p == NULL) {
 			mutex_exit(proc_lock);
 			return ESRCH;
 		}
@@ -742,9 +743,11 @@ out:
 	 * Copy only the used part of siginfo, the padding part is
 	 * left unchanged (userland is not supposed to touch it anyway).
 	 */
-	if (error == 0) {
+	if (error == 0 && SCARG(uap, info)) {
 		error = (*storeinf)(&ksi.ksi_info, SCARG(uap, info),
 		    sizeof(ksi.ksi_info));
 	}
+	if (error == 0)
+		*retval = ksi.ksi_info._signo;
 	return error;
 }

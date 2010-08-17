@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel_rdb.h,v 1.1 2009/09/12 08:23:25 phx Exp $	*/
+/*	$NetBSD: disklabel_rdb.h,v 1.1.4.1 2010/08/17 06:48:07 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -205,6 +205,8 @@ struct lsegblock {
 #define DOST_EXT2	0x4c4e5800	/* 'LNX0' Linux fs partition (ext2fs) */
 #define DOST_LNXSWP	0x53575000	/* 'SWP0' Linux swap partition */
 #define DOST_RAID	0x52414900	/* 'RAID' Raidframe partition */
+#define DOST_MSD	0x4d534400	/* 'MSDx' MSDOS partition */
+#define DOST_SFS	0x53465300	/* 'SFSx' Smart fs partition */
 
 struct adostype {
 	u_char archtype;	/* see ADT_xxx below */
@@ -220,6 +222,8 @@ struct adostype {
 #define ADT_AMIX	5
 #define ADT_EXT2	6
 #define ADT_RAID	7
+#define ADT_MSD		8
+#define ADT_SFS		9
 
 #define ISFSARCH_NETBSD(adt) \
 	((adt).archtype >= ADT_NETBSDROOT && (adt).archtype <= ADT_NETBSDUSER)

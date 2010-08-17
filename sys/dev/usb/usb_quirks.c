@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_quirks.c,v 1.65.2.1 2010/04/30 14:43:53 uebayasi Exp $	*/
+/*	$NetBSD: usb_quirks.c,v 1.65.2.2 2010/08/17 06:46:46 uebayasi Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_quirks.c,v 1.30 2003/01/02 04:15:55 imp Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_quirks.c,v 1.65.2.1 2010/04/30 14:43:53 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_quirks.c,v 1.65.2.2 2010/08/17 06:46:46 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -111,6 +111,7 @@ Static const struct usbd_quirk_entry {
  { USB_VENDOR_HP, USB_PRODUCT_HP_840C,		    ANY,   { UQ_BROKEN_BIDIR }},
  { USB_VENDOR_HP, USB_PRODUCT_HP_816C,		    ANY,   { UQ_BROKEN_BIDIR }},
  { USB_VENDOR_HP, USB_PRODUCT_HP_959C,		    ANY,   { UQ_BROKEN_BIDIR }},
+ { USB_VENDOR_MTK, USB_PRODUCT_MTK_GPS_RECEIVER,    ANY,   { UQ_NO_UNION_NRM }},
  { USB_VENDOR_NEC, USB_PRODUCT_NEC_PICTY900,	    ANY,   { UQ_BROKEN_BIDIR }},
  { USB_VENDOR_NEC, USB_PRODUCT_NEC_PICTY760,	    ANY,   { UQ_BROKEN_BIDIR }},
  { USB_VENDOR_NEC, USB_PRODUCT_NEC_PICTY920,	    ANY,   { UQ_BROKEN_BIDIR }},

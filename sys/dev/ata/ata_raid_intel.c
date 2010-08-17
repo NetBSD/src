@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_raid_intel.c,v 1.4 2009/05/11 17:14:31 cegger Exp $	*/
+/*	$NetBSD: ata_raid_intel.c,v 1.4.2.1 2010/08/17 06:46:03 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2000-2008 Søren Schmidt <sos@FreeBSD.org>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_raid_intel.c,v 1.4 2009/05/11 17:14:31 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_raid_intel.c,v 1.4.2.1 2010/08/17 06:46:03 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -61,6 +61,9 @@ __KERNEL_RCSID(0, "$NetBSD: ata_raid_intel.c,v 1.4 2009/05/11 17:14:31 cegger Ex
 #else
 #define	DPRINTF(x)	/* nothing */
 #endif
+
+static int find_volume_id(struct intel_raid_conf *);
+
 
 #ifdef ATA_RAID_DEBUG
 static const char *
@@ -139,10 +142,10 @@ ata_raid_read_config_intel(struct wd_softc *sc)
 	struct ataraid_disk_info *adi;
 	struct vnode *vp;
 	uint32_t checksum, *ptr;
-	static int curdrive;
 	int bmajor, count, curvol = 0, error = 0;
 	char *tmp;
 	dev_t dev;
+	int volumeid, diskidx;
 
 	info = malloc(1536, M_DEVBUF, M_WAITOK|M_ZERO);
 
@@ -203,11 +206,19 @@ ata_raid_read_config_intel(struct wd_softc *sc)
 	/* This one points to the first volume */
 	map = (struct intel_raid_mapping *)&info->disk[info->total_disks];
 
+	volumeid = find_volume_id(info);
+	if (volumeid < 0) {
+		aprint_error_dev(sc->sc_dev,
+				 "too many RAID arrays\n");
+		error = ENOMEM;
+		goto out;
+	}
+
 findvol:
 	/*
 	 * Lookup or allocate a new array info structure for this array.
 	 */
-	aai = ata_raid_get_array_info(ATA_RAID_TYPE_INTEL, curvol); 
+	aai = ata_raid_get_array_info(ATA_RAID_TYPE_INTEL, volumeid + curvol); 
 
 	/* Fill in array info */
 	aai->aai_generation = info->generation;
@@ -241,7 +252,7 @@ findvol:
 
 	aai->aai_type = ATA_RAID_TYPE_INTEL;
 	aai->aai_capacity = map->total_sectors;
-	aai->aai_interleave = map->stripe_sectors / 2;
+	aai->aai_interleave = map->stripe_sectors;
 	aai->aai_ndisks = map->total_disks;
 	aai->aai_heads = 255;
 	aai->aai_sectors = 63;
@@ -253,24 +264,26 @@ findvol:
 		strlcpy(aai->aai_name, map->name, sizeof(aai->aai_name));
 
 	/* Fill in disk info */
-	adi = &aai->aai_disks[curdrive];
+	diskidx = aai->aai_curdisk++;
+	adi = &aai->aai_disks[diskidx];
 	adi->adi_status = 0;
 
-	if (info->disk[curdrive].flags & INTEL_F_ONLINE)
+	if (info->disk[diskidx].flags & INTEL_F_ONLINE)
 		adi->adi_status |= ADI_S_ONLINE;
-	if (info->disk[curdrive].flags & INTEL_F_ASSIGNED)
+	if (info->disk[diskidx].flags & INTEL_F_ASSIGNED)
 		adi->adi_status |= ADI_S_ASSIGNED;
-	if (info->disk[curdrive].flags & INTEL_F_SPARE) {
+	if (info->disk[diskidx].flags & INTEL_F_SPARE) {
 		adi->adi_status &= ~ADI_S_ONLINE;
 		adi->adi_status |= ADI_S_SPARE;
 	}
-	if (info->disk[curdrive].flags & INTEL_F_DOWN)
+	if (info->disk[diskidx].flags & INTEL_F_DOWN)
 		adi->adi_status &= ~ADI_S_ONLINE;
 
 	if (adi->adi_status) {
 		adi->adi_dev = sc->sc_dev;
-		adi->adi_sectors = info->disk[curdrive].sectors;
+		adi->adi_sectors = info->disk[diskidx].sectors;
 		adi->adi_compsize = adi->adi_sectors - aai->aai_reserved;
+
 		/*
 		 * Check if that is the only volume, otherwise repeat
 		 * the process to find more.
@@ -281,10 +294,57 @@ findvol:
 			    &map->disk_idx[map->total_disks];
 			goto findvol;
 		}
-		curdrive++;
 	}
 
  out:
 	free(info, M_DEVBUF);
 	return error;
+}
+
+
+/*
+ * Assign `volume id' to RAID volumes.
+ */
+static struct {
+	/* We assume disks are on the same array if these three values
+	   are same. */
+	uint32_t config_id;
+	uint32_t generation;
+	uint32_t checksum;
+
+	int id;
+} array_note[10]; /* XXX: this array is not used after ld_ataraid is
+		   * configured. */
+
+static int n_array = 0;
+static int volume_id = 0;
+
+static int
+find_volume_id(struct intel_raid_conf *info)
+{
+	int i, ret;
+
+	for (i=0; i < n_array; ++i) {
+		if (info->checksum == array_note[i].checksum &&
+		    info->config_id == array_note[i].config_id &&
+		    info->generation == array_note[i].generation) {
+			/* we have already seen this array */
+			return array_note[i].id;
+		}
+	}
+
+	if (n_array >= __arraycount(array_note)) {
+		/* Too many arrays */
+		return -1;
+	}
+
+	array_note[n_array].checksum = info->checksum;
+	array_note[n_array].config_id = info->config_id;
+	array_note[n_array].generation = info->generation;
+	array_note[n_array].id = ret = volume_id;
+
+	/* Allocate volume ids for all volumes in this array */
+	volume_id += info->total_volumes;
+	++n_array;
+	return ret;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_core.c,v 1.15 2010/01/08 11:35:10 pooka Exp $	*/
+/*	$NetBSD: kern_core.c,v 1.15.2.1 2010/08/17 06:47:25 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_core.c,v 1.15 2010/01/08 11:35:10 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_core.c,v 1.15.2.1 2010/08/17 06:47:25 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/vnode.h>
@@ -206,7 +206,7 @@ coredump(struct lwp *l, const char *pattern)
 	/* Now dump the actual core file. */
 	error = (*p->p_execsw->es_coredump)(l, &io);
  out:
-	VOP_UNLOCK(vp, 0);
+	VOP_UNLOCK(vp);
 	error1 = vn_close(vp, FWRITE, cred);
 	if (error == 0)
 		error = error1;

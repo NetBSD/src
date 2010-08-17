@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_lookup.c,v 1.61 2010/01/08 11:35:11 pooka Exp $	*/
+/*	$NetBSD: ext2fs_lookup.c,v 1.61.2.1 2010/08/17 06:48:10 uebayasi Exp $	*/
 
 /*
  * Modified for NetBSD 1.2E
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_lookup.c,v 1.61 2010/01/08 11:35:11 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_lookup.c,v 1.61.2.1 2010/08/17 06:48:10 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -589,7 +589,7 @@ found:
 			return (0);
 		}
 		if (flags & ISDOTDOT)
-			VOP_UNLOCK(vdp, 0); /* race to get the inode */
+			VOP_UNLOCK(vdp); /* race to get the inode */
 		error = VFS_VGET(vdp->v_mount, foundino, &tdp);
 		if (flags & ISDOTDOT)
 			vn_lock(vdp, LK_EXCLUSIVE | LK_RETRY);
@@ -629,7 +629,7 @@ found:
 		if (dp->i_number == foundino)
 			return (EISDIR);
 		if (flags & ISDOTDOT)
-			VOP_UNLOCK(vdp, 0); /* race to get the inode */
+			VOP_UNLOCK(vdp); /* race to get the inode */
 		error = VFS_VGET(vdp->v_mount, foundino, &tdp);
 		if (flags & ISDOTDOT)
 			vn_lock(vdp, LK_EXCLUSIVE | LK_RETRY);
@@ -661,7 +661,7 @@ found:
 	 */
 	pdp = vdp;
 	if (flags & ISDOTDOT) {
-		VOP_UNLOCK(pdp, 0);	/* race to get the inode */
+		VOP_UNLOCK(pdp);	/* race to get the inode */
 		error = VFS_VGET(vdp->v_mount, foundino, &tdp);
 		vn_lock(pdp, LK_EXCLUSIVE | LK_RETRY);
 		if (error) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.38.2.1 2010/04/30 14:39:57 uebayasi Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.38.2.2 2010/08/17 06:45:31 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -262,10 +262,8 @@
 #ifdef XEN
 /* Not on Xen */
 #define CPUID_FEAT_BLACKLIST	 (CPUID_PGE|CPUID_PSE|CPUID_MTRR|CPUID_FXSR)
-#define CPUID_EXT_FEAT_BLACKLIST (CPUID_NOX)
 #else
 #define CPUID_FEAT_BLACKLIST	 0
-#define CPUID_EXT_FEAT_BLACKLIST 0
 #endif /* XEN */
 
 /*
@@ -345,6 +343,7 @@
 #define	MSR_MTRRfix4K_E8000	0x26d
 #define	MSR_MTRRfix4K_F0000	0x26e
 #define	MSR_MTRRfix4K_F8000	0x26f
+#define	MSR_CR_PAT		0x277
 #define MSR_MTRRdefType		0x2ff
 #define MSR_MC0_CTL		0x400
 #define MSR_MC0_STATUS		0x401
@@ -450,6 +449,13 @@
 #define		BU_CFG_THRL2IDXCMPDIS	0x0000080000000000ULL
 #define		BU_CFG_WBPFSMCCHKDIS	0x0000200000000000ULL
 #define		BU_CFG_WBENHWSBDIS	0x0001000000000000ULL
+
+/* AMD Family10h MSRs */
+#define	MSR_OSVW_ID_LENGTH		0xc0010140
+#define	MSR_OSVW_STATUS			0xc0010141
+
+/* X86 MSRs */
+#define	MSR_RDTSCP_AUX			0xc0000103
 
 /*
  * Constants related to MTRRs

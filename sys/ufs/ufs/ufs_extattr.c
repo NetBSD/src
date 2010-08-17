@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_extattr.c,v 1.26 2009/05/10 20:27:21 dholland Exp $	*/
+/*	$NetBSD: ufs_extattr.c,v 1.26.2.1 2010/08/17 06:48:13 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1999-2002 Robert N. M. Watson
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_extattr.c,v 1.26 2009/05/10 20:27:21 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_extattr.c,v 1.26.2.1 2010/08/17 06:48:13 uebayasi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ffs.h"
@@ -272,7 +272,7 @@ ufs_extattr_lookup(struct vnode *start_dvp, int lockparent, const char *dirname,
 	    (size_t *) &cnp.cn_namelen);
 	if (error) {
 		if (lockparent == 0) {
-			VOP_UNLOCK(start_dvp, 0);
+			VOP_UNLOCK(start_dvp);
 		}
 		PNBUF_PUT(cnp.cn_pnbuf);
 		printf("ufs_extattr_lookup: copystr failed\n");
@@ -286,7 +286,7 @@ ufs_extattr_lookup(struct vnode *start_dvp, int lockparent, const char *dirname,
 	error = ufs_lookup(&vargs);
 	PNBUF_PUT(cnp.cn_pnbuf);
 	if (error) {
-		VOP_UNLOCK(start_dvp, 0);
+		VOP_UNLOCK(start_dvp);
 		return (error);
 	}
 #if 0
@@ -317,7 +317,7 @@ ufs_extattr_enable_with_open(struct ufsmount *ump, struct vnode *vp,
 	if (error) {
 		printf("ufs_extattr_enable_with_open.VOP_OPEN(): failed "
 		    "with %d\n", error);
-		VOP_UNLOCK(vp, 0);
+		VOP_UNLOCK(vp);
 		return (error);
 	}
 
@@ -327,7 +327,7 @@ ufs_extattr_enable_with_open(struct ufsmount *ump, struct vnode *vp,
 
 	vref(vp);
 
-	VOP_UNLOCK(vp, 0);
+	VOP_UNLOCK(vp);
 
 	error = ufs_extattr_enable(ump, attrnamespace, attrname, vp, l);
 	if (error != 0)
@@ -662,11 +662,11 @@ ufs_extattr_enable(struct ufsmount *ump, int attrnamespace,
 	LIST_INSERT_HEAD(&ump->um_extattr.uepm_list, attribute,
 	    uele_entries);
 
-	VOP_UNLOCK(backing_vnode, 0);
+	VOP_UNLOCK(backing_vnode);
 	return (0);
 
  unlock_free_exit:
-	VOP_UNLOCK(backing_vnode, 0);
+	VOP_UNLOCK(backing_vnode);
 
  free_exit:
 	free(attribute, M_UFS_EXTATTR);
@@ -719,14 +719,14 @@ ufs_extattrctl(struct mount *mp, int cmd, struct vnode *filename_vp,
 	if ((error = kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
 	    NULL)) != 0) {
 		if (filename_vp != NULL)
-			VOP_UNLOCK(filename_vp, 0);
+			VOP_UNLOCK(filename_vp);
 		return (error);
 	}
 
 	switch(cmd) {
 	case UFS_EXTATTR_CMD_START:
 		if (filename_vp != NULL) {
-			VOP_UNLOCK(filename_vp, 0);
+			VOP_UNLOCK(filename_vp);
 			return (EINVAL);
 		}
 		if (attrname != NULL)
@@ -737,7 +737,7 @@ ufs_extattrctl(struct mount *mp, int cmd, struct vnode *filename_vp,
 		
 	case UFS_EXTATTR_CMD_STOP:
 		if (filename_vp != NULL) {
-			VOP_UNLOCK(filename_vp, 0);
+			VOP_UNLOCK(filename_vp);
 			return (EINVAL);
 		}
 		if (attrname != NULL)
@@ -750,7 +750,7 @@ ufs_extattrctl(struct mount *mp, int cmd, struct vnode *filename_vp,
 		if (filename_vp == NULL)
 			return (EINVAL);
 		if (attrname == NULL) {
-			VOP_UNLOCK(filename_vp, 0);
+			VOP_UNLOCK(filename_vp);
 			return (EINVAL);
 		}
 
@@ -766,7 +766,7 @@ ufs_extattrctl(struct mount *mp, int cmd, struct vnode *filename_vp,
 
 	case UFS_EXTATTR_CMD_DISABLE:
 		if (filename_vp != NULL) {
-			VOP_UNLOCK(filename_vp, 0);
+			VOP_UNLOCK(filename_vp);
 			return (EINVAL);
 		}
 		if (attrname == NULL)
@@ -955,7 +955,7 @@ ufs_extattr_get(struct vnode *vp, int attrnamespace, const char *name,
 		uio->uio_offset = 0;
 
 	if (attribute->uele_backing_vnode != vp)
-		VOP_UNLOCK(attribute->uele_backing_vnode, 0);
+		VOP_UNLOCK(attribute->uele_backing_vnode);
 
 	return (error);
 }
@@ -1129,7 +1129,7 @@ ufs_extattr_set(struct vnode *vp, int attrnamespace, const char *name,
 	uio->uio_offset = 0;
 
 	if (attribute->uele_backing_vnode != vp)
-		VOP_UNLOCK(attribute->uele_backing_vnode, 0);
+		VOP_UNLOCK(attribute->uele_backing_vnode);
 
 	return (error);
 }
@@ -1254,7 +1254,7 @@ ufs_extattr_rm(struct vnode *vp, int attrnamespace, const char *name,
 		error = ENXIO;
 
  vopunlock_exit:
-	VOP_UNLOCK(attribute->uele_backing_vnode, 0);
+	VOP_UNLOCK(attribute->uele_backing_vnode);
 
 	return (error);
 }

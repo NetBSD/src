@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.11 2009/12/10 05:10:04 rmind Exp $
+#	$NetBSD: genassym.cf,v 1.11.2.1 2010/08/17 06:45:23 uebayasi Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -153,6 +153,7 @@ define	L_PROC			offsetof(struct lwp, l_proc)
 define	L_MD_REGS		offsetof(struct lwp, l_md.md_regs)
 define	L_MD_FLAGS		offsetof(struct lwp, l_md.md_flags)
 define	P_FLAG			offsetof(struct proc, p_flag)
+define	P_RASLIST		offsetof(struct proc, p_raslist)
 define	P_VMSPACE		offsetof(struct proc, p_vmspace)
 
 # lwp fields and values
@@ -176,6 +177,9 @@ define	PCB_REGS		offsetof(struct pcb, pcb_regs[0])
 define	PCB_ONFAULT		offsetof(struct pcb, pcb_onfault)
 define	PCB_FPCTX		offsetof(struct pcb, pcb_fpregs)
 define	SIZEOF_PCB		sizeof(struct pcb)
+
+# frame offsets
+define 	TF_PC			offsetof(struct frame, f_pc)
 
 # exception frame offset/sizes
 define	FR_SP			offsetof(struct trapframe, tf_regs[15])

@@ -1,4 +1,4 @@
-/*	$NetBSD: wmi_dell.c,v 1.3.2.2 2010/04/30 14:43:07 uebayasi Exp $ */
+/*	$NetBSD: wmi_dell.c,v 1.3.2.3 2010/08/17 06:46:03 uebayasi Exp $ */
 
 /*-
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wmi_dell.c,v 1.3.2.2 2010/04/30 14:43:07 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wmi_dell.c,v 1.3.2.3 2010/08/17 06:46:03 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -166,6 +166,8 @@ wmi_dell_notify_handler(ACPI_HANDLE hdl, uint32_t evt, void *aux)
 	ACPI_BUFFER buf;
 	ACPI_STATUS rv;
 	uint32_t val;
+
+	buf.Pointer = NULL;
 
 	sc = device_private(self);
 	rv = acpi_wmi_event_get(sc->sc_parent, evt, &buf);

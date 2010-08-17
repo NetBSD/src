@@ -1,4 +1,4 @@
-/*      $NetBSD: sdtemp.c,v 1.9.2.1 2010/04/30 14:43:11 uebayasi Exp $        */
+/*      $NetBSD: sdtemp.c,v 1.9.2.2 2010/08/17 06:46:08 uebayasi Exp $        */
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdtemp.c,v 1.9.2.1 2010/04/30 14:43:11 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdtemp.c,v 1.9.2.2 2010/08/17 06:46:08 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,8 +80,8 @@ static bool	sdtemp_pmf_resume(device_t, const pmf_qual_t *);
 
 struct sdtemp_dev_entry {
 	const uint16_t sdtemp_mfg_id;
-	const uint8_t  sdtemp_dev_id;
-	const uint8_t  sdtemp_rev_id;
+	const uint16_t  sdtemp_devrev;
+	const uint16_t  sdtemp_mask;
 	const uint8_t  sdtemp_resolution;
 	const char    *sdtemp_desc;
 };
@@ -100,36 +100,43 @@ struct sdtemp_dev_entry {
  */
 static const struct sdtemp_dev_entry
 sdtemp_dev_table[] = {
-    { MAXIM_MANUFACTURER_ID, MAX_6604_DEVICE_ID,    0xff, 3,
-	"Maxim MAX604" },
-    { MCP_MANUFACTURER_ID,   MCP_9805_DEVICE_ID,    0xff, 2,
-	"Microchip Tech MCP9805" },
-    { MCP_MANUFACTURER_ID,   MCP_98242_DEVICE_ID,   0xff, -4,
+    { MAXIM_MANUFACTURER_ID, MAX_6604_DEVICE_ID,    MAX_6604_MASK,   3,
+	"Maxim MAX6604" },
+    { MCP_MANUFACTURER_ID,   MCP_9805_DEVICE_ID,    MCP_9805_MASK,   2,
+	"Microchip Tech MCP9805/MCP9843" },
+    { MCP_MANUFACTURER_ID,   MCP_98243_DEVICE_ID,   MCP_98243_MASK, -4,
+	"Microchip Tech MCP98243" },
+    { MCP_MANUFACTURER_ID,   MCP_98242_DEVICE_ID,   MCP_98242_MASK, -4,
 	"Microchip Tech MCP98242" },
-    { ADT_MANUFACTURER_ID,   ADT_7408_DEVICE_ID,    0xff, 4,
+    { ADT_MANUFACTURER_ID,   ADT_7408_DEVICE_ID,    ADT_7408_MASK,   4,
 	"Analog Devices ADT7408" },
-    { NXP_MANUFACTURER_ID,   NXP_SE97_DEVICE_ID,    0xff, 3,
-	"NXP Semiconductors SE97/SE98" },
-    { STTS_MANUFACTURER_ID,  STTS_424E02_DEVICE_ID, 0x00, 2,
-	"STmicroelectronics STTS424E02-DA" }, 
-    { STTS_MANUFACTURER_ID,  STTS_424E02_DEVICE_ID, 0x01, 2,
-	"STmicroelectronics STTS424E02-DN" }, 
-    { CAT_MANUFACTURER_ID,   CAT_34TS02_DEVICE_ID,  0xff, 4,
+    { NXP_MANUFACTURER_ID,   NXP_SE98_DEVICE_ID,    NXP_SE98_MASK,   3,
+	"NXP Semiconductors SE97B/SE98" },
+    { NXP_MANUFACTURER_ID,   NXP_SE97_DEVICE_ID,    NXP_SE97_MASK,   3,
+	"NXP Semiconductors SE97" },
+    { STTS_MANUFACTURER_ID,  STTS_424E_DEVICE_ID,   STTS_424E_MASK,  2,
+	"STmicroelectronics STTS424E" }, 
+    { STTS_MANUFACTURER_ID,  STTS_424_DEVICE_ID,    STTS_424_MASK,   2,
+	"STmicroelectronics STTS424" }, 
+    { CAT_MANUFACTURER_ID,   CAT_34TS02_DEVICE_ID,  CAT_34TS02_MASK, 4,
 	"Catalyst CAT34TS02/CAT6095" },
+    { IDT_MANUFACTURER_ID,   IDT_TS3000B3_DEVICE_ID, IDT_TS3000B3_MASK, 4,
+	"Integrated Device Technology TS3000B3/TSE2002B3" },
     { 0, 0, 0, 2, "Unknown" }
 };
 
 static int
-sdtemp_lookup(uint16_t mfg, uint16_t dev, uint16_t rev)
+sdtemp_lookup(uint16_t mfg, uint16_t devrev)
 {
 	int i;
 
-	for (i = 0; sdtemp_dev_table[i].sdtemp_mfg_id; i++)
-		if (sdtemp_dev_table[i].sdtemp_mfg_id == mfg &&
-		    sdtemp_dev_table[i].sdtemp_dev_id == dev &&
-		    (sdtemp_dev_table[i].sdtemp_rev_id == 0xff ||
-		     sdtemp_dev_table[i].sdtemp_rev_id == rev))
+	for (i = 0; sdtemp_dev_table[i].sdtemp_mfg_id; i++) {
+		if (mfg != sdtemp_dev_table[i].sdtemp_mfg_id)
+			continue;
+		if ((devrev & sdtemp_dev_table[i].sdtemp_mask) ==
+		    sdtemp_dev_table[i].sdtemp_devrev)
 			break;
+	}
 
 	return i;
 }
@@ -157,7 +164,7 @@ sdtemp_match(device_t parent, cfdata_t cf, void *aux)
 	if (error)
 		return 0;
 
-	i = sdtemp_lookup(mfgid, devid >> 8, devid & 0xff);
+	i = sdtemp_lookup(mfgid, devid);
 	if (sdtemp_dev_table[i].sdtemp_mfg_id == 0) {
 		aprint_debug("sdtemp: No match for mfg 0x%04x dev 0x%02x "
 		    "rev 0x%02x at address 0x%02x\n", mfgid, devid >> 8,
@@ -173,8 +180,6 @@ sdtemp_attach(device_t parent, device_t self, void *aux)
 {
 	struct sdtemp_softc *sc = device_private(self);
 	struct i2c_attach_args *ia = aux;
-	sysmon_envsys_lim_t limits;
-	uint32_t props;
 	uint16_t mfgid, devid;
 	int i, error;
 
@@ -189,7 +194,7 @@ sdtemp_attach(device_t parent, device_t self, void *aux)
 		aprint_error(": attach error %d\n", error);
 		return;
 	}
-	i = sdtemp_lookup(mfgid, devid >> 8, devid & 0xff);
+	i = sdtemp_lookup(mfgid, devid);
 	sc->sc_resolution =
 	    sdtemp_dev_table[i].sdtemp_resolution;
 
@@ -274,21 +279,23 @@ sdtemp_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	/* Retrieve and display hardware monitor limits */
-	sdtemp_get_limits(sc->sc_sme, sc->sc_sensor, &limits, &props);
+	sdtemp_get_limits(sc->sc_sme, sc->sc_sensor, &sc->sc_deflims,
+	    &sc->sc_defprops);
 	aprint_normal_dev(self, "");
 	i = 0;
-	if (props & PROP_WARNMIN) {
-		aprint_normal("low limit %dC", __UK2C(limits.sel_warnmin));
+	if (sc->sc_defprops & PROP_WARNMIN) {
+		aprint_normal("low limit %dC",
+		              __UK2C(sc->sc_deflims.sel_warnmin));
 		i++;
 	}
-	if (props & PROP_WARNMAX) {
+	if (sc->sc_defprops & PROP_WARNMAX) {
 		aprint_normal("%shigh limit %dC ", (i)?", ":"",
-			      __UK2C(limits.sel_warnmax));
+			      __UK2C(sc->sc_deflims.sel_warnmax));
 		i++;
 	}
-	if (props & PROP_CRITMAX) {
+	if (sc->sc_defprops & PROP_CRITMAX) {
 		aprint_normal("%scritical limit %dC ", (i)?", ":"",
-			      __UK2C(limits.sel_critmax));
+			      __UK2C(sc->sc_deflims.sel_critmax));
 		i++;
 	}
 	if (i == 0)
@@ -329,10 +336,6 @@ sdtemp_get_limits(struct sysmon_envsys *sme, envsys_data_t *edata,
 	iic_release_bus(sc->sc_tag, 0);
 	if (*props != 0)
 		*props |= PROP_DRIVER_LIMITS;
-	if (sc->sc_defprops == 0) {
-		sc->sc_deflims  = *limits;
-		sc->sc_defprops = *props;
-	}
 }
 
 /* Send current limit values to the device */
@@ -473,11 +476,14 @@ sdtemp_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 	/* Now check for limits */
 	if ((edata->upropset & PROP_DRIVER_LIMITS) == 0)
 		edata->state = ENVSYS_SVALID;
-	else if (val & SDTEMP_ABOVE_CRIT)
+	else if ((val & SDTEMP_ABOVE_CRIT) &&
+		    (edata->upropset & PROP_CRITMAX))
 		edata->state = ENVSYS_SCRITOVER;
-	else if (val & SDTEMP_ABOVE_UPPER)
+	else if ((val & SDTEMP_ABOVE_UPPER) &&
+		    (edata->upropset & PROP_WARNMAX))
 		edata->state = ENVSYS_SWARNOVER;
-	else if (val & SDTEMP_BELOW_LOWER)
+	else if ((val & SDTEMP_BELOW_LOWER) &&
+		    (edata->upropset & PROP_WARNMIN))
 		edata->state = ENVSYS_SWARNUNDER;
 	else
 		edata->state = ENVSYS_SVALID;
