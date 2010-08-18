@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.106 2010/08/15 19:43:03 cegger Exp $
+$NetBSD: acronyms.comp,v 1.107 2010/08/18 17:01:55 jruoho Exp $
 
 3WHS	three-way handshake
 ABI	application binary interface
@@ -48,9 +48,11 @@ BGA	ball grid array
 BGP	border gateway protocol
 BIND	Berkeley Internet Name Daemon
 BIOS	basic input/output system
+BKDG	BIOS and kernel developer's guide
 BLAS	basic linear algebra subprograms
 BLOB	binary large object
 BMC	baseboard management controller
+BP	base pointer
 BPF	Berkeley packet filter
 BPS	bits per second
 BQS	Berkeley quality software
@@ -87,6 +89,7 @@ CMI	control management interface
 CMI	control method interface
 CMYK	cyan magenta yellow black
 COFF	common object file format
+COMA	cache-only memory architecture
 COW	copy-on-write
 CPU	central processing unit
 CR	carriage return
@@ -94,6 +97,8 @@ CRLF	carriage return line feed
 CRT	cathode ray tube
 CS	computer science
 CS	cable select
+CS	code segment
+CSI	common system interface
 CSMA	carrier sense multiple access
 CSMA/CA	carrier sense multiple access with collision avoidance
 CSMA/CD	carrier sense multiple access with collision detection
@@ -137,6 +142,7 @@ DS	debug store
 DSDT	differentiated system descriptor table
 DSL	digital subscriber line
 DSLAM	digital subscriber line access multiplexer
+DSO	dynamic shared object
 DSSS	direct sequence spread spectrum
 DTD	document type definition
 DTE	data terminal equipment
@@ -200,6 +206,7 @@ GID	group identifier
 GIF	graphics interchange format
 GMCH	graphics and memory controller hub
 GNU	GNU's not Unix
+GOT	global offset table
 GPE	general purpose event
 GPL	GNU/general public license
 GPU	graphics processing unit
@@ -216,6 +223,7 @@ HDD	hard disk drive
 HDCP	high-bandwidth digital content protection
 HFM	highest frequency mode
 HID	human interface device
+HMA	high memory area
 HPC	high performance computing
 HPET	high precision event timer
 HT	hyper-threading
@@ -262,6 +270,7 @@ IRDA	infrared data association
 IRQ	interrupt request
 IRTF	Internet research task force
 ISA	industry standard architecture
+ISA	instruction set architecture
 ISDN	integrated services digital network
 ISI	inter-symbol interference
 ISM	industrial, scientific and medical
@@ -383,6 +392,7 @@ OOB	out of band
 OOM	out of memory
 OOP	object oriented programming
 OQL	object query language
+ORM	object-relational mapping
 OS	operating system
 OSD	open source definition
 OSF	open software foundation
@@ -430,6 +440,7 @@ PIO	programmed input/output
 PKI	public key infrastructure
 PLL	phase locked loop
 PMI	platform management interrupt
+PMIO	port-mapped input/output
 PMT	photo-multiplier tube
 PNG	portable network graphics
 POE	power over ethernet
@@ -496,6 +507,7 @@ SCM	software configuration management
 SCM	source code management
 SCP	secure copy
 SCI	system control interrupt
+SCI	scalable coherent interface
 SCSI	small computer system interface
 SCTP	stream control transmission protocol
 SDK	software development kit
@@ -542,6 +554,7 @@ SVGA	super video graphics {array,adapter}
 SVM	secure virtual machine
 SVM	support vector machine
 SWF	Shockwave Flash
+TAS	test and set
 TCB	trusted computing base
 TCC	thermal control circuit
 TCL	tool command language
@@ -580,6 +593,8 @@ UFS	Unix file system
 UI	user interface
 UID	user identifier
 UID	unique identifier
+UMA	upper memory area
+UMB	upper memory block
 UML	unified modeling language
 UPS	uninterruptible power supply
 URI	uniform resource identifier
