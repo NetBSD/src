@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ping.c,v 1.5 2010/08/18 21:22:34 pooka Exp $	*/
+/*	$NetBSD: t_ping.c,v 1.6 2010/08/18 21:23:48 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: t_ping.c,v 1.5 2010/08/18 21:22:34 pooka Exp $");
+__RCSID("$NetBSD: t_ping.c,v 1.6 2010/08/18 21:23:48 pooka Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -306,6 +306,7 @@ ATF_TC_HEAD(ping_of_death, tc)
 
 	atf_tc_set_md_var(tc, "descr", "send a \"ping of death\"");
 	atf_tc_set_md_var(tc, "use.fs", "true");
+	atf_tc_set_md_var(tc, "timeout", "2");
 }
 
 ATF_TC_BODY(ping_of_death, tc)
