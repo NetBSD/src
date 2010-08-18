@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_md.c,v 1.13 2010/08/18 04:12:29 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_md.c,v 1.14 2010/08/18 16:08:50 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.13 2010/08/18 04:12:29 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.14 2010/08/18 16:08:50 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -56,6 +56,8 @@ static int	 acpicpu_md_quirks_piix4(struct pci_attach_args *);
 static int	 acpicpu_md_pstate_sysctl_get(SYSCTLFN_PROTO);
 static int	 acpicpu_md_pstate_sysctl_set(SYSCTLFN_PROTO);
 static int	 acpicpu_md_pstate_sysctl_all(SYSCTLFN_PROTO);
+static void	 acpicpu_md_pstate_status(void *, void *);
+static void	 acpicpu_md_tstate_status(void *, void *);
 
 extern uint32_t cpus_running;
 extern struct acpicpu_softc **acpicpu_sc;
@@ -513,8 +515,8 @@ int
 acpicpu_md_pstate_set(struct acpicpu_pstate *ps)
 {
 	struct msr_rw_info msr;
-	uint64_t xc, val;
-	int i;
+	uint64_t xc;
+	int rv = 0;
 
 	switch (cpu_vendor) {
 
@@ -552,6 +554,19 @@ acpicpu_md_pstate_set(struct acpicpu_pstate *ps)
 	if (ps->ps_status_addr == 0)
 		return 0;
 
+	xc = xc_broadcast(0, (xcfunc_t)acpicpu_md_pstate_status, ps, &rv);
+	xc_wait(xc);
+
+	return rv;
+}
+
+static void
+acpicpu_md_pstate_status(void *arg1, void *arg2)
+{
+	struct acpicpu_pstate *ps = arg1;
+	uint64_t val;
+	int i;
+
 	for (i = val = 0; i < ACPICPU_P_STATE_RETRY; i++) {
 
 		val = rdmsr(ps->ps_status_addr);
@@ -560,32 +575,25 @@ acpicpu_md_pstate_set(struct acpicpu_pstate *ps)
 			val = val & ps->ps_status_mask;
 
 		if (val == ps->ps_status)
-			return 0;
+			return;
 
 		DELAY(ps->ps_latency);
 	}
 
-	return EAGAIN;
+	*(uintptr_t *)arg2 = EAGAIN;
 }
 
 int
 acpicpu_md_tstate_get(struct acpicpu_softc *sc, uint32_t *percent)
 {
 	struct acpicpu_tstate *ts;
-	uint64_t val, sta;
+	uint64_t val;
 	uint32_t i;
 
-	switch (cpu_vendor) {
-
-	case CPUVENDOR_INTEL:
-		sta = MSR_THERM_CONTROL;
-		break;
-
-	default:
+	if (cpu_vendor != CPUVENDOR_INTEL)
 		return ENODEV;
-	}
 
-	val = rdmsr(sta);
+	val = rdmsr(MSR_THERM_CONTROL);
 
 	for (i = 0; i < sc->sc_tstate_count; i++) {
 
@@ -607,23 +615,16 @@ int
 acpicpu_md_tstate_set(struct acpicpu_tstate *ts)
 {
 	struct msr_rw_info msr;
-	uint64_t xc, val, sta;
-	uint32_t i;
+	uint64_t xc;
+	int rv = 0;
 
-	switch (cpu_vendor) {
-
-	case CPUVENDOR_INTEL:
-		msr.msr_read  = true;
-		msr.msr_type  = MSR_THERM_CONTROL;
-		msr.msr_value = ts->ts_control;
-		msr.msr_mask = __BITS(1, 4);
-
-		sta = MSR_THERM_CONTROL;
-		break;
-
-	default:
+	if (cpu_vendor != CPUVENDOR_INTEL)
 		return ENODEV;
-	}
+
+	msr.msr_read  = true;
+	msr.msr_type  = MSR_THERM_CONTROL;
+	msr.msr_value = ts->ts_control;
+	msr.msr_mask = __BITS(1, 4);
 
 	xc = xc_broadcast(0, (xcfunc_t)x86_msr_xcall, &msr, NULL);
 	xc_wait(xc);
@@ -631,15 +632,28 @@ acpicpu_md_tstate_set(struct acpicpu_tstate *ts)
 	if (ts->ts_status == 0)
 		return 0;
 
+	xc = xc_broadcast(0, (xcfunc_t)acpicpu_md_tstate_status, ts, &rv);
+	xc_wait(xc);
+
+	return rv;
+}
+
+static void
+acpicpu_md_tstate_status(void *arg1, void *arg2)
+{
+	struct acpicpu_tstate *ts = arg1;
+	uint64_t val;
+	int i;
+
 	for (i = val = 0; i < ACPICPU_T_STATE_RETRY; i++) {
 
-		val = rdmsr(sta);
+		val = rdmsr(MSR_THERM_CONTROL);
 
 		if (val == ts->ts_status)
-			return 0;
+			return;
 
 		DELAY(ts->ts_latency);
 	}
 
-	return EAGAIN;
+	*(uintptr_t *)arg2 = EAGAIN;
 }
