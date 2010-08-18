@@ -1,4 +1,4 @@
-/*	$NetBSD: pwd_mkdb.c,v 1.51 2010/01/10 19:04:35 snj Exp $	*/
+/*	$NetBSD: pwd_mkdb.c,v 1.52 2010/08/18 08:06:39 christos Exp $	*/
 
 /*
  * Copyright (c) 2000, 2009 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@ __COPYRIGHT("@(#) Copyright (c) 2000, 2009\
  The NetBSD Foundation, Inc.  All rights reserved.\
   Copyright (c) 1991, 1993, 1994\
  The Regents of the University of California.  All rights reserved.");
-__RCSID("$NetBSD: pwd_mkdb.c,v 1.51 2010/01/10 19:04:35 snj Exp $");
+__RCSID("$NetBSD: pwd_mkdb.c,v 1.52 2010/08/18 08:06:39 christos Exp $");
 #endif /* not lint */
 
 #if HAVE_NBTOOL_CONFIG_H
@@ -111,10 +111,12 @@ __RCSID("$NetBSD: pwd_mkdb.c,v 1.51 2010/01/10 19:04:35 snj Exp $");
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <syslog.h>
 #include <limits.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdarg.h>
 #include <string.h>
 #include <unistd.h>
 #include <util.h>
@@ -158,6 +160,7 @@ static char	*pname;				/* password file name */
 static char	prefix[MAXPATHLEN];
 static char	oldpwdfile[MAX(MAXPATHLEN, LINE_MAX * 2)];
 static int 	lorder = BYTE_ORDER;
+static int	logsyslog;
 static int	clean;
 static int	verbose;
 static int	warning;
@@ -167,7 +170,8 @@ static struct pwddb sdb, idb;
 void	bailout(void) __attribute__((__noreturn__));
 void	cp(const char *, const char *, mode_t);
 void	deldbent(struct pwddb *, int, void *);
-void	error(const char *);
+void	mkpw_error(const char *, ...);
+void	mkpw_warning(const char *, ...);
 int	getdbent(struct pwddb *, int, void *, struct passwd **);
 void	inconsistency(void);
 void	install(const char *, const char *);
@@ -214,7 +218,7 @@ opendb(struct pwddb *db, const char *dbname, const char *username,
 
 	db->db = dbopen(db->dbname, flags, perm, DB_HASH, &openinfo);
 	if (db->db == NULL)
-		error(db->dbname);
+		mkpw_error("Cannot open `%s'", db->dbname);
 
 	db->fname = dbname;
 	db->rversion = getversion(dbname);
@@ -224,28 +228,25 @@ opendb(struct pwddb *db, const char *dbname, const char *username,
 		db->wversion = req_version;
 
 	if (warning && db->rversion == 0 && db->wversion == 0) {
-		warnx("Database %s is a version %u database.",
+		mkpw_warning("Database %s is a version %u database.",
 		    db->fname, db->rversion);
-		warnx("Use %s -V 1 to upgrade once you've recompiled "
+		mkpw_warning("Use %s -V 1 to upgrade once you've recompiled "
 		    "all your binaries.", getprogname());
 	}
 	if (db->wversion != db->rversion) {
 		if (username != NULL) {
-			(void)fprintf(stderr, "%s: you cannot change a single "
+			mkpw_warning("You cannot change a single "
 			    "record from version %u to version %u\n",
-			    getprogname(), db->rversion, db->wversion);
+			    db->rversion, db->wversion);
 			bailout();
 		} else if (verbose) {
-		    (void)fprintf(stderr, "%s: changing %s from version "
-			"%u to version %u\n",
-			getprogname(), db->fname,
-			db->rversion, db->wversion);
+		    mkpw_warning("Changing %s from version %u to version %u",
+			db->fname, db->rversion, db->wversion);
 		}
 	} else {
 		if (verbose)
-			(void)fprintf(stderr, "%s: %s version %u "
-			    "requested %u\n", getprogname(), db->fname,
-			    db->rversion, db->wversion);
+			mkpw_warning("File `%s' version %u requested %u",
+			    db->fname, db->rversion, db->wversion);
 	}
 
 	setversion(db);
@@ -276,9 +277,10 @@ main(int argc, char *argv[])
 	cachesize = 0;
 	verbose = 0;
 	warning = 0;
+	logsyslog = 0;
 	req_version = ~0U;
 
-	while ((ch = getopt(argc, argv, "BLc:d:psu:V:vw")) != -1)
+	while ((ch = getopt(argc, argv, "BLc:d:lpsu:V:vw")) != -1)
 		switch (ch) {
 		case 'B':			/* big-endian output */
 			lorder = BIG_ENDIAN;
@@ -292,6 +294,10 @@ main(int argc, char *argv[])
 		case 'd':			/* set prefix */
 			(void)strlcpy(prefix, optarg, sizeof(prefix));
 			break;
+		case 'l':
+			openlog(getprogname(), LOG_PID, LOG_AUTH);
+			logsyslog = 1;
+			break;
 		case 'p':			/* create V7 "file.orig" */
 			makeold = 1;
 			break;
@@ -303,8 +309,10 @@ main(int argc, char *argv[])
 			break;
 		case 'V':
 			req_version = (uint32_t)atoi(optarg);
-			if (req_version > 1)
-				err(1, "Unknown version %u\n", req_version);
+			if (req_version > 1) {
+				mkpw_warning("Unknown version %u", req_version);
+				return EXIT_FAILURE;
+			}
 			break;
 		case 'v':
 			verbose++;
@@ -350,12 +358,12 @@ main(int argc, char *argv[])
 	pname = *argv;
 	/* Open the original password file */
 	if ((fp = fopen(pname, "r")) == NULL)
-		error(pname);
+		mkpw_error("Cannot open `%s'", pname);
 
 	openinfo.lorder = lorder;
 
 	if (fstat(fileno(fp), &st) == -1)
-		error(pname);
+		mkpw_error("Cannot stat `%s'", pname);
 
 	if (cachesize) {
 		openinfo.cachesize = cachesize;
@@ -393,10 +401,10 @@ main(int argc, char *argv[])
 		    pname);
 		if ((tfd = open(oldpwdfile, O_WRONLY | O_CREAT | O_EXCL,
 		    PERM_INSECURE)) < 0)
-			error(oldpwdfile);
+			mkpw_error("Cannot create `%s'", oldpwdfile);
 		clean |= FILE_ORIG;
 		if ((oldfp = fdopen(tfd, "w")) == NULL)
-			error(oldpwdfile);
+			mkpw_error("Cannot fdopen `%s'", oldpwdfile);
 	}
 
 	if (username != NULL) {
@@ -444,11 +452,11 @@ main(int argc, char *argv[])
 			if (pwd.pw_name[0] == '+') {
 				if ((flags & _PASSWORD_NOUID) == 0 &&
 				    pwd.pw_uid == 0)
-					warnx("line %d: superuser override "
-					    "in YP inclusion", lineno);
+					mkpw_warning("line %d: superuser "
+					    "override in YP inclusion", lineno);
 				if ((flags & _PASSWORD_NOGID) == 0 &&
 				    pwd.pw_gid == 0)
-					warnx("line %d: wheel override "
+					mkpw_warning("line %d: wheel override "
 					    "in YP inclusion", lineno);
 			}
 
@@ -461,7 +469,7 @@ main(int argc, char *argv[])
 			continue;
 
 		if (found) {
-			warnx("user `%s' listed twice in password file",
+			mkpw_warning("user `%s' listed twice in password file",
 			    username);
 			bailout();
 		}
@@ -537,7 +545,7 @@ main(int argc, char *argv[])
 		if (hasyp)
 			putyptoken(&sdb);
 	} else if (!found) {
-		warnx("user `%s' not found in password file", username);
+		mkpw_warning("user `%s' not found in password file", username);
 		bailout();
 	}
 
@@ -592,9 +600,8 @@ scan(FILE *fp, struct passwd *pw, int *flags, int *lineno)
 	 *	-- The Who
 	 */
 	if ((p = strchr(line, '\n')) == NULL) {
-		warnx("line too long");
 		errno = EFTYPE;	/* XXX */
-		error(pname);
+		mkpw_error("%s, %d: line too long", pname, *lineno);
 	}
 	*p = '\0';
 	if (strcmp(line, "+") == 0) {
@@ -603,9 +610,8 @@ scan(FILE *fp, struct passwd *pw, int *flags, int *lineno)
 	}
 	oflags = 0;
 	if (!pw_scan(line, pw, &oflags)) {
-		warnx("at line #%d", *lineno);
 		errno = EFTYPE;	/* XXX */
-		error(pname);
+		mkpw_error("%s, %d: Syntax mkpw_error", pname, *lineno);
 	}
 	*flags = oflags;
 
@@ -616,16 +622,10 @@ void
 install(const char *from, const char *to)
 {
 	char buf[MAXPATHLEN];
-	char errbuf[BUFSIZ];
-	int sverrno;
 
 	(void)snprintf(buf, sizeof(buf), "%s%s", prefix, to);
-	if (rename(from, buf)) {
-		sverrno = errno;
-		(void)snprintf(errbuf, sizeof(errbuf), "%s to %s", from, buf);
-		errno = sverrno;
-		error(errbuf);
-	}
+	if (rename(from, buf))
+		mkpw_error("Cannot rename `%s' to `%s'", from, buf);
 }
 
 void
@@ -640,13 +640,13 @@ void
 cp(const char *from, const char *to, mode_t mode)              
 {               
 	static char buf[MAXBSIZE];
-	int from_fd, to_fd, sverrno;
+	int from_fd, to_fd;
 	ssize_t rcount, wcount;
 
 	if ((from_fd = open(from, O_RDONLY, 0)) < 0)
-		error(from);
+		mkpw_error("Cannot open `%s'", from);
 	if ((to_fd = open(to, O_WRONLY | O_CREAT | O_EXCL, mode)) < 0)
-		error(to);
+		mkpw_error("Cannot open `%s'", to);
 	while ((rcount = read(from_fd, buf, MAXBSIZE)) > 0) {
 		wcount = write(to_fd, buf, (size_t)rcount);
 		if (rcount != wcount || wcount == -1)
@@ -661,41 +661,50 @@ cp(const char *from, const char *to, mode_t mode)
 	return;
 
 on_error:
-	sverrno = errno;
-	(void)snprintf(buf, sizeof(buf), "%s to %s", from, to);
-	errno = sverrno;
-	error(buf);
+	mkpw_error("Cannot copy `%s' to `%s'", from, to);
 }
 
 void
 wr_error(const char *str)
 {
-	char errbuf[BUFSIZ];
-	int sverrno;
-
-	sverrno = errno;
-
-	(void)snprintf(errbuf, sizeof(errbuf),
-		"attempt to write %s failed", str);
-
-	errno = sverrno;
-	error(errbuf);
+	mkpw_error("Cannot write `%s'", str);
 }
 
 void
-error(const char *str)
+mkpw_error(const char *fmt, ...)
 {
-
-	warn("%s", str);
+	va_list ap;
+	va_start(ap, fmt);
+	if (logsyslog) {
+		int sverrno = errno;
+		char efmt[BUFSIZ];
+		snprintf(efmt, sizeof(efmt), "%s (%%m)", fmt);
+		errno = sverrno;
+		vsyslog(LOG_ERR, efmt, ap);
+	} else
+		vwarn(fmt, ap);
+	va_end(ap);
 	bailout();
+}
+
+void
+mkpw_warning(const char *fmt, ...)
+{
+	va_list ap;
+	va_start(ap, fmt);
+	if (logsyslog)
+		vsyslog(LOG_WARNING, fmt, ap);
+	else
+		vwarnx(fmt, ap);
+	va_end(ap);
 }
 
 void
 inconsistency(void)
 {
 
-	warnx("text files and databases are inconsistent");
-	warnx("re-build the databases without -u");
+	mkpw_warning("text files and databases are inconsistent");
+	mkpw_warning("re-build the databases without -u");
 	bailout();
 }
 
@@ -726,7 +735,7 @@ getversion(const char *fname)
 		/* If we are building on a separate root, assume version 1 */
 		if ((errno == EACCES || errno == ENOENT) && prefix[0])
 			return 1;
-		warn("Cannot open database %s", fname);
+		mkpw_warning("Cannot open database `%s'", fname);
 		bailout();
 	}
 	key.data = __UNCONST("VERSION");
@@ -734,22 +743,24 @@ getversion(const char *fname)
 
 	switch (ret = (*db->get)(db, &key, &data, 0)) {
 	case -1:	/* Error */
-		warn("Cannot get VERSION record from database");
+		mkpw_warning("Cannot get VERSION record from database `%s'",
+		    fname);
 		goto out;
 	case 0:
 		if (data.size != sizeof(version)) {
-		    warnx("Bad VERSION record in database");
+		    mkpw_warning("Bad VERSION record in database `%s'", fname);
 		    goto out;
 		}
 		(void)memcpy(&version, data.data, sizeof(version));
 		/*FALLTHROUGH*/
 	case 1:
 		if (ret == 1)
-			warnx("Database %s has no version info", fname);
+			mkpw_warning("Database `%s' has no version info",
+			    fname);
 		(*db->close)(db);
 		return version;
 	default:
-		warnx("internal error db->get returns %d", ret);
+		mkpw_warning("internal mkpw_error db->get returns %d", ret);
 		goto out;
 	}
 out:
@@ -769,7 +780,7 @@ setversion(struct pwddb *db)
 	data.size = sizeof(uint32_t);
 
 	if ((*db->db->put)(db->db, &key, &data, 0) != 0) {
-		warn("Can't write VERSION record to %s", db->dbname);
+		mkpw_warning("Can't write VERSION record to `%s'", db->dbname);
 		bailout();
 	}
 }
@@ -947,7 +958,7 @@ getdbent(struct pwddb *db, int type, void *keyp, struct passwd **tpwd)
 	if ((rv = (*db->db->get)(db->db, &key, &data, 0)) == 1)
 		return (rv);
 	if (rv == -1)
-		error(db->dbname);
+		mkpw_error("Error getting record from `%s'", db->dbname);
 
 	p = (char *)data.data;
 
@@ -1036,7 +1047,7 @@ usage(void)
 {
 
 	(void)fprintf(stderr,
-	    "Usage: %s [-BLpsvw] [-c cachesize] [-d directory] [-u user] "
+	    "Usage: %s [-BLlpsvw] [-c cachesize] [-d directory] [-u user] "
 	    "[-V version] file\n",
 	    getprogname());
 	exit(EXIT_FAILURE);
