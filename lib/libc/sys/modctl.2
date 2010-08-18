@@ -1,4 +1,4 @@
-.\"	$NetBSD: modctl.2,v 1.4 2009/10/26 20:43:37 jnemeth Exp $
+.\"	$NetBSD: modctl.2,v 1.5 2010/08/18 01:55:32 pgoyette Exp $
 .\"
 .\" Copyright (c) 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -191,6 +191,13 @@ and the module is already loaded.
 .It Bq Er EFAULT
 A bad address was given for
 .Fa argp .
+.It Bq Er EFBIG
+The argument
+.Fa operation
+is
+.Dv MODCTL_LOAD ,
+the specified module resides in the file system, and the module's default
+proplib file was too large.
 .It Bq Er EINVAL
 The argument
 .Fa operation
@@ -248,6 +255,19 @@ There was not enough memory to perform the
 .It Bq Er EPERM
 Not allowed to perform the
 .Fa operation .
+.It Bq Er EPROGMISMATCH
+The argument
+.Fa operation
+is
+.Dv MODCTL_LOAD ,
+the
+.Fa ml_flags
+field in the
+.Em modctl_load_t
+structure does not include
+.Dv MODCTL_LOAD_FORCE ,
+and the requested module does not match the current kernel's version
+information.
 .El
 .Sh HISTORY
 The
