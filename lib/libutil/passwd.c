@@ -1,4 +1,4 @@
-/*	$NetBSD: passwd.c,v 1.48 2009/01/18 12:13:04 lukem Exp $	*/
+/*	$NetBSD: passwd.c,v 1.49 2010/08/18 08:09:17 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994, 1995
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: passwd.c,v 1.48 2009/01/18 12:13:04 lukem Exp $");
+__RCSID("$NetBSD: passwd.c,v 1.49 2010/08/18 08:09:17 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -150,7 +150,7 @@ pw_mkdb(username, secureonly)
 		args[0] = "pwd_mkdb";
 		args[1] = "-d";
 		args[2] = pw_prefix;
-		args[3] = "-p";
+		args[3] = "-pl";
 		i = 4;
 
 		if (secureonly)
