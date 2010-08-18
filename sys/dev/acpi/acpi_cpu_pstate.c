@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_pstate.c,v 1.29 2010/08/17 10:57:30 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_pstate.c,v 1.30 2010/08/18 18:32:20 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_pstate.c,v 1.29 2010/08/17 10:57:30 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_pstate.c,v 1.30 2010/08/18 18:32:20 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/evcnt.h>
@@ -111,6 +111,17 @@ acpicpu_pstate_attach(device_t self)
 
 	if (ACPI_FAILURE(rv))
 		aprint_debug_dev(self, "_PPC missing\n");
+
+	/*
+	 * Employ the XPSS structure by filling
+	 * it with MD information required for FFH.
+	 */
+	rv = acpicpu_md_pstate_pss(sc);
+
+	if (rv != 0) {
+		rv = AE_SUPPORT;
+		goto fail;
+	}
 
 	sc->sc_flags |= ACPICPU_FLAG_P;
 
