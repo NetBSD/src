@@ -1,4 +1,4 @@
-.\"	$NetBSD: module.9,v 1.16 2010/08/17 06:44:25 wiz Exp $
+.\"	$NetBSD: module.9,v 1.17 2010/08/18 01:56:45 pgoyette Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -229,8 +229,15 @@ the class of the module being loaded
 must match the requested
 .Fa class .
 Except when verifying a module's class when it is being loaded, module
-classes are transparent to the module subsystem.
+classes other than
+.Dv MODULE_CLASS_SECMODEL
+are transparent to the module subsystem.
 They are provided only for the benefit of the subsystem's clients.
+Modules with class
+.Dv MODULE_CLASS_SECMODEL
+are automatically registered with
+.Fn secmodel_register
+after being successfully loaded.
 .Pp
 The
 .Fn module_load
