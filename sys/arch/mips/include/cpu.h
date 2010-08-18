@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.90.16.30 2010/08/16 18:01:13 matt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.90.16.31 2010/08/18 17:01:20 matt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -436,6 +436,9 @@ struct cpu_info *
 	cpu_info_alloc(struct pmap_tlb_info *, u_int);
 void	cpu_attach_common(device_t, struct cpu_info *);
 void	cpu_startup_common(void);
+#ifdef _LP64
+void	cpu_vmspace_exec(struct lwp *, vaddr_t, vaddr_t);
+#endif
 #ifdef MULTIPROCESSOR
 void	cpu_hatch(struct cpu_info *ci);
 void	cpu_trampoline(void);
