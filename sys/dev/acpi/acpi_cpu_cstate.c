@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_cstate.c,v 1.30 2010/08/17 18:49:28 cegger Exp $ */
+/* $NetBSD: acpi_cpu_cstate.c,v 1.31 2010/08/18 02:01:45 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_cstate.c,v 1.30 2010/08/17 18:49:28 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_cstate.c,v 1.31 2010/08/18 02:01:45 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -664,13 +664,14 @@ acpicpu_cstate_idle(void)
 
 	KASSERT(acpicpu_sc != NULL);
 	KASSERT(ci->ci_acpiid < maxcpus);
-	KASSERT(ci->ci_ilevel == IPL_NONE);
 
 	sc = acpicpu_sc[ci->ci_acpiid];
-	KASSERT((sc->sc_flags & ACPICPU_FLAG_C) != 0);
 
 	if (__predict_false(sc == NULL))
 		goto halt;
+
+	KASSERT(ci->ci_ilevel == IPL_NONE);
+	KASSERT((sc->sc_flags & ACPICPU_FLAG_C) != 0);
 
 	if (__predict_false(sc->sc_cold != false))
 		goto halt;
