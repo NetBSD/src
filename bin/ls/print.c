@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.47 2010/04/02 15:09:12 christos Exp $	*/
+/*	$NetBSD: print.c,v 1.48 2010/08/18 02:53:54 enami Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.5 (Berkeley) 7/28/94";
 #else
-__RCSID("$NetBSD: print.c,v 1.47 2010/04/02 15:09:12 christos Exp $");
+__RCSID("$NetBSD: print.c,v 1.48 2010/08/18 02:53:54 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -107,15 +107,15 @@ printlong(DISPLAY *dp)
 		if (f_size) {
 			if (f_humanize) {
 				if ((humanize_number(szbuf, sizeof(szbuf),
-					sp->st_blocks * S_BLKSIZE,
-			    "", HN_AUTOSCALE,
-			    (HN_DECIMAL | HN_B | HN_NOSPACE))) == -1)
-				err(1, "humanize_number");
-			(void)printf("%*s ", dp->s_block, szbuf);
+				    sp->st_blocks * S_BLKSIZE,
+				    "", HN_AUTOSCALE,
+				    (HN_DECIMAL | HN_B | HN_NOSPACE))) == -1)
+					err(1, "humanize_number");
+				(void)printf("%*s ", dp->s_block, szbuf);
 			} else {
-			(void)printf("%*llu ", dp->s_block,
-					(long long)howmany(sp->st_blocks,
-							   	blocksize));
+				(void)printf("%*llu ", dp->s_block,
+				    (long long)howmany(sp->st_blocks,
+				    blocksize));
 			}
 		}
 		(void)strmode(sp->st_mode, buf);
