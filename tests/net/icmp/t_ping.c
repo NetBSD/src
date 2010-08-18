@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ping.c,v 1.3 2010/08/18 16:39:22 pooka Exp $	*/
+/*	$NetBSD: t_ping.c,v 1.4 2010/08/18 17:49:03 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: t_ping.c,v 1.3 2010/08/18 16:39:22 pooka Exp $");
+__RCSID("$NetBSD: t_ping.c,v 1.4 2010/08/18 17:49:03 pooka Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -278,15 +278,15 @@ ATF_TC_BODY(pingsize, tc)
 	succ = 0;
 
 	/* small sizes */
-	for (i = IP_MAXPACKET - 60000; i > 0; i--)
+	for (i = 0 ; i < IP_MAXPACKET - 60000; i++)
 		succ += doping("1.1.1.10", 1, i);
 
 	/* medium sizes */
-	for (i = IP_MAXPACKET - 100; i > IP_MAXPACKET - 60000; i -= 1000)
+	for (i = IP_MAXPACKET - 60000; i < IP_MAXPACKET - 100; i += 1000)
 		succ += doping("1.1.1.10", 1, i);
 
 	/* big sizes */
-	for (i = IP_MAXPACKET; i > IP_MAXPACKET - 100; i -= 10)
+	for (i = IP_MAXPACKET - 100; i < IP_MAXPACKET; i += 10)
 		succ += doping("1.1.1.10", 1, i);
 
 	printf("got %d/%d\n", succ, IP_MAXPACKET);
