@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ping.c,v 1.4 2010/08/18 17:49:03 pooka Exp $	*/
+/*	$NetBSD: t_ping.c,v 1.5 2010/08/18 21:22:34 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -29,20 +29,27 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: t_ping.c,v 1.4 2010/08/18 17:49:03 pooka Exp $");
+__RCSID("$NetBSD: t_ping.c,v 1.5 2010/08/18 21:22:34 pooka Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/resource.h>
+#include <sys/sysctl.h>
+#include <sys/wait.h>
 
 #include <atf-c.h>
+#include <assert.h>
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
+#include <netinet/in.h>
+#include <netinet/ip_var.h>
+
 #include <rump/rump.h>
+#include <rump/rump_syscalls.h>
 
 #include "../../h_macros.h"
 #include "../config/netconfig.c"
@@ -293,6 +300,120 @@ ATF_TC_BODY(pingsize, tc)
 	kill(cpid, SIGKILL);
 }
 
+ATF_TC(ping_of_death);
+ATF_TC_HEAD(ping_of_death, tc)
+{
+
+	atf_tc_set_md_var(tc, "descr", "send a \"ping of death\"");
+	atf_tc_set_md_var(tc, "use.fs", "true");
+}
+
+ATF_TC_BODY(ping_of_death, tc)
+{
+	char data[1500];
+	struct sockaddr_in dst;
+	struct ip *ip;
+	struct icmp *icmp;
+	char ifname[IFNAMSIZ];
+	pid_t cpid;
+	size_t tot, frag;
+	int s, x, loop;
+
+	cpid = fork();
+	rump_init();
+	netcfg_rump_makeshmif("jippikaiee", ifname);
+
+	switch (cpid) {
+	case -1:
+		atf_tc_fail_errno("fork failed");
+	case 0:
+		/* wait until we receive a too long IP packet */
+		for (loop = 0;; loop++) {
+			uint64_t ipstat[IP_NSTATS];
+			size_t arglen;
+			int mib[4];
+
+			if (loop == 1)
+				netcfg_rump_if(ifname,
+				    "1.1.1.10", "255.255.255.0");
+
+			mib[0] = CTL_NET;
+			mib[1] = PF_INET;
+			mib[2] = IPPROTO_IP;
+			mib[3] = IPCTL_STATS;
+
+			arglen = sizeof(ipstat);
+			RL(rump_sys___sysctl(mib, 4, &ipstat, &arglen,
+			    NULL, 0));
+			if (loop == 0 && ipstat[IP_STAT_TOOLONG] != 0)
+				_exit(1);
+			if (ipstat[IP_STAT_TOOLONG])
+				break;
+			usleep(10000);
+		}
+
+		_exit(0);
+		break;
+	default:
+		break;
+	}
+
+	netcfg_rump_if(ifname, "1.1.1.20", "255.255.255.0");
+
+	RL(s = rump_sys_socket(PF_INET, SOCK_RAW, 0));
+	x = 1;
+	RL(rump_sys_setsockopt(s, IPPROTO_IP, IP_HDRINCL, &x, sizeof(x)));
+
+	memset(&dst, 0, sizeof(dst));
+	dst.sin_len = sizeof(dst);
+	dst.sin_family = AF_INET;
+	dst.sin_addr.s_addr = inet_addr("1.1.1.10");
+
+	/* construct packet */
+	memset(data, 0, sizeof(data));
+	ip = (struct ip *)data;
+	ip->ip_v = 4;
+	ip->ip_hl = sizeof(*ip) >> 2;
+	ip->ip_p = IPPROTO_ICMP;
+	ip->ip_ttl = IPDEFTTL;
+	ip->ip_dst = dst.sin_addr;
+	ip->ip_id = 1234;
+
+	icmp = (struct icmp *)(ip + 1);
+	icmp->icmp_type = ICMP_ECHO;
+	icmp->icmp_cksum = in_cksum(icmp, sizeof(*icmp));
+
+	for (;;) {
+		int status;
+
+		/* resolve arp before sending raw stuff */
+		netcfg_rump_pingtest("1.1.1.10", 1);
+
+		for (tot = 0;
+		    tot < 65538 - sizeof(*ip);
+		    tot += (frag - sizeof(*ip))) {
+			frag = MIN(65538 - tot, sizeof(data));
+			ip->ip_off = tot >> 3;
+			assert(ip->ip_off << 3 == tot);
+			ip->ip_len = frag;
+
+			if (frag == sizeof(data)) {
+				ip->ip_off |= IP_MF;
+			}
+
+			RL(rump_sys_sendto(s, data, frag, 0,
+			    (struct sockaddr *)&dst, sizeof(dst)));
+		}
+		if (waitpid(-1, &status, WNOHANG) > 0) {
+			if (WIFEXITED(status) && WEXITSTATUS(status) == 0)
+				break;
+			atf_tc_fail("child did not exit clean");
+		}
+			
+		usleep(10000);
+	}
+}
+
 ATF_TP_ADD_TCS(tp)
 {
 
@@ -300,6 +421,7 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, floodping);
 	ATF_TP_ADD_TC(tp, floodping2);
 	ATF_TP_ADD_TC(tp, pingsize);
+	ATF_TP_ADD_TC(tp, ping_of_death);
 
 	return atf_no_error();
 }
