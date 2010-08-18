@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_md.c,v 1.14 2010/08/18 16:08:50 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_md.c,v 1.15 2010/08/18 18:32:20 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.14 2010/08/18 16:08:50 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.15 2010/08/18 18:32:20 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -452,6 +452,57 @@ acpicpu_md_pstate_sysctl_all(SYSCTLFN_ARGS)
 }
 
 int
+acpicpu_md_pstate_pss(struct acpicpu_softc *sc)
+{
+	struct acpicpu_pstate *ps, msr;
+	uint32_t i = 0;
+
+	(void)memset(&msr, 0, sizeof(struct acpicpu_pstate));
+
+	switch (cpu_vendor) {
+
+	case CPUVENDOR_INTEL:
+		msr.ps_control_addr = MSR_PERF_CTL;
+		msr.ps_control_mask = __BITS(0, 15);
+
+		msr.ps_status_addr  = MSR_PERF_STATUS;
+		msr.ps_status_mask  = __BITS(0, 15);
+		break;
+
+	case CPUVENDOR_AMD:
+
+		if ((sc->sc_flags & ACPICPU_FLAG_P_XPSS) == 0)
+			return EOPNOTSUPP;
+
+		break;
+
+	default:
+		return ENODEV;
+	}
+
+	while (i < sc->sc_pstate_count) {
+
+		ps = &sc->sc_pstate[i];
+
+		if (ps->ps_status_addr == 0)
+			ps->ps_status_addr = msr.ps_status_addr;
+
+		if (ps->ps_status_mask == 0)
+			ps->ps_status_mask = msr.ps_status_mask;
+
+		if (ps->ps_control_addr == 0)
+			ps->ps_control_addr = msr.ps_control_addr;
+
+		if (ps->ps_control_mask == 0)
+			ps->ps_control_mask = msr.ps_control_mask;
+
+		i++;
+	}
+
+	return 0;
+}
+
+int
 acpicpu_md_pstate_get(struct acpicpu_softc *sc, uint32_t *freq)
 {
 	struct acpicpu_pstate *ps = NULL;
@@ -468,24 +519,6 @@ acpicpu_md_pstate_get(struct acpicpu_softc *sc, uint32_t *freq)
 
 	if (__predict_false(ps == NULL))
 		return EINVAL;
-
-	switch (cpu_vendor) {
-
-	case CPUVENDOR_INTEL:
-		ps->ps_status_addr = MSR_PERF_STATUS;
-		ps->ps_status_mask = __BITS(0, 15);
-		break;
-
-	case CPUVENDOR_AMD:
-
-		if ((ps->ps_flags & ACPICPU_FLAG_P_XPSS) == 0)
-			return EOPNOTSUPP;
-
-		break;
-
-	default:
-		return ENODEV;
-	}
 
 	if (ps->ps_status_addr == 0)
 		return EINVAL;
@@ -517,27 +550,6 @@ acpicpu_md_pstate_set(struct acpicpu_pstate *ps)
 	struct msr_rw_info msr;
 	uint64_t xc;
 	int rv = 0;
-
-	switch (cpu_vendor) {
-
-	case CPUVENDOR_INTEL:
-		ps->ps_control_addr = MSR_PERF_CTL;
-		ps->ps_control_mask = __BITS(0, 15);
-
-		ps->ps_status_addr  = MSR_PERF_STATUS;
-		ps->ps_status_mask  = __BITS(0, 15);
-		break;
-
-	case CPUVENDOR_AMD:
-
-		if ((ps->ps_flags & ACPICPU_FLAG_P_XPSS) == 0)
-			return EOPNOTSUPP;
-
-		break;
-
-	default:
-		return ENODEV;
-	}
 
 	msr.msr_read  = false;
 	msr.msr_type  = ps->ps_control_addr;
