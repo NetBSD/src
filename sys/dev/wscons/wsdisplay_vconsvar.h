@@ -1,4 +1,4 @@
-/*	$NetBSD: wsdisplay_vconsvar.h,v 1.10 2009/08/20 02:01:08 macallan Exp $ */
+/*	$NetBSD: wsdisplay_vconsvar.h,v 1.11 2010/08/18 16:46:51 macallan Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Michael Lorenz
@@ -53,6 +53,7 @@ struct vcons_screen {
 					 * - for drivers that use software
 					 * drawing */
 #define VCONS_DONT_DRAW		8	/* don't draw on this screen at all */
+#define VCONS_DONT_READ		0x10	/* avoid framebuffer reads */
 	/* status flags used by vcons */
 	uint32_t scr_status;
 #define VCONS_IS_VISIBLE	1	/* this screen is currently visible */
