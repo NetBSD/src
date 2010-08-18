@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.129 2010/08/08 00:23:26 joerg Exp $
+# $NetBSD: shl.mi,v 1.130 2010/08/18 14:26:16 sketch Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -250,6 +250,7 @@
 ./usr/libdata/debug/usr/lib/libm.so.0.8.debug		comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libmagic.so.3.0.debug	comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libmenu.so.6.0.debug	comp-sys-debug	debug
+./usr/libdata/debug/usr/lib/libmj.so.0.0.debug		comp-crypto-debug	debug
 ./usr/libdata/debug/usr/lib/libnetpgp.so.3.0.debug	comp-crypto-debug	crypto,debug
 ./usr/libdata/debug/usr/lib/libnvpair.so.0.0.debug	comp-zfs-debug	zfs,dynamicroot,debug
 ./usr/libdata/debug/usr/lib/libobjc.so.2.0.debug	comp-sys-debug	gcc=3,debug
