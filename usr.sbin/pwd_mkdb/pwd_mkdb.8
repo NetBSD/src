@@ -1,4 +1,4 @@
-.\"	$NetBSD: pwd_mkdb.8,v 1.27 2010/08/18 08:06:39 christos Exp $
+.\"	$NetBSD: pwd_mkdb.8,v 1.28 2010/08/18 10:00:49 wiz Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -138,9 +138,6 @@ encrypted password and the insecure version has an asterisk
 .Pp
 The databases are used by the C library password routines (see
 .Xr getpwent 3 ) .
-.Sh EXIT STATUS
-.Nm
-exits zero on success, non-zero on failure.
 .Sh FILES
 .Bl -tag -width Pa -compact
 .It Pa /etc/master.passwd
@@ -156,6 +153,18 @@ The secure password database file.
 .It Pa /etc/spwd.db.tmp
 A temporary file.
 .El
+.Sh EXIT STATUS
+.Nm
+exits zero on success, non-zero on failure.
+.Sh COMPATIBILITY
+Previous versions of the system had a program similar to
+.Nm
+which built
+.Em dbm
+style databases for the password file but depended on the calling programs
+to install them.
+The program was renamed in order that previous users of the program
+not be surprised by the changes in functionality.
 .Sh SEE ALSO
 .Xr chpass 1 ,
 .Xr passwd 1 ,
@@ -169,15 +178,6 @@ A temporary file.
 .Xr userdel 8 ,
 .Xr usermod 8 ,
 .Xr vipw 8
-.Sh COMPATIBILITY
-Previous versions of the system had a program similar to
-.Nm
-which built
-.Em dbm
-style databases for the password file but depended on the calling programs
-to install them.
-The program was renamed in order that previous users of the program
-not be surprised by the changes in functionality.
 .Sh BUGS
 Because of the necessity for atomic update of the password files,
 .Nm
