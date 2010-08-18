@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips3.S,v 1.93.38.10 2010/08/16 17:57:10 matt Exp $	*/
+/*	$NetBSD: locore_mips3.S,v 1.93.38.11 2010/08/18 06:35:01 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -614,7 +614,7 @@ NESTED_NOPROFILE(cpu_trampoline, 0, ra)
 	PTR_S	MIPS_CURLWP, CPU_INFO_CURLWP(a0)
 
 #ifdef _LP64
-	li	v0, MIPS_SR_KX			# allow 64bit addressing
+	li	v0, MIPS_SR_KX | MIPS_SR_UX	# allow 64bit addressing
 #else
 	li	v0, 0
 #endif
