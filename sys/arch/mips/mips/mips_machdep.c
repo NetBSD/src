@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.47 2010/06/09 14:20:00 matt Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.48 2010/08/18 07:12:57 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -112,7 +112,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.47 2010/06/09 14:20:00 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.48 2010/08/18 07:12:57 matt Exp $");
 
 #define	__INTR_PRIVATE
 
@@ -1232,9 +1232,9 @@ setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 	struct proc * const p = l->l_proc;
 
 	memset(tf, 0, sizeof(struct trapframe));
-	tf->tf_regs[_R_SP] = (int)stack;
-	tf->tf_regs[_R_PC] = (int)pack->ep_entry & ~3;
-	tf->tf_regs[_R_T9] = (int)pack->ep_entry & ~3; /* abicall requirement */
+	tf->tf_regs[_R_SP] = (intptr_t)stack;
+	tf->tf_regs[_R_PC] = (intptr_t)pack->ep_entry & ~3;
+	tf->tf_regs[_R_T9] = (intptr_t)pack->ep_entry & ~3; /* abicall requirement */
 	tf->tf_regs[_R_SR] = PSL_USERSET;
 #if !defined(__mips_o32)
 	/*
@@ -1674,10 +1674,10 @@ mips_init_lwp0_uarea(void)
 	}
 	lwp0.l_md.md_utf = (struct trapframe *)(v + USPACE) - 1;
 #ifdef _LP64
-	lwp0.l_md.md_utf->tf_regs[_R_SR] = MIPS_SR_KX;
+	lwp0.l_md.md_utf->tf_regs[_R_SR] = MIPS_SR_KX | MIPS_SR_UX;
 	lwp0.l_addr->u_pcb.pcb_context.val[_L_SR] =
 	    (ipl_sr_map.sr_bits[IPL_SCHED] ^ MIPS_INT_MASK)
-	    | MIPS_SR_KX | MIPS_SR_INT_IE;
+	    | MIPS_SR_KX | MIPS_SR_UX | MIPS_SR_INT_IE;
 #else
 	lwp0.l_addr->u_pcb.pcb_context.val[_L_SR] = MIPS_SR_INT_IE;
 #endif
