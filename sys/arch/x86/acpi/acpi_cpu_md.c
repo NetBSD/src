@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_md.c,v 1.12 2010/08/14 05:13:20 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_md.c,v 1.13 2010/08/18 04:12:29 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.12 2010/08/14 05:13:20 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.13 2010/08/18 04:12:29 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -56,7 +56,6 @@ static int	 acpicpu_md_quirks_piix4(struct pci_attach_args *);
 static int	 acpicpu_md_pstate_sysctl_get(SYSCTLFN_PROTO);
 static int	 acpicpu_md_pstate_sysctl_set(SYSCTLFN_PROTO);
 static int	 acpicpu_md_pstate_sysctl_all(SYSCTLFN_PROTO);
-static int	 acpicpu_md_tstate_get_status(uint64_t *);
 
 extern uint32_t cpus_running;
 extern struct acpicpu_softc **acpicpu_sc;
@@ -135,7 +134,7 @@ acpicpu_md_quirks(void)
 	case CPUVENDOR_AMD:
 
 		/*
-		 * XXX: Deal with PowerNow! and C1E here.
+		 * XXX: Deal with (non-XPSS) PowerNow! and C1E.
 		 */
 		break;
 	}
@@ -251,6 +250,10 @@ acpicpu_md_pstate_start(void)
 
 	case CPUVENDOR_INTEL:
 		str = "est";
+		break;
+
+	case CPUVENDOR_AMD:
+		str = "powernow";
 		break;
 
 	default:
@@ -449,37 +452,61 @@ acpicpu_md_pstate_sysctl_all(SYSCTLFN_ARGS)
 int
 acpicpu_md_pstate_get(struct acpicpu_softc *sc, uint32_t *freq)
 {
-	struct acpicpu_pstate *ps;
+	struct acpicpu_pstate *ps = NULL;
 	uint64_t val;
 	uint32_t i;
+
+	for (i = 0; i < sc->sc_pstate_count; i++) {
+
+		ps = &sc->sc_pstate[i];
+
+		if (ps->ps_freq != 0)
+			break;
+	}
+
+	if (__predict_false(ps == NULL))
+		return EINVAL;
 
 	switch (cpu_vendor) {
 
 	case CPUVENDOR_INTEL:
+		ps->ps_status_addr = MSR_PERF_STATUS;
+		ps->ps_status_mask = __BITS(0, 15);
+		break;
 
-		val = rdmsr(MSR_PERF_STATUS);
-		val = val & 0xffff;
+	case CPUVENDOR_AMD:
 
-		for (i = 0; i < sc->sc_pstate_count; i++) {
+		if ((ps->ps_flags & ACPICPU_FLAG_P_XPSS) == 0)
+			return EOPNOTSUPP;
 
-			ps = &sc->sc_pstate[i];
-
-			if (ps->ps_freq == 0)
-				continue;
-
-			if (val == ps->ps_status) {
-				*freq = ps->ps_freq;
-				return 0;
-			}
-		}
-
-		return EIO;
+		break;
 
 	default:
 		return ENODEV;
 	}
 
-	return 0;
+	if (ps->ps_status_addr == 0)
+		return EINVAL;
+
+	val = rdmsr(ps->ps_status_addr);
+
+	if (ps->ps_status_mask != 0)
+		val = val & ps->ps_status_mask;
+
+	for (i = 0; i < sc->sc_pstate_count; i++) {
+
+		ps = &sc->sc_pstate[i];
+
+		if (ps->ps_freq == 0)
+			continue;
+
+		if (val == ps->ps_status) {
+			*freq = ps->ps_freq;
+			return 0;
+		}
+	}
+
+	return EIO;
 }
 
 int
@@ -492,23 +519,45 @@ acpicpu_md_pstate_set(struct acpicpu_pstate *ps)
 	switch (cpu_vendor) {
 
 	case CPUVENDOR_INTEL:
-		msr.msr_read  = true;
-		msr.msr_type  = MSR_PERF_CTL;
-		msr.msr_value = ps->ps_control;
-		msr.msr_mask  = 0xffffULL;
+		ps->ps_control_addr = MSR_PERF_CTL;
+		ps->ps_control_mask = __BITS(0, 15);
+
+		ps->ps_status_addr  = MSR_PERF_STATUS;
+		ps->ps_status_mask  = __BITS(0, 15);
+		break;
+
+	case CPUVENDOR_AMD:
+
+		if ((ps->ps_flags & ACPICPU_FLAG_P_XPSS) == 0)
+			return EOPNOTSUPP;
+
 		break;
 
 	default:
 		return ENODEV;
 	}
 
+	msr.msr_read  = false;
+	msr.msr_type  = ps->ps_control_addr;
+	msr.msr_value = ps->ps_control;
+
+	if (ps->ps_control_mask != 0) {
+		msr.msr_mask = ps->ps_control_mask;
+		msr.msr_read = true;
+	}
+
 	xc = xc_broadcast(0, (xcfunc_t)x86_msr_xcall, &msr, NULL);
 	xc_wait(xc);
 
+	if (ps->ps_status_addr == 0)
+		return 0;
+
 	for (i = val = 0; i < ACPICPU_P_STATE_RETRY; i++) {
 
-		val = rdmsr(MSR_PERF_STATUS);
-		val = val & 0xffff;
+		val = rdmsr(ps->ps_status_addr);
+
+		if (ps->ps_status_mask != 0)
+			val = val & ps->ps_status_mask;
 
 		if (val == ps->ps_status)
 			return 0;
@@ -523,14 +572,20 @@ int
 acpicpu_md_tstate_get(struct acpicpu_softc *sc, uint32_t *percent)
 {
 	struct acpicpu_tstate *ts;
-	uint64_t val;
+	uint64_t val, sta;
 	uint32_t i;
-	int rv;
 
-	rv = acpicpu_md_tstate_get_status(&val);
+	switch (cpu_vendor) {
 
-	if (rv != 0)
-		return rv;
+	case CPUVENDOR_INTEL:
+		sta = MSR_THERM_CONTROL;
+		break;
+
+	default:
+		return ENODEV;
+	}
+
+	val = rdmsr(sta);
 
 	for (i = 0; i < sc->sc_tstate_count; i++) {
 
@@ -548,29 +603,12 @@ acpicpu_md_tstate_get(struct acpicpu_softc *sc, uint32_t *percent)
 	return EIO;
 }
 
-static int
-acpicpu_md_tstate_get_status(uint64_t *val)
-{
-
-	switch (cpu_vendor) {
-
-	case CPUVENDOR_INTEL:
-		*val = rdmsr(MSR_THERM_CONTROL);
-		break;
-
-	default:
-		return ENODEV;
-	}
-
-	return 0;
-}
-
 int
 acpicpu_md_tstate_set(struct acpicpu_tstate *ts)
 {
 	struct msr_rw_info msr;
-	uint64_t xc, val;
-	int i;
+	uint64_t xc, val, sta;
+	uint32_t i;
 
 	switch (cpu_vendor) {
 
@@ -579,6 +617,8 @@ acpicpu_md_tstate_set(struct acpicpu_tstate *ts)
 		msr.msr_type  = MSR_THERM_CONTROL;
 		msr.msr_value = ts->ts_control;
 		msr.msr_mask = __BITS(1, 4);
+
+		sta = MSR_THERM_CONTROL;
 		break;
 
 	default:
@@ -593,7 +633,7 @@ acpicpu_md_tstate_set(struct acpicpu_tstate *ts)
 
 	for (i = val = 0; i < ACPICPU_T_STATE_RETRY; i++) {
 
-		(void)acpicpu_md_tstate_get_status(&val);
+		val = rdmsr(sta);
 
 		if (val == ts->ts_status)
 			return 0;
