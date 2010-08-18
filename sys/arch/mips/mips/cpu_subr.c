@@ -32,7 +32,7 @@
 #include "opt_multiprocessor.h"
 #include "opt_sa.h"
 
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.1.2.9 2010/08/16 18:01:13 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.1.2.10 2010/08/18 17:01:21 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -700,3 +700,20 @@ cpu_offline_md(void)
 
 	(*mips_locoresw.lsw_cpu_offline_md)();
 }
+
+#ifdef _LP64
+void
+cpu_vmspace_exec(lwp_t *l, vaddr_t start, vaddr_t end)
+{
+	/*
+	 * We need to turn on/off UX so that copyout/copyin will work
+	 * well before setreg gets called.
+	 */
+	uint32_t sr = mips_cp0_status_read();
+	if (end != (uint32_t) end) {
+		mips_cp0_status_write(sr | MIPS3_SR_UX);
+	} else {
+		mips_cp0_status_write(sr & ~MIPS3_SR_UX);
+	}
+}
+#endif
