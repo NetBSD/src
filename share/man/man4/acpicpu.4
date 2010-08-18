@@ -1,4 +1,4 @@
-.\" $NetBSD: acpicpu.4,v 1.12 2010/08/15 19:34:50 jruoho Exp $
+.\" $NetBSD: acpicpu.4,v 1.13 2010/08/18 04:16:12 jruoho Exp $
 .\"
 .\" Coyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd August 15, 2010
+.Dd August 18, 2010
 .Dt ACPICPU 4
 .Os
 .Sh NAME
@@ -119,6 +119,7 @@ Depending on the processor, additional timers such as
 .Tn TSC
 .Pq time stamp counter
 may be stopped.
+Processor caches may be flushed.
 Entry and exit latencies are expected to be high; the
 .Tn CPU
 can no longer
@@ -306,9 +307,9 @@ If this extension is available in a vendor
 it is recommended to turn it off, with or without
 .Nm .
 .It
-The use of native instructions in P-states
-is currently supported only on Intel
-.Tn CPUs .
+While P-states are supported on all Intel
+.Tn CPUs ,
+not all AMD processors are yet supported.
 .It
 Processor thermal control (see
 .Xr acpitz 4 )
