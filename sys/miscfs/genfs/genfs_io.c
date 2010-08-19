@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.38 2010/08/08 18:17:11 chs Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.39 2010/08/19 02:10:02 pooka Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.38 2010/08/08 18:17:11 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.39 2010/08/19 02:10:02 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -160,7 +160,8 @@ startover:
 #if defined(DIAGNOSTIC)
 		GOP_SIZE(vp, vp->v_writesize, &writeeof, GOP_SIZE_MEM);
 		if (newsize > round_page(writeeof)) {
-			panic("%s: past eof", __func__);
+			panic("%s: past eof: %" PRId64 " vs. %" PRId64,
+			    __func__, newsize, round_page(writeeof));
 		}
 #endif /* defined(DIAGNOSTIC) */
 	} else {
