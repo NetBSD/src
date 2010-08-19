@@ -1,4 +1,4 @@
-/* $NetBSD: wb_acpi.c,v 1.4 2010/08/19 18:30:33 jmcneill Exp $ */
+/* $NetBSD: wb_acpi.c,v 1.5 2010/08/19 18:37:38 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2009 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,12 +26,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wb_acpi.c,v 1.4 2010/08/19 18:30:33 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wb_acpi.c,v 1.5 2010/08/19 18:37:38 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/systm.h>
 
+#include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
 
 #include <dev/ic/w83l518dvar.h>
