@@ -1,4 +1,4 @@
-#	$NetBSD: OPENBLOCKS266,v 1.46.2.2 2010/08/11 14:03:58 uebayasi Exp $
+#	$NetBSD: OPENBLOCKS266,v 1.46.2.3 2010/08/19 12:36:58 uebayasi Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -7,7 +7,7 @@ include		"arch/evbppc/conf/std.obs266"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"OPENBLOCKS266-$Revision: 1.46.2.2 $"
+#ident 		"OPENBLOCKS266-$Revision: 1.46.2.3 $"
 
 maxusers	32
 
@@ -197,6 +197,7 @@ options 	MIIVERBOSE		# verbose PHY autoconfig messages
 #pseudo-device	fss			# file system snapshot device
 #pseudo-device	md		1	# memory disk device
 #pseudo-device	vnd			# disk-like interface to files
+#pseudo-device	xmd		1	# XIP memory disk device
 
 # network pseudo-devices
 pseudo-device	loop			# network loopback

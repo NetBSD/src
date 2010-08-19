@@ -1,0 +1,30 @@
+.\" $NetBSD: xmd.4,v 1.1.2.1 2010/08/19 12:36:59 uebayasi Exp $
+.\"
+.\" This file is in the public domain.
+.\"
+.Dd August 19, 2010
+.Dt XMD 4
+.Os
+.Sh NAME
+.Nm xmd
+.Nd XIP memory disk
+.Sh SYNOPSIS
+.Cd "pseudo-device xmd" Op Ar count
+.Sh DESCRIPTION
+The
+.Nm
+driver enables use of system or user memory as a disk, which can be
+mounted as XIP (eXecute-In-Place), so that filesystem data are read
+without consuming intermediate page cache buffers.
+.Pp
+Memory for the disk is allocated within the kernel and set with
+.Xr mdsetimage 8
+before the
+.Nm
+device may be used as a disk.
+.Nm
+disks should be mounted as read-only to enable XIP.
+.Sh SEE ALSO
+.Xr md 4 ,
+.Xr options 4 ,
+.Xr mdsetimage 8
