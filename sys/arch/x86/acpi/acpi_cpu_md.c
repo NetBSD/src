@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_md.c,v 1.17 2010/08/19 18:30:24 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_md.c,v 1.18 2010/08/19 21:40:45 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.17 2010/08/19 18:30:24 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.18 2010/08/19 21:40:45 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -109,7 +109,7 @@ acpicpu_md_quirks(void)
 {
 	struct cpu_info *ci = curcpu();
 	struct pci_attach_args pa;
-	uint32_t val = 0;
+	uint32_t family, val = 0;
 
 	if (acpicpu_md_cpus_running() == 1)
 		val |= ACPICPU_FLAG_C_BM;
@@ -133,7 +133,12 @@ acpicpu_md_quirks(void)
 
 	case CPUVENDOR_AMD:
 
-		switch (CPUID2FAMILY(ci->ci_signature)) {
+		family = CPUID2FAMILY(ci->ci_signature);
+
+		if (family == 0xf)
+			family += CPUID2EXTFAMILY(ci->ci_signature);
+
+		switch (family) {
 
 		case 0x10:
 		case 0x11:
@@ -461,7 +466,7 @@ acpicpu_md_pstate_pss(struct acpicpu_softc *sc)
 {
 	struct acpicpu_pstate *ps, msr;
 	struct cpu_info *ci = curcpu();
-	uint32_t i = 0;
+	uint32_t family, i = 0;
 
 	(void)memset(&msr, 0, sizeof(struct acpicpu_pstate));
 
@@ -478,7 +483,12 @@ acpicpu_md_pstate_pss(struct acpicpu_softc *sc)
 
 	case CPUVENDOR_AMD:
 
-		switch (CPUID2FAMILY(ci->ci_signature)) {
+		family = CPUID2FAMILY(ci->ci_signature);
+
+		if (family == 0xf)
+			family += CPUID2EXTFAMILY(ci->ci_signature);
+
+		switch (family) {
 
 		case 0x10:
 		case 0x11:
