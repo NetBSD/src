@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.26.36.1.2.33 2010/08/16 18:01:13 matt Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.26.36.1.2.34 2010/08/19 07:21:37 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -411,25 +411,28 @@ VECTOR(MIPSX(xtlb_miss), unknown)
 	.set	noat
 	dmfc0	k0, MIPS_COP_0_BAD_VADDR	#00: k0=bad address
 #ifdef _LP64
-	lui	k1, %hi(CPUVAR(PMAP_SEGTAB))	#01: k1=hi of segtab
-	bltz	k0, MIPSX(kernelfault)		#02: k0<0 -> 4f (kernel fault)
-	 PTR_SRL k0, 2*(PGSHIFT-PTR_SCALESHIFT)+(PGSHIFT-2) #03: k0=seg offset (almost)
-	andi	k0, NBPG-(1<<PTR_SCALESHIFT)	#04: k0=seg offset (mask 0x3)
-	PTR_L	k1, %lo(CPUVAR(PMAP_SEGTAB))(k1)#05: k1=segment tab
-	PTR_ADDU k1, k0				#06: k1=seg entry address
-	PTR_L	k1, 0(k1)			#07: k1=seg entry
+	nop					#01: nop
+	bltz	k0, MIPSX(kernelfault)		#02: k0<0 -> kernel fault
+	 PTR_SRL k1,k0,2*(PGSHIFT-PTR_SCALESHIFT)+(PGSHIFT-2)+PGSHIFT #03: clear valid bits
+	bnez	k1, MIPSX(nopagetable)		#04: not legal address
+	 PTR_SRL k0, 2*(PGSHIFT-PTR_SCALESHIFT)+(PGSHIFT-2) #05: k0=seg offset (almost)
+	lui	k1, %hi(CPUVAR(PMAP_SEGTAB))	#06: k1=hi of segtab
+	andi	k0, NBPG-(1<<PTR_SCALESHIFT)	#07: k0=seg offset (mask 0x3)
+	PTR_L	k1, %lo(CPUVAR(PMAP_SEGTAB))(k1)#08: k1=segment tab
+	PTR_ADDU k1, k0				#09: k1=seg entry address
+	PTR_L	k1, 0(k1)			#0a: k1=seg entry
 #else
-	lui	k1, %hi(CPUVAR(PMAP_SEG0TAB))	#01: k1=hi of segbase
-	bltz	k0, MIPSX(kernelfault)		#02: k0<0 -> 4f (kernel fault)
+	lui	k1, %hi(CPUVAR(PMAP_SEG0TAB))	#01: k1=hi of seg0tab
+	bltz	k0, MIPSX(kernelfault)		#02: k0<0 -> kernel fault
 	 dsrl	k0, 31				#03: clear low 31 bits
 	bnez	k0, MIPSX(nopagetable)		#04: not legal address
 	 nop
 	PTR_L	k1, %lo(CPUVAR(PMAP_SEG0TAB))(k1)#05: k1=segment tab base
 #endif /* _LP64 */
-	dmfc0	k0, MIPS_COP_0_BAD_VADDR	#08: k0=bad address (again)
-	PTR_SRL	k0, 1*(PGSHIFT-PTR_SCALESHIFT)+(PGSHIFT-2) #09: k0=seg offset (almost)
-	b	MIPSX(tlb_miss_common)		#0a
-	 nop
+	dmfc0	k0, MIPS_COP_0_BAD_VADDR	#0b: k0=bad address (again)
+	nop					#0c
+	b	MIPSX(tlb_miss_common)		#0d
+	 PTR_SRL k0, 1*(PGSHIFT-PTR_SCALESHIFT)+(PGSHIFT-2) #0e: k0=seg offset (almost)
 	.set	at
 _VECTOR_END(MIPSX(xtlb_miss))
 #else
