@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.974.2.7 2010/08/17 06:45:56 uebayasi Exp $
+#	$NetBSD: files,v 1.974.2.8 2010/08/19 12:36:58 uebayasi Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20100430
@@ -270,6 +270,10 @@ defflag	opt_md.h		MEMORY_DISK_HOOKS MEMORY_DISK_IS_ROOT
 				MEMORY_DISK_DYNAMIC
 defparam opt_md.h		MEMORY_DISK_SERVER=1 MEMORY_DISK_ROOT_SIZE
 				MEMORY_DISK_RBFLAGS
+
+# XIP memory (ram) disk options
+#
+defflag	opt_xmd.h		XMD_ROOT_SIZE
 
 defflag opt_tftproot.h		TFTPROOT TFTPROOT_DEBUG
 
@@ -1256,6 +1260,7 @@ defpseudo ccd:		disk
 defpseudodev cgd:	disk, des, blowfish, cast128, rijndael
 defpseudodev md:	disk
 defpseudodev fss:	disk
+defpseudodev xmd:	disk
 
 defpseudo pty:		tty
 defpseudo rnd
@@ -1415,6 +1420,7 @@ file	dev/rndpool.c			rnd			needs-flag
 file	dev/sequencer.c			sequencer		needs-flag
 file	dev/video.c			video			needs-flag
 file	dev/vnd.c			vnd			needs-flag
+file	dev/xmd.c			xmd			needs-count
 file	kern/bufq_disksort.c		bufq_disksort
 file	kern/bufq_fcfs.c		bufq_fcfs
 file	kern/bufq_priocscan.c		bufq_priocscan
