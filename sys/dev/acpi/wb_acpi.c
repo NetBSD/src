@@ -1,4 +1,4 @@
-/* $NetBSD: wb_acpi.c,v 1.3 2010/08/19 14:59:24 jmcneill Exp $ */
+/* $NetBSD: wb_acpi.c,v 1.4 2010/08/19 18:30:33 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2009 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wb_acpi.c,v 1.3 2010/08/19 14:59:24 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wb_acpi.c,v 1.4 2010/08/19 18:30:33 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -40,6 +40,9 @@ __KERNEL_RCSID(0, "$NetBSD: wb_acpi.c,v 1.3 2010/08/19 14:59:24 jmcneill Exp $")
 #include <dev/isa/isadmavar.h>
 
 #include <dev/sdmmc/sdmmcvar.h>
+
+#define _COMPONENT	ACPI_RESOURCE_COMPONENT
+ACPI_MODULE_NAME	("wb_acpi")
 
 static int	wb_acpi_match(device_t, cfdata_t, void *);
 static void	wb_acpi_attach(device_t, device_t, void *);
