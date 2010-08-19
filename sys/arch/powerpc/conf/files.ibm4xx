@@ -1,4 +1,4 @@
-#	$NetBSD: files.ibm4xx,v 1.10.88.3 2010/08/11 13:56:28 uebayasi Exp $
+#	$NetBSD: files.ibm4xx,v 1.10.88.4 2010/08/19 01:02:21 uebayasi Exp $
 #
 # IBM 4xx specific configuration info
 
@@ -77,4 +77,4 @@ file	arch/powerpc/ibm4xx/dev/exb.c		exb
 
 # FlashROM on external bus
 attach	flash at exb with flash_exb
-file	arch/powerpc/ibm4xx/dev/flash_exb.c	flash_exb
+file	arch/powerpc/ibm4xx/dev/flash_exb.c	flash_exb	needs-flag

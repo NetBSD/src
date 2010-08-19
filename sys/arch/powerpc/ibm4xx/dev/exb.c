@@ -1,4 +1,4 @@
-/*	$Id: exb.c,v 1.1.2.1 2010/08/11 13:53:22 uebayasi Exp $	*/
+/*	$Id: exb.c,v 1.1.2.2 2010/08/19 01:02:21 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exb.c,v 1.1.2.1 2010/08/11 13:53:22 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exb.c,v 1.1.2.2 2010/08/19 01:02:21 uebayasi Exp $");
 
 #include "locators.h"
 
@@ -43,18 +43,10 @@ __KERNEL_RCSID(0, "$NetBSD: exb.c,v 1.1.2.1 2010/08/11 13:53:22 uebayasi Exp $")
 #include <powerpc/ibm4xx/dcr4xx.h>
 #include <powerpc/ibm4xx/dev/exbvar.h>
 
-/* XXX board specific */
-static const struct exb_conf exb_confs[] = {
-	{ "flash", 0xff800000 + 0x00000000, 0x00010000 },	// 0xff800000
-	{ "flash", 0xff800000 + 0x00010000, 0x007b0000 },	// 0xff810000
-#if 0 /* XXX extent(9) */
-	{ "flash", 0xff800000 + 0x007c0000, 0x00040000 },	// 0xfffc0000
-#endif
-	{ NULL }
-};
-
 struct exb_softc {
 };
+
+extern const struct exb_conf exb_confs[];
 
 static int exb_match(device_t, struct cfdata *, void *);
 static void exb_attach(device_t, struct device *, void *);

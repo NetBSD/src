@@ -1,4 +1,4 @@
-/*	$NetBSD: obs266_autoconf.c,v 1.4.76.1 2010/04/30 14:39:18 uebayasi Exp $	*/
+/*	$NetBSD: obs266_autoconf.c,v 1.4.76.2 2010/08/19 01:02:21 uebayasi Exp $	*/
 
 /*
  * Copyright 2004 Shigeyuki Fukushima.
@@ -33,15 +33,19 @@
  * DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obs266_autoconf.c,v 1.4.76.1 2010/04/30 14:39:18 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obs266_autoconf.c,v 1.4.76.2 2010/08/19 01:02:21 uebayasi Exp $");
+
+#include "flash_exb.h"
 
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/bus.h>
 
 #include <machine/obs266.h>
 
 #include <powerpc/ibm4xx/cpu.h>
 #include <powerpc/ibm4xx/dcr4xx.h>
+#include <powerpc/ibm4xx/dev/exbvar.h>
 
 #include <dev/ic/comreg.h>
 
@@ -78,3 +82,17 @@ void device_register(struct device *dev, void *aux)
 
 	obs405_device_register(dev, aux, OBS266_COM_FREQ);
 }
+
+#if NFLASH_EXB > 0
+const struct exb_conf exb_confs[] = {
+	/* 0xff800000-0xff810000 */
+	{ "flash", 0xff800000 + 0x00000000, 0x00010000 },
+	/* 0xff810000-0xfffc0000 */
+	{ "flash", 0xff800000 + 0x00010000, 0x007b0000 },
+#if 0 /* XXX extent(9) */
+	/* 0xfffc0000-0xffffffff */
+	{ "flash", 0xff800000 + 0x007c0000, 0x00040000 },
+#endif
+	{ NULL }
+};
+#endif
