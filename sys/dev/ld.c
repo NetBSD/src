@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.c,v 1.66 2009/07/23 21:38:33 dyoung Exp $	*/
+/*	$NetBSD: ld.c,v 1.67 2010/08/19 17:59:10 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.66 2009/07/23 21:38:33 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.67 2010/08/19 17:59:10 jmcneill Exp $");
 
 #include "rnd.h"
 
@@ -67,6 +67,7 @@ __KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.66 2009/07/23 21:38:33 dyoung Exp $");
 static void	ldgetdefaultlabel(struct ld_softc *, struct disklabel *);
 static void	ldgetdisklabel(struct ld_softc *);
 static void	ldminphys(struct buf *bp);
+static bool	ld_suspend(device_t, const pmf_qual_t *);
 static bool	ld_shutdown(device_t, int);
 static void	ldstart(struct ld_softc *, struct buf *);
 static void	ld_set_properties(struct ld_softc *);
@@ -154,7 +155,7 @@ ldattach(struct ld_softc *sc)
 #endif
 
 	/* Register with PMF */
-	if (!pmf_device_register1(sc->sc_dv, NULL, NULL, ld_shutdown))
+	if (!pmf_device_register1(sc->sc_dv, ld_suspend, NULL, ld_shutdown))
 		aprint_error_dev(sc->sc_dv,
 		    "couldn't establish power handler\n");
 
@@ -261,6 +262,13 @@ ldenddetach(struct ld_softc *sc)
 			aprint_error_dev(&sc->sc_dv, "unable to flush cache\n");
 #endif
 	mutex_destroy(&sc->sc_mutex);
+}
+
+/* ARGSUSED */
+static bool
+ld_suspend(device_t dev, const pmf_qual_t *qual)
+{
+	return ld_shutdown(dev, 0);
 }
 
 /* ARGSUSED */
