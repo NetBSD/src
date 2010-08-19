@@ -1,4 +1,4 @@
-/* $NetBSD: hdaudio_afg.c,v 1.25 2010/08/15 22:32:02 jmcneill Exp $ */
+/* $NetBSD: hdaudio_afg.c,v 1.26 2010/08/19 18:06:37 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdaudio_afg.c,v 1.25 2010/08/15 22:32:02 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdaudio_afg.c,v 1.26 2010/08/19 18:06:37 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -120,8 +120,8 @@ static const char *hdaudio_afg_mixer_names[] = HDAUDIO_DEVICE_NAMES;
 static const char *hdaudio_afg_port_connectivity[] = {
 	"Jack",
 	"Unconnected",
-	"Fixed Function",
-	"Jack & Fixed Function"
+	"Built-In",
+	"Jack & Built-In"
 };
 static const char *hdaudio_afg_default_device[] = {
 	"Line Out",
@@ -129,7 +129,7 @@ static const char *hdaudio_afg_default_device[] = {
 	"HP Out",
 	"CD",
 	"SPDIF Out",
-	"Digital Other Out",
+	"Digital Out",
 	"Modem Line Side",
 	"Modem Handset Side",
 	"Line In",
@@ -137,7 +137,7 @@ static const char *hdaudio_afg_default_device[] = {
 	"Mic In",
 	"Telephony",
 	"SPDIF In",
-	"Digital Other In",
+	"Digital In",
 	"Reserved",
 	"Other"
 };
@@ -792,7 +792,27 @@ hdaudio_afg_assoc_dump(struct hdaudio_afg_softc *sc)
 			    hdaudio_afg_default_device[curdev]);
 
 			for (curport = 0; curport < 4; curport++) {
+				bool devonport = false;
 				if ((portmask & (1 << curport)) == 0)
+					continue;
+
+				for (j = 0; j < HDAUDIO_MAXPINS; j++) {
+					if (as[i].as_dacs[j] == 0)
+						continue;
+
+					w = hdaudio_afg_widget_lookup(sc,
+					    as[i].as_pins[j]);
+					if (w == NULL)
+						continue;
+					conn = COP_CFG_PORT_CONNECTIVITY(w->w_pin.config);
+					defdev = COP_CFG_DEFAULT_DEVICE(w->w_pin.config);
+					if (conn != curport || defdev != curdev)
+						continue;
+
+					devonport = true;
+				}
+
+				if (devonport == false)
 					continue;
 
 				hda_print1(sc, " [%s",
