@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.123.8.1 2010/04/21 05:26:10 matt Exp $	 */
+/*	$NetBSD: rtld.c,v 1.123.8.2 2010/08/19 15:35:18 matt Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rtld.c,v 1.123.8.1 2010/04/21 05:26:10 matt Exp $");
+__RCSID("$NetBSD: rtld.c,v 1.123.8.2 2010/08/19 15:35:18 matt Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -346,9 +346,13 @@ _rtld(Elf_Addr *sp, Elf_Addr relocbase)
 	sp += 2 + argc;		/* Skip over argc, arguments, and NULL
 				 * terminator */
 	env = (char **) sp;
+#if defined(RTLD_DEBUG)
+	dbg(("env is %p", env));
+#endif
 	while (*sp++ != 0) {	/* Skip over environment, and NULL terminator */
 #if defined(RTLD_DEBUG)
-		dbg(("env[%d] = %p %s", i++, (void *)sp[-1], (char *)sp[-1]));
+		dbg(("env[%d] = %p", i++, (void *)sp[-1]));
+		dbg(("%s", (char *)sp[-1]));
 #endif
 	}
 	aux = (const AuxInfo *) sp;
