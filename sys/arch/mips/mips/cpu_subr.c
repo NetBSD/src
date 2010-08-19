@@ -32,7 +32,7 @@
 #include "opt_multiprocessor.h"
 #include "opt_sa.h"
 
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.1.2.10 2010/08/18 17:01:21 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.1.2.11 2010/08/19 07:20:19 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -504,7 +504,7 @@ cpu_signotify(struct lwp *l)
 {
 	KASSERT(kpreempt_disabled());
 	KASSERT(lwp_locked(l, NULL));
-	KASSERT(l->l_stat == LSONPROC || l->l_stat == LSRUN);
+	KASSERT(l->l_stat == LSONPROC || l->l_stat == LSRUN || l->l_stat == LSSTOP);
 
 	l->l_md.md_astpending = 1; 		/* force call to ast() */
 }
