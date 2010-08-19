@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.280.4.3.4.1 2010/04/21 00:28:16 matt Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.280.4.3.4.2 2010/08/19 07:23:24 matt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.280.4.3.4.1 2010/04/21 00:28:16 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.280.4.3.4.2 2010/08/19 07:23:24 matt Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
@@ -1031,7 +1031,7 @@ execve1(struct lwp *l, const char *path, char * const *args,
 		(*pack.ep_esch->es_setregs)(l, &pack, (u_long) stack);
 
 	/* map the process's signal trampoline code */
-	if (exec_sigcode_map(p, pack.ep_esch->es_emul)) {
+	if ((error = exec_sigcode_map(p, pack.ep_esch->es_emul)) != 0) {
 		DPRINTF(("execve: map sigcode failed %d\n", error));
 		goto exec_abort;
 	}
@@ -1204,8 +1204,10 @@ copyargs(struct lwp *l, struct exec_package *pack, struct ps_strings *arginfo,
 	nullp = NULL;
 	argc = arginfo->ps_nargvstr;
 	envc = arginfo->ps_nenvstr;
-	if ((error = copyout(&argc, cpp++, sizeof(argc))) != 0)
+	if ((error = copyout(&argc, cpp++, sizeof(argc))) != 0) {
+		DPRINTF(("copyargs:%d copyout @%p %zu\n", __LINE__, cpp-1, sizeof(argc)));
 		return error;
+	}
 
 	dp = (char *) (cpp + argc + envc + 2 + pack->ep_esch->es_arglen);
 	sp = argp;
@@ -1213,23 +1215,39 @@ copyargs(struct lwp *l, struct exec_package *pack, struct ps_strings *arginfo,
 	/* XXX don't copy them out, remap them! */
 	arginfo->ps_argvstr = cpp; /* remember location of argv for later */
 
-	for (; --argc >= 0; sp += len, dp += len)
-		if ((error = copyout(&dp, cpp++, sizeof(dp))) != 0 ||
-		    (error = copyoutstr(sp, dp, ARG_MAX, &len)) != 0)
+	for (; --argc >= 0; sp += len, dp += len) {
+		if ((error = copyout(&dp, cpp++, sizeof(dp))) != 0) {
+			DPRINTF(("copyargs:%d copyout @%p %zu\n", __LINE__, cpp-1, sizeof(dp)));
 			return error;
+		}
+		if ((error = copyoutstr(sp, dp, ARG_MAX, &len)) != 0) {
+			DPRINTF(("copyargs:%d copyoutstr @%p %u\n", __LINE__, dp, ARG_MAX));
+			return error;
+		}
+	}
 
-	if ((error = copyout(&nullp, cpp++, sizeof(nullp))) != 0)
+	if ((error = copyout(&nullp, cpp++, sizeof(nullp))) != 0) {
+		DPRINTF(("copyargs:%d copyout @%p %zu\n", __LINE__, cpp-1, sizeof(nullp)));
 		return error;
+	}
 
 	arginfo->ps_envstr = cpp; /* remember location of envp for later */
 
-	for (; --envc >= 0; sp += len, dp += len)
-		if ((error = copyout(&dp, cpp++, sizeof(dp))) != 0 ||
-		    (error = copyoutstr(sp, dp, ARG_MAX, &len)) != 0)
+	for (; --envc >= 0; sp += len, dp += len) {
+		if ((error = copyout(&dp, cpp++, sizeof(dp))) != 0) {
+			DPRINTF(("copyargs:%d copyout @%p %zu\n", __LINE__, cpp-1, sizeof(dp)));
 			return error;
+		}
+		if ((error = copyoutstr(sp, dp, ARG_MAX, &len)) != 0) {
+			DPRINTF(("copyargs:%d copyoutstr @%p %u\n", __LINE__, dp, ARG_MAX));
+			return error;
+		}
+	}
 
-	if ((error = copyout(&nullp, cpp++, sizeof(nullp))) != 0)
+	if ((error = copyout(&nullp, cpp++, sizeof(nullp))) != 0) {
+		DPRINTF(("copyargs:%d copyout @%p %zu\n", __LINE__, cpp-1, sizeof(nullp)));
 		return error;
+	}
 
 	*stackp = (char *)cpp;
 	return 0;
@@ -1665,6 +1683,10 @@ exec_sigcode_map(struct proc *p, const struct emul *e)
 			UVM_MAPFLAG(UVM_PROT_RX, UVM_PROT_RX, UVM_INH_SHARE,
 				    UVM_ADV_RANDOM, 0));
 	if (error) {
+		DPRINTF(("exec_sigcode_map:%d map %p "
+		    "uvm_map %#"PRIxVSIZE"@%#"PRIxVADDR" failed %d\n",
+		    __LINE__, &p->p_vmspace->vm_map, round_page(sz), va,
+		    error));
 		(*uobj->pgops->pgo_detach)(uobj);
 		return (error);
 	}
