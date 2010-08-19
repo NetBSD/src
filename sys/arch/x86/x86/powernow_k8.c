@@ -1,4 +1,4 @@
-/*	$NetBSD: powernow_k8.c,v 1.26 2009/10/05 23:59:31 rmind Exp $ */
+/*	$NetBSD: powernow_k8.c,v 1.27 2010/08/19 04:12:45 jruoho Exp $ */
 /*	$OpenBSD: powernow-k8.c,v 1.8 2006/06/16 05:58:50 gwk Exp $ */
 
 /*-
@@ -59,7 +59,7 @@
 /* AMD POWERNOW K8 driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: powernow_k8.c,v 1.26 2009/10/05 23:59:31 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: powernow_k8.c,v 1.27 2010/08/19 04:12:45 jruoho Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -70,6 +70,7 @@ __KERNEL_RCSID(0, "$NetBSD: powernow_k8.c,v 1.26 2009/10/05 23:59:31 rmind Exp $
 #include <sys/xcall.h>
 
 #include <x86/cpu_msr.h>
+#include <x86/cpuvar.h>
 #include <x86/powernow.h>
 
 #include <dev/isa/isareg.h>
@@ -78,13 +79,6 @@ __KERNEL_RCSID(0, "$NetBSD: powernow_k8.c,v 1.26 2009/10/05 23:59:31 rmind Exp $
 #include <machine/cpu.h>
 #include <machine/cpufunc.h>
 #include <machine/bus.h>
-
-#ifdef _MODULE
-static struct sysctllog *sysctllog;
-#define SYSCTLLOG	&sysctllog
-#else
-#define SYSCTLLOG	NULL
-#endif
 
 static struct powernow_cpu_state *k8pnow_current_state;
 static unsigned int cur_freq;
@@ -98,7 +92,6 @@ static int k8pnow_states(struct powernow_cpu_state *, uint32_t, unsigned int,
     unsigned int);
 static int k8_powernow_setperf(unsigned int);
 static int k8_powernow_init_once(void);
-static void k8_powernow_init_main(void);
 
 static uint64_t
 k8pnow_wr_fidvid(u_int fid, uint64_t vid, uint64_t ctrl)
@@ -341,7 +334,7 @@ k8pnow_states(struct powernow_cpu_state *cstate, uint32_t cpusig,
 static int
 k8_powernow_init_once(void)
 {
-	k8_powernow_init_main();
+	k8_powernow_init_main(0);
 	return 0;
 }
 
@@ -357,8 +350,8 @@ k8_powernow_init(void)
 	}
 }
 
-static void
-k8_powernow_init_main(void)
+void
+k8_powernow_init_main(int vendor)
 {
 	uint64_t status;
 	uint32_t maxfid, maxvid, i;
@@ -425,29 +418,34 @@ k8_powernow_init_main(void)
 		goto err;
 	}
 
+	if (cpu_freq_sysctllog != NULL)
+		goto err;
+
+	cpu_freq_init = k8_powernow_init_main;
+
 	/* Create sysctl machdep.powernow.frequency. */
-	if (sysctl_createv(SYSCTLLOG, 0, NULL, &node,
+	if (sysctl_createv(&cpu_freq_sysctllog, 0, NULL, &node,
 	    CTLFLAG_PERMANENT,
 	    CTLTYPE_NODE, "machdep", NULL,
 	    NULL, 0, NULL, 0,
 	    CTL_MACHDEP, CTL_EOL) != 0)
 		goto err;
 
-	if (sysctl_createv(SYSCTLLOG, 0, &node, &pnownode,
+	if (sysctl_createv(&cpu_freq_sysctllog, 0, &node, &pnownode,
 	    0,
 	    CTLTYPE_NODE, "powernow", NULL,
 	    NULL, 0, NULL, 0,
 	    CTL_CREATE, CTL_EOL) != 0)
 		goto err;
 
-	if (sysctl_createv(SYSCTLLOG, 0, &pnownode, &freqnode,
+	if (sysctl_createv(&cpu_freq_sysctllog, 0, &pnownode, &freqnode,
 	    0,
 	    CTLTYPE_NODE, "frequency", NULL,
 	    NULL, 0, NULL, 0,
 	    CTL_CREATE, CTL_EOL) != 0)
 		goto err;
 
-	if (sysctl_createv(SYSCTLLOG, 0, &freqnode, &node,
+	if (sysctl_createv(&cpu_freq_sysctllog, 0, &freqnode, &node,
 	    CTLFLAG_READWRITE,
 	    CTLTYPE_INT, "target", NULL,
 	    k8pnow_sysctl_helper, 0, NULL, 0,
@@ -456,7 +454,7 @@ k8_powernow_init_main(void)
 
 	powernow_node_target = node->sysctl_num;
 
-	if (sysctl_createv(SYSCTLLOG, 0, &freqnode, &node,
+	if (sysctl_createv(&cpu_freq_sysctllog, 0, &freqnode, &node,
 	    0,
 	    CTLTYPE_INT, "current", NULL,
 	    k8pnow_sysctl_helper, 0, NULL, 0,
@@ -465,7 +463,7 @@ k8_powernow_init_main(void)
 
 	powernow_node_current = node->sysctl_num;
 
-	if (sysctl_createv(SYSCTLLOG, 0, &freqnode, &node,
+	if (sysctl_createv(&cpu_freq_sysctllog, 0, &freqnode, &node,
 	    0,
 	    CTLTYPE_STRING, "available", NULL,
 	    NULL, 0, freq_names, freq_names_len,
@@ -481,18 +479,26 @@ k8_powernow_init_main(void)
 
 	return;
 
-  err:
+err:
 	if (cstate)
 		free(cstate, M_DEVBUF);
+
 	if (freq_names)
 		free(freq_names, M_SYSCTLDATA);
+
+	if (cpu_freq_sysctllog) {
+		sysctl_teardown(&cpu_freq_sysctllog);
+		cpu_freq_sysctllog = NULL;
+	}
+
+	cpu_freq_init = NULL;
 }
 
 void
 k8_powernow_destroy(void)
 {
 #ifdef _MODULE
-	sysctl_teardown(SYSCTLLOG);
+	sysctl_teardown(&cpu_freq_sysctllog);
 
 	if (k8pnow_current_state)
 		free(k8pnow_current_state, M_DEVBUF);
