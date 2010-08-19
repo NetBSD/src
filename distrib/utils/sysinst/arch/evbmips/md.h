@@ -1,4 +1,4 @@
-/* $NetBSD: md.h,v 1.2 2007/11/12 15:07:35 jmmv Exp $ */
+/* $NetBSD: md.h,v 1.2.22.1 2010/08/19 15:37:27 matt Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -50,13 +50,30 @@
  *  Default filesets to fetch and install during installation or upgrade.
  *  The standard sets are: base etc comp games man misc tests text
  */
+
+#if defined(ARCH_mipsel) || defined(ARCH_mipseb)
+#error
 #define SET_KERNEL_1_NAME	"kern-ALCHEMY"
 #define SET_KERNEL_2_NAME	"kern-AR531X"
 #define SET_KERNEL_3_NAME	"kern-DBAU1500"
 #define SET_KERNEL_4_NAME	"kern-DBAU1550"
-#define SET_KERNEL_5_NAME       "kern-MALTA"
-#define SET_KERNEL_6_NAME       "kern-MTX-1"
-#define SET_KERNEL_7_NAME       "kern-OMSAL400"
+#define SET_KERNEL_5_NAME	"kern-MALTA"
+#endif
+#if defined(ARCH_mipsel)
+#error
+#define SET_KERNEL_6_NAME	"kern-MTX-1"
+#define SET_KERNEL_7_NAME	"kern-OMSAL400"
+#endif
+
+#if defined(ARCH_mips64eb) || defined(ARCH_mips64el)
+#define SET_KERNEL_4_NAME	"kern-MALTA32"
+#define SET_KERNEL_3_NAME	"kern-MALTA64"
+#define SET_KERNEL_2_NAME	"kern-XLSATX32"
+#define SET_KERNEL_1_NAME	"kern-XLSATX64"
+#endif
+
+#undef evbmips
+#undef evbmips64
 
 #define MD_SETS_SELECTED	SET_SYSTEM
 
