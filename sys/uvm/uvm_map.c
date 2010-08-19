@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.263.4.3.4.2 2010/08/18 18:19:11 matt Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.263.4.3.4.3 2010/08/19 07:30:31 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.263.4.3.4.2 2010/08/18 18:19:11 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.263.4.3.4.3 2010/08/19 07:30:31 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -4139,7 +4139,7 @@ uvmspace_exec(struct lwp *l, vaddr_t start, vaddr_t end)
 	/* XXX cgd 960926: the sparc #ifdef should be a MD hook */
 	kill_user_windows(l);   /* before stack addresses go away */
 #endif
-#if defined(__mips__) && defined(_LP64)
+#ifdef __HAVE_CPU_VMSPACE_EXEC
 	cpu_vmspace_exec(l, start, end);
 #endif
 
