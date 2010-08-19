@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu.c,v 1.19 2010/08/17 10:17:52 jruoho Exp $ */
+/* $NetBSD: acpi_cpu.c,v 1.20 2010/08/19 05:09:53 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu.c,v 1.19 2010/08/17 10:17:52 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu.c,v 1.20 2010/08/19 05:09:53 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -51,6 +51,7 @@ static void		  acpicpu_attach(device_t, device_t, void *);
 static int		  acpicpu_detach(device_t, int);
 static int		  acpicpu_once_attach(void);
 static int		  acpicpu_once_detach(void);
+static void		  acpicpu_prestart(device_t);
 static void		  acpicpu_start(device_t);
 
 static int		  acpicpu_object(ACPI_HANDLE, struct acpicpu_object *);
@@ -159,7 +160,7 @@ acpicpu_attach(device_t parent, device_t self, void *aux)
 	acpicpu_pstate_attach(self);
 	acpicpu_tstate_attach(self);
 
-	(void)config_defer(self, acpicpu_start);
+	(void)config_defer(self, acpicpu_prestart);
 	(void)acpi_register_notify(sc->sc_node, acpicpu_notify);
 	(void)pmf_device_register(self, acpicpu_suspend, acpicpu_resume);
 }
@@ -235,7 +236,7 @@ acpicpu_once_detach(void)
 }
 
 static void
-acpicpu_start(device_t self)
+acpicpu_prestart(device_t self)
 {
 	struct acpicpu_softc *sc = device_private(self);
 	static bool once = false;
@@ -245,10 +246,21 @@ acpicpu_start(device_t self)
 		return;
 	}
 
+	once = true;
+
+	(void)config_interrupts(self, acpicpu_start);
+}
+
+static void
+acpicpu_start(device_t self)
+{
+	struct acpicpu_softc *sc = device_private(self);
+
 	/*
 	 * Run the state-specific initialization
 	 * routines. These should be called only
-	 * once, after all ACPI CPUs have attached.
+	 * once, after interrupts are enabled and
+	 * all ACPI CPUs have attached.
 	 */
 	if ((sc->sc_flags & ACPICPU_FLAG_C) != 0)
 		acpicpu_cstate_start(self);
@@ -262,7 +274,6 @@ acpicpu_start(device_t self)
 	aprint_debug_dev(sc->sc_dev, "ACPI CPUs started (cap "
 	    "0x%02x, flags 0x%06x)\n", sc->sc_cap, sc->sc_flags);
 
-	once = true;
 	sc->sc_cold = false;
 }
 
