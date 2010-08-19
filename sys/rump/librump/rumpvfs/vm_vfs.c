@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_vfs.c,v 1.16 2010/06/02 12:07:03 pooka Exp $	*/
+/*	$NetBSD: vm_vfs.c,v 1.17 2010/08/19 02:07:11 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_vfs.c,v 1.16 2010/06/02 12:07:03 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_vfs.c,v 1.17 2010/08/19 02:07:11 pooka Exp $");
 
 #include <sys/param.h>
 
@@ -89,6 +89,8 @@ uvm_aio_biodone(struct buf *bp)
  * UBC
  */
 
+#define PAGERFLAGS (PGO_SYNCIO | PGO_NOBLOCKALLOC | PGO_NOTIMESTAMP)
+
 void
 uvm_vnp_zerorange(struct vnode *vp, off_t off, size_t len)
 {
@@ -106,7 +108,7 @@ uvm_vnp_zerorange(struct vnode *vp, off_t off, size_t len)
 		memset(pgs, 0, npages * sizeof(struct vm_page *));
 		mutex_enter(&uobj->vmobjlock);
 		rv = uobj->pgops->pgo_get(uobj, off, pgs, &npages, 0, 
-		    VM_PROT_READ | VM_PROT_WRITE, 0, PGO_SYNCIO);
+		    VM_PROT_READ | VM_PROT_WRITE, 0, PAGERFLAGS | PGO_PASTEOF);
 		KASSERT(npages > 0);
 
 		for (i = 0; i < npages; i++) {
@@ -147,7 +149,7 @@ ubc_uiomove(struct uvm_object *uobj, struct uio *uio, vsize_t todo,
 	pgalloc = npages * sizeof(pgs);
 	pgs = kmem_zalloc(pgalloc, KM_SLEEP);
 
-	pagerflags = PGO_SYNCIO | PGO_NOBLOCKALLOC | PGO_NOTIMESTAMP;
+	pagerflags = PAGERFLAGS;
 	if (flags & UBC_WRITE)
 		pagerflags |= PGO_PASTEOF;
 	if (flags & UBC_FAULTBUSY)
