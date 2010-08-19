@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_md.c,v 1.16 2010/08/19 11:08:33 jmcneill Exp $ */
+/* $NetBSD: acpi_cpu_md.c,v 1.17 2010/08/19 18:30:24 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.16 2010/08/19 11:08:33 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.17 2010/08/19 18:30:24 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -47,6 +47,14 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.16 2010/08/19 11:08:33 jmcneill Ex
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
+
+#define MSR_0FH_CONTROL		0xc0010041 /* Family 0Fh (and K7).  */
+#define MSR_0FH_STATUS		0xc0010042
+
+#define MSR_10H_LIMIT		0xc0010061 /* Families 10h and 11h. */
+#define MSR_10H_CONTROL		0xc0010062
+#define MSR_10H_STATUS		0xc0010063
+#define MSR_10H_CONFIG		0xc0010064
 
 static char	  native_idle_text[16];
 void		(*native_idle)(void) = NULL;
@@ -68,13 +76,9 @@ acpicpu_md_cap(void)
 	struct cpu_info *ci = curcpu();
 	uint32_t val = 0;
 
-	switch (cpu_vendor) {
-	case CPUVENDOR_INTEL:
-	case CPUVENDOR_IDT:
-		break;
-	default:
+	if (cpu_vendor != CPUVENDOR_IDT &&
+	    cpu_vendor != CPUVENDOR_INTEL)
 		return val;
-	}
 
 	/*
 	 * Basic SMP C-states (required for _CST).
@@ -115,8 +119,9 @@ acpicpu_md_quirks(void)
 
 	switch (cpu_vendor) {
 
-	case CPUVENDOR_INTEL:
 	case CPUVENDOR_IDT:
+	case CPUVENDOR_INTEL:
+
 		if ((ci->ci_feat_val[1] & CPUID2_EST) != 0)
 			val |= ACPICPU_FLAG_P_FFH;
 
@@ -124,27 +129,19 @@ acpicpu_md_quirks(void)
 			val |= ACPICPU_FLAG_T_FFH;
 
 		val |= ACPICPU_FLAG_C_BM | ACPICPU_FLAG_C_ARB;
-
-		/*
-		 * Bus master arbitration is not
-		 * needed on some recent Intel CPUs.
-		 */
-		if (cpu_vendor == CPUVENDOR_INTEL &&
-		    CPUID2FAMILY(ci->ci_signature) > 15)
-			val &= ~ACPICPU_FLAG_C_ARB;
-
-		if (cpu_vendor == CPUVENDOR_INTEL &&
-		    CPUID2FAMILY(ci->ci_signature) == 6 &&
-		    CPUID2MODEL(ci->ci_signature) >= 15)
-			val &= ~ACPICPU_FLAG_C_ARB;
-
 		break;
 
 	case CPUVENDOR_AMD:
 
-		/*
-		 * XXX: Deal with (non-XPSS) PowerNow! and C1E.
-		 */
+		switch (CPUID2FAMILY(ci->ci_signature)) {
+
+		case 0x10:
+		case 0x11:
+
+			if ((ci->ci_feat_val[2] & CPUID_APM_HWP) != 0)
+				val |= ACPICPU_FLAG_P_FFH;
+		}
+
 		break;
 	}
 
@@ -463,14 +460,15 @@ int
 acpicpu_md_pstate_pss(struct acpicpu_softc *sc)
 {
 	struct acpicpu_pstate *ps, msr;
+	struct cpu_info *ci = curcpu();
 	uint32_t i = 0;
 
 	(void)memset(&msr, 0, sizeof(struct acpicpu_pstate));
 
 	switch (cpu_vendor) {
 
-	case CPUVENDOR_INTEL:
 	case CPUVENDOR_IDT:
+	case CPUVENDOR_INTEL:
 		msr.ps_control_addr = MSR_PERF_CTL;
 		msr.ps_control_mask = __BITS(0, 15);
 
@@ -480,8 +478,22 @@ acpicpu_md_pstate_pss(struct acpicpu_softc *sc)
 
 	case CPUVENDOR_AMD:
 
-		if ((sc->sc_flags & ACPICPU_FLAG_P_XPSS) == 0)
-			return EOPNOTSUPP;
+		switch (CPUID2FAMILY(ci->ci_signature)) {
+
+		case 0x10:
+		case 0x11:
+			msr.ps_control_addr = MSR_10H_CONTROL;
+			msr.ps_control_mask = __BITS(0, 2);
+
+			msr.ps_status_addr  = MSR_10H_STATUS;
+			msr.ps_status_mask  = __BITS(0, 2);
+			break;
+
+		default:
+
+			if ((sc->sc_flags & ACPICPU_FLAG_P_XPSS) == 0)
+				return EOPNOTSUPP;
+		}
 
 		break;
 
@@ -527,7 +539,7 @@ acpicpu_md_pstate_get(struct acpicpu_softc *sc, uint32_t *freq)
 	}
 
 	if (__predict_false(ps == NULL))
-		return EINVAL;
+		return ENODEV;
 
 	if (ps->ps_status_addr == 0)
 		return EINVAL;
@@ -611,10 +623,6 @@ acpicpu_md_tstate_get(struct acpicpu_softc *sc, uint32_t *percent)
 	uint64_t val;
 	uint32_t i;
 
-	if (cpu_vendor != CPUVENDOR_INTEL &&
-	    cpu_vendor != CPUVENDOR_IDT)
-		return ENODEV;
-
 	val = rdmsr(MSR_THERM_CONTROL);
 
 	for (i = 0; i < sc->sc_tstate_count; i++) {
@@ -639,10 +647,6 @@ acpicpu_md_tstate_set(struct acpicpu_tstate *ts)
 	struct msr_rw_info msr;
 	uint64_t xc;
 	int rv = 0;
-
-	if (cpu_vendor != CPUVENDOR_INTEL &&
-	    cpu_vendor != CPUVENDOR_IDT)
-		return ENODEV;
 
 	msr.msr_read  = true;
 	msr.msr_type  = MSR_THERM_CONTROL;
