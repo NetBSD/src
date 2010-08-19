@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.43.36.15 2010/02/28 23:45:07 matt Exp $	*/
+/*	$NetBSD: types.h,v 1.43.36.16 2010/08/19 07:30:31 matt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -144,6 +144,9 @@ typedef	volatile int		__cpu_simple_lock_t;
 
 #if defined(_KERNEL)
 #define	__HAVE_RAS
+#if defined(_LP64)
+#define __HAVE_CPU_VMSPACE_EXEC
 #endif
+#endif /* _KERNEL */
 
 #endif	/* _MACHTYPES_H_ */
