@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.136 2010/08/17 11:47:27 pooka Exp $
+# $NetBSD: mi,v 1.137 2010/08/19 02:37:04 pooka Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -228,6 +228,7 @@
 ./usr/libdata/debug/usr/tests/fs/union/t_pr.debug			tests-fs-debug		debug,atf
 ./usr/libdata/debug/usr/tests/fs/vfs					tests-fs-debug
 ./usr/libdata/debug/usr/tests/fs/vfs/t_full.debug			tests-fs-debug		debug,atf
+./usr/libdata/debug/usr/tests/fs/vfs/t_io.debug			tests-fs-debug		debug,atf
 ./usr/libdata/debug/usr/tests/fs/vfs/t_renamerace.debug			tests-fs-debug		debug,atf
 ./usr/libdata/debug/usr/tests/fs/vfs/t_rmdirrace.debug			tests-fs-debug		debug,atf
 ./usr/libdata/debug/usr/tests/fs/vfs/t_vfsops.debug			tests-fs-debug		debug,atf
@@ -1036,6 +1037,7 @@
 ./usr/tests/fs/vfs				tests-fs-tests
 ./usr/tests/fs/vfs/Atffile			tests-fs-tests		atf
 ./usr/tests/fs/vfs/t_full			tests-fs-tests		atf
+./usr/tests/fs/vfs/t_io			tests-fs-tests		atf
 ./usr/tests/fs/vfs/t_renamerace			tests-fs-tests		atf
 ./usr/tests/fs/vfs/t_rmdirrace			tests-fs-tests		atf
 ./usr/tests/fs/vfs/t_vfsops			tests-fs-tests		atf
