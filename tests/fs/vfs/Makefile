@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2010/08/17 11:46:16 pooka Exp $
+#	$NetBSD: Makefile,v 1.11 2010/08/19 02:36:02 pooka Exp $
 #
 
 .include <bsd.own.mk>
@@ -7,6 +7,7 @@ TESTSDIR=	${TESTSBASE}/fs/vfs
 WARNS=		4
 
 TESTS_C+=	t_full
+TESTS_C+=	t_io
 TESTS_C+=	t_renamerace
 TESTS_C+=	t_rmdirrace
 TESTS_C+=	t_vfsops
