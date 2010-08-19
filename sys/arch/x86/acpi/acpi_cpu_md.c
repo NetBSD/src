@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_md.c,v 1.15 2010/08/18 18:32:20 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_md.c,v 1.16 2010/08/19 11:08:33 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.15 2010/08/18 18:32:20 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.16 2010/08/19 11:08:33 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -68,8 +68,13 @@ acpicpu_md_cap(void)
 	struct cpu_info *ci = curcpu();
 	uint32_t val = 0;
 
-	if (cpu_vendor != CPUVENDOR_INTEL)
+	switch (cpu_vendor) {
+	case CPUVENDOR_INTEL:
+	case CPUVENDOR_IDT:
+		break;
+	default:
 		return val;
+	}
 
 	/*
 	 * Basic SMP C-states (required for _CST).
@@ -111,7 +116,7 @@ acpicpu_md_quirks(void)
 	switch (cpu_vendor) {
 
 	case CPUVENDOR_INTEL:
-
+	case CPUVENDOR_IDT:
 		if ((ci->ci_feat_val[1] & CPUID2_EST) != 0)
 			val |= ACPICPU_FLAG_P_FFH;
 
@@ -124,10 +129,12 @@ acpicpu_md_quirks(void)
 		 * Bus master arbitration is not
 		 * needed on some recent Intel CPUs.
 		 */
-		if (CPUID2FAMILY(ci->ci_signature) > 15)
+		if (cpu_vendor == CPUVENDOR_INTEL &&
+		    CPUID2FAMILY(ci->ci_signature) > 15)
 			val &= ~ACPICPU_FLAG_C_ARB;
 
-		if (CPUID2FAMILY(ci->ci_signature) == 6 &&
+		if (cpu_vendor == CPUVENDOR_INTEL &&
+		    CPUID2FAMILY(ci->ci_signature) == 6 &&
 		    CPUID2MODEL(ci->ci_signature) >= 15)
 			val &= ~ACPICPU_FLAG_C_ARB;
 
@@ -251,6 +258,7 @@ acpicpu_md_pstate_start(void)
 	switch (cpu_vendor) {
 
 	case CPUVENDOR_INTEL:
+	case CPUVENDOR_IDT:
 		str = "est";
 		break;
 
@@ -462,6 +470,7 @@ acpicpu_md_pstate_pss(struct acpicpu_softc *sc)
 	switch (cpu_vendor) {
 
 	case CPUVENDOR_INTEL:
+	case CPUVENDOR_IDT:
 		msr.ps_control_addr = MSR_PERF_CTL;
 		msr.ps_control_mask = __BITS(0, 15);
 
@@ -602,7 +611,8 @@ acpicpu_md_tstate_get(struct acpicpu_softc *sc, uint32_t *percent)
 	uint64_t val;
 	uint32_t i;
 
-	if (cpu_vendor != CPUVENDOR_INTEL)
+	if (cpu_vendor != CPUVENDOR_INTEL &&
+	    cpu_vendor != CPUVENDOR_IDT)
 		return ENODEV;
 
 	val = rdmsr(MSR_THERM_CONTROL);
@@ -630,7 +640,8 @@ acpicpu_md_tstate_set(struct acpicpu_tstate *ts)
 	uint64_t xc;
 	int rv = 0;
 
-	if (cpu_vendor != CPUVENDOR_INTEL)
+	if (cpu_vendor != CPUVENDOR_INTEL &&
+	    cpu_vendor != CPUVENDOR_IDT)
 		return ENODEV;
 
 	msr.msr_read  = true;
