@@ -1,4 +1,4 @@
-/*	$NetBSD: xmd.c,v 1.1.2.1 2010/08/19 12:36:58 uebayasi Exp $	*/
+/*	$NetBSD: xmd.c,v 1.1.2.2 2010/08/20 07:03:23 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2010 Tsubai Masanari.  All rights reserved.
@@ -79,7 +79,7 @@ struct bdevsw xmd_bdevsw = {
 
 struct cdevsw xmd_cdevsw = {
 	nullopen, nullclose, nullread, nowrite, xmd_ioctl,
-	nostop, notty, nopoll, xmd_mmap, nokqfilter
+	nostop, notty, nopoll, xmd_mmap, nokqfilter, D_DISK | D_MPSAFE
 };
 
 extern struct cfdriver xmd_cd;

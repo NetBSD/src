@@ -1,4 +1,4 @@
-/*	$Id: flash.c,v 1.1.2.12 2010/08/11 13:24:47 uebayasi Exp $	*/
+/*	$Id: flash.c,v 1.1.2.13 2010/08/20 07:03:23 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2010 Tsubai Masanari.  All rights reserved.
@@ -53,7 +53,7 @@ struct bdevsw flash_bdevsw = {
 
 struct cdevsw flash_cdevsw = {
 	nullopen, nullclose, nullread, nowrite, flash_ioctl,
-	nostop, notty, nopoll, flash_mmap, nokqfilter
+	nostop, notty, nopoll, flash_mmap, nokqfilter, D_DISK | D_MPSAFE
 };
 
 static int
