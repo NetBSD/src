@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_md.c,v 1.18 2010/08/19 21:40:45 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_md.c,v 1.19 2010/08/20 06:34:32 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.18 2010/08/19 21:40:45 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.19 2010/08/20 06:34:32 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -58,17 +58,18 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.18 2010/08/19 21:40:45 jruoho Exp 
 
 static char	  native_idle_text[16];
 void		(*native_idle)(void) = NULL;
-void		(*native_cpu_freq_init)(int) = NULL;
 
 static int	 acpicpu_md_quirks_piix4(struct pci_attach_args *);
+static void	 acpicpu_md_pstate_status(void *, void *);
+static void	 acpicpu_md_tstate_status(void *, void *);
+static int	 acpicpu_md_pstate_sysctl_init(void);
 static int	 acpicpu_md_pstate_sysctl_get(SYSCTLFN_PROTO);
 static int	 acpicpu_md_pstate_sysctl_set(SYSCTLFN_PROTO);
 static int	 acpicpu_md_pstate_sysctl_all(SYSCTLFN_PROTO);
-static void	 acpicpu_md_pstate_status(void *, void *);
-static void	 acpicpu_md_tstate_status(void *, void *);
 
 extern uint32_t cpus_running;
 extern struct acpicpu_softc **acpicpu_sc;
+static struct sysctllog *acpicpu_log = NULL;
 
 uint32_t
 acpicpu_md_cap(void)
@@ -253,210 +254,16 @@ acpicpu_md_idle_enter(int method, int state)
 int
 acpicpu_md_pstate_start(void)
 {
-	const struct sysctlnode	*fnode, *mnode, *rnode;
-	const char *str;
-	int rv;
 
-	switch (cpu_vendor) {
-
-	case CPUVENDOR_INTEL:
-	case CPUVENDOR_IDT:
-		str = "est";
-		break;
-
-	case CPUVENDOR_AMD:
-		str = "powernow";
-		break;
-
-	default:
-		return ENODEV;
-	}
-
-	/*
-	 * A kludge for backwards compatibility.
-	 */
-	native_cpu_freq_init = cpu_freq_init;
-
-	if (cpu_freq_sysctllog != NULL) {
-		sysctl_teardown(&cpu_freq_sysctllog);
-		cpu_freq_sysctllog = NULL;
-	}
-
-	rv = sysctl_createv(&cpu_freq_sysctllog, 0, NULL, &rnode,
-	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "machdep", NULL,
-	    NULL, 0, NULL, 0, CTL_MACHDEP, CTL_EOL);
-
-	if (rv != 0)
-		goto fail;
-
-	rv = sysctl_createv(&cpu_freq_sysctllog, 0, &rnode, &mnode,
-	    0, CTLTYPE_NODE, str, NULL,
-	    NULL, 0, NULL, 0, CTL_CREATE, CTL_EOL);
-
-	if (rv != 0)
-		goto fail;
-
-	rv = sysctl_createv(&cpu_freq_sysctllog, 0, &mnode, &fnode,
-	    0, CTLTYPE_NODE, "frequency", NULL,
-	    NULL, 0, NULL, 0, CTL_CREATE, CTL_EOL);
-
-	if (rv != 0)
-		goto fail;
-
-	rv = sysctl_createv(&cpu_freq_sysctllog, 0, &fnode, &rnode,
-	    CTLFLAG_READWRITE, CTLTYPE_INT, "target", NULL,
-	    acpicpu_md_pstate_sysctl_set, 0, NULL, 0, CTL_CREATE, CTL_EOL);
-
-	if (rv != 0)
-		goto fail;
-
-	rv = sysctl_createv(&cpu_freq_sysctllog, 0, &fnode, &rnode,
-	    CTLFLAG_READONLY, CTLTYPE_INT, "current", NULL,
-	    acpicpu_md_pstate_sysctl_get, 0, NULL, 0, CTL_CREATE, CTL_EOL);
-
-	if (rv != 0)
-		goto fail;
-
-	rv = sysctl_createv(&cpu_freq_sysctllog, 0, &fnode, &rnode,
-	    CTLFLAG_READONLY, CTLTYPE_STRING, "available", NULL,
-	    acpicpu_md_pstate_sysctl_all, 0, NULL, 0, CTL_CREATE, CTL_EOL);
-
-	if (rv != 0)
-		goto fail;
-
-	return 0;
-
-fail:
-	if (cpu_freq_sysctllog != NULL) {
-		sysctl_teardown(&cpu_freq_sysctllog);
-		cpu_freq_sysctllog = NULL;
-	}
-
-	if (native_cpu_freq_init != NULL)
-		(*native_cpu_freq_init)(cpu_vendor);
-
-	return rv;
+	return acpicpu_md_pstate_sysctl_init();
 }
 
 int
 acpicpu_md_pstate_stop(void)
 {
 
-	if (cpu_freq_sysctllog != NULL) {
-		sysctl_teardown(&cpu_freq_sysctllog);
-		cpu_freq_sysctllog = NULL;
-	}
-
-	if (native_cpu_freq_init != NULL)
-		(*native_cpu_freq_init)(cpu_vendor);
-
-	return 0;
-}
-
-static int
-acpicpu_md_pstate_sysctl_get(SYSCTLFN_ARGS)
-{
-	struct cpu_info *ci = curcpu();
-	struct acpicpu_softc *sc;
-	struct sysctlnode node;
-	uint32_t freq;
-	int err;
-
-	sc = acpicpu_sc[ci->ci_acpiid];
-
-	if (sc == NULL)
-		return ENXIO;
-
-	err = acpicpu_pstate_get(sc, &freq);
-
-	if (err != 0)
-		return err;
-
-	node = *rnode;
-	node.sysctl_data = &freq;
-
-	err = sysctl_lookup(SYSCTLFN_CALL(&node));
-
-	if (err != 0 || newp == NULL)
-		return err;
-
-	return 0;
-}
-
-static int
-acpicpu_md_pstate_sysctl_set(SYSCTLFN_ARGS)
-{
-	struct cpu_info *ci = curcpu();
-	struct acpicpu_softc *sc;
-	struct sysctlnode node;
-	uint32_t freq;
-	int err;
-
-	sc = acpicpu_sc[ci->ci_acpiid];
-
-	if (sc == NULL)
-		return ENXIO;
-
-	err = acpicpu_pstate_get(sc, &freq);
-
-	if (err != 0)
-		return err;
-
-	node = *rnode;
-	node.sysctl_data = &freq;
-
-	err = sysctl_lookup(SYSCTLFN_CALL(&node));
-
-	if (err != 0 || newp == NULL)
-		return err;
-
-	err = acpicpu_pstate_set(sc, freq);
-
-	if (err != 0)
-		return err;
-
-	return 0;
-}
-
-static int
-acpicpu_md_pstate_sysctl_all(SYSCTLFN_ARGS)
-{
-	struct cpu_info *ci = curcpu();
-	struct acpicpu_softc *sc;
-	struct sysctlnode node;
-	char buf[1024];
-	size_t len;
-	uint32_t i;
-	int err;
-
-	sc = acpicpu_sc[ci->ci_acpiid];
-
-	if (sc == NULL)
-		return ENXIO;
-
-	(void)memset(&buf, 0, sizeof(buf));
-
-	mutex_enter(&sc->sc_mtx);
-
-	for (len = 0, i = sc->sc_pstate_max; i < sc->sc_pstate_count; i++) {
-
-		if (sc->sc_pstate[i].ps_freq == 0)
-			continue;
-
-		len += snprintf(buf + len, sizeof(buf) - len, "%u%s",
-		    sc->sc_pstate[i].ps_freq,
-		    i < (sc->sc_pstate_count - 1) ? " " : "");
-	}
-
-	mutex_exit(&sc->sc_mtx);
-
-	node = *rnode;
-	node.sysctl_data = buf;
-
-	err = sysctl_lookup(SYSCTLFN_CALL(&node));
-
-	if (err != 0 || newp == NULL)
-		return err;
+	if (acpicpu_log != NULL)
+		sysctl_teardown(&acpicpu_log);
 
 	return 0;
 }
@@ -694,3 +501,191 @@ acpicpu_md_tstate_status(void *arg1, void *arg2)
 
 	*(uintptr_t *)arg2 = EAGAIN;
 }
+
+/*
+ * A kludge for backwards compatibility.
+ */
+static int
+acpicpu_md_pstate_sysctl_init(void)
+{
+	const struct sysctlnode	*fnode, *mnode, *rnode;
+	const char *str;
+	int rv;
+
+	switch (cpu_vendor) {
+
+	case CPUVENDOR_IDT:
+	case CPUVENDOR_INTEL:
+		str = "est";
+		break;
+
+	case CPUVENDOR_AMD:
+		str = "powernow";
+		break;
+
+	default:
+		return ENODEV;
+	}
+
+
+	rv = sysctl_createv(&acpicpu_log, 0, NULL, &rnode,
+	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "machdep", NULL,
+	    NULL, 0, NULL, 0, CTL_MACHDEP, CTL_EOL);
+
+	if (rv != 0)
+		goto fail;
+
+	rv = sysctl_createv(&acpicpu_log, 0, &rnode, &mnode,
+	    0, CTLTYPE_NODE, str, NULL,
+	    NULL, 0, NULL, 0, CTL_CREATE, CTL_EOL);
+
+	if (rv != 0)
+		goto fail;
+
+	rv = sysctl_createv(&acpicpu_log, 0, &mnode, &fnode,
+	    0, CTLTYPE_NODE, "frequency", NULL,
+	    NULL, 0, NULL, 0, CTL_CREATE, CTL_EOL);
+
+	if (rv != 0)
+		goto fail;
+
+	rv = sysctl_createv(&acpicpu_log, 0, &fnode, &rnode,
+	    CTLFLAG_READWRITE, CTLTYPE_INT, "target", NULL,
+	    acpicpu_md_pstate_sysctl_set, 0, NULL, 0, CTL_CREATE, CTL_EOL);
+
+	if (rv != 0)
+		goto fail;
+
+	rv = sysctl_createv(&acpicpu_log, 0, &fnode, &rnode,
+	    CTLFLAG_READONLY, CTLTYPE_INT, "current", NULL,
+	    acpicpu_md_pstate_sysctl_get, 0, NULL, 0, CTL_CREATE, CTL_EOL);
+
+	if (rv != 0)
+		goto fail;
+
+	rv = sysctl_createv(&acpicpu_log, 0, &fnode, &rnode,
+	    CTLFLAG_READONLY, CTLTYPE_STRING, "available", NULL,
+	    acpicpu_md_pstate_sysctl_all, 0, NULL, 0, CTL_CREATE, CTL_EOL);
+
+	if (rv != 0)
+		goto fail;
+
+	return 0;
+
+fail:
+	if (acpicpu_log != NULL) {
+		sysctl_teardown(&acpicpu_log);
+		acpicpu_log = NULL;
+	}
+
+	return rv;
+}
+
+static int
+acpicpu_md_pstate_sysctl_get(SYSCTLFN_ARGS)
+{
+	struct cpu_info *ci = curcpu();
+	struct acpicpu_softc *sc;
+	struct sysctlnode node;
+	uint32_t freq;
+	int err;
+
+	sc = acpicpu_sc[ci->ci_acpiid];
+
+	if (sc == NULL)
+		return ENXIO;
+
+	err = acpicpu_pstate_get(sc, &freq);
+
+	if (err != 0)
+		return err;
+
+	node = *rnode;
+	node.sysctl_data = &freq;
+
+	err = sysctl_lookup(SYSCTLFN_CALL(&node));
+
+	if (err != 0 || newp == NULL)
+		return err;
+
+	return 0;
+}
+
+static int
+acpicpu_md_pstate_sysctl_set(SYSCTLFN_ARGS)
+{
+	struct cpu_info *ci = curcpu();
+	struct acpicpu_softc *sc;
+	struct sysctlnode node;
+	uint32_t freq;
+	int err;
+
+	sc = acpicpu_sc[ci->ci_acpiid];
+
+	if (sc == NULL)
+		return ENXIO;
+
+	err = acpicpu_pstate_get(sc, &freq);
+
+	if (err != 0)
+		return err;
+
+	node = *rnode;
+	node.sysctl_data = &freq;
+
+	err = sysctl_lookup(SYSCTLFN_CALL(&node));
+
+	if (err != 0 || newp == NULL)
+		return err;
+
+	err = acpicpu_pstate_set(sc, freq);
+
+	if (err != 0)
+		return err;
+
+	return 0;
+}
+
+static int
+acpicpu_md_pstate_sysctl_all(SYSCTLFN_ARGS)
+{
+	struct cpu_info *ci = curcpu();
+	struct acpicpu_softc *sc;
+	struct sysctlnode node;
+	char buf[1024];
+	size_t len;
+	uint32_t i;
+	int err;
+
+	sc = acpicpu_sc[ci->ci_acpiid];
+
+	if (sc == NULL)
+		return ENXIO;
+
+	(void)memset(&buf, 0, sizeof(buf));
+
+	mutex_enter(&sc->sc_mtx);
+
+	for (len = 0, i = sc->sc_pstate_max; i < sc->sc_pstate_count; i++) {
+
+		if (sc->sc_pstate[i].ps_freq == 0)
+			continue;
+
+		len += snprintf(buf + len, sizeof(buf) - len, "%u%s",
+		    sc->sc_pstate[i].ps_freq,
+		    i < (sc->sc_pstate_count - 1) ? " " : "");
+	}
+
+	mutex_exit(&sc->sc_mtx);
+
+	node = *rnode;
+	node.sysctl_data = buf;
+
+	err = sysctl_lookup(SYSCTLFN_CALL(&node));
+
+	if (err != 0 || newp == NULL)
+		return err;
+
+	return 0;
+}
+
