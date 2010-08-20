@@ -1,0 +1,9 @@
+#	$NetBSD: XIP,v 1.1.2.1 2010/08/20 07:04:38 uebayasi Exp $
+
+include "arch/i386/conf/GENERIC"
+
+file-system 	FFS		# UFS
+options 	XIP
+
+pseudo-device	xmd		1	# XIP memory disk device (ramdisk)
+options 	XMD_ROOT_SIZE=10240	# 5MB
