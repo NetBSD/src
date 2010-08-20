@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_pstate.c,v 1.31 2010/08/20 04:16:00 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_pstate.c,v 1.32 2010/08/20 06:36:40 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_pstate.c,v 1.31 2010/08/20 04:16:00 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_pstate.c,v 1.32 2010/08/20 06:36:40 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/evcnt.h>
@@ -274,6 +274,12 @@ acpicpu_pstate_start(device_t self)
 
 fail:
 	sc->sc_flags &= ~ACPICPU_FLAG_P;
+
+	if (rv == EEXIST) {
+		aprint_error_dev(self, "driver conflicts with existing one\n");
+		return;
+	}
+
 	aprint_error_dev(self, "failed to start P-states (err %d)\n", rv);
 }
 
