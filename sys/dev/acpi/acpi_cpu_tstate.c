@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_tstate.c,v 1.14 2010/08/17 10:57:30 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_tstate.c,v 1.15 2010/08/20 04:16:00 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_tstate.c,v 1.14 2010/08/17 10:57:30 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_tstate.c,v 1.15 2010/08/20 04:16:00 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/evcnt.h>
@@ -749,6 +749,11 @@ acpicpu_tstate_set(struct acpicpu_softc *sc, uint32_t percent)
 	}
 
 	mutex_enter(&sc->sc_mtx);
+
+	if (sc->sc_tstate_current == percent) {
+		mutex_exit(&sc->sc_mtx);
+		return 0;
+	}
 
 	for (i = sc->sc_tstate_max; i <= sc->sc_tstate_min; i++) {
 
