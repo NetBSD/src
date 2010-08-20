@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu.h,v 1.19 2010/08/18 18:32:20 jruoho Exp $ */
+/* $NetBSD: acpi_cpu.h,v 1.20 2010/08/20 12:20:23 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -103,10 +103,12 @@
 #define ACPICPU_FLAG_C_C1E	 __BIT(9)	/* AMD C1E detected	     */
 
 #define ACPICPU_FLAG_P_FFH	 __BIT(10)	/* Native P-states           */
-#define ACPICPU_FLAG_P_XPSS	 __BIT(11)	/* Microsoft XPSS in use     */
+#define ACPICPU_FLAG_P_HW	 __BIT(11)	/* HW coordination supported */
+#define ACPICPU_FLAG_P_XPSS	 __BIT(12)	/* Microsoft XPSS in use     */
+#define ACPICPU_FLAG_P_TURBO	 __BIT(13)	/* Turbo Boost / Turbo Core  */
 
-#define ACPICPU_FLAG_T_FFH	 __BIT(12)	/* Native throttling         */
-#define ACPICPU_FLAG_T_FADT	 __BIT(13)	/* Throttling with FADT      */
+#define ACPICPU_FLAG_T_FFH	 __BIT(14)	/* Native throttling         */
+#define ACPICPU_FLAG_T_FADT	 __BIT(15)	/* Throttling with FADT      */
 
 /*
  * This is AML_RESOURCE_GENERIC_REGISTER,
