@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.c,v 1.23 2010/06/24 13:03:11 hannken Exp $	*/
+/*	$NetBSD: exec_elf.c,v 1.24 2010/08/20 14:59:53 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1994, 2000, 2005 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.23 2010/06/24 13:03:11 hannken Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.24 2010/08/20 14:59:53 joerg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pax.h"
@@ -730,28 +730,22 @@ exec_elf_makecmds(struct lwp *l, struct exec_package *epp)
 
 		switch (ph[i].p_type) {
 		case PT_LOAD:
-			/*
-			 * XXX
-			 * Can handle only 2 sections: text and data
-			 */
-			if (nload++ == 2) {
-				error = ENOEXEC;
-				goto bad;
-			}
 			elf_load_psection(&epp->ep_vmcmds, epp->ep_vp,
 			    &ph[i], &addr, &size, &prot, VMCMD_FIXED);
 
 			/*
-			 * Decide whether it's text or data by looking
-			 * at the entry point.
+			 * Consider this as text segment, if it is executable.
+			 * If there is more than one text segment, pick the
+			 * largest.
+			 *
+			 * If it is not executable, use the last section
+			 * as data segment to make break() happy.
 			 */
-			if (eh->e_entry >= addr &&
-			    eh->e_entry < (addr + size)) {
-				epp->ep_taddr = addr;
-				epp->ep_tsize = size;
-				if (epp->ep_daddr == ELFDEFNNAME(NO_ADDR)) {
-					epp->ep_daddr = addr;
-					epp->ep_dsize = size;
+			if (ph[i].p_flags & PF_X) {
+				if (epp->ep_taddr == ELFDEFNNAME(NO_ADDR) ||
+				    size > epp->ep_tsize) {
+					epp->ep_taddr = addr;
+					epp->ep_tsize = size;
 				}
 			} else {
 				epp->ep_daddr = addr;
@@ -778,6 +772,11 @@ exec_elf_makecmds(struct lwp *l, struct exec_package *epp)
 			 */
 			break;
 		}
+	}
+
+	if (epp->ep_daddr == ELFDEFNNAME(NO_ADDR)) {
+		epp->ep_daddr = epp->ep_taddr;
+		epp->ep_dsize = epp->ep_tsize;
 	}
 
 	/*
