@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_pcb.c,v 1.111 2010/08/20 15:01:11 joerg Exp $	*/
+/*	$NetBSD: in6_pcb.c,v 1.112 2010/08/20 16:38:16 joerg Exp $	*/
 /*	$KAME: in6_pcb.c,v 1.84 2001/02/08 18:02:08 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.111 2010/08/20 15:01:11 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.112 2010/08/20 16:38:16 joerg Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -369,7 +369,7 @@ in6_pcbbind(void *v, struct mbuf *nam, struct lwp *l)
 	 */
 	if (in6p->in6p_lport || !(IN6_IS_ADDR_UNSPECIFIED(&in6p->in6p_laddr) ||
 	    (IN6_IS_ADDR_V4MAPPED(&in6p->in6p_laddr) &&
-	      in6p->in6p_laddr.s6_addr32[3] == 0))) {
+	      in6p->in6p_laddr.s6_addr32[3] == 0)))
 		return (EINVAL);
 
 	if (nam != NULL) {
