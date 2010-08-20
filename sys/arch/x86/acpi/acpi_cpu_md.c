@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_md.c,v 1.19 2010/08/20 06:34:32 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_md.c,v 1.20 2010/08/20 07:00:17 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.19 2010/08/20 06:34:32 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.20 2010/08/20 07:00:17 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -254,6 +254,27 @@ acpicpu_md_idle_enter(int method, int state)
 int
 acpicpu_md_pstate_start(void)
 {
+	const uint64_t est = __BIT(16);
+	uint64_t val;
+
+	switch (cpu_vendor) {
+
+	case CPUVENDOR_IDT:
+	case CPUVENDOR_INTEL:
+
+		val = rdmsr(MSR_MISC_ENABLE);
+
+		if ((val & est) == 0) {
+
+			val |= est;
+
+			wrmsr(MSR_MISC_ENABLE, val);
+			val = rdmsr(MSR_MISC_ENABLE);
+
+			if ((val & est) == 0)
+				return ENOTTY;
+		}
+	}
 
 	return acpicpu_md_pstate_sysctl_init();
 }
