@@ -317,7 +317,7 @@ static void
 inf_ptrace_resume (ptid_t ptid, int step, enum target_signal signal)
 {
   pid_t pid = ptid_get_pid (ptid);
-  int request = PT_CONTINUE;
+  int request = PT_CONTINUE, sig = target_signal_to_host (signal);
 
   if (pid == -1)
     /* Resume all threads.  Traditionally ptrace() only supports
@@ -332,13 +332,14 @@ inf_ptrace_resume (ptid_t ptid, int step, enum target_signal signal)
          all possible successor instructions), so we don't have to
          worry about that here.  */
       request = PT_STEP;
+      sig = 0;
     }
 
   /* An address of (PTRACE_TYPE_ARG3)1 tells ptrace to continue from
      where it was.  If GDB wanted it to start some other way, we have
      already written a new program counter value to the child.  */
   errno = 0;
-  ptrace (request, pid, (PTRACE_TYPE_ARG3)1, target_signal_to_host (signal));
+  ptrace (request, pid, (PTRACE_TYPE_ARG3)1, sig);
   if (errno != 0)
     perror_with_name (("ptrace"));
 }
