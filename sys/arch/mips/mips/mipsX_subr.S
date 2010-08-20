@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.26.36.1.2.34 2010/08/19 07:21:37 matt Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.26.36.1.2.35 2010/08/20 03:21:41 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -2171,6 +2171,7 @@ LEAF_NOPROFILE(MIPSX(cpu_switch_resume))
 	PANIC("USPACE sat on odd page boundary")
 
 MIPSX(entry0):
+	_MFC0	t3, MIPS_COP_0_TLB_HI		# save TLB_HI
 	_MTC0	v0, MIPS_COP_0_TLB_HI		# VPN = va
 	COP0_SYNC
 	nop
@@ -2216,6 +2217,10 @@ MIPSX(entry0set):
 	nop
 	nop
 	tlbwi					# set TLB entry #0
+	COP0_SYNC
+	nop
+	nop
+	_MTC0	t3, MIPS_COP_0_TLB_HI		# restore TLB_HI
 	COP0_SYNC
 	nop
 	nop
