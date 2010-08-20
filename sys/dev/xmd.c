@@ -1,4 +1,4 @@
-/*	$NetBSD: xmd.c,v 1.1.2.2 2010/08/20 07:03:23 uebayasi Exp $	*/
+/*	$NetBSD: xmd.c,v 1.1.2.3 2010/08/20 07:03:40 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2010 Tsubai Masanari.  All rights reserved.
@@ -26,6 +26,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: xmd.c,v 1.1.2.3 2010/08/20 07:03:40 uebayasi Exp $");
 
 #include "opt_xip.h"
 #include "opt_xmd.h"
