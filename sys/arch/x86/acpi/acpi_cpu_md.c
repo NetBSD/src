@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_md.c,v 1.26 2010/08/21 07:18:34 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_md.c,v 1.27 2010/08/21 09:16:28 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.26 2010/08/21 07:18:34 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.27 2010/08/21 09:16:28 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -402,24 +402,24 @@ acpicpu_md_pstate_pss(struct acpicpu_softc *sc)
 
 	/*
 	 * Fill the P-state structures with MSR addresses that are
-	 * known to be correct. But only do this when the values
-	 * reported by BIOS are absent. If a vendor uses XPSS, we
-	 * do not necessary need to do anything to support new CPUs.
+	 * known to be correct. If we do not know the addresses,
+	 * leave the values intact. If a vendor uses XPSS, we do
+	 * not necessary need to do anything to support new CPUs.
 	 */
 	while (i < sc->sc_pstate_count) {
 
 		ps = &sc->sc_pstate[i];
 
-		if (ps->ps_status_addr == 0)
+		if (msr.ps_status_addr != 0)
 			ps->ps_status_addr = msr.ps_status_addr;
 
-		if (ps->ps_status_mask == 0)
+		if (msr.ps_status_mask != 0)
 			ps->ps_status_mask = msr.ps_status_mask;
 
-		if (ps->ps_control_addr == 0)
+		if (msr.ps_control_addr != 0)
 			ps->ps_control_addr = msr.ps_control_addr;
 
-		if (ps->ps_control_mask == 0)
+		if (msr.ps_control_mask != 0)
 			ps->ps_control_mask = msr.ps_control_mask;
 
 		i++;
