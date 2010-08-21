@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_pstate.c,v 1.32 2010/08/20 06:36:40 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_pstate.c,v 1.33 2010/08/21 13:12:15 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_pstate.c,v 1.32 2010/08/20 06:36:40 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_pstate.c,v 1.33 2010/08/21 13:12:15 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/evcnt.h>
@@ -81,16 +81,10 @@ acpicpu_pstate_attach(device_t self)
 	 * systems where _PDC or _OSC may be used.
 	 */
 	if (sc->sc_cap == 0) {
-
 		rv = acpicpu_pstate_xpss(sc);
 
 		if (ACPI_SUCCESS(rv))
 			sc->sc_flags |= ACPICPU_FLAG_P_XPSS;
-
-		if (ACPI_FAILURE(rv) && rv != AE_NOT_FOUND) {
-			str = "XPSS";
-			goto fail;
-		}
 	}
 
 	rv = acpicpu_pstate_pct(sc);
@@ -493,11 +487,11 @@ static ACPI_STATUS
 acpicpu_pstate_xpss(struct acpicpu_softc *sc)
 {
 	static const size_t size = sizeof(struct acpicpu_pstate);
-	struct acpicpu_pstate *ps;
+	struct acpicpu_pstate *ps, *pstate = NULL;
 	ACPI_OBJECT *obj;
 	ACPI_BUFFER buf;
 	ACPI_STATUS rv;
-	uint32_t count;
+	uint32_t count, pstate_count;
 	uint32_t i, j;
 
 	rv = acpi_eval_struct(sc->sc_node->ad_handle, "XPSS", &buf);
@@ -512,7 +506,7 @@ acpicpu_pstate_xpss(struct acpicpu_softc *sc)
 		goto out;
 	}
 
-	count = obj->Package.Count;
+	pstate_count = count = obj->Package.Count;
 
 	if (count == 0) {
 		rv = AE_NOT_EXIST;
@@ -524,21 +518,16 @@ acpicpu_pstate_xpss(struct acpicpu_softc *sc)
 		goto out;
 	}
 
-	if (sc->sc_pstate != NULL)
-		kmem_free(sc->sc_pstate, sc->sc_pstate_count * size);
+	pstate = kmem_zalloc(count * size, KM_SLEEP);
 
-	sc->sc_pstate = kmem_zalloc(count * size, KM_SLEEP);
-
-	if (sc->sc_pstate == NULL) {
+	if (pstate == NULL) {
 		rv = AE_NO_MEMORY;
 		goto out;
 	}
 
-	sc->sc_pstate_count = count;
+	for (count = i = 0; i < pstate_count; i++) {
 
-	for (count = i = 0; i < sc->sc_pstate_count; i++) {
-
-		ps = &sc->sc_pstate[i];
+		ps = &pstate[i];
 		rv = acpicpu_pstate_xpss_add(ps, &obj->Package.Elements[i]);
 
 		if (ACPI_FAILURE(rv)) {
@@ -548,7 +537,7 @@ acpicpu_pstate_xpss(struct acpicpu_softc *sc)
 
 		for (j = 0; j < i; j++) {
 
-			if (ps->ps_freq >= sc->sc_pstate[j].ps_freq) {
+			if (ps->ps_freq >= pstate[j].ps_freq) {
 				ps->ps_freq = 0;
 				break;
 			}
@@ -558,7 +547,16 @@ acpicpu_pstate_xpss(struct acpicpu_softc *sc)
 			count++;
 	}
 
-	rv = (count != 0) ? AE_OK : AE_NOT_EXIST;
+	if (count > 0) {
+		if (sc->sc_pstate != NULL)
+			kmem_free(sc->sc_pstate, sc->sc_pstate_count * size);
+		sc->sc_pstate = pstate;
+		sc->sc_pstate_count = pstate_count;
+		rv = AE_OK;
+	} else {
+		kmem_free(pstate, pstate_count * size);
+		rv = AE_NOT_EXIST;
+	}
 
 out:
 	if (buf.Pointer != NULL)
@@ -570,7 +568,6 @@ out:
 static ACPI_STATUS
 acpicpu_pstate_xpss_add(struct acpicpu_pstate *ps, ACPI_OBJECT *obj)
 {
-	static const size_t size = sizeof(uint64_t);
 	ACPI_OBJECT *elm;
 	int i;
 
@@ -596,7 +593,7 @@ acpicpu_pstate_xpss_add(struct acpicpu_pstate *ps, ACPI_OBJECT *obj)
 		if (elm[i].Type != ACPI_TYPE_BUFFER)
 			return AE_TYPE;
 
-		if (elm[i].Buffer.Length > size)
+		if (elm[i].Buffer.Length != 8)
 			return AE_LIMIT;
 	}
 
@@ -608,11 +605,10 @@ acpicpu_pstate_xpss_add(struct acpicpu_pstate *ps, ACPI_OBJECT *obj)
 	if (ps->ps_freq == 0 || ps->ps_freq > 9999)
 		return AE_BAD_DECIMAL_CONSTANT;
 
-	(void)memcpy(&ps->ps_control, elm[4].Buffer.Pointer, size);
-	(void)memcpy(&ps->ps_status,  elm[5].Buffer.Pointer, size);
-
-	(void)memcpy(&ps->ps_control_mask, elm[6].Buffer.Pointer, size);
-	(void)memcpy(&ps->ps_status_mask,  elm[7].Buffer.Pointer, size);
+	ps->ps_control = ACPI_GET64(elm[4].Buffer.Pointer);
+	ps->ps_status = ACPI_GET64(elm[5].Buffer.Pointer);
+	ps->ps_control_mask = ACPI_GET64(elm[6].Buffer.Pointer);
+	ps->ps_status_mask = ACPI_GET64(elm[7].Buffer.Pointer);
 
 	/*
 	 * The latency is often defined to be
