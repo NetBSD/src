@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.991 2010/08/21 03:06:37 tsutsui Exp $
+# $NetBSD: GENERIC,v 1.992 2010/08/21 11:55:21 jmcneill Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.991 $"
+#ident 		"GENERIC-$Revision: 1.992 $"
 
 maxusers	64		# estimated number of users
 
@@ -568,6 +568,7 @@ radeondrm*	at vga?		# ATI Radeon DRM driver
 savagedrm*	at vga?		# S3 Savage DRM driver
 sisdrm*		at vga?		# SiS DRM driver
 tdfxdrm*	at vga?		# 3dfx (voodoo) DRM driver
+viadrm*		at vga?		# VIA DRM driver
 
 # Serial Devices
 
