@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_md.c,v 1.21 2010/08/21 02:47:37 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_md.c,v 1.22 2010/08/21 03:55:24 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.21 2010/08/21 02:47:37 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.22 2010/08/21 03:55:24 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -47,6 +47,8 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.21 2010/08/21 02:47:37 jruoho Exp 
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
+
+#define CPUID_INTEL_TSC		__BIT(8)
 
 #define MSR_0FH_CONTROL		0xc0010041 /* Family 0Fh (and K7).  */
 #define MSR_0FH_STATUS		0xc0010042
@@ -119,10 +121,11 @@ acpicpu_md_quirks(void)
 	if ((ci->ci_feat_val[1] & CPUID2_MONITOR) != 0)
 		val |= ACPICPU_FLAG_C_FFH;
 
+	val |= ACPICPU_FLAG_C_TSC;
+
 	switch (cpu_vendor) {
 
 	case CPUVENDOR_IDT:
-	case CPUVENDOR_INTEL:
 
 		if ((ci->ci_feat_val[1] & CPUID2_EST) != 0)
 			val |= ACPICPU_FLAG_P_FFH;
@@ -130,7 +133,36 @@ acpicpu_md_quirks(void)
 		if ((ci->ci_feat_val[0] & CPUID_ACPI) != 0)
 			val |= ACPICPU_FLAG_T_FFH;
 
+		break;
+
+	case CPUVENDOR_INTEL:
+
 		val |= ACPICPU_FLAG_C_BM | ACPICPU_FLAG_C_ARB;
+
+		if ((ci->ci_feat_val[1] & CPUID2_EST) != 0)
+			val |= ACPICPU_FLAG_P_FFH;
+
+		if ((ci->ci_feat_val[0] & CPUID_ACPI) != 0)
+			val |= ACPICPU_FLAG_T_FFH;
+
+		/*
+		 * Detect whether TSC is invariant. If it is not,
+		 * we keep the flag to note that TSC will not run
+		 * at constant rate. Depending on the CPU, this may
+		 * affect P- and T-state changes, but especially
+		 * relevant are C-states; with variant TSC, states
+		 * larger than C1 will completely stop the timer.
+		 */
+		x86_cpuid(0x80000000, regs);
+
+		if (regs[0] >= 0x80000007) {
+
+			x86_cpuid(0x80000007, regs);
+
+			if ((regs[3] & CPUID_INTEL_TSC) != 0)
+				val &= ~ACPICPU_FLAG_C_TSC;
+		}
+
 		break;
 
 	case CPUVENDOR_AMD:
@@ -142,10 +174,14 @@ acpicpu_md_quirks(void)
 
 		switch (family) {
 
+		case 0x0f:
 		case 0x10:
 		case 0x11:
 
 			x86_cpuid(0x80000007, regs);
+
+			if ((regs[3] & CPUID_APM_TSC) != 0)
+				val &= ~ACPICPU_FLAG_C_TSC;
 
 			if ((regs[3] & CPUID_APM_HWP) != 0)
 				val |= ACPICPU_FLAG_P_FFH;
