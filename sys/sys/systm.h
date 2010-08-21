@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.239 2010/01/31 02:04:43 pooka Exp $	*/
+/*	$NetBSD: systm.h,v 1.240 2010/08/21 13:17:32 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -491,6 +491,11 @@ void scdebug_ret(register_t, int, const register_t[]);
 void	kernel_lock_init(void);
 void	_kernel_lock(int);
 void	_kernel_unlock(int, int *);
+
+void	kernconfig_lock_init(void);
+void	kernconfig_lock(void);
+void	kernconfig_unlock(void);
+bool	kernconfig_is_held(void);
 
 #if defined(MULTIPROCESSOR) || defined(_MODULE)
 #define	KERNEL_LOCK(count, lwp)			\
