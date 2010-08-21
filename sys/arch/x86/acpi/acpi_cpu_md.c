@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_md.c,v 1.27 2010/08/21 09:16:28 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_md.c,v 1.28 2010/08/21 15:37:35 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.27 2010/08/21 09:16:28 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.28 2010/08/21 15:37:35 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -466,12 +466,12 @@ acpicpu_md_pstate_get(struct acpicpu_softc *sc, uint32_t *freq)
 	if (__predict_false(ps == NULL))
 		return ENODEV;
 
-	if (ps->ps_status_addr == 0)
+	if (__predict_false(ps->ps_status_addr == 0))
 		return EINVAL;
 
 	val = rdmsr(ps->ps_status_addr);
 
-	if (ps->ps_status_mask != 0)
+	if (__predict_true(ps->ps_status_mask != 0))
 		val = val & ps->ps_status_mask;
 
 	for (i = 0; i < sc->sc_pstate_count; i++) {
@@ -481,7 +481,7 @@ acpicpu_md_pstate_get(struct acpicpu_softc *sc, uint32_t *freq)
 		if (ps->ps_freq == 0)
 			continue;
 
-		if (val == ps->ps_status) {
+		if (val == ps->ps_status || val == ps->ps_control) {
 			*freq = ps->ps_freq;
 			return 0;
 		}
@@ -535,7 +535,7 @@ acpicpu_md_pstate_status(void *arg1, void *arg2)
 		if (__predict_true(ps->ps_status_mask != 0))
 			val = val & ps->ps_status_mask;
 
-		if (val == ps->ps_status)
+		if (val == ps->ps_status || val == ps->ps_control)
 			return;
 
 		DELAY(ps->ps_latency);
@@ -560,7 +560,7 @@ acpicpu_md_tstate_get(struct acpicpu_softc *sc, uint32_t *percent)
 		if (ts->ts_percent == 0)
 			continue;
 
-		if (val == ts->ts_control || val == ts->ts_status) {
+		if (val == ts->ts_status || val == ts->ts_control) {
 			*percent = ts->ts_percent;
 			return 0;
 		}
@@ -604,7 +604,7 @@ acpicpu_md_tstate_status(void *arg1, void *arg2)
 
 		val = rdmsr(MSR_THERM_CONTROL);
 
-		if (val == ts->ts_status)
+		if (val == ts->ts_status || val == ts->ts_control)
 			return;
 
 		DELAY(ts->ts_latency);
