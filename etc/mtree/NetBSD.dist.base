@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.base,v 1.46 2010/08/10 21:56:24 pooka Exp $
+#	$NetBSD: NetBSD.dist.base,v 1.47 2010/08/21 06:41:09 christos Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -856,6 +856,7 @@
 ./usr/share/man/cat9/sun3
 ./usr/share/man/cat9/vax
 ./usr/share/man/cat9/x68k
+./usr/share/man/cat9/x86
 ./usr/share/man/man1
 ./usr/share/man/man1/atari
 ./usr/share/man/man1/hp300
@@ -959,6 +960,7 @@
 ./usr/share/man/man9/sun3
 ./usr/share/man/man9/vax
 ./usr/share/man/man9/x68k
+./usr/share/man/man9/x86
 ./usr/share/man/html1
 ./usr/share/man/html1/atari
 ./usr/share/man/html1/hp300
@@ -1062,6 +1064,7 @@
 ./usr/share/man/html9/sun3
 ./usr/share/man/html9/vax
 ./usr/share/man/html9/x68k
+./usr/share/man/html9/x86
 ./usr/share/me
 ./usr/share/misc
 ./usr/share/mk
