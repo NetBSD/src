@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_md.c,v 1.25 2010/08/21 06:45:50 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_md.c,v 1.26 2010/08/21 07:18:34 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.25 2010/08/21 06:45:50 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.26 2010/08/21 07:18:34 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -400,6 +400,12 @@ acpicpu_md_pstate_pss(struct acpicpu_softc *sc)
 		return ENODEV;
 	}
 
+	/*
+	 * Fill the P-state structures with MSR addresses that are
+	 * known to be correct. But only do this when the values
+	 * reported by BIOS are absent. If a vendor uses XPSS, we
+	 * do not necessary need to do anything to support new CPUs.
+	 */
 	while (i < sc->sc_pstate_count) {
 
 		ps = &sc->sc_pstate[i];
