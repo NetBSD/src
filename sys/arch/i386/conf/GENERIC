@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.990 2010/08/08 20:04:24 chs Exp $
+# $NetBSD: GENERIC,v 1.991 2010/08/21 03:06:37 tsutsui Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.990 $"
+#ident 		"GENERIC-$Revision: 1.991 $"
 
 maxusers	64		# estimated number of users
 
@@ -1205,6 +1205,7 @@ url*	at uhub? port ?		# Realtek RTL8150L based adapters
 atu*	at uhub? port ?		# Atmel AT76C50XX based adapters
 ral*	at uhub? port ?		# Ralink Technology RT25x0 802.11a/b/g
 rum*	at uhub? port ?		# Ralink Technology RT2501/RT2601 802.11a/b/g
+upgt*	at uhub? port ?		# Intersil PrismGT
 zyd*	at uhub? port ?		# Zydas ZD1211
 
 # Prolific PL2301/PL2302 host-to-host adapter
