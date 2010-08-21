@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_target.c,v 1.13 2010/05/18 15:10:38 haad Exp $      */
+/*        $NetBSD: dm_target.c,v 1.14 2010/08/21 13:19:41 pgoyette Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -83,9 +83,7 @@ dm_target_autoload(const char *dm_target_name)
 		gen = module_gen;
 
 		/* Try to autoload target module */
-		mutex_enter(&module_lock);
 		(void) module_autoload(name, MODULE_CLASS_MISC);
-		mutex_exit(&module_lock);
 	} while (gen != module_gen);
 
 	mutex_enter(&dm_target_mutex);
