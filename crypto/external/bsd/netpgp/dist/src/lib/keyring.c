@@ -57,7 +57,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: keyring.c,v 1.43 2010/08/15 16:10:56 agc Exp $");
+__RCSID("$NetBSD: keyring.c,v 1.44 2010/08/21 19:00:43 agc Exp $");
 #endif
 
 #ifdef HAVE_FCNTL_H
@@ -834,6 +834,9 @@ __ops_getkeybyid(__ops_io_t *io, const __ops_keyring_t *keyring,
 			}
 			return &keyring->keys[*from];
 		}
+		if (memcmp(&keyring->keys[*from].encid, "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0", OPS_KEY_ID_SIZE) == 0) {
+			continue;
+		}
 		if (memcmp(&keyring->keys[*from].encid, keyid, OPS_KEY_ID_SIZE) == 0 ||
 		    memcmp(&keyring->keys[*from].encid[OPS_KEY_ID_SIZE / 2], keyid, OPS_KEY_ID_SIZE / 2) == 0) {
 			if (pubkey) {
@@ -924,12 +927,12 @@ getkeybyname(__ops_io_t *io,
 	for (keyp = &keyring->keys[*from]; *from < keyring->keyc; *from += 1, keyp++) {
 		uidp = keyp->uids;
 		for (i = 0 ; i < keyp->uidc; i++, uidp++) {
-			if (__ops_get_debug_level(__FILE__)) {
-				(void) fprintf(io->outs,
-					"keyid \"%s\" len %" PRIsize "u\n",
-				       (char *) *uidp, len);
-			}
 			if (regexec(&r, (char *)*uidp, 0, NULL, 0) == 0) {
+				if (__ops_get_debug_level(__FILE__)) {
+					(void) fprintf(io->outs,
+						"MATCHED keyid \"%s\" len %" PRIsize "u\n",
+					       (char *) *uidp, len);
+				}
 				regfree(&r);
 				return keyp;
 			}
