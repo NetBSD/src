@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1497 2010/08/21 10:11:34 jruoho Exp $
+#	$NetBSD: mi,v 1.1498 2010/08/21 10:32:35 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -9174,9 +9174,9 @@
 ./usr/share/man/cat9/hztoms.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/i386/bios32_service.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/i386/bioscall.0		comp-sys-catman		.cat
-./usr/share/man/cat9/i386/nmi.0			comp-sys-catman		.cat
-./usr/share/man/cat9/i386/nmi_disestablish.0	comp-sys-catman		.cat
-./usr/share/man/cat9/i386/nmi_establish.0	comp-sys-catman		.cat
+./usr/share/man/cat9/i386/nmi.0			comp-obsolete		obsolete
+./usr/share/man/cat9/i386/nmi_disestablish.0	comp-obsolete		obsolete
+./usr/share/man/cat9/i386/nmi_establish.0	comp-obsolete		obsolete
 ./usr/share/man/cat9/i386/return_address.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/i386/spllower.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/i386/splraise.0		comp-sys-catman		.cat
@@ -10011,6 +10011,9 @@
 ./usr/share/man/cat9/wsmouse.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/wsmouse_input.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/wsmousedevprint.0		comp-sys-catman		.cat
+./usr/share/man/cat9/x86/nmi.0			comp-sys-catman		.cat
+./usr/share/man/cat9/x86/nmi_disestablish.0	comp-sys-catman		.cat
+./usr/share/man/cat9/x86/nmi_establish.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/x86/x86_msr_xcall.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/xc_broadcast.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/xc_unicast.0		comp-sys-catman		.cat
@@ -14980,9 +14983,9 @@
 ./usr/share/man/html9/hztoms.html		comp-sys-htmlman	html
 ./usr/share/man/html9/i386/bios32_service.html	comp-sys-htmlman	html
 ./usr/share/man/html9/i386/bioscall.html	comp-sys-htmlman	html
-./usr/share/man/html9/i386/nmi.html		comp-sys-htmlman	html
-./usr/share/man/html9/i386/nmi_disestablish.html	comp-sys-htmlman	html
-./usr/share/man/html9/i386/nmi_establish.html		comp-sys-htmlman	html
+./usr/share/man/html9/i386/nmi.html		comp-obsolete		obsolete
+./usr/share/man/html9/i386/nmi_disestablish.html	comp-obsolete	obsolete
+./usr/share/man/html9/i386/nmi_establish.html		comp-obsolete	obsolete
 ./usr/share/man/html9/i386/return_address.html	comp-sys-htmlman	html
 ./usr/share/man/html9/i386/spllower.html	comp-sys-htmlman	html
 ./usr/share/man/html9/i386/splraise.html	comp-sys-htmlman	html
@@ -15765,6 +15768,9 @@
 ./usr/share/man/html9/wsmouse.html		comp-sys-htmlman	html
 ./usr/share/man/html9/wsmouse_input.html	comp-sys-htmlman	html
 ./usr/share/man/html9/wsmousedevprint.html	comp-sys-htmlman	html
+./usr/share/man/html9/x86/nmi.html		comp-sys-htmlman	html
+./usr/share/man/html9/x86/nmi_disestablish.html	comp-sys-htmlman	html
+./usr/share/man/html9/x86/nmi_establish.html	comp-sys-htmlman	html
 ./usr/share/man/html9/x86/x86_msr_xcall.html	comp-sys-htmlman	html
 ./usr/share/man/html9/xc_broadcast.html		comp-sys-htmlman	html
 ./usr/share/man/html9/xc_unicast.html		comp-sys-htmlman	html
@@ -20941,9 +20947,9 @@
 ./usr/share/man/man9/hztoms.9			comp-sys-man		.man
 ./usr/share/man/man9/i386/bios32_service.9	comp-sys-man		.man
 ./usr/share/man/man9/i386/bioscall.9		comp-sys-man		.man
-./usr/share/man/man9/i386/nmi.9			comp-sys-man		.man
-./usr/share/man/man9/i386/nmi_disestablish.9	comp-sys-man		.man
-./usr/share/man/man9/i386/nmi_establish.9	comp-sys-man		.man
+./usr/share/man/man9/i386/nmi.9			comp-obsolete		obsolete
+./usr/share/man/man9/i386/nmi_disestablish.9	comp-obsolete		obsolete
+./usr/share/man/man9/i386/nmi_establish.9	comp-obsolete		obsolete
 ./usr/share/man/man9/i386/return_address.9	comp-sys-man		.man
 ./usr/share/man/man9/i386/spllower.9		comp-sys-man		.man
 ./usr/share/man/man9/i386/splraise.9		comp-sys-man		.man
@@ -21778,6 +21784,9 @@
 ./usr/share/man/man9/wsmouse.9			comp-sys-man		.man
 ./usr/share/man/man9/wsmouse_input.9		comp-sys-man		.man
 ./usr/share/man/man9/wsmousedevprint.9		comp-sys-man		.man
+./usr/share/man/man9/x86/nmi.9			comp-sys-man		.man
+./usr/share/man/man9/x86/nmi_disestablish.9	comp-sys-man		.man
+./usr/share/man/man9/x86/nmi_establish.9	comp-sys-man		.man
 ./usr/share/man/man9/x86/x86_msr_xcall.9	comp-sys-man		.man
 ./usr/share/man/man9/xc_broadcast.9		comp-sys-man		.man
 ./usr/share/man/man9/xc_unicast.9		comp-sys-man		.man
