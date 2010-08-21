@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.44 2010/07/29 08:16:49 cegger Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.45 2010/08/21 02:31:13 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -200,9 +200,10 @@
 #define CPUID_APM_100	0x00000040	/* 100MHz multiplier control */
 #define CPUID_APM_HWP	0x00000080	/* HW P-State control */
 #define CPUID_APM_TSC	0x00000100	/* TSC invariant */
+#define CPUID_APM_CPB	0x00000200	/* Core performance boost */
 
 #define CPUID_APM_FLAGS		"\20\1TS\2FID\3VID\4TTP\5HTC\6STC\007100" \
-				    "\10HWP\11TSC"
+				    "\10HWP\11TSC\12CPB"
 
 /*
  * Centaur Extended Feature flags
