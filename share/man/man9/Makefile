@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.340 2010/08/11 18:20:09 pgoyette Exp $
+#       $NetBSD: Makefile,v 1.341 2010/08/21 10:11:35 jruoho Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -921,7 +921,7 @@ MLINKS+=xcall.9 xc_broadcast.9 \
 	xcall.9 xc_unicast.9 \
 	xcall.9 xc_wait.9
 
-SUBDIR= man9.i386 man9.sun3
+SUBDIR= man9.i386 man9.sun3 man9.x86
 
 .include <bsd.man.mk>
 .include <bsd.subdir.mk>
