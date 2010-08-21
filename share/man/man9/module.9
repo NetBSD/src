@@ -1,4 +1,4 @@
-.\"	$NetBSD: module.9,v 1.17 2010/08/18 01:56:45 pgoyette Exp $
+.\"	$NetBSD: module.9,v 1.18 2010/08/21 13:17:32 pgoyette Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd August 17, 2010
+.Dd August XXX, 2010
 .Dt MODULE 9
 .Os
 .Sh NAME
@@ -86,6 +86,8 @@ The
 .Vt modinfo_t
 type resides within the module itself, and contains module header info.
 .El
+.Pp
+The module subsystem is protected by the global kernconfig_mutex.
 .Sh FUNCTIONS
 .Bl -tag -width abcd
 .It Fn MODULE "class" "name" "required"
@@ -362,21 +364,37 @@ is used to enable loading modules from the file system.
 Until this routine is called, modules can only be loaded if they were
 built-in to the kernel image or provided by the boot loader.
 .El
-.Sh LOCK PROTOCOL
-The
-.Nm
-subsystem is protected with the global
-.Vt module_mutex .
-This
-.Xr mutex 9
-must be acquired before calling any of these routines.
-As an exception, the
+.Sh PROGRAMMING CONSIDERATIONS
+The module subsystem is designed to be called recursively, but only within
+a single lwp.
+This permits one module's
+.Fn modcmd
+routine to load or unload other modules.
+.Pp
+A module is not permitted to load or unload itself.
+Attempts to load or unload a module from within its own
+.Fn modcmd
+routine will fail with
+.Er EEXIST
+or
+.Er EBUSY
+respectively.
+.Pp
+Although a module can be loaded by either
 .Fn module_load
-routine acquires the mutex itself, so one does not need to acquire it
-before calling
-.Fn module_load .
-Loading of a module and its required modules occurs as an atomic
-operation, and either completely succeeds or completely fails.
+or
+.Fn module_autoload
+it is not possible for the module's
+.Fn modcmd
+routine to distinguish between the two methods.
+Any module which needs to ensure that it does not get auto-unloaded must
+either handle the
+.Dv MODULE_CMD_AUTOUNLOAD
+command in its
+.Fn modcmd
+routine, or use
+.Fn module_hold
+to increment its reference count.
 .Sh CODE REFERENCES
 This section describes places within the
 .Nx

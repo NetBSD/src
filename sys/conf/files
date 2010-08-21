@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.992 2010/07/07 01:09:39 chs Exp $
+#	$NetBSD: files,v 1.993 2010/08/21 13:17:32 pgoyette Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20100430
@@ -1434,6 +1434,7 @@ file	kern/init_sysctl_base.c
 file	kern/init_sysent.c
 file	kern/kern_acct.c
 file	kern/kern_auth.c
+file	kern/kern_cfglock.c
 file	kern/kern_clock.c
 file	kern/kern_condvar.c
 file	kern/kern_core.c		coredump
