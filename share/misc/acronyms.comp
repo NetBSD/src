@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.107 2010/08/18 17:01:55 jruoho Exp $
+$NetBSD: acronyms.comp,v 1.108 2010/08/21 06:10:37 jruoho Exp $
 
 3WHS	three-way handshake
 ABI	application binary interface
@@ -39,6 +39,7 @@ ATX	advanced technology extended
 AWK	Aho, Werner, and Kernighan
 BAR	base address register
 BCD	binary coded decimal
+BCS	base configuration space
 BEDO	burst extended data output
 BER	basic encoding rules
 BER	bit error rate
@@ -48,6 +49,7 @@ BGA	ball grid array
 BGP	border gateway protocol
 BIND	Berkeley Internet Name Daemon
 BIOS	basic input/output system
+BIST	built-in self-test
 BKDG	BIOS and kernel developer's guide
 BLAS	basic linear algebra subprograms
 BLOB	binary large object
@@ -58,6 +60,7 @@ BPS	bits per second
 BQS	Berkeley quality software
 BSD	Berkeley software distribution
 BSOD	blue screen of death
+BSP	boot strap processor
 BSS	block started by symbol
 BT	Bluetooth
 BT	BitTorrent
@@ -88,6 +91,7 @@ CLV	constant linear velocity (as opposed to CAV)
 CMI	control management interface
 CMI	control method interface
 CMYK	cyan magenta yellow black
+COF	current operating frequency
 COFF	common object file format
 COMA	cache-only memory architecture
 COW	copy-on-write
@@ -97,6 +101,7 @@ CRLF	carriage return line feed
 CRT	cathode ray tube
 CS	computer science
 CS	cable select
+CS	chip select
 CS	code segment
 CSI	common system interface
 CSMA	carrier sense multiple access
@@ -176,6 +181,7 @@ EPROM	erasable programmable read only memory
 ESDRAM	enhanced synchronous dynamic random access memory
 EST	enhanced speedstep
 FAT	file allocation table
+FEC	forward error correction
 FFH	functional fixed hardware
 FBRAM	frame buffer random access memory
 FCS	frame check sequence
@@ -184,6 +190,7 @@ FFI	foreign function interface
 FFS	fast file system
 FFS	find first set
 FHSS	frequency hop spread spectrum
+FID	frequency identifier
 FIFO	first in first out
 FIR	fast infrared
 FLOPS	floating [point] operations per second
@@ -227,12 +234,14 @@ HMA	high memory area
 HPC	high performance computing
 HPET	high precision event timer
 HT	hyper-threading
+HTC	hardware thermal control
 HTML	hyper-text markup language
 HTTP	hyper-text transfer protocol
 HTTPS	hyper-text transfer protocol, secure
 HZ	Hertz
 I2O	intelligent input/output
 IANA	Internet assigned number authority
+IBS	instruction based sampling
 IC	integrated circuit
 ICB	Internet citizen's band
 ICH	I/O controller hub
@@ -249,6 +258,7 @@ IEC	international electrotechnical commission
 IEEE	Institute [of] Electrical [and] Electronics Engineers
 IESG	Internet Engineering Steering Group
 IETF	Internet Engineering Task Force
+IFCM	isochronous flow control mode
 IGMP	Internet group management protocol
 IGP	interior gateway protocol
 IKE	Internet key exchange
@@ -306,6 +316,7 @@ LFU	least frequently used
 LIFO	last in first out
 LILO	last in last out
 LILO	Linux loader
+LINT	local interrupt
 LIR	local Internet registry
 LKM	{Linux, loadable} kernel module
 LKML	Linux kernel mailing list
@@ -322,15 +333,18 @@ LTR	load task register
 LUN	logical unit number
 LV	logical volume
 LVM	logical volume management
+LVT	local vector table
 LZW	Lempel Ziv Welch
 MAC	medium access control
 MAC	mandatory access control
 MADT	multiple APIC descriptor table
 MBR	master boot record
+MC	memory controller
 MCA	machine check architecture
 MCE	machine check exception
 MCGA	multicolor graphics adapter
 MCH	memory controller hub
+MCQ	memory controlled queue
 MDA	mail delivery agent
 MDA	monochrome display adapter
 MDRAM	multibank dynamic random access memory
@@ -389,6 +403,7 @@ OFDM	orthogonal frequency division multiplexing
 OO	object oriented
 OO	OpenOffice
 OOB	out of band
+OOE	out of order execution
 OOM	out of memory
 OOP	object oriented programming
 OQL	object query language
@@ -453,6 +468,7 @@ PPB	PCI [to] PCI bridge
 PPP	point-to-point protocol
 PPPOA	point-to-point protocol over ATM
 PPPOE	point-to-point protocol over ethernet
+PRBS	pseudo-random bit sequence
 PRML	partial response, maximum likelihood
 PRNG	pseudo random number generator
 PROM	programmable read only memory
@@ -494,6 +510,7 @@ RTF	rich text format
 RTOS	real time operating system
 RTS	request to send
 RTT	round time trip
+RX	receive, receiver
 S/PDIF	Sony/Phillips digital interface
 SACD	super audio compact disc
 SAD	security association database
@@ -583,6 +600,7 @@ TSC	time stamp counter
 TSS	task state segment
 TTL	time to live
 TTY	teletype
+TX	transmit out, transmitter
 TZ	time zone
 UART	universal asynchronous receiver/transmitter
 UC	uncacheable
@@ -591,6 +609,7 @@ UDO	ultra density optical (storage)
 UDP	user datagram protocol
 UFS	Unix file system
 UI	user interface
+UI	unit interval
 UID	user identifier
 UID	unique identifier
 UMA	upper memory area
@@ -613,6 +632,7 @@ VCM	virtual channel memory
 VESA	video electronics standards association
 VG	volume group
 VGA	video graphics {array,adapter}
+VID	voltage level identifier
 VLAN	virtual local area network
 VLSI	very large scale integration
 VLSM	variable length subnet mask
@@ -629,13 +649,16 @@ WIFI    wireless fidelity
 WLAN	wireless local area network
 VMX	virtual machine extensions
 VMX	vector multimedia extensions
+WDT	watchdog timer
 WPA	wi-fi protected access
 WRAM	window random access memory
 WWAN	wireless wide area network
 WWW	world wide web
 WYSIWYG	what you see is what you get
+XBAR	crossbar
 XER	XML encoding rules
 XGA	extended graphics {array,adapter}
+XIP	execute in place
 XML	extensible markup language
 XP	extreme programming
 XSL	extensible stylesheet language
