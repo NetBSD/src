@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu.h,v 1.21 2010/08/21 03:55:24 jruoho Exp $ */
+/* $NetBSD: acpi_cpu.h,v 1.22 2010/08/21 06:45:50 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -100,16 +100,17 @@
 #define ACPICPU_FLAG_C_BM	 __BIT(6)	/* Bus master control        */
 #define ACPICPU_FLAG_C_BM_STS	 __BIT(7)	/* Bus master check required */
 #define ACPICPU_FLAG_C_ARB	 __BIT(8)	/* Bus master arbitration    */
-#define ACPICPU_FLAG_C_TSC	 __BIT(9)	/* TSC broken with > C1      */
-#define ACPICPU_FLAG_C_C1E	 __BIT(10)	/* AMD C1E detected	     */
+#define ACPICPU_FLAG_C_TSC	 __BIT(9)	/* TSC broken, > C1, Px, Tx  */
+#define ACPICPU_FLAG_C_APIC	 __BIT(10)	/* APIC timer broken, > C1   */
+#define ACPICPU_FLAG_C_C1E	 __BIT(11)	/* AMD C1E detected	     */
 
-#define ACPICPU_FLAG_P_FFH	 __BIT(11)	/* Native P-states           */
-#define ACPICPU_FLAG_P_HW	 __BIT(12)	/* HW coordination supported */
-#define ACPICPU_FLAG_P_XPSS	 __BIT(13)	/* Microsoft XPSS in use     */
-#define ACPICPU_FLAG_P_TURBO	 __BIT(14)	/* Turbo Boost / Turbo Core  */
+#define ACPICPU_FLAG_P_FFH	 __BIT(12)	/* Native P-states           */
+#define ACPICPU_FLAG_P_HW	 __BIT(13)	/* HW coordination supported */
+#define ACPICPU_FLAG_P_XPSS	 __BIT(14)	/* Microsoft XPSS in use     */
+#define ACPICPU_FLAG_P_TURBO	 __BIT(15)	/* Turbo Boost / Turbo Core  */
 
-#define ACPICPU_FLAG_T_FFH	 __BIT(15)	/* Native throttling         */
-#define ACPICPU_FLAG_T_FADT	 __BIT(16)	/* Throttling with FADT      */
+#define ACPICPU_FLAG_T_FFH	 __BIT(16)	/* Native throttling         */
+#define ACPICPU_FLAG_T_FADT	 __BIT(17)	/* Throttling with FADT      */
 
 /*
  * This is AML_RESOURCE_GENERIC_REGISTER,
