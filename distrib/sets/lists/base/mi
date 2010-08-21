@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.878 2010/08/07 21:53:18 christos Exp $
+# $NetBSD: mi,v 1.879 2010/08/21 06:38:59 christos Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -3365,6 +3365,7 @@
 ./usr/share/man/cat9/sun3			base-man-share
 ./usr/share/man/cat9/vax			base-man-share
 ./usr/share/man/cat9/x68k			base-man-share
+./usr/share/man/cat9/x86			base-man-share
 ./usr/share/man/html1				base-man-share
 ./usr/share/man/html1/atari			base-man-share
 ./usr/share/man/html1/hp300			base-man-share
@@ -3484,6 +3485,7 @@
 ./usr/share/man/html9/sun3			base-man-share
 ./usr/share/man/html9/vax			base-man-share
 ./usr/share/man/html9/x68k			base-man-share
+./usr/share/man/html9/x86			base-man-share
 ./usr/share/man/makewhatis.sed			base-man-share		share
 ./usr/share/man/man1				base-man-share
 ./usr/share/man/man1/atari			base-man-share
@@ -3606,6 +3608,7 @@
 ./usr/share/man/man9/sun3			base-man-share
 ./usr/share/man/man9/vax			base-man-share
 ./usr/share/man/man9/x68k			base-man-share
+./usr/share/man/man9/x86			base-man-share
 ./usr/share/man/whatis.db			base-man-share		man
 ./usr/share/me					base-groff-share
 ./usr/share/misc				base-terminfo-share
