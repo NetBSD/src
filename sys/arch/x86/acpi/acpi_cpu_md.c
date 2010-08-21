@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_md.c,v 1.24 2010/08/21 05:10:43 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_md.c,v 1.25 2010/08/21 06:45:50 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.24 2010/08/21 05:10:43 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.25 2010/08/21 06:45:50 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -121,7 +121,7 @@ acpicpu_md_quirks(void)
 	if ((ci->ci_feat_val[1] & CPUID2_MONITOR) != 0)
 		val |= ACPICPU_FLAG_C_FFH;
 
-	val |= ACPICPU_FLAG_C_TSC;
+	val |= ACPICPU_FLAG_C_APIC | ACPICPU_FLAG_C_TSC;
 
 	switch (cpu_vendor) {
 
@@ -146,18 +146,22 @@ acpicpu_md_quirks(void)
 			val |= ACPICPU_FLAG_T_FFH;
 
 		/*
-		 * See if MSR_APERF, MSR_MPERF,
-		 * and Turbo Boost are available.
+		 * Check whether MSR_APERF, MSR_MPERF, and Turbo
+		 * Boost are available. Also see if we might have
+		 * an invariant local APIC timer ("ARAT").
 		 */
 		if (cpuid_level >= 0x06) {
 
 			x86_cpuid(0x06, regs);
 
-			if ((regs[2] & __BIT(0)) != 0)	      /* ECX.06[0] */
+			if ((regs[2] & __BIT(0)) != 0)		/* ECX.06[0] */
 				val |= ACPICPU_FLAG_P_HW;
 
-			if ((regs[0] & __BIT(1)) != 0)	      /* EAX.06[1] */
+			if ((regs[0] & __BIT(1)) != 0)		/* EAX.06[1] */
 				val |= ACPICPU_FLAG_P_TURBO;
+
+			if ((regs[0] & __BIT(2)) != 0)		/* EAX.06[2] */
+				val &= ~ACPICPU_FLAG_C_APIC;
 		}
 
 		/*
@@ -419,12 +423,8 @@ acpicpu_md_pstate_pss(struct acpicpu_softc *sc)
 	 * When the state is P0 and Turbo Boost has been
 	 * detected, we need to skip the status check as
 	 * BIOS may not report right comparison values for
-	 * the IA32_PERF_STATUS MSR. Note that this is a
-	 * BIOS issue, and that for instance AMD documents
-	 * clearly state that vendors should never expose
-	 * "turbo" in the ACPI objects (namely, in _PSS).
-	 *
-	 * For discussion, see:
+	 * the IA32_PERF_STATUS register. Note that this
+	 * issue is specific to Intel. For discussion, see:
 	 *
 	 *	Intel Corporation: Intel Turbo Boost Technology
 	 *	in Intel Core(tm) Microarchitectures (Nehalem)
