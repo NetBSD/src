@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_md.c,v 1.23 2010/08/21 04:36:29 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_md.c,v 1.24 2010/08/21 05:10:43 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.23 2010/08/21 04:36:29 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.24 2010/08/21 05:10:43 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -156,8 +156,8 @@ acpicpu_md_quirks(void)
 			if ((regs[2] & __BIT(0)) != 0)	      /* ECX.06[0] */
 				val |= ACPICPU_FLAG_P_HW;
 
-			if ((regs[0] & __BIT(1)) != 0)
-				val |= ACPICPU_FLAG_P_TURBO;  /* EAX.06[1] */
+			if ((regs[0] & __BIT(1)) != 0)	      /* EAX.06[1] */
+				val |= ACPICPU_FLAG_P_TURBO;
 		}
 
 		/*
@@ -166,7 +166,7 @@ acpicpu_md_quirks(void)
 		 * at constant rate. Depending on the CPU, this may
 		 * affect P- and T-state changes, but especially
 		 * relevant are C-states; with variant TSC, states
-		 * larger than C1 will completely stop the timer.
+		 * larger than C1 may completely stop the counter.
 		 */
 		x86_cpuid(0x80000000, regs);
 
@@ -415,6 +415,30 @@ acpicpu_md_pstate_pss(struct acpicpu_softc *sc)
 		i++;
 	}
 
+	/*
+	 * When the state is P0 and Turbo Boost has been
+	 * detected, we need to skip the status check as
+	 * BIOS may not report right comparison values for
+	 * the IA32_PERF_STATUS MSR. Note that this is a
+	 * BIOS issue, and that for instance AMD documents
+	 * clearly state that vendors should never expose
+	 * "turbo" in the ACPI objects (namely, in _PSS).
+	 *
+	 * For discussion, see:
+	 *
+	 *	Intel Corporation: Intel Turbo Boost Technology
+	 *	in Intel Core(tm) Microarchitectures (Nehalem)
+	 *	Based Processors. White Paper, November 2008.
+	 */
+	if (cpu_vendor != CPUVENDOR_INTEL)
+		return 0;
+
+	if ((sc->sc_flags & ACPICPU_FLAG_P_TURBO) == 0)
+		return 0;
+
+	if (sc->sc_pstate[1].ps_freq + 1 == sc->sc_pstate[0].ps_freq)
+		sc->sc_pstate[0].ps_flags |= ACPICPU_FLAG_P_TURBO;
+
 	return 0;
 }
 
@@ -471,7 +495,7 @@ acpicpu_md_pstate_set(struct acpicpu_pstate *ps)
 	msr.msr_type  = ps->ps_control_addr;
 	msr.msr_value = ps->ps_control;
 
-	if (ps->ps_control_mask != 0) {
+	if (__predict_true(ps->ps_control_mask != 0)) {
 		msr.msr_mask = ps->ps_control_mask;
 		msr.msr_read = true;
 	}
@@ -479,7 +503,10 @@ acpicpu_md_pstate_set(struct acpicpu_pstate *ps)
 	xc = xc_broadcast(0, (xcfunc_t)x86_msr_xcall, &msr, NULL);
 	xc_wait(xc);
 
-	if (ps->ps_status_addr == 0)
+	if (__predict_false(ps->ps_status_addr == 0))
+		return 0;
+
+	if ((ps->ps_flags & ACPICPU_FLAG_P_TURBO) != 0)
 		return 0;
 
 	xc = xc_broadcast(0, (xcfunc_t)acpicpu_md_pstate_status, ps, &rv);
@@ -499,7 +526,7 @@ acpicpu_md_pstate_status(void *arg1, void *arg2)
 
 		val = rdmsr(ps->ps_status_addr);
 
-		if (ps->ps_status_mask != 0)
+		if (__predict_true(ps->ps_status_mask != 0))
 			val = val & ps->ps_status_mask;
 
 		if (val == ps->ps_status)
