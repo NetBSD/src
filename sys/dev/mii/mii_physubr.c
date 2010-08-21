@@ -1,4 +1,4 @@
-/*	$NetBSD: mii_physubr.c,v 1.71 2010/07/25 14:44:34 pgoyette Exp $	*/
+/*	$NetBSD: mii_physubr.c,v 1.72 2010/08/21 13:18:35 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mii_physubr.c,v 1.71 2010/07/25 14:44:34 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mii_physubr.c,v 1.72 2010/08/21 13:18:35 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -71,11 +71,8 @@ const char *mii_get_descr_stub(int oui, int model)
  */
 void mii_load_verbose(void)
 {
-	if (mii_verbose_loaded == 0) {
-		mutex_enter(&module_lock);
+	if (mii_verbose_loaded == 0)
 		module_autoload("miiverbose", MODULE_CLASS_MISC);
-		mutex_exit(&module_lock);
-	}
 }  
 
 static void mii_phy_statusmsg(struct mii_softc *);
