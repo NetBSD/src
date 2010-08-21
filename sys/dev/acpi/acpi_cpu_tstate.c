@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_tstate.c,v 1.15 2010/08/20 04:16:00 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_tstate.c,v 1.16 2010/08/21 18:25:45 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_tstate.c,v 1.15 2010/08/20 04:16:00 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_tstate.c,v 1.16 2010/08/21 18:25:45 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/evcnt.h>
@@ -682,15 +682,6 @@ acpicpu_tstate_get(struct acpicpu_softc *sc, uint32_t *percent)
 
 			if (sc->sc_tstate[i].ts_percent == 0)
 				continue;
-
-			/*
-			 * As the status field may be zero, compare
-			 * against the control field value as well.
-			 */
-			if (val == sc->sc_tstate[i].ts_control) {
-				ts = &sc->sc_tstate[i];
-				break;
-			}
 
 			if (val == sc->sc_tstate[i].ts_status) {
 				ts = &sc->sc_tstate[i];
