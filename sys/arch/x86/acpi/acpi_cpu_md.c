@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_md.c,v 1.20 2010/08/20 07:00:17 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_md.c,v 1.21 2010/08/21 02:47:37 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.20 2010/08/20 07:00:17 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.21 2010/08/21 02:47:37 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -111,6 +111,7 @@ acpicpu_md_quirks(void)
 	struct cpu_info *ci = curcpu();
 	struct pci_attach_args pa;
 	uint32_t family, val = 0;
+	uint32_t regs[4];
 
 	if (acpicpu_md_cpus_running() == 1)
 		val |= ACPICPU_FLAG_C_BM;
@@ -144,8 +145,13 @@ acpicpu_md_quirks(void)
 		case 0x10:
 		case 0x11:
 
-			if ((ci->ci_feat_val[2] & CPUID_APM_HWP) != 0)
+			x86_cpuid(0x80000007, regs);
+
+			if ((regs[3] & CPUID_APM_HWP) != 0)
 				val |= ACPICPU_FLAG_P_FFH;
+
+			if ((regs[3] & CPUID_APM_CPB) != 0)
+				val |= ACPICPU_FLAG_P_TURBO;
 		}
 
 		break;
