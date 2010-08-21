@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.299 2010/07/07 01:30:37 chs Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.300 2010/08/21 13:19:39 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.299 2010/07/07 01:30:37 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.300 2010/08/21 13:19:39 pgoyette Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_modular.h"
@@ -500,17 +500,13 @@ exec_autoload(void)
 	char const * const *list;
 	int i;
 
-	mutex_enter(&module_lock);
 	list = (nexecs == 0 ? native : compat);
 	for (i = 0; list[i] != NULL; i++) {
 		if (module_autoload(list[i], MODULE_CLASS_MISC) != 0) {
 		    	continue;
 		}
-		mutex_exit(&module_lock);
 	   	yield();
-		mutex_enter(&module_lock);
 	}
-	mutex_exit(&module_lock);
 #endif
 }
 

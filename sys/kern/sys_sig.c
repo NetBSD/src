@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_sig.c,v 1.28 2010/07/01 02:38:31 rmind Exp $	*/
+/*	$NetBSD: sys_sig.c,v 1.29 2010/08/21 13:19:39 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.28 2010/07/01 02:38:31 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.29 2010/08/21 13:19:39 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -347,13 +347,13 @@ sigaction1(struct lwp *l, int signum, const struct sigaction *nsa,
 	 *
 	 * If version < 2, we try to autoload the compat module.  Note
 	 * that we interlock with the unload check in compat_modcmd()
-	 * using module_lock.  If the autoload fails, we don't try it
+	 * using kernconfig_lock.  If the autoload fails, we don't try it
 	 * again for this process.
 	 */
 	if (nsa != NULL) {
 		if (__predict_false(vers < 2) &&
 		    (p->p_lflag & PL_SIGCOMPAT) == 0) {
-			mutex_enter(&module_lock);
+			kernconfig_lock();
 			if (sendsig_sigcontext_vec == NULL) {
 				(void)module_autoload("compat",
 				    MODULE_CLASS_ANY);
@@ -374,7 +374,7 @@ sigaction1(struct lwp *l, int signum, const struct sigaction *nsa,
 			 */
 			p->p_lflag |= PL_SIGCOMPAT;
 			mutex_exit(proc_lock);
-			mutex_exit(&module_lock);
+			kernconfig_unlock();
 		}
 
 		switch (vers) {
