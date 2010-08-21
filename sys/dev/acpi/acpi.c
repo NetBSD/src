@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.215 2010/08/09 09:36:42 gsutre Exp $	*/
+/*	$NetBSD: acpi.c,v 1.216 2010/08/21 13:18:35 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.215 2010/08/09 09:36:42 gsutre Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.216 2010/08/21 13:18:35 pgoyette Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -1793,11 +1793,8 @@ void
 acpi_load_verbose(void)
 {
 
-	if (acpi_verbose_loaded == 0) {
-		mutex_enter(&module_lock);
+	if (acpi_verbose_loaded == 0)
 		module_autoload("acpiverbose", MODULE_CLASS_MISC);
-		mutex_exit(&module_lock);
-	}
 }
 
 void
