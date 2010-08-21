@@ -1,4 +1,4 @@
-/*	$NetBSD: k_helper.c,v 1.3 2008/04/28 20:24:12 martin Exp $	*/
+/*	$NetBSD: k_helper.c,v 1.4 2010/08/21 13:21:48 pgoyette Exp $	*/
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: k_helper.c,v 1.3 2008/04/28 20:24:12 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: k_helper.c,v 1.4 2010/08/21 13:21:48 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -50,7 +50,8 @@ static int present = 1;
 static int prop_str_ok;
 static char prop_str_val[128];
 static int prop_int_ok;
-static int prop_int_val;
+static int64_t prop_int_val;
+static int prop_int_load;
 
 #define K_HELPER 0x12345678
 #define K_HELPER_PRESENT 0
@@ -58,6 +59,7 @@ static int prop_int_val;
 #define K_HELPER_PROP_STR_VAL 2
 #define K_HELPER_PROP_INT_OK 3
 #define K_HELPER_PROP_INT_VAL 4
+#define K_HELPER_PROP_INT_LOAD 5
 
 SYSCTL_SETUP(sysctl_k_helper_setup, "sysctl k_helper subtree setup")
 {
@@ -98,10 +100,17 @@ SYSCTL_SETUP(sysctl_k_helper_setup, "sysctl k_helper subtree setup")
 
 	sysctl_createv(clog, 0, NULL, NULL,
 	               CTLFLAG_PERMANENT,
-	               CTLTYPE_INT, "prop_int_val",
+	               CTLTYPE_QUAD, "prop_int_val",
 		       SYSCTL_DESCR("String property's value"),
 		       NULL, 0, &prop_int_val, 0,
 	               CTL_VENDOR, K_HELPER, K_HELPER_PROP_INT_VAL, CTL_EOL);
+
+	sysctl_createv(clog, 0, NULL, NULL,
+	               CTLFLAG_PERMANENT,
+	               CTLTYPE_INT, "prop_int_load",
+		       SYSCTL_DESCR("Status of recursive modload"),
+		       NULL, 0, &prop_int_load, 0,
+	               CTL_VENDOR, K_HELPER, K_HELPER_PROP_INT_LOAD, CTL_EOL);
 }
 
 /* --------------------------------------------------------------------- */
@@ -142,6 +151,17 @@ k_helper_init(prop_dictionary_t props)
 	}
 	if (!prop_int_ok)
 		prop_int_val = -1;
+
+	p = prop_dictionary_get(props, "prop_recurse");
+	if (p != NULL && prop_object_type(p) == PROP_TYPE_STRING) {
+		const char *recurse_name = prop_string_cstring_nocopy(p);
+		if (recurse_name != NULL)
+			prop_int_load = module_load(recurse_name,
+			    MODCTL_NO_PROP, NULL, MODULE_CLASS_ANY);
+		else
+			prop_int_load = -1;
+	} else
+		prop_int_load = -2;
 
 	sysctl_k_helper_setup(&clog);
 
