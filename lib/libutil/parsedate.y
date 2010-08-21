@@ -96,7 +96,7 @@ static time_t	yyRelSeconds;
 }
 
 %token	tAGO tDAY tDAYZONE tID tMERIDIAN tMINUTE_UNIT tMONTH tMONTH_UNIT
-%token	tSEC_UNIT tSNUMBER tUNUMBER tZONE tDST
+%token	tSEC_UNIT tSNUMBER tUNUMBER tZONE tDST AT_SIGN
 
 %type	<Number>	tDAY tDAYZONE tMINUTE_UNIT tMONTH tMONTH_UNIT
 %type	<Number>	tSEC_UNIT tSNUMBER tUNUMBER tZONE
@@ -128,6 +128,11 @@ item	: time {
 	    yyHaveDate++;
 	    yyHaveZone++;
 	}
+	| epochdate {
+	    yyHaveTime++;
+	    yyHaveDate++;
+	    yyHaveZone++;
+	}
 	| number
 	;
 
@@ -139,6 +144,31 @@ cvsstamp: tUNUMBER '.' tUNUMBER '.' tUNUMBER '.' tUNUMBER '.' tUNUMBER '.' tUNUM
 	    yyHour = $7;
 	    yyMinutes = $9;
 	    yySeconds = $11;
+	    yyDSTmode = DSToff;
+	    yyTimezone = 0;
+	}
+	;
+
+epochdate: AT_SIGN tUNUMBER {
+            time_t    when = $2;
+            struct tm tmbuf;
+            if (gmtime_r(&when, &tmbuf) != NULL) {
+		yyYear = tmbuf.tm_year + 1900;
+		yyMonth = tmbuf.tm_mon + 1;
+		yyDay = tmbuf.tm_mday;
+
+		yyHour = tmbuf.tm_hour;
+		yyMinutes = tmbuf.tm_min;
+		yySeconds = tmbuf.tm_sec;
+	    } else {
+		yyYear = 1970;
+		yyMonth = 1;
+		yyDay = 1;
+
+		yyHour = 0;
+		yyMinutes = 0;
+		yySeconds = 0;
+	    }
 	    yyDSTmode = DSToff;
 	    yyTimezone = 0;
 	}
@@ -816,6 +846,10 @@ yylex(void)
 	    *p = '\0';
 	    yyInput--;
 	    return LookupWord(buff);
+	}
+	if (c == '@') {
+	    yyInput++;
+	    return AT_SIGN;
 	}
 	if (c != '(')
 	    return *yyInput++;
