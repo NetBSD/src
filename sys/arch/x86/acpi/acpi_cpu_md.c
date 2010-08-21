@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_md.c,v 1.22 2010/08/21 03:55:24 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_md.c,v 1.23 2010/08/21 04:36:29 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.22 2010/08/21 03:55:24 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.23 2010/08/21 04:36:29 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -144,6 +144,21 @@ acpicpu_md_quirks(void)
 
 		if ((ci->ci_feat_val[0] & CPUID_ACPI) != 0)
 			val |= ACPICPU_FLAG_T_FFH;
+
+		/*
+		 * See if MSR_APERF, MSR_MPERF,
+		 * and Turbo Boost are available.
+		 */
+		if (cpuid_level >= 0x06) {
+
+			x86_cpuid(0x06, regs);
+
+			if ((regs[2] & __BIT(0)) != 0)	      /* ECX.06[0] */
+				val |= ACPICPU_FLAG_P_HW;
+
+			if ((regs[0] & __BIT(1)) != 0)
+				val |= ACPICPU_FLAG_P_TURBO;  /* EAX.06[1] */
+		}
 
 		/*
 		 * Detect whether TSC is invariant. If it is not,
