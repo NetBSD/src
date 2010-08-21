@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.237 2010/07/01 02:38:31 rmind Exp $	*/
+/*	$NetBSD: tty.c,v 1.238 2010/08/21 13:19:39 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.237 2010/07/01 02:38:31 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.238 2010/08/21 13:19:39 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1264,13 +1264,10 @@ ttioctl(struct tty *tp, u_long cmd, void *data, int flag, struct lwp *l)
 				break;
 			}
 			rw_exit(&ttcompat_lock);
-			mutex_enter(&module_lock);
 			(void)module_autoload("compat", MODULE_CLASS_ANY);
 			if (ttcompatvec == NULL) {
-				mutex_exit(&module_lock);
 				return EPASSTHROUGH;
 			}
-			mutex_exit(&module_lock);
 		}
 		error = (*ttcompatvec)(tp, cmd, data, flag, l);
 		rw_exit(&ttcompat_lock);
