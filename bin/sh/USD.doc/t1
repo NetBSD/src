@@ -14,7 +14,7 @@
 .\" documentation and/or other materials provided with the distribution.
 .\"
 .\" All advertising materials mentioning features or use of this software
-.\" must display the following acknowledgement:
+.\" must display the following acknowledgment:
 .\"
 .\" This product includes software developed or owned by Caldera
 .\" International, Inc.  Neither the name of Caldera International, Inc.
@@ -40,7 +40,7 @@
 .EH 'USD:3-%''An Introduction to the UNIX Shell'
 .OH 'An Introduction to the UNIX Shell''USD:3-%'
 .\".RP
-.TL 
+.TL
 An Introduction to the UNIX Shell
 .AU
 S. R. Bourne
@@ -48,15 +48,23 @@ S. R. Bourne
 Murray Hill, NJ
 .AU
 (Updated for 4.3BSD by Mark Seiden)
+.AU
+(Further updated by Perry E. Metzger)\(dg
 .AB
+.FS
+\(dg This paper was updated in 2010 to reflect most features of modern
+POSIX shells, which all follow the design of S.R. Bourne's original v7
+Unix shell.
+Among these are ash, bash, ksh and others.
+Typically one of these will be installed as /bin/sh on a modern system.
+It does not describe the behavior of the c shell (csh).
+If it's the c shell (csh) you're interested in, a good place to
+begin is William Joy's paper "An Introduction to the C shell" (USD:4).
+.FE
 .LP
 The
 .ul
-shell\(dd
-.FS 
-\(dd This paper describes sh(1). If it's the c shell (csh) you're interested in, 
-a good place to begin is William Joy's paper "An Introduction to the C shell" (USD:4).
-.FE
+shell
 is a command programming language that provides an interface
 to the
 .UX
@@ -156,28 +164,7 @@ The argument \fI\(mil\fP tells \fIls\fP
 to print status information, size and
 the creation date for each file.
 .SH
-1.2\ Background\ commands
-.LP
-To execute a command the shell normally
-creates a new \fIprocess\fP
-and waits for it to finish.
-A command may be run without waiting
-for it to finish.
-For example,
-.DS
-	cc pgm.c &
-.DE
-calls the C compiler to compile
-the file \fIpgm.c\|.\fP
-The trailing \fB&\fP is an operator that instructs the shell
-not to wait for the command to finish.
-To help keep track of such a process
-the shell reports its process
-number following its creation.
-A list of currently active processes may be obtained
-using the \fIps\fP command.
-.SH
-1.3\ Input\ output\ redirection
+1.2\ Input\ output\ redirection
 .LP
 Most commands produce output on the standard output
 that is initially connected to the terminal.
@@ -218,8 +205,30 @@ then
 	wc \(mil <file
 .DE
 could be used.
+.\" I considered adding the following, but have thought better of it
+.\" for now.
+.\" -- Perry Metzger
+.\"
+.\" .LP
+.\" Error messages are typically printed by commands on a different
+.\" channel, called standard error, which may also be redirected using the
+.\" notation 2>\|.
+.\" For example
+.\" .DS
+.\" command some args >out 2>errors
+.\" .DE
+.\" will redirect standard output to the file `out' but standard error
+.\" (and thus all error messages) to `errors'.
+.\" The notation 2>&1 sets standard error pointing to the same
+.\" place as standard out.
+.\" Thus:
+.\" .DS
+.\" command some args 2>&1 >everything
+.\" .DE
+.\" will put both standard out and standard error into the file `everything'.
+.\" See section 3.7 below for more details.
 .SH
-1.4\ Pipelines\ and\ filters
+1.3\ Pipelines\ and\ filters
 .LP
 The standard output of one command may be
 connected to the standard input of another
@@ -237,8 +246,8 @@ the overall effect is the same as
 	ls \(mil >file; wc <file
 .DE
 except that no \fIfile\fP is used.
-Instead the two processes are connected
-by a pipe (see \fIpipe\fP (2)) and are
+Instead the two \fIprocesses\fP are connected
+by a pipe (see \fIpipe\fP(2)) and are
 run in parallel.
 Pipes are unidirectional and
 synchronization is achieved by
@@ -276,6 +285,37 @@ for example,
 prints the number of file names
 in the current directory containing
 the string \fIold.\fP
+.SH
+1.4\ Background\ commands
+.LP
+To execute a command (or pipeline) the shell normally
+creates the new \fIprocesses\fP
+and waits for them to finish.
+A command may be run without waiting
+for it to finish.
+For example,
+.DS
+	cc pgm.c &
+.DE
+calls the C compiler to compile
+the file \fIpgm.c\|.\fP
+The trailing \fB&\fP is an operator that instructs the shell
+not to wait for the command to finish.
+To help keep track of such a process
+the shell reports its job number (see below) and process
+id following its creation.
+Such a command is said to be running in the \fIbackground\fP.
+By contrast, a command executed without the \fB&\fP is said to be
+running in the \fIforeground\fP.\(dg
+.FS
+\(dg Even after execution, one may move commands from the foreground
+to the background, or temporarily suspend their execution (which is
+known as \fIstopping\fP a command.
+This is described in detail in section 3.10 on \fIJob Control\fB.
+.FE
+.LP
+A list of currently active processes, including ones not associated
+with the current shell, may be obtained using the \fIps\fP(1) command.
 .SH
 1.5\ File\ name\ generation
 .LP
@@ -367,6 +407,21 @@ and `the parent directory'
 respectively.
 (Notice that \fIls\fP suppresses
 information for the files `\fB.\fP' and `\fB..\fP'\|.)
+.LP
+Finally, the tilde character, `\fB\(ap\fP', may be used to indicate the
+home directory of a user.
+The `\fB\(ap\fP' at the beginning of a path name followed by a
+non-alphabetic character expands to the current user's home
+directory.
+If the `\fB\(ap\fP' is followed by a login name, it expands to the named
+user's home directory.
+For example:
+.DS
+	ls \(ap
+	cd \(apegbert/
+.DE
+will list the contents of the user's home directory and then change
+to the home directory of the user ``egbert''.
 .SH
 1.6\ Quoting
 .LP
@@ -379,12 +434,12 @@ Any character preceded by a \fB\\\fR is \fIquoted\fP
 and loses its special meaning, if any.
 The \fB\\\fP is elided so that
 .DS
-	echo \\\\?
+	echo \\?
 .DE
 will echo a single \fB?\|,\fP
 and
 .DS
-	echo \\\\\\\\
+	echo \\\\
 .DE
 will echo a single \fB\\\|.\fR
 To allow long strings to be continued over
@@ -420,7 +475,7 @@ that prevents interpretation of some but not all
 metacharacters.
 Discussion of the
 details is deferred
-to section 3.4\|.
+to section 3.5\|.
 .SH
 1.7\ Prompting
 .LP
@@ -430,23 +485,29 @@ By default this prompt is `\fB$\ \fR'\|.
 It may be changed by saying,
 for example,
 .DS
-	\s-1PS1\s0=yesdear
+	\s-1PS1\s0="yesdear$ "
 .DE
-that sets the prompt to be the string \fIyesdear\|.\fP
+that sets the prompt to be the string \fIyesdear$\|.\fP
 If a newline is typed and further input is needed
 then the shell will issue the prompt `\fB>\ \fR'\|.
 Sometimes this can be caused by mistyping
 a quote mark.
-If it is unexpected then an interrupt (\s-1DEL\s0)
+If it is unexpected then entering the interrupt character
+(typically \s-1CONTROL-C\s0) 
 will return the shell to read another command.
 This prompt may be changed by saying, for example,
 .DS
 	\s-1PS2\s0=more
 .DE
+Entering the interrupt character may also be used to terminate most
+programs running as the current foreground job.
+.LP
+(\s-1PS1\s0 and \s-1PS2\s0 are \fIshell variables\fP, which will be
+described in section 2.4 below.)
 .SH
 1.8\ The\ shell\ and\ login
 .LP
-Following \fIlogin\fP (1)
+Following \fIlogin\fP(1)
 the shell is called to read and execute
 commands typed at the terminal.
 If the user's login directory
@@ -454,6 +515,12 @@ contains the file \fB.profile\fP
 then it is assumed to contain commands
 and is read by the shell before reading
 any commands from the terminal.
+.LP
+(Most versions of the shell also specify a file that is read and
+executed on start-up whether or not the shell is invoked by login.
+The \s-1ENV\s0 shell variable, described in section 2.4 below, can be
+used to override the name of this file.
+See the shell manual page for further information.)
 .SH
 1.9\ Summary
 .sp

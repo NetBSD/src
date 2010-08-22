@@ -42,13 +42,13 @@
 .LP
 Shell variables may be given values
 by assignment
-or when a shell procedure is invoked.
-An argument to a shell procedure of the form
+or when a shell script is invoked.
+An argument to a command of the form
 \fIname=value\fP
 that precedes the command name
 causes \fIvalue\fP
 to be assigned to \fIname\fP
-before execution of the procedure begins.
+before execution of the command begins.
 The value of \fIname\fP in the invoking
 shell is not affected.
 For example,
@@ -57,64 +57,69 @@ For example,
 .DE
 will execute \fIcommand\fP with
 \fBuser\fP set to \fIfred\fP.
-The \fB\(mik\fR flag causes arguments of the form
-\fIname=value\fP to be interpreted in this way
-anywhere in the argument list.
-Such \fInames\fP are sometimes
-called keyword parameters.
-If any arguments remain they
-are available as positional
-parameters \fB$1, $2, \*(ZZ\|.\fP
+.\" Removed by Perry Metzger because -k is not in POSIX
+.\"
+.\" The \fB\(mik\fR flag causes arguments of the form
+.\" \fIname=value\fP to be interpreted in this way
+.\" anywhere in the argument list.
+.\" Such \fInames\fP are sometimes
+.\" called keyword parameters.
+.\" If any arguments remain they
+.\" are available as positional
+.\" parameters \fB$1, $2, \*(ZZ\|.\fP
 .LP
 The \fIset\fP command
 may also be used to set positional parameters
-from within a procedure.
+from within a script.
 For example,
 .DS
-	set\ \(mi\ \*(ST
+	set\ \(mi\(mi\ \*(ST
 .DE
 will set \fB$1\fP to the first file name
 in the current directory, \fB$2\fP to the next,
 and so on.
-Note that the first argument, \(mi, ensures correct treatment
+Note that the first argument, \(mi\(mi, ensures correct treatment
 when the first file name begins with a \(mi\|.
 .LP
 .SH
 3.1\ Parameter\ transmission
 .LP
-When a shell procedure is invoked both positional
-and keyword parameters may be supplied with the call.
-Keyword parameters are also made available implicitly
-to a shell procedure
+When a command is executed both positional parameters
+and shell variables may be set on invocation.
+Variables are also made available implicitly
+to a command
 by specifying in advance that such parameters
-are to be exported.
+are to be exported from the invoking shell.
 For example,
 .DS
-	export\ user\ box
+	export\ user\ box=red
 .DE
 marks the variables \fBuser\fP and \fBbox\fP
-for export.
-When a shell procedure is invoked
+for export (setting \fBbox\fP to ``red'' in the process).
+When a command is invoked
 copies are made of all exportable variables
-for use within the invoked procedure.
+(also known as \fIenvironment variables\fP)
+for use within the invoked program.
 Modification of such variables
-within the procedure does not
+within an invoked command does not
 affect the values in the invoking shell.
 It is generally true of
-a shell procedure
+a shell script or other program
 that it
-may not modify the state
+cannot modify the state
 of its caller without explicit
-request on the part of the caller.
-(Shared file descriptors are an
-exception to this rule.)
+actions on the part of the caller.
+.\" Removed by Perry Metzger because this is confusing to beginners.
+.\"
+.\" (Shared file descriptors are an
+.\" exception to this rule.)
 .LP
 Names whose value is intended to remain
 constant may be declared \fIreadonly\|.\fP
 The form of this command is the same as that of the \fIexport\fP
 command,
 .DS
-	readonly name \*(ZZ
+	readonly name[=value] \*(ZZ
 .DE
 Subsequent attempts to set readonly variables
 are illegal.
@@ -136,53 +141,56 @@ will echo nothing.
 A default string may be given
 as in
 .DS
-	echo ${d\(mi\fB.\fR}
+	echo ${d:\(mi\fB.\fR}
 .DE
 which will echo
 the value of the variable \fBd\fP
-if it is set and `\fB.\fP' otherwise.
+if it is set and not null and `\fB.\fP' otherwise.
 The default string is evaluated using the usual
 quoting conventions so that
 .DS
-	echo ${d\(mi\'\*(ST\'}
+	echo ${d:\(mi\'\*(ST\'}
 .DE
 will echo \fB\*(ST\fP if the variable \fBd\fP
-is not set.
+is not set or null.
 Similarly
 .DS
-	echo ${d\(mi$1}
+	echo ${d:\(mi$1}
 .DE
-will echo the value of \fBd\fP if it is set
+will echo the value of \fBd\fP if it is set and not null
 and the value (if any) of \fB$1\fP otherwise.
+.LP
+The notation ${d:+\fB.\fR} performs the inverse operation. It
+substitutes `\fB.\fP' if \fBd\fP is set or not null, and otherwise
+substitutes null.
+.LP
 A variable may be assigned a default value
 using
 the notation
 .DS
-	echo ${d=\fB.\fR}
+	echo ${d:=\fB.\fR}
 .DE
 which substitutes the same string as
 .DS
-	echo ${d\(mi\fB.\fR}
+	echo ${d:\(mi\fB.\fR}
 .DE
-and if \fBd\fP were not previously set
+and if \fBd\fP were not previously set or null
 then it will be set to the string `\fB.\fP'\|.
-(The notation ${\*(ZZ=\*(ZZ}
-is not available for positional parameters.)
 .LP
 If there is no sensible default then
 the notation
 .DS
-	echo ${d?message}
+	echo ${d:?\fImessage\fP}
 .DE
-will echo the value of the variable \fBd\fP if it has
-one, otherwise \fImessage\fP is printed by the shell and
-execution of the shell procedure is abandoned.
+will echo the value of the variable \fBd\fP if it is set and not null,
+otherwise \fImessage\fP is printed by the shell and
+execution of the shell script is abandoned.
 If \fImessage\fP is absent then a standard message
 is printed.
-A shell procedure that requires some parameters
-to be set might start as follows.
+A shell script that requires some variables
+to be set might start as follows:
 .DS
-	:\ ${user?}\ ${acct?}\ ${bin?}
+	:\ ${user:?}\ ${acct:?}\ ${bin:?}
 	\*(ZZ
 .DE
 Colon (\fB:\fP) is a command
@@ -191,7 +199,7 @@ built in to the shell and does nothing
 once its arguments have been evaluated.
 If any of the variables \fBuser, acct\fP
 or \fBbin\fP are not set then the shell
-will abandon execution of the procedure.
+will abandon execution of the script.
 .SH
 3.3\ Command\ substitution
 .LP
@@ -201,31 +209,35 @@ The command \fIpwd\fP prints on its standard
 output the name of the current directory.
 For example, if the current directory is
 \fB/usr/fred/bin\fR
-then the command
+then the commands
 .DS
-	d=\`pwd\`
+	d=$(pwd)
 .DE
+(or the older notation d=\`pwd\`)
 is equivalent to
 .DS
 	d=/usr/fred/bin
 .DE
 .LP
-The entire string between grave accents (\`\*(ZZ\`)
+The entire string inside $(\*(ZZ)\| (or between grave accents \`\*(ZZ\`)
 is taken as the command
 to be executed
 and is replaced with the output from
 the command.
-The command is written using the usual
-quoting conventions
-except that a \fB\`\fR must be escaped using
-a \fB\\\|.\fR
+(The difference between the $(\*(ZZ) and \`\*(ZZ\` notations is that
+the former may be nested, while the latter cannot be.)
+.LP
+The command is written using the usual quoting conventions,
+except that inside \`\*(ZZ\`
+a \fB\`\fR must be escaped using
+a \fB\\\|\fR.
 For example,
 .DS
-	ls \`echo "$1"\`
+	ls $(echo "$HOME")
 .DE
 is equivalent to
 .DS
-	ls $1
+	ls $HOME
 .DE
 Command substitution occurs in all contexts
 where parameter substitution occurs (including \fIhere\fP documents) and the
@@ -233,7 +245,7 @@ treatment of the resulting text is the same
 in both cases.
 This mechanism allows string
 processing commands to be used within
-shell procedures.
+shell scripts.
 An example of such a command is \fIbasename\fP
 which removes a specified suffix from a string.
 For example,
@@ -246,7 +258,7 @@ fragment from a \fIcc\fP command.
 .DS
 	case $A in
 	\*(Ca\*(ZZ
-	\*(Ca\*(ST\fB.\fPc)	B=\`basename $A \fB.\fPc\`
+	\*(Ca\*(ST\fB.\fPc)	B=$(basename $A \fB.\fPc)
 	\*(Ca\*(ZZ
 	esac
 .DE
@@ -265,7 +277,7 @@ to the names of files in time order,
 most recent first.
 .IP \(bu
 .ft B
-set \`date\`; echo $6 $2 $3, $4
+set \(mi\(mi\| \`date\`; echo $6 $2 $3, $4
 .ft R
 .br
 will print, e.g.,
@@ -274,7 +286,24 @@ will print, e.g.,
 .ft R
 .RE
 .SH
-3.4\ Evaluation\ and\ quoting
+3.4\ Arithmetic\ Expansion
+.LP
+Within a $((\*(ZZ)) construct, integer arithmetic operations are
+evaluated.
+(The $ in front of variable names is optional within $((\*(ZZ)).
+For example:
+.DS
+	x=5; y=1
+	echo $(($x+3*2))
+	echo $((y+=x))
+	echo $y
+.DE
+will print `11', then `6', then `6' again.
+Most of the constructs permitted in C arithmetic operations are
+permitted though some (like `++') are not universally supported \(em
+see the shell manual page for details.
+.SH
+3.5\ Evaluation\ and\ quoting
 .LP
 The shell is a macro processor that
 provides parameter substitution, command substitution and file
@@ -292,7 +321,9 @@ substitutions occur.
 .IP \(bu
 parameter substitution, e.g. \fB$user\fP
 .IP \(bu
-command substitution, e.g. \fB\`pwd\`\fP
+command substitution, e.g. \fB$(pwd)\fP or \fB\`pwd\`\fP
+.IP \(bu
+arithmetic expansion, e.g. \fB$(($count+1))\fP
 .RS
 .LP
 Only one evaluation occurs so that if, for example, the value of the variable
@@ -360,6 +391,7 @@ have a special meaning within double quotes
 and may be quoted using \fB\\\|.\fP
 .DS
 	\fB$	\fPparameter substitution
+	\fB$()\fP	command substitution
 	\fB\`\fP	command substitution
 	\fB"\fP	ends the quoted string
 	\fB\e\fP	quotes the special characters \fB$ \` " \e\fP
@@ -434,7 +466,7 @@ The input is read and the resulting command(s)
 executed.
 For example,
 .DS
-	wg=\\'eval who\*(VTgrep\\'
+	wg=\'eval who\*(VTgrep\'
 	$wg fred
 .DE
 is equivalent to
@@ -444,10 +476,10 @@ is equivalent to
 In this example,
 \fIeval\fP is required
 since there is no interpretation
-of metacharacters, such as \fB\*(VT\|,\fP following
+of metacharacters, such as \fB\*(VT\|\fR, following
 substitution.
 .SH
-3.5\ Error\ handling
+3.6\ Error\ handling
 .LP
 The treatment of errors detected by
 the shell depends on the type of error
@@ -455,8 +487,11 @@ and on whether the shell is being
 used interactively.
 An interactive shell is one whose
 input and output are connected
-to a terminal (as determined by
-\fIgtty\fP (2)).
+to a terminal.
+.\" Removed by Perry Metzger, obsolete and excess detail
+.\"
+.\" (as determined by
+.\" \fIgtty\fP (2)).
 A shell invoked with the \fB\(mii\fP
 flag is also interactive.
 .LP
@@ -484,7 +519,7 @@ will go on to execute the next command.
 Except for the last case an error
 message will be printed by the shell.
 All remaining errors cause the shell
-to exit from a command procedure.
+to exit from a script.
 An interactive shell will return
 to read another command from the terminal.
 Such errors include the following.
@@ -526,8 +561,8 @@ if any error is detected.
 Figure 3. UNIX signals\(dg
 .ft
 .FS
-\(dg Additional signals have been added in Berkeley Unix.  See sigvec(2) or signal(3C)
-for an up-to-date list.
+\(dg Additional signals have been added in modern Unix.
+See \fIsigvec\fP(2) or \fIsignal\fP(3) for an up-to-date list.
 .FE
 Those signals marked with an asterisk
 produce a core dump
@@ -538,9 +573,9 @@ external signal that can cause a dump.
 The signals in this list of potential interest
 to shell programs are 1, 2, 3, 14 and 15.
 .SH
-3.6\ Fault\ handling
+3.7\ Fault\ handling
 .LP
-Shell procedures normally terminate
+shell scripts normally terminate
 when an interrupt is received from the
 terminal.
 The \fItrap\fP command is used
@@ -558,11 +593,11 @@ will execute the commands
 .DE
 \fIexit\fP is
 another built-in command
-that terminates execution of a shell procedure.
+that terminates execution of a shell script.
 The \fIexit\fP is required; otherwise,
 after the trap has been taken,
 the shell will resume executing
-the procedure
+the script
 at the place where it was interrupted.
 .LP
 UNIX signals can be handled in one of three ways.
@@ -575,7 +610,7 @@ Lastly, they can be left to cause
 termination of the process without
 it having to take any further action.
 If a signal is being ignored
-on entry to the shell procedure, for example,
+on entry to the shell script, for example,
 by invoking it in the background (see 3.7) then \fItrap\fP
 commands (and the signal) are ignored.
 .LP
@@ -584,15 +619,17 @@ by this modified version of the \fItouch\fP
 command (Figure 4).
 The cleanup action is to remove the file \fBjunk$$\fR\|.
 .DS
+	#!/bin/sh
+
 	flag=
 	trap\ \'rm\ \(mif\ junk$$;\ exit\'\ 1 2 3 15
 	for i
 	do\ case\ $i\ in
 	\*(DC\(mic)	flag=N ;;
 	\*(DC\*(ST)	if\ test\ \(mif\ $i
-	\*(DC	then	ln\ $i\ junk$$;\ rm\ junk$$
+	\*(DC	then	cp\ $i\ junk$$;\ mv\ junk$$ $i
 	\*(DC	elif\ test\ $flag
-	\*(DC	then	echo\ file\ \\\\\'$i\\\\\'\ does\ not\ exist
+	\*(DC	then	echo\ file\ \\'$i\\'\ does\ not\ exist
 	\*(DC	else	>$i
 	\*(DC	fi
 	\*(DOesac
@@ -615,9 +652,9 @@ the file.
 Since there is no signal 0 in UNIX
 it is used by the shell to indicate the
 commands to be executed on exit from the
-shell procedure.
+shell script.
 .LP
-A procedure may, itself, elect to
+A script may, itself, elect to
 ignore signals by specifying the null
 string as the argument to trap.
 The following fragment is taken from the
@@ -627,7 +664,7 @@ The following fragment is taken from the
 .DE
 which causes \fIhangup, interrupt, quit \fRand\fI kill\fR
 to be ignored both by the
-procedure and by invoked commands.
+script and by invoked commands.
 .LP
 Traps may be reset by saying
 .DS
@@ -640,7 +677,7 @@ by writing
 	trap
 .DE
 .LP
-The procedure \fIscan\fP (Figure 5) is an example
+The script \fIscan\fP (Figure 5) is an example
 of the use of \fItrap\fP where there is no exit
 in the trap command.
 \fIscan\fP takes each directory
@@ -677,7 +714,7 @@ It returns a non-zero exit status if either
 an end-of-file is read or an interrupt
 is received.
 .SH
-3.7\ Command\ execution
+3.8\ Command\ execution
 .LP
 To run a command (other than a built-in) the shell first creates
 a new process using the system call \fIfork.\fP
@@ -764,40 +801,42 @@ merged.
 (Strictly speaking file descriptor 2 is created
 by duplicating file descriptor 1 but the effect is usually to
 merge the two streams.)
-.LP
-The environment for a command run in the background such as
-.DS
-	list \*(ST.c \*(VT lpr &
-.DE
-is modified in two ways.
-Firstly, the default standard input
-for such a command is the empty file \fB/dev/null\|.\fR
-This prevents two processes (the shell and the command),
-which are running in parallel, from trying to
-read the same input.
-Chaos would ensue
-if this were not the case.
-For example,
-.DS
-	ed file &
-.DE
-would allow both the editor and the shell
-to read from the same input at the same time.
-.LP
-The other modification to the environment of a background
-command is to turn off the QUIT and INTERRUPT signals
-so that they are ignored by the command.
-This allows these signals to be used
-at the terminal without causing background
-commands to terminate.
-For this reason the UNIX convention
-for a signal is that if it is set to 1
-(ignored) then it is never changed
-even for a short time.
-Note that the shell command \fItrap\fP
-has no effect for an ignored signal.
+.\" Removed by Perry Metzger, most of this is now obsolete
+.\"
+.\" .LP
+.\" The environment for a command run in the background such as
+.\" .DS
+.\" 	list \*(ST.c \*(VT lpr &
+.\" .DE
+.\" is modified in two ways.
+.\" Firstly, the default standard input
+.\" for such a command is the empty file \fB/dev/null\|.\fR
+.\" This prevents two processes (the shell and the command),
+.\" which are running in parallel, from trying to
+.\" read the same input.
+.\" Chaos would ensue
+.\" if this were not the case.
+.\" For example,
+.\" .DS
+.\" 	ed file &
+.\" .DE
+.\" would allow both the editor and the shell
+.\" to read from the same input at the same time.
+.\" .LP
+.\" The other modification to the environment of a background
+.\" command is to turn off the QUIT and INTERRUPT signals
+.\" so that they are ignored by the command.
+.\" This allows these signals to be used
+.\" at the terminal without causing background
+.\" commands to terminate.
+.\" For this reason the UNIX convention
+.\" for a signal is that if it is set to 1
+.\" (ignored) then it is never changed
+.\" even for a short time.
+.\" Note that the shell command \fItrap\fP
+.\" has no effect for an ignored signal.
 .SH
-3.8\ Invoking\ the\ shell
+3.9\ Invoking\ the\ shell
 .LP
 The following flags are interpreted by the shell
 when it is invoked.
@@ -821,6 +860,84 @@ In this case TERMINATE is ignored (so that \fBkill 0\fP
 does not kill an interactive shell) and INTERRUPT is caught and ignored
 (so that \fBwait\fP is interruptable).
 In all cases QUIT is ignored by the shell.
+.SH
+3.10\ Job\ Control
+.LP
+When a command or pipeline (also known as a \fIjob\fP) is running in
+the foreground, entering the stop character (typically
+\s-1CONTROL-Z\s0 but user settable with the \fIstty\fP(1) command)
+will usually cause the job to stop.
+.LP
+The jobs associated with the current shell may be listed by entering
+the \fIjobs\fP command.
+Each job has an associated \fIjob number\fP.
+Jobs that are stopped may be continued by entering
+.DS
+	bg %\fIjobnumber\fP
+.DE
+and jobs may be moved to the foreground by entering
+.DS
+	fg %\fIjobnumber\fP
+.DE
+If there is a sole job with a particular name (say only one instance
+of \fIcc\fP running), \fIfg\fP and \fIbg\fP may also use name of the
+command in place of the number, as in:
+.DS
+	bg %cc
+.DE
+If no `\fB%\fP' clause is entered, most recently stopped job
+(indicated with a `+' by the \fIjobs\fP command) will be assumed.
+See the manual page for the shell for more details.
+.SH
+3.11\ Aliases
+.LP
+The \fIalias\fP command creates a so-called shell alias, which is an
+abbreviation that macro-expands at run time into some other command.
+For example:
+.DS
+	alias ls="ls -F"
+.DE
+would cause the command sequence \fBls -F\fP to be executed whenever
+the user types \fBls\fP into the shell.
+Note that if the user types \fBls -a\fP, the shell will in fact
+execute \fBls -F -a\fP.
+The command \fBalias\fP on its own prints out all current aliases.
+The \fIunalias\fP command, as in:
+.DS
+	unalias ls
+.DE
+will remove an existing alias.
+Aliases can shadow pre-existing commands, as in the example above.
+They are typically used to override the interactive behavior of
+commands in small ways, for example to always invoke some program with
+a favorite option, and are almost never found in scripts.
+.SH
+3.12\ Command\ Line\ Editing\ and\ Recall
+.LP
+When working interactively with the shell, it is often tedious to
+retype previously entered commands, especially if they are complicated.
+The shell therefore maintains a so-called \fIhistory\fP, which is
+stored in the file specified by the \fB\s-1HISTFILE\s0\fP environment
+variable if it is set.
+Users may view, edit, and re-enter previous lines of input using
+a small subset of the commands of the \fIvi\fP(1) or
+\fIemacs\fP(1)\(dg editors.
+.FS
+Technically, vi command editing is standardized by POSIX while emacs
+is not.
+However, all modern shells support both styles.
+.FE
+Emacs style editing may be selected by entering
+.DS
+	set -o emacs
+.DE
+and vi style editing may be selected with
+.DS
+	set -o vi
+.DE
+The details of how command line editing works are beyond the scope of
+this document.
+See the shell manual page for details.
 .SH
 Acknowledgements
 .LP
