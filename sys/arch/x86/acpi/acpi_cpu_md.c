@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_md.c,v 1.29 2010/08/21 18:25:45 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_md.c,v 1.30 2010/08/22 04:42:57 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.29 2010/08/21 18:25:45 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.30 2010/08/22 04:42:57 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -510,18 +510,23 @@ acpicpu_md_pstate_set(struct acpicpu_pstate *ps)
 	xc_wait(xc);
 
 	if (__predict_false(ps->ps_status == 0))
-		return 0;
+		goto out;
 
 	if (__predict_false(ps->ps_status_addr == 0))
-		return 0;
+		goto out;
 
 	if ((ps->ps_flags & ACPICPU_FLAG_P_TURBO) != 0)
-		return 0;
+		goto out;
 
 	xc = xc_broadcast(0, (xcfunc_t)acpicpu_md_pstate_status, ps, &rv);
 	xc_wait(xc);
 
 	return rv;
+
+out:
+	DELAY(ps->ps_latency);
+
+	return 0;
 }
 
 static void
@@ -587,8 +592,10 @@ acpicpu_md_tstate_set(struct acpicpu_tstate *ts)
 	xc = xc_broadcast(0, (xcfunc_t)x86_msr_xcall, &msr, NULL);
 	xc_wait(xc);
 
-	if (ts->ts_status == 0)
+	if (ts->ts_status == 0) {
+		DELAY(ts->ts_latency);
 		return 0;
+	}
 
 	xc = xc_broadcast(0, (xcfunc_t)acpicpu_md_tstate_status, ts, &rv);
 	xc_wait(xc);
