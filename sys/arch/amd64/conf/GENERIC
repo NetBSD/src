@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.284 2010/08/08 18:28:00 chs Exp $
+# $NetBSD: GENERIC,v 1.285 2010/08/22 18:56:21 rmind Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.284 $"
+#ident 		"GENERIC-$Revision: 1.285 $"
 
 maxusers	64		# estimated number of users
 
@@ -1107,6 +1107,9 @@ options		MEMORY_DISK_DYNAMIC	# loaded via kernel module
 
 pseudo-device	vnd			# disk-like interface to files
 #options 	VND_COMPRESSION		# compressed vnd(4)
+
+# NPF
+#pseudo-device	npf
 
 # network pseudo-devices
 pseudo-device	bpfilter		# Berkeley packet filter

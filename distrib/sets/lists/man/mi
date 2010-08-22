@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1233 2010/08/06 17:00:12 jruoho Exp $
+# $NetBSD: mi,v 1.1234 2010/08/22 18:56:20 rmind Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2419,6 +2419,8 @@
 ./usr/share/man/cat8/nfsiod.0			man-obsolete		obsolete
 ./usr/share/man/cat8/nis.0			man-nis-catman		.cat
 ./usr/share/man/cat8/nologin.0			man-sysutil-catman	.cat
+./usr/share/man/cat8/npf.conf.0			man-npf-catman		.cat
+./usr/share/man/cat8/npfctl.0			man-npf-catman		.cat
 ./usr/share/man/cat8/nqmgr.0			man-obsolete		obsolete
 ./usr/share/man/cat8/nslookup.0			man-netutil-catman	.cat
 ./usr/share/man/cat8/nsupdate.0			man-obsolete		obsolete
@@ -4876,6 +4878,8 @@
 ./usr/share/man/html8/nfsd.html			man-nfsserver-htmlman	html
 ./usr/share/man/html8/nis.html			man-nis-htmlman		html
 ./usr/share/man/html8/nologin.html		man-sysutil-htmlman	html
+./usr/share/man/html8/npf.conf.html		man-npf-htmlman		html
+./usr/share/man/html8/npfctl.html		man-npf-htmlman		html
 ./usr/share/man/html8/nslookup.html		man-netutil-htmlman	html
 ./usr/share/man/html8/nsupdate.html		man-obsolete		obsolete
 ./usr/share/man/html8/ntalkd.html		man-netutil-htmlman	html
@@ -7555,6 +7559,8 @@
 ./usr/share/man/man8/nfsiod.8			man-obsolete		obsolete
 ./usr/share/man/man8/nis.8			man-nis-man		.man
 ./usr/share/man/man8/nologin.8			man-sysutil-man		.man
+./usr/share/man/man8/npf.conf.8			man-npf-man		.man
+./usr/share/man/man8/npfctl.8			man-npf-man		.man
 ./usr/share/man/man8/nqmgr.8			man-obsolete		obsolete
 ./usr/share/man/man8/nslookup.8			man-netutil-man		.man
 ./usr/share/man/man8/nsupdate.8			man-obsolete		obsolete

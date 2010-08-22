@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1498 2010/08/21 10:32:35 jruoho Exp $
+#	$NetBSD: mi,v 1.1499 2010/08/22 18:56:19 rmind Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1474,6 +1474,8 @@
 ./usr/include/net/if_vlanvar.h			comp-c-include
 ./usr/include/net/net_stats.h			comp-c-include
 ./usr/include/net/netisr.h			comp-c-include
+./usr/include/net/npf.h				comp-npf-include	npf
+./usr/include/net/npf_ncode.h			comp-npf-include	npf
 ./usr/include/net/pfil.h			comp-c-include
 ./usr/include/net/pfkeyv2.h			comp-c-include
 ./usr/include/net/pfvar.h			comp-c-include
@@ -3632,6 +3634,7 @@
 ./usr/libdata/debug/usr/sbin/ndp.debug		comp-netutil-debug	inet6,debug
 ./usr/libdata/debug/usr/sbin/netgroup_mkdb.debug	comp-nis-debug		debug
 ./usr/libdata/debug/usr/sbin/nfsd.debug		comp-nfsserver-debug	debug
+./usr/libdata/debug/usr/sbin/npfctl.debug	comp-npf-debug		npf,debug
 ./usr/libdata/debug/usr/sbin/ntp-keygen.debug	comp-ntp-debug		crypto,debug
 ./usr/libdata/debug/usr/sbin/ntpd.debug		comp-ntp-debug		debug
 ./usr/libdata/debug/usr/sbin/ntpdate.debug	comp-ntp-debug		debug
@@ -9406,6 +9409,7 @@
 ./usr/share/man/cat9/nanouptime.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/need_resched.0		comp-obsolete		obsolete
 ./usr/share/man/cat9/nextrunqueue.0		comp-obsolete		obsolete
+./usr/share/man/cat9/npf_ncode.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/nullop.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/old_sysctl.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/opencrypto.0		comp-sys-catman		.cat
@@ -15209,6 +15213,7 @@
 ./usr/share/man/html9/namei.html		comp-sys-htmlman	html
 ./usr/share/man/html9/nanotime.html		comp-sys-htmlman	html
 ./usr/share/man/html9/nanouptime.html		comp-sys-htmlman	html
+./usr/share/man/html9/npf_ncode.html		comp-sys-htmlman	html
 ./usr/share/man/html9/nullop.html		comp-sys-htmlman	html
 ./usr/share/man/html9/old_sysctl.html		comp-sys-htmlman	html
 ./usr/share/man/html9/opencrypto.html		comp-sys-htmlman	html
@@ -21179,6 +21184,7 @@
 ./usr/share/man/man9/nanouptime.9		comp-sys-man		.man
 ./usr/share/man/man9/need_resched.9		comp-obsolete		obsolete
 ./usr/share/man/man9/nextrunqueue.9		comp-obsolete		obsolete
+./usr/share/man/man9/npf_ncode.9		comp-sys-man		.man
 ./usr/share/man/man9/nullop.9			comp-sys-man		.man
 ./usr/share/man/man9/old_sysctl.9		comp-sys-man		.man
 ./usr/share/man/man9/opencrypto.9		comp-sys-man		.man

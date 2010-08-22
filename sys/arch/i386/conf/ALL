@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.266 2010/08/21 03:06:37 tsutsui Exp $
+# $NetBSD: ALL,v 1.267 2010/08/22 18:56:21 rmind Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.266 $"
+#ident 		"ALL-$Revision: 1.267 $"
 
 maxusers	64		# estimated number of users
 
@@ -1597,6 +1597,9 @@ pseudo-device	vnd			# disk-like interface to files
 options 	VND_COMPRESSION		# compressed vnd(4)
 
 pseudo-device 	dm			# device-mapper disk driver
+
+# NPF
+pseudo-device	npf
 
 # network pseudo-devices
 pseudo-device	bpfilter		# Berkeley packet filter
