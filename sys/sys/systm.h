@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.240 2010/08/21 13:17:32 pgoyette Exp $	*/
+/*	$NetBSD: systm.h,v 1.241 2010/08/22 14:12:10 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -492,10 +492,12 @@ void	kernel_lock_init(void);
 void	_kernel_lock(int);
 void	_kernel_unlock(int, int *);
 
+#ifdef _KERNEL
 void	kernconfig_lock_init(void);
 void	kernconfig_lock(void);
 void	kernconfig_unlock(void);
 bool	kernconfig_is_held(void);
+#endif
 
 #if defined(MULTIPROCESSOR) || defined(_MODULE)
 #define	KERNEL_LOCK(count, lwp)			\
