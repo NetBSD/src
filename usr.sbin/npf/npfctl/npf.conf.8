@@ -1,0 +1,169 @@
+.\"	$NetBSD: npf.conf.8,v 1.1 2010/08/22 18:56:23 rmind Exp $
+.\"
+.\" Copyright (c) 2009-2010 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This material is based upon work partially supported by The
+.\" NetBSD Foundation under a contract with Mindaugas Rasiukevicius.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd August 22, 2010
+.Dt NPF.CONF 8
+.Os
+.Sh NAME
+.Nm npf.conf
+.Nd NPF packet filter configuration file
+.\" -----
+.Sh DESCRIPTION
+.Nm
+is the default configuration file for NPF packet filter.
+It can contain definitions, grouped rules, and tables.
+.Sh DEFINITIONS
+Definitions are general purpose keywords which can be used in the
+ruleset to make it more flexible and easier to manage.
+Most commonly, definitions are used to define one of the following:
+IP addresses, networks, ports, or interfaces.
+Definitions can contain multiple elements.
+.Sh GROUPS
+Having one huge ruleset for all interfaces or directions might be
+inefficient; therefore, NPF requires that all rules be defined within groups.
+Groups can be thought of as higher level rules which have subrules.
+The main properties of a group are its interface and traffic direction.
+Packets matching group criteria are passed to the ruleset of that group.
+If a packet does not match any group, it is passed to the default group.
+The default group must always be defined.
+.Sh RULES
+Rules, which are the main part of NPF configuration, describe the criteria
+used to inspect and make decisions about packets.
+Currently, NPF supports filtering on the following criteria: interface,
+traffic direction, protocol, IPv4 address or network, and TCP/UDP port
+or range.
+Supported actions are blocking or passing the packet.
+.Pp
+Each rule has a priority, which is set according to its order in the ruleset.
+Rules defined first are accordingly inspected first.
+All rules in the group are inspected sequentially, and the last matching
+dictates the action to be taken.
+Rules, however, may be explicitly marked as final (that is, "quick").
+In such cases, processing stops after encountering the first matching rule
+marked as final.
+If there is no matching rule in the custom group, then rules in the default
+group will be inspected.
+.Pp
+Definitions (prefixed with "$") and tables (specified by an ID within
+"\*[Lt]\*[Gt]" marks) can be used in the filter options of rules.
+.Sh TABLES
+Certain configurations might use very large sets of IP addresses or change
+sets frequently.
+Storing large IP sets in the configuration file or performing frequent
+reloads can have a significant performance cost.
+.Pp
+In order to achieve high performance, NPF has tables.
+NPF tables provide separate storage designed for large IP sets and frequent
+updates without reloading the entire ruleset.
+Tables can be managed dynamically or loaded from a separate file, which
+is useful for large static tables.
+There are two types of storage: "tree" (red-black tree is used) and
+"hash".
+.Sh NAT
+Special rules for Network Address Translation (NAT) can be added.
+Translation is performed on specified interface, assigning a specified
+address of said interface.
+Minimal filtering criteria on local network and destination are provided.
+.\" -----
+.Sh GRAMMAR
+.Bd -literal
+line		= ( def | table | nat | group )
+
+def		= ( "{ a, b, ... }" | "text" | "$\*[Lt]interface\*[Gt]" )
+iface		= ( \*[Lt]interface\*[Gt] | def )
+
+table		= "table" \*[Lt]tid\*[Gt] "type" ( "hash" | "tree" )
+		  ( "dynamic" | "file" \*[Lt]path\*[Gt] )
+
+nat		= "nat" iface "from" \*[Lt]addr/mask\*[Gt] "to" \*[Lt]addr/mask\*[Gt] "->" \*[Lt]addr\*[Gt]
+
+group		= "group" "(" ( "default" | group-opts ) "") ruleset
+group-opts	= "interface" iface "," [ "in" | "out" ]
+
+ruleset		= "{" rule1 \*[Lt]newline\*[Gt], rule2 \*[Lt]newline\*[Gt], ... "}"
+
+rule		= ( "block" | "pass" ) [ "in" | out" ] rule-opts
+		  [ "on" iface ] [ "inet" | "inet6" ] [ "proto" \*[Lt]protocol\*[Gt] ]
+		  ( "all" | filt-opts )
+
+rule-opts	= [ "log" ] [ "count" ] [ "quick" ]
+filt-opts	= [ "from" ( iface | def | \*[Lt]addr/mask\*[Gt] | \*[Lt]tid\*[Gt] ) port-opts ]
+		  [ "to" ( iface | def | \*[Lt]addr/mask\*[Gt] | \*[Lt]tid\*[Gt] ) port-opts ]
+port-opts	= [ "port" ( \*[Lt]port-num\*[Gt] | \*[Lt]port-from\*[Gt] ":" \*[Lt]port-to\*[Gt] | def ) ]
+.Ed
+.\" -----
+.Sh FILES
+.Bl -tag -width /dev/npf.conf -compact
+.It Pa /dev/npf
+control device
+.It Pa /etc/npf.conf
+default configuration file
+.El
+.\" -----
+.Sh EXAMPLES
+.Bd -literal
+ext_if = "wm0"
+int_if = "wm1"
+
+services_tcp = "{ http, https, smtp, domain, 6000 }"
+services_udp = "{ domain, ntp, 6000 }"
+
+table "1" type "hash" file "/etc/npf_blacklist"
+table "2" type "tree" dynamic
+
+nat $ext_if from 192.168.0.0/24 to 0.0.0.0/0 -> $ext_if
+
+group (name "external", interface $ext_if) {
+	block in quick from \*[Lt]1\*[Gt]
+	pass out quick from $ext_if keep state
+
+	pass in log quick inet proto tcp to $ext_if port ssh
+	pass in quick proto tcp to $ext_if port $services_tcp
+	pass in quick proto udp to $ext_if port $services_udp
+	pass in quick proto tcp to $ext_if port 49151:65535	# Passive FTP
+	pass in quick proto udp to $ext_if port 33434:33600	# Traceroute
+}
+
+group (name "internal", interface $int_if) {
+	block in all
+	pass in quick from \*[Lt]2\*[Gt]
+	pass out quick all
+}
+
+group (default) {
+        block all
+}
+.Ed
+.\" -----
+.Sh SEE ALSO
+.Xr npfctl 8 ,
+.Xr npf_ncode 9
+.Sh HISTORY
+NPF first appeared in
+.Nx 6.0 .

@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.993 2010/08/21 13:17:32 pgoyette Exp $
+#	$NetBSD: files,v 1.994 2010/08/22 18:56:21 rmind Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20100430
@@ -188,7 +188,6 @@ include "net80211/files.net80211"
 include "netatalk/files.netatalk"
 include "netbt/files.netbt"
 include "netinet/files.netinet"
-include "netinet/files.ipfilter"
 include "netinet6/files.netinet6"
 include "netinet6/files.ipsec"
 include "netipsec/files.netipsec"
@@ -196,6 +195,9 @@ include "netiso/files.netiso"
 include "netmpls/files.netmpls"
 include "netnatm/files.netnatm"
 include "netsmb/files.netsmb"
+
+include "net/npf/files.npf"
+include "netinet/files.ipfilter"
 include "net/files.pf"
 
 obsolete defflag		CCITT		# obsolete
