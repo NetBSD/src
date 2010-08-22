@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.166 2010/08/07 20:48:54 christos Exp $
+# $NetBSD: mi,v 1.167 2010/08/22 02:16:17 perry Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -574,6 +574,13 @@
 ./usr/share/doc/usd/01.begin/u3			misc-usd-doc		doc
 ./usr/share/doc/usd/01.begin/u4			misc-usd-doc		doc
 ./usr/share/doc/usd/01.begin/u5			misc-usd-doc		doc
+./usr/share/doc/usd/03.shell/Makefile		misc-usd-doc		doc
+./usr/share/doc/usd/03.shell/Rv7man		misc-usd-doc		doc
+./usr/share/doc/usd/03.shell/t.mac		misc-usd-doc		doc
+./usr/share/doc/usd/03.shell/t1			misc-usd-doc		doc
+./usr/share/doc/usd/03.shell/t2			misc-usd-doc		doc
+./usr/share/doc/usd/03.shell/t3			misc-usd-doc		doc
+./usr/share/doc/usd/03.shell/t4			misc-usd-doc		doc
 ./usr/share/doc/usd/04.csh/Makefile		misc-usd-doc		doc
 ./usr/share/doc/usd/04.csh/csh.1		misc-usd-doc		doc
 ./usr/share/doc/usd/04.csh/csh.2		misc-usd-doc		doc
