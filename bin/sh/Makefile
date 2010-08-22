@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.92 2010/08/22 02:09:36 perry Exp $
+#	$NetBSD: Makefile,v 1.93 2010/08/22 02:21:31 perry Exp $
 #	@(#)Makefile	8.4 (Berkeley) 5/5/95
 
 .include <bsd.own.mk>
@@ -82,3 +82,4 @@ SUBDIR+=USD.doc
 .endif
 
 .include <bsd.prog.mk>
+.include <bsd.subdir.mk>
