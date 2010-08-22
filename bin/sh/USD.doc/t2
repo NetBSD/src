@@ -14,7 +14,7 @@
 .\" documentation and/or other materials provided with the distribution.
 .\"
 .\" All advertising materials mentioning features or use of this software
-.\" must display the following acknowledgement:
+.\" must display the following acknowledgment:
 .\"
 .\" This product includes software developed or owned by Caldera
 .\" International, Inc.  Neither the name of Caldera International, Inc.
@@ -38,7 +38,7 @@
 .\"	@(#)t2	8.1 (Berkeley) 6/8/93
 .\"
 .SH
-2.0\ Shell\ procedures
+2.0\ Shell\ scripts
 .LP
 The shell may be used to read and execute commands
 contained in a file.
@@ -47,12 +47,12 @@ For example,
 	sh file [ args \*(ZZ ]
 .DE
 calls the shell to read commands from \fIfile.\fP
-Such a file is called a \fIcommand procedure\fP
-or \fIshell procedure.\fP
+Such a file is called a \fIshell script.\fP
 Arguments may be supplied with the call
 and are referred to in \fIfile\fP
 using the positional parameters
 \fB$1, $2, \*(ZZ\|.\fR
+.LP
 For example, if the file \fIwg\fP contains
 .DS
 	who \*(VT grep $1
@@ -68,7 +68,7 @@ is equivalent to
 .LP
 UNIX files have three independent attributes,
 \fIread,\fP \fIwrite\fP and \fIexecute.\fP
-The UNIX command \fIchmod\fP (1) may be used
+The UNIX command \fIchmod\fP(1) may be used
 to make a file executable.
 For example,
 .DS
@@ -83,14 +83,31 @@ is equivalent to
 .DS
 	sh wg fred
 .DE
-This allows shell procedures and programs
+This allows shell scripts and other programs
 to be used interchangeably.
 In either case a new process is created to
 run the command.
 .LP
+The `\fB#\fP' character is used as a comment character by the shell.
+All characters following the `#' on a line are ignored.
+.LP
+A typical modern system has several different shells, some with differing
+command syntax, and it is desirable to specify which one should be
+invoked when an executable script is invoked.
+If the special comment
+.DS
+	#!/\fIpath\fP/\fIto\fP/\fIinterpreter\fP
+.DE
+appears as the first line in a script, it is used to specify the
+absolute pathname of the shell (or other interpreter) that should be
+used to execute the file.
+(Without such a line, \fB/bin/sh\fP is assumed.)
+It is best if a script explicitly states
+what shell it is intended for in this manner.
+.LP
 As well as providing names for the positional
 parameters,
-the number of positional parameters in the call
+the number of positional parameters to a script
 is available as \fB$#\|.\fP
 The name of the file being executed
 is available as \fB$0\|.\fP
@@ -106,15 +123,18 @@ as in,
 .DE
 which simply prepends some arguments
 to those already given.
+(The variable \fB$@\fP also expands to ``all positional
+parameters'', but is subtly different when expanded inside quotes.
+See section 3.5, below.)
 .SH
 2.1\ Control\ flow\ -\ for
 .LP
-A frequent use of shell procedures is to loop
+A frequent use of shell scripts is to loop
 through the arguments (\fB$1, $2, \*(ZZ\fR)
 executing commands once for each argument.
-An example of such a procedure is
+An example of such a script is
 \fItel\fP that searches the file
-\fB/usr/lib/telnos\fR
+\fB/usr/share/telnos\fR
 that contains lines of the form
 .DS
 	\*(ZZ
@@ -124,14 +144,18 @@ that contains lines of the form
 .DE
 The text of \fItel\fP is
 .DS
+	#!/bin/sh
+
 	for i
-	do grep $i /usr/lib/telnos; done
+	do
+		grep $i /usr/share/telnos
+	done
 .DE
 The command
 .DS
 	tel fred
 .DE
-prints those lines in \fB/usr/lib/telnos\fR
+prints those lines in \fB/usr/share/telnos\fR
 that contain the string \fIfred\|.\fP
 .DS
 	tel fred bert
@@ -187,7 +211,7 @@ For example,
 	case $# in
 	\*(Ca1)	cat \*(AP$1 ;;
 	\*(Ca2)	cat \*(AP$2 <$1 ;;
-	\*(Ca\*(ST)	echo \\'usage: append [ from ] to\\' ;;
+	\*(Ca\*(ST)	echo \'usage: append [ from ] to\' ;;
 	esac
 .DE
 is an \fIappend\fP command.
@@ -253,9 +277,9 @@ The following example is a fragment of a \fIcc\fP command.
 	for i
 	do case $i in
 	\*(DC\(mi[ocs])	\*(ZZ ;;
-	\*(DC\(mi\*(ST)	echo \\"unknown flag $i\\" ;;
+	\*(DC\(mi\*(ST)	echo "unknown flag $i" ;;
 	\*(DC\*(ST.c)	/lib/c0 $i \*(ZZ ;;
-	\*(DC\*(ST)	echo \\"unexpected argument $i\\" ;;
+	\*(DC\*(ST)	echo "unexpected argument $i" ;;
 	\*(DOesac
 	done
 .DE
@@ -282,19 +306,19 @@ The usual quoting conventions apply
 so that
 .DS
 	case $i in
-	\*(Ca\\\\?)	\*(ZZ
+	\*(Ca\\?)	\*(ZZ
 .DE
 will match the character \fB?\|.\fP
 .SH
 2.3\ Here\ documents
 .LP
-The shell procedure \fItel\fP
-in section 2.1 uses the file \fB/usr/lib/telnos\fR
+The shell script \fItel\fP
+in section 2.1 uses the file \fB/usr/share/telnos\fR
 to supply the data
 for \fIgrep.\fP
 An alternative is to include this
 data
-within the shell procedure as a \fIhere\fP document, as in,
+within the shell script as a \fIhere\fP document, as in,
 .DS
 	for i
 	do grep $i \*(HE!
@@ -314,7 +338,7 @@ of the string following \*(HE\|.
 .LP
 Parameters are substituted in the document
 before it is made available to \fIgrep\fP
-as illustrated by the following procedure
+as illustrated by the following script
 called \fIedg\|.\fP
 .DS
 	ed $3 \*(HE%
@@ -340,7 +364,7 @@ to quote the special character \fB$\fP
 as in
 .DS
 	ed $3 \*(HE+
-	1,\\\\$s/$1/$2/g
+	1,\\$s/$1/$2/g
 	w
 	+
 .DE
@@ -353,9 +377,9 @@ may be prevented entirely by quoting
 the terminating string,
 for example,
 .DS
-	grep $i \*(HE\\\\#
+	grep $i \*(HE'end'
 	\*(ZZ
-	#
+	end
 .DE
 The document is presented
 without modification to \fIgrep.\fP
@@ -363,8 +387,11 @@ If parameter substitution is not required
 in a \fIhere\fP document this latter form
 is more efficient.
 .SH
-2.4\ Shell\ variables
+2.4\ Shell\ variables\(dg
 .LP
+.FS
+Also known as \fIenvironment variables\fB, see \fIenvironment\fB(7).
+.FE
 The shell
 provides string-valued variables.
 Variable names begin with a letter
@@ -382,7 +409,7 @@ by saying, for example,
 	null=
 .DE
 The value of a variable is substituted
-by preceding its name with \fB$\|;\fP
+by preceding its name with \fB$\|\fP;
 for example,
 .DS
 	echo $user
@@ -511,6 +538,8 @@ is equivalent to
 .DE
 This variable is also typically set in the
 the user's login profile.
+.IP \fB$\s-1PWD\s0\fP 8
+The current working directory. Set by the \fIcd\fB command.
 .IP \fB$\s-1PATH\s0\fP 8
 A list of directories that contain commands (the \fIsearch path\fR\|).
 Each time a command is executed by the shell
@@ -545,7 +574,14 @@ The shell prompt when further input is needed,
 by default, `\fB>\ \fR'.
 .IP \fB$\s-1IFS\s0\fP 8
 The set of characters used by \fIblank
-interpretation\fR (see section 3.4).
+interpretation\fR (see section 3.5).
+.IP \fB$\s-1ENV\s0\fP 8
+The shell reads and executes the commands in the file
+specified by this variable when it is initially started.
+Unlike the \fB.profile\fP file, these commands are executed by all
+shells, not just the one started at login.
+(Most versions of the shell specify a filename that is used if
+\s-1ENV\s0 is not explicitly set. See the manual page for your shell.)
 .RE
 .SH
 2.5\ The\ test\ command
@@ -561,7 +597,7 @@ exists and non-zero exit status otherwise.
 In general \fItest\fP evaluates a predicate
 and returns the result as its exit status.
 Some of the more frequently used \fItest\fP
-arguments are given here, see \fItest\fP (1)
+arguments are given here, see \fItest\fP(1)
 for a complete specification.
 .DS
 	test s		true if the argument \fIs\fP is not the null string
@@ -570,6 +606,20 @@ for a complete specification.
 	test \(miw file	true if \fIfile\fP is writable
 	test \(mid file	true if \fIfile\fP is a directory
 .DE
+The \fItest\fP command is known as `\fB[\fP' and may be invoked as
+such.
+For aesthetic reasons, the command ignores a close bracket `\fB]\fP' given
+at the end of a command so
+.DS
+	[ -f filename ]
+.DE
+and
+.DS
+	test -f filename
+.DE
+are completely equivalent.
+Typically, the bracket notation is used when \fItest\fP is invoked inside
+shell control constructs.
 .SH
 2.6\ Control\ flow\ -\ while
 .LP
@@ -599,7 +649,7 @@ is executed;
 otherwise, the loop terminates.
 For example,
 .DS
-	while test $1
+	while [ $1 ]
 	do \*(ZZ
 	\*(DOshift
 	done
@@ -623,7 +673,7 @@ In an \fBuntil\fP loop
 the termination condition is reversed.
 For example,
 .DS
-	until test \(mif file
+	until [ \(mif file ]
 	do sleep 300; done
 	\fIcommands\fP
 .DE
@@ -632,6 +682,20 @@ Each time round the loop it waits for
 5 minutes before trying again.
 (Presumably another process
 will eventually create the file.)
+.LP
+The most recent enclosing loop may be exited with the \fBbreak\fP
+command, or the rest of the body skipped and the next iteration begun
+with the \fBcontinue\fP command.
+.LP
+The commands \fItrue\fP(1) and \fIfalse\fP(1) return 0 and non-zero
+exit statuses respectively. They are sometimes of use in control flow,
+e.g.:
+.DS
+	while true
+	do date; sleep 5
+	done
+.DE
+is an infinite loop that prints the date and time every five seconds.
 .SH
 2.7\ Control\ flow\ -\ if
 .LP
@@ -651,7 +715,7 @@ The \fBif\fP command may be used
 in conjunction with the \fItest\fP command
 to test for the existence of a file as in
 .DS
-	if test \(mif file
+	if [ \(mif file ]
 	then	\fIprocess file\fP
 	else	\fIdo something else\fP
 	fi
@@ -686,21 +750,23 @@ notation as,
 	fi
 .DE
 .LP
-The following example is the \fItouch\fP command
+The following example is an implementation of the \fItouch\fP command
 which changes the `last modified' time for a list
 of files.
 The command may be used in conjunction
-with \fImake\fP (1) to force recompilation of a list
+with \fImake\fP(1) to force recompilation of a list
 of files.
 .DS
+	#!/bin/sh
+
 	flag=
 	for i
 	do case $i in
 	\*(DC\(mic)	flag=N ;;
-	\*(DC\*(ST)	if test \(mif $i
-	\*(DC	then	ln $i junk$$; rm junk$$
-	\*(DC	elif test $flag
-	\*(DC	then	echo file \\\\\'$i\\\\\' does not exist
+	\*(DC\*(ST)	if [ \(mif $i ]
+	\*(DC	then	cp $i junk$$; mv junk$$ $i
+	\*(DC	elif [ $flag ]
+	\*(DC	then	echo file \\'$i\\' does not exist
 	\*(DC	else	>$i
 	\*(DC	fi
 	\*(DO esac
@@ -714,9 +780,9 @@ is set to some non-null string if the \fB\(mic\fP
 argument is encountered.
 The commands
 .DS
-	ln \*(ZZ; rm \*(ZZ
+	cp \*(ZZ; mv \*(ZZ
 .DE
-make a link to the file and then remove it
+copy the file and then overwrite it with the copy,
 thus causing the last modified date to be updated.
 .LP
 The sequence
@@ -737,6 +803,17 @@ executes \fIcommand2\fP only if \fIcommand1\fP
 fails.
 In each case the value returned
 is that of the last simple command executed.
+.LP
+Placing a `\fB!\fP' in front of a pipeline inverts its exit
+status, almost in the manner of the C operator of the same name.
+Thus:
+.DS
+	if ! [ -d $1 ]
+	then
+		echo $1 is not a directory
+	fi
+.DE
+will print a message only if $1 is not a directory.
 .SH
 2.8\ Command\ grouping
 .LP
@@ -767,24 +844,44 @@ The commands
 have the same effect but leave the invoking
 shell in the directory \fBx.\fP
 .SH
-2.9\ Debugging\ shell\ procedures
+2.9\ Shell\ Functions
+.LP
+A function may be defined by the syntax
+.DS
+	\fIfuncname\fP() \fB{\fI command-list\fB ; }\fR
+.DE
+Functions are invoked within a script as though they were separate
+commands of the same name.
+While they are executed, the
+positional parameters \fB$1, $2, \*(ZZ\fR are temporarily set to the
+arguments passed to the function. For example:
+.DS
+	count() {
+		echo $2 : $#
+	}
+
+	count a b c
+.DE
+would print `b : 3'.
+.SH
+2.10\ Debugging\ shell\ scripts
 .LP
 The shell provides two tracing mechanisms
-to help when debugging shell procedures.
-The first is invoked within the procedure
+to help when debugging shell scripts.
+The first is invoked within the script
 as
 .DS
 	set \(miv
 .DE
 (\fBv\fP for verbose) and causes lines of the
-procedure to be printed as they are read.
+script to be printed as they are read.
 It is useful to help isolate syntax errors.
-It may be invoked without modifying the procedure
+It may be invoked without modifying the script
 by saying
 .DS
-	sh \(miv proc \*(ZZ
+	sh \(miv \fIscript\fP \*(ZZ
 .DE
-where \fIproc\fP is the name of the shell procedure.
+where \fIscript\fP is the name of the shell script.
 This flag may be used in conjunction
 with the \fB\(min\fP flag which prevents
 execution of subsequent commands.
@@ -806,12 +903,12 @@ Both flags may be turned off by saying
 .DS
 	set \(mi
 .DE
-and the current setting of the shell flags is available as \fB$\(mi\|.\fR
+and the current setting of the shell flags is available as \fB$\(mi\|\fR.
 .SH
-2.10\ The\ man\ command
+2.11\ The\ man\ command
 .LP
-The following is the \fIman\fP command
-which is used to diplay sections of the UNIX manual on your terminal.
+The following is a simple implementation of the \fIman\fP command,
+which is used to display sections of the UNIX manual on your terminal.
 It is called, for example, as
 .DS
 		man sh
@@ -827,10 +924,12 @@ The last prints the \fIfork\fP manual page
 from section 2, which covers system calls.
 .sp 2
 .DS
-	cd /usr/man
+	#!/bin/sh
 
-	: \'colon is the comment command\'
-	: \'default is nroff ($N), section 1 ($s)\'
+	cd /usr/share/man
+
+	# "#" is the comment character
+	# default is nroff ($N), section 1 ($s)
 	N=n\ s=1
 
 	for i
@@ -842,16 +941,20 @@ from section 2, which covers system calls.
 .sp .5
 	\*(DC\(min)	N=n ;;
 .sp .5
-	\*(DC\(mi\*(ST)	echo unknown flag \\\\\'$i\\\\\' ;;
+	\*(DC\(mi\*(ST)	echo unknown flag \\'$i\\' ;;
 .sp .5
-	\*(DC\*(ST)	if test \(mif man$s/$i.$s
-	\*(DC	then	${N}roff man0/${N}aa man$s/$i.$s
-	\*(DC	else	: \'look through all manual sections\'
+	\*(DC\*(ST)	if [ \(mif man$s/$i.$s ]
+	\*(DC	then
+	\*(DC		${N}roff \(miman man$s/$i.$s
+	\*(DC	else	# look through all manual sections
 	\*(DC		found=no
 	\*(DC		for j in 1 2 3 4 5 6 7 8 9
-	\*(DC		do if test \(mif man$j/$i.$j
-	\*(DC		\*(DOthen man $j $i
+	\*(DC		do
+	\*(DC		\*(DOif [ \(mif man$j/$i.$j ]
+	\*(DC		\*(DOthen
+	\*(DC		\*(DO\*(THman $j $i
 	\*(DC		\*(DO\*(THfound=yes
+	\*(DC		\*(DO\*(THbreak
 	\*(DC		\*(DOfi
 	\*(DC		done
 	\*(DC		case $found in

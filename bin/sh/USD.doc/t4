@@ -41,14 +41,16 @@
 .SH
 Appendix\ A\ -\ Grammar
 .LP
+Note: This grammar needs updating, it is obsolete.
+.LP
 .LD
 \fIitem:		word
 		input-output
 		name = value
-.sp 0.8
+.sp 0.7
 simple-command: item
 		simple-command item
-.sp 0.8
+.sp 0.7
 command:	simple-command
 		\fB( \fIcommand-list \fB)
 		\fB{ \fIcommand-list \fB}
@@ -58,44 +60,44 @@ command:	simple-command
 		\fBuntil \fIcommand-list \fBdo \fIcommand-list \fBdone
 		\fBcase \fIword \fBin \fIcase-part \*(ZZ \fBesac
 		\fBif \fIcommand-list \fBthen \fIcommand-list \fIelse-part \fBfi
-.sp 0.8
-\fIpipeline:		command
+.sp 0.7
+\fIpipeline:	command
 		pipeline \fB\*(VT\fI command
-.sp 0.8
-andor:		pipeline
+.sp 0.7
+andor:	pipeline
 		andor \fB&&\fI pipeline
 		andor \fB\*(VT\*(VT\fI pipeline
-.sp 0.8
+.sp 0.7
 command-list:	andor
 		command-list \fB;\fI
 		command-list \fB&\fI
 		command-list \fB;\fI andor
 		command-list \fB&\fI andor
-.sp 0.8
+.sp 0.7
 input-output:	\fB> \fIfile
 		\fB< \fIfile
 		\fB\*(AP \fIword
 		\fB\*(HE \fIword
-.sp 0.8
+.sp 0.7
 file:		word
 		\fB&\fI digit
 		\fB&\fI \(mi
-.sp 0.8
+.sp 0.7
 case-part:	pattern\fB ) \fIcommand-list\fB ;;
-.sp 0.8
-\fIpattern:		word
+.sp 0.7
+\fIpattern:	word
 		pattern \fB\*(VT\fI word
-.sp 0.8
+.sp 0.7
 \fIelse-part:	\fBelif \fIcommand-list\fB then\fI command-list else-part\fP
 		\fBelse \fIcommand-list\fI
 		empty
-.sp 0.8
+.sp 0.7
 empty:
-.sp 0.8
+.sp 0.7
 word:		\fRa sequence of non-blank characters\fI
-.sp 0.8
+.sp 0.7
 name:		\fRa sequence of letters, digits or underscores starting with a letter\fI
-.sp 0.8
+.sp 0.7
 digit:		\fB0 1 2 3 4 5 6 7 8 9\fP
 .DE
 .LP
@@ -111,52 +113,56 @@ pipe symbol
 `andf' symbol
 .IP \fB\*(VT\*(VT\fR 6
 `orf' symbol
-.IP \fB;\fP 6
+.IP \fB;\fP 8
 command separator
-.IP \fB;;\fP 6
+.IP \fB;;\fP 8
 case delimiter
-.IP \fB&\fP 6
+.IP \fB&\fP 8
 background commands
-.IP \fB(\ )\fP 6
+.IP \fB(\ )\fP 8
 command grouping
-.IP \fB<\fP 6
+.IP \fB<\fP 8
 input redirection
-.IP \fB\*(HE\fP 6
+.IP \fB\*(HE\fP 8
 input from a here document
-.IP \fB>\fP 6
+.IP \fB>\fP 8
 output creation
-.IP \fB\*(AP\fP 6
+.IP \fB\*(AP\fP 8
 output append
 .sp 2
 .RE
 .LP
 b) patterns
 .RS
-.IP \fB\*(ST\fP 6
+.IP \fB\*(ST\fP 8
 match any character(s) including none
-.IP \fB?\fP 6
+.IP \fB?\fP 8
 match any single character
-.IP \fB[...]\fP 6
+.IP \fB[...]\fP 8
 match any of the enclosed characters
 .sp 2
 .RE
 .LP
 c) substitution
 .RS
-.IP \fB${...}\fP 6
+.IP \fB${...}\fP 8
 substitute shell variable
-.IP \fB\`...\`\fP 6
+.IP \fB$(...)\fP 8
 substitute command output
+.IP \fB\`...\`\fP 8
+substitute command output
+.IP \fB$((...))\fP 8
+substitute arithmetic expression
 .sp 2
 .RE
 .LP
 d) quoting
 .RS
-.IP \fB\e\fP 6
+.IP \fB\e\fP 8
 quote the next character
-.IP \fB\'...\'\fP 6
+.IP \fB\'...\'\fP 8
 quote the enclosed characters except for \'
-.IP \fB"\&..."\fR 6
+.IP \fB"\&..."\fP 8
 quote the enclosed characters except
 for \fB$ \` \e "\fP
 .sp 2
@@ -168,6 +174,6 @@ e) reserved words
 if then else elif fi
 case in esac
 for while until do done
-{  }
+! {  }
 .ft
 .DE
