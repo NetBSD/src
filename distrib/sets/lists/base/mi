@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.879 2010/08/21 06:38:59 christos Exp $
+# $NetBSD: mi,v 1.880 2010/08/22 18:56:18 rmind Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -1239,6 +1239,7 @@
 ./usr/sbin/netgroup_mkdb			base-nis-bin
 ./usr/sbin/nfsd					base-nfsserver-bin
 ./usr/sbin/nfsiod				base-obsolete		obsolete
+./usr/sbin/npfctl				base-npf-bin		npf
 ./usr/sbin/nslookup				base-obsolete		obsolete
 ./usr/sbin/nsquery				base-obsolete		obsolete
 ./usr/sbin/nstest				base-obsolete		obsolete

@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.274 2010/08/15 07:27:33 mrg Exp $
+#	$NetBSD: bsd.README,v 1.275 2010/08/22 18:56:20 rmind Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -264,6 +264,9 @@ MKMDNS		If "no", disables building of mDNS infrastructure
 
 MKNLS		If "no", don't build or install the NLS files and locale
 		definition files.
+		Default: yes
+
+MKNPF		If "no", don't build or install the NPF and its modules.
 		Default: yes
 
 MKOBJ		If "no", don't enable the rule which creates objdirs,
