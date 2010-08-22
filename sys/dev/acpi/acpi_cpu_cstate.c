@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_cstate.c,v 1.31 2010/08/18 02:01:45 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_cstate.c,v 1.32 2010/08/22 17:45:48 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_cstate.c,v 1.31 2010/08/18 02:01:45 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_cstate.c,v 1.32 2010/08/22 17:45:48 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -749,7 +749,7 @@ acpicpu_cstate_idle_enter(struct acpicpu_softc *sc, int state)
 	struct acpicpu_cstate *cs = &sc->sc_cstate[state];
 	uint32_t end, start, val;
 
-	start = acpitimer_read_safe(NULL);
+	start = acpitimer_read_fast(NULL);
 
 	switch (cs->cs_method) {
 
@@ -769,7 +769,7 @@ acpicpu_cstate_idle_enter(struct acpicpu_softc *sc, int state)
 
 	cs->cs_evcnt.ev_count++;
 
-	end = acpitimer_read_safe(NULL);
+	end = acpitimer_read_fast(NULL);
 	sc->sc_cstate_sleep = hztoms(acpitimer_delta(end, start)) * 1000;
 
 	acpi_md_OsEnableInterrupt();
