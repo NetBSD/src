@@ -1,0 +1,123 @@
+.\"	$NetBSD: npfctl.8,v 1.1 2010/08/22 18:56:24 rmind Exp $
+.\"
+.\" Copyright (c) 2009-2010 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This material is based upon work partially supported by The
+.\" NetBSD Foundation under a contract with Mindaugas Rasiukevicius.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd August 22, 2010
+.Dt NPFCTL 8
+.Os
+.Sh NAME
+.Nm npfctl
+.Nd control NPF packet filter
+.Sh SYNOPSIS
+.Nm npfctl
+.Ar command
+.Op Ar arguments
+.\" -----
+.Sh DESCRIPTION
+The
+.Nm
+command can be used to control the NPF packet filter.
+For a description of NPF's configuration file, see
+.Xr npf.conf 8 .
+.Pp
+The first argument,
+.Ar command ,
+specifies the action to take.
+Valid commands are:
+.Bl -tag -width reload
+.It start
+Enable packet inspection using the currently loaded configuration, if any.
+Note that this command does not load or reload the configuration.
+.It stop
+Disable packet inspection.
+This command does not change the currently loaded configuration.
+.It reload Op Ar path
+Load or reload configuration from file.
+The configuration file at
+.Pa /etc/npf.conf
+will be used unless a file is specified by
+.Ar path .
+The reload operation (i.e., replacing the ruleset) is atomic.
+.It flush
+Flush configuration.
+That is, remove all rules and tables.
+This command does not disable packet inspection.
+.It table Ar tid
+List all entries in the currently loaded table specified by
+.Ar tid .
+Fail if
+.Ar tid
+does not exist.
+.It table Ar tid Aq Ar addr/mask
+Query the table
+.Ar tid
+for a specific IPv4 CIDR, specified by
+.Ar addr/mask .
+If no mask is specified, a single host is assumed.
+.It table Ar tid Ar [ add | rem ] Aq Ar addr/mask
+In table
+.Ar tid ,
+add or remove the IPv4 CIDR specified by
+.Aq Ar addr/mask .
+.El
+.\" -----
+.Sh PERFORMANCE
+Reloading the configuration is a relatively expensive operation.
+Therefore, frequent reloads should be avoided.
+Use of tables should be considered as an alternative design.
+See
+.Xr npf.conf 8
+for details.
+.\" -----
+.Sh FILES
+.Bl -tag -width /etc/npf.conf -compact
+.It Pa /dev/npf
+control device
+.It Pa /etc/npf.conf
+default configuration file
+.El
+.\" -----
+.Sh EXAMPLES
+Starting the NPF packet filter:
+.Bd -literal -offset indent
+# npfctl reload
+# npfctl start
+.Ed
+.Pp
+Addition and removal of entries in the table whose ID is 2:
+.Bd -literal -offset indent
+# npfctl table 2 add 10.0.0.1
+# npfctl table 2 rem 182.168.0.0/24
+.Ed
+.\" -----
+.Sh SEE ALSO
+.Xr npf.conf 8 ,
+.Xr npf_ncode 9
+.Sh HISTORY
+NPF first appeared in
+.Nx 6.0 .

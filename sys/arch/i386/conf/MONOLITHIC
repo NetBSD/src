@@ -1,4 +1,4 @@
-# $NetBSD: MONOLITHIC,v 1.11 2010/04/09 14:02:05 ahoka Exp $
+# $NetBSD: MONOLITHIC,v 1.12 2010/08/22 18:56:21 rmind Exp $
 #
 # Non MODULAR, used mostly as a reference as to what we modularized.
 #
@@ -49,6 +49,9 @@ options 	NFSSERVER
 
 options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 options 	PPP_DEFLATE	# Deflate compression support for PPP
+
+# NPF
+#pseudo-device	npf
 
 pseudo-device	accf_data	# "dataready" accept filter
 pseudo-device	accf_http	# "httpready" accept filter

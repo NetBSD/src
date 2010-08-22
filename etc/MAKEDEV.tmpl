@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.134 2010/04/19 04:34:42 pooka Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.135 2010/08/22 18:56:20 rmind Exp $
 #
 # Copyright (c) 2003,2007,2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -255,6 +255,7 @@
 #	mlx*	Mylex DAC960 control interface
 #	mly*	Mylex AcceleRAID/eXtremeRAID control interface
 #	np*	UNIBUS Ethernet co-processor interface, for downloading.
+#	npf	NPF packet filter
 #	nsmb*	SMB requester
 #	openfirm OpenFirmware accessor
 #	pad*	Pseudo-audio device driver
@@ -732,7 +733,7 @@ all)
 	makedev md0 md1
 	makedev raid0 raid1 raid2 raid3 raid4 raid5 raid6 raid7
 	makedev vnd0 vnd1 vnd2 vnd3
-	makedev bpf
+	makedev bpf npf
 	makedev tun0 tun1 tun2 tun3
 	makedev ipl pf crypto random
 	makedev lockstat clockctl cpuctl
@@ -1259,6 +1260,10 @@ lpt*|lpa*)
 bpf)
 	mkdev bpf	c %bpf_chr% 0
 	lndev bpf bpf0
+	;;
+
+npf)
+	mkdev npf	c %npf_chr% 0
 	;;
 
 bthub)

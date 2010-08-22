@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.245 2010/08/04 17:13:33 christos Exp $
+#	$NetBSD: Makefile,v 1.246 2010/08/22 18:56:23 rmind Exp $
 #	from: @(#)Makefile	5.20 (Berkeley) 6/12/93
 
 .include <bsd.own.mk>
@@ -50,6 +50,11 @@ SUBDIR+=pvcsif pvctxctl
 
 .if (${MKCRYPTO} != "no")
 SUBDIR+= racoon racoonctl
+.endif
+
+# NPF
+.if (${MKNPF} != "no")
+SUBDIR+=npf
 .endif
 
 # IP Filter
