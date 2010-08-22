@@ -8032,12 +8032,12 @@ dtrace_probe_provide(dtrace_probedesc_t *desc, dtrace_provider_t *prv)
 		    *((char **)&mod_nbsd->mod_info->mi_name) = "netbsd";
 		}
 
-		mutex_enter(&module_lock);
+		kernconfig_lock();
 		prv->dtpv_pops.dtps_provide_module(prv->dtpv_arg, mod_nbsd);
 		TAILQ_FOREACH(mod, &module_list, mod_chain) {
 			prv->dtpv_pops.dtps_provide_module(prv->dtpv_arg, mod);
 		}
-		mutex_exit(&module_lock);
+		kernconfig_unlock();
 #endif
 
 		mutex_exit(&mod_lock);
