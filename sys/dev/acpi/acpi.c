@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.216 2010/08/21 13:18:35 pgoyette Exp $	*/
+/*	$NetBSD: acpi.c,v 1.217 2010/08/22 00:39:08 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.216 2010/08/21 13:18:35 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.217 2010/08/22 00:39:08 jmcneill Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -183,10 +183,7 @@ static const char * const acpi_ignored_ids[] = {
 	"PNP0200",	/* AT DMA controller is handled internally */
 	"PNP0A??",	/* PCI Busses are handled internally */
 	"PNP0B00",	/* AT RTC is handled internally */
-	"PNP0C0B",	/* No need for "ACPI fan" driver */
 	"PNP0C0F",	/* ACPI PCI link devices are handled internally */
-	"IFX0102",	/* No driver for Infineon TPM */
-	"INT0800",	/* No driver for Intel Firmware Hub device */
 #endif
 #if defined(x86_64)
 	"PNP0C04",	/* FPU is handled internally */
