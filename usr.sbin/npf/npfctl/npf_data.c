@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_data.c,v 1.1 2010/08/22 18:56:23 rmind Exp $	*/
+/*	$NetBSD: npf_data.c,v 1.2 2010/08/23 06:01:04 jnemeth Exp $	*/
 
 /*-
  * Copyright (c) 2009-2010 The NetBSD Foundation, Inc.
@@ -517,7 +517,7 @@ skip_proto:
 	npfctl_gennc_complete(&nc);
 
 	if ((uintptr_t)nc - (uintptr_t)ncptr != sz)
-		errx(EXIT_FAILURE, "n-code size got wrong (%lu != %lu)",
+		errx(EXIT_FAILURE, "n-code size got wrong (%tu != %zu)",
 		    (uintptr_t)nc - (uintptr_t)ncptr, sz);
 
 #ifdef DEBUG
