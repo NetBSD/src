@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.130 2010/08/18 14:26:16 sketch Exp $
+# $NetBSD: shl.mi,v 1.131 2010/08/23 20:53:41 pooka Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -106,6 +106,7 @@
 ./usr/lib/librumpdev_putter_pic.a		comp-c-piclib
 ./usr/lib/librumpdev_raidframe_pic.a		comp-c-piclib
 ./usr/lib/librumpdev_rnd_pic.a			comp-c-piclib
+./usr/lib/librumpdev_scsipi_pic.a			comp-c-piclib
 ./usr/lib/librumpdev_sysmon_pic.a		comp-c-piclib
 ./usr/lib/librumpdev_ubt_pic.a			comp-c-piclib
 ./usr/lib/librumpdev_ucom_pic.a			comp-c-piclib
@@ -286,6 +287,7 @@
 ./usr/libdata/debug/usr/lib/librumpdev_putter.so.0.0.debug	comp-rump-debug	debug
 ./usr/libdata/debug/usr/lib/librumpdev_raidframe.so.0.0.debug	comp-rump-debug	debug
 ./usr/libdata/debug/usr/lib/librumpdev_rnd.so.0.0.debug	comp-rump-debug	debug
+./usr/libdata/debug/usr/lib/librumpdev_scsipi.so.0.0.debug	comp-rump-debug	debug
 ./usr/libdata/debug/usr/lib/librumpdev_sysmon.so.0.0.debug	comp-rump-debug	debug
 ./usr/libdata/debug/usr/lib/librumpdev_ubt.so.0.0.debug	comp-rump-debug	debug
 ./usr/libdata/debug/usr/lib/librumpdev_ucom.so.0.0.debug	comp-rump-debug	debug
