@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_md.c,v 1.30 2010/08/22 04:42:57 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_md.c,v 1.31 2010/08/23 16:20:44 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.30 2010/08/22 04:42:57 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.31 2010/08/23 16:20:44 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -248,14 +248,26 @@ acpicpu_md_cpus_running(void)
 }
 
 int
-acpicpu_md_idle_start(void)
+acpicpu_md_idle_start(struct acpicpu_softc *sc)
 {
 	const size_t size = sizeof(native_idle_text);
+	struct acpicpu_cstate *cs;
+	bool ipi = false;
+	int i;
 
-	x86_disable_intr();
 	x86_cpu_idle_get(&native_idle, native_idle_text, size);
-	x86_cpu_idle_set(acpicpu_cstate_idle, "acpi");
-	x86_enable_intr();
+
+	for (i = 0; i < ACPI_C_STATE_COUNT; i++) {
+
+		cs = &sc->sc_cstate[i];
+
+		if (cs->cs_method == ACPICPU_C_STATE_HALT) {
+			ipi = true;
+			break;
+		}
+	}
+
+	x86_cpu_idle_set(acpicpu_cstate_idle, "acpi", ipi);
 
 	return 0;
 }
@@ -264,10 +276,10 @@ int
 acpicpu_md_idle_stop(void)
 {
 	uint64_t xc;
+	bool ipi;
 
-	x86_disable_intr();
-	x86_cpu_idle_set(native_idle, native_idle_text);
-	x86_enable_intr();
+	ipi = (native_idle != x86_cpu_idle_halt) ? false : true;
+	x86_cpu_idle_set(native_idle, native_idle_text, ipi);
 
 	/*
 	 * Run a cross-call to ensure that all CPUs are
@@ -280,7 +292,8 @@ acpicpu_md_idle_stop(void)
 }
 
 /*
- * The MD idle loop. Called with interrupts disabled.
+ * Called with interrupts disabled.
+ * Caller should enable interrupts after return.
  */
 void
 acpicpu_md_idle_enter(int method, int state)
@@ -294,7 +307,7 @@ acpicpu_md_idle_enter(int method, int state)
 		x86_enable_intr();
 		x86_monitor(&ci->ci_want_resched, 0, 0);
 
-		if (__predict_false(ci->ci_want_resched) != 0)
+		if (__predict_false(ci->ci_want_resched != 0))
 			return;
 
 		x86_mwait((state - 1) << 4, 0);
@@ -302,10 +315,8 @@ acpicpu_md_idle_enter(int method, int state)
 
 	case ACPICPU_C_STATE_HALT:
 
-		if (__predict_false(ci->ci_want_resched) != 0) {
-			x86_enable_intr();
+		if (__predict_false(ci->ci_want_resched != 0))
 			return;
-		}
 
 		x86_stihlt();
 		break;
