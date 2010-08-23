@@ -1,4 +1,4 @@
-# $NetBSD: bsd.test.mk,v 1.12 2010/08/02 07:08:26 jmmv Exp $
+# $NetBSD: bsd.test.mk,v 1.13 2010/08/23 16:03:03 joerg Exp $
 #
 
 .include <bsd.init.mk>
@@ -7,12 +7,7 @@ _TESTS=		# empty
 
 .if defined(TESTS_SUBDIRS)
 SUBDIR+=	${TESTS_SUBDIRS}
-
-.  for dir in ${TESTS_SUBDIRS}
-.    if ${dir} != ".WAIT"
-_TESTS:=	${_TESTS} ${dir}
-.    endif
-.  endfor
+_TESTS:=	${TESTS_SUBDIRS:N.WAIT}
 .endif
 
 .include <bsd.subdir.mk>
