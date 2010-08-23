@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_machdep.c,v 1.42 2010/07/18 09:29:12 jruoho Exp $	*/
+/*	$NetBSD: x86_machdep.c,v 1.43 2010/08/23 16:20:45 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 YAMAMOTO Takashi,
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.42 2010/07/18 09:29:12 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.43 2010/08/23 16:20:45 jruoho Exp $");
 
 #include "opt_modular.h"
 #include "opt_physmem.h"
@@ -62,6 +62,10 @@ __KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.42 2010/07/18 09:29:12 jruoho Exp 
 #include <machine/vmparam.h>
 
 #include <uvm/uvm_extern.h>
+
+void (*x86_cpu_idle)(void);
+static bool x86_cpu_idle_ipi;
+static char x86_cpu_idle_text[16];
 
 int check_pa_acc(paddr_t, vm_prot_t);
 
@@ -183,7 +187,7 @@ cpu_need_resched(struct cpu_info *ci, int flags)
 		if (ci == cur)
 			return;
 #ifndef XEN /* XXX review when Xen gets MP support */
-		if (x86_cpu_idle == x86_cpu_idle_halt)
+		if (x86_cpu_idle_ipi != false)
 			x86_send_ipi(ci, 0);
 #endif
 		return;
@@ -314,9 +318,6 @@ cpu_kpreempt_disabled(void)
 }
 #endif	/* __HAVE_PREEMPTION */
 
-void (*x86_cpu_idle)(void);
-static char x86_cpu_idle_text[16];
-
 SYSCTL_SETUP(sysctl_machdep_cpu_idle, "sysctl machdep cpu_idle")
 {
 	const struct sysctlnode	*mnode, *node;
@@ -335,14 +336,15 @@ SYSCTL_SETUP(sysctl_machdep_cpu_idle, "sysctl machdep cpu_idle")
 void
 x86_cpu_idle_init(void)
 {
+
 #ifndef XEN
 	if ((cpu_feature[1] & CPUID2_MONITOR) == 0 ||
 	    cpu_vendor == CPUVENDOR_AMD)
-		x86_cpu_idle_set(x86_cpu_idle_halt, "halt");
+		x86_cpu_idle_set(x86_cpu_idle_halt, "halt", true);
 	else
-		x86_cpu_idle_set(x86_cpu_idle_mwait, "mwait");
+		x86_cpu_idle_set(x86_cpu_idle_mwait, "mwait", false);
 #else
-	x86_cpu_idle_set(x86_cpu_idle_xen, "xen");
+	x86_cpu_idle_set(x86_cpu_idle_xen, "xen", false);
 #endif
 }
 
@@ -356,10 +358,11 @@ x86_cpu_idle_get(void (**func)(void), char *text, size_t len)
 }
 
 void
-x86_cpu_idle_set(void (*func)(void), const char *text)
+x86_cpu_idle_set(void (*func)(void), const char *text, bool ipi)
 {
 
 	x86_cpu_idle = func;
+	x86_cpu_idle_ipi = ipi;
 
 	(void)strlcpy(x86_cpu_idle_text, text, sizeof(x86_cpu_idle_text));
 }
