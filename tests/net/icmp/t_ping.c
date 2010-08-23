@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ping.c,v 1.6 2010/08/18 21:23:48 pooka Exp $	*/
+/*	$NetBSD: t_ping.c,v 1.7 2010/08/23 10:49:27 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: t_ping.c,v 1.6 2010/08/18 21:23:48 pooka Exp $");
+__RCSID("$NetBSD: t_ping.c,v 1.7 2010/08/23 10:49:27 pooka Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -83,6 +83,8 @@ ATF_TC_BODY(simpleping, tc)
 	default:
 		break;
 	}
+
+	usleep(500000);
 
 	netcfg_rump_if(ifname, "1.1.1.20", "255.255.255.0");
 
