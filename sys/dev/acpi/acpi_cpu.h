@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu.h,v 1.22 2010/08/21 06:45:50 jruoho Exp $ */
+/* $NetBSD: acpi_cpu.h,v 1.23 2010/08/23 16:20:45 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -240,7 +240,7 @@ int		acpicpu_tstate_set(struct acpicpu_softc *, uint32_t);
 uint32_t	acpicpu_md_cap(void);
 uint32_t	acpicpu_md_quirks(void);
 uint32_t	acpicpu_md_cpus_running(void);
-int		acpicpu_md_idle_start(void);
+int		acpicpu_md_idle_start(struct acpicpu_softc *);
 int		acpicpu_md_idle_stop(void);
 void		acpicpu_md_idle_enter(int, int);
 int		acpicpu_md_pstate_start(void);

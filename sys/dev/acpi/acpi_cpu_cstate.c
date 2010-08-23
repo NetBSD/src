@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_cstate.c,v 1.32 2010/08/22 17:45:48 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_cstate.c,v 1.33 2010/08/23 16:20:45 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_cstate.c,v 1.32 2010/08/22 17:45:48 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_cstate.c,v 1.33 2010/08/23 16:20:45 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -216,8 +216,9 @@ acpicpu_cstate_detach_evcnt(struct acpicpu_softc *sc)
 void
 acpicpu_cstate_start(device_t self)
 {
+	struct acpicpu_softc *sc = device_private(self);
 
-	(void)acpicpu_md_idle_start();
+	(void)acpicpu_md_idle_start(sc);
 }
 
 bool
@@ -653,14 +654,14 @@ acpicpu_cstate_latency(struct acpicpu_softc *sc)
 void
 acpicpu_cstate_idle(void)
 {
-        struct cpu_info *ci = curcpu();
+	struct cpu_info *ci = curcpu();
 	struct acpicpu_softc *sc;
 	int state;
 
-	if (__predict_false(ci->ci_want_resched) != 0)
-		return;
-
 	acpi_md_OsDisableInterrupt();
+
+	if (__predict_false(ci->ci_want_resched != 0))
+		goto out;
 
 	KASSERT(acpicpu_sc != NULL);
 	KASSERT(ci->ci_acpiid < maxcpus);
@@ -668,16 +669,16 @@ acpicpu_cstate_idle(void)
 	sc = acpicpu_sc[ci->ci_acpiid];
 
 	if (__predict_false(sc == NULL))
-		goto halt;
+		goto out;
 
 	KASSERT(ci->ci_ilevel == IPL_NONE);
 	KASSERT((sc->sc_flags & ACPICPU_FLAG_C) != 0);
 
 	if (__predict_false(sc->sc_cold != false))
-		goto halt;
+		goto out;
 
 	if (__predict_false(mutex_tryenter(&sc->sc_mtx) == 0))
-		goto halt;
+		goto out;
 
 	mutex_exit(&sc->sc_mtx);
 	state = acpicpu_cstate_latency(sc);
@@ -739,8 +740,8 @@ acpicpu_cstate_idle(void)
 
 	return;
 
-halt:
-	acpicpu_md_idle_enter(ACPICPU_C_STATE_HALT, ACPI_STATE_C1);
+out:
+	acpi_md_OsEnableInterrupt();
 }
 
 static void
@@ -761,18 +762,13 @@ acpicpu_cstate_idle_enter(struct acpicpu_softc *sc, int state)
 	case ACPICPU_C_STATE_SYSIO:
 		(void)AcpiOsReadPort(cs->cs_addr, &val, 8);
 		break;
-
-	default:
-		acpicpu_md_idle_enter(ACPICPU_C_STATE_HALT, ACPI_STATE_C1);
-		break;
 	}
 
-	cs->cs_evcnt.ev_count++;
+	acpi_md_OsEnableInterrupt();
 
+	cs->cs_evcnt.ev_count++;
 	end = acpitimer_read_fast(NULL);
 	sc->sc_cstate_sleep = hztoms(acpitimer_delta(end, start)) * 1000;
-
-	acpi_md_OsEnableInterrupt();
 }
 
 static bool
