@@ -1,4 +1,4 @@
-/*	$NetBSD: i82802reg.h,v 1.3 2010/07/23 00:43:21 jakllsch Exp $	*/
+/*	$NetBSD: i82802reg.h,v 1.4 2010/08/23 02:57:19 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2000 Michael Shalayeff
@@ -39,6 +39,8 @@
 #define	I82802AC_REGBASE	0xffb00000
 #define	I82802AC_MEMBASE	0xfff00000
 #define	I82802AC_WINSIZE	0x00100000
+#define	I82802AB_MEMBASE	0xfff80000
+#define	I82802AB_WINSIZE	0x00080000
 
 #define I82802_MFG	0x89
 #define I82802AB_ID	0xad
