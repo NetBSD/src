@@ -1,6 +1,7 @@
 PROG=umserv
 NOMAN=
-LDADD+=-lrumpdev_ugenhc -lrumpdev_umass -lrumpdev_usb -lrumpdev_disk -lrumpdev
+LDADD+=-lrumpdev_ugenhc -lrumpdev_umass -lrumpdev_scsipi -lrumpdev_usb
+LDADD+=-lrumpdev_disk -lrumpdev
 LDADD+=-lrumpvfs
 LDADD+=-lrump -lrumpuser -lpthread
 
