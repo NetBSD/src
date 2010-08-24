@@ -1,4 +1,4 @@
-/*	$NetBSD: fwdv.c,v 1.3 2008/05/02 19:59:19 xtraeme Exp $	*/
+/*	$NetBSD: fwdv.c,v 1.4 2010/08/24 08:41:24 cegger Exp $	*/
 /*
  * Copyright (C) 2003
  * 	Hidetoshi Shimokawa. All rights reserved.
@@ -32,17 +32,13 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $FreeBSD: src/usr.sbin/fwcontrol/fwdv.c,v 1.7 2007/06/17 10:20:55 simokawa Exp $
+ * $FreeBSD: src/usr.sbin/fwcontrol/fwdv.c,v 1.8 2009/02/02 21:05:12 sbruno Exp $
  */
 #include <sys/param.h>
 #include <sys/ioctl.h>
 #include <sys/time.h>
 #include <sys/types.h>
 #include <sys/uio.h>
-
-#if __FreeBSD_version >= 500000
-#include <arpa/inet.h>
-#endif
 
 #include <err.h>
 #include <errno.h>
@@ -53,13 +49,8 @@
 #include <string.h>
 #include <sysexits.h>
 
-#if defined(__FreeBSD__)
-#include <dev/firewire/firewire.h>
-#include <dev/firewire/iec68113.h>
-#elif defined(__NetBSD__)
 #include <dev/ieee1394/firewire.h>
 #include <dev/ieee1394/iec68113.h>
-#endif
 
 #include "fwmethods.h"
 
@@ -106,12 +97,12 @@ dvrecv(int d, const char *filename, char ich, int count)
 	struct ciphdr *ciph;
 	struct fw_pkt *pkt;
 	char *pad, *buf;
-	u_int32_t *ptr;
+	uint32_t *ptr;
 	int len, tlen, npad, fd, k, m, vec, lsystem = -1, nb;
 	int nblocks[] = {250 /* NTSC */, 300 /* PAL */};
 	struct iovec wbuf[NPACKET_R];
 
-	if(strcmp(filename, "-") == 0) {
+	if (strcmp(filename, "-") == 0) {
 		fd = STDOUT_FILENO;
 	} else {
 		fd = open(filename, O_CREAT | O_WRONLY | O_TRUNC, 0660);
@@ -130,13 +121,13 @@ dvrecv(int d, const char *filename, char ich, int count)
 	bufreq.tx.npacket = 0;
 	bufreq.tx.psize = 0;
 	if (ioctl(d, FW_SSTBUF, &bufreq) < 0)
-		err(1, "ioctl FW_SSTBUF");
+		err(EXIT_FAILURE, "ioctl FW_SSTBUF");
 
 	isoreq.ch = ich & 0x3f;
 	isoreq.tag = (ich >> 6) & 3;
 
 	if (ioctl(d, FW_SRSTREAM, &isoreq) < 0)
-       		err(1, "ioctl");
+		err(EXIT_FAILURE, "ioctl");
 
 	k = m = 0;
 	while (count <= 0 || k <= count) {
@@ -146,13 +137,12 @@ dvrecv(int d, const char *filename, char ich, int count)
 						/* RBUFSIZE - tlen */)) > 0) {
 			if (len < 0) {
 				if (errno == EAGAIN) {
-					fprintf(stderr,
-					    "(EAGAIN)- push 'Play'?\n");
+					fprintf(stderr, "(EAGAIN)\n");
 					fflush(stderr);
 					if (len <= 0)
 						continue;
 				} else
-					err(1, "read failed");
+					err(EXIT_FAILURE, "read failed");
 			}
 			tlen += len;
 			if ((RBUFSIZE - tlen) < PSIZE)
@@ -162,16 +152,16 @@ dvrecv(int d, const char *filename, char ich, int count)
 		tlen = len = read(d, buf, RBUFSIZE);
 		if (len < 0) {
 			if (errno == EAGAIN) {
-				fprintf(stderr, "(EAGAIN)\n");
+				fprintf(stderr, "(EAGAIN) - push 'Play'?\n");
 				fflush(stderr);
 				if (len <= 0)
 					continue;
 			} else
-				err(1, "read failed");
+				err(EXIT_FAILURE, "read failed");
 		}
 #endif
 		vec = 0;
-		ptr = (u_int32_t *) buf;
+		ptr = (uint32_t *) buf;
 again:
 		pkt = (struct fw_pkt *) ptr;
 #if DEBUG
@@ -182,11 +172,10 @@ again:
 		ciph = (struct ciphdr *)(ptr + 1);	/* skip iso header */
 		if (ciph->fmt != CIP_FMT_DVCR)
 			errx(1, "unknown format 0x%x", ciph->fmt);
-		ptr = (u_int32_t *) (ciph + 1);		/* skip cip header */
+		ptr = (uint32_t *) (ciph + 1);		/* skip cip header */
 #if DEBUG
-		if (ciph->fdf.dv.cyc != 0xffff && k == 0) {
+		if (ciph->fdf.dv.cyc != 0xffff && k == 0)
 			fprintf(stderr, "0x%04x\n", ntohs(ciph->fdf.dv.cyc));
-		}
 #endif
 		if (pkt->mode.stream.len <= sizeof(struct ciphdr))
 			/* no payload */
@@ -210,15 +199,20 @@ again:
 					(dv->payload[0] & DV_DSF_12) == 0)
 					dv->payload[0] |= DV_DSF_12;
 				nb = nblocks[lsystem];
-				fprintf(stderr, "%d", k%10);
+				fprintf(stderr, "%d:%02d:%02d %d\r",
+				    k / (3600 * frame_rate[lsystem]),
+				    (k / (60 * frame_rate[lsystem])) % 60,
+				    (k / frame_rate[lsystem]) % 60,
+				    k % frame_rate[lsystem]);
+
 #if FIX_FRAME
 				if (m > 0 && m != nb) {
 					/* padding bad frame */
 					npad = ((nb - m) % nb);
 					if (npad < 0)
 						npad += nb;
-					fprintf(stderr, "(%d blocks padded)",
-								npad);
+					fprintf(stderr, "\n%d blocks padded\n",
+					    npad);
 					npad *= DSIZE;
 					wbuf[vec].iov_base = pad;
 					wbuf[vec++].iov_len = npad;
@@ -229,10 +223,6 @@ again:
 				}
 #endif
 				k++;
-				if (k % frame_rate[lsystem] == 0) {
-					/* every second */
-					fprintf(stderr, "\n");
-				}
 				fflush(stderr);
 				m = 0;
 			}
@@ -246,16 +236,15 @@ again:
 				vec = 0;
 			}
 		}
-		ptr = (u_int32_t *)dv;
+		ptr = (uint32_t *)dv;
 next:
 		if ((char *)ptr < buf + tlen)
 			goto again;
 		if (vec > 0)
 			writev(fd, wbuf, vec);
 	}
-	if(fd != STDOUT_FILENO) {
+	if (fd != STDOUT_FILENO)
 		close(fd);
-	}
 	fprintf(stderr, "\n");
 }
 
@@ -271,7 +260,7 @@ dvsend(int d, const char *filename, char ich, int count)
 	int lsystem=-1, pad_acc, cycle_acc, cycle, f_cycle, f_frac;
 	struct iovec wbuf[TNBUF*2 + NEMPTY];
 	char *pbuf;
-	u_int32_t iso_data, iso_empty, hdr[TNBUF + NEMPTY][3];
+	uint32_t iso_data, iso_empty, hdr[TNBUF + NEMPTY][3];
 	struct ciphdr *ciph;
 	struct timeval start, end;
 	double rtime;
@@ -292,13 +281,13 @@ dvsend(int d, const char *filename, char ich, int count)
 	bufreq.tx.npacket = NPACKET_T;
 	bufreq.tx.psize = PSIZE;
 	if (ioctl(d, FW_SSTBUF, &bufreq) < 0)
-		err(1, "ioctl FW_SSTBUF");
+		err(EXIT_FAILURE, "ioctl FW_SSTBUF");
 
 	isoreq.ch = ich & 0x3f;
 	isoreq.tag = (ich >> 6) & 3;
 
 	if (ioctl(d, FW_STSTREAM, &isoreq) < 0)
-		err(1, "ioctl FW_STSTREAM");
+		err(EXIT_FAILURE, "ioctl FW_STSTREAM");
 
 	iso_data = 0;
 	pkt = (struct fw_pkt *) &iso_data;
@@ -414,7 +403,7 @@ again:
 				fprintf(stderr, "(EAGAIN) - push 'Play'?\n");
 				goto again;
 			}
-			err(1, "write failed");
+			err(EXIT_FAILURE, "write failed");
 		}
 	}
 	close(fd);
