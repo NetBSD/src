@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1501 2010/08/24 11:26:27 pooka Exp $
+#	$NetBSD: mi,v 1.1502 2010/08/24 15:03:18 pooka Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1915,6 +1915,7 @@
 ./usr/include/rump/rumpuser.h			comp-c-include
 ./usr/include/rump/rumpvfs_if_pub.h		comp-c-include
 ./usr/include/rump/rumpvnode_if.h		comp-c-include
+./usr/include/rump/scsitest.h			comp-c-include
 ./usr/include/rump/ukfs.h			comp-c-include
 ./usr/include/sa.h				comp-obsolete		obsolete
 ./usr/include/sched.h				comp-c-include
