@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.549 2010/08/23 20:53:41 pooka Exp $
+# $NetBSD: shl.mi,v 1.550 2010/08/24 11:26:27 pooka Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -405,6 +405,9 @@
 ./usr/lib/librumpdev_scsipi.so			base-rump-shlib
 ./usr/lib/librumpdev_scsipi.so.0			base-rump-shlib
 ./usr/lib/librumpdev_scsipi.so.0.0			base-rump-shlib
+./usr/lib/librumpdev_scsitest.so			base-rump-shlib
+./usr/lib/librumpdev_scsitest.so.0			base-rump-shlib
+./usr/lib/librumpdev_scsitest.so.0.0			base-rump-shlib
 ./usr/lib/librumpdev_sysmon.so			base-rump-shlib
 ./usr/lib/librumpdev_sysmon.so.0		base-rump-shlib
 ./usr/lib/librumpdev_sysmon.so.0.0		base-rump-shlib
