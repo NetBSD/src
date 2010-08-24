@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.237 2010/06/17 08:19:02 pooka Exp $
+#	$NetBSD: build.sh,v 1.238 2010/08/24 13:35:32 pgoyette Exp $
 #
 # Copyright (c) 2001-2009 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -61,6 +61,27 @@ ERRORMESSAGE
 statusmsg()
 {
 	${runcmd} echo "===> $@" | tee -a "${results}"
+}
+
+statusmsg2()
+{
+	msg="${1}"
+	shift
+	case ${msg} in
+	????????????????*)	;;
+	??????????*)		msg="${msg}      ";;
+	?????*)			msg="${msg}           ";;
+	*)			msg="${msg}                ";;
+	esac
+	case ${msg} in
+	?????????????????????*)	;;
+	????????????????????)	msg="${msg} ";;
+	???????????????????)	msg="${msg}  ";;
+	??????????????????)	msg="${msg}   ";;
+	?????????????????)	msg="${msg}    ";;
+	????????????????)	msg="${msg}     ";;
+	esac
+	statusmsg "${msg}$@"
 }
 
 warning()
@@ -1219,7 +1240,7 @@ validatemakeparams()
 		fi
 		eval ${var}=\"\${newval}\"
 		eval export ${var}
-		statusmsg "${var} path:     ${newval}"
+		statusmsg2 "${var} path:" "${newval}"
 	done
 
 	# RELEASEMACHINEDIR is just a subdir name, e.g. "i386".
@@ -1361,7 +1382,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.237 2010/06/17 08:19:02 pooka Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.238 2010/08/24 13:35:32 pgoyette Exp $
 # with these arguments: ${_args}
 #
 
@@ -1386,8 +1407,7 @@ exec "\${TOOLDIR}/bin/${toolprefix}make" \${1+"\$@"}
 EOF
 	[ "${runcmd}" = "echo" ] && echo EOF
 	${runcmd} chmod +x "${makewrapper}"
-	statusmsg "makewrapper:      ${makewrapper}"
-	statusmsg "Updated ${makewrapper}"
+	statusmsg2 "Updated makewrapper:" "${makewrapper}"
 }
 
 make_in_dir()
@@ -1456,8 +1476,8 @@ buildkernel()
 		buildkernelwarned=true
 	fi
 	getkernelconf $1
-	statusmsg "Building kernel:  ${kernelconf}"
-	statusmsg "Build directory:  ${kernelbuildpath}"
+	statusmsg2 "Building kernel:" "${kernelconf}"
+	statusmsg2 "Build directory:" "${kernelbuildpath}"
 	${runcmd} mkdir -p "${kernelbuildpath}" ||
 	    bomb "Cannot mkdir: ${kernelbuildpath}"
 	if [ "${MKUPDATE}" = "no" ]; then
@@ -1491,7 +1511,7 @@ releasekernel()
 		builtkern="${kernelbuildpath}/${kern}"
 		[ -f "${builtkern}" ] || continue
 		releasekern="${kernelreldir}/${kern}-${kernelconfname}.gz"
-		statusmsg "Kernel copy:      ${releasekern}"
+		statusmsg2 "Kernel copy:" "${releasekern}"
 		if [ "${runcmd}" = "echo" ]; then
 			echo "gzip -c -9 < ${builtkern} > ${releasekern}"
 		else
@@ -1635,13 +1655,13 @@ main()
 	sanitycheck
 
 	build_start=$(date)
-	statusmsg "${progname} command: $0 $@"
-	statusmsg "${progname} started: ${build_start}"
-	statusmsg "NetBSD version:   ${DISTRIBVER}"
-	statusmsg "MACHINE:          ${MACHINE}"
-	statusmsg "MACHINE_ARCH:     ${MACHINE_ARCH}"
-	statusmsg "Build platform:   ${uname_s} ${uname_r} ${uname_m}"
-	statusmsg "HOST_SH:          ${HOST_SH}"
+	statusmsg2 "${progname} command:" "$0 $@"
+	statusmsg2 "${progname} started:" "${build_start}"
+	statusmsg2 "NetBSD version:"   "${DISTRIBVER}"
+	statusmsg2 "MACHINE:"          "${MACHINE}"
+	statusmsg2 "MACHINE_ARCH:"     "${MACHINE_ARCH}"
+	statusmsg2 "Build platform:"   "${uname_s} ${uname_r} ${uname_m}"
+	statusmsg2 "HOST_SH:"          "${HOST_SH}"
 
 	rebuildmake
 	validatemakeparams
@@ -1716,7 +1736,7 @@ main()
 		esac
 	done
 
-	statusmsg "${progname} ended:   $(date)"
+	statusmsg2 "${progname} ended:" "$(date)"
 	if [ -s "${results}" ]; then
 		echo "===> Summary of results:"
 		sed -e 's/^===>//;s/^/	/' "${results}"
