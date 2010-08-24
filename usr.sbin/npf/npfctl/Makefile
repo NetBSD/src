@@ -1,7 +1,7 @@
-# $NetBSD: Makefile,v 1.1 2010/08/22 18:56:23 rmind Exp $
+# $NetBSD: Makefile,v 1.2 2010/08/24 23:55:04 rmind Exp $
 
 PROG=		npfctl
-MAN=		npfctl.8 npf.conf.8
+MAN=		npfctl.8 npf.conf.5
 
 SRCS=		npfctl.c npf_parser.c npf_data.c npf_ncgen.c
 
