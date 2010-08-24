@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.238 2010/08/24 13:35:32 pgoyette Exp $
+#	$NetBSD: build.sh,v 1.239 2010/08/24 15:28:22 pgoyette Exp $
 #
 # Copyright (c) 2001-2009 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -67,13 +67,13 @@ statusmsg2()
 {
 	msg="${1}"
 	shift
-	case ${msg} in
+	case "${msg}" in
 	????????????????*)	;;
 	??????????*)		msg="${msg}      ";;
 	?????*)			msg="${msg}           ";;
 	*)			msg="${msg}                ";;
 	esac
-	case ${msg} in
+	case "${msg}" in
 	?????????????????????*)	;;
 	????????????????????)	msg="${msg} ";;
 	???????????????????)	msg="${msg}  ";;
@@ -1382,7 +1382,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.238 2010/08/24 13:35:32 pgoyette Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.239 2010/08/24 15:28:22 pgoyette Exp $
 # with these arguments: ${_args}
 #
 
