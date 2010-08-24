@@ -1,4 +1,4 @@
-.\"	$NetBSD: getmntopts.3,v 1.11 2010/05/04 07:58:28 jruoho Exp $
+.\"	$NetBSD: getmntopts.3,v 1.12 2010/08/24 12:05:01 christos Exp $
 .\"
 .\" Copyright (c) 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -51,7 +51,7 @@
 The
 .Fn getmntopts
 function takes a comma separated option list and a list
-of valid option names, and computes the bitmask
+of valid option names, and computes the bitmasks
 corresponding to the requested set of options.
 .Pp
 The string
@@ -141,17 +141,59 @@ Finally, the table must be terminated by an entry with a
 .Dv NULL
 first element.
 .Pp
+.Fn getmntopts
+returns a
+.Li "mntoptparse_t"
+handle that can be used in subsequent
+.Fn getmntoptstr
+and
+.Fn getmntoptnum
+calls to fetch a value for an option and that must be freed with a call
+to
+.Fn freemntopts .
+If an error occurred, then if the external integer value
+.Va getmnt_silent
+is zero then
+.Fn getmntopts
+prints an error message and exits;
+if
+.Va getmnt_silent
+is non-zero then
+.Fn getmntopts
+returns
+.Dv NULL .
+.Pp
 The
 .Fn getmntoptstr
 function returns the string value of the named option, if such a value
-was set it the option string.
+was set in the option string.
+If the value was not set, then if the external integer value
+.Va getmnt_silent
+is zero then
+.Fn getmntoptstr
+prints an error message and exits;
+if
+.Va getmnt_silent
+is non-zero then
+.Fn getmntoptstr
+returns
+.Dv NULL .
 .Pp
 The
 .Fn getmntoptnum
-returns the long value of the named option, if such a value was set it the
+returns the long value of the named option, if such a value was set in the
 option string.
-It prints an error message and exits if the value was not
-set, or could not be converted from a string to a long.
+If the value was not set, or could not be converted from a string to a
+long, then if the external integer value
+.Va getmnt_silent
+is zero then
+.Fn getmntoptnum
+prints an error message and exits;
+if
+.Va getmnt_silent
+is non-zero then
+.Fn getmntoptnum
+returns \-1.
 .Pp
 The
 .Fn freemntopts
@@ -172,7 +214,7 @@ is returned.
 .Fn getmntoptstr
 returns
 .Dv NULL
-if the option does not have an argument, or the option string.
+if an error occurred.
 .Fn getmntoptnum
 returns \-1 if an error occurred.
 .Sh EXAMPLES
@@ -214,9 +256,11 @@ freemntopts(mp);
 If the external integer variable
 .Va getmnt_silent
 is zero then the
-.Fn getmntopts
-function displays an error message and exits if an
-unrecognized option is encountered.
+.Fn getmntopts ,
+.Fn getmntoptstr ,
+and
+.Fn getmntoptnum
+functions display an error message and exit if an error occurred.
 By default
 .Va getmnt_silent
 is zero.
