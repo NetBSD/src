@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.217 2010/08/22 00:39:08 jmcneill Exp $	*/
+/*	$NetBSD: acpi.c,v 1.218 2010/08/24 04:36:02 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.217 2010/08/22 00:39:08 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.218 2010/08/24 04:36:02 pgoyette Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -154,7 +154,8 @@ static int acpi_dbgr = 0x00;
  * subsystems that ACPI supercedes) when ACPI is active.
  */
 int	acpi_active;
-int	acpi_force_load;
+
+int	acpi_force_load = 0;
 int	acpi_suspended = 0;
 int	acpi_verbose_loaded = 0;
 
