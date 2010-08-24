@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_lid.c,v 1.40 2010/04/27 05:57:43 jruoho Exp $	*/
+/*	$NetBSD: acpi_lid.c,v 1.41 2010/08/24 15:03:34 jruoho Exp $	*/
 
 /*
  * Copyright 2001, 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_lid.c,v 1.40 2010/04/27 05:57:43 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_lid.c,v 1.41 2010/08/24 15:03:34 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -165,8 +165,11 @@ acpilid_notify_handler(ACPI_HANDLE handle, uint32_t notify, void *context)
 		(void)AcpiOsExecute(handler, acpilid_status_changed, dv);
 		break;
 
+	case ACPI_NOTIFY_DEVICE_WAKE:
+		break;
+
 	default:
-		aprint_error_dev(dv, "unknown notify 0x%02X\n", notify);
+		aprint_debug_dev(dv, "unknown notify 0x%02X\n", notify);
 	}
 }
 
