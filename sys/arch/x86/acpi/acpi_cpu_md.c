@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_md.c,v 1.32 2010/08/24 07:28:00 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_md.c,v 1.33 2010/08/24 10:29:53 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.32 2010/08/24 07:28:00 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.33 2010/08/24 10:29:53 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -47,6 +47,8 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.32 2010/08/24 07:28:00 jruoho Exp 
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
+
+#define ACPICPU_P_STATE_STATUS	0
 
 /*
  * AMD families 10h and 11h.
@@ -417,13 +419,24 @@ acpicpu_md_pstate_pss(struct acpicpu_softc *sc)
 
 	(void)memset(&msr, 0, sizeof(struct acpicpu_pstate));
 
-	if ((sc->sc_flags & ACPICPU_FLAG_P_FIDVID) != 0)
-		msr.ps_flags = ACPICPU_FLAG_P_FIDVID;
-
 	switch (cpu_vendor) {
 
 	case CPUVENDOR_IDT:
 	case CPUVENDOR_INTEL:
+
+		/*
+		 * If the so-called Turbo Boost is present,
+		 * the P0-state is always the "turbo state".
+		 *
+		 * For discussion, see:
+		 *
+		 *	Intel Corporation: Intel Turbo Boost Technology
+		 *	in Intel Core(tm) Microarchitectures (Nehalem)
+		 *	Based Processors. White Paper, November 2008.
+		 */
+		if ((sc->sc_flags & ACPICPU_FLAG_P_TURBO) != 0)
+			sc->sc_pstate[0].ps_flags |= ACPICPU_FLAG_P_TURBO;
+
 		msr.ps_control_addr = MSR_PERF_CTL;
 		msr.ps_control_mask = __BITS(0, 15);
 
@@ -432,6 +445,9 @@ acpicpu_md_pstate_pss(struct acpicpu_softc *sc)
 		break;
 
 	case CPUVENDOR_AMD:
+
+		if ((sc->sc_flags & ACPICPU_FLAG_P_FIDVID) != 0)
+			msr.ps_flags |= ACPICPU_FLAG_P_FIDVID;
 
 		family = CPUID2FAMILY(ci->ci_signature);
 
@@ -493,26 +509,6 @@ acpicpu_md_pstate_pss(struct acpicpu_softc *sc)
 
 		i++;
 	}
-
-	/*
-	 * When the state is P0 and Turbo Boost has been
-	 * detected, we need to skip the status check as
-	 * BIOS may not report right comparison values for
-	 * the IA32_PERF_STATUS register. Note that this
-	 * issue is specific to Intel. For discussion, see:
-	 *
-	 *	Intel Corporation: Intel Turbo Boost Technology
-	 *	in Intel Core(tm) Microarchitectures (Nehalem)
-	 *	Based Processors. White Paper, November 2008.
-	 */
-	if (cpu_vendor != CPUVENDOR_INTEL)
-		return 0;
-
-	if ((sc->sc_flags & ACPICPU_FLAG_P_TURBO) == 0)
-		return 0;
-
-	if (sc->sc_pstate[1].ps_freq + 1 == sc->sc_pstate[0].ps_freq)
-		sc->sc_pstate[0].ps_flags |= ACPICPU_FLAG_P_TURBO;
 
 	return 0;
 }
@@ -584,24 +580,15 @@ acpicpu_md_pstate_set(struct acpicpu_pstate *ps)
 	xc = xc_broadcast(0, (xcfunc_t)x86_msr_xcall, &msr, NULL);
 	xc_wait(xc);
 
-	if (__predict_false(ps->ps_status == 0))
-		goto out;
-
-	if (__predict_false(ps->ps_status_addr == 0))
-		goto out;
-
-	if ((ps->ps_flags & ACPICPU_FLAG_P_TURBO) != 0)
-		goto out;
+	if (ACPICPU_P_STATE_STATUS == 0) {
+		DELAY(ps->ps_latency);
+		return 0;
+	}
 
 	xc = xc_broadcast(0, (xcfunc_t)acpicpu_md_pstate_status, ps, &rv);
 	xc_wait(xc);
 
 	return rv;
-
-out:
-	DELAY(ps->ps_latency);
-
-	return 0;
 }
 
 static void
