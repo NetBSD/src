@@ -1,4 +1,4 @@
-.\"	$NetBSD: fwctl.8,v 1.14 2010/08/16 06:56:48 wiz Exp $
+.\"	$NetBSD: fwctl.8,v 1.15 2010/08/24 08:41:24 cegger Exp $
 .\"
 .\" Copyright (c) 2005 KIYOHARA Takashi
 .\" All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\" $FreeBSD: src/usr.sbin/fwcontrol/fwcontrol.8,v 1.21 2007/10/31 05:59:17 brueffer Exp $
 .\"
-.Dd May 18, 2009
+.Dd August 24, 2010
 .Dt FWCTL 8
 .Os
 .Sh NAME
@@ -71,12 +71,21 @@ register on all supported nodes.
 Show the configuration ROM on the node.
 .It Fl d Ar node
 Hex dump of the configuration ROM.
+.It Fl f Ar node
+Force specified
+.Ar node
+to be the root node on the next bus reset by sending a PHY config packet.
+Valid values are 0 - 63.
 .It Fl g Ar gap_count
 Broadcast new
 .Ar gap_count
 by phy_config packet.
 By default this value is 63 on all nodes.
 Valid values are 0 - 63.
+.It Fl i Ar pri_req
+Set the
+.Dv PRIORITY_BUDGET
+register on all supported nodes.
 .It Fl l Ar file
 Load hex dump file of the configuration ROM and parse it.
 .It Fl M Ar mode

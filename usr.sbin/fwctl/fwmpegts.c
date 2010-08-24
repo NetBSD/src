@@ -1,3 +1,4 @@
+/* $NetBSD: fwmpegts.c,v 1.2 2010/08/24 08:41:24 cegger Exp $ */
 /*
  * Copyright (C) 2005
  * 	Petr Holub, Hidetoshi Shimokawa. All rights reserved.
@@ -31,17 +32,13 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  * 
- * $FreeBSD: src/usr.sbin/fwcontrol/fwmpegts.c,v 1.1 2006/10/26 22:33:38 imp Exp $
+ * $FreeBSD: src/usr.sbin/fwcontrol/fwmpegts.c,v 1.3 2009/02/02 21:05:12 sbruno Exp $
  */
 #include <sys/param.h>
 #include <sys/ioctl.h>
 #include <sys/time.h>
 #include <sys/types.h>
 #include <sys/uio.h>
-
-#if __FreeBSD_version >= 500000
-#include <arpa/inet.h>
-#endif
 
 #include <err.h>
 #include <errno.h>
@@ -52,13 +49,8 @@
 #include <string.h>
 #include <sysexits.h>
 
-#if defined(__FreeBSD__)
-#include <dev/firewire/firewire.h>
-#include <dev/firewire/iec68113.h>
-#elif defined(__NetBSD__)
 #include <dev/ieee1394/firewire.h>
 #include <dev/ieee1394/iec68113.h>
-#endif
 
 #include "fwmethods.h"
 
@@ -175,13 +167,13 @@ mpegtsrecv(int d, const char *filename, char ich, int count)
 	bufreq.tx.npacket = 0;
 	bufreq.tx.psize = 0;
 	if (ioctl(d, FW_SSTBUF, &bufreq) < 0)
-		err(1, "ioctl");
+		err(EXIT_FAILURE, "ioctl");
 
 	isoreq.ch = ich & 0x3f;
 	isoreq.tag = (ich >> 6) & 3;
 
 	if (ioctl(d, FW_SRSTREAM, &isoreq) < 0)
-		err(1, "ioctl");
+		err(EXIT_FAILURE, "ioctl");
 
 	k = m = 0;
 	while (count <= 0 || k <= count) {
@@ -192,10 +184,9 @@ mpegtsrecv(int d, const char *filename, char ich, int count)
 		if (len < 0) {
 			if (errno == EAGAIN) {
 				fprintf(stderr, "(EAGAIN) - push 'Play'?\n");
-				if (len <= 0)
-					continue;
-			} else
-				err(1, "read failed");
+				continue;
+			}
+			err(EXIT_FAILURE, "read failed");
 		}
 		ptr = (uint32_t *) buf;
 
