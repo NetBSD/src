@@ -1,4 +1,4 @@
-/*	$NetBSD: radeonfb.c,v 1.36 2010/08/17 18:53:16 macallan Exp $ */
+/*	$NetBSD: radeonfb.c,v 1.37 2010/08/24 12:47:17 macallan Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.36 2010/08/17 18:53:16 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.37 2010/08/24 12:47:17 macallan Exp $");
 
 #define RADEONFB_DEFAULT_DEPTH 8
 
@@ -1027,6 +1027,7 @@ radeonfb_ioctl(void *v, void *vs,
 			if ((dp->rd_wsmode == WSDISPLAYIO_MODE_EMUL) &&
 			    (dp->rd_vd.active)) {
 				radeonfb_engine_init(dp);
+				radeonfb_init_palette(sc, dp == &sc->sc_displays[0] ? 0 : 1);
 				radeonfb_modeswitch(dp);
 				vcons_redraw_screen(dp->rd_vd.active);
 			}
