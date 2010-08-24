@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.base,v 1.47 2010/08/21 06:41:09 christos Exp $
+#	$NetBSD: NetBSD.dist.base,v 1.48 2010/08/24 11:31:48 pooka Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -202,6 +202,7 @@
 ./usr/libdata/debug/usr/tests/crypto/libcrypto
 ./usr/libdata/debug/usr/tests/dev
 ./usr/libdata/debug/usr/tests/dev/audio
+./usr/libdata/debug/usr/tests/dev/scsipi
 ./usr/libdata/debug/usr/tests/dev/sysmon
 ./usr/libdata/debug/usr/tests/fs
 ./usr/libdata/debug/usr/tests/fs/ffs
@@ -1132,6 +1133,7 @@
 ./usr/tests/crypto/libcrypto
 ./usr/tests/dev
 ./usr/tests/dev/audio
+./usr/tests/dev/scsipi
 ./usr/tests/dev/sysmon
 ./usr/tests/fs
 ./usr/tests/fs/ffs

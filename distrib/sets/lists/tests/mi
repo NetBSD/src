@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.137 2010/08/19 02:37:04 pooka Exp $
+# $NetBSD: mi,v 1.138 2010/08/24 11:31:48 pooka Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -188,6 +188,8 @@
 ./usr/libdata/debug/usr/tests/dev					tests-fs-debug
 ./usr/libdata/debug/usr/tests/dev/audio					tests-fs-debug
 ./usr/libdata/debug/usr/tests/dev/audio/h_pad.debug			tests-fs-debug		debug,atf
+./usr/libdata/debug/usr/tests/dev/scsipi					tests-fs-debug
+./usr/libdata/debug/usr/tests/dev/scsipi/t_cd.debug			tests-fs-debug		debug,atf
 ./usr/libdata/debug/usr/tests/dev/sysmon					tests-fs-debug
 ./usr/libdata/debug/usr/tests/dev/sysmon/t_swwdog.debug			tests-fs-debug		debug,atf
 ./usr/libdata/debug/usr/tests/fs/ffs					tests-fs-debug
@@ -943,6 +945,9 @@
 ./usr/tests/dev/audio/h_pad			tests-fs-tests		atf
 ./usr/tests/dev/audio/t_pad			tests-fs-tests		atf
 ./usr/tests/dev/audio/t_pad_output.bz2.uue			tests-fs-tests		atf
+./usr/tests/dev/scsipi				tests-fs-tests
+./usr/tests/dev/scsipi/Atffile			tests-fs-tests		atf
+./usr/tests/dev/scsipi/t_cd			tests-fs-tests		atf
 ./usr/tests/dev/sysmon				tests-fs-tests
 ./usr/tests/dev/sysmon/Atffile			tests-fs-tests		atf
 ./usr/tests/dev/sysmon/t_swwdog			tests-fs-tests		atf
