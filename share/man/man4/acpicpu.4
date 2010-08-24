@@ -1,4 +1,4 @@
-.\" $NetBSD: acpicpu.4,v 1.14 2010/08/20 06:35:55 jruoho Exp $
+.\" $NetBSD: acpicpu.4,v 1.15 2010/08/24 07:27:59 jruoho Exp $
 .\"
 .\" Coyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd August 20, 2010
+.Dd August 24, 2010
 .Dt ACPICPU 4
 .Os
 .Sh NAME
@@ -161,12 +161,17 @@ and
 .Dq PowerSaver
 .Pq VIA .
 .Pp
-The
-.Dv P0
-state is always the highest operating frequency supported by the processor.
+The P0-state is always the highest operating
+frequency supported by the processor.
 The number of additional P-states may vary across processors and vendors.
 Each higher numbered P-state represents lower
 clock frequencies and hence lower power consumption.
+Note that while
+.Nm
+always uses the exact frequencies internally,
+the user-visible values reported by
+.Tn ACPI
+may be rounded or approximated by the vendor.
 .Pp
 Unlike conventional
 .Tn CPU
@@ -174,8 +179,9 @@ frequency management,
 .Tn ACPI
 provides support for Dynamic Voltage and Frequency Scaling
 .Pq Tn DVFS .
-This means that the firmware may request the implementation to
-dynamically scale the presently supported maximum clock frequency.
+Among other things,
+this means that the firmware may request the implementation to
+dynamically scale the presently supported maximum or minimum clock frequency.
 For example, if
 .Xr acpiacad 4
 is disconnected, the maximum available frequency may be lowered.
@@ -191,7 +197,7 @@ can be used to actively modulate the
 time a processor is allowed to execute.
 Outside the
 .Tn ACPI
-nomenclature, throttling may be known as
+nomenclature, throttling and T-states may be known as
 .Dq on-demand clock modulation
 .Pq Tn ODCM .
 .Pp
@@ -205,8 +211,7 @@ The T0-state has always a duty cycle of 100 \&%,
 and thus, comparable to the C0-state, the processor is fully active.
 Each additional higher-numbered T-state indicates lower duty cycles.
 At most eight T-states may be available, although also T-states use
-.Tn DVFS ;
-both the maximum and the minimum available T-state may change dynamically.
+.Tn DVFS .
 .Pp
 The duty cycle does not refer to the actual clock signal,
 but to the time period in which the clock signal is allowed
@@ -218,7 +223,7 @@ but 25 \&% of the time the
 .Tn CPU
 is forced to idle.
 Because of this, the use of T-states may
-severely reduce system performance.
+severely affect system performance.
 .Pp
 There are two typical situations for throttling:
 power management and thermal control.
@@ -266,7 +271,7 @@ controls for P-states as the ones provided by the kernel configuration
 .Dv ENHANCED_SPEEDSTEP
 and
 .Dv POWERNOW_K8 .
-Depending on the processor vendor, the second-level node is either
+Depending on the processor, the second-level node is either
 .Ic machdep.est
 or
 .Ic machdep.powernow .
@@ -299,9 +304,6 @@ device driver appeared in
 .An Jukka Ruohonen
 .Aq jruohonen@iki.fi
 .Sh CAVEATS
-The
-.Nm
-driver should be considered experimental.
 At least the following caveats can be mentioned.
 .Bl -bullet
 .It
@@ -319,10 +321,6 @@ If this extension is available in a vendor
 .Tn BIOS ,
 it is recommended to turn it off, with or without
 .Nm .
-.It
-While P-states are supported on all Intel
-.Tn CPUs ,
-not all AMD processors are yet supported.
 .It
 Processor thermal control (see
 .Xr acpitz 4 )

@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu.h,v 1.23 2010/08/23 16:20:45 jruoho Exp $ */
+/* $NetBSD: acpi_cpu.h,v 1.24 2010/08/24 07:27:59 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -108,9 +108,10 @@
 #define ACPICPU_FLAG_P_HW	 __BIT(13)	/* HW coordination supported */
 #define ACPICPU_FLAG_P_XPSS	 __BIT(14)	/* Microsoft XPSS in use     */
 #define ACPICPU_FLAG_P_TURBO	 __BIT(15)	/* Turbo Boost / Turbo Core  */
+#define ACPICPU_FLAG_P_FIDVID	 __BIT(16)	/* AMD "FID/VID algorithm"   */
 
-#define ACPICPU_FLAG_T_FFH	 __BIT(16)	/* Native throttling         */
-#define ACPICPU_FLAG_T_FADT	 __BIT(17)	/* Throttling with FADT      */
+#define ACPICPU_FLAG_T_FFH	 __BIT(17)	/* Native throttling         */
+#define ACPICPU_FLAG_T_FADT	 __BIT(18)	/* Throttling with FADT      */
 
 /*
  * This is AML_RESOURCE_GENERIC_REGISTER,

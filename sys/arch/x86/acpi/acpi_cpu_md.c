@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_md.c,v 1.31 2010/08/23 16:20:44 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_md.c,v 1.32 2010/08/24 07:28:00 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.31 2010/08/23 16:20:44 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.32 2010/08/24 07:28:00 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -48,21 +48,53 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.31 2010/08/23 16:20:44 jruoho Exp 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
 
-#define CPUID_INTEL_TSC		__BIT(8)
-
-#define MSR_0FH_CONTROL		0xc0010041 /* Family 0Fh (and K7).  */
-#define MSR_0FH_STATUS		0xc0010042
-
-#define MSR_10H_LIMIT		0xc0010061 /* Families 10h and 11h. */
+/*
+ * AMD families 10h and 11h.
+ */
+#define MSR_10H_LIMIT		0xc0010061
 #define MSR_10H_CONTROL		0xc0010062
 #define MSR_10H_STATUS		0xc0010063
 #define MSR_10H_CONFIG		0xc0010064
+
+/*
+ * AMD family 0Fh.
+ */
+#define MSR_0FH_CONTROL		0xc0010041
+#define MSR_0FH_STATUS		0xc0010042
+
+#define MSR_0FH_STATUS_CFID	__BITS( 0,  5)
+#define MSR_0FH_STATUS_CVID	__BITS(32, 36)
+#define MSR_0FH_STATUS_PENDING	__BITS(31, 31)
+
+#define MSR_0FH_CONTROL_FID	__BITS( 0,  5)
+#define MSR_0FH_CONTROL_VID	__BITS( 8, 12)
+#define MSR_0FH_CONTROL_CHG	__BITS(16, 16)
+#define MSR_0FH_CONTROL_CNT	__BITS(32, 51)
+
+#define ACPI_0FH_STATUS_FID	__BITS( 0,  5)
+#define ACPI_0FH_STATUS_VID	__BITS( 6, 10)
+
+#define ACPI_0FH_CONTROL_FID	__BITS( 0,  5)
+#define ACPI_0FH_CONTROL_VID	__BITS( 6, 10)
+#define ACPI_0FH_CONTROL_VST	__BITS(11, 17)
+#define ACPI_0FH_CONTROL_MVS	__BITS(18, 19)
+#define ACPI_0FH_CONTROL_PLL	__BITS(20, 26)
+#define ACPI_0FH_CONTROL_RVO	__BITS(28, 29)
+#define ACPI_0FH_CONTROL_IRT	__BITS(30, 31)
+
+#define FID_TO_VCO_FID(fidd)	(((fid) < 8) ? (8 + ((fid) << 1)) : (fid))
 
 static char	  native_idle_text[16];
 void		(*native_idle)(void) = NULL;
 
 static int	 acpicpu_md_quirks_piix4(struct pci_attach_args *);
 static void	 acpicpu_md_pstate_status(void *, void *);
+static int	 acpicpu_md_pstate_fidvid_get(struct acpicpu_softc *,
+                                              uint32_t *);
+static int	 acpicpu_md_pstate_fidvid_set(struct acpicpu_pstate *);
+static int	 acpicpu_md_pstate_fidvid_read(uint32_t *, uint32_t *);
+static void	 acpicpu_md_pstate_fidvid_write(uint32_t, uint32_t,
+					        uint32_t, uint32_t);
 static void	 acpicpu_md_tstate_status(void *, void *);
 static int	 acpicpu_md_pstate_sysctl_init(void);
 static int	 acpicpu_md_pstate_sysctl_get(SYSCTLFN_PROTO);
@@ -178,7 +210,7 @@ acpicpu_md_quirks(void)
 
 			x86_cpuid(0x80000007, regs);
 
-			if ((regs[3] & CPUID_INTEL_TSC) != 0)
+			if ((regs[3] & __BIT(8)) != 0)
 				val &= ~ACPICPU_FLAG_C_TSC;
 		}
 
@@ -186,18 +218,33 @@ acpicpu_md_quirks(void)
 
 	case CPUVENDOR_AMD:
 
+		x86_cpuid(0x80000000, regs);
+
+		if (regs[0] < 0x80000007)
+			break;
+
+		x86_cpuid(0x80000007, regs);
+
 		family = CPUID2FAMILY(ci->ci_signature);
 
 		if (family == 0xf)
 			family += CPUID2EXTFAMILY(ci->ci_signature);
 
-		switch (family) {
+    		switch (family) {
 
 		case 0x0f:
+
+			if ((regs[3] & CPUID_APM_FID) == 0)
+				break;
+
+			if ((regs[3] & CPUID_APM_VID) == 0)
+				break;
+
+			val |= ACPICPU_FLAG_P_FFH | ACPICPU_FLAG_P_FIDVID;
+			break;
+
 		case 0x10:
 		case 0x11:
-
-			x86_cpuid(0x80000007, regs);
 
 			if ((regs[3] & CPUID_APM_TSC) != 0)
 				val &= ~ACPICPU_FLAG_C_TSC;
@@ -370,6 +417,9 @@ acpicpu_md_pstate_pss(struct acpicpu_softc *sc)
 
 	(void)memset(&msr, 0, sizeof(struct acpicpu_pstate));
 
+	if ((sc->sc_flags & ACPICPU_FLAG_P_FIDVID) != 0)
+		msr.ps_flags = ACPICPU_FLAG_P_FIDVID;
+
 	switch (cpu_vendor) {
 
 	case CPUVENDOR_IDT:
@@ -389,6 +439,11 @@ acpicpu_md_pstate_pss(struct acpicpu_softc *sc)
 			family += CPUID2EXTFAMILY(ci->ci_signature);
 
 		switch (family) {
+
+		case 0x0f:
+			msr.ps_control_addr = MSR_0FH_CONTROL;
+			msr.ps_status_addr  = MSR_0FH_STATUS;
+			break;
 
 		case 0x10:
 		case 0x11:
@@ -420,6 +475,9 @@ acpicpu_md_pstate_pss(struct acpicpu_softc *sc)
 	while (i < sc->sc_pstate_count) {
 
 		ps = &sc->sc_pstate[i];
+
+		if (msr.ps_flags != 0)
+			ps->ps_flags |= msr.ps_flags;
 
 		if (msr.ps_status_addr != 0)
 			ps->ps_status_addr = msr.ps_status_addr;
@@ -466,11 +524,14 @@ acpicpu_md_pstate_get(struct acpicpu_softc *sc, uint32_t *freq)
 	uint64_t val;
 	uint32_t i;
 
+	if ((sc->sc_flags & ACPICPU_FLAG_P_FIDVID) != 0)
+		return acpicpu_md_pstate_fidvid_get(sc, freq);
+
 	for (i = 0; i < sc->sc_pstate_count; i++) {
 
 		ps = &sc->sc_pstate[i];
 
-		if (ps->ps_freq != 0)
+		if (__predict_true(ps->ps_freq != 0))
 			break;
 	}
 
@@ -489,7 +550,7 @@ acpicpu_md_pstate_get(struct acpicpu_softc *sc, uint32_t *freq)
 
 		ps = &sc->sc_pstate[i];
 
-		if (ps->ps_freq == 0)
+		if (__predict_false(ps->ps_freq == 0))
 			continue;
 
 		if (val == ps->ps_status) {
@@ -507,6 +568,9 @@ acpicpu_md_pstate_set(struct acpicpu_pstate *ps)
 	struct msr_rw_info msr;
 	uint64_t xc;
 	int rv = 0;
+
+	if ((ps->ps_flags & ACPICPU_FLAG_P_FIDVID) != 0)
+		return acpicpu_md_pstate_fidvid_set(ps);
 
 	msr.msr_read  = false;
 	msr.msr_type  = ps->ps_control_addr;
@@ -561,6 +625,189 @@ acpicpu_md_pstate_status(void *arg1, void *arg2)
 	}
 
 	*(uintptr_t *)arg2 = EAGAIN;
+}
+
+static int
+acpicpu_md_pstate_fidvid_get(struct acpicpu_softc *sc, uint32_t *freq)
+{
+	struct acpicpu_pstate *ps;
+	uint32_t fid, i, vid;
+	uint32_t cfid, cvid;
+	int rv;
+
+	/*
+	 * AMD family 0Fh needs special treatment.
+	 * While it wants to use ACPI, it does not
+	 * comply with the ACPI specifications.
+	 */
+	rv = acpicpu_md_pstate_fidvid_read(&cfid, &cvid);
+
+	if (rv != 0)
+		return rv;
+
+	for (i = 0; i < sc->sc_pstate_count; i++) {
+
+		ps = &sc->sc_pstate[i];
+
+		if (__predict_false(ps->ps_freq == 0))
+			continue;
+
+		fid = __SHIFTOUT(ps->ps_status, ACPI_0FH_STATUS_FID);
+		vid = __SHIFTOUT(ps->ps_status, ACPI_0FH_STATUS_VID);
+
+		if (cfid == fid && cvid == vid) {
+			*freq = ps->ps_freq;
+			return 0;
+		}
+	}
+
+	return EIO;
+}
+
+static int
+acpicpu_md_pstate_fidvid_set(struct acpicpu_pstate *ps)
+{
+	const uint64_t ctrl = ps->ps_control;
+	uint32_t cfid, cvid, fid, i, irt;
+	uint32_t pll, vco_cfid, vco_fid;
+	uint32_t val, vid, vst;
+	int rv;
+
+	rv = acpicpu_md_pstate_fidvid_read(&cfid, &cvid);
+
+	if (rv != 0)
+		return rv;
+
+	fid = __SHIFTOUT(ctrl, ACPI_0FH_CONTROL_FID);
+	vid = __SHIFTOUT(ctrl, ACPI_0FH_CONTROL_VID);
+	irt = __SHIFTOUT(ctrl, ACPI_0FH_CONTROL_IRT);
+	vst = __SHIFTOUT(ctrl, ACPI_0FH_CONTROL_VST);
+	pll = __SHIFTOUT(ctrl, ACPI_0FH_CONTROL_PLL);
+
+	vst = vst * 20;
+	pll = pll * 1000 / 5;
+	irt = 10 * __BIT(irt);
+
+	/*
+	 * Phase 1.
+	 */
+	while (cvid > vid) {
+
+		val = 1 << __SHIFTOUT(ctrl, ACPI_0FH_CONTROL_MVS);
+		val = (val > cvid) ? 0 : cvid - val;
+
+		acpicpu_md_pstate_fidvid_write(cfid, val, 1, vst);
+		rv = acpicpu_md_pstate_fidvid_read(NULL, &cvid);
+
+		if (rv != 0)
+			return rv;
+	}
+
+	i = __SHIFTOUT(ctrl, ACPI_0FH_CONTROL_RVO);
+
+	for (; i > 0 && cvid > 0; --i) {
+
+		acpicpu_md_pstate_fidvid_write(cfid, cvid - 1, 1, vst);
+		rv = acpicpu_md_pstate_fidvid_read(NULL, &cvid);
+
+		if (rv != 0)
+			return rv;
+	}
+
+	/*
+	 * Phase 2.
+	 */
+	if (cfid != fid) {
+
+		vco_fid  = FID_TO_VCO_FID(fid);
+		vco_cfid = FID_TO_VCO_FID(cfid);
+
+		while (abs(vco_fid - vco_cfid) > 2) {
+
+			if (fid <= cfid)
+				val = cfid - 2;
+			else {
+				val = (cfid > 6) ? cfid + 2 :
+				    FID_TO_VCO_FID(cfid) + 2;
+			}
+
+			acpicpu_md_pstate_fidvid_write(val, cvid, pll, irt);
+			rv = acpicpu_md_pstate_fidvid_read(&cfid, NULL);
+
+			if (rv != 0)
+				return rv;
+
+			vco_cfid = FID_TO_VCO_FID(cfid);
+		}
+
+		acpicpu_md_pstate_fidvid_write(fid, cvid, pll, irt);
+		rv = acpicpu_md_pstate_fidvid_read(&cfid, NULL);
+
+		if (rv != 0)
+			return rv;
+	}
+
+	/*
+	 * Phase 3.
+	 */
+	if (cvid != vid) {
+
+		acpicpu_md_pstate_fidvid_write(cfid, vid, 1, vst);
+		rv = acpicpu_md_pstate_fidvid_read(NULL, &cvid);
+
+		if (rv != 0)
+			return rv;
+	}
+
+	if (cfid != fid || cvid != vid)
+		return EIO;
+
+	return 0;
+}
+
+static int
+acpicpu_md_pstate_fidvid_read(uint32_t *cfid, uint32_t *cvid)
+{
+	int i = ACPICPU_P_STATE_RETRY * 100;
+	uint64_t val;
+
+	do {
+		val = rdmsr(MSR_0FH_STATUS);
+
+	} while (__SHIFTOUT(val, MSR_0FH_STATUS_PENDING) != 0 && --i >= 0);
+
+	if (i == 0)
+		return EAGAIN;
+
+	if (cfid != NULL)
+		*cfid = __SHIFTOUT(val, MSR_0FH_STATUS_CFID);
+
+	if (cvid != NULL)
+		*cvid = __SHIFTOUT(val, MSR_0FH_STATUS_CVID);
+
+	return 0;
+}
+
+static void
+acpicpu_md_pstate_fidvid_write(uint32_t fid,
+    uint32_t vid, uint32_t cnt, uint32_t tmo)
+{
+	struct msr_rw_info msr;
+	uint64_t xc;
+
+	msr.msr_read  = false;
+	msr.msr_type  = MSR_0FH_CONTROL;
+	msr.msr_value = 0;
+
+	msr.msr_value |= __SHIFTIN(fid, MSR_0FH_CONTROL_FID);
+	msr.msr_value |= __SHIFTIN(vid, MSR_0FH_CONTROL_VID);
+	msr.msr_value |= __SHIFTIN(cnt, MSR_0FH_CONTROL_CNT);
+	msr.msr_value |= __SHIFTIN(0x1, MSR_0FH_CONTROL_CHG);
+
+	xc = xc_broadcast(0, (xcfunc_t)x86_msr_xcall, &msr, NULL);
+	xc_wait(xc);
+
+	DELAY(tmo);
 }
 
 int
