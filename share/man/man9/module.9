@@ -1,4 +1,4 @@
-.\"	$NetBSD: module.9,v 1.19 2010/08/21 13:34:43 pgoyette Exp $
+.\"	$NetBSD: module.9,v 1.20 2010/08/24 05:34:15 jruoho Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd August 21, 2010
+.Dd August 24, 2010
 .Dt MODULE 9
 .Os
 .Sh NAME
@@ -343,8 +343,8 @@ Create the thread that attempts to automatically unload modules that were
 loaded via the
 .Fn module_autoload
 routine.
-.Fn module_start_unload_thread
-is called once the scheduler and timer functions are initialized.
+The function is called only once,
+after the scheduler and timer functions are initialized.
 .It Fn module_builtin_require_force "void"
 Mark as "disabled" any built-in modules that have not been successfully
 initialized.
@@ -366,24 +366,27 @@ built-in to the kernel image or provided by the boot loader.
 .El
 .Sh PROGRAMMING CONSIDERATIONS
 The module subsystem is designed to be called recursively, but only within
-a single lwp.
+a single LWP.
 This permits one module's
 .Fn modcmd
 routine to load or unload other modules.
 .Pp
+Additional considerations:
+.Bl -bullet -offset indent
+.It
 A module is not permitted to load or unload itself.
 Attempts to load or unload a module from within its own
 .Fn modcmd
 routine will fail with
 .Er EEXIST
 or
-.Er EBUSY
+.Er EBUSY ,
 respectively.
-.Pp
-Although a module can be loaded by either
+.It
+Although a module can be loaded by using either
 .Fn module_load
 or
-.Fn module_autoload
+.Fn module_autoload ,
 it is not possible for the module's
 .Fn modcmd
 routine to distinguish between the two methods.
@@ -395,6 +398,7 @@ command in its
 routine, or use
 .Fn module_hold
 to increment its reference count.
+.El
 .Sh CODE REFERENCES
 This section describes places within the
 .Nx
