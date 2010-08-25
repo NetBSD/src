@@ -1,4 +1,4 @@
-/*	$NetBSD: loadfile.h,v 1.11 2010/08/25 16:23:23 christos Exp $	 */
+/*	$NetBSD: loadfile.h,v 1.12 2010/08/25 16:30:01 christos Exp $	 */
 
 /*-
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -52,6 +52,7 @@
 #define LOAD_NOTE	0x0040
 #define LOAD_ALL	0x007f
 #define LOAD_MINIMAL	0x002f
+#define LOAD_BACKWARDS	0x0050
 
 #define	COUNT_TEXT	0x0100
 #define	COUNT_TEXTA	0x0200
