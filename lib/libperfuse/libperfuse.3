@@ -1,0 +1,117 @@
+.\" $NetBSD: libperfuse.3,v 1.1 2010/08/25 07:16:00 manu Exp $
+.\"
+.\" Copyright (c) 2010 Emmanuel Dreyfus. All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.ds str-Lb-libperfuse        PUFFS enabled relay to FUSE Library (libperfuse, \-lperfuse)
+.Dd August 12, 2010
+.Dt LIBPERFUSE 2
+.Os
+.Sh NAME
+.Nm perfuse_mount ,
+.Nm perfuse_open
+.Nd Request a
+.Xr puffs 3 mount from 
+.Xr perfused 8 .
+.Sh LIBRARY
+.Lb libperfuse
+.Sh SYNOPSIS
+.In perfuse.h
+.Ft int
+.Fn perfuse_mount "const char *source" "const char *dir" "const char *filesystemtype" "long int mountflags" "void *data"
+.Ft int
+.Fn perfuse_open "const char *path" "int flags"
+.Sh DESCRIPTION
+.Fn perfuse_mount
+sends a mount request to 
+.Xr perfused 8 .
+It is intended as a drop-in replacement for
+.Xr mount 2
+for FUSE filesystems daemons and libraries, so that they can work with
+.Xr perfused 8 .
+.Pp
+The function prototype mimics Linux's
+.Xr mount 2 ,
+with the following arguments:
+.Bl -tag -width indent
+.It Ar source
+The source fileystem that will appear in
+.Xr df 1 ,
+and
+.Xr mount 8
+listings. Defaults to
+.Pa /dev/fuse
+if NULL.
+.It Ar dir
+The filesystem mount point.
+.It Ar filesystemtype
+The gileystem type, as displayed by
+.Xr df 1 ,
+and
+.Xr mount 8 .
+Defaults to "fuse"
+if NULL.
+.It Ar mountflags
+This contains the same value as in 
+.Xr mount 2
+.Ar flags
+argument.
+.It Ar data
+This contains the same value as in 
+.Xr mount 2
+.Ar data
+argument.
+.El
+.Pp
+.Fn perfuse_open
+is a drop-in replacement for the 
+.Xr open 2
+system call where
+.Pa /dev/fuse
+is used. If
+.Ar path
+is different than
+.Pa /dev/fuse ,
+.Fn perfuse_open 
+handles control to the regular
+.Xr open 2 .
+.Sh RETURN VALUES
+.Fn perfuse_mount
+returns a file descriptor to the
+.Pa /dev/fuse
+socket on success, and cause exit on failure.
+.Sh ERRORS
+.Fn perfuse_mount
+will fail when one of the following occurs:
+.Bl -tag -width Er
+.El
+.Sh SEE ALSO
+.Xd df 1 ,
+.Xr mount 2 ,
+.Xr open 2 ,
+.Xr mount 8 ,
+.Xr perfused 8
+.Sh AUTHORS
+The program was written by
+.An Emmanuel Dreyfus 
+.Aq manu@NetBSD.org .
