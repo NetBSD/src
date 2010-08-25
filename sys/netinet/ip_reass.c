@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_reass.c,v 1.2 2010/07/19 14:09:45 rmind Exp $	*/
+/*	$NetBSD: ip_reass.c,v 1.3 2010/08/25 00:05:14 rmind Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_reass.c,v 1.2 2010/07/19 14:09:45 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_reass.c,v 1.3 2010/08/25 00:05:14 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -73,7 +73,32 @@ __KERNEL_RCSID(0, "$NetBSD: ip_reass.c,v 1.2 2010/07/19 14:09:45 rmind Exp $");
 #include <netinet/in_var.h>
 
 /*
- * IP datagram reassembly hashed queues, pool, lock and counters.
+ * IP reassembly queue structures.  Each fragment being reassembled is
+ * attached to one of these structures.  They are timed out after TTL
+ * drops to 0, and may also be reclaimed if memory becomes tight.
+ */
+
+typedef struct ipfr_qent {
+	TAILQ_ENTRY(ipfr_qent)	ipqe_q;
+	struct ip *		ipqe_ip;
+	struct mbuf *		ipqe_m;
+	bool			ipqe_mff;
+} ipfr_qent_t;
+
+typedef struct ipfr_queue {
+	LIST_ENTRY(ipfr_queue)	ipq_q;		/* to other reass headers */
+	TAILQ_HEAD(, ipfr_qent)	ipq_fragq;	/* queue of fragment entries */
+	uint8_t			ipq_ttl;	/* time for reass q to live */
+	uint8_t			ipq_p;		/* protocol of this fragment */
+	uint16_t		ipq_id;		/* sequence id for reassembly */
+	struct in_addr		ipq_src;
+	struct in_addr		ipq_dst;
+	uint16_t		ipq_nfrags;	/* frags in this queue entry */
+	uint8_t 		ipq_tos;	/* TOS of this fragment */
+} ipfr_queue_t;
+
+/*
+ * Hash table of IP reassembly queues.
  */
 #define	IPREASS_HASH_SHIFT	6
 #define	IPREASS_HASH_SIZE	(1 << IPREASS_HASH_SHIFT)
@@ -81,52 +106,36 @@ __KERNEL_RCSID(0, "$NetBSD: ip_reass.c,v 1.2 2010/07/19 14:09:45 rmind Exp $");
 #define	IPREASS_HASH(x, y) \
 	(((((x) & 0xf) | ((((x) >> 8) & 0xf) << 4)) ^ (y)) & IPREASS_HASH_MASK)
 
-struct ipqhead	ipq[IPREASS_HASH_SIZE];
-struct pool	ipqent_pool;
-static int	ipq_locked;
+static LIST_HEAD(, ipfr_queue)	ip_frags[IPREASS_HASH_SIZE];
+static struct pool	ipqent_pool;
+static int		ipq_locked;
 
-static int	ip_nfragpackets;	/* packets in reass queue */
-static int	ip_nfrags;		/* total fragments in reass queues */
+/* Number of packets in reassembly queue and total number of fragments. */
+static int		ip_nfragpackets;
+static int		ip_nfrags;
 
-static int	ip_maxfragpackets;	/* limit on packets. XXX sysctl */
-static int	ip_maxfrags;		/* limit on fragments. XXX sysctl */
-
-/*
- * IP reassembly queue structure.  Each fragment being reassembled is
- * attached to one of these structures.  They are timed out after ipq_ttl
- * drops to 0, and may also be reclaimed if memory becomes tight.
- */
-struct ipq {
-	LIST_ENTRY(ipq)	ipq_q;		/* to other reass headers */
-	uint8_t		ipq_ttl;	/* time for reass q to live */
-	uint8_t		ipq_p;		/* protocol of this fragment */
-	uint16_t	ipq_id;		/* sequence id for reassembly */
-	struct ipqehead	ipq_fragq;	/* to ip fragment queue */
-	struct in_addr	ipq_src;
-	struct in_addr	ipq_dst;
-	uint16_t	ipq_nfrags;	/* frags in this queue entry */
-	uint8_t 	ipq_tos;	/* TOS of this fragment */
-};
+/* Limits on packet and fragments. */
+static int		ip_maxfragpackets;
+static int		ip_maxfrags;
 
 /*
- * Cached copy of nmbclusters. If nbclusters is different,
- * recalculate IP parameters derived from nmbclusters.
+ * Cached copy of nmbclusters.  If nbclusters is different, recalculate
+ * IP parameters derived from nmbclusters.
  */
-static int	ip_nmbclusters;			/* copy of nmbclusters */
+static int		ip_nmbclusters;
 
 /*
  * IP reassembly TTL machinery for multiplicative drop.
  */
-static u_int	fragttl_histo[IPFRAGTTL + 1];
+static u_int		fragttl_histo[IPFRAGTTL + 1];
 
-void		sysctl_ip_reass_setup(void);
-static void	ip_nmbclusters_changed(void);
+void			sysctl_ip_reass_setup(void);
+static void		ip_nmbclusters_changed(void);
 
-static struct ipq *	ip_reass_lookup(struct ip *, u_int *);
-static struct mbuf *	ip_reass(struct ipqent *, struct ipq *, u_int);
+static struct mbuf *	ip_reass(ipfr_qent_t *, ipfr_queue_t *, u_int);
 static u_int		ip_reass_ttl_decr(u_int ticks);
 static void		ip_reass_drophalf(void);
-static void		ip_freef(struct ipq *);
+static void		ip_freef(ipfr_queue_t *);
 
 /*
  * ip_reass_init:
@@ -138,11 +147,11 @@ ip_reass_init(void)
 {
 	int i;
 
-	pool_init(&ipqent_pool, sizeof(struct ipqent), 0, 0, 0, "ipqepl",
+	pool_init(&ipqent_pool, sizeof(ipfr_qent_t), 0, 0, 0, "ipqepl",
 	    NULL, IPL_VM);
 
 	for (i = 0; i < IPREASS_HASH_SIZE; i++) {
-		LIST_INIT(&ipq[i]);
+		LIST_INIT(&ip_frags[i]);
 	}
 	ip_maxfragpackets = 200;
 	ip_maxfrags = 0;
@@ -255,34 +264,6 @@ do {									\
 #define	IPQ_UNLOCK()		ipq_unlock()
 
 /*
- * ip_reass_lookup:
- *
- *	Look for queue of fragments of this datagram.
- */
-static struct ipq *
-ip_reass_lookup(struct ip *ip, u_int *hashp)
-{
-	struct ipq *fp;
-	u_int hash;
-
-	IPQ_LOCK();
-	hash = IPREASS_HASH(ip->ip_src.s_addr, ip->ip_id);
-	LIST_FOREACH(fp, &ipq[hash], ipq_q) {
-		if (ip->ip_id != fp->ipq_id)
-			continue;
-		if (!in_hosteq(ip->ip_src, fp->ipq_src))
-			continue;
-		if (!in_hosteq(ip->ip_dst, fp->ipq_dst))
-			continue;
-		if (ip->ip_p != fp->ipq_p)
-			continue;
-		break;
-	}
-	*hashp = hash;
-	return fp;
-}
-
-/*
  * ip_reass:
  *
  *	Take incoming datagram fragment and try to reassemble it into whole
@@ -290,12 +271,11 @@ ip_reass_lookup(struct ip *ip, u_int *hashp)
  *	then it is given as 'fp'; otherwise have to make a chain.
  */
 struct mbuf *
-ip_reass(struct ipqent *ipqe, struct ipq *fp, u_int hash)
+ip_reass(ipfr_qent_t *ipqe, ipfr_queue_t *fp, const u_int hash)
 {
-	struct ipqhead *ipqhead = &ipq[hash];
 	const int hlen = ipqe->ipqe_ip->ip_hl << 2;
 	struct mbuf *m = ipqe->ipqe_m, *t;
-	struct ipqent *nq, *p, *q;
+	ipfr_qent_t *nq, *p, *q;
 	struct ip *ip;
 	int i, next, s;
 
@@ -338,11 +318,11 @@ ip_reass(struct ipqent *ipqe, struct ipq *fp, u_int hash)
 			goto dropfrag;
 		}
 		ip_nfragpackets++;
-		fp = malloc(sizeof(struct ipq), M_FTABLE, M_NOWAIT);
+		fp = malloc(sizeof(ipfr_queue_t), M_FTABLE, M_NOWAIT);
 		if (fp == NULL) {
 			goto dropfrag;
 		}
-		LIST_INSERT_HEAD(ipqhead, fp, ipq_q);
+		LIST_INSERT_HEAD(&ip_frags[hash], fp, ipq_q);
 		fp->ipq_nfrags = 1;
 		fp->ipq_ttl = IPFRAGTTL;
 		fp->ipq_p = ipqe->ipqe_ip->ip_p;
@@ -510,9 +490,9 @@ dropfrag:
  *	Free a fragment reassembly header and all associated datagrams.
  */
 static void
-ip_freef(struct ipq *fp)
+ip_freef(ipfr_queue_t *fp)
 {
-	struct ipqent *q, *p;
+	ipfr_qent_t *q, *p;
 	u_int nfrags = 0;
 	int s;
 
@@ -550,14 +530,14 @@ static u_int
 ip_reass_ttl_decr(u_int ticks)
 {
 	u_int nfrags, median, dropfraction, keepfraction;
-	struct ipq *fp, *nfp;
+	ipfr_queue_t *fp, *nfp;
 	int i;
 
 	nfrags = 0;
 	memset(fragttl_histo, 0, sizeof(fragttl_histo));
 
 	for (i = 0; i < IPREASS_HASH_SIZE; i++) {
-		for (fp = LIST_FIRST(&ipq[i]); fp != NULL; fp = nfp) {
+		for (fp = LIST_FIRST(&ip_frags[i]); fp != NULL; fp = nfp) {
 			fp->ipq_ttl = ((fp->ipq_ttl <= ticks) ?
 			    0 : fp->ipq_ttl - ticks);
 			nfp = LIST_NEXT(fp, ipq_q);
@@ -660,8 +640,8 @@ ip_reass_slowtimo(void)
 
 		i = dropscanidx;
 		while (ip_nfragpackets > ip_maxfragpackets && wrapped == 0) {
-			while (LIST_FIRST(&ipq[i]) != NULL) {
-				ip_freef(LIST_FIRST(&ipq[i]));
+			while (LIST_FIRST(&ip_frags[i]) != NULL) {
+				ip_freef(LIST_FIRST(&ip_frags[i]));
 			}
 			if (++i >= IPREASS_HASH_SIZE) {
 				i = 0;
@@ -691,12 +671,24 @@ ip_reass_slowtimo(void)
 int
 ip_reass_packet(struct mbuf *m, struct ip *ip, bool mff, struct mbuf **m_final)
 {
-	struct ipq *fp;
-	struct ipqent *ipqe;
+	ipfr_queue_t *fp;
+	ipfr_qent_t *ipqe;
 	u_int hash;
 
 	/* Look for queue of fragments of this datagram. */
-	fp = ip_reass_lookup(ip, &hash);
+	IPQ_LOCK();
+	hash = IPREASS_HASH(ip->ip_src.s_addr, ip->ip_id);
+	LIST_FOREACH(fp, &ip_frags[hash], ipq_q) {
+		if (ip->ip_id != fp->ipq_id)
+			continue;
+		if (!in_hosteq(ip->ip_src, fp->ipq_src))
+			continue;
+		if (!in_hosteq(ip->ip_dst, fp->ipq_dst))
+			continue;
+		if (ip->ip_p != fp->ipq_p)
+			continue;
+		break;
+	}
 
 	/* Make sure that TOS matches previous fragments. */
 	if (fp && fp->ipq_tos != ip->ip_tos) {
