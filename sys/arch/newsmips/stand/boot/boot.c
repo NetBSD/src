@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.17 2009/01/20 13:12:26 tsutsui Exp $	*/
+/*	$NetBSD: boot.c,v 1.18 2010/08/25 16:35:57 christos Exp $	*/
 
 /*-
  * Copyright (C) 1999 Tsubai Masanari.  All rights reserved.
@@ -161,10 +161,9 @@ boot(uint32_t a0, uint32_t a1, uint32_t a2, uint32_t a3, uint32_t a4,
 		kernels[1] = NULL;
 	}
 
-	/* disable LOAD_NOTE on floppy to avoid backward seek across volumes */
 	loadflag = LOAD_KERNEL;
 	if (devname[0] == 'f')	/* XXX */
-		loadflag &= ~LOAD_NOTE;
+		loadflag &= ~LOAD_BACKWARDS;
 
 	marks[MARK_START] = 0;
 
