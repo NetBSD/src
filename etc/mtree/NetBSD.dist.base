@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.base,v 1.48 2010/08/24 11:31:48 pooka Exp $
+#	$NetBSD: NetBSD.dist.base,v 1.49 2010/08/25 16:44:25 jmmv Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -233,6 +233,7 @@
 ./usr/libdata/debug/usr/tests/lib/libc
 ./usr/libdata/debug/usr/tests/lib/libc/hash
 ./usr/libdata/debug/usr/tests/lib/libc/stdlib
+./usr/libdata/debug/usr/tests/lib/libdes
 ./usr/libdata/debug/usr/tests/lib/libevent
 ./usr/libdata/debug/usr/tests/lib/semaphore
 ./usr/libdata/debug/usr/tests/lib/semaphore/pthread
@@ -1168,6 +1169,7 @@
 ./usr/tests/lib/libc
 ./usr/tests/lib/libc/hash
 ./usr/tests/lib/libc/stdlib
+./usr/tests/lib/libdes
 ./usr/tests/lib/semaphore
 ./usr/tests/lib/semaphore/pthread
 ./usr/tests/lib/libevent
