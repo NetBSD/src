@@ -1,4 +1,4 @@
-/*	$NetBSD: t_renamerace.c,v 1.8 2010/07/16 19:16:41 pooka Exp $	*/
+/*	$NetBSD: t_renamerace.c,v 1.9 2010/08/25 18:11:20 pooka Exp $	*/
 
 /*
  * Modified for rump and atf from a program supplied
@@ -37,7 +37,7 @@ w1(void *arg)
 	while (!quittingtime) {
 		fd = rump_sys_open("rename.test1",
 		    O_WRONLY|O_CREAT|O_TRUNC, 0666);
-		if (fd == -1)
+		if (fd == -1 && errno != EEXIST)
 			atf_tc_fail_errno("create");
 		rump_sys_unlink("rename.test1");
 		rump_sys_close(fd);
@@ -82,10 +82,12 @@ w2(void *arg)
 	return NULL;
 }
 
+#define NWRK 8
 static void
 renamerace(const atf_tc_t *tc, const char *mp)
 {
-	pthread_t pt1, pt2;
+	pthread_t pt1[NWRK], pt2[NWRK];
+	int i;
 
 	if (FSTYPE_LFS(tc))
 		atf_tc_expect_signal(-1, "PR kern/43582");
@@ -93,14 +95,19 @@ renamerace(const atf_tc_t *tc, const char *mp)
 	if (FSTYPE_MSDOS(tc))
 		atf_tc_skip("test fails in some setups, reason unknown");
 
-	pthread_create(&pt1, NULL, w1, __UNCONST(mp));
-	pthread_create(&pt2, NULL, w2, __UNCONST(mp));
+	for (i = 0; i < NWRK; i++)
+		pthread_create(&pt1[i], NULL, w1, __UNCONST(mp));
+
+	for (i = 0; i < NWRK; i++)
+		pthread_create(&pt2[i], NULL, w2, __UNCONST(mp));
 
 	sleep(5);
 	quittingtime = 1;
 
-	pthread_join(pt1, NULL);
-	pthread_join(pt2, NULL);
+	for (i = 0; i < NWRK; i++)
+		pthread_join(pt1[i], NULL);
+	for (i = 0; i < NWRK; i++)
+		pthread_join(pt2[i], NULL);
 
 	/*
 	 * XXX: does not always fail on LFS, especially for unicpu
@@ -108,6 +115,14 @@ renamerace(const atf_tc_t *tc, const char *mp)
 	 */
 	if (FSTYPE_LFS(tc))
 		abort();
+
+	/*
+	 * NFS sillyrename is broken and may linger on in the file system.
+	 * This sleep lets them finish so we don't get transient unmount
+	 * failures.
+	 */
+	if (FSTYPE_NFS(tc))
+		sleep(1);
 }
 
 static void
