@@ -1,4 +1,4 @@
-/*	$NetBSD: xmd_machdep.c,v 1.1.2.1 2010/08/19 12:36:58 uebayasi Exp $	*/
+/*	$NetBSD: xmd_machdep.c,v 1.1.2.2 2010/08/25 14:32:54 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -26,7 +26,14 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: xmd_machdep.c,v 1.1.2.2 2010/08/25 14:32:54 uebayasi Exp $");
+
 #include "opt_xip.h"
+
+#ifndef XIP
+#error xmd(4) needs options XIP
+#endif
 
 #include <sys/param.h>
 #include <sys/mman.h>
@@ -49,16 +56,16 @@ xmd_machdep_mmap(vaddr_t addr, off_t off, int prot)
 void *
 xmd_machdep_physload(vaddr_t addr, size_t size)
 {
-	paddr_t s, e, as, ae;
+	paddr_t start, end;
 
 	/* addr is in PA == VA RAM area. */
 	KASSERT(addr >= 0x00000000);
 	KASSERT(addr < 0x80000000);
 
-	s = as = (addr) >> PAGE_SHIFT;
-	e = ae = (addr + size) >> PAGE_SHIFT;
+	start = (addr) >> PAGE_SHIFT;
+	end = (addr + size) >> PAGE_SHIFT;
 
-	return uvm_page_physload_device(s, e, as, ae, PROT_READ, 0);
+	return uvm_page_physload_device(start, end, start, end, PROT_READ, 0);
 }
 
 void
