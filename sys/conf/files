@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.974.2.8 2010/08/19 12:36:58 uebayasi Exp $
+#	$NetBSD: files,v 1.974.2.9 2010/08/25 14:32:30 uebayasi Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20100430
@@ -273,7 +273,7 @@ defparam opt_md.h		MEMORY_DISK_SERVER=1 MEMORY_DISK_ROOT_SIZE
 
 # XIP memory (ram) disk options
 #
-defflag	opt_xmd.h		XMD_ROOT_SIZE
+defparam opt_xmd.h		XMD_ROOT_SIZE
 
 defflag opt_tftproot.h		TFTPROOT TFTPROOT_DEBUG
 
