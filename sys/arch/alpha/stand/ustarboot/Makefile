@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.7 2009/02/03 12:49:00 tsutsui Exp $
+# $NetBSD: Makefile,v 1.8 2010/08/25 16:30:44 christos Exp $
 
 PROG = ustarboot
 
@@ -12,7 +12,7 @@ CPPFLAGS += ${UNIFIED_CPPFLAGS} \
 		-DLIBSA_SINGLE_DEVICE=blkdev \
 		  -D"blkdevioctl(x,y,z)=EINVAL" \
 		-DLIBSA_SINGLE_FILESYSTEM=ustarfs \
-		-DNO_LOAD_NOTE
+		-DNO_LOAD_BACKWARDS
 
 CLEANFILES+= ${PROG}.sym
 
