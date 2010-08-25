@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_md.c,v 1.33 2010/08/24 10:29:53 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_md.c,v 1.34 2010/08/25 05:07:43 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.33 2010/08/24 10:29:53 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.34 2010/08/25 05:07:43 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -188,13 +188,13 @@ acpicpu_md_quirks(void)
 
 			x86_cpuid(0x06, regs);
 
-			if ((regs[2] & __BIT(0)) != 0)		/* ECX.06[0] */
+			if ((regs[2] & CPUID_DSPM_HWF) != 0)
 				val |= ACPICPU_FLAG_P_HW;
 
-			if ((regs[0] & __BIT(1)) != 0)		/* EAX.06[1] */
+			if ((regs[0] & CPUID_DSPM_IDA) != 0)
 				val |= ACPICPU_FLAG_P_TURBO;
 
-			if ((regs[0] & __BIT(2)) != 0)		/* EAX.06[2] */
+			if ((regs[0] & CPUID_DSPM_ARAT) != 0)
 				val &= ~ACPICPU_FLAG_C_APIC;
 		}
 
