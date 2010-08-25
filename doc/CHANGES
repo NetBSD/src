@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1428 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1429 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -331,8 +331,6 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		filesystems in an orderly fashion during shutdown,
 		detaching the devices and unmounting the filesystems.
 		i386 and sparc64 are finished. [dyoung 20090625]
-	kernel: Ephemeral mapping (emap) implementation, i386/amd64 support.
-		[rmind 20090628]
 	dhcpcd(8): Import dhcpcd-5.0.5 [roy 20090704]
 	dhcpcd(8): Import dhcpcd-5.0.6 [roy 20090708]
 	sysmon_envsys(8): Enhancements to allow access to driver-internal
@@ -677,6 +675,7 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	mkubootimage(1): Added tool to generate u-boot kernel images.
 		[jmcneill 20100618]
 	httpd(8): Import bozohttpd-20100621. [mrg 20100621]
+	kernel: Add high-priority xcall(9) support. [rmind 20100622]
 	hp700: Add support for uturn(4) based machines. [skrll 20100624]
 	network: Add mpls(4) - MultiProtocol Label Switching support
 		[kefren 20100626]
@@ -686,6 +685,7 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		FUKAUMI Naoki. [tsutsui 20100704]
 	compat_linux(8): Update linux emulation to support NPTL.
 		We now claim to be linux kernel version 2.6.18.  [chs 20100706]
+	kernel: Add direct select()/poll() support. [rmind 20100708]
 	prep: Support xserver.  It tested only on-board s3(864).
 		[kiyohara 20100712]
 	tests: Convert the libposix, libprop, libpthread, librt, libskey and
@@ -704,3 +704,4 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	bind: Update to 9.7.2b1. [christos 20100806]
 	acpicpu(4): add a driver for ACPI-based processor functionality.
 		[jruoho 20100815]
+	network: Added NPF - a new packet filter. [rmind 20100822]
