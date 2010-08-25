@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.24 2010/08/25 16:38:04 christos Exp $	*/
+/*	$NetBSD: boot.c,v 1.25 2010/08/25 20:16:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999 Eduardo E. Horvath.  All rights reserved.
@@ -55,6 +55,7 @@
 #include <machine/cpu.h>
 #include <machine/promlib.h>
 #include <machine/bootinfo.h>
+#include <sparc/stand/common/isfloppy.h>
 
 #include "boot.h"
 #include "ofdev.h"
@@ -506,7 +507,7 @@ main(void *ofw)
 	/* Figure boot arguments */
 	strncpy(bootdev, prom_getbootpath(), sizeof(bootdev) - 1);
 	boothowto = bootoptions(prom_getbootargs(), bootdev, kernel, bootline);
-	isfloppy = strstr(bootdev, "fd") || strstr(bootdev, "floppy");
+	isfloppy = bootdev_isfloppy(bootdev);
 
 	for (;; *kernel = '\0') {
 		if (boothowto & RB_ASKNAME) {

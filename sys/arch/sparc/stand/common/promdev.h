@@ -1,4 +1,4 @@
-/*	$NetBSD: promdev.h,v 1.15 2010/08/25 18:11:54 christos Exp $ */
+/*	$NetBSD: promdev.h,v 1.16 2010/08/25 20:16:49 christos Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -69,9 +69,6 @@ extern int	net_mountroot(void);
 extern int	mmu_init(void);
 extern int	(*pmap_map)(vaddr_t, paddr_t, psize_t);
 extern int	(*pmap_extract)(vaddr_t, paddr_t *);
-
-/* In promdev.c */
-extern int	bootdev_isfloppy(void);
 
 /* In str0.S: */
 extern void	sparc_noop(void);
