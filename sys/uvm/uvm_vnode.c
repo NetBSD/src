@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_vnode.c,v 1.93.2.1 2010/02/11 06:26:47 uebayasi Exp $	*/
+/*	$NetBSD: uvm_vnode.c,v 1.93.2.2 2010/08/25 14:21:23 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -50,9 +50,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.93.2.1 2010/02/11 06:26:47 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.93.2.2 2010/08/25 14:21:23 uebayasi Exp $");
 
 #include "opt_uvmhist.h"
+#include "opt_xip.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -178,7 +179,7 @@ uvn_get(struct uvm_object *uobj, voff_t offset,
 	UVMHIST_LOG(ubchist, "vp %p off 0x%x", vp, (int)offset, 0,0);
 
 #ifdef XIP
-	if ((vp->v_flag & VV_XIP) != 0)
+	if ((vp->v_vflag & VV_XIP) != 0)
 		goto uvn_get_ra_done;
 #endif
 	if ((access_type & VM_PROT_WRITE) == 0 && (flags & PGO_LOCKED) == 0) {
