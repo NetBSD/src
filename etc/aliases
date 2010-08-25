@@ -1,9 +1,9 @@
-#	$NetBSD: aliases,v 1.21 2008/07/18 21:12:03 apb Exp $
+#	$NetBSD: aliases,v 1.22 2010/08/25 15:38:44 reed Exp $
 #
 #	from: @(#)aliases	8.2 (Berkeley) 3/5/94
 #
 #  Aliases in this file will NOT be expanded in the header from
-#  Mail, but WILL be visible over networks or from /bin/mail.
+#  Mail, but WILL be visible over networks or from /usr/bin/mail.
 #
 #	>>>>>>>>>>	The program "newaliases" must be run after
 #	>> NOTE >>	this file is updated for any changes to
