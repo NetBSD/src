@@ -1,4 +1,4 @@
-/*	$NetBSD: promdev.c,v 1.23 2009/10/18 06:24:21 tsutsui Exp $ */
+/*	$NetBSD: promdev.c,v 1.24 2010/08/25 18:11:54 christos Exp $ */
 
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -105,6 +105,14 @@ static int	saveecho;
 static daddr_t doffset = 0;
 #endif
 
+
+int
+bootdev_isfloppy(void)
+{
+	return strncmp(prom_bootdevice, "fd", 2) == 0 ||
+		strstr(prom_bootdevice, "SUNW,fdtwo") != NULL ||
+		strstr(prom_bootdevice, "fdthree") != NULL;
+}
 
 void
 putchar(int c)
@@ -219,9 +227,7 @@ devopen(struct open_file *f, const char *fname, char **file)
 		 * Don't check disklabel on floppy boot since
 		 * reopening it could cause Data Access Exception later.
 		 */
-		if (strncmp(prom_bootdevice, "fd", 2) == 0 ||
-		    strstr(prom_bootdevice, "SUNW,fdtwo") != NULL ||
-		    strstr(prom_bootdevice, "fdthree") != NULL)
+		if (bootdev_isfloppy())
 			return 0;
 
 		/*
