@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.275 2010/08/22 18:56:20 rmind Exp $
+#	$NetBSD: bsd.README,v 1.276 2010/08/25 15:24:29 reed Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -1143,7 +1143,7 @@ MAN		The manual pages to be installed (use a .1 - .9 suffix).
 
 MLINKS		List of manual page links (using a .1 - .9 suffix).  The
 		linked-to file must come first, the linked file second,
-		and there may be multiple pairs.  The files are soft-linked.
+		and there may be multiple pairs.
 
 The include file <bsd.man.mk> includes a file named "../Makefile.inc" if
 it exists.
