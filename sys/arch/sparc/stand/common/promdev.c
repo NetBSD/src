@@ -1,4 +1,4 @@
-/*	$NetBSD: promdev.c,v 1.24 2010/08/25 18:11:54 christos Exp $ */
+/*	$NetBSD: promdev.c,v 1.25 2010/08/25 20:16:49 christos Exp $ */
 
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -48,6 +48,7 @@
 #include <lib/libsa/net.h>
 #include <lib/libkern/libkern.h>
 #include <sparc/stand/common/promdev.h>
+#include <sparc/stand/common/isfloppy.h>
 
 #ifndef BOOTXX
 #include <sys/disklabel.h>
@@ -104,15 +105,6 @@ static int	saveecho;
 #ifndef BOOTXX
 static daddr_t doffset = 0;
 #endif
-
-
-int
-bootdev_isfloppy(void)
-{
-	return strncmp(prom_bootdevice, "fd", 2) == 0 ||
-		strstr(prom_bootdevice, "SUNW,fdtwo") != NULL ||
-		strstr(prom_bootdevice, "fdthree") != NULL;
-}
 
 void
 putchar(int c)
@@ -227,7 +219,7 @@ devopen(struct open_file *f, const char *fname, char **file)
 		 * Don't check disklabel on floppy boot since
 		 * reopening it could cause Data Access Exception later.
 		 */
-		if (bootdev_isfloppy())
+		if (bootdev_isfloppy(prom_bootdevice))
 			return 0;
 
 		/*
