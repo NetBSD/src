@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_venus.c,v 1.25 2007/03/04 06:01:12 christos Exp $	*/
+/*	$NetBSD: coda_venus.c,v 1.25.52.1 2010/08/25 04:17:47 snj Exp $	*/
 
 /*
  *
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_venus.c,v 1.25 2007/03/04 06:01:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_venus.c,v 1.25.52.1 2010/08/25 04:17:47 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -308,7 +308,7 @@ venus_ioctl(void *mdp, CodaFid *fid,
     tmp = ((com >> 16) & IOCPARM_MASK) - sizeof (char *) - sizeof (int);
     inp->cmd |= (tmp & IOCPARM_MASK) <<	16;
 
-    if (iap->vi.in_size < 0 || iap->vi.in_size > VC_MAXMSGSIZE) {
+    if (iap->vi.in_size > VC_MAXMSGSIZE || iap->vi.out_size > VC_MAXMSGSIZE) {
 	CODA_FREE(inp, coda_ioctl_size);
 	return (EINVAL);
     }
