@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.36.2.21 2010/08/17 06:47:36 uebayasi Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.36.2.22 2010/08/25 14:29:12 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.36.2.21 2010/08/17 06:47:36 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.36.2.22 2010/08/25 14:29:12 uebayasi Exp $");
 
 #include "opt_xip.h"
 
@@ -824,7 +824,6 @@ genfs_do_getpages_xip(void *v)
 	if ((flags & PGO_LOCKED) == 0)
 		mutex_exit(&uobj->vmobjlock);
 
-	/* XXX optimize */
 	off = offset;
 	for (i = 0; i < npages; i++) {
 		daddr_t lbn, blkno;
@@ -867,7 +866,7 @@ genfs_do_getpages_xip(void *v)
 
 		UVMHIST_LOG(ubchist, "xip pgs %d => phys_addr=0x%lx (%p)",
 			i,
-			(long)pg->phys_addr,
+			(long)pps[i]->phys_addr,
 			pps[i],
 			0);
 
