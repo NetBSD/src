@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.107 2010/06/19 00:43:57 christos Exp $	*/
+/*	$NetBSD: options.c,v 1.108 2010/08/25 21:36:02 sjg Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: options.c,v 1.107 2010/06/19 00:43:57 christos Exp $");
+__RCSID("$NetBSD: options.c,v 1.108 2010/08/25 21:36:02 sjg Exp $");
 #endif
 #endif /* not lint */
 
@@ -1462,6 +1462,8 @@ cpio_set_action(int op)
 {
 	if ((act == APPND && op == ARCHIVE) || (act == ARCHIVE && op == APPND))
 		act = APPND;
+	else if (act == EXTRACT && op == LIST)
+		act = op;
 	else if (act != ERROR && act != op)
 		cpio_usage();
 	else
