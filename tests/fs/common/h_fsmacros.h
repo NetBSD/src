@@ -1,4 +1,4 @@
-/*	$NetBSD: h_fsmacros.h,v 1.18 2010/08/09 19:32:26 pooka Exp $	*/
+/*	$NetBSD: h_fsmacros.h,v 1.19 2010/08/25 18:16:06 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -68,26 +68,28 @@ FSPROTOS(tmpfs);
 do {									\
 	if (_fs_##_fstest_newfs(_tc_, &_args_,				\
 	    FSTEST_IMGNAME, FSTEST_IMGSIZE, NULL) != 0)			\
-		atf_tc_fail("newfs failed");				\
+		atf_tc_fail_errno("newfs failed");			\
 	if (_fs_##_fstest_mount(_tc_, _args_, FSTEST_MNTNAME, 0) != 0)	\
-		atf_tc_fail("mount failed");				\
+		atf_tc_fail_errno("mount failed");			\
 } while (/*CONSTCOND*/0);
 
 #define FSTEST_CONSTRUCTOR_FSPRIV(_tc_, _fs_, _args_, _privargs_)	\
 do {									\
 	if (_fs_##_fstest_newfs(_tc_, &_args_,				\
 	    FSTEST_IMGNAME, FSTEST_IMGSIZE, _privargs_) != 0)		\
-		atf_tc_fail("newfs failed");				\
+		atf_tc_fail_errno("newfs failed");			\
 	if (_fs_##_fstest_mount(_tc_, _args_, FSTEST_MNTNAME, 0) != 0)	\
-		atf_tc_fail("mount failed");				\
+		atf_tc_fail_errno("mount failed");			\
 } while (/*CONSTCOND*/0);
 
 #define FSTEST_DESTRUCTOR(_tc_, _fs_, _args_)				\
 do {									\
-	if (_fs_##_fstest_unmount(_tc_, FSTEST_MNTNAME, 0) != 0)	\
-		atf_tc_fail("unmount failed");				\
+	if (_fs_##_fstest_unmount(_tc_, FSTEST_MNTNAME, 0) != 0) {	\
+		rump_pub_vfs_mount_print(FSTEST_MNTNAME, 1);		\
+		atf_tc_fail_errno("unmount failed");			\
+	}								\
 	if (_fs_##_fstest_delfs(_tc_, _args_) != 0)			\
-		atf_tc_fail("delfs failed");				\
+		atf_tc_fail_errno("delfs failed");			\
 } while (/*CONSTCOND*/0);
 
 #define ATF_TC_FSADD(fs,type,func,desc) \
@@ -105,15 +107,17 @@ do {									\
       atf_tc_skip("filesystem not selected"); \
     FSTEST_CONSTRUCTOR(tc,fs,fs##func##tmp); \
     func(tc,FSTEST_MNTNAME); \
-    if (fs##_fstest_unmount(tc, FSTEST_MNTNAME, 0) != 0) \
-      atf_tc_fail("unmount failed"); \
+    if (fs##_fstest_unmount(tc, FSTEST_MNTNAME, 0) != 0) { \
+      rump_pub_vfs_mount_print(FSTEST_MNTNAME, 1); \
+      atf_tc_fail_errno("unmount failed"); \
+    } \
   } \
   ATF_TC_CLEANUP(fs##_##func,tc) \
   { \
     if (!atf_check_fstype(tc, type)) \
       return; \
     if (fs##_fstest_delfs(tc, fs##func##tmp) != 0) \
-      atf_tc_fail("delfs failed"); \
+      atf_tc_fail_errno("delfs failed"); \
   }
 
 #define ATF_TP_FSADD(fs,func) \
