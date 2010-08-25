@@ -1,4 +1,4 @@
-/*	$NetBSD: xmd_machdep.c,v 1.1.2.1 2010/08/20 07:04:38 uebayasi Exp $	*/
+/*	$NetBSD: xmd_machdep.c,v 1.1.2.2 2010/08/25 13:36:09 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xmd_machdep.c,v 1.1.2.1 2010/08/20 07:04:38 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xmd_machdep.c,v 1.1.2.2 2010/08/25 13:36:09 uebayasi Exp $");
 
 #include "opt_xip.h"
 
@@ -46,7 +46,7 @@ paddr_t
 xmd_machdep_mmap(vaddr_t addr, off_t off, int prot)
 {
 
-	return x86_btop(addr + off);
+	return x86_btop(vtophys(addr + off));
 }
 
 void *
@@ -54,8 +54,8 @@ xmd_machdep_physload(vaddr_t addr, size_t size)
 {
 	paddr_t start, end;
 
-	start = x86_btop(addr);
-	end = x86_btop(addr + size);
+	start = x86_btop(vtophys(addr));
+	end = x86_btop(vtophys(addr + size));
 
 	return uvm_page_physload_device(start, end, start, end, PROT_READ, 0);
 }
