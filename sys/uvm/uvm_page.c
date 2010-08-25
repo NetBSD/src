@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.153.2.53 2010/08/11 13:14:55 uebayasi Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.153.2.54 2010/08/25 14:23:16 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.153.2.53 2010/08/11 13:14:55 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.153.2.54 2010/08/25 14:23:16 uebayasi Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -873,7 +873,10 @@ uvm_page_physload_device(paddr_t start, paddr_t end, paddr_t avail_start,
 #endif
 	}
 
+#ifdef DIAGNOSTIC
+	extern int uvm_physseg_inited;
 	KASSERT(uvm_physseg_inited);
+#endif
 
 #ifdef __HAVE_PMAP_PHYSSEG
 #ifdef __HAVE_PMAP_PHYSSEG_INIT
@@ -902,13 +905,14 @@ uvm_page_physunload_device(void *cookie)
 }
 #endif
 
+int uvm_physseg_inited;
+
 static struct vm_physseg *
 uvm_physseg_alloc(struct vm_physseg_freelist *freelist,
     struct vm_physseg **segs, int nsegs,
     const paddr_t start, const paddr_t end)
 {
 	struct vm_physseg *ps;
-	static int uvm_physseg_inited;
 
 	if (uvmexp.pagesize == 0)
 		panic("uvm_page_physload: page size not set!");
@@ -1584,6 +1588,8 @@ uvm_pagealloc_strat(struct uvm_object *obj, voff_t off, struct vm_anon *anon,
 			pmap_zero_page(VM_PAGE_TO_PHYS(pg));
 	}
 
+	KASSERT((pg->pqflags & PQ_FIXED) == 0);
+
 	return(pg);
 
  fail:
@@ -2111,6 +2117,7 @@ uvm_pagedeactivate(struct vm_page *pg)
 {
 
 	KASSERT(mutex_owned(&uvm_pageqlock));
+	KASSERT((pg->pqflags & PQ_FIXED) == 0);
 	KASSERT(pg->wire_count != 0 || uvmpdpol_pageisqueued_p(pg));
 	uvmpdpol_pagedeactivate(pg);
 }
@@ -2126,6 +2133,7 @@ uvm_pageactivate(struct vm_page *pg)
 {
 
 	KASSERT(mutex_owned(&uvm_pageqlock));
+	KASSERT((pg->pqflags & PQ_FIXED) == 0);
 #if defined(READAHEAD_STATS)
 	if ((pg->pqflags & PQ_READAHEAD) != 0) {
 		uvm_ra_hit.ev_count++;
@@ -2146,6 +2154,7 @@ void
 uvm_pagedequeue(struct vm_page *pg)
 {
 
+	KASSERT((pg->pqflags & PQ_FIXED) == 0);
 	if (uvmpdpol_pageisqueued_p(pg)) {
 		KASSERT(mutex_owned(&uvm_pageqlock));
 	}
@@ -2163,6 +2172,7 @@ uvm_pageenqueue(struct vm_page *pg)
 {
 
 	KASSERT(mutex_owned(&uvm_pageqlock));
+	KASSERT((pg->pqflags & PQ_FIXED) == 0);
 	if (pg->wire_count != 0) {
 		return;
 	}
