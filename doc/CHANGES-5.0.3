@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0.3,v 1.1.2.15 2010/07/19 18:15:38 riz Exp $
+# $NetBSD: CHANGES-5.0.3,v 1.1.2.16 2010/08/25 04:16:32 snj Exp $
 
 A complete list of changes from the NetBSD 5.0.2 release to the NetBSD 5.0.3
 release:
@@ -287,4 +287,11 @@ lib/libc/gen/glob.c				1.25-1.26
 
 	Fix globbing in libc and sftp.
 	[christos, ticket #1430]
+
+sys/coda/coda.h					1.16
+sys/coda/coda_venus.c				1.28
+sys/coda/coda_vnops.c				1.76
+
+	Correct incomplete size checks for the coda ioctls.
+	[christos, ticket #1431]
 
