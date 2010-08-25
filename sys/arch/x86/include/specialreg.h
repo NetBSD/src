@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.46 2010/08/21 02:59:18 jruoho Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.47 2010/08/25 05:07:43 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -127,6 +127,27 @@
 			    "\30MMX\31FXSR\32SSE\33SSE2\34SS\35HTT\36TM" \
 			    "\37IA64\40SBF"
 
+/*
+ * Intel Digital Thermal Sensor and
+ * Power Management, Fn0000_0006 - %eax.
+ */
+#define CPUID_DSPM_DTS	0x00000001	/* Digital Thermal Sensor */
+#define CPUID_DSPM_IDA	0x00000002	/* Intel Dynamic Acceleration */
+#define CPUID_DSPM_ARAT	0x00000004	/* Always Running APIC Timer */
+#define CPUID_DSPM_PLN	0x00000010	/* Power Limit Notification */
+#define CPUID_DSPM_CME	0x00000020	/* Clock Modulation Extension */
+#define CPUID_DSPM_PLTM	0x00000040	/* Package Level Thermal Management */
+
+#define CPUID_DSPM_FLAGS	"\20\1DTS\2IDA\3ARAT\5PLN\6CME\7PLTM"
+
+/*
+ * Intel Digital Thermal Sensor and
+ * Power Management, Fn0000_0006 - %ecx.
+ */
+#define CPUID_DSPM_HWF	0x00000001	/* MSR_APERF/MSR_MPERF available */
+
+#define CPUID_DSPM_FLAGS1	"\20\1HWF"
+
 /* Intel Fn80000001 extended features - %edx */
 #define CPUID_SYSCALL	0x00000800	/* SYSCALL/SYSRET */
 #define CPUID_XD	0x00100000	/* Execute Disable (like CPUID_NOX) */
@@ -190,7 +211,6 @@
  * AMD Advanced Power Management
  * CPUID Fn8000_0007 %edx
  */
-
 #define CPUID_APM_TS	0x00000001	/* Temperature Sensor */
 #define CPUID_APM_FID	0x00000002	/* Frequency ID control */
 #define CPUID_APM_VID	0x00000004	/* Voltage ID control */

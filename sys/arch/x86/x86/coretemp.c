@@ -1,4 +1,4 @@
-/* $NetBSD: coretemp.c,v 1.15 2010/08/15 08:45:20 mrg Exp $ */
+/* $NetBSD: coretemp.c,v 1.16 2010/08/25 05:07:43 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coretemp.c,v 1.15 2010/08/15 08:45:20 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coretemp.c,v 1.16 2010/08/25 05:07:43 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -80,7 +80,7 @@ coretemp_register(struct cpu_info *ci)
 	 * sensors. EBX[0:3] contains the number of sensors.
 	 */
 	x86_cpuid(0x06, regs);
-	if ((regs[0] & 0x1) != 1)
+	if ((regs[0] & CPUID_DSPM_DTS) == 0)
 		return;
 
 	sc = kmem_zalloc(sizeof(struct coretemp_softc), KM_NOSLEEP);
