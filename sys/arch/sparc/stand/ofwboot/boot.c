@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.23 2010/08/25 16:24:45 christos Exp $	*/
+/*	$NetBSD: boot.c,v 1.24 2010/08/25 16:38:04 christos Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999 Eduardo E. Horvath.  All rights reserved.
@@ -354,7 +354,9 @@ start_kernel(char *kernel, char *bootline, void *ofw, int isfloppy)
 {
 	int fd;
 	u_long marks[MARK_MAX];
-	int flags = isfloppy ? LOAD_MINIMAL : LOAD_ALL;
+	int flags = LOAD_ALL;
+	if (isfloppy)
+		flags &= ~LOAD_BACKWARDS;
 
 	/*
 	 * First, load headers using default allocator and check whether kernel
