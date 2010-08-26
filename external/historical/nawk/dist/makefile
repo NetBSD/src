@@ -27,6 +27,8 @@ CFLAGS = -O2
 CFLAGS =
 
 CC = gcc -Wall -g
+CC = /opt/SUNWspro/bin/cc
+CC = /opt/pure/purify/purify cc
 CC = cc
 CC = gcc -Wall -g -Wwrite-strings
 CC = gcc -fprofile-arcs -ftest-coverage # then gcov f1.c; cat f1.c.gcov
@@ -83,4 +85,4 @@ names:
 	@echo $(LISTING)
 
 clean:
-	rm -f a.out *.o *.obj maketab maketab.exe *.bb *.bbg *.da *.gcov *.gcno *.gcda # proctab.c
+	rm -f a.out *.o *.obj maketab maketab.exe ytab.[ch] *.bb *.bbg *.da *.gcov *.gcno *.gcda # proctab.c
