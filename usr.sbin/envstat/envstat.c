@@ -1,4 +1,4 @@
-/* $NetBSD: envstat.c,v 1.78 2010/08/01 15:39:52 mlelstv Exp $ */
+/* $NetBSD: envstat.c,v 1.79 2010/08/26 05:25:57 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: envstat.c,v 1.78 2010/08/01 15:39:52 mlelstv Exp $");
+__RCSID("$NetBSD: envstat.c,v 1.79 2010/08/26 05:25:57 jruoho Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -38,6 +38,7 @@ __RCSID("$NetBSD: envstat.c,v 1.78 2010/08/01 15:39:52 mlelstv Exp $");
 #include <fcntl.h>
 #include <err.h>
 #include <errno.h>
+#include <paths.h>
 #include <syslog.h>
 #include <sys/envsys.h>
 #include <sys/types.h>
@@ -45,8 +46,6 @@ __RCSID("$NetBSD: envstat.c,v 1.78 2010/08/01 15:39:52 mlelstv Exp $");
 #include <prop/proplib.h>
 
 #include "envstat.h"
-
-#define _PATH_DEV_SYSMON	"/dev/sysmon"
 
 #define ENVSYS_DFLAG	0x00000001	/* list registered devices */
 #define ENVSYS_FFLAG	0x00000002	/* show temp in farenheit */
@@ -94,7 +93,7 @@ typedef struct envsys_dvprops {
 } *dvprops_t;
 
 /* A simple queue to manage all sensors */
-static SIMPLEQ_HEAD(, envsys_sensor) sensors_list = 
+static SIMPLEQ_HEAD(, envsys_sensor) sensors_list =
     SIMPLEQ_HEAD_INITIALIZER(sensors_list);
 
 /* A simple queue to manage statistics for all sensors */
@@ -156,7 +155,7 @@ int main(int argc, char **argv)
 			flags |= ENVSYS_LFLAG;
 			break;
 		case 'r':
-			/* 
+			/*
 			 * This flag is noop.. it's only here for
 			 * compatibility with the old implementation.
 			 */
@@ -208,8 +207,8 @@ int main(int argc, char **argv)
 		errx(EXIT_FAILURE, "-d flag cannot be used with -s");
 
 	/* Open the device in ro mode */
-	if ((fd = open(_PATH_DEV_SYSMON, O_RDONLY)) == -1)
-		err(EXIT_FAILURE, "%s", _PATH_DEV_SYSMON);
+	if ((fd = open(_PATH_SYSMON, O_RDONLY)) == -1)
+		err(EXIT_FAILURE, "%s", _PATH_SYSMON);
 
 	/* Print dictionary in raw mode */
 	if (flags & ENVSYS_XFLAG) {
@@ -227,13 +226,13 @@ int main(int argc, char **argv)
 		(void)close(fd);
 
 		/* open the fd in rw mode */
-		if ((fd = open(_PATH_DEV_SYSMON, O_RDWR)) == -1)
-			err(EXIT_FAILURE, "%s", _PATH_DEV_SYSMON);
+		if ((fd = open(_PATH_SYSMON, O_RDWR)) == -1)
+			err(EXIT_FAILURE, "%s", _PATH_SYSMON);
 
 		dict = prop_dictionary_create();
 		if (!dict)
 			err(EXIT_FAILURE, "prop_dictionary_create");
-		
+
 		rval = prop_dictionary_set_bool(dict,
 						"envsys-remove-props",
 					        true);
@@ -304,13 +303,13 @@ send_dictionary(FILE *cf, int fd)
 	 * Close the read only descriptor and open a new one read write.
 	 */
 	(void)close(fd);
-	if ((fd = open(_PATH_DEV_SYSMON, O_RDWR)) == -1) {
+	if ((fd = open(_PATH_SYSMON, O_RDWR)) == -1) {
 		error = errno;
-		warn("%s", _PATH_DEV_SYSMON);
+		warn("%s", _PATH_SYSMON);
 		return error;
 	}
 
-	/* 
+	/*
 	 * Send our sensor properties dictionary to the kernel then.
 	 */
 	error = prop_dictionary_send_ioctl(udict, fd, ENVSYS_SETDICTIONARY);
@@ -326,7 +325,7 @@ find_stats_sensor(const char *desc)
 {
 	sensor_stats_t stats;
 
-	/* 
+	/*
 	 * If we matched a sensor by its description return it, otherwise
 	 * allocate a new one.
 	 */
@@ -418,7 +417,7 @@ parse_dictionary(int fd)
 					(void)printf("%d seconds)\n",
 					    (int)edp->refresh_timo);
 			}
-			
+
 			free(edp);
 			edp = NULL;
 		}
@@ -732,14 +731,14 @@ print_sensors(void)
 	if (width)
 		maxlen = width;
 
-	/* 
+	/*
 	 * Print a header at the bottom only once showing different
 	 * members if the statistics flag is set or not.
 	 *
 	 * As bonus if -s is set, only print this header every 10 iterations
 	 * to avoid redundancy... like vmstat(1).
 	 */
-	
+
 	a = "Current";
 	units = "Unit";
 	if (statistics) {
