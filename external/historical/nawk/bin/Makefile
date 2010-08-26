@@ -1,9 +1,10 @@
-#	$NetBSD: Makefile,v 1.1 2010/08/26 14:57:16 christos Exp $
+#	$NetBSD: Makefile,v 1.2 2010/08/26 16:21:25 christos Exp $
 
 WARNS?= 4
 
 .include <bsd.own.mk>
 
+BINDIR?= /usr/bin
 DIST=	${.CURDIR}/../dist
 .PATH:	${DIST}
 
