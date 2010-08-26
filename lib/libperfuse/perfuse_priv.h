@@ -1,4 +1,4 @@
-/*  $NetBSD: perfuse_priv.h,v 1.1 2010/08/25 07:16:00 manu Exp $ */
+/*  $NetBSD: perfuse_priv.h,v 1.2 2010/08/26 13:29:01 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010 Emmanuel Dreyfus. All rights reserved.
@@ -102,6 +102,8 @@ struct perfuse_node_data {
 	int pnd_flags;
 #define PND_RECLAIMED		0x1	/* reclaim pending */
 #define PND_INREADDIR		0x2	/* readdir in progress */
+#define PND_OPEN		0x4	/* At least one fh is allocated */
+#define PND_DIRTY		0x8	/* There is some data to sync */
 	puffs_cookie_t pnd_parent;
 	int pnd_childcount;
 };

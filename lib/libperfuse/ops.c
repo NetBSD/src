@@ -1,4 +1,4 @@
-/*  $NetBSD: ops.c,v 1.1 2010/08/25 07:16:00 manu Exp $ */
+/*  $NetBSD: ops.c,v 1.2 2010/08/26 13:29:01 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010 Emmanuel Dreyfus. All rights reserved.
@@ -824,7 +824,6 @@ perfuse_node_create(pu, opc, pni, pcn, vap)
 		if (error != 0)	
 			return error;
 
-
 		return 0;
 	}
 
@@ -960,9 +959,14 @@ perfuse_node_open(pu, opc, mode, pcr)
 	 * so that we can reuse it later
 	 */
 	perfuse_new_fh((puffs_cookie_t)pn, foo->fh);
+
 #ifdef PERFUSE_DEBUG
 	if (perfuse_diagflags & PDF_FH)
-		DPRINTF("%s: fh = %lld\n", __func__, foo->fh);
+		DPRINTF("%s: opc = %p, file = \"%s\", "
+			"ino = %lld, fh = 0x%llx\n",
+			__func__, (void *)opc, 
+			(char *)PNPATH((struct puffs_node *)opc),
+			PERFUSE_NODE_DATA(opc)->pnd_ino, foo->fh);
 #endif
 out:
 	ps->ps_destroy_msg(pm);
@@ -982,16 +986,46 @@ perfuse_node_close(pu, opc, flags, pcr)
 	perfuse_msg_t *pm;
 	int op;
 	uint64_t fh;
+	struct perfuse_node_data *pnd;
 	struct fuse_release_in *fri;
 	struct puffs_node *pn;
 	int error;
 	
 	ps = puffs_getspecific(pu);
-
 	pn = (struct puffs_node *)opc;
+	pnd = PERFUSE_NODE_DATA(pn);
 
-	if ((fh = perfuse_get_fh((puffs_cookie_t)pn)) == FUSE_UNKNOWN_FH)
+	if (puffs_pn_getvap(pn)->va_type == VDIR)
+		op = FUSE_RELEASEDIR;
+	else
+		op = FUSE_RELEASE;
+
+	if (!(pnd->pnd_flags & PND_OPEN))
 		return EBADF;
+
+	fh = perfuse_get_fh(opc);
+
+	/*
+	 * Sync before close for files
+	 * XXX no pcr argument to pass
+	 */
+	if ((op == FUSE_RELEASE) && (pnd->pnd_flags & PND_DIRTY)) {
+#ifdef PERFUSE_DEBUG
+		if (perfuse_diagflags & PDF_SYNC)
+			DPRINTF("%s: SYNC opc = %p, file = \"%s\"\n", 
+				__func__, (void*)opc, (char *)PNPATH(pn));
+#endif
+		if ((error = perfuse_node_fsync(pu, opc, NULL, 0, 0, 0)) != 0)
+			return error;
+
+		pnd->pnd_flags &= ~PND_DIRTY;
+
+#ifdef PERFUSE_DEBUG
+		if (perfuse_diagflags & PDF_SYNC)
+			DPRINTF("%s: CLEAR opc = %p, file = \"%s\"\n", 
+				__func__, (void*)opc, (char *)PNPATH((pn)));
+#endif
+	}
 
 	/*
 	 * Destroy the filehandle before sending the 
@@ -1004,13 +1038,9 @@ perfuse_node_close(pu, opc, flags, pcr)
 
 #ifdef PERFUSE_DEBUG
 	if (perfuse_diagflags & PDF_FH)
-		DPRINTF("%s: fh = %lld\n", __func__, fh);
+		DPRINTF("%s: opc = %p, ino = %lld, fh = 0x%llx\n",
+			__func__, (void *)opc, pnd->pnd_ino, fh);
 #endif
-
-	if (puffs_pn_getvap(pn)->va_type == VDIR)
-		op = FUSE_RELEASEDIR;
-	else
-		op = FUSE_RELEASE;
 
 	/*
 	 * release_flags may be set to FUSE_RELEASE_FLUSH
@@ -1024,12 +1054,18 @@ perfuse_node_close(pu, opc, flags, pcr)
 	fri->lock_owner = PERFUSE_NODE_DATA(pn)->pnd_lock_owner;
 	fri->flags = (fri->lock_owner != 0) ? FUSE_RELEASE_FLUSH : 0;
 
+#ifdef PERFUSE_DEBUG
+	if (perfuse_diagflags & PDF_FH)
+		DPRINTF("%s: opc = %p, ino = %lld, fh = 0x%llx\n",
+			 __func__, (void *)opc, pnd->pnd_ino, fri->fh);
+#endif
+
 	if ((error = XCHG_MSG(ps, pu, pm, NO_PAYLOAD_REPLY_LEN)) != 0)
 		goto out;
 
 out:
 	if (error != 0)
-		DWARNX("%s: freed fh = %lld but filesystem returned error = %d",
+		DWARNX("%s: freed fh = 0x%llx but filesystem returned error = %d",
 		       __func__, fh, error);
 
 	ps->ps_destroy_msg(pm);
@@ -1077,8 +1113,14 @@ perfuse_node_access(pu, opc, mode, pcr)
 		fgi = GET_INPAYLOAD(ps, pm, fuse_getattr_in);
 		fgi->getattr_flags = 0; 
 		fgi->dummy = 0;
-		fgi->fh = 0;
+		fgi->fh = perfuse_get_fh(opc);
 
+#ifdef PERFUSE_DEBUG
+		if (perfuse_diagflags & PDF_FH)
+			DPRINTF("%s: opc = %p, ino = %lld, fh = 0x%llx\n",
+				__func__, (void *)opc,
+				PERFUSE_NODE_DATA(opc)->pnd_ino, fgi->fh);
+#endif
 		if ((error = XCHG_MSG(ps, pu, pm, sizeof(*fao))) != 0) {
 			ps->ps_destroy_msg(pm);
 			goto out;
@@ -1161,7 +1203,8 @@ perfuse_node_setattr(pu, opc, vap, pcr)
 	fsi = GET_INPAYLOAD(ps, pm, fuse_setattr_in);
 	fsi->valid = 0;
 
-	if ((fh = perfuse_get_fh(opc)) != FUSE_UNKNOWN_FH) {
+	if (PERFUSE_NODE_DATA(opc)->pnd_flags & PND_OPEN) {
+		fh = perfuse_get_fh(opc);
 		fsi->fh = fh;
 		fsi->valid |= FUSE_FATTR_FH;
 	}
@@ -1235,6 +1278,12 @@ perfuse_node_poll(pu, opc, events)
 	fpi->kh = 0;
 	fpi->flags = 0;
 
+#ifdef PERFUSE_DEBUG
+	if (perfuse_diagflags & PDF_FH)
+		DPRINTF("%s: opc = %p, ino = %lld, fh = 0x%llx\n",
+			__func__, (void *)opc,	
+			PERFUSE_NODE_DATA(opc)->pnd_ino, fpi->fh);
+#endif
 	if ((error = XCHG_MSG(ps, pu, pm, sizeof(*fpo))) != 0)
 		goto out;
 
@@ -1272,9 +1321,15 @@ perfuse_node_fsync(pu, opc, pcr, flags, offlo, offhi)
 {
 	perfuse_msg_t *pm;
 	struct perfuse_state *ps;
+	struct perfuse_node_data *pnd;
 	struct fuse_fsync_in *ffi;
+	uint64_t fh;
+	int open_self;
 	int error;
 	
+	pm = NULL;
+	open_self = 0;	
+
 	/* 
 	 * If we previously detected it as unimplemented,
 	 * skip the call to the filesystem.
@@ -1284,24 +1339,73 @@ perfuse_node_fsync(pu, opc, pcr, flags, offlo, offhi)
 		return ENOSYS;
 
 	/*
+	 * Do not sync if there are no change to sync
+	 * XXX remove that testif we implement mmap
+	 */
+	pnd = PERFUSE_NODE_DATA(opc);
+#ifdef PERFUSE_DEBUG
+	if (perfuse_diagflags & PDF_SYNC)
+		DPRINTF("%s: TEST opc = %p, file = \"%s\" is %sdirty\n", 
+			__func__, (void*)opc,
+			(char *)PNPATH((struct puffs_node *)opc),
+			pnd->pnd_flags & PND_DIRTY ? "" : "not ");
+#endif
+	if (!(pnd->pnd_flags & PND_DIRTY))
+		return 0;
+
+	/*
+	 * It seems NetBSD can call fsync without open first
+	 * glusterfs complain in such a situation:
+	 * "FSYNC() ERR => -1 (Invalid argument)"
+	 */
+	if (!(pnd->pnd_flags & PND_OPEN)) {
+		if ((error = perfuse_node_open(pu, opc, FREAD, pcr)) != 0)
+			goto out;
+		open_self = 1;
+	}
+
+	fh = perfuse_get_fh(opc);
+	
+	/*
 	 * If fsync_flags  is set, meta data should not be flushed.
 	 */
 	pm = ps->ps_new_msg(pu, opc, FUSE_FSYNC, sizeof(*ffi), NULL);
 	ffi = GET_INPAYLOAD(ps, pm, fuse_fsync_in);
-	ffi->fh = perfuse_get_fh(opc);
+	ffi->fh = fh;
 	ffi->fsync_flags = (flags & FFILESYNC) ? 0 : 1;
+
+#ifdef PERFUSE_DEBUG
+	if (perfuse_diagflags & PDF_FH)
+		DPRINTF("%s: opc = %p, ino = %lld, fh = 0x%llx\n",
+			__func__, (void *)opc,
+			PERFUSE_NODE_DATA(opc)->pnd_ino, ffi->fh);
+#endif
 
 	if ((error = XCHG_MSG(ps, pu, pm, NO_PAYLOAD_REPLY_LEN)) != 0)
 		goto out;	
 
 	/*
-	 * No reply beyond fuse_out_header: nothing to do on success.
+	 * No reply beyond fuse_out_header: nothing to do on success
+	 * just clear the dirty flag
 	 */
+	pnd->pnd_flags &= ~PND_DIRTY;
+
+#ifdef PERFUSE_DEBUG
+	if (perfuse_diagflags & PDF_SYNC)
+		DPRINTF("%s: CLEAR opc = %p, file = \"%s\"\n", 
+			__func__, (void*)opc,
+			(char *)PNPATH((struct puffs_node *)opc));
+#endif
+
 out:
 	if (error == ENOSYS)
 		ps->ps_flags |= PS_NO_FSYNC;
 
-	ps->ps_destroy_msg(pm);
+	if (pm != NULL)
+		ps->ps_destroy_msg(pm);
+
+	if (open_self)
+		(void)perfuse_node_close(pu, opc, 0, pcr);
 
 	return error;
 }
@@ -1522,6 +1626,7 @@ perfuse_node_rmdir(pu, opc, targ, pcn)
 		DERR(EX_OSERR, "puffs_inval_namecache_node failed");
 
 	puffs_setback(puffs_cc_getcc(pu), PUFFS_SETBACK_NOREF_N2);
+
 out:
 	ps->ps_destroy_msg(pm);
 
@@ -1619,14 +1724,20 @@ perfuse_node_readdir(pu, opc, dent, readoff,
 	 * It seems NetBSD can call readdir without open first
 	 * libfuse will crash if it is done that way, hence open first.
 	 */
-	if ((fh = perfuse_get_fh(opc)) == FUSE_UNKNOWN_FH) {
+	if (!(PERFUSE_NODE_DATA(opc)->pnd_flags & PND_OPEN)) {
 		if ((error = perfuse_node_open(pu, opc, FREAD, pcr)) != 0)
 			goto out;
 		open_self = 1;
-		
-		if ((fh = perfuse_get_fh(opc)) == FUSE_UNKNOWN_FH)
-			DERRX(EX_SOFTWARE, "open directory without fh");
 	}
+
+	fh = perfuse_get_fh(opc);
+
+#ifdef PERFUSE_DEBUG
+	if (perfuse_diagflags & PDF_FH)
+		DPRINTF("%s: opc = %p, ino = %lld, fh = 0x%llx\n",
+			__func__, (void *)opc,
+			PERFUSE_NODE_DATA(opc)->pnd_ino, fh);
+#endif
 
 	pnd->pnd_all_fd = NULL;
 	pnd->pnd_all_fd_len = 0;
@@ -1783,31 +1894,32 @@ perfuse_node_reclaim(pu, opc)
 {
 	struct perfuse_state *ps;
 	perfuse_msg_t *pm;
+	struct perfuse_node_data *pnd;
 	struct fuse_forget_in *ffi;
 	struct puffs_node *pn;
 	struct puffs_node *pn_root;
 	
 	ps = puffs_getspecific(pu);
+	pnd = PERFUSE_NODE_DATA(opc);
 
 	/*
 	 * Make sure open files are properly closed when reclaimed.
 	 */
-	while (perfuse_get_fh(opc) != FUSE_UNKNOWN_FH)
+	while (pnd->pnd_flags & PND_OPEN)
 		(void)perfuse_node_close(pu, opc, 0, NULL);
 		
 	/*
 	 * Never forget the root.
 	 */
-	if (PERFUSE_NODE_DATA(opc)->pnd_ino == FUSE_ROOT_ID)
+	if (pnd->pnd_ino == FUSE_ROOT_ID)
 		return 0;
 
-	PERFUSE_NODE_DATA(opc)->pnd_flags |= PND_RECLAIMED;
+	pnd->pnd_flags |= PND_RECLAIMED;
 
 #ifdef PERFUSE_DEBUG
 	if (perfuse_diagflags & PDF_RECLAIM)
 		DPRINTF("%s (nodeid %lld) reclaimed\n", 
-		       (char *)PNPATH((struct puffs_node *)opc),
-		       PERFUSE_NODE_DATA(opc)->pnd_ino);
+		       (char *)PNPATH((struct puffs_node *)opc), pnd->pnd_ino);
 #endif
 
 	pn_root = puffs_getroot(pu);
@@ -1815,30 +1927,44 @@ perfuse_node_reclaim(pu, opc)
 	while (pn != pn_root) {
 		struct puffs_node *parent_pn;
 	
+		pnd = PERFUSE_NODE_DATA(pn);
+
 #ifdef PERFUSE_DEBUG
 	if (perfuse_diagflags & PDF_RECLAIM)
-		DPRINTF("%s (nodeid %lld) is %sreclaimed, has childcount %d\n", 
-		        (char *)PNPATH(pn), 
-		        PERFUSE_NODE_DATA(pn)->pnd_ino,
-		        PERFUSE_NODE_DATA(pn)->pnd_flags & PND_RECLAIMED 
-				? "" : "not ",
-		        PERFUSE_NODE_DATA(pn)->pnd_childcount);
+		DPRINTF("%s (nodeid %lld) is %sreclaimed, "
+			"has childcount %d, %sopen\n", 
+		        (char *)PNPATH(pn), pnd->pnd_ino,
+		        pnd->pnd_flags & PND_RECLAIMED ? "" : "not ",
+		        pnd->pnd_childcount,
+			pnd->pnd_flags & PND_OPEN ? "" : "not ");
+
+	if (pnd->pnd_flags & PND_OPEN)
+		DWARNX("%s: (nodeid %lld) %s is still open",
+		       __func__, pnd->pnd_ino, (char *)PNPATH(pn));
 #endif
-		if (!(PERFUSE_NODE_DATA(pn)->pnd_flags & PND_RECLAIMED) ||
-		    (PERFUSE_NODE_DATA(pn)->pnd_childcount != 0))
+
+		if (!(pnd->pnd_flags & PND_RECLAIMED) ||
+		    (pnd->pnd_childcount != 0))
 			return 0;
+
+		/*
+		 * If the file is still open, close all file handles
+		 * XXX no pcr arguement to send.
+		 */
+		while(pnd->pnd_flags & PND_OPEN)
+			(void)perfuse_node_close(pu, opc, 0, NULL);
 
 		pm = ps->ps_new_msg(pu, (puffs_cookie_t)pn, FUSE_FORGET, 
 			      sizeof(*ffi), NULL);
 		ffi = GET_INPAYLOAD(ps, pm, fuse_forget_in);
-		ffi->nlookup = PERFUSE_NODE_DATA(pn)->pnd_nlookup;
+		ffi->nlookup = pnd->pnd_nlookup;
 
 		/*
 		 * No reply is expected, pm is freed in XCHG_MSG
 		 */
 		(void)XCHG_MSG_NOREPLY(ps, pu, pm, UNSPEC_REPLY_LEN);
 
-		parent_pn = PERFUSE_NODE_DATA(pn)->pnd_parent;
+		parent_pn = pnd->pnd_parent;
 
 		perfuse_destroy_pn(pn);
 		puffs_pn_put(pn);
@@ -1915,6 +2041,13 @@ perfuse_node_advlock(pu, opc, id, op, fl, flags)
 	fli->lk.type = fl->l_type;
 	fli->lk.pid = fl->l_pid;
 	fli->lk_flags = (flags & F_FLOCK) ? FUSE_LK_FLOCK : 0;
+
+#ifdef PERFUSE_DEBUG
+	if (perfuse_diagflags & PDF_FH)
+		DPRINTF("%s: opc = %p, ino = %lld, fh = 0x%llx\n",
+			__func__, (void *)opc,
+			PERFUSE_NODE_DATA(opc)->pnd_ino, fli->fh);
+#endif
 
 	if ((error = XCHG_MSG(ps, pu, pm, sizeof(*flo))) != 0)
 		goto out;
@@ -1993,6 +2126,12 @@ perfuse_node_read(pu, opc, buf, offset, resid, pcr, ioflag)
 		fri->flags = 0;
 		fri->flags |= (fri->lock_owner != 0) ? FUSE_READ_LOCKOWNER : 0;
 
+#ifdef PERFUSE_DEBUG
+	if (perfuse_diagflags & PDF_FH)
+		DPRINTF("%s: opc = %p, ino = %lld, fh = 0x%llx\n",
+			__func__, (void *)opc,
+			PERFUSE_NODE_DATA(opc)->pnd_ino, fri->fh);
+#endif
 		error = XCHG_MSG(ps, pu, pm, UNSPEC_REPLY_LEN);
 
 		if (error  != 0)
@@ -2085,6 +2224,12 @@ perfuse_node_write(pu, opc, buf, offset, resid, pcr, ioflag)
 		fwi->flags |= (ioflag & IO_DIRECT) ? 0 : FUSE_WRITE_CACHE; 
 		(void)memcpy((fwi + 1), buf + written, data_len);
 
+#ifdef PERFUSE_DEBUG
+	if (perfuse_diagflags & PDF_FH)
+		DPRINTF("%s: opc = %p, ino = %lld, fh = 0x%llx\n",
+			__func__, (void *)opc,
+			PERFUSE_NODE_DATA(opc)->pnd_ino, fwi->fh);
+#endif
 		if ((error = XCHG_MSG(ps, pu, pm, sizeof(*fwo))) != 0)
 			goto out;
 
@@ -2110,6 +2255,17 @@ perfuse_node_write(pu, opc, buf, offset, resid, pcr, ioflag)
 	else
 		ps->ps_asyncwrites++;
 
+	/*
+	 * Remember to sync the file
+	 */
+	PERFUSE_NODE_DATA(opc)->pnd_flags |= PND_DIRTY;
+
+#ifdef PERFUSE_DEBUG
+	if (perfuse_diagflags & PDF_SYNC)
+		DPRINTF("%s: DIRTY opc = %p, file = \"%s\"\n", 
+			__func__, (void*)opc,
+			(char *)PNPATH((struct puffs_node *)opc));
+#endif
 out:
 	if (pm != NULL)
 		ps->ps_destroy_msg(pm);

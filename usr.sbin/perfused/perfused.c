@@ -1,4 +1,4 @@
-/*  $NetBSD: perfused.c,v 1.1 2010/08/25 07:18:01 manu Exp $ */
+/*  $NetBSD: perfused.c,v 1.2 2010/08/26 13:29:02 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010 Emmanuel Dreyfus. All rights reserved.
@@ -297,6 +297,8 @@ parse_debug(optstr)
 			retval |= PDF_RECLAIM;
 		else if (strcmp(opt, "requeue") == 0)
 			retval |= PDF_REQUEUE;
+		else if (strcmp(opt, "sync") == 0)
+			retval |= PDF_SYNC;
 		else if (strcmp(opt, "misc") == 0)
 			retval |= PDF_MISC;
 		else
