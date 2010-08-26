@@ -23,6 +23,10 @@ THIS SOFTWARE.
 ****************************************************************/
 
 %{
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <stdio.h>
 #include <string.h>
 #include "awk.h"
@@ -80,7 +84,7 @@ Node	*arglist = 0;	/* list of args for current function */
 %left	GETLINE
 %nonassoc APPEND EQ GE GT LE LT NE MATCHOP IN '|'
 %left	ARG BLTIN BREAK CALL CLOSE CONTINUE DELETE DO EXIT FOR FUNC 
-%left	GSUB IF INDEX LSUBSTR MATCHFCN NEXT NUMBER
+%left	GENSUB GSUB IF INDEX LSUBSTR MATCHFCN NEXT NUMBER
 %left	PRINT PRINTF RETURN SPLIT SPRINTF STRING SUB SUBSTR
 %left	REGEXPR VAR VARNF IVAR WHILE '('
 %left	CAT
@@ -369,6 +373,22 @@ term:
 	| INCR var			{ $$ = op1(PREINCR, $2); }
 	| var DECR			{ $$ = op1(POSTDECR, $1); }
 	| var INCR			{ $$ = op1(POSTINCR, $1); }
+	| GENSUB '(' reg_expr comma pattern comma pattern ')'
+		{ $$ = op5(GENSUB, NIL, (Node*)makedfa($3, 1), $5, $7, rectonode()); }
+	| GENSUB '(' pattern comma pattern comma pattern ')'
+		{ if (constnode($3))
+			$$ = op5(GENSUB, NIL, (Node *)makedfa(strnode($3), 1), $5, $7, rectonode());
+		  else
+			$$ = op5(GENSUB, (Node *)1, $3, $5, $7, rectonode());
+		}
+	| GENSUB '(' reg_expr comma pattern comma pattern comma pattern ')'
+		{ $$ = op5(GENSUB, NIL, (Node*)makedfa($3, 1), $5, $7, $9); }
+	| GENSUB '(' pattern comma pattern comma pattern comma pattern ')'
+		{ if (constnode($3))
+			$$ = op5(GENSUB, NIL, (Node *)makedfa(strnode($3),1), $5,$7,$9);
+		  else
+			$$ = op5(GENSUB, (Node *)1, $3, $5, $7, $9);
+		}
 	| GETLINE var LT term		{ $$ = op3(GETLINE, $2, itonp($3), $4); }
 	| GETLINE LT term		{ $$ = op3(GETLINE, NIL, itonp($2), $3); }
 	| GETLINE var			{ $$ = op3(GETLINE, $2, NIL, NIL); }
