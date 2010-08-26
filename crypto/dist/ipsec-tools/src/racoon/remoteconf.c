@@ -1,4 +1,4 @@
-/*	$NetBSD: remoteconf.c,v 1.19 2010/06/22 09:41:33 vanhu Exp $	*/
+/*	$NetBSD: remoteconf.c,v 1.20 2010/08/26 13:31:55 vanhu Exp $	*/
 
 /* Id: remoteconf.c,v 1.38 2006/05/06 15:52:44 manubsd Exp */
 
@@ -554,6 +554,24 @@ duprmconf (rmconf)
 		new->etypes = dupetypes(new->etypes);
 	new->idvl_p = genlist_init();
 	genlist_foreach(rmconf->idvl_p, dupidvl, new->idvl_p);
+
+        /* duplicate strings */ 
+	if (new->mycertfile != NULL) { 
+		new->mycertfile = racoon_strdup(new->mycertfile); 
+		STRDUP_FATAL(new->mycertfile); 
+	} 
+	if (new->myprivfile != NULL) { 
+		new->myprivfile = racoon_strdup(new->myprivfile); 
+		STRDUP_FATAL(new->myprivfile); 
+	} 
+	if (new->peerscertfile != NULL) { 
+		new->peerscertfile = racoon_strdup(new->peerscertfile); 
+		STRDUP_FATAL(new->peerscertfile); 
+	} 
+	if (new->cacertfile != NULL) { 
+                new->cacertfile = racoon_strdup(new->cacertfile); 
+		STRDUP_FATAL(new->cacertfile); 
+	} 
 
 	return new;
 }
