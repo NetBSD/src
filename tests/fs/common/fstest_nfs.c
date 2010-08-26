@@ -1,4 +1,4 @@
-/*	$NetBSD: fstest_nfs.c,v 1.3 2010/07/30 16:15:05 pooka Exp $	*/
+/*	$NetBSD: fstest_nfs.c,v 1.4 2010/08/26 15:07:16 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -196,11 +196,26 @@ int
 nfs_fstest_unmount(const atf_tc_t *tc, const char *path, int flags)
 {
 	struct nfstestargs *args = theargs;
-	int status;
+	int status, i, sverrno;
 
-	if (rump_sys_unmount(path, flags) == -1) {
-		return errno;
+	/*
+	 * NFS handles sillyrenames in an workqueue.  Some of them might
+	 * be still in the queue even if all user activity has ceased.
+	 * We try to unmount for 2 seconds to give them a chance
+	 * to flush out.
+	 *
+	 * PR kern/43799
+	 */
+	for (i = 0; i < 20; i++) {
+		if ((status = rump_sys_unmount(path, flags)) == 0)
+			break;
+		sverrno = errno;
+		if (sverrno != EBUSY)
+			break;
+		usleep(100000);
 	}
+	if (status == -1)
+		return sverrno;
 
 	/*
 	 * It's highly expected that the child will die next, so we

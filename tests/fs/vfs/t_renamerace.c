@@ -1,4 +1,4 @@
-/*	$NetBSD: t_renamerace.c,v 1.9 2010/08/25 18:11:20 pooka Exp $	*/
+/*	$NetBSD: t_renamerace.c,v 1.10 2010/08/26 15:07:16 pooka Exp $	*/
 
 /*
  * Modified for rump and atf from a program supplied
@@ -115,14 +115,6 @@ renamerace(const atf_tc_t *tc, const char *mp)
 	 */
 	if (FSTYPE_LFS(tc))
 		abort();
-
-	/*
-	 * NFS sillyrename is broken and may linger on in the file system.
-	 * This sleep lets them finish so we don't get transient unmount
-	 * failures.
-	 */
-	if (FSTYPE_NFS(tc))
-		sleep(1);
 }
 
 static void
