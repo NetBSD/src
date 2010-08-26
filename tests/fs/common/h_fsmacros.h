@@ -1,4 +1,4 @@
-/*	$NetBSD: h_fsmacros.h,v 1.19 2010/08/25 18:16:06 pooka Exp $	*/
+/*	$NetBSD: h_fsmacros.h,v 1.20 2010/08/26 08:19:18 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -37,6 +37,10 @@
 #include <atf-c.h>
 #include <puffsdump.h>
 #include <string.h>
+
+#include <rump/rump.h>
+
+#include "../../h_macros.h"
 
 #define FSPROTOS(_fs_)							\
 int _fs_##_fstest_newfs(const atf_tc_t *, void **, const char *,	\
