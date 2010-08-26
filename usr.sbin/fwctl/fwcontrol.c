@@ -1,4 +1,4 @@
-/*	$NetBSD: fwcontrol.c,v 1.9 2010/08/24 08:41:24 cegger Exp $	*/
+/*	$NetBSD: fwcontrol.c,v 1.10 2010/08/26 07:04:04 cegger Exp $	*/
 /*
  * Copyright (C) 2002
  * 	Hidetoshi Shimokawa. All rights reserved.
@@ -34,7 +34,7 @@
  */
 #include <sys/cdefs.h>
 //__FBSDID("$FreeBSD: src/usr.sbin/fwcontrol/fwcontrol.c,v 1.23 2006/10/26 22:33:38 imp Exp $");
-__RCSID("$NetBSD: fwcontrol.c,v 1.9 2010/08/24 08:41:24 cegger Exp $");
+__RCSID("$NetBSD: fwcontrol.c,v 1.10 2010/08/26 07:04:04 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -401,6 +401,15 @@ get_crom(int fd, int node, void *crom_buf, int len)
 }
 
 static void
+show_crc(uint16_t crc, uint16_t good_crc)
+{
+	if (crc == good_crc)
+		printf("(OK)\n");
+	else
+		printf("(NG, 0x%x)\n", good_crc);
+}
+
+static void
 show_crom(uint32_t *crom_buf)
 {
 	int i;
@@ -422,16 +431,13 @@ show_crom(uint32_t *crom_buf)
 	if (hdr->info_len == 1) {
 		/* minimum ROM */
 		reg = (struct csrreg *)hdr;
-		printf("verndor ID: 0x%06x\n",  reg->val);
+		printf("vendor ID: 0x%06x\n", reg->val);
 		return;
 	}
-	printf("info_len=%d crc_len=%d crc=0x%04x",
-		hdr->info_len, hdr->crc_len, hdr->crc);
 	crc = crom_crc(crom_buf+1, hdr->crc_len);
-	if (crc == hdr->crc)
-		printf("(OK)\n");
-	else
-		printf("(NG)\n");
+	printf("info_len=%d crc_len=%d crc=0x%04x ",
+		hdr->info_len, hdr->crc_len, crc);
+	show_crc(crc, hdr->crc);
 	parse_bus_info_block(crom_buf+1);
 
 	crom_init_context(&cc, crom_buf);
@@ -440,13 +446,10 @@ show_crom(uint32_t *crom_buf)
 		printf("no root directory - giving up\n");
 		return;
 	}
-	printf("root_directory: len=0x%04x(%d) crc=0x%04x",
-			dir->crc_len, dir->crc_len, dir->crc);
 	crc = crom_crc((uint32_t *)&dir->entry[0], dir->crc_len);
-	if (crc == dir->crc)
-		printf("(OK)\n");
-	else
-		printf("(NG)\n");
+	printf("root_directory: len=0x%04x(%d) crc=0x%04x ",
+			dir->crc_len, dir->crc_len, crc);
+	show_crc(crc, dir->crc);
 	if (dir->crc_len < 1)
 		return;
 	while (cc.depth >= 0) {
