@@ -1,4 +1,4 @@
-/*  $NetBSD: perfuse_if.h,v 1.1 2010/08/25 07:16:00 manu Exp $ */
+/*  $NetBSD: perfuse_if.h,v 1.2 2010/08/26 13:29:01 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010 Emmanuel Dreyfus. All rights reserved.
@@ -45,13 +45,17 @@ extern int perfuse_diagflags;
 #define PDF_RECLAIM	0x020	/* Reclaimed files */
 #define PDF_READDIR	0x040	/* readdir operations */
 #define PDF_REQUEUE	0x080	/* reueued messages */
-#define PDF_MISC	0x100	/* Miscelaneous messages */
-#define PDF_SYSLOG	0x200	/* use syslog */
+#define PDF_SYNC	0x100	/* fsync and dirty flags */
+#define PDF_MISC	0x200	/* Miscelaneous messages */
+#define PDF_SYSLOG	0x400	/* use syslog */
 
 /*
  * Diagnostic functions
  */
 #define DPRINTF(fmt, ...) do {						\
+	if (perfuse_diagflags & PDF_SYSLOG)				\
+		syslog(LOG_INFO, fmt, ## __VA_ARGS__);			\
+									\
 	if (perfuse_diagflags & PDF_FOREGROUND)				\
 		(void)printf(fmt, ## __VA_ARGS__);			\
 } while (0 /* CONSTCOND */)
