@@ -1,4 +1,4 @@
-$NetBSD: README,v 1.9 2010/05/01 19:51:33 christos Exp $
+$NetBSD: README,v 1.10 2010/08/26 16:33:09 christos Exp $
 
 Organization of Sources:
 
@@ -59,6 +59,9 @@ The licenses currently used are:
 	gpl3		GNU Public License, version 3.
 			http://www.opensource.org/licenses/gpl-3.0.html
 
+	historical	Lucent's old license:
+			http://www.opensource.org/licenses/historical.php
+			
 	ibm-public	IBM's public license:
 			http://www.opensource.org/licenses/ibmpl.php
 
