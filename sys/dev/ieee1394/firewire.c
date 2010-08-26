@@ -1,4 +1,4 @@
-/*	$NetBSD: firewire.c,v 1.36 2010/08/14 18:28:59 jym Exp $	*/
+/*	$NetBSD: firewire.c,v 1.37 2010/08/26 08:56:15 cegger Exp $	*/
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
  * Copyright (c) 1998-2002 Katsushi Kobayashi and Hidetoshi Shimokawa
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: firewire.c,v 1.36 2010/08/14 18:28:59 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: firewire.c,v 1.37 2010/08/26 08:56:15 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -2053,6 +2053,10 @@ fw_attach_dev(struct firewire_comm *fc)
 			SLIST_FOREACH(devlist, &sc->devlist, link)
 				if (devlist->fwdev == fwdev)
 					break;
+
+			if (devlist == NULL)
+				continue;
+
 			if (devlist->fwdev != fwdev)
 				panic("already detached");
 
