@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_pcie.c,v 1.1.2.14 2010/05/08 18:08:34 matt Exp $	*/
+/*	$NetBSD: rmixl_pcie.c,v 1.1.2.15 2010/08/26 20:09:33 rmind Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_pcie.c,v 1.1.2.14 2010/05/08 18:08:34 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_pcie.c,v 1.1.2.15 2010/08/26 20:09:33 rmind Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -1222,7 +1222,7 @@ rmixl_pcie_intr_establish(void *v, pci_intr_handle_t pih, int ipl,
 	u_int link, bitno, irq;
 	uint32_t r;
 	rmixl_pcie_link_intr_t *lip;
-	rmixl_pcie_link_dispatch_t *dip;
+	rmixl_pcie_link_dispatch_t *dip = NULL;
 	uint32_t bit;
 	u_int offset;
 	int s;

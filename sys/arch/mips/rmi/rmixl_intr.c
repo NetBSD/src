@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_intr.c,v 1.1.2.22 2010/06/10 00:41:43 cliff Exp $	*/
+/*	$NetBSD: rmixl_intr.c,v 1.1.2.23 2010/08/26 20:09:33 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_intr.c,v 1.1.2.22 2010/06/10 00:41:43 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_intr.c,v 1.1.2.23 2010/08/26 20:09:33 rmind Exp $");
 
 #include "opt_ddb.h"
 #define	__INTR_PRIVATE
@@ -373,7 +373,7 @@ static int rmixl_send_ipi(struct cpu_info *, int);
 static int rmixl_ipi_intr(void *);
 #endif
 
-#if defined(IOINTR_DEBUG) || defined(DIAGNOSTIC)
+#if defined(DIAGNOSTIC) || defined(IOINTR_DEBUG) || defined(DDB)
 int  rmixl_intrhand_print_subr(int);
 int  rmixl_intrhand_print(void);
 int  rmixl_irt_print(void);

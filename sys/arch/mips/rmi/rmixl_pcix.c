@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_pcix.c,v 1.1.2.5 2010/04/17 07:34:08 cliff Exp $	*/
+/*	$NetBSD: rmixl_pcix.c,v 1.1.2.6 2010/08/26 20:09:33 rmind Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_pcix.c,v 1.1.2.5 2010/04/17 07:34:08 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_pcix.c,v 1.1.2.6 2010/08/26 20:09:33 rmind Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -263,7 +263,7 @@ CFATTACH_DECL_NEW(rmixl_pcix, sizeof(rmixl_pcix_softc_t),
 
 static int rmixl_pcix_found;
 
-#if defined(DIAGNOSTIC) || defined(DEBUG) || defined(DDB)
+#ifdef DIAGNOSTIC
 static rmixl_pcix_softc_t *rmixl_pcix_sc;
 #endif
 
