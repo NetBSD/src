@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.40.2.2 2010/08/17 06:45:35 uebayasi Exp $	*/
+/*	$NetBSD: cpu.c,v 1.40.2.3 2010/08/26 09:43:45 uebayasi Exp $	*/
 /* NetBSD: cpu.c,v 1.18 2004/02/20 17:35:01 yamt Exp  */
 
 /*-
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.40.2.2 2010/08/17 06:45:35 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.40.2.3 2010/08/26 09:43:45 uebayasi Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -87,6 +87,7 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.40.2.2 2010/08/17 06:45:35 uebayasi Exp $"
 #include <sys/reboot.h>
 
 #include <uvm/uvm_extern.h>
+#include <uvm/uvm_page.h>
 
 #include <machine/cpufunc.h>
 #include <machine/cpuvar.h>
