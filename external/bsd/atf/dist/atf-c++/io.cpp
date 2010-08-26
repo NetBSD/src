@@ -368,7 +368,8 @@ impl::std_muxer::got_eof(void)
 }
 
 void
-impl::std_muxer::read(unbuffered_istream& out, unbuffered_istream& err)
+impl::std_muxer::read(unbuffered_istream& out, unbuffered_istream& err,
+                      const bool& terminate)
 {
     struct pollfd fds[2];
     fds[0].fd = out.get_fh().get();
@@ -379,8 +380,15 @@ impl::std_muxer::read(unbuffered_istream& out, unbuffered_istream& err)
     do {
         fds[0].revents = 0;
         fds[1].revents = 0;
-        if (::poll(fds, 2, -1) == -1)
-            break;
+
+        int ret;
+        while ((ret = ::poll(fds, 2, 250)) <= 0) {
+            if (terminate || ret == -1) {
+                fds[0].events = 0;
+                fds[1].events = 0;
+                break;
+            }
+        }
 
         if (fds[0].revents & POLLIN) {
             std::string line;
@@ -388,7 +396,7 @@ impl::std_muxer::read(unbuffered_istream& out, unbuffered_istream& err)
                 got_stdout_line(line);
             else
                 fds[0].events &= ~POLLIN;
-        } else if (fds[0].revents & POLLHUP)
+        } else if (fds[0].revents & POLLERR || fds[0].revents & POLLHUP)
             fds[0].events &= ~POLLIN;
 
         if (fds[1].revents & POLLIN) {
@@ -397,7 +405,7 @@ impl::std_muxer::read(unbuffered_istream& out, unbuffered_istream& err)
                 got_stderr_line(line);
             else
                 fds[1].events &= ~POLLIN;
-        } else if (fds[1].revents & POLLHUP)
+        } else if (fds[1].revents & POLLERR || fds[1].revents & POLLHUP)
             fds[1].events &= ~POLLIN;
     } while (fds[0].events & POLLIN || fds[1].events & POLLIN);
 

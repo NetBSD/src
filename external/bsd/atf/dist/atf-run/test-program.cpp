@@ -646,6 +646,18 @@ impl::read_test_case_result(const atf::fs::path& results_path)
     return detail::parse_test_case_result(line);
 }
 
+namespace {
+
+static bool sigchld_received;
+
+static void
+sigchld_handler(const int signo)
+{
+    sigchld_received = true;
+}
+
+} // anonymous namespace
+
 std::pair< std::string, atf::process::status >
 impl::run_test_case(const atf::fs::path& executable,
                     const std::string& test_case_name,
@@ -683,8 +695,11 @@ impl::run_test_case(const atf::fs::path& executable,
     // Process the test case's output and multiplex it into our output
     // stream as we read it.
     try {
+        atf::signals::signal_programmer sigchld(SIGCHLD, sigchld_handler);
+
         output_muxer muxer(writer);
-        muxer.read(outin, errin);
+        sigchld_received = false;
+        muxer.read(outin, errin, sigchld_received);
         outin.close();
         errin.close();
     } catch (...) {
@@ -697,8 +712,9 @@ impl::run_test_case(const atf::fs::path& executable,
     std::string reason;
 
     if (timeout_timer.fired()) {
-        INV(status.signaled());
-        INV(status.termsig() == SIGKILL);
+        // Don't assume the child process has been signaled due to the timeout
+        // expiration as older versions did.  The child process may have exited
+        // but we may have timed out due to a subchild process getting stuck.
         reason = "Test case timed out after " + atf::text::to_string(timeout) +
             " " + (timeout == 1 ? "second" : "seconds");
     }
