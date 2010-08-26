@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ping.c,v 1.7 2010/08/23 10:49:27 pooka Exp $	*/
+/*	$NetBSD: t_ping.c,v 1.8 2010/08/26 17:24:14 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: t_ping.c,v 1.7 2010/08/23 10:49:27 pooka Exp $");
+__RCSID("$NetBSD: t_ping.c,v 1.8 2010/08/26 17:24:14 pooka Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -129,7 +129,7 @@ in_cksum(void *data, size_t len)
 }
 
 static int
-doping(const char *target, int loops, size_t pktsize)
+doping(const char *target, int loops, int pktsize)
 {
 	char sndbuf[IP_MAXPACKET - sizeof(struct ip)];
 	char recvbuf[IP_MAXPACKET];
