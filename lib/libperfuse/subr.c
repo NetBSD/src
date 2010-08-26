@@ -1,4 +1,4 @@
-/*  $NetBSD: subr.c,v 1.1 2010/08/25 07:16:00 manu Exp $ */
+/*  $NetBSD: subr.c,v 1.2 2010/08/26 13:29:01 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010 Emmanuel Dreyfus. All rights reserved.
@@ -107,6 +107,7 @@ perfuse_new_fh(opc, fh)
 		return;
 
 	pnd = PERFUSE_NODE_DATA(opc);
+	pnd->pnd_flags |= PND_OPEN;
 
 	if ((pfh = malloc(sizeof(*pfh))) == NULL)
 		DERR(EX_OSERR, "malloc failed");
@@ -136,8 +137,12 @@ perfuse_destroy_fh(opc, fh)
 		}
 	}
 
+	if (TAILQ_EMPTY(&pnd->pnd_fh))
+		pnd->pnd_flags &= ~PND_OPEN;
+
 	if (pfh == NULL)
-		warnx("%s: unexistant fh = %lld (double close?)", __func__, fh);
+		DERRX(EX_SOFTWARE, "%s: unexistant fh = %lld (double close?)",
+		      __func__, fh);
 	
 	return;
 }
