@@ -578,7 +578,7 @@ public:
     std_muxer(void);
     virtual ~std_muxer(void);
 
-    void read(unbuffered_istream&, unbuffered_istream&);
+    void read(unbuffered_istream&, unbuffered_istream&, const bool&);
 };
 
 // ------------------------------------------------------------------------
