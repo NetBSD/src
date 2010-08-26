@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.775 2010/08/08 13:42:44 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.776 2010/08/26 15:01:07 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -665,8 +665,8 @@ Notes:
 Delete the otherOS directory before importing.
 
 Package:	nawk
-Version:	2007-05-01
-Current Vers:	2007-10-23
+Version:	2010-05-23
+Current Vers:	2010-05-23
 Maintainer:	Brian Kernighan <bwk@princeton.edu>
 Archive Site:	http://www.cs.princeton.edu/~bwk/btl.mirror/
 Home Page:	http://www.cs.princeton.edu/~bwk/btl.mirror/
@@ -675,8 +675,8 @@ Responsible:	jdolecek
 License:	BSD-like
 Notes:
 Build maketab from nawk sources and generate proctab.c.
-Remove buildwin.bat, mac.code, missing95.c, ytab.[ch], ytab?.bak, then import
-to src/dist/nawk.
+Remove buildwin.bat, missing95.c, ytab.[ch], ytab?.bak, vcvars.bat makefile.win
+then import to src/external/historical/nawk/dist.
 
 Package:	ndbootd
 Version:	0.5
