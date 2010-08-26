@@ -1,4 +1,4 @@
-/*	$NetBSD: t_renamerace.c,v 1.10 2010/08/26 15:07:16 pooka Exp $	*/
+/*	$NetBSD: t_renamerace.c,v 1.11 2010/08/26 18:06:44 pooka Exp $	*/
 
 /*
  * Modified for rump and atf from a program supplied
@@ -32,7 +32,6 @@ w1(void *arg)
 	int fd;
 
 	rump_pub_lwp_alloc_and_switch(0, 10);
-	rump_sys_chdir(arg);
 
 	while (!quittingtime) {
 		fd = rump_sys_open("rename.test1",
@@ -43,8 +42,6 @@ w1(void *arg)
 		rump_sys_close(fd);
 	}
 
-	rump_sys_chdir("/");
-
 	return NULL;
 }
 
@@ -53,15 +50,12 @@ w1_dirs(void *arg)
 {
 
 	rump_pub_lwp_alloc_and_switch(0, 10);
-	rump_sys_chdir(arg);
 
 	while (!quittingtime) {
 		if (rump_sys_mkdir("rename.test1", 0777) == -1)
 			atf_tc_fail_errno("mkdir");
 		rump_sys_rmdir("rename.test1");
 	}
-
-	rump_sys_chdir("/");
 
 	return NULL;
 }
@@ -71,13 +65,10 @@ w2(void *arg)
 {
 
 	rump_pub_lwp_alloc_and_switch(0, 11);
-	rump_sys_chdir(arg);
 
 	while (!quittingtime) {
 		rump_sys_rename("rename.test1", "rename.test2");
 	}
-
-	rump_sys_chdir("/");
 
 	return NULL;
 }
@@ -95,11 +86,12 @@ renamerace(const atf_tc_t *tc, const char *mp)
 	if (FSTYPE_MSDOS(tc))
 		atf_tc_skip("test fails in some setups, reason unknown");
 
+	RL(rump_sys_chdir(mp));
 	for (i = 0; i < NWRK; i++)
-		pthread_create(&pt1[i], NULL, w1, __UNCONST(mp));
+		pthread_create(&pt1[i], NULL, w1, NULL);
 
 	for (i = 0; i < NWRK; i++)
-		pthread_create(&pt2[i], NULL, w2, __UNCONST(mp));
+		pthread_create(&pt2[i], NULL, w2, NULL);
 
 	sleep(5);
 	quittingtime = 1;
@@ -108,6 +100,7 @@ renamerace(const atf_tc_t *tc, const char *mp)
 		pthread_join(pt1[i], NULL);
 	for (i = 0; i < NWRK; i++)
 		pthread_join(pt2[i], NULL);
+	RL(rump_sys_chdir("/"));
 
 	/*
 	 * XXX: does not always fail on LFS, especially for unicpu
@@ -130,14 +123,16 @@ renamerace_dirs(const atf_tc_t *tc, const char *mp)
 	    FSTYPE_MSDOS(tc))
 		atf_tc_expect_signal(-1, "PR kern/43626");
 
-	pthread_create(&pt1, NULL, w1_dirs, __UNCONST(mp));
-	pthread_create(&pt2, NULL, w2, __UNCONST(mp));
+	RL(rump_sys_chdir(mp));
+	pthread_create(&pt1, NULL, w1_dirs, NULL);
+	pthread_create(&pt2, NULL, w2, NULL);
 
 	sleep(5);
 	quittingtime = 1;
 
 	pthread_join(pt1, NULL);
 	pthread_join(pt2, NULL);
+	RL(rump_sys_chdir("/"));
 
 	/*
 	 * Doesn't always trigger when run on a slow backend
