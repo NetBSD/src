@@ -1,4 +1,4 @@
-.\"	$NetBSD: psignal.3,v 1.16 2010/04/14 07:20:27 njoly Exp $
+.\"	$NetBSD: psignal.3,v 1.17 2010/08/27 08:38:41 christos Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,11 +29,12 @@
 .\"
 .\"     @(#)psignal.3	8.2 (Berkeley) 2/27/95
 .\"
-.Dd February 27, 1995
+.Dd August 27, 2010
 .Dt PSIGNAL 3
 .Os
 .Sh NAME
 .Nm psignal ,
+.Nm psiginfo ,
 .Nm sys_siglist ,
 .Nm sys_signame
 .Nd system signal messages
@@ -42,7 +43,8 @@
 .Sh SYNOPSIS
 .In signal.h
 .Ft void
-.Fn psignal "unsigned sig" "const char *s"
+.Fn psignal "int sig" "const char *s"
+.Fn psiginfo "const siginfo_t *si" "const char *s"
 .Vt extern const char * const sys_siglist[];
 .Vt extern const char * const sys_signame[];
 .Sh DESCRIPTION
@@ -65,6 +67,14 @@ If the signal number is not recognized
 the string
 .Dq "Unknown signal"
 is produced.
+.Pp
+The
+.Fn psiginfo
+function produces the same output as the
+.Fn psignal
+function, only it uses the signal number information from the
+.Fa si
+argument.
 .Pp
 The message strings can be accessed directly using the external array
 .Va sys_siglist ,
@@ -89,3 +99,7 @@ The
 .Fn psignal
 function appeared in
 .Bx 4.2 .
+The
+.Fn psiginfo
+function appeared in
+.Nx 6.0 .
