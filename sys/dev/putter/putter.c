@@ -1,4 +1,4 @@
-/*	$NetBSD: putter.c,v 1.28 2010/04/11 09:36:47 pooka Exp $	*/
+/*	$NetBSD: putter.c,v 1.29 2010/08/27 07:40:01 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: putter.c,v 1.28 2010/04/11 09:36:47 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: putter.c,v 1.29 2010/08/27 07:40:01 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -606,6 +606,7 @@ putter_detach(struct putter_instance *pi)
 	TAILQ_REMOVE(&putter_ilist, pi, pi_entries);
 	pi->pi_private = PUTTER_DEAD;
 	mutex_exit(&pi_mtx);
+	seldestroy(&pi->pi_sel);
 
 	DPRINTF(("putter_nukebypmp: nuked %p\n", pi));
 }
