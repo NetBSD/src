@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1502 2010/08/24 15:03:18 pooka Exp $
+#	$NetBSD: mi,v 1.1503 2010/08/27 08:42:23 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -7595,6 +7595,7 @@
 ./usr/share/man/cat3/pset_bind.0		comp-c-catman		.cat
 ./usr/share/man/cat3/pset_create.0		comp-c-catman		.cat
 ./usr/share/man/cat3/pset_destroy.0		comp-c-catman		.cat
+./usr/share/man/cat3/psiginfo.0			comp-c-catman		.cat
 ./usr/share/man/cat3/psignal.0			comp-c-catman		.cat
 ./usr/share/man/cat3/pthread.0			comp-c-catman		.cat
 ./usr/share/man/cat3/pthread_atfork.0		comp-c-catman		.cat
@@ -9596,6 +9597,7 @@
 ./usr/share/man/cat9/propdb_create.0		comp-obsolete		obsolete
 ./usr/share/man/cat9/propdb_destroy.0		comp-obsolete		obsolete
 ./usr/share/man/cat9/properties.0		comp-obsolete		obsolete
+./usr/share/man/cat9/psiginfo.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/psignal.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/putiobuf.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/putter.0			comp-sys-catman		.cat
@@ -13488,6 +13490,7 @@
 ./usr/share/man/html3/pset_bind.html		comp-c-htmlman		html
 ./usr/share/man/html3/pset_create.html		comp-c-htmlman		html
 ./usr/share/man/html3/pset_destroy.html		comp-c-htmlman		html
+./usr/share/man/html3/psiginfo.html		comp-c-htmlman		html
 ./usr/share/man/html3/psignal.html		comp-c-htmlman		html
 ./usr/share/man/html3/pthread.html		comp-c-htmlman		html
 ./usr/share/man/html3/pthread_atfork.html	comp-c-htmlman		html
