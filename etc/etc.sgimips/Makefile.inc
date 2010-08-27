@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.19 2009/12/14 01:12:05 matt Exp $
+#	$NetBSD: Makefile.inc,v 1.20 2010/08/27 11:02:55 tsutsui Exp $
 #
 #	etc.sgimips/Makefile.inc -- sgimips-specific etc Makefile targets
 #
@@ -14,7 +14,7 @@ SFX=64
 
 KERNEL_SETS=		GENERIC${SFX}_IP2x GENERIC${SFX}_IP3x
 .if ${MACHINE_ARCH} == "mipseb"
-KERNEL_SETS=		GENERIC32_IP12
+KERNEL_SETS+=		GENERIC32_IP12
 KERNEL_SUFFIXES=	ecoff
 .endif
 
