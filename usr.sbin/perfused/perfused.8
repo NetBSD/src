@@ -1,4 +1,4 @@
-.\" $NetBSD: perfused.8,v 1.2 2010/08/26 13:29:02 manu Exp $
+.\" $NetBSD: perfused.8,v 1.3 2010/08/27 09:58:17 manu Exp $
 .\"
 .\" Copyright (c) 2010 Emmanuel Dreyfus. All rights reserved.
 .\"
@@ -34,6 +34,7 @@
 .Op Fl f
 .Op Fl d Ar types
 .Op Fl s
+.Op Fl i fd
 .Sh DESCRIPTION
 .Nm
 is a userland daemon mplementing the FUSE kernel level API. It creates a
@@ -106,6 +107,15 @@ Display dirty flags and sync operations
 .El
 .It Fl s
 Enable debug output only when receiving SIGINFO.
+.It Fl i Ar fd
+Do not open
+.Pa /dev/fuse
+but use the socket available from file descriptor
+.Ar fd .
+This is used when 
+.Nm 
+is started from 
+.Xr libperfuse 3 .
 .El
 .Sh ERRORS
 The program logs to the syslog daemon as facility

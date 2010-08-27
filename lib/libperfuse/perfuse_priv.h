@@ -1,4 +1,4 @@
-/*  $NetBSD: perfuse_priv.h,v 1.2 2010/08/26 13:29:01 manu Exp $ */
+/*  $NetBSD: perfuse_priv.h,v 1.3 2010/08/27 09:58:17 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010 Emmanuel Dreyfus. All rights reserved.
@@ -41,9 +41,7 @@ struct perfuse_state {
 	void *ps_private;	/* Private field for libperfuse user */
 	struct puffs_usermount *ps_pu;
 	struct puffs_node *ps_root;
-	uid_t ps_uid;
-	gid_t ps_gid;
-	pid_t ps_pid;
+	uid_t ps_owner_uid;
 	int ps_flags;
 #define PS_NO_ACCESS	0x0001	/* access is unimplemented; */
 #define PS_NO_FSYNC	0x0002	/* fsync is unimplemented */
