@@ -1,4 +1,4 @@
-.\" $NetBSD: acpicpu.4,v 1.15 2010/08/24 07:27:59 jruoho Exp $
+.\" $NetBSD: acpicpu.4,v 1.16 2010/08/27 03:05:26 jruoho Exp $
 .\"
 .\" Coyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd August 24, 2010
+.Dd August 27, 2010
 .Dt ACPICPU 4
 .Os
 .Sh NAME
@@ -284,13 +284,18 @@ The
 driver conflicts with the following kernel configuration
 .Xr options 4 :
 .Dv ENHANCED_SPEEDSTEP ,
-.Dv INTEL_ONDEMAND_CLOCKMOD ,
-.Dv POWERNOW_K7 ,
+.Dv POWERNOW_K8 ,
 and
-.Dv POWERNOW_K8 .
+.Dv INTEL_ONDEMAND_CLOCKMOD .
 These options must be disabled if
 .Nm
 is used.
+Furthermore, in the unlikely case where both
+.Nm
+and
+.Xr ichlpcib 4
+provides support for P-states,
+either one but not both may be used.
 .Sh SEE ALSO
 .Xr acpi 4 ,
 .Xr acpitz 4 ,

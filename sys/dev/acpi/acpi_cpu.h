@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu.h,v 1.24 2010/08/24 07:27:59 jruoho Exp $ */
+/* $NetBSD: acpi_cpu.h,v 1.25 2010/08/27 03:05:26 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -201,14 +201,10 @@ struct acpicpu_softc {
 	uint32_t		 sc_tstate_min;
 
 	kmutex_t		 sc_mtx;
-	bus_space_tag_t		 sc_iot;
-	bus_space_handle_t	 sc_ioh;
-
 	uint32_t		 sc_cap;
 	uint32_t		 sc_flags;
 	cpuid_t			 sc_cpuid;
 	bool			 sc_cold;
-	bool			 sc_mapped;
 	bool			 sc_passive;
 };
 
