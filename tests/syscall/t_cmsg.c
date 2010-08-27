@@ -1,4 +1,4 @@
-/*	$NetBSD: t_cmsg.c,v 1.13 2009/12/18 21:24:13 pooka Exp $	*/
+/*	$NetBSD: t_cmsg.c,v 1.14 2010/08/27 10:03:14 pgoyette Exp $	*/
 
 #include <sys/types.h>
 #include <sys/mount.h>
@@ -135,14 +135,14 @@ ATF_TC_BODY(cmsg_sendfd, tc)
 
 	cmp->cmsg_level = SOL_SOCKET;
 	cmp->cmsg_type = SCM_RIGHTS;
-	cmp->cmsg_len = CMSG_SPACE(sizeof(int));
+	cmp->cmsg_len = CMSG_LEN(sizeof(int));
 
 	msg.msg_iov = &iov;
 	msg.msg_iovlen = 1;
 	msg.msg_name = NULL;
 	msg.msg_namelen = 0;
 	msg.msg_control = cmp;
-	msg.msg_controllen = CMSG_LEN(sizeof(int));
+	msg.msg_controllen = CMSG_SPACE(sizeof(int));
 	*(int *)CMSG_DATA(cmp) = fd[0];
 
 	/* pass the fd */
