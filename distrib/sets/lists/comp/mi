@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1503 2010/08/27 08:42:23 christos Exp $
+#	$NetBSD: mi,v 1.1504 2010/08/27 15:40:46 tron Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -9597,7 +9597,6 @@
 ./usr/share/man/cat9/propdb_create.0		comp-obsolete		obsolete
 ./usr/share/man/cat9/propdb_destroy.0		comp-obsolete		obsolete
 ./usr/share/man/cat9/properties.0		comp-obsolete		obsolete
-./usr/share/man/cat9/psiginfo.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/psignal.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/putiobuf.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/putter.0			comp-sys-catman		.cat
