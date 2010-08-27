@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu.c,v 1.21 2010/08/27 02:44:05 jruoho Exp $ */
+/* $NetBSD: acpi_cpu.c,v 1.22 2010/08/27 03:05:26 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu.c,v 1.21 2010/08/27 02:44:05 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu.c,v 1.22 2010/08/27 03:05:26 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -115,9 +115,7 @@ acpicpu_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_dev = self;
 	sc->sc_cold = true;
-	sc->sc_mapped = false;
 	sc->sc_passive = false;
-	sc->sc_iot = aa->aa_iot;
 	sc->sc_node = aa->aa_node;
 	sc->sc_cpuid = acpicpu_id(sc->sc_object.ao_procid);
 
@@ -141,20 +139,6 @@ acpicpu_attach(device_t parent, device_t self, void *aux)
 
 	mutex_init(&sc->sc_mtx, MUTEX_DEFAULT, IPL_NONE);
 
-	/*
-	 * We should claim the bus space. However, we do this only
-	 * to announce that the space is in use. As is noted in
-	 * ichlpcib(4), we can continue our I/O without bus_space(9).
-	 */
-	if (sc->sc_object.ao_pblklen == 6 && sc->sc_object.ao_pblkaddr != 0) {
-
-		rv = bus_space_map(sc->sc_iot, sc->sc_object.ao_pblkaddr,
-		    sc->sc_object.ao_pblklen, 0, &sc->sc_ioh);
-
-		if (rv == 0)
-			sc->sc_mapped = true;
-	}
-
 	acpicpu_cstate_attach(self);
 	acpicpu_pstate_attach(self);
 	acpicpu_tstate_attach(self);
@@ -168,7 +152,6 @@ static int
 acpicpu_detach(device_t self, int flags)
 {
 	struct acpicpu_softc *sc = device_private(self);
-	const bus_addr_t addr = sc->sc_object.ao_pblkaddr;
 	static ONCE_DECL(once_detach);
 	int rv = 0;
 
@@ -197,9 +180,6 @@ acpicpu_detach(device_t self, int flags)
 
 	if (rv != 0)
 		return rv;
-
-	if (sc->sc_mapped != false)
-		bus_space_unmap(sc->sc_iot, sc->sc_ioh, addr);
 
 	mutex_destroy(&sc->sc_mtx);
 
