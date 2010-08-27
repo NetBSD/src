@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.7 2010/08/21 13:57:41 pgoyette Exp $
+# $NetBSD: Makefile,v 1.8 2010/08/27 09:56:40 pooka Exp $
 
 .include <bsd.own.mk>
 
@@ -10,7 +10,9 @@ TESTSDIR=	${TESTSBASE}/modules
 # will confuse atf-run.  Therefore we must install, at the very least, the
 # Atffile into it.
 TESTS_C=	t_modctl
+TESTS_C+=	t_builtin
 LDADD=		-lprop
+LDADD+=		-lrumpfs_kernfs -lrumpvfs -lrump -lrumpuser -lpthread
 
 TESTS_SH=	t_modload
 
