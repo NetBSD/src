@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.139 2010/08/25 16:46:48 jmmv Exp $
+# $NetBSD: mi,v 1.140 2010/08/27 10:01:04 pooka Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -341,6 +341,7 @@
 ./usr/libdata/debug/usr/tests/libexec/ld.elf_so				tests-libexec-debug
 ./usr/libdata/debug/usr/tests/libexec/ld.elf_so/t_dlinfo.debug		tests-libexec-debug	debug,atf
 ./usr/libdata/debug/usr/tests/modules					tests-sys-debug
+./usr/libdata/debug/usr/tests/modules/t_builtin.debug			tests-sys-debug		debug,atf
 ./usr/libdata/debug/usr/tests/modules/t_modctl.debug			tests-sys-debug		debug,atf
 ./usr/libdata/debug/usr/tests/net					tests-net-debug
 ./usr/libdata/debug/usr/tests/net/bpf					tests-net-debug
