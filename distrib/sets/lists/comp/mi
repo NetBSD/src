@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1504 2010/08/27 15:40:46 tron Exp $
+#	$NetBSD: mi,v 1.1505 2010/08/27 16:29:13 tron Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -19377,6 +19377,7 @@
 ./usr/share/man/man3/pset_bind.3		comp-c-man		.man
 ./usr/share/man/man3/pset_create.3		comp-c-man		.man
 ./usr/share/man/man3/pset_destroy.3		comp-c-man		.man
+./usr/share/man/man3/psiginfo.3			comp-c-man		.man
 ./usr/share/man/man3/psignal.3			comp-c-man		.man
 ./usr/share/man/man3/pthread.3			comp-c-man		.man
 ./usr/share/man/man3/pthread_atfork.3		comp-c-man		.man
