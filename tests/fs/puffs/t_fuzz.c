@@ -1,4 +1,4 @@
-/*	$NetBSD: t_fuzz.c,v 1.3 2010/08/16 10:46:20 pooka Exp $	*/
+/*	$NetBSD: t_fuzz.c,v 1.4 2010/08/27 12:42:21 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -38,6 +38,7 @@
 
 #include <sys/types.h>
 #include <sys/mount.h>
+#include <sys/poll.h>
 
 #include <assert.h>
 #include <atf-c.h>
@@ -167,6 +168,7 @@ respondthread(void *arg)
 {
 	char buf[PUFFS_MSG_MAXSIZE];
 	struct puffs_req *preq = (void *)buf;
+	struct pollfd pfd;
 	ssize_t n;
 
 	pthread_mutex_lock(&damtx);
@@ -176,6 +178,13 @@ respondthread(void *arg)
 
 		while (dafd != -1) {
 			pthread_mutex_unlock(&damtx);
+			pfd.fd = dafd;
+			pfd.events = POLLIN;
+			pfd.revents = 0;
+			if (rump_sys_poll(&pfd, 1, 10) == 0) {
+				pthread_mutex_lock(&damtx);
+				continue;
+			}
 			n = rump_sys_read(dafd, buf, sizeof(buf));
 			if (n <= 0) {
 				pthread_mutex_lock(&damtx);
@@ -204,11 +213,12 @@ testbody(int nfix)
 	srandom(seed);
 	printf("test seeded RNG with %lu\n", seed);
 
+	rump_init();
+
 	pthread_mutex_init(&damtx, NULL);
 	pthread_cond_init(&dacv, NULL);
 	pthread_create(&pt, NULL, respondthread, NULL);
 
-	rump_init();
 	ATF_REQUIRE(rump_sys_mkdir("/mnt", 0777) == 0);
 
 	for (i = 0; i < ITERATIONS; i++) {
