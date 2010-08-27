@@ -1,4 +1,4 @@
-/*  $NetBSD: msg.c,v 1.1 2010/08/25 07:18:01 manu Exp $ */
+/*  $NetBSD: msg.c,v 1.2 2010/08/27 09:58:17 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010 Emmanuel Dreyfus. All rights reserved.
@@ -137,7 +137,7 @@ perfuse_new_pb (pu, opc, opcode, payload_len, cred)
 	fih->pid = 0;
 	if (cred != NULL) {
 		(void)puffs_cred_getuid(cred, &fih->uid);
-		(void)puffs_cred_getuid(cred, &fih->uid);
+		(void)puffs_cred_getgid(cred, &fih->gid);
 	}
 	if ((pcc = puffs_cc_getcc(pu)) != NULL)
 		(void)puffs_cc_getcaller(pcc, (pid_t *)&fih->pid, NULL);
@@ -597,3 +597,31 @@ perfuse_gotframe(pu, pb)
 	return;	
 }
 
+void
+perfuse_fdnotify(pu, fd, what)
+	struct puffs_usermount *pu;
+	int fd;
+	int what;
+{
+	if (fd != (int)perfuse_getspecific(pu))
+		DERRX(EX_SOFTWARE, "%s: unexpected notification for fd = %d",
+		      __func__, fd); 
+
+	if ((what != PUFFS_FBIO_READ) && (what != PUFFS_FBIO_WRITE))
+		DERRX(EX_SOFTWARE, "%s: unexpected notification what = 0x%x",
+		      __func__, what); 
+
+	if (perfuse_unmount(pu) != 0)
+		DWARN("unmount() failed");
+
+	if (shutdown(fd, SHUT_RDWR) != 0)
+		DWARN("shutdown() failed");
+
+	if (perfuse_diagflags & PDF_MISC)
+		DPRINTF("Exit");
+	
+	exit(0);
+	
+	/* NOTREACHED */
+	return;
+}

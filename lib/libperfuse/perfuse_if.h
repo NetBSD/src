@@ -1,4 +1,4 @@
-/*  $NetBSD: perfuse_if.h,v 1.2 2010/08/26 13:29:01 manu Exp $ */
+/*  $NetBSD: perfuse_if.h,v 1.3 2010/08/27 09:58:17 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010 Emmanuel Dreyfus. All rights reserved.
@@ -29,6 +29,7 @@
 #define _REFUSE_PERFUSE_H
 
 #define _PATH_FUSE "/dev/fuse"
+#define _PATH_PERFUSED "/usr/sbin/perfused"
 #define FUSE_COMMFD_ENV "_FUSE_COMMFD" 
 #define PERFUSE_MOUNT_MAGIC "noFuseRq"
 #define PERFUSE_UNKNOWN_INO 0xffffffff
@@ -201,5 +202,6 @@ int perfuse_inloop(struct puffs_usermount *);
 const char *perfuse_opname(int);
 void perfuse_fs_init(struct puffs_usermount *);
 int perfuse_mainloop(struct puffs_usermount *);
+int perfuse_unmount(struct puffs_usermount *);
 
 #endif /* _REFUSE_PERFUSE_H */
