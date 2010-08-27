@@ -186,10 +186,10 @@ Cell *(*proctab[94])(Node **, int) = {
 	nullproc,	/* STRING */
 	nullproc,	/* REGEXPR */
 	awkgetline,	/* GETLINE */
-	substr,	/* SUBSTR */
-	split,	/* SPLIT */
 	gensub,	/* GENSUB */
 	jump,	/* RETURN */
+	split,	/* SPLIT */
+	substr,	/* SUBSTR */
 	whilestat,	/* WHILE */
 	cat,	/* CAT */
 	boolop,	/* NOT */
