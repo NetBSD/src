@@ -1,4 +1,4 @@
-# $NetBSD: module.mi,v 1.4 2010/08/21 13:21:48 pgoyette Exp $
+# $NetBSD: module.mi,v 1.5 2010/08/27 10:01:04 pooka Exp $
 #
 # These are only made for ports doing modules.
 #
@@ -7,5 +7,6 @@
 ./usr/tests/modules/k_helper/k_helper.kmod	tests-sys-tests		atf
 ./usr/tests/modules/k_helper2			tests-sys-tests		atf
 ./usr/tests/modules/k_helper2/k_helper2.kmod	tests-sys-tests		atf
+./usr/tests/modules/t_builtin			tests-sys-tests		atf
 ./usr/tests/modules/t_modctl			tests-sys-tests		atf
 ./usr/tests/modules/t_modload			tests-sys-tests		atf
