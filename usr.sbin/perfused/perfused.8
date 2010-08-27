@@ -1,4 +1,4 @@
-.\" $NetBSD: perfused.8,v 1.3 2010/08/27 09:58:17 manu Exp $
+.\" $NetBSD: perfused.8,v 1.4 2010/08/27 18:12:51 wiz Exp $
 .\"
 .\" Copyright (c) 2010 Emmanuel Dreyfus. All rights reserved.
 .\"
@@ -28,105 +28,106 @@
 .Dt PERFUSED 8
 .Sh NAME
 .Nm perfused
-.Nd "PUFFS Enabled Relay to FUSE Daemon"
+.Nd PUFFS Enabled Relay to FUSE Daemon
 .Sh SYNOPSIS
 .Nm
-.Op Fl f
+.Op Fl fs
 .Op Fl d Ar types
-.Op Fl s
 .Op Fl i fd
 .Sh DESCRIPTION
 .Nm
-is a userland daemon mplementing the FUSE kernel level API. It creates a
+is a userland daemon implementing the FUSE kernel level API.
+It creates a
 .Pa /dev/fuse
-socket for FUSE filesystem daemons to conenct to.
+socket for FUSE file system daemons to connect to.
 .Nm
-takes care of mouting the filesystem using 
+takes care of mounting the file system using
 .Xr puffs 3 .
 .Pp
-When the kernel sends a 
+When the kernel sends a
 .Xr puffs 3
-operation for the mounted filesystem, 
+operation for the mounted file system,
 .Nm
-will translate it into a FUSE request, and will send it to the filesystem
+will translate it into a FUSE request, and will send it to the file system
 daemon through
 .Pa /dev/fuse .
-The FUSE reply will be converted back into a 
+The FUSE reply will be converted back into a
 .Xr puffs 3
 reply and will be relayed to the kernel.
 .Pp
-FUSE filesystems daemons must be modified so that they request
+FUSE file system daemons must be modified so that they request
 .Nm
-for performing the 
+to perform the
 .Xr mount 2
-system call instead of doing it on their own. This is done by 
-replacing in the sources
+system call instead of doing it on their own.
+This is done by replacing
 .Xr mount 2
 and the
-.Xr open 2 
-call for
+.Xr open 2
+calls for
 .Pa /dev/fuse
-by
+with
 .Fn perfuse_mount
-and 
-.Fn perfuse_open .
+and
+.Fn perfuse_open ,
+respectively, in their sources.
 .Xr libperfuse 3
 must be used at link time.
-Most FUSE filesystem daemons use
+Most FUSE file system daemons use
 .Nm libfuse
-and will work unmodified, provided 
-the modification is done in 
+and will work unmodified, provided the modification is done in
 .Nm libfuse
 itself .
 .Pp
-The following options are availlable:
-.Bl -tag -width indent
-.It Fl f
-Do not fork and stay in the foreground.
+The following options are available:
+.Bl -tag -width XdXtypesXX
 .It Fl d Ar types
-Print additionnal debug information. 
+Print additional debug information.
 .Ar types
-is a comma-separated list of informaton type to print: 
+is a comma-separated list of information types to print:
 .Bl -tag -width indent
 .It Ar puffs
-Display PUFFS requests and replies
+Display PUFFS requests and replies.
 .It Ar fuse
-Display FUSE requests and replies
+Display FUSE requests and replies.
 .It Ar dump
-Dump content of FUSE frames
+Dump content of FUSE frames.
 .It Ar fh
-Display filehandles activity
+Display file handle activity.
 .It Ar reclaim
-Display reclaim activity
+Display reclaim activity.
 .It Ar readdir
-Display readdir activity
+Display readdir activity.
 .It Ar requeue
-Display requeue activity
+Display requeue activity.
 .It Ar sync
-Display dirty flags and sync operations
+Display dirty flags and sync operations.
 .El
-.It Fl s
-Enable debug output only when receiving SIGINFO.
+.It Fl f
+Do not fork, but stay in the foreground.
 .It Fl i Ar fd
 Do not open
 .Pa /dev/fuse
-but use the socket available from file descriptor
+but use the socket available from the file descriptor
 .Ar fd .
-This is used when 
-.Nm 
-is started from 
+This is used when
+.Nm
+is started from
 .Xr libperfuse 3 .
+.It Fl s
+Enable debug output only when receiving
+.Li SIGINFO .
 .El
 .Sh ERRORS
 The program logs to the syslog daemon as facility
 .Dq daemon .
 For detailed debugging use the
-.Fl d 
+.Fl d
 (debug) option.
 .Sh SEE ALSO
-.Xr puffs 4 ,
 .Xr mount 2 ,
-.Xr perfuse_mount 3 
+.Xr perfuse_mount 3 ,
+.Xr puffs 4
 .Sh AUTHORS
 The program was written by
 .An Emmanuel Dreyfus
