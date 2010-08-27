@@ -1,4 +1,4 @@
-.\"	$NetBSD: bits.3,v 1.8 2010/08/26 16:42:28 dyoung Exp $
+.\"	$NetBSD: bits.3,v 1.9 2010/08/27 09:13:38 jruoho Exp $
 .\"
 .\" Copyright (c) 2006, 2010 David Young.  All rights reserved.
 .\"
@@ -25,7 +25,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd August 26, 2010
+.Dd August 27, 2010
 .Dt BITS 3
 .Os
 .Sh NAME
@@ -110,37 +110,17 @@ Note that
 .Fn __SHIFTOUT "m" "m" .
 .El
 .Sh EXAMPLES
-.Bd -literal
-/*
- * Register definitions taken from the RFMD RF3000 manual.
- */
-#define	RF3000_GAINCTL			0x11
-#define RF3000_GAINCTL_TXVGC_MASK	__BITS(7, 2)
-#define	RF3000_GAINCTL_SCRAMBLER	__BIT(1)
+The following example demonstrates basic usage of the
+.Nm bits
+macros:
+.Bd -literal -offset indent
+uint32_t bits, mask, val;
 
-/*
- * Shift the transmit power into the transmit-power field of the
- * gain-control register and write it to the baseband processor.
- */
-atw_rf3000_write(sc, RF3000_GAINCTL,
-    __SHIFTIN(txpower, RF3000_GAINCTL_TXVGC_MASK));
+bits = __BITS(2, 3);			/* 00001100 */
+mask = __BIT(2) | __BIT(3);		/* 00001100 */
 
-/*
- * Register definitions taken from the ADMtek ADM8211 manual.
- */
-#define	ATW_RXSTAT_OWN		__BIT(31)
-
-/* ... */
-
-#define	ATW_RXSTAT_DA1		__BIT(17)
-#define	ATW_RXSTAT_DA0          __BIT(16)
-#define	ATW_RXSTAT_RXDR_MASK    __BITS(15,12)
-#define	ATW_RXSTAT_FL_MASK	__BITS(11,0)
-
-/*
- * Extract the frame length from the Rx descriptor's status field.
- */
-len = __SHIFTOUT(rxstat, ATW_RXSTAT_FL_MASK);
+val = __SHIFTIN(0x03, mask);		/* 00001100 */
+val = __SHIFTOUT(0xf, mask);		/* 00000011 */
 .Ed
 .Sh HISTORY
 The
