@@ -1,4 +1,4 @@
-/*	$NetBSD: t_basic.c,v 1.7 2010/07/30 16:15:06 pooka Exp $	*/
+/*	$NetBSD: t_basic.c,v 1.8 2010/08/27 05:34:46 pooka Exp $	*/
 
 #include <sys/types.h>
 #include <sys/mount.h>
@@ -131,14 +131,6 @@ ATF_TC_BODY(root_lnk, tc)
 	if (rump_sys_unmount("/mp", 0) == -1)
 		atf_tc_fail_errno("unmount");
 #endif
-
-	/*
-	 * XXX2: due to atf issue #53, we must make sure the child dies
-	 * before we exit.
-	 */
-	signal(SIGCHLD, SIG_IGN);
-	if (kill(pargs->pta_childpid, SIGTERM) == -1)
-		atf_tc_fail_errno("kill");
 }
 
 ATF_TC(root_fifo);
