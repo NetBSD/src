@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.123 2010/04/17 17:51:47 christos Exp $	*/
+/*	$NetBSD: unistd.h,v 1.124 2010/08/27 08:40:38 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2008 The NetBSD Foundation, Inc.
@@ -310,7 +310,7 @@ int	 profil(char *, size_t, u_long, u_int);
 #ifndef __PSIGNAL_DECLARED
 #define __PSIGNAL_DECLARED
 /* also in signal.h */
-void	psignal(unsigned int, const char *);
+void	psignal(int, const char *);
 #endif /* __PSIGNAL_DECLARED */
 int	 rcmd(char **, int, const char *, const char *, const char *, int *);
 int	 reboot(int, char *);
