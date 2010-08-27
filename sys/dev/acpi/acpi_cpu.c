@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu.c,v 1.20 2010/08/19 05:09:53 jruoho Exp $ */
+/* $NetBSD: acpi_cpu.c,v 1.21 2010/08/27 02:44:05 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu.c,v 1.20 2010/08/19 05:09:53 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu.c,v 1.21 2010/08/27 02:44:05 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -57,10 +57,9 @@ static void		  acpicpu_start(device_t);
 static int		  acpicpu_object(ACPI_HANDLE, struct acpicpu_object *);
 static cpuid_t		  acpicpu_id(uint32_t);
 static uint32_t		  acpicpu_cap(struct acpicpu_softc *);
-static ACPI_OBJECT	 *acpicpu_cap_init(void);
-static ACPI_STATUS	  acpicpu_cap_pdc(ACPI_HANDLE);
-static ACPI_STATUS	  acpicpu_cap_osc(ACPI_HANDLE, uint32_t *);
-static const char	 *acpicpu_cap_oscerr(uint32_t);
+static ACPI_STATUS	  acpicpu_cap_pdc(struct acpicpu_softc *, uint32_t);
+static ACPI_STATUS	  acpicpu_cap_osc(struct acpicpu_softc *,
+					  uint32_t, uint32_t *);
 static void		  acpicpu_notify(ACPI_HANDLE, uint32_t, void *);
 static bool		  acpicpu_suspend(device_t, const pmf_qual_t *);
 static bool		  acpicpu_resume(device_t, const pmf_qual_t *);
@@ -132,15 +131,15 @@ acpicpu_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
+	aprint_naive("\n");
+	aprint_normal(": ACPI CPU\n");
+
 	acpicpu_sc[sc->sc_cpuid] = sc;
 
 	sc->sc_cap = acpicpu_cap(sc);
 	sc->sc_flags |= acpicpu_md_quirks();
 
 	mutex_init(&sc->sc_mtx, MUTEX_DEFAULT, IPL_NONE);
-
-	aprint_naive("\n");
-	aprint_normal(": ACPI CPU\n");
 
 	/*
 	 * We should claim the bus space. However, we do this only
@@ -334,150 +333,171 @@ acpicpu_id(uint32_t id)
 static uint32_t
 acpicpu_cap(struct acpicpu_softc *sc)
 {
-	uint32_t cap[3] = { 0 };
+	uint32_t flags, cap = 0;
+	const char *str;
 	ACPI_STATUS rv;
-	int err;
 
 	/*
-	 * Set machine-dependent processor capabilities.
-	 *
-	 * The _PDC was deprecated in ACPI 3.0 in favor of the _OSC,
-	 * but firmware may expect that we evaluate it nevertheless.
+	 * Query and set machine-dependent capabilities.
+	 * Note that the Intel-specific _PDC method was
+	 * deprecated in the ACPI 3.0 in favor of _OSC.
 	 */
-	rv = acpicpu_cap_pdc(sc->sc_node->ad_handle);
+	flags = acpicpu_md_cap();
+	rv = acpicpu_cap_osc(sc, flags, &cap);
 
-	if (ACPI_FAILURE(rv) && rv != AE_NOT_FOUND)
-		aprint_error_dev(sc->sc_dev, "failed to evaluate _PDC: "
-		    "%s\n", AcpiFormatException(rv));
-
-	rv = acpicpu_cap_osc(sc->sc_node->ad_handle, cap);
-
-	if (ACPI_FAILURE(rv) && rv != AE_NOT_FOUND)
-		aprint_error_dev(sc->sc_dev, "failed to evaluate _OSC: "
-		    "%s\n", AcpiFormatException(rv));
-
-	if (ACPI_SUCCESS(rv)) {
-
-		err = cap[0] & ~__BIT(0);
-
-		if (err != 0) {
-			aprint_error_dev(sc->sc_dev, "errors in "
-			    "_OSC: %s\n", acpicpu_cap_oscerr(err));
-			cap[2] = 0;
-		}
+	if (ACPI_FAILURE(rv) && rv != AE_NOT_FOUND) {
+		str = "_OSC";
+		goto fail;
 	}
 
-	return cap[2];
+	rv = acpicpu_cap_pdc(sc, flags);
+
+	if (ACPI_FAILURE(rv) && rv != AE_NOT_FOUND) {
+		str = "_PDC";
+		goto fail;
+	}
+
+	if (cap == 0)
+		cap = flags;
+
+	return cap;
+
+fail:
+	aprint_error_dev(sc->sc_dev, "failed to evaluate "
+	    "%s: %s\n", str, AcpiFormatException(rv));
+
+	return 0;
 }
 
-static ACPI_OBJECT *
-acpicpu_cap_init(void)
+static ACPI_STATUS
+acpicpu_cap_pdc(struct acpicpu_softc *sc, uint32_t flags)
 {
-	static uint32_t cap[3];
-	static ACPI_OBJECT obj;
+	ACPI_OBJECT_LIST arg;
+	ACPI_OBJECT obj;
+	uint32_t cap[3];
+
+	arg.Count = 1;
+	arg.Pointer = &obj;
 
 	cap[0] = ACPICPU_PDC_REVID;
 	cap[1] = 1;
-	cap[2] = acpicpu_md_cap();
+	cap[2] = flags;
 
 	obj.Type = ACPI_TYPE_BUFFER;
 	obj.Buffer.Length = sizeof(cap);
-	obj.Buffer.Pointer = (uint8_t *)cap;
+	obj.Buffer.Pointer = (void *)cap;
 
-	return &obj;
+	return AcpiEvaluateObject(sc->sc_node->ad_handle, "_PDC", &arg, NULL);
 }
 
 static ACPI_STATUS
-acpicpu_cap_pdc(ACPI_HANDLE hdl)
+acpicpu_cap_osc(struct acpicpu_softc *sc, uint32_t flags, uint32_t *val)
 {
-	ACPI_OBJECT_LIST arg_list;
-
-	arg_list.Count = 1;
-	arg_list.Pointer = acpicpu_cap_init();
-
-	return AcpiEvaluateObject(hdl, "_PDC", &arg_list, NULL);
-}
-
-static ACPI_STATUS
-acpicpu_cap_osc(ACPI_HANDLE hdl, uint32_t *val)
-{
-	ACPI_OBJECT_LIST arg_list;
-	ACPI_OBJECT *cap, *obj;
-	ACPI_OBJECT arg[4];
+	ACPI_OBJECT_LIST arg;
+	ACPI_OBJECT obj[4];
+	ACPI_OBJECT *osc;
 	ACPI_BUFFER buf;
 	ACPI_STATUS rv;
+	uint32_t cap[2];
+	uint32_t *ptr;
+	int i = 5;
 
-	/* Intel. */
-	static uint8_t cpu_oscuuid[16] = {
+	static uint8_t intel_uuid[16] = {
 		0x16, 0xA6, 0x77, 0x40, 0x0C, 0x29, 0xBE, 0x47,
 		0x9E, 0xBD, 0xD8, 0x70, 0x58, 0x71, 0x39, 0x53
 	};
 
-	cap = acpicpu_cap_init();
+	cap[0] = ACPI_OSC_QUERY;
+	cap[1] = flags;
 
-	arg_list.Count = 4;
-	arg_list.Pointer = arg;
+again:
+	arg.Count = 4;
+	arg.Pointer = obj;
 
-	arg[0].Type = ACPI_TYPE_BUFFER;
-	arg[0].Buffer.Length = sizeof(cpu_oscuuid);
-	arg[0].Buffer.Pointer = cpu_oscuuid;
+	obj[0].Type = ACPI_TYPE_BUFFER;
+	obj[0].Buffer.Length = sizeof(intel_uuid);
+	obj[0].Buffer.Pointer = intel_uuid;
 
-	arg[1].Type = ACPI_TYPE_INTEGER;
-	arg[1].Integer.Value = ACPICPU_PDC_REVID;
+	obj[1].Type = ACPI_TYPE_INTEGER;
+	obj[1].Integer.Value = ACPICPU_PDC_REVID;
 
-	arg[2].Type = ACPI_TYPE_INTEGER;
-	arg[2].Integer.Value = cap->Buffer.Length / sizeof(uint32_t);
+	obj[2].Type = ACPI_TYPE_INTEGER;
+	obj[2].Integer.Value = __arraycount(cap);
 
-	arg[3] = *cap;
+	obj[3].Type = ACPI_TYPE_BUFFER;
+	obj[3].Buffer.Length = sizeof(cap);
+	obj[3].Buffer.Pointer = (void *)cap;
 
 	buf.Pointer = NULL;
 	buf.Length = ACPI_ALLOCATE_LOCAL_BUFFER;
 
-	rv = AcpiEvaluateObject(hdl, "_OSC", &arg_list, &buf);
+	rv = AcpiEvaluateObject(sc->sc_node->ad_handle, "_OSC", &arg, &buf);
 
 	if (ACPI_FAILURE(rv))
-		return rv;
+		goto out;
 
-	obj = buf.Pointer;
+	osc = buf.Pointer;
 
-	if (obj->Type != ACPI_TYPE_BUFFER) {
+	if (osc->Type != ACPI_TYPE_BUFFER) {
 		rv = AE_TYPE;
 		goto out;
 	}
 
-	if (obj->Buffer.Length != cap->Buffer.Length) {
+	if (osc->Buffer.Length != sizeof(cap)) {
 		rv = AE_BUFFER_OVERFLOW;
 		goto out;
 	}
 
-	(void)memcpy(val, obj->Buffer.Pointer, obj->Buffer.Length);
+	ptr = (uint32_t *)osc->Buffer.Pointer;
+
+	if ((ptr[0] & ACPI_OSC_ERROR) != 0) {
+		rv = AE_ERROR;
+		goto out;
+	}
+
+	if ((ptr[0] & (ACPI_OSC_ERROR_REV | ACPI_OSC_ERROR_UUID)) != 0) {
+		rv = AE_BAD_PARAMETER;
+		goto out;
+	}
+
+	/*
+	 * "It is strongly recommended that the OS evaluate
+	 *  _OSC with the Query Support Flag set until _OSC
+	 *  returns the Capabilities Masked bit clear, to
+	 *  negotiate the set of features to be granted to
+	 *  the OS for native support (ACPI 4.0, 6.2.10)."
+	 */
+	if ((ptr[0] & ACPI_OSC_ERROR_MASKED) != 0 && i >= 0) {
+
+		ACPI_FREE(buf.Pointer);
+		i--;
+
+		goto again;
+	}
+
+	if ((cap[0] & ACPI_OSC_QUERY) != 0) {
+
+		ACPI_FREE(buf.Pointer);
+		cap[0] &= ~ACPI_OSC_QUERY;
+
+		goto again;
+	}
+
+	/*
+	 * It is permitted for _OSC to return all
+	 * bits cleared, but this is specified to
+	 * vary on per-device basis. Assume that
+	 * everything rather than nothing will be
+	 * supported in thise case; we do not need
+	 * the firmware to know the CPU features.
+	 */
+	*val = (ptr[1] != 0) ? ptr[1] : cap[1];
 
 out:
 	if (buf.Pointer != NULL)
 		ACPI_FREE(buf.Pointer);
 
 	return rv;
-}
-
-static const char *
-acpicpu_cap_oscerr(uint32_t err)
-{
-
-	KASSERT((err & __BIT(0)) == 0);
-
-	if ((err & __BIT(1)) != 0)
-		return "_OSC failure";
-
-	if ((err & __BIT(2)) != 0)
-		return "unrecognized UUID";
-
-	if ((err & __BIT(3)) != 0)
-		return "unrecognized revision";
-
-	if ((err & __BIT(4)) != 0)
-		return "capabilities masked";
-
-	return "unknown error";
 }
 
 static void
