@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.153.2.54 2010/08/25 14:23:16 uebayasi Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.153.2.55 2010/08/27 09:40:52 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.153.2.54 2010/08/25 14:23:16 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.153.2.55 2010/08/27 09:40:52 uebayasi Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -1074,6 +1074,8 @@ vm_physseg_find_contig(struct vm_physseg **segs, int nsegs, int op,
 {
 
 	/* 'contig' case */
+	if (nsegs == 0)
+		return(-1);
 	if (vm_physseg_within_p(segs[0], op, pframe, pg, offp)) {
 		return(0);
 	}
