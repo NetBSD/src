@@ -1,4 +1,4 @@
-/*  $NetBSD: perfuse.c,v 1.1 2010/08/25 07:16:00 manu Exp $ */
+/*  $NetBSD: perfuse.c,v 1.2 2010/08/27 09:58:17 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010 Emmanuel Dreyfus. All rights reserved.
@@ -101,16 +101,21 @@ perfuse_open(path, flags, mode)
 	int flags;
 	mode_t mode;
 {
-	int s;
+	int sv[2];
 	struct sockaddr_un sun;
 	struct sockaddr *sa;
+	char progname[] = _PATH_PERFUSED;
+	char minus_i[] = "-i";
+	char fdstr[16];
+	char *const argv[] = { progname, minus_i, fdstr, NULL};
+	char *const envp[] = { NULL };
 
 	if (strcmp(path, _PATH_FUSE) != 0)
 		return open(path, flags, mode);
 
-	if ((s = socket(PF_LOCAL, SOCK_STREAM, 0)) == -1) {
+	if ((sv[0] = socket(PF_LOCAL, SOCK_STREAM, 0)) == -1) {
 #ifdef PERFUSE_DEBUG
-		printf("%s:%d socket failed: %s", 
+		printf("%s:%d socket failed: %s\n", 
 		       __func__, __LINE__, strerror(errno));
 #endif
 		return -1;
@@ -121,16 +126,49 @@ perfuse_open(path, flags, mode)
 	sun.sun_family = AF_LOCAL;
 	(void)strcpy(sun.sun_path, path);
 
-	if (connect(s, sa, (socklen_t)sun.sun_len) == -1) {
+	if (connect(sv[0], sa, (socklen_t)sun.sun_len) == 0) 
+		return sv[0];
+
+
+	/*
+	 * Attempt to run perfused on our own
+	 * if it does not run yet; In that case
+	 * we will talk using a socketpair 
+	 * instead of /dev/fuse.
+	 */
+	if (socketpair(PF_LOCAL, SOCK_STREAM, 0, sv) != 0) {
 #ifdef PERFUSE_DEBUG
-		printf("%s:%d connect failed: %s", 
+		printf("%s:%d: socketpair failed: %s\n",
 		       __func__, __LINE__, strerror(errno));
 #endif
-		close(s);
 		return -1;
 	}
 
-	return s;
+	(void)sprintf(fdstr, "%d", sv[1]);
+
+	switch(fork()) {
+	case -1:
+#ifdef PERFUSE_DEBUG
+		printf("%s:%d: fork failed: %s\n",
+		       __func__, __LINE__, strerror(errno));
+#endif
+		return -1;
+		/* NOTREACHED */
+		break;
+	case 0:
+		(void)execve(argv[0], argv, envp);
+#ifdef PERFUSE_DEBUG
+		printf("%s:%d: execve failed: %s\n",
+		       __func__, __LINE__, strerror(errno));
+#endif
+		return -1;
+		/* NOTREACHED */
+		break;
+	default:
+		break;
+	}
+	
+	return sv[0];
 }
 
 
@@ -188,7 +226,7 @@ perfuse_mount(source, target, filesystemtype, mountflags, data)
 
 	if (write(s, &pmo, sizeof(pmo)) != sizeof(pmo)) {
 #ifdef PERFUSE_DEBUG
-		printf("%s:%d short write", __func__, __LINE__);
+		printf("%s:%d short write\n", __func__, __LINE__);
 #endif
 		return -1;
 	}
@@ -197,7 +235,7 @@ perfuse_mount(source, target, filesystemtype, mountflags, data)
 		len = pmo.pmo_source_len;
 		if (write(s, source, len) != (ssize_t)len) {
 #ifdef PERFUSE_DEBUG
-			printf("%s:%d short write", __func__, __LINE__);
+			printf("%s:%d short write\n", __func__, __LINE__);
 #endif
 			return -1;
 		}
@@ -207,7 +245,7 @@ perfuse_mount(source, target, filesystemtype, mountflags, data)
 		len = pmo.pmo_target_len;
 		if (write(s, target, len) != (ssize_t)len) {
 #ifdef PERFUSE_DEBUG
-			printf("%s:%d short write", __func__, __LINE__);
+			printf("%s:%d short write\n", __func__, __LINE__);
 #endif
 			return -1;
 		}
@@ -217,7 +255,7 @@ perfuse_mount(source, target, filesystemtype, mountflags, data)
 		len = pmo.pmo_filesystemtype_len;
 		if (write(s, filesystemtype, len) != (ssize_t)len) {
 #ifdef PERFUSE_DEBUG
-			printf("%s:%d short write", __func__, __LINE__);
+			printf("%s:%d short write\n", __func__, __LINE__);
 #endif
 			return -1;
 		}
@@ -227,7 +265,7 @@ perfuse_mount(source, target, filesystemtype, mountflags, data)
 		len = pmo.pmo_data_len;
 		if (write(s, data, len) != (ssize_t)len) {
 #ifdef PERFUSE_DEBUG
-			printf("%s:%d short write", __func__, __LINE__);
+			printf("%s:%d short write\n", __func__, __LINE__);
 #endif
 			return -1;
 		}
@@ -262,7 +300,7 @@ perfuse_init(pc, pmi)
 	struct puffs_pathobj *po_root;
 
 	ps = init_state();
-	ps->ps_uid = pmi->pmi_uid;
+	ps->ps_owner_uid = pmi->pmi_uid;
 
 	if (pmi->pmi_source)
 		ps->ps_source = strdup(pmi->pmi_source);
@@ -274,7 +312,7 @@ perfuse_init(pc, pmi)
 	/*
 	 * Some options are forbidden for non root users
 	 */
-	if (ps->ps_uid != 0)
+	if (ps->ps_owner_uid != 0)
 	    ps->ps_mountflags |= MNT_NOSUID|MNT_NODEV;
 
 	PUFFSOP_INIT(pops);
@@ -413,4 +451,15 @@ perfuse_get_ino(pu, opc)
 	puffs_cookie_t opc;
 {
 	return PERFUSE_NODE_DATA(opc)->pnd_ino;
+}
+
+int
+perfuse_unmount(pu)
+	struct puffs_usermount *pu;
+{
+	struct perfuse_state *ps;
+
+	ps = puffs_getspecific(pu);
+
+	return unmount(ps->ps_target, MNT_FORCE);
 }

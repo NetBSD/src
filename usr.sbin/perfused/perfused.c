@@ -1,4 +1,4 @@
-/*  $NetBSD: perfused.c,v 1.2 2010/08/26 13:29:02 manu Exp $ */
+/*  $NetBSD: perfused.c,v 1.3 2010/08/27 09:58:17 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010 Emmanuel Dreyfus. All rights reserved.
@@ -52,10 +52,10 @@
 
 static int getpeerid(int, pid_t *, uid_t *, gid_t *);
 static int access_mount(const char *, uid_t, int);
-static int accept_new_mount(int);
+static void new_mount(int);
 static int parse_debug(char *);
 static void siginfo_handler(int);
-static void parse_options(int, char **);
+static int parse_options(int, char **);
 static void get_mount_info(int, struct perfuse_mount_info *);
 int main(int, char **);
 
@@ -171,32 +171,17 @@ get_mount_info(fd, pmi)
 	return;
 }
 
-static int
-accept_new_mount(s)
-	int s;
+static void
+new_mount(fd)
+	int fd;
 {
 	struct puffs_usermount *pu;
-	struct sockaddr_storage ss;
-	socklen_t ss_len;
-	struct sockaddr *sa;
 	struct perfuse_mount_info pmi;
 	struct perfuse_callbacks pc;
 	int ro_flag;
 	pid_t pid;
-	int fd;
 	int flags;
 
-#ifdef PERFUSE_DEBUG
-	DPRINTF("waiting connexion\n");
-#endif
-	sa = (struct sockaddr *)(void *)&ss;
-	ss_len = sizeof(ss);
-	if ((fd = accept(s, sa, &ss_len)) == -1)
-		DERR(EX_OSERR,  "accept failed");
-
-#ifdef PERFUSE_DEBUG
-	DPRINTF("connexion accepted\n");
-#endif
 
 	pid = (perfuse_diagflags & PDF_FOREGROUND) ? 0 : fork();
 	switch(pid) {
@@ -206,7 +191,7 @@ accept_new_mount(s)
 	case 0:
 		break;
 	default:
-		return fd;
+		return;
 		/* NOTREACHED */
 		break;
 	}
@@ -245,7 +230,7 @@ accept_new_mount(s)
 	pu = perfuse_init(&pc, &pmi);
 	
 	puffs_framev_init(pu, perfuse_readframe, perfuse_writeframe, 
-			  perfuse_cmpframe, perfuse_gotframe, NULL);
+			  perfuse_cmpframe, perfuse_gotframe, perfuse_fdnotify);
 
 	if (puffs_framev_addfd(pu, fd, PUFFS_FBIO_READ|PUFFS_FBIO_WRITE) == -1)
 		DERR(EX_SOFTWARE, "puffs_framev_addfd failed");
@@ -269,7 +254,12 @@ accept_new_mount(s)
 	/*
 	 * Hand over control to puffs main loop.
 	 */
-	return perfuse_mainloop(pu);
+	(void)perfuse_mainloop(pu);
+
+	DERRX(EX_SOFTWARE, "perfuse_mainloop exit");
+
+	/* NOTREACHED */
+	return;
 }
 
 static int 
@@ -325,17 +315,18 @@ siginfo_handler(sig)
 	return;
 }
 
-static void
+static int
 parse_options(argc, argv)
 	int argc;
 	char **argv;
 {
 	int ch;
 	int foreground = 0;
+	int retval = -1;
 
 	perfuse_diagflags = PDF_FOREGROUND | PDF_SYSLOG;
 
-	while ((ch = getopt(argc, argv, "d:fs")) != -1) {
+	while ((ch = getopt(argc, argv, "d:fsi:")) != -1) {
 		switch (ch) {
 		case 'd':
 			perfuse_diagflags |= parse_debug(optarg);
@@ -347,8 +338,12 @@ parse_options(argc, argv)
 		case 'f':
 			foreground = 1;
 			break;
+		case 'i':
+			retval = atoi(optarg);
+			foreground = 1;
+			break;
 		default:
-			DERR(EX_USAGE, "%s [-d level] [-s] [-f]", argv[0]);
+			DERR(EX_USAGE, "%s [-d level] [-s] [-f] [-i fd]", argv[0]);
 			break;
 		}
 	}
@@ -356,7 +351,7 @@ parse_options(argc, argv)
 	if (!foreground)
 		perfuse_diagflags &= ~PDF_FOREGROUND;
 
-	return; 
+	return retval; 
 }
 
 int
@@ -366,7 +361,7 @@ main(argc, argv)
 {
 	int s;
 
-	parse_options(argc, argv);
+	s = parse_options(argc, argv);
 
 	if (perfuse_diagflags & PDF_SYSLOG)
 		openlog("perfused", 0, LOG_DAEMON);
@@ -375,10 +370,32 @@ main(argc, argv)
 		if (daemon(0, 0) != 0)
 			DERR(EX_OSERR, "daemon failed");
 
+	if (s != -1) {
+		new_mount(s);
+		DERRX(EX_SOFTWARE, "new_mount exit while -i is used");
+	}
+
 	s = perfuse_open_sock();
 	
 	do {
-		(void)accept_new_mount(s);
+		struct sockaddr *sa;
+		struct sockaddr_storage ss;
+		socklen_t ss_len;
+		int fd;
+
+#ifdef PERFUSE_DEBUG
+		if (perfuse_diagflags & PDF_MISC)
+			DPRINTF("waiting connexion\n");
+#endif
+		sa = (struct sockaddr *)(void *)&ss;
+		ss_len = sizeof(ss);
+		if ((fd = accept(s, sa, &ss_len)) == -1)
+			DERR(EX_OSERR,  "accept failed");
+#ifdef PERFUSE_DEBUG
+		if (perfuse_diagflags & PDF_MISC)
+			DPRINTF("connexion accepted\n");
+#endif
+		new_mount(fd);
 	} while (1 /* CONSTCOND */);
 		
 	/* NOTREACHED */

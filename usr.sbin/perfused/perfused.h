@@ -1,4 +1,4 @@
-/*  $NetBSD: perfused.h,v 1.1 2010/08/25 07:18:01 manu Exp $ */
+/*  $NetBSD: perfused.h,v 1.2 2010/08/27 09:58:17 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010 Emmanuel Dreyfus. All rights reserved.
@@ -52,6 +52,7 @@ int perfuse_writeframe(struct puffs_usermount *,
 int perfuse_cmpframe(struct puffs_usermount *, 
      struct puffs_framebuf *, struct puffs_framebuf *, int *);
 void perfuse_gotframe(struct puffs_usermount *, struct puffs_framebuf *);
+void perfuse_fdnotify(struct puffs_usermount *, int, int);
 
 struct fuse_out_header *perfuse_get_outhdr(perfuse_msg_t *);
 struct fuse_in_header *perfuse_get_inhdr(perfuse_msg_t *);

@@ -1,4 +1,4 @@
-/*  $NetBSD: ops.c,v 1.2 2010/08/26 13:29:01 manu Exp $ */
+/*  $NetBSD: ops.c,v 1.3 2010/08/27 09:58:17 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010 Emmanuel Dreyfus. All rights reserved.
@@ -667,7 +667,7 @@ perfuse_fs_statvfs(pu, svfsb)
 	svfsb->f_fsidx.__fsid_val[1] = 0;
 	svfsb->f_fsid = ps->ps_fsid;
 	svfsb->f_namemax = MAXPATHLEN;	/* XXX */
-	svfsb->f_owner = ps->ps_uid;
+	svfsb->f_owner = ps->ps_owner_uid;
 
 	(void)strlcpy(svfsb->f_mntonname, ps->ps_target, _VFS_NAMELEN);
 
@@ -1206,7 +1206,8 @@ perfuse_node_setattr(pu, opc, vap, pcr)
 	if (PERFUSE_NODE_DATA(opc)->pnd_flags & PND_OPEN) {
 		fh = perfuse_get_fh(opc);
 		fsi->fh = fh;
-		fsi->valid |= FUSE_FATTR_FH;
+		if (fh != FUSE_UNKNOWN_FH)
+			fsi->valid |= FUSE_FATTR_FH;
 	}
 
 	if (vap->va_size != (u_quad_t)PUFFS_VNOVAL) {
