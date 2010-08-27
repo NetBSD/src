@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.170 2010/05/22 06:38:15 tnozaki Exp $
+#	$NetBSD: Makefile.inc,v 1.171 2010/08/27 08:38:41 christos Exp $
 #	from: @(#)Makefile.inc	8.6 (Berkeley) 5/4/95
 
 # gen sources
@@ -130,7 +130,7 @@ MLINKS+=glob.3 glob_pattern_p.3
 MLINKS+=humanize_number.3 dehumanize_number.3
 MLINKS+=makecontext.3 swapcontext.3
 MLINKS+=popen.3 pclose.3
-MLINKS+=psignal.3 sys_siglist.3 psignal.3 sys_signame.3
+MLINKS+=psignal.3 sys_siglist.3 psignal.3 sys_signame.3 psignal.3 psiginfo.3
 MLINKS+=pwcache.3 user_from_uid.3 pwcache.3 group_from_gid.3
 MLINKS+=pwcache.3 uid_from_user.3 pwcache.3 gid_from_group.3
 MLINKS+=pwcache.3 pwcache_userdb.3 pwcache.3 pwcache_groupdb.3
