@@ -1,4 +1,4 @@
-/* $NetBSD: nlist_elf32.c,v 1.31 2009/08/21 08:42:02 he Exp $ */
+/* $NetBSD: nlist_elf32.c,v 1.32 2010/08/28 21:30:02 joerg Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: nlist_elf32.c,v 1.31 2009/08/21 08:42:02 he Exp $");
+__RCSID("$NetBSD: nlist_elf32.c,v 1.32 2010/08/28 21:30:02 joerg Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 /* If not included by nlist_elf64.c, ELFSIZE won't be defined. */
@@ -89,7 +89,7 @@ ELFNAMEEND(__fdnlist)(fd, list)
 #if (ELFSIZE == 32)
 	Elf32_Half nshdr;
 #elif (ELFSIZE == 64)
-	Elf64_Half nshdr;
+	Elf64_Word nshdr;
 #endif
 	size_t i, nsyms;
 	int rv, nent;
