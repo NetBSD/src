@@ -1,4 +1,4 @@
-/*	$NetBSD: networking.c,v 1.2 2010/08/28 15:39:25 kardel Exp $	*/
+/*	$NetBSD: networking.c,v 1.3 2010/08/28 20:54:24 kardel Exp $	*/
 
 #include "networking.h"
 
@@ -280,7 +280,7 @@ recv_bcst_data (
 	FD_SET(rsock, &bcst_fd);
 
 	if(ENABLED_OPT(TIMEOUT)) 
-		timeout_tv.tv_sec = (int) OPT_ARG(TIMEOUT);
+		timeout_tv.tv_sec = atol(OPT_ARG(TIMEOUT));
 	else 
 		timeout_tv.tv_sec = 68; /* ntpd broadcasts every 64s */
 	
