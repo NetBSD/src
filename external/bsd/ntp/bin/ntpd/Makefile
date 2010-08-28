@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2010/08/28 15:42:46 kardel Exp $
+#	$NetBSD: Makefile,v 1.3 2010/08/28 20:51:08 kardel Exp $
 
 NOGCCERROR=yes
 
@@ -89,3 +89,7 @@ ntpd.8: ntpd.1
 	@cp $? $@
 
 .include <bsd.prog.mk>
+
+# kill default .y.c rule - to rebuild ntp_parser.c we need bison which is not part of the toolchain
+.y.c:
+
