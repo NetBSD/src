@@ -1,4 +1,4 @@
-#	$NetBSD: files.omap2,v 1.4 2010/07/07 22:53:44 macallan Exp $
+#	$NetBSD: files.omap2,v 1.5 2010/08/28 13:02:32 ahoka Exp $
 #
 # Configuration info for Texas Instruments OMAP2/OMAP3 CPU support
 # Based on xscale/files.pxa2x0
@@ -78,6 +78,11 @@ device gpmc { [addr=-1], [size=0], [intr=-1], [mult=1], [nobyteacc=0]
 	     } : bus_space_generic
 attach gpmc at mainbus
 file	arch/arm/omap/omap2_gpmc.c		gpmc
+
+# PRCM interface
+device	prcm
+attach	prcm at obio
+file	arch/arm/omap/omap2_prcm.c		prcm needs-flag
 
 # OHCI USB controller
 ##attach	ohci at obio with obioohci:		omapgpio
