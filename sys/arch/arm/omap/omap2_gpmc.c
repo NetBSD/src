@@ -1,7 +1,7 @@
-/*	$Id: omap2_gpmc.c,v 1.6 2010/07/07 21:10:39 ahoka Exp $	*/
+/*	$Id: omap2_gpmc.c,v 1.7 2010/08/28 04:00:35 kiyohara Exp $	*/
 
 /* adapted from: */
-/*	$NetBSD: omap2_gpmc.c,v 1.6 2010/07/07 21:10:39 ahoka Exp $ */
+/*	$NetBSD: omap2_gpmc.c,v 1.7 2010/08/28 04:00:35 kiyohara Exp $ */
 
 
 /*
@@ -102,7 +102,7 @@
 
 #include "opt_omap.h"
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap2_gpmc.c,v 1.6 2010/07/07 21:10:39 ahoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap2_gpmc.c,v 1.7 2010/08/28 04:00:35 kiyohara Exp $");
 
 #include "locators.h"
 
@@ -200,7 +200,7 @@ gpmc_attach(device_t parent, device_t self, void *aux)
 	rev = bus_space_read_4(sc->sc_iot, ioh, GPMC_REVISION);
 
 	aprint_normal(", rev %d.%d\n",
-		GPMC_REVISION_REV_MAJ(rev), 
+		GPMC_REVISION_REV_MAJ(rev),
 		GPMC_REVISION_REV_MIN(rev));
 
 	sc->sc_ioh = ioh;
@@ -222,7 +222,6 @@ gpmc_csconfig_init(struct gpmc_softc *sc)
 	gpmc_csconfig_t *cs;
 	uint32_t r;
 	int i;
-	
 
 	cs = &sc->sc_csconfig[0];
 	for (i=0; i < GPMC_NCS; i++) {
