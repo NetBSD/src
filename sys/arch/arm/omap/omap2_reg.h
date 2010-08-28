@@ -1,4 +1,4 @@
-/* $NetBSD: omap2_reg.h,v 1.2 2010/06/16 22:06:54 jmcneill Exp $ */
+/* $NetBSD: omap2_reg.h,v 1.3 2010/08/28 13:02:32 ahoka Exp $ */
 
 /*
  * Copyright (c) 2007 Microsoft
@@ -229,6 +229,51 @@
 		(OMAP2_CM_CLKSEL2_CORE_RESa \
 		|OMAP2_CM_CLKSEL2_CORE_RESb)
 
+
+/*
+ * Power Management registers base, offsets, and size
+ */
+#ifdef OMAP_3530
+#define	OMAP2_PRM_BASE			0x48306000
+#endif
+
+#define OMAP2_PRM_SIZE			0x00002000 /* 8k */
+
+/* module offsets */
+#define OCP_MOD		0x0800
+#define MPU_MOD		0x0900
+#define CORE_MOD	0x0a00
+#define GFX_MOD		0x0b00
+#define WKUP_MOD	0x0c00
+#define PLL_MOD		0x0d00
+
+/* module offsets specific to chip */
+#define OMAP24XX_GR_MOD		OCP_MOD
+#define OMAP24XX_DSP_MOD	0x1000
+#define OMAP2430_MDM_MOD	0x1400
+#define OMAP3430_IVA2_MOD	0x0000 /* IVA2 before base! */
+#define OMAP3430ES2_SGX_MOD	GFX_MOD
+#define OMAP3430_CCR_MOD	PLL_MOD
+#define OMAP3430_DSS_MOD	0x0e00
+#define OMAP3430_CAM_MOD	0x0f00
+#define OMAP3430_PER_MOD	0x1000
+#define OMAP3430_EMU_MOD	0x1100
+#define OMAP3430_GR_MOD		0x1200
+#define OMAP3430_NEON_MOD	0x1300
+#define OMAP3430ES2_USBHOST_MOD	0x1400
+
+#define OMAP2_RM_RSTCTRL	0x50
+#define OMAP2_RM_RSTTIME	0x54
+#define OMAP2_RM_RSTST		0x58
+#define OMAP2_PM_WKDEP		0xc8
+#define OMAP2_PM_PWSTCTRL	0xe0
+#define OMAP2_PM_PWSTST		0xe4
+#define OMAP2_PM_PREPWSTST	0xe8
+#define OMAP2_PRM_IRQSTATUS	0xf8
+#define OMAP2_PRM_IRQENABLE	0xfc
+
+#define OMAP_RST_DPLL3		__BIT(2)
+#define OMAP_RST_GS		__BIT(1)
 
 /*
  * L3 Interconnect Target Agent Common Registers
