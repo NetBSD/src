@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2009/12/13 17:13:48 kardel Exp $
+#	$NetBSD: Makefile,v 1.2 2010/08/28 15:42:46 kardel Exp $
 
 NOGCCERROR=yes
 
@@ -6,7 +6,7 @@ NOGCCERROR=yes
 
 
 PROG=	ntp-keygen
-MAN=
+MAN=	ntp-keygen.8
 BINDIR=	/usr/sbin
 
 SRCS=	ntp-keygen-opts.c	\
@@ -22,5 +22,8 @@ DIST=${IDIST}/util
 CPPFLAGS+=-I${IDIST}/include -I${IDIST}/libopts
 
 .PATH: ${DIST}
+
+ntp-keygen.8:	ntp-keygen.1
+	@cp $? $@
 
 .include <bsd.prog.mk>

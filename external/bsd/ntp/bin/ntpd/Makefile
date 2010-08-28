@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2009/12/13 17:13:48 kardel Exp $
+#	$NetBSD: Makefile,v 1.2 2010/08/28 15:42:46 kardel Exp $
 
 NOGCCERROR=yes
 
@@ -6,8 +6,7 @@ NOGCCERROR=yes
 
 
 PROG=	ntpd
-MAN=
-#MAN=	named.8 lwresd.8 named.conf.5
+MAN=	ntpd.8
 BINDIR=	/usr/sbin
 
 SRCS=	cmd_args.c				\
@@ -85,5 +84,8 @@ DIST=${IDIST}/ntpd
 CPPFLAGS+=-I${IDIST}/include -I${IDIST}/libopts
 
 .PATH: ${DIST}
+
+ntpd.8: ntpd.1
+	@cp $? $@
 
 .include <bsd.prog.mk>
