@@ -1,4 +1,4 @@
-/*	$NetBSD: t_full.c,v 1.2 2010/08/27 08:15:30 pooka Exp $	*/
+/*	$NetBSD: t_full.c,v 1.3 2010/08/28 10:56:11 wiz Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@ fillfs(const atf_tc_t *tc, const char *mp)
 	int fd, i = 0;
 
 	if (FSTYPE_PUFFS(tc)) {
-		atf_tc_skip("puffs does not support GOP_ALLOC");
+		atf_tc_skip("puffs does not support explicit block allocation (GOP_ALLOC)");
 	}
 
 	bonus = 0;
