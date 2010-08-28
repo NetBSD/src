@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.1 2009/12/13 17:13:48 kardel Exp $
+#	$NetBSD: Makefile,v 1.2 2010/08/28 15:42:45 kardel Exp $
 
 # NOGCCERROR=yes
 
 .include <bsd.own.mk>
 
 PROG=	ntpq
-MAN=
+MAN=	ntpq.8
 BINDIR=	/usr/sbin
 
 SRCS=	ntpq.c					\
@@ -22,5 +22,8 @@ DIST=${IDIST}/ntpq
 CPPFLAGS+=-I${IDIST}/include -I${IDIST}/libopts
 
 .PATH: ${DIST}
+
+ntpq.8:	ntpq.1
+	@cp $? $@
 
 .include <bsd.prog.mk>
