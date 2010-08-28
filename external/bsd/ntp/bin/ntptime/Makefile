@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2009/12/13 17:13:48 kardel Exp $
+#	$NetBSD: Makefile,v 1.2 2010/08/28 15:42:45 kardel Exp $
 
 NOGCCERROR=yes
 
@@ -6,7 +6,7 @@ NOGCCERROR=yes
 
 
 PROG=	ntptime
-MAN=
+MAN=	ntptime.8
 BINDIR=	/usr/sbin
 
 SRCS=	ntptime.c
