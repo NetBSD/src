@@ -1,4 +1,4 @@
-/*  $NetBSD: perfuse.c,v 1.2 2010/08/27 09:58:17 manu Exp $ */
+/*  $NetBSD: perfuse.c,v 1.3 2010/08/28 03:46:21 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010 Emmanuel Dreyfus. All rights reserved.
@@ -362,6 +362,7 @@ perfuse_init(pc, pmi)
 	 */
 	pn_root = perfuse_new_pn(pu, NULL);
 	PERFUSE_NODE_DATA(pn_root)->pnd_ino = FUSE_ROOT_ID; 
+	PERFUSE_NODE_DATA(pn_root)->pnd_parent = pn_root;
 	puffs_setroot(pu, pn_root);
 	ps->ps_fsid = pn_root->pn_va.va_fsid;
 	
