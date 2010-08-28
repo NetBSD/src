@@ -1,4 +1,4 @@
-/*	$NetBSD: xmd.c,v 1.1.2.3 2010/08/20 07:03:40 uebayasi Exp $	*/
+/*	$NetBSD: xmd.c,v 1.1.2.4 2010/08/28 16:27:02 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2010 Tsubai Masanari.  All rights reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xmd.c,v 1.1.2.3 2010/08/20 07:03:40 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xmd.c,v 1.1.2.4 2010/08/28 16:27:02 uebayasi Exp $");
 
 #include "opt_xip.h"
 #include "opt_xmd.h"
@@ -71,6 +71,7 @@ static int xmd_detach(device_t, int);
 static dev_type_open(xmd_open);
 static dev_type_close(xmd_close);
 static dev_type_ioctl(xmd_ioctl);
+static dev_type_read(xmd_read);
 static dev_type_mmap(xmd_mmap);
 static dev_type_strategy(xmd_strategy);
 static dev_type_size(xmd_size);
@@ -81,15 +82,13 @@ struct bdevsw xmd_bdevsw = {
 };
 
 struct cdevsw xmd_cdevsw = {
-	nullopen, nullclose, nullread, nowrite, xmd_ioctl,
+	xmd_open, xmd_close, xmd_read, nowrite, xmd_ioctl,
 	nostop, notty, nopoll, xmd_mmap, nokqfilter, D_DISK | D_MPSAFE
 };
 
 extern struct cfdriver xmd_cd;
 CFATTACH_DECL3_NEW(xmd, sizeof(struct xmd_softc),
     NULL, xmd_attach, xmd_detach, NULL, NULL, NULL, DVF_DETACH_SHUTDOWN);
-
-static struct dkdriver xmddkdriver = { xmd_strategy, NULL };
 
 const char md_root_image[XMD_ROOT_SIZE << DEV_BSHIFT] __aligned(PAGE_SIZE) =
     "|This is the root ramdisk!\n";
@@ -132,9 +131,7 @@ xmd_attach(device_t parent, device_t self, void *aux)
 	sc->sc_phys = xmd_machdep_physload(sc->sc_addr, sc->sc_size);
 #endif
 
-	bufq_alloc(&sc->sc_buflist, "fcfs", 0);
-
-	disk_init(&sc->sc_dkdev, device_xname(self), &xmddkdriver);
+	disk_init(&sc->sc_dkdev, device_xname(self), NULL);
 	disk_attach(&sc->sc_dkdev);
 
 	if (!pmf_device_register(self, NULL, NULL))
@@ -161,7 +158,11 @@ xmd_detach(device_t self, int flags)
 	pmf_device_deregister(self);
 	disk_detach(&sc->sc_dkdev);
 	disk_destroy(&sc->sc_dkdev);
-	bufq_free(sc->sc_buflist);
+
+#ifdef XIP
+	xmd_machdep_physunload(sc->sc_phys);
+#endif
+
 	return 0;
 }
 
@@ -234,6 +235,19 @@ xmd_ioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	}
 
 	return error;
+}
+
+static int
+xmd_read(dev_t dev, struct uio *uio, int flags)
+{
+	struct xmd_softc *sc;
+
+	sc = device_lookup_private(&xmd_cd, DISKUNIT(dev));
+
+	if (sc == NULL)
+		return ENXIO;
+
+	return physio(xmd_strategy, NULL, dev, B_READ, minphys, uio);
 }
 
 paddr_t
