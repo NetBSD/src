@@ -1,4 +1,4 @@
-/*	$NetBSD: eln.c,v 1.7 2010/04/15 00:52:48 christos Exp $	*/
+/*	$NetBSD: eln.c,v 1.8 2010/08/28 15:44:59 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: eln.c,v 1.7 2010/04/15 00:52:48 christos Exp $");
+__RCSID("$NetBSD: eln.c,v 1.8 2010/08/28 15:44:59 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include "histedit.h"
@@ -115,6 +115,13 @@ el_set(EditLine *el, int op, ...)
 	case EL_RPROMPT: {
 		el_pfunc_t p = va_arg(ap, el_pfunc_t);
 		ret = prompt_set(el, p, 0, op, 0);
+		break;
+	}
+
+	case EL_RESIZE: {
+		el_zfunc_t p = va_arg(ap, el_zfunc_t);
+		void *arg = va_arg(ap, void *);
+		ret = ch_resizefun(el, p, arg);
 		break;
 	}
 
