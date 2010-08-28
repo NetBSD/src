@@ -1,4 +1,4 @@
-/*	$NetBSD: gumstix_machdep.c,v 1.29 2010/08/08 09:00:15 kiyohara Exp $ */
+/*	$NetBSD: gumstix_machdep.c,v 1.30 2010/08/28 04:46:24 kiyohara Exp $ */
 /*
  * Copyright (C) 2005, 2006, 2007  WIDE Project and SOUM Corporation.
  * All rights reserved.
@@ -139,6 +139,7 @@
 
 #include "opt_evbarm_boardtype.h"
 #include "opt_cputypes.h"
+#include "opt_omap.h"
 #include "opt_gumstix.h"
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -168,6 +169,7 @@
 #include <machine/frame.h>
 
 #include <arm/arm32/machdep.h>
+#include <arm/omap/omap2_gpmcreg.h>
 #include <arm/omap/omap2_reg.h>
 #include <arm/omap/omap_var.h>
 #include <arm/omap/omap_com.h>
@@ -457,6 +459,13 @@ static const struct pmap_devmap gumstix_devmap[] = {
 		OVERO_L4_PERIPHERAL_VBASE,
 		_A(OMAP3530_L4_PERIPHERAL_BASE),
 		_S(OMAP3530_L4_PERIPHERAL_SIZE),
+		VM_PROT_READ | VM_PROT_WRITE,
+		PTE_NOCACHE
+	},
+	{
+		OVERO_GPMC_VBASE,
+		_A(GPMC_BASE),
+		_S(GPMC_SIZE),
 		VM_PROT_READ | VM_PROT_WRITE,
 		PTE_NOCACHE
 	},
@@ -1035,6 +1044,10 @@ read_system_serial(void)
 #ifdef GUMSTIX_NETBSD_ARGS_BUSHEADER
 static const char busheader_name[] = "busheader=";
 #endif
+#if defined(GUMSTIX_NETBSD_ARGS_BUSHEADER) || \
+    defined(GUMSTIX_NETBSD_ARGS_EXPANSION)
+static const char expansion_name[] = "expansion=";
+#endif
 #ifdef GUMSTIX_NETBSD_ARGS_CONSOLE
 static const char console_name[] = "console=";
 #endif
@@ -1048,8 +1061,17 @@ process_kernel_args(int argc, char *argv[])
 	for (i = 1, j = 0; i < argc; i++) {
 #ifdef GUMSTIX_NETBSD_ARGS_BUSHEADER
 		if (!strncmp(argv[i], busheader_name, strlen(busheader_name))) {
-			/* configure for GPIOs of busheader side */
+			/* Configure for GPIOs of busheader side */
 			gxio_config_expansion(argv[i] + strlen(busheader_name));
+			gxio_configured = 1;
+			continue;
+		}
+#endif
+#if defined(GUMSTIX_NETBSD_ARGS_BUSHEADER) || \
+    defined(GUMSTIX_NETBSD_ARGS_EXPANSION)
+		if (!strncmp(argv[i], expansion_name, strlen(expansion_name))) {
+			/* Configure expansion */
+			gxio_config_expansion(argv[i] + strlen(expansion_name));
 			gxio_configured = 1;
 			continue;
 		}
@@ -1081,25 +1103,36 @@ process_kernel_args(int argc, char *argv[])
 static void
 process_kernel_args_liner(char *args)
 {
+	int i = 0;
 	char *p = NULL;
 
 	boothowto = 0;
 
 	strncpy(bootargs, args, sizeof(bootargs));
-#ifdef GUMSTIX_NETBSD_ARGS_BUSHEADER
-	p = strstr(bootargs, busheader_name);
-	if (p) {
-		int i = 0;
-		char expansion[256], c;
+#if defined(GUMSTIX_NETBSD_ARGS_BUSHEADER) || \
+    defined(GUMSTIX_NETBSD_ARGS_EXPANSION)
+	{
+		char *q;
 
-		do {
-			c = *(p + strlen(busheader_name) + i);
-			if (c == ' ')
-				c = '\0';
-			expansion[i++] = c;
-		} while (c != '\0' && i < sizeof(expansion));
-		gxio_config_expansion(expansion);
-		strcpy(p, p + i);
+		if ((p = strstr(bootargs, expansion_name)))
+			q = p + strlen(expansion_name);
+#ifdef GUMSTIX_NETBSD_ARGS_BUSHEADER
+		else if (p = strstr(bootargs, busheader_name))
+			q = p + strlen(busheader_name);
+#endif
+		if (p) {
+			char expansion[256], c;
+
+			i = 0;
+			do {
+				c = *(q + i);
+				if (c == ' ')
+					c = '\0';
+				expansion[i++] = c;
+			} while (c != '\0' && i < sizeof(expansion));
+			gxio_config_expansion(expansion);
+			strcpy(p, q + i);
+		}
 	}
 #endif
 	if (p == NULL)
@@ -1107,9 +1140,9 @@ process_kernel_args_liner(char *args)
 #ifdef GUMSTIX_NETBSD_ARGS_CONSOLE
 	p = strstr(bootargs, console_name);
 	if (p != NULL) {
-		int i = 0;
 		char c;
 
+		i = 0;
 		do {
 			c = *(p + strlen(console_name) + i);
 			if (c == ' ')
@@ -1117,7 +1150,7 @@ process_kernel_args_liner(char *args)
 			console[i++] = c;
 		} while (c != '\0' && i < sizeof(console));
 		consinit();
-		strcpy(p, p + i);
+		strcpy(p, p + strlen(console_name) + i);
 	}
 #endif
 	boot_args = bootargs;
