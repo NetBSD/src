@@ -1,4 +1,4 @@
-/*	$NetBSD: beagle_machdep.c,v 1.9 2010/08/28 13:02:32 ahoka Exp $ */
+/*	$NetBSD: beagle_machdep.c,v 1.10 2010/08/28 13:42:12 ahoka Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.9 2010/08/28 13:02:32 ahoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.10 2010/08/28 13:42:12 ahoka Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -134,6 +134,7 @@ __KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.9 2010/08/28 13:02:32 ahoka Exp
 #include "opt_md.h"
 #include "opt_com.h"
 #include "opt_omap.h"
+#include "prcm.h"
 #include "md.h"
 
 #include <sys/param.h>
