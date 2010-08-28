@@ -1,4 +1,4 @@
-/*	$NetBSD: omap2_gpmcreg.h,v 1.3 2010/07/10 11:50:49 ahoka Exp $	*/
+/*	$NetBSD: omap2_gpmcreg.h,v 1.4 2010/08/28 04:03:51 kiyohara Exp $	*/
 /*
  * Copyright (c) 2007 Microsoft
  * All rights reserved.
@@ -198,6 +198,12 @@
 #define GPMC_CONFIG7_BASEADDRESS	__BITS(5,0)
 #define GPMC_CONFIG7_CSVALID		__BIT(6)
 #define GPMC_CONFIG7_MASKADDRESS	__BITS(11,8)
+#define GPMC_CONFIG7(m, b)		(((m) << 8) | (((b) >> 24) & 0x3f))
+#define GPMC_CONFIG7_MASK_256M		0x0
+#define GPMC_CONFIG7_MASK_128M		0x8
+#define GPMC_CONFIG7_MASK_64M		0xc
+#define GPMC_CONFIG7_MASK_32M		0xe
+#define GPMC_CONFIG7_MASK_16M		0xf
 
 static __inline ulong
 omap_gpmc_config7_addr(uint32_t r)
@@ -213,16 +219,16 @@ omap_gpmc_config7_size(uint32_t r)
 		uint  mask;
 		ulong size;
 	} gpmc_config7_size_tab[5] = {
-		{ 0x0, (256 << 20) },		/* 256 MB */
-		{ 0x8, (128 << 20) },		/* 128 MB */
-		{ 0xc, ( 64 << 20) },		/*  64 MB */
-		{ 0xe, ( 32 << 20) },		/*  32 MB */
-		{ 0xf, ( 16 << 20) },		/*  16 MB */
+		{ GPMC_CONFIG7_MASK_256M, (256 << 20) },
+		{ GPMC_CONFIG7_MASK_128M, (128 << 20) },
+		{ GPMC_CONFIG7_MASK_64M,  ( 64 << 20) },
+		{ GPMC_CONFIG7_MASK_32M,  ( 32 << 20) },
+		{ GPMC_CONFIG7_MASK_16M,  ( 16 << 20) },
 	};
 	mask = ((r) & GPMC_CONFIG7_MASKADDRESS) >> 8;
 	for (i=0; i < 5; i++) {
 		if (gpmc_config7_size_tab[i].mask == mask)
-		return gpmc_config7_size_tab[i].size;
+			return gpmc_config7_size_tab[i].size;
 	}
 	return 0;
 }
