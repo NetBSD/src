@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.167 2010/08/22 02:16:17 perry Exp $
+# $NetBSD: mi,v 1.168 2010/08/28 16:17:32 kardel Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -37,6 +37,32 @@
 ./usr/share/doc/html/bzip2/manual_4.html	misc-obsolete		obsolete
 ./usr/share/doc/html/bzip2/manual_toc.html	misc-obsolete		obsolete
 ./usr/share/doc/html/ntp			misc-ntp-htmldoc
+./usr/share/doc/html/ntp/bugs.html		misc-ntp-htmldoc	doc
+./usr/share/doc/html/ntp/build.html		misc-obsolete		obsolete
+./usr/share/doc/html/ntp/comdex.html		misc-ntp-htmldoc	doc
+./usr/share/doc/html/ntp/config.html		misc-ntp-htmldoc	doc
+./usr/share/doc/html/ntp/decode.html		misc-ntp-htmldoc	doc
+./usr/share/doc/html/ntp/drivers/mx4200data.html		misc-ntp-htmldoc	doc
+./usr/share/doc/html/ntp/hints.html		misc-ntp-htmldoc	doc
+./usr/share/doc/html/ntp/kernpps.html		misc-ntp-htmldoc	doc
+./usr/share/doc/html/ntp/quick.html		misc-ntp-htmldoc	doc
+./usr/share/doc/html/ntp/rate.html		misc-ntp-htmldoc	doc
+./usr/share/doc/html/ntp/scripts/accopt.txt	misc-ntp-htmldoc	doc
+./usr/share/doc/html/ntp/scripts/audio.txt	misc-ntp-htmldoc	doc
+./usr/share/doc/html/ntp/scripts/authopt.txt	misc-ntp-htmldoc	doc
+./usr/share/doc/html/ntp/scripts/clockopt.txt	misc-ntp-htmldoc	doc
+./usr/share/doc/html/ntp/scripts/command.txt	misc-ntp-htmldoc	doc
+./usr/share/doc/html/ntp/scripts/config.txt	misc-ntp-htmldoc	doc
+./usr/share/doc/html/ntp/scripts/confopt.txt	misc-ntp-htmldoc	doc
+./usr/share/doc/html/ntp/scripts/external.txt	misc-ntp-htmldoc	doc
+./usr/share/doc/html/ntp/scripts/install.txt	misc-ntp-htmldoc	doc
+./usr/share/doc/html/ntp/scripts/manual.txt	misc-ntp-htmldoc	doc
+./usr/share/doc/html/ntp/scripts/misc.txt	misc-ntp-htmldoc	doc
+./usr/share/doc/html/ntp/scripts/miscopt.txt	misc-ntp-htmldoc	doc
+./usr/share/doc/html/ntp/scripts/monopt.txt	misc-ntp-htmldoc	doc
+./usr/share/doc/html/ntp/scripts/refclock.txt	misc-ntp-htmldoc	doc
+./usr/share/doc/html/ntp/sitemap.html		misc-ntp-htmldoc	doc
+./usr/share/doc/html/ntp/xleave.html		misc-ntp-htmldoc	doc
 ./usr/share/doc/html/ntp/Oncore-SHMEM.htm	misc-obsolete		obsolete
 ./usr/share/doc/html/ntp/accopt.htm		misc-obsolete		obsolete
 ./usr/share/doc/html/ntp/accopt.html		misc-ntp-htmldoc	doc
@@ -48,22 +74,23 @@
 ./usr/share/doc/html/ntp/authopt.html		misc-ntp-htmldoc	doc
 ./usr/share/doc/html/ntp/biblio.htm		misc-obsolete		obsolete
 ./usr/share/doc/html/ntp/build.htm		misc-obsolete		obsolete
-./usr/share/doc/html/ntp/build			misc-ntp-htmldoc
-./usr/share/doc/html/ntp/build/build.html	misc-ntp-htmldoc	doc
-./usr/share/doc/html/ntp/build/config.html	misc-ntp-htmldoc	doc
-./usr/share/doc/html/ntp/build/hints.html	misc-ntp-htmldoc	doc
-./usr/share/doc/html/ntp/build/patches.html	misc-ntp-htmldoc	doc
-./usr/share/doc/html/ntp/build/porting.html	misc-ntp-htmldoc	doc
-./usr/share/doc/html/ntp/build/quick.html	misc-ntp-htmldoc	doc
-./usr/share/doc/html/ntp/build/scripts		misc-ntp-htmldoc
-./usr/share/doc/html/ntp/build/scripts/footer.txt	misc-ntp-htmldoc	doc
-./usr/share/doc/html/ntp/build/scripts/links10.txt	misc-ntp-htmldoc	doc
-./usr/share/doc/html/ntp/build/scripts/links11.txt	misc-ntp-htmldoc	doc
-./usr/share/doc/html/ntp/build/scripts/links12.txt	misc-ntp-htmldoc	doc
-./usr/share/doc/html/ntp/build/scripts/links7.txt	misc-ntp-htmldoc	doc
-./usr/share/doc/html/ntp/build/scripts/links8.txt	misc-ntp-htmldoc	doc
-./usr/share/doc/html/ntp/build/scripts/links9.txt	misc-ntp-htmldoc	doc
-./usr/share/doc/html/ntp/build/scripts/style.css	misc-ntp-htmldoc	doc
+./usr/share/doc/html/ntp/build.html		misc-obsolete		obsolete
+./usr/share/doc/html/ntp/build			misc-obsolete
+./usr/share/doc/html/ntp/build/build.html	misc-obsolete		obsolete
+./usr/share/doc/html/ntp/build/config.html	misc-obsolete		obsolete
+./usr/share/doc/html/ntp/build/hints.html	misc-obsolete		obsolete
+./usr/share/doc/html/ntp/build/patches.html	misc-obsolete		obsolete
+./usr/share/doc/html/ntp/build/porting.html	misc-obsolete		obsolete
+./usr/share/doc/html/ntp/build/quick.html	misc-obsolete		obsolete
+./usr/share/doc/html/ntp/build/scripts		misc-obsolete		obsolete
+./usr/share/doc/html/ntp/build/scripts/footer.txt	misc-obsolete		obsolete
+./usr/share/doc/html/ntp/build/scripts/links10.txt	misc-obsolete		obsolete
+./usr/share/doc/html/ntp/build/scripts/links11.txt	misc-obsolete		obsolete
+./usr/share/doc/html/ntp/build/scripts/links12.txt	misc-obsolete		obsolete
+./usr/share/doc/html/ntp/build/scripts/links7.txt	misc-obsolete		obsolete
+./usr/share/doc/html/ntp/build/scripts/links8.txt	misc-obsolete		obsolete
+./usr/share/doc/html/ntp/build/scripts/links9.txt	misc-obsolete		obsolete
+./usr/share/doc/html/ntp/build/scripts/style.css	misc-obsolete		obsolete
 ./usr/share/doc/html/ntp/clockopt.htm		misc-obsolete		obsolete
 ./usr/share/doc/html/ntp/clockopt.html			misc-ntp-htmldoc	doc
 ./usr/share/doc/html/ntp/config.htm		misc-obsolete		obsolete
@@ -140,8 +167,8 @@
 ./usr/share/doc/html/ntp/drivers/driver8.html		misc-ntp-htmldoc	doc
 ./usr/share/doc/html/ntp/drivers/driver9.html		misc-ntp-htmldoc	doc
 ./usr/share/doc/html/ntp/drivers/icons			misc-ntp-htmldoc
-./usr/share/doc/html/ntp/drivers/icons/home.gif		misc-ntp-htmldoc	doc
-./usr/share/doc/html/ntp/drivers/icons/mail2.gif	misc-ntp-htmldoc	doc
+./usr/share/doc/html/ntp/drivers/icons/home.gif		misc-obsolete		obsolete
+./usr/share/doc/html/ntp/drivers/icons/mail2.gif	misc-obsolete		obsolete
 ./usr/share/doc/html/ntp/drivers/oncore-shmem.html	misc-ntp-htmldoc	doc
 ./usr/share/doc/html/ntp/drivers/scripts		misc-ntp-htmldoc
 ./usr/share/doc/html/ntp/drivers/scripts/footer.txt	misc-ntp-htmldoc	doc
@@ -152,7 +179,7 @@
 ./usr/share/doc/html/ntp/extern.html			misc-ntp-htmldoc	doc
 ./usr/share/doc/html/ntp/gadget.htm		misc-obsolete		obsolete
 ./usr/share/doc/html/ntp/gadget.html			misc-ntp-htmldoc	doc
-./usr/share/doc/html/ntp/groups.html			misc-ntp-htmldoc	doc
+./usr/share/doc/html/ntp/groups.html			misc-obsolete		obsolete
 ./usr/share/doc/html/ntp/hints.htm		misc-obsolete		obsolete
 ./usr/share/doc/html/ntp/hints/a-ux		misc-obsolete		obsolete
 ./usr/share/doc/html/ntp/hints/aix		misc-obsolete		obsolete
@@ -184,8 +211,8 @@
 ./usr/share/doc/html/ntp/howto.html			misc-ntp-htmldoc	doc
 ./usr/share/doc/html/ntp/htmlprimer.htm		misc-obsolete		obsolete
 ./usr/share/doc/html/ntp/icons			misc-ntp-htmldoc
-./usr/share/doc/html/ntp/icons/home.gif			misc-ntp-htmldoc	doc
-./usr/share/doc/html/ntp/icons/mail2.gif		misc-ntp-htmldoc	doc
+./usr/share/doc/html/ntp/icons/home.gif			misc-obsolete		obsolete
+./usr/share/doc/html/ntp/icons/mail2.gif		misc-obsolete		obsolete
 ./usr/share/doc/html/ntp/index.htm		misc-obsolete		obsolete
 ./usr/share/doc/html/ntp/index.html			misc-ntp-htmldoc	doc
 ./usr/share/doc/html/ntp/kern.htm		misc-obsolete		obsolete
@@ -193,19 +220,19 @@
 ./usr/share/doc/html/ntp/kernpps.htm		misc-obsolete		obsolete
 ./usr/share/doc/html/ntp/keygen.html			misc-ntp-htmldoc	doc
 ./usr/share/doc/html/ntp/ldisc.htm		misc-obsolete		obsolete
-./usr/share/doc/html/ntp/ldisc.html			misc-ntp-htmldoc	doc
+./usr/share/doc/html/ntp/ldisc.html			misc-obsolete		obsolete
 ./usr/share/doc/html/ntp/manyopt.html			misc-ntp-htmldoc	doc
 ./usr/share/doc/html/ntp/measure.htm		misc-obsolete		obsolete
-./usr/share/doc/html/ntp/measure.html			misc-ntp-htmldoc	doc
+./usr/share/doc/html/ntp/measure.html			misc-obsolete		obsolete
 ./usr/share/doc/html/ntp/miscopt.htm		misc-obsolete		obsolete
 ./usr/share/doc/html/ntp/miscopt.html			misc-ntp-htmldoc	doc
 ./usr/share/doc/html/ntp/monopt.htm		misc-obsolete		obsolete
 ./usr/share/doc/html/ntp/monopt.html			misc-ntp-htmldoc	doc
 ./usr/share/doc/html/ntp/msyslog.html			misc-ntp-htmldoc	doc
 ./usr/share/doc/html/ntp/mx4200data.htm		misc-obsolete		obsolete
-./usr/share/doc/html/ntp/mx4200data.html		misc-ntp-htmldoc	doc
+./usr/share/doc/html/ntp/mx4200data.html		misc-obsolete		obsolete
 ./usr/share/doc/html/ntp/notes.htm		misc-obsolete		obsolete
-./usr/share/doc/html/ntp/notes.html			misc-ntp-htmldoc	doc
+./usr/share/doc/html/ntp/notes.html			misc-obsolete		obsolete
 ./usr/share/doc/html/ntp/ntp_conf.html			misc-ntp-htmldoc	doc
 ./usr/share/doc/html/ntp/ntpd.htm		misc-obsolete		obsolete
 ./usr/share/doc/html/ntp/ntpd.html			misc-ntp-htmldoc	doc
@@ -241,12 +268,12 @@
 ./usr/share/doc/html/ntp/release.html			misc-ntp-htmldoc	doc
 ./usr/share/doc/html/ntp/scripts			misc-ntp-htmldoc
 ./usr/share/doc/html/ntp/scripts/footer.txt		misc-ntp-htmldoc	doc
-./usr/share/doc/html/ntp/scripts/links10.txt		misc-ntp-htmldoc	doc
-./usr/share/doc/html/ntp/scripts/links11.txt		misc-ntp-htmldoc	doc
-./usr/share/doc/html/ntp/scripts/links12.txt		misc-ntp-htmldoc	doc
-./usr/share/doc/html/ntp/scripts/links7.txt		misc-ntp-htmldoc	doc
-./usr/share/doc/html/ntp/scripts/links8.txt		misc-ntp-htmldoc	doc
-./usr/share/doc/html/ntp/scripts/links9.txt		misc-ntp-htmldoc	doc
+./usr/share/doc/html/ntp/scripts/links10.txt		misc-obsolete		obsolete
+./usr/share/doc/html/ntp/scripts/links11.txt		misc-obsolete		obsolete
+./usr/share/doc/html/ntp/scripts/links12.txt		misc-obsolete		obsolete
+./usr/share/doc/html/ntp/scripts/links7.txt		misc-obsolete		obsolete
+./usr/share/doc/html/ntp/scripts/links8.txt		misc-obsolete		obsolete
+./usr/share/doc/html/ntp/scripts/links9.txt		misc-obsolete		obsolete
 ./usr/share/doc/html/ntp/scripts/style.css		misc-ntp-htmldoc	doc
 ./usr/share/doc/html/ntp/sntp.html			misc-ntp-htmldoc	doc
 ./usr/share/doc/html/ntp/tickadj.htm		misc-obsolete		obsolete
