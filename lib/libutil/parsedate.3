@@ -1,4 +1,4 @@
-.\"     $NetBSD: parsedate.3,v 1.6 2010/05/04 06:41:27 jruoho Exp $
+.\"     $NetBSD: parsedate.3,v 1.7 2010/08/28 13:42:07 tron Exp $
 .\"
 .\" Copyright (c) 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd May 4, 2010
+.Dd Aug 28, 2010
 .Dt PARSEDATE 3
 .Os
 .Sh NAME
@@ -228,6 +228,12 @@ Relative items are also supported:
 .It next sunday
 .It +2 years
 .El
+.Pp
+Seconds since epoch (also known as UNIX time) are also supported:
+.Bl -tag -compact -width "@735275209"
+.It @735275209
+Tue Apr 20 03:06:49 UTC 1993
+.El
 .Sh RETURN VALUES
 .Fn parsedate
 returns the number of seconds passed since the Epoch, or
@@ -236,6 +242,8 @@ if the date could not be parsed properly.
 .Sh SEE ALSO
 .Xr date 1 ,
 .Xr eeprom 8
+.Sh BUGS
+The parsedate function is not re-entrant or thread-safe.
 .Sh HISTORY
 The parser used in
 .Fn parsedate
