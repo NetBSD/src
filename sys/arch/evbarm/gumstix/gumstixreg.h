@@ -1,4 +1,4 @@
-/*	$NetBSD: gumstixreg.h,v 1.5 2010/07/10 08:17:48 kiyohara Exp $  */
+/*	$NetBSD: gumstixreg.h,v 1.6 2010/08/28 04:46:24 kiyohara Exp $  */
 /*
  * Copyright (C) 2005, 2006 WIDE Project and SOUM Corporation.
  * All rights reserved.
@@ -48,6 +48,7 @@
 #define GUMSTIX_LCDC_VBASE		0xfd700000
 
 #define OVERO_L4_PERIPHERAL_VBASE	0x90000000
+#define OVERO_GPMC_VBASE		0x90100000
 
 
 #define ioreg_read(a)		(*(volatile unsigned *)(a))
