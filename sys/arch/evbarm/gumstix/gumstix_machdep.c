@@ -1,4 +1,4 @@
-/*	$NetBSD: gumstix_machdep.c,v 1.30 2010/08/28 04:46:24 kiyohara Exp $ */
+/*	$NetBSD: gumstix_machdep.c,v 1.31 2010/08/28 07:13:47 kiyohara Exp $ */
 /*
  * Copyright (C) 2005, 2006, 2007  WIDE Project and SOUM Corporation.
  * All rights reserved.
@@ -139,8 +139,10 @@
 
 #include "opt_evbarm_boardtype.h"
 #include "opt_cputypes.h"
-#include "opt_omap.h"
 #include "opt_gumstix.h"
+#ifdef OVERO
+#include "opt_omap.h"
+#endif
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
 #include "opt_pmap_debug.h"
@@ -1117,7 +1119,7 @@ process_kernel_args_liner(char *args)
 		if ((p = strstr(bootargs, expansion_name)))
 			q = p + strlen(expansion_name);
 #ifdef GUMSTIX_NETBSD_ARGS_BUSHEADER
-		else if (p = strstr(bootargs, busheader_name))
+		else if ((p = strstr(bootargs, busheader_name)))
 			q = p + strlen(busheader_name);
 #endif
 		if (p) {
