@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_scanner.c,v 1.1.1.1 2009/12/13 16:56:14 kardel Exp $	*/
+/*	$NetBSD: ntp_scanner.c,v 1.2 2010/08/28 20:52:55 kardel Exp $	*/
 
 
 /* ntp_scanner.c
@@ -353,7 +353,7 @@ is_special(
 	int ch
 	)
 {
-	return (int)strchr(special_chars, ch);
+	return strchr(special_chars, ch) != NULL;
 }
 
 
