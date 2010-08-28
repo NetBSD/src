@@ -1,4 +1,4 @@
-/*	$NetBSD: gxio.c,v 1.16 2010/08/28 04:39:42 kiyohara Exp $ */
+/*	$NetBSD: gxio.c,v 1.17 2010/08/28 07:06:29 kiyohara Exp $ */
 /*
  * Copyright (C) 2005, 2006, 2007 WIDE Project and SOUM Corporation.
  * All rights reserved.
@@ -31,11 +31,14 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gxio.c,v 1.16 2010/08/28 04:39:42 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gxio.c,v 1.17 2010/08/28 07:06:29 kiyohara Exp $");
 
 #include "opt_cputypes.h"
 #include "opt_gumstix.h"
 #include "opt_gxio.h"
+#if defined(OVERO)
+#include "opt_omap.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -48,7 +51,9 @@ __KERNEL_RCSID(0, "$NetBSD: gxio.c,v 1.16 2010/08/28 04:39:42 kiyohara Exp $");
 
 #include <arm/omap/omap2_gpmcreg.h>
 #include <arm/omap/omap2_reg.h>
+#if defined(OMAP3530)
 #include <arm/omap/omap2_intr.h>
+#endif
 #include <arm/omap/omap_var.h>
 #if defined(CPU_XSCALE_PXA270) || defined(CPU_XSCALE_PXA250)
 #include <arm/xscale/pxa2x0cpu.h>
