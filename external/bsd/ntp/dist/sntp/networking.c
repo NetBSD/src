@@ -1,4 +1,4 @@
-/*	$NetBSD: networking.c,v 1.1.1.1 2009/12/13 16:57:11 kardel Exp $	*/
+/*	$NetBSD: networking.c,v 1.2 2010/08/28 15:39:25 kardel Exp $	*/
 
 #include "networking.h"
 
@@ -62,6 +62,8 @@ resolve_hosts (
 			free(logmsg);
 		} else {
 #ifdef DEBUG
+			struct addrinfo *dres;
+
 			for (dres = tres[resc]; dres; dres = dres->ai_next) {
 				getnameinfo(dres->ai_addr, dres->ai_addrlen, adr_buf, sizeof(adr_buf), NULL, 0, NI_NUMERICHOST);
 				STDLINE
@@ -160,7 +162,7 @@ recvdata (
 		pkt_output((struct pkt *) rdata, recvc, stdout);
 	}
 	else {
-		saved_errno = errno;
+		int saved_errno = errno;
 		printf("recvfrom error %d (%s)\n", errno, strerror(errno));
 		errno = saved_errno;
 	}
