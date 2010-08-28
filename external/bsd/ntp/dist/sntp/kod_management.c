@@ -1,4 +1,4 @@
-/*	$NetBSD: kod_management.c,v 1.1.1.1 2009/12/13 16:57:10 kardel Exp $	*/
+/*	$NetBSD: kod_management.c,v 1.2 2010/08/28 15:38:55 kardel Exp $	*/
 
 #include <string.h>
 #include <sys/types.h>
@@ -8,7 +8,6 @@
 #include "log.h"
 #include "sntp-opts.h"
 #include "ntp_stdlib.h"
-#define DEBUG
 
 int kod_init = 0, kod_db_cnt = 0;
 const char *kod_db_file;
