@@ -1,5 +1,5 @@
 #
-#	$NetBSD: OVERO,v 1.4 2010/08/28 04:54:46 kiyohara Exp $
+#	$NetBSD: OVERO,v 1.5 2010/08/28 04:58:49 kiyohara Exp $
 #
 #	OVERO -- Gumstix. Inc. Overo platforms kernel
 #
@@ -204,9 +204,9 @@ omapmputmr2	at obio2 addr 0x49036000 intr 40	# GP Timer 4
 options OMAP_MPU_TIMER_CLOCK_FREQ=12000000
 
 # Watchdog timers
-#omapwdt32k*	at obio2 addr 0x49030000 size 2048	# WDT3
-#omapwdt32k*	at obio1 addr 0x4830c000 size 2048	# WDT1
-omapwdt32k*	at obio1 addr 0x48314000 size 2048	# WDT2
+#omapwdt32k*	at obio2 addr 0x49030000 size 0x0800	# WDT3
+#omapwdt32k*	at obio1 addr 0x4830c000 size 0x0800	# WDT1
+omapwdt32k*	at obio1 addr 0x48314000 size 0x0800	# WDT2
 
 # On-board USB
 #ehci*		at obio0 addr 0x48064800 size 0x0400 intr 77
