@@ -1,10 +1,11 @@
-#	$NetBSD: files.overo,v 1.2 2010/07/10 08:31:34 kiyohara Exp $
+#	$NetBSD: files.overo,v 1.3 2010/08/28 04:54:46 kiyohara Exp $
 #
 # Gumstix. Inc. Overo boards configuration info
 #
 
 file	arch/evbarm/gumstix/gumstix_machdep.c
 defflag opt_gumstix.h				OVERO 
+						GUMSTIX_NETBSD_ARGS_EXPANSION
 
 defparam opt_gxio.h				GXIO_DEFAULT_EXPANSION
 file	arch/evbarm/gumstix/gxio.c
@@ -15,3 +16,7 @@ include "arch/arm/omap/files.omap2"
 # NS16550 compatible serial ports
 attach com at obio with obiouart
 file	arch/arm/omap/obio_com.c		obiouart
+
+# SMSC LAN9118
+attach	smsh at gpmc with smsh_gpmc
+file	arch/evbarm/gumstix/if_smsh_gpmc.c	smsh_gpmc
