@@ -1,4 +1,4 @@
-/*	$NetBSD: chared.c,v 1.28 2009/12/30 22:37:40 christos Exp $	*/
+/*	$NetBSD: chared.c,v 1.29 2010/08/28 15:44:59 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)chared.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: chared.c,v 1.28 2009/12/30 22:37:40 christos Exp $");
+__RCSID("$NetBSD: chared.c,v 1.29 2010/08/28 15:44:59 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -489,6 +489,8 @@ ch_init(EditLine *el)
 	    sizeof(*el->el_chared.c_kill.buf));
 	el->el_chared.c_kill.mark	= el->el_line.buffer;
 	el->el_chared.c_kill.last	= el->el_chared.c_kill.buf;
+	el->el_chared.c_resizefun	= NULL;
+	el->el_chared.c_resizearg	= NULL;
 
 	el->el_map.current		= el->el_map.key;
 
@@ -629,6 +631,8 @@ ch_enlargebufs(EditLine *el, size_t addlen)
 
 	/* Safe to set enlarged buffer size */
 	el->el_line.limit  = &el->el_line.buffer[newsz - EL_LEAVE];
+	if (el->el_chared.c_resizefun)
+		(*el->el_chared.c_resizefun)(el, el->el_chared.c_resizearg);
 	return 1;
 }
 
@@ -781,4 +785,12 @@ c_hpos(EditLine *el)
 			continue;
 		return (int)(el->el_line.cursor - ptr - 1);
 	}
+}
+
+protected int
+ch_resizefun(EditLine *el, el_zfunc_t f, void *a)
+{
+	el->el_chared.c_resizefun = f;
+	el->el_chared.c_resizearg = a;
+	return 0;
 }

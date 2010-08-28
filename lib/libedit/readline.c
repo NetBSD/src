@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.c,v 1.90 2010/08/04 20:29:18 christos Exp $	*/
+/*	$NetBSD: readline.c,v 1.91 2010/08/28 15:44:59 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: readline.c,v 1.90 2010/08/04 20:29:18 christos Exp $");
+__RCSID("$NetBSD: readline.c,v 1.91 2010/08/28 15:44:59 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -220,6 +220,17 @@ _getc_function(EditLine *el, char *c)
 	return 1;
 }
 
+static void
+_resize_fun(EditLine *el, void *a)
+{
+	const LineInfo *li;
+	char **ap = a;
+
+	li = el_line(el);
+	/* a cheesy way to get rid of const cast. */
+	*ap = memchr(li->buffer, *li->buffer, 1);
+}
+
 static const char _dothistory[] = "/.history";
 
 static const char *
@@ -272,7 +283,6 @@ int
 rl_initialize(void)
 {
 	TYPE(HistEvent) ev;
-	const LineInfo *li;
 	int editmode = 1;
 	struct termios t;
 
@@ -305,6 +315,9 @@ rl_initialize(void)
 	history_length = 0;
 	max_input_history = INT_MAX;
 	el_set(e, EL_HIST, history, h);
+
+	/* Setup resize function */
+	el_set(e, EL_RESIZE, _resize_fun, &rl_line_buffer);
 
 	/* setup getc function if valid */
 	if (rl_getc_function)
@@ -351,9 +364,7 @@ rl_initialize(void)
 	 * Unfortunately, some applications really do use rl_point
 	 * and rl_line_buffer directly.
 	 */
-	li = el_line(e);
-	/* a cheesy way to get rid of const cast. */
-	rl_line_buffer = memchr(li->buffer, *li->buffer, 1);
+	_resize_fun(e, &rl_line_buffer);
 	_rl_update_pos();
 
 	if (rl_startup_hook)
