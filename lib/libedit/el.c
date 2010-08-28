@@ -1,4 +1,4 @@
-/*	$NetBSD: el.c,v 1.59 2010/04/15 00:56:40 christos Exp $	*/
+/*	$NetBSD: el.c,v 1.60 2010/08/28 15:44:59 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)el.c	8.2 (Berkeley) 1/3/94";
 #else
-__RCSID("$NetBSD: el.c,v 1.59 2010/04/15 00:56:40 christos Exp $");
+__RCSID("$NetBSD: el.c,v 1.60 2010/08/28 15:44:59 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -174,6 +174,13 @@ FUN(el,set)(EditLine *el, int op, ...)
 		el_pfunc_t p = va_arg(ap, el_pfunc_t);
 
 		rv = prompt_set(el, p, 0, op, 1);
+		break;
+	}
+
+	case EL_RESIZE: {
+		el_zfunc_t p = va_arg(ap, el_zfunc_t);
+		void *arg = va_arg(ap, void *);
+		rv = ch_resizefun(el, p, arg);
 		break;
 	}
 
