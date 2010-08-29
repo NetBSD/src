@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2010/08/29 10:13:07 kardel Exp $
+#	$NetBSD: Makefile,v 1.5 2010/08/29 11:15:32 kardel Exp $
 
 NOGCCERROR=yes
 
@@ -74,7 +74,7 @@ SRCS=	cmd_args.c				\
 	refclock_wwvb.c				\
 	refclock_zyfer.c
 
-LDADD+=		-L${LIBPARSE} -lparse -L${LIBISC} -liscntp -lm -lutil -ldns_sd
+LDADD+=		-L${LIBPARSE} -lparse -L${LIBISC} -liscntp -lm -lutil
 DPADD+=		${LIBPARSE}/libparse.a ${LIBISC}/libiscntp.a ${LIBOPTS}/libopts.a  ${LIBNTP}/libntp.a ${LIBM} ${LIBUTIL}
 
 .include "${.CURDIR}/../Makefile.inc"
@@ -85,6 +85,7 @@ CPPFLAGS+=-I${IDIST}/include -I${IDIST}/libopts
 
 .if ("${MKMDNS}" != "no")
 CPPFLAGS+=-DUSE_MDNS
+LDADD+=-ldns_sd
 .endif
 
 .PATH: ${DIST}
