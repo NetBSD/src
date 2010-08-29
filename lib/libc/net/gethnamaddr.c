@@ -1,4 +1,4 @@
-/*	$NetBSD: gethnamaddr.c,v 1.75 2009/10/02 07:41:08 wiz Exp $	*/
+/*	$NetBSD: gethnamaddr.c,v 1.76 2010/08/29 15:40:35 christos Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1988, 1993
@@ -57,7 +57,7 @@
 static char sccsid[] = "@(#)gethostnamadr.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "Id: gethnamaddr.c,v 8.21 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: gethnamaddr.c,v 1.75 2009/10/02 07:41:08 wiz Exp $");
+__RCSID("$NetBSD: gethnamaddr.c,v 1.76 2010/08/29 15:40:35 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -133,7 +133,7 @@ typedef union {
 } align;
 
 #ifdef DEBUG
-static void dprintf(const char *, res_state, ...)
+static void debugprintf(const char *, res_state, ...)
 	__attribute__((__format__(__printf__, 1, 3)));
 #endif
 static struct hostent *getanswer(const querybuf *, int, const char *, int,
@@ -174,7 +174,7 @@ static const ns_src default_dns_files[] = {
 
 #ifdef DEBUG
 static void
-dprintf(const char *msg, res_state res, ...)
+debugprintf(const char *msg, res_state res, ...)
 {
 	_DIAGASSERT(msg != NULL);
 
@@ -190,7 +190,7 @@ dprintf(const char *msg, res_state res, ...)
 	}
 }
 #else
-# define dprintf(msg, res, num) /*nada*/
+# define debugprintf(msg, res, num) /*nada*/
 #endif
 
 #define BOUNDED_INCR(x) \
@@ -450,13 +450,13 @@ getanswer(const querybuf *answer, int anslen, const char *qname, int qtype,
 			    (size_t)((u_long)bp % sizeof(align));
 
 			if (bp + n >= &hostbuf[sizeof hostbuf]) {
-				dprintf("size (%d) too big\n", res, n);
+				debugprintf("size (%d) too big\n", res, n);
 				had_error++;
 				continue;
 			}
 			if (hap >= &h_addr_ptrs[MAXADDRS-1]) {
 				if (!toobig++) {
-					dprintf("Too many addresses (%d)\n",
+					debugprintf("Too many addresses (%d)\n",
 						res, MAXADDRS);
 				}
 				cp += n;
@@ -1107,7 +1107,7 @@ _dns_gethtbyname(void *rv, void *cb_data, va_list ap)
 	n = res_nsearch(res, name, C_IN, type, buf->buf, sizeof(buf->buf));
 	if (n < 0) {
 		free(buf);
-		dprintf("res_nsearch failed (%d)\n", res, n);
+		debugprintf("res_nsearch failed (%d)\n", res, n);
 		__res_put_state(res);
 		return NS_NOTFOUND;
 	}
@@ -1188,7 +1188,7 @@ _dns_gethtbyaddr(void *rv, void	*cb_data, va_list ap)
 	n = res_nquery(res, qbuf, C_IN, T_PTR, buf->buf, sizeof(buf->buf));
 	if (n < 0) {
 		free(buf);
-		dprintf("res_nquery failed (%d)\n", res, n);
+		debugprintf("res_nquery failed (%d)\n", res, n);
 		__res_put_state(res);
 		return NS_NOTFOUND;
 	}
