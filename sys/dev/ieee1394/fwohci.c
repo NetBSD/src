@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci.c,v 1.128 2010/05/23 18:56:58 christos Exp $	*/
+/*	$NetBSD: fwohci.c,v 1.129 2010/08/29 21:15:26 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
@@ -37,7 +37,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.128 2010/05/23 18:56:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.129 2010/08/29 21:15:26 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -2104,7 +2104,7 @@ fwohci_intr_dma(struct fwohci_softc *sc, uint32_t stat)
 #endif
 			OWRITE(sc, FWOHCI_INTMASKCLR, OHCI_INT_CYC_LOST);
 			aprint_error_dev(fc->dev, "too many cycle lost, "
-			    "no cycle master presents?\n");
+			    "no cycle master present?\n");
 		}
 	}
 	if (stat & OHCI_INT_DMA_ATRQ)
