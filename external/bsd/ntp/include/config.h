@@ -333,7 +333,11 @@
 #define HAVE_DLFCN_H 1
 
 /* Use Rendezvous/DNS-SD registration */
+#ifdef USE_MDNS
 #define HAVE_DNSREGISTRATION 1
+#else
+#undef HAVE_DNSREGISTRATION
+#endif
 
 /* Define to 1 if you don't have `vprintf' but do have `_doprnt.' */
 /* #undef HAVE_DOPRNT */
