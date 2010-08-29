@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2010/08/29 11:15:32 kardel Exp $
+#	$NetBSD: Makefile,v 1.6 2010/08/29 18:55:50 kardel Exp $
 
 NOGCCERROR=yes
 
@@ -82,11 +82,6 @@ DPADD+=		${LIBPARSE}/libparse.a ${LIBISC}/libiscntp.a ${LIBOPTS}/libopts.a  ${LI
 DIST=${IDIST}/ntpd
 
 CPPFLAGS+=-I${IDIST}/include -I${IDIST}/libopts
-
-.if ("${MKMDNS}" != "no")
-CPPFLAGS+=-DUSE_MDNS
-LDADD+=-ldns_sd
-.endif
 
 .PATH: ${DIST}
 

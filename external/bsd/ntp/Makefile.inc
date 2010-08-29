@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.2 2009/12/14 02:09:39 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.3 2010/08/29 18:55:50 kardel Exp $
 
 .if !defined(NTP_MAKEFILE_INC)
 NTP_MAKEFILE_INC=yes
@@ -9,10 +9,6 @@ WARNS?=	0
 COPTS+=-Werror
 
 .include <bsd.own.mk>
-
-.if ${MKCRYPTO} == "no"
-NTP_USE_OPENSSL?=no
-.endif
 
 IDIST=		${NETBSDSRCDIR}/external/bsd/ntp/dist
 NTP_SRCDIR=	${NETBSDSRCDIR}/external/bsd/ntp
@@ -42,6 +38,11 @@ LDADD+=		-lcrypto -lcrypt
 DPADD+=		${LIBCRYPTO} ${LIBCRYPT}
 .endif
 
+.if ("${MKMDNS}" != "no")
+CPPFLAGS+=-DHAVE_DNSREGISTRATION=1
+LDADD+=-ldns_sd
+.endif
+
 SRCS+=	version.c
 
 CLEANFILES+=version.c version.o
@@ -50,6 +51,14 @@ version.c: ${LIBNTP}/libntp.a ${.CURDIR}/../../scripts/mkver ${.CURDIR}/../../im
 	${HOST_SH} ${.CURDIR}/../../scripts/mkver ${PROG} > /dev/null
 
 .endif # defined(PROG)
+
+.if (${MKCRYPTO} != "no")
+CPPFLAGS+=-DOPENSSL
+.endif
+
+.if ("${MKINET6}" != "no")
+CPPFLAGS+=-DWANT_IPV6 
+.endif
 
 .if exists(${.CURDIR}/../../Makefile.inc)
 .include "${.CURDIR}/../../Makefile.inc"
