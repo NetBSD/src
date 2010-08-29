@@ -332,12 +332,9 @@
 /* Define to 1 if you have the <dlfcn.h> header file. */
 #define HAVE_DLFCN_H 1
 
+/* NetBSD: set by build process */
 /* Use Rendezvous/DNS-SD registration */
-#ifdef USE_MDNS
-#define HAVE_DNSREGISTRATION 1
-#else
-#undef HAVE_DNSREGISTRATION
-#endif
+/* #define HAVE_DNSREGISTRATION 1 */
 
 /* Define to 1 if you don't have `vprintf' but do have `_doprnt.' */
 /* #undef HAVE_DOPRNT */
@@ -1063,7 +1060,7 @@
 #define ISC_PLATFORM_HAVEIN6PKTINFO /**/
 
 /* have IPv6? */
-#define ISC_PLATFORM_HAVEIPV6 /**/
+#define ISC_PLATFORM_HAVEIPV6
 
 /* struct sockaddr has sa_len? */
 #define ISC_PLATFORM_HAVESALEN /**/
@@ -1156,7 +1153,7 @@
 /* #undef NO_PARENB_IGNPAR */
 
 /* Default location of crypto key info */
-#define NTP_KEYSDIR "/tmp/ntp-4.2.6/etc"
+#define NTP_KEYSDIR "/etc/ntp"
 
 /* Path to sign daemon rendezvous socket */
 /* #undef NTP_SIGND_PATH */
@@ -1170,8 +1167,9 @@
 /* Do we have support for SHMEM_STATUS? */
 #define ONCORE_SHMEM_STATUS 1
 
+/* NetBSD: set by build process */
 /* Use OpenSSL? */
-#define OPENSSL /**/
+/* #define OPENSSL */
 
 /* Should we open the broadcast socket? */
 #define OPEN_BCAST_SOCKET 1
@@ -1244,13 +1242,21 @@
 /* #undef SCO5_CLOCK */
 
 /* The size of `char*', as computed by sizeof. */
+#ifndef _LP64
 #define SIZEOF_CHARP 4
+#else
+#define SIZEOF_CHARP 8
+#endif
 
 /* The size of `int', as computed by sizeof. */
 #define SIZEOF_INT 4
 
 /* The size of `long', as computed by sizeof. */
+#ifndef _LP64
 #define SIZEOF_LONG 4
+#else
+#define SIZEOF_LONG 8
+#endif
 
 /* The size of `short', as computed by sizeof. */
 #define SIZEOF_SHORT 2
@@ -1277,7 +1283,7 @@
 /* #undef STEP_SLEW */
 
 /* canonical system (cpu-vendor-os) of where we should run */
-#define STR_SYSTEM "i386-unknown-netbsdelf5.99.20"
+#define STR_SYSTEM "i386-unknown-netbsdelf"
 
 /* Buggy syscall() (Solaris2.4)? */
 /* #undef SYSCALL_BUG */
@@ -1349,8 +1355,9 @@ typedef unsigned int	uintptr_t;
 /* Version number of package */
 #define VERSION "4.2.6"
 
+/* NetBSD: set by build process */
 /* configure --enable-ipv6 */
-#define WANT_IPV6 /**/
+/* #define WANT_IPV6 */
 
 /* Define this if a working libregex can be found */
 #define WITH_LIBREGEX 1
