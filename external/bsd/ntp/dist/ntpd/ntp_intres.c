@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_intres.c,v 1.1.1.1 2009/12/13 16:55:34 kardel Exp $	*/
+/*	$NetBSD: ntp_intres.c,v 1.2 2010/08/29 18:54:30 kardel Exp $	*/
 
 /*
  * ripped off from ../ntpres/ntpres.c by Greg Troxel 4/2/92
@@ -472,7 +472,7 @@ addentry(
 	ce = emalloc(sizeof(*ce));
 	ce->ce_name = estrdup(name);
 	ce->ce_peeraddr = 0;
-#ifdef ISC_PLATFORM_HAVEIPV6
+#ifdef INCLUDE_IPV6_SUPPORT
 	ce->ce_peeraddr6 = in6addr_any;
 #endif
 	ZERO_SOCK(&ce->peer_store);
