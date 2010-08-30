@@ -1,4 +1,4 @@
-/*	$NetBSD: t_swwdog.c,v 1.1 2010/08/06 16:13:26 pooka Exp $	*/
+/*	$NetBSD: t_swwdog.c,v 1.2 2010/08/30 08:30:17 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -44,7 +44,7 @@
 
 #include "../../h_macros.h"
 
-static sig_atomic_t tcount;
+static volatile sig_atomic_t tcount;
 
 static void
 sigcount(int sig)
