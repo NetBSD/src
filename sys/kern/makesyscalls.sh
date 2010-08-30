@@ -1,5 +1,5 @@
 #! /bin/sh -
-#	$NetBSD: makesyscalls.sh,v 1.98 2010/07/19 15:25:47 pooka Exp $
+#	$NetBSD: makesyscalls.sh,v 1.99 2010/08/30 10:24:04 pooka Exp $
 #
 # Copyright (c) 1994, 1996, 2000 Christopher G. Demetriou
 # All rights reserved.
@@ -548,7 +548,10 @@ function printproto(wrap) {
 	if (!rumpable)
 		return
 
-	printf("%s rump_%s(", returntype, funcstdname) > rumpcallshdr
+	if (wantrename)
+		printf("%s rump_%s(", returntype, funcstdname) > rumpcallshdr
+	else
+		printf("%s rump_sys_%s(", returntype, funcalias) > rumpcallshdr
 	for (i = 1; i < varargc; i++)
 		if (argname[i] != "PAD")
 			printf("%s, ", argtype[i]) > rumpcallshdr
@@ -575,7 +578,7 @@ function printrumpsysent(insysent, compatwrap) {
 	if (argc == 0) {
 		printf("0, 0, ") > rumpsysent
 	} else {
-		printf("ns(struct %s%s_args), ", compatwrap_, funcname) > rumpsysent
+		printf("ns(struct sys_%s%s_args), ", compatwrap_, funcalias) > rumpsysent
 	}
 	printf("0,\n\t    %s },", wfn) > rumpsysent
 	for (i = 0; i < (41 - length(wfn)) / 8; i++)
@@ -667,14 +670,14 @@ function putent(type, compatwrap) {
 	}
 
 	# need a local prototype, we export the re-re-named one in .h
-	printf("\n%s rump_%s(", returntype, funcname) > rumpcalls
+	printf("\n%s rump_sys_%s(", returntype, funcalias) > rumpcalls
 	for (i = 1; i < argc; i++) {
 		if (argname[i] != "PAD")
 			printf("%s, ", argtype[i]) > rumpcalls
 	}
 	printf("%s);", argtype[argc]) > rumpcalls
 
-	printf("\n%s\nrump_%s(", returntype, funcname) > rumpcalls
+	printf("\n%s\nrump_sys_%s(", returntype, funcalias) > rumpcalls
 	for (i = 1; i < argc; i++) {
 		if (argname[i] != "PAD")
 			printf("%s %s, ", argtype[i], argname[i]) > rumpcalls
