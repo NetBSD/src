@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.182 2010/08/26 19:56:07 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.183 2010/08/30 10:49:40 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.182 2010/08/26 19:56:07 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.183 2010/08/30 10:49:40 pooka Exp $");
 
 #include <sys/systm.h>
 #define ELFSIZE ARCH_ELFSIZE
@@ -530,8 +530,9 @@ rump_lwp_alloc(pid_t pid, lwpid_t lid)
 		p->p_fd = fd_init(NULL);
 		p->p_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NONE);
 		p->p_pgrp = &rump_pgrp;
-		l->l_cred = rump_cred_suserget();
+		p->p_cred = l->l_cred = rump_cred_suserget();
 
+		chgproccnt(0, 1);
 		atomic_inc_uint(&nprocs);
 	} else {
 		p = &proc0;
@@ -576,6 +577,7 @@ rump_lwp_release(struct lwp *l)
 	if (p->p_pid != 0) {
 		mutex_obj_free(p->p_lock);
 		fd_free();
+		chgproccnt(kauth_cred_getuid(p->p_cred), -1);
 		if (rump_proc_vfs_release)
 			rump_proc_vfs_release(p);
 		rump_cred_put(l->l_cred);
