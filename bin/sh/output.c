@@ -1,4 +1,4 @@
-/*	$NetBSD: output.c,v 1.32 2010/07/19 01:15:17 joerg Exp $	*/
+/*	$NetBSD: output.c,v 1.33 2010/08/30 06:27:14 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)output.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: output.c,v 1.32 2010/07/19 01:15:17 joerg Exp $");
+__RCSID("$NetBSD: output.c,v 1.33 2010/08/30 06:27:14 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -264,8 +264,9 @@ out1fmt(const char *fmt, ...)
 	va_end(ap);
 }
 
+#ifdef DEBUG
 void
-dprintf(const char *fmt, ...)
+debugprintf(const char *fmt, ...)
 {
 	va_list ap;
 
@@ -274,6 +275,7 @@ dprintf(const char *fmt, ...)
 	va_end(ap);
 	flushout(out2);
 }
+#endif
 
 void
 fmtstr(char *outbuf, size_t length, const char *fmt, ...)

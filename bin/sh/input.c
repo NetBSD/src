@@ -1,4 +1,4 @@
-/*	$NetBSD: input.c,v 1.42 2009/03/10 21:21:11 roy Exp $	*/
+/*	$NetBSD: input.c,v 1.43 2010/08/30 06:27:14 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)input.c	8.3 (Berkeley) 6/9/95";
 #else
-__RCSID("$NetBSD: input.c,v 1.42 2009/03/10 21:21:11 roy Exp $");
+__RCSID("$NetBSD: input.c,v 1.43 2010/08/30 06:27:14 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -338,7 +338,7 @@ pushstring(char *s, int len, void *ap)
 	struct strpush *sp;
 
 	INTOFF;
-/*dprintf("*** calling pushstring: %s, %d\n", s, len);*/
+/*debugprintf("*** calling pushstring: %s, %d\n", s, len);*/
 	if (parsefile->strpush) {
 		sp = ckmalloc(sizeof (struct strpush));
 		sp->prev = parsefile->strpush;
@@ -365,7 +365,7 @@ popstring(void)
 	parsenextc = sp->prevstring;
 	parsenleft = sp->prevnleft;
 	parselleft = sp->prevlleft;
-/*dprintf("*** calling popstring: restoring to '%s'\n", parsenextc);*/
+/*debugprintf("*** calling popstring: restoring to '%s'\n", parsenextc);*/
 	if (sp->ap)
 		sp->ap->flag &= ~ALIASINUSE;
 	parsefile->strpush = sp->prev;
