@@ -1,4 +1,4 @@
-/*	$NetBSD: output.h,v 1.20 2008/10/31 14:38:42 christos Exp $	*/
+/*	$NetBSD: output.h,v 1.21 2010/08/30 06:27:14 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -70,8 +70,10 @@ void outfmt(struct output *, const char *, ...)
     __attribute__((__format__(__printf__,2,3)));
 void out1fmt(const char *, ...)
     __attribute__((__format__(__printf__,1,2)));
+#ifdef DEBUG
 void dprintf(const char *, ...)
     __attribute__((__format__(__printf__,1,2)));
+#endif
 void fmtstr(char *, size_t, const char *, ...)
     __attribute__((__format__(__printf__,3,4)));
 void doformat(struct output *, const char *, va_list);
