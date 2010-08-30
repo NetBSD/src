@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rumpkern,v 1.93 2010/08/21 13:20:43 pgoyette Exp $
+#	$NetBSD: Makefile.rumpkern,v 1.94 2010/08/30 09:44:11 pooka Exp $
 #
 
 .include "${RUMPTOP}/Makefile.rump"
@@ -44,23 +44,54 @@ SRCS+=	rump_syscalls.c rumpkern_if_wrappers.c
 SRCS+=	devsw.c
 
 #
-# Rest are from the std kernel sources.
+# std kernel sources
 #
 # sys/kern
-SRCS+=	init_sysctl_base.c kern_auth.c kern_cfglock.c kern_descrip.c	\
-	kern_event.c kern_hook.c kern_ksyms.c kern_malloc_stdtype.c	\
-	kern_module.c kern_mutex_obj.c kern_ntptime.c kern_proc.c	\
-	kern_rate.c kern_resource.c kern_stub.c kern_syscall.c		\
-	kern_sysctl.c kern_tc.c kern_timeout.c kern_uidinfo.c param.c	\
-	sys_descrip.c sys_generic.c sys_module.c sys_pipe.c sys_select.c \
+SRCS+=	init_sysctl_base.c	\
+	kern_auth.c		\
+	kern_cfglock.c		\
+	kern_descrip.c		\
+	kern_event.c		\
+	kern_hook.c		\
+	kern_ksyms.c		\
+	kern_malloc_stdtype.c	\
+	kern_module.c		\
+	kern_mutex_obj.c	\
+	kern_ntptime.c		\
+	kern_proc.c		\
+	kern_rate.c		\
+	kern_resource.c		\
+	kern_stub.c		\
+	kern_syscall.c		\
+	kern_sysctl.c		\
+	kern_tc.c		\
+	kern_timeout.c		\
+	kern_uidinfo.c		\
+	param.c			\
+	subr_devsw.c		\
+	subr_callback.c		\
+	subr_copy.c		\
+	subr_device.c		\
+	subr_evcnt.c		\
+	subr_extent.c		\
+	subr_hash.c		\
+	subr_humanize.c		\
+	subr_iostat.c		\
+	subr_kobj.c		\
+	subr_log.c		\
+	subr_lwp_specificdata.c	\
+	subr_once.c		\
+	subr_prf.c		\
+	subr_specificdata.c	\
+	subr_time.c		\
+	subr_workqueue.c	\
+	subr_xcall.c		\
+	sys_descrip.c		\
+	sys_generic.c		\
+	sys_module.c		\
+	sys_pipe.c		\
+	sys_select.c		\
 	syscalls.c
-
-# sys/kern subr (misc)
-SRCS+=	subr_devsw.c subr_callback.c subr_copy.c subr_device.c		\
-	subr_evcnt.c subr_extent.c subr_hash.c subr_humanize.c		\
-	subr_iostat.c subr_kobj.c subr_log.c subr_lwp_specificdata.c	\
-	subr_once.c subr_prf.c subr_specificdata.c subr_time.c		\
-	subr_workqueue.c subr_xcall.c
 
 # sys/uvm
 SRCS+=	uvm_readahead.c
