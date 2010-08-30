@@ -1,4 +1,4 @@
-/*	$NetBSD: gumstix_machdep.c,v 1.31 2010/08/28 07:13:47 kiyohara Exp $ */
+/*	$NetBSD: gumstix_machdep.c,v 1.32 2010/08/30 05:37:30 kiyohara Exp $ */
 /*
  * Copyright (C) 2005, 2006, 2007  WIDE Project and SOUM Corporation.
  * All rights reserved.
@@ -142,6 +142,7 @@
 #include "opt_gumstix.h"
 #ifdef OVERO
 #include "opt_omap.h"
+#include "prcm.h"
 #endif
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -172,6 +173,9 @@
 
 #include <arm/arm32/machdep.h>
 #include <arm/omap/omap2_gpmcreg.h>
+#if NPRCM > 0
+#include <arm/omap/omap2_prcm.h>
+#endif
 #include <arm/omap/omap2_reg.h>
 #include <arm/omap/omap_var.h>
 #include <arm/omap/omap_com.h>
@@ -330,6 +334,9 @@ cpu_reboot(int howto, char *bootstr)
 		printf("Please press any key to reboot.\n\n");
 		cngetc();
 		printf("rebooting...\n");
+#if defined(OMAP_3530) && NPRCM > 0
+		prcm_cold_reset();
+#endif
 		cpu_reset();
 		/*NOTREACHED*/
 	}
@@ -366,6 +373,9 @@ cpu_reboot(int howto, char *bootstr)
 	}
 
 	printf("rebooting...\n");
+#if defined(OMAP_3530) && NPRCM > 0
+	prcm_cold_reset();
+#endif
 	cpu_reset();
 	/*NOTREACHED*/
 }
