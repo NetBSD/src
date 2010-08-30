@@ -1,4 +1,4 @@
-/*	$NetBSD: db_input.c,v 1.23 2009/03/07 22:02:17 ad Exp $	*/
+/*	$NetBSD: db_input.c,v 1.24 2010/08/30 19:23:25 tls Exp $	*/
 
 /*
  * Mach Operating System
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_input.c,v 1.23 2009/03/07 22:02:17 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_input.c,v 1.24 2010/08/30 19:23:25 tls Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddbparam.h"
@@ -63,7 +63,6 @@ static char    *db_lc;		/* current character */
 static char    *db_le;		/* one past last character */
 #if DDB_HISTORY_SIZE != 0
 static char	db_history[DDB_HISTORY_SIZE];	/* start of history buffer */
-static int	db_history_size = DDB_HISTORY_SIZE;/* size of history buffer */
 static char    *db_history_curr = db_history;	/* start of current line */
 static char    *db_history_last = db_history;	/* start of last line */
 static char    *db_history_prev = (char *) 0;	/* start of previous line */
@@ -131,20 +130,30 @@ db_delete_line(void)
 }
 
 #if DDB_HISTORY_SIZE != 0
-#define INC_DB_CURR() \
-	do { \
-		 db_history_curr++; \
-		 if (db_history_curr > db_history + db_history_size - 1) \
-			 db_history_curr = db_history; \
-	} while (/*CONSTCOND*/ 0)
-#define DEC_DB_CURR() \
-	do { \
-		 db_history_curr--; \
-		 if (db_history_curr < db_history) \
-		     db_history_curr = db_history + \
-		     db_history_size - 1; \
-	} while (/*CONSTCOND*/ 0)
+
+#define INC_DB_CURR() do {						\
+	++db_history_curr;						\
+	if (db_history_curr > db_history + DDB_HISTORY_SIZE - 1)	\
+	    db_history_curr = db_history;				\
+    } while (0)
+#define DEC_DB_CURR() do {						\
+	--db_history_curr;						\
+	if (db_history_curr < db_history)				\
+	    db_history_curr = db_history + DDB_HISTORY_SIZE - 1;	\
+    } while (0)
 #endif
+
+static inline void db_hist_put(int c)
+{
+	KASSERT(&db_history[0]  <= db_history_last);
+	KASSERT(db_history_last <= &db_history[DDB_HISTORY_SIZE-1]);
+
+	*db_history_last++ = c;
+
+	if (db_history_last > &db_history[DDB_HISTORY_SIZE-1])
+	    db_history_last = db_history;
+}
+	
 
 /* returns true at end-of-line */
 static int
@@ -239,7 +248,7 @@ db_inputchar(int c)
 			for (p = db_history_curr, db_le = db_lbuf_start;
 			     *p; ) {
 				*db_le++ = *p++;
-				if (p == db_history + db_history_size) {
+				if (p >= db_history + DDB_HISTORY_SIZE) {
 					p = db_history;
 				}
 			}
@@ -261,8 +270,7 @@ db_inputchar(int c)
 				for (p = db_history_curr,
 				     db_le = db_lbuf_start; *p;) {
 					*db_le++ = *p++;
-					if (p == db_history +
-					    db_history_size) {
+					if (p >= db_history + DDB_HISTORY_SIZE) {
 						p = db_history;
 					}
 				}
@@ -291,10 +299,10 @@ db_inputchar(int c)
 			     pc != db_le && *pp; pp++, pc++) {
 				if (*pp != *pc)
 					break;
-				if (++pp == db_history + db_history_size) {
+				if (++pp >= db_history + DDB_HISTORY_SIZE) {
 					pp = db_history;
 				}
-				if (++pc == db_history + db_history_size) {
+				if (++pc >= db_history + DDB_HISTORY_SIZE) {
 					pc = db_history;
 				}
 			}
@@ -307,15 +315,13 @@ db_inputchar(int c)
 		}
 		if (db_le != db_lbuf_start) {
 			char *p;
+
 			db_history_prev = db_history_last;
-			for (p = db_lbuf_start; p != db_le; p++) {
-				*db_history_last++ = *p;
-				if (db_history_last == db_history +
-				    db_history_size) {
-					db_history_last = db_history;
-				}
+
+			for (p = db_lbuf_start; p != db_le; ) {
+				db_hist_put(*p++);
 			}
-			*db_history_last++ = '\0';
+			db_hist_put(0);
 		}
 		db_history_curr = db_history_last;
 #endif
