@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rumpkern,v 1.94 2010/08/30 09:44:11 pooka Exp $
+#	$NetBSD: Makefile.rumpkern,v 1.95 2010/08/30 09:44:40 pooka Exp $
 #
 
 .include "${RUMPTOP}/Makefile.rump"
@@ -59,6 +59,7 @@ SRCS+=	init_sysctl_base.c	\
 	kern_mutex_obj.c	\
 	kern_ntptime.c		\
 	kern_proc.c		\
+	kern_prot.c		\
 	kern_rate.c		\
 	kern_resource.c		\
 	kern_stub.c		\
