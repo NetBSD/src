@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.235 2010/06/10 19:09:03 pooka Exp $
+	$NetBSD: syscalls.master,v 1.236 2010/08/30 10:32:54 pooka Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -90,13 +90,13 @@
 			    long bufsize, int flags); }
 19	COMPAT_43 MODULAR { long|sys||lseek(int fd, long offset, int whence); }\
 			    olseek
-20	STD 		{ pid_t|sys||getpid_with_ppid(void); } getpid
+20	STD 	RUMP	{ pid_t|sys||getpid_with_ppid(void); } getpid
 21	COMPAT_40 MODULAR { int|sys||mount(const char *type, const char *path, \
 			    int flags, void *data); }
 22	STD 	 RUMP	{ int|sys||unmount(const char *path, int flags); }
-23	STD 		{ int|sys||setuid(uid_t uid); }
-24	STD 		{ uid_t|sys||getuid_with_euid(void); } getuid
-25	STD 		{ uid_t|sys||geteuid(void); }
+23	STD 	RUMP	{ int|sys||setuid(uid_t uid); }
+24	STD 	RUMP	{ uid_t|sys||getuid_with_euid(void); } getuid
+25	STD 	RUMP	{ uid_t|sys||geteuid(void); }
 26	STD 		{ int|sys||ptrace(int req, pid_t pid, void *addr, \
 			    int data); }
 27	STD 	RUMP	{ ssize_t|sys||recvmsg(int s, struct msghdr *msg, \
@@ -119,12 +119,12 @@
 37	STD 		{ int|sys||kill(int pid, int signum); }
 38	COMPAT_43 MODULAR { int|sys||stat(const char *path, struct stat43 *ub); } \
 			    stat43
-39	STD 		{ pid_t|sys||getppid(void); }
+39	STD 	RUMP	{ pid_t|sys||getppid(void); }
 40	COMPAT_43 MODULAR { int|sys||lstat(const char *path, \
 			    struct stat43 *ub); } lstat43
 41	STD 	RUMP	{ int|sys||dup(int fd); }
 42	STD 	RUMP	{ int|sys||pipe(void); }
-43	STD 		{ gid_t|sys||getegid(void); }
+43	STD 	RUMP	{ gid_t|sys||getegid(void); }
 44	STD 		{ int|sys||profil(char *samples, size_t size, \
 			    u_long offset, u_int scale); }
 45	STD 		{ int|sys||ktrace(const char *fname, int ops, \
@@ -132,11 +132,11 @@
 46	COMPAT_13 MODULAR { int|sys||sigaction(int signum, \
 			    const struct sigaction13 *nsa, \
 			    struct sigaction13 *osa); } sigaction13
-47	STD 		{ gid_t|sys||getgid_with_egid(void); } getgid
+47	STD 	RUMP	{ gid_t|sys||getgid_with_egid(void); } getgid
 48	COMPAT_13 MODULAR { int|sys||sigprocmask(int how, \
 			    int mask); } sigprocmask13
-49	STD 		{ int|sys||__getlogin(char *namebuf, size_t namelen); }
-50	STD 	 	{ int|sys||__setlogin(const char *namebuf); }
+49	STD 	RUMP	{ int|sys||__getlogin(char *namebuf, size_t namelen); }
+50	STD 	RUMP 	{ int|sys||__setlogin(const char *namebuf); }
 51	STD 		{ int|sys||acct(const char *path); }
 52	COMPAT_13 MODULAR { int|sys||sigpending(void); } sigpending13
 53	COMPAT_13 MODULAR { int|sys||sigaltstack( \
@@ -177,12 +177,12 @@
 77	OBSOL		vlimit
 78	STD 		{ int|sys||mincore(void *addr, size_t len, \
 			    char *vec); }
-79	STD 		{ int|sys||getgroups(int gidsetsize, \
+79	STD 	RUMP	{ int|sys||getgroups(int gidsetsize, \
 			    gid_t *gidset); }
-80	STD 		{ int|sys||setgroups(int gidsetsize, \
+80	STD 	RUMP	{ int|sys||setgroups(int gidsetsize, \
 			    const gid_t *gidset); }
-81	STD 		{ int|sys||getpgrp(void); }
-82	STD 		{ int|sys||setpgid(int pid, int pgid); }
+81	STD 	RUMP	{ int|sys||getpgrp(void); }
+82	STD 	RUMP	{ int|sys||setpgid(int pid, int pgid); }
 83	COMPAT_50 MODULAR { int|sys||setitimer(int which, \
 			    const struct itimerval50 *itv, \
 			    struct itimerval50 *oitv); }
@@ -250,8 +250,8 @@
 125	COMPAT_43 MODULAR { int|sys||recvfrom(int s, void *buf, size_t len, \
 			    int flags, void *from, int *fromlenaddr); } \
 			    orecvfrom
-126	STD 		{ int|sys||setreuid(uid_t ruid, uid_t euid); }
-127	STD 		{ int|sys||setregid(gid_t rgid, gid_t egid); }
+126	STD 	RUMP	{ int|sys||setreuid(uid_t ruid, uid_t euid); }
+127	STD 	RUMP	{ int|sys||setregid(gid_t rgid, gid_t egid); }
 128	STD 	 RUMP	{ int|sys||rename(const char *from, const char *to); }
 129	COMPAT_43 MODULAR { int|sys||truncate(const char *path, long length); } \
 			    otruncate
@@ -280,7 +280,7 @@
 145	COMPAT_43 MODULAR { int|sys||setrlimit(int which, \
 			    const struct orlimit *rlp); } osetrlimit
 146	COMPAT_43 MODULAR { int|sys||killpg(int pgid, int signum); } okillpg
-147	STD 	 	{ int|sys||setsid(void); }
+147	STD 	RUMP 	{ int|sys||setsid(void); }
 148	STD 		{ int|sys||quotactl(const char *path, int cmd, \
 			    int uid, void *arg); }
 149	COMPAT_43 MODULAR { int|sys||quota(void); } oquota
@@ -353,9 +353,9 @@
 180	UNIMPL
 
 ; Syscalls 180-199 are used by/reserved for BSD
-181	STD 		{ int|sys||setgid(gid_t gid); }
-182	STD 		{ int|sys||setegid(gid_t egid); }
-183	STD 		{ int|sys||seteuid(uid_t euid); }
+181	STD 	RUMP	{ int|sys||setgid(gid_t gid); }
+182	STD 	RUMP	{ int|sys||setegid(gid_t egid); }
+183	STD 	RUMP	{ int|sys||seteuid(uid_t euid); }
 184	STD MODULAR	{ int|sys||lfs_bmapv(fsid_t *fsidp, \
 			    struct block_info *blkiov, int blkcnt); }
 185	STD MODULAR	{ int|sys||lfs_markv(fsid_t *fsidp, \
@@ -394,7 +394,7 @@
 205	STD 		{ int|sys||undelete(const char *path); }
 206	COMPAT_50 MODULAR { int|sys||futimes(int fd, \
 			    const struct timeval50 *tptr); }
-207	STD 		{ pid_t|sys||getpgid(pid_t pid); }
+207	STD 	 RUMP	{ pid_t|sys||getpgid(pid_t pid); }
 208	STD	 RUMP	{ int|sys||reboot(int opt, char *bootstr); }
 209	STD 	 RUMP	{ int|sys||poll(struct pollfd *fds, u_int nfds, \
 			    int timeout); }
@@ -542,7 +542,7 @@
 			    gid_t gid); }
 285	STD 		{ int|sys||__posix_lchown(const char *path, uid_t uid, \
 			    gid_t gid); }
-286	STD 		{ pid_t|sys||getsid(pid_t pid); }
+286	STD 	RUMP	{ pid_t|sys||getsid(pid_t pid); }
 287	STD 		{ pid_t|sys||__clone(int flags, void *stack); }
 288	STD 		{ int|sys||fktrace(int fd, int ops, \
 			    int facs, int pid); }
@@ -587,7 +587,7 @@
 303	EXCL		__shmctl13
 #endif
 304	STD 	 RUMP	{ int|sys||lchflags(const char *path, u_long flags); }
-305	STD 		{ int|sys||issetugid(void); }
+305	STD 	RUMP	{ int|sys||issetugid(void); }
 306	STD 		{ int|sys||utrace(const char *label, void *addr, \
 				size_t len); }
 307	STD 		{ int|sys||getcontext(struct __ucontext *ucp); }
