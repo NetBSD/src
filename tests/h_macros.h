@@ -1,4 +1,4 @@
-/* $NetBSD: h_macros.h,v 1.5 2010/08/16 17:01:43 pooka Exp $ */
+/* $NetBSD: h_macros.h,v 1.6 2010/08/31 17:21:14 pooka Exp $ */
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -44,6 +44,11 @@
 	ATF_CHECK_MSG((x) != (v), "%s: %s", #x, strerror(errno))
 
 #define RL(x) REQUIRE_LIBC(x, -1)
+#define RZ(x)								\
+do {									\
+	int RZ_rv = x;							\
+	ATF_REQUIRE_MSG(RZ_rv == 0, "%s: %s", #x, strerror(RZ_rv));	\
+} while (/*CONSTCOND*/0)
 
 static __inline void
 atf_tc_fail_errno(const char *fmt, ...)
