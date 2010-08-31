@@ -1,4 +1,4 @@
-/*	$NetBSD: db_input.c,v 1.24 2010/08/30 19:23:25 tls Exp $	*/
+/*	$NetBSD: db_input.c,v 1.25 2010/08/31 07:12:55 enami Exp $	*/
 
 /*
  * Mach Operating System
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_input.c,v 1.24 2010/08/30 19:23:25 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_input.c,v 1.25 2010/08/31 07:12:55 enami Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddbparam.h"
@@ -134,12 +134,12 @@ db_delete_line(void)
 #define INC_DB_CURR() do {						\
 	++db_history_curr;						\
 	if (db_history_curr > db_history + DDB_HISTORY_SIZE - 1)	\
-	    db_history_curr = db_history;				\
+		db_history_curr = db_history;				\
     } while (0)
 #define DEC_DB_CURR() do {						\
 	--db_history_curr;						\
 	if (db_history_curr < db_history)				\
-	    db_history_curr = db_history + DDB_HISTORY_SIZE - 1;	\
+		db_history_curr = db_history + DDB_HISTORY_SIZE - 1;	\
     } while (0)
 #endif
 
