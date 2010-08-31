@@ -1,4 +1,4 @@
-/*	$NetBSD: db_input.c,v 1.25 2010/08/31 07:12:55 enami Exp $	*/
+/*	$NetBSD: db_input.c,v 1.26 2010/08/31 07:48:23 enami Exp $	*/
 
 /*
  * Mach Operating System
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_input.c,v 1.25 2010/08/31 07:12:55 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_input.c,v 1.26 2010/08/31 07:48:23 enami Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddbparam.h"
@@ -141,9 +141,9 @@ db_delete_line(void)
 	if (db_history_curr < db_history)				\
 		db_history_curr = db_history + DDB_HISTORY_SIZE - 1;	\
     } while (0)
-#endif
 
-static inline void db_hist_put(int c)
+static inline void
+db_hist_put(int c)
 {
 	KASSERT(&db_history[0]  <= db_history_last);
 	KASSERT(db_history_last <= &db_history[DDB_HISTORY_SIZE-1]);
@@ -153,6 +153,7 @@ static inline void db_hist_put(int c)
 	if (db_history_last > &db_history[DDB_HISTORY_SIZE-1])
 	    db_history_last = db_history;
 }
+#endif
 	
 
 /* returns true at end-of-line */
