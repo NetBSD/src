@@ -1,4 +1,4 @@
-/*	$NetBSD: gfb.c,v 1.2 2009/12/31 05:08:05 macallan Exp $	*/
+/*	$NetBSD: gfb.c,v 1.3 2010/08/31 03:08:23 macallan Exp $	*/
 
 /*
  * Copyright (c) 2009 Michael Lorenz
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gfb.c,v 1.2 2009/12/31 05:08:05 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gfb.c,v 1.3 2010/08/31 03:08:23 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,7 +66,7 @@ struct gfb_softc {
 
 	int sc_width, sc_height, sc_depth, sc_stride, sc_fblen;
 	int sc_locked;
-	void *sc_fbaddr, *sc_shadow;
+	void *sc_fbaddr;
 	struct vcons_screen sc_console_screen;
 	struct wsscreen_descr sc_defaultscreen_descr;
 	const struct wsscreen_descr *sc_screens[1];
@@ -158,7 +158,6 @@ gfb_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	sc->sc_shadow = kmem_alloc(sc->sc_fblen, KM_SLEEP);
 	sc->sc_locked = 0;
 	sc->sc_mode = WSDISPLAYIO_MODE_EMUL;
 
@@ -230,6 +229,27 @@ gfb_attach(device_t parent, device_t self, void *aux)
 	aa.accesscookie = &sc->vd;
 
 	config_found(sc->sc_dev, &aa, wsemuldisplaydevprint);
+
+#ifdef GFB_DEBUG
+	/*
+	 * now dump a register range
+	 * try 1, 2 and 4 since they're only 0x2000 each
+	 */
+	bus_space_handle_t regh;
+
+	if (bus_space_map(sc->sc_memt, ma->ma_reg[3].ur_paddr,
+	    0x2000, BUS_SPACE_MAP_LINEAR, &regh) == 0) {
+		for (i = 0; i < 0x200; i += 32) {
+			printf("%04x", i);
+			for (j = 0; j < 32; j += 4) {
+				printf(" %08x", bus_space_read_4(sc->sc_memt,
+				    regh, i + j));
+			}
+			printf("\n"); 
+		}
+		bus_space_unmap(sc->sc_memt, regh, 0x2000);
+	}
+#endif
 }
 
 static int
@@ -330,8 +350,8 @@ gfb_init_screen(void *cookie, struct vcons_screen *scr,
 	ri->ri_stride = sc->sc_stride;
 	ri->ri_flg = RI_CENTER | RI_FULLCLEAR;
 
-	ri->ri_bits = sc->sc_shadow;
-	ri->ri_hwbits = (char *)sc->sc_fbaddr;
+	ri->ri_bits = (char *)sc->sc_fbaddr;
+	scr->scr_flags |= VCONS_DONT_READ;
 
 	if (existing) {
 		ri->ri_flg |= RI_CLEAR;
