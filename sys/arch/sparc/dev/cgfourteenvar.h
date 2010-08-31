@@ -1,4 +1,4 @@
-/*	$NetBSD: cgfourteenvar.h,v 1.12 2010/06/10 13:21:13 macallan Exp $ */
+/*	$NetBSD: cgfourteenvar.h,v 1.13 2010/08/31 21:14:57 macallan Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -87,15 +87,14 @@ struct cgfourteen_softc {
 	struct	cg14_cursor sc_cursor;	/* Hardware cursor state */
 	union 	cg14cmap sc_saveclut; 	/* a place to stash PROM state */
 	size_t	sc_vramsize;
+	int 	sc_depth;	/* current colour depth */
 #if NWSDISPLAY > 0
 	struct  vcons_data sc_vd;
-	struct vcons_screen sc_console_screen;
-	struct wsscreen_descr sc_defaultscreen_descr;
+	struct 	vcons_screen sc_console_screen;
+	struct 	wsscreen_descr sc_defaultscreen_descr;
 	const struct wsscreen_descr *sc_screens[1];
-	struct wsscreen_list sc_screenlist;
-	void *sc_shadowfb;
-	int sc_mode;	/* wsdisplay mode - EMUL, DUMB etc. */
-	int sc_depth;	/* current colour depth */
+	struct 	wsscreen_list sc_screenlist;
+	int 	sc_mode;	/* wsdisplay mode - EMUL, DUMB etc. */
 #endif
 
 	uint8_t	sc_savexlut[256];
