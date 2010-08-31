@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.108 2010/08/25 21:36:02 sjg Exp $	*/
+/*	$NetBSD: options.c,v 1.109 2010/08/31 03:16:06 enami Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: options.c,v 1.108 2010/08/25 21:36:02 sjg Exp $");
+__RCSID("$NetBSD: options.c,v 1.109 2010/08/31 03:16:06 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -643,7 +643,7 @@ pax_options(int argc, char **argv)
 			secure = 0;
 			break;
 		case OPT_FORCE_LOCAL:
-			forcelocal = 0;
+			forcelocal = 1;
 			break;
 		case OPT_USE_COMPRESS_PROGRAM:
 			zflag = 1;
@@ -1677,6 +1677,7 @@ cpio_options(int argc, char **argv)
 			(void)fputs("\n\n", stderr);
 			cpio_usage();
 			break;
+		case 'F':
 		case 'I':
 		case 'O':
 			/*
@@ -1734,13 +1735,13 @@ cpio_options(int argc, char **argv)
 			 * process Version 6 cpio format
 			 */
 			frmt = &(fsub[F_BCPIO]);
+			break;
 		case OPT_FORCE_LOCAL:
 			forcelocal = 1;
 			break;
 		case OPT_INSECURE:
 			secure = 0;
 			break;
-
 		case OPT_SPARSE:
 			/* do nothing; we already generate sparse files */
 			break;
