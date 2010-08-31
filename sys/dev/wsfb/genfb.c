@@ -1,4 +1,4 @@
-/*	$NetBSD: genfb.c,v 1.29 2010/02/22 05:55:10 ahoka Exp $ */
+/*	$NetBSD: genfb.c,v 1.30 2010/08/31 02:49:17 macallan Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.29 2010/02/22 05:55:10 ahoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.30 2010/08/31 02:49:17 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -193,9 +193,11 @@ genfb_attach(struct genfb_softc *sc, struct genfb_ops *ops)
 	memcpy(&sc->sc_ops, ops, sizeof(struct genfb_ops));
 	sc->sc_mode = WSDISPLAYIO_MODE_EMUL;
 
+#ifdef GENFB_SHADOWFB
 	sc->sc_shadowfb = kmem_alloc(sc->sc_fbsize, KM_SLEEP);
 	if (sc->sc_want_clear == false && sc->sc_shadowfb != NULL)
 		memcpy(sc->sc_shadowfb, sc->sc_fbaddr, sc->sc_fbsize);
+#endif
 
 	vcons_init(&sc->vd, sc, &sc->sc_defaultscreen_descr,
 	    &genfb_accessops);
@@ -415,12 +417,17 @@ genfb_init_screen(void *cookie, struct vcons_screen *scr,
 	if (sc->sc_want_clear)
 		ri->ri_flg |= RI_FULLCLEAR;
 
+#ifdef GENFB_SHADOWFB
 	if (sc->sc_shadowfb != NULL) {
 
 		ri->ri_hwbits = (char *)sc->sc_fbaddr;
 		ri->ri_bits = (char *)sc->sc_shadowfb;
 	} else
+#endif
+	{
 		ri->ri_bits = (char *)sc->sc_fbaddr;
+		scr->scr_flags |= VCONS_DONT_READ;
+	}
 
 	if (existing && sc->sc_want_clear) {
 		ri->ri_flg |= RI_CLEAR;
