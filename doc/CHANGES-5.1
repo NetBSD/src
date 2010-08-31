@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.238 2010/08/25 04:22:21 snj Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.239 2010/08/31 10:56:03 bouyer Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -17424,4 +17424,22 @@ sys/coda/coda_vnops.c				1.76
 
 	Correct incomplete size checks for the coda ioctls.
 	[christos, ticket #1431]
+
+sys/arch/x86/x86/intel_busclock.c		1.11
+
+	Some core i7 CPUs report model 0c. In this case, check for the extended
+	model value.
+	Required to avoid faulting on rdmsr(MSR_FSB_FREQ) early during boot.
+	[jym, ticket #1439]
+
+sys/kern/exec_subr.c				1.65
+sys/kern/kern_pax.c				1.24
+
+	Fix issues with stack allocation and pax aslr:
+	- since the size is unsigned, don't check just that it is > 0,
+	  but limit it to the MAXSSIZ
+	- if the stack size is reduced because of aslr, make sure we reduce
+	  the actual allocation by the same size so that the size does not
+	  wrap around.
+	[christos, ticket #1444]
 
