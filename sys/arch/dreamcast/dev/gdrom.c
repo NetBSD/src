@@ -1,4 +1,4 @@
-/*	$NetBSD: gdrom.c,v 1.27 2010/08/31 12:12:48 tsutsui Exp $	*/
+/*	$NetBSD: gdrom.c,v 1.28 2010/08/31 15:17:20 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: gdrom.c,v 1.27 2010/08/31 12:12:48 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gdrom.c,v 1.28 2010/08/31 15:17:20 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,8 +50,10 @@ __KERNEL_RCSID(0, "$NetBSD: gdrom.c,v 1.27 2010/08/31 12:12:48 tsutsui Exp $");
 
 #include <machine/sysasicvar.h>
 
-int	gdrommatch(struct device *, struct cfdata *, void *);
-void	gdromattach(struct device *, struct device *, void *);
+#include "ioconf.h"
+
+int	gdrommatch(device_t, cfdata_t, void *);
+void	gdromattach(device_t, device_t, void *);
 
 dev_type_open(gdromopen);
 dev_type_close(gdromclose);
@@ -71,7 +73,7 @@ const struct cdevsw gdrom_cdevsw = {
 };
 
 struct gdrom_softc {
-	struct device sc_dv;	/* generic device info; must come first */
+	device_t sc_dev;	/* generic device info */
 	struct disk dkdev;	/* generic disk info */
 	struct buf curbuf;	/* state of current I/O operation */
 
@@ -85,12 +87,10 @@ struct gdrom_softc {
 	int cmd_cond;		/* resulting condition of command */
 };
 
-CFATTACH_DECL(gdrom, sizeof(struct gdrom_softc),
+CFATTACH_DECL_NEW(gdrom, sizeof(struct gdrom_softc),
     gdrommatch, gdromattach, NULL, NULL);
 
 struct dkdriver gdromdkdriver = { gdromstrategy };
-
-extern struct cfdriver gdrom_cd;
 
 
 struct gd_toc {
@@ -368,7 +368,7 @@ int gdrom_mount_disk(struct gdrom_softc *sc)
 }
 
 int
-gdrommatch(struct device *parent, struct cfdata *cf, void *aux)
+gdrommatch(device_t parent, cfdata_t cf, void *aux)
 {
 	static int gdrom_matched = 0;
 
@@ -381,17 +381,18 @@ gdrommatch(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 void
-gdromattach(struct device *parent, struct device *self, void *aux)
+gdromattach(device_t parent, device_t self, void *aux)
 {
 	struct gdrom_softc *sc;
 	uint32_t p, x;
 
-	sc = (struct gdrom_softc *)self;
+	sc = device_private(self);
+	sc->sc_dev = self;
 
 	/*
 	 * Initialize and attach the disk structure.
 	 */
-	disk_init(&sc->dkdev, sc->sc_dv.dv_xname, &gdromdkdriver);
+	disk_init(&sc->dkdev, device_xname(self), &gdromdkdriver);
 	disk_attach(&sc->dkdev);
 
 	/*
