@@ -1,4 +1,4 @@
-/*	$NetBSD: pic.c,v 1.4 2008/12/30 05:43:14 matt Exp $	*/
+/*	$NetBSD: pic.c,v 1.5 2010/08/31 14:23:27 kiyohara Exp $	*/
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -28,7 +28,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.4 2008/12/30 05:43:14 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.5 2010/08/31 14:23:27 kiyohara Exp $");
 
 #define _INTR_PRIVATE
 #include <sys/param.h>
@@ -229,7 +229,7 @@ pic_deliver_irqs(struct pic_softc *pic, int ipl, void *frame)
 #endif
 		}
 		progress = true;
-		blocked_irqs = pending_irqs;
+		blocked_irqs = 0;
 		do {
 			irq = ffs(pending_irqs) - 1;
 			KASSERT(irq >= 0);
@@ -240,9 +240,9 @@ pic_deliver_irqs(struct pic_softc *pic, int ipl, void *frame)
 				cpsie(I32_bit);
 				pic_dispatch(is, frame);
 				cpsid(I32_bit);
+				blocked_irqs |= __BIT(irq);
 			} else {
 				KASSERT(0);
-				blocked_irqs &= ~__BIT(irq);
 			}
 			pending_irqs = pic_find_pending_irqs_by_ipl(pic,
 			    irq_base, *ipending, ipl);
