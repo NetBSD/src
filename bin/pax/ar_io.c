@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)ar_io.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: ar_io.c,v 1.51 2010/08/31 04:50:07 enami Exp $");
+__RCSID("$NetBSD: ar_io.c,v 1.52 2010/08/31 05:07:09 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -147,13 +147,11 @@ ar_open(const char *name)
 			syswarn(0, errno, "Failed open on %s", name);
 			return -1;
 		}
-#if !HAVE_NBTOOL_CONFIG_H
 		if (!isrmt(arfd)) {
 			rmtclose(arfd);
 			tty_warn(0, "Not a remote file: %s", name);
 			return -1;
 		}
-#endif
 		blksz = rdblksz = 8192;
 		lstrval = 1;
 		return 0;
