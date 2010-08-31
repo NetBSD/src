@@ -1,4 +1,4 @@
-/*	$NetBSD: rmtlib.c,v 1.21 2006/03/19 23:05:50 christos Exp $	*/
+/*	$NetBSD: rmtlib.c,v 1.22 2010/08/31 05:12:35 enami Exp $	*/
 
 /*
  *	rmt --- remote tape emulator subroutines
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: rmtlib.c,v 1.21 2006/03/19 23:05:50 christos Exp $");
+__RCSID("$NetBSD: rmtlib.c,v 1.22 2010/08/31 05:12:35 enami Exp $");
 
 #define RMTIOCTL	1
 /* #define USE_REXEC	1 */	/* rexec code courtesy of Dan Kegel, srs!dan */
@@ -70,8 +70,6 @@ static	int	command(int, char *);
 static	int	remdev(const char *);
 static	void	rmtabort(int);
 static	int	status(int);
-
-	int	isrmt(int);
 
 
 #define BUFMAGIC	64	/* a magic number for buffer sizes */
