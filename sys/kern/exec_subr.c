@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_subr.c,v 1.61.8.1 2009/04/01 00:25:22 snj Exp $	*/
+/*	$NetBSD: exec_subr.c,v 1.61.8.1.2.1 2010/08/31 10:55:34 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1996 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_subr.c,v 1.61.8.1 2009/04/01 00:25:22 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_subr.c,v 1.61.8.1.2.1 2010/08/31 10:55:34 bouyer Exp $");
 
 #include "opt_pax.h"
 
@@ -386,6 +386,7 @@ exec_setup_stack(struct lwp *l, struct exec_package *epp)
 		epp->ep_minsaddr = USRSTACK;
 		max_stack_size = MAXSSIZ;
 	}
+	epp->ep_ssize = l->l_proc->p_rlimit[RLIMIT_STACK].rlim_cur;
 
 #ifdef PAX_ASLR
 	pax_aslr_stack(l, epp, &max_stack_size);
@@ -395,7 +396,6 @@ exec_setup_stack(struct lwp *l, struct exec_package *epp)
 	
 	epp->ep_maxsaddr = (u_long)STACK_GROW(epp->ep_minsaddr,
 		max_stack_size);
-	epp->ep_ssize = l->l_proc->p_rlimit[RLIMIT_STACK].rlim_cur;
 
 	/*
 	 * set up commands for stack.  note that this takes *two*, one to
@@ -410,11 +410,11 @@ exec_setup_stack(struct lwp *l, struct exec_package *epp)
 	noaccess_size = max_stack_size - access_size;
 	noaccess_linear_min = (u_long)STACK_ALLOC(STACK_GROW(epp->ep_minsaddr,
 	    access_size), noaccess_size);
-	if (noaccess_size > 0) {
+	if (noaccess_size > 0 && noaccess_size <= MAXSSIZ) {
 		NEW_VMCMD2(&epp->ep_vmcmds, vmcmd_map_zero, noaccess_size,
 		    noaccess_linear_min, NULL, 0, VM_PROT_NONE, VMCMD_STACK);
 	}
-	KASSERT(access_size > 0);
+	KASSERT(access_size > 0 && access_size <= MAXSSIZ);
 	NEW_VMCMD2(&epp->ep_vmcmds, vmcmd_map_zero, access_size,
 	    access_linear_min, NULL, 0, VM_PROT_READ | VM_PROT_WRITE,
 	    VMCMD_STACK);
