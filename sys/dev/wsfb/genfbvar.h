@@ -1,4 +1,4 @@
-/*	$NetBSD: genfbvar.h,v 1.14 2010/02/24 22:38:09 dyoung Exp $ */
+/*	$NetBSD: genfbvar.h,v 1.15 2010/08/31 02:49:17 macallan Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfbvar.h,v 1.14 2010/02/24 22:38:09 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfbvar.h,v 1.15 2010/08/31 02:49:17 macallan Exp $");
 
 #ifndef GENFBVAR_H
 #define GENFBVAR_H
@@ -46,6 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: genfbvar.h,v 1.14 2010/02/24 22:38:09 dyoung Exp $")
 #include <dev/rasops/rasops.h>
 
 #include <dev/wscons/wsdisplay_vconsvar.h>
+#include "opt_genfb.h"
 
 #ifdef SPLASHSCREEN
 #define GENFB_DISABLE_TEXT
@@ -81,7 +82,9 @@ struct genfb_softc {
 	struct genfb_colormap_callback *sc_cmcb;
 	struct genfb_pmf_callback *sc_pmfcb;
 	void *sc_fbaddr;	/* kva */
-	void *sc_shadowfb; 
+#ifdef GENFB_SHADOWFB
+	void *sc_shadowfb;
+#endif
 	bus_addr_t sc_fboffset;	/* bus address */
 	int sc_width, sc_height, sc_stride, sc_depth;
 	size_t sc_fbsize;
