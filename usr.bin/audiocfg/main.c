@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.2 2010/09/01 09:04:16 jmcneill Exp $ */
+/* $NetBSD: main.c,v 1.3 2010/09/01 09:18:03 wiz Exp $ */
 
 /*
  * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -40,8 +40,8 @@ static void
 usage(const char *p)
 {
 	fprintf(stderr, "usage: %s list\n", p);
-	fprintf(stderr, "       %s default [index]\n", p);
-	fprintf(stderr, "       %s test [index]\n", p);
+	fprintf(stderr, "       %s default <index>\n", p);
+	fprintf(stderr, "       %s test <index>\n", p);
 	exit(EXIT_FAILURE);
 }
 
