@@ -1,4 +1,4 @@
-/*	$NetBSD: gdrom.c,v 1.33 2010/09/01 16:23:15 tsutsui Exp $	*/
+/*	$NetBSD: gdrom.c,v 1.34 2010/09/01 16:48:00 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: gdrom.c,v 1.33 2010/09/01 16:23:15 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gdrom.c,v 1.34 2010/09/01 16:48:00 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,6 +103,12 @@ struct gd_toc {
 	unsigned int leadout;
 };
 
+#ifdef GDROMDEBUG
+#define DPRINTF(x)	printf x
+#else
+#define DPRINTF(x)	/**/
+#endif
+
 #define TOC_LBA(n)	((n) & 0xffffff00)
 #define TOC_ADR(n)	((n) & 0x0f)
 #define TOC_CTRL(n)	(((n) & 0xf0) >> 4)
@@ -166,22 +172,16 @@ gdrom_intr(void *arg)
 
 	s = splbio();
 	cond = GDROM_COND;
-#ifdef GDROMDEBUG
-	printf("GDROM: cond = %x\n", cond);
-#endif
+	DPRINTF(("GDROM: cond = %x\n", cond));
 	if (!sc->cmd_active) {
-#ifdef GDROMDEBUG
-		printf("GDROM: inactive IRQ!?\n");
-#endif
+		DPRINTF(("GDROM: inactive IRQ!?\n"));
 		splx(s);
 		return 0;
 	}
 
-	if ((cond & 8)) {
+	if ((cond & 0x08) != 0) {
 		int cnt = (GDROM_CNTHI << 8) | GDROM_CNTLO;
-#ifdef GDROMDEBUG
-		printf("GDROM: cnt = %d\n", cnt);
-#endif
+		DPRINTF(("GDROM: cnt = %d\n", cnt));
 		sc->cmd_actual += cnt;
 		if (cnt > 0 && sc->cmd_result_size > 0) {
 			int subcnt = (cnt > sc->cmd_result_size ?
@@ -201,9 +201,9 @@ gdrom_intr(void *arg)
 			cnt -= 2;
 		}
 	}
-	while (GDROM_BUSY & 0x80);
+	while ((GDROM_BUSY & 0x80) != 0);
 	
-	if ((cond & 8) == 0) {
+	if ((cond & 0x08) == 0) {
 		sc->cmd_cond = cond;
 		sc->cmd_active = 0;
 		wakeup(&sc->cmd_active);
@@ -214,7 +214,8 @@ gdrom_intr(void *arg)
 }
 
 
-int gdrom_do_command(struct gdrom_softc *sc, void *req, void *buf,
+int
+gdrom_do_command(struct gdrom_softc *sc, void *req, void *buf,
     unsigned int nbyt, int *resid)
 {
 	int i, s;
@@ -230,12 +231,12 @@ int gdrom_do_command(struct gdrom_softc *sc, void *req, void *buf,
 	sc->cmd_result_buf = buf;
 	sc->cmd_result_size = nbyt;
 
-	if (GDSTATSTAT(GDROM_STAT) == 6)
+	if (GDSTATSTAT(GDROM_STAT) == 0x06)
 		return -1;
 	
 	GDROM_COND = 0xa0;
 	DELAY(1);
-	while ((GDROM_BUSY & 0x88) != 8)
+	while ((GDROM_BUSY & 0x88) != 0x08)
 		;
 
 	s = splbio();
@@ -243,7 +244,7 @@ int gdrom_do_command(struct gdrom_softc *sc, void *req, void *buf,
 	sc->cmd_actual = 0;
 	sc->cmd_active = 1;
 
-	for (i = 0; i< 6; i++)
+	for (i = 0; i < 6; i++)
 		GDROM_DATA = ptr[i];
 	
 	while (sc->cmd_active)
@@ -261,30 +262,28 @@ int gdrom_do_command(struct gdrom_softc *sc, void *req, void *buf,
 int gdrom_command_sense(struct gdrom_softc *sc, void *req, void *buf,
     unsigned int nbyt, int *resid)
 {
-	/* 76543210 76543210
-	   0   0x13      -
-	   2    -      bufsz(hi)
-	   4 bufsz(lo)   -
-	   6    -        -
-	   8    -        -
-	   10    -        -        */
+	/*
+	 *  76543210 76543210
+	 *  0   0x13      -
+	 *  2    -      bufsz(hi)
+	 *  4 bufsz(lo)   -
+	 *  6    -        -
+	 *  8    -        -
+	 * 10    -        -
+	 */
 	uint16_t sense_data[5];
 	uint8_t cmd[12];
-	int sense_key, sense_specific;
+	int cond, sense_key, sense_specific;
 
-	int cond = gdrom_do_command(sc, req, buf, nbyt, resid);
+	cond = gdrom_do_command(sc, req, buf, nbyt, resid);
 
 	if (cond < 0) {
-#ifdef GDROMDEBUG
-		printf("GDROM: not ready (2:58)\n");
-#endif
+		DPRINTF(("GDROM: not ready (2:58)\n"));
 		return EIO;
 	}
 	
 	if ((cond & 1) == 0) {
-#ifdef GDROMDEBUG
-		printf("GDROM: no sense.  0:0\n");
-#endif
+		DPRINTF(("GDROM: no sense.  0:0\n"));
 		return 0;
 	}
 	
@@ -298,29 +297,27 @@ int gdrom_command_sense(struct gdrom_softc *sc, void *req, void *buf,
 	sense_key = sense_data[1] & 0xf;
 	sense_specific = sense_data[4];
 	if (sense_key == 11 && sense_specific == 0) {
-#ifdef GDROMDEBUG
-		printf("GDROM: aborted (ignored).  0:0\n");
-#endif
+		DPRINTF(("GDROM: aborted (ignored).  0:0\n"));
 		return 0;
 	}
 	
-#ifdef GDROMDEBUG
-	printf("GDROM: SENSE %d:", sense_key);
-	printf("GDROM: %d\n", sense_specific);
-#endif
+	DPRINTF(("GDROM: SENSE %d:", sense_key));
+	DPRINTF(("GDROM: %d\n", sense_specific));
 	
 	return sense_key == 0 ? 0 : EIO;
 }
 
 int gdrom_read_toc(struct gdrom_softc *sc, struct gd_toc *toc)
 {
-	/* 76543210 76543210
-	   0   0x14      -
-	   2    -      bufsz(hi)
-	   4 bufsz(lo)   -
-	   6    -        -
-	   8    -        -
-	   10    -        -        */
+	/*
+	 *  76543210 76543210
+	 *  0   0x14      -
+	 *  2    -      bufsz(hi)
+	 *  4 bufsz(lo)   -
+	 *  6    -        -
+	 *  8    -        -
+	 * 10    -        -
+	 */
 	uint8_t cmd[12];
 
 	memset(cmd, 0, sizeof(cmd));
@@ -335,24 +332,26 @@ int gdrom_read_toc(struct gdrom_softc *sc, struct gd_toc *toc)
 int gdrom_read_sectors(struct gdrom_softc *sc, void *buf, int sector, int cnt,
     int *resid)
 {
-	/* 76543210 76543210
-	   0   0x30    datafmt
-	   2  sec(hi)  sec(mid)
-	   4  sec(lo)    -
-	   6    -        -
-	   8  cnt(hi)  cnt(mid)
-	   10  cnt(lo)    -        */
+	/*
+	 *  76543210 76543210
+	 *  0   0x30    datafmt
+	 *  2  sec(hi)  sec(mid)
+	 *  4  sec(lo)    -
+	 *  6    -        -
+	 *  8  cnt(hi)  cnt(mid)
+	 * 10  cnt(lo)    -
+	 */
 	uint8_t cmd[12];
 
 	memset(cmd, 0, sizeof(cmd));
 
-	cmd[0] = 0x30;
-	cmd[1] = 0x20;
-	cmd[2] = sector>>16;
-	cmd[3] = sector>>8;
-	cmd[4] = sector;
-	cmd[8] = cnt>>16;
-	cmd[9] = cnt>>8;
+	cmd[0]  = 0x30;
+	cmd[1]  = 0x20;
+	cmd[2]  = sector >> 16;
+	cmd[3]  = sector >>  8;
+	cmd[4]  = sector;
+	cmd[8]  = cnt >> 16;
+	cmd[9]  = cnt >>  8;
 	cmd[10] = cnt;
 
 	return gdrom_command_sense(sc, cmd, buf, cnt << 11, resid);
@@ -360,13 +359,15 @@ int gdrom_read_sectors(struct gdrom_softc *sc, void *buf, int sector, int cnt,
 
 int gdrom_mount_disk(struct gdrom_softc *sc)
 {
-	/* 76543210 76543210
-	   0   0x70      -
-	   2   0x1f      -
-	   4    -        -
-	   6    -        -
-	   8    -        -
-	   10    -        -        */
+	/*
+	 *  76543210 76543210
+	 *  0   0x70      -
+	 *  2   0x1f      -
+	 *  4    -        -
+	 *  6    -        -
+	 *  8    -        -
+	 * 10    -        -
+	 */
 	uint8_t cmd[12];
 
 	memset(cmd, 0, sizeof(cmd));
@@ -426,9 +427,7 @@ gdromopen(dev_t dev, int flags, int devtype, struct lwp *l)
 	int s, error, unit, cnt;
 	struct gd_toc toc;
 
-#ifdef GDROMDEBUG
-	printf("GDROM: open\n");
-#endif
+	DPRINTF(("GDROM: open\n"));
 
 	unit = DISKUNIT(dev);
 
@@ -449,21 +448,19 @@ gdromopen(dev_t dev, int flags, int devtype, struct lwp *l)
 		if ((error = gdrom_mount_disk(sc)) == 0)
 			break;
 
-	if (!error)
+	if (error == 0)
 		error = gdrom_read_toc(sc, &toc);
 
 	sc->is_busy = false;
 	wakeup(&sc->is_busy);
 
-	if (error)
+	if (error != 0)
 		return error;
 
 	sc->is_open = true;
 	sc->openpart_start = 150;
 
-#ifdef GDROMDEBUG
-	printf("GDROM: open OK\n");
-#endif
+	DPRINTF(("GDROM: open OK\n"));
 	return 0;
 }
 
@@ -472,9 +469,9 @@ gdromclose(dev_t dev, int flags, int devtype, struct lwp *l)
 {
 	struct gdrom_softc *sc;
 	int unit;
-#ifdef GDROMDEBUG
-	printf("GDROM: close\n");
-#endif
+
+	DPRINTF(("GDROM: close\n"));
+
 	unit = DISKUNIT(dev);
 	sc = device_lookup_private(&gdrom_cd, unit);
 
@@ -488,9 +485,8 @@ gdromstrategy(struct buf *bp)
 {
 	struct gdrom_softc *sc;
 	int s, unit;
-#ifdef GDROMDEBUG
-	printf("GDROM: strategy\n");
-#endif
+
+	DPRINTF(("GDROM: strategy\n"));
 	
 	unit = DISKUNIT(bp->b_dev);
 	sc = device_lookup_private(&gdrom_cd, unit);
@@ -500,11 +496,10 @@ gdromstrategy(struct buf *bp)
 
 	bp->b_rawblkno = bp->b_blkno / (2048 / DEV_BSIZE) + sc->openpart_start;
 
-#ifdef GDROMDEBUG
-	printf("GDROM: read_sectors(%p, %d, %ld) [%ld bytes]\n",
+	DPRINTF(("GDROM: read_sectors(%p, %lld, %d) [%d bytes]\n",
 	    bp->b_data, bp->b_rawblkno,
-	    bp->b_bcount>>11, bp->b_bcount);
-#endif
+	    bp->b_bcount >> 11, bp->b_bcount));
+
 	s = splbio();
 	bufq_put(sc->sc_bufq, bp);
 	splx(s);
@@ -564,9 +559,8 @@ gdromioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 {
 	struct gdrom_softc *sc;
 	int unit, error;
-#ifdef GDROMDEBUG
-	printf("GDROM: ioctl %lx\n", cmd);
-#endif
+
+	DPRINTF(("GDROM: ioctl %lx\n", cmd));
 
 	unit = DISKUNIT(dev);
 	sc = device_lookup_private(&gdrom_cd, unit);
@@ -590,19 +584,19 @@ gdromioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 		sc->is_busy = false;
 		wakeup(&sc->is_busy);
 
-		if (error)
+		if (error != 0)
 			return error;
 
 		for (track = TOC_TRACK(toc.last);
 		    track >= TOC_TRACK(toc.first);
 		    --track)
-			if (TOC_CTRL(toc.entry[track-1]))
+			if (TOC_CTRL(toc.entry[track - 1]))
 				break;
 
 		if (track < TOC_TRACK(toc.first) || track > 100)
 			return ENXIO;
 
-		*(int *)addr = htonl(TOC_LBA(toc.entry[track-1])) -
+		*(int *)addr = htonl(TOC_LBA(toc.entry[track - 1])) -
 		    sc->openpart_start;
 
 		return 0;
@@ -620,9 +614,8 @@ gdromioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 int
 gdromread(dev_t dev, struct uio *uio, int flags)
 {
-#ifdef GDROMDEBUG
-	printf("GDROM: read\n");
-#endif
+
+	DPRINTF(("GDROM: read\n"));
 	return physio(gdromstrategy, NULL, dev, B_READ, minphys, uio);
 }
 
