@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.204 2010/08/04 14:25:16 pooka Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.205 2010/09/01 15:12:16 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.204 2010/08/04 14:25:16 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.205 2010/09/01 15:12:16 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1248,7 +1248,6 @@ fd_init(filedesc_t *fdp)
 	if (__predict_true(fdp == NULL)) {
 		fdp = pool_cache_get(filedesc_cache, PR_WAITOK);
 	} else {
-		/* XXXRUMP KASSERT(fdp == &filedesc0); */
 		filedesc_ctor(NULL, fdp, PR_WAITOK);
 	}
 
