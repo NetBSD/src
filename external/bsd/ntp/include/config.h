@@ -388,7 +388,9 @@
 /* #undef HAVE_HZ_IN_STRUCT_CLOCKINFO */
 
 /* Define to 1 if you have the <ieeefp.h> header file. */
+#ifndef __vax__
 #define HAVE_IEEEFP_H 1
+#endif
 
 /* have iflist_sysctl? */
 #define HAVE_IFLIST_SYSCTL 1
