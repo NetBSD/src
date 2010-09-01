@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.1.1.1 2010/08/30 02:19:47 mrg Exp $ */
+/* $NetBSD: main.c,v 1.2 2010/09/01 09:04:16 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -39,7 +39,9 @@
 static void
 usage(const char *p)
 {
-	fprintf(stderr, "usage: %s [index]\n", p);
+	fprintf(stderr, "usage: %s list\n", p);
+	fprintf(stderr, "       %s default [index]\n", p);
+	fprintf(stderr, "       %s test [index]\n", p);
 	exit(EXIT_FAILURE);
 }
 
@@ -52,22 +54,25 @@ main(int argc, char *argv[])
 	if (audiodev_refresh() == -1)
 		return EXIT_FAILURE;
 
-	switch (argc) {
-	case 1:
+	if (argc < 2)
+		usage(argv[0]);
+		/* NOTREACHED */
+
+	if (strcmp(argv[1], "list") == 0) {
 		n = audiodev_count();
 		for (i = 0; i < n; i++) {
 			adev = audiodev_get(i);
-			printf("%u: [%c] %s: %s\n",
+			printf("%u: [%c] %s: %s (%u playback channel%s)\n",
 			    i, adev->defaultdev ? '*' : ' ',
-			    adev->xname, adev->audio_device.name);
+			    adev->xname, adev->audio_device.name,
+			    adev->pchan, adev->pchan == 1 ? "" : "s");
 		}
-		break;
-	case 2:
-		if (*argv[1] < '0' || *argv[1] > '9')
+	} else if (strcmp(argv[1], "default") == 0 && argc == 3) {
+		if (*argv[2] < '0' || *argv[2] > '9')
 			usage(argv[0]);
 			/* NOTREACHED */
 		errno = 0;
-		i = strtoul(argv[1], NULL, 10);
+		i = strtoul(argv[2], NULL, 10);
 		if (errno)
 			usage(argv[0]);
 			/* NOTREACHED */
@@ -81,11 +86,27 @@ main(int argc, char *argv[])
 			perror("couldn't set default device");
 			return EXIT_FAILURE;
 		}
-		break;
-	default:
+	} else if (strcmp(argv[1], "test") == 0 && argc == 3) {
+		if (*argv[2] < '0' || *argv[2] > '9')
+			usage(argv[0]);
+			/* NOTREACHED */
+		errno = 0;
+		i = strtoul(argv[2], NULL, 10);
+		if (errno)
+			usage(argv[0]);
+			/* NOTREACHED */
+		adev = audiodev_get(i);
+		if (adev == NULL) {
+			fprintf(stderr, "no such device\n");
+			return EXIT_FAILURE;
+		}
+		for (i = 0; i < adev->pchan; i++) {
+			printf("testing channel %d...\n", i);
+			audiodev_test(adev, 1 << i);
+		}
+	} else
 		usage(argv[0]);
 		/* NOTREACHED */
-	}
 
 	return EXIT_SUCCESS;
 }
