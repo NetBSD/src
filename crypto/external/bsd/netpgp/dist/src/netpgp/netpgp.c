@@ -1,4 +1,4 @@
-/* $NetBSD: netpgp.c,v 1.13 2010/08/13 18:29:41 agc Exp $ */
+/* $NetBSD: netpgp.c,v 1.14 2010/09/01 17:25:57 agc Exp $ */
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -343,13 +343,22 @@ setoption(netpgp_t *netpgp, prog_t *p, int val, char *arg, int *homeset)
 		netpgp_setvar(netpgp, "coredumps", "allowed");
 		break;
 	case ENCRYPT:
+		/* for encryption, we need a userid */
+		netpgp_setvar(netpgp, "need userid", "1");
+		p->cmd = val;
+		break;
 	case SIGN:
 	case CLEARSIGN:
-		/* for encryption and signing, we need a userid */
+		/* for signing, we need a userid and a seckey */
+		netpgp_setvar(netpgp, "need seckey", "1");
 		netpgp_setvar(netpgp, "need userid", "1");
 		p->cmd = val;
 		break;
 	case DECRYPT:
+		/* for decryption, we need a seckey */
+		netpgp_setvar(netpgp, "need seckey", "1");
+		p->cmd = val;
+		break;
 	case VERIFY:
 	case VERIFY_CAT:
 	case LIST_PACKETS:
@@ -437,6 +446,7 @@ setoption(netpgp_t *netpgp, prog_t *p, int val, char *arg, int *homeset)
 		netpgp_setvar(netpgp, "results", arg);
 		break;
 	case SSHKEYFILE:
+		netpgp_setvar(netpgp, "ssh keys", "1");
 		netpgp_setvar(netpgp, "sshkeyfile", arg);
 		break;
 	case MAX_MEM_ALLOC:
@@ -532,10 +542,12 @@ main(int argc, char **argv)
 					netpgp_get_info("maintainer"));
 				exit(EXIT_SUCCESS);
 			case 'd':
+				/* for decryption, we need the seckey */
+				netpgp_setvar(&netpgp, "need seckey", "1");
 				p.cmd = DECRYPT;
 				break;
 			case 'e':
-				/* for encryption and signing, we need a userid */
+				/* for encryption, we need a userid */
 				netpgp_setvar(&netpgp, "need userid", "1");
 				p.cmd = ENCRYPT;
 				break;
@@ -545,7 +557,8 @@ main(int argc, char **argv)
 				}
 				break;
 			case 's':
-				/* for encryption and signing, we need a userid */
+				/* for signing, we need a userid and a seckey */
+				netpgp_setvar(&netpgp, "need seckey", "1");
 				netpgp_setvar(&netpgp, "need userid", "1");
 				p.cmd = SIGN;
 				break;
