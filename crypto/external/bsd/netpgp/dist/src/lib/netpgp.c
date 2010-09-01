@@ -34,7 +34,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: netpgp.c,v 1.70 2010/09/01 06:20:23 agc Exp $");
+__RCSID("$NetBSD: netpgp.c,v 1.71 2010/09/01 17:25:57 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -575,7 +575,7 @@ netpgp_init(netpgp_t *netpgp)
 		}
 	} else {
 		last = (netpgp->pubring != NULL);
-		if (!readsshkeys(netpgp, homedir, netpgp_getvar(netpgp, "need userid"))) {
+		if (!readsshkeys(netpgp, homedir, netpgp_getvar(netpgp, "need seckey"))) {
 			(void) fprintf(io->errs, "Can't read ssh keys\n");
 			return 0;
 		}

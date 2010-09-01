@@ -57,7 +57,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: create.c,v 1.33 2010/08/15 07:52:26 agc Exp $");
+__RCSID("$NetBSD: create.c,v 1.34 2010/09/01 17:25:57 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -271,7 +271,7 @@ write_pubkey_body(const __ops_pubkey_t *key, __ops_output_t *output)
 
 /*
  * Note that we support v3 keys here because they're needed for
- * verification - the writer doesn't allow them, though
+ * verification.
  */
 static unsigned 
 write_seckey_body(const __ops_seckey_t *key,
@@ -480,11 +480,6 @@ write_seckey_body(const __ops_seckey_t *key,
 static unsigned 
 write_struct_pubkey(__ops_output_t *output, const __ops_pubkey_t *key)
 {
-	if (key->version != 4) {
-		(void) fprintf(stderr,
-			"write_struct_pubkey: wrong key version\n");
-		return 0;
-	}
 	return __ops_write_ptag(output, OPS_PTAG_CT_PUBLIC_KEY) &&
 		__ops_write_length(output, 1 + 4 + 1 + pubkey_length(key)) &&
 		write_pubkey_body(key, output);
@@ -513,7 +508,7 @@ __ops_write_xfer_pubkey(__ops_output_t *output,
 		__ops_writer_push_armoured(output, OPS_PGP_PUBLIC_KEY_BLOCK);
 	}
 	/* public key */
-	if (!write_struct_pubkey(output, &key->key.seckey.pubkey)) {
+	if (!write_struct_pubkey(output, &key->key.pubkey)) {
 		return 0;
 	}
 

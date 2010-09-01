@@ -92,13 +92,17 @@ main(int argc, char **argv)
 	host = strdup("localhost");
 	daemonise = 1;
 	family = strdup("46");
-	while ((i = getopt(argc, argv, "DH:Vf:h:p:v:")) != -1) {
+	while ((i = getopt(argc, argv, "DH:S:Vf:h:p:v:")) != -1) {
 		switch(i) {
 		case 'D':
 			daemonise = 0;
 			break;
 		case 'H':
 			set_homedir(&netpgp, optarg, NULL, 0);
+			break;
+		case 'S':
+			netpgp_setvar(&netpgp, "ssh keys", "1");
+			netpgp_setvar(&netpgp, "sshkeyfile", optarg);
 			break;
 		case 'V':
 			printf("%s: Version %d\n", *argv, HKPD_VERSION);
