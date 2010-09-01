@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: makerumpif.sh,v 1.4 2009/10/15 00:29:19 pooka Exp $
+#	$NetBSD: makerumpif.sh,v 1.5 2010/09/01 19:32:11 pooka Exp $
 #
 # Copyright (c) 2009 Antti Kantee.  All rights reserved.
 #
@@ -67,9 +67,9 @@ sed -e '
 ' ${1} | awk -F\| -v rumptop=${RUMPTOP} '
 function fileheaders(file, srcstr)
 {
-	printf("/*\t$NetBSD: makerumpif.sh,v 1.4 2009/10/15 00:29:19 pooka Exp $\t*/\n\n") > file
+	printf("/*\t$NetBSD: makerumpif.sh,v 1.5 2010/09/01 19:32:11 pooka Exp $\t*/\n\n") > file
 	printf("/*\n * Automatically generated.  DO NOT EDIT.\n") > file
-	genstr = "$NetBSD: makerumpif.sh,v 1.4 2009/10/15 00:29:19 pooka Exp $"
+	genstr = "$NetBSD: makerumpif.sh,v 1.5 2010/09/01 19:32:11 pooka Exp $"
 	gsub("\\$", "", genstr)
 	printf(" * from: %s\n", srcstr) > file
 	printf(" * by:   %s\n", genstr) > file
@@ -91,9 +91,9 @@ NR == 1 {
 }
 
 $1 == "NAME"{myname = $2;next}
-$1 == "PUBHDR"{pubhdr = rumptop "/" $2;next}
-$1 == "PRIVHDR"{privhdr = rumptop "/" $2;next}
-$1 == "WRAPPERS"{gencalls = rumptop "/" $2;next}
+$1 == "PUBHDR"{pubhdr = rumptop "/" $2;print pubhdr;next}
+$1 == "PRIVHDR"{privhdr = rumptop "/" $2;print privhdr;next}
+$1 == "WRAPPERS"{gencalls = rumptop "/" $2;print gencalls;next}
 
 /^;/{next}
 /\\$/{sub("\\\n", "");getline nextline;$0 = $0 nextline}
