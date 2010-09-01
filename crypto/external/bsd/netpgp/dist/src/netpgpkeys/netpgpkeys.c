@@ -179,6 +179,10 @@ pobj(FILE *fp, mj_t *obj, int depth)
 {
 	int	i;
 
+	if (obj == NULL) {
+		(void) fprintf(stderr, "No object found\n");
+		return;
+	}
 	for (i = 0 ; i < depth ; i++) {
 		p(fp, " ", NULL);
 	}
@@ -332,7 +336,9 @@ match_keys(netpgp_t *netpgp, FILE *fp, char *f, const int psigs)
 	from = to = tok = 0;
 	/* convert from string into an mj structure */
 	(void) mj_parse(&ids, json, &from, &to, &tok);
-	idc = mj_arraycount(&ids);
+	if ((idc = mj_arraycount(&ids)) == 1 && strchr(json, '{') == NULL) {
+		idc = 0;
+	}
 	(void) fprintf(fp, "%d key%s found\n", idc, (idc == 1) ? "" : "s");
 	for (i = 0 ; i < idc ; i++) {
 		formatobj(fp, &ids.value.v[i], psigs);
@@ -474,6 +480,7 @@ setoption(netpgp_t *netpgp, prog_t *p, int val, char *arg, int *homeset)
 		netpgp_setvar(netpgp, "res", arg);
 		break;
 	case SSHKEYFILE:
+		netpgp_setvar(netpgp, "ssh keys", "1");
 		netpgp_setvar(netpgp, "sshkeyfile", arg);
 		break;
 	case OPS_DEBUG:
@@ -483,6 +490,7 @@ setoption(netpgp_t *netpgp, prog_t *p, int val, char *arg, int *homeset)
 		p->cmd = HELP_CMD;
 		break;
 	}
+	return 1;
 }
 
 /* we have -o option=value -- parse, and process */
@@ -548,7 +556,7 @@ main(int argc, char **argv)
 		if (ch >= LIST_KEYS) {
 			/* getopt_long returns 0 for long options */
 			if (!setoption(&netpgp, &p, options[optindex].val, optarg, &homeset)) {
-				(void) fprintf(stderr, "Bad option\n");
+				(void) fprintf(stderr, "Bad setoption result %d\n", ch);
 			}
 		} else {
 			switch (ch) {
@@ -566,7 +574,7 @@ main(int argc, char **argv)
 				break;
 			case 'o':
 				if (!parse_option(&netpgp, &p, optarg, &homeset)) {
-					(void) fprintf(stderr, "Bad option\n");
+					(void) fprintf(stderr, "Bad parse_option\n");
 				}
 				break;
 			case 's':
