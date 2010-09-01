@@ -1,4 +1,4 @@
-/*      $NetBSD: lwproc.c,v 1.1 2010/09/01 19:37:58 pooka Exp $	*/
+/*      $NetBSD: lwproc.c,v 1.2 2010/09/01 21:16:56 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lwproc.c,v 1.1 2010/09/01 19:37:58 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lwproc.c,v 1.2 2010/09/01 21:16:56 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -319,6 +319,9 @@ rump_lwproc_releaselwp(void)
 {
 	struct proc *p;
 	struct lwp *l = curlwp;
+
+	if (l->l_refcnt == 0 && l->l_flag & LW_WEXIT)
+		panic("releasing non-pertinent lwp");
 
 	p = l->l_proc;
 	mutex_enter(p->p_lock);
