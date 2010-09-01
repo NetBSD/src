@@ -1,4 +1,4 @@
-/*	$NetBSD: gdrom.c,v 1.29 2010/09/01 12:25:27 tsutsui Exp $	*/
+/*	$NetBSD: gdrom.c,v 1.30 2010/09/01 15:08:22 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt
@@ -33,13 +33,14 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: gdrom.c,v 1.29 2010/09/01 12:25:27 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gdrom.c,v 1.30 2010/09/01 15:08:22 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 
 #include <sys/buf.h>
+#include <sys/bufq.h>
 #include <sys/ioctl.h>
 #include <sys/fcntl.h>
 #include <sys/disklabel.h>
@@ -74,10 +75,12 @@ const struct cdevsw gdrom_cdevsw = {
 
 struct gdrom_softc {
 	device_t sc_dev;	/* generic device info */
-	struct disk dkdev;	/* generic disk info */
+	struct disk sc_dk;	/* generic disk info */
+	struct bufq_state *sc_bufq;	/* device buffer queue */
 	struct buf curbuf;	/* state of current I/O operation */
 
 	int is_open, is_busy;
+	bool is_active;
 	int openpart_start;	/* start sector of currently open partition */
 
 	int cmd_active;
@@ -126,6 +129,7 @@ int	gdrom_read_toc(struct gdrom_softc *, struct gd_toc *);
 int	gdrom_read_sectors(struct gdrom_softc *, void *, int, int, int *);
 int	gdrom_mount_disk(struct gdrom_softc *);
 int	gdrom_intr(void *);
+void	gdrom_start(struct gdrom_softc *);
 
 int gdrom_getstat(void)
 {
@@ -389,11 +393,13 @@ gdromattach(device_t parent, device_t self, void *aux)
 	sc = device_private(self);
 	sc->sc_dev = self;
 
+	bufq_alloc(&sc->sc_bufq, "disksort", BUFQ_SORT_RAWBLOCK);
+
 	/*
 	 * Initialize and attach the disk structure.
 	 */
-	disk_init(&sc->dkdev, device_xname(self), &gdromdkdriver);
-	disk_attach(&sc->dkdev);
+	disk_init(&sc->sc_dk, device_xname(self), &gdromdkdriver);
+	disk_attach(&sc->sc_dk);
 
 	/*
 	 * reenable disabled drive
@@ -475,7 +481,7 @@ void
 gdromstrategy(struct buf *bp)
 {
 	struct gdrom_softc *sc;
-	int s, unit, error, resid;
+	int s, unit;
 #ifdef GDROMDEBUG
 	printf("GDROM: strategy\n");
 #endif
@@ -494,24 +500,57 @@ gdromstrategy(struct buf *bp)
 	    bp->b_bcount>>11, bp->b_bcount);
 #endif
 	s = splbio();
-	while (sc->is_busy)
-		tsleep(&sc->is_busy, PRIBIO, "gdbusy", 0);
-	sc->is_busy = 1;
+	bufq_put(sc->sc_bufq, bp);
 	splx(s);
-
-	if ((error = gdrom_read_sectors(sc, bp->b_data, bp->b_rawblkno,
-	    bp->b_bcount >> 11, &resid)))
-		bp->b_error = error;
-
-	sc->is_busy = 0;
-	wakeup(&sc->is_busy);
-	bp->b_resid = resid;
-	biodone(bp);
+	if (!sc->is_active)
+		gdrom_start(sc);
 	return;
 
  done:
 	bp->b_resid = bp->b_bcount;
 	biodone(bp);
+}
+
+void
+gdrom_start(struct gdrom_softc *sc)
+{
+	struct buf *bp;
+	int error, resid, s;
+
+	sc->is_active = true;
+
+	for (;;) {
+		s = splbio();
+		bp = bufq_get(sc->sc_bufq);
+		if (bp == NULL) {
+			splx(s);
+			break;
+		}
+
+		while (sc->is_busy)
+			tsleep(&sc->is_busy, PRIBIO, "gdbusy", 0);
+		sc->is_busy = 1;
+		disk_busy(&sc->sc_dk);
+		splx(s);
+
+		error = gdrom_read_sectors(sc, bp->b_data, bp->b_rawblkno,
+		    bp->b_bcount >> 11, &resid);
+		bp->b_error = error;
+		bp->b_resid = resid;
+		if (error != 0)
+			bp->b_resid = bp->b_bcount;
+
+		sc->is_busy = 0;
+		wakeup(&sc->is_busy);
+		
+		s = splbio();
+		disk_unbusy(&sc->sc_dk, bp->b_bcount - bp->b_resid,
+		    (bp->b_flags & B_READ) != 0);
+		splx(s);
+		biodone(bp);
+	}
+
+	sc->is_active = false;
 }
 
 int
