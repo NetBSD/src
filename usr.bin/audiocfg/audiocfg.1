@@ -1,4 +1,4 @@
-.\"	$NetBSD: audiocfg.1,v 1.1 2010/08/31 14:57:26 wiz Exp $
+.\"	$NetBSD: audiocfg.1,v 1.2 2010/09/01 07:50:33 wiz Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd August 31, 2010
+.Dd September 1, 2010
 .Dt AUDIOCFG 1
 .Os
 .Sh NAME
@@ -39,11 +39,9 @@
 .Sh DESCRIPTION
 The
 .Nm
-utility helps maintaining a
-.Pa /dev/audio
-symlink.
+utility helps maintaining the audio and mixer device symlinks.
 Run without arguments, it lists the available audio devices and shows
-the current default audio device.
+the currently selected default audio device.
 If given an
 .Ar index
 argument, that device is set as default audio device.
@@ -61,8 +59,23 @@ to work.
 Symlink to default audio device.
 .It Pa /dev/audio[0-9]*
 Available audio devices.
+.It Pa /dev/audioctl
+Symlink to default audio control device.
+.It Pa /dev/audioctl[0-9]*
+Available audio control devices.
 .It Pa /dev/drvctl
 Used for finding the correlating audio driver to an audio device.
+.It Pa /dev/mixer
+Symlink to default mixer device.
+.It Pa /dev/mixer[0-9]*
+Available mixer devices.
+.It Pa /dev/sound
+Symlink to default audio device (for the difference to
+.Pa /dev/audio ,
+see
+.Xr audio 4 ) .
+.It Pa /dev/sound[0-9]*
+Available audio devices.
 .El
 .Sh SEE ALSO
 .Xr audioplay 1 ,
