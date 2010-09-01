@@ -1,4 +1,4 @@
-/*  $NetBSD: msg.c,v 1.2 2010/08/27 09:58:17 manu Exp $ */
+/*  $NetBSD: msg.c,v 1.3 2010/09/01 14:57:24 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010 Emmanuel Dreyfus. All rights reserved.
@@ -85,7 +85,7 @@ perfuse_recv_early(fd, len)
 		return NULL;
 
 	if ((buf = malloc(len + 1)) == NULL)
-		err(EX_OSERR, "malloc(%d) failed", len);
+		err(EX_OSERR, "malloc(%zd) failed", len);
 
 	if (read(fd, buf, len) != len) {
 		DWARN("short read");
@@ -226,7 +226,8 @@ perfuse_xchg_pb(pu, pm, expected_len, reply)
 	opcode = fih->opcode;
 
 	if (perfuse_diagflags & PDF_FUSE)
-		DPRINTF("> unique = %lld, nodeid = %lld, opcode = %s (%d)\n",
+		DPRINTF("> unique = %"PRId64", nodeid = %"PRId64", "
+			"opcode = %s (%d)\n",
 			unique_in, nodeid, perfuse_opname(opcode), opcode);
 
 	if (perfuse_diagflags & PDF_DUMP)
@@ -234,7 +235,7 @@ perfuse_xchg_pb(pu, pm, expected_len, reply)
 
 #endif /* PERFUSE_DEBUG */
 
-	fd = (int)perfuse_getspecific(pu);
+	fd = (int)(long)perfuse_getspecific(pu);
 
 	if (perfuse_inloop(pu))
 		error = xchg_pb_inloop(pu, pb, fd, reply);
@@ -252,7 +253,8 @@ perfuse_xchg_pb(pu, pm, expected_len, reply)
 	unique_out = foh->unique;	
 
 	if (perfuse_diagflags & PDF_FUSE)
-		DPRINTF("< unique = %lld, nodeid = %lld, opcode = %s (%d), "
+		DPRINTF("< unique = %"PRId64", nodeid = %"PRId64", "
+			"opcode = %s (%d), "
 			"error = %d\n", unique_out, nodeid, 
 			perfuse_opname(opcode), opcode, error);
 
@@ -260,10 +262,11 @@ perfuse_xchg_pb(pu, pm, expected_len, reply)
 		perfuse_hexdump((char *)foh, foh->len);
 
 	if (unique_in != unique_out) {
-		printf("%s: packet mismatch unique %lld vs %lld\n",
+		printf("%s: packet mismatch unique %"PRId64" vs %"PRId64"\n",
 		     __func__, unique_in, unique_out);
 		abort();
-		errx(EX_SOFTWARE, "%s: packet mismatch unique %lld vs %lld\n",
+		errx(EX_SOFTWARE, "%s: packet mismatch unique "
+		     "%"PRId64" vs %"PRId64"\n",
 		     __func__, unique_in, unique_out);
 	}
 #endif /* PERFUSE_DEBUG */
@@ -272,7 +275,7 @@ perfuse_xchg_pb(pu, pm, expected_len, reply)
 	    (foh->len - sizeof(*foh) < expected_len) &&
 	    (foh->error == 0)) {
 		DERRX(EX_PROTOCOL, 
-		     "Unexpected short reply: received %d bytes, expected %d",
+		     "Unexpected short reply: received %zd bytes, expected %zd",
 		     foh->len - sizeof(*foh), expected_len);
 	}
 
@@ -588,7 +591,7 @@ perfuse_gotframe(pu, pb)
 	len = sizeof(*foh);
 	PUFFS_FRAMEBUF_GETWINDOW(pb, 0, (void **)&foh, &len);
 
-	DWARNX("Unexpected frame: unique = %lld, error = %d", 
+	DWARNX("Unexpected frame: unique = %"PRId64", error = %d", 
 	       foh->unique, foh->error);
 #ifdef PERFUSE_DEBUG
 	perfuse_hexdump((char *)(void *)foh, foh->len);

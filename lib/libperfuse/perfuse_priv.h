@@ -1,4 +1,4 @@
-/*  $NetBSD: perfuse_priv.h,v 1.3 2010/08/27 09:58:17 manu Exp $ */
+/*  $NetBSD: perfuse_priv.h,v 1.4 2010/09/01 14:57:24 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010 Emmanuel Dreyfus. All rights reserved.
@@ -59,8 +59,8 @@ struct perfuse_state {
 	char *ps_filesystemtype;
 	int ps_mountflags;
 	uint64_t ps_unique;
-	uint32_t ps_readahead;
-	uint32_t ps_write;
+	size_t ps_readahead;
+	size_t ps_write;
 	perfuse_new_msg_fn ps_new_msg;
 	perfuse_xchg_msg_fn ps_xchg_msg;
 	perfuse_destroy_msg_fn ps_destroy_msg;

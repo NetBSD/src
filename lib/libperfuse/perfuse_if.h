@@ -1,4 +1,4 @@
-/*  $NetBSD: perfuse_if.h,v 1.3 2010/08/27 09:58:17 manu Exp $ */
+/*  $NetBSD: perfuse_if.h,v 1.4 2010/09/01 14:57:24 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010 Emmanuel Dreyfus. All rights reserved.
@@ -146,7 +146,7 @@ struct perfuse_callbacks {
  * mount request
  */
 struct perfuse_mount_out {
-        uint32_t pmo_len;
+        size_t pmo_len;
         int32_t pmo_error;  
         uint64_t pmo_unique;
 	char pmo_magic[sizeof(PERFUSE_MOUNT_MAGIC)];
