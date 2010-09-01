@@ -1,4 +1,4 @@
-/*	$NetBSD: t_cmsg.c,v 1.14 2010/08/27 10:03:14 pgoyette Exp $	*/
+/*	$NetBSD: t_cmsg.c,v 1.15 2010/09/01 19:41:28 pooka Exp $	*/
 
 #include <sys/types.h>
 #include <sys/mount.h>
@@ -92,7 +92,8 @@ ATF_TC_BODY(cmsg_sendfd, tc)
 	rump_init();
 
 	/* create first (non-proc0) process to be used in test */
-	l1 = rump_pub_newproc_switch();
+	RZ(rump_pub_lwproc_newproc());
+	l1 = rump_pub_lwproc_curlwp();
 
 	/* create unix socket and bind it to a path */
 	memset(&sun, 0, sizeof(sun));
@@ -108,7 +109,8 @@ ATF_TC_BODY(cmsg_sendfd, tc)
 		atf_tc_fail_errno("socket 1 listen");
 
 	/* create second process for test */
-	l2 = rump_pub_newproc_switch();
+	RZ(rump_pub_lwproc_newproc());
+	l2 = rump_pub_lwproc_curlwp();
 
 	/* connect to unix domain socket */
 	memset(&sun, 0, sizeof(sun));
@@ -157,7 +159,7 @@ ATF_TC_BODY(cmsg_sendfd, tc)
 	*(int *)CMSG_DATA(cmp) = -1;
 
 	/* switch back to original proc */
-	rump_pub_lwp_switch(l1);
+	rump_pub_lwproc_switch(l1);
 
 	/* accept connection and read fd */
 	sl = sizeof(sun);

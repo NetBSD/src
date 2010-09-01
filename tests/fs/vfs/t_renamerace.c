@@ -1,4 +1,4 @@
-/*	$NetBSD: t_renamerace.c,v 1.11 2010/08/26 18:06:44 pooka Exp $	*/
+/*	$NetBSD: t_renamerace.c,v 1.12 2010/09/01 19:41:28 pooka Exp $	*/
 
 /*
  * Modified for rump and atf from a program supplied
@@ -25,13 +25,14 @@
 #include "../../h_macros.h"
 
 static volatile int quittingtime;
+pid_t wrkpid;
 
 static void *
 w1(void *arg)
 {
 	int fd;
 
-	rump_pub_lwp_alloc_and_switch(0, 10);
+	rump_pub_lwproc_newlwp(wrkpid);
 
 	while (!quittingtime) {
 		fd = rump_sys_open("rename.test1",
@@ -49,7 +50,7 @@ static void *
 w1_dirs(void *arg)
 {
 
-	rump_pub_lwp_alloc_and_switch(0, 10);
+	rump_pub_lwproc_newlwp(wrkpid);
 
 	while (!quittingtime) {
 		if (rump_sys_mkdir("rename.test1", 0777) == -1)
@@ -64,7 +65,7 @@ static void *
 w2(void *arg)
 {
 
-	rump_pub_lwp_alloc_and_switch(0, 11);
+	rump_pub_lwproc_newlwp(wrkpid);
 
 	while (!quittingtime) {
 		rump_sys_rename("rename.test1", "rename.test2");
@@ -122,6 +123,9 @@ renamerace_dirs(const atf_tc_t *tc, const char *mp)
 	if (FSTYPE_FFS(tc) || FSTYPE_EXT2FS(tc) || FSTYPE_LFS(tc) ||
 	    FSTYPE_MSDOS(tc))
 		atf_tc_expect_signal(-1, "PR kern/43626");
+
+	RZ(rump_pub_lwproc_newproc());
+	RL(wrkpid = rump_sys_getpid());
 
 	RL(rump_sys_chdir(mp));
 	pthread_create(&pt1, NULL, w1_dirs, NULL);

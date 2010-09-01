@@ -1,4 +1,4 @@
-/*	$NetBSD: t_renamerace.c,v 1.8 2010/07/14 21:39:31 pooka Exp $	*/
+/*	$NetBSD: t_renamerace.c,v 1.9 2010/09/01 19:41:27 pooka Exp $	*/
 
 /*
  * Modified for rump and atf from a program supplied
@@ -33,13 +33,14 @@ ATF_TC_HEAD(renamerace2, tc)
 }
 
 static volatile int quittingtime = 0;
+static pid_t wrkpid;
 
 static void *
 r2w1(void *arg)
 {
 	int fd;
 
-	rump_pub_lwp_alloc_and_switch(0, 0);
+	rump_pub_lwproc_newlwp(wrkpid);
 
 	fd = rump_sys_open("/file", O_CREAT | O_RDWR, 0777);
 	if (fd == -1)
@@ -61,7 +62,7 @@ r2w2(void *arg)
 {
 	int fd;
 
-	rump_pub_lwp_alloc_and_switch(0, 0);
+	rump_pub_lwproc_newlwp(wrkpid);
 
 	while (!quittingtime) {
 		fd = rump_sys_open("/dir/file1", O_RDWR);
@@ -104,6 +105,8 @@ ATF_TC_BODY(renamerace2, tc)
 	if (rump_sys_mkdir("/dir", 0777) == -1)
 		atf_tc_fail_errno("cannot create directory");
 
+	RZ(rump_pub_lwproc_newproc());
+	RL(wrkpid = rump_sys_getpid());
 	pthread_create(&pt[0], NULL, r2w1, NULL);
 	pthread_create(&pt[1], NULL, r2w2, NULL);
 

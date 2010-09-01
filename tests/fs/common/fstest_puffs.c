@@ -1,4 +1,4 @@
-/*	$NetBSD: fstest_puffs.c,v 1.2 2010/07/30 16:15:05 pooka Exp $	*/
+/*	$NetBSD: fstest_puffs.c,v 1.3 2010/09/01 19:41:27 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -72,8 +72,7 @@ readshovel(void *arg)
 	phdr = (void *)buf;
 	preq = (void *)buf;
 
-	/* use static thread id */
-	rump_pub_lwp_alloc_and_switch(0, 10);
+	rump_pub_lwproc_newlwp(0);
 
 	for (;;) {
 		ssize_t n;
@@ -114,8 +113,7 @@ writeshovel(void *arg)
 	size_t toread;
 	int comfd, puffsfd;
 
-	/* use static thread id */
-	rump_pub_lwp_alloc_and_switch(0, 11);
+	rump_pub_lwproc_newlwp(0);
 
 	comfd = args->pta_servfd;
 	puffsfd = args->pta_rumpfd;
