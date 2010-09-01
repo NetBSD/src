@@ -1,4 +1,4 @@
-/*	$NetBSD: lwp.h,v 1.137 2010/07/08 12:23:31 rmind Exp $	*/
+/*	$NetBSD: lwp.h,v 1.138 2010/09/01 19:37:58 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2010
@@ -240,6 +240,7 @@ extern lwp_t lwp0;			/* LWP for proc0 */
 #define	LW_UNPARKED	0x10000000 /* Unpark op pending */
 #define	LW_SA_YIELD	0x40000000 /* LWP on VP is yielding */
 #define	LW_SA_IDLE	0x80000000 /* VP is idle */
+#define	LW_RUMP_CLEAR	LW_SA_IDLE /* clear curlwp in rump scheduler */
 
 /* The second set of flags is kept in l_pflag. */
 #define	LP_KTRACTIVE	0x00000001 /* Executing ktrace operation */

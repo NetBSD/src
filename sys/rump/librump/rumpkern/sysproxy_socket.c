@@ -1,4 +1,4 @@
-/*	$NetBSD: sysproxy_socket.c,v 1.7 2010/08/11 11:51:06 pgoyette Exp $	*/
+/*	$NetBSD: sysproxy_socket.c,v 1.8 2010/09/01 19:37:59 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysproxy_socket.c,v 1.7 2010/08/11 11:51:06 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysproxy_socket.c,v 1.8 2010/09/01 19:37:59 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -388,14 +388,14 @@ handle_syscall(void *arg)
 
 	callp = rump_sysent + req->rpc_sysnum;
 	mylwp = curlwp;
-	l = rump_newproc_switch();
+	rump_lwproc_newproc();
 	rump_set_vmspace(&rump_sysproxy_vmspace);
 
 	resp.rpc_retval = 0; /* default */
 	resp.rpc_error = callp->sy_call(l, (void *)req->rpc_data,
 	    &resp.rpc_retval);
-	rump_lwp_release(l);
-	rump_lwp_switch(mylwp);
+	rump_lwproc_releaselwp();
+	rump_lwproc_switch(mylwp);
 	kmem_free(req, req->rpc_head.rpch_flen);
 
 	dosend(sock, qent, (uint8_t *)&resp, sizeof(resp), false);

@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_private.h,v 1.54 2010/06/14 21:04:56 pooka Exp $	*/
+/*	$NetBSD: rump_private.h,v 1.55 2010/09/01 19:37:58 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -93,8 +93,6 @@ int		rump_component_count(enum rump_component_type);
 void		rump_gettime(struct timespec *);
 void		rump_getuptime(struct timespec *);
 
-void		rump_lwp_free(struct lwp *);
-lwpid_t		rump_nextlid(void);
 void		rump_set_vmspace(struct vmspace *);
 
 typedef void	(*rump_proc_vfs_init_fn)(struct proc *);
@@ -109,6 +107,8 @@ extern void *rump_sysproxy_arg;
 
 int		rump_sysproxy_copyout(const void *, void *, size_t);
 int		rump_sysproxy_copyin(const void *, void *, size_t);
+
+struct lwp *	rump__lwproc_allockernlwp(void);
 
 void	rump_cpus_bootstrap(int);
 void	rump_scheduler_init(void);
