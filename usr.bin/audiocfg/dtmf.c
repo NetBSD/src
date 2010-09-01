@@ -1,4 +1,4 @@
-/* $NetBSD: dtmf.c,v 1.1 2010/09/01 09:04:16 jmcneill Exp $ */
+/* $NetBSD: dtmf.c,v 1.2 2010/09/01 21:54:00 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,6 +26,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/endian.h>
+
 #include <fcntl.h>
 #include <math.h>
 #include <stdio.h>
@@ -50,9 +52,10 @@ dtmf_create(int16_t *buf, unsigned int sample_rate,
 		for (c = 0; c < channels; c++) {
 			if ((chanmask & (1 << c)) == 0)
 				continue;
-			buf[c] = 
+			buf[c] = htole16(
 			    (sin(i * PI2 * (freq1 / sample_rate)) +
-			     sin(i * PI2 * (freq2 / sample_rate))) * 16383;
+			     sin(i * PI2 * (freq2 / sample_rate))) * 16383
+					);
 		}
 		buf += channels;
 	}
