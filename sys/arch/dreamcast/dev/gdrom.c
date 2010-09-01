@@ -1,4 +1,4 @@
-/*	$NetBSD: gdrom.c,v 1.32 2010/09/01 15:40:06 tsutsui Exp $	*/
+/*	$NetBSD: gdrom.c,v 1.33 2010/09/01 16:23:15 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: gdrom.c,v 1.32 2010/09/01 15:40:06 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gdrom.c,v 1.33 2010/09/01 16:23:15 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,8 +53,8 @@ __KERNEL_RCSID(0, "$NetBSD: gdrom.c,v 1.32 2010/09/01 15:40:06 tsutsui Exp $");
 
 #include "ioconf.h"
 
-int	gdrommatch(device_t, cfdata_t, void *);
-void	gdromattach(device_t, device_t, void *);
+static int  gdrommatch(device_t, cfdata_t, void *);
+static void gdromattach(device_t, device_t, void *);
 
 dev_type_open(gdromopen);
 dev_type_close(gdromclose);
@@ -121,18 +121,23 @@ struct gd_toc {
 #define GDROM_CNTHI	GDROM(0x94)
 #define GDROM_COND	GDROM(0x9c)
 
-int	gdrom_getstat(void);
-int	gdrom_do_command(struct gdrom_softc *, void *, void *, unsigned int,
-	    int *);
-int	gdrom_command_sense(struct gdrom_softc *, void *, void *, unsigned int,
-	    int *);
-int	gdrom_read_toc(struct gdrom_softc *, struct gd_toc *);
-int	gdrom_read_sectors(struct gdrom_softc *, void *, int, int, int *);
-int	gdrom_mount_disk(struct gdrom_softc *);
-int	gdrom_intr(void *);
-void	gdrom_start(struct gdrom_softc *);
+#if 0
+static int gdrom_getstat(void);
+#endif
+static int gdrom_do_command(struct gdrom_softc *, void *, void *,
+    unsigned int, int *);
+static int gdrom_command_sense(struct gdrom_softc *, void *, void *,
+    unsigned int, int *);
+static int gdrom_read_toc(struct gdrom_softc *, struct gd_toc *);
+static int gdrom_read_sectors(struct gdrom_softc *, void *, int, int,
+    int *);
+static int gdrom_mount_disk(struct gdrom_softc *);
+static int gdrom_intr(void *);
+static void gdrom_start(struct gdrom_softc *);
 
-int gdrom_getstat(void)
+#if 0
+int
+gdrom_getstat(void)
 {
 	uint8_t s1, s2, s3;
 
@@ -150,6 +155,7 @@ int gdrom_getstat(void)
 	else
 		return -1;
 }
+#endif
 
 int
 gdrom_intr(void *arg)
