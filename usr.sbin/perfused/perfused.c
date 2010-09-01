@@ -1,4 +1,4 @@
-/*  $NetBSD: perfused.c,v 1.3 2010/08/27 09:58:17 manu Exp $ */
+/*  $NetBSD: perfused.c,v 1.4 2010/09/01 14:57:24 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010 Emmanuel Dreyfus. All rights reserved.
@@ -137,8 +137,8 @@ get_mount_info(fd, pmi)
 	}
 
 #ifdef PERFUSE_DEBUG
-	DPRINTF("perfuse lengths: source = %d, target = %d, "
-	       "filesystemtype = %d, data = %d\n", 
+	DPRINTF("perfuse lengths: source = %zd, target = %zd, "
+	       "filesystemtype = %zd, data = %zd\n", 
 		pmo->pmo_source_len, 
 		pmo->pmo_target_len,
 		pmo->pmo_filesystemtype_len,
@@ -235,7 +235,7 @@ new_mount(fd)
 	if (puffs_framev_addfd(pu, fd, PUFFS_FBIO_READ|PUFFS_FBIO_WRITE) == -1)
 		DERR(EX_SOFTWARE, "puffs_framev_addfd failed");
 
-	perfuse_setspecific(pu, (void *)fd);
+	perfuse_setspecific(pu, (void *)(long)fd);
 
 	setproctitle("perfused %s", pmi.pmi_target);
 	(void)kill(getpid(), SIGINFO);		/* This is for -s option */

@@ -1,4 +1,4 @@
-/*  $NetBSD: subr.c,v 1.2 2010/08/26 13:29:01 manu Exp $ */
+/*  $NetBSD: subr.c,v 1.3 2010/09/01 14:57:24 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010 Emmanuel Dreyfus. All rights reserved.
@@ -141,7 +141,8 @@ perfuse_destroy_fh(opc, fh)
 		pnd->pnd_flags &= ~PND_OPEN;
 
 	if (pfh == NULL)
-		DERRX(EX_SOFTWARE, "%s: unexistant fh = %lld (double close?)",
+		DERRX(EX_SOFTWARE, 
+		      "%s: unexistant fh = %"PRId64" (double close?)",
 		      __func__, fh);
 	
 	return;

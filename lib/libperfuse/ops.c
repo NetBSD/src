@@ -1,4 +1,4 @@
-/*  $NetBSD: ops.c,v 1.4 2010/08/28 03:46:21 manu Exp $ */
+/*  $NetBSD: ops.c,v 1.5 2010/09/01 14:57:24 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010 Emmanuel Dreyfus. All rights reserved.
@@ -124,12 +124,12 @@ fuse_attr_to_vap(ps, vap, fa)
 	vap->va_fileid = fa->ino;
 	vap->va_size = fa->size;
 	vap->va_blocksize = fa->blksize;
-	vap->va_atime.tv_sec = (long)fa->atime;
-	vap->va_atime.tv_nsec = fa->atimensec;
-	vap->va_mtime.tv_sec = (long)fa->mtime;
-	vap->va_mtime.tv_nsec = fa->mtimensec;
-	vap->va_ctime.tv_sec = (long)fa->ctime;
-	vap->va_ctime.tv_nsec = fa->ctimensec;
+	vap->va_atime.tv_sec = (time_t)fa->atime;
+	vap->va_atime.tv_nsec = (long) fa->atimensec;
+	vap->va_mtime.tv_sec = (time_t)fa->mtime;
+	vap->va_mtime.tv_nsec = (long)fa->mtimensec;
+	vap->va_ctime.tv_sec = (time_t)fa->ctime;
+	vap->va_ctime.tv_nsec = (long)fa->ctimensec;
 	vap->va_birthtime.tv_sec = 0;
 	vap->va_birthtime.tv_nsec = 0;
 	vap->va_gen = 0; 
@@ -404,14 +404,14 @@ fuse_to_dirent(pu, opc, fd, fd_len)
 		}
 
 		dents->d_fileno = fd->ino;
-		dents->d_reclen = reclen;
+		dents->d_reclen = (unsigned short)reclen;
 		dents->d_namlen = fd->namelen;
 		dents->d_type = fd->type;
 		strlcpy(dents->d_name, fd->name, fd->namelen + 1);
 
 #ifdef PERFUSE_DEBUG
 		if (perfuse_diagflags & PDF_READDIR)
-			DPRINTF("%s: translated \"%s\" ino = %lld\n",
+			DPRINTF("%s: translated \"%s\" ino = %"PRId64"\n",
 				__func__, dents->d_name, dents->d_fileno);
 #endif
 
@@ -428,8 +428,10 @@ fuse_to_dirent(pu, opc, fd, fd_len)
 		len = FUSE_DIRENT_ALIGN(sizeof(*fd) + fd->namelen);
 #ifdef PERFUSE_DEBUG
 		if (perfuse_diagflags & PDF_READDIR)
-			DPRINTF("%s: record at %lld/0x%llx length = %d/0x%x. "
-				"next record at %lld/0x%llx, max %d/0x%x\n",
+			DPRINTF("%s: record at %"PRId64"/0x%"PRIx64" "
+				"length = %zd/0x%zx. "
+				"next record at %"PRId64"/0x%"PRIx64" "
+				"max %zd/0x%zx\n",
 				__func__, fd_offset, fd_offset, len, len,
 				fd_offset + len, fd_offset + len, 
 				fd_len, fd_len);
@@ -499,7 +501,7 @@ readdir_buffered(ps, opc, dent, readoff,
 
 #ifdef PERFUSE_DEBUG
 	if (perfuse_diagflags & PDF_READDIR)
-		DPRINTF("%s: readoff = %lld,  pnd->pnd_dirent_len = %d\n", 
+		DPRINTF("%s: readoff = %"PRId64",  pnd->pnd_dirent_len = %zd\n",
 			__func__, *readoff, pnd->pnd_dirent_len);
 #endif
 	if (*readoff >=  pnd->pnd_dirent_len) {
@@ -704,7 +706,7 @@ perfuse_fs_statvfs(pu, svfsb)
 	svfsb->f_asyncreads = ps->ps_asyncreads;
 	svfsb->f_asyncwrites = ps->ps_asyncwrites;
 
-	svfsb->f_fsidx.__fsid_val[0] = ps->ps_fsid;
+	svfsb->f_fsidx.__fsid_val[0] = (int32_t)ps->ps_fsid;
 	svfsb->f_fsidx.__fsid_val[1] = 0;
 	svfsb->f_fsid = ps->ps_fsid;
 	svfsb->f_namemax = MAXPATHLEN;	/* XXX */
@@ -1051,7 +1053,7 @@ perfuse_node_open(pu, opc, mode, pcr)
 #ifdef PERFUSE_DEBUG
 	if (perfuse_diagflags & PDF_FH)
 		DPRINTF("%s: opc = %p, file = \"%s\", "
-			"ino = %lld, fh = 0x%llx\n",
+			"ino = %"PRId64", fh = 0x%"PRIx64"\n",
 			__func__, (void *)opc, 
 			(char *)PNPATH((struct puffs_node *)opc),
 			PERFUSE_NODE_DATA(opc)->pnd_ino, foo->fh);
@@ -1125,7 +1127,7 @@ perfuse_node_close(pu, opc, flags, pcr)
 
 #ifdef PERFUSE_DEBUG
 	if (perfuse_diagflags & PDF_FH)
-		DPRINTF("%s: opc = %p, ino = %lld, fh = 0x%llx\n",
+		DPRINTF("%s: opc = %p, ino = %"PRId64", fh = 0x%"PRIx64"\n",
 			__func__, (void *)opc, pnd->pnd_ino, fh);
 #endif
 
@@ -1143,7 +1145,7 @@ perfuse_node_close(pu, opc, flags, pcr)
 
 #ifdef PERFUSE_DEBUG
 	if (perfuse_diagflags & PDF_FH)
-		DPRINTF("%s: opc = %p, ino = %lld, fh = 0x%llx\n",
+		DPRINTF("%s: opc = %p, ino = %"PRId64", fh = 0x%"PRIx64"\n",
 			 __func__, (void *)opc, pnd->pnd_ino, fri->fh);
 #endif
 
@@ -1152,7 +1154,8 @@ perfuse_node_close(pu, opc, flags, pcr)
 
 out:
 	if (error != 0)
-		DWARNX("%s: freed fh = 0x%llx but filesystem returned error = %d",
+		DWARNX("%s: freed fh = 0x%"PRIx64" but filesystem "
+		       "returned error = %d",
 		       __func__, fh, error);
 
 	ps->ps_destroy_msg(pm);
@@ -1204,8 +1207,8 @@ perfuse_node_access(pu, opc, mode, pcr)
 
 #ifdef PERFUSE_DEBUG
 		if (perfuse_diagflags & PDF_FH)
-			DPRINTF("%s: opc = %p, ino = %lld, fh = 0x%llx\n",
-				__func__, (void *)opc,
+			DPRINTF("%s: opc = %p, ino = %"PRId64", "
+				"fh = 0x%"PRIx64"\n", __func__, (void *)opc,
 				PERFUSE_NODE_DATA(opc)->pnd_ino, fgi->fh);
 #endif
 		if ((error = XCHG_MSG(ps, pu, pm, sizeof(*fao))) != 0) {
@@ -1355,13 +1358,13 @@ perfuse_node_setattr(pu, opc, vap, pcr)
 
 	if (vap->va_atime.tv_sec != (time_t)PUFFS_VNOVAL) {
 		fsi->atime = vap->va_atime.tv_sec;;
-		fsi->atimensec = vap->va_atime.tv_nsec;;
+		fsi->atimensec = (uint32_t)vap->va_atime.tv_nsec;;
 		fsi->valid |= (FUSE_FATTR_ATIME|FUSE_FATTR_ATIME_NOW);
 	}
 
 	if (vap->va_mtime.tv_sec != (time_t)PUFFS_VNOVAL) {
 		fsi->mtime = vap->va_mtime.tv_sec;;
-		fsi->mtimensec = vap->va_mtime.tv_nsec;;
+		fsi->mtimensec = (uint32_t)vap->va_mtime.tv_nsec;;
 		fsi->valid |= (FUSE_FATTR_MTIME|FUSE_FATTR_MTIME_NOW);
 	}
 
@@ -1419,7 +1422,7 @@ perfuse_node_poll(pu, opc, events)
 
 #ifdef PERFUSE_DEBUG
 	if (perfuse_diagflags & PDF_FH)
-		DPRINTF("%s: opc = %p, ino = %lld, fh = 0x%llx\n",
+		DPRINTF("%s: opc = %p, ino = %"PRId64", fh = 0x%"PRIx64"\n",
 			__func__, (void *)opc,	
 			PERFUSE_NODE_DATA(opc)->pnd_ino, fpi->fh);
 #endif
@@ -1515,7 +1518,7 @@ perfuse_node_fsync(pu, opc, pcr, flags, offlo, offhi)
 
 #ifdef PERFUSE_DEBUG
 	if (perfuse_diagflags & PDF_FH)
-		DPRINTF("%s: opc = %p, ino = %lld, fh = 0x%llx\n",
+		DPRINTF("%s: opc = %p, ino = %"PRId64", fh = 0x%"PRIx64"\n",
 			__func__, (void *)opc,
 			PERFUSE_NODE_DATA(opc)->pnd_ino, ffi->fh);
 #endif
@@ -1915,7 +1918,7 @@ perfuse_node_readdir(pu, opc, dent, readoff,
 
 #ifdef PERFUSE_DEBUG
 	if (perfuse_diagflags & PDF_FH)
-		DPRINTF("%s: opc = %p, ino = %lld, fh = 0x%llx\n",
+		DPRINTF("%s: opc = %p, ino = %"PRId64", fh = 0x%"PRIx64"\n",
 			__func__, (void *)opc,
 			PERFUSE_NODE_DATA(opc)->pnd_ino, fh);
 #endif
@@ -2066,7 +2069,7 @@ perfuse_node_readlink(pu, opc, pcr, linkname, linklen)
 	foh = GET_OUTHDR(ps, pm);
 	len = foh->len - sizeof(*foh) + 1;
 	if (len > *linklen)
-		DERRX(EX_PROTOCOL, "path len = %d too long", len);
+		DERRX(EX_PROTOCOL, "path len = %zd too long", len);
 		
 	*linklen = len;
 	(void)strlcpy(linkname, _GET_OUTPAYLOAD(ps, pm, char *), len);
@@ -2107,7 +2110,7 @@ perfuse_node_reclaim(pu, opc)
 
 #ifdef PERFUSE_DEBUG
 	if (perfuse_diagflags & PDF_RECLAIM)
-		DPRINTF("%s (nodeid %lld) reclaimed\n", 
+		DPRINTF("%s (nodeid %"PRId64") reclaimed\n", 
 		       (char *)PNPATH((struct puffs_node *)opc), pnd->pnd_ino);
 #endif
 
@@ -2120,7 +2123,7 @@ perfuse_node_reclaim(pu, opc)
 
 #ifdef PERFUSE_DEBUG
 	if (perfuse_diagflags & PDF_RECLAIM)
-		DPRINTF("%s (nodeid %lld) is %sreclaimed, "
+		DPRINTF("%s (nodeid %"PRId64") is %sreclaimed, "
 			"has childcount %d, %sopen\n", 
 		        (char *)PNPATH(pn), pnd->pnd_ino,
 		        pnd->pnd_flags & PND_RECLAIMED ? "" : "not ",
@@ -2128,7 +2131,7 @@ perfuse_node_reclaim(pu, opc)
 			pnd->pnd_flags & PND_OPEN ? "" : "not ");
 
 	if (pnd->pnd_flags & PND_OPEN)
-		DWARNX("%s: (nodeid %lld) %s is still open",
+		DWARNX("%s: (nodeid %"PRId64") %s is still open",
 		       __func__, pnd->pnd_ino, (char *)PNPATH(pn));
 #endif
 
@@ -2233,7 +2236,7 @@ perfuse_node_advlock(pu, opc, id, op, fl, flags)
 
 #ifdef PERFUSE_DEBUG
 	if (perfuse_diagflags & PDF_FH)
-		DPRINTF("%s: opc = %p, ino = %lld, fh = 0x%llx\n",
+		DPRINTF("%s: opc = %p, ino = %"PRId64", fh = 0x%"PRIx64"\n",
 			__func__, (void *)opc,
 			PERFUSE_NODE_DATA(opc)->pnd_ino, fli->fh);
 #endif
@@ -2292,7 +2295,7 @@ perfuse_node_read(pu, opc, buf, offset, resid, pcr, ioflag)
 	requested = *resid;
 	if ((ps->ps_readahead + requested) > ps->ps_max_readahead) {
 		if (perfuse_diagflags & PDF_REQUEUE)
-			DPRINTF("readahead = %d\n", ps->ps_readahead);
+			DPRINTF("readahead = %zd\n", ps->ps_readahead);
 		requeue_request(pu, opc, PCQ_READ);
 	}
 	ps->ps_readahead += requested;
@@ -2309,7 +2312,7 @@ perfuse_node_read(pu, opc, buf, offset, resid, pcr, ioflag)
 		fri = GET_INPAYLOAD(ps, pm, fuse_read_in);
 		fri->fh = perfuse_get_fh(opc);
 		fri->offset = offset;
-		fri->size = MIN(*resid, PAGE_SIZE - sizeof(*foh));
+		fri->size = (uint32_t)MIN(*resid, PAGE_SIZE - sizeof(*foh));
 		fri->read_flags = 0; /* XXX Unused by libfuse? */
 		fri->lock_owner = PERFUSE_NODE_DATA(opc)->pnd_lock_owner;
 		fri->flags = 0;
@@ -2317,7 +2320,7 @@ perfuse_node_read(pu, opc, buf, offset, resid, pcr, ioflag)
 
 #ifdef PERFUSE_DEBUG
 	if (perfuse_diagflags & PDF_FH)
-		DPRINTF("%s: opc = %p, ino = %lld, fh = 0x%llx\n",
+		DPRINTF("%s: opc = %p, ino = %"PRId64", fh = 0x%"PRIx64"\n",
 			__func__, (void *)opc,
 			PERFUSE_NODE_DATA(opc)->pnd_ino, fri->fh);
 #endif
@@ -2381,7 +2384,7 @@ perfuse_node_write(pu, opc, buf, offset, resid, pcr, ioflag)
 	requested = *resid;
 	if ((ps->ps_write + requested) > ps->ps_max_write) {
 		if (perfuse_diagflags & PDF_REQUEUE)
-			DPRINTF("write = %d\n", ps->ps_write);
+			DPRINTF("write = %zd\n", ps->ps_write);
 		requeue_request(pu, opc, PCQ_WRITE);
 	}
 	ps->ps_write += requested;
@@ -2405,7 +2408,7 @@ perfuse_node_write(pu, opc, buf, offset, resid, pcr, ioflag)
 		fwi = GET_INPAYLOAD(ps, pm, fuse_write_in);
 		fwi->fh = perfuse_get_fh(opc);
 		fwi->offset = offset;
-		fwi->size = data_len;
+		fwi->size = (uint32_t)data_len;
 		fwi->write_flags = (fwi->size % PAGE_SIZE) ? 0 : 1;
 		fwi->lock_owner = PERFUSE_NODE_DATA(opc)->pnd_lock_owner;
 		fwi->flags = 0;
@@ -2415,7 +2418,7 @@ perfuse_node_write(pu, opc, buf, offset, resid, pcr, ioflag)
 
 #ifdef PERFUSE_DEBUG
 	if (perfuse_diagflags & PDF_FH)
-		DPRINTF("%s: opc = %p, ino = %lld, fh = 0x%llx\n",
+		DPRINTF("%s: opc = %p, ino = %"PRId64", fh = 0x%"PRIx64"\n",
 			__func__, (void *)opc,
 			PERFUSE_NODE_DATA(opc)->pnd_ino, fwi->fh);
 #endif
