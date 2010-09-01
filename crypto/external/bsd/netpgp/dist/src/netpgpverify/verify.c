@@ -1,4 +1,4 @@
-/* $NetBSD: verify.c,v 1.14 2010/07/01 04:27:21 agc Exp $ */
+/* $NetBSD: verify.c,v 1.15 2010/09/01 17:25:57 agc Exp $ */
 
 /*-
  * Copyright (c) 2009,2010 The NetBSD Foundation, Inc.
@@ -323,6 +323,7 @@ main(int argc, char **argv)
 			netpgp_setvar(&netpgp, "results", optarg);
 			break;
 		case SSHKEYFILE:
+			netpgp_setvar(&netpgp, "ssh keys", "1");
 			netpgp_setvar(&netpgp, "sshkeyfile", optarg);
 			break;
 		case MAX_MEM_ALLOC:
