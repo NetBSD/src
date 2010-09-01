@@ -1,4 +1,4 @@
-.\" $NetBSD: mdoc.local,v 1.58 2010/08/07 18:57:12 wiz Exp $
+.\" $NetBSD: mdoc.local,v 1.59 2010/09/01 13:01:35 wiz Exp $
 .\"
 .\" Copyright (c) 2003, 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -87,6 +87,7 @@
 .ds doc-str-Lb-libiscsi         iSCSI protocol library (libiscsi, \-liscsi)
 .ds doc-str-Lb-libnetpgp        Netpgp signing, verification, encryption and decryption (libnetpgp, \-lnetpgp)
 .ds doc-str-Lb-libprop          Property Container Object Library (libprop, \-lprop)
+.ds doc-str-Lb-libperfuse       PUFFS enabled relay to FUSE Library (libperfuse, \-lperfuse)
 .ds doc-str-Lb-libpuffs         puffs Convenience Library (libpuffs, \-lpuffs)
 .ds doc-str-Lb-librefuse        File System in Userspace Convenience Library (librefuse, \-lrefuse)
 .ds doc-str-Lb-libssp           Buffer Overflow Protection Library (libssp, \-lssp)
