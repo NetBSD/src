@@ -1,4 +1,4 @@
-/*	$NetBSD: ukfs.c,v 1.52 2010/07/19 15:35:38 pooka Exp $	*/
+/*	$NetBSD: ukfs.c,v 1.53 2010/09/01 19:40:34 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2009  Antti Kantee.  All Rights Reserved.
@@ -74,7 +74,6 @@ struct ukfs {
 	void *ukfs_specific;
 
 	pthread_spinlock_t ukfs_spin;
-	pid_t ukfs_nextpid;
 	struct vnode *ukfs_cdir;
 	int ukfs_devfd;
 	char *ukfs_devpath;
@@ -124,26 +123,12 @@ ukfs_getspecific(struct ukfs *ukfs)
 #define pthread_spin_destroy(a)
 #endif
 
-static pid_t
-nextpid(struct ukfs *ukfs)
-{
-	pid_t npid;
-
-	pthread_spin_lock(&ukfs->ukfs_spin);
-	if (ukfs->ukfs_nextpid == 0)
-		ukfs->ukfs_nextpid++;
-	npid = ukfs->ukfs_nextpid++;
-	pthread_spin_unlock(&ukfs->ukfs_spin);
-
-	return npid;
-}
-
 static void
 precall(struct ukfs *ukfs)
 {
 	struct vnode *rvp, *cvp;
 
-	rump_pub_lwp_alloc_and_switch(nextpid(ukfs), 1);
+	rump_pub_lwproc_newproc();
 	rvp = ukfs_getrvp(ukfs);
 	pthread_spin_lock(&ukfs->ukfs_spin);
 	cvp = ukfs->ukfs_cdir;
@@ -160,7 +145,8 @@ postcall(struct ukfs *ukfs)
 	rvp = ukfs_getrvp(ukfs);
 	rump_pub_rcvp_set(NULL, rvp);
 	rump_pub_vp_rele(rvp);
-	rump_pub_lwp_release(rump_pub_lwp_curlwp());
+
+	rump_pub_lwproc_releaselwp();
 }
 
 struct ukfs_part {
@@ -685,19 +671,19 @@ ukfs_release(struct ukfs *fs, int flags)
 		mntflag = 0;
 		if (flags & UKFS_RELFLAG_FORCE)
 			mntflag = MNT_FORCE;
-		rump_pub_lwp_alloc_and_switch(nextpid(fs), 1);
+		rump_pub_lwproc_newproc();
 		rump_pub_vp_rele(fs->ukfs_rvp);
 		fs->ukfs_rvp = NULL;
 		rv = rump_sys_unmount(fs->ukfs_mountpath, mntflag);
 		if (rv == -1) {
 			error = errno;
 			rump_pub_vfs_root(fs->ukfs_mp, &fs->ukfs_rvp, 0);
-			rump_pub_lwp_release(rump_pub_lwp_curlwp());
+			rump_pub_lwproc_releaselwp();
 			ukfs_chdir(fs, fs->ukfs_mountpath);
 			errno = error;
 			return -1;
 		}
-		rump_pub_lwp_release(rump_pub_lwp_curlwp());
+		rump_pub_lwproc_releaselwp();
 	}
 
 	if (fs->ukfs_devpath) {
@@ -773,7 +759,7 @@ getmydents(struct vnode *vp, off_t *off, uint8_t *buf, size_t bufsize)
 	struct kauth_cred *cred;
 	
 	uio = rump_pub_uio_setup(buf, bufsize, *off, RUMPUIO_READ);
-	cred = rump_pub_cred_suserget();
+	cred = rump_pub_cred_create(0, 0, 0, NULL);
 	rv = RUMP_VOP_READDIR(vp, uio, cred, &eofflag, NULL, NULL);
 	rump_pub_cred_put(cred);
 	RUMP_VOP_UNLOCK(vp);

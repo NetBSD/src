@@ -1,4 +1,4 @@
-/*	$NetBSD: p2k.c,v 1.41 2010/06/24 13:03:05 hannken Exp $	*/
+/*	$NetBSD: p2k.c,v 1.42 2010/09/01 19:40:35 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2009  Antti Kantee.  All Rights Reserved.
@@ -141,7 +141,7 @@ makecn(const struct puffs_cn *pcn, int myflags)
 	cred = cred_create(pcn->pcn_cred);
 	/* LINTED: prehistoric types in first two args */
 	return rump_pub_makecn(pcn->pcn_nameiop, pcn->pcn_flags | myflags,
-	    pcn->pcn_name, pcn->pcn_namelen, cred, rump_pub_lwp_curlwp());
+	    pcn->pcn_name, pcn->pcn_namelen, cred, rump_pub_lwproc_curlwp());
 }
 
 static __inline void
@@ -158,15 +158,7 @@ makelwp(struct puffs_usermount *pu)
 	lwpid_t lid;
 
 	puffs_cc_getcaller(puffs_cc_getcc(pu), &pid, &lid);
-	rump_pub_lwp_alloc_and_switch(pid, lid);
-}
-
-/*ARGSUSED*/
-static void
-clearlwp(struct puffs_usermount *pu)
-{
-
-	rump_pub_lwp_release(rump_pub_lwp_curlwp());
+	rump_pub_allbetsareoff_setid(pid, lid);
 }
 
 static __inline struct p2k_vp_hash *
@@ -372,6 +364,8 @@ p2k_init(uint32_t puffs_flags)
 	if (p2m)
 		rump_init();
 
+	rump_pub_lwproc_newproc();
+
 	return p2m;
 }
 
@@ -463,7 +457,7 @@ setupfs(struct p2k_mount *p2m, const char *vfsname, const char *devpath,
 	puffs_setfhsize(pu, 0, PUFFS_FHFLAG_PASSTHROUGH);
 	puffs_setstacksize(pu, PUFFS_STACKSIZE_MIN);
 	puffs_fakecc = 1;
-	puffs_set_prepost(pu, makelwp, clearlwp);
+	puffs_set_prepost(pu, makelwp, NULL);
 	puffs_set_errnotify(pu, p2k_errcatcher);
 
 	puffs_setspecific(pu, p2m);
@@ -568,11 +562,14 @@ p2k_fs_unmount(struct puffs_usermount *pu, int flags)
 {
 	struct p2k_mount *p2m = puffs_getspecific(pu);
 	struct ukfs *fs = p2m->p2m_ukfs;
+	struct lwp *l;
 	int error = 0;
 
-	rump_pub_lwp_release(rump_pub_lwp_curlwp()); /* ukfs & curlwp tricks */
-
 	rump_pub_vp_rele(p2m->p2m_rvp);
+
+	l = rump_pub_lwproc_curlwp();
+	rump_pub_lwproc_switch(NULL); /* ukfs & curlwp tricks */
+
 	if (fs) {
 		if (ukfs_release(fs, 0) != 0) {
 			ukfs_release(fs, UKFS_RELFLAG_FORCE);
@@ -580,6 +577,7 @@ p2k_fs_unmount(struct puffs_usermount *pu, int flags)
 		}
 	}
 	p2m->p2m_ukfs = NULL;
+	rump_pub_lwproc_switch(l);
 
 	if (p2m->p2m_hasdebug) {
 		printf("-- rump kernel event counters --\n");
@@ -587,7 +585,6 @@ p2k_fs_unmount(struct puffs_usermount *pu, int flags)
 		printf("-- end of event counters --\n");
 	}
 
-	rump_pub_lwp_alloc_and_switch(0, 0);
 	return error;
 }
 
