@@ -32,7 +32,7 @@
 #include "opt_multiprocessor.h"
 #include "opt_sa.h"
 
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.1.2.11 2010/08/19 07:20:19 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.1.2.12 2010/09/01 00:59:42 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -89,7 +89,8 @@ volatile u_long cpus_paused = 0;
 static struct cpu_info *cpu_info_last = &cpu_info_store;
 
 struct cpu_info *
-cpu_info_alloc(struct pmap_tlb_info *ti, u_int cpu_id)
+cpu_info_alloc(struct pmap_tlb_info *ti, cpuid_t cpu_id, cpuid_t cpu_node_id,
+	cpuid_t cpu_core_id, cpuid_t cpu_smt_id)
 {
 	vaddr_t cpu_info_offset = (vaddr_t)&cpu_info_store & PAGE_MASK; 
 	struct pglist pglist;
@@ -126,6 +127,9 @@ cpu_info_alloc(struct pmap_tlb_info *ti, u_int cpu_id)
 	}
 
 	ci->ci_cpuid = cpu_id;
+	ci->ci_data.cpu_node_id = cpu_node_id;
+	ci->ci_data.cpu_core_id = cpu_core_id;
+	ci->ci_data.cpu_smt_id = cpu_smt_id;
 	ci->ci_cpu_freq = cpu_info_store.ci_cpu_freq;
 	ci->ci_cctr_freq = cpu_info_store.ci_cctr_freq;
         ci->ci_cycles_per_hz = cpu_info_store.ci_cycles_per_hz;
