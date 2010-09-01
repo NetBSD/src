@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.144 2010/06/23 08:36:03 pooka Exp $	*/
+/*	$NetBSD: emul.c,v 1.145 2010/09/01 19:37:58 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.144 2010/06/23 08:36:03 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.145 2010/09/01 19:37:58 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/null.h>
@@ -156,6 +156,25 @@ lwp_unsleep(lwp_t *l, bool cleanup)
 	KASSERT(mutex_owned(l->l_mutex));
 
 	(*l->l_syncobj->sobj_unsleep)(l, cleanup);
+}
+
+void
+lwp_update_creds(struct lwp *l)
+{
+	struct proc *p;
+	kauth_cred_t oldcred;
+
+	p = l->l_proc;
+	oldcred = l->l_cred;
+	l->l_prflag &= ~LPR_CRMOD;
+
+	mutex_enter(p->p_lock);
+	kauth_cred_hold(p->p_cred);
+	l->l_cred = p->p_cred;
+	mutex_exit(p->p_lock);
+
+	if (oldcred != NULL)
+		kauth_cred_free(oldcred);
 }
 
 vaddr_t
