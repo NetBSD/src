@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.39 2010/08/19 02:10:02 pooka Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.40 2010/09/01 16:56:19 chs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.39 2010/08/19 02:10:02 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.40 2010/09/01 16:56:19 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -125,7 +125,6 @@ genfs_getpages(void *v)
 	int i, error, npages;
 	const int flags = ap->a_flags;
 	struct vnode * const vp = ap->a_vp;
-	struct genfs_node * const gp = VTOG(vp);
 	struct uvm_object * const uobj = &vp->v_uobj;
 	kauth_cred_t const cred = curlwp->l_cred;		/* XXXUBC curlwp */
 	const bool async = (flags & PGO_SYNCIO) == 0;
@@ -133,6 +132,7 @@ genfs_getpages(void *v)
 	bool has_trans = false;
 	const bool overwrite = (flags & PGO_OVERWRITE) != 0;
 	const bool blockalloc = memwrite && (flags & PGO_NOBLOCKALLOC) == 0;
+	const bool glocked = (flags & PGO_GLOCKHELD) != 0;
 	UVMHIST_FUNC("genfs_getpages"); UVMHIST_CALLED(ubchist);
 
 	UVMHIST_LOG(ubchist, "vp %p off 0x%x/%x count %d",
@@ -211,6 +211,7 @@ startover:
 		int nfound;
 		struct vm_page *pg;
 
+		KASSERT(!glocked);
 		npages = *ap->a_count;
 #if defined(DEBUG)
 		for (i = 0; i < npages; i++) {
@@ -303,14 +304,19 @@ startover:
 	 * check if our idea of v_size is still valid.
 	 */
 
-	if (blockalloc) {
-		rw_enter(&gp->g_glock, RW_WRITER);
-	} else {
-		rw_enter(&gp->g_glock, RW_READER);
+	KASSERT(!glocked || genfs_node_wrlocked(vp));
+	if (!glocked) {
+		if (blockalloc) {
+			genfs_node_wrlock(vp);
+		} else {
+			genfs_node_rdlock(vp);
+		}
 	}
 	mutex_enter(&uobj->vmobjlock);
 	if (vp->v_size < origvsize) {
-		genfs_node_unlock(vp);
+		if (!glocked) {
+			genfs_node_unlock(vp);
+		}
 		if (pgs != pgs_onstack)
 			kmem_free(pgs, pgs_size);
 		goto startover;
@@ -318,7 +324,9 @@ startover:
 
 	if (uvn_findpages(uobj, origoffset, &npages, &pgs[ridx],
 	    async ? UFP_NOWAIT : UFP_ALL) != orignmempages) {
-		genfs_node_unlock(vp);
+		if (!glocked) {
+			genfs_node_unlock(vp);
+		}
 		KASSERT(async != 0);
 		genfs_rel_pages(&pgs[ridx], orignmempages);
 		mutex_exit(&uobj->vmobjlock);
@@ -339,7 +347,9 @@ startover:
 		}
 	}
 	if (i == npages) {
-		genfs_node_unlock(vp);
+		if (!glocked) {
+			genfs_node_unlock(vp);
+		}
 		UVMHIST_LOG(ubchist, "returning cached pages", 0,0,0,0);
 		npages += ridx;
 		goto out;
@@ -350,7 +360,9 @@ startover:
 	 */
 
 	if (overwrite) {
-		genfs_node_unlock(vp);
+		if (!glocked) {
+			genfs_node_unlock(vp);
+		}
 		UVMHIST_LOG(ubchist, "PGO_OVERWRITE",0,0,0,0);
 
 		for (i = 0; i < npages; i++) {
@@ -386,7 +398,9 @@ startover:
 		npgs = npages;
 		if (uvn_findpages(uobj, startoffset, &npgs, pgs,
 		    async ? UFP_NOWAIT : UFP_ALL) != npages) {
-			genfs_node_unlock(vp);
+			if (!glocked) {
+				genfs_node_unlock(vp);
+			}
 			KASSERT(async != 0);
 			genfs_rel_pages(pgs, npages);
 			mutex_exit(&uobj->vmobjlock);
@@ -584,7 +598,9 @@ loopdone:
 	nestiobuf_done(mbp, skipbytes, error);
 	if (async) {
 		UVMHIST_LOG(ubchist, "returning 0 (async)",0,0,0,0);
-		genfs_node_unlock(vp);
+		if (!glocked) {
+			genfs_node_unlock(vp);
+		}
 		error = 0;
 		goto out_err_free;
 	}
@@ -635,7 +651,9 @@ loopdone:
 			}
 		}
 	}
-	genfs_node_unlock(vp);
+	if (!glocked) {
+		genfs_node_unlock(vp);
+	}
 
 	putiobuf(mbp);
     }
