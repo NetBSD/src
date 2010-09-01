@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.150 2010/08/07 21:32:28 christos Exp $
+#	$NetBSD: Makefile,v 1.151 2010/09/01 16:01:27 agc Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
@@ -67,8 +67,8 @@ SUBDIR+=	librumpuser	# depends on libpthread
 .if (${MKCRYPTO} != "no")
 # these depend on libcrypto*, libz and libbz2
 SUBDIR+=	../crypto/external/bsd/openssh/lib
-# XXX Should restructure netpgp/lib to contain libmj and libnetpgp
 SUBDIR+=	../crypto/external/bsd/netpgp/libmj
+SUBDIR+=	.WAIT
 SUBDIR+=	../crypto/external/bsd/netpgp/lib
 .endif
 
