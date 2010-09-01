@@ -57,7 +57,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: keyring.c,v 1.45 2010/09/01 06:20:23 agc Exp $");
+__RCSID("$NetBSD: keyring.c,v 1.46 2010/09/01 17:25:57 agc Exp $");
 #endif
 
 #ifdef HAVE_FCNTL_H
@@ -821,6 +821,9 @@ const __ops_key_t *
 __ops_getkeybyid(__ops_io_t *io, const __ops_keyring_t *keyring,
 			   const uint8_t *keyid, unsigned *from, __ops_pubkey_t **pubkey)
 {
+	uint8_t	nullid[OPS_KEY_ID_SIZE];
+
+	(void) memset(nullid, 0x0, sizeof(nullid));
 	for ( ; keyring && *from < keyring->keyc; *from += 1) {
 		if (__ops_get_debug_level(__FILE__)) {
 			hexdump(io->errs, "keyring keyid", keyring->keys[*from].sigid, OPS_KEY_ID_SIZE);
@@ -834,7 +837,7 @@ __ops_getkeybyid(__ops_io_t *io, const __ops_keyring_t *keyring,
 			}
 			return &keyring->keys[*from];
 		}
-		if (memcmp(&keyring->keys[*from].encid, "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0", OPS_KEY_ID_SIZE) == 0) {
+		if (memcmp(&keyring->keys[*from].encid, nullid, sizeof(nullid)) == 0) {
 			continue;
 		}
 		if (memcmp(&keyring->keys[*from].encid, keyid, OPS_KEY_ID_SIZE) == 0 ||

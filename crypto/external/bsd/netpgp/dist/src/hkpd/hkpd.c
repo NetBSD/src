@@ -31,7 +31,6 @@
 #include <sys/param.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
-#include <sys/param.h>
 #include <sys/select.h>
 
 #include <netinet/in.h>
@@ -78,7 +77,7 @@ frompercent(char *in, size_t insize, char *out, size_t outsize)
 
 /* make into html */
 static int
-htmlify(char *buf, size_t size, const int code, const int get, const char *title, const int mr, const char *body)
+htmlify(char *buf, size_t size, const int code, const int get, const char *title, const char *out, const char *body)
 {
 	return snprintf(buf, size,
 		"%s %d %s\r\n"
@@ -90,13 +89,13 @@ htmlify(char *buf, size_t size, const int code, const int get, const char *title
 		HKP_HTTP_LEVEL, code, (code == HKP_SUCCESS) ? "OK" : "not found",
 		HKP_NAME, HKPD_VERSION,
 		(get) ? HKP_MIME_GET : HKP_MIME_INDEX,
-		(get || !mr) ? "" : HKP_MACHREAD,
+		(get || strcmp(out, "mr") != 0) ? "" : HKP_MACHREAD,
 		body);
 }
 
 /* send the response now */
 static int
-response(int sock, const int code, const char *search, const int get, char *buf, int cc, int mr)
+response(int sock, const int code, const char *search, const int get, char *buf, int cc, const char *out)
 {
 	char	outbuf[1024 * 512];
 	char	item[BUFSIZ];
@@ -109,13 +108,13 @@ response(int sock, const int code, const char *search, const int get, char *buf,
 			"Error handling request: No keys found for '%s'\r\n", search);
 		n = htmlify(outbuf, sizeof(outbuf), code, get,
 			"Error handling request\r\n",
-			mr,
+			out,
 			item);
 	} else {
 		(void) snprintf(item, sizeof(item), "Search results for '%s'", search);
 		n = htmlify(outbuf, sizeof(outbuf), code, get,
 			item,
-			mr,
+			out,
 			buf);
 	}
 	for (tot = 0 ; (wc = write(sock, &outbuf[tot], n - tot)) > 0 && tot < n ; tot += wc) {
@@ -203,20 +202,20 @@ hkpd(netpgp_t *netpgp, int sock4, int sock6)
 	struct sockaddr_in	from;
 	regmatch_t		searchmatches[10];
 	regmatch_t		opmatches[10];
-	regmatch_t		mrmatch[3];
+	regmatch_t		fmtmatch[3];
 	socklen_t		fromlen;
-	regex_t			machreadterm;
 	regex_t			searchterm;
+	regex_t			fmtterm;
 	regex_t			opterm;
 	regex_t			get;
 	fd_set			sockets;
 	char			search[BUFSIZ];
 	char			buf[BUFSIZ];
 	char			*cp;
+	char			fmt[10];
 	int			newsock;
 	int			sock;
 	int			code;
-	int			mr;
 	int			ok;
 	int			cc;
 	int			n;
@@ -225,12 +224,12 @@ hkpd(netpgp_t *netpgp, int sock4, int sock6)
 #define HTTPGET		"GET /pks/lookup\\?"
 #define OPTERM		"op=([a-zA-Z]+)"
 #define SEARCHTERM	"search=([^ \t&]+)"
-#define MACHREAD	"options=mr"
+#define FMT		"options=(mr|json)"
 
 	(void) regcomp(&get, HTTPGET, REG_EXTENDED);
 	(void) regcomp(&opterm, OPTERM, REG_EXTENDED);
 	(void) regcomp(&searchterm, SEARCHTERM, REG_EXTENDED);
-	(void) regcomp(&machreadterm, MACHREAD, REG_EXTENDED);
+	(void) regcomp(&fmtterm, FMT, REG_EXTENDED);
 	if (sock4 >= 0) {
 		listen(sock4, 32);
 	}
@@ -265,8 +264,12 @@ hkpd(netpgp_t *netpgp, int sock4, int sock6)
 			(void) fprintf(stderr, "no operation in request\n");
 			ok = 0;
 		}
-		if (ok) {
-			mr = (regexec(&machreadterm, buf, 3, mrmatch, 0) == 0);
+		if (ok && regexec(&fmtterm, buf, 3, fmtmatch, 0) == 0) {
+			(void) snprintf(fmt, sizeof(fmt), "%.*s",
+				(int)(fmtmatch[1].rm_eo - fmtmatch[1].rm_so),
+				&buf[(int)fmtmatch[1].rm_so]);
+		} else {
+			fmt[0] = 0x0;
 		}
 		if (ok && regexec(&searchterm, buf, 10, searchmatches, 0) != 0) {
 			(void) fprintf(stderr, "no search term in request\n");
@@ -286,26 +289,36 @@ hkpd(netpgp_t *netpgp, int sock4, int sock6)
 		if (strncmp(&buf[opmatches[1].rm_so], "vindex", 6) == 0) {
 			cc = 0;
 			netpgp_setvar(netpgp, "subkey sigs", "yes");
-			if ((cp = netpgp_get_key(netpgp, search, (mr) ? "mr" : "")) != NULL) {
+			if (strcmp(fmt, "json") == 0) {
+				if (netpgp_match_keys_json(netpgp, &cp, search, "human", 1)) {
+					cc = strlen(cp);
+					code = HKP_SUCCESS;
+				}
+			} else if ((cp = netpgp_get_key(netpgp, search, fmt)) != NULL) {
 				cc = strlen(cp);
 				code = HKP_SUCCESS;
 			}
-			response(newsock, code, search, 0, cp, cc, mr);
+			response(newsock, code, search, 0, cp, cc, fmt);
 			netpgp_unsetvar(netpgp, "subkey sigs");
 		} else if (strncmp(&buf[opmatches[1].rm_so], "index", 5) == 0) {
 			cc = 0;
 			netpgp_unsetvar(netpgp, "subkey sigs");
-			if ((cp = netpgp_get_key(netpgp, search, (mr) ? "mr" : "")) != NULL) {
+			if (strcmp(fmt, "json") == 0) {
+				if (netpgp_match_keys_json(netpgp, &cp, search, "human", 0)) {
+					cc = strlen(cp);
+					code = HKP_SUCCESS;
+				}
+			} else if ((cp = netpgp_get_key(netpgp, search, fmt)) != NULL) {
 				cc = strlen(cp);
 				code = HKP_SUCCESS;
 			}
-			response(newsock, code, search, 0, cp, cc, mr);
+			response(newsock, code, search, 0, cp, cc, fmt);
 		} else if (strncmp(&buf[opmatches[1].rm_so], "get", 3) == 0) {
 			if ((cp = netpgp_export_key(netpgp, search)) != NULL) {
 				cc = strlen(cp);
 				code = HKP_SUCCESS;
 			}
-			response(newsock, code, search, 1, cp, cc, mr);
+			response(newsock, code, search, 1, cp, cc, fmt);
 		}
 		free(cp);
 		(void) close(newsock);
