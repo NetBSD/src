@@ -1,4 +1,4 @@
-/*	$NetBSD: gdrom.c,v 1.30 2010/09/01 15:08:22 tsutsui Exp $	*/
+/*	$NetBSD: gdrom.c,v 1.31 2010/09/01 15:20:12 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: gdrom.c,v 1.30 2010/09/01 15:08:22 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gdrom.c,v 1.31 2010/09/01 15:20:12 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -227,8 +227,7 @@ int gdrom_do_command(struct gdrom_softc *sc, void *req, void *buf,
 		return -1;
 	
 	GDROM_COND = 0xa0;
-	for (i = 0; i < 64; i++)
-		;
+	DELAY(1);
 	while ((GDROM_BUSY & 0x88) != 8)
 		;
 
