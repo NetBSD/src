@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.90.16.31 2010/08/18 17:01:20 matt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.90.16.32 2010/09/01 00:59:42 matt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -86,6 +86,7 @@ struct cpu_info {
 	 * Per-cpu pmap information
 	 */
 	int ci_tlb_slot;		/* reserved tlb entry for cpu_info */
+	u_int ci_pmap_asid_cur;		/* current ASID */
 	struct pmap_tlb_info *ci_tlb_info; /* tlb information for this cpu */
 	union segtab *ci_pmap_seg0tab;
 #ifdef _LP64
@@ -433,7 +434,8 @@ extern volatile u_long cpus_halted;
 #endif
 
 struct cpu_info *
-	cpu_info_alloc(struct pmap_tlb_info *, u_int);
+	cpu_info_alloc(struct pmap_tlb_info *, cpuid_t, cpuid_t, cpuid_t,
+	    cpuid_t);
 void	cpu_attach_common(device_t, struct cpu_info *);
 void	cpu_startup_common(void);
 #ifdef _LP64

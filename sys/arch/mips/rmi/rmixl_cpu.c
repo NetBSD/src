@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_cpu.c,v 1.1.2.13 2010/08/16 18:01:13 matt Exp $	*/
+/*	$NetBSD: rmixl_cpu.c,v 1.1.2.14 2010/09/01 00:59:43 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -38,7 +38,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_cpu.c,v 1.1.2.13 2010/08/16 18:01:13 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_cpu.c,v 1.1.2.14 2010/09/01 00:59:43 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -168,7 +168,8 @@ cpu_rmixl_attach(device_t parent, device_t self, void *aux)
 		KASSERT(ca->ca_core < 8);
 		KASSERT(ca->ca_thread < 4);
 		cpuid = (ca->ca_core << 2) | ca->ca_thread;
-		ci = cpu_info_alloc(ccsc->sc_tlbinfo, cpuid);
+		ci = cpu_info_alloc(ccsc->sc_tlbinfo, cpuid,
+		    /* XXX */ 0, ca->ca_core, ca->ca_thread);
 		KASSERT(ci != NULL);
 		sc->sc_dev = self;
 		sc->sc_ci = ci;
