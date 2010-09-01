@@ -1,4 +1,4 @@
-/*	$NetBSD: gdrom.c,v 1.28 2010/08/31 15:17:20 tsutsui Exp $	*/
+/*	$NetBSD: gdrom.c,v 1.29 2010/09/01 12:25:27 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: gdrom.c,v 1.28 2010/08/31 15:17:20 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gdrom.c,v 1.29 2010/09/01 12:25:27 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -563,7 +563,7 @@ gdromioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 		return 0;
 	}
 	default:
-		return EINVAL;
+		return ENOTTY;
 	}
 
 #ifdef DIAGNOSTIC
