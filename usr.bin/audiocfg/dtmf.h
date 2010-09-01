@@ -1,4 +1,4 @@
-/* $NetBSD: audiodev.h,v 1.2 2010/09/01 09:04:16 jmcneill Exp $ */
+/* $NetBSD: dtmf.h,v 1.1 2010/09/01 09:04:16 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,35 +26,12 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _HAVE_AUDIODEV_H
-#define _HAVE_AUDIODEV_H
+#ifndef _HAVE_DTMF_H
+#define _HAVE_DTMF_H
 
-#include <sys/audioio.h>
-#include <sys/queue.h>
-#include <sys/syslimits.h>
+#include <stdint.h>
 
-#include <stdbool.h>
+void	dtmf_new(int16_t **, size_t *, unsigned int, unsigned short,
+		 unsigned short, unsigned int, float, float);
 
-struct audiodev {
-	char xname[16];
-	uint16_t unit;
-	char path[PATH_MAX+1];
-
-	int fd;
-	dev_t dev;
-	bool defaultdev;
-
-	int pchan;
-
-	audio_device_t audio_device;
-
-	TAILQ_ENTRY(audiodev) next;
-};
-
-int			audiodev_refresh(void);
-unsigned int		audiodev_count(void);
-struct audiodev *	audiodev_get(unsigned int);
-int			audiodev_set_default(struct audiodev *);
-int			audiodev_test(struct audiodev *, unsigned int);
-
-#endif /* !_HAVE_AUDIODEV_H */
+#endif /* !_HAVE_DTMF_H */

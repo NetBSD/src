@@ -1,4 +1,4 @@
-/* $NetBSD: audiodev.c,v 1.1.1.1 2010/08/30 02:19:47 mrg Exp $ */
+/* $NetBSD: audiodev.c,v 1.2 2010/09/01 09:04:16 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -40,9 +40,41 @@
 
 #include "audiodev.h"
 #include "drvctl.h"
+#include "dtmf.h"
 
 static TAILQ_HEAD(audiodevhead, audiodev) audiodevlist =
     TAILQ_HEAD_INITIALIZER(audiodevlist);
+
+#define AUDIODEV_SAMPLE_RATE	44100
+
+static unsigned int
+audiodev_probe_pchans(struct audiodev *adev)
+{
+	audio_info_t info;
+	unsigned int nchans = 0, n;
+	int error;
+
+	AUDIO_INITINFO(&info);
+	info.play.sample_rate = AUDIODEV_SAMPLE_RATE;
+	info.play.precision = 16;
+	info.play.encoding = AUDIO_ENCODING_SLINEAR_LE;
+	info.play.channels = 1;
+	info.mode = AUMODE_PLAY;
+	error = ioctl(adev->fd, AUDIO_SETINFO, &info);
+	if (error == -1)
+		return 0;
+	nchans = 1;
+
+	for (n = 2; n <= 16; n += 2) {
+		info.play.channels = n;
+		error = ioctl(adev->fd, AUDIO_SETINFO, &info);
+		if (error == -1)
+			break;
+		nchans = info.play.channels;
+	}
+
+	return nchans;
+}
 
 static int
 audiodev_getinfo(struct audiodev *adev)
@@ -63,6 +95,8 @@ audiodev_getinfo(struct audiodev *adev)
 		close(adev->fd);
 		return -1;
 	}
+
+	adev->pchan = audiodev_probe_pchans(adev);
 
 	return 0;
 }
@@ -107,7 +141,7 @@ audiodev_refresh(void)
 	struct audiodev *adev;
 	int fd, error;
 
-	fd = open(DRVCTLDEV, O_RDWR);
+	fd = open(DRVCTLDEV, O_RDONLY);
 	if (fd == -1) {
 		perror("open " DRVCTLDEV);
 		return -1;
@@ -199,6 +233,52 @@ audiodev_set_default(struct audiodev *adev)
 		perror("symlink " _PATH_MIXER);
 		return -1;
 	}
+
+	return 0;
+}
+
+int
+audiodev_test(struct audiodev *adev, unsigned int chanmask)
+{
+	audio_info_t info;
+	int16_t *buf;
+	size_t buflen;
+	off_t off;
+
+	AUDIO_INITINFO(&info);
+	info.play.sample_rate = AUDIODEV_SAMPLE_RATE;
+	info.play.channels = adev->pchan;
+	info.play.precision = 16;
+	info.play.encoding = AUDIO_ENCODING_SLINEAR_LE;
+	info.mode = AUMODE_PLAY;
+	if (ioctl(adev->fd, AUDIO_SETINFO, &info) == -1) {
+		perror("ioctl AUDIO_SETINFO");
+		return -1;
+	}
+	if (ioctl(adev->fd, AUDIO_GETINFO, &info) == -1) {
+		perror("ioctl AUDIO_GETINFO");
+		return -1;
+	}
+
+	dtmf_new(&buf, &buflen, info.play.sample_rate, 2,
+	    adev->pchan, chanmask, 350.0, 440.0);
+	if (buf == NULL)
+		return -1;
+
+	off = 0;
+	while (buflen > 0) {
+		size_t wlen = info.play.buffer_size;
+		if (wlen > buflen)
+			wlen = buflen;
+		write(adev->fd, (char *)buf + off, wlen);
+		off += wlen;
+		buflen -= wlen;
+	}
+
+	if (ioctl(adev->fd, AUDIO_DRAIN) == -1)
+		perror("ioctl AUDIO_DRAIN");
+
+	free(buf);
 
 	return 0;
 }

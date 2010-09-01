@@ -1,4 +1,4 @@
-/* $NetBSD: audiodev.h,v 1.2 2010/09/01 09:04:16 jmcneill Exp $ */
+/* $NetBSD: dtmf.c,v 1.1 2010/09/01 09:04:16 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,35 +26,50 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _HAVE_AUDIODEV_H
-#define _HAVE_AUDIODEV_H
+#include <fcntl.h>
+#include <math.h>
+#include <stdio.h>
+#include <stdint.h>
+#include <string.h>
+#include <stdlib.h>
+#include <unistd.h>
 
-#include <sys/audioio.h>
-#include <sys/queue.h>
-#include <sys/syslimits.h>
+#include "dtmf.h"
 
-#include <stdbool.h>
+#define	PI2	(3.14159265358979323846f * 2)
 
-struct audiodev {
-	char xname[16];
-	uint16_t unit;
-	char path[PATH_MAX+1];
+static void
+dtmf_create(int16_t *buf, unsigned int sample_rate,
+    unsigned short sample_length, unsigned short channels,
+    unsigned int chanmask, float freq1, float freq2)
+{
+	int c, i;
+	size_t sample_count = sample_rate * sample_length;
 
-	int fd;
-	dev_t dev;
-	bool defaultdev;
+	for (i = 0; i < sample_count; i++) {
+		for (c = 0; c < channels; c++) {
+			if ((chanmask & (1 << c)) == 0)
+				continue;
+			buf[c] = 
+			    (sin(i * PI2 * (freq1 / sample_rate)) +
+			     sin(i * PI2 * (freq2 / sample_rate))) * 16383;
+		}
+		buf += channels;
+	}
+}
 
-	int pchan;
+void
+dtmf_new(int16_t **buf, size_t *buflen, unsigned int sample_rate,
+    unsigned short sample_length, unsigned short channels,
+    unsigned int chanmask, float rate1, float rate2)
+{
+	*buflen = sample_rate * sizeof(int16_t) * sample_length * channels;
+	*buf = calloc(1, *buflen);
+	if (*buf == NULL) {
+		perror("calloc");
+		return;
+	}
 
-	audio_device_t audio_device;
-
-	TAILQ_ENTRY(audiodev) next;
-};
-
-int			audiodev_refresh(void);
-unsigned int		audiodev_count(void);
-struct audiodev *	audiodev_get(unsigned int);
-int			audiodev_set_default(struct audiodev *);
-int			audiodev_test(struct audiodev *, unsigned int);
-
-#endif /* !_HAVE_AUDIODEV_H */
+	dtmf_create(*buf, sample_rate, sample_length, channels, chanmask,
+	    rate1, rate2);
+}
