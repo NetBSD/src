@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.18.16.8 2010/05/11 21:08:51 matt Exp $ */
+/* $NetBSD: cpu.c,v 1.18.16.9 2010/09/01 01:07:26 matt Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.18.16.8 2010/05/11 21:08:51 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.18.16.9 2010/09/01 01:07:26 matt Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -134,7 +134,7 @@ cpu_attach(device_t parent, device_t self, void *aux)
 	} else {
 #if defined(MULTIPROCESSOR)
 		int status;
-		ci = cpu_info_alloc(NULL, found - 1);
+		ci = cpu_info_alloc(NULL, found - 1, 0, found - 1, 0);
 		KASSERT(ci);
 
 		cpu->sb1cpu_dev = self;
