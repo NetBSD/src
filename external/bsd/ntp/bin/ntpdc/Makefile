@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2010/08/28 15:42:45 kardel Exp $
+#	$NetBSD: Makefile,v 1.3 2010/09/01 16:26:11 he Exp $
 
 .include <bsd.own.mk>
 
@@ -11,8 +11,8 @@ SRCS=	ntpdc.c					\
 	ntpdc-opts.c
 
 
-LDADD+=		-L${LIBNTP} -lntp -L${LIBISC} -liscntp -lm -ledit
-DPADD+=		${LIBISC}/libiscntp.a ${LIBNTP}/libntp.a ${LIBM} ${LIBUTIL} ${LIBEDIT}
+LDADD+=		-L${LIBNTP} -lntp -L${LIBISC} -liscntp -lm -ledit -lterminfo
+DPADD+=		${LIBISC}/libiscntp.a ${LIBNTP}/libntp.a ${LIBM} ${LIBUTIL} ${LIBEDIT} ${LIBTERMINFO}
 
 .include "${.CURDIR}/../Makefile.inc"
 
