@@ -34,7 +34,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: netpgp.c,v 1.69 2010/08/15 16:10:56 agc Exp $");
+__RCSID("$NetBSD: netpgp.c,v 1.70 2010/09/01 06:20:23 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -170,7 +170,7 @@ resultp(__ops_io_t *io,
 				"WARNING: signature for %s made with encryption key\n",
 				(f) ? f : "<stdin>");
 		}
-		__ops_print_keydata(io, ring, key, "pub", &key->key.pubkey, 0);
+		__ops_print_keydata(io, ring, key, "signature ", &key->key.pubkey, 0);
 	}
 }
 
@@ -691,7 +691,7 @@ netpgp_match_keys(netpgp_t *netpgp, char *name, const char *fmt, void *vp, const
 			} else {
 				__ops_sprint_keydata(netpgp->io, netpgp->pubring,
 						key, &pubs.v[pubs.c],
-						"pub",
+						"signature ",
 						&key->key.pubkey, psigs);
 			}
 			if (pubs.v[pubs.c] != NULL) {
@@ -819,7 +819,7 @@ netpgp_get_key(netpgp_t *netpgp, const char *name, const char *fmt)
 				netpgp_getvar(netpgp, "subkey sigs") != NULL) > 0) ? newkey : NULL;
 	}
 	return (__ops_sprint_keydata(netpgp->io, netpgp->pubring,
-				key, &newkey, "pub",
+				key, &newkey, "signature",
 				&key->key.pubkey,
 				netpgp_getvar(netpgp, "subkey sigs") != NULL) > 0) ? newkey : NULL;
 }
@@ -889,7 +889,7 @@ netpgp_generate_key(netpgp_t *netpgp, char *id, int numbits)
 		return 0;
 	}
 	cp = NULL;
-	__ops_sprint_keydata(netpgp->io, NULL, key, &cp, "pub", &key->key.seckey.pubkey, 0);
+	__ops_sprint_keydata(netpgp->io, NULL, key, &cp, "signature ", &key->key.seckey.pubkey, 0);
 	(void) fprintf(stdout, "%s", cp);
 	/* write public key */
 	(void) snprintf(dir, sizeof(dir), "%s/%.16s", netpgp_getvar(netpgp, "homedir"), &cp[31]);
@@ -1137,10 +1137,11 @@ netpgp_sign_memory(netpgp_t *netpgp,
 			if (pubkey == NULL) {
 				(void) fprintf(io->errs,
 					"netpgp: warning - using pubkey from secring\n");
-				__ops_print_keydata(io, netpgp->pubring, keypair, "pub",
+				__ops_print_keydata(io, netpgp->pubring, keypair, "signature ",
 					&keypair->key.seckey.pubkey, 0);
 			} else {
-				__ops_print_keydata(io, netpgp->pubring, pubkey, "pub", &pubkey->key.pubkey, 0);
+				__ops_print_keydata(io, netpgp->pubring, pubkey, "signature ",
+					&pubkey->key.pubkey, 0);
 			}
 		}
 		/* now decrypt key */
@@ -1480,58 +1481,3 @@ netpgp_validate_sigs(netpgp_t *netpgp)
 
 	return (int)__ops_validate_all_sigs(&result, netpgp->pubring, NULL);
 }
-
-#if 0
-#include "sshkey.h"
-
-int
-netpgp_pgpkey_to_sshkey(netpgp_t *netpgp, char *name, SSHKey *sshkey)
-{
-	const __ops_key_t	*pgpkey;
-	unsigned		 k;
-
-	k = 0;
-	pgpkey = __ops_getnextkeybyname(netpgp->io, netpgp->pubring, name, &k);
-	if (pgpkey == NULL) {
-		pgpkey = __ops_getkeybyname(io, netpgp->pubring, userid);
-	}
-	if (pgpkey == NULL) {
-		(void) fprintf(stderr, "No key matching '%s'\n", name);
-		return 0;
-	}
-	switch(pgpkey->key.pubkey.alg) {
-	case OPS_PKA_RSA:
-		sshkey->type = KEY_RSA;
-		sshkey->rsa = calloc(1, sizeof(*sshkey->rsa);
-		if (sshkey->rsa == NULL) {
-			(void) fprintf(stderr, "RSA memory problems\n");
-			return 0;
-		}
-		sshkey->rsa->n = pgpkey->key.pubkey.key.rsa.n;
-		sshkey->rsa->e = pgpkey->key.pubkey.key.rsa.e;
-		sshkey->rsa->d = pgpkey->key.seckey.key.rsa.d;
-		sshkey->rsa->p = pgpkey->key.seckey.key.rsa.p;
-		sshkey->rsa->q = pgpkey->key.seckey.key.rsa.q;
-		sshkey->rsa->iqmp = pgpkey->key.seckey.key.rsa.u;
-		break;
-	case OPS_PKA_DSA:
-		sshkey->type = KEY_DSA;
-		sshkey->dsa = calloc(1, sizeof(*sshkey->dsa);
-		if (sshkey->dsa == NULL) {
-			(void) fprintf(stderr, "DSA memory problems\n");
-			return 0;
-		}
-		sshkey->rsa->n = pgpkey->key.pubkey.key.rsa.n;
-		key->dsa->p = pgpkey->key.pubkey.key.dsa.p;
-		key->dsa->q = pgpkey->key.pubkey.key.dsa.q;
-		key->dsa->g = pgpkey->key.pubkey.key.dsa.g;
-		key->dsa->pub_key = pgpkey->key.pubkey.key.dsa.y;
-		key->dsa->priv_key = pgpkey->key.seckey.key.dsa.x;
-		break;
-	default:
-		(void) fprintf(stderr, "weird type\n");
-		return 0;
-	}
-	return 1;
-}
-#endif
