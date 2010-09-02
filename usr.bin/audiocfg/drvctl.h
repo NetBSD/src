@@ -1,4 +1,4 @@
-/* $NetBSD: drvctl.h,v 1.1.1.1 2010/08/30 02:19:47 mrg Exp $ */
+/* $NetBSD: drvctl.h,v 1.2 2010/09/02 02:17:35 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -33,6 +33,6 @@
 #include <sys/drvctlio.h>
 
 int	drvctl_foreach(int, const char *,
-		       void (*)(void *, const char *, unsigned int), void *);
+	    void (*)(void *, const char *, const char *, unsigned int), void *);
 
 #endif /* !_HAVE_DRVCTL_H */
