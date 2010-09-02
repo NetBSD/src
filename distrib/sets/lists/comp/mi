@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1505 2010/08/27 16:29:13 tron Exp $
+#	$NetBSD: mi,v 1.1506 2010/09/02 12:29:49 pooka Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -7861,6 +7861,7 @@
 ./usr/share/man/cat3/rresvport_af.0		comp-c-catman		.cat
 ./usr/share/man/cat3/rsa.0			comp-obsolete		obsolete
 ./usr/share/man/cat3/rump.0			comp-c-catman		.cat
+./usr/share/man/cat3/rump_lwproc.0			comp-c-catman		.cat
 ./usr/share/man/cat3/rumpuser.0			comp-c-catman		.cat
 ./usr/share/man/cat3/ruserok.0			comp-c-catman		.cat
 ./usr/share/man/cat3/savetty.0			comp-c-catman		.cat
@@ -13748,6 +13749,7 @@
 ./usr/share/man/html3/rresvport.html		comp-c-htmlman		html
 ./usr/share/man/html3/rresvport_af.html		comp-c-htmlman		html
 ./usr/share/man/html3/rump.html			comp-c-htmlman		html
+./usr/share/man/html3/rump_lwproc.html			comp-c-htmlman		html
 ./usr/share/man/html3/rumpuser.html		comp-c-htmlman		html
 ./usr/share/man/html3/ruserok.html		comp-c-htmlman		html
 ./usr/share/man/html3/savetty.html		comp-c-htmlman		html
@@ -19643,6 +19645,7 @@
 ./usr/share/man/man3/rresvport_af.3		comp-c-man		.man
 ./usr/share/man/man3/rsa.3			comp-obsolete		obsolete
 ./usr/share/man/man3/rump.3			comp-c-man		.man
+./usr/share/man/man3/rump_lwproc.3			comp-c-man		.man
 ./usr/share/man/man3/rumpuser.3			comp-c-man		.man
 ./usr/share/man/man3/ruserok.3			comp-c-man		.man
 ./usr/share/man/man3/savetty.3			comp-c-man		.man
