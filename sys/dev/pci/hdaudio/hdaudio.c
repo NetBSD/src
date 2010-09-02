@@ -1,4 +1,4 @@
-/* $NetBSD: hdaudio.c,v 1.7 2010/08/07 16:24:19 jmcneill Exp $ */
+/* $NetBSD: hdaudio.c,v 1.8 2010/09/02 01:55:31 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdaudio.c,v 1.7 2010/08/07 16:24:19 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdaudio.c,v 1.8 2010/09/02 01:55:31 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -619,7 +619,7 @@ hdaudio_config_print(void *opaque, const char *pnp)
 
 		aprint_normal("%s at %s", type, pnp);
 	}
-	aprint_normal(" vendor 0x%04X product 0x%04X nid 0x%02X",
+	aprint_debug(" vendor 0x%04X product 0x%04X nid 0x%02X",
 	    vendor, product, nid);
 
 	return UNCONF;
