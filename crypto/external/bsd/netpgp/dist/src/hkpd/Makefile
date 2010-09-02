@@ -1,11 +1,11 @@
-# $NetBSD: Makefile,v 1.3 2010/09/01 17:25:57 agc Exp $
+# $NetBSD: Makefile,v 1.4 2010/09/02 05:58:01 agc Exp $
 
 PROG=hkpd
 SRCS=hkpd.c main.c
 CPPFLAGS+=-g # -DHAVE_CONFIG_H=1
 LDFLAGS+=-g
 LDADD+= -lnetpgp
-MAN=hkpd.8
+MAN=hkpd.1
 WARNS=0 # anything over 0 will fail at the link stage with IDEA errors
 
 .include <bsd.prog.mk>
