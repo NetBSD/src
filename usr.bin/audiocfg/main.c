@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.4 2010/09/02 02:08:30 jmcneill Exp $ */
+/* $NetBSD: main.c,v 1.5 2010/09/02 02:17:35 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -62,8 +62,9 @@ main(int argc, char *argv[])
 		n = audiodev_count();
 		for (i = 0; i < n; i++) {
 			adev = audiodev_get(i);
-			printf("%u: [%c] %s: ",
-			    i, adev->defaultdev ? '*' : ' ', adev->xname);
+			printf("%u: [%c] %s @ %s: ",
+			    i, adev->defaultdev ? '*' : ' ',
+			    adev->xname, adev->pxname);
 			printf("%s", adev->audio_device.name);
 			if (strlen(adev->audio_device.version) > 0)
 				printf(" %s", adev->audio_device.version);

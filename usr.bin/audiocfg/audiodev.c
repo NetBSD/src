@@ -1,4 +1,4 @@
-/* $NetBSD: audiodev.c,v 1.2 2010/09/01 09:04:16 jmcneill Exp $ */
+/* $NetBSD: audiodev.c,v 1.3 2010/09/02 02:17:35 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -102,7 +102,7 @@ audiodev_getinfo(struct audiodev *adev)
 }
 
 static int
-audiodev_add(const char *dev, unsigned int unit)
+audiodev_add(const char *pdev, const char *dev, unsigned int unit)
 {
 	struct audiodev *adev;
 
@@ -110,6 +110,7 @@ audiodev_add(const char *dev, unsigned int unit)
 	if (adev == NULL) 
 		return -1;
 
+	strlcpy(adev->pxname, pdev, sizeof(adev->pxname));
 	strlcpy(adev->xname, dev, sizeof(adev->xname));
 	snprintf(adev->path, sizeof(adev->path) - 1, "/dev/%s", dev);
 	adev->unit = unit;
@@ -130,9 +131,9 @@ audiodev_add(const char *dev, unsigned int unit)
 }
 
 static void
-audiodev_cb(void *args, const char *dev, unsigned int unit)
+audiodev_cb(void *args, const char *pdev, const char *dev, unsigned int unit)
 {
-	audiodev_add(dev, unit);
+	audiodev_add(pdev, dev, unit);
 }
 
 int
