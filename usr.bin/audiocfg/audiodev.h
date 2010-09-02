@@ -1,4 +1,4 @@
-/* $NetBSD: audiodev.h,v 1.2 2010/09/01 09:04:16 jmcneill Exp $ */
+/* $NetBSD: audiodev.h,v 1.3 2010/09/02 02:17:35 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -36,7 +36,8 @@
 #include <stdbool.h>
 
 struct audiodev {
-	char xname[16];
+	char pxname[16];	/* hw (parent) device */
+	char xname[16];		/* audio(4) device */
 	uint16_t unit;
 	char path[PATH_MAX+1];
 

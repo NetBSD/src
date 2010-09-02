@@ -1,4 +1,4 @@
-/* $NetBSD: drvctl.c,v 1.1.1.1 2010/08/30 02:19:47 mrg Exp $ */
+/* $NetBSD: drvctl.c,v 1.2 2010/09/02 02:17:35 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -97,7 +97,8 @@ drvctl_get_properties(int fd, const char *devnode, prop_dictionary_t *props)
 
 static int
 drvctl_search(int fd, const char *curnode, const char *dvname,
-    void (*callback)(void *, const char *, unsigned int), void *args)
+    void (*callback)(void *, const char *, const char *, unsigned int),
+    void *args)
 {
 	struct devlistargs laa;
 	unsigned int i;
@@ -120,7 +121,8 @@ drvctl_search(int fd, const char *curnode, const char *dvname,
 			rv = prop_dictionary_get_uint32(props,
 			    "device-unit", &unit);
 			if (rv == true)
-				callback(args, laa.l_childname[i], unit);
+				callback(args, curnode,
+				    laa.l_childname[i], unit);
 		}
 		prop_object_release(props);
 
@@ -134,7 +136,8 @@ drvctl_search(int fd, const char *curnode, const char *dvname,
 
 int
 drvctl_foreach(int fd, const char *dvname,
-    void (*callback)(void *, const char *, unsigned int), void *args)
+    void (*callback)(void *, const char *, const char *, unsigned int),
+    void *args)
 {
 	return drvctl_search(fd, "", dvname, callback, args);
 }
