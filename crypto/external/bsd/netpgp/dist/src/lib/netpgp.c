@@ -34,7 +34,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: netpgp.c,v 1.72 2010/09/02 06:00:12 agc Exp $");
+__RCSID("$NetBSD: netpgp.c,v 1.73 2010/09/02 07:31:16 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -563,6 +563,11 @@ format_json_key(FILE *fp, mj_t *obj, const int psigs)
 		mj_asprint(&s, obj);
 		(void) fprintf(stderr, "formatobj: json is '%s'\n", s);
 		free(s);
+	}
+	if (obj->c == 2 && obj->value.v[1].type == MJ_STRING &&
+	    strcmp(obj->value.v[1].value.s, "[REVOKED]") == 0) {
+		/* whole key has been rovoked - just return */
+		return;
 	}
 	pobj(fp, &obj->value.v[mj_object_find(obj, "header", 0, 2) + 1], 0);
 	p(fp, " ", NULL);
