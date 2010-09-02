@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpnfsd.c,v 1.4 2010/08/05 16:47:59 pooka Exp $	*/
+/*	$NetBSD: rumpnfsd.c,v 1.5 2010/09/02 15:13:55 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -93,10 +93,10 @@ main(int argc, char *argv[])
 	rump_sys_mkdir("/var/db", 0777);
 
 	if (ffs_fstest_newfs(NULL, &fsarg,
-	    FSTEST_IMGNAME, FSTEST_IMGSIZE, NULL) != 0)
-		atf_tc_fail("newfs failed");
+	    imagename, FSTEST_IMGSIZE, NULL) != 0)
+		err(1, "newfs failed");
 	if (ffs_fstest_mount(NULL, fsarg, exportpath, 0) != 0)
-		atf_tc_fail("mount failed");
+		err(1, "mount failed");
 
 #if 0
 	/*
