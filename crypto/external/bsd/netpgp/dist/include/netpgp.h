@@ -97,6 +97,7 @@ int netpgp_decrypt_memory(netpgp_t *, const void *, const size_t, char *, size_t
 int netpgp_match_keys_json(netpgp_t *, char **, char *, const char *, const int);
 int netpgp_match_keys(netpgp_t *, char *, const char *, void *, const int);
 int netpgp_match_pubkeys(netpgp_t *, char *, void *);
+int netpgp_format_json(void *, const char *, const int);
 
 int netpgp_validate_sigs(netpgp_t *);
 
