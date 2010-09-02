@@ -1,4 +1,4 @@
-/*	$NetBSD: t_lwproc.c,v 1.1 2010/09/01 21:18:14 pooka Exp $	*/
+/*	$NetBSD: t_lwproc.c,v 1.2 2010/09/02 09:57:34 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -205,6 +205,21 @@ ATF_TC_BODY(nolwprelease, tc)
 	}
 }
 
+ATF_TC(nolwp);
+ATF_TC_HEAD(nolwp, tc)
+{
+
+	atf_tc_set_md_var(tc, "descr", "check that curlwp for an implicit "
+	    "context is NULL");
+}
+
+ATF_TC_BODY(nolwp, tc)
+{
+
+	rump_init();
+	ATF_REQUIRE_EQ(rump_pub_lwproc_curlwp(), NULL);
+}
+
 ATF_TP_ADD_TCS(tp)
 {
 
@@ -213,6 +228,7 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, inherit);
 	ATF_TP_ADD_TC(tp, lwps);
 	ATF_TP_ADD_TC(tp, nolwprelease);
+	ATF_TP_ADD_TC(tp, nolwp);
 
 	return atf_no_error();
 }
