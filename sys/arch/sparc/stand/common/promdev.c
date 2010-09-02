@@ -1,4 +1,4 @@
-/*	$NetBSD: promdev.c,v 1.25 2010/08/25 20:16:49 christos Exp $ */
+/*	$NetBSD: promdev.c,v 1.26 2010/09/02 03:14:42 uwe Exp $ */
 
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -304,7 +304,7 @@ obp_v0_strategy(void *devdata, int flag, daddr_t dblk, size_t size,
 	dblk += doffset;
 #endif
 #ifdef DEBUG_PROM
-	printf("promstrategy: size=%d dblk=%d\n", size, dblk);
+	printf("promstrategy: size=%zd dblk=%d\n", size, (int)dblk);
 #endif
 
 #define prom_bread(fd, nblk, dblk, buf) \
@@ -326,7 +326,7 @@ obp_v0_strategy(void *devdata, int flag, daddr_t dblk, size_t size,
 	*rsize = dbtob(n);
 
 #ifdef DEBUG_PROM
-	printf("rsize = %x\n", *rsize);
+	printf("rsize = %zx\n", *rsize);
 #endif
 	return (error);
 }
@@ -343,7 +343,7 @@ obp_v2_strategy(void *devdata, int flag, daddr_t dblk, size_t size,
 	dblk += doffset;
 #endif
 #ifdef DEBUG_PROM
-	printf("promstrategy: size=%d dblk=%d\n", size, dblk);
+	printf("promstrategy: size=%zd dblk=%d\n", size, (int)dblk);
 #endif
 
 #ifndef BOOTXX	/* We know it's a block device, so save some space */
@@ -356,7 +356,7 @@ obp_v2_strategy(void *devdata, int flag, daddr_t dblk, size_t size,
 		: prom_write(fd, buf, size);
 
 #ifdef DEBUG_PROM
-	printf("rsize = %x\n", *rsize);
+	printf("rsize = %zx\n", *rsize);
 #endif
 	return (error);
 }
@@ -382,7 +382,7 @@ oldmon_strategy(void *devdata, int flag, daddr_t dblk, size_t size,
 	dblk += doffset;
 #endif
 #ifdef DEBUG_PROM
-	printf("prom_strategy: size=%d dblk=%d\n", size, dblk);
+	printf("prom_strategy: size=%zd dblk=%d\n", size, (int)dblk);
 #endif
 
 	dmabuf = dvma_mapin(buf, size);
@@ -396,7 +396,7 @@ oldmon_strategy(void *devdata, int flag, daddr_t dblk, size_t size,
 	dvma_mapout(dmabuf, size);
 
 #ifdef DEBUG_PROM
-	printf("disk_strategy: xcnt = %x\n", xcnt);
+	printf("disk_strategy: xcnt = %zx\n", xcnt);
 #endif
 
 	if (xcnt <= 0)
@@ -622,7 +622,7 @@ oldmon_iopen(struct promdata *pd)
 	printf("d_dmabytes=%d\n", dip->d_dmabytes);
 	printf("d_localbytes=%d\n", dip->d_localbytes);
 	printf("d_stdcount=%d\n", dip->d_stdcount);
-	printf("d_stdaddrs[%d]=%x\n", bp->ctlrNum, dip->d_stdaddrs[bp->ctlrNum]);
+	printf("d_stdaddrs[%d]=%lx\n", bp->ctlrNum, dip->d_stdaddrs[bp->ctlrNum]);
 	printf("d_devtype=%d\n", dip->d_devtype);
 	printf("d_maxiobytes=%d\n", dip->d_maxiobytes);
 #endif
@@ -643,7 +643,7 @@ oldmon_iopen(struct promdata *pd)
 		si->si_devaddr = oldmon_mapin(dip->d_stdaddrs[si->si_ctlr],
 			dip->d_devbytes, dip->d_devtype);
 #ifdef	DEBUG_PROM
-		printf("prom_iopen: devaddr=0x%x pte=0x%x\n",
+		printf("prom_iopen: devaddr=%p pte=0x%x\n",
 			si->si_devaddr,
 			getpte4((u_long)si->si_devaddr & ~PGOFSET));
 #endif
@@ -652,14 +652,14 @@ oldmon_iopen(struct promdata *pd)
 	if (dip->d_dmabytes) {
 		si->si_dmaaddr = dvma_alloc(dip->d_dmabytes);
 #ifdef	DEBUG_PROM
-		printf("prom_iopen: dmaaddr=0x%x\n", si->si_dmaaddr);
+		printf("prom_iopen: dmaaddr=%p\n", si->si_dmaaddr);
 #endif
 	}
 
 	if (dip->d_localbytes) {
 		si->si_devdata = alloc(dip->d_localbytes);
 #ifdef	DEBUG_PROM
-		printf("prom_iopen: devdata=0x%x\n", si->si_devdata);
+		printf("prom_iopen: devdata=%p\n", si->si_devdata);
 #endif
 	}
 
