@@ -34,7 +34,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: netpgp.c,v 1.71 2010/09/01 17:25:57 agc Exp $");
+__RCSID("$NetBSD: netpgp.c,v 1.72 2010/09/02 06:00:12 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -467,6 +467,153 @@ isarmoured(__ops_io_t *io, const char *f, const void *memory, const char *text)
 		armoured = (strncmp(memory, text, strlen(text)) == 0);
 	}
 	return armoured;
+}
+
+/* vararg print function */
+static void
+p(FILE *fp, const char *s, ...)
+{
+	va_list	args;
+
+	va_start(args, s);
+	while (s != NULL) {
+		(void) fprintf(fp, "%s", s);
+		s = va_arg(args, char *);
+	}
+	va_end(args);
+}
+
+/* print a JSON object to the FILE stream */
+static void
+pobj(FILE *fp, mj_t *obj, int depth)
+{
+	unsigned	i;
+
+	if (obj == NULL) {
+		(void) fprintf(stderr, "No object found\n");
+		return;
+	}
+	for (i = 0 ; i < (unsigned)depth ; i++) {
+		p(fp, " ", NULL);
+	}
+	switch(obj->type) {
+	case MJ_NULL:
+	case MJ_FALSE:
+	case MJ_TRUE:
+		p(fp, (obj->type == MJ_NULL) ? "null" : (obj->type == MJ_FALSE) ? "false" : "true", NULL);
+		break;
+	case MJ_NUMBER:
+		p(fp, obj->value.s, NULL);
+		break;
+	case MJ_STRING:
+		(void) fprintf(fp, "%.*s", (int)(obj->c), obj->value.s);
+		break;
+	case MJ_ARRAY:
+		for (i = 0 ; i < obj->c ; i++) {
+			pobj(fp, &obj->value.v[i], depth + 1);
+			if (i < obj->c - 1) {
+				(void) fprintf(fp, ", "); 
+			}
+		}
+		(void) fprintf(fp, "\n"); 
+		break;
+	case MJ_OBJECT:
+		for (i = 0 ; i < obj->c ; i += 2) {
+			pobj(fp, &obj->value.v[i], depth + 1);
+			p(fp, ": ", NULL); 
+			pobj(fp, &obj->value.v[i + 1], 0);
+			if (i < obj->c - 1) {
+				p(fp, ", ", NULL); 
+			}
+		}
+		p(fp, "\n", NULL); 
+		break;
+	default:
+		break;
+	}
+}
+
+/* return the time as a string */
+static char * 
+ptimestr(char *dest, size_t size, time_t t)
+{
+	struct tm      *tm;
+
+	tm = gmtime(&t);
+	(void) snprintf(dest, size, "%04d-%02d-%02d",
+		tm->tm_year + 1900,
+		tm->tm_mon + 1,
+		tm->tm_mday);
+	return dest;
+}
+
+/* format a JSON object */
+static void
+format_json_key(FILE *fp, mj_t *obj, const int psigs)
+{
+	int64_t	 birthtime;
+	int64_t	 duration;
+	time_t	 now;
+	char	 tbuf[32];
+	char	*s;
+	mj_t	*sub;
+	int	 i;
+
+	if (__ops_get_debug_level(__FILE__)) {
+		mj_asprint(&s, obj);
+		(void) fprintf(stderr, "formatobj: json is '%s'\n", s);
+		free(s);
+	}
+	pobj(fp, &obj->value.v[mj_object_find(obj, "header", 0, 2) + 1], 0);
+	p(fp, " ", NULL);
+	pobj(fp, &obj->value.v[mj_object_find(obj, "key bits", 0, 2) + 1], 0);
+	p(fp, "/", NULL);
+	pobj(fp, &obj->value.v[mj_object_find(obj, "pka", 0, 2) + 1], 0);
+	p(fp, " ", NULL);
+	pobj(fp, &obj->value.v[mj_object_find(obj, "key id", 0, 2) + 1], 0);
+	birthtime = strtoll(obj->value.v[mj_object_find(obj, "birthtime", 0, 2) + 1].value.s, NULL, 10);
+	p(fp, " ", ptimestr(tbuf, sizeof(tbuf), birthtime), NULL);
+	duration = strtoll(obj->value.v[mj_object_find(obj, "duration", 0, 2) + 1].value.s, NULL, 10);
+	if (duration > 0) {
+		now = time(NULL);
+		p(fp, " ", (birthtime + duration < now) ? "[EXPIRED " : "[EXPIRES ",
+			ptimestr(tbuf, sizeof(tbuf), birthtime + duration), "]", NULL);
+	}
+	p(fp, "\n", "Key fingerprint: ", NULL);
+	pobj(fp, &obj->value.v[mj_object_find(obj, "fingerprint", 0, 2) + 1], 0);
+	p(fp, "\n", NULL);
+	/* go to field after \"duration\" */
+	for (i = mj_object_find(obj, "duration", 0, 2) + 2; i < mj_arraycount(obj) ; i += 2) {
+		if (strcmp(obj->value.v[i].value.s, "uid") == 0) {
+			sub = &obj->value.v[i + 1];
+			p(fp, "uid", NULL);
+			pobj(fp, &sub->value.v[0], (psigs) ? 4 : 14); /* human name */
+			pobj(fp, &sub->value.v[1], 1); /* any revocation */
+			p(fp, "\n", NULL);
+		} else if (strcmp(obj->value.v[i].value.s, "encryption") == 0) {
+			sub = &obj->value.v[i + 1];
+			p(fp, "encryption", NULL);
+			pobj(fp, &sub->value.v[0], 1);	/* size */
+			p(fp, "/", NULL);
+			pobj(fp, &sub->value.v[1], 0); /* alg */
+			p(fp, " ", NULL);
+			pobj(fp, &sub->value.v[2], 0); /* id */
+			p(fp, " ", ptimestr(tbuf, sizeof(tbuf), strtoll(sub->value.v[3].value.s, NULL, 10)),
+				"\n", NULL);
+		} else if (strcmp(obj->value.v[i].value.s, "sig") == 0) {
+			sub = &obj->value.v[i + 1];
+			p(fp, "sig", NULL);
+			pobj(fp, &sub->value.v[0], 8);	/* size */
+			p(fp, "  ", ptimestr(tbuf, sizeof(tbuf), strtoll(sub->value.v[1].value.s, NULL, 10)),
+				" ", NULL); /* time */
+			pobj(fp, &sub->value.v[2], 0); /* human name */
+			p(fp, "\n", NULL);
+		} else {
+			fprintf(stderr, "weird '%s'\n", obj->value.v[i].value.s);
+			pobj(fp, &obj->value.v[i], 0); /* human name */
+		}
+	}
+	p(fp, "\n", NULL);
 }
 
 /***************************************************************************/
@@ -1480,4 +1627,36 @@ netpgp_validate_sigs(netpgp_t *netpgp)
 	__ops_validation_t	result;
 
 	return (int)__ops_validate_all_sigs(&result, netpgp->pubring, NULL);
+}
+
+/* print the json out on 'fp' */
+int
+netpgp_format_json(void *vp, const char *json, const int psigs)
+{
+	mj_t	 ids;
+	FILE	*fp;
+	int	 from;
+	int	 idc;
+	int	 tok;
+	int	 to;
+	int	 i;
+
+	if ((fp = (FILE *)vp) == NULL || json == NULL) {
+		return 0;
+	}
+	/* ids is an array of strings, each containing 1 entry */
+	(void) memset(&ids, 0x0, sizeof(ids));
+	from = to = tok = 0;
+	/* convert from string into an mj structure */
+	(void) mj_parse(&ids, json, &from, &to, &tok);
+	if ((idc = mj_arraycount(&ids)) == 1 && strchr(json, '{') == NULL) {
+		idc = 0;
+	}
+	(void) fprintf(fp, "%d key%s found\n", idc, (idc == 1) ? "" : "s");
+	for (i = 0 ; i < idc ; i++) {
+		format_json_key(fp, &ids.value.v[i], psigs);
+	}
+	/* clean up */
+	mj_delete(&ids);
+	return idc;
 }
