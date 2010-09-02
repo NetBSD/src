@@ -1,4 +1,4 @@
-/*  $NetBSD: ops.c,v 1.5 2010/09/01 14:57:24 manu Exp $ */
+/*  $NetBSD: ops.c,v 1.6 2010/09/02 08:58:06 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010 Emmanuel Dreyfus. All rights reserved.
@@ -49,8 +49,7 @@ static int node_lookup_dir_nodot(struct puffs_usermount *,
 static int node_lookup_common(struct puffs_usermount *, puffs_cookie_t, 
     const char*, struct puffs_node **);
 static int node_mk_common(struct puffs_usermount *, puffs_cookie_t,
-    struct puffs_newinfo *, const struct puffs_cn *pcn,
-    const struct vattr *, perfuse_msg_t *);
+    struct puffs_newinfo *, const struct puffs_cn *pcn, perfuse_msg_t *);
 static const char *basename_r(const char *);
 static ssize_t fuse_to_dirent(struct puffs_usermount *, puffs_cookie_t,
     struct fuse_dirent *, size_t);
@@ -241,12 +240,11 @@ out:
  * perfuse_node_symlink
  */
 static int
-node_mk_common(pu, opc, pni, pcn, vap, pm)
+node_mk_common(pu, opc, pni, pcn, pm)
 	struct puffs_usermount *pu;
 	puffs_cookie_t opc;
 	struct puffs_newinfo *pni;
 	const struct puffs_cn *pcn;
-	const struct vattr *vap;
 	perfuse_msg_t *pm;
 {
 	struct perfuse_state *ps;
@@ -545,6 +543,7 @@ requeue_request(pu, opc, type)
 #endif
 
 	puffs_cc_yield(pcq.pcq_cc);
+	TAILQ_REMOVE(&pnd->pnd_pcq, &pcq, pcq_next);
 
 #ifdef PERFUSE_DEBUG
 	if (perfuse_diagflags & PDF_REQUEUE)
@@ -576,14 +575,12 @@ dequeue_requests(ps, opc, type, max)
 		if (pcq->pcq_type != type)
 			continue;
 	
-		puffs_cc_schedule(pcq->pcq_cc);
-		TAILQ_REMOVE(&pnd->pnd_pcq, pcq, pcq_next);
-
 #ifdef PERFUSE_DEBUG
 		if (perfuse_diagflags & PDF_REQUEUE)
 			DPRINTF("%s: SCHEDULE opc = %p, pcc = %p\n",
 				__func__, (void *)opc, pcq->pcq_cc);
 #endif
+		puffs_cc_schedule(pcq->pcq_cc);
 		
 		if (++dequeued == max)
 			break;
@@ -970,7 +967,7 @@ perfuse_node_mknod(pu, opc, pni, pcn, vap)
 	fmi->umask = 0; 	/* Seems unused bu libfuse */
 	(void)strlcpy((char *)(void *)(fmi + 1), path, len - sizeof(*fmi));
 
-	return node_mk_common(pu, opc, pni, pcn, vap, pm);
+	return node_mk_common(pu, opc, pni, pcn, pm);
 }
 
 
@@ -1758,7 +1755,7 @@ perfuse_node_mkdir(pu, opc, pni, pcn, vap)
 	fmi->umask = 0; 	/* Seems unused bu libfuse? */
 	(void)strlcpy((char *)(void *)(fmi + 1), path, len - sizeof(*fmi));
 
-	return node_mk_common(pu, opc, pni, pcn, vap, pm);
+	return node_mk_common(pu, opc, pni, pcn, pm);
 }
 
 
@@ -1848,7 +1845,7 @@ perfuse_node_symlink(pu, opc, pni, pcn_src, vap, link_target)
 	np += path_len;
 	(void)strlcpy(np, link_target, linkname_len);
 
-	return node_mk_common(pu, opc, pni, pcn_src, vap, pm);
+	return node_mk_common(pu, opc, pni, pcn_src, pm);
 }
 
 int 
