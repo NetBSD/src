@@ -1,4 +1,4 @@
-/* $NetBSD: loadfile_elf32.c,v 1.25 2010/03/12 21:43:11 darran Exp $ */
+/* $NetBSD: loadfile_elf32.c,v 1.26 2010/09/02 17:10:14 christos Exp $ */
 
 /*-
  * Copyright (c) 1997, 2008 The NetBSD Foundation, Inc.
@@ -411,36 +411,40 @@ ELFNAMEEND(loadfile)(int fd, Elf_Ehdr *elf, u_long *marks, int flags)
 		 * First load the section names section.
 		 */
 		if (boot_load_ctf && (elf->e_shstrndx != 0)) {
-		    if (lseek(fd, shp[elf->e_shstrndx].sh_offset,
-			SEEK_SET) == -1) {
-			    WARN(("lseek symbols"));
-			    goto freeshp;
-		    }
-		    nr = READ(fd, maxp, shp[elf->e_shstrndx].sh_size);
-		    if (nr == -1) {
-			    WARN(("read symbols"));
-			    goto freeshp;
-		    }
-		    if (nr != (ssize_t)shp[elf->e_shstrndx].sh_size) {
-			    errno = EIO;
-			    WARN(("read symbols"));
-			    goto freeshp;
-		    }
+			if (flags & LOAD_SYM) {
+				if (lseek(fd, shp[elf->e_shstrndx].sh_offset,
+				    SEEK_SET) == -1) {
+					WARN(("lseek symbols"));
+					goto freeshp;
+				}
+				nr = READ(fd, maxp,
+				    shp[elf->e_shstrndx].sh_size);
+				if (nr == -1) {
+					WARN(("read symbols"));
+					goto freeshp;
+				}
+				if (nr !=
+				    (ssize_t)shp[elf->e_shstrndx].sh_size) {
+					errno = EIO;
+					WARN(("read symbols"));
+					goto freeshp;
+				}
 
-		    shstr = ALLOC(shp[elf->e_shstrndx].sh_size);
-		    if (lseek(fd, shp[elf->e_shstrndx].sh_offset,
-			SEEK_SET) == -1) {
-			    WARN(("lseek symbols"));
-			    goto freeshp;
-		    }
-		    nr = read(fd, shstr, shp[elf->e_shstrndx].sh_size);
-		    if (nr == -1) {
-			    WARN(("read symbols"));
-			    goto freeshp;
-		    }
-
-		    shp[elf->e_shstrndx].sh_offset = maxp - elfp;
-		    maxp += roundup(shp[elf->e_shstrndx].sh_size, ELFROUND);
+				shstr = ALLOC(shp[elf->e_shstrndx].sh_size);
+				if (lseek(fd, shp[elf->e_shstrndx].sh_offset,
+				    SEEK_SET) == -1) {
+					WARN(("lseek symbols"));
+					goto freeshp;
+				}
+				nr = read(fd, shstr,
+				    shp[elf->e_shstrndx].sh_size);
+				if (nr == -1) {
+					WARN(("read symbols"));
+					goto freeshp;
+				}
+			}
+			shp[elf->e_shstrndx].sh_offset = maxp - elfp;
+			maxp += roundup(shp[elf->e_shstrndx].sh_size, ELFROUND);
 		}
 
 		/*
