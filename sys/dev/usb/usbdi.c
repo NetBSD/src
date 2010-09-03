@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.127 2010/01/16 17:03:03 bouyer Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.128 2010/09/03 23:15:09 cegger Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.28 1999/11/17 22:33:49 n_hibma Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.127 2010/01/16 17:03:03 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.128 2010/09/03 23:15:09 cegger Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -800,7 +800,8 @@ usb_transfer_complete(usbd_xfer_handle xfer)
 			       xfer, SIMPLEQ_FIRST(&pipe->queue));
 		xfer->busy_free = XFER_BUSY;
 #endif
-		SIMPLEQ_REMOVE_HEAD(&pipe->queue, next);
+		if (SIMPLEQ_FIRST(&pipe->queue) != NULL)
+			SIMPLEQ_REMOVE_HEAD(&pipe->queue, next);
 	}
 	DPRINTFN(5,("usb_transfer_complete: repeat=%d new head=%p\n",
 		    repeat, SIMPLEQ_FIRST(&pipe->queue)));
