@@ -1,4 +1,4 @@
-/*  $NetBSD: perfuse_priv.h,v 1.4 2010/09/01 14:57:24 manu Exp $ */
+/*  $NetBSD: perfuse_priv.h,v 1.5 2010/09/03 07:15:18 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010 Emmanuel Dreyfus. All rights reserved.
@@ -71,13 +71,7 @@ struct perfuse_state {
 };
 
 
-struct perfuse_file_handle {
-	uint64_t pfh_fh;
-	TAILQ_ENTRY(perfuse_file_handle) pfh_entries;
-};
-
-
-enum perfuse_qtype { PCQ_READDIR, PCQ_READ, PCQ_WRITE };
+enum perfuse_qtype { PCQ_READDIR, PCQ_READ, PCQ_WRITE, PCQ_AFTERWRITE };
 
 struct perfuse_cc_queue {
 	enum perfuse_qtype pcq_type;
@@ -87,7 +81,8 @@ struct perfuse_cc_queue {
 
 
 struct perfuse_node_data {
-	TAILQ_HEAD(,perfuse_file_handle) pnd_fh;
+	uint64_t pnd_rfh;
+	uint64_t pnd_wfh;
 	uint64_t pnd_ino;			/* inode */
 	uint64_t pnd_nlookup;			/* vnode refcount */
 	uint64_t pnd_offset;			/* seek state */
@@ -98,10 +93,16 @@ struct perfuse_node_data {
 	size_t pnd_all_fd_len;
 	TAILQ_HEAD(,perfuse_cc_queue) pnd_pcq;	/* queued requests */
 	int pnd_flags;
-#define PND_RECLAIMED		0x1	/* reclaim pending */
-#define PND_INREADDIR		0x2	/* readdir in progress */
-#define PND_OPEN		0x4	/* At least one fh is allocated */
-#define PND_DIRTY		0x8	/* There is some data to sync */
+#define PND_RECLAIMED		0x01	/* reclaim pending */
+#define PND_INREADDIR		0x02	/* readdir in progress */
+#define PND_DIRTY		0x04	/* There is some data to sync */
+#define PND_RFH			0x08	/* Read FH allocated */
+#define PND_WFH			0x10	/* Write FH allocated */
+#define PND_INREAD		0x20	/* read in progress */
+#define PND_INWRITE		0x40	/* write in progress */
+
+#define PND_OPEN		(PND_RFH|PND_WFH)	/* File is open */
+#define PND_BUSY		(PND_INREADDIR|PND_INREAD|PND_INWRITE)
 	puffs_cookie_t pnd_parent;
 	int pnd_childcount;
 };
@@ -131,9 +132,9 @@ __BEGIN_DECLS
 struct puffs_node *perfuse_new_pn(struct puffs_usermount *, 
     struct puffs_node *);
 void perfuse_destroy_pn(struct puffs_node *);
-void perfuse_new_fh(puffs_cookie_t, uint64_t);
+void perfuse_new_fh(puffs_cookie_t, uint64_t, int);
 void perfuse_destroy_fh(puffs_cookie_t, uint64_t);
-uint64_t perfuse_get_fh(puffs_cookie_t);
+uint64_t perfuse_get_fh(puffs_cookie_t, int);
 uint64_t perfuse_next_unique(struct puffs_usermount *);
 
 char *perfuse_fs_mount(int, ssize_t);
