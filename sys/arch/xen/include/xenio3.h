@@ -1,4 +1,4 @@
-/* $NetBSD: xenio3.h,v 1.2 2008/02/17 16:21:19 bouyer Exp $ */
+/* $NetBSD: xenio3.h,v 1.3 2010/09/03 06:07:24 cegger Exp $ */
 /******************************************************************************
  * evtchn.h
  * 
@@ -28,8 +28,8 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef __XEN_XENIO_H__
-#define __XEN_XENIO_H__
+#ifndef __XEN_XENIO3_H__
+#define __XEN_XENIO3_H__
 
 /*
  * Bind a fresh port to VIRQ @virq.
@@ -86,4 +86,4 @@ struct ioctl_evtchn_notify {
 #define IOCTL_EVTCHN_RESET				\
 	_IO('E', 9)
 
-#endif /* __XEN_XENIO_H__ */
+#endif /* __XEN_XENIO3_H__ */
