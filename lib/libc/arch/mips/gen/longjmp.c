@@ -1,4 +1,4 @@
-/*	$NetBSD: longjmp.c,v 1.3 2009/02/16 03:23:29 lukem Exp $	*/
+/*	$NetBSD: longjmp.c,v 1.4 2010/09/03 17:22:51 matt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@ __longjmp14(jmp_buf env, int val)
 	uc.uc_link = 0;
 
 	/* Save return value in context */
-	uc.uc_mcontext.__gregs[_R_V0] = val;
+	uc.uc_mcontext.__gregs[_REG_V0] = val;
 
 	/* Copy saved registers */
 	uc.uc_mcontext.__gregs[_REG_S0] = sc->sc_regs[_R_S0];
@@ -82,6 +82,9 @@ __longjmp14(jmp_buf env, int val)
 	uc.uc_mcontext.__gregs[_REG_S6] = sc->sc_regs[_R_S6];
 	uc.uc_mcontext.__gregs[_REG_S7] = sc->sc_regs[_R_S7];
 	uc.uc_mcontext.__gregs[_REG_S8] = sc->sc_regs[_R_S8];
+#if defined(__mips_n32) || defined(__mips_n64)
+	uc.uc_mcontext.__gregs[_REG_GP] = sc->sc_regs[_R_GP];
+#endif
 	uc.uc_mcontext.__gregs[_REG_SP] = sc->sc_regs[_R_SP];
 	uc.uc_mcontext.__gregs[_REG_RA] = sc->sc_regs[_R_RA];
 	uc.uc_mcontext.__gregs[_REG_EPC] = sc->sc_pc;

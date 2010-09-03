@@ -1,4 +1,4 @@
-/*	$NetBSD: _setjmp.S,v 1.21 2009/12/14 01:07:42 matt Exp $	*/
+/*	$NetBSD: _setjmp.S,v 1.22 2010/09/03 17:22:51 matt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -46,7 +46,7 @@
 #if 0
 	RCSID("from: @(#)_setjmp.s	8.1 (Berkeley) 6/4/93")
 #else
-	RCSID("$NetBSD: _setjmp.S,v 1.21 2009/12/14 01:07:42 matt Exp $")
+	RCSID("$NetBSD: _setjmp.S,v 1.22 2010/09/03 17:22:51 matt Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -68,7 +68,6 @@ LEAF(_setjmp)
 	REG_LI	v0, 0xACEDBADE			# sigcontext magic number
 	REG_S	ra, _OFFSETOF_SC_PC(a0)		# sc_pc = return address
 	REG_S	v0, _OFFSETOF_SC_REGS(a0)	#   saved in sc_regs[0]
-	REG_S	a1, _OFFSETOF_SC_REGS_V0(a0)	# save return value
 	REG_S	s0, _OFFSETOF_SC_REGS_S0(a0)
 	REG_S	s1, _OFFSETOF_SC_REGS_S1(a0)
 	REG_S	s2, _OFFSETOF_SC_REGS_S2(a0)
@@ -82,13 +81,14 @@ LEAF(_setjmp)
 #if defined(__mips_n32) || defined(__mips_n64)
 	REG_S	gp, _OFFSETOF_SC_REGS_GP(a0)	# newabi gp is callee-saved
 #endif
-	cfc1	v0, $31				# too bad cant check if FP used
 	/*
 	 * In N32, FP registers F20, F22, F24, F26, F28, F30 are callee-saved.
 	 * In N64, FP registers F23 .. F31 are callee-saved.
 	 * In O32, FP registers F20 .. F23 are callee-saved.
 	 */
 #ifndef SOFTFLOAT_FOR_GCC
+	cfc1	v0, $31				# too bad cant check if FP used
+	INT_S	v0, _OFFSETOF_SC_FPREGS_FCSR(a0)
 #if defined(__mips_n64) || defined(__mips_n32)
 	FP_S	$f30, _OFFSETOF_SC_FPREGS_F30(a0)
 	FP_S	$f28, _OFFSETOF_SC_FPREGS_F28(a0)
@@ -110,7 +110,6 @@ LEAF(_setjmp)
 	FP_S	$f31, _OFFSETOF_SC_FPREGS_F31(a0)
 #endif
 #endif	/* SOFTFLOAT_FOR_GCC */
-	INT_S	v0, _OFFSETOF_SC_FPREGS_FCSR(a0)
 	REG_EPILOGUE
 
 	j	ra
@@ -128,6 +127,7 @@ LEAF(_longjmp)
 	REG_LI		t0, 0xACEDBADE
 	bne		v0, t0, botch		# jump if error
 	PTR_ADDU	sp, sp, CALLFRAME_SIZ	# does not matter, sanity
+	REG_S		a1, _OFFSETOF_SC_REGS_V0(a0)	# save return value
 	REG_L		s0, _OFFSETOF_SC_REGS_S0(a0)
 	REG_L		s1, _OFFSETOF_SC_REGS_S1(a0)
 	REG_L		s2, _OFFSETOF_SC_REGS_S2(a0)
@@ -140,16 +140,16 @@ LEAF(_longjmp)
 	REG_L		gp, _OFFSETOF_SC_REGS_GP(a0)
 #endif
 	# get fpu status
-	INT_L		v0, _OFFSETOF_SC_FPREGS_FCSR(a0)
 	REG_L		sp, _OFFSETOF_SC_REGS_SP(a0)
 	REG_L		s8, _OFFSETOF_SC_REGS_S8(a0)
+#ifndef SOFTFLOAT_FOR_GCC
+	INT_L		v0, _OFFSETOF_SC_FPREGS_FCSR(a0)
 	ctc1		v0, $31
 	/*
 	 * In N32, FP registers F20, F22, F24, F26, F28, F30 are callee-saved.
 	 * In N64, FP registers F23 .. F31 are callee-saved.
 	 * In O32, FP registers F20 .. F23 are callee-saved.
 	 */
-#ifndef SOFTFLOAT_FOR_GCC
 #if defined(__mips_n64) || defined(__mips_n32)
 	FP_L	$f30, _OFFSETOF_SC_FPREGS_F30(a0)
 	FP_L	$f28, _OFFSETOF_SC_FPREGS_F28(a0)
@@ -173,7 +173,7 @@ LEAF(_longjmp)
 #endif	/* SOFTFLOAT_FOR_GCC */
 
 	REG_EPILOGUE
-	REG_L	v0, _OFFSETOF_SC_REGS_V0(a0)
+	move	v0, a1			# get return value in 1st arg
 	j	ra
 	nop
 
