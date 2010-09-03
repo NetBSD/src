@@ -1,4 +1,4 @@
-/*  $NetBSD: ops.c,v 1.7 2010/09/03 07:15:18 manu Exp $ */
+/*  $NetBSD: ops.c,v 1.8 2010/09/03 14:32:50 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010 Emmanuel Dreyfus. All rights reserved.
@@ -1006,7 +1006,9 @@ perfuse_node_create(pu, opc, pni, pcn, vap)
 	 * aware that the file was created. If we do not do it, we 
 	 * get "SETATTR (null) (fuse_loc_fill() failed)"
 	 */
-	(void)node_lookup_common(pu, opc, (char*)PCNPATH(pcn), NULL);
+	(void)puffs_pn_nodewalk(pu, puffs_path_walkcmp,
+        		        __UNCONST(&pcn->pcn_po_full));
+
 out: 
 	ps->ps_destroy_msg(pm);
 
@@ -2489,7 +2491,6 @@ perfuse_node_write(pu, opc, buf, offset, resid, pcr, ioflag)
 	if (puffs_pn_getvap((struct puffs_node *)opc)->va_type == VDIR) 
 		return EBADF;
 
-DPRINTF("%s ENTER\n", __func__);
 	pnd->pnd_flags |= PND_INWRITE;
 
 	requested = *resid;
