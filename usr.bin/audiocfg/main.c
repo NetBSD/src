@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.5 2010/09/02 02:17:35 jmcneill Exp $ */
+/* $NetBSD: main.c,v 1.6 2010/09/03 19:20:37 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,6 +26,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <assert.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <limits.h>
@@ -45,6 +46,21 @@ usage(const char *p)
 	exit(EXIT_FAILURE);
 }
 
+static void
+print_audiodev(struct audiodev *adev, int i)
+{
+	assert(adev != NULL);
+
+	printf("%u: [%c] %s @ %s: ",
+	    i, adev->defaultdev ? '*' : ' ',
+	    adev->xname, adev->pxname);
+	printf("%s", adev->audio_device.name);
+	if (strlen(adev->audio_device.version) > 0)
+		printf(" %s", adev->audio_device.version);
+	printf(", %u playback channel%s\n",
+	    adev->pchan, adev->pchan == 1 ? "" : "s");
+}
+
 int
 main(int argc, char *argv[])
 {
@@ -60,17 +76,8 @@ main(int argc, char *argv[])
 
 	if (strcmp(argv[1], "list") == 0) {
 		n = audiodev_count();
-		for (i = 0; i < n; i++) {
-			adev = audiodev_get(i);
-			printf("%u: [%c] %s @ %s: ",
-			    i, adev->defaultdev ? '*' : ' ',
-			    adev->xname, adev->pxname);
-			printf("%s", adev->audio_device.name);
-			if (strlen(adev->audio_device.version) > 0)
-				printf(" %s", adev->audio_device.version);
-			printf(", %u playback channel%s\n",
-			    adev->pchan, adev->pchan == 1 ? "" : "s");
-		}
+		for (i = 0; i < n; i++)
+			print_audiodev(audiodev_get(i), i);
 	} else if (strcmp(argv[1], "default") == 0 && argc == 3) {
 		if (*argv[2] < '0' || *argv[2] > '9')
 			usage(argv[0]);
@@ -104,9 +111,13 @@ main(int argc, char *argv[])
 			fprintf(stderr, "no such device\n");
 			return EXIT_FAILURE;
 		}
+		print_audiodev(adev, i);
 		for (i = 0; i < adev->pchan; i++) {
-			printf("testing channel %d...\n", i);
-			audiodev_test(adev, 1 << i);
+			printf("  testing channel %d...", i);
+			fflush(stdout);
+			if (audiodev_test(adev, 1 << i) == -1)
+				return EXIT_FAILURE;
+			printf(" done\n");
 		}
 	} else
 		usage(argv[0]);

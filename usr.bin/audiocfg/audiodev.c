@@ -1,4 +1,4 @@
-/* $NetBSD: audiodev.c,v 1.3 2010/09/02 02:17:35 jmcneill Exp $ */
+/* $NetBSD: audiodev.c,v 1.4 2010/09/03 19:20:37 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -245,6 +245,7 @@ audiodev_test(struct audiodev *adev, unsigned int chanmask)
 	int16_t *buf;
 	size_t buflen;
 	off_t off;
+	int rv = 0;
 
 	AUDIO_INITINFO(&info);
 	info.play.sample_rate = AUDIODEV_SAMPLE_RATE;
@@ -271,7 +272,12 @@ audiodev_test(struct audiodev *adev, unsigned int chanmask)
 		size_t wlen = info.play.buffer_size;
 		if (wlen > buflen)
 			wlen = buflen;
-		write(adev->fd, (char *)buf + off, wlen);
+		wlen = write(adev->fd, (char *)buf + off, wlen);
+		if (wlen == -1) {
+			perror("write");
+			rv = -1;
+			goto done;
+		}
 		off += wlen;
 		buflen -= wlen;
 	}
@@ -279,7 +285,8 @@ audiodev_test(struct audiodev *adev, unsigned int chanmask)
 	if (ioctl(adev->fd, AUDIO_DRAIN) == -1)
 		perror("ioctl AUDIO_DRAIN");
 
+done:
 	free(buf);
 
-	return 0;
+	return rv;
 }
