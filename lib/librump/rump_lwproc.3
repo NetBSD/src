@@ -1,4 +1,4 @@
-.\"     $NetBSD: rump_lwproc.3,v 1.1 2010/09/02 12:29:49 pooka Exp $
+.\"     $NetBSD: rump_lwproc.3,v 1.2 2010/09/03 07:12:51 wiz Exp $
 .\"
 .\" Copyright (c) 2010 Antti Kantee.  All rights reserved.
 .\"
@@ -49,14 +49,14 @@ container and a thread (lwp) is the execution context.
 Every lwp is associated with exactly one process, and a process is
 associated with one or more lwps.
 The current lwp (curlwp) indicates the current process and determines
-which resources, such as uid/gid, current working directory, and
+which resources, such as UID/GID, current working directory, and
 file descriptor table, are currently used.
 These basic principles apply to rump kernels as well, but since
 rump uses the host's thread and process context directly, the rules
 for how thread context is determined are different.
 .Pp
 In the rump model, each host thread (pthread) is either bound to
-a rump kernel lwp or accesses the rump kernel with a implicit thread
+a rump kernel lwp or accesses the rump kernel with an implicit thread
 context associated with the system process proc0.
 The implicit thread context is created every time the rump kernel
 is entered and disbanded upon exit.
