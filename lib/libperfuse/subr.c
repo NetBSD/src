@@ -1,4 +1,4 @@
-/*  $NetBSD: subr.c,v 1.3 2010/09/01 14:57:24 manu Exp $ */
+/*  $NetBSD: subr.c,v 1.4 2010/09/03 07:15:18 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010 Emmanuel Dreyfus. All rights reserved.
@@ -51,7 +51,8 @@ perfuse_new_pn(pu, parent)
 		DERR(EX_SOFTWARE, "puffs_pn_new failed");
 
 	(void)memset(pnd, 0, sizeof(*pnd));
-	TAILQ_INIT(&pnd->pnd_fh);
+	pnd->pnd_rfh = FUSE_UNKNOWN_FH;
+	pnd->pnd_wfh = FUSE_UNKNOWN_FH;
 	pnd->pnd_ino = PERFUSE_UNKNOWN_INO;
 	pnd->pnd_nlookup = 1;
 	pnd->pnd_parent = parent;
@@ -79,8 +80,8 @@ perfuse_destroy_pn(pn)
 		if (pnd->pnd_all_fd != NULL)
 			free(pnd->pnd_all_fd);
 #ifdef PERFUSE_DEBUG
-		if (!TAILQ_EMPTY(&pnd->pnd_fh))
-			DERRX(EX_SOFTWARE, "%s: non empty pnd_fh", __func__);
+		if (pnd->pnd_flags & PND_OPEN)
+			DERRX(EX_SOFTWARE, "%s: file open", __func__);
 
 		if (!TAILQ_EMPTY(&pnd->pnd_pcq))
 			DERRX(EX_SOFTWARE, "%s: non empty pnd_pcq", __func__);
@@ -96,25 +97,30 @@ perfuse_destroy_pn(pn)
 
 
 void
-perfuse_new_fh(opc, fh)
+perfuse_new_fh(opc, fh, mode)
 	puffs_cookie_t opc;
 	uint64_t fh;
+	int mode;
 {
 	struct perfuse_node_data *pnd;
-	struct perfuse_file_handle *pfh;
-
-	if (fh == FUSE_UNKNOWN_FH)
-		return;
 
 	pnd = PERFUSE_NODE_DATA(opc);
-	pnd->pnd_flags |= PND_OPEN;
 
-	if ((pfh = malloc(sizeof(*pfh))) == NULL)
-		DERR(EX_OSERR, "malloc failed");
+	if (mode & FWRITE) {
+		if (pnd->pnd_flags & PND_WFH)
+			DERRX(EX_SOFTWARE, "%s: opc = %p, write fh already set",
+			      __func__, (void *)opc);	
+		pnd->pnd_wfh = fh;
+		pnd->pnd_flags |= PND_WFH;
+	} 
 
-	pfh->pfh_fh = fh;
-
-	TAILQ_INSERT_TAIL(&pnd->pnd_fh, pfh, pfh_entries);
+	if (mode & FREAD) {
+		if (pnd->pnd_flags & PND_RFH)
+			DERRX(EX_SOFTWARE, "%s: opc = %p, read fh already set",
+			      __func__, (void *)opc);	
+		pnd->pnd_rfh = fh;
+		pnd->pnd_flags |= PND_RFH;
+	}
 
 	return;
 }
@@ -125,42 +131,51 @@ perfuse_destroy_fh(opc, fh)
 	uint64_t fh; 
 {
 	struct perfuse_node_data *pnd;
-	struct perfuse_file_handle *pfh;
 
 	pnd = PERFUSE_NODE_DATA(opc);
 
-	TAILQ_FOREACH(pfh, &pnd->pnd_fh, pfh_entries) {
-		if (pfh->pfh_fh == fh) {
-			TAILQ_REMOVE(&pnd->pnd_fh, pfh, pfh_entries);
-			free(pfh);
-			break;
-		}
+	if (fh == pnd->pnd_rfh) {
+		if (!(pnd->pnd_flags & PND_RFH) && (fh != FUSE_UNKNOWN_FH))
+			DERRX(EX_SOFTWARE, 
+			      "%s: opc = %p, unset rfh = %"PRIx64"",
+			      __func__, (void *)opc, fh);	
+		pnd->pnd_rfh = FUSE_UNKNOWN_FH;
+		pnd->pnd_flags &= ~PND_RFH;
 	}
 
-	if (TAILQ_EMPTY(&pnd->pnd_fh))
-		pnd->pnd_flags &= ~PND_OPEN;
+	if (fh == pnd->pnd_wfh) {
+		if (!(pnd->pnd_flags & PND_WFH) && (fh != FUSE_UNKNOWN_FH))
+			DERRX(EX_SOFTWARE,
+			      "%s: opc = %p, unset wfh = %"PRIx64"",
+			      __func__, (void *)opc, fh);	
+		pnd->pnd_wfh = FUSE_UNKNOWN_FH;
+		pnd->pnd_flags &= ~PND_WFH;
+	} 
 
-	if (pfh == NULL)
-		DERRX(EX_SOFTWARE, 
-		      "%s: unexistant fh = %"PRId64" (double close?)",
-		      __func__, fh);
-	
 	return;
 }
 
 uint64_t
-perfuse_get_fh(opc)
+perfuse_get_fh(opc, mode)
 	puffs_cookie_t opc;
+	int mode;
 {
 	struct perfuse_node_data *pnd;
-	struct perfuse_file_handle *pfh;
-	uint64_t fh = FUSE_UNKNOWN_FH;
 
 	pnd = PERFUSE_NODE_DATA(opc);
 
-	if ((pfh = TAILQ_FIRST(&pnd->pnd_fh)) != NULL)
-		fh = pfh->pfh_fh;;
+	if (mode & FWRITE) 
+		if (pnd->pnd_flags & PND_WFH)
+			return pnd->pnd_wfh;
 
-	return fh;
+	if (mode & FREAD) {
+		if (pnd->pnd_flags & PND_RFH)
+			return pnd->pnd_rfh;
+
+		if (pnd->pnd_flags & PND_WFH)
+			return pnd->pnd_wfh;
+	}
+
+	return FUSE_UNKNOWN_FH;
 }
 

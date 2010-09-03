@@ -1,4 +1,4 @@
-/*  $NetBSD: ops.c,v 1.6 2010/09/02 08:58:06 manu Exp $ */
+/*  $NetBSD: ops.c,v 1.7 2010/09/03 07:15:18 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010 Emmanuel Dreyfus. All rights reserved.
@@ -41,6 +41,7 @@
 #include "perfuse_priv.h"
 #include "fuse.h"
 
+static int node_close_common(struct puffs_usermount *, puffs_cookie_t, int);
 static int no_access(puffs_cookie_t, const struct puffs_cred *, mode_t);
 static void fuse_attr_to_vap(struct perfuse_state *,
     struct vattr *, struct fuse_attr *);
@@ -74,6 +75,7 @@ static void dequeue_requests(struct perfuse_state *,
  */
 #define F_WAIT		0x010
 #define F_FLOCK		0x020
+#define OFLAGS(fflags)  ((fflags) - 1)
 
 /* 
  * Borrowed from src/sys/kern/vfs_subr.c and src/sys/sys/vnode.h 
@@ -90,6 +92,74 @@ const int vttoif_tab[9] = {
 #define IFTOVT(mode) (iftovt_tab[((mode) & S_IFMT) >> 12])
 #define VTTOIF(indx) (vttoif_tab[(int)(indx)])
 
+static int
+node_close_common(pu, opc, mode)
+	struct puffs_usermount *pu;
+	puffs_cookie_t opc;
+	int mode;
+{
+	struct perfuse_state *ps;
+	perfuse_msg_t *pm;
+	int op;
+	uint64_t fh;
+	struct fuse_release_in *fri;
+	struct perfuse_node_data *pnd;
+	struct puffs_node *pn;
+	int error;
+
+	ps = puffs_getspecific(pu);
+	pn = (struct puffs_node *)opc;
+	pnd = PERFUSE_NODE_DATA(pn);
+
+	if (puffs_pn_getvap(pn)->va_type == VDIR) {
+		op = FUSE_RELEASEDIR;
+		mode = FREAD;
+	} else {
+		op = FUSE_RELEASE;
+	}
+
+	/*
+	 * Destroy the filehandle before sending the 
+	 * request to the FUSE filesystem, otherwise 
+	 * we may get a second close() while we wait
+	 * for the reply, and we would end up closing
+	 * the same fh twice instead of closng both.
+	 */
+	fh = perfuse_get_fh(opc, mode);
+	perfuse_destroy_fh(pn, fh);
+
+	/*
+	 * release_flags may be set to FUSE_RELEASE_FLUSH
+	 * to flush locks. lock_owner must be set in that case
+	 */
+	pm = ps->ps_new_msg(pu, opc, op, sizeof(*fri), NULL);
+	fri = GET_INPAYLOAD(ps, pm, fuse_release_in);
+	fri->fh = fh;
+	fri->flags = 0;
+	fri->release_flags = 0;
+	fri->lock_owner = pnd->pnd_lock_owner;
+	fri->flags = (fri->lock_owner != 0) ? FUSE_RELEASE_FLUSH : 0;
+
+#ifdef PERFUSE_DEBUG
+	if (perfuse_diagflags & PDF_FH)
+		DPRINTF("%s: opc = %p, ino = %"PRId64", fh = 0x%"PRIx64"\n",
+			 __func__, (void *)opc, pnd->pnd_ino, fri->fh);
+#endif
+
+	if ((error = XCHG_MSG(ps, pu, pm, NO_PAYLOAD_REPLY_LEN)) != 0)
+		goto out;
+
+	ps->ps_destroy_msg(pm);
+
+	error = 0;
+
+out:
+	if (error != 0)
+		DERRX(EX_SOFTWARE, "%s: freed fh = 0x%"PRIx64" but filesystem "
+		      "returned error = %d", __func__, fh, error);
+
+	return error;
+}
 
 static int
 no_access(opc, pcr, mode)
@@ -802,6 +872,19 @@ perfuse_node_lookup(pu, opc, pni, pcn)
 	int error;
 	
 	/*
+	 * Special case for ..
+	 */
+	if (PCNISDOTDOT(pcn)) {
+		pn = PERFUSE_NODE_DATA(opc)->pnd_parent;
+		PERFUSE_NODE_DATA(pn)->pnd_flags &= ~PND_RECLAIMED;
+		
+		puffs_newinfo_setcookie(pni, pn);
+		puffs_newinfo_setvtype(pni, VDIR);
+
+		return 0;
+	}
+
+	/*
 	 * XXX This is borrowed from librefuse, 
 	 * and __UNCONST is said to be fixed.
 	 */
@@ -866,6 +949,12 @@ perfuse_node_create(pu, opc, pni, pcn, vap)
 		if (error != 0)
 			return error;
 
+		error = node_lookup_common(pu, opc, (char*)PCNPATH(pcn), &pn);
+		if (error != 0)	
+			return error;
+
+		opc = (puffs_cookie_t)pn;
+
 		error = perfuse_node_open(pu, opc, FREAD|FWRITE, pcn->pcn_cred);
 		if (error != 0)	
 			return error;
@@ -898,12 +987,26 @@ perfuse_node_create(pu, opc, pni, pcn, vap)
 	 * so that we can reuse it later
 	 */
 	pn = perfuse_new_pn(pu, opc);
-	perfuse_new_fh((puffs_cookie_t)pn, foo->fh);
+	perfuse_new_fh((puffs_cookie_t)pn, foo->fh, FWRITE);
 	PERFUSE_NODE_DATA(pn)->pnd_ino = feo->nodeid;
+
+#ifdef PERFUSE_DEBUG
+	if (perfuse_diagflags & PDF_FH)
+		DPRINTF("%s: opc = %p, file = \"%s\", "
+			"ino = %"PRId64", rfh = 0x%"PRIx64"\n",
+			__func__, (void *)pn, (char *)PCNPATH(pcn),
+			feo->nodeid, foo->fh);
+#endif
 
 	fuse_attr_to_vap(ps, &pn->pn_va, &feo->attr);
 	puffs_newinfo_setcookie(pni, pn);
 
+	/*
+	 * It seems we need to do this so that glusterfs gets fully
+	 * aware that the file was created. If we do not do it, we 
+	 * get "SETATTR (null) (fuse_loc_fill() failed)"
+	 */
+	(void)node_lookup_common(pu, opc, (char*)PCNPATH(pcn), NULL);
 out: 
 	ps->ps_destroy_msg(pm);
 
@@ -979,8 +1082,10 @@ perfuse_node_open(pu, opc, mode, pcr)
 	const struct puffs_cred *pcr;
 {
 	struct perfuse_state *ps;
+	struct perfuse_node_data *pnd;
 	perfuse_msg_t *pm;
 	mode_t pmode;
+	mode_t fmode;
 	int op;
 	struct fuse_open_in *foi;
 	struct fuse_open_out *foo;
@@ -988,6 +1093,7 @@ perfuse_node_open(pu, opc, mode, pcr)
 	int error;
 	
 	ps = puffs_getspecific(pu);
+	pnd = PERFUSE_NODE_DATA(opc);
 
 	pn = (struct puffs_node *)opc;
 	if (puffs_pn_getvap(pn)->va_type == VDIR) {
@@ -995,8 +1101,8 @@ perfuse_node_open(pu, opc, mode, pcr)
 		pmode = PUFFS_VREAD|PUFFS_VEXEC;
 	} else {
 		op = FUSE_OPEN;
-		if (mode & (O_RDWR|O_WRONLY))
-			pmode = PUFFS_VWRITE;
+		if (mode & FWRITE)
+			pmode = PUFFS_VWRITE|PUFFS_VREAD;
 		else
 			pmode = PUFFS_VREAD;
 	}
@@ -1006,8 +1112,7 @@ perfuse_node_open(pu, opc, mode, pcr)
 	 * Opening a file requires R-- for reading, -W- for writing
 	 * In both cases, --X is required on the parent.
 	 */
-	if (no_access((puffs_cookie_t)PERFUSE_NODE_DATA(opc)->pnd_parent,
-	    pcr, PUFFS_VEXEC))
+	if (no_access((puffs_cookie_t)pnd->pnd_parent, pcr, PUFFS_VEXEC))
 		return EACCES;
 
 	if (no_access(opc, pcr, pmode))
@@ -1017,23 +1122,30 @@ perfuse_node_open(pu, opc, mode, pcr)
 	 * libfuse docs say O_CREAT should not be set.
 	 */
 	mode &= ~O_CREAT;
-		
+
+	/*
+	 * Do not open twice, and do not reopen for reading
+	 * if we already have write handle.
+	 * Directories are always open with read access only, 
+	 * whatever flags we get.
+	 */
+	if (op == FUSE_OPENDIR)
+		mode = (mode & ~(FREAD|FWRITE)) | FREAD;
+	if ((mode & FREAD) && (pnd->pnd_flags & PND_RFH))
+		return 0;
+	if ((mode & FWRITE) && (pnd->pnd_flags & PND_WFH))
+		return 0;
+
+	/*
+	 * Convert PUFFS mode to FUSE mode: convert FREAD/FWRITE
+	 * to O_RDONLY/O_WRONLY while perserving the other options.
+	 */
+	fmode = mode & ~(FREAD|FWRITE);
+	fmode |= (mode & FWRITE) ? O_RDWR : O_RDONLY;
+
 	pm = ps->ps_new_msg(pu, opc, op, sizeof(*foi), pcr);
 	foi = GET_INPAYLOAD(ps, pm, fuse_open_in);
-	foi->flags = mode & ~O_ACCMODE; 
-	switch (mode & (FREAD|FWRITE)) {
-	case FREAD|FWRITE:
-		foi->flags |= O_RDWR;
-		break;
-	case FREAD:
-		foi->flags |= O_RDONLY;
-		break;
-	case FWRITE:
-		foi->flags |= O_WRONLY;
-		break;
-	default:
-		break;
-	}
+	foi->flags = fmode;
 	foi->unused = 0;
 
 	if ((error = XCHG_MSG(ps, pu, pm, sizeof(*foo))) != 0)
@@ -1045,15 +1157,16 @@ perfuse_node_open(pu, opc, mode, pcr)
 	 * Save the file handle in node private data 
 	 * so that we can reuse it later
 	 */
-	perfuse_new_fh((puffs_cookie_t)pn, foo->fh);
+	perfuse_new_fh((puffs_cookie_t)pn, foo->fh, mode);
 
 #ifdef PERFUSE_DEBUG
 	if (perfuse_diagflags & PDF_FH)
 		DPRINTF("%s: opc = %p, file = \"%s\", "
-			"ino = %"PRId64", fh = 0x%"PRIx64"\n",
+			"ino = %"PRId64", %s%sfh = 0x%"PRIx64"\n",
 			__func__, (void *)opc, 
 			(char *)PNPATH((struct puffs_node *)opc),
-			PERFUSE_NODE_DATA(opc)->pnd_ino, foo->fh);
+			pnd->pnd_ino, mode & FREAD ? "r" : "",
+			mode & FWRITE ? "w" : "", foo->fh);
 #endif
 out:
 	ps->ps_destroy_msg(pm);
@@ -1061,7 +1174,7 @@ out:
 	return error;
 }
 
-/* ARGSUSED2 */
+/* ARGSUSED0 */
 int
 perfuse_node_close(pu, opc, flags, pcr)
 	struct puffs_usermount *pu;
@@ -1069,95 +1182,34 @@ perfuse_node_close(pu, opc, flags, pcr)
 	int flags;
 	const struct puffs_cred *pcr;
 {
-	struct perfuse_state *ps;
-	perfuse_msg_t *pm;
-	int op;
-	uint64_t fh;
-	struct perfuse_node_data *pnd;
-	struct fuse_release_in *fri;
 	struct puffs_node *pn;
-	int error;
-	
-	ps = puffs_getspecific(pu);
-	pn = (struct puffs_node *)opc;
-	pnd = PERFUSE_NODE_DATA(pn);
+	struct perfuse_node_data *pnd;
 
-	if (puffs_pn_getvap(pn)->va_type == VDIR)
-		op = FUSE_RELEASEDIR;
-	else
-		op = FUSE_RELEASE;
+	pn = (struct puffs_node *)opc;
+	pnd = PERFUSE_NODE_DATA(opc);
 
 	if (!(pnd->pnd_flags & PND_OPEN))
 		return EBADF;
 
-	fh = perfuse_get_fh(opc);
-
 	/*
-	 * Sync before close for files
+	 * Make sure all operation are finished
+	 * There can be an ongoing write, or queued operations
+	 * XXX perhaps deadlock. Use requeue_request
 	 */
-	if ((op == FUSE_RELEASE) && (pnd->pnd_flags & PND_DIRTY)) {
-#ifdef PERFUSE_DEBUG
-		if (perfuse_diagflags & PDF_SYNC)
-			DPRINTF("%s: SYNC opc = %p, file = \"%s\"\n", 
-				__func__, (void*)opc, (char *)PNPATH(pn));
-#endif
-		if ((error = perfuse_node_fsync(pu, opc, pcr, 0, 0, 0)) != 0)
-			return error;
+	while ((pnd->pnd_flags & PND_BUSY) ||
+	       !TAILQ_EMPTY(&pnd->pnd_pcq))
+		puffs_cc_yield(puffs_cc_getcc(pu));
 
-		pnd->pnd_flags &= ~PND_DIRTY;
-
-#ifdef PERFUSE_DEBUG
-		if (perfuse_diagflags & PDF_SYNC)
-			DPRINTF("%s: CLEAR opc = %p, file = \"%s\"\n", 
-				__func__, (void*)opc, (char *)PNPATH((pn)));
-#endif
-	}
-
-	/*
-	 * Destroy the filehandle before sending the 
-	 * request to the FUSE filesystem, otherwise 
-	 * we may get a second close() while we wait
-	 * for the reply, and we would end up closing
-	 * the same fh twice instead of closng both.
+	/* 
+	 * The NetBSD kernel will send sync and setattr(mtime, ctime)
+	 * afer a close on a regular file. Some FUSE filesystem will 
+	 * assume theses operations are performed on open files. We 
+	 * therefore postpone the close operation at reclaim time.
 	 */
-	perfuse_destroy_fh(pn, fh);
+	if (puffs_pn_getvap(pn)->va_type != VREG)
+		return node_close_common(pu, opc, flags);
 
-#ifdef PERFUSE_DEBUG
-	if (perfuse_diagflags & PDF_FH)
-		DPRINTF("%s: opc = %p, ino = %"PRId64", fh = 0x%"PRIx64"\n",
-			__func__, (void *)opc, pnd->pnd_ino, fh);
-#endif
-
-	/*
-	 * release_flags may be set to FUSE_RELEASE_FLUSH
-	 * to flush locks. lock_owner must be set in that case
-	 */
-	pm = ps->ps_new_msg(pu, opc, op, sizeof(*fri), NULL);
-	fri = GET_INPAYLOAD(ps, pm, fuse_release_in);
-	fri->fh = fh;
-	fri->flags = 0;
-	fri->release_flags = 0;
-	fri->lock_owner = PERFUSE_NODE_DATA(pn)->pnd_lock_owner;
-	fri->flags = (fri->lock_owner != 0) ? FUSE_RELEASE_FLUSH : 0;
-
-#ifdef PERFUSE_DEBUG
-	if (perfuse_diagflags & PDF_FH)
-		DPRINTF("%s: opc = %p, ino = %"PRId64", fh = 0x%"PRIx64"\n",
-			 __func__, (void *)opc, pnd->pnd_ino, fri->fh);
-#endif
-
-	if ((error = XCHG_MSG(ps, pu, pm, NO_PAYLOAD_REPLY_LEN)) != 0)
-		goto out;
-
-out:
-	if (error != 0)
-		DWARNX("%s: freed fh = 0x%"PRIx64" but filesystem "
-		       "returned error = %d",
-		       __func__, fh, error);
-
-	ps->ps_destroy_msg(pm);
-
-	return error;
+	return 0;
 }
 
 int
@@ -1200,7 +1252,7 @@ perfuse_node_access(pu, opc, mode, pcr)
 		fgi = GET_INPAYLOAD(ps, pm, fuse_getattr_in);
 		fgi->getattr_flags = 0; 
 		fgi->dummy = 0;
-		fgi->fh = perfuse_get_fh(opc);
+		fgi->fh = perfuse_get_fh(opc, FREAD);
 
 #ifdef PERFUSE_DEBUG
 		if (perfuse_diagflags & PDF_FH)
@@ -1288,15 +1340,20 @@ perfuse_node_setattr(pu, opc, vap, pcr)
 	perfuse_msg_t *pm;
 	uint64_t fh;
 	struct perfuse_state *ps;
+	struct perfuse_node_data *pnd;
 	struct fuse_setattr_in *fsi;
 	int error;
+	int open_self;
 	struct vattr *old_va;
+
+	open_self = 0;
+	ps = puffs_getspecific(pu);
+	pnd = PERFUSE_NODE_DATA(opc);
 
 	/*
 	 * setattr requires --X on the parent directory
 	 */
-	if (no_access((puffs_cookie_t)PERFUSE_NODE_DATA(opc)->pnd_parent,
-	    pcr, PUFFS_VEXEC))
+	if (no_access((puffs_cookie_t)pnd->pnd_parent, pcr, PUFFS_VEXEC))
 		return EACCES;
 
 	old_va = puffs_pn_getvap((struct puffs_node *)opc);
@@ -1331,21 +1388,38 @@ perfuse_node_setattr(pu, opc, vap, pcr)
 	 */
 	if ((vap->va_mode != (mode_t)PUFFS_VNOVAL) &&
 	    (puffs_access_chmod(old_va->va_uid, old_va->va_gid,
-				 old_va->va_type, vap->va_mode, pcr)) != 0)
+				old_va->va_type, vap->va_mode, pcr)) != 0)
 		return EACCES;
 	
+	/*
+	 * setattr(mtime, ctime) require an open file,
+	 * at least for glusterfs.
+	 */
+	if (((vap->va_atime.tv_sec != (time_t)PUFFS_VNOVAL) ||
+	     (vap->va_mtime.tv_sec != (time_t)PUFFS_VNOVAL)) &&
+	    !(pnd->pnd_flags & PND_WFH)) {
+		if ((error = perfuse_node_open(pu, opc, FWRITE, pcr)) != 0)
+			return error;
+		open_self = 1;
+	}
+	/*
+	 * It seems troublesome to resize a file while
+	 * a write is just beeing done. Wait for
+	 * it to finish.
+	 */
+	if (vap->va_size != (u_quad_t)PUFFS_VNOVAL)
+		while (pnd->pnd_flags & PND_INWRITE)
+			requeue_request(pu, opc, PCQ_AFTERWRITE);
 
-	ps = puffs_getspecific(pu);
 
 	pm = ps->ps_new_msg(pu, opc, FUSE_SETATTR, sizeof(*fsi), pcr);
 	fsi = GET_INPAYLOAD(ps, pm, fuse_setattr_in);
 	fsi->valid = 0;
 
-	if (PERFUSE_NODE_DATA(opc)->pnd_flags & PND_OPEN) {
-		fh = perfuse_get_fh(opc);
+	if (pnd->pnd_flags & PND_WFH) {
+		fh = perfuse_get_fh(opc, FWRITE);
 		fsi->fh = fh;
-		if (fh != FUSE_UNKNOWN_FH)
-			fsi->valid |= FUSE_FATTR_FH;
+		fsi->valid |= FUSE_FATTR_FH;
 	}
 
 	if (vap->va_size != (u_quad_t)PUFFS_VNOVAL) {
@@ -1380,8 +1454,8 @@ perfuse_node_setattr(pu, opc, vap, pcr)
 		fsi->valid |= FUSE_FATTR_GID;
 	}
 
-	if (PERFUSE_NODE_DATA(opc)->pnd_lock_owner != 0) {
-		fsi->lock_owner = PERFUSE_NODE_DATA(opc)->pnd_lock_owner;
+	if (pnd->pnd_lock_owner != 0) {
+		fsi->lock_owner = pnd->pnd_lock_owner;
 		fsi->valid |= FUSE_FATTR_LOCKOWNER;
 	}
 
@@ -1391,6 +1465,9 @@ perfuse_node_setattr(pu, opc, vap, pcr)
 	error = XCHG_MSG(ps, pu, pm, sizeof(struct fuse_attr_out));
 
 	ps->ps_destroy_msg(pm);
+
+	if (open_self)
+		(void)perfuse_node_close(pu, opc, FWRITE, pcr);
 
 	return error;
 }
@@ -1413,7 +1490,7 @@ perfuse_node_poll(pu, opc, events)
  	 */
 	pm = ps->ps_new_msg(pu, opc, FUSE_POLL, sizeof(*fpi), NULL);
 	fpi = GET_INPAYLOAD(ps, pm, fuse_poll_in);
-	fpi->fh = perfuse_get_fh(opc);
+	fpi->fh = perfuse_get_fh(opc, FREAD);
 	fpi->kh = 0;
 	fpi->flags = 0;
 
@@ -1479,7 +1556,7 @@ perfuse_node_fsync(pu, opc, pcr, flags, offlo, offhi)
 
 	/*
 	 * Do not sync if there are no change to sync
-	 * XXX remove that testif we implement mmap
+	 * XXX remove that test if we implement mmap
 	 */
 	pnd = PERFUSE_NODE_DATA(opc);
 #ifdef PERFUSE_DEBUG
@@ -1498,12 +1575,12 @@ perfuse_node_fsync(pu, opc, pcr, flags, offlo, offhi)
 	 * "FSYNC() ERR => -1 (Invalid argument)"
 	 */
 	if (!(pnd->pnd_flags & PND_OPEN)) {
-		if ((error = perfuse_node_open(pu, opc, FREAD, pcr)) != 0)
+		if ((error = perfuse_node_open(pu, opc, FWRITE, pcr)) != 0)
 			goto out;
 		open_self = 1;
 	}
 
-	fh = perfuse_get_fh(opc);
+	fh = perfuse_get_fh(opc, FWRITE);
 	
 	/*
 	 * If fsync_flags  is set, meta data should not be flushed.
@@ -1543,8 +1620,8 @@ out:
 	if (pm != NULL)
 		ps->ps_destroy_msg(pm);
 
-	if (open_self)
-		(void)perfuse_node_close(pu, opc, 0, pcr);
+	if (open_self) 
+		(void)node_close_common(pu, opc, FWRITE);
 
 	return error;
 }
@@ -1576,26 +1653,28 @@ perfuse_node_remove(pu, opc, targ, pcn)
 	const struct puffs_cn *pcn;
 {
 	struct perfuse_state *ps;
-	perfuse_msg_t *pm;
 	struct puffs_node *pn;
+	struct perfuse_node_data *pnd;
+	perfuse_msg_t *pm;
 	char *path;
 	const char *name;
 	size_t len;
 	int error;
 	
+	pnd = PERFUSE_NODE_DATA(opc);
+
 	/*
 	 * remove requires -WX on the parent directory 
 	 * no right required on the object.
 	 */
-	if (no_access((puffs_cookie_t)PERFUSE_NODE_DATA(opc)->pnd_parent,
+	if (no_access((puffs_cookie_t)pnd->pnd_parent,
 	    pcn->pcn_cred, PUFFS_VWRITE|PUFFS_VEXEC))
 		return EACCES;
-
-	ps = puffs_getspecific(pu);
 
 	if (targ == NULL)
 		DERRX(EX_SOFTWARE, "%s: targ is NULL", __func__);
 
+	ps = puffs_getspecific(pu);
 	pn = (struct puffs_node *)targ;
 	name = basename_r((char *)PNPATH(pn));
 	len = strlen(name) + 1;
@@ -1609,9 +1688,6 @@ perfuse_node_remove(pu, opc, targ, pcn)
 
 	if (puffs_inval_namecache_dir(pu, opc) != 0)
 		DERR(EX_OSERR, "puffs_inval_namecache_dir failed");
-
-	if (puffs_inval_pagecache_node(pu, (puffs_cookie_t)pn) != 0)
-		DERR(EX_OSERR, "puffs_inval_namecache_node failed");
 
 	puffs_setback(puffs_cc_getcc(pu), PUFFS_SETBACK_NOREF_N2);
 
@@ -1767,6 +1843,7 @@ perfuse_node_rmdir(pu, opc, targ, pcn)
 	const struct puffs_cn *pcn;
 {
 	struct perfuse_state *ps;
+	struct perfuse_node_data *pnd;
 	perfuse_msg_t *pm;
 	struct puffs_node *pn;
 	char *path;
@@ -1774,11 +1851,13 @@ perfuse_node_rmdir(pu, opc, targ, pcn)
 	size_t len;
 	int error;
 	
+	pnd = PERFUSE_NODE_DATA(opc);
+
 	/*
 	 * remove requires -WX on the parent directory 
 	 * no right required on the object.
 	 */
-	if (no_access((puffs_cookie_t)PERFUSE_NODE_DATA(opc)->pnd_parent,
+	if (no_access((puffs_cookie_t)pnd->pnd_parent,
 	    pcn->pcn_cred, PUFFS_VWRITE|PUFFS_VEXEC))
 		return EACCES;
 
@@ -1796,9 +1875,6 @@ perfuse_node_rmdir(pu, opc, targ, pcn)
 
 	if (puffs_inval_namecache_dir(pu, opc) != 0)
 		DERR(EX_OSERR, "puffs_inval_namecache_dir failed");
-
-	if (puffs_inval_pagecache_node(pu, (puffs_cookie_t)pn) != 0)
-		DERR(EX_OSERR, "puffs_inval_namecache_node failed");
 
 	puffs_setback(puffs_cc_getcc(pu), PUFFS_SETBACK_NOREF_N2);
 
@@ -1905,17 +1981,17 @@ perfuse_node_readdir(pu, opc, dent, readoff,
 	 * It seems NetBSD can call readdir without open first
 	 * libfuse will crash if it is done that way, hence open first.
 	 */
-	if (!(PERFUSE_NODE_DATA(opc)->pnd_flags & PND_OPEN)) {
+	if (!(pnd->pnd_flags & PND_OPEN)) {
 		if ((error = perfuse_node_open(pu, opc, FREAD, pcr)) != 0)
 			goto out;
 		open_self = 1;
 	}
 
-	fh = perfuse_get_fh(opc);
+	fh = perfuse_get_fh(opc, FREAD);
 
 #ifdef PERFUSE_DEBUG
 	if (perfuse_diagflags & PDF_FH)
-		DPRINTF("%s: opc = %p, ino = %"PRId64", fh = 0x%"PRIx64"\n",
+		DPRINTF("%s: opc = %p, ino = %"PRId64", rfh = 0x%"PRIx64"\n",
 			__func__, (void *)opc,
 			PERFUSE_NODE_DATA(opc)->pnd_ino, fh);
 #endif
@@ -2013,7 +2089,7 @@ out:
 	 * errors are ignored.
 	 */
 	if (open_self)
-		(void)perfuse_node_close(pu, opc, 0, pcr);
+		(void)perfuse_node_close(pu, opc, FWRITE, pcr);
 
 	if (error == 0)
 		error = readdir_buffered(ps, opc, dent, readoff,
@@ -2092,12 +2168,6 @@ perfuse_node_reclaim(pu, opc)
 	pnd = PERFUSE_NODE_DATA(opc);
 
 	/*
-	 * Make sure open files are properly closed when reclaimed.
-	 */
-	while (pnd->pnd_flags & PND_OPEN)
-		(void)perfuse_node_close(pu, opc, 0, NULL);
-		
-	/*
 	 * Never forget the root.
 	 */
 	if (pnd->pnd_ino == FUSE_ROOT_ID)
@@ -2121,15 +2191,17 @@ perfuse_node_reclaim(pu, opc)
 #ifdef PERFUSE_DEBUG
 	if (perfuse_diagflags & PDF_RECLAIM)
 		DPRINTF("%s (nodeid %"PRId64") is %sreclaimed, "
-			"has childcount %d, %sopen\n", 
+			"has childcount %d %s%s%s, pending ops:%s%s%s%s\n", 
 		        (char *)PNPATH(pn), pnd->pnd_ino,
 		        pnd->pnd_flags & PND_RECLAIMED ? "" : "not ",
 		        pnd->pnd_childcount,
-			pnd->pnd_flags & PND_OPEN ? "" : "not ");
-
-	if (pnd->pnd_flags & PND_OPEN)
-		DWARNX("%s: (nodeid %"PRId64") %s is still open",
-		       __func__, pnd->pnd_ino, (char *)PNPATH(pn));
+			pnd->pnd_flags & PND_OPEN ? "open " : "not open",
+			pnd->pnd_flags & PND_RFH ? "r" : "",
+			pnd->pnd_flags & PND_WFH ? "w" : "",
+			pnd->pnd_flags & PND_INREADDIR ? " readdir" : "",
+			pnd->pnd_flags & PND_INREAD ? " read" : "",
+			pnd->pnd_flags & PND_INWRITE ? " write" : "",
+			pnd->pnd_flags & PND_BUSY ? "" : " none");
 #endif
 
 		if (!(pnd->pnd_flags & PND_RECLAIMED) ||
@@ -2137,12 +2209,38 @@ perfuse_node_reclaim(pu, opc)
 			return 0;
 
 		/*
-		 * If the file is still open, close all file handles
-		 * XXX no pcr arguement to send.
+		 * Make sure all operation are finished
+		 * There can be an ongoing write, or queued operations
 		 */
-		while(pnd->pnd_flags & PND_OPEN)
-			(void)perfuse_node_close(pu, opc, 0, NULL);
+		while (pnd->pnd_flags & PND_INWRITE) {
+			requeue_request(pu, opc, PCQ_AFTERWRITE);
 
+			/*
+			 * It may have been cancelled in the meantime
+			 */
+			if (!(pnd->pnd_flags & PND_RECLAIMED))
+				return 0;
+		}
+
+#ifdef PERFUSE_DEBUG
+		if ((pnd->pnd_flags & PND_BUSY) ||
+		       !TAILQ_EMPTY(&pnd->pnd_pcq))
+			DERRX(EX_SOFTWARE, "%s: opc = %p: ongoing operations",
+			      __func__, (void *)opc);
+#endif
+
+		/*
+		 * Close open files
+		 */
+		if (pnd->pnd_flags & PND_WFH)
+			(void)node_close_common(pu, opc, FREAD);
+
+		if (pnd->pnd_flags & PND_RFH)
+			(void)node_close_common(pu, opc, FWRITE);
+
+		/*
+		 * And send the FORGET message
+		 */
 		pm = ps->ps_new_msg(pu, (puffs_cookie_t)pn, FUSE_FORGET, 
 			      sizeof(*ffi), NULL);
 		ffi = GET_INPAYLOAD(ps, pm, fuse_forget_in);
@@ -2223,7 +2321,7 @@ perfuse_node_advlock(pu, opc, id, op, fl, flags)
 			
 	pm = ps->ps_new_msg(pu, opc, fop, sizeof(*fli), NULL);
 	fli = GET_INPAYLOAD(ps, pm, fuse_lk_in);
-	fli->fh = perfuse_get_fh(opc);
+	fli->fh = perfuse_get_fh(opc, FWRITE);
 	fli->owner = fl->l_pid;
 	fli->lk.start = fl->l_start;
 	fli->lk.end = fl->l_start + fl->l_len;
@@ -2279,6 +2377,7 @@ perfuse_node_read(pu, opc, buf, offset, resid, pcr, ioflag)
 	int ioflag;
 {
 	struct perfuse_state *ps;
+	struct perfuse_node_data *pnd;
 	perfuse_msg_t *pm;
 	struct fuse_read_in *fri;
 	struct fuse_out_header *foh;
@@ -2287,7 +2386,13 @@ perfuse_node_read(pu, opc, buf, offset, resid, pcr, ioflag)
 	int error;
 	
 	ps = puffs_getspecific(pu);
+	pnd = PERFUSE_NODE_DATA(opc);
 	pm = NULL;
+
+	if (puffs_pn_getvap((struct puffs_node *)opc)->va_type == VDIR) 
+		return EBADF;
+
+	pnd->pnd_flags |= PND_INREAD;
 
 	requested = *resid;
 	if ((ps->ps_readahead + requested) > ps->ps_max_readahead) {
@@ -2307,19 +2412,18 @@ perfuse_node_read(pu, opc, buf, offset, resid, pcr, ioflag)
 		 */
 		pm = ps->ps_new_msg(pu, opc, FUSE_READ, sizeof(*fri), pcr);
 		fri = GET_INPAYLOAD(ps, pm, fuse_read_in);
-		fri->fh = perfuse_get_fh(opc);
+		fri->fh = perfuse_get_fh(opc, FREAD);
 		fri->offset = offset;
 		fri->size = (uint32_t)MIN(*resid, PAGE_SIZE - sizeof(*foh));
 		fri->read_flags = 0; /* XXX Unused by libfuse? */
-		fri->lock_owner = PERFUSE_NODE_DATA(opc)->pnd_lock_owner;
+		fri->lock_owner = pnd->pnd_lock_owner;
 		fri->flags = 0;
 		fri->flags |= (fri->lock_owner != 0) ? FUSE_READ_LOCKOWNER : 0;
 
 #ifdef PERFUSE_DEBUG
 	if (perfuse_diagflags & PDF_FH)
 		DPRINTF("%s: opc = %p, ino = %"PRId64", fh = 0x%"PRIx64"\n",
-			__func__, (void *)opc,
-			PERFUSE_NODE_DATA(opc)->pnd_ino, fri->fh);
+			__func__, (void *)opc, pnd->pnd_ino, fri->fh);
 #endif
 		error = XCHG_MSG(ps, pu, pm, UNSPEC_REPLY_LEN);
 
@@ -2351,6 +2455,8 @@ out:
 	ps->ps_readahead -= requested;
 	dequeue_requests(ps, opc, PCQ_READ, 1);
 
+	pnd->pnd_flags &= ~PND_INREAD;
+
 	return error;
 }
 
@@ -2365,6 +2471,7 @@ perfuse_node_write(pu, opc, buf, offset, resid, pcr, ioflag)
 	int ioflag;
 {
 	struct perfuse_state *ps;
+	struct perfuse_node_data *pnd;
 	perfuse_msg_t *pm;
 	struct fuse_write_in *fwi;
 	struct fuse_write_out *fwo;
@@ -2375,8 +2482,15 @@ perfuse_node_write(pu, opc, buf, offset, resid, pcr, ioflag)
 	int error;
 	
 	ps = puffs_getspecific(pu);
+	pnd = PERFUSE_NODE_DATA(opc);
 	pm = NULL;
 	written = 0;
+
+	if (puffs_pn_getvap((struct puffs_node *)opc)->va_type == VDIR) 
+		return EBADF;
+
+DPRINTF("%s ENTER\n", __func__);
+	pnd->pnd_flags |= PND_INWRITE;
 
 	requested = *resid;
 	if ((ps->ps_write + requested) > ps->ps_max_write) {
@@ -2403,11 +2517,11 @@ perfuse_node_write(pu, opc, buf, offset, resid, pcr, ioflag)
 		 */
 		pm = ps->ps_new_msg(pu, opc, FUSE_WRITE, payload_len, pcr);
 		fwi = GET_INPAYLOAD(ps, pm, fuse_write_in);
-		fwi->fh = perfuse_get_fh(opc);
+		fwi->fh = perfuse_get_fh(opc, FWRITE);
 		fwi->offset = offset;
 		fwi->size = (uint32_t)data_len;
 		fwi->write_flags = (fwi->size % PAGE_SIZE) ? 0 : 1;
-		fwi->lock_owner = PERFUSE_NODE_DATA(opc)->pnd_lock_owner;
+		fwi->lock_owner = pnd->pnd_lock_owner;
 		fwi->flags = 0;
 		fwi->flags |= (fwi->lock_owner != 0) ? FUSE_WRITE_LOCKOWNER : 0;
 		fwi->flags |= (ioflag & IO_DIRECT) ? 0 : FUSE_WRITE_CACHE; 
@@ -2416,8 +2530,7 @@ perfuse_node_write(pu, opc, buf, offset, resid, pcr, ioflag)
 #ifdef PERFUSE_DEBUG
 	if (perfuse_diagflags & PDF_FH)
 		DPRINTF("%s: opc = %p, ino = %"PRId64", fh = 0x%"PRIx64"\n",
-			__func__, (void *)opc,
-			PERFUSE_NODE_DATA(opc)->pnd_ino, fwi->fh);
+			__func__, (void *)opc, pnd->pnd_ino, fwi->fh);
 #endif
 		if ((error = XCHG_MSG(ps, pu, pm, sizeof(*fwo))) != 0)
 			goto out;
@@ -2447,7 +2560,7 @@ perfuse_node_write(pu, opc, buf, offset, resid, pcr, ioflag)
 	/*
 	 * Remember to sync the file
 	 */
-	PERFUSE_NODE_DATA(opc)->pnd_flags |= PND_DIRTY;
+	pnd->pnd_flags |= PND_DIRTY;
 
 #ifdef PERFUSE_DEBUG
 	if (perfuse_diagflags & PDF_SYNC)
@@ -2461,6 +2574,13 @@ out:
 
 	ps->ps_write -= requested;
 	dequeue_requests(ps, opc, PCQ_WRITE, 1);
+
+	pnd->pnd_flags &= ~PND_INWRITE;
+
+	/*
+	 * Dequeue operation that were waiting for write to complete
+	 */ 
+	dequeue_requests(ps, opc, PCQ_AFTERWRITE, DEQUEUE_ALL);
 
 	return error;
 }
