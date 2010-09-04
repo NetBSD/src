@@ -1,7 +1,7 @@
-/*	$Id: omap2_gpmc.c,v 1.7 2010/08/28 04:00:35 kiyohara Exp $	*/
+/*	$Id: omap2_gpmc.c,v 1.8 2010/09/04 16:23:47 ahoka Exp $	*/
 
 /* adapted from: */
-/*	$NetBSD: omap2_gpmc.c,v 1.7 2010/08/28 04:00:35 kiyohara Exp $ */
+/*	$NetBSD: omap2_gpmc.c,v 1.8 2010/09/04 16:23:47 ahoka Exp $ */
 
 
 /*
@@ -102,7 +102,7 @@
 
 #include "opt_omap.h"
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap2_gpmc.c,v 1.7 2010/08/28 04:00:35 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap2_gpmc.c,v 1.8 2010/09/04 16:23:47 ahoka Exp $");
 
 #include "locators.h"
 
@@ -315,4 +315,16 @@ gpmc_print(void *aux, const char *name)
 		aprint_normal(" intr %d", sa->gpmc_intr);
 
 	return UNCONF;
+}
+
+uint32_t
+gpmc_register_read(struct gpmc_softc *sc, bus_size_t reg)
+{
+	return bus_space_read_4(sc->sc_iot, sc->sc_ioh, reg);
+}
+
+void
+gpmc_register_write(struct gpmc_softc *sc, bus_size_t reg, const uint32_t data)
+{
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, reg, data);
 }
