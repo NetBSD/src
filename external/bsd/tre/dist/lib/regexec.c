@@ -48,6 +48,9 @@ char *alloca ();
 #include "tre.h"
 #include "xmalloc.h"
 
+#ifdef __weak_alias
+__weak_alias(regexec,_regexec)
+#endif
 
 /* Fills the POSIX.2 regmatch_t array according to the TNFA tag and match
    endpoint values. */
@@ -204,6 +207,7 @@ tre_regnexec(const regex_t *preg, const char *str, size_t len,
 	 size_t nmatch, regmatch_t pmatch[], int eflags)
 {
   tre_tnfa_t *tnfa = (void *)preg->TRE_REGEX_T_FIELD;
+  /* CONSTCOND */
   tre_str_type_t type = (TRE_MB_CUR_MAX == 1) ? STR_BYTE : STR_MBS;
 
   return tre_match(tnfa, str, len, type, nmatch, pmatch, eflags);
@@ -218,7 +222,9 @@ tre_regexec(const regex_t *preg, const char *str,
 	size_t		 newlen;
 
 	if (eflags & REG_STARTEND) {
+		/* LINTED */
 		newstr = &str[pmatch[0].rm_so];
+		/* LINTED */
 		newlen = pmatch[0].rm_eo;
 		newflags = (unsigned)(eflags & ~REG_STARTEND);
 	} else {
