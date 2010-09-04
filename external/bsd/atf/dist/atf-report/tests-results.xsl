@@ -49,6 +49,10 @@
                 select="count(tests-results/tp/tc/failed)" />
   <xsl:variable name="ntcs-skipped"
                 select="count(tests-results/tp/tc/skipped)" />
+  <xsl:variable name="ntcs-exp-fail"
+                select="count(tests-results/tp/tc/expected_signal) +
+			count(tests-results/tp/tc/expected_timeout) +
+			count(tests-results/tp/tc/expected_failure)" />
 
   <xsl:template match="/">
     <xsl:copy>
@@ -73,6 +77,9 @@
         <xsl:call-template name="tcs-summary" />
         <xsl:if test="$ntcs-failed > 0">
           <xsl:call-template name="failed-tcs-summary" />
+        </xsl:if>
+        <xsl:if test="$ntcs-exp-fail > 0">
+          <xsl:call-template name="exp-fail-tcs-summary" />
         </xsl:if>
         <xsl:if test="$ntcs-skipped > 0">
           <xsl:call-template name="skipped-tcs-summary" />
@@ -151,7 +158,7 @@
       <tr class="entry">
         <td><p>Root</p></td>
         <td><p><xsl:value-of
-        select="info[@class = 'tests.dir']" /></p></td>
+        select="info[@class = 'tests.root']" /></p></td>
       </tr>
       <tr class="entry">
         <td><p>Test programs</p></td>
@@ -193,6 +200,23 @@
             <td><p>Failed test cases</p></td>
             <td class="numeric">
               <p><xsl:value-of select="$ntcs-failed" /></p>
+            </td>
+          </xsl:otherwise>
+        </xsl:choose>
+      </tr>
+      <tr class="entry">
+        <xsl:choose>
+          <xsl:when test="$ntcs-exp-fail > 0">
+            <td><p><a href="#exp-fail-tcs-summary">Expected-Fail test
+            cases</a></p></td>
+            <td class="numeric-warning">
+              <p><xsl:value-of select="$ntcs-exp-fail" /></p>
+            </td>
+          </xsl:when>
+          <xsl:otherwise>
+            <td><p>Expected-Fail test cases</p></td>
+            <td class="numeric">
+              <p><xsl:value-of select="$ntcs-exp-fail" /></p>
             </td>
           </xsl:otherwise>
         </xsl:choose>
@@ -256,6 +280,22 @@
     </table>
   </xsl:template>
 
+  <xsl:template name="exp-fail-tcs-summary">
+    <a name="exp-fail-tcs-summary" />
+    <h2 id="exp-fail-tcs-summary">Expected-Fail test cases summary</h2>
+
+    <table class="tcs-summary">
+      <tr>
+        <th><p>Test case</p></th>
+        <th><p>Result</p></th>
+        <th><p>Reason</p></th>
+      </tr>
+      <xsl:apply-templates select="tp" mode="summary">
+        <xsl:with-param name="which">expected</xsl:with-param>
+      </xsl:apply-templates>
+    </table>
+  </xsl:template>
+
   <xsl:template name="failed-tcs-summary">
     <a name="failed-tcs-summary" />
     <h2 id="failed-tcs-summary">Failed test cases summary</h2>
@@ -295,6 +335,12 @@
       <xsl:choose>
         <xsl:when test="$which = 'passed' and tc/passed">yes</xsl:when>
         <xsl:when test="$which = 'failed' and tc/failed">yes</xsl:when>
+        <xsl:when test="$which = 'expected' and
+			tc/expected_failure">yes</xsl:when>
+        <xsl:when test="$which = 'expected' and
+			tc/expected_timeout">yes</xsl:when>
+        <xsl:when test="$which = 'expected' and
+			tc/expected_signal">yes</xsl:when>
         <xsl:when test="$which = 'skipped' and tc/skipped">yes</xsl:when>
         <xsl:when test="$which = 'all'">yes</xsl:when>
         <xsl:otherwise>no</xsl:otherwise>
@@ -323,6 +369,12 @@
       <xsl:choose>
         <xsl:when test="$which = 'passed' and ./passed">yes</xsl:when>
         <xsl:when test="$which = 'failed' and ./failed">yes</xsl:when>
+        <xsl:when test="$which = 'expected' and
+			./expected_signal">yes</xsl:when>
+        <xsl:when test="$which = 'expected' and
+			./expected_failure">yes</xsl:when>
+        <xsl:when test="$which = 'expected' and
+			./expected_timeout">yes</xsl:when>
         <xsl:when test="$which = 'skipped' and ./skipped">yes</xsl:when>
         <xsl:when test="$which = 'all'">yes</xsl:when>
         <xsl:otherwise>no</xsl:otherwise>
@@ -333,7 +385,8 @@
       <tr>
         <td class="tc-id">
           <xsl:choose>
-            <xsl:when test="failed|skipped">
+            <xsl:when test="failed|skipped|expected_failure|
+			    expected_timeout|expected_signal">
               <p><a href="#{$full-id}"><xsl:value-of select="@id" /></a></p>
             </xsl:when>
             <xsl:otherwise>
@@ -341,7 +394,9 @@
             </xsl:otherwise>
           </xsl:choose>
         </td>
-        <xsl:apply-templates select="passed|failed|skipped" mode="tc" />
+        <xsl:apply-templates select="passed|failed|skipped|
+				     expected_failure|expected_timeout|
+				     expected_signal" mode="tc" />
       </tr>
     </xsl:if>
   </xsl:template>
@@ -349,6 +404,19 @@
   <xsl:template match="passed" mode="tc">
     <td class="tcr-passed"><p>Passed</p></td>
     <td><p>N/A</p></td>
+  </xsl:template>
+
+  <xsl:template match="expected_failure" mode="tc">
+    <td class="tcr-exfail"><p>Expected Failure</p></td>
+    <td><p><xsl:apply-templates /></p></td>
+  </xsl:template>
+  <xsl:template match="expected_timeout" mode="tc">
+    <td class="tcr-exfail"><p>Expected Failure</p></td>
+    <td><p><xsl:apply-templates /></p></td>
+  </xsl:template>
+  <xsl:template match="expected_signal" mode="tc">
+    <td class="tcr-exfail"><p>Expected Failure</p></td>
+    <td><p><xsl:apply-templates /></p></td>
   </xsl:template>
 
   <xsl:template match="failed" mode="tc">
@@ -362,11 +430,25 @@
   </xsl:template>
 
   <xsl:template match="tp" mode="details">
-    <xsl:apply-templates select="tc[failed|skipped]" mode="details" />
+    <xsl:apply-templates select="tc[failed|skipped|expected_timeout|
+				    expected_failure|expected_signal]"
+			 mode="details" />
   </xsl:template>
 
   <xsl:template match="failed" mode="details">
     <p class="term"><strong>FAILED</strong>: <xsl:apply-templates /></p>
+  </xsl:template>
+
+  <xsl:template match="expected_failure" mode="details">
+    <p class="term"><strong>XFAIL</strong>: <xsl:apply-templates /></p>
+  </xsl:template>
+
+  <xsl:template match="expected_timeout" mode="details">
+    <p class="term"><strong>XFAIL</strong>: <xsl:apply-templates /></p>
+  </xsl:template>
+
+  <xsl:template match="expected_signal" mode="details">
+    <p class="term"><strong>XFAIL</strong>: <xsl:apply-templates /></p>
   </xsl:template>
 
   <xsl:template match="skipped" mode="details">
@@ -383,7 +465,9 @@
     <xsl:value-of select="@id" /></h2>
 
     <h3>Termination reason</h3>
-    <xsl:apply-templates select="failed|skipped" mode="details" />
+    <xsl:apply-templates select="failed|skipped|expected_failure|
+				 expected_timeout|expected_signal"
+			 mode="details" />
 
     <xsl:if test="so">
       <h3>Standard output stream</h3>
