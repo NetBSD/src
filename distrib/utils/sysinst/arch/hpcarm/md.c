@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.7 2009/09/19 14:57:28 abs Exp $ */
+/*	$NetBSD: md.c,v 1.8 2010/09/04 01:23:25 tsutsui Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -59,7 +59,33 @@ md_init(void)
 void
 md_init_set_status(int minimal)
 {
-	(void)minimal;
+	static const struct {
+		const char *name;
+		const int set;
+	} kern_sets[] = {
+		{ "IPAQ",	SET_KERNEL_IPAQ },
+		{ "JORNADA720",	SET_KERNEL_JORNADA720 },
+		{ "WZERO3",	SET_KERNEL_WZERO3 }
+	};
+	static const int mib[2] = {CTL_KERN, KERN_VERSION};
+	size_t len;
+	char *version;
+	u_int i;
+
+	/* check INSTALL kernel name to select an appropriate kernel set */
+	/* XXX: hw.cpu_model has a processor name on arm ports */
+	sysctl(mib, 2, NULL, &len, NULL, 0);
+	version = malloc(len);
+	if (version == NULL)
+		return;
+	sysctl(mib, 2, version, &len, NULL, 0);
+	for (i = 0; i < __arraycount(kern_sets); i++) {
+		if (strstr(version, kern_sets[i].name) != NULL) {
+			set_kernel_set(kern_sets[i].set);
+			break;
+		}
+	}
+	free(version);
 }
 
 int
