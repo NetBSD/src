@@ -417,17 +417,17 @@ tre_tnfa_run_backtrack(const tre_tnfa_t *tnfa, const void *string,
 	  /* This is a back reference state.  All transitions leaving from
 	     this state have the same back reference "assertion".  Instead
 	     of reading the next character, we match the back reference. */
-	  int so, eo, bt = trans_i->u.backref;
-	  int bt_len;
-	  int result;
+	  regoff_t so, eo, bt = trans_i->u.backref;
+	  regoff_t bt_len;
+	  regoff_t result;
 
 	  DPRINT(("  should match back reference %d\n", bt));
 	  /* Get the substring we need to match against.  Remember to
 	     turn off REG_NOSUB temporarily. */
 	  tre_fill_pmatch(bt + 1, pmatch, tnfa->cflags & /*LINTED*/!REG_NOSUB,
 			  tnfa, tags, pos);
-	  so = pmatch[bt].rm_so;
-	  eo = pmatch[bt].rm_eo;
+	  /* LINTED */so = pmatch[bt].rm_so;
+	  /* LINTED */eo = pmatch[bt].rm_eo;
 	  bt_len = eo - so;
 
 #ifdef TRE_DEBUG
@@ -468,7 +468,7 @@ tre_tnfa_run_backtrack(const tre_tnfa_t *tnfa, const void *string,
 				 (size_t)bt_len);
 #endif /* TRE_WCHAR */
 	      else
-		result = strncmp((const char*)string + so, str_byte - 1,
+		/* LINTED */result = strncmp((const char*)string + so, str_byte - 1,
 				 (size_t)bt_len);
 	    }
 	  else if (len - pos < bt_len)
@@ -479,7 +479,7 @@ tre_tnfa_run_backtrack(const tre_tnfa_t *tnfa, const void *string,
 			     (size_t)bt_len);
 #endif /* TRE_WCHAR */
 	  else
-	    result = memcmp((const char*)string + so, str_byte - 1,
+	    /* LINTED */result = memcmp((const char*)string + so, str_byte - 1,
 			    (size_t)bt_len);
 
 	  if (result == 0)
@@ -498,11 +498,11 @@ tre_tnfa_run_backtrack(const tre_tnfa_t *tnfa, const void *string,
 	      /* Advance in input string and resync `prev_c', `next_c'
 		 and pos. */
 	      DPRINT(("	 back reference matched\n"));
-	      str_byte += bt_len - 1;
+	      /* LINTED */str_byte += bt_len - 1;
 #ifdef TRE_WCHAR
-	      str_wide += bt_len - 1;
+	      /* LINTED */str_wide += bt_len - 1;
 #endif /* TRE_WCHAR */
-	      pos += bt_len - 1;
+	      /* LINTED */pos += bt_len - 1;
 	      GET_NEXT_WCHAR();
 	      DPRINT(("	 pos now %d\n", pos));
 	    }
