@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.9 2010/04/17 13:36:21 nonaka Exp $
+#	$NetBSD: Makefile.inc,v 1.10 2010/09/04 01:16:50 tsutsui Exp $
 #
 #	etc.hpcarm/Makefile.inc -- hpcarm-specific etc Makefile targets
 #
@@ -8,7 +8,7 @@
 
 KERNEL_SETS=		IPAQ JORNADA720 WZERO3
 
-BUILD_KERNELS=		INSTALL_IPAQ INSTALL_WZERO3
+BUILD_KERNELS=		INSTALL_IPAQ INSTALL_JORNADA720 INSTALL_WZERO3
 
 INSTALLATION_DIRS+=	installation/miniroot
 
