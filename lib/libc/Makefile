@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.142 2010/05/30 08:28:53 tnozaki Exp $
+#	$NetBSD: Makefile,v 1.143 2010/09/04 12:17:58 ahoka Exp $
 #	@(#)Makefile	8.2 (Berkeley) 2/3/94
 #
 # All library objects contain sccsid strings by default; they may be
@@ -78,7 +78,11 @@ COMPATDIR=${.CURDIR}/compat
 .if (${MACHINE_ARCH} != "alpha") && (${MACHINE_ARCH} != "sparc64")
 .include "${.CURDIR}/quad/Makefile.inc"
 .endif
+.if (${USE_LIBTRE} == "yes")
+.include "${NETBSDSRCDIR}/external/bsd/tre/Makefile.inc"
+.else
 .include "${.CURDIR}/regex/Makefile.inc"
+.endif
 .include "${.CURDIR}/resolv/Makefile.inc"
 .include "${.CURDIR}/rpc/Makefile.inc"
 .include "${.CURDIR}/ssp/Makefile.inc"

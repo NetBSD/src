@@ -18,6 +18,11 @@
 #include "tre-internal.h"
 #include "xmalloc.h"
 
+#ifdef __weak_alias
+__weak_alias(regcomp,_regcomp)
+__weak_alias(regfree,_regfree)
+#endif
+
 int
 tre_regncomp(regex_t *preg, const char *regex, size_t n, int cflags)
 {

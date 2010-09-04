@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.640 2010/08/22 18:56:21 rmind Exp $
+#	$NetBSD: bsd.own.mk,v 1.641 2010/09/04 12:17:58 ahoka Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -871,7 +871,7 @@ ${var}?= yes
 # USE_* options which default to "no".
 #
 # For now, disable pigz as compressor by default
-.for var in USE_PIGZGZIP
+.for var in USE_PIGZGZIP USE_LIBTRE
 ${var}?= no
 .endfor
 

@@ -21,6 +21,10 @@
 #include "tre-internal.h"
 #include "tre.h"
 
+#ifdef __weak_alias
+__weak_alias(regerror,_regerror)
+#endif
+
 #ifdef HAVE_GETTEXT
 #include <libintl.h>
 #else
