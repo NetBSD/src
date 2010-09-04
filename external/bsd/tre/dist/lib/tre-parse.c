@@ -174,6 +174,20 @@ tre_compare_items(const void *a, const void *b)
 
 #ifndef TRE_USE_SYSTEM_WCTYPE
 
+int tre_isalnum_func(tre_cint_t);
+int tre_isalpha_func(tre_cint_t);
+int tre_isascii_func(tre_cint_t);
+int tre_isblank_func(tre_cint_t);
+int tre_iscntrl_func(tre_cint_t);
+int tre_isdigit_func(tre_cint_t);
+int tre_isgraph_func(tre_cint_t);
+int tre_islower_func(tre_cint_t);
+int tre_isprint_func(tre_cint_t);
+int tre_ispunct_func(tre_cint_t);
+int tre_isspace_func(tre_cint_t);
+int tre_isupper_func(tre_cint_t);
+int tre_isxdigit_func(tre_cint_t);
+
 /* isalnum() and the rest may be macros, so wrap them to functions. */
 int tre_isalnum_func(tre_cint_t c) { return tre_isalnum(c); }
 int tre_isalpha_func(tre_cint_t c) { return tre_isalpha(c); }
@@ -201,7 +215,7 @@ int tre_isupper_func(tre_cint_t c) { return tre_isupper(c); }
 int tre_isxdigit_func(tre_cint_t c) { return tre_isxdigit(c); }
 
 struct {
-  char *name;
+  const char *name;
   int (*func)(tre_cint_t);
 } tre_ctype_map[] = {
   { "alnum", &tre_isalnum_func },
@@ -324,7 +338,7 @@ tre_parse_bracket_items(tre_parse_ctx_t *ctx, int negate,
 #endif /* defined HAVE_WCSTOMBS */
 		  }
 #else /* !TRE_WCHAR */
-		  strncpy(tmp_str, (const char*)re + 2, len);
+		  /* LINTED */strncpy(tmp_str, (const char*)re + 2, len);
 #endif /* !TRE_WCHAR */
 		  tmp_str[len] = '\0';
 		  DPRINT(("  class name: %s\n", tmp_str));
@@ -332,7 +346,7 @@ tre_parse_bracket_items(tre_parse_ctx_t *ctx, int negate,
 		  if (!class)
 		    status = REG_ECTYPE;
 		  /* Optimize character classes for 8 bit character sets. */
-		  if (status == REG_OK && TRE_MB_CUR_MAX == 1)
+		  /* CONSTCOND */if (status == REG_OK && TRE_MB_CUR_MAX == 1)
 		    {
 		      status = tre_expand_ctype(ctx->mem, class, items,
 						&i, &max_i, ctx->cflags);
