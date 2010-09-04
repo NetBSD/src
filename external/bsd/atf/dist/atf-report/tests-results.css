@@ -158,3 +158,7 @@ table.tcs-summary td.tcr-failed {
 table.tcs-summary td.tcr-skipped {
     background: #ffffaa;
 }
+
+table.tcs-summary td.tcr-exfail {
+    background: #ffaaff;
+}
