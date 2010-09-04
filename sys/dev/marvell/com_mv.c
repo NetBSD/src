@@ -1,4 +1,4 @@
-/*	$NetBSD: com_mv.c,v 1.3 2010/08/01 06:47:16 kiyohara Exp $	*/
+/*	$NetBSD: com_mv.c,v 1.4 2010/09/04 05:01:20 kiyohara Exp $	*/
 /*
  * Copyright (c) 2007, 2010 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_mv.c,v 1.3 2010/08/01 06:47:16 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_mv.c,v 1.4 2010/09/04 05:01:20 kiyohara Exp $");
+
+#include "opt_com.h"
 
 #include <sys/param.h>
 #include <sys/bus.h>
