@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.3 2010/08/29 18:55:50 kardel Exp $
+#	$NetBSD: Makefile.inc,v 1.4 2010/09/04 17:06:06 kardel Exp $
 
 .if !defined(NTP_MAKEFILE_INC)
 NTP_MAKEFILE_INC=yes
@@ -57,7 +57,9 @@ CPPFLAGS+=-DOPENSSL
 .endif
 
 .if ("${MKINET6}" != "no")
-CPPFLAGS+=-DWANT_IPV6 
+CPPFLAGS+=-DWANT_IPV6
+.else
+CPPFLAGS+=-DISC_PLATFORM_NEEDIN6ADDRANY
 .endif
 
 .if exists(${.CURDIR}/../../Makefile.inc)
