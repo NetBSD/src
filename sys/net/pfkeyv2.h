@@ -1,4 +1,4 @@
-/*	$NetBSD: pfkeyv2.h,v 1.26 2008/02/20 17:05:53 matt Exp $	*/
+/*	$NetBSD: pfkeyv2.h,v 1.27 2010/09/05 06:52:53 spz Exp $	*/
 /*	$KAME: pfkeyv2.h,v 1.36 2003/07/25 09:33:37 itojun Exp $	*/
 
 /*
@@ -310,14 +310,16 @@ struct sadb_x_nat_t_frag {
 #define SADB_X_EXT_NAT_T_TYPE         20
 #define SADB_X_EXT_NAT_T_SPORT        21
 #define SADB_X_EXT_NAT_T_DPORT        22
-#define SADB_X_EXT_NAT_T_OA           23
-#define SADB_X_EXT_NAT_T_FRAG	      24
+#define SADB_X_EXT_NAT_T_OA           23	/* compat */
+#define SADB_X_EXT_NAT_T_OAI          23
+#define SADB_X_EXT_NAT_T_OAR          24
+#define SADB_X_EXT_NAT_T_FRAG	      25
 #if 0
 #define	SADB_X_EXT_TAG		      25	/* KAME */
 #define	SADB_X_EXT_SA3		      26	/* KAME */
 #define	SADB_X_EXT_PACKET	      27	/* KAME */
 #endif
-#define SADB_EXT_MAX                  24
+#define SADB_EXT_MAX                  25
 
 #define SADB_SATYPE_UNSPEC	0
 #define SADB_SATYPE_AH		2
