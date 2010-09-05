@@ -1,4 +1,4 @@
-/*  $NetBSD: ops.c,v 1.8 2010/09/03 14:32:50 manu Exp $ */
+/*  $NetBSD: ops.c,v 1.9 2010/09/05 06:49:13 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010 Emmanuel Dreyfus. All rights reserved.
@@ -59,7 +59,7 @@ static int readdir_buffered(struct perfuse_state *, puffs_cookie_t,
     int *, off_t *, size_t *);
 static void requeue_request(struct puffs_usermount *, 
     puffs_cookie_t opc, enum perfuse_qtype);
-static void dequeue_requests(struct perfuse_state *, 
+static int dequeue_requests(struct perfuse_state *, 
      puffs_cookie_t opc, enum perfuse_qtype, int);
 #define DEQUEUE_ALL 0
 
@@ -625,7 +625,7 @@ requeue_request(pu, opc, type)
 }
 
 /* ARGSUSED0 */
-static void
+static int
 dequeue_requests(ps, opc, type, max)
 	struct perfuse_state *ps;
 	puffs_cookie_t opc;
@@ -661,7 +661,7 @@ dequeue_requests(ps, opc, type, max)
 		DPRINTF("%s: DONE  opc = %p\n", __func__, (void *)opc);
 #endif
 
-	return;
+	return dequeued;
 }
 	
 void
@@ -966,11 +966,15 @@ perfuse_node_create(pu, opc, pni, pcn, vap)
 	namelen = strlen(name) + 1;
 	len = sizeof(*fci) + namelen;
 
+	/*
+	 * flags should use O_WRONLY instead of O_RDWR, but it
+	 * breaks when the caller tries to read from file.
+	 */
 	pm = ps->ps_new_msg(pu, opc, FUSE_CREATE, len, pcn->pcn_cred);
 	fci = GET_INPAYLOAD(ps, pm, fuse_create_in);
-	fci->flags = 0; 	/* No flags seems available */
+	fci->flags = O_CREAT | O_TRUNC | O_RDWR;
 	fci->mode = vap->va_mode;
-	fci->umask = 0; 	/* Seems unused bu libfuse */
+	fci->umask = 0; 	/* Seems unused by libfuse */
 	(void)strlcpy((char*)(void *)(fci + 1), name, namelen);
 
 	len = sizeof(*feo) + sizeof(*foo);
@@ -1000,14 +1004,6 @@ perfuse_node_create(pu, opc, pni, pcn, vap)
 
 	fuse_attr_to_vap(ps, &pn->pn_va, &feo->attr);
 	puffs_newinfo_setcookie(pni, pn);
-
-	/*
-	 * It seems we need to do this so that glusterfs gets fully
-	 * aware that the file was created. If we do not do it, we 
-	 * get "SETATTR (null) (fuse_loc_fill() failed)"
-	 */
-	(void)puffs_pn_nodewalk(pu, puffs_path_walkcmp,
-        		        __UNCONST(&pcn->pcn_po_full));
 
 out: 
 	ps->ps_destroy_msg(pm);
@@ -1065,6 +1061,9 @@ perfuse_node_mknod(pu, opc, pni, pcn, vap)
 	path = basename_r((char *)PCNPATH(pcn));
 	len = sizeof(*fmi) + strlen(path) + 1; 
 
+	/*	
+	 * mode can contain file type (ie: S_IFREG), use VTTOIF(vap->va_type)
+	 */
 	pm = ps->ps_new_msg(pu, opc, FUSE_MKNOD, len, pcn->pcn_cred);
 	fmi = GET_INPAYLOAD(ps, pm, fuse_mknod_in);
 	fmi->mode = vap->va_mode | VTTOIF(vap->va_type);
@@ -1193,15 +1192,6 @@ perfuse_node_close(pu, opc, flags, pcr)
 	if (!(pnd->pnd_flags & PND_OPEN))
 		return EBADF;
 
-	/*
-	 * Make sure all operation are finished
-	 * There can be an ongoing write, or queued operations
-	 * XXX perhaps deadlock. Use requeue_request
-	 */
-	while ((pnd->pnd_flags & PND_BUSY) ||
-	       !TAILQ_EMPTY(&pnd->pnd_pcq))
-		puffs_cc_yield(puffs_cc_getcc(pu));
-
 	/* 
 	 * The NetBSD kernel will send sync and setattr(mtime, ctime)
 	 * afer a close on a regular file. Some FUSE filesystem will 
@@ -1226,6 +1216,9 @@ perfuse_node_access(pu, opc, mode, pcr)
 	struct fuse_access_in *fai;
 	int error;
 	
+	if (PERFUSE_NODE_DATA(opc)->pnd_flags & PND_REMOVED)
+		return ENOENT;
+
 	/* 
 	 * If we previously detected the filesystem does not 
 	 * implement access(), short-circuit the call and skip 
@@ -1292,6 +1285,9 @@ perfuse_node_getattr(pu, opc, vap, pcr)
 	struct fuse_attr_out *fao;
 	int error;
 	
+	if (PERFUSE_NODE_DATA(opc)->pnd_flags & PND_REMOVED)
+		return ENOENT;
+
 	/*
 	 * getattr requires --X on the parent directory
 	 */
@@ -1345,12 +1341,22 @@ perfuse_node_setattr(pu, opc, vap, pcr)
 	struct perfuse_node_data *pnd;
 	struct fuse_setattr_in *fsi;
 	int error;
-	int open_self;
 	struct vattr *old_va;
 
-	open_self = 0;
 	ps = puffs_getspecific(pu);
 	pnd = PERFUSE_NODE_DATA(opc);
+
+	/*
+	 * The only operation we can do once the file is removed 
+	 * is to resize it, and we can do it only if it is open.
+	 */
+	if (pnd->pnd_flags & PND_REMOVED) {
+		if (!(pnd->pnd_flags & PND_OPEN))
+			return ENOENT;
+		
+		if (vap->va_size == (u_quad_t)PUFFS_VNOVAL)
+			return 0;
+	}
 
 	/*
 	 * setattr requires --X on the parent directory
@@ -1394,17 +1400,6 @@ perfuse_node_setattr(pu, opc, vap, pcr)
 		return EACCES;
 	
 	/*
-	 * setattr(mtime, ctime) require an open file,
-	 * at least for glusterfs.
-	 */
-	if (((vap->va_atime.tv_sec != (time_t)PUFFS_VNOVAL) ||
-	     (vap->va_mtime.tv_sec != (time_t)PUFFS_VNOVAL)) &&
-	    !(pnd->pnd_flags & PND_WFH)) {
-		if ((error = perfuse_node_open(pu, opc, FWRITE, pcr)) != 0)
-			return error;
-		open_self = 1;
-	}
-	/*
 	 * It seems troublesome to resize a file while
 	 * a write is just beeing done. Wait for
 	 * it to finish.
@@ -1442,7 +1437,7 @@ perfuse_node_setattr(pu, opc, vap, pcr)
 	}
 
 	if (vap->va_mode != (mode_t)PUFFS_VNOVAL) {
-		fsi->mode = vap->va_mode;
+		fsi->mode = vap->va_mode; 
 		fsi->valid |= FUSE_FATTR_MODE;
 	}
 	
@@ -1462,14 +1457,20 @@ perfuse_node_setattr(pu, opc, vap, pcr)
 	}
 
 	/*
+	 * If node was removed, ignore anything but resize
+	 * This works around glusterfs'
+	 * "SETATTR (null) (fuse_loc_fill() failed), ret = -2"
+	 */
+	if (pnd->pnd_flags & PND_REMOVED)
+		fsi->valid &= 
+		    (FUSE_FATTR_SIZE | FUSE_FATTR_FH | FUSE_FATTR_LOCKOWNER);
+
+	/*
 	 * A fuse_attr_out is returned, but we ignore it.
 	 */
 	error = XCHG_MSG(ps, pu, pm, sizeof(struct fuse_attr_out));
 
 	ps->ps_destroy_msg(pm);
-
-	if (open_self)
-		(void)perfuse_node_close(pu, opc, FWRITE, pcr);
 
 	return error;
 }
@@ -1693,6 +1694,8 @@ perfuse_node_remove(pu, opc, targ, pcn)
 
 	puffs_setback(puffs_cc_getcc(pu), PUFFS_SETBACK_NOREF_N2);
 
+	PERFUSE_NODE_DATA(targ)->pnd_flags |= PND_REMOVED;
+
 	/*
 	 * Reclaim should take care of decreasing pnd_childcount
 	 */
@@ -1767,8 +1770,8 @@ perfuse_node_rename(pu, opc, src, pcn_src, targ_dir, targ, pcn_targ)
 	/*
 	 * move requires -WX on source and destination directory 
 	 */
-	if (no_access(src, pcn_src->pcn_cred, PUFFS_VWRITE|PUFFS_VEXEC) ||
-	    no_access(targ,  pcn_targ->pcn_cred, PUFFS_VWRITE|PUFFS_VEXEC))
+	if (no_access(opc, pcn_src->pcn_cred, PUFFS_VWRITE|PUFFS_VEXEC) ||
+	    no_access(targ_dir,  pcn_targ->pcn_cred, PUFFS_VWRITE|PUFFS_VEXEC))
 		return EACCES;
 
 	ps = puffs_getspecific(pu);
@@ -1829,8 +1832,8 @@ perfuse_node_mkdir(pu, opc, pni, pcn, vap)
 
 	pm = ps->ps_new_msg(pu, opc, FUSE_MKDIR, len, pcn->pcn_cred);
 	fmi = GET_INPAYLOAD(ps, pm, fuse_mkdir_in);
-	fmi->mode = vap->va_mode | VTTOIF(vap->va_type);
-	fmi->umask = 0; 	/* Seems unused bu libfuse? */
+	fmi->mode = vap->va_mode;
+	fmi->umask = 0; 	/* Seems unused by libfuse? */
 	(void)strlcpy((char *)(void *)(fmi + 1), path, len - sizeof(*fmi));
 
 	return node_mk_common(pu, opc, pni, pcn, pm);
@@ -1879,6 +1882,8 @@ perfuse_node_rmdir(pu, opc, targ, pcn)
 		DERR(EX_OSERR, "puffs_inval_namecache_dir failed");
 
 	puffs_setback(puffs_cc_getcc(pu), PUFFS_SETBACK_NOREF_N2);
+
+	PERFUSE_NODE_DATA(targ)->pnd_flags |= PND_REMOVED;
 
 out:
 	ps->ps_destroy_msg(pm);
@@ -2100,8 +2105,8 @@ out:
 	/*
 	 * Schedule queued readdir requests
 	 */
-	dequeue_requests(ps, opc, PCQ_READDIR, DEQUEUE_ALL);
 	pnd->pnd_flags &= ~PND_INREADDIR;
+	(void)dequeue_requests(ps, opc, PCQ_READDIR, DEQUEUE_ALL);
 
 #ifdef PERFUSE_DEBUG
 	if (perfuse_diagflags & PDF_READDIR)
@@ -2193,7 +2198,7 @@ perfuse_node_reclaim(pu, opc)
 #ifdef PERFUSE_DEBUG
 	if (perfuse_diagflags & PDF_RECLAIM)
 		DPRINTF("%s (nodeid %"PRId64") is %sreclaimed, "
-			"has childcount %d %s%s%s, pending ops:%s%s%s%s\n", 
+			"has childcount %d %s%s%s, pending ops:%s%s\n", 
 		        (char *)PNPATH(pn), pnd->pnd_ino,
 		        pnd->pnd_flags & PND_RECLAIMED ? "" : "not ",
 		        pnd->pnd_childcount,
@@ -2201,9 +2206,7 @@ perfuse_node_reclaim(pu, opc)
 			pnd->pnd_flags & PND_RFH ? "r" : "",
 			pnd->pnd_flags & PND_WFH ? "w" : "",
 			pnd->pnd_flags & PND_INREADDIR ? " readdir" : "",
-			pnd->pnd_flags & PND_INREAD ? " read" : "",
-			pnd->pnd_flags & PND_INWRITE ? " write" : "",
-			pnd->pnd_flags & PND_BUSY ? "" : " none");
+			pnd->pnd_flags & PND_INWRITE ? " write" : "");
 #endif
 
 		if (!(pnd->pnd_flags & PND_RECLAIMED) ||
@@ -2218,14 +2221,15 @@ perfuse_node_reclaim(pu, opc)
 			requeue_request(pu, opc, PCQ_AFTERWRITE);
 
 			/*
-			 * It may have been cancelled in the meantime
+			 * reclaim may have been cancelled in the meantime
+			 * if the file as been look'ed up again.
 			 */
-			if (!(pnd->pnd_flags & PND_RECLAIMED))
+			if (!(pnd->pnd_flags & PND_RECLAIMED)) 
 				return 0;
 		}
 
 #ifdef PERFUSE_DEBUG
-		if ((pnd->pnd_flags & PND_BUSY) ||
+		if ((pnd->pnd_flags & (PND_INREADDIR|PND_INWRITE)) ||
 		       !TAILQ_EMPTY(&pnd->pnd_pcq))
 			DERRX(EX_SOFTWARE, "%s: opc = %p: ongoing operations",
 			      __func__, (void *)opc);
@@ -2235,10 +2239,10 @@ perfuse_node_reclaim(pu, opc)
 		 * Close open files
 		 */
 		if (pnd->pnd_flags & PND_WFH)
-			(void)node_close_common(pu, opc, FREAD);
+			(void)node_close_common(pu, opc, FWRITE);
 
 		if (pnd->pnd_flags & PND_RFH)
-			(void)node_close_common(pu, opc, FWRITE);
+			(void)node_close_common(pu, opc, FREAD);
 
 		/*
 		 * And send the FORGET message
@@ -2394,8 +2398,6 @@ perfuse_node_read(pu, opc, buf, offset, resid, pcr, ioflag)
 	if (puffs_pn_getvap((struct puffs_node *)opc)->va_type == VDIR) 
 		return EBADF;
 
-	pnd->pnd_flags |= PND_INREAD;
-
 	requested = *resid;
 	if ((ps->ps_readahead + requested) > ps->ps_max_readahead) {
 		if (perfuse_diagflags & PDF_REQUEUE)
@@ -2455,9 +2457,8 @@ out:
 		ps->ps_destroy_msg(pm);
 
 	ps->ps_readahead -= requested;
-	dequeue_requests(ps, opc, PCQ_READ, 1);
 
-	pnd->pnd_flags &= ~PND_INREAD;
+	(void)dequeue_requests(ps, opc, PCQ_READ, 1);
 
 	return error;
 }
@@ -2491,7 +2492,10 @@ perfuse_node_write(pu, opc, buf, offset, resid, pcr, ioflag)
 	if (puffs_pn_getvap((struct puffs_node *)opc)->va_type == VDIR) 
 		return EBADF;
 
+	while (pnd->pnd_flags & PND_INWRITE)
+		requeue_request(pu, opc, PCQ_WRITE);
 	pnd->pnd_flags |= PND_INWRITE;
+
 
 	requested = *resid;
 	if ((ps->ps_write + requested) > ps->ps_max_write) {
@@ -2574,14 +2578,15 @@ out:
 		ps->ps_destroy_msg(pm);
 
 	ps->ps_write -= requested;
-	dequeue_requests(ps, opc, PCQ_WRITE, 1);
 
-	pnd->pnd_flags &= ~PND_INWRITE;
 
 	/*
-	 * Dequeue operation that were waiting for write to complete
+	 * If there are no more queued write, we can resume
+	 * an operation awaiting write completion.
 	 */ 
-	dequeue_requests(ps, opc, PCQ_AFTERWRITE, DEQUEUE_ALL);
+	pnd->pnd_flags &= ~PND_INWRITE;
+	if (dequeue_requests(ps, opc, PCQ_WRITE, 1) == 0)
+		(void)dequeue_requests(ps, opc, PCQ_AFTERWRITE, DEQUEUE_ALL);
 
 	return error;
 }
