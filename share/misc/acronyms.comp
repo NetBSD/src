@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.108 2010/08/21 06:10:37 jruoho Exp $
+$NetBSD: acronyms.comp,v 1.109 2010/09/05 23:50:48 ahoka Exp $
 
 3WHS	three-way handshake
 ABI	application binary interface
@@ -12,6 +12,7 @@ ADSL	asymmetric digital subscriber line
 AES	Advanced Encryption Standard
 AFS	Andrew File System
 AGP	accelerated graphics port
+ALE	address latch enable
 ALU	arithmetic and logical unit
 AM	amplitude modulation
 AMI	alternate mark inversion
@@ -70,6 +71,7 @@ CAM	content addressable memory
 CARP	common address redundancy protocol
 CAS	(atomic) compare and swap
 CAS	computer algebra system
+CAS	column address strobe
 CAV	constant angular velocity (as opposed to CLV)
 CCD	charge coupled device
 CD	compact disc
@@ -400,6 +402,7 @@ OCR	optical character recognition
 ODCM	on-demand clock modulation
 OEM	original equipment manufacturer
 OFDM	orthogonal frequency division multiplexing
+ONFI	open nand flash interface
 OO	object oriented
 OO	OpenOffice
 OOB	out of band
@@ -487,9 +490,11 @@ RAID	redundant array of inexpensive disks
 RAM	random access memory
 RAS	restartable atomic sequence
 RAS	remote access service
+RAS	row address strobe
 RCS	revision control system
 RCU	read-copy-update
 RDF	resource description format
+REST	representational state transfer
 RGB	red green blue
 RHL	Red Hat Linux
 RIFF	Resource Interchange File Format
@@ -628,6 +633,7 @@ UUID	universally unique identifier
 UUOC	useless use of cat
 VA	virtual address
 VAX	virtual address extension
+VCC	common collector voltage
 VCM	virtual channel memory
 VESA	video electronics standards association
 VG	volume group
