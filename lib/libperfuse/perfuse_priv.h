@@ -1,4 +1,4 @@
-/*  $NetBSD: perfuse_priv.h,v 1.5 2010/09/03 07:15:18 manu Exp $ */
+/*  $NetBSD: perfuse_priv.h,v 1.6 2010/09/05 06:49:13 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010 Emmanuel Dreyfus. All rights reserved.
@@ -98,11 +98,10 @@ struct perfuse_node_data {
 #define PND_DIRTY		0x04	/* There is some data to sync */
 #define PND_RFH			0x08	/* Read FH allocated */
 #define PND_WFH			0x10	/* Write FH allocated */
-#define PND_INREAD		0x20	/* read in progress */
+#define PND_REMOVED		0x20	/* Node was removed */
 #define PND_INWRITE		0x40	/* write in progress */
 
 #define PND_OPEN		(PND_RFH|PND_WFH)	/* File is open */
-#define PND_BUSY		(PND_INREADDIR|PND_INREAD|PND_INWRITE)
 	puffs_cookie_t pnd_parent;
 	int pnd_childcount;
 };
