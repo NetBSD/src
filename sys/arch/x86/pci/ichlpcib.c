@@ -1,4 +1,4 @@
-/*	$NetBSD: ichlpcib.c,v 1.27 2010/08/17 01:45:51 jakllsch Exp $	*/
+/*	$NetBSD: ichlpcib.c,v 1.28 2010/09/06 20:03:56 christos Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ichlpcib.c,v 1.27 2010/08/17 01:45:51 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ichlpcib.c,v 1.28 2010/09/06 20:03:56 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -371,7 +371,7 @@ lpcibchilddet(device_t self, device_t child)
 static int
 lpcibrescan(device_t self, const char *ifattr, const int *locators)
 {
-#if NHPET > 0 || NGPIO > 0
+#if NHPET > 0 || NGPIO > 0 || NFWHRNG > 0
 	struct lpcib_softc *sc = device_private(self);
 #endif
 
