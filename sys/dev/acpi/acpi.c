@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.218 2010/08/24 04:36:02 pgoyette Exp $	*/
+/*	$NetBSD: acpi.c,v 1.219 2010/09/06 15:54:26 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.218 2010/08/24 04:36:02 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.219 2010/09/06 15:54:26 jmcneill Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -329,6 +329,13 @@ acpi_probe(void)
 			rsdt->AslCompilerId,
 		        rsdt->AslCompilerRevision);
 		aprint_normal("ACPI: Not used. Set acpi_force_load to use.\n");
+		acpi_unmap_rsdt(rsdt);
+		AcpiTerminate();
+		return 0;
+	}
+	if (acpi_force_load == 0 && (acpi_find_quirks() & ACPI_QUIRK_OLDBIOS)) {
+		aprint_normal("ACPI: BIOS is too old (%s). Set acpi_force_load to use.\n",
+		    pmf_get_platform("firmware-date"));
 		acpi_unmap_rsdt(rsdt);
 		AcpiTerminate();
 		return 0;

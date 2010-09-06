@@ -1,4 +1,4 @@
-/*	$NetBSD: acpivar.h,v 1.61 2010/08/07 20:07:25 jruoho Exp $	*/
+/*	$NetBSD: acpivar.h,v 1.62 2010/09/06 15:54:27 jmcneill Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -328,6 +328,7 @@ struct acpi_quirk {
 #define ACPI_QUIRK_BADPCI	0x00000002	/* bad PCI hierarchy */
 #define ACPI_QUIRK_BADBBN	0x00000004	/* _BBN broken */
 #define ACPI_QUIRK_IRQ0		0x00000008	/* bad 0->2 irq override */
+#define ACPI_QUIRK_OLDBIOS	0x00000010	/* BIOS date blacklisted */
 
 int acpi_find_quirks(void);
 

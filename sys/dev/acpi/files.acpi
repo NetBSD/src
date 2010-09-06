@@ -1,10 +1,11 @@
-#	$NetBSD: files.acpi,v 1.79 2010/08/13 16:21:50 jruoho Exp $
+#	$NetBSD: files.acpi,v 1.80 2010/09/06 15:54:27 jmcneill Exp $
 
 include "dev/acpi/acpica/files.acpica"
 
 defflag	opt_acpi.h	ACPIVERBOSE ACPI_DEBUG ACPI_ACTIVATE_DEV
 			ACPI_DSDT_OVERRIDE ACPI_SCANPCI ACPI_BREAKPOINT
 defparam opt_acpi.h	ACPI_DSDT_FILE := "\"/dev/null\""
+defparam opt_acpi.h	ACPI_BLACKLIST_YEAR = 2000
 
 define	acpiapmbus { }
 define	acpinodebus { }
