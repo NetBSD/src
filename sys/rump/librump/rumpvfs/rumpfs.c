@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpfs.c,v 1.63 2010/07/21 17:52:13 hannken Exp $	*/
+/*	$NetBSD: rumpfs.c,v 1.64 2010/09/06 14:50:34 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009  Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.63 2010/07/21 17:52:13 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.64 2010/09/06 14:50:34 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -106,6 +106,8 @@ const struct vnodeopv_entry_desc rump_vnodeop_entries[] = {
 	{ &vop_islocked_desc, genfs_islocked },
 	{ &vop_inactive_desc, rump_vop_inactive },
 	{ &vop_reclaim_desc, rump_vop_reclaim },
+	{ &vop_remove_desc, genfs_eopnotsupp },
+	{ &vop_link_desc, genfs_eopnotsupp },
 	{ NULL, NULL }
 };
 const struct vnodeopv_desc rump_vnodeop_opv_desc =
