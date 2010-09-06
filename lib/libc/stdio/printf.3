@@ -1,4 +1,4 @@
-.\"	$NetBSD: printf.3,v 1.52 2010/05/13 21:52:43 joerg Exp $
+.\"	$NetBSD: printf.3,v 1.53 2010/09/06 14:52:55 christos Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,18 +33,20 @@
 .\"
 .\"     @(#)printf.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd March 21, 2010
+.Dd August 28, 2010
 .Dt PRINTF 3
 .Os
 .Sh NAME
 .Nm printf ,
 .Nm fprintf ,
+.Nm dprintf
 .Nm sprintf ,
 .Nm snprintf ,
 .Nm asprintf ,
 .Nm vprintf ,
 .Nm vfprintf ,
 .Nm vsprintf ,
+.Nm vdprintf ,
 .Nm vsnprintf ,
 .Nm vasprintf
 .Nd formatted output conversion
@@ -56,6 +58,8 @@
 .Fn printf "const char * restrict format" ...
 .Ft int
 .Fn fprintf "FILE * restrict stream" "const char * restrict format" ...
+.Ft int
+.Fn dprintf "int fd" "const char * restrict format" ...
 .Ft int
 .Fn sprintf "char * restrict str" "const char * restrict format" ...
 .Ft int
@@ -69,6 +73,8 @@
 .Fn vfprintf "FILE * restrict stream" "const char * restrict format" "va_list ap"
 .Ft int
 .Fn vsprintf "char * restrict str" "const char * restrict format" "va_list ap"
+.Ft int
+.Fn vdprintf "int fd" "const char * restrict format" "va_list ap"
 .Ft int
 .Fn vsnprintf "char * restrict str" "size_t size" "const char * restrict format" "va_list ap"
 .Ft int
@@ -92,6 +98,11 @@ and
 .Fn vfprintf
 write output to the given output
 .Fa stream ;
+.Fn dprintf
+and
+.Fn vdprintf
+write output to the give file descriptor
+.Fa fd ;
 .Fn sprintf ,
 .Fn snprintf ,
 .Fn vsprintf ,
@@ -814,6 +825,12 @@ The functions
 and
 .Fn vasprintf
 are modeled on the ones that first appeared in the GNU C library.
+The functions
+.Fn dprintf
+and
+.Fn vdprintf
+are parts of POSIX 200805 and appeared in
+.Nx 6.0 .
 .Sh CAVEATS
 Because
 .Fn sprintf

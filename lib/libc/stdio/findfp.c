@@ -1,4 +1,4 @@
-/*	$NetBSD: findfp.c,v 1.24 2010/01/11 20:39:29 joerg Exp $	*/
+/*	$NetBSD: findfp.c,v 1.25 2010/09/06 14:52:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)findfp.c	8.2 (Berkeley) 1/4/94";
 #else
-__RCSID("$NetBSD: findfp.c,v 1.24 2010/01/11 20:39:29 joerg Exp $");
+__RCSID("$NetBSD: findfp.c,v 1.25 2010/09/06 14:52:55 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -119,6 +119,23 @@ moreglue(n)
 	return (g);
 }
 
+void
+__sfpinit(FILE *fp)
+{
+	fp->_flags = 1;		/* reserve this slot; caller sets real flags */
+	fp->_p = NULL;		/* no current pointer */
+	fp->_w = 0;		/* nothing to read or write */
+	fp->_r = 0;
+	fp->_bf._base = NULL;	/* no buffer */
+	fp->_bf._size = 0;
+	fp->_lbfsize = 0;	/* not line buffered */
+	fp->_file = -1;		/* no file */
+/*	fp->_cookie = <any>; */	/* caller sets cookie, _read/_write etc */
+	_UB(fp)._base = NULL;	/* no ungetc buffer */
+	_UB(fp)._size = 0;
+	memset(WCIO_GET(fp), 0, sizeof(struct wchar_io_data));
+}
+
 /*
  * Find a free FILE for fopen et al.
  */
@@ -143,18 +160,7 @@ __sfp()
 	rwlock_unlock(&__sfp_lock);
 	return (NULL);
 found:
-	fp->_flags = 1;		/* reserve this slot; caller sets real flags */
-	fp->_p = NULL;		/* no current pointer */
-	fp->_w = 0;		/* nothing to read or write */
-	fp->_r = 0;
-	fp->_bf._base = NULL;	/* no buffer */
-	fp->_bf._size = 0;
-	fp->_lbfsize = 0;	/* not line buffered */
-	fp->_file = -1;		/* no file */
-/*	fp->_cookie = <any>; */	/* caller sets cookie, _read/_write etc */
-	_UB(fp)._base = NULL;	/* no ungetc buffer */
-	_UB(fp)._size = 0;
-	memset(WCIO_GET(fp), 0, sizeof(struct wchar_io_data));
+	__sfpinit(fp);
 	rwlock_unlock(&__sfp_lock);
 	return (fp);
 }
