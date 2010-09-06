@@ -1,4 +1,4 @@
-/*  $NetBSD: perfused.c,v 1.5 2010/09/06 01:40:24 manu Exp $ */
+/*  $NetBSD: perfused.c,v 1.6 2010/09/06 13:15:29 wiz Exp $ */
 
 /*-
  *  Copyright (c) 2010 Emmanuel Dreyfus. All rights reserved.
@@ -205,14 +205,14 @@ new_mount(fd)
 	 * Get peer identity
 	 */
 	if (getpeerid(fd, NULL, &pmi.pmi_uid, NULL) != 0)
-		DWARNX("Unable to retreive peer identity");
+		DWARNX("Unable to retrieve peer identity");
 
 	/*
 	 * Check that peer owns mountpoint and read (and write) on it?
 	 */
 	ro_flag = pmi.pmi_mountflags & MNT_RDONLY;
 	if (access_mount(pmi.pmi_target, pmi.pmi_uid, ro_flag) != 0)
-		DERRX(EX_NOPERM, "insuficient privvileges to mount %s", 
+		DERRX(EX_NOPERM, "insufficient privileges to mount %s", 
 		      pmi.pmi_target);
 
 
@@ -343,7 +343,7 @@ parse_options(argc, argv)
 			foreground = 1;
 			break;
 		default:
-			DERR(EX_USAGE, "%s [-d level] [-s] [-f] [-i fd]", argv[0]);
+			DERR(EX_USAGE, "%s [-fs] [-d level] [-i fd]", argv[0]);
 			break;
 		}
 	}
