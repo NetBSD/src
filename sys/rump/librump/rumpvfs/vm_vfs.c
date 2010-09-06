@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_vfs.c,v 1.17 2010/08/19 02:07:11 pooka Exp $	*/
+/*	$NetBSD: vm_vfs.c,v 1.18 2010/09/06 17:32:38 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_vfs.c,v 1.17 2010/08/19 02:07:11 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_vfs.c,v 1.18 2010/09/06 17:32:38 pooka Exp $");
 
 #include <sys/param.h>
 
@@ -132,10 +132,8 @@ uvm_vnp_zerorange(struct vnode *vp, off_t off, size_t len)
 	return;
 }
 
-/* dumdidumdum */
 #define len2npages(off, len)						\
-  (((((len) + PAGE_MASK) & ~(PAGE_MASK)) >> PAGE_SHIFT)			\
-    + (((off & PAGE_MASK) + (len & PAGE_MASK)) > PAGE_SIZE))
+    ((round_page(off+len) - trunc_page(off)) >> PAGE_SHIFT)
 
 int
 ubc_uiomove(struct uvm_object *uobj, struct uio *uio, vsize_t todo,
