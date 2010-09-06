@@ -1,4 +1,4 @@
-/*  $NetBSD: perfuse.c,v 1.3 2010/08/28 03:46:21 manu Exp $ */
+/*  $NetBSD: perfuse.c,v 1.4 2010/09/06 01:40:24 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010 Emmanuel Dreyfus. All rights reserved.
@@ -208,20 +208,20 @@ perfuse_mount(source, target, filesystemtype, mountflags, data)
 	
 
 	pmo.pmo_len = sizeof(pmo);
-	pmo.pmo_len += source ? strlen(source) : 0;
-	pmo.pmo_len += target ? strlen(target) : 0;
-	pmo.pmo_len += filesystemtype ? strlen(filesystemtype) : 0;
-	pmo.pmo_len += data ? strlen(data) : 0;
+	pmo.pmo_len += source ? (uint32_t)strlen(source) : 0;
+	pmo.pmo_len += target ? (uint32_t)strlen(target) : 0;
+	pmo.pmo_len += filesystemtype ? (uint32_t)strlen(filesystemtype) : 0;
+	pmo.pmo_len += data ? (uint32_t)strlen(data) : 0;
 	pmo.pmo_error = 0;
 	pmo.pmo_unique = (uint64_t)-1;
 
 	(void)strcpy(pmo.pmo_magic, PERFUSE_MOUNT_MAGIC);
-	pmo.pmo_source_len = source ? strlen(source) : 0;
-	pmo.pmo_target_len = target ? strlen(target) : 0;
+	pmo.pmo_source_len = source ? (uint32_t)strlen(source) : 0;
+	pmo.pmo_target_len = target ? (uint32_t)strlen(target) : 0;
 	pmo.pmo_filesystemtype_len = 
-	    filesystemtype ? strlen(filesystemtype) : 0;
-	pmo.pmo_mountflags = mountflags;
-	pmo.pmo_data_len = data ? strlen(data) : 0;
+	    filesystemtype ? (uint32_t)strlen(filesystemtype) : 0;
+	pmo.pmo_mountflags = (uint32_t)mountflags;
+	pmo.pmo_data_len = data ? (uint32_t)strlen(data) : 0;
 	
 
 	if (write(s, &pmo, sizeof(pmo)) != sizeof(pmo)) {
