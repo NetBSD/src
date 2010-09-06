@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1506 2010/09/02 12:29:49 pooka Exp $
+#	$NetBSD: mi,v 1.1507 2010/09/06 14:55:37 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -5594,6 +5594,7 @@
 ./usr/share/man/cat3/dn_expand.0		comp-c-catman		.cat
 ./usr/share/man/cat3/dngettext.0		comp-c-catman		.cat
 ./usr/share/man/cat3/doupdate.0			comp-c-catman		.cat
+./usr/share/man/cat3/dprintf.0			comp-c-catman		.cat
 ./usr/share/man/cat3/drand48.0			comp-c-catman		.cat
 ./usr/share/man/cat3/dsa.0			comp-obsolete		obsolete
 ./usr/share/man/cat3/dup_field.0		comp-c-catman		.cat
@@ -8403,6 +8404,7 @@
 ./usr/share/man/cat3/valloc.0			comp-c-catman		.cat
 ./usr/share/man/cat3/varargs.0			comp-c-catman		.cat
 ./usr/share/man/cat3/vasprintf.0		comp-c-catman		.cat
+./usr/share/man/cat3/vdprintf.0			comp-c-catman		.cat
 ./usr/share/man/cat3/verr.0			comp-c-catman		.cat
 ./usr/share/man/cat3/verrx.0			comp-c-catman		.cat
 ./usr/share/man/cat3/vfprintf.0			comp-c-catman		.cat
@@ -11532,6 +11534,7 @@
 ./usr/share/man/html3/dn_expand.html		comp-c-htmlman		html
 ./usr/share/man/html3/dngettext.html		comp-c-htmlman		html
 ./usr/share/man/html3/doupdate.html		comp-c-htmlman		html
+./usr/share/man/html3/dprintf.html		comp-c-htmlman		html
 ./usr/share/man/html3/drand48.html		comp-c-htmlman		html
 ./usr/share/man/html3/dup_field.html		comp-c-htmlman		html
 ./usr/share/man/html3/dupwin.html		comp-c-htmlman		html
@@ -14257,6 +14260,7 @@
 ./usr/share/man/html3/valloc.html		comp-c-htmlman		html
 ./usr/share/man/html3/varargs.html		comp-c-htmlman		html
 ./usr/share/man/html3/vasprintf.html		comp-c-htmlman		html
+./usr/share/man/html3/vdprintf.html		comp-c-htmlman		html
 ./usr/share/man/html3/verr.html			comp-c-htmlman		html
 ./usr/share/man/html3/verrx.html		comp-c-htmlman		html
 ./usr/share/man/html3/vfprintf.html		comp-c-htmlman		html
@@ -17378,6 +17382,7 @@
 ./usr/share/man/man3/dn_expand.3		comp-c-man		.man
 ./usr/share/man/man3/dngettext.3		comp-c-man		.man
 ./usr/share/man/man3/doupdate.3			comp-c-man		.man
+./usr/share/man/man3/dprintf.3			comp-c-man		.man
 ./usr/share/man/man3/drand48.3			comp-c-man		.man
 ./usr/share/man/man3/dsa.3			comp-obsolete		obsolete
 ./usr/share/man/man3/dup_field.3		comp-c-man		.man
@@ -20183,6 +20188,7 @@
 ./usr/share/man/man3/valloc.3			comp-c-man		.man
 ./usr/share/man/man3/varargs.3			comp-c-man		.man
 ./usr/share/man/man3/vasprintf.3		comp-c-man		.man
+./usr/share/man/man3/vdprintf.3			comp-c-man		.man
 ./usr/share/man/man3/verr.3			comp-c-man		.man
 ./usr/share/man/man3/verrx.3			comp-c-man		.man
 ./usr/share/man/man3/vfprintf.3			comp-c-man		.man
