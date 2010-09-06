@@ -1,4 +1,4 @@
-.\" $NetBSD: pgp2ssh.1,v 1.1 2010/09/06 18:16:52 agc Exp $
+.\" $NetBSD: pgp2ssh.1,v 1.2 2010/09/06 20:33:18 wiz Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -38,14 +38,14 @@
 .Op Fl f address-family
 .Op Fl h hostname
 .Op Fl p port
-userid...
+.Ar userid ...
 .Sh DESCRIPTION
 The
 .Nm
 command retrieves PGP public key information from the key server daemon
 using the HKP protocol, and converts the PGP public
 key to a format suitable for use by
-.Xr ssh 1
+.Xr ssh 1 .
 The
 .Xr hkpd 1
 is normally used to serve public key information.
@@ -65,8 +65,7 @@ support DSA keys, due to their limitations.
 It is quite possible to serve ssh public keys
 across a network using
 .Xr hkpd 1
-to
-serve the key, and
+to serve the key, and
 .Nm
 to retrieve the key using the HKP protocol,
 and to save the key in ssh format on the remote computer,
