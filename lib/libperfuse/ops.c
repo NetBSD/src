@@ -1,4 +1,4 @@
-/*  $NetBSD: ops.c,v 1.9 2010/09/05 06:49:13 manu Exp $ */
+/*  $NetBSD: ops.c,v 1.10 2010/09/06 01:17:05 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010 Emmanuel Dreyfus. All rights reserved.
@@ -416,7 +416,7 @@ fuse_to_dirent(pu, opc, fd, fd_len)
 	fd_offset = 0;
 	written = 0;
 	dents = PERFUSE_NODE_DATA(opc)->pnd_dirent;
-	dents_len = PERFUSE_NODE_DATA(opc)->pnd_dirent_len;
+	dents_len = (size_t)PERFUSE_NODE_DATA(opc)->pnd_dirent_len;
 
 	do {
 		char *ndp;
@@ -569,7 +569,8 @@ readdir_buffered(ps, opc, dent, readoff,
 
 #ifdef PERFUSE_DEBUG
 	if (perfuse_diagflags & PDF_READDIR)
-		DPRINTF("%s: readoff = %"PRId64",  pnd->pnd_dirent_len = %zd\n",
+		DPRINTF("%s: readoff = %"PRId64",  "
+			"pnd->pnd_dirent_len = %"PRId64"\n",
 			__func__, *readoff, pnd->pnd_dirent_len);
 #endif
 	if (*readoff >=  pnd->pnd_dirent_len) {
@@ -1067,7 +1068,7 @@ perfuse_node_mknod(pu, opc, pni, pcn, vap)
 	pm = ps->ps_new_msg(pu, opc, FUSE_MKNOD, len, pcn->pcn_cred);
 	fmi = GET_INPAYLOAD(ps, pm, fuse_mknod_in);
 	fmi->mode = vap->va_mode | VTTOIF(vap->va_type);
-	fmi->rdev = vap->va_rdev;
+	fmi->rdev = (uint32_t)vap->va_rdev;
 	fmi->umask = 0; 	/* Seems unused bu libfuse */
 	(void)strlcpy((char *)(void *)(fmi + 1), path, len - sizeof(*fmi));
 

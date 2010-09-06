@@ -1,4 +1,4 @@
-/*  $NetBSD: perfuse_priv.h,v 1.6 2010/09/05 06:49:13 manu Exp $ */
+/*  $NetBSD: perfuse_priv.h,v 1.7 2010/09/06 01:17:05 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010 Emmanuel Dreyfus. All rights reserved.
@@ -88,7 +88,7 @@ struct perfuse_node_data {
 	uint64_t pnd_offset;			/* seek state */
 	uint64_t pnd_lock_owner;
 	struct dirent *pnd_dirent;		/* native buffer for readdir */
-	size_t pnd_dirent_len;
+	off_t pnd_dirent_len;
 	struct fuse_dirent *pnd_all_fd;		/* FUSE buffer for readdir */
 	size_t pnd_all_fd_len;
 	TAILQ_HEAD(,perfuse_cc_queue) pnd_pcq;	/* queued requests */
