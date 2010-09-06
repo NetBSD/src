@@ -1,25 +1,25 @@
 #	from: @(#)Makefile.inc	5.7 (Berkeley) 6/27/91
-#	$NetBSD: Makefile.inc,v 1.36 2009/07/13 22:19:25 roy Exp $
+#	$NetBSD: Makefile.inc,v 1.37 2010/09/06 14:52:55 christos Exp $
 
 # stdio sources
 .PATH: ${.CURDIR}/stdio
 
 CPPFLAGS+=-DWIDE_DOUBLE
 
-SRCS+=	asprintf.c clrerr.c fclose.c fdopen.c feof.c ferror.c fflush.c \
-	fgetc.c fgetln.c fgetpos.c fgets.c fgetstr.c fgetwc.c fgetwln.c \
-	fgetws.c fileno.c findfp.c flags.c flockfile.c fopen.c fparseln.c \
-	fprintf.c fpurge.c fputc.c fputs.c fputwc.c fputws.c fread.c \
-	freopen.c fscanf.c fseek.c fseeko.c fsetpos.c ftell.c ftello.c \
+SRCS+=	asprintf.c clrerr.c dprintf.c fclose.c fdopen.c feof.c ferror.c \
+	fflush.c fgetc.c fgetln.c fgetpos.c fgets.c fgetstr.c fgetwc.c \
+	fgetwln.c fgetws.c fileno.c findfp.c flags.c flockfile.c fopen.c \
+	fparseln.c fprintf.c fpurge.c fputc.c fputs.c fputwc.c fputws.c \
+	fread.c freopen.c fscanf.c fseek.c fseeko.c fsetpos.c ftell.c ftello.c \
 	funopen.c fvwrite.c fwalk.c fwide.c fwprintf.c fwrite.c fwscanf.c \
 	getc.c getchar.c getdelim.c getline.c gettemp.c getw.c getwc.c \
 	getwchar.c makebuf.c mkdtemp.c mkstemp.c perror.c printf.c putc.c \
 	putchar.c puts.c putw.c putwc.c putwchar.c refill.c remove.c rewind.c \
 	rget.c scanf.c setbuf.c setbuffer.c setvbuf.c snprintf.c snprintf_ss.c \
 	sscanf.c stdio.c swprintf.c swscanf.c tmpfile.c ungetc.c ungetwc.c \
-	vasprintf.c vfprintf.c vfscanf.c vfwprintf.c vfwscanf.c vprintf.c \
-	vscanf.c vsnprintf.c vsnprintf_ss.c vsscanf.c vswprintf.c vswscanf.c \
-	vwprintf.c vwscanf.c wbuf.c wprintf.c wscanf.c wsetup.c
+	vasprintf.c vdprintf.c vfprintf.c vfscanf.c vfwprintf.c vfwscanf.c \
+	vprintf.c vscanf.c vsnprintf.c vsnprintf_ss.c vsscanf.c vswprintf.c \
+	vswscanf.c vwprintf.c vwscanf.c wbuf.c wprintf.c wscanf.c wsetup.c
 
 .if !defined(AUDIT)
 SRCS+=	gets.c sprintf.c vsprintf.c tempnam.c tmpnam.c mktemp.c
@@ -50,7 +50,8 @@ MLINKS+=getdelim.3 getline.3
 MLINKS+=mktemp.3 mkdtemp.3 mktemp.3 mkstemp.3
 MLINKS+=printf.3 asprintf.3 printf.3 fprintf.3 printf.3 snprintf.3 \
 	printf.3 sprintf.3 printf.3 vasprintf.3 printf.3 vfprintf.3 \
-	printf.3 vprintf.3 printf.3 vsnprintf.3 printf.3 vsprintf.3 
+	printf.3 vprintf.3 printf.3 vsnprintf.3 printf.3 vsprintf.3 \
+	printf.3 dprintf.3 printf.3 vdprintf.3
 MLINKS+=putc.3 fputc.3 putc.3 putc_unlocked.3 putc.3 putchar.3 \
 	putc.3 putchar_unlocked.3 putc.3 putw.3
 MLINKS+=scanf.3 fscanf.3 scanf.3 sscanf.3 scanf.3 vfscanf.3 scanf.3 vscanf.3 \
