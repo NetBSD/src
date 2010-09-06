@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.h,v 1.44 2010/05/11 20:09:11 pooka Exp $	*/
+/*	$NetBSD: rump.h,v 1.45 2010/09/06 18:43:28 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -141,6 +141,7 @@ _END_DECLS
 
 #ifdef RUMP_SYS_IOCTL
 #define ioctl(...) rump_sys_ioctl(__VA_ARGS__)
+#define fnctl(...) rump_sys_fcntl(__VA_ARGS__)
 #endif /* RUMP_SYS_IOCTL */
 
 #ifdef RUMP_SYS_CLOSE
@@ -169,6 +170,29 @@ _END_DECLS
 #define symlink(a,b) rump_sys_symlink(a,b)
 #define unlink(a) rump_sys_unlink(a)
 #define readlink(a,b,c) rump_sys_readlink(a,b,c)
+#define chdir(a) rump_sys_chdir(a)
+#define fsync(a) rump_sys_fsync(a)
+#define sync() rump_sys_sync()
+#define chown(a,b,c) rump_sys_chown(a,b,c)
+#define fchown(a,b,c) rump_sys_fchown(a,b,c)
+#define lchown(a,b,c) rump_sys_lchown(a,b,c)
+#define lseek(a,b,c) rump_sys_lseek(a,b,c)
+#define mknod(a,b,c) rump_sys_mknod(a,b,c)
+#define rename(a,b) rump_sys_rename(a,b)
+#define truncate(a,b) rump_sys_truncate(a,b)
+#define ftruncate(a,b) rump_sys_ftruncate(a,b)
+#define umask(a) rump_sys_umask(a)
+#define getdents(a,b,c) rump_sys_getdents(a,b,c)
 #endif /* RUMP_SYS_FILEOPS */
+
+#ifdef RUMP_SYS_STAT
+#define stat(a,b) rump_sys_stat(a,b)
+#define fstat(a,b) rump_sys_fstat(a,b)
+#define lstat(a,b) rump_sys_lstat(a,b)
+#endif /* RUMP_SYS_STAT */
+
+#ifdef RUMP_SYS_PROCOPS
+#define getpid() rump_sys_getpid()
+#endif /* RUMP_SYS_PROCOPS */
 
 #endif /* _RUMP_RUMP_H_ */
