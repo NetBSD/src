@@ -101,6 +101,10 @@ int netpgp_format_json(void *, const char *, const int);
 
 int netpgp_validate_sigs(netpgp_t *);
 
+/* save pgp key in ssh format */
+int netpgp_write_sshkey(netpgp_t *, char *, const char *, char *, size_t);
+
+
 __END_DECLS
 
 #endif /* !NETPGP_H_ */

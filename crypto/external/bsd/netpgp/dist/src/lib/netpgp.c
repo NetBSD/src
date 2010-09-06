@@ -34,7 +34,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: netpgp.c,v 1.73 2010/09/02 07:31:16 agc Exp $");
+__RCSID("$NetBSD: netpgp.c,v 1.74 2010/09/06 18:19:38 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -619,6 +619,69 @@ format_json_key(FILE *fp, mj_t *obj, const int psigs)
 		}
 	}
 	p(fp, "\n", NULL);
+}
+
+/* save a pgp pubkey to a temp file */
+static int
+savepubkey(char *res, char *f, size_t size)
+{
+	size_t	len;
+	int	cc;
+	int	wc;
+	int	fd;
+
+	(void) snprintf(f, size, "/tmp/pgp2ssh.XXXXXXX");
+	if ((fd = mkstemp(f)) < 0) {
+		(void) fprintf(stderr, "can't create temp file '%s'\n", f);
+		return 0;
+	}
+	len = strlen(res);
+	for (cc = 0 ; (wc = write(fd, &res[cc], len - cc)) > 0 ; cc += wc) {
+	}
+	(void) close(fd);
+	return 1;
+}
+
+/* format a uint32_t */
+static int
+formatu32(uint8_t *buffer, uint32_t value)
+{
+	buffer[0] = (uint8_t)(value >> 24) & 0xff;
+	buffer[1] = (uint8_t)(value >> 16) & 0xff;
+	buffer[2] = (uint8_t)(value >> 8) & 0xff;
+	buffer[3] = (uint8_t)value & 0xff;
+	return sizeof(uint32_t);
+}
+
+/* format a string as (len, string) */
+static int
+formatstring(char *buffer, const uint8_t *s, size_t len)
+{
+	int	cc;
+
+	cc = formatu32((uint8_t *)buffer, len);
+	(void) memcpy(&buffer[cc], s, len);
+	return cc + len;
+}
+
+/* format a bignum, checking for "interesting" high bit values */
+static int
+formatbignum(char *buffer, BIGNUM *bn)
+{
+	size_t	 len;
+	uint8_t	*cp;
+	int	 cc;
+
+	len = (size_t) BN_num_bytes(bn);
+	if ((cp = calloc(1, len + 1)) == NULL) {
+		(void) fprintf(stderr, "calloc failure in formatbignum\n");
+		return 0;
+	}
+	(void) BN_bn2bin(bn, cp + 1);
+	cp[0] = 0x0;
+	cc = (cp[1] & 0x80) ? formatstring(buffer, cp, len + 1) : formatstring(buffer, &cp[1], len);
+	free(cp);
+	return cc;
 }
 
 /***************************************************************************/
@@ -1664,4 +1727,60 @@ netpgp_format_json(void *vp, const char *json, const int psigs)
 	/* clean up */
 	mj_delete(&ids);
 	return idc;
+}
+
+/* find a key in keyring, and write it in ssh format */
+int
+netpgp_write_sshkey(netpgp_t *netpgp, char *s, const char *userid, char *out, size_t size)
+{
+	const __ops_key_t	*key;
+	__ops_keyring_t		*keyring;
+	__ops_io_t		*io;
+	unsigned		 k;
+	size_t			 cc;
+	char			 f[MAXPATHLEN];
+
+	if ((io = calloc(1, sizeof(__ops_io_t))) == NULL) {
+		(void) fprintf(stderr, "netpgp_save_sshpub: bad alloc 1\n");
+		return 0;
+	}
+	io->outs = stdout;
+	io->errs = stderr;
+	io->res = stderr;
+	netpgp->io = io;
+	/* write new to temp file */
+	savepubkey(s, f, sizeof(f));
+	if ((keyring = calloc(1, sizeof(*keyring))) == NULL) {
+		(void) fprintf(stderr, "netpgp_save_sshpub: bad alloc 2\n");
+		return 0;
+	}
+	if (!__ops_keyring_fileread(netpgp->pubring = keyring, 1, f)) {
+		(void) fprintf(stderr, "can't import key\n");
+		return 0;
+	}
+	/* get rsa key */
+	k = 0;
+	key = __ops_getnextkeybyname(netpgp->io, netpgp->pubring, userid, &k);
+	if (key == NULL) {
+		(void) fprintf(stderr, "no key found for '%s'\n", userid);
+		return 0;
+	}
+	if (key->key.pubkey.alg != OPS_PKA_RSA) {
+		/* we're not interested in supporting DSA either :-) */
+		(void) fprintf(stderr, "key not RSA '%s'\n", userid);
+		return 0;
+	}
+	/* XXX - check trust sigs */
+	/* XXX - check expiry */
+	/* XXX - check start */
+	/* XXX - check not weak key */
+	/* get rsa e and n */
+	(void) memset(out, 0x0, size);
+	cc = formatstring((char *)out, (const uint8_t *)"ssh-rsa", 7);
+	cc += formatbignum((char *)&out[cc], key->key.pubkey.key.rsa.e);
+	cc += formatbignum((char *)&out[cc], key->key.pubkey.key.rsa.n);
+	cc += snprintf(&out[cc], size - cc, " %s", key->uids[0]);
+	free(io);
+	free(keyring);
+	return cc;
 }
