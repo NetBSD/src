@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.236 2010/08/30 10:32:54 pooka Exp $
+	$NetBSD: syscalls.master,v 1.237 2010/09/06 20:00:09 pooka Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -152,7 +152,7 @@
 			    size_t count); }
 59	STD 		{ int|sys||execve(const char *path, \
 			    char * const *argp, char * const *envp); }
-60	STD 		{ mode_t|sys||umask(mode_t newmask); }
+60	STD 	 RUMP	{ mode_t|sys||umask(mode_t newmask); }
 61	STD 	 RUMP	{ int|sys||chroot(const char *path); }
 62	COMPAT_43 MODULAR { int|sys||fstat(int fd, struct stat43 *sb); } fstat43
 63	COMPAT_43 MODULAR { int|sys||getkerninfo(int op, char *where, int *size, \
