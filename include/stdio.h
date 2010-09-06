@@ -1,4 +1,4 @@
-/*	$NetBSD: stdio.h,v 1.76 2010/02/25 18:37:12 joerg Exp $	*/
+/*	$NetBSD: stdio.h,v 1.77 2010/09/06 14:52:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -491,6 +491,13 @@ static __inline int __sputc(int _c, FILE *_p) {
 #define	fileno(p)	__sfileno(p)
 #endif /* !_REENTRANT && !_PTHREADS */
 #endif /* !_ANSI_SOURCE */
+
+#if (_POSIX_C_SOURCE - 0) >= 200809L || defined(_NETBSD_SOURCE)
+int	 vdprintf(int, const char * __restrict, _BSD_VA_LIST_)
+		__printflike(2, 0);
+int	 dprintf(int, const char * __restrict, ...)
+		__printflike(2, 3);
+#endif /* (_POSIX_C_SOURCE - 0) >= 200809L || defined(_NETBSD_SOURCE) */
 
 #if (_POSIX_C_SOURCE - 0) >= 199506L || (_XOPEN_SOURCE - 0) >= 500 || \
     defined(_REENTRANT) || defined(_NETBSD_SOURCE)
