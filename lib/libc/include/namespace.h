@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.142 2010/04/25 00:54:46 joerg Exp $	*/
+/*	$NetBSD: namespace.h,v 1.143 2010/09/06 17:49:56 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
@@ -669,6 +669,7 @@
 #define uuid_create_nil		_uuid_create_nil
 #define uuid_is_nil		_uuid_is_nil
 #define valloc			_valloc
+#define vdprintf		_vdprintf
 #define vis			_vis
 #ifndef vsnprintf
 #define vsnprintf		_vsnprintf
