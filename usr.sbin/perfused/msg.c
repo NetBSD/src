@@ -1,4 +1,4 @@
-/*  $NetBSD: msg.c,v 1.3 2010/09/01 14:57:24 manu Exp $ */
+/*  $NetBSD: msg.c,v 1.4 2010/09/06 01:40:24 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010 Emmanuel Dreyfus. All rights reserved.
@@ -128,7 +128,7 @@ perfuse_new_pb (pu, opc, opcode, payload_len, cred)
 
 	(void)memset(data, 0, len);
 	fih = (struct fuse_in_header *)data;
-	fih->len = len;
+	fih->len = (uint32_t)len;
 	fih->opcode = opcode;
 	fih->unique = perfuse_next_unique(pu);
 	fih->nodeid = nodeid;
@@ -606,7 +606,7 @@ perfuse_fdnotify(pu, fd, what)
 	int fd;
 	int what;
 {
-	if (fd != (int)perfuse_getspecific(pu))
+	if (fd != (int)(long)perfuse_getspecific(pu))
 		DERRX(EX_SOFTWARE, "%s: unexpected notification for fd = %d",
 		      __func__, fd); 
 

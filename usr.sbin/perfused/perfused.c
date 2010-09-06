@@ -1,4 +1,4 @@
-/*  $NetBSD: perfused.c,v 1.4 2010/09/01 14:57:24 manu Exp $ */
+/*  $NetBSD: perfused.c,v 1.5 2010/09/06 01:40:24 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010 Emmanuel Dreyfus. All rights reserved.
@@ -137,8 +137,8 @@ get_mount_info(fd, pmi)
 	}
 
 #ifdef PERFUSE_DEBUG
-	DPRINTF("perfuse lengths: source = %zd, target = %zd, "
-	       "filesystemtype = %zd, data = %zd\n", 
+	DPRINTF("perfuse lengths: source = %"PRId32", target = %"PRId32", "
+	       "filesystemtype = %"PRId32", data = %"PRId32"\n", 
 		pmo->pmo_source_len, 
 		pmo->pmo_target_len,
 		pmo->pmo_filesystemtype_len,
@@ -165,7 +165,7 @@ get_mount_info(fd, pmi)
 	pmi->pmi_source = source;
 	pmi->pmi_target = target;
 	pmi->pmi_filesystemtype = filesystemtype;
-	pmi->pmi_mountflags = mountflags;
+	pmi->pmi_mountflags = (int)mountflags;
 	pmi->pmi_data = data;
 
 	return;
