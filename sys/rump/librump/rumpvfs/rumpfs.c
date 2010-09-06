@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpfs.c,v 1.64 2010/09/06 14:50:34 pooka Exp $	*/
+/*	$NetBSD: rumpfs.c,v 1.65 2010/09/06 15:07:33 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009  Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.64 2010/09/06 14:50:34 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.65 2010/09/06 15:07:33 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -1195,6 +1195,8 @@ struct vfsops rumpfs_vfsops = {
 	.vfs_snapshot =		(void *)eopnotsupp,
 	.vfs_extattrctl =	(void *)eopnotsupp,
 	.vfs_suspendctl =	(void *)eopnotsupp,
+	.vfs_renamelock_enter =	genfs_renamelock_enter,
+	.vfs_renamelock_exit =	genfs_renamelock_exit,
 	.vfs_opv_descs =	rump_opv_descs,
 	/* vfs_refcount */
 	/* vfs_list */
