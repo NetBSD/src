@@ -1,4 +1,4 @@
-/*	$NetBSD: glob.c,v 1.26 2010/07/06 14:59:22 christos Exp $	*/
+/*	$NetBSD: glob.c,v 1.27 2010/09/06 14:40:25 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)glob.c	8.3 (Berkeley) 10/13/93";
 #else
-__RCSID("$NetBSD: glob.c,v 1.26 2010/07/06 14:59:22 christos Exp $");
+__RCSID("$NetBSD: glob.c,v 1.27 2010/09/06 14:40:25 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -160,16 +160,16 @@ static Char	*g_strchr(const Char *, int);
 static int	 g_stat(Char *, __gl_stat_t *, glob_t *);
 static int	 glob0(const Char *, glob_t *, size_t *);
 static int	 glob1(Char *, glob_t *, size_t *);
-static int	 glob2(Char *, Char *, Char *, Char *, glob_t *,
+static int	 glob2(Char *, Char *, Char *, const Char *, glob_t *,
     size_t *);
-static int	 glob3(Char *, Char *, Char *, Char *, Char *, glob_t *,
-    size_t *);
+static int	 glob3(Char *, Char *, Char *, const Char *, const Char *,
+    const Char *, glob_t *, size_t *);
 static int	 globextend(const Char *, glob_t *, size_t *);
 static const Char *globtilde(const Char *, Char *, size_t, glob_t *);
 static int	 globexp1(const Char *, glob_t *, size_t *);
 static int	 globexp2(const Char *, const Char *, glob_t *, int *,
     size_t *);
-static int	 match(Char *, Char *, Char *);
+static int	 match(const Char *, const Char *, const Char *);
 #ifdef DEBUG
 static void	 qprintf(const char *, Char *);
 #endif
@@ -346,7 +346,7 @@ globexp2(const Char *ptr, const Char *pattern, glob_t *pglob, int *rv,
 
 				/* Expand the current pattern */
 #ifdef DEBUG
-				qprintf("globexp2:", patbuf);
+				qprintf("globexp2", patbuf);
 #endif
 				*rv = globexp1(patbuf, pglob, limit);
 
@@ -513,10 +513,13 @@ glob0(const Char *pattern, glob_t *pglob, size_t *limit)
 			break;
 		case STAR:
 			pglob->gl_flags |= GLOB_MAGCHAR;
-			/* collapse adjacent stars to one, 
+			/* collapse adjacent stars to one [or three if globstar]
 			 * to avoid exponential behavior
 			 */
-			if (bufnext == patbuf || bufnext[-1] != M_ALL)
+			if (bufnext == patbuf || bufnext[-1] != M_ALL ||
+			    ((pglob->gl_flags & GLOB_STAR) != 0 && 
+			    (bufnext - 1 == patbuf || bufnext[-2] != M_ALL ||
+			    bufnext - 2 == patbuf || bufnext[-3] != M_ALL)))
 				*bufnext++ = M_ALL;
 			break;
 		default:
@@ -526,7 +529,7 @@ glob0(const Char *pattern, glob_t *pglob, size_t *limit)
 	}
 	*bufnext = EOS;
 #ifdef DEBUG
-	qprintf("glob0:", patbuf);
+	qprintf("glob0", patbuf);
 #endif
 
 	if ((error = glob1(patbuf, pglob, limit)) != 0)
@@ -592,11 +595,12 @@ glob1(Char *pattern, glob_t *pglob, size_t *limit)
  * meta characters.
  */
 static int
-glob2(Char *pathbuf, Char *pathend, Char *pathlim, Char *pattern, glob_t *pglob,
-    size_t *limit)
+glob2(Char *pathbuf, Char *pathend, Char *pathlim, const Char *pattern,
+    glob_t *pglob, size_t *limit)
 {
 	__gl_stat_t sb;
-	Char *p, *q;
+	const Char *p;
+	Char *q;
 	int anymeta;
 	Char *pend;
 	ptrdiff_t diff;
@@ -606,6 +610,9 @@ glob2(Char *pathbuf, Char *pathend, Char *pathlim, Char *pattern, glob_t *pglob,
 	_DIAGASSERT(pattern != NULL);
 	_DIAGASSERT(pglob != NULL);
 
+#ifdef DEBUG
+	qprintf("glob2", pathbuf);
+#endif
 	/*
 	 * Loop over pattern segments until end of pattern or until
 	 * segment with meta character found.
@@ -677,19 +684,24 @@ glob2(Char *pathbuf, Char *pathend, Char *pathlim, Char *pattern, glob_t *pglob,
 			}
 		} else			/* Need expansion, recurse. */
 			return glob3(pathbuf, pathend, pathlim, pattern, p,
-			    pglob, limit);
+			    pattern, pglob, limit);
 	}
 	/* NOTREACHED */
 }
 
 static int
-glob3(Char *pathbuf, Char *pathend, Char *pathlim, Char *pattern,
-    Char *restpattern, glob_t *pglob, size_t *limit)
+glob3(Char *pathbuf, Char *pathend, Char *pathlim, const Char *pattern,
+    const Char *restpattern, const Char *pglobstar, glob_t *pglob,
+    size_t *limit)
 {
 	struct dirent *dp;
 	DIR *dirp;
+	__gl_stat_t sbuf;
 	int error;
 	char buf[MAXPATHLEN];
+	int globstar = 0;
+	int chase_symlinks = 0;
+	const Char *termstar = NULL;
 
 	/*
 	 * The readdirfunc declaration can't be prototyped, because it is
@@ -708,6 +720,39 @@ glob3(Char *pathbuf, Char *pathend, Char *pathlim, Char *pattern,
 	*pathend = EOS;
 	errno = 0;
 	    
+	while (pglobstar < restpattern) {
+		if ((pglobstar[0] & M_MASK) == M_ALL &&
+		    (pglobstar[1] & M_MASK) == M_ALL) {
+			globstar = 1;
+			chase_symlinks = (pglobstar[2] & M_MASK) == M_ALL;
+			termstar = pglobstar + (2 + chase_symlinks);
+			break;
+		}
+		pglobstar++;
+	} 
+
+	if (globstar) {
+		error = pglobstar == pattern && termstar == restpattern ?
+		    *restpattern == EOS ?
+		    glob2(pathbuf, pathend, pathlim, restpattern - 1, pglob,
+		    limit) :
+		    glob2(pathbuf, pathend, pathlim, restpattern + 1, pglob,
+		    limit) :
+		    glob3(pathbuf, pathend, pathlim, pattern, restpattern,
+		    termstar, pglob, limit);
+		if (error)
+			return error;
+		*pathend = EOS;
+	}
+
+	if (*pathbuf && (g_lstat(pathbuf, &sbuf, pglob) ||
+	    !S_ISDIR(sbuf.st_mode)
+#ifdef S_IFLINK
+	     && ((globstar && !chase_symlinks) || !S_ISLNK(sbuf.st_mode))
+#endif
+	    ))
+		return 0;
+
 	if ((dirp = g_opendir(pathbuf, pglob)) == NULL) {
 		if (pglob->gl_errfunc) {
 			if (g_Ctoc(pathbuf, buf, sizeof(buf)))
@@ -789,16 +834,36 @@ glob3(Char *pathbuf, Char *pathend, Char *pathlim, Char *pattern,
 			}
 		}
 
-		if (!match(pathend, pattern, restpattern)) {
-			*pathend = EOS;
-			continue;
-		}
-		error = glob2(pathbuf, --dc, pathlim, restpattern, pglob,
-		    limit);
-		if (error)
-			break;
-	}
+		if (globstar) {
+#ifdef S_IFLNK
+			if (!chase_symlinks &&
+			    (g_lstat(pathbuf, &sbuf, pglob) ||
+			    S_ISLNK(sbuf.st_mode)))
+				continue;
+#endif
 
+			if (!match(pathend, pattern, termstar))
+				continue;
+	    
+			if (--dc < pathlim - 2)
+				*dc++ = SEP;
+			*dc = EOS;
+			error = glob2(pathbuf, dc, pathlim, pglobstar,
+			    pglob, limit);
+			if (error)
+				break;
+			*pathend = EOS;
+		} else {
+			if (!match(pathend, pattern, restpattern)) {
+				*pathend = EOS;
+				continue;
+			}
+			error = glob2(pathbuf, --dc, pathlim, restpattern,
+			    pglob, limit);
+			if (error)
+				break;
+		}
+	}
 	if (pglob->gl_flags & GLOB_ALTDIRFUNC)
 		(*pglob->gl_closedir)(dirp);
 	else
@@ -881,7 +946,7 @@ globextend(const Char *path, glob_t *pglob, size_t *limit)
  * pattern causes a recursion level.
  */
 static int
-match(Char *name, Char *pat, Char *patend)
+match(const Char *name, const Char *pat, const Char *patend)
 {
 	int ok, negate_range;
 	Char c, k;
@@ -894,13 +959,14 @@ match(Char *name, Char *pat, Char *patend)
 		c = *pat++;
 		switch (c & M_MASK) {
 		case M_ALL:
+			while (pat < patend && (*pat & M_MASK) == M_ALL)
+				pat++;	/* eat consecutive '*' */
 			if (pat == patend)
 				return 1;
-			do 
-			    if (match(name, pat, patend))
-				    return 1;
-			while (*name++ != EOS);
-			return 0;
+			for (; !match(name, pat, patend); name++)
+				if (*name == EOS)
+					return 0;
+			return 1;
 		case M_ONE:
 			if (*name++ == EOS)
 				return 0;
@@ -963,7 +1029,7 @@ glob_pattern_p(const char *pattern, int quote)
 			return 1;
 
 		case QUOTE:
-			if (quote && pattern[1] != '\0')
+			if (quote && pattern[1] != EOS)
 			      ++pattern;
 			break;
 
