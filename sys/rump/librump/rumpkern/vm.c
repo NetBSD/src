@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.87 2010/07/29 15:13:00 hannken Exp $	*/
+/*	$NetBSD: vm.c,v 1.88 2010/09/06 20:10:20 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2010 Antti Kantee.  All Rights Reserved.
@@ -30,9 +30,7 @@
  */
 
 /*
- * Virtual memory emulation routines.  Contents:
- *  + anon objects & pager
- *  + misc support routines
+ * Virtual memory emulation routines.
  */
 
 /*
@@ -43,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.87 2010/07/29 15:13:00 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.88 2010/09/06 20:10:20 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -60,21 +58,14 @@ __KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.87 2010/07/29 15:13:00 hannken Exp $");
 
 #include <uvm/uvm.h>
 #include <uvm/uvm_ddb.h>
+#include <uvm/uvm_pdpolicy.h>
 #include <uvm/uvm_prot.h>
 #include <uvm/uvm_readahead.h>
 
 #include "rump_private.h"
 
-static int ao_get(struct uvm_object *, voff_t, struct vm_page **,
-	int *, int, vm_prot_t, int, int);
-static int ao_put(struct uvm_object *, voff_t, voff_t, int);
-
-const struct uvm_pagerops aobj_pager = {
-	.pgo_get = ao_get,
-	.pgo_put = ao_put,
-};
-
 kmutex_t uvm_pageqlock;
+kmutex_t uvm_swap_data_lock;
 
 struct uvmexp uvmexp;
 struct uvm uvm;
@@ -149,88 +140,6 @@ uvm_pagezero(struct vm_page *pg)
 }
 
 /*
- * Anon object stuff
- */
-
-static int
-ao_get(struct uvm_object *uobj, voff_t off, struct vm_page **pgs,
-	int *npages, int centeridx, vm_prot_t access_type,
-	int advice, int flags)
-{
-	struct vm_page *pg;
-	int i;
-
-	if (centeridx)
-		panic("%s: centeridx != 0 not supported", __func__);
-
-	/* loop over pages */
-	off = trunc_page(off);
-	for (i = 0; i < *npages; i++) {
- retrylookup:
-		pg = uvm_pagelookup(uobj, off + (i << PAGE_SHIFT));
-		if (pg) {
-			if (pg->flags & PG_BUSY) {
-				pg->flags |= PG_WANTED;
-				UVM_UNLOCK_AND_WAIT(pg, &uobj->vmobjlock, 0,
-				    "aogetpg", 0);
-				goto retrylookup;
-			}
-			pg->flags |= PG_BUSY;
-			pgs[i] = pg;
-		} else {
-			pg = uvm_pagealloc(uobj,
-			    off + (i << PAGE_SHIFT), NULL, UVM_PGA_ZERO);
-			pgs[i] = pg;
-		}
-	}
-	mutex_exit(&uobj->vmobjlock);
-
-	return 0;
-
-}
-
-static int
-ao_put(struct uvm_object *uobj, voff_t start, voff_t stop, int flags)
-{
-	struct vm_page *pg;
-
-	/* we only free all pages for now */
-	if ((flags & PGO_FREE) == 0 || (flags & PGO_ALLPAGES) == 0) {
-		mutex_exit(&uobj->vmobjlock);
-		return 0;
-	}
-
-	while ((pg = TAILQ_FIRST(&uobj->memq)) != NULL)
-		uvm_pagefree(pg);
-	mutex_exit(&uobj->vmobjlock);
-
-	return 0;
-}
-
-struct uvm_object *
-uao_create(vsize_t size, int flags)
-{
-	struct uvm_object *uobj;
-
-	uobj = kmem_zalloc(sizeof(struct uvm_object), KM_SLEEP);
-	uobj->pgops = &aobj_pager;
-	TAILQ_INIT(&uobj->memq);
-	mutex_init(&uobj->vmobjlock, MUTEX_DEFAULT, IPL_NONE);
-
-	return uobj;
-}
-
-void
-uao_detach(struct uvm_object *uobj)
-{
-
-	mutex_enter(&uobj->vmobjlock);
-	ao_put(uobj, 0, 0, PGO_ALLPAGES | PGO_FREE);
-	mutex_destroy(&uobj->vmobjlock);
-	kmem_free(uobj, sizeof(*uobj));
-}
-
-/*
  * Misc routines
  */
 
@@ -260,6 +169,7 @@ uvm_init(void)
 
 	mutex_init(&pagermtx, MUTEX_DEFAULT, 0);
 	mutex_init(&uvm_pageqlock, MUTEX_DEFAULT, 0);
+	mutex_init(&uvm_swap_data_lock, MUTEX_DEFAULT, 0);
 
 	mutex_init(&pdaemonmtx, MUTEX_DEFAULT, 0);
 	cv_init(&pdaemoncv, "pdaemon");
@@ -757,6 +667,13 @@ uvm_pagedequeue(struct vm_page *pg)
 
 void
 uvm_pageenqueue(struct vm_page *pg)
+{
+
+	/* nada */
+}
+
+void
+uvmpdpol_anfree(struct vm_anon *an)
 {
 
 	/* nada */
