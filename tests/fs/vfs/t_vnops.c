@@ -1,4 +1,4 @@
-/*	$NetBSD: t_vnops.c,v 1.6 2010/08/01 14:50:54 mlelstv Exp $	*/
+/*	$NetBSD: t_vnops.c,v 1.7 2010/09/06 15:21:34 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -43,6 +43,10 @@
 
 #define USES_DIRS \
     if (FSTYPE_SYSVBFS(tc)) atf_tc_skip("dirs not supported by file system")
+
+#define USES_SYMLINKS					\
+    if (FSTYPE_SYSVBFS(tc) || FSTYPE_MSDOS(tc))		\
+	atf_tc_skip("dirs not supported by file system")
 
 static char *
 md(char *buf, const char *base, const char *tail)
@@ -438,6 +442,17 @@ rename_nametoolong(const atf_tc_t *tc, const char *mp)
 	rump_sys_chdir("/");
 }
 
+static void
+symlink_zerolen(const atf_tc_t *tc, const char *mp)
+{
+
+	USES_SYMLINKS;
+
+	RL(rump_sys_chdir(mp));
+	RL(rump_sys_symlink("", "afile"));
+	RL(rump_sys_chdir("/"));
+}
+
 ATF_TC_FSAPPLY(lookup_simple, "simple lookup (./.. on root)");
 ATF_TC_FSAPPLY(lookup_complex, "lookup of non-dot entries");
 ATF_TC_FSAPPLY(dir_simple, "mkdir/rmdir");
@@ -447,6 +462,7 @@ ATF_TC_FSAPPLY(rename_dotdot, "rename dir ..");
 ATF_TC_FSAPPLY(rename_reg_nodir, "rename regular files, no subdirectories");
 ATF_TC_FSAPPLY(create_nametoolong, "create file with name too long");
 ATF_TC_FSAPPLY(rename_nametoolong, "rename to file with name too long");
+ATF_TC_FSAPPLY(symlink_zerolen, "symlink with 0-len target");
 
 ATF_TP_ADD_TCS(tp)
 {
@@ -460,6 +476,7 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_FSAPPLY(rename_reg_nodir);
 	ATF_TP_FSAPPLY(create_nametoolong);
 	ATF_TP_FSAPPLY(rename_nametoolong);
+	ATF_TP_FSAPPLY(symlink_zerolen);
 
 	return atf_no_error();
 }
