@@ -1,4 +1,4 @@
-/*  $NetBSD: perfuse_if.h,v 1.4 2010/09/01 14:57:24 manu Exp $ */
+/*  $NetBSD: perfuse_if.h,v 1.5 2010/09/06 01:17:05 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010 Emmanuel Dreyfus. All rights reserved.
@@ -153,7 +153,7 @@ struct perfuse_mount_out {
 	size_t pmo_source_len;
 	size_t pmo_target_len;
 	size_t pmo_filesystemtype_len;
-	int pmo_mountflags;
+	long pmo_mountflags;
 	size_t pmo_data_len;
 };
 
