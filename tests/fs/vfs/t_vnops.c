@@ -1,4 +1,4 @@
-/*	$NetBSD: t_vnops.c,v 1.7 2010/09/06 15:21:34 pooka Exp $	*/
+/*	$NetBSD: t_vnops.c,v 1.8 2010/09/06 15:27:18 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -449,6 +449,11 @@ symlink_zerolen(const atf_tc_t *tc, const char *mp)
 	USES_SYMLINKS;
 
 	RL(rump_sys_chdir(mp));
+
+	if (FSTYPE_TMPFS(tc)) {
+		atf_tc_expect_signal(SIGABRT, "PR kern/43843");
+	}
+
 	RL(rump_sys_symlink("", "afile"));
 	RL(rump_sys_chdir("/"));
 }
