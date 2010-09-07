@@ -1,4 +1,4 @@
-/*	$NetBSD: p2k.c,v 1.43 2010/09/07 17:16:19 pooka Exp $	*/
+/*	$NetBSD: p2k.c,v 1.44 2010/09/07 17:22:53 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2009  Antti Kantee.  All Rights Reserved.
@@ -560,13 +560,9 @@ p2k_fs_unmount(struct puffs_usermount *pu, int flags)
 {
 	struct p2k_mount *p2m = puffs_getspecific(pu);
 	struct ukfs *fs = p2m->p2m_ukfs;
-	struct lwp *l;
 	int error = 0;
 
 	rump_pub_vp_rele(p2m->p2m_rvp);
-
-	l = rump_pub_lwproc_curlwp();
-	rump_pub_lwproc_switch(NULL); /* ukfs & curlwp tricks */
 
 	if (fs) {
 		if (ukfs_release(fs, 0) != 0) {
@@ -575,7 +571,6 @@ p2k_fs_unmount(struct puffs_usermount *pu, int flags)
 		}
 	}
 	p2m->p2m_ukfs = NULL;
-	rump_pub_lwproc_switch(l);
 
 	if (p2m->p2m_hasdebug) {
 		printf("-- rump kernel event counters --\n");
