@@ -1,9 +1,9 @@
-/*	$NetBSD: rumpvfs_if_priv.h,v 1.7 2010/07/19 15:30:43 pooka Exp $	*/
+/*	$NetBSD: rumpvfs_if_priv.h,v 1.8 2010/09/07 17:14:19 pooka Exp $	*/
 
 /*
  * Automatically generated.  DO NOT EDIT.
- * from: NetBSD: rumpvfs.ifspec,v 1.5 2010/07/19 15:29:44 pooka Exp 
- * by:   NetBSD: makerumpif.sh,v 1.4 2009/10/15 00:29:19 pooka Exp 
+ * from: NetBSD: rumpvfs.ifspec,v 1.6 2010/09/07 17:13:03 pooka Exp 
+ * by:   NetBSD: makerumpif.sh,v 1.5 2010/09/01 19:32:11 pooka Exp 
  */
 
 void rump_getvninfo(struct vnode *, enum vtype *, off_t *, dev_t *);
@@ -35,8 +35,6 @@ int rump_vfs_extattrctl(struct mount *, int, struct vnode *, int, const char *);
 void rump_vfs_syncwait(struct mount *);
 int rump_vfs_getmp(const char *, struct mount **);
 void rump_vfs_mount_print(const char *, int);
-void rump_rcvp_set(struct vnode *, struct vnode *);
-struct vnode * rump_cdir_get(void);
 int rump_syspuffs_glueinit(int, int *);
 void rump_vattr50_to_vattr(const struct vattr *, struct vattr *);
 void rump_vattr_to_vattr50(const struct vattr *, struct vattr *);
