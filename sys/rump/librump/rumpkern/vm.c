@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.90 2010/09/07 07:47:36 pooka Exp $	*/
+/*	$NetBSD: vm.c,v 1.91 2010/09/07 21:11:10 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2010 Antti Kantee.  All Rights Reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.90 2010/09/07 07:47:36 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.91 2010/09/07 21:11:10 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -63,6 +63,7 @@ __KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.90 2010/09/07 07:47:36 pooka Exp $");
 #include <uvm/uvm_readahead.h>
 
 #include "rump_private.h"
+#include "rump_vfs_private.h"
 
 kmutex_t uvm_pageqlock;
 kmutex_t uvm_swap_data_lock;
@@ -81,8 +82,7 @@ static unsigned int pdaemon_waiters;
 static kmutex_t pdaemonmtx;
 static kcondvar_t pdaemoncv, oomwait;
 
-#define RUMPMEM_UNLIMITED ((unsigned long)-1)
-static unsigned long physmemlimit = RUMPMEM_UNLIMITED;
+unsigned long rump_physmemlimit = RUMPMEM_UNLIMITED;
 static unsigned long curphysmem;
 
 static int
@@ -199,13 +199,13 @@ uvm_init(void)
 	int error;
 
 	if (rumpuser_getenv("RUMP_MEMLIMIT", buf, sizeof(buf), &error) == 0) {
-		physmemlimit = strtoll(buf, NULL, 10);
+		rump_physmemlimit = strtoll(buf, NULL, 10);
 		/* it's not like we'd get far with, say, 1 byte, but ... */
-		if (physmemlimit == 0)
+		if (rump_physmemlimit == 0)
 			panic("uvm_init: no memory available");
 #define HUMANIZE_BYTES 9
 		CTASSERT(sizeof(buf) >= HUMANIZE_BYTES);
-		format_bytes(buf, HUMANIZE_BYTES, physmemlimit);
+		format_bytes(buf, HUMANIZE_BYTES, rump_physmemlimit);
 #undef HUMANIZE_BYTES
 	} else {
 		strlcpy(buf, "unlimited (host limit)", sizeof(buf));
@@ -782,6 +782,7 @@ uvm_pageout(void *arg)
 		pool_drain_start(&pp_first, &where);
 		pp = pp_first;
 		for (;;) {
+			rump_vfs_drainbufs(10 /* XXX: estimate better */);
 			succ = pool_drain_end(pp, where);
 			if (succ)
 				break;
@@ -839,9 +840,9 @@ rump_hypermalloc(size_t howmuch, int alignment, bool waitok, const char *wmsg)
 
 	/* first we must be within the limit */
  limitagain:
-	if (physmemlimit != RUMPMEM_UNLIMITED) {
+	if (rump_physmemlimit != RUMPMEM_UNLIMITED) {
 		newmem = atomic_add_long_nv(&curphysmem, howmuch);
-		if (newmem > physmemlimit) {
+		if (newmem > rump_physmemlimit) {
 			newmem = atomic_add_long_nv(&curphysmem, -howmuch);
 			if (!waitok)
 				return NULL;
@@ -865,7 +866,7 @@ void
 rump_hyperfree(void *what, size_t size)
 {
 
-	if (physmemlimit != RUMPMEM_UNLIMITED) {
+	if (rump_physmemlimit != RUMPMEM_UNLIMITED) {
 		atomic_add_long(&curphysmem, -size);
 	}
 	rumpuser_free(what);
