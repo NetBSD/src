@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.33 2010/09/07 17:49:23 pooka Exp $	*/
+/*	$NetBSD: intr.c,v 1.34 2010/09/07 18:25:38 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.33 2010/09/07 17:49:23 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.34 2010/09/07 18:25:38 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -74,6 +74,7 @@ struct softint_lev {
 kcondvar_t lbolt; /* Oh Kath Ra */
 
 static u_int ticks;
+static int ncpu_final;
 
 static u_int
 rumptc_get(struct timecounter *tc)
@@ -198,10 +199,11 @@ sithread(void *arg)
 }
 
 void
-rump_intr_init()
+rump_intr_init(int numcpu)
 {
 
 	cv_init(&lbolt, "oh kath ra");
+	ncpu_final = numcpu;
 }
 
 void
@@ -256,9 +258,9 @@ softint_establish(u_int flags, void (*func)(void *), void *arg)
 	si->si_flags = flags & SOFTINT_MPSAFE ? SI_MPSAFE : 0;
 	si->si_level = flags & SOFTINT_LVLMASK;
 	KASSERT(si->si_level < SOFTINT_COUNT);
-	si->si_entry = malloc(sizeof(*si->si_entry) * ncpu,
+	si->si_entry = malloc(sizeof(*si->si_entry) * ncpu_final,
 	    M_TEMP, M_WAITOK | M_ZERO);
-	for (i = 0; i < ncpu; i++) {
+	for (i = 0; i < ncpu_final; i++) {
 		sip = &si->si_entry[i];
 		sip->sip_parent = si;
 	}
@@ -299,7 +301,7 @@ softint_disestablish(void *cook)
 	struct softint *si = cook;
 	int i;
 
-	for (i = 0; i < ncpu; i++) {
+	for (i = 0; i < ncpu_final; i++) {
 		struct softint_percpu *sip;
 
 		sip = &si->si_entry[i];
