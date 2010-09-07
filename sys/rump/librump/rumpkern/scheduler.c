@@ -1,4 +1,4 @@
-/*      $NetBSD: scheduler.c,v 1.19 2010/09/01 19:37:59 pooka Exp $	*/
+/*      $NetBSD: scheduler.c,v 1.20 2010/09/07 07:59:48 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scheduler.c,v 1.19 2010/09/01 19:37:59 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scheduler.c,v 1.20 2010/09/07 07:59:48 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -136,13 +136,15 @@ rump_cpus_bootstrap(int num)
 		rcpu = &rcpu_storage[i];
 		ci = &rump_cpus[i];
 		ci->ci_index = i;
-		rump_cpu_attach(ci);
-		ncpu++;
 	}
+
+	/* attach first cpu for bootstrap */
+	rump_cpu_attach(&rump_cpus[0]);
+	ncpu = 1;
 }
 
 void
-rump_scheduler_init()
+rump_scheduler_init(int numcpu)
 {
 	struct rumpcpu *rcpu;
 	struct cpu_info *ci;
@@ -150,7 +152,7 @@ rump_scheduler_init()
 
 	rumpuser_mutex_init(&lwp0mtx);
 	rumpuser_cv_init(&lwp0cv);
-	for (i = 0; i < ncpu; i++) {
+	for (i = 0; i < numcpu; i++) {
 		rcpu = &rcpu_storage[i];
 		ci = &rump_cpus[i];
 		rcpu->rcpu_ci = ci;

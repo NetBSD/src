@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.185 2010/09/06 20:10:20 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.186 2010/09/07 07:59:48 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.185 2010/09/06 20:10:20 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.186 2010/09/07 07:59:48 pooka Exp $");
 
 #include <sys/systm.h>
 #define ELFSIZE ARCH_ELFSIZE
@@ -313,7 +313,7 @@ rump__init(int rump_version)
 	lwpinit_specificdata();
 	lwp_initspecific(&lwp0);
 
-	rump_scheduler_init();
+	rump_scheduler_init(numcpu);
 	/* revert temporary context and schedule a real context */
 	l->l_cpu = NULL;
 	rumpuser_set_curlwp(NULL);
@@ -329,8 +329,14 @@ rump__init(int rump_version)
 	tc_setclock(&ts);
 
 	/* we are mostly go.  do per-cpu subsystem init */
-	for (i = 0; i < ncpu; i++) {
+	for (i = 0; i < numcpu; i++) {
 		struct cpu_info *ci = cpu_lookup(i);
+
+		/* attach non-bootstrap CPUs */
+		if (i > 0) {
+			rump_cpu_attach(ci);
+			ncpu++;
+		}
 
 		callout_init_cpu(ci);
 		softint_init(ci);
