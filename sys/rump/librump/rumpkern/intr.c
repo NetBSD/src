@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.32 2010/08/15 21:28:33 pooka Exp $	*/
+/*	$NetBSD: intr.c,v 1.33 2010/09/07 17:49:23 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.32 2010/08/15 21:28:33 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.33 2010/09/07 17:49:23 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -243,16 +243,6 @@ softint_init(struct cpu_info *ci)
 		panic("clock thread creation failed: %d", rv);
 }
 
-/*
- * Soft interrupts bring two choices.  If we are running with thread
- * support enabled, defer execution, otherwise execute in place.
- * See softint_schedule().
- * 
- * As there is currently no clear concept of when a thread finishes
- * work (although rump_clear_curlwp() is close), simply execute all
- * softints in the timer thread.  This is probably not the most
- * efficient method, but good enough for now.
- */
 void *
 softint_establish(u_int flags, void (*func)(void *), void *arg)
 {
@@ -275,6 +265,11 @@ softint_establish(u_int flags, void (*func)(void *), void *arg)
 
 	return si;
 }
+
+/*
+ * Soft interrupts bring two choices.  If we are running with thread
+ * support enabled, defer execution, otherwise execute in place.
+ */
 
 void
 softint_schedule(void *arg)
