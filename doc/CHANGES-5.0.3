@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0.3,v 1.1.2.17 2010/08/31 10:56:34 bouyer Exp $
+# $NetBSD: CHANGES-5.0.3,v 1.1.2.18 2010/09/07 19:39:56 bouyer Exp $
 
 A complete list of changes from the NetBSD 5.0.2 release to the NetBSD 5.0.3
 release:
@@ -305,4 +305,32 @@ sys/kern/kern_pax.c				1.24
 	  the actual allocation by the same size so that the size does not
 	  wrap around.
 	[christos, ticket #1444]
+
+crypto/external/bsd/openssl/dist/ssl/s3_clnt.c	1.2 via patch
+
+	fix CVE-2010-2939:
+	a double free() in error case cause a SEGV, see the thread
+	"openssl-1.0.0a and glibc detected sthg ;)" in openssl-dev.
+	[drochner, ticket #1447]
+
+sys/miscfs/genfs/genfs_io.c			1.40 via patch
+sys/miscfs/genfs/genfs_node.h			1.20 via patch
+sys/miscfs/genfs/genfs_vnops.c			1.183 via patch
+sys/ufs/ufs/ufs_inode.c				1.83 via patch
+sys/uvm/uvm_pager.h				1.39 via patch
+
+	replace the earlier workaround for PR 40389 with a better fix.
+	the earlier change caused data corruption by freeing pages
+	without invaliding their mappings.  instead of the trylock/retry,
+	just take the genfs-node lock before calling VOP_GETPAGES()
+	and pass a new flag to tell it that we're already holding this lock.
+	[chs, ticket #1448]
+
+sys/arch/amd64/amd64/netbsd32_machdep.c		1.66, 1.67
+sys/arch/amd64/include/segments.h		1.21
+
+	in check_mcontext32(), accept the LDT selector for 32-bit user code
+	as well as the GDT selector.  fixes PR 43835.
+	accept the LDT selector in check_sigcontext32() too.
+	[chs, ticket #1449]
 
