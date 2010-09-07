@@ -1,4 +1,4 @@
-/*	$NetBSD: segments.h,v 1.19 2008/10/26 00:08:15 mrg Exp $	*/
+/*	$NetBSD: segments.h,v 1.19.4.1 2010/09/07 19:38:21 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -382,10 +382,8 @@ int valid_user_selector(struct lwp *, uint64_t, char *, int);
 #define VALID_USER_DSEL32(s) \
     (((s) & 0xffff) == GSEL(GUDATA32_SEL, SEL_UPL) || \
      ((s) & 0xffff) == LSEL(LUDATA32_SEL, SEL_UPL))
-#if 0 /* not used */
 #define VALID_USER_CSEL32(s) \
     ((s) == GSEL(GUCODE32_SEL, SEL_UPL) || (s) == LSEL(LUCODE32_SEL, SEL_UPL))
-#endif
 
 #define VALID_USER_CSEL(s) \
     ((s) == GSEL(GUCODE_SEL, SEL_UPL) || (s) == LSEL(LUCODE_SEL, SEL_UPL))
