@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.237 2010/09/06 20:00:09 pooka Exp $
+	$NetBSD: syscalls.master,v 1.238 2010/09/07 17:10:08 pooka Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -561,7 +561,7 @@
 			    sigset_t *oset); }
 294	STD 		{ int|sys|14|sigsuspend(const sigset_t *set); }
 295	COMPAT_16 MODULAR { int|sys|14|sigreturn(struct sigcontext *sigcntxp); }
-296	STD 		{ int|sys||__getcwd(char *bufp, size_t length); }
+296	STD 	 RUMP	{ int|sys||__getcwd(char *bufp, size_t length); }
 297	STD 	 RUMP	{ int|sys||fchroot(int fd); }
 298	COMPAT_30 MODULAR { int|sys||fhopen(const struct compat_30_fhandle *fhp, int flags); }
 299	COMPAT_30 MODULAR { int|sys||fhstat(const struct compat_30_fhandle *fhp, \
