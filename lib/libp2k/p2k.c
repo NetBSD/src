@@ -1,4 +1,4 @@
-/*	$NetBSD: p2k.c,v 1.42 2010/09/01 19:40:35 pooka Exp $	*/
+/*	$NetBSD: p2k.c,v 1.43 2010/09/07 17:16:19 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2009  Antti Kantee.  All Rights Reserved.
@@ -420,12 +420,6 @@ setupfs(struct p2k_mount *p2m, const char *vfsname, const char *devpath,
 			rv = -1;
 			goto out;
 		}
-		if ((rv = rump_pub_vfs_root(p2m->p2m_mp,
-		    &p2m->p2m_rvp, 0)) != 0) {
-			errno = rv;
-			rv = -1;
-			goto out;
-		}
 	} else {
 		if (part != ukfs_part_na)
 			ukfs = ukfs_mount_disk(vfsname, devpath, part,
@@ -438,7 +432,11 @@ setupfs(struct p2k_mount *p2m, const char *vfsname, const char *devpath,
 		ukfs_setspecific(ukfs, p2m);
 		p2m->p2m_ukfs = ukfs;
 		p2m->p2m_mp = ukfs_getmp(ukfs);
-		p2m->p2m_rvp = ukfs_getrvp(ukfs);
+	}
+	if ((rv = rump_pub_vfs_root(p2m->p2m_mp, &p2m->p2m_rvp, 0)) != 0) {
+		errno = rv;
+		rv = -1;
+		goto out;
 	}
 
 	p2m->p2m_pu = pu;
