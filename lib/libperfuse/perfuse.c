@@ -1,4 +1,4 @@
-/*  $NetBSD: perfuse.c,v 1.4 2010/09/06 01:40:24 manu Exp $ */
+/*  $NetBSD: perfuse.c,v 1.5 2010/09/07 02:11:04 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010 Emmanuel Dreyfus. All rights reserved.
@@ -115,8 +115,7 @@ perfuse_open(path, flags, mode)
 
 	if ((sv[0] = socket(PF_LOCAL, SOCK_STREAM, 0)) == -1) {
 #ifdef PERFUSE_DEBUG
-		printf("%s:%d socket failed: %s\n", 
-		       __func__, __LINE__, strerror(errno));
+		DWARN("%s:%d socket failed: %s", __func__, __LINE__);
 #endif
 		return -1;
 	}
@@ -138,8 +137,7 @@ perfuse_open(path, flags, mode)
 	 */
 	if (socketpair(PF_LOCAL, SOCK_STREAM, 0, sv) != 0) {
 #ifdef PERFUSE_DEBUG
-		printf("%s:%d: socketpair failed: %s\n",
-		       __func__, __LINE__, strerror(errno));
+		DWARN("%s:%d: socketpair failed", __func__, __LINE__);
 #endif
 		return -1;
 	}
@@ -149,8 +147,7 @@ perfuse_open(path, flags, mode)
 	switch(fork()) {
 	case -1:
 #ifdef PERFUSE_DEBUG
-		printf("%s:%d: fork failed: %s\n",
-		       __func__, __LINE__, strerror(errno));
+		DWARN("%s:%d: fork failed", __func__, __LINE__);
 #endif
 		return -1;
 		/* NOTREACHED */
@@ -158,8 +155,7 @@ perfuse_open(path, flags, mode)
 	case 0:
 		(void)execve(argv[0], argv, envp);
 #ifdef PERFUSE_DEBUG
-		printf("%s:%d: execve failed: %s\n",
-		       __func__, __LINE__, strerror(errno));
+		DWARN("%s:%d: execve failed", __func__, __LINE__);
 #endif
 		return -1;
 		/* NOTREACHED */
@@ -181,32 +177,19 @@ perfuse_mount(source, target, filesystemtype, mountflags, data)
 	const void *data;
 {
 	int s;
-#if 0
-	struct sockaddr_un sun;
-#endif
 	size_t len;
 	struct perfuse_mount_out pmo;
 
 #ifdef PERFUSE_DEBUG
-	printf("%s(\"%s\", \"%s\", \"%s\", 0x%lx, \"%s\")\n", __func__,
-	       source, target, filesystemtype, mountflags, (const char *)data);
+	if (perfuse_diagflags & PDF_MISC)
+		DPRINTF("%s(\"%s\", \"%s\", \"%s\", 0x%lx, \"%s\")\n",
+			__func__, source, target, filesystemtype, 
+			mountflags, (const char *)data);
 #endif
 
-#if 0
-	if ((s = socket(PF_LOCAL, SOCK_STREAM, 0)) == -1)
-		err(EX_OSERR, "socket failed");
-
-	sun.sun_len = sizeof(sun);
-	sun.sun_family = AF_LOCAL;
-	(void)strcpy(sun.sun_path, _PATH_FUSE);
-
-	if (connect(s, (struct sockaddr *)&sun, sun.sun_len) == -1)
-		err(EX_UNAVAILABLE, "cannot connect to \"%s\"", _PATH_FUSE);
-#endif
 	if ((s = get_fd(data)) == -1)
 		return -1;
 	
-
 	pmo.pmo_len = sizeof(pmo);
 	pmo.pmo_len += source ? (uint32_t)strlen(source) : 0;
 	pmo.pmo_len += target ? (uint32_t)strlen(target) : 0;
@@ -226,7 +209,8 @@ perfuse_mount(source, target, filesystemtype, mountflags, data)
 
 	if (write(s, &pmo, sizeof(pmo)) != sizeof(pmo)) {
 #ifdef PERFUSE_DEBUG
-		printf("%s:%d short write\n", __func__, __LINE__);
+		if (perfuse_diagflags & PDF_MISC)
+			DPRINTF("%s:%d short write\n", __func__, __LINE__);
 #endif
 		return -1;
 	}
@@ -235,7 +219,7 @@ perfuse_mount(source, target, filesystemtype, mountflags, data)
 		len = pmo.pmo_source_len;
 		if (write(s, source, len) != (ssize_t)len) {
 #ifdef PERFUSE_DEBUG
-			printf("%s:%d short write\n", __func__, __LINE__);
+			DWARNX("%s:%d short write\n", __func__, __LINE__);
 #endif
 			return -1;
 		}
@@ -245,7 +229,7 @@ perfuse_mount(source, target, filesystemtype, mountflags, data)
 		len = pmo.pmo_target_len;
 		if (write(s, target, len) != (ssize_t)len) {
 #ifdef PERFUSE_DEBUG
-			printf("%s:%d short write\n", __func__, __LINE__);
+			DWARNX("%s:%d short write\n", __func__, __LINE__);
 #endif
 			return -1;
 		}
@@ -255,7 +239,7 @@ perfuse_mount(source, target, filesystemtype, mountflags, data)
 		len = pmo.pmo_filesystemtype_len;
 		if (write(s, filesystemtype, len) != (ssize_t)len) {
 #ifdef PERFUSE_DEBUG
-			printf("%s:%d short write\n", __func__, __LINE__);
+			DWARNX("%s:%d short write\n", __func__, __LINE__);
 #endif
 			return -1;
 		}
@@ -265,7 +249,7 @@ perfuse_mount(source, target, filesystemtype, mountflags, data)
 		len = pmo.pmo_data_len;
 		if (write(s, data, len) != (ssize_t)len) {
 #ifdef PERFUSE_DEBUG
-			printf("%s:%d short write\n", __func__, __LINE__);
+			DWARNX("%s:%d short write\n", __func__, __LINE__);
 #endif
 			return -1;
 		}
