@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_private.h,v 1.57 2010/09/07 18:25:38 pooka Exp $	*/
+/*	$NetBSD: rump_private.h,v 1.58 2010/09/07 21:11:10 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -86,6 +86,9 @@ do {									\
 	if ((att_error = call) != 0)					\
 		panic("\"%s\" failed", #call);				\
 } while (/*CONSTCOND*/0)
+
+#define RUMPMEM_UNLIMITED ((unsigned long)-1)
+extern unsigned long rump_physmemlimit;
 
 void		rump_component_init(enum rump_component_type);
 int		rump_component_count(enum rump_component_type);

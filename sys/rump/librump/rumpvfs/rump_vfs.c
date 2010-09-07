@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_vfs.c,v 1.57 2010/09/07 17:13:03 pooka Exp $	*/
+/*	$NetBSD: rump_vfs.c,v 1.58 2010/09/07 21:11:10 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump_vfs.c,v 1.57 2010/09/07 17:13:03 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump_vfs.c,v 1.58 2010/09/07 21:11:10 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -98,6 +98,13 @@ rump_vfs_init(void)
 		struct cpu_info *ci = cpu_lookup(i);
 		cache_cpu_init(ci);
 	}
+
+	/* make number of bufpages 5% of total memory limit */
+	if (rump_physmemlimit != RUMPMEM_UNLIMITED) {
+		extern u_int bufpages;
+		bufpages = rump_physmemlimit / (20 * PAGE_SIZE);
+	}
+
 	vfsinit();
 	bufinit();
 	cwd_sys_init();
@@ -481,4 +488,13 @@ rump_biodone(void *arg, size_t count, int error)
 	bp->b_error = error;
 
 	biodone(bp);
+}
+
+void
+rump_vfs_drainbufs(int npages)
+{
+
+	mutex_enter(&bufcache_lock);
+	buf_drain(npages);
+	mutex_exit(&bufcache_lock);
 }
