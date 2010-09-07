@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_vfs.c,v 1.56 2010/06/30 15:48:59 pooka Exp $	*/
+/*	$NetBSD: rump_vfs.c,v 1.57 2010/09/07 17:13:03 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump_vfs.c,v 1.56 2010/06/30 15:48:59 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump_vfs.c,v 1.57 2010/09/07 17:13:03 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -58,8 +58,6 @@ __KERNEL_RCSID(0, "$NetBSD: rump_vfs.c,v 1.56 2010/06/30 15:48:59 pooka Exp $");
 
 struct cwdinfo cwdi0;
 const char *rootfstype = ROOT_FSTYPE_ANY;
-
-static void rump_rcvp_lwpset(struct vnode *, struct vnode *, struct lwp *);
 
 static void
 pvfs_init(struct proc *p)
@@ -483,45 +481,4 @@ rump_biodone(void *arg, size_t count, int error)
 	bp->b_error = error;
 
 	biodone(bp);
-}
-
-static void
-rump_rcvp_lwpset(struct vnode *rvp, struct vnode *cvp, struct lwp *l)
-{
-	struct cwdinfo *cwdi = l->l_proc->p_cwdi;
-
-	KASSERT(cvp);
-
-	rw_enter(&cwdi->cwdi_lock, RW_WRITER);
-	if (cwdi->cwdi_rdir)
-		vrele(cwdi->cwdi_rdir);
-	if (rvp)
-		vref(rvp);
-	cwdi->cwdi_rdir = rvp;
-
-	vrele(cwdi->cwdi_cdir);
-	vref(cvp);
-	cwdi->cwdi_cdir = cvp;
-	rw_exit(&cwdi->cwdi_lock);
-}
-
-void
-rump_rcvp_set(struct vnode *rvp, struct vnode *cvp)
-{
-
-	rump_rcvp_lwpset(rvp, cvp, curlwp);
-}
-
-struct vnode *
-rump_cdir_get(void)
-{
-	struct vnode *vp;
-	struct cwdinfo *cwdi = curlwp->l_proc->p_cwdi;
-
-	rw_enter(&cwdi->cwdi_lock, RW_READER);
-	vp = cwdi->cwdi_cdir;
-	rw_exit(&cwdi->cwdi_lock);
-	vref(vp);
-
-	return vp;
 }
