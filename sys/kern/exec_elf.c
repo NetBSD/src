@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.c,v 1.24 2010/08/20 14:59:53 joerg Exp $	*/
+/*	$NetBSD: exec_elf.c,v 1.25 2010/09/07 21:32:03 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1994, 2000, 2005 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.24 2010/08/20 14:59:53 joerg Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.25 2010/09/07 21:32:03 joerg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pax.h"
@@ -636,7 +636,7 @@ exec_elf_makecmds(struct lwp *l, struct exec_package *epp)
 {
 	Elf_Ehdr *eh = epp->ep_hdr;
 	Elf_Phdr *ph, *pp;
-	Elf_Addr phdr = 0, pos = 0;
+	Elf_Addr phdr = 0, pos = 0, end_text = 0;
 	int error, i, nload;
 	char *interp = NULL;
 	u_long phsize;
@@ -737,9 +737,6 @@ exec_elf_makecmds(struct lwp *l, struct exec_package *epp)
 			 * Consider this as text segment, if it is executable.
 			 * If there is more than one text segment, pick the
 			 * largest.
-			 *
-			 * If it is not executable, use the last section
-			 * as data segment to make break() happy.
 			 */
 			if (ph[i].p_flags & PF_X) {
 				if (epp->ep_taddr == ELFDEFNNAME(NO_ADDR) ||
@@ -747,6 +744,7 @@ exec_elf_makecmds(struct lwp *l, struct exec_package *epp)
 					epp->ep_taddr = addr;
 					epp->ep_tsize = size;
 				}
+				end_text = addr + size;
 			} else {
 				epp->ep_daddr = addr;
 				epp->ep_dsize = size;
@@ -775,8 +773,8 @@ exec_elf_makecmds(struct lwp *l, struct exec_package *epp)
 	}
 
 	if (epp->ep_daddr == ELFDEFNNAME(NO_ADDR)) {
-		epp->ep_daddr = epp->ep_taddr;
-		epp->ep_dsize = epp->ep_tsize;
+		epp->ep_daddr = end_text;
+		epp->ep_dsize = 0;
 	}
 
 	/*
