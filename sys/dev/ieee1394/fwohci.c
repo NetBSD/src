@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci.c,v 1.129 2010/08/29 21:15:26 cegger Exp $	*/
+/*	$NetBSD: fwohci.c,v 1.130 2010/09/07 07:19:45 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
@@ -37,7 +37,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.129 2010/08/29 21:15:26 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.130 2010/09/07 07:19:45 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -882,13 +882,12 @@ static int
 fwohci_irx_disable(struct firewire_comm *fc, int dmach)
 {
 	struct fwohci_softc *sc = (struct fwohci_softc *)fc;
-	int sleepch;
 
 	OWRITE(sc, OHCI_IRCTLCLR(dmach), OHCI_CNTL_DMA_RUN);
 	OWRITE(sc, OHCI_IR_MASKCLR, 1 << dmach);
 	OWRITE(sc, OHCI_IR_STATCLR, 1 << dmach);
 	/* XXX we cannot free buffers until the DMA really stops */
-	tsleep((void *)&sleepch, FWPRI, "fwirxd", hz);
+	kpause("fwirxd", true, hz, NULL);
 	fwohci_db_free(sc, &sc->ir[dmach]);
 	sc->ir[dmach].xferq.flag &= ~FWXFERQ_RUNNING;
 	return 0;
@@ -1016,14 +1015,13 @@ static int
 fwohci_itx_disable(struct firewire_comm *fc, int dmach)
 {
 	struct fwohci_softc *sc = (struct fwohci_softc *)fc;
-	int sleepch;
 
 	OWRITE(sc, OHCI_ITCTLCLR(dmach),
 	    OHCI_CNTL_DMA_RUN | OHCI_CNTL_CYCMATCH_S);
 	OWRITE(sc, OHCI_IT_MASKCLR, 1 << dmach);
 	OWRITE(sc, OHCI_IT_STATCLR, 1 << dmach);
 	/* XXX we cannot free buffers until the DMA really stops */
-	tsleep((void *)&sleepch, FWPRI, "fwitxd", hz);
+	kpause("fwitxd", true, hz, NULL);
 	fwohci_db_free(sc, &sc->it[dmach]);
 	sc->it[dmach].xferq.flag &= ~FWXFERQ_RUNNING;
 	return 0;
