@@ -1,4 +1,4 @@
-/*	$NetBSD: t_lwproc.c,v 1.2 2010/09/02 09:57:34 pooka Exp $	*/
+/*	$NetBSD: t_lwproc.c,v 1.3 2010/09/07 17:09:28 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -220,6 +220,26 @@ ATF_TC_BODY(nolwp, tc)
 	ATF_REQUIRE_EQ(rump_pub_lwproc_curlwp(), NULL);
 }
 
+ATF_TC(nullswitch);
+ATF_TC_HEAD(nullswitch, tc)
+{
+
+	atf_tc_set_md_var(tc, "descr", "check that switching to NULL marks "
+	    "current lwp as not running");
+}
+
+ATF_TC_BODY(nullswitch, tc)
+{
+	struct lwp *l;
+
+	rump_init();
+	RZ(rump_pub_lwproc_newlwp(0));
+	l = rump_pub_lwproc_curlwp();
+	rump_pub_lwproc_switch(NULL);
+	/* if remains LP_RUNNING, next call will panic */
+	rump_pub_lwproc_switch(l);
+}
+
 ATF_TP_ADD_TCS(tp)
 {
 
@@ -229,6 +249,7 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, lwps);
 	ATF_TP_ADD_TC(tp, nolwprelease);
 	ATF_TP_ADD_TC(tp, nolwp);
+	ATF_TP_ADD_TC(tp, nullswitch);
 
 	return atf_no_error();
 }
