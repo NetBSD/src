@@ -57,7 +57,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: openssl_crypto.c,v 1.27 2010/08/15 07:52:27 agc Exp $");
+__RCSID("$NetBSD: openssl_crypto.c,v 1.28 2010/09/07 00:25:37 agc Exp $");
 #endif
 
 #ifdef HAVE_OPENSSL_DSA_H
@@ -524,7 +524,7 @@ __ops_rsa_private_encrypt(uint8_t *out,
 	orsa = RSA_new();
 	orsa->n = BN_dup(pubkey->n);
 	orsa->d = seckey->d;
-	orsa->p = seckey->q;
+	orsa->p = seckey->q;	/* p and q are round the other way in openssl */
 	orsa->q = seckey->p;
 
 	/* debug */
