@@ -1,4 +1,4 @@
-/*  $NetBSD: ops.c,v 1.12 2010/09/07 02:11:04 manu Exp $ */
+/*  $NetBSD: ops.c,v 1.13 2010/09/07 16:58:13 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010 Emmanuel Dreyfus. All rights reserved.
@@ -972,11 +972,13 @@ perfuse_node_create(pu, opc, pni, pcn, vap)
 	/*
 	 * flags should use O_WRONLY instead of O_RDWR, but it
 	 * breaks when the caller tries to read from file.
+	 * 
+	 * mode must contain file type (ie: S_IFREG), use VTTOIF(vap->va_type)
 	 */
 	pm = ps->ps_new_msg(pu, opc, FUSE_CREATE, len, pcn->pcn_cred);
 	fci = GET_INPAYLOAD(ps, pm, fuse_create_in);
 	fci->flags = O_CREAT | O_TRUNC | O_RDWR;
-	fci->mode = vap->va_mode;
+	fci->mode = vap->va_mode | VTTOIF(vap->va_type);
 	fci->umask = 0; 	/* Seems unused by libfuse */
 	(void)strlcpy((char*)(void *)(fci + 1), name, namelen);
 
@@ -1065,7 +1067,7 @@ perfuse_node_mknod(pu, opc, pni, pcn, vap)
 	len = sizeof(*fmi) + strlen(path) + 1; 
 
 	/*	
-	 * mode can contain file type (ie: S_IFREG), use VTTOIF(vap->va_type)
+	 * mode must contain file type (ie: S_IFREG), use VTTOIF(vap->va_type)
 	 */
 	pm = ps->ps_new_msg(pu, opc, FUSE_MKNOD, len, pcn->pcn_cred);
 	fmi = GET_INPAYLOAD(ps, pm, fuse_mknod_in);
