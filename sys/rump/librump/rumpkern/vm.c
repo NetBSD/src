@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.88 2010/09/06 20:10:20 pooka Exp $	*/
+/*	$NetBSD: vm.c,v 1.89 2010/09/07 06:06:54 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2010 Antti Kantee.  All Rights Reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.88 2010/09/06 20:10:20 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.89 2010/09/07 06:06:54 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -73,7 +73,6 @@ struct uvm uvm;
 struct vm_map rump_vmmap;
 static struct vm_map_kernel kmem_map_store;
 struct vm_map *kmem_map = &kmem_map_store.vmk_map;
-const struct rb_tree_ops uvm_page_tree_ops;
 
 static struct vm_map_kernel kernel_map_store;
 struct vm_map *kernel_map = &kernel_map_store.vmk_map;
@@ -85,6 +84,32 @@ static kcondvar_t pdaemoncv, oomwait;
 #define RUMPMEM_UNLIMITED ((unsigned long)-1)
 static unsigned long physmemlimit = RUMPMEM_UNLIMITED;
 static unsigned long curphysmem;
+
+static int
+pg_compare_key(const struct rb_node *n, const void *key)
+{
+	voff_t a = ((const struct vm_page *)n)->offset;
+	voff_t b = *(const voff_t *)key;
+
+	if (a < b)
+		return 1;
+	else if (a > b)
+		return -1;
+	else
+		return 0;
+}
+
+static int
+pg_compare_nodes(const struct rb_node *n1, const struct rb_node *n2)
+{
+
+	return pg_compare_key(n1, &((const struct vm_page *)n2)->offset);
+}
+
+const struct rb_tree_ops uvm_page_tree_ops = {
+	.rbto_compare_nodes = pg_compare_nodes,
+	.rbto_compare_key = pg_compare_key,
+};
 
 /*
  * vm pages 
@@ -107,6 +132,8 @@ uvm_pagealloc_strat(struct uvm_object *uobj, voff_t off, struct vm_anon *anon,
 	pg->flags = PG_CLEAN|PG_BUSY|PG_FAKE;
 
 	TAILQ_INSERT_TAIL(&uobj->memq, pg, listq.queue);
+	rb_tree_insert_node(&uobj->rb_tree, &pg->rb_node);
+
 	uobj->uo_npages++;
 
 	return pg;
@@ -126,6 +153,7 @@ uvm_pagefree(struct vm_page *pg)
 		wakeup(pg);
 
 	uobj->uo_npages--;
+	rb_tree_remove_node(&uobj->rb_tree, &pg->rb_node);
 	TAILQ_REMOVE(&uobj->memq, pg, listq.queue);
 	kmem_free((void *)pg->uanon, PAGE_SIZE);
 	kmem_free(pg, sizeof(*pg));
@@ -366,17 +394,8 @@ uvm_pageratop(vaddr_t va)
 struct vm_page *
 uvm_pagelookup(struct uvm_object *uobj, voff_t off)
 {
-	struct vm_page *pg;
 
-	TAILQ_FOREACH(pg, &uobj->memq, listq.queue) {
-		if ((pg->flags & PG_MARKER) != 0)
-			continue;
-		if (pg->offset == off) {
-			return pg;
-		}
-	}
-
-	return NULL;
+	return (struct vm_page *)rb_tree_find_node(&uobj->rb_tree, &off);
 }
 
 void
