@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.89 2010/09/07 06:06:54 pooka Exp $	*/
+/*	$NetBSD: vm.c,v 1.90 2010/09/07 07:47:36 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2010 Antti Kantee.  All Rights Reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.89 2010/09/07 06:06:54 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.90 2010/09/07 07:47:36 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -115,6 +115,26 @@ const struct rb_tree_ops uvm_page_tree_ops = {
  * vm pages 
  */
 
+static int
+pgctor(void *arg, void *obj, int flags)
+{
+	struct vm_page *pg = obj;
+
+	memset(pg, 0, sizeof(*pg));
+	pg->uanon = rump_hypermalloc(PAGE_SIZE, PAGE_SIZE, true, "pgalloc");
+	return 0;
+}
+
+static void
+pgdtor(void *arg, void *obj)
+{
+	struct vm_page *pg = obj;
+
+	rump_hyperfree(pg->uanon, PAGE_SIZE);
+}
+
+static struct pool_cache pagecache;
+
 /* called with the object locked */
 struct vm_page *
 uvm_pagealloc_strat(struct uvm_object *uobj, voff_t off, struct vm_anon *anon,
@@ -122,14 +142,14 @@ uvm_pagealloc_strat(struct uvm_object *uobj, voff_t off, struct vm_anon *anon,
 {
 	struct vm_page *pg;
 
-	pg = kmem_zalloc(sizeof(struct vm_page), KM_SLEEP);
+	pg = pool_cache_get(&pagecache, PR_WAITOK);
 	pg->offset = off;
 	pg->uobject = uobj;
 
-	pg->uanon = (void *)kmem_alloc(PAGE_SIZE, KM_SLEEP);
-	if (flags & UVM_PGA_ZERO)
-		memset(pg->uanon, 0, PAGE_SIZE);
 	pg->flags = PG_CLEAN|PG_BUSY|PG_FAKE;
+	if (flags & UVM_PGA_ZERO) {
+		uvm_pagezero(pg);
+	}
 
 	TAILQ_INSERT_TAIL(&uobj->memq, pg, listq.queue);
 	rb_tree_insert_node(&uobj->rb_tree, &pg->rb_node);
@@ -155,8 +175,7 @@ uvm_pagefree(struct vm_page *pg)
 	uobj->uo_npages--;
 	rb_tree_remove_node(&uobj->rb_tree, &pg->rb_node);
 	TAILQ_REMOVE(&uobj->memq, pg, listq.queue);
-	kmem_free((void *)pg->uanon, PAGE_SIZE);
-	kmem_free(pg, sizeof(*pg));
+	pool_cache_put(&pagecache, pg);
 }
 
 void
@@ -207,6 +226,9 @@ uvm_init(void)
 	callback_head_init(&kernel_map_store.vmk_reclaim_callback, IPL_VM);
 	kmem_map->pmap = pmap_kernel();
 	callback_head_init(&kmem_map_store.vmk_reclaim_callback, IPL_VM);
+
+	pool_cache_bootstrap(&pagecache, sizeof(struct vm_page), 0, 0, 0,
+	    "page$", NULL, IPL_NONE, pgctor, pgdtor, NULL);
 }
 
 void
