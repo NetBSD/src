@@ -1,4 +1,4 @@
-/*  $NetBSD: perfuse_if.h,v 1.6 2010/09/06 01:40:24 manu Exp $ */
+/*  $NetBSD: perfuse_if.h,v 1.7 2010/09/07 02:11:04 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010 Emmanuel Dreyfus. All rights reserved.
@@ -28,8 +28,10 @@
 #ifndef _REFUSE_PERFUSE_H
 #define _REFUSE_PERFUSE_H
 
-#define _PATH_FUSE "/dev/fuse"
+#ifndef _PATH_PERFUSED
 #define _PATH_PERFUSED "/usr/sbin/perfused"
+#endif /* _PATH_PERFUSED */
+#define _PATH_FUSE "/dev/fuse"
 #define FUSE_COMMFD_ENV "_FUSE_COMMFD" 
 #define PERFUSE_MOUNT_MAGIC "noFuseRq"
 #define PERFUSE_UNKNOWN_INO 0xffffffff

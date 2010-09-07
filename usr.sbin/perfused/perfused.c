@@ -1,4 +1,4 @@
-/*  $NetBSD: perfused.c,v 1.6 2010/09/06 13:15:29 wiz Exp $ */
+/*  $NetBSD: perfused.c,v 1.7 2010/09/07 02:11:04 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010 Emmanuel Dreyfus. All rights reserved.
@@ -52,12 +52,18 @@
 
 static int getpeerid(int, pid_t *, uid_t *, gid_t *);
 static int access_mount(const char *, uid_t, int);
-static void new_mount(int);
+static void new_mount(int, int);
 static int parse_debug(char *);
 static void siginfo_handler(int);
 static int parse_options(int, char **);
 static void get_mount_info(int, struct perfuse_mount_info *);
 int main(int, char **);
+
+/*
+ * Flags for new_mount()
+ */
+#define  PMNT_DEVFUSE	0x0	/* We use /dev/fuse */
+#define  PMNT_SOCKPAIR	0x1	/* We use socketpair */
 
 
 static int
@@ -137,12 +143,12 @@ get_mount_info(fd, pmi)
 	}
 
 #ifdef PERFUSE_DEBUG
-	DPRINTF("perfuse lengths: source = %"PRId32", target = %"PRId32", "
-	       "filesystemtype = %"PRId32", data = %"PRId32"\n", 
-		pmo->pmo_source_len, 
-		pmo->pmo_target_len,
-		pmo->pmo_filesystemtype_len,
-		pmo->pmo_data_len);
+	if (perfuse_diagflags & PDF_MISC)
+		DPRINTF("perfuse lengths: source = %"PRId32", "
+			"target = %"PRId32", filesystemtype = %"PRId32", "
+			"data = %"PRId32"\n", pmo->pmo_source_len, 
+			pmo->pmo_target_len, pmo->pmo_filesystemtype_len, 
+			pmo->pmo_data_len);
 #endif
 	len = pmo->pmo_source_len;
 	source = perfuse_recv_early(fd, len);
@@ -159,8 +165,10 @@ get_mount_info(fd, pmi)
 	data = perfuse_recv_early(fd, len);
 
 #ifdef PERFUSE_DEBUG
-	DPRINTF("%s(\"%s\", \"%s\", \"%s\", 0x%lx, \"%s\")\n", __func__,
-	       source, target, filesystemtype, mountflags, (const char *)data);
+	if (perfuse_diagflags & PDF_MISC)
+		DPRINTF("%s(\"%s\", \"%s\", \"%s\", 0x%lx, \"%s\")\n", 
+		__func__, source, target, filesystemtype, 
+		mountflags, (const char *)data);
 #endif
 	pmi->pmi_source = source;
 	pmi->pmi_target = target;
@@ -172,8 +180,9 @@ get_mount_info(fd, pmi)
 }
 
 static void
-new_mount(fd)
+new_mount(fd, pmnt_flags)
 	int fd;
+	int pmnt_flags;
 {
 	struct puffs_usermount *pu;
 	struct perfuse_mount_info pmi;
@@ -202,17 +211,24 @@ new_mount(fd)
 	get_mount_info(fd, &pmi);
 
 	/*
-	 * Get peer identity
+	 * Get peer identity. If we use socketpair (-i option),
+	 * peer identity if the same as us.
 	 */
-	if (getpeerid(fd, NULL, &pmi.pmi_uid, NULL) != 0)
-		DWARNX("Unable to retrieve peer identity");
+	if (pmnt_flags & PMNT_SOCKPAIR) {
+		pmi.pmi_uid = getuid();
+	} else {
+		if (getpeerid(fd, NULL, &pmi.pmi_uid, NULL) != 0) {
+			DWARNX("Unable to retreive peer identity");
+			pmi.pmi_uid = (uid_t)-1;
+		}
+	}
 
 	/*
 	 * Check that peer owns mountpoint and read (and write) on it?
 	 */
 	ro_flag = pmi.pmi_mountflags & MNT_RDONLY;
 	if (access_mount(pmi.pmi_target, pmi.pmi_uid, ro_flag) != 0)
-		DERRX(EX_NOPERM, "insufficient privileges to mount %s", 
+		DERRX(EX_NOPERM, "insuficient privileges to mount on %s", 
 		      pmi.pmi_target);
 
 
@@ -337,6 +353,7 @@ parse_options(argc, argv)
 			break;
 		case 'f':
 			foreground = 1;
+			perfuse_diagflags |= PDF_MISC;
 			break;
 		case 'i':
 			retval = atoi(optarg);
@@ -371,7 +388,7 @@ main(argc, argv)
 			DERR(EX_OSERR, "daemon failed");
 
 	if (s != -1) {
-		new_mount(s);
+		new_mount(s, PMNT_SOCKPAIR);
 		DERRX(EX_SOFTWARE, "new_mount exit while -i is used");
 	}
 
@@ -395,7 +412,7 @@ main(argc, argv)
 		if (perfuse_diagflags & PDF_MISC)
 			DPRINTF("connexion accepted\n");
 #endif
-		new_mount(fd);
+		new_mount(fd, PMNT_DEVFUSE);
 	} while (1 /* CONSTCOND */);
 		
 	/* NOTREACHED */

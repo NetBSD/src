@@ -1,4 +1,4 @@
-/*  $NetBSD: msg.c,v 1.4 2010/09/06 01:40:24 manu Exp $ */
+/*  $NetBSD: msg.c,v 1.5 2010/09/07 02:11:04 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010 Emmanuel Dreyfus. All rights reserved.
@@ -87,7 +87,7 @@ perfuse_recv_early(fd, len)
 	if ((buf = malloc(len + 1)) == NULL)
 		err(EX_OSERR, "malloc(%zd) failed", len);
 
-	if (read(fd, buf, len) != len) {
+	if (read(fd, buf, len) != (ssize_t)len) {
 		DWARN("short read");
 		return NULL;
 	}
