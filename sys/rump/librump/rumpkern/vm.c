@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.92 2010/09/08 21:02:11 pooka Exp $	*/
+/*	$NetBSD: vm.c,v 1.93 2010/09/08 21:14:32 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2010 Antti Kantee.  All Rights Reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.92 2010/09/08 21:02:11 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.93 2010/09/08 21:14:32 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -180,10 +180,11 @@ uvm_pagealloc_strat(struct uvm_object *uobj, voff_t off, struct vm_anon *anon,
 	rb_tree_insert_node(&uobj->rb_tree, &pg->rb_node);
 
 	/*
-	 * Put vnodes on the LRU page queue.  we can't flush others,
-	 * so don't bother with them.
+	 * Don't put anons on the LRU page queue.  We can't flush them
+	 * (there's no concept of swap in a rump kernel), so no reason
+	 * to bother with them.
 	 */
-	if (UVM_OBJ_IS_VNODE(uobj)) {
+	if (!UVM_OBJ_IS_AOBJ(uobj)) {
 		atomic_inc_uint(&vmpage_onqueue);
 		mutex_enter(&uvm_pageqlock);
 		TAILQ_INSERT_TAIL(&vmpage_lruqueue, pg, pageq.queue);
@@ -215,7 +216,7 @@ uvm_pagefree(struct vm_page *pg)
 	uobj->uo_npages--;
 	rb_tree_remove_node(&uobj->rb_tree, &pg->rb_node);
 
-	if (UVM_OBJ_IS_VNODE(uobj)) {
+	if (!UVM_OBJ_IS_AOBJ(uobj)) {
 		TAILQ_REMOVE(&vmpage_lruqueue, pg, pageq.queue);
 		atomic_dec_uint(&vmpage_onqueue);
 	}
@@ -467,7 +468,7 @@ uvm_pagelookup(struct uvm_object *uobj, voff_t off)
 	struct vm_page *pg;
 
 	pg = (struct vm_page *)rb_tree_find_node(&uobj->rb_tree, &off);
-	if (pg && UVM_OBJ_IS_VNODE(pg->uobject)) {
+	if (pg && !UVM_OBJ_IS_AOBJ(pg->uobject)) {
 		mutex_enter(&uvm_pageqlock);
 		TAILQ_REMOVE(&vmpage_lruqueue, pg, pageq.queue);
 		TAILQ_INSERT_TAIL(&vmpage_lruqueue, pg, pageq.queue);
