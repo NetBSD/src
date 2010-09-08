@@ -1,4 +1,4 @@
-/*	$NetBSD: yp_passwd.c,v 1.33 2009/04/12 23:59:37 lukem Exp $	*/
+/*	$NetBSD: yp_passwd.c,v 1.34 2010/09/08 13:44:44 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from:  @(#)local_passwd.c    8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: yp_passwd.c,v 1.33 2009/04/12 23:59:37 lukem Exp $");
+__RCSID("$NetBSD: yp_passwd.c,v 1.34 2010/09/08 13:44:44 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -168,21 +168,26 @@ static int
 ypgetpwnam(const char *nam, struct passwd *pwd)
 {
 	char *val;
-	int reason, vallen;
-	int flags;
+	int reason, vallen, namlen = (int)strlen(nam);
+	int flags = 0;
 	int ok = 0;
 	
 	val = NULL;
-	reason = yp_match(domain, "passwd.byname", nam, (int)strlen(nam),
-			  &val, &vallen);
+	reason = yp_match(domain, "master.passwd.byname", nam, namlen,
+                          &val, &vallen);
+	if (reason == YPERR_MAP) {
+		reason = yp_match(domain, "passwd.byname", nam, namlen,
+				  &val, &vallen);
+		flags = _PASSWORD_OLDFMT;
+	}
 	if (reason != 0)
 		goto out;
 
-	flags = _PASSWORD_OLDFMT;
 	if (pw_scan(val, pwd, &flags) == 0)
 		goto out;
 
 	ok = 1;
+	val = NULL;	/* Don't free the memory, it is still in use */
 out:
 	if (val)
 		free(val);
@@ -213,7 +218,7 @@ pwyp_process(const char *username, int argc, char **argv)
 	char *master;
 	int ch, r, rpcport, status;
 	struct yppasswd ypp;
-	struct passwd pwb, *pw;
+	struct passwd pwb, pwb2, *pw;
 	char pwbuf[1024];
 	struct timeval tv;
 	CLIENT *client;
@@ -266,7 +271,7 @@ pwyp_process(const char *username, int argc, char **argv)
 	 * the daemon.
 	 */
 	if ((r = yp_master(domain, "passwd.byname", &master)) != 0)
-		errx(1, "can't find the master NIS server.  Reason: %s",
+		errx(1, "can't find the master NIS server. Reason: %s",
 		    yperr_string(r));
 
 	/*
@@ -285,16 +290,16 @@ pwyp_process(const char *username, int argc, char **argv)
 
 	/* Bail out if this is a local (non-yp) user, */
 	/* then get user's login identity */
-	if (!ypgetpwnam(username, pw = &pwb) ||
-	    getpwnam_r(username, &pwb, pwbuf, sizeof(pwbuf), &pw) ||
+	if (!ypgetpwnam(username, &pwb) ||
+	    getpwnam_r(username, &pwb2, pwbuf, sizeof(pwbuf), &pw) ||
 	    pw == NULL)
 		errx(1, "NIS unknown user %s", username);
 
-	if (uid && uid != pw->pw_uid)
+	if (uid && uid != pwb.pw_uid)
 		errx(1, "you may only change your own password: %s",
 		    strerror(EACCES));
 
-	makeypp(&ypp, pw);
+	makeypp(&ypp, &pwb);
 
 	client = clnt_create(master, YPPASSWDPROG, YPPASSWDVERS, "udp");
 	if (client == NULL)
