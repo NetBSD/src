@@ -1,4 +1,4 @@
-/*	$NetBSD: remoteconf.c,v 1.20 2010/08/26 13:31:55 vanhu Exp $	*/
+/*	$NetBSD: remoteconf.c,v 1.21 2010/09/08 12:18:35 vanhu Exp $	*/
 
 /* Id: remoteconf.c,v 1.38 2006/05/06 15:52:44 manubsd Exp */
 
@@ -106,11 +106,13 @@ rmconf_match_identity(rmconf, id_p)
 		return 0;
 
 	for (id = genlist_next(rmconf->idvl_p, &gpb); id; id = genlist_next(0, &gpb)) {
+		/* No ID specified in configuration, so it is ok */
+		if (id->id == 0)
+			return 0;
+
 		/* check the type of both IDs */
 		if (id->idtype != doi2idtype(id_b->type))
 			continue;  /* ID type mismatch */
-		if (id->id == 0)
-			return 0;
 
 		/* compare defined ID with the ID sent by peer. */
 		switch (id->idtype) {
@@ -197,23 +199,32 @@ rmconf_match_type(rmsel, rmconf)
 	struct rmconfselector *rmsel;
 	struct remoteconf *rmconf;
 {
-	int ret = MATCH_NONE;
+	int ret = MATCH_NONE, tmp;
 
 	/* No match at all: unwanted anonymous */
 	if ((rmsel->flags & GETRMCONF_F_NO_ANONYMOUS) &&
-	    rmconf->remote->sa_family == AF_UNSPEC)
+	    rmconf->remote->sa_family == AF_UNSPEC){
+		plog(LLV_DEBUG2, LOCATION, rmsel->remote,
+		     "Not matched: Anonymous conf.\n");
 		return MATCH_NONE;
+	}
 
-	if ((rmsel->flags & GETRMCONF_F_NO_PASSIVE) && rmconf->passive)
+	if ((rmsel->flags & GETRMCONF_F_NO_PASSIVE) && rmconf->passive){
+		plog(LLV_DEBUG2, LOCATION, rmsel->remote,
+		     "Not matched: passive conf.\n");
 		return MATCH_NONE;
+	}
 
 	ret |= MATCH_BASIC;
 
 	/* Check address */
 	if (rmsel->remote != NULL) {
 		if (rmconf->remote->sa_family != AF_UNSPEC) {
-			if (cmpsaddr(rmsel->remote, rmconf->remote) == CMPSADDR_MISMATCH)
+			if (cmpsaddr(rmsel->remote, rmconf->remote) == CMPSADDR_MISMATCH){
+				plog(LLV_DEBUG2, LOCATION, rmsel->remote,
+				     "Not matched: address mismatch.\n");
 				return MATCH_NONE;
+			}
 
 			/* Address matched */
 			ret |= MATCH_ADDRESS;
@@ -222,24 +233,34 @@ rmconf_match_type(rmsel, rmconf)
 
 	/* Check etype and approval */
 	if (rmsel->etype != ISAKMP_ETYPE_NONE) {
-		if (rmconf_match_etype_and_approval(rmconf, rmsel->etype,
-						    rmsel->approval) != 0)
+		tmp=rmconf_match_etype_and_approval(rmconf, rmsel->etype,
+						    rmsel->approval);
+		if (tmp != 0){
+			plog(LLV_DEBUG2, LOCATION, rmsel->remote,
+			     "Not matched: etype (%d)/approval mismatch (%d).\n", rmsel->etype, tmp);
 			return MATCH_NONE;
+		}
 		ret |= MATCH_SA;
 	}
 
 	/* Check identity */
 	if (rmsel->identity != NULL && rmconf->verify_identifier) {
-		if (rmconf_match_identity(rmconf, rmsel->identity) != 0)
+		if (rmconf_match_identity(rmconf, rmsel->identity) != 0){
+			plog(LLV_DEBUG2, LOCATION, rmsel->remote,
+			     "Not matched: identity mismatch.\n");
 			return MATCH_NONE;
+		}
 		ret |= MATCH_IDENTITY;
 	}
 
 	/* Check certificate request */
 	if (rmsel->certificate_request != NULL) {
 		if (oakley_get_certtype(rmsel->certificate_request) !=
-		    oakley_get_certtype(rmconf->mycert))
+		    oakley_get_certtype(rmconf->mycert)){
+			plog(LLV_DEBUG2, LOCATION, rmsel->remote,
+			     "Not matched: cert type mismatch.\n");
 			return MATCH_NONE;
+		}
 
 		if (rmsel->certificate_request->l > 1) {
 			vchar_t *issuer;
@@ -249,12 +270,17 @@ rmconf_match_type(rmsel, rmconf)
 			    memcmp(rmsel->certificate_request->v + 1,
 				   issuer->v, issuer->l) != 0) {
 				vfree(issuer);
+				plog(LLV_DEBUG2, LOCATION, rmsel->remote,
+				     "Not matched: cert issuer mismatch.\n");
 				return MATCH_NONE;
 			}
 			vfree(issuer);
 		} else {
-			if (!rmconf->match_empty_cr)
+			if (!rmconf->match_empty_cr){
+				plog(LLV_DEBUG2, LOCATION, rmsel->remote,
+				     "Not matched: empty certificate request.\n");
 				return MATCH_NONE;
+			}
 		}
 
 		ret |= MATCH_AUTH_IDENTITY;
@@ -286,9 +312,17 @@ enumrmconf(rmsel, enum_func, enum_arg)
 	int ret = 0;
 
 	RACOON_TAILQ_FOREACH_REVERSE(p, &rmtree, _rmtree, chain) {
+		plog(LLV_DEBUG2, LOCATION, rmsel->remote,
+		     "Checking remote conf \"%s\" %s.\n", p->name,
+		     p->remote->sa_family == AF_UNSPEC ?
+		     "anonymous" : saddr2str(p->remote));
+
 		if (rmsel != NULL) {
-			if (rmconf_match_type(rmsel, p) == MATCH_NONE)
+			if (rmconf_match_type(rmsel, p) == MATCH_NONE){
+				plog(LLV_DEBUG2, LOCATION, rmsel->remote,
+				     "Not matched.\n");
 				continue;
+			}
 		}
 
 		plog(LLV_DEBUG2, LOCATION, NULL,
@@ -740,6 +774,8 @@ check_etypeok(rmconf, ctx)
 	for (e = rmconf->etypes; e != NULL; e = e->next) {
 		if (e->type == etype)
 			return 1;
+		plog(LLV_DEBUG2, LOCATION, NULL,
+		     "Etype mismatch: got %d, expected %d.\n", e->type, etype);
 	}
 
 	return 0;
@@ -1049,7 +1085,10 @@ checkisakmpsa(pcheck_level, proposal, acceptable)
 	struct isakmpsa *p;
 
 	for (p = acceptable; p != NULL; p = p->next){
-		if (proposal->authmethod != isakmpsa_switch_authmethod(p->authmethod) ||
+		plog(LLV_DEBUG2, LOCATION, NULL,
+		     "checkisakmpsa:\nauthmethod: %d / %d\n",
+		     isakmpsa_switch_authmethod(proposal->authmethod), isakmpsa_switch_authmethod(p->authmethod));
+		if (isakmpsa_switch_authmethod(proposal->authmethod) != isakmpsa_switch_authmethod(p->authmethod) ||
 		    proposal->enctype != p->enctype ||
                     proposal->dh_group != p->dh_group ||
 		    proposal->hashtype != p->hashtype)
