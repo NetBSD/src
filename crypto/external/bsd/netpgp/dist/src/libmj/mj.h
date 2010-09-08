@@ -64,5 +64,6 @@ int mj_lint(mj_t *);
 int mj_snprint(char *, size_t, mj_t *);
 int mj_asprint(char **, mj_t *);
 int mj_string_size(mj_t *);
+int mj_pretty(mj_t *, void *, unsigned, const char *);
 
 #endif

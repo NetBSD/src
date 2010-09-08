@@ -1,4 +1,4 @@
-/* $NetBSD: netpgp.c,v 1.14 2010/09/01 17:25:57 agc Exp $ */
+/* $NetBSD: netpgp.c,v 1.15 2010/09/08 03:21:22 agc Exp $ */
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -527,7 +527,7 @@ main(int argc, char **argv)
 	netpgp_setvar(&netpgp, "max mem alloc", "4194304");
 	homeset = 0;
 	optindex = 0;
-	while ((ch = getopt_long(argc, argv, "Vdeo:sv", options, &optindex)) != -1) {
+	while ((ch = getopt_long(argc, argv, "S:Vdeo:sv", options, &optindex)) != -1) {
 		if (ch >= ENCRYPT) {
 			/* getopt_long returns 0 for long options */
 			if (!setoption(&netpgp, &p, options[optindex].val, optarg, &homeset)) {
@@ -535,6 +535,10 @@ main(int argc, char **argv)
 			}
 		} else {
 			switch (ch) {
+			case 'S':
+				netpgp_setvar(&netpgp, "ssh keys", "1");
+				netpgp_setvar(&netpgp, "sshkeyfile", optarg);
+				break;
 			case 'V':
 				printf(
 	"%s\nAll bug reports, praise and chocolate, please, to:\n%s\n",

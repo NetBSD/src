@@ -58,7 +58,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: packet-parse.c,v 1.41 2010/08/15 16:36:24 agc Exp $");
+__RCSID("$NetBSD: packet-parse.c,v 1.42 2010/09/08 03:21:22 agc Exp $");
 #endif
 
 #ifdef HAVE_OPENSSL_CAST_H
@@ -2550,7 +2550,6 @@ parse_seckey(__ops_region_t *region, __ops_stream_t *stream)
 		break;
 
 	case OPS_PKA_ELGAMAL:
-printf("elgamal reading\n");
 		if (!limread_mpi(&pkt.u.seckey.key.elgamal.x, region, stream)) {
 			ret = 0;
 		}
@@ -2652,7 +2651,6 @@ parse_pk_sesskey(__ops_region_t *region,
 	unsigned		 k;
 	BIGNUM			*enc_m;
 	int			 n;
-
 	/* Can't rely on it being CAST5 */
 	/* \todo FIXME RW */
 	/* const size_t sz_unencoded_m_buf=CAST_KEY_LENGTH+1+2; */

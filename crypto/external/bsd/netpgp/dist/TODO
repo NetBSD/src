@@ -6,7 +6,6 @@ agentctl
 convert to and from ascii armored sigs
 gpgme compat lib
 get rid of public key free as part of seckey
-return userids from successful verify, and then print id out if required
 is get_passphrase_cb needed?
 error logging
 separate from libcrypto?
@@ -97,3 +96,6 @@ hkp to include sigs too
 make netpgpkeys work - add, import, commit, update, sign, passphrase
 fix ssh fingerprints not matching netpgp
 json/yaml output
+return userids from successful verify, and then print id out if required
+convert between pgp and ssh key formats
+PEM ssh keys and passphrases

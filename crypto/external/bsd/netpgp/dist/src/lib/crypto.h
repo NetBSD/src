@@ -145,6 +145,9 @@ int __ops_rsa_private_encrypt(uint8_t *, const uint8_t *, size_t,
 int __ops_rsa_private_decrypt(uint8_t *, const uint8_t *, size_t,
 			const __ops_rsa_seckey_t *, const __ops_rsa_pubkey_t *);
 
+int __ops_elgamal_private_decrypt(uint8_t *, const uint8_t *, size_t,
+			const __ops_elgamal_seckey_t *, const __ops_elgamal_pubkey_t *);
+
 unsigned __ops_block_size(__ops_symm_alg_t);
 unsigned __ops_key_size(__ops_symm_alg_t);
 
@@ -189,6 +192,7 @@ unsigned   __ops_decrypt_file(__ops_io_t *,
 			__ops_keyring_t *,
 			const unsigned,
 			const unsigned,
+			const unsigned,
 			void *,
 			__ops_cbfunc_t *);
 
@@ -204,6 +208,7 @@ __ops_decrypt_buf(__ops_io_t *,
 			const size_t,
 			__ops_keyring_t *,
 			__ops_keyring_t *,
+			const unsigned,
 			const unsigned,
 			void *,
 			__ops_cbfunc_t *);
@@ -256,6 +261,7 @@ struct __ops_cbdata_t {
 	void			*passfp;	/* fp for passphrase input */
 	__ops_cryptinfo_t	 cryptinfo;	/* used when decrypting */
 	__ops_printstate_t	 printstate;	/* used to keep state when printing */
+	__ops_seckey_t		*sshseckey;	/* secret key for ssh */
 };
 
 /** __ops_hashtype_t */

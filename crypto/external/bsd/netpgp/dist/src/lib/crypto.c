@@ -54,7 +54,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: crypto.c,v 1.27 2010/08/15 07:52:26 agc Exp $");
+__RCSID("$NetBSD: crypto.c,v 1.28 2010/09/08 03:21:22 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -143,8 +143,43 @@ __ops_decrypt_decode_mpi(uint8_t *buf,
 		return n - i;
 	case OPS_PKA_DSA:
 	case OPS_PKA_ELGAMAL:
-		(void) fprintf(stderr, "XXX - no support for DSA/Elgamal yet\n");
-		return 0;
+		(void) fprintf(stderr, "XXX - preliminary support for DSA/Elgamal\n");
+		if (__ops_get_debug_level(__FILE__)) {
+			hexdump(stderr, "encrypted", encmpibuf, 16);
+		}
+		n = __ops_elgamal_private_decrypt(mpibuf, encmpibuf,
+					(unsigned)(BN_num_bits(encmpi) + 7) / 8,
+					&seckey->key.elgamal, &seckey->pubkey.key.elgamal);
+		if (n == -1) {
+			(void) fprintf(stderr, "ops_elgamal_private_decrypt failure\n");
+			return -1;
+		}
+		if (__ops_get_debug_level(__FILE__)) {
+			hexdump(stderr, "decrypted", mpibuf, 16);
+		}
+		if (n <= 0) {
+			return -1;
+		}
+		/* Decode EME-PKCS1_V1_5 (RFC 2437). */
+		if (mpibuf[0] != 0 || mpibuf[1] != 2) {
+			return -1;
+		}
+		/* Skip the random bytes. */
+		for (i = 2; i < n && mpibuf[i]; ++i) {
+		}
+		if (i == n || i < 10) {
+			return -1;
+		}
+		/* Skip the zero */
+		i += 1;
+		/* this is the unencoded m buf */
+		if ((unsigned) (n - i) <= buflen) {
+			(void) memcpy(buf, mpibuf + i, (unsigned)(n - i)); /* XXX - Flexelint */
+		}
+		if (__ops_get_debug_level(__FILE__)) {
+			hexdump(stderr, "decoded m", buf, (size_t)(n - i));
+		}
+		return n - i;
 	default:
 		(void) fprintf(stderr, "pubkey algorithm wrong\n");
 		return -1;
@@ -216,6 +251,10 @@ write_parsed_cb(const __ops_packet_t *pkt, __ops_cbdata_t *cbinfo)
 		return __ops_pk_sesskey_cb(pkt, cbinfo);
 
 	case OPS_GET_SECKEY:
+		if (cbinfo->sshseckey) {
+			*content->get_seckey.seckey = cbinfo->sshseckey;
+			return OPS_KEEP_MEMORY;
+		}
 		return __ops_get_seckey_cb(pkt, cbinfo);
 
 	case OPS_GET_PASSPHRASE:
@@ -361,6 +400,7 @@ __ops_decrypt_file(__ops_io_t *io,
 			__ops_keyring_t *pubring,
 			const unsigned use_armour,
 			const unsigned allow_overwrite,
+			const unsigned sshkeys,
 			void *passfp,
 			__ops_cbfunc_t *getpassfunc)
 {
@@ -424,6 +464,7 @@ __ops_decrypt_file(__ops_io_t *io,
 	parse->cbinfo.passfp = passfp;
 	parse->cbinfo.cryptinfo.getpassphrase = getpassfunc;
 	parse->cbinfo.cryptinfo.pubring = pubring;
+	parse->cbinfo.sshseckey = (sshkeys) ? &secring->keys[0].key.seckey : NULL;
 
 	/* Set up armour/passphrase options */
 	if (use_armour) {
@@ -456,6 +497,7 @@ __ops_decrypt_buf(__ops_io_t *io,
 			__ops_keyring_t *secring,
 			__ops_keyring_t *pubring,
 			const unsigned use_armour,
+			const unsigned sshkeys,
 			void *passfp,
 			__ops_cbfunc_t *getpassfunc)
 {
@@ -487,6 +529,7 @@ __ops_decrypt_buf(__ops_io_t *io,
 	parse->cbinfo.cryptinfo.pubring = pubring;
 	parse->cbinfo.passfp = passfp;
 	parse->cbinfo.cryptinfo.getpassphrase = getpassfunc;
+	parse->cbinfo.sshseckey = (sshkeys) ? &secring->keys[0].key.seckey : NULL;
 
 	/* Set up armour/passphrase options */
 	if (use_armour) {

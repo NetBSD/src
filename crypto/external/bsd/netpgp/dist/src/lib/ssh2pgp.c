@@ -242,6 +242,13 @@ __ops_ssh2pubkey(__ops_io_t *io, const char *f, __ops_key_t *key, __ops_hash_alg
 	bufgap_seek(&bg, 1, BGFromHere, BGByte);
 	off = bufgap_tell(&bg, BGFromBOF, BGByte);
 
+	if (bufgap_size(&bg, BGByte) - off < 10) {
+		(void) fprintf(stderr, "bad key file '%s'\n", f);
+		(void) free(buf);
+		bufgap_close(&bg);
+		return 0;
+	}
+
 	/* convert from base64 to binary */
 	cc = bufgap_getbin(&bg, buf, (size_t)st.st_size);
 	if ((space = strchr(buf, ' ')) != NULL) {
