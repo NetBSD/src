@@ -1,5 +1,5 @@
 #
-#	$NetBSD: BEAGLEBOARD,v 1.11 2010/08/31 19:07:01 macallan Exp $
+#	$NetBSD: BEAGLEBOARD,v 1.12 2010/09/08 22:52:25 ahoka Exp $
 #
 #	BEAGLEBOARD -- TI OMAP 3530 Eval Board Kernel
 #
@@ -27,7 +27,7 @@ options 	PMAPCOUNTERS
 
 file-system	FFS		# UFS
 #file-system	LFS		# log-structured file system
-#file-system	MFS		# memory file system
+file-system	MFS		# memory file system
 file-system	NFS		# Network file system
 #file-system 	ADOSFS		# AmigaDOS-compatible file system
 #file-system 	EXT2FS		# second extended file system (linux)
@@ -87,8 +87,8 @@ options		NFS_BOOT_RWSIZE=1024
 
 #options 	COMPAT_43	# 4.3BSD compatibility.
 options 	COMPAT_50	# NetBSD 5.0 compatibility.
-#options 	COMPAT_40	# NetBSD 4.0 compatibility.
-#options 	COMPAT_30	# NetBSD 3.0 compatibility.
+options 	COMPAT_40	# NetBSD 4.0 compatibility.
+options 	COMPAT_30	# NetBSD 3.0 compatibility.
 #options 	COMPAT_20	# NetBSD 2.0 compatibility.
 #options 	COMPAT_16	# NetBSD 1.6 compatibility.
 #options 	COMPAT_15	# NetBSD 1.5 compatibility.
@@ -248,19 +248,19 @@ pseudo-device	wsfont
 prcm*		at obio1 addr 0x48306000 size 0x2000	# PRM Module
 
 # On-board USB
-ehci*		at obio0 addr 0x48064800 size 0x0400 intr 77
+#ehci*		at obio0 addr 0x48064800 size 0x0400 intr 77
 #ohci*		at obio0 addr 0x48064400 size 0x0400 intr 76
 #usb*		at ohci?
-usb*		at ehci?
-uhub*		at usb?
-uhub*		at uhub? port ?
-umass*		at uhub? port ? configuration ? interface ?
-wd*		at umass?
-uhidev*		at uhub?
-ukbd*		at uhidev?
-ums*		at uhidev?
-wskbd*		at ukbd?
-wsmouse*	at ums?
+#usb*		at ehci?
+#uhub*		at usb?
+#uhub*		at uhub? port ?
+#umass*		at uhub? port ? configuration ? interface ?
+#wd*		at umass?
+#uhidev*		at uhub?
+#ukbd*		at uhidev?
+#ums*		at uhidev?
+#wskbd*		at ukbd?
+#wsmouse*	at ums?
 
 #axe*		at uhub? port ? configuration ? interface ?
 
@@ -273,7 +273,7 @@ options		OMAP_CK_REF_SPEED=12000000
 # Pseudo-Devices
 
 # disk/mass storage pseudo-devices
-#pseudo-device	md		1	# memory disk device (ramdisk)
+pseudo-device	md		1	# memory disk device (ramdisk)
 #pseudo-device	vnd			# disk-like interface to files
 #pseudo-device	fss			# file system snapshot device
 
