@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.465 2010/07/11 20:00:52 gsutre Exp $
+.\"	$NetBSD: main,v 1.466 2010/09/08 19:21:13 zoltan Exp $
 .\"
 .\" Copyright (c) 1999-2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1261,6 +1261,7 @@ If you're one of them, and would like to be mentioned, tell us!)
 .It Ta Constantine A. Murenin Ta Mt cnst@NetBSD.org
 .It Ta Joseph Myers Ta Mt jsm@NetBSD.org
 .It Ta Tuomo M\(:akinen Ta Mt tjam@NetBSD.org
+.It Ta Zolt\('an Arnold NAGY Ta Mt zoltan@NetBSD.org
 .It Ta Ken Nakata Ta Mt kenn@NetBSD.org
 .It Ta Takeshi Nakayama Ta Mt nakayama@NetBSD.org
 .It Ta Phil Nelson Ta Mt phil@NetBSD.org
