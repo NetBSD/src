@@ -1,4 +1,4 @@
-/*	$NetBSD: busypage.c,v 1.1 2010/05/31 23:32:51 pooka Exp $	*/
+/*	$NetBSD: busypage.c,v 1.2 2010/09/08 20:40:24 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: busypage.c,v 1.1 2010/05/31 23:32:51 pooka Exp $");
+__RCSID("$NetBSD: busypage.c,v 1.2 2010/09/08 20:40:24 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/param.h>
@@ -69,7 +69,9 @@ rumptest_busypage()
 	cv_init(&tcv, "napina");
 
 	uobj = uao_create(1, 0);
+	mutex_enter(&uobj->vmobjlock);
 	testpg = uvm_pagealloc(uobj, 0, NULL, 0);
+	mutex_exit(&uobj->vmobjlock);
 	if (testpg == NULL)
 		panic("couldn't create vm page");
 
