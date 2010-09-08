@@ -152,6 +152,20 @@ gettok(const char *s, int *from, int *to, int *tok)
 	return *tok;
 }
 
+/* minor function used to indent a JSON field */
+static void
+indent(FILE *fp, unsigned depth, const char *trailer)
+{
+	unsigned	i;
+
+	for (i = 0 ; i < depth ; i++) {
+		(void) fprintf(fp, "    ");
+	}
+	if (trailer) {
+		(void) fprintf(fp, "%s", trailer);
+	}
+}
+
 /***************************************************************************/
 
 /* return the number of entries in the array */
@@ -479,6 +493,7 @@ mj_append_field(mj_t *atom, const char *name, const char *type, ...)
 	return 1;
 }
 
+/* make sure a JSON object is politically correct */
 int
 mj_lint(mj_t *obj)
 {
@@ -518,4 +533,43 @@ mj_lint(mj_t *obj)
 		(void) fprintf(stderr, "problem type %d in %p\n", obj->type, obj);
 		return 0;
 	}
+}
+
+/* pretty-print a JSON struct - can be called recursively */
+int
+mj_pretty(mj_t *mj, void *vp, unsigned depth, const char *trailer)
+{
+	unsigned	 i;
+	FILE		*fp;
+
+	fp = (FILE *)vp;
+	switch(mj->type) {
+	case MJ_NUMBER:
+	case MJ_TRUE:
+	case MJ_FALSE:
+	case MJ_NULL:
+		indent(fp, depth, mj->value.s);
+		break;
+	case MJ_STRING:
+		indent(fp, depth, NULL);
+		(void) fprintf(fp, "\"%s\"", mj->value.s);
+		break;
+	case MJ_ARRAY:
+		indent(fp, depth, "[\n");
+		for (i = 0 ; i < mj->c ; i++) {
+			mj_pretty(&mj->value.v[i], fp, depth + 1, (i < mj->c - 1) ? ",\n" : "\n");
+		}
+		indent(fp, depth, "]");
+		break;
+	case MJ_OBJECT:
+		indent(fp, depth, "{\n");
+		for (i = 0 ; i < mj->c ; i += 2) {
+			mj_pretty(&mj->value.v[i], fp, depth + 1, " : ");
+			mj_pretty(&mj->value.v[i + 1], fp, 0, (i < mj->c - 2) ? ",\n" : "\n");
+		}
+		indent(fp, depth, "}");
+		break;
+	}
+	indent(fp, 0, trailer);
+	return 1;
 }

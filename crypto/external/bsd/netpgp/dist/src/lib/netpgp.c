@@ -34,7 +34,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: netpgp.c,v 1.74 2010/09/06 18:19:38 agc Exp $");
+__RCSID("$NetBSD: netpgp.c,v 1.75 2010/09/08 03:21:22 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -264,6 +264,12 @@ readsshkeys(netpgp_t *netpgp, char *homedir, const char *needseckey)
 	if ((filename = netpgp_getvar(netpgp, "sshkeyfile")) == NULL) {
 		(void) snprintf(f, sizeof(f), "%s/id_rsa.pub", homedir);
 		filename = f;
+	} else {
+		/* got ssh keys, check for pub file name */
+		if (strcmp(&filename[strlen(filename) - 4], ".pub") != 0) {
+			(void) fprintf(stderr, "readsshkeys: bad pubkey filename '%s'\n", filename);
+			return 0;
+		}
 	}
 	if ((pubring = calloc(1, sizeof(*pubring))) == NULL) {
 		(void) fprintf(stderr, "readsshkeys: bad alloc\n");
@@ -1185,6 +1191,7 @@ netpgp_decrypt_file(netpgp_t *netpgp, const char *f, char *out, int armored)
 	const unsigned	 overwrite = 1;
 	__ops_io_t	*io;
 	unsigned	 realarmor;
+	unsigned	 sshkeys;
 
 	__OPS_USED(armored);
 	io = netpgp->io;
@@ -1194,9 +1201,10 @@ netpgp_decrypt_file(netpgp_t *netpgp, const char *f, char *out, int armored)
 		return 0;
 	}
 	realarmor = isarmoured(io, f, NULL, ARMOR_HEAD);
+	sshkeys = (unsigned)(netpgp_getvar(netpgp, "ssh keys") != NULL);
 	return __ops_decrypt_file(netpgp->io, f, out, netpgp->secring,
 				netpgp->pubring,
-				realarmor, overwrite,
+				realarmor, overwrite, sshkeys,
 				netpgp->passfp, get_passphrase_cb);
 }
 
@@ -1491,6 +1499,7 @@ netpgp_decrypt_memory(netpgp_t *netpgp, const void *input, const size_t insize,
 	__ops_memory_t	*mem;
 	__ops_io_t	*io;
 	unsigned	 realarmour;
+	unsigned	 sshkeys;
 	size_t		 m;
 
 	__OPS_USED(armored);
@@ -1501,9 +1510,11 @@ netpgp_decrypt_memory(netpgp_t *netpgp, const void *input, const size_t insize,
 		return 0;
 	}
 	realarmour = isarmoured(io, NULL, input, ARMOR_HEAD);
+	sshkeys = (unsigned)(netpgp_getvar(netpgp, "ssh keys") != NULL);
 	mem = __ops_decrypt_buf(netpgp->io, input, insize, netpgp->secring,
 				netpgp->pubring,
-				realarmour, netpgp->passfp,
+				realarmour, sshkeys,
+				netpgp->passfp,
 				get_passphrase_cb);
 	m = MIN(__ops_mem_len(mem), outsize);
 	(void) memcpy(out, __ops_mem_data(mem), m);

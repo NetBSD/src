@@ -85,6 +85,10 @@ JSON object output functions:
 .Fo mj_string_size
 .Fa "mj_t *atom"
 .Fc
+.Ft int
+.Fo mj_pretty
+.Fa "mj_t *atom" "void *stream" "unsigned depth" "const char *trailer"
+.Fc
 .Sh DESCRIPTION
 .Nm
 is a small library interface to allow JSON text to be created and parsed.
@@ -144,12 +148,28 @@ using
 and the JSON serialised text is copied into it.
 This memory can later be de-allocated using
 .Xr free 3 .
+For formatted output to a
+.Dv FILE *
+stream, the
+.Fn mj_pretty
+function is used.
+The calling interface gives the ability to indent the
+output to a given
+.Fa depth
+and for the formatted output to be followed by a
+.Fa trailer
+string, which is usually NULL for external calls,
+but can be any valid string.
+Output is sent to the
+.Fa stream
+file stream.
 .Pp
 The
 .Fa type
 argument given to the
 .Fn mj_create ,
-.Fn mj_append and
+.Fn mj_append ,
+and
 .Fn mj_append_field
 functions is taken from a list of
 .Dq false
@@ -171,9 +191,6 @@ Within a JSON object, the key values can be iterated over using an integer
 index to access the individual
 JSON objects.
 The index can also be found using the
-.Fn mj_object_index
-function, and the object using
-the
 .Fn mj_object_find
 function.
 .Pp
