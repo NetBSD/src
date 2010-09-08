@@ -1,4 +1,4 @@
-/*	$NetBSD: bozohttpd.h,v 1.14 2010/06/17 19:43:30 mrg Exp $	*/
+/*	$NetBSD: bozohttpd.h,v 1.15 2010/09/08 00:47:44 mrg Exp $	*/
 
 /*	$eterna: bozohttpd.h,v 1.35 2010/06/17 00:49:30 mrg Exp $	*/
 
@@ -256,7 +256,7 @@ int	bozo_user_transform(bozo_httpreq_t *, int *);
 
 /* dir-index-bozo.c */
 #ifdef NO_DIRINDEX_SUPPORT
-#define bozo_dir_index(a, b, c, d)		0
+#define bozo_dir_index(a, b, c)				0
 #else
 int	bozo_dir_index(bozo_httpreq_t *, const char *, int);
 #endif /* NO_DIRINDEX_SUPPORT */
