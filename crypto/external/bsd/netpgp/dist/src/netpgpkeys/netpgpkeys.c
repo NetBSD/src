@@ -387,7 +387,7 @@ main(int argc, char **argv)
 	netpgp_setvar(&netpgp, "res", "<stdout>");
 	netpgp_setvar(&netpgp, "hash", DEFAULT_HASH_ALG);
 	optindex = 0;
-	while ((ch = getopt_long(argc, argv, "Vglo:s", options, &optindex)) != -1) {
+	while ((ch = getopt_long(argc, argv, "S:Vglo:s", options, &optindex)) != -1) {
 		if (ch >= LIST_KEYS) {
 			/* getopt_long returns 0 for long options */
 			if (!setoption(&netpgp, &p, options[optindex].val, optarg, &homeset)) {
@@ -395,6 +395,10 @@ main(int argc, char **argv)
 			}
 		} else {
 			switch (ch) {
+			case 'S':
+				netpgp_setvar(&netpgp, "ssh keys", "1");
+				netpgp_setvar(&netpgp, "sshkeyfile", optarg);
+				break;
 			case 'V':
 				printf(
 	"%s\nAll bug reports, praise and chocolate, please, to:\n%s\n",

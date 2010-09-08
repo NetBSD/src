@@ -57,7 +57,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: openssl_crypto.c,v 1.28 2010/09/07 00:25:37 agc Exp $");
+__RCSID("$NetBSD: openssl_crypto.c,v 1.29 2010/09/08 03:21:22 agc Exp $");
 #endif
 
 #ifdef HAVE_OPENSSL_DSA_H
@@ -77,7 +77,10 @@ __RCSID("$NetBSD: openssl_crypto.c,v 1.28 2010/09/07 00:25:37 agc Exp $");
 
 #include <stdlib.h>
 #include <string.h>
-/* Hash size for secret key check */
+
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
 
 #include "crypto.h"
 #include "keyring.h"
@@ -834,10 +837,13 @@ int
 openssl_read_pem_seckey(const char *f, __ops_key_t *key, const char *type, int verbose)
 {
 	FILE	*fp;
+	char	 prompt[BUFSIZ];
+	char	*pass;
 	DSA	*dsa;
 	RSA	*rsa;
 	int	 ok;
 
+	OpenSSL_add_all_algorithms();
 	if ((fp = fopen(f, "r")) == NULL) {
 		if (verbose) {
 			(void) fprintf(stderr, "can't open '%s'\n", f);
@@ -847,13 +853,16 @@ openssl_read_pem_seckey(const char *f, __ops_key_t *key, const char *type, int v
 	ok = 1;
 	if (strcmp(type, "ssh-rsa") == 0) {
 		if ((rsa = PEM_read_RSAPrivateKey(fp, NULL, NULL, NULL)) == NULL) {
-			ok = 0;
-		} else {
-			key->key.seckey.key.rsa.d = rsa->d;
-			key->key.seckey.key.rsa.p = rsa->p;
-			key->key.seckey.key.rsa.q = rsa->q;
-			key->key.seckey.key.rsa.d = rsa->d;
+			(void) snprintf(prompt, sizeof(prompt), "netpgp PEM %s passphrase: ", f);
+			do {
+				pass = getpass(prompt);
+				rsa = PEM_read_RSAPrivateKey(fp, NULL, NULL, pass);
+			} while (rsa == NULL);
 		}
+		key->key.seckey.key.rsa.d = rsa->d;
+		key->key.seckey.key.rsa.p = rsa->p;
+		key->key.seckey.key.rsa.q = rsa->q;
+		key->key.seckey.key.rsa.d = rsa->d;
 	} else if (strcmp(type, "ssh-dss") == 0) {
 		if ((dsa = PEM_read_DSAPrivateKey(fp, NULL, NULL, NULL)) == NULL) {
 			ok = 0;
@@ -865,4 +874,78 @@ openssl_read_pem_seckey(const char *f, __ops_key_t *key, const char *type, int v
 	}
 	(void) fclose(fp);
 	return ok;
+}
+
+int
+__ops_elgamal_private_decrypt(uint8_t *out,
+				const uint8_t *in,
+				size_t length,
+				const __ops_elgamal_seckey_t *seckey,
+				const __ops_elgamal_pubkey_t *pubkey)
+{
+	BIGNUM	*bndiv;
+	BIGNUM	*c1x;
+	BN_CTX	*tmp;
+	BIGNUM	*c1;
+	BIGNUM	*c2;
+	BIGNUM	*p;
+	BIGNUM	*x;
+	BIGNUM	*m;
+	int	 ret = 0;
+
+	/* split in byutes into c1 and c2 */
+	c1 = BN_bin2bn(in, (int)(length / 2), NULL);
+	c2 = BN_bin2bn(&in[length / 2], (int)(length / 2), NULL);
+	/* other bits */
+	p = pubkey->p;
+	x = seckey->x;
+	c1x = BN_new();
+	bndiv = BN_new();
+	m = BN_new();
+	tmp = BN_CTX_new();
+	if (!c1 || !c2 || !p || !x || !c1x || !bndiv || !m || !tmp) {
+		goto done;
+	}
+	/*
+	 * m = c2 / (c1^x)
+	 */
+	if (!BN_mod_exp(c1x, c1, x, p, tmp)) {
+		goto done;
+	}
+	if (!BN_mod_inverse(bndiv, c1x, p, tmp)) {
+		goto done;
+	}
+	if (!BN_mod_mul(m, c2, bndiv, p, tmp)) {
+		goto done;
+	}
+	/* result */
+	if (BN_bn2bin(m, out) > 0) {
+		ret = 1;
+	}
+done:
+	if (tmp) {
+		BN_CTX_free(tmp);
+	}
+	if (m) {
+		BN_clear_free(m);
+	}
+	if (bndiv) {
+		BN_clear_free(bndiv);
+	}
+	if (c1x) {
+		BN_clear_free(c1x);
+	}
+	if (x) {
+		BN_clear_free(x);
+	}
+	if (p) {
+		BN_clear_free(p);
+	}
+	if (c1) {
+		BN_clear_free(c1);
+	}
+	if (c2) {
+		BN_clear_free(c2);
+	}
+	return ret;
 }
