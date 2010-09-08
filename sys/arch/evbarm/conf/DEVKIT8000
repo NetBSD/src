@@ -1,0 +1,15 @@
+#
+#	$NetBSD: DEVKIT8000,v 1.1 2010/09/08 22:53:53 ahoka Exp $
+#
+#	DevKit8000 -- TI OMAP 3530 Eval Board Kernel
+#
+
+# DevKit8000 is a Beagleboard clone
+#
+include	"arch/evbarm/conf/BEAGLEBOARD"
+
+include "arch/evbarm/conf/files.devkit8000"
+
+# DM9000 Ethernet (requires omapgpio0)
+dme0		at gpmc? addr 0x2c000000 intr 121
+
