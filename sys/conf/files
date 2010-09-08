@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.994 2010/08/22 18:56:21 rmind Exp $
+#	$NetBSD: files,v 1.995 2010/09/08 22:55:54 ahoka Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20100430
@@ -1246,6 +1246,11 @@ file	dev/ic/iavc.c			iavc
 # Broadcom AirForce / Apple Airport Extreme
 device	bwi: arp, ifnet, firmload, wlan
 file	dev/ic/bwi.c			bwi
+
+# DM9000 Ethernet controllers
+#
+device	dme: arp, ether, ifnet
+file	dev/ic/dm9000.c			dme
 
 # legitimate pseudo-devices
 #
