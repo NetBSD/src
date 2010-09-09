@@ -1,4 +1,4 @@
-/*	$NetBSD: siop.c,v 1.96 2010/05/02 17:37:52 jakllsch Exp $	*/
+/*	$NetBSD: siop.c,v 1.97 2010/09/09 14:50:25 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -28,7 +28,7 @@
 /* SYM53c7/8xx PCI-SCSI I/O Processors driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siop.c,v 1.96 2010/05/02 17:37:52 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siop.c,v 1.97 2010/09/09 14:50:25 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,15 +56,12 @@ __KERNEL_RCSID(0, "$NetBSD: siop.c,v 1.96 2010/05/02 17:37:52 jakllsch Exp $");
 
 #include "opt_siop.h"
 
-#ifndef DEBUG
-#undef DEBUG
-#endif
 /*
 #define SIOP_DEBUG
 #define SIOP_DEBUG_DR
 #define SIOP_DEBUG_INTR
 #define SIOP_DEBUG_SCHED
-#define DUMP_SCRIPT
+#define SIOP_DUMP_SCRIPT
 */
 
 #define SIOP_STATS
@@ -174,7 +171,7 @@ siop_attach(struct siop_softc *sc)
 	 * siop_reset() will reset the chip, thus clearing pending interrupts
 	 */
 	siop_reset(sc);
-#ifdef DUMP_SCRIPT
+#ifdef SIOP_DUMP_SCRIPT
 	siop_dump_script(sc);
 #endif
 
@@ -1604,13 +1601,11 @@ siop_dump_script(struct siop_softc *sc)
 
 	for (i = 0; i < PAGE_SIZE / 4; i += 2) {
 		printf("0x%04x: 0x%08x 0x%08x", i * 4,
-		    siop_ctoh32(&sc->sc_c, sc->sc_c.sc_script[i]),
-		    siop_ctoh32(&sc->sc_c, sc->sc_c.sc_script[i + 1]));
-		if ((siop_ctoh32(&sc->sc_c,
-		    sc->sc_c.sc_script[i]) & 0xe0000000) == 0xc0000000) {
+		    siop_script_read(sc, i),
+		    siop_script_read(sc, i + 1));
+		if ((siop_script_read(sc, i) & 0xe0000000) == 0xc0000000) {
 			i++;
-			printf(" 0x%08x", siop_ctoh32(&sc->sc_c,
-			     sc->sc_c.sc_script[i + 1]));
+			printf(" 0x%08x", siop_script_read(sc, i + 1));
 		}
 		printf("\n");
 	}
@@ -1675,7 +1670,7 @@ siop_morecbd(struct siop_softc *sc)
 		    error);
 		goto bad0;
 	}
-#ifdef DEBUG
+#ifdef SIOP_DEBUG
 	printf("%s: alloc newcdb at PHY addr 0x%lx\n",
 	    device_xname(sc->sc_c.sc_dev),
 	    (unsigned long)newcbd->xferdma->dm_segs[0].ds_addr);
@@ -1907,7 +1902,7 @@ siop_add_dev(struct siop_softc *sc, int target, int lun)
 		 * can't extend this slot. Probably not worth trying to deal
 		 * with this case
 		 */
-#ifdef DEBUG
+#ifdef SIOP_DEBUG
 		aprint_error_dev(sc->sc_c.sc_dev,
 		    "%d:%d: can't allocate a lun sw slot\n", target, lun);
 #endif
@@ -1931,7 +1926,7 @@ siop_add_dev(struct siop_softc *sc, int target, int lun)
 		 * not enough space, probably not worth dealing with it.
 		 * We can hold 13 tagged-queuing capable devices in the 4k RAM.
 		 */
-#ifdef DEBUG
+#ifdef SIOP_DEBUG
 		aprint_error_dev(sc->sc_c.sc_dev,
 		    "%d:%d: not enough memory for a lun sw slot\n",
 		    target, lun);
