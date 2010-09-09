@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.94 2010/09/09 10:02:14 pooka Exp $	*/
+/*	$NetBSD: vm.c,v 1.95 2010/09/09 12:23:06 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2010 Antti Kantee.  All Rights Reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.94 2010/09/09 10:02:14 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.95 2010/09/09 12:23:06 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -207,6 +207,7 @@ uvm_pagefree(struct vm_page *pg)
 	struct uvm_object *uobj = pg->uobject;
 
 	KASSERT(mutex_owned(&uvm_pageqlock));
+	KASSERT(mutex_owned(&uobj->vmobjlock));
 
 	if (pg->flags & PG_WANTED)
 		wakeup(pg);
@@ -815,6 +816,28 @@ uvm_pageout_done(int npages)
 	/* could wakeup waiters, but just let the pagedaemon do it */
 }
 
+static bool
+processpage(struct vm_page *pg)
+{
+	struct uvm_object *uobj;
+
+	uobj = pg->uobject;
+	if (mutex_tryenter(&uobj->vmobjlock)) {
+		if ((pg->flags & PG_BUSY) == 0) {
+			mutex_exit(&uvm_pageqlock);
+			uobj->pgops->pgo_put(uobj, pg->offset,
+			    pg->offset + PAGE_SIZE,
+			    PGO_CLEANIT|PGO_FREE);
+			KASSERT(!mutex_owned(&uobj->vmobjlock));
+			return true;
+		} else {
+			mutex_exit(&uobj->vmobjlock);
+		}
+	}
+
+	return false;
+}
+
 /*
  * The Diabolical pageDaemon Director (DDD).
  */
@@ -832,21 +855,16 @@ uvm_pageout(void *arg)
 	for (;;) {
 		if (succ) {
 			kernel_map->flags &= ~VM_MAP_WANTVA;
-			kmem_map->flags &= VM_MAP_WANTVA;
+			kmem_map->flags &= ~VM_MAP_WANTVA;
 			timo = 0;
+			if (pdaemon_waiters) {
+				pdaemon_waiters = 0;
+				cv_broadcast(&oomwait);
+			}
 		}
 		succ = false;
 
-		/*
-		 * Wake up everyone regardless of perceived success.
-		 * They will just resleep if we're stil out of juice.
-		 */
-		if (pdaemon_waiters) {
-			pdaemon_waiters = 0;
-			cv_broadcast(&oomwait);
-		}
-
-		cv_timedwait(&pdaemoncv, &pdaemonmtx, 0);
+		cv_timedwait(&pdaemoncv, &pdaemonmtx, timo);
 		uvmexp.pdwoke++;
 
 		/* tell the world that we are hungry */
@@ -881,7 +899,6 @@ uvm_pageout(void *arg)
 		while (cleaned < PAGEDAEMON_OBJCHUNK) {
 			skipped = 0;
 			TAILQ_FOREACH(pg, &vmpage_lruqueue, pageq.queue) {
-				struct uvm_object *uobj;
 
 				/*
 				 * skip over pages we _might_ have tried
@@ -892,17 +909,9 @@ uvm_pageout(void *arg)
 				while (skipped++ < skip)
 					continue;
 
-				uobj = pg->uobject;
-				if (mutex_tryenter(&uobj->vmobjlock)) {
-					if ((pg->flags & PG_BUSY) == 0) {
-						mutex_exit(&uvm_pageqlock);
-						uobj->pgops->pgo_put(uobj,
-						    pg->offset,
-						    pg->offset + PAGE_SIZE,
-						    PGO_CLEANIT|PGO_FREE);
-						cleaned++;
-						goto again;
-					}
+				if (processpage(pg)) {
+					cleaned++;
+					goto again;
 				}
 
 				skip++;
@@ -957,7 +966,7 @@ uvm_pageout(void *arg)
 		if (!succ) {
 			rumpuser_dprintf("pagedaemoness: failed to reclaim "
 			    "memory ... sleeping (deadlock?)\n");
-			kpause("dpdd", false, hz, NULL);
+			timo = hz;
 		}
 
 		mutex_enter(&pdaemonmtx);
