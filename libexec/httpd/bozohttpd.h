@@ -1,4 +1,4 @@
-/*	$NetBSD: bozohttpd.h,v 1.15 2010/09/08 00:47:44 mrg Exp $	*/
+/*	$NetBSD: bozohttpd.h,v 1.16 2010/09/09 04:41:49 mrg Exp $	*/
 
 /*	$eterna: bozohttpd.h,v 1.35 2010/06/17 00:49:30 mrg Exp $	*/
 
@@ -238,7 +238,7 @@ void	bozo_add_content_map_cgi(bozohttpd_t *, const char *, const char *);
 #ifdef NO_DAEMON_MODE
 #define bozo_daemon_init(x)				/* nothing */
 #define bozo_daemon_fork(x)				0
-#define bozo_daemon_closefds()				/* nothing */
+#define bozo_daemon_closefds(x)				/* nothing */
 #else
 void	bozo_daemon_init(bozohttpd_t *);
 int	bozo_daemon_fork(bozohttpd_t *);
