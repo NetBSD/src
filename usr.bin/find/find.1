@@ -1,4 +1,4 @@
-.\"	$NetBSD: find.1,v 1.69 2009/11/06 21:03:12 dsl Exp $
+.\"	$NetBSD: find.1,v 1.70 2010/09/09 11:42:13 wiz Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -276,8 +276,8 @@ to exit early.
 The string
 .Dq {}
 must appear, and must appear last.
-Each set is limitted to no more than 5,000 pathnames,
-and is also limitted such that the invokation of
+Each set is limited to no more than 5,000 pathnames,
+and is also limited such that the invocation of
 .Ar utility
 does not exceed
 .Dv ARG_MAX .
@@ -303,7 +303,7 @@ is not supported.
 .It Ic -exit Op Ar n
 This primary causes
 .Nm
-to stop traversing the filesystem and exit immediately if a
+to stop traversing the file system and exit immediately if a
 previous condition was met.
 If no value is specified, the exit value will be 0, else
 .Ar n .
@@ -361,7 +361,7 @@ True if the file is contained in a file system of type
 .Ar type .
 The
 .Xr sysctl 8
-command can be used to find out the types of filesystems
+command can be used to find out the types of file systems
 that are available on the system:
 .Bd -literal -offset indent
 sysctl vfs.generic.fstypes
@@ -708,7 +708,7 @@ The
 .Nm
 utility normally exits 0 on success, and exits with 1 under certain
 internal error conditions.
-If any invokations of
+If any invocations of
 .Dq Ic -exec Ar ... No +
 primaries return non-zero exit-status, then
 .Nm
@@ -839,7 +839,7 @@ though the feature originated in
 .Pp
 The
 .Ic -delete
-primary does not interact well with other options that cause the filesystem
+primary does not interact well with other options that cause the file system
 tree traversal options to be changed.
 .Sh HISTORY
 A much simpler
