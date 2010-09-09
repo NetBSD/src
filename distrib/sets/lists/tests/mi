@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.143 2010/09/09 11:38:15 njoly Exp $
+# $NetBSD: mi,v 1.144 2010/09/09 22:20:09 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -283,6 +283,8 @@
 ./usr/libdata/debug/usr/tests/lib/csu/h_initfini3.debug			tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/csu/libh_initfini3_dso.so.1.debug	tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc					tests-lib-debug
+./usr/libdata/debug/usr/tests/lib/libc/gen				tests-lib-debug
+./usr/libdata/debug/usr/tests/lib/libc/gen/t_glob_star.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/hash				tests-lib-debug
 ./usr/libdata/debug/usr/tests/lib/libc/hash/t_sha2.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/stdlib				tests-lib-debug
@@ -1425,6 +1427,9 @@
 ./usr/tests/lib/csu/t_crt0			tests-lib-tests		atf
 ./usr/tests/lib/libc				tests-lib-tests
 ./usr/tests/lib/libc/Atffile			tests-lib-tests		atf
+./usr/tests/lib/libc/gen			tests-lib-tests
+./usr/tests/lib/libc/gen/Atffile		tests-lib-tests		atf
+./usr/tests/lib/libc/gen/t_glob_star		tests-lib-tests		atf
 ./usr/tests/lib/libc/hash			tests-lib-tests
 ./usr/tests/lib/libc/hash/Atffile		tests-lib-tests		atf
 ./usr/tests/lib/libc/hash/t_sha2		tests-lib-tests		atf
