@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.93 2010/09/08 21:14:32 pooka Exp $	*/
+/*	$NetBSD: vm.c,v 1.94 2010/09/09 10:02:14 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2010 Antti Kantee.  All Rights Reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.93 2010/09/08 21:14:32 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.94 2010/09/09 10:02:14 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -483,6 +483,9 @@ uvm_page_unbusy(struct vm_page **pgs, int npgs)
 {
 	struct vm_page *pg;
 	int i;
+
+	KASSERT(npgs > 0);
+	KASSERT(mutex_owned(&pgs[0]->uobject->vmobjlock));
 
 	for (i = 0; i < npgs; i++) {
 		pg = pgs[i];
