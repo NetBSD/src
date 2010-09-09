@@ -1,4 +1,4 @@
-/*	$NetBSD: t_vnops.c,v 1.8 2010/09/06 15:27:18 pooka Exp $	*/
+/*	$NetBSD: t_vnops.c,v 1.9 2010/09/09 11:42:52 njoly Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
 
 #define USES_SYMLINKS					\
     if (FSTYPE_SYSVBFS(tc) || FSTYPE_MSDOS(tc))		\
-	atf_tc_skip("dirs not supported by file system")
+	atf_tc_skip("symlinks not supported by file system")
 
 static char *
 md(char *buf, const char *base, const char *tail)
