@@ -1,4 +1,4 @@
-/*	$NetBSD: r128fb.c,v 1.10 2009/10/01 19:02:27 jmmv Exp $	*/
+/*	$NetBSD: r128fb.c,v 1.11 2010/09/09 01:22:11 macallan Exp $	*/
 
 /*
  * Copyright (c) 2007 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: r128fb.c,v 1.10 2009/10/01 19:02:27 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: r128fb.c,v 1.11 2010/09/09 01:22:11 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,6 +59,14 @@ __KERNEL_RCSID(0, "$NetBSD: r128fb.c,v 1.10 2009/10/01 19:02:27 jmmv Exp $");
 
 #include <dev/i2c/i2cvar.h>
 
+#include "opt_r128fb.h"
+
+#ifdef R128FB_DEBUG
+#define DPRINTF printf
+#else
+#define DPRINTF while(0) printf
+#endif
+
 struct r128fb_softc {
 	device_t sc_dev;
 
@@ -74,7 +82,7 @@ struct r128fb_softc {
 	bus_size_t sc_fbsize, sc_regsize;
 
 	int sc_width, sc_height, sc_depth, sc_stride;
-	int sc_locked;
+	int sc_locked, sc_have_backlight, sc_bl_level;
 	void *sc_fbaddr;
 	struct vcons_screen sc_console_screen;
 	struct wsscreen_descr sc_defaultscreen_descr;
@@ -123,6 +131,10 @@ static void	r128fb_copycols(void *, int, int, int, int);
 static void	r128fb_erasecols(void *, int, int, int, long);
 static void	r128fb_copyrows(void *, int, int, int);
 static void	r128fb_eraserows(void *, int, int, long);
+
+static void	r128fb_brightness_up(device_t);
+static void	r128fb_brightness_down(device_t);
+static void	r128fb_set_backlight(struct r128fb_softc *, int);
 
 struct wsdisplay_accessops r128fb_accessops = {
 	r128fb_ioctl,
@@ -191,6 +203,7 @@ r128fb_attach(device_t parent, device_t self, void *aux)
 	unsigned long		defattr;
 	bool			is_console;
 	int i, j;
+	uint32_t reg;
 
 	sc->sc_pc = pa->pa_pc;
 	sc->sc_pcitag = pa->pa_tag;
@@ -305,7 +318,21 @@ r128fb_attach(device_t parent, device_t self, void *aux)
 	aa.accesscookie = &sc->vd;
 
 	config_found(sc->sc_dev, &aa, wsemuldisplaydevprint);
-	
+
+	/* no suspend/resume support yet */
+	pmf_device_register(sc->sc_dev, NULL, NULL);
+	reg = bus_space_read_4(sc->sc_memt, sc->sc_regh, R128_LVDS_GEN_CNTL);
+	DPRINTF("reg: %08x\n", reg);
+	if (reg & R128_LVDS_ON) {
+		sc->sc_have_backlight = 1;
+		sc->sc_bl_level = 255 -
+		    ((reg & R128_LEVEL_MASK) >> R128_LEVEL_SHIFT);
+		pmf_event_register(sc->sc_dev, PMFE_DISPLAY_BRIGHTNESS_UP,
+		    r128fb_brightness_up, TRUE);
+		pmf_event_register(sc->sc_dev, PMFE_DISPLAY_BRIGHTNESS_DOWN,
+		    r128fb_brightness_down, TRUE);
+	} else
+		sc->sc_have_backlight = 0;	
 }
 
 static int
@@ -787,3 +814,37 @@ r128fb_eraserows(void *cookie, int row, int nrows, long fillattr)
 	}
 }
 
+static void
+r128fb_set_backlight(struct r128fb_softc *sc, int level)
+{
+	uint32_t reg;
+
+	if (level > 255) level = 255;
+	if (level < 0) level = 0;
+	if (level == sc->sc_bl_level)
+		return;
+	sc->sc_bl_level = level;
+	level = 255 - level;
+	reg = bus_space_read_4(sc->sc_memt, sc->sc_regh, R128_LVDS_GEN_CNTL);
+	reg &= ~R128_LEVEL_MASK;
+	reg |= level << R128_LEVEL_SHIFT;
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, R128_LVDS_GEN_CNTL, reg);
+	DPRINTF("level: %d reg %08x\n", level, reg);
+}
+	
+
+static void
+r128fb_brightness_up(device_t dev)
+{
+	struct r128fb_softc *sc = device_private(dev);
+
+	r128fb_set_backlight(sc, sc->sc_bl_level + 8);
+}
+
+static void
+r128fb_brightness_down(device_t dev)
+{
+	struct r128fb_softc *sc = device_private(dev);
+
+	r128fb_set_backlight(sc, sc->sc_bl_level - 8);
+}

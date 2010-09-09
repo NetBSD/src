@@ -1,4 +1,4 @@
-/*	$NetBSD: r128fbreg.h,v 1.1 2007/11/07 19:09:09 macallan Exp $	*/
+/*	$NetBSD: r128fbreg.h,v 1.2 2010/09/09 01:22:10 macallan Exp $	*/
 
 /*
  * Copyright 1999, 2000 ATI Technologies Inc., Markham, Ontario,
@@ -55,9 +55,35 @@
 #ifndef R128FB_REG_H
 #define R128FB_REG_H
 
-#define R128_PALETTE_DATA                 0x00b4
-#define R128_PALETTE_INDEX                0x00b0
+/* RAMDAC */
+#define R128_PALETTE_DATA		0x00b4
+#define R128_PALETTE_INDEX		0x00b0
 
+/* flat panel registers */
+#define R128_FP_PANEL_CNTL		0x0288
+	#define FPCNT_DIGON		  0x00000001	/* FP dig. voltage */
+	#define FPCNT_BACKLIGHT_ON	  0x00000002
+	#define FPCNT_BL_MODULATION_ON	  0x00000004
+	#define FPCNT_BL_CLK_SEL	  0x00000008	/* 1 - divide by 3 */
+	#define FPCNT_MONID_EN		  0x00000010	/* use MONID pins for
+							   backlight control */
+	#define FPCNT_FPENABLE_POL	  0x00000020	/* 1 - active low */
+	#define FPCNT_LEVEL_MASK	  0x0000ff00
+	#define FPCNT_LEVEL_SHIFT	  8
+
+#define R128_LVDS_GEN_CNTL                0x02d0
+#       define R128_LVDS_ON               (1   <<  0)
+#       define R128_LVDS_DISPLAY_DIS      (1   <<  1)
+#       define R128_LVDS_EN               (1   <<  7)
+#       define R128_LVDS_DIGON            (1   << 18)
+#       define R128_LVDS_BLON             (1   << 19)
+#       define R128_LVDS_SEL_CRTC2        (1   << 23)
+#       define R128_HSYNC_DELAY_SHIFT     28
+#       define R128_HSYNC_DELAY_MASK      (0xf << 28)
+#	define R128_LEVEL_MASK	          0x0000ff00
+#	define R128_LEVEL_SHIFT	          8
+
+/* drawing engine */
 #define R128_PC_NGUI_CTLSTAT              0x0184
 #       define R128_PC_FLUSH_GUI          (3 << 0)
 #       define R128_PC_RI_GUI             (1 << 2)
