@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.142 2010/09/01 21:19:37 pooka Exp $
+# $NetBSD: mi,v 1.143 2010/09/09 11:38:15 njoly Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -281,8 +281,7 @@
 ./usr/libdata/debug/usr/tests/lib/csu/h_initfini1.debug			tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/csu/h_initfini2.debug			tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/csu/h_initfini3.debug			tests-lib-debug		debug,atf
-./usr/libdata/debug/usr/tests/lib/csu/h_initfini3_dso.so.1.debug	tests-lib-debug		debug,atf
-./usr/libdata/debug/usr/tests/lib/csu/libh_initfini3_dso.so.1.debug	tests-obsolete		obsolete
+./usr/libdata/debug/usr/tests/lib/csu/libh_initfini3_dso.so.1.debug	tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc					tests-lib-debug
 ./usr/libdata/debug/usr/tests/lib/libc/hash				tests-lib-debug
 ./usr/libdata/debug/usr/tests/lib/libc/hash/t_sha2.debug		tests-lib-debug		debug,atf
