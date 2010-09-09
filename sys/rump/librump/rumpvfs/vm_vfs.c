@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_vfs.c,v 1.21 2010/09/09 09:50:21 pooka Exp $	*/
+/*	$NetBSD: vm_vfs.c,v 1.22 2010/09/09 10:01:25 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_vfs.c,v 1.21 2010/09/09 09:50:21 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_vfs.c,v 1.22 2010/09/09 10:01:25 pooka Exp $");
 
 #include <sys/param.h>
 
@@ -114,10 +114,10 @@ uvm_vnp_zerorange(struct vnode *vp, off_t off, size_t len)
 		return;
 
 	pgs = kmem_alloc(maxpages * sizeof(pgs), KM_SLEEP);
+	mutex_enter(&uobj->vmobjlock);
 	while (len) {
 		npages = MIN(maxpages, round_page(len) >> PAGE_SHIFT);
 		memset(pgs, 0, npages * sizeof(struct vm_page *));
-		mutex_enter(&uobj->vmobjlock);
 		rv = uobj->pgops->pgo_get(uobj, trunc_page(off),
 		    pgs, &npages, 0, VM_PROT_READ | VM_PROT_WRITE,
 		    0, PAGERFLAGS | PGO_PASTEOF);
@@ -142,8 +142,10 @@ uvm_vnp_zerorange(struct vnode *vp, off_t off, size_t len)
 			off += chunklen;
 			len -= chunklen;
 		}
+		mutex_enter(&uobj->vmobjlock);
 		uvm_page_unbusy(pgs, npages);
 	}
+	mutex_exit(&uobj->vmobjlock);
 	kmem_free(pgs, maxpages * sizeof(pgs));
 
 	return;
@@ -170,10 +172,10 @@ ubc_uiomove(struct uvm_object *uobj, struct uio *uio, vsize_t todo,
 	if (flags & UBC_FAULTBUSY)
 		pagerflags |= PGO_OVERWRITE;
 
+	mutex_enter(&uobj->vmobjlock);
 	do {
 		npages = len2npages(uio->uio_offset, todo);
 		memset(pgs, 0, pgalloc);
-		mutex_enter(&uobj->vmobjlock);
 		rv = uobj->pgops->pgo_get(uobj, trunc_page(uio->uio_offset),
 		    pgs, &npages, 0, VM_PROT_READ | VM_PROT_WRITE, 0,
 		    pagerflags);
@@ -198,8 +200,10 @@ ubc_uiomove(struct uvm_object *uobj, struct uio *uio, vsize_t todo,
 				pg->flags &= ~(PG_CLEAN | PG_FAKE);
 			todo -= xfersize;
 		}
+		mutex_enter(&uobj->vmobjlock);
 		uvm_page_unbusy(pgs, npages);
 	} while (todo);
+	mutex_exit(&uobj->vmobjlock);
 
  out:
 	kmem_free(pgs, pgalloc);

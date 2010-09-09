@@ -1,4 +1,4 @@
-/*	$NetBSD: busypage.c,v 1.2 2010/09/08 20:40:24 pooka Exp $	*/
+/*	$NetBSD: busypage.c,v 1.3 2010/09/09 09:59:48 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: busypage.c,v 1.2 2010/09/08 20:40:24 pooka Exp $");
+__RCSID("$NetBSD: busypage.c,v 1.3 2010/09/09 09:59:48 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/param.h>
@@ -83,9 +83,9 @@ rumptest_busypage()
 	mutex_enter(&uobj->vmobjlock);
 	while (!threadrun)
 		cv_wait(&tcv, &uobj->vmobjlock);
-	mutex_exit(&uobj->vmobjlock);
 
 	uvm_page_unbusy(&testpg, 1);
+	mutex_exit(&uobj->vmobjlock);
 
 	rv = kthread_join(newl);
 	if (rv)
