@@ -1,4 +1,4 @@
-/*  $NetBSD: ops.c,v 1.13 2010/09/07 16:58:13 manu Exp $ */
+/*  $NetBSD: ops.c,v 1.14 2010/09/09 09:12:35 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010 Emmanuel Dreyfus. All rights reserved.
@@ -62,7 +62,7 @@ static int readdir_buffered(struct perfuse_state *, puffs_cookie_t,
 static void requeue_request(struct puffs_usermount *, 
     puffs_cookie_t opc, enum perfuse_qtype);
 static int dequeue_requests(struct perfuse_state *, 
-     puffs_cookie_t opc, enum perfuse_qtype, int);
+    puffs_cookie_t opc, enum perfuse_qtype, int);
 #define DEQUEUE_ALL 0
 
 /* 
@@ -359,6 +359,10 @@ node_mk_common(pu, opc, pni, pcn, pm)
 	 */
 	error = XCHG_MSG(ps, pu, pm, sizeof(struct fuse_attr_out));
 
+	/*
+	 * The parent directory needs a sync
+	 */
+	PERFUSE_NODE_DATA(opc)->pnd_flags |= PND_DIRTY;
 out:
 	ps->ps_destroy_msg(pm);
 
@@ -1010,6 +1014,10 @@ perfuse_node_create(pu, opc, pni, pcn, vap)
 	fuse_attr_to_vap(ps, &pn->pn_va, &feo->attr);
 	puffs_newinfo_setcookie(pni, pn);
 
+	/*
+	 * The parent directory needs a sync
+	 */
+	PERFUSE_NODE_DATA(opc)->pnd_flags |= PND_DIRTY;
 out: 
 	ps->ps_destroy_msg(pm);
 
@@ -1132,11 +1140,7 @@ perfuse_node_open(pu, opc, mode, pcr)
 	/*
 	 * Do not open twice, and do not reopen for reading
 	 * if we already have write handle.
-	 * Directories are always open with read access only, 
-	 * whatever flags we get.
 	 */
-	if (op == FUSE_OPENDIR)
-		mode = (mode & ~(FREAD|FWRITE)) | FREAD;
 	if ((mode & FREAD) && (pnd->pnd_flags & PND_RFH))
 		return 0;
 	if ((mode & FWRITE) && (pnd->pnd_flags & PND_WFH))
@@ -1543,6 +1547,7 @@ perfuse_node_fsync(pu, opc, pcr, flags, offlo, offhi)
 	off_t offlo;
 	off_t offhi;
 {
+	int op;
 	perfuse_msg_t *pm;
 	struct perfuse_state *ps;
 	struct perfuse_node_data *pnd;
@@ -1553,18 +1558,16 @@ perfuse_node_fsync(pu, opc, pcr, flags, offlo, offhi)
 	
 	pm = NULL;
 	open_self = 0;	
-
-	/* 
-	 * If we previously detected it as unimplemented,
-	 * skip the call to the filesystem.
-	 */
 	ps = puffs_getspecific(pu);
-	if (ps->ps_flags == PS_NO_FSYNC)
-		return ENOSYS;
+
+	if (puffs_pn_getvap((struct puffs_node *)opc)->va_type == VDIR) 
+		op = FUSE_FSYNCDIR;
+	else 		/* VREG but also other types such as VLNK */
+		op = FUSE_FSYNC;
 
 	/*
 	 * Do not sync if there are no change to sync
-	 * XXX remove that test if we implement mmap
+	 * XXX remove that test on files if we implement mmap
 	 */
 	pnd = PERFUSE_NODE_DATA(opc);
 #ifdef PERFUSE_DEBUG
@@ -1582,7 +1585,7 @@ perfuse_node_fsync(pu, opc, pcr, flags, offlo, offhi)
 	 * glusterfs complain in such a situation:
 	 * "FSYNC() ERR => -1 (Invalid argument)"
 	 */
-	if (!(pnd->pnd_flags & PND_OPEN)) {
+	if (!(pnd->pnd_flags & PND_WFH)) {
 		if ((error = perfuse_node_open(pu, opc, FWRITE, pcr)) != 0)
 			goto out;
 		open_self = 1;
@@ -1593,7 +1596,7 @@ perfuse_node_fsync(pu, opc, pcr, flags, offlo, offhi)
 	/*
 	 * If fsync_flags  is set, meta data should not be flushed.
 	 */
-	pm = ps->ps_new_msg(pu, opc, FUSE_FSYNC, sizeof(*ffi), NULL);
+	pm = ps->ps_new_msg(pu, opc, op, sizeof(*ffi), NULL);
 	ffi = GET_INPAYLOAD(ps, pm, fuse_fsync_in);
 	ffi->fh = fh;
 	ffi->fsync_flags = (flags & FFILESYNC) ? 0 : 1;
@@ -1622,8 +1625,11 @@ perfuse_node_fsync(pu, opc, pcr, flags, offlo, offhi)
 #endif
 
 out:
+	/*
+	 * ENOSYS is not returned to kernel,
+	 */
 	if (error == ENOSYS)
-		ps->ps_flags |= PS_NO_FSYNC;
+		error = 0;
 
 	if (pm != NULL)
 		ps->ps_destroy_msg(pm);
@@ -1683,6 +1689,7 @@ perfuse_node_remove(pu, opc, targ, pcn)
 		DERRX(EX_SOFTWARE, "%s: targ is NULL", __func__);
 
 	ps = puffs_getspecific(pu);
+	pnd = PERFUSE_NODE_DATA(opc);
 	pn = (struct puffs_node *)targ;
 	name = basename_r((char *)PNPATH(pn));
 	len = strlen(name) + 1;
@@ -1704,6 +1711,11 @@ perfuse_node_remove(pu, opc, targ, pcn)
 	/*
 	 * Reclaim should take care of decreasing pnd_childcount
 	 */
+
+	/*
+	 * The parent directory needs a sync
+	 */
+	PERFUSE_NODE_DATA(opc)->pnd_flags |= PND_DIRTY;
 out:
 	ps->ps_destroy_msg(pm);
 
@@ -1890,6 +1902,10 @@ perfuse_node_rmdir(pu, opc, targ, pcn)
 
 	PERFUSE_NODE_DATA(targ)->pnd_flags |= PND_REMOVED;
 
+	/*
+	 * The parent directory needs a sync
+	 */
+	PERFUSE_NODE_DATA(opc)->pnd_flags |= PND_DIRTY;
 out:
 	ps->ps_destroy_msg(pm);
 

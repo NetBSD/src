@@ -1,4 +1,4 @@
-/*  $NetBSD: perfuse_priv.h,v 1.8 2010/09/06 01:40:24 manu Exp $ */
+/*  $NetBSD: perfuse_priv.h,v 1.9 2010/09/09 09:12:35 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010 Emmanuel Dreyfus. All rights reserved.
@@ -44,7 +44,6 @@ struct perfuse_state {
 	uid_t ps_owner_uid;
 	int ps_flags;
 #define PS_NO_ACCESS	0x0001	/* access is unimplemented; */
-#define PS_NO_FSYNC	0x0002	/* fsync is unimplemented */
 #define PS_NO_CREAT	0x0004	/* create is unimplemented */
 #define PS_INLOOP	0x0008	/* puffs mainloop started */
 	long ps_fsid;
