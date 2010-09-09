@@ -1,8 +1,8 @@
-/* $NetBSD: if_srt.c,v 1.14 2010/04/05 07:22:24 joerg Exp $ */
+/* $NetBSD: if_srt.c,v 1.15 2010/09/09 03:24:57 tls Exp $ */
 /* This file is in the public domain. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_srt.c,v 1.14 2010/04/05 07:22:24 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_srt.c,v 1.15 2010/09/09 03:24:57 tls Exp $");
 
 #include "opt_inet.h"
 
@@ -110,13 +110,13 @@ find_rt(struct srt_softc *sc, int af, ...)
 		break;
 	}
 	va_end(ap);
-	for (i=0;i<sc->nrt;i++) {
+	for (i=0; i < sc->nrt; i++) {
 		r = sc->rts[i];
 		if (r->af != af)
 			continue;
 		switch (af) {
 		case AF_INET:
-			if ((ia.s_addr & ipv4_masks[r->srcmask]) ==
+			if ((ia.s_addr & htonl(ipv4_masks[r->srcmask])) ==
 			    r->srcmatch.v4.s_addr)
 				return r;
 			break;
