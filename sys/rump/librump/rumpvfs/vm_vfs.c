@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_vfs.c,v 1.20 2010/09/06 21:33:07 pooka Exp $	*/
+/*	$NetBSD: vm_vfs.c,v 1.21 2010/09/09 09:50:21 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_vfs.c,v 1.20 2010/09/06 21:33:07 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_vfs.c,v 1.21 2010/09/09 09:50:21 pooka Exp $");
 
 #include <sys/param.h>
 
@@ -47,11 +47,13 @@ __KERNEL_RCSID(0, "$NetBSD: vm_vfs.c,v 1.20 2010/09/06 21:33:07 pooka Exp $");
 void
 uvm_aio_aiodone(struct buf *bp)
 {
+	struct uvm_object *uobj;
 	int i, npages = bp->b_bufsize >> PAGE_SHIFT;
 	struct vm_page **pgs;
 	vaddr_t va;
 	int pageout = 0;
 
+	KASSERT(npages > 0);
 	pgs = kmem_alloc(npages * sizeof(*pgs), KM_SLEEP);
 	for (i = 0; i < npages; i++) {
 		va = (vaddr_t)bp->b_data + (i << PAGE_SHIFT);
@@ -65,7 +67,16 @@ uvm_aio_aiodone(struct buf *bp)
 
 	uvm_pagermapout((vaddr_t)bp->b_data, npages);
 	uvm_pageout_done(pageout);
+
+	/* get uobj because we need it after pages might be recycled */
+	uobj = pgs[0]->uobject;
+	KASSERT(uobj);
+
+	mutex_enter(&uobj->vmobjlock);
+	mutex_enter(&uvm_pageqlock);
 	uvm_page_unbusy(pgs, npages);
+	mutex_exit(&uvm_pageqlock);
+	mutex_exit(&uobj->vmobjlock);
 
 	if (BUF_ISWRITE(bp) && (bp->b_cflags & BC_AGE) != 0) {
 		mutex_enter(bp->b_objlock);
