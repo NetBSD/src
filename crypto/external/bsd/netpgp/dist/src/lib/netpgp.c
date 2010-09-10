@@ -34,7 +34,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: netpgp.c,v 1.75 2010/09/08 03:21:22 agc Exp $");
+__RCSID("$NetBSD: netpgp.c,v 1.76 2010/09/10 20:14:19 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -256,20 +256,25 @@ readsshkeys(netpgp_t *netpgp, char *homedir, const char *needseckey)
 {
 	__ops_keyring_t	*pubring;
 	__ops_keyring_t	*secring;
+	struct stat	 st;
 	unsigned	 hashtype;
 	char		*hash;
 	char		 f[MAXPATHLEN];
 	char		*filename;
 
 	if ((filename = netpgp_getvar(netpgp, "sshkeyfile")) == NULL) {
+		/* set reasonable default for RSA key */
 		(void) snprintf(f, sizeof(f), "%s/id_rsa.pub", homedir);
 		filename = f;
-	} else {
+	} else if (strcmp(&filename[strlen(filename) - 4], ".pub") != 0) {
 		/* got ssh keys, check for pub file name */
-		if (strcmp(&filename[strlen(filename) - 4], ".pub") != 0) {
-			(void) fprintf(stderr, "readsshkeys: bad pubkey filename '%s'\n", filename);
-			return 0;
-		}
+		(void) snprintf(f, sizeof(f), "%s.pub", filename);
+		filename = f;
+	}
+	/* check the pub file exists */
+	if (stat(filename, &st) != 0) {
+		(void) fprintf(stderr, "readsshkeys: bad pubkey filename '%s'\n", filename);
+		return 0;
 	}
 	if ((pubring = calloc(1, sizeof(*pubring))) == NULL) {
 		(void) fprintf(stderr, "readsshkeys: bad alloc\n");
