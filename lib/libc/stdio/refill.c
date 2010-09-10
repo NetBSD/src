@@ -1,4 +1,4 @@
-/*	$NetBSD: refill.c,v 1.13 2003/08/07 16:43:30 agc Exp $	*/
+/*	$NetBSD: refill.c,v 1.14 2010/09/10 10:29:23 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)refill.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: refill.c,v 1.13 2003/08/07 16:43:30 agc Exp $");
+__RCSID("$NetBSD: refill.c,v 1.14 2010/09/10 10:29:23 drochner Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -91,6 +91,7 @@ __srefill(fp)
 	if ((fp->_flags & __SRD) == 0) {
 		if ((fp->_flags & __SRW) == 0) {
 			errno = EBADF;
+			fp->_flags |= __SERR;
 			return (EOF);
 		}
 		/* switch to reading */
