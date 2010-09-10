@@ -1,4 +1,4 @@
-/*	$NetBSD: dm9000.c,v 1.1 2010/09/08 22:01:29 ahoka Exp $	*/
+/*	$NetBSD: dm9000.c,v 1.2 2010/09/10 08:58:36 ahoka Exp $	*/
 
 /*
  * Copyright (c) 2009 Paul Fleischer
@@ -408,10 +408,6 @@ int dme_intr(void *arg)
 	}
 #endif
 
-#ifdef DIAGNOSTIC
-	sc->sc_inside_interrupt = false;
-#endif
-	
 	/* Enable interrupts again */
 	dme_write(sc, DM9000_IMR, DM9000_IMR_PAR | DM9000_IMR_PRM |
 		 DM9000_IMR_PTM);
