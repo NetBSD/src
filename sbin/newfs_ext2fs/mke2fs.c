@@ -1,4 +1,4 @@
-/*	$NetBSD: mke2fs.c,v 1.13 2009/10/19 18:41:08 bouyer Exp $	*/
+/*	$NetBSD: mke2fs.c,v 1.14 2010/09/10 15:51:20 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2007 Izumi Tsutsui.  All rights reserved.
@@ -92,8 +92,7 @@
  *	- Design and Implementation of the Second Extended Filesystem
  *		http://e2fsprogs.sourceforge.net/ext2intro.html
  *	- Linux Documentation "The Second Extended Filesystem"
- *		src/linux/Documentation/filesystems/ext2.txt
- *		    in the Linux kernel distribution
+ *		http://www.kernel.org/doc/Documentation/filesystems/ext2.txt
  */
 
 #include <sys/cdefs.h>
@@ -101,7 +100,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.11 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: mke2fs.c,v 1.13 2009/10/19 18:41:08 bouyer Exp $");
+__RCSID("$NetBSD: mke2fs.c,v 1.14 2010/09/10 15:51:20 tsutsui Exp $");
 #endif
 #endif /* not lint */
 
