@@ -246,6 +246,7 @@ b64encode(const char *in, const size_t insize, void *vp, size_t outsize, int lin
 	int              blocksout;
 	int              wordlen;
 
+	wordlen = 0;
 	for (blocksout = 0, inp = in, outp = out; (size_t)(inp - in) < insize && (size_t)(outp - out) < outsize;) {
 		for (wordlen = 0, i = 0; i < sizeof(wordin); i++) {
 			wordin[i] = (uint8_t) *inp++;
@@ -262,13 +263,20 @@ b64encode(const char *in, const size_t insize, void *vp, size_t outsize, int lin
 			}
 			blocksout++;
 		}
-		if (blocksout >= (int)(linesize / sizeof(wordout)) ||
-		    (size_t)(inp - in) >= insize) {
-			if (blocksout) {
-				*outp++ = '\r';
-				*outp++ = '\n';
+		if (linesize > 0) {
+			if (blocksout >= (int)(linesize / sizeof(wordout)) ||
+			    (size_t)(inp - in) >= insize) {
+				if (blocksout) {
+					*outp++ = '\r';
+					*outp++ = '\n';
+				}
+				blocksout = 0;
 			}
-			blocksout = 0;
+		}
+	}
+	if (wordlen == 3 && (size_t)(outp - out) < outsize - 4) {
+		for (i = 0 ; i < 4 ; i++) {
+			*outp++ = '=';
 		}
 	}
 	return (int)(outp - out);
@@ -296,16 +304,16 @@ int
 b64decode(const char *in, const size_t insize, void *vp, size_t outsize)
 {
 	const char	*inp;
+	unsigned	 wordlen;
+	unsigned	 i;
 	uint8_t    	 wordout[3];
 	uint8_t    	 wordin[4];
 	uint8_t    	 v;
 	char		*out = vp;
 	char		*outp;
-	int              wordlen;
-	int              i;
 
 	for (inp = in, outp = out ; (size_t)(inp - in) < insize && (size_t)(outp - out) < outsize ; ) {
-		for (wordlen = 0, i = 0 ; i < 4 && (size_t)(inp - in) < insize ; i++) {
+		for (wordlen = 0, i = 0 ; i < sizeof(wordin) && (size_t)(inp - in) < insize ; i++) {
 			/* get a single character */
 			for (v = 0; (size_t)(inp - in) < insize && v == 0 ; ) {
 				if (*inp == '\r' && *(inp + 1) == '\n') {
@@ -318,7 +326,7 @@ b64decode(const char *in, const size_t insize, void *vp, size_t outsize)
 					}
 				}
 			}
-			/* perhaps 0 pad */
+			/* perhaps 0x0 pad */
 			if ((size_t)(inp - in) < insize) {
 				wordlen += 1;
 				if (v) {
