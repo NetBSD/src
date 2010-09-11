@@ -1,4 +1,4 @@
-/*	$NetBSD: t_cd.c,v 1.1 2010/08/24 11:29:45 pooka Exp $	*/
+/*	$NetBSD: t_cd.c,v 1.2 2010/09/11 16:03:41 martin Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -31,6 +31,7 @@
 #include <atf-c.h>
 #include <fcntl.h>
 #include <stdio.h>
+#include <util.h>
 
 #include <rump/rump.h>
 #include <rump/rump_syscalls.h>
@@ -48,10 +49,12 @@ ATF_TC_HEAD(noisyeject, tc)
 
 ATF_TC_BODY(noisyeject, tc)
 {
+	static char fname[] = "/dev/rcd0_";
 	int fd, arg = 0;
 
+	fname[strlen(fname)-1] = 'a' + getrawpartition();
 	rump_init();
-	RL(fd = rump_sys_open("/dev/rcd0d", O_RDWR));
+	RL(fd = rump_sys_open(fname, O_RDWR));
 	RL(rump_sys_ioctl(fd, DIOCEJECT, &arg));
 
 	ATF_REQUIRE_EQ(rump_scsitest_err[RUMP_SCSITEST_NOISYSYNC], 0);
