@@ -1,4 +1,4 @@
-/*	$NetBSD: map_object.c,v 1.39 2010/01/10 07:29:47 skrll Exp $	 */
+/*	$NetBSD: map_object.c,v 1.40 2010/09/11 11:11:52 skrll Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: map_object.c,v 1.39 2010/01/10 07:29:47 skrll Exp $");
+__RCSID("$NetBSD: map_object.c,v 1.40 2010/09/11 11:11:52 skrll Exp $");
 #endif /* not lint */
 
 #include <errno.h>
@@ -114,7 +114,8 @@ _rtld_map_object(const char *path, int fd, const struct stat *sb)
 	/* Make sure the file is valid */
 	if (memcmp(ELFMAG, ehdr->e_ident, SELFMAG) != 0 ||
 	    ehdr->e_ident[EI_CLASS] != ELFCLASS) {
-		_rtld_error("%s: unrecognized file format2 [%x != %x]", path, ehdr->e_ident[EI_CLASS], ELFCLASS);
+		_rtld_error("%s: unrecognized file format2 [%x != %x]", path,
+		    ehdr->e_ident[EI_CLASS], ELFCLASS);
 		goto bad;
 	}
 	/* Elf_e_ident includes class */
