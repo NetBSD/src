@@ -274,11 +274,6 @@ b64encode(const char *in, const size_t insize, void *vp, size_t outsize, int lin
 			}
 		}
 	}
-	if (wordlen == 3 && (size_t)(outp - out) < outsize - 4) {
-		for (i = 0 ; i < 4 ; i++) {
-			*outp++ = '=';
-		}
-	}
 	return (int)(outp - out);
 }
 
@@ -315,7 +310,7 @@ b64decode(const char *in, const size_t insize, void *vp, size_t outsize)
 	for (inp = in, outp = out ; (size_t)(inp - in) < insize && (size_t)(outp - out) < outsize ; ) {
 		for (wordlen = 0, i = 0 ; i < sizeof(wordin) && (size_t)(inp - in) < insize ; i++) {
 			/* get a single character */
-			for (v = 0; (size_t)(inp - in) < insize && v == 0 ; ) {
+			for (v = 0; (size_t)(inp - in) <= insize && v == 0 ; ) {
 				if (*inp == '\r' && *(inp + 1) == '\n') {
 					inp += 2;
 				} else {
@@ -327,7 +322,7 @@ b64decode(const char *in, const size_t insize, void *vp, size_t outsize)
 				}
 			}
 			/* perhaps 0x0 pad */
-			if ((size_t)(inp - in) < insize) {
+			if ((size_t)(inp - in) <= insize) {
 				wordlen += 1;
 				if (v) {
 					wordin[i] = (uint8_t) (v - 1);
