@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.216 2010/07/07 01:30:35 chs Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.217 2010/09/11 20:53:04 chs Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.216 2010/07/07 01:30:35 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.217 2010/09/11 20:53:04 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -779,6 +779,7 @@ again:
 			idb.d_reclen = (u_short)linux_reclen;
 		}
 		strcpy(idb.d_name, bdp->d_name);
+		idb.d_name[strlen(idb.d_name) + 1] = bdp->d_type;
 		if ((error = copyout((void *)&idb, outp, linux_reclen)))
 			goto out;
 		/* advance past this real entry */
