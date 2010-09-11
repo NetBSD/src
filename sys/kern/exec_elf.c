@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.c,v 1.25 2010/09/07 21:32:03 joerg Exp $	*/
+/*	$NetBSD: exec_elf.c,v 1.26 2010/09/11 20:49:28 chs Exp $	*/
 
 /*-
  * Copyright (c) 1994, 2000, 2005 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.25 2010/09/07 21:32:03 joerg Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.26 2010/09/11 20:49:28 chs Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pax.h"
@@ -636,11 +636,12 @@ exec_elf_makecmds(struct lwp *l, struct exec_package *epp)
 {
 	Elf_Ehdr *eh = epp->ep_hdr;
 	Elf_Phdr *ph, *pp;
-	Elf_Addr phdr = 0, pos = 0, end_text = 0;
+	Elf_Addr phdr = 0, computed_phdr = 0, pos = 0, end_text = 0;
 	int error, i, nload;
 	char *interp = NULL;
 	u_long phsize;
 	struct proc *p;
+	struct elf_args *ap = NULL;
 	bool is_dyn;
 
 	if (epp->ep_hdrvalid < sizeof(Elf_Ehdr))
@@ -749,6 +750,9 @@ exec_elf_makecmds(struct lwp *l, struct exec_package *epp)
 				epp->ep_daddr = addr;
 				epp->ep_dsize = size;
 			}
+			if (ph[i].p_offset == 0) {
+				computed_phdr = ph[i].p_vaddr + eh->e_phoff;
+			}
 			break;
 
 		case PT_SHLIB:
@@ -771,6 +775,10 @@ exec_elf_makecmds(struct lwp *l, struct exec_package *epp)
 			break;
 		}
 	}
+	if (interp || (epp->ep_flags & EXEC_FORCEAUX) != 0) {
+		ap = malloc(sizeof(struct elf_args), M_TEMP, M_WAITOK);
+		ap->arg_interp = (vaddr_t)NULL;
+	}
 
 	if (epp->ep_daddr == ELFDEFNNAME(NO_ADDR)) {
 		epp->ep_daddr = end_text;
@@ -782,30 +790,26 @@ exec_elf_makecmds(struct lwp *l, struct exec_package *epp)
 	 * its interpreter
 	 */
 	if (interp) {
-		struct elf_args *ap;
 		int j = epp->ep_vmcmds.evs_used;
 		u_long interp_offset;
 
-		ap = (struct elf_args *)malloc(sizeof(struct elf_args),
-		    M_TEMP, M_WAITOK);
 		if ((error = elf_load_file(l, epp, interp,
 		    &epp->ep_vmcmds, &interp_offset, ap, &pos)) != 0) {
-			free(ap, M_TEMP);
 			goto bad;
 		}
 		ap->arg_interp = epp->ep_vmcmds.evs_cmds[j].ev_addr;
 		epp->ep_entry = ap->arg_interp + interp_offset;
-		ap->arg_phaddr = phdr;
-
-		ap->arg_phentsize = eh->e_phentsize;
-		ap->arg_phnum = eh->e_phnum;
-		ap->arg_entry = eh->e_entry;
-
-		epp->ep_emul_arg = ap;
-
 		PNBUF_PUT(interp);
 	} else
 		epp->ep_entry = eh->e_entry;
+
+	if (ap) {
+		ap->arg_phaddr = phdr ? phdr : computed_phdr;
+		ap->arg_phentsize = eh->e_phentsize;
+		ap->arg_phnum = eh->e_phnum;
+		ap->arg_entry = eh->e_entry;
+		epp->ep_emul_arg = ap;
+	}
 
 #ifdef ELF_MAP_PAGE_ZERO
 	/* Dell SVR4 maps page zero, yeuch! */
@@ -818,6 +822,8 @@ exec_elf_makecmds(struct lwp *l, struct exec_package *epp)
 bad:
 	if (interp)
 		PNBUF_PUT(interp);
+	if (ap)
+		free(ap, M_TEMP);
 	kmem_free(ph, phsize);
 	kill_vmcmds(&epp->ep_vmcmds);
 	return error;

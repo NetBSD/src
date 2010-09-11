@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.h,v 1.130 2010/05/02 05:30:20 dholland Exp $	*/
+/*	$NetBSD: exec.h,v 1.131 2010/09/11 20:49:28 chs Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -209,6 +209,7 @@ struct exec_package {
 #define	EXEC_SKIPARG	0x0008		/* don't copy user-supplied argv[0] */
 #define	EXEC_DESTR	0x0010		/* destructive ops performed */
 #define	EXEC_32		0x0020		/* 32-bit binary emulation */
+#define	EXEC_FORCEAUX	0x0040		/* always use ELF AUX vector */
 
 struct exec_vmcmd {
 	int	(*ev_proc)(struct lwp *, struct exec_vmcmd *);
