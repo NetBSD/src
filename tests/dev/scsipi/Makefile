@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2010/09/02 16:55:15 he Exp $
+#	$NetBSD: Makefile,v 1.3 2010/09/11 16:03:41 martin Exp $
 #
 
 .include <bsd.own.mk>
@@ -8,7 +8,7 @@ TESTSDIR=	${TESTSBASE}/dev/scsipi
 TESTS_C=	t_cd
 
 LDADD+=	-lrumpdev_scsitest -lrumpdev_scsipi -lrumpdev_disk -lrumpdev -lrumpvfs
-LDADD+=	-lrump
+LDADD+=	-lrump -lutil
 LDADD+=	-lrumpuser -lpthread
 
 WARNS=	4
