@@ -411,11 +411,11 @@
     <td><p><xsl:apply-templates /></p></td>
   </xsl:template>
   <xsl:template match="expected_timeout" mode="tc">
-    <td class="tcr-exfail"><p>Expected Failure</p></td>
+    <td class="tcr-exfail"><p>Expected Timeout</p></td>
     <td><p><xsl:apply-templates /></p></td>
   </xsl:template>
   <xsl:template match="expected_signal" mode="tc">
-    <td class="tcr-exfail"><p>Expected Failure</p></td>
+    <td class="tcr-exfail"><p>Expected Signal</p></td>
     <td><p><xsl:apply-templates /></p></td>
   </xsl:template>
 
