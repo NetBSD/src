@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.241 2010/08/22 14:12:10 pgoyette Exp $	*/
+/*	$NetBSD: systm.h,v 1.242 2010/09/12 16:07:40 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -301,6 +301,7 @@ void	statclock(struct clockframe *);
 #ifdef NTP
 void	ntp_init(void);
 #ifdef PPS_SYNC
+struct timespec;
 void	hardpps(struct timespec *, long);
 #endif /* PPS_SYNC */
 #else
