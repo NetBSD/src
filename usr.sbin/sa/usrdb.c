@@ -1,4 +1,4 @@
-/* $NetBSD: usrdb.c,v 1.11 2003/11/12 13:31:08 grant Exp $ */
+/* $NetBSD: usrdb.c,v 1.11.16.1 2010/09/12 21:18:05 bouyer Exp $ */
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: usrdb.c,v 1.11 2003/11/12 13:31:08 grant Exp $");
+__RCSID("$NetBSD: usrdb.c,v 1.11.16.1 2010/09/12 21:18:05 bouyer Exp $");
 #endif
 
 #include <sys/types.h>
@@ -294,7 +294,7 @@ static int
 uid_compare(k1, k2)
 	const DBT *k1, *k2;
 {
-	u_long d1, d2;
+	uid_t d1, d2;
 
 	memcpy(&d1, k1->data, sizeof(d1));
 	memcpy(&d2, k2->data, sizeof(d2));
