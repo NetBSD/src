@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.241 2010/09/12 04:54:31 snj Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.242 2010/09/12 19:00:36 snj Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -17477,4 +17477,16 @@ lib/libc/stdlib/exit.c				1.13
 	ld.elf_so.  This fixes hppa ld.elf_so by reducing the number of
 	PLABELs required to the number before the hack was applied.
 	[skrll, ticket #1451]
+
+sys/dist/ipf/netinet/ip_fil_netbsd.c		1.56
+
+	- Fix mbuf corruption when sending ICMP errors for blocked IPv6
+	packets due to wrong buffer size computations. The corrupted
+	mbufs could lead to a panic.
+	- Fix computation of link mtu where the link mtu itself is
+	unspecified.
+	- Limit ICMP error packets for IPv6 to MMTU as required by RFC4443.
+	This also avoids dropped errors when the length exceeds the link
+	mtu.
+	[mlelstv, ticket #1453]
 
