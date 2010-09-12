@@ -1,4 +1,4 @@
-/*	$NetBSD: eap.c,v 1.2 2005/02/20 10:47:17 cube Exp $	*/
+/*	$NetBSD: eap.c,v 1.3 2010/09/12 16:03:39 drochner Exp $	*/
 
 /*
  * eap.c - Extensible Authentication Protocol for PPP (RFC 2284)
@@ -50,7 +50,7 @@
 #if 0
 #define RCSID	"Id: eap.c,v 1.4 2004/11/09 22:39:25 paulus Exp"
 #else
-__RCSID("$NetBSD: eap.c,v 1.2 2005/02/20 10:47:17 cube Exp $");
+__RCSID("$NetBSD: eap.c,v 1.3 2010/09/12 16:03:39 drochner Exp $");
 #endif
 #endif
 
@@ -198,8 +198,8 @@ static void eap_figure_next_state __P((eap_state *, int));
 static void eap_send_request __P((eap_state *));
 static void eap_rechallenge __P((void *));
 static void srp_lwrechallenge __P((void *));
-static void eap_send_response __P((eap_state *, u_char, u_char, u_char *, int));
-static void eap_chap_response __P((eap_state *, u_char, u_char *, char *, int));
+static void eap_send_response __P((eap_state *, u_char, u_char, const u_char *, int));
+static void eap_chap_response __P((eap_state *, u_char, const u_char *, const char *, int));
 static void eap_send_nak __P((eap_state *,u_char,u_char)); 
 static void eap_request __P((eap_state *, u_char *, int, int));
 static void eap_response __P((eap_state *, u_char *, int, int));
@@ -1065,12 +1065,8 @@ int unit;
  * Format and send a regular EAP Response message.
  */
 static void
-eap_send_response(esp, id, typenum, str, lenstr)
-eap_state *esp;
-u_char id;
-u_char typenum;
-u_char *str;
-int lenstr;
+eap_send_response(eap_state *esp, u_char id, u_char typenum,
+		  const u_char *str, int lenstr)
 {
 	u_char *outp;
 	int msglen;
@@ -1096,12 +1092,8 @@ int lenstr;
  * Format and send an MD5-Challenge EAP Response message.
  */
 static void
-eap_chap_response(esp, id, hash, name, namelen)
-eap_state *esp;
-u_char id;
-u_char *hash;
-char *name;
-int namelen;
+eap_chap_response(eap_state *esp, u_char id, const u_char *hash,
+		  const char *name, int namelen)
 {
 	u_char *outp;
 	int msglen;
@@ -1193,10 +1185,7 @@ u_char *str;
 #endif /* USE_SRP */
 
 static void
-eap_send_nak(esp, id, type)
-eap_state *esp;
-u_char id;
-u_char type;
+eap_send_nak(eap_state *esp, u_char id, u_char type)
 {
 	u_char *outp;
 	int msglen;

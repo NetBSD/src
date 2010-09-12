@@ -1,4 +1,4 @@
-/*	$NetBSD: fsck.h,v 1.47 2008/10/09 16:56:23 christos Exp $	*/
+/*	$NetBSD: fsck.h,v 1.48 2010/09/12 16:03:39 drochner Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -321,24 +321,24 @@ static inline u_int16_t iswap16 (u_int16_t);
 static inline u_int32_t iswap32 (u_int32_t);
 static inline u_int64_t iswap64 (u_int64_t);
 
-static inline u_int16_t iswap16(x)
-	u_int16_t x;
+static inline u_int16_t
+iswap16(u_int16_t x)
 {
 	if (needswap)
 		return bswap16(x);
 	else return x;
 }
 
-static inline u_int32_t iswap32(x)
-	u_int32_t x;
+static inline u_int32_t
+iswap32(u_int32_t x)
 {
 	if (needswap)
 		return bswap32(x);
 	else return x;
 }
 
-static inline u_int64_t iswap64(x)
-	u_int64_t x;
+static inline u_int64_t
+iswap64(u_int64_t x)
 {
 	if (needswap)
 		return bswap64(x);
