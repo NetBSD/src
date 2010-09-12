@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_core.c,v 1.38 2006/11/16 01:33:45 christos Exp $	*/
+/*	$NetBSD: esp_core.c,v 1.38.2.1 2010/09/12 21:16:46 bouyer Exp $	*/
 /*	$KAME: esp_core.c,v 1.53 2001/11/27 09:47:30 sakane Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_core.c,v 1.38 2006/11/16 01:33:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_core.c,v 1.38.2.1 2010/09/12 21:16:46 bouyer Exp $");
 
 #include "opt_inet.h"
 
@@ -409,9 +409,10 @@ esp_cbc_mature(sav)
 	}
 
 	algo = esp_algorithm_lookup(sav->alg_enc);
-	if (!algo) {
+	if (algo == NULL) {
 		ipseclog((LOG_ERR,
-		    "esp_cbc_mature %s: unsupported algorithm.\n", algo->name));
+		    "esp_cbc_mature: unsupported encryption algorithm %d\n",
+		    sav->alg_enc));
 		return 1;
 	}
 
