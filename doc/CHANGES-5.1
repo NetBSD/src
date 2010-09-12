@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.240 2010/09/07 19:40:07 bouyer Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.241 2010/09/12 04:54:31 snj Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -17470,4 +17470,11 @@ sys/arch/amd64/include/segments.h		1.21
 	as well as the GDT selector.  fixes PR 43835.
 	accept the LDT selector in check_sigcontext32() too.
 	[chs, ticket #1449]
+
+lib/libc/stdlib/exit.c				1.13
+
+	Only do the __libc_init hack in libc, i.e. remove it from
+	ld.elf_so.  This fixes hppa ld.elf_so by reducing the number of
+	PLABELs required to the number before the hack was applied.
+	[skrll, ticket #1451]
 
