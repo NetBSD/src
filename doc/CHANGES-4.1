@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.206 2010/08/05 01:44:13 riz Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.207 2010/09/12 21:19:33 bouyer Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -4215,4 +4215,28 @@ lib/libc/gen/glob.c				1.26 via patch
 
 	Fix globbing in libc and sftp.
 	[christos, ticket #1399]
+
+sys/netinet6/esp_aesctr.c			1.13
+sys/netinet6/esp_core.c				1.46
+
+	Fix some code paths where pointers are dereferenced after checking
+	that they are NULL (oops?)
+	[jym, ticket #1403]
+
+usr.sbin/sa/usrdb.c				1.14
+
+	On LP64 platforms, uid_t is not the same size as u_long, so the key
+	comparison function being given to db was comparing 4 extra bytes of
+	rubbish.
+	[dholland, ticket #1404]
+
+sys/dist/ipf/netinet/ip_fil_netbsd.c		1.56
+
+	Fix mbuf corruption when sending ICMP errors for blocked IPv6
+	packets due to wrong buffer size computations. The corrupted
+	mbufs could lead to a panic.
+	Fix computation of link mtu where the link mtu itself is unspecified.
+	Limit ICMP error packets for IPv6 to MMTU as required by RFC4443. This
+	also avoids dropped errors when the length exceeds the link mtu.
+	[mlelstv, ticket #1405]
 
