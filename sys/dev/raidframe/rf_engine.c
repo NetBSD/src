@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_engine.c,v 1.40 2009/11/17 18:54:26 jld Exp $	*/
+/*	$NetBSD: rf_engine.c,v 1.41 2010/09/13 08:43:06 drochner Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -55,7 +55,7 @@
  ****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_engine.c,v 1.40 2009/11/17 18:54:26 jld Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_engine.c,v 1.41 2010/09/13 08:43:06 drochner Exp $");
 
 #include <sys/errno.h>
 
@@ -171,6 +171,7 @@ rf_ConfigureEngine(RF_ShutdownList_t **listp, RF_Raid_t *raidPtr,
 	return (0);
 }
 
+#if 0
 static int
 BranchDone(RF_DagNode_t *node)
 {
@@ -211,6 +212,7 @@ BranchDone(RF_DagNode_t *node)
 		break;
 	}
 }
+#endif
 
 static int
 NodeReady(RF_DagNode_t *node)
