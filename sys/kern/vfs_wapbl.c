@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_wapbl.c,v 1.3.8.1 2009/02/24 04:13:35 snj Exp $	*/
+/*	$NetBSD: vfs_wapbl.c,v 1.3.8.2 2010/09/13 19:52:49 snj Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2008, 2009 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
  * This implements file system independent write ahead filesystem logging.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.3.8.1 2009/02/24 04:13:35 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.3.8.2 2010/09/13 19:52:49 snj Exp $");
 
 #include <sys/param.h>
 
@@ -2072,7 +2072,7 @@ wapbl_blkhash_init(struct wapbl_replay *wr, u_int size)
 		for (hashsize = 1; hashsize < size; hashsize <<= 1)
 			continue;
 		wr->wr_blkhash = wapbl_malloc(hashsize * sizeof(*wr->wr_blkhash));
-		for (i = 0; i < wr->wr_blkhashmask; i++)
+		for (i = 0; i < hashsize; i++)
 			LIST_INIT(&wr->wr_blkhash[i]);
 		wr->wr_blkhashmask = hashsize - 1;
 	}
