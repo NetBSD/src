@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.80 2010/08/07 06:44:08 sjg Exp $	*/
+/*	$NetBSD: compat.c,v 1.81 2010/09/13 15:36:57 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: compat.c,v 1.80 2010/08/07 06:44:08 sjg Exp $";
+static char rcsid[] = "$NetBSD: compat.c,v 1.81 2010/09/13 15:36:57 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)compat.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: compat.c,v 1.80 2010/08/07 06:44:08 sjg Exp $");
+__RCSID("$NetBSD: compat.c,v 1.81 2010/09/13 15:36:57 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -352,6 +352,12 @@ again:
 
     local = TRUE;
 
+#ifdef USE_META
+    if (useMeta) {
+	meta_compat_start();
+    }
+#endif
+    
     /*
      * Fork and execute the single command. If the fork fails, we abort.
      */
@@ -362,6 +368,11 @@ again:
     if (cpid == 0) {
 	Check_Cwd(av);
 	Var_ExportVars();
+#ifdef USE_META
+	if (useMeta) {
+	    meta_compat_child();
+	}
+#endif
 	if (local)
 	    (void)execvp(av[0], (char *const *)UNCONST(av));
 	else
@@ -374,6 +385,12 @@ again:
     if (bp)
 	free(bp);
     Lst_Replace(cmdNode, NULL);
+
+#ifdef USE_META
+    if (useMeta) {
+	meta_compat_parent();
+    }
+#endif
 
     /*
      * The child is off and running. Now all we can do is wait...
@@ -393,6 +410,11 @@ again:
 		status = WSTOPSIG(reason);		/* stopped */
 	    } else if (WIFEXITED(reason)) {
 		status = WEXITSTATUS(reason);		/* exited */
+#if defined(USE_META) && defined(USE_FILEMON_ONCE)
+		if (useMeta) {
+		    meta_cmd_finish(NULL);
+		}
+#endif
 		if (status != 0) {
 		    if (DEBUG(ERROR)) {
 		        fprintf(debug_file, "\n*** Failed target:  %s\n*** Failed command: ",
@@ -419,6 +441,11 @@ again:
 
 	    if (!WIFEXITED(reason) || (status != 0)) {
 		if (errCheck) {
+#ifdef USE_META
+		    if (useMeta) {
+			meta_job_error(NULL, gn, 0, status);
+		    }
+#endif
 		    gn->made = ERROR;
 		    if (keepgoing) {
 			/*
@@ -551,6 +578,11 @@ Compat_Make(void *gnp, void *pgnp)
 	     */
 	    if (!touchFlag || (gn->type & OP_MAKE)) {
 		curTarg = gn;
+#ifdef USE_META
+		if (useMeta && !NoExecute(gn)) {
+		    meta_job_start(NULL, gn);
+		}
+#endif
 		Lst_ForEach(gn->commands, CompatRunCommand, gn);
 		curTarg = NULL;
 	    } else {
@@ -559,6 +591,11 @@ Compat_Make(void *gnp, void *pgnp)
 	} else {
 	    gn->made = ERROR;
 	}
+#ifdef USE_META
+	if (useMeta && !NoExecute(gn)) {
+	    meta_job_finish(NULL);
+	}
+#endif
 
 	if (gn->made != ERROR) {
 	    /*

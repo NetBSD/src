@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.164 2010/05/24 21:04:49 sjg Exp $	*/
+/*	$NetBSD: parse.c,v 1.165 2010/09/13 15:36:57 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: parse.c,v 1.164 2010/05/24 21:04:49 sjg Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.165 2010/09/13 15:36:57 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.164 2010/05/24 21:04:49 sjg Exp $");
+__RCSID("$NetBSD: parse.c,v 1.165 2010/09/13 15:36:57 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -196,10 +196,13 @@ typedef enum {
     Includes,	    /* .INCLUDES */
     Interrupt,	    /* .INTERRUPT */
     Libs,	    /* .LIBS */
+    Meta,	    /* .META */
     MFlags,	    /* .MFLAGS or .MAKEFLAGS */
     Main,	    /* .MAIN and we don't have anything user-specified to
 		     * make */
     NoExport,	    /* .NOEXPORT */
+    NoMeta,	    /* .NOMETA */
+    NoMetaCmp,	    /* .NOMETA_CMP */
     NoPath,	    /* .NOPATH */
     Not,	    /* Not special */
     NotParallel,    /* .NOTPARALLEL */
@@ -258,7 +261,10 @@ static struct {
 { ".MAIN",	  Main,		0 },
 { ".MAKE",  	  Attribute,   	OP_MAKE },
 { ".MAKEFLAGS",	  MFlags,   	0 },
+{ ".META",	  Meta,		OP_META },
 { ".MFLAGS",	  MFlags,   	0 },
+{ ".NOMETA",	  NoMeta,	OP_NOMETA },
+{ ".NOMETA_CMP",  NoMetaCmp,	OP_NOMETA_CMP },
 { ".NOPATH",	  NoPath,	OP_NOPATH },
 { ".NOTMAIN",	  Attribute,   	OP_NOTMAIN },
 { ".NOTPARALLEL", NotParallel,	0 },
