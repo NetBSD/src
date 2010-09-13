@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.243 2010/09/13 07:32:05 snj Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.244 2010/09/13 19:54:24 snj Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -17489,6 +17489,13 @@ sys/dist/ipf/netinet/ip_fil_netbsd.c		1.56
 	This also avoids dropped errors when the length exceeds the link
 	mtu.
 	[mlelstv, ticket #1453]
+
+sys/kern/vfs_wapbl.c				patch
+
+	Fix inconsistencies in the wapbl replay process which can lead to
+	a premature abort of the fsck run and possibly leave a corrupted
+	filesystem.  Addresses PR bin/43336.
+	[drochner, ticket #1454]
 
 gnu/usr.bin/groff/tmac/mdoc.local		patch
 sys/sys/param.h					patch
