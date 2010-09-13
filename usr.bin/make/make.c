@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.81 2010/07/06 03:56:59 dholland Exp $	*/
+/*	$NetBSD: make.c,v 1.82 2010/09/13 15:36:57 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: make.c,v 1.81 2010/07/06 03:56:59 dholland Exp $";
+static char rcsid[] = "$NetBSD: make.c,v 1.82 2010/09/13 15:36:57 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)make.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: make.c,v 1.81 2010/07/06 03:56:59 dholland Exp $");
+__RCSID("$NetBSD: make.c,v 1.82 2010/09/13 15:36:57 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -329,6 +329,12 @@ Make_OODate(GNode *gn)
 	}
 	oodate = (gn->flags & FORCE) ? TRUE : FALSE;
     }
+
+#ifdef USE_META
+    if (useMeta) {
+	oodate = meta_oodate(gn, oodate);
+    }
+#endif
 
     /*
      * If the target isn't out-of-date, the parents need to know its
