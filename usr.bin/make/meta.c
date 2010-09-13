@@ -28,6 +28,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
  */
+#if defined(USE_META)
 
 #ifdef HAVE_CONFIG_H
 # include "config.h"
@@ -957,3 +958,5 @@ meta_compat_parent(void)
     }
     fclose(fp);
 }
+
+#endif	/* USE_META */
