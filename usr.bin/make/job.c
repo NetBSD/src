@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.154 2010/08/07 21:28:40 sjg Exp $	*/
+/*	$NetBSD: job.c,v 1.155 2010/09/13 15:36:57 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: job.c,v 1.154 2010/08/07 21:28:40 sjg Exp $";
+static char rcsid[] = "$NetBSD: job.c,v 1.155 2010/09/13 15:36:57 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: job.c,v 1.154 2010/08/07 21:28:40 sjg Exp $");
+__RCSID("$NetBSD: job.c,v 1.155 2010/09/13 15:36:57 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -960,6 +960,12 @@ JobFinish(Job *job, int status)
 {
     Boolean 	 done, return_job_token;
 
+#ifdef USE_META
+    if (useMeta) {
+	meta_job_finish(job);
+    }
+#endif
+    
     if (DEBUG(JOB)) {
 	fprintf(debug_file, "Jobfinish: %d [%s], status %d\n",
 				job->pid, job->node->name, status);
@@ -1017,6 +1023,11 @@ JobFinish(Job *job, int status)
 		    MESSAGE(stdout, job->node);
 		    lastNode = job->node;
 		}
+#ifdef USE_META
+		if (useMeta) {
+		    meta_job_error(job, job->node, job->flags, WEXITSTATUS(status));
+		}
+#endif
 		(void)printf("*** [%s] Error code %d%s\n",
 				job->node->name,
 			       WEXITSTATUS(status),
@@ -1311,6 +1322,11 @@ JobExec(Job *job, char **argv)
 	/* Child */
 	sigset_t tmask;
 
+#ifdef USE_META
+	if (useMeta) {
+	    meta_job_child(job);
+	}
+#endif
 	/*
 	 * Reset all signal handlers; this is necessary because we also
 	 * need to unblock signals before we exec(2).
@@ -1574,6 +1590,11 @@ JobStart(GNode *gn, int flags)
 	 */
 	noExec = FALSE;
 
+#ifdef USE_META
+	if (useMeta) {
+	    meta_job_start(job, gn);
+	}
+#endif
 	/*
 	 * We can do all the commands at once. hooray for sanity
 	 */
@@ -1846,6 +1867,11 @@ end_loop:
 		    MESSAGE(stdout, job->node);
 		    lastNode = job->node;
 		}
+#ifdef USE_META
+		if (useMeta) {
+		    meta_job_output(job, cp, gotNL ? "\n" : "");
+		}
+#endif
 		(void)fprintf(stdout, "%s%s", cp, gotNL ? "\n" : "");
 		(void)fflush(stdout);
 	    }

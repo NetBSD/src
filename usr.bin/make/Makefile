@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.50 2010/04/22 19:15:23 sjg Exp $
+#	$NetBSD: Makefile,v 1.51 2010/09/13 15:36:57 sjg Exp $
 #	@(#)Makefile	5.2 (Berkeley) 12/28/90
 
 PROG=	make
@@ -12,6 +12,17 @@ SRCS+=	lstAppend.c lstAtEnd.c lstAtFront.c lstClose.c lstConcat.c \
 	lstInit.c lstInsert.c lstIsAtEnd.c lstIsEmpty.c lstLast.c \
 	lstMember.c lstNext.c lstOpen.c lstRemove.c lstReplace.c lstSucc.c
 SRCS += lstPrev.c
+
+# let people experiment for a bit
+USE_META ?= no
+.if ${USE_META:tl} != "no"
+SRCS+=	meta.c
+CPPFLAGS+= -DUSE_META
+FILEMON_H ?= ${.CURDIR:H:H}/sys/dev/filemon/filemon.h
+.if exists(${FILEMON_H}) && ${FILEMON_H:T} == "filemon.h"
+COPTS.meta.c += -DHAVE_FILEMON_H -I${FILEMON_H:H}
+.endif
+.endif
 
 .PATH:	${.CURDIR}/lst.lib
 .if make(install)

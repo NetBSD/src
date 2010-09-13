@@ -1,4 +1,4 @@
-/*	$NetBSD: job.h,v 1.39 2009/04/11 09:41:18 apb Exp $	*/
+/*	$NetBSD: job.h,v 1.40 2010/09/13 15:36:57 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -135,6 +135,11 @@ emul_poll(struct pollfd *fd, int nfd, int timeout);
  */
 struct pollfd;
 
+
+#ifdef USE_META
+# include "meta.h"
+#endif
+
 #define JOB_BUFSIZE	1024
 typedef struct Job {
     int       	pid;	    /* The child's process ID */
@@ -165,6 +170,10 @@ typedef struct Job {
 				/* Buffer for storing the output of the
 				 * job, line by line */
     int   	curPos;	/* Current position in op_outBuf */
+
+#ifdef USE_META
+    struct BuildMon	bm;
+#endif
 } Job;
 
 #define inPipe jobPipe[0]

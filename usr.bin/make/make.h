@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.82 2010/04/23 00:18:50 sjg Exp $	*/
+/*	$NetBSD: make.h,v 1.83 2010/09/13 15:36:57 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -260,6 +260,9 @@ typedef struct GNode {
 #define OP_PHONY	0x00010000  /* Not a file target; run always */
 #define OP_NOPATH	0x00020000  /* Don't search for file in the path */
 #define OP_WAIT 	0x00040000  /* .WAIT phony node */
+#define OP_NOMETA	0x00080000  /* .NOMETA do not create a .meta file */
+#define OP_META		0x00100000  /* .META we _do_ want a .meta file */
+#define OP_NOMETA_CMP	0x00200000  /* Do not compare commands in .meta file */
 /* Attributes applied by PMake */
 #define OP_TRANSFORM	0x80000000  /* The node is a transformation rule */
 #define OP_MEMBER 	0x40000000  /* Target is a member of an archive */
@@ -433,6 +436,8 @@ extern int debug;
 #define DEBUG_SHELL	0x00800
 #define DEBUG_ERROR	0x01000
 #define DEBUG_LOUD	0x02000
+#define DEBUG_META	0x04000
+
 #define DEBUG_GRAPH3	0x10000
 #define DEBUG_SCRIPT	0x20000
 #define DEBUG_PARSE	0x40000
