@@ -1,4 +1,4 @@
-/* $NetBSD: hdaudio_ids.h,v 1.1 2010/09/02 01:55:31 jmcneill Exp $ */
+/* $NetBSD: hdaudio_ids.h,v 1.2 2010/09/13 22:37:02 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -37,6 +37,7 @@
 #define	HDA_VENDOR_VIA			0x1106
 #define	HDA_VENDOR_SIGMATEL2		0x111d
 #define	HDA_VENDOR_ANALOG_DEVICES	0x11d4
+#define	HDA_VENDOR_CONEXANT		0x14f1
 #define	HDA_VENDOR_CMEDIA		0x434d
 #define	HDA_VENDOR_INTEL		0x8086
 #define	HDA_VENDOR_SIGMATEL		0x8384
