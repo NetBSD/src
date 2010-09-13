@@ -37,7 +37,9 @@
 #include <fcntl.h>
 #include <libgen.h>
 #include <errno.h>
+#if !defined(HAVE_CONFIG_H) || defined(HAVE_ERR_H)
 #include <err.h>
+#endif
 
 #include "make.h"
 #include "job.h"
@@ -68,6 +70,10 @@ extern Boolean comatMake;
 #endif
 #ifndef ROUNDUP
 # define ROUNDUP(n, u)   (N2U((n), (u)) * (u))
+#endif
+
+#if !defined(HAVE_STRSEP)
+# define strsep(s, d) stresep((s), (d), 0)
 #endif
 
 /*
@@ -567,11 +573,9 @@ meta_job_error(Job *job, GNode *gn, int flags, int status)
     }
     getcwd(cwd, sizeof(cwd));
     Var_Set(".ERROR_CWD", cwd, VAR_GLOBAL, 0);
-#ifdef USE_FILEMON
     if (pbm) {
 	Var_Set(".ERROR_META_FILE", pbm->meta_fname, VAR_GLOBAL, 0);
     }
-#endif
 }
 
 void
