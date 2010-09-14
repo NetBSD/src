@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.24 2010/07/06 20:50:34 cegger Exp $	*/
+/*	$NetBSD: pte.h,v 1.25 2010/09/14 21:34:02 jym Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -267,7 +267,7 @@ typedef uint32_t pt_entry_t;		/* PTE */
 #define	PG_KW		0x00000002	/* kernel read-write */
 
 #ifdef PAE
-#define	PG_NX		0x8000000000000000 /* No-execute */
+#define	PG_NX		0x8000000000000000ULL /* No-execute */
 #else
 #define	PG_NX		0		/* dummy */
 #endif
