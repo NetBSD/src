@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.181 2010/09/13 16:32:00 sjg Exp $
+.\"	$NetBSD: make.1,v 1.182 2010/09/14 11:57:03 wiz Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -766,15 +766,15 @@ runs in.
 It can contain a number of keywords:
 .Bl -hang -width ignore-cmd
 .It Pa compat
-Like 
+Like
 .Fl B
-puts 
+puts
 .Nm
 into "compat" mode.
 .It Pa meta
 Puts
 .Nm
-into "meta" mode, where meta files are created for each target 
+into "meta" mode, where meta files are created for each target
 to capture the command run, the output generated and if
 .Xr filemon 4
 is available, the system calls which are of interest to
@@ -787,7 +787,7 @@ The message printed the value of:
 .Va .MAKE.META.PREFIX .
 .It Pa ignore-cmd
 Some makefiles have commands which are simply not stable.
-This keyword causes them to be ignored for 
+This keyword causes them to be ignored for
 determining whether a target is out of date in "meta" mode.
 See also
 .Ic .NOMETA_CMP .
@@ -800,7 +800,7 @@ If not empty, it can be used to trigger processing of
 .It Va .MAKE.META.FILES
 In "meta" mode, this variable contains a list of all the meta files
 used (updated or not).
-This list can be used to process the meta files to extract dependency 
+This list can be used to process the meta files to extract dependency
 information.
 .It Va .MAKE.META.PREFIX
 Defines the message printed for each meta file updated in "meta verbose" mode.
@@ -1659,7 +1659,7 @@ Normally used to mark recursive
 .It Ic .META
 Create a meta file for the target, even if it is flagged as
 .Ic .PHONY ,
-.Ic .MAKE 
+.Ic .MAKE ,
 or
 .Ic .SPECIAL .
 Usage in conjunction with
@@ -1669,14 +1669,14 @@ is the most likely case.
 Do not create a meta file for the target.
 Meta files are also not created for
 .Ic .PHONY ,
-.Ic .MAKE
+.Ic .MAKE ,
 or
 .Ic .SPECIAL
 targets.
 .It Ic .NOMETA_CMP
 Ignore differences in commands when deciding if target is out of date.
 This is useful if the command contains a value which always changes.
-If the number of commands change, though the target will still be out of date.
+If the number of commands change, though, the target will still be out of date.
 .It Ic .NOPATH
 Do not search for the target in the directories specified by
 .Ic .PATH .
