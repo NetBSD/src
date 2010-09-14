@@ -1,4 +1,4 @@
-/*	$NetBSD: cgthree.c,v 1.26 2009/11/25 21:10:56 macallan Exp $ */
+/*	$NetBSD: cgthree.c,v 1.27 2010/09/14 18:43:41 macallan Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgthree.c,v 1.26 2009/11/25 21:10:56 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgthree.c,v 1.27 2010/09/14 18:43:41 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -234,20 +234,6 @@ cgthreeattach(struct cgthree_softc *sc, const char *name, int isconsole)
 		 * we're not the console so we just clear the screen and don't 
 		 * set up any sort of text display
 		 */
-		if (cgthree_defaultscreen.textops == NULL) {
-			/* 
-			 * ugly, but...
-			 * we want the console settings to win, so we only
-			 * touch anything when we find an untouched screen
-			 * definition. In this case we fill it from fb to
-			 * avoid problems in case no cgthree is the console
-			 */
-			ri = &sc->sc_fb.fb_rinfo;
-			cgthree_defaultscreen.textops = &ri->ri_ops;
-			cgthree_defaultscreen.capabilities = ri->ri_caps;
-			cgthree_defaultscreen.nrows = ri->ri_rows;
-			cgthree_defaultscreen.ncols = ri->ri_cols;
-		}
 	}
 
 	/* Initialize the default color map. */
@@ -557,6 +543,8 @@ cgthree_init_screen(void *cookie, struct vcons_screen *scr,
 {
 	struct cgthree_softc *sc = cookie;
 	struct rasops_info *ri = &scr->scr_ri;
+
+	scr->scr_flags |= VCONS_DONT_READ;
 
 	ri->ri_depth = 8;
 	ri->ri_width = sc->sc_width;
