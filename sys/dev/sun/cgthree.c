@@ -1,4 +1,4 @@
-/*	$NetBSD: cgthree.c,v 1.27 2010/09/14 18:43:41 macallan Exp $ */
+/*	$NetBSD: cgthree.c,v 1.28 2010/09/14 19:36:13 macallan Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgthree.c,v 1.27 2010/09/14 18:43:41 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgthree.c,v 1.28 2010/09/14 19:36:13 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -221,6 +221,8 @@ cgthreeattach(struct cgthree_softc *sc, const char *name, int isconsole)
 		/* we mess with cg3_console_screen only once */
 		vcons_init_screen(&sc->vd, &cg3_console_screen, 1,
 		    &defattr);
+		memset(sc->sc_fb.fb_pixels, (defattr >> 16) & 0xff,
+		    sc->sc_stride * sc->sc_height);
 		cg3_console_screen.scr_flags |= VCONS_SCREEN_IS_STATIC;
 
 		cgthree_defaultscreen.textops = &ri->ri_ops;
@@ -229,6 +231,7 @@ cgthreeattach(struct cgthree_softc *sc, const char *name, int isconsole)
 		cgthree_defaultscreen.ncols = ri->ri_cols;
 		sc->vd.active = &cg3_console_screen;
 		wsdisplay_cnattach(&cgthree_defaultscreen, ri, 0, 0, defattr);
+		vcons_replay_msgbuf(&cg3_console_screen);
 	} else {
 		/* 
 		 * we're not the console so we just clear the screen and don't 
@@ -554,8 +557,6 @@ cgthree_init_screen(void *cookie, struct vcons_screen *scr,
 
 	ri->ri_bits = sc->sc_fb.fb_pixels;
 
-	memset(sc->sc_fb.fb_pixels, (*defattr >> 16) & 0xff,
-	    sc->sc_stride * sc->sc_height);
 	rasops_init(ri, sc->sc_height/8, sc->sc_width/8);
 	ri->ri_caps = WSSCREEN_WSCOLORS | WSSCREEN_REVERSE;
 	rasops_reconfig(ri, sc->sc_height / ri->ri_font->fontheight,
