@@ -1,4 +1,4 @@
-/*	$NetBSD: r128fb.c,v 1.11 2010/09/09 01:22:11 macallan Exp $	*/
+/*	$NetBSD: r128fb.c,v 1.12 2010/09/14 02:11:06 macallan Exp $	*/
 
 /*
  * Copyright (c) 2007 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: r128fb.c,v 1.11 2010/09/09 01:22:11 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: r128fb.c,v 1.12 2010/09/14 02:11:06 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -312,13 +312,6 @@ r128fb_attach(device_t parent, device_t self, void *aux)
 		(*ri->ri_ops.allocattr)(ri, 0, 0, 0, &defattr);
 	}
 
-	aa.console = is_console;
-	aa.scrdata = &sc->sc_screenlist;
-	aa.accessops = &r128fb_accessops;
-	aa.accesscookie = &sc->vd;
-
-	config_found(sc->sc_dev, &aa, wsemuldisplaydevprint);
-
 	/* no suspend/resume support yet */
 	pmf_device_register(sc->sc_dev, NULL, NULL);
 	reg = bus_space_read_4(sc->sc_memt, sc->sc_regh, R128_LVDS_GEN_CNTL);
@@ -331,8 +324,17 @@ r128fb_attach(device_t parent, device_t self, void *aux)
 		    r128fb_brightness_up, TRUE);
 		pmf_event_register(sc->sc_dev, PMFE_DISPLAY_BRIGHTNESS_DOWN,
 		    r128fb_brightness_down, TRUE);
+		aprint_verbose("%s: LVDS output is active, enabling backlight"
+			       " control\n", device_xname(self));
 	} else
 		sc->sc_have_backlight = 0;	
+
+	aa.console = is_console;
+	aa.scrdata = &sc->sc_screenlist;
+	aa.accessops = &r128fb_accessops;
+	aa.accesscookie = &sc->vd;
+
+	config_found(sc->sc_dev, &aa, wsemuldisplaydevprint);
 }
 
 static int
@@ -343,6 +345,7 @@ r128fb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 	struct r128fb_softc *sc = vd->cookie;
 	struct wsdisplay_fbinfo *wdf;
 	struct vcons_screen *ms = vd->active;
+	struct wsdisplay_param  *param;
 
 	switch (cmd) {
 
@@ -392,6 +395,26 @@ r128fb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 				}
 			}
 			return 0;
+
+	case WSDISPLAYIO_GETPARAM:
+		param = (struct wsdisplay_param *)data;
+		if ((param->param == WSDISPLAYIO_PARAM_BACKLIGHT) &&
+		    (sc->sc_have_backlight != 0)) {
+			param->min = 0;
+			param->max = 255;
+			param->curval = sc->sc_bl_level;
+			return 0;
+		}
+		return EPASSTHROUGH;
+
+	case WSDISPLAYIO_SETPARAM:
+		param = (struct wsdisplay_param *)data;
+		if ((param->param == WSDISPLAYIO_PARAM_BACKLIGHT) &&
+		    (sc->sc_have_backlight != 0)) {
+			r128fb_set_backlight(sc, param->curval);
+			return 0;
+		}
+		return EPASSTHROUGH;
 	}
 	return EPASSTHROUGH;
 }
