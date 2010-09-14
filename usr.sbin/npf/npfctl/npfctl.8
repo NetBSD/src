@@ -1,4 +1,4 @@
-.\"	$NetBSD: npfctl.8,v 1.2 2010/08/24 23:55:05 rmind Exp $
+.\"	$NetBSD: npfctl.8,v 1.3 2010/09/14 11:04:57 kim Exp $
 .\"
 .\" Copyright (c) 2009-2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -43,7 +43,7 @@ The
 .Nm
 command can be used to control the NPF packet filter.
 For a description of NPF's configuration file, see
-.Xr npf.conf 8 .
+.Xr npf.conf 5 .
 .Pp
 The first argument,
 .Ar command ,
@@ -91,7 +91,7 @@ Reloading the configuration is a relatively expensive operation.
 Therefore, frequent reloads should be avoided.
 Use of tables should be considered as an alternative design.
 See
-.Xr npf.conf 8
+.Xr npf.conf 5
 for details.
 .\" -----
 .Sh FILES
