@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix.c,v 1.47 2010/05/04 05:11:06 macallan Exp $ */
+/*	$NetBSD: cgsix.c,v 1.48 2010/09/14 18:42:12 macallan Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgsix.c,v 1.47 2010/05/04 05:11:06 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgsix.c,v 1.48 2010/09/14 18:42:12 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -637,20 +637,6 @@ cg6attach(struct cgsix_softc *sc, const char *name, int isconsole)
 		 * we're not the console so we just clear the screen and don't 
 		 * set up any sort of text display
 		 */
-		if (cgsix_defaultscreen.textops == NULL) {
-			/* 
-			 * ugly, but...
-			 * we want the console settings to win, so we only
-			 * touch anything when we find an untouched screen
-			 * definition. In this case we fill it from fb to
-			 * avoid problems in case no cgsix is the console
-			 */
-			ri = &sc->sc_fb.fb_rinfo;
-			cgsix_defaultscreen.textops = &ri->ri_ops;
-			cgsix_defaultscreen.capabilities = ri->ri_caps;
-			cgsix_defaultscreen.nrows = ri->ri_rows;
-			cgsix_defaultscreen.ncols = ri->ri_cols;
-		}
 	}
 	
 	aa.scrdata = &cgsix_screenlist;
