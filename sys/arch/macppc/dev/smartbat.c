@@ -1,4 +1,4 @@
-/*	$NetBSD: smartbat.c,v 1.3 2008/08/12 17:16:16 macallan Exp $ */
+/*	$NetBSD: smartbat.c,v 1.4 2010/09/14 02:45:25 macallan Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smartbat.c,v 1.3 2008/08/12 17:16:16 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smartbat.c,v 1.4 2010/09/14 02:45:25 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -174,43 +174,60 @@ static void
 smartbat_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 {
 	struct smartbat_softc *sc = sme->sme_cookie;
-	int which = edata->sensor;
+	int which = edata->sensor, present;
 
 	smartbat_update(sc, 0);
+	present = (sc->sc_flags & PMU_PWR_BATT_PRESENT) != 0;
 
-	switch (which) {
-	case BAT_AC_PRESENT:
-		edata->value_cur = (sc->sc_flags & PMU_PWR_AC_PRESENT);
-		break;
-	case BAT_PRESENT:
-		edata->value_cur = (sc->sc_flags & PMU_PWR_BATT_PRESENT);
-		break;
-	case BAT_VOLTAGE:
-		edata->value_cur = sc->sc_voltage * 1000;
-		break;
-	case BAT_CURRENT:
-		edata->value_cur = sc->sc_draw * 1000;
-		break;
-	case BAT_MAX_CHARGE:
-		edata->value_cur = sc->sc_max_charge * 1000;
-		break;
-	case BAT_CHARGE:
-		edata->value_cur = sc->sc_charge * 1000;
-		break;
-	case BAT_CHARGING:
-		if ((sc->sc_flags & PMU_PWR_BATT_CHARGING) &&
-		    (sc->sc_flags & PMU_PWR_AC_PRESENT))
-			edata->value_cur = 1;
-		else
+	if (present) {
+		switch (which) {
+		case BAT_AC_PRESENT:
+			edata->value_cur = (sc->sc_flags & PMU_PWR_AC_PRESENT);
+			break;
+		case BAT_PRESENT:
+			edata->value_cur = present;
+			break;
+		case BAT_VOLTAGE:
+			edata->value_cur = sc->sc_voltage * 1000;
+			break;
+		case BAT_CURRENT:
+			edata->value_cur = sc->sc_draw * 1000;
+			break;
+		case BAT_MAX_CHARGE:
+			edata->value_cur = sc->sc_max_charge * 1000;
+			break;
+		case BAT_CHARGE:
+			edata->value_cur = sc->sc_charge * 1000;
+			break;
+		case BAT_CHARGING:
+			if ((sc->sc_flags & PMU_PWR_BATT_CHARGING) &&
+			    (sc->sc_flags & PMU_PWR_AC_PRESENT))
+				edata->value_cur = 1;
+			else
+				edata->value_cur = 0;
+
+			break;
+		case BAT_FULL:
+			edata->value_cur = (sc->sc_flags & PMU_PWR_BATT_FULL);
+			break;
+		}
+		edata->state = ENVSYS_SVALID;
+	} else {
+		/* battery isn't there */
+		switch (which) {
+		case BAT_AC_PRESENT:
+			edata->value_cur = (sc->sc_flags & PMU_PWR_AC_PRESENT);
+			edata->state = ENVSYS_SVALID;
+			break;
+		case BAT_PRESENT:
+			edata->value_cur = present;
+			edata->state = ENVSYS_SVALID;
+			break;
+		default:
+			edata->state = ENVSYS_SINVALID;
 			edata->value_cur = 0;
-
-		break;
-	case BAT_FULL:
-		edata->value_cur = (sc->sc_flags & PMU_PWR_BATT_FULL);
-		break;
+		}
 	}
-
-	edata->state = ENVSYS_SVALID;
 }
 
 /*
