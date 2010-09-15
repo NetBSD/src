@@ -1,4 +1,4 @@
-.\" $NetBSD: aio_fsync.3,v 1.6 2010/05/17 19:22:31 jruoho Exp $
+.\" $NetBSD: aio_fsync.3,v 1.7 2010/09/15 07:28:46 yamt Exp $
 .\"
 .\" Copyright (c) 2007 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -83,16 +83,6 @@ and
 .Fn aio_error
 in order to determine return or error status for the enqueued operation
 while it is in progress.
-.Sh RESTRICTIONS
-The asynchronous I/O control buffer
-.Fa aiocbp
-should be zeroed before the
-.Fn aio_fsync
-system call to avoid passing bogus context information to the kernel.
-.Pp
-Modifications of the Asynchronous I/O Control Block structure after
-the request has been enqueued, but before the request has completed,
-are not allowed.
 .Sh RETURN VALUES
 .Rv -std aio_fsync
 .Sh ERRORS
