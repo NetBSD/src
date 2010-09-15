@@ -1,4 +1,4 @@
-/*  $NetBSD: perfused.h,v 1.2 2010/08/27 09:58:17 manu Exp $ */
+/*  $NetBSD: perfused.h,v 1.3 2010/09/15 01:51:44 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010 Emmanuel Dreyfus. All rights reserved.
@@ -43,8 +43,7 @@ extern int perfuse_diagflags;
 #endif /* PERFUSE_DEBUG */
 
 int perfuse_open_sock(void);
-void *perfuse_recv_early(int, size_t);
-
+void *perfuse_recv_early(int, struct sockcred *, size_t); 
 int perfuse_readframe(struct puffs_usermount *, 
      struct puffs_framebuf *, int, int *);
 int perfuse_writeframe(struct puffs_usermount *, 

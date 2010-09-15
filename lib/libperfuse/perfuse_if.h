@@ -1,4 +1,4 @@
-/*  $NetBSD: perfuse_if.h,v 1.7 2010/09/07 02:11:04 manu Exp $ */
+/*  $NetBSD: perfuse_if.h,v 1.8 2010/09/15 01:51:43 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010 Emmanuel Dreyfus. All rights reserved.
@@ -36,6 +36,7 @@
 #define PERFUSE_MOUNT_MAGIC "noFuseRq"
 #define PERFUSE_UNKNOWN_INO 0xffffffff
 
+#define PERFUSE_SOCKTYPE SOCK_DGRAM
 /* 
  * Diagnostic flags. This global is used only for DPRINTF/DERR/DWARN
  */
@@ -157,6 +158,7 @@ struct perfuse_mount_out {
 	uint32_t pmo_filesystemtype_len;
 	uint32_t pmo_mountflags;
 	uint32_t pmo_data_len;
+	uint32_t pmo_sock_len;
 };
 
 struct perfuse_mount_info {
@@ -171,9 +173,11 @@ struct perfuse_mount_info {
 /*
  * Duplicated fro fuse.h to avoid making it public
  */
+#ifndef FUSE_BUFSIZE
 #define FUSE_MIN_BUFSIZE 0x21000
 #define FUSE_PREF_BUFSIZE (PAGE_SIZE + 0x1000)
-#define FUSE_BUFSIZE MAX(FUSE_PREF_BUFSIZE, FUSE_MIN_BUFSIZE)
+#define FUSE_BUFSIZE MAX(FUSE_PREF_BUFSIZE /* CONSTCOND */, FUSE_MIN_BUFSIZE)
+#endif /* FUSE_BUFSIZE */
 
 struct fuse_in_header {
 	uint32_t	len;

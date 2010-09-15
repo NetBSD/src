@@ -1,4 +1,4 @@
-/*  $NetBSD: msg.c,v 1.5 2010/09/07 02:11:04 manu Exp $ */
+/*  $NetBSD: msg.c,v 1.6 2010/09/15 01:51:44 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010 Emmanuel Dreyfus. All rights reserved.
@@ -35,6 +35,8 @@
 #include <syslog.h>
 #include <paths.h>
 #include <puffs.h>
+#include <limits.h>
+#include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <machine/vmparam.h>
@@ -53,46 +55,106 @@ perfuse_open_sock(void)
 	int s;
 	struct sockaddr_un sun;
 	const struct sockaddr *sa;
+	uint32_t opt;
 
 	(void)unlink(_PATH_FUSE);
 
-	if ((s = socket(AF_LOCAL, SOCK_STREAM, 0)) == -1)
+	if ((s = socket(AF_LOCAL, PERFUSE_SOCKTYPE, 0)) == -1)
 		err(EX_OSERR, "socket failed");
 
 	sa = (const struct sockaddr *)(void *)&sun;
 	sun.sun_len = sizeof(sun);
 	sun.sun_family = AF_LOCAL;
 	(void)strcpy(sun.sun_path, _PATH_FUSE); 
+
+	/*
+	 * Set a buffer lentgh large enough so that any FUSE packet
+	 * will fit.
+	 */
+	opt = FUSE_BUFSIZE;
+	if (setsockopt(s, SOL_SOCKET, SO_SNDBUF, &opt, sizeof(opt)) != 0)
+		DWARN("%s: setsockopt SO_SNDBUF to %d failed", __func__, opt);
+
+	opt = FUSE_BUFSIZE;
+	if (setsockopt(s, SOL_SOCKET, SO_RCVBUF, &opt, sizeof(opt)) != 0)
+		DWARN("%s: setsockopt SO_RCVBUF to %d failed", __func__, opt);
+
+	/*
+	 * Request peer credentials
+	 */
+	opt = 1;
+	if (setsockopt(s, 0, LOCAL_CREDS, &opt, sizeof(opt)) != 0)
+		DWARN("%s: setsockopt LOCAL_CREDS failed", __func__);
 	
 	if (bind(s, sa, (socklen_t )sun.sun_len) == -1)
 		err(EX_OSERR, "cannot open \"%s\" socket", _PATH_FUSE);
 
+#if (PERFUSE_SOCKTYPE == SOCK_DGRAM)
+	if (connect(s, sa, (socklen_t )sun.sun_len) == -1)
+		err(EX_OSERR, "cannot open \"%s\" socket", _PATH_FUSE);
+#else
 	if (listen(s, 1) == -1)	
 		err(EX_OSERR, "listen failed");
+#endif
 
 	return s;
 }
 
 
 void *
-perfuse_recv_early(fd, len)
+perfuse_recv_early(fd, sockcred, sockcred_len)
 	int fd;
-	size_t len;
+	struct sockcred *sockcred;
+	size_t sockcred_len;
 {
+	struct fuse_out_header foh;
+	size_t len;
 	char *buf;
+	struct msghdr msg;
+	char cmsg_buf[sizeof(struct cmsghdr) + SOCKCREDSIZE(NGROUPS_MAX)];
+	struct cmsghdr *cmsg = (struct cmsghdr *)(void *)&cmsg_buf;
+	struct sockcred *sc = (struct sockcred *)(void *)(cmsg + 1);
+	struct iovec iov;
+	
+	len = sizeof(foh);
 
-	if (len == 0)
-		return NULL;
+	/*
+	 * We use the complicated recvmsg because we want peer creds.
+	 */
+	iov.iov_base = &foh;
+	iov.iov_len = len;
+	msg.msg_name = NULL;
+	msg.msg_namelen = 0;
+	msg.msg_iov = &iov;
+	msg.msg_iovlen = 1;
+	msg.msg_control = cmsg;
+	msg.msg_controllen = sizeof(cmsg_buf);
+	msg.msg_flags = 0;
 
-	if ((buf = malloc(len + 1)) == NULL)
-		err(EX_OSERR, "malloc(%zd) failed", len);
-
-	if (read(fd, buf, len) != (ssize_t)len) {
-		DWARN("short read");
+	if (recvmsg(fd, &msg, MSG_NOSIGNAL|MSG_PEEK) != (ssize_t)len) {
+		DWARN("short recv (header)");
 		return NULL;
 	}
 
-	buf[len] = '\0';
+	if (cmsg->cmsg_type != SCM_CREDS) {
+		DWARNX("No SCM_CREDS");
+		return NULL;
+	}
+
+	if (sockcred != NULL)
+		(void)memcpy(sockcred, sc,
+			     MIN(cmsg->cmsg_len - sizeof(*cmsg), sockcred_len));
+		
+
+	len = foh.len;
+	if ((buf = malloc(len)) == NULL)
+		err(EX_OSERR, "malloc(%zd) failed", len);
+
+	if (recv(fd, buf, len, MSG_NOSIGNAL) != (ssize_t)len) {
+		DWARN("short recv (frame)");
+		return NULL;
+	}
+
 	return buf;
 }
 
@@ -416,17 +478,24 @@ perfuse_readframe(pu, pufbuf, fd, done)
 	size_t remain;
 	ssize_t readen;
 	void *data;
+	int peek = 0;
+
+#if (PERFUSE_SOCKTYPE == SOCK_DGRAM)
+	peek = MSG_PEEK;
+#endif
 
 	offset = puffs_framebuf_telloff(pufbuf);
 
 	/*
 	 * Read the header 
+	 * MSG_PEEK is used so that this code works for SOCK_DGRAM
+	 * socket. The loop is only needed to work with SOCK_STREAM. 
 	 */
 	while (offset < sizeof(foh)) {
 		remain = sizeof(foh) - offset;
 		PUFFS_FRAMEBUF_GETWINDOW(pufbuf, offset, &data, &remain);
 
-		switch (readen = recv(fd, data, remain, MSG_NOSIGNAL)) {
+		switch (readen = recv(fd, data, remain, MSG_NOSIGNAL|peek)) {
 		case 0:
 			DWARNX("%s: recv retunred 0", __func__);
 			return ECONNRESET;
@@ -448,6 +517,12 @@ perfuse_readframe(pu, pufbuf, fd, done)
 			DERR(EX_OSERR, "puffs_framebuf_seekset failed");
 	}
 
+#if (PERFUSE_SOCKTYPE == SOCK_DGRAM)
+	/*
+	 * We had a peek at the header, now really read it.
+	 */
+	offset = 0;
+#endif
 	
 	/*
 	 * We have a header, get remaing length to read

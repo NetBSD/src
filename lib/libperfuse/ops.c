@@ -1,4 +1,4 @@
-/*  $NetBSD: ops.c,v 1.14 2010/09/09 09:12:35 manu Exp $ */
+/*  $NetBSD: ops.c,v 1.15 2010/09/15 01:51:43 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010 Emmanuel Dreyfus. All rights reserved.
@@ -613,10 +613,10 @@ requeue_request(pu, opc, type)
 	TAILQ_INSERT_TAIL(&pnd->pnd_pcq, &pcq, pcq_next);
 
 #ifdef PERFUSE_DEBUG
-
 	if (perfuse_diagflags & PDF_REQUEUE)
-		DPRINTF("%s: REQUEUE opc = %p, pcc = %p\n", 
-		       __func__, (void *)opc, pcq.pcq_cc);
+		DPRINTF("%s: REQUEUE opc = %p, pcc = %p (%s)\n", 
+		        __func__, (void *)opc, pcq.pcq_cc,
+			perfuse_qtypestr[type]);
 #endif
 
 	puffs_cc_yield(pcq.pcq_cc);
@@ -624,8 +624,9 @@ requeue_request(pu, opc, type)
 
 #ifdef PERFUSE_DEBUG
 	if (perfuse_diagflags & PDF_REQUEUE)
-		DPRINTF("%s: RESUME opc = %p, pcc = %p\n",
-		        __func__, (void *)opc, pcq.pcq_cc);
+		DPRINTF("%s: RESUME opc = %p, pcc = %p (%s)\n",
+		        __func__, (void *)opc, pcq.pcq_cc,
+			perfuse_qtypestr[type]);
 #endif
 
 	return;
@@ -654,8 +655,9 @@ dequeue_requests(ps, opc, type, max)
 	
 #ifdef PERFUSE_DEBUG
 		if (perfuse_diagflags & PDF_REQUEUE)
-			DPRINTF("%s: SCHEDULE opc = %p, pcc = %p\n",
-				__func__, (void *)opc, pcq->pcq_cc);
+			DPRINTF("%s: SCHEDULE opc = %p, pcc = %p (%s)\n",
+				__func__, (void *)opc, pcq->pcq_cc,
+				 perfuse_qtypestr[type]);
 #endif
 		puffs_cc_schedule(pcq->pcq_cc);
 		
@@ -1812,11 +1814,15 @@ perfuse_node_rename(pu, opc, src, pcn_src, targ_dir, targ, pcn_targ)
 	/*
 	 * Update source and destination directories child count
 	 * Update moved object parent directory
+	 * Set dirty flag for source and parent
 	 */
 	PERFUSE_NODE_DATA(opc)->pnd_childcount--;
 	PERFUSE_NODE_DATA(targ_dir)->pnd_childcount++;
+
 	PERFUSE_NODE_DATA(src)->pnd_parent = targ_dir;
 
+	PERFUSE_NODE_DATA(opc)->pnd_flags |= PND_DIRTY;
+	PERFUSE_NODE_DATA(targ_dir)->pnd_flags |= PND_DIRTY;
 out:
 	ps->ps_destroy_msg(pm);
 
@@ -2219,13 +2225,14 @@ perfuse_node_reclaim(pu, opc)
 #ifdef PERFUSE_DEBUG
 	if (perfuse_diagflags & PDF_RECLAIM)
 		DPRINTF("%s (nodeid %"PRId64") is %sreclaimed, "
-			"has childcount %d %s%s%s, pending ops:%s%s\n", 
+			"has childcount %d %s%s%s, pending ops:%s%s%s\n", 
 		        (char *)PNPATH(pn), pnd->pnd_ino,
 		        pnd->pnd_flags & PND_RECLAIMED ? "" : "not ",
 		        pnd->pnd_childcount,
 			pnd->pnd_flags & PND_OPEN ? "open " : "not open",
 			pnd->pnd_flags & PND_RFH ? "r" : "",
 			pnd->pnd_flags & PND_WFH ? "w" : "",
+			pnd->pnd_flags & PND_BUSY ? "" : " none",
 			pnd->pnd_flags & PND_INREADDIR ? " readdir" : "",
 			pnd->pnd_flags & PND_INWRITE ? " write" : "");
 #endif

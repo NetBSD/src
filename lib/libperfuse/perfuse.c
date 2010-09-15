@@ -1,4 +1,4 @@
-/*  $NetBSD: perfuse.c,v 1.5 2010/09/07 02:11:04 manu Exp $ */
+/*  $NetBSD: perfuse.c,v 1.6 2010/09/15 01:51:43 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010 Emmanuel Dreyfus. All rights reserved.
@@ -35,6 +35,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/un.h>
+#include <machine/vmparam.h>
 
 #define LIBPERFUSE
 #include "perfuse.h"
@@ -109,16 +110,29 @@ perfuse_open(path, flags, mode)
 	char fdstr[16];
 	char *const argv[] = { progname, minus_i, fdstr, NULL};
 	char *const envp[] = { NULL };
+	uint32_t opt;
 
 	if (strcmp(path, _PATH_FUSE) != 0)
 		return open(path, flags, mode);
 
-	if ((sv[0] = socket(PF_LOCAL, SOCK_STREAM, 0)) == -1) {
+	if ((sv[0] = socket(PF_LOCAL, PERFUSE_SOCKTYPE, 0)) == -1) {
 #ifdef PERFUSE_DEBUG
 		DWARN("%s:%d socket failed: %s", __func__, __LINE__);
 #endif
 		return -1;
 	}
+
+	/*
+	 * Set a buffer lentgh large enough so that any FUSE packet
+	 * will fit.
+	 */
+	opt = FUSE_BUFSIZE;
+	if (setsockopt(sv[0], SOL_SOCKET, SO_SNDBUF, &opt, sizeof(opt)) != 0)
+		DWARN("%s: setsockopt SO_SNDBUF to %d failed", __func__, opt);
+
+	opt = FUSE_BUFSIZE;
+	if (setsockopt(sv[0], SOL_SOCKET, SO_RCVBUF, &opt, sizeof(opt)) != 0)
+		DWARN("%s: setsockopt SO_RCVBUF to %d failed", __func__, opt);
 
 	sa = (struct sockaddr *)(void *)&sun;
 	sun.sun_len = sizeof(sun);
@@ -135,12 +149,38 @@ perfuse_open(path, flags, mode)
 	 * we will talk using a socketpair 
 	 * instead of /dev/fuse.
 	 */
-	if (socketpair(PF_LOCAL, SOCK_STREAM, 0, sv) != 0) {
-#ifdef PERFUSE_DEBUG
+	if (socketpair(PF_LOCAL, PERFUSE_SOCKTYPE, 0, sv) != 0) {
 		DWARN("%s:%d: socketpair failed", __func__, __LINE__);
-#endif
 		return -1;
 	}
+
+	/*
+	 * Set a buffer lentgh large enough so that any FUSE packet
+	 * will fit.
+	 */
+	opt = FUSE_BUFSIZE;
+	if (setsockopt(sv[0], SOL_SOCKET, SO_SNDBUF, &opt, sizeof(opt)) != 0)
+		DWARN("%s: setsockopt SO_SNDBUF to %d failed", __func__, opt);
+
+	opt = FUSE_BUFSIZE;
+	if (setsockopt(sv[0], SOL_SOCKET, SO_RCVBUF, &opt, sizeof(opt)) != 0)
+		DWARN("%s: setsockopt SO_RCVBUF to %d failed", __func__, opt);
+
+	opt = FUSE_BUFSIZE;
+	if (setsockopt(sv[1], SOL_SOCKET, SO_SNDBUF, &opt, sizeof(opt)) != 0)
+		DWARN("%s: setsockopt SO_SNDBUF to %d failed", __func__, opt);
+
+	opt = FUSE_BUFSIZE;
+	if (setsockopt(sv[1], SOL_SOCKET, SO_RCVBUF, &opt, sizeof(opt)) != 0)
+		DWARN("%s: setsockopt SO_RCVBUF to %d failed", __func__, opt);
+
+	/*
+	 * Request peer credentials. This musr be done before first 
+	 * frame is sent.
+	 */
+	opt = 1;
+	if (setsockopt(sv[1], 0, LOCAL_CREDS, &opt, sizeof(opt)) != 0)
+		DWARN("%s: setsockopt LOCAL_CREDS failed", __func__);
 
 	(void)sprintf(fdstr, "%d", sv[1]);
 
@@ -167,7 +207,6 @@ perfuse_open(path, flags, mode)
 	return sv[0];
 }
 
-
 int
 perfuse_mount(source, target, filesystemtype, mountflags, data)
 	const char *source;
@@ -178,7 +217,16 @@ perfuse_mount(source, target, filesystemtype, mountflags, data)
 {
 	int s;
 	size_t len;
-	struct perfuse_mount_out pmo;
+	struct perfuse_mount_out *pmo;
+#if (PERFUSE_SOCKTYPE == SOCK_DGRAM)
+	struct sockaddr_storage ss;
+	struct sockaddr_un sun;
+	struct sockaddr *sa;
+	socklen_t sa_len;
+#endif
+	size_t sock_len;
+	char *frame;
+	char *cp;
 
 #ifdef PERFUSE_DEBUG
 	if (perfuse_diagflags & PDF_MISC)
@@ -189,70 +237,95 @@ perfuse_mount(source, target, filesystemtype, mountflags, data)
 
 	if ((s = get_fd(data)) == -1)
 		return -1;
-	
-	pmo.pmo_len = sizeof(pmo);
-	pmo.pmo_len += source ? (uint32_t)strlen(source) : 0;
-	pmo.pmo_len += target ? (uint32_t)strlen(target) : 0;
-	pmo.pmo_len += filesystemtype ? (uint32_t)strlen(filesystemtype) : 0;
-	pmo.pmo_len += data ? (uint32_t)strlen(data) : 0;
-	pmo.pmo_error = 0;
-	pmo.pmo_unique = (uint64_t)-1;
 
-	(void)strcpy(pmo.pmo_magic, PERFUSE_MOUNT_MAGIC);
-	pmo.pmo_source_len = source ? (uint32_t)strlen(source) : 0;
-	pmo.pmo_target_len = target ? (uint32_t)strlen(target) : 0;
-	pmo.pmo_filesystemtype_len = 
-	    filesystemtype ? (uint32_t)strlen(filesystemtype) : 0;
-	pmo.pmo_mountflags = (uint32_t)mountflags;
-	pmo.pmo_data_len = data ? (uint32_t)strlen(data) : 0;
-	
+	/*
+	 * If we are connected to /dev/fuse, we need a second
+	 * socket to get replies from perfused.
+	 * XXX This socket is not removed at exit time yet
+	 */
+	sock_len = 0;
+#if (PERFUSE_SOCKTYPE == SOCK_DGRAM)
+	sa = (struct sockaddr *)(void *)&ss;
+	sa_len = sizeof(ss);
+	if ((getpeername(s, sa, &sa_len) == 0) &&
+	    (sa->sa_family = AF_LOCAL) &&
+	    (strcmp(((struct sockaddr_un *)sa)->sun_path, _PATH_FUSE) == 0)) {
 
-	if (write(s, &pmo, sizeof(pmo)) != sizeof(pmo)) {
+		sa = (struct sockaddr *)(void *)&sun;
+		sun.sun_len = sizeof(sun);
+		sun.sun_family = AF_LOCAL;
+		(void)sprintf(sun.sun_path, "%s/%s-%d",
+			      _PATH_TMP, getprogname(), getpid());
+		
+		if (bind(s, sa, sa->sa_len) != 0)
+			DERR(EX_OSERR, "%s:%d bind to \"%s\" failed",
+			     __func__, __LINE__, sun.sun_path);
+
+		sock_len = strlen(sun.sun_path) + 1;
+	}
+#endif /* PERFUSE_SOCKTYPE */
+		
+	len = sizeof(*pmo);
+	len += source ? (uint32_t)strlen(source) + 1 : 0;
+	len += target ? (uint32_t)strlen(target) + 1 : 0;
+	len += filesystemtype ? (uint32_t)strlen(filesystemtype) + 1 : 0;
+	len += data ? (uint32_t)strlen(data) + 1 : 0;
+	len += sock_len;
+
+	if ((frame = malloc(len)) == NULL) {
 #ifdef PERFUSE_DEBUG
 		if (perfuse_diagflags & PDF_MISC)
-			DPRINTF("%s:%d short write\n", __func__, __LINE__);
+			DWARN("%s:%d malloc failed", __func__, __LINE__);
 #endif
 		return -1;
 	}
+
+	pmo = (struct perfuse_mount_out *)(void *)frame;
+	pmo->pmo_len = len;
+	pmo->pmo_error = 0;
+	pmo->pmo_unique = (uint64_t)-1;
+	(void)strcpy(pmo->pmo_magic, PERFUSE_MOUNT_MAGIC);
+
+	pmo->pmo_source_len = source ? (uint32_t)strlen(source) + 1 : 0;
+	pmo->pmo_target_len = target ? (uint32_t)strlen(target) + 1: 0;
+	pmo->pmo_filesystemtype_len = 
+	    filesystemtype ? (uint32_t)strlen(filesystemtype) + 1 : 0;
+	pmo->pmo_mountflags = (uint32_t)mountflags;
+	pmo->pmo_data_len = data ? (uint32_t)strlen(data) + 1 : 0;
+	pmo->pmo_sock_len = sock_len;
 	
+	cp = (char *)(void *)(pmo + 1);
+
 	if (source) {
-		len = pmo.pmo_source_len;
-		if (write(s, source, len) != (ssize_t)len) {
-#ifdef PERFUSE_DEBUG
-			DWARNX("%s:%d short write\n", __func__, __LINE__);
-#endif
-			return -1;
-		}
+		(void)strcpy(cp, source);
+		cp += pmo->pmo_source_len;
 	}
 	
 	if (target) {
-		len = pmo.pmo_target_len;
-		if (write(s, target, len) != (ssize_t)len) {
-#ifdef PERFUSE_DEBUG
-			DWARNX("%s:%d short write\n", __func__, __LINE__);
-#endif
-			return -1;
-		}
+		(void)strcpy(cp, target);
+		cp += pmo->pmo_target_len;
 	}
-	
+
 	if (filesystemtype) {
-		len = pmo.pmo_filesystemtype_len;
-		if (write(s, filesystemtype, len) != (ssize_t)len) {
-#ifdef PERFUSE_DEBUG
-			DWARNX("%s:%d short write\n", __func__, __LINE__);
-#endif
-			return -1;
-		}
+		(void)strcpy(cp, filesystemtype);
+		cp += pmo->pmo_filesystemtype_len;
 	}
 	
 	if (data) {
-		len = pmo.pmo_data_len;
-		if (write(s, data, len) != (ssize_t)len) {
+		(void)strcpy(cp, data);
+		cp += pmo->pmo_data_len;
+	}
+
+	if (sock_len != 0) {
+		(void)strcpy(cp, sun.sun_path);
+		cp += pmo->pmo_sock_len;
+	}
+
+	if (send(s, frame, len, MSG_NOSIGNAL) != len) {
 #ifdef PERFUSE_DEBUG
-			DWARNX("%s:%d short write\n", __func__, __LINE__);
+		DWARN("%s:%d sendto failed", __func__, __LINE__);
 #endif
-			return -1;
-		}
+		return -1;
 	}
 
 	return 0;

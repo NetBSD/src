@@ -1,4 +1,4 @@
-/*  $NetBSD: perfuse_priv.h,v 1.9 2010/09/09 09:12:35 manu Exp $ */
+/*  $NetBSD: perfuse_priv.h,v 1.10 2010/09/15 01:51:43 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010 Emmanuel Dreyfus. All rights reserved.
@@ -71,6 +71,9 @@ struct perfuse_state {
 
 
 enum perfuse_qtype { PCQ_READDIR, PCQ_READ, PCQ_WRITE, PCQ_AFTERWRITE };
+#ifdef PERFUSE_DEBUG
+extern const char *perfuse_qtypestr[];
+#endif
 
 struct perfuse_cc_queue {
 	enum perfuse_qtype pcq_type;
@@ -101,6 +104,7 @@ struct perfuse_node_data {
 #define PND_INWRITE		0x40	/* write in progress */
 
 #define PND_OPEN		(PND_RFH|PND_WFH)	/* File is open */
+#define PND_BUSY		(PND_INREADDIR|PND_INWRITE)
 	puffs_cookie_t pnd_parent;
 	int pnd_childcount;
 };

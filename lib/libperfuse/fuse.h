@@ -1,4 +1,4 @@
-/*  $NetBSD: fuse.h,v 1.1 2010/08/25 07:16:00 manu Exp $ */
+/*  $NetBSD: fuse.h,v 1.2 2010/09/15 01:51:43 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010 Emmanuel Dreyfus. All rights reserved.
@@ -33,9 +33,11 @@
 #define FUSE_ROOT_ID 1
 #define FUSE_UNKNOWN_FH (uint64_t)0
 
+#ifndef FUSE_BUFSIZE
 #define FUSE_MIN_BUFSIZE 0x21000
 #define FUSE_PREF_BUFSIZE (PAGE_SIZE + 0x1000)
-#define FUSE_BUFSIZE MAX(FUSE_PREF_BUFSIZE, FUSE_MIN_BUFSIZE)
+#define FUSE_BUFSIZE MAX(FUSE_PREF_BUFSIZE /* CONSTCOND */, FUSE_MIN_BUFSIZE)
+#endif /* FUSE_BUFSIZE */
 
 struct fuse_attr {
 	uint64_t	ino;
