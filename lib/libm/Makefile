@@ -1,4 +1,4 @@
-#  $NetBSD: Makefile,v 1.97 2010/08/10 17:53:08 drochner Exp $
+#  $NetBSD: Makefile,v 1.98 2010/09/15 16:11:29 christos Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24
 #
@@ -57,7 +57,7 @@ ARCH_SRCS = s_copysign.S s_copysignf.S lrint.S
 .endif
 .PATH:	${.CURDIR}/arch/i387
 
-COMMON_SRCS+= fenv.c
+COMMON_SRCS+= fenv.c s_nextafterl.c s_nexttoward.c
 ARCH_SRCS = e_acos.S e_asin.S e_atan2.S e_exp.S e_expf.S e_fmod.S e_log.S \
 	    e_logf.S e_log10.S e_log10f.S e_log2.S e_log2f.S e_remainder.S \
 	    e_remainderf.S e_scalb.S e_scalbf.S e_sqrt.S e_sqrtf.S s_atan.S \
@@ -127,8 +127,8 @@ COMMON_SRCS+= e_acos.c e_acosf.c e_acosh.c e_acoshf.c e_asin.c e_asinf.c \
 	k_cos.c k_cosf.c k_rem_pio2.c k_rem_pio2f.c k_sin.c k_sinf.c \
 	k_standard.c k_tan.c k_tanf.c \
 	s_asinh.c s_asinhf.c s_atan.c s_atanf.c s_cbrt.c s_cbrtf.c s_ceil.c \
-	s_ceilf.c s_copysign.c s_copysignf.c s_cos.c s_cosf.c s_erf.c \
-	s_erff.c s_exp2.c s_exp2f.c s_expm1.c s_expm1f.c s_fabsf.c \
+	s_ceilf.c s_copysign.c s_copysignf.c s_copysignl.c s_cos.c s_cosf.c s_erf.c \
+	s_erff.c s_exp2.c s_exp2f.c s_expm1.c s_expm1f.c s_fabsf.c s_fabsl.c \
 	s_finite.c s_finitef.c \
 	s_floor.c s_floorf.c s_frexpf.c s_ilogb.c s_ilogbf.c \
 	s_isinff.c s_isnanf.c s_ldexpf.c s_lib_version.c s_log1p.c \
@@ -226,16 +226,24 @@ MLINKS+=ceil.3 ceilf.3
 MLINKS+=cos.3 cosf.3
 MLINKS+=cosh.3 coshf.3
 MLINKS+=erf.3 erff.3 erf.3 erfc.3 erf.3 erfcf.3
-MLINKS+=exp.3 expf.3 exp.3 expm1.3 exp.3 expm1f.3 exp.3 log.3 exp.3 logf.3 \
-	exp.3 log10.3 exp.3 log10f.3 exp.3 log1p.3 exp.3 log1pf.3 \
-	exp.3 pow.3 exp.3 powf.3 exp.3 log2.3 exp.3 log2f.3
+MLINKS+=exp.3 expf.3 exp.3 expm1.3 exp.3 expm1f.3 			\
+	exp.3 exp2.3 exp.3 exp2f.3 					\
+	exp.3 log.3 exp.3 logf.3 					\
+	exp.3 log10.3 exp.3 log10f.3 					\
+	exp.3 log1p.3 exp.3 log1pf.3 					\
+	exp.3 pow.3 exp.3 powf.3 					\
+	exp.3 log2.3 exp.3 log2f.3
 MLINKS+=fabs.3 fabsf.3
 MLINKS+=floor.3 floorf.3
 MLINKS+=fmod.3 fmodf.3
 MLINKS+=hypot.3 hypotf.3
-MLINKS+=ieee.3 copysign.3 ieee.3 copysignf.3 ieee.3 finite.3 ieee.3 finitef.3 \
-	ieee.3 ilogb.3 ieee.3 ilogbf.3 ieee.3 nextafter.3 ieee.3 nextafterf.3 \
-	ieee.3 remainder.3 ieee.3 remainderf.3 ieee.3 scalbn.3 ieee.3 scalbnf.3
+MLINKS+=ieee.3 copysign.3 ieee.3 copysignf.3 ieee.3 copysignl.3 	\
+	ieee.3 finite.3 ieee.3 finitef.3 				\
+	ieee.3 ilogb.3 ieee.3 ilogbf.3					\
+	ieee.3 nextafter.3 ieee.3 nextafterf.3 ieee.3 nextafterl.3	\
+	ieee.3 nexttoward.3						\
+	ieee.3 remainder.3 ieee.3 remainderf.3 				\
+	ieee.3 scalbn.3 ieee.3 scalbnf.3
 MLINKS+=ieee_test.3 logb.3 ieee_test.3 logbf.3
 MLINKS+=ieee_test.3 scalb.3 ieee_test.3 scalbf.3
 MLINKS+=ieee_test.3 significand.3 ieee_test.3 significandf.3

@@ -1,4 +1,4 @@
-/* $NetBSD: crealf.c,v 1.1 2007/08/20 16:01:36 drochner Exp $ */
+/* $NetBSD: crealf.c,v 1.2 2010/09/15 16:11:29 christos Exp $ */
 
 /*
  * Written by Matthias Drochner <drochner@NetBSD.org>.
@@ -6,10 +6,12 @@
  */
 
 #include <complex.h>
+#include "../src/math_private.h"
 
 float
 crealf(float complex z)
 {
+	float_complex w = { .z = z };
 
-	return __real__ z;
+	return (REAL_PART(w));
 }
