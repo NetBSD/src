@@ -1,4 +1,4 @@
-.\" $NetBSD: aio_cancel.3,v 1.4 2010/05/17 19:22:31 jruoho Exp $
+.\" $NetBSD: aio_cancel.3,v 1.5 2010/09/15 07:28:46 yamt Exp $
 .\"
 .\" Copyright (c) 1999 Softweyr LLC.
 .\" All rights reserved.
@@ -51,15 +51,6 @@ is specified, only that specific asynchronous I/O request is cancelled.
 Normal asynchronous notification occurs for cancelled requests.
 Requests complete with an error result of
 .Er ECANCELED .
-.Sh RESTRICTIONS
-The
-.Fn aio_cancel
-system call does not cancel asynchronous I/O requests for raw disk devices.
-The
-.Fn aio_cancel
-system call will always return
-.Dv AIO_NOTCANCELED
-for file descriptors associated with raw disk devices.
 .Sh RETURN VALUES
 The
 .Fn aio_cancel
