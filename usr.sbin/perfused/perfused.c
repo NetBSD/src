@@ -1,4 +1,4 @@
-/*  $NetBSD: perfused.c,v 1.7 2010/09/07 02:11:04 manu Exp $ */
+/*  $NetBSD: perfused.c,v 1.8 2010/09/15 01:51:44 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010 Emmanuel Dreyfus. All rights reserved.
@@ -50,7 +50,6 @@
 #include "../../lib/libperfuse/perfuse_if.h"
 #include "perfused.h"
 
-static int getpeerid(int, pid_t *, uid_t *, gid_t *);
 static int access_mount(const char *, uid_t, int);
 static void new_mount(int, int);
 static int parse_debug(char *);
@@ -65,34 +64,6 @@ int main(int, char **);
 #define  PMNT_DEVFUSE	0x0	/* We use /dev/fuse */
 #define  PMNT_SOCKPAIR	0x1	/* We use socketpair */
 
-
-static int
-getpeerid(s, pidp, uidp, gidp)
-	int s;
-	pid_t *pidp;
-	uid_t *uidp;
-	gid_t *gidp;
-{
-	struct unpcbid unp;
-	socklen_t len;
-	int error;
-
-	len = sizeof(unp);
-	error = getsockopt(s, 0, LOCAL_PEEREID, &unp, &len);
-	if (error != 0)
-		return error;
-		
-	if (pidp != NULL)
-		*pidp = unp.unp_pid;
-
-	if (uidp != NULL)
-		*uidp = unp.unp_euid;
-
-	if (gidp != NULL)
-		*gidp = unp.unp_egid;
-
-	return 0;
-}
 
 static int
 access_mount(mnt, uid, ro)
@@ -128,14 +99,18 @@ get_mount_info(fd, pmi)
 	struct perfuse_mount_info *pmi;
 {
 	struct perfuse_mount_out *pmo;
+	struct sockcred cred;
+	char *cp;
 	char *source = NULL;
 	char *target = NULL;
 	char *filesystemtype = NULL;
 	long mountflags = 0;
-	void *data;
-	size_t len;
+	void *data = NULL;
+	char *sock = NULL;
 
-	pmo = (struct perfuse_mount_out *)perfuse_recv_early(fd, sizeof(*pmo));
+	pmo = (struct perfuse_mount_out *)
+		perfuse_recv_early(fd, &cred, sizeof(cred));
+
 	if (pmo == NULL) {
 		if (shutdown(fd, SHUT_RDWR) != 0)
 			DERR(EX_OSERR, "shutdown failed");
@@ -146,35 +121,69 @@ get_mount_info(fd, pmi)
 	if (perfuse_diagflags & PDF_MISC)
 		DPRINTF("perfuse lengths: source = %"PRId32", "
 			"target = %"PRId32", filesystemtype = %"PRId32", "
-			"data = %"PRId32"\n", pmo->pmo_source_len, 
-			pmo->pmo_target_len, pmo->pmo_filesystemtype_len, 
-			pmo->pmo_data_len);
+			"data = %"PRId32", sock = %"PRId32"\n", 
+			pmo->pmo_source_len, pmo->pmo_target_len, 
+			pmo->pmo_filesystemtype_len, pmo->pmo_data_len,
+			pmo->pmo_sock_len);
 #endif
-	len = pmo->pmo_source_len;
-	source = perfuse_recv_early(fd, len);
+	cp = (char *)(void *)(pmo + 1);
+	
+	if (pmo->pmo_source_len != 0) {
+		source = cp;
+		cp += pmo->pmo_source_len;
+	}
 
-	len = pmo->pmo_target_len;
-	target = perfuse_recv_early(fd, len);
+	if (pmo->pmo_target_len != 0) {
+		target = cp;
+		cp += pmo->pmo_target_len;
+	}
 
-	len = pmo->pmo_filesystemtype_len;
-	filesystemtype = perfuse_recv_early(fd, len);
+	if (pmo->pmo_filesystemtype_len != 0) {
+		filesystemtype = cp;
+		cp += pmo->pmo_filesystemtype_len;
+	}
 
 	mountflags = pmo->pmo_mountflags;
 
-	len = pmo->pmo_data_len;
-	data = perfuse_recv_early(fd, len);
+	if (pmo->pmo_data_len != 0) {
+		data = cp;
+		cp += pmo->pmo_data_len;
+	}
+
+	if (pmo->pmo_sock_len != 0) {
+		sock = cp;
+		cp += pmo->pmo_sock_len;
+	}
 
 #ifdef PERFUSE_DEBUG
 	if (perfuse_diagflags & PDF_MISC)
-		DPRINTF("%s(\"%s\", \"%s\", \"%s\", 0x%lx, \"%s\")\n", 
+		DPRINTF("%s(\"%s\", \"%s\", \"%s\", 0x%lx, \"%s\", \"%s\")\n", 
 		__func__, source, target, filesystemtype, 
-		mountflags, (const char *)data);
+		mountflags, (const char *)data, sock);
 #endif
 	pmi->pmi_source = source;
 	pmi->pmi_target = target;
 	pmi->pmi_filesystemtype = filesystemtype;
 	pmi->pmi_mountflags = (int)mountflags;
 	pmi->pmi_data = data;
+
+	pmi->pmi_uid = cred.sc_euid;
+
+	/*
+	 * Connect to the remote socket, if provided
+	 */
+	if (sock) {
+		const struct sockaddr *sa;
+		struct sockaddr_un sun;
+
+		sa = (const struct sockaddr *)(void *)&sun;
+		sun.sun_len = sizeof(sun);
+		sun.sun_family = AF_LOCAL;
+		strcpy(sun.sun_path, sock);
+
+		if (connect(fd, sa, sun.sun_len) != 0)
+			DERR(EX_OSERR, "connect \"%s\" failed", sun.sun_path);
+	}
 
 	return;
 }
@@ -190,7 +199,6 @@ new_mount(fd, pmnt_flags)
 	int ro_flag;
 	pid_t pid;
 	int flags;
-
 
 	pid = (perfuse_diagflags & PDF_FOREGROUND) ? 0 : fork();
 	switch(pid) {
@@ -209,19 +217,6 @@ new_mount(fd, pmnt_flags)
 	 * Mount information (source, target, mount flags...)
 	 */
 	get_mount_info(fd, &pmi);
-
-	/*
-	 * Get peer identity. If we use socketpair (-i option),
-	 * peer identity if the same as us.
-	 */
-	if (pmnt_flags & PMNT_SOCKPAIR) {
-		pmi.pmi_uid = getuid();
-	} else {
-		if (getpeerid(fd, NULL, &pmi.pmi_uid, NULL) != 0) {
-			DWARNX("Unable to retreive peer identity");
-			pmi.pmi_uid = (uid_t)-1;
-		}
-	}
 
 	/*
 	 * Check that peer owns mountpoint and read (and write) on it?
@@ -395,23 +390,32 @@ main(argc, argv)
 	s = perfuse_open_sock();
 	
 	do {
+#if (PERFUSE_SOCKTYPE != SOCK_DGRAM)
 		struct sockaddr *sa;
 		struct sockaddr_storage ss;
 		socklen_t ss_len;
+#endif
 		int fd;
 
 #ifdef PERFUSE_DEBUG
 		if (perfuse_diagflags & PDF_MISC)
 			DPRINTF("waiting connexion\n");
 #endif
+#if (PERFUSE_SOCKTYPE == SOCK_DGRAM)
+		fd = s;
+#else
 		sa = (struct sockaddr *)(void *)&ss;
 		ss_len = sizeof(ss);
+
 		if ((fd = accept(s, sa, &ss_len)) == -1)
 			DERR(EX_OSERR,  "accept failed");
+
 #ifdef PERFUSE_DEBUG
 		if (perfuse_diagflags & PDF_MISC)
 			DPRINTF("connexion accepted\n");
-#endif
+#endif /* PERFUSE_DEBUG */
+#endif /* PERFUSE_SOCKTYPE */
+
 		new_mount(fd, PMNT_DEVFUSE);
 	} while (1 /* CONSTCOND */);
 		

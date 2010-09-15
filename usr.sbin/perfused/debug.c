@@ -1,4 +1,4 @@
-/*  $NetBSD: debug.c,v 1.2 2010/08/26 13:29:02 manu Exp $ */
+/*  $NetBSD: debug.c,v 1.3 2010/09/15 01:51:44 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010 Emmanuel Dreyfus. All rights reserved.
@@ -29,6 +29,7 @@
 #include <string.h>
 #include <syslog.h>
 #include <ctype.h>
+#include <sys/socket.h>
 
 #include "perfused.h"
 
