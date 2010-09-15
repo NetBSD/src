@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee.h,v 1.10 2007/02/02 23:07:44 christos Exp $ */
+/*	$NetBSD: ieee.h,v 1.11 2010/09/15 16:11:28 christos Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -85,7 +85,9 @@ struct ieee_ext {
  * A NaN is a `signalling NaN' if its QUIETNAN bit is clear in its
  * high fraction; if the bit is set, it is a `quiet NaN'.
  */
-#define	EXT_EXP_INFNAN	32767
+#define	EXT_EXP_INFNAN	0x7fff
+#define	EXT_EXP_INF	0x7fff
+#define	EXT_EXP_NAN	0x7fff
 
 #if 0
 #define	SNG_QUIETNAN	(1 << 22)
@@ -105,3 +107,11 @@ union ieee_ext_u {
 	long double		extu_ld;
 	struct ieee_ext		extu_ext;
 };
+
+#define extu_exp	extu_ext.ext_exp
+#define extu_sign	extu_ext.ext_sign
+#define extu_fracl	extu_ext.ext_fracl
+#define extu_frach	extu_ext.ext_frach
+
+#define LDBL_NBIT	0x80000000
+#define mask_nbit_l(u)	((u).extu_frach &= ~LDBL_NBIT)

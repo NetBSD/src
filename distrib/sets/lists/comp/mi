@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1507 2010/09/06 14:55:37 christos Exp $
+#	$NetBSD: mi,v 1.1508 2010/09/15 16:11:28 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -5365,6 +5365,7 @@
 ./usr/share/man/cat3/chgat.0			comp-c-catman		.cat
 ./usr/share/man/cat3/cimag.0			comp-c-catman		complex,.cat
 ./usr/share/man/cat3/cimagf.0			comp-c-catman		complex,.cat
+./usr/share/man/cat3/cimagl.0			comp-c-catman		complex,.cat
 ./usr/share/man/cat3/circleq_empty.0		comp-obsolete		obsolete
 ./usr/share/man/cat3/circleq_entry.0		comp-obsolete		obsolete
 ./usr/share/man/cat3/circleq_first.0		comp-obsolete		obsolete
@@ -5423,6 +5424,7 @@
 ./usr/share/man/cat3/conjf.0			comp-c-catman		complex,.cat
 ./usr/share/man/cat3/copysign.0			comp-c-catman		.cat
 ./usr/share/man/cat3/copysignf.0		comp-c-catman		.cat
+./usr/share/man/cat3/copysignl.0		comp-c-catman		.cat
 ./usr/share/man/cat3/copywin.0			comp-c-catman		.cat
 ./usr/share/man/cat3/cos.0			comp-c-catman		.cat
 ./usr/share/man/cat3/cosf.0			comp-c-catman		.cat
@@ -5430,6 +5432,7 @@
 ./usr/share/man/cat3/coshf.0			comp-c-catman		.cat
 ./usr/share/man/cat3/cpow.0			comp-c-catman		complex,.cat
 ./usr/share/man/cat3/cpowf.0			comp-c-catman		complex,.cat
+./usr/share/man/cat3/cproj.0			comp-c-catman		complex,.cat
 ./usr/share/man/cat3/cpuset.0			comp-c-catman		.cat
 ./usr/share/man/cat3/cpuset_clr.0		comp-c-catman		.cat
 ./usr/share/man/cat3/cpuset_create.0		comp-c-catman		.cat
@@ -5440,6 +5443,7 @@
 ./usr/share/man/cat3/cpuset_zero.0		comp-c-catman		.cat
 ./usr/share/man/cat3/creal.0			comp-c-catman		complex,.cat
 ./usr/share/man/cat3/crealf.0			comp-c-catman		complex,.cat
+./usr/share/man/cat3/creall.0			comp-c-catman		complex,.cat
 ./usr/share/man/cat3/creat.0			comp-c-catman		.cat
 ./usr/share/man/cat3/crypt.0			comp-c-catman		.cat
 ./usr/share/man/cat3/crypto.0			comp-c-catman		crypto,.cat
@@ -5783,6 +5787,8 @@
 ./usr/share/man/cat3/execvp.0			comp-c-catman		.cat
 ./usr/share/man/cat3/exit.0			comp-c-catman		.cat
 ./usr/share/man/cat3/exp.0			comp-c-catman		.cat
+./usr/share/man/cat3/exp2.0			comp-c-catman		.cat
+./usr/share/man/cat3/exp2f.0			comp-c-catman		.cat
 ./usr/share/man/cat3/expf.0			comp-c-catman		.cat
 ./usr/share/man/cat3/expm1.0			comp-c-catman		.cat
 ./usr/share/man/cat3/expm1f.0			comp-c-catman		.cat
@@ -7292,6 +7298,8 @@
 ./usr/share/man/cat3/newwin.0			comp-c-catman		.cat
 ./usr/share/man/cat3/nextafter.0		comp-c-catman		.cat
 ./usr/share/man/cat3/nextafterf.0		comp-c-catman		.cat
+./usr/share/man/cat3/nextafterl.0		comp-c-catman		.cat
+./usr/share/man/cat3/nexttoward.0		comp-c-catman		.cat
 ./usr/share/man/cat3/nftw.0			comp-c-catman		.cat
 ./usr/share/man/cat3/ngettext.0			comp-c-catman		.cat
 ./usr/share/man/cat3/nice.0			comp-c-catman		.cat
@@ -11320,6 +11328,7 @@
 ./usr/share/man/html3/chgat.html		comp-c-htmlman		html
 ./usr/share/man/html3/cimag.html		comp-c-htmlman		complex,html
 ./usr/share/man/html3/cimagf.html		comp-c-htmlman		complex,html
+./usr/share/man/html3/cimagl.html		comp-c-htmlman		complex,html
 ./usr/share/man/html3/clear.html		comp-c-htmlman		html
 ./usr/share/man/html3/clearerr.html		comp-c-htmlman		html
 ./usr/share/man/html3/clearok.html		comp-c-htmlman		html
@@ -11364,6 +11373,7 @@
 ./usr/share/man/html3/conjf.html		comp-c-htmlman		complex,html
 ./usr/share/man/html3/copysign.html		comp-c-htmlman		html
 ./usr/share/man/html3/copysignf.html		comp-c-htmlman		html
+./usr/share/man/html3/copysignl.html		comp-c-htmlman		html
 ./usr/share/man/html3/copywin.html		comp-c-htmlman		html
 ./usr/share/man/html3/cos.html			comp-c-htmlman		html
 ./usr/share/man/html3/cosf.html			comp-c-htmlman		html
@@ -11371,6 +11381,7 @@
 ./usr/share/man/html3/coshf.html		comp-c-htmlman		html
 ./usr/share/man/html3/cpow.html			comp-c-htmlman		complex,html
 ./usr/share/man/html3/cpowf.html		comp-c-htmlman		complex,html
+./usr/share/man/html3/cproj.html		comp-c-htmlman		complex,html
 ./usr/share/man/html3/cpuset.html		comp-c-htmlman		html
 ./usr/share/man/html3/cpuset_clr.html		comp-c-htmlman		html
 ./usr/share/man/html3/cpuset_create.html	comp-c-htmlman		html
@@ -11381,6 +11392,7 @@
 ./usr/share/man/html3/cpuset_zero.html		comp-c-htmlman		html
 ./usr/share/man/html3/creal.html		comp-c-htmlman		complex,html
 ./usr/share/man/html3/crealf.html		comp-c-htmlman		complex,html
+./usr/share/man/html3/creall.html		comp-c-htmlman		complex,html
 ./usr/share/man/html3/creat.html		comp-c-htmlman		html
 ./usr/share/man/html3/crypt.html		comp-c-htmlman		html
 ./usr/share/man/html3/crypto.html		comp-c-htmlman		crypto,html
@@ -11723,6 +11735,8 @@
 ./usr/share/man/html3/exit.html			comp-c-htmlman		html
 ./usr/share/man/html3/exp.html			comp-c-htmlman		html
 ./usr/share/man/html3/expf.html			comp-c-htmlman		html
+./usr/share/man/html3/exp2.html			comp-c-htmlman		html
+./usr/share/man/html3/exp2f.html		comp-c-htmlman		html
 ./usr/share/man/html3/expm1.html		comp-c-htmlman		html
 ./usr/share/man/html3/expm1f.html		comp-c-htmlman		html
 ./usr/share/man/html3/extattr.html		comp-c-htmlman		html
@@ -13192,6 +13206,8 @@
 ./usr/share/man/html3/newwin.html		comp-c-htmlman		html
 ./usr/share/man/html3/nextafter.html		comp-c-htmlman		html
 ./usr/share/man/html3/nextafterf.html		comp-c-htmlman		html
+./usr/share/man/html3/nextafterl.html		comp-c-htmlman		html
+./usr/share/man/html3/nexttoward.html		comp-c-htmlman		html
 ./usr/share/man/html3/nftw.html			comp-c-htmlman		html
 ./usr/share/man/html3/ngettext.html		comp-c-htmlman		html
 ./usr/share/man/html3/nice.html			comp-c-htmlman		html
@@ -17153,6 +17169,7 @@
 ./usr/share/man/man3/chgat.3			comp-c-man		.man
 ./usr/share/man/man3/cimag.3			comp-c-man		complex,.man
 ./usr/share/man/man3/cimagf.3			comp-c-man		complex,.man
+./usr/share/man/man3/cimagl.3			comp-c-man		complex,.man
 ./usr/share/man/man3/circleq_empty.3		comp-obsolete		obsolete
 ./usr/share/man/man3/circleq_entry.3		comp-obsolete		obsolete
 ./usr/share/man/man3/circleq_first.3		comp-obsolete		obsolete
@@ -17211,6 +17228,7 @@
 ./usr/share/man/man3/conjf.3			comp-c-man		complex,.man
 ./usr/share/man/man3/copysign.3			comp-c-man		.man
 ./usr/share/man/man3/copysignf.3		comp-c-man		.man
+./usr/share/man/man3/copysignl.3		comp-c-man		.man
 ./usr/share/man/man3/copywin.3			comp-c-man		.man
 ./usr/share/man/man3/cos.3			comp-c-man		.man
 ./usr/share/man/man3/cosf.3			comp-c-man		.man
@@ -17218,6 +17236,7 @@
 ./usr/share/man/man3/coshf.3			comp-c-man		.man
 ./usr/share/man/man3/cpow.3			comp-c-man		complex,.man
 ./usr/share/man/man3/cpowf.3			comp-c-man		complex,.man
+./usr/share/man/man3/cproj.3			comp-c-man		complex,.man
 ./usr/share/man/man3/cpuset.3			comp-c-man		.man
 ./usr/share/man/man3/cpuset_clr.3		comp-c-man		.man
 ./usr/share/man/man3/cpuset_create.3		comp-c-man		.man
@@ -17228,6 +17247,7 @@
 ./usr/share/man/man3/cpuset_zero.3		comp-c-man		.man
 ./usr/share/man/man3/creal.3			comp-c-man		complex,.man
 ./usr/share/man/man3/crealf.3			comp-c-man		complex,.man
+./usr/share/man/man3/creall.3			comp-c-man		complex,.man
 ./usr/share/man/man3/creat.3			comp-c-man		.man
 ./usr/share/man/man3/crypt.3			comp-c-man		.man
 ./usr/share/man/man3/crypto.3			comp-c-man		crypto,.man
@@ -17572,6 +17592,8 @@
 ./usr/share/man/man3/exit.3			comp-c-man		.man
 ./usr/share/man/man3/exp.3			comp-c-man		.man
 ./usr/share/man/man3/expf.3			comp-c-man		.man
+./usr/share/man/man3/exp2.3			comp-c-man		.man
+./usr/share/man/man3/exp2f.3			comp-c-man		.man
 ./usr/share/man/man3/expm1.3			comp-c-man		.man
 ./usr/share/man/man3/expm1f.3			comp-c-man		.man
 ./usr/share/man/man3/extattr.3			comp-c-man		.man
@@ -19080,6 +19102,8 @@
 ./usr/share/man/man3/newwin.3			comp-c-man		.man
 ./usr/share/man/man3/nextafter.3		comp-c-man		.man
 ./usr/share/man/man3/nextafterf.3		comp-c-man		.man
+./usr/share/man/man3/nextafterl.3		comp-c-man		.man
+./usr/share/man/man3/nexttoward.3		comp-c-man		.man
 ./usr/share/man/man3/nftw.3			comp-c-man		.man
 ./usr/share/man/man3/ngettext.3			comp-c-man		.man
 ./usr/share/man/man3/nice.3			comp-c-man		.man

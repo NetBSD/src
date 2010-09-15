@@ -1,4 +1,4 @@
-/*	$NetBSD: math.h,v 1.52 2010/05/02 06:31:48 dholland Exp $	*/
+/*	$NetBSD: math.h,v 1.53 2010/09/15 16:11:30 christos Exp $	*/
 
 /*
  * ====================================================
@@ -311,6 +311,7 @@ float	scalbnf(float, int);
 
 float	cbrtf(float);
 float	fabsf(float);
+long double	fabsl(long double);
 float	hypotf(float, float);
 float	powf(float, float);
 float	sqrtf(float);
@@ -351,10 +352,13 @@ float	remainderf(float, float);
 /* 7.12.11 manipulation */
 
 float	copysignf(float, float);
+long double	copysignl(long double, long double);
 double	nan(const char *);
 float	nanf(const char *);
 long double	nanl(const char *);
 float	nextafterf(float, float);
+long double     nextafterl(long double, long double);
+double	nexttoward(double, long double);
 
 /* 7.12.14 comparison */
 

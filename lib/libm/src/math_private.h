@@ -11,7 +11,7 @@
 
 /*
  * from: @(#)fdlibm.h 5.1 93/09/24
- * $NetBSD: math_private.h,v 1.14 2010/01/11 16:28:39 christos Exp $
+ * $NetBSD: math_private.h,v 1.15 2010/09/15 16:11:30 christos Exp $
  */
 
 #ifndef _MATH_PRIVATE_H_
@@ -169,6 +169,37 @@ do {								\
 	}					\
 } while (/*CONSTCOND*/0)
 #endif
+
+#ifdef	_COMPLEX_H
+
+/*
+ * Quoting from ISO/IEC 9899:TC2:
+ *
+ * 6.2.5.13 Types
+ * Each complex type has the same representation and alignment requirements as
+ * an array type containing exactly two elements of the corresponding real type;
+ * the first element is equal to the real part, and the second element to the
+ * imaginary part, of the complex number.
+ */
+typedef union {
+	float complex z;
+	float parts[2];
+} float_complex;
+
+typedef union {
+	double complex z;
+	double parts[2];
+} double_complex;
+
+typedef union {
+	long double complex z;
+	long double complex parts[2];
+} long_double_complex;
+
+#define	REAL_PART(z)	((z).parts[0])
+#define	IMAG_PART(z)	((z).parts[1])
+
+#endif	/* _COMPLEX_H */
 
 /* ieee style elementary functions */
 extern double __ieee754_sqrt __P((double));
