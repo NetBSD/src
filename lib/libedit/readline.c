@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.c,v 1.91 2010/08/28 15:44:59 christos Exp $	*/
+/*	$NetBSD: readline.c,v 1.92 2010/09/16 20:08:51 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: readline.c,v 1.91 2010/08/28 15:44:59 christos Exp $");
+__RCSID("$NetBSD: readline.c,v 1.92 2010/09/16 20:08:51 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -121,10 +121,6 @@ VFunction *rl_prep_term_function = (VFunction *)rl_prep_terminal;
 VFunction *rl_deprep_term_function = (VFunction *)rl_deprep_terminal;
 KEYMAP_ENTRY_ARRAY emacs_meta_keymap;
 
-#ifdef WIDECHAR
-static ct_buffer_t conv;
-#endif
-
 /*
  * The current prompt string.
  */
@@ -157,7 +153,7 @@ int rl_completion_append_character = ' ';
 
 /* stuff below is used internally by libedit for readline emulation */
 
-static TYPE(History) *h = NULL;
+static History *h = NULL;
 static EditLine *e = NULL;
 static Function *map[256];
 static jmp_buf topbuf;
@@ -191,13 +187,13 @@ _get_prompt(EditLine *el __attribute__((__unused__)))
 static HIST_ENTRY *
 _move_history(int op)
 {
-	TYPE(HistEvent) ev;
+	HistEvent ev;
 	static HIST_ENTRY rl_he;
 
-	if (FUNW(history)(h, &ev, op) != 0)
+	if (history(h, &ev, op) != 0)
 		return (HIST_ENTRY *) NULL;
 
-	rl_he.line = ct_encode_string(ev.str, &conv);
+	rl_he.line = ev.str;
 	rl_he.data = NULL;
 
 	return (&rl_he);
@@ -282,14 +278,14 @@ rl_set_prompt(const char *prompt)
 int
 rl_initialize(void)
 {
-	TYPE(HistEvent) ev;
+	HistEvent ev;
 	int editmode = 1;
 	struct termios t;
 
 	if (e != NULL)
 		el_end(e);
 	if (h != NULL)
-		FUN(history,end)(h);
+		history_end(h);
 
 	if (!rl_instream)
 		rl_instream = stdin;
@@ -305,13 +301,13 @@ rl_initialize(void)
 	e = el_init(rl_readline_name, rl_instream, rl_outstream, stderr);
 
 	if (!editmode)
-		FUN(el,set)(e, EL_EDITMODE, 0);
+		el_set(e, EL_EDITMODE, 0);
 
-	h = FUN(history,init)();
+	h = history_init();
 	if (!e || !h)
 		return (-1);
 
-	FUNW(history)(h, &ev, H_SETSIZE, INT_MAX);	/* unlimited */
+	history(h, &ev, H_SETSIZE, INT_MAX);	/* unlimited */
 	history_length = 0;
 	max_input_history = INT_MAX;
 	el_set(e, EL_HIST, history, h);
@@ -325,7 +321,7 @@ rl_initialize(void)
 
 	/* for proper prompt printing in readline() */
 	if (rl_set_prompt("") == -1) {
-		FUN(history,end)(h);
+		history_end(h);
 		el_end(e);
 		return -1;
 	}
@@ -381,7 +377,7 @@ rl_initialize(void)
 char *
 readline(const char *p)
 {
-	TYPE(HistEvent) ev;
+	HistEvent ev;
 	const char * volatile prompt = p;
 	int count;
 	const char *ret;
@@ -429,7 +425,7 @@ readline(const char *p)
 	} else
 		buf = NULL;
 
-	FUNW(history)(h, &ev, H_GETSIZE);
+	history(h, &ev, H_GETSIZE);
 	history_length = ev.num;
 
 	return buf;
@@ -509,7 +505,7 @@ get_history_event(const char *cmd, int *cindex, int qchar)
 	size_t len;
 	char	*pat;
 	const char *rptr;
-	TYPE(HistEvent) ev;
+	HistEvent ev;
 
 	idx = *cindex;
 	if (cmd[idx++] != history_expansion_char)
@@ -517,10 +513,10 @@ get_history_event(const char *cmd, int *cindex, int qchar)
 
 	/* find out which event to take */
 	if (cmd[idx] == history_expansion_char || cmd[idx] == '\0') {
-		if (FUNW(history)(h, &ev, H_FIRST) != 0)
+		if (history(h, &ev, H_FIRST) != 0)
 			return(NULL);
 		*cindex = cmd[idx]? (idx + 1):idx;
-		return ct_encode_string(ev.str, &conv);
+		return ev.str;
 	}
 	sign = 0;
 	if (cmd[idx] == '-') {
@@ -575,7 +571,7 @@ get_history_event(const char *cmd, int *cindex, int qchar)
 		pat[len] = '\0';
 	}
 
-	if (FUNW(history)(h, &ev, H_CURR) != 0) {
+	if (history(h, &ev, H_CURR) != 0) {
 		if (pat != last_search_pat)
 			free(pat);
 		return (NULL);
@@ -594,7 +590,7 @@ get_history_event(const char *cmd, int *cindex, int qchar)
 
 	if (ret == -1) {
 		/* restore to end of list on failed search */
-		FUNW(history)(h, &ev, H_FIRST);
+		history(h, &ev, H_FIRST);
 		(void)fprintf(rl_outstream, "%s: Event not found\n", pat);
 		if (pat != last_search_pat)
 			free(pat);
@@ -610,13 +606,13 @@ get_history_event(const char *cmd, int *cindex, int qchar)
 	if (pat != last_search_pat)
 		free(pat);
 
-	if (FUNW(history)(h, &ev, H_CURR) != 0)
+	if (history(h, &ev, H_CURR) != 0)
 		return(NULL);
 	*cindex = idx;
-	rptr = ct_encode_string(ev.str, &conv);
+	rptr = ev.str;
 
 	/* roll back to original position */
-	(void)FUNW(history)(h, &ev, H_SET, num);
+	(void)history(h, &ev, H_SET, num);
 
 	return rptr;
 }
@@ -1126,12 +1122,12 @@ history_tokenize(const char *str)
 void
 stifle_history(int max)
 {
-	TYPE(HistEvent) ev;
+	HistEvent ev;
 
 	if (h == NULL || e == NULL)
 		rl_initialize();
 
-	if (FUNW(history)(h, &ev, H_SETSIZE, max) == 0)
+	if (history(h, &ev, H_SETSIZE, max) == 0)
 		max_input_history = max;
 }
 
@@ -1142,10 +1138,10 @@ stifle_history(int max)
 int
 unstifle_history(void)
 {
-	TYPE(HistEvent) ev;
+	HistEvent ev;
 	int omax;
 
-	FUNW(history)(h, &ev, H_SETSIZE, INT_MAX);
+	history(h, &ev, H_SETSIZE, INT_MAX);
 	omax = max_input_history;
 	max_input_history = INT_MAX;
 	return (omax);		/* some value _must_ be returned */
@@ -1303,13 +1299,13 @@ out1:
 int
 read_history(const char *filename)
 {
-	TYPE(HistEvent) ev;
+	HistEvent ev;
 
 	if (h == NULL || e == NULL)
 		rl_initialize();
 	if (filename == NULL && (filename = _default_history_file()) == NULL)
 		return errno;
-	return (FUNW(history)(h, &ev, H_LOAD, filename) == -1 ?
+	return (history(h, &ev, H_LOAD, filename) == -1 ?
 	    (errno ? errno : EINVAL) : 0);
 }
 
@@ -1320,13 +1316,13 @@ read_history(const char *filename)
 int
 write_history(const char *filename)
 {
-	TYPE(HistEvent) ev;
+	HistEvent ev;
 
 	if (h == NULL || e == NULL)
 		rl_initialize();
 	if (filename == NULL && (filename = _default_history_file()) == NULL)
 		return errno;
-	return (FUNW(history)(h, &ev, H_SAVE, filename) == -1 ?
+	return (history(h, &ev, H_SAVE, filename) == -1 ?
 	    (errno ? errno : EINVAL) : 0);
 }
 
@@ -1340,29 +1336,29 @@ HIST_ENTRY *
 history_get(int num)
 {
 	static HIST_ENTRY she;
-	TYPE(HistEvent) ev;
+	HistEvent ev;
 	int curr_num;
 
 	if (h == NULL || e == NULL)
 		rl_initialize();
 
 	/* save current position */
-	if (FUNW(history)(h, &ev, H_CURR) != 0)
+	if (history(h, &ev, H_CURR) != 0)
 		return (NULL);
 	curr_num = ev.num;
 
 	/* start from the oldest */
-	if (FUNW(history)(h, &ev, H_LAST) != 0)
+	if (history(h, &ev, H_LAST) != 0)
 		return (NULL);	/* error */
 
 	/* look forwards for event matching specified offset */
-	if (FUNW(history)(h, &ev, H_NEXT_EVDATA, num, &she.data))
+	if (history(h, &ev, H_NEXT_EVDATA, num, &she.data))
 		return (NULL);
 
-	she.line = ct_encode_string(ev.str, &conv);
+	she.line = ev.str;
 
 	/* restore pointer to where it was */
-	(void)FUNW(history)(h, &ev, H_SET, curr_num);
+	(void)history(h, &ev, H_SET, curr_num);
 
 	return (&she);
 }
@@ -1374,16 +1370,13 @@ history_get(int num)
 int
 add_history(const char *line)
 {
-	TYPE(HistEvent) ev;
-	const Char *wline;
+	HistEvent ev;
 
 	if (h == NULL || e == NULL)
 		rl_initialize();
 
-	wline = ct_decode_string(line, &conv);
-
-	(void)FUNW(history)(h, &ev, H_ENTER, wline);
-	if (FUNW(history)(h, &ev, H_GETSIZE) == 0)
+	(void)history(h, &ev, H_ENTER, line);
+	if (history(h, &ev, H_GETSIZE) == 0)
 		history_length = ev.num;
 
 	return (!(history_length > 0)); /* return 0 if all is okay */
@@ -1397,7 +1390,7 @@ HIST_ENTRY *
 remove_history(int num)
 {
 	HIST_ENTRY *he;
-	TYPE(HistEvent) ev;
+	HistEvent ev;
 
 	if (h == NULL || e == NULL)
 		rl_initialize();
@@ -1405,13 +1398,13 @@ remove_history(int num)
 	if ((he = malloc(sizeof(*he))) == NULL)
 		return NULL;
 
-	if (FUNW(history)(h, &ev, H_DELDATA, num, &he->data) != 0) {
+	if (history(h, &ev, H_DELDATA, num, &he->data) != 0) {
 		free(he);
 		return NULL;
 	}
 
-	he->line = ct_encode_string(ev.str, &conv);
-	if (FUNW(history)(h, &ev, H_GETSIZE) == 0)
+	he->line = ev.str;
+	if (history(h, &ev, H_GETSIZE) == 0)
 		history_length = ev.num;
 
 	return he;
@@ -1425,37 +1418,37 @@ HIST_ENTRY *
 replace_history_entry(int num, const char *line, histdata_t data)
 {
 	HIST_ENTRY *he;
-	TYPE(HistEvent) ev;
+	HistEvent ev;
 	int curr_num;
 
 	if (h == NULL || e == NULL)
 		rl_initialize();
 
 	/* save current position */
-	if (FUNW(history)(h, &ev, H_CURR) != 0)
+	if (history(h, &ev, H_CURR) != 0)
 		return NULL;
 	curr_num = ev.num;
 
 	/* start from the oldest */
-	if (FUNW(history)(h, &ev, H_LAST) != 0)
+	if (history(h, &ev, H_LAST) != 0)
 		return NULL;	/* error */
 
 	if ((he = malloc(sizeof(*he))) == NULL)
 		return NULL;
 
 	/* look forwards for event matching specified offset */
-	if (FUNW(history)(h, &ev, H_NEXT_EVDATA, num, &he->data))
+	if (history(h, &ev, H_NEXT_EVDATA, num, &he->data))
 		goto out;
 
-	he->line = strdup(ct_encode_string(ev.str, &e->el_scratch));
+	he->line = strdup(ev.str);
 	if (he->line == NULL)
 		goto out;
 
-	if (FUNW(history)(h, &ev, H_REPLACE, line, data))
+	if (history(h, &ev, H_REPLACE, line, data))
 		goto out;
 
 	/* restore pointer to where it was */
-	if (FUNW(history)(h, &ev, H_SET, curr_num))
+	if (history(h, &ev, H_SET, curr_num))
 		goto out;
 
 	return he;
@@ -1470,9 +1463,9 @@ out:
 void
 clear_history(void)
 {
-	TYPE(HistEvent) ev;
+	HistEvent ev;
 
-	(void)FUNW(history)(h, &ev, H_CLEAR);
+	(void)history(h, &ev, H_CLEAR);
 	history_length = 0;
 }
 
@@ -1483,16 +1476,16 @@ clear_history(void)
 int
 where_history(void)
 {
-	TYPE(HistEvent) ev;
+	HistEvent ev;
 	int curr_num, off;
 
-	if (FUNW(history)(h, &ev, H_CURR) != 0)
+	if (history(h, &ev, H_CURR) != 0)
 		return (0);
 	curr_num = ev.num;
 
-	(void)FUNW(history)(h, &ev, H_FIRST);
+	(void)history(h, &ev, H_FIRST);
 	off = 1;
-	while (ev.num != curr_num && FUNW(history)(h, &ev, H_NEXT) == 0)
+	while (ev.num != curr_num && history(h, &ev, H_NEXT) == 0)
 		off++;
 
 	return (off);
@@ -1516,22 +1509,22 @@ current_history(void)
 int
 history_total_bytes(void)
 {
-	TYPE(HistEvent) ev;
+	HistEvent ev;
 	int curr_num;
 	size_t size;
 
-	if (FUNW(history)(h, &ev, H_CURR) != 0)
+	if (history(h, &ev, H_CURR) != 0)
 		return (-1);
 	curr_num = ev.num;
 
-	(void)FUNW(history)(h, &ev, H_FIRST);
+	(void)history(h, &ev, H_FIRST);
 	size = 0;
 	do
-		size += Strlen(ev.str) * sizeof(*ev.str);
-	while (FUNW(history)(h, &ev, H_NEXT) == 0);
+		size += strlen(ev.str) * sizeof(*ev.str);
+	while (history(h, &ev, H_NEXT) == 0);
 
 	/* get to the same position as before */
-	FUNW(history)(h, &ev, H_PREV_EVENT, curr_num);
+	history(h, &ev, H_PREV_EVENT, curr_num);
 
 	return (int)(size);
 }
@@ -1543,21 +1536,21 @@ history_total_bytes(void)
 int
 history_set_pos(int pos)
 {
-	TYPE(HistEvent) ev;
+	HistEvent ev;
 	int curr_num;
 
 	if (pos >= history_length || pos < 0)
 		return (-1);
 
-	(void)FUNW(history)(h, &ev, H_CURR);
+	(void)history(h, &ev, H_CURR);
 	curr_num = ev.num;
 
 	/*
 	 * use H_DELDATA to set to nth history (without delete) by passing
 	 * (void **)-1
 	 */
-	if (FUNW(history)(h, &ev, H_DELDATA, pos, (void **)-1)) {
-		(void)FUNW(history)(h, &ev, H_SET, curr_num);
+	if (history(h, &ev, H_DELDATA, pos, (void **)-1)) {
+		(void)history(h, &ev, H_SET, curr_num);
 		return(-1);
 	}
 	return (0);
@@ -1592,23 +1585,21 @@ next_history(void)
 int
 history_search(const char *str, int direction)
 {
-	TYPE(HistEvent) ev;
-	const Char *strp;
-	const Char *wstr;
+	HistEvent ev;
+	const char *strp;
 	int curr_num;
 
-	if (FUNW(history)(h, &ev, H_CURR) != 0)
+	if (history(h, &ev, H_CURR) != 0)
 		return (-1);
 	curr_num = ev.num;
 
-	wstr = ct_decode_string(str, &conv);
 	for (;;) {
-		if ((strp = Strstr(ev.str, wstr)) != NULL)
+		if ((strp = strstr(ev.str, str)) != NULL)
 			return (int) (strp - ev.str);
-		if (FUNW(history)(h, &ev, direction < 0 ? H_NEXT:H_PREV) != 0)
+		if (history(h, &ev, direction < 0 ? H_NEXT:H_PREV) != 0)
 			break;
 	}
-	(void)FUNW(history)(h, &ev, H_SET, curr_num);
+	(void)history(h, &ev, H_SET, curr_num);
 	return (-1);
 }
 
@@ -1619,9 +1610,9 @@ history_search(const char *str, int direction)
 int
 history_search_prefix(const char *str, int direction)
 {
-	TYPE(HistEvent) ev;
+	HistEvent ev;
 
-	return (FUNW(history)(h, &ev, direction < 0 ?
+	return (history(h, &ev, direction < 0 ?
 	    H_PREV_STR : H_NEXT_STR, str));
 }
 
@@ -1635,30 +1626,28 @@ int
 history_search_pos(const char *str,
 		   int direction __attribute__((__unused__)), int pos)
 {
-	TYPE(HistEvent) ev;
+	HistEvent ev;
 	int curr_num, off;
-	const Char *wstr;
 
 	off = (pos > 0) ? pos : -pos;
 	pos = (pos > 0) ? 1 : -1;
 
-	if (FUNW(history)(h, &ev, H_CURR) != 0)
+	if (history(h, &ev, H_CURR) != 0)
 		return (-1);
 	curr_num = ev.num;
 
-	if (history_set_pos(off) != 0 || FUNW(history)(h, &ev, H_CURR) != 0)
+	if (history_set_pos(off) != 0 || history(h, &ev, H_CURR) != 0)
 		return (-1);
 
-	wstr = ct_decode_string(str, &conv);
 	for (;;) {
-		if (Strstr(ev.str, wstr))
+		if (strstr(ev.str, str))
 			return (off);
-		if (FUNW(history)(h, &ev, (pos < 0) ? H_PREV : H_NEXT) != 0)
+		if (history(h, &ev, (pos < 0) ? H_PREV : H_NEXT) != 0)
 			break;
 	}
 
 	/* set "current" pointer back to previous state */
-	(void)FUNW(history)(h, &ev,
+	(void)history(h, &ev,
 	    pos < 0 ? H_NEXT_EVENT : H_PREV_EVENT, curr_num);
 
 	return (-1);
@@ -1781,6 +1770,8 @@ rl_complete(int ignore __attribute__((__unused__)), int invoking_key)
 	    (size_t)rl_completion_query_items,
 	    &rl_completion_type, &rl_attempted_completion_over,
 	    &rl_point, &rl_end);
+
+
 }
 
 
