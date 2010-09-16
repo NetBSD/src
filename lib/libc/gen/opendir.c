@@ -1,4 +1,4 @@
-/*	$NetBSD: opendir.c,v 1.35 2009/01/11 02:46:27 christos Exp $	*/
+/*	$NetBSD: opendir.c,v 1.36 2010/09/16 02:38:50 yamt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)opendir.c	8.7 (Berkeley) 12/10/94";
 #else
-__RCSID("$NetBSD: opendir.c,v 1.35 2009/01/11 02:46:27 christos Exp $");
+__RCSID("$NetBSD: opendir.c,v 1.36 2010/09/16 02:38:50 yamt Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -104,8 +104,6 @@ __opendir_common(int fd, const char *name, int flags)
 	int unionstack, nfsdir;
 	struct statvfs sfb;
 
-	_DIAGASSERT(name != NULL);
-
 	if (fcntl(fd, F_SETFD, FD_CLOEXEC) == -1)
 		goto error;
 	if (fstat(fd, &sb) || !S_ISDIR(sb.st_mode)) {
@@ -120,7 +118,7 @@ __opendir_common(int fd, const char *name, int flags)
 	 * If the machine's page size is an exact multiple of DIRBLKSIZ,
 	 * use a buffer that is cluster boundary aligned.
 	 * Hopefully this can be a big win someday by allowing page trades
-	 * to user space to be done by getdirentries()
+	 * to user space to be done by getdents()
 	 */
 	if (((pagesz = getpagesize()) % DIRBLKSIZ) == 0)
 		incr = pagesz;
@@ -140,7 +138,8 @@ __opendir_common(int fd, const char *name, int flags)
 	else
 		unionstack = 0;
 
-	nfsdir = !(strncmp(sfb.f_fstypename, MOUNT_NFS, sizeof(sfb.f_fstypename)));
+	nfsdir = !(strncmp(sfb.f_fstypename, MOUNT_NFS,
+	    sizeof(sfb.f_fstypename)));
 
 	if (unionstack || nfsdir) {
 		size_t len;
@@ -175,7 +174,7 @@ retry:
 		do {
 			/*
 			 * Always make at least DIRBLKSIZ bytes
-			 * available to getdirentries
+			 * available to getdents
 			 */
 			if (space < DIRBLKSIZ) {
 				space += incr;
