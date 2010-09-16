@@ -11,7 +11,7 @@
 
 /*
  * from: @(#)fdlibm.h 5.1 93/09/24
- * $NetBSD: math_private.h,v 1.15 2010/09/15 16:11:30 christos Exp $
+ * $NetBSD: math_private.h,v 1.16 2010/09/16 20:39:50 drochner Exp $
  */
 
 #ifndef _MATH_PRIVATE_H_
@@ -193,7 +193,7 @@ typedef union {
 
 typedef union {
 	long double complex z;
-	long double complex parts[2];
+	long double parts[2];
 } long_double_complex;
 
 #define	REAL_PART(z)	((z).parts[0])
