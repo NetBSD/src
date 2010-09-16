@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_handler.c,v 1.1 2010/08/22 18:56:22 rmind Exp $	*/
+/*	$NetBSD: npf_handler.c,v 1.2 2010/09/16 04:53:27 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2010 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_handler.c,v 1.1 2010/08/22 18:56:22 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_handler.c,v 1.2 2010/09/16 04:53:27 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,6 +56,8 @@ __KERNEL_RCSID(0, "$NetBSD: npf_handler.c,v 1.1 2010/08/22 18:56:22 rmind Exp $"
 static struct pfil_head *	npf_ph_if = NULL;
 static struct pfil_head *	npf_ph_inet = NULL;
 
+static bool			default_pass = true;
+
 int	npf_packet_handler(void *, struct mbuf **, struct ifnet *, int);
 
 /*
@@ -69,59 +71,67 @@ npf_ifhook(void *arg, struct mbuf **mp, struct ifnet *ifp, int di)
 }
 
 /*
- * npf_packet_handler: main packet handling routine.
+ * npf_packet_handler: main packet handling routine for layer 3.
  *
  * Note: packet flow and inspection logic is in strict order.
  */
 int
 npf_packet_handler(void *arg, struct mbuf **mp, struct ifnet *ifp, int di)
 {
-	const int layer = (const int)(long)arg;
 	nbuf_t *nbuf = *mp;
 	npf_cache_t npc;
 	npf_session_t *se;
 	npf_rule_t *rl;
-	int error;
+	bool keepstate;
+	int retfl, error;
 
 	/*
 	 * Initialise packet information cache.
 	 * Note: it is enough to clear the info bits.
 	 */
 	npc.npc_info = 0;
+	error = 0;
+	retfl = 0;
 
 	/* Inspect the list of sessions. */
-	se = npf_session_inspect(&npc, nbuf, ifp, di, layer);
+	se = npf_session_inspect(&npc, nbuf, ifp, di);
 
-	/* Inbound NAT. */
-	if ((di & PFIL_IN) && (error = npf_natin(&npc, se, nbuf, layer)) != 0) {
+	/* If "passing" session found - skip the ruleset inspection. */
+	if (se && npf_session_pass(se)) {
+		goto pass;
+	}
+
+	/* Inspect the ruleset using this packet. */
+	rl = npf_ruleset_inspect(&npc, nbuf, ifp, di, NPF_LAYER_3);
+	if (rl == NULL) {
+		if (default_pass) {
+			goto pass;
+		}
+		error = ENETUNREACH;
 		goto out;
 	}
 
-	/* If session found - we pass this packet. */
-	if (se && npf_session_pass(se)) {
-		error = 0;
-	} else {
-		/* Inspect ruleset using this packet. */
-		rl = npf_ruleset_inspect(&npc, nbuf, ifp, di, layer);
-		if (rl != NULL) {
-			bool keepstate;
-			/* Apply the rule. */
-			error = npf_rule_apply(&npc, rl, &keepstate);
-			if (error) {
-				goto out;
-			}
-			/* Establish a session, if required. */
-			if (keepstate) {
-				se = npf_session_establish(&npc, NULL, di);
-			}
-		}
-		/* No rules or "default" rule - pass. */
+	/* Apply the rule. */
+	error = npf_rule_apply(&npc, rl, &keepstate, &retfl);
+	if (error) {
+		goto out;
 	}
 
-	/* Outbound NAT. */
-	if (di & PFIL_OUT) {
-		error = npf_natout(&npc, se, nbuf, ifp, layer);
+	/* Establish a "pass" session, if required. */
+	if (keepstate && !se) {
+		se = npf_session_establish(&npc, NULL, di);
+		if (se == NULL) {
+			error = ENOMEM;
+			goto out;
+		}
+		npf_session_setpass(se);
 	}
+pass:
+	KASSERT(error == 0);
+	/*
+	 * Perform NAT.
+	 */
+	error = npf_do_nat(&npc, se, nbuf, ifp, di);
 out:
 	/* Release reference on session. */
 	if (se != NULL) {
@@ -130,9 +140,16 @@ out:
 
 	/*
 	 * If error is set - drop the packet.
-	 * Normally, ENETUNREACH is used to "block".
+	 * Normally, ENETUNREACH is used for "block".
 	 */
 	if (error) {
+		/*
+		 * Depending on flags and protocol, return TCP reset (RST)
+		 * or ICMP destination unreachable
+		 */
+		if (retfl) {
+			npf_return_block(&npc, nbuf, retfl);
+		}
 		m_freem(*mp);
 		*mp = NULL;
 	}
@@ -171,7 +188,7 @@ npf_register_pfil(void)
 	KASSERT(error == 0);
 
 	/* Packet IN/OUT handler on all interfaces and IP layer. */
-	error = pfil_add_hook(npf_packet_handler, (void *)NPF_LAYER_3,
+	error = pfil_add_hook(npf_packet_handler, NULL,
 	    PFIL_WAITOK | PFIL_ALL, npf_ph_inet);
 	KASSERT(error == 0);
 
@@ -193,7 +210,7 @@ npf_unregister_pfil(void)
 	KERNEL_LOCK(1, NULL);
 
 	if (npf_ph_if) {
-		(void)pfil_remove_hook(npf_packet_handler, (void *)NPF_LAYER_3,
+		(void)pfil_remove_hook(npf_packet_handler, NULL,
 		    PFIL_ALL, npf_ph_inet);
 		(void)pfil_remove_hook(npf_ifhook, NULL,
 		    PFIL_IFADDR | PFIL_IFNET, npf_ph_if);

@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_mbuf.c,v 1.1 2010/08/22 18:56:22 rmind Exp $	*/
+/*	$NetBSD: npf_mbuf.c,v 1.2 2010/09/16 04:53:27 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2010 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_mbuf.c,v 1.1 2010/08/22 18:56:22 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_mbuf.c,v 1.2 2010/09/16 04:53:27 rmind Exp $");
 #endif
 
 #include <sys/param.h>
@@ -132,10 +132,11 @@ nbuf_rw_datum(const int wr, nbuf_t *nbuf, void *n_ptr, size_t len, void *buf)
 		l = m->m_len - off;
 		KASSERT(l < len);
 		len -= l;
-		if (wr) {
+		if (wr == NBUF_DATA_WRITE) {
 			while (l--)
 				*d++ = *b++;
 		} else {
+			KASSERT(wr == NBUF_DATA_READ);
 			while (l--)
 				*b++ = *d++;
 		}
@@ -158,10 +159,11 @@ nbuf_rw_datum(const int wr, nbuf_t *nbuf, void *n_ptr, size_t len, void *buf)
 	KASSERT(len <= m->m_len);
 
 	/* Non-overlapping case: fetch the actual data. */
-	if (wr) {
+	if (wr == NBUF_DATA_WRITE) {
 		while (len--)
 			*d++ = *b++;
 	} else {
+		KASSERT(wr == NBUF_DATA_READ);
 		while (len--)
 			*b++ = *d++;
 	}

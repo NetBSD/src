@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_instr.c,v 1.1 2010/08/22 18:56:22 rmind Exp $	*/
+/*	$NetBSD: npf_instr.c,v 1.2 2010/09/16 04:53:27 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2010 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_instr.c,v 1.1 2010/08/22 18:56:22 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_instr.c,v 1.2 2010/09/16 04:53:27 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -181,8 +181,7 @@ npf_match_udp_ports(npf_cache_t *npc, nbuf_t *nbuf, void *n_ptr,
  * npf_match_icmp4: match ICMPv4 packet.
  */
 int
-npf_match_icmp4(npf_cache_t *npc, nbuf_t *nbuf, void *n_ptr,
-    const int type, const int code)
+npf_match_icmp4(npf_cache_t *npc, nbuf_t *nbuf, void *n_ptr, const uint32_t tc)
 {
 
 	if (!npf_iscached(npc, NPC_ICMP)) {
@@ -200,10 +199,35 @@ npf_match_icmp4(npf_cache_t *npc, nbuf_t *nbuf, void *n_ptr,
 		}
 		KASSERT(npf_iscached(npc, NPC_ICMP));
 	}
-	/* Match, if required. */
-	if (type != ~0 && type != npc->npc_icmp_type)
-		return -1;
-	if (code != ~0 && code != npc->npc_icmp_code)
-		return -1;
+	/* Match code/type, if required. */
+	if ((1 << 31) & tc) {
+		const uint8_t type = (tc >> 8) & 0xff;
+		if (type != npc->npc_icmp_type) {
+			return -1;
+		}
+	}
+	if ((1 << 30) & tc) {
+		const uint8_t code = tc & 0xff;
+		if (code != npc->npc_icmp_code) {
+			return -1;
+		}
+	}
 	return 0;
+}
+
+/*
+ * npf_match_tcpfl: match TCP flags.
+ */
+int
+npf_match_tcpfl(npf_cache_t *npc, nbuf_t *nbuf, void *n_ptr, const uint32_t fl)
+{
+	const uint8_t tcpfl = (fl >> 8) & 0xff, mask = fl & 0xff;
+
+	if (!npf_iscached(npc, NPC_IP46) && !npf_ip4_proto(npc, nbuf, n_ptr)) {
+		return -1;
+	}
+	if (!npf_fetch_tcpfl(npc, nbuf, n_ptr)) {
+		return -1;
+	}
+	return ((npc->npc_tcp_flags & mask) == tcpfl) ? 0 : -1;
 }

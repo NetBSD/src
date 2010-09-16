@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_ruleset.c,v 1.1 2010/08/22 18:56:22 rmind Exp $	*/
+/*	$NetBSD: npf_ruleset.c,v 1.2 2010/09/16 04:53:27 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2010 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_ruleset.c,v 1.1 2010/08/22 18:56:22 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_ruleset.c,v 1.2 2010/09/16 04:53:27 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -230,6 +230,7 @@ npf_rule_alloc(int attr, pri_t pri, int ifidx, void *nc, size_t sz)
 	rl->r_nat = NULL;
 	return rl;
 }
+
 #if 0
 /*
  * npf_activate_rule: activate rule by inserting it into the global ruleset.
@@ -334,23 +335,19 @@ npf_hook_unregister(npf_rule_t *rl, npf_hook_t *hk)
 }
 
 /*
- * npf_ruleset_match: inspect the packet against the ruleset.
+ * npf_ruleset_match: inspect the packet against the given ruleset.
  *
- * Loop for each rule in the set and perform run n-code processor of each
- * rule against the packet (nbuf chain).  If sub-ruleset found, inspect it.
- *
- * => If found, ruleset is kept read-locked.
- * => Caller should protect the nbuf chain.
+ * Loop for each rule in the set and run n-code processor of each rule
+ * against the packet (nbuf chain).
  */
 npf_rule_t *
-npf_ruleset_match(npf_ruleset_t *rlset0, npf_cache_t *npc, nbuf_t *nbuf,
+npf_ruleset_match(npf_ruleset_t *rlset, npf_cache_t *npc, nbuf_t *nbuf,
     struct ifnet *ifp, const int di, const int layer)
 {
 	npf_rule_t *final_rl = NULL, *rl;
-	npf_ruleset_t *rlset = rlset0;
 
 	KASSERT(((di & PFIL_IN) != 0) ^ ((di & PFIL_OUT) != 0));
-reinspect:
+
 	TAILQ_FOREACH(rl, &rlset->rs_queue, r_entry) {
 		KASSERT(!final_rl || rl->r_priority >= final_rl->r_priority);
 
@@ -374,38 +371,42 @@ reinspect:
 		/* Set the matching rule and check for "final". */
 		final_rl = rl;
 		if (rl->r_attr & NPF_RULE_FINAL) {
-			goto final;
+			break;
 		}
-	}
-	/* Default, if no final rule. */
-	if (final_rl == NULL) {
-		rlset = rlset0;
-		final_rl = rlset->rs_default;
-	}
-	/* Inspect the sub-ruleset, if any. */
-	if (final_rl) {
-final:
-		if (TAILQ_EMPTY(&final_rl->r_subset.rs_queue)) {
-			return final_rl;
-		}
-		rlset = &final_rl->r_subset;
-		final_rl = NULL;
-		goto reinspect;
 	}
 	return final_rl;
 }
 
 /*
  * npf_ruleset_inspect: inspection of the main ruleset for filtering.
+ * If sub-ruleset is found, inspect it.
+ *
+ * => If found, ruleset is kept read-locked.
+ * => Caller should protect the nbuf chain.
  */
 npf_rule_t *
 npf_ruleset_inspect(npf_cache_t *npc, nbuf_t *nbuf,
     struct ifnet *ifp, const int di, const int layer)
 {
+	npf_ruleset_t *rlset = ruleset;
 	npf_rule_t *rl;
+	bool defed;
 
+	defed = false;
 	rw_enter(&ruleset_lock, RW_READER);
-	rl = npf_ruleset_match(ruleset, npc, nbuf, ifp, di, layer);
+reinspect:
+	rl = npf_ruleset_match(rlset, npc, nbuf, ifp, di, layer);
+
+	/* If no final rule, then - default. */
+	if (rl == NULL && !defed) {
+		rl = ruleset->rs_default;
+		defed = true;
+	}
+	/* Inspect the sub-ruleset, if any. */
+	if (rl && !TAILQ_EMPTY(&rl->r_subset.rs_queue)) {
+		rlset = &rl->r_subset;
+		goto reinspect;
+	}
 	if (rl == NULL) {
 		rw_exit(&ruleset_lock);
 	}
@@ -419,7 +420,8 @@ npf_ruleset_inspect(npf_cache_t *npc, nbuf_t *nbuf,
  * => Releases the ruleset lock.
  */
 int
-npf_rule_apply(const npf_cache_t *npc, npf_rule_t *rl, bool *keepstate)
+npf_rule_apply(const npf_cache_t *npc, npf_rule_t *rl,
+    bool *keepstate, int *retfl)
 {
 	npf_hook_t *hk;
 
@@ -432,6 +434,8 @@ npf_rule_apply(const npf_cache_t *npc, npf_rule_t *rl, bool *keepstate)
 
 	/* If not passing - drop the packet. */
 	if ((rl->r_attr & NPF_RULE_PASS) == 0) {
+		/* Determine whether any return message is needed. */
+		*retfl = rl->r_attr & (NPF_RULE_RETRST | NPF_RULE_RETICMP);
 		rw_exit(&ruleset_lock);
 		return ENETUNREACH;
 	}
@@ -455,12 +459,11 @@ npf_rulenc_dump(npf_rule_t *rl)
 	uint32_t *op = rl->r_ncode;
 	size_t n = rl->r_nc_size;
 
-	do {
+	while (n) {
 		printf("\t> |0x%02x|\n", (uint32_t)*op);
 		op++;
 		n -= sizeof(*op);
-	} while (n);
-
+	}
 	printf("-> %s\n", (rl->r_attr & NPF_RULE_PASS) ? "pass" : "block");
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_processor.c,v 1.1 2010/08/22 18:56:22 rmind Exp $	*/
+/*	$NetBSD: npf_processor.c,v 1.2 2010/09/16 04:53:27 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2010 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_processor.c,v 1.1 2010/08/22 18:56:22 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_processor.c,v 1.2 2010/09/16 04:53:27 rmind Exp $");
 #endif
 
 #include <sys/param.h>
@@ -154,7 +154,7 @@ npf_ncode_process(npf_cache_t *npc, const void *ncode,
 	i_ptr = ncode;
 	regs[0] = layer;
 
-	lcount = NPF_LOOP_LIMIT;	/* XXX */
+	lcount = NPF_LOOP_LIMIT;
 	cmpval = 0;
 
 	/* Note: offset = n_ptr - nbuf_dataptr(nbuf); */
@@ -304,10 +304,15 @@ cisc_like:
 		i_ptr = nc_fetch_double(i_ptr, &n, &i);
 		cmpval = npf_match_udp_ports(npc, nbuf, n_ptr, n, i);
 		break;
+	case NPF_OPCODE_TCP_FLAGS:
+		/* TCP flags/mask. */
+		i_ptr = nc_fetch_word(i_ptr, &n);
+		cmpval = npf_match_tcpfl(npc, nbuf, n_ptr, n);
+		break;
 	case NPF_OPCODE_ICMP4:
-		/* ICMP type, code. */
-		i_ptr = nc_fetch_double(i_ptr, &n, &i);
-		cmpval = npf_match_icmp4(npc, nbuf, n_ptr, n, i);
+		/* ICMP type/code. */
+		i_ptr = nc_fetch_word(i_ptr, &n);
+		cmpval = npf_match_icmp4(npc, nbuf, n_ptr, n);
 		break;
 	default:
 		/* Invalid instruction. */
@@ -447,8 +452,11 @@ jmp_check:
 	case NPF_OPCODE_UDP_PORTS:
 		error = nc_ptr_check(&iptr, nc, sz, 2, NULL, 0);
 		break;
+	case NPF_OPCODE_TCP_FLAGS:
+		error = nc_ptr_check(&iptr, nc, sz, 1, NULL, 0);
+		break;
 	case NPF_OPCODE_ICMP4:
-		error = nc_ptr_check(&iptr, nc, sz, 2, NULL, 0);
+		error = nc_ptr_check(&iptr, nc, sz, 1, NULL, 0);
 		break;
 	default:
 		/* Invalid instruction. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_data.c,v 1.2 2010/08/23 06:01:04 jnemeth Exp $	*/
+/*	$NetBSD: npf_data.c,v 1.3 2010/09/16 04:53:27 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2010 The NetBSD Foundation, Inc.
@@ -36,6 +36,7 @@
 #include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <net/if.h>
+#include <netinet/tcp.h>
 
 #include <arpa/inet.h>
 #include <prop/proplib.h>
@@ -74,7 +75,7 @@ npfctl_init_data(void)
 	prop_dictionary_set(npf_dict, "version", ver);
 
 	nat_arr = prop_array_create();
-	prop_dictionary_set(npf_dict, "nat", nat_arr);
+	prop_dictionary_set(npf_dict, "translation", nat_arr);
 
 	settings_dict = prop_dictionary_create();
 	prop_dictionary_set(npf_dict, "settings", settings_dict);
@@ -92,7 +93,7 @@ npfctl_ioctl_send(int fd)
 	int ret = 0, errval;
 
 #ifdef DEBUG
-	prop_dictionary_externalize_to_file(npf_dict, "/tmp/npf.plist");
+	prop_dictionary_externalize_to_file(npf_dict, "./npf.plist");
 #else
 	errval = prop_dictionary_send_ioctl(npf_dict, fd, IOC_NPF_RELOAD);
 	if (errval) {
@@ -108,8 +109,9 @@ npfctl_ioctl_send(int fd)
  * Helper routines:
  *
  *	npfctl_getif() - get interface addresses and index number from name.
- *	npfctl_servname2port() - get service ports from name.
  *	npfctl_parse_v4mask() - parse address/mask integers from CIDR block.
+ *	npfctl_parse_port() - parse port number (which may be a service name).
+ *	npfctl_parse_tcpfl() - parse TCP flags.
  */
 
 static struct ifaddrs *
@@ -132,20 +134,13 @@ npfctl_getif(char *ifname, unsigned int *if_idx)
 	return ifent;
 }
 
-static int
-npfctl_servname2port(char *name)
-{
-	struct servent *se;
-
-	se = getservbyname(name, NULL);
-	return se ? se->s_port : -1;
-}
-
 bool
-npfctl_parse_v4mask(char *str, in_addr_t *addr, in_addr_t *mask)
+npfctl_parse_v4mask(char *ostr, in_addr_t *addr, in_addr_t *mask)
 {
+	char *str = xstrdup(ostr);
 	char *p = strchr(str, '/');
 	u_int bits;
+	bool ret;
 
 	/* In network byte order. */
 	if (p) {
@@ -155,7 +150,37 @@ npfctl_parse_v4mask(char *str, in_addr_t *addr, in_addr_t *mask)
 	} else {
 		*mask = 0xffffffff;
 	}
-	return inet_aton(str, (struct in_addr *)addr) != 0;
+	ret = inet_aton(str, (struct in_addr *)addr) != 0;
+	free(str);
+	return ret;
+}
+
+static bool
+npfctl_parse_port(char *ostr, bool *range, in_port_t *fport, in_port_t *tport)
+{
+	char *str = xstrdup(ostr), *sep;
+
+	*range = false;
+	if ((sep = strchr(str, ':')) != NULL) {
+		/* Port range (only numeric). */
+		*range = true;
+		*sep = '\0';
+
+	} else if (isalpha((unsigned char)*str)) {
+		struct servent *se;
+
+		se = getservbyname(str, NULL);
+		if (se == NULL) {
+			free(str);
+			return false;
+		}
+		*fport = se->s_port;
+	} else {
+		*fport = htons(atoi(str));
+	}
+	*tport = sep ? htons(atoi(sep + 1)) : *fport;
+	free(str);
+	return true;
 }
 
 static void
@@ -178,6 +203,40 @@ npfctl_parse_cidr(char *str, in_addr_t *addr, in_addr_t *mask)
 	} else if (!npfctl_parse_v4mask(str, addr, mask)) {
 		errx(EXIT_FAILURE, "invalid CIDR '%s'\n", str);
 	}
+}
+
+static bool
+npfctl_parse_tcpfl(char *s, uint8_t *tfl, uint8_t *tfl_mask)
+{
+	uint8_t tcpfl = 0;
+	bool mask = false;
+
+	while (*s) {
+		switch (*s) {
+		case 'F': tcpfl |= TH_FIN; break;
+		case 'S': tcpfl |= TH_SYN; break;
+		case 'R': tcpfl |= TH_RST; break;
+		case 'P': tcpfl |= TH_PUSH; break;
+		case 'A': tcpfl |= TH_ACK; break;
+		case 'U': tcpfl |= TH_URG; break;
+		case 'E': tcpfl |= TH_ECE; break;
+		case 'W': tcpfl |= TH_CWR; break;
+		case '/':
+			*s = '\0';
+			*tfl = tcpfl;
+			tcpfl = 0;
+			mask = true;
+			break;
+		default:
+			return false;
+		}
+		s++;
+	}
+	if (!mask) {
+		*tfl = tcpfl;
+	}
+	*tfl_mask = tcpfl;
+	return true;
 }
 
 /*
@@ -390,27 +449,15 @@ npfctl_rulenc_ports(void **nc, int nblocks[], var_t *dat, bool tcpudp, bool sd)
 
 	/* Generate TCP/UDP port matching blocks. */
 	for (el = dat->v_elements; el != NULL; el = el->e_next) {
-		int pfrom, pto;
-		char *sep;
+		in_port_t fport, tport;
+		bool range;
 
-		if ((sep = strchr(el->e_data, ':')) != NULL) {
-			/* Port range (only numeric). */
-			*sep = '\0';
+		if (!npfctl_parse_port(el->e_data, &range, &fport, &tport)) {
+			errx(EXIT_FAILURE, "invalid service '%s'", el->e_data);
 		}
-		if (isalpha((unsigned char)*el->e_data)) {
-			pfrom = npfctl_servname2port(el->e_data);
-			if (pfrom == -1) {
-				errx(EXIT_FAILURE, "invalid service '%s'",
-				    el->e_data);
-			}
-		} else {
-			pfrom = htons(atoi(el->e_data));
-		}
-		pto = sep ? htons(atoi(sep + 1)) : pfrom;
-
 		nblocks[0]--;
 		foff = npfctl_failure_offset(nblocks);
-		npfctl_gennc_ports(nc, foff, pfrom, pto, tcpudp, sd);
+		npfctl_gennc_ports(nc, foff, fport, tport, tcpudp, sd);
 	}
 }
 
@@ -431,12 +478,13 @@ npfctl_rulenc_block(void **nc, int nblocks[], var_t *cidr, var_t *ports,
 }
 
 void
-npfctl_rule_protodata(prop_dictionary_t rl, char *proto, var_t *from,
-    var_t *fports, var_t *to, var_t *tports)
+npfctl_rule_protodata(prop_dictionary_t rl, char *proto, char *tcp_flags,
+    int icmp_type, int icmp_code,
+    var_t *from, var_t *fports, var_t *to, var_t *tports)
 {
 	prop_data_t ncdata;
 	bool icmp, tcpudp, both;
-	int nblocks[2] = { 0, 0 };
+	int foff, nblocks[3] = { 0, 0, 0 };
 	void *ncptr, *nc;
 	size_t sz;
 
@@ -455,7 +503,6 @@ npfctl_rule_protodata(prop_dictionary_t rl, char *proto, var_t *from,
 		fports = NULL;
 		tports = NULL;
 		icmp = true;
-		nblocks[0] += 1;
 
 	} else if (strcmp(proto, "tcp") == 0) {
 		/* Just TCP. */
@@ -469,6 +516,15 @@ npfctl_rule_protodata(prop_dictionary_t rl, char *proto, var_t *from,
 		/* Default. */
 	}
 skip_proto:
+	if (icmp_type != -1) {
+		assert(tcp_flags == NULL);
+		icmp = true;
+		nblocks[2] += 1;
+	}
+	if (tcpudp && tcp_flags) {
+		assert(icmp_type == -1 && icmp_code == -1);
+		nblocks[2] += 1;
+	}
 
 	/* Calculate how blocks to determince n-code. */
 	if (from && from->v_count) {
@@ -488,6 +544,12 @@ skip_proto:
 			nblocks[0] += tports->v_count * (both ? 2 : 1);
 	}
 
+	/* Any n-code to generate? */
+	if ((nblocks[0] + nblocks[1] + nblocks[2]) == 0) {
+		/* Done, if none. */
+		return;
+	}
+
 	/* Allocate memory for the n-code. */
 	sz = npfctl_calc_ncsize(nblocks);
 	ncptr = malloc(sz);
@@ -497,10 +559,9 @@ skip_proto:
 	}
 	nc = ncptr;
 
-	/* Ethernet fragment (ETHERTYPE_IP), XXX. */
-	npfctl_gennc_ether(&nc, npfctl_failure_offset(nblocks), htons(0x0800));
-
-	/* Generate v4 CIDR matching blocks and TCP/UDP port matching. */
+	/*
+	 * Generate v4 CIDR matching blocks and TCP/UDP port matching.
+	 */
 	if (from) {
 		npfctl_rulenc_block(&nc, nblocks, from, fports,
 		    both, tcpudp, true);
@@ -509,16 +570,34 @@ skip_proto:
 		npfctl_rulenc_block(&nc, nblocks, to, tports,
 		    both, tcpudp, false);
 	}
-	/* ICMP case. */
+
 	if (icmp) {
-		const int foff = npfctl_failure_offset(nblocks);
-		npfctl_gennc_icmp(&nc, foff, -1, -1);
+		/*
+		 * ICMP case.
+		 */
+		nblocks[2]--;
+		foff = npfctl_failure_offset(nblocks);
+		npfctl_gennc_icmp(&nc, foff, icmp_type, icmp_code);
+
+	} else if (tcpudp && tcp_flags) {
+		/*
+		 * TCP case, flags.
+		 */
+		uint8_t tfl = 0, tfl_mask;
+
+		nblocks[2]--;
+		foff = npfctl_failure_offset(nblocks);
+		if (!npfctl_parse_tcpfl(tcp_flags, &tfl, &tfl_mask)) {
+			errx(EXIT_FAILURE, "invalid TCP flags '%s'", tcp_flags);
+		}
+		npfctl_gennc_tcpfl(&nc, foff, tfl, tfl_mask);
 	}
 	npfctl_gennc_complete(&nc);
 
-	if ((uintptr_t)nc - (uintptr_t)ncptr != sz)
+	if ((uintptr_t)nc - (uintptr_t)ncptr != sz) {
 		errx(EXIT_FAILURE, "n-code size got wrong (%tu != %zu)",
 		    (uintptr_t)nc - (uintptr_t)ncptr, sz);
+	}
 
 #ifdef DEBUG
 	uint32_t *op = ncptr;
@@ -565,15 +644,39 @@ npfctl_add_nat(prop_dictionary_t nat)
 }
 
 void
-npfctl_nat_setup(prop_dictionary_t rl, char *iface, char *gwip)
+npfctl_nat_setup(prop_dictionary_t rl, int type, int flags,
+    char *iface, char *taddr, char *rport)
 {
-	const int attr = NPF_RULE_PASS | NPF_RULE_OUT | NPF_RULE_FINAL;
+	int attr = NPF_RULE_PASS | NPF_RULE_FINAL;
 	in_addr_t addr, mask;
 
+	/* Translation type and flags. */
+	prop_dictionary_set(rl, "type",
+	    prop_number_create_integer(type));
+	prop_dictionary_set(rl, "flags",
+	    prop_number_create_integer(flags));
+
 	/* Interface and attributes. */
+	attr |= (type == NPF_NATOUT) ? NPF_RULE_OUT : NPF_RULE_IN;
 	npfctl_rule_setattr(rl, attr, iface);
 
-	/* Gateway IP, XXX should be no mask. */
-	npfctl_parse_cidr(gwip, &addr, &mask);
-	prop_dictionary_set(rl, "gateway_ip", prop_number_create_integer(addr));
+	/* Translation IP, XXX should be no mask. */
+	npfctl_parse_cidr(taddr, &addr, &mask);
+	prop_dictionary_set(rl, "translation_ip",
+	    prop_number_create_integer(addr));
+
+	/* Translation port (for redirect case). */
+	if (rport) {
+		in_port_t port;
+		bool range;
+
+		if (!npfctl_parse_port(rport, &range, &port, &port)) {
+			errx(EXIT_FAILURE, "invalid service '%s'", rport);
+		}
+		if (range) {
+			errx(EXIT_FAILURE, "range is not supported for 'rdr'");
+		}
+		prop_dictionary_set(rl, "translation_port",
+		    prop_number_create_integer(port));
+	}
 }

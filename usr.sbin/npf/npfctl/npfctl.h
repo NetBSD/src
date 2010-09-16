@@ -1,4 +1,4 @@
-/*	$NetBSD: npfctl.h,v 1.1 2010/08/22 18:56:24 rmind Exp $	*/
+/*	$NetBSD: npfctl.h,v 1.2 2010/09/16 04:53:27 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2010 The NetBSD Foundation, Inc.
@@ -78,8 +78,8 @@ bool		npfctl_parse_v4mask(char *, in_addr_t *, in_addr_t *);
 prop_dictionary_t npfctl_mk_rule(bool);
 void		npfctl_add_rule(prop_dictionary_t, prop_dictionary_t);
 void		npfctl_rule_setattr(prop_dictionary_t, int, char *);
-void		npfctl_rule_protodata(prop_dictionary_t, char *, var_t *,
-		    var_t *, var_t *, var_t *);
+void		npfctl_rule_protodata(prop_dictionary_t, char *, char *,
+		    int, int, var_t *, var_t *, var_t *, var_t *);
 void		npfctl_rule_icmpdata(prop_dictionary_t, var_t *, var_t *);
 
 prop_dictionary_t npfctl_lookup_table(char *);
@@ -90,7 +90,8 @@ void		npfctl_add_table(prop_dictionary_t);
 
 prop_dictionary_t npfctl_mk_nat(void);
 void		npfctl_add_nat(prop_dictionary_t);
-void		npfctl_nat_setup(prop_dictionary_t, char *, char *);
+void		npfctl_nat_setup(prop_dictionary_t, int, int,
+		    char *, char *, char *);
 
 size_t		npfctl_calc_ncsize(int []);
 size_t		npfctl_failure_offset(int []);
@@ -99,6 +100,7 @@ void		npfctl_gennc_ether(void **, int, uint16_t);
 void		npfctl_gennc_v4cidr(void **, int,
 		    in_addr_t, in_addr_t, bool);
 void		npfctl_gennc_icmp(void **, int, int, int);
+void		npfctl_gennc_tcpfl(void **, int , uint8_t, uint8_t);
 void		npfctl_gennc_ports(void **, int,
 		    in_port_t, in_port_t, bool, bool);
 void		npfctl_gennc_tbl(void **, int, u_int , bool);

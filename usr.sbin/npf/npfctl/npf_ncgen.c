@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_ncgen.c,v 1.1 2010/08/22 18:56:23 rmind Exp $	*/
+/*	$NetBSD: npf_ncgen.c,v 1.2 2010/09/16 04:53:27 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2010 The NetBSD Foundation, Inc.
@@ -48,14 +48,14 @@ npfctl_calc_ncsize(int nblocks[])
 {
 	/*
 	 * Blocks:
-	 * - 13 words by npfctl_gennc_ether(), single initial block.
 	 * - 5 words each by npfctl_gennc_ports/tbl(), stored in nblocks[0].
 	 * - 6 words each by npfctl_gennc_v4cidr(), stored in nblocks[1].
+	 * - 4 words by npfctl_gennc_{icmp,tcpfl}(), stored in nblocks[2].
 	 * - 4 words by npfctl_gennc_complete(), single last fragment.
 	 */
 	return nblocks[0] * 5 * sizeof(uint32_t) +
 	    nblocks[1] * 6 * sizeof(uint32_t) +
-	    13 * sizeof(uint32_t) +
+	    nblocks[2] * 4 * sizeof(uint32_t) +
 	    4 * sizeof(uint32_t);
 }
 
@@ -65,15 +65,18 @@ npfctl_calc_ncsize(int nblocks[])
 size_t
 npfctl_failure_offset(int nblocks[])
 {
-	size_t tblport_blocks, v4cidr_blocks;
+	size_t tblport_blocks, v4cidr_blocks, icmp_tcpfl;
 	/*
 	 * Take into account all blocks (plus 2 words for comparison each),
 	 * and additional 4 words to skip the last comparison and success path.
 	 */
 	tblport_blocks = (3 + 2) * nblocks[0];
 	v4cidr_blocks = (4 + 2) * nblocks[1];
-	return tblport_blocks + v4cidr_blocks + 4;
+	icmp_tcpfl = (2 + 2) * nblocks[2];
+	return tblport_blocks + v4cidr_blocks + icmp_tcpfl + 4;
 }
+
+#if 0
 
 /*
  * npfctl_gennc_ether: initial n-code fragment to check Ethernet frame.
@@ -108,6 +111,8 @@ npfctl_gennc_ether(void **ncptr, int foff, uint16_t ethertype)
 	/* + 13 words. */
 	*ncptr = (void *)nc;
 }
+
+#endif
 
 /*
  * npfctl_gennc_v4cidr: fragment to match IPv4 CIDR.
@@ -155,23 +160,23 @@ npfctl_gennc_ports(void **ncptr, int foff,
 }
 
 /*
- * npfctl_gennc_icmp: fragment to match ICMP code and type.
+ * npfctl_gennc_icmp: fragment to match ICMP type and code.
  */
 void
-npfctl_gennc_icmp(void **ncptr, int foff, int code, int type)
+npfctl_gennc_icmp(void **ncptr, int foff, int type, int code)
 {
 	uint32_t *nc = *ncptr;
 
-	/* OP, code, type (3 words) */
+	/* OP, code, type (2 words) */
 	*nc++ = NPF_OPCODE_ICMP4;
-	*nc++ = code;
-	*nc++ = type;
+	*nc++ = (type == -1 ? 0 : (1 << 31) & (type & 0xff << 8)) |
+		(code == -1 ? 0 : (1 << 31) & (code & 0xff));
 
 	/* If not equal, jump to failure block, continue otherwise (2 words). */
 	*nc++ = NPF_OPCODE_BNE;
 	*nc++ = foff;
 
-	/* + 5 words. */
+	/* + 4 words. */
 	*ncptr = (void *)nc;
 }
 
@@ -194,6 +199,26 @@ npfctl_gennc_tbl(void **ncptr, int foff, u_int tid, bool sd)
 	*nc++ = foff;
 
 	/* + 5 words. */
+	*ncptr = (void *)nc;
+}
+
+/*
+ * npfctl_gennc_tcpfl: fragment to match TCP flags/mask.
+ */
+void
+npfctl_gennc_tcpfl(void **ncptr, int foff, uint8_t tf, uint8_t tf_mask)
+{
+	uint32_t *nc = *ncptr;
+
+	/* OP, code, type (2 words) */
+	*nc++ = NPF_OPCODE_TCP_FLAGS;
+	*nc++ = (tf << 8) | tf_mask;
+
+	/* If not equal, jump to failure block, continue otherwise (2 words). */
+	*nc++ = NPF_OPCODE_BNE;
+	*nc++ = foff;
+
+	/* + 4 words. */
 	*ncptr = (void *)nc;
 }
 

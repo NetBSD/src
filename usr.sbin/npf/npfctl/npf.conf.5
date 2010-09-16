@@ -1,4 +1,4 @@
-.\"	$NetBSD: npf.conf.5,v 1.1 2010/08/24 23:55:05 rmind Exp $
+.\"	$NetBSD: npf.conf.5,v 1.2 2010/09/16 04:53:27 rmind Exp $
 .\"
 .\" Copyright (c) 2009-2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd August 24, 2010
+.Dd September 16, 2010
 .Dt NPF.CONF 5
 .Os
 .Sh NAME
@@ -95,27 +95,31 @@ Minimal filtering criteria on local network and destination are provided.
 .Bd -literal
 line		= ( def | table | nat | group )
 
-def		= ( "{ a, b, ... }" | "text" | "$\*[Lt]interface\*[Gt]" )
+def		= ( \*[Lt]name\*[Gt] "=" "{ a, b, ... }" | "text" | "$\*[Lt]interface\*[Gt]" )
 iface		= ( \*[Lt]interface\*[Gt] | def )
 
 table		= "table" \*[Lt]tid\*[Gt] "type" ( "hash" | "tree" )
 		  ( "dynamic" | "file" \*[Lt]path\*[Gt] )
 
-nat		= "nat" iface "from" \*[Lt]addr/mask\*[Gt] "to" \*[Lt]addr/mask\*[Gt] "->" \*[Lt]addr\*[Gt]
+nat		= "nat" iface filt-opts "->" \*[Lt]addr\*[Gt]
+binat		= "binat" iface filt-opts "->" \*[Lt]addr\*[Gt]
+rdr		= "rdr" iface filt-opts "->" \*[Lt]addr\*[Gt] port-opts
 
 group		= "group" "(" ( "default" | group-opts ) "") ruleset
 group-opts	= "interface" iface "," [ "in" | "out" ]
 
 ruleset		= "{" rule1 \*[Lt]newline\*[Gt], rule2 \*[Lt]newline\*[Gt], ... "}"
 
-rule		= ( "block" | "pass" ) [ "in" | out" ] rule-opts
+rule		= ( "block" block-opts | "pass" ) [ "in" | out" ] rule-opts
 		  [ "on" iface ] [ "inet" | "inet6" ] [ "proto" \*[Lt]protocol\*[Gt] ]
-		  ( "all" | filt-opts )
+		  ( "all" | filt-opts [ "flags" \*[Lt]tcp_flags> \*[Gt] )
 
+block-opts	= [ "return-rst" | "return-icmp" | "return" ]
 rule-opts	= [ "log" ] [ "count" ] [ "quick" ]
 filt-opts	= [ "from" ( iface | def | \*[Lt]addr/mask\*[Gt] | \*[Lt]tid\*[Gt] ) port-opts ]
 		  [ "to" ( iface | def | \*[Lt]addr/mask\*[Gt] | \*[Lt]tid\*[Gt] ) port-opts ]
 port-opts	= [ "port" ( \*[Lt]port-num\*[Gt] | \*[Lt]port-from\*[Gt] ":" \*[Lt]port-to\*[Gt] | def ) ]
+proto-opts	= [ "flags" \*[Lt]tcp_flags\*[Gt] | "icmp-type" \*[Lt]type\*[Gt] "code" \*[Lt]code\*[Gt] ]
 .Ed
 .\" -----
 .Sh FILES

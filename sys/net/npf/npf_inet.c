@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_inet.c,v 1.1 2010/08/22 18:56:22 rmind Exp $	*/
+/*	$NetBSD: npf_inet.c,v 1.2 2010/09/16 04:53:27 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2010 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_inet.c,v 1.1 2010/08/22 18:56:22 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_inet.c,v 1.2 2010/09/16 04:53:27 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -242,7 +242,10 @@ npf_fetch_icmp(npf_cache_t *npc, nbuf_t *nbuf, void *n_ptr)
 	return true;
 }
 
-static inline bool
+/*
+ * npf_fetch_tcpfl: fetch TCP flags and store into the cache.
+ */
+bool
 npf_fetch_tcpfl(npf_cache_t *npc, nbuf_t *nbuf, void *n_ptr)
 {
 	u_int offby;
@@ -257,24 +260,13 @@ npf_fetch_tcpfl(npf_cache_t *npc, nbuf_t *nbuf, void *n_ptr)
 }
 
 /*
- * npf_cache_all_ip4: general routine to cache all relevant IPv4 and
+ * npf_cache_all: general routine to cache all relevant IPv4 and
  * TCP, UDP or ICMP data.
  */
 bool
-npf_cache_all_ip4(npf_cache_t *npc, nbuf_t *nbuf, const int layer)
+npf_cache_all(npf_cache_t *npc, nbuf_t *nbuf)
 {
 	void *n_ptr = nbuf_dataptr(nbuf);
-	u_int offby;
-
-	if (layer == NPF_LAYER_2) {
-		/* Ethernet: match if ETHERTYPE_IP and if so - advance. */
-		if (npf_match_ether(nbuf, 1, 0, ETHERTYPE_IP, &offby))
-			return false;
-		if ((n_ptr = nbuf_advance(&nbuf, n_ptr, offby)) == NULL)
-			return false;
-		/* Cache Ethernet header length. XXX */
-		npc->npc_elen = offby;
-	}
 
 	/* IPv4: get protocol, source and destination addresses. */
 	if (!npf_iscached(npc, NPC_IP46) && !npf_ip4_proto(npc, nbuf, n_ptr)) {

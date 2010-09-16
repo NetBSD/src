@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_alg_icmp.c,v 1.1 2010/08/22 18:56:22 rmind Exp $	*/
+/*	$NetBSD: npf_alg_icmp.c,v 1.2 2010/09/16 04:53:27 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_alg_icmp.c,v 1.1 2010/08/22 18:56:22 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_alg_icmp.c,v 1.2 2010/09/16 04:53:27 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -228,11 +228,6 @@ npfa_icmp_session(npf_cache_t *npc, nbuf_t *nbuf, void *keyptr)
 
 	/* Advance to ICMP header. */
 	n_ptr = nbuf_dataptr(nbuf);
-#ifdef _NPF_TESTING
-	if (npc->npc_elen && /* XXX */
-	    (n_ptr = nbuf_advance(&nbuf, n_ptr, npc->npc_elen)) == NULL)
-		return false;
-#endif
 	if ((n_ptr = nbuf_advance(&nbuf, n_ptr, npc->npc_hlen)) == NULL) {
 		return false;
 	}
@@ -317,7 +312,7 @@ npfa_icmp_natin(npf_cache_t *npc, nbuf_t *nbuf, void *ntptr)
 	in_addr_t addr;
 	in_port_t port;
 
-	npf_nat_getlocal(nt, &addr, &port);
+	npf_nat_getorig(nt, &addr, &port);
 
 	if (!npf_rwrip(&enpc, nbuf, n_ptr, PFIL_OUT, addr)) {
 		return false;
