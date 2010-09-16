@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_ctl.c,v 1.1 2010/08/22 18:56:22 rmind Exp $	*/
+/*	$NetBSD: npf_ctl.c,v 1.2 2010/09/16 04:53:27 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2010 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_ctl.c,v 1.1 2010/08/22 18:56:22 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_ctl.c,v 1.2 2010/09/16 04:53:27 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -328,7 +328,9 @@ npf_mk_natlist(npf_ruleset_t *nset, prop_array_t natlist)
 		prop_object_t obj;
 		npf_natpolicy_t *np;
 		npf_rule_t *rl;
-		in_addr_t gip;
+		in_addr_t taddr;
+		in_port_t tport;
+		int type, flags;
 
 		/* NAT policy - dictionary. */
 		if (prop_object_type(natdict) != PROP_TYPE_DICTIONARY) {
@@ -336,9 +338,21 @@ npf_mk_natlist(npf_ruleset_t *nset, prop_array_t natlist)
 			break;
 		}
 
-		/* Gateway IP. */
-		obj = prop_dictionary_get(natdict, "gateway_ip");
-		gip = (in_addr_t)prop_number_integer_value(obj);
+		/* Translation type. */
+		obj = prop_dictionary_get(natdict, "type");
+		type = prop_number_integer_value(obj);
+
+		/* Translation type. */
+		obj = prop_dictionary_get(natdict, "flags");
+		flags = prop_number_integer_value(obj);
+
+		/* Translation IP. */
+		obj = prop_dictionary_get(natdict, "translation_ip");
+		taddr = (in_addr_t)prop_number_integer_value(obj);
+
+		/* Translation port (for redirect case). */
+		obj = prop_dictionary_get(natdict, "translation_port");
+		tport = (in_addr_t)prop_number_integer_value(obj);
 
 		/*
 		 * NAT policies are standard rules, plus additional
@@ -349,7 +363,7 @@ npf_mk_natlist(npf_ruleset_t *nset, prop_array_t natlist)
 			break;
 
 		/* Allocate a new NAT policy and assign to the rule. */
-		np = npf_nat_newpolicy(gip);
+		np = npf_nat_newpolicy(type, flags, taddr, tport);
 		if (np == NULL) {
 			error = ENOMEM;
 			break;
@@ -402,7 +416,7 @@ npfctl_reload(u_long cmd, void *data)
 
 	/* NAT policies. */
 	nset = npf_ruleset_create();
-	natlist = prop_dictionary_get(dict, "nat");
+	natlist = prop_dictionary_get(dict, "translation");
 	error = npf_mk_natlist(nset, natlist);
 	if (error)
 		goto fail;
@@ -455,7 +469,7 @@ fail:
 }
 
 /*
- * npf_table_ctl: add, remove or query entries in the specified table.
+ * npfctl_table: add, remove or query entries in the specified table.
  *
  * For maximum performance, interface is avoiding proplib(3)'s overhead.
  */

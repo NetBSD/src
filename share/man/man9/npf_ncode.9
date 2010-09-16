@@ -1,4 +1,4 @@
-.\"	$NetBSD: npf_ncode.9,v 1.3 2010/08/24 23:55:05 rmind Exp $
+.\"	$NetBSD: npf_ncode.9,v 1.4 2010/09/16 04:53:27 rmind Exp $
 .\"
 .\" Copyright (c) 2009-2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd August 22, 2010
+.Dd September 16, 2010
 .Dt NPF_NCODE 9
 .Os
 .Sh NAME
@@ -220,12 +220,16 @@ specified by table ID.
 Value of the first argument indicates whether source (if 0x1) or
 destination (if 0x0) address should be matched.
 .\" -
-.It Sy 0x92 NPF_OPCODE_ICMP4 <type> <code>
-Match ICMP type and code of the packet, unless a value of ~0 (all bits set)
-is passed, which indicates that comparison should not be performed.
+.It Sy 0x92 NPF_OPCODE_ICMP4 <type/code>
+Match that packet is ICMP and compare type and code values, if required.
+Highest 32nd and 31st bits indicate whether the type and code values,
+accordingly, should be compared.
+If comparison is required, the type and code values are represented by
+lower 16 bits.
+The higher 8 bits represent type, and the lower 8 bits code number.
 .\" -
 .It Sy 0xa0 NPF_OPCODE_TCP_PORT	<s/d>, <port range>
-Match the source or destination port with a specified port range.
+Match the TCP source or destination port with a specified port range.
 The higher 16 bits of the second argument represent the "from" and
 the lower 16 bits represent the "to" values of the range.
 The 32-bit port range value is in host byte order, however the actual
@@ -234,13 +238,14 @@ The value of the first argument indicates whether source (if 0x1) or
 destination (if 0x0) port should be matched.
 .\" -
 .It Sy 0xa1 NPF_OPCODE_UDP_PORT <s/d>, <port range>
-Match the source or destination port with a specified port range.
-The higher 16 bits of the second argument represent the "from" and
-the lower 16 bits represent the "to" values of range.
-The 32-bit port range value is in host byte order, however the actual
-"from" and "to" values should be in network byte order.
-The value of the first argument indicates whether source (if 0x1) or
-destination (if 0x0) port should be matched.
+Equivalent of
+.Dv NPF_OPCODE_TCP_PORT ,
+but for UDP protocol.
+.\" -
+.It Sy 0xa2 NPF_OPCODE_TCP_FLAGS <fl/mask>
+Match the TCP flags with the a specified flags and mask,
+represented by the lower 16 bits.
+The higher 8 bits represent flags and the lower 8 bits mask to apply.
 .El
 .\" -----
 .Sh CODE REFERENCES
