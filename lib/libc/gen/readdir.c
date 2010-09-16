@@ -1,4 +1,4 @@
-/*	$NetBSD: readdir.c,v 1.24 2008/05/04 18:53:26 tonnerre Exp $	*/
+/*	$NetBSD: readdir.c,v 1.25 2010/09/16 02:38:50 yamt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)readdir.c	8.3 (Berkeley) 9/29/94";
 #else
-__RCSID("$NetBSD: readdir.c,v 1.24 2008/05/04 18:53:26 tonnerre Exp $");
+__RCSID("$NetBSD: readdir.c,v 1.25 2010/09/16 02:38:50 yamt Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -57,7 +57,6 @@ struct dirent *
 _readdir_unlocked(DIR *dirp, int skipdeleted)
 {
 	struct dirent *dp;
-
 
 	for (;;) {
 		if (dirp->dd_loc >= dirp->dd_size) {
