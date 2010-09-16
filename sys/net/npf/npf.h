@@ -1,4 +1,4 @@
-/*	$NetBSD: npf.h,v 1.1 2010/08/22 18:56:22 rmind Exp $	*/
+/*	$NetBSD: npf.h,v 1.2 2010/09/16 04:53:27 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2010 The NetBSD Foundation, Inc.
@@ -81,7 +81,6 @@ typedef void			nbuf_t;
 typedef struct {
 	uint32_t		npc_info;
 	int			npc_dir;
-	uint8_t			npc_elen;
 	/* NPC_IP46 */
 	uint8_t			npc_proto;
 	uint16_t		npc_hlen;
@@ -127,7 +126,7 @@ npf_hook_t *	npf_hook_register(npf_rule_t *,
 		    void (*)(const npf_cache_t *, void *), void *);
 void		npf_hook_unregister(npf_rule_t *, npf_hook_t *);
 
-#endif
+#endif	/* _KERNEL */
 
 /* Rule attributes. */
 #define	NPF_RULE_PASS			0x0001
@@ -136,10 +135,19 @@ void		npf_hook_unregister(npf_rule_t *, npf_hook_t *);
 #define	NPF_RULE_LOG			0x0008
 #define	NPF_RULE_DEFAULT		0x0010
 #define	NPF_RULE_KEEPSTATE		0x0020
+#define	NPF_RULE_RETRST			0x0040
+#define	NPF_RULE_RETICMP		0x0080
 
 #define	NPF_RULE_IN			0x1000
 #define	NPF_RULE_OUT			0x2000
 #define	NPF_RULE_DIMASK			0x3000
+
+/* Address translation types and flags. */
+#define	NPF_NATIN			1
+#define	NPF_NATOUT			2
+
+#define	NPF_NAT_PORTS			0x01
+#define	NPF_NAT_PORTMAP			0x02
 
 /* Table types. */
 #define	NPF_TABLE_HASH			1
@@ -176,4 +184,4 @@ typedef struct npf_ioctl_table {
 #define	IOC_NPF_RELOAD		_IOW('N', 102, struct plistref)
 #define	IOC_NPF_TABLE		_IOW('N', 103, struct npf_ioctl_table)
 
-#endif
+#endif	/* _NPF_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_parser.c,v 1.1 2010/08/22 18:56:23 rmind Exp $	*/
+/*	$NetBSD: npf_parser.c,v 1.2 2010/09/16 04:53:27 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2010 The NetBSD Foundation, Inc.
@@ -154,8 +154,10 @@ npfctl_parserule(char *buf, prop_dictionary_t rl)
 {
 	var_t *from_cidr = NULL, *fports = NULL;
 	var_t *to_cidr = NULL, *tports = NULL;
-	char *proto = NULL;
+	char *proto = NULL, *tcp_flags = NULL;
 	char *p, *sptr, *iface;
+	bool icmp = false, tcp = false;
+	int icmp_type = -1, icmp_code = -1;
 	int ret, attr = 0;
 
 	DPRINTF(("rule\t|%s|\n", buf));
@@ -166,12 +168,24 @@ npfctl_parserule(char *buf, prop_dictionary_t rl)
 	/* pass or block (mandatory) */
 	if (strcmp(p, "block") == 0) {
 		attr = 0;
+		PARSE_NEXT_TOKEN();
+		/* return-rst or return-icmp */
+		if (strcmp(p, "return-rst") == 0) {
+			attr |= NPF_RULE_RETRST;
+			PARSE_NEXT_TOKEN();
+		} else if (strcmp(p, "return-icmp") == 0) {
+			attr |= NPF_RULE_RETICMP;
+			PARSE_NEXT_TOKEN();
+		} else if (strcmp(p, "return") == 0) {
+			attr |= NPF_RULE_RETRST | NPF_RULE_RETICMP;
+			PARSE_NEXT_TOKEN();
+		}
 	} else if (strcmp(p, "pass") == 0) {
 		attr = NPF_RULE_PASS;
+		PARSE_NEXT_TOKEN();
 	} else {
 		return PARSE_ERR();
 	}
-	PARSE_NEXT_TOKEN();
 
 	/* in or out */
 	if (strcmp(p, "in") == 0) {
@@ -233,8 +247,14 @@ npfctl_parserule(char *buf, prop_dictionary_t rl)
 		PARSE_NEXT_TOKEN();
 		var_t *pvar = npfctl_parsevalue(p);
 		PARSE_NEXT_TOKEN();
+		if (pvar->v_type != VAR_SINGLE) {
+			errx(EXIT_FAILURE, "only one protocol can be specified");
+		}
 		element_t *el = pvar->v_elements;
 		proto = el->e_data;
+		/* Determine TCP, ICMP. */
+		tcp = (strcmp(proto, "tcp") == 0);
+		icmp = (strcmp(proto, "icmp") == 0);
 	}
 
 	/*
@@ -280,6 +300,38 @@ npfctl_parserule(char *buf, prop_dictionary_t rl)
 	if (ret) {
 		return ret;
 	}
+
+	/* flags <fl/mask> */
+	if (p && strcmp(p, "flags") == 0) {
+		if (icmp) {
+			errx(EXIT_FAILURE,
+			    "TCP flags used with ICMP protocol");
+		}
+		PARSE_NEXT_TOKEN();
+		var_t *tfvar = npfctl_parsevalue(p);
+		PARSE_NEXT_TOKEN_NOCHECK();
+		if (tfvar->v_type != VAR_SINGLE) {
+			errx(EXIT_FAILURE, "invalid TCP flags");
+		}
+		element_t *el = tfvar->v_elements;
+		tcp_flags = el->e_data;
+	}
+
+	/* icmp-type <t> code <c> */
+	if (p && strcmp(p, "icmp-type") == 0) {
+		if (tcp) {
+			errx(EXIT_FAILURE,
+			    "ICMP options used with TCP protocol");
+		}
+		PARSE_NEXT_TOKEN();
+		icmp_type = atoi(p);
+		PARSE_NEXT_TOKEN_NOCHECK();
+		if (p && strcmp(p, "code") == 0) {
+			PARSE_NEXT_TOKEN();
+			icmp_code = atoi(p);
+			PARSE_NEXT_TOKEN_NOCHECK();
+		}
+	}
 last:
 	/* keep state */
 	if (p && strcmp(p, "keep") == 0) {
@@ -293,7 +345,8 @@ last:
 	/*
 	 * Generate all protocol data.
 	 */
-	npfctl_rule_protodata(rl, proto, from_cidr, fports, to_cidr, tports);
+	npfctl_rule_protodata(rl, proto, tcp_flags, icmp_type, icmp_code,
+	    from_cidr, fports, to_cidr, tports);
 	return 0;
 }
 
@@ -450,22 +503,28 @@ npfctl_parsetable(char *buf, prop_dictionary_t tl)
 /*
  * npfctl_parse_nat: parse NAT policy definition.
  *
- *	nat on <if> from <localnet> to <filter> -> <ip>
+ *	[bi]nat <if> from <net> to <net/addr> -> <ip>
+ *	rdr <if> from <net> to <addr> -> <ip>
  */
 static inline int
 npfctl_parse_nat(char *buf, prop_dictionary_t nat)
 {
 	var_t *ifvar, *from_cidr, *to_cidr, *ip;
+	var_t *tports = NULL, *rports = NULL;
 	element_t *iface, *cidr;
 	char *p, *sptr;
+	bool binat, rdr;
 
-	DPRINTF(("nat\t|%s|\n", buf));
+	DPRINTF(("[bi]nat/rdr\t|%s|\n", buf));
+	binat = (strncmp(buf, "binat", 5) == 0);
+	rdr = (strncmp(buf, "rdr", 3) == 0);
+
 	if ((p = strchr(buf, ' ')) == NULL) {
 		return PARSE_ERR();
 	}
 	PARSE_FIRST_TOKEN();
 
-	/* on <interface> */
+	/* <interface> */
 	if ((ifvar = npfctl_parsevalue(p)) == NULL) {
 		return PARSE_ERR();
 	}
@@ -492,6 +551,12 @@ npfctl_parse_nat(char *buf, prop_dictionary_t nat)
 	to_cidr = npfctl_parsevalue(p);
 	PARSE_NEXT_TOKEN();
 
+	if (rdr && strcmp(p, "port") == 0) {
+		PARSE_NEXT_TOKEN();
+		tports = npfctl_parsevalue(p);
+		PARSE_NEXT_TOKEN();
+	}
+
 	/* -> <ip> */
 	if (strcmp(p, "->") != 0) {
 		return PARSE_ERR();
@@ -500,9 +565,54 @@ npfctl_parse_nat(char *buf, prop_dictionary_t nat)
 	ip = npfctl_parsevalue(p);
 	cidr = ip->v_elements;
 
-	/* Setup NAT policy (rule as filter and extra info). */
-	npfctl_rule_protodata(nat, NULL, from_cidr, NULL, to_cidr, NULL);
-	npfctl_nat_setup(nat, iface->e_data, cidr->e_data);
+	if (rdr) {
+		PARSE_NEXT_TOKEN();
+		if (strcmp(p, "port") != 0) {
+			return PARSE_ERR();
+		}
+		PARSE_NEXT_TOKEN();
+		rports = npfctl_parsevalue(p);
+	}
+
+	/*
+	 * Setup NAT policy (rule as filter and extra info), which is
+	 * Outbound NAT (NPF_NATOUT).  Unless it is a redirect rule,
+	 * in which case it is Inbound NAT with specified port.
+	 *
+	 * XXX mess
+	 */
+	if (!rdr) {
+		npfctl_rule_protodata(nat, NULL, NULL, -1, -1, from_cidr,
+		    NULL, to_cidr, NULL);
+		npfctl_nat_setup(nat, NPF_NATOUT,
+		    binat ? 0 : (NPF_NAT_PORTS | NPF_NAT_PORTMAP),
+		    iface->e_data, cidr->e_data, NULL);
+	} else {
+		element_t *rp = rports->v_elements;
+
+		npfctl_rule_protodata(nat, NULL, NULL, -1, -1, from_cidr,
+		    NULL, to_cidr, tports);
+		npfctl_nat_setup(nat, NPF_NATIN, NPF_NAT_PORTS,
+		    iface->e_data, cidr->e_data, rp->e_data);
+	}
+
+	/*
+	 * For bi-directional NAT case, create and setup additional
+	 * Inbound NAT (NPF_NATIN) policy.  Note that translation address
+	 * is local IP, and filter criteria is inverted accordingly.
+	 *
+	 * XXX mess
+	 */
+	if (binat) {
+		prop_dictionary_t bn = npfctl_mk_nat();
+		element_t *taddr = from_cidr->v_elements;
+
+		npfctl_rule_protodata(bn, NULL, NULL, -1, -1,
+		    to_cidr, NULL, ip, NULL);
+		npfctl_nat_setup(bn, NPF_NATIN, 0, iface->e_data,
+		    taddr->e_data, NULL);
+		npfctl_add_nat(bn);
+	}
 	return 0;
 }
 
@@ -603,7 +713,8 @@ npf_parseline(char *buf)
 			return ret;
 		npfctl_add_table(tl);
 
-	} else if (strncmp(p, "nat", 3) == 0) {
+	} else if (strncmp(p, "nat", 3) == 0 || strncmp(p, "rdr", 3) == 0 ||
+	    strncmp(p, "binat", 5) == 0) {
 		prop_dictionary_t nat;
 
 		/* NAT policy. */
