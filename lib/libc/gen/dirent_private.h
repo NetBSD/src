@@ -1,14 +1,14 @@
-/*	$NetBSD: dirent_private.h,v 1.2 2008/05/04 18:53:26 tonnerre Exp $	*/
+/*	$NetBSD: dirent_private.h,v 1.3 2010/09/16 02:38:50 yamt Exp $	*/
 
 /*
  * One struct _dirpos is malloced to describe the current directory
  * position each time telldir is called. It records the current magic 
- * cookie returned by getdirentries and the offset within the buffer
- * associated with that return value.
+ * cookie returned by getdents and the offset within the buffer associated
+ * with that return value.
  */
 struct dirpos {
 	struct dirpos *dp_next;	/* next structure in list */
-	off_t	dp_seek;	/* magic cookie returned by getdirentries */
+	off_t	dp_seek;	/* magic cookie returned by getdents */
 	long	dp_loc;		/* offset of entry in buffer */
 };
 
