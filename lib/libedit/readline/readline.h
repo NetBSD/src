@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.h,v 1.31 2010/08/04 20:29:18 christos Exp $	*/
+/*	$NetBSD: readline.h,v 1.32 2010/09/16 20:08:52 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -151,7 +151,6 @@ int		 where_history(void);
 HIST_ENTRY	*current_history(void);
 HIST_ENTRY	*history_get(int);
 HIST_ENTRY	*remove_history(int);
-/*###152 [lint] syntax error 'histdata_t' [249]%%%*/
 HIST_ENTRY	*replace_history_entry(int, const char *, histdata_t);
 int		 history_total_bytes(void);
 int		 history_set_pos(int);
