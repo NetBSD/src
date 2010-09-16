@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_ncode.h,v 1.1 2010/08/22 18:56:22 rmind Exp $	*/
+/*	$NetBSD: npf_ncode.h,v 1.2 2010/09/16 04:53:27 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2010 The NetBSD Foundation, Inc.
@@ -103,5 +103,6 @@ void	npf_ncode_free(void *, size_t);
 
 #define	NPF_OPCODE_TCP_PORTS		0xa0
 #define	NPF_OPCODE_UDP_PORTS		0xa1
+#define	NPF_OPCODE_TCP_FLAGS		0xa2
 
 #endif

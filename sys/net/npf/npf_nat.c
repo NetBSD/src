@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_nat.c,v 1.1 2010/08/22 18:56:22 rmind Exp $	*/
+/*	$NetBSD: npf_nat.c,v 1.2 2010/09/16 04:53:27 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -39,10 +39,26 @@
  *	NAT module has a separate ruleset, where rules contain associated
  *	NAT policy, thus flexible filter criteria can be used.
  *
+ * Translation types
+ *
+ *	There are two types of translation: outbound (NPF_NATOUT) and
+ *	inbound (NPF_NATIN).  It should not be confused with connection
+ *	direction.
+ *
+ *	Outbound NAT rewrites:
+ *	- Source on "forwards" stream.
+ *	- Destination on "backwards" stream.
+ *	Inbound NAT rewrites:
+ *	- Destination on "forwards" stream.
+ *	- Source on "backwards" stream.
+ *
+ *	It should be noted that bi-directional NAT is a combined outbound
+ *	and inbound translation, therefore constructed as two policies.
+ *
  * NAT policies and port maps
  *
- *	NAT policy is applied when a packet matches the rule.  Apart from
- *	filter criteria, NAT policy has a translation (gateway) IP address
+ *	NAT (translation) policy is applied when a packet matches the rule.
+ *	Apart from filter criteria, NAT policy has a translation IP address
  *	and associated port map.  Port map is a bitmap used to reserve and
  *	use unique TCP/UDP ports for translation.  Port maps are unique to
  *	the IP addresses, therefore multiple NAT policies with the same IP
@@ -51,7 +67,7 @@
  * NAT sessions and translation entries
  *
  *	NAT module relies on session management module.  Each "NAT" session
- *	has an associated translation entry (npf_nat_t).  It contains local
+ *	has an associated translation entry (npf_nat_t).  It contains saved
  *	i.e. original IP address with port and translation port, allocated
  *	from the port map.  Each NAT translation entry is associated with
  *	the policy, which contains translation IP address.  Allocated port
@@ -61,7 +77,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_nat.c,v 1.1 2010/08/22 18:56:22 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_nat.c,v 1.2 2010/09/16 04:53:27 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -94,26 +110,29 @@ typedef struct {
 /* NAT policy structure. */
 struct npf_natpolicy {
 	LIST_ENTRY(npf_natpolicy)	n_entry;
-	in_addr_t			n_gw_ip;
+	int				n_type;
+	int				n_flags;
+	in_addr_t			n_taddr;
+	in_port_t			n_tport;
 	npf_portmap_t *			n_portmap;
 };
 
 /* NAT translation entry for a session. */ 
 struct npf_nat {
 	npf_natpolicy_t *		nt_natpolicy;
-	/* Local address and port (for backwards translation). */
-	in_addr_t			nt_laddr;
-	in_port_t			nt_lport;
-	/* Translation port (for forwards). */
+	/* Original address and port (for backwards translation). */
+	in_addr_t			nt_oaddr;
+	in_port_t			nt_oport;
+	/* Translation port (for redirects). */
 	in_port_t			nt_tport;
 	/* ALG (if any) associated with this NAT entry. */
 	npf_alg_t *			nt_alg;
 	uintptr_t			nt_alg_arg;
 };
 
-static npf_ruleset_t *			nat_ruleset;
-static LIST_HEAD(, npf_natpolicy)	nat_policy_list;
-static pool_cache_t			nat_cache;
+static npf_ruleset_t *			nat_ruleset	__read_mostly;
+static LIST_HEAD(, npf_natpolicy)	nat_policy_list	__read_mostly;
+static pool_cache_t			nat_cache	__read_mostly;
 
 /*
  * npf_nat_sys{init,fini}: initialise/destroy NAT subsystem structures.
@@ -141,13 +160,13 @@ npf_nat_sysfini(void)
 }
 
 /*
- * npf_nat_newpolicy: allocate a new NAT policy.
+ * npf_nat_newpolicy: create a new NAT policy.
  *
  * => Shares portmap if policy is on existing translation address.
  * => XXX: serialise at upper layer.
  */
 npf_natpolicy_t *
-npf_nat_newpolicy(in_addr_t gip)
+npf_nat_newpolicy(int type, int flags, in_addr_t taddr, in_port_t tport)
 {
 	npf_natpolicy_t *np, *it;
 	npf_portmap_t *pm;
@@ -156,12 +175,20 @@ npf_nat_newpolicy(in_addr_t gip)
 	if (np == NULL) {
 		return NULL;
 	}
-	np->n_gw_ip = gip;
+	KASSERT(type == NPF_NATIN || type == NPF_NATOUT);
+	np->n_type = type;
+	np->n_flags = flags;
+	np->n_taddr = taddr;
+	np->n_tport = tport;
+
+	pm = NULL;
+	if ((flags & NPF_NAT_PORTMAP) == 0) {
+		goto nopm;
+	}
 
 	/* Search for a NAT policy using the same translation address. */
-	pm = NULL;
 	LIST_FOREACH(it, &nat_policy_list, n_entry) {
-		if (it->n_gw_ip != np->n_gw_ip)
+		if (it->n_taddr != np->n_taddr)
 			continue;
 		pm = it->n_portmap;
 		break;
@@ -180,6 +207,7 @@ npf_nat_newpolicy(in_addr_t gip)
 		/* Share the port map. */
 		pm->p_refcnt++;
 	}
+nopm:
 	np->n_portmap = pm;
 	/*
 	 * Note: old policies with new might co-exist in the list,
@@ -200,7 +228,8 @@ npf_nat_freepolicy(npf_natpolicy_t *np)
 	npf_portmap_t *pm = np->n_portmap;
 
 	LIST_REMOVE(np, n_entry);
-	if (--pm->p_refcnt == 0) {
+	if (pm && --pm->p_refcnt == 0) {
+		KASSERT((np->n_flags & NPF_NAT_PORTMAP) != 0);
 		kmem_free(pm, sizeof(npf_portmap_t) +
 		    (PORTMAP_SIZE * sizeof(uint32_t)));
 	}
@@ -245,7 +274,7 @@ npf_nat_getport(npf_natpolicy_t *np)
 				/* No space. */
 				return 0;
 			}
-			/* This bitmap is sfilled, next. */
+			/* This bitmap is filled, next. */
 			idx = (idx ? idx : PORTMAP_SIZE) - 1;
 			continue;
 		}
@@ -282,115 +311,219 @@ npf_nat_putport(npf_natpolicy_t *np, in_port_t port)
 }
 
 /*
- * npf_natout:
- *	- Inspect packet for a NAT policy, unless session with NAT
- *	  association already exists.
- *	- Perform "forwards" translation: rewrite source address, etc.
- *	- Establish sessions or if already exists, associate NAT policy.
+ * npf_nat_inspect: inspect packet against NAT ruleset and return a policy.
  */
-int
-npf_natout(npf_cache_t *npc, npf_session_t *se, nbuf_t *nbuf,
-    struct ifnet *ifp, const int layer)
+static npf_natpolicy_t *
+npf_nat_inspect(npf_cache_t *npc, nbuf_t *nbuf, struct ifnet *ifp, const int di)
+{
+	npf_rule_t *rl;
+
+	rl = npf_ruleset_match(nat_ruleset, npc, nbuf, ifp, di, NPF_LAYER_3);
+
+	return rl ? npf_rule_getnat(rl) : NULL;
+}
+
+/*
+ * npf_nat_create: create a new NAT translation entry.
+ */
+static npf_nat_t *
+npf_nat_create(npf_cache_t *npc, npf_natpolicy_t *np)
 {
 	const int proto = npc->npc_proto;
+	npf_nat_t *nt;
+
+	/* New NAT association. */
+	nt = pool_cache_get(nat_cache, PR_NOWAIT);
+	if (nt == NULL){
+		return NULL;
+	}
+	nt->nt_natpolicy = np;
+	nt->nt_alg = NULL;
+
+	/* Save the original address which may be rewritten. */
+	if (np->n_type == NPF_NATOUT) {
+		/* Source (local) for Outbound NAT. */
+		nt->nt_oaddr = npc->npc_srcip;
+	} else {
+		/* Destination (external) for Inbound NAT. */
+		KASSERT(np->n_type == NPF_NATIN);
+		nt->nt_oaddr = npc->npc_dstip;
+	}
+
+	/*
+	 * Port translation, if required, and if it is TCP/UDP.
+	 */
+	if ((np->n_flags & NPF_NAT_PORTS) == 0 ||
+	    (proto != IPPROTO_TCP && proto != IPPROTO_UDP)) {
+		nt->nt_oport = 0;
+		nt->nt_tport = 0;
+		return nt;
+	}
+	/* Save a relevant TCP/UDP port. */
+	KASSERT(npf_iscached(npc, NPC_PORTS));
+	if (np->n_type == NPF_NATOUT) {
+		nt->nt_oport = npc->npc_sport;
+	} else {
+		nt->nt_oport = npc->npc_dport;
+	}
+	/* Get a new port for translation. */
+	if ((np->n_flags & NPF_NAT_PORTMAP) != 0) {
+		nt->nt_tport = npf_nat_getport(np);
+	} else {
+		nt->nt_tport = np->n_tport;
+	}
+	return nt;
+}
+
+/*
+ * npf_nat_translate: perform address and/or port translation.
+ */
+static int
+npf_nat_translate(npf_cache_t *npc, nbuf_t *nbuf, npf_nat_t *nt,
+    const bool forw, const int di)
+{
+	const npf_natpolicy_t *np = nt->nt_natpolicy;
 	void *n_ptr = nbuf_dataptr(nbuf);
-	npf_session_t *nse = NULL; /* XXXgcc */
+	in_addr_t addr;
+	in_port_t port;
+
+	KASSERT(npf_iscached(npc, NPC_IP46 | NPC_ADDRS));
+
+	if (forw) {
+		/* "Forwards" stream: use translation address/port. */
+		KASSERT(
+		    (np->n_type == NPF_NATIN && di == PFIL_IN) ^
+		    (np->n_type == NPF_NATOUT && di == PFIL_OUT)
+		);
+		addr = np->n_taddr;
+		port = nt->nt_tport;
+	} else {
+		/* "Backwards" stream: use original address/port. */
+		KASSERT(
+		    (np->n_type == NPF_NATIN && di == PFIL_OUT) ^
+		    (np->n_type == NPF_NATOUT && di == PFIL_IN)
+		);
+		addr = nt->nt_oaddr;
+		port = nt->nt_oport;
+	}
+
+	/* Execute ALG hooks first. */
+	npf_alg_exec(npc, nbuf, nt, di);
+
+	/*
+	 * Address translation: rewrite source/destination address, depending
+	 * on direction (PFIL_OUT - for source, PFIL_IN - for destination).
+	 * Note: cache will be used in npf_rwrport(), update only in the end.
+	 */
+	if (!npf_rwrip(npc, nbuf, n_ptr, di, addr)) {
+		return EINVAL;
+	}
+	if ((np->n_flags & NPF_NAT_PORTS) == 0) {
+		/* Cache new address. */
+		if (di == PFIL_OUT) {
+			npc->npc_srcip = addr;
+		} else {
+			npc->npc_dstip = addr;
+		}
+		return 0;
+	}
+	switch (npc->npc_proto) {
+	case IPPROTO_TCP:
+	case IPPROTO_UDP:
+		KASSERT(npf_iscached(npc, NPC_PORTS));
+		/* Rewrite source/destination port. */
+		if (!npf_rwrport(npc, nbuf, n_ptr, di, port, addr)) {
+			return EINVAL;
+		}
+		break;
+	case IPPROTO_ICMP:
+		/* None. */
+		break;
+	default:
+		return ENOTSUP;
+	}
+	/* Cache new address and port. */
+	if (di == PFIL_OUT) {
+		npc->npc_srcip = addr;
+		npc->npc_sport = port;
+	} else {
+		npc->npc_dstip = addr;
+		npc->npc_dport = port;
+	}
+	return 0;
+}
+
+/*
+ * npf_do_nat:
+ *	- Inspect packet for a NAT policy, unless a session with a NAT
+ *	  association already exists.  In such case, determine whether is
+ *	  is a "forwards" or "backwards" stream.
+ *	- Perform translation: rewrite source address if "forwards" stream
+ *	  and destination address if "backwards".
+ *	- Establish sessions or, if already exists, associate a NAT policy.
+ */
+int
+npf_do_nat(npf_cache_t *npc, npf_session_t *se, nbuf_t *nbuf,
+    struct ifnet *ifp, const int di)
+{
+	npf_session_t *nse = NULL;
 	npf_natpolicy_t *np;
 	npf_nat_t *nt;
-	npf_rule_t *rl;
-	in_addr_t gwip;
-	in_port_t tport;
 	int error;
-	bool new;
+	bool forw, new;
 
 	/* All relevant IPv4 data should be already cached. */
 	if (!npf_iscached(npc, NPC_IP46 | NPC_ADDRS)) {
 		return 0;
 	}
 
-	/* Detect if there is a linked session pointing to the NAT entry. */
-	nt = se ? npf_session_retlinknat(se) : NULL;
-	if (nt) {
+	/*
+	 * Return the NAT entry associated with the session, if any.
+	 * Assumptions:
+	 * - If associated via linked session, then "forwards" stream.
+	 * - If associated directly, then "backwards" stream.
+	 */
+	if (se && (nt = npf_session_retnat(se, di, &forw)) != NULL) {
 		np = nt->nt_natpolicy;
 		new = false;
-		goto skip;
+		goto translate;
 	}
 
-	/* Inspect packet against NAT ruleset, return a policy. */
-	rl = npf_ruleset_match(nat_ruleset, npc, nbuf, ifp, PFIL_OUT, layer);
-	np = rl ? npf_rule_getnat(rl) : NULL;
+	/* Inspect the packet for a NAT policy, if there is no session. */
+	np = npf_nat_inspect(npc, nbuf, ifp, di);
 	if (np == NULL) {
 		/* If packet does not match - done. */
 		return 0;
 	}
+	forw = true;
 
-	/* New NAT association. */
-	nt = pool_cache_get(nat_cache, PR_NOWAIT);
-	if (nt == NULL){
+	/* Create a new NAT translation entry. */
+	nt = npf_nat_create(npc, np);
+	if (nt == NULL) {
 		return ENOMEM;
 	}
-	nt->nt_natpolicy = np;
-	nt->nt_alg = NULL;
 	new = true;
 
-	/* Save local (source) address. */
-	nt->nt_laddr = npc->npc_srcip;
-
-	if (proto == IPPROTO_TCP || proto == IPPROTO_UDP) {
-		/* Also, save local TCP/UDP port. */
-		KASSERT(npf_iscached(npc, NPC_PORTS));
-		nt->nt_lport = npc->npc_sport;
-		/* Get a new port for translation. */
-		nt->nt_tport = npf_nat_getport(np);
-	} else {
-		nt->nt_lport = 0;
-		nt->nt_tport = 0;
-	}
-
-	/* Match any ALGs. */
-	npf_alg_exec(npc, nbuf, nt, PFIL_OUT);
-
-	/* If there is no local session, establish one before translation. */
+	/*
+	 * If there is no local session (no "keep state" rule - unusual, but
+	 * possible configuration), establish one before translation.  Note
+	 * that it is not a "pass" session, therefore passing of "backwards"
+	 * stream depends on other, stateless filtering rules.
+	 */
 	if (se == NULL) {
-		nse = npf_session_establish(npc, NULL, PFIL_OUT);
+		nse = npf_session_establish(npc, NULL, di);
 		if (nse == NULL) {
 			error = ENOMEM;
 			goto out;
 		}
 		se = nse;
-	} else {
-		nse = NULL;
 	}
-skip:
-	if (layer == NPF_LAYER_2 && /* XXX */
-	    (n_ptr = nbuf_advance(&nbuf, n_ptr, npc->npc_elen)) == NULL)
-		return EINVAL;
-
-	/* Execute ALG hooks first. */
-	npf_alg_exec(npc, nbuf, nt, PFIL_OUT);
-
-	gwip = np->n_gw_ip;
-	tport = nt->nt_tport;
-
-	/*
-	 * Perform translation: rewrite source address et al.
-	 * Note: cache may be used in npf_rwrport(), update only in the end.
-	 */
-	if (!npf_rwrip(npc, nbuf, n_ptr, PFIL_OUT, gwip)) {
-		error = EINVAL;
+translate:
+	/* Perform the translation. */
+	error = npf_nat_translate(npc, nbuf, nt, forw, di);
+	if (error) {
 		goto out;
 	}
-	if (proto == IPPROTO_TCP || proto == IPPROTO_UDP) {
-		KASSERT(tport != 0);
-		if (!npf_rwrport(npc, nbuf, n_ptr, PFIL_OUT, tport, gwip)) {
-			error = EINVAL;
-			goto out;
-		}
-	}
-	/* Success: cache new address and port (if any). */
-	npc->npc_srcip = gwip;
-	npc->npc_sport = tport;
-	error = 0;
 
 	if (__predict_false(new)) {
 		npf_session_t *natse;
@@ -400,7 +533,7 @@ skip:
 		 *
 		 * Note: packet now has a translated address in the cache.
 		 */
-		natse = npf_session_establish(npc, nt, PFIL_OUT);
+		natse = npf_session_establish(npc, nt, di);
 		if (natse == NULL) {
 			error = ENOMEM;
 			goto out;
@@ -413,13 +546,12 @@ skip:
 out:
 		if (error) {
 			if (nse != NULL) {
-				/* XXX: expire local session if new? */
+				/* XXX: Expire it?? */
 			}
 			/* Will free the structure and return the port. */
 			npf_nat_expire(nt);
 		}
 		if (nse != NULL) {
-			/* Drop the reference local session was new. */
 			npf_session_release(nse);
 		}
 	}
@@ -427,72 +559,14 @@ out:
 }
 
 /*
- * npf_natin:
- *	- Inspect packet for a session with associated NAT policy.
- *	- Perform "backwards" translation: rewrite destination address, etc.
- */
-int
-npf_natin(npf_cache_t *npc, npf_session_t *se, nbuf_t *nbuf, const int layer)
-{
-	npf_nat_t *nt = se ? npf_session_retnat(se) : NULL;
-
-	if (nt == NULL) {
-		/* No association - no translation. */
-		return 0;
-	}
-	KASSERT(npf_iscached(npc, NPC_IP46 | NPC_ADDRS));
-
-	void *n_ptr = nbuf_dataptr(nbuf);
-	in_addr_t laddr = nt->nt_laddr;
-	in_port_t lport = nt->nt_lport;
-
-	if (layer == NPF_LAYER_2) {
-		n_ptr = nbuf_advance(&nbuf, n_ptr, npc->npc_elen);
-		if (n_ptr == NULL) {
-			return EINVAL;
-		}
-	}
-
-	/* Execute ALG hooks first. */
-	npf_alg_exec(npc, nbuf, nt, PFIL_IN);
-
-	/*
-	 * Address translation: rewrite destination address.
-	 * Note: cache will be used in npf_rwrport(), update only in the end.
-	 */
-	if (!npf_rwrip(npc, nbuf, n_ptr, PFIL_IN, laddr)) {
-		return EINVAL;
-	}
-	switch (npc->npc_proto) {
-	case IPPROTO_TCP:
-	case IPPROTO_UDP:
-		KASSERT(npf_iscached(npc, NPC_PORTS));
-		/* Rewrite destination port. */
-		if (!npf_rwrport(npc, nbuf, n_ptr, PFIL_IN, lport, laddr)) {
-			return EINVAL;
-		}
-		break;
-	case IPPROTO_ICMP:
-		/* None. */
-		break;
-	default:
-		return ENOTSUP;
-	}
-	/* Cache new address and port. */
-	npc->npc_dstip = laddr;
-	npc->npc_dport = lport;
-	return 0;
-}
-
-/*
- * npf_nat_getlocal: return local IP address and port from translation entry.
+ * npf_nat_getorig: return original IP address and port from translation entry.
  */
 void
-npf_nat_getlocal(npf_nat_t *nt, in_addr_t *addr, in_port_t *port)
+npf_nat_getorig(npf_nat_t *nt, in_addr_t *addr, in_port_t *port)
 {
 
-	*addr = nt->nt_laddr;
-	*port = nt->nt_lport;
+	*addr = nt->nt_oaddr;
+	*port = nt->nt_oport;
 }
 
 void
@@ -509,9 +583,10 @@ npf_nat_setalg(npf_nat_t *nt, npf_alg_t *alg, uintptr_t arg)
 void
 npf_nat_expire(npf_nat_t *nt)
 {
+	npf_natpolicy_t *np = nt->nt_natpolicy;
 
-	if (nt->nt_tport) {
-		npf_natpolicy_t *np = nt->nt_natpolicy;
+	if ((np->n_flags & NPF_NAT_PORTMAP) != 0) {
+		KASSERT(nt->nt_tport != 0);
 		npf_nat_putport(np, nt->nt_tport);
 	}
 	pool_cache_put(nat_cache, nt);
@@ -531,14 +606,15 @@ npf_nat_dump(npf_nat_t *nt)
 	}
 	LIST_FOREACH(np, &nat_policy_list, n_entry) {
 skip:
-		ip.s_addr = np->n_gw_ip;
-		printf("\tNAT policy: gw_ip = %s\n", inet_ntoa(ip));
+		ip.s_addr = np->n_taddr;
+		printf("\tNAT policy: type = %d, flags = %d, taddr = %s\n",
+		    np->n_type, np->n_flags, inet_ntoa(ip));
 		if (nt == NULL) {
 			continue;
 		}
-		ip.s_addr = nt->nt_laddr;
-		printf("\tNAT: original address %s, lport %d, tport = %d\n",
-		    inet_ntoa(ip), ntohs(nt->nt_lport), ntohs(nt->nt_tport));
+		ip.s_addr = nt->nt_oaddr;
+		printf("\tNAT: original address %s, oport %d, tport = %d\n",
+		    inet_ntoa(ip), ntohs(nt->nt_oport), ntohs(nt->nt_tport));
 		if (nt->nt_alg) {
 			printf("\tNAT ALG = %p, ARG = %p\n",
 			    nt->nt_alg, (void *)nt->nt_alg_arg);
