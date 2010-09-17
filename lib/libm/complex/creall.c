@@ -1,4 +1,4 @@
-/*	$NetBSD: creall.c,v 1.1 2010/09/15 16:11:29 christos Exp $	*/
+/*	$NetBSD: creall.c,v 1.2 2010/09/17 20:39:39 christos Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -26,7 +26,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: creall.c,v 1.1 2010/09/15 16:11:29 christos Exp $");
+__RCSID("$NetBSD: creall.c,v 1.2 2010/09/17 20:39:39 christos Exp $");
 
 #include <complex.h>
 #include "../src/math_private.h"
@@ -35,6 +35,7 @@ __RCSID("$NetBSD: creall.c,v 1.1 2010/09/15 16:11:29 christos Exp $");
  * creall(long double complex z)
  * This function returns the real part value of z.
  */
+#ifdef EXT_EXP_INFNAN
 long double
 creall(long double complex z)
 {
@@ -42,3 +43,4 @@ creall(long double complex z)
 
 	return (REAL_PART(w));
 }
+#endif

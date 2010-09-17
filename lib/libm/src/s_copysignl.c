@@ -1,4 +1,4 @@
-/*	$NetBSD: s_copysignl.c,v 1.1 2010/09/15 16:12:05 christos Exp $	*/
+/*	$NetBSD: s_copysignl.c,v 1.2 2010/09/17 20:39:39 christos Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -26,7 +26,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: s_copysignl.c,v 1.1 2010/09/15 16:12:05 christos Exp $");
+__RCSID("$NetBSD: s_copysignl.c,v 1.2 2010/09/17 20:39:39 christos Exp $");
 
 #include <math.h>
 #include <machine/ieee.h>
@@ -35,6 +35,7 @@ __RCSID("$NetBSD: s_copysignl.c,v 1.1 2010/09/15 16:12:05 christos Exp $");
  * copysignl(long double x, long double y)
  * This function returns a value with the magnitude of x and the sign of y.
  */
+#ifdef EXT_EXP_INFNAN
 long double
 copysignl(long double x, long double y)
 {
@@ -47,3 +48,4 @@ copysignl(long double x, long double y)
 
 	return (ux.extu_ld);
 }
+#endif

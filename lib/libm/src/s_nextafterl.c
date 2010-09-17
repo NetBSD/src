@@ -1,4 +1,4 @@
-/*	$NetBSD: s_nextafterl.c,v 1.1 2010/09/15 16:12:05 christos Exp $	*/
+/*	$NetBSD: s_nextafterl.c,v 1.2 2010/09/17 20:39:39 christos Exp $	*/
 
 /* @(#)s_nextafter.c 5.1 93/09/24 */
 /*
@@ -13,12 +13,13 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: s_nextafterl.c,v 1.1 2010/09/15 16:12:05 christos Exp $");
+__RCSID("$NetBSD: s_nextafterl.c,v 1.2 2010/09/17 20:39:39 christos Exp $");
 
 #include <float.h>
 #include <math.h>
 #include <machine/ieee.h>
 
+#ifdef EXT_EXP_INFNAN
 #if LDBL_MAX_EXP != 0x4000
 #error "Unsupported long double format"
 #endif
@@ -90,3 +91,4 @@ nextafterl(long double x, long double y)
 
 	return ux.extu_ld;
 }
+#endif
