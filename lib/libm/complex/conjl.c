@@ -1,4 +1,4 @@
-/*	$NetBSD: conjl.c,v 1.1 2010/09/15 16:11:29 christos Exp $	*/
+/*	$NetBSD: conjl.c,v 1.2 2010/09/17 20:39:39 christos Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -26,7 +26,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: conjl.c,v 1.1 2010/09/15 16:11:29 christos Exp $");
+__RCSID("$NetBSD: conjl.c,v 1.2 2010/09/17 20:39:39 christos Exp $");
 
 #include <complex.h>
 #include <math.h>
@@ -38,6 +38,7 @@ __RCSID("$NetBSD: conjl.c,v 1.1 2010/09/15 16:11:29 christos Exp $");
  * conjl(long double complex z)
  * This function returns the complex conjugate value of its argument, z.
  */
+#ifdef EXT_EXP_INFNAN
 long double complex
 conjl(long double complex z)
 {
@@ -47,3 +48,4 @@ conjl(long double complex z)
 
 	return (w.z);
 }
+#endif
