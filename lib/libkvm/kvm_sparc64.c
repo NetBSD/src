@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_sparc64.c,v 1.13 2008/01/18 16:26:09 martin Exp $	*/
+/*	$NetBSD: kvm_sparc64.c,v 1.14 2010/09/19 02:07:00 jym Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_sparc.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: kvm_sparc64.c,v 1.13 2008/01/18 16:26:09 martin Exp $");
+__RCSID("$NetBSD: kvm_sparc64.c,v 1.14 2010/09/19 02:07:00 jym Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -69,11 +69,8 @@ __RCSID("$NetBSD: kvm_sparc64.c,v 1.13 2008/01/18 16:26:09 martin Exp $");
 
 #include "kvm_private.h"
 
-int _kvm_kvatop __P((kvm_t *, u_long, u_long *));
-
 void
-_kvm_freevtop(kd)
-	kvm_t *kd;
+_kvm_freevtop(kvm_t *kd)
 {
 	if (kd->vmst != 0) {
 		_kvm_err(kd, kd->program, "_kvm_freevtop: internal error");
@@ -89,8 +86,7 @@ _kvm_freevtop(kd)
  * We should read in and cache the ksegs here to speed up operations...
  */
 int
-_kvm_initvtop(kd)
-	kvm_t *kd;
+_kvm_initvtop(kvm_t *kd)
 {
 	kd->nbpg = 0x2000;
 
@@ -104,10 +100,7 @@ _kvm_initvtop(kd)
  * physical address.  This routine is used only for crash dumps.
  */
 int
-_kvm_kvatop(kd, va, pa)
-	kvm_t *kd;
-	u_long va;
-	u_long *pa;
+_kvm_kvatop(kvm_t *kd, u_long va, u_long *pa)
 {
 	cpu_kcore_hdr_t *cpup = kd->cpu_data;
 	u_long kernbase = cpup->kernbase;
@@ -236,9 +229,7 @@ lose:
  * Translate a physical address to a file-offset in the crash dump.
  */
 off_t
-_kvm_pa2off(kd, pa)
-	kvm_t   *kd;
-	u_long  pa;
+_kvm_pa2off(kvm_t *kd, u_long pa)
 {
 	cpu_kcore_hdr_t *cpup = kd->cpu_data;
 	phys_ram_seg_t *mp;
@@ -274,8 +265,7 @@ _kvm_pa2off(kd, pa)
  * have to deal with these NOT being constants!  (i.e. m68k)
  */
 int
-_kvm_mdopen(kd)
-	kvm_t	*kd;
+_kvm_mdopen(kvm_t *kd)
 {
 	u_long max_uva;
 	extern struct ps_strings *__ps_strings;

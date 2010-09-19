@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_sun3x.c,v 1.9 2008/04/28 20:23:01 martin Exp $	*/
+/*	$NetBSD: kvm_sun3x.c,v 1.10 2010/09/19 02:07:00 jym Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_sparc.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: kvm_sun3x.c,v 1.9 2008/04/28 20:23:01 martin Exp $");
+__RCSID("$NetBSD: kvm_sun3x.c,v 1.10 2010/09/19 02:07:00 jym Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -59,10 +59,10 @@ __RCSID("$NetBSD: kvm_sun3x.c,v 1.9 2008/04/28 20:23:01 martin Exp $");
 #include "kvm_private.h"
 #include "kvm_m68k.h"
 
-int   _kvm_sun3x_initvtop __P((kvm_t *));
-void  _kvm_sun3x_freevtop __P((kvm_t *));
-int	  _kvm_sun3x_kvatop   __P((kvm_t *, u_long, u_long *));
-off_t _kvm_sun3x_pa2off   __P((kvm_t *, u_long));
+int   _kvm_sun3x_initvtop(kvm_t *);
+void  _kvm_sun3x_freevtop(kvm_t *);
+int   _kvm_sun3x_kvatop  (kvm_t *, u_long, u_long *);
+off_t _kvm_sun3x_pa2off  (kvm_t *, u_long);
 
 struct kvm_ops _kvm_ops_sun3x = {
 	_kvm_sun3x_initvtop,
@@ -82,15 +82,13 @@ struct kvm_ops _kvm_ops_sun3x = {
  * into crash dump files.  Nothing to do here.
  */
 int
-_kvm_sun3x_initvtop(kd)
-	kvm_t *kd;
+_kvm_sun3x_initvtop(kvm_t *kd)
 {
-	return (0);
+	return 0;
 }
 
 void
-_kvm_sun3x_freevtop(kd)
-	kvm_t *kd;
+_kvm_sun3x_freevtop(kvm_t *kd)
 {
 }
 
@@ -101,10 +99,7 @@ _kvm_sun3x_freevtop(kd)
  * physical address.  This routine is used only for crash dumps.
  */
 int
-_kvm_sun3x_kvatop(kd, va, pap)
-	kvm_t *kd;
-	u_long va;
-	u_long *pap;
+_kvm_sun3x_kvatop(kvm_t *kd, u_long va, u_long *pap)
 {
 	cpu_kcore_hdr_t *h = kd->cpu_data;
 	struct sun3x_kcore_hdr *s = &h->un._sun3x;
@@ -161,9 +156,7 @@ done:
  * Translate a physical address to a file-offset in the crash dump.
  */
 off_t
-_kvm_sun3x_pa2off(kd, pa)
-	kvm_t	*kd;
-	u_long	pa;
+_kvm_sun3x_pa2off(kvm_t *kd, u_long pa)
 {
 	off_t		off;
 	phys_ram_seg_t	*rsp;
