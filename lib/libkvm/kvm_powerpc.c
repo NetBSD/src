@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_powerpc.c,v 1.10 2010/09/19 02:07:00 jym Exp $	*/
+/*	$NetBSD: kvm_powerpc.c,v 1.11 2010/09/19 11:37:40 jym Exp $	*/
 
 /*
  * Copyright (c) 2005 Wasabi Systems, Inc.
@@ -90,11 +90,10 @@
 #include <powerpc/oea/bat.h>
 #include <powerpc/oea/pte.h>
 
-static int	_kvm_match_601bat(kvm_t *kd, u_long va, u_long *pa, int *off);
-static int	_kvm_match_bat(kvm_t *kd, u_long va, u_long *pa, int *off);
-static int	_kvm_match_sr(kvm_t *kd, u_long va, u_long *pa, int *off);
-static struct pte *_kvm_scan_pteg(struct pteg *pteg, uint32_t vsid,
-				  uint32_t api, int secondary);
+static int	_kvm_match_601bat(kvm_t *, u_long, u_long *, int *);
+static int	_kvm_match_bat(kvm_t *, u_long, u_long *, int *);
+static int	_kvm_match_sr(kvm_t *, u_long, u_long *, int *);
+static struct pte *_kvm_scan_pteg(struct pteg *, uint32_t, uint32_t, int);
 
 void
 _kvm_freevtop(kvm_t *kd)
