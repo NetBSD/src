@@ -1,4 +1,4 @@
-#	$NetBSD: files.m68k,v 1.46 2010/06/06 04:51:33 mrg Exp $
+#	$NetBSD: files.m68k,v 1.47 2010/09/19 01:35:43 tsutsui Exp $
 #
 
 defflag	opt_fpsp.h		FPSP
@@ -13,6 +13,7 @@ defflag				PMAP_DEBUG
 file	arch/m68k/m68k/copy.s
 file	arch/m68k/m68k/copypage.s
 file	arch/m68k/m68k/core_machdep.c		coredump
+file	arch/m68k/m68k/cpu_in_cksum.c		(inet | inet6) & cpu_in_cksum
 file	arch/m68k/m68k/db_disasm.c		ddb
 file	arch/m68k/m68k/db_interface.c		ddb
 file	arch/m68k/m68k/db_trace.c		ddb
@@ -21,7 +22,7 @@ file	arch/m68k/m68k/kobj_machdep.c		modular
 file	arch/m68k/m68k/lock_stubs.s
 file	arch/m68k/m68k/m68k_machdep.c
 file	arch/m68k/m68k/mappedcopy.c		mappedcopy
-file	arch/m68k/m68k/oc_cksum.s		inet
+file	arch/m68k/m68k/oc_cksum.s		(inet | inet6) & cpu_in_cksum
 file	arch/m68k/m68k/process_machdep.c
 file	arch/m68k/m68k/reenter_syscall.s
 file	arch/m68k/m68k/regdump.c
