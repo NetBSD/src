@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_getloadavg.c,v 1.8 2003/08/07 16:44:37 agc Exp $	*/
+/*	$NetBSD: kvm_getloadavg.c,v 1.9 2010/09/19 02:07:00 jym Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_getloadavg.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: kvm_getloadavg.c,v 1.8 2003/08/07 16:44:37 agc Exp $");
+__RCSID("$NetBSD: kvm_getloadavg.c,v 1.9 2010/09/19 02:07:00 jym Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -70,10 +70,7 @@ static struct nlist nl[] = {
  * Return number of samples retrieved, or -1 on error.
  */
 int
-kvm_getloadavg(kd, loadavg, nelem)
-	kvm_t *kd;
-	double loadavg[];
-	int nelem;
+kvm_getloadavg(kvm_t *kd, double loadavg[], int nelem)
 {
 	struct loadavg loadinfo;
 	struct nlist *p;

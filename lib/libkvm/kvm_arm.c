@@ -1,4 +1,4 @@
-/* $NetBSD: kvm_arm.c,v 1.4 2008/01/15 13:57:42 ad Exp $	 */
+/* $NetBSD: kvm_arm.c,v 1.5 2010/09/19 02:07:00 jym Exp $	 */
 
 /*-
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: kvm_arm.c,v 1.4 2008/01/15 13:57:42 ad Exp $");
+__RCSID("$NetBSD: kvm_arm.c,v 1.5 2010/09/19 02:07:00 jym Exp $");
 #endif				/* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -71,7 +71,7 @@ _kvm_initvtop(kvm_t * kd)
 }
 
 int
-_kvm_kvatop(kvm_t * kd, u_long va, u_long * pa)
+_kvm_kvatop(kvm_t * kd, u_long va, u_long *pa)
 {
 	cpu_kcore_hdr_t *cpu_kh;
 	pd_entry_t      pde;
