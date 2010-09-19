@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: sleep_button,v 1.5 2008/06/06 23:13:58 jmcneill Exp $
+#	$NetBSD: sleep_button,v 1.6 2010/09/19 21:47:28 abs Exp $
 #
 # Generic script for sleep button events.
 #
@@ -20,7 +20,7 @@ pressed)
 		/sbin/sysctl -w machdep.sleep_state=3
 	else
 		sleep 1
-		if /etc/rc.d/apmd status >/dev/null ; then
+		if /etc/rc.d/apmd onestatus >/dev/null ; then
 			/usr/sbin/apm -z
 		else
 			/usr/sbin/apm -d -z

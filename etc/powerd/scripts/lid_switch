@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: lid_switch,v 1.6 2010/09/14 04:37:04 macallan Exp $
+#	$NetBSD: lid_switch,v 1.7 2010/09/19 21:47:28 abs Exp $
 #
 # Generic script for lid switch events.  We try to put the system to sleep.
 #
@@ -10,7 +10,7 @@
 
 case "${2}" in
 pressed)
-	#if /etc/rc.d/apmd status >/dev/null ; then
+	#if /etc/rc.d/apmd onestatus >/dev/null ; then
 	#	/usr/sbin/apm -S
 	#else
 	#	/usr/sbin/apm -d -S
