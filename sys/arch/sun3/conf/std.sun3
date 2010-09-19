@@ -1,8 +1,9 @@
-# $NetBSD: std.sun3,v 1.33 2006/10/01 03:53:27 tsutsui Exp $
+# $NetBSD: std.sun3,v 1.34 2010/09/19 02:09:29 tsutsui Exp $
 
 # Standard information for Sun3 machines.
 machine	sun3 m68k sun68k
-include		"conf/std"	# MI standard options
+include		"conf/std"			# MI standard options
+include		"arch/m68k/conf/std.m68k"	# m68k standard options
 
 # Machine type to be supported by this kernel.  Note:
 # The SUN3 and SUN3X options are mutually exclusive!
@@ -13,6 +14,3 @@ options 	M68020
 
 # The root node (required)
 mainbus0 at root
-
-# Standard defines
-options 	EXEC_ELF32, EXEC_SCRIPT
