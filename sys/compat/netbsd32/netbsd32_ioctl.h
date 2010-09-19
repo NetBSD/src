@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.h,v 1.27 2010/09/19 09:46:59 mrg Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.h,v 1.28 2010/09/19 10:33:31 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -49,10 +49,21 @@
 			(struct __CONCAT(netbsd32_, type) *)data32, cmd); \
 		break
 
+#define IOCTL_CONV_TO(cmd, type)	\
+		size = IOCPARM_LEN(cmd); \
+		if (size > sizeof(stkbuf)) \
+			data = memp = kmem_alloc(size, KM_SLEEP); \
+		else \
+			data = (void *)stkbuf; \
+		__CONCAT(netbsd32_to_, type)((__CONCAT(netbsd32_, type) *) \
+			data32, (type *)data, cmd); \
+		error = (*fp->f_ops->fo_ioctl)(fp, cmd, data); \
+		__CONCAT(netbsd32_from_, type)((type *)data, \
+			(__CONCAT(netbsd32_, type) *)data32, cmd); \
+		break
+
 /* from <sys/audioio.h> */
-#if 0
-#define AUDIO_WSEEK	_IOR('A', 25, u_long)
-#endif
+#define AUDIO_WSEEK32	_IOR('A', 25, netbsd32_u_long)
 
 /* from <sys/dkio.h> */
 typedef netbsd32_pointer_t netbsd32_disklabel_tp_t;
@@ -136,15 +147,7 @@ netinet/ip_nat.h:26:#define SIOCGFRST	_IOR('r', 84, struct ipfrstat)
 
 netinet/ip_nat.h:27:#define SIOCGIPST	_IOR('r', 85, struct ips_stat)
 
-sys/lkm.h:286:#define	LMRESERV	_IOWR('K', 0, struct lmc_resrv)
-
-sys/lkm.h:287:#define	LMLOADBUF	_IOW('K', 1, struct lmc_loadbuf)
-
-sys/lkm.h:291:#define	LMLOAD		_IOW('K', 9, struct lmc_load)
-
-sys/lkm.h:292:#define	LMUNLOAD	_IOWR('K', 10, struct lmc_unload)
-
-sys/lkm.h:293:#define	LMSTAT		_IOWR('K', 11, struct lmc_stat)
+sys/module.h?
 
 sys/rnd.h:186:#define RNDGETPOOL      _IOR('R',  103, u_char *)  /* get whole pool */
 
@@ -205,7 +208,6 @@ struct	netbsd32_ifreq {
 		} ifru_b;
 	} ifr_ifru;
 };
-#if 1
 /* from <dev/pci/if_devar.h> */
 #define	SIOCGADDRROM32		_IOW('i', 240, struct netbsd32_ifreq)	/* get 128 bytes of ROM */
 #define	SIOCGCHIPID32		_IOWR('i', 241, struct netbsd32_ifreq)	/* get chipid */
@@ -277,7 +279,6 @@ struct	netbsd32_ifreq {
 /* from <netatalk/phase2.h> */
 #define SIOCPHASE1_32	_IOW('i', 100, struct netbsd32_ifreq)	/* AppleTalk phase 1 */
 #define SIOCPHASE2_32	_IOW('i', 101, struct netbsd32_ifreq)	/* AppleTalk phase 2 */
-#endif
 
 /* from <net/if.h> */
 struct	netbsd32_ifconf {
@@ -289,12 +290,10 @@ struct	netbsd32_ifconf {
 #define	ifc_buf	ifc_ifcu.ifcu_buf	/* buffer address */
 #define	ifc_req	ifc_ifcu.ifcu_req	/* array of structures returned */
 };
-#if 1
 /* from <sys/sockio.h> */
 #define	OOSIOCGIFCONF32	_IOWR('i', 20, struct netbsd32_ifconf)	/* get ifnet list */
 #define	OSIOCGIFCONF32	_IOWR('i', 36, struct netbsd32_ifconf)	/* get ifnet list */
 #define	SIOCGIFCONF32	_IOWR('i', 38, struct netbsd32_ifconf)	/* get ifnet list */
-#endif
 
 /* from <net/if.h> */
 struct netbsd32_ifmediareq {
@@ -307,10 +306,8 @@ struct netbsd32_ifmediareq {
 						   array */
 	netbsd32_intp	ifm_ulist;		/* media words */
 };
-#if 1
 /* from <sys/sockio.h> */
 #define	SIOCGIFMEDIA32	_IOWR('i', 54, struct netbsd32_ifmediareq) /* get net media */
-#endif
 
 /* from <net/if.h> */
 struct  netbsd32_ifdrv {
@@ -319,10 +316,8 @@ struct  netbsd32_ifdrv {
 	netbsd32_size_t	ifd_len;
 	netbsd32_voidp	ifd_data;
 };
-#if 1
 /* from <sys/sockio.h> */
 #define SIOCSDRVSPEC32	_IOW('i', 123, struct netbsd32_ifdrv)   /* set driver-specific */
-#endif
 
 /* from <netinet/ip_mroute.h> */
 struct netbsd32_sioc_vif_req {
@@ -332,10 +327,8 @@ struct netbsd32_sioc_vif_req {
 	netbsd32_u_long	ibytes;		/* input byte count on vif */
 	netbsd32_u_long	obytes;		/* output byte count on vif */
 };
-#if 1
 /* from <sys/sockio.h> */
 #define	SIOCGETVIFCNT32	_IOWR('u', 51, struct netbsd32_sioc_vif_req)/* vif pkt cnt */
-#endif
 
 struct netbsd32_sioc_sg_req {
 	struct	in_addr src;
@@ -344,10 +337,8 @@ struct netbsd32_sioc_sg_req {
 	u_long	bytecnt;
 	u_long	wrong_if;
 };
-#if 1
 /* from <sys/sockio.h> */
 #define	SIOCGETSGCNT32	_IOWR('u', 52, struct netbsd32_sioc_sg_req) /* sg pkt cnt */
-#endif
 
 /*
  * The next two structures are marked "__packed" as they normally end up
@@ -367,20 +358,17 @@ struct netbsd32_vnd_user {
 	ino_t		vnu_ino;	/* ...at this inode */
 } __packed;
 
-#if 1
 /* from <dev/vndvar.h> */
 #define VNDIOCSET32	_IOWR('F', 0, struct netbsd32_vnd_ioctl)	/* enable disk */
 #define VNDIOCCLR32	_IOW('F', 1, struct netbsd32_vnd_ioctl)	/* disable disk */
 #define VNDIOCGET32	_IOWR('F', 3, struct netbsd32_vnd_user)	/* get list */
 
-/* from <dev/vnd.c> */
 struct netbsd32_vnd_ioctl50 {
 	netbsd32_charp	vnd_file;	/* pathname of file to mount */
 	int		vnd_flags;	/* flags; see below */
 	struct vndgeom	vnd_geom;	/* geometry to emulate */
 	unsigned int	vnd_size;	/* (returned) size of disk */
 } __packed;
+/* from <dev/vnd.c> */
 #define VNDIOCSET5032	_IOWR('F', 0, struct netbsd32_vnd_ioctl50)
 #define VNDIOCCLR5032	_IOW('F', 1, struct netbsd32_vnd_ioctl50)
-
-#endif
