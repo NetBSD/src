@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.210 2010/06/24 21:20:23 riz Exp $	*/
+/*	$NetBSD: vnd.c,v 1.211 2010/09/19 05:50:28 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
@@ -130,10 +130,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.210 2010/06/24 21:20:23 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.211 2010/09/19 05:50:28 mrg Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vnd.h"
+#include "opt_compat_netbsd.h"
 #endif
 
 #include <sys/param.h>
@@ -193,6 +194,24 @@ struct vndxfer {
 
 #define VNDLABELDEV(dev) \
     (MAKEDISKDEV(major((dev)), vndunit((dev)), RAW_PART))
+
+#ifdef COMPAT_30
+struct vnd_user30 {
+	int		vnu_unit;	/* which vnd unit */
+	uint32_t	vnu_dev;	/* file is on this device... */
+	uint32_t	vnu_ino;	/* ...at this inode */
+};
+#define VNDIOCGET30	_IOWR('F', 2, struct vnd_user30)	/* get list */
+#endif
+
+#ifdef COMPAT_50
+struct vnd_user50 {
+	int		vnu_unit;	/* which vnd unit */
+	uint32_t	vnu_dev;	/* file is on this device... */
+	ino_t		vnu_ino;	/* ...at this inode */
+};
+#define VNDIOCGET50	_IOWR('F', 3, struct vnd_user50)	/* get list */
+#endif
 
 /* called by main() at boot time */
 void	vndattach(int);
@@ -1032,7 +1051,10 @@ vndioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	vnd = device_lookup_private(&vnd_cd, unit);
 	if (vnd == NULL &&
 #ifdef COMPAT_30
-	    cmd != VNDIOOCGET &&
+	    cmd != VNDIOCGET30 &&
+#endif
+#ifdef COMPAT_50
+	    cmd != VNDIOCGET50 &&
 #endif
 	    cmd != VNDIOCGET)
 		return ENXIO;
@@ -1365,10 +1387,10 @@ unlock_and_exit:
 		break;
 
 #ifdef COMPAT_30
-	case VNDIOOCGET: {
-		struct vnd_ouser *vnu;
+	case VNDIOCGET30: {
+		struct vnd_user30 *vnu;
 		struct vattr va;
-		vnu = (struct vnd_ouser *)data;
+		vnu = (struct vnd_user30 *)data;
 		KASSERT(l);
 		switch (error = vnd_cget(l, unit, &vnu->vnu_unit, &va)) {
 		case 0:
@@ -1386,6 +1408,30 @@ unlock_and_exit:
 		break;
 	}
 #endif
+
+#ifdef COMPAT_50
+	case VNDIOCGET50: {
+		struct vnd_user50 *vnu;
+		struct vattr va;
+		vnu = (struct vnd_user50 *)data;
+		KASSERT(l);
+		switch (error = vnd_cget(l, unit, &vnu->vnu_unit, &va)) {
+		case 0:
+			vnu->vnu_dev = va.va_fsid;
+			vnu->vnu_ino = va.va_fileid;
+			break;
+		case -1:
+			/* unused is not an error */
+			vnu->vnu_dev = 0;
+			vnu->vnu_ino = 0;
+			break;
+		default:
+			return error;
+		}
+		break;
+	}
+#endif
+
 	case VNDIOCGET: {
 		struct vnd_user *vnu;
 		struct vattr va;
