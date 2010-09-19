@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.h,v 1.26 2010/09/19 09:09:30 mrg Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.h,v 1.27 2010/09/19 09:46:59 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -372,4 +372,15 @@ struct netbsd32_vnd_user {
 #define VNDIOCSET32	_IOWR('F', 0, struct netbsd32_vnd_ioctl)	/* enable disk */
 #define VNDIOCCLR32	_IOW('F', 1, struct netbsd32_vnd_ioctl)	/* disable disk */
 #define VNDIOCGET32	_IOWR('F', 3, struct netbsd32_vnd_user)	/* get list */
+
+/* from <dev/vnd.c> */
+struct netbsd32_vnd_ioctl50 {
+	netbsd32_charp	vnd_file;	/* pathname of file to mount */
+	int		vnd_flags;	/* flags; see below */
+	struct vndgeom	vnd_geom;	/* geometry to emulate */
+	unsigned int	vnd_size;	/* (returned) size of disk */
+} __packed;
+#define VNDIOCSET5032	_IOWR('F', 0, struct netbsd32_vnd_ioctl50)
+#define VNDIOCCLR5032	_IOW('F', 1, struct netbsd32_vnd_ioctl50)
+
 #endif
