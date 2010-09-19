@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.212 2010/09/19 07:11:42 mrg Exp $	*/
+/*	$NetBSD: vnd.c,v 1.213 2010/09/19 09:41:37 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.212 2010/09/19 07:11:42 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.213 2010/09/19 09:41:37 mrg Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vnd.h"
@@ -194,33 +194,6 @@ struct vndxfer {
 
 #define VNDLABELDEV(dev) \
     (MAKEDISKDEV(major((dev)), vndunit((dev)), RAW_PART))
-
-#ifdef COMPAT_30
-struct vnd_user30 {
-	int		vnu_unit;	/* which vnd unit */
-	uint32_t	vnu_dev;	/* file is on this device... */
-	uint32_t	vnu_ino;	/* ...at this inode */
-};
-#define VNDIOCGET30	_IOWR('F', 2, struct vnd_user30)	/* get list */
-#endif
-
-#ifdef COMPAT_50
-struct vnd_user50 {
-	int		vnu_unit;	/* which vnd unit */
-	uint32_t	vnu_dev;	/* file is on this device... */
-	ino_t		vnu_ino;	/* ...at this inode */
-};
-#define VNDIOCGET50	_IOWR('F', 3, struct vnd_user50)	/* get list */
-
-struct vnd_ioctl50 {
-	char		*vnd_file;	/* pathname of file to mount */
-	int		vnd_flags;	/* flags; see below */
-	struct vndgeom	vnd_geom;	/* geometry to emulate */
-	unsigned int	vnd_size;	/* (returned) size of disk */
-};
-#define VNDIOCSET50	_IOWR('F', 0, struct vnd_ioctl50)
-#define VNDIOCCLR50	_IOW('F', 1, struct vnd_ioctl50)
-#endif
 
 /* called by main() at boot time */
 void	vndattach(int);
@@ -1073,10 +1046,8 @@ vndioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	switch (cmd) {
 	case VNDIOCSET:
 	case VNDIOCCLR:
-#ifdef VNDIOCSET50
+#ifdef COMPAT_50
 	case VNDIOCSET50:
-#endif
-#ifdef VNDIOCCLR50
 	case VNDIOCCLR50:
 #endif
 	case DIOCSDINFO:
