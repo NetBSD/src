@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.c,v 1.48 2010/09/19 09:09:30 mrg Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.c,v 1.49 2010/09/19 09:46:59 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.48 2010/09/19 09:09:30 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.49 2010/09/19 09:46:59 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,6 +70,8 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.48 2010/09/19 09:09:30 mrg Exp 
 #include <compat/netbsd32/netbsd32.h>
 #include <compat/netbsd32/netbsd32_ioctl.h>
 #include <compat/netbsd32/netbsd32_syscallargs.h>
+
+#include <dev/vndvar.h>
 
 /* prototypes for the converters */
 static inline void netbsd32_to_partinfo(struct netbsd32_partinfo *,
@@ -236,6 +238,16 @@ netbsd32_to_vnd_user(struct netbsd32_vnd_user *s32p, struct vnd_user *p, u_long 
 	p->vnu_ino = s32p->vnu_ino;
 }
 
+static inline void
+netbsd32_to_vnd_ioctl50(struct netbsd32_vnd_ioctl50 *s32p, struct vnd_ioctl50 *p, u_long cmd)
+{
+
+	p->vnd_file = (char *)NETBSD32PTR64(s32p->vnd_file);
+	p->vnd_flags = s32p->vnd_flags;
+	p->vnd_geom = s32p->vnd_geom;
+	p->vnd_size = s32p->vnd_size;
+}
+
 /*
  * handle ioctl conversions from 64-bit kernel -> netbsd32
  */
@@ -363,6 +375,15 @@ netbsd32_from_vnd_user(struct vnd_user *p, struct netbsd32_vnd_user *s32p, u_lon
 	s32p->vnu_unit = p->vnu_unit;
 	s32p->vnu_dev = p->vnu_dev;
 	s32p->vnu_ino = p->vnu_ino;
+}
+
+static inline void
+netbsd32_from_vnd_ioctl50(struct vnd_ioctl50 *p, struct netbsd32_vnd_ioctl50 *s32p, u_long cmd)
+{
+
+	s32p->vnd_flags = p->vnd_flags;
+	s32p->vnd_geom = p->vnd_geom;
+	s32p->vnd_size = p->vnd_size;
 }
 
 
@@ -599,6 +620,12 @@ printf("netbsd32_ioctl(%d, %x, %x): %s group %c base %d len %d\n",
 
 	case VNDIOCGET32:
 		IOCTL_STRUCT_CONV_TO(VNDIOCGET, vnd_user);
+
+	case VNDIOCSET5032:
+		IOCTL_STRUCT_CONV_TO(VNDIOCSET50, vnd_ioctl50);
+
+	case VNDIOCCLR5032:
+		IOCTL_STRUCT_CONV_TO(VNDIOCCLR50, vnd_ioctl50);
 
 	default:
 #ifdef NETBSD32_MD_IOCTL
