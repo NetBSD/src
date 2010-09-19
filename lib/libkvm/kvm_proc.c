@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_proc.c,v 1.84 2009/10/21 21:11:58 rmind Exp $	*/
+/*	$NetBSD: kvm_proc.c,v 1.85 2010/09/19 02:07:00 jym Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_proc.c	8.3 (Berkeley) 9/23/93";
 #else
-__RCSID("$NetBSD: kvm_proc.c,v 1.84 2009/10/21 21:11:58 rmind Exp $");
+__RCSID("$NetBSD: kvm_proc.c,v 1.85 2010/09/19 02:07:00 jym Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -173,35 +173,29 @@ struct kvm_kauth_cred {
 	(kvm_read(kd, addr, (obj), sizeof(*obj)) != sizeof(*obj))
 
 /* XXX: What uses these two functions? */
-char		*_kvm_uread __P((kvm_t *, const struct proc *, u_long,
-		    u_long *));
-ssize_t		kvm_uread __P((kvm_t *, const struct proc *, u_long, char *,
-		    size_t));
+char		*_kvm_uread(kvm_t *, const struct proc *, u_long, u_long *);
+ssize_t		kvm_uread(kvm_t *, const struct proc *, u_long, char *,
+		    size_t);
 
-static char	*_kvm_ureadm __P((kvm_t *, const struct miniproc *, u_long,
-		    u_long *));
-static ssize_t	kvm_ureadm __P((kvm_t *, const struct miniproc *, u_long,
-		    char *, size_t));
+static char	*_kvm_ureadm(kvm_t *, const struct miniproc *, u_long,
+		    u_long *);
+static ssize_t	kvm_ureadm(kvm_t *, const struct miniproc *, u_long,
+		    char *, size_t);
 
-static char	**kvm_argv __P((kvm_t *, const struct miniproc *, u_long, int,
-		    int));
-static int	kvm_deadprocs __P((kvm_t *, int, int, u_long, u_long, int));
-static char	**kvm_doargv __P((kvm_t *, const struct miniproc *, int,
-		    void (*)(struct ps_strings *, u_long *, int *)));
-static char	**kvm_doargv2 __P((kvm_t *, pid_t, int, int));
-static int	kvm_proclist __P((kvm_t *, int, int, struct proc *,
-		    struct kinfo_proc *, int));
-static int	proc_verify __P((kvm_t *, u_long, const struct miniproc *));
-static void	ps_str_a __P((struct ps_strings *, u_long *, int *));
-static void	ps_str_e __P((struct ps_strings *, u_long *, int *));
+static char	**kvm_argv(kvm_t *, const struct miniproc *, u_long, int, int);
+static int	kvm_deadprocs(kvm_t *, int, int, u_long, u_long, int);
+static char	**kvm_doargv(kvm_t *, const struct miniproc *, int,
+		    void (*)(struct ps_strings *, u_long *, int *));
+static char	**kvm_doargv2(kvm_t *, pid_t, int, int);
+static int	kvm_proclist(kvm_t *, int, int, struct proc *,
+		    struct kinfo_proc *, int);
+static int	proc_verify(kvm_t *, u_long, const struct miniproc *);
+static void	ps_str_a(struct ps_strings *, u_long *, int *);
+static void	ps_str_e(struct ps_strings *, u_long *, int *);
 
 
 static char *
-_kvm_ureadm(kd, p, va, cnt)
-	kvm_t *kd;
-	const struct miniproc *p;
-	u_long va;
-	u_long *cnt;
+_kvm_ureadm(kvm_t *kd, const struct miniproc *p, u_long va, u_long *cnt)
 {
 	u_long addr, head;
 	u_long offset;
@@ -283,11 +277,7 @@ _kvm_ureadm(kd, p, va, cnt)
 }
 
 char *
-_kvm_uread(kd, p, va, cnt)
-	kvm_t *kd;
-	const struct proc *p;
-	u_long va;
-	u_long *cnt;
+_kvm_uread(kvm_t *kd, const struct proc *p, u_long va, u_long *cnt)
 {
 	struct miniproc mp;
 
@@ -334,12 +324,8 @@ _kvm_convertcred(kvm_t *kd, u_long cred, struct eproc *eproc)
  * at most maxcnt procs.
  */
 static int
-kvm_proclist(kd, what, arg, p, bp, maxcnt)
-	kvm_t *kd;
-	int what, arg;
-	struct proc *p;
-	struct kinfo_proc *bp;
-	int maxcnt;
+kvm_proclist(kvm_t *kd, int what, int arg, struct proc *p,
+	     struct kinfo_proc *bp, int maxcnt)
 {
 	int cnt = 0;
 	int nlwps;
@@ -472,12 +458,8 @@ kvm_proclist(kd, what, arg, p, bp, maxcnt)
  * Return number of procs read.  maxcnt is the max we will read.
  */
 static int
-kvm_deadprocs(kd, what, arg, a_allproc, a_zombproc, maxcnt)
-	kvm_t *kd;
-	int what, arg;
-	u_long a_allproc;
-	u_long a_zombproc;
-	int maxcnt;
+kvm_deadprocs(kvm_t *kd, int what, int arg, u_long a_allproc,
+	      u_long a_zombproc, int maxcnt)
 {
 	struct kinfo_proc *bp = kd->procbase;
 	int acnt, zcnt;
@@ -504,11 +486,7 @@ kvm_deadprocs(kd, what, arg, a_allproc, a_zombproc, maxcnt)
 }
 
 struct kinfo_proc2 *
-kvm_getproc2(kd, op, arg, esize, cnt)
-	kvm_t *kd;
-	int op, arg;
-	size_t esize;
-	int *cnt;
+kvm_getproc2(kvm_t *kd, int op, int arg, size_t esize, int *cnt)
 {
 	size_t size;
 	int mib[6], st, nprocs;
@@ -747,12 +725,7 @@ again:
 }
 
 struct kinfo_lwp *
-kvm_getlwps(kd, pid, paddr, esize, cnt)
-	kvm_t *kd;
-	int pid;
-	u_long paddr;
-	size_t esize;
-	int *cnt;
+kvm_getlwps(kvm_t *kd, int pid, u_long paddr, size_t esize, int *cnt)
 {
 	size_t size;
 	int mib[5], nlwps;
@@ -852,10 +825,7 @@ again:
 }
 
 struct kinfo_proc *
-kvm_getprocs(kd, op, arg, cnt)
-	kvm_t *kd;
-	int op, arg;
-	int *cnt;
+kvm_getprocs(kvm_t *kd, int op, int arg, int *cnt)
 {
 	size_t size;
 	int mib[4], st, nprocs;
@@ -920,10 +890,7 @@ kvm_getprocs(kd, op, arg, cnt)
 }
 
 void *
-_kvm_realloc(kd, p, n)
-	kvm_t *kd;
-	void *p;
-	size_t n;
+_kvm_realloc(kvm_t *kd, void *p, size_t n)
 {
 	void *np = realloc(p, n);
 
@@ -939,12 +906,8 @@ _kvm_realloc(kd, p, n)
  * environment strings.  Read at most maxcnt characters of strings.
  */
 static char **
-kvm_argv(kd, p, addr, narg, maxcnt)
-	kvm_t *kd;
-	const struct miniproc *p;
-	u_long addr;
-	int narg;
-	int maxcnt;
+kvm_argv(kvm_t *kd, const struct miniproc *p, u_long addr, int narg,
+	 int maxcnt)
 {
 	char *np, *cp, *ep, *ap;
 	u_long oaddr = (u_long)~0L;
@@ -1056,10 +1019,7 @@ kvm_argv(kd, p, addr, narg, maxcnt)
 }
 
 static void
-ps_str_a(p, addr, n)
-	struct ps_strings *p;
-	u_long *addr;
-	int *n;
+ps_str_a(struct ps_strings *p, u_long *addr, int *n)
 {
 
 	*addr = (u_long)p->ps_argvstr;
@@ -1067,10 +1027,7 @@ ps_str_a(p, addr, n)
 }
 
 static void
-ps_str_e(p, addr, n)
-	struct ps_strings *p;
-	u_long *addr;
-	int *n;
+ps_str_e(struct ps_strings *p, u_long *addr, int *n)
 {
 
 	*addr = (u_long)p->ps_envstr;
@@ -1083,10 +1040,7 @@ ps_str_e(p, addr, n)
  * being wrong are very low.
  */
 static int
-proc_verify(kd, kernp, p)
-	kvm_t *kd;
-	u_long kernp;
-	const struct miniproc *p;
+proc_verify(kvm_t *kd, u_long kernp, const struct miniproc *p)
 {
 	struct proc kernproc;
 
@@ -1102,11 +1056,8 @@ proc_verify(kd, kernp, p)
 }
 
 static char **
-kvm_doargv(kd, p, nchr, info)
-	kvm_t *kd;
-	const struct miniproc *p;
-	int nchr;
-	void (*info)(struct ps_strings *, u_long *, int *);
+kvm_doargv(kvm_t *kd, const struct miniproc *p, int nchr,
+	   void (*info)(struct ps_strings *, u_long *, int *))
 {
 	char **ap;
 	u_long addr;
@@ -1140,10 +1091,7 @@ kvm_doargv(kd, p, nchr, info)
  * Get the command args.  This code is now machine independent.
  */
 char **
-kvm_getargv(kd, kp, nchr)
-	kvm_t *kd;
-	const struct kinfo_proc *kp;
-	int nchr;
+kvm_getargv(kvm_t *kd, const struct kinfo_proc *kp, int nchr)
 {
 	struct miniproc p;
 
@@ -1152,10 +1100,7 @@ kvm_getargv(kd, kp, nchr)
 }
 
 char **
-kvm_getenvv(kd, kp, nchr)
-	kvm_t *kd;
-	const struct kinfo_proc *kp;
-	int nchr;
+kvm_getenvv(kvm_t *kd, const struct kinfo_proc *kp, int nchr)
 {
 	struct miniproc p;
 
@@ -1164,11 +1109,7 @@ kvm_getenvv(kd, kp, nchr)
 }
 
 static char **
-kvm_doargv2(kd, pid, type, nchr)
-	kvm_t *kd;
-	pid_t pid;
-	int type;
-	int nchr;
+kvm_doargv2(kvm_t *kd, pid_t pid, int type, int nchr)
 {
 	size_t bufs;
 	int narg, mib[4];
@@ -1246,20 +1187,14 @@ kvm_doargv2(kd, pid, type, nchr)
 }
 
 char **
-kvm_getargv2(kd, kp, nchr)
-	kvm_t *kd;
-	const struct kinfo_proc2 *kp;
-	int nchr;
+kvm_getargv2(kvm_t *kd, const struct kinfo_proc2 *kp, int nchr)
 {
 
 	return (kvm_doargv2(kd, kp->p_pid, KERN_PROC_ARGV, nchr));
 }
 
 char **
-kvm_getenvv2(kd, kp, nchr)
-	kvm_t *kd;
-	const struct kinfo_proc2 *kp;
-	int nchr;
+kvm_getenvv2(kvm_t *kd, const struct kinfo_proc2 *kp, int nchr)
 {
 
 	return (kvm_doargv2(kd, kp->p_pid, KERN_PROC_ENV, nchr));
@@ -1269,12 +1204,8 @@ kvm_getenvv2(kd, kp, nchr)
  * Read from user space.  The user context is given by p.
  */
 static ssize_t
-kvm_ureadm(kd, p, uva, buf, len)
-	kvm_t *kd;
-	const struct miniproc *p;
-	u_long uva;
-	char *buf;
-	size_t len;
+kvm_ureadm(kvm_t *kd, const struct miniproc *p, u_long uva,
+	   char *buf, size_t len)
 {
 	char *cp;
 
@@ -1299,12 +1230,7 @@ kvm_ureadm(kd, p, uva, buf, len)
 }
 
 ssize_t
-kvm_uread(kd, p, uva, buf, len)
-	kvm_t *kd;
-	const struct proc *p;
-	u_long uva;
-	char *buf;
-	size_t len;
+kvm_uread(kvm_t *kd, const struct proc *p, u_long uva, char *buf, size_t len)
 {
 	struct miniproc mp;
 

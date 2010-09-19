@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_file.c,v 1.26 2008/03/12 05:57:28 mrg Exp $	*/
+/*	$NetBSD: kvm_file.c,v 1.27 2010/09/19 02:07:00 jym Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1992, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_file.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: kvm_file.c,v 1.26 2008/03/12 05:57:28 mrg Exp $");
+__RCSID("$NetBSD: kvm_file.c,v 1.27 2010/09/19 02:07:00 jym Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -76,17 +76,14 @@ __RCSID("$NetBSD: kvm_file.c,v 1.26 2008/03/12 05:57:28 mrg Exp $");
 	(kvm_read(kd, (u_long) addr, obj, sizeof(*obj)) != sizeof(*obj))
 
 static int
-kvm_deadfiles __P((kvm_t *, int, int, long, int));
+kvm_deadfiles(kvm_t *, int, int, long, int);
 
 /*
  * Get file structures.
  */
 /*ARGSUSED*/
 static int
-kvm_deadfiles(kd, op, arg, ofhead, numfiles)
-	kvm_t *kd;
-	int op, arg, numfiles;
-	long ofhead;
+kvm_deadfiles(kvm_t *kd, int op, int arg, long ofhead, int numfiles)
 {
 	size_t buflen = kd->argspc_len, n = 0;
 	struct file *fp;
@@ -128,10 +125,7 @@ kvm_deadfiles(kd, op, arg, ofhead, numfiles)
 }
 
 char *
-kvm_getfiles(kd, op, arg, cnt)
-	kvm_t *kd;
-	int op, arg;
-	int *cnt;
+kvm_getfiles(kvm_t *kd, int op, int arg, int *cnt)
 {
 	size_t size;
 	int mib[2], st;

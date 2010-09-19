@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_sparc.c,v 1.30 2008/10/25 19:09:10 mrg Exp $	*/
+/*	$NetBSD: kvm_sparc.c,v 1.31 2010/09/19 02:07:00 jym Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_sparc.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: kvm_sparc.c,v 1.30 2008/10/25 19:09:10 mrg Exp $");
+__RCSID("$NetBSD: kvm_sparc.c,v 1.31 2010/09/19 02:07:00 jym Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -81,9 +81,9 @@ static int nptesg;	/* [sun4/sun4c] only */
 #undef VA_OFF
 #define VA_OFF(va) (va & (kd->nbpg - 1))
 
-int _kvm_kvatop44c __P((kvm_t *, u_long, u_long *));
-int _kvm_kvatop4m __P((kvm_t *, u_long, u_long *));
-int _kvm_kvatop4u __P((kvm_t *, u_long, u_long *));
+int _kvm_kvatop44c(kvm_t *, u_long, u_long *);
+int _kvm_kvatop4m (kvm_t *, u_long, u_long *);
+int _kvm_kvatop4u (kvm_t *, u_long, u_long *);
 
 /*
  * XXX
@@ -108,8 +108,7 @@ typedef struct sparc64_cpu_kcore_hdr {
 } sparc64_cpu_kcore_hdr_t;
 
 void
-_kvm_freevtop(kd)
-	kvm_t *kd;
+_kvm_freevtop(kvm_t *kd)
 {
 	if (kd->vmst != 0) {
 		_kvm_err(kd, kd->program, "_kvm_freevtop: internal error");
@@ -123,8 +122,7 @@ _kvm_freevtop(kd)
  * front of the crash dump by pmap_dumpmmu().
  */
 int
-_kvm_initvtop(kd)
-	kvm_t *kd;
+_kvm_initvtop(kvm_t *kd)
 {
 	sparc64_cpu_kcore_hdr_t *cpup = kd->cpu_data;
 
@@ -154,10 +152,7 @@ _kvm_initvtop(kd)
  * physical address.  This routine is used only for crash dumps.
  */
 int
-_kvm_kvatop(kd, va, pa)
-	kvm_t *kd;
-	u_long va;
-	u_long *pa;
+_kvm_kvatop(kvm_t *kd, u_long va, u_long *pa)
 {
 	if (cputyp == -1)
 		if (_kvm_initvtop(kd) != 0)
@@ -181,10 +176,7 @@ _kvm_kvatop(kd, va, pa)
  * (note: sun4 3-level MMU not yet supported)
  */
 int
-_kvm_kvatop44c(kd, va, pa)
-	kvm_t *kd;
-	u_long va;
-	u_long *pa;
+_kvm_kvatop44c(kvm_t *kd, u_long va, u_long *pa)
 {
 	int vr, vs, pte;
 	sparc64_cpu_kcore_hdr_t *cpup = kd->cpu_data;
@@ -231,10 +223,7 @@ err:
 }
 
 int
-_kvm_kvatop4m(kd, va, pa)
-	kvm_t *kd;
-	u_long va;
-	u_long *pa;
+_kvm_kvatop4m(kvm_t *kd, u_long va, u_long *pa)
 {
 	sparc64_cpu_kcore_hdr_t *cpup = kd->cpu_data;
 	int vr, vs;
@@ -291,10 +280,7 @@ err:
  * sparc64 pmap's 32-bit page table format
  */
 int
-_kvm_kvatop4u(kd, va, pa)
-	kvm_t *kd;
-	u_long va;
-	u_long *pa;
+_kvm_kvatop4u(kvm_t *kd, u_long va, u_long *pa)
 {
 	sparc64_cpu_kcore_hdr_t *cpup = kd->cpu_data;
 	int64_t **segmaps;
@@ -356,9 +342,7 @@ err:
  * Translate a physical address to a file-offset in the crash dump.
  */
 off_t
-_kvm_pa2off(kd, pa)
-	kvm_t   *kd;
-	u_long  pa;
+_kvm_pa2off(kvm_t *kd, u_long pa)
 {
 	sparc64_cpu_kcore_hdr_t *cpup = kd->cpu_data;
 	phys_ram_seg_t *mp;
@@ -394,8 +378,7 @@ _kvm_pa2off(kd, pa)
  * have to deal with these NOT being constants!  (i.e. m68k)
  */
 int
-_kvm_mdopen(kd)
-	kvm_t	*kd;
+_kvm_mdopen(kvm_t *kd)
 {
 	u_long max_uva;
 	extern struct ps_strings *__ps_strings;

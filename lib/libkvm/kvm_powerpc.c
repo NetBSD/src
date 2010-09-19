@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_powerpc.c,v 1.9 2010/02/25 23:35:29 matt Exp $	*/
+/*	$NetBSD: kvm_powerpc.c,v 1.10 2010/09/19 02:07:00 jym Exp $	*/
 
 /*
  * Copyright (c) 2005 Wasabi Systems, Inc.
@@ -97,8 +97,7 @@ static struct pte *_kvm_scan_pteg(struct pteg *pteg, uint32_t vsid,
 				  uint32_t api, int secondary);
 
 void
-_kvm_freevtop(kd)
-	kvm_t *kd;
+_kvm_freevtop(kvm_t *kd)
 {
 	if (kd->vmst != 0)
 		free(kd->vmst);
@@ -106,8 +105,7 @@ _kvm_freevtop(kd)
 
 /*ARGSUSED*/
 int
-_kvm_initvtop(kd)
-	kvm_t *kd;
+_kvm_initvtop(kvm_t *kd)
 {
 
 	return 0;
@@ -116,11 +114,7 @@ _kvm_initvtop(kd)
 #define BAT601_SIZE(b)  ((((b) << 17) | ~BAT601_BLPI) + 1)
 
 static int
-_kvm_match_601bat(kd, va, pa, off)
-	kvm_t *kd;
-	u_long va;
-	u_long *pa;
-	int *off;
+_kvm_match_601bat(kvm_t *kd, u_long va, u_long *pa, int *off)
 {
 	cpu_kcore_hdr_t	*cpu_kh;
 	u_long		pgoff;
@@ -148,11 +142,7 @@ _kvm_match_601bat(kd, va, pa, off)
 #define BAT_SIZE(b)     ((((b) << 15) | ~BAT_EPI) + 1)
 
 static int
-_kvm_match_bat(kd, va, pa, off)
-	kvm_t *kd;
-	u_long va;
-	u_long *pa;
-	int *off;
+_kvm_match_bat(kvm_t *kd, u_long va, u_long *pa, int *off)
 {
 	cpu_kcore_hdr_t	*cpu_kh;
 	u_long		pgoff;
@@ -182,11 +172,7 @@ _kvm_match_bat(kd, va, pa, off)
 #define SR_VSID_HASH_MASK	0x0007ffff
 
 static struct pte *
-_kvm_scan_pteg(pteg, vsid, api, secondary)
-	struct pteg *pteg;
-	uint32_t vsid;
-	uint32_t api;
-	int secondary;
+_kvm_scan_pteg(struct pteg *pteg, uint32_t vsid, uint32_t api, int secondary)
 {
 	struct pte	*pte;
 	u_long		ptehi;
@@ -211,11 +197,7 @@ _kvm_scan_pteg(pteg, vsid, api, secondary)
 #define HASH_MASK	0x0007ffff
 
 static int
-_kvm_match_sr(kd, va, pa, off)
-	kvm_t *kd;
-	u_long va;
-	u_long *pa;
-	int *off;
+_kvm_match_sr(kvm_t *kd, u_long va, u_long *pa, int *off)
 {
 	cpu_kcore_hdr_t	*cpu_kh;
 	struct pteg	pteg;
@@ -283,10 +265,7 @@ _kvm_match_sr(kd, va, pa, off)
  * Translate a KVA to a PA
  */
 int
-_kvm_kvatop(kd, va, pa)
-	kvm_t *kd;
-	u_long va;
-	u_long *pa;
+_kvm_kvatop(kvm_t *kd, u_long va, u_long *pa)
 {
 	cpu_kcore_hdr_t	*cpu_kh;
 	int		offs;
@@ -351,9 +330,7 @@ _kvm_kvatop(kd, va, pa)
 }
 
 off_t
-_kvm_pa2off(kd, pa)
-	kvm_t *kd;
-	u_long pa;
+_kvm_pa2off(kvm_t *kd, u_long pa)
 {
 	cpu_kcore_hdr_t	*cpu_kh;
 	phys_ram_seg_t	*ram;
@@ -382,8 +359,7 @@ _kvm_pa2off(kd, pa)
  * have to deal with these NOT being constants!  (i.e. m68k)
  */
 int
-_kvm_mdopen(kd)
-	kvm_t	*kd;
+_kvm_mdopen(kvm_t *kd)
 {
 	uintptr_t max_uva;
 	extern struct ps_strings *__ps_strings;

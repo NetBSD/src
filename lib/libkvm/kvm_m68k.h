@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_m68k.h,v 1.4 2008/04/28 20:23:01 martin Exp $	*/
+/*	$NetBSD: kvm_m68k.h,v 1.5 2010/09/19 02:07:00 jym Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -30,10 +30,10 @@
  */
 
 struct kvm_ops {
-	int   (*initvtop) __P((kvm_t *));
-	void  (*freevtop) __P((kvm_t *));
-	int	  (*kvatop)   __P((kvm_t *, u_long, u_long *));
-	off_t (*pa2off)   __P((kvm_t *, u_long));
+	int   (*initvtop)(kvm_t *);
+	void  (*freevtop)(kvm_t *);
+	int   (*kvatop)  (kvm_t *, u_long, u_long *);
+	off_t (*pa2off)  (kvm_t *, u_long);
 };
 
 struct vmstate {
