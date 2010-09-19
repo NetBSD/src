@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.211 2010/09/19 05:50:28 mrg Exp $	*/
+/*	$NetBSD: vnd.c,v 1.212 2010/09/19 07:11:42 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.211 2010/09/19 05:50:28 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.212 2010/09/19 07:11:42 mrg Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vnd.h"
@@ -211,6 +211,15 @@ struct vnd_user50 {
 	ino_t		vnu_ino;	/* ...at this inode */
 };
 #define VNDIOCGET50	_IOWR('F', 3, struct vnd_user50)	/* get list */
+
+struct vnd_ioctl50 {
+	char		*vnd_file;	/* pathname of file to mount */
+	int		vnd_flags;	/* flags; see below */
+	struct vndgeom	vnd_geom;	/* geometry to emulate */
+	unsigned int	vnd_size;	/* (returned) size of disk */
+};
+#define VNDIOCSET50	_IOWR('F', 0, struct vnd_ioctl50)
+#define VNDIOCCLR50	_IOW('F', 1, struct vnd_ioctl50)
 #endif
 
 /* called by main() at boot time */
@@ -1064,9 +1073,11 @@ vndioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	switch (cmd) {
 	case VNDIOCSET:
 	case VNDIOCCLR:
-#ifdef VNDIOOCSET
-	case VNDIOOCSET:
-	case VNDIOOCCLR:
+#ifdef VNDIOCSET50
+	case VNDIOCSET50:
+#endif
+#ifdef VNDIOCCLR50
+	case VNDIOCCLR50:
 #endif
 	case DIOCSDINFO:
 	case DIOCWDINFO:
@@ -1083,8 +1094,8 @@ vndioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	/* Must be initialized for these... */
 	switch (cmd) {
 	case VNDIOCCLR:
-#ifdef VNDIOOCCLR
-	case VNDIOOCCLR:
+#ifdef VNDIOCCLR50
+	case VNDIOCCLR50:
 #endif
 	case DIOCGDINFO:
 	case DIOCSDINFO:
@@ -1105,8 +1116,8 @@ vndioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	}
 
 	switch (cmd) {
-#ifdef VNDIOOCSET
-	case VNDIOOCSET:
+#ifdef VNDIOCSET50
+	case VNDIOCSET50:
 #endif
 	case VNDIOCSET:
 		if (vnd->sc_flags & VNF_INITED)
@@ -1313,8 +1324,8 @@ vndioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 
 		vndthrottle(vnd, vnd->sc_vp);
 		vio->vnd_osize = dbtob(vnd->sc_size);
-#ifdef VNDIOOCSET
-		if (cmd != VNDIOOCSET)
+#ifdef VNDIOCSET50
+		if (cmd != VNDIOCSET50)
 #endif
 			vio->vnd_size = dbtob(vnd->sc_size);
 		vnd->sc_flags |= VNF_INITED;
@@ -1373,8 +1384,8 @@ unlock_and_exit:
 		vndunlock(vnd);
 		return error;
 
-#ifdef VNDIOOCCLR
-	case VNDIOOCCLR:
+#ifdef VNDIOCCLR50
+	case VNDIOCCLR50:
 #endif
 	case VNDIOCCLR:
 		part = DISKPART(dev);
