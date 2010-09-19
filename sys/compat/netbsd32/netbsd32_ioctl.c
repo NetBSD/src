@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.c,v 1.47 2010/04/23 15:19:20 rmind Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.c,v 1.48 2010/09/19 09:09:30 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.47 2010/04/23 15:19:20 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.48 2010/09/19 09:09:30 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -216,6 +216,26 @@ netbsd32_to_sioc_sg_req(struct netbsd32_sioc_sg_req *s32p, struct sioc_sg_req *p
 	p->wrong_if = (u_long)s32p->wrong_if;
 }
 
+static inline void
+netbsd32_to_vnd_ioctl(struct netbsd32_vnd_ioctl *s32p, struct vnd_ioctl *p, u_long cmd)
+{
+
+	p->vnd_file = (char *)NETBSD32PTR64(s32p->vnd_file);
+	p->vnd_flags = s32p->vnd_flags;
+	p->vnd_geom = s32p->vnd_geom;
+	p->vnd_osize = s32p->vnd_osize;
+	p->vnd_size = s32p->vnd_size;
+}
+
+static inline void
+netbsd32_to_vnd_user(struct netbsd32_vnd_user *s32p, struct vnd_user *p, u_long cmd)
+{
+
+	p->vnu_unit = s32p->vnu_unit;
+	p->vnu_dev = s32p->vnu_dev;
+	p->vnu_ino = s32p->vnu_ino;
+}
+
 /*
  * handle ioctl conversions from 64-bit kernel -> netbsd32
  */
@@ -324,6 +344,25 @@ netbsd32_from_sioc_sg_req(struct sioc_sg_req *p, struct netbsd32_sioc_sg_req *s3
 	s32p->pktcnt = (netbsd32_u_long)p->pktcnt;
 	s32p->bytecnt = (netbsd32_u_long)p->bytecnt;
 	s32p->wrong_if = (netbsd32_u_long)p->wrong_if;
+}
+
+static inline void
+netbsd32_from_vnd_ioctl(struct vnd_ioctl *p, struct netbsd32_vnd_ioctl *s32p, u_long cmd)
+{
+
+	s32p->vnd_flags = p->vnd_flags;
+	s32p->vnd_geom = p->vnd_geom;
+	s32p->vnd_osize = p->vnd_osize;
+	s32p->vnd_size = p->vnd_size;
+}
+
+static inline void
+netbsd32_from_vnd_user(struct vnd_user *p, struct netbsd32_vnd_user *s32p, u_long cmd)
+{
+
+	s32p->vnu_unit = p->vnu_unit;
+	s32p->vnu_dev = p->vnu_dev;
+	s32p->vnu_ino = p->vnu_ino;
 }
 
 
@@ -551,6 +590,15 @@ printf("netbsd32_ioctl(%d, %x, %x): %s group %c base %d len %d\n",
 
 	case SIOCGETSGCNT32:
 		IOCTL_STRUCT_CONV_TO(SIOCGETSGCNT, sioc_sg_req);
+
+	case VNDIOCSET32:
+		IOCTL_STRUCT_CONV_TO(VNDIOCSET, vnd_ioctl);
+
+	case VNDIOCCLR32:
+		IOCTL_STRUCT_CONV_TO(VNDIOCCLR, vnd_ioctl);
+
+	case VNDIOCGET32:
+		IOCTL_STRUCT_CONV_TO(VNDIOCGET, vnd_user);
 
 	default:
 #ifdef NETBSD32_MD_IOCTL
