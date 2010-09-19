@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.135 2010/08/22 18:56:20 rmind Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.136 2010/09/19 20:52:23 jakllsch Exp $
 #
 # Copyright (c) 2003,2007,2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1465,7 +1465,7 @@ agp*)
 
 pci*)
 	unit=${i#pci}
-	mkdev pci$unit c %pci_chr% $unit 644
+	mkdev pci$unit c %pci_chr% $unit 640
 	;;
 
 dpti*)
