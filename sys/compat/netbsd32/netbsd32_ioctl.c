@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.c,v 1.49 2010/09/19 09:46:59 mrg Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.c,v 1.50 2010/09/19 10:33:31 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.49 2010/09/19 09:46:59 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.50 2010/09/19 10:33:31 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -248,6 +248,13 @@ netbsd32_to_vnd_ioctl50(struct netbsd32_vnd_ioctl50 *s32p, struct vnd_ioctl50 *p
 	p->vnd_size = s32p->vnd_size;
 }
 
+static inline void
+netbsd32_to_u_long(netbsd32_u_long *s32p, u_long *p, u_long cmd)
+{
+
+	*p = (u_long)*s32p;
+}
+
 /*
  * handle ioctl conversions from 64-bit kernel -> netbsd32
  */
@@ -386,6 +393,13 @@ netbsd32_from_vnd_ioctl50(struct vnd_ioctl50 *p, struct netbsd32_vnd_ioctl50 *s3
 	s32p->vnd_size = p->vnd_size;
 }
 
+static inline void
+netbsd32_from_u_long(u_long *p, netbsd32_u_long *s32p, u_long cmd)
+{
+
+	*s32p = (netbsd32_u_long)*p;
+}
+
 
 /*
  * main ioctl syscall.
@@ -514,6 +528,9 @@ printf("netbsd32_ioctl(%d, %x, %x): %s group %c base %d len %d\n",
 		mutex_exit(&fp->f_lock);
 		error = (*fp->f_ops->fo_ioctl)(fp, FIOASYNC, (void *)&tmp);
 		break;
+
+	case AUDIO_WSEEK32:
+		IOCTL_CONV_TO(AUDIO_WSEEK, u_long);
 
 	case DIOCGPART32:
 		IOCTL_STRUCT_CONV_TO(DIOCGPART, partinfo);
