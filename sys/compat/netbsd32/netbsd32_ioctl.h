@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.h,v 1.25 2009/12/09 04:50:47 christos Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.h,v 1.26 2010/09/19 09:09:30 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -25,6 +25,15 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/device.h>
+#include <sys/disklabel.h>
+#include <sys/disk.h>
+
+#include <net/zlib.h>
+
+#include <dev/dkvar.h>
+#include <dev/vndvar.h>
 
 /* we define some handy macros here... */
 #define IOCTL_STRUCT_CONV_TO(cmd, type)	\
@@ -338,4 +347,29 @@ struct netbsd32_sioc_sg_req {
 #if 1
 /* from <sys/sockio.h> */
 #define	SIOCGETSGCNT32	_IOWR('u', 52, struct netbsd32_sioc_sg_req) /* sg pkt cnt */
+#endif
+
+/*
+ * The next two structures are marked "__packed" as they normally end up
+ * being padded in 64-bit mode.
+ */
+struct netbsd32_vnd_ioctl {
+	netbsd32_charp	vnd_file;	/* pathname of file to mount */
+	int		vnd_flags;	/* flags; see below */
+	struct vndgeom	vnd_geom;	/* geometry to emulate */
+	unsigned int	vnd_osize;	/* (returned) size of disk */
+	uint64_t	vnd_size;	/* (returned) size of disk */
+} __packed;
+
+struct netbsd32_vnd_user {
+	int		vnu_unit;	/* which vnd unit */
+	dev_t		vnu_dev;	/* file is on this device... */
+	ino_t		vnu_ino;	/* ...at this inode */
+} __packed;
+
+#if 1
+/* from <dev/vndvar.h> */
+#define VNDIOCSET32	_IOWR('F', 0, struct netbsd32_vnd_ioctl)	/* enable disk */
+#define VNDIOCCLR32	_IOW('F', 1, struct netbsd32_vnd_ioctl)	/* disable disk */
+#define VNDIOCGET32	_IOWR('F', 3, struct netbsd32_vnd_user)	/* get list */
 #endif
