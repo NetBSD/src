@@ -1,4 +1,4 @@
-/*	$NetBSD: vndvar.h,v 1.27 2010/09/19 05:50:28 mrg Exp $	*/
+/*	$NetBSD: vndvar.h,v 1.28 2010/09/19 07:11:42 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -209,11 +209,5 @@ struct vnd_user {
 #define VNDIOCSET	_IOWR('F', 0, struct vnd_ioctl)	/* enable disk */
 #define VNDIOCCLR	_IOW('F', 1, struct vnd_ioctl)	/* disable disk */
 #define VNDIOCGET	_IOWR('F', 3, struct vnd_user)	/* get list */
-
-/* These only have the 32bit vnd_osize field */
-#define VNDIOOCSET	_IOC(IOC_INOUT, 'F', 0, \
-				offsetof(struct vnd_ioctl, vnd_size))
-#define VNDIOOCCLR	_IOC(IOC_IN, 'F', 1, \
-				offsetof(struct vnd_ioctl, vnd_size))
 
 #endif /* _SYS_DEV_VNDVAR_H_ */
