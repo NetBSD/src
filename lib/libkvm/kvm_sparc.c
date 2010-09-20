@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_sparc.c,v 1.31 2010/09/19 02:07:00 jym Exp $	*/
+/*	$NetBSD: kvm_sparc.c,v 1.32 2010/09/20 23:23:16 jym Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_sparc.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: kvm_sparc.c,v 1.31 2010/09/19 02:07:00 jym Exp $");
+__RCSID("$NetBSD: kvm_sparc.c,v 1.32 2010/09/20 23:23:16 jym Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -81,9 +81,9 @@ static int nptesg;	/* [sun4/sun4c] only */
 #undef VA_OFF
 #define VA_OFF(va) (va & (kd->nbpg - 1))
 
-int _kvm_kvatop44c(kvm_t *, u_long, u_long *);
-int _kvm_kvatop4m (kvm_t *, u_long, u_long *);
-int _kvm_kvatop4u (kvm_t *, u_long, u_long *);
+int _kvm_kvatop44c(kvm_t *, vaddr_t, paddr_t *);
+int _kvm_kvatop4m (kvm_t *, vaddr_t, paddr_t *);
+int _kvm_kvatop4u (kvm_t *, vaddr_t, paddr_t *);
 
 /*
  * XXX
@@ -152,7 +152,7 @@ _kvm_initvtop(kvm_t *kd)
  * physical address.  This routine is used only for crash dumps.
  */
 int
-_kvm_kvatop(kvm_t *kd, u_long va, u_long *pa)
+_kvm_kvatop(kvm_t *kd, vaddr_t va, paddr_t *pa)
 {
 	if (cputyp == -1)
 		if (_kvm_initvtop(kd) != 0)
@@ -176,7 +176,7 @@ _kvm_kvatop(kvm_t *kd, u_long va, u_long *pa)
  * (note: sun4 3-level MMU not yet supported)
  */
 int
-_kvm_kvatop44c(kvm_t *kd, u_long va, u_long *pa)
+_kvm_kvatop44c(kvm_t *kd, vaddr_t va, paddr_t *pa)
 {
 	int vr, vs, pte;
 	sparc64_cpu_kcore_hdr_t *cpup = kd->cpu_data;
@@ -211,19 +211,19 @@ _kvm_kvatop44c(kvm_t *kd, u_long va, u_long *pa)
 		goto err;
 	pte = ptes[sp->sg_pmeg * nptesg + VA_VPG(va)];
 	if ((pte & PG_V) != 0) {
-		long p, off = VA_OFF(va);
+		paddr_t p, off = VA_OFF(va);
 
 		p = (pte & PG_PFNUM) << pgshift;
 		*pa = p + off;
 		return (kd->nbpg - off);
 	}
 err:
-	_kvm_err(kd, 0, "invalid address (%lx)", va);
+	_kvm_err(kd, 0, "invalid address (%#"PRIxVADDR")", va);
 	return (0);
 }
 
 int
-_kvm_kvatop4m(kvm_t *kd, u_long va, u_long *pa)
+_kvm_kvatop4m(kvm_t *kd, vaddr_t va, paddr_t *pa)
 {
 	sparc64_cpu_kcore_hdr_t *cpup = kd->cpu_data;
 	int vr, vs;
@@ -260,7 +260,8 @@ _kvm_kvatop4m(kvm_t *kd, u_long va, u_long *pa)
 		return (0);
 
 	if (_kvm_pread(kd, kd->pmfd, &pte, sizeof(pte), foff) != sizeof(pte)) {
-		_kvm_syserr(kd, kd->program, "cannot read pte for %lx", va);
+		_kvm_syserr(kd, kd->program, "cannot read pte for "
+		    "%#" PRIxVADDR, va);
 		return (0);
 	}
 
@@ -272,7 +273,7 @@ _kvm_kvatop4m(kvm_t *kd, u_long va, u_long *pa)
 		return (kd->nbpg - off);
 	}
 err:
-	_kvm_err(kd, 0, "invalid address (%lx)", va);
+	_kvm_err(kd, 0, "invalid address (%#"PRIxVADDR")", va);
 	return (0);
 }
 
@@ -280,7 +281,7 @@ err:
  * sparc64 pmap's 32-bit page table format
  */
 int
-_kvm_kvatop4u(kvm_t *kd, u_long va, u_long *pa)
+_kvm_kvatop4u(kvm_t *kd, vaddr_t va, paddr_t *pa)
 {
 	sparc64_cpu_kcore_hdr_t *cpup = kd->cpu_data;
 	int64_t **segmaps;
@@ -325,15 +326,13 @@ _kvm_kvatop4u(kvm_t *kd, u_long va, u_long *pa)
 	 *	segmap[cpup->nsegmap];
 	 */
 	segmaps = (int64_t **)((long)kd->cpu_data + cpup->segmapoffset);
-	/* XXX XXX XXX _kvm_pa2off takes u_long and returns off_t..
-	   should take off_t also!! */
-
-	ptes = (int64_t *)(int)_kvm_pa2off(kd, (u_long)segmaps[sparc64_va_to_seg(va)]);
+	ptes = (int64_t *)(int)_kvm_pa2off(kd,
+	    (paddr_t)segmaps[sparc64_va_to_seg(va)]);
 	pte = ptes[sparc64_va_to_pte(va)];
 	if ((pte & SPARC64_TLB_V) != 0)
 		return ((pte & SPARC64_TLB_PA_MASK) | (va & (kd->nbpg - 1)));
 err:
-	_kvm_err(kd, 0, "invalid address (%lx)", va);
+	_kvm_err(kd, 0, "invalid address (%#"PRIxVADDR")", va);
 	return (0);
 }
 
@@ -342,7 +341,7 @@ err:
  * Translate a physical address to a file-offset in the crash dump.
  */
 off_t
-_kvm_pa2off(kvm_t *kd, u_long pa)
+_kvm_pa2off(kvm_t *kd, paddr_t pa)
 {
 	sparc64_cpu_kcore_hdr_t *cpup = kd->cpu_data;
 	phys_ram_seg_t *mp;

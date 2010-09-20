@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm.c,v 1.94 2009/09/14 19:29:20 apb Exp $	*/
+/*	$NetBSD: kvm.c,v 1.95 2010/09/20 23:23:16 jym Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm.c	8.2 (Berkeley) 2/13/94";
 #else
-__RCSID("$NetBSD: kvm.c,v 1.94 2009/09/14 19:29:20 apb Exp $");
+__RCSID("$NetBSD: kvm.c,v 1.95 2010/09/20 23:23:16 jym Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -54,6 +54,7 @@ __RCSID("$NetBSD: kvm.c,v 1.94 2009/09/14 19:29:20 apb Exp $");
 #include <sys/exec.h>
 #include <sys/kcore.h>
 #include <sys/ksyms.h>
+#include <sys/types.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -798,7 +799,7 @@ int
 kvm_dump_inval(kvm_t *kd)
 {
 	struct nlist	nl[2];
-	u_long		pa;
+	paddr_t		pa;
 	size_t		dsize;
 	off_t		doff;
 	void		*newbuf;
@@ -814,7 +815,7 @@ kvm_dump_inval(kvm_t *kd)
 		_kvm_err(kd, 0, "bad namelist");
 		return (-1);
 	}
-	if (_kvm_kvatop(kd, (u_long)nl[0].n_value, &pa) == 0)
+	if (_kvm_kvatop(kd, (vaddr_t)nl[0].n_value, &pa) == 0)
 		return (-1);
 
 	errno = 0;
@@ -868,10 +869,10 @@ kvm_read(kvm_t *kd, u_long kva, void *buf, size_t len)
 		}
 		cp = buf;
 		while (len > 0) {
-			u_long	pa;
+			paddr_t	pa;
 			off_t	foff;
 
-			cc = _kvm_kvatop(kd, kva, &pa);
+			cc = _kvm_kvatop(kd, (vaddr_t)kva, &pa);
 			if (cc == 0)
 				return (-1);
 			if (cc > len)

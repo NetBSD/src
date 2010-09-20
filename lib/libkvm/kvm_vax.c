@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_vax.c,v 1.17 2010/09/19 02:07:00 jym Exp $ */
+/*	$NetBSD: kvm_vax.c,v 1.18 2010/09/20 23:23:16 jym Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993
@@ -44,6 +44,8 @@
 #include <sys/user.h>
 #include <sys/proc.h>
 #include <sys/stat.h>
+#include <sys/types.h>
+
 #include <unistd.h>
 #include <nlist.h>
 #include <stdlib.h>
@@ -107,18 +109,20 @@ _kvm_initvtop(kvm_t *kd)
  * physical address.  This routine is used only for crash dumps.
  */
 int
-_kvm_kvatop(kvm_t *kd, u_long va, u_long *pa)
+_kvm_kvatop(kvm_t *kd, vaddr_t va, paddr_t *pa)
 {
 	u_long end;
 
 	if (va < (u_long) KERNBASE) {
-		_kvm_err(kd, 0, "invalid address (%lx<%lx)", va, (u_long) KERNBASE);
+		_kvm_err(kd, 0, "invalid address (%#"PRIxVADDR"<%lx)", va,
+		    (u_long)KERNBASE);
 		return (0);
 	}
 
 	end = kd->vmst->end;
 	if (va >= end) {
-		_kvm_err(kd, 0, "invalid address (%lx>=%lx)", va, end);
+		_kvm_err(kd, 0, "invalid address (%#"PRIxVADDR"<%lx)", va,
+		    end);
 		return (0);
 	}
 
@@ -131,7 +135,7 @@ _kvm_kvatop(kvm_t *kd, u_long va, u_long *pa)
  * XXX - crash dump doesn't work anyway.
  */
 off_t
-_kvm_pa2off(kvm_t *kd, u_long pa)
+_kvm_pa2off(kvm_t *kd, paddr_t pa)
 {
 	return(kd->dump_off + pa);
 }

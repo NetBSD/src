@@ -1,4 +1,4 @@
-/* $NetBSD: kvm_arm.c,v 1.5 2010/09/19 02:07:00 jym Exp $	 */
+/* $NetBSD: kvm_arm.c,v 1.6 2010/09/20 23:23:16 jym Exp $	 */
 
 /*-
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -39,12 +39,14 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: kvm_arm.c,v 1.5 2010/09/19 02:07:00 jym Exp $");
+__RCSID("$NetBSD: kvm_arm.c,v 1.6 2010/09/20 23:23:16 jym Exp $");
 #endif				/* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
 #include <sys/exec.h>
 #include <sys/kcore.h>
+#include <sys/types.h>
+
 #include <arm/kcore.h>
 #include <arm/arm32/pte.h>
 
@@ -71,12 +73,12 @@ _kvm_initvtop(kvm_t * kd)
 }
 
 int
-_kvm_kvatop(kvm_t * kd, u_long va, u_long *pa)
+_kvm_kvatop(kvm_t * kd, vaddr_t va, paddr_t *pa)
 {
 	cpu_kcore_hdr_t *cpu_kh;
 	pd_entry_t      pde;
 	pt_entry_t      pte;
-	uint32_t        pde_pa, pte_pa;
+	paddr_t		pde_pa, pte_pa;
 
 	if (ISALIVE(kd)) {
 		_kvm_err(kd, 0, "vatop called in live kernel!");

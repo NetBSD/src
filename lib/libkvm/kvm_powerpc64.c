@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_powerpc64.c,v 1.3 2010/09/19 02:07:00 jym Exp $	*/
+/*	$NetBSD: kvm_powerpc64.c,v 1.4 2010/09/20 23:23:16 jym Exp $	*/
 
 /*
  * Copyright (c) 2005 Wasabi Systems, Inc.
@@ -71,6 +71,7 @@
 
 #include <sys/param.h>
 #include <sys/exec.h>
+#include <sys/types.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -112,7 +113,7 @@ _kvm_initvtop(kvm_t *kd)
  * Translate a KVA to a PA
  */
 int
-_kvm_kvatop(kvm_t *kd, u_long va, u_long *pa)
+_kvm_kvatop(kvm_t *kd, vaddr_t va, paddr_t *pa)
 {
 	cpu_kcore_hdr_t	*cpu_kh;
 	uint32_t	pvr;
@@ -133,7 +134,7 @@ _kvm_kvatop(kvm_t *kd, u_long va, u_long *pa)
 }
 
 off_t
-_kvm_pa2off(kvm_t *kd, u_long pa)
+_kvm_pa2off(kvm_t *kd, paddr_t pa)
 {
 	cpu_kcore_hdr_t	*cpu_kh;
 	phys_ram_seg_t	*ram;

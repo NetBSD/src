@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_m68k_cmn.c,v 1.14 2010/09/19 02:07:00 jym Exp $	*/
+/*	$NetBSD: kvm_m68k_cmn.c,v 1.15 2010/09/20 23:23:16 jym Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1992, 1993
@@ -74,7 +74,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_hp300.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: kvm_m68k_cmn.c,v 1.14 2010/09/19 02:07:00 jym Exp $");
+__RCSID("$NetBSD: kvm_m68k_cmn.c,v 1.15 2010/09/20 23:23:16 jym Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -102,8 +102,8 @@ __RCSID("$NetBSD: kvm_m68k_cmn.c,v 1.14 2010/09/19 02:07:00 jym Exp $");
 
 int   _kvm_cmn_initvtop(kvm_t *);
 void  _kvm_cmn_freevtop(kvm_t *);
-int   _kvm_cmn_kvatop(kvm_t *, u_long, u_long *);
-off_t _kvm_cmn_pa2off(kvm_t *, u_long);
+int   _kvm_cmn_kvatop(kvm_t *, vaddr_t, paddr_t *);
+off_t _kvm_cmn_pa2off(kvm_t *, paddr_t);
 
 struct kvm_ops _kvm_ops_cmn = {
 	_kvm_cmn_initvtop,
@@ -111,8 +111,8 @@ struct kvm_ops _kvm_ops_cmn = {
 	_kvm_cmn_kvatop,
 	_kvm_cmn_pa2off };
 
-static int vatop_030(kvm_t *, uint32_t, u_long, u_long *);
-static int vatop_040(kvm_t *, uint32_t, u_long, u_long *);
+static int vatop_030(kvm_t *, uint32_t, vaddr_t, paddr_t *);
+static int vatop_040(kvm_t *, uint32_t, vaddr_t, paddr_t *);
 
 #define	_kvm_btop(v, a)	(((unsigned)(a)) >> (v)->pgshift)
 
@@ -133,11 +133,11 @@ _kvm_cmn_initvtop(kvm_t *kd)
 }
 
 int
-_kvm_cmn_kvatop(kvm_t *kd, u_long va, u_long *pa)
+_kvm_cmn_kvatop(kvm_t *kd, vaddr_t va, paddr_t *pa)
 {
 	cpu_kcore_hdr_t *h = kd->cpu_data;
 	struct m68k_kcore_hdr *m = &h->un._m68k;
-	int (*vtopf)(kvm_t *, uint32_t, u_long, u_long *);
+	int (*vtopf)(kvm_t *, uint32_t, vaddr_t, paddr_t *);
 
 	if (ISALIVE(kd)) {
 		_kvm_err(kd, 0, "vatop called in live kernel!");
@@ -186,12 +186,12 @@ _kvm_cmn_pa2off(kvm_t *kd, u_long pa)
  */
 
 static int
-vatop_030(kvm_t *kd, uint32_t stpa, u_long va, u_long *pa)
+vatop_030(kvm_t *kd, uint32_t stpa, vaddr_t va, paddr_t *pa)
 {
 	cpu_kcore_hdr_t *h = kd->cpu_data;
 	struct m68k_kcore_hdr *m = &h->un._m68k;
 	struct vmstate *vm = kd->vmst;
-	u_long addr;
+	paddr_t addr;
 	uint32_t ste, pte;
 	u_int p, offset;
 
@@ -247,12 +247,12 @@ invalid:
 }
 
 static int
-vatop_040(kvm_t *kd, uint32_t stpa, u_long va, u_long *pa)
+vatop_040(kvm_t *kd, uint32_t stpa, vaddr_t va, paddr_t *pa)
 {
 	cpu_kcore_hdr_t *h = kd->cpu_data;
 	struct m68k_kcore_hdr *m = &h->un._m68k;
 	struct vmstate *vm = kd->vmst;
-	u_long addr;
+	paddr_t addr;
 	uint32_t stpa2;
 	uint32_t ste, pte;
 	u_int offset;
