@@ -1,4 +1,4 @@
-/*  $NetBSD: perfuse.c,v 1.6 2010/09/15 01:51:43 manu Exp $ */
+/*  $NetBSD: perfuse.c,v 1.7 2010/09/20 07:00:21 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010 Emmanuel Dreyfus. All rights reserved.
@@ -58,6 +58,7 @@ init_state(void)
 	(void)memset(ps, 0, sizeof(*ps));
 	ps->ps_max_write = UINT_MAX;
 	ps->ps_max_readahead = UINT_MAX;
+	TAILQ_INIT(&ps->ps_pnd);
 	
 	return ps;
 }
@@ -220,7 +221,7 @@ perfuse_mount(source, target, filesystemtype, mountflags, data)
 	struct perfuse_mount_out *pmo;
 #if (PERFUSE_SOCKTYPE == SOCK_DGRAM)
 	struct sockaddr_storage ss;
-	struct sockaddr_un sun;
+	struct sockaddr_un *sun;
 	struct sockaddr *sa;
 	socklen_t sa_len;
 #endif
@@ -246,22 +247,22 @@ perfuse_mount(source, target, filesystemtype, mountflags, data)
 	sock_len = 0;
 #if (PERFUSE_SOCKTYPE == SOCK_DGRAM)
 	sa = (struct sockaddr *)(void *)&ss;
+	sun = (struct sockaddr_un *)(void *)&ss;
 	sa_len = sizeof(ss);
 	if ((getpeername(s, sa, &sa_len) == 0) &&
 	    (sa->sa_family = AF_LOCAL) &&
-	    (strcmp(((struct sockaddr_un *)sa)->sun_path, _PATH_FUSE) == 0)) {
+	    (strcmp(sun->sun_path, _PATH_FUSE) == 0)) {
 
-		sa = (struct sockaddr *)(void *)&sun;
-		sun.sun_len = sizeof(sun);
-		sun.sun_family = AF_LOCAL;
-		(void)sprintf(sun.sun_path, "%s/%s-%d",
+		sun->sun_len = sizeof(*sun);
+		sun->sun_family = AF_LOCAL;
+		(void)sprintf(sun->sun_path, "%s/%s-%d",
 			      _PATH_TMP, getprogname(), getpid());
 		
-		if (bind(s, sa, sa->sa_len) != 0)
+		if (bind(s, sa, (socklen_t)sa->sa_len) != 0)
 			DERR(EX_OSERR, "%s:%d bind to \"%s\" failed",
-			     __func__, __LINE__, sun.sun_path);
+			     __func__, __LINE__, sun->sun_path);
 
-		sock_len = strlen(sun.sun_path) + 1;
+		sock_len = strlen(sun->sun_path) + 1;
 	}
 #endif /* PERFUSE_SOCKTYPE */
 		
@@ -317,7 +318,7 @@ perfuse_mount(source, target, filesystemtype, mountflags, data)
 	}
 
 	if (sock_len != 0) {
-		(void)strcpy(cp, sun.sun_path);
+		(void)strcpy(cp, sun->sun_path);
 		cp += pmo->pmo_sock_len;
 	}
 
