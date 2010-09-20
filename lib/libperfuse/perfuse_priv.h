@@ -1,4 +1,4 @@
-/*  $NetBSD: perfuse_priv.h,v 1.10 2010/09/15 01:51:43 manu Exp $ */
+/*  $NetBSD: perfuse_priv.h,v 1.11 2010/09/20 07:00:22 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010 Emmanuel Dreyfus. All rights reserved.
@@ -37,6 +37,17 @@
 #include "perfuse_if.h"
 #include "fuse.h"
 
+/* 
+ * When a file is created, it is open for the filesystem, but not
+ * for the kernel. We keep the file open to avoid re-open it, but
+ * once we open PERFUSE_OPENFS_MAXFILES files, we start closing
+ * on our own any file that has not been open for PERFUSE_OPENFS_TIMEOUT
+ * seconds. This is to avoid file leaks and getting "Too many open 
+ * files in system"
+ */
+#define PERFUSE_OPENFS_TIMEOUT 3
+#define PERFUSE_OPENFS_MAXFILES 32
+
 struct perfuse_state {
 	void *ps_private;	/* Private field for libperfuse user */
 	struct puffs_usermount *ps_pu;
@@ -58,8 +69,6 @@ struct perfuse_state {
 	char *ps_filesystemtype;
 	int ps_mountflags;
 	uint64_t ps_unique;
-	size_t ps_readahead;
-	size_t ps_write;
 	perfuse_new_msg_fn ps_new_msg;
 	perfuse_xchg_msg_fn ps_xchg_msg;
 	perfuse_destroy_msg_fn ps_destroy_msg;
@@ -67,10 +76,13 @@ struct perfuse_state {
 	perfuse_get_inpayload_fn ps_get_inpayload;
 	perfuse_get_outhdr_fn ps_get_outhdr;
 	perfuse_get_outpayload_fn ps_get_outpayload;
+	TAILQ_HEAD(, perfuse_node_data) ps_pnd;
+	int ps_pnd_count;
 };
 
 
-enum perfuse_qtype { PCQ_READDIR, PCQ_READ, PCQ_WRITE, PCQ_AFTERWRITE };
+enum perfuse_qtype { 	PCQ_READDIR, PCQ_READ, PCQ_WRITE, PCQ_AFTERWRITE };
+
 #ifdef PERFUSE_DEBUG
 extern const char *perfuse_qtypestr[];
 #endif
@@ -80,7 +92,6 @@ struct perfuse_cc_queue {
 	struct puffs_cc *pcq_cc;
 	TAILQ_ENTRY(perfuse_cc_queue) pcq_next;
 };
-
 
 struct perfuse_node_data {
 	uint64_t pnd_rfh;
@@ -95,18 +106,22 @@ struct perfuse_node_data {
 	size_t pnd_all_fd_len;
 	TAILQ_HEAD(,perfuse_cc_queue) pnd_pcq;	/* queued requests */
 	int pnd_flags;
-#define PND_RECLAIMED		0x01	/* reclaim pending */
-#define PND_INREADDIR		0x02	/* readdir in progress */
-#define PND_DIRTY		0x04	/* There is some data to sync */
-#define PND_RFH			0x08	/* Read FH allocated */
-#define PND_WFH			0x10	/* Write FH allocated */
-#define PND_REMOVED		0x20	/* Node was removed */
-#define PND_INWRITE		0x40	/* write in progress */
+#define PND_RECLAIMED		0x001	/* reclaim pending */
+#define PND_INREADDIR		0x002	/* readdir in progress */
+#define PND_DIRTY		0x004	/* There is some data to sync */
+#define PND_RFH			0x008	/* Read FH allocated */
+#define PND_WFH			0x010	/* Write FH allocated */
+#define PND_REMOVED		0x020	/* Node was removed */
+#define PND_INWRITE		0x040	/* write in progress */
+#define PND_OPENFS		0x080	/* Open by fs but not by kernel */
 
 #define PND_OPEN		(PND_RFH|PND_WFH)	/* File is open */
 #define PND_BUSY		(PND_INREADDIR|PND_INWRITE)
 	puffs_cookie_t pnd_parent;
 	int pnd_childcount;
+	time_t pnd_timestamp;
+	TAILQ_ENTRY(perfuse_node_data) pnd_next;
+	puffs_cookie_t pnd_pn;
 };
 
 #define PERFUSE_NODE_DATA(opc)	\
@@ -125,19 +140,16 @@ struct perfuse_node_data {
 	(struct type *)(void *)ps->ps_get_outpayload(pm)
 #define _GET_OUTPAYLOAD(ps, pm, type) (type)ps->ps_get_outpayload(pm)
 
-#define XCHG_MSG(ps, pu, opc, len) ps->ps_xchg_msg(pu, opc, len, wait_reply)
-#define XCHG_MSG_NOREPLY(ps, pu, opc, len) \
-    ps->ps_xchg_msg(pu, opc, len, no_reply)
-
 __BEGIN_DECLS
 
 struct puffs_node *perfuse_new_pn(struct puffs_usermount *, 
     struct puffs_node *);
-void perfuse_destroy_pn(struct puffs_node *);
-void perfuse_new_fh(puffs_cookie_t, uint64_t, int);
+void perfuse_destroy_pn(struct puffs_usermount *, struct puffs_node *);
+void perfuse_new_fh(struct puffs_usermount *, puffs_cookie_t, uint64_t, int);
 void perfuse_destroy_fh(puffs_cookie_t, uint64_t);
 uint64_t perfuse_get_fh(puffs_cookie_t, int);
 uint64_t perfuse_next_unique(struct puffs_usermount *);
+int perfuse_node_close_common(struct puffs_usermount *, puffs_cookie_t, int);
 
 char *perfuse_fs_mount(int, ssize_t);
 

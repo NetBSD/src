@@ -1,4 +1,4 @@
-/*  $NetBSD: subr.c,v 1.4 2010/09/03 07:15:18 manu Exp $ */
+/*  $NetBSD: subr.c,v 1.5 2010/09/20 07:00:22 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010 Emmanuel Dreyfus. All rights reserved.
@@ -41,8 +41,11 @@ perfuse_new_pn(pu, parent)
 	struct puffs_usermount *pu;
 	struct puffs_node *parent;
 {
+	struct perfuse_state *ps;
 	struct puffs_node *pn;
 	struct perfuse_node_data *pnd;
+
+	ps = puffs_getspecific(pu);
 
 	if ((pnd = malloc(sizeof(*pnd))) == NULL)
 		DERR(EX_OSERR, "malloc failed");
@@ -56,7 +59,12 @@ perfuse_new_pn(pu, parent)
 	pnd->pnd_ino = PERFUSE_UNKNOWN_INO;
 	pnd->pnd_nlookup = 1;
 	pnd->pnd_parent = parent;
+	pnd->pnd_timestamp = time(NULL);
+	pnd->pnd_pn = (puffs_cookie_t)pn;
 	TAILQ_INIT(&pnd->pnd_pcq);
+
+	TAILQ_INSERT_TAIL(&ps->ps_pnd, pnd, pnd_next);
+	ps->ps_pnd_count++;
 
 	if (parent != NULL)
 		PERFUSE_NODE_DATA(parent)->pnd_childcount++;
@@ -65,10 +73,18 @@ perfuse_new_pn(pu, parent)
 }
 
 void
-perfuse_destroy_pn(pn)
+perfuse_destroy_pn(pu, pn)
+	struct puffs_usermount *pu;
 	struct puffs_node *pn;
 {
+	struct perfuse_state *ps;
 	struct perfuse_node_data *pnd;
+
+	ps = puffs_getspecific(pu);
+	pnd = PERFUSE_NODE_DATA(pn);
+
+	TAILQ_REMOVE(&ps->ps_pnd, pnd, pnd_next);
+	ps->ps_pnd_count--;
 
 	if ((pnd = puffs_pn_getpriv(pn)) != NULL) {
 		if (pnd->pnd_parent != NULL)
@@ -97,12 +113,39 @@ perfuse_destroy_pn(pn)
 
 
 void
-perfuse_new_fh(opc, fh, mode)
+perfuse_new_fh(pu, opc, fh, mode)
+	struct puffs_usermount *pu;
 	puffs_cookie_t opc;
 	uint64_t fh;
 	int mode;
 {
+	struct perfuse_state *ps;
 	struct perfuse_node_data *pnd;
+
+	ps = puffs_getspecific(pu);
+
+	/*
+	 * Nodes file with PND_OPENFS are open by the filesystem but
+	 * not by the kernel, because of a CREATE operation. If
+	 * the kernel never opens them, we have a leak to fix. 
+	 * If we have enough open files, we start closing the
+	 * one that had been open for too long.
+	 */
+	if (ps->ps_pnd_count > PERFUSE_OPENFS_MAXFILES) {
+		time_t now;
+
+		now = time(NULL);
+
+		TAILQ_FOREACH(pnd, &ps->ps_pnd, pnd_next) {
+			if ((pnd->pnd_ino == FUSE_ROOT_ID) ||
+			    !(pnd->pnd_flags & PND_OPENFS) ||
+			    (now < pnd->pnd_timestamp + PERFUSE_OPENFS_TIMEOUT))
+				continue;
+
+		pnd->pnd_flags &= ~PND_OPENFS;
+			perfuse_node_close_common(pu, pnd->pnd_pn, FWRITE);
+		}
+	}
 
 	pnd = PERFUSE_NODE_DATA(opc);
 
