@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_spl.S,v 1.1.2.4 2010/05/28 22:14:53 cliff Exp $	*/
+/*	$NetBSD: rmixl_spl.S,v 1.1.2.5 2010/09/20 19:40:11 cliff Exp $	*/
 
 /*-
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 #include <mips/asm.h>
 #include <mips/cpuregs.h>
 
-RCSID("$NetBSD: rmixl_spl.S,v 1.1.2.4 2010/05/28 22:14:53 cliff Exp $");
+RCSID("$NetBSD: rmixl_spl.S,v 1.1.2.5 2010/09/20 19:40:11 cliff Exp $");
 
 #include "assym.h"
 
@@ -50,6 +50,7 @@ RCSID("$NetBSD: rmixl_spl.S,v 1.1.2.4 2010/05/28 22:14:53 cliff Exp $");
 #define RMIXL_COP_0_EIRR	_(9), 6
 #define RMIXL_COP_0_EIMR	_(9), 7
 
+	.set noreorder
 
 /* 
  * Array of mask of bits to set in the EIMR when we go to a
@@ -111,6 +112,8 @@ _splraise:
 	bnez	v1, 2f				# yes, don't change.
 	 nop
 	dmtc0	zero, RMIXL_COP_0_EIMR		## disable all interrupts
+	PTR_L	a3, L_CPU(MIPS_CURLWP)		## reload L_CPU in case we were
+						##  preempted and moved...
 	INT_S	a1, CPU_INFO_CPL(a3)		## save IPL in cpu_info
 	dmtc0	a0, RMIXL_COP_0_EIMR		## set new EIMR
 #ifdef PARANOIA
@@ -226,6 +229,8 @@ STATIC_XLEAF(_splsw_splhigh_noprof)
 	beq	v0, a1, 1f			# don't do anything if IPL_HIGH
 	 nop
 	dmtc0	zero, RMIXL_COP_0_EIMR		## disable all interrupts
+	PTR_L	a3, L_CPU(MIPS_CURLWP)		## reload L_CPU in case we were
+						##  preempted and moved...
 	INT_S	a1, CPU_INFO_CPL(a3)		## save IPL in cpu_info
 						## interrupts remain disabled!
 #ifdef PARANOIA
