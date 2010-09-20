@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_pcie.c,v 1.1.2.15 2010/08/26 20:09:33 rmind Exp $	*/
+/*	$NetBSD: rmixl_pcie.c,v 1.1.2.16 2010/09/20 19:42:31 cliff Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_pcie.c,v 1.1.2.15 2010/08/26 20:09:33 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_pcie.c,v 1.1.2.16 2010/09/20 19:42:31 cliff Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -52,6 +52,8 @@ __KERNEL_RCSID(0, "$NetBSD: rmixl_pcie.c,v 1.1.2.15 2010/08/26 20:09:33 rmind Ex
 #include <sys/device.h>
 #include <sys/extent.h>
 #include <sys/malloc.h>
+#include <sys/kernel.h>		/* for 'hz' */
+#include <sys/cpu.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -158,6 +160,9 @@ static const u_int msi_enb_offset[4] = {
 		((((uint64_t)RMIXL_PCIE_LINK_STATUS1_ERRORS) << 32) |	\
 		   (uint64_t)RMIXL_PCIE_LINK_STATUS0_ERRORS)
 
+#define RMIXL_PCIE_EVCNT(sc, link, bitno, cpu)	\
+		&(sc)->sc_evcnts[link][(bitno) * (ncpu) + (cpu)]
+
 static int	rmixl_pcie_match(device_t, cfdata_t, void *);
 static void	rmixl_pcie_attach(device_t, device_t, void *);
 static void	rmixl_pcie_init(struct rmixl_pcie_softc *);
@@ -195,6 +200,10 @@ static void	rmixl_pcie_decompose_pih(pci_intr_handle_t, u_int *, u_int *, u_int 
 static void	rmixl_pcie_intr_disestablish(void *, void *);
 static void	*rmixl_pcie_intr_establish(void *, pci_intr_handle_t,
 		    int, int (*)(void *), void *);
+static rmixl_pcie_link_intr_t *
+		rmixl_pcie_lip_add_1(rmixl_pcie_softc_t *, u_int, int, int);
+static void	rmixl_pcie_lip_free_callout(rmixl_pcie_link_intr_t *);
+static void	rmixl_pcie_lip_free(void *);
 static int	rmixl_pcie_intr(void *);
 static void	rmixl_pcie_link_error_intr(u_int, uint32_t, uint32_t);
 #if defined(DEBUG) || defined(DDB)
@@ -202,12 +211,6 @@ int		rmixl_pcie_error_check(void);
 #endif
 static int	_rmixl_pcie_error_check(void *);
 static int	rmixl_pcie_error_intr(void *);
-
-/*
- * XXX use locks
- */
-#define	PCI_CONF_LOCK(s)	(s) = splhigh()
-#define	PCI_CONF_UNLOCK(s)	splx((s))
 
 
 #define RMIXL_PCIE_CONCAT3(a,b,c) a ## b ## c
@@ -287,6 +290,8 @@ rmixl_pcie_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dev = self;
 
 	aprint_normal(" RMI XLS PCIe Interface\n");
+
+	mutex_init(&sc->sc_mutex, MUTEX_DEFAULT, IPL_HIGH);
 
 	rmixl_pcie_lnkcfg(sc);
 
@@ -546,8 +551,9 @@ rmixl_pcie_lnkcfg(struct rmixl_pcie_softc *sc)
 static void
 rmixl_pcie_intcfg(struct rmixl_pcie_softc *sc)
 {
-	rmixl_pcie_link_intr_t *lip;
 	int link;
+	size_t size;
+	rmixl_pcie_evcnt_t *ev;
 
 	DPRINTF(("%s: disable all link interrupts\n", __func__));
 	for (link=0; link < sc->sc_pcie_lnktab.ncfgs; link++) {
@@ -556,11 +562,25 @@ rmixl_pcie_intcfg(struct rmixl_pcie_softc *sc)
 		RMIXL_IOREG_WRITE(RMIXL_IO_DEV_PCIE_LE + int_enb_offset[link].r1,
 			RMIXL_PCIE_LINK_STATUS1_ERRORS); 
 		RMIXL_IOREG_WRITE(RMIXL_IO_DEV_PCIE_LE + msi_enb_offset[link], 0); 
-		lip = &sc->sc_link_intr[link];
-		LIST_INIT(&lip->dispatch);
-		lip->ih = NULL;
-		lip->link = link;
-		lip->enabled = false;
+		sc->sc_link_intr[link] = NULL;
+
+		/*
+		 * allocate per-cpu, per-pin interrupt event counters
+		 */
+		size = ncpu * PCI_INTERRUPT_PIN_MAX * sizeof(rmixl_pcie_evcnt_t);
+		ev = malloc(size, M_DEVBUF, M_NOWAIT);
+		if (ev == NULL)
+			panic("%s: cannot malloc evcnts\n", __func__);
+		sc->sc_evcnts[link] = ev;
+		for (int pin=PCI_INTERRUPT_PIN_A; pin <= PCI_INTERRUPT_PIN_MAX; pin++) {
+			for (int cpu=0; cpu < ncpu; cpu++) {
+				ev = RMIXL_PCIE_EVCNT(sc, link, pin - 1, cpu);
+				snprintf(ev->name, sizeof(ev->name),
+					"cpu%d, link %d, pin %d", cpu, link, pin);
+				evcnt_attach_dynamic(&ev->evcnt, EVCNT_TYPE_INTR,
+					NULL, "rmixl_pcie", ev->name);
+			}
+		}
 	}
 }
 
@@ -956,9 +976,8 @@ rmixl_pcie_conf_read(void *v, pcitag_t tag, int offset)
 	bus_space_tag_t bst;
 	pcireg_t rv;
 	uint64_t cfg0;
-	u_int s;
 
-	PCI_CONF_LOCK(s);
+	mutex_enter(&sc->sc_mutex);
 
 	if (rmixl_pcie_conf_setup(sc, tag, &offset, &bst, &bsh) == 0) {
 		cfg0 = rmixl_cache_err_dis();
@@ -978,7 +997,8 @@ rmixl_pcie_conf_read(void *v, pcitag_t tag, int offset)
 		rv = -1;
 	}
 
-	PCI_CONF_UNLOCK(s);
+	mutex_exit(&sc->sc_mutex);
+
 	return rv;
 }
 
@@ -989,9 +1009,8 @@ rmixl_pcie_conf_write(void *v, pcitag_t tag, int offset, pcireg_t val)
 	static bus_space_handle_t bsh;
 	bus_space_tag_t bst;
 	uint64_t cfg0;
-	u_int s;
 
-	PCI_CONF_LOCK(s);
+	mutex_enter(&sc->sc_mutex);
 
 	if (rmixl_pcie_conf_setup(sc, tag, &offset, &bst, &bsh) == 0) {
 		cfg0 = rmixl_cache_err_dis();
@@ -1008,7 +1027,7 @@ rmixl_pcie_conf_write(void *v, pcitag_t tag, int offset, pcireg_t val)
 		rmixl_cache_err_restore(cfg0);
 	}
 
-	PCI_CONF_UNLOCK(s);
+	mutex_exit(&sc->sc_mutex);
 }
 
 int
@@ -1169,49 +1188,72 @@ rmixl_pcie_intr_disestablish(void *v, void *ih)
 {
 	rmixl_pcie_softc_t *sc = v;
 	rmixl_pcie_link_dispatch_t *dip = ih;
-	rmixl_pcie_link_intr_t *lip = &sc->sc_link_intr[dip->link];;
+	rmixl_pcie_link_intr_t *lip = sc->sc_link_intr[dip->link];
 	uint32_t r;
 	uint32_t bit;
 	u_int offset;
 	u_int other;
+	bool busy;
 
 	DPRINTF(("%s: link=%d pin=%d irq=%d\n",
 		__func__, dip->link, dip->bitno + 1, dip->irq));
-	LIST_REMOVE(dip, next);
 
-	rmixl_intr_disestablish(lip->ih);
+	mutex_enter(&sc->sc_mutex);
 
-	if (dip->bitno < 32) {
-		bit = 1 << dip->bitno;
-		offset = int_enb_offset[dip->link].r0;
-		other  = int_enb_offset[dip->link].r1;
-	} else {
-		bit = 1 << (dip->bitno - 32);
-		offset = int_enb_offset[dip->link].r1;
-		other  = int_enb_offset[dip->link].r0;
-	}
-
-	/* disable this interrupt in the PCIe bridge */
-	r = RMIXL_IOREG_READ(RMIXL_IO_DEV_PCIE_LE + offset);
-	r &= ~bit;
-	RMIXL_IOREG_WRITE(RMIXL_IO_DEV_PCIE_LE + offset, r);
+	dip->func = NULL;	/* mark unused, prevent further dispatch */
 
 	/*
-	 * if both STATUS0 and STATUS1 are 0
-	 * mark the link interrupt disabled
+	 * if no other dispatch handle is using this interrupt,
+	 * we can disable it
 	 */
-	if (r == 0) {
-		/* check the other reg */
-		if (RMIXL_IOREG_READ(RMIXL_IO_DEV_PCIE_LE + other) == 0) {
-			lip->enabled = false;
-			DPRINTF(("%s: disabled link %d\n", __func__, lip->link));
+	busy = false;
+	for (int i=0; i < lip->dispatch_count; i++) {
+		rmixl_pcie_link_dispatch_t *d = &lip->dispatch_data[i];
+		if (d == dip)
+			continue;
+		if (d->bitno == dip->bitno) {
+			busy = true;
+			break;
+		}
+	}
+	if (! busy) {
+		if (dip->bitno < 32) {
+			bit = 1 << dip->bitno;
+			offset = int_enb_offset[dip->link].r0;
+			other  = int_enb_offset[dip->link].r1;
+		} else {
+			bit = 1 << (dip->bitno - 32);
+			offset = int_enb_offset[dip->link].r1;
+			other  = int_enb_offset[dip->link].r0;
+		}
+
+		/* disable this interrupt in the PCIe bridge */
+		r = RMIXL_IOREG_READ(RMIXL_IO_DEV_PCIE_LE + offset);
+		r &= ~bit;
+		RMIXL_IOREG_WRITE(RMIXL_IO_DEV_PCIE_LE + offset, r);
+
+		/*
+		 * if both ENABLE0 and ENABLE1 are 0
+		 * disable the link interrupt
+		 */
+		if (r == 0) {
+			/* check the other reg */
+			if (RMIXL_IOREG_READ(RMIXL_IO_DEV_PCIE_LE + other) == 0) {
+				DPRINTF(("%s: disable link %d\n", __func__, lip->link));
+
+				/* tear down interrupt on this link */
+				rmixl_intr_disestablish(lip->ih);
+
+				/* commit NULL interrupt set */
+				sc->sc_link_intr[dip->link] = NULL;
+
+				/* schedule delayed free of the old link interrupt set */
+				rmixl_pcie_lip_free_callout(lip);
+			}
 		}
 	}
 
-	evcnt_detach(&dip->count);
-
-	free(dip, M_DEVBUF);
-
+	mutex_exit(&sc->sc_mutex);
 }
 
 static void *
@@ -1225,7 +1267,6 @@ rmixl_pcie_intr_establish(void *v, pci_intr_handle_t pih, int ipl,
 	rmixl_pcie_link_dispatch_t *dip = NULL;
 	uint32_t bit;
 	u_int offset;
-	int s;
 
 	if (pih == ~0) {
 		DPRINTF(("%s: bad pih=%#lx, implies PCI_INTERRUPT_PIN_NONE\n",
@@ -1234,55 +1275,25 @@ rmixl_pcie_intr_establish(void *v, pci_intr_handle_t pih, int ipl,
 	}
 
 	rmixl_pcie_decompose_pih(pih, &link, &bitno, &irq);
-	DPRINTF(("%s: link=%d pin=%d irq=%d\n", __func__, link, bitno + 1, irq));
+	DPRINTF(("%s: link=%d pin=%d irq=%d\n",
+		__func__, link, bitno + 1, irq));
 
-	lip = &sc->sc_link_intr[link];
+	mutex_enter(&sc->sc_mutex);
 
-	s = splhigh();
-
-#ifdef DEBUG
-	LIST_FOREACH(dip, &lip->dispatch, next) {
-		if (dip->bitno == bitno)
-			panic("%s: pin %d alread on dispatch list",
-				__func__, bitno + 1);
-	}
-#endif
+	lip = rmixl_pcie_lip_add_1(sc, link, irq, ipl);
+	if (lip == NULL)
+		return NULL;
 
 	/*
-	 * all intrs on a link get same ipl and sc
-	 * first intr established sets the standard
+	 * initializae our new interrupt, the last element in dispatch_data[]
 	 */
-	if (lip->enabled == true) {
-		KASSERT(sc == lip->sc);
-		if (sc != lip->sc) {
-			printf("%s: sc %p mismatch\n", __func__, sc); 
-			goto out;
-		}
-		KASSERT(ipl == lip->ipl);
-		if (ipl != lip->ipl) {
-			printf("%s: ipl %d mismatch\n", __func__, ipl); 
-			goto out;
-		}
-	}
-
-	/*
-	 * allocate and initialize a dispatch handle
-	 */
-	dip = malloc(sizeof(*dip), M_DEVBUF, M_NOWAIT);
-	if (dip == NULL) {
-		printf("%s: cannot malloc dispatch handle\n", __func__);
-		goto out;
-	}
-
+	dip = &lip->dispatch_data[lip->dispatch_count - 1];
 	dip->link = link;
 	dip->bitno = bitno;
 	dip->irq = irq;
 	dip->func = func;
 	dip->arg = arg;
-	snprintf(dip->count_name, sizeof(dip->count_name),
-		"link %d, pin %d", link, bitno + 1);
-	evcnt_attach_dynamic(&dip->count, EVCNT_TYPE_INTR, NULL,
-		"rmixl_pcie", dip->count_name);
+	dip->counts = RMIXL_PCIE_EVCNT(sc, link, bitno, 0);
 
 	if (bitno < 32) {
 		offset = int_enb_offset[link].r0;
@@ -1292,28 +1303,123 @@ rmixl_pcie_intr_establish(void *v, pci_intr_handle_t pih, int ipl,
 		bit = 1 << (bitno - 32);
 	}
 
+	/* commit the new link interrupt set */
+	sc->sc_link_intr[link] = lip;
+
 	/* enable this interrupt in the PCIe bridge */
 	r = RMIXL_IOREG_READ(RMIXL_IO_DEV_PCIE_LE + offset); 
 	r |= bit;
 	RMIXL_IOREG_WRITE(RMIXL_IO_DEV_PCIE_LE + offset, r); 
 
-	if (lip->enabled == false) {
-		lip->ih = rmixl_intr_establish(irq, sc->sc_tmsk,
-			ipl, RMIXL_TRIG_LEVEL, RMIXL_POLR_HIGH,
-			rmixl_pcie_intr, lip, false);
-		if (lip->ih == NULL)
-			panic("%s: cannot establish irq %d", __func__, irq);
-
-		lip->sc = sc;
-		lip->ipl = ipl;
-		lip->enabled = true;
-		DPRINTF(("%s: enabled link %d\n", __func__, link));
-	}
-	LIST_INSERT_HEAD(&lip->dispatch, dip, next);
-
- out:
-	splx(s);
+	mutex_exit(&sc->sc_mutex);
 	return dip;
+}
+
+rmixl_pcie_link_intr_t *
+rmixl_pcie_lip_add_1(rmixl_pcie_softc_t *sc, u_int link, int irq, int ipl)
+{
+	rmixl_pcie_link_intr_t *lip_old = sc->sc_link_intr[link];
+	rmixl_pcie_link_intr_t *lip_new;
+	u_int dispatch_count;
+	size_t size;
+
+	dispatch_count = 1;
+	size = sizeof(rmixl_pcie_link_intr_t);
+	if (lip_old != NULL) {
+		/*
+		 * count only those dispatch elements still in use
+		 * unused ones will be pruned during copy
+		 * i.e. we are "lazy" there is no rmixl_pcie_lip_sub_1
+                 */     
+		for (int i=0; i < lip_old->dispatch_count; i++) {
+			if (lip_old->dispatch_data[i].func != NULL) {
+				dispatch_count++;
+				size += sizeof(rmixl_pcie_link_intr_t);
+			}
+		}
+	}
+
+	/*
+	 * allocate and initialize link intr struct
+	 * with one or more dispatch handles
+	 */
+	lip_new = malloc(size, M_DEVBUF, M_NOWAIT);
+	if (lip_new == NULL) {
+#ifdef DIAGNOSTIC
+		printf("%s: cannot malloc\n", __func__);
+#endif
+		return NULL;
+	}
+
+	if (lip_old == NULL) {
+		/* initialize the link interrupt struct */
+		lip_new->sc = sc;
+		lip_new->link = link;
+		lip_new->ipl = ipl;
+		lip_new->ih = rmixl_intr_establish(irq, sc->sc_tmsk,
+			ipl, RMIXL_TRIG_LEVEL, RMIXL_POLR_HIGH,
+			rmixl_pcie_intr, lip_new, false);
+		if (lip_new->ih == NULL)
+			panic("%s: cannot establish irq %d", __func__, irq);
+	} else {
+		/*
+		 * all intrs on a link get same ipl and sc
+		 * first intr established sets the standard
+		 */
+		KASSERT(sc == lip_old->sc);
+		if (sc != lip_old->sc) {
+			printf("%s: sc %p mismatch\n", __func__, sc); 
+			free(lip_new, M_DEVBUF);
+			return NULL;
+		}
+		KASSERT (ipl == lip_old->ipl);
+		if (ipl != lip_old->ipl) {
+			printf("%s: ipl %d mismatch\n", __func__, ipl); 
+			free(lip_new, M_DEVBUF);
+			return NULL;
+		}
+		/*
+		 * copy lip_old to lip_new, skipping unused dispatch elemets
+		 */
+		memcpy(lip_new, lip_old, sizeof(rmixl_pcie_link_intr_t));
+		for (int j=0, i=0; i < lip_old->dispatch_count; i++) {
+			if (lip_old->dispatch_data[i].func != NULL) {
+				memcpy(&lip_new->dispatch_data[j],
+					&lip_old->dispatch_data[i],
+					sizeof(rmixl_pcie_link_dispatch_t));
+				j++;
+			}
+		}
+
+		/*
+		 * schedule delayed free of old link interrupt set
+		 */
+		rmixl_pcie_lip_free_callout(lip_old);
+	}
+	lip_new->dispatch_count = dispatch_count;
+
+	return lip_new;
+}
+
+/*
+ * delay free of the old link interrupt set
+ * to allow anyone still using it to do so safely
+ * XXX 2 seconds should be plenty?
+ */
+static void
+rmixl_pcie_lip_free_callout(rmixl_pcie_link_intr_t *lip)
+{
+	callout_init(&lip->callout, 0);
+	callout_reset(&lip->callout, 2 * hz, rmixl_pcie_lip_free, lip);
+}
+
+static void
+rmixl_pcie_lip_free(void *arg)
+{
+	rmixl_pcie_link_intr_t *lip = arg;
+	
+	callout_destroy(&lip->callout);
+	free(lip, M_DEVBUF);
 }
 
 static int
@@ -1334,12 +1440,16 @@ rmixl_pcie_intr(void *arg)
 		if (status & RMIXL_PCIE_LINK_STATUS_ERRORS)
 			rmixl_pcie_link_error_intr(link, status0, status1);
 
-		LIST_FOREACH(dip, &lip->dispatch, next) {
-			uint64_t bit = 1 << dip->bitno;
-			if ((status & bit) != 0) {
-				(void)(*dip->func)(dip->arg);
-				dip->count.ev_count++;
-				rv = 1;
+		for (u_int i=0; i < lip->dispatch_count; i++) {
+			dip = &lip->dispatch_data[i];
+			int (*func)(void *) = dip->func;
+			if (func != NULL) {
+				uint64_t bit = 1 << dip->bitno;
+				if ((status & bit) != 0) {
+					(void)(*func)(dip->arg);
+					dip->counts[cpu_index(curcpu())].evcnt.ev_count++;
+					rv = 1;
+				}
 			}
 		}
 	}
