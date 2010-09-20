@@ -1,4 +1,4 @@
-/*	$eterna: bozohttpd.h,v 1.35 2010/06/17 00:49:30 mrg Exp $	*/
+/*	$eterna: bozohttpd.h,v 1.37 2010/09/20 22:26:28 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997-2010 Matthew R. Green
@@ -160,13 +160,13 @@ typedef struct bozoprefs_t {
 
 #define	strornull(x)	((x) ? (x) : "<null>")
 
-#ifdef DEBUG
+#ifndef NO_DEBUG
 void	debug__(bozohttpd_t *, int, const char *, ...)
 			__attribute__((__format__(__printf__, 3, 4)));
 #define debug(x)	debug__ x
 #else
 #define	debug(x)	
-#endif /* DEBUG */
+#endif /* NO_DEBUG */
 
 void	bozo_warn(bozohttpd_t *, const char *, ...)
 		__attribute__((__format__(__printf__, 2, 3)));
@@ -235,7 +235,7 @@ void	bozo_add_content_map_cgi(bozohttpd_t *, const char *, const char *);
 #ifdef NO_DAEMON_MODE
 #define bozo_daemon_init(x)				/* nothing */
 #define bozo_daemon_fork(x)				0
-#define bozo_daemon_closefds()				/* nothing */
+#define bozo_daemon_closefds(x)				/* nothing */
 #else
 void	bozo_daemon_init(bozohttpd_t *);
 int	bozo_daemon_fork(bozohttpd_t *);
@@ -253,7 +253,7 @@ int	bozo_user_transform(bozo_httpreq_t *, int *);
 
 /* dir-index-bozo.c */
 #ifdef NO_DIRINDEX_SUPPORT
-#define bozo_dir_index(a, b, c, d)		0
+#define bozo_dir_index(a, b, c)				0
 #else
 int	bozo_dir_index(bozo_httpreq_t *, const char *, int);
 #endif /* NO_DIRINDEX_SUPPORT */

@@ -1,4 +1,4 @@
-/*	$eterna: bozohttpd.c,v 1.174 2010/06/21 06:47:23 mrg Exp $	*/
+/*	$eterna: bozohttpd.c,v 1.176 2010/09/20 22:26:28 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997-2010 Matthew R. Green
@@ -107,7 +107,7 @@
 #define INDEX_HTML		"index.html"
 #endif
 #ifndef SERVER_SOFTWARE
-#define SERVER_SOFTWARE		"bozohttpd/20100621"
+#define SERVER_SOFTWARE		"bozohttpd/20100920"
 #endif
 #ifndef DIRECT_ACCESS_FILE
 #define DIRECT_ACCESS_FILE	".bzdirect"
@@ -327,13 +327,12 @@ void
 bozo_clean_request(bozo_httpreq_t *request)
 {
 	struct bozoheaders *hdr, *ohdr = NULL;
-	bozohttpd_t *httpd = request->hr_httpd;
 
 	if (request == NULL)
 		return;
 
 	/* If SSL enabled cleanup SSL structure. */
-	bozo_ssl_destroy(httpd);
+	bozo_ssl_destroy(request->hr_httpd);
 
 	/* clean up request */
 #define MF(x)	if (request->x) free(request->x)
@@ -609,10 +608,6 @@ bozo_read_request(bozohttpd_t *httpd)
 				str,
 				host ? host : addr ? addr : "<local>",
 				port ? port : "<stdin>");
-#if 0
-			debug((httpd, DEBUG_FAT,
-				"read_req, getting request: ``%s''", str));
-#endif
 
 			/* we allocate return space in file and query only */
 			parse_request(httpd, str, &method, &file, &query, &proto);
@@ -953,9 +948,7 @@ check_virtual(bozo_httpreq_t *request)
 {
 	bozohttpd_t *httpd = request->hr_httpd;
 	char *file = request->hr_file, *s;
-	struct dirent **list;
 	size_t len;
-	int i;
 
 	if (!httpd->virtbase)
 		goto use_slashdir;
@@ -990,18 +983,33 @@ check_virtual(bozo_httpreq_t *request)
 	    request->hr_host, httpd->virtbase, request->hr_file));
 	if (strncasecmp(httpd->virthostname, request->hr_host, len) != 0) {
 		s = 0;
-		for (i = scandir(httpd->virtbase, &list, 0, 0); i--; list++) {
-			debug((httpd, DEBUG_OBESE, "looking at dir``%s''",
-			    (*list)->d_name));
-			if (strncasecmp((*list)->d_name, request->hr_host,
-			    len) == 0) {
-				/* found it, punch it */
-				httpd->virthostname = (*list)->d_name;
-				if (asprintf(&s, "%s/%s", httpd->virtbase,
-						httpd->virthostname) < 0)
-					bozo_err(httpd, 1, "asprintf");
-				break;
+		DIR *dirp;
+		struct dirent *d;
+
+		if ((dirp = opendir(httpd->virtbase)) != NULL) {
+			while ((d = readdir(dirp)) != NULL) {
+				if (strcmp(d->d_name, ".") == 0 ||
+				    strcmp(d->d_name, "..") == 0) {
+					continue;
+				}
+				debug((httpd, DEBUG_OBESE, "looking at dir``%s''",
+			 	   d->d_name));
+				if (strncasecmp(d->d_name, request->hr_host,
+				    len) == 0) {
+					/* found it, punch it */
+					debug((httpd, DEBUG_OBESE, "found it punch it"));
+					httpd->virthostname = d->d_name;
+					if (asprintf(&s, "%s/%s", httpd->virtbase,
+					    httpd->virthostname) < 0)
+						bozo_err(httpd, 1, "asprintf");
+					break;
+				}
 			}
+			closedir(dirp);
+		}
+		else {
+			debug((httpd, DEBUG_FAT, "opendir %s failed: %s",
+			    httpd->virtbase, strerror(errno)));
 		}
 		if (s == 0) {
 			if (httpd->unknown_slash)
@@ -1520,7 +1528,7 @@ bozo_print_header(bozo_httpreq_t *request,
 	bozo_flush(httpd, stdout);
 }
 
-#ifdef DEBUG
+#ifndef NO_DEBUG
 void
 debug__(bozohttpd_t *httpd, int level, const char *fmt, ...)
 {
@@ -1541,7 +1549,7 @@ debug__(bozohttpd_t *httpd, int level, const char *fmt, ...)
 	va_end(ap);
 	errno = savederrno;
 }
-#endif /* DEBUG */
+#endif /* NO_DEBUG */
 
 /* these are like warn() and err(), except for syslog not stderr */
 void

@@ -1,9 +1,9 @@
-#	$eterna: Makefile,v 1.29 2010/05/10 02:24:30 mrg Exp $
+#	$eterna: Makefile,v 1.30 2010/07/11 00:34:27 mrg Exp $
 #
 # berkeley (netbsd) makefile.  see Makefile.boot for other systems.
 
 # compile-time options are:
-#	DEBUG			/* include debugging support */
+#	NO_DEBUG		/* don't include debugging support */
 #	NO_USER_SUPPORT		/* don't support /~user requests */
 #	NO_CGIBIN_SUPPORT	/* don't support cgi-bin requests */
 #	NO_DIRINDEX_SUPPORT	/* don't support directory indexing */
@@ -14,7 +14,7 @@
 #
 # these are usually set via the "COPTS" variable, or some other method
 # for setting CFLAGS relevant to your make, eg
-#   % make COPTS="-DDEBUG -DDO_HTPASSWD"
+#   % make COPTS="-DDO_HTPASSWD"
 
 PROG?=	bozohttpd
 MAN=	bozohttpd.8
