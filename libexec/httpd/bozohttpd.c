@@ -1,4 +1,4 @@
-/*	$NetBSD: bozohttpd.c,v 1.22 2010/07/11 03:13:08 mrg Exp $	*/
+/*	$NetBSD: bozohttpd.c,v 1.23 2010/09/20 21:58:43 mrg Exp $	*/
 
 /*	$eterna: bozohttpd.c,v 1.174 2010/06/21 06:47:23 mrg Exp $	*/
 
@@ -991,18 +991,30 @@ check_virtual(bozo_httpreq_t *request)
 	    request->hr_host, httpd->virtbase, request->hr_file));
 	if (strncasecmp(httpd->virthostname, request->hr_host, len) != 0) {
 		s = 0;
-		for (i = scandir(httpd->virtbase, &list, 0, 0); i--; list++) {
-			debug((httpd, DEBUG_OBESE, "looking at dir``%s''",
-			    (*list)->d_name));
-			if (strncasecmp((*list)->d_name, request->hr_host,
-			    len) == 0) {
-				/* found it, punch it */
-				httpd->virthostname = (*list)->d_name;
-				if (asprintf(&s, "%s/%s", httpd->virtbase,
-						httpd->virthostname) < 0)
-					bozo_err(httpd, 1, "asprintf");
-				break;
+		if ((dirp = opendir(httpd->virtbase)) != NULL) {
+			while ((d = readdir(dirp)) != NULL) {
+				if (strcmp(d->d_name, ".") == 0 ||
+				    strcmp(d->d_name, "..") == 0) {
+					continue;
+				}
+				debug((httpd, DEBUG_OBESE, "looking at dir``%s''",
+			 	   d->d_name));
+				if (strncasecmp(d->d_name, request->hr_host,
+				    len) == 0) {
+					/* found it, punch it */
+					debug((httpd, DEBUG_OBESE, "found it punch it"));
+					httpd->virthostname = d->d_name;
+					if (asprintf(&s, "%s/%s", httpd->virtbase,
+					    httpd->virthostname) < 0)
+						bozo_err(httpd, 1, "asprintf");
+					break;
+				}
 			}
+			closedir(dirp);
+		}
+		else {
+			debug((httpd, DEBUG_FAT, "opendir %s failed: %s",
+			    httpd->virtbase, strerror(errno)));
 		}
 		if (s == 0) {
 			if (httpd->unknown_slash)
