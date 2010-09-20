@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmc_mem.c,v 1.5 2010/05/01 21:14:39 reinoud Exp $	*/
+/*	$NetBSD: sdmmc_mem.c,v 1.6 2010/09/20 09:19:31 kiyohara Exp $	*/
 /*	$OpenBSD: sdmmc_mem.c,v 1.10 2009/01/09 10:55:22 jsg Exp $	*/
 
 /*
@@ -46,7 +46,7 @@
 /* Routines for SD/MMC memory cards. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdmmc_mem.c,v 1.5 2010/05/01 21:14:39 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdmmc_mem.c,v 1.6 2010/09/20 09:19:31 kiyohara Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -686,11 +686,11 @@ sdmmc_mem_send_scr(struct sdmmc_softc *sc, struct sdmmc_function *sf,
 
 	error = sdmmc_app_command(sc, sf, &cmd);
 	if (error == 0) {
-		memcpy(scr, ptr, datalen);
 		if (ISSET(sc->sc_caps, SMC_CAPS_DMA)) {
 			bus_dmamap_sync(sc->sc_dmat, sc->sc_dmap, 0, datalen,
 			    BUS_DMASYNC_POSTREAD);
 		}
+		memcpy(scr, ptr, datalen);
 	}
 
 out:
@@ -788,11 +788,11 @@ sdmmc_mem_send_cxd_data(struct sdmmc_softc *sc, int opcode, void *data,
 
 	error = sdmmc_mmc_command(sc, &cmd);
 	if (error == 0) {
-		memcpy(data, ptr, datalen);
 		if (ISSET(sc->sc_caps, SMC_CAPS_DMA)) {
 			bus_dmamap_sync(sc->sc_dmat, sc->sc_dmap, 0, datalen,
 			    BUS_DMASYNC_POSTREAD);
 		}
+		memcpy(data, ptr, datalen);
 	}
 
 out:
