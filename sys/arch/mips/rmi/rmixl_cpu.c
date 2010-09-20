@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_cpu.c,v 1.1.2.14 2010/09/01 00:59:43 matt Exp $	*/
+/*	$NetBSD: rmixl_cpu.c,v 1.1.2.15 2010/09/20 19:39:10 cliff Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -38,7 +38,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_cpu.c,v 1.1.2.14 2010/09/01 00:59:43 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_cpu.c,v 1.1.2.15 2010/09/20 19:39:10 cliff Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -76,12 +76,13 @@ static void	cpu_setup_trampoline_ipi(struct device *, struct cpu_info *);
 #endif
 static int	cpu_setup_trampoline_common(struct cpu_info *, struct rmixl_cpu_trampoline_args *);
 static void	cpu_setup_trampoline_callback(struct cpu_info *);
+#endif	/* MULTIPROCESSOR */
+
 #ifdef DEBUG
 void		rmixl_cpu_data_print(struct cpu_data *);
 struct cpu_info *
 		rmixl_cpuinfo_print(cpuid_t);
 #endif	/* DEBUG */
-#endif	/* MULTIPROCESSOR */
 
 CFATTACH_DECL_NEW(cpu_rmixl, sizeof(struct rmixl_cpu_softc),
 	cpu_rmixl_match, cpu_rmixl_attach, NULL, NULL); 
@@ -354,6 +355,7 @@ cpu_setup_trampoline_callback(struct cpu_info *ci)
 	rmixlfw_wakeup_cpu(rmixl_cpu_trampoline, (void *)ta,
 		(uint64_t)1 << ci->ci_cpuid, wakeup_cpu);
 }
+#endif	/* MULTIPROCESSOR */
 
 
 #ifdef DEBUG
@@ -439,4 +441,3 @@ rmixl_cpuinfo_print(cpuid_t cpuid)
 }
 
 #endif	/* DEBUG */
-#endif	/* MULTIPROCESSOR */
