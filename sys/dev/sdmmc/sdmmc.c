@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmc.c,v 1.2 2010/04/06 15:10:09 nonaka Exp $	*/
+/*	$NetBSD: sdmmc.c,v 1.3 2010/09/20 09:06:03 kiyohara Exp $	*/
 /*	$OpenBSD: sdmmc.c,v 1.18 2009/01/09 10:58:38 jsg Exp $	*/
 
 /*
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdmmc.c,v 1.2 2010/04/06 15:10:09 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdmmc.c,v 1.3 2010/09/20 09:06:03 kiyohara Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -291,6 +291,8 @@ sdmmc_discover_task(void *arg)
 		if (!ISSET(sc->sc_flags, SMF_CARD_PRESENT)) {
 			SET(sc->sc_flags, SMF_CARD_PRESENT);
 			sdmmc_card_attach(sc);
+			if (!ISSET(sc->sc_flags, SMF_CARD_ATTACHED))
+				CLR(sc->sc_flags, SMF_CARD_PRESENT);
 		}
 	} else {
 		if (ISSET(sc->sc_flags, SMF_CARD_PRESENT)) {
