@@ -1,4 +1,4 @@
-/*	$NetBSD: bozohttpd.c,v 1.23 2010/09/20 21:58:43 mrg Exp $	*/
+/*	$NetBSD: bozohttpd.c,v 1.24 2010/09/20 22:18:22 mrg Exp $	*/
 
 /*	$eterna: bozohttpd.c,v 1.174 2010/06/21 06:47:23 mrg Exp $	*/
 
@@ -954,9 +954,7 @@ check_virtual(bozo_httpreq_t *request)
 {
 	bozohttpd_t *httpd = request->hr_httpd;
 	char *file = request->hr_file, *s;
-	struct dirent **list;
 	size_t len;
-	int i;
 
 	if (!httpd->virtbase)
 		goto use_slashdir;
@@ -991,6 +989,9 @@ check_virtual(bozo_httpreq_t *request)
 	    request->hr_host, httpd->virtbase, request->hr_file));
 	if (strncasecmp(httpd->virthostname, request->hr_host, len) != 0) {
 		s = 0;
+		DIR *dirp;
+		struct dirent *d;
+
 		if ((dirp = opendir(httpd->virtbase)) != NULL) {
 			while ((d = readdir(dirp)) != NULL) {
 				if (strcmp(d->d_name, ".") == 0 ||
