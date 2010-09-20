@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_pcix.c,v 1.1.2.6 2010/08/26 20:09:33 rmind Exp $	*/
+/*	$NetBSD: rmixl_pcix.c,v 1.1.2.7 2010/09/20 19:42:31 cliff Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_pcix.c,v 1.1.2.6 2010/08/26 20:09:33 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_pcix.c,v 1.1.2.7 2010/09/20 19:42:31 cliff Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -52,6 +52,8 @@ __KERNEL_RCSID(0, "$NetBSD: rmixl_pcix.c,v 1.1.2.6 2010/08/26 20:09:33 rmind Exp
 #include <sys/device.h>
 #include <sys/extent.h>
 #include <sys/malloc.h>
+#include <sys/kernel.h>		/* for 'hz' */
+#include <sys/cpu.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -189,12 +191,6 @@ int rmixl_pcix_debug = PCI_DEBUG;
 #define RMIXL_PCIXREG_READ(o)     (*RMIXL_PCIXREG_VADDR(o))
 #define RMIXL_PCIXREG_WRITE(o,v)  *RMIXL_PCIXREG_VADDR(o) = (v)
 
-/*
- * XXX use locks
- */
-#define	PCI_CONF_LOCK(s)	(s) = splhigh()
-#define	PCI_CONF_UNLOCK(s)	splx((s))
-
 
 #define RMIXL_PCIX_CONCAT3(a,b,c) a ## b ## c
 #define RMIXL_PCIX_BAR_INIT(reg, bar, size, align) {			\
@@ -221,6 +217,11 @@ int rmixl_pcix_debug = PCI_DEBUG;
 		RMIXL_PCIX_CONCAT3(RMIXLR_SBC_PCIX_,reg,_BAR));		\
 	DPRINTF(("%s: %s BAR %#x\n", __func__, __STRING(reg), bar));	\
 }
+
+
+#define RMIXL_PCIX_EVCNT(sc, intrpin, cpu)	\
+	&(sc)->sc_evcnts[(intrpin) * (ncpu) + (cpu)]
+
 
 static int	rmixl_pcix_match(device_t, cfdata_t, void *);
 static void	rmixl_pcix_attach(device_t, device_t, void *);
@@ -253,6 +254,10 @@ static void	rmixl_pcix_decompose_pih(pci_intr_handle_t, u_int *, u_int *);
 static void	rmixl_pcix_intr_disestablish(void *, void *);
 static void	*rmixl_pcix_intr_establish(void *, pci_intr_handle_t,
 		    int, int (*)(void *), void *);
+static rmixl_pcix_intr_t *
+                rmixl_pcix_pip_add_1(rmixl_pcix_softc_t *, int, int);
+static void     rmixl_pcix_pip_free_callout(rmixl_pcix_intr_t *);
+static void     rmixl_pcix_pip_free(void *);
 static int	rmixl_pcix_intr(void *);
 static int	rmixl_pcix_error_intr(void *);
 
@@ -262,10 +267,6 @@ CFATTACH_DECL_NEW(rmixl_pcix, sizeof(rmixl_pcix_softc_t),
 
 
 static int rmixl_pcix_found;
-
-#ifdef DIAGNOSTIC
-static rmixl_pcix_softc_t *rmixl_pcix_sc;
-#endif
 
 
 static int  
@@ -307,9 +308,6 @@ rmixl_pcix_attach(device_t parent, device_t self, void *aux)
 	uint32_t bar;
 
 	rmixl_pcix_found = 1;
-#ifdef DIAGNOSTIC
-	rmixl_pcix_sc = sc;
-#endif
 	sc->sc_dev = self;
 	sc->sc_29bit_dmat = obio->obio_29bit_dmat;
 	sc->sc_32bit_dmat = obio->obio_32bit_dmat;
@@ -482,6 +480,9 @@ rmixl_pcix_attach(device_t parent, device_t self, void *aux)
 static void
 rmixl_pcix_intcfg(rmixl_pcix_softc_t *sc)
 {
+	size_t size;
+	rmixl_pcix_evcnt_t *ev;
+
 	DPRINTF(("%s\n", __func__));
 
 	/* mask all interrupts until they are established */
@@ -495,28 +496,35 @@ rmixl_pcix_intcfg(rmixl_pcix_softc_t *sc)
 	(void)RMIXL_PCIXREG_READ(RMIXL_PCIX_ECFG_INTR_STATUS); 
 	(void)RMIXL_PCIXREG_READ(RMIXL_PCIX_ECFG_INTR_ERR_STATUS); 
 
-	/* initialize the dispatch handles */
-	for (int i=0; i < RMIXL_PCIX_NINTR; i++) {
-		rmixl_pcix_intr_t *ih = &sc->sc_intr[i];
-		LIST_INIT(&ih->dispatch);
-		ih->ih = NULL;
-		ih->intrpin = i;
-		ih->enabled = false;
+	/* initialize the (non-error interrupt) dispatch handles */
+	sc->sc_intr = NULL;
+
+	/*
+	 * allocate per-cpu, per-pin interrupt event counters
+	 */
+	size = ncpu * PCI_INTERRUPT_PIN_MAX * sizeof(rmixl_pcix_evcnt_t);
+	ev = malloc(size, M_DEVBUF, M_NOWAIT);
+	if (ev == NULL)
+		panic("%s: cannot malloc evcnts\n", __func__);
+	sc->sc_evcnts = ev;
+	for (int pin=PCI_INTERRUPT_PIN_A; pin <= PCI_INTERRUPT_PIN_MAX; pin++) {
+		for (int cpu=0; cpu < ncpu; cpu++) {
+			ev = RMIXL_PCIX_EVCNT(sc, pin - 1, cpu);
+			snprintf(ev->name, sizeof(ev->name),
+				"cpu%d, pin %d", cpu, pin);
+			evcnt_attach_dynamic(&ev->evcnt, EVCNT_TYPE_INTR,
+				NULL, "rmixl_pcix", ev->name);
+		}
 	}
 
-	sc->sc_ih = rmixl_intr_establish(16, sc->sc_tmsk,
-		IPL_VM, RMIXL_TRIG_LEVEL, RMIXL_POLR_HIGH,
-		rmixl_pcix_intr, sc, false);
-	if (sc->sc_ih == NULL)
-		panic("%s: cannot establish irq %d", __func__, 16);
-
+	/*
+	 * establish PCIX error interrupt handler
+	 */
 	sc->sc_fatal_ih = rmixl_intr_establish(24, sc->sc_tmsk,
 		IPL_VM, RMIXL_TRIG_LEVEL, RMIXL_POLR_HIGH,
 		rmixl_pcix_error_intr, sc, false);
 	if (sc->sc_fatal_ih == NULL)
 		panic("%s: cannot establish irq %d", __func__, 24);
-
-	sc->sc_intr_init_done = true;
 }
 
 static void
@@ -702,9 +710,8 @@ rmixl_pcix_conf_read(void *v, pcitag_t tag, int offset)
 	bus_space_tag_t bst;
 	pcireg_t rv;
 	uint64_t cfg0;
-	u_int s;
 
-	PCI_CONF_LOCK(s);
+	mutex_enter(&sc->sc_mutex);
 
 	if (rmixl_pcix_conf_setup(sc, tag, &offset, &bst, &bsh) == 0) {
 		cfg0 = rmixl_cache_err_dis();
@@ -724,7 +731,8 @@ rmixl_pcix_conf_read(void *v, pcitag_t tag, int offset)
 		rv = -1;
 	}
 
-	PCI_CONF_UNLOCK(s);
+	mutex_exit(&sc->sc_mutex);
+
 	return rv;
 }
 
@@ -735,9 +743,8 @@ rmixl_pcix_conf_write(void *v, pcitag_t tag, int offset, pcireg_t val)
 	static bus_space_handle_t bsh;
 	bus_space_tag_t bst;
 	uint64_t cfg0;
-	u_int s;
 
-	PCI_CONF_LOCK(s);
+	mutex_enter(&sc->sc_mutex);
 
 	if (rmixl_pcix_conf_setup(sc, tag, &offset, &bst, &bsh) == 0) {
 		cfg0 = rmixl_cache_err_dis();
@@ -754,7 +761,7 @@ rmixl_pcix_conf_write(void *v, pcitag_t tag, int offset, pcireg_t val)
 		rmixl_cache_err_restore(cfg0);
 	}
 
-	PCI_CONF_UNLOCK(s);
+	mutex_exit(&sc->sc_mutex);
 }
 
 int
@@ -826,17 +833,32 @@ rmixl_pcix_intr_disestablish(void *v, void *ih)
 {
 	rmixl_pcix_softc_t *sc = v;
 	rmixl_pcix_dispatch_t *dip = ih;
-	rmixl_pcix_intr_t *pip = &sc->sc_intr[dip->bitno];;
+	rmixl_pcix_intr_t *pip = sc->sc_intr;
+	bool busy;
 
 	DPRINTF(("%s: pin=%d irq=%d\n",
 		__func__, dip->bitno + 1, dip->irq));
 	KASSERT(dip->bitno < RMIXL_PCIX_NINTR);
 
-	LIST_REMOVE(dip, next);
-	evcnt_detach(&dip->count);
-	free(dip, M_DEVBUF);
+	mutex_enter(&sc->sc_mutex);
 
-	if (LIST_EMPTY(&pip->dispatch)) {
+	dip->func = NULL;	/* prevent further dispatch */
+
+	/*
+	 * if no other dispatch handle is using this interrupt,
+	 * we can disable it
+	 */
+	busy = false;
+	for (int i=0; i < pip->dispatch_count; i++) {
+		rmixl_pcix_dispatch_t *d = &pip->dispatch_data[i];
+		if (d == dip)
+			continue;
+		if (d->bitno == dip->bitno) {
+			busy = true;
+			break;
+		}
+	}
+	if (! busy) {
 		uint32_t bit = 1 << (dip->bitno + 2);
 		uint32_t r;
 
@@ -845,8 +867,21 @@ rmixl_pcix_intr_disestablish(void *v, void *ih)
 		RMIXL_PCIXREG_WRITE(RMIXL_PCIX_ECFG_INTR_CONTROL, r);
 		DPRINTF(("%s: disabled pin %d\n", __func__, dip->bitno + 1));
 
-		pip->enabled = false;
+		pip->intenb &= ~(1 << dip->bitno);
+
+		if ((r & PCIX_INTR_CONTROL_MASK_ALL) == 0) {
+			/* tear down interrupt for this pcix */
+			rmixl_intr_disestablish(pip->ih);
+
+			/* commit NULL interrupt set */
+			sc->sc_intr = NULL;
+
+			/* schedule delayed free of the old interrupt set */
+			rmixl_pcix_pip_free_callout(pip);
+		}
 	}
+
+	mutex_exit(&sc->sc_mutex);
 }
 
 static void *
@@ -856,8 +891,7 @@ rmixl_pcix_intr_establish(void *v, pci_intr_handle_t pih, int ipl,
 	rmixl_pcix_softc_t *sc = v;
 	u_int bitno, irq;
 	rmixl_pcix_intr_t *pip;
-	rmixl_pcix_dispatch_t *dip;
-	int s;
+	rmixl_pcix_dispatch_t *dip = NULL;
 
 	if (pih == ~0) {
 		DPRINTF(("%s: bad pih=%#lx, implies PCI_INTERRUPT_PIN_NONE\n",
@@ -869,35 +903,38 @@ rmixl_pcix_intr_establish(void *v, pci_intr_handle_t pih, int ipl,
 	DPRINTF(("%s: pin=%d irq=%d\n", __func__, bitno + 1, irq));
 
 	KASSERT(bitno < RMIXL_PCIX_NINTR);
-	pip = &sc->sc_intr[bitno];
-
-	s = splhigh();
 
 	/*
-	 * all PCI-X device intrs get same ipl and sc
+	 * all PCI-X device intrs get same ipl
 	 */
-	KASSERT(sc == rmixl_pcix_sc);
 	KASSERT(ipl == IPL_VM);
 
-	/*
-	 * allocate and initialize a dispatch handle
-	 */
-	dip = malloc(sizeof(*dip), M_DEVBUF, M_NOWAIT);
-	if (dip == NULL) {
-		printf("%s: cannot malloc dispatch handle\n", __func__);
-		goto out;
-	}
+	mutex_enter(&sc->sc_mutex);
 
+	pip = rmixl_pcix_pip_add_1(sc, irq, ipl); 
+	if (pip == NULL)
+		return NULL;
+
+	/*
+	 * initializae our new interrupt, the last element in dispatch_data[] 
+	 */
+	dip = &pip->dispatch_data[pip->dispatch_count - 1];
 	dip->bitno = bitno;
 	dip->irq = irq;
 	dip->func = func;
 	dip->arg = arg;
+#if NEVER
 	snprintf(dip->count_name, sizeof(dip->count_name),
 		"pin %d", bitno + 1);
 	evcnt_attach_dynamic(&dip->count, EVCNT_TYPE_INTR, NULL,
 		"rmixl_pcix", dip->count_name);
+#endif
 
-	if (pip->enabled == false) {
+	/* commit the new interrupt set */
+	sc->sc_intr = pip;
+
+	/* enable this interrupt in the PCIX controller, if necessary */
+	if ((pip->intenb & (1 << bitno)) == 0) {
 		uint32_t bit = 1 << (bitno + 2);
 		uint32_t r;
 
@@ -907,37 +944,138 @@ rmixl_pcix_intr_establish(void *v, pci_intr_handle_t pih, int ipl,
 
 		pip->sc = sc;
 		pip->ipl = ipl;
-		pip->enabled = true;
+		pip->intenb |= 1 << bitno;
 		DPRINTF(("%s: enabled pin %d\n", __func__, bitno + 1));
 	}
 
-	LIST_INSERT_HEAD(&pip->dispatch, dip, next);
-
- out:
-	splx(s);
+	mutex_exit(&sc->sc_mutex);
 	return dip;
+}
+
+rmixl_pcix_intr_t *
+rmixl_pcix_pip_add_1(rmixl_pcix_softc_t *sc, int irq, int ipl)
+{
+	rmixl_pcix_intr_t *pip_old = sc->sc_intr;
+	rmixl_pcix_intr_t *pip_new;
+	u_int dispatch_count;
+	size_t size;
+
+	dispatch_count = 1;
+	size = sizeof(rmixl_pcix_intr_t);
+	if (pip_old != NULL) {
+		/*
+		 * count only those dispatch elements still in use
+		 * unused ones will be pruned during copy
+		 * i.e. we are "lazy" there is no rmixl_pcix_pip_sub_1
+		 */
+		for (int i=0; i < pip_old->dispatch_count; i++) {
+			if (pip_old->dispatch_data[i].func != NULL) {
+				dispatch_count++;
+				size += sizeof(rmixl_pcix_intr_t);
+			}
+		}
+	}
+
+	/*
+	 * allocate and initialize softc intr struct
+	 * with one or more dispatch handles
+	 */
+	pip_new = malloc(size, M_DEVBUF, M_NOWAIT);
+	if (pip_new == NULL) {
+#ifdef DIAGNOSTIC
+		printf("%s: cannot malloc\n", __func__);
+#endif
+		return NULL;
+	}
+
+	if (pip_old == NULL) {
+		/* initialize the interrupt struct */
+		pip_new->sc = sc;
+		pip_new->ipl = ipl;
+		pip_new->ih = rmixl_intr_establish(irq, sc->sc_tmsk,
+			ipl, RMIXL_TRIG_LEVEL, RMIXL_POLR_HIGH,
+			rmixl_pcix_intr, pip_new, false);
+		if (pip_new->ih == NULL)
+			panic("%s: cannot establish irq %d", __func__, irq);
+	} else {
+		/*
+		 * all intrs on a softc get same ipl and sc
+		 * first intr established sets the standard
+		 */
+		KASSERT(sc == pip_old->sc);
+		if (sc != pip_old->sc) {
+			printf("%s: sc %p mismatch\n", __func__, sc); 
+			free(pip_new, M_DEVBUF);
+			return NULL;
+		}
+		KASSERT (ipl == pip_old->ipl);
+		if (ipl != pip_old->ipl) {
+			printf("%s: ipl %d mismatch\n", __func__, ipl); 
+			free(pip_new, M_DEVBUF);
+			return NULL;
+		}
+		/*
+		 * copy pip_old to pip_new, skipping unused dispatch elemets
+		 */
+		memcpy(pip_new, pip_old, sizeof(rmixl_pcix_intr_t));
+		for (int j=0, i=0; i < pip_old->dispatch_count; i++) {
+			if (pip_old->dispatch_data[i].func != NULL) {
+				memcpy(&pip_new->dispatch_data[j],
+					&pip_old->dispatch_data[i],
+					sizeof(rmixl_pcix_dispatch_t));
+				j++;
+			}
+		}
+
+		/*
+		 * schedule delayed free of old interrupt set
+		 */
+		rmixl_pcix_pip_free_callout(pip_old);
+	}
+	pip_new->dispatch_count = dispatch_count;
+
+	return pip_new;
+}
+
+/*
+ * delay free of the old interrupt set
+ * to allow anyone still using it to do so safely
+ * XXX 2 seconds should be plenty?
+ */
+static void
+rmixl_pcix_pip_free_callout(rmixl_pcix_intr_t *pip)
+{
+	callout_init(&pip->callout, 0);
+	callout_reset(&pip->callout, 2 * hz, rmixl_pcix_pip_free, pip);
+}       
+        
+static void
+rmixl_pcix_pip_free(void *arg)
+{       
+	rmixl_pcix_intr_t *pip = arg;
+
+	callout_destroy(&pip->callout);
+	free(pip, M_DEVBUF);
 }
 
 static int
 rmixl_pcix_intr(void *arg)
 {
-	rmixl_pcix_softc_t *sc = arg;
+	rmixl_pcix_intr_t *pip = arg;
 	int rv = 0;
 
 	uint32_t status = RMIXL_PCIXREG_READ(RMIXL_PCIX_ECFG_INTR_STATUS); 
 	DPRINTF(("%s: %#x\n", __func__, status));
 
 	if (status != 0) {
-		for (int i=0; i < RMIXL_PCIX_NINTR; i++) {
-			uint32_t bit = 1 << i;
-			if ((status & bit) != 0) {
-				rmixl_pcix_intr_t *pip = &sc->sc_intr[i];
-				rmixl_pcix_dispatch_t *dip;
-				LIST_FOREACH(dip, &pip->dispatch, next) {
-					(void)(*dip->func)(dip->arg);
-					dip->count.ev_count++;
-					rv = 1;
-				}
+		for (int i=0; i < pip->dispatch_count; i++) {
+			rmixl_pcix_dispatch_t *dip = &pip->dispatch_data[i];
+			uint32_t bit = 1 << dip->bitno;
+			int (*func)(void *) = dip->func;
+			if ((func != NULL) && (status & bit) != 0) {
+				(void)(*func)(dip->arg);
+				dip->counts[cpu_index(curcpu())].evcnt.ev_count++;
+				rv = 1;
 			}
 		}
 	}

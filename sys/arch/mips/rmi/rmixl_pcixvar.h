@@ -1,4 +1,4 @@
-/*      $NetBSD: rmixl_pcixvar.h,v 1.1.2.2 2010/04/13 18:15:16 cliff Exp $	*/
+/*      $NetBSD: rmixl_pcixvar.h,v 1.1.2.3 2010/09/20 19:42:31 cliff Exp $	*/
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -33,25 +33,31 @@
 
 #include <dev/pci/pcivar.h>
 
+typedef struct rmixl_pcix_evcnt {
+	struct evcnt evcnt;
+	char name[32];
+} rmixl_pcix_evcnt_t;
+
 typedef struct rmixl_pcix_dispatch {
-	LIST_ENTRY(rmixl_pcix_dispatch) next;
 	int (*func)(void *);
 	void *arg;
 	u_int bitno;
 	u_int irq;
-	struct evcnt count;
-	char count_name[32];
+	rmixl_pcix_evcnt_t *counts;	/* index by cpu */
 } rmixl_pcix_dispatch_t;
 
 struct rmixl_pcix_softc;
 
 typedef struct rmixl_pcix_intr {
 	struct rmixl_pcix_softc *sc;
-	LIST_HEAD(, rmixl_pcix_dispatch) dispatch;
 	u_int intrpin;
 	u_int ipl;
-	bool enabled;
 	void *ih;			/* mips interrupt handle */
+	callout_t callout;		/* for delayed free of this struct */
+	u_int intenb;			/* enabled flags for INT[ABCD] */
+	u_int dispatch_count;
+	rmixl_pcix_dispatch_t dispatch_data[1];
+					/* variable length */
 } rmixl_pcix_intr_t;
 
 #define RMIXL_PCIX_NINTR	4	/* PCI INT[A,B,C,D] */
@@ -64,11 +70,11 @@ typedef struct rmixl_pcix_softc {
 	bus_dma_tag_t			sc_29bit_dmat;
 	bus_dma_tag_t			sc_32bit_dmat;
 	bus_dma_tag_t			sc_64bit_dmat;
+	kmutex_t			sc_mutex;
 	int				sc_tmsk;
 	void 			       *sc_fatal_ih;
-	void 			       *sc_ih;
-	rmixl_pcix_intr_t		sc_intr[RMIXL_PCIX_NINTR];
-	bool				sc_intr_init_done;	
+        rmixl_pcix_evcnt_t             *sc_evcnts;
+	rmixl_pcix_intr_t	       *sc_intr;
 } rmixl_pcix_softc_t;
 
 
