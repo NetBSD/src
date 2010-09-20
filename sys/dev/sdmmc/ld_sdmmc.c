@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_sdmmc.c,v 1.4 2009/11/28 10:00:24 nonaka Exp $	*/
+/*	$NetBSD: ld_sdmmc.c,v 1.5 2010/09/20 09:03:33 kiyohara Exp $	*/
 
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_sdmmc.c,v 1.4 2009/11/28 10:00:24 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_sdmmc.c,v 1.5 2010/09/20 09:03:33 kiyohara Exp $");
 
 #include "rnd.h"
 
@@ -115,7 +115,7 @@ ld_sdmmc_attach(device_t parent, device_t self, void *aux)
 
 	ld->sc_dv = self;
 
-	aprint_normal("\n");
+	aprint_normal(": <%s>\n", sa->sf->cid.pnm);
 	aprint_naive("\n");
 
 	callout_init(&sc->sc_task.task_callout, CALLOUT_MPSAFE);
