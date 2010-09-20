@@ -1,4 +1,4 @@
-/*	$NetBSD: cimagl.c,v 1.2 2010/09/17 20:39:39 christos Exp $	*/
+/*	$NetBSD: cimagl.c,v 1.3 2010/09/20 16:55:20 christos Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -26,7 +26,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: cimagl.c,v 1.2 2010/09/17 20:39:39 christos Exp $");
+__RCSID("$NetBSD: cimagl.c,v 1.3 2010/09/20 16:55:20 christos Exp $");
 
 #include <complex.h>
 #include "../src/math_private.h"
@@ -35,7 +35,6 @@ __RCSID("$NetBSD: cimagl.c,v 1.2 2010/09/17 20:39:39 christos Exp $");
  * cimagl(long double complex z)
  * This function returns the imaginary part value (as a real) of z.
  */
-#ifdef EXT_EXP_INFNAN
 long double
 cimagl(long double complex z)
 {
@@ -43,4 +42,3 @@ cimagl(long double complex z)
 
 	return (IMAG_PART(w));
 }
-#endif
