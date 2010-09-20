@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmc_mem.c,v 1.6 2010/09/20 09:19:31 kiyohara Exp $	*/
+/*	$NetBSD: sdmmc_mem.c,v 1.7 2010/09/20 09:30:20 kiyohara Exp $	*/
 /*	$OpenBSD: sdmmc_mem.c,v 1.10 2009/01/09 10:55:22 jsg Exp $	*/
 
 /*
@@ -46,7 +46,7 @@
 /* Routines for SD/MMC memory cards. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdmmc_mem.c,v 1.6 2010/09/20 09:19:31 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdmmc_mem.c,v 1.7 2010/09/20 09:30:20 kiyohara Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -74,10 +74,8 @@ static int sdmmc_mem_send_scr(struct sdmmc_softc *, struct sdmmc_function *,
 static int sdmmc_mem_decode_scr(struct sdmmc_softc *, struct sdmmc_function *);
 static int sdmmc_mem_send_cxd_data(struct sdmmc_softc *, int, void *, size_t);
 static int sdmmc_set_bus_width(struct sdmmc_function *, int);
-#if 0
 static int sdmmc_mem_mmc_switch(struct sdmmc_function *, uint8_t, uint8_t,
     uint8_t);
-#endif
 static int sdmmc_mem_spi_read_ocr(struct sdmmc_softc *, uint32_t, uint32_t *);
 static int sdmmc_mem_single_read_block(struct sdmmc_function *, uint32_t,
     u_char *, size_t);
@@ -474,6 +472,32 @@ sdmmc_mem_init(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 				    " (%d bit)\n", SDMMCDEVNAME(sc), 4));
 			}
 		}
+	} else if (sf->csd.mmcver >= MMC_CSD_MMCVER_4_0) {
+		if (ISSET(sc->sc_caps, SMC_CAPS_8BIT_MODE)) {
+			width = 8;
+			value = EXT_CSD_BUS_WIDTH_8;
+		} else if (ISSET(sc->sc_caps, SMC_CAPS_4BIT_MODE)) {
+			width = 4;
+			value = EXT_CSD_BUS_WIDTH_4;
+		} else {
+			width = 1;
+			value = EXT_CSD_BUS_WIDTH_1;
+		}
+
+		if (width != 1) {
+			error = sdmmc_mem_mmc_switch(sf, EXT_CSD_CMD_SET_NORMAL,
+			    EXT_CSD_BUS_WIDTH, value);
+			if (error == 0)
+				error = sdmmc_chip_bus_width(sc->sc_sct,
+				    sc->sc_sch, width);
+			else {
+				DPRINTF(("%s: can't change bus width"
+				    " (%d bit)\n", SDMMCDEVNAME(sc), width));
+				goto out;
+			}
+
+			/* XXXX: need bus test? (using by CMD14 & CMD19) */
+		}
 	}
 
 out:
@@ -856,7 +880,6 @@ sdmmc_set_bus_width(struct sdmmc_function *sf, int width)
 	return error;
 }
 
-#if 0
 static int
 sdmmc_mem_mmc_switch(struct sdmmc_function *sf, uint8_t set, uint8_t index,
     uint8_t value)
@@ -872,7 +895,6 @@ sdmmc_mem_mmc_switch(struct sdmmc_function *sf, uint8_t set, uint8_t index,
 
 	return sdmmc_mmc_command(sc, &cmd);
 }
-#endif
 
 /*
  * SPI mode function
