@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_proc.c,v 1.85 2010/09/19 02:07:00 jym Exp $	*/
+/*	$NetBSD: kvm_proc.c,v 1.86 2010/09/20 23:23:16 jym Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_proc.c	8.3 (Berkeley) 9/23/93";
 #else
-__RCSID("$NetBSD: kvm_proc.c,v 1.85 2010/09/19 02:07:00 jym Exp $");
+__RCSID("$NetBSD: kvm_proc.c,v 1.86 2010/09/20 23:23:16 jym Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -89,6 +89,7 @@ __RCSID("$NetBSD: kvm_proc.c,v 1.85 2010/09/19 02:07:00 jym Exp $");
 #include <sys/resourcevar.h>
 #include <sys/mutex.h>
 #include <sys/specificdata.h>
+#include <sys/types.h>
 
 #include <errno.h>
 #include <stdlib.h>

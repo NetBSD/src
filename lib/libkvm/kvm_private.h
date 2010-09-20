@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_private.h,v 1.17 2010/09/19 02:07:00 jym Exp $	*/
+/*	$NetBSD: kvm_private.h,v 1.18 2010/09/20 23:23:16 jym Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -111,9 +111,9 @@ void	 _kvm_freeprocs(kvm_t *);
 void	 _kvm_freevtop(kvm_t *);
 int	 _kvm_mdopen(kvm_t *);
 int	 _kvm_initvtop(kvm_t *);
-int	 _kvm_kvatop(kvm_t *, u_long, u_long *);
+int	 _kvm_kvatop(kvm_t *, vaddr_t, paddr_t *);
 void	*_kvm_malloc(kvm_t *, size_t);
-off_t	 _kvm_pa2off(kvm_t *, u_long);
+off_t	 _kvm_pa2off(kvm_t *, paddr_t);
 void	*_kvm_realloc(kvm_t *, void *, size_t);
 void	 _kvm_syserr(kvm_t *, const char *, const char *, ...)
 	    __attribute__((__format__(__printf__, 3, 4)));
