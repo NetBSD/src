@@ -1,6 +1,6 @@
-/*	$NetBSD: main.c,v 1.1.1.1 2010/05/10 03:30:04 mrg Exp $	*/
+/*	$NetBSD: main.c,v 1.1.1.2 2010/09/20 23:07:21 mrg Exp $	*/
 
-/*	$eterna: main.c,v 1.3 2010/05/10 02:51:28 mrg Exp $	*/
+/*	$eterna: main.c,v 1.4 2010/07/11 00:34:28 mrg Exp $	*/
 /* from: eterna: bozohttpd.c,v 1.159 2009/05/23 02:14:30 mrg Exp 	*/
 
 /*
@@ -65,7 +65,7 @@ usage(bozohttpd_t *httpd, char *progname)
 	bozo_warn(httpd, "usage: %s [options] slashdir [virtualhostname]",
 			progname);
 	bozo_warn(httpd, "options:");
-#ifdef DEBUG
+#ifndef NO_DEBUG
 	bozo_warn(httpd, "   -d\t\t\tenable debug support");
 #endif
 	bozo_warn(httpd, "   -s\t\t\talways log to stderr");
@@ -267,10 +267,10 @@ main(int argc, char **argv)
 
 		case 'd':
 			httpd.debug++;
-#ifndef DEBUG
+#ifdef NO_DEBUG
 			if (httpd.debug == 1)
 				bozo_warn(&httpd, "Debugging is not enabled");
-#endif /* !DEBUG */
+#endif /* NO_DEBUG */
 			break;
 
 #ifdef NO_USER_SUPPORT
