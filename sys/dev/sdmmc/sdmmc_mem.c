@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmc_mem.c,v 1.7 2010/09/20 09:30:20 kiyohara Exp $	*/
+/*	$NetBSD: sdmmc_mem.c,v 1.8 2010/09/20 09:34:47 kiyohara Exp $	*/
 /*	$OpenBSD: sdmmc_mem.c,v 1.10 2009/01/09 10:55:22 jsg Exp $	*/
 
 /*
@@ -46,7 +46,7 @@
 /* Routines for SD/MMC memory cards. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdmmc_mem.c,v 1.7 2010/09/20 09:30:20 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdmmc_mem.c,v 1.8 2010/09/20 09:34:47 kiyohara Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -746,8 +746,11 @@ sdmmc_mem_decode_scr(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 	int ver;
 
 	memset(resp, 0, sizeof(resp));
-	resp[0] = sf->raw_scr[1];
-	resp[1] = sf->raw_scr[0];
+	/*
+	 * Change the raw-scr received from the DMA stream to resp.
+	 */
+	resp[0] = be32toh(sf->raw_scr[1]);
+	resp[1] = be32toh(sf->raw_scr[0]) >> 8;
 
 	ver = SCR_STRUCTURE(resp);
 	sf->scr.sd_spec = SCR_SD_SPEC(resp);
