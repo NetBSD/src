@@ -1,6 +1,6 @@
-/*	$NetBSD: bozohttpd.h,v 1.16 2010/09/09 04:41:49 mrg Exp $	*/
+/*	$NetBSD: bozohttpd.h,v 1.17 2010/09/20 23:11:38 mrg Exp $	*/
 
-/*	$eterna: bozohttpd.h,v 1.35 2010/06/17 00:49:30 mrg Exp $	*/
+/*	$eterna: bozohttpd.h,v 1.37 2010/09/20 22:26:28 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997-2010 Matthew R. Green
@@ -163,13 +163,13 @@ typedef struct bozoprefs_t {
 
 #define	strornull(x)	((x) ? (x) : "<null>")
 
-#ifdef DEBUG
+#ifndef NO_DEBUG
 void	debug__(bozohttpd_t *, int, const char *, ...)
 			__attribute__((__format__(__printf__, 3, 4)));
 #define debug(x)	debug__ x
 #else
 #define	debug(x)	
-#endif /* DEBUG */
+#endif /* NO_DEBUG */
 
 void	bozo_warn(bozohttpd_t *, const char *, ...)
 		__attribute__((__format__(__printf__, 2, 3)));

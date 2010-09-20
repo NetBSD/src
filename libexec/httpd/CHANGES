@@ -1,10 +1,15 @@
-$eterna: CHANGES,v 1.76 2010/06/21 06:45:45 mrg Exp $
+$eterna: CHANGES,v 1.77 2010/09/20 22:26:28 mrg Exp $
 
 changes since bozohttpd 20100617:
 	o  properly fully disable multi-file mode for now
 	o  fix the -t and -U options when used without the -e option, broken since
 	   the library-ifcation
 	o  be explicit that logs go to the FTP facility in syslog
+	o  use scandir() with alphasort() for sorted directory lists, from moof
+	o  fix a serious error in vhost handling; "Host:.." would allow access to
+	   the next level directory from the virtual root directory, from seanb
+	o  fix some various non standard compile time errors, from rudolf
+	o  fix dynamic CGI content maps, from rudolf
 
 changes since bozohttpd 20100509:
 	o  fix some compile issues
