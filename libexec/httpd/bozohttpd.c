@@ -1,6 +1,6 @@
-/*	$NetBSD: bozohttpd.c,v 1.24 2010/09/20 22:18:22 mrg Exp $	*/
+/*	$NetBSD: bozohttpd.c,v 1.25 2010/09/20 23:11:38 mrg Exp $	*/
 
-/*	$eterna: bozohttpd.c,v 1.174 2010/06/21 06:47:23 mrg Exp $	*/
+/*	$eterna: bozohttpd.c,v 1.176 2010/09/20 22:26:28 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997-2010 Matthew R. Green
@@ -109,7 +109,7 @@
 #define INDEX_HTML		"index.html"
 #endif
 #ifndef SERVER_SOFTWARE
-#define SERVER_SOFTWARE		"bozohttpd/20100621"
+#define SERVER_SOFTWARE		"bozohttpd/20100920"
 #endif
 #ifndef DIRECT_ACCESS_FILE
 #define DIRECT_ACCESS_FILE	".bzdirect"
@@ -610,10 +610,6 @@ bozo_read_request(bozohttpd_t *httpd)
 				str,
 				host ? host : addr ? addr : "<local>",
 				port ? port : "<stdin>");
-#if 0
-			debug((httpd, DEBUG_FAT,
-				"read_req, getting request: ``%s''", str));
-#endif
 
 			/* we allocate return space in file and query only */
 			parse_request(httpd, str, &method, &file, &query, &proto);
@@ -1534,7 +1530,7 @@ bozo_print_header(bozo_httpreq_t *request,
 	bozo_flush(httpd, stdout);
 }
 
-#ifdef DEBUG
+#ifndef NO_DEBUG
 void
 debug__(bozohttpd_t *httpd, int level, const char *fmt, ...)
 {
@@ -1555,7 +1551,7 @@ debug__(bozohttpd_t *httpd, int level, const char *fmt, ...)
 	va_end(ap);
 	errno = savederrno;
 }
-#endif /* DEBUG */
+#endif /* NO_DEBUG */
 
 /* these are like warn() and err(), except for syslog not stderr */
 void
