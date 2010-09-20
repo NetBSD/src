@@ -1,4 +1,4 @@
-/*	$NetBSD: umodem_common.c,v 1.18 2010/06/27 10:41:26 kardel Exp $	*/
+/*	$NetBSD: umodem_common.c,v 1.19 2010/09/20 14:18:13 christos Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umodem_common.c,v 1.18 2010/06/27 10:41:26 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umodem_common.c,v 1.19 2010/09/20 14:18:13 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -218,6 +218,7 @@ umodem_common_attach(device_ptr_t self, struct umodem_softc *sc,
 	sc->sc_ctl_notify = -1;
 	sc->sc_notify_pipe = NULL;
 
+	id = usbd_get_interface_descriptor(sc->sc_ctl_iface);
 	for (i = 0; i < id->bNumEndpoints; i++) {
 		ed = usbd_interface2endpoint_descriptor(sc->sc_ctl_iface, i);
 		if (ed == NULL)
