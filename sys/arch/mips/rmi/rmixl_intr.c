@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_intr.c,v 1.1.2.23 2010/08/26 20:09:33 rmind Exp $	*/
+/*	$NetBSD: rmixl_intr.c,v 1.1.2.24 2010/09/20 19:41:05 cliff Exp $	*/
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_intr.c,v 1.1.2.23 2010/08/26 20:09:33 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_intr.c,v 1.1.2.24 2010/09/20 19:41:05 cliff Exp $");
 
 #include "opt_ddb.h"
 #define	__INTR_PRIVATE
@@ -726,7 +726,6 @@ rmixl_vec_establish(int vec, int cpumask, int ipl,
 		return NULL;
 	}
 
-	ih->ih_func = func;
 	ih->ih_arg = arg;
 	ih->ih_mpsafe = mpsafe;
 	ih->ih_vec = vec;
@@ -738,6 +737,8 @@ rmixl_vec_establish(int vec, int cpumask, int ipl,
 		KASSERT((ipl_eimr_map[i] & eimr_bit) == 0);
 		ipl_eimr_map[i] |= eimr_bit;
 	}
+
+	ih->ih_func = func;	/* do this last */
 
 	splx(s);
 
@@ -805,7 +806,7 @@ rmixl_vec_disestablish(void *cookie)
 
 	s = splhigh();
 
-	ih->ih_func = NULL;
+	ih->ih_func = NULL;	/* do this first */
 
 	eimr_bit = (uint64_t)1 << ih->ih_vec;
 	for (int i=ih->ih_ipl; --i >= 0; ) {
