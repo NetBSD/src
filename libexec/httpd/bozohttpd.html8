@@ -1,0 +1,618 @@
+<html>
+<head>
+        <title>
+                 September 20, 2010 BOZOHTTPD 8 BOZOS
+
+        </title>
+        <style type="text/css">
+        <!--
+                body { margin-left:4%; }
+                H1, H2, H3, H4, H5 {
+                        color: maroon; padding: 4pt; margin-left: -4%;
+                        border: solid; border-width: thin; width: 100%;
+                        background: rgb(204,204,255)
+                }
+        -->
+        </style>
+</head>
+<body bgcolor="#FFFFFF" text="#000000">
+        <h3 id="NAME">
+        NAME
+        </h3>
+<b>bozohttpd</b>
+- hyper text transfer protocol version 1.1 daemon
+        <h3 id="SYNOPSIS">
+        SYNOPSIS
+        </h3>
+<b>bozohttpd</b>
+[<b>-</b><b>HVXbefnrus</b>]
+[<b>-</b><b>C</b><i></i><i> suffix</i><i> cgihandler</i>]
+[<b>-</b><b>I</b><i></i><i> port</i>]
+[<b>-</b><b>M</b><i></i><i> suffix</i><i> type</i><i> encoding</i><i> encoding11</i>]
+[<b>-</b><b>S</b><i></i><i> server_software</i>]
+[<b>-</b><b>c</b><i></i><i> cgibin</i>]
+[<b>-</b><b>i</b><i></i><i> address</i>]
+[<b>-</b><b>p</b><i></i><i> pubdir</i>]
+[<b>-</b><b>t</b><i></i><i> chrootdir</i>]
+[<b>-</b><b>v</b><i></i><i> virtualroot</i>]
+[<b>-</b><b>x</b><i></i><i> index</i>]
+[<b>-</b><b>Z</b><i></i><i> cert</i><i> privkey</i>]
+<i></i><i>slashdir</i>
+[<i></i><i>myname</i>]
+        <h3 id="DESCRIPTION">
+        DESCRIPTION
+        </h3>
+The
+<b>bozohttpd</b>
+program reads a
+<em></em><em>HTTP</em>
+request from the standard input, and sends a reply to the standard output.
+Besides ~user translation and virtual hosting support (see below), all file
+requests are from
+<i></i><i>slashdir</i>
+directory.
+The server uses
+<i></i><i>myname</i>
+as its name, which defaults to the local hostname, obtained from
+<a href="../html3/gethostname.html">gethostname(3)</a>
+(but see the
+<b>-</b><b>v</b>
+option for virtual hosting.)
+<b>bozohttpd</b>
+writes logs to
+<a href="../html3/syslog.html">syslog(3)</a>
+using the ftp facaility (but see the
+<b>-</b><b>s</b>
+option for testing.)
+<b>bozohttpd</b>
+is designed to be small, simple and relatively featureless,
+hopefully increasing its security.
+        <h4 id="OPTIONS">
+        OPTIONS
+        </h4>
+The following options are available:
+<dl compact>
+<p><dt><b>-</b><b>b</b><dd>
+This option enables daemon mode, where
+<b>bozohttpd</b>
+detaches from the current terminal, running in the background and
+servicing HTTP requests.
+<p><dt><b>-</b><b>C</b><i></i><i> suffix</i><i> cgihandler</i><dd>
+This option adds a new CGI handler program for a particular file type.
+The
+<i></i><i>suffix</i>
+should be any normal file suffix, and the
+<i></i><i>cgihandler</i>
+should be a full path to an interpreter.
+This option is the only way to enable CGI programs that exist
+outside of the cgibin directory to be executed.
+Multiple
+<b>-</b><b>C</b>
+options may be passed.
+<p><dt><b>-</b><b>c</b><i></i><i> cgibin</i><dd>
+This option enables the CGI/1.1 interface.
+The
+<i></i><i>cgibin</i>
+directory is expected to contain the CGI programs to be used.
+<b>bozohttpd</b>
+looks for URL's in the form of
+<em></em><em>/cgi-bin/&lt;scriptname&gt;</em>
+where
+&lt;scriptname&gt;
+is a valid CGI program in the
+<i></i><i>cgibin</i>
+directory.
+In other words, all CGI URL's must begin with
+<em></em><em>/cgi-bin/</em>.
+Note that the CGI/1.1 interface is not available with
+<em></em><em>~user</em>
+translation.
+<p><dt><b>-</b><b>e</b><dd>
+This option causes
+<b>bozohttpd</b>
+to not clear the environment when used with either the
+<b>-</b><b>t</b>
+or
+<b>-</b><b>U</b>
+options.
+<p><dt><b>-</b><b>f</b><dd>
+This option stops the
+<b>-</b><b>b</b>
+flag from
+<b>bozohttpd</b>
+detaching from the tty and going into the background.
+<p><dt><b>-</b><b>H</b><dd>
+This option causes directory index mode to hide files and directories
+that start with a period, except for
+<code></code><code>..</code>.
+Also see
+<b>-</b><b>X</b>.
+<p><dt><b>-</b><b>I</b><i></i><i> port</i><dd>
+This option is only valid with the
+<b>-</b><b>b</b>
+option.
+It causes
+<i></i><i>port</i>
+to use used as the port to bind daemon mode.
+The default is the
+``http''
+port.
+<p><dt><b>-</b><b>i</b><i></i><i> address</i><dd>
+This option is only valid with the
+<b>-</b><b>b</b>
+option.
+It causes
+<i></i><i>address</i>
+to use used as the address to bind daemon mode.
+If otherwise unspecified, the address used to bind is derived from the
+<i></i><i>myname</i>,
+which defaults to the name returned by
+<a href="../html3/gethostname.html">gethostname(3)</a>.
+Only the last
+<b>-</b><b>i</b>
+option is used.
+<p><dt><b>-</b><b>M</b><i></i><i> suffix</i><i> type</i><i> encoding</i><i> encoding11</i><dd>
+This option adds a new entry to the table that converts file suffixes to
+content type and encoding.
+This option takes four additional arguments containing
+the file prefix, its
+``Content-Type'',
+``Content-Encoding'',
+and
+``Content-Encoding''
+for HTTP/1.1 connections, respectively.
+If any of these are a single dash
+(``-''),
+the empty string is used instead.
+Multiple
+<b>-</b><b>M</b>
+options may be passed.
+<p><dt><b>-</b><b>n</b><dd>
+This option stops
+<b>bozohttpd</b>
+from doing IP address to name resolution of hosts for setting the
+<code></code><code>REMOTE_HOST</code>
+variable before running a CGI program.
+This option has no effect without the
+<b>-</b><b>c</b>
+option.
+<p><dt><b>-</b><b>p</b><i></i><i> pubdir</i><dd>
+This option changes the default user directory for
+<em></em><em>/~user/</em>
+translations from
+``public_html''
+to
+<i></i><i>pubdir</i>.
+<p><dt><b>-</b><b>r</b><dd>
+This option forces pages besides the
+``index.html''
+(see the
+<b>-</b><b>X</b>
+option) page to require that the Referrer: header be present and
+refer to this web server, otherwise a redirect to the
+``index.html''
+page will be returned instead.
+<p><dt><b>-</b><b>S</b><i></i><i> server_software</i><dd>
+This option sets the internal server version to
+<i></i><i>server_software</i>.
+<p><dt><b>-</b><b>s</b><dd>
+This option forces logging to be set to stderr always.
+<p><dt><b>-</b><b>t</b><i></i><i> chrootdir</i><dd>
+When this option is used,
+<b>bozohttpd</b>
+will chroot to the specified directory
+before answering requests.
+Every other path should be specified relative
+to the new root, if this option is used.
+Note that the current environment
+is normally replaced with an empty environment with this option, unless the
+<b>-</b><b>e</b>
+option is also used.
+<p><dt><b>-</b><b>U</b><i></i><i> username</i><dd>
+This option causes
+<b>bozohttpd</b>
+to switch to the user and the groups of
+<i></i><i>username</i>
+after initialization.
+This option, like
+<b>-</b><b>t</b>
+above, causes
+<b>bozohttpd</b>
+to clear the environment unless the
+<b>-</b><b>e</b>
+option is given.
+<p><dt><b>-</b><b>u</b><dd>
+This option enables the transformation of Uniform Resource Locators of
+the form
+<em></em><em>/~user/</em>
+into the the directory
+<code></code><code>~user/public_html</code>
+(but see the
+<b>-</b><b>p</b>
+option above).
+<p><dt><b>-</b><b>V</b><dd>
+This option sets the default virtual host directory to
+<i></i><i>slashdir</i>.
+If no directory exists in
+<i></i><i>virtualroot</i>
+for the request, then
+<i></i><i>slashdir</i>
+will be used.
+The default behaviour is to return 404 (Not Found.)
+<p><dt><b>-</b><b>v</b><i></i><i> virtualroot</i><dd>
+This option enables virtual hosting support.
+Directories in
+<i></i><i>virtualroot</i>
+will be searched for a matching virtual host name, when parsing
+the HTML request.
+If a matching name is found, it will be used
+as both the server's real name,
+[<i></i><i>myname</i>],
+and as the
+<i></i><i>slashdir</i>.
+See the
+<a href="#EXAMPLES">EXAMPLES</a>
+section for an example of using this option.
+<p><dt><b>-</b><b>X</b><dd>
+This option enables directory indexing.
+A directory index will be generated only when the default file (i.e.
+<code></code><code>index.html</code>
+normally) is not present.
+<p><dt><b>-</b><b>x</b><i></i><i> index</i><dd>
+This option changes the default file read for directories from
+``index.html''
+to
+<i></i><i>index</i>.
+<p><dt><b>-</b><b>Z</b><i></i><i> certificate_path</i><i> privatekey_path</i><dd>
+This option sets the path to the server certificate file and the private key file
+in pem format.
+It also causes
+<b>bozohttpd</b>
+to start SSL mode.
+</dl>
+        <p>
+Note that in
+<b>bozohttpd</b>
+versions 20031005 and prior that supported the
+<b>-</b><b>C</b>
+and
+<b>-</b><b>M</b>
+options, they took a single space-separated argument that was parsed.
+since version 20040828, they take multiple options (2 in the case of
+<b>-</b><b>C</b>
+and 4 in the case of
+<b>-</b><b>M</b>.)
+        <h4 id="INETD CONFIGURATION">
+        INETD CONFIGURATION
+        </h4>
+As
+<b>bozohttpd</b>
+uses
+<a href="../html8/inetd.html">inetd(8)</a>
+by default to process incoming TCP connections for HTTP requests
+(but see the
+<b>-</b><b>b</b>
+option),
+<b>bozohttpd</b>
+has little internal networking knowledge.
+(Indeed, you can run it on the command line with little change of functionality.)
+A typical
+<a href="../html5/inetd.conf.html">inetd.conf(5)</a>
+entry would be:
+<code>
+<pre>
+http stream tcp  nowait:600 httpd /usr/pkg/libexec/bozohttpd bozohttpd /var/www
+http stream tcp6 nowait:600 httpd /usr/pkg/libexec/bozohttpd bozohttpd /var/www
+</pre>
+</code>
+        <p>
+This would serve web pages from
+<code></code><code>/var/www</code>
+on both IPv4 and IPv6 ports.
+The
+<em></em><em>:600</em>
+changes the
+requests per minute to 600, up from the
+<a href="../html8/inetd.html">inetd(8)</a>
+default of 40.
+        <p>
+Using the
+NetBSD
+<a href="../html8/inetd.html">inetd(8)</a>,
+you can provide multiple IP-address based HTTP servers by having multiple
+listening ports with different configurations.
+        <h4 id="NOTES">
+        NOTES
+        </h4>
+This server supports the
+<em></em><em>HTTP/0.9</em>,
+<em></em><em>HTTP/1.0</em>,
+and
+<em></em><em>HTTP/1.1</em>
+standards.
+Support for these protocols is very minimal and many optional features are
+not supported.
+        <p>
+<b>bozohttpd</b>
+can be compiled without CGI support (NO_CGIBIN_SUPPORT), user
+transformations (NO_USER_SUPPORT), directory index support (NO_DIRINDEX_SUPPORT),
+daemon mode support (NO_DAEMON_MODE), and dynamic MIME content
+(NO_DYNAMIC_CONTENT), and SSL support (NO_SSL_SUPPORT) by defining the listed
+macros when building
+<b>.</b>
+        <h4 id="HTTP BASIC AUTHORISATION">
+        HTTP BASIC AUTHORISATION
+        </h4>
+<b>bozohttpd</b>
+has support for HTTP Basic Authorisation.
+If a file named
+<code></code><code>.htpasswd</code>
+exists in the directory of the current request,
+<b>bozohttpd</b>
+will restrict access to documents in that directory
+using the RFC 2617 HTTP
+``Basic''
+authentication scheme.
+        <p>
+Note:
+This does not recursively protect any sub-directories.
+        <p>
+The
+<code></code><code>.htpasswd</code>
+file contains lines delimited with a colon containing
+usernames and passwords hashed with
+<a href="../html3/crypt.html">crypt(3)</a>,
+for example:
+<code>
+<pre>
+heather:$1$pZWI4tH/$DzDPl63i6VvVRv2lJNV7k1
+jeremy:A.xewbx2DpQ8I
+</pre>
+</code>
+        <p>
+On
+NetBSD,
+the
+<a href="../html1/pwhash.html">pwhash(1)</a>
+utility may be used to generate hashed passwords.
+        <p>
+While
+<b>bozohttpd</b>
+distributed with
+NetBSD
+has support for HTTP Basic Authorisation enabled by default,
+in the portable distribution it is excluded.
+Compile
+<b>bozohttpd</b>
+with
+``-DDO_HTPASSWD''
+on the compiler command line to enable this support.
+It may require linking with the crypt library, using
+``-lcrypt''.
+        <h4 id="SSL SUPPORT">
+        SSL SUPPORT
+        </h4>
+<b>bozohttpd</b>
+has support for SSLv2, SSLv3, and TLSv1 protocols that is included by
+default.
+It requires linking with the crypto and ssl library, using
+``-lcrypto -lssl''.
+To disable SSL SUPPORT compile
+<b>bozohttpd</b>
+with
+``-DNO_SSL_SUPPORT''
+on the compiler command line.
+        <h3 id="FILES">
+        FILES
+        </h3>
+<b>bozohttpd</b>
+looks for a couple of special files in directories that allow certain features
+to be provided on a per-directory basis.
+In addition to the
+<code></code><code>.htpasswd</code>
+used by HTTP basic authorisation,
+if a
+<code></code><code>.bzdirect</code>
+file is found (contents are irrelevant)
+<b>bozohttpd</b>
+will allow direct access even with the
+<b>-</b><b>r</b>
+option.
+If a
+<code></code><code>.bzredirect</code>
+symbolic link is found,
+<b>bozohttpd</b>
+will perform a smart redirect to the target of this symlink.
+The target is assumed to live on the same server.
+If a
+<code></code><code>.bzabsredirect</code>
+symbolic link is found,
+<b>bozohttpd</b>
+will redirect to the absolute url pointed to by this symlink.
+This is useful to redirect to different servers.
+        <h3 id="EXAMPLES">
+        EXAMPLES
+        </h3>
+To configure set of virtual hosts, one would use an
+<a href="../html5/inetd.conf.html">inetd.conf(5)</a>
+entry like:
+<code>
+<pre>
+http stream tcp  nowait:600 httpd /usr/pkg/libexec/bozohttpd bozohttpd -v /var/vroot /var/www
+</pre>
+</code>
+        <p>
+and inside
+<code></code><code>/var/vroot</code>
+create a directory (or a symlink to a directory) with the same name as
+the virtual host, for each virtual host.
+Lookups for these names are done in a case-insensitive manner.
+        <p>
+To use
+<b>bozohttpd</b>
+with PHP, one must use the
+<b>-</b><b>C</b>
+option to specify a CGI handler for a particular file type.
+Typically this, this will be like:
+<code>
+<pre>
+bozohttpd -C .php /usr/pkg/bin/php /var/www
+</pre>
+</code>
+        <h3 id="SEE ALSO">
+        SEE ALSO
+        </h3>
+<a href="../html5/inetd.conf.html">inetd.conf(5)</a>,
+<a href="../html8/inetd.html">inetd(8)</a>
+        <h3 id="HISTORY">
+        HISTORY
+        </h3>
+The
+<b>bozohttpd</b>
+program was first written in perl, based on another perl http server
+called
+``tinyhttpd''.
+It was then rewritten from scratch in perl, and then once again in C.
+The focus has always been simplicity and security, with minimal features
+and regular code audits.
+This manual documents
+<b>bozohttpd</b>
+version 20100920.
+        <h3 id="AUTHORS">
+        AUTHORS
+        </h3>
+<b>bozohttpd</b>
+was written by Matthew R. Green
+&lt;mrg@eterna.com.au&gt;.
+        <p>
+The large list of contributors includes:
+<dl>
+<p><dd>-
+Arnaud Lacombe
+&lt;alc@netbsd.org&gt;
+provided some clean up for memory leaks
+<p><dd>-
+Christoph Badura
+&lt;bad@bsd.de&gt;
+provided Range: header support
+<p><dd>-
+Sean Boudreau
+&lt;seanb@NetBSD.org&gt;
+provided an security fix for virtual hosting
+<p><dd>-
+Julian Coleman
+&lt;jdc@coris.org.uk&gt;
+provided an IPv6 bugfix
+<p><dd>-
+Chuck Cranor
+&lt;chuck@research.att.com&gt;
+provided cgi-bin support fixes, and more
+<p><dd>-
+DEGROOTE Arnaud
+&lt;degroote@netbsd.org&gt;
+provided a fix for daemon mode
+<p><dd>-
+Andrew Doran
+&lt;ad@netbsd.org&gt;
+provided directory indexing support
+<p><dd>-
+Per Ekman
+&lt;pek@pdc.kth.se&gt;
+provided a fix for a minor (non-security) buffer overflow condition
+<p><dd>-
+Alistair G. Crooks
+&lt;agc@netbsd.org&gt;
+cleaned up many internal interfaces, made bozohttpd linkable as a
+library and provided the lua binding.
+<p><dd>-
+Jun-ichiro itojun Hagino, KAME
+&lt;itojun@iijlab.net&gt;
+provided initial IPv6 support
+<p><dd>-
+Martin Husemann
+&lt;martin@netbsd.org&gt;
+provided .bzabsredirect support
+<p><dd>-
+Arto Huusko
+&lt;arto.huusko@pp2.inet.fi&gt;
+provided fixes cgi-bin
+<p><dd>-
+Roland Illig
+&lt;roland.illig@gmx.de&gt;
+provided some off-by-one fixes
+<p><dd>-
+Zak Johnson
+&lt;zakj@nox.cx&gt;
+provided cgi-bin enhancements
+<p><dd>-
+Nicolas Jombart
+&lt;ecu@ipv42.net&gt;
+provided fixes for HTTP basic authorisation support
+<p><dd>-
+Thomas Klausner
+&lt;wiz@danbala.ifoer.tuwien.ac.at&gt;
+provided many fixes and enhancements for the man page
+<p><dd>-
+Johnny Lam
+&lt;jlam@netbsd.org&gt;
+provided man page fixes
+<p><dd>-
+Luke Mewburn
+&lt;lukem@netbsd.org&gt;
+provided many various fixes, including cgi-bin fixes and enhancements,
+HTTP basic authorisation support and much code clean up
+<p><dd>-
+Jeremy C. Reed
+&lt;reed@netbsd.org&gt;
+provided several clean up fixes, and man page updates
+<p><dd>-
+Scott Reynolds
+&lt;scottr@netbsd.org&gt;
+provided various fixes
+<p><dd>-
+Tyler Retzlaff
+&lt;rtr@eterna.com.au&gt;
+provided SSL support, cgi-bin fixes and much other random other stuff
+<p><dd>-
+rudolf
+&lt;netbsd@eq.cz&gt;
+provided minor compile fixes and a CGI content map fix
+<p><dd>-
+Steve Rumble
+&lt;rumble@ephemeral.org&gt;
+provided the
+<b>-</b><b>V</b>
+option.
+<p><dd>-
+Joerg Sonnenberger
+&lt;joerg@netbsd.org&gt;
+implemented If-Modified-Since support
+<p><dd>-
+ISIHARA Takanori
+&lt;ishit@oak.dti.ne.jp&gt;
+provided a man page fix
+<p><dd>-
+Holger Weiss
+&lt;holger@CIS.FU-Berlin.DE&gt;
+provided http authorisation fixes
+<p><dd>-
+&lt;xs@kittenz.org&gt;
+provided chroot and change-to-user support, and other various fixes
+<p><dd>-
+Coyote Point provided various CGI fixes
+</dl>
+        <p>
+There are probably others I have forgotten (let me know if you care)
+        <p>
+Please send all updates to
+<b>bozohttpd</b>
+to
+&lt;mrg@eterna.com.au&gt;
+for inclusion in future releaases.
+        <h3 id="BUGS">
+        BUGS
+        </h3>
+<b>bozohttpd</b>
+does not handled HTTP/1.1 chunked input from the client yet.
+</body>
+</html>
