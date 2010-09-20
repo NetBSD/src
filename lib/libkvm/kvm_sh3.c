@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_sh3.c,v 1.7 2010/09/19 02:07:00 jym Exp $	*/
+/*	$NetBSD: kvm_sh3.c,v 1.8 2010/09/20 23:23:16 jym Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_hp300.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: kvm_sh3.c,v 1.7 2010/09/19 02:07:00 jym Exp $");
+__RCSID("$NetBSD: kvm_sh3.c,v 1.8 2010/09/20 23:23:16 jym Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -51,6 +51,8 @@ __RCSID("$NetBSD: kvm_sh3.c,v 1.7 2010/09/19 02:07:00 jym Exp $");
 #include <sys/proc.h>
 #include <sys/stat.h>
 #include <sys/kcore.h>
+#include <sys/types.h>
+
 #include <stdlib.h>
 #include <unistd.h>
 #include <nlist.h>
@@ -92,7 +94,7 @@ _kvm_initvtop(kvm_t *kd)
  * Translate a kernel virtual address to a physical address.
  */
 int
-_kvm_kvatop(kvm_t *kd, u_long va, u_long *pa)
+_kvm_kvatop(kvm_t *kd, vaddr_t va, paddr_t *pa)
 {
 	_kvm_err(kd, 0, "vatop not yet implemented!");
 	return 0;
@@ -102,7 +104,7 @@ _kvm_kvatop(kvm_t *kd, u_long va, u_long *pa)
  * Translate a physical address to a file-offset in the crash dump.
  */
 off_t
-_kvm_pa2off(kvm_t *kd, u_long pa)
+_kvm_pa2off(kvm_t *kd, paddr_t pa)
 {
 	_kvm_err(kd, 0, "pa2off not yet implemented!");
 	return 0;

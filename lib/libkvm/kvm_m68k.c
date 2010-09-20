@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_m68k.c,v 1.17 2010/09/19 02:07:00 jym Exp $	*/
+/*	$NetBSD: kvm_m68k.c,v 1.18 2010/09/20 23:23:16 jym Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -42,6 +42,7 @@
 #include <sys/exec.h>
 #include <sys/kcore.h>
 #include <sys/sysctl.h>
+#include <sys/types.h>
 
 #include <stdio.h>
 #include <string.h>
@@ -131,13 +132,13 @@ _kvm_freevtop(kvm_t *kd)
 }
 
 int
-_kvm_kvatop(kvm_t *kd, u_long va, u_long *pap)
+_kvm_kvatop(kvm_t *kd, vaddr_t va, paddr_t *pap)
 {
 	return ((kd->vmst->ops->kvatop)(kd, va, pap));
 }
 
 off_t
-_kvm_pa2off(kvm_t *kd, u_long pa)
+_kvm_pa2off(kvm_t *kd, paddr_t pa)
 {
 	return ((kd->vmst->ops->pa2off)(kd, pa));
 }

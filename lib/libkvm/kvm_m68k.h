@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_m68k.h,v 1.5 2010/09/19 02:07:00 jym Exp $	*/
+/*	$NetBSD: kvm_m68k.h,v 1.6 2010/09/20 23:23:16 jym Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -32,8 +32,8 @@
 struct kvm_ops {
 	int   (*initvtop)(kvm_t *);
 	void  (*freevtop)(kvm_t *);
-	int   (*kvatop)  (kvm_t *, u_long, u_long *);
-	off_t (*pa2off)  (kvm_t *, u_long);
+	int   (*kvatop)  (kvm_t *, vaddr_t, paddr_t *);
+	off_t (*pa2off)  (kvm_t *, paddr_t);
 };
 
 struct vmstate {
