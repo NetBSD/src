@@ -1,4 +1,4 @@
-/*      $NetBSD: rmixl_pcievar.h,v 1.1.2.7 2010/04/13 18:15:16 cliff Exp $	*/
+/*      $NetBSD: rmixl_pcievar.h,v 1.1.2.8 2010/09/20 19:42:31 cliff Exp $	*/
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -50,26 +50,31 @@ typedef struct rmixl_pcie_lnktab {
 	const rmixl_pcie_lnkcfg_t *cfg;
 } rmixl_pcie_lnktab_t;
 
+typedef struct rmixl_pcie_evcnt {
+	struct evcnt evcnt;
+	char name[32];
+} rmixl_pcie_evcnt_t;
+
 typedef struct rmixl_pcie_link_dispatch {
-	LIST_ENTRY(rmixl_pcie_link_dispatch) next;
 	int (*func)(void *);
 	void *arg;
 	u_int link;
 	u_int bitno;
 	u_int irq;
-	struct evcnt count;
-	char count_name[32];
+	rmixl_pcie_evcnt_t *counts;	/* index by cpu */
 } rmixl_pcie_link_dispatch_t;
 
 struct rmixl_pcie_softc;
 
 typedef struct rmixl_pcie_link_intr {
 	struct rmixl_pcie_softc *sc;
-	LIST_HEAD(, rmixl_pcie_link_dispatch) dispatch;
 	u_int link;
 	u_int ipl;
-	bool enabled;
 	void *ih;			/* mips interrupt handle */
+	callout_t callout;		/* for delayed free of this struct */
+	u_int dispatch_count;
+	rmixl_pcie_link_dispatch_t  dispatch_data[1];
+					/* variable length */
 } rmixl_pcie_link_intr_t;
 
 #define RMIXL_PCIE_NLINKS_MAX	4
@@ -83,9 +88,11 @@ typedef struct rmixl_pcie_softc {
 	bus_dma_tag_t			sc_32bit_dmat;
 	bus_dma_tag_t			sc_64bit_dmat;
 	rmixl_pcie_lnktab_t		sc_pcie_lnktab;
+	kmutex_t			sc_mutex;
 	int				sc_tmsk;
 	void 			       *sc_fatal_ih;
-	rmixl_pcie_link_intr_t		sc_link_intr[RMIXL_PCIE_NLINKS_MAX];
+	rmixl_pcie_evcnt_t	       *sc_evcnts[RMIXL_PCIE_NLINKS_MAX];
+	rmixl_pcie_link_intr_t	       *sc_link_intr[RMIXL_PCIE_NLINKS_MAX];
 } rmixl_pcie_softc_t;
 
 
