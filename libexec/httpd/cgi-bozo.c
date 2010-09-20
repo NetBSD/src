@@ -1,6 +1,6 @@
-/*	$NetBSD: cgi-bozo.c,v 1.17 2010/06/17 19:43:30 mrg Exp $	*/
+/*	$NetBSD: cgi-bozo.c,v 1.18 2010/09/20 23:11:38 mrg Exp $	*/
 
-/*	$eterna: cgi-bozo.c,v 1.37 2010/06/09 07:54:16 mrg Exp $	*/
+/*	$eterna: cgi-bozo.c,v 1.38 2010/09/20 22:25:00 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997-2010 Matthew R. Green
@@ -507,6 +507,7 @@ bozo_add_content_map_cgi(bozohttpd_t *httpd, const char *arg, const char *cgihan
 
 	map = bozo_get_content_map(httpd, arg);
 	map->name = arg;
+	map->namelen = strlen(map->name);
 	map->type = map->encoding = map->encoding11 = NULL;
 	map->cgihandler = cgihandler;
 }
