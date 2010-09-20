@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_i386.c,v 1.27 2010/09/19 02:07:00 jym Exp $	*/
+/*	$NetBSD: kvm_i386.c,v 1.28 2010/09/20 23:23:16 jym Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_hp300.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: kvm_i386.c,v 1.27 2010/09/19 02:07:00 jym Exp $");
+__RCSID("$NetBSD: kvm_i386.c,v 1.28 2010/09/20 23:23:16 jym Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -50,7 +50,8 @@ __RCSID("$NetBSD: kvm_i386.c,v 1.27 2010/09/19 02:07:00 jym Exp $");
 #include <sys/user.h>
 #include <sys/stat.h>
 #include <sys/kcore.h>
-#include <i386/kcore.h>
+#include <sys/types.h>
+
 #include <stdlib.h>
 #include <unistd.h>
 #include <nlist.h>
@@ -63,6 +64,7 @@ __RCSID("$NetBSD: kvm_i386.c,v 1.27 2010/09/19 02:07:00 jym Exp $");
 
 #include "kvm_private.h"
 
+#include <i386/kcore.h>
 #include <i386/pmap.h>
 #include <i386/pte.h>
 #include <i386/vmparam.h>
@@ -93,17 +95,17 @@ _kvm_initvtop(kvm_t *kd)
  * Translate a kernel virtual address to a physical address.
  */
 int
-_kvm_kvatop(kvm_t *kd, u_long va, u_long *pa)
+_kvm_kvatop(kvm_t *kd, vaddr_t va, paddr_t *pa)
 {
 	cpu_kcore_hdr_t *cpu_kh;
 	u_long page_off;
 	pd_entry_t pde;
 	pt_entry_t pte;
-	u_long pde_pa, pte_pa;
+	paddr_t pde_pa, pte_pa;
 
 	if (ISALIVE(kd)) {
 		_kvm_err(kd, 0, "vatop called in live kernel!");
-		return (0);
+		return 0;
 	}
 
 	cpu_kh = kd->cpu_data;
@@ -152,15 +154,15 @@ _kvm_kvatop(kvm_t *kd, u_long va, u_long *pa)
 	return (int)(NBPG - page_off);
 
  lose:
-	*pa = (u_long)~0L;
-	return (0);
+	*pa = (paddr_t)~0L;
+	return 0;
 }
 
 /*
  * Translate a physical address to a file-offset in the crash dump.
  */
 off_t
-_kvm_pa2off(kvm_t *kd, u_long pa)
+_kvm_pa2off(kvm_t *kd, paddr_t pa)
 {
 	cpu_kcore_hdr_t *cpu_kh;
 	phys_ram_seg_t *ramsegs;

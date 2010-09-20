@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_sun2.c,v 1.4 2010/09/19 02:07:00 jym Exp $ */
+/*	$NetBSD: kvm_sun2.c,v 1.5 2010/09/20 23:23:16 jym Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_sparc.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: kvm_sun2.c,v 1.4 2010/09/19 02:07:00 jym Exp $");
+__RCSID("$NetBSD: kvm_sun2.c,v 1.5 2010/09/20 23:23:16 jym Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -65,8 +65,8 @@ __RCSID("$NetBSD: kvm_sun2.c,v 1.4 2010/09/19 02:07:00 jym Exp $");
 
 int   _kvm_sun2_initvtop(kvm_t *);
 void  _kvm_sun2_freevtop(kvm_t *);
-int   _kvm_sun2_kvatop  (kvm_t *, u_long, u_long *);
-off_t _kvm_sun2_pa2off  (kvm_t *, u_long);
+int   _kvm_sun2_kvatop  (kvm_t *, vaddr_t, paddr_t *);
+off_t _kvm_sun2_pa2off  (kvm_t *, paddr_t);
 
 struct kvm_ops _kvm_ops_sun2 = {
 	_kvm_sun2_initvtop,
@@ -129,7 +129,7 @@ _kvm_sun2_freevtop(kvm_t *kd)
  * physical address.  This routine is used only for crash dumps.
  */
 int
-_kvm_sun2_kvatop(kvm_t *kd, u_long va, u_long *pap)
+_kvm_sun2_kvatop(kvm_t *kd, vaddr_t va, paddr_t *pap)
 {
 	cpu_kcore_hdr_t *h = kd->cpu_data;
 	struct sun2_kcore_hdr *s = &h->un._sun2;
@@ -137,7 +137,7 @@ _kvm_sun2_kvatop(kvm_t *kd, u_long va, u_long *pap)
 	struct private_vmstate *pv = v->private;
 	int pte, offset;
 	u_int segnum, sme, ptenum;
-	u_long pa;
+	paddr_t pa;
 
 	if (ISALIVE(kd)) {
 		_kvm_err(kd, 0, "vatop called in live kernel!");
@@ -175,7 +175,7 @@ _kvm_sun2_kvatop(kvm_t *kd, u_long va, u_long *pap)
  * Translate a physical address to a file-offset in the crash dump.
  */
 off_t
-_kvm_sun2_pa2off(kvm_t *kd, u_long pa)
+_kvm_sun2_pa2off(kvm_t *kd, paddr_t pa)
 {
 	return(kd->dump_off + pa);
 }
