@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmc_mem.c,v 1.8 2010/09/20 09:34:47 kiyohara Exp $	*/
+/*	$NetBSD: sdmmc_mem.c,v 1.9 2010/09/20 09:42:32 kiyohara Exp $	*/
 /*	$OpenBSD: sdmmc_mem.c,v 1.10 2009/01/09 10:55:22 jsg Exp $	*/
 
 /*
@@ -46,7 +46,7 @@
 /* Routines for SD/MMC memory cards. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdmmc_mem.c,v 1.8 2010/09/20 09:34:47 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdmmc_mem.c,v 1.9 2010/09/20 09:42:32 kiyohara Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -731,10 +731,10 @@ dmamem_free:
 	}
 	DPRINTF(("%s: sdmem_mem_send_scr: error = %d\n", SDMMCDEVNAME(sc),
 	    error));
-	if (error)
-		return error;
+
 #ifdef SDMMC_DEBUG
-	sdmmc_dump_data("SCR", scr, 8);
+	if (error == 0)
+		sdmmc_dump_data("SCR", scr, 8);
 #endif
 	return error;
 }
