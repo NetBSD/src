@@ -1,6 +1,6 @@
-/*	$NetBSD: dir-index-bozo.c,v 1.10 2010/08/16 18:32:44 dogcow Exp $	*/
+/*	$NetBSD: dir-index-bozo.c,v 1.11 2010/09/20 23:11:38 mrg Exp $	*/
 
-/*	$eterna: dir-index-bozo.c,v 1.17 2010/05/10 02:51:28 mrg Exp $	*/
+/*	$eterna: dir-index-bozo.c,v 1.18 2010/09/20 22:26:29 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997-2010 Matthew R. Green
