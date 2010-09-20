@@ -1,4 +1,4 @@
-/*	$NetBSD: ping6.c,v 1.72 2009/04/11 07:45:48 lukem Exp $	*/
+/*	$NetBSD: ping6.c,v 1.73 2010/09/20 11:49:48 ahoka Exp $	*/
 /*	$KAME: ping6.c,v 1.164 2002/11/16 14:05:37 itojun Exp $	*/
 
 /*
@@ -77,7 +77,7 @@ static char sccsid[] = "@(#)ping.c	8.1 (Berkeley) 6/5/93";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ping6.c,v 1.72 2009/04/11 07:45:48 lukem Exp $");
+__RCSID("$NetBSD: ping6.c,v 1.73 2010/09/20 11:49:48 ahoka Exp $");
 #endif
 #endif
 
@@ -2109,8 +2109,14 @@ summary(void)
 	if (nreceived && timing) {
 		/* Only display average to microseconds */
 		double num = nreceived + nrepeats;
-		double avg = tsum / num;
-		double dev = sqrt((tsumsq - num * avg * avg) / (num - 1));
+		double dev, avg;
+		if (num > 1) {
+			avg = tsum / num;
+			dev = sqrt((tsumsq - num * avg * avg) / (num - 1));
+		} else {
+			avg = tsum;
+			dev = 0.0;
+		}
 		(void)printf(
 		    "round-trip min/avg/max/std-dev = %.3f/%.3f/%.3f/%.3f ms\n",
 		    tmin, avg, tmax, dev);
