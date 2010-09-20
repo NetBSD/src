@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.c,v 1.67 2010/08/19 17:59:10 jmcneill Exp $	*/
+/*	$NetBSD: ld.c,v 1.68 2010/09/20 06:54:06 kiyohara Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.67 2010/08/19 17:59:10 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.68 2010/09/20 06:54:06 kiyohara Exp $");
 
 #include "rnd.h"
 
@@ -145,6 +145,7 @@ ldattach(struct ld_softc *sc)
 	    "%d bytes/sect x %"PRIu64" sectors\n",
 	    tbuf, sc->sc_ncylinders, sc->sc_nheads,
 	    sc->sc_nsectors, sc->sc_secsize, sc->sc_secperunit);
+	sc->sc_disksize512 = sc->sc_secperunit * sc->sc_secsize / DEV_BSIZE;
 
 	ld_set_properties(sc);
 
@@ -626,10 +627,14 @@ ldstrategy(struct buf *bp)
 	 * Do bounds checking and adjust the transfer.  If error, process.
 	 * If past the end of partition, just return.
 	 */
-	if (part != RAW_PART &&
-	    bounds_check_with_label(&sc->sc_dk, bp,
-	    (sc->sc_flags & (LDF_WLABEL | LDF_LABELLING)) != 0) <= 0) {
-		goto done;
+	if (part == RAW_PART) {
+		if (bounds_check_with_mediasize(bp, DEV_BSIZE,
+		    sc->sc_disksize512) <= 0)
+			goto done;
+	} else {
+		if (bounds_check_with_label(&sc->sc_dk, bp,
+		    (sc->sc_flags & (LDF_WLABEL | LDF_LABELLING)) != 0) <= 0)
+			goto done;
 	}
 
 	/*
