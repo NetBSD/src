@@ -1,4 +1,4 @@
-/*  $NetBSD: perfused.c,v 1.8 2010/09/15 01:51:44 manu Exp $ */
+/*  $NetBSD: perfused.c,v 1.9 2010/09/20 06:45:38 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010 Emmanuel Dreyfus. All rights reserved.
@@ -100,6 +100,7 @@ get_mount_info(fd, pmi)
 {
 	struct perfuse_mount_out *pmo;
 	struct sockcred cred;
+	int opt;
 	char *cp;
 	char *source = NULL;
 	char *target = NULL;
@@ -117,6 +118,13 @@ get_mount_info(fd, pmi)
 		exit(EX_PROTOCOL);
 	}
 
+	/*
+	 * We do not need peer creds beyond this point
+	 */
+	opt = 0;
+	if (setsockopt(fd, 0, LOCAL_CREDS, &opt, sizeof(opt)) != 0)
+		DWARN("%s: setsockopt LOCAL_CREDS failed", __func__);
+	
 #ifdef PERFUSE_DEBUG
 	if (perfuse_diagflags & PDF_MISC)
 		DPRINTF("perfuse lengths: source = %"PRId32", "
