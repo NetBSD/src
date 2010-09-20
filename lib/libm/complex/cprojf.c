@@ -1,4 +1,4 @@
-/*	$NetBSD: cprojf.c,v 1.1 2010/09/15 16:11:29 christos Exp $	*/
+/*	$NetBSD: cprojf.c,v 1.2 2010/09/20 16:53:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -26,11 +26,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: cprojf.c,v 1.1 2010/09/15 16:11:29 christos Exp $");
+__RCSID("$NetBSD: cprojf.c,v 1.2 2010/09/20 16:53:30 christos Exp $");
 
 #include <complex.h>
 #include <math.h>
-#include <machine/ieee.h>
 
 #include "../src/math_private.h"
 
