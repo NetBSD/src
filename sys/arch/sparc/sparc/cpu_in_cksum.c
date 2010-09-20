@@ -1,4 +1,4 @@
-/*	$NetBSD: in_cksum.c,v 1.20 2008/05/30 02:29:37 mrg Exp $ */
+/*	$NetBSD: cpu_in_cksum.c,v 1.1 2010/09/20 10:21:10 tsutsui Exp $ */
 
 /*
  * Copyright (c) 1995 Matthew R. Green.
@@ -103,15 +103,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_cksum.c,v 1.20 2008/05/30 02:29:37 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_in_cksum.c,v 1.1 2010/09/20 10:21:10 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/mbuf.h>
 #include <netinet/in.h>
-#include <netinet/in_systm.h>
-#include <netinet/ip.h>
-#include <netinet/ip_var.h>
 
 /*
  * Checksum routine for Internet Protocol family headers.
@@ -144,7 +141,7 @@ __KERNEL_RCSID(0, "$NetBSD: in_cksum.c,v 1.20 2008/05/30 02:29:37 mrg Exp $");
  * Zubin Dittia (zubin@dworkin.wustl.edu)
  */
 
-#define Asm	__asm volatile
+#define Asm	asm volatile
 #define ADD64		Asm("	ld [%4+ 0],%1;   ld [%4+ 4],%2;		\
 				addcc  %0,%1,%0; addxcc %0,%2,%0;	\
 				ld [%4+ 8],%1;   ld [%4+12],%2;		\
@@ -197,13 +194,13 @@ __KERNEL_RCSID(0, "$NetBSD: in_cksum.c,v 1.20 2008/05/30 02:29:37 mrg Exp $");
 #define ADDCARRY	{if (sum > 0xffff) sum -= 0xffff;}
 #define ROL		{sum = sum << 8;}	/* depends on recent REDUCE */
 #define ADDBYTE		{ROL; sum += *w; byte_swapped ^= 1;}
-#define ADDSHORT	{sum += *(u_short *)w;}
+#define ADDSHORT	{sum += *(uint16_t *)w;}
 #define ADVANCE(n)	{w += n; mlen -= n;}
 
-static inline int
-in_cksum_internal(struct mbuf *m, int off, int len, u_int sum)
+int
+cpu_in_cksum(struct mbuf *m, int len, int off, uint32_t sum)
 {
-	u_char *w;
+	uint8_t *w;
 	int mlen = 0;
 	int byte_swapped = 0;
 
@@ -212,12 +209,12 @@ in_cksum_internal(struct mbuf *m, int off, int len, u_int sum)
 	 * allow the compiler to pick which specific machine registers to
 	 * use, instead of hard-coding this in the asm code above.
 	 */
-	u_int tmp1, tmp2;
+	uint32_t tmp1, tmp2;
 
 	for (; m && len; m = m->m_next) {
 		if (m->m_len == 0)
 			continue;
-		w = mtod(m, u_char *) + off;
+		w = mtod(m, uint8_t *) + off;
 		mlen = m->m_len - off;
 		off = 0;
 		if (len < mlen)
@@ -228,13 +225,13 @@ in_cksum_internal(struct mbuf *m, int off, int len, u_int sum)
 		 * Ensure that we're aligned on a word boundary here so
 		 * that we can do 32 bit operations below.
 		 */
-		if ((3 & (long)w) != 0) {
+		if (((uintptr_t)w & 3) != 0) {
 			REDUCE;
-			if ((1 & (long)w) != 0 && mlen >= 1) {
+			if (((uintptr_t)w & 1) != 0 && mlen >= 1) {
 				ADDBYTE;
 				ADVANCE(1);
 			}
-			if ((2 & (long)w) != 0 && mlen >= 2) {
+			if (((uintptr_t)w & 2) != 0 && mlen >= 2) {
 				ADDSHORT;
 				ADVANCE(2);
 			}
@@ -284,51 +281,5 @@ in_cksum_internal(struct mbuf *m, int off, int len, u_int sum)
 	REDUCE;
 	ADDCARRY;
 
-	return (0xffff ^ sum);
-}
-
-int
-in_cksum(struct mbuf *m, int len)
-{
-
-	return (in_cksum_internal(m, 0, len, 0));
-}
-
-int
-in4_cksum(struct mbuf *m, uint8_t nxt, int off, int len)
-{
-	u_char *w;
-	u_int sum = 0;
-	struct ipovly ipov;
-
-	/*
-	 * Declare two temporary registers for use by the asm code.  We
-	 * allow the compiler to pick which specific machine registers to
-	 * use, instead of hard-coding this in the asm code above.
-	 */
-	u_int tmp1, tmp2;
-
-	if (nxt != 0) {
-		/* pseudo header */
-		memset(&ipov, 0, sizeof(ipov));
-		ipov.ih_len = htons(len);
-		ipov.ih_pr = nxt;
-		ipov.ih_src = mtod(m, struct ip *)->ip_src;
-		ipov.ih_dst = mtod(m, struct ip *)->ip_dst;
-		w = (u_char *)&ipov;
-		/* assumes sizeof(ipov) == 20 */
-		ADD16;
-		w += 16;
-		ADD4;
-	}
-
-	/* skip unnecessary part */
-	while (m && off > 0) {
-		if (m->m_len > off)
-			break;
-		off -= m->m_len;
-		m = m->m_next;
-	}
-
-	return (in_cksum_internal(m, off, len, sum));
+	return 0xffff ^ sum;
 }
