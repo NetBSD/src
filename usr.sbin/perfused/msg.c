@@ -1,4 +1,4 @@
-/*  $NetBSD: msg.c,v 1.6 2010/09/15 01:51:44 manu Exp $ */
+/*  $NetBSD: msg.c,v 1.7 2010/09/20 06:45:38 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010 Emmanuel Dreyfus. All rights reserved.
@@ -483,7 +483,6 @@ perfuse_readframe(pu, pufbuf, fd, done)
 #if (PERFUSE_SOCKTYPE == SOCK_DGRAM)
 	peek = MSG_PEEK;
 #endif
-
 	offset = puffs_framebuf_telloff(pufbuf);
 
 	/*
@@ -509,6 +508,11 @@ perfuse_readframe(pu, pufbuf, fd, done)
 			/* NOTREACHED */
 			break;
 		default:
+#if defined(PERFUSE_DEBUG) && (PERFUSE_SOCKTYPE == SOCK_DGRAM)
+			if (readen != remain)
+				DERRX(EX_SOFTWARE, "%s: short recv %zd/%zd",
+				      __func__, readen, remain);
+#endif
 			break;
 		}
 
@@ -566,6 +570,11 @@ perfuse_readframe(pu, pufbuf, fd, done)
 			/* NOTREACHED */
 			break;
 		default:
+#if defined(PERFUSE_DEBUG) && (PERFUSE_SOCKTYPE == SOCK_DGRAM)
+			if (readen != remain)
+				DERRX(EX_SOFTWARE, "%s: short recv %zd/%zd",
+				      __func__, readen, remain);
+#endif
 			break;
 		}
 
@@ -615,6 +624,11 @@ perfuse_writeframe(pu, pufbuf, fd, done)
 			/* NOTREACHED */
 			break;
 		default:
+#if defined(PERFUSE_DEBUG) && (PERFUSE_SOCKTYPE == SOCK_DGRAM)
+			if (written != remain)
+				DERRX(EX_SOFTWARE, "%s: short send %zd/%zd",
+				      __func__, written, remain);
+#endif
 			break;
 		}
 
