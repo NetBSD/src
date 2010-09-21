@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ipcomp.c,v 1.19 2009/03/18 16:00:23 cegger Exp $	*/
+/*	$NetBSD: xform_ipcomp.c,v 1.20 2010/09/21 13:41:18 degroote Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_ipcomp.c,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /* $OpenBSD: ip_ipcomp.c,v 1.1 2001/07/05 12:08:52 jjbg Exp $ */
 
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ipcomp.c,v 1.19 2009/03/18 16:00:23 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ipcomp.c,v 1.20 2010/09/21 13:41:18 degroote Exp $");
 
 /* IP payload compression protocol (IPComp), see RFC 2393 */
 #include "opt_inet.h"
@@ -298,6 +298,10 @@ ipcomp_input_cb(struct cryptop *crp)
 		goto bad;
 	}
 	IPCOMP_STATINC(IPCOMP_STAT_HIST + sav->alg_comp);
+
+	/* Update the counters */
+	IPCOMP_STATADD(IPCOMP_STAT_IBYTES, m->m_pkthdr.len - skip - hlen);
+
 
 	clen = crp->crp_olen;		/* Length of data after processing */
 
