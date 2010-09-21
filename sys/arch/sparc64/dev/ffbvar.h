@@ -1,4 +1,4 @@
-/*	$NetBSD: ffbvar.h,v 1.8 2006/09/14 16:05:18 martin Exp $	*/
+/*	$NetBSD: ffbvar.h,v 1.9 2010/09/21 03:31:04 macallan Exp $	*/
 /*	$OpenBSD: creatorvar.h,v 1.6 2002/07/30 19:48:15 jason Exp $	*/
 
 /*
@@ -44,7 +44,6 @@ struct ffb_softc {
 	struct device sc_dv;
 	struct fbdevice sc_fb;
 	bus_space_tag_t sc_bt;
-	bus_space_handle_t sc_pixel_h;
 	bus_space_handle_t sc_dac_h;
 	bus_space_handle_t sc_fbc_h;
 	bus_addr_t sc_addrs[FFB_NREGS];
@@ -58,10 +57,9 @@ struct ffb_softc {
 	u_int sc_locked;
 	int sc_mode;
 	int sc_accel, sc_needredraw;
-	int32_t sc_fifo_cache, sc_fg_cache;
-
+	int32_t sc_fifo_cache, sc_fg_cache, sc_bg_cache;
+	
 	/* virtual console stuff */
-	void (*putchar)(void *c, int row, int col, u_int uc, long attr);
 	struct vcons_data vd;
 };
 
