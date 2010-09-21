@@ -1,4 +1,4 @@
-/*	$NetBSD: wsdisplay_vcons.c,v 1.17 2010/08/18 16:46:51 macallan Exp $ */
+/*	$NetBSD: wsdisplay_vcons.c,v 1.18 2010/09/21 03:33:14 macallan Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay_vcons.c,v 1.17 2010/08/18 16:46:51 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay_vcons.c,v 1.18 2010/09/21 03:33:14 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -234,12 +234,16 @@ vcons_init_screen(struct vcons_data *vd, struct vcons_screen *scr,
 	ri->ri_ops.putchar   = vcons_putchar;
 	ri->ri_ops.cursor    = vcons_cursor;
 
-	if (scr->scr_flags & VCONS_DONT_READ) {
-		ri->ri_ops.copyrows  = vcons_copyrows_noread;
+	if (scr->scr_flags & VCONS_NO_COPYCOLS) {
 		ri->ri_ops.copycols  = vcons_copycols_noread;
 	} else {
-		ri->ri_ops.copyrows  = vcons_copyrows;
 		ri->ri_ops.copycols  = vcons_copycols;
+	}
+
+	if (scr->scr_flags & VCONS_NO_COPYROWS) {
+		ri->ri_ops.copyrows  = vcons_copyrows_noread;
+	} else {
+		ri->ri_ops.copyrows  = vcons_copyrows;
 	}
 
 	ri->ri_hw = scr;
