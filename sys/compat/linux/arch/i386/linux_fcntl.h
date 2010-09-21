@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_fcntl.h,v 1.5 2008/04/28 20:23:42 martin Exp $	*/
+/*	$NetBSD: linux_fcntl.h,v 1.6 2010/09/21 19:26:19 chs Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -46,8 +46,8 @@
 #define LINUX_O_APPEND		0x0400
 #define LINUX_O_NDELAY		0x0800
 #define LINUX_O_SYNC		0x1000
-
 #define LINUX_FASYNC		0x2000
+#define LINUX_O_DIRECTORY	0x10000
 
 /* fcntl(2) operations */
 #define LINUX_F_DUPFD		0
