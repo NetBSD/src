@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuset.c,v 1.15 2009/04/25 19:38:25 rmind Exp $	*/
+/*	$NetBSD: cpuset.c,v 1.16 2010/09/21 02:03:29 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #ifndef _STANDALONE
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: cpuset.c,v 1.15 2009/04/25 19:38:25 rmind Exp $");
+__RCSID("$NetBSD: cpuset.c,v 1.16 2010/09/21 02:03:29 rmind Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -144,6 +144,7 @@ _cpuset_create(void)
 		size_t len;
 		u_int nc;
 
+		len = sizeof(nc);
 		if (sysctl(mib, __arraycount(mib), &nc, &len, NULL, 0) == -1)
 			return NULL;
 
