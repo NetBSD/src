@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.189 2010/04/23 17:48:06 dholland Exp $
+$NetBSD: acronyms,v 1.190 2010/09/21 07:14:20 soda Exp $
 AFAIC	as far as I'm concerned
 AFAICR	as far as I can recall
 AFAICT	as far as I can tell
@@ -176,6 +176,7 @@ NRFPT	not ready for prime time
 NRN	no reply necessary
 NSFW	not suitable for work
 NVM	never mind
+O2W	off to work
 OIC	oh, I see
 OMG	oh, my god
 OMW	on my way
