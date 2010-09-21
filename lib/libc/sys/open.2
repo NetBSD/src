@@ -1,4 +1,4 @@
-.\"	$NetBSD: open.2,v 1.45 2010/09/06 19:48:38 wiz Exp $
+.\"	$NetBSD: open.2,v 1.46 2010/09/21 19:26:18 chs Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -145,6 +145,8 @@ be multiples of
 If the I/O request is made
 using an interface that supports scatter/gather via struct iovec, each
 element of the request must meet the above alignment constraints.
+.It Dv O_DIRECTORY
+Fail if the file is not a directory.
 .El
 .Pp
 Opening a file with
@@ -307,6 +309,8 @@ and there are no free inodes on the file system on which the
 file is being created.
 .It Bq Er ENOTDIR
 A component of the path prefix is not a directory.
+.It Bq Er ENOTDIR
+O_DIRECTORY is specified and the last path component is not a directory.
 .It Bq Er ENXIO
 The named file is a character special or block
 special file, and the device associated with this special file

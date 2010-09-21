@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.177 2010/08/25 13:51:50 pooka Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.178 2010/09/21 19:26:19 chs Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.177 2010/08/25 13:51:50 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.178 2010/09/21 19:26:19 chs Exp $");
 
 #include "veriexec.h"
 
@@ -139,6 +139,9 @@ vn_open(struct nameidata *ndp, int fmode, int cmode)
 	struct vattr va;
 	int error;
 	char *path;
+
+	if ((fmode & (O_CREAT | O_DIRECTORY)) == (O_CREAT | O_DIRECTORY))
+		return EINVAL;
 
 	ndp->ni_cnd.cn_flags &= TRYEMULROOT | NOCHROOT;
 
@@ -259,6 +262,9 @@ vn_openchk(struct vnode *vp, kauth_cred_t cred, int fflags)
 {
 	int permbits = 0;
 	int error;
+
+	if ((fflags & O_DIRECTORY) != 0 && vp->v_type != VDIR)
+		return ENOTDIR;
 
 	if ((fflags & FREAD) != 0) {
 		permbits = VREAD;
