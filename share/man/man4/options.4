@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.395 2010/07/25 07:09:02 wiz Exp $
+.\"	$NetBSD: options.4,v 1.396 2010/09/21 13:46:41 degroote Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -1650,7 +1650,7 @@ for details.
 .It Cd options IPSEC
 Includes support for the
 .Tn IPsec
-protocol.
+protocol, using the KAME implementation.
 See
 .Xr ipsec 4
 for details.
@@ -1665,10 +1665,21 @@ for details.
 Includes support for
 .Tn IPsec
 .Tn ESP
-protocol.
+protocol, using the KAME implementation.
 See
 .Xr ipsec 4
 for details.
+.It Cd options FAST_IPSEC
+Includes support for the 
+.Tn IPsec
+protocol, using the implementation derived from 
+.Ox
+, relaying on 
+.Xr opencrypto 9
+to carry out cryptographic operations.
+See
+.Xr fast_ipsec 4
+for details. 
 .It Cd options IPSEC_NAT_T
 Includes support for
 .Tn IPsec
