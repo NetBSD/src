@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc64,v 1.127 2010/03/06 23:26:10 mrg Exp $
+#	$NetBSD: files.sparc64,v 1.128 2010/09/21 03:26:20 macallan Exp $
 
 # @(#)files.sparc64	8.1 (Berkeley) 7/19/93
 # sparc64-specific configuration info
@@ -165,7 +165,7 @@ file	arch/sparc64/dev/cgfourteen.c	cgfourteen needs-flag
 
 device ffb: wsemuldisplaydev, rasops8, rasops32, fb, vcons
 file	arch/sparc64/dev/ffb.c			ffb
-
+defflag opt_ffb.h FFB_DEBUG FFB_SYNC
 attach ffb at mainbus,upa with ffb_mainbus
 file	arch/sparc64/dev/ffb_mainbus.c		ffb_mainbus
 
