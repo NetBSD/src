@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_cfg.c,v 1.23 2010/08/04 09:16:58 vanhu Exp $	*/
+/*	$NetBSD: isakmp_cfg.c,v 1.24 2010/09/21 13:14:17 vanhu Exp $	*/
 
 /* Id: isakmp_cfg.c,v 1.55 2006/08/22 18:17:17 manubsd Exp */
 
@@ -38,7 +38,7 @@
 #include <sys/socket.h>
 #include <sys/queue.h>
 
-#include <utmp.h>
+#include <utmpx.h>
 #if defined(__APPLE__) && defined(__MACH__)
 #include <util.h>
 #endif
@@ -1661,8 +1661,7 @@ isakmp_cfg_accounting_system(port, raddr, usr, inout)
 	int inout;
 {
 	int error = 0;
-	struct utmp ut;
-	char term[UT_LINESIZE];
+	struct utmpx ut;
 	char addr[NI_MAXHOST];
 	
 	if (usr == NULL || usr[0]=='\0') {
@@ -1671,36 +1670,33 @@ isakmp_cfg_accounting_system(port, raddr, usr, inout)
 		return -1;
 	}
 
-	sprintf(term, TERMSPEC, port);
+	memset(&ut, 0, sizeof ut);
+	gettimeofday((struct timeval *)&ut.ut_tv, NULL);
+	snprintf(ut.ut_id, sizeof ut.ut_id, TERMSPEC, port);
 
 	switch (inout) {
 	case ISAKMP_CFG_LOGIN:
-		strncpy(ut.ut_name, usr, UT_NAMESIZE);
-		ut.ut_name[UT_NAMESIZE - 1] = '\0';
-
-		strncpy(ut.ut_line, term, UT_LINESIZE);
-		ut.ut_line[UT_LINESIZE - 1] = '\0';
+		ut.ut_type = USER_PROCESS;
+		strncpy(ut.ut_user, usr, sizeof ut.ut_user);
 
 		GETNAMEINFO_NULL(raddr, addr);
-		strncpy(ut.ut_host, addr, UT_HOSTSIZE);
-		ut.ut_host[UT_HOSTSIZE - 1] = '\0';
+		strncpy(ut.ut_host, addr, sizeof ut.ut_host);
 
-		ut.ut_time = time(NULL);
- 
 		plog(LLV_INFO, LOCATION, NULL,
 			"Accounting : '%s' logging on '%s' from %s.\n",
-			ut.ut_name, ut.ut_line, ut.ut_host);
+			ut.ut_user, ut.ut_id, addr);
 
-		login(&ut);
+		pututxline(&ut);
 
 		break;
 	case ISAKMP_CFG_LOGOUT:	
+		ut.ut_type = DEAD_PROCESS;
 
 		plog(LLV_INFO, LOCATION, NULL,
 			"Accounting : '%s' unlogging from '%s'.\n",
-			usr, term);
+			usr, ut.ut_id);
 
-		logout(term);
+		pututxline(&ut);
 
 		break;
 	default:
