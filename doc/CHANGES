@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1435 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1436 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -719,3 +719,4 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		year is 2000 or older. To override this behaviour, set
 		acpi_force_load=1 or add options ACPI_BLACKLIST_YEAR=0 to your
 		kernel config. [jmcneill 20100906]
+	httpd(8): Import bozohttpd-20100920. [mrg 20100921]
