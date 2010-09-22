@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.0.2,v 1.1.2.75 2010/08/05 01:48:12 riz Exp $
+#	$NetBSD: CHANGES-4.0.2,v 1.1.2.76 2010/09/22 23:03:58 snj Exp $
 
 A complete list of changes from the NetBSD 4.0.1 release to the NetBSD 4.0.2
 release:
@@ -1069,4 +1069,9 @@ lib/libc/gen/glob.c				1.26 via patch
 
 	Fix globbing in libc and sftp.
 	[christos, ticket #1399]
+
+dist/bzip2/decompress.c				1.2
+
+	Avoid integer overflow that can lead to buffer overflow.
+	[christos, ticket #1406]
 
