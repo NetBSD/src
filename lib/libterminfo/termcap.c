@@ -1,4 +1,4 @@
-/* $NetBSD: termcap.c,v 1.8 2010/07/04 07:30:33 roy Exp $ */
+/* $NetBSD: termcap.c,v 1.9 2010/09/22 06:10:51 roy Exp $ */
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: termcap.c,v 1.8 2010/07/04 07:30:33 roy Exp $");
+__RCSID("$NetBSD: termcap.c,v 1.9 2010/09/22 06:10:51 roy Exp $");
 
 #include <assert.h>
 #include <ctype.h>
@@ -326,10 +326,12 @@ elen:
 	return NULL;
 }
 
-static struct def_info {
+typedef struct {
 	const char *name;
 	const char *cap;
-} def_infos[] = {
+} DEF_INFO;
+
+static DEF_INFO def_infos[] = {
 	{ "bel",	"^G" },
 	{ "cr",		"^M" },
 	{ "cud1",	"^J" },
