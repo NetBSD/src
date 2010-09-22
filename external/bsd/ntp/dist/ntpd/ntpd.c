@@ -1,4 +1,4 @@
-/*	$NetBSD: ntpd.c,v 1.2 2009/12/14 00:42:47 christos Exp $	*/
+/*	$NetBSD: ntpd.c,v 1.3 2010/09/22 14:37:08 christos Exp $	*/
 
 /*
  * ntpd.c - main program for the fixed point NTP daemon
@@ -1179,7 +1179,7 @@ getgroup:
 #ifdef HAVE_DNSREGISTRATION
 		if (mdnsreg && (current_time - mdnsreg ) > 60 && mdnstries && sys_leap != LEAP_NOTINSYNC) {
 			mdnsreg = current_time;
-			msyslog(LOG_INFO, "Attemping to register mDNS");
+			msyslog(LOG_INFO, "Attempting to register mDNS");
 			if ( DNSServiceRegister (&mdns, 0, 0, NULL, "_ntp._udp", NULL, NULL, 
 			    htons(NTP_PORT), 0, NULL, NULL, NULL) != kDNSServiceErr_NoError ) {
 				if (!--mdnstries) {
