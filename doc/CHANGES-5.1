@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.244 2010/09/13 19:54:24 snj Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.245 2010/09/22 22:53:53 snj Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -17502,4 +17502,9 @@ sys/sys/param.h					patch
 
 	Welcome to 5.1_RC4!
 	[snj]
+
+dist/bzip2/decompress.c				1.2
+
+	Avoid integer overflow that can lead to buffer overflow.
+	[christos, ticket #1455]
 
