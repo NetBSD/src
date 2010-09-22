@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0.3,v 1.1.2.18 2010/09/07 19:39:56 bouyer Exp $
+# $NetBSD: CHANGES-5.0.3,v 1.1.2.19 2010/09/22 22:52:27 snj Exp $
 
 A complete list of changes from the NetBSD 5.0.2 release to the NetBSD 5.0.3
 release:
@@ -333,4 +333,9 @@ sys/arch/amd64/include/segments.h		1.21
 	as well as the GDT selector.  fixes PR 43835.
 	accept the LDT selector in check_sigcontext32() too.
 	[chs, ticket #1449]
+
+dist/bzip2/decompress.c				1.2
+
+	Avoid integer overflow that can lead to buffer overflow.
+	[christos, ticket #1455]
 
