@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmcvar.h,v 1.4 2010/09/21 04:57:44 kiyohara Exp $	*/
+/*	$NetBSD: sdmmcvar.h,v 1.5 2010/09/22 04:32:53 kiyohara Exp $	*/
 /*	$OpenBSD: sdmmcvar.h,v 1.13 2009/01/09 10:55:22 jsg Exp $	*/
 
 /*
@@ -203,7 +203,7 @@ struct sdmmc_softc {
 #define SMF_CARD_ATTACHED	0x8000	/* card driver(s) attached */
 
 	uint32_t sc_caps;		/* host capability */
-#define SMC_CAPS_AUTO_STOP	0x0001	/* send CMD12 automatically by host */
+#define SMC_CAPS_AUTO_STOP	0x0001	/* send CMD12 automagically by host */
 #define SMC_CAPS_4BIT_MODE	0x0002	/* 4-bits data bus width */
 #define SMC_CAPS_DMA		0x0004	/* DMA transfer */
 #define SMC_CAPS_SPI_MODE	0x0008	/* SPI mode */
