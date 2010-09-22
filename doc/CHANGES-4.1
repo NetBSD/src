@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.207 2010/09/12 21:19:33 bouyer Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.208 2010/09/22 23:08:31 snj Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -4239,4 +4239,9 @@ sys/dist/ipf/netinet/ip_fil_netbsd.c		1.56
 	Limit ICMP error packets for IPv6 to MMTU as required by RFC4443. This
 	also avoids dropped errors when the length exceeds the link mtu.
 	[mlelstv, ticket #1405]
+
+dist/bzip2/decompress.c				1.2
+
+	Avoid integer overflow that can lead to buffer overflow.
+	[christos, ticket #1406]
 
