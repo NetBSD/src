@@ -1,4 +1,4 @@
-/* $NetBSD: term.h,v 1.5 2010/02/26 00:09:00 roy Exp $ */
+/* $NetBSD: term.h,v 1.6 2010/09/22 06:10:51 roy Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -1449,7 +1449,7 @@ enum TISTRS{
 #define zero_motion			 t_zero_motion(cur_term)
 
 #ifndef _TERMINFO
-typedef struct terminal {
+typedef struct {
 	int fildes;
 	/* We need to expose these so that the macros work */
 	const char *name;

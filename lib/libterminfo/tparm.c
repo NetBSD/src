@@ -1,4 +1,4 @@
-/* $NetBSD: tparm.c,v 1.1 2010/02/03 15:16:32 roy Exp $ */
+/* $NetBSD: tparm.c,v 1.2 2010/09/22 06:10:51 roy Exp $ */
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tparm.c,v 1.1 2010/02/03 15:16:32 roy Exp $");
+__RCSID("$NetBSD: tparm.c,v 1.2 2010/09/22 06:10:51 roy Exp $");
 
 #include <assert.h>
 #include <ctype.h>
@@ -42,13 +42,13 @@ __RCSID("$NetBSD: tparm.c,v 1.1 2010/02/03 15:16:32 roy Exp $");
 
 static TERMINAL *dumbterm; /* For non thread safe functions */
 
-typedef struct tpstack {
+typedef struct {
 	long nums[20];
 	char *strings[20];
 	size_t offset;
 } TPSTACK;
 
-typedef struct tpvar {
+typedef struct {
 	long num;
 	char *string;
 } TPVAR;

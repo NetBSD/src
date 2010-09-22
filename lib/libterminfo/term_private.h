@@ -1,4 +1,4 @@
-/* $NetBSD: term_private.h,v 1.7 2010/03/02 14:11:11 roy Exp $ */
+/* $NetBSD: term_private.h,v 1.8 2010/09/22 06:10:51 roy Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
 #define VALID_NUMERIC(s) ((s) >= 0)
 #define VALID_STRING(s)  ((s) != CANCELLED_STRING && (s) != ABSENT_STRING)
 
-typedef struct termextra {
+typedef struct {
 	const char *id;
 	char type;
 	char flag;
@@ -79,7 +79,7 @@ typedef struct termextra {
 	const char *str;
 } TERMUSERDEF;
 
-typedef struct terminal {
+typedef struct {
 	int fildes;
 	/* We need to expose these so that the macros work */
 	const char *name;
@@ -125,14 +125,14 @@ void		_ti_freeterm(TERMINAL *);
 
 #define UINT16_T_MAX 0xffff
 
-typedef struct tbuf {
+typedef struct {
 	char *buf;
 	size_t buflen;
 	size_t bufpos;
 	size_t entries;
 } TBUF;
 
-typedef struct tic {
+typedef struct {
 	char *name;
 	char *alias;
 	char *desc;

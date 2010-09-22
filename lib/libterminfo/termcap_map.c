@@ -1,4 +1,4 @@
-/* $NetBSD: termcap_map.c,v 1.2 2010/02/12 10:18:56 roy Exp $ */
+/* $NetBSD: termcap_map.c,v 1.3 2010/09/22 06:10:51 roy Exp $ */
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -28,9 +28,9 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: termcap_map.c,v 1.2 2010/02/12 10:18:56 roy Exp $");
+__RCSID("$NetBSD: termcap_map.c,v 1.3 2010/09/22 06:10:51 roy Exp $");
 
-typedef struct termcap_entry {
+typedef struct {
 	const char id[3];
 	int ti;
 } TENTRY;
