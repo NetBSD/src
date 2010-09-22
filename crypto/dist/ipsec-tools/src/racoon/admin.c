@@ -1,4 +1,4 @@
-/*	$NetBSD: admin.c,v 1.32 2009/09/03 09:29:07 tteras Exp $	*/
+/*	$NetBSD: admin.c,v 1.33 2010/09/22 13:37:35 vanhu Exp $	*/
 
 /* Id: admin.c,v 1.25 2006/04/06 14:31:04 manubsd Exp */
 
@@ -329,7 +329,7 @@ admin_process(so2, combuf)
 	case ADMIN_LOGOUT_USER: {
 		struct ph1handle *iph1;
 		char user[LOGINLEN+1];
-		int found = 0, len = com->ac_len - sizeof(com);
+		int found = 0, len = com->ac_len - sizeof(*com);
 
 		if (len > LOGINLEN) {
 			plog(LLV_ERROR, LOCATION, NULL,
