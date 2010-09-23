@@ -1,4 +1,4 @@
-/*	$NetBSD: setenv.c,v 1.33 2010/09/23 16:02:41 christos Exp $	*/
+/*	$NetBSD: setenv.c,v 1.34 2010/09/23 17:30:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)setenv.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: setenv.c,v 1.33 2010/09/23 16:02:41 christos Exp $");
+__RCSID("$NetBSD: setenv.c,v 1.34 2010/09/23 17:30:49 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -44,8 +44,9 @@ __RCSID("$NetBSD: setenv.c,v 1.33 2010/09/23 16:02:41 christos Exp $");
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
-#include "local.h"
+#include <bitstring.h>
 #include "reentrant.h"
+#include "local.h"
 
 #ifdef __weak_alias
 __weak_alias(setenv,_setenv)
@@ -56,6 +57,7 @@ extern rwlock_t __environ_lock;
 #endif
 
 extern char **environ;
+extern bitstr_t *__environ_malloced;
 
 /*
  * setenv --
@@ -74,12 +76,18 @@ setenv(const char *name, const char *value, int rewrite)
 	_DIAGASSERT(name != NULL);
 	_DIAGASSERT(value != NULL);
 
+	rwlock_wrlock(&__environ_lock);
+	/* find if already exists */
+	c = __findenv(name, &offset);
+
+	if (__allocenv(offset) == -1)
+		return -1;
+
 	if (*value == '=')			/* no `=' in value */
 		++value;
 	l_value = strlen(value);
-	rwlock_wrlock(&__environ_lock);
-	/* find if already exists */
-	if ((c = __findenv(name, &offset)) != NULL) {
+
+	if (c != NULL) {
 		if (!rewrite)
 			goto good;
 		if (strlen(c) > l_value)	/* old larger; copy over */
@@ -109,6 +117,7 @@ setenv(const char *name, const char *value, int rewrite)
 	(void)memcpy(c, name, size);
 	c += size;
 	*c++ = '=';
+	bit_set(__environ_malloced, offset);
 copy:
 	(void)memcpy(c, value, l_value + 1);
 good:
