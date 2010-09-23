@@ -1,4 +1,4 @@
-/*	$NetBSD: gumstix_machdep.c,v 1.33 2010/09/23 06:54:46 kiyohara Exp $ */
+/*	$NetBSD: gumstix_machdep.c,v 1.34 2010/09/23 07:01:41 kiyohara Exp $ */
 /*
  * Copyright (C) 2005, 2006, 2007  WIDE Project and SOUM Corporation.
  * All rights reserved.
@@ -173,9 +173,7 @@
 
 #include <arm/arm32/machdep.h>
 #include <arm/omap/omap2_gpmcreg.h>
-#if NPRCM > 0
 #include <arm/omap/omap2_prcm.h>
-#endif
 #include <arm/omap/omap2_reg.h>
 #include <arm/omap/omap_var.h>
 #include <arm/omap/omap_com.h>
