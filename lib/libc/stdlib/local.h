@@ -1,4 +1,4 @@
-/*	$NetBSD: local.h,v 1.2 2009/10/21 01:07:45 snj Exp $	*/
+/*	$NetBSD: local.h,v 1.3 2010/09/23 17:30:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -24,4 +24,12 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-char *__findenv __P((const char *, int *));
+char *__findenv(const char *, int *);
+int __allocenv(int);
+
+#ifdef _REENTRANT
+extern rwlock_t __environ_lock;
+#endif
+
+extern char **environ;
+extern bitstr_t *__environ_malloced;
