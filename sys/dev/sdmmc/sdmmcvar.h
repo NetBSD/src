@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmcvar.h,v 1.5 2010/09/22 04:32:53 kiyohara Exp $	*/
+/*	$NetBSD: sdmmcvar.h,v 1.6 2010/09/23 12:03:27 kiyohara Exp $	*/
 /*	$OpenBSD: sdmmcvar.h,v 1.13 2009/01/09 10:55:22 jsg Exp $	*/
 
 /*
@@ -161,6 +161,7 @@ struct sdmmc_function {
 	/* common members */
 	struct sdmmc_softc *sc;		/* card slot softc */
 	uint16_t rca;			/* relative card address */
+	int width;			/* bus width */
 	int flags;
 #define SFF_ERROR		0x0001	/* function is poo; ignore it */
 #define SFF_SDHC		0x0002	/* SD High Capacity card */
