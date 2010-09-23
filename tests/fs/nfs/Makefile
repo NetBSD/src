@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2010/07/28 19:23:01 pooka Exp $
+#	$NetBSD: Makefile,v 1.4 2010/09/23 09:39:14 he Exp $
 #
 
 .include <bsd.own.mk>
@@ -9,15 +9,16 @@ SUBDIR+= 	nfsservice
 
 TESTS_C=	t_mountd
 
-LDADD+=-lrumpfs_ffs                                             # ffs
-LDADD+=-lrumpfs_nfs                                             # NFS
-LDADD+=-lrumpdev_disk -lrumpdev                                 # disk device
-LDADD+=-lrumpnet_shmif -lrumpnet_netinet -lrumpnet_net -lrumpnet
-LDADD+=-lrumpvfs -lrump -lrumpuser -lpthread                    # base
-
-LDADD+=-lutil
-
 VFSTESTDIR != cd ${.CURDIR}/../common && ${PRINTOBJDIR}
 LDADD+=-L${VFSTESTDIR} -lvfstest
+
+LDADD+=-lrumpfs_nfs                                             # NFS
+LDADD+=-lrumpfs_ffs -lrumpvfs                                   # ffs
+LDADD+=-lrumpdev_disk -lrumpdev                                 # disk device
+LDADD+=-lrumpnet_shmif 						# shmif
+LDADD+=-lrumpnet_netinet -lrumpnet_net -lrumpnet
+LDADD+=-lrump -lrumpuser -lpthread                    		# base
+
+LDADD+=-lutil
 
 .include <bsd.test.mk>
