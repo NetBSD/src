@@ -1,4 +1,4 @@
-#	$NetBSD: files.discovery,v 1.16 2010/07/13 13:05:05 kiyohara Exp $
+#	$NetBSD: files.discovery,v 1.17 2010/09/23 12:36:01 kiyohara Exp $
 #
 # Config file and device description for machine-independent support for
 # the Marvell (formerly Galileo Technology) Discovery system controllers.
@@ -89,3 +89,9 @@ file	dev/marvell/com_mv.c		mvuart_gt | mvuart_mbus
 device	gtidmac: dmover_service
 file	dev/marvell/gtidmac.c		gtidmac
 attach	gtidmac at gt with gtidmac_gt
+
+# Secure Digital Input/Output (SDIO) Interface
+device	mvsdio: sdmmcbus
+file	dev/marvell/mvsdio.c		mvsdio
+defparam	opt_mvsdio.h		MVSDIO_CARD_DETECT
+					MVSDIO_WRITE_PROTECT
