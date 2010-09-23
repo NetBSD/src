@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_generic.c,v 1.1 2010/07/26 15:56:45 pooka Exp $	*/
+/*	$NetBSD: rpc_generic.c,v 1.2 2010/09/23 09:38:14 he Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: rpc_generic.c,v 1.1 2010/07/26 15:56:45 pooka Exp $");
+__RCSID("$NetBSD: rpc_generic.c,v 1.2 2010/09/23 09:38:14 he Exp $");
 #endif
 
 #include "namespace.h"
@@ -68,6 +68,11 @@ __RCSID("$NetBSD: rpc_generic.c,v 1.1 2010/07/26 15:56:45 pooka Exp $");
 
 #include <rump/rump.h>
 #include <rump/rump_syscalls.h>
+
+#ifdef __weak_alias
+__weak_alias(taddr2uaddr,_taddr2uaddr)
+__weak_alias(uaddr2taddr,_uaddr2taddr)
+#endif
 
 struct handle {
 	NCONF_HANDLE *nhandle;

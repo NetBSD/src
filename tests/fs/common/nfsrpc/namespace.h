@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.1 2010/07/26 15:56:45 pooka Exp $	*/
+/*	$NetBSD: namespace.h,v 1.2 2010/09/23 09:38:14 he Exp $	*/
 
 /*-
  * Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
@@ -51,5 +51,41 @@
 #define svc_lock		__rpc_svc_lock
 #define svcraw_lock		__rpc_svcraw_lock
 #define xprtlist_lock		__rpc_xprtlist_lock
+
+/* NFS server stuff */
+#define svc_dg_create		_svc_dg_create
+
+#define rpc_broadcast		_rpc_broadcast
+#define rpc_broadcast_exp	_rpc_broadcast_exp
+
+#define svc_fd_create		_svc_fd_create
+#define svc_vc_create		_svc_vc_create
+#define svc_getreq              _svc_getreq
+#define svc_getreqset           _svc_getreqset
+#define svc_getreq_common       _svc_getreq_common
+#define svc_register            _svc_register
+#define svc_reg                 _svc_reg
+#define svc_unreg               _svc_unreg
+#define svc_sendreply           _svc_sendreply
+#define svc_unregister          _svc_unregister
+#define svcerr_auth             _svcerr_auth
+#define svcerr_decode           _svcerr_decode
+#define svcerr_noproc           _svcerr_noproc
+#define svcerr_noprog           _svcerr_noprog
+#define svcerr_progvers         _svcerr_progvers
+#define svcerr_systemerr        _svcerr_systemerr
+#define svcerr_weakauth         _svcerr_weakauth
+#define xprt_register           _xprt_register
+#define xprt_unregister         _xprt_unregister
+#define rpc_control             _rpc_control
+
+#define taddr2uaddr		_taddr2uaddr
+#define uaddr2taddr		_uaddr2taddr
+
+#define rpcb_set		_rpcb_set
+#define rpcb_unset		_rpcb_unset
+#define rpcb_getmaps		_rpcb_getmaps
+#define rpcb_taddr2uaddr	_rpcb_taddr2uaddr
+#define rpcb_uaddr2taddr	_rpcb_uaddr2taddr
 
 #endif /* _NAMESPACE_H_ */
