@@ -1,4 +1,4 @@
-/*  $NetBSD: perfuse_priv.h,v 1.11 2010/09/20 07:00:22 manu Exp $ */
+/*  $NetBSD: perfuse_priv.h,v 1.12 2010/09/23 16:02:34 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010 Emmanuel Dreyfus. All rights reserved.
@@ -37,17 +37,6 @@
 #include "perfuse_if.h"
 #include "fuse.h"
 
-/* 
- * When a file is created, it is open for the filesystem, but not
- * for the kernel. We keep the file open to avoid re-open it, but
- * once we open PERFUSE_OPENFS_MAXFILES files, we start closing
- * on our own any file that has not been open for PERFUSE_OPENFS_TIMEOUT
- * seconds. This is to avoid file leaks and getting "Too many open 
- * files in system"
- */
-#define PERFUSE_OPENFS_TIMEOUT 3
-#define PERFUSE_OPENFS_MAXFILES 32
-
 struct perfuse_state {
 	void *ps_private;	/* Private field for libperfuse user */
 	struct puffs_usermount *ps_pu;
@@ -81,7 +70,13 @@ struct perfuse_state {
 };
 
 
-enum perfuse_qtype { 	PCQ_READDIR, PCQ_READ, PCQ_WRITE, PCQ_AFTERWRITE };
+enum perfuse_qtype { 
+	PCQ_READDIR,	
+	PCQ_READ,
+	PCQ_WRITE,
+	PCQ_AFTERWRITE,
+	PCQ_OPEN
+};
 
 #ifdef PERFUSE_DEBUG
 extern const char *perfuse_qtypestr[];
@@ -98,7 +93,7 @@ struct perfuse_node_data {
 	uint64_t pnd_wfh;
 	uint64_t pnd_ino;			/* inode */
 	uint64_t pnd_nlookup;			/* vnode refcount */
-	uint64_t pnd_offset;			/* seek state */
+	uint64_t pnd_size;			/* file size */
 	uint64_t pnd_lock_owner;
 	struct dirent *pnd_dirent;		/* native buffer for readdir */
 	off_t pnd_dirent_len;
@@ -113,10 +108,10 @@ struct perfuse_node_data {
 #define PND_WFH			0x010	/* Write FH allocated */
 #define PND_REMOVED		0x020	/* Node was removed */
 #define PND_INWRITE		0x040	/* write in progress */
-#define PND_OPENFS		0x080	/* Open by fs but not by kernel */
+#define PND_INOPEN		0x100	/* open in progress */
 
 #define PND_OPEN		(PND_RFH|PND_WFH)	/* File is open */
-#define PND_BUSY		(PND_INREADDIR|PND_INWRITE)
+#define PND_BUSY		(PND_INREADDIR|PND_INWRITE|PND_INOPEN)
 	puffs_cookie_t pnd_parent;
 	int pnd_childcount;
 	time_t pnd_timestamp;
@@ -145,7 +140,7 @@ __BEGIN_DECLS
 struct puffs_node *perfuse_new_pn(struct puffs_usermount *, 
     struct puffs_node *);
 void perfuse_destroy_pn(struct puffs_usermount *, struct puffs_node *);
-void perfuse_new_fh(struct puffs_usermount *, puffs_cookie_t, uint64_t, int);
+void perfuse_new_fh(puffs_cookie_t, uint64_t, int);
 void perfuse_destroy_fh(puffs_cookie_t, uint64_t);
 uint64_t perfuse_get_fh(puffs_cookie_t, int);
 uint64_t perfuse_next_unique(struct puffs_usermount *);
