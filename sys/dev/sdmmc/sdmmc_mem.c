@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmc_mem.c,v 1.10 2010/09/21 04:53:53 kiyohara Exp $	*/
+/*	$NetBSD: sdmmc_mem.c,v 1.11 2010/09/23 12:03:27 kiyohara Exp $	*/
 /*	$OpenBSD: sdmmc_mem.c,v 1.10 2009/01/09 10:55:22 jsg Exp $	*/
 
 /*
@@ -46,7 +46,7 @@
 /* Routines for SD/MMC memory cards. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdmmc_mem.c,v 1.10 2010/09/21 04:53:53 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdmmc_mem.c,v 1.11 2010/09/23 12:03:27 kiyohara Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -453,6 +453,7 @@ sdmmc_mem_init(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 	}
 
         /* change bus width if supported */
+	sf->width = 1;
 	if (ISSET(sc->sc_flags, SMF_SD_MODE)) {
 		error = sdmmc_mem_send_scr(sc, sf, sf->raw_scr);
 		if (error) {
@@ -470,7 +471,9 @@ sdmmc_mem_init(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 			if (error) {
 				DPRINTF(("%s: can't change bus width"
 				    " (%d bit)\n", SDMMCDEVNAME(sc), 4));
+				goto out;
 			}
+			sf->width = 4;
 		}
 	} else if (sf->csd.mmcver >= MMC_CSD_MMCVER_4_0) {
 		if (ISSET(sc->sc_caps, SMC_CAPS_8BIT_MODE)) {
@@ -497,6 +500,8 @@ sdmmc_mem_init(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 			}
 
 			/* XXXX: need bus test? (using by CMD14 & CMD19) */
+
+			sf->width = width;
 		}
 	}
 
