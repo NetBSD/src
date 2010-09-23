@@ -1,4 +1,4 @@
-/*  $NetBSD: perfuse.c,v 1.7 2010/09/20 07:00:21 manu Exp $ */
+/*  $NetBSD: perfuse.c,v 1.8 2010/09/23 16:02:34 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010 Emmanuel Dreyfus. All rights reserved.
@@ -406,7 +406,8 @@ perfuse_init(pc, pmi)
 	PUFFSOP_SET(pops, perfuse, node, read);
 	PUFFSOP_SET(pops, perfuse, node, write);
 
-	puffs_flags = PUFFS_FLAG_BUILDPATH | PUFFS_FLAG_HASHPATH;
+	puffs_flags = PUFFS_FLAG_BUILDPATH | PUFFS_FLAG_HASHPATH |
+		      PUFFS_KFLAG_WTCACHE | PUFFS_KFLAG_IAONDEMAND;
 	if (perfuse_diagflags & PDF_PUFFS)
 		puffs_flags |= PUFFS_FLAG_OPDUMP;
 
