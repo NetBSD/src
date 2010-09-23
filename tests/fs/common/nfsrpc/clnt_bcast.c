@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_bcast.c,v 1.1 2010/07/26 15:56:45 pooka Exp $	*/
+/*	$NetBSD: clnt_bcast.c,v 1.2 2010/09/23 09:38:14 he Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)clnt_bcast.c 1.15 89/04/21 Copyr 1988 Sun Micro";
 #else
-__RCSID("$NetBSD: clnt_bcast.c,v 1.1 2010/07/26 15:56:45 pooka Exp $");
+__RCSID("$NetBSD: clnt_bcast.c,v 1.2 2010/09/23 09:38:14 he Exp $");
 #endif
 #endif
 
@@ -112,6 +112,11 @@ __RCSID("$NetBSD: clnt_bcast.c,v 1.1 2010/07/26 15:56:45 pooka Exp $");
  * both rpcbind and portmap, it will cause them to reply twice, and
  * also here it will get two responses ... inefficient and clumsy.
  */
+
+#ifdef __weak_alias
+__weak_alias(rpc_broadcast_exp,_rpc_broadcast_exp)
+__weak_alias(rpc_broadcast,_rpc_broadcast)
+#endif
 
 struct broadif {
 	int index;
