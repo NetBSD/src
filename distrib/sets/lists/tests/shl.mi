@@ -1,0 +1,13 @@
+# $NetBSD: shl.mi,v 1.1 2010/09/23 09:42:18 he Exp $
+#
+./usr/libdata/debug/usr/tests/lib/csu/h_initfini3_dso.so.1.debug	tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/csu/libh_initfini3_dso.so.1.debug	tests-obsolete		obsolete
+./usr/tests/lib/csu/h_initfini3_dso.so.1	tests-lib-tests		atf
+./usr/tests/lib/csu/libh_initfini3_dso.so.1	tests-obsolete		obsolete
+./usr/tests/util/id/libfake.so.0		tests-obsolete		obsolete
+./usr/tests/util/id/libfake.so.0.0		tests-obsolete		obsolete
+./usr/libdata/debug/usr/tests/lib/csu/libh_initfini3_dso.so.1.debug	tests-lib-debug		debug,atf
+./usr/tests/lib/csu/h_initfini3_dso.so		tests-lib-tests		atf
+./usr/tests/lib/csu/h_initfini3_dso.so.1	tests-lib-tests		atf
+./usr/tests/lib/csu/libh_initfini3_dso.so	tests-obsolete		obsolete
+./usr/tests/lib/csu/libh_initfini3_dso.so.1	tests-obsolete		obsolete
