@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.244 2010/06/12 08:12:03 skrll Exp $	*/
+/*	$NetBSD: if.c,v 1.245 2010/09/23 21:16:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.244 2010/06/12 08:12:03 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.245 2010/09/23 21:16:42 christos Exp $");
 
 #include "opt_inet.h"
 
@@ -981,7 +981,7 @@ if_clone_lookup(const char *name, int *unitp)
 
 	unit = 0;
 	while (cp - name < IFNAMSIZ && *cp) {
-		if (*cp < '0' || *cp > '9' || unit > INT_MAX / 10) {
+		if (*cp < '0' || *cp > '9' || unit >= INT_MAX / 10) {
 			/* Bogus unit number. */
 			return NULL;
 		}
