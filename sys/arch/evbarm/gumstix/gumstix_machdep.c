@@ -1,4 +1,4 @@
-/*	$NetBSD: gumstix_machdep.c,v 1.32 2010/08/30 05:37:30 kiyohara Exp $ */
+/*	$NetBSD: gumstix_machdep.c,v 1.33 2010/09/23 06:54:46 kiyohara Exp $ */
 /*
  * Copyright (C) 2005, 2006, 2007  WIDE Project and SOUM Corporation.
  * All rights reserved.
@@ -1203,6 +1203,17 @@ consinit(void)
 
 #if NCOM > 0
 
+#ifdef GUMSTIX_NETBSD_ARGS_CONSOLE
+	/* Maybe passed Linux's bootargs 'console=ttyS?,<speed>...' */
+	if (strncmp(console, "ttyS", 4) == 0 && console[5] == ',') {
+		int i;
+
+		comcnspeed = 0;
+		for (i = 6; i < strlen(console) && isdigit(console[i]); i++)
+			comcnspeed = comcnspeed * 10 + (console[i] - '0');
+	}
+#endif
+
 #if defined(GUMSTIX)
 
 #ifdef FFUARTCONSOLE
@@ -1212,7 +1223,8 @@ consinit(void)
 	} else
 #endif
 #if defined(GUMSTIX_NETBSD_ARGS_CONSOLE)
-	if (console[0] == '\0' || strcasecmp(console, "ffuart") == 0)
+	if (console[0] == '\0' || strcasecmp(console, "ffuart") == 0 ||
+	    strncmp(console, "ttyS0,", 6) == 0)
 #endif
 	{
 		int rv;
