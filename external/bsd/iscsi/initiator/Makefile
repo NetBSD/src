@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2009/06/25 13:47:11 agc Exp $
+# $NetBSD: Makefile,v 1.3 2010/09/23 09:40:23 he Exp $
 
 .sinclude "${.CURDIR}/../Makefile.inc"
 
@@ -11,8 +11,8 @@ ISCSIDIST=	${.CURDIR}/../dist
 
 PROG=iscsi-initiator
 SRCS=iscsi-initiator.c virtdir.c libkmod.c
-LDADD+= -lrefuse -liscsi
-DPADD+= ${LIBREFUSE} ${LIBISCSI}
+LDADD+= -lrefuse -liscsi -lpuffs
+DPADD+= ${LIBREFUSE} ${LIBISCSI} ${LIBPUFFS}
 CPPFLAGS+= -I${ISCSIDIST}/include
 CPPFLAGS+= -pthread
 LDFLAGS+= -pthread
