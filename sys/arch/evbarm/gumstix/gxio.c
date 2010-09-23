@@ -1,4 +1,4 @@
-/*	$NetBSD: gxio.c,v 1.17 2010/08/28 07:06:29 kiyohara Exp $ */
+/*	$NetBSD: gxio.c,v 1.18 2010/09/23 06:43:32 kiyohara Exp $ */
 /*
  * Copyright (C) 2005, 2006, 2007 WIDE Project and SOUM Corporation.
  * All rights reserved.
@@ -31,7 +31,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gxio.c,v 1.17 2010/08/28 07:06:29 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gxio.c,v 1.18 2010/09/23 06:43:32 kiyohara Exp $");
 
 #include "opt_cputypes.h"
 #include "opt_gumstix.h"
@@ -315,9 +315,7 @@ gxio_config_pin(void)
 #elif defined(CPU_XSCALE_PXA270)
 	pxa2x0_gpio_set_function(12, GPIO_OUT | GPIO_CLR);
 #endif
-#if !defined(OVERO)	/* XXXXX */
 	delay(100);
-#endif
 
 #if defined(CPU_XSCALE_PXA270) && defined(CPU_XSCALE_PXA250)
 	pxa2x0_gpio_config(
