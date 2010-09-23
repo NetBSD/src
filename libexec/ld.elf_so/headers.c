@@ -1,4 +1,4 @@
-/*	$NetBSD: headers.c,v 1.29 2010/04/05 14:01:26 joerg Exp $	 */
+/*	$NetBSD: headers.c,v 1.30 2010/09/23 13:03:35 joerg Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: headers.c,v 1.29 2010/04/05 14:01:26 joerg Exp $");
+__RCSID("$NetBSD: headers.c,v 1.30 2010/09/23 13:03:35 joerg Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -69,7 +69,8 @@ _rtld_digest_dynamic(const char *execname, Obj_Entry *obj)
 	Elf_Dyn        *dynp;
 	Needed_Entry  **needed_tail = &obj->needed;
 	const Elf_Dyn  *dyn_rpath = NULL;
-	Elf_Sword	plttype = DT_NULL;
+	bool		use_pltrel = false;
+	bool		use_pltrela = false;
 	Elf_Addr        relsz = 0, relasz = 0;
 	Elf_Addr	pltrel = 0, pltrelsz = 0;
 	Elf_Addr	init = 0, fini = 0;
@@ -112,8 +113,9 @@ _rtld_digest_dynamic(const char *execname, Obj_Entry *obj)
 			break;
 
 		case DT_PLTREL:
-			plttype = dynp->d_un.d_val;
-			assert(plttype == DT_REL || plttype == DT_RELA);
+			use_pltrel = dynp->d_un.d_val == DT_REL;
+			use_pltrela = dynp->d_un.d_val == DT_RELA;
+			assert(use_pltrel || use_pltrela);
 			break;
 
 		case DT_SYMTAB:
@@ -248,7 +250,7 @@ _rtld_digest_dynamic(const char *execname, Obj_Entry *obj)
 
 	obj->rellim = (const Elf_Rel *)((const uint8_t *)obj->rel + relsz);
 	obj->relalim = (const Elf_Rela *)((const uint8_t *)obj->rela + relasz);
-	if (plttype == DT_REL) {
+	if (use_pltrel) {
 		obj->pltrel = (const Elf_Rel *)(obj->relocbase + pltrel);
 		obj->pltrellim = (const Elf_Rel *)(obj->relocbase + pltrel + pltrelsz);
 		obj->pltrelalim = 0;
@@ -258,7 +260,7 @@ _rtld_digest_dynamic(const char *execname, Obj_Entry *obj)
 		    obj->rellim > obj->pltrel &&
 		    obj->rellim <= obj->pltrellim)
 			obj->rellim = obj->pltrel;
-	} else if (plttype == DT_RELA) {
+	} else if (use_pltrela) {
 		obj->pltrela = (const Elf_Rela *)(obj->relocbase + pltrel);
 		obj->pltrellim = 0;
 		obj->pltrelalim = (const Elf_Rela *)(obj->relocbase + pltrel + pltrelsz);
