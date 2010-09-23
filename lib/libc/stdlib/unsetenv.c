@@ -1,4 +1,4 @@
-/*	$NetBSD: unsetenv.c,v 1.3 2005/09/13 01:44:10 christos Exp $	*/
+/*	$NetBSD: unsetenv.c,v 1.4 2010/09/23 17:30:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)setenv.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: unsetenv.c,v 1.3 2005/09/13 01:44:10 christos Exp $");
+__RCSID("$NetBSD: unsetenv.c,v 1.4 2010/09/23 17:30:49 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -44,14 +44,9 @@ __RCSID("$NetBSD: unsetenv.c,v 1.3 2005/09/13 01:44:10 christos Exp $");
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
-#include "local.h"
+#include <bitstring.h>
 #include "reentrant.h"
-
-#ifdef _REENTRANT
-extern rwlock_t __environ_lock;
-#endif
-
-extern char **environ;
+#include "local.h"
 
 /*
  * unsetenv(name) --
@@ -71,11 +66,22 @@ unsetenv(name)
 		return -1;
 	}
 
+	if (__allocenv(-1) == -1)
+		return -1;
+
 	rwlock_wrlock(&__environ_lock);
-	while (__findenv(name, &offset))	/* if set multiple times */
-		for (p = &environ[offset];; ++p)
+	while (__findenv(name, &offset)) {	/* if set multiple times */
+		if (bit_test(__environ_malloced, offset))
+			free(environ[offset]);
+		for (p = &environ[offset];; ++p, ++offset) {
+			if (bit_test(__environ_malloced, offset + 1))
+				bit_set(__environ_malloced, offset);
+			else
+				bit_clear(__environ_malloced, offset);
 			if (!(*p = *(p + 1)))
 				break;
+		}
+	}
 	rwlock_unlock(&__environ_lock);
 
 	return 0;
