@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_dg.c,v 1.1 2010/07/26 15:56:45 pooka Exp $	*/
+/*	$NetBSD: svc_dg.c,v 1.2 2010/09/23 09:38:14 he Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -44,7 +44,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: svc_dg.c,v 1.1 2010/07/26 15:56:45 pooka Exp $");
+__RCSID("$NetBSD: svc_dg.c,v 1.2 2010/09/23 09:38:14 he Exp $");
 #endif
 
 #include "namespace.h"
@@ -72,6 +72,10 @@ __RCSID("$NetBSD: svc_dg.c,v 1.1 2010/07/26 15:56:45 pooka Exp $");
 
 #define	su_data(xprt)	((struct svc_dg_data *)(xprt->xp_p2))
 #define	rpc_buffer(xprt) ((xprt)->xp_p1)
+
+#ifdef __weak_alias
+__weak_alias(svc_dg_create,_svc_dg_create)
+#endif
 
 #ifndef MAX
 #define	MAX(a, b)	(((a) > (b)) ? (a) : (b))

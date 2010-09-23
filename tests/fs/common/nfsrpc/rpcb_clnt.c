@@ -1,4 +1,4 @@
-/*	$NetBSD: rpcb_clnt.c,v 1.1 2010/07/26 15:56:45 pooka Exp $	*/
+/*	$NetBSD: rpcb_clnt.c,v 1.2 2010/09/23 09:38:14 he Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)rpcb_clnt.c 1.30 89/06/21 Copyr 1988 Sun Micro";
 #else
-__RCSID("$NetBSD: rpcb_clnt.c,v 1.1 2010/07/26 15:56:45 pooka Exp $");
+__RCSID("$NetBSD: rpcb_clnt.c,v 1.2 2010/09/23 09:38:14 he Exp $");
 #endif
 #endif
 
@@ -77,6 +77,14 @@ __RCSID("$NetBSD: rpcb_clnt.c,v 1.1 2010/07/26 15:56:45 pooka Exp $");
 #include <rump/rump_syscalls.h>
 
 #include "rpc_internal.h"
+
+#ifdef __weak_alias
+__weak_alias(rpcb_set,_rpcb_set)
+__weak_alias(rpcb_unset,_rpcb_unset)
+__weak_alias(rpcb_getmaps,_rpcb_getmaps)
+__weak_alias(rpcb_taddr2uaddr,_rpcb_taddr2uaddr)
+__weak_alias(rpcb_uaddr2taddr,_rpcb_uaddr2taddr)
+#endif
 
 static struct timeval tottimeout = { 60, 0 };
 static const struct timeval rmttimeout = { 3, 0 };
