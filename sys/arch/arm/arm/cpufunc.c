@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.99 2010/07/05 06:54:48 kiyohara Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.100 2010/09/23 07:31:10 kiyohara Exp $	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
@@ -45,11 +45,11 @@
  *
  * C functions for supporting CPU / MMU / TLB specific operations.
  *
- * Created      : 30/01/97
+ * Created	: 30/01/97
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.99 2010/07/05 06:54:48 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.100 2010/09/23 07:31:10 kiyohara Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_cpuoptions.h"
@@ -1168,17 +1168,17 @@ static int	arm_dcache_l2_linesize;
 static inline u_int
 get_cachesize_cp15(int cssr)
 {
-    u_int csid;
+	u_int csid;
 
 #if (CPU_CORTEX) > 0
-    __asm volatile(".arch\tarmv7a");
-    __asm volatile("mcr p15, 2, %0, c0, c0, 0" :: "r" (cssr));
-    __asm volatile("isb");	/* sync to the new cssr */
+	__asm volatile(".arch\tarmv7a");
+	__asm volatile("mcr p15, 2, %0, c0, c0, 0" :: "r" (cssr));
+	__asm volatile("isb");	/* sync to the new cssr */
 #else
-    __asm volatile("mcr p15, 1, %0, c0, c0, 2" :: "r" (cssr));
+	__asm volatile("mcr p15, 1, %0, c0, c0, 2" :: "r" (cssr));
 #endif
-    __asm volatile("mrc p15, 1, %0, c0, c0, 0" : "=r" (csid));
-    return csid;
+	__asm volatile("mrc p15, 1, %0, c0, c0, 0" : "=r" (csid));
+	return csid;
 }
 #endif
 
@@ -1571,13 +1571,13 @@ set_cpufuncs(void)
 	}
 #endif	/* CPU_FA526 */
 #ifdef CPU_IXP12X0
-        if (cputype == CPU_ID_IXP1200) {
-                cpufuncs = ixp12x0_cpufuncs;
-                cpu_reset_needs_v4_MMU_disable = 1;
-                get_cachetype_table();
-                pmap_pte_init_sa1();
-                return 0;
-        }
+	if (cputype == CPU_ID_IXP1200) {
+		cpufuncs = ixp12x0_cpufuncs;
+		cpu_reset_needs_v4_MMU_disable = 1;
+		get_cachetype_table();
+		pmap_pte_init_sa1();
+		return 0;
+	}
 #endif  /* CPU_IXP12X0 */
 #ifdef CPU_XSCALE_80200
 	if (cputype == CPU_ID_80200) {
@@ -1688,7 +1688,7 @@ set_cpufuncs(void)
 #endif /* __CPU_XSCALE_PXA2XX */
 #ifdef CPU_XSCALE_IXP425
 	if (cputype == CPU_ID_IXP425_533 || cputype == CPU_ID_IXP425_400 ||
-            cputype == CPU_ID_IXP425_266) {
+	    cputype == CPU_ID_IXP425_266) {
 		ixp425_icu_init();
 
 		cpufuncs = xscale_cpufuncs;
@@ -2511,10 +2511,10 @@ arm11_setup(char *args)
 
 #if defined(PROCESS_ID_IS_CURCPU)
 	/* set curcpu() */
-        __asm("mcr\tp15, 0, %0, c13, c0, 4" : : "r"(&cpu_info_store));
+	__asm("mcr\tp15, 0, %0, c13, c0, 4" : : "r"(&cpu_info_store));
 #elif defined(PROCESS_ID_IS_CURLWP)
 	/* set curlwp() */
-        __asm("mcr\tp15, 0, %0, c13, c0, 4" : : "r"(&lwp0));
+	__asm("mcr\tp15, 0, %0, c13, c0, 4" : : "r"(&lwp0));
 #endif
 
 	cpuctrl = CPU_CONTROL_MMU_ENABLE | CPU_CONTROL_SYST_ENABLE
@@ -2575,10 +2575,10 @@ armv7_setup(args)
 
 #if defined(PROCESS_ID_IS_CURCPU)
 	/* set curcpu() */
-        __asm("mcr\tp15, 0, %0, c13, c0, 4" : : "r"(&cpu_info_store));
+	__asm("mcr\tp15, 0, %0, c13, c0, 4" : : "r"(&cpu_info_store));
 #elif defined(PROCESS_ID_IS_CURLWP)
 	/* set curlwp() */
-        __asm("mcr\tp15, 0, %0, c13, c0, 4" : : "r"(&lwp0));
+	__asm("mcr\tp15, 0, %0, c13, c0, 4" : : "r"(&lwp0));
 #endif
 
 	cpuctrl = CPU_CONTROL_MMU_ENABLE | CPU_CONTROL_IC_ENABLE
@@ -2672,10 +2672,10 @@ arm1136_setup(char *args)
 
 #if defined(PROCESS_ID_IS_CURCPU)
 	/* set curcpu() */
-        __asm("mcr\tp15, 0, %0, c13, c0, 4" : : "r"(&cpu_info_store));
+	__asm("mcr\tp15, 0, %0, c13, c0, 4" : : "r"(&cpu_info_store));
 #elif defined(PROCESS_ID_IS_CURLWP)
 	/* set curlwp() */
-        __asm("mcr\tp15, 0, %0, c13, c0, 4" : : "r"(&lwp0));
+	__asm("mcr\tp15, 0, %0, c13, c0, 4" : : "r"(&lwp0));
 #endif
 
 	cpuid = cpu_id();
