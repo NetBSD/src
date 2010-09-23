@@ -1,4 +1,4 @@
-/*  $NetBSD: perfused.c,v 1.9 2010/09/20 06:45:38 manu Exp $ */
+/*  $NetBSD: perfused.c,v 1.10 2010/09/23 16:02:34 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010 Emmanuel Dreyfus. All rights reserved.
@@ -124,7 +124,7 @@ get_mount_info(fd, pmi)
 	opt = 0;
 	if (setsockopt(fd, 0, LOCAL_CREDS, &opt, sizeof(opt)) != 0)
 		DWARN("%s: setsockopt LOCAL_CREDS failed", __func__);
-	
+
 #ifdef PERFUSE_DEBUG
 	if (perfuse_diagflags & PDF_MISC)
 		DPRINTF("perfuse lengths: source = %"PRId32", "
@@ -310,6 +310,8 @@ parse_debug(optstr)
 			retval |= PDF_SYNC;
 		else if (strcmp(opt, "misc") == 0)
 			retval |= PDF_MISC;
+		else if (strcmp(opt, "filename") == 0)
+			retval |= PDF_FILENAME;
 		else
 			DERRX(EX_USAGE, "unknown debug flag \"%s\"", opt);
 	}

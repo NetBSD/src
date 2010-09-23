@@ -1,4 +1,4 @@
-/*  $NetBSD: subr.c,v 1.5 2010/09/20 07:00:22 manu Exp $ */
+/*  $NetBSD: subr.c,v 1.6 2010/09/23 16:02:34 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010 Emmanuel Dreyfus. All rights reserved.
@@ -113,39 +113,12 @@ perfuse_destroy_pn(pu, pn)
 
 
 void
-perfuse_new_fh(pu, opc, fh, mode)
-	struct puffs_usermount *pu;
+perfuse_new_fh(opc, fh, mode)
 	puffs_cookie_t opc;
 	uint64_t fh;
 	int mode;
 {
-	struct perfuse_state *ps;
 	struct perfuse_node_data *pnd;
-
-	ps = puffs_getspecific(pu);
-
-	/*
-	 * Nodes file with PND_OPENFS are open by the filesystem but
-	 * not by the kernel, because of a CREATE operation. If
-	 * the kernel never opens them, we have a leak to fix. 
-	 * If we have enough open files, we start closing the
-	 * one that had been open for too long.
-	 */
-	if (ps->ps_pnd_count > PERFUSE_OPENFS_MAXFILES) {
-		time_t now;
-
-		now = time(NULL);
-
-		TAILQ_FOREACH(pnd, &ps->ps_pnd, pnd_next) {
-			if ((pnd->pnd_ino == FUSE_ROOT_ID) ||
-			    !(pnd->pnd_flags & PND_OPENFS) ||
-			    (now < pnd->pnd_timestamp + PERFUSE_OPENFS_TIMEOUT))
-				continue;
-
-		pnd->pnd_flags &= ~PND_OPENFS;
-			perfuse_node_close_common(pu, pnd->pnd_pn, FWRITE);
-		}
-	}
 
 	pnd = PERFUSE_NODE_DATA(opc);
 
@@ -207,9 +180,10 @@ perfuse_get_fh(opc, mode)
 
 	pnd = PERFUSE_NODE_DATA(opc);
 
-	if (mode & FWRITE) 
+	if (mode & FWRITE) {
 		if (pnd->pnd_flags & PND_WFH)
 			return pnd->pnd_wfh;
+	}
 
 	if (mode & FREAD) {
 		if (pnd->pnd_flags & PND_RFH)
@@ -217,6 +191,7 @@ perfuse_get_fh(opc, mode)
 
 		if (pnd->pnd_flags & PND_WFH)
 			return pnd->pnd_wfh;
+
 	}
 
 	return FUSE_UNKNOWN_FH;

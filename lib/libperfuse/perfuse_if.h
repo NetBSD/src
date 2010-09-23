@@ -1,4 +1,4 @@
-/*  $NetBSD: perfuse_if.h,v 1.8 2010/09/15 01:51:43 manu Exp $ */
+/*  $NetBSD: perfuse_if.h,v 1.9 2010/09/23 16:02:34 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010 Emmanuel Dreyfus. All rights reserved.
@@ -52,6 +52,7 @@ extern int perfuse_diagflags;
 #define PDF_SYNC	0x100	/* fsync and dirty flags */
 #define PDF_MISC	0x200	/* Miscelaneous messages */
 #define PDF_SYSLOG	0x400	/* use syslog */
+#define PDF_FILENAME	0x800	/* File names */
 
 /*
  * Diagnostic functions

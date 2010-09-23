@@ -1,4 +1,4 @@
-/*  $NetBSD: debug.c,v 1.2 2010/09/15 01:51:43 manu Exp $ */
+/*  $NetBSD: debug.c,v 1.3 2010/09/23 16:02:34 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010 Emmanuel Dreyfus. All rights reserved.
@@ -79,7 +79,13 @@ const struct perfuse_opcode perfuse_opcode[] = {
 	{ 0, "UNKNOWN" },
 };
 
-const char *perfuse_qtypestr[] = { "READDIR", "READ", "WRITE", "AFTERWRITE" };
+const char *perfuse_qtypestr[] = { 
+	"READDIR",
+	"READ",
+	"WRITE",
+	"AFTERWRITE",
+	"OPEN"
+};
 
 const char *
 perfuse_opname(opcode)
