@@ -1,4 +1,4 @@
-/*	$NetBSD: setenv.c,v 1.32 2009/12/02 09:34:51 enami Exp $	*/
+/*	$NetBSD: setenv.c,v 1.33 2010/09/23 16:02:41 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)setenv.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: setenv.c,v 1.32 2009/12/02 09:34:51 enami Exp $");
+__RCSID("$NetBSD: setenv.c,v 1.33 2010/09/23 16:02:41 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -82,7 +82,7 @@ setenv(const char *name, const char *value, int rewrite)
 	if ((c = __findenv(name, &offset)) != NULL) {
 		if (!rewrite)
 			goto good;
-		if (strlen(c) >= l_value)	/* old larger; copy over */
+		if (strlen(c) > l_value)	/* old larger; copy over */
 			goto copy;
 	} else {					/* create new slot */
 		size = (size_t)(sizeof(char *) * (offset + 2));
