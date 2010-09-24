@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_verbose.c,v 1.10 2010/08/11 10:32:42 gsutre Exp $ */
+/*	$NetBSD: acpi_verbose.c,v 1.11 2010/09/24 07:48:59 gsutre Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007, 2010 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_verbose.c,v 1.10 2010/08/11 10:32:42 gsutre Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_verbose.c,v 1.11 2010/09/24 07:48:59 gsutre Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -509,6 +509,9 @@ device_find_by_acpi_pci_info(const struct acpi_pci_info *ap)
 	device_t dv, pr;
 	struct pci_softc *pci;
 	deviter_t di;
+
+	if (ap->ap_function == 0xFFFF)
+		return NULL;
 
 	for (dv = deviter_first(&di, DEVITER_F_ROOT_FIRST); dv != NULL;
 	     dv = deviter_next(&di)) {
