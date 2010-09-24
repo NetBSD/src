@@ -1,4 +1,4 @@
-/*	$NetBSD: hppa_reloc.c,v 1.33 2010/08/06 16:33:17 joerg Exp $	*/
+/*	$NetBSD: hppa_reloc.c,v 1.34 2010/09/24 11:41:46 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2004 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hppa_reloc.c,v 1.33 2010/08/06 16:33:17 joerg Exp $");
+__RCSID("$NetBSD: hppa_reloc.c,v 1.34 2010/09/24 11:41:46 skrll Exp $");
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -83,12 +83,10 @@ store_ptr(void *where, Elf_Addr val)
 }
 
 /*
- * In the runtime architecture (ABI), PLABEL function 
- * pointers are distinguished from normal function 
- * pointers by having the next-least-significant bit
- * set.  (This bit is referred to as the L field in
- * HP documentation).  The $$dyncall millicode is
- * aware of this.
+ * In the runtime architecture (ABI), PLABEL function pointers are
+ * distinguished from normal function pointers by having the next-least-
+ * significant bit set.  (This bit is referred to as the L field in HP
+ * documentation).  The $$dyncall millicode is aware of this.
  */
 #define	RTLD_MAKE_PLABEL(plabel)	(((Elf_Addr)(plabel)) | (1 << 1))
 #define RTLD_IS_PLABEL(addr)		(((Elf_Addr)(addr)) & (1 << 1))
@@ -401,7 +399,8 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 					store_ptr(where, tmp);
 				rdbg(("DIR32 %s in %s --> %p in %s",
 				    obj->strtab + obj->symtab[symnum].st_name,
-				    obj->path, (void *)load_ptr(where), defobj->path));
+				    obj->path, (void *)load_ptr(where),
+				    defobj->path));
 			} else {
 				tmp = (Elf_Addr)(obj->relocbase +
 				    rela->r_addend);
@@ -542,7 +541,8 @@ _rtld_relocate_plt_lazy(const Obj_Entry *obj)
 }
 
 static inline int
-_rtld_relocate_plt_object(const Obj_Entry *obj, const Elf_Rela *rela, Elf_Addr *tp)
+_rtld_relocate_plt_object(const Obj_Entry *obj, const Elf_Rela *rela,
+    Elf_Addr *tp)
 {
 	Elf_Word *where = (Elf_Word *)(obj->relocbase + rela->r_offset);
 	const Elf_Sym *def;
@@ -563,7 +563,8 @@ _rtld_relocate_plt_object(const Obj_Entry *obj, const Elf_Rela *rela, Elf_Addr *
 		if (__predict_false(def == &_rtld_sym_zero))
 			return 0;
 
-		func_pc = (Elf_Addr)(defobj->relocbase + def->st_value + rela->r_addend);
+		func_pc = (Elf_Addr)(defobj->relocbase + def->st_value +
+		    rela->r_addend);
 		func_sl = (Elf_Addr)(defobj->pltgot);
 
 		rdbg(("bind now/fixup in %s --> old=(%p,%p) new=(%p,%p)",
