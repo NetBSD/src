@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.95 2010/09/09 12:23:06 pooka Exp $	*/
+/*	$NetBSD: vm.c,v 1.96 2010/09/24 22:51:51 rmind Exp $	*/
 
 /*
  * Copyright (c) 2007-2010 Antti Kantee.  All Rights Reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.95 2010/09/09 12:23:06 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.96 2010/09/24 22:51:51 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -106,29 +106,31 @@ static struct pglist vmpage_lruqueue;
 static unsigned vmpage_onqueue;
 
 static int
-pg_compare_key(const struct rb_node *n, const void *key)
+pg_compare_key(void *ctx, const void *n, const void *key)
 {
 	voff_t a = ((const struct vm_page *)n)->offset;
 	voff_t b = *(const voff_t *)key;
 
 	if (a < b)
-		return 1;
-	else if (a > b)
 		return -1;
+	else if (a > b)
+		return 1;
 	else
 		return 0;
 }
 
 static int
-pg_compare_nodes(const struct rb_node *n1, const struct rb_node *n2)
+pg_compare_nodes(void *ctx, const void *n1, const void *n2)
 {
 
-	return pg_compare_key(n1, &((const struct vm_page *)n2)->offset);
+	return pg_compare_key(ctx, n1, &((const struct vm_page *)n2)->offset);
 }
 
-const struct rb_tree_ops uvm_page_tree_ops = {
+const rb_tree_ops_t uvm_page_tree_ops = {
 	.rbto_compare_nodes = pg_compare_nodes,
 	.rbto_compare_key = pg_compare_key,
+	.rbto_node_offset = offsetof(struct vm_page, rb_node),
+	.rbto_context = NULL
 };
 
 /*
@@ -177,7 +179,7 @@ uvm_pagealloc_strat(struct uvm_object *uobj, voff_t off, struct vm_anon *anon,
 	}
 
 	TAILQ_INSERT_TAIL(&uobj->memq, pg, listq.queue);
-	rb_tree_insert_node(&uobj->rb_tree, &pg->rb_node);
+	(void)rb_tree_insert_node(&uobj->rb_tree, pg);
 
 	/*
 	 * Don't put anons on the LRU page queue.  We can't flush them
@@ -215,7 +217,7 @@ uvm_pagefree(struct vm_page *pg)
 	TAILQ_REMOVE(&uobj->memq, pg, listq.queue);
 
 	uobj->uo_npages--;
-	rb_tree_remove_node(&uobj->rb_tree, &pg->rb_node);
+	rb_tree_remove_node(&uobj->rb_tree, pg);
 
 	if (!UVM_OBJ_IS_AOBJ(uobj)) {
 		TAILQ_REMOVE(&vmpage_lruqueue, pg, pageq.queue);
@@ -468,7 +470,7 @@ uvm_pagelookup(struct uvm_object *uobj, voff_t off)
 {
 	struct vm_page *pg;
 
-	pg = (struct vm_page *)rb_tree_find_node(&uobj->rb_tree, &off);
+	pg = rb_tree_find_node(&uobj->rb_tree, &off);
 	if (pg && !UVM_OBJ_IS_AOBJ(pg->uobject)) {
 		mutex_enter(&uvm_pageqlock);
 		TAILQ_REMOVE(&vmpage_lruqueue, pg, pageq.queue);
