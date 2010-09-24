@@ -1,4 +1,4 @@
-/*	$NetBSD: setenv.c,v 1.34 2010/09/23 17:30:49 christos Exp $	*/
+/*	$NetBSD: setenv.c,v 1.35 2010/09/24 14:31:15 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)setenv.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: setenv.c,v 1.34 2010/09/23 17:30:49 christos Exp $");
+__RCSID("$NetBSD: setenv.c,v 1.35 2010/09/24 14:31:15 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -81,7 +81,7 @@ setenv(const char *name, const char *value, int rewrite)
 	c = __findenv(name, &offset);
 
 	if (__allocenv(offset) == -1)
-		return -1;
+		goto bad;
 
 	if (*value == '=')			/* no `=' in value */
 		++value;
@@ -90,7 +90,7 @@ setenv(const char *name, const char *value, int rewrite)
 	if (c != NULL) {
 		if (!rewrite)
 			goto good;
-		if (strlen(c) > l_value)	/* old larger; copy over */
+		if (strlen(c) >= l_value)	/* old is enough; copy over */
 			goto copy;
 	} else {					/* create new slot */
 		size = (size_t)(sizeof(char *) * (offset + 2));
@@ -113,6 +113,8 @@ setenv(const char *name, const char *value, int rewrite)
 	/* name + `=' + value */
 	if ((c = malloc(size + l_value + 2)) == NULL)
 		goto bad;
+	if (bit_test(__environ_malloced, offset))
+		free(environ[offset]);
 	environ[offset] = c;
 	(void)memcpy(c, name, size);
 	c += size;
