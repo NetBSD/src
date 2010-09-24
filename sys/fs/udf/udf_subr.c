@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.107 2010/07/21 17:52:11 hannken Exp $ */
+/* $NetBSD: udf_subr.c,v 1.108 2010/09/24 22:51:50 rmind Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.107 2010/07/21 17:52:11 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.108 2010/09/24 22:51:50 rmind Exp $");
 #endif /* not lint */
 
 
@@ -3396,34 +3396,37 @@ udf_compare_icb(const struct long_ad *a, const struct long_ad *b)
 
 
 static int
-udf_compare_rbnodes(const struct rb_node *a, const struct rb_node *b)
+udf_compare_rbnodes(void *ctx, const void *a, const void *b)
 {
-	struct udf_node *a_node = RBTOUDFNODE(a);
-	struct udf_node *b_node = RBTOUDFNODE(b);
+	const struct udf_node *a_node = a;
+	const struct udf_node *b_node = b;
 
 	return udf_compare_icb(&a_node->loc, &b_node->loc);
 }
 
 
 static int
-udf_compare_rbnode_icb(const struct rb_node *a, const void *key)
+udf_compare_rbnode_icb(void *ctx, const void *a, const void *key)
 {
-	struct udf_node *a_node = RBTOUDFNODE(a);
+	const struct udf_node *a_node = a;
 	const struct long_ad * const icb = key;
 
 	return udf_compare_icb(&a_node->loc, icb);
 }
 
 
-static const struct rb_tree_ops udf_node_rbtree_ops = {
+static const rb_tree_ops_t udf_node_rbtree_ops = {
 	.rbto_compare_nodes = udf_compare_rbnodes,
-	.rbto_compare_key   = udf_compare_rbnode_icb,
+	.rbto_compare_key = udf_compare_rbnode_icb,
+	.rbto_node_offset = offsetof(struct udf_node, rbnode),
+	.rbto_context = NULL
 };
 
 
 void
 udf_init_nodes_tree(struct udf_mount *ump)
 {
+
 	rb_tree_init(&ump->udf_node_tree, &udf_node_rbtree_ops);
 }
 
@@ -3431,16 +3434,14 @@ udf_init_nodes_tree(struct udf_mount *ump)
 static struct udf_node *
 udf_node_lookup(struct udf_mount *ump, struct long_ad *icbptr)
 {
-	struct rb_node  *rb_node;
 	struct udf_node *udf_node;
 	struct vnode *vp;
 
 loop:
 	mutex_enter(&ump->ihash_lock);
 
-	rb_node = rb_tree_find_node(&ump->udf_node_tree, icbptr);
-	if (rb_node) {
-		udf_node = RBTOUDFNODE(rb_node);
+	udf_node = rb_tree_find_node(&ump->udf_node_tree, icbptr);
+	if (udf_node) {
 		vp = udf_node->vnode;
 		assert(vp);
 		mutex_enter(&vp->v_interlock);
@@ -3462,7 +3463,7 @@ udf_register_node(struct udf_node *udf_node)
 
 	/* add node to the rb tree */
 	mutex_enter(&ump->ihash_lock);
-		rb_tree_insert_node(&ump->udf_node_tree, &udf_node->rbnode);
+	rb_tree_insert_node(&ump->udf_node_tree, udf_node);
 	mutex_exit(&ump->ihash_lock);
 }
 
@@ -3474,7 +3475,7 @@ udf_deregister_node(struct udf_node *udf_node)
 
 	/* remove node from the rb tree */
 	mutex_enter(&ump->ihash_lock);
-		rb_tree_remove_node(&ump->udf_node_tree, &udf_node->rbnode);
+	rb_tree_remove_node(&ump->udf_node_tree, udf_node);
 	mutex_exit(&ump->ihash_lock);
 }
 
@@ -6367,7 +6368,7 @@ derailed:
 	KASSERT(mutex_owned(&mntvnode_lock));
 
 	DPRINTF(SYNC, ("sync_pass %d\n", pass));
-	udf_node = RBTOUDFNODE(RB_TREE_MIN(&ump->udf_node_tree));
+	udf_node = RB_TREE_MIN(&ump->udf_node_tree);
 	for (;udf_node; udf_node = n_udf_node) {
 		DPRINTF(SYNC, ("."));
 
@@ -6375,9 +6376,8 @@ derailed:
 		vp = udf_node->vnode;
 
 		mutex_enter(&vp->v_interlock);
-		n_udf_node = RBTOUDFNODE(rb_tree_iterate(
-			&ump->udf_node_tree, &udf_node->rbnode,
-			RB_DIR_RIGHT));
+		n_udf_node = rb_tree_iterate(&ump->udf_node_tree,
+		    udf_node, RB_DIR_RIGHT);
 
 		if (n_udf_node)
 			n_udf_node->i_flags |= IN_SYNCED;

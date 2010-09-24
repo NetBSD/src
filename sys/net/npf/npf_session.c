@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_session.c,v 1.2 2010/09/16 04:53:27 rmind Exp $	*/
+/*	$NetBSD: npf_session.c,v 1.3 2010/09/24 22:51:50 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_session.c,v 1.2 2010/09/16 04:53:27 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_session.c,v 1.3 2010/09/24 22:51:50 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -139,17 +139,13 @@ struct npf_session {
 	struct timespec 		s_atime;
 };
 
-/* Return pointer to npf_session_t from RB-tree node. (XXX fix rb-tree) */
-#define	NPF_RBN2SESENT(n)		\
-    (npf_session_t *)((uintptr_t)n - offsetof(npf_session_t, se_entry.rbnode))
-
 LIST_HEAD(npf_sesslist, npf_session);
 
 #define	SESS_HASH_BUCKETS		1024	/* XXX tune + make tunable */
 #define	SESS_HASH_MASK			(SESS_HASH_BUCKETS - 1)
 
 typedef struct {
-	struct rb_tree			sh_tree;
+	rb_tree_t			sh_tree;
 	krwlock_t			sh_lock;
 	u_int				sh_count;
 } npf_sess_hash_t;
@@ -229,10 +225,10 @@ npf_session_sysfini(void)
  */
 
 static signed int
-sess_rbtree_cmp_nodes(const struct rb_node *n1, const struct rb_node *n2)
+sess_rbtree_cmp_nodes(void *ctx, const void *n1, const void *n2)
 {
-	const npf_session_t * const se1 = NPF_RBN2SESENT(n1);
-	const npf_session_t * const se2 = NPF_RBN2SESENT(n2);
+	const npf_session_t * const se1 = n1;
+	const npf_session_t * const se2 = n2;
 
 	/*
 	 * Note: must compare equivalent streams.
@@ -269,9 +265,9 @@ sess_rbtree_cmp_nodes(const struct rb_node *n1, const struct rb_node *n2)
 }
 
 static signed int
-sess_rbtree_cmp_key(const struct rb_node *n1, const void *key)
+sess_rbtree_cmp_key(void *ctx, const void *n1, const void *key)
 {
-	const npf_session_t * const se = NPF_RBN2SESENT(n1);
+	const npf_session_t * const se = n1;
 	const npf_cache_t * const npc = key;
 	in_port_t sport, dport;
 	in_addr_t src, dst;
@@ -302,9 +298,11 @@ sess_rbtree_cmp_key(const struct rb_node *n1, const void *key)
 	return 0;
 }
 
-static const struct rb_tree_ops sess_rbtree_ops = {
+static const rb_tree_ops_t sess_rbtree_ops = {
 	.rbto_compare_nodes = sess_rbtree_cmp_nodes,
-	.rbto_compare_key = sess_rbtree_cmp_key
+	.rbto_compare_key = sess_rbtree_cmp_key,
+	.rbto_node_offset = offsetof(npf_session_t, se_entry.rbnode),
+	.rbto_context = NULL
 };
 
 static inline npf_sess_hash_t *
@@ -484,7 +482,6 @@ npf_session_inspect(npf_cache_t *npc, nbuf_t *nbuf,
     struct ifnet *ifp, const int di)
 {
 	npf_sess_hash_t *sh;
-	struct rb_node *nd;
 	npf_session_t *se;
 
 	/* Attempt to fetch and cache all relevant IPv4 data. */
@@ -519,12 +516,11 @@ npf_session_inspect(npf_cache_t *npc, nbuf_t *nbuf,
 
 	/* Lookup the tree for a state entry. */
 	rw_enter(&sh->sh_lock, RW_READER);
-	nd = rb_tree_find_node(&sh->sh_tree, key);
-	if (nd == NULL) {
+	se = rb_tree_find_node(&sh->sh_tree, key);
+	if (se == NULL) {
 		rw_exit(&sh->sh_lock);
 		return NULL;
 	}
-	se = NPF_RBN2SESENT(nd);
 
 	/* Inspect the protocol data and handle state changes. */
 	if (npf_session_pstate(npc, se, di)) {
@@ -606,7 +602,7 @@ npf_session_establish(const npf_cache_t *npc, npf_nat_t *nt, const int di)
 	/* Find the hash bucket and insert the state into the tree. */
 	sh = sess_hash_bucket(npc);
 	rw_enter(&sh->sh_lock, RW_WRITER);
-	ok = rb_tree_insert_node(&sh->sh_tree, &se->se_entry.rbnode);
+	ok = rb_tree_insert_node(&sh->sh_tree, se) == se;
 	if (__predict_true(ok)) {
 		sh->sh_count++;
 		DPRINTF(("NPF: new se %p (link %p, nat %p)\n",
@@ -727,7 +723,7 @@ static void
 npf_session_gc(struct npf_sesslist *gc_list, bool flushall)
 {
 	struct timespec tsnow;
-	npf_session_t *se;
+	npf_session_t *se, *nse;
 	u_int i;
 
 	getnanouptime(&tsnow);
@@ -735,7 +731,6 @@ npf_session_gc(struct npf_sesslist *gc_list, bool flushall)
 	/* Scan each session in the hash table. */
 	for (i = 0; i < SESS_HASH_BUCKETS; i++) {
 		npf_sess_hash_t *sh;
-		struct rb_node *nd;
 
 		sh = &sess_hashtbl[i];
 		if (sh->sh_count == 0) {
@@ -743,17 +738,16 @@ npf_session_gc(struct npf_sesslist *gc_list, bool flushall)
 		}
 		rw_enter(&sh->sh_lock, RW_WRITER);
 		/* For each (left -> right) ... */
-		nd = rb_tree_iterate(&sh->sh_tree, NULL, RB_DIR_LEFT);
-		while (nd != NULL) {
+		se = rb_tree_iterate(&sh->sh_tree, NULL, RB_DIR_LEFT);
+		while (se != NULL) {
 			/* Get item, pre-iterate, skip if not expired. */
-			se = NPF_RBN2SESENT(nd);
-			nd = rb_tree_iterate(&sh->sh_tree, nd, RB_DIR_RIGHT);
+			nse = rb_tree_iterate(&sh->sh_tree, se, RB_DIR_RIGHT);
 			if (!npf_session_expired(se, &tsnow) && !flushall) {
 				continue;
 			}
 
 			/* Expired - move to G/C list. */
-			rb_tree_remove_node(&sh->sh_tree, &se->se_entry.rbnode);
+			rb_tree_remove_node(&sh->sh_tree, se);
 			LIST_INSERT_HEAD(gc_list, se, se_entry.gclist);
 			sh->sh_count--;
 
@@ -765,6 +759,7 @@ npf_session_gc(struct npf_sesslist *gc_list, bool flushall)
 				    se, se->s_nat_se));
 				se->s_nat_se = NULL;
 			}
+			se = nse;
 		}
 		KASSERT(!flushall || sh->sh_count == 0);
 		rw_exit(&sh->sh_lock);
@@ -845,7 +840,6 @@ void
 npf_sessions_dump(void)
 {
 	npf_sess_hash_t *sh;
-	struct rb_node *nd;
 	npf_session_t *se;
 	struct timespec tsnow;
 
@@ -862,12 +856,10 @@ npf_sessions_dump(void)
 			continue;
 		}
 		printf("s_bucket %d (count = %d)\n", i, sh->sh_count);
-		RB_TREE_FOREACH(nd, &sh->sh_tree) {
+		RB_TREE_FOREACH(se, &sh->sh_tree) {
 			struct timespec tsdiff;
 			struct in_addr ip;
 			int etime;
-
-			se = NPF_RBN2SESENT(nd);
 
 			timespecsub(&tsnow, &se->s_atime, &tsdiff);
 			etime = (se->s_state == SE_ESTABLISHED) ?

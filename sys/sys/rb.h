@@ -1,4 +1,4 @@
-/* $NetBSD: rb.h,v 1.13 2009/08/16 10:57:01 yamt Exp $ */
+/*	$NetBSD: rb.h,v 1.14 2010/09/24 22:51:51 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -28,6 +28,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
 #ifndef _SYS_RB_H_
 #define	_SYS_RB_H_
 
@@ -40,7 +41,9 @@
 #include <sys/queue.h>
 #include <sys/endian.h>
 
-struct rb_node {
+__BEGIN_DECLS
+
+typedef struct rb_node {
 	struct rb_node *rb_nodes[2];
 #define	RB_DIR_LEFT		0
 #define	RB_DIR_RIGHT		1
@@ -95,7 +98,7 @@ struct rb_node {
 #ifdef RBDEBUG
 	TAILQ_ENTRY(rb_node) rb_link;
 #endif
-};
+} rb_node_t;
 
 #define RB_TREE_MIN(T) rb_tree_iterate((T), NULL, RB_DIR_LEFT)
 #define RB_TREE_MAX(T) rb_tree_iterate((T), NULL, RB_DIR_RIGHT)
@@ -124,29 +127,31 @@ TAILQ_HEAD(rb_node_qh, rb_node);
 
 /*
  * rbto_compare_nodes_fn:
- *	return a positive value if the first node < the second node.
- *	return a negative value if the first node > the second node.
+ *	return a positive value if the first node > the second node.
+ *	return a negative value if the first node < the second node.
  *	return 0 if they are considered same.
  *
  * rbto_compare_key_fn:
- *	return a positive value if the node < the key.
- *	return a negative value if the node > the key.
+ *	return a positive value if the node > the key.
+ *	return a negative value if the node < the key.
  *	return 0 if they are considered same.
  */
 
-typedef signed int (*const rbto_compare_nodes_fn)(const struct rb_node *,
-    const struct rb_node *);
-typedef signed int (*const rbto_compare_key_fn)(const struct rb_node *,
-    const void *);
+typedef signed int (*const rbto_compare_nodes_fn)(void *,
+    const void *, const void *);
+typedef signed int (*const rbto_compare_key_fn)(void *,
+    const void *, const void *);
 
-struct rb_tree_ops {
+typedef struct {
 	rbto_compare_nodes_fn rbto_compare_nodes;
 	rbto_compare_key_fn rbto_compare_key;
-};
+	size_t rbto_node_offset;
+	void *rbto_context;
+} rb_tree_ops_t;
 
-struct rb_tree {
+typedef struct rb_tree {
 	struct rb_node *rbt_root;
-	const struct rb_tree_ops *rbt_ops;
+	const rb_tree_ops_t *rbt_ops;
 	struct rb_node *rbt_minmax[2];
 #ifdef RBDEBUG
 	struct rb_node_qh rbt_nodes;
@@ -160,7 +165,7 @@ struct rb_tree {
 	unsigned int rbt_removal_rebalance_calls;
 	unsigned int rbt_removal_rebalance_passes;
 #endif
-};
+} rb_tree_t;
 
 #ifdef RBSTATS
 #define	RBSTAT_INC(v)	((void)((v)++))
@@ -170,22 +175,20 @@ struct rb_tree {
 #define	RBSTAT_DEC(v)	do { } while (/*CONSTCOND*/0)
 #endif
 
-void	rb_tree_init(struct rb_tree *, const struct rb_tree_ops *);
-bool	rb_tree_insert_node(struct rb_tree *, struct rb_node *);
-struct rb_node	*
-	rb_tree_find_node(struct rb_tree *, const void *);
-struct rb_node	*
-	rb_tree_find_node_geq(struct rb_tree *, const void *);
-struct rb_node	*
-	rb_tree_find_node_leq(struct rb_tree *, const void *);
-void	rb_tree_remove_node(struct rb_tree *, struct rb_node *);
-struct rb_node *
-	rb_tree_iterate(struct rb_tree *, struct rb_node *, const unsigned int);
+void	rb_tree_init(rb_tree_t *, const rb_tree_ops_t *);
+void *	rb_tree_insert_node(rb_tree_t *, void *);
+void *	rb_tree_find_node(rb_tree_t *, const void *);
+void *	rb_tree_find_node_geq(rb_tree_t *, const void *);
+void *	rb_tree_find_node_leq(rb_tree_t *, const void *);
+void	rb_tree_remove_node(rb_tree_t *, void *);
+void *	rb_tree_iterate(rb_tree_t *, void *, const unsigned int);
 #ifdef RBDEBUG
-void	rb_tree_check(const struct rb_tree *, bool);
+void	rb_tree_check(const rb_tree_t *, bool);
 #endif
 #ifdef RBSTATS
-void	rb_tree_depths(const struct rb_tree *, size_t *);
+void	rb_tree_depths(const rb_tree_t *, size_t *);
 #endif
+
+__END_DECLS
 
 #endif	/* _SYS_RB_H_*/

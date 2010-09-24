@@ -1,4 +1,4 @@
-/* $NetBSD: udf.h,v 1.41 2010/02/25 16:15:57 reinoud Exp $ */
+/* $NetBSD: udf.h,v 1.42 2010/09/24 22:51:50 rmind Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -356,12 +356,6 @@ struct udf_mount {
 	struct udf_strategy	*strategy;
 	void			*strategy_private;
 };
-
-
-#define RBTOUDFNODE(node) \
-	((node) ? \
-	 (void *)((uintptr_t)(node) - offsetof(struct udf_node, rbnode)) \
-	 : NULL)
 
 /*
  * UDF node describing a file/directory.

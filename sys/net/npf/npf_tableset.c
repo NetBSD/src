@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_tableset.c,v 1.1 2010/08/22 18:56:23 rmind Exp $	*/
+/*	$NetBSD: npf_tableset.c,v 1.2 2010/09/24 22:51:50 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2010 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_tableset.c,v 1.1 2010/08/22 18:56:23 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_tableset.c,v 1.2 2010/09/24 22:51:50 rmind Exp $");
 #endif
 
 #include <sys/param.h>
@@ -62,18 +62,15 @@ __KERNEL_RCSID(0, "$NetBSD: npf_tableset.c,v 1.1 2010/08/22 18:56:23 rmind Exp $
 
 /* Table entry structure. */
 struct npf_tblent {
-	/* IPv4 CIDR block. */
-	in_addr_t			te_addr;
-	in_addr_t			te_mask;
+	/* Hash/tree entry. */
 	union {
 		LIST_ENTRY(npf_tblent)	hashq;
 		struct rb_node		rbnode;
 	} te_entry;
+	/* IPv4 CIDR block. */
+	in_addr_t			te_addr;
+	in_addr_t			te_mask;
 };
-
-/* Return pointer to npf_tblent_t from RB-tree node. (XXX fix rb-tree) */
-#define	NPF_RBN2TBLENT(n)		\
-    (npf_tblent_t *)((uintptr_t)n - offsetof(npf_tblent_t, te_entry.rbnode))
 
 LIST_HEAD(npf_hashl, npf_tblent);
 
@@ -89,7 +86,7 @@ struct npf_table {
 	u_int				t_type;
 	struct npf_hashl *		t_hashl;
 	u_long				t_hashmask;
-	struct rb_tree			t_rbtree;
+	rb_tree_t			t_rbtree;
 };
 
 /* Global table array and its lock. */
@@ -201,37 +198,39 @@ npf_tableset_reload(npf_tableset_t *tblset)
  */
 
 static signed int
-table_rbtree_cmp_nodes(const struct rb_node *n1, const struct rb_node *n2)
+table_rbtree_cmp_nodes(void *ctx, const void *n1, const void *n2)
 {
-	const npf_tblent_t *te1 = NPF_RBN2TBLENT(n1);
-	const npf_tblent_t *te2 = NPF_RBN2TBLENT(n2);
+	const npf_tblent_t * const te1 = n1;
+	const npf_tblent_t * const te2 = n2;
 	const in_addr_t x = te1->te_addr & te1->te_mask;
 	const in_addr_t y = te2->te_addr & te2->te_mask;
 
 	if (x < y)
-		return 1;
-	if (x > y)
 		return -1;
+	if (x > y)
+		return 1;
 	return 0;
 }
 
 static signed int
-table_rbtree_cmp_key(const struct rb_node *n1, const void *key)
+table_rbtree_cmp_key(void *ctx, const void *n1, const void *key)
 {
-	const npf_tblent_t *te = NPF_RBN2TBLENT(n1);
+	const npf_tblent_t * const te = n1;
 	const in_addr_t x = te->te_addr & te->te_mask;
 	const in_addr_t y = *(const in_addr_t *)key;
 
 	if (x < y)
-		return 1;
-	if (x > y)
 		return -1;
+	if (x > y)
+		return 1;
 	return 0;
 }
 
-static const struct rb_tree_ops table_rbtree_ops = {
+static const rb_tree_ops_t table_rbtree_ops = {
 	.rbto_compare_nodes = table_rbtree_cmp_nodes,
-	.rbto_compare_key = table_rbtree_cmp_key
+	.rbto_compare_key = table_rbtree_cmp_key,
+	.rbto_node_offset = offsetof(npf_tblent_t, te_entry.rbnode),
+	.rbto_context = NULL
 };
 
 /*
@@ -285,7 +284,6 @@ void
 npf_table_destroy(npf_table_t *t)
 {
 	npf_tblent_t *e;
-	struct rb_node *nd;
 	u_int n;
 
 	switch (t->t_type) {
@@ -299,10 +297,9 @@ npf_table_destroy(npf_table_t *t)
 		hashdone(t->t_hashl, HASH_LIST, t->t_hashmask);
 		break;
 	case NPF_TABLE_RBTREE:
-		while ((nd = rb_tree_iterate(&t->t_rbtree, NULL,
-		    RB_DIR_RIGHT)) != NULL) {
-			e = NPF_RBN2TBLENT(nd);
-			rb_tree_remove_node(&t->t_rbtree, &e->te_entry.rbnode);
+		while ((e = rb_tree_iterate(&t->t_rbtree, NULL,
+		    RB_DIR_LEFT)) != NULL) {
+			rb_tree_remove_node(&t->t_rbtree, e);
 			pool_cache_put(tblent_cache, e);
 		}
 		break;
@@ -442,7 +439,7 @@ npf_table_add_v4cidr(npf_tableset_t *tset, u_int tid,
 		break;
 	case NPF_TABLE_RBTREE:
 		/* Insert entry.  Returns false, if duplicate. */
-		if (!rb_tree_insert_node(&t->t_rbtree, &e->te_entry.rbnode)) {
+		if (rb_tree_insert_node(&t->t_rbtree, e) != e) {
 			error = EEXIST;
 		}
 		break;
@@ -465,7 +462,6 @@ npf_table_rem_v4cidr(npf_tableset_t *tset, u_int tid,
     in_addr_t addr, in_addr_t mask)
 {
 	struct npf_hashl *htbl;
-	struct rb_node *nd;
 	npf_tblent_t *e;
 	npf_table_t *t;
 	in_addr_t val;
@@ -497,10 +493,9 @@ npf_table_rem_v4cidr(npf_tableset_t *tset, u_int tid,
 	case NPF_TABLE_RBTREE:
 		/* Key: (address & mask). */
 		val = addr & mask;
-		nd = rb_tree_find_node(&t->t_rbtree, &val);
-		if (__predict_true(nd != NULL)) {
-			e = NPF_RBN2TBLENT(nd);
-			rb_tree_remove_node(&t->t_rbtree, &e->te_entry.rbnode);
+		e = rb_tree_find_node(&t->t_rbtree, &val);
+		if (__predict_true(e != NULL)) {
+			rb_tree_remove_node(&t->t_rbtree, e);
 		} else {
 			error = ESRCH;
 		}
@@ -525,7 +520,6 @@ int
 npf_table_match_v4addr(u_int tid, in_addr_t ip4addr)
 {
 	struct npf_hashl *htbl;
-	struct rb_node *nd;
 	npf_tblent_t *e;
 	npf_table_t *t;
 
@@ -546,8 +540,7 @@ npf_table_match_v4addr(u_int tid, in_addr_t ip4addr)
 		}
 		break;
 	case NPF_TABLE_RBTREE:
-		nd = rb_tree_find_node(&t->t_rbtree, &ip4addr);
-		e = NPF_RBN2TBLENT(nd);
+		e = rb_tree_find_node(&t->t_rbtree, &ip4addr);
 		KASSERT((ip4addr & e->te_mask) == e->te_addr);
 		break;
 	default:

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_node.c,v 1.113 2010/07/21 17:52:13 hannken Exp $	*/
+/*	$NetBSD: nfs_node.c,v 1.114 2010/09/24 22:51:50 rmind Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.113 2010/07/21 17:52:13 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.114 2010/09/24 22:51:50 rmind Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -106,9 +106,6 @@ nfs_node_done(void)
 	workqueue_destroy(nfs_sillyworkq);
 }
 
-#define	RBTONFSNODE(node) \
-	(void *)((uintptr_t)(node) - offsetof(struct nfsnode, n_rbnode))
-
 struct fh_match {
 	nfsfh_t *fhm_fhp;
 	size_t fhm_fhsize;
@@ -116,10 +113,10 @@ struct fh_match {
 };
 
 static int
-nfs_compare_nodes(const struct rb_node *parent, const struct rb_node *node)
+nfs_compare_nodes(void *ctx, const void *parent, const void *node)
 {
-	const struct nfsnode * const pnp = RBTONFSNODE(parent);
-	const struct nfsnode * const np = RBTONFSNODE(node);
+	const struct nfsnode * const pnp = parent;
+	const struct nfsnode * const np = node;
 
 	if (pnp->n_fhsize != np->n_fhsize)
 		return np->n_fhsize - pnp->n_fhsize;
@@ -128,9 +125,9 @@ nfs_compare_nodes(const struct rb_node *parent, const struct rb_node *node)
 }
 
 static int
-nfs_compare_node_fh(const struct rb_node *b, const void *key)
+nfs_compare_node_fh(void *ctx, const void *b, const void *key)
 {
-	const struct nfsnode * const pnp = RBTONFSNODE(b);
+	const struct nfsnode * const pnp = b;
 	const struct fh_match * const fhm = key;
 
 	if (pnp->n_fhsize != fhm->fhm_fhsize)
@@ -139,17 +136,19 @@ nfs_compare_node_fh(const struct rb_node *b, const void *key)
 	return memcmp(fhm->fhm_fhp, pnp->n_fhp, pnp->n_fhsize);
 }
 
-static const struct rb_tree_ops nfs_node_rbtree_ops = {
+static const rb_tree_ops_t nfs_node_rbtree_ops = {
 	.rbto_compare_nodes = nfs_compare_nodes,
 	.rbto_compare_key = nfs_compare_node_fh,
+	.rbto_node_offset = offsetof(struct nfsnode, n_rbnode),
+	.rbto_context = NULL
 };
 
 void
 nfs_rbtinit(struct nfsmount *nmp)
 {
+
 	rb_tree_init(&nmp->nm_rbtree, &nfs_node_rbtree_ops);
 }
-
 
 /*
  * Look up a vnode/nfsnode by file handle.
@@ -158,23 +157,22 @@ nfs_rbtinit(struct nfsmount *nmp)
  * nfsnode structure is returned.
  */
 int
-nfs_nget1(struct mount *mntp, nfsfh_t *fhp, int fhsize, struct nfsnode **npp, int lkflags)
+nfs_nget1(struct mount *mntp, nfsfh_t *fhp, int fhsize, struct nfsnode **npp,
+    int lkflags)
 {
 	struct nfsnode *np;
 	struct vnode *vp;
 	struct nfsmount *nmp = VFSTONFS(mntp);
 	int error;
 	struct fh_match fhm;
-	struct rb_node *node;
 
 	fhm.fhm_fhp = fhp;
 	fhm.fhm_fhsize = fhsize;
 
 loop:
 	rw_enter(&nmp->nm_rbtlock, RW_READER);
-	node = rb_tree_find_node(&nmp->nm_rbtree, &fhm);
-	if (node != NULL) {
-		np = RBTONFSNODE(node);
+	np = rb_tree_find_node(&nmp->nm_rbtree, &fhm);
+	if (np != NULL) {
 		vp = NFSTOV(np);
 		mutex_enter(&vp->v_interlock);
 		rw_exit(&nmp->nm_rbtlock);
@@ -234,7 +232,7 @@ loop:
 	VOP_LOCK(vp, LK_EXCLUSIVE);
 	NFS_INVALIDATE_ATTRCACHE(np);
 	uvm_vnp_setsize(vp, 0);
-	rb_tree_insert_node(&nmp->nm_rbtree, &np->n_rbnode);
+	(void)rb_tree_insert_node(&nmp->nm_rbtree, np);
 	rw_exit(&nmp->nm_rbtlock);
 
 	*npp = np;
@@ -294,7 +292,7 @@ nfs_reclaim(void *v)
 		vprint("nfs_reclaim: pushing active", vp);
 
 	rw_enter(&nmp->nm_rbtlock, RW_WRITER);
-	rb_tree_remove_node(&nmp->nm_rbtree, &np->n_rbnode);
+	rb_tree_remove_node(&nmp->nm_rbtree, np);
 	rw_exit(&nmp->nm_rbtlock);
 
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.292 2010/06/22 18:34:50 rmind Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.293 2010/09/24 22:51:51 rmind Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.292 2010/06/22 18:34:50 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.293 2010/09/24 22:51:51 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -318,53 +318,56 @@ int _uvm_map_sanity(struct vm_map *);
 int _uvm_tree_sanity(struct vm_map *);
 static vsize_t uvm_rb_maxgap(const struct vm_map_entry *);
 
-CTASSERT(offsetof(struct vm_map_entry, rb_node) == 0);
 #define	ROOT_ENTRY(map)		((struct vm_map_entry *)(map)->rb_tree.rbt_root)
 #define	LEFT_ENTRY(entry)	((struct vm_map_entry *)(entry)->rb_node.rb_left)
 #define	RIGHT_ENTRY(entry)	((struct vm_map_entry *)(entry)->rb_node.rb_right)
 #define	PARENT_ENTRY(map, entry) \
 	(ROOT_ENTRY(map) == (entry) \
-	    ? NULL \
-	    : (struct vm_map_entry *)RB_FATHER(&(entry)->rb_node))
+	    ? NULL : (struct vm_map_entry *)RB_FATHER(&(entry)->rb_node))
 
 static int
-uvm_map_compare_nodes(const struct rb_node *nparent,
-	const struct rb_node *nkey)
+uvm_map_compare_nodes(void *ctx, const void *nparent, const void *nkey)
 {
-	const struct vm_map_entry *eparent = (const void *) nparent;
-	const struct vm_map_entry *ekey = (const void *) nkey;
+	const struct vm_map_entry *eparent = nparent;
+	const struct vm_map_entry *ekey = nkey;
 
 	KASSERT(eparent->start < ekey->start || eparent->start >= ekey->end);
 	KASSERT(ekey->start < eparent->start || ekey->start >= eparent->end);
 
-	if (ekey->start < eparent->start)
+	if (eparent->start < ekey->start)
 		return -1;
-	if (ekey->start >= eparent->end)
+	if (eparent->end >= ekey->start)
 		return 1;
 	return 0;
 }
 
 static int
-uvm_map_compare_key(const struct rb_node *nparent, const void *vkey)
+uvm_map_compare_key(void *ctx, const void *nparent, const void *vkey)
 {
-	const struct vm_map_entry *eparent = (const void *) nparent;
+	const struct vm_map_entry *eparent = nparent;
 	const vaddr_t va = *(const vaddr_t *) vkey;
 
-	if (va < eparent->start)
+	if (eparent->start < va)
 		return -1;
-	if (va >= eparent->end)
+	if (eparent->end >= va)
 		return 1;
 	return 0;
 }
 
-static const struct rb_tree_ops uvm_map_tree_ops = {
+static const rb_tree_ops_t uvm_map_tree_ops = {
 	.rbto_compare_nodes = uvm_map_compare_nodes,
 	.rbto_compare_key = uvm_map_compare_key,
+	.rbto_node_offset = offsetof(struct vm_map_entry, rb_node),
+	.rbto_context = NULL
 };
 
+/*
+ * uvm_rb_gap: return the gap size between our entry and next entry.
+ */
 static inline vsize_t
 uvm_rb_gap(const struct vm_map_entry *entry)
 {
+
 	KASSERT(entry->next != NULL);
 	return entry->next->start - entry->end;
 }
@@ -402,16 +405,18 @@ uvm_rb_fixup(struct vm_map *map, struct vm_map_entry *entry)
 	while ((parent = PARENT_ENTRY(map, entry)) != NULL) {
 		struct vm_map_entry *brother;
 		vsize_t maxgap = parent->gap;
+		unsigned int which;
 
 		KDASSERT(parent->gap == uvm_rb_gap(parent));
 		if (maxgap < entry->maxgap)
 			maxgap = entry->maxgap;
 		/*
-		 * Since we work our towards the root, we know entry's maxgap
-		 * value is ok but its brothers may now be out-of-date due
-		 * rebalancing.  So refresh it.
+		 * Since we work towards the root, we know entry's maxgap
+		 * value is OK, but its brothers may now be out-of-date due
+		 * to rebalancing.  So refresh it.
 		 */
-		brother = (struct vm_map_entry *)parent->rb_node.rb_nodes[RB_POSITION(&entry->rb_node) ^ RB_DIR_OTHER];
+		which = RB_POSITION(&entry->rb_node) ^ RB_DIR_OTHER;
+		brother = (struct vm_map_entry *)parent->rb_node.rb_nodes[which];
 		if (brother != NULL) {
 			KDASSERT(brother->gap == uvm_rb_gap(brother));
 			brother->maxgap = uvm_rb_maxgap(brother);
@@ -427,12 +432,16 @@ uvm_rb_fixup(struct vm_map *map, struct vm_map_entry *entry)
 static void
 uvm_rb_insert(struct vm_map *map, struct vm_map_entry *entry)
 {
+	struct vm_map_entry *ret;
+
 	entry->gap = entry->maxgap = uvm_rb_gap(entry);
 	if (entry->prev != &map->header)
 		entry->prev->gap = uvm_rb_gap(entry->prev);
 
-	if (!rb_tree_insert_node(&map->rb_tree, &entry->rb_node))
-		panic("uvm_rb_insert: map %p: duplicate entry?", map);
+	ret = rb_tree_insert_node(&map->rb_tree, entry);
+	KASSERTMSG(ret == entry,
+	    ("uvm_rb_insert: map %p: duplicate entry %p", map, ret)
+	);
 
 	/*
 	 * If the previous entry is not our immediate left child, then it's an
@@ -460,7 +469,7 @@ uvm_rb_remove(struct vm_map *map, struct vm_map_entry *entry)
 	if (entry->next != &map->header)
 		next_parent = PARENT_ENTRY(map, entry->next);
 
-	rb_tree_remove_node(&map->rb_tree, &entry->rb_node);
+	rb_tree_remove_node(&map->rb_tree, entry);
 
 	/*
 	 * If the previous node has a new parent, fixup the tree starting
@@ -598,8 +607,7 @@ _uvm_tree_sanity(struct vm_map *map)
 
 	for (tmp = map->header.next; tmp != &map->header;
 	    tmp = tmp->next, i++) {
-		trtmp = (void *) rb_tree_iterate(&map->rb_tree, &tmp->rb_node,
-		    RB_DIR_LEFT);
+		trtmp = rb_tree_iterate(&map->rb_tree, tmp, RB_DIR_LEFT);
 		if (trtmp == NULL)
 			trtmp = &map->header;
 		if (tmp->prev != trtmp) {
@@ -607,8 +615,7 @@ _uvm_tree_sanity(struct vm_map *map)
 			    i, tmp, tmp->prev, trtmp);
 			goto error;
 		}
-		trtmp = (void *) rb_tree_iterate(&map->rb_tree, &tmp->rb_node,
-		    RB_DIR_RIGHT);
+		trtmp = rb_tree_iterate(&map->rb_tree, tmp, RB_DIR_RIGHT);
 		if (trtmp == NULL)
 			trtmp = &map->header;
 		if (tmp->next != trtmp) {
@@ -616,7 +623,7 @@ _uvm_tree_sanity(struct vm_map *map)
 			    i, tmp, tmp->next, trtmp);
 			goto error;
 		}
-		trtmp = (void *)rb_tree_find_node(&map->rb_tree, &tmp->start);
+		trtmp = rb_tree_find_node(&map->rb_tree, &tmp->start);
 		if (trtmp != tmp) {
 			printf("lookup: %d: %p - %p: %p\n", i, tmp, trtmp,
 			    PARENT_ENTRY(map, tmp));
