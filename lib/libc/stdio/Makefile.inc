@@ -1,5 +1,5 @@
 #	from: @(#)Makefile.inc	5.7 (Berkeley) 6/27/91
-#	$NetBSD: Makefile.inc,v 1.38 2010/09/24 09:21:53 tnozaki Exp $
+#	$NetBSD: Makefile.inc,v 1.39 2010/09/24 21:50:56 christos Exp $
 
 # stdio sources
 .PATH: ${.CURDIR}/stdio
@@ -30,8 +30,8 @@ SRCS+=	gets.c sprintf.c vsprintf.c tempnam.c tmpnam.c mktemp.c
 SRCS+=	_fileno.c _fseeko.c _ftello.c
 
 MAN+=	fclose.3 ferror.3 fflush.3 fgetln.3 fgets.3 fgetwln.3 fgetws.3 \
-	flockfile.3 fopen.3 fparseln.3 fputs.3 fputws.3 fread.3 fseek.3 \
-	funopen.3 fwide.3 getc.3 getdelim.3 getwc.3 mktemp.3 printf.3 \
+	flockfile.3 fmemopen.3 fopen.3 fparseln.3 fputs.3 fputws.3 fread.3 \
+	fseek.3 funopen.3 fwide.3 getc.3 getdelim.3 getwc.3 mktemp.3 printf.3 \
 	putc.3 putwc.3 remove.3 scanf.3 setbuf.3 stdio.3 tmpnam.3 \
 	ungetc.3 ungetwc.3 wprintf.3 wscanf.3
 
