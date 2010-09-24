@@ -1,4 +1,4 @@
-/*	$NetBSD: stdio.h,v 1.77 2010/09/06 14:52:26 christos Exp $	*/
+/*	$NetBSD: stdio.h,v 1.78 2010/09/24 09:21:53 tnozaki Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -507,6 +507,11 @@ int	 dprintf(int, const char * __restrict, ...)
 #define getchar_unlocked()	getc_unlocked(stdin)
 #define putchar_unlocked(x)	putc_unlocked(x, stdout)
 #endif /* _POSIX_C_SOURCE >= 199506 || _XOPEN_SOURCE >= 500 || _REENTRANT... */
+
+#if (_POSIX_C_SOURCE - 0) >= 200809L || (_XOPEN_SOURCE - 0) >= 700 || \
+    defined(_NETBSD_SOURCE)
+FILE *fmemopen(void * __restrict, size_t, const char * __restrict);
+#endif
 
 #if _FORTIFY_SOURCE > 0
 #include <ssp/stdio.h>

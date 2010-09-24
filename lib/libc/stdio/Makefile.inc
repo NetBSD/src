@@ -1,5 +1,5 @@
 #	from: @(#)Makefile.inc	5.7 (Berkeley) 6/27/91
-#	$NetBSD: Makefile.inc,v 1.37 2010/09/06 14:52:55 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.38 2010/09/24 09:21:53 tnozaki Exp $
 
 # stdio sources
 .PATH: ${.CURDIR}/stdio
@@ -20,6 +20,7 @@ SRCS+=	asprintf.c clrerr.c dprintf.c fclose.c fdopen.c feof.c ferror.c \
 	vasprintf.c vdprintf.c vfprintf.c vfscanf.c vfwprintf.c vfwscanf.c \
 	vprintf.c vscanf.c vsnprintf.c vsnprintf_ss.c vsscanf.c vswprintf.c \
 	vswscanf.c vwprintf.c vwscanf.c wbuf.c wprintf.c wscanf.c wsetup.c
+SRCS+=	fmemopen.c
 
 .if !defined(AUDIT)
 SRCS+=	gets.c sprintf.c vsprintf.c tempnam.c tmpnam.c mktemp.c
