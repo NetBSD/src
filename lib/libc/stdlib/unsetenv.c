@@ -1,4 +1,4 @@
-/*	$NetBSD: unsetenv.c,v 1.4 2010/09/23 17:30:49 christos Exp $	*/
+/*	$NetBSD: unsetenv.c,v 1.5 2010/09/24 14:34:44 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)setenv.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: unsetenv.c,v 1.4 2010/09/23 17:30:49 christos Exp $");
+__RCSID("$NetBSD: unsetenv.c,v 1.5 2010/09/24 14:34:44 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -66,10 +66,11 @@ unsetenv(name)
 		return -1;
 	}
 
+	rwlock_wrlock(&__environ_lock);
+
 	if (__allocenv(-1) == -1)
 		return -1;
 
-	rwlock_wrlock(&__environ_lock);
 	while (__findenv(name, &offset)) {	/* if set multiple times */
 		if (bit_test(__environ_malloced, offset))
 			free(environ[offset]);
