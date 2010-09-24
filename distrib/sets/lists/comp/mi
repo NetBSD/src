@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1508 2010/09/15 16:11:28 christos Exp $
+#	$NetBSD: mi,v 1.1509 2010/09/24 21:53:00 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -5869,6 +5869,7 @@
 ./usr/share/man/cat3/fmax.0			comp-c-catman		.cat
 ./usr/share/man/cat3/fmaxf.0			comp-c-catman		.cat
 ./usr/share/man/cat3/fmaxl.0			comp-c-catman		.cat
+./usr/share/man/cat3/fmemopen.0			comp-c-catman		.cat
 ./usr/share/man/cat3/fmin.0			comp-c-catman		.cat
 ./usr/share/man/cat3/fminf.0			comp-c-catman		.cat
 ./usr/share/man/cat3/fminl.0			comp-c-catman		.cat
@@ -11815,6 +11816,7 @@
 ./usr/share/man/html3/fmax.html			comp-c-htmlman		html
 ./usr/share/man/html3/fmaxf.html		comp-c-htmlman		html
 ./usr/share/man/html3/fmaxl.html		comp-c-htmlman		html
+./usr/share/man/html3/fmemopen.html		comp-c-htmlman		html
 ./usr/share/man/html3/fmin.html			comp-c-htmlman		html
 ./usr/share/man/html3/fminf.html		comp-c-htmlman		html
 ./usr/share/man/html3/fminl.html		comp-c-htmlman		html
@@ -17673,6 +17675,7 @@
 ./usr/share/man/man3/fmax.3			comp-c-man		.man
 ./usr/share/man/man3/fmaxf.3			comp-c-man		.man
 ./usr/share/man/man3/fmaxl.3			comp-c-man		.man
+./usr/share/man/man3/fmemopen.3			comp-c-man		.man
 ./usr/share/man/man3/fmin.3			comp-c-man		.man
 ./usr/share/man/man3/fminf.3			comp-c-man		.man
 ./usr/share/man/man3/fminl.3			comp-c-man		.man
