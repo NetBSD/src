@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_reloc.c,v 1.59 2010/08/06 16:33:18 joerg Exp $	*/
+/*	$NetBSD: mips_reloc.c,v 1.60 2010/09/24 15:20:52 matt Exp $	*/
 
 /*
  * Copyright 1997 Michael L. Hitch <mhitch@montana.edu>
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mips_reloc.c,v 1.59 2010/08/06 16:33:18 joerg Exp $");
+__RCSID("$NetBSD: mips_reloc.c,v 1.60 2010/09/24 15:20:52 matt Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -74,6 +74,7 @@ caddr_t _rtld_bind(Elf_Word, Elf_Addr, Elf_Addr, Elf_Addr);
 #define	ELF_R_NXTTYPE_64_P(r_type)	(0)
 #define	Elf_Sxword			Elf32_Sword
 #endif
+#define	GOT1_MASK			(~(Elf_Addr)0 >> 1)
 
 static inline Elf_Sxword
 load_ptr(void *where, size_t len)
@@ -426,7 +427,7 @@ caddr_t
 _rtld_bind(Elf_Word a0, Elf_Addr a1, Elf_Addr a2, Elf_Addr a3)
 {
 	Elf_Addr *got = (Elf_Addr *)(a2 - 0x7ff0);
-	const Obj_Entry *obj = (Obj_Entry *)(got[1] & 0x7fffffff);
+	const Obj_Entry *obj = (Obj_Entry *)(got[1] & GOT1_MASK);
 	Elf_Addr new_value = 0;	/* XXX gcc */
 	int err;
 
