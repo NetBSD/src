@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.c,v 1.50 2010/09/19 10:33:31 mrg Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.c,v 1.51 2010/09/24 13:12:53 njoly Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.50 2010/09/19 10:33:31 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.51 2010/09/24 13:12:53 njoly Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,6 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.50 2010/09/19 10:33:31 mrg Exp 
 #include <sys/syscallargs.h>
 #include <sys/ktrace.h>
 #include <sys/kmem.h>
+#include <sys/envsys.h>
 
 #ifdef __sparc__
 #include <dev/sun/fbio.h>
@@ -249,6 +250,14 @@ netbsd32_to_vnd_ioctl50(struct netbsd32_vnd_ioctl50 *s32p, struct vnd_ioctl50 *p
 }
 
 static inline void
+netbsd32_to_plistref(struct netbsd32_plistref *s32p, struct plistref *p, u_long cmd)
+{
+
+	p->pref_plist = NETBSD32PTR64(s32p->pref_plist);
+	p->pref_len = s32p->pref_len;
+}
+
+static inline void
 netbsd32_to_u_long(netbsd32_u_long *s32p, u_long *p, u_long cmd)
 {
 
@@ -391,6 +400,14 @@ netbsd32_from_vnd_ioctl50(struct vnd_ioctl50 *p, struct netbsd32_vnd_ioctl50 *s3
 	s32p->vnd_flags = p->vnd_flags;
 	s32p->vnd_geom = p->vnd_geom;
 	s32p->vnd_size = p->vnd_size;
+}
+
+static inline void
+netbsd32_from_plistref(struct plistref *p, struct netbsd32_plistref *s32p, u_long cmd)
+{
+
+	NETBSD32PTR32(s32p->pref_plist, p->pref_plist);
+	s32p->pref_len = p->pref_len;
 }
 
 static inline void
@@ -643,6 +660,13 @@ printf("netbsd32_ioctl(%d, %x, %x): %s group %c base %d len %d\n",
 
 	case VNDIOCCLR5032:
 		IOCTL_STRUCT_CONV_TO(VNDIOCCLR50, vnd_ioctl50);
+
+	case ENVSYS_GETDICTIONARY32:
+		IOCTL_STRUCT_CONV_TO(ENVSYS_GETDICTIONARY, plistref);
+	case ENVSYS_SETDICTIONARY32:
+		IOCTL_STRUCT_CONV_TO(ENVSYS_SETDICTIONARY, plistref);
+	case ENVSYS_REMOVEPROPS32:
+		IOCTL_STRUCT_CONV_TO(ENVSYS_REMOVEPROPS, plistref);
 
 	default:
 #ifdef NETBSD32_MD_IOCTL
