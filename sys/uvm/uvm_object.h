@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_object.h,v 1.26 2008/06/04 15:06:04 ad Exp $	*/
+/*	$NetBSD: uvm_object.h,v 1.27 2010/09/24 22:51:51 rmind Exp $	*/
 
 /*
  *
@@ -105,7 +105,7 @@ extern const struct uvm_pagerops aobj_pager;
 #define	UVM_OBJ_IS_AOBJ(uobj)						\
 	((uobj)->pgops == &aobj_pager)
 
-extern const struct rb_tree_ops uvm_page_tree_ops;
+extern const rb_tree_ops_t uvm_page_tree_ops;
 
 #define	UVM_OBJ_INIT(uobj, ops, refs)					\
 	do {								\
