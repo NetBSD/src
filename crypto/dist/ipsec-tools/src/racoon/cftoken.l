@@ -1,4 +1,4 @@
-/*	$NetBSD: cftoken.l,v 1.21 2010/06/22 09:41:33 vanhu Exp $	*/
+/*	$NetBSD: cftoken.l,v 1.22 2010/09/24 15:09:29 vanhu Exp $	*/
 
 /* Id: cftoken.l,v 1.53 2006/08/22 18:17:17 manubsd Exp */
 
@@ -638,6 +638,10 @@ no		{ YYD; yylval.num = FALSE; return(BOOLEAN); }
 
 <<EOF>>		{
 			yy_delete_buffer(YY_CURRENT_BUFFER);
+			fclose (incstack[incstackp].fp);
+			incstack[incstackp].fp = NULL;
+			racoon_free(incstack[incstackp].path);
+			incstack[incstackp].path = NULL;
 			incstackp--;
     nextfile:
 			if (incstack[incstackp].matchon <
