@@ -1,4 +1,4 @@
-/*	$NetBSD: mdreloc.c,v 1.48 2010/09/24 11:57:11 skrll Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.49 2010/09/24 11:59:28 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000 Eduardo Horvath.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mdreloc.c,v 1.48 2010/09/24 11:57:11 skrll Exp $");
+__RCSID("$NetBSD: mdreloc.c,v 1.49 2010/09/24 11:59:28 skrll Exp $");
 #endif /* not lint */
 
 #include <errno.h>
@@ -504,7 +504,8 @@ _rtld_relocate_plt_objects(const Obj_Entry *obj)
  * _rtld_bind
  */
 static inline int
-_rtld_relocate_plt_object(const Obj_Entry *obj, const Elf_Rela *rela, Elf_Addr *tp)
+_rtld_relocate_plt_object(const Obj_Entry *obj, const Elf_Rela *rela,
+    Elf_Addr *tp)
 {
 	Elf_Word *where = (Elf_Word *)(obj->relocbase + rela->r_offset);
 	const Elf_Sym *def;
