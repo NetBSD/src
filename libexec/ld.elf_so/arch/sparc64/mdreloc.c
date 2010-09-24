@@ -1,4 +1,4 @@
-/*	$NetBSD: mdreloc.c,v 1.47 2010/08/06 16:33:18 joerg Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.48 2010/09/24 11:57:11 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000 Eduardo Horvath.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mdreloc.c,v 1.47 2010/08/06 16:33:18 joerg Exp $");
+__RCSID("$NetBSD: mdreloc.c,v 1.48 2010/09/24 11:57:11 skrll Exp $");
 #endif /* not lint */
 
 #include <errno.h>
@@ -554,7 +554,7 @@ _rtld_relocate_plt_object(const Obj_Entry *obj, const Elf_Rela *rela, Elf_Addr *
 	if (rela->r_addend) {
 		Elf_Addr *ptr = (Elf_Addr *)where;
 		/*
-		 * This entry is >=32768.  The relocations points to a
+		 * This entry is >= 32768.  The relocations points to a
 		 * PC-relative pointer to the bind_0 stub at the top of the
 		 * PLT section.  Update it to point to the target function.
 		 */
@@ -576,7 +576,7 @@ _rtld_relocate_plt_object(const Obj_Entry *obj, const Elf_Rela *rela, Elf_Addr *
 		 *	nop
 		 *
 		 */
-		where[1] = BAA | ((offset >> 2) &0x3fffff);
+		where[1] = BAA | ((offset >> 2) & 0x3fffff);
 		__asm volatile("iflush %0+4" : : "r" (where));
 	} else if (value < (1L<<32)) {
 		/* 
