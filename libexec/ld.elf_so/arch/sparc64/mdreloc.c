@@ -1,4 +1,4 @@
-/*	$NetBSD: mdreloc.c,v 1.49 2010/09/24 11:59:28 skrll Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.50 2010/09/24 12:00:10 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000 Eduardo Horvath.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mdreloc.c,v 1.49 2010/09/24 11:59:28 skrll Exp $");
+__RCSID("$NetBSD: mdreloc.c,v 1.50 2010/09/24 12:00:10 skrll Exp $");
 #endif /* not lint */
 
 #include <errno.h>
@@ -526,9 +526,8 @@ _rtld_relocate_plt_object(const Obj_Entry *obj, const Elf_Rela *rela,
 	    defobj->strtab + def->st_name, (void *)value));
 
 	/*
-	 * At the PLT entry pointed at by `where', we now construct
-	 * a direct transfer to the now fully resolved function
-	 * address.
+	 * At the PLT entry pointed at by `where', we now construct a direct
+	 * transfer to the now fully resolved function address.
 	 *
 	 * A PLT entry is supposed to start by looking like this:
 	 *
@@ -541,14 +540,13 @@ _rtld_relocate_plt_object(const Obj_Entry *obj, const Elf_Rela *rela,
 	 *	nop
 	 *	nop
 	 *
-	 * When we replace these entries we start from the second
-	 * entry and do it in reverse order so the last thing we
-	 * do is replace the branch.  That allows us to change this
-	 * atomically.
+	 * When we replace these entries we start from the last instruction
+	 * and do it in reverse order so the last thing we do is replace the
+	 * branch.  That allows us to change this atomically.
 	 *
-	 * We now need to find out how far we need to jump.  We
-	 * have a choice of several different relocation techniques
-	 * which are increasingly expensive.
+	 * We now need to find out how far we need to jump.  We have a choice
+	 * of several different relocation techniques which are increasingly
+	 * expensive.
 	 */
 
 	offset = ((Elf_Addr)where) - value;
