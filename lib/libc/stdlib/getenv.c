@@ -1,4 +1,4 @@
-/*	$NetBSD: getenv.c,v 1.20 2010/09/23 17:30:49 christos Exp $	*/
+/*	$NetBSD: getenv.c,v 1.21 2010/09/25 18:11:40 tron Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)getenv.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: getenv.c,v 1.20 2010/09/23 17:30:49 christos Exp $");
+__RCSID("$NetBSD: getenv.c,v 1.21 2010/09/25 18:11:40 tron Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -43,15 +43,14 @@ __RCSID("$NetBSD: getenv.c,v 1.20 2010/09/23 17:30:49 christos Exp $");
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
-#include <bitstring.h>
 #include "reentrant.h"
 #include "local.h"
 
 #ifdef _REENTRANT
 rwlock_t __environ_lock = RWLOCK_INITIALIZER;
 #endif
-bitstr_t *__environ_malloced;
-static size_t environ_bitlen;
+char **__environ_malloced;
+static size_t environ_malloced_len;
 
 __weak_alias(getenv_r, _getenv_r)
 
@@ -104,28 +103,27 @@ out:
 int
 __allocenv(int offset)
 {
-	bitstr_t *s;
+	char **p;
 	size_t nl;
 
 	if (offset == -1) {
 		char **ptr;
-		for (ptr = environ, offset = 0; *ptr; ptr++)
+		for (ptr = environ, offset = 0; *ptr != NULL; ptr++)
 			offset++;
 	}
-	nl = bitstr_size(offset + 2);
-	if (__environ_malloced == NULL) {
-		s = malloc(nl);
-	} else if (environ_bitlen < nl)
-		s = realloc(__environ_malloced, nl);
-	else
+
+	if ((size_t)offset < environ_malloced_len)
 		return 0;
 
-	if (s == NULL)
+	nl = offset + 2;
+	p = realloc(__environ_malloced, nl * sizeof(char *));
+	if (p == NULL)
 		return -1;
 
-	(void)memset(&s[environ_bitlen], 0, nl - environ_bitlen);
-	environ_bitlen = nl;
-	__environ_malloced = s;
+	(void)memset(&p[environ_malloced_len], 0,
+	    (nl - environ_malloced_len) * sizeof(char *));
+	environ_malloced_len = nl;
+	__environ_malloced = p;
 
 	return 0;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: local.h,v 1.3 2010/09/23 17:30:49 christos Exp $	*/
+/*	$NetBSD: local.h,v 1.4 2010/09/25 18:11:40 tron Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -32,4 +32,4 @@ extern rwlock_t __environ_lock;
 #endif
 
 extern char **environ;
-extern bitstr_t *__environ_malloced;
+extern char **__environ_malloced;
