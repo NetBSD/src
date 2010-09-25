@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.561 2010/07/02 08:35:41 tnn Exp $
+$NetBSD: usbdevs,v 1.562 2010/09/25 15:29:40 tsutsui Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -1369,10 +1369,11 @@ product IODATA IU_CD2		0x0204	DVD Multi-plus unit iU-CD2
 product IODATA DVR_UEH8		0x0206	DVD Multi-plus unit DVR-UEH8
 product IODATA USBSSMRW		0x0314	USB-SSMRW SD-card adapter
 product IODATA USBSDRW		0x031e	USB-SDRW SD-card adapter
-product IODATA USBETT		0x0901	USB ETT
-product IODATA USBETTX		0x0904	USB ETTX
-product IODATA USBETTXS		0x0913	USB ETTX
+product IODATA USBETT		0x0901	USB ET/T
+product IODATA USBETTX		0x0904	USB ET/TX
+product IODATA USBETTXS		0x0913	USB ET/TX-S
 product IODATA USBWNB11		0x0922	USB Airport WN-B11
+product IODATA ETXUS2		0x092a	ETX-US2
 product IODATA ETGUS2		0x0930	ETG-US2
 product IODATA USBRSAQ		0x0a03	USB serial adapter USB-RSAQ1
 product IODATA USBRSAQ5		0x0a0e	USB serial adapter USB-RSAQ5
