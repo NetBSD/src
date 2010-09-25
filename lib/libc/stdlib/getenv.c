@@ -1,4 +1,4 @@
-/*	$NetBSD: getenv.c,v 1.21 2010/09/25 18:11:40 tron Exp $	*/
+/*	$NetBSD: getenv.c,v 1.22 2010/09/25 19:31:51 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)getenv.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: getenv.c,v 1.21 2010/09/25 18:11:40 tron Exp $");
+__RCSID("$NetBSD: getenv.c,v 1.22 2010/09/25 19:31:51 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -112,16 +112,16 @@ __allocenv(int offset)
 			offset++;
 	}
 
-	if ((size_t)offset < environ_malloced_len)
+	nl = offset + 2; 	/* one for potentially new entry one for NULL */
+	if (nl < environ_malloced_len)
 		return 0;
 
-	nl = offset + 2;
-	p = realloc(__environ_malloced, nl * sizeof(char *));
+	p = realloc(__environ_malloced, nl * sizeof(*p));
 	if (p == NULL)
 		return -1;
 
 	(void)memset(&p[environ_malloced_len], 0,
-	    (nl - environ_malloced_len) * sizeof(char *));
+	    (nl - environ_malloced_len) * sizeof(*p));
 	environ_malloced_len = nl;
 	__environ_malloced = p;
 
