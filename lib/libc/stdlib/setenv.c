@@ -1,4 +1,4 @@
-/*	$NetBSD: setenv.c,v 1.36 2010/09/25 18:11:40 tron Exp $	*/
+/*	$NetBSD: setenv.c,v 1.37 2010/09/25 19:10:37 tron Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)setenv.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: setenv.c,v 1.36 2010/09/25 18:11:40 tron Exp $");
+__RCSID("$NetBSD: setenv.c,v 1.37 2010/09/25 19:10:37 tron Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -118,7 +118,7 @@ setenv(const char *name, const char *value, int rewrite)
 	*c++ = '=';
 
 	free(__environ_malloced[offset]);
-	__environ_malloced[offset] = c;
+	__environ_malloced[offset] = environ[offset];
 
 copy:
 	(void)memcpy(c, value, l_value + 1);
