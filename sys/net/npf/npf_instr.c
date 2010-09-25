@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_instr.c,v 1.2 2010/09/16 04:53:27 rmind Exp $	*/
+/*	$NetBSD: npf_instr.c,v 1.3 2010/09/25 00:25:31 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2010 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_instr.c,v 1.2 2010/09/16 04:53:27 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_instr.c,v 1.3 2010/09/25 00:25:31 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -71,10 +71,7 @@ npf_match_ether(nbuf_t *nbuf, int sd, int _res, uint16_t ethertype, uint32_t *r)
 	/* Ethernet header: check EtherType. */
 	offby = offsetof(struct ether_header, ether_type);
 again:
-	if ((n_ptr = nbuf_advance(&nbuf, n_ptr, offby)) == NULL) {
-		return -1;
-	}
-	if (nbuf_fetch_datum(nbuf, n_ptr, sizeof(uint16_t), &val16)) {
+	if (nbuf_advfetch(&nbuf, &n_ptr, offby, sizeof(uint16_t), &val16)) {
 		return -1;
 	}
 	val16 = ntohs(val16);

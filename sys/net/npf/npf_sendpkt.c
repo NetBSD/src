@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_sendpkt.c,v 1.1 2010/09/16 04:53:27 rmind Exp $	*/
+/*	$NetBSD: npf_sendpkt.c,v 1.2 2010/09/25 00:25:31 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_sendpkt.c,v 1.1 2010/09/16 04:53:27 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_sendpkt.c,v 1.2 2010/09/25 00:25:31 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -70,23 +70,17 @@ npf_fetch_seqack(nbuf_t *nbuf, npf_cache_t *npc,
 
 	/* Fetch total length of IP. */
 	offby = offsetof(struct ip, ip_len);
-	if ((n_ptr = nbuf_advance(&nbuf, n_ptr, offby)) == NULL)
-		return false;
-	if (nbuf_fetch_datum(nbuf, n_ptr, sizeof(uint16_t), &iplen))
+	if (nbuf_advfetch(&nbuf, &n_ptr, offby, sizeof(uint16_t), &iplen))
 		return false;
 
 	/* Fetch SEQ and ACK numbers. */
 	offby = (npc->npc_hlen - offby) + offsetof(struct tcphdr, th_seq);
-	if ((n_ptr = nbuf_advance(&nbuf, n_ptr, offby)) == NULL)
-		return false;
-	if (nbuf_fetch_datum(nbuf, n_ptr, sizeof(seqack), seqack))
+	if (nbuf_advfetch(&nbuf, &n_ptr, offby, sizeof(seqack), seqack))
 		return false;
 
 	/* Fetch TCP data offset (header length) value. */
 	offby = sizeof(seqack);
-	if ((n_ptr = nbuf_advance(&nbuf, n_ptr, offby)) == NULL)
-		return false;
-	if (nbuf_fetch_datum(nbuf, n_ptr, sizeof(uint8_t), &toff))
+	if (nbuf_advfetch(&nbuf, &n_ptr, offby, sizeof(uint8_t), &toff))
 		return false;
 	toff >>= 4;
 

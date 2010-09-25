@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_alg_icmp.c,v 1.2 2010/09/16 04:53:27 rmind Exp $	*/
+/*	$NetBSD: npf_alg_icmp.c,v 1.3 2010/09/25 00:25:31 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_alg_icmp.c,v 1.2 2010/09/16 04:53:27 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_alg_icmp.c,v 1.3 2010/09/25 00:25:31 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -119,6 +119,8 @@ npfa_icmp_match(npf_cache_t *npc, nbuf_t *nbuf, void *ntptr)
 {
 	const int proto = npc->npc_proto;
 	void *n_ptr = nbuf_dataptr(nbuf);
+	u_int offby;
+	uint8_t ttl;
 
 	/* Handle TCP/UDP traceroute - check for port range. */
 	if (proto != IPPROTO_TCP && proto != IPPROTO_UDP) {
@@ -131,17 +133,11 @@ npfa_icmp_match(npf_cache_t *npc, nbuf_t *nbuf, void *ntptr)
 	}
 
 	/* Check for low TTL. */
-	const u_int offby = offsetof(struct ip, ip_ttl);
-	if ((n_ptr = nbuf_advance(&nbuf, n_ptr, offby)) == NULL) {
+	offby = offsetof(struct ip, ip_ttl);
+	if (nbuf_advfetch(&nbuf, &n_ptr, offby, sizeof(uint8_t), &ttl))
 		return false;
-	}
-	uint8_t ttl;
-	if (nbuf_fetch_datum(nbuf, n_ptr, sizeof(uint8_t), &ttl)) {
+	if (ttl > TR_MAX_TTL)
 		return false;
-	}
-	if (ttl > TR_MAX_TTL) {
-		return false;
-	}
 
 	/* Associate ALG with translation entry. */
 	npf_nat_t *nt = ntptr;
@@ -194,10 +190,7 @@ npf_icmp_uniqid(const int type, npf_cache_t *npc, nbuf_t *nbuf, void *n_ptr)
 	case ICMP_IREQREPLY:
 		/* Should contain ICMP query ID. */
 		offby = offsetof(struct icmp, icmp_id);
-		if ((n_ptr = nbuf_advance(&nbuf, n_ptr, offby)) == NULL) {
-			return false;
-		}
-		if (nbuf_fetch_datum(nbuf, n_ptr, sizeof(uint16_t),
+		if (nbuf_advfetch(&nbuf, &n_ptr, offby, sizeof(uint16_t),
 		    &npc->npc_icmp_id)) {
 			return false;
 		}
@@ -286,10 +279,7 @@ npfa_icmp_natin(npf_cache_t *npc, nbuf_t *nbuf, void *ntptr)
 
 	/* Advance to ICMP checksum and fetch it. */
 	offby = npc->npc_hlen + offsetof(struct icmp, icmp_cksum);
-	if ((n_ptr = nbuf_advance(&nbuf, n_ptr, offby)) == NULL) {
-		return false;
-	}
-	if (nbuf_fetch_datum(nbuf, n_ptr, sizeof(uint16_t), &cksum)) {
+	if (nbuf_advfetch(&nbuf, &n_ptr, offby, sizeof(uint16_t), &cksum)) {
 		return false;
 	}
 
