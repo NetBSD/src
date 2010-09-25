@@ -1,4 +1,4 @@
-/*	$NetBSD: unsetenv.c,v 1.5 2010/09/24 14:34:44 christos Exp $	*/
+/*	$NetBSD: unsetenv.c,v 1.6 2010/09/25 18:11:40 tron Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)setenv.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: unsetenv.c,v 1.5 2010/09/24 14:34:44 christos Exp $");
+__RCSID("$NetBSD: unsetenv.c,v 1.6 2010/09/25 18:11:40 tron Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -53,10 +53,8 @@ __RCSID("$NetBSD: unsetenv.c,v 1.5 2010/09/24 14:34:44 christos Exp $");
  *	Delete environmental variable "name".
  */
 int
-unsetenv(name)
-	const char *name;
+unsetenv(const char *name)
 {
-	char **p;
 	int offset;
 
 	_DIAGASSERT(name != NULL);
@@ -66,22 +64,22 @@ unsetenv(name)
 		return -1;
 	}
 
-	rwlock_wrlock(&__environ_lock);
+	if (rwlock_wrlock(&__environ_lock) != 0)
+		return -1;
 
 	if (__allocenv(-1) == -1)
 		return -1;
 
-	while (__findenv(name, &offset)) {	/* if set multiple times */
-		if (bit_test(__environ_malloced, offset))
-			free(environ[offset]);
-		for (p = &environ[offset];; ++p, ++offset) {
-			if (bit_test(__environ_malloced, offset + 1))
-				bit_set(__environ_malloced, offset);
-			else
-				bit_clear(__environ_malloced, offset);
-			if (!(*p = *(p + 1)))
-				break;
+	while (__findenv(name, &offset) != NULL ) { /* if set multiple times */
+		free(__environ_malloced[offset]);
+
+		while (environ[offset] != NULL) {
+			environ[offset] = environ[offset + 1];
+			__environ_malloced[offset] =
+			    __environ_malloced[offset + 1];
+			offset++;
 		}
+		__environ_malloced[offset] = NULL;
 	}
 	rwlock_unlock(&__environ_lock);
 
