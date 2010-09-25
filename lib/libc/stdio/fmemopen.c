@@ -1,4 +1,4 @@
-/* $NetBSD: fmemopen.c,v 1.2 2010/09/25 13:45:11 tron Exp $ */
+/* $NetBSD: fmemopen.c,v 1.3 2010/09/25 14:00:30 tron Exp $ */
 
 /*-
  * Copyright (c)2007, 2010 Takehiko NOZAKI,
@@ -29,12 +29,13 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: fmemopen.c,v 1.2 2010/09/25 13:45:11 tron Exp $");
+__RCSID("$NetBSD: fmemopen.c,v 1.3 2010/09/25 14:00:30 tron Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -116,7 +117,7 @@ fmemopen_seek(void *cookie, fpos_t offset, int whence)
 		goto error;
 	}
 	if (offset >= (fpos_t)0 && offset <= p->tail - p->head) {
-		p->cur = p->head + (intptr_t)offset;
+		p->cur = p->head + (ptrdiff_t)offset;
 		return (fpos_t)(p->cur - p->head);
 	}
 error:
