@@ -1,4 +1,4 @@
-.\"	$NetBSD: fmemopen.3,v 1.2 2010/09/25 01:19:39 uwe Exp $
+.\"	$NetBSD: fmemopen.3,v 1.3 2010/09/25 09:44:08 wiz Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -38,7 +38,7 @@
 .Dt FMEMOPEN 3
 .Os
 .Sh NAME
-.Nm fmemopen ,
+.Nm fmemopen
 .Nd open a stream that points to the given buffer
 .Sh LIBRARY
 .Lb libc
@@ -54,12 +54,12 @@ associates a stream with the given
 .Fa buffer
 and
 .Fa size .
-The 
+The
 .Fa buffer
 can be either
 .Dv NULL ,
 or must be of the given
-.Fa size.
+.Fa size .
 If the
 .Fa buffer
 is
@@ -69,7 +69,7 @@ a
 of the given
 .Fa size
 will be dynamically allocated using
-.Xr malloc 3 
+.Xr malloc 3
 and freed when
 .Xr fclose 3
 is called.
@@ -98,8 +98,8 @@ was specified, then the stream will always point at the first byte of the
 The stream also keeps track of the
 .Fa size
 of the
-.Fa buffer 
-The 
+.Fa buffer
+The
 .Fa size
 is initialized depending on the mode:
 .Bl -tag -width r/w+
@@ -158,13 +158,11 @@ is set to indicate the error.
 .It Bq Er EINVAL
 The
 .Fa size was
-.Dv 0 .
-.It Bq Er EINVAL
-The
+.Dv 0 ;
+or the
 .Fa mode
-argument is invalid.
-.It Bq Er EINVAL
-The
+argument is invalid;
+or the
 .Fa buffer
 argument is
 .Dv NULL
@@ -186,7 +184,7 @@ specified for the routine
 .Xr fclose 3 ,
 .Xr fflush 3 ,
 .Xr fopen 3 ,
-.Xr malloc 3 
+.Xr malloc 3
 .Sh HISTORY
 The
 .Fn fmemopen
