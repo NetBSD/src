@@ -1,4 +1,4 @@
-/*	$NetBSD: setenv.c,v 1.35 2010/09/24 14:31:15 christos Exp $	*/
+/*	$NetBSD: setenv.c,v 1.36 2010/09/25 18:11:40 tron Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)setenv.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: setenv.c,v 1.35 2010/09/24 14:31:15 christos Exp $");
+__RCSID("$NetBSD: setenv.c,v 1.36 2010/09/25 18:11:40 tron Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -44,7 +44,6 @@ __RCSID("$NetBSD: setenv.c,v 1.35 2010/09/24 14:31:15 christos Exp $");
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
-#include <bitstring.h>
 #include "reentrant.h"
 #include "local.h"
 
@@ -55,9 +54,6 @@ __weak_alias(setenv,_setenv)
 #ifdef _REENTRANT
 extern rwlock_t __environ_lock;
 #endif
-
-extern char **environ;
-extern bitstr_t *__environ_malloced;
 
 /*
  * setenv --
@@ -76,7 +72,9 @@ setenv(const char *name, const char *value, int rewrite)
 	_DIAGASSERT(name != NULL);
 	_DIAGASSERT(value != NULL);
 
-	rwlock_wrlock(&__environ_lock);
+	if (rwlock_wrlock(&__environ_lock) != 0)
+		return -1;
+
 	/* find if already exists */
 	c = __findenv(name, &offset);
 
@@ -113,13 +111,15 @@ setenv(const char *name, const char *value, int rewrite)
 	/* name + `=' + value */
 	if ((c = malloc(size + l_value + 2)) == NULL)
 		goto bad;
-	if (bit_test(__environ_malloced, offset))
-		free(environ[offset]);
+
 	environ[offset] = c;
 	(void)memcpy(c, name, size);
 	c += size;
 	*c++ = '=';
-	bit_set(__environ_malloced, offset);
+
+	free(__environ_malloced[offset]);
+	__environ_malloced[offset] = c;
+
 copy:
 	(void)memcpy(c, value, l_value + 1);
 good:
