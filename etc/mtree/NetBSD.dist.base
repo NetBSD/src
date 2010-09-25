@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.base,v 1.51 2010/09/10 16:37:12 christos Exp $
+#	$NetBSD: NetBSD.dist.base,v 1.52 2010/09/25 10:34:13 wiz Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -296,7 +296,6 @@
 ./usr/share/doc/html/postfix
 ./usr/share/doc/html/ntp
 ./usr/share/doc/html/ntp/build
-./usr/share/doc/html/ntp/build/scripts
 ./usr/share/doc/html/ntp/drivers
 ./usr/share/doc/html/ntp/drivers/icons
 ./usr/share/doc/html/ntp/drivers/scripts
