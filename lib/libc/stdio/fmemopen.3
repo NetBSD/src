@@ -1,4 +1,4 @@
-.\"	$NetBSD: fmemopen.3,v 1.1 2010/09/24 21:50:56 christos Exp $
+.\"	$NetBSD: fmemopen.3,v 1.2 2010/09/25 01:19:39 uwe Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -105,8 +105,7 @@ is initialized depending on the mode:
 .Bl -tag -width r/w+
 .It Dv r/r+
 Set to the
-.Fa
-size
+.Fa size
 argument.
 .It Dv w/w+
 Set to
@@ -174,6 +173,7 @@ and the
 argument does not specify a
 .Dv + .
 .El
+.Pp
 The
 .Fn fmemopen
 function
@@ -182,7 +182,6 @@ may also fail and set
 for any of the errors
 specified for the routine
 .Xr malloc 3 .
-.El
 .Sh SEE ALSO
 .Xr fclose 3 ,
 .Xr fflush 3 ,
