@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.168 2010/08/28 16:17:32 kardel Exp $
+# $NetBSD: mi,v 1.169 2010/09/25 10:34:58 wiz Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -37,32 +37,6 @@
 ./usr/share/doc/html/bzip2/manual_4.html	misc-obsolete		obsolete
 ./usr/share/doc/html/bzip2/manual_toc.html	misc-obsolete		obsolete
 ./usr/share/doc/html/ntp			misc-ntp-htmldoc
-./usr/share/doc/html/ntp/bugs.html		misc-ntp-htmldoc	doc
-./usr/share/doc/html/ntp/build.html		misc-obsolete		obsolete
-./usr/share/doc/html/ntp/comdex.html		misc-ntp-htmldoc	doc
-./usr/share/doc/html/ntp/config.html		misc-ntp-htmldoc	doc
-./usr/share/doc/html/ntp/decode.html		misc-ntp-htmldoc	doc
-./usr/share/doc/html/ntp/drivers/mx4200data.html		misc-ntp-htmldoc	doc
-./usr/share/doc/html/ntp/hints.html		misc-ntp-htmldoc	doc
-./usr/share/doc/html/ntp/kernpps.html		misc-ntp-htmldoc	doc
-./usr/share/doc/html/ntp/quick.html		misc-ntp-htmldoc	doc
-./usr/share/doc/html/ntp/rate.html		misc-ntp-htmldoc	doc
-./usr/share/doc/html/ntp/scripts/accopt.txt	misc-ntp-htmldoc	doc
-./usr/share/doc/html/ntp/scripts/audio.txt	misc-ntp-htmldoc	doc
-./usr/share/doc/html/ntp/scripts/authopt.txt	misc-ntp-htmldoc	doc
-./usr/share/doc/html/ntp/scripts/clockopt.txt	misc-ntp-htmldoc	doc
-./usr/share/doc/html/ntp/scripts/command.txt	misc-ntp-htmldoc	doc
-./usr/share/doc/html/ntp/scripts/config.txt	misc-ntp-htmldoc	doc
-./usr/share/doc/html/ntp/scripts/confopt.txt	misc-ntp-htmldoc	doc
-./usr/share/doc/html/ntp/scripts/external.txt	misc-ntp-htmldoc	doc
-./usr/share/doc/html/ntp/scripts/install.txt	misc-ntp-htmldoc	doc
-./usr/share/doc/html/ntp/scripts/manual.txt	misc-ntp-htmldoc	doc
-./usr/share/doc/html/ntp/scripts/misc.txt	misc-ntp-htmldoc	doc
-./usr/share/doc/html/ntp/scripts/miscopt.txt	misc-ntp-htmldoc	doc
-./usr/share/doc/html/ntp/scripts/monopt.txt	misc-ntp-htmldoc	doc
-./usr/share/doc/html/ntp/scripts/refclock.txt	misc-ntp-htmldoc	doc
-./usr/share/doc/html/ntp/sitemap.html		misc-ntp-htmldoc	doc
-./usr/share/doc/html/ntp/xleave.html		misc-ntp-htmldoc	doc
 ./usr/share/doc/html/ntp/Oncore-SHMEM.htm	misc-obsolete		obsolete
 ./usr/share/doc/html/ntp/accopt.htm		misc-obsolete		obsolete
 ./usr/share/doc/html/ntp/accopt.html		misc-ntp-htmldoc	doc
@@ -73,9 +47,10 @@
 ./usr/share/doc/html/ntp/authopt.htm		misc-obsolete		obsolete
 ./usr/share/doc/html/ntp/authopt.html		misc-ntp-htmldoc	doc
 ./usr/share/doc/html/ntp/biblio.htm		misc-obsolete		obsolete
+./usr/share/doc/html/ntp/bugs.html		misc-ntp-htmldoc	doc
+./usr/share/doc/html/ntp/build			misc-obsolete
 ./usr/share/doc/html/ntp/build.htm		misc-obsolete		obsolete
 ./usr/share/doc/html/ntp/build.html		misc-obsolete		obsolete
-./usr/share/doc/html/ntp/build			misc-obsolete
 ./usr/share/doc/html/ntp/build/build.html	misc-obsolete		obsolete
 ./usr/share/doc/html/ntp/build/config.html	misc-obsolete		obsolete
 ./usr/share/doc/html/ntp/build/hints.html	misc-obsolete		obsolete
@@ -93,13 +68,16 @@
 ./usr/share/doc/html/ntp/build/scripts/style.css	misc-obsolete		obsolete
 ./usr/share/doc/html/ntp/clockopt.htm		misc-obsolete		obsolete
 ./usr/share/doc/html/ntp/clockopt.html			misc-ntp-htmldoc	doc
+./usr/share/doc/html/ntp/comdex.html		misc-ntp-htmldoc	doc
 ./usr/share/doc/html/ntp/config.htm		misc-obsolete		obsolete
+./usr/share/doc/html/ntp/config.html		misc-ntp-htmldoc	doc
 ./usr/share/doc/html/ntp/confopt.htm		misc-obsolete		obsolete
 ./usr/share/doc/html/ntp/confopt.html			misc-ntp-htmldoc	doc
 ./usr/share/doc/html/ntp/copyright.htm		misc-obsolete		obsolete
 ./usr/share/doc/html/ntp/copyright.html			misc-ntp-htmldoc	doc
 ./usr/share/doc/html/ntp/debug.htm		misc-obsolete		obsolete
 ./usr/share/doc/html/ntp/debug.html			misc-ntp-htmldoc	doc
+./usr/share/doc/html/ntp/decode.html		misc-ntp-htmldoc	doc
 ./usr/share/doc/html/ntp/driver1.htm		misc-obsolete		obsolete
 ./usr/share/doc/html/ntp/driver10.htm		misc-obsolete		obsolete
 ./usr/share/doc/html/ntp/driver11.htm		misc-obsolete		obsolete
@@ -169,6 +147,7 @@
 ./usr/share/doc/html/ntp/drivers/icons			misc-ntp-htmldoc
 ./usr/share/doc/html/ntp/drivers/icons/home.gif		misc-obsolete		obsolete
 ./usr/share/doc/html/ntp/drivers/icons/mail2.gif	misc-obsolete		obsolete
+./usr/share/doc/html/ntp/drivers/mx4200data.html		misc-ntp-htmldoc	doc
 ./usr/share/doc/html/ntp/drivers/oncore-shmem.html	misc-ntp-htmldoc	doc
 ./usr/share/doc/html/ntp/drivers/scripts		misc-ntp-htmldoc
 ./usr/share/doc/html/ntp/drivers/scripts/footer.txt	misc-ntp-htmldoc	doc
@@ -181,6 +160,7 @@
 ./usr/share/doc/html/ntp/gadget.html			misc-ntp-htmldoc	doc
 ./usr/share/doc/html/ntp/groups.html			misc-obsolete		obsolete
 ./usr/share/doc/html/ntp/hints.htm		misc-obsolete		obsolete
+./usr/share/doc/html/ntp/hints.html		misc-ntp-htmldoc	doc
 ./usr/share/doc/html/ntp/hints/a-ux		misc-obsolete		obsolete
 ./usr/share/doc/html/ntp/hints/aix		misc-obsolete		obsolete
 ./usr/share/doc/html/ntp/hints/bsdi		misc-obsolete		obsolete
@@ -218,6 +198,7 @@
 ./usr/share/doc/html/ntp/kern.htm		misc-obsolete		obsolete
 ./usr/share/doc/html/ntp/kern.html			misc-ntp-htmldoc	doc
 ./usr/share/doc/html/ntp/kernpps.htm		misc-obsolete		obsolete
+./usr/share/doc/html/ntp/kernpps.html		misc-ntp-htmldoc	doc
 ./usr/share/doc/html/ntp/keygen.html			misc-ntp-htmldoc	doc
 ./usr/share/doc/html/ntp/ldisc.htm		misc-obsolete		obsolete
 ./usr/share/doc/html/ntp/ldisc.html			misc-obsolete		obsolete
@@ -260,6 +241,8 @@
 ./usr/share/doc/html/ntp/prefer.html			misc-ntp-htmldoc	doc
 ./usr/share/doc/html/ntp/qth.htm		misc-obsolete		obsolete
 ./usr/share/doc/html/ntp/quick.htm		misc-obsolete		obsolete
+./usr/share/doc/html/ntp/quick.html		misc-ntp-htmldoc	doc
+./usr/share/doc/html/ntp/rate.html		misc-ntp-htmldoc	doc
 ./usr/share/doc/html/ntp/rdebug.htm		misc-obsolete		obsolete
 ./usr/share/doc/html/ntp/rdebug.html			misc-ntp-htmldoc	doc
 ./usr/share/doc/html/ntp/refclock.htm		misc-obsolete		obsolete
@@ -267,18 +250,34 @@
 ./usr/share/doc/html/ntp/release.htm		misc-obsolete		obsolete
 ./usr/share/doc/html/ntp/release.html			misc-ntp-htmldoc	doc
 ./usr/share/doc/html/ntp/scripts			misc-ntp-htmldoc
+./usr/share/doc/html/ntp/scripts/accopt.txt	misc-ntp-htmldoc	doc
+./usr/share/doc/html/ntp/scripts/audio.txt	misc-ntp-htmldoc	doc
+./usr/share/doc/html/ntp/scripts/authopt.txt	misc-ntp-htmldoc	doc
+./usr/share/doc/html/ntp/scripts/clockopt.txt	misc-ntp-htmldoc	doc
+./usr/share/doc/html/ntp/scripts/command.txt	misc-ntp-htmldoc	doc
+./usr/share/doc/html/ntp/scripts/config.txt	misc-ntp-htmldoc	doc
+./usr/share/doc/html/ntp/scripts/confopt.txt	misc-ntp-htmldoc	doc
+./usr/share/doc/html/ntp/scripts/external.txt	misc-ntp-htmldoc	doc
 ./usr/share/doc/html/ntp/scripts/footer.txt		misc-ntp-htmldoc	doc
+./usr/share/doc/html/ntp/scripts/install.txt	misc-ntp-htmldoc	doc
 ./usr/share/doc/html/ntp/scripts/links10.txt		misc-obsolete		obsolete
 ./usr/share/doc/html/ntp/scripts/links11.txt		misc-obsolete		obsolete
 ./usr/share/doc/html/ntp/scripts/links12.txt		misc-obsolete		obsolete
 ./usr/share/doc/html/ntp/scripts/links7.txt		misc-obsolete		obsolete
 ./usr/share/doc/html/ntp/scripts/links8.txt		misc-obsolete		obsolete
 ./usr/share/doc/html/ntp/scripts/links9.txt		misc-obsolete		obsolete
+./usr/share/doc/html/ntp/scripts/manual.txt	misc-ntp-htmldoc	doc
+./usr/share/doc/html/ntp/scripts/misc.txt	misc-ntp-htmldoc	doc
+./usr/share/doc/html/ntp/scripts/miscopt.txt	misc-ntp-htmldoc	doc
+./usr/share/doc/html/ntp/scripts/monopt.txt	misc-ntp-htmldoc	doc
+./usr/share/doc/html/ntp/scripts/refclock.txt	misc-ntp-htmldoc	doc
 ./usr/share/doc/html/ntp/scripts/style.css		misc-ntp-htmldoc	doc
+./usr/share/doc/html/ntp/sitemap.html		misc-ntp-htmldoc	doc
 ./usr/share/doc/html/ntp/sntp.html			misc-ntp-htmldoc	doc
 ./usr/share/doc/html/ntp/tickadj.htm		misc-obsolete		obsolete
 ./usr/share/doc/html/ntp/tickadj.html			misc-ntp-htmldoc	doc
 ./usr/share/doc/html/ntp/vxworks.htm		misc-obsolete		obsolete
+./usr/share/doc/html/ntp/xleave.html		misc-ntp-htmldoc	doc
 ./usr/share/doc/html/ntp/y2k.htm		misc-obsolete		obsolete
 ./usr/share/doc/html/postfix/ADDRESS_CLASS_README.html	misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/ADDRESS_REWRITING_README.html	misc-postfix-htmldoc	postfix,doc
@@ -319,8 +318,8 @@
 ./usr/share/doc/html/postfix/SMTPD_POLICY_README.html	misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/SMTPD_PROXY_README.html	misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/STANDARD_CONFIGURATION_README.html	misc-postfix-htmldoc	postfix,doc
-./usr/share/doc/html/postfix/TLS_README.html		misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/TLS_LEGACY_README.html	misc-postfix-htmldoc	postfix,doc
+./usr/share/doc/html/postfix/TLS_README.html		misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/TUNING_README.html		misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/ULTRIX_README.html		misc-obsolete	obsolete
 ./usr/share/doc/html/postfix/UUCP_README.html		misc-postfix-htmldoc	postfix,doc
@@ -376,8 +375,8 @@
 ./usr/share/doc/html/postfix/postdrop.1.html	misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/postfix-logo.jpg	misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/postfix-manuals.html	misc-postfix-htmldoc	postfix,doc
-./usr/share/doc/html/postfix/postfix.1.html	misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/postfix-wrapper.5.html	misc-postfix-htmldoc	postfix,doc
+./usr/share/doc/html/postfix/postfix.1.html	misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/postkick.1.html	misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/postlock.1.html	misc-postfix-htmldoc	postfix,doc
 ./usr/share/doc/html/postfix/postlog.1.html	misc-postfix-htmldoc	postfix,doc
@@ -800,9 +799,9 @@
 ./usr/share/examples/postfix/SMTPD_POLICY_README	misc-postfix-examples	postfix,doc
 ./usr/share/examples/postfix/SMTPD_PROXY_README	misc-postfix-examples	postfix,doc
 ./usr/share/examples/postfix/STANDARD_CONFIGURATION_README	misc-postfix-examples	postfix,doc
+./usr/share/examples/postfix/TLS_LEGACY_README	misc-postfix-examples	postfix,doc
 ./usr/share/examples/postfix/TLS_LICENSE	misc-postfix-examples	postfix,share
 ./usr/share/examples/postfix/TLS_README		misc-postfix-examples	postfix,doc
-./usr/share/examples/postfix/TLS_LEGACY_README	misc-postfix-examples	postfix,doc
 ./usr/share/examples/postfix/TUNING_README	misc-postfix-examples	postfix,doc
 ./usr/share/examples/postfix/UUCP_README	misc-postfix-examples	postfix,doc
 ./usr/share/examples/postfix/VERP_README	misc-postfix-examples	postfix,doc
