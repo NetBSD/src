@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_object.h,v 1.27 2010/09/24 22:51:51 rmind Exp $	*/
+/*	$NetBSD: uvm_object.h,v 1.28 2010/09/25 01:42:40 matt Exp $	*/
 
 /*
  *
@@ -41,7 +41,7 @@
  * uvm_object.h
  */
 
-#include <sys/rb.h>
+#include <sys/rbtree.h>
 
 /*
  * uvm_object: all that is left of mach objects.
