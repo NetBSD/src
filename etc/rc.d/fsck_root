@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: fsck_root,v 1.4 2010/02/16 02:46:02 mrg Exp $
+# $NetBSD: fsck_root,v 1.5 2010/09/25 15:10:14 bad Exp $
 #
 
 # PROVIDE: fsck_root
@@ -24,7 +24,7 @@ fsck_root_start()
 	# Do nothing if root file system has fs_passno=0 in /etc/fstab.
 	while read fs_spec fs_file fs_vfstype fs_mntops fs_freq fs_passno
 	do
-		case "${fs_spec}:${fs_file}:${fs_passno}" in
+		case "${fs_spec}:${fs_file}:${fs_passno:=0}" in
 		\#*|'':*)
 			continue # skip comment or blank line
 			;;
