@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.169 2010/09/25 10:34:58 wiz Exp $
+# $NetBSD: mi,v 1.170 2010/09/25 10:35:59 wiz Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -50,7 +50,7 @@
 ./usr/share/doc/html/ntp/bugs.html		misc-ntp-htmldoc	doc
 ./usr/share/doc/html/ntp/build			misc-obsolete
 ./usr/share/doc/html/ntp/build.htm		misc-obsolete		obsolete
-./usr/share/doc/html/ntp/build.html		misc-obsolete		obsolete
+./usr/share/doc/html/ntp/build.html		misc-ntp-htmldoc	doc
 ./usr/share/doc/html/ntp/build/build.html	misc-obsolete		obsolete
 ./usr/share/doc/html/ntp/build/config.html	misc-obsolete		obsolete
 ./usr/share/doc/html/ntp/build/hints.html	misc-obsolete		obsolete
