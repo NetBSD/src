@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_rb_impl.h,v 1.7 2008/06/30 20:14:09 matt Exp $	*/
+/*	$NetBSD: prop_rb_impl.h,v 1.8 2010/09/25 01:42:38 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #define	_PROP_RB_IMPL_H_
 
 #ifdef __NetBSD__
-#include <sys/rb.h>
+#include <sys/rbtree.h>
 
 /*
  * Define local names for common rb_tree functions.

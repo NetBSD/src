@@ -1,4 +1,4 @@
-/*	$NetBSD: rb.c,v 1.7 2010/09/24 22:51:51 rmind Exp $	*/
+/*	$NetBSD: rb.c,v 1.8 2010/09/25 01:42:38 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -70,9 +70,9 @@ __weak_alias(rb_tree_depths, _rb_tree_depths)
 #endif
 
 #ifdef RBTEST
-#include "rb.h"
+#include "rbtree.h"
 #else
-#include <sys/rb.h>
+#include <sys/rbtree.h>
 #endif
 
 static void rb_tree_insert_rebalance(struct rb_tree *, struct rb_node *);

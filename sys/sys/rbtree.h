@@ -1,4 +1,4 @@
-/*	$NetBSD: rb.h,v 1.14 2010/09/24 22:51:51 rmind Exp $	*/
+/*	$NetBSD: rbtree.h,v 1.1 2010/09/25 01:42:40 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -29,8 +29,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _SYS_RB_H_
-#define	_SYS_RB_H_
+#ifndef _SYS_RBTREE_H_
+#define	_SYS_RBTREE_H_
 
 #if defined(_KERNEL) || defined(_STANDALONE)
 #include <sys/types.h>
@@ -191,4 +191,4 @@ void	rb_tree_depths(const rb_tree_t *, size_t *);
 
 __END_DECLS
 
-#endif	/* _SYS_RB_H_*/
+#endif	/* _SYS_RBTREE_H_*/

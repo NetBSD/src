@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsmount.h,v 1.49 2009/03/14 14:46:11 dsl Exp $	*/
+/*	$NetBSD: nfsmount.h,v 1.50 2010/09/25 01:42:39 matt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -42,7 +42,7 @@
 #include <sys/rwlock.h>
 #include <sys/mutex.h>
 #include <sys/disk.h>
-#include <sys/rb.h>
+#include <sys/rbtree.h>
 #endif
 
 /*
