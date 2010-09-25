@@ -1,4 +1,4 @@
-/*	$NetBSD: npf.h,v 1.2 2010/09/16 04:53:27 rmind Exp $	*/
+/*	$NetBSD: npf.h,v 1.3 2010/09/25 00:25:31 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2010 The NetBSD Foundation, Inc.
@@ -110,6 +110,7 @@ npf_iscached(const npf_cache_t *npc, const int inf)
 /* Network buffer interface. */
 void *		nbuf_dataptr(void *);
 void *		nbuf_advance(nbuf_t **, void *, u_int);
+int		nbuf_advfetch(nbuf_t **, void **, u_int, size_t, void *);
 int		nbuf_fetch_datum(nbuf_t *, void *, size_t, void *);
 int		nbuf_store_datum(nbuf_t *, void *, size_t, void *);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_inet.c,v 1.2 2010/09/16 04:53:27 rmind Exp $	*/
+/*	$NetBSD: npf_inet.c,v 1.3 2010/09/25 00:25:31 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2010 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_inet.c,v 1.2 2010/09/16 04:53:27 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_inet.c,v 1.3 2010/09/25 00:25:31 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -106,28 +106,23 @@ npf_ip4_proto(npf_cache_t *npc, nbuf_t *nbuf, void *n_ptr)
 	hlen = (val8 & 0xf) << 2;
 	if (hlen < sizeof(struct ip))
 		return false;
-	offby = offsetof(struct ip, ip_off);
-	if ((n_ptr = nbuf_advance(&nbuf, n_ptr, offby)) == NULL)
-		return false;
 
 	/* IPv4 header: check fragment offset. */
-	error = nbuf_fetch_datum(nbuf, n_ptr, sizeof(uint8_t), &val8);
+	offby = offsetof(struct ip, ip_off);
+	error = nbuf_advfetch(&nbuf, &n_ptr, offby, sizeof(uint8_t), &val8);
 	if (error || (val8 & ~htons(IP_DF | IP_RF)))
 		return false;
 
 	/* Get and match protocol. */
 	KASSERT(offsetof(struct ip, ip_p) > offby);
 	offby = offsetof(struct ip, ip_p) - offby;
-	if ((n_ptr = nbuf_advance(&nbuf, n_ptr, offby)) == NULL)
-		return false;
-	if (nbuf_fetch_datum(nbuf, n_ptr, sizeof(uint8_t), &val8))
+	if (nbuf_advfetch(&nbuf, &n_ptr, offby, sizeof(uint8_t), &val8))
 		return false;
 
 	/* IP checksum. */
 	offby = offsetof(struct ip, ip_sum) - offsetof(struct ip, ip_p);
-	if ((n_ptr = nbuf_advance(&nbuf, n_ptr, offby)) == NULL)
-		return false;
-	if (nbuf_fetch_datum(nbuf, n_ptr, sizeof(uint16_t), &npc->npc_ipsum))
+	if (nbuf_advfetch(&nbuf, &n_ptr, offby,
+	    sizeof(uint16_t), &npc->npc_ipsum))
 		return false;
 
 	/* Cache: IPv4, protocol, header length. */
@@ -145,20 +140,17 @@ npf_ip4_proto(npf_cache_t *npc, nbuf_t *nbuf, void *n_ptr)
 bool
 npf_fetch_ip4addrs(npf_cache_t *npc, nbuf_t *nbuf, void *n_ptr)
 {
+	in_addr_t *src = &npc->npc_srcip, *dst = &npc->npc_dstip;
 	u_int offby;
 
 	/* Source address. */
 	offby = offsetof(struct ip, ip_src);
-	if ((n_ptr = nbuf_advance(&nbuf, n_ptr, offby)) == NULL)
-		return false;
-	if (nbuf_fetch_datum(nbuf, n_ptr, sizeof(in_addr_t), &npc->npc_srcip))
+	if (nbuf_advfetch(&nbuf, &n_ptr, offby, sizeof(in_addr_t), src))
 		return false;
 
 	/* Destination address. */
 	offby = offsetof(struct ip, ip_dst) - offby;
-	if ((n_ptr = nbuf_advance(&nbuf, n_ptr, offby)) == NULL)
-		return false;
-	if (nbuf_fetch_datum(nbuf, n_ptr, sizeof(in_addr_t), &npc->npc_dstip))
+	if (nbuf_advfetch(&nbuf, &n_ptr, offby, sizeof(in_addr_t), dst))
 		return false;
 
 	/* Both addresses are cached. */
@@ -216,28 +208,23 @@ npf_fetch_ports(npf_cache_t *npc, nbuf_t *nbuf, void *n_ptr, const int proto)
 bool
 npf_fetch_icmp(npf_cache_t *npc, nbuf_t *nbuf, void *n_ptr)
 {
+	uint8_t *type = &npc->npc_icmp_type, *code = &npc->npc_icmp_code;
 	u_int offby;
-	uint8_t type;
 
 	KASSERT(npf_iscached(npc, NPC_IP46));
 
 	/* ICMP type. */
 	offby = npc->npc_hlen;
 	CTASSERT(offsetof(struct icmp, icmp_type) == 0);
-	if ((n_ptr = nbuf_advance(&nbuf, n_ptr, offby)) == NULL)
-		return false;
-	if (nbuf_fetch_datum(nbuf, n_ptr, sizeof(uint8_t), &type))
+	if (nbuf_advfetch(&nbuf, &n_ptr, offby, sizeof(uint8_t), type))
 		return false;
 
 	/* ICMP code. */
 	offby = offsetof(struct icmp, icmp_code);
-	if ((n_ptr = nbuf_advance(&nbuf, n_ptr, offby)) == NULL)
-		return false;
-	if (nbuf_fetch_datum(nbuf, n_ptr, sizeof(uint8_t), &npc->npc_icmp_code))
+	if (nbuf_advfetch(&nbuf, &n_ptr, offby, sizeof(uint8_t), code))
 		return false;
 
 	/* Mark as cached. */
-	npc->npc_icmp_type = type;
 	npc->npc_info |= NPC_ICMP;
 	return true;
 }
@@ -248,14 +235,12 @@ npf_fetch_icmp(npf_cache_t *npc, nbuf_t *nbuf, void *n_ptr)
 bool
 npf_fetch_tcpfl(npf_cache_t *npc, nbuf_t *nbuf, void *n_ptr)
 {
-	u_int offby;
+	const u_int offby = npc->npc_hlen + offsetof(struct tcphdr, th_flags);
+	uint8_t *tcpfl = &npc->npc_tcp_flags;
 
-	/* Get TCP flags. */
-	offby = npc->npc_hlen + offsetof(struct tcphdr, th_flags);
-	if ((n_ptr = nbuf_advance(&nbuf, n_ptr, offby)) == NULL)
+	if (nbuf_advfetch(&nbuf, &n_ptr, offby, sizeof(uint8_t), tcpfl)) {
 		return false;
-	if (nbuf_fetch_datum(nbuf, n_ptr, sizeof(uint8_t), &npc->npc_tcp_flags))
-		return false;
+	}
 	return true;
 }
 
@@ -346,10 +331,9 @@ npf_rwrport(npf_cache_t *npc, nbuf_t *nbuf, void *n_ptr, const int di,
 		return false;
 
 	/* Advance and update TCP/UDP checksum. */
-	if ((n_ptr = nbuf_advance(&nbuf, n_ptr, toff)) == NULL)
+	if (nbuf_advfetch(&nbuf, &n_ptr, toff, sizeof(uint16_t), &cksum)) {
 		return false;
-	if (nbuf_fetch_datum(nbuf, n_ptr, sizeof(uint16_t), &cksum))
-		return false;
+	}
 	if (__predict_true(cksum || proto == IPPROTO_TCP)) {
 		cksum = npf_fixup32_cksum(cksum, oaddr, naddr);
 		cksum = npf_fixup16_cksum(cksum, oport, port);
