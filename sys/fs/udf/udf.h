@@ -1,4 +1,4 @@
-/* $NetBSD: udf.h,v 1.42 2010/09/24 22:51:50 rmind Exp $ */
+/* $NetBSD: udf.h,v 1.43 2010/09/25 01:42:40 matt Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -30,7 +30,7 @@
 #define _FS_UDF_UDF_H_
 
 #include <sys/queue.h>
-#include <sys/rb.h>
+#include <sys/rbtree.h>
 #include <sys/uio.h>
 #include <sys/mutex.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_impl.h,v 1.2 2010/09/16 04:53:27 rmind Exp $	*/
+/*	$NetBSD: npf_impl.h,v 1.3 2010/09/25 01:42:39 matt Exp $	*/
 
 /*-
  * Copyright (c) 2009-2010 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 #ifndef _NPF_IMPL_H_
 #define _NPF_IMPL_H_
 
-#include <sys/rb.h>
+#include <sys/rbtree.h>
 #include <sys/hash.h>
 #include <sys/queue.h>
 #include <sys/types.h>
