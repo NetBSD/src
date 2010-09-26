@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.201.4.5 2010/03/11 15:04:31 yamt Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.201.4.6 2010/09/26 03:58:55 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.201.4.5 2010/03/11 15:04:31 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.201.4.6 2010/09/26 03:58:55 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -1739,32 +1739,55 @@ void
 nfs_clearcommit(struct mount *mp)
 {
 	struct vnode *vp;
+	struct vnode *mvp;
 	struct nfsnode *np;
 	struct vm_page *pg;
 	struct nfsmount *nmp = VFSTONFS(mp);
 
+	mvp = vnalloc(mp);
 	rw_enter(&nmp->nm_writeverflock, RW_WRITER);
 	mutex_enter(&mntvnode_lock);
-	TAILQ_FOREACH(vp, &mp->mnt_vnodelist, v_mntvnodes) {
+	for (vp = TAILQ_FIRST(&mp->mnt_vnodelist); vp != NULL;
+	    vp = vunmark(mvp)) {
+		int error;
+
+		vmark(mvp, vp);
 		KASSERT(vp->v_mount == mp);
-		if (vp->v_type != VREG)
+		/*
+		 * skip syncer and marker vnodes
+		 */
+		if (vp->v_data == NULL || vismarker(vp)) {
 			continue;
+		}
 		mutex_enter(&vp->v_interlock);
-		if (vp->v_iflag & (VI_XLOCK | VI_CLEAN)) {
+		if (vp->v_type != VREG) {
 			mutex_exit(&vp->v_interlock);
 			continue;
 		}
+		mutex_exit(&mntvnode_lock);
+		error = vget(vp, 0);
+		if (error != 0) {
+			mutex_enter(&mntvnode_lock);
+			continue;
+		}
 		np = VTONFS(vp);
+		KASSERT(np != NULL);
+		mutex_enter(&np->n_commitlock);
 		np->n_pushlo = np->n_pushhi = np->n_pushedlo =
 		    np->n_pushedhi = 0;
 		np->n_commitflags &=
 		    ~(NFS_COMMIT_PUSH_VALID | NFS_COMMIT_PUSHED_VALID);
+		mutex_enter(&vp->v_interlock);
 		TAILQ_FOREACH(pg, &vp->v_uobj.memq, listq.queue) {
 			pg->flags &= ~PG_NEEDCOMMIT;
 		}
 		mutex_exit(&vp->v_interlock);
+		mutex_exit(&np->n_commitlock);
+		vrele(vp);
+		mutex_enter(&mntvnode_lock);
 	}
 	mutex_exit(&mntvnode_lock);
+	vnfree(mvp);
 	mutex_enter(&nmp->nm_lock);
 	nmp->nm_iflag &= ~NFSMNT_STALEWRITEVERF;
 	mutex_exit(&nmp->nm_lock);
@@ -1776,6 +1799,7 @@ nfs_merge_commit_ranges(struct vnode *vp)
 {
 	struct nfsnode *np = VTONFS(vp);
 
+	KASSERT(mutex_owned(&np->n_commitlock));
 	KASSERT(np->n_commitflags & NFS_COMMIT_PUSH_VALID);
 
 	if (!(np->n_commitflags & NFS_COMMIT_PUSHED_VALID)) {
@@ -1804,6 +1828,8 @@ nfs_in_committed_range(struct vnode *vp, off_t off, off_t len)
 	struct nfsnode *np = VTONFS(vp);
 	off_t lo, hi;
 
+	KASSERT(mutex_owned(&np->n_commitlock));
+
 	if (!(np->n_commitflags & NFS_COMMIT_PUSHED_VALID))
 		return 0;
 	lo = off;
@@ -1818,6 +1844,8 @@ nfs_in_tobecommitted_range(struct vnode *vp, off_t off, off_t len)
 	struct nfsnode *np = VTONFS(vp);
 	off_t lo, hi;
 
+	KASSERT(mutex_owned(&np->n_commitlock));
+
 	if (!(np->n_commitflags & NFS_COMMIT_PUSH_VALID))
 		return 0;
 	lo = off;
@@ -1831,6 +1859,8 @@ nfs_add_committed_range(struct vnode *vp, off_t off, off_t len)
 {
 	struct nfsnode *np = VTONFS(vp);
 	off_t lo, hi;
+
+	KASSERT(mutex_owned(&np->n_commitlock));
 
 	lo = off;
 	hi = lo + len;
@@ -1856,6 +1886,8 @@ nfs_del_committed_range(struct vnode *vp, off_t off, off_t len)
 {
 	struct nfsnode *np = VTONFS(vp);
 	off_t lo, hi;
+
+	KASSERT(mutex_owned(&np->n_commitlock));
 
 	if (!(np->n_commitflags & NFS_COMMIT_PUSHED_VALID))
 		return;
@@ -1892,6 +1924,8 @@ nfs_add_tobecommitted_range(struct vnode *vp, off_t off, off_t len)
 	struct nfsnode *np = VTONFS(vp);
 	off_t lo, hi;
 
+	KASSERT(mutex_owned(&np->n_commitlock));
+
 	lo = off;
 	hi = lo + len;
 
@@ -1916,6 +1950,8 @@ nfs_del_tobecommitted_range(struct vnode *vp, off_t off, off_t len)
 {
 	struct nfsnode *np = VTONFS(vp);
 	off_t lo, hi;
+
+	KASSERT(mutex_owned(&np->n_commitlock));
 
 	if (!(np->n_commitflags & NFS_COMMIT_PUSH_VALID))
 		return;

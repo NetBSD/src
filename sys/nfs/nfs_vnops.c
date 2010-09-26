@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.266.10.7 2010/08/11 22:54:59 yamt Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.266.10.8 2010/09/26 03:58:55 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.266.10.7 2010/08/11 22:54:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.266.10.8 2010/09/26 03:58:55 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -462,6 +462,8 @@ nfs_open(void *v)
 	struct nfsnode *np = VTONFS(vp);
 	int error;
 
+	KASSERT(VOP_ISLOCKED(vp) == LK_EXCLUSIVE);
+
 	if (vp->v_type != VREG && vp->v_type != VDIR && vp->v_type != VLNK) {
 		return (EACCES);
 	}
@@ -530,6 +532,8 @@ nfs_close(void *v)
 	int error = 0;
 	UVMHIST_FUNC("nfs_close"); UVMHIST_CALLED(ubchist);
 
+	KASSERT(VOP_ISLOCKED(vp) == LK_EXCLUSIVE);
+
 	if (vp->v_type == VREG) {
 	    if (np->n_flag & NMODIFIED) {
 #ifndef NFS_V2_ONLY
@@ -541,10 +545,7 @@ nfs_close(void *v)
 		    error = nfs_vinvalbuf(vp, V_SAVE, ap->a_cred, curlwp, 1);
 		NFS_INVALIDATE_ATTRCACHE(np);
 	    }
-	    if (np->n_flag & NWRITEERR) {
-		np->n_flag &= ~NWRITEERR;
-		error = np->n_error;
-	    }
+	    error = atomic_swap_uint((unsigned int *)&np->n_error, 0);
 	}
 	UVMHIST_LOG(ubchist, "returning %d", error,0,0,0);
 	return (error);
@@ -576,8 +577,10 @@ nfs_getattr(void *v)
 	/*
 	 * Update local times for special files.
 	 */
-	if (np->n_flag & (NACC | NUPD))
-		np->n_flag |= NCHG;
+	mutex_enter(&np->n_attrlock);
+	if (np->n_specflags & (NACC | NUPD))
+		np->n_specflags |= NCHG;
+	mutex_exit(&np->n_attrlock);
 
 	/*
 	 * if we have delayed truncation, do it now.
@@ -620,6 +623,8 @@ nfs_setattr(void *v)
 	struct vattr *vap = ap->a_vap;
 	int error = 0;
 	u_quad_t tsize = 0;
+
+	KASSERT(VOP_ISLOCKED(vp) == LK_EXCLUSIVE);
 
 	/*
 	 * Setting of flags is not supported.
@@ -793,6 +798,8 @@ nfs_lookup(void *v)
 	int error = 0, attrflag, fhsize;
 	const int v3 = NFS_ISV3(dvp);
 
+	KASSERT(VOP_ISLOCKED(dvp) == LK_EXCLUSIVE);
+
 	flags = cnp->cn_flags;
 
 	*vpp = NULLVP;
@@ -881,6 +888,7 @@ nfs_lookup(void *v)
 			/* newvp has been reclaimed. */
 			vrele(newvp);
 			*vpp = NULLVP;
+			printf("%s: %p revoked\n", __func__, newvp);
 			goto dorpc;
 		}
 		if (!VOP_GETATTR(newvp, &vattr, cnp->cn_cred)
@@ -1090,6 +1098,8 @@ nfs_read(void *v)
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 
+	KASSERT(VOP_ISLOCKED(vp));
+
 	if (vp->v_type != VREG)
 		return EISDIR;
 	return (nfs_bioread(vp, ap->a_uio, ap->a_ioflag, ap->a_cred, 0));
@@ -1108,6 +1118,8 @@ nfs_readlink(void *v)
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct nfsnode *np = VTONFS(vp);
+
+	KASSERT(VOP_ISLOCKED(vp));
 
 	if (vp->v_type != VLNK)
 		return (EPERM);
@@ -1523,6 +1535,8 @@ nfs_mknodrpc(struct vnode *dvp, struct vnode **vpp, struct componentname *cnp, s
 	u_int32_t rdev;
 	const int v3 = NFS_ISV3(dvp);
 
+	KASSERT(VOP_ISLOCKED(dvp) == LK_EXCLUSIVE);
+
 	if (vap->va_type == VCHR || vap->va_type == VBLK)
 		rdev = txdr_unsigned(vap->va_rdev);
 	else if (vap->va_type == VFIFO || vap->va_type == VSOCK)
@@ -1608,6 +1622,8 @@ nfs_mknod(void *v)
 	struct componentname *cnp = ap->a_cnp;
 	int error;
 
+	KASSERT(VOP_ISLOCKED(dvp) == LK_EXCLUSIVE);
+
 	error = nfs_mknodrpc(dvp, ap->a_vpp, cnp, ap->a_vap);
 	VN_KNOTE(dvp, NOTE_WRITE);
 	if (error == 0 || error == EEXIST)
@@ -1641,6 +1657,8 @@ nfs_create(void *v)
 	struct mbuf *mreq, *mrep, *md, *mb;
 	const int v3 = NFS_ISV3(dvp);
 	u_int32_t excl_mode = NFSV3CREATE_UNCHECKED;
+
+	KASSERT(VOP_ISLOCKED(dvp) == LK_EXCLUSIVE);
 
 	/*
 	 * Oops, not for me..
@@ -1782,6 +1800,8 @@ nfs_remove(void *v)
 	int error = 0;
 	struct vattr vattr;
 
+	KASSERT(VOP_ISLOCKED(dvp) == LK_EXCLUSIVE);
+
 #ifndef DIAGNOSTIC
 	if ((cnp->cn_flags & HASBUF) == 0)
 		panic("nfs_remove: no name");
@@ -1859,6 +1879,8 @@ nfs_removerpc(struct vnode *dvp, const char *name, int namelen, kauth_cred_t cre
 	int rexmit = 0;
 	struct nfsnode *dnp = VTONFS(dvp);
 
+	KASSERT(VOP_ISLOCKED(dvp) == LK_EXCLUSIVE);
+
 	nfsstats.rpccnt[NFSPROC_REMOVE]++;
 	nfsm_reqhead(dnp, NFSPROC_REMOVE,
 		NFSX_FH(v3) + NFSX_UNSIGNED + nfsm_rndup(namelen));
@@ -1905,6 +1927,8 @@ nfs_rename(void *v)
 	struct componentname *tcnp = ap->a_tcnp;
 	struct componentname *fcnp = ap->a_fcnp;
 	int error;
+
+	KASSERT(VOP_ISLOCKED(tdvp) == LK_EXCLUSIVE);
 
 #ifndef DIAGNOSTIC
 	if ((tcnp->cn_flags & HASBUF) == 0 ||
@@ -2044,6 +2068,8 @@ nfs_linkrpc(struct vnode *dvp, struct vnode *vp, const char *name,
 	int rexmit = 0;
 	struct nfsnode *np = VTONFS(vp);
 
+	KASSERT(VOP_ISLOCKED(dvp) == LK_EXCLUSIVE);
+
 	nfsstats.rpccnt[NFSPROC_LINK]++;
 	nfsm_reqhead(np, NFSPROC_LINK,
 	    NFSX_FH(v3)*2 + NFSX_UNSIGNED + nfsm_rndup(namelen));
@@ -2089,6 +2115,8 @@ nfs_link(void *v)
 	struct vnode *dvp = ap->a_dvp;
 	struct componentname *cnp = ap->a_cnp;
 	int error = 0;
+
+	KASSERT(VOP_ISLOCKED(dvp) == LK_EXCLUSIVE);
 
 	if (dvp->v_mount != vp->v_mount) {
 		VOP_ABORTOP(dvp, cnp);
@@ -2245,6 +2273,8 @@ nfs_mkdir(void *v)
 	struct mbuf *mreq, *mrep, *md, *mb;
 	const int v3 = NFS_ISV3(dvp);
 
+	KASSERT(VOP_ISLOCKED(dvp) == LK_EXCLUSIVE);
+
 	len = cnp->cn_namelen;
 	nfsstats.rpccnt[NFSPROC_MKDIR]++;
 	nfsm_reqhead(dnp, NFSPROC_MKDIR,
@@ -2336,6 +2366,8 @@ nfs_rmdir(void *v)
 	struct mbuf *mreq, *mrep, *md, *mb;
 	const int v3 = NFS_ISV3(dvp);
 	struct nfsnode *dnp;
+
+	KASSERT(VOP_ISLOCKED(dvp) == LK_EXCLUSIVE);
 
 	if (dvp == vp) {
 		vrele(dvp);
@@ -3193,6 +3225,13 @@ nfs_fsync(void *v)
 
 	struct vnode *vp = ap->a_vp;
 
+	/*
+	 * XXX currently we can be called with the vnode only
+	 * LK_SHARED-locked.  it violates the vnode locking protocol.
+	 *
+	 * eg. nfs_read -> nfs_flushstalebuf -> vinvalbuf -> VOP_FSYNC
+	 */
+
 	if (vp->v_type != VREG)
 		return 0;
 
@@ -3209,14 +3248,16 @@ nfs_flush(struct vnode *vp, kauth_cred_t cred, int waitfor, struct lwp *l,
 {
 	struct nfsnode *np = VTONFS(vp);
 	int error;
+	int error2;
 	int flushflags = PGO_ALLPAGES|PGO_CLEANIT|PGO_SYNCIO;
 	UVMHIST_FUNC("nfs_flush"); UVMHIST_CALLED(ubchist);
 
+	KASSERT(vp->v_type == VREG);
 	mutex_enter(&vp->v_interlock);
 	error = VOP_PUTPAGES(vp, 0, 0, flushflags);
-	if (np->n_flag & NWRITEERR) {
-		error = np->n_error;
-		np->n_flag &= ~NWRITEERR;
+	error2 = atomic_swap_uint((unsigned int *)&np->n_error, 0);
+	if (error2 != 0) {
+		error = error2;
 	}
 	UVMHIST_LOG(ubchist, "returning %d", error,0,0,0);
 	return (error);
@@ -3445,8 +3486,10 @@ nfsspec_read(void *v)
 	/*
 	 * Set access flag.
 	 */
-	np->n_flag |= NACC;
+	mutex_enter(&np->n_attrlock);
+	np->n_specflags |= NACC;
 	getnanotime(&np->n_atim);
+	mutex_exit(&np->n_attrlock);
 	return (VOCALL(spec_vnodeop_p, VOFFSET(vop_read), ap));
 }
 
@@ -3467,8 +3510,10 @@ nfsspec_write(void *v)
 	/*
 	 * Set update flag.
 	 */
-	np->n_flag |= NUPD;
+	mutex_enter(&np->n_attrlock);
+	np->n_specflags |= NUPD;
 	getnanotime(&np->n_mtim);
+	mutex_exit(&np->n_attrlock);
 	return (VOCALL(spec_vnodeop_p, VOFFSET(vop_write), ap));
 }
 
@@ -3490,18 +3535,22 @@ nfsspec_close(void *v)
 	struct nfsnode *np = VTONFS(vp);
 	struct vattr vattr;
 
-	if (np->n_flag & (NACC | NUPD)) {
-		np->n_flag |= NCHG;
+	mutex_enter(&np->n_attrlock);
+	if (np->n_specflags & (NACC | NUPD)) {
+		np->n_specflags |= NCHG;
 		if (vp->v_usecount == 1 &&
 		    (vp->v_mount->mnt_flag & MNT_RDONLY) == 0) {
 			vattr_null(&vattr);
-			if (np->n_flag & NACC)
+			if (np->n_specflags & NACC)
 				vattr.va_atime = np->n_atim;
-			if (np->n_flag & NUPD)
+			if (np->n_specflags & NUPD)
 				vattr.va_mtime = np->n_mtim;
+			mutex_exit(&np->n_attrlock);
 			(void)VOP_SETATTR(vp, &vattr, ap->a_cred);
+			mutex_enter(&np->n_attrlock);
 		}
 	}
+	mutex_exit(&np->n_attrlock);
 	return (VOCALL(spec_vnodeop_p, VOFFSET(vop_close), ap));
 }
 
@@ -3522,8 +3571,10 @@ nfsfifo_read(void *v)
 	/*
 	 * Set access flag.
 	 */
-	np->n_flag |= NACC;
+	mutex_enter(&np->n_attrlock);
+	np->n_specflags |= NACC;
 	getnanotime(&np->n_atim);
+	mutex_exit(&np->n_attrlock);
 	return (VOCALL(fifo_vnodeop_p, VOFFSET(vop_read), ap));
 }
 
@@ -3544,8 +3595,10 @@ nfsfifo_write(void *v)
 	/*
 	 * Set update flag.
 	 */
-	np->n_flag |= NUPD;
+	mutex_enter(&np->n_attrlock);
+	np->n_specflags |= NUPD;
 	getnanotime(&np->n_mtim);
+	mutex_exit(&np->n_attrlock);
 	return (VOCALL(fifo_vnodeop_p, VOFFSET(vop_write), ap));
 }
 
@@ -3567,24 +3620,28 @@ nfsfifo_close(void *v)
 	struct nfsnode *np = VTONFS(vp);
 	struct vattr vattr;
 
-	if (np->n_flag & (NACC | NUPD)) {
+	mutex_enter(&np->n_attrlock);
+	if (np->n_specflags & (NACC | NUPD)) {
 		struct timespec ts;
 
 		getnanotime(&ts);
-		if (np->n_flag & NACC)
+		if (np->n_specflags & NACC)
 			np->n_atim = ts;
-		if (np->n_flag & NUPD)
+		if (np->n_specflags & NUPD)
 			np->n_mtim = ts;
-		np->n_flag |= NCHG;
+		np->n_specflags |= NCHG;
 		if (vp->v_usecount == 1 &&
 		    (vp->v_mount->mnt_flag & MNT_RDONLY) == 0) {
 			vattr_null(&vattr);
-			if (np->n_flag & NACC)
+			if (np->n_specflags & NACC)
 				vattr.va_atime = np->n_atim;
-			if (np->n_flag & NUPD)
+			if (np->n_specflags & NUPD)
 				vattr.va_mtime = np->n_mtim;
+			mutex_exit(&np->n_attrlock);
 			(void)VOP_SETATTR(vp, &vattr, ap->a_cred);
+			mutex_enter(&np->n_attrlock);
 		}
 	}
+	mutex_exit(&np->n_attrlock);
 	return (VOCALL(fifo_vnodeop_p, VOFFSET(vop_close), ap));
 }

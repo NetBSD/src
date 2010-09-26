@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_clntsubs.c,v 1.1.2.2 2010/03/11 15:04:31 yamt Exp $	*/
+/*	$NetBSD: nfs_clntsubs.c,v 1.1.2.3 2010/09/26 03:58:55 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_clntsubs.c,v 1.1.2.2 2010/03/11 15:04:31 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_clntsubs.c,v 1.1.2.3 2010/09/26 03:58:55 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -302,10 +302,10 @@ nfs_loadattrcache(struct vnode **vpp, struct nfs_fattr *fp, struct vattr *vaper,
 	np->n_attrstamp = time_second;
 	if (vaper != NULL) {
 		memcpy((void *)vaper, (void *)vap, sizeof(*vap));
-		if (np->n_flag & NCHG) {
-			if (np->n_flag & NACC)
+		if (np->n_specflags & NCHG) {
+			if (np->n_specflags & NACC)
 				vaper->va_atime = np->n_atim;
-			if (np->n_flag & NUPD)
+			if (np->n_specflags & NUPD)
 				vaper->va_mtime = np->n_mtim;
 		}
 	}
@@ -355,10 +355,10 @@ nfs_getattrcache(struct vnode *vp, struct vattr *vaper)
 			np->n_size = vap->va_size;
 	}
 	memcpy(vaper, vap, sizeof(struct vattr));
-	if (np->n_flag & NCHG) {
-		if (np->n_flag & NACC)
+	if (np->n_specflags & NCHG) {
+		if (np->n_specflags & NACC)
 			vaper->va_atime = np->n_atim;
-		if (np->n_flag & NUPD)
+		if (np->n_specflags & NUPD)
 			vaper->va_mtime = np->n_mtim;
 	}
 	mutex_exit(&np->n_attrlock);

@@ -1,4 +1,4 @@
-/*	 $NetBSD: nfsnode.h,v 1.67.10.2 2009/05/04 08:14:22 yamt Exp $	*/
+/*	 $NetBSD: nfsnode.h,v 1.67.10.3 2010/09/26 03:58:55 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -49,6 +49,13 @@
 #include <miscfs/genfs/genfs_node.h>
 
 /*
+ * protected by:
+ *	a: n_attrlock
+ *	c: n_commitlock
+ *	v: vnode lock
+ */
+
+/*
  * Definitions for the directory cache. Because directory cookies
  * are an opaque 64 bit entity, we need to provide some sort of
  * mapping between cookies and logical blocknumbers. Also,
@@ -94,18 +101,18 @@ struct nfsdircache {
  */
 
 struct nfsnode_spec {
-	struct timespec	nspec_mtim;	/* local mtime */
-	struct timespec	nspec_atim;	/* local atime */
+	struct timespec	nspec_mtim;	/* a: local mtime */
+	struct timespec	nspec_atim;	/* a: local atime */
 };
 
 struct nfsnode_reg {
-	off_t nreg_pushedlo;		/* 1st blk in commited range */
-	off_t nreg_pushedhi;		/* Last block in range */
-	off_t nreg_pushlo;		/* 1st block in commit range */
-	off_t nreg_pushhi;		/* Last block in range */
+	off_t nreg_pushedlo;		/* c: 1st blk in commited range */
+	off_t nreg_pushedhi;		/* c: Last block in range */
+	off_t nreg_pushlo;		/* c: 1st block in commit range */
+	off_t nreg_pushhi;		/* c: Last block in range */
 	kmutex_t nreg_commitlock;	/* Serialize commits XXX */
-	int nreg_commitflags;
-	int nreg_error;			/* Save write error value */
+	int nreg_commitflags;		/* c: */
+	int nreg_error;			/* v: Save write error value */
 };
 
 struct nfsnode_dir {
@@ -171,7 +178,8 @@ struct nfsnode {
 	time_t			n_accstamp;	/* Access cache timestamp */
 	uid_t			n_accuid;	/* Last access requester */
 	int			n_accmode;	/* Mode last requested */
-	int			n_accerror;	/* Error last returned */
+	int			n_accerror;	/* a: Error last returned */
+	unsigned int		n_specflags;	/* a: */
 };
 
 /*
@@ -186,10 +194,6 @@ struct nfsnode {
 #define	NFLUSHWANT	0x0001	/* Want wakeup from a flush in prog. */
 #define	NFLUSHINPROG	0x0002	/* Avoid multiple calls to vinvalbuf() */
 #define	NMODIFIED	0x0004	/* Might have a modified buffer in bio */
-#define	NWRITEERR	0x0008	/* Flag write errors so close will know */
-#define	NACC		0x0100	/* Special file accessed */
-#define	NUPD		0x0200	/* Special file updated */
-#define	NCHG		0x0400	/* Special file times changed */
 #define	NTRUNCDELAYED	0x1000	/* Should be truncated later;
 				   implies stale cache */
 #define	NREMOVED	0x2000	/* Has been removed */
@@ -197,6 +201,13 @@ struct nfsnode {
 #define	NEOFVALID	0x8000	/* dir: n_direofoffset is valid */
 
 #define	NFS_EOFVALID(ndp)	((ndp)->n_flag & NEOFVALID)
+
+/*
+ * n_specflags
+ */
+#define	NACC		0x0100	/* Special file accessed */
+#define	NUPD		0x0200	/* Special file updated */
+#define	NCHG		0x0400	/* Special file times changed */
 
 /*
  * Convert between nfsnode pointers and vnode pointers
