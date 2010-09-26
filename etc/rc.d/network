@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: network,v 1.60 2009/09/11 21:25:07 cegger Exp $
+# $NetBSD: network,v 1.61 2010/09/26 18:52:04 apb Exp $
 #
 
 # PROVIDE: network
@@ -259,6 +259,7 @@ network_start()
 				)
 				;;
 			esac |
+			collapse_backslash_newline |
 			while read -r args; do
 				case "$args" in
 				''|"#"*|create)
