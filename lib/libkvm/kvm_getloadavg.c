@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_getloadavg.c,v 1.9 2010/09/19 02:07:00 jym Exp $	*/
+/*	$NetBSD: kvm_getloadavg.c,v 1.10 2010/09/26 22:28:05 jym Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_getloadavg.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: kvm_getloadavg.c,v 1.9 2010/09/19 02:07:00 jym Exp $");
+__RCSID("$NetBSD: kvm_getloadavg.c,v 1.10 2010/09/26 22:28:05 jym Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -86,8 +86,6 @@ kvm_getloadavg(kvm_t *kd, double loadavg[], int nelem)
 		return (-1);
 	}
 
-#define KREAD(kd, addr, obj) \
-	(kvm_read(kd, addr, (void *)(obj), sizeof(*obj)) != sizeof(*obj))
 	if (KREAD(kd, nl[X_AVERUNNABLE].n_value, &loadinfo)) {
 		_kvm_err(kd, kd->program, "can't read averunnable");
 		return (-1);
