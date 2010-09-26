@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_proc.c,v 1.86 2010/09/20 23:23:16 jym Exp $	*/
+/*	$NetBSD: kvm_proc.c,v 1.87 2010/09/26 22:28:05 jym Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_proc.c	8.3 (Berkeley) 9/23/93";
 #else
-__RCSID("$NetBSD: kvm_proc.c,v 1.86 2010/09/20 23:23:16 jym Exp $");
+__RCSID("$NetBSD: kvm_proc.c,v 1.87 2010/09/26 22:28:05 jym Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -169,9 +169,6 @@ struct kvm_kauth_cred {
 	gid_t cr_groups[NGROUPS];	/* group memberships */
 	specificdata_reference cr_sd;	/* specific data */
 };
-
-#define KREAD(kd, addr, obj) \
-	(kvm_read(kd, addr, (obj), sizeof(*obj)) != sizeof(*obj))
 
 /* XXX: What uses these two functions? */
 char		*_kvm_uread(kvm_t *, const struct proc *, u_long, u_long *);

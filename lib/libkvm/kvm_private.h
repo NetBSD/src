@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_private.h,v 1.18 2010/09/20 23:23:16 jym Exp $	*/
+/*	$NetBSD: kvm_private.h,v 1.19 2010/09/26 22:28:05 jym Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -118,6 +118,9 @@ void	*_kvm_realloc(kvm_t *, void *, size_t);
 void	 _kvm_syserr(kvm_t *, const char *, const char *, ...)
 	    __attribute__((__format__(__printf__, 3, 4)));
 ssize_t	_kvm_pread(kvm_t *, int, void *, size_t, off_t);
+
+#define KREAD(kd, addr, obj) \
+	(kvm_read(kd, addr, (obj), sizeof(*obj)) != sizeof(*obj))
 
 #define KVM_ALLOC(kd, member, size) \
     do { \
