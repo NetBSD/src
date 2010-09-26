@@ -1,4 +1,4 @@
-.\" 	$NetBSD: rc.subr.8,v 1.26 2010/03/15 19:00:20 jmmv Exp $
+.\" 	$NetBSD: rc.subr.8,v 1.27 2010/09/26 18:37:15 apb Exp $
 .\"
 .\" Copyright (c) 2002-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -45,6 +45,8 @@
 .Ic check_pidfile Ar pidfile Ar procname Op Ar interpreter
 .It
 .Ic check_process Ar procname Op Ar interpreter
+.It
+.Ic collapse_backslash_newline
 .It
 .Ic err Ar exitval Ar message
 .It
@@ -208,6 +210,10 @@ argument that matches
 .Ar interpreter
 is handled as per
 .Ic check_pidfile .
+.It Ic collapse_backslash_newline
+Copy input to output, collapsing
+.Ao backslash Ac Ns Ao newline Ac
+to nothing, but leaving other backslashes alone.
 .It Ic err Ar exitval Ar message
 Display an error message to
 .Em stderr ,

@@ -1,4 +1,4 @@
-# $NetBSD: rc.subr,v 1.85 2010/06/08 18:04:17 christos Exp $
+# $NetBSD: rc.subr,v 1.86 2010/09/26 18:37:14 apb Exp $
 #
 # Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1194,6 +1194,27 @@ human_exit_code()
 		echo "terminated with signal $(expr $1 - 128)"
 	fi
 }
-	
+
+#
+# collapse_backslash_newline
+#	Copy input to output, collapsing <backslash><newline>
+#	to nothing, but leaving other backslashes alone.
+#
+collapse_backslash_newline()
+{
+	local line
+	while read -r line ; do
+		case "$line" in
+		*\\)
+			# print it, without the backslash or newline
+			printf "%s" "${line%?}"
+			;;
+		*)
+			# print it, with a newline
+			printf "%s\n" "${line}"
+			;;
+		esac
+	done
+}
 
 _rc_subr_loaded=:
