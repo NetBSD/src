@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.36.2.23 2010/09/26 06:38:36 uebayasi Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.36.2.24 2010/09/26 07:06:57 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.36.2.23 2010/09/26 06:38:36 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.36.2.24 2010/09/26 07:06:57 uebayasi Exp $");
 
 #include "opt_xip.h"
 
@@ -62,6 +62,10 @@ __KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.36.2.23 2010/09/26 06:38:36 uebayasi 
 static int genfs_do_getpages(void *);
 #ifdef XIP
 static int genfs_do_getpages_xip(void *);
+static int genfs_do_getpages_xip1(struct vnode *, voff_t, struct vm_page **,
+    int *, int, vm_prot_t, int, int);
+static int genfs_do_putpages_xip(struct vnode *, off_t, off_t, int,
+    struct vm_page **);
 #endif
 static int genfs_do_directio(struct vmspace *, vaddr_t, size_t, struct vnode *,
     off_t, enum uio_rw);
@@ -128,9 +132,8 @@ genfs_getpages(void *v)
 		int a_advice;
 		int a_flags;
 	} */ * const ap = v;
-	struct vnode * const vp = ap->a_vp;
 
-	if ((vp->v_vflag & VV_XIP) != 0)
+	if ((ap->a_vp->v_vflag & VV_XIP) != 0)
 		return genfs_do_getpages_xip(v);
 	else
 #endif
@@ -754,20 +757,6 @@ out_err:
 }
 
 #ifdef XIP
-static struct uvm_object xip_zero_obj;
-static struct vm_page *xip_zero_page;
-
-static int
-xip_zero_page_init(void)
-{
-
-	UVM_OBJ_INIT(&xip_zero_obj, NULL, 0);
-	xip_zero_page = uvm_pagealloc(&xip_zero_obj, 0, NULL, UVM_PGA_ZERO);
-	KASSERT(xip_zero_page != NULL);
-	uvm_pagewire(xip_zero_page);
-	return 0;
-}
-
 /*
  * genfs_do_getpages_xip
  *      Return "direct pages" of XIP vnode.  The block addresses of XIP
@@ -791,18 +780,36 @@ genfs_do_getpages_xip(void *v)
 		int a_flags;
 	} */ * const ap = v;
 
-	struct vnode * const vp = ap->a_vp;
-	int *npagesp = ap->a_count;
-	const off_t offset = ap->a_offset;
-	struct vm_page **pps = ap->a_m;
+	return genfs_do_getpages_xip1(
+		ap->a_vp,
+		ap->a_offset,
+		ap->a_m,
+		ap->a_count,
+		ap->a_centeridx,
+		ap->a_access_type,
+		ap->a_advice,
+		ap->a_flags);
+}
+
+static int
+genfs_do_getpages_xip1(
+	struct vnode *vp,
+	voff_t offset,
+	struct vm_page **pps,
+	int *npagesp,
+	int centeridx,
+	vm_prot_t access_type,
+	int advice,
+	int flags)
+{
 	struct uvm_object * const uobj = &vp->v_uobj;
-	const int flags = ap->a_flags;
 
 	int error;
 	off_t eof, sbkoff, ebkoff, off;
 	int npages;
 	int fs_bshift, fs_bsize, dev_bshift, dev_bsize;
 	int i;
+	struct vm_page *zero_page;
 
 	UVMHIST_FUNC("genfs_do_getpages_xip"); UVMHIST_CALLED(ubchist);
 
@@ -819,6 +826,8 @@ genfs_do_getpages_xip(void *v)
 	sbkoff = offset & ~(fs_bsize - 1);
 	ebkoff = ((offset + PAGE_SIZE * npages) + (fs_bsize - 1)) &
 	    ~(fs_bsize - 1);
+
+	zero_page = NULL;
 
 	UVMHIST_LOG(ubchist, "xip npages=%d sbkoff=%lx ebkoff=%lx",
 	    npages, (long)sbkoff, (long)ebkoff, 0);
@@ -847,10 +856,19 @@ genfs_do_getpages_xip(void *v)
 		 *   allocated and linearly ordered by physical address.
 		 */
 		if (blkno < 0) {
-			static ONCE_DECL(xip_zero_page_inited);
+			zero_page = uvm_pagelookup(uobj, 0);
 
-			RUN_ONCE(&xip_zero_page_inited, xip_zero_page_init);
-			pps[i] = xip_zero_page;
+			if (zero_page == NULL) {
+				mutex_enter(&uobj->vmobjlock);
+				zero_page = uvm_pagealloc(uobj, 0, NULL,
+				    UVM_PGA_ZERO);
+				mutex_exit(&uobj->vmobjlock);
+				KASSERT(zero_page != NULL);
+				mutex_enter(&uvm_pageqlock);
+				uvm_pagewire(zero_page);
+				mutex_exit(&uvm_pageqlock);
+			}
+			pps[i] = zero_page;
 		} else {
 			struct vm_physseg *seg;
 			daddr_t seg_off;
@@ -885,7 +903,7 @@ genfs_do_getpages_xip(void *v)
 	for (i = 0; i < npages; i++) {
 		struct vm_page *pg = pps[i];
 
-		if (pg == xip_zero_page) {
+		if (pg == zero_page) {
 		} else {
 			KASSERT((pg->flags & PG_BUSY) == 0);
 			KASSERT((pg->flags & PG_RDONLY) != 0);
@@ -964,6 +982,12 @@ genfs_putpages(void *v)
 		int a_flags;
 	} */ * const ap = v;
 
+#ifdef XIP
+	if ((ap->a_vp->v_vflag & VV_XIP) != 0)
+		return genfs_do_putpages_xip(ap->a_vp, ap->a_offlo, ap->a_offhi,
+		    ap->a_flags, NULL);
+	else
+#endif
 	return genfs_do_putpages(ap->a_vp, ap->a_offlo, ap->a_offhi,
 	    ap->a_flags, NULL);
 }
@@ -1428,6 +1452,115 @@ skip_scan:
 
 	return (error);
 }
+
+#ifdef XIP
+int
+genfs_do_putpages_xip(struct vnode *vp, off_t startoff, off_t endoff,
+    int flags, struct vm_page **busypg)
+{
+	struct uvm_object *uobj = &vp->v_uobj;
+	struct genfs_node * const gp = VTOG(vp);
+
+	UVMHIST_FUNC("genfs_do_putpages_xip"); UVMHIST_CALLED(ubchist);
+
+	KASSERT(mutex_owned(&uobj->vmobjlock));
+	KASSERT((vp->v_iflag & VI_ONWORKLST) == 0);
+	KASSERT(vp->v_numoutput == 0);
+	KASSERT(gp->g_dirtygen == 0);
+
+	UVMHIST_LOG(ubchist, "vp %p pages %d off 0x%x len 0x%x",
+	    vp, uobj->uo_npages, startoff, endoff - startoff);
+
+	/*
+	 * XIP pages are read-only, and never become dirty.  They're also never
+	 * queued.  PGO_DEACTIVATE and PGO_CLEANIT are meaningless for XIP
+	 * pages, so we ignore them.
+	 */
+	if ((flags & PGO_FREE) == 0)
+		goto done;
+
+	/*
+	 * For PGO_FREE (or (PGO_CLEANIT | PGO_FREE)), we invalidate MMU
+	 * mappings of both XIP pages and XIP zero pages.
+	 *
+	 * Zero page is freed when one of its mapped offset is freed, even if
+	 * one file (vnode) has many holes and mapping its zero page to all
+	 * of those hole pages.
+	 *
+	 * We don't know which pages are currently mapped in the given vp,
+	 * because XIP pages are not added to vnode.  What we can is to locate
+	 * pages by querying the filesystem as done in getpages.  Call
+	 * genfs_do_getpages_xip().
+	 */
+
+	off_t off, eof;
+	struct vm_page *zero_page;
+	bool put_zero_page;
+
+	off = trunc_page(startoff);
+	if (endoff == 0 || (flags & PGO_ALLPAGES))
+		GOP_SIZE(vp, vp->v_size, &eof, GOP_SIZE_MEM);
+	else
+		eof = endoff;
+
+	zero_page = uvm_pagelookup(uobj, 0);
+	KASSERT(zero_page != NULL || uobj->uo_npages == 0);
+	KASSERT(zero_page == NULL || uobj->uo_npages == 1);
+	put_zero_page = false;
+
+	while (off < eof) {
+		int npages, orignpages, error, i;
+		struct vm_page *pgs[maxpages], *pg;
+
+		npages = round_page(eof - off) >> PAGE_SHIFT;
+		if (npages > maxpages)
+			npages = maxpages;
+
+		orignpages = npages;
+		error = genfs_do_getpages_xip1(vp, off, pgs, &npages, 0,
+		    VM_PROT_ALL, 0, PGO_LOCKED);
+		KASSERT(error == 0);
+		KASSERT(npages == orignpages);
+		for (i = 0; i < npages; i++) {
+			pg = pgs[i];
+			if (pg == NULL || pg == PGO_DONTCARE)
+				continue;
+			if (pg == zero_page) {
+				put_zero_page = true;
+			} else {
+				/*
+				 * Freeing normal XIP pages; nothing to do.
+				 */
+				pmap_page_protect(pg, VM_PROT_NONE);
+				KASSERT((pg->flags & PG_BUSY) != 0);
+				KASSERT((pg->flags & PG_RDONLY) != 0);
+				KASSERT((pg->flags & PG_CLEAN) != 0);
+				KASSERT((pg->flags & PG_FAKE) == 0);
+				KASSERT((pg->pqflags & PQ_FIXED) != 0);
+				pg->flags &= ~PG_BUSY;
+			}
+		}
+		off += npages << PAGE_SHIFT;
+	}
+
+	if (put_zero_page) {
+		/*
+		 * Freeing an XIP zero page.
+		 */
+		pmap_page_protect(zero_page, VM_PROT_NONE);
+		mutex_enter(&uvm_pageqlock);
+		uvm_pageunwire(zero_page);
+		mutex_exit(&uvm_pageqlock);
+		uvm_pagefree(zero_page);
+	}
+
+	KASSERT(uobj->uo_npages == 0);
+
+done:
+	mutex_exit(&uobj->vmobjlock);
+	return 0;
+}
+#endif
 
 int
 genfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages, int flags)
