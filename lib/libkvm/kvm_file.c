@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_file.c,v 1.27 2010/09/19 02:07:00 jym Exp $	*/
+/*	$NetBSD: kvm_file.c,v 1.28 2010/09/26 22:28:05 jym Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1992, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_file.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: kvm_file.c,v 1.27 2010/09/19 02:07:00 jym Exp $");
+__RCSID("$NetBSD: kvm_file.c,v 1.28 2010/09/26 22:28:05 jym Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -72,9 +72,6 @@ __RCSID("$NetBSD: kvm_file.c,v 1.27 2010/09/19 02:07:00 jym Exp $");
 
 #include "kvm_private.h"
 
-#define KREAD(kd, addr, obj) \
-	(kvm_read(kd, (u_long) addr, obj, sizeof(*obj)) != sizeof(*obj))
-
 static int
 kvm_deadfiles(kvm_t *, int, int, long, int);
 
@@ -94,7 +91,7 @@ kvm_deadfiles(kvm_t *kd, int op, int arg, long ofhead, int numfiles)
 	 * first copyout filehead
 	 */
 	if (buflen < sizeof(fhead) ||
-	    KREAD(kd, ofhead, &fhead)) {
+	    KREAD(kd, (u_long)ofhead, &fhead)) {
 		_kvm_err(kd, kd->program, "can't read filehead");
 		return (0);
 	}
@@ -107,7 +104,8 @@ kvm_deadfiles(kvm_t *kd, int op, int arg, long ofhead, int numfiles)
 	 */
 	for (fp = fhead.lh_first; fp != 0; fp = fp->f_list.le_next) {
 		if (buflen > sizeof(struct file)) {
-			if (KREAD(kd, (long)fp, ((struct file *)(void *)where))) {
+			if (KREAD(kd, (u_long)fp,
+			    ((struct file *)(void *)where))) {
 				_kvm_err(kd, kd->program, "can't read kfp");
 				return (0);
 			}

@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_m68k_cmn.c,v 1.15 2010/09/20 23:23:16 jym Exp $	*/
+/*	$NetBSD: kvm_m68k_cmn.c,v 1.16 2010/09/26 22:28:05 jym Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1992, 1993
@@ -74,7 +74,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_hp300.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: kvm_m68k_cmn.c,v 1.15 2010/09/20 23:23:16 jym Exp $");
+__RCSID("$NetBSD: kvm_m68k_cmn.c,v 1.16 2010/09/26 22:28:05 jym Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -115,9 +115,6 @@ static int vatop_030(kvm_t *, uint32_t, vaddr_t, paddr_t *);
 static int vatop_040(kvm_t *, uint32_t, vaddr_t, paddr_t *);
 
 #define	_kvm_btop(v, a)	(((unsigned)(a)) >> (v)->pgshift)
-
-#define KREAD(kd, addr, p)\
-	(kvm_read(kd, addr, (char *)(p), sizeof(*(p))) != sizeof(*(p)))
 
 void
 _kvm_cmn_freevtop(kvm_t *kd)
