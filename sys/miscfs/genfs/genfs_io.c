@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.36.2.24 2010/09/26 07:06:57 uebayasi Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.36.2.25 2010/09/26 15:18:11 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.36.2.24 2010/09/26 07:06:57 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.36.2.25 2010/09/26 15:18:11 uebayasi Exp $");
 
 #include "opt_xip.h"
 
@@ -1459,7 +1459,9 @@ genfs_do_putpages_xip(struct vnode *vp, off_t startoff, off_t endoff,
     int flags, struct vm_page **busypg)
 {
 	struct uvm_object *uobj = &vp->v_uobj;
+#ifdef DIAGNOSTIC
 	struct genfs_node * const gp = VTOG(vp);
+#endif
 
 	UVMHIST_FUNC("genfs_do_putpages_xip"); UVMHIST_CALLED(ubchist);
 
@@ -1487,10 +1489,10 @@ genfs_do_putpages_xip(struct vnode *vp, off_t startoff, off_t endoff,
 	 * one file (vnode) has many holes and mapping its zero page to all
 	 * of those hole pages.
 	 *
-	 * We don't know which pages are currently mapped in the given vp,
-	 * because XIP pages are not added to vnode.  What we can is to locate
-	 * pages by querying the filesystem as done in getpages.  Call
-	 * genfs_do_getpages_xip().
+	 * We don't know which pages are currently mapped in the given vnode,
+	 * because XIP pages are not added to vnode.  What we can do is to
+	 * locate pages by querying the filesystem as done in getpages.  Call
+	 * genfs_do_getpages_xip1().
 	 */
 
 	off_t off, eof;
