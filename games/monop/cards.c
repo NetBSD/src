@@ -1,4 +1,4 @@
-/*	$NetBSD: cards.c,v 1.23 2008/02/24 03:56:48 christos Exp $	*/
+/*	$NetBSD: cards.c,v 1.24 2010/09/26 21:12:23 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)cards.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: cards.c,v 1.23 2008/02/24 03:56:48 christos Exp $");
+__RCSID("$NetBSD: cards.c,v 1.24 2010/09/26 21:12:23 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -247,7 +247,7 @@ get_card(dp)
 	do {
 		thiscard = &dp->info[dp->top_card];
 		type_maj = thiscard->actioncode[0];
-		dp->top_card = ++(dp->top_card) % dp->num_cards;
+		dp->top_card = (dp->top_card + 1) % dp->num_cards;
 	} while (dp->gojf_used && type_maj == GOJF);
 	type_min = thiscard->actioncode[1];
 	num = atoi(thiscard->actioncode+2);
