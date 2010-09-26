@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.171 2010/08/27 08:38:41 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.172 2010/09/26 02:26:59 yamt Exp $
 #	from: @(#)Makefile.inc	8.6 (Berkeley) 5/4/95
 
 # gen sources
@@ -15,7 +15,7 @@ SRCS+= 	_errno.c alarm.c alphasort.c arc4random.c assert.c basename.c clock.c \
 	getloadavg.c getlogin.c getmntinfo.c \
 	getnetgrent.c getpagesize.c \
 	getpass.c getprogname.c getpwent.c getttyent.c \
-	getusershell.c glob.c humanize_number.c initgroups.c \
+	getusershell.c glob.c humanize_number.c initdir.c initgroups.c \
 	isascii.c isatty.c isctype.c lockf.c nftw.c \
 	nice.c nlist.c nlist_aout.c \
 	nlist_coff.c nlist_ecoff.c nlist_elf32.c nlist_elf64.c opendir.c \

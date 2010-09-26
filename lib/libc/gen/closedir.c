@@ -1,4 +1,4 @@
-/*	$NetBSD: closedir.c,v 1.15 2006/05/17 20:36:50 christos Exp $	*/
+/*	$NetBSD: closedir.c,v 1.16 2010/09/26 02:26:59 yamt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)closedir.c	8.1 (Berkeley) 6/10/93";
 #else
-__RCSID("$NetBSD: closedir.c,v 1.15 2006/05/17 20:36:50 christos Exp $");
+__RCSID("$NetBSD: closedir.c,v 1.16 2010/09/26 02:26:59 yamt Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -62,7 +62,6 @@ int
 closedir(DIR *dirp)
 {
 	int fd;
-	struct dirpos *poslist;
 
 	_DIAGASSERT(dirp != NULL);
 
@@ -72,15 +71,7 @@ closedir(DIR *dirp)
 #endif
 	fd = dirp->dd_fd;
 	dirp->dd_fd = -1;
-	dirp->dd_loc = 0;
-	free(dirp->dd_buf);
-
-	/* free seekdir/telldir storage */
-	for (poslist = dirp->dd_internal; poslist; ) {
-		struct dirpos *nextpos = poslist->dp_next;
-		free(poslist);
-		poslist = nextpos;
-	}
+	_finidir(dirp);
 
 #ifdef _REENTRANT
 	if (__isthreaded) {
