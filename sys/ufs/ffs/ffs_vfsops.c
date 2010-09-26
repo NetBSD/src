@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.257.2.8 2010/08/17 06:48:10 uebayasi Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.257.2.9 2010/09/26 06:35:32 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.257.2.8 2010/08/17 06:48:10 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.257.2.9 2010/09/26 06:35:32 uebayasi Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1771,12 +1771,6 @@ ffs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 
 	vp->v_vflag |= VV_LOCKSWORK;
 
-#ifdef XIP
-	if ((vp->v_mount->mnt_iflag & IMNT_XIP) != 0) {
-		vp->v_vflag |= VV_XIP;
-	}
-#endif
-
 	/*
 	 * XXX MFS ends up here, too, to allocate an inode.  Should we
 	 * XXX create another pool for MFS inodes?
@@ -1841,6 +1835,13 @@ ffs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 	 */
 
 	ufs_vinit(mp, ffs_specop_p, ffs_fifoop_p, &vp);
+
+#ifdef XIP
+	if ((vp->v_mount->mnt_iflag & IMNT_XIP) != 0 &&
+	    vp->v_type == VREG) {
+		vp->v_vflag |= VV_XIP;
+	}
+#endif
 
 	/*
 	 * Finish inode initialization now that aliasing has been resolved.
