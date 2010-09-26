@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.36.2.22 2010/08/25 14:29:12 uebayasi Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.36.2.23 2010/09/26 06:38:36 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.36.2.22 2010/08/25 14:29:12 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.36.2.23 2010/09/26 06:38:36 uebayasi Exp $");
 
 #include "opt_xip.h"
 
@@ -817,9 +817,11 @@ genfs_do_getpages_xip(void *v)
 	dev_bsize = 1 << dev_bshift;
 
 	sbkoff = offset & ~(fs_bsize - 1);
-	ebkoff = ((offset + PAGE_SIZE * npages) + (fs_bsize - 1)) & ~(fs_bsize - 1);
+	ebkoff = ((offset + PAGE_SIZE * npages) + (fs_bsize - 1)) &
+	    ~(fs_bsize - 1);
 
-	UVMHIST_LOG(ubchist, "xip npages=%d sbkoff=%lx ebkoff=%lx", npages, (long)sbkoff, (long)ebkoff, 0);
+	UVMHIST_LOG(ubchist, "xip npages=%d sbkoff=%lx ebkoff=%lx",
+	    npages, (long)sbkoff, (long)ebkoff, 0);
 
 	if ((flags & PGO_LOCKED) == 0)
 		mutex_exit(&uobj->vmobjlock);
@@ -834,7 +836,8 @@ genfs_do_getpages_xip(void *v)
 
 		error = VOP_BMAP(vp, lbn, &devvp, &blkno, &run);
 		KASSERT(error == 0);
-		UVMHIST_LOG(ubchist, "xip VOP_BMAP: lbn=%ld blkno=%ld run=%d", (long)lbn, (long)blkno, run, 0);
+		UVMHIST_LOG(ubchist, "xip VOP_BMAP: lbn=%ld blkno=%ld run=%d",
+		    (long)lbn, (long)blkno, run, 0);
 
 		/*
 		 * XIP page metadata assignment
@@ -856,10 +859,12 @@ genfs_do_getpages_xip(void *v)
 			seg = devvp->v_physseg;
 			KASSERT(seg != NULL);
 			/* bus_space_mmap cookie -> paddr_t */
-			seg_off = (blkno << dev_bshift) + (off - (lbn << fs_bshift));
+			seg_off = (blkno << dev_bshift) +
+			    (off - (lbn << fs_bshift));
 			KASSERT((seg_off & PAGE_MASK) == 0);
 			pg = seg->pgs + (seg_off >> PAGE_SHIFT);
-			KASSERT(pg->phys_addr == (seg->start << PAGE_SHIFT) + seg_off);
+			KASSERT(pg->phys_addr ==
+			    (seg->start << PAGE_SHIFT) + seg_off);
 
 			pps[i] = pg;
 		}
