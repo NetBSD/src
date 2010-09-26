@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.175.2.2 2010/08/11 22:54:58 yamt Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.175.2.3 2010/09/26 03:58:54 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.175.2.2 2010/08/11 22:54:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.175.2.3 2010/09/26 03:58:54 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -458,15 +458,16 @@ nfs_write(void *v)
 	int ioflag = ap->a_ioflag;
 	int extended = 0, wrotedata = 0;
 
+	KASSERT(VOP_ISLOCKED(vp) == LK_EXCLUSIVE);
 #ifdef DIAGNOSTIC
 	if (uio->uio_rw != UIO_WRITE)
 		panic("nfs_write mode");
 #endif
 	if (vp->v_type != VREG)
 		return (EIO);
-	if (np->n_flag & NWRITEERR) {
-		np->n_flag &= ~NWRITEERR;
-		return (np->n_error);
+	error = atomic_swap_uint((unsigned int *)&np->n_error, 0);
+	if (error != 0) {
+		return error;
 	}
 #ifndef NFS_V2_ONLY
 	if ((nmp->nm_flag & NFSMNT_NFSV3) &&
@@ -1050,13 +1051,12 @@ again:
 			}
 			mutex_exit(&uobj->vmobjlock);
 			goto out;
-		} else if (error == NFSERR_STALEWRITEVERF) {
+		} else if (error == NFSERR_STALEWRITEVERF || (random() % 10) == 0) {
 			nfs_clearcommit(vp->v_mount);
 			goto again;
 		}
 		if (error) {
 			bp->b_error = np->n_error = error;
-			np->n_flag |= NWRITEERR;
 		}
 		goto out;
 	}
@@ -1119,13 +1119,12 @@ again:
 		 * we got an error.
 		 */
 		bp->b_error = np->n_error = error;
-		np->n_flag |= NWRITEERR;
 	}
 
 	rw_exit(&nmp->nm_writeverflock);
 
 
-	if (stalewriteverf) {
+	if (stalewriteverf || (random() % 10) == 0) {
 		nfs_clearcommit(vp->v_mount);
 	}
 #ifndef NFS_V2_ONLY
@@ -1160,7 +1159,7 @@ nfs_doio_phys(struct buf *bp, struct uio *uiop)
 		rw_enter(&nmp->nm_writeverflock, RW_READER);
 		error = nfs_writerpc(vp, uiop, &iomode, false, &stalewriteverf);
 		rw_exit(&nmp->nm_writeverflock);
-		if (stalewriteverf) {
+		if (stalewriteverf || (random() % 10) == 0) {
 			nfs_clearcommit(bp->b_vp->v_mount);
 		}
 	}

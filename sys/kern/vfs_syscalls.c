@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.350.2.7 2010/08/11 22:54:44 yamt Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.350.2.8 2010/09/26 03:58:54 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.350.2.7 2010/08/11 22:54:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.350.2.8 2010/09/26 03:58:54 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -315,8 +315,14 @@ mount_domount(struct lwp *l, struct vnode **vpp, struct vfsops *vfsops,
 	 * If the user is not root, ensure that they own the directory
 	 * onto which we are attempting to mount.
 	 */
-	if ((error = VOP_GETATTR(vp, &va, l->l_cred)) != 0 ||
-	    (va.va_uid != kauth_cred_geteuid(l->l_cred) &&
+	vn_lock(vp, LK_SHARED | LK_RETRY);
+	error = VOP_GETATTR(vp, &va, l->l_cred);
+	VOP_UNLOCK(vp);
+	if (error != 0) {
+		vfs_delref(vfsops);
+		return error;
+	}
+	if ((va.va_uid != kauth_cred_geteuid(l->l_cred) &&
 	    (error = kauth_authorize_generic(l->l_cred,
 	    KAUTH_GENERIC_ISSUSER, NULL)) != 0)) {
 		vfs_delref(vfsops);
