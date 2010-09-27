@@ -1,4 +1,4 @@
-/*	$NetBSD: agpio.h,v 1.6 2010/09/27 21:25:38 christos Exp $	*/
+/*	$NetBSD: agpio.h,v 1.7 2010/09/27 22:49:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -65,7 +65,6 @@
 #define AGPIOC_RESERVE    _IOW (AGPIOC_BASE, 4, agp_region)
 #define AGPIOC_PROTECT    _IOW (AGPIOC_BASE, 5, agp_region)
 #endif
-#define AGPIOC_OALLOCATE  _IOWR(AGPIOC_BASE, 6, agp_oallocate)
 #define AGPIOC_ALLOCATE   _IOWR(AGPIOC_BASE, 6, agp_allocate)
 #define AGPIOC_DEALLOCATE _IOW (AGPIOC_BASE, 7, int)
 #define AGPIOC_BIND       _IOW (AGPIOC_BASE, 8, agp_bind)
@@ -108,16 +107,6 @@ typedef struct _agp_region {
 } agp_region;
 #endif
 
-typedef struct _agp_oallocate {
-	int key;		/* tag of allocation            */
-	size_t pg_count;	/* number of pages              */
-	uint32_t type;		/* 0 == normal, other devspec   */
-   	u_long physical;	/* device specific (some devices
-				 * need a phys address of the
-				 * actual page behind the gatt
-				 * table)                        */
-} agp_oallocate;
-
 typedef struct _agp_allocate {
 	int key;		/* tag of allocation            */
 	size_t pg_count;	/* number of pages              */
@@ -127,6 +116,7 @@ typedef struct _agp_allocate {
 				 * actual page behind the gatt
 				 * table)                        */
 } agp_allocate;
+
 typedef struct _agp_bind {
 	int key;		/* tag of allocation            */
 	off_t pg_start;		/* starting page to populate    */
