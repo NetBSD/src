@@ -1,4 +1,4 @@
-/* $NetBSD: fmemopen.c,v 1.4 2010/09/27 16:50:13 tnozaki Exp $ */
+/* $NetBSD: fmemopen.c,v 1.5 2010/09/27 17:08:29 tnozaki Exp $ */
 
 /*-
  * Copyright (c)2007, 2010 Takehiko NOZAKI,
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: fmemopen.c,v 1.4 2010/09/27 16:50:13 tnozaki Exp $");
+__RCSID("$NetBSD: fmemopen.c,v 1.5 2010/09/27 17:08:29 tnozaki Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -154,28 +154,24 @@ fmemopen_close1(void *cookie)
 FILE *
 fmemopen(void * __restrict buf, size_t size, const char * __restrict mode)
 {
-	int oflags;
+	int flags, oflags;
 	FILE *fp;
 	struct fmemopen_cookie *cookie;
 
-	if (size < (size_t)1) {
-		errno = EINVAL;
+	if (size < (size_t)1)
+		goto invalid;
+
+	flags = __sflags(mode, &oflags);
+	if (flags == 0)
 		return NULL;
-	}
+
+	if ((oflags & O_RDWR) == 0 && buf == NULL)
+		goto invalid;
 
 	fp = __sfp();
 	if (fp == NULL)
 		return NULL;
 	fp->_file = -1;
-
-	fp->_flags = __sflags(mode, &oflags);
-	if (fp->_flags == 0)
-		return NULL;
-
-	if ((oflags & O_RDWR) == 0 && buf == NULL) {
-		errno = EINVAL;
-		goto release;
-	}
 
 	cookie = malloc(sizeof(*cookie));
 	if (cookie == NULL)
@@ -206,12 +202,17 @@ fmemopen(void * __restrict buf, size_t size, const char * __restrict mode)
 
 	cookie->cur = (oflags & O_APPEND) ? cookie->eob : cookie->head;
 
-	fp->_write  = (fp->_flags & __SRD) ? NULL : &fmemopen_write;
-	fp->_read   = (fp->_flags & __SWR) ? NULL : &fmemopen_read;
+	fp->_flags  = flags;
+	fp->_write  = (flags & __SRD) ? NULL : &fmemopen_write;
+	fp->_read   = (flags & __SWR) ? NULL : &fmemopen_read;
 	fp->_seek   = &fmemopen_seek;
 	fp->_cookie = (void *)cookie;
 
 	return fp;
+
+invalid:
+	errno = EINVAL;
+	return NULL;
 
 release:
 	fp->_flags = 0;
