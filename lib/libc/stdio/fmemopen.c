@@ -1,4 +1,4 @@
-/* $NetBSD: fmemopen.c,v 1.3 2010/09/25 14:00:30 tron Exp $ */
+/* $NetBSD: fmemopen.c,v 1.4 2010/09/27 16:50:13 tnozaki Exp $ */
 
 /*-
  * Copyright (c)2007, 2010 Takehiko NOZAKI,
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: fmemopen.c,v 1.3 2010/09/25 14:00:30 tron Exp $");
+__RCSID("$NetBSD: fmemopen.c,v 1.4 2010/09/27 16:50:13 tnozaki Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -70,7 +70,7 @@ static int
 fmemopen_write(void *cookie, const char *buf, int nbytes)
 {
 	struct fmemopen_cookie *p;
-	char *s, *t;
+	char *s;
 
 	_DIAGASSERT(cookie != NULL);
 	_DIAGASSERT(buf != NULL && nbytes > 0);
@@ -79,16 +79,18 @@ fmemopen_write(void *cookie, const char *buf, int nbytes)
 	if (p->cur >= p->tail)
 		return 0;
 	s = p->cur;
-	t = p->tail - 1;
 	do {
-		if (p->cur == t) {
-			if (*buf == '\0')
-				*p->cur++ = *buf++;
+		if (p->cur == p->tail - 1) {
+			if (*buf == '\0') {
+				*p->cur++ = '\0';
+				goto ok;
+			}
 			break;
 		}
 		*p->cur++ = *buf++;
 	} while (--nbytes > 0);
 	*p->cur = '\0';
+ok:
 	if (p->cur > p->eob)
 		p->eob = p->cur;
 
