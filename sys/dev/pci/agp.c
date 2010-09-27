@@ -1,4 +1,4 @@
-/*	$NetBSD: agp.c,v 1.70 2010/09/27 21:25:38 christos Exp $	*/
+/*	$NetBSD: agp.c,v 1.71 2010/09/27 22:53:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -65,7 +65,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp.c,v 1.70 2010/09/27 21:25:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp.c,v 1.71 2010/09/27 22:53:46 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -944,7 +944,24 @@ agpioctl(dev_t dev, u_long cmd, void *data, int fflag, struct lwp *l)
 	case AGPIOC_SETUP:
 		return agp_setup_user(sc, (agp_setup *)data);
 
-#ifndef __LP64__	/* Wish ifdef knew about sizeof */
+#ifdef __i386__
+{
+	/*
+	 * Handle paddr_t change from 32 bit for non PAE kernels
+	 * to 64 bit.
+	 */
+#define AGPIOC_OALLOCATE  _IOWR(AGPIOC_BASE, 6, agp_oallocate)
+
+	typedef struct _agp_oallocate {
+		int key;		/* tag of allocation            */
+		size_t pg_count;	/* number of pages              */
+		uint32_t type;		/* 0 == normal, other devspec   */
+		u_long physical;	/* device specific (some devices
+					 * need a phys address of the
+					 * actual page behind the gatt
+					 * table)                        */
+	} agp_oallocate;
+
 	case AGPIOC_OALLOCATE: {
 		agp_allocate aga;
 		agp_oallocate *oaga = data;
@@ -956,8 +973,8 @@ agpioctl(dev_t dev, u_long cmd, void *data, int fflag, struct lwp *l)
 
 		return agp_allocate_user(sc, &aga);
 	}
+}
 #endif
-		
 	case AGPIOC_ALLOCATE:
 		return agp_allocate_user(sc, (agp_allocate *)data);
 
