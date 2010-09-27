@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_xauth.c,v 1.20 2009/04/20 13:23:55 tteras Exp $	*/
+/*	$NetBSD: isakmp_xauth.c,v 1.21 2010/09/27 11:57:59 vanhu Exp $	*/
 
 /* Id: isakmp_xauth.c,v 1.38 2006/08/22 18:17:17 manubsd Exp */
 
@@ -507,7 +507,7 @@ xauth_radius_init(void)
 		if (!auth_added) {
 			if (rad_config(radius_auth_state, NULL) != 0) {
 				plog(LLV_ERROR, LOCATION, NULL, 
-				    "Cannot open librarius config file: %s\n", 
+				    "Cannot open libradius config file: %s\n", 
 				    rad_strerror(radius_auth_state));
 				rad_close(radius_auth_state);
 				radius_auth_state = NULL;
@@ -547,7 +547,7 @@ xauth_radius_init(void)
 		if (!acct_added) {
 			if (rad_config(radius_acct_state, NULL) != 0) {
 				plog(LLV_ERROR, LOCATION, NULL, 
-				    "Cannot open librarius config file: %s\n", 
+				    "Cannot open libradius config file: %s\n", 
 				    rad_strerror(radius_acct_state));
 				rad_close(radius_acct_state);
 				radius_acct_state = NULL;
