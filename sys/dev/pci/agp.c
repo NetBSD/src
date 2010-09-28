@@ -1,4 +1,4 @@
-/*	$NetBSD: agp.c,v 1.71 2010/09/27 22:53:46 christos Exp $	*/
+/*	$NetBSD: agp.c,v 1.72 2010/09/28 14:02:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -65,7 +65,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp.c,v 1.71 2010/09/27 22:53:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp.c,v 1.72 2010/09/28 14:02:48 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -963,15 +963,19 @@ agpioctl(dev_t dev, u_long cmd, void *data, int fflag, struct lwp *l)
 	} agp_oallocate;
 
 	case AGPIOC_OALLOCATE: {
+		int ret;
 		agp_allocate aga;
 		agp_oallocate *oaga = data;
 
-		aga.key = oaga->key;
-		aga.pg_count = oaga->pg_count;
 		aga.type = oaga->type;
-		aga.physical = oaga->physical;
+		aga.pg_count = oaga->pg_count;
 
-		return agp_allocate_user(sc, &aga);
+		if ((ret = agp_allocate_user(sc, &aga)) == 0) {
+			oaga->key = aga->key;
+			oaga->physical = (u_long)aga->physical;
+		}
+
+		return ret;
 	}
 }
 #endif
