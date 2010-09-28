@@ -1,6 +1,6 @@
-.\"	$NetBSD: hdaudio.4,v 1.5 2009/12/23 19:38:33 asau Exp $
+.\"	$NetBSD: hdaudio.4,v 1.6 2010/09/28 12:25:27 wiz Exp $
 .\"
-.\" Copyright (c) 2009 The NetBSD Foundation, Inc.
+.\" Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd September 26, 2009
+.Dd September 28, 2010
 .Dt HDAUDIO 4
 .Os
 .Sh NAME
@@ -92,13 +92,14 @@ be supported without requiring per-device quirks.
 .Xr audio 4 ,
 .Xr mixer 4 ,
 .Xr pci 4 ,
+.Xr hdaudioctl 8 ,
 .Pa http://www.intel.com/standards/hdaudio/
 .Pa http://www.microsoft.com/whdc/device/audio/
 .Sh HISTORY
 The
 .Nm
 device driver appeared in
-.Nx 6.0 .
+.Nx 5.1 .
 .Sh AUTHORS
 The
 .Nm
