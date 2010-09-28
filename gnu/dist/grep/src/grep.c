@@ -1,4 +1,4 @@
-/*	$NetBSD: grep.c,v 1.12 2008/08/28 03:59:06 lukem Exp $	*/
+/*	$NetBSD: grep.c,v 1.13 2010/09/28 00:54:04 dholland Exp $	*/
 
 /* grep.c - main driver file for grep.
    Copyright 1992, 1997-1999, 2000 Free Software Foundation, Inc.
@@ -542,7 +542,10 @@ prline (char const *beg, char const *lim, int sep)
 	  if (b == lim)
 	    break;
 	  if (match_size == 0)
-	    break;
+	    {
+	      beg++;
+	      continue;
+	    }
 	  if(color_option)
 	    printf("\33[%sm", grep_color);
 	  fwrite(b, sizeof (char), match_size, stdout);
