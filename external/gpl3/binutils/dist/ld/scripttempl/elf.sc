@@ -86,6 +86,7 @@
 #
 #  Each of these can also have corresponding .rel.* and .rela.* sections.
 
+test -z "$TEXT_START_SYMBOLS" && TEXT_START_SYMBOLS="PROVIDE_HIDDEN (__eprol = .);"
 test -z "$ENTRY" && ENTRY=_start
 test -z "${BIG_OUTPUT_FORMAT}" && BIG_OUTPUT_FORMAT=${OUTPUT_FORMAT}
 test -z "${LITTLE_OUTPUT_FORMAT}" && LITTLE_OUTPUT_FORMAT=${OUTPUT_FORMAT}
