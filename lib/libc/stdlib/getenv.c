@@ -1,4 +1,4 @@
-/*	$NetBSD: getenv.c,v 1.22 2010/09/25 19:31:51 christos Exp $	*/
+/*	$NetBSD: getenv.c,v 1.23 2010/09/29 00:44:04 enami Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)getenv.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: getenv.c,v 1.22 2010/09/25 19:31:51 christos Exp $");
+__RCSID("$NetBSD: getenv.c,v 1.23 2010/09/29 00:44:04 enami Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -113,7 +113,7 @@ __allocenv(int offset)
 	}
 
 	nl = offset + 2; 	/* one for potentially new entry one for NULL */
-	if (nl < environ_malloced_len)
+	if (nl <= environ_malloced_len)
 		return 0;
 
 	p = realloc(__environ_malloced, nl * sizeof(*p));
