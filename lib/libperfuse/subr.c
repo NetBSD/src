@@ -1,4 +1,4 @@
-/*  $NetBSD: subr.c,v 1.6 2010/09/23 16:02:34 manu Exp $ */
+/*  $NetBSD: subr.c,v 1.7 2010/09/29 08:01:10 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010 Emmanuel Dreyfus. All rights reserved.
@@ -106,7 +106,7 @@ perfuse_destroy_pn(pu, pn)
 		free(pnd);
 	}
 
-	puffs_pn_remove(pn);
+	puffs_pn_put(pn);
 
 	return;
 }

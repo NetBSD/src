@@ -1,4 +1,4 @@
-/*  $NetBSD: ops.c,v 1.17 2010/09/23 16:02:34 manu Exp $ */
+/*  $NetBSD: ops.c,v 1.18 2010/09/29 08:01:10 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010 Emmanuel Dreyfus. All rights reserved.
@@ -54,12 +54,10 @@ static int node_lookup_common(struct puffs_usermount *, puffs_cookie_t,
     const char*, struct puffs_node **);
 static int node_mk_common(struct puffs_usermount *, puffs_cookie_t,
     struct puffs_newinfo *, const struct puffs_cn *pcn, perfuse_msg_t *);
-static const char *basename_r(const char *);
 static ssize_t fuse_to_dirent(struct puffs_usermount *, puffs_cookie_t,
     struct fuse_dirent *, size_t);
-static int readdir_buffered(struct perfuse_state *, puffs_cookie_t,
-    struct dirent *, off_t *, size_t *, const struct puffs_cred *,
-    int *, off_t *, size_t *);
+static int readdir_buffered(puffs_cookie_t, struct dirent *, off_t *, 
+    size_t *, const struct puffs_cred *, int *, off_t *, size_t *);
 static void requeue_request(struct puffs_usermount *, 
     puffs_cookie_t opc, enum perfuse_qtype);
 static int dequeue_requests(struct perfuse_state *, 
@@ -175,9 +173,13 @@ xchg_msg(pu, opc, pm, len, wait)
      	enum perfuse_xchg_pb_reply wait;
 {
 	struct perfuse_state *ps;
+	struct perfuse_node_data *pnd;
 	int error;
 
 	ps = puffs_getspecific(pu);
+	pnd = NULL;
+	if ((struct puffs_node *)opc != NULL)
+		pnd = PERFUSE_NODE_DATA(opc);
 
 #ifdef PERFUSE_DEBUG
 	if ((perfuse_diagflags & PDF_FILENAME) && (opc != 0))
@@ -185,7 +187,15 @@ xchg_msg(pu, opc, pm, len, wait)
 			(char *)PNPATH((struct puffs_node *)opc), 
 			PERFUSE_NODE_DATA(opc)->pnd_flags);
 #endif
+	if (pnd)
+		pnd->pnd_flags |= PND_INXCHG;
+
 	error = ps->ps_xchg_msg(pu, pm, len, wait);
+
+	if (pnd) {
+		pnd->pnd_flags &= ~PND_INXCHG;
+		(void)dequeue_requests(ps, opc, PCQ_AFTERXCHG, DEQUEUE_ALL);
+	}
 
 	return error;
 }
@@ -306,7 +316,6 @@ node_lookup_common(pu, opc, path, pnp)
 
 	ps = puffs_getspecific(pu);
 
-	path = basename_r(path);
 	len = strlen(path) + 1;
 
 	pm = ps->ps_new_msg(pu, opc, FUSE_LOOKUP, len, NULL);
@@ -327,8 +336,9 @@ node_lookup_common(pu, opc, path, pnp)
 
 #ifdef PERFUSE_DEBUG
 	if (perfuse_diagflags & PDF_FILENAME)
-		DPRINTF("%s: opc = %p, looked up opc = %p, file = \"%s\"\n",
-			__func__, (void *)opc, pn, (char *)PNPATH(pn));
+		DPRINTF("%s: opc = %p, looked up opc = %p, ino = %"PRId64" "
+			"file = \"%s\"\n", __func__, (void *)opc, pn, 
+			feo->nodeid, path);
 #endif
 out: 
 	ps->ps_destroy_msg(pm);
@@ -400,41 +410,6 @@ out:
 	ps->ps_destroy_msg(pm);
 
 	return error;
-}
-
-static const char *
-basename_r(string)
-	const char *string;
-{
-	char *result;
-
-	if ((result = rindex(string, '/')) == NULL)
-		return string;
-
-	/*
-	 * We are finished if this is not a trailing /
-	 */
-	if (result[1] != '\0')
-		return result + 1;
-
-	
-	/*
-	 * Go back until we found something else than a /
-	 */
-	while (result != string) {
-		result--;
-		if (result[0] != '/')
-			break;
-	}
-
-	if (result == string)
-		return string;
-
-	if ((result = rindex(string, '/')) == NULL)
-		return string;
-
-	return result + 1;
-	
 }
 
 static ssize_t
@@ -569,11 +544,10 @@ fuse_to_dirent(pu, opc, fd, fd_len)
 	return written;
 }
 
-/* ARGSUSED0 */
+/* ARGSUSED4 */
 static int 
-readdir_buffered(ps, opc, dent, readoff, 
-		     reslen, pcr, eofflag, cookies, ncookies)
-	struct perfuse_state *ps;
+readdir_buffered(opc, dent, readoff, 
+		 reslen, pcr, eofflag, cookies, ncookies)
 	puffs_cookie_t opc;
 	struct dirent *dent;
 	off_t *readoff;
@@ -622,7 +596,6 @@ readdir_buffered(ps, opc, dent, readoff,
 	return 0;
 }
 
-/* ARGSUSED0 */
 static void
 requeue_request(pu, opc, type)
 	struct puffs_usermount *pu;
@@ -907,31 +880,22 @@ perfuse_node_lookup(pu, opc, pni, pcn)
 	struct puffs_node *pn;
 	int error;
 	
+	error = 0;
+
 	/*
 	 * Special case for ..
 	 */
-	if (PCNISDOTDOT(pcn)) {
+	if (strcmp(pcn->pcn_name, "..") == 0) 
 		pn = PERFUSE_NODE_DATA(opc)->pnd_parent;
-		PERFUSE_NODE_DATA(pn)->pnd_flags &= ~PND_RECLAIMED;
-		
-		puffs_newinfo_setcookie(pni, pn);
-		puffs_newinfo_setvtype(pni, VDIR);
+	else
+		error = node_lookup_common(pu, (puffs_cookie_t)opc,
+					   pcn->pcn_name, &pn);
 
-		return 0;
-	}
+	if (error != 0)
+		return error;
 
-	/*
-	 * XXX This is borrowed from librefuse, 
-	 * and __UNCONST is said to be fixed.
-	 */
-        pn = puffs_pn_nodewalk(pu, puffs_path_walkcmp,
-        		       __UNCONST(&pcn->pcn_po_full));
-
-	if (pn == NULL) {
-		error = node_lookup_common(pu, opc, (char *)PCNPATH(pcn), &pn);
-		if (error != 0)
-			return error;
-	}
+	if (PERFUSE_NODE_DATA(pn)->pnd_flags & PND_REMOVED)
+		return ENOENT;
 
 	/*
 	 * If that node had a pending reclaim, wipe it out.
@@ -943,7 +907,7 @@ perfuse_node_lookup(pu, opc, pni, pcn)
 	puffs_newinfo_setsize(pni, (voff_t)pn->pn_va.va_size);
 	puffs_newinfo_setrdev(pni, pn->pn_va.va_rdev);
 
-	return 0;
+	return error;
 }
 
 int
@@ -965,6 +929,9 @@ perfuse_node_create(pu, opc, pni, pcn, vap)
 	size_t len;
 	int error;
 	
+	if (PERFUSE_NODE_DATA(opc)->pnd_flags & PND_REMOVED)
+		return ENOENT;
+
 	/*
 	 * Create an object require -WX permission in the parent directory
 	 */
@@ -977,7 +944,7 @@ perfuse_node_create(pu, opc, pni, pcn, vap)
 	 */
 	ps = puffs_getspecific(pu);
 	if (ps->ps_flags & PS_NO_CREAT) {
-		error = node_lookup_common(pu, opc, (char*)PCNPATH(pcn), &pn);
+		error = node_lookup_common(pu, opc, pcn->pcn_name, &pn);
 		if (error == 0)	
 			return EEXIST;
 
@@ -985,7 +952,7 @@ perfuse_node_create(pu, opc, pni, pcn, vap)
 		if (error != 0)
 			return error;
 
-		error = node_lookup_common(pu, opc, (char*)PCNPATH(pcn), &pn);
+		error = node_lookup_common(pu, opc, pcn->pcn_name, &pn);
 		if (error != 0)	
 			return error;
 
@@ -998,8 +965,8 @@ perfuse_node_create(pu, opc, pni, pcn, vap)
 		return 0;
 	}
 
-	name = basename_r((char *)PCNPATH(pcn));
-	namelen = strlen(name) + 1;
+	name = pcn->pcn_name;
+	namelen = pcn->pcn_namelen + 1;
 	len = sizeof(*fci) + namelen;
 
 	/*
@@ -1044,7 +1011,7 @@ perfuse_node_create(pu, opc, pni, pcn, vap)
 	if (perfuse_diagflags & (PDF_FH|PDF_FILENAME))
 		DPRINTF("%s: opc = %p, file = \"%s\", flags = 0x%x "
 			"ino = %"PRId64", wfh = 0x%"PRIx64"\n",
-			__func__, (void *)pn, (char *)PCNPATH(pcn),
+			__func__, (void *)pn, pcn->pcn_name,
 			PERFUSE_NODE_DATA(pn)->pnd_flags, feo->nodeid, foo->fh);
 #endif
 
@@ -1078,6 +1045,9 @@ perfuse_node_mknod(pu, opc, pni, pcn, vap)
 	const char* path;
 	size_t len;
 	
+	if (PERFUSE_NODE_DATA(opc)->pnd_flags & PND_REMOVED)
+		return ENOENT;
+
 	/*
 	 * Only superuser can mknod objects other than 
 	 * directories, files, socks, fifo and links.
@@ -1101,8 +1071,8 @@ perfuse_node_mknod(pu, opc, pni, pcn, vap)
 
 
 	ps = puffs_getspecific(pu);
-	path = basename_r((char *)PCNPATH(pcn));
-	len = sizeof(*fmi) + strlen(path) + 1; 
+	path = pcn->pcn_name;
+	len = sizeof(*fmi) + pcn->pcn_namelen + 1; 
 
 	/*	
 	 * mode must contain file type (ie: S_IFREG), use VTTOIF(vap->va_type)
@@ -1142,6 +1112,9 @@ perfuse_node_open(pu, opc, mode, pcr)
 	pm = NULL;
 	error = 0;
 
+	if (pnd->pnd_flags & PND_REMOVED)
+		return ENOENT;
+
 	/*
 	 * Queue open on a node so that we do not open
 	 * twice. This would be better with read and
@@ -1152,16 +1125,6 @@ perfuse_node_open(pu, opc, mode, pcr)
 	pnd->pnd_flags |= PND_INOPEN;
 
 	if (puffs_pn_getvap(pn)->va_type == VDIR) {
-		/*
-		 * We may open removed files, but it seems much more 
-		 * troublesome to open removed directories. glusterfs says 
-		 * "OPENDIR (null) (fuse_loc_fill() failed)"
-		 */
-		if (pnd->pnd_flags & PND_REMOVED) {
-			error = ENOENT;
-			goto out;
-		}
-
 		op = FUSE_OPENDIR;
 		pmode = PUFFS_VREAD|PUFFS_VEXEC;
 	} else {
@@ -1198,20 +1161,10 @@ perfuse_node_open(pu, opc, mode, pcr)
 	if (((mode & FREAD) && (pnd->pnd_flags & PND_RFH)) ||
 	    ((mode & FREAD) && (pnd->pnd_flags & PND_WFH)) ||
 	    ((mode & FWRITE) && (pnd->pnd_flags & PND_WFH))) {
-		puffs_setback(puffs_cc_getcc(pu), PUFFS_SETBACK_INACT_N1);
 		error = 0;
 		goto out;
 	}
 	
-	/* 
-	 * Fail any attempt to reopen a removed file if
-	 * we do not have any file handle left.
-	 */
-	if (pnd->pnd_flags & PND_REMOVED) {
-		error = ENOENT;
-		goto out;
-	}
-
 	/*
 	 * Convert PUFFS mode to FUSE mode: convert FREAD/FWRITE
 	 * to O_RDONLY/O_WRONLY while perserving the other options.
@@ -1235,11 +1188,6 @@ perfuse_node_open(pu, opc, mode, pcr)
 	 */
 	perfuse_new_fh(opc, foo->fh, mode);
 	 
-	/*
-	 * Request inactive to be send on this node.
-	 */
-	puffs_setback(puffs_cc_getcc(pu), PUFFS_SETBACK_INACT_N1);
-
 #ifdef PERFUSE_DEBUG
 	if (perfuse_diagflags & (PDF_FH|PDF_FILENAME))
 		DPRINTF("%s: opc = %p, file = \"%s\", "
@@ -1339,10 +1287,24 @@ perfuse_node_access(pu, opc, mode, pcr)
 		}
 
 		fao = GET_OUTPAYLOAD(ps, pm, fuse_attr_out);
-		
+
+#ifdef PERFUSE_DEBUG
+		if (!(fao->attr_valid & (FUSE_FATTR_SIZE|FUSE_FATTR_MODE|
+					 FUSE_FATTR_UID|FUSE_FATTR_GID)))
+			DERRX(EX_SOFTWARE, "%s: fao->attr_valid = 0x%"PRId64"",
+			      __func__, fao->attr_valid);
+#endif
 		error = puffs_access(VREG, fao->attr.mode, fao->attr.uid,
 				     fao->attr.gid, (mode_t)mode, pcr); 
 
+		/*
+		 * While we are there, grab size if unknown.
+		 */
+		if (!(PERFUSE_NODE_DATA(opc)->pnd_flags & PND_GOTSIZE)) {
+			PERFUSE_NODE_DATA(opc)->pnd_size = fao->attr.size;
+			PERFUSE_NODE_DATA(opc)->pnd_flags |= PND_GOTSIZE;
+		}
+		
 		ps->ps_destroy_msg(pm);
 	}
 
@@ -1363,11 +1325,7 @@ perfuse_node_getattr(pu, opc, vap, pcr)
 	struct fuse_attr_out *fao;
 	int error;
 	
-	/*
-	 * If removed and not open, it fails
-	 */
-	if ((PERFUSE_NODE_DATA(opc)->pnd_flags & PND_REMOVED) &&
-	    !(PERFUSE_NODE_DATA(opc)->pnd_flags & PND_OPEN))
+	if (PERFUSE_NODE_DATA(opc)->pnd_flags & PND_REMOVED)
 		return ENOENT;
 
 	/*
@@ -1407,6 +1365,13 @@ perfuse_node_getattr(pu, opc, vap, pcr)
 	 */
 	fuse_attr_to_vap(ps, vap, &fao->attr);
 
+	/*
+	 * While we are there, grab size if unknown.
+	 */
+	if (!(PERFUSE_NODE_DATA(opc)->pnd_flags & PND_GOTSIZE)) {
+		PERFUSE_NODE_DATA(opc)->pnd_size = fao->attr.size;
+		PERFUSE_NODE_DATA(opc)->pnd_flags |= PND_GOTSIZE;
+	}
 out:
 	ps->ps_destroy_msg(pm);
 
@@ -1565,8 +1530,10 @@ out:
 	/*
 	 * Keep track of new size
 	 */
-	if ((error == 0) && (vap->va_size != (u_quad_t)PUFFS_VNOVAL))
+	if ((error == 0) && (vap->va_size != (u_quad_t)PUFFS_VNOVAL)) {
 		pnd->pnd_size = (uint64_t)vap->va_size;
+		pnd->pnd_flags |= PND_GOTSIZE;
+	}
 
 	if (pm != NULL)
 		ps->ps_destroy_msg(pm);
@@ -1681,6 +1648,20 @@ perfuse_node_fsync(pu, opc, pcr, flags, offlo, offhi)
 	if (!(pnd->pnd_flags & PND_DIRTY))
 		return 0;
 
+	/*
+	 * It seems NetBSD can call fsync without open first
+	 * glusterfs complain in such a situation:
+	 * "FSYNC() ERR => -1 (Invalid argument)"
+	 * The file will be closed at inactive time.
+	 * 
+	 * We open the directory for reading in order to sync.
+	 * This sounds rather counterintuitive, but it works.
+	 */
+	if (!(pnd->pnd_flags & PND_WFH)) {
+		if ((error = perfuse_node_open(pu, opc, FREAD, pcr)) != 0)
+			goto out;
+	}
+
 	if (op == FUSE_FSYNCDIR)
 		fh = perfuse_get_fh(opc, FREAD);
 	else
@@ -1746,8 +1727,10 @@ perfuse_node_seek(pu, opc, oldoff, newoff,  pcr)
 	 * seek may modify file size
 	 */
 	pnd = PERFUSE_NODE_DATA(opc);
-	if (newoff > pnd->pnd_size)
+	if (newoff > pnd->pnd_size) {
 		pnd->pnd_size = newoff;
+		pnd->pnd_flags |= PND_GOTSIZE;
+	}
 
 	return 0;
 }
@@ -1760,7 +1743,6 @@ perfuse_node_remove(pu, opc, targ, pcn)
 	const struct puffs_cn *pcn;
 {
 	struct perfuse_state *ps;
-	struct puffs_node *pn;
 	struct perfuse_node_data *pnd;
 	perfuse_msg_t *pm;
 	char *path;
@@ -1769,6 +1751,10 @@ perfuse_node_remove(pu, opc, targ, pcn)
 	int error;
 	
 	pnd = PERFUSE_NODE_DATA(opc);
+
+	if ((pnd->pnd_flags & PND_REMOVED) ||
+	    (PERFUSE_NODE_DATA(targ)->pnd_flags & PND_REMOVED))
+		return ENOENT;
 
 	/*
 	 * remove requires -WX on the parent directory 
@@ -1784,20 +1770,21 @@ perfuse_node_remove(pu, opc, targ, pcn)
 
 	if (perfuse_diagflags & (PDF_FH|PDF_FILENAME))
 		DPRINTF("%s: opc = %p, remove opc = %p, file = \"%s\"\n",
-			__func__, (void *)opc, (void *)targ, 
-			(char *)PNPATH((struct puffs_node *)targ));
+			__func__, (void *)opc, (void *)targ, pcn->pcn_name);
 #endif
 
 	ps = puffs_getspecific(pu);
 	pnd = PERFUSE_NODE_DATA(opc);
-	pn = (struct puffs_node *)targ;
-	name = basename_r((char *)PNPATH(pn));
-	len = strlen(name) + 1;
+	name = pcn->pcn_name;
+	len = pcn->pcn_namelen + 1;
 
 	/*
-	 * Tag the node as removed before sending the operation.
+	 * Await for all operations on the deleted node to drain, 
+	 * as the filesystem may be confused to have it deleted
+	 * during a getattr
 	 */
-	PERFUSE_NODE_DATA(targ)->pnd_flags |= PND_REMOVED;
+	while (PERFUSE_NODE_DATA(targ)->pnd_flags & PND_INXCHG)
+		requeue_request(pu, targ, PCQ_AFTERXCHG);
 
 	pm = ps->ps_new_msg(pu, opc, FUSE_UNLINK, len, pcn->pcn_cred);
 	path = _GET_INPAYLOAD(ps, pm, char *);
@@ -1806,14 +1793,9 @@ perfuse_node_remove(pu, opc, targ, pcn)
 	if ((error = xchg_msg(pu, opc, pm, UNSPEC_REPLY_LEN, wait_reply)) != 0)
 		goto out;
 
-	if (puffs_inval_namecache_dir(pu, opc) != 0)
-		DERR(EX_OSERR, "puffs_inval_namecache_dir failed");
-
-	puffs_setback(puffs_cc_getcc(pu), PUFFS_SETBACK_NOREF_N2);
-
-	/*
-	 * Reclaim should take care of decreasing pnd_childcount
-	 */
+	PERFUSE_NODE_DATA(targ)->pnd_flags |= PND_REMOVED;
+	if (!(PERFUSE_NODE_DATA(targ)->pnd_flags & PND_OPEN))
+		puffs_setback(puffs_cc_getcc(pu), PUFFS_SETBACK_NOREF_N2);
 
 	/*
 	 * The parent directory needs a sync
@@ -1824,7 +1806,7 @@ perfuse_node_remove(pu, opc, targ, pcn)
 	if (perfuse_diagflags & PDF_FILENAME)
 		DPRINTF("%s: remove nodeid = %"PRId64" file = \"%s\"\n",
 			__func__, PERFUSE_NODE_DATA(targ)->pnd_ino,
-			(char *)PNPATH((struct puffs_node *)targ));
+			pcn->pcn_name);
 #endif
 out:
 	ps->ps_destroy_msg(pm);
@@ -1846,6 +1828,9 @@ perfuse_node_link(pu, opc, targ, pcn)
 	struct puffs_node *pn;
 	struct fuse_link_in *fli;
 	int error;
+
+	if (PERFUSE_NODE_DATA(opc)->pnd_flags & PND_REMOVED)
+		return ENOENT;
 	
 	/*
 	 * Create an object require -WX permission in the parent directory
@@ -1856,8 +1841,8 @@ perfuse_node_link(pu, opc, targ, pcn)
 
 	ps = puffs_getspecific(pu);
 	pn = (struct puffs_node *)targ;
-	name = basename_r((char *)PCNPATH(pcn));
-	len =  sizeof(*fli) + strlen(name) + 1;
+	name = pcn->pcn_name;
+	len =  sizeof(*fli) + pcn->pcn_namelen + 1;
 
 	pm = ps->ps_new_msg(pu, opc, FUSE_LINK, len, pcn->pcn_cred);
 	fli = GET_INPAYLOAD(ps, pm, fuse_link_in);
@@ -1871,8 +1856,6 @@ perfuse_node_link(pu, opc, targ, pcn)
 	return error;
 }
 
-/* targ is unused since the name is in pcn_targ */
-/* ARGSUSED5 */ 
 int
 perfuse_node_rename(pu, opc, src, pcn_src, targ_dir, targ, pcn_targ)
 	struct puffs_usermount *pu;
@@ -1894,6 +1877,11 @@ perfuse_node_rename(pu, opc, src, pcn_src, targ_dir, targ, pcn_targ)
 	size_t newname_len;
 	size_t oldname_len;
 	
+	if ((PERFUSE_NODE_DATA(opc)->pnd_flags & PND_REMOVED) ||
+	    (PERFUSE_NODE_DATA(src)->pnd_flags & PND_REMOVED) ||
+	    (PERFUSE_NODE_DATA(targ_dir)->pnd_flags & PND_REMOVED))
+		return ENOENT;
+
 	/*
 	 * move requires -WX on source and destination directory 
 	 */
@@ -1901,11 +1889,24 @@ perfuse_node_rename(pu, opc, src, pcn_src, targ_dir, targ, pcn_targ)
 	    no_access(targ_dir,  pcn_targ->pcn_cred, PUFFS_VWRITE|PUFFS_VEXEC))
 		return EACCES;
 
+	/*
+	 * Await for all operations on the deleted node to drain, 
+	 * as the filesystem may be confused to have it deleted
+	 * during a getattr
+	 */
+	if ((struct puffs_node *)targ != NULL) {
+		while (PERFUSE_NODE_DATA(targ)->pnd_flags & PND_INXCHG)
+			requeue_request(pu, targ, PCQ_AFTERXCHG);
+	} else {
+		while (PERFUSE_NODE_DATA(src)->pnd_flags & PND_INXCHG)
+			requeue_request(pu, src, PCQ_AFTERXCHG);
+	}
+
 	ps = puffs_getspecific(pu);
-	newname =  basename_r((char *)PCNPATH(pcn_targ));
-	newname_len = strlen(newname) + 1;
-	oldname =  basename_r((char *)PCNPATH(pcn_src));
-	oldname_len = strlen(oldname) + 1;
+	newname =  pcn_targ->pcn_name;
+	newname_len = pcn_targ->pcn_namelen + 1;
+	oldname =  pcn_src->pcn_name;
+	oldname_len = pcn_src->pcn_namelen + 1;
 
 	len = sizeof(*fri) + oldname_len + newname_len;
 	pm = ps->ps_new_msg(pu, opc, FUSE_RENAME, len, pcn_src->pcn_cred);
@@ -1919,11 +1920,6 @@ perfuse_node_rename(pu, opc, src, pcn_src, targ_dir, targ, pcn_targ)
 	if ((error = xchg_msg(pu, opc, pm, UNSPEC_REPLY_LEN, wait_reply)) != 0)
 		goto out;
 
-	/*
-	 * Update source and destination directories child count
-	 * Update moved object parent directory
-	 * Set dirty flag for source and parent
-	 */
 	PERFUSE_NODE_DATA(opc)->pnd_childcount--;
 	PERFUSE_NODE_DATA(targ_dir)->pnd_childcount++;
 
@@ -1932,11 +1928,28 @@ perfuse_node_rename(pu, opc, src, pcn_src, targ_dir, targ, pcn_targ)
 	PERFUSE_NODE_DATA(opc)->pnd_flags |= PND_DIRTY;
 	PERFUSE_NODE_DATA(targ_dir)->pnd_flags |= PND_DIRTY;
 
-	/*
-	 * targ is not NULL if replaced node is removed
-	 */
-	if ((struct puffs_node *)targ != NULL)
-	PERFUSE_NODE_DATA(targ)->pnd_flags = PND_REMOVED;
+	if ((struct puffs_node *)targ != NULL) {
+		struct perfuse_node_data *targ_pnd;
+		struct perfuse_node_data *src_pnd;
+
+		/*
+		 * We overwrite a node. src must be freed, as it 
+		 * is associated in kernel with the old path. We
+		 * therefore have to transfer perfuse_node_data
+		 * from src to targ.
+		 * 
+		 * src cannot be destroyed here as setback is not
+		 * allowed in rename operation. The node is tagged
+		 * with PND_REMOVED, it will be disposed at inactive
+		 * time.
+		 */
+		targ_pnd = PERFUSE_NODE_DATA(targ);
+		src_pnd = PERFUSE_NODE_DATA(src);
+		puffs_pn_setpriv((struct puffs_node *)targ, src_pnd);
+		puffs_pn_setpriv((struct puffs_node *)src, targ_pnd);
+
+		PERFUSE_NODE_DATA(src)->pnd_flags |= PND_REMOVED;
+	}
 
 #ifdef PERFUSE_DEBUG
 	if (perfuse_diagflags & PDF_FILENAME)
@@ -1944,17 +1957,16 @@ perfuse_node_rename(pu, opc, src, pcn_src, targ_dir, targ, pcn_targ)
 			"from nodeid = %"PRId64" \"%s\" "
 			"to nodeid = %"PRId64" \"%s\"\n",
 	 		__func__, 
-			 PERFUSE_NODE_DATA(src)->pnd_ino,
-			(char *)PCNPATH(pcn_src),
-			(char *)PCNPATH(pcn_targ),
-			 PERFUSE_NODE_DATA(opc)->pnd_ino,
+			PERFUSE_NODE_DATA(src)->pnd_ino, pcn_src->pcn_name,
+			pcn_targ->pcn_name, PERFUSE_NODE_DATA(opc)->pnd_ino,
 			(char *)PNPATH((struct puffs_node *)targ_dir),
-			 PERFUSE_NODE_DATA(targ_dir)->pnd_ino,
+			PERFUSE_NODE_DATA(targ_dir)->pnd_ino,
 			(char *)PNPATH((struct puffs_node *)opc));
 #endif
 
 out:
-	ps->ps_destroy_msg(pm);
+	if (pm != NULL)
+		ps->ps_destroy_msg(pm);
 
 	return error;
 }
@@ -1973,6 +1985,9 @@ perfuse_node_mkdir(pu, opc, pni, pcn, vap)
 	const char *path;
 	size_t len;
 	
+	if (PERFUSE_NODE_DATA(opc)->pnd_flags & PND_REMOVED)
+		return ENOENT;
+
 	/*
 	 * Create an object require -WX permission in the parent directory
 	 */
@@ -1980,8 +1995,8 @@ perfuse_node_mkdir(pu, opc, pni, pcn, vap)
 		return EACCES;
 
 	ps = puffs_getspecific(pu);
-	path = basename_r((char *)PCNPATH(pcn));
-	len = sizeof(*fmi) + strlen(path) + 1; 
+	path = pcn->pcn_name;
+	len = sizeof(*fmi) + pcn->pcn_namelen + 1; 
 
 	pm = ps->ps_new_msg(pu, opc, FUSE_MKDIR, len, pcn->pcn_cred);
 	fmi = GET_INPAYLOAD(ps, pm, fuse_mkdir_in);
@@ -2003,13 +2018,15 @@ perfuse_node_rmdir(pu, opc, targ, pcn)
 	struct perfuse_state *ps;
 	struct perfuse_node_data *pnd;
 	perfuse_msg_t *pm;
-	struct puffs_node *pn;
 	char *path;
 	const char *name;
 	size_t len;
 	int error;
 	
 	pnd = PERFUSE_NODE_DATA(opc);
+	if (pnd->pnd_flags & PND_REMOVED)
+		return ENOENT;
+
 
 	/*
 	 * remove requires -WX on the parent directory 
@@ -2019,15 +2036,18 @@ perfuse_node_rmdir(pu, opc, targ, pcn)
 	    pcn->pcn_cred, PUFFS_VWRITE|PUFFS_VEXEC))
 		return EACCES;
 
-	ps = puffs_getspecific(pu);
-	pn = (struct puffs_node *)targ;
-	name = basename_r((char *)PNPATH(pn));
-	len = strlen(name) + 1;
-
 	/*
-	 * Tag the node as removed beofre sending the operation.
+	 * Await for all operations on the deleted node to drain, 
+	 * as the filesystem may be confused to have it deleted
+	 * during a getattr
 	 */
-	PERFUSE_NODE_DATA(targ)->pnd_flags |= PND_REMOVED;
+	while (PERFUSE_NODE_DATA(targ)->pnd_flags & PND_INXCHG)
+		requeue_request(pu, targ, PCQ_AFTERXCHG);
+
+
+	ps = puffs_getspecific(pu);
+	name = pcn->pcn_name;
+	len = pcn->pcn_namelen + 1;
 
 	pm = ps->ps_new_msg(pu, opc, FUSE_RMDIR, len, pcn->pcn_cred);
 	path = _GET_INPAYLOAD(ps, pm, char *);
@@ -2036,10 +2056,9 @@ perfuse_node_rmdir(pu, opc, targ, pcn)
 	if ((error = xchg_msg(pu, opc, pm, UNSPEC_REPLY_LEN, wait_reply)) != 0)
 		goto out;
 
-	if (puffs_inval_namecache_dir(pu, opc) != 0)
-		DERR(EX_OSERR, "puffs_inval_namecache_dir failed");
-
-	puffs_setback(puffs_cc_getcc(pu), PUFFS_SETBACK_NOREF_N2);
+	PERFUSE_NODE_DATA(targ)->pnd_flags |= PND_REMOVED;
+	if (!(PERFUSE_NODE_DATA(targ)->pnd_flags & PND_OPEN))
+		puffs_setback(puffs_cc_getcc(pu), PUFFS_SETBACK_NOREF_N2);
 
 	/*
 	 * The parent directory needs a sync
@@ -2077,6 +2096,9 @@ perfuse_node_symlink(pu, opc, pni, pcn_src, vap, link_target)
 	size_t linkname_len;
 	size_t len;
 	
+	if (PERFUSE_NODE_DATA(opc)->pnd_flags & PND_REMOVED)
+		return ENOENT;
+
 	/*
 	 * Create an object require -WX permission in the parent directory
 	 */
@@ -2084,8 +2106,8 @@ perfuse_node_symlink(pu, opc, pni, pcn_src, vap, link_target)
 		return EACCES;
 
 	ps = puffs_getspecific(pu);
-	path = basename_r((char *)PCNPATH(pcn_src));
-	path_len = strlen(path) + 1;
+	path = pcn_src->pcn_name;
+	path_len = pcn_src->pcn_namelen + 1;
 	linkname_len = strlen(link_target) + 1;
 	len = path_len + linkname_len;
 
@@ -2150,6 +2172,15 @@ perfuse_node_readdir(pu, opc, dent, readoff,
 		goto out;
 	pnd->pnd_dirent_len = 0;
 	
+	/*
+	 * It seems NetBSD can call readdir without open first
+	 * libfuse will crash if it is done that way, hence open first.
+	 */
+	if (!(pnd->pnd_flags & PND_OPEN)) {
+		if ((error = perfuse_node_open(pu, opc, FREAD, pcr)) != 0)
+			goto out;
+	}
+
 	fh = perfuse_get_fh(opc, FREAD);
 
 #ifdef PERFUSE_DEBUG
@@ -2249,7 +2280,7 @@ out:
 		ps->ps_destroy_msg(pm);
 
 	if (error == 0)
-		error = readdir_buffered(ps, opc, dent, readoff,
+		error = readdir_buffered(opc, dent, readoff,
 			reslen, pcr, eofflag, cookies, ncookies);
 
 	/*
@@ -2281,6 +2312,9 @@ perfuse_node_readlink(pu, opc, pcr, linkname, linklen)
 	size_t len;
 	struct fuse_out_header *foh;
 	
+	if (PERFUSE_NODE_DATA(opc)->pnd_flags & PND_REMOVED)
+		return ENOENT;
+
 	/* 
 	 * --X required on parent, R-- required on link
 	 */
@@ -2394,7 +2428,6 @@ perfuse_node_reclaim(pu, opc)
 		parent_pn = pnd->pnd_parent;
 
 		perfuse_destroy_pn(pu, pn);
-		puffs_pn_put(pn);
 
 		pn = parent_pn;
 	}
@@ -2402,7 +2435,6 @@ perfuse_node_reclaim(pu, opc)
 	return 0;
 }
 
-/* ARGSUSED0 */
 int 
 perfuse_node_inactive(pu, opc)
 	struct puffs_usermount *pu;
@@ -2412,13 +2444,13 @@ perfuse_node_inactive(pu, opc)
 
 	pnd = PERFUSE_NODE_DATA(opc);
 
-	if (!(pnd->pnd_flags & PND_OPEN))
+	if (!(pnd->pnd_flags & (PND_OPEN|PND_REMOVED)))
 		return 0;
 
 	/*
 	 * Make sure all operation are finished
 	 * There can be an ongoing write. Other
-	 * operation wit for all data before 
+	 * operation wait for all data before 
 	 * the close/inactive.
 	 */
 	while (pnd->pnd_flags & PND_INWRITE)
@@ -2450,6 +2482,9 @@ perfuse_node_inactive(pu, opc)
 		(void)perfuse_node_close_common(pu, opc, FREAD);
 
 	pnd->pnd_flags &= ~PND_INOPEN;
+
+	if (pnd->pnd_flags & PND_REMOVED)
+		puffs_setback(puffs_cc_getcc(pu), PUFFS_SETBACK_NOREF_N1);
 
 	return 0;
 }
@@ -2655,7 +2690,6 @@ perfuse_node_write(pu, opc, buf, offset, resid, pcr, ioflag)
 	
 	ps = puffs_getspecific(pu);
 	pnd = PERFUSE_NODE_DATA(opc);
-	pm = NULL;
 	written = 0;
 
 	if (puffs_pn_getvap((struct puffs_node *)opc)->va_type == VDIR) 
@@ -2668,6 +2702,37 @@ perfuse_node_write(pu, opc, buf, offset, resid, pcr, ioflag)
 	while (pnd->pnd_flags & PND_INWRITE)
 		requeue_request(pu, opc, PCQ_WRITE);
 	pnd->pnd_flags |= PND_INWRITE;
+
+	/*
+	 * append flag: we may have to read file size first.
+	 */
+	if (ioflag & PUFFS_IO_APPEND) {
+		if (!(pnd->pnd_flags & PND_GOTSIZE)) {
+			struct fuse_getattr_in *fgi;
+			struct fuse_attr_out *fao;
+
+			pm = ps->ps_new_msg(pu, opc, FUSE_GETATTR, 
+					    sizeof(*fgi), NULL);
+			fgi = GET_INPAYLOAD(ps, pm, fuse_getattr_in);
+			fgi->getattr_flags = 0; 
+			fgi->dummy = 0;
+			fgi->fh = perfuse_get_fh(opc, FWRITE);
+
+			if ((error = xchg_msg(pu, opc, pm, 
+			     sizeof(*fao), wait_reply)) != 0)
+				goto out;
+
+			fao = GET_OUTPAYLOAD(ps, pm, fuse_attr_out);
+			pnd->pnd_size = fao->attr.size;
+			pnd->pnd_flags |= PND_GOTSIZE;
+
+			ps->ps_destroy_msg(pm);
+		}
+
+		offset = pnd->pnd_size;
+	}
+
+	pm = NULL;
 
 	do {
 		size_t max_write;
@@ -2700,7 +2765,8 @@ perfuse_node_write(pu, opc, buf, offset, resid, pcr, ioflag)
 		fwi->flags = 0;
 		fwi->flags |= (fwi->lock_owner != 0) ? FUSE_WRITE_LOCKOWNER : 0;
 		fwi->flags |= (ioflag & IO_DIRECT) ? 0 : FUSE_WRITE_CACHE; 
-		(void)memcpy((fwi + 1), buf + written, data_len);
+		(void)memcpy((fwi + 1), buf, data_len);
+
 
 #ifdef PERFUSE_DEBUG
 	if (perfuse_diagflags & PDF_FH)
@@ -2722,6 +2788,7 @@ perfuse_node_write(pu, opc, buf, offset, resid, pcr, ioflag)
 		offset += written;
 		buf += written;
 		pnd->pnd_size = offset; /* New file size */
+		pnd->pnd_flags |= PND_GOTSIZE;
 
 		ps->ps_destroy_msg(pm);
 		pm = NULL;

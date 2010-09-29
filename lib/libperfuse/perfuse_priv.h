@@ -1,4 +1,4 @@
-/*  $NetBSD: perfuse_priv.h,v 1.12 2010/09/23 16:02:34 manu Exp $ */
+/*  $NetBSD: perfuse_priv.h,v 1.13 2010/09/29 08:01:10 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010 Emmanuel Dreyfus. All rights reserved.
@@ -75,7 +75,8 @@ enum perfuse_qtype {
 	PCQ_READ,
 	PCQ_WRITE,
 	PCQ_AFTERWRITE,
-	PCQ_OPEN
+	PCQ_OPEN,
+	PCQ_AFTERXCHG
 };
 
 #ifdef PERFUSE_DEBUG
@@ -109,6 +110,8 @@ struct perfuse_node_data {
 #define PND_REMOVED		0x020	/* Node was removed */
 #define PND_INWRITE		0x040	/* write in progress */
 #define PND_INOPEN		0x100	/* open in progress */
+#define PND_GOTSIZE		0x200	/* pnd_size was set */
+#define PND_INXCHG		0x400	/* FUSE exchange in progress */
 
 #define PND_OPEN		(PND_RFH|PND_WFH)	/* File is open */
 #define PND_BUSY		(PND_INREADDIR|PND_INWRITE|PND_INOPEN)
