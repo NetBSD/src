@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1237 2010/09/01 19:28:51 tron Exp $
+# $NetBSD: mi,v 1.1238 2010/09/29 13:47:06 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1892,6 +1892,7 @@
 ./usr/share/man/cat5/regexp_table.0		man-postfix-catman	postfix,.cat
 ./usr/share/man/cat5/relocated.0		man-postfix-catman	postfix,.cat
 ./usr/share/man/cat5/remote.0			man-sys-catman		.cat
+./usr/share/man/cat5/resolver.0			man-net-catman		.cat
 ./usr/share/man/cat5/resolv.conf.0		man-net-catman		.cat
 ./usr/share/man/cat5/resolvconf.conf.0		man-resolvconf-catman		.cat
 ./usr/share/man/cat5/rhosts.0			man-netutil-catman	.cat
@@ -4481,6 +4482,7 @@
 ./usr/share/man/html5/regexp_table.html		man-postfix-htmlman	postfix,html
 ./usr/share/man/html5/relocated.html		man-postfix-htmlman	postfix,html
 ./usr/share/man/html5/remote.html		man-sys-htmlman		html
+./usr/share/man/html5/resolver.html		man-net-htmlman		html
 ./usr/share/man/html5/resolv.conf.html		man-net-htmlman		html
 ./usr/share/man/html5/resolvconf.conf.html	man-resolvconf-htmlman		html
 ./usr/share/man/html5/rhosts.html		man-netutil-htmlman	html
@@ -7034,6 +7036,7 @@
 ./usr/share/man/man5/regexp_table.5		man-postfix-man		postfix,.man
 ./usr/share/man/man5/relocated.5		man-postfix-man		postfix,.man
 ./usr/share/man/man5/remote.5			man-sys-man		.man
+./usr/share/man/man5/resolver.5			man-net-man		.man
 ./usr/share/man/man5/resolv.conf.5		man-net-man		.man
 ./usr/share/man/man5/resolvconf.conf.5		man-resolvconf-man	.man
 ./usr/share/man/man5/rhosts.5			man-netutil-man		.man
