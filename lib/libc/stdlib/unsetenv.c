@@ -1,4 +1,4 @@
-/*	$NetBSD: unsetenv.c,v 1.7 2010/09/25 18:37:24 tron Exp $	*/
+/*	$NetBSD: unsetenv.c,v 1.8 2010/09/29 00:40:17 enami Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)setenv.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: unsetenv.c,v 1.7 2010/09/25 18:37:24 tron Exp $");
+__RCSID("$NetBSD: unsetenv.c,v 1.8 2010/09/29 00:40:17 enami Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -72,7 +72,7 @@ unsetenv(const char *name)
 		return -1;
 	}
 
-	while (__findenv(name, &offset) != NULL ) { /* if set multiple times */
+	while (__findenv(name, &offset) != NULL) { /* if set multiple times */
 		free(__environ_malloced[offset]);
 
 		while (environ[offset] != NULL) {
