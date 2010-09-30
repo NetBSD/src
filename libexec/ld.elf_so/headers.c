@@ -1,4 +1,4 @@
-/*	$NetBSD: headers.c,v 1.30 2010/09/23 13:03:35 joerg Exp $	 */
+/*	$NetBSD: headers.c,v 1.31 2010/09/30 09:11:18 skrll Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: headers.c,v 1.30 2010/09/23 13:03:35 joerg Exp $");
+__RCSID("$NetBSD: headers.c,v 1.31 2010/09/30 09:11:18 skrll Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -138,8 +138,8 @@ _rtld_digest_dynamic(const char *execname, Obj_Entry *obj)
 
 		case DT_HASH:
 			{
-				const Elf_Word *hashtab = (const Elf_Word *)
-				(obj->relocbase + dynp->d_un.d_ptr);
+				const Elf_Symindx *hashtab = (const Elf_Symindx *)
+				    (obj->relocbase + dynp->d_un.d_ptr);
 
 				if (hashtab[0] > UINT32_MAX)
 					obj->nbuckets = UINT32_MAX;
