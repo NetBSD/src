@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.103 2010/08/28 21:30:02 joerg Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.104 2010/09/30 09:11:19 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -84,14 +84,10 @@ typedef	int64_t		Elf64_SOff;
 typedef	int32_t		Elf64_Shalf;
 #define	ELF64_FSZ_SHALF	4
 
-#ifndef ELF64_FSZ_SWORD
 typedef	int32_t		Elf64_Sword;
 #define	ELF64_FSZ_SWORD	4
-#endif /* ELF64_FSZ_SWORD */
-#ifndef ELF64_FSZ_WORD
 typedef	uint32_t	Elf64_Word;
 #define	ELF64_FSZ_WORD	4
-#endif /* ELF64_FSZ_WORD */
 
 typedef	int64_t		Elf64_Sxword;
 #define	ELF64_FSZ_SXWORD 8
@@ -885,6 +881,10 @@ struct netbsd_elfcore_procinfo {
 #define	ELFCLASS	ELFCLASS64
 
 #define	AuxInfo		Aux64Info
+#endif
+
+#ifndef	Elf_Symindx
+#define	Elf_Symindx	uint32_t
 #endif
 
 #define	ELF32_ST_BIND(info)		ELF_ST_BIND(info)

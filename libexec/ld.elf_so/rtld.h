@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.h,v 1.92 2010/08/06 16:33:17 joerg Exp $	 */
+/*	$NetBSD: rtld.h,v 1.93 2010/09/30 09:11:18 skrll Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -161,12 +161,12 @@ typedef struct Struct_Obj_Entry {
 	Elf_Word        gotsym;		/* First dynamic symbol in GOT */
 #endif
 
-	const Elf_Word *buckets;	/* Hash table buckets array */
+	const Elf_Symindx *buckets;	/* Hash table buckets array */
 	uint32_t        nbuckets;	/* Number of buckets */
 	uint32_t        nbuckets_m;	/* Precomputed for fast remainder */
 	uint8_t         nbuckets_s1;
 	uint8_t         nbuckets_s2;
-	const Elf_Word *chains;		/* Hash table chain array */
+	const Elf_Symindx *chains;	/* Hash table chain array */
 	unsigned long   nchains;	/* Number of chains */
 
 	Search_Path    *rpaths;		/* Search path specified in object */
