@@ -1,4 +1,4 @@
-/*	$NetBSD: alpha_reloc.c,v 1.37 2010/08/06 16:33:17 joerg Exp $	*/
+/*	$NetBSD: alpha_reloc.c,v 1.38 2010/09/30 09:11:18 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -62,7 +62,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: alpha_reloc.c,v 1.37 2010/08/06 16:33:17 joerg Exp $");
+__RCSID("$NetBSD: alpha_reloc.c,v 1.38 2010/09/30 09:11:18 skrll Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -80,7 +80,7 @@ __RCSID("$NetBSD: alpha_reloc.c,v 1.37 2010/08/06 16:33:17 joerg Exp $");
 void _rtld_bind_start(void);
 void _rtld_bind_start_old(void);
 void _rtld_relocate_nonplt_self(Elf_Dyn *, Elf_Addr);
-caddr_t _rtld_bind(const Obj_Entry *, Elf_Word);
+caddr_t _rtld_bind(const Obj_Entry *, Elf_Addr);
 static inline int _rtld_relocate_plt_object(const Obj_Entry *,
     const Elf_Rela *, Elf_Addr *);
 
@@ -476,7 +476,7 @@ out:
 }
 
 caddr_t
-_rtld_bind(const Obj_Entry *obj, Elf_Word reloff)
+_rtld_bind(const Obj_Entry *obj, Elf_Addr reloff)
 {
 	const Elf_Rela *rela = 
 	    (const Elf_Rela *)((const uint8_t *)obj->pltrela + reloff);
