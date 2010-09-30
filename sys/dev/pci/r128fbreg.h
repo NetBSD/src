@@ -1,4 +1,4 @@
-/*	$NetBSD: r128fbreg.h,v 1.2 2010/09/09 01:22:10 macallan Exp $	*/
+/*	$NetBSD: r128fbreg.h,v 1.3 2010/09/30 03:14:39 macallan Exp $	*/
 
 /*
  * Copyright 1999, 2000 ATI Technologies Inc., Markham, Ontario,
@@ -141,6 +141,7 @@
 #       define R128_DP_SRC_SOURCE_MASK        (7    << 24)
 #       define R128_DP_SRC_SOURCE_MEMORY      (2    << 24)
 #       define R128_DP_SRC_SOURCE_HOST_DATA   (3    << 24)
+#       define R128_DP_SRC_SOURCE_HOST_ALIGN  (4    << 24)
 #       define R128_GMC_3D_FCN_EN             (1    << 27)
 #       define R128_GMC_CLR_CMP_CNTL_DIS      (1    << 28)
 #       define R128_GMC_AUX_CLIP_DIS          (1    << 29)
@@ -203,7 +204,15 @@
 #define R128_DP_DATATYPE                  0x16c4
 #       define R128_HOST_BIG_ENDIAN_EN    (1 << 29)
 
+#define R128_DP_MIX                       0x16c8
+#	define R128_MIX_SRC_VRAM		  (2 << 8)
+#	define R128_MIX_SRC_HOSTDATA		  (3 << 8)
+#	define R128_MIX_SRC_HOST_BYTEALIGN	  (4 << 8)
+#	define R128_MIX_SRC_ROP3_MASK		  (0xff << 16)
+
 #define R128_DP_WRITE_MASK                0x16cc
+#define R128_DP_SRC_BKGD_CLR              0x15dc
+#define R128_DP_SRC_FRGD_CLR              0x15d8
 
 #define R128_DP_CNTL_XDIR_YDIR_YMAJOR     0x16d0
 #       define R128_DST_Y_MAJOR             (1 <<  2)
@@ -216,11 +225,27 @@
 #       define R128_DEFAULT_SC_RIGHT_MAX  (0x1fff <<  0)
 #       define R128_DEFAULT_SC_BOTTOM_MAX (0x1fff << 16)
 
-#define R128_SC_TOP_LEFT                  0x16ec
+/* scissor registers */
+#define R128_SC_BOTTOM                    0x164c
 #define R128_SC_BOTTOM_RIGHT              0x16f0
+#define R128_SC_BOTTOM_RIGHT_C            0x1c8c
+#define R128_SC_LEFT                      0x1640
+#define R128_SC_RIGHT                     0x1644
+#define R128_SC_TOP                       0x1648
+#define R128_SC_TOP_LEFT                  0x16ec
+#define R128_SC_TOP_LEFT_C                0x1c88
 
 #define R128_GUI_STAT                     0x1740
 #       define R128_GUI_FIFOCNT_MASK      0x0fff
 #       define R128_GUI_ACTIVE            (1 << 31)
+
+#define R128_HOST_DATA0                   0x17c0
+#define R128_HOST_DATA1                   0x17c4
+#define R128_HOST_DATA2                   0x17c8
+#define R128_HOST_DATA3                   0x17cc
+#define R128_HOST_DATA4                   0x17d0
+#define R128_HOST_DATA5                   0x17d4
+#define R128_HOST_DATA6                   0x17d8
+#define R128_HOST_DATA7                   0x17dc
 
 #endif /* R128FB_REG_H */
