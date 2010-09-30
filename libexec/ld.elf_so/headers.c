@@ -1,4 +1,4 @@
-/*	$NetBSD: headers.c,v 1.31 2010/09/30 09:11:18 skrll Exp $	 */
+/*	$NetBSD: headers.c,v 1.32 2010/09/30 19:43:11 skrll Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: headers.c,v 1.31 2010/09/30 09:11:18 skrll Exp $");
+__RCSID("$NetBSD: headers.c,v 1.32 2010/09/30 19:43:11 skrll Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -313,11 +313,12 @@ _rtld_digest_phdr(const Elf_Phdr *phdr, int phnum, caddr_t entry)
 	obj = _rtld_obj_new();
 	for (ph = phdr; ph < phlimit; ++ph) {
 		vaddr = ph->p_vaddr + relocoffs;
-		dbg(("headers: relocoffs = %lx\n", (long)relocoffs));
 		switch (ph->p_type) {
 
 		case PT_PHDR:
 			relocoffs = (uintptr_t)phdr - (uintptr_t)ph->p_vaddr;
+			dbg(("headers: phdr %p phsize %zu relocoffs %lx", obj->phdr,                                                                                  
+			    obj->phsize, (long)relocoffs)); 
 			break;
 
 		case PT_INTERP:
