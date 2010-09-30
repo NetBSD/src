@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld_start.S,v 1.8 2010/09/24 11:41:46 skrll Exp $	*/
+/*	$NetBSD: rtld_start.S,v 1.9 2010/09/30 19:32:40 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -146,6 +146,15 @@ EXIT(__rtld_hppa_setup_pltgot)
  * very closely tied to the shared-library call stub and the PLT stub, both
  * inserted by the linker.
  */
+
+/*
+ * This is a magic branch instruction that is used by GCC's
+ * __canonicalize_funcptr_for_compare() function to fixup relocations
+ * in order to do function pointer comparisons.
+ */
+
+	bl	_rtld_bind, %rp
+
 ENTRY(_rtld_bind_start,HPPA_FRAME_SIZE)
 
 	/* Start stack calling convention.  */
