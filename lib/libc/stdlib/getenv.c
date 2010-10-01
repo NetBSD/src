@@ -1,4 +1,4 @@
-/*	$NetBSD: getenv.c,v 1.23 2010/09/29 00:44:04 enami Exp $	*/
+/*	$NetBSD: getenv.c,v 1.24 2010/10/01 20:11:32 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)getenv.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: getenv.c,v 1.23 2010/09/29 00:44:04 enami Exp $");
+__RCSID("$NetBSD: getenv.c,v 1.24 2010/10/01 20:11:32 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -50,6 +50,7 @@ __RCSID("$NetBSD: getenv.c,v 1.23 2010/09/29 00:44:04 enami Exp $");
 rwlock_t __environ_lock = RWLOCK_INITIALIZER;
 #endif
 char **__environ_malloced;
+static char **saveenv;
 static size_t environ_malloced_len;
 
 __weak_alias(getenv_r, _getenv_r)
@@ -106,15 +107,28 @@ __allocenv(int offset)
 	char **p;
 	size_t nl;
 
-	if (offset == -1) {
+	if (offset == -1 || saveenv != environ) {
 		char **ptr;
 		for (ptr = environ, offset = 0; *ptr != NULL; ptr++)
 			offset++;
 	}
 
 	nl = offset + 2; 	/* one for potentially new entry one for NULL */
-	if (nl <= environ_malloced_len)
+	if (nl <= environ_malloced_len && saveenv == environ)
 		return 0;
+
+	if (saveenv == environ) {		/* just increase size */
+		if ((p = realloc(saveenv, nl * sizeof(*p))) == NULL)
+			return -1;
+		saveenv = p;
+	} else {				/* get new space */
+		free(saveenv);
+		if ((saveenv = malloc(nl * sizeof(*saveenv))) == NULL)
+			return -1;
+		(void)memcpy(saveenv, environ, (nl - 2) * sizeof(*saveenv));
+	}
+	environ = saveenv;
+	environ[offset + 1] = NULL;
 
 	p = realloc(__environ_malloced, nl * sizeof(*p));
 	if (p == NULL)
@@ -151,9 +165,9 @@ __findenv(const char *name, int *offset)
 	len = np - name;
 	for (p = environ; (c = *p) != NULL; ++p)
 		if (strncmp(c, name, len) == 0 && c[len] == '=') {
-			*offset = p - environ;
+			*offset = (int)(p - environ);
 			return c + len + 1;
 		}
-	*offset = p - environ;
+	*offset = (int)(p - environ);
 	return NULL;
 }
