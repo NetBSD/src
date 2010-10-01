@@ -1,4 +1,4 @@
-/*	$NetBSD: putenv.c,v 1.12 2003/08/07 16:43:42 agc Exp $	*/
+/*	$NetBSD: putenv.c,v 1.13 2010/10/01 20:11:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)putenv.c	8.2 (Berkeley) 3/27/94";
 #else
-__RCSID("$NetBSD: putenv.c,v 1.12 2003/08/07 16:43:42 agc Exp $");
+__RCSID("$NetBSD: putenv.c,v 1.13 2010/10/01 20:11:32 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -44,28 +44,41 @@ __RCSID("$NetBSD: putenv.c,v 1.12 2003/08/07 16:43:42 agc Exp $");
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
+#include "reentrant.h"
+#include "local.h"
 
 #ifdef __weak_alias
 __weak_alias(putenv,_putenv)
 #endif
 
 int
-putenv(str)
-	const char *str;
+putenv(char *str)
 {
 	char *p, *equal;
-	int rval;
+	int offset;
 
 	_DIAGASSERT(str != NULL);
 
-	if ((p = strdup(str)) == NULL)
-		return (-1);
-	if ((equal = strchr(p, '=')) == NULL) {
-		(void)free(p);
-		return (-1);
-	}
+	if ((equal = strchr(str, '=')) == NULL)
+		return -1;
+
+	if (rwlock_wrlock(&__environ_lock) != 0)
+		return -1;
+
 	*equal = '\0';
-	rval = setenv(p, equal + 1, 1);
-	(void)free(p);
-	return (rval);
+	p = __findenv(str, &offset);
+	*equal = '=';
+
+	if (__allocenv(offset) == -1)
+		goto bad;
+
+	if (p != NULL && environ[offset] == __environ_malloced[offset])
+		free(__environ_malloced[offset]);
+
+	environ[offset] = str;
+	rwlock_unlock(&__environ_lock);
+	return 0;
+bad:
+	rwlock_unlock(&__environ_lock);
+	return -1;
 }
