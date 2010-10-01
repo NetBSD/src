@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_mci.c,v 1.5 2010/04/06 15:55:46 nonaka Exp $	*/
+/*	$NetBSD: pxa2x0_mci.c,v 1.6 2010/10/01 09:54:56 kiyohara Exp $	*/
 /*	$OpenBSD: pxa2x0_mmc.c,v 1.5 2009/02/23 18:09:55 miod Exp $	*/
 
 /*
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0_mci.c,v 1.5 2010/04/06 15:55:46 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_mci.c,v 1.6 2010/10/01 09:54:56 kiyohara Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -305,7 +305,7 @@ pxamci_attach_sub(device_t self, struct pxaip_attach_args *pxa)
 	saa.saa_clkmax = sc->sc_clkmax;
 	saa.saa_caps = 0;
 	if (!ISSET(sc->sc_caps, PMC_CAPS_NO_DMA))
-		SET(saa.saa_caps, SMC_CAPS_DMA);
+		SET(saa.saa_caps, SMC_CAPS_DMA | SMC_CAPS_MULTI_SEG_DMA);
 	if (CPU_IS_PXA270 && ISSET(sc->sc_caps, PMC_CAPS_4BIT))
 		SET(saa.saa_caps, SMC_CAPS_4BIT_MODE);
 
