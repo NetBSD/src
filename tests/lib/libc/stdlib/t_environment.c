@@ -1,4 +1,4 @@
-/*	$NetBSD: t_environment.c,v 1.1 2010/09/23 17:38:08 christos Exp $	*/
+/*	$NetBSD: t_environment.c,v 1.2 2010/10/01 20:12:20 christos Exp $	*/
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -32,22 +32,29 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_environment.c,v 1.1 2010/09/23 17:38:08 christos Exp $");
+__RCSID("$NetBSD: t_environment.c,v 1.2 2010/10/01 20:12:20 christos Exp $");
 
 #include <atf-c.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-ATF_TC(t_environment);
+ATF_TC(t_setenv);
+ATF_TC(t_putenv);
 
-ATF_TC_HEAD(t_environment, tc)
+ATF_TC_HEAD(t_setenv, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Test setenv(3), getenv(3), unsetenv(3)");
 }
 
-ATF_TC_BODY(t_environment, tc)
+ATF_TC_HEAD(t_putenv, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Test putenv(3), getenv(3), unsetenv(3)");
+}
+
+ATF_TC_BODY(t_setenv, tc)
 {
 	size_t i;
 	char name[1024];
@@ -66,9 +73,26 @@ ATF_TC_BODY(t_environment, tc)
 	}
 }
 
+ATF_TC_BODY(t_putenv, tc)
+{
+	char string[1024];
+
+	snprintf(string, sizeof(string), "crap=true");
+	ATF_CHECK(putenv(string) != -1);
+	ATF_CHECK_STREQ(getenv("crap"), "true");
+	string[1] = 'l';
+	ATF_CHECK_STREQ(getenv("clap"), "true");
+	ATF_CHECK(getenv("crap") == NULL);
+	string[1] = 'r';
+	unsetenv("crap");
+	ATF_CHECK(getenv("crap") == NULL);
+		
+}
+
 ATF_TP_ADD_TCS(tp)
 {
-	ATF_TP_ADD_TC(tp, t_environment);
+	ATF_TP_ADD_TC(tp, t_setenv);
+	ATF_TP_ADD_TC(tp, t_putenv);
 
 	return atf_no_error();
 }
