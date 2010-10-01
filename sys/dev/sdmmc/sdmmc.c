@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmc.c,v 1.3 2010/09/20 09:06:03 kiyohara Exp $	*/
+/*	$NetBSD: sdmmc.c,v 1.4 2010/10/01 09:50:42 kiyohara Exp $	*/
 /*	$OpenBSD: sdmmc.c,v 1.18 2009/01/09 10:58:38 jsg Exp $	*/
 
 /*
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdmmc.c,v 1.3 2010/09/20 09:06:03 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdmmc.c,v 1.4 2010/10/01 09:50:42 kiyohara Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -60,6 +60,8 @@ __KERNEL_RCSID(0, "$NetBSD: sdmmc.c,v 1.3 2010/09/20 09:06:03 kiyohara Exp $");
 #include <sys/proc.h>
 #include <sys/systm.h>
 #include <sys/callout.h>
+
+#include <machine/vmparam.h>
 
 #include <dev/sdmmc/sdmmc_ioreg.h>
 #include <dev/sdmmc/sdmmcchip.h>
@@ -587,12 +589,58 @@ sdmmc_function_alloc(struct sdmmc_softc *sc)
 	sf->cis.product = SDMMC_PRODUCT_INVALID;
 	sf->cis.function = SDMMC_FUNCTION_INVALID;
 
+	if (ISSET(sc->sc_flags, SMF_MEM_MODE) &&
+	    ISSET(sc->sc_caps, SMC_CAPS_DMA) &&
+	    !ISSET(sc->sc_caps, SMC_CAPS_MULTI_SEG_DMA)) {
+		bus_dma_segment_t ds;
+		int rseg, error;
+
+		error = bus_dmamap_create(sc->sc_dmat, SDMMC_SECTOR_SIZE, 1,
+		    SDMMC_SECTOR_SIZE, 0, BUS_DMA_WAITOK, &sf->bbuf_dmap);
+		if (error)
+			goto fail1;
+		error = bus_dmamem_alloc(sc->sc_dmat, SDMMC_SECTOR_SIZE,
+		    PAGE_SIZE, 0, &ds, 1, &rseg, BUS_DMA_WAITOK);
+		if (error)
+			goto fail2;
+		error = bus_dmamem_map(sc->sc_dmat, &ds, 1, SDMMC_SECTOR_SIZE,
+		    &sf->bbuf, BUS_DMA_WAITOK);
+		if (error)
+			goto fail3;
+		error = bus_dmamap_load(sc->sc_dmat, sf->bbuf_dmap,
+		    sf->bbuf, SDMMC_SECTOR_SIZE, NULL,
+		    BUS_DMA_WAITOK|BUS_DMA_READ|BUS_DMA_WRITE);
+		if (!error)
+			goto out;
+
+		bus_dmamem_unmap(sc->sc_dmat, sf->bbuf, SDMMC_SECTOR_SIZE);
+fail3:
+		bus_dmamem_free(sc->sc_dmat, &ds, 1);
+fail2:
+		bus_dmamap_destroy(sc->sc_dmat, sf->bbuf_dmap);
+fail1:
+		free(sf, M_DEVBUF);
+		sf = NULL;
+	}
+out:
+
 	return sf;
 }
 
 void
 sdmmc_function_free(struct sdmmc_function *sf)
 {
+	struct sdmmc_softc *sc = sf->sc;
+
+	if (ISSET(sc->sc_flags, SMF_MEM_MODE) &&
+	    ISSET(sc->sc_caps, SMC_CAPS_DMA) &&
+	    !ISSET(sc->sc_caps, SMC_CAPS_MULTI_SEG_DMA)) {
+		bus_dmamap_unload(sc->sc_dmat, sf->bbuf_dmap);
+		bus_dmamem_unmap(sc->sc_dmat, sf->bbuf, SDMMC_SECTOR_SIZE);
+		bus_dmamem_free(sc->sc_dmat,
+		    sf->bbuf_dmap->dm_segs, sf->bbuf_dmap->dm_nsegs);
+		bus_dmamap_destroy(sc->sc_dmat, sf->bbuf_dmap);
+	}
 
 	free(sf, M_DEVBUF);
 }

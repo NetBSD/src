@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmcvar.h,v 1.6 2010/09/23 12:03:27 kiyohara Exp $	*/
+/*	$NetBSD: sdmmcvar.h,v 1.7 2010/10/01 09:50:42 kiyohara Exp $	*/
 /*	$OpenBSD: sdmmcvar.h,v 1.13 2009/01/09 10:55:22 jsg Exp $	*/
 
 /*
@@ -85,6 +85,8 @@ struct sdmmc_command {
 	uint32_t	 c_arg;		/* SD/MMC command argument */
 	sdmmc_response	 c_resp;	/* response buffer */
 	bus_dmamap_t	 c_dmamap;
+	int		 c_dmaseg;	/* DMA segment number */
+	int		 c_dmaoff;	/* offset in DMA segment */
 	void		*c_data;	/* buffer to send or read into */
 	int		 c_datalen;	/* length of data buffer */
 	int		 c_blklen;	/* block length */
@@ -176,6 +178,8 @@ struct sdmmc_function {
 	sdmmc_response raw_cid;		/* temp. storage for decoding */
 	uint32_t raw_scr[2];
 	struct sdmmc_scr scr;		/* decoded CSR value */
+	void *bbuf;			/* bounce buffer */
+	bus_dmamap_t bbuf_dmap;		/* DMA map for bounce buffer */
 };
 
 /*
@@ -211,6 +215,7 @@ struct sdmmc_softc {
 #define SMC_CAPS_POLL_CARD_DET	0x0010	/* Polling card detect */
 #define SMC_CAPS_SINGLE_ONLY	0x0020	/* only single read/write */
 #define SMC_CAPS_8BIT_MODE	0x0040	/* 8-bits data bus width */
+#define SMC_CAPS_MULTI_SEG_DMA	0x0080	/* multiple segment DMA transfer */
 
 	/* function */
 	int sc_function_count;		/* number of I/O functions (SDIO) */
