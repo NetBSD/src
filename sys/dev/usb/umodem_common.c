@@ -1,4 +1,4 @@
-/*	$NetBSD: umodem_common.c,v 1.20 2010/10/01 20:56:10 christos Exp $	*/
+/*	$NetBSD: umodem_common.c,v 1.21 2010/10/01 20:56:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umodem_common.c,v 1.20 2010/10/01 20:56:10 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umodem_common.c,v 1.21 2010/10/01 20:56:50 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -317,6 +317,8 @@ umodem_intr(usbd_xfer_handle xfer, usbd_private_handle priv,
 			return;
 		printf("%s: abnormal status: %s\n", USBDEVNAME(sc->sc_dev),
 		       usbd_errstr(status));
+		if (status == USBD_STALLED)
+			usbd_clear_endpoint_stall_async(sc->sc_notify_pipe);
 		return;
 	}
 
