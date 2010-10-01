@@ -1,4 +1,4 @@
-.\"	$NetBSD: getenv.3,v 1.21 2010/10/01 20:11:32 christos Exp $
+.\"	$NetBSD: getenv.3,v 1.22 2010/10/01 20:57:50 wiz Exp $
 .\"
 .\" Copyright (c) 1988, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -120,14 +120,14 @@ to the given
 .Pp
 The
 .Fn putenv
-function takes an argument of the form 
+function takes an argument of the form
 .Dq name=value
 and it will set the environment variable
 .Dq name
 equal to
 .Dq value
 by altering an existing entry, or creating a new one if an existing
-one does not exit.
+one does not exist.
 The actual string argument passed to
 .Fn putenv
 will become part of the environment.
