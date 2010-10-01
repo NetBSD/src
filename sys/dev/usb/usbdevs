@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.562 2010/09/25 15:29:40 tsutsui Exp $
+$NetBSD: usbdevs,v 1.563 2010/10/01 20:56:10 christos Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -2558,6 +2558,7 @@ product ZINWELL ZWXG261		0x0260	ZWX-G261
 
 /* Zoom Telephonics, Inc. products */
 product ZOOM 2986L		0x9700	2986L Fax modem
+product ZOOM 3095		0x3095	3095 USB Fax modem
 
 /* Zydas Technology Corporation products */
 product ZYDAS ZD1211		0x1211	ZD1211 WLAN abg

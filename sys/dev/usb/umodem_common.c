@@ -1,4 +1,4 @@
-/*	$NetBSD: umodem_common.c,v 1.19 2010/09/20 14:18:13 christos Exp $	*/
+/*	$NetBSD: umodem_common.c,v 1.20 2010/10/01 20:56:10 christos Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umodem_common.c,v 1.19 2010/09/20 14:18:13 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umodem_common.c,v 1.20 2010/10/01 20:56:10 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -370,13 +370,18 @@ umodem_get_caps(usbd_device_handle dev, int *cm, int *acm,
 	const usb_cdc_cm_descriptor_t *cmd;
 	const usb_cdc_acm_descriptor_t *cad;
 	const usb_cdc_union_descriptor_t *cud;
+	u_int32_t uq_flags;
 
 	*cm = *acm = 0;
+	uq_flags = usbd_get_quirks(dev)->uq_flags;
 
-	if (usbd_get_quirks(dev)->uq_flags & UQ_NO_UNION_NRM) {
+	if (uq_flags & UQ_NO_UNION_NRM) {
 		DPRINTF(("umodem_get_caps: NO_UNION_NRM quirk - returning 0\n"));
 		return 0;
 	}
+
+	if (uq_flags & UQ_LOST_CS_DESC)
+		id = NULL;
 
 	cmd = (const usb_cdc_cm_descriptor_t *)usb_find_desc_if(dev,
 							  UDESC_CS_INTERFACE,
