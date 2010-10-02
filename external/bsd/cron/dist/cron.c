@@ -1,4 +1,4 @@
-/*	$NetBSD: cron.c,v 1.6 2010/05/18 21:49:51 christos Exp $	*/
+/*	$NetBSD: cron.c,v 1.7 2010/10/02 12:22:20 tron Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -25,7 +25,7 @@
 #if 0
 static char rcsid[] = "Id: cron.c,v 1.12 2004/01/23 18:56:42 vixie Exp";
 #else
-__RCSID("$NetBSD: cron.c,v 1.6 2010/05/18 21:49:51 christos Exp $");
+__RCSID("$NetBSD: cron.c,v 1.7 2010/10/02 12:22:20 tron Exp $");
 #endif
 #endif
 
@@ -93,7 +93,7 @@ main(int argc, char *argv[]) {
 	set_cron_uid();
 	set_cron_cwd();
 
-	if (putenv("PATH="_PATH_DEFPATH) < 0) {
+	if (setenv("PATH", _PATH_DEFPATH, 1) < 0) {
 		log_it("CRON", getpid(), "DEATH", "can't malloc");
 		exit(1);
 	}
