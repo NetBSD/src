@@ -1,4 +1,4 @@
-/* $NetBSD: ym_acpi.c,v 1.11 2010/03/05 14:00:17 jruoho Exp $ */
+/* $NetBSD: ym_acpi.c,v 1.12 2010/10/02 18:06:47 gsutre Exp $ */
 
 /*
  * Copyright (c) 2006 Jasper Wallace <jasper@pointless.net>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ym_acpi.c,v 1.11 2010/03/05 14:00:17 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ym_acpi.c,v 1.12 2010/10/02 18:06:47 gsutre Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,6 +61,8 @@ ym_acpi_match(device_t parent, cfdata_t match, void *aux)
 	struct acpi_attach_args *aa = aux;
 
 	if (aa->aa_node->ad_type != ACPI_TYPE_DEVICE)
+		return 0;
+	if (!(aa->aa_node->ad_devinfo->Valid & ACPI_VALID_HID))
 		return 0;
 	if (!aa->aa_node->ad_devinfo->HardwareId.String)
 		return 0;
