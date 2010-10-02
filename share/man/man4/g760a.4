@@ -1,4 +1,4 @@
-.\" $NetBSD: g760a.4,v 1.1 2010/10/02 06:22:00 kiyohara Exp $
+.\" $NetBSD: g760a.4,v 1.2 2010/10/02 09:18:57 wiz Exp $
 .\"
 .\" Copyright (c) 2008 A.Leo.
 .\" All rights reserved.
@@ -38,20 +38,20 @@
 .Nd Global Mixed-mode Technology Inc. G760a fan speed controller driver
 .Sh SYNOPSIS
 .Cd g760a0 at iic? addr 0x3e
-.Pp
 .Sh DESCRIPTION
 The
 .Nm
 driver provides support for the
-.Tn Global Mixed-mode Technology Inc
+.Tn Global Mixed-mode Technology Inc.
 G760a on iicbus fan speed controller to be used with the
 .Xr envsys 4
-API. This chip could be found in
+API.
+This chip could be found in
 .Tn D-Link's DNS-323 NAS box.
 .Pp
 The following
 .Xr sysctl 8
-variable control the fan's speed:
+variable controls the fan's speed:
 .Bl -tag
 .It Dv machdep.g760a0.rpm
 This value specifies the desired speed for the fan.
@@ -59,15 +59,16 @@ Valid range is 2000..20000 or 0 (the fan is turned off).
 The default value is 0.
 .Pp
 When setting the desired speed the RPM number will be converted
-to the internal represenation and truncated. For example when you
-are setting 2000 it will be truncated to 2006, and 8000 will be
-changed to 8057.
+to the internal represenation and truncated.
+For example when you are setting 2000 it will be truncated to 2006,
+and 8000 will be changed to 8057.
 .El
 .Sh SEE ALSO
-.Xr lm 4 ,
 .Xr envsys 4 ,
-.Xr envstat 4
+.Xr lm 4 ,
+.Xr envstat 8
 .Sh AUTHORS
 The
 .Nm
-driver was written by A. Leo.
+driver was written by
+.An A. Leo .
