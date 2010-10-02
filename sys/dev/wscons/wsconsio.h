@@ -1,4 +1,4 @@
-/* $NetBSD: wsconsio.h,v 1.92 2009/12/31 05:08:05 macallan Exp $ */
+/* $NetBSD: wsconsio.h,v 1.93 2010/10/02 00:52:02 macallan Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -442,7 +442,14 @@ struct wsdisplay_kbddata {
 };
 #define	_O_WSDISPLAYIO_SETKEYBOARD	_IOWR('W', 81, struct wsdisplay_kbddata)
 
-/* Misc control.  Not applicable to all display types. */
+/*
+ * Misc control.  Not applicable to all display types.
+ * - WSDISPLAYIO_PARAM_BACKLIGHT should be an on/off switch for screensavers,
+ *   it should turn the display dark / turn the backlight off without changing
+ *   the brightness value so screensavers and such can just flip the switch
+ *   without caring about actual brightness settings
+ * - WSDISPLAYIO_PARAM_BRIGHTNESS should set display / backlight brightness
+ */
 struct wsdisplay_param {
 	int param;
 #define	WSDISPLAYIO_PARAM_BACKLIGHT	1
