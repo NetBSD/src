@@ -1,4 +1,4 @@
-/*	$NetBSD: setenv.c,v 1.39 2010/10/01 20:11:32 christos Exp $	*/
+/*	$NetBSD: setenv.c,v 1.40 2010/10/02 16:56:03 tron Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)setenv.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: setenv.c,v 1.39 2010/10/01 20:11:32 christos Exp $");
+__RCSID("$NetBSD: setenv.c,v 1.40 2010/10/02 16:56:03 tron Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -83,8 +83,15 @@ setenv(const char *name, const char *value, int rewrite)
 	if (c != NULL) {
 		if (!rewrite)
 			goto good;
-		if (strlen(c) >= l_value)	/* old is enough; copy over */
+		/*
+		 * Check whether the buffer was allocated via setenv(3) and
+		 * whether there is enough space. If so simply overwrite the
+		 * existing value.
+		 */
+		if (environ[offset] == __environ_malloced[offset] &&
+		    strlen(c) >= l_value) {
 			goto copy;
+		}
 	}
 	for (cc = name; *cc && *cc != '='; ++cc)	/* no `=' in name */
 		continue;
