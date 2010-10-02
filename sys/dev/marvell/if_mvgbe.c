@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mvgbe.c,v 1.2 2010/07/11 08:43:36 kiyohara Exp $	*/
+/*	$NetBSD: if_mvgbe.c,v 1.3 2010/10/02 05:57:42 kiyohara Exp $	*/
 /*
  * Copyright (c) 2007, 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mvgbe.c,v 1.2 2010/07/11 08:43:36 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mvgbe.c,v 1.3 2010/10/02 05:57:42 kiyohara Exp $");
 
 #include "rnd.h"
 
@@ -180,11 +180,13 @@ struct mvgbec_softc {
 	bus_space_handle_t sc_ioh;
 
 	kmutex_t sc_mtx;
+
+	int sc_fix_tqtb;
 };
 
 struct mvgbe_softc {
 	device_t sc_dev;
-	int sc_port;				/* port num (0 or 1) */
+	int sc_port;
 
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;
@@ -267,23 +269,39 @@ CFATTACH_DECL_NEW(mvgbe, sizeof(struct mvgbe_softc),
 
 struct mvgbe_port {
 	int model;
+	int unit;
 	int ports;
-	int irqs[4];
+	int irqs[3];
+	int flags;
+#define FLAGS_FIX_TQTB	(1 << 0)
 } mvgbe_ports[] = {
-	{ MARVELL_DISCOVERY_II,		3, { 32, 33, 34 } },
-	{ MARVELL_DISCOVERY_III,	3, { 32, 33, 34 } },
+	{ MARVELL_DISCOVERY_II,		0, 3, { 32, 33, 34 }, 0 },
+	{ MARVELL_DISCOVERY_III,	0, 3, { 32, 33, 34 }, 0 },
 #if 0
-	{ MARVELL_DISCOVERY_LT,		?, { } },
-	{ MARVELL_DISCOVERY_V,		?, { } },
-	{ MARVELL_DISCOVERY_VI,		?, { } },
+	{ MARVELL_DISCOVERY_LT,		0, ?, { }, 0 },
+	{ MARVELL_DISCOVERY_V,		0, ?, { }, 0 },
+	{ MARVELL_DISCOVERY_VI,		0, ?, { }, 0 },
 #endif
-	{ MARVELL_ORION_1_88F5082,	1, { 21 } },
-	{ MARVELL_ORION_1_88F5180N,	1, { 21 } },
-	{ MARVELL_ORION_1_88F5181,	1, { 21 } },
-	{ MARVELL_ORION_1_88F5182,	1, { 21 } },
-	{ MARVELL_ORION_2_88F5281,	1, { 21 } },
-	{ MARVELL_ORION_1_88F6082,	1, { 21 } },
-	{ MARVELL_ORION_1_88W8660,	1, { 21 } },
+	{ MARVELL_ORION_1_88F5082,	0, 1, { 21 }, 0 },
+	{ MARVELL_ORION_1_88F5180N,	0, 1, { 21 }, 0 },
+	{ MARVELL_ORION_1_88F5181,	0, 1, { 21 }, 0 },
+	{ MARVELL_ORION_1_88F5182,	0, 1, { 21 }, 0 },
+	{ MARVELL_ORION_2_88F5281,	0, 1, { 21 }, 0 },
+	{ MARVELL_ORION_1_88F6082,	0, 1, { 21 }, 0 },
+	{ MARVELL_ORION_1_88W8660,	0, 1, { 21 }, 0 },
+
+	{ MARVELL_KIRKWOOD_88F6180,	0, 1, { 11 }, FLAGS_FIX_TQTB },
+	{ MARVELL_KIRKWOOD_88F6192,	0, 1, { 11 }, FLAGS_FIX_TQTB },
+	{ MARVELL_KIRKWOOD_88F6192,	1, 1, { 14 }, FLAGS_FIX_TQTB },
+	{ MARVELL_KIRKWOOD_88F6281,	0, 1, { 11 }, FLAGS_FIX_TQTB },
+	{ MARVELL_KIRKWOOD_88F6281,	1, 1, { 14 }, FLAGS_FIX_TQTB },
+
+	{ MARVELL_MV78XX0_MV78100,	0, 1, { 40 }, FLAGS_FIX_TQTB },
+	{ MARVELL_MV78XX0_MV78100,	1, 1, { 44 }, FLAGS_FIX_TQTB },
+	{ MARVELL_MV78XX0_MV78200,	0, 1, { 40 }, FLAGS_FIX_TQTB },
+	{ MARVELL_MV78XX0_MV78200,	1, 1, { 44 }, FLAGS_FIX_TQTB },
+	{ MARVELL_MV78XX0_MV78200,	2, 1, { 48 }, FLAGS_FIX_TQTB },
+	{ MARVELL_MV78XX0_MV78200,	3, 1, { 52 }, FLAGS_FIX_TQTB },
 };
 
 
@@ -296,7 +314,6 @@ mvgbec_match(device_t parent, struct cfdata *match, void *aux)
 
 	if (strcmp(mva->mva_name, match->cf_name) != 0)
 		return 0;
-
 	if (mva->mva_offset == MVA_OFFSET_DEFAULT)
 		return 0;
 
@@ -343,8 +360,11 @@ mvgbec_attach(device_t parent, device_t self, void *aux)
 
 	memset(&gbea, 0, sizeof(gbea));
 	for (i = 0; i < __arraycount(mvgbe_ports); i++) {
-		if (mvgbe_ports[i].model != mva->mva_model)
+		if (mvgbe_ports[i].model != mva->mva_model ||
+		    mvgbe_ports[i].unit != mva->mva_unit)
 			continue;
+
+		sc->sc_fix_tqtb = mvgbe_ports[i].flags & FLAGS_FIX_TQTB;
 
 		for (j = 0; j < mvgbe_ports[i].ports; j++) {
 			gbea.mva_name = "mvgbe";
@@ -362,6 +382,7 @@ mvgbec_attach(device_t parent, device_t self, void *aux)
 				phyaddr |= MVGBE_PHYADDR_PHYAD(j, mii->mii_phy);
 			}
 		}
+		break;
 	}
 	MVGBE_WRITE(sc, MVGBE_PHYADDR, phyaddr);
 }
@@ -919,8 +940,9 @@ static int
 mvgbe_init(struct ifnet *ifp)
 {
 	struct mvgbe_softc *sc = ifp->if_softc;
+	struct mvgbec_softc *csc = device_private(device_parent(sc->sc_dev));
 	struct mii_data *mii = &sc->sc_mii;
-	uint32_t reg, val;
+	uint32_t reg;
 	int i, s;
 
 	DPRINTFN(2, ("mvgbe_init\n"));
@@ -959,20 +981,33 @@ mvgbe_init(struct ifnet *ifp)
 	    MVGBE_PSC_FLFAIL |			/* Do NOT Force Link Fail */
 	    MVGBE_PSC_MRU(MVGBE_PSC_MRU_9700) |	/* Always 9700 OK */
 	    MVGBE_PSC_SETFULLDX);		/* Set_FullDx */
+	/* XXXX: mvgbe(4) always use RGMII. */
+	MVGBE_WRITE(sc, MVGBE_PSC1,
+	    MVGBE_READ(sc, MVGBE_PSC1) | MVGBE_PSC1_RGMIIEN);
+	/* XXXX: Also always Weighted Round-Robin Priority Mode */
+	MVGBE_WRITE(sc, MVGBE_TQFPC, MVGBE_TQFPC_EN(0));
 
 	MVGBE_WRITE(sc, MVGBE_CRDP(0), MVGBE_RX_RING_ADDR(sc, 0));
 	MVGBE_WRITE(sc, MVGBE_TCQDP, MVGBE_TX_RING_ADDR(sc, 0));
 
-	val = 0x3fffffff;
-	for (i = 0; i < 8; i++) {
+	if (csc->sc_fix_tqtb) {
 		/*
-		 * Queue 0 must be programmed to 0x3fffffff. Queue 1 through 7
-		 * must be programmed to 0x00000000.
+		 * Queue 0 (offset 0x72700) must be programmed to 0x3fffffff.
+		 * And offset 0x72704 must be programmed to 0x03ffffff.
+		 * Queue 1 through 7 must be programmed to 0x0.
 		 */
-		MVGBE_WRITE(sc, MVGBE_TQTBCOUNT(i), val);
-		MVGBE_WRITE(sc, MVGBE_TQTBCONFIG(i), val);
-		val = 0x00000000;
-	}
+		MVGBE_WRITE(sc, MVGBE_TQTBCOUNT(0), 0x3fffffff);
+		MVGBE_WRITE(sc, MVGBE_TQTBCONFIG(0), 0x03ffffff);
+		for (i = 1; i < 8; i++) {
+			MVGBE_WRITE(sc, MVGBE_TQTBCOUNT(i), 0x0);
+			MVGBE_WRITE(sc, MVGBE_TQTBCONFIG(i), 0x0);
+		}
+	} else
+		for (i = 1; i < 8; i++) {
+			MVGBE_WRITE(sc, MVGBE_TQTBCOUNT(i), 0x3fffffff);
+			MVGBE_WRITE(sc, MVGBE_TQTBCONFIG(i), 0xffff7fff);
+			MVGBE_WRITE(sc, MVGBE_TQAC(i), 0xfc0000ff);
+		}
 
 	MVGBE_WRITE(sc, MVGBE_PXC, MVGBE_PXC_RXCS);
 	MVGBE_WRITE(sc, MVGBE_PXCX, 0);
@@ -1291,7 +1326,7 @@ mvgbe_newbuf(struct mvgbe_softc *sc, int i, struct mbuf *m,
 	r->bufsize = MVGBE_JLEN & ~MVGBE_BUF_MASK;
 	r->cmdsts = MVGBE_BUFFER_OWNED_BY_DMA | MVGBE_RX_ENABLE_INTERRUPT;
 
-	MVGBE_CDRXSYNC(sc, i, BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
+	MVGBE_CDRXSYNC(sc, i, BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 	return 0;
 }
@@ -1554,7 +1589,7 @@ mvgbe_encap(struct mvgbe_softc *sc, struct mbuf *m_head,
 
 	/* Sync descriptors before handing to chip */
 	MVGBE_CDTXSYNC(sc, *txidx, txmap->dm_nsegs,
-	    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 	sc->sc_cdata.mvgbe_tx_cnt += i;
 	*txidx = current;
