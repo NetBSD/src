@@ -1,4 +1,4 @@
-/*	$NetBSD: machfb.c,v 1.59 2010/05/04 05:07:14 macallan Exp $	*/
+/*	$NetBSD: machfb.c,v 1.60 2010/10/02 23:50:04 macallan Exp $	*/
 
 /*
  * Copyright (c) 2002 Bang Jun-Young
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 __KERNEL_RCSID(0, 
-	"$NetBSD: machfb.c,v 1.59 2010/05/04 05:07:14 macallan Exp $");
+	"$NetBSD: machfb.c,v 1.60 2010/10/02 23:50:04 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -584,7 +584,7 @@ mach64_attach(device_t parent, device_t self, void *aux)
 	prop_dictionary_get_uint32(device_properties(self), "width", &width);
 	prop_dictionary_get_uint32(device_properties(self), "height", &height);
 
-	if ((edid_data = prop_dictionary_get(device_properties(self), "EDIDDD"))
+	if ((edid_data = prop_dictionary_get(device_properties(self), "EDID"))
 	    != NULL) {
 	    	struct edid_info ei;
 
