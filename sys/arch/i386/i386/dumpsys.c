@@ -1,4 +1,4 @@
-/*	$NetBSD: dumpsys.c,v 1.9 2010/02/26 19:25:07 jym Exp $	*/
+/*	$NetBSD: dumpsys.c,v 1.10 2010/10/02 22:54:47 jym Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dumpsys.c,v 1.9 2010/02/26 19:25:07 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dumpsys.c,v 1.10 2010/10/02 22:54:47 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -609,7 +609,6 @@ cpu_dump_mempagecnt(void)
 static int
 cpu_dump(void)
 {
-	int (*dump)(dev_t, daddr_t, void *, size_t);
 	kcore_seg_t seg;
 	cpu_kcore_hdr_t cpuhdr;
 	const struct bdevsw *bdev;
@@ -617,7 +616,6 @@ cpu_dump(void)
 	bdev = bdevsw_lookup(dumpdev);
 	if (bdev == NULL)
 		return (ENXIO);
-	dump = bdev->d_dump;
 
 	/*
 	 * Generate a segment header.
