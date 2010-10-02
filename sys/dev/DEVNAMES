@@ -1,4 +1,4 @@
-#	$NetBSD: DEVNAMES,v 1.260 2010/06/09 04:48:02 kiyohara Exp $
+#	$NetBSD: DEVNAMES,v 1.261 2010/10/02 06:09:45 kiyohara Exp $
 #
 # This file contains all used device names and defined attributes in
 # alphabetical order. New devices added to the system somewhere should first
@@ -477,6 +477,7 @@ fwip			MI
 fwohci			MI
 fxp			MI
 g2bus			dreamcast
+g740a			MI
 gapspci			dreamcast
 gayle			amiga		Attribute
 gayle			amigappc	Attribute
@@ -537,9 +538,10 @@ gt			cobalt
 gt			evbmips
 gt			MI
 gten			prep
-gtidma			evbppc
+gtidmac			MI
 gtmpsc			MI
 gtpci			MI
+gttwsi			MI
 gtsc			amiga
 gtsc			amigappc
 gus			MI
@@ -892,6 +894,7 @@ mtty			MI
 mu			vax
 mulaw			MI		Attribute
 mvgbe			MI
+mvpex			MI
 mvsata			MI
 nca			MI
 ncr5380sbc		MI		Attribute
