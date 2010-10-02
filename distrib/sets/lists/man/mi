@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1238 2010/09/29 13:47:06 christos Exp $
+# $NetBSD: mi,v 1.1239 2010/10/02 06:26:28 kiyohara Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -951,6 +951,7 @@
 ./usr/share/man/cat4/fwiso.0			man-obsolete		obsolete
 ./usr/share/man/cat4/fwohci.0			man-sys-catman		.cat
 ./usr/share/man/cat4/fxp.0			man-sys-catman		.cat
+./usr/share/man/cat4/g760a.0			man-sys-catman		.cat
 ./usr/share/man/cat4/gcscaudio.0		man-sys-catman		.cat
 ./usr/share/man/cat4/gem.0			man-sys-catman		.cat
 ./usr/share/man/cat4/genfb.0			man-sys-catman		.cat
@@ -3633,6 +3634,7 @@
 ./usr/share/man/html4/fwip.html			man-sys-htmlman		html
 ./usr/share/man/html4/fwohci.html		man-sys-htmlman		html
 ./usr/share/man/html4/fxp.html			man-sys-htmlman		html
+./usr/share/man/html4/g760a.html		man-sys-htmlman		html
 ./usr/share/man/html4/gcscaudio.html		man-sys-htmlman		html
 ./usr/share/man/html4/gem.html			man-sys-htmlman		html
 ./usr/share/man/html4/genfb.html		man-sys-htmlman		html
@@ -6095,6 +6097,7 @@
 ./usr/share/man/man4/fwiso.4			man-obsolete		obsolete
 ./usr/share/man/man4/fwohci.4			man-sys-man		.man
 ./usr/share/man/man4/fxp.4			man-sys-man		.man
+./usr/share/man/man4/g760a.4			man-sys-man		.man
 ./usr/share/man/man4/gcscaudio.4		man-sys-man		.man
 ./usr/share/man/man4/gem.4			man-sys-man		.man
 ./usr/share/man/man4/genfb.4			man-sys-man		.man
