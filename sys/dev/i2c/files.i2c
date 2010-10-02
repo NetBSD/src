@@ -1,4 +1,4 @@
-#	$NetBSD: files.i2c,v 1.27 2010/03/24 00:31:41 pgoyette Exp $
+#	$NetBSD: files.i2c,v 1.28 2010/10/02 06:07:37 kiyohara Exp $
 
 defflag	opt_i2cbus.h				I2C_SCAN
 define	i2cbus { }
@@ -119,3 +119,8 @@ file	dev/i2c/adm1021.c		admtemp
 device	smscmon: sysmon_envsys
 attach	smscmon at iic
 file	dev/i2c/smscmon.c		smscmon
+
+# G760a FAN controller
+device	g760a: sysmon_envsys
+attach	g760a at iic
+file	dev/i2c/g760a.c			g760a
