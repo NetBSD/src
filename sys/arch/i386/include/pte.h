@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.25 2010/09/14 21:34:02 jym Exp $	*/
+/*	$NetBSD: pte.h,v 1.26 2010/10/02 22:53:49 jym Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -252,7 +252,7 @@ typedef uint32_t pt_entry_t;		/* PTE */
 #define	PG_U		0x00000020	/* has been used */
 #define	PG_M		0x00000040	/* has been modified */
 #define PG_PAT		0x00000080	/* PAT (on pte) */
-#define PG_PS		0x00000080	/* 4MB page size */
+#define PG_PS		0x00000080	/* 4MB page size (2MB for PAE) */
 #define PG_G		0x00000100	/* global, don't TLB flush */
 #define PG_AVAIL1	0x00000200	/* ignored by hardware */
 #define PG_AVAIL2	0x00000400	/* ignored by hardware */
