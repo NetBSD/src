@@ -1,4 +1,4 @@
-#	$NetBSD: files.discovery,v 1.17 2010/09/23 12:36:01 kiyohara Exp $
+#	$NetBSD: files.discovery,v 1.18 2010/10/02 05:53:37 kiyohara Exp $
 #
 # Config file and device description for machine-independent support for
 # the Marvell (formerly Galileo Technology) Discovery system controllers.
@@ -68,8 +68,8 @@ attach	mvgbe at mvgbec
 file	dev/marvell/if_mvgbe.c		mvgbec | mvgbe
 
 # USB 2.0 Interface
-#attach	ehci at gt with mvusb_gt
-#file	dev/marvell/ehci_mv.c		mvusb_gt | mvusb_mbus
+attach	ehci at gt with mvusb_gt
+file	dev/marvell/ehci_mv.c		mvusb_gt | mvusb_mbus
 
 # Cryptographic Engines and Security Accelerator
 #device	mvcesa: opencrypto
