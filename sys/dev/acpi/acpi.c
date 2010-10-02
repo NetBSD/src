@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.219 2010/09/06 15:54:26 jmcneill Exp $	*/
+/*	$NetBSD: acpi.c,v 1.220 2010/10/02 18:06:47 gsutre Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.219 2010/09/06 15:54:26 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.220 2010/10/02 18:06:47 gsutre Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -977,15 +977,6 @@ acpi_rescan_nodes(struct acpi_softc *sc)
 			    (di->CurrentStatus & ACPI_STA_OK) != ACPI_STA_OK)
 				continue;
 		}
-
-		/*
-		 * The same problem as above. As for example
-		 * thermal zones and power resources do not
-		 * have a valid HID, only evaluate devices.
-		 */
-		if (di->Type == ACPI_TYPE_DEVICE &&
-		   (di->Valid & ACPI_VALID_HID) == 0)
-			continue;
 
 		/*
 		 * Handled internally.
