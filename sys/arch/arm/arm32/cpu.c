@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.76 2010/06/19 20:42:43 matt Exp $	*/
+/*	$NetBSD: cpu.c,v 1.77 2010/10/02 05:37:58 kiyohara Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -46,7 +46,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.76 2010/06/19 20:42:43 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.77 2010/10/02 05:37:58 kiyohara Exp $");
 
 #include <sys/systm.h>
 #include <sys/malloc.h>
@@ -344,6 +344,10 @@ const struct cpuidtab cpuids[] = {
 	  generic_steppings },
 	{ CPU_ID_TI925T,	CPU_CLASS_ARM9TDMI,	"TI ARM925T",
 	  generic_steppings },
+	{ CPU_ID_MV88SV131,	CPU_CLASS_ARM9ES,	"Sheeva 88SV131",
+	  generic_steppings },
+	{ CPU_ID_MV88FR571_VD,	CPU_CLASS_ARM9ES,	"Sheeva 88FR571-vd",
+	  generic_steppings },
 
 	{ CPU_ID_ARM1020E,	CPU_CLASS_ARM10E,	"ARM1020E",
 	  generic_steppings },
@@ -605,7 +609,7 @@ identify_arm_cpu(struct device *dv, struct cpu_info *ci)
 #ifdef CPU_ARM9
 	case CPU_CLASS_ARM9TDMI:
 #endif
-#ifdef CPU_ARM9E
+#if defined(CPU_ARM9E) || defined(CPU_SHEEVA)
 	case CPU_CLASS_ARM9ES:
 	case CPU_CLASS_ARM9EJS:
 #endif
