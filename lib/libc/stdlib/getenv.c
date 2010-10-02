@@ -1,4 +1,4 @@
-/*	$NetBSD: getenv.c,v 1.24 2010/10/01 20:11:32 christos Exp $	*/
+/*	$NetBSD: getenv.c,v 1.25 2010/10/02 10:51:07 tron Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)getenv.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: getenv.c,v 1.24 2010/10/01 20:11:32 christos Exp $");
+__RCSID("$NetBSD: getenv.c,v 1.25 2010/10/02 10:51:07 tron Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -120,15 +120,18 @@ __allocenv(int offset)
 	if (saveenv == environ) {		/* just increase size */
 		if ((p = realloc(saveenv, nl * sizeof(*p))) == NULL)
 			return -1;
+		(void)memset(&p[environ_malloced_len], 0,
+		    (nl - environ_malloced_len) * sizeof(*p));
 		saveenv = p;
 	} else {				/* get new space */
 		free(saveenv);
 		if ((saveenv = malloc(nl * sizeof(*saveenv))) == NULL)
 			return -1;
 		(void)memcpy(saveenv, environ, (nl - 2) * sizeof(*saveenv));
+		saveenv[nl - 2] = NULL;
+		saveenv[nl - 1] = NULL;
 	}
 	environ = saveenv;
-	environ[offset + 1] = NULL;
 
 	p = realloc(__environ_malloced, nl * sizeof(*p));
 	if (p == NULL)
