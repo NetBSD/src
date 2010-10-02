@@ -1,4 +1,4 @@
-/*	$NetBSD: rsh.c,v 1.31 2009/01/18 00:42:35 lukem Exp $	*/
+/*	$NetBSD: rsh.c,v 1.32 2010/10/02 09:24:16 gson Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1990, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1990, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)rsh.c	8.4 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: rsh.c,v 1.31 2009/01/18 00:42:35 lukem Exp $");
+__RCSID("$NetBSD: rsh.c,v 1.32 2010/10/02 09:24:16 gson Exp $");
 #endif
 #endif /* not lint */
 
@@ -135,7 +135,7 @@ main(int argc, char **argv)
 	if ((loop = getenv("RCMD_LOOP")) && strcmp(loop, "YES") == 0)
 		warnx("rcmd appears to be looping!");
 
-	putenv("RCMD_LOOP=YES");
+	setenv("RCMD_LOOP", "YES", 1);
 
 #  define	OPTIONS	"468KLdel:np:u:w"
 
