@@ -1,4 +1,4 @@
-/*	$NetBSD: machfb.c,v 1.60 2010/10/02 23:50:04 macallan Exp $	*/
+/*	$NetBSD: machfb.c,v 1.61 2010/10/02 23:54:03 macallan Exp $	*/
 
 /*
  * Copyright (c) 2002 Bang Jun-Young
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 __KERNEL_RCSID(0, 
-	"$NetBSD: machfb.c,v 1.60 2010/10/02 23:50:04 macallan Exp $");
+	"$NetBSD: machfb.c,v 1.61 2010/10/02 23:54:03 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -528,7 +528,7 @@ mach64_attach(device_t parent, device_t self, void *aux)
 	aprint_normal(": %s (rev. 0x%02x)\n", devinfo, 
 	    PCI_REVISION(pa->pa_class));
 	aprint_naive(": Graphics processor\n");
-#ifdef DEBUG
+#ifdef MACHFB_DEBUG
 	printf(prop_dictionary_externalize(device_properties(self)));
 #endif
 	
@@ -595,7 +595,7 @@ mach64_attach(device_t parent, device_t self, void *aux)
 
 		edid_parse(sc->sc_edid_data, &ei);
 
-#ifdef DEBUG
+#ifdef MACHFB_DEBUG
 		edid_print(&ei);
 #endif
 		if (ei.edid_have_range) {
@@ -908,7 +908,7 @@ mach64_get_mode(struct mach64_softc *sc, struct videomode *mode)
 	mode->vsync_start = (crtc.v_sync_strt_wid & 0xffff) + 1;
 	mode->vsync_end = (crtc.v_sync_strt_wid >> 16) + mode->vsync_start;
 
-#ifdef DEBUG_MACHFB
+#ifdef MACHFB_DEBUG
 	printf("mach64_get_mode: %d %d %d %d %d %d %d %d\n",
 	    mode->hdisplay, mode->hsync_start, mode->hsync_end, mode->htotal,
 	    mode->vdisplay, mode->vsync_start, mode->vsync_end, mode->vtotal);
