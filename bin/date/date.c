@@ -1,4 +1,4 @@
-/* $NetBSD: date.c,v 1.53 2010/05/29 20:41:58 dholland Exp $ */
+/* $NetBSD: date.c,v 1.54 2010/10/02 08:26:09 gson Exp $ */
 
 /*
  * Copyright (c) 1985, 1987, 1988, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)date.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: date.c,v 1.53 2010/05/29 20:41:58 dholland Exp $");
+__RCSID("$NetBSD: date.c,v 1.54 2010/10/02 08:26:09 gson Exp $");
 #endif
 #endif /* not lint */
 
@@ -79,6 +79,7 @@ main(int argc, char *argv[])
 	size_t bufsiz;
 	const char *format;
 	int ch;
+	static char tz_utc0[] = "TZ=UTC0";
 
 	setprogname(argv[0]);
 	(void)setlocale(LC_ALL, "");
@@ -106,7 +107,7 @@ main(int argc, char *argv[])
 			tval = strtoll(optarg, NULL, 0);
 			break;
 		case 'u':		/* do everything in UTC */
-			(void)putenv("TZ=UTC0");
+			(void)putenv(tz_utc0);
 			break;
 		default:
 			usage();
