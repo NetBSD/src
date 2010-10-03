@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_reass.c,v 1.3 2010/08/25 00:05:14 rmind Exp $	*/
+/*	$NetBSD: ip_reass.c,v 1.4 2010/10/03 19:44:47 rmind Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -46,13 +46,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_reass.c,v 1.3 2010/08/25 00:05:14 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_reass.c,v 1.4 2010/10/03 19:44:47 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
 
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
+#include <sys/mutex.h>
 #include <sys/domain.h>
 #include <sys/protosw.h>
 #include <sys/pool.h>
@@ -107,8 +108,8 @@ typedef struct ipfr_queue {
 	(((((x) & 0xf) | ((((x) >> 8) & 0xf) << 4)) ^ (y)) & IPREASS_HASH_MASK)
 
 static LIST_HEAD(, ipfr_queue)	ip_frags[IPREASS_HASH_SIZE];
-static struct pool	ipqent_pool;
-static int		ipq_locked;
+static pool_cache_t	ipfren_cache;
+static kmutex_t		ipfr_lock;
 
 /* Number of packets in reassembly queue and total number of fragments. */
 static int		ip_nfragpackets;
@@ -129,6 +130,8 @@ static int		ip_nmbclusters;
  */
 static u_int		fragttl_histo[IPFRAGTTL + 1];
 
+static struct sysctllog *ip_reass_sysctllog;
+
 void			sysctl_ip_reass_setup(void);
 static void		ip_nmbclusters_changed(void);
 
@@ -147,8 +150,9 @@ ip_reass_init(void)
 {
 	int i;
 
-	pool_init(&ipqent_pool, sizeof(ipfr_qent_t), 0, 0, 0, "ipqepl",
-	    NULL, IPL_VM);
+	ipfren_cache = pool_cache_init(sizeof(ipfr_qent_t), coherency_unit,
+	    0, 0, "ipfrenpl", NULL, IPL_NET, NULL, NULL, NULL);
+	mutex_init(&ipfr_lock, MUTEX_DEFAULT, IPL_SOFTNET);
 
 	for (i = 0; i < IPREASS_HASH_SIZE; i++) {
 		LIST_INIT(&ip_frags[i]);
@@ -159,8 +163,6 @@ ip_reass_init(void)
 
 	sysctl_ip_reass_setup();
 }
-
-static struct sysctllog *ip_reass_sysctllog;
 
 void
 sysctl_ip_reass_setup(void)
@@ -209,60 +211,6 @@ ip_nmbclusters_changed(void)
 	ip_nmbclusters = nmbclusters;
 }
 
-static inline int	ipq_lock_try(void);
-static inline void	ipq_unlock(void);
-
-static inline int
-ipq_lock_try(void)
-{
-	int s;
-
-	/*
-	 * Use splvm() -- we're blocking things that would cause
-	 * mbuf allocation.
-	 */
-	s = splvm();
-	if (ipq_locked) {
-		splx(s);
-		return (0);
-	}
-	ipq_locked = 1;
-	splx(s);
-	return (1);
-}
-
-static inline void
-ipq_unlock(void)
-{
-	int s;
-
-	s = splvm();
-	ipq_locked = 0;
-	splx(s);
-}
-
-#ifdef DIAGNOSTIC
-#define	IPQ_LOCK()							\
-do {									\
-	if (ipq_lock_try() == 0) {					\
-		printf("%s:%d: ipq already locked\n", __FILE__, __LINE__); \
-		panic("ipq_lock");					\
-	}								\
-} while (/*CONSTCOND*/ 0)
-#define	IPQ_LOCK_CHECK()						\
-do {									\
-	if (ipq_locked == 0) {						\
-		printf("%s:%d: ipq lock not held\n", __FILE__, __LINE__); \
-		panic("ipq lock check");				\
-	}								\
-} while (/*CONSTCOND*/ 0)
-#else
-#define	IPQ_LOCK()		(void) ipq_lock_try()
-#define	IPQ_LOCK_CHECK()	/* nothing */
-#endif
-
-#define	IPQ_UNLOCK()		ipq_unlock()
-
 /*
  * ip_reass:
  *
@@ -277,9 +225,9 @@ ip_reass(ipfr_qent_t *ipqe, ipfr_queue_t *fp, const u_int hash)
 	struct mbuf *m = ipqe->ipqe_m, *t;
 	ipfr_qent_t *nq, *p, *q;
 	struct ip *ip;
-	int i, next, s;
+	int i, next;
 
-	IPQ_LOCK_CHECK();
+	KASSERT(mutex_owned(&ipfr_lock));
 
 	/*
 	 * Presence of header sizes in mbufs would confuse code below.
@@ -385,9 +333,7 @@ ip_reass(ipfr_qent_t *ipqe, ipfr_queue_t *fp, const u_int hash)
 		nq = TAILQ_NEXT(q, ipqe_q);
 		m_freem(q->ipqe_m);
 		TAILQ_REMOVE(&fp->ipq_fragq, q, ipqe_q);
-		s = splvm();
-		pool_put(&ipqent_pool, q);
-		splx(s);
+		pool_cache_put(ipfren_cache, q);
 		fp->ipq_nfrags--;
 		ip_nfrags--;
 	}
@@ -405,44 +351,46 @@ insert:
 	for (p = NULL, q = TAILQ_FIRST(&fp->ipq_fragq); q != NULL;
 	    p = q, q = TAILQ_NEXT(q, ipqe_q)) {
 		if (ntohs(q->ipqe_ip->ip_off) != next) {
-			IPQ_UNLOCK();
+			mutex_exit(&ipfr_lock);
 			return NULL;
 		}
 		next += ntohs(q->ipqe_ip->ip_len);
 	}
 	if (p->ipqe_mff) {
-		IPQ_UNLOCK();
+		mutex_exit(&ipfr_lock);
 		return NULL;
 	}
 	/*
-	 * Reassembly is complete.  Check for a bogus message size and
-	 * concatenate fragments.
+	 * Reassembly is complete.  Check for a bogus message size.
 	 */
 	q = TAILQ_FIRST(&fp->ipq_fragq);
 	ip = q->ipqe_ip;
 	if ((next + (ip->ip_hl << 2)) > IP_MAXPACKET) {
 		IP_STATINC(IP_STAT_TOOLONG);
 		ip_freef(fp);
-		IPQ_UNLOCK();
+		mutex_exit(&ipfr_lock);
 		return NULL;
 	}
+	LIST_REMOVE(fp, ipq_q);
+	ip_nfrags -= fp->ipq_nfrags;
+	ip_nfragpackets--;
+	mutex_exit(&ipfr_lock);
+
+	/* Concatenate all fragments. */
 	m = q->ipqe_m;
 	t = m->m_next;
 	m->m_next = NULL;
 	m_cat(m, t);
 	nq = TAILQ_NEXT(q, ipqe_q);
-	s = splvm();
-	pool_put(&ipqent_pool, q);
-	splx(s);
+	pool_cache_put(ipfren_cache, q);
+
 	for (q = nq; q != NULL; q = nq) {
 		t = q->ipqe_m;
 		nq = TAILQ_NEXT(q, ipqe_q);
-		s = splvm();
-		pool_put(&ipqent_pool, q);
-		splx(s);
+		pool_cache_put(ipfren_cache, q);
 		m_cat(m, t);
 	}
-	ip_nfrags -= fp->ipq_nfrags;
+	free(fp, M_FTABLE);
 
 	/*
 	 * Create header for new packet by modifying header of first
@@ -453,13 +401,11 @@ insert:
 	ip->ip_src = fp->ipq_src;
 	ip->ip_dst = fp->ipq_dst;
 
-	LIST_REMOVE(fp, ipq_q);
-	free(fp, M_FTABLE);
-	ip_nfragpackets--;
 	m->m_len += (ip->ip_hl << 2);
 	m->m_data -= (ip->ip_hl << 2);
-	/* some debugging cruft by sklower, below, will go away soon */
-	if (m->m_flags & M_PKTHDR) { /* XXX this should be done elsewhere */
+
+	/* Fix up mbuf.  XXX This should be done elsewhere. */
+	if (m->m_flags & M_PKTHDR) {
 		int plen = 0;
 		for (t = m; t; t = t->m_next) {
 			plen += t->m_len;
@@ -467,7 +413,6 @@ insert:
 		m->m_pkthdr.len = plen;
 		m->m_pkthdr.csum_flags = 0;
 	}
-	IPQ_UNLOCK();
 	return m;
 
 dropfrag:
@@ -476,11 +421,10 @@ dropfrag:
 	}
 	ip_nfrags--;
 	IP_STATINC(IP_STAT_FRAGDROPPED);
+	mutex_exit(&ipfr_lock);
+
+	pool_cache_put(ipfren_cache, ipqe);
 	m_freem(m);
-	s = splvm();
-	pool_put(&ipqent_pool, ipqe);
-	splx(s);
-	IPQ_UNLOCK();
 	return NULL;
 }
 
@@ -492,29 +436,20 @@ dropfrag:
 static void
 ip_freef(ipfr_queue_t *fp)
 {
-	ipfr_qent_t *q, *p;
-	u_int nfrags = 0;
-	int s;
+	ipfr_qent_t *q;
 
-	IPQ_LOCK_CHECK();
+	KASSERT(mutex_owned(&ipfr_lock));
 
-	for (q = TAILQ_FIRST(&fp->ipq_fragq); q != NULL; q = p) {
-		p = TAILQ_NEXT(q, ipqe_q);
-		m_freem(q->ipqe_m);
-		nfrags++;
-		TAILQ_REMOVE(&fp->ipq_fragq, q, ipqe_q);
-		s = splvm();
-		pool_put(&ipqent_pool, q);
-		splx(s);
-	}
-
-	if (nfrags != fp->ipq_nfrags) {
-		printf("ip_freef: nfrags %d != %d\n", fp->ipq_nfrags, nfrags);
-	}
-	ip_nfrags -= nfrags;
 	LIST_REMOVE(fp, ipq_q);
-	free(fp, M_FTABLE);
+	ip_nfrags -= fp->ipq_nfrags;
 	ip_nfragpackets--;
+
+	while ((q = TAILQ_FIRST(&fp->ipq_fragq)) != NULL) {
+		TAILQ_REMOVE(&fp->ipq_fragq, q, ipqe_q);
+		m_freem(q->ipqe_m);
+		pool_cache_put(ipfren_cache, q);
+	}
+	free(fp, M_FTABLE);
 }
 
 /*
@@ -571,6 +506,8 @@ ip_reass_drophalf(void)
 {
 	u_int median_ticks;
 
+	KASSERT(mutex_owned(&ipfr_lock));
+
 	/*
 	 * Compute median TTL of all fragments, and count frags
 	 * with that TTL or lower (roughly half of all fragments).
@@ -593,13 +530,13 @@ ip_reass_drain(void)
 	 * We may be called from a device's interrupt context.  If
 	 * the ipq is already busy, just bail out now.
 	 */
-	if (ipq_lock_try() != 0) {
+	if (mutex_tryenter(&ipfr_lock)) {
 		/*
 		 * Drop half the total fragments now. If more mbufs are
 		 * needed, we will be called again soon.
 		 */
 		ip_reass_drophalf();
-		IPQ_UNLOCK();
+		mutex_exit(&ipfr_lock);
 	}
 }
 
@@ -614,7 +551,7 @@ ip_reass_slowtimo(void)
 	static u_int dropscanidx = 0;
 	u_int i, median_ttl;
 
-	IPQ_LOCK();
+	mutex_enter(&ipfr_lock);
 
 	/* Age TTL of all fragments by 1 tick .*/
 	median_ttl = ip_reass_ttl_decr(1);
@@ -656,7 +593,7 @@ ip_reass_slowtimo(void)
 		}
 		dropscanidx = i;
 	}
-	IPQ_UNLOCK();
+	mutex_exit(&ipfr_lock);
 }
 
 /*
@@ -676,7 +613,7 @@ ip_reass_packet(struct mbuf *m, struct ip *ip, bool mff, struct mbuf **m_final)
 	u_int hash;
 
 	/* Look for queue of fragments of this datagram. */
-	IPQ_LOCK();
+	mutex_enter(&ipfr_lock);
 	hash = IPREASS_HASH(ip->ip_src.s_addr, ip->ip_id);
 	LIST_FOREACH(fp, &ip_frags[hash], ipq_q) {
 		if (ip->ip_id != fp->ipq_id)
@@ -693,7 +630,7 @@ ip_reass_packet(struct mbuf *m, struct ip *ip, bool mff, struct mbuf **m_final)
 	/* Make sure that TOS matches previous fragments. */
 	if (fp && fp->ipq_tos != ip->ip_tos) {
 		IP_STATINC(IP_STAT_BADFRAGS);
-		IPQ_UNLOCK();
+		mutex_exit(&ipfr_lock);
 		return EINVAL;
 	}
 
@@ -701,12 +638,10 @@ ip_reass_packet(struct mbuf *m, struct ip *ip, bool mff, struct mbuf **m_final)
 	 * Create new entry and attempt to reassembly.
 	 */
 	IP_STATINC(IP_STAT_FRAGMENTS);
-	int s = splvm();
-	ipqe = pool_get(&ipqent_pool, PR_NOWAIT);
-	splx(s);
+	ipqe = pool_cache_get(ipfren_cache, PR_NOWAIT);
 	if (ipqe == NULL) {
 		IP_STATINC(IP_STAT_RCVMEMDROP);
-		IPQ_UNLOCK();
+		mutex_exit(&ipfr_lock);
 		return ENOMEM;
 	}
 	ipqe->ipqe_mff = mff;
