@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_session.c,v 1.3 2010/09/24 22:51:50 rmind Exp $	*/
+/*	$NetBSD: npf_session.c,v 1.4 2010/10/03 19:36:38 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_session.c,v 1.3 2010/09/24 22:51:50 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_session.c,v 1.4 2010/10/03 19:36:38 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -743,6 +743,7 @@ npf_session_gc(struct npf_sesslist *gc_list, bool flushall)
 			/* Get item, pre-iterate, skip if not expired. */
 			nse = rb_tree_iterate(&sh->sh_tree, se, RB_DIR_RIGHT);
 			if (!npf_session_expired(se, &tsnow) && !flushall) {
+				se = nse;
 				continue;
 			}
 
@@ -767,11 +768,11 @@ npf_session_gc(struct npf_sesslist *gc_list, bool flushall)
 }
 
 /*
- * npf_sessions_free: destroy all sessions in the G/C list, which
+ * npf_session_free: destroy all sessions in the G/C list, which
  * have no references.  Return true, if list is empty.
  */
 static void
-npf_sessions_free(struct npf_sesslist *gc_list)
+npf_session_free(struct npf_sesslist *gc_list)
 {
 	npf_session_t *se, *nse;
 
@@ -815,14 +816,14 @@ npf_session_worker(void *arg)
 
 		/* Flush all if session tracking got disabled. */
 		npf_session_gc(&gc_list, flushreq);
-		npf_sessions_free(&gc_list);
+		npf_session_free(&gc_list);
 
 	} while (sess_tracking);
 
 	/* Wait for any referenced sessions to be released. */
 	while (!LIST_EMPTY(&gc_list)) {
 		kpause("npfgcfr", false, 1, NULL);
-		npf_sessions_free(&gc_list);
+		npf_session_free(&gc_list);
 	}
 
 	/* Notify that we are done. */
