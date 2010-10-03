@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_mbuf.c,v 1.3 2010/09/25 00:25:31 rmind Exp $	*/
+/*	$NetBSD: npf_mbuf.c,v 1.4 2010/10/03 19:30:22 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2010 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_mbuf.c,v 1.3 2010/09/25 00:25:31 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_mbuf.c,v 1.4 2010/10/03 19:30:22 rmind Exp $");
 #endif
 
 #include <sys/param.h>
@@ -189,17 +189,25 @@ nbuf_store_datum(nbuf_t *nbuf, void *n_ptr, size_t len, void *buf)
 
 /*
  * nbuf_advfetch: advance and fetch the datum.
- * WARNING: Values of nbuf and n_ptr are undefined on error.
  */
 int
 nbuf_advfetch(nbuf_t **nbuf, void **n_ptr, u_int n, size_t len, void *buf)
 {
+	nbuf_t *orig_nbuf = *nbuf;
+	void *orig_nptr = *n_ptr;
+	int error;
 
 	*n_ptr = nbuf_advance(nbuf, *n_ptr, n);
-	if (__predict_false(*n_ptr == NULL)) {
-		return EINVAL;
+	if (__predict_false(*n_ptr != NULL)) {
+		error = nbuf_fetch_datum(*nbuf, *n_ptr, len, buf);
+	} else {
+		error = EINVAL;
 	}
-	return nbuf_fetch_datum(*nbuf, n_ptr, len, buf);
+	if (__predict_false(error)) {
+		*nbuf = orig_nbuf;
+		*n_ptr = orig_nptr;
+	}
+	return error;
 }
 
 /*
