@@ -1,4 +1,4 @@
-/*  $NetBSD: perfuse.c,v 1.9 2010/09/29 08:01:10 manu Exp $ */
+/*  $NetBSD: perfuse.c,v 1.10 2010/10/03 05:46:47 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010 Emmanuel Dreyfus. All rights reserved.
@@ -58,7 +58,6 @@ init_state(void)
 	(void)memset(ps, 0, sizeof(*ps));
 	ps->ps_max_write = UINT_MAX;
 	ps->ps_max_readahead = UINT_MAX;
-	TAILQ_INIT(&ps->ps_pnd);
 	
 	return ps;
 }
@@ -411,9 +410,6 @@ perfuse_init(pc, pmi)
 	if (perfuse_diagflags & PDF_PUFFS)
 		puffs_flags |= PUFFS_FLAG_OPDUMP;
 
-	if (perfuse_diagflags & PDF_FILENAME)
-		puffs_flags |= PUFFS_FLAG_BUILDPATH;
-
 	if ((pu = puffs_init(pops, _PATH_PUFFS, name, ps, puffs_flags)) == NULL)
 		DERR(EX_OSERR, "puffs_init failed");
 
@@ -422,7 +418,7 @@ perfuse_init(pc, pmi)
 	/*
 	 * Setup filesystem root
 	 */
-	pn_root = perfuse_new_pn(pu, NULL);
+	pn_root = perfuse_new_pn(pu, "", NULL);
 	PERFUSE_NODE_DATA(pn_root)->pnd_ino = FUSE_ROOT_ID; 
 	PERFUSE_NODE_DATA(pn_root)->pnd_parent = pn_root;
 	puffs_setroot(pu, pn_root);
