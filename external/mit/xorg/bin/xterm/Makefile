@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2010/06/30 04:58:42 mrg Exp $
+#	$NetBSD: Makefile,v 1.8 2010/10/03 22:06:43 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -20,6 +20,9 @@ CPPFLAGS+=	-I${X11SRCDIR.${PROG}} \
 APPDEFS=XTerm.ad XTerm-color.ad
 
 BUILDSYMLINKS=	XTerm-col.ad XTerm-color.ad
+
+#CPPFLAGS+=-DOPT_TRACE
+#SRCS+=trace.c
 
 LDADD+=	-lXft -lfontconfig -lfreetype -lexpat -lXrender
 DPADD+=	${LIBXFT} ${LIBFONTCONFIG} ${LIBFREETYPE} ${LIBEXPAT} ${LIBXRENDER}
