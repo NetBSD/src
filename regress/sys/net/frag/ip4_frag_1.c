@@ -1,4 +1,4 @@
-/*	$NetBSD: ip4_frag_1.c,v 1.1 2010/07/13 22:13:18 rmind Exp $	*/
+/*	$NetBSD: ip4_frag_1.c,v 1.2 2010/10/03 19:41:25 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -126,7 +126,8 @@ create_ip_packet(in_addr_t target, int foff, size_t addlen)
 		n = 0;
 	}
 	for (data += n; n < addlen; n++) {
-		data[n] = (0xf & n);
+		*data = (0xf & n);
+		data++;
 	}
 	return (void *)ip;
 }
