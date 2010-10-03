@@ -1,4 +1,4 @@
-/*  $NetBSD: debug.c,v 1.4 2010/09/29 08:01:10 manu Exp $ */
+/*  $NetBSD: debug.c,v 1.5 2010/10/03 05:46:47 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010 Emmanuel Dreyfus. All rights reserved.
@@ -84,7 +84,7 @@ const char *perfuse_qtypestr[] = {
 	"READ",
 	"WRITE",
 	"AFTERWRITE",
-	"OPEN"
+	"OPEN",
 	"AFTERXCHG"
 };
 

@@ -1,4 +1,4 @@
-/*  $NetBSD: subr.c,v 1.7 2010/09/29 08:01:10 manu Exp $ */
+/*  $NetBSD: subr.c,v 1.8 2010/10/03 05:46:47 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010 Emmanuel Dreyfus. All rights reserved.
@@ -36,9 +36,12 @@
 
 #include "perfuse_priv.h"
 
+static size_t node_path(puffs_cookie_t, char *, size_t);
+
 struct puffs_node *
-perfuse_new_pn(pu, parent)
+perfuse_new_pn(pu, name, parent)
 	struct puffs_usermount *pu;
+	const char *name;
 	struct puffs_node *parent;
 {
 	struct perfuse_state *ps;
@@ -61,13 +64,18 @@ perfuse_new_pn(pu, parent)
 	pnd->pnd_parent = parent;
 	pnd->pnd_timestamp = time(NULL);
 	pnd->pnd_pn = (puffs_cookie_t)pn;
+	(void)strlcpy(pnd->pnd_name, name, MAXPATHLEN);
 	TAILQ_INIT(&pnd->pnd_pcq);
+	TAILQ_INIT(&pnd->pnd_children);
 
-	TAILQ_INSERT_TAIL(&ps->ps_pnd, pnd, pnd_next);
-	ps->ps_pnd_count++;
+	if (parent != NULL) {
+		struct perfuse_node_data *parent_pnd;
 
-	if (parent != NULL)
-		PERFUSE_NODE_DATA(parent)->pnd_childcount++;
+		parent_pnd = PERFUSE_NODE_DATA(parent);
+		TAILQ_INSERT_TAIL(&parent_pnd->pnd_children, pnd, pnd_next);
+
+		parent_pnd->pnd_childcount++;
+	}
 
 	return pn;
 }
@@ -83,8 +91,12 @@ perfuse_destroy_pn(pu, pn)
 	ps = puffs_getspecific(pu);
 	pnd = PERFUSE_NODE_DATA(pn);
 
-	TAILQ_REMOVE(&ps->ps_pnd, pnd, pnd_next);
-	ps->ps_pnd_count--;
+	if (pnd->pnd_parent != NULL) {
+		struct perfuse_node_data *parent_pnd;
+
+		parent_pnd = PERFUSE_NODE_DATA(pnd->pnd_parent);
+		TAILQ_REMOVE(&parent_pnd->pnd_children, pnd, pnd_next);
+	}
 
 	if ((pnd = puffs_pn_getpriv(pn)) != NULL) {
 		if (pnd->pnd_parent != NULL)
@@ -197,3 +209,34 @@ perfuse_get_fh(opc, mode)
 	return FUSE_UNKNOWN_FH;
 }
 
+static size_t
+node_path(opc, buf, buflen)
+	puffs_cookie_t opc;
+	char *buf;
+	size_t buflen;
+{
+	struct perfuse_node_data *pnd;
+	size_t written;
+	
+	pnd = PERFUSE_NODE_DATA(opc);
+	if (pnd->pnd_parent == opc)
+		return 0;
+
+	written = node_path(pnd->pnd_parent, buf, buflen);
+	buf += written;
+	buflen -= written;
+	
+	return written + snprintf(buf, buflen, "/%s", pnd->pnd_name);
+}
+
+char *
+perfuse_node_path(opc)
+	puffs_cookie_t opc;
+{
+	static char buf[MAXPATHLEN + 1];
+
+	if (node_path(opc, buf, sizeof(buf)) == 0)
+		sprintf(buf, "/");
+
+	return buf;
+}

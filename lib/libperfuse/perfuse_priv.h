@@ -1,4 +1,4 @@
-/*  $NetBSD: perfuse_priv.h,v 1.13 2010/09/29 08:01:10 manu Exp $ */
+/*  $NetBSD: perfuse_priv.h,v 1.14 2010/10/03 05:46:47 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010 Emmanuel Dreyfus. All rights reserved.
@@ -65,8 +65,6 @@ struct perfuse_state {
 	perfuse_get_inpayload_fn ps_get_inpayload;
 	perfuse_get_outhdr_fn ps_get_outhdr;
 	perfuse_get_outpayload_fn ps_get_outpayload;
-	TAILQ_HEAD(, perfuse_node_data) ps_pnd;
-	int ps_pnd_count;
 };
 
 
@@ -120,6 +118,8 @@ struct perfuse_node_data {
 	time_t pnd_timestamp;
 	TAILQ_ENTRY(perfuse_node_data) pnd_next;
 	puffs_cookie_t pnd_pn;
+	char pnd_name[MAXPATHLEN];	/* node name */
+	TAILQ_HEAD(,perfuse_node_data) pnd_children;
 };
 
 #define PERFUSE_NODE_DATA(opc)	\
@@ -140,13 +140,14 @@ struct perfuse_node_data {
 
 __BEGIN_DECLS
 
-struct puffs_node *perfuse_new_pn(struct puffs_usermount *, 
+struct puffs_node *perfuse_new_pn(struct puffs_usermount *, const char *,
     struct puffs_node *);
 void perfuse_destroy_pn(struct puffs_usermount *, struct puffs_node *);
 void perfuse_new_fh(puffs_cookie_t, uint64_t, int);
 void perfuse_destroy_fh(puffs_cookie_t, uint64_t);
 uint64_t perfuse_get_fh(puffs_cookie_t, int);
 uint64_t perfuse_next_unique(struct puffs_usermount *);
+char *perfuse_node_path(puffs_cookie_t);
 int perfuse_node_close_common(struct puffs_usermount *, puffs_cookie_t, int);
 
 char *perfuse_fs_mount(int, ssize_t);
