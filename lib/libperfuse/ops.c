@@ -1,4 +1,4 @@
-/*  $NetBSD: ops.c,v 1.19 2010/10/03 05:46:47 manu Exp $ */
+/*  $NetBSD: ops.c,v 1.20 2010/10/04 03:56:24 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010 Emmanuel Dreyfus. All rights reserved.
@@ -1192,10 +1192,7 @@ perfuse_node_open(pu, opc, mode, pcr)
 
 	/*
 	 * Do not open twice, and do not reopen for reading
-	 * if we already have write handle. Just ask for
-	 * inactive, in case the node was open by a create
-	 * operation (we are not allowed to call puffs_setback
-	 * at create time, puffs interface forbids it)
+	 * if we already have write handle.
 	 */
 	if (((mode & FREAD) && (pnd->pnd_flags & PND_RFH)) ||
 	    ((mode & FREAD) && (pnd->pnd_flags & PND_WFH)) ||
@@ -1319,7 +1316,12 @@ perfuse_node_access(pu, opc, mode, pcr)
 		fgi = GET_INPAYLOAD(ps, pm, fuse_getattr_in);
 		fgi->getattr_flags = 0; 
 		fgi->dummy = 0;
-		fgi->fh = perfuse_get_fh(opc, FREAD);
+		fgi->fh = 0;
+
+		if (PERFUSE_NODE_DATA(opc)->pnd_flags & PND_OPEN) {
+			fgi->fh = perfuse_get_fh(opc, FREAD);
+			fgi->getattr_flags |= FUSE_GETATTR_FH; 
+		}
 
 #ifdef PERFUSE_DEBUG
 		if (perfuse_diagflags & PDF_FH)
@@ -1335,12 +1337,6 @@ perfuse_node_access(pu, opc, mode, pcr)
 
 		fao = GET_OUTPAYLOAD(ps, pm, fuse_attr_out);
 
-#ifdef PERFUSE_DEBUG
-		if (!(fao->attr_valid & (FUSE_FATTR_SIZE|FUSE_FATTR_MODE|
-					 FUSE_FATTR_UID|FUSE_FATTR_GID)))
-			DERRX(EX_SOFTWARE, "%s: fao->attr_valid = 0x%"PRId64"",
-			      __func__, fao->attr_valid);
-#endif
 		error = puffs_access(VREG, fao->attr.mode, fao->attr.uid,
 				     fao->attr.gid, (mode_t)mode, pcr); 
 
@@ -1392,10 +1388,12 @@ perfuse_node_getattr(pu, opc, vap, pcr)
 	fgi = GET_INPAYLOAD(ps, pm, fuse_getattr_in);
 	fgi->getattr_flags = 0; 
 	fgi->dummy = 0;
-	fgi->fh = perfuse_get_fh(opc, FREAD);
+	fgi->fh = 0;
 
-	if (PERFUSE_NODE_DATA(opc)->pnd_flags & PND_OPEN)
+	if (PERFUSE_NODE_DATA(opc)->pnd_flags & PND_OPEN) {
+		fgi->fh = perfuse_get_fh(opc, FREAD);
 		fgi->getattr_flags |= FUSE_GETATTR_FH;
+	}
 
 	if ((error = xchg_msg(pu, opc, pm, sizeof(*fao), wait_reply)) != 0)
 		goto out;
@@ -2760,7 +2758,7 @@ perfuse_node_write(pu, opc, buf, offset, resid, pcr, ioflag)
 			pm = ps->ps_new_msg(pu, opc, FUSE_GETATTR, 
 					    sizeof(*fgi), NULL);
 			fgi = GET_INPAYLOAD(ps, pm, fuse_getattr_in);
-			fgi->getattr_flags = 0; 
+			fgi->getattr_flags = FUSE_GETATTR_FH; 
 			fgi->dummy = 0;
 			fgi->fh = perfuse_get_fh(opc, FWRITE);
 
