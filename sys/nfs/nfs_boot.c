@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_boot.c,v 1.79 2009/03/04 06:56:25 nisimura Exp $	*/
+/*	$NetBSD: nfs_boot.c,v 1.80 2010/10/04 23:48:22 cyber Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_boot.c,v 1.79 2009/03/04 06:56:25 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_boot.c,v 1.80 2010/10/04 23:48:22 cyber Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -90,6 +90,8 @@ int nfs_boot_bootparam = 1; /* BOOTPARAM enabled (default) */
 #ifdef NFS_BOOT_BOOTSTATIC
 int nfs_boot_bootstatic = 1; /* BOOTSTATIC enabled (default) */
 #endif
+
+#define IP_MIN_MTU 576
 
 /* mountd RPC */
 static int md_mount(struct sockaddr_in *mdsin, char *path,
@@ -154,6 +156,12 @@ nfs_boot_init(struct nfs_diskless *nd, struct lwp *lwp)
 	if (error)
 		return (error);
 
+	/*
+	 * Set MTU if passed
+	 */
+	if (nd->nd_mtu >= IP_MIN_MTU )
+		nfs_boot_setmtu(nd->nd_ifp, nd->nd_mtu, lwp);
+	
 	/*
 	 * If the gateway address is set, add a default route.
 	 * (The mountd RPCs may go across a gateway.)
@@ -234,6 +242,48 @@ nfs_boot_ifupdown(struct ifnet *ifp, struct lwp *lwp, int up)
 out:
 	soclose(so);
 	return (error);
+}
+
+void
+nfs_boot_setmtu(struct ifnet *ifp, int mtu, struct lwp *lwp)
+{
+	struct socket *so;
+	struct ifreq ireq;
+	int error;
+
+	memset(&ireq, 0, sizeof(ireq));
+	memcpy(ireq.ifr_name, ifp->if_xname, IFNAMSIZ);
+
+	/*
+	 * Get a socket to use for various things in here.
+	 * After this, use "goto out" to cleanup and return.
+	 */
+	error = socreate(AF_INET, &so, SOCK_DGRAM, 0, lwp, NULL);
+	if (error) {
+		printf("setmtu: socreate, error=%d\n", error);
+		return;
+	}
+
+	/*
+	 * Get structure, set the new MTU, push structure.
+	 */
+	error = ifioctl(so, SIOCGIFMTU, (void *)&ireq, lwp);
+	if (error) {
+		printf("setmtu: GIFMTU, error=%d\n", error);
+		goto out;
+	}
+
+	ireq.ifr_mtu = mtu;
+
+	error = ifioctl(so, SIOCSIFMTU, &ireq, lwp);
+	if (error) {
+		printf("setmtu: SIFMTU, error=%d\n", error);
+		goto out;
+	}
+
+out:
+	soclose(so);
+	return;
 }
 
 int
