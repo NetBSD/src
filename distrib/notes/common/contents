@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.160 2010/06/09 17:37:23 phx Exp $
+.\"	$NetBSD: contents,v 1.161 2010/10/04 13:58:43 tsutsui Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -209,12 +209,12 @@ The install kernel.
 .if \n[sgimips] \{\
 .			It Pa netbsd-GENERIC32_IP12.gz
 A kernel suitable for booting on R3000 Indigo, IRIS 4D/3x and similar machines.
-.			It Pa netbsd.ecoff-GENERIC32_IP12.gz
+.			It Pa netbsd-GENERIC32_IP12.ecoff.gz
 GENERIC32_IP2x targeted for being bootable on the above machines
 with PROMs that do not understand the ELF binary format.
 .			It Pa netbsd-GENERIC32_IP2x.gz
 A kernel suitable for booting on Indy, Indigo 2 and similar machines.
-.			It Pa netbsd.ecoff-GENERIC32_IP2x.gz
+.			It Pa netbsd-GENERIC32_IP2x.ecoff.gz
 GENERIC32_IP2x targeted for being bootable on older Indigo 2 and possibly
 Indy machines with PROMs that do not understand the ELF binary format.
 .			It Pa netbsd-GENERIC32_IP3x.gz
@@ -1933,7 +1933,7 @@ The following are included in the
 directory:
 .
 .(tag netbsd-INSTALL32_IPxx.symbols.gz
-.It Pa netbsd.ecoff-GENERIC32_IPxx.gz
+.It Pa netbsd-GENERIC32_IPxx.ecoff.gz
 An ECOFF
 version of the 
 .Li GENERIC32_IPxx
