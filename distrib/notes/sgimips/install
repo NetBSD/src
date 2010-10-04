@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.9 2008/10/29 17:01:50 tsutsui Exp $
+.\"	$NetBSD: install,v 1.10 2010/10/04 13:58:43 tsutsui Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -157,12 +157,12 @@ You must also decide which kernel you need to boot.
 Because of differences in SGI hardware between different machines,
 the kernel load addresses differ.
 You will need GENERIC32_IP2x for the Indy and Indigo2,
-ecoff-GENERIC32_IP2x for the Indigo (and Indy/Indigo2 machines with old PROMs),
+GENERIC32_IP2x.ecoff for the Indigo (and Indy/Indigo2 machines with old PROMs),
 and GENERIC32_IP3x for the O2.
 .Pp
 .Dl server# Ic gzip -d -c netbsd-GENERIC32_IP2x.gz \*[Gt] /tftpboot/netbsd-sgimips
 or
-.Dl server# Ic gzip -d -c netbsd.ecoff-GENERIC32_IP2x.gz \*[Gt] /tftpboot/netbsd-sgimips
+.Dl server# Ic gzip -d -c netbsd-GENERIC32_IP2x.ecoff.gz \*[Gt] /tftpboot/netbsd-sgimips
 or
 .Dl server# Ic gzip -d -c netbsd-GENERIC32_IP2x.gz \*[Gt] /tftpboot/netbsd-sgimips
 .
