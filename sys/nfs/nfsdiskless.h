@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsdiskless.h,v 1.29 2008/10/27 10:58:23 cegger Exp $	*/
+/*	$NetBSD: nfsdiskless.h,v 1.30 2010/10/04 23:48:23 cyber Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997 The NetBSD Foundation, Inc.
@@ -56,6 +56,7 @@ struct nfs_diskless {
 	struct in_addr nd_myip; /* My IP address */
 	struct in_addr nd_mask; /* My netmask */
 	struct in_addr nd_gwip; /* My gateway */
+	int nd_mtu;		/* Interface MTU */
 	/* Information for each mount point we need. */
 	struct nfs_dlmount nd_root; 	/* Mount info for root */
 #ifdef TFTPROOT
@@ -65,11 +66,12 @@ struct nfs_diskless {
 };
 
 #ifdef _KERNEL
-int nfs_boot_init (struct nfs_diskless *nd, struct lwp *lwp);
-void nfs_boot_cleanup (struct nfs_diskless *nd, struct lwp *lwp);
+int nfs_boot_init (struct nfs_diskless *, struct lwp *);
+void nfs_boot_cleanup (struct nfs_diskless *, struct lwp *);
 int nfs_boot_ifupdown (struct ifnet *, struct lwp *, int);
 int nfs_boot_setaddress (struct ifnet *, struct lwp *,
 			     uint32_t, uint32_t, uint32_t);
+void nfs_boot_setmtu (struct ifnet *, int, struct lwp *);
 int nfs_boot_deladdress (struct ifnet *, struct lwp *, uint32_t);
 void nfs_boot_flushrt (struct ifnet *);
 int nfs_boot_setrecvtimo (struct socket *);
