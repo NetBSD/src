@@ -1,4 +1,4 @@
-/*	$NetBSD: putenv.c,v 1.15 2010/10/02 16:56:03 tron Exp $	*/
+/*	$NetBSD: putenv.c,v 1.16 2010/10/05 02:23:38 enami Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)putenv.c	8.2 (Berkeley) 3/27/94";
 #else
-__RCSID("$NetBSD: putenv.c,v 1.15 2010/10/02 16:56:03 tron Exp $");
+__RCSID("$NetBSD: putenv.c,v 1.16 2010/10/05 02:23:38 enami Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -54,28 +54,18 @@ __weak_alias(putenv,_putenv)
 int
 putenv(char *str)
 {
-	char *name, *equal, *p;
-	size_t namelen;
+	char *p;
 	int offset;
 
 	_DIAGASSERT(str != NULL);
 
-	if ((equal = strchr(str, '=')) == NULL)
+	if (strchr(str, '=') == NULL)
 		return -1;
 
-	namelen = equal - str;
-	if ((name = malloc(namelen + 1)) == NULL)
+	if (rwlock_wrlock(&__environ_lock) != 0)
 		return -1;
-	(void)memcpy(name, str, namelen);
-	name[namelen] = '\0';
 
-	if (rwlock_wrlock(&__environ_lock) != 0) {
-		free(name);
-		return -1;
-	}
-
-	p = __findenv(name, &offset);
-	free(name);
+	p = __findenv(str, &offset);
 
 	if (__allocenv(offset) == -1)
 		goto bad;
