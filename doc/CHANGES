@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1438 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1439 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -145,9 +145,9 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	sk(4): Add support for flow control. [cegger 20090212]
 	nfe(4): Add support for flow control for MCP65. [cegger 20090212]
 	share/mk: Enable -Wsign-compare for $WARNS>=4.  [lukem 20090212]
-	tests: Converted the awk, basename, bzip2, config, cut, dirname, grep,
-		gzip, libcrypto, m4, make and sdiff tests to ATF.  Initial
-		work from the GSoC 2008 project by Lukasz Strzygowski.
+	tests(7): Converted the awk, basename, bzip2, config, cut, dirname,
+		grep, gzip, libcrypto, m4, make and sdiff tests to ATF.
+		Initial work from the GSoC 2008 project by Lukasz Strzygowski.
 		[jmmv 20090213]
 	libfetch: Import libfetch-2.22. [joerg 20090214]
 	openssh: Import 5.1. [christos 20090216]
@@ -160,7 +160,7 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	compat_linux(8), compat_linux32: Add IPC_64 support for all shmctl(2)
 		commands, not only for STAT/SET. [njoly 20090218]
 	i386: The vesafb(4) driver has been retired. [jmcneill 20090218]
-	tests: Converted some of the kernel tests, including kqueue and ipf,
+	tests(7): Converted some of the kernel tests, including kqueue and ipf,
 		to ATF.  Initial work from the GSoC 2008 project by Lukasz
 		Strzygowski.  [jmmv 20090220]
 	dhcpcd(8): Import dhcpcd-4.0.11. [roy 20090221]
@@ -258,7 +258,7 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	pmax: Add UFS2 boot support. [tsutsui 20090421]
 	uftdi(4): Add support for USB serial adapter REX-USB60F.
 		[taca 20090421]
-	netpgp: Import netpgp. This is a heavily-modified version of
+	netpgp(1): Import netpgp. This is a heavily-modified version of
 		openpgpsdk, and will replace it. [agc 20090423]
 	landisk: Enable to build a bootable install disk image.
 		[tsutsui 20090423]
@@ -271,7 +271,7 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	dhcpcd(8): Import dhcpcd-5.0.0. [roy 20090428]
 	rc.d(8): Add an rc.d script for dhcpcd(8). [roy 20090428]
 	ichlpcib(4): Attach 82801IEM LPC Interface Bridge too. [njoly 20090429]
-	rump: Add support for remote system calls [pooka 20090429]
+	rump(3): Add support for remote system calls [pooka 20090429]
 	sh3: Add some support for SH7706. [nonaka 20090430]
 	hppa: Merge the nick-hppapmap branch which includes a port of the
 		OpenBSD pmap, improves support for machines without the
@@ -424,7 +424,7 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		[bouyer 20090923]
 	ld.elf_so(1): Support dlinfo(), currently limited to RTLD_DI_LINKMAP.
 		[pooka 20090924]
-	rump: Support autoloading of modules from linksets.  [pooka 20090924]
+	rump(3): Support autoloading of modules from linksets.  [pooka 20090924]
 	gpio(4): Add the GPIO_PIN_PULSATE attribute to let a pin pulsate at
 		a hardware defined frequency and duty cycle. [mbalmer 20090925]
 	gpioctl(8): Support the new GPIO_PIN_PULSATE attribute for pins using
@@ -445,16 +445,16 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		[jmcneill 20091002]
 	i386: Add support for VIA C7 temperature sensors. [jmcneill 20091002]
 	dhcpcd(8): Import dhcpcd-5.1.1. [roy 20091002]
-	libm(3): Add f{dim,max,min}{,f,l} from FreeBSD [christos 20091004]
+	libm: Add f{dim,max,min}{,f,l} from FreeBSD [christos 20091004]
 	ukfs(3): Support disklabel partitions.  [pooka 20091007]
 	man(1): Display manpage when specified with a path [cegger 20091007]
 	hdaudioctl(8): Add tool to manipulate hdaudio(4) devices
 		[sborrill 20091011]
-	rump: Create proper prototypes for varargs system calls.
+	rump(3): Create proper prototypes for varargs system calls.
 		[pooka 20091013]
-	rump: Introduce public interface specifications and autogenerate
+	rump(3): Introduce public interface specifications and autogenerate
 		entrypoint wrappers.  [pooka 20091014]
-	rump: Add a virtual CPU scheduler which maps the current thread
+	rump(3): Add a virtual CPU scheduler which maps the current thread
 		to an available virtual CPU on entry to the rump kernel.
 		[pooka 20091015]
 	dhcpcd(8): Import dhcpcd-5.1.2. [roy 20091016]
@@ -482,7 +482,7 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		and linking.  It is useful mostly for developers.
 		[pooka 20091118]
 	resolvconf(8): Import openreslv-3.3.3. [roy 20091121]
-	rump: Load rump virtual kernel symbol table at boot.  This enables
+	rump(3): Load rump virtual kernel symbol table at boot.  This enables
 		the use of the kernel linker in a rump kernel.
 		[pooka 20091126]
 	ums(4): Added touchpanel support. [mbalmer 20091127]
@@ -495,7 +495,7 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	udl(4): Add a driver for DisplayLink DL-1x0/1x5 based USB LCDs and
 		USB-VGA adaptors. Ported from OpenBSD by FUKAUMI Naoki
 		with many modification. [tsutsui 20091130]
-	rump: Support binding threads to a specific CPU.  [pooka 20091201]
+	rump(3): Support binding threads to a specific CPU.  [pooka 20091201]
 	lvm(8): Import new lvm2tools 2.02.56 version and libdevmapper 1.02.40.
 		[haad 20091202]
 	resolvconf(8): Import openreslv-3.3.4. [roy 20091204]
@@ -573,7 +573,7 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		lm(4) on any port.	[cnst 20100221]
 	wcfb: A driver for 3Dlabs Wildcat graphics cards [macallan 20100224]
 	netstat(8): Add -h which humanizes numbers from -bi.  [pooka 20100224]
-	ld.so_elf: Implement negative symbol lookup cache [roy 20100227]
+	ld.elf_so(1): Implement negative symbol lookup cache [roy 20100227]
 	dhcpcd(8): Import dhcpcd-5.2.1. [roy 20100227]
 	ddb(4): Add 'mach frame' for hp700.  [skrll 20100302]
 	ne(4): Add proper support for NE2000 8 bit mode. [tsutsui 20090303]
@@ -593,10 +593,10 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		the SMC_TT VME-ISA bridge. [tsutsui 20100313]
 	aibs(4): Remove aiboost(4) as obsolete and redundant
 		since the introduction of aibs(4).	[cnst 20100319]
-	rump: Support bluetooth.  [pooka 20100322]
+	rump(3): Support bluetooth.  [pooka 20100322]
 	cgtwelve: A driver for Sun CG12 / Matrox SG3 graphics boards
 		[macallan 20100323]
-	rump: Support unionfs, layerfs, nullfs and umapfs.  [pooka 20100330]
+	rump(3): Support unionfs, layerfs, nullfs and umapfs.  [pooka 20100330]
 	dhcpcd(8): Import dhcpcd-5.2.2. [roy 20100331]
 	nca(4): Added PCI attachment for Domex DMX-3191D SCSI board.
 		[jakllsch 20100401]
@@ -612,7 +612,7 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	fss(4): Add snapshot support for MSDOS file systems. [hannken 20100409]
 	fsck_msdos(8): add -x option which allows to run fsck_msdos -n on
 		a snapshot of a live file system. [hannken 20100411]
-	rump: Support file system snapshots.  [pooka 20100412]
+	rump(3): Support file system snapshots.  [pooka 20100412]
 	hpcarm: Add support for Sharp W-ZERO3 series. [nonaka 20100417]
 	acpi(4): Statistical event counters were added to hw.acpi.stat
 		sysctl(8) tree. Dynamic debug output messages provided by the
@@ -628,9 +628,9 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		The database cache for services(5) has been updated to use
 		this. services_mkdb(8) can still be used to create the old
 		format. [joerg 20100425]
-	rump: Autoload host kernel modules from /stand/arch/modules on
+	rump(3): Autoload host kernel modules from /stand/arch/modules on
 		x86 archs.  [pooka 20100426]
-	rump: Properly support virtual SMP on x86 hosts and default to
+	rump(3): Properly support virtual SMP on x86 hosts and default to
 		the same number of CPUs as on the host (configurable
 		with RUMP_NCPU).  [pooka 20100428]
 	tftpd(8): Add -c so files can be uploaded without requiring them
@@ -638,23 +638,23 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		considerations before enabling. [hubertf 20100429]
 	hp700: Add support for elroy(4), astro(4) and ssio(4) based 64-bit
 		machines running in 32-bit mode. [skrll 20100430]
-	rump: Autogenerate /dev device nodes.  [pooka 20100430]
-	rump: Support audio(9).  [pooka 20100501]
+	rump(3): Autogenerate /dev device nodes.  [pooka 20100430]
+	rump(3): Support audio(9).  [pooka 20100501]
 	hpcsh: Add sysinst(8) support. [tsutsui 20100503]
 	sandpoint: Added support for Marvell-SKnet in netboot.
 		[phx 20100503]
 	xen: Enable no-execute bit feature for i386pae and amd64 kernels.
 		[jym 20100505]
-	cron: Import 4.1 from isc. [christos 20100506]
+	cron(8): Import 4.1 from isc. [christos 20100506]
 	atf(7): Import 0.8.  [jmmv 20100508]
 	bozohttpd: Update to bozohttpd-20100509.  [mrg 20100509]
-	rump: Add uniprocessor locking routines.  They can be used in
+	rump(3): Add uniprocessor locking routines.  They can be used in
 		virtual uniprocessor configurations for a significant
 		performance boost.  [pooka 20100518]
 	puffs(3): Support extended attributes.  [pooka 20100521]
 	btmagic(4): Added Apple Magic Mouse driver.  [plunky 20100522]
 	X11: Updated many packages, notably: Mesa 7.7.1, xextproto 7.1.1,
-		libXext 1.1.1, libXi 1.3 (XInput2), libX11 1.3.3, pixman 0.18.2, 
+		libXext 1.1.1, libXi 1.3 (XInput2), libX11 1.3.3, pixman 0.18.2,
 		xinput 1.5.1, xf86-input-keyboard 1.4.0, xf86-input-mouse 1.5.0,
 		xf86-video-ati 6.13.0, xf86-video-mga 1.4.12,
 		xf86-video-nv 2.1.17, xf86-video-siliconmotion 1.7.4,
@@ -664,7 +664,7 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		[mrg 20100523]
 	X11: Added support for xf86-video-geode and xf86-video-openchrome.
 		[mrg 20100527]
-	rump: Implement a pagedaemon which releases weakly referenced
+	rump(3): Implement a pagedaemon which releases weakly referenced
 		memory in case of a memory shortage.  [pooka 20100603]
 	atf(7): Import 0.9.  [jmmv 20100604]
 	dhcpcd(8): Import dhcpcd-5.2.4. [roy 20100604]
@@ -690,12 +690,12 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	compat_linux(8): Update linux emulation to support NPTL.
 		We now claim to be linux kernel version 2.6.18.  [chs 20100706]
 	kernel: Add direct select()/poll() support. [rmind 20100708]
-	prep: Support xserver.  It tested only on-board s3(864).
+	prep: Support Xserver.  It's tested only on-board s3(864).
 		[kiyohara 20100712]
-	tests: Convert the libposix, libprop, libpthread, librt, libskey and
+	tests(7): Convert the libposix, libprop, libpthread, librt, libskey and
 		libutil tests to ATF.  [jmmv 20100716]
-	tests: Convert the include and csu tests to ATF.  [jmmv 20100717]
-	tests: Convert the lint1 and libobjc tests to ATF.  [jmmv 20100718]
+	tests(7): Convert the include and csu tests to ATF.  [jmmv 20100717]
+	tests(7): Convert the lint1 and libobjc tests to ATF.  [jmmv 20100718]
 	amd64, i386: Intel Firmware Hub Random Number Generator support moved
 		from pchb(4) to fwhrng(4) at ichlpcib(4).  [jakllsch 20100723]
 	i386: Add PAE support. [jym 20100727]
@@ -703,14 +703,14 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		[tsutsui 20100731]
 	bebox: Support xserver.  It tested only s3(TRIO 64V+).
 		[kiyohara 20100801]
-	tests: Convert the sort tests to ATF.  [jmmv 20100801]
+	tests(7): Convert the sort tests to ATF.  [jmmv 20100801]
 	wpa: New wpa_supplicant and hostapd 0.7.2 [christos 20100804]
 	bind: Update to 9.7.2b1. [christos 20100806]
 	acpicpu(4): add a driver for ACPI-based processor functionality.
 		[jruoho 20100815]
 	network: Added NPF - a new packet filter. [rmind 20100822]
-	tests: Convert the libdes tests to ATF.  [jmmv 20100825]
-	awk: upgrade to 20100523 [christos 20100826]
+	tests(7): Convert the libdes tests to ATF.  [jmmv 20100825]
+	awk(1): upgrade to 20100523 [christos 20100826]
 	ntp: switch build to ntp 4.2.6 (imported 20091213 in external/bsd/ntp)
 		[kardel 20100827]
 	omapfb: a simple driver for OMAP 3xxx on-chip video, especially the
