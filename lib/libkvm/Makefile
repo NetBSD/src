@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.45 2008/10/25 23:59:42 mrg Exp $
+#	$NetBSD: Makefile,v 1.46 2010/10/05 23:48:16 jym Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 6/4/93
 
 USE_FORT?= yes	# used primarily by setgid programs
@@ -7,9 +7,6 @@ USE_SHLIBDIR=	yes
 
 LIB=	kvm
 CPPFLAGS+=-DLIBC_SCCS -I${NETBSDSRCDIR}/sys
-.if ${MACHINE_ARCH} == "i386"
-LINTFLAGS+=-w
-.endif
 
 SRCS=	kvm.c kvm_file.c kvm_getloadavg.c kvm_proc.c
 
@@ -29,6 +26,11 @@ SRCS+=	kvm_${MACHINE_CPU}.c
 .BEGIN:
 	@echo no kvm_xx.c for ${MACHINE_ARCH} nor ${MACHINE_CPU}
 	@false
+.endif
+
+.if ${MACHINE_ARCH} == "i386"
+LINTFLAGS+=-w
+SRCS+=	kvm_i386pae.c # Hook PAE support in the i386 build
 .endif
 
 # Additional modules needed for m68k

@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_i386.c,v 1.28 2010/09/20 23:23:16 jym Exp $	*/
+/*	$NetBSD: kvm_i386.c,v 1.29 2010/10/05 23:48:16 jym Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_hp300.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: kvm_i386.c,v 1.28 2010/09/20 23:23:16 jym Exp $");
+__RCSID("$NetBSD: kvm_i386.c,v 1.29 2010/10/05 23:48:16 jym Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -74,6 +74,16 @@ __RCSID("$NetBSD: kvm_i386.c,v 1.28 2010/09/20 23:23:16 jym Exp $");
 #define	ptob(x)		((caddr_t)((x) << PGSHIFT))	/* XXX */
 #endif
 
+/*
+ * Indicates whether PAE is in use for the kernel image
+ * 0: native i386 memory mappings
+ * 1: i386 PAE mappings
+ */
+static int i386_use_pae;
+
+int _kvm_kvatop_i386(kvm_t *, vaddr_t, paddr_t *);
+int _kvm_kvatop_i386pae(kvm_t *, vaddr_t, paddr_t *);
+
 void
 _kvm_freevtop(kvm_t *kd)
 {
@@ -87,6 +97,11 @@ _kvm_freevtop(kvm_t *kd)
 int
 _kvm_initvtop(kvm_t *kd)
 {
+	cpu_kcore_hdr_t *cpu_kh = kd->cpu_data;
+
+	i386_use_pae = 0; /* default: non PAE mode */
+	if ((cpu_kh->pdppaddr & I386_KCORE_PAE) == I386_KCORE_PAE)
+		i386_use_pae = 1;
 
 	return 0;
 }
@@ -97,24 +112,44 @@ _kvm_initvtop(kvm_t *kd)
 int
 _kvm_kvatop(kvm_t *kd, vaddr_t va, paddr_t *pa)
 {
-	cpu_kcore_hdr_t *cpu_kh;
-	u_long page_off;
-	pd_entry_t pde;
-	pt_entry_t pte;
-	paddr_t pde_pa, pte_pa;
 
 	if (ISALIVE(kd)) {
 		_kvm_err(kd, 0, "vatop called in live kernel!");
 		return 0;
 	}
 
+	switch (i386_use_pae) {
+	default:
+	case 0:
+		return _kvm_kvatop_i386(kd, va, pa);
+	case 1:
+		return _kvm_kvatop_i386pae(kd, va, pa);
+	}
+	
+}
+
+/*
+ * Used to translate a virtual address to a physical address for systems
+ * with PAE mode disabled. Only two levels of virtual memory pages are
+ * dereferenced (L2 PDEs, then L1 PTEs).
+ */
+int
+_kvm_kvatop_i386(kvm_t *kd, vaddr_t va, paddr_t *pa)
+{
+	cpu_kcore_hdr_t *cpu_kh;
+	u_long page_off;
+	pd_entry_t pde;
+	pt_entry_t pte;
+	paddr_t pde_pa, pte_pa;
+
 	cpu_kh = kd->cpu_data;
 	page_off = va & PGOFSET;
 
 	/*
 	 * Find and read the page directory entry.
+	 * pdppaddr being PAGE_SIZE aligned, we mask the option bits.
 	 */
-	pde_pa = cpu_kh->pdppaddr + (pl2_pi(va) * sizeof(pd_entry_t));
+	pde_pa = (cpu_kh->pdppaddr & PG_FRAME) + (pl2_pi(va) * sizeof(pde));
 	if (_kvm_pread(kd, kd->pmfd, (void *)&pde, sizeof(pde),
 	    _kvm_pa2off(kd, pde_pa)) != sizeof(pde)) {
 		_kvm_syserr(kd, 0, "could not read PDE");
