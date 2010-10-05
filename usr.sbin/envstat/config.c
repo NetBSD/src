@@ -1,4 +1,4 @@
-/* 	$NetBSD: config.c,v 1.9 2010/02/15 22:37:14 pgoyette Exp $	*/
+/* 	$NetBSD: config.c,v 1.10 2010/10/05 05:03:49 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: config.c,v 1.9 2010/02/15 22:37:14 pgoyette Exp $");
+__RCSID("$NetBSD: config.c,v 1.10 2010/10/05 05:03:49 pgoyette Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -97,6 +97,7 @@ config_errmsg(int lvl, const char *key, const char *key2)
 void
 config_dict_add_prop(const char *key, char *value)
 {
+
 	if (!key || !value)
 		return;
 
@@ -682,7 +683,8 @@ convert_val_to_pnumber(prop_dictionary_t kdict, const char *prop,
 		num = prop_number_create_unsigned_integer(val);
 		free(strval);
 
-	} else if (prop_string_equals_cstring(obj, "Fan")) {
+	} else if (prop_string_equals_cstring(obj, "Fan") ||
+		   prop_string_equals_cstring(obj, "Integer")) {
 		/* no conversion */
 		val = strtod(value, &endptr);
 		if (*endptr != '\0')
