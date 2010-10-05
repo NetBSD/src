@@ -1,4 +1,4 @@
-/*	$NetBSD: kcore.h,v 1.4 2008/01/12 20:03:42 ad Exp $	*/
+/*	$NetBSD: kcore.h,v 1.5 2010/10/05 23:48:16 jym Exp $	*/
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -42,6 +42,15 @@ typedef struct cpu_kcore_hdr {
 	phys_ram_seg_t  memsegs[];		/* RAM segments */
 #endif
 } cpu_kcore_hdr_t;
+
+/*
+ * Used to indicate that PAE should be used for virtual address
+ * translation. As PDPpaddr is expected to be PAGE_SIZE aligned,
+ * this can be safely OR'ed in pdppaddr.
+ * To avoid any kind of conflict with existing MMU bits, we chose one
+ * ignored by hardware
+ */
+#define I386_KCORE_PAE	PG_AVAIL1
 
 #ifdef _KERNEL
 void	dumpsys(void);

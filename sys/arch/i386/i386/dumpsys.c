@@ -1,4 +1,4 @@
-/*	$NetBSD: dumpsys.c,v 1.10 2010/10/02 22:54:47 jym Exp $	*/
+/*	$NetBSD: dumpsys.c,v 1.11 2010/10/05 23:48:16 jym Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dumpsys.c,v 1.10 2010/10/02 22:54:47 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dumpsys.c,v 1.11 2010/10/05 23:48:16 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -628,6 +628,8 @@ cpu_dump(void)
 	 * Add the machine-dependent header info.
 	 */
 	cpuhdr.pdppaddr = PDPpaddr;
+	if (i386_use_pae == 1)
+		cpuhdr.pdppaddr |= I386_KCORE_PAE;
 	cpuhdr.nmemsegs = dump_nmemsegs;
 	(void)dump_header_addbytes(&cpuhdr, ALIGN(sizeof(cpuhdr)));
 
