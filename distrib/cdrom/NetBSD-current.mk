@@ -1,4 +1,4 @@
-# $NetBSD: NetBSD-current.mk,v 1.7 2008/04/30 15:29:11 ad Exp $
+# $NetBSD: NetBSD-current.mk,v 1.8 2010/10/05 14:16:20 tsutsui Exp $
 #
 # Configuration file for NetBSD-current.
 
@@ -12,7 +12,7 @@ INTFILES.alpha=		netbsd.alpha:alpha/installation/instkernel/netbsd.gz,link \
 			boot:alpha/binary/sets/base.tgz,./usr/mdec/boot
 
 # cats needs an a.out kernel to boot from
-INTFILES.cats=		netbsd.cats:cats/binary/kernel/netbsd.aout-INSTALL.gz
+INTFILES.cats=		netbsd.cats:cats/binary/kernel/netbsd-INSTALL.aout.gz
 
 # BOOTFILE.i386 is relative to CD staging root
 BOOTFILE.i386=		boot.i386
