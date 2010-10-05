@@ -1,4 +1,4 @@
-/* $NetBSD: envstat.c,v 1.79 2010/08/26 05:25:57 jruoho Exp $ */
+/* $NetBSD: envstat.c,v 1.80 2010/10/05 00:14:55 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: envstat.c,v 1.79 2010/08/26 05:25:57 jruoho Exp $");
+__RCSID("$NetBSD: envstat.c,v 1.80 2010/10/05 00:14:55 pgoyette Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -906,7 +906,48 @@ do {								\
 		/* integers */
 		} else if (strcmp(sensor->type, "Integer") == 0) {
 
-			(void)printf(":%10d", sensor->cur_value);
+			stype = "none";
+
+			(void)printf(":%10d ", sensor->cur_value);
+
+			ilen = 8;
+			if (statistics) {
+				/* show statistics if flag set */
+				(void)printf("%8u %8u %8u ",
+				    stats->max, stats->min, stats->avg);
+				ilen += 2;
+			} else {
+				if (sensor->critmax_value) {
+					(void)printf("%*u ", (int)ilen,
+					    sensor->critmax_value);
+					ilen = 8;
+				} else
+					ilen += 9;
+
+				if (sensor->warnmax_value) {
+					(void)printf("%*u ", (int)ilen,
+					    sensor->warnmax_value);
+					ilen = 8;
+				} else
+					ilen += 9;
+
+				if (sensor->warnmin_value) {
+					(void)printf("%*u ", (int)ilen,
+					    sensor->warnmin_value);
+					ilen = 8;
+				} else
+					ilen += 9;
+
+				if (sensor->critmin_value) {
+					(void)printf( "%*u ", (int)ilen,
+					    sensor->critmin_value);
+					ilen = 8;
+				} else
+					ilen += 9;
+
+			}
+
+			(void)printf("%*s", (int)ilen - 4, stype);
 
 		/* drives  */
 		} else if (strcmp(sensor->type, "Drive") == 0) {
