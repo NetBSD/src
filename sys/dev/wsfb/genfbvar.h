@@ -1,4 +1,4 @@
-/*	$NetBSD: genfbvar.h,v 1.15 2010/08/31 02:49:17 macallan Exp $ */
+/*	$NetBSD: genfbvar.h,v 1.16 2010/10/06 02:24:35 macallan Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfbvar.h,v 1.15 2010/08/31 02:49:17 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfbvar.h,v 1.16 2010/10/06 02:24:35 macallan Exp $");
 
 #ifndef GENFBVAR_H
 #define GENFBVAR_H
@@ -66,6 +66,12 @@ struct genfb_colormap_callback {
 	void (*gcc_set_mapreg)(void *, int, int, int, int);
 };
 
+struct genfb_parameter_callback{
+	void *gpc_cookie;
+	void (*gpc_set_parameter)(void *, int);
+	int (*gpc_get_parameter)(void *);
+};
+
 struct genfb_pmf_callback {
 	bool (*gpc_suspend)(device_t, const pmf_qual_t *);
 	bool (*gpc_resume)(device_t, const pmf_qual_t *);
@@ -81,6 +87,8 @@ struct genfb_softc {
 	struct wsscreen_list sc_screenlist;
 	struct genfb_colormap_callback *sc_cmcb;
 	struct genfb_pmf_callback *sc_pmfcb;
+	struct genfb_parameter_callback *sc_backlight;
+	int sc_backlight_level, sc_backlight_on;
 	void *sc_fbaddr;	/* kva */
 #ifdef GENFB_SHADOWFB
 	void *sc_shadowfb;
