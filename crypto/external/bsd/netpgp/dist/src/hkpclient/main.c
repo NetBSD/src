@@ -61,7 +61,7 @@ main(int argc, char **argv)
 		}
 	}
 	for (i = optind + 1 ; i < argc ; i++) {
-		if (hkpc_get(&res, server, port, family, argv[optind], argv[i])) {
+		if (hkpc_get(&res, server, port, family, argv[optind], argv[i]) >= 0) {
 			hkpc_print_key(stdout, argv[optind], res);
 		}
 	}
