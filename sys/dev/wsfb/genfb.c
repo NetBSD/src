@@ -1,4 +1,4 @@
-/*	$NetBSD: genfb.c,v 1.30 2010/08/31 02:49:17 macallan Exp $ */
+/*	$NetBSD: genfb.c,v 1.31 2010/10/06 02:24:35 macallan Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.30 2010/08/31 02:49:17 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.31 2010/10/06 02:24:35 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,6 +73,13 @@ static int 	genfb_getcmap(struct genfb_softc *, struct wsdisplay_cmap *);
 static int 	genfb_putpalreg(struct genfb_softc *, uint8_t, uint8_t,
 			    uint8_t, uint8_t);
 
+static void	genfb_brightness_up(device_t);
+static void	genfb_brightness_down(device_t);
+/* set backlight level */
+static void	genfb_set_backlight(struct genfb_softc *, int);
+/* turn backlight on and off without messing with the level */
+static void	genfb_switch_backlight(struct genfb_softc *, int);
+
 extern const u_char rasops_cmap[768];
 
 static int genfb_cnattach_called = 0;
@@ -95,13 +102,16 @@ void
 genfb_init(struct genfb_softc *sc)
 {
 	prop_dictionary_t dict;
-	uint64_t cmap_cb, pmf_cb;
+	uint64_t cmap_cb, pmf_cb, bl_cb;
 	uint32_t fboffset;
+	bool console;
 
 	dict = device_properties(&sc->sc_dev);
 #ifdef GENFB_DEBUG
 	printf(prop_dictionary_externalize(dict));
 #endif
+	prop_dictionary_get_bool(dict, "is_console", &console);
+
 	if (!prop_dictionary_get_uint32(dict, "width", &sc->sc_width)) {
 		GPRINTF("no width property\n");
 		return;
@@ -141,11 +151,34 @@ genfb_init(struct genfb_softc *sc)
 		if (cmap_cb != 0)
 			sc->sc_cmcb = (void *)(vaddr_t)cmap_cb;
 	}
+
 	/* optional pmf callback */
 	sc->sc_pmfcb = NULL;
 	if (prop_dictionary_get_uint64(dict, "pmf_callback", &pmf_cb)) {
 		if (pmf_cb != 0)
 			sc->sc_pmfcb = (void *)(vaddr_t)pmf_cb;
+	}
+
+	/* optional backlight control callback */
+	sc->sc_backlight = NULL;
+	if (prop_dictionary_get_uint64(dict, "backlight_callback", &bl_cb)) {
+		if (bl_cb != 0) {
+			sc->sc_backlight = (void *)(vaddr_t)bl_cb;
+			sc->sc_backlight_on = 1;
+			aprint_naive_dev(&sc->sc_dev, 
+			    "enabling backlight control\n");
+			sc->sc_backlight_level = 
+			    sc->sc_backlight->gpc_get_parameter(
+			    sc->sc_backlight->gpc_cookie);
+			if (console) {
+				pmf_event_register(&sc->sc_dev, 
+				    PMFE_DISPLAY_BRIGHTNESS_UP,
+				    genfb_brightness_up, TRUE);
+				pmf_event_register(&sc->sc_dev, 
+				    PMFE_DISPLAY_BRIGHTNESS_DOWN,
+				    genfb_brightness_down, TRUE);
+			}
+		}
 	}
 }
 
@@ -308,6 +341,7 @@ genfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 	struct genfb_softc *sc = vd->cookie;
 	struct wsdisplay_fbinfo *wdf;
 	struct vcons_screen *ms = vd->active;
+	struct wsdisplay_param *param;
 	int new_mode, error;
 
 	switch (cmd) {
@@ -382,6 +416,37 @@ genfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 #else
 			return ENODEV;
 #endif
+		case WSDISPLAYIO_GETPARAM:
+			param = (struct wsdisplay_param *)data;
+			if (sc->sc_backlight == NULL)
+				return EPASSTHROUGH;
+			switch (param->param) {
+			case WSDISPLAYIO_PARAM_BRIGHTNESS:
+				param->min = 0;
+				param->max = 255;
+				param->curval = sc->sc_backlight_level;
+				return 0;
+			case WSDISPLAYIO_PARAM_BACKLIGHT:
+				param->min = 0;
+				param->max = 1;
+				param->curval = sc->sc_backlight_on;
+				return 0;
+			}
+			return EPASSTHROUGH;
+
+		case WSDISPLAYIO_SETPARAM:
+			param = (struct wsdisplay_param *)data;
+			if (sc->sc_backlight == NULL)
+				return EPASSTHROUGH;
+			switch (param->param) {
+			case WSDISPLAYIO_PARAM_BRIGHTNESS:
+				genfb_set_backlight(sc, param->curval);
+				return 0;
+			case WSDISPLAYIO_PARAM_BACKLIGHT:
+				genfb_switch_backlight(sc,  param->curval);
+				return 0;
+			}
+			return EPASSTHROUGH;
 		default:
 			if (sc->sc_ops.genfb_ioctl)
 				return sc->sc_ops.genfb_ioctl(sc, vs, cmd,
@@ -570,4 +635,60 @@ genfb_borrow(bus_addr_t addr, bus_space_handle_t *hdlp)
 	if (sc && sc->sc_ops.genfb_borrow)
 		return sc->sc_ops.genfb_borrow(sc, addr, hdlp);
 	return 0;
+}
+
+static void
+genfb_set_backlight(struct genfb_softc *sc, int level)
+{
+
+	KASSERT(sc->sc_backlight != NULL);
+
+	/*
+	 * should we do nothing when backlight is off, should we just store the
+	 * level and use it when turning back on or should we just flip sc_bl_on
+	 * and turn the backlight on?
+	 * For now turn it on so a crashed screensaver can't get the user stuck
+	 * with a dark screen as long as hotkeys work
+	 */
+	if (level > 255) level = 255;
+	if (level < 0) level = 0;
+	if (level == sc->sc_backlight_level)
+		return;
+	sc->sc_backlight_level = level;
+	if (sc->sc_backlight_on == 0)
+		sc->sc_backlight_on = 1;
+	sc->sc_backlight->gpc_set_parameter(
+	    sc->sc_backlight->gpc_cookie, level);
+}
+
+static void
+genfb_switch_backlight(struct genfb_softc *sc, int on)
+{
+	int level;
+
+	KASSERT(sc->sc_backlight != NULL);
+
+	if (on == sc->sc_backlight_on)
+		return;
+	sc->sc_backlight_on = on;
+	level = on ? sc->sc_backlight_level : 0;
+	sc->sc_backlight->gpc_set_parameter(
+	    sc->sc_backlight->gpc_cookie, level);
+}
+	
+
+static void
+genfb_brightness_up(device_t dev)
+{
+	struct genfb_softc *sc = device_private(dev);
+
+	genfb_set_backlight(sc, sc->sc_backlight_level + 8);
+}
+
+static void
+genfb_brightness_down(device_t dev)
+{
+	struct genfb_softc *sc = device_private(dev);
+
+	genfb_set_backlight(sc, sc->sc_backlight_level - 8);
 }
