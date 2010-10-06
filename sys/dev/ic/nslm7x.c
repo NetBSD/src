@@ -1,4 +1,4 @@
-/*	$NetBSD: nslm7x.c,v 1.55 2010/03/23 12:13:28 njoly Exp $ */
+/*	$NetBSD: nslm7x.c,v 1.56 2010/10/06 18:13:33 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nslm7x.c,v 1.55 2010/03/23 12:13:28 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nslm7x.c,v 1.56 2010/10/06 18:13:33 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1847,6 +1847,10 @@ wb_match(struct lm_softc *sc)
 		break;
 	case WB_CHIPID_W83627THF:
 		model = "W83627THF";
+		lm_generic_banksel(sc, WB_BANKSEL_B0);
+		if ((*sc->lm_readreg)(sc, WB_BANK0_CONFIG) & WB_CONFIG_VMR9)
+			sc->vrm9 = 1;
+		lm_generic_banksel(sc, banksel);
 		lm_setup_sensors(sc, w83637hf_sensors);
 		wb_temp_diode_type(sc, cf_flags);
 		break;
