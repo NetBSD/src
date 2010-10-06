@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_reass.c,v 1.4 2010/10/03 19:44:47 rmind Exp $	*/
+/*	$NetBSD: ip_reass.c,v 1.5 2010/10/06 07:39:37 enami Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_reass.c,v 1.4 2010/10/03 19:44:47 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_reass.c,v 1.5 2010/10/06 07:39:37 enami Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -390,7 +390,6 @@ insert:
 		pool_cache_put(ipfren_cache, q);
 		m_cat(m, t);
 	}
-	free(fp, M_FTABLE);
 
 	/*
 	 * Create header for new packet by modifying header of first
@@ -400,6 +399,7 @@ insert:
 	ip->ip_len = htons((ip->ip_hl << 2) + next);
 	ip->ip_src = fp->ipq_src;
 	ip->ip_dst = fp->ipq_dst;
+	free(fp, M_FTABLE);
 
 	m->m_len += (ip->ip_hl << 2);
 	m->m_data -= (ip->ip_hl << 2);
