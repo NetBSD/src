@@ -96,7 +96,7 @@ main(int argc, char **argv)
 		/* btoa */
 		ascc = b64encode(key, keyc, asc, sizeof(asc), 0xffffffff);
 		/* write to .ssh/id_c0596823.pub */
-		printf("ssh-rsa %.*s %s\n", ascc - 2, asc, cp);
+		printf("ssh-rsa %.*s %s\n", ascc, asc, cp);
 	}
 	exit((ok) ? EXIT_SUCCESS : EXIT_FAILURE);
 }
