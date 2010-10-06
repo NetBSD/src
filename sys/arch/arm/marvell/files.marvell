@@ -1,4 +1,4 @@
-#       $NetBSD: files.marvell,v 1.1 2010/10/03 05:49:24 kiyohara Exp $
+#       $NetBSD: files.marvell,v 1.2 2010/10/06 05:24:01 kiyohara Exp $
 #
 # Configuration info for Marvell System on Chip support
 #
@@ -51,7 +51,7 @@ attach	mvgbec at mvsoc with mvgbec_mbus
 attach	ehci at mvsoc with mvusb_mbus
 
 # Cryptographic Engines and Security Accelerator
-attach	mvcesa at mvsoc with mvcesa_mbus
+#attach	mvcesa at mvsoc with mvcesa_mbus
 
 # TWSI Two-Wire Serial Interface
 attach	gttwsi at mvsoc with gttwsi_mbus
