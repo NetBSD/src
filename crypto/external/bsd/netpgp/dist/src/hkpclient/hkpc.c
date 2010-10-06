@@ -74,7 +74,7 @@ hkpc_connect(const char *hostname, const int port, const int fam)
         }
         freeaddrinfo(res);
         if (rc < 0) {
-                (void) fprintf(stderr, "bind() to %s:%d failed (rc %d)\n",
+                (void) fprintf(stderr, "connect() to %s:%d failed (rc %d)\n",
 				hostname, port, rc);
         }
         return sock;
@@ -128,7 +128,7 @@ hkpc_print_key(FILE *fp, const char *op, const char *res)
 	if (strcmp(op, "index") == 0 || strcmp(op, "vindex") == 0) {
 		ret = netpgp_format_json(fp, &res[(int)matches[0].rm_eo], 1);
 	} else {
-		(void) fprintf(fp, "%s\n", &res[(int)matches[0].rm_eo + 1]);
+		(void) fprintf(fp, "%s\n", &res[(int)matches[0].rm_eo]);
 		ret = 1;
 	}
 	return ret;
