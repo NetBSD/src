@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmc_io.c,v 1.3 2010/10/07 12:24:23 kiyohara Exp $	*/
+/*	$NetBSD: sdmmc_io.c,v 1.4 2010/10/07 12:28:34 kiyohara Exp $	*/
 /*	$OpenBSD: sdmmc_io.c,v 1.10 2007/09/17 01:33:33 krw Exp $	*/
 
 /*
@@ -20,7 +20,7 @@
 /* Routines for SD I/O cards. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdmmc_io.c,v 1.3 2010/10/07 12:24:23 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdmmc_io.c,v 1.4 2010/10/07 12:28:34 kiyohara Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -258,7 +258,7 @@ sdmmc_io_function_enable(struct sdmmc_function *sf)
 	SET(reg, (1U << sf->number));
 	sdmmc_io_write_1(sf0, SD_IO_CCCR_FN_ENABLE, reg);
 	SDMMC_UNLOCK(sc);
-	
+
 	retry = 5;
 	while (!sdmmc_io_function_ready(sf) && retry-- > 0)
 		kpause("pause", false, hz, NULL);
@@ -369,7 +369,7 @@ sdmmc_io_read_1(struct sdmmc_function *sf, int reg)
 	uint8_t data = 0;
 
 	/* Don't lock */
-	
+
 	(void)sdmmc_io_rw_direct(sf->sc, sf, reg, (u_char *)&data,
 	    SD_ARG_CMD52_READ);
 	return data;
@@ -413,7 +413,7 @@ sdmmc_io_read_4(struct sdmmc_function *sf, int reg)
 	uint32_t data = 0;
 
 	/* Don't lock */
-	
+
 	(void)sdmmc_io_rw_extended(sf->sc, sf, reg, (u_char *)&data, 4,
 	    SD_ARG_CMD53_READ | SD_ARG_CMD53_INCREMENT);
 	return data;
