@@ -1,4 +1,4 @@
-/*	$NetBSD: genfb.c,v 1.31 2010/10/06 02:24:35 macallan Exp $ */
+/*	$NetBSD: genfb.c,v 1.32 2010/10/07 07:53:53 macallan Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.31 2010/10/06 02:24:35 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.32 2010/10/07 07:53:53 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,7 +106,7 @@ genfb_init(struct genfb_softc *sc)
 	uint32_t fboffset;
 	bool console;
 
-	dict = device_properties(&sc->sc_dev);
+	dict = device_properties(sc->sc_dev);
 #ifdef GENFB_DEBUG
 	printf(prop_dictionary_externalize(dict));
 #endif
@@ -165,16 +165,16 @@ genfb_init(struct genfb_softc *sc)
 		if (bl_cb != 0) {
 			sc->sc_backlight = (void *)(vaddr_t)bl_cb;
 			sc->sc_backlight_on = 1;
-			aprint_naive_dev(&sc->sc_dev, 
+			aprint_naive_dev(sc->sc_dev, 
 			    "enabling backlight control\n");
 			sc->sc_backlight_level = 
 			    sc->sc_backlight->gpc_get_parameter(
 			    sc->sc_backlight->gpc_cookie);
 			if (console) {
-				pmf_event_register(&sc->sc_dev, 
+				pmf_event_register(sc->sc_dev, 
 				    PMFE_DISPLAY_BRIGHTNESS_UP,
 				    genfb_brightness_up, TRUE);
-				pmf_event_register(&sc->sc_dev, 
+				pmf_event_register(sc->sc_dev, 
 				    PMFE_DISPLAY_BRIGHTNESS_DOWN,
 				    genfb_brightness_down, TRUE);
 			}
@@ -193,7 +193,7 @@ genfb_attach(struct genfb_softc *sc, struct genfb_ops *ops)
 	int i, j;
 	bool console;
 
-	dict = device_properties(&sc->sc_dev);
+	dict = device_properties(sc->sc_dev);
 	prop_dictionary_get_bool(dict, "is_console", &console);
 
 	if (prop_dictionary_get_uint16(dict, "cursor-row", &crow) == false)
@@ -204,11 +204,11 @@ genfb_attach(struct genfb_softc *sc, struct genfb_ops *ops)
 
 	/* do not attach when we're not console */
 	if (!console) {
-		aprint_normal_dev(&sc->sc_dev, "no console, unable to continue\n");
+		aprint_normal_dev(sc->sc_dev, "no console, unable to continue\n");
 		return -1;
 	}
 
-	aprint_verbose_dev(&sc->sc_dev, "framebuffer at %p, size %dx%d, depth %d, "
+	aprint_verbose_dev(sc->sc_dev, "framebuffer at %p, size %dx%d, depth %d, "
 	    "stride %d\n",
 	    sc->sc_fboffset ? (void *)(intptr_t)sc->sc_fboffset : sc->sc_fbaddr,
 	    sc->sc_width, sc->sc_height, sc->sc_depth, sc->sc_stride);
@@ -328,7 +328,7 @@ genfb_attach(struct genfb_softc *sc, struct genfb_ops *ops)
 		SCREEN_DISABLE_DRAWING(&sc->sc_console_screen);
 #endif
 
-	config_found(&sc->sc_dev, &aa, wsemuldisplaydevprint);
+	config_found(sc->sc_dev, &aa, wsemuldisplaydevprint);
 
 	return 0;
 }
