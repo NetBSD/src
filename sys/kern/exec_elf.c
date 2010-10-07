@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.c,v 1.26 2010/09/11 20:49:28 chs Exp $	*/
+/*	$NetBSD: exec_elf.c,v 1.27 2010/10/07 02:14:02 chs Exp $	*/
 
 /*-
  * Copyright (c) 1994, 2000, 2005 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.26 2010/09/11 20:49:28 chs Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.27 2010/10/07 02:14:02 chs Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pax.h"
@@ -781,7 +781,7 @@ exec_elf_makecmds(struct lwp *l, struct exec_package *epp)
 	}
 
 	if (epp->ep_daddr == ELFDEFNNAME(NO_ADDR)) {
-		epp->ep_daddr = end_text;
+		epp->ep_daddr = round_page(end_text);
 		epp->ep_dsize = 0;
 	}
 
