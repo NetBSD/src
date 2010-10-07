@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmc.c,v 1.5 2010/10/07 12:24:23 kiyohara Exp $	*/
+/*	$NetBSD: sdmmc.c,v 1.6 2010/10/07 12:40:34 kiyohara Exp $	*/
 /*	$OpenBSD: sdmmc.c,v 1.18 2009/01/09 10:58:38 jsg Exp $	*/
 
 /*
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdmmc.c,v 1.5 2010/10/07 12:24:23 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdmmc.c,v 1.6 2010/10/07 12:40:34 kiyohara Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -376,6 +376,7 @@ sdmmc_card_attach(struct sdmmc_softc *sc)
 		memset(&saa, 0, sizeof saa);
 		saa.manufacturer = sf->cis.manufacturer;
 		saa.product = sf->cis.product;
+		saa.interface = sf->interface;
 		saa.sf = sf;
 
 		sf->child =
