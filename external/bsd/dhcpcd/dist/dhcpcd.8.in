@@ -22,7 +22,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd January 18, 2010
+.Dd August 31, 2010
 .Dt DHCPCD 8 SMM
 .Os
 .Sh NAME
@@ -61,8 +61,13 @@
 .Fl k , -release
 .Op interface
 .Nm
+.Fl U, -dumplease
+.Ar interface
+.Nm
 .Fl x , -exit
 .Op interface
+.Nm
+.Fl v , -version
 .Sh DESCRIPTION
 .Nm
 is an implementation of the DHCP client specified in
@@ -254,26 +259,12 @@ Request the DHCP
 variable for use in
 .Pa @SCRIPT@ .
 .It Fl n , -rebind
-Notifies an existing
+Notifies
 .Nm
-process running on the
-.Ar interface
-to rebind its lease.
-.Nm
-will not re-configure itself or use any other command line arguments.
-.Nm
-will timeout the rebind after 30 seconds at which point the lease will be
-expired and
-.Nm
-will enter the discovery state to obtain a new lease.
-Use the
-.Fl t , -timeout
-option to change this.
+to reload its configuration and rebind its interfaces.
 If
 .Nm
 is not running, then it starts up as normal.
-This option used to be renew, but rebind is more accurate as we need to
-broadcast the request instead of unicasting.
 .It Fl p , -persistent
 .Nm
 normally de-configures the
@@ -348,6 +339,10 @@ Set the vendor option 03 with an IP address as a string.
 .D1 dhcpcd \-v 03,\e"192.168.0.2\e" eth0
 Set un-encapsulated vendor option to hello world.
 .D1 dhcpcd \-v ,"hello world" eth0
+.It Fl v , -version
+Display both program version and copyright information.
+.Nm
+then exits before doing any configuration.
 .It Fl w , -waitip
 Wait for an address to be assigned before forking to the background.
 .It Fl x , -exit
@@ -502,6 +497,12 @@ files.
 To test INFORM the interface needs to be configured with the desired address
 before starting
 .Nm .
+.It Fl U, -dumplease Ar interface
+Dumps the last lease for the
+.Ar interface
+to stdout.
+.Ar interface
+could also be a path to a DHCP wire formatted file.
 .It Fl V, -variables
 Display a list of option codes and the associated variable for use in
 .Xr dhcpcd-run-hooks 8 .
