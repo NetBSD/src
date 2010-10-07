@@ -1,4 +1,4 @@
-/* $NetBSD: tsp_pci.c,v 1.6 2009/03/14 21:04:02 dsl Exp $ */
+/* $NetBSD: tsp_pci.c,v 1.7 2010/10/07 19:55:02 hans Exp $ */
 
 /*-
  * Copyright (c) 1999 by Ross Harvey.  All rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: tsp_pci.c,v 1.6 2009/03/14 21:04:02 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tsp_pci.c,v 1.7 2010/10/07 19:55:02 hans Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -129,4 +129,57 @@ tsp_conf_write(void *cpv, pcitag_t tag, int offset, pcireg_t data)
 	alpha_mb();
 	*datap = data;
 	alpha_mb();
+}
+
+#define NTH_STR(n, ...) ((const char *[]){ __VA_ARGS__ }[n])
+
+void
+tsp_print_error(unsigned int indent, unsigned long p_error)
+{
+	char buf[40];
+
+	if (PER_INV(p_error)) {
+		IPRINTF(indent, "data invalid\n");
+		return;
+	}
+
+	if (!PER_ERR(p_error))
+		return;
+
+	snprintb(buf, 40,
+		 "\177\20"
+		 "b\0Error lost\0"
+		 "b\1PCI SERR#\0"
+		 "b\2PCI PERR#\0"
+		 "b\3Delayed completion retry timeout\0"
+		 "b\4Invalid S/G page table entry\0"
+		 "b\5Address parity error\0"
+		 "b\6Target abort\0"
+		 "b\7PCI read data parity error\0"
+		 "b\10no PCI DEVSEL#\0"
+		 "b\11unknown\0"
+		 "b\12Uncorrectable ECC\0"
+		 "b\13Correctable ECC\0",
+		 PER_ERR(p_error));
+	IPRINTF(indent, "error    = %s\n", buf);
+	
+	if (PER_ECC(p_error)) {
+		IPRINTF(indent, "address  = 0x%09lx\n", PER_SADR(p_error));
+		IPRINTF(indent, "command  = 0x%lx<%s>\n", PER_CMD(p_error),
+			NTH_STR(PER_CMD(p_error) & 0x3,
+				"DMA read", "DMA RMW", "?", "S/G read"));
+		IPRINTF(indent, "syndrome = 0x%02lx\n", PER_SYN(p_error));
+	} else {
+		IPRINTF(indent, "address  = 0x%08lx, 0x%lx<%s>\n",
+			PER_PADR(p_error), PER_TRNS(p_error),
+			NTH_STR(PER_TRNS(p_error), "No DAC", "DAC SG Win3",
+				"Monster Window", "Monster Window"));
+		IPRINTF(indent, "command  = 0x%lx<%s>\n", PER_CMD(p_error),
+			NTH_STR(PER_CMD(p_error),
+				"PCI IACK", "PCI special cycle",
+				"PCI I/O read", "PCI I/O write", "?",
+				"PCI PTP write", "PCI memory read",
+				"PCI memory write", "PCI CSR write",
+				"?", "?", "?", "?", "?", "?", "?"));
+	}
 }
