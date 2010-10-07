@@ -1,4 +1,4 @@
-/*	$NetBSD: services_mkdb.c,v 1.17 2010/05/05 22:10:50 wiz Exp $	*/
+/*	$NetBSD: services_mkdb.c,v 1.18 2010/10/07 01:28:50 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: services_mkdb.c,v 1.17 2010/05/05 22:10:50 wiz Exp $");
+__RCSID("$NetBSD: services_mkdb.c,v 1.18 2010/10/07 01:28:50 christos Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -54,7 +54,7 @@ __RCSID("$NetBSD: services_mkdb.c,v 1.17 2010/05/05 22:10:50 wiz Exp $");
 static char tname[MAXPATHLEN];
 
 #define	PMASK		0xffff
-#define PROTOMAX	5
+#define PROTOMAX	6
 
 static StringList ***parseservices(const char *, StringList *);
 static void	cleanup(void);
