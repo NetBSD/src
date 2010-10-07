@@ -51,6 +51,7 @@ static struct timeout {
 	struct timeval when;
 	void (*callback)(void *);
 	void *arg;
+	int queue;
 	struct timeout *next;
 } *timeouts;
 static struct timeout *free_timeouts;
@@ -109,7 +110,8 @@ delete_event(int fd)
 }
 
 void
-add_timeout_tv(const struct timeval *when, void (*callback)(void *), void *arg)
+add_q_timeout_tv(int queue,
+    const struct timeval *when, void (*callback)(void *), void *arg)
 {
 	struct timeval w;
 	struct timeout *t, *tt = NULL;
@@ -147,6 +149,7 @@ add_timeout_tv(const struct timeval *when, void (*callback)(void *), void *arg)
 	t->when.tv_usec = w.tv_usec;
 	t->callback = callback;
 	t->arg = arg;
+	t->queue = queue;
 
 	/* The timeout list should be in chronological order,
 	 * soonest first.
@@ -168,28 +171,30 @@ add_timeout_tv(const struct timeval *when, void (*callback)(void *), void *arg)
 }
 
 void
-add_timeout_sec(time_t when, void (*callback)(void *), void *arg)
+add_q_timeout_sec(int queue, time_t when, void (*callback)(void *), void *arg)
 {
 	struct timeval tv;
 
 	tv.tv_sec = when;
 	tv.tv_usec = 0;
-	add_timeout_tv(&tv, callback, arg);
+	add_q_timeout_tv(queue, &tv, callback, arg);
 }
 
 /* This deletes all timeouts for the interface EXCEPT for ones with the
  * callbacks given. Handy for deleting everything apart from the expire
  * timeout. */
-void
-delete_timeouts(void *arg, void (*callback)(void *), ...)
+static void
+v_delete_q_timeouts(int queue, void *arg, void (*callback)(void *), va_list v)
 {
 	struct timeout *t, *tt, *last = NULL;
 	va_list va;
 	void (*f)(void *);
 
 	for (t = timeouts; t && (tt = t->next, 1); t = tt) {
-		if (t->arg == arg && t->callback != callback) {
-			va_start(va, callback);
+		if (t->queue == queue && t->arg == arg &&
+		    t->callback != callback)
+		{
+			va_copy(va, v);
 			while ((f = va_arg(va, void (*)(void *))))
 				if (f == t->callback)
 					break;
@@ -209,12 +214,32 @@ delete_timeouts(void *arg, void (*callback)(void *), ...)
 }
 
 void
-delete_timeout(void (*callback)(void *), void *arg)
+delete_q_timeouts(int queue, void *arg, void (*callback)(void *), ...)
+{
+	va_list va;
+
+	va_start(va, callback);
+	v_delete_q_timeouts(queue, arg, callback, va);
+	va_end(va);
+}
+
+void
+delete_timeouts( void *arg, void (*callback)(void *), ...)
+{
+	va_list va;
+
+	va_start(va, callback);
+	v_delete_q_timeouts(0, arg, callback, va);
+	va_end(va);
+}
+
+void
+delete_q_timeout(int queue, void (*callback)(void *), void *arg)
 {
 	struct timeout *t, *tt, *last = NULL;
 
 	for (t = timeouts; t && (tt = t->next, 1); t = tt) {
-		if (t->arg == arg &&
+		if (t->queue == queue && t->arg == arg &&
 		    (!callback || t->callback == callback))
 		{
 			if (last)

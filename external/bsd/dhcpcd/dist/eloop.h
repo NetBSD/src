@@ -30,11 +30,17 @@
 
 #include <time.h>
 
+#define add_timeout_tv(a, b, c) add_q_timeout_tv(0, a, b, c)
+#define add_timeout_sec(a, b, c) add_q_timeout_sec(0, a, b, c)
+#define delete_timeout(a, b) delete_q_timeout(0, a, b)
+
 void add_event(int fd, void (*)(void *), void *);
 void delete_event(int fd);
-void add_timeout_sec(time_t, void (*)(void *), void *);
-void add_timeout_tv(const struct timeval *, void (*)(void *), void *);
-void delete_timeout(void (*)(void *), void *);
+void add_q_timeout_sec(int queue, time_t, void (*)(void *), void *);
+void add_q_timeout_tv(int queue, const struct timeval *, void (*)(void *),
+    void *);
+void delete_q_timeout(int, void (*)(void *), void *);
+void delete_q_timeouts(int, void *, void (*)(void *), ...);
 void delete_timeouts(void *, void (*)(void *), ...);
 void start_eloop(void);
 

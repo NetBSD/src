@@ -551,6 +551,21 @@ get_routes(const struct interface *iface)
 	    iface->name, &iface->state->options->options);
 }
 
+/* Some DHCP servers add set host routes by setting the gateway
+ * to the assinged IP address. This differs from our notion of a host route
+ * where the gateway is the destination address, so we fix it. */
+static struct rt *
+massage_host_routes(struct rt *rt, const struct interface *iface)
+{
+	struct rt *r;
+
+	for (r = rt; r; r = r->next)
+		if (r->gate.s_addr == iface->addr.s_addr &&
+		    r->net.s_addr == INADDR_BROADCAST)
+			r->gate.s_addr = r->dest.s_addr;
+	return rt;
+}
+
 static struct rt *
 add_destination_route(struct rt *rt, const struct interface *iface)
 {
@@ -629,6 +644,7 @@ build_routes(void)
 		if (ifp->state->new == NULL)
 			continue;
 		dnr = get_routes(ifp);
+		dnr = massage_host_routes(dnr, ifp);
 		dnr = add_subnet_route(dnr, ifp);
 		dnr = add_router_host_route(dnr, ifp);
 		dnr = add_destination_route(dnr, ifp);
