@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmc_io.c,v 1.2 2009/12/05 22:34:43 pooka Exp $	*/
+/*	$NetBSD: sdmmc_io.c,v 1.3 2010/10/07 12:24:23 kiyohara Exp $	*/
 /*	$OpenBSD: sdmmc_io.c,v 1.10 2007/09/17 01:33:33 krw Exp $	*/
 
 /*
@@ -20,7 +20,7 @@
 /* Routines for SD I/O cards. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdmmc_io.c,v 1.2 2009/12/05 22:34:43 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdmmc_io.c,v 1.3 2010/10/07 12:24:23 kiyohara Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -158,6 +158,9 @@ sdmmc_io_scan(struct sdmmc_softc *sc)
 	sc->sc_fn0 = sf0;
 	SIMPLEQ_INSERT_TAIL(&sc->sf_head, sf0, sf_list);
 
+	/* Go to Data Transfer Mode, if possible. */
+	sdmmc_chip_bus_rod(sc->sc_sct, sc->sc_sch, 0);
+
 	/* Verify that the RCA has been set by selecting the card. */
 	error = sdmmc_select_card(sc, sf0);
 	if (error) {
@@ -204,6 +207,14 @@ sdmmc_io_init(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 		if (sdmmcdebug)
 			sdmmc_print_cis(sf);
 #endif
+
+		if (sc->sc_busclk > sf->csd.tran_speed)
+			sc->sc_busclk = sf->csd.tran_speed;
+		error =
+		    sdmmc_chip_bus_clock(sc->sc_sct, sc->sc_sch, sc->sc_busclk);
+		if (error)
+			aprint_error_dev(sc->sc_dev,
+			    "can't change bus clock\n");
 	}
 
 out:
