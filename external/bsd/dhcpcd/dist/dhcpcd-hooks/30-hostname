@@ -29,6 +29,6 @@ set_hostname()
 	fi
 }
 
-case "$reason" in
-BOUND|INFORM|REBIND|REBOOT|RENEW|TIMEOUT|STATIC)	set_hostname;;
-esac
+if $if_up; then
+	set_hostname
+fi

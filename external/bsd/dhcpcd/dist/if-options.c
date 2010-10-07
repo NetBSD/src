@@ -95,6 +95,7 @@ const struct option cf_options[] = {
 	{"require",         required_argument, NULL, 'Q'},
 	{"static",          required_argument, NULL, 'S'},
 	{"test",            no_argument,       NULL, 'T'},
+	{"dumplease",       no_argument,       NULL, 'U'},
 	{"variables",       no_argument,       NULL, 'V'},
 	{"whitelist",       required_argument, NULL, 'W'},
 	{"blacklist",       required_argument, NULL, 'X'},
@@ -336,7 +337,8 @@ parse_option(struct if_options *ifo, int opt, const char *arg)
 	case 'g': /* FALLTHROUGH */
 	case 'n': /* FALLTHROUGH */
 	case 'x': /* FALLTHROUGH */
-	case 'T': /* We need to handle non interface options */
+	case 'T': /* FALLTHROUGH */
+	case 'U': /* We need to handle non interface options */
 		break;
 	case 'b':
 		ifo->options |= DHCPCD_BACKGROUND;
@@ -524,9 +526,7 @@ parse_option(struct if_options *ifo, int opt, const char *arg)
 		}
 		break;
 	case 'z':
-		/* We only set this if we haven't got any interfaces */
-		if (!ifaces)
-			ifav = splitv(&ifac, ifav, arg);
+		ifav = splitv(&ifac, ifav, arg);
 		break;
 	case 'A':
 		ifo->options &= ~DHCPCD_ARP;
@@ -712,9 +712,7 @@ parse_option(struct if_options *ifo, int opt, const char *arg)
 		ifo->blacklist[ifo->blacklist_len++] = addr2.s_addr;
 		break;
 	case 'Z':
-		/* We only set this if we haven't got any interfaces */
-		if (!ifaces)
-			ifdv = splitv(&ifdc, ifdv, arg);
+		ifdv = splitv(&ifdc, ifdv, arg);
 		break;
 	case O_ARPING:
 		if (parse_addr(&addr, NULL, arg) != 0)
@@ -849,8 +847,7 @@ read_config(const char *file,
 		}
 		if (skip)
 			continue;
-		if (parse_config_line(ifo, option, line) != 1)
-			break;
+		parse_config_line(ifo, option, line);
 	}
 	fclose(f);
 

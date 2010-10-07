@@ -9,6 +9,13 @@ signature_base_end="# End of dhcpcd"
 signature_end="$signature_base_end $from $interface"
 state_dir=/var/run/dhcpcd
 
+if_up=false
+if_down=false
+case "$reason" in
+BOUND|INFORM|REBIND|REBOOT|RENEW|TIMEOUT|STATIC)	if_up=true;;
+PREINIT|EXPIRE|FAIL|IPV4LL|NAK|NOCARRIER|RELEASE|STOP)	if_down=true;;
+esac
+
 # Ensure that all arguments are unique
 uniqify()
 {
@@ -91,17 +98,19 @@ remove_markers()
 # If different, replace first with second otherwise remove second
 change_file()
 {
-	if type cmp >/dev/null 2>&1; then
-		cmp -s "$1" "$2"
-	elif type diff >/dev/null 2>&1; then
-		diff -q "$1" "$2" >/dev/null
-	else
-		# Hopefully we're only working on small text files ...
-		[ "$(cat "$1")" = "$(cat "$2")" ]
-	fi
-	if [ $? -eq 0 ]; then
-		rm -f "$2"
-		return 1
+	if [ -e "$1" ]; then
+		if type cmp >/dev/null 2>&1; then
+			cmp -s "$1" "$2"
+		elif type diff >/dev/null 2>&1; then
+			diff -q "$1" "$2" >/dev/null
+		else
+			# Hopefully we're only working on small text files ...
+			[ "$(cat "$1")" = "$(cat "$2")" ]
+		fi
+		if [ $? -eq 0 ]; then
+			rm -f "$2"
+			return 1
+		fi
 	fi
 	cat "$2" > "$1"
 	rm -f "$2"
@@ -131,13 +140,40 @@ syslog()
 	local lvl="$1"
 
 	[ -n "$lvl" ] && shift
-	if [ -n "$@" ]; then
+	if [ -n "$*" ]; then
 		if type logger >/dev/null 2>&1; then
-			logger -t dhcpcd -p daemon."$lvl" -s "$@"
+			logger -t dhcpcd -p daemon."$lvl" -s "$*"
 		fi
 	fi
 }
 
+# Check a system service exists 
+service_exists()
+{
+	@SERVICEEXISTS@
+}
+
+# Send a command to a system service
+service_cmd()
+{
+	@SERVICECMD@
+}
+
+# Send a command to a system service if it is running
+service_status()
+{
+	@SERVICESTATUS@
+}
+
+# Handy macros for our hooks
+service_command()
+{
+	service_exists $1 && service_cmd $1 $2
+}
+service_condcommand()
+{
+	service_exists $1 && service_status $1 && service_cmd $1 $2
+}
 
 # We source each script into this one so that scripts run earlier can
 # remove variables from the environment so later scripts don't see them.

@@ -1,0 +1,5 @@
+# Just echo our DHCP options we have
+
+if [ "$reason" = "DUMP" ]; then
+	set | sed -ne 's/^new_//p' | sort
+fi

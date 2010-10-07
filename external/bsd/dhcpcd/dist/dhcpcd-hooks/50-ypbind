@@ -1,15 +1,8 @@
 # Sample dhcpcd hook for ypbind
 # This script is only suitable for the Linux version.
 
-# Distributions may want to just have their command here instead of this
-if [ -x /etc/rc.d/ypbind ]; then
-	ypbind_restart_cmd="/etc/rc.d/ypbind restart"
-	ypbind_stop_cmd="/etc/rc.d/ypbind stop"
-elif [ -x /usr/local/etc/rc.d/ypbind ]; then
-	ypbind_restart_cmd="/usr/local/etc/rc.d/ypbind restart"
-	ypbind_stop_cmd="/usr/local/etc/rc.d/ypbind stop"
-fi
-
+: ${ypbind_restart_cmd:="service_command ypbind restart"}
+: ${ypbind_stop_cmd:="service_condcommand ypbind stop"}
 ypbind_dir="$state_dir/ypbind"
 
 best_domain()
@@ -70,17 +63,12 @@ restore_yp_binding()
 	fi
 }
 
-case "$reason" in
-PREINIT)
+if [ "$reason" = PREINIT ]; then
 	rm -f "$ypbind_dir/$interface"
-	;;
-TEST)
-	;;
-*)
+else if $if_up || $if_down; then
 	if [ -n "$new_nis_domain" ]; then
 		make_yp_binding
 	elif [ -n "$old_nis_domain" ]; then
 		restore_yp_binding
 	fi
-	;;
-esac
+fi

@@ -71,6 +71,8 @@
 	    (((struct sockaddr_in *)(void *)sa)->sin_addr).s_addr : 0
 
 static int r_fd = -1;
+static char *link_buf;
+static ssize_t link_buflen;
 
 int
 if_init(_unused struct interface *iface)
@@ -302,11 +304,10 @@ get_addrs(int type, char *cp, struct sockaddr **sa)
 	}
 }
 
-#define BUFFER_LEN	2048
 int
 manage_link(int fd)
 {
-	char buffer[2048], *p, *e, *cp;
+	char *p, *e, *cp;
 	char ifname[IF_NAMESIZE];
 	ssize_t bytes;
 	struct rt_msghdr *rtm;
@@ -315,9 +316,19 @@ manage_link(int fd)
 	struct ifa_msghdr *ifam;
 	struct rt rt;
 	struct sockaddr *sa, *rti_info[RTAX_MAX];
+	int len;
 
 	for (;;) {
-		bytes = read(fd, buffer, BUFFER_LEN);
+		if (ioctl(fd, FIONREAD, &len) == -1)
+			return -1;
+		if (link_buflen < len) {
+			p = realloc(link_buf, len);
+			if (p == NULL)
+				return -1;
+			link_buf = p;
+			link_buflen = len;
+		}
+		bytes = read(fd, link_buf, link_buflen);
 		if (bytes == -1) {
 			if (errno == EAGAIN)
 				return 0;
@@ -325,8 +336,8 @@ manage_link(int fd)
 				continue;
 			return -1;
 		}
-		e = buffer + bytes;
-		for (p = buffer; p < e; p += rtm->rtm_msglen) {
+		e = link_buf + bytes;
+		for (p = link_buf; p < e; p += rtm->rtm_msglen) {
 			rtm = (struct rt_msghdr *)(void *)p;
 			switch(rtm->rtm_type) {
 			case RTM_IFANNOUNCE:

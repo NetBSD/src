@@ -322,6 +322,15 @@ discover_interfaces(int argc, char * const *argv)
 #endif
 #ifdef AF_LINK
 	const struct sockaddr_dl *sdl;
+#ifdef IFLR_ACTIVE
+	struct if_laddrreq iflr;
+	int socket_aflink;
+
+	socket_aflink = socket(AF_LINK, SOCK_DGRAM, 0);
+	if (socket_aflink == -1)
+		return NULL;
+	memset(&iflr, 0, sizeof(iflr));
+#endif
 #elif AF_PACKET
 	const struct sockaddr_ll *sll;
 #endif
@@ -409,6 +418,23 @@ discover_interfaces(int argc, char * const *argv)
 		} else if (ifa->ifa_addr != NULL) {
 #ifdef AF_LINK
 			sdl = (const struct sockaddr_dl *)(void *)ifa->ifa_addr;
+
+#ifdef IFLR_ACTIVE
+			/* We need to check for active address */
+			strlcpy(iflr.iflr_name, ifp->name,
+			    sizeof(iflr.iflr_name));
+			memcpy(&iflr.addr, ifa->ifa_addr,
+			    MIN(ifa->ifa_addr->sa_len, sizeof(iflr.addr)));
+			iflr.flags = IFLR_PREFIX;
+			iflr.prefixlen = sdl->sdl_alen * NBBY;
+			if (ioctl(socket_aflink, SIOCGLIFADDR, &iflr) == -1 ||
+			    !(iflr.flags & IFLR_ACTIVE))
+			{
+				free_interface(ifp);
+				continue;
+			}
+#endif
+
 			switch(sdl->sdl_type) {
 			case IFT_ETHER:
 				ifp->family = ARPHRD_ETHER;
@@ -464,6 +490,11 @@ discover_interfaces(int argc, char * const *argv)
 		ifl = ifp;
 	}
 	freeifaddrs(ifaddrs);
+
+#ifdef IFLR_ACTIVE
+	close(socket_aflink);
+#endif
+
 	return ifs;
 }
 
