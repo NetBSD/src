@@ -1,4 +1,4 @@
-/* $NetBSD: tsc.c,v 1.17 2010/04/15 03:09:12 jakllsch Exp $ */
+/* $NetBSD: tsc.c,v 1.18 2010/10/07 19:55:02 hans Exp $ */
 
 /*-
  * Copyright (c) 1999 by Ross Harvey.  All rights reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.17 2010/04/15 03:09:12 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.18 2010/10/07 19:55:02 hans Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -243,4 +243,33 @@ tsp_bus_get_window(int type, int window,
 	abst->abst_sys_end = TS_PHYSADDR(abst->abst_sys_end);
 
 	return (0);
+}
+
+void
+tsc_print_dir(unsigned int indent, unsigned long dir)
+{
+	char buf[60];
+
+	snprintb(buf, 60,
+		 "\177\20"
+		 "b\77Internal Cchip asynchronous error\0"
+		 "b\76Pchip 0 error\0"
+		 "b\75Pchip 1 error\0"
+		 "b\74Pchip 2 error\0"
+		 "b\73Pchip 3 error\0",
+		 dir);
+	IPRINTF(indent, "DIR = %s\n", buf);
+}
+
+void
+tsc_print_misc(unsigned int indent, unsigned long misc)
+{
+	unsigned long tmp = MISC_NXM_SRC(misc);
+
+	if (!MISC_NXM(misc))
+		return;
+
+	IPRINTF(indent, "NXM address detected\n");
+	IPRINTF(indent, "NXM source         = %s %lu\n",
+		tmp <= 3 ? "CPU" : "Pchip", tmp <= 3 ? tmp : tmp - 4);
 }

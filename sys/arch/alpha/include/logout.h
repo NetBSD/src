@@ -1,4 +1,4 @@
-/* $NetBSD: logout.h,v 1.6 2005/12/11 12:16:16 christos Exp $ */
+/* $NetBSD: logout.h,v 1.7 2010/10/07 19:55:02 hans Exp $ */
 
 /*
  * Copyright (c) 1998 by Matthew Jacob
@@ -262,3 +262,41 @@ typedef struct {
 #ifdef	_KERNEL
 extern void ev5_logout_print(mc_hdr_ev5 *, mc_uc_ev5 *);
 #endif
+
+/*
+ * EV6/67 specific Machine Check logout definitions
+ * from DS20E Service Guide, EK-K8F6W-SV. A01
+ */
+
+struct ev6_logout_area {
+	struct alpha_logout_area la;
+	uint32_t mchk_code;
+	uint32_t mchk_rev;
+};
+
+struct ev6_logout_proc {
+	uint64_t i_stat;
+	uint64_t dc_stat;
+	uint64_t c_addr;
+	uint64_t c_syndrome1;
+	uint64_t c_syndrome0;
+	uint64_t c_stat;
+	uint64_t c_sts;
+	uint64_t mm_stat;
+	uint64_t exc_addr;
+	uint64_t ier_cm;
+	uint64_t isum;
+	uint64_t _r;
+	uint64_t pal_base;
+	uint64_t i_ctl;
+	uint64_t pctx;
+};
+
+struct ev6_logout_sys {
+	uint64_t flags;
+	uint64_t dir;
+	uint64_t misc;
+	uint64_t p0_error;
+	uint64_t p1_error;
+};
+
