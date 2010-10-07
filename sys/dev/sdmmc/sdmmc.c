@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmc.c,v 1.4 2010/10/01 09:50:42 kiyohara Exp $	*/
+/*	$NetBSD: sdmmc.c,v 1.5 2010/10/07 12:24:23 kiyohara Exp $	*/
 /*	$OpenBSD: sdmmc.c,v 1.18 2009/01/09 10:58:38 jsg Exp $	*/
 
 /*
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdmmc.c,v 1.4 2010/10/01 09:50:42 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdmmc.c,v 1.5 2010/10/07 12:24:23 kiyohara Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -368,20 +368,6 @@ sdmmc_card_attach(struct sdmmc_softc *sc)
 		aprint_error_dev(sc->sc_dev, "init failed\n");
 		goto err;
 	}
-
-	/*
-	 * Set SD/MMC bus clock.
-	 */
-#ifdef SDMMC_DEBUG
-	if ((sc->sc_busclk / 1000) != 0) {
-		DPRINTF(1,("%s: bus clock: %u.%03u MHz\n", DEVNAME(sc),
-		    sc->sc_busclk / 1000, sc->sc_busclk % 1000));
-	} else {
-		DPRINTF(1,("%s: bus clock: %u KHz\n", DEVNAME(sc),
-		    sc->sc_busclk % 1000));
-	}
-#endif
-	(void)sdmmc_chip_bus_clock(sc->sc_sct, sc->sc_sch, sc->sc_busclk);
 
 	SIMPLEQ_FOREACH(sf, &sc->sf_head, sf_list) {
 		if (ISSET(sc->sc_flags, SMF_IO_MODE) && sf->number < 1)
