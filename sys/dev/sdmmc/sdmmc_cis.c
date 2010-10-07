@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmc_cis.c,v 1.2 2010/10/07 12:40:34 kiyohara Exp $	*/
+/*	$NetBSD: sdmmc_cis.c,v 1.3 2010/10/07 16:26:37 kiyohara Exp $	*/
 /*	$OpenBSD: sdmmc_cis.c,v 1.1 2006/06/01 21:53:41 uwe Exp $	*/
 
 /*
@@ -20,7 +20,7 @@
 /* Routines to decode the Card Information Structure of SD I/O cards */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdmmc_cis.c,v 1.2 2010/10/07 12:40:34 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdmmc_cis.c,v 1.3 2010/10/07 16:26:37 kiyohara Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,9 +70,9 @@ static void
 decode_funce_common(struct sdmmc_function *sf, struct sdmmc_cis *cis,
 		    int tpllen, uint32_t reg)
 {
-	const static int speed_val[] =
+	static const int speed_val[] =
 	    { 0, 10, 12, 13, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 70, 80 };
-	const static int speed_unit[] = { 10, 100, 1000, 10000, };
+	static const int speed_unit[] = { 10, 100, 1000, 10000, };
 	struct sdmmc_function *sf0 = sf->sc->sc_fn0;
 	device_t dev = sf->sc->sc_dev;
 	int fn0_blk_size, max_tran_speed;
