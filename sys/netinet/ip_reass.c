@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_reass.c,v 1.5 2010/10/06 07:39:37 enami Exp $	*/
+/*	$NetBSD: ip_reass.c,v 1.6 2010/10/07 03:15:49 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_reass.c,v 1.5 2010/10/06 07:39:37 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_reass.c,v 1.6 2010/10/07 03:15:49 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -152,7 +152,7 @@ ip_reass_init(void)
 
 	ipfren_cache = pool_cache_init(sizeof(ipfr_qent_t), coherency_unit,
 	    0, 0, "ipfrenpl", NULL, IPL_NET, NULL, NULL, NULL);
-	mutex_init(&ipfr_lock, MUTEX_DEFAULT, IPL_SOFTNET);
+	mutex_init(&ipfr_lock, MUTEX_DEFAULT, IPL_VM);
 
 	for (i = 0; i < IPREASS_HASH_SIZE; i++) {
 		LIST_INIT(&ip_frags[i]);
