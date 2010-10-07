@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmcvar.h,v 1.7 2010/10/01 09:50:42 kiyohara Exp $	*/
+/*	$NetBSD: sdmmcvar.h,v 1.8 2010/10/07 12:24:23 kiyohara Exp $	*/
 /*	$OpenBSD: sdmmcvar.h,v 1.13 2009/01/09 10:55:22 jsg Exp $	*/
 
 /*
@@ -40,6 +40,7 @@ struct sdmmc_csd {
 	int	write_bl_len;	/* block length for writes */
 	int	r2w_factor;
 	int	tran_speed;	/* transfer speed (kbit/s) */
+	int	ccc;		/* Card Command Class for SD */
 	/* ... */
 };
 
@@ -163,6 +164,7 @@ struct sdmmc_function {
 	/* common members */
 	struct sdmmc_softc *sc;		/* card slot softc */
 	uint16_t rca;			/* relative card address */
+	int interface;			/* SD/MMC:0, SDIO:standard interface */
 	int width;			/* bus width */
 	int flags;
 #define SFF_ERROR		0x0001	/* function is poo; ignore it */
@@ -178,6 +180,7 @@ struct sdmmc_function {
 	sdmmc_response raw_cid;		/* temp. storage for decoding */
 	uint32_t raw_scr[2];
 	struct sdmmc_scr scr;		/* decoded CSR value */
+
 	void *bbuf;			/* bounce buffer */
 	bus_dmamap_t bbuf_dmap;		/* DMA map for bounce buffer */
 };
@@ -252,6 +255,7 @@ struct sdmmc_softc {
 struct sdmmc_attach_args {
 	uint16_t manufacturer;
 	uint16_t product;
+	int interface;
 	struct sdmmc_function *sf;
 };
 
@@ -329,7 +333,6 @@ int	sdmmc_mem_init(struct sdmmc_softc *, struct sdmmc_function *);
 int	sdmmc_mem_send_op_cond(struct sdmmc_softc *, uint32_t, uint32_t *);
 int	sdmmc_mem_send_if_cond(struct sdmmc_softc *, uint32_t, uint32_t *);
 int	sdmmc_mem_set_blocklen(struct sdmmc_softc *, struct sdmmc_function *);
-int	sdmmc_mem_send_extcsd(struct sdmmc_softc *sc);
 int	sdmmc_mem_read_block(struct sdmmc_function *, uint32_t, u_char *,
 	    size_t);
 int	sdmmc_mem_write_block(struct sdmmc_function *, uint32_t, u_char *,
