@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmc_io.c,v 1.4 2010/10/07 12:28:34 kiyohara Exp $	*/
+/*	$NetBSD: sdmmc_io.c,v 1.5 2010/10/07 12:40:34 kiyohara Exp $	*/
 /*	$OpenBSD: sdmmc_io.c,v 1.10 2007/09/17 01:33:33 krw Exp $	*/
 
 /*
@@ -20,7 +20,7 @@
 /* Routines for SD I/O cards. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdmmc_io.c,v 1.4 2010/10/07 12:28:34 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdmmc_io.c,v 1.5 2010/10/07 12:40:34 kiyohara Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -187,12 +187,20 @@ out:
 int
 sdmmc_io_init(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 {
+	struct sdmmc_function *sf0 = sc->sc_fn0;
 	int error = 0;
+	uint8_t reg;
 
 	SDMMC_LOCK(sc);
 
 	if (sf->number == 0) {
-		sdmmc_io_write_1(sf, SD_IO_CCCR_BUS_WIDTH, CCCR_BUS_WIDTH_1);
+		sf->width = 1;
+		reg = sdmmc_io_read_1(sf, SD_IO_CCCR_CAPABILITY);
+		if (!(reg & CCCR_CAPS_LSC) || (reg & CCCR_CAPS_4BLS)) {
+			sdmmc_io_write_1(sf, SD_IO_CCCR_BUS_WIDTH,
+			    CCCR_BUS_WIDTH_4);
+			sf->width = 4;
+		}
 
 		error = sdmmc_read_cis(sf, &sf->cis);
 		if (error) {
@@ -208,6 +216,15 @@ sdmmc_io_init(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 			sdmmc_print_cis(sf);
 #endif
 
+		reg = sdmmc_io_read_1(sf, SD_IO_CCCR_HIGH_SPEED);
+		if (reg & CCCR_HIGH_SPEED_SHS) {
+			reg |= CCCR_HIGH_SPEED_EHS;
+			sdmmc_io_write_1(sf, SD_IO_CCCR_HIGH_SPEED, reg);
+			sf->csd.tran_speed = 50000;	/* 50MHz */
+
+			/* Wait 400KHz x 8 clock */
+			delay(1);
+		}
 		if (sc->sc_busclk > sf->csd.tran_speed)
 			sc->sc_busclk = sf->csd.tran_speed;
 		error =
@@ -215,6 +232,25 @@ sdmmc_io_init(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 		if (error)
 			aprint_error_dev(sc->sc_dev,
 			    "can't change bus clock\n");
+	} else {
+		reg = sdmmc_io_read_1(sf0, SD_IO_FBR(sf->number) + 0x000);
+		sf->interface = FBR_STD_FUNC_IF_CODE(reg);
+		if (sf->interface == 0x0f)
+			sf->interface =
+			    sdmmc_io_read_1(sf0, SD_IO_FBR(sf->number) + 0x001);
+		error = sdmmc_read_cis(sf, &sf->cis);
+		if (error) {
+			aprint_error_dev(sc->sc_dev, "couldn't read CIS\n");
+			SET(sf->flags, SFF_ERROR);
+			goto out;
+		}
+
+		sdmmc_check_cis_quirks(sf);
+
+#ifdef SDMMC_DEBUG
+		if (sdmmcdebug)
+			sdmmc_print_cis(sf);
+#endif
 	}
 
 out:

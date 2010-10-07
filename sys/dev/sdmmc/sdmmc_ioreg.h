@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmc_ioreg.h,v 1.1 2009/04/21 03:00:30 nonaka Exp $	*/
+/*	$NetBSD: sdmmc_ioreg.h,v 1.2 2010/10/07 12:40:34 kiyohara Exp $	*/
 /*	$OpenBSD: sdmmc_ioreg.h,v 1.4 2007/06/02 01:48:37 uwe Exp $	*/
 
 /*
@@ -56,9 +56,8 @@
 
 /* SD R4 response (IO OCR) */
 #define SD_IO_OCR_MEM_READY		(1<<31)
-#define SD_IO_OCR_NUM_FUNCTIONS(ocr)	(((ocr) >> 28) & 0x3)
-/* XXX big fat memory present "flag" because we don't know better */
-#define SD_IO_OCR_MEM_PRESENT		(0xf<<24)
+#define SD_IO_OCR_NUM_FUNCTIONS(ocr)	(((ocr) >> 28) & 0x7)
+#define SD_IO_OCR_MEM_PRESENT		(1<<27)
 #define SD_IO_OCR_MASK			0x00fffff0
 
 /* Card Common Control Registers (CCCR) */
@@ -68,13 +67,17 @@
 #define SD_IO_CCCR_CCCR_REV(r)		((r) & 0xf)
 #define  CCCR_CCCR_REV_1_00		0
 #define  CCCR_CCCR_REV_1_10		1
+#define  CCCR_CCCR_REV_1_20		2
 #define SD_IO_CCCR_SDIO_REV(r)		(((r) >> 4) & 0xf)
 #define  CCCR_SDIO_REV_1_00		0
 #define  CCCR_SDIO_REV_1_10		1
+#define  CCCR_SDIO_REV_1_20		2	/* (unreleased) */
+#define  CCCR_SDIO_REV_2_00		3
 #define SD_IO_CCCR_SPEC_REV		0x01
 #define SD_IO_CCCR_SD_PHYS_SPEC_VER(r)	((r) & 0xf)
 #define  CCCR_SD_PHYS_SPEC_VER_1_01	0
 #define  CCCR_SD_PHYS_SPEC_VER_1_10	1
+#define  CCCR_SD_PHYS_SPEC_VER_2_00	2
 #define SD_IO_CCCR_FN_ENABLE		0x02
 #define SD_IO_CCCR_FN_IOREADY		0x03
 #define SD_IO_CCCR_FN_INTEN		0x04
@@ -83,8 +86,8 @@
 #define SD_IO_CCCR_CTL			0x06
 #define  CCCR_CTL_RES			(1<<3)
 #define SD_IO_CCCR_BUS_WIDTH		0x07
-#define  CCCR_BUS_WIDTH_4		(1<<1)
-#define  CCCR_BUS_WIDTH_1		(1<<0)
+#define  CCCR_BUS_WIDTH_4		(2<<0)
+#define  CCCR_BUS_WIDTH_1		(0<<0)
 #define SD_IO_CCCR_CAPABILITY		0x08
 #define  CCCR_CAPS_SDC			(1<<0)
 #define  CCCR_CAPS_SMB			(1<<1) /* Multi-Block support */
@@ -104,22 +107,29 @@
 #define SD_IO_CCCR_FN_READY_FLG		0x0f
 #define SD_IO_CCCR_FN0_BLKSIZ		0x10 /* 0x10-0x11 */
 #define SD_IO_CCCR_POWER_CTL		0x12
+#define SD_IO_CCCR_HIGH_SPEED		0x13
+#define  CCCR_HIGH_SPEED_SHS		(1<<0) /* Support High-Speed */
+#define  CCCR_HIGH_SPEED_EHS		(1<<1) /* Enable High-Speed */
 
 /* Function Basic Registers (FBR) */
 #define SD_IO_FBR_START			0x00100
-#define SD_IO_FBR_SIZE			0x00700
+#define SD_IO_FBR_SIZE			0x100
+#define SD_IO_FBR(func)	((((func) - 1) * SD_IO_FBR_SIZE) + SD_IO_FBR_START)
+#define  FBR_STD_FUNC_IF_CODE(v)	((v) & 0x0f)
 
 /* Card Information Structure (CIS) */
 #define SD_IO_CIS_START			0x01000
 #define SD_IO_CIS_SIZE			0x17000
 
-/* CIS tuple codes (based on PC Card 16) */
-#define SD_IO_CISTPL_VERS_1		0x15
-#define SD_IO_CISTPL_MANFID		0x20
-#define SD_IO_CISTPL_FUNCID		0x21
-#define SD_IO_CISTPL_FUNCE		0x22
-
-/* CISTPL_FUNCID codes */
-#define SDMMC_FUNCTION_WLAN		0x0c
+/* SDIO Standard Function Interface code */
+#define SD_IO_SFIC_NO_STANDARD		0x0
+#define SD_IO_SFIC_UART			0x1
+#define SD_IO_SFIC_TYPEA_BLUETOOTH	0x2	/* Type-A Bluetooth */
+#define SD_IO_SFIC_TYPEB_BLUETOOTH	0x3	/* Type-B Bluetooth */
+#define SD_IO_SFIC_GPS			0x4
+#define SD_IO_SFIC_CAMERA		0x5
+#define SD_IO_SFIC_PHS			0x6
+#define SD_IO_SFIC_WLAN			0x7
+#define SD_IO_SFIC_ATA			0x8	/* Embedded SDIO-ATA */
 
 #endif	/* _SDMMC_IOREG_H_ */
