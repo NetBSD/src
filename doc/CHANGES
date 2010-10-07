@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1439 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1440 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -722,3 +722,4 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	httpd(8): Import bozohttpd-20100920. [mrg 20100921]
 	evbarm: Support Marvell Sheevaplug and some Marvell SoC NAS box.
 		[kiyohara 20101002]
+	dhcpcd(8): Import dhcpcd-5.2.8. [roy 20101007]
