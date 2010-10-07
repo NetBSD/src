@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.257.2.9 2010/09/26 06:35:32 uebayasi Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.257.2.10 2010/10/07 08:54:16 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.257.2.9 2010/09/26 06:35:32 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.257.2.10 2010/10/07 08:54:16 uebayasi Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1182,19 +1182,22 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	mp->mnt_flag |= MNT_LOCAL;
 	mp->mnt_iflag |= IMNT_MPSAFE;
 #ifdef XIP
-	if ((mp->mnt_flag & MNT_RDONLY) == 0)
-		printf("XIP needs read-only mount\n");
-	else {
-		void *physseg = NULL;
+#define	FS_IS_PAGE_ALIGNED_P(fs) \
+	(((fs)->fs_bsize & PAGE_MASK) == 0 && \
+	 ((fs)->fs_fsize & PAGE_MASK) == 0)
 
-		if ((VOP_IOCTL(devvp, DIOCGPHYSSEG, &physseg, FREAD,
-		    cred) == 0) &&
-		    physseg != NULL) {
-			mp->mnt_iflag |= IMNT_XIP;
-			devvp->v_physseg = physseg;
-		} else
-			printf("device doesn't support DIOCGPHYSSEG\n");
+	void *physseg = NULL;
+
+	if ((mp->mnt_flag & MNT_RDONLY) == 0 ||
+	    (VOP_IOCTL(devvp, DIOCGPHYSSEG, &physseg, FREAD, cred) != 0) ||
+	    physseg == NULL ||
+	    !FS_IS_PAGE_ALIGNED_P(fs)) {
+		error = ENXIO;
+		free(fs->fs_csp, M_UFSMNT);
+		goto out;
 	}
+	mp->mnt_iflag |= IMNT_XIP;
+	devvp->v_physseg = physseg;
 #endif
 #ifdef FFS_EI
 	if (needswap)
