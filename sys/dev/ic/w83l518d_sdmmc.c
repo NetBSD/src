@@ -1,4 +1,4 @@
-/* $NetBSD: w83l518d_sdmmc.c,v 1.2 2010/08/19 14:58:22 jmcneill Exp $ */
+/* $NetBSD: w83l518d_sdmmc.c,v 1.3 2010/10/07 12:06:09 kiyohara Exp $ */
 
 /*
  * Copyright (c) 2009 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: w83l518d_sdmmc.c,v 1.2 2010/08/19 14:58:22 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: w83l518d_sdmmc.c,v 1.3 2010/10/07 12:06:09 kiyohara Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -75,6 +75,7 @@ static int	wb_sdmmc_write_protect(sdmmc_chipset_handle_t);
 static int	wb_sdmmc_bus_power(sdmmc_chipset_handle_t, uint32_t);
 static int	wb_sdmmc_bus_clock(sdmmc_chipset_handle_t, int);
 static int	wb_sdmmc_bus_width(sdmmc_chipset_handle_t, int);
+static int	wb_sdmmc_bus_rod(sdmmc_chipset_handle_t, int);
 static void	wb_sdmmc_exec_command(sdmmc_chipset_handle_t,
 				      struct sdmmc_command *);
 static void	wb_sdmmc_card_enable_intr(sdmmc_chipset_handle_t, int);
@@ -89,6 +90,7 @@ static struct sdmmc_chip_functions wb_sdmmc_chip_functions = {
 	.bus_power = wb_sdmmc_bus_power,
 	.bus_clock = wb_sdmmc_bus_clock,
 	.bus_width = wb_sdmmc_bus_width,
+	.bus_rod = wb_sdmmc_bus_rod,
 	.exec_command = wb_sdmmc_exec_command,
 	.card_enable_intr = wb_sdmmc_card_enable_intr,
 	.card_intr_ack = wb_sdmmc_card_intr_ack,
@@ -309,6 +311,14 @@ wb_sdmmc_bus_width(sdmmc_chipset_handle_t sch, int width)
 	wb->wb_sdmmc_width = width;
 
 	return 0;
+}
+
+static int
+wb_sdmmc_bus_rod(sdmmc_chipset_handle_t sch, int on)
+{
+
+	/* Not support */
+	return -1;
 }
 
 
