@@ -1,4 +1,4 @@
-/*	$NetBSD: r128fb.c,v 1.13 2010/09/30 03:16:51 macallan Exp $	*/
+/*	$NetBSD: r128fb.c,v 1.14 2010/10/07 20:39:54 macallan Exp $	*/
 
 /*
  * Copyright (c) 2007 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: r128fb.c,v 1.13 2010/09/30 03:16:51 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: r128fb.c,v 1.14 2010/10/07 20:39:54 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,7 +81,7 @@ struct r128fb_softc {
 	bus_size_t sc_fbsize, sc_regsize;
 
 	int sc_width, sc_height, sc_depth, sc_stride;
-	int sc_locked, sc_have_backlight, sc_bl_level;
+	int sc_locked, sc_have_backlight, sc_bl_level, sc_bl_on;
 	struct vcons_screen sc_console_screen;
 	struct wsscreen_descr sc_defaultscreen_descr;
 	const struct wsscreen_descr *sc_screens[1];
@@ -130,7 +130,10 @@ static void	r128fb_eraserows(void *, int, int, long);
 
 static void	r128fb_brightness_up(device_t);
 static void	r128fb_brightness_down(device_t);
+/* set backlight level */
 static void	r128fb_set_backlight(struct r128fb_softc *, int);
+/* turn backlight on and off without messing with the level */
+static void	r128fb_switch_backlight(struct r128fb_softc *, int);
 
 struct wsdisplay_accessops r128fb_accessops = {
 	r128fb_ioctl,
@@ -193,6 +196,7 @@ r128fb_attach(device_t parent, device_t self, void *aux)
 	struct r128fb_softc	*sc = device_private(self);
 	struct pci_attach_args	*pa = aux;
 	struct rasops_info	*ri;
+	bus_space_tag_t		tag;
 	char devinfo[256];
 	struct wsemuldisplaydev_attach_args aa;
 	prop_dictionary_t	dict;
@@ -239,7 +243,7 @@ r128fb_attach(device_t parent, device_t self, void *aux)
 	}
 
 	if (pci_mapreg_map(pa, 0x18, PCI_MAPREG_TYPE_MEM, 0,
-	    &sc->sc_memt, &sc->sc_regh, &sc->sc_reg, &sc->sc_regsize)) {
+	    &tag, &sc->sc_regh, &sc->sc_reg, &sc->sc_regsize)) {
 		aprint_error("%s: failed to map registers.\n",
 		    device_xname(sc->sc_dev));
 	}
@@ -308,6 +312,7 @@ r128fb_attach(device_t parent, device_t self, void *aux)
 	DPRINTF("reg: %08x\n", reg);
 	if (reg & R128_LVDS_ON) {
 		sc->sc_have_backlight = 1;
+		sc->sc_bl_on = 1;
 		sc->sc_bl_level = 255 -
 		    ((reg & R128_LEVEL_MASK) >> R128_LEVEL_SHIFT);
 		pmf_event_register(sc->sc_dev, PMFE_DISPLAY_BRIGHTNESS_UP,
@@ -387,20 +392,32 @@ r128fb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 
 		case WSDISPLAYIO_GETPARAM:
 			param = (struct wsdisplay_param *)data;
-			if ((param->param == WSDISPLAYIO_PARAM_BACKLIGHT) &&
-			    (sc->sc_have_backlight != 0)) {
+			if (sc->sc_have_backlight == 0)
+				return EPASSTHROUGH;
+			switch (param->param) {
+			case WSDISPLAYIO_PARAM_BRIGHTNESS:
 				param->min = 0;
 				param->max = 255;
 				param->curval = sc->sc_bl_level;
+				return 0;
+			case WSDISPLAYIO_PARAM_BACKLIGHT:
+				param->min = 0;
+				param->max = 1;
+				param->curval = sc->sc_bl_on;
 				return 0;
 			}
 			return EPASSTHROUGH;
 
 		case WSDISPLAYIO_SETPARAM:
 			param = (struct wsdisplay_param *)data;
-			if ((param->param == WSDISPLAYIO_PARAM_BACKLIGHT) &&
-			    (sc->sc_have_backlight != 0)) {
+			if (sc->sc_have_backlight == 0)
+				return EPASSTHROUGH;
+			switch (param->param) {
+			case WSDISPLAYIO_PARAM_BRIGHTNESS:
 				r128fb_set_backlight(sc, param->curval);
+				return 0;
+			case WSDISPLAYIO_PARAM_BACKLIGHT:
+				r128fb_switch_backlight(sc,  param->curval);
 				return 0;
 			}
 			return EPASSTHROUGH;
@@ -925,17 +942,43 @@ r128fb_set_backlight(struct r128fb_softc *sc, int level)
 {
 	uint32_t reg;
 
+	/*
+	 * should we do nothing when backlight is off, should we just store the
+	 * level and use it when turning back on or should we just flip sc_bl_on
+	 * and turn the backlight on?
+	 * For now turn it on so a crashed screensaver can't get the user stuck
+	 * with a dark screen as long as hotkeys work
+	 */
 	if (level > 255) level = 255;
 	if (level < 0) level = 0;
 	if (level == sc->sc_bl_level)
 		return;
 	sc->sc_bl_level = level;
+	if (sc->sc_bl_on == 0)
+		sc->sc_bl_on = 1;
 	level = 255 - level;
 	reg = bus_space_read_4(sc->sc_memt, sc->sc_regh, R128_LVDS_GEN_CNTL);
 	reg &= ~R128_LEVEL_MASK;
 	reg |= level << R128_LEVEL_SHIFT;
 	bus_space_write_4(sc->sc_memt, sc->sc_regh, R128_LVDS_GEN_CNTL, reg);
-	DPRINTF("level: %d reg %08x\n", level, reg);
+	DPRINTF("backlight level: %d reg %08x\n", level, reg);
+}
+
+static void
+r128fb_switch_backlight(struct r128fb_softc *sc, int on)
+{
+	uint32_t reg;
+	int level;
+
+	if (on == sc->sc_bl_on)
+		return;
+	sc->sc_bl_on = on;
+	reg = bus_space_read_4(sc->sc_memt, sc->sc_regh, R128_LVDS_GEN_CNTL);
+	reg &= ~R128_LEVEL_MASK;
+	level = on ? 255 - sc->sc_bl_level : 255;
+	reg |= level << R128_LEVEL_SHIFT;
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, R128_LVDS_GEN_CNTL, reg);
+	DPRINTF("backlight state: %d reg %08x\n", on, reg);
 }
 	
 
