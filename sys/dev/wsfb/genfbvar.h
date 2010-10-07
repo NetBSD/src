@@ -1,4 +1,4 @@
-/*	$NetBSD: genfbvar.h,v 1.16 2010/10/06 02:24:35 macallan Exp $ */
+/*	$NetBSD: genfbvar.h,v 1.17 2010/10/07 07:53:53 macallan Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfbvar.h,v 1.16 2010/10/06 02:24:35 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfbvar.h,v 1.17 2010/10/07 07:53:53 macallan Exp $");
 
 #ifndef GENFBVAR_H
 #define GENFBVAR_H
@@ -78,7 +78,7 @@ struct genfb_pmf_callback {
 };
 
 struct genfb_softc {
-	struct	device sc_dev;
+	device_t sc_dev;
 	struct vcons_data vd;
 	struct genfb_ops sc_ops;
 	struct vcons_screen sc_console_screen;
