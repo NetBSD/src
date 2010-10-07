@@ -4,7 +4,7 @@ mtu_dir="$state_dir/mtu"
 
 if [ "$reason" = PREINIT -a -e "$mtu_dir/$interface" ]; then
 	rm "$mtu_dir/$interface"
-elif [ "$reason" != TEST -a -n "$new_interface_mtu" ]; then
+elif [ -n "$new_interface_mtu" ] && $if_up; then
 	# The smalled MTU dhcpcd can work with is 576
 	if [ "$new_interface_mtu" -ge 576 ]; then
 		if ifconfig "$interface" mtu "$new_interface_mtu"; then
@@ -16,10 +16,12 @@ elif [ "$reason" != TEST -a -n "$new_interface_mtu" ]; then
 			fi
 		fi
 	fi
-elif [ "$reason" != TEST -a -e "$mtu_dir/$interface" ]; then
-	# No MTU in this state, so restore the prior MTU
-	mtu=$(cat "$mtu_dir/$interface")
-	syslog info "$interface: MTU restored to $mtu"
-	ifconfig "$interface" mtu "$mtu"
-	rm "$mtu_dir/$interface"
+elif [ -e "$mtu_dir/$interface" ]; then
+	if $if_up || $if_down; then
+		# No MTU in this state, so restore the prior MTU
+		mtu=$(cat "$mtu_dir/$interface")
+		syslog info "$interface: MTU restored to $mtu"
+		ifconfig "$interface" mtu "$mtu"
+		rm "$mtu_dir/$interface"
+	fi
 fi
