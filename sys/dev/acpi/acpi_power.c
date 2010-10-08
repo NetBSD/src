@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_power.c,v 1.22 2010/08/06 18:10:40 jruoho Exp $ */
+/* $NetBSD: acpi_power.c,v 1.23 2010/10/08 07:04:31 gsutre Exp $ */
 
 /*-
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_power.c,v 1.22 2010/08/06 18:10:40 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_power.c,v 1.23 2010/10/08 07:04:31 gsutre Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -99,7 +99,8 @@ struct acpi_power_res {
 static TAILQ_HEAD(, acpi_power_res) res_head =
 	TAILQ_HEAD_INITIALIZER(res_head);
 
-static const struct sysctlnode	*anode = NULL;
+static int32_t acpi_power_acpinode = CTL_EOL;
+static int32_t acpi_power_powernode = CTL_EOL;
 
 static struct acpi_power_res	*acpi_power_res_init(ACPI_HANDLE);
 static struct acpi_power_res	*acpi_power_res_get(ACPI_HANDLE);
@@ -691,6 +692,7 @@ fail:
 
 SYSCTL_SETUP(sysctl_acpi_power_setup, "sysctl hw.acpi.power subtree setup")
 {
+	const struct sysctlnode *anode;
 	int err;
 
 	err = sysctl_createv(NULL, 0, NULL, &anode,
@@ -699,7 +701,7 @@ SYSCTL_SETUP(sysctl_acpi_power_setup, "sysctl hw.acpi.power subtree setup")
 	    CTL_HW, CTL_EOL);
 
 	if (err != 0)
-		goto fail;
+		return;
 
 	err = sysctl_createv(NULL, 0, &anode, &anode,
 	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "acpi",
@@ -707,7 +709,9 @@ SYSCTL_SETUP(sysctl_acpi_power_setup, "sysctl hw.acpi.power subtree setup")
 	    CTL_CREATE, CTL_EOL);
 
 	if (err != 0)
-		goto fail;
+		return;
+
+	acpi_power_acpinode = anode->sysctl_num;
 
 	err = sysctl_createv(NULL, 0, &anode, &anode,
 	    CTLFLAG_PERMANENT, CTLTYPE_NODE,
@@ -716,12 +720,9 @@ SYSCTL_SETUP(sysctl_acpi_power_setup, "sysctl hw.acpi.power subtree setup")
 	    CTL_CREATE, CTL_EOL);
 
 	if (err != 0)
-		goto fail;
+		return;
 
-	return;
-
-fail:
-	anode = NULL;
+	acpi_power_powernode = anode->sysctl_num;
 }
 
 void
@@ -732,7 +733,8 @@ acpi_power_add(struct acpi_devnode *ad)
 	KASSERT(ad != NULL && ad->ad_root != NULL);
 	KASSERT((ad->ad_flags & ACPI_DEVICE_POWER) != 0);
 
-	if (anode == NULL)
+	if (acpi_power_acpinode == CTL_EOL ||
+	    acpi_power_powernode == CTL_EOL)
 		return;
 
 	/*
@@ -740,9 +742,10 @@ acpi_power_add(struct acpi_devnode *ad)
 	 * may power multiple devices, it is unclear whether
 	 * power resources should be controllable by an user.
 	 */
-	err = sysctl_createv(NULL, 0, &anode, NULL,
+	err = sysctl_createv(NULL, 0, NULL, NULL,
 	    CTLFLAG_READONLY, CTLTYPE_STRING, ad->ad_name,
 	    NULL, acpi_power_sysctl, 0, ad, 0,
+	    CTL_HW, acpi_power_acpinode, acpi_power_powernode,
 	    CTL_CREATE, CTL_EOL);
 
 	if (err != 0)
