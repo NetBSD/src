@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bwi_pci.c,v 1.9 2010/01/19 22:07:00 pooka Exp $	*/
+/*	$NetBSD: if_bwi_pci.c,v 1.10 2010/10/09 19:46:15 phx Exp $	*/
 /*	$OpenBSD: if_bwi_pci.c,v 1.6 2008/02/14 22:10:02 brad Exp $ */
 
 /*
@@ -24,7 +24,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bwi_pci.c,v 1.9 2010/01/19 22:07:00 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bwi_pci.c,v 1.10 2010/10/09 19:46:15 phx Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -113,7 +113,7 @@ bwi_pci_attach(device_t parent, device_t self, void *aux)
 	int error = 0;
 
 	aprint_naive("\n");
-	aprint_normal(": Broadcom Wireless");
+	aprint_normal(": Broadcom Wireless\n");
 
 	sc->sc_dev = self;
 	sc->sc_dmat = pa->pa_dmat;
