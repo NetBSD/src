@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.22.78.4 2010/08/11 22:52:14 yamt Exp $	 */
+/*	$NetBSD: exec.c,v 1.22.78.5 2010/10/09 03:31:48 yamt Exp $	 */
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -228,7 +228,7 @@ common_load_kernel(const char *file, u_long *basemem, u_long *extmem,
 #endif
 	marks[MARK_START] = loadaddr;
 	if ((fd = loadfile(file, marks,
-	    LOAD_KERNEL & ~(floppy ? LOAD_NOTE : 0))) == -1)
+	    LOAD_KERNEL & ~(floppy ? LOAD_BACKWARDS : 0))) == -1)
 		return EIO;
 
 	close(fd);

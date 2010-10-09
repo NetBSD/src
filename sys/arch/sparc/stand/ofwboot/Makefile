@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.21.20.2 2010/08/11 22:52:46 yamt Exp $
+#	$NetBSD: Makefile,v 1.21.20.3 2010/10/09 03:31:54 yamt Exp $
 
 CURDIR=	${.CURDIR}
 S=	${CURDIR}/../../../..
@@ -11,8 +11,8 @@ WARNS=		0
 
 PROG?=		ofwboot
 SRCS=		srt0.s Locore.c boot.c ofdev.c alloc.c net.c netif_of.c vers.c
-SRCS+=		bootinfo.c loadfile_machdep.c promlib.c prf.c
-.PATH:		${S}/arch/sparc64/sparc64
+SRCS+=		bootinfo.c loadfile_machdep.c promlib.c prf.c isfloppy.c
+.PATH:		${S}/arch/sparc64/sparc64 ${S}/arch/sparc/stand/common
 
 # XXX SHOULD NOT NEED TO DEFINE THESE!
 LIBCRT0=

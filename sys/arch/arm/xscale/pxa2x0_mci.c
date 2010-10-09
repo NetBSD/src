@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_mci.c,v 1.1.4.5 2010/08/11 22:51:42 yamt Exp $	*/
+/*	$NetBSD: pxa2x0_mci.c,v 1.1.4.6 2010/10/09 03:31:41 yamt Exp $	*/
 /*	$OpenBSD: pxa2x0_mmc.c,v 1.5 2009/02/23 18:09:55 miod Exp $	*/
 
 /*
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0_mci.c,v 1.1.4.5 2010/08/11 22:51:42 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_mci.c,v 1.1.4.6 2010/10/09 03:31:41 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -101,6 +101,7 @@ static int	pxamci_write_protect(sdmmc_chipset_handle_t);
 static int	pxamci_bus_power(sdmmc_chipset_handle_t, uint32_t);
 static int	pxamci_bus_clock(sdmmc_chipset_handle_t, int);
 static int	pxamci_bus_width(sdmmc_chipset_handle_t, int);
+static int	pxamci_bus_rod(sdmmc_chipset_handle_t, int);
 static void	pxamci_exec_command(sdmmc_chipset_handle_t,
 		    struct sdmmc_command *);
 static void	pxamci_card_enable_intr(sdmmc_chipset_handle_t, int);
@@ -124,6 +125,7 @@ static struct sdmmc_chip_functions pxamci_chip_functions = {
 	.bus_power		= pxamci_bus_power,
 	.bus_clock		= pxamci_bus_clock,
 	.bus_width		= pxamci_bus_width,
+	.bus_rod		= pxamci_bus_rod,
 
 	/* command execution */
 	.exec_command		= pxamci_exec_command,
@@ -305,7 +307,7 @@ pxamci_attach_sub(device_t self, struct pxaip_attach_args *pxa)
 	saa.saa_clkmax = sc->sc_clkmax;
 	saa.saa_caps = 0;
 	if (!ISSET(sc->sc_caps, PMC_CAPS_NO_DMA))
-		SET(saa.saa_caps, SMC_CAPS_DMA);
+		SET(saa.saa_caps, SMC_CAPS_DMA | SMC_CAPS_MULTI_SEG_DMA);
 	if (CPU_IS_PXA270 && ISSET(sc->sc_caps, PMC_CAPS_4BIT))
 		SET(saa.saa_caps, SMC_CAPS_4BIT_MODE);
 
@@ -546,6 +548,14 @@ pxamci_bus_width(sdmmc_chipset_handle_t sch, int width)
 	splx(s);
 
 	return rv;
+}
+
+static int
+pxamci_bus_rod(sdmmc_chipset_handle_t sch, int on)
+{
+
+	/* not support */
+	return -1;
 }
 
 static void

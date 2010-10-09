@@ -1,4 +1,4 @@
-/* $NetBSD: wss_acpi.c,v 1.19.4.4 2010/03/11 15:03:23 yamt Exp $ */
+/* $NetBSD: wss_acpi.c,v 1.19.4.5 2010/10/09 03:32:04 yamt Exp $ */
 
 /*
  * Copyright (c) 2002 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wss_acpi.c,v 1.19.4.4 2010/03/11 15:03:23 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wss_acpi.c,v 1.19.4.5 2010/10/09 03:32:04 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/audioio.h>
@@ -90,6 +90,9 @@ static int
 wss_acpi_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct acpi_attach_args *aa = aux;
+
+	if ((aa->aa_node->ad_devinfo->Valid & ACPI_VALID_HID) == 0)
+		return 0;
 
 	if (aa->aa_node->ad_type != ACPI_TYPE_DEVICE ||
 	    wss_acpi_hints_index(aa->aa_node->ad_devinfo->HardwareId.String) == -1)

@@ -1,4 +1,4 @@
-/*	$NetBSD: sysproxy_socket.c,v 1.2.2.3 2010/03/11 15:04:38 yamt Exp $	*/
+/*	$NetBSD: sysproxy_socket.c,v 1.2.2.4 2010/10/09 03:32:44 yamt Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysproxy_socket.c,v 1.2.2.3 2010/03/11 15:04:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysproxy_socket.c,v 1.2.2.4 2010/10/09 03:32:44 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -270,7 +270,7 @@ wrkenqueue(void (*wfn)(void *), void *arg)
 			printf("syscall proxy warning: over 30 workers\n");
 		mutex_exit(&wrkmtx);
 		wrk = kmem_zalloc(sizeof(*wrk), KM_SLEEP);
-		cv_init(&wrk->wrkcv, "sproxywrk");
+		cv_init(&wrk->wrkcv, "sproxywk");
  retry:
 		error = kthread_create(PRI_NONE, KTHREAD_MPSAFE, NULL,
 		    wrkthread, wrk, NULL, "spw_%d", nwrk);
@@ -372,7 +372,7 @@ handle_syscall(void *arg)
 	struct sysproxy_qent *qent = get_qent();
 	struct rumprpc_sysresp resp;
 	struct sysent *callp;
-	struct lwp *mylwp, *l;
+	struct lwp *mylwp;
 
 	resp.rpc_head.rpch_flen = sizeof(resp);
 	resp.rpc_head.rpch_reqno = req->rpc_head.rpch_reqno;
@@ -388,14 +388,14 @@ handle_syscall(void *arg)
 
 	callp = rump_sysent + req->rpc_sysnum;
 	mylwp = curlwp;
-	l = rump_newproc_switch();
+	rump_lwproc_newproc();
 	rump_set_vmspace(&rump_sysproxy_vmspace);
 
 	resp.rpc_retval = 0; /* default */
-	resp.rpc_error = callp->sy_call(l, (void *)req->rpc_data,
+	resp.rpc_error = callp->sy_call(curlwp, (void *)req->rpc_data,
 	    &resp.rpc_retval);
-	rump_lwp_release(l);
-	rump_lwp_switch(mylwp);
+	rump_lwproc_releaselwp();
+	rump_lwproc_switch(mylwp);
 	kmem_free(req, req->rpc_head.rpch_flen);
 
 	dosend(sock, qent, (uint8_t *)&resp, sizeof(resp), false);

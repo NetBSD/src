@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu.c,v 1.14.2.2 2010/08/11 22:53:15 yamt Exp $ */
+/* $NetBSD: acpi_cpu.c,v 1.14.2.3 2010/10/09 03:32:04 yamt Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu.c,v 1.14.2.2 2010/08/11 22:53:15 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu.c,v 1.14.2.3 2010/10/09 03:32:04 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -51,14 +51,15 @@ static void		  acpicpu_attach(device_t, device_t, void *);
 static int		  acpicpu_detach(device_t, int);
 static int		  acpicpu_once_attach(void);
 static int		  acpicpu_once_detach(void);
+static void		  acpicpu_prestart(device_t);
+static void		  acpicpu_start(device_t);
 
 static int		  acpicpu_object(ACPI_HANDLE, struct acpicpu_object *);
 static cpuid_t		  acpicpu_id(uint32_t);
 static uint32_t		  acpicpu_cap(struct acpicpu_softc *);
-static ACPI_OBJECT	 *acpicpu_cap_init(void);
-static ACPI_STATUS	  acpicpu_cap_pdc(ACPI_HANDLE);
-static ACPI_STATUS	  acpicpu_cap_osc(ACPI_HANDLE, uint32_t *);
-static const char	 *acpicpu_cap_oscerr(uint32_t);
+static ACPI_STATUS	  acpicpu_cap_pdc(struct acpicpu_softc *, uint32_t);
+static ACPI_STATUS	  acpicpu_cap_osc(struct acpicpu_softc *,
+					  uint32_t, uint32_t *);
 static void		  acpicpu_notify(ACPI_HANDLE, uint32_t, void *);
 static bool		  acpicpu_suspend(device_t, const pmf_qual_t *);
 static bool		  acpicpu_resume(device_t, const pmf_qual_t *);
@@ -112,12 +113,9 @@ acpicpu_attach(device_t parent, device_t self, void *aux)
 	if (rv != 0)
 		return;
 
-	KASSERT(acpicpu_sc != NULL);
-
 	sc->sc_dev = self;
-	sc->sc_cold = false;
-	sc->sc_mapped = false;
-	sc->sc_iot = aa->aa_iot;
+	sc->sc_cold = true;
+	sc->sc_passive = false;
 	sc->sc_node = aa->aa_node;
 	sc->sc_cpuid = acpicpu_id(sc->sc_object.ao_procid);
 
@@ -131,6 +129,9 @@ acpicpu_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
+	aprint_naive("\n");
+	aprint_normal(": ACPI CPU\n");
+
 	acpicpu_sc[sc->sc_cpuid] = sc;
 
 	sc->sc_cap = acpicpu_cap(sc);
@@ -138,44 +139,23 @@ acpicpu_attach(device_t parent, device_t self, void *aux)
 
 	mutex_init(&sc->sc_mtx, MUTEX_DEFAULT, IPL_NONE);
 
-	aprint_naive("\n");
-	aprint_normal(": ACPI CPU\n");
-
-	/*
-	 * We should claim the bus space. However, we do this only
-	 * to announce that the space is in use. As is noted in
-	 * ichlpcib(4), we can continue our I/O without bus_space(9).
-	 */
-	if (sc->sc_object.ao_pblklen == 6 && sc->sc_object.ao_pblkaddr != 0) {
-
-		rv = bus_space_map(sc->sc_iot, sc->sc_object.ao_pblkaddr,
-		    sc->sc_object.ao_pblklen, 0, &sc->sc_ioh);
-
-		if (rv == 0)
-			sc->sc_mapped = true;
-	}
-
 	acpicpu_cstate_attach(self);
 	acpicpu_pstate_attach(self);
+	acpicpu_tstate_attach(self);
 
-	(void)config_finalize_register(self, acpicpu_cstate_start);
-	(void)config_finalize_register(self, acpicpu_pstate_start);
-
+	(void)config_defer(self, acpicpu_prestart);
 	(void)acpi_register_notify(sc->sc_node, acpicpu_notify);
 	(void)pmf_device_register(self, acpicpu_suspend, acpicpu_resume);
-
-	aprint_debug_dev(sc->sc_dev, "cap 0x%02x, "
-	    "flags 0x%06x\n", sc->sc_cap, sc->sc_flags);
 }
 
 static int
 acpicpu_detach(device_t self, int flags)
 {
 	struct acpicpu_softc *sc = device_private(self);
-	const bus_addr_t addr = sc->sc_object.ao_pblkaddr;
 	static ONCE_DECL(once_detach);
 	int rv = 0;
 
+	sc->sc_cold = true;
 	acpi_deregister_notify(sc->sc_node);
 
 	if ((sc->sc_flags & ACPICPU_FLAG_C) != 0)
@@ -190,13 +170,16 @@ acpicpu_detach(device_t self, int flags)
 	if (rv != 0)
 		return rv;
 
-	rv = RUN_ONCE(&once_detach, acpicpu_once_detach);
+	if ((sc->sc_flags & ACPICPU_FLAG_T) != 0)
+		rv = acpicpu_tstate_detach(self);
 
 	if (rv != 0)
 		return rv;
 
-	if (sc->sc_mapped != false)
-		bus_space_unmap(sc->sc_iot, sc->sc_ioh, addr);
+	rv = RUN_ONCE(&once_detach, acpicpu_once_detach);
+
+	if (rv != 0)
+		return rv;
 
 	mutex_destroy(&sc->sc_mtx);
 
@@ -225,12 +208,52 @@ acpicpu_once_detach(void)
 {
 	struct acpicpu_softc *sc;
 
-	KASSERT(acpicpu_sc != NULL);
-
-	kmem_free(acpicpu_sc, maxcpus * sizeof(*sc));
-	acpicpu_sc = NULL;
+	if (acpicpu_sc != NULL)
+		kmem_free(acpicpu_sc, maxcpus * sizeof(*sc));
 
 	return 0;
+}
+
+static void
+acpicpu_prestart(device_t self)
+{
+	struct acpicpu_softc *sc = device_private(self);
+	static bool once = false;
+
+	if (once != false) {
+		sc->sc_cold = false;
+		return;
+	}
+
+	once = true;
+
+	(void)config_interrupts(self, acpicpu_start);
+}
+
+static void
+acpicpu_start(device_t self)
+{
+	struct acpicpu_softc *sc = device_private(self);
+
+	/*
+	 * Run the state-specific initialization
+	 * routines. These should be called only
+	 * once, after interrupts are enabled and
+	 * all ACPI CPUs have attached.
+	 */
+	if ((sc->sc_flags & ACPICPU_FLAG_C) != 0)
+		acpicpu_cstate_start(self);
+
+	if ((sc->sc_flags & ACPICPU_FLAG_P) != 0)
+		acpicpu_pstate_start(self);
+
+	if ((sc->sc_flags & ACPICPU_FLAG_T) != 0)
+		acpicpu_tstate_start(self);
+
+	aprint_debug_dev(sc->sc_dev, "ACPI CPUs started (cap "
+	    "0x%02x, flags 0x%06x)\n", sc->sc_cap, sc->sc_flags);
+
+	sc->sc_cold = false;
 }
 
 static int
@@ -290,150 +313,171 @@ acpicpu_id(uint32_t id)
 static uint32_t
 acpicpu_cap(struct acpicpu_softc *sc)
 {
-	uint32_t cap[3] = { 0 };
+	uint32_t flags, cap = 0;
+	const char *str;
 	ACPI_STATUS rv;
-	int err;
 
 	/*
-	 * Set machine-dependent processor capabilities.
-	 *
-	 * The _PDC was deprecated in ACPI 3.0 in favor of the _OSC,
-	 * but firmware may expect that we evaluate it nevertheless.
+	 * Query and set machine-dependent capabilities.
+	 * Note that the Intel-specific _PDC method was
+	 * deprecated in the ACPI 3.0 in favor of _OSC.
 	 */
-	rv = acpicpu_cap_pdc(sc->sc_node->ad_handle);
+	flags = acpicpu_md_cap();
+	rv = acpicpu_cap_osc(sc, flags, &cap);
 
-	if (ACPI_FAILURE(rv) && rv != AE_NOT_FOUND)
-		aprint_error_dev(sc->sc_dev, "failed to evaluate _PDC: "
-		    "%s\n", AcpiFormatException(rv));
-
-	rv = acpicpu_cap_osc(sc->sc_node->ad_handle, cap);
-
-	if (ACPI_FAILURE(rv) && rv != AE_NOT_FOUND)
-		aprint_error_dev(sc->sc_dev, "failed to evaluate _OSC: "
-		    "%s\n", AcpiFormatException(rv));
-
-	if (ACPI_SUCCESS(rv)) {
-
-		err = cap[0] & ~__BIT(0);
-
-		if (err != 0) {
-			aprint_error_dev(sc->sc_dev, "errors in "
-			    "_OSC: %s\n", acpicpu_cap_oscerr(err));
-			cap[2] = 0;
-		}
+	if (ACPI_FAILURE(rv) && rv != AE_NOT_FOUND) {
+		str = "_OSC";
+		goto fail;
 	}
 
-	return cap[2];
+	rv = acpicpu_cap_pdc(sc, flags);
+
+	if (ACPI_FAILURE(rv) && rv != AE_NOT_FOUND) {
+		str = "_PDC";
+		goto fail;
+	}
+
+	if (cap == 0)
+		cap = flags;
+
+	return cap;
+
+fail:
+	aprint_error_dev(sc->sc_dev, "failed to evaluate "
+	    "%s: %s\n", str, AcpiFormatException(rv));
+
+	return 0;
 }
 
-static ACPI_OBJECT *
-acpicpu_cap_init(void)
+static ACPI_STATUS
+acpicpu_cap_pdc(struct acpicpu_softc *sc, uint32_t flags)
 {
-	static uint32_t cap[3];
-	static ACPI_OBJECT obj;
+	ACPI_OBJECT_LIST arg;
+	ACPI_OBJECT obj;
+	uint32_t cap[3];
+
+	arg.Count = 1;
+	arg.Pointer = &obj;
 
 	cap[0] = ACPICPU_PDC_REVID;
 	cap[1] = 1;
-	cap[2] = acpicpu_md_cap();
+	cap[2] = flags;
 
 	obj.Type = ACPI_TYPE_BUFFER;
 	obj.Buffer.Length = sizeof(cap);
-	obj.Buffer.Pointer = (uint8_t *)cap;
+	obj.Buffer.Pointer = (void *)cap;
 
-	return &obj;
+	return AcpiEvaluateObject(sc->sc_node->ad_handle, "_PDC", &arg, NULL);
 }
 
 static ACPI_STATUS
-acpicpu_cap_pdc(ACPI_HANDLE hdl)
+acpicpu_cap_osc(struct acpicpu_softc *sc, uint32_t flags, uint32_t *val)
 {
-	ACPI_OBJECT_LIST arg_list;
-
-	arg_list.Count = 1;
-	arg_list.Pointer = acpicpu_cap_init();
-
-	return AcpiEvaluateObject(hdl, "_PDC", &arg_list, NULL);
-}
-
-static ACPI_STATUS
-acpicpu_cap_osc(ACPI_HANDLE hdl, uint32_t *val)
-{
-	ACPI_OBJECT_LIST arg_list;
-	ACPI_OBJECT *cap, *obj;
-	ACPI_OBJECT arg[4];
+	ACPI_OBJECT_LIST arg;
+	ACPI_OBJECT obj[4];
+	ACPI_OBJECT *osc;
 	ACPI_BUFFER buf;
 	ACPI_STATUS rv;
+	uint32_t cap[2];
+	uint32_t *ptr;
+	int i = 5;
 
-	/* Intel. */
-	static uint8_t cpu_oscuuid[16] = {
+	static uint8_t intel_uuid[16] = {
 		0x16, 0xA6, 0x77, 0x40, 0x0C, 0x29, 0xBE, 0x47,
 		0x9E, 0xBD, 0xD8, 0x70, 0x58, 0x71, 0x39, 0x53
 	};
 
-	cap = acpicpu_cap_init();
+	cap[0] = ACPI_OSC_QUERY;
+	cap[1] = flags;
 
-	arg_list.Count = 4;
-	arg_list.Pointer = arg;
+again:
+	arg.Count = 4;
+	arg.Pointer = obj;
 
-	arg[0].Type = ACPI_TYPE_BUFFER;
-	arg[0].Buffer.Length = sizeof(cpu_oscuuid);
-	arg[0].Buffer.Pointer = cpu_oscuuid;
+	obj[0].Type = ACPI_TYPE_BUFFER;
+	obj[0].Buffer.Length = sizeof(intel_uuid);
+	obj[0].Buffer.Pointer = intel_uuid;
 
-	arg[1].Type = ACPI_TYPE_INTEGER;
-	arg[1].Integer.Value = ACPICPU_PDC_REVID;
+	obj[1].Type = ACPI_TYPE_INTEGER;
+	obj[1].Integer.Value = ACPICPU_PDC_REVID;
 
-	arg[2].Type = ACPI_TYPE_INTEGER;
-	arg[2].Integer.Value = cap->Buffer.Length / sizeof(uint32_t);
+	obj[2].Type = ACPI_TYPE_INTEGER;
+	obj[2].Integer.Value = __arraycount(cap);
 
-	arg[3] = *cap;
+	obj[3].Type = ACPI_TYPE_BUFFER;
+	obj[3].Buffer.Length = sizeof(cap);
+	obj[3].Buffer.Pointer = (void *)cap;
 
 	buf.Pointer = NULL;
 	buf.Length = ACPI_ALLOCATE_LOCAL_BUFFER;
 
-	rv = AcpiEvaluateObject(hdl, "_OSC", &arg_list, &buf);
+	rv = AcpiEvaluateObject(sc->sc_node->ad_handle, "_OSC", &arg, &buf);
 
 	if (ACPI_FAILURE(rv))
-		return rv;
+		goto out;
 
-	obj = buf.Pointer;
+	osc = buf.Pointer;
 
-	if (obj->Type != ACPI_TYPE_BUFFER) {
+	if (osc->Type != ACPI_TYPE_BUFFER) {
 		rv = AE_TYPE;
 		goto out;
 	}
 
-	if (obj->Buffer.Length != cap->Buffer.Length) {
+	if (osc->Buffer.Length != sizeof(cap)) {
 		rv = AE_BUFFER_OVERFLOW;
 		goto out;
 	}
 
-	(void)memcpy(val, obj->Buffer.Pointer, obj->Buffer.Length);
+	ptr = (uint32_t *)osc->Buffer.Pointer;
+
+	if ((ptr[0] & ACPI_OSC_ERROR) != 0) {
+		rv = AE_ERROR;
+		goto out;
+	}
+
+	if ((ptr[0] & (ACPI_OSC_ERROR_REV | ACPI_OSC_ERROR_UUID)) != 0) {
+		rv = AE_BAD_PARAMETER;
+		goto out;
+	}
+
+	/*
+	 * "It is strongly recommended that the OS evaluate
+	 *  _OSC with the Query Support Flag set until _OSC
+	 *  returns the Capabilities Masked bit clear, to
+	 *  negotiate the set of features to be granted to
+	 *  the OS for native support (ACPI 4.0, 6.2.10)."
+	 */
+	if ((ptr[0] & ACPI_OSC_ERROR_MASKED) != 0 && i >= 0) {
+
+		ACPI_FREE(buf.Pointer);
+		i--;
+
+		goto again;
+	}
+
+	if ((cap[0] & ACPI_OSC_QUERY) != 0) {
+
+		ACPI_FREE(buf.Pointer);
+		cap[0] &= ~ACPI_OSC_QUERY;
+
+		goto again;
+	}
+
+	/*
+	 * It is permitted for _OSC to return all
+	 * bits cleared, but this is specified to
+	 * vary on per-device basis. Assume that
+	 * everything rather than nothing will be
+	 * supported in thise case; we do not need
+	 * the firmware to know the CPU features.
+	 */
+	*val = (ptr[1] != 0) ? ptr[1] : cap[1];
 
 out:
 	if (buf.Pointer != NULL)
 		ACPI_FREE(buf.Pointer);
 
 	return rv;
-}
-
-static const char *
-acpicpu_cap_oscerr(uint32_t err)
-{
-
-	KASSERT((err & __BIT(0)) == 0);
-
-	if ((err & __BIT(1)) != 0)
-		return "_OSC failure";
-
-	if ((err & __BIT(2)) != 0)
-		return "unrecognized UUID";
-
-	if ((err & __BIT(3)) != 0)
-		return "unrecognized revision";
-
-	if ((err & __BIT(4)) != 0)
-		return "capabilities masked";
-
-	return "unknown error";
 }
 
 static void
@@ -444,6 +488,9 @@ acpicpu_notify(ACPI_HANDLE hdl, uint32_t evt, void *aux)
 	device_t self = aux;
 
 	sc = device_private(self);
+
+	if (sc->sc_cold != false)
+		return;
 
 	switch (evt) {
 
@@ -468,7 +515,7 @@ acpicpu_notify(ACPI_HANDLE hdl, uint32_t evt, void *aux)
 		if ((sc->sc_flags & ACPICPU_FLAG_T) == 0)
 			return;
 
-		func = NULL;
+		func = acpicpu_tstate_callback;
 		break;
 
 	default:
@@ -484,13 +531,16 @@ acpicpu_suspend(device_t self, const pmf_qual_t *qual)
 {
 	struct acpicpu_softc *sc = device_private(self);
 
-	sc->sc_cold = true;
-
 	if ((sc->sc_flags & ACPICPU_FLAG_C) != 0)
 		(void)acpicpu_cstate_suspend(self);
 
 	if ((sc->sc_flags & ACPICPU_FLAG_P) != 0)
 		(void)acpicpu_pstate_suspend(self);
+
+	if ((sc->sc_flags & ACPICPU_FLAG_T) != 0)
+		(void)acpicpu_tstate_suspend(self);
+
+	sc->sc_cold = true;
 
 	return true;
 }
@@ -507,6 +557,9 @@ acpicpu_resume(device_t self, const pmf_qual_t *qual)
 
 	if ((sc->sc_flags & ACPICPU_FLAG_P) != 0)
 		(void)acpicpu_pstate_resume(self);
+
+	if ((sc->sc_flags & ACPICPU_FLAG_T) != 0)
+		(void)acpicpu_tstate_resume(self);
 
 	return true;
 }

@@ -1,11 +1,10 @@
-#	$NetBSD: UCOM.ioconf,v 1.4.2.2 2010/03/11 15:04:33 yamt Exp $
+#	$NetBSD: UCOM.ioconf,v 1.4.2.3 2010/10/09 03:32:42 yamt Exp $
 #
 
 ioconf ucom
 
 include "conf/files"
 include "dev/usb/files.usb"
-include "rump/dev/files.rump"
 
 pseudo-root uhub*
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.23.10.6 2010/08/11 22:52:55 yamt Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.23.10.7 2010/10/09 03:31:56 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -127,6 +127,27 @@
 			    "\30MMX\31FXSR\32SSE\33SSE2\34SS\35HTT\36TM" \
 			    "\37IA64\40SBF"
 
+/*
+ * Intel Digital Thermal Sensor and
+ * Power Management, Fn0000_0006 - %eax.
+ */
+#define CPUID_DSPM_DTS	0x00000001	/* Digital Thermal Sensor */
+#define CPUID_DSPM_IDA	0x00000002	/* Intel Dynamic Acceleration */
+#define CPUID_DSPM_ARAT	0x00000004	/* Always Running APIC Timer */
+#define CPUID_DSPM_PLN	0x00000010	/* Power Limit Notification */
+#define CPUID_DSPM_CME	0x00000020	/* Clock Modulation Extension */
+#define CPUID_DSPM_PLTM	0x00000040	/* Package Level Thermal Management */
+
+#define CPUID_DSPM_FLAGS	"\20\1DTS\2IDA\3ARAT\5PLN\6CME\7PLTM"
+
+/*
+ * Intel Digital Thermal Sensor and
+ * Power Management, Fn0000_0006 - %ecx.
+ */
+#define CPUID_DSPM_HWF	0x00000001	/* MSR_APERF/MSR_MPERF available */
+
+#define CPUID_DSPM_FLAGS1	"\20\1HWF"
+
 /* Intel Fn80000001 extended features - %edx */
 #define CPUID_SYSCALL	0x00000800	/* SYSCALL/SYSRET */
 #define CPUID_XD	0x00100000	/* Execute Disable (like CPUID_NOX) */
@@ -190,7 +211,6 @@
  * AMD Advanced Power Management
  * CPUID Fn8000_0007 %edx
  */
-
 #define CPUID_APM_TS	0x00000001	/* Temperature Sensor */
 #define CPUID_APM_FID	0x00000002	/* Frequency ID control */
 #define CPUID_APM_VID	0x00000004	/* Voltage ID control */
@@ -200,9 +220,10 @@
 #define CPUID_APM_100	0x00000040	/* 100MHz multiplier control */
 #define CPUID_APM_HWP	0x00000080	/* HW P-State control */
 #define CPUID_APM_TSC	0x00000100	/* TSC invariant */
+#define CPUID_APM_CPB	0x00000200	/* Core performance boost */
 
 #define CPUID_APM_FLAGS		"\20\1TS\2FID\3VID\4TTP\5HTC\6STC\007100" \
-				    "\10HWP\11TSC"
+				    "\10HWP\11TSC\12CPB"
 
 /*
  * Centaur Extended Feature flags
@@ -287,6 +308,8 @@
 #define MSR_PERFCTR0		0x0c1
 #define MSR_PERFCTR1		0x0c2
 #define MSR_FSB_FREQ		0x0cd	/* Core Duo/Solo only */
+#define MSR_MPERF		0x0e7
+#define MSR_APERF		0x0e8
 #define MSR_IA32_EXT_CONFIG	0x0ee	/* Undocumented. Core Solo/Duo only */
 #define MSR_MTRRcap		0x0fe
 #define	MSR_BBL_CR_ADDR		0x116	/* PII+ only */
@@ -427,7 +450,7 @@
 #define		HWCR_FFDIS		0x00000040
 
 #define	MSR_NB_CFG	0xc001001f
-#define		NB_CFG_DISIOREQLOCK	0x0000000000000004ULL
+#define		NB_CFG_DISIOREQLOCK	0x0000000000000008ULL
 #define		NB_CFG_DISDATMSK	0x0000001000000000ULL
 #define		NB_CFG_INITAPICCPUIDLO	(1ULL << 54)
 

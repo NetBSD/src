@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.75.4.4 2010/03/11 15:04:06 yamt Exp $	*/
+/*	$NetBSD: ucom.c,v 1.75.4.5 2010/10/09 03:32:26 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.75.4.4 2010/03/11 15:04:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.75.4.5 2010/10/09 03:32:26 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -982,10 +982,8 @@ ucomstart(struct tty *tp)
 		return;
 
 	s = spltty();
-	if (ISSET(tp->t_state, TS_BUSY | TS_TIMEOUT | TS_TTSTOP)) {
-		DPRINTFN(4,("ucomstart: no go, state=0x%x\n", tp->t_state));
+	if (ISSET(tp->t_state, TS_BUSY | TS_TIMEOUT | TS_TTSTOP))
 		goto out;
-	}
 	if (sc->sc_tx_stopped)
 		goto out;
 
@@ -996,10 +994,8 @@ ucomstart(struct tty *tp)
 	data = tp->t_outq.c_cf;
 	cnt = ndqb(&tp->t_outq, 0);
 
-	if (cnt == 0) {
-		DPRINTF(("ucomstart: cnt==0\n"));
+	if (cnt == 0)
 		goto out;
-	}
 
 	ub = SIMPLEQ_FIRST(&sc->sc_obuff_free);
 	KASSERT(ub != NULL);
@@ -1031,7 +1027,6 @@ ucomstart(struct tty *tp)
 void
 ucomstop(struct tty *tp, int flag)
 {
-	DPRINTF(("ucomstop: flag=%d\n", flag));
 #if 0
 	/*struct ucom_softc *sc =
 	    device_lookup_private(&ucom_cd, UCOMUNIT(dev));*/
@@ -1039,7 +1034,6 @@ ucomstop(struct tty *tp, int flag)
 
 	s = spltty();
 	if (ISSET(tp->t_state, TS_BUSY)) {
-		DPRINTF(("ucomstop: XXX\n"));
 		/* sc->sc_tx_stopped = 1; */
 		if (!ISSET(tp->t_state, TS_TTSTOP))
 			SET(tp->t_state, TS_FLUSH);

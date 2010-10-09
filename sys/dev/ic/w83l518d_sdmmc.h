@@ -1,4 +1,4 @@
-/* $NetBSD: w83l518d_sdmmc.h,v 1.1.6.2 2010/03/11 15:03:36 yamt Exp $ */
+/* $NetBSD: w83l518d_sdmmc.h,v 1.1.6.3 2010/10/09 03:32:06 yamt Exp $ */
 
 /*
  * Copyright (c) 2009 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,5 +31,7 @@
 void	wb_sdmmc_attach(struct wb_softc *);
 int	wb_sdmmc_detach(struct wb_softc *, int);
 int	wb_sdmmc_intr(struct wb_softc *);
+bool	wb_sdmmc_suspend(struct wb_softc *);
+bool	wb_sdmmc_resume(struct wb_softc *);
 
 #endif

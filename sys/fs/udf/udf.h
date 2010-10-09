@@ -1,4 +1,4 @@
-/* $NetBSD: udf.h,v 1.10.22.5 2010/03/11 15:04:14 yamt Exp $ */
+/* $NetBSD: udf.h,v 1.10.22.6 2010/10/09 03:32:30 yamt Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -30,7 +30,7 @@
 #define _FS_UDF_UDF_H_
 
 #include <sys/queue.h>
-#include <sys/rb.h>
+#include <sys/rbtree.h>
 #include <sys/uio.h>
 #include <sys/mutex.h>
 
@@ -356,12 +356,6 @@ struct udf_mount {
 	struct udf_strategy	*strategy;
 	void			*strategy_private;
 };
-
-
-#define RBTOUDFNODE(node) \
-	((node) ? \
-	 (void *)((uintptr_t)(node) - offsetof(struct udf_node, rbnode)) \
-	 : NULL)
 
 /*
  * UDF node describing a file/directory.

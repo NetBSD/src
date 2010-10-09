@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.c,v 1.57.4.4 2009/08/19 18:47:02 yamt Exp $	*/
+/*	$NetBSD: ld.c,v 1.57.4.5 2010/10/09 03:32:03 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.57.4.4 2009/08/19 18:47:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.57.4.5 2010/10/09 03:32:03 yamt Exp $");
 
 #include "rnd.h"
 
@@ -67,6 +67,7 @@ __KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.57.4.4 2009/08/19 18:47:02 yamt Exp $");
 static void	ldgetdefaultlabel(struct ld_softc *, struct disklabel *);
 static void	ldgetdisklabel(struct ld_softc *);
 static void	ldminphys(struct buf *bp);
+static bool	ld_suspend(device_t, const pmf_qual_t *);
 static bool	ld_shutdown(device_t, int);
 static void	ldstart(struct ld_softc *, struct buf *);
 static void	ld_set_properties(struct ld_softc *);
@@ -144,6 +145,7 @@ ldattach(struct ld_softc *sc)
 	    "%d bytes/sect x %"PRIu64" sectors\n",
 	    tbuf, sc->sc_ncylinders, sc->sc_nheads,
 	    sc->sc_nsectors, sc->sc_secsize, sc->sc_secperunit);
+	sc->sc_disksize512 = sc->sc_secperunit * sc->sc_secsize / DEV_BSIZE;
 
 	ld_set_properties(sc);
 
@@ -154,7 +156,7 @@ ldattach(struct ld_softc *sc)
 #endif
 
 	/* Register with PMF */
-	if (!pmf_device_register1(sc->sc_dv, NULL, NULL, ld_shutdown))
+	if (!pmf_device_register1(sc->sc_dv, ld_suspend, NULL, ld_shutdown))
 		aprint_error_dev(sc->sc_dv,
 		    "couldn't establish power handler\n");
 
@@ -261,6 +263,13 @@ ldenddetach(struct ld_softc *sc)
 			aprint_error_dev(&sc->sc_dv, "unable to flush cache\n");
 #endif
 	mutex_destroy(&sc->sc_mutex);
+}
+
+/* ARGSUSED */
+static bool
+ld_suspend(device_t dev, const pmf_qual_t *qual)
+{
+	return ld_shutdown(dev, 0);
 }
 
 /* ARGSUSED */
@@ -618,10 +627,14 @@ ldstrategy(struct buf *bp)
 	 * Do bounds checking and adjust the transfer.  If error, process.
 	 * If past the end of partition, just return.
 	 */
-	if (part != RAW_PART &&
-	    bounds_check_with_label(&sc->sc_dk, bp,
-	    (sc->sc_flags & (LDF_WLABEL | LDF_LABELLING)) != 0) <= 0) {
-		goto done;
+	if (part == RAW_PART) {
+		if (bounds_check_with_mediasize(bp, DEV_BSIZE,
+		    sc->sc_disksize512) <= 0)
+			goto done;
+	} else {
+		if (bounds_check_with_label(&sc->sc_dk, bp,
+		    (sc->sc_flags & (LDF_WLABEL | LDF_LABELLING)) != 0) <= 0)
+			goto done;
 	}
 
 	/*

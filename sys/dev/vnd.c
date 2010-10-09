@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.178.4.7 2010/08/11 22:53:14 yamt Exp $	*/
+/*	$NetBSD: vnd.c,v 1.178.4.8 2010/10/09 03:32:03 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
@@ -130,10 +130,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.178.4.7 2010/08/11 22:53:14 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.178.4.8 2010/10/09 03:32:03 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vnd.h"
+#include "opt_compat_netbsd.h"
 #endif
 
 #include <sys/param.h>
@@ -1032,7 +1033,10 @@ vndioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	vnd = device_lookup_private(&vnd_cd, unit);
 	if (vnd == NULL &&
 #ifdef COMPAT_30
-	    cmd != VNDIOOCGET &&
+	    cmd != VNDIOCGET30 &&
+#endif
+#ifdef COMPAT_50
+	    cmd != VNDIOCGET50 &&
 #endif
 	    cmd != VNDIOCGET)
 		return ENXIO;
@@ -1042,9 +1046,9 @@ vndioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	switch (cmd) {
 	case VNDIOCSET:
 	case VNDIOCCLR:
-#ifdef VNDIOOCSET
-	case VNDIOOCSET:
-	case VNDIOOCCLR:
+#ifdef COMPAT_50
+	case VNDIOCSET50:
+	case VNDIOCCLR50:
 #endif
 	case DIOCSDINFO:
 	case DIOCWDINFO:
@@ -1061,8 +1065,8 @@ vndioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	/* Must be initialized for these... */
 	switch (cmd) {
 	case VNDIOCCLR:
-#ifdef VNDIOOCCLR
-	case VNDIOOCCLR:
+#ifdef VNDIOCCLR50
+	case VNDIOCCLR50:
 #endif
 	case DIOCGDINFO:
 	case DIOCSDINFO:
@@ -1083,8 +1087,8 @@ vndioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	}
 
 	switch (cmd) {
-#ifdef VNDIOOCSET
-	case VNDIOOCSET:
+#ifdef VNDIOCSET50
+	case VNDIOCSET50:
 #endif
 	case VNDIOCSET:
 		if (vnd->sc_flags & VNF_INITED)
@@ -1291,8 +1295,8 @@ vndioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 
 		vndthrottle(vnd, vnd->sc_vp);
 		vio->vnd_osize = dbtob(vnd->sc_size);
-#ifdef VNDIOOCSET
-		if (cmd != VNDIOOCSET)
+#ifdef VNDIOCSET50
+		if (cmd != VNDIOCSET50)
 #endif
 			vio->vnd_size = dbtob(vnd->sc_size);
 		vnd->sc_flags |= VNF_INITED;
@@ -1351,8 +1355,8 @@ unlock_and_exit:
 		vndunlock(vnd);
 		return error;
 
-#ifdef VNDIOOCCLR
-	case VNDIOOCCLR:
+#ifdef VNDIOCCLR50
+	case VNDIOCCLR50:
 #endif
 	case VNDIOCCLR:
 		part = DISKPART(dev);
@@ -1365,10 +1369,10 @@ unlock_and_exit:
 		break;
 
 #ifdef COMPAT_30
-	case VNDIOOCGET: {
-		struct vnd_ouser *vnu;
+	case VNDIOCGET30: {
+		struct vnd_user30 *vnu;
 		struct vattr va;
-		vnu = (struct vnd_ouser *)data;
+		vnu = (struct vnd_user30 *)data;
 		KASSERT(l);
 		switch (error = vnd_cget(l, unit, &vnu->vnu_unit, &va)) {
 		case 0:
@@ -1386,6 +1390,30 @@ unlock_and_exit:
 		break;
 	}
 #endif
+
+#ifdef COMPAT_50
+	case VNDIOCGET50: {
+		struct vnd_user50 *vnu;
+		struct vattr va;
+		vnu = (struct vnd_user50 *)data;
+		KASSERT(l);
+		switch (error = vnd_cget(l, unit, &vnu->vnu_unit, &va)) {
+		case 0:
+			vnu->vnu_dev = va.va_fsid;
+			vnu->vnu_ino = va.va_fileid;
+			break;
+		case -1:
+			/* unused is not an error */
+			vnu->vnu_dev = 0;
+			vnu->vnu_ino = 0;
+			break;
+		default:
+			return error;
+		}
+		break;
+	}
+#endif
+
 	case VNDIOCGET: {
 		struct vnd_user *vnu;
 		struct vattr va;

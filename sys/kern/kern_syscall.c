@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_syscall.c,v 1.4.6.2 2010/08/11 22:54:41 yamt Exp $	*/
+/*	$NetBSD: kern_syscall.c,v 1.4.6.3 2010/10/09 03:32:31 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_syscall.c,v 1.4.6.2 2010/08/11 22:54:41 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_syscall.c,v 1.4.6.3 2010/10/09 03:32:31 yamt Exp $");
 
 #include "opt_modular.h"
 
@@ -45,6 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_syscall.c,v 1.4.6.2 2010/08/11 22:54:41 yamt Ex
 #include <sys/syscall.h>
 #include <sys/syscallargs.h>
 #include <sys/syscallvar.h>
+#include <sys/systm.h>
 #include <sys/xcall.h>
 
 int
@@ -199,13 +200,13 @@ sys_nomodule(struct lwp *l, const void *v, register_t *retval)
 
 	/*
 	 * Restart the syscall if we interrupted a module unload that
-	 * failed.  Acquiring module_lock delays us until any unload
+	 * failed.  Acquiring kernconfig_lock delays us until any unload
 	 * has been completed or rolled back.
 	 */
-	mutex_enter(&module_lock);
+	kernconfig_lock();
 	sy = l->l_sysent;
 	if (sy->sy_call != sys_nomodule) {
-		mutex_exit(&module_lock);
+		kernconfig_unlock();
 		return ERESTART;
 	}
 	/*
@@ -224,11 +225,11 @@ sys_nomodule(struct lwp *l, const void *v, register_t *retval)
 			    sy->sy_call == sys_nomodule) {
 			    	break;
 			}
-			mutex_exit(&module_lock);
+			kernconfig_unlock();
 			return ERESTART;
 		}
 	}
-	mutex_exit(&module_lock);
+	kernconfig_unlock();
 #endif	/* MODULAR */
 
 	return sys_nosys(l, v, retval);
@@ -240,7 +241,7 @@ syscall_establish(const struct emul *em, const struct syscall_package *sp)
 	struct sysent *sy;
 	int i;
 
-	KASSERT(mutex_owned(&module_lock));
+	KASSERT(kernconfig_is_held());
 
 	if (em == NULL) {
 		em = &emul_netbsd;
@@ -277,7 +278,7 @@ syscall_disestablish(const struct emul *em, const struct syscall_package *sp)
 	lwp_t *l;
 	int i;
 
-	KASSERT(mutex_owned(&module_lock));
+	KASSERT(kernconfig_is_held());
 
 	if (em == NULL) {
 		em = &emul_netbsd;
@@ -320,7 +321,7 @@ syscall_disestablish(const struct emul *em, const struct syscall_package *sp)
 		/*
 		 * We lose: one or more calls are still in use.  Put back
 		 * the old entrypoints and act like nothing happened.
-		 * When we drop module_lock, any system calls held in
+		 * When we drop kernconfig_lock, any system calls held in
 		 * sys_nomodule() will be restarted.
 		 */
 		for (i = 0; sp[i].sp_call != NULL; i++) {

@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsys_events.c,v 1.54.4.5 2010/08/11 22:54:12 yamt Exp $ */
+/* $NetBSD: sysmon_envsys_events.c,v 1.54.4.6 2010/10/09 03:32:26 yamt Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.54.4.5 2010/08/11 22:54:12 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.54.4.6 2010/10/09 03:32:26 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -546,12 +546,12 @@ sysmon_envsys_update_limits(struct sysmon_envsys *sme, envsys_data_t *edata)
 {
 	int err;
 
+	sysmon_envsys_acquire(sme, false);
 	if (sme->sme_get_limits == NULL ||
 	    (edata->flags & ENVSYS_FMONLIMITS) == 0)
-		return EINVAL;
-
-	sysmon_envsys_acquire(sme, false);
-	err = sme_update_limits(sme, edata);
+		err = EINVAL;
+	else
+		err = sme_update_limits(sme, edata);
 	sysmon_envsys_release(sme, false);
 
 	return err;
@@ -595,8 +595,9 @@ sme_update_limits(struct sysmon_envsys *sme, envsys_data_t *edata)
 	if (see == NULL)
 		return EINVAL;
 
-	/* Get new limit values */
-	(*sme->sme_get_limits)(sme, edata, &lims, &props);
+	/* Update limit values from driver if possible */
+	if (sme->sme_get_limits != NULL)
+		(*sme->sme_get_limits)(sme, edata, &lims, &props);
 
 	/* Update event and dictionary */
 	sme_event_register(sdict, edata, sme, &lims, props,

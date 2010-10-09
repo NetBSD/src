@@ -1,4 +1,4 @@
-/*	$NetBSD: kue_fw.h,v 1.3 2001/01/19 08:54:21 jdolecek Exp $	*/
+/*	$NetBSD: kue_fw.h,v 1.3.128.1 2010/10/09 03:32:26 yamt Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -86,7 +86,7 @@
 #define KUE_QTINTR_LOAD_CODE_HIGH	0x9C
 
 /* Firmware code segment */
-Static const unsigned char kue_code_seg[] =
+static const uint8_t kue_code_seg[] =
 {
     /******************************************/
     /* NOTE: B6/C3 is data header signature   */
@@ -578,7 +578,7 @@ Static const unsigned char kue_code_seg[] =
 };
 
 /* Firmware fixup (data?) segment */
-Static const unsigned char kue_fix_seg[] =
+static const uint8_t kue_fix_seg[] =
 {
     /******************************************/
     /* NOTE: B6/C3 is data header signature   */
@@ -681,6 +681,6 @@ Static const unsigned char kue_fix_seg[] =
 
 /* Fixup command. */
 #define KUE_TRIGCMD_OFFSET	5
-Static const unsigned char kue_trig_seg[] = {
+static const uint8_t kue_trig_seg[] = {
     0xb6, 0xc3, 0x01, 0x00, 0x06, 0x64, 0x00, 0x00
 };

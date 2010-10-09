@@ -1,4 +1,4 @@
-/*	$NetBSD: beagle_machdep.c,v 1.3.8.5 2010/08/11 22:51:50 yamt Exp $ */
+/*	$NetBSD: beagle_machdep.c,v 1.3.8.6 2010/10/09 03:31:43 yamt Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.3.8.5 2010/08/11 22:51:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.3.8.6 2010/10/09 03:31:43 yamt Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -134,6 +134,7 @@ __KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.3.8.5 2010/08/11 22:51:50 yamt 
 #include "opt_md.h"
 #include "opt_com.h"
 #include "opt_omap.h"
+#include "prcm.h"
 #include "md.h"
 
 #include <sys/param.h>
@@ -172,6 +173,7 @@ __KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.3.8.5 2010/08/11 22:51:50 yamt 
 #include <arm/omap/omap_com.h>
 #include <arm/omap/omap_var.h>
 #include <arm/omap/omap_wdtvar.h>
+#include <arm/omap/omap2_prcm.h>
 
 #include <evbarm/beagle/beagle.h>
 
@@ -298,6 +300,9 @@ cpu_reboot(int howto, char *bootstr)
 #if NOMAPWDT32K > 0
 		omapwdt32k_reboot();
 #endif
+#if NPRCM > 0
+		prcm_cold_reset();
+#endif
 		cpu_reset();
 		/*NOTREACHED*/
 	}
@@ -339,6 +344,9 @@ cpu_reboot(int howto, char *bootstr)
 	printf("rebooting...\n");
 #if NOMAPWDT32K > 0
 	omapwdt32k_reboot();
+#endif
+#if NPRCM > 0
+	prcm_cold_reset();
 #endif
 	cpu_reset();
 	/*NOTREACHED*/

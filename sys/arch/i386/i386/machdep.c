@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.629.2.6 2010/08/11 22:52:11 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.629.2.7 2010/10/09 03:31:47 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.629.2.6 2010/08/11 22:52:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.629.2.7 2010/10/09 03:31:47 yamt Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -250,6 +250,7 @@ int	i386_fpu_exception;
 int	i386_fpu_fdivbug;
 
 int	i386_use_fxsave;
+int	i386_use_pae = 0;
 int	i386_has_sse;
 int	i386_has_sse2;
 
@@ -689,6 +690,12 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_QUAD, "tsc_freq", NULL,
 		       NULL, 0, &tsc_freq, 0,
+		       CTL_MACHDEP, CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_INT, "pae", 
+		       SYSCTL_DESCR("Whether the kernel uses PAE"),
+		       NULL, 0, &i386_use_pae, 0,
 		       CTL_MACHDEP, CTL_CREATE, CTL_EOL);
 }
 
@@ -1301,6 +1308,10 @@ init386(paddr_t first_avail)
 	cpu_feature[0] &= ~CPUID_FEAT_BLACKLIST;
 
 	cpu_init_msrs(&cpu_info_primary, true);
+
+#ifdef PAE
+	i386_use_pae = 1;
+#endif
 
 #ifdef XEN
 	pcb->pcb_cr3 = PDPpaddr;

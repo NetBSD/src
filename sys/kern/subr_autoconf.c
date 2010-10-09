@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.146.2.7 2010/08/11 22:54:41 yamt Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.146.2.8 2010/10/09 03:32:31 yamt Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.146.2.7 2010/08/11 22:54:41 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.146.2.8 2010/10/09 03:32:31 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -832,6 +832,8 @@ rescan_with_cfdata(const struct cfdata *cf)
 
 			(*d->dv_cfattach->ca_rescan)(d,
 				cfdata_ifattr(cf1), cf1->cf_loc);
+
+			config_deferred(d);
 		}
 	}
 	deviter_release(&di);

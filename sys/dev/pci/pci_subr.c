@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.74.4.4 2010/08/11 22:53:51 yamt Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.74.4.5 2010/10/09 03:32:09 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.74.4.4 2010/08/11 22:53:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.74.4.5 2010/10/09 03:32:09 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -323,11 +323,8 @@ int pciverbose_loaded = 0;
  */
 void pci_load_verbose(void)
 {
-	if (pciverbose_loaded == 0) {
-		mutex_enter(&module_lock);
+	if (pciverbose_loaded == 0)
 		module_autoload("pciverbose", MODULE_CLASS_MISC);
-		mutex_exit(&module_lock);
-	}
 }
 
 const char *pci_findvendor_stub(pcireg_t id_reg)

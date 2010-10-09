@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_object.h,v 1.24.10.1 2009/05/04 08:14:39 yamt Exp $	*/
+/*	$NetBSD: uvm_object.h,v 1.24.10.2 2010/10/09 03:32:47 yamt Exp $	*/
 
 /*
  *
@@ -41,7 +41,7 @@
  * uvm_object.h
  */
 
-#include <sys/rb.h>
+#include <sys/rbtree.h>
 
 /*
  * uvm_object: all that is left of mach objects.
@@ -105,7 +105,7 @@ extern const struct uvm_pagerops aobj_pager;
 #define	UVM_OBJ_IS_AOBJ(uobj)						\
 	((uobj)->pgops == &aobj_pager)
 
-extern const struct rb_tree_ops uvm_page_tree_ops;
+extern const rb_tree_ops_t uvm_page_tree_ops;
 
 #define	UVM_OBJ_INIT(uobj, ops, refs)					\
 	do {								\

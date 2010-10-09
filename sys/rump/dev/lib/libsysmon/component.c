@@ -1,4 +1,4 @@
-/*	$NetBSD: component.c,v 1.2.2.3 2010/08/11 22:55:01 yamt Exp $	*/
+/*	$NetBSD: component.c,v 1.2.2.4 2010/10/09 03:32:41 yamt Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: component.c,v 1.2.2.3 2010/08/11 22:55:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: component.c,v 1.2.2.4 2010/10/09 03:32:41 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -52,7 +52,7 @@ RUMP_COMPONENT(RUMP_COMPONENT_DEV)
 
 	if ((error = config_init_component(cfdriver_ioconf_swwdog,
 	    cfattach_ioconf_swwdog, cfdata_ioconf_swwdog)) != 0) {
-		printf("cannot attach sysmon: %d\n", error);
+		printf("cannot attach swwdog: %d\n", error);
 		return;
 	}
 

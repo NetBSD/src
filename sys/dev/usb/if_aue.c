@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aue.c,v 1.110.10.4 2010/08/11 22:54:13 yamt Exp $	*/
+/*	$NetBSD: if_aue.c,v 1.110.10.5 2010/10/09 03:32:26 yamt Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.110.10.4 2010/08/11 22:54:13 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.110.10.5 2010/10/09 03:32:26 yamt Exp $");
 
 #include "opt_inet.h"
 #include "rnd.h"
@@ -188,6 +188,7 @@ Static const struct aue_type aue_devs[] = {
  {{ USB_VENDOR_HP,		USB_PRODUCT_HP_HN210E},		  PII },
  {{ USB_VENDOR_IODATA,		USB_PRODUCT_IODATA_USBETTX},	  0 },
  {{ USB_VENDOR_IODATA,		USB_PRODUCT_IODATA_USBETTXS},	  PII },
+ {{ USB_VENDOR_IODATA,		USB_PRODUCT_IODATA_ETXUS2},	  PII },
  {{ USB_VENDOR_KINGSTON,	USB_PRODUCT_KINGSTON_KNU101TX},   0 },
  {{ USB_VENDOR_LINKSYS,		USB_PRODUCT_LINKSYS_USB10TX1},	  LSYS|PII },
  {{ USB_VENDOR_LINKSYS,		USB_PRODUCT_LINKSYS_USB10T},	  LSYS },
