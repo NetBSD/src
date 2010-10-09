@@ -1,4 +1,4 @@
-/*        $NetBSD: device-mapper.c,v 1.23 2010/05/18 15:10:38 haad Exp $ */
+/*        $NetBSD: device-mapper.c,v 1.24 2010/10/09 12:56:06 haad Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -174,6 +174,8 @@ dm_modcmd(modcmd_t cmd, void *arg)
 
 		error = devsw_attach(dm_cd.cd_name, &dm_bdevsw, &bmajor,
 		    &dm_cdevsw, &cmajor);
+		if (error == EEXIST)
+			error = 0;
 		if (error) {
 			config_cfattach_detach(dm_cd.cd_name, &dm_ca);
 			config_cfdriver_detach(&dm_cd);
