@@ -1,4 +1,4 @@
-.\"	$NetBSD: sleep.1,v 1.19 2007/08/18 00:41:52 hubertf Exp $
+.\"	$NetBSD: sleep.1,v 1.20 2010/10/09 04:57:30 mrg Exp $
 .\"
 .\" Copyright (c) 1990, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -57,6 +57,11 @@ Note: The
 command will accept and honor a non-integer number of specified seconds.
 This is a non-portable extension, and its use will nearly guarantee that
 a shell script will not execute properly on another system.
+.Pp
+When the
+.Dv SIGINFO
+signal is received, the estimate of the amount of seconds left to
+sleep is printed on the standard output.
 .Sh EXIT STATUS
 The
 .Nm
