@@ -1,4 +1,4 @@
-/*      $NetBSD: sa11x0_com.c,v 1.42.10.4 2010/03/11 15:02:07 yamt Exp $        */
+/*      $NetBSD: sa11x0_com.c,v 1.42.10.5 2010/10/09 03:31:41 yamt Exp $        */
 
 /*-
  * Copyright (c) 1998, 1999, 2001 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sa11x0_com.c,v 1.42.10.4 2010/03/11 15:02:07 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sa11x0_com.c,v 1.42.10.5 2010/10/09 03:31:41 yamt Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -159,7 +159,7 @@ static inline void sacom_schedrx(struct sacom_softc *);
 
 #ifdef hpcarm
 /* HPCARM specific functions */
-static void	sacom_j720_init(struct sa11x0_softc *, struct sacom_softc *);
+static void	sacom_j720_init(device_t, device_t);
 #endif
 
 #define COMUNIT_MASK	0x7ffff
@@ -234,7 +234,7 @@ sacom_attach(device_t parent, device_t self, void *aux)
 
 #ifdef hpcarm
 	struct platid_data *p;
-	void (*mdinit)(device_t, struct sacom_softc *);
+	void (*mdinit)(device_t, device_t);
 #endif
 
 	aprint_normal("\n");
@@ -270,7 +270,7 @@ sacom_attach(device_t parent, device_t self, void *aux)
 	/* Do hpcarm specific initialization, if any */
 	if ((p = platid_search_data(&platid, sacom_platid_table)) != NULL) {
 		mdinit = p->data;
-		(mdinit)(parent, sc);
+		(*mdinit)(parent, self);
 	}
 #endif
 
@@ -1400,12 +1400,16 @@ sacomintr(void *arg)
 }
 
 static void
-sacom_j720_init(struct sa11x0_softc *parent, struct sacom_softc *sc) {
+sacom_j720_init(device_t parent, device_t self)
+{
+	struct sa11x0_softc *sasc;
+
+	sasc = device_private(parent);
 
 	/* XXX  this should be done at sc->enable function */
-	bus_space_write_4(parent->sc_iot, parent->sc_gpioh,
+	bus_space_write_4(sasc->sc_iot, sasc->sc_gpioh,
 	    SAGPIO_PCR, 0xa0000);
-	bus_space_write_4(parent->sc_iot, parent->sc_gpioh,
+	bus_space_write_4(sasc->sc_iot, sasc->sc_gpioh,
 	    SAGPIO_PSR, 0x100);
 }
 

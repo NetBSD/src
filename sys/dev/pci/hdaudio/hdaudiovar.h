@@ -1,4 +1,4 @@
-/* $NetBSD: hdaudiovar.h,v 1.4.2.3 2010/03/11 15:04:00 yamt Exp $ */
+/* $NetBSD: hdaudiovar.h,v 1.4.2.4 2010/10/09 03:32:23 yamt Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -56,6 +56,8 @@
 	aprint_error_dev((sc)->sc_dev, __VA_ARGS__)
 #define	hda_trace(sc, ...)		\
 	aprint_debug_dev((sc)->sc_dev, __VA_ARGS__)
+#define	hda_trace1(sc, ...)		\
+	aprint_debug(__VA_ARGS__)
 #define	hda_delay(us)			\
 	delay((us))
 

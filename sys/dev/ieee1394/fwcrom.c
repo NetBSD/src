@@ -1,4 +1,4 @@
-/*	$NetBSD: fwcrom.c,v 1.6.12.3 2010/08/11 22:53:34 yamt Exp $	*/
+/*	$NetBSD: fwcrom.c,v 1.6.12.4 2010/10/09 03:32:07 yamt Exp $	*/
 /*-
  * Copyright (c) 2002-2003
  * 	Hidetoshi Shimokawa. All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwcrom.c,v 1.6.12.3 2010/08/11 22:53:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwcrom.c,v 1.6.12.4 2010/10/09 03:32:07 yamt Exp $");
 
 #include <sys/param.h>
 #ifdef _KERNEL
@@ -178,10 +178,16 @@ crom_parse_text(struct crom_context *cc, char *buf, int len)
 		return;
 
 	reg = crom_get(cc);
-	if (reg->key != CROM_TEXTLEAF ||
-	    (char *)(reg + reg->val) > CROM_END(cc)) {
-		strncpy(buf, nullstr, len);
-		return;
+	switch (reg->key) {
+	case CROM_TEXTLEAF:
+	case CROM_TEXTLEAF2:
+		break;
+	default:
+		if ((char *)(reg + reg->val) > CROM_END(cc)) {
+			strncpy(buf, nullstr, len);
+			return;
+		}
+		break;
 	}
 	textleaf = (struct csrtext *)(reg + reg->val);
 
@@ -288,7 +294,7 @@ crom_desc(struct crom_context *cc, char *buf, int len)
 	switch (reg->key & CSRTYPE_MASK) {
 	case CSRTYPE_I:
 #if 0
-		len -= snprintf(buf, len, "%d", reg->val);
+		len -= snprintf(buf, len, "0x%x", reg->val);
 		buf += strlen(buf);
 #else
 		*buf = '\0';
@@ -304,32 +310,42 @@ crom_desc(struct crom_context *cc, char *buf, int len)
 	case CSRTYPE_D:
 		dir = (struct csrdirectory *) (reg + reg->val);
 		crc = crom_crc((uint32_t *)dir->entry, dir->crc_len);
-		len -= snprintf(buf, len, "len=%d crc=0x%04x(%s) ",
-		    dir->crc_len, dir->crc, (crc == dir->crc) ? "OK" : "NG");
+		len -= snprintf(buf, len, "len=%d crc=0x%04x ",
+		    dir->crc_len, crc);
+		buf += strlen(buf);
+
+		if (crc == dir->crc)
+			len -= snprintf(buf, len, "(OK) ");
+		else
+			len -= snprintf(buf, len, "(NG, 0x%x) ",
+			    dir->crc);
 		buf += strlen(buf);
 	}
 	switch (reg->key) {
-	case 0x03:
+	case CSRKEY_VENDOR: /* 0x03 */
 		desc = "module_vendor_ID";
 		break;
-	case 0x04:
+	case CSRKEY_HW: /* 0x04 */
 		desc = "hardware_version";
 		break;
-	case 0x0c:
+	case CSRKEY_NCAP: /* 0x0c */
 		desc = "node_capabilities";
 		break;
-	case 0x12:
+	case CSRKEY_SPEC: /* 0x12 */
 		desc = "unit_spec_ID";
 		break;
-	case 0x13:
+	case CSRKEY_VER: /* 0x13 */
 		desc = "unit_sw_version";
 		crom_desc_specver(0, reg->val, buf, len);
 		break;
-	case 0x14:
+	case CSRKEY_DINFO: /* 0x14 */
 		desc = "logical_unit_number";
 		break;
-	case 0x17:
+	case CSRKEY_MODEL: /* 0x17 */
 		desc = "model_ID";
+		break;
+	case CSRKEY_REV: /* 0x21 */
+		desc = "revision_ID";
 		break;
 	case 0x38:
 		desc = "command_set_spec_ID";
@@ -349,12 +365,19 @@ crom_desc(struct crom_context *cc, char *buf, int len)
 	case 0x3d:
 		desc = "reconnect_timeout";
 		break;
+	case 0x40:
+		desc = "command_regs_base";
+		break;
 	case 0x54:
 		desc = "management_agent";
 		break;
-	case 0x81:
+	case CROM_TEXTLEAF: /* 0x81 */
+	case CROM_TEXTLEAF2: /* 0x82 */
 		desc = "text_leaf";
 		crom_parse_text(cc, buf + strlen(buf), len);
+		break;
+	case CROM_NODEID: /* 0x8d */
+		desc = "node_unique_ID";
 		break;
 	case 0xd1:
 		desc = "unit_directory";

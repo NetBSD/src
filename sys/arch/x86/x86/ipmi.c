@@ -1,4 +1,4 @@
-/*	$NetBSD: ipmi.c,v 1.18.4.6 2010/08/11 22:52:57 yamt Exp $ */
+/*	$NetBSD: ipmi.c,v 1.18.4.7 2010/10/09 03:31:58 yamt Exp $ */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.18.4.6 2010/08/11 22:52:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.18.4.7 2010/10/09 03:31:58 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1976,7 +1976,7 @@ ipmi_match(device_t parent, cfdata_t cf, void *aux)
 	sc.sc_if->probe(&sc);
 
 	mutex_init(&sc.sc_cmd_mtx, MUTEX_DEFAULT, IPL_SOFTCLOCK);
-	cv_init(&sc.sc_cmd_sleep, "ipmimatch");
+	cv_init(&sc.sc_cmd_sleep, "ipmimtch");
 	mutex_enter(&sc.sc_cmd_mtx);
 	/* Identify BMC device early to detect lying bios */
 	if (ipmi_sendcmd(&sc, BMC_SA, 0, APP_NETFN, APP_GET_DEVICE_ID,
@@ -2133,7 +2133,7 @@ ipmi_attach(device_t parent, device_t self, void *aux)
 	cv_init(&sc->sc_cmd_sleep, "ipmicmd");
 
 	mutex_init(&sc->sc_poll_mtx, MUTEX_DEFAULT, IPL_SOFTCLOCK);
-	cv_init(&sc->sc_poll_cv, "ipmi_poll");
+	cv_init(&sc->sc_poll_cv, "ipmipoll");
 
 	if (kthread_create(PRI_NONE, 0, NULL, ipmi_thread, self,
 	    &sc->sc_kthread, "ipmi") != 0) {

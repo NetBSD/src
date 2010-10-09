@@ -1,4 +1,4 @@
-/*	 $NetBSD: nfsnode.h,v 1.67.10.3 2010/09/26 03:58:55 yamt Exp $	*/
+/*	 $NetBSD: nfsnode.h,v 1.67.10.4 2010/10/09 03:32:40 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -40,7 +40,7 @@
 
 #include <sys/condvar.h>
 #include <sys/mutex.h>
-#include <sys/rb.h>
+#include <sys/rbtree.h>
 
 #ifndef _NFS_NFS_H_
 #include <nfs/nfs.h>

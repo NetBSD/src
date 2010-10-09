@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuconf.h,v 1.13.50.3 2010/08/11 22:51:41 yamt Exp $	*/
+/*	$NetBSD: cpuconf.h,v 1.13.50.4 2010/10/09 03:31:39 yamt Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -81,7 +81,8 @@
 			 defined(CPU_XSCALE_80200) +			\
 			 defined(CPU_XSCALE_80321) +			\
 			 defined(__CPU_XSCALE_PXA2XX) +			\
-			 defined(CPU_XSCALE_IXP425))
+			 defined(CPU_XSCALE_IXP425)) +			\
+			 defined(CPU_SHEEVA))
 #else
 #define	CPU_NTYPES	2
 #endif /* _KERNEL_OPT */
@@ -116,7 +117,8 @@
 #if !defined(_KERNEL_OPT) ||						\
     (defined(CPU_ARM9E) || defined(CPU_ARM10) ||			\
      defined(CPU_XSCALE_80200) || defined(CPU_XSCALE_80321) ||		\
-     defined(__CPU_XSCALE_PXA2XX) || defined(CPU_XSCALE_IXP425))
+     defined(__CPU_XSCALE_PXA2XX) || defined(CPU_XSCALE_IXP425)) ||	\
+     defined(CPU_SHEEVA)
 #define	ARM_ARCH_5	1
 #else
 #define	ARM_ARCH_5	0
@@ -177,7 +179,7 @@
 #if !defined(_KERNEL_OPT) ||						\
     (defined(CPU_ARM6) || defined(CPU_ARM7) || defined(CPU_ARM7TDMI) ||	\
      defined(CPU_ARM8) || defined(CPU_ARM9) || defined(CPU_ARM9E) ||	\
-     defined(CPU_ARM10) || defined(CPU_FA526))
+     defined(CPU_ARM10) || defined(CPU_FA526)) || defined(CPU_SHEEVA)
 #define	ARM_MMU_GENERIC		1
 #else
 #define	ARM_MMU_GENERIC		0

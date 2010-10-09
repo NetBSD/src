@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.336.4.6 2010/08/11 22:54:44 yamt Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.336.4.7 2010/10/09 03:32:33 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.336.4.6 2010/08/11 22:54:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.336.4.7 2010/10/09 03:32:33 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -366,16 +366,7 @@ try_nextlist:
 	vp->v_freelisthd = NULL;
 	mutex_exit(&vnode_free_list_lock);
 
-	if (vp->v_usecount != 0) {
-		/*
-		 * was referenced again before we got the interlock
-		 * Don't return to freelist - the holder of the last
-		 * reference will destroy it.
-		 */
-		mutex_exit(&vp->v_interlock);
-		mutex_enter(&vnode_free_list_lock);
-		goto retry;
-	}
+	KASSERT(vp->v_usecount == 0);
 
 	/*
 	 * The vnode is still associated with a file system, so we must
@@ -1312,22 +1303,6 @@ vget(vnode_t *vp, int flags)
 		return ENOENT;
 	}
 
-	if ((vp->v_iflag & VI_INACTNOW) != 0) {
-		/*
-		 * if it's being desactived, wait for it to complete.
-		 * Make sure to not return a clean vnode.
-		 */
-		 if ((flags & LK_NOWAIT) != 0) {
-			vrelel(vp, 0);
-			return EBUSY;
-		}
-		vwait(vp, VI_INACTNOW);
-		if ((vp->v_iflag & VI_CLEAN) != 0) {
-			vrelel(vp, 0);
-			return ENOENT;
-		}
-	}
-
 	/*
 	 * Ok, we got it in good shape.  Just locking left.
 	 */
@@ -1431,30 +1406,14 @@ vrelel(vnode_t *vp, int flags)
 			/* The pagedaemon can't wait around; defer. */
 			defer = true;
 		} else if (curlwp == vrele_lwp) {
-			/*
-			 * We have to try harder. But we can't sleep
-			 * with VI_INACTNOW as vget() may be waiting on it.
-			 */
-			vp->v_iflag &= ~(VI_INACTREDO|VI_INACTNOW);
-			cv_broadcast(&vp->v_cv);
+			/* We have to try harder. */
+			vp->v_iflag &= ~VI_INACTREDO;
 			mutex_exit(&vp->v_interlock);
 			error = vn_lock(vp, LK_EXCLUSIVE);
 			if (error != 0) {
 				/* XXX */
 				vpanic(vp, "vrele: unable to lock %p");
 			}
-			mutex_enter(&vp->v_interlock);
-			/*
-			 * if we did get another reference while
-			 * sleeping, don't try to inactivate it yet.
-			 */
-			if (__predict_false(vtryrele(vp))) {
-				VOP_UNLOCK(vp);
-				mutex_exit(&vp->v_interlock);
-				return;
-			}
-			vp->v_iflag |= VI_INACTNOW;
-			mutex_exit(&vp->v_interlock);
 			defer = false;
 		} else if ((vp->v_iflag & VI_LAYER) != 0) {
 			/* 
@@ -1490,7 +1449,6 @@ vrelel(vnode_t *vp, int flags)
 			if (++vrele_pending > (desiredvnodes >> 8))
 				cv_signal(&vrele_cv); 
 			mutex_exit(&vrele_lock);
-			cv_broadcast(&vp->v_cv);
 			mutex_exit(&vp->v_interlock);
 			return;
 		}
@@ -1515,7 +1473,6 @@ vrelel(vnode_t *vp, int flags)
 		VOP_INACTIVE(vp, &recycle);
 		mutex_enter(&vp->v_interlock);
 		vp->v_iflag &= ~VI_INACTNOW;
-		cv_broadcast(&vp->v_cv);
 		if (!recycle) {
 			if (vtryrele(vp)) {
 				mutex_exit(&vp->v_interlock);

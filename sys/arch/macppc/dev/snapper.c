@@ -1,4 +1,4 @@
-/*	$NetBSD: snapper.c,v 1.25.18.2 2010/03/11 15:02:36 yamt Exp $	*/
+/*	$NetBSD: snapper.c,v 1.25.18.3 2010/10/09 03:31:50 yamt Exp $	*/
 /*	Id: snapper.c,v 1.11 2002/10/31 17:42:13 tsubai Exp	*/
 /*	Id: i2s.c,v 1.12 2005/01/15 14:32:35 tsubai Exp		*/
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: snapper.c,v 1.25.18.2 2010/03/11 15:02:36 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: snapper.c,v 1.25.18.3 2010/10/09 03:31:50 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/audioio.h>
@@ -148,8 +148,6 @@ static void snapper_mute_headphone(struct snapper_softc *, int);
 static int snapper_cint(void *);
 static int tas3004_init(struct snapper_softc *);
 static void snapper_init(struct snapper_softc *, int);
-static void snapper_volume_up(device_t);
-static void snapper_volume_down(device_t);
 
 struct snapper_codecvar {
 	stream_filter_t	base;
@@ -617,7 +615,7 @@ static int headphone_detect_active;
 #define  DEQ_MCR1_W_16	0x00	/*  16 bit */
 #define  DEQ_MCR1_W_18	0x01	/*  18 bit */
 #define  DEQ_MCR1_W_20	0x02	/*  20 bit */
-#define  DEQ_MCR1_W_24	0x03	/*  20 bit */
+#define  DEQ_MCR1_W_24	0x03	/*  24 bit */
 
 #define DEQ_MCR2_DL	0x80	/* Download */
 #define DEQ_MCR2_AP	0x02	/* All pass mode */
@@ -788,10 +786,8 @@ snapper_attach(device_t parent, device_t self, void *aux)
 	aprint_normal(": irq %d,%d,%d\n", cirq, oirq, iirq);
 
 	/* PMF event handler */
-	pmf_event_register(self, PMFE_AUDIO_VOLUME_DOWN,
-	    snapper_volume_down, TRUE);
-	pmf_event_register(self, PMFE_AUDIO_VOLUME_UP,
-	    snapper_volume_up, TRUE);
+	pmf_device_register(sc->sc_dev, NULL, NULL);
+
 	config_defer(self, snapper_defer);
 }
 
@@ -1202,7 +1198,7 @@ snapper_query_devinfo(void *h, mixer_devinfo_t *dip)
 	switch (dip->index) {
 
 	case SNAPPER_OUTPUT_SELECT:
-		dip->mixer_class = SNAPPER_MONITOR_CLASS;
+		dip->mixer_class = SNAPPER_OUTPUT_CLASS;
 		strcpy(dip->label.name, AudioNoutput);
 		dip->type = AUDIO_MIXER_SET;
 		dip->prev = dip->next = AUDIO_MIXER_LAST;
@@ -1214,11 +1210,12 @@ snapper_query_devinfo(void *h, mixer_devinfo_t *dip)
 		return 0;
 
 	case SNAPPER_VOL_OUTPUT:
-		dip->mixer_class = SNAPPER_MONITOR_CLASS;
+		dip->mixer_class = SNAPPER_OUTPUT_CLASS;
 		strcpy(dip->label.name, AudioNmaster);
 		dip->type = AUDIO_MIXER_VALUE;
 		dip->prev = dip->next = AUDIO_MIXER_LAST;
 		dip->un.v.num_channels = 2;
+		dip->un.v.delta = 16;
 		strcpy(dip->un.v.units.name, AudioNvolume);
 		return 0;
 
@@ -1271,7 +1268,7 @@ snapper_query_devinfo(void *h, mixer_devinfo_t *dip)
 		if (sc->sc_mode == SNAPPER_SWVOL)
 			return ENXIO;
 
-		dip->mixer_class = SNAPPER_MONITOR_CLASS;
+		dip->mixer_class = SNAPPER_OUTPUT_CLASS;
 		strcpy(dip->label.name, AudioNtreble);
 		dip->type = AUDIO_MIXER_VALUE;
 		dip->prev = dip->next = AUDIO_MIXER_LAST;
@@ -1282,7 +1279,7 @@ snapper_query_devinfo(void *h, mixer_devinfo_t *dip)
 		if (sc->sc_mode == SNAPPER_SWVOL)
 			return ENXIO;
 
-		dip->mixer_class = SNAPPER_MONITOR_CLASS;
+		dip->mixer_class = SNAPPER_OUTPUT_CLASS;
 		strcpy(dip->label.name, AudioNbass);
 		dip->type = AUDIO_MIXER_VALUE;
 		dip->prev = dip->next = AUDIO_MIXER_LAST;
@@ -1293,7 +1290,7 @@ snapper_query_devinfo(void *h, mixer_devinfo_t *dip)
 		if (sc->sc_mode == SNAPPER_SWVOL)
 			return ENXIO;
 
-		dip->mixer_class = SNAPPER_MONITOR_CLASS;
+		dip->mixer_class = SNAPPER_OUTPUT_CLASS;
 		strcpy(dip->label.name, AudioNdac);
 		dip->type = AUDIO_MIXER_VALUE;
 		dip->prev = dip->next = AUDIO_MIXER_LAST;
@@ -1304,7 +1301,7 @@ snapper_query_devinfo(void *h, mixer_devinfo_t *dip)
 		if (sc->sc_mode == SNAPPER_SWVOL)
 			return ENXIO;
 
-		dip->mixer_class = SNAPPER_MONITOR_CLASS;
+		dip->mixer_class = SNAPPER_OUTPUT_CLASS;
 		strcpy(dip->label.name, AudioNline);
 		dip->type = AUDIO_MIXER_VALUE;
 		dip->prev = dip->next = AUDIO_MIXER_LAST;
@@ -2110,22 +2107,4 @@ snapper_init(struct snapper_softc *sc, int node)
 	sc->mixer[4] = 128;
 	sc->mixer[5] = 0;
 	snapper_write_mixers(sc);
-}
-
-static void
-snapper_volume_up(device_t dev)
-{
-	struct snapper_softc *sc = device_private(dev);
-
-	snapper_set_volume(sc, min(0xff, sc->sc_vol_l + 8),
-	     min(0xff, sc->sc_vol_r + 8));
-}
-
-static void
-snapper_volume_down(device_t dev)
-{
-	struct snapper_softc *sc = device_private(dev);
-
-	snapper_set_volume(sc, max(0, sc->sc_vol_l - 8),
-	     max(0, sc->sc_vol_r - 8));
 }

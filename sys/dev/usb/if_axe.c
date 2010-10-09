@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axe.c,v 1.24.4.4 2010/08/11 22:54:13 yamt Exp $	*/
+/*	$NetBSD: if_axe.c,v 1.24.4.5 2010/10/09 03:32:26 yamt Exp $	*/
 /*	$OpenBSD: if_axe.c,v 1.96 2010/01/09 05:33:08 jsg Exp $ */
 
 /*
@@ -89,7 +89,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.24.4.4 2010/08/11 22:54:13 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.24.4.5 2010/10/09 03:32:26 yamt Exp $");
 
 #if defined(__NetBSD__)
 #include "opt_inet.h"
@@ -184,8 +184,6 @@ CFATTACH_DECL_NEW(axe, sizeof(struct axe_softc),
 
 static int	axe_tx_list_init(struct axe_softc *);
 static int	axe_rx_list_init(struct axe_softc *);
-static int	axe_newbuf(struct axe_softc *, struct axe_chain *,
-		    struct mbuf *);
 static int	axe_encap(struct axe_softc *, struct mbuf *, int);
 static void	axe_rxeof(usbd_xfer_handle, usbd_private_handle, usbd_status);
 static void	axe_txeof(usbd_xfer_handle, usbd_private_handle, usbd_status);
@@ -734,7 +732,7 @@ axe_attach(device_t parent, device_t self, void *aux)
 	callout_init(&sc->axe_stat_ch, 0);
 	callout_setfunc(&sc->axe_stat_ch, axe_tick, sc);
 
-	sc->axe_attached = 1;
+	sc->axe_attached = true;
 	splx(s);
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->axe_udev, sc->axe_dev);
@@ -753,7 +751,7 @@ axe_detach(device_t self, int flags)
 	if (!sc->axe_attached)
 		return 0;
 
-	sc->axe_dying = 1;
+	sc->axe_dying = true;
 
 	/*
 	 * Remove any pending tasks.  They cannot be executing because they run
@@ -783,7 +781,7 @@ axe_detach(device_t self, int flags)
 		aprint_debug_dev(self, "detach has active endpoints\n");
 #endif
 
-	sc->axe_attached = 0;
+	sc->axe_attached = false;
 
 	if (--sc->axe_refcnt >= 0) {
 		/* Wait for processes to go away. */
@@ -806,49 +804,11 @@ axe_activate(device_t self, devact_t act)
 	switch (act) {
 	case DVACT_DEACTIVATE:
 		if_deactivate(&sc->axe_ec.ec_if);
-		sc->axe_dying = 1;
+		sc->axe_dying = true;
 		return 0;
 	default:
 		return EOPNOTSUPP;
 	}
-}
-
-/*
- * Initialize an RX descriptor and attach an MBUF cluster.
- */
-static int
-axe_newbuf(struct axe_softc *sc, struct axe_chain *c, struct mbuf *m)
-{
-	struct mbuf *m_new = NULL;
-
-	DPRINTFN(10,("%s: %s: enter\n", USBDEVNAME(sc->axe_dev),__func__));
-
-	if (m == NULL) {
-		MGETHDR(m_new, M_DONTWAIT, MT_DATA);
-		if (m_new == NULL) {
-			aprint_error_dev(sc->axe_dev, "no memory for rx list "
-			    "-- packet dropped!\n");
-			return ENOBUFS;
-		}
-
-		MCLGET(m_new, M_DONTWAIT);
-		if ((m_new->m_flags & M_EXT) == 0) {
-			aprint_error_dev(sc->axe_dev, "no memory for rx list "
-			    "-- packet dropped!\n");
-			m_freem(m_new);
-			return ENOBUFS;
-		}
-		m_new->m_len = m_new->m_pkthdr.len = MCLBYTES;
-	} else {
-		m_new = m;
-		m_new->m_len = m_new->m_pkthdr.len = MCLBYTES;
-		m_new->m_data = m_new->m_ext.ext_buf;
-	}
-
-	m_adj(m_new, ETHER_ALIGN);
-	c->axe_mbuf = m_new;
-
-	return 0;
 }
 
 static int
@@ -865,8 +825,6 @@ axe_rx_list_init(struct axe_softc *sc)
 		c = &cd->axe_rx_chain[i];
 		c->axe_sc = sc;
 		c->axe_idx = i;
-		if (axe_newbuf(sc, c, NULL) == ENOBUFS)
-			return ENOBUFS;
 		if (c->axe_xfer == NULL) {
 			c->axe_xfer = usbd_alloc_xfer(sc->axe_udev);
 			if (c->axe_xfer == NULL)
@@ -897,7 +855,6 @@ axe_tx_list_init(struct axe_softc *sc)
 		c = &cd->axe_tx_chain[i];
 		c->axe_sc = sc;
 		c->axe_idx = i;
-		c->axe_mbuf = NULL;
 		if (c->axe_xfer == NULL) {
 			c->axe_xfer = usbd_alloc_xfer(sc->axe_udev);
 			if (c->axe_xfer == NULL)
@@ -926,7 +883,7 @@ axe_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 	struct ifnet *ifp;
 	uint8_t *buf;
 	uint32_t total_len;
-	uint16_t pktlen = 0;
+	u_int rxlen, pktlen;
 	struct mbuf *m;
 	struct axe_sframe_hdr hdr;
 	int s;
@@ -963,50 +920,53 @@ axe_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 				ifp->if_ierrors++;
 				goto done;
 			}
-			buf += pktlen;
 
 			memcpy(&hdr, buf, sizeof(hdr));
 			total_len -= sizeof(hdr);
+			buf += sizeof(hdr);
 
 			if ((hdr.len ^ hdr.ilen) != 0xffff) {
 				ifp->if_ierrors++;
 				goto done;
 			}
-			pktlen = le16toh(hdr.len);
-			if (pktlen > total_len) {
-				ifp->if_ierrors++;
-				goto done;
+
+			rxlen = le16toh(hdr.len);
+			if (total_len < rxlen) {
+				pktlen = total_len;
+				total_len = 0;
+			} else {
+				pktlen = rxlen;
+				rxlen = roundup2(rxlen, 2);
+				total_len -= rxlen;
 			}
 
-			buf += sizeof(hdr);
-
-			pktlen = roundup2(pktlen, 2);
-
-			if (total_len < pktlen)
-				total_len = 0;
-			else
-				total_len -= pktlen;
 		} else { /* AX172 */
-			pktlen = total_len;
+			pktlen = rxlen = total_len;
 			total_len = 0;
 		}
 
-		m = c->axe_mbuf;
-
-		/* XXX ugly */
-		if (axe_newbuf(sc, c, NULL) == ENOBUFS) {
+		MGETHDR(m, M_DONTWAIT, MT_DATA);
+		if (m == NULL) {
 			ifp->if_ierrors++;
 			goto done;
 		}
+
+		if (pktlen > MHLEN - ETHER_ALIGN) {
+			MCLGET(m, M_DONTWAIT);
+			if ((m->m_flags & M_EXT) == 0) {
+				m_freem(m);
+				ifp->if_ierrors++;
+				goto done;
+			}
+		}
+		m->m_data += ETHER_ALIGN;
 
 		ifp->if_ipackets++;
 		m->m_pkthdr.rcvif = ifp;
 		m->m_pkthdr.len = m->m_len = pktlen;
 
-		memcpy(mtod(m, char *), buf, pktlen);
-
-		/* No errors; receive the packet. */
-		pktlen -= ETHER_CRC_LEN + 4;
+		memcpy(mtod(m, uint8_t *), buf, pktlen);
+		buf += rxlen;
 
 		s = splnet();
 
@@ -1070,9 +1030,6 @@ axe_txeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 
 	ifp->if_timer = 0;
 	ifp->if_flags &= ~IFF_OACTIVE;
-
-	m_freem(c->axe_mbuf);
-	c->axe_mbuf = NULL;
 
 	if (!IFQ_IS_EMPTY(&ifp->if_snd))
 		axe_start(ifp);
@@ -1175,7 +1132,6 @@ axe_encap(struct axe_softc *sc, struct mbuf *m, int idx)
 		m_copydata(m, 0, m->m_pkthdr.len, c->axe_buf);
 		length = m->m_pkthdr.len;
 	}
-	c->axe_mbuf = m;
 
 	usbd_setup_xfer(c->axe_xfer, sc->axe_ep[AXE_ENDPT_TX],
 	    c, c->axe_buf, length, USBD_FORCE_SHORT_XFER | USBD_NO_COPY, 10000,
@@ -1197,7 +1153,7 @@ static void
 axe_start(struct ifnet *ifp)
 {
 	struct axe_softc *sc;
-	struct mbuf *m_head = NULL;
+	struct mbuf *m;
 
 	sc = ifp->if_softc;
 
@@ -1207,22 +1163,23 @@ axe_start(struct ifnet *ifp)
 	if ((ifp->if_flags & (IFF_OACTIVE|IFF_RUNNING)) != IFF_RUNNING)
 		return;
 
-	IFQ_POLL(&ifp->if_snd, m_head);
-	if (m_head == NULL) {
+	IFQ_POLL(&ifp->if_snd, m);
+	if (m == NULL) {
 		return;
 	}
 
-	if (axe_encap(sc, m_head, 0)) {
+	if (axe_encap(sc, m, 0)) {
 		ifp->if_flags |= IFF_OACTIVE;
 		return;
 	}
-	IFQ_DEQUEUE(&ifp->if_snd, m_head);
+	IFQ_DEQUEUE(&ifp->if_snd, m);
 
 	/*
 	 * If there's a BPF listener, bounce a copy of this frame
 	 * to him.
 	 */
-	bpf_mtap(ifp, m_head);
+	bpf_mtap(ifp, m);
+	m_freem(m);
 
 	ifp->if_flags |= IFF_OACTIVE;
 
@@ -1482,10 +1439,6 @@ axe_stop(struct ifnet *ifp, int disable)
 
 	/* Free RX resources. */
 	for (i = 0; i < AXE_RX_LIST_CNT; i++) {
-		if (sc->axe_cdata.axe_rx_chain[i].axe_mbuf != NULL) {
-			m_freem(sc->axe_cdata.axe_rx_chain[i].axe_mbuf);
-			sc->axe_cdata.axe_rx_chain[i].axe_mbuf = NULL;
-		}
 		if (sc->axe_cdata.axe_rx_chain[i].axe_xfer != NULL) {
 			usbd_free_xfer(sc->axe_cdata.axe_rx_chain[i].axe_xfer);
 			sc->axe_cdata.axe_rx_chain[i].axe_xfer = NULL;
@@ -1494,10 +1447,6 @@ axe_stop(struct ifnet *ifp, int disable)
 
 	/* Free TX resources. */
 	for (i = 0; i < AXE_TX_LIST_CNT; i++) {
-		if (sc->axe_cdata.axe_tx_chain[i].axe_mbuf != NULL) {
-			m_freem(sc->axe_cdata.axe_tx_chain[i].axe_mbuf);
-			sc->axe_cdata.axe_tx_chain[i].axe_mbuf = NULL;
-		}
 		if (sc->axe_cdata.axe_tx_chain[i].axe_xfer != NULL) {
 			usbd_free_xfer(sc->axe_cdata.axe_tx_chain[i].axe_xfer);
 			sc->axe_cdata.axe_tx_chain[i].axe_xfer = NULL;

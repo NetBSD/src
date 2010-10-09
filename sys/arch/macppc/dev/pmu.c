@@ -1,4 +1,4 @@
-/*	$NetBSD: pmu.c,v 1.12.4.3 2010/03/11 15:02:36 yamt Exp $ */
+/*	$NetBSD: pmu.c,v 1.12.4.4 2010/10/09 03:31:50 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmu.c,v 1.12.4.3 2010/03/11 15:02:36 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmu.c,v 1.12.4.4 2010/10/09 03:31:50 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,6 +41,8 @@ __KERNEL_RCSID(0, "$NetBSD: pmu.c,v 1.12.4.3 2010/03/11 15:02:36 yamt Exp $");
 #include <machine/autoconf.h>
 #include <dev/clock_subr.h>
 #include <dev/i2c/i2cvar.h>
+
+#include <dev/sysmon/sysmonvar.h>
 
 #include <macppc/dev/viareg.h>
 #include <macppc/dev/pmuvar.h>
@@ -75,6 +77,7 @@ struct pmu_softc {
 	struct adb_bus_accessops sc_adbops;
 	struct i2c_controller sc_i2c;
 	struct pmu_ops sc_pmu_ops;
+	struct sysmon_pswitch sc_lidswitch;
 	bus_space_tag_t sc_memt;
 	bus_space_handle_t sc_memh;
 	uint32_t sc_flags;
@@ -86,6 +89,7 @@ struct pmu_softc {
 	int sc_pending_eject;
 	int sc_brightness, sc_brightness_wanted;
 	int sc_volume, sc_volume_wanted;
+	int sc_lid_closed;
 	/* deferred processing */
 	lwp_t *sc_thread;
 	/* signalling the event thread */
@@ -279,6 +283,7 @@ pmu_attach(struct device *parent, struct device *dev, void *aux)
 	sc->sc_volume = sc->sc_volume_wanted = 0x80;
 	sc->sc_flags = 0;
 	sc->sc_callback = NULL;
+	sc->sc_lid_closed = 0;
 
 	if (bus_space_map(sc->sc_memt, ca->ca_reg[0] + ca->ca_baseaddr,
 	    ca->ca_reg[1], 0, &sc->sc_memh) != 0) {
@@ -401,6 +406,12 @@ bat_done:
 	    "%s", "pmu") != 0) {
 		printf("pmu: unable to create event kthread");
 	}
+
+	sc->sc_lidswitch.smpsw_name = "Lid switch";
+	sc->sc_lidswitch.smpsw_type = PSWITCH_TYPE_LID;
+	if (sysmon_pswitch_register(&sc->sc_lidswitch) != 0)
+		printf("%s: unable to register lid switch with sysmon\n",
+		    device_xname(dev));
 }
 
 static void
@@ -640,6 +651,7 @@ pmu_intr(void *arg)
 		goto done;
 	}
 	if (resp[1] & PMU_INT_ENVIRONMENT) {
+		int closed;
 #ifdef PMU_VERBOSE
 		/* deal with environment messages */
 		printf("environment:");
@@ -647,6 +659,13 @@ pmu_intr(void *arg)
 			printf(" %02x", resp[i]);
 		printf("\n");
 #endif
+		closed = (resp[2] & PMU_ENV_LID_CLOSED) != 0;
+		if (closed != sc->sc_lid_closed) {
+			sc->sc_lid_closed = closed;
+			sysmon_pswitch_event(&sc->sc_lidswitch, 
+	    		    closed ? PSWITCH_EVENT_PRESSED : 
+			    PSWITCH_EVENT_RELEASED);
+		}
 		goto done;
 	}
 	if (resp[1] & PMU_INT_TICK) {

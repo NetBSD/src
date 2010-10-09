@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.114.2.7 2010/08/11 22:53:15 yamt Exp $	*/
+/*	$NetBSD: acpi.c,v 1.114.2.8 2010/10/09 03:32:03 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.114.2.7 2010/08/11 22:53:15 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.114.2.8 2010/10/09 03:32:03 yamt Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -154,7 +154,8 @@ static int acpi_dbgr = 0x00;
  * subsystems that ACPI supercedes) when ACPI is active.
  */
 int	acpi_active;
-int	acpi_force_load;
+
+int	acpi_force_load = 0;
 int	acpi_suspended = 0;
 int	acpi_verbose_loaded = 0;
 
@@ -183,10 +184,7 @@ static const char * const acpi_ignored_ids[] = {
 	"PNP0200",	/* AT DMA controller is handled internally */
 	"PNP0A??",	/* PCI Busses are handled internally */
 	"PNP0B00",	/* AT RTC is handled internally */
-	"PNP0C0B",	/* No need for "ACPI fan" driver */
 	"PNP0C0F",	/* ACPI PCI link devices are handled internally */
-	"IFX0102",	/* No driver for Infineon TPM */
-	"INT0800",	/* No driver for Intel Firmware Hub device */
 #endif
 #if defined(x86_64)
 	"PNP0C04",	/* FPU is handled internally */
@@ -331,6 +329,13 @@ acpi_probe(void)
 			rsdt->AslCompilerId,
 		        rsdt->AslCompilerRevision);
 		aprint_normal("ACPI: Not used. Set acpi_force_load to use.\n");
+		acpi_unmap_rsdt(rsdt);
+		AcpiTerminate();
+		return 0;
+	}
+	if (acpi_force_load == 0 && (acpi_find_quirks() & ACPI_QUIRK_OLDBIOS)) {
+		aprint_normal("ACPI: BIOS is too old (%s). Set acpi_force_load to use.\n",
+		    pmf_get_platform("firmware-date"));
 		acpi_unmap_rsdt(rsdt);
 		AcpiTerminate();
 		return 0;
@@ -972,15 +977,6 @@ acpi_rescan_nodes(struct acpi_softc *sc)
 			    (di->CurrentStatus & ACPI_STA_OK) != ACPI_STA_OK)
 				continue;
 		}
-
-		/*
-		 * The same problem as above. As for example
-		 * thermal zones and power resources do not
-		 * have a valid HID, only evaluate devices.
-		 */
-		if (di->Type == ACPI_TYPE_DEVICE &&
-		   (di->Valid & ACPI_VALID_HID) == 0)
-			continue;
 
 		/*
 		 * Handled internally.
@@ -1793,11 +1789,8 @@ void
 acpi_load_verbose(void)
 {
 
-	if (acpi_verbose_loaded == 0) {
-		mutex_enter(&module_lock);
+	if (acpi_verbose_loaded == 0)
 		module_autoload("acpiverbose", MODULE_CLASS_MISC);
-		mutex_exit(&module_lock);
-	}
 }
 
 void

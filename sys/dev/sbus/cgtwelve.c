@@ -1,4 +1,4 @@
-/*	$NetBSD: cgtwelve.c,v 1.3.6.2 2010/08/11 22:54:10 yamt Exp $ */
+/*	$NetBSD: cgtwelve.c,v 1.3.6.3 2010/10/09 03:32:24 yamt Exp $ */
 
 /*-
  * Copyright (c) 2010 Michael Lorenz
@@ -29,7 +29,7 @@
 /* a console driver for the Sun CG12 / Matrox SG3 graphics board */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgtwelve.c,v 1.3.6.2 2010/08/11 22:54:10 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgtwelve.c,v 1.3.6.3 2010/10/09 03:32:24 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,6 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: cgtwelve.c,v 1.3.6.2 2010/08/11 22:54:10 yamt Exp $"
 #include <dev/wscons/wsdisplay_vconsvar.h>
 
 #include <dev/sbus/cgtwelvereg.h>
+#include <dev/ic/bt462reg.h>
 
 #include "opt_wsemul.h"
 #include "opt_cgtwelve.h"
@@ -127,6 +128,8 @@ struct wsdisplay_accessops cgtwelve_accessops = {
 	NULL,	/* scroll */
 };
 
+extern const u_char rasops_cmap[768];
+
 static int
 cgtwelve_match(device_t parent, cfdata_t cf, void *aux)
 {
@@ -161,9 +164,13 @@ cgtwelve_attach(device_t parent, device_t self, void *args)
 	/* read geometry information from the device tree */
 	sc->sc_width = prom_getpropint(sa->sa_node, "width", 1152);
 	sc->sc_height = prom_getpropint(sa->sa_node, "height", 900);
+#ifdef CG12_COLOR
+	sc->sc_stride = sc->sc_width;
+#else
 	sc->sc_stride = (sc->sc_width + 7) >> 3;
-
+#endif
 	sc->sc_fbsize = sc->sc_height * sc->sc_stride;
+
 	sc->sc_fbaddr = (void *)prom_getpropint(sa->sa_node, "address", 0);
 	if (sc->sc_fbaddr == NULL) {
 		if (sbus_bus_map(sa->sa_bustag,
@@ -178,7 +185,6 @@ cgtwelve_attach(device_t parent, device_t self, void *args)
 	}
 		
 	aprint_normal_dev(self, "%d x %d\n", sc->sc_width, sc->sc_height);
-
 
 	if (sbus_bus_map(sa->sa_bustag,
 			 sa->sa_slot,
@@ -211,9 +217,17 @@ cgtwelve_attach(device_t parent, device_t self, void *args)
 	}
 	sc->sc_int = bus_space_vaddr(sa->sa_bustag, bh);
 
+#ifdef CG12_COLOR
+	cgtwelve_setup(sc, 8);
+#else
 	cgtwelve_setup(sc, 1);
-
+#endif
+#ifdef CG12_SHADOW
 	sc->sc_shadow = kmem_alloc(sc->sc_fbsize, KM_SLEEP);
+#else
+	sc->sc_shadow = NULL;
+#endif
+
 	isconsole = fb_is_console(node);
 
 	sc->sc_mode = WSDISPLAYIO_MODE_EMUL;
@@ -243,70 +257,18 @@ cgtwelve_attach(device_t parent, device_t self, void *args)
 	aa.accesscookie = &sc->vd;
 
 	config_found(self, &aa, wsemuldisplaydevprint);
-#if 0	
+#ifdef CG12_DEBUG
 	{
-		bus_space_handle_r bh = sc->sc_regh;
-		int i, j;
-
-		bus_space_write_4(sa->sa_bustag, bh, CG12_EIC_RESET, 0);
-
-		bus_space_write_4(sa->sa_bustag, bh,
-		    CG12DPU_PLN_RDMSK_HOST, CG12_PLN_RD_ENABLE);
-		bus_space_write_4(sa->sa_bustag, bh,
-		    CG12DPU_PLN_WRMSK_HOST, CG12_PLN_WR_ENABLE);
-		bus_space_write_4(sa->sa_bustag, bh,
-		    CG12DPU_PLN_SL_HOST, CG12_PLN_SL_ENABLE);
-		bus_space_write_4(sa->sa_bustag, bh,
-		    CG12APU_HPAGE, CG12_HPAGE_ENABLE);
-		bus_space_write_4(sa->sa_bustag, bh,
-		    CG12APU_HACCESS, CG12_HACCESS_ENABLE);
-		memset(sc->sc_fbaddr, 0, 0x10000);
-
-		bus_space_write_4(sa->sa_bustag, bh,
-		    CG12DPU_PLN_RDMSK_LOC, 0xffffffff);
-		bus_space_write_4(sa->sa_bustag, bh,
-		    CG12DPU_PLN_WRMSK_LOC, 0xffffffff);
-		bus_space_write_4(sa->sa_bustag, bh,
-		    CG12APU_LACCESS, CG12_HACCESS_24BIT);
-		bus_space_write_4(sa->sa_bustag, bh,
-		    CG12APU_LPAGE, CG12_HPAGE_24BIT);
-		bus_space_write_4(sa->sa_bustag, bh,
-		    CG12DPU_PLN_SL_LOCAL0, CG12_PLN_SL_24BIT);
-		bus_space_write_4(sa->sa_bustag, bh,
-		    CG12APU_DWG_CTL, DWGCTL_BITBLT | 0x00f30000);
-		bus_space_write_4(sa->sa_bustag, bh,
-		    CG12APU_F_XLEFT, 10);
-		bus_space_write_4(sa->sa_bustag, bh,
-		    CG12APU_F_XRIGHT, 1010);
-		bus_space_write_4(sa->sa_bustag, bh,
-		    CG12APU_Y_DST, 10);
-		bus_space_write_4(sa->sa_bustag, bh,
-		    CG12DPU_COLOUR0, 0xffffffff);
-#if 1
-		bus_space_write_4(sa->sa_bustag, bh,
-		    CG12APU_LENGTH | 0x1000, 800);
-#endif
-		bus_space_write_4(sa->sa_bustag, bh,
-		    CG12DPU_PLN_RDMSK_HOST, CG12_PLN_RD_OVERLAY);
-		bus_space_write_4(sa->sa_bustag, bh,
-		    CG12DPU_PLN_WRMSK_HOST, CG12_PLN_WR_OVERLAY);
-		bus_space_write_4(sa->sa_bustag, bh,
-		    CG12DPU_PLN_SL_HOST, CG12_PLN_SL_OVERLAY);
-		bus_space_write_4(sa->sa_bustag, bh,
-		    CG12APU_HPAGE, CG12_HPAGE_OVERLAY);
-		bus_space_write_4(sa->sa_bustag, bh,
-		    CG12APU_HACCESS, CG12_HACCESS_OVERLAY);
-
-		for (i = 0x100; i < 0x300; i += 32) {
-			printf("%04x:", i);
-			for (j = 0; j < 32; j += 4) {
-				printf(" %08x", bus_space_read_4(sa->sa_bustag,
-				    bh, i + j));
-			}
-			printf("\n");
+		int i;
+		for (i = 0; i < 0x10; i++) {
+			bus_space_write_4(sc->sc_tag, sc->sc_regh, 
+			    CG12DAC_ADDR0, (i << 16) | (i << 8) | i);
+			bus_space_write_4(sc->sc_tag, sc->sc_regh, 
+			    CG12DAC_ADDR1, 0x010101);
+			printf("%02x: %08x\n", i, bus_space_read_4(sc->sc_tag, 
+			    sc->sc_regh, CG12DAC_CTRL));
 		}
 	}
-	panic("poof");
 #endif
 }
 
@@ -403,7 +365,7 @@ cgtwelve_write_dac(struct cgtwelve_softc *sc, int idx, int r, int g, int b)
 static void
 cgtwelve_setup(struct cgtwelve_softc *sc, int depth)
 {
-	int i;
+	int i, j;
 
 	/* first let's put some stuff into the WID table */
 	cgtwelve_write_wid(sc, 0, CG12_WID_8_BIT);
@@ -411,7 +373,17 @@ cgtwelve_setup(struct cgtwelve_softc *sc, int depth)
 	
 	/* a linear ramp for the gamma table */
 	for (i = 0; i < 256; i++)
-		cgtwelve_write_dac(sc, i + 0x100, i, i, i);	
+		cgtwelve_write_dac(sc, i + 0x100, i, i, i);
+
+	j = 0;
+	/* rasops' ANSI colour map */
+	for (i = 0; i < 256; i++) {
+		cgtwelve_write_dac(sc, i,
+		    rasops_cmap[j],
+		    rasops_cmap[j + 1],
+		    rasops_cmap[j + 2]);
+		j += 3;
+	}
 
 	switch(depth) {
 	case 1:
@@ -428,6 +400,30 @@ cgtwelve_setup(struct cgtwelve_softc *sc, int depth)
 		/* now clean the plane */
 		cgtwelve_select_ovl(sc, CG12_SEL_OVL);
 		memset(sc->sc_fbaddr, 0, 0x20000);
+		break;
+	case 8:
+		/* setup the 8bit fb */
+		/*
+		 * first clean the 8bit fb - for aesthetic reasons do it while
+		 * it's still not visible ( we hope... )
+		 */
+		cgtwelve_select_ovl(sc, CG12_SEL_8BIT);
+		memset(sc->sc_int, 0x00, 0x100000);
+
+		/* now write the right thing into the WID plane */
+		cgtwelve_select_ovl(sc, CG12_SEL_WID);
+		memset(sc->sc_wids, 0, 0x100000);
+
+		/* hide the overlay */
+		cgtwelve_select_ovl(sc, CG12_SEL_ENABLE);
+		memset(sc->sc_fbaddr, 0, 0x20000);
+
+		/* now clean the plane */
+		cgtwelve_select_ovl(sc, CG12_SEL_OVL);
+		memset(sc->sc_fbaddr, 0, 0x20000);
+
+		/* and make sure we can write the 24bit fb */
+		cgtwelve_select_ovl(sc, CG12_SEL_8BIT);
 		break;
 	case 24:
 	case 32:
@@ -464,21 +460,38 @@ cgtwelve_init_screen(void *cookie, struct vcons_screen *scr,
 	struct cgtwelve_softc *sc = cookie;
 	struct rasops_info *ri = &scr->scr_ri;
 
+#ifdef CG12_COLOR
+	ri->ri_depth = 8;
+#else
 	ri->ri_depth = 1;
+#endif
 	ri->ri_width = sc->sc_width;
 	ri->ri_height = sc->sc_height;
 	ri->ri_stride = sc->sc_stride;
 	ri->ri_flg = RI_CENTER;
 
 	if (sc->sc_shadow == NULL) {
+#ifdef CG12_COLOR
+		ri->ri_bits = sc->sc_int;
+#else
 		ri->ri_bits = sc->sc_fbaddr;
+#endif
+		scr->scr_flags |= VCONS_DONT_READ;
 	} else {
+#ifdef CG12_COLOR
+		ri->ri_hwbits = sc->sc_int;
+#else
 		ri->ri_hwbits = sc->sc_fbaddr;
+#endif
 		ri->ri_bits = sc->sc_shadow;
 	}
 
-	rasops_init(ri, ri->ri_height/8, ri->ri_width/8);
+	rasops_init(ri, ri->ri_height / 8, ri->ri_width / 8);
+#ifdef CG12_COLOR
+	ri->ri_caps = WSSCREEN_REVERSE | WSSCREEN_WSCOLORS;
+#else
 	ri->ri_caps = WSSCREEN_REVERSE;
+#endif
 	rasops_reconfig(ri, ri->ri_height / ri->ri_font->fontheight,
 		    ri->ri_width / ri->ri_font->fontwidth);
 }
@@ -531,7 +544,11 @@ cgtwelve_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 					sc->sc_mode = new_mode;
 					if (new_mode == WSDISPLAYIO_MODE_EMUL)
 					{
+#ifdef CG12_COLOR
+						cgtwelve_setup(sc, 8);
+#else
 						cgtwelve_setup(sc, 1);
+#endif
 						vcons_redraw_screen(ms);
 					} else {
 						cgtwelve_setup(sc, 32);

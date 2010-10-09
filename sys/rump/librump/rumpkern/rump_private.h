@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_private.h,v 1.8.10.3 2010/08/11 22:55:07 yamt Exp $	*/
+/*	$NetBSD: rump_private.h,v 1.8.10.4 2010/10/09 03:32:43 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -87,14 +87,15 @@ do {									\
 		panic("\"%s\" failed", #call);				\
 } while (/*CONSTCOND*/0)
 
+#define RUMPMEM_UNLIMITED ((unsigned long)-1)
+extern unsigned long rump_physmemlimit;
+
 void		rump_component_init(enum rump_component_type);
 int		rump_component_count(enum rump_component_type);
 
 void		rump_gettime(struct timespec *);
 void		rump_getuptime(struct timespec *);
 
-void		rump_lwp_free(struct lwp *);
-lwpid_t		rump_nextlid(void);
 void		rump_set_vmspace(struct vmspace *);
 
 typedef void	(*rump_proc_vfs_init_fn)(struct proc *);
@@ -110,8 +111,10 @@ extern void *rump_sysproxy_arg;
 int		rump_sysproxy_copyout(const void *, void *, size_t);
 int		rump_sysproxy_copyin(const void *, void *, size_t);
 
+struct lwp *	rump__lwproc_allockernlwp(void);
+
 void	rump_cpus_bootstrap(int);
-void	rump_scheduler_init(void);
+void	rump_scheduler_init(int);
 void	rump_schedule(void);
 void	rump_unschedule(void);
 void 	rump_schedule_cpu(struct lwp *);
@@ -135,7 +138,7 @@ void	rump_kernel_ununlock_allbutone(int);
 
 void	rump_tsleep_init(void);
 
-void	rump_intr_init(void);
+void	rump_intr_init(int);
 void	rump_softint_run(struct cpu_info *);
 
 void	*rump_hypermalloc(size_t, int, bool, const char *);

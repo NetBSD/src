@@ -1,4 +1,4 @@
-/*	$NetBSD: armreg.h,v 1.37.50.3 2010/08/11 22:51:41 yamt Exp $	*/
+/*	$NetBSD: armreg.h,v 1.37.50.4 2010/10/09 03:31:39 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Ben Harris
@@ -119,6 +119,7 @@
 #define CPU_ID_DEC		0x44000000 /* 'D' */
 #define CPU_ID_INTEL		0x69000000 /* 'i' */
 #define	CPU_ID_TI		0x54000000 /* 'T' */
+#define CPU_ID_MARVELL		0x56000000 /* 'V' */
 #define	CPU_ID_FARADAY		0x66000000 /* 'f' */
 
 /* How to decide what format the CPUID is in. */
@@ -205,6 +206,8 @@
 #define CPU_ID_SA110		0x4401a100
 #define CPU_ID_SA1100		0x4401a110
 #define	CPU_ID_TI925T		0x54029250
+#define CPU_ID_MV88FR571_VD	0x56155710
+#define CPU_ID_MV88SV131	0x56251310
 #define	CPU_ID_FA526		0x66015260
 #define CPU_ID_SA1110		0x6901b110
 #define CPU_ID_IXP1200		0x6901c120
@@ -314,6 +317,18 @@
 #define	XSCALE_AUXCTL_MD_WB_RWA	0x00000010 /* mini-D$ wb, read/write-allocate */
 #define	XSCALE_AUXCTL_MD_WT	0x00000020 /* mini-D$ wt, read-allocate */
 #define	XSCALE_AUXCTL_MD_MASK	0x00000030
+
+/* Marvell Feroceon Extra Features Register (CP15 register 1, opcode2 0) */
+#define FC_DCACHE_REPL_LOCK	0x80000000 /* Replace DCache Lock */
+#define FC_DCACHE_STREAM_EN	0x20000000 /* DCache Streaming Switch */
+#define FC_WR_ALLOC_EN		0x10000000 /* Enable Write Allocate */
+#define FC_L2_PREF_DIS		0x01000000 /* L2 Cache Prefetch Disable */
+#define FC_L2_INV_EVICT_LINE	0x00800000 /* L2 Invalidates Uncorrectable Error Line Eviction */
+#define FC_L2CACHE_EN		0x00400000 /* L2 enable */
+#define FC_ICACHE_REPL_LOCK	0x00080000 /* Replace ICache Lock */
+#define FC_GLOB_HIST_REG_EN	0x00040000 /* Branch Global History Register Enable */
+#define FC_BRANCH_TARG_BUF_DIS	0x00020000 /* Branch Target Buffer Disable */
+#define FC_L1_PAR_ERR_EN	0x00010000 /* L1 Parity Error Enable */
 
 /* Cache type register definitions 0 */
 #define	CPU_CT_FORMAT(x)	(((x) >> 29) & 0x7)	/* reg format */

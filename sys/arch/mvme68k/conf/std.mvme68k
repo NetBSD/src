@@ -1,15 +1,14 @@
-#	$NetBSD: std.mvme68k,v 1.13 2005/12/11 12:18:17 christos Exp $
+#	$NetBSD: std.mvme68k,v 1.13.78.1 2010/10/09 03:31:51 yamt Exp $
 #
 # Options/devices that all mvme68ks should have
 #
 
 machine mvme68k m68k
-include		"conf/std"	# MI standard options
+include		"conf/std"			# MI standard options
+include		"arch/m68k/conf/std.m68k"	# m68k standard options
 
 timekeeper0 at mainbus0
 
 options 	EXEC_AOUT	# support for exec'ing a.out
-options 	EXEC_ELF32	# support for exec'ing Elf
-options 	EXEC_SCRIPT	# support for #! scripts
 
 options 	USE_ALT_LPT	# use own lpt implementation

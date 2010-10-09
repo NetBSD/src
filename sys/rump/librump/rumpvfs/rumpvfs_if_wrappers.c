@@ -1,9 +1,9 @@
-/*	$NetBSD: rumpvfs_if_wrappers.c,v 1.3.4.3 2010/08/11 22:55:08 yamt Exp $	*/
+/*	$NetBSD: rumpvfs_if_wrappers.c,v 1.3.4.4 2010/10/09 03:32:44 yamt Exp $	*/
 
 /*
  * Automatically generated.  DO NOT EDIT.
- * from: NetBSD: rumpvfs.ifspec,v 1.5 2010/07/19 15:29:44 pooka Exp 
- * by:   NetBSD: makerumpif.sh,v 1.4 2009/10/15 00:29:19 pooka Exp 
+ * from: NetBSD: rumpvfs.ifspec,v 1.6 2010/09/07 17:13:03 pooka Exp 
+ * by:   NetBSD: makerumpif.sh,v 1.5 2010/09/01 19:32:11 pooka Exp 
  */
 
 #include <sys/cdefs.h>
@@ -336,27 +336,6 @@ rump_pub_vfs_mount_print(const char *arg1, int arg2)
 	rump_schedule();
 	rump_vfs_mount_print(arg1, arg2);
 	rump_unschedule();
-}
-
-void
-rump_pub_rcvp_set(struct vnode *arg1, struct vnode *arg2)
-{
-
-	rump_schedule();
-	rump_rcvp_set(arg1, arg2);
-	rump_unschedule();
-}
-
-struct vnode *
-rump_pub_cdir_get(void)
-{
-	struct vnode * rv;
-
-	rump_schedule();
-	rv = rump_cdir_get();
-	rump_unschedule();
-
-	return rv;
 }
 
 int

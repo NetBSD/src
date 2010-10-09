@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpblk.c,v 1.23.2.5 2010/08/11 22:55:08 yamt Exp $	*/
+/*	$NetBSD: rumpblk.c,v 1.23.2.6 2010/10/09 03:32:44 yamt Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpblk.c,v 1.23.2.5 2010/08/11 22:55:08 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpblk.c,v 1.23.2.6 2010/10/09 03:32:44 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -272,7 +272,7 @@ putwindow(struct rblkdev *rblk, struct blkwin *win)
 	mutex_enter(&rblk->rblk_memmtx);
 	if (--win->win_refcnt == 0 && rblk->rblk_waiting) {
 		rblk->rblk_waiting = false;
-		cv_signal(&rblk->rblk_memcv);
+		cv_broadcast(&rblk->rblk_memcv);
 	}
 	KASSERT(win->win_refcnt >= 0);
 	mutex_exit(&rblk->rblk_memmtx);

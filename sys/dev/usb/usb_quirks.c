@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_quirks.c,v 1.58.4.4 2010/08/11 22:54:16 yamt Exp $	*/
+/*	$NetBSD: usb_quirks.c,v 1.58.4.5 2010/10/09 03:32:27 yamt Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_quirks.c,v 1.30 2003/01/02 04:15:55 imp Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_quirks.c,v 1.58.4.4 2010/08/11 22:54:16 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_quirks.c,v 1.58.4.5 2010/10/09 03:32:27 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -135,6 +135,8 @@ Static const struct usbd_quirk_entry {
 	ANY, { UQ_ASSUME_CM_OVER_DATA }},
  { USB_VENDOR_HYUNDAI, USB_PRODUCT_HYUNDAI_UM175,
 	ANY, { UQ_ASSUME_CM_OVER_DATA }},
+ { USB_VENDOR_ZOOM, USB_PRODUCT_ZOOM_3095,
+	ANY, { UQ_LOST_CS_DESC }},
  { 0, 0, 0, { 0 } }
 };
 

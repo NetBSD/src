@@ -1,4 +1,4 @@
-/*	$NetBSD: acpivar.h,v 1.32.4.4 2010/08/11 22:53:16 yamt Exp $	*/
+/*	$NetBSD: acpivar.h,v 1.32.4.5 2010/10/09 03:32:04 yamt Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -66,6 +66,17 @@ struct acpibus_attach_args {
 
 /*
  * PCI information for ACPI device nodes that correspond to PCI devices.
+ *
+ * Remarks:
+ *
+ *	ap_bus		<= 255
+ *	ap_device	<= 31
+ *	ap_function	<= 7		or	ap_function == 0xFFFF
+ *	ap_downbus	<= 255		if	ap_bridge == true
+ *
+ * The device and function numbers are encoded in the value returned by
+ * _ADR.  A function number of 0xFFFF is used to refer to all the
+ * functions on a PCI device (ACPI 4.0a, p. 200).
  */
 struct acpi_pci_info {
 	uint16_t		 ap_segment;	/* PCI segment group */
@@ -328,6 +339,7 @@ struct acpi_quirk {
 #define ACPI_QUIRK_BADPCI	0x00000002	/* bad PCI hierarchy */
 #define ACPI_QUIRK_BADBBN	0x00000004	/* _BBN broken */
 #define ACPI_QUIRK_IRQ0		0x00000008	/* bad 0->2 irq override */
+#define ACPI_QUIRK_OLDBIOS	0x00000010	/* BIOS date blacklisted */
 
 int acpi_find_quirks(void);
 

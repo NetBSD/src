@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_quirks.c,v 1.9.14.3 2010/08/11 22:53:16 yamt Exp $	*/
+/*	$NetBSD: acpi_quirks.c,v 1.9.14.4 2010/10/09 03:32:04 yamt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: acpi_quirks.c,v 1.9.14.3 2010/08/11 22:53:16 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_quirks.c,v 1.9.14.4 2010/10/09 03:32:04 yamt Exp $");
 
 #include "opt_acpi.h"
 
@@ -68,9 +68,6 @@ static struct acpi_quirk acpi_quirks[] = {
 
 	{ ACPI_SIG_FADT, "NVIDIA", 0x06040000, AQ_EQ, "CK8     ",
 	  ACPI_QUIRK_IRQ0 },
-
-	{ ACPI_SIG_DSDT, "NVIDIA", 0x00001000, AQ_EQ, "AWRDACPI",
-	  ACPI_QUIRK_BROKEN },
 
 	{ ACPI_SIG_FADT, "HP    ", 0x06040012, AQ_LTE, "HWPC20F ",
 	  ACPI_QUIRK_BROKEN },
@@ -109,6 +106,25 @@ acpi_rev_cmp(uint32_t tabval, uint32_t wanted, int op)
 	return 1;
 }
 
+#ifdef ACPI_BLACKLIST_YEAR
+static int
+acpi_find_bios_year(void)
+{
+	const char *datestr = pmf_get_platform("firmware-date");
+	unsigned long date;
+
+	if (datestr == NULL)
+		return -1;
+
+	date = strtoul(datestr, NULL, 10);
+	if (date == 0 || date == ULONG_MAX)
+		return -1;
+	if (date < 19000000 || date > 99999999)
+		return -1;
+	return date / 10000;
+}
+#endif
+
 /*
  * Simple function to search the quirk table. Only to be used after
  * AcpiLoadTables has been successfully called.
@@ -119,6 +135,12 @@ acpi_find_quirks(void)
 	int i, nquirks;
 	struct acpi_quirk *aqp;
 	ACPI_TABLE_HEADER fadt, dsdt, xsdt, *hdr;
+#ifdef ACPI_BLACKLIST_YEAR
+	int year = acpi_find_bios_year();
+
+	if (year != -1 && year <= ACPI_BLACKLIST_YEAR)
+		return ACPI_QUIRK_OLDBIOS;
+#endif
 
 	nquirks = __arraycount(acpi_quirks);
 

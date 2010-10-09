@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.17.2.6 2010/08/11 22:52:59 yamt Exp $	*/
+/*	$NetBSD: cpu.c,v 1.17.2.7 2010/10/09 03:31:59 yamt Exp $	*/
 /* NetBSD: cpu.c,v 1.18 2004/02/20 17:35:01 yamt Exp  */
 
 /*-
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.17.2.6 2010/08/11 22:52:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.17.2.7 2010/10/09 03:31:59 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -184,9 +184,6 @@ uint32_t cpu_feature[5]; /* X86 CPUID feature bits
 
 bool x86_mp_online;
 paddr_t mp_trampoline_paddr = MP_TRAMPOLINE;
-
-void (*cpu_freq_init)(int) = NULL;
-struct sysctllog *cpu_freq_sysctllog = NULL;
 
 #if defined(MULTIPROCESSOR)
 void    	cpu_hatch(void *);

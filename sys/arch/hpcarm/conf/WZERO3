@@ -1,4 +1,4 @@
-#	$NetBSD: WZERO3,v 1.14.2.2 2010/08/11 22:52:05 yamt Exp $
+#	$NetBSD: WZERO3,v 1.14.2.3 2010/10/09 03:31:45 yamt Exp $
 #
 #	WZERO3 -- Sharp Windows Mobile 5 based PDA
 #
@@ -7,7 +7,7 @@ include	"arch/hpcarm/conf/std.pxa2x0"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.14.2.2 $"
+#ident 		"GENERIC-$Revision: 1.14.2.3 $"
 
 # estimated number of users
 maxusers	32
@@ -83,7 +83,7 @@ options 	COMPAT_50	# NetBSD 5.0 compatibility.
 options 	COMPAT_40	# NetBSD 4.0 compatibility.
 options 	COMPAT_30	# NetBSD 3.0 compatibility.
 options 	COMPAT_20	# NetBSD 2.0 compatibility.
-#options 	COMPAT_16	# NetBSD 1.6 compatibility.
+options 	COMPAT_16	# NetBSD 1.6 compatibility.
 #options 	COMPAT_15	# NetBSD 1.5 compatibility.
 #options 	COMPAT_14	# NetBSD 1.4 compatibility.
 #options 	COMPAT_13	# NetBSD 1.3 compatibility.
@@ -242,6 +242,7 @@ kue*	at uhub? port ?		# Kawasaki LSI KL5KUSB101B based adapters
 udav*	at uhub? port ?	 	# Davicom DM9601 based adapters
 url*	at uhub? port ?		# Realtek RTL8150L based adapters
 
+acphy*	at mii? phy ?		# Altima AC101 and AMD Am79c874 PHYs
 rlphy*	at mii? phy ?		# Realtek 8139/8201L PHYs
 ukphy*  at mii? phy ?		# generic unknown PHYs
 urlphy* at mii? phy ?		# Realtek RTL8150L internal PHYs

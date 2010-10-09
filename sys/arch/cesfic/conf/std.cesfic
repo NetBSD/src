@@ -1,11 +1,10 @@
-#	$NetBSD: std.cesfic,v 1.4 2005/12/11 12:17:05 christos Exp $
+#	$NetBSD: std.cesfic,v 1.4.78.1 2010/10/09 03:31:42 yamt Exp $
 #
 # Options/devices that all cesfics should have
 #
 
 machine cesfic m68k
-include		"conf/std"	# MI standard options
+include		"conf/std"			# MI standard options
+include		"arch/m68k/conf/std.m68k"	# m68k standard options
 
-options 	EXEC_ELF32
 options 	EXEC_AOUT	# support for exec'ing a.out
-options 	EXEC_SCRIPT	# support for #! scripts

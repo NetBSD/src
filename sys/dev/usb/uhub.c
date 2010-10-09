@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.96.2.4 2010/03/11 15:04:06 yamt Exp $	*/
+/*	$NetBSD: uhub.c,v 1.96.2.5 2010/10/09 03:32:27 yamt Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 
 /*
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.96.2.4 2010/03/11 15:04:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.96.2.5 2010/10/09 03:32:27 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -522,6 +522,14 @@ uhub_explore(usbd_device_handle dev)
 #ifdef DIAGNOSTIC
 			aprint_debug_dev(sc->sc_dev,
 			    "port %d, device disappeared after reset\n", port);
+#endif
+			continue;
+		}
+		if (!(status & UPS_PORT_ENABLED)) {
+			/* Not allowed send/receive packet. */
+#ifdef DIAGNOSTIC
+			printf("%s: port %d, device not enable\n",
+			       USBDEVNAME(sc->sc_dev), port);
 #endif
 			continue;
 		}

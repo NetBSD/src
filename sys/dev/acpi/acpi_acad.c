@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_acad.c,v 1.33.4.4 2010/08/11 22:53:15 yamt Exp $	*/
+/*	$NetBSD: acpi_acad.c,v 1.33.4.5 2010/10/09 03:32:03 yamt Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_acad.c,v 1.33.4.4 2010/08/11 22:53:15 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_acad.c,v 1.33.4.5 2010/10/09 03:32:03 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -159,7 +159,7 @@ static bool
 acpiacad_resume(device_t dv, const pmf_qual_t *qual)
 {
 
-	(void)AcpiOsExecute(OSL_NOTIFY_HANDLER, acpiacad_get_status, dv);
+	acpiacad_get_status(dv);
 
 	return true;
 }

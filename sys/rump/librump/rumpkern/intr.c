@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.2.18.4 2010/08/11 22:55:06 yamt Exp $	*/
+/*	$NetBSD: intr.c,v 1.2.18.5 2010/10/09 03:32:43 yamt Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.2.18.4 2010/08/11 22:55:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.2.18.5 2010/10/09 03:32:43 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -47,26 +47,34 @@ __KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.2.18.4 2010/08/11 22:55:06 yamt Exp $");
  */
 
 #define SI_MPSAFE 0x01
-#define SI_ONLIST 0x02
-#define SI_KILLME 0x04
+#define SI_KILLME 0x02
 
+struct softint_percpu;
 struct softint {
 	void (*si_func)(void *);
 	void *si_arg;
 	int si_flags;
 	int si_level;
 
-	LIST_ENTRY(softint) si_entries;
+	struct softint_percpu *si_entry; /* [0,ncpu-1] */
+};
+
+struct softint_percpu {
+	struct softint *sip_parent;
+	bool sip_onlist;
+
+	LIST_ENTRY(softint_percpu) sip_entries;
 };
 
 struct softint_lev {
 	struct rumpuser_cv *si_cv;
-	LIST_HEAD(, softint) si_pending;
+	LIST_HEAD(, softint_percpu) si_pending;
 };
 
 kcondvar_t lbolt; /* Oh Kath Ra */
 
 static u_int ticks;
+static int ncpu_final;
 
 static u_int
 rumptc_get(struct timecounter *tc)
@@ -148,6 +156,7 @@ doclock(void *noarg)
 static void
 sithread(void *arg)
 {
+	struct softint_percpu *sip;
 	struct softint *si;
 	void (*func)(void *) = NULL;
 	void *funarg;
@@ -161,13 +170,15 @@ sithread(void *arg)
 
 	for (;;) {
 		if (!LIST_EMPTY(&si_lvl->si_pending)) {
-			si = LIST_FIRST(&si_lvl->si_pending);
+			sip = LIST_FIRST(&si_lvl->si_pending);
+			si = sip->sip_parent;
+
 			func = si->si_func;
 			funarg = si->si_arg;
 			mpsafe = si->si_flags & SI_MPSAFE;
 
-			si->si_flags &= ~SI_ONLIST;
-			LIST_REMOVE(si, si_entries);
+			sip->sip_onlist = false;
+			LIST_REMOVE(sip, sip_entries);
 			if (si->si_flags & SI_KILLME) {
 				softint_disestablish(si);
 				continue;
@@ -188,10 +199,11 @@ sithread(void *arg)
 }
 
 void
-rump_intr_init()
+rump_intr_init(int numcpu)
 {
 
 	cv_init(&lbolt, "oh kath ra");
+	ncpu_final = numcpu;
 }
 
 void
@@ -233,20 +245,12 @@ softint_init(struct cpu_info *ci)
 		panic("clock thread creation failed: %d", rv);
 }
 
-/*
- * Soft interrupts bring two choices.  If we are running with thread
- * support enabled, defer execution, otherwise execute in place.
- * See softint_schedule().
- * 
- * As there is currently no clear concept of when a thread finishes
- * work (although rump_clear_curlwp() is close), simply execute all
- * softints in the timer thread.  This is probably not the most
- * efficient method, but good enough for now.
- */
 void *
 softint_establish(u_int flags, void (*func)(void *), void *arg)
 {
 	struct softint *si;
+	struct softint_percpu *sip;
+	int i;
 
 	si = malloc(sizeof(*si), M_TEMP, M_WAITOK);
 	si->si_func = func;
@@ -254,38 +258,59 @@ softint_establish(u_int flags, void (*func)(void *), void *arg)
 	si->si_flags = flags & SOFTINT_MPSAFE ? SI_MPSAFE : 0;
 	si->si_level = flags & SOFTINT_LVLMASK;
 	KASSERT(si->si_level < SOFTINT_COUNT);
+	si->si_entry = malloc(sizeof(*si->si_entry) * ncpu_final,
+	    M_TEMP, M_WAITOK | M_ZERO);
+	for (i = 0; i < ncpu_final; i++) {
+		sip = &si->si_entry[i];
+		sip->sip_parent = si;
+	}
 
 	return si;
 }
+
+/*
+ * Soft interrupts bring two choices.  If we are running with thread
+ * support enabled, defer execution, otherwise execute in place.
+ */
 
 void
 softint_schedule(void *arg)
 {
 	struct softint *si = arg;
+	struct softint_percpu *sip = &si->si_entry[curcpu()->ci_index];
 	struct cpu_data *cd = &curcpu()->ci_data;
 	struct softint_lev *si_lvl = cd->cpu_softcpu;
 
 	if (!rump_threads) {
 		si->si_func(si->si_arg);
 	} else {
-		if (!(si->si_flags & SI_ONLIST)) {
+		if (!sip->sip_onlist) {
 			LIST_INSERT_HEAD(&si_lvl[si->si_level].si_pending,
-			    si, si_entries);
-			si->si_flags |= SI_ONLIST;
+			    sip, sip_entries);
+			sip->sip_onlist = true;
 		}
 	}
 }
 
-/* flimsy disestablish: should wait for softints to finish */
+/*
+ * flimsy disestablish: should wait for softints to finish.
+ */
 void
 softint_disestablish(void *cook)
 {
 	struct softint *si = cook;
+	int i;
 
-	if (si->si_flags & SI_ONLIST) {
-		si->si_flags |= SI_KILLME;
-		return;
+	for (i = 0; i < ncpu_final; i++) {
+		struct softint_percpu *sip;
+
+		sip = &si->si_entry[i];
+		if (sip->sip_onlist) {
+			si->si_flags |= SI_KILLME;
+			return;
+		}
 	}
+	free(si->si_entry, M_TEMP);
 	free(si, M_TEMP);
 }
 

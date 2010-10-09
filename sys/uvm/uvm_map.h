@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.h,v 1.61.2.3 2009/08/19 18:48:36 yamt Exp $	*/
+/*	$NetBSD: uvm_map.h,v 1.61.2.4 2010/10/09 03:32:47 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -110,7 +110,7 @@
 
 #endif /* _KERNEL */
 
-#include <sys/rb.h>
+#include <sys/rbtree.h>
 #include <sys/pool.h>
 #include <sys/rwlock.h>
 #include <sys/mutex.h>

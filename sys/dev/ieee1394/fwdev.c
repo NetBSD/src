@@ -1,4 +1,4 @@
-/*	$NetBSD: fwdev.c,v 1.14.12.2 2010/08/11 22:53:34 yamt Exp $	*/
+/*	$NetBSD: fwdev.c,v 1.14.12.3 2010/10/09 03:32:07 yamt Exp $	*/
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
  * Copyright (c) 1998-2002 Katsushi Kobayashi and Hidetoshi Shimokawa
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwdev.c,v 1.14.12.2 2010/08/11 22:53:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwdev.c,v 1.14.12.3 2010/10/09 03:32:07 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -248,7 +248,9 @@ readloop:
 		if (slept == 0) {
 			slept = 1;
 			ir->flag |= FWXFERQ_WAKEUP;
+			mutex_exit(&fc->fc_mtx);
 			err = tsleep(ir, FWPRI, "fw_read", hz);
+			mutex_enter(&fc->fc_mtx);
 			ir->flag &= ~FWXFERQ_WAKEUP;
 			if (err == 0)
 				goto readloop;
@@ -324,7 +326,9 @@ isoloop:
 			if (err)
 				goto out;
 #endif
+			mutex_exit(&fc->fc_mtx);
 			err = tsleep(it, FWPRI, "fw_write", hz);
+			mutex_enter(&fc->fc_mtx);
 			if (err)
 				goto out;
 			goto isoloop;
@@ -799,12 +803,18 @@ fw_read_async(struct fw_drv1 *d, struct uio *uio, int ioflag)
 	int err = 0;
 
 	mutex_enter(&d->fc->fc_mtx);
-	while ((xfer = STAILQ_FIRST(&d->rq)) == NULL && err == 0)
-		err = tsleep(&d->rq, FWPRI, "fwra", 0);
 
-	if (err != 0) {
-		mutex_exit(&d->fc->fc_mtx);
-		return err;
+	for (;;) {
+		xfer = STAILQ_FIRST(&d->rq);
+		if (xfer == NULL && err == 0) {
+			mutex_exit(&d->fc->fc_mtx);
+			err = tsleep(&d->rq, FWPRI, "fwra", 0);
+			if (err != 0)
+				return err;
+			mutex_enter(&d->fc->fc_mtx);
+			continue;
+		}
+		break;
 	}
 
 	STAILQ_REMOVE_HEAD(&d->rq, link);

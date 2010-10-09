@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.h,v 1.52.4.4 2010/08/11 22:55:17 yamt Exp $	*/
+/*	$NetBSD: uvm_page.h,v 1.52.4.5 2010/10/09 03:32:47 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -118,7 +118,7 @@
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_pglist.h>
 
-#include <sys/rb.h>
+#include <sys/rbtree.h>
 
 struct vm_page {
 	struct rb_node		rb_node;	/* tree of pages in obj (O) */

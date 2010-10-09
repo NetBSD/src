@@ -1,0 +1,9 @@
+#	$NetBSD: files.marvell,v 1.1.2.2 2010/10/09 03:31:43 yamt Exp $
+#
+# Marvell Orion, Discovery Innovation and Kirkwood NASs configuration info
+#
+
+file	arch/evbarm/marvell/marvell_machdep.c
+
+# CPU support and integrated peripherals
+include	"arch/arm/marvell/files.marvell"

@@ -1,4 +1,4 @@
-/*	$NetBSD: firewire.c,v 1.20.4.4 2010/08/11 22:53:34 yamt Exp $	*/
+/*	$NetBSD: firewire.c,v 1.20.4.5 2010/10/09 03:32:07 yamt Exp $	*/
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
  * Copyright (c) 1998-2002 Katsushi Kobayashi and Hidetoshi Shimokawa
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: firewire.c,v 1.20.4.4 2010/08/11 22:53:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: firewire.c,v 1.20.4.5 2010/10/09 03:32:07 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -907,7 +907,7 @@ fw_xfer_free(struct fw_xfer* xfer)
 {
 
 	if (xfer == NULL) {
-		aprint_error_dev(xfer->fc->bdev, "xfer == NULL\n");
+		aprint_error("fw_xfer_free: xfer == NULL\n");
 		return;
 	}
 	fw_xfer_unload(xfer);
@@ -920,7 +920,7 @@ fw_xfer_free_buf(struct fw_xfer* xfer)
 {
 
 	if (xfer == NULL) {
-		aprint_error_dev(xfer->fc->bdev, "xfer == NULL\n");
+		aprint_error("fw_xfer_free_buf: xfer == NULL\n");
 		return;
 	}
 	fw_xfer_unload(xfer);
@@ -1959,6 +1959,45 @@ fw_bus_probe_thread(void *arg)
 	/* NOTREACHED */
 }
 
+static const char *
+fw_get_devclass(struct fw_device *fwdev)
+{
+	struct crom_context cc;
+	struct csrreg *reg;
+
+	crom_init_context(&cc, fwdev->csrrom);
+	reg = crom_search_key(&cc, CSRKEY_VER);
+	if (reg == NULL)
+		return "null";
+
+	switch (reg->val) {
+	case CSR_PROTAVC:
+		return "av/c";
+	case CSR_PROTCAL:
+		return "cal";
+	case CSR_PROTEHS:
+		return "ehs";
+	case CSR_PROTHAVI:
+		return "havi";
+	case CSR_PROTCAM104:
+		return "cam104";
+	case CSR_PROTCAM120:
+		return "cam120";
+	case CSR_PROTCAM130:
+		return "cam130";
+	case CSR_PROTDPP:
+		return "printer";
+	case CSR_PROTIICP:
+		return "iicp";
+	case CSRVAL_T10SBP2:
+		return "sbp";
+	default:
+		if (firewire_debug)
+			printf("%s: reg->val 0x%x\n",
+				__func__, reg->val);
+		return "sbp";
+	}
+}
 
 /*
  * To attach sub-devices layer onto IEEE1394 bus.
@@ -1973,7 +2012,7 @@ fw_attach_dev(struct firewire_comm *fc)
 	struct fw_attach_args fwa;
 	int locs[IEEE1394IFCF_NLOCS];
 
-	fwa.name = "sbp";
+	fwa.name = "null";
 	fwa.fc = fc;
 
 	mutex_enter(&fc->fc_mtx);
@@ -1993,16 +2032,17 @@ fw_attach_dev(struct firewire_comm *fc)
 			locs[IEEE1394IFCF_EUIHI] = fwdev->eui.hi;
 			locs[IEEE1394IFCF_EUILO] = fwdev->eui.lo;
 
+			fwa.name = fw_get_devclass(fwdev);
 			fwa.fwdev = fwdev;
-			fwdev->sbp = config_found_sm_loc(sc->dev, "ieee1394if",
+			fwdev->dev = config_found_sm_loc(sc->dev, "ieee1394if",
 			    locs, &fwa, firewire_print, config_stdsubmatch);
-			if (fwdev->sbp == NULL) {
+			if (fwdev->dev == NULL) {
 				free(devlist, M_DEVBUF);
 				break;
 			}
 
 			devlist->fwdev = fwdev;
-			devlist->dev = fwdev->sbp;
+			devlist->dev = fwdev->dev;
 
 			mutex_enter(&fc->fc_mtx);
 			if (SLIST_EMPTY(&sc->devlist))
@@ -2053,6 +2093,10 @@ fw_attach_dev(struct firewire_comm *fc)
 			SLIST_FOREACH(devlist, &sc->devlist, link)
 				if (devlist->fwdev == fwdev)
 					break;
+
+			if (devlist == NULL)
+				continue;
+
 			if (devlist->fwdev != fwdev)
 				panic("already detached");
 
@@ -2060,7 +2104,7 @@ fw_attach_dev(struct firewire_comm *fc)
 			    link);
 			free(devlist, M_DEVBUF);
 
-			if (config_detach(fwdev->sbp, DETACH_FORCE) != 0)
+			if (config_detach(fwdev->dev, DETACH_FORCE) != 0)
 				return;
 
 			STAILQ_REMOVE(&fc->devices, fwdev, fw_device, link);

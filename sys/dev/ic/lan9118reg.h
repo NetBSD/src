@@ -1,4 +1,4 @@
-/*	$NetBSD: lan9118reg.h,v 1.1.2.3 2010/03/11 15:03:32 yamt Exp $	*/
+/*	$NetBSD: lan9118reg.h,v 1.1.2.4 2010/10/09 03:32:06 yamt Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -37,6 +37,11 @@
 #define LAN9218_ID_9215	0x115a
 #define LAN9218_ID_9217	0x117a
 #define LAN9218_ID_9218	0x118a
+
+#define LAN9210_ID_9210	0x9210
+#define LAN9210_ID_9211	0x9211
+#define LAN9220_ID_9220	0x9220
+#define LAN9220_ID_9221	0x9221
 
 #define IS_LAN9118(id)	((id) >= LAN9118_ID_9115 && (id) <= LAN9118_ID_9118)
 #define IS_LAN9218(id)	((id) >= LAN9218_ID_9215 && (id) <= LAN9218_ID_9218)

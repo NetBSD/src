@@ -1,4 +1,4 @@
-/*	$NetBSD: acpireg.h,v 1.5.74.2 2010/08/11 22:53:16 yamt Exp $	*/
+/*	$NetBSD: acpireg.h,v 1.5.74.3 2010/10/09 03:32:04 yamt Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -44,6 +44,16 @@
 #define ACPI_STA_OK		(ACPI_STA_DEVICE_PRESENT	|	\
 				 ACPI_STA_DEVICE_ENABLED	|	\
 				 ACPI_STA_DEVICE_FUNCTIONING)
+
+/*
+ * Operating System Capabilities, _OSC.
+ */
+#define ACPI_OSC_QUERY		__BIT(0)
+#define ACPI_OSC_ERROR		__BIT(1)
+#define ACPI_OSC_ERROR_UUID	__BIT(2)
+#define ACPI_OSC_ERROR_REV	__BIT(3)
+#define ACPI_OSC_ERROR_MASKED	__BIT(4)
+
 /*
  * PCI functions.
  */

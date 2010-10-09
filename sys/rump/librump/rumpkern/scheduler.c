@@ -1,4 +1,4 @@
-/*      $NetBSD: scheduler.c,v 1.9.4.3 2010/08/11 22:55:07 yamt Exp $	*/
+/*      $NetBSD: scheduler.c,v 1.9.4.4 2010/10/09 03:32:44 yamt Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scheduler.c,v 1.9.4.3 2010/08/11 22:55:07 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scheduler.c,v 1.9.4.4 2010/10/09 03:32:44 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -78,7 +78,7 @@ static struct rumpuser_mtx *lwp0mtx;
 static struct rumpuser_cv *lwp0cv;
 static unsigned nextcpu;
 
-static bool lwp0busy = false;
+static bool lwp0isbusy = false;
 
 /*
  * Keep some stats.
@@ -136,13 +136,15 @@ rump_cpus_bootstrap(int num)
 		rcpu = &rcpu_storage[i];
 		ci = &rump_cpus[i];
 		ci->ci_index = i;
-		rump_cpu_attach(ci);
-		ncpu++;
 	}
+
+	/* attach first cpu for bootstrap */
+	rump_cpu_attach(&rump_cpus[0]);
+	ncpu = 1;
 }
 
 void
-rump_scheduler_init()
+rump_scheduler_init(int numcpu)
 {
 	struct rumpcpu *rcpu;
 	struct cpu_info *ci;
@@ -150,7 +152,7 @@ rump_scheduler_init()
 
 	rumpuser_mutex_init(&lwp0mtx);
 	rumpuser_cv_init(&lwp0cv);
-	for (i = 0; i < ncpu; i++) {
+	for (i = 0; i < numcpu; i++) {
 		rcpu = &rcpu_storage[i];
 		ci = &rump_cpus[i];
 		rcpu->rcpu_ci = ci;
@@ -187,6 +189,30 @@ rump_schedlock_cv_timedwait(struct rumpuser_cv *cv, const struct timespec *ts)
 	    ts->tv_sec, ts->tv_nsec);
 }
 
+static void
+lwp0busy(void)
+{
+
+	/* busy lwp0 */
+	KASSERT(curlwp == NULL || curlwp->l_cpu == NULL);
+	rumpuser_mutex_enter_nowrap(lwp0mtx);
+	while (lwp0isbusy)
+		rumpuser_cv_wait_nowrap(lwp0cv, lwp0mtx);
+	lwp0isbusy = true;
+	rumpuser_mutex_exit(lwp0mtx);
+}
+
+static void
+lwp0rele(void)
+{
+
+	rumpuser_mutex_enter_nowrap(lwp0mtx);
+	KASSERT(lwp0isbusy == true);
+	lwp0isbusy = false;
+	rumpuser_cv_signal(lwp0cv);
+	rumpuser_mutex_exit(lwp0mtx);
+}
+
 void
 rump_schedule()
 {
@@ -199,31 +225,27 @@ rump_schedule()
 	 * for this case -- anyone who cares about performance will
 	 * start a real thread.
 	 */
-	l = rumpuser_get_curlwp();
-	if (l == NULL) {
-		/* busy lwp0 */
-		rumpuser_mutex_enter_nowrap(lwp0mtx);
-		while (lwp0busy)
-			rumpuser_cv_wait_nowrap(lwp0cv, lwp0mtx);
-		lwp0busy = true;
-		rumpuser_mutex_exit(lwp0mtx);
+	if (__predict_true((l = rumpuser_get_curlwp()) != NULL)) {
+		rump_schedule_cpu(l);
+		LWP_CACHE_CREDS(l, l->l_proc);
+	} else {
+		lwp0busy();
 
 		/* schedule cpu and use lwp0 */
 		rump_schedule_cpu(&lwp0);
 		rumpuser_set_curlwp(&lwp0);
-		l = rump_lwp_alloc(0, rump_nextlid());
 
-		/* release lwp0 */
-		rump_lwp_switch(l);
-		rumpuser_mutex_enter_nowrap(lwp0mtx);
-		lwp0busy = false;
-		rumpuser_cv_signal(lwp0cv);
-		rumpuser_mutex_exit(lwp0mtx);
+		/* allocate thread, switch to it, and release lwp0 */
+		l = rump__lwproc_allockernlwp();
+		rump_lwproc_switch(l);
+		lwp0rele();
 
-		/* mark new lwp as dead-on-exit */
-		rump_lwp_release(l);
-	} else {
-		rump_schedule_cpu(l);
+		/*
+		 * mark new thread dead-on-unschedule.  this
+		 * means that we'll be running with l_refcnt == 0.
+		 * relax, it's fine.
+		 */
+		rump_lwproc_releaselwp();
 	}
 }
 
@@ -317,6 +339,7 @@ rump_schedule_cpu_interlock(struct lwp *l, void *interlock)
  fastlane:
 	l->l_cpu = l->l_target_cpu = rcpu->rcpu_ci;
 	l->l_mutex = rcpu->rcpu_ci->ci_schedstate.spc_mutex;
+	l->l_ncsw++;
 }
 
 void
@@ -330,29 +353,31 @@ rump_unschedule()
 	l->l_mutex = NULL;
 
 	/*
-	 * If we're using a temp lwp, need to take lwp0 for rump_lwp_free().
-	 * (we could maybe cache idle lwp's to avoid constant bouncing)
+	 * Check special conditions:
+	 *  1) do we need to free the lwp which just unscheduled?
+	 *     (locking order: lwp0, cpu)
+	 *  2) do we want to clear curlwp for the current host thread
 	 */
-	if (l->l_flag & LW_WEXIT) {
-		rumpuser_set_curlwp(NULL);
+	if (__predict_false(l->l_flag & LW_WEXIT)) {
+		lwp0busy();
 
-		/* busy lwp0 */
-		rumpuser_mutex_enter_nowrap(lwp0mtx);
-		while (lwp0busy)
-			rumpuser_cv_wait_nowrap(lwp0cv, lwp0mtx);
-		lwp0busy = true;
-		rumpuser_mutex_exit(lwp0mtx);
+		/* Now that we have lwp0, we can schedule a CPU again */
+		rump_schedule_cpu(l);
 
-		rump_schedule_cpu(&lwp0);
-		rumpuser_set_curlwp(&lwp0);
-		rump_lwp_free(l);
+		/* switch to lwp0.  this frees the old thread */
+		KASSERT(l->l_flag & LW_WEXIT);
+		rump_lwproc_switch(&lwp0);
+
+		/* release lwp0 */
 		rump_unschedule_cpu(&lwp0);
+		lwp0.l_mutex = NULL;
+		lwp0.l_pflag &= ~LP_RUNNING;
+		lwp0rele();
 		rumpuser_set_curlwp(NULL);
 
-		rumpuser_mutex_enter_nowrap(lwp0mtx);
-		lwp0busy = false;
-		rumpuser_cv_signal(lwp0cv);
-		rumpuser_mutex_exit(lwp0mtx);
+	} else if (__predict_false(l->l_flag & LW_RUMP_CLEAR)) {
+		rumpuser_set_curlwp(NULL);
+		l->l_flag &= ~LW_RUMP_CLEAR;
 	}
 }
 
