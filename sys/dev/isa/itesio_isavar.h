@@ -1,4 +1,4 @@
-/*	$NetBSD: itesio_isavar.h,v 1.6.2.1 2010/08/11 22:53:36 yamt Exp $	*/
+/*	$NetBSD: itesio_isavar.h,v 1.6.2.2 2010/10/09 03:32:08 yamt Exp $	*/
 /*	$OpenBSD: itvar.h,v 1.2 2003/11/05 20:57:10 grange Exp $	*/
 
 /*
@@ -61,6 +61,7 @@
 #define ITESIO_ID8712	0x8712
 #define ITESIO_ID8716	0x8716
 #define ITESIO_ID8718	0x8718
+#define ITESIO_ID8721	0x8721
 #define ITESIO_ID8726	0x8726
 
 /* 

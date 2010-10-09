@@ -1,9 +1,9 @@
-/*	$NetBSD: rumpkern_if_wrappers.c,v 1.6.2.3 2010/08/11 22:55:07 yamt Exp $	*/
+/*	$NetBSD: rumpkern_if_wrappers.c,v 1.6.2.4 2010/10/09 03:32:44 yamt Exp $	*/
 
 /*
  * Automatically generated.  DO NOT EDIT.
- * from: NetBSD: rumpkern.ifspec,v 1.4 2010/03/05 18:41:46 pooka Exp 
- * by:   NetBSD: makerumpif.sh,v 1.4 2009/10/15 00:29:19 pooka Exp 
+ * from: NetBSD: rumpkern.ifspec,v 1.6 2010/09/01 19:13:38 pooka Exp 
+ * by:   NetBSD: makerumpif.sh,v 1.5 2010/09/01 19:32:11 pooka Exp 
  */
 
 #include <sys/cdefs.h>
@@ -140,18 +140,6 @@ rump_pub_cred_create(uid_t arg1, gid_t arg2, size_t arg3, gid_t *arg4)
 	return rv;
 }
 
-struct kauth_cred*
-rump_pub_cred_suserget(void)
-{
-	struct kauth_cred* rv;
-
-	rump_schedule();
-	rv = rump_cred_suserget();
-	rump_unschedule();
-
-	return rv;
-}
-
 void
 rump_pub_cred_put(struct kauth_cred *arg1)
 {
@@ -161,69 +149,66 @@ rump_pub_cred_put(struct kauth_cred *arg1)
 	rump_unschedule();
 }
 
-struct lwp *
-rump_pub_newproc_switch(void)
+int
+rump_pub_lwproc_newproc(void)
 {
-	struct lwp * rv;
+	int rv;
 
 	rump_schedule();
-	rv = rump_newproc_switch();
+	rv = rump_lwproc_newproc();
 	rump_unschedule();
 
 	return rv;
 }
 
-struct lwp *
-rump_pub_lwp_alloc(pid_t arg1, lwpid_t arg2)
+int
+rump_pub_lwproc_newlwp(pid_t arg1)
 {
-	struct lwp * rv;
+	int rv;
 
 	rump_schedule();
-	rv = rump_lwp_alloc(arg1, arg2);
-	rump_unschedule();
-
-	return rv;
-}
-
-struct lwp *
-rump_pub_lwp_alloc_and_switch(pid_t arg1, lwpid_t arg2)
-{
-	struct lwp * rv;
-
-	rump_schedule();
-	rv = rump_lwp_alloc_and_switch(arg1, arg2);
-	rump_unschedule();
-
-	return rv;
-}
-
-struct lwp *
-rump_pub_lwp_curlwp(void)
-{
-	struct lwp * rv;
-
-	rump_schedule();
-	rv = rump_lwp_curlwp();
+	rv = rump_lwproc_newlwp(arg1);
 	rump_unschedule();
 
 	return rv;
 }
 
 void
-rump_pub_lwp_switch(struct lwp *arg1)
+rump_pub_lwproc_switch(struct lwp *arg1)
 {
 
 	rump_schedule();
-	rump_lwp_switch(arg1);
+	rump_lwproc_switch(arg1);
 	rump_unschedule();
 }
 
 void
-rump_pub_lwp_release(struct lwp *arg1)
+rump_pub_lwproc_releaselwp(void)
 {
 
 	rump_schedule();
-	rump_lwp_release(arg1);
+	rump_lwproc_releaselwp();
+	rump_unschedule();
+}
+
+struct lwp *
+rump_pub_lwproc_curlwp(void)
+{
+	struct lwp * rv;
+
+	rump_schedule();
+	rv = rump_lwproc_curlwp();
+	rump_unschedule();
+
+	return rv;
+}
+
+void
+rump_pub_allbetsareoff_setid(pid_t arg1, int arg2)
+{
+
+	rump_schedule();
+	rump_allbetsareoff_setid(arg1, arg2);
 	rump_unschedule();
 }
 

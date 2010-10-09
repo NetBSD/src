@@ -1,9 +1,6 @@
-# $NetBSD: std.next68k,v 1.11 2005/12/11 12:18:25 christos Exp $
+# $NetBSD: std.next68k,v 1.11.78.1 2010/10/09 03:31:52 yamt Exp $
 
 # Standard information for next68k
 machine	next68k m68k
-include		"conf/std"	# MI standard options
-
-# Standard defines
-options 	EXEC_ELF32
-options 	EXEC_SCRIPT
+include		"conf/std"			# MI standard options
+include		"arch/m68k/conf/std.m68k"	# m68k standard options

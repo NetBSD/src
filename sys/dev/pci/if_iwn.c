@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwn.c,v 1.9.4.6 2010/08/11 22:53:47 yamt Exp $	*/
+/*	$NetBSD: if_iwn.c,v 1.9.4.7 2010/10/09 03:32:09 yamt Exp $	*/
 /*	$OpenBSD: if_iwn.c,v 1.96 2010/05/13 09:25:03 damien Exp $	*/
 
 /*-
@@ -22,7 +22,7 @@
  * adapters.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.9.4.6 2010/08/11 22:53:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.9.4.7 2010/10/09 03:32:09 yamt Exp $");
 
 #define IWN_USE_RBUF	/* Use local storage for RX */
 #undef IWN_HWCRYPTO	/* XXX does not even compile yet */
@@ -5913,7 +5913,8 @@ iwn_stop(struct ifnet *ifp, int disable)
 	struct iwn_softc *sc = ifp->if_softc;
 	struct ieee80211com *ic = &sc->sc_ic;
 
-	mutex_enter(&sc->sc_mtx);
+	if (!disable)
+		mutex_enter(&sc->sc_mtx);
 	sc->sc_flags &= ~IWN_FLAG_HW_INITED;
 	ifp->if_timer = sc->sc_tx_timer = 0;
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
@@ -5928,7 +5929,8 @@ iwn_stop(struct ifnet *ifp, int disable)
 	sc->sc_sensor.value_cur = 0;
 	sc->sc_sensor.state = ENVSYS_SINVALID;
 #endif
-	mutex_exit(&sc->sc_mtx);
+	if (!disable)
+		mutex_exit(&sc->sc_mtx);
 }
 
 /*

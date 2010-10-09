@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_ms.c,v 1.8 2008/03/26 18:04:15 matt Exp $	*/
+/*	$NetBSD: adb_ms.c,v 1.8.4.1 2010/10/09 03:32:04 yamt Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adb_ms.c,v 1.8 2008/03/26 18:04:15 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adb_ms.c,v 1.8.4.1 2010/10/09 03:32:04 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -107,7 +107,6 @@ struct adbms_softc {
 static int	adbms_match(device_t, cfdata_t, void *);
 static void	adbms_attach(device_t, device_t, void *);
 static void	ems_init(struct adbms_softc *);
-//static void	ms_processevent(adb_event_t *event, struct adbms_softc *);
 static void	init_trackpad(struct adbms_softc *);
 static void	adbms_init_mouse(struct adbms_softc *);
 static void	adbms_init_turbo(struct adbms_softc *);
@@ -614,7 +613,7 @@ adbms_mangle_2(struct adbms_softc *sc, int buttons)
 		/* finger up */
 		if (sc->sc_down) {
 			if (((sc->sc_x * sc->sc_x + 
-			    sc->sc_y * sc->sc_y) < 20) && 
+			    sc->sc_y * sc->sc_y) < 3) && 
 			    (sc->sc_wsmousedev)) {
 				/* 
 				 * if there wasn't much movement between
@@ -646,7 +645,7 @@ adbms_mangle_4(struct adbms_softc *sc, int buttons)
 		/* finger up */
 		if (sc->sc_down) {
 			if (((sc->sc_x * sc->sc_x + 
-			    sc->sc_y * sc->sc_y) < 20) && 
+			    sc->sc_y * sc->sc_y) < 3) && 
 			    (sc->sc_wsmousedev)) {
 				/* 
 				 * if there wasn't much movement between
@@ -758,7 +757,7 @@ adbms_wait(struct adbms_softc *sc, int timeout)
 		}
 	} else {
 		while ((sc->sc_msg_len == -1) && (cnt < timeout)) {
-			tsleep(&sc->sc_event, 0, "adbkbdio", hz);
+			tsleep(&sc->sc_event, 0, "adbmsio", hz);
 			cnt++;
 		}
 	}

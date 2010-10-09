@@ -1,0 +1,9 @@
+#	$NetBSD: files.devkit8000,v 1.1.2.2 2010/10/09 03:31:43 yamt Exp $
+#
+# DevKit8000 TI OMAP2 evaluation board configuration info
+#
+
+# on-board DM9000
+#
+attach dme at gpmc with dme_gpmc
+file	arch/evbarm/devkit8000/if_dme_gpmc.c		dme_gpmc

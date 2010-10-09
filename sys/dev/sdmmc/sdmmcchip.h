@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmcchip.h,v 1.1.4.3 2010/08/11 22:54:11 yamt Exp $	*/
+/*	$NetBSD: sdmmcchip.h,v 1.1.4.4 2010/10/09 03:32:25 yamt Exp $	*/
 /*	$OpenBSD: sdmmcchip.h,v 1.3 2007/05/31 10:09:01 uwe Exp $	*/
 
 /*
@@ -44,10 +44,11 @@ struct sdmmc_chip_functions {
 	/* write protect */
 	int		(*write_protect)(sdmmc_chipset_handle_t);
 
-	/* bus power, clock frequency and width */
+	/* bus power, clock frequency, width and ROD(OpenDrain/PushPull) */
 	int		(*bus_power)(sdmmc_chipset_handle_t, uint32_t);
 	int		(*bus_clock)(sdmmc_chipset_handle_t, int);
 	int		(*bus_width)(sdmmc_chipset_handle_t, int);
+	int		(*bus_rod)(sdmmc_chipset_handle_t, int);
 
 	/* command execution */
 	void		(*exec_command)(sdmmc_chipset_handle_t,
@@ -72,13 +73,15 @@ struct sdmmc_chip_functions {
 /* write protect */
 #define sdmmc_chip_write_protect(tag, handle)				\
 	((tag)->write_protect((handle)))
-/* bus power, clock frequency and width */
+/* bus power, clock frequency, width and rod */
 #define sdmmc_chip_bus_power(tag, handle, ocr)				\
 	((tag)->bus_power((handle), (ocr)))
 #define sdmmc_chip_bus_clock(tag, handle, freq)				\
 	((tag)->bus_clock((handle), (freq)))
 #define sdmmc_chip_bus_width(tag, handle, width)			\
 	((tag)->bus_width((handle), (width)))
+#define sdmmc_chip_bus_rod(tag, handle, width)				\
+	((tag)->bus_rod((handle), (width)))
 /* command execution */
 #define sdmmc_chip_exec_command(tag, handle, cmdp)			\
 	((tag)->exec_command((handle), (cmdp)))

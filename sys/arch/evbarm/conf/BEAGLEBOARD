@@ -1,5 +1,5 @@
 #
-#	$NetBSD: BEAGLEBOARD,v 1.5.2.4 2010/08/11 22:51:50 yamt Exp $
+#	$NetBSD: BEAGLEBOARD,v 1.5.2.5 2010/10/09 03:31:43 yamt Exp $
 #
 #	BEAGLEBOARD -- TI OMAP 3530 Eval Board Kernel
 #
@@ -145,6 +145,7 @@ options 	SYMTAB_SPACE=300000
 
 ## USB Debugging options
 options USB_DEBUG
+options EHCI_DEBUG
 options OHCI_DEBUG 
 options UHUB_DEBUG 
 
@@ -168,7 +169,7 @@ mainbus0	at root
 cpu0		at mainbus?
 
 # Specify the memory size in megabytes.
-options		MEMSIZE=128
+options		MEMSIZE=256
 
 # L3 Interconnect
 L3i0		at mainbus?
@@ -204,7 +205,7 @@ gpio*		at omapgpio?
 
 # On-board 16550 UARTs
 com0		at obio2 addr 0x49020000 intr 74 mult 4	# UART3 (console)
-#options 	CONSADDR=0x49020000, CONSPEED=57600
+#options 	CONSADDR=0x49020000, CONSPEED=38400
 options 	CONSADDR=0x49020000, CONSPEED=115200
 
 # Operating System Timer
@@ -220,13 +221,47 @@ omapwdt32k*	at obio2 addr 0x49030000 size 2048	# WDT3
 #omapwdt32k*	at obio1 addr 0x4830c000 size 2048	# WDT1
 #omapwdt32k*	at obio1 addr 0x48314000 size 2048	# WDT2
 
+# onboard video
+omapfb*		at obio0 addr 0x48050000 size 0x10000
+
+# make sure the console display is always wsdisplay0
+wsdisplay0	at wsemuldisplaydev? console 1
+wsdisplay*	at wsemuldisplaydev?
+
+# various options for wscons - we try to look as much like a standard
+# sun console as possible
+options 	WSEMUL_VT100		# sun terminal emulation
+options 	WS_DEFAULT_FG=WSCOL_BLACK
+options 	WS_DEFAULT_BG=WSCOL_LIGHT_WHITE
+options		WS_KERNEL_FG=WSCOL_GREEN
+options		WS_KERNEL_BG=WSCOL_LIGHT_WHITE
+options 	WSDISPLAY_COMPAT_USL		# VT handling
+options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
+options 	WSDISPLAY_DEFAULTSCREENS=4
+options		FONT_QVSS8x15
+#options 	FONT_GALLANT12x22	# the console font
+
+pseudo-device	wsmux			# mouse & keyboard multiplexor
+pseudo-device	wsfont
+
+# Power, Reset and Clock Management
+prcm*		at obio1 addr 0x48306000 size 0x2000	# PRM Module
+
 # On-board USB
 #ehci*		at obio0 addr 0x48064800 size 0x0400 intr 77
 #ohci*		at obio0 addr 0x48064400 size 0x0400 intr 76
 #usb*		at ohci?
+#usb*		at ehci?
 #uhub*		at usb?
-##umass*		at uhub? port ? configuration ? interface ?
-##wd*		at umass?
+#uhub*		at uhub? port ?
+#umass*		at uhub? port ? configuration ? interface ?
+#wd*		at umass?
+#uhidev*		at uhub?
+#ukbd*		at uhidev?
+#ums*		at uhidev?
+#wskbd*		at ukbd?
+#wsmouse*	at ums?
+
 #axe*		at uhub? port ? configuration ? interface ?
 
 # Hardware clocking and power management

@@ -1,4 +1,4 @@
-/*	$NetBSD: itesio_isa.c,v 1.17.2.1 2010/08/11 22:53:36 yamt Exp $ */
+/*	$NetBSD: itesio_isa.c,v 1.17.2.2 2010/10/09 03:32:07 yamt Exp $ */
 /*	Derived from $OpenBSD: it.c,v 1.19 2006/04/10 00:57:54 deraadt Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: itesio_isa.c,v 1.17.2.1 2010/08/11 22:53:36 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: itesio_isa.c,v 1.17.2.2 2010/10/09 03:32:07 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -140,6 +140,7 @@ itesio_isa_match(device_t parent, cfdata_t match, void *aux)
 	case ITESIO_ID8712:
 	case ITESIO_ID8716:
 	case ITESIO_ID8718:
+	case ITESIO_ID8721:
 	case ITESIO_ID8726:
 		ia->ia_nio = 1;
 		ia->ia_io[0].ir_size = 2;
@@ -462,9 +463,10 @@ itesio_refresh_volts(struct itesio_softc *sc, envsys_data_t *edata)
 	if (i == 5 || i == 6)
 		edata->value_cur -= ITESIO_EC_VREF;
 	/* rfact is (factor * 10^4) */
-	edata->value_cur *= itesio_vrfact[i];
 	if (edata->rfact)
-		edata->value_cur += edata->rfact;
+		edata->value_cur *= edata->rfact;
+	else
+		edata->value_cur *= itesio_vrfact[i];
 	/* division by 10 gets us back to uVDC */
 	edata->value_cur /= 10;
 	if (i == 5 || i == 6)

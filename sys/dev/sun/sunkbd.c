@@ -1,4 +1,4 @@
-/*	$NetBSD: sunkbd.c,v 1.27 2008/03/29 19:15:36 tsutsui Exp $	*/
+/*	$NetBSD: sunkbd.c,v 1.27.4.1 2010/10/09 03:32:25 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunkbd.c,v 1.27 2008/03/29 19:15:36 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunkbd.c,v 1.27.4.1 2010/10/09 03:32:25 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -255,7 +255,7 @@ sunkbdinput(int c, struct tty *tp)
 		log(LOG_ERR, "%s: input error (0x%x)\n",
 		    device_xname(k->k_kbd.k_dev), c);
 		c &= TTY_CHARMASK;
-		if (!k->k_txflags & K_TXBUSY) {
+		if (!(k->k_txflags & K_TXBUSY)) {
 			ttyflush(tp, FREAD | FWRITE);
 			goto send_reset;
 		}

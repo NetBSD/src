@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_verbose.c,v 1.10.2.2 2010/08/11 22:53:16 yamt Exp $ */
+/*	$NetBSD: acpi_verbose.c,v 1.10.2.3 2010/10/09 03:32:04 yamt Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007, 2010 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_verbose.c,v 1.10.2.2 2010/08/11 22:53:16 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_verbose.c,v 1.10.2.3 2010/10/09 03:32:04 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -77,7 +77,11 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_verbose.c,v 1.10.2.2 2010/08/11 22:53:16 yamt E
 #include <dev/acpi/acpivar.h>
 #include <dev/acpi/acpidevs_data.h>
 
+#include <dev/pci/pcivar.h>
+
 #include <prop/proplib.h>
+
+#include "locators.h"
 
 static bool	   acpiverbose_modcmd_prop(prop_dictionary_t);
 
@@ -88,6 +92,7 @@ static ACPI_STATUS acpi_print_madt_callback(ACPI_SUBTABLE_HEADER *, void *);
 static void	   acpi_print_fadt(struct acpi_softc *);
 static void	   acpi_print_devnodes(struct acpi_softc *);
 static void	   acpi_print_tree(struct acpi_devnode *, uint32_t);
+static device_t	   device_find_by_acpi_pci_info(const struct acpi_pci_info *);
 
 extern ACPI_TABLE_HEADER *madt_header;
 
@@ -455,6 +460,7 @@ static void
 acpi_print_tree(struct acpi_devnode *ad, uint32_t level)
 {
 	struct acpi_devnode *child;
+	device_t pcidev;
 	uint32_t i;
 
 	for (i = 0; i < level; i++)
@@ -463,6 +469,9 @@ acpi_print_tree(struct acpi_devnode *ad, uint32_t level)
 	aprint_normal("%-5s [%02u] [%c%c] ", ad->ad_name, ad->ad_type,
 	    ((ad->ad_flags & ACPI_DEVICE_POWER)  != 0) ? 'P' : ' ',
 	    ((ad->ad_flags & ACPI_DEVICE_WAKEUP) != 0) ? 'W' : ' ');
+
+	if (ad->ad_device != NULL)
+		aprint_normal("<%s> ", device_xname(ad->ad_device));
 
 	if (ad->ad_pciinfo != NULL) {
 
@@ -474,12 +483,50 @@ acpi_print_tree(struct acpi_devnode *ad, uint32_t level)
 			aprint_normal("[R] ");
 
 		if (ad->ad_pciinfo->ap_bridge != false)
-			aprint_normal("[B] -> 0x%02X",
+			aprint_normal("[B] -> 0x%02X ",
 			    ad->ad_pciinfo->ap_downbus);
+
+		pcidev = device_find_by_acpi_pci_info(ad->ad_pciinfo);
+		if (pcidev != NULL)
+			aprint_normal("<%s>", device_xname(pcidev));
 	}
 
 	aprint_normal("\n");
 
 	SIMPLEQ_FOREACH(child, &ad->ad_child_head, ad_child_list)
 	    acpi_print_tree(child, level + 1);
+}
+
+/*
+ * device_find_by_acpi_pci_info:
+ *
+ *	Returns the device corresponding to the given PCI info, or NULL
+ *	if it doesn't exist.
+ */
+static device_t
+device_find_by_acpi_pci_info(const struct acpi_pci_info *ap)
+{
+	device_t dv, pr;
+	struct pci_softc *pci;
+	deviter_t di;
+
+	if (ap->ap_function == 0xFFFF)
+		return NULL;
+
+	for (dv = deviter_first(&di, DEVITER_F_ROOT_FIRST); dv != NULL;
+	     dv = deviter_next(&di)) {
+		pr = device_parent(dv);
+		if ((pr == NULL) || !device_is_a(pr, "pci"))
+			continue;
+		if (dv->dv_locators == NULL)	/* This should not happen. */
+			continue;
+		pci = device_private(pr);
+		if (pci->sc_bus == ap->ap_bus &&
+		    device_locator(dv, PCICF_DEV) == ap->ap_device &&
+		    device_locator(dv, PCICF_FUNCTION) == ap->ap_function)
+			break;
+	}
+	deviter_release(&di);
+
+	return dv;
 }

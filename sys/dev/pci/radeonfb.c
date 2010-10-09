@@ -1,4 +1,4 @@
-/*	$NetBSD: radeonfb.c,v 1.27.4.5 2010/08/11 22:54:04 yamt Exp $ */
+/*	$NetBSD: radeonfb.c,v 1.27.4.6 2010/10/09 03:32:22 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -70,9 +70,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.27.4.5 2010/08/11 22:54:04 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.27.4.6 2010/10/09 03:32:22 yamt Exp $");
 
-#define RADEONFB_DEFAULT_DEPTH 32
+#define RADEONFB_DEFAULT_DEPTH 8
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -181,7 +181,7 @@ static const struct videomode *radeonfb_port_mode(struct radeonfb_softc *,
 
 static int radeonfb_drm_print(void *, const char *);
 
-#ifdef	RADEON_DEBUG
+#ifdef	RADEONFB_DEBUG
 int	radeon_debug = 1;
 #define	DPRINTF(x)	\
 	if (radeon_debug) printf x
@@ -199,6 +199,8 @@ int	radeon_debug = 1;
 /* any reasonably modern display should handle this */
 #define	RADEON_DEFAULT_MODE	"1024x768x60"
 #endif
+
+extern const u_char rasops_cmap[768];
 
 const char	*radeonfb_default_mode = RADEON_DEFAULT_MODE;
 
@@ -549,6 +551,7 @@ radeonfb_attach(device_t parent, device_t dev, void *aux)
 
 	PRINTREG(RADEON_BIOS_4_SCRATCH);
 	PRINTREG(RADEON_FP_GEN_CNTL);
+	sc->sc_fp_gen_cntl = GET32(sc, RADEON_FP_GEN_CNTL);
 	PRINTREG(RADEON_FP2_GEN_CNTL);
 	PRINTREG(RADEON_TMDS_CNTL);
 	PRINTREG(RADEON_TMDS_TRANSMITTER_CNTL);
@@ -662,7 +665,18 @@ radeonfb_attach(device_t parent, device_t dev, void *aux)
 	    RADEON_FP_TMDS_EN |
 		RADEON_FP_CRTC_DONT_SHADOW_VPAR |
 		RADEON_FP_CRTC_DONT_SHADOW_HEND);
-	CLR32(sc, RADEON_FP_GEN_CNTL, RADEON_FP_SEL_CRTC2);
+	/*
+	 * XXX
+	 * no idea why this is necessary - if I do not clear this bit on my
+	 * iBook G4 the screen remains black, even though it's already clear.
+	 * It needs to be set on my Sun XVR-100 for the DVI port to work
+	 */
+
+	if (sc->sc_fp_gen_cntl & RADEON_FP_SEL_CRTC2) {
+		SET32(sc, RADEON_FP_GEN_CNTL, RADEON_FP_SEL_CRTC2);
+	} else
+		CLR32(sc, RADEON_FP_GEN_CNTL, RADEON_FP_SEL_CRTC2);
+
 	if (HAS_CRTC2(sc))
 		SET32(sc, RADEON_FP2_GEN_CNTL, RADEON_FP2_SRC_SEL_CRTC2);
 
@@ -802,7 +816,7 @@ radeonfb_attach(device_t parent, device_t dev, void *aux)
 			goto error;
 		}
 
-		printf("init engine\n");
+		DPRINTF("init engine\n");
 		/* XXX: this seems suspicious - per display engine
 		   initialization? */
 		radeonfb_engine_init(dp);
@@ -854,11 +868,14 @@ radeonfb_attach(device_t parent, device_t dev, void *aux)
 #endif
 		if (dp->rd_console) {
 
+			radeonfb_modeswitch(dp);
 			wsdisplay_cnattach(dp->rd_wsscreens, ri, 0, 0,
 			    defattr);
 #ifdef SPLASHSCREEN
 			splash_render(&dp->rd_splash,
 			    SPLASH_F_CENTER|SPLASH_F_FILL);
+#else
+			vcons_replay_msgbuf(&dp->rd_vscreen);
 #endif
 
 #ifdef SPLASHSCREEN_PROGRESS
@@ -897,6 +914,7 @@ radeonfb_attach(device_t parent, device_t dev, void *aux)
 		aa.accesscookie = &dp->rd_vd;
 
 		config_found(&sc->sc_dev, &aa, wsemuldisplaydevprint);
+		
 		radeonfb_blank(dp, 0);
 		
 		/* Initialise delayed lvds operations for backlight. */
@@ -905,6 +923,15 @@ radeonfb_attach(device_t parent, device_t dev, void *aux)
 				radeonfb_lvds_callout, dp);
 	}
 
+	/*
+	 * if we have console output via firmware like on sparc64 it may
+	 * interfere with DAC programming so program the palette again
+	 * here after we took over
+	 */
+	radeonfb_init_palette(sc, 0); 
+	if (HAS_CRTC2(sc))
+		radeonfb_init_palette(sc, 1);
+	                                
 	pmf_event_register(dev, PMFE_DISPLAY_BRIGHTNESS_UP,
 	    radeonfb_brightness_up, TRUE);
 	pmf_event_register(dev, PMFE_DISPLAY_BRIGHTNESS_DOWN,
@@ -1000,7 +1027,8 @@ radeonfb_ioctl(void *v, void *vs,
 			if ((dp->rd_wsmode == WSDISPLAYIO_MODE_EMUL) &&
 			    (dp->rd_vd.active)) {
 				radeonfb_engine_init(dp);
-				//radeonfb_modeswitch(dp);
+				radeonfb_init_palette(sc, dp == &sc->sc_displays[0] ? 0 : 1);
+				radeonfb_modeswitch(dp);
 				vcons_redraw_screen(dp->rd_vd.active);
 			}
 		}
@@ -1423,7 +1451,7 @@ radeonfb_calc_dividers(struct radeonfb_softc *sc, uint32_t dotclock,
 }
 
 #if 0
-#ifdef RADEON_DEBUG
+#ifdef RADEONFB_DEBUG
 static void
 dump_buffer(const char *pfx, void *buffer, unsigned int size)
 {
@@ -1873,7 +1901,7 @@ radeonfb_modeswitch(struct radeonfb_display *dp)
 	int			i;
 
 	/* blank the display while we switch modes */
-	//radeonfb_blank(dp, 1);
+	radeonfb_blank(dp, 1);
 
 #if 0
 	SET32(sc, RADEON_CRTC_EXT_CNTL,
@@ -1898,7 +1926,7 @@ radeonfb_modeswitch(struct radeonfb_display *dp)
 		radeonfb_setcrtc(dp, i);
 
 	/* activate the display */
-	//radeonfb_blank(dp, 0);
+	radeonfb_blank(dp, 0);
 }
 
 void
@@ -2311,11 +2339,28 @@ radeonfb_init_palette(struct radeonfb_softc *sc, int crtc)
 		CLR32(sc, RADEON_DAC_CNTL2, RADEON_DAC2_PALETTE_ACC_CTL);
 
 	PUT32(sc, RADEON_PALETTE_INDEX, 0);
-	for (i = 0; i <= CLUT_WIDTH; ++i) {
-		PUT32(sc, RADEON_PALETTE_30_DATA,
-		    (CLUT_COLOR(i) << 10) |
-		    (CLUT_COLOR(i) << 20) |
-		    (CLUT_COLOR(i)));
+	if (sc->sc_displays[crtc].rd_bpp == 0)
+		sc->sc_displays[crtc].rd_bpp = RADEONFB_DEFAULT_DEPTH;
+
+	if (sc->sc_displays[crtc].rd_bpp == 8) {
+		/* ANSI palette */
+		int j = 0;
+
+                for (i = 0; i <= CLUT_WIDTH; ++i) {
+                	PUT32(sc, RADEON_PALETTE_30_DATA,
+				(rasops_cmap[j] << 22) |
+				(rasops_cmap[j + 1] << 12) |
+				(rasops_cmap[j + 2] << 2));
+			j += 3;
+		}
+	} else {
+		/* linear ramp */
+		for (i = 0; i <= CLUT_WIDTH; ++i) {
+			PUT32(sc, RADEON_PALETTE_30_DATA,
+			    (CLUT_COLOR(i) << 10) |
+			    (CLUT_COLOR(i) << 20) |
+			    (CLUT_COLOR(i)));
+		}
 	}
 
 	CLR32(sc, RADEON_DAC_CNTL2, RADEON_DAC2_PALETTE_ACC_CTL);
@@ -2724,6 +2769,7 @@ radeonfb_engine_init(struct radeonfb_display *dp)
 {
 	struct radeonfb_softc	*sc = dp->rd_softc;
 	uint32_t		pitch;
+	volatile uint32_t	junk;
 
 	/* no 3D */
 	PUT32(sc, RADEON_RB3D_CNTL, 0);
@@ -2752,6 +2798,7 @@ radeonfb_engine_init(struct radeonfb_display *dp)
 #else
 	CLR32(sc, RADEON_DP_DATATYPE, RADEON_HOST_BIG_ENDIAN_EN);
 #endif
+	junk = GET32(sc, RADEON_DP_DATATYPE);
 
 	/* default scissors -- no clipping */
 	radeonfb_wait_fifo(sc, 1);

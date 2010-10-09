@@ -1,4 +1,4 @@
-/*	$NetBSD: gumstix_start.S,v 1.5.20.2 2010/08/11 22:51:51 yamt Exp $ */
+/*	$NetBSD: gumstix_start.S,v 1.5.20.3 2010/10/09 03:31:44 yamt Exp $ */
 /*
  * Copyright (C) 2005, 2006 WIDE Project and SOUM Corporation.
  * All rights reserved.
@@ -195,6 +195,11 @@ _C_LABEL(gumstix_start):
 	orr	r0, r0, #CPU_CONTROL_SYST_ENABLE
 #endif
 #if defined(CPU_CORTEXA8)
+	/* Disable L2 cache beforehand. */
+	mrc	p15, 0, r1, c1, c0, 1
+	bic	r1, r1, #0x2		/* clear L2EN */
+	mcr	p15, 0, r1, c1, c0, 1
+
 	orr	r0, r0, #CPU_CONTROL_AFLT_ENABLE | CPU_CONTROL_DC_ENABLE
 	orr	r0, r0, #CPU_CONTROL_BPRD_ENABLE | CPU_CONTROL_IC_ENABLE
 #endif

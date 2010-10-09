@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.890.2.6 2010/08/11 22:52:10 yamt Exp $
+# $NetBSD: GENERIC,v 1.890.2.7 2010/10/09 03:31:46 yamt Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.890.2.6 $"
+#ident 		"GENERIC-$Revision: 1.890.2.7 $"
 
 maxusers	64		# estimated number of users
 
@@ -568,6 +568,7 @@ radeondrm*	at vga?		# ATI Radeon DRM driver
 savagedrm*	at vga?		# S3 Savage DRM driver
 sisdrm*		at vga?		# SiS DRM driver
 tdfxdrm*	at vga?		# 3dfx (voodoo) DRM driver
+viadrm*		at vga?		# VIA DRM driver
 
 # Serial Devices
 
@@ -1205,6 +1206,7 @@ url*	at uhub? port ?		# Realtek RTL8150L based adapters
 atu*	at uhub? port ?		# Atmel AT76C50XX based adapters
 ral*	at uhub? port ?		# Ralink Technology RT25x0 802.11a/b/g
 rum*	at uhub? port ?		# Ralink Technology RT2501/RT2601 802.11a/b/g
+upgt*	at uhub? port ?		# Intersil PrismGT
 zyd*	at uhub? port ?		# Zydas ZD1211
 
 # Prolific PL2301/PL2302 host-to-host adapter
@@ -1538,6 +1540,9 @@ options 	MEMORY_DISK_DYNAMIC	# loaded via kernel module
 
 pseudo-device	vnd			# disk-like interface to files
 options 	VND_COMPRESSION		# compressed vnd(4)
+
+# NPF
+#pseudo-device	npf
 
 # network pseudo-devices
 pseudo-device	bpfilter		# Berkeley packet filter

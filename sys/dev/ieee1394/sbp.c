@@ -1,4 +1,4 @@
-/*	$NetBSD: sbp.c,v 1.21.4.3 2010/08/11 22:53:35 yamt Exp $	*/
+/*	$NetBSD: sbp.c,v 1.21.4.4 2010/10/09 03:32:07 yamt Exp $	*/
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
  * Copyright (c) 1998-2002 Katsushi Kobayashi and Hidetoshi Shimokawa
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbp.c,v 1.21.4.3 2010/08/11 22:53:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbp.c,v 1.21.4.4 2010/10/09 03:32:07 yamt Exp $");
 
 
 #include <sys/param.h>
@@ -495,6 +495,12 @@ sbpattach(device_t parent, device_t self, void *aux)
 	sc->sc_target.fwdev = NULL;
 	sc->sc_target.luns = NULL;
 
+	/* Initialize mutexes and lists before we can error out
+	 * to prevent crashes on detach
+	 */
+	mutex_init(&sc->sc_fwb.fwb_mtx, MUTEX_DEFAULT, IPL_VM);
+	STAILQ_INIT(&sc->sc_fwb.xferlist);
+
 	if (sbp_alloc_target(sc, fwa->fwdev) == NULL)
 		return;
 
@@ -525,9 +531,7 @@ sbpattach(device_t parent, device_t self, void *aux)
 	dv_unit = device_unit(sc->sc_fd.dev);
 	sc->sc_fwb.start = SBP_DEV2ADDR(dv_unit, 0);
 	sc->sc_fwb.end = SBP_DEV2ADDR(dv_unit, -1);
-	mutex_init(&sc->sc_fwb.fwb_mtx, MUTEX_DEFAULT, IPL_VM);
 	/* pre-allocate xfer */
-	STAILQ_INIT(&sc->sc_fwb.xferlist);
 	fw_xferlist_add(&sc->sc_fwb.xferlist, M_SBP,
 	    /*send*/ 0, /*recv*/ SBP_RECV_LEN, SBP_NUM_OCB / 2,
 	    fc, (void *)sc, sbp_recv);
@@ -550,7 +554,7 @@ sbpdetach(device_t self, int flags)
 
 	sbp_scsipi_detach_target(&sc->sc_target);
 
-	if (SBP_FWDEV_ALIVE(sc->sc_target.fwdev)) {
+	if (sc->sc_target.fwdev && SBP_FWDEV_ALIVE(sc->sc_target.fwdev)) {
 		sbp_logout_all(sc);
 
 		/* XXX wait for logout completion */
@@ -566,6 +570,7 @@ sbpdetach(device_t self, int flags)
 	mutex_destroy(&sc->sc_fwb.fwb_mtx);
 
 	mutex_destroy(&sc->sc_mtx);
+	cv_destroy(&sc->sc_cv);
 
 	return 0;
 }
@@ -841,17 +846,6 @@ END_DEBUG
 	target->sbp = sc;
 	target->fwdev = fwdev;
 	target->target_id = 0;
-	/* XXX we may want to reload mgm port after each bus reset */
-	/* XXX there might be multiple management agents */
-	crom_init_context(&cc, target->fwdev->csrrom);
-	reg = crom_search_key(&cc, CROM_MGM);
-	if (reg == NULL || reg->val == 0) {
-		aprint_error_dev(sc->sc_fd.dev, "NULL management address\n");
-		target->fwdev = NULL;
-		return NULL;
-	}
-	target->mgm_hi = 0xffff;
-	target->mgm_lo = 0xf0000000 | (reg->val << 2);
 	target->mgm_ocb_cur = NULL;
 SBP_DEBUG(1)
 	printf("target: mgm_port: %x\n", target->mgm_lo);
@@ -863,6 +857,20 @@ END_DEBUG
 
 	target->luns = NULL;
 	target->num_lun = 0;
+
+	/* XXX we may want to reload mgm port after each bus reset */
+	/* XXX there might be multiple management agents */
+	crom_init_context(&cc, target->fwdev->csrrom);
+	reg = crom_search_key(&cc, CROM_MGM);
+	if (reg == NULL || reg->val == 0) {
+		aprint_error_dev(sc->sc_fd.dev, "NULL management address\n");
+		target->fwdev = NULL;
+		return NULL;
+	}
+
+	target->mgm_hi = 0xffff;
+	target->mgm_lo = 0xf0000000 | (reg->val << 2);
+
 	return target;
 }
 
@@ -2023,7 +2031,7 @@ SBP_DEBUG(0)
 	printf("sbp_logout_all\n");
 END_DEBUG
 	target = &sbp->sc_target;
-	if (target->luns != NULL)
+	if (target->luns != NULL) {
 		for (i = 0; i < target->num_lun; i++) {
 			sdev = target->luns[i];
 			if (sdev == NULL)
@@ -2033,6 +2041,7 @@ END_DEBUG
 			    sdev->status <= SBP_DEV_ATTACHED)
 				sbp_mgm_orb(sdev, ORB_FUN_LGO, NULL);
 		}
+	}
 
 	return 0;
 }

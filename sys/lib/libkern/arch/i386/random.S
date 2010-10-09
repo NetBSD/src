@@ -1,4 +1,4 @@
-/*	$NetBSD: random.S,v 1.3.148.2 2009/05/04 08:13:50 yamt Exp $	*/
+/*	$NetBSD: random.S,v 1.3.148.3 2010/10/09 03:32:34 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -83,12 +83,12 @@ ENTRY(random)
 	shld	$1,%eax,%edx
 	andl	$0x7fffffff,%eax
 	addl	%edx,%eax
-	js	1f
+	js	neg
 	PIC_PROLOGUE
 	movl	%eax,PIC_GOTOFF(randseed)
 	PIC_EPILOGUE
 	ret
-1:
+neg:
 	subl	$0x7fffffff,%eax
 	PIC_PROLOGUE
 	movl	%eax,PIC_GOTOFF(randseed)

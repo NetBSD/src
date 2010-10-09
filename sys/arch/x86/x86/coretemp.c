@@ -1,4 +1,4 @@
-/* $NetBSD: coretemp.c,v 1.9.10.4 2010/08/11 22:52:56 yamt Exp $ */
+/* $NetBSD: coretemp.c,v 1.9.10.5 2010/10/09 03:31:58 yamt Exp $ */
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coretemp.c,v 1.9.10.4 2010/08/11 22:52:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coretemp.c,v 1.9.10.5 2010/10/09 03:31:58 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -70,11 +70,17 @@ coretemp_register(struct cpu_info *ci)
 	int cpumodel, cpuextmodel, cpumask;
 
 	/*
+	 * Don't attach on anything but the first SMT ID.
+	 */
+	if (ci->ci_smt_id != 0)
+		return;
+
+	/*
 	 * CPUID 0x06 returns 1 if the processor has on-die thermal
 	 * sensors. EBX[0:3] contains the number of sensors.
 	 */
 	x86_cpuid(0x06, regs);
-	if ((regs[0] & 0x1) != 1)
+	if ((regs[0] & CPUID_DSPM_DTS) == 0)
 		return;
 
 	sc = kmem_zalloc(sizeof(struct coretemp_softc), KM_NOSLEEP);

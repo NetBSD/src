@@ -1,4 +1,4 @@
-/*	$NetBSD: cgfourteen.c,v 1.52.20.5 2010/08/11 22:52:44 yamt Exp $ */
+/*	$NetBSD: cgfourteen.c,v 1.52.20.6 2010/10/09 03:31:52 yamt Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -365,8 +365,6 @@ cgfourteenattach(device_t parent, device_t self, void *aux)
 	} else {
 		sc->sc_fb.fb_pixels = (void *)fbva[1];
 	}
-
-	sc->sc_shadowfb = kmem_alloc(ramsize, KM_NOSLEEP);
 
 	if (isconsole)
 		printf(" (console)\n");
@@ -785,10 +783,6 @@ cg14_setup_wsdisplay(struct cgfourteen_softc *sc, int is_cons)
 		memset(sc->sc_fb.fb_pixels,
 		       (defattr >> 16) & 0xff,
 		       ri->ri_stride * ri->ri_height);
-		if (sc->sc_shadowfb != NULL)
-			memset(sc->sc_shadowfb,
-			       (defattr >> 16) & 0xff,
-			       ri->ri_stride * ri->ri_height);
 		sc->sc_console_screen.scr_flags |= VCONS_SCREEN_IS_STATIC;
 
 		sc->sc_defaultscreen_descr.textops = &ri->ri_ops;
@@ -1019,11 +1013,8 @@ cg14_init_screen(void *cookie, struct vcons_screen *scr,
 	ri->ri_stride = ri->ri_width;
 	ri->ri_flg = RI_CENTER | RI_FULLCLEAR;
 
-	if (sc->sc_shadowfb != NULL) {
-		ri->ri_bits = sc->sc_shadowfb;
-		ri->ri_hwbits = (char *)sc->sc_fb.fb_pixels;
-	} else 
-		ri->ri_bits = (char *)sc->sc_fb.fb_pixels;
+	ri->ri_bits = (char *)sc->sc_fb.fb_pixels;
+	scr->scr_flags |= VCONS_DONT_READ;
 
 	if (existing) {
 		ri->ri_flg |= RI_CLEAR;

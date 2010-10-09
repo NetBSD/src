@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_prot.c,v 1.106.2.2 2010/08/11 22:54:40 yamt Exp $	*/
+/*	$NetBSD: kern_prot.c,v 1.106.2.3 2010/10/09 03:32:31 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_prot.c,v 1.106.2.2 2010/08/11 22:54:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_prot.c,v 1.106.2.3 2010/10/09 03:32:31 yamt Exp $");
 
 #include "opt_compat_43.h"
 
@@ -625,4 +625,3 @@ sys___setlogin(struct lwp *l, const struct sys___setlogin_args *uap, register_t 
 	mutex_exit(proc_lock);
 	return (0);
 }
-

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_wapbl.c,v 1.25.2.5 2010/08/11 22:54:45 yamt Exp $	*/
+/*	$NetBSD: vfs_wapbl.c,v 1.25.2.6 2010/10/09 03:32:33 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2008, 2009 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #define WAPBL_INTERNAL
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.25.2.5 2010/08/11 22:54:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.25.2.6 2010/10/09 03:32:33 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/bitops.h>
@@ -2095,7 +2095,7 @@ wapbl_blkhash_init(struct wapbl_replay *wr, u_int size)
 		for (hashsize = 1; hashsize < size; hashsize <<= 1)
 			continue;
 		wr->wr_blkhash = wapbl_malloc(hashsize * sizeof(*wr->wr_blkhash));
-		for (i = 0; i < wr->wr_blkhashmask; i++)
+		for (i = 0; i < hashsize; i++)
 			LIST_INIT(&wr->wr_blkhash[i]);
 		wr->wr_blkhashmask = hashsize - 1;
 	}
@@ -2648,7 +2648,7 @@ wapbl_replay_write(struct wapbl_replay *wr, struct vnode *fsdevvp)
 
 	scratch = wapbl_malloc(MAXBSIZE);
 
-	for (i = 0; i < wr->wr_blkhashmask; ++i) {
+	for (i = 0; i <= wr->wr_blkhashmask; ++i) {
 		LIST_FOREACH(wb, &wr->wr_blkhash[i], wb_hash) {
 			off = wb->wb_off;
 			error = wapbl_circ_read(wr, scratch, fsblklen, &off);

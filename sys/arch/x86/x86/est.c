@@ -1,4 +1,4 @@
-/*	$NetBSD: est.c,v 1.8.4.4 2010/08/11 22:52:57 yamt Exp $	*/
+/*	$NetBSD: est.c,v 1.8.4.5 2010/10/09 03:31:58 yamt Exp $	*/
 /*
  * Copyright (c) 2003 Michael Eriksson.
  * All rights reserved.
@@ -81,7 +81,7 @@
 /* #define EST_DEBUG */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: est.c,v 1.8.4.4 2010/08/11 22:52:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: est.c,v 1.8.4.5 2010/10/09 03:31:58 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1261,42 +1261,35 @@ est_init_main(int vendor)
 	/*
 	 * Setup the sysctl sub-tree machdep.est.*
 	 */
-	if (cpu_freq_sysctllog != NULL) {
-		rc = EALREADY;
-		goto err;
-	}
-
-	cpu_freq_init = est_init_main;
-
-	if ((rc = sysctl_createv(&cpu_freq_sysctllog, 0, NULL, &node,
+	if ((rc = sysctl_createv(NULL, 0, NULL, &node,
 	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "machdep", NULL,
 	    NULL, 0, NULL, 0, CTL_MACHDEP, CTL_EOL)) != 0)
 		goto err;
 
-	if ((rc = sysctl_createv(&cpu_freq_sysctllog, 0, &node, &estnode,
+	if ((rc = sysctl_createv(NULL, 0, &node, &estnode,
 	    0, CTLTYPE_NODE, "est", NULL,
 	    NULL, 0, NULL, 0, CTL_CREATE, CTL_EOL)) != 0)
 		goto err;
 
-	if ((rc = sysctl_createv(&cpu_freq_sysctllog, 0, &estnode, &freqnode,
+	if ((rc = sysctl_createv(NULL, 0, &estnode, &freqnode,
 	    0, CTLTYPE_NODE, "frequency", NULL,
 	    NULL, 0, NULL, 0, CTL_CREATE, CTL_EOL)) != 0)
 		goto err;
 
-	if ((rc = sysctl_createv(&cpu_freq_sysctllog, 0, &freqnode, &node,
+	if ((rc = sysctl_createv(NULL, 0, &freqnode, &node,
 	    EST_TARGET_CTLFLAG, CTLTYPE_INT, "target", NULL,
 	    est_sysctl_helper, 0, NULL, 0, CTL_CREATE, CTL_EOL)) != 0)
 		goto err;
 	est_node_target = node->sysctl_num;
 
-	if ((rc = sysctl_createv(&cpu_freq_sysctllog, 0, &freqnode, &node,
+	if ((rc = sysctl_createv(NULL, 0, &freqnode, &node,
 	    0, CTLTYPE_INT, "current", NULL,
 	    est_sysctl_helper, 0, NULL, 0, CTL_CREATE, CTL_EOL)) != 0)
 		goto err;
 	est_node_current = node->sysctl_num;
 
-	if ((rc = sysctl_createv(&cpu_freq_sysctllog, 0, &freqnode, &node,
-	    CTLFLAG_READONLY, CTLTYPE_STRING, "available", NULL,
+	if ((rc = sysctl_createv(NULL, 0, &freqnode, &node,
+	    0, CTLTYPE_STRING, "available", NULL,
 	    NULL, 0, freq_names, freq_len, CTL_CREATE, CTL_EOL)) != 0)
 		goto err;
 
@@ -1304,11 +1297,5 @@ est_init_main(int vendor)
 
  err:
 	free(freq_names, M_SYSCTLDATA);
-
-	if (cpu_freq_sysctllog != NULL)
-		sysctl_teardown(&cpu_freq_sysctllog);
-
-	cpu_freq_init = NULL;
-
 	aprint_error("%s: sysctl_createv failed (rc = %d)\n", __func__, rc);
 }

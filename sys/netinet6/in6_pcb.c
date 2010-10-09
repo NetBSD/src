@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_pcb.c,v 1.97.2.3 2009/06/20 07:20:34 yamt Exp $	*/
+/*	$NetBSD: in6_pcb.c,v 1.97.2.4 2010/10/09 03:32:38 yamt Exp $	*/
 /*	$KAME: in6_pcb.c,v 1.84 2001/02/08 18:02:08 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.97.2.3 2009/06/20 07:20:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.97.2.4 2010/10/09 03:32:38 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -367,7 +367,9 @@ in6_pcbbind(void *v, struct mbuf *nam, struct lwp *l)
 	 * If we already have a local port or a local address it means we're
 	 * bounded.
 	 */
-	if (in6p->in6p_lport || !IN6_IS_ADDR_UNSPECIFIED(&in6p->in6p_laddr))
+	if (in6p->in6p_lport || !(IN6_IS_ADDR_UNSPECIFIED(&in6p->in6p_laddr) ||
+	    (IN6_IS_ADDR_V4MAPPED(&in6p->in6p_laddr) &&
+	      in6p->in6p_laddr.s6_addr32[3] == 0)))
 		return (EINVAL);
 
 	if (nam != NULL) {

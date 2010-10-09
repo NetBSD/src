@@ -1,0 +1,40 @@
+#	$NetBSD: KUROBOX_PRO,v 1.1.2.2 2010/10/09 03:31:43 yamt Exp $
+#
+#  KUROBOX_PRO -- KUROUTOSHIKOU. KURO-BOX/PRO platform kernel
+#
+
+include 	"arch/evbarm/conf/MARVELL_NAS"
+
+# Board Type
+makeoptions	BOARDTYPE="kurobox_pro"
+options 	EVBARM_BOARDTYPE=kurobox_pro
+
+makeoptions	CPUFLAGS="-mcpu=xscale"	# Xscale instruction set support
+no options	CPU_SHEEVA
+no options	KIRKWOOD
+
+# Development and Debugging options
+
+#options 	PERFCTRS	# performance counters
+options 	DIAGNOSTIC	# internally consistency checks
+options 	DEBUG
+#options 	PMAP_DEBUG	# Enable pmap_debug_level code
+#options 	VERBOSE_INIT_ARM # verbose bootstraping messages
+options 	DDB		# in-kernel debugger
+#options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
+#options 	KGDB
+#options 	DEBUG_KGDB
+makeoptions	DEBUG="-g -O2"	# compile full symbol table
+options 	SYMTAB_SPACE=500000
+#options 	AUDIO_DEBUG=2
+
+
+# On-chip PCI Interface doesn't use.
+no gtpci* at mvsoc?
+no pci*	at gtpci?
+
+rs5c372rtc* at iic? addr 0x32		# RICOH RS5C372 RTC
+
+# PCI network interfaces
+#mskc*	at pci? dev ? function ?	# Marvell Yukon 2 Gigabit Ethernet
+#msk*	at mskc?

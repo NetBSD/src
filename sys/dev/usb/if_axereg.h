@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axereg.h,v 1.5.10.2 2010/08/11 22:54:13 yamt Exp $	*/
+/*	$NetBSD: if_axereg.h,v 1.5.10.3 2010/10/09 03:32:26 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003
@@ -176,8 +176,7 @@ struct axe_softc;
 struct axe_chain {
 	struct axe_softc	*axe_sc;
 	usbd_xfer_handle	axe_xfer;
-	char			*axe_buf;
-	struct mbuf		*axe_mbuf;
+	uint8_t			*axe_buf;
 	int			axe_accum;
 	int			axe_idx;
 };
@@ -217,8 +216,8 @@ struct axe_softc {
 	struct callout axe_stat_ch;
 
 	int			axe_refcnt;
-	char			axe_dying;
-	char			axe_attached;
+	bool			axe_dying;
+	bool			axe_attached;
 
 	struct usb_task		axe_tick_task;
 
@@ -226,8 +225,8 @@ struct axe_softc {
 
 	int			axe_link;
 
-	unsigned char		axe_ipgs[3];
-	unsigned char 		axe_phyaddrs[2];
+	uint8_t			axe_ipgs[3];
+	uint8_t 		axe_phyaddrs[2];
 	struct timeval		axe_rx_notice;
 	int			axe_bufsz;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ichlpcib.c,v 1.10.4.5 2010/08/11 22:52:56 yamt Exp $	*/
+/*	$NetBSD: ichlpcib.c,v 1.10.4.6 2010/10/09 03:31:57 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ichlpcib.c,v 1.10.4.5 2010/08/11 22:52:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ichlpcib.c,v 1.10.4.6 2010/10/09 03:31:57 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -177,6 +177,7 @@ static struct lpcib_device {
 	int has_ich5_hpet;
 } lpcib_devices[] = {
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801AA_LPC, 0, 0 },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801AB_LPC, 0, 0 },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801BA_LPC, 0, 0 },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801BAM_LPC, 0, 0 },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801CA_LPC, 0, 0 },
@@ -370,7 +371,7 @@ lpcibchilddet(device_t self, device_t child)
 static int
 lpcibrescan(device_t self, const char *ifattr, const int *locators)
 {
-#if NHPET > 0 || NGPIO > 0
+#if NHPET > 0 || NGPIO > 0 || NFWHRNG > 0
 	struct lpcib_softc *sc = device_private(self);
 #endif
 

@@ -1,0 +1,8 @@
+# $NetBSD: std.m68k,v 1.1.2.2 2010/10/09 03:31:49 yamt Exp $
+#
+# standard, required NetBSD/m68k options
+
+options 	EXEC_ELF32		# exec ELF binaries
+options 	EXEC_SCRIPT		# exec #! scripts
+
+options 	CPU_IN_CKSUM		# use MD optimized cpu_in_cksum()

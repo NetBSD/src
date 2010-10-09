@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_fcntl.h,v 1.1.148.1 2008/05/16 02:23:37 yamt Exp $	*/
+/*	$NetBSD: linux_fcntl.h,v 1.1.148.2 2010/10/09 03:32:00 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -49,6 +49,7 @@
 #define LINUX_O_APPEND		0x0008
 #define LINUX_O_NDELAY		LINUX_O_NONBLOCK
 #define LINUX_O_SYNC		0x4000
+#define LINUX_O_DIRECTORY	0x8000
 
 #define LINUX_FASYNC		0x2000
 

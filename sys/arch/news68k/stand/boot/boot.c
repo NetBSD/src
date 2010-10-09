@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.14.10.2 2009/05/04 08:11:37 yamt Exp $	*/
+/*	$NetBSD: boot.c,v 1.14.10.3 2010/10/09 03:31:51 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999 Izumi Tsutsui.  All rights reserved.
@@ -123,10 +123,9 @@ boot(uint32_t d4, uint32_t d5, uint32_t d6, uint32_t d7)
 		kernels[1] = NULL;
 	}
 
-	/* disable LOAD_NOTE on floppy to avoid backward seek across volumes */
 	loadflag = LOAD_KERNEL;
 	if (devname[0] == 'f')	/* XXX */
-		loadflag &= ~LOAD_NOTE;
+		loadflag &= ~LOAD_BACKWARDS;
 
 	for (i = 0; kernels[i]; i++) {
 		sprintf(file, "%s%s", devname, kernels[i]);

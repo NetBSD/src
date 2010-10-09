@@ -1,4 +1,4 @@
-/*	$NetBSD: gttwsi.c,v 1.3.2.2 2010/08/11 22:53:37 yamt Exp $	*/
+/*	$NetBSD: gttwsi.c,v 1.3.2.3 2010/10/09 03:32:08 yamt Exp $	*/
 /*
  * Copyright (c) 2008 Eiji Kawauchi.
  * All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gttwsi.c,v 1.3.2.2 2010/08/11 22:53:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gttwsi.c,v 1.3.2.3 2010/10/09 03:32:08 yamt Exp $");
 #include "locators.h"
 
 #include <sys/param.h>
@@ -335,7 +335,10 @@ gttwsi_read_byte(void *v, uint8_t *valp, int flags)
 	struct gttwsi_softc *sc = v;
 	int error;
 
-	error = gttwsi_wait(sc, CONTROL_ACK, STAT_MRRD_AT, flags);
+	if (flags & I2C_F_STOP)
+		error = gttwsi_wait(sc, 0, STAT_MRRD_ANT, flags);
+	else
+		error = gttwsi_wait(sc, CONTROL_ACK, STAT_MRRD_AT, flags);
 	if (!error)
 		*valp = RREG(sc, TWSI_DATA);
 	if (flags & I2C_F_LAST)

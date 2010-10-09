@@ -1,4 +1,4 @@
-/*	$NetBSD: fwhrng.c,v 1.1.2.2 2010/08/11 22:52:56 yamt Exp $	*/
+/*	$NetBSD: fwhrng.c,v 1.1.2.3 2010/10/09 03:31:56 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 Michael Shalayeff
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwhrng.c,v 1.1.2.2 2010/08/11 22:52:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwhrng.c,v 1.1.2.3 2010/10/09 03:31:56 yamt Exp $");
 
 #include "rnd.h"        
                             
@@ -85,7 +85,7 @@ fwhrng_match(device_t parent, cfdata_t match, void *aux)
 	bst = x86_bus_space_mem;
 
 	/* read chip ID */
-	if (bus_space_map(bst, I82802AC_MEMBASE, I82802AC_WINSIZE, 0, &bsh))
+	if (bus_space_map(bst, I82802AB_MEMBASE, I82802AB_WINSIZE, 0, &bsh))
 		return 0;
 
 	bus_space_write_1(bst, bsh, 0, 0xff); /* reset */
@@ -96,7 +96,7 @@ fwhrng_match(device_t parent, cfdata_t match, void *aux)
 	id1 = bus_space_read_1(bst, bsh, 1);
 	bus_space_write_1(bst, bsh, 0, 0xff); /* reset */
 
-	bus_space_unmap(bst, bsh, I82802AC_WINSIZE);
+	bus_space_unmap(bst, bsh, I82802AB_WINSIZE);
 
 	aprint_debug_dev(parent, "fwh: data %02x,%02x, id %02x,%02x\n",
 	    data0, data1, id0, id1);

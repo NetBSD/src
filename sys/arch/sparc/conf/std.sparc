@@ -1,4 +1,4 @@
-#	$NetBSD: std.sparc,v 1.22 2005/12/11 12:19:05 christos Exp $
+#	$NetBSD: std.sparc,v 1.22.78.1 2010/10/09 03:31:52 yamt Exp $
 
 #
 # Mandatory NetBSD/sparc kernel options.
@@ -10,3 +10,5 @@ include		"conf/std"	# MI standard options
 options 	EXEC_AOUT	# execve(2) support for a.out binaries
 options 	EXEC_ELF32	# execve(2) support for ELF binaries
 options 	EXEC_SCRIPT	# execve(2) support for scripts
+
+options 	CPU_IN_CKSUM	# use MD optimized cpu_in_cksum()

@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.13.20.1 2009/05/04 08:12:07 yamt Exp $	*/
+/*	$NetBSD: boot.c,v 1.13.20.2 2010/10/09 03:31:56 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 Minoura Makoto
@@ -111,7 +111,7 @@ doboot(const char *file, int flags)
 
 	loadflag = LOAD_KERNEL;
 	if (file[0] == 'f')
-		loadflag &= ~LOAD_NOTE;
+		loadflag &= ~LOAD_BACKWARDS;
 		
 	marks[MARK_START] = 0x100000;
 	if ((fd = loadfile(file, marks, loadflag)) == -1) {

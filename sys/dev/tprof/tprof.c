@@ -1,4 +1,4 @@
-/*	$NetBSD: tprof.c,v 1.1.18.2 2009/05/04 08:13:20 yamt Exp $	*/
+/*	$NetBSD: tprof.c,v 1.1.18.3 2010/10/09 03:32:26 yamt Exp $	*/
 
 /*-
  * Copyright (c)2008,2009 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tprof.c,v 1.1.18.2 2009/05/04 08:13:20 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tprof.c,v 1.1.18.3 2010/10/09 03:32:26 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -667,7 +667,7 @@ tprof_driver_init(void)
 	mutex_init(&tprof_reader_lock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&tprof_startstop_lock, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&tprof_cv, "tprof");
-	cv_init(&tprof_reader_cv, "tprofread");
+	cv_init(&tprof_reader_cv, "tprof_rd");
 	STAILQ_INIT(&tprof_list);
 }
 

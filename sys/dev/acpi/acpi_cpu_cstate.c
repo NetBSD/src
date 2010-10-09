@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_cstate.c,v 1.23.2.2 2010/08/11 22:53:15 yamt Exp $ */
+/* $NetBSD: acpi_cpu_cstate.c,v 1.23.2.3 2010/10/09 03:32:04 yamt Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_cstate.c,v 1.23.2.2 2010/08/11 22:53:15 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_cstate.c,v 1.23.2.3 2010/10/09 03:32:04 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -37,9 +37,6 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_cpu_cstate.c,v 1.23.2.2 2010/08/11 22:53:15 yam
 #include <sys/once.h>
 #include <sys/mutex.h>
 #include <sys/timetc.h>
-
-#include <dev/pci/pcivar.h>
-#include <dev/pci/pcidevs.h>
 
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
@@ -61,7 +58,6 @@ static void		 acpicpu_cstate_cst_bios(void);
 static void		 acpicpu_cstate_memset(struct acpicpu_softc *);
 static void		 acpicpu_cstate_fadt(struct acpicpu_softc *);
 static void		 acpicpu_cstate_quirks(struct acpicpu_softc *);
-static int		 acpicpu_cstate_quirks_piix4(struct pci_attach_args *);
 static int		 acpicpu_cstate_latency(struct acpicpu_softc *);
 static bool		 acpicpu_cstate_bm_check(void);
 static void		 acpicpu_cstate_idle_enter(struct acpicpu_softc *,int);
@@ -94,7 +90,6 @@ acpicpu_cstate_attach(device_t self)
 	switch (rv) {
 
 	case AE_OK:
-		sc->sc_flags |= ACPICPU_FLAG_C_CST;
 		acpicpu_cstate_cst_bios();
 		break;
 
@@ -103,6 +98,8 @@ acpicpu_cstate_attach(device_t self)
 		acpicpu_cstate_fadt(sc);
 		break;
 	}
+
+	sc->sc_flags |= ACPICPU_FLAG_C;
 
 	acpicpu_cstate_quirks(sc);
 	acpicpu_cstate_attach_evcnt(sc);
@@ -113,8 +110,12 @@ void
 acpicpu_cstate_attach_print(struct acpicpu_softc *sc)
 {
 	struct acpicpu_cstate *cs;
+	static bool once = false;
 	const char *str;
 	int i;
+
+	if (once != false)
+		return;
 
 	for (i = 0; i < ACPI_C_STATE_COUNT; i++) {
 
@@ -126,7 +127,7 @@ acpicpu_cstate_attach_print(struct acpicpu_softc *sc)
 		switch (cs->cs_method) {
 
 		case ACPICPU_C_STATE_HALT:
-			str = "HALT";
+			str = "HLT";
 			break;
 
 		case ACPICPU_C_STATE_FFH:
@@ -134,18 +135,19 @@ acpicpu_cstate_attach_print(struct acpicpu_softc *sc)
 			break;
 
 		case ACPICPU_C_STATE_SYSIO:
-			str = "SYSIO";
+			str = "I/O";
 			break;
 
 		default:
 			panic("NOTREACHED");
 		}
 
-		aprint_debug_dev(sc->sc_dev, "C%d: %5s, "
-		    "lat %3u us, pow %5u mW, addr 0x%06x, flags 0x%02x\n",
-		    i, str, cs->cs_latency, cs->cs_power,
-		    (uint32_t)cs->cs_addr, cs->cs_flags);
+		aprint_debug_dev(sc->sc_dev, "C%d: %3s, "
+		    "lat %3u us, pow %5u mW, flags 0x%02x\n", i, str,
+		    cs->cs_latency, cs->cs_power, cs->cs_flags);
 	}
+
+	once = true;
 }
 
 static void
@@ -211,23 +213,12 @@ acpicpu_cstate_detach_evcnt(struct acpicpu_softc *sc)
 	}
 }
 
-int
+void
 acpicpu_cstate_start(device_t self)
 {
 	struct acpicpu_softc *sc = device_private(self);
-	static ONCE_DECL(once_start);
-	int rv;
 
-	/*
-	 * Save the existing idle-mechanism and claim the cpu_idle(9).
-	 * This should be called after all ACPI CPUs have been attached.
-	 */
-	rv = RUN_ONCE(&once_start, acpicpu_md_idle_start);
-
-	if (rv == 0)
-		sc->sc_flags |= ACPICPU_FLAG_C;
-
-	return rv;
+	(void)acpicpu_md_idle_start(sc);
 }
 
 bool
@@ -240,11 +231,10 @@ acpicpu_cstate_suspend(device_t self)
 bool
 acpicpu_cstate_resume(device_t self)
 {
-	static const ACPI_OSD_EXEC_CALLBACK func = acpicpu_cstate_callback;
 	struct acpicpu_softc *sc = device_private(self);
 
-	if ((sc->sc_flags & ACPICPU_FLAG_C_CST) != 0)
-		(void)AcpiOsExecute(OSL_NOTIFY_HANDLER, func, sc->sc_dev);
+	if ((sc->sc_flags & ACPICPU_FLAG_C_FADT) == 0)
+		acpicpu_cstate_callback(self);
 
 	return true;
 }
@@ -257,10 +247,8 @@ acpicpu_cstate_callback(void *aux)
 
 	sc = device_private(self);
 
-	if ((sc->sc_flags & ACPICPU_FLAG_C_FADT) != 0) {
-		KASSERT((sc->sc_flags & ACPICPU_FLAG_C_CST) == 0);
+	if ((sc->sc_flags & ACPICPU_FLAG_C_FADT) != 0)
 		return;
-	}
 
 	mutex_enter(&sc->sc_mtx);
 	(void)acpicpu_cstate_cst(sc);
@@ -514,7 +502,7 @@ acpicpu_cstate_cst_bios(void)
 	const uint8_t val = AcpiGbl_FADT.CstControl;
 	const uint32_t addr = AcpiGbl_FADT.SmiCommand;
 
-	if (addr == 0)
+	if (addr == 0 || val == 0)
 		return;
 
 	(void)AcpiOsWritePort(addr, val, 8);
@@ -550,9 +538,14 @@ acpicpu_cstate_fadt(struct acpicpu_softc *sc)
 	if ((AcpiGbl_FADT.Flags & ACPI_FADT_C1_SUPPORTED) != 0)
 		cs[ACPI_STATE_C1].cs_method = ACPICPU_C_STATE_HALT;
 
-	if ((acpicpu_md_cpus_running() > 1) &&
-	    (AcpiGbl_FADT.Flags & ACPI_FADT_C2_MP_SUPPORTED) == 0)
+	if (sc->sc_object.ao_pblkaddr == 0)
 		return;
+
+	if (acpicpu_md_cpus_running() > 1) {
+
+		if ((AcpiGbl_FADT.Flags & ACPI_FADT_C2_MP_SUPPORTED) == 0)
+			return;
+	}
 
 	cs[ACPI_STATE_C2].cs_method = ACPICPU_C_STATE_SYSIO;
 	cs[ACPI_STATE_C3].cs_method = ACPICPU_C_STATE_SYSIO;
@@ -566,7 +559,6 @@ acpicpu_cstate_fadt(struct acpicpu_softc *sc)
 	/*
 	 * The P_BLK length should always be 6. If it
 	 * is not, reduce functionality accordingly.
-	 * Sanity check also FADT's latency levels.
 	 */
 	if (sc->sc_object.ao_pblklen < 5)
 		cs[ACPI_STATE_C2].cs_method = 0;
@@ -574,6 +566,11 @@ acpicpu_cstate_fadt(struct acpicpu_softc *sc)
 	if (sc->sc_object.ao_pblklen < 6)
 		cs[ACPI_STATE_C3].cs_method = 0;
 
+	/*
+	 * Sanity check the latency levels in FADT.
+	 * Values above the thresholds are used to
+	 * inform that C-states are not supported.
+	 */
 	CTASSERT(ACPICPU_C_C2_LATENCY_MAX == 100);
 	CTASSERT(ACPICPU_C_C3_LATENCY_MAX == 1000);
 
@@ -589,60 +586,40 @@ acpicpu_cstate_quirks(struct acpicpu_softc *sc)
 {
 	const uint32_t reg = AcpiGbl_FADT.Pm2ControlBlock;
 	const uint32_t len = AcpiGbl_FADT.Pm2ControlLength;
-	struct pci_attach_args pa;
+
+	/*
+	 * Disable C3 for PIIX4.
+	 */
+	if ((sc->sc_flags & ACPICPU_FLAG_PIIX4) != 0) {
+		sc->sc_cstate[ACPI_STATE_C3].cs_method = 0;
+		return;
+	}
 
 	/*
 	 * Check bus master arbitration. If ARB_DIS
 	 * is not available, processor caches must be
 	 * flushed before C3 (ACPI 4.0, section 8.2).
 	 */
-	if (reg != 0 && len != 0)
+	if (reg != 0 && len != 0) {
 		sc->sc_flags |= ACPICPU_FLAG_C_ARB;
-	else {
-		/*
-		 * Disable C3 entirely if WBINVD is not present.
-		 */
-		if ((AcpiGbl_FADT.Flags & ACPI_FADT_WBINVD) == 0)
-			sc->sc_flags |= ACPICPU_FLAG_C_NOC3;
-		else {
-			/*
-			 * If WBINVD is present and functioning properly,
-			 * flush all processor caches before entering C3.
-			 */
-			if ((AcpiGbl_FADT.Flags & ACPI_FADT_WBINVD_FLUSH) == 0)
-				sc->sc_flags &= ~ACPICPU_FLAG_C_BM;
-			else
-				sc->sc_flags |= ACPICPU_FLAG_C_NOC3;
-		}
+		return;
 	}
 
 	/*
-	 * There are several erratums for PIIX4.
+	 * Disable C3 entirely if WBINVD is not present.
 	 */
-	if (pci_find_device(&pa, acpicpu_cstate_quirks_piix4) != 0)
-		sc->sc_flags |= ACPICPU_FLAG_C_NOC3;
-
-	if ((sc->sc_flags & ACPICPU_FLAG_C_NOC3) != 0)
+	if ((AcpiGbl_FADT.Flags & ACPI_FADT_WBINVD) == 0)
 		sc->sc_cstate[ACPI_STATE_C3].cs_method = 0;
-}
-
-static int
-acpicpu_cstate_quirks_piix4(struct pci_attach_args *pa)
-{
-
-	/*
-	 * XXX: The pci_find_device(9) function only deals with
-	 *	attached devices. Change this to use something like
-	 *	pci_device_foreach(), and implement it for IA-64.
-	 */
-	if (PCI_VENDOR(pa->pa_id) != PCI_VENDOR_INTEL)
-		return 0;
-
-	if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEL_82371AB_ISA ||
-	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEL_82440MX_PMC)
-		return 1;
-
-	return 0;
+	else {
+		/*
+		 * If WBINVD is present and functioning properly,
+		 * flush all processor caches before entering C3.
+		 */
+		if ((AcpiGbl_FADT.Flags & ACPI_FADT_WBINVD_FLUSH) == 0)
+			sc->sc_flags &= ~ACPICPU_FLAG_C_BM;
+		else
+			sc->sc_cstate[ACPI_STATE_C3].cs_method = 0;
+	}
 }
 
 static int
@@ -677,32 +654,31 @@ acpicpu_cstate_latency(struct acpicpu_softc *sc)
 void
 acpicpu_cstate_idle(void)
 {
-        struct cpu_info *ci = curcpu();
+	struct cpu_info *ci = curcpu();
 	struct acpicpu_softc *sc;
 	int state;
 
-	if (__predict_false(ci->ci_want_resched) != 0)
-		return;
-
 	acpi_md_OsDisableInterrupt();
+
+	if (__predict_false(ci->ci_want_resched != 0))
+		goto out;
 
 	KASSERT(acpicpu_sc != NULL);
 	KASSERT(ci->ci_acpiid < maxcpus);
-	KASSERT(ci->ci_ilevel == IPL_NONE);
 
 	sc = acpicpu_sc[ci->ci_acpiid];
 
 	if (__predict_false(sc == NULL))
-		goto halt;
+		goto out;
+
+	KASSERT(ci->ci_ilevel == IPL_NONE);
+	KASSERT((sc->sc_flags & ACPICPU_FLAG_C) != 0);
 
 	if (__predict_false(sc->sc_cold != false))
-		goto halt;
-
-	if (__predict_false((sc->sc_flags & ACPICPU_FLAG_C) == 0))
-		goto halt;
+		goto out;
 
 	if (__predict_false(mutex_tryenter(&sc->sc_mtx) == 0))
-		goto halt;
+		goto out;
 
 	mutex_exit(&sc->sc_mtx);
 	state = acpicpu_cstate_latency(sc);
@@ -764,8 +740,8 @@ acpicpu_cstate_idle(void)
 
 	return;
 
-halt:
-	acpicpu_md_idle_enter(ACPICPU_C_STATE_HALT, ACPI_STATE_C1);
+out:
+	acpi_md_OsEnableInterrupt();
 }
 
 static void
@@ -774,7 +750,7 @@ acpicpu_cstate_idle_enter(struct acpicpu_softc *sc, int state)
 	struct acpicpu_cstate *cs = &sc->sc_cstate[state];
 	uint32_t end, start, val;
 
-	start = acpitimer_read_safe(NULL);
+	start = acpitimer_read_fast(NULL);
 
 	switch (cs->cs_method) {
 
@@ -786,18 +762,13 @@ acpicpu_cstate_idle_enter(struct acpicpu_softc *sc, int state)
 	case ACPICPU_C_STATE_SYSIO:
 		(void)AcpiOsReadPort(cs->cs_addr, &val, 8);
 		break;
-
-	default:
-		acpicpu_md_idle_enter(ACPICPU_C_STATE_HALT, ACPI_STATE_C1);
-		break;
 	}
 
-	cs->cs_evcnt.ev_count++;
-
-	end = acpitimer_read_safe(NULL);
-	sc->sc_cstate_sleep = hztoms(acpitimer_delta(end, start)) * 1000;
-
 	acpi_md_OsEnableInterrupt();
+
+	cs->cs_evcnt.ev_count++;
+	end = acpitimer_read_fast(NULL);
+	sc->sc_cstate_sleep = hztoms(acpitimer_delta(end, start)) * 1000;
 }
 
 static bool

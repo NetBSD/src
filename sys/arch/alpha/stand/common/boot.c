@@ -1,4 +1,4 @@
-/* $NetBSD: boot.c,v 1.28.78.1 2009/05/04 08:10:30 yamt Exp $ */
+/* $NetBSD: boot.c,v 1.28.78.2 2010/10/09 03:31:37 yamt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -122,8 +122,8 @@ main(long fd)
 		gets(boot_file);
 	}
 
-#ifdef NO_LOAD_NOTE
-	loadflag = LOAD_KERNEL & ~LOAD_NOTE;
+#ifdef NO_LOAD_BACKWARDS
+	loadflag = LOAD_KERNEL & ~LOAD_BACKWARDS;
 #else
 	loadflag = LOAD_KERNEL;
 #endif

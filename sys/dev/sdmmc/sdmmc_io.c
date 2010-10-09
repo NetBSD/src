@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmc_io.c,v 1.1.4.3 2010/03/11 15:04:03 yamt Exp $	*/
+/*	$NetBSD: sdmmc_io.c,v 1.1.4.4 2010/10/09 03:32:24 yamt Exp $	*/
 /*	$OpenBSD: sdmmc_io.c,v 1.10 2007/09/17 01:33:33 krw Exp $	*/
 
 /*
@@ -20,7 +20,7 @@
 /* Routines for SD I/O cards. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdmmc_io.c,v 1.1.4.3 2010/03/11 15:04:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdmmc_io.c,v 1.1.4.4 2010/10/09 03:32:24 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -158,6 +158,9 @@ sdmmc_io_scan(struct sdmmc_softc *sc)
 	sc->sc_fn0 = sf0;
 	SIMPLEQ_INSERT_TAIL(&sc->sf_head, sf0, sf_list);
 
+	/* Go to Data Transfer Mode, if possible. */
+	sdmmc_chip_bus_rod(sc->sc_sct, sc->sc_sch, 0);
+
 	/* Verify that the RCA has been set by selecting the card. */
 	error = sdmmc_select_card(sc, sf0);
 	if (error) {
@@ -184,13 +187,57 @@ out:
 int
 sdmmc_io_init(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 {
+	struct sdmmc_function *sf0 = sc->sc_fn0;
 	int error = 0;
+	uint8_t reg;
 
 	SDMMC_LOCK(sc);
 
 	if (sf->number == 0) {
-		sdmmc_io_write_1(sf, SD_IO_CCCR_BUS_WIDTH, CCCR_BUS_WIDTH_1);
+		sf->width = 1;
+		reg = sdmmc_io_read_1(sf, SD_IO_CCCR_CAPABILITY);
+		if (!(reg & CCCR_CAPS_LSC) || (reg & CCCR_CAPS_4BLS)) {
+			sdmmc_io_write_1(sf, SD_IO_CCCR_BUS_WIDTH,
+			    CCCR_BUS_WIDTH_4);
+			sf->width = 4;
+		}
 
+		error = sdmmc_read_cis(sf, &sf->cis);
+		if (error) {
+			aprint_error_dev(sc->sc_dev, "couldn't read CIS\n");
+			SET(sf->flags, SFF_ERROR);
+			goto out;
+		}
+
+		sdmmc_check_cis_quirks(sf);
+
+#ifdef SDMMC_DEBUG
+		if (sdmmcdebug)
+			sdmmc_print_cis(sf);
+#endif
+
+		reg = sdmmc_io_read_1(sf, SD_IO_CCCR_HIGH_SPEED);
+		if (reg & CCCR_HIGH_SPEED_SHS) {
+			reg |= CCCR_HIGH_SPEED_EHS;
+			sdmmc_io_write_1(sf, SD_IO_CCCR_HIGH_SPEED, reg);
+			sf->csd.tran_speed = 50000;	/* 50MHz */
+
+			/* Wait 400KHz x 8 clock */
+			delay(1);
+		}
+		if (sc->sc_busclk > sf->csd.tran_speed)
+			sc->sc_busclk = sf->csd.tran_speed;
+		error =
+		    sdmmc_chip_bus_clock(sc->sc_sct, sc->sc_sch, sc->sc_busclk);
+		if (error)
+			aprint_error_dev(sc->sc_dev,
+			    "can't change bus clock\n");
+	} else {
+		reg = sdmmc_io_read_1(sf0, SD_IO_FBR(sf->number) + 0x000);
+		sf->interface = FBR_STD_FUNC_IF_CODE(reg);
+		if (sf->interface == 0x0f)
+			sf->interface =
+			    sdmmc_io_read_1(sf0, SD_IO_FBR(sf->number) + 0x001);
 		error = sdmmc_read_cis(sf, &sf->cis);
 		if (error) {
 			aprint_error_dev(sc->sc_dev, "couldn't read CIS\n");
@@ -247,7 +294,7 @@ sdmmc_io_function_enable(struct sdmmc_function *sf)
 	SET(reg, (1U << sf->number));
 	sdmmc_io_write_1(sf0, SD_IO_CCCR_FN_ENABLE, reg);
 	SDMMC_UNLOCK(sc);
-	
+
 	retry = 5;
 	while (!sdmmc_io_function_ready(sf) && retry-- > 0)
 		kpause("pause", false, hz, NULL);
@@ -358,7 +405,7 @@ sdmmc_io_read_1(struct sdmmc_function *sf, int reg)
 	uint8_t data = 0;
 
 	/* Don't lock */
-	
+
 	(void)sdmmc_io_rw_direct(sf->sc, sf, reg, (u_char *)&data,
 	    SD_ARG_CMD52_READ);
 	return data;
@@ -402,7 +449,7 @@ sdmmc_io_read_4(struct sdmmc_function *sf, int reg)
 	uint32_t data = 0;
 
 	/* Don't lock */
-	
+
 	(void)sdmmc_io_rw_extended(sf->sc, sf, reg, (u_char *)&data, 4,
 	    SD_ARG_CMD53_READ | SD_ARG_CMD53_INCREMENT);
 	return data;

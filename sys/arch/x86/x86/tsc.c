@@ -1,4 +1,4 @@
-/*	$NetBSD: tsc.c,v 1.13.4.4 2010/08/11 22:52:58 yamt Exp $	*/
+/*	$NetBSD: tsc.c,v 1.13.4.5 2010/10/09 03:31:58 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.13.4.4 2010/08/11 22:52:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.13.4.5 2010/10/09 03:31:58 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -128,7 +128,7 @@ tsc_tc_init(void)
 		case 0x0f:
 			/* Check for "invariant TSC", bit 8 of %edx. */
 			x86_cpuid(0x80000007, descs);
-			safe = (descs[3] & (1 << 8)) != 0;
+			safe = (descs[3] & CPUID_APM_TSC) != 0;
 			break;
 		}
 	}

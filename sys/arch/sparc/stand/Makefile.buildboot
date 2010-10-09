@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.buildboot,v 1.23.78.3 2010/08/11 22:52:45 yamt Exp $
+#	$NetBSD: Makefile.buildboot,v 1.23.78.4 2010/10/09 03:31:53 yamt Exp $
 #
 # This file is for the sparc `boot' and `bootxx' only; it does not
 # currently play well on a 64-bit system.
@@ -7,7 +7,7 @@ S=	${.CURDIR}/../../../..
 
 .PATH: ${.CURDIR}/../common ${.CURDIR}/../../sparc
 
-COMMONSOURCE=	srt0.S promdev.c dvma.c promlib.c
+COMMONSOURCE=	srt0.S promdev.c dvma.c promlib.c isfloppy.c
 
 SRCS=		${COMMONSOURCE} ${PROGSOURCE}
 NOMAN=		# defined

@@ -1,4 +1,4 @@
-/*	$NetBSD: wsdisplay_vcons.c,v 1.15.20.1 2008/05/16 02:25:17 yamt Exp $ */
+/*	$NetBSD: wsdisplay_vcons.c,v 1.15.20.2 2010/10/09 03:32:28 yamt Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay_vcons.c,v 1.15.20.1 2008/05/16 02:25:17 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay_vcons.c,v 1.15.20.2 2010/10/09 03:32:28 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,6 +88,13 @@ static void vcons_copyrows(void *, int, int, int);
 static void vcons_eraserows(void *, int, int, long);
 static void vcons_putchar(void *, int, int, u_int, long);
 static void vcons_cursor(void *, int, int, int);
+
+/*
+ * methods that avoid framebuffer reads
+ */
+static void vcons_copycols_noread(void *, int, int, int, int);
+static void vcons_copyrows_noread(void *, int, int, int);
+
 
 /* support for reading/writing text buffers. For wsmoused */
 static int  vcons_putwschar(struct vcons_screen *, struct wsdisplay_char *);
@@ -223,11 +230,22 @@ vcons_init_screen(struct vcons_data *vd, struct vcons_screen *scr,
 	vd->cursor    = ri->ri_ops.cursor;
 
 	ri->ri_ops.eraserows = vcons_eraserows;	
-	ri->ri_ops.copyrows  = vcons_copyrows;	
 	ri->ri_ops.erasecols = vcons_erasecols;	
-	ri->ri_ops.copycols  = vcons_copycols;	
 	ri->ri_ops.putchar   = vcons_putchar;
 	ri->ri_ops.cursor    = vcons_cursor;
+
+	if (scr->scr_flags & VCONS_NO_COPYCOLS) {
+		ri->ri_ops.copycols  = vcons_copycols_noread;
+	} else {
+		ri->ri_ops.copycols  = vcons_copycols;
+	}
+
+	if (scr->scr_flags & VCONS_NO_COPYROWS) {
+		ri->ri_ops.copyrows  = vcons_copyrows_noread;
+	} else {
+		ri->ri_ops.copyrows  = vcons_copyrows;
+	}
+
 	ri->ri_hw = scr;
 
 	/* 
@@ -558,6 +576,33 @@ vcons_copycols(void *cookie, int row, int srccol, int dstcol, int ncols)
 }
 
 static void
+vcons_copycols_noread(void *cookie, int row, int srccol, int dstcol, int ncols)
+{
+	struct rasops_info *ri = cookie;
+	struct vcons_screen *scr = ri->ri_hw;
+
+	vcons_copycols_buffer(cookie, row, srccol, dstcol, ncols);
+
+	vcons_lock(scr);
+	if (SCREEN_IS_VISIBLE(scr) && SCREEN_CAN_DRAW(scr)) {
+		int pos, c, offset;
+
+#ifdef WSDISPLAY_SCROLLSUPPORT
+		offset = scr->scr_current_offset;
+#else
+		offset = 0;
+#endif
+		pos = ri->ri_cols * row + dstcol + offset;
+		for (c = dstcol; c < (dstcol + ncols); c++) {
+			scr->scr_vd->putchar(cookie, row, c, 
+			   scr->scr_chars[pos], scr->scr_attrs[pos]);
+			pos++;
+		}
+	}
+	vcons_unlock(scr);
+}
+
+static void
 vcons_erasecols_buffer(void *cookie, int row, int startcol, int ncols, long fillattr)
 {
 	struct rasops_info *ri = cookie;
@@ -644,6 +689,35 @@ vcons_copyrows(void *cookie, int srcrow, int dstrow, int nrows)
 	vcons_lock(scr);
 	if (SCREEN_IS_VISIBLE(scr) && SCREEN_CAN_DRAW(scr)) {
 		scr->scr_vd->copyrows(cookie, srcrow, dstrow, nrows);
+	}
+	vcons_unlock(scr);
+}
+
+static void
+vcons_copyrows_noread(void *cookie, int srcrow, int dstrow, int nrows)
+{
+	struct rasops_info *ri = cookie;
+	struct vcons_screen *scr = ri->ri_hw;
+
+	vcons_copyrows_buffer(cookie, srcrow, dstrow, nrows);
+
+	vcons_lock(scr);
+	if (SCREEN_IS_VISIBLE(scr) && SCREEN_CAN_DRAW(scr)) {
+		int pos, l, c, offset;
+
+#ifdef WSDISPLAY_SCROLLSUPPORT
+		offset = scr->scr_current_offset;
+#else
+		offset = 0;
+#endif
+		pos = ri->ri_cols * dstrow + offset;
+		for (l = dstrow; l < (dstrow + nrows); l++) {
+			for (c = 0; c < ri->ri_cols; c++) {
+				scr->scr_vd->putchar(cookie, l, c, 
+				   scr->scr_chars[pos], scr->scr_attrs[pos]);
+				pos++;
+			}
+		}
 	}
 	vcons_unlock(scr);
 }

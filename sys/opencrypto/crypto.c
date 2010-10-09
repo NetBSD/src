@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto.c,v 1.27.4.3 2010/08/11 22:54:59 yamt Exp $ */
+/*	$NetBSD: crypto.c,v 1.27.4.4 2010/10/09 03:32:40 yamt Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/crypto.c,v 1.4.2.5 2003/02/26 00:14:05 sam Exp $	*/
 /*	$OpenBSD: crypto.c,v 1.41 2002/07/17 23:52:38 art Exp $	*/
 
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.27.4.3 2010/08/11 22:54:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.27.4.4 2010/10/09 03:32:40 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/reboot.h>
@@ -248,7 +248,7 @@ crypto_init0(void)
 	int error;
 
 	mutex_init(&crypto_mtx, MUTEX_DEFAULT, IPL_NET);
-	cv_init(&cryptoret_cv, "crypto_wait");
+	cv_init(&cryptoret_cv, "crypto_w");
 	pool_init(&cryptop_pool, sizeof(struct cryptop), 0, 0,  
 		  0, "cryptop", NULL, IPL_NET); 
 	pool_init(&cryptodesc_pool, sizeof(struct cryptodesc), 0, 0,

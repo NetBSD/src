@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.89.2.5 2010/08/11 22:51:33 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.89.2.6 2010/10/09 03:31:37 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.89.2.5 2010/08/11 22:51:33 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.89.2.6 2010/10/09 03:31:37 yamt Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -697,8 +697,10 @@ haltsys:
         if ((howto & RB_POWERDOWN) == RB_POWERDOWN) {
 #ifndef XEN
 #if NACPICA > 0
-		acpi_enter_sleep_state(acpi_softc, ACPI_STATE_S5);
-		printf("WARNING: powerdown failed!\n");
+		if (acpi_softc != NULL) {
+			acpi_enter_sleep_state(acpi_softc, ACPI_STATE_S5);
+			printf("WARNING: ACPI powerdown failed!\n");
+		}
 #endif
 #else /* XEN */
 		HYPERVISOR_shutdown();

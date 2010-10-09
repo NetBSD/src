@@ -1,4 +1,4 @@
-/* $NetBSD: radeonfbvar.h,v 1.6.28.1 2009/08/19 18:47:17 yamt Exp $ */
+/* $NetBSD: radeonfbvar.h,v 1.6.28.2 2010/10/09 03:32:23 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -273,6 +273,7 @@ struct radeonfb_softc {
 
 	uint8_t			*sc_bios;
 	bus_size_t		sc_biossz;
+	uint32_t		sc_fp_gen_cntl;
 
 	char			sc_modebuf[64];
 	const char		*sc_defaultmode;

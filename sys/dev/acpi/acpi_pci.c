@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_pci.c,v 1.4.2.3 2010/08/11 22:53:16 yamt Exp $ */
+/* $NetBSD: acpi_pci.c,v 1.4.2.4 2010/10/09 03:32:04 yamt Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_pci.c,v 1.4.2.3 2010/08/11 22:53:16 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_pci.c,v 1.4.2.4 2010/10/09 03:32:04 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -113,9 +113,10 @@ acpi_pcidev_pciroot_bus(ACPI_HANDLE handle, uint16_t *busp)
 	if (ACPI_FAILURE(rv))
 		return rv;
 
-	if (bus < 0 || bus > 0xFFFF)
+	if (bus == -1)
 		return AE_NOT_EXIST;
 
+	/* Here it holds that 0 <= bus <= 0xFFFF. */
 	*busp = (uint16_t)bus;
 
 	return rv;
@@ -142,7 +143,10 @@ acpi_pcidev_pciroot_bus_callback(ACPI_RESOURCE *res, void *context)
 	if (*bus != -1)
 		return AE_ALREADY_EXISTS;
 
-	*bus = addr64.Minimum;
+	if (addr64.Minimum > 0xFFFF)
+		return AE_BAD_DATA;
+
+	*bus = (int32_t)addr64.Minimum;
 
 	return AE_OK;
 }
@@ -211,7 +215,7 @@ acpi_pcidev_scan(struct acpi_devnode *ad)
 		ap->ap_function = ACPI_LOLODWORD(ad->ad_devinfo->Address);
 
 		if (ap->ap_bus > 255 || ap->ap_device > 31 ||
-		    ap->ap_function > 7) {
+		    (ap->ap_function > 7 && ap->ap_function != 0xFFFF)) {
 			aprint_error_dev(ad->ad_root,
 			    "invalid PCI address for %s\n", ad->ad_name);
 			kmem_free(ap, sizeof(*ap));
@@ -246,21 +250,31 @@ acpi_pcidev_scan(struct acpi_devnode *ad)
 		ap->ap_device = ACPI_HILODWORD(ad->ad_devinfo->Address);
 		ap->ap_function = ACPI_LOLODWORD(ad->ad_devinfo->Address);
 
-		if (ap->ap_device > 31 || ap->ap_function > 7) {
+		if (ap->ap_device > 31 ||
+		    (ap->ap_function > 7 && ap->ap_function != 0xFFFF)) {
 			aprint_error_dev(ad->ad_root,
 			    "invalid PCI address for %s\n", ad->ad_name);
 			kmem_free(ap, sizeof(*ap));
 			goto rec;
 		}
 
-		/*
-		 * Check whether this device is a PCI-to-PCI
-		 * bridge and get its secondary bus number.
-		 */
-		rv = acpi_pcidev_ppb_downbus(ap->ap_segment, ap->ap_bus,
-		    ap->ap_device, ap->ap_function, &ap->ap_downbus);
+		if (ap->ap_function == 0xFFFF) {
+			/*
+			 * Assume that this device is not a PCI-to-PCI bridge.
+			 * XXX: Do we need to be smarter?
+			 */
+			ap->ap_bridge = false;
+		} else {
+			/*
+			 * Check whether this device is a PCI-to-PCI
+			 * bridge and get its secondary bus number.
+			 */
+			rv = acpi_pcidev_ppb_downbus(ap->ap_segment, ap->ap_bus,
+			    ap->ap_device, ap->ap_function, &ap->ap_downbus);
 
-		ap->ap_bridge = (rv != AE_OK) ? false : true;
+			ap->ap_bridge = (rv != AE_OK) ? false : true;
+		}
+
 		ad->ad_pciinfo = ap;
 
 		goto rec;

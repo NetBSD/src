@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_pax.c,v 1.20.10.2 2010/08/11 22:54:39 yamt Exp $	*/
+/*	$NetBSD: kern_pax.c,v 1.20.10.3 2010/10/09 03:32:31 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_pax.c,v 1.20.10.2 2010/08/11 22:54:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_pax.c,v 1.20.10.3 2010/10/09 03:32:31 yamt Exp $");
 
 #include "opt_pax.h"
 
@@ -353,6 +353,8 @@ pax_aslr_stack(struct lwp *l, struct exec_package *epp, u_long *max_stack_size)
 #endif
 		epp->ep_minsaddr -= d;
 		*max_stack_size -= d;
+		if (epp->ep_ssize > *max_stack_size)
+			epp->ep_ssize = *max_stack_size;
 	}
 }
 #endif /* PAX_ASLR */

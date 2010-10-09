@@ -1,4 +1,4 @@
-/*	$NetBSD: mvgbereg.h,v 1.1.4.2 2010/08/11 22:53:38 yamt Exp $	*/
+/*	$NetBSD: mvgbereg.h,v 1.1.4.3 2010/10/09 03:32:08 yamt Exp $	*/
 /*
  * Copyright (c) 2007 KIYOHARA Takashi
  * All rights reserved.
@@ -76,10 +76,11 @@
 #define MVGBE_MACAH		0x018	/* MAC Address High */
 #define MVGBE_SDC		0x01c	/* SDMA Configuration */
 #define MVGBE_DSCP(n)		(0x020 + ((n) << 2))
-#define MVGBE_PSC		0x03c
+#define MVGBE_PSC		0x03c	/* Port Serial Control0 */
 #define MVGBE_VPT2P		0x040	/* VLAN Priority Tag to Priority */
 #define MVGBE_PS		0x044	/* Ethernet Port Status */
 #define MVGBE_TQC		0x048	/* Transmit Queue Command */
+#define MVGBE_PSC1		0x04c	/* Port Serial Control1 */
 #define MVGBE_MTU		0x058	/* Max Transmit Unit */
 #define MVGBE_IC		0x060	/* Port Interrupt Cause */
 #define MVGBE_ICE		0x064	/* Port Interrupt Cause Extend */
@@ -91,6 +92,7 @@
 #define MVGBE_PXDFC		0x084	/* Port Rx Discard Frame Counter */
 #define MVGBE_POFC		0x088	/* Port Overrun Frame Counter */
 #define MVGBE_PIAE		0x094	/* Port Internal Address Error */
+#define MVGBE_TQFPC		0x0dc	/* Transmit Queue Fixed Priority Cfg */
 #define MVGBE_CRDP(n)		(0x20c + ((n) << 4))
 			/* Ethernet Current Receive Descriptor Pointers */
 #define MVGBE_RQC		0x280	/* Receive Queue Command */
@@ -282,6 +284,11 @@
 #define MVGBE_TQC_ENQ			(1 << 0)	/* Enable Q */
 #define MVGBE_TQC_DISQ			(1 << 8)	/* Disable Q */
 
+/* Port Serial Control 1 (MVGBE_PSC1) */
+#define MVGBE_PSC1_PCSLB		(1 << 1)
+#define MVGBE_PSC1_RGMIIEN		(1 << 3)	/* RGMII */
+#define MVGBE_PSC1_PRST			(1 << 4)	/* Port Reset */
+
 /* Port Interrupt Cause (MVGBE_IC) */
 #define MVGBE_IC_RXBUF			(1 << 0)
 #define MVGBE_IC_EXTEND			(1 << 1)
@@ -306,6 +313,9 @@
 /* Port Rx Minimal Frame Size (MVGBE_PMFS) */
 #define MVGBE_PMFS_RXMFS(rxmfs)		(((rxmfs) - 40) & 0x7c)
 					/* RxMFS = 40,44,48,52,56,60,64 bytes */
+
+/* Transmit Queue Fixed Priority Configuration */
+#define MVGBE_TQFPC_EN(q)		(1 << (q))
 
 /* Receive Queue Command (MVGBE_RQC) */
 #define MVGBE_RQC_ENQ_MASK		(0xff << 0)	/* Enable Q */

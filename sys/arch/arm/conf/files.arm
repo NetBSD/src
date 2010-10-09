@@ -1,4 +1,4 @@
-#	$NetBSD: files.arm,v 1.90.4.4 2010/08/11 22:51:40 yamt Exp $
+#	$NetBSD: files.arm,v 1.90.4.5 2010/10/09 03:31:39 yamt Exp $
 
 # temporary define to allow easy moving to ../arch/arm/arm32
 defflag				ARM32
@@ -12,6 +12,7 @@ defflag	opt_cputypes.h		CPU_ARM6 CPU_ARM7 CPU_ARM7TDMI CPU_ARM8
 				CPU_XSCALE_80200 CPU_XSCALE_80321
 				CPU_XSCALE_PXA250 CPU_XSCALE_PXA270
 				CPU_XSCALE_IXP425 
+				CPU_SHEEVA
 defflag	opt_cputypes.h		CPU_ARM1136: CPU_ARM11
 defflag	opt_cputypes.h		CPU_ARM1176: CPU_ARM11
 defflag	opt_cputypes.h		CPU_CORTEXA8: CPU_CORTEX
@@ -105,7 +106,8 @@ file	arch/arm/arm/cpufunc_asm_arm67.S	cpu_arm6 | cpu_arm7
 file	arch/arm/arm/cpufunc_asm_arm7tdmi.S	cpu_arm7tdmi
 file	arch/arm/arm/cpufunc_asm_arm8.S		cpu_arm8
 file	arch/arm/arm/cpufunc_asm_arm9.S		cpu_arm9
-file	arch/arm/arm/cpufunc_asm_arm10.S	cpu_arm9e | cpu_arm10
+file	arch/arm/arm/cpufunc_asm_arm10.S	cpu_arm9e | cpu_arm10 |
+							cpu_sheeva
 file	arch/arm/arm/cpufunc_asm_arm11.S	cpu_arm11 | cpu_cortex
 file	arch/arm/arm/cpufunc_asm_arm1136.S	cpu_arm1136
 file	arch/arm/arm/cpufunc_asm_armv4.S	cpu_arm9 | cpu_arm9e |
@@ -120,9 +122,11 @@ file	arch/arm/arm/cpufunc_asm_armv4.S	cpu_arm9 | cpu_arm9e |
 							cpu_xscale_ixp425 |
 							cpu_xscale_pxa250 |
 							cpu_xscale_pxa270 |
-							cpu_cortex
+							cpu_cortex |
+							cpu_sheeva
 file	arch/arm/arm/cpufunc_asm_armv5.S	cpu_arm10
-file	arch/arm/arm/cpufunc_asm_armv5_ec.S	cpu_arm9e | cpu_arm10
+file	arch/arm/arm/cpufunc_asm_armv5_ec.S	cpu_arm9e | cpu_arm10 |
+							cpu_sheeva
 file	arch/arm/arm/cpufunc_asm_armv6.S	cpu_arm11 | cpu_cortex
 file	arch/arm/arm/cpufunc_asm_armv7.S	cpu_cortex
 file	arch/arm/arm/cpufunc_asm_sa1.S		cpu_sa110 | cpu_sa1100 |
@@ -137,6 +141,7 @@ file	arch/arm/arm/cpufunc_asm_xscale.S	cpu_xscale_80200 |
 						    cpu_xscale_pxa270 |
 						    cpu_cortex
 file	arch/arm/arm/cpufunc_asm_ixp12x0.S	cpu_ixp12x0
+file	arch/arm/arm/cpufunc_asm_sheeva.S	cpu_sheeva
 file	arch/arm/arm/fusu.S
 file	arch/arm/arm/idle_machdep.c
 file	arch/arm/arm/lock_cas.S

@@ -1,16 +1,13 @@
-/* $NetBSD: elf_machdep.h,v 1.10.122.1 2009/06/20 07:19:59 yamt Exp $ */
+/* $NetBSD: elf_machdep.h,v 1.10.122.2 2010/10/09 03:31:36 yamt Exp $ */
 
 #ifndef	_ALPHA_ELF_MACHDEP_H_
 #define	_ALPHA_ELF_MACHDEP_H_
 
 /*
- * Alpha ELF uses different (non-standard) definitions of Elf64_Sword
- * and Elf64_Word.
+ * Alpha ELF uses different (non-standard) definitions for the symbol
+ * hash table section.
  */
-typedef	int64_t		Elf64_Sword;
-#define	ELF64_FSZ_SWORD	8
-typedef	uint64_t	Elf64_Word;
-#define	ELF64_FSZ_WORD	8
+#define	Elf_Symindx	uint64_t
 
 #define	ELF32_MACHDEP_ENDIANNESS	XXX	/* break compilation */
 #define	ELF32_MACHDEP_ID_CASES						\

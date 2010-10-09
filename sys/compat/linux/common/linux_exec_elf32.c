@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec_elf32.c,v 1.80.20.2 2009/05/04 08:12:22 yamt Exp $	*/
+/*	$NetBSD: linux_exec_elf32.c,v 1.80.20.3 2010/10/09 03:32:01 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_exec_elf32.c,v 1.80.20.2 2009/05/04 08:12:22 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_exec_elf32.c,v 1.80.20.3 2010/10/09 03:32:01 yamt Exp $");
 
 #ifndef ELFSIZE
 /* XXX should die */
@@ -383,6 +383,7 @@ ELFNAME2(linux,probe)(struct lwp *l, struct exec_package *epp, void *eh,
 		if ((error = emul_find_interp(l, epp, itp)))
 			return (error);
 	}
+	epp->ep_flags |= EXEC_FORCEAUX;
 	DPRINTF(("linux_probe: returning 0\n"));
 	return 0;
 }

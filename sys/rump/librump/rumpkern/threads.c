@@ -1,4 +1,4 @@
-/*	$NetBSD: threads.c,v 1.8.2.3 2010/08/11 22:55:07 yamt Exp $	*/
+/*	$NetBSD: threads.c,v 1.8.2.4 2010/10/09 03:32:44 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007-2009 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: threads.c,v 1.8.2.3 2010/08/11 22:55:07 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: threads.c,v 1.8.2.4 2010/10/09 03:32:44 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -139,7 +139,7 @@ kthread_create(pri_t pri, int flags, struct cpu_info *ci,
 	k = malloc(sizeof(*k), M_TEMP, M_WAITOK);
 	k->f = func;
 	k->arg = arg;
-	k->mylwp = l = rump_lwp_alloc(0, rump_nextlid());
+	k->mylwp = l = rump__lwproc_allockernlwp();
 	l->l_flag |= LW_SYSTEM;
 	if (flags & KTHREAD_MPSAFE)
 		l->l_pflag |= LP_MPSAFE;
@@ -174,7 +174,7 @@ kthread_exit(int ecode)
 
 	if ((curlwp->l_pflag & LP_MPSAFE) == 0)
 		KERNEL_UNLOCK_LAST(NULL);
-	rump_lwp_release(curlwp);
+	rump_lwproc_releaselwp();
 	/* unschedule includes membar */
 	rump_unschedule();
 	rumpuser_thread_exit();

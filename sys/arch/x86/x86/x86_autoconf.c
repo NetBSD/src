@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_autoconf.c,v 1.34.4.5 2010/03/11 15:03:09 yamt Exp $	*/
+/*	$NetBSD: x86_autoconf.c,v 1.34.4.6 2010/10/09 03:31:58 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_autoconf.c,v 1.34.4.5 2010/03/11 15:03:09 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_autoconf.c,v 1.34.4.6 2010/10/09 03:31:58 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,9 +55,14 @@ __KERNEL_RCSID(0, "$NetBSD: x86_autoconf.c,v 1.34.4.5 2010/03/11 15:03:09 yamt E
 
 #include "acpica.h"
 #include "pci.h"
+#include "isa.h"
 #include "genfb.h"
 #include "wsdisplay.h"
 #include "opt_vga.h"
+
+#if NACPICA > 0
+#include <dev/acpi/acpivar.h>
+#endif
 
 #ifdef VGA_POST
 #include <x86/vga_post.h>
@@ -618,6 +623,15 @@ device_register(device_t dev, void *aux)
 		}
 #endif /* NPCI > 0 */
 	}
+#if NISA > 0 && NACPICA > 0
+#if notyet
+	if (device_is_a(dev, "isa") && acpi_active) {
+		if (!(AcpiGbl_FADT.BootFlags & ACPI_FADT_LEGACY_DEVICES))
+			prop_dictionary_set_bool(device_properties(dev),
+			    "no-legacy-devices", true);
+	}
+#endif
+#endif /* NISA > 0 && NACPICA > 0 */
 #if NPCI > 0
 	if (device_parent(dev) && device_is_a(device_parent(dev), "pci") &&
 	    found_console == false) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: genfb_sbus.c,v 1.4.4.3 2010/03/11 15:04:02 yamt Exp $ */
+/*	$NetBSD: genfb_sbus.c,v 1.4.4.4 2010/10/09 03:32:24 yamt Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -29,7 +29,7 @@
 /* an SBus frontend for the generic fb console driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb_sbus.c,v 1.4.4.3 2010/03/11 15:04:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb_sbus.c,v 1.4.4.4 2010/10/09 03:32:24 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,7 +62,7 @@ static int	genfb_ioctl_sbus(void *, void *, u_long, void *, int,
 				 struct lwp*);
 static paddr_t	genfb_mmap_sbus(void *, void *, off_t, int);
 
-CFATTACH_DECL(genfb_sbus, sizeof(struct genfb_sbus_softc),
+CFATTACH_DECL_NEW(genfb_sbus, sizeof(struct genfb_sbus_softc),
     genfb_match_sbus, genfb_attach_sbus, NULL, NULL);
 
 /*
@@ -100,6 +100,7 @@ genfb_attach_sbus(device_t parent, device_t self, void *args)
 	int isconsole;
 
 	aprint_normal("\n");
+	sc->sc_gen.sc_dev = self;
 	/* Remember cookies for genfb_mmap_sbus() */
 	sc->sc_tag = sa->sa_bustag;
 	sc->sc_paddr = sbus_bus_addr(sa->sa_bustag, sa->sa_slot, sa->sa_offset);

@@ -1,0 +1,28 @@
+# $NetBSD: files.npf,v 1.2.2.2 2010/10/09 03:32:37 yamt Exp $
+#
+# Public Domain.
+#
+
+#
+# NPF pseudo device and modules.
+#
+
+defpseudo	npf:	ifnet
+
+# Core
+file	net/npf/npf.c				npf
+file	net/npf/npf_ctl.c			npf
+file	net/npf/npf_handler.c			npf
+file	net/npf/npf_instr.c			npf
+file	net/npf/npf_mbuf.c			npf
+file	net/npf/npf_processor.c			npf
+file	net/npf/npf_ruleset.c			npf
+file	net/npf/npf_tableset.c			npf
+file	net/npf/npf_inet.c			npf
+file	net/npf/npf_session.c			npf
+file	net/npf/npf_nat.c			npf
+file	net/npf/npf_alg.c			npf
+file	net/npf/npf_sendpkt.c			npf
+
+# ALGs
+file	net/npf/npf_alg_icmp.c			npf

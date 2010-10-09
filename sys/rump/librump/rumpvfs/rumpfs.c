@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpfs.c,v 1.16.2.7 2010/08/11 22:55:08 yamt Exp $	*/
+/*	$NetBSD: rumpfs.c,v 1.16.2.8 2010/10/09 03:32:44 yamt Exp $	*/
 
 /*
  * Copyright (c) 2009  Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.16.2.7 2010/08/11 22:55:08 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.16.2.8 2010/10/09 03:32:44 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -106,6 +106,8 @@ const struct vnodeopv_entry_desc rump_vnodeop_entries[] = {
 	{ &vop_islocked_desc, genfs_islocked },
 	{ &vop_inactive_desc, rump_vop_inactive },
 	{ &vop_reclaim_desc, rump_vop_reclaim },
+	{ &vop_remove_desc, genfs_eopnotsupp },
+	{ &vop_link_desc, genfs_eopnotsupp },
 	{ NULL, NULL }
 };
 const struct vnodeopv_desc rump_vnodeop_opv_desc =
@@ -1193,6 +1195,8 @@ struct vfsops rumpfs_vfsops = {
 	.vfs_snapshot =		(void *)eopnotsupp,
 	.vfs_extattrctl =	(void *)eopnotsupp,
 	.vfs_suspendctl =	(void *)eopnotsupp,
+	.vfs_renamelock_enter =	genfs_renamelock_enter,
+	.vfs_renamelock_exit =	genfs_renamelock_exit,
 	.vfs_opv_descs =	rump_opv_descs,
 	/* vfs_refcount */
 	/* vfs_list */

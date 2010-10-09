@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.116.2.4 2010/08/11 22:54:48 yamt Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.116.2.5 2010/10/09 03:32:35 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.116.2.4 2010/08/11 22:54:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.116.2.5 2010/10/09 03:32:35 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -459,9 +459,7 @@ spec_open(void *v)
 				break;
 			
 			/* Try to autoload device module */
-			mutex_enter(&module_lock);
 			(void) module_autoload(name, MODULE_CLASS_DRIVER);
-			mutex_exit(&module_lock);
 		} while (gen != module_gen);
 
 		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
@@ -512,9 +510,7 @@ spec_open(void *v)
 			VOP_UNLOCK(vp);
 
                         /* Try to autoload device module */
-			mutex_enter(&module_lock);
 			(void) module_autoload(name, MODULE_CLASS_DRIVER);
-			mutex_exit(&module_lock);
 			
 			vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 		} while (gen != module_gen);

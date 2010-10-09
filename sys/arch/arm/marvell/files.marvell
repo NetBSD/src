@@ -1,0 +1,71 @@
+#       $NetBSD: files.marvell,v 1.2.2.2 2010/10/09 03:31:40 yamt Exp $
+#
+# Configuration info for Marvell System on Chip support
+#
+
+include "arch/arm/pic/files.pic"
+
+device	mvsoc { [unit = -1], [offset = -1], [irq = -1] } : bus_space_generic, pic
+attach	mvsoc at mainbus
+file	arch/arm/marvell/mvsoc.c		mvsoc
+file	arch/arm/marvell/mvsoc_space.c
+file	arch/arm/marvell/mvsoc_dma.c
+
+file	arch/arm/arm32/irq_dispatch.S
+
+defflag opt_mvsoc.h				ORION KIRKWOOD MV78XX0
+file	arch/arm/marvell/mvsoc_intr.c
+file	arch/arm/marvell/orion.c		orion
+file	arch/arm/marvell/kirkwood.c		kirkwood
+#file	arch/arm/marvell/mv78xx0.c		mv78xx0
+
+
+# Integrated peripherals
+include "dev/marvell/files.discovery"
+
+# Timers
+device	mvsoctmr
+attach	mvsoctmr at mvsoc
+file	arch/arm/marvell/mvsoctmr.c		mvsoctmr
+
+
+# PCI Express Interface
+attach	mvpex at mvsoc with mvpex_mbus
+
+# PCI Interface
+attach	gtpci at mvsoc with gtpci_mbus
+
+file	arch/arm/marvell/pci_machdep.c		mvpex | gtpci
+
+device	pchb
+attach	pchb at pci
+file	dev/marvell/pchb.c			pchb
+
+# Serial-ATA II Host Controller (SATAHC)
+attach	mvsata at mvsoc with mvsata_mbus
+
+# Gigabit Ethernet Controller Interface
+attach	mvgbec at mvsoc with mvgbec_mbus
+
+# USB 2.0 Interface
+attach	ehci at mvsoc with mvusb_mbus
+
+# Cryptographic Engines and Security Accelerator
+#attach	mvcesa at mvsoc with mvcesa_mbus
+
+# TWSI Two-Wire Serial Interface
+attach	gttwsi at mvsoc with gttwsi_mbus
+
+# UART Interface
+attach	com at mvsoc with mvuart_mbus
+
+# IDMA Controller and XOR Engine
+attach	gtidmac at mvsoc with gtidmac_mbus
+
+# General Purpose I/O Port Interface
+device	mvsocgpp: gpiobus, pic
+attach	mvsocgpp at mvsoc
+file	arch/arm/marvell/mvsocgpp.c		mvsocgpp	needs-flag
+
+# Secure Digital Input/Output (SDIO) Interface
+attach	mvsdio at mvsoc with mvsdio_mbus
