@@ -1,4 +1,4 @@
-/*	 $NetBSD: nfsnode.h,v 1.67.10.4 2010/10/09 03:32:40 yamt Exp $	*/
+/*	 $NetBSD: nfsnode.h,v 1.67.10.5 2010/10/10 08:29:40 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -116,12 +116,13 @@ struct nfsnode_reg {
 };
 
 struct nfsnode_dir {
-	off_t ndir_direof;		/* EOF offset cache */
+	off_t ndir_direof;		/* a: EOF offset cache */
 	nfsuint64 ndir_cookieverf;	/* Cookie verifier */
 	struct nfsdirhashhead *ndir_dircache; /* offset -> cache hash heads */
 	struct nfsdirchainhead ndir_dirchain; /* Chain of dir cookies */
 	struct timespec ndir_nctime;	/* Last name cache entry */
 	unsigned ndir_dircachesize;	/* Size of dir cookie cache */
+	unsigned int ndir_eofvalid;	/* a: ndir_direof is valid */
 };
 
 struct nfsnode {
@@ -146,6 +147,7 @@ struct nfsnode {
 #define n_error		n_un1.nu_reg.nreg_error
 
 #define n_direofoffset	n_un1.nu_dir.ndir_direof
+#define n_direofvalid	n_un1.nu_dir.ndir_eofvalid
 #define n_cookieverf	n_un1.nu_dir.ndir_cookieverf
 #define n_dircache	n_un1.nu_dir.ndir_dircache
 #define	n_dirchain	n_un1.nu_dir.ndir_dirchain
@@ -198,9 +200,6 @@ struct nfsnode {
 				   implies stale cache */
 #define	NREMOVED	0x2000	/* Has been removed */
 #define	NUSEOPENCRED	0x4000	/* Try open cred first rather than owner's */
-#define	NEOFVALID	0x8000	/* dir: n_direofoffset is valid */
-
-#define	NFS_EOFVALID(ndp)	((ndp)->n_flag & NEOFVALID)
 
 /*
  * n_specflags

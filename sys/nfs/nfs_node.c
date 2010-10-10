@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_node.c,v 1.101.10.5 2010/10/09 03:32:39 yamt Exp $	*/
+/*	$NetBSD: nfs_node.c,v 1.101.10.6 2010/10/10 08:29:39 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.101.10.5 2010/10/09 03:32:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.101.10.6 2010/10/10 08:29:39 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -261,7 +261,7 @@ nfs_inactive(void *v)
 		nfs_vinvalbuf(vp, 0, sp->s_cred, curlwp, 1);
 	*ap->a_recycle = (np->n_flag & NREMOVED) != 0;
 	np->n_flag &=
-	    (NMODIFIED | NFLUSHINPROG | NFLUSHWANT | NEOFVALID | NTRUNCDELAYED);
+	    (NMODIFIED | NFLUSHINPROG | NFLUSHWANT | NTRUNCDELAYED);
 
 	if (vp->v_type == VDIR && np->n_dircache)
 		nfs_invaldircache(vp,
