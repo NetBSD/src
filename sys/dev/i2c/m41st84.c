@@ -1,4 +1,4 @@
-/*	$NetBSD: m41st84.c,v 1.15 2009/12/12 14:44:10 tsutsui Exp $	*/
+/*	$NetBSD: m41st84.c,v 1.16 2010/10/10 05:17:44 kiyohara Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: m41st84.c,v 1.15 2009/12/12 14:44:10 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: m41st84.c,v 1.16 2010/10/10 05:17:44 kiyohara Exp $");
+
+#include "opt_strtc.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,6 +68,8 @@ static int	strtc_match(device_t, cfdata_t, void *);
 
 CFATTACH_DECL_NEW(strtc, sizeof(struct strtc_softc),
     strtc_match, strtc_attach, NULL, NULL);
+
+#ifndef STRTC_NO_USERRAM
 extern struct cfdriver strtc_cd;
 
 dev_type_open(strtc_open);
@@ -77,6 +81,7 @@ const struct cdevsw strtc_cdevsw = {
 	strtc_open, strtc_close, strtc_read, strtc_write, noioctl,
 	nostop, notty, nopoll, nommap, nokqfilter, D_OTHER
 };
+#endif
 
 static int strtc_clock_read(struct strtc_softc *, struct clock_ymdhms *);
 static int strtc_clock_write(struct strtc_softc *, struct clock_ymdhms *);
@@ -115,6 +120,7 @@ strtc_attach(device_t parent, device_t self, void *arg)
 	todr_attach(&sc->sc_todr);
 }
 
+#ifndef STRTC_NO_USERRAM
 /*ARGSUSED*/
 int
 strtc_open(dev_t dev, int flag, int fmt, struct lwp *l)
@@ -221,6 +227,7 @@ strtc_write(dev_t dev, struct uio *uio, int flags)
 
 	return (error);
 }
+#endif	/* STRTC_NO_USERRAM */
 
 static int
 strtc_gettime(struct todr_chip_handle *ch, struct timeval *tv)
@@ -416,6 +423,7 @@ strtc_clock_write(struct strtc_softc *sc, struct clock_ymdhms *dt)
 	return (1);
 }
 
+#ifndef STRTC_NO_WATCHDOG
 void
 strtc_wdog_config(void *arg, uint8_t wd)
 {
@@ -440,3 +448,4 @@ strtc_wdog_config(void *arg, uint8_t wd)
 
 	iic_release_bus(sc->sc_tag, I2C_F_POLL);
 }
+#endif	/* STRTC_NO_WATCHDOG */

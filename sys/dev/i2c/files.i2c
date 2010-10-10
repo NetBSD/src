@@ -1,4 +1,4 @@
-#	$NetBSD: files.i2c,v 1.28 2010/10/02 06:07:37 kiyohara Exp $
+#	$NetBSD: files.i2c,v 1.29 2010/10/10 05:17:44 kiyohara Exp $
 
 defflag	opt_i2cbus.h				I2C_SCAN
 define	i2cbus { }
@@ -26,6 +26,8 @@ file	dev/i2c/m41t00.c			m41trtc
 device	strtc
 attach	strtc at iic
 file	dev/i2c/m41st84.c			strtc
+defflag	opt_strtc.h				STRTC_NO_USERRAM
+						STRTC_NO_WATCHDOG
 
 # MAX6900 Real Time Clock
 device	maxrtc
