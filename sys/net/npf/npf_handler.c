@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_handler.c,v 1.2 2010/09/16 04:53:27 rmind Exp $	*/
+/*	$NetBSD: npf_handler.c,v 1.3 2010/10/10 15:29:01 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2010 The NetBSD Foundation, Inc.
@@ -33,13 +33,11 @@
  * NPF packet handler.
  */
 
-#ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_handler.c,v 1.2 2010/09/16 04:53:27 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_handler.c,v 1.3 2010/10/10 15:29:01 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#endif
 
 #include <sys/mbuf.h>
 #include <sys/mutex.h>
@@ -152,6 +150,12 @@ out:
 		}
 		m_freem(*mp);
 		*mp = NULL;
+	} else {
+		/*
+		 * XXX: Disable for now, it will be set accordingly later,
+		 * for optimisations (to reduce inspection).
+		 */
+		(*mp)->m_flags &= ~M_CANFASTFWD;
 	}
 	return error;
 }
