@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.201.4.6 2010/09/26 03:58:55 yamt Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.201.4.7 2010/10/10 08:29:39 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.201.4.6 2010/09/26 03:58:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.201.4.7 2010/10/10 08:29:39 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -1152,7 +1152,7 @@ nfs_dirhash(off_t off)
 	return sum;
 }
 
-#define	_NFSDC_MTX(np)		(&NFSTOV(np)->v_interlock)
+#define	_NFSDC_MTX(np)		(&(np)->n_attrlock)
 #define	NFSDC_LOCK(np)		mutex_enter(_NFSDC_MTX(np))
 #define	NFSDC_UNLOCK(np)	mutex_exit(_NFSDC_MTX(np))
 #define	NFSDC_ASSERT_LOCKED(np) KASSERT(mutex_owned(_NFSDC_MTX(np)))
@@ -1438,7 +1438,7 @@ nfs_invaldircache(struct vnode *vp, int flags)
 #endif
 
 	if ((flags & NFS_INVALDIRCACHE_KEEPEOF) == 0)
-		np->n_flag &= ~NEOFVALID;
+		np->n_direofvalid = 0;
 
 	if (!np->n_dircache)
 		return;

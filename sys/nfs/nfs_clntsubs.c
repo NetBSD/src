@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_clntsubs.c,v 1.1.2.3 2010/09/26 03:58:55 yamt Exp $	*/
+/*	$NetBSD: nfs_clntsubs.c,v 1.1.2.4 2010/10/10 08:29:39 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_clntsubs.c,v 1.1.2.3 2010/09/26 03:58:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_clntsubs.c,v 1.1.2.4 2010/10/10 08:29:39 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -370,6 +370,7 @@ nfs_delayedtruncate(struct vnode *vp)
 {
 	struct nfsnode *np = VTONFS(vp);
 
+	KASSERT(VOP_ISLOCKED(vp));
 	if (np->n_flag & NTRUNCDELAYED) {
 		np->n_flag &= ~NTRUNCDELAYED;
 		genfs_node_wrlock(vp);

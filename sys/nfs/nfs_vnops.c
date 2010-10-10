@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.266.10.8 2010/09/26 03:58:55 yamt Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.266.10.9 2010/10/10 08:29:39 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.266.10.8 2010/09/26 03:58:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.266.10.9 2010/10/10 08:29:39 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -2553,8 +2553,10 @@ nfs_readdirrpc(struct vnode *vp, struct uio *uiop, kauth_cred_t cred)
 				txdr_cookie3(uiop->uio_offset, tl);
 			}
 			tl += 2;
+			mutex_enter(&dnp->n_attrlock);
 			*tl++ = dnp->n_cookieverf.nfsuquad[0];
 			*tl++ = dnp->n_cookieverf.nfsuquad[1];
+			mutex_exit(&dnp->n_attrlock);
 		} else
 #endif
 		{
@@ -2570,8 +2572,10 @@ nfs_readdirrpc(struct vnode *vp, struct uio *uiop, kauth_cred_t cred)
 			if (!error) {
 				nfsm_dissect(tl, u_int32_t *,
 				    2 * NFSX_UNSIGNED);
+				mutex_enter(&dnp->n_attrlock);
 				dnp->n_cookieverf.nfsuquad[0] = *tl++;
 				dnp->n_cookieverf.nfsuquad[1] = *tl;
+				mutex_exit(&dnp->n_attrlock);
 			} else {
 				m_freem(mrep);
 				goto nfsmout;
@@ -2703,8 +2707,10 @@ nfs_readdirrpc(struct vnode *vp, struct uio *uiop, kauth_cred_t cred)
 	 * block.
 	 */
 	if (bigenough) {
+		mutex_enter(&dnp->n_attrlock);
 		dnp->n_direofoffset = uiop->uio_offset;
-		dnp->n_flag |= NEOFVALID;
+		dnp->n_direofvalid = 1;
+		mutex_exit(&dnp->n_attrlock);
 	}
 nfsmout:
 	return (error);
@@ -2763,8 +2769,10 @@ nfs_readdirplusrpc(struct vnode *vp, struct uio *uiop, kauth_cred_t cred)
 			txdr_cookie3(uiop->uio_offset, tl);
 		}
 		tl += 2;
+		mutex_enter(&dnp->n_attrlock);
 		*tl++ = dnp->n_cookieverf.nfsuquad[0];
 		*tl++ = dnp->n_cookieverf.nfsuquad[1];
+		mutex_exit(&dnp->n_attrlock);
 		*tl++ = txdr_unsigned(nmp->nm_readdirsize);
 		*tl = txdr_unsigned(nmp->nm_rsize);
 		nfsm_request(dnp, NFSPROC_READDIRPLUS, curlwp, cred);
@@ -2775,8 +2783,10 @@ nfs_readdirplusrpc(struct vnode *vp, struct uio *uiop, kauth_cred_t cred)
 		}
 		nrpcs++;
 		nfsm_dissect(tl, u_int32_t *, 3 * NFSX_UNSIGNED);
+		mutex_enter(&dnp->n_attrlock);
 		dnp->n_cookieverf.nfsuquad[0] = *tl++;
 		dnp->n_cookieverf.nfsuquad[1] = *tl++;
+		mutex_exit(&dnp->n_attrlock);
 		more_dirs = fxdr_unsigned(int, *tl);
 
 		/* loop thru the dir entries, doctoring them to 4bsd form */
@@ -2929,8 +2939,10 @@ nfs_readdirplusrpc(struct vnode *vp, struct uio *uiop, kauth_cred_t cred)
 	 * block.
 	 */
 	if (bigenough) {
+		mutex_enter(&dnp->n_attrlock);
 		dnp->n_direofoffset = uiop->uio_offset;
-		dnp->n_flag |= NEOFVALID;
+		dnp->n_direofvalid = 1;
+		mutex_exit(&dnp->n_attrlock);
 	}
 nfsmout:
 	if (newvp != NULLVP) {
