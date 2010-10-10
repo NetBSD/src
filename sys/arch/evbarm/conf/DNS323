@@ -1,4 +1,4 @@
-#	$NetBSD: DNS323,v 1.1 2010/10/02 06:18:39 kiyohara Exp $
+#	$NetBSD: DNS323,v 1.2 2010/10/10 05:19:35 kiyohara Exp $
 #
 #  DNS323 -- D-Link. DNS-323 platform kernel
 #
@@ -30,4 +30,6 @@ options 	SYMTAB_SPACE=500000
 
 g760a*	at iic? addr 0x3e		# G760a fan speed controller
 lmtemp*	at iic? addr 0x48		# LM75 temperature sensor
-#m41t80rtc* at iic? addr 0x68		# ST M41T80 Real-Time Clock
+strtc* at iic? addr 0x68		# ST M41T80 Real-Time Clock
+options 	STRTC_NO_USERRAM
+options 	STRTC_NO_WATCHDOG
