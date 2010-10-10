@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2005/03/02 01:06:15 christos Exp $
+#	$NetBSD: Makefile,v 1.8 2010/10/10 07:03:28 tsutsui Exp $
 
 .include <bsd.own.mk>
 
@@ -13,7 +13,22 @@ CPPFLAGS+=	-DHAS_VFORK ${X11FLAGS.CONNECTION} -DBINDIR=\"${X11BINDIR}\" \
 
 CPPFLAGS+=	-DXFREE86
 .if (${USE_PAM} != "no")
+# XXX: Legacy non-XFree86 servers don't handle PAM
+.if \
+    ${MACHINE} != "alpha"	&& \
+    ${MACHINE} != "amiga"	&& \
+    ${MACHINE} != "dreamcast"	&& \
+    ${MACHINE} != "ews4800mips"	&& \
+    ${MACHINE} != "hpcarm"	&& \
+    ${MACHINE} != "hpcmips"	&& \
+    ${MACHINE} != "hpcsh"	&& \
+    ${MACHINE} != "newsmips"	&& \
+    ${MACHINE} != "pmax"	&& \
+    ${MACHINE} != "sun3"	&& \
+    ${MACHINE} != "x68k"	&& \
+    1
 CPPFLAGS+=	-DUSE_PAM
+.endif
 .endif
 
 CPPSCRIPTS=	startx xinitrc
