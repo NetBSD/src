@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.h,v 1.93 2010/09/30 09:11:18 skrll Exp $	 */
+/*	$NetBSD: rtld.h,v 1.94 2010/10/10 21:27:16 christos Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -116,6 +116,9 @@ typedef struct _rtld_library_xform_t {
  *
  * Items marked with "(%)" are dynamically allocated, and must be freed
  * when the structure is destroyed.
+ *
+ * The layout of this structure needs to be preserved because pre-2.0 binaries
+ * hard-coded the location of dlopen() and friends.
  */
 
 #define RTLD_MAGIC	0xd550b87a
@@ -162,10 +165,7 @@ typedef struct Struct_Obj_Entry {
 #endif
 
 	const Elf_Symindx *buckets;	/* Hash table buckets array */
-	uint32_t        nbuckets;	/* Number of buckets */
-	uint32_t        nbuckets_m;	/* Precomputed for fast remainder */
-	uint8_t         nbuckets_s1;
-	uint8_t         nbuckets_s2;
+	unsigned long	unused1;	/* Used to be nbuckets */
 	const Elf_Symindx *chains;	/* Hash table chain array */
 	unsigned long   nchains;	/* Number of chains */
 
@@ -210,6 +210,11 @@ typedef struct Struct_Obj_Entry {
 	ino_t           ino;		/* Object's inode number */
 
 	void		*ehdr;
+
+	uint32_t        nbuckets;	/* Number of buckets */
+	uint32_t        nbuckets_m;	/* Precomputed for fast remainder */
+	uint8_t         nbuckets_s1;
+	uint8_t         nbuckets_s2;
 } Obj_Entry;
 
 typedef struct Struct_DoneList {
