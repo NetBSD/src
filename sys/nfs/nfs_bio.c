@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.175.2.3 2010/09/26 03:58:54 yamt Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.175.2.4 2010/10/10 08:29:39 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.175.2.3 2010/09/26 03:58:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.175.2.4 2010/10/10 08:29:39 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -93,6 +93,7 @@ nfs_bioread(struct vnode *vp, struct uio *uio, int ioflag,
 	int advice;
 	struct lwp *l = curlwp;
 
+	KASSERT(VOP_ISLOCKED(vp));
 #ifdef DIAGNOSTIC
 	if (uio->uio_rw != UIO_READ)
 		panic("nfs_read mode");
@@ -215,12 +216,15 @@ diragain:
 				uio->uio_offset, 0, 0);
 		}
 
-		if (NFS_EOFVALID(np) &&
+		mutex_enter(&np->n_attrlock);
+		if (np->n_direofvalid &&
 		    ndp->dc_cookie == np->n_direofoffset) {
+			mutex_exit(&np->n_attrlock);
 			nfs_putdircache(np, ndp);
 			nfsstats.direofcache_hits++;
 			return (0);
 		}
+		mutex_exit(&np->n_attrlock);
 
 		bp = nfs_getcacheblk(vp, NFSDC_BLKNO(ndp), NFS_DIRBLKSIZ, l);
 		if (!bp)
@@ -257,15 +261,18 @@ diragain:
 		 * also, empty block implies EOF.
 		 */
 
+		mutex_enter(&np->n_attrlock);
 		if (bp->b_bcount == bp->b_resid ||
-		    (NFS_EOFVALID(np) &&
+		    (np->n_direofvalid &&
 		    ndp->dc_blkcookie == np->n_direofoffset)) {
+			mutex_exit(&np->n_attrlock);
 			KASSERT(bp->b_bcount != bp->b_resid ||
 			    ndp->dc_blkcookie == bp->b_dcookie);
 			nfs_putdircache(np, ndp);
 			brelse(bp, BC_NOCACHE);
 			return 0;
 		}
+		mutex_exit(&np->n_attrlock);
 
 		/*
 		 * Find the entry we were looking for in the block.
@@ -386,8 +393,10 @@ diragain:
 		 * (You need the current block first, so that you have the
 		 *  directory offset cookie of the next block.)
 		 */
+		mutex_enter(&np->n_attrlock);
 		if (nfs_numasync > 0 && nmp->nm_readahead > 0 &&
-		    !NFS_EOFVALID(np)) {
+		    !np->n_direofvalid) {
+			mutex_exit(&np->n_attrlock);
 			rabp = nfs_getcacheblk(vp, NFSDC_BLKNO(nndp),
 						NFS_DIRBLKSIZ, l);
 			if (rabp) {
@@ -400,6 +409,8 @@ diragain:
 			    } else
 				brelse(rabp, 0);
 			}
+		} else {
+			mutex_exit(&np->n_attrlock);
 		}
 		nfs_putdircache(np, nndp);
 		got_buf = 1;
@@ -705,6 +716,10 @@ nfs_flushstalebuf(struct vnode *vp, kauth_cred_t cred, struct lwp *l,
 		if (error)
 			return error;
 		if (timespeccmp(&np->n_mtime, &vattr.va_mtime, !=)) {
+			/*
+			 * the file seems modified on the server.
+			 * flush our cache.
+			 */
 			if (vp->v_type == VDIR) {
 				nfs_invaldircache(vp, 0);
 			}
