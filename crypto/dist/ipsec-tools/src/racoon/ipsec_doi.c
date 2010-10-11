@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_doi.c,v 1.44 2010/01/17 23:02:48 wiz Exp $	*/
+/*	$NetBSD: ipsec_doi.c,v 1.45 2010/10/11 14:16:30 vanhu Exp $	*/
 
 /* Id: ipsec_doi.c,v 1.55 2006/08/17 09:20:41 vanhu Exp */
 
@@ -370,12 +370,16 @@ get_ph1approvalx(rmconf, ctx)
 	case PROP_CHECK_OBEY:
 		sa->lifetime = pctx->sa->lifetime;
 		sa->lifebyte = pctx->sa->lifebyte;
+		sa->encklen = pctx->sa->encklen;
 		break;
 	case PROP_CHECK_CLAIM:
+	case PROP_CHECK_STRICT:
 		if (pctx->sa->lifetime < sa->lifetime)
 			sa->lifetime = pctx->sa->lifetime;
 		if (pctx->sa->lifebyte < sa->lifebyte)
 			sa->lifebyte = pctx->sa->lifebyte;
+		if (pctx->sa->encklen > sa->encklen)
+			sa->encklen = pctx->sa->encklen;
 		break;
 	default:
 		break;
