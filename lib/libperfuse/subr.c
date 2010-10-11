@@ -1,4 +1,4 @@
-/*  $NetBSD: subr.c,v 1.8 2010/10/03 05:46:47 manu Exp $ */
+/*  $NetBSD: subr.c,v 1.9 2010/10/11 01:08:26 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010 Emmanuel Dreyfus. All rights reserved.
@@ -62,7 +62,6 @@ perfuse_new_pn(pu, name, parent)
 	pnd->pnd_ino = PERFUSE_UNKNOWN_INO;
 	pnd->pnd_nlookup = 1;
 	pnd->pnd_parent = parent;
-	pnd->pnd_timestamp = time(NULL);
 	pnd->pnd_pn = (puffs_cookie_t)pn;
 	(void)strlcpy(pnd->pnd_name, name, MAXPATHLEN);
 	TAILQ_INIT(&pnd->pnd_pcq);
