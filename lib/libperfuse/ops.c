@@ -1,4 +1,4 @@
-/*  $NetBSD: ops.c,v 1.21 2010/10/11 01:08:26 manu Exp $ */
+/*  $NetBSD: ops.c,v 1.22 2010/10/11 01:52:05 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010 Emmanuel Dreyfus. All rights reserved.
@@ -2410,12 +2410,18 @@ perfuse_node_readlink(pu, opc, pcr, linkname, linklen)
 		goto out;
 
 	foh = GET_OUTHDR(ps, pm);
-	len = foh->len - sizeof(*foh) + 1;
+	len = foh->len - sizeof(*foh);
 	if (len > *linklen)
 		DERRX(EX_PROTOCOL, "path len = %zd too long", len);
+	if (len == 0)
+		DERRX(EX_PROTOCOL, "path len = %zd too short", len);
 		
-	*linklen = len;
-	(void)strlcpy(linkname, _GET_OUTPAYLOAD(ps, pm, char *), len);
+	/*
+	 * FUSE filesystems return a NUL terminated string, we 
+	 * do not want to trailing \0
+	 */
+	*linklen = len - 1;
+	(void)memcpy(linkname, _GET_OUTPAYLOAD(ps, pm, char *), len);
 out:
 	ps->ps_destroy_msg(pm);
 
