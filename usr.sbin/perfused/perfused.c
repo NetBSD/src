@@ -1,4 +1,4 @@
-/*  $NetBSD: perfused.c,v 1.10 2010/09/23 16:02:34 manu Exp $ */
+/*  $NetBSD: perfused.c,v 1.11 2010/10/11 05:37:58 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010 Emmanuel Dreyfus. All rights reserved.
@@ -400,33 +400,11 @@ main(argc, argv)
 	s = perfuse_open_sock();
 	
 	do {
-#if (PERFUSE_SOCKTYPE != SOCK_DGRAM)
-		struct sockaddr *sa;
-		struct sockaddr_storage ss;
-		socklen_t ss_len;
-#endif
-		int fd;
-
 #ifdef PERFUSE_DEBUG
 		if (perfuse_diagflags & PDF_MISC)
-			DPRINTF("waiting connexion\n");
+			DPRINTF("perfused ready\n");
 #endif
-#if (PERFUSE_SOCKTYPE == SOCK_DGRAM)
-		fd = s;
-#else
-		sa = (struct sockaddr *)(void *)&ss;
-		ss_len = sizeof(ss);
-
-		if ((fd = accept(s, sa, &ss_len)) == -1)
-			DERR(EX_OSERR,  "accept failed");
-
-#ifdef PERFUSE_DEBUG
-		if (perfuse_diagflags & PDF_MISC)
-			DPRINTF("connexion accepted\n");
-#endif /* PERFUSE_DEBUG */
-#endif /* PERFUSE_SOCKTYPE */
-
-		new_mount(fd, PMNT_DEVFUSE);
+		new_mount(s, PMNT_DEVFUSE);
 	} while (1 /* CONSTCOND */);
 		
 	/* NOTREACHED */
