@@ -1,4 +1,4 @@
-/*  $NetBSD: subr.c,v 1.9 2010/10/11 01:08:26 manu Exp $ */
+/*  $NetBSD: subr.c,v 1.10 2010/10/11 05:37:58 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010 Emmanuel Dreyfus. All rights reserved.
@@ -44,11 +44,8 @@ perfuse_new_pn(pu, name, parent)
 	const char *name;
 	struct puffs_node *parent;
 {
-	struct perfuse_state *ps;
 	struct puffs_node *pn;
 	struct perfuse_node_data *pnd;
-
-	ps = puffs_getspecific(pu);
 
 	if ((pnd = malloc(sizeof(*pnd))) == NULL)
 		DERR(EX_OSERR, "malloc failed");
@@ -84,10 +81,8 @@ perfuse_destroy_pn(pu, pn)
 	struct puffs_usermount *pu;
 	struct puffs_node *pn;
 {
-	struct perfuse_state *ps;
 	struct perfuse_node_data *pnd;
 
-	ps = puffs_getspecific(pu);
 	pnd = PERFUSE_NODE_DATA(pn);
 
 	if (pnd->pnd_parent != NULL) {
