@@ -1,4 +1,4 @@
-/*	$NetBSD: t_glob_star.c,v 1.2 2010/10/11 15:16:01 christos Exp $	*/
+/*	$NetBSD: t_glob_star.c,v 1.3 2010/10/11 15:48:57 christos Exp $	*/
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_glob_star.c,v 1.2 2010/10/11 15:16:01 christos Exp $");
+__RCSID("$NetBSD: t_glob_star.c,v 1.3 2010/10/11 15:48:57 christos Exp $");
 
 #include <atf-c.h>
 
@@ -45,6 +45,8 @@ __RCSID("$NetBSD: t_glob_star.c,v 1.2 2010/10/11 15:16:01 christos Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
+
+#include "../../../h_macros.h"
 
 
 #ifdef DEBUG
@@ -178,7 +180,7 @@ run(const char *p, int flags, const char **res, size_t len)
 	gl.gl_stat = gl_stat;
 	gl.gl_lstat = gl_lstat;
 
-	ATF_CHECK(glob(p, GLOB_ALTDIRFUNC | flags, NULL, &gl) == 0);
+	RZ(glob(p, GLOB_ALTDIRFUNC | flags, NULL, &gl));
 
 	for (i = 0; i < gl.gl_pathc; i++)
 		DPRINTF(("%s\n", gl.gl_pathv[i]));
