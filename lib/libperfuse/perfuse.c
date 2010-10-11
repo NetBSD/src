@@ -1,4 +1,4 @@
-/*  $NetBSD: perfuse.c,v 1.10 2010/10/03 05:46:47 manu Exp $ */
+/*  $NetBSD: perfuse.c,v 1.11 2010/10/11 05:37:58 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010 Emmanuel Dreyfus. All rights reserved.
@@ -115,7 +115,7 @@ perfuse_open(path, flags, mode)
 	if (strcmp(path, _PATH_FUSE) != 0)
 		return open(path, flags, mode);
 
-	if ((sv[0] = socket(PF_LOCAL, PERFUSE_SOCKTYPE, 0)) == -1) {
+	if ((sv[0] = socket(PF_LOCAL, SOCK_DGRAM, 0)) == -1) {
 #ifdef PERFUSE_DEBUG
 		DWARN("%s:%d socket failed: %s", __func__, __LINE__);
 #endif
@@ -149,7 +149,7 @@ perfuse_open(path, flags, mode)
 	 * we will talk using a socketpair 
 	 * instead of /dev/fuse.
 	 */
-	if (socketpair(PF_LOCAL, PERFUSE_SOCKTYPE, 0, sv) != 0) {
+	if (socketpair(PF_LOCAL, SOCK_DGRAM, 0, sv) != 0) {
 		DWARN("%s:%d: socketpair failed", __func__, __LINE__);
 		return -1;
 	}
@@ -218,12 +218,10 @@ perfuse_mount(source, target, filesystemtype, mountflags, data)
 	int s;
 	size_t len;
 	struct perfuse_mount_out *pmo;
-#if (PERFUSE_SOCKTYPE == SOCK_DGRAM)
 	struct sockaddr_storage ss;
 	struct sockaddr_un *sun;
 	struct sockaddr *sa;
 	socklen_t sa_len;
-#endif
 	size_t sock_len;
 	char *frame;
 	char *cp;
@@ -244,7 +242,6 @@ perfuse_mount(source, target, filesystemtype, mountflags, data)
 	 * XXX This socket is not removed at exit time yet
 	 */
 	sock_len = 0;
-#if (PERFUSE_SOCKTYPE == SOCK_DGRAM)
 	sa = (struct sockaddr *)(void *)&ss;
 	sun = (struct sockaddr_un *)(void *)&ss;
 	sa_len = sizeof(ss);
@@ -263,7 +260,6 @@ perfuse_mount(source, target, filesystemtype, mountflags, data)
 
 		sock_len = strlen(sun->sun_path) + 1;
 	}
-#endif /* PERFUSE_SOCKTYPE */
 		
 	len = sizeof(*pmo);
 	len += source ? (uint32_t)strlen(source) + 1 : 0;

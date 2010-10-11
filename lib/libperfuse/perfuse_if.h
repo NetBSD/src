@@ -1,4 +1,4 @@
-/*  $NetBSD: perfuse_if.h,v 1.9 2010/09/23 16:02:34 manu Exp $ */
+/*  $NetBSD: perfuse_if.h,v 1.10 2010/10/11 05:37:58 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010 Emmanuel Dreyfus. All rights reserved.
@@ -36,7 +36,6 @@
 #define PERFUSE_MOUNT_MAGIC "noFuseRq"
 #define PERFUSE_UNKNOWN_INO 0xffffffff
 
-#define PERFUSE_SOCKTYPE SOCK_DGRAM
 /* 
  * Diagnostic flags. This global is used only for DPRINTF/DERR/DWARN
  */

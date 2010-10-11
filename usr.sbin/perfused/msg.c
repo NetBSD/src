@@ -1,4 +1,4 @@
-/*  $NetBSD: msg.c,v 1.8 2010/10/11 01:12:25 manu Exp $ */
+/*  $NetBSD: msg.c,v 1.9 2010/10/11 05:37:58 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010 Emmanuel Dreyfus. All rights reserved.
@@ -59,7 +59,7 @@ perfuse_open_sock(void)
 
 	(void)unlink(_PATH_FUSE);
 
-	if ((s = socket(AF_LOCAL, PERFUSE_SOCKTYPE, 0)) == -1)
+	if ((s = socket(AF_LOCAL, SOCK_DGRAM, 0)) == -1)
 		err(EX_OSERR, "socket failed");
 
 	sa = (const struct sockaddr *)(void *)&sun;
@@ -90,13 +90,8 @@ perfuse_open_sock(void)
 	if (bind(s, sa, (socklen_t )sun.sun_len) == -1)
 		err(EX_OSERR, "cannot open \"%s\" socket", _PATH_FUSE);
 
-#if (PERFUSE_SOCKTYPE == SOCK_DGRAM)
 	if (connect(s, sa, (socklen_t )sun.sun_len) == -1)
 		err(EX_OSERR, "cannot open \"%s\" socket", _PATH_FUSE);
-#else
-	if (listen(s, 1) == -1)	
-		err(EX_OSERR, "listen failed");
-#endif
 
 	return s;
 }
@@ -475,116 +470,85 @@ perfuse_readframe(pu, pufbuf, fd, done)
 	int *done;
 {
 	struct fuse_out_header foh;
-	size_t offset;
-	size_t remain;
+	size_t len;
 	ssize_t readen;
 	void *data;
-	int peek = 0;
-
-#if (PERFUSE_SOCKTYPE == SOCK_DGRAM)
-	peek = MSG_PEEK;
-#endif
-	offset = puffs_framebuf_telloff(pufbuf);
 
 	/*
 	 * Read the header 
-	 * MSG_PEEK is used so that this code works for SOCK_DGRAM
-	 * socket. The loop is only needed to work with SOCK_STREAM. 
 	 */
-	while (offset < sizeof(foh)) {
-		remain = sizeof(foh) - offset;
-		PUFFS_FRAMEBUF_GETWINDOW(pufbuf, offset, &data, &remain);
+	len = sizeof(foh);
+	PUFFS_FRAMEBUF_GETWINDOW(pufbuf, 0, &data, &len);
 
-		switch (readen = recv(fd, data, remain, MSG_NOSIGNAL|peek)) {
-		case 0:
-			DWARNX("%s: recv retunred 0", __func__);
-			return ECONNRESET;
-			/* NOTREACHED */
-			break;
-		case -1:
-			if (errno == EAGAIN)
-				return 0;
-			DWARN("%s: recv retunred -1", __func__);
-			return errno;
-			/* NOTREACHED */
-			break;
-		default:
-#if defined(PERFUSE_DEBUG) && (PERFUSE_SOCKTYPE == SOCK_DGRAM)
-			if (readen != remain)
-				DERRX(EX_SOFTWARE, "%s: short recv %zd/%zd",
-				      __func__, readen, remain);
-#endif
-			break;
-		}
-
-		offset += readen;
-		if (puffs_framebuf_seekset(pufbuf, offset) == -1)
-			DERR(EX_OSERR, "puffs_framebuf_seekset failed");
+	switch (readen = recv(fd, data, len, MSG_NOSIGNAL|MSG_PEEK)) {
+	case 0:
+		DWARNX("%s: recv retunred 0", __func__);
+		return ECONNRESET;
+		/* NOTREACHED */
+		break;
+	case -1:
+		if (errno == EAGAIN)
+			return 0;
+		DWARN("%s: recv retunred -1", __func__);
+		return errno;
+		/* NOTREACHED */
+		break;
+	default:
+		break;
 	}
 
-#if (PERFUSE_SOCKTYPE == SOCK_DGRAM)
-	/*
-	 * We had a peek at the header, now really read it.
-	 */
-	offset = 0;
+#ifdef PERFUSE_DEBUG
+	if (readen != len)
+		DERRX(EX_SOFTWARE, "%s: short recv %zd/%zd",
+		      __func__, readen, len);
 #endif
-	
+
 	/*
 	 * We have a header, get remaing length to read
 	 */
 	if (puffs_framebuf_getdata_atoff(pufbuf, 0, &foh, sizeof(foh)) != 0)
 		DERR(EX_SOFTWARE, "puffs_framebuf_getdata_atoff failed");
-;
+
+	len = foh.len;
+
 #ifdef PERFUSE_DEBUG
-		if (foh.len > FUSE_BUFSIZE)
-			DERRX(EX_SOFTWARE, "%s: foh.len = %d (this is huge!)", 
-			      __func__, foh.len);
+	if (len > FUSE_BUFSIZE)
+		DERRX(EX_SOFTWARE, "%s: foh.len = %d", __func__, len);
 #endif
 
 	/*
-	 * If we have only readen the header so far, 
-	 * this is time to reserve space.
+	 * This is time to reserve space.
 	 */
-	remain = foh.len - offset;
-	if (offset == sizeof(foh))
-		if (puffs_framebuf_reserve_space(pufbuf, remain) == -1)
-			DERR(EX_OSERR, "puffs_framebuf_reserve_space failed");
-
+	if (puffs_framebuf_reserve_space(pufbuf, len) == -1)
+		DERR(EX_OSERR, "puffs_framebuf_reserve_space failed");
 
 	/*
 	 * And read the remaining data
 	 */ 
-	while (remain != 0) {
-		PUFFS_FRAMEBUF_GETWINDOW(pufbuf, offset, &data, &remain);
+	PUFFS_FRAMEBUF_GETWINDOW(pufbuf, 0, &data, &len);
 
-		switch (readen = recv(fd, data, remain, MSG_NOSIGNAL)) {
-		case 0:
-			DWARNX("%s: recv retunred 0", __func__);
-			return ECONNRESET;
-			/* NOTREACHED */
-			break;
-		case -1:
-			if (errno == EAGAIN)
-				return 0;
-			DWARN("%s: recv retunred -1", __func__);
-			return errno;
-			/* NOTREACHED */
-			break;
-		default:
-#if defined(PERFUSE_DEBUG) && (PERFUSE_SOCKTYPE == SOCK_DGRAM)
-			if (readen != remain)
-				DERRX(EX_SOFTWARE, "%s: short recv %zd/%zd",
-				      __func__, readen, remain);
-#endif
-			break;
-		}
-
-		offset += readen;
-		remain -= readen;
-
-		if (puffs_framebuf_seekset(pufbuf, offset) == -1)
-			DERR(EX_OSERR, "puffs_framebuf_seekset failed");
+	switch (readen = recv(fd, data, len, MSG_NOSIGNAL)) {
+	case 0:
+		DWARNX("%s: recv retunred 0", __func__);
+		return ECONNRESET;
+		/* NOTREACHED */
+		break;
+	case -1:
+		if (errno == EAGAIN)
+			return 0;
+		DWARN("%s: recv retunred -1", __func__);
+		return errno;
+		/* NOTREACHED */
+		break;
+	default:
+		break;
 	}
+
+#ifdef PERFUSE_DEBUG
+	if (readen != len)
+		DERRX(EX_SOFTWARE, "%s: short recv %zd/%zd",
+		      __func__, readen, len);
+#endif
 
 	*done = 1;
 	return 0;
@@ -598,47 +562,35 @@ perfuse_writeframe(pu, pufbuf, fd, done)
 	int fd;
 	int *done;
 {
-	size_t offset;
 	size_t len;
 	ssize_t written;
-	size_t remain;
 	void *data;
 
-	offset = puffs_framebuf_telloff(pufbuf);
-	len = puffs_framebuf_tellsize(pufbuf) - offset;
-	remain = len;
+	len = puffs_framebuf_tellsize(pufbuf);
+	PUFFS_FRAMEBUF_GETWINDOW(pufbuf, 0, &data, &len);
 
-	while (remain != 0) {
-		PUFFS_FRAMEBUF_GETWINDOW(pufbuf, offset, &data, &len);
-
-		switch (written = send(fd, data, remain, MSG_NOSIGNAL)) {
-		case 0:
-			DWARNX("%s: send retunred 0", __func__);
-			return ECONNRESET;
-			/* NOTREACHED */
-			break;
-		case -1:
-			if (errno == EAGAIN)
-				return 0;
-			DWARN("%s: send retunred -1", __func__);
-			return errno;
-			/* NOTREACHED */
-			break;
-		default:
-#if defined(PERFUSE_DEBUG) && (PERFUSE_SOCKTYPE == SOCK_DGRAM)
-			if (written != remain)
-				DERRX(EX_SOFTWARE, "%s: short send %zd/%zd",
-				      __func__, written, remain);
-#endif
-			break;
-		}
-
-		remain -= written;
-		offset += written;
-
-		if (puffs_framebuf_seekset(pufbuf, offset) == -1)
-			DERR(EX_OSERR, "puffs_framebuf_seekset failed");
+	switch (written = send(fd, data, len, MSG_NOSIGNAL)) {
+	case 0:
+		DWARNX("%s: send retunred 0", __func__);
+		return ECONNRESET;
+		/* NOTREACHED */
+		break;
+	case -1:
+		if (errno == EAGAIN)
+			return 0;
+		DWARN("%s: send retunred -1", __func__);
+		return errno;
+		/* NOTREACHED */
+		break;
+	default:
+		break;
 	}
+
+#ifdef PERFUSE_DEBUG
+	if (written != len)
+		DERRX(EX_SOFTWARE, "%s: short send %zd/%zd",
+		      __func__, written, len);
+#endif
 
 	*done = 1;
 	return 0;
