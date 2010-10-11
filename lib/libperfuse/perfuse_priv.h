@@ -1,4 +1,4 @@
-/*  $NetBSD: perfuse_priv.h,v 1.14 2010/10/03 05:46:47 manu Exp $ */
+/*  $NetBSD: perfuse_priv.h,v 1.15 2010/10/11 01:08:26 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010 Emmanuel Dreyfus. All rights reserved.
@@ -92,7 +92,6 @@ struct perfuse_node_data {
 	uint64_t pnd_wfh;
 	uint64_t pnd_ino;			/* inode */
 	uint64_t pnd_nlookup;			/* vnode refcount */
-	uint64_t pnd_size;			/* file size */
 	uint64_t pnd_lock_owner;
 	struct dirent *pnd_dirent;		/* native buffer for readdir */
 	off_t pnd_dirent_len;
@@ -108,14 +107,12 @@ struct perfuse_node_data {
 #define PND_REMOVED		0x020	/* Node was removed */
 #define PND_INWRITE		0x040	/* write in progress */
 #define PND_INOPEN		0x100	/* open in progress */
-#define PND_GOTSIZE		0x200	/* pnd_size was set */
 #define PND_INXCHG		0x400	/* FUSE exchange in progress */
 
 #define PND_OPEN		(PND_RFH|PND_WFH)	/* File is open */
 #define PND_BUSY		(PND_INREADDIR|PND_INWRITE|PND_INOPEN)
 	puffs_cookie_t pnd_parent;
 	int pnd_childcount;
-	time_t pnd_timestamp;
 	TAILQ_ENTRY(perfuse_node_data) pnd_next;
 	puffs_cookie_t pnd_pn;
 	char pnd_name[MAXPATHLEN];	/* node name */
