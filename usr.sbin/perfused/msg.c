@@ -1,4 +1,4 @@
-/*  $NetBSD: msg.c,v 1.7 2010/09/20 06:45:38 manu Exp $ */
+/*  $NetBSD: msg.c,v 1.8 2010/10/11 01:12:25 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010 Emmanuel Dreyfus. All rights reserved.
@@ -68,14 +68,15 @@ perfuse_open_sock(void)
 	(void)strcpy(sun.sun_path, _PATH_FUSE); 
 
 	/*
-	 * Set a buffer lentgh large enough so that any FUSE packet
-	 * will fit.
+	 * Set a buffer lentgh large enough so that a few FUSE packets
+	 * will fit. 
+	 * XXX We will have to find how many packets we need
 	 */
-	opt = FUSE_BUFSIZE;
+	opt = 4 * FUSE_BUFSIZE;
 	if (setsockopt(s, SOL_SOCKET, SO_SNDBUF, &opt, sizeof(opt)) != 0)
 		DWARN("%s: setsockopt SO_SNDBUF to %d failed", __func__, opt);
 
-	opt = FUSE_BUFSIZE;
+	opt = 4 * FUSE_BUFSIZE;
 	if (setsockopt(s, SOL_SOCKET, SO_RCVBUF, &opt, sizeof(opt)) != 0)
 		DWARN("%s: setsockopt SO_RCVBUF to %d failed", __func__, opt);
 
