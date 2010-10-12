@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.267 2010/08/22 18:56:21 rmind Exp $
+# $NetBSD: ALL,v 1.268 2010/10/12 19:10:50 gsutre Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.267 $"
+#ident 		"ALL-$Revision: 1.268 $"
 
 maxusers	64		# estimated number of users
 
@@ -375,6 +375,8 @@ acpilid* 	at acpi?		# ACPI Lid Switch
 # XXX the same bus, and bad things (tm) will happen!
 acpismbus*	at acpi?		# ACPI SMBus CMI (experimental)
 acpitz* 	at acpi?		# ACPI Thermal Zone
+acpivga*	at acpi?		# ACPI Display Adapter
+acpiout*	at acpivga?		# ACPI Display Output Device
 acpiwmi*	at acpi?		# ACPI WMI Mapper
 
 # Mainboard devices

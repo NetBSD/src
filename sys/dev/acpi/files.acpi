@@ -1,4 +1,4 @@
-#	$NetBSD: files.acpi,v 1.80 2010/09/06 15:54:27 jmcneill Exp $
+#	$NetBSD: files.acpi,v 1.81 2010/10/12 19:10:50 gsutre Exp $
 
 include "dev/acpi/acpica/files.acpica"
 
@@ -65,6 +65,13 @@ file	dev/acpi/acpi_cpu.c		acpicpu
 file	dev/acpi/acpi_cpu_cstate.c	acpicpu
 file	dev/acpi/acpi_cpu_pstate.c	acpicpu
 file	dev/acpi/acpi_cpu_tstate.c	acpicpu
+
+# ACPI Display
+device	acpivga {}
+attach	acpivga at acpinodebus
+device	acpiout
+attach	acpiout at acpivga
+file	dev/acpi/acpi_display.c		acpivga|acpiout
 
 # ACPI Thermal Zone
 device	acpitz: sysmon_envsys

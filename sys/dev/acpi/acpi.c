@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.220 2010/10/02 18:06:47 gsutre Exp $	*/
+/*	$NetBSD: acpi.c,v 1.221 2010/10/12 19:10:50 gsutre Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.220 2010/10/02 18:06:47 gsutre Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.221 2010/10/12 19:10:50 gsutre Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -665,11 +665,10 @@ acpi_build_tree(struct acpi_softc *sc)
 	/*
 	 * Scan the internal namespace.
 	 */
+	(void)acpi_pcidev_scan(sc->sc_root);
 	(void)acpi_rescan(sc->sc_dev, NULL, NULL);
 
 	acpi_rescan_capabilities(sc);
-
-	(void)acpi_pcidev_scan(sc->sc_root);
 }
 
 static ACPI_STATUS
