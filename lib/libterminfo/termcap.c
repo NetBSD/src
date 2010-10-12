@@ -1,4 +1,4 @@
-/* $NetBSD: termcap.c,v 1.9 2010/09/22 06:10:51 roy Exp $ */
+/* $NetBSD: termcap.c,v 1.10 2010/10/12 12:49:27 christos Exp $ */
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: termcap.c,v 1.9 2010/09/22 06:10:51 roy Exp $");
+__RCSID("$NetBSD: termcap.c,v 1.10 2010/10/12 12:49:27 christos Exp $");
 
 #include <assert.h>
 #include <ctype.h>
@@ -231,7 +231,7 @@ strval(const char *val)
 	char *info, *ip, c;
 	const char *ps, *pe;
 	int p;
-	size_t len, l, n;
+	size_t len, l;
 
 	len = 1024; /* no single string should be bigger */
 	info = ip = malloc(len);
@@ -280,7 +280,6 @@ strval(const char *val)
 			*ip++ = '%';
 			*ip++ = 'd';
 			l += 5;
-			n += 5;
 			/* FALLTHROUGH */
 		case 'r':
 			p = 3 - p;
@@ -306,7 +305,7 @@ strval(const char *val)
 
 	/* Add our padding at the end. */
 	if (ps != NULL) {
-		n = pe - ps;
+		size_t n = pe - ps;
 		if (l + n + 4 > len)
 			goto elen;
 		*ip++ = '$';
