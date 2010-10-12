@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.48 2010/09/18 15:49:25 jakllsch Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.49 2010/10/12 00:39:08 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -461,7 +461,7 @@
 #define		IC_CFG_DIS_SEQ_PREFETCH	0x00000800
 
 #define	MSR_DC_CFG	0xc0011022
-#define		DC_CFG_DIS_CNV_WC_SSO	0x00000004
+#define		DC_CFG_DIS_CNV_WC_SSO	0x00000008
 #define		DC_CFG_DIS_SMC_CHK_BUF	0x00000400
 #define		DC_CFG_ERRATA_261	0x01000000
 
