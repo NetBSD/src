@@ -1,4 +1,4 @@
-.\" $NetBSD: btdevctl.8,v 1.6 2010/10/11 15:30:57 plunky Exp $
+.\" $NetBSD: btdevctl.8,v 1.7 2010/10/12 21:49:08 wiz Exp $
 .\"
 .\" Copyright (c) 2006 Itronix Inc.
 .\" All rights reserved.
@@ -147,14 +147,14 @@ set the
 variable
 .Sy btdevctl
 to YES.
-.Sh EXIT STATUS
-.Ex -std
 .Sh FILES
 .Bl -tag -compact
 .It Pa /etc/bluetooth/btdevctl.conf
 .It Pa /dev/bthub
 .It Pa /var/db/btdevctl.plist
 .El
+.Sh EXIT STATUS
+.Ex -std
 .Sh SEE ALSO
 .Xr btpin 1 ,
 .Xr bthidev 4 ,
@@ -164,7 +164,7 @@ to YES.
 .Pp
 See the Bluetooth chapter of
 .Qq The NetBSD Guide
-for detailed examples of configuring keyboards, mice and audio headsets.
+for detailed examples of configuring keyboards, mice, and audio headsets.
 .Sh HISTORY
 Parts of the
 .Nm
