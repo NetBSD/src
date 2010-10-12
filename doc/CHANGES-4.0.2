@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.0.2,v 1.1.2.76 2010/09/22 23:03:58 snj Exp $
+#	$NetBSD: CHANGES-4.0.2,v 1.1.2.77 2010/10/12 10:16:56 bouyer Exp $
 
 A complete list of changes from the NetBSD 4.0.1 release to the NetBSD 4.0.2
 release:
@@ -1074,4 +1074,11 @@ dist/bzip2/decompress.c				1.2
 
 	Avoid integer overflow that can lead to buffer overflow.
 	[christos, ticket #1406]
+
+crypto/external/bsd/openssl/dist/ssl/s3_clnt.c	1.2 via patch
+
+	fix a double free() in error case (fixing CVE-2010-2939), see the
+	thread "openssl-1.0.0a and glibc detected sthg ;)" in openssl-dev.
+	I was getting a SEGV with the example posted there.
+	[jnemeth, ticket #1408]
 
