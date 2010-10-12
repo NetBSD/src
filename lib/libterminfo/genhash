@@ -1,5 +1,5 @@
 #!/bin/sh
-# $NetBSD: genhash,v 1.6 2010/03/03 12:09:49 roy Exp $
+# $NetBSD: genhash,v 1.7 2010/10/12 12:57:51 christos Exp $
 
 # Copyright (c) 2009 The NetBSD Foundation, Inc.
 #
@@ -44,9 +44,10 @@ genent()
 	local name=$1 NAME=$2 len=
 
 	# Calculate the maximum word length plus terminator
-	len=`$TOOL_SED -e "1,/enum TI${NAME}/d" -e '/};/,$d' \
+	len=$($TOOL_SED -e "1,/enum TI${NAME}/d" -e '/};/,$d' \
             -e 's/.*TICODE_\([^,]*\).*/\1X/' $TERMH | \
-	    $TOOL_AWK 'BEGIN {L=0} {if (length($1)>L) L=length($1)} END {print L}'`
+	    $TOOL_AWK \
+	    'BEGIN {L=0} {if (length($1)>L) L=length($1)} END {print L}')
 
 	echo
 	echo "static const char _ti_${name}ids[][${len}] = {"
@@ -93,7 +94,7 @@ cat <<EOF
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("\$NetBSD: genhash,v 1.6 2010/03/03 12:09:49 roy Exp $");
+__RCSID("\$NetBSD: genhash,v 1.7 2010/10/12 12:57:51 christos Exp $");
 
 #include <stdint.h>
 #include <stdlib.h>
