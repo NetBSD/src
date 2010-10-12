@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs_elf.h,v 1.32 2010/07/02 11:38:20 cegger Exp $	*/
+/*	$NetBSD: cdefs_elf.h,v 1.33 2010/10/12 06:39:48 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -29,10 +29,6 @@
 
 #ifndef _SYS_CDEFS_ELF_H_
 #define	_SYS_CDEFS_ELF_H_
-
-#ifdef _KERNEL_OPT
-#include "opt_multiprocessor.h"
-#endif
 
 #ifdef __LEADING_UNDERSCORE
 #define	_C_LABEL(x)	__CONCAT(_,x)
