@@ -1,5 +1,5 @@
 #!/bin/sh
-# $NetBSD: genman,v 1.3 2010/03/03 12:09:49 roy Exp $
+# $NetBSD: genman,v 1.4 2010/10/12 12:57:51 christos Exp $
 
 # Copyright (c) 2009 The NetBSD Foundation, Inc.
 #
@@ -45,15 +45,15 @@ gentab()
 	$TOOL_SED -n \
 	-e "s/#define t_\([^(]*\).*>$tab\[TICODE_\([^]]*\).*/\1 \2/p" \
 	$ti | $TOOL_SORT | while read name code foo; do
-		cap=`$TOOL_SED -ne "s/.*{ \"\(..\)\", TICODE_$code }.*/\1/p" $tc |
-			head -n 1`
+		cap=$($TOOL_SED -ne "s/.*{ \"\(..\)\", TICODE_$code }.*/\1/p" \
+		    $tc | head -n 1)
 		echo ".It Li \"$name\" Ta Sy \"\\&$code\" Ta Sy \"\\&$cap\""
 	done
 }
 
-boolcaps=`gentab $TERMH $TERMC flags`
-numcaps=`gentab $TERMH $TERMC nums`
-strcaps=`gentab $TERMH $TERMC strs`
+boolcaps=$(gentab $TERMH $TERMC flags)
+numcaps=$(gentab $TERMH $TERMC nums)
+strcaps=$(gentab $TERMH $TERMC strs)
 
 echo ".\\\"DO NOT EDIT"
 echo ".\\\"Automatically generated from termcap.5.in"
