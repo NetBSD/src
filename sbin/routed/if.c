@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.28 2009/10/26 02:53:15 christos Exp $	*/
+/*	$NetBSD: if.c,v 1.29 2010/10/13 09:19:40 martin Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,7 +37,7 @@
 #include "pathnames.h"
 
 #ifdef __NetBSD__
-__RCSID("$NetBSD: if.c,v 1.28 2009/10/26 02:53:15 christos Exp $");
+__RCSID("$NetBSD: if.c,v 1.29 2010/10/13 09:19:40 martin Exp $");
 #elif defined(__FreeBSD__)
 __RCSID("$FreeBSD$");
 #else
@@ -693,7 +693,7 @@ ifinit(void)
 	struct rt_entry *rt;
 	size_t needed;
 	int mib[6];
-	struct if_msghdr *ifm;
+	struct if_msghdr ifm;
 	struct ifa_msghdr *ifam, *ifam_lim, *ifam2;
 	int in, ierr, out, oerr;
 	struct intnet *intnetp;
@@ -751,25 +751,26 @@ ifinit(void)
 		if (ifam->ifam_type == RTM_IFINFO) {
 			const struct sockaddr_dl *sdl;
 
-			ifm = (struct if_msghdr *)ifam;
+			memcpy(&ifm, ifam, sizeof ifm);
 			/* make prototype structure for the IP aliases
 			 */
 			memset(&ifs0, 0, sizeof(ifs0));
 			ifs0.int_rip_sock = -1;
-			ifs0.int_index = ifm->ifm_index;
-			ifs0.int_if_flags = ifm->ifm_flags;
+			ifs0.int_index = ifm.ifm_index;
+			ifs0.int_if_flags = ifm.ifm_flags;
 			ifs0.int_state = IS_CHECKED;
 			ifs0.int_query_time = NEVER;
 			ifs0.int_act_time = now.tv_sec;
 			ifs0.int_data.ts = now.tv_sec;
-			ifs0.int_data.ipackets = ifm->ifm_data.ifi_ipackets;
-			ifs0.int_data.ierrors = ifm->ifm_data.ifi_ierrors;
-			ifs0.int_data.opackets = ifm->ifm_data.ifi_opackets;
-			ifs0.int_data.oerrors = ifm->ifm_data.ifi_oerrors;
+			ifs0.int_data.ipackets = ifm.ifm_data.ifi_ipackets;
+			ifs0.int_data.ierrors = ifm.ifm_data.ifi_ierrors;
+			ifs0.int_data.opackets = ifm.ifm_data.ifi_opackets;
+			ifs0.int_data.oerrors = ifm.ifm_data.ifi_oerrors;
 #ifdef sgi
-			ifs0.int_data.odrops = ifm->ifm_data.ifi_odrops;
+			ifs0.int_data.odrops = ifm.ifm_data.ifi_odrops;
 #endif
-			sdl = (const struct sockaddr_dl *)(ifm + 1);
+			sdl = (const struct sockaddr_dl *)
+				((struct if_msghdr *)ifam + 1);
 			/* NUL-termination by memset, above. */
 			memcpy(ifs0.int_name, sdl->sdl_data,
 				MIN(sizeof(ifs0.int_name) - 1, sdl->sdl_nlen));
