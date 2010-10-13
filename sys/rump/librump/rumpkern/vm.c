@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.96 2010/09/24 22:51:51 rmind Exp $	*/
+/*	$NetBSD: vm.c,v 1.97 2010/10/13 11:01:04 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2010 Antti Kantee.  All Rights Reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.96 2010/09/24 22:51:51 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.97 2010/10/13 11:01:04 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -464,14 +464,23 @@ uvm_pageratop(vaddr_t va)
 	return pg;
 }
 
-/* Called with the vm object locked */
+/*
+ * Called with the vm object locked.
+ *
+ * Put vnode object pages at the end of the access queue to indicate
+ * they have been recently accessed and should not be immediate
+ * candidates for pageout.  Do not do this for lookups done by
+ * the pagedaemon to mimic pmap_kentered mappings which don't track
+ * access information.
+ */
 struct vm_page *
 uvm_pagelookup(struct uvm_object *uobj, voff_t off)
 {
 	struct vm_page *pg;
+	bool ispagedaemon = curlwp == uvm.pagedaemon_lwp;
 
 	pg = rb_tree_find_node(&uobj->rb_tree, &off);
-	if (pg && !UVM_OBJ_IS_AOBJ(pg->uobject)) {
+	if (pg && !UVM_OBJ_IS_AOBJ(pg->uobject) && !ispagedaemon) {
 		mutex_enter(&uvm_pageqlock);
 		TAILQ_REMOVE(&vmpage_lruqueue, pg, pageq.queue);
 		TAILQ_INSERT_TAIL(&vmpage_lruqueue, pg, pageq.queue);
