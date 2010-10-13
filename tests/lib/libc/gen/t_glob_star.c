@@ -1,4 +1,4 @@
-/*	$NetBSD: t_glob_star.c,v 1.3 2010/10/11 15:48:57 christos Exp $	*/
+/*	$NetBSD: t_glob_star.c,v 1.4 2010/10/13 10:31:00 pooka Exp $	*/
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_glob_star.c,v 1.3 2010/10/11 15:48:57 christos Exp $");
+__RCSID("$NetBSD: t_glob_star.c,v 1.4 2010/10/13 10:31:00 pooka Exp $");
 
 #include <atf-c.h>
 
@@ -164,7 +164,7 @@ gl_closedir(void *v)
 {
 	struct gl_dir *d = v;
 	d->pos = 0;
-	DPRINTF(("closedir %p\n", d))
+	DPRINTF(("closedir %p\n", d));
 }
 
 static void
