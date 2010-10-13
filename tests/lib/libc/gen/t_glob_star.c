@@ -1,4 +1,4 @@
-/*	$NetBSD: t_glob_star.c,v 1.4 2010/10/13 10:31:00 pooka Exp $	*/
+/*	$NetBSD: t_glob_star.c,v 1.5 2010/10/13 11:19:28 pooka Exp $	*/
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_glob_star.c,v 1.4 2010/10/13 10:31:00 pooka Exp $");
+__RCSID("$NetBSD: t_glob_star.c,v 1.5 2010/10/13 11:19:28 pooka Exp $");
 
 #include <atf-c.h>
 
@@ -99,7 +99,7 @@ static const char *glob_star_not[] = {
 static void
 trim(char *buf, size_t len, const char *name)
 {
-	char *path = buf, *epath = buf + sizeof(buf) - 1;
+	char *path = buf, *epath = buf + len;
 	while (path < epath && (*path++ = *name++) != '\0')
 		continue;
 	path--;
