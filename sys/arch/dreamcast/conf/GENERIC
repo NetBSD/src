@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.96 2010/09/01 16:13:32 he Exp $
+# $NetBSD: GENERIC,v 1.97 2010/10/13 10:56:56 tsutsui Exp $
 #
 # GENERIC machine description file
 # 
@@ -67,7 +67,6 @@ options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 # Executable format options
 options 	EXEC_COFF	# COFF executables
-options 	EXEC_ELF32	# 32-bit ELF executables
 
 # File systems
 file-system 	FFS		# UFS
