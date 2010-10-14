@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.18 2009/03/18 10:22:26 cegger Exp $	*/
+/*	$NetBSD: boot.c,v 1.19 2010/10/14 06:12:54 kiyohara Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -73,6 +73,8 @@ main(void)
 	if (whichCPU() == 1)
 		cpu1();
 	resetCPU1();
+
+	scanPCI();
 
 	/*
 	 * console init
