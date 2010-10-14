@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.104 2010/09/30 09:11:19 skrll Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.105 2010/10/14 07:57:34 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -348,7 +348,8 @@ typedef struct {
 #define	PT_NOTE		4		/* Auxiliary information */
 #define	PT_SHLIB	5		/* Reserved, unspecified semantics */
 #define	PT_PHDR		6		/* Entry for header table itself */
-#define	PT_NUM		7
+#define	PT_TLS		7		/* TLS initialisation image */
+#define	PT_NUM		8
 
 #define	PT_LOOS         0x60000000	/* OS-specific range */
 #define	PT_HIOS         0x6fffffff
