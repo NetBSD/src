@@ -1,4 +1,4 @@
-/*	$NetBSD: m68k_syscall.c,v 1.41 2010/04/26 15:07:01 tsutsui Exp $	*/
+/*	$NetBSD: m68k_syscall.c,v 1.42 2010/10/14 16:34:29 tsutsui Exp $	*/
 
 /*-
  * Portions Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: m68k_syscall.c,v 1.41 2010/04/26 15:07:01 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: m68k_syscall.c,v 1.42 2010/10/14 16:34:29 tsutsui Exp $");
 
 #include "opt_execfmt.h"
 #include "opt_compat_netbsd.h"
@@ -144,9 +144,7 @@ extern void machine_userret(struct lwp *, struct frame *, u_quad_t);
 
 void syscall(register_t, struct frame);
 
-#ifdef COMPAT_AOUT_M68K
 void	aoutm68k_syscall_intern(struct proc *);
-#endif
 static void syscall_plain(register_t, struct lwp *, struct frame *);
 static void syscall_fancy(register_t, struct lwp *, struct frame *);
 
@@ -192,7 +190,6 @@ syscall_intern(struct proc *p)
 		p->p_md.md_syscall = syscall_plain;
 }
 
-#ifdef COMPAT_AOUT_M68K
 /*
  * Not worth the effort of a whole new set of syscall_{plain,fancy} functions
  */
@@ -205,7 +202,6 @@ aoutm68k_syscall_intern(struct proc *p)
 	else
 		p->p_md.md_syscall = syscall_plain;
 }
-#endif
 
 static void
 syscall_plain(register_t code, struct lwp *l, struct frame *frame)
