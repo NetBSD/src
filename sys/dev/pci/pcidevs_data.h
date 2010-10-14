@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.1045 2010/08/26 10:23:24 dogcow Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.1046 2010/10/14 03:36:11 taca Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1049 2010/08/26 10:21:56 dogcow Exp
+ *	NetBSD: pcidevs,v 1.1050 2010/10/14 03:35:23 taca Exp
  */
 
 /*
@@ -578,12 +578,11 @@ static const uint16_t pci_vendors[] = {
 	    PCI_VENDOR_NETSEC, 4872, 0,
 	    PCI_VENDOR_SIBYTE, 4759, 4879, 0,
 	    PCI_VENDOR_MYSON, 4888, 127, 0,
-	    PCI_VENDOR_SYBATECH, 4817, 4902, 0,
-	    PCI_VENDOR_MELLANOX, 4907, 96, 0,
-	    PCI_VENDOR_NDC, 180, 4916, 0,
-	    PCI_VENDOR_ACTIONTEC, 4925, 4932, 932, 0,
-	    PCI_VENDOR_ATHEROS, 4936, 3340, 0,
-	    PCI_VENDOR_GLOBALSUN, 353, 1464, 4902, 0,
+	    PCI_VENDOR_MELLANOX, 4902, 96, 0,
+	    PCI_VENDOR_NDC, 180, 4911, 0,
+	    PCI_VENDOR_ACTIONTEC, 4920, 4927, 932, 0,
+	    PCI_VENDOR_ATHEROS, 4931, 3340, 0,
+	    PCI_VENDOR_GLOBALSUN, 353, 1464, 4939, 0,
 	    PCI_VENDOR_SAFENET, 4944, 0,
 	    PCI_VENDOR_MICREL, 4952, 0,
 	    PCI_VENDOR_LINKSYS, 4959, 0,
@@ -3917,8 +3916,6 @@ static const uint16_t pci_products[] = {
 	    17013, 6610, 6220, 0,
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E7221_IGD, 
 	    17013, 692, 1716, 2443, 0,
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82915G_IGD, 
-	    16996, 692, 1716, 2443, 0,
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82915GM_HB, 
 	    17019, 6610, 6220, 0,
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82915GM_EX, 
@@ -7652,7 +7649,7 @@ static const char pci_words[] = { "."
 	    "Hitach\0" /* 1 refs @ 673 */
 	    "AMP\0" /* 1 refs @ 680 */
 	    "Silicon\0" /* 4 refs @ 684 */
-	    "Integrated\0" /* 67 refs @ 692 */
+	    "Integrated\0" /* 66 refs @ 692 */
 	    "Seiko\0" /* 1 refs @ 703 */
 	    "Tatung\0" /* 1 refs @ 709 */
 	    "Hewlett-Packard\0" /* 1 refs @ 716 */
@@ -7786,7 +7783,7 @@ static const char pci_words[] = { "."
 	    "Industrial\0" /* 2 refs @ 1688 */
 	    "Benchmarq\0" /* 1 refs @ 1699 */
 	    "Sierra\0" /* 2 refs @ 1709 */
-	    "Graphics\0" /* 65 refs @ 1716 */
+	    "Graphics\0" /* 64 refs @ 1716 */
 	    "ACC\0" /* 1 refs @ 1725 */
 	    "Digicom\0" /* 1 refs @ 1729 */
 	    "Honeywell\0" /* 1 refs @ 1737 */
@@ -7883,7 +7880,7 @@ static const char pci_words[] = { "."
 	    "F.\0" /* 1 refs @ 2420 */
 	    "Mikroelektronik\0" /* 1 refs @ 2423 */
 	    "I-O\0" /* 1 refs @ 2439 */
-	    "Device\0" /* 52 refs @ 2443 */
+	    "Device\0" /* 51 refs @ 2443 */
 	    "Soyo\0" /* 1 refs @ 2450 */
 	    "Fast\0" /* 19 refs @ 2455 */
 	    "NCube\0" /* 1 refs @ 2460 */
@@ -8202,7 +8199,7 @@ static const char pci_words[] = { "."
 	    "TerraTec\0" /* 1 refs @ 4794 */
 	    "Perle\0" /* 1 refs @ 4803 */
 	    "Solidum\0" /* 1 refs @ 4809 */
-	    "Syba\0" /* 2 refs @ 4817 */
+	    "Syba\0" /* 1 refs @ 4817 */
 	    "Faraday\0" /* 1 refs @ 4822 */
 	    "Geocast\0" /* 1 refs @ 4830 */
 	    "Bluesteel\0" /* 1 refs @ 4838 */
@@ -8212,12 +8209,12 @@ static const char pci_words[] = { "."
 	    "NetSec\0" /* 1 refs @ 4872 */
 	    "(SiByte)\0" /* 1 refs @ 4879 */
 	    "Myson-Century\0" /* 1 refs @ 4888 */
-	    "Tech\0" /* 2 refs @ 4902 */
-	    "Mellanox\0" /* 1 refs @ 4907 */
-	    "Datacomm\0" /* 1 refs @ 4916 */
-	    "Action\0" /* 1 refs @ 4925 */
-	    "Tec\0" /* 1 refs @ 4932 */
-	    "Atheros\0" /* 1 refs @ 4936 */
+	    "Mellanox\0" /* 1 refs @ 4902 */
+	    "Datacomm\0" /* 1 refs @ 4911 */
+	    "Action\0" /* 1 refs @ 4920 */
+	    "Tec\0" /* 1 refs @ 4927 */
+	    "Atheros\0" /* 1 refs @ 4931 */
+	    "Tech\0" /* 1 refs @ 4939 */
 	    "SafeNet\0" /* 2 refs @ 4944 */
 	    "Micrel\0" /* 1 refs @ 4952 */
 	    "Linksys\0" /* 2 refs @ 4959 */
@@ -9884,7 +9881,7 @@ static const char pci_words[] = { "."
 	    "82875P\0" /* 3 refs @ 16969 */
 	    "PCI-CSA\0" /* 1 refs @ 16976 */
 	    "82915P/G/GL\0" /* 2 refs @ 16984 */
-	    "82915G/GL\0" /* 3 refs @ 16996 */
+	    "82915G/GL\0" /* 2 refs @ 16996 */
 	    "82925X\0" /* 2 refs @ 17006 */
 	    "E7221\0" /* 2 refs @ 17013 */
 	    "82915PM/GM/GMS,82910GML\0" /* 1 refs @ 17019 */
