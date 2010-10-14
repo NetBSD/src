@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.19 2010/10/14 06:12:54 kiyohara Exp $	*/
+/*	$NetBSD: boot.c,v 1.20 2010/10/14 06:17:57 kiyohara Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -208,4 +208,11 @@ next:
 		    bootinfo,
 		    (void *)marks[MARK_ENTRY]);
 	}
+}
+
+void
+_rtt(void)
+{
+
+	/* XXXX */
 }
