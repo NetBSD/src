@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.h,v 1.8 2010/10/14 05:52:01 kiyohara Exp $	*/
+/*	$NetBSD: boot.h,v 1.9 2010/10/14 06:12:54 kiyohara Exp $	*/
 
 #define	TICKS_PER_SEC	(33000000 / 4)		/* 33MHz */
 #define	NS_PER_TICK	(1000000000 / TICKS_PER_SEC)
@@ -73,6 +73,19 @@ int kbd_test(void);
  * monitor
  */
 int db_monitor(void);
+
+/*
+ * pci
+ */
+void scanPCI(void);
+int findPCIVga(void);
+void enablePCI(int, int, int, int);
+int PCISlotnum(u_int, u_int, u_int);
+int PCIVendor(int);
+u_long PCIAddress(int, u_int, int);
+#ifdef DEBUG
+void printslots(void);
+#endif
 
 /*
  * tgets
