@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.21 2010/10/14 06:39:52 kiyohara Exp $	*/
+/*	$NetBSD: boot.c,v 1.22 2010/10/14 06:50:44 kiyohara Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -40,9 +40,12 @@
 #include <machine/cpu.h>
 
 #include "boot.h"
+#include "wdvar.h"
 
 char *names[] = {
+	"/dev/disk/ide/0/master/0_0:/netbsd",
 	"/dev/disk/floppy:netbsd",	"/dev/disk/floppy:netbsd.gz",
+	"/dev/disk/ide/0/master/0_0:/onetbsd",
 	"/dev/disk/floppy:onetbsd",	"/dev/disk/floppy:onetbsd.gz"
 	"in",
 };
@@ -115,17 +118,22 @@ main(void)
 	p += sizeof (btinfo_console);
 	memcpy(p, (void *)&btinfo_clock, sizeof (btinfo_clock));
 
-	/*
-	 * attached kernel check
-	 */
-	init_in();
-
 	runCPU1((void *)start_CPU1);
 	wait_for(&CPU1_alive);
 
 	printf(">> %s, Revision %s\n", bootprog_name, bootprog_rev);
 	printf(">> (%s, %s)\n", bootprog_maker, bootprog_date);
 	printf(">> Memory: %d k\n", btinfo_memory.memsize / 1024);
+
+	/*
+	 * attached kernel check and copy.
+	 */
+	init_in();
+
+	printf("\n");
+
+	/* Initialize wdc@isa port 0x1f0 */
+	wdc_init(0x1f0);
 
 	for (;;) {
 		name = names[n++];
