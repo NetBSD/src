@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.200 2009/12/30 22:12:12 elad Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.201 2010/10/14 03:07:51 oki Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.200 2009/12/30 22:12:12 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.201 2010/10/14 03:07:51 oki Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_sock_counters.h"
@@ -1022,7 +1022,7 @@ sosend(struct socket *so, struct mbuf *addr, struct uio *uio, struct mbuf *top,
 				}
 				if (resid >= MINCLSIZE && space >= MCLBYTES) {
 					SOSEND_COUNTER_INCR(&sosend_copy_big);
-					m_clget(m, M_WAIT);
+					m_clget(m, M_DONTWAIT);
 					if ((m->m_flags & M_EXT) == 0)
 						goto nopages;
 					mlen = MCLBYTES;
