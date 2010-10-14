@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.6 2005/12/11 12:17:04 christos Exp $	*/
+/*	$NetBSD: conf.c,v 1.7 2010/10/14 06:39:52 kiyohara Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -34,17 +34,19 @@
 #include <sys/param.h>
 #include <lib/libsa/stand.h>
 
-int fdstrategy(void *, int, daddr_t, size_t, void *, size_t *);
-int fdopen(struct open_file *, ...);
-int fdclose(struct open_file *);
+extern int fdstrategy(void *, int, daddr_t, size_t, void *, size_t *);
+extern int fdopen(struct open_file *, ...);
+extern int fdclose(struct open_file *);
 
-int instrategy(void *, int, daddr_t, size_t, void *, size_t *);
-int inopen(struct open_file *, ...);
-int inclose(struct open_file *);
+extern int instrategy(void *, int, daddr_t, size_t, void *, size_t *);
+extern int inopen(struct open_file *, ...);
+extern int inclose(struct open_file *);
 
 struct devsw devsw[] = {
 	{ "fd", fdstrategy, fdopen, fdclose, noioctl },
-	{ "in", instrategy, inopen, inclose, noioctl },
+
+	{ NULL, NULL,       NULL,   NULL,    NULL },
 };
+struct devsw pseudo_devsw = { "in", instrategy, inopen, inclose, noioctl };
 
 int ndevs = sizeof(devsw) / sizeof(devsw[0]);

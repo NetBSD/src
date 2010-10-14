@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.20 2010/10/14 06:17:57 kiyohara Exp $	*/
+/*	$NetBSD: boot.c,v 1.21 2010/10/14 06:39:52 kiyohara Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -42,10 +42,9 @@
 #include "boot.h"
 
 char *names[] = {
-	"in()",
-	"fd(0,1,0)netbsd", "fd(0,1,0)netbsd.gz",
-	"fd(0,1,0)netbsd.old", "fd(0,1,0)netbsd.old.gz",
-	"fd(0,1,0)onetbsd", "fd(0,1,0)onetbsd.gz"
+	"/dev/disk/floppy:netbsd",	"/dev/disk/floppy:netbsd.gz",
+	"/dev/disk/floppy:onetbsd",	"/dev/disk/floppy:onetbsd.gz"
+	"in",
 };
 #define	NUMNAMES (sizeof (names) / sizeof (names[0]))
 
