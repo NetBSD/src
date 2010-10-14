@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.h,v 1.7 2008/05/26 16:28:39 kiyohara Exp $	*/
+/*	$NetBSD: boot.h,v 1.8 2010/10/14 05:52:01 kiyohara Exp $	*/
 
 #define	TICKS_PER_SEC	(33000000 / 4)		/* 33MHz */
 #define	NS_PER_TICK	(1000000000 / TICKS_PER_SEC)
@@ -47,10 +47,19 @@ void init_in(void);
 /*
  * io
  */
-void outb(int, char);
+void outb(int, u_char);
 void outw(int, u_short);
 u_char inb(int);
+u_short inw(int);
+u_short inwrb(int);
+void writeb(u_long, u_char);
+void writel(u_long, u_long);
+u_char readb(u_long);
+u_short readw(u_long);
+u_long readl(u_long);
 u_long local_to_PCI(u_long);
+void _wbinv(uint32_t, uint32_t);
+void _inv(uint32_t, uint32_t);
 
 /*
  * kbd
