@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1049 2010/08/26 10:21:56 dogcow Exp $
+$NetBSD: pcidevs,v 1.1050 2010/10/14 03:35:23 taca Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -593,7 +593,6 @@ vendor EUMITCOM		0x1638	Eumitcom
 vendor NETSEC		0x1660	NetSec
 vendor SIBYTE		0x166d	Broadcom (SiByte)
 vendor MYSON		0x1516	Myson-Century Technology
-vendor SYBATECH		0x1592	Syba Tech
 vendor MELLANOX		0x15b3	Mellanox Technologies
 vendor NDC		0x15e8	National Datacomm
 vendor ACTIONTEC	0x1668	Action Tec Electronics
@@ -2551,7 +2550,6 @@ product INTEL 82925X_HB		0x2584	82925X Host
 product INTEL 82925X_EX		0x2585	82925X PCI Express Bridge
 product INTEL E7221_HB		0x2588	E7221 Host Bridge
 product INTEL E7221_IGD		0x258a	E7221 Integrated Graphics Device
-product INTEL 82915G_IGD	0x2582	82915G/GL Integrated Graphics Device
 product INTEL 82915GM_HB	0x2590	82915PM/GM/GMS,82910GML Host Bridge
 product INTEL 82915GM_EX	0x2591	82915PM/GM PCI Express Bridge
 product INTEL 82915GM_IGD	0x2592	82915GM/GMS,82910GML Integrated Graphics Device
