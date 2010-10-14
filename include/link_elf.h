@@ -1,8 +1,4 @@
-/*	$NetBSD: link_elf.h,v 1.8 2009/11/04 19:28:03 pooka Exp $	*/
-
-/*
- * This only exists for GDB.
- */
+/*	$NetBSD: link_elf.h,v 1.9 2010/10/14 07:51:21 skrll Exp $	*/
 
 #ifndef _LINK_ELF_H_
 #define	_LINK_ELF_H_
@@ -22,6 +18,9 @@ typedef struct link_map {
 	struct link_map *l_prev;
 } Link_map;
 
+/*
+ * This only exists for GDB.
+ */
 struct r_debug {
 	int r_version;			/* not used */
 	struct link_map *r_map;		/* list of loaded images */
