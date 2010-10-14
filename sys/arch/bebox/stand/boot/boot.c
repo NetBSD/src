@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.22 2010/10/14 06:50:44 kiyohara Exp $	*/
+/*	$NetBSD: boot.c,v 1.23 2010/10/14 06:58:22 kiyohara Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -40,11 +40,14 @@
 #include <machine/cpu.h>
 
 #include "boot.h"
+#include "sdvar.h"
 #include "wdvar.h"
 
 char *names[] = {
+	"/dev/disk/scsi/0/0/0_0:/netbsd",
 	"/dev/disk/ide/0/master/0_0:/netbsd",
 	"/dev/disk/floppy:netbsd",	"/dev/disk/floppy:netbsd.gz",
+	"/dev/disk/scsi/0/0/0_0:/onetbsd",
 	"/dev/disk/ide/0/master/0_0:/onetbsd",
 	"/dev/disk/floppy:onetbsd",	"/dev/disk/floppy:onetbsd.gz"
 	"in",
@@ -131,6 +134,9 @@ main(void)
 	init_in();
 
 	printf("\n");
+
+	/* Initialize siop@pci0 dev 12 func 0 */
+	siop_init(0, 12, 0);
 
 	/* Initialize wdc@isa port 0x1f0 */
 	wdc_init(0x1f0);

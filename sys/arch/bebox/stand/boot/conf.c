@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.8 2010/10/14 06:50:44 kiyohara Exp $	*/
+/*	$NetBSD: conf.c,v 1.9 2010/10/14 06:58:22 kiyohara Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -42,12 +42,17 @@ extern int instrategy(void *, int, daddr_t, size_t, void *, size_t *);
 extern int inopen(struct open_file *, ...);
 extern int inclose(struct open_file *);
 
+extern int sdstrategy(void *, int, daddr_t, size_t, void *, size_t *);
+extern int sdopen(struct open_file *, ...);
+extern int sdclose(struct open_file *);
+
 extern int wdstrategy(void *, int, daddr_t, size_t, void *, size_t *);
 extern int wdopen(struct open_file *, ...);
 extern int wdclose(struct open_file *);
 
 struct devsw devsw[] = {
 	{ "fd", fdstrategy, fdopen, fdclose, noioctl },
+	{ "sd", sdstrategy, sdopen, sdclose, noioctl },
 	{ "wd", wdstrategy, wdopen, wdclose, noioctl },
 
 	{ NULL, NULL,       NULL,   NULL,    NULL },

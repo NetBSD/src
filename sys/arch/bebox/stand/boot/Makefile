@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.28 2010/10/14 06:50:43 kiyohara Exp $
+#	$NetBSD: Makefile,v 1.29 2010/10/14 06:58:22 kiyohara Exp $
 
 NOMAN= # defined
 
@@ -23,7 +23,7 @@ NEWVERSWHAT=	"BOOT"
 SRCS= srt0.s
 SRCS+= boot.c clock.c com.c conf.c cons.c cpu.c devopen.c
 SRCS+= fd.c filesystem.c inkernel.c io.c kbd.c monitor.c ns16550.c
-SRCS+= pci.c prf.c tgets.c vers.c vga.c video.c vreset.c wdc.c wd.c
+SRCS+= pci.c prf.c sd.c siop.c tgets.c vers.c vga.c video.c vreset.c wdc.c wd.c
 SRCS+= setjmp.S
 
 CFLAGS= -Wno-main -ffreestanding

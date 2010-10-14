@@ -1,4 +1,4 @@
-$NetBSD: version,v 1.9 2010/10/14 06:50:44 kiyohara Exp $
+$NetBSD: version,v 1.10 2010/10/14 06:58:22 kiyohara Exp $
 
 1.1:		Boot program for BeBox; initial revision
 1.2:		check BUS FREQ, add clock information
@@ -9,3 +9,5 @@ $NetBSD: version,v 1.9 2010/10/14 06:50:44 kiyohara Exp $
 1.6:		Support framebuffer and vga.
 		Split boot{,_com0,_vga}.
 1.7:		Support kernel load from IDE HDD with onboard wdc.
+1.8:		Support kernel load from SCSI HDD with onboard siop.
+		(EXPERIMENTAL)
