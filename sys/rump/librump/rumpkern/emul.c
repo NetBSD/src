@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.145 2010/09/01 19:37:58 pooka Exp $	*/
+/*	$NetBSD: emul.c,v 1.146 2010/10/15 15:55:53 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.145 2010/09/01 19:37:58 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.146 2010/10/15 15:55:53 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/null.h>
@@ -103,9 +103,10 @@ int pgofset = 4096-1;
 int pgshift = 12;
 #endif
 
-/* sun3 is sun3 with broken kernel modules */
+/* on sun3 VM_MAX_ADDRESS is a const variable */
+/* XXX: should be moved into rump.c and initialize for sun3 and sun3x? */
 #ifdef sun3
-char KERNBASE[1]; /* this is completely random ... */
+const vaddr_t kernbase = KERNBASE3;
 #endif
 
 struct loadavg averunnable = {

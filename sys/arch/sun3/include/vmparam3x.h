@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam3x.h,v 1.20 2010/04/30 13:48:55 pooka Exp $	*/
+/*	$NetBSD: vmparam3x.h,v 1.21 2010/10/15 15:55:52 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -97,14 +97,4 @@
 #endif
 #ifndef	MAXSSIZ
 #define	MAXSSIZ		(32*1024*1024)		/* max stack size */
-#endif
-
-/*
- * PTEs for mapping user space into the kernel for phyio operations.
- * The actual limitation for physio requests will be the DVMA space,
- * and that is fixed by hardware design at 1MB.  We could make the
- * physio map larger than that, but it would not buy us much.
- */
-#ifndef USRIOSIZE
-#define USRIOSIZE	128	/* 1 MB */
 #endif

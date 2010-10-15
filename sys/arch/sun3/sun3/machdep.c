@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.197 2010/02/08 19:02:32 joerg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.198 2010/10/15 15:55:53 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.197 2010/02/08 19:02:32 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.198 2010/10/15 15:55:53 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -106,6 +106,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.197 2010/02/08 19:02:32 joerg Exp $");
 #include <sys/vnode.h>
 #include <sys/syscallargs.h>
 #include <sys/ksyms.h>
+#include <sys/module.h>
 #ifdef	KGDB
 #include <sys/kgdb.h>
 #endif
@@ -138,6 +139,10 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.197 2010/02/08 19:02:32 joerg Exp $");
 extern char kernel_text[];
 /* Defined by the linker */
 extern char etext[];
+
+/* kernel_arch specific values required by module(9) */
+const vaddr_t kernbase = KERNBASE3;
+const vaddr_t kern_end = KERN_END3;
 
 /* Our exported CPU info; we can have only one. */  
 struct cpu_info cpu_info_store;
@@ -226,7 +231,7 @@ cpu_startup(void)
 	 * Its mapping was prepared in pmap_bootstrap().
 	 * Also, offset some to avoid PROM scribbles.
 	 */
-	v = (char *)KERNBASE;
+	v = (char *)KERNBASE3;
 	msgbufaddr = v + MSGBUFOFF;
 	initmsgbuf(msgbufaddr, MSGBUFSIZE);
 
@@ -625,7 +630,7 @@ dumpsys(void)
 	/* Fill in cpu_kcore_hdr_t part. */
 	strncpy(chdr_p->name, kernel_arch, sizeof(chdr_p->name));
 	chdr_p->page_size = PAGE_SIZE;
-	chdr_p->kernbase = KERNBASE;
+	chdr_p->kernbase = KERNBASE3;
 
 	/* Fill in the sun3_kcore_hdr part (MMU state). */
 	pmap_kcore_hdr(sh);
@@ -669,7 +674,7 @@ dumpsys(void)
 	do {
 		if ((todo & 0xf) == 0)
 			printf_nolog("\r%4d", todo);
-		vaddr = (char*)(paddr + KERNBASE);
+		vaddr = (char*)(paddr + KERNBASE3);
 		error = (*dsw->d_dump)(dumpdev, blkno, vaddr, PAGE_SIZE);
 		if (error)
 			goto fail;
@@ -731,3 +736,13 @@ cpu_exec_aout_makecmds(struct lwp *l, struct exec_package *epp)
 {
 	return ENOEXEC;
 }
+
+#ifdef MODULAR
+/*
+ * Push any modules loaded by the bootloader etc.
+ */
+void
+module_init_md(void)
+{
+}
+#endif

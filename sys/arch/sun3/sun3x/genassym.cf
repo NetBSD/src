@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.12 2010/07/07 01:23:08 chs Exp $
+#	$NetBSD: genassym.cf,v 1.13 2010/10/15 15:55:53 tsutsui Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -119,13 +119,13 @@ define	DC_CLEAR			DC_CLEAR
 define	CACHE_CLR			CACHE_CLR
 
 # sun3 memory map
-define	USRSTACK			USRSTACK
+define	USRSTACK3X			USRSTACK3X
 define	SUN3X_MONSTART			SUN3X_MONSTART
 define	SUN3X_PROM_BASE			SUN3X_PROM_BASE
 define	SUN3X_MONEND			SUN3X_MONEND
 
 # kernel-isms
-define	KERNBASE			KERNBASE
+define	KERNBASE3X			KERNBASE3X
 define	USPACE				USPACE
 define	PAGE_SIZE			PAGE_SIZE
 
