@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.110 2009/11/26 00:19:23 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.111 2010/10/15 15:55:53 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.110 2009/11/26 00:19:23 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.111 2010/10/15 15:55:53 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -348,7 +348,7 @@ unsigned int	NUM_A_TABLES, NUM_B_TABLES, NUM_C_TABLES;
  * for purposes of MMU table allocation is -KERNBASE
  * (length from KERNBASE to 0xFFFFffff)
  */
-#define	KVAS_SIZE		(-KERNBASE)
+#define	KVAS_SIZE		(-KERNBASE3X)
 
 /* Numbers of kernel MMU tables to support KVAS_SIZE. */
 #define KERN_B_TABLES	(KVAS_SIZE >> MMU_TIA_SHIFT)
@@ -388,9 +388,9 @@ mmu_ptov(paddr_t pa)
 {
 	vaddr_t va;
 
-	va = (pa + KERNBASE);
+	va = (pa + KERNBASE3X);
 #ifdef	PMAP_DEBUG
-	if ((va < KERNBASE) || (va >= virtual_contig_end))
+	if ((va < KERNBASE3X) || (va >= virtual_contig_end))
 		panic("mmu_ptov");
 #endif
 	return (void *)va;
@@ -403,10 +403,10 @@ mmu_vtop(void *vva)
 
 	va = (vaddr_t)vva;
 #ifdef	PMAP_DEBUG
-	if ((va < KERNBASE) || (va >= virtual_contig_end))
+	if ((va < KERNBASE3X) || (va >= virtual_contig_end))
 		panic("mmu_vtop");
 #endif
-	return va - KERNBASE;
+	return va - KERNBASE3X;
 }
 
 /*
@@ -638,7 +638,7 @@ pmap_bootstrap(vaddr_t nextva)
 	 * That is plenty for our bootstrap work.
 	 */
 	virtual_avail = m68k_round_page(nextva);
-	virtual_contig_end = KERNBASE + 0x400000; /* +4MB */
+	virtual_contig_end = KERNBASE3X + 0x400000; /* +4MB */
 	virtual_end = VM_MAX_KERNEL_ADDRESS;
 	/* Don't need avail_start til later. */
 
@@ -760,7 +760,7 @@ pmap_bootstrap(vaddr_t nextva)
 	 * practice to explicitly show that we are interpreting
 	 * it as a list of A table descriptors.
 	 */
-	for (i = 0; i < MMU_TIA(KERNBASE); i++) {
+	for (i = 0; i < MMU_TIA(KERNBASE3X); i++) {
 		kernAbase[i].addr.raw = 0;
 	}
 
@@ -769,7 +769,7 @@ pmap_bootstrap(vaddr_t nextva)
 	 * correct spots in the contiguous table of PTEs allocated for the
 	 * kernel's virtual memory space.
 	 */
-	for (i = MMU_TIA(KERNBASE); i < MMU_A_TBL_SIZE; i++) {
+	for (i = MMU_TIA(KERNBASE3X); i < MMU_A_TBL_SIZE; i++) {
 		kernAbase[i].attr.raw =
 		    MMU_LONG_DTE_LU | MMU_LONG_DTE_SUPV | MMU_DT_SHORT;
 		kernAbase[i].addr.raw = mmu_vtop(&kernBbase[b]);
@@ -802,7 +802,7 @@ pmap_bootstrap(vaddr_t nextva)
 	 * These variables will never change after this point.
 	 */
 	virtual_contig_end = virtual_avail;
-	avail_start = virtual_avail - KERNBASE;
+	avail_start = virtual_avail - KERNBASE3X;
 
 	/*
 	 * `avail_next' is a running pointer used by pmap_next_page() to
@@ -851,7 +851,7 @@ pmap_bootstrap(vaddr_t nextva)
 	 * Only the mappings created here exist in our tables, so
 	 * remember to map anything we expect to use.
 	 */
-	va = (vaddr_t)KERNBASE;
+	va = (vaddr_t)KERNBASE3X;
 	pa = 0;
 
 	/*
@@ -1001,7 +1001,7 @@ pmap_bootstrap_copyprom(void)
 	 * Note: mon_ctbl[0] maps SUN3X_MON_KDB_BASE
 	 */
 	mon_ctbl = *romp->monptaddr;
-	i = m68k_btop(SUN3X_MON_KDB_BASE - KERNBASE);
+	i = m68k_btop(SUN3X_MON_KDB_BASE - KERNBASE3X);
 	kpte = &kernCbase[i];
 	len = m68k_btop(SUN3X_MONEND - SUN3X_MON_KDB_BASE);
 
@@ -1020,7 +1020,7 @@ pmap_bootstrap_copyprom(void)
 	 * not recorded in our PV lists...
 	 */
 	mon_ctbl = *romp->shadowpteaddr;
-	i = m68k_btop(SUN3X_MON_DVMA_BASE - KERNBASE);
+	i = m68k_btop(SUN3X_MON_DVMA_BASE - KERNBASE3X);
 	kpte = &kernCbase[i];
 	len = m68k_btop(SUN3X_MON_DVMA_SIZE);
 	for (i = (len - 1); i < len; i++) {
@@ -1056,7 +1056,7 @@ pmap_bootstrap_setprom(void)
 	int i;
 
 	mon_dte = (mmu_long_dte_t *)mon_crp.rp_addr;
-	for (i = MMU_TIA(KERNBASE); i < MMU_TIA(KERN_END); i++) {
+	for (i = MMU_TIA(KERNBASE3X); i < MMU_TIA(KERN_END3X); i++) {
 		mon_dte[i].attr.raw = kernAbase[i].attr.raw;
 		mon_dte[i].addr.raw = kernAbase[i].addr.raw;
 	}
@@ -1395,7 +1395,7 @@ free_a_table(a_tmgr_t *a_tbl, bool relink)
 	at_wired = a_tbl->at_wcnt;
 	if (a_tbl->at_ecnt) {
 		dte = a_tbl->at_dtbl;
-		for (i = 0; i < MMU_TIA(KERNBASE); i++) {
+		for (i = 0; i < MMU_TIA(KERNBASE3X); i++) {
 			/*
 			 * If a table entry points to a valid B table, free
 			 * it and its children.
@@ -2093,7 +2093,7 @@ pmap_enter_kernel(vaddr_t va, paddr_t pa, vm_prot_t prot)
 	/*
 	 * Calculate the index of the PTE being modified.
 	 */
-	pte_idx = (u_long)m68k_btop(va - KERNBASE);
+	pte_idx = (u_long)m68k_btop(va - KERNBASE3X);
 
 	/* This array is traditionally named "Sysmap" */
 	pte = &kernCbase[pte_idx];
@@ -2153,7 +2153,7 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 	mmu_short_pte_t	*pte;
 
 	/* This array is traditionally named "Sysmap" */
-	pte = &kernCbase[(u_long)m68k_btop(va - KERNBASE)];
+	pte = &kernCbase[(u_long)m68k_btop(va - KERNBASE3X)];
 
 	KASSERT(!MMU_VALID_DT(*pte));
 	pte->attr.raw = MMU_DT_INVALID | MMU_DT_PAGE | (pa & MMU_PAGE_MASK);
@@ -2171,8 +2171,8 @@ pmap_kremove(vaddr_t va, vsize_t len)
 		panic("pmap_kremove: alignment");
 #endif
 
-	idx  = m68k_btop(va - KERNBASE);
-	eidx = m68k_btop(va + len - KERNBASE);
+	idx  = m68k_btop(va - KERNBASE3X);
+	eidx = m68k_btop(va + len - KERNBASE3X);
 
 	while (idx < eidx) {
 		kernCbase[idx++].attr.raw = MMU_DT_INVALID;
@@ -2215,7 +2215,7 @@ pmap_protect_kernel(vaddr_t startva, vaddr_t endva, vm_prot_t prot)
 	vaddr_t va;
 	mmu_short_pte_t *pte;
 
-	pte = &kernCbase[(unsigned long) m68k_btop(startva - KERNBASE)];
+	pte = &kernCbase[(unsigned long) m68k_btop(startva - KERNBASE3X)];
 	for (va = startva; va < endva; va += PAGE_SIZE, pte++) {
 		if (MMU_VALID_DT(*pte)) {
 		    switch (prot) {
@@ -2823,7 +2823,7 @@ pmap_get_pteinfo(u_int idx, pmap_t *pmap, c_tmgr_t **tbl)
 		*pmap = pmap_kernel();
 
 		va = m68k_ptob(idx);
-		va += KERNBASE;
+		va += KERNBASE3X;
 	}
 		
 	return va;
@@ -2921,7 +2921,7 @@ pmap_extract_kernel(vaddr_t va, paddr_t *pap)
 {
 	mmu_short_pte_t *pte;
 
-	pte = &kernCbase[(u_int)m68k_btop(va - KERNBASE)];
+	pte = &kernCbase[(u_int)m68k_btop(va - KERNBASE3X)];
 	if (!MMU_VALID_DT(*pte))
 		return false;
 	if (pap != NULL)
@@ -2976,8 +2976,8 @@ pmap_remove_kernel(vaddr_t sva, vaddr_t eva)
 		panic("pmap_remove_kernel: alignment");
 #endif
 
-	idx  = m68k_btop(sva - KERNBASE);
-	eidx = m68k_btop(eva - KERNBASE);
+	idx  = m68k_btop(sva - KERNBASE3X);
+	eidx = m68k_btop(eva - KERNBASE3X);
 
 	while (idx < eidx) {
 		pmap_remove_pte(&kernCbase[idx++]);
@@ -3659,7 +3659,7 @@ pmap_count(pmap_t pmap, int type)
 	a_tbl = pmap->pm_a_tmgr;
 
 	count = 0;
-	for (a_idx = 0; a_idx < MMU_TIA(KERNBASE); a_idx++) {
+	for (a_idx = 0; a_idx < MMU_TIA(KERNBASE3X); a_idx++) {
 	    if (MMU_VALID_DT(a_tbl->at_dtbl[a_idx])) {
 	        b_tbl = mmuB2tmgr(mmu_ptov(a_tbl->at_dtbl[a_idx].addr.raw));
 	        for (b_idx = 0; b_idx < MMU_B_TBL_SIZE; b_idx++) {
@@ -3705,7 +3705,7 @@ get_pte(vaddr_t va)
 	pte_pa = ptest_addr(va & ~PGOFSET);
 
 	/* Convert to a virtual address... */
-	pte = (mmu_short_pte_t *) (KERNBASE + pte_pa);
+	pte = (mmu_short_pte_t *) (KERNBASE3X + pte_pa);
 
 	/* Make sure it is in our level-C tables... */
 	if ((pte < kernCbase) ||
@@ -3727,10 +3727,10 @@ set_pte(vaddr_t va, u_int pte)
 {
 	u_long idx;
 
-	if (va < KERNBASE)
+	if (va < KERNBASE3X)
 		return;
 
-	idx = (unsigned long) m68k_btop(va - KERNBASE);
+	idx = (unsigned long) m68k_btop(va - KERNBASE3X);
 	kernCbase[idx].attr.raw = pte;
 	TBIS(va);
 }
