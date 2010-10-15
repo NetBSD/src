@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.246 2010/10/15 23:27:12 snj Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.247 2010/10/15 23:50:31 snj Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -17513,4 +17513,11 @@ libexec/httpd/bozohttpd.c			patch
 	Fix a serious error in vhost handling; "Host:.." would allow
 	access to the next level directory from the virtual root directory.
 	[mrg, ticket #1456]
+
+share/man/man4/hdaudio.4			1.5, 1.6
+
+	Correct spelling: "HDAUDIO_AFG_DEBUG"
+	--
+	hdaudio appeared in 5.1. Add xref to hdaudioctl(8).
+	[wiz, ticket #1457]
 
