@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0.3,v 1.1.2.19 2010/09/22 22:52:27 snj Exp $
+# $NetBSD: CHANGES-5.0.3,v 1.1.2.20 2010/10/15 23:21:43 snj Exp $
 
 A complete list of changes from the NetBSD 5.0.2 release to the NetBSD 5.0.3
 release:
@@ -338,4 +338,10 @@ dist/bzip2/decompress.c				1.2
 
 	Avoid integer overflow that can lead to buffer overflow.
 	[christos, ticket #1455]
+
+libexec/httpd/bozohttpd.c			patch
+
+	Fix a serious error in vhost handling; "Host:.." would allow
+	access to the next level directory from the virtual root directory.
+	[mrg, ticket #1456]
 
