@@ -1,4 +1,4 @@
-.\"	$NetBSD: mkdep.1,v 1.14 2005/12/12 22:49:37 wiz Exp $
+.\"	$NetBSD: mkdep.1,v 1.15 2010/10/15 05:46:48 dholland Exp $
 .\"
 .\" Copyright (c) 1987, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)mkdep.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd December 12, 2005
+.Dd October 15, 2010
 .Dt MKDEP 1
 .Os
 .Sh NAME
@@ -124,3 +124,11 @@ The
 .Nm
 command appeared in
 .Bx 4.3 Tahoe .
+.Sh BUGS
+Some characters special to
+.Xr make 1 ,
+most notably the comment character, are not escaped correctly if they
+appear in file names.
+This can lead to unparseable output or silently cause dependencies to
+be lost.
+.\" (This problem is actually in gcc -M.)
