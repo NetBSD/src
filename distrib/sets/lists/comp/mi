@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1510 2010/09/25 01:42:38 matt Exp $
+#	$NetBSD: mi,v 1.1511 2010/10/15 12:29:17 skrll Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -11736,9 +11736,9 @@
 ./usr/share/man/html3/execvp.html		comp-c-htmlman		html
 ./usr/share/man/html3/exit.html			comp-c-htmlman		html
 ./usr/share/man/html3/exp.html			comp-c-htmlman		html
-./usr/share/man/html3/expf.html			comp-c-htmlman		html
 ./usr/share/man/html3/exp2.html			comp-c-htmlman		html
 ./usr/share/man/html3/exp2f.html		comp-c-htmlman		html
+./usr/share/man/html3/expf.html			comp-c-htmlman		html
 ./usr/share/man/html3/expm1.html		comp-c-htmlman		html
 ./usr/share/man/html3/expm1f.html		comp-c-htmlman		html
 ./usr/share/man/html3/extattr.html		comp-c-htmlman		html
@@ -17594,9 +17594,9 @@
 ./usr/share/man/man3/execvp.3			comp-c-man		.man
 ./usr/share/man/man3/exit.3			comp-c-man		.man
 ./usr/share/man/man3/exp.3			comp-c-man		.man
-./usr/share/man/man3/expf.3			comp-c-man		.man
 ./usr/share/man/man3/exp2.3			comp-c-man		.man
 ./usr/share/man/man3/exp2f.3			comp-c-man		.man
+./usr/share/man/man3/expf.3			comp-c-man		.man
 ./usr/share/man/man3/expm1.3			comp-c-man		.man
 ./usr/share/man/man3/expm1f.3			comp-c-man		.man
 ./usr/share/man/man3/extattr.3			comp-c-man		.man
