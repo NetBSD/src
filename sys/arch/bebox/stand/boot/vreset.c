@@ -1,4 +1,4 @@
-/*	$NetBSD: vreset.c,v 1.12 2010/10/14 06:12:54 kiyohara Exp $	*/
+/*	$NetBSD: vreset.c,v 1.13 2010/10/15 20:01:03 he Exp $	*/
 
 /*
  * Copyright (C) 1995-1997 Gary Thomas (gdt@linuxppc.org)
@@ -438,7 +438,7 @@ static void setTextRegs(struct VgaRegs *);
 static void setTextCLUT(void);
 static void loadFont(u_char *);
 static void unlockS3(void);
-statuc void enablePCIvideo(int);
+static void enablePCIvideo(int);
 
 void
 vga_reset(u_char *ISA_mem)
