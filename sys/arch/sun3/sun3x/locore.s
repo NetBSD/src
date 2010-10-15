@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.60 2010/02/25 07:21:20 skrll Exp $	*/
+/*	$NetBSD: locore.s,v 1.61 2010/10/15 15:55:53 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -112,7 +112,7 @@ ASGLOBAL(start)
 | boot loader has loaded us into low memory but all the symbols in this
 | code have been linked high.
 	movw	#PSL_HIGHIPL,%sr	| no interrupts
-	movl	#KERNBASE,%a5		| for vtop conversion
+	movl	#KERNBASE3X,%a5		| for vtop conversion
 	lea	_C_LABEL(mon_crp),%a0	| where to store the CRP
 	subl	%a5,%a0
 	| Note: borrowing mon_crp for tt0 setup...
@@ -169,7 +169,7 @@ L_high_code:
 	lea	_C_LABEL(lwp0),%a0	| get lwp0
 	movl	%a0@(L_PCB),%a1		| XXXuvm_lwp_getuarea
 	lea	%a1@(USPACE-4),%sp	| set SSP to last word
-	movl	#USRSTACK-4,%a2
+	movl	#USRSTACK3X-4,%a2
 	movl	%a2,%usp		| init user SP
 
 | Note curpcb was already set in _bootstrap().
@@ -800,7 +800,7 @@ L_delay:
 | Not using _C_LABEL() here because these symbols are never
 | referenced by any C code, and if the leading underscore
 | ever goes away, these lines turn into syntax errors...
-	.set	_KERNBASE,KERNBASE
+	.set	_KERNBASE3X,KERNBASE3X
 	.set	_MONSTART,SUN3X_MONSTART
 	.set	_PROM_BASE,SUN3X_PROM_BASE
 	.set	_MONEND,SUN3X_MONEND
