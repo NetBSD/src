@@ -1,4 +1,4 @@
-/*	$NetBSD: deq.c,v 1.6 2009/03/14 21:04:11 dsl Exp $	*/
+/*	$NetBSD: deq.c,v 1.7 2010/10/15 22:18:58 phx Exp $	*/
 
 /*-
  * Copyright (C) 2005 Michael Lorenz
@@ -32,7 +32,7 @@
  */
  
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: deq.c,v 1.6 2009/03/14 21:04:11 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: deq.c,v 1.7 2010/10/15 22:18:58 phx Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,14 +59,16 @@ int
 deq_match(device_t parent, struct cfdata *cf, void *aux)
 {
 	struct ki2c_confargs *ka = aux;
-	char compat[32];
+	char buf[32];
 	
-	if (strcmp(ka->ka_name, "deq") != 0)
-		return 0;
-
-	memset(compat, 0, sizeof(compat));
-	if(OF_getprop(ka->ka_node, "i2c-address", compat, sizeof(compat)))
-		return 1;
+	if (strcmp(ka->ka_name, "deq") == 0) {
+		if (OF_getprop(ka->ka_node, "i2c-address", buf, sizeof(buf)))
+			return 1;
+	} else if (strcmp(ka->ka_name, "codec") == 0) {
+		if (OF_getprop(ka->ka_node, "compatible", buf, sizeof(buf)))
+			if (strcmp(buf, "tas3004") == 0)
+				return 1;
+	}
 	return 0;
 }
 
@@ -83,5 +85,5 @@ deq_attach(device_t parent, device_t self, void *aux)
 	sc->sc_parent = parent;
 	sc->sc_address = ka->ka_addr & 0xfe;
 	sc->sc_i2c = ka->ka_tag;
-	printf(" Apple Digital Equalizer, addr 0x%x\n", sc->sc_address);
+	aprint_normal(" Apple Digital Equalizer, addr 0x%x\n", sc->sc_address);
 }
