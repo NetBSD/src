@@ -1,4 +1,4 @@
-/*	$NetBSD: bozohttpd.c,v 1.7.8.3 2009/03/26 17:19:45 snj Exp $	*/
+/*	$NetBSD: bozohttpd.c,v 1.7.8.4 2010/10/15 23:25:45 snj Exp $	*/
 
 /*	$eterna: bozohttpd.c,v 1.142 2008/03/03 03:36:11 mrg Exp $	*/
 
@@ -111,7 +111,7 @@
 #define INDEX_HTML		"index.html"
 #endif
 #ifndef SERVER_SOFTWARE
-#define SERVER_SOFTWARE		"bozohttpd/20080303"
+#define SERVER_SOFTWARE		"bozohttpd/20080303-nb1"
 #endif
 #ifndef DIRECT_ACCESS_FILE
 #define DIRECT_ACCESS_FILE	".bzdirect"
@@ -1038,6 +1038,9 @@ check_virtual(http_req *request)
 	if (strncasecmp(myname, request->hr_host, len) != 0) {
 		s = 0;
 		for (i = scandir(vpath, &list, 0, 0); i--; list++) {
+			if (strcmp((*list)->d_name, ".") == 0 ||
+			    strcmp((*list)->d_name, "..") == 0)
+				continue;
 			debug((DEBUG_OBESE, "looking at dir``%s''",
 			    (*list)->d_name));
 			if (strncasecmp((*list)->d_name, request->hr_host,
