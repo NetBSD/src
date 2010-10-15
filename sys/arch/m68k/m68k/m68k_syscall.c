@@ -1,4 +1,4 @@
-/*	$NetBSD: m68k_syscall.c,v 1.42 2010/10/14 16:34:29 tsutsui Exp $	*/
+/*	$NetBSD: m68k_syscall.c,v 1.43 2010/10/15 10:20:09 tsutsui Exp $	*/
 
 /*-
  * Portions Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: m68k_syscall.c,v 1.42 2010/10/14 16:34:29 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: m68k_syscall.c,v 1.43 2010/10/15 10:20:09 tsutsui Exp $");
 
 #include "opt_execfmt.h"
 #include "opt_compat_netbsd.h"
@@ -290,7 +290,7 @@ syscall_plain(register_t code, struct lwp *l, struct frame *frame)
 		 * value there. However, -current binaries post 4.0
 		 * but pre-5.0 might still require this copy, so we
 		 * select this behaviour based on COMPAT_50 as we have
-		 * no equivvalent for the exact in-between version.
+		 * no equivalent for the exact in-between version.
 		 */
 #ifdef COMPAT_AOUT_M68K
 		{
