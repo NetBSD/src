@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.46 2010/05/31 20:32:29 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.47 2010/10/15 12:20:33 tsutsui Exp $
 
 .include <bsd.own.mk>
 
@@ -68,6 +68,11 @@ SUBDIR+=	xldscripts
 .endif
 
 # Machine dependent section
+.if ${MACHINE_ARCH} == "i386" || \
+    ${MACHINE_ARCH} == "m68k"
+SUBDIR+=	exec_aout
+.endif
+
 .if ${MACHINE_ARCH} != "alpha"
 SUBDIR+=	exec_elf32
 .endif
@@ -106,11 +111,17 @@ SUBDIR+=	compat_ibcs2
 SUBDIR+=	compat_linux
 SUBDIR+=	compat_svr4
 SUBDIR+=	drm
-SUBDIR+=	exec_aout
 SUBDIR+=	i915drm
 SUBDIR+=	radeondrm
 SUBDIR+=	viadrm
 SUBDIR+=	pad
+.endif
+
+.if ${MACHINE_ARCH} == "m68k"
+SUBDIR+=	compat_aoutm68k
+#SUBDIR+=	compat_linux
+#SUBDIR+=	compat_sunos
+#SUBDIR+=	compat_svr4
 .endif
 
 .include <bsd.own.mk>
