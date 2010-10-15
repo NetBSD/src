@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_select.c,v 1.27 2010/07/12 11:04:25 rmind Exp $	*/
+/*	$NetBSD: sys_select.c,v 1.28 2010/10/15 05:39:19 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009, 2010 The NetBSD Foundation, Inc.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_select.c,v 1.27 2010/07/12 11:04:25 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_select.c,v 1.28 2010/10/15 05:39:19 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -689,7 +689,7 @@ selnotify(struct selinfo *sip, int events, long knhint)
 			 */
 			l = sip->sel_lwp;
 			oflag = l->l_selflag;
-#ifdef DIRECT_SELECT
+#ifndef NO_DIRECT_SELECT
 			sel_setevents(l, sip, events);
 #else
 			l->l_selflag = SEL_RESET;
