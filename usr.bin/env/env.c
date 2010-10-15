@@ -35,7 +35,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993, 1994\
 
 #ifndef lint
 /*static char sccsid[] = "@(#)env.c	8.3 (Berkeley) 4/2/94";*/
-__RCSID("$NetBSD: env.c,v 1.17 2008/07/21 14:19:22 lukem Exp $");
+__RCSID("$NetBSD: env.c,v 1.18 2010/10/15 19:35:08 jschauma Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -77,7 +77,7 @@ main(int argc, char **argv)
 
 	if (*argv) {
 		/* return 127 if the command to be run could not be found; 126
-		   if the command was was found but could not be invoked */
+		   if the command was found but could not be invoked */
 
 		execvp(*argv, argv);
 		err((errno == ENOENT) ? 127 : 126, "%s", *argv);
