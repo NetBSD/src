@@ -1,4 +1,4 @@
-/*	$NetBSD: mkbootimage.c,v 1.11 2008/09/01 19:03:44 martin Exp $	*/
+/*	$NetBSD: mkbootimage.c,v 1.12 2010/10/16 05:05:09 kiyohara Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -232,7 +232,7 @@ prep_check_mbr(int prep_fd, char *rawdev)
 
 	memset(mbr, 0, sizeof(mbr));
 	mbrp = (struct mbr_partition *)&mbr[MBR_PART_OFFSET];
- 
+
 	/* Set entry point and boot image size skipping over elf header */
 	entry  = sa_htole32(0x400);
 	length = sa_htole32(elf_stat.st_size - sizeof(hdr) + 0x400);
@@ -241,7 +241,7 @@ prep_check_mbr(int prep_fd, char *rawdev)
 	 * Set magic number for msdos partition
 	 */
 	*(unsigned short *)&mbr[MBR_MAGIC_OFFSET] = sa_htole16(MBR_MAGIC);
-  
+
 	/*
 	 * Build a "PReP" partition table entry in the boot record
 	 *  - "PReP" may only look at the system_indicator
@@ -256,15 +256,15 @@ prep_check_mbr(int prep_fd, char *rawdev)
 	 * one partition on the diskette and it shall contain the rest of the
 	 * diskette.
 	 */
-	mbrp->mbrp_shd   = 0;	/* zero-based			     */
-	mbrp->mbrp_ssect = 2;	/* one-based			     */
-	mbrp->mbrp_scyl  = 0;	/* zero-based			     */
-	mbrp->mbrp_ehd   = 1;	/* assumes two heads		     */
+	mbrp->mbrp_shd   = 0;	/* zero-based */
+	mbrp->mbrp_ssect = 2;	/* one-based */
+	mbrp->mbrp_scyl  = 0;	/* zero-based */
+	mbrp->mbrp_ehd   = 1;	/* assumes two heads */
 	if (lfloppyflag)
-		mbrp->mbrp_esect = 36;  /* 2.88MB floppy	     */
+		mbrp->mbrp_esect = 36;  /* 2.88MB floppy */
 	else
-		mbrp->mbrp_esect = 18;	/* assumes 18 sectors/track  */
-	mbrp->mbrp_ecyl  = 79;	/* assumes 80 cylinders/diskette     */
+		mbrp->mbrp_esect = 18;	/* assumes 18 sectors/track */
+	mbrp->mbrp_ecyl  = 79;	/* assumes 80 cylinders/diskette */
 
 	/*
 	 * The "PReP" software ignores the above fields and just looks at
@@ -275,13 +275,13 @@ prep_check_mbr(int prep_fd, char *rawdev)
 	 *     the beginning sector is zero-based!
 	 */
 
-	/* This has to be 0 on the PowerStack? */   
+	/* This has to be 0 on the PowerStack? */
 	mbrp->mbrp_start = sa_htole32(0);
 	mbrp->mbrp_size  = sa_htole32(2 * 18 * 80 - 1);
 
 	write(prep_fd, mbr, sizeof(mbr));
 	write(prep_fd, &entry, sizeof(entry));
-	write(prep_fd, &length, sizeof(length));  
+	write(prep_fd, &length, sizeof(length));
 }
 
 static int
@@ -397,7 +397,7 @@ prep_build_image(char *kernel, char *boot, char *rawdev, char *outname)
 	close(elf_fd);
 
 	return 0;
-}	
+}
 
 /* Fill in the needed information on the boot and config records.  Most of
  * this is just AIX garbage that we don't really need to boot.
@@ -595,7 +595,7 @@ bebox_write_header(int bebox_fd, int elf_image_len, int kern_img_len)
 
 	if (saloneflag)
 		hsize = 0;
-	
+
 	ldrOffset = ULALIGN(sizeof (fileHdr) + sizeof (textHdr) +
 	    sizeof (dataHdr) + sizeof (ldrHdr));
 	dataOffset = ULALIGN(ldrOffset + sizeof (lh));
@@ -605,70 +605,70 @@ bebox_write_header(int bebox_fd, int elf_image_len, int kern_img_len)
 	memset(&fileHdr, 0, sizeof (fileHdr));
 	fileHdr.magic = sa_htobe32(PEF_MAGIC);
 	fileHdr.fileTypeID = sa_htobe32(PEF_FILE);
-        fileHdr.archID = sa_htobe32(PEF_PPC);
-        fileHdr.versionNumber = sa_htobe32(1);
-        fileHdr.numSections = sa_htobe16(3);
-        fileHdr.loadableSections = sa_htobe16(2);
-        write(bebox_fd, &fileHdr, sizeof (fileHdr));
+	fileHdr.archID = sa_htobe32(PEF_PPC);
+	fileHdr.versionNumber = sa_htobe32(1);
+	fileHdr.numSections = sa_htobe16(3);
+	fileHdr.loadableSections = sa_htobe16(2);
+	write(bebox_fd, &fileHdr, sizeof (fileHdr));
 
 	/* Create the Section Header for TEXT */
 	memset(&textHdr, 0, sizeof (textHdr));
-        textHdr.sectionName = sa_htobe32(-1);
-        textHdr.sectionAddress = sa_htobe32(0);
-        textHdr.execSize = sa_htobe32(elf_image_len);
-        textHdr.initSize = sa_htobe32(elf_image_len);
-        textHdr.rawSize = sa_htobe32(elf_image_len);
-        textHdr.fileOffset = sa_htobe32(textOffset);
-        textHdr.regionKind = CodeSection;
-        textHdr.shareKind = ContextShare;
-        textHdr.alignment = 4;  /* 16 byte alignment */
-        write(bebox_fd, &textHdr, sizeof (textHdr));
+	textHdr.sectionName = sa_htobe32(-1);
+	textHdr.sectionAddress = sa_htobe32(0);
+	textHdr.execSize = sa_htobe32(elf_image_len);
+	textHdr.initSize = sa_htobe32(elf_image_len);
+	textHdr.rawSize = sa_htobe32(elf_image_len);
+	textHdr.fileOffset = sa_htobe32(textOffset);
+	textHdr.regionKind = CodeSection;
+	textHdr.shareKind = ContextShare;
+	textHdr.alignment = 4;  /* 16 byte alignment */
+	write(bebox_fd, &textHdr, sizeof (textHdr));
 
 	/* Create the Section Header for DATA */
 	memset(&dataHdr, 0, sizeof (dataHdr));
-        dataHdr.sectionName = sa_htobe32(-1);
-        dataHdr.sectionAddress = sa_htobe32(0);
-        dataHdr.execSize = sa_htobe32(sizeof (entry_vector) + kern_img_len);
-        dataHdr.initSize = sa_htobe32(sizeof (entry_vector) + kern_img_len);
-        dataHdr.rawSize = sa_htobe32(sizeof (entry_vector) + kern_img_len);
-        dataHdr.fileOffset = sa_htobe32(dataOffset);
-        dataHdr.regionKind = DataSection;
-        dataHdr.shareKind = ContextShare;
-        dataHdr.alignment = 4;  /* 16 byte alignment */
-        write(bebox_fd, &dataHdr, sizeof (dataHdr));
+	dataHdr.sectionName = sa_htobe32(-1);
+	dataHdr.sectionAddress = sa_htobe32(0);
+	dataHdr.execSize = sa_htobe32(sizeof (entry_vector) + kern_img_len);
+	dataHdr.initSize = sa_htobe32(sizeof (entry_vector) + kern_img_len);
+	dataHdr.rawSize = sa_htobe32(sizeof (entry_vector) + kern_img_len);
+	dataHdr.fileOffset = sa_htobe32(dataOffset);
+	dataHdr.regionKind = DataSection;
+	dataHdr.shareKind = ContextShare;
+	dataHdr.alignment = 4;  /* 16 byte alignment */
+	write(bebox_fd, &dataHdr, sizeof (dataHdr));
 
 	/* Create the Section Header for loader stuff */
 	memset(&ldrHdr, 0, sizeof (ldrHdr));
-        ldrHdr.sectionName = sa_htobe32(-1);
-        ldrHdr.sectionAddress = sa_htobe32(0);
-        ldrHdr.execSize = sa_htobe32(sizeof (lh));
-        ldrHdr.initSize = sa_htobe32(sizeof (lh));
-        ldrHdr.rawSize = sa_htobe32(sizeof (lh));
-        ldrHdr.fileOffset = sa_htobe32(ldrOffset);
-        ldrHdr.regionKind = LoaderSection;
-        ldrHdr.shareKind = GlobalShare;
-        ldrHdr.alignment = 4;  /* 16 byte alignment */
-        write(bebox_fd, &ldrHdr, sizeof (ldrHdr));
+	ldrHdr.sectionName = sa_htobe32(-1);
+	ldrHdr.sectionAddress = sa_htobe32(0);
+	ldrHdr.execSize = sa_htobe32(sizeof (lh));
+	ldrHdr.initSize = sa_htobe32(sizeof (lh));
+	ldrHdr.rawSize = sa_htobe32(sizeof (lh));
+	ldrHdr.fileOffset = sa_htobe32(ldrOffset);
+	ldrHdr.regionKind = LoaderSection;
+	ldrHdr.shareKind = GlobalShare;
+	ldrHdr.alignment = 4;  /* 16 byte alignment */
+	write(bebox_fd, &ldrHdr, sizeof (ldrHdr));
 
 	/* Create the Loader Header */
 	memset(&lh, 0, sizeof (lh));
-        lh.entryPointSection = sa_htobe32(1);		/* Data */
-        lh.entryPointOffset = sa_htobe32(0);
-        lh.initPointSection = sa_htobe32(-1);
-        lh.initPointOffset = sa_htobe32(0);
-        lh.termPointSection = sa_htobe32(-1);
-        lh.termPointOffset = sa_htobe32(0);
-        lseek(bebox_fd, ldrOffset + hsize, SEEK_SET);
-        write(bebox_fd, &lh, sizeof (lh));
+	lh.entryPointSection = sa_htobe32(1);		/* Data */
+	lh.entryPointOffset = sa_htobe32(0);
+	lh.initPointSection = sa_htobe32(-1);
+	lh.initPointOffset = sa_htobe32(0);
+	lh.termPointSection = sa_htobe32(-1);
+	lh.termPointOffset = sa_htobe32(0);
+	lseek(bebox_fd, ldrOffset + hsize, SEEK_SET);
+	write(bebox_fd, &lh, sizeof (lh));
 
 	/* Copy the pseudo-DATA */
 	memset(entry_vector, 0, sizeof (entry_vector));
-        entry_vector[0] = sa_htobe32(BEBOX_ENTRY);	/* Magic */
-        lseek(bebox_fd, dataOffset + hsize, SEEK_SET);
-        write(bebox_fd, entry_vector, sizeof (entry_vector));
+	entry_vector[0] = sa_htobe32(BEBOX_ENTRY);	/* Magic */
+	lseek(bebox_fd, dataOffset + hsize, SEEK_SET);
+	write(bebox_fd, entry_vector, sizeof (entry_vector));
 
 	return textOffset;
-}	
+}
 
 static int
 bebox_build_image(char *kernel, char *boot, char *rawdev, char *outname)
@@ -688,7 +688,7 @@ bebox_build_image(char *kernel, char *boot, char *rawdev, char *outname)
 
 	if (saloneflag)
 		hsize = 0;
-	
+
 	elf_fd = open_file("bootloader", boot, &hdr, &elf_stat);
 	kern_fd = open_file("kernel", kernel, &khdr, &kern_stat);
 	kern_len = kern_stat.st_size + BEBOX_MAGICSIZE + KERNLENSIZE;
@@ -718,10 +718,10 @@ bebox_build_image(char *kernel, char *boot, char *rawdev, char *outname)
 			    strerror(errno));
 	}
 	lseek(bebox_fd, hsize, SEEK_SET);
-	
+
 	/* write the header with the wrong values to get the offset right */
 	bebox_write_header(bebox_fd, elf_img_len, kern_stat.st_size);
-	
+
 	/* Copy kernel */
 	kern_img = (unsigned char *)malloc(kern_stat.st_size);
 
@@ -773,7 +773,7 @@ bebox_build_image(char *kernel, char *boot, char *rawdev, char *outname)
 	lseek(bebox_fd, toff + hsize, SEEK_SET);
 	write(bebox_fd, elf_img, elf_img_len);
 	free(elf_img);
-	
+
 	close(kern_fd);
 	close(elf_fd);
 
@@ -781,7 +781,7 @@ bebox_build_image(char *kernel, char *boot, char *rawdev, char *outname)
 		close(bebox_fd);
 		return 0;
 	}
-	
+
 	/* Now go back and write in the block header */
 	endoff = lseek(bebox_fd, 0, SEEK_END);
 	lseek(bebox_fd, 0, SEEK_SET);
@@ -810,14 +810,14 @@ bebox_build_image(char *kernel, char *boot, char *rawdev, char *outname)
 		*(long *)(header_img + *offset) = (long)sa_htobe32(tp.tv_sec);
 
 	write(bebox_fd, header_img, BEBOX_HEADER_SIZE);
-	
+
 	/* now pad the end */
 	flength = roundup(endoff, BEBOX_BLOCK_SIZE);
 	/* refill the header_img with zeros */
 	memset(header_img, 0, BEBOX_BLOCK_SIZE * 2);
 	lseek(bebox_fd, 0, SEEK_END);
 	write(bebox_fd, header_img, flength - endoff);
-	
+
 	close(bebox_fd);
 
 	return 0;
@@ -833,7 +833,7 @@ main(int argc, char **argv)
 	char machine[SYS_NMLN];
 	int mib[2] = { CTL_HW, HW_MACHINE };
 #endif
-	
+
 	setprogname(argv[0]);
 	kern_len = 0;
 
@@ -897,7 +897,7 @@ main(int argc, char **argv)
 #endif
 			usage(1);
 	}
-		
+
 	outname = argv[0];
 
 	if (strcmp(march, "prep") == 0)
