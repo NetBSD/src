@@ -35,7 +35,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993, 1994\
 
 #ifndef lint
 /*static char sccsid[] = "@(#)env.c	8.3 (Berkeley) 4/2/94";*/
-__RCSID("$NetBSD: env.c,v 1.18 2010/10/15 19:35:08 jschauma Exp $");
+__RCSID("$NetBSD: env.c,v 1.19 2010/10/16 11:13:52 njoly Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -54,7 +54,7 @@ extern char **environ;
 int
 main(int argc, char **argv)
 {
-	char **ep, *p;
+	char **ep;
 	char *cleanenv[1];
 	int ch;
 
@@ -72,8 +72,8 @@ main(int argc, char **argv)
 			usage();
 		}
 
-	for (argv += optind; *argv && (p = strchr(*argv, '=')); ++argv)
-		(void)setenv(*argv, ++p, 1);
+	for (argv += optind; *argv && strchr(*argv, '=') != NULL; ++argv)
+		(void)putenv(*argv);
 
 	if (*argv) {
 		/* return 127 if the command to be run could not be found; 126
