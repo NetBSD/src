@@ -1,4 +1,4 @@
-/*	$NetBSD: t_environment.c,v 1.2 2010/10/01 20:12:20 christos Exp $	*/
+/*	$NetBSD: t_environment.c,v 1.3 2010/10/16 11:23:41 njoly Exp $	*/
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -32,9 +32,10 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_environment.c,v 1.2 2010/10/01 20:12:20 christos Exp $");
+__RCSID("$NetBSD: t_environment.c,v 1.3 2010/10/16 11:23:41 njoly Exp $");
 
 #include <atf-c.h>
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -71,6 +72,14 @@ ATF_TC_BODY(t_setenv, tc)
 		unsetenv(name);
 		ATF_CHECK(getenv(name) == NULL);
 	}
+
+	ATF_CHECK_ERRNO(EINVAL, setenv(NULL, "val", 1) == -1);
+	ATF_CHECK_ERRNO(EINVAL, setenv("", "val", 1) == -1);
+	ATF_CHECK_ERRNO(EINVAL, setenv("v=r", "val", 1) == -1);
+	ATF_CHECK_ERRNO(EINVAL, setenv("var", NULL, 1) == -1);
+
+	ATF_CHECK(setenv("var", "=val", 1) == 0);
+	ATF_CHECK_STREQ(getenv("var"), "=val");
 }
 
 ATF_TC_BODY(t_putenv, tc)
