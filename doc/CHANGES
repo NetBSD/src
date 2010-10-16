@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1441 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1442 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -643,6 +643,9 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	hpcsh: Add sysinst(8) support. [tsutsui 20100503]
 	sandpoint: Added support for Marvell-SKnet in netboot.
 		[phx 20100503]
+	news68k: Switch NetBSD/news68k to using 8KB/page in kernel.
+		It slightly improves performance on NWS-1750D.
+		[tsutsui 20100504]
 	xen: Enable no-execute bit feature for i386pae and amd64 kernels.
 		[jym 20100505]
 	cron(8): Import 4.1 from isc. [christos 20100506]
@@ -681,8 +684,14 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	httpd(8): Import bozohttpd-20100621. [mrg 20100621]
 	kernel: Add high-priority xcall(9) support. [rmind 20100622]
 	hp700: Add support for uturn(4) based machines. [skrll 20100624]
+	autoconf(9): Add config_mountroot(9), which defers device configuration
+		after mountroot(), like config_interrupt(9) that defers
+		configuration after interrupts are enabled. [tsutsui 20100625]
+	hpcarm: Use rtc_offset passed from hpcboot. [tsutsui 20100626]
 	network: Add mpls(4) - MultiProtocol Label Switching support
 		[kefren 20100626]
+	kue(4): Fix unaligned memory access to make kue(4) work on
+		ARM and MIPS machines. [tsutsui 20100627]
 	atf(7): Import 0.10.  [jmmv 20100703]
 	upgt(4): Add a driver for Conexant/Intersil PrismGT SoftMAC USB
 		IEEE 802.11b/g WLAN device, ported from OpenBSD by
@@ -692,6 +701,7 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	kernel: Add direct select()/poll() support. [rmind 20100708]
 	prep: Support Xserver.  It's tested only on-board s3(864).
 		[kiyohara 20100712]
+	hpcarm: Bump MAXPARTITIONS from 8 to 16. [tsutsui 20100717]
 	tests(7): Convert the libposix, libprop, libpthread, librt, libskey and
 		libutil tests to ATF.  [jmmv 20100716]
 	tests(7): Convert the include and csu tests to ATF.  [jmmv 20100717]
@@ -705,6 +715,9 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		[kiyohara 20100801]
 	tests(7): Convert the sort tests to ATF.  [jmmv 20100801]
 	wpa: New wpa_supplicant and hostapd 0.7.2 [christos 20100804]
+	hpcarm: Improve console speed on W-ZERO3 machines using
+		write through mapping for framebuffer memory.
+		[tsutsui 20100808]
 	bind: Update to 9.7.2b1. [christos 20100806]
 	acpicpu(4): add a driver for ACPI-based processor functionality.
 		[jruoho 20100815]
@@ -713,14 +726,39 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	awk(1): upgrade to 20100523 [christos 20100826]
 	ntp: switch build to ntp 4.2.6 (imported 20091213 in external/bsd/ntp)
 		[kardel 20100827]
+	dreamcast: Fix a long standing GD-ROM driver bug so that file system
+		on GD-ROM works properly.  The problem is reported and tracked
+		by Yasushi Oshima. [tsutsui 20100831]
 	omapfb: a simple driver for OMAP 3xxx on-chip video, especially the
 		Beagleboard [macallan 20100831]
+	hpcarm: Add an install kernel for JORNADA720 and make sysinst(8)
+		choose a proper default kernel per running installation kernel.
+		[tsutsui 20100904]
 	acpi(4): The ACPI driver will no longer attach if the BIOS release
 		year is 2000 or older. To override this behaviour, set
 		acpi_force_load=1 or add options ACPI_BLACKLIST_YEAR=0 to your
 		kernel config. [jmcneill 20100906]
+	amd64, i386: Enable Ext2fs support in bootloader. [tsutsui 20100911]
+	m68k: Re-enable m68k optimized in_cksum routine.  Makes
+		~5% improvements of ttcp(1) xfer rates. [tsutsui 20100919]
+	sparc: Re-enable sparc optimized in_cksum routine. [tsutsui 20100920]
 	httpd(8): Import bozohttpd-20100920. [mrg 20100921]
+	aue(4): Add support for I-O DATA ETX-US2. [tsutsui 20100925]
 	evbarm: Support Marvell Sheevaplug and some Marvell SoC NAS box.
 		[kiyohara 20101002]
+	build: Use consistent kernel names in distribution, i.e. rename kernels
+		from "netbsd.aout-GENERIC.gz" to "netbsd-GENERIC.aout.gz" etc.
+		[tsutsui 20101004]
+	dreamcast: Build and put a raw binary format kernel into distribution.
+		[tsutsui 20101004]
 	dhcpcd(8): Import dhcpcd-5.2.8. [roy 20101007]
+	xinit(1): Disable PAM on ports which have legacy non-XFree86 servers
+		so that xinit(1) can properly quit Xserver after xinitrc script
+		exits. [tsutsui 20101010]
 	acpivga(4): Add a driver for ACPI video extensions.  [gsutre 20101012]
+	dreamcast: Add a stub for kernels with options MODULAR.
+		[tsutsui 20101013]
+	m68k: Fix kobj relocation functions so that MODULAR kernel work
+		on m68k ports.  [tsutsui 20101014]
+	sun3: Make common kernel module binaries work on both sun3 and sun3x.
+		[tsutsui 20101015]
