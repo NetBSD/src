@@ -1,4 +1,4 @@
-.\"	$NetBSD: getenv.3,v 1.22 2010/10/01 20:57:50 wiz Exp $
+.\"	$NetBSD: getenv.3,v 1.23 2010/10/16 11:23:41 njoly Exp $
 .\"
 .\" Copyright (c) 1988, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"     from: @(#)getenv.3	8.2 (Berkeley) 12/11/93
 .\"
-.Dd October 1, 2010
+.Dd October 16, 2010
 .Dt GETENV 3
 .Os
 .Sh NAME
@@ -62,16 +62,14 @@ These functions set, unset and fetch environment variables from the
 host
 .Em environment list .
 For compatibility with differing environment conventions,
-the given arguments
+the
+.Fn getenv
+or
+.Fn getenv_r
+given argument
 .Ar name
-and
-.Ar value
-may be appended and prepended,
-respectively,
-with an equal sign
-.Dq Li \&= ,
-except for
-.Fn unsetenv .
+may be appended with an equal sign
+.Dq Li \&= .
 .Pp
 The
 .Fn getenv
@@ -160,11 +158,18 @@ is successful, the string returned should be considered read-only.
 The
 .Fa name
 argument to
+.Fn setenv
+or
 .Fn unsetenv
 is a null pointer, points to an empty string, or points to a string
 containing an
 .Dq Li \&=
 character.
+The
+.Fa value
+argument to
+.Fn setenv
+is a null pointer.
 .It Bq Er ENOMEM
 The function
 .Fn setenv
