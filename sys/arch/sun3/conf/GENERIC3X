@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC3X,v 1.107 2010/04/29 22:40:54 chs Exp $
+# $NetBSD: GENERIC3X,v 1.108 2010/10/16 13:55:54 tsutsui Exp $
 
 # GENERIC Sun3X (3/80, 3/470)
 # Supports root on: ie0, le0, sd*, ...
@@ -7,7 +7,7 @@ include 	"arch/sun3/conf/std.sun3x"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC3X-$Revision: 1.107 $"
+#ident		"GENERIC3X-$Revision: 1.108 $"
 
 makeoptions	COPTS="-Os"	# bootloader has size limit (~2MB)
 
@@ -24,6 +24,9 @@ options 	SYSVMSG		# System V message queues
 options 	SYSVSEM		# System V semaphores
 options 	SYSVSHM		# System V shared memory
 options 	P1003_1B_SEMAPHORE # p1003.1b semaphore support
+
+#options 	MODULAR		# new style module framework
+
 #options 	INSECURE	# disable kernel security level
 #options 	USERCONF	# userconf(4) support
 #options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
