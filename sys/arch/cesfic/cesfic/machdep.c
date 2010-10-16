@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.54 2010/02/08 19:02:27 joerg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.55 2010/10/16 17:10:43 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.54 2010/02/08 19:02:27 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.55 2010/10/16 17:10:43 tsutsui Exp $");
 
 #include "opt_bufcache.h"
 #include "opt_ddb.h"
@@ -85,6 +85,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.54 2010/02/08 19:02:27 joerg Exp $");
 #include "opt_compat_netbsd.h"
 #include "opt_sysv.h"
 #include "opt_panicbutton.h"
+#include "opt_modular.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -107,6 +108,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.54 2010/02/08 19:02:27 joerg Exp $");
 #include <sys/tty.h>
 #include <sys/vnode.h>
 #include <sys/ksyms.h>
+#include <sys/module.h>
 #ifdef SYSVMSG
 #include <sys/msg.h>
 #endif
@@ -701,3 +703,13 @@ cpu_exec_aout_makecmds(struct lwp *l, struct exec_package *epp)
 
 	return ENOEXEC;
 }
+
+#ifdef MODULAR
+/*
+ * Push any modules loaded by the bootloader etc.
+ */
+void
+module_init_md(void)
+{
+}
+#endif

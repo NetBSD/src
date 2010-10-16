@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.335 2010/02/08 19:02:30 joerg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.336 2010/10/16 17:10:43 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.335 2010/02/08 19:02:30 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.336 2010/10/16 17:10:43 tsutsui Exp $");
 
 #include "opt_adb.h"
 #include "opt_ddb.h"
@@ -142,6 +142,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.335 2010/02/08 19:02:30 joerg Exp $");
 #include <sys/syscallargs.h>
 #include <sys/vnode.h>
 #include <sys/ksyms.h>
+#include <sys/module.h>
 #ifdef	KGDB
 #include <sys/kgdb.h>
 #endif
@@ -924,6 +925,16 @@ cpu_exec_aout_makecmds(struct lwp *l, struct exec_package *epp)
 
 	return error;
 }
+
+#ifdef MODULAR
+/*
+ * Push any modules loaded by the bootloader etc.
+ */
+void
+module_init_md(void)
+{
+}
+#endif
 
 static char *envbuf = NULL;
 
