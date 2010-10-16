@@ -1,4 +1,4 @@
-/*      $NetBSD: if_xennet_xenbus.c,v 1.42 2010/10/16 00:12:08 jym Exp $      */
+/*      $NetBSD: if_xennet_xenbus.c,v 1.43 2010/10/16 00:18:06 jym Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.42 2010/10/16 00:12:08 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.43 2010/10/16 00:18:06 jym Exp $");
 
 #include "opt_xen.h"
 #include "opt_nfs_boot.h"
@@ -530,8 +530,9 @@ static void xennet_backend_changed(void *arg, XenbusState new_state)
 		xenbus_switch_state(sc->sc_xbusd, NULL, XenbusStateClosed);
 		break;
 	case XenbusStateInitWait:
-		xennet_xenbus_resume(sc);
-		xenbus_switch_state(sc->sc_xbusd, NULL, XenbusStateConnected);
+		if (xennet_xenbus_resume(sc) == 0)
+			xenbus_switch_state(sc->sc_xbusd, NULL,
+			    XenbusStateConnected);
 		break;
 	case XenbusStateUnknown:
 	default:
