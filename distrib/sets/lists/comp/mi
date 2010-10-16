@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1512 2010/10/16 10:27:06 skrll Exp $
+#	$NetBSD: mi,v 1.1513 2010/10/16 10:41:50 skrll Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -11538,11 +11538,11 @@
 ./usr/share/man/html3/disklabel_dkcksum.html	comp-c-htmlman		html
 ./usr/share/man/html3/disklabel_scan.html	comp-c-htmlman		html
 ./usr/share/man/html3/div.html			comp-c-htmlman		html
+./usr/share/man/html3/dl_iterate_phdr.html	comp-c-htmlman		html
 ./usr/share/man/html3/dladdr.html		comp-c-htmlman		html
 ./usr/share/man/html3/dlclose.html		comp-c-htmlman		html
 ./usr/share/man/html3/dlctl.html		comp-c-htmlman		html
 ./usr/share/man/html3/dlerror.html		comp-c-htmlman		html
-./usr/share/man/html3/dl_iterate_phdr.html	comp-c-htmlman		html
 ./usr/share/man/html3/dlfcn.html		comp-c-htmlman		html
 ./usr/share/man/html3/dlopen.html		comp-c-htmlman		html
 ./usr/share/man/html3/dlsym.html		comp-c-htmlman		html
