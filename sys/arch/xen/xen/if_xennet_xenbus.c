@@ -1,4 +1,4 @@
-/*      $NetBSD: if_xennet_xenbus.c,v 1.41 2010/04/05 07:19:32 joerg Exp $      */
+/*      $NetBSD: if_xennet_xenbus.c,v 1.42 2010/10/16 00:12:08 jym Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.41 2010/04/05 07:19:32 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.42 2010/10/16 00:12:08 jym Exp $");
 
 #include "opt_xen.h"
 #include "opt_nfs_boot.h"
@@ -369,9 +369,6 @@ xennet_xenbus_attach(device_t parent, device_t self, void *aux)
 	rnd_attach_source(&sc->sc_rnd_source, device_xname(sc->sc_dev),
 	    RND_TYPE_NET, 0);
 #endif
-
-	/* initialise shared structures and tell backend that we are ready */
-	xennet_xenbus_resume(sc);
 }
 
 static int
@@ -500,12 +497,6 @@ again:
 		errmsg = "writing event channel";
 		goto abort_transaction;
 	}
-	error = xenbus_printf(xbt, sc->sc_xbusd->xbusd_path,
-	    "state", "%d", XenbusStateConnected);
-	if (error) {
-		errmsg = "writing frontend XenbusStateConnected";
-		goto abort_transaction;
-	}
 	error = xenbus_transaction_end(xbt, 0);
 	if (error == EAGAIN)
 		goto again;
@@ -531,14 +522,16 @@ static void xennet_backend_changed(void *arg, XenbusState new_state)
 
 	switch (new_state) {
 	case XenbusStateInitialising:
-	case XenbusStateInitWait:
 	case XenbusStateInitialised:
+	case XenbusStateConnected:
 		break;
 	case XenbusStateClosing:
 		sc->sc_backend_status = BEST_CLOSED;
 		xenbus_switch_state(sc->sc_xbusd, NULL, XenbusStateClosed);
 		break;
-	case XenbusStateConnected:
+	case XenbusStateInitWait:
+		xennet_xenbus_resume(sc);
+		xenbus_switch_state(sc->sc_xbusd, NULL, XenbusStateConnected);
 		break;
 	case XenbusStateUnknown:
 	default:
