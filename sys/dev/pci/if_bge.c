@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.186 2010/07/21 15:35:39 msaitoh Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.187 2010/10/16 06:29:33 taca Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.186 2010/07/21 15:35:39 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.187 2010/10/16 06:29:33 taca Exp $");
 
 #include "vlan.h"
 #include "rnd.h"
@@ -749,10 +749,7 @@ bge_writemem_ind(struct bge_softc *sc, int off, int val)
 static void
 bge_set_max_readrq(struct bge_softc *sc)
 {
-	device_t dev;
 	pcireg_t val;
-
-	dev = sc->bge_dev;
 
 	val = pci_conf_read(sc->sc_pc, sc->sc_pcitag, sc->bge_pciecap
 	    + PCI_PCIE_DCSR);
