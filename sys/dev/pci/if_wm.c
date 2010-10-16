@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.214 2010/07/26 22:33:24 jym Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.215 2010/10/16 06:31:49 taca Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.214 2010/07/26 22:33:24 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.215 2010/10/16 06:31:49 taca Exp $");
 
 #include "rnd.h"
 
@@ -6364,7 +6364,7 @@ wm_kmrn_readreg(struct wm_softc *sc, int reg)
 			    "%s: failed to get semaphore\n", __func__);
 			return 0;
 		}
-	} else 	if (sc->sc_flags == WM_F_SWFWHW_SYNC) {
+	} else if (sc->sc_flags == WM_F_SWFWHW_SYNC) {
 		if (wm_get_swfwhw_semaphore(sc)) {
 			aprint_error_dev(sc->sc_dev,
 			    "%s: failed to get semaphore\n", __func__);
@@ -6402,7 +6402,7 @@ wm_kmrn_writereg(struct wm_softc *sc, int reg, int val)
 			    "%s: failed to get semaphore\n", __func__);
 			return;
 		}
-	} else 	if (sc->sc_flags == WM_F_SWFWHW_SYNC) {
+	} else if (sc->sc_flags == WM_F_SWFWHW_SYNC) {
 		if (wm_get_swfwhw_semaphore(sc)) {
 			aprint_error_dev(sc->sc_dev,
 			    "%s: failed to get semaphore\n", __func__);
@@ -6677,8 +6677,8 @@ wm_ich8_cycle_init(struct wm_softc *sc)
 	 * against, in order to start a new cycle or FDONE bit should be
 	 * changed in the hardware so that it is 1 after harware reset, which
 	 * can then be used as an indication whether a cycle is in progress or
-	 * has been completed .. we should also have some software semaphore me
-	 * chanism to guard FDONE or the cycle in progress bit so that two
+	 * has been completed .. we should also have some software semaphore
+	 * mechanism to guard FDONE or the cycle in progress bit so that two
 	 * threads access to those bits can be sequentiallized or a way so that
 	 * 2 threads dont start the cycle at the same time
 	 */
