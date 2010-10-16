@@ -1,4 +1,4 @@
-/*	$NetBSD: pef.h,v 1.1 2007/12/20 23:00:00 garbled Exp $	*/
+/*	$NetBSD: pef.h,v 1.2 2010/10/16 05:05:09 kiyohara Exp $	*/
 
 /*-
  * Copyright (C) 1995-1997 Gary Thomas (gdt@linuxppc.org)
@@ -31,38 +31,38 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
- 
+
 struct FileHeader
 {
-   	unsigned long magic;
-   	unsigned long fileTypeID;
-   	unsigned long archID;
-   	unsigned long versionNumber;
-   	unsigned long dateTimeStamp;
-   	unsigned long definVersion;
-   	unsigned long implVersion;
-   	unsigned long currentVersion;
-   	unsigned short numSections;
-   	unsigned short loadableSections;
-   	unsigned long memoryAddress;
+	unsigned long magic;
+	unsigned long fileTypeID;
+	unsigned long archID;
+	unsigned long versionNumber;
+	unsigned long dateTimeStamp;
+	unsigned long definVersion;
+	unsigned long implVersion;
+	unsigned long currentVersion;
+	unsigned short numSections;
+	unsigned short loadableSections;
+	unsigned long memoryAddress;
 };
 
 #define PEF_MAGIC 0x4A6F7921  /* Joy! */
 #define PEF_FILE  0x70656666  /* peff */
-#define PEF_PPC   0x70777063  /* pwpc */  
+#define PEF_PPC   0x70777063  /* pwpc */
 
 struct SectionHeader
 {
-   	unsigned long sectionName;
-   	unsigned long sectionAddress;
-   	unsigned long execSize;
-   	unsigned long initSize;
-   	unsigned long rawSize;
-   	unsigned long fileOffset;
-   	unsigned char regionKind;
-   	unsigned char shareKind;
-   	unsigned char alignment;
-   	unsigned char _reserved;
+	unsigned long sectionName;
+	unsigned long sectionAddress;
+	unsigned long execSize;
+	unsigned long initSize;
+	unsigned long rawSize;
+	unsigned long fileOffset;
+	unsigned char regionKind;
+	unsigned char shareKind;
+	unsigned char alignment;
+	unsigned char _reserved;
 };
 
 #define CodeSection	0
@@ -75,22 +75,22 @@ struct SectionHeader
 #define ContextShare	1
 #define TeamShare	2
 #define TaskShare	3
-#define GlobalShare	4   
+#define GlobalShare	4
 
 struct LoaderHeader
 {
-   	unsigned long entryPointSection;
-   	unsigned long entryPointOffset;
-   	unsigned long initPointSection;
-   	unsigned long initPointOffset;
-   	unsigned long termPointSection;
-   	unsigned long termPointOffset;
-   	unsigned long numImportFiles;
-   	unsigned long numImportSyms;
-   	unsigned long numSections;
-   	unsigned long relocationsOffset;
-   	unsigned long stringsOffset;
-   	unsigned long hashSlotTable;
-   	unsigned long hashSlotTableSize;
-   	unsigned long numExportSyms;
+	unsigned long entryPointSection;
+	unsigned long entryPointOffset;
+	unsigned long initPointSection;
+	unsigned long initPointOffset;
+	unsigned long termPointSection;
+	unsigned long termPointOffset;
+	unsigned long numImportFiles;
+	unsigned long numImportSyms;
+	unsigned long numSections;
+	unsigned long relocationsOffset;
+	unsigned long stringsOffset;
+	unsigned long hashSlotTable;
+	unsigned long hashSlotTableSize;
+	unsigned long numExportSyms;
 };
