@@ -1,4 +1,4 @@
-/*	$NetBSD: setenv.c,v 1.40 2010/10/02 16:56:03 tron Exp $	*/
+/*	$NetBSD: setenv.c,v 1.41 2010/10/16 11:23:41 njoly Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)setenv.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: setenv.c,v 1.40 2010/10/02 16:56:03 tron Exp $");
+__RCSID("$NetBSD: setenv.c,v 1.41 2010/10/16 11:23:41 njoly Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -60,12 +60,22 @@ int
 setenv(const char *name, const char *value, int rewrite)
 {
 	char *c;
-	const char *cc;
 	size_t l_value, size;
 	int offset;
 
 	_DIAGASSERT(name != NULL);
 	_DIAGASSERT(value != NULL);
+
+	if (name == NULL || value == NULL) {
+		errno = EINVAL;
+		return -1;
+	}
+
+	size = strcspn(name, "=");
+	if (size == 0 || name[size] != '\0') {
+		errno = EINVAL;
+		return -1;
+	}
 
 	if (rwlock_wrlock(&__environ_lock) != 0)
 		return -1;
@@ -76,8 +86,6 @@ setenv(const char *name, const char *value, int rewrite)
 	if (__allocenv(offset) == -1)
 		goto bad;
 
-	if (*value == '=')			/* no `=' in value */
-		++value;
 	l_value = strlen(value);
 
 	if (c != NULL) {
@@ -93,9 +101,6 @@ setenv(const char *name, const char *value, int rewrite)
 			goto copy;
 		}
 	}
-	for (cc = name; *cc && *cc != '='; ++cc)	/* no `=' in name */
-		continue;
-	size = cc - name;
 	/* name + `=' + value */
 	if ((c = malloc(size + l_value + 2)) == NULL)
 		goto bad;
