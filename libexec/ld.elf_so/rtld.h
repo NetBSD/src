@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.h,v 1.94 2010/10/10 21:27:16 christos Exp $	 */
+/*	$NetBSD: rtld.h,v 1.95 2010/10/16 10:27:07 skrll Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -85,6 +85,11 @@ typedef struct Struct_Objlist_Entry {
 
 typedef SIMPLEQ_HEAD(Struct_Objlist, Struct_Objlist_Entry) Objlist;
 
+typedef struct Struct_Name_Entry {
+	STAILQ_ENTRY(Struct_Name_Entry)	link;
+	char	name[1];
+} Name_Entry;
+
 typedef struct Struct_Needed_Entry {
 	struct Struct_Needed_Entry *next;
 	struct Struct_Obj_Entry *obj;
@@ -142,8 +147,8 @@ typedef struct Struct_Obj_Entry {
 	caddr_t         relocbase;	/* Reloc const = mapbase - *vaddrbase */
 	Elf_Dyn        *dynamic;	/* Dynamic section */
 	caddr_t         entry;		/* Entry point */
-	const Elf_Phdr *__junk001;
-	size_t		pathlen;	/* Pathname length */
+	const Elf_Phdr *phdr;		/* Program header (may be xmalloc'ed) */
+	size_t		phsize;		/* Size of program header in bytes */
 
 	/* Items from the dynamic section. */
 	Elf_Addr       *pltgot;		/* PLTGOT table */
@@ -197,8 +202,10 @@ typedef struct Struct_Obj_Entry {
 					 * called */
 			fini_called:1,	/* True if .fini function has been 
 					 * called */
-			initfirst:1;	/* True if object's .init/.fini take
-					* priority over others */
+			initfirst:1,	/* True if object's .init/.fini take
+					 * priority over others */
+			phdr_loaded:1;	/* Phdr is loaded and doesn't need to
+					 * be freed. */
 
 	struct link_map linkmap;	/* for GDB */
 
@@ -215,6 +222,9 @@ typedef struct Struct_Obj_Entry {
 	uint32_t        nbuckets_m;	/* Precomputed for fast remainder */
 	uint8_t         nbuckets_s1;
 	uint8_t         nbuckets_s2;
+	size_t		pathlen;	/* Pathname length */
+	STAILQ_HEAD(, Struct_Name_Entry) names;	/* List of names for this object we
+						   know about. */
 } Obj_Entry;
 
 typedef struct Struct_DoneList {
@@ -230,7 +240,8 @@ extern struct r_debug _rtld_debug;
 extern Search_Path *_rtld_default_paths;
 extern Obj_Entry *_rtld_objlist;
 extern Obj_Entry **_rtld_objtail;
-extern int _rtld_objcount;
+extern u_int _rtld_objcount;
+extern u_int _rtld_objloads;
 extern Obj_Entry *_rtld_objmain;
 extern Obj_Entry _rtld_objself;
 extern Search_Path *_rtld_paths;
@@ -242,16 +253,17 @@ extern Elf_Sym _rtld_sym_zero;
 
 /* rtld.c */
 
-/*
- * We export these symbols using _rtld_symbol_lookup and is_exported.
- */
+/* We export these symbols using _rtld_symbol_lookup and is_exported. */
 char *dlerror(void);
 void *dlopen(const char *, int);
 void *dlsym(void *, const char *);
 int dlclose(void *);
 int dladdr(const void *, Dl_info *);
 int dlinfo(void *, int, void *);
+int dl_iterate_phdr(int (*)(struct dl_phdr_info *, size_t, void *),
+    void *);
 
+/* These aren't exported */
 void _rtld_error(const char *, ...)
      __attribute__((__format__(__printf__,1,2)));
 void _rtld_die(void) __attribute__((__noreturn__));
