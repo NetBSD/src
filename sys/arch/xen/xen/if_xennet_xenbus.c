@@ -1,4 +1,4 @@
-/*      $NetBSD: if_xennet_xenbus.c,v 1.43 2010/10/16 00:18:06 jym Exp $      */
+/*      $NetBSD: if_xennet_xenbus.c,v 1.44 2010/10/16 00:20:05 jym Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.43 2010/10/16 00:18:06 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.44 2010/10/16 00:20:05 jym Exp $");
 
 #include "opt_xen.h"
 #include "opt_nfs_boot.h"
@@ -1270,7 +1270,7 @@ xennet_hex_dump(const unsigned char *pkt, size_t len, const char *type, int id)
 {
 	size_t i, j;
 
-	printf("pkt %p len %d/%x type %s id %d\n", pkt, len, len, type, id);
+	printf("pkt %p len %zd/%zx type %s id %d\n", pkt, len, len, type, id);
 	printf("00000000  ");
 	for(i=0; i<len; i++) {
 		printf("%c%c ", XCHR(pkt[i]>>4), XCHR(pkt[i]));
