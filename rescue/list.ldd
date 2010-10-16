@@ -1,4 +1,4 @@
-#	$NetBSD: list.ldd,v 1.3 2010/02/27 11:17:54 roy Exp $
+#	$NetBSD: list.ldd,v 1.4 2010/10/16 10:27:07 skrll Exp $
 
 PROG	ldd
 
@@ -8,5 +8,6 @@ LIBS	${LDD_ELF64DIR}/libldd_elf64.a
 SPECIAL ldd	keepsymbols	_rtld_pagesz _rtld_error _rtld_trust
 SPECIAL ldd	keepsymbols	_rtld_default_paths _rtld_paths 
 SPECIAL ldd	keepsymbols	_rtld_xforms _rtld_objmain
-SPECIAL ldd	keepsymbols	_rtld_objtail _rtld_objlist _rtld_objcount
+SPECIAL ldd	keepsymbols	_rtld_objtail _rtld_objlist
+SPECIAL ldd	keepsymbols	_rtld_objcount _rtld_objloads
 SPECIAL ldd	keepsymbols	print_needed main_local main_progname

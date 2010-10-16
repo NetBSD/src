@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1511 2010/10/15 12:29:17 skrll Exp $
+#	$NetBSD: mi,v 1.1512 2010/10/16 10:27:06 skrll Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -5588,6 +5588,7 @@
 ./usr/share/man/cat3/disklabel_dkcksum.0	comp-c-catman		.cat
 ./usr/share/man/cat3/disklabel_scan.0		comp-c-catman		.cat
 ./usr/share/man/cat3/div.0			comp-c-catman		.cat
+./usr/share/man/cat3/dl_iterate_phdr.0		comp-c-catman		.cat
 ./usr/share/man/cat3/dladdr.0			comp-c-catman		.cat
 ./usr/share/man/cat3/dlclose.0			comp-c-catman		.cat
 ./usr/share/man/cat3/dlctl.0			comp-c-catman		.cat
@@ -11541,6 +11542,7 @@
 ./usr/share/man/html3/dlclose.html		comp-c-htmlman		html
 ./usr/share/man/html3/dlctl.html		comp-c-htmlman		html
 ./usr/share/man/html3/dlerror.html		comp-c-htmlman		html
+./usr/share/man/html3/dl_iterate_phdr.html	comp-c-htmlman		html
 ./usr/share/man/html3/dlfcn.html		comp-c-htmlman		html
 ./usr/share/man/html3/dlopen.html		comp-c-htmlman		html
 ./usr/share/man/html3/dlsym.html		comp-c-htmlman		html
@@ -17394,6 +17396,7 @@
 ./usr/share/man/man3/disklabel_dkcksum.3	comp-c-man		.man
 ./usr/share/man/man3/disklabel_scan.3		comp-c-man		.man
 ./usr/share/man/man3/div.3			comp-c-man		.man
+./usr/share/man/man3/dl_iterate_phdr.3		comp-c-man		.man
 ./usr/share/man/man3/dladdr.3			comp-c-man		.man
 ./usr/share/man/man3/dlclose.3			comp-c-man		.man
 ./usr/share/man/man3/dlctl.3			comp-c-man		.man

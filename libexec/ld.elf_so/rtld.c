@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.130 2010/03/18 22:17:55 roy Exp $	 */
+/*	$NetBSD: rtld.c,v 1.131 2010/10/16 10:27:07 skrll Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rtld.c,v 1.130 2010/03/18 22:17:55 roy Exp $");
+__RCSID("$NetBSD: rtld.c,v 1.131 2010/10/16 10:27:07 skrll Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -83,9 +83,10 @@ struct r_debug  _rtld_debug;	/* for GDB; */
 bool            _rtld_trust;	/* False for setuid and setgid programs */
 Obj_Entry      *_rtld_objlist;	/* Head of linked list of shared objects */
 Obj_Entry     **_rtld_objtail;	/* Link field of last object in list */
-int		_rtld_objcount;	/* Number of shared objects */
 Obj_Entry      *_rtld_objmain;	/* The main program shared object */
 Obj_Entry       _rtld_objself;	/* The dynamic linker shared object */
+u_int		_rtld_objcount;	/* Number of objects in _rtld_objlist */
+u_int		_rtld_objloads;	/* Number of objects loaded in _rtld_objlist */
 const char	_rtld_path[] = _PATH_RTLD;
 
 /* Initialize a fake symbol for resolving undefined weak references. */
@@ -501,6 +502,8 @@ _rtld(Elf_Addr *sp, Elf_Addr relocbase)
 	/* Link the main program into the list of objects. */
 	*_rtld_objtail = _rtld_objmain;
 	_rtld_objtail = &_rtld_objmain->next;
+	_rtld_objcount++;
+	_rtld_objloads++;
 
 	_rtld_linkmap_add(_rtld_objmain);
 	_rtld_linkmap_add(&_rtld_objself);
@@ -1040,6 +1043,38 @@ dlinfo(void *handle, int req, void *v)
 	}
 
 	return 0;
+}
+
+__strong_alias(__dl_iterate_phdr,dl_iterate_phdr);
+int
+dl_iterate_phdr(int (*callback)(struct dl_phdr_info *, size_t, void *), void *param)
+{
+	struct dl_phdr_info phdr_info;
+	const Obj_Entry *obj;
+	int error = 0;
+
+	for (obj = _rtld_objlist;  obj != NULL;  obj = obj->next) {
+		phdr_info.dlpi_addr = (Elf_Addr)obj->relocbase;
+		phdr_info.dlpi_name = STAILQ_FIRST(&obj->names) ?
+		    STAILQ_FIRST(&obj->names)->name : obj->path;
+		phdr_info.dlpi_phdr = obj->phdr;
+		phdr_info.dlpi_phnum = obj->phsize / sizeof(obj->phdr[0]);
+#if 1
+		phdr_info.dlpi_tls_modid = 0;
+		phdr_info.dlpi_tls_data = 0;
+#else
+		phdr_info.dlpi_tls_modid = obj->tlsindex;
+		phdr_info.dlpi_tls_data = obj->tlsinit;
+#endif
+		phdr_info.dlpi_adds = _rtld_objloads;
+		phdr_info.dlpi_subs = _rtld_objloads - _rtld_objcount;
+
+		error = callback(&phdr_info, sizeof(phdr_info), param);
+		if (error)
+			break;
+	}
+
+	return error;
 }
 
 /*
