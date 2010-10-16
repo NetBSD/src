@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci_mv.c,v 1.1 2010/10/02 05:53:37 kiyohara Exp $	*/
+/*	$NetBSD: ehci_mv.c,v 1.2 2010/10/16 05:29:29 kiyohara Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci_mv.c,v 1.1 2010/10/02 05:53:37 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci_mv.c,v 1.2 2010/10/16 05:29:29 kiyohara Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -71,6 +71,19 @@ extern int ehcidebug;
 /* ehci generic registers */
 #define MARVELL_USB_EHCI_BASE		0x100
 #define MARVELL_USB_EHCI_SIZE		0x1000
+
+/* ehci vendor extension registers */
+#define MARVELL_USB_EHCI_PS_PSPD	0x0c000000	/* Port speed */
+#define MARVELL_USB_EHCI_PS_PSPD_FS	0x00000000	/*  Full speed */
+#define MARVELL_USB_EHCI_PS_PSPD_LS	0x04000000	/*  Low speed */
+#define MARVELL_USB_EHCI_PS_PSPD_HS	0x08000000	/*  High speed */
+
+#define MARVELL_USB_EHCI_USBMODE	0x68
+#define MARVELL_USB_EHCI_MODE_STRMDIS	0x00000008 /* RW straming disable */
+#define MARVELL_USB_EHCI_MODE_BE	0x00000004 /* RW B/L endianness select*/
+#define MARVELL_USB_EHCI_MODE_HDMASK	0x00000003 /* RW host/device Mask */
+#define MARVELL_USB_EHCI_MODE_HOST	0x00000003 /* RW mode host */
+#define MARVELL_USB_EHCI_MODE_DEVICE	0x00000002 /* RW mode device */
 
 #define MARVELL_USB_DCIVERSION		0x120
 #define MARVELL_USB_DCCPARAMS		0x124
@@ -154,6 +167,9 @@ static void mvusb_attach(device_t, device_t, void *);
 static void mvusb_init(struct mvusb_softc *);
 static void mvusb_wininit(struct mvusb_softc *);
 
+static void mvusb_vendor_init(struct ehci_softc *);
+static int mvusb_vendor_port_status(struct ehci_softc *, uint32_t, int);
+
 CFATTACH_DECL2_NEW(mvusb_gt, sizeof(struct mvusb_softc),
     mvusb_match, mvusb_attach, NULL, ehci_activate, NULL, ehci_childdet);
 CFATTACH_DECL2_NEW(mvusb_mbus, sizeof(struct mvusb_softc),
@@ -223,6 +239,9 @@ mvusb_attach(device_t parent, device_t self, void *aux)
 	/* Figure out vendor for root hub descriptor. */
 	sc->sc.sc_id_vendor = 0x0000;				/* XXXXX */
 	strcpy(sc->sc.sc_vendor, "Marvell");
+
+	sc->sc.sc_vendor_init = mvusb_vendor_init;
+	sc->sc.sc_vendor_port_status = mvusb_vendor_port_status;
 
 	r = ehci_init(&sc->sc);
 	if (r != USBD_NORMAL_COMPLETION) {
@@ -371,4 +390,38 @@ mvusb_wininit(struct mvusb_softc *sc)
 	for (; window < MARVELL_USB_NWINDOW; window++)
 		bus_space_write_4(sc->sc_iot, sc->sc_ioh,
 		    MARVELL_USB_WCR(window), 0);
+}
+
+static void
+mvusb_vendor_init(struct ehci_softc *sc)
+{
+	uint32_t mode;
+
+	/* put TDI/ARC silicon into EHCI mode */
+	mode = EOREAD4(sc, MARVELL_USB_EHCI_USBMODE);
+	mode &= ~MARVELL_USB_EHCI_MODE_HDMASK;	/* Host/Device Mask */
+	mode |= MARVELL_USB_EHCI_MODE_HOST;
+	mode |= MARVELL_USB_EHCI_MODE_STRMDIS;
+	EOWRITE4(sc, MARVELL_USB_EHCI_USBMODE, mode);
+}
+
+static int
+mvusb_vendor_port_status(struct ehci_softc *sc, uint32_t v, int i)
+{
+
+	i &= ~UPS_HIGH_SPEED;
+	if (v & EHCI_PS_CS) {
+		switch (v & MARVELL_USB_EHCI_PS_PSPD) {
+		case MARVELL_USB_EHCI_PS_PSPD_FS:
+			break;
+		case MARVELL_USB_EHCI_PS_PSPD_LS:
+			i |= UPS_LOW_SPEED;
+			break;
+		case MARVELL_USB_EHCI_PS_PSPD_HS:
+		default:
+			i |= UPS_HIGH_SPEED;
+		}
+	}
+
+	return i;
 }
