@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.120 2010/08/01 06:13:19 kiyohara Exp $
+# $NetBSD: GENERIC,v 1.121 2010/10/16 05:49:03 kiyohara Exp $
 #
 # GENERIC machine description file
 #
@@ -22,13 +22,11 @@ include 	"arch/bebox/conf/std.bebox"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.120 $"
+#ident 		"GENERIC-$Revision: 1.121 $"
 
 maxusers	32
 
 # Standard system options
-
-options 	INSECURE	# disable kernel security levels - X needs this
 
 options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 options 	NTP		# NTP phase/frequency locked loop
@@ -187,7 +185,7 @@ pckbc0		at isa?			# pc keyboard controller
 pckbd*		at pckbc?		# PC keyboard
 pms*		at pckbc?		# PS/2 mouse for wsmouse
 #options	PMS_DISABLE_POWERHOOK	# Disable PS/2 reset on resume
-options		PMS_SYNAPTICS_TOUCHPAD	# Enable support for Synaptics Touchpads
+#options 	PMS_SYNAPTICS_TOUCHPAD	# Enable support for Synaptics Touchpads
 genfb*		at pci? dev ? function ?
 options 	WSFB_FAKE_VGA_FB
 vga*		at pci? dev ? function ?
@@ -261,6 +259,11 @@ tlp*	at pci? dev ? function ?	# DECchip 21x4x and clones
 
 # MII/PHY support
 ukphy*  at mii? phy ?                   # generic unknown PHYs
+
+# TV cards
+
+# Brooktree 848/849/878/879 based TV cards
+bktr*	at pci? dev ? function ?	# Brooktree video/audio capture/tuner
 
 
 # Pseudo-Devices
