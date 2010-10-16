@@ -1,4 +1,4 @@
-/*	$NetBSD: mkbootimage.c,v 1.12 2010/10/16 05:05:09 kiyohara Exp $	*/
+/*	$NetBSD: mkbootimage.c,v 1.13 2010/10/16 05:14:14 kiyohara Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -70,6 +70,7 @@
 
 /* Globals */
 
+int inkernflag = 1;
 int saloneflag = 0;
 int verboseflag = 0;
 int lfloppyflag = 0;
@@ -125,10 +126,10 @@ usage(int extended)
 		fprintf(stderr, "\n\n");
 	}
 #ifdef USE_SYSCTL
-	fprintf(stderr, "usage: %s [-lsv] [-m machine] [-b bootfile] "
+	fprintf(stderr, "usage: %s [-Ilsv] [-m machine] [-b bootfile] "
 	    "[-k kernel] [-r rawdev] bootimage\n", getprogname());
 #else
-	fprintf(stderr, "usage: %s [-lsv] -m machine [-b bootfile] "
+	fprintf(stderr, "usage: %s [-Ilsv] -m machine [-b bootfile] "
 	    "[-k kernel] [-r rawdev] bootimage\n", getprogname());
 #endif
 	exit(1);
@@ -690,8 +691,11 @@ bebox_build_image(char *kernel, char *boot, char *rawdev, char *outname)
 		hsize = 0;
 
 	elf_fd = open_file("bootloader", boot, &hdr, &elf_stat);
-	kern_fd = open_file("kernel", kernel, &khdr, &kern_stat);
-	kern_len = kern_stat.st_size + BEBOX_MAGICSIZE + KERNLENSIZE;
+	if (inkernflag) {
+		kern_fd = open_file("kernel", kernel, &khdr, &kern_stat);
+		kern_len = kern_stat.st_size + BEBOX_MAGICSIZE + KERNLENSIZE;
+	} else
+		kern_len = BEBOX_MAGICSIZE + KERNLENSIZE;
 
 	for (i = 0; i < ELFGET16(hdr.e_phnum); i++) {
 		lseek(elf_fd, ELFGET32(hdr.e_phoff) + sizeof(phdr) * i,
@@ -719,26 +723,34 @@ bebox_build_image(char *kernel, char *boot, char *rawdev, char *outname)
 	}
 	lseek(bebox_fd, hsize, SEEK_SET);
 
-	/* write the header with the wrong values to get the offset right */
-	bebox_write_header(bebox_fd, elf_img_len, kern_stat.st_size);
+	if (inkernflag) {
+		/*
+		 * write the header with the wrong values to get the offset
+		 * right
+		 */
+		bebox_write_header(bebox_fd, elf_img_len, kern_stat.st_size);
 
-	/* Copy kernel */
-	kern_img = (unsigned char *)malloc(kern_stat.st_size);
+		/* Copy kernel */
+		kern_img = (unsigned char *)malloc(kern_stat.st_size);
 
-	if (kern_img == NULL)
-		errx(3, "Can't malloc: %s", strerror(errno));
+		if (kern_img == NULL)
+			errx(3, "Can't malloc: %s", strerror(errno));
 
-	/* we need to jump back after having read the headers */
-	lseek(kern_fd, 0, SEEK_SET);
-	if (read(kern_fd, (void *)kern_img, kern_stat.st_size) !=
-	    kern_stat.st_size)
-		errx(3, "Can't read kernel '%s' : %s", kernel, strerror(errno));
+		/* we need to jump back after having read the headers */
+		lseek(kern_fd, 0, SEEK_SET);
+		if (read(kern_fd, (void *)kern_img, kern_stat.st_size) !=
+		    kern_stat.st_size)
+			errx(3, "Can't read kernel '%s' : %s",
+			    kernel, strerror(errno));
 
-	gzf = gzdopen(dup(bebox_fd), "a");
-	if (gzf == NULL)
-		errx(3, "Can't init compression: %s", strerror(errno));
-	if (gzsetparams(gzf, Z_BEST_COMPRESSION, Z_DEFAULT_STRATEGY) != Z_OK)
-		errx(3, "%s", gzerror(gzf, &err));
+		gzf = gzdopen(dup(bebox_fd), "a");
+		if (gzf == NULL)
+			errx(3, "Can't init compression: %s", strerror(errno));
+		if (gzsetparams(gzf, Z_BEST_COMPRESSION, Z_DEFAULT_STRATEGY) !=
+		    Z_OK)
+			errx(3, "%s", gzerror(gzf, &err));
+	} else
+		bebox_write_header(bebox_fd, elf_img_len, 0);
 
 	/* write a magic number and size before the kernel */
 	write(bebox_fd, (void *)bebox_magic, BEBOX_MAGICSIZE);
@@ -746,12 +758,17 @@ bebox_build_image(char *kernel, char *boot, char *rawdev, char *outname)
 	tmp = sa_htobe32(0);
 	write(bebox_fd, (void *)&tmp, KERNLENSIZE);
 
-	/* write in the compressed kernel */
-	kstart = lseek(bebox_fd, 0, SEEK_CUR);
-	kgzlen = gzwrite(gzf, kern_img, kern_stat.st_size);
-	gzclose(gzf);
-	kend = lseek(bebox_fd, 0, SEEK_CUR);
-	free(kern_img);
+	if (inkernflag) {
+		/* write in the compressed kernel */
+		kstart = lseek(bebox_fd, 0, SEEK_CUR);
+		kgzlen = gzwrite(gzf, kern_img, kern_stat.st_size);
+		gzclose(gzf);
+		kend = lseek(bebox_fd, 0, SEEK_CUR);
+		free(kern_img);
+	} else {
+		kstart = kend = lseek(bebox_fd, 0, SEEK_CUR);
+		kgzlen = 0;
+	}
 
 	/* jump back to the length position now that we know the length */
 	lseek(bebox_fd, lenpos, SEEK_SET);
@@ -774,7 +791,8 @@ bebox_build_image(char *kernel, char *boot, char *rawdev, char *outname)
 	write(bebox_fd, elf_img, elf_img_len);
 	free(elf_img);
 
-	close(kern_fd);
+	if (inkernflag)
+		close(kern_fd);
 	close(elf_fd);
 
 	if (saloneflag) {
@@ -837,13 +855,17 @@ main(int argc, char **argv)
 	setprogname(argv[0]);
 	kern_len = 0;
 
-	while ((ch = getopt(argc, argv, "b:k:lm:r:sv")) != -1)
+	while ((ch = getopt(argc, argv, "b:Ik:lm:r:sv")) != -1)
 		switch (ch) {
 		case 'b':
 			boot = optarg;
 			break;
+		case 'I':
+			inkernflag = 0;
+			break;
 		case 'k':
 			kernel = optarg;
+			inkernflag = 1;
 			break;
 		case 'l':
 			lfloppyflag = 1;
@@ -871,7 +893,7 @@ main(int argc, char **argv)
 	if (argc < 1)
 		usage(0);
 
-	if (kernel == NULL)
+	if (kernel == NULL && inkernflag)
 		kernel = "/netbsd";
 
 	if (boot == NULL)
