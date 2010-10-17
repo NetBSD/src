@@ -1,4 +1,4 @@
-/*	$NetBSD: maple.c,v 1.41 2010/10/17 14:13:44 tsutsui Exp $	*/
+/*	$NetBSD: maple.c,v 1.42 2010/10/17 14:17:49 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: maple.c,v 1.41 2010/10/17 14:13:44 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: maple.c,v 1.42 2010/10/17 14:17:49 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -89,6 +89,7 @@ __KERNEL_RCSID(0, "$NetBSD: maple.c,v 1.41 2010/10/17 14:13:44 tsutsui Exp $");
 #include <dreamcast/dev/maple/maplereg.h>
 #include <dreamcast/dev/maple/mapleio.h>
 
+#include "ioconf.h"
 #include "locators.h"
 
 /* Internal macros, functions, and variables. */
@@ -159,8 +160,6 @@ int	maple_polling;		/* Are we polling?  (Debugger mode) */
 
 CFATTACH_DECL_NEW(maple, sizeof(struct maple_softc),
     maplematch, mapleattach, NULL, NULL);
-
-extern struct cfdriver maple_cd;
 
 dev_type_open(mapleopen);
 dev_type_close(mapleclose);

@@ -1,4 +1,4 @@
-/*	$NetBSD: mmemcard.c,v 1.19 2010/10/17 14:13:44 tsutsui Exp $	*/
+/*	$NetBSD: mmemcard.c,v 1.20 2010/10/17 14:17:49 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mmemcard.c,v 1.19 2010/10/17 14:13:44 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mmemcard.c,v 1.20 2010/10/17 14:17:49 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -48,6 +48,8 @@ __KERNEL_RCSID(0, "$NetBSD: mmemcard.c,v 1.19 2010/10/17 14:13:44 tsutsui Exp $"
 
 #include <dreamcast/dev/maple/maple.h>
 #include <dreamcast/dev/maple/mapleconf.h>
+
+#include "ioconf.h"
 
 #define MMEM_MAXACCSIZE	1012	/* (255*4) - 8  =  253*32 / 8 */
 
@@ -198,8 +200,6 @@ const struct cdevsw mmem_cdevsw = {
 
 CFATTACH_DECL_NEW(mmem, sizeof(struct mmem_softc),
     mmemmatch, mmemattach, mmemdetach, NULL);
-
-extern struct cfdriver mmem_cd;
 
 struct dkdriver mmemdkdriver = { mmemstrategy };
 
