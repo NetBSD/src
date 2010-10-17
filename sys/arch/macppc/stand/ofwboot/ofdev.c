@@ -1,4 +1,4 @@
-/*	$NetBSD: ofdev.c,v 1.22 2009/01/28 15:03:28 tsutsui Exp $	*/
+/*	$NetBSD: ofdev.c,v 1.23 2010/10/17 15:33:04 phx Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -132,6 +132,88 @@ static struct of_dev ofdev = {
 
 char opened_name[MAXBOOTPATHLEN];
 
+/*
+ * Check if this APM partition is a suitable root partition and return
+ * its file system type or zero.
+ */
+static u_int8_t
+check_apm_root(struct part_map_entry *part, int *clust)
+{
+	struct blockzeroblock *bzb;
+	char typestr[32], *s;
+	u_int8_t fstype;
+
+	*clust = 0;  /* may become 1 for A/UX partitions */
+	fstype = 0;
+	bzb = (struct blockzeroblock *)(&part->pmBootArgs);
+
+	/* convert partition type name to upper case */
+	strncpy(typestr, (char *)part->pmPartType, sizeof(typestr));
+	typestr[sizeof(typestr) - 1] = '\0';
+	for (s = typestr; *s; s++)
+		if ((*s >= 'a') && (*s <= 'z'))
+			*s = (*s - 'a' + 'A');
+
+	if (strcmp(PART_TYPE_NBSD_PPCBOOT, typestr) == 0) {
+		if ((bzb->bzbMagic == BZB_MAGIC) &&
+		    (bzb->bzbType < FSMAXTYPES))
+			fstype = bzb->bzbType;
+		else
+			fstype = FS_BSDFFS;
+	} else if (strcmp(PART_TYPE_UNIX, typestr) == 0 &&
+	    bzb->bzbMagic == BZB_MAGIC && (bzb->bzbFlags & BZB_ROOTFS)) {
+		*clust = bzb->bzbCluster;
+		fstype = FS_BSDFFS;
+	}
+
+	return fstype;
+}
+
+/*
+ * Build a disklabel from APM partitions.
+ * We will just look for a suitable root partition and insert it into
+ * the 'a' slot. Should be sufficient to boot a kernel from it.
+ */
+static int
+search_mac_label(struct of_dev *devp, char *buf, struct disklabel *lp)
+{
+	struct part_map_entry *pme;
+	struct partition *a_part;
+	size_t nread;
+	int blkno, clust, lastblk, lastclust;
+	u_int8_t fstype;
+
+	pme = (struct part_map_entry *)buf;
+	a_part = &lp->d_partitions[0];		/* disklabel 'a' partition */
+	lastclust = -1;
+
+	for (blkno = lastblk = 1; blkno <= lastblk; blkno++) {
+		if (strategy(devp, F_READ, blkno, DEV_BSIZE, pme, &nread)
+		    || nread != DEV_BSIZE)
+			return ERDLAB;
+		if (pme->pmSig != PART_ENTRY_MAGIC ||
+		    pme->pmPartType[0] == '\0')
+			break;
+		lastblk = pme->pmMapBlkCnt;
+
+		fstype = check_apm_root(pme, &clust);
+
+		if (fstype && (lastclust == -1 || clust < lastclust)) {
+			a_part->p_size = pme->pmPartBlkCnt;
+			a_part->p_offset = pme->pmPyPartStart;
+			a_part->p_fstype = fstype;
+			if ((lastclust = clust) == 0)
+				break;	/* we won't find a better match */
+		}
+	}
+	if (lastclust < 0)
+		return ERDLAB;		/* no root partition found */
+
+	/* pretend we only have partitions 'a', 'b' and 'c' */
+	lp->d_npartitions = RAW_PART + 1;
+	return 0;
+}
+
 static u_long
 get_long(const void *p)
 {
@@ -141,11 +223,11 @@ get_long(const void *p)
 }
 
 /*
- * Find a valid disklabel.
+ * Find a valid disklabel from MBR partitions.
  */
 static int
-search_label(struct of_dev *devp, u_long off, char *buf, struct disklabel *lp,
-	     u_long off0)
+search_dos_label(struct of_dev *devp, u_long off, char *buf,
+    struct disklabel *lp, u_long off0)
 {
 	size_t nread;
 	struct mbr_partition *p;
@@ -187,7 +269,7 @@ search_label(struct of_dev *devp, u_long off, char *buf, struct disklabel *lp,
 			}
 		} else if (p->mbrp_type == MBR_PTYPE_EXT) {
 			poff = get_long(&p->mbrp_start);
-			if (!search_label(devp, poff, buf, lp, off0)) {
+			if (!search_dos_label(devp, poff, buf, lp, off0)) {
 				recursion--;
 				return 0;
 			}
@@ -201,7 +283,6 @@ search_label(struct of_dev *devp, u_long off, char *buf, struct disklabel *lp,
 	recursion--;
 	return ERDLAB;
 }
-
 
 bool
 parsefilepath(const char *path, char *devname, char *fname, char *ppart)
@@ -340,14 +421,9 @@ devopen(struct open_file *of, const char *name, char **file)
 		return ENOENT;
 	if (OF_getprop(handle, "device_type", buf, sizeof buf) < 0)
 		return ENXIO;
-#if 0
-	if (!strcmp(buf, "block"))
-		/*
-		 * For block devices, indicate raw partition
-		 * (:0 in OpenFirmware)
-		 */
+	if (!strcmp(buf, "block") && strrchr(devname, ':') == NULL)
+		/* indicate raw partition, when missing */
 		strlcat(devname, ":0", sizeof(devname));
-#endif
 	if ((handle = OF_open(devname)) == -1)
 		return ENXIO;
 	memset(&ofdev, 0, sizeof ofdev);
@@ -357,13 +433,17 @@ devopen(struct open_file *of, const char *name, char **file)
 	if (!strcmp(buf, "block")) {
 		ofdev.type = OFDEV_DISK;
 		ofdev.bsize = DEV_BSIZE;
-		/* First try to find a disklabel without MBR partitions */
+		/* First try to find a disklabel without partitions */
 		if (strategy(&ofdev, F_READ,
 			     LABELSECTOR, DEV_BSIZE, buf, &nread) != 0
 		    || nread != DEV_BSIZE
 		    || getdisklabel(buf, &label)) {
-			/* Else try MBR partitions */
-			error = search_label(&ofdev, 0, buf, &label, 0);
+			/* Else try APM or MBR partitions */
+			if (((struct drvr_map *)buf)->sbSig == DRIVER_MAP_MAGIC)
+				error = search_mac_label(&ofdev, buf, &label);
+			else
+				error = search_dos_label(&ofdev, 0, buf,
+				    &label, 0);
 			if (error && error != ERDLAB)
 				goto bad;
 		}
@@ -375,7 +455,7 @@ devopen(struct open_file *of, const char *name, char **file)
 				 * but there is none
 				 */
 				goto bad;
-			/* No, label, just use complete disk */
+			/* No label, just use complete disk */
 			ofdev.partoff = 0;
 		} else {
 			part = partition ? partition - 'a' : 0;
