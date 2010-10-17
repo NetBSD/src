@@ -1,4 +1,4 @@
-/*	$NetBSD: kgmon.c,v 1.24 2009/01/18 09:50:15 lukem Exp $	*/
+/*	$NetBSD: kgmon.c,v 1.25 2010/10/17 16:13:56 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1983, 1992, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1992, 1993\
 #if 0
 static char sccsid[] = "from: @(#)kgmon.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: kgmon.c,v 1.24 2009/01/18 09:50:15 lukem Exp $");
+__RCSID("$NetBSD: kgmon.c,v 1.25 2010/10/17 16:13:56 uebayasi Exp $");
 #endif
 #endif /* not lint */
 
@@ -348,7 +348,7 @@ dumpstate(struct kvmvars *kvp)
 		    kcountsize, i,
 		    kflag ? kvm_geterr(kvp->kd) : strerror(errno));
 	if ((fwrite(tickbuf, kcountsize, 1, fp)) != 1)
-		err(EXIT_FAILURE, "writing tocks to gmon.out");
+		err(EXIT_FAILURE, "writing ticks to gmon.out");
 	free(tickbuf);
 
 	/*
