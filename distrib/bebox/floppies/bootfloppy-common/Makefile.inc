@@ -1,67 +1,26 @@
-#	$NetBSD: Makefile.inc,v 1.12 2009/09/18 09:24:59 abs Exp $
+#	$NetBSD: Makefile.inc,v 1.13 2010/10/17 11:19:53 kiyohara Exp $
 
-# TOP is assumed to be defined by Makefile including this one.
-
-COMMONDIR=	${TOP}/bootfloppy-common
-
-.include <bsd.kernobj.mk>
 .include <bsd.own.mk>
+.include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
 
-MOUNT_POINT?=	/mnt
-VND?=		vnd0
-VND_DEV=	/dev/${VND}a
-VND_RDEV=	/dev/r${VND}a
-VND_CDEV=	/dev/${VND}d
-VND_CRDEV=	/dev/r${VND}d
-IMAGE?=		xxx.fs
-KERN?=		netbsd-xxx
-MDEC=		${DESTDIR}/usr/mdec
+# Required variables:
+#	IMAGE
 
-LISTS=		${COMMONDIR}/list
+MDEC?=		${DESTDIR}/usr/mdec
+BOOTLOADER?=	${MDEC}/boot
 
-RAMDISKDIR!=	cd $(.CURDIR)/../ramdisk && ${PRINTOBJDIR}
-RAMDISK=	${RAMDISKDIR}/ramdisk.fs
+${IMAGE}:
+	${TOOL_POWERPCMKBOOTIMAGE} -I -m ${MACHINE} -b ${BOOTLOADER} ${.TARGET}
 
-DISKTYPE?=	floppy3
-DISKSIZE?=	2880
+KFILES=	${IMAGE}
 
-# Some reasonable values for the -i parameter to newfs are:
-#
-#   6144	1147k, 189 inodes free
-#  16384	1159k,  93 inodes free
-# 204800	1167k,  29 inodes free
-INO_BYTES?=	204800
+CLEANFILES+=	${KFILES}
 
-CLEANFILES+=	netbsd.ram.gz
 
-all:	netbsd.ram.gz
-	dd if=/dev/zero of=${IMAGE} count=${DISKSIZE}
-	vnconfig -t ${DISKTYPE} -v -c ${VND_CDEV} ${IMAGE}
-	disklabel -rw ${VND_CDEV} ${DISKTYPE}
-	newfs -B be -m 0 -o space -i ${INO_BYTES} -c 80 ${VND_RDEV} ${DISKTYPE}
-	mount ${VND_DEV} ${MOUNT_POINT}
-	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} \
-	    KERNOBJDIR=${KERNOBJDIR} TARGDIR=${MOUNT_POINT} ${HOST_SH} \
-	    ${NETBSDSRCDIR}/distrib/common/runlist.sh ${LISTS}
-	@echo ""
-	@df -i ${MOUNT_POINT}
-	@echo ""
-	umount ${MOUNT_POINT}
-	vnconfig -u ${VND_CDEV}
+realall: ${KFILES}
 
-unconfig:
-	-umount -f ${MOUNT_POINT}
-	-vnconfig -u ${VND_DEV}
-	-/bin/rm -f ${IMAGE}
+release: check_RELEASEDIR .WAIT ${KFILES}
+	${RELEASE_INSTALL} ${KFILES} \
+	    ${RELEASEDIR}/${RELEASEMACHINEDIR}/installation/floppy
 
-netbsd.ram.gz: ${KERN} ${RAMDISK}
-	cp ${KERN} netbsd.tmp
-	${TOOL_MDSETIMAGE} -v netbsd.tmp ${RAMDISK}
-	gzip -9nf netbsd.tmp
-	mv netbsd.tmp.gz ${.TARGET}
-
-clean cleandir:
-	/bin/rm -f *.core ${IMAGE} ${CLEANFILES}
-
-.include <bsd.obj.mk>
-.include <bsd.subdir.mk>
+.include <bsd.prog.mk>
