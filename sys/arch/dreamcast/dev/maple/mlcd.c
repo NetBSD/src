@@ -1,4 +1,4 @@
-/*	$NetBSD: mlcd.c,v 1.13 2010/10/17 14:13:44 tsutsui Exp $	*/
+/*	$NetBSD: mlcd.c,v 1.14 2010/10/17 14:17:49 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mlcd.c,v 1.13 2010/10/17 14:13:44 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mlcd.c,v 1.14 2010/10/17 14:17:49 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -43,6 +43,8 @@ __KERNEL_RCSID(0, "$NetBSD: mlcd.c,v 1.13 2010/10/17 14:13:44 tsutsui Exp $");
 
 #include <dreamcast/dev/maple/maple.h>
 #include <dreamcast/dev/maple/mapleconf.h>
+
+#include "ioconf.h"
 
 #define MLCD_MAXACCSIZE	1012	/* (255*4) - 8  =  253*32 / 8 */
 
@@ -173,8 +175,6 @@ const struct cdevsw mlcd_cdevsw = {
 
 CFATTACH_DECL_NEW(mlcd, sizeof(struct mlcd_softc),
     mlcdmatch, mlcdattach, mlcddetach, NULL);
-
-extern struct cfdriver mlcd_cd;
 
 /* initial image "NetBSD dreamcast" */
 static const char initimg48x32[192] = {
