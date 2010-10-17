@@ -1,4 +1,4 @@
-/*	$NetBSD: mkbdvar.h,v 1.6 2005/12/11 12:17:06 christos Exp $	*/
+/*	$NetBSD: mkbdvar.h,v 1.7 2010/10/17 14:13:44 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt
@@ -43,9 +43,9 @@ struct mkbd_condition {
  * State info, per keyboard instance.
  */
 struct mkbd_softc {
-	struct device  sc_dev;
-	struct device	*sc_wskbddev;
-	struct device *sc_parent;
+	device_t sc_dev;
+	device_t sc_wskbddev;
+	device_t sc_parent;
 
 	struct maple_unit *sc_unit;
 	struct mkbd_condition sc_condition;
