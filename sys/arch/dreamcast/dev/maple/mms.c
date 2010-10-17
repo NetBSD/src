@@ -1,4 +1,4 @@
-/*	$NetBSD: mms.c,v 1.15 2010/10/17 14:13:44 tsutsui Exp $	*/
+/*	$NetBSD: mms.c,v 1.16 2010/10/17 14:16:21 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mms.c,v 1.15 2010/10/17 14:13:44 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mms.c,v 1.16 2010/10/17 14:16:21 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -91,16 +91,16 @@ struct mms_softc {
 	struct device *sc_wsmousedev;
 };
 
-int	mms_match(device_t, cfdata_t, void *);
-void	mms_attach(device_t, device_t, void *);
-int	mms_detach(device_t, int);
+static int	mms_match(device_t, cfdata_t, void *);
+static void	mms_attach(device_t, device_t, void *);
+static int	mms_detach(device_t, int);
 
 CFATTACH_DECL_NEW(mms, sizeof(struct mms_softc),
     mms_match, mms_attach, mms_detach, NULL);
 
-int	mms_enable(void *);
-int	mms_ioctl(void *, u_long, void *, int, struct lwp *);
-void	mms_disable(void *);
+static int	mms_enable(void *);
+static int	mms_ioctl(void *, u_long, void *, int, struct lwp *);
+static void	mms_disable(void *);
 
 const struct wsmouse_accessops mms_accessops = {
 	mms_enable,
@@ -108,9 +108,9 @@ const struct wsmouse_accessops mms_accessops = {
 	mms_disable,
 };
 
-void	mms_intr(void *, struct maple_response *, int, int);
+static void	mms_intr(void *, struct maple_response *, int, int);
 
-int
+static int
 mms_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct maple_attach_args *ma = aux;
@@ -118,7 +118,7 @@ mms_match(device_t parent, cfdata_t cf, void *aux)
 	return ma->ma_function == MAPLE_FN_MOUSE ? MAPLE_MATCH_FUNC : 0;
 }
 
-void
+static void
 mms_attach(device_t parent, device_t self, void *aux)
 {
 	struct mms_softc *sc = device_private(self);
@@ -163,7 +163,7 @@ mms_attach(device_t parent, device_t self, void *aux)
 	maple_set_callback(parent, sc->sc_unit, MAPLE_FN_MOUSE, mms_intr, sc);
 }
 
-int
+static int
 mms_detach(device_t self, int flags)
 {
 	struct mms_softc *sc = device_private(self);
@@ -175,7 +175,7 @@ mms_detach(device_t self, int flags)
 	return rv;
 }
 
-int
+static int
 mms_enable(void *v)
 {
 	struct mms_softc *sc = v;
@@ -184,7 +184,7 @@ mms_enable(void *v)
 	return 0;
 }
 
-void
+static void
 mms_disable(void *v)
 {
 	struct mms_softc *sc = v;
@@ -192,7 +192,7 @@ mms_disable(void *v)
 	maple_enable_periodic(sc->sc_parent, sc->sc_unit, MAPLE_FN_MOUSE, 0);
 }
 
-int
+static int
 mms_ioctl(void *v, u_long cmd, void *data, int flag, struct lwp *l)
 {
 
@@ -212,7 +212,7 @@ mms_ioctl(void *v, u_long cmd, void *data, int flag, struct lwp *l)
 	return 0;
 }
 
-void
+static void
 mms_intr(void *arg, struct maple_response *response, int size, int flags)
 {
 	struct mms_softc *sc = arg;
