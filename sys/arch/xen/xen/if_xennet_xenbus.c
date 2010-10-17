@@ -1,4 +1,4 @@
-/*      $NetBSD: if_xennet_xenbus.c,v 1.44 2010/10/16 00:20:05 jym Exp $      */
+/*      $NetBSD: if_xennet_xenbus.c,v 1.45 2010/10/17 17:10:44 jym Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.44 2010/10/16 00:20:05 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.45 2010/10/17 17:10:44 jym Exp $");
 
 #include "opt_xen.h"
 #include "opt_nfs_boot.h"
@@ -199,6 +199,9 @@ struct xennet_xenbus_softc {
 #define BEST_DISCONNECTED	1
 #define BEST_CONNECTED		2
 #define BEST_SUSPENDED		3
+	unsigned long sc_rx_feature;
+#define FEATURE_RX_FLIP		0
+#define FEATURE_RX_COPY		1
 #if NRND > 0
 	rndsource_element_t     sc_rnd_source;
 #endif
@@ -430,6 +433,7 @@ xennet_xenbus_resume(void *p)
 {
 	struct xennet_xenbus_softc *sc = p;
 	struct xenbus_transaction *xbt;
+	unsigned long rx_copy;
 	int error;
 	netif_tx_sring_t *tx_ring;
 	netif_rx_sring_t *rx_ring;
@@ -438,7 +442,6 @@ xennet_xenbus_resume(void *p)
 
 	sc->sc_tx_ring_gntref = GRANT_INVALID_REF;
 	sc->sc_rx_ring_gntref = GRANT_INVALID_REF;
-
 
 	/* setup device: alloc event channel and shared rings */
 	tx_ring = (void *)uvm_km_alloc(kernel_map, PAGE_SIZE, 0,
@@ -469,6 +472,19 @@ xennet_xenbus_resume(void *p)
 	event_set_handler(sc->sc_evtchn, &xennet_handler, sc,
 	    IPL_NET, device_xname(sc->sc_dev));
 
+	error = xenbus_read_ul(NULL, sc->sc_xbusd->xbusd_otherend,
+	    "feature-rx-copy", &rx_copy, 10);
+	if (error)
+		rx_copy = 0; /* default value if key is absent */
+
+	if (rx_copy == 1) {
+		aprint_normal_dev(sc->sc_dev, "using RX copy mode\n");
+		sc->sc_rx_feature = FEATURE_RX_COPY;
+	} else {
+		aprint_normal_dev(sc->sc_dev, "using RX flip mode\n");
+		sc->sc_rx_feature = FEATURE_RX_FLIP;
+	}
+
 again:
 	xbt = xenbus_transaction_start();
 	if (xbt == NULL)
@@ -483,6 +499,12 @@ again:
 	    "rx-ring-ref","%u", sc->sc_rx_ring_gntref);
 	if (error) {
 		errmsg = "writing rx ring-ref";
+		goto abort_transaction;
+	}
+	error = xenbus_printf(xbt, sc->sc_xbusd->xbusd_path,
+	    "request-rx-copy", "%lu", rx_copy);
+	if (error) {
+		errmsg = "writing request-rx-copy";
 		goto abort_transaction;
 	}
 	error = xenbus_printf(xbt, sc->sc_xbusd->xbusd_path,
@@ -553,8 +575,10 @@ xennet_alloc_rx_buffer(struct xennet_xenbus_softc *sc)
 	RING_IDX i;
 	struct xennet_rxreq *req;
 	struct xen_memory_reservation reservation;
-	int s1, s2;
+	int s1, s2, otherend_id;
 	paddr_t pfn;
+
+	otherend_id = sc->sc_xbusd->xbusd_otherend_id;
 
 	s1 = splnet();
 	for (i = 0; sc->sc_free_rxreql != 0; i++) {
@@ -563,53 +587,80 @@ xennet_alloc_rx_buffer(struct xennet_xenbus_softc *sc)
 		KASSERT(req == &sc->sc_rxreqs[req->rxreq_id]);
 		RING_GET_REQUEST(&sc->sc_rx_ring, req_prod + i)->id =
 		    req->rxreq_id;
-		if (xengnt_grant_transfer(sc->sc_xbusd->xbusd_otherend_id,
-		    &req->rxreq_gntref) != 0) {
+
+		switch (sc->sc_rx_feature) {
+		case FEATURE_RX_COPY:
+			if (xengnt_grant_access(otherend_id,
+			    xpmap_ptom_masked(req->rxreq_pa),
+			    0, &req->rxreq_gntref) != 0) {
+				goto out_loop;
+			}
 			break;
+		case FEATURE_RX_FLIP:
+			if (xengnt_grant_transfer(otherend_id,
+			    &req->rxreq_gntref) != 0) {
+				goto out_loop;
+			}
+			break;
+		default:
+			panic("%s: unsupported RX feature mode: %ld\n",
+			    __func__, sc->sc_rx_feature);
 		}
+
 		RING_GET_REQUEST(&sc->sc_rx_ring, req_prod + i)->gref =
 		    req->rxreq_gntref;
 
 		SLIST_REMOVE_HEAD(&sc->sc_rxreq_head, rxreq_next);
 		sc->sc_free_rxreql--;
 
-		/* unmap the page */
-		MULTI_update_va_mapping(&rx_mcl[i], req->rxreq_va, 0, 0);
-		/*
-		 * Remove this page from pseudo phys map before
-		 * passing back to Xen.
-		 */
-		pfn = (req->rxreq_pa - XPMAP_OFFSET) >> PAGE_SHIFT;
-		xennet_pages[i] = xpmap_phys_to_machine_mapping[pfn];
-		xpmap_phys_to_machine_mapping[pfn] = INVALID_P2M_ENTRY;
+		if (sc->sc_rx_feature == FEATURE_RX_FLIP) {
+			/* unmap the page */
+			MULTI_update_va_mapping(&rx_mcl[i],
+			    req->rxreq_va, 0, 0);
+			/*
+			 * Remove this page from pseudo phys map before
+			 * passing back to Xen.
+			 */
+			pfn = (req->rxreq_pa - XPMAP_OFFSET) >> PAGE_SHIFT;
+			xennet_pages[i] = xpmap_phys_to_machine_mapping[pfn];
+			xpmap_phys_to_machine_mapping[pfn] = INVALID_P2M_ENTRY;
+		}
 	}
+
+out_loop:
 	if (i == 0) {
 		splx(s1);
 		return;
 	}
-	/* also make sure to flush all TLB entries */
-	rx_mcl[i-1].args[MULTI_UVMFLAGS_INDEX] = UVMF_TLB_FLUSH|UVMF_ALL;
-	/*
-	 * We may have allocated buffers which have entries
-	 * outstanding in the page update queue -- make sure we flush
-	 * those first!
-	 */
-	s2 = splvm();
-	xpq_flush_queue();
-	splx(s2);
-	/* now decrease reservation */
-	xenguest_handle(reservation.extent_start) = xennet_pages;
-	reservation.nr_extents = i;
-	reservation.extent_order = 0;
-	reservation.address_bits = 0;
-	reservation.domid = DOMID_SELF;
-	rx_mcl[i].op = __HYPERVISOR_memory_op;
-	rx_mcl[i].args[0] = XENMEM_decrease_reservation;
-	rx_mcl[i].args[1] = (unsigned long)&reservation;
-	HYPERVISOR_multicall(rx_mcl, i+1);
-	if (__predict_false(rx_mcl[i].result != i)) {
-		panic("xennet_alloc_rx_buffer: XENMEM_decrease_reservation");
+
+	if (sc->sc_rx_feature == FEATURE_RX_FLIP) {
+		/* also make sure to flush all TLB entries */
+		rx_mcl[i-1].args[MULTI_UVMFLAGS_INDEX] =
+		    UVMF_TLB_FLUSH | UVMF_ALL;
+		/*
+		 * We may have allocated buffers which have entries
+		 * outstanding in the page update queue -- make sure we flush
+		 * those first!
+		 */
+		s2 = splvm();
+		xpq_flush_queue();
+		splx(s2);
+		/* now decrease reservation */
+		xenguest_handle(reservation.extent_start) = xennet_pages;
+		reservation.nr_extents = i;
+		reservation.extent_order = 0;
+		reservation.address_bits = 0;
+		reservation.domid = DOMID_SELF;
+		rx_mcl[i].op = __HYPERVISOR_memory_op;
+		rx_mcl[i].args[0] = XENMEM_decrease_reservation;
+		rx_mcl[i].args[1] = (unsigned long)&reservation;
+		HYPERVISOR_multicall(rx_mcl, i+1);
+		if (__predict_false(rx_mcl[i].result != i)) {
+			panic("xennet_alloc_rx_buffer: "
+			    "XENMEM_decrease_reservation");
+		}
 	}
+
 	sc->sc_rx_ring.req_prod_pvt = req_prod + i;
 	RING_PUSH_REQUESTS(&sc->sc_rx_ring);
 
@@ -652,44 +703,57 @@ xennet_free_rx_buffer(struct xennet_xenbus_softc *sc)
 			SLIST_INSERT_HEAD(&sc->sc_rxreq_head, rxreq,
 			    rxreq_next);
 			sc->sc_free_rxreql++;
-			ma = xengnt_revoke_transfer(rxreq->rxreq_gntref);
-			rxreq->rxreq_gntref = GRANT_INVALID_REF;
-			if (ma == 0) {
-				u_long pfn;
-				struct xen_memory_reservation xenres;
-				/*
-				 * transfer not complete, we lost the page.
-				 * Get one from hypervisor
-				 */
-				xenguest_handle(xenres.extent_start) = &pfn;
-				xenres.nr_extents = 1;
-				xenres.extent_order = 0;
-				xenres.address_bits = 31;
-				xenres.domid = DOMID_SELF;
-				if (HYPERVISOR_memory_op(
-				    XENMEM_increase_reservation, &xenres) < 0) {
-					panic("xennet_free_rx_buffer: "
-					    "can't get memory back");
+
+			switch (sc->sc_rx_feature) {
+			case FEATURE_RX_COPY:
+				xengnt_revoke_access(rxreq->rxreq_gntref);
+				rxreq->rxreq_gntref = GRANT_INVALID_REF;
+				break;
+			case FEATURE_RX_FLIP:
+				ma = xengnt_revoke_transfer(
+				    rxreq->rxreq_gntref);
+				rxreq->rxreq_gntref = GRANT_INVALID_REF;
+				if (ma == 0) {
+					u_long pfn;
+					struct xen_memory_reservation xenres;
+					/*
+					 * transfer not complete, we lost the page.
+					 * Get one from hypervisor
+					 */
+					xenguest_handle(xenres.extent_start) = &pfn;
+					xenres.nr_extents = 1;
+					xenres.extent_order = 0;
+					xenres.address_bits = 31;
+					xenres.domid = DOMID_SELF;
+					if (HYPERVISOR_memory_op(
+					    XENMEM_increase_reservation, &xenres) < 0) {
+						panic("xennet_free_rx_buffer: "
+						    "can't get memory back");
+					}
+					ma = pfn;
+					KASSERT(ma != 0);
 				}
-				ma = pfn;
-				KASSERT(ma != 0);
+				pa = rxreq->rxreq_pa;
+				va = rxreq->rxreq_va;
+				/* remap the page */
+				mmu[0].ptr = (ma << PAGE_SHIFT) | MMU_MACHPHYS_UPDATE;
+				mmu[0].val = ((pa - XPMAP_OFFSET) >> PAGE_SHIFT);
+				MULTI_update_va_mapping(&mcl[0], va, 
+				    (ma << PAGE_SHIFT) | PG_V | PG_KW,
+				    UVMF_TLB_FLUSH|UVMF_ALL);
+				xpmap_phys_to_machine_mapping[
+				    (pa - XPMAP_OFFSET) >> PAGE_SHIFT] = ma;
+				mcl[1].op = __HYPERVISOR_mmu_update;
+				mcl[1].args[0] = (unsigned long)mmu;
+				mcl[1].args[1] = 1;
+				mcl[1].args[2] = 0;
+				mcl[1].args[3] = DOMID_SELF;
+				HYPERVISOR_multicall(mcl, 2);
+				break;
+			default:
+				panic("%s: unsupported RX feature mode: %ld\n",
+				    __func__, sc->sc_rx_feature);
 			}
-			pa = rxreq->rxreq_pa;
-			va = rxreq->rxreq_va;
-			/* remap the page */
-			mmu[0].ptr = (ma << PAGE_SHIFT) | MMU_MACHPHYS_UPDATE;
-			mmu[0].val = ((pa - XPMAP_OFFSET) >> PAGE_SHIFT);
-			MULTI_update_va_mapping(&mcl[0], va, 
-			    (ma << PAGE_SHIFT) | PG_V | PG_KW,
-			    UVMF_TLB_FLUSH|UVMF_ALL);
-			xpmap_phys_to_machine_mapping[
-			    (pa - XPMAP_OFFSET) >> PAGE_SHIFT] = ma;
-			mcl[1].op = __HYPERVISOR_mmu_update;
-			mcl[1].args[0] = (unsigned long)mmu;
-			mcl[1].args[1] = 1;
-			mcl[1].args[2] = 0;
-			mcl[1].args[3] = DOMID_SELF;
-			HYPERVISOR_multicall(mcl, 2);
 		}
 
 	}
@@ -820,41 +884,58 @@ again:
 		req = &sc->sc_rxreqs[rx->id];
 		KASSERT(req->rxreq_gntref != GRANT_INVALID_REF);
 		KASSERT(req->rxreq_id == rx->id);
-		ma = xengnt_revoke_transfer(req->rxreq_gntref);
-		if (ma == 0) {
-			DPRINTFN(XEDB_EVENT, ("xennet_handler ma == 0\n"));
-			/*
-			 * the remote could't send us a packet.
-			 * we can't free this rxreq as no page will be mapped
-			 * here. Instead give it back immediatly to backend.
-			 */
-			ifp->if_ierrors++;
-			RING_GET_REQUEST(&sc->sc_rx_ring,
-			    sc->sc_rx_ring.req_prod_pvt)->id = req->rxreq_id;
-			RING_GET_REQUEST(&sc->sc_rx_ring,
-			    sc->sc_rx_ring.req_prod_pvt)->gref =
-				req->rxreq_gntref;
-			sc->sc_rx_ring.req_prod_pvt++;
-			RING_PUSH_REQUESTS(&sc->sc_rx_ring);
-			continue;
+
+		ma = 0;
+		switch (sc->sc_rx_feature) {
+		case FEATURE_RX_COPY:
+			xengnt_revoke_access(req->rxreq_gntref);
+			break;
+		case FEATURE_RX_FLIP:
+			ma = xengnt_revoke_transfer(req->rxreq_gntref);
+			if (ma == 0) {
+				DPRINTFN(XEDB_EVENT, ("xennet_handler ma == 0\n"));
+				/*
+				 * the remote could't send us a packet.
+				 * we can't free this rxreq as no page will be mapped
+				 * here. Instead give it back immediatly to backend.
+				 */
+				ifp->if_ierrors++;
+				RING_GET_REQUEST(&sc->sc_rx_ring,
+				    sc->sc_rx_ring.req_prod_pvt)->id = req->rxreq_id;
+				RING_GET_REQUEST(&sc->sc_rx_ring,
+				    sc->sc_rx_ring.req_prod_pvt)->gref =
+					req->rxreq_gntref;
+				sc->sc_rx_ring.req_prod_pvt++;
+				RING_PUSH_REQUESTS(&sc->sc_rx_ring);
+				continue;
+			}
+			break;
+		default:
+			panic("%s: unsupported RX feature mode: %ld\n",
+			    __func__, sc->sc_rx_feature);
 		}
+
 		req->rxreq_gntref = GRANT_INVALID_REF;
 
 		pa = req->rxreq_pa;
 		va = req->rxreq_va;
-		/* remap the page */
-		mmu[0].ptr = (ma << PAGE_SHIFT) | MMU_MACHPHYS_UPDATE;
-		mmu[0].val = ((pa - XPMAP_OFFSET) >> PAGE_SHIFT);
-		MULTI_update_va_mapping(&mcl[0], va, 
-		    (ma << PAGE_SHIFT) | PG_V | PG_KW, UVMF_TLB_FLUSH|UVMF_ALL);
-		xpmap_phys_to_machine_mapping[
-		    (pa - XPMAP_OFFSET) >> PAGE_SHIFT] = ma;
-		mcl[1].op = __HYPERVISOR_mmu_update;
-		mcl[1].args[0] = (unsigned long)mmu;
-		mcl[1].args[1] = 1;
-		mcl[1].args[2] = 0;
-		mcl[1].args[3] = DOMID_SELF;
-		HYPERVISOR_multicall(mcl, 2);
+
+		if (sc->sc_rx_feature == FEATURE_RX_FLIP) {
+			/* remap the page */
+			mmu[0].ptr = (ma << PAGE_SHIFT) | MMU_MACHPHYS_UPDATE;
+			mmu[0].val = ((pa - XPMAP_OFFSET) >> PAGE_SHIFT);
+			MULTI_update_va_mapping(&mcl[0], va, 
+			    (ma << PAGE_SHIFT) | PG_V | PG_KW, UVMF_TLB_FLUSH|UVMF_ALL);
+			xpmap_phys_to_machine_mapping[
+			    (pa - XPMAP_OFFSET) >> PAGE_SHIFT] = ma;
+			mcl[1].op = __HYPERVISOR_mmu_update;
+			mcl[1].args[0] = (unsigned long)mmu;
+			mcl[1].args[1] = 1;
+			mcl[1].args[2] = 0;
+			mcl[1].args[3] = DOMID_SELF;
+			HYPERVISOR_multicall(mcl, 2);
+		}
+
 		pktp = (void *)(va + rx->offset);
 #ifdef XENNET_DEBUG_DUMP
 		xennet_hex_dump(pktp, rx->status, "r", rx->id);
