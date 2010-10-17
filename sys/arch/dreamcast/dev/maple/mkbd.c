@@ -1,4 +1,4 @@
-/*	$NetBSD: mkbd.c,v 1.27 2008/10/19 21:24:20 marcus Exp $	*/
+/*	$NetBSD: mkbd.c,v 1.28 2010/10/17 14:13:44 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mkbd.c,v 1.27 2008/10/19 21:24:20 marcus Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mkbd.c,v 1.28 2010/10/17 14:13:44 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -62,9 +62,9 @@ __KERNEL_RCSID(0, "$NetBSD: mkbd.c,v 1.27 2008/10/19 21:24:20 marcus Exp $");
 /*
  * Function declarations.
  */
-static	int mkbdmatch(struct device *, struct cfdata *, void *);
-static	void mkbdattach(struct device *, struct device *, void *);
-static	int mkbddetach(struct device *, int);
+static	int mkbdmatch(device_t, cfdata_t, void *);
+static	void mkbdattach(device_t, device_t, void *);
+static	int mkbddetach(device_t, int);
 
 int	mkbd_enable(void *, int);
 void	mkbd_set_leds(void *, int);
@@ -97,11 +97,11 @@ static struct mkbd_softc *mkbd_console_softc;
 static int mkbd_is_console;
 static int mkbd_console_initted;
 
-CFATTACH_DECL(mkbd, sizeof(struct mkbd_softc),
+CFATTACH_DECL_NEW(mkbd, sizeof(struct mkbd_softc),
     mkbdmatch, mkbdattach, mkbddetach, NULL);
 
 static int
-mkbdmatch(struct device *parent, struct cfdata *cf, void *aux)
+mkbdmatch(device_t parent, cfdata_t cf, void *aux)
 {
 	struct maple_attach_args *ma = aux;
 
@@ -109,15 +109,16 @@ mkbdmatch(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-mkbdattach(struct device *parent, struct device *self, void *aux)
+mkbdattach(device_t parent, device_t self, void *aux)
 {
-	struct mkbd_softc *sc = (struct mkbd_softc *) self;
+	struct mkbd_softc *sc = device_private(self);
 	struct maple_attach_args *ma = aux;
 #if NWSKBD > 0
 	struct wskbddev_attach_args a;
 #endif
 	uint32_t kbdtype;
 
+	sc->sc_dev = self;
 	sc->sc_parent = parent;
 	sc->sc_unit = ma->ma_unit;
 
@@ -168,9 +169,9 @@ mkbdattach(struct device *parent, struct device *self, void *aux)
 }
 
 static int
-mkbddetach(struct device *self, int flags)
+mkbddetach(device_t self, int flags)
 {
-	struct mkbd_softc *sc = (struct mkbd_softc *) self;
+	struct mkbd_softc *sc = device_private(self);
 	int rv = 0;
 
 	if (sc == mkbd_console_softc) {
@@ -178,7 +179,7 @@ mkbddetach(struct device *self, int flags)
 		 * Hack to allow another Maple keyboard to be new console.
 		 * XXX Should some other type device can be console.
 		 */
-		printf("%s: was console keyboard\n", sc->sc_dev.dv_xname);
+		printf("%s: was console keyboard\n", device_xname(sc->sc_dev));
 		wskbd_cndetach();
 		mkbd_console_softc = NULL;
 		mkbd_console_initted = 0;
