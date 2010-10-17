@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.5 2007/07/24 10:49:24 pavel Exp $
+#	$NetBSD: Makefile.inc,v 1.6 2010/10/17 10:56:48 kiyohara Exp $
 #
 #	etc.bebox/Makefile.inc -- bebox-specific etc Makefile targets
 #
@@ -9,3 +9,8 @@
 KERNEL_SETS=		GENERIC
 
 BUILD_KERNELS=		INSTALL
+
+INSTALLATION_DIRS+=	installation/floppy
+
+snap_md_post:
+	${MAKESUMS} -t ${RELEASEDIR}/${RELEASEMACHINEDIR}/installation/floppy '*'
