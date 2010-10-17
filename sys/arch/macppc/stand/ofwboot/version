@@ -1,4 +1,4 @@
-$NetBSD: version,v 1.12 2009/01/28 15:03:28 tsutsui Exp $
+$NetBSD: version,v 1.13 2010/10/17 15:33:04 phx Exp $
 
 1.1:		Initial revision from NetBSD/powerpc.
 1.2:		Use MI loadfile().
@@ -12,3 +12,5 @@ $NetBSD: version,v 1.12 2009/01/28 15:03:28 tsutsui Exp $
 1.9:		Zero out the stack before we call into C code.
 1.10:		Support userconf(4).
 1.11:		Check floppyboot and disable LOAD_NOTE to avoid backward seek.
+1.12:		Read Apple Partition Map to find the root partition, when
+		no OF path was specified.
