@@ -1,4 +1,4 @@
-/*	$NetBSD: mms.c,v 1.14 2008/04/28 20:23:16 martin Exp $	*/
+/*	$NetBSD: mms.c,v 1.15 2010/10/17 14:13:44 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mms.c,v 1.14 2008/04/28 20:23:16 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mms.c,v 1.15 2010/10/17 14:13:44 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -81,9 +81,9 @@ struct mms_condition {
 #define	MMS_FUNCDATA_START	0x800
 
 struct mms_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 
-	struct device *sc_parent;
+	device_t sc_parent;
 	struct maple_unit *sc_unit;
 
 	uint32_t sc_oldbuttons;
@@ -91,11 +91,11 @@ struct mms_softc {
 	struct device *sc_wsmousedev;
 };
 
-int	mms_match(struct device *, struct cfdata *, void *);
-void	mms_attach(struct device *, struct device *, void *);
-int	mms_detach(struct device *, int);
+int	mms_match(device_t, cfdata_t, void *);
+void	mms_attach(device_t, device_t, void *);
+int	mms_detach(device_t, int);
 
-CFATTACH_DECL(mms, sizeof(struct mms_softc),
+CFATTACH_DECL_NEW(mms, sizeof(struct mms_softc),
     mms_match, mms_attach, mms_detach, NULL);
 
 int	mms_enable(void *);
@@ -111,7 +111,7 @@ const struct wsmouse_accessops mms_accessops = {
 void	mms_intr(void *, struct maple_response *, int, int);
 
 int
-mms_match(struct device *parent, struct cfdata *cf, void *aux)
+mms_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct maple_attach_args *ma = aux;
 
@@ -119,22 +119,23 @@ mms_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 void
-mms_attach(struct device *parent, struct device *self, void *aux)
+mms_attach(device_t parent, device_t self, void *aux)
 {
-	struct mms_softc *sc = (void *) self;
+	struct mms_softc *sc = device_private(self);
 	struct maple_attach_args *ma = aux;
 	struct wsmousedev_attach_args a;
 	uint32_t data;
 
 	printf(": SEGA Dreamcast Mouse\n");
 
+	sc->sc_dev = self;
 	sc->sc_parent = parent;
 	sc->sc_unit = ma->ma_unit;
 
 	data = maple_get_function_data(ma->ma_devinfo,
 	    MAPLE_FN_MOUSE);
 
-	printf("%s: buttons:", sc->sc_dev.dv_xname);
+	printf("%s: buttons:", device_xname(self));
 	if (data & MMS_FUNCDATA_A)
 		printf(" left");
 	if (data & MMS_FUNCDATA_C)
@@ -163,9 +164,9 @@ mms_attach(struct device *parent, struct device *self, void *aux)
 }
 
 int
-mms_detach(struct device *self, int flags)
+mms_detach(device_t self, int flags)
 {
-	struct mms_softc *sc = (void *) self;
+	struct mms_softc *sc = device_private(self);
 	int rv = 0;
 
 	if (sc->sc_wsmousedev != NULL)
