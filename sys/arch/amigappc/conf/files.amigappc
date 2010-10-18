@@ -1,4 +1,4 @@
-#	$NetBSD: files.amigappc,v 1.22 2010/02/02 19:07:05 phx Exp $
+#	$NetBSD: files.amigappc,v 1.23 2010/10/18 22:00:47 phx Exp $
 
 # maxpartitions must be first item in files.${ARCH}.newconf
 maxpartitions 16			# NOTE THAT AMIGA IS SPECIAL!
@@ -30,6 +30,8 @@ defflag	opt_retina.h		RETINA_SPEED_HACK
 defflag				BB060STUPIDROM
 defflag				P5PPC68KBOARD
 defflag				LEV6_DEFER
+
+defparam			IOBZCLOCK
 
 file	dev/cons.c				ite | ser
 file	dev/cninit.c				ite | ser
