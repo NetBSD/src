@@ -1,4 +1,4 @@
-/*	$NetBSD: filesystem.c,v 1.8 2010/10/14 06:50:44 kiyohara Exp $	*/
+/*	$NetBSD: filesystem.c,v 1.9 2010/10/18 17:56:40 kiyohara Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -30,11 +30,13 @@
  */
 
 #include <lib/libsa/stand.h>
+#include <lib/libsa/ustarfs.h>
 #include <ufs.h>
 
 struct fs_ops file_system[] = {
 	FS_OPS(ffsv1),
 	FS_OPS(ffsv2),
+	FS_OPS(ustarfs),
 	FS_OPS(null),
 };
 
