@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.169 2010/07/07 11:42:18 pooka Exp $ */
+/* $NetBSD: vmstat.c,v 1.170 2010/10/18 19:39:32 christos Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001, 2007 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.169 2010/07/07 11:42:18 pooka Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.170 2010/10/18 19:39:32 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -296,6 +296,9 @@ char	*nlistf, *memf;
 /* allow old usage [vmstat 1] */
 #define	BACKWARD_COMPATIBILITY
 
+static const int vmmeter_mib[] = { CTL_VM, VM_METER };
+static const int uvmexp2_mib[] = { CTL_VM, VM_UVMEXP2 };
+
 int
 main(int argc, char *argv[])
 {
@@ -410,7 +413,9 @@ main(int argc, char *argv[])
 			    i != X_TIME_SECOND &&
 			    i != X_TIME) {
 				if (doexit++ == 0)
-					(void)fprintf(stderr, "vmstat: undefined symbols:");
+					(void)fprintf(stderr,
+					    "%s: undefined symbols:",
+					    getprogname());
 				(void)fprintf(stderr, " %s",
 				    namelist[i].n_name);
 			}
@@ -599,7 +604,6 @@ void
 dovmtotal(struct timespec *interval, int reps)
 {
 	struct vmtotal total;
-	int mib[2];
 	size_t size;
 
 	(void)signal(SIGCONT, needhdr);
@@ -608,16 +612,13 @@ dovmtotal(struct timespec *interval, int reps)
 		if (!--hdrcnt)
 			print_total_hdr();
 		if (memf != NULL) {
-			(void)printf(
-			    "Unable to get vmtotals from crash dump.\n");
+			warnx("Unable to get vmtotals from crash dump.");
 			(void)memset(&total, 0, sizeof(total));
 		} else {
 			size = sizeof(total);
-			mib[0] = CTL_VM;
-			mib[1] = VM_METER;
-			if (sysctl(mib, 2, &total, &size, NULL, 0) < 0) {
-				(void)printf("Can't get vmtotals: %s\n",
-				    strerror(errno));
+			if (sysctl(vmmeter_mib, __arraycount(vmmeter_mib),
+			    &total, &size, NULL, 0) == -1) {
+				warn("Can't get vmtotals");
 				(void)memset(&total, 0, sizeof(total));
 			}
 		}
@@ -650,7 +651,6 @@ dovmstat(struct timespec *interval, int reps)
 {
 	struct vmtotal total;
 	time_t uptime, halfuptime;
-	int mib[2];
 	size_t size;
 	int pagesize = getpagesize();
 	int ovflw;
@@ -677,16 +677,13 @@ dovmstat(struct timespec *interval, int reps)
 			 * XXX Can't do this if we're reading a crash
 			 * XXX dump because they're lazily-calculated.
 			 */
-			(void)printf(
-			    "Unable to get vmtotals from crash dump.\n");
+			warnx("Unable to get vmtotals from crash dump.");
 			(void)memset(&total, 0, sizeof(total));
 		} else {
 			size = sizeof(total);
-			mib[0] = CTL_VM;
-			mib[1] = VM_METER;
-			if (sysctl(mib, 2, &total, &size, NULL, 0) < 0) {
-				(void)printf("Can't get vmtotals: %s\n",
-				    strerror(errno));
+			if (sysctl(vmmeter_mib, __arraycount(vmmeter_mib),
+			    &total, &size, NULL, 0) == -1) {
+				warn("Can't get vmtotals");
 				(void)memset(&total, 0, sizeof(total));
 			}
 		}
@@ -784,7 +781,6 @@ dosum(void)
 {
 	struct nchstats nchstats;
 	u_long nchtotal;
-	int mib[2];
 	struct uvmexp_sysctl uvmexp2;
 	size_t ssize;
 	int active_kernel;
@@ -799,11 +795,9 @@ dosum(void)
 	active_kernel = (memf == NULL);
 	if (active_kernel) {
 		/* only on active kernel */
-		mib[0] = CTL_VM;
-		mib[1] = VM_UVMEXP2;
-		if (sysctl(mib, 2, &uvmexp2, &ssize, NULL, 0) < 0)
-			fprintf(stderr, "%s: sysctl vm.uvmexp2 failed: %s",
-				getprogname(), strerror(errno));
+		if (sysctl(uvmexp2_mib, __arraycount(uvmexp2_mib), &uvmexp2,
+		    &ssize, NULL, 0) == -1)
+			warn("sysctl vm.uvmexp2 failed");
 	}
 
 	kread(namelist, X_UVMEXP, &uvmexp, sizeof(uvmexp));
