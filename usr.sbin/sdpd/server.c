@@ -1,4 +1,4 @@
-/*	$NetBSD: server.c,v 1.8 2010/03/07 10:58:40 plunky Exp $	*/
+/*	$NetBSD: server.c,v 1.9 2010/10/18 20:43:23 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: server.c,v 1.8 2010/03/07 10:58:40 plunky Exp $");
+__RCSID("$NetBSD: server.c,v 1.9 2010/10/18 20:43:23 plunky Exp $");
 
 #include <sys/select.h>
 #include <sys/stat.h>
@@ -564,14 +564,14 @@ server_close_fd(server_t *srv, int fd)
 	FD_CLR(fd, &srv->fdset);
 	srv->fdidx[fd].valid = false;
 
+	log_debug("client on fd#%d closed", fd);
+
 	if (fd == srv->fdmax) {
 		while (fd > 0 && !srv->fdidx[fd].valid)
 			fd--;
 
 		srv->fdmax = fd;
 	}
-
-	log_debug("client on fd#%d closed", fd);
 }
 
 /*
