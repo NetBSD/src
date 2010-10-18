@@ -1,4 +1,4 @@
-/*	$NetBSD: bzsc.c,v 1.46 2010/06/06 04:50:06 mrg Exp $ */
+/*	$NetBSD: bzsc.c,v 1.47 2010/10/18 22:02:25 phx Exp $ */
 
 /*
  * Copyright (c) 1997 Michael L. Hitch
@@ -36,10 +36,12 @@
  * SUCH DAMAGE.
  */
 
+#ifdef __m68k__
 #include "opt_m68k_arch.h"
+#endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bzsc.c,v 1.46 2010/06/06 04:50:06 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bzsc.c,v 1.47 2010/10/18 22:02:25 phx Exp $");
 
 /*
  * Initial amiga Blizzard 1230-II driver by Daniel Widenfalk.  Conversion to
