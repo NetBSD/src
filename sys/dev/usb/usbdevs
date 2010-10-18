@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.563 2010/10/01 20:56:10 christos Exp $
+$NetBSD: usbdevs,v 1.564 2010/10/18 16:10:55 sborrill Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -1456,6 +1456,7 @@ product KEYSPAN UIA11		0x0202	UIA-11 remote control
 /* Kingston products */
 product KINGSTON XX1		0x0008	Ethernet Adapter
 product KINGSTON KNU101TX	0x000a	KNU101TX USB Ethernet
+product	KINGSTON DTMINI10	0x162c	DT Mini 10
 
 /* Kodak products */
 product KODAK DC220		0x0100	Digital Science DC220
