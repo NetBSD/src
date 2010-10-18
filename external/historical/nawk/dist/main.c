@@ -49,8 +49,6 @@ extern	int errorflag;	/* non-zero if any syntax errors; set by yyerror */
 int	compile_time = 2;	/* for error printing: */
 				/* 2 = cmdline, 1 = compile, 0 = running */
 
-#define	MAX_PFILE	20	/* max number of -f's */
-
 static char	**pfile = NULL;	/* program filenames from -f's */
 static size_t 	maxpfile = 0;	/* max program filenames */
 static size_t	npfile = 0;	/* number of filenames */
