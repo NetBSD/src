@@ -1,4 +1,4 @@
-.\"	$NetBSD: swsensor.4,v 1.1 2010/10/19 11:55:38 pgoyette Exp $
+.\"	$NetBSD: swsensor.4,v 1.2 2010/10/19 12:53:23 wiz Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation
 .\" All rights reserved.
@@ -44,21 +44,23 @@ and
 .Xr envstat 8 .
 The driver creates a single sensor which is intended to be loaded as a
 kernel module.
-By default, the sensor is of type ENVSYS_UNITS_INTEGER.
+By default, the sensor is of type
+.Dv ENVSYS_UNITS_INTEGER .
 This can be overridden when the module is loaded by passing the desired
 sensor type in the property list with
 .Xr modload 8 .
 For example,
 .Dl Ic modload -i type=1 swsensor
-will create a sensor of type ENVSYS_UNITS_SFANRPM.
+will create a sensor of type
+.Dv ENVSYS_UNITS_SFANRPM .
 .Pp
 The sensor's raw value can be manually updated by modifying the
 .Xr sysctl 8
 variable
 .Dq hw.swsensor.cur_value .
 .Sh SEE ALSO
+.Xr modctl 2 ,
 .Xr envstat 8 ,
-.Xr modctl 8 ,
 .Xr sysctl 8
 .Sh HISTORY
 The
