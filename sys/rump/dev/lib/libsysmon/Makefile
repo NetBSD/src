@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2010/07/22 14:10:14 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.4 2010/10/19 11:58:01 pgoyette Exp $
 #
 
 .PATH:	${.CURDIR}/../../../../dev/sysmon
@@ -8,7 +8,7 @@ IOCONF=	SYSMON.ioconf
 
 SRCS=	sysmon_taskq.c sysmon_power.c sysmon_envsys.c sysmon_envsys_events.c \
 	sysmon_envsys_tables.c sysmon_envsys_util.c sysmon_wdog.c sysmon.c \
-	swwdog.c
+	swsensor.c swwdog.c
 
 SRCS+=	component.c 
 
