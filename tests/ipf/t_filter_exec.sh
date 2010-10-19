@@ -1,4 +1,4 @@
-# $NetBSD: t_filter_exec.sh,v 1.1 2010/07/10 17:28:36 jmmv Exp $
+# $NetBSD: t_filter_exec.sh,v 1.2 2010/10/19 16:36:36 jmmv Exp $
 #
 # Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -30,20 +30,20 @@
 # See the IPFILTER.LICENCE file for details on licencing.
 #
 
-h_dotest()
+dotest()
 {
 	h_copydata $1
 
 	{ while read rule; do
 		atf_check -x "echo \"$rule\" | ipftest -F \
-$2 -Rbr - -i in $4 >>out"
+$2 -Rbr - -i in $4 $5 >>out"
 		echo "--------" >>out
 	done; } <reg
 
 	diff -u exp out || atf_fail "results differ"
 }
 
-h_mtest()
+mtest()
 {
 	h_copydata $1
 
@@ -53,7 +53,7 @@ h_mtest()
 	diff -u exp out || atf_fail "results differ"
 }
 
-h_dotest6()
+dotest6()
 {
 	h_copydata $(echo ${1} | tr _ .)
 
@@ -88,7 +88,7 @@ test_case f15 mtest text text
 test_case f16 mtest text text
 test_case f17 mtest hex hex
 test_case f18 mtest text text
-test_case f19 dotest text text -T fr_statemax=3
+broken_test_case f19 dotest text text -T fr_statemax=3
 test_case f20 mtest text text
 test_case f24 mtest hex text
 test_case ipv6_1 dotest6 hex hex
