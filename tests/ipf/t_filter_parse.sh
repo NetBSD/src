@@ -1,4 +1,4 @@
-# $NetBSD: t_filter_parse.sh,v 1.1 2010/07/10 17:28:36 jmmv Exp $
+# $NetBSD: t_filter_parse.sh,v 1.2 2010/10/19 16:36:36 jmmv Exp $
 #
 # Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -30,7 +30,7 @@
 # See the IPFILTER.LICENCE file for details on licencing.
 #
 
-h_itest()
+itest()
 {
 	h_copydata $1
 
@@ -44,7 +44,7 @@ h_itest()
 	esac
 }
 
-h_itest_i19()
+itest_i19()
 {
 	cp "$(atf_get_srcdir)/expected/i19.dist" .
 
@@ -80,7 +80,7 @@ h_itest_i19()
 	/bin/rm i19.p?
 
 	mv i19 exp
-	h_itest "$@"
+	itest "$@"
 }
 
 test_case i1 itest text ipf
