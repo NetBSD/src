@@ -34,7 +34,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: netpgp.c,v 1.76 2010/09/10 20:14:19 agc Exp $");
+__RCSID("$NetBSD: netpgp.c,v 1.77 2010/10/19 00:00:00 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -1118,7 +1118,7 @@ netpgp_generate_key(netpgp_t *netpgp, char *id, int numbits)
 	__ops_sprint_keydata(netpgp->io, NULL, key, &cp, "signature ", &key->key.seckey.pubkey, 0);
 	(void) fprintf(stdout, "%s", cp);
 	/* write public key */
-	(void) snprintf(dir, sizeof(dir), "%s/%.16s", netpgp_getvar(netpgp, "homedir"), &cp[31]);
+	(void) snprintf(dir, sizeof(dir), "%s/%.16s", netpgp_getvar(netpgp, "homedir"), &cp[38]);
 	if (mkdir(dir, 0700) < 0) {
 		(void) fprintf(io->errs, "can't mkdir '%s'\n", dir);
 		return 0;
@@ -1795,7 +1795,6 @@ netpgp_write_sshkey(netpgp_t *netpgp, char *s, const char *userid, char *out, si
 	cc = formatstring((char *)out, (const uint8_t *)"ssh-rsa", 7);
 	cc += formatbignum((char *)&out[cc], key->key.pubkey.key.rsa.e);
 	cc += formatbignum((char *)&out[cc], key->key.pubkey.key.rsa.n);
-	cc += snprintf(&out[cc], size - cc, " %s", key->uids[0]);
 	free(io);
 	free(keyring);
 	return cc;
