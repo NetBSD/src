@@ -1,4 +1,4 @@
-/* $NetBSD: vga.c,v 1.104 2010/04/19 18:24:26 dyoung Exp $ */
+/* $NetBSD: vga.c,v 1.105 2010/10/19 22:27:54 jmcneill Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga.c,v 1.104 2010/04/19 18:24:26 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga.c,v 1.105 2010/10/19 22:27:54 jmcneill Exp $");
 
 /* for WSCONS_SUPPORT_PCVTFONTS */
 #include "opt_wsdisplay_compat.h"
@@ -1479,5 +1479,10 @@ vga_resume(struct vga_softc *sc)
 {
 #ifdef VGA_RESET_ON_RESUME
 	vga_initregs(&sc->sc_vc->hdl);
+#endif
+#ifdef PCDISPLAY_SOFTCURSOR
+	/* Disable the hardware cursor */
+	vga_6845_write(&sc->sc_vc->hdl, curstart, 0x20);
+	vga_6845_write(&sc->sc_vc->hdl, curend, 0x00);
 #endif
 }
