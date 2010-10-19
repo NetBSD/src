@@ -1,4 +1,4 @@
-/*	$NetBSD: component.c,v 1.4 2010/08/10 21:48:23 pooka Exp $	*/
+/*	$NetBSD: component.c,v 1.5 2010/10/19 15:40:15 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: component.c,v 1.4 2010/08/10 21:48:23 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: component.c,v 1.5 2010/10/19 15:40:15 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/domain.h>
@@ -42,10 +42,11 @@ __KERNEL_RCSID(0, "$NetBSD: component.c,v 1.4 2010/08/10 21:48:23 pooka Exp $");
 
 RUMP_COMPONENT(RUMP_COMPONENT_NET_ROUTE)
 {
-	extern struct domain routedomain;
+	extern struct domain routedomain, linkdomain;
 
 	ifinit1();
 	ifinit();
 	loopattach(1);
+	DOMAINADD(linkdomain);
 	DOMAINADD(routedomain);
 }
