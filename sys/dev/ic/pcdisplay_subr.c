@@ -1,4 +1,4 @@
-/* $NetBSD: pcdisplay_subr.c,v 1.34 2007/10/19 11:59:58 ad Exp $ */
+/* $NetBSD: pcdisplay_subr.c,v 1.35 2010/10/19 22:27:19 jmcneill Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcdisplay_subr.c,v 1.34 2007/10/19 11:59:58 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcdisplay_subr.c,v 1.35 2010/10/19 22:27:19 jmcneill Exp $");
 
 #include "opt_wsmsgattrs.h" /* for WSDISPLAY_CUSTOM_OUTPUT */
 
@@ -51,8 +51,9 @@ pcdisplay_cursor_init(struct pcdisplayscreen *scr, int existing)
 	bus_space_handle_t memh;
 	int off;
 
-	pcdisplay_6845_write(scr->hdl, curstart, 0x10);
-	pcdisplay_6845_write(scr->hdl, curend, 0x10);
+	/* Disable the hardware cursor */
+	pcdisplay_6845_write(scr->hdl, curstart, 0x20);
+	pcdisplay_6845_write(scr->hdl, curend, 0x00);
 
 	if (existing) {
 		/*
