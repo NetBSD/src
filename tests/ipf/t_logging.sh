@@ -1,4 +1,4 @@
-# $NetBSD: t_logging.sh,v 1.1 2010/07/10 17:28:36 jmmv Exp $
+# $NetBSD: t_logging.sh,v 1.2 2010/10/19 16:36:36 jmmv Exp $
 #
 # Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -30,7 +30,7 @@
 # See the IPFILTER.LICENCE file for details on licencing.
 #
 
-h_logtest()
+logtest()
 {
 	h_copydata $1
 	cp $(atf_get_srcdir)/expected/$1.b exp.b

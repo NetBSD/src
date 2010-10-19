@@ -1,4 +1,4 @@
-# $NetBSD: t_nat_parse.sh,v 1.1 2010/07/10 17:28:36 jmmv Exp $
+# $NetBSD: t_nat_parse.sh,v 1.2 2010/10/19 16:36:36 jmmv Exp $
 #
 # Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -30,7 +30,7 @@
 # See the IPFILTER.LICENCE file for details on licencing.
 #
 
-h_intest()
+intest()
 {
 	h_copydata $1
 
@@ -38,7 +38,7 @@ h_intest()
 }
 
 test_case in1 intest text text
-test_case in2 intest text text
+broken_test_case in2 intest text text
 test_case in3 intest text text
 test_case in4 intest text text
 test_case in5 intest text text

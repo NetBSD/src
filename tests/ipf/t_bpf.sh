@@ -1,4 +1,4 @@
-# $NetBSD: t_bpf.sh,v 1.1 2010/07/10 17:28:36 jmmv Exp $
+# $NetBSD: t_bpf.sh,v 1.2 2010/10/19 16:36:36 jmmv Exp $
 #
 # Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -30,7 +30,7 @@
 # See the IPFILTER.LICENCE file for details on licencing.
 #
 
-h_itest()
+itest()
 {
 	h_copydata $1
 
@@ -44,7 +44,7 @@ h_itest()
 	esac
 }
 
-h_bpftest()
+bpftest()
 {
 	h_copydata $(echo ${1} | tr _ .)
 	cp "$(atf_get_srcdir)/input/$(echo ${1} | sed s,bpf_,,)" in
