@@ -1,4 +1,4 @@
-/*	$NetBSD: component.c,v 1.4 2010/10/04 15:57:27 pgoyette Exp $	*/
+/*	$NetBSD: component.c,v 1.5 2010/10/19 11:58:01 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: component.c,v 1.4 2010/10/04 15:57:27 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: component.c,v 1.5 2010/10/19 11:58:01 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -43,6 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: component.c,v 1.4 2010/10/04 15:57:27 pgoyette Exp $
 #include "ioconf.c"
 
 void swwdogattach(int);
+void swsensorattach(int);
 
 RUMP_COMPONENT(RUMP_COMPONENT_DEV)
 {
@@ -78,4 +79,5 @@ RUMP_COMPONENT(RUMP_COMPONENT_DEV)
 	sysmon_wdog_init();
 
 	rump_pdev_add(swwdogattach, 0);
+	rump_pdev_add(swsensorattach, 0);
 }
