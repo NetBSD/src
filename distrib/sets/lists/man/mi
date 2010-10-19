@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1240 2010/10/12 23:01:55 gsutre Exp $
+# $NetBSD: mi,v 1.1241 2010/10/19 11:58:00 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1544,6 +1544,7 @@
 ./usr/share/man/cat4/svwsata.0			man-sys-catman		.cat
 ./usr/share/man/cat4/sw.0			man-sys-catman		.cat
 ./usr/share/man/cat4/swcrypto.0			man-sys-catman		.cat
+./usr/share/man/cat4/swsensor.0			man-sys-catman		.cat
 ./usr/share/man/cat4/swwdog.0			man-sys-catman		.cat
 ./usr/share/man/cat4/sysbeep.0			man-sys-catman		.cat
 ./usr/share/man/cat4/systrace.0			man-obsolete		obsolete
@@ -4158,6 +4159,7 @@
 ./usr/share/man/html4/svwsata.html		man-sys-htmlman		html
 ./usr/share/man/html4/sw.html			man-sys-htmlman		html
 ./usr/share/man/html4/swcrypto.html		man-sys-htmlman		html
+./usr/share/man/html4/swsensor.html		man-sys-htmlman		html
 ./usr/share/man/html4/swwdog.html		man-sys-htmlman		html
 ./usr/share/man/html4/sysbeep.html		man-sys-htmlman		html
 ./usr/share/man/html4/tap.html			man-sys-htmlman		html
@@ -6694,6 +6696,7 @@
 ./usr/share/man/man4/svwsata.4			man-sys-man		.man
 ./usr/share/man/man4/sw.4			man-sys-man		.man
 ./usr/share/man/man4/swcrypto.4			man-sys-man		.man
+./usr/share/man/man4/swsensor.4			man-sys-man		.man
 ./usr/share/man/man4/swwdog.4			man-sys-man		.man
 ./usr/share/man/man4/sysbeep.4			man-sys-man		.man
 ./usr/share/man/man4/systrace.4			man-obsolete		obsolete
