@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.7 2010/07/03 08:14:13 jmmv Exp $
+# $NetBSD: Makefile,v 1.8 2010/10/20 09:20:13 jmmv Exp $
 
 .include <bsd.own.mk>
 
@@ -9,11 +9,12 @@ SRCDIR=		${NETBSDSRCDIR}/external/bsd/atf/dist
 
 BINDIR=		/usr/bin
 PROG_CXX=	atf-run
-SRCS=		atf-run.cpp atffile.cpp config.cpp fs.cpp requirements.cpp \
-		test-program.cpp timer.cpp
+SRCS=		atf-run.cpp atffile.cpp config.cpp fs.cpp io.cpp requirements.cpp \
+		signals.cpp test-program.cpp timer.cpp user.cpp
 MAN=		atf-run.1
 
 CPPFLAGS+=	-DHAVE_CONFIG_H
+CPPFLAGS+=	-I${SRCDIR}
 CPPFLAGS+=	-I${.CURDIR}/../../lib/libatf-c
 LDADD+=		-latf-c++ -latf-c
 

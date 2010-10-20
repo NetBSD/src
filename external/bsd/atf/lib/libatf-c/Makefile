@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.6 2010/07/03 08:14:11 jmmv Exp $
+# $NetBSD: Makefile,v 1.7 2010/10/20 09:20:09 jmmv Exp $
 
 NOLINT=		# defined
 
@@ -10,6 +10,7 @@ NOPIC=		# defined; interface is still too unstable
 SRCDIR=		${NETBSDSRCDIR}/external/bsd/atf/dist
 .PATH:		${SRCDIR}
 .PATH:		${SRCDIR}/atf-c
+.PATH:		${SRCDIR}/atf-c/detail
 
 CPPFLAGS+=	-I${.CURDIR}
 CPPFLAGS+=	-I.
@@ -47,6 +48,7 @@ SRCS=		build.c \
 		sanity.c \
 		text.c \
 		user.c \
+		utils.c \
 		tc.c \
 		tp.c \
 		tp_main.c
@@ -55,20 +57,12 @@ INCS=		build.h \
 		check.h \
 		config.h \
 		defs.h \
-		dynstr.h \
-		env.h \
 		error.h \
 		error_fwd.h \
-		fs.h \
-		list.h \
 		macros.h \
-		map.h \
-		process.h \
-		sanity.h \
 		tc.h \
-		text.h \
 		tp.h \
-		user.h
+		utils.h
 INCSDIR=	/usr/include/atf-c
 
 INCS+=		atf-c.h
@@ -90,7 +84,7 @@ FILESDIR=	/usr/lib/pkgconfig
 
 realall: atf-c.pc
 atf-c.pc: Makefile atf-c.pc.in
-	${TOOL_SED} -e 's,__ATF_VERSION__,0.10,g' \
+	${TOOL_SED} -e 's,__ATF_VERSION__,0.11,g' \
 	    -e 's,__CC__,gcc,g' \
 	    -e 's,__INCLUDEDIR__,/usr/include,g' \
 	    -e 's,__LIBDIR__,/usr/lib,g' \
