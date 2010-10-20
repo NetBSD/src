@@ -2,6 +2,29 @@ Major changes between releases                  Automated Testing Framework
 ===========================================================================
 
 
+Changes in version 0.11
+***********************
+
+Experimental version released on October 20th, 2010.
+
+* The ATF_CHECK* macros in atf-c++ were renamed to ATF_REQUIRE* to match
+  their counterparts in atf-c.
+
+* Clearly separated the modules in atf-c that are supposed to be public
+  from those that are implementation details.  The header files for the
+  internal modules are not installed any more.
+
+* Made the atf-check tool private.  It is only required by atf-sh and being
+  public has the danger of causing confusion.  Also, making it private
+  simplifies the public API of atf.
+
+* Changed atf-sh to enable per-command error checking (set -e) by default.
+  This catches many cases in which a test case is broken but it is not
+  reported as such because execution continues.
+
+* Fixed the XSTL and CSS stylesheets to support expected failures.
+
+
 Changes in version 0.10
 ***********************
 

@@ -39,16 +39,18 @@ extern "C" {
 #include <cstdlib>
 #include <cstring>
 #include <fstream>
+#include <iostream>
 
-#include "atf-c++/env.hpp"
-#include "atf-c++/parser.hpp"
-#include "atf-c++/process.hpp"
-#include "atf-c++/sanity.hpp"
-#include "atf-c++/signals.hpp"
-#include "atf-c++/text.hpp"
+#include "atf-c++/detail/env.hpp"
+#include "atf-c++/detail/parser.hpp"
+#include "atf-c++/detail/process.hpp"
+#include "atf-c++/detail/sanity.hpp"
+#include "atf-c++/detail/text.hpp"
 
 #include "config.hpp"
 #include "fs.hpp"
+#include "io.hpp"
+#include "signals.hpp"
 #include "test-program.hpp"
 #include "timer.hpp"
 
@@ -56,6 +58,20 @@ namespace impl = atf::atf_run;
 namespace detail = atf::atf_run::detail;
 
 namespace {
+
+static void
+check_stream(std::ostream& os)
+{
+    // If we receive a signal while writing to the stream, the bad bit gets set.
+    // Things seem to behave fine afterwards if we clear such error condition.
+    // However, I'm not sure if it's safe to query errno at this point.
+    if (os.bad()) {
+        if (errno == EINTR)
+            os.clear();
+        else
+            throw std::runtime_error("Failed");
+    }
+}
 
 namespace atf_tp {
 
@@ -109,28 +125,6 @@ public:
         const
     {
         return m_tcs;
-    }
-};
-
-class output_muxer : public atf::io::std_muxer {
-    impl::atf_tps_writer& m_writer;
-
-    void
-    got_stdout_line(const std::string& line)
-    {
-        m_writer.stdout_tc(line);
-    }
-
-    void
-    got_stderr_line(const std::string& line)
-    {
-        m_writer.stderr_tc(line);
-    }
-
-public:
-    output_muxer(impl::atf_tps_writer& writer) :
-        m_writer(writer)
-    {
     }
 };
 
@@ -234,8 +228,8 @@ prepare_child(const atf::fs::path& workdir)
 
     ::umask(S_IWGRP | S_IWOTH);
 
-    for (int i = 1; i <= atf::signals::last_signo; i++)
-        atf::signals::reset(i);
+    for (int i = 1; i <= impl::last_signo; i++)
+        impl::reset(i);
 
     atf::env::set("HOME", workdir.str());
     atf::env::unset("LANG");
@@ -360,7 +354,7 @@ handle_result_with_reason_and_arg(const std::string& state,
     } else {
         try {
             value = atf::text::to_type< int >(arg);
-        } catch (const std::runtime_error& e) {
+        } catch (const std::runtime_error&) {
             throw std::runtime_error("The value '" + arg + "' passed to the '" +
                 state + "' state must be an integer");
         }
@@ -410,7 +404,7 @@ detail::atf_tp_reader::validate_and_insert(const std::string& name,
     } else if (name == "has.cleanup") {
         try {
             (void)atf::text::to_bool(value);
-        } catch (const std::runtime_error& e) {
+        } catch (const std::runtime_error&) {
             throw parse_error(lineno, "The has.cleanup property requires a"
                               " boolean value");
         }
@@ -430,7 +424,7 @@ detail::atf_tp_reader::validate_and_insert(const std::string& name,
     } else if (name == "use.fs") {
         try {
             (void)atf::text::to_bool(value);
-        } catch (const std::runtime_error& e) {
+        } catch (const std::runtime_error&) {
             throw parse_error(lineno, "The use.fs property requires a boolean"
                               " value");
         }
@@ -538,14 +532,14 @@ impl::atf_tps_writer::atf_tps_writer(std::ostream& os) :
 void
 impl::atf_tps_writer::info(const std::string& what, const std::string& val)
 {
-    m_os << "info: " << what << ", " << val << std::endl;
+    m_os << "info: " << what << ", " << val << "\n";
     m_os.flush();
 }
 
 void
 impl::atf_tps_writer::ntps(size_t p_ntps)
 {
-    m_os << "tps-count: " << p_ntps << std::endl;
+    m_os << "tps-count: " << p_ntps << "\n";
     m_os.flush();
 }
 
@@ -553,7 +547,7 @@ void
 impl::atf_tps_writer::start_tp(const std::string& tp, size_t ntcs)
 {
     m_tpname = tp;
-    m_os << "tp-start: " << tp << ", " << ntcs << std::endl;
+    m_os << "tp-start: " << tp << ", " << ntcs << "\n";
     m_os.flush();
 }
 
@@ -562,9 +556,9 @@ impl::atf_tps_writer::end_tp(const std::string& reason)
 {
     PRE(reason.find('\n') == std::string::npos);
     if (reason.empty())
-        m_os << "tp-end: " << m_tpname << std::endl;
+        m_os << "tp-end: " << m_tpname << "\n";
     else
-        m_os << "tp-end: " << m_tpname << ", " << reason << std::endl;
+        m_os << "tp-end: " << m_tpname << ", " << reason << "\n";
     m_os.flush();
 }
 
@@ -572,22 +566,26 @@ void
 impl::atf_tps_writer::start_tc(const std::string& tcname)
 {
     m_tcname = tcname;
-    m_os << "tc-start: " << tcname << std::endl;
+    m_os << "tc-start: " << tcname << "\n";
     m_os.flush();
 }
 
 void
 impl::atf_tps_writer::stdout_tc(const std::string& line)
 {
-    m_os << "tc-so:" << line << std::endl;
+    m_os << "tc-so:" << line << "\n";
+    check_stream(m_os);
     m_os.flush();
+    check_stream(m_os);
 }
 
 void
 impl::atf_tps_writer::stderr_tc(const std::string& line)
 {
-    m_os << "tc-se:" << line << std::endl;
+    m_os << "tc-se:" << line << "\n";
+    check_stream(m_os);
     m_os.flush();
+    check_stream(m_os);
 }
 
 void
@@ -597,7 +595,7 @@ impl::atf_tps_writer::end_tc(const std::string& state,
     std::string str = "tc-end: " + m_tcname + ", " + state;
     if (!reason.empty())
         str += ", " + reason;
-    m_os << str << std::endl;
+    m_os << str << "\n";
     m_os.flush();
 }
 
@@ -612,8 +610,7 @@ impl::get_metadata(const atf::fs::path& executable,
                            atf::process::stream_inherit(),
                            static_cast< void * >(&params));
 
-    atf::io::file_handle outfh = child.stdout_fd();
-    atf::io::pistream outin(outfh);
+    impl::pistream outin(child.stdout_fd());
 
     metadata_reader parser(outin);
     parser.read();
@@ -646,6 +643,40 @@ impl::read_test_case_result(const atf::fs::path& results_path)
     return detail::parse_test_case_result(line);
 }
 
+namespace {
+
+static volatile bool terminate_poll;
+
+static void
+sigchld_handler(const int signo)
+{
+    terminate_poll = true;
+}
+
+class child_muxer : public impl::muxer {
+    impl::atf_tps_writer& m_writer;
+
+    void
+    line_callback(const size_t index, const std::string& line)
+    {
+        switch (index) {
+        case 0: m_writer.stdout_tc(line); break;
+        case 1: m_writer.stderr_tc(line); break;
+        default: UNREACHABLE;
+        }
+    }
+
+public:
+    child_muxer(const int* fds, const size_t nfds,
+                impl::atf_tps_writer& writer) :
+        muxer(fds, nfds),
+        m_writer(writer)
+    {
+    }
+};
+
+} // anonymous namespace
+
 std::pair< std::string, atf::process::status >
 impl::run_test_case(const atf::fs::path& executable,
                     const std::string& test_case_name,
@@ -667,38 +698,44 @@ impl::run_test_case(const atf::fs::path& executable,
                            atf::process::stream_capture(),
                            static_cast< void * >(&params));
 
+    terminate_poll = false;
+
     const atf::tests::vars_map::const_iterator iter = metadata.find("timeout");
     INV(iter != metadata.end());
     const unsigned int timeout =
         atf::text::to_type< unsigned int >((*iter).second);
     const pid_t child_pid = child.pid();
-    child_timer timeout_timer(timeout, child_pid);
 
     // Get the input stream of stdout and stderr.
-    atf::io::file_handle outfh = child.stdout_fd();
-    atf::io::unbuffered_istream outin(outfh);
-    atf::io::file_handle errfh = child.stderr_fd();
-    atf::io::unbuffered_istream errin(errfh);
+    impl::file_handle outfh = child.stdout_fd();
+    impl::file_handle errfh = child.stderr_fd();
+
+    bool timed_out = false;
 
     // Process the test case's output and multiplex it into our output
     // stream as we read it.
+    int fds[2] = {outfh.get(), errfh.get()};
+    child_muxer mux(fds, 2, writer);
     try {
-        output_muxer muxer(writer);
-        muxer.read(outin, errin);
-        outin.close();
-        errin.close();
+        child_timer timeout_timer(timeout, child_pid, terminate_poll);
+        signal_programmer sigchld(SIGCHLD, sigchld_handler);
+        mux.mux(terminate_poll);
+        timed_out = timeout_timer.fired();
     } catch (...) {
         UNREACHABLE;
     }
 
+    ::killpg(child_pid, SIGTERM);
+    mux.flush();
     atf::process::status status = child.wait();
     ::killpg(child_pid, SIGKILL);
 
     std::string reason;
 
-    if (timeout_timer.fired()) {
-        INV(status.signaled());
-        INV(status.termsig() == SIGKILL);
+    if (timed_out) {
+        // Don't assume the child process has been signaled due to the timeout
+        // expiration as older versions did.  The child process may have exited
+        // but we may have timed out due to a subchild process getting stuck.
         reason = "Test case timed out after " + atf::text::to_string(timeout) +
             " " + (timeout == 1 ? "second" : "seconds");
     }

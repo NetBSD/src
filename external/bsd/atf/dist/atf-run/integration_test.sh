@@ -310,6 +310,22 @@ fds_body()
         -e empty atf-run
 }
 
+atf_test_case mux_streams
+mux_streams_head()
+{
+    atf_set "descr" "Tests for a race condition in stream multiplexing"
+    atf_set "use.fs" "true"
+}
+mux_streams_body()
+{
+    create_helper mux_streams
+
+    for i in 1 2 3 4 5; do
+        echo "Attempt ${i}"
+        atf_check -s eq:0 -o match:'stdout 9999' -o match:'stderr 9999' atf-run
+    done
+}
+
 atf_test_case expect
 expect_head()
 {
@@ -650,7 +666,9 @@ cleanup_pass_body()
     atf_check -s eq:0 -o match:'cleanup_states, passed' -e ignore atf-run \
         -v state=pass -v statedir=$(pwd) helper
     test -f to-stay || atf_fail "Test case body did not run correctly"
-    test -f to-delete && atf_fail "Test case cleanup did not run correctly"
+    if [ -f to-delete ]; then
+        atf_fail "Test case cleanup did not run correctly"
+    fi
 }
 
 atf_test_case cleanup_fail
@@ -668,7 +686,9 @@ cleanup_fail_body()
     atf_check -s eq:1 -o match:'cleanup_states, failed' -e ignore atf-run \
         -v state=fail -v statedir=$(pwd) helper
     test -f to-stay || atf_fail "Test case body did not run correctly"
-    test -f to-delete && atf_fail "Test case cleanup did not run correctly"
+    if [ -f to-delete ]; then
+        atf_fail "Test case cleanup did not run correctly"
+    fi
 }
 
 atf_test_case cleanup_skip
@@ -686,7 +706,9 @@ cleanup_skip_body()
     atf_check -s eq:0 -o match:'cleanup_states, skipped' -e ignore atf-run \
         -v state=skip -v statedir=$(pwd) helper
     test -f to-stay || atf_fail "Test case body did not run correctly"
-    test -f to-delete && atf_fail "Test case cleanup did not run correctly"
+    if [ -f to-delete ]; then
+        atf_fail "Test case cleanup did not run correctly"
+    fi
 }
 
 atf_test_case cleanup_curdir
@@ -1001,7 +1023,28 @@ timeout_body()
     atf_check -s eq:1 \
         -o match:"${TESTCASE}, failed, .*timed out after 1 second" -e ignore \
         atf-run -v statedir=$(pwd) helper
-    test -f finished && atf_fail "Test case was not killed after time out"
+    if [ -f finished ]; then
+        atf_fail "Test case was not killed after time out"
+    fi
+}
+
+atf_test_case timeout_forkexit
+timeout_forkexit_head()
+{
+    atf_set "descr" "Tests that atf-run deals gracefully with a test program" \
+        "that forks, exits, but the child process hangs"
+    atf_set "use.fs" "true"
+}
+timeout_forkexit_body()
+{
+    create_helper timeout_forkexit
+    create_atffile helper
+
+    atf_check -s eq:0 -o match:"${TESTCASE}, passed" -e ignore atf-run \
+        -v statedir=$(pwd) helper
+    test -f parent-finished || atf_fail "Parent did not exit as expected"
+    test -f child-finished && atf_fail "Subprocess exited but it should have" \
+        "been forcibly terminated" || true
 }
 
 atf_test_case use_fs
@@ -1036,6 +1079,7 @@ atf_init_test_cases()
     atf_add_test_case atffile_recursive
     atf_add_test_case expect
     atf_add_test_case fds
+    atf_add_test_case mux_streams
     atf_add_test_case missing_results
     atf_add_test_case broken_results
     atf_add_test_case broken_tp_list
@@ -1061,6 +1105,7 @@ atf_init_test_cases()
     atf_add_test_case require_user_unprivileged
     atf_add_test_case require_user_bad
     atf_add_test_case timeout
+    atf_add_test_case timeout_forkexit
     atf_add_test_case use_fs
 }
 

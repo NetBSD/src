@@ -28,14 +28,22 @@
  */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
 #include "atf-c/error.h"
-#include "atf-c/fs.h"
-#include "atf-c/sanity.h"
 #include "atf-c/tc.h"
 #include "atf-c/tp.h"
+
+#include "detail/fs.h"
+#include "detail/map.h"
+#include "detail/sanity.h"
+
+struct atf_tp_impl {
+    atf_list_t m_tcs;
+    atf_map_t m_config;
+};
 
 /* ---------------------------------------------------------------------
  * Auxiliary functions.
@@ -49,10 +57,10 @@ find_tc(const atf_tp_t *tp, const char *ident)
     atf_list_citer_t iter;
 
     tc = NULL;
-    atf_list_for_each_c(iter, &tp->m_tcs) {
+    atf_list_for_each_c(iter, &tp->pimpl->m_tcs) {
         const atf_tc_t *tc2;
         tc2 = atf_list_citer_data(iter);
-        if (strcmp(tc2->m_ident, ident) == 0) {
+        if (strcmp(atf_tc_get_ident(tc2), ident) == 0) {
             tc = tc2;
             break;
         }
@@ -69,17 +77,25 @@ find_tc(const atf_tp_t *tp, const char *ident)
  */
 
 atf_error_t
-atf_tp_init(atf_tp_t *tp, struct atf_map *config)
+atf_tp_init(atf_tp_t *tp, const char *const *config)
 {
     atf_error_t err;
 
     PRE(config != NULL);
 
-    err = atf_list_init(&tp->m_tcs);
+    tp->pimpl = malloc(sizeof(struct atf_tp_impl));
+    if (tp->pimpl == NULL)
+        return atf_no_memory_error();
+
+    err = atf_list_init(&tp->pimpl->m_tcs);
     if (atf_is_error(err))
         goto out;
 
-    tp->m_config = config;
+    err = atf_map_init_charpp(&tp->pimpl->m_config, config);
+    if (atf_is_error(err)) {
+        atf_list_fini(&tp->pimpl->m_tcs);
+        goto out;
+    }
 
     INV(!atf_is_error(err));
 out:
@@ -91,21 +107,25 @@ atf_tp_fini(atf_tp_t *tp)
 {
     atf_list_iter_t iter;
 
-    atf_list_for_each(iter, &tp->m_tcs) {
+    atf_map_fini(&tp->pimpl->m_config);
+
+    atf_list_for_each(iter, &tp->pimpl->m_tcs) {
         atf_tc_t *tc = atf_list_iter_data(iter);
         atf_tc_fini(tc);
     }
-    atf_list_fini(&tp->m_tcs);
+    atf_list_fini(&tp->pimpl->m_tcs);
+
+    free(tp->pimpl);
 }
 
 /*
  * Getters.
  */
 
-const struct atf_map *
+char **
 atf_tp_get_config(const atf_tp_t *tp)
 {
-    return tp->m_config;
+    return atf_map_to_charpp(&tp->pimpl->m_config);
 }
 
 bool
@@ -123,10 +143,33 @@ atf_tp_get_tc(const atf_tp_t *tp, const char *id)
     return tc;
 }
 
-const atf_list_t *
+const atf_tc_t *const *
 atf_tp_get_tcs(const atf_tp_t *tp)
 {
-    return &tp->m_tcs;
+    const atf_tc_t **array;
+    atf_list_citer_t iter;
+    size_t i;
+
+    array = malloc(sizeof(atf_tc_t *) *
+                   (atf_list_size(&tp->pimpl->m_tcs) + 1));
+    if (array == NULL)
+        goto out;
+
+    i = 0;
+    atf_list_for_each_c(iter, &tp->pimpl->m_tcs) {
+        array[i] = atf_list_citer_data(iter);
+        if (array[i] == NULL) {
+            free(array);
+            array = NULL;
+            goto out;
+        }
+
+        i++;
+    }
+    array[i] = NULL;
+
+out:
+    return array;
 }
 
 /*
@@ -138,11 +181,11 @@ atf_tp_add_tc(atf_tp_t *tp, atf_tc_t *tc)
 {
     atf_error_t err;
 
-    PRE(find_tc(tp, tc->m_ident) == NULL);
+    PRE(find_tc(tp, atf_tc_get_ident(tc)) == NULL);
 
-    err = atf_list_append(&tp->m_tcs, tc, false);
+    err = atf_list_append(&tp->pimpl->m_tcs, tc, false);
 
-    POST(find_tc(tp, tc->m_ident) != NULL);
+    POST(find_tc(tp, atf_tc_get_ident(tc)) != NULL);
 
     return err;
 }
@@ -152,8 +195,7 @@ atf_tp_add_tc(atf_tp_t *tp, atf_tc_t *tc)
  * --------------------------------------------------------------------- */
 
 atf_error_t
-atf_tp_run(const atf_tp_t *tp, const char *tcname,
-           const atf_fs_path_t *resfile)
+atf_tp_run(const atf_tp_t *tp, const char *tcname, const char *resfile)
 {
     const atf_tc_t *tc;
 

@@ -45,6 +45,11 @@
 <!ELEMENT tc ((so, se)*, (passed, failed, skipped))>
 <!ATTLIST tc id NMTOKEN #REQUIRED>
 
+<!ELEMENT expected_death (#PCDATA)>
+<!ELEMENT expected_exit (#PCDATA)>
+<!ELEMENT expected_failure (#PCDATA)>
+<!ELEMENT expected_signal (#PCDATA)>
+<!ELEMENT expected_timeout (#PCDATA)>
 <!ELEMENT passed EMPTY>
 <!ELEMENT failed (#PCDATA)>
 <!ELEMENT skipped (#PCDATA)>

@@ -166,7 +166,15 @@ expect_helpers (1/1): 17 test cases
     timeout_but_pass: Failed: Test case was expected to hang but it continued execution
 
 Test cases for known bugs:
-    expect_helpers:death_and_exit, expect_helpers:death_and_signal, expect_helpers:exit_any_and_exit, expect_helpers:exit_code_and_exit, expect_helpers:fail_and_fail_check, expect_helpers:fail_and_fail_requirement, expect_helpers:signal_any_and_signal, expect_helpers:signal_no_and_signal, expect_helpers:timeout_and_hang
+    expect_helpers:death_and_exit: Exit case
+    expect_helpers:death_and_signal: Signal case
+    expect_helpers:exit_any_and_exit: Call will exit
+    expect_helpers:exit_code_and_exit: Call will exit
+    expect_helpers:fail_and_fail_check: And fail again: 2 checks failed as expected; see output for more details
+    expect_helpers:fail_and_fail_requirement: Fail reason: The failure
+    expect_helpers:signal_any_and_signal: Call will signal
+    expect_helpers:signal_no_and_signal: Call will signal
+    expect_helpers:timeout_and_hang: Will overrun
 
 Failed test cases:
     expect_helpers:death_but_pass, expect_helpers:exit_but_pass, expect_helpers:fail_but_pass, expect_helpers:pass_but_fail_check, expect_helpers:pass_but_fail_requirement, expect_helpers:signal_but_pass, expect_helpers:timeout_but_pass

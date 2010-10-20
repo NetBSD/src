@@ -30,12 +30,12 @@
 #if !defined(ATF_C_TC_H)
 #define ATF_C_TC_H
 
+#include <stdbool.h>
+#include <stddef.h>
+
 #include <atf-c/defs.h>
 #include <atf-c/error_fwd.h>
-#include <atf-c/map.h>
 
-struct atf_dynstr;
-struct atf_fs_path;
 struct atf_tc;
 
 typedef void (*atf_tc_head_t)(struct atf_tc *);
@@ -50,7 +50,7 @@ typedef void (*atf_tc_cleanup_t)(const struct atf_tc *);
 struct atf_tc_pack {
     const char *m_ident;
 
-    const atf_map_t *m_config;
+    const char *const *m_config;
 
     atf_tc_head_t m_head;
     atf_tc_body_t m_body;
@@ -62,24 +62,18 @@ typedef const struct atf_tc_pack atf_tc_pack_t;
  * The "atf_tc" type.
  * --------------------------------------------------------------------- */
 
+struct atf_tc_impl;
 struct atf_tc {
-    const char *m_ident;
-
-    atf_map_t m_vars;
-    const atf_map_t *m_config;
-
-    atf_tc_head_t m_head;
-    atf_tc_body_t m_body;
-    atf_tc_cleanup_t m_cleanup;
+    struct atf_tc_impl *pimpl;
 };
 typedef struct atf_tc atf_tc_t;
 
 /* Constructors/destructors. */
 atf_error_t atf_tc_init(atf_tc_t *, const char *, atf_tc_head_t,
                         atf_tc_body_t, atf_tc_cleanup_t,
-                        const atf_map_t *);
+                        const char *const *);
 atf_error_t atf_tc_init_pack(atf_tc_t *, atf_tc_pack_t *,
-                             const atf_map_t *);
+                             const char *const *);
 void atf_tc_fini(atf_tc_t *);
 
 /* Getters. */
@@ -88,7 +82,7 @@ const char *atf_tc_get_config_var(const atf_tc_t *, const char *);
 const char *atf_tc_get_config_var_wd(const atf_tc_t *, const char *,
                                      const char *);
 const char *atf_tc_get_md_var(const atf_tc_t *, const char *);
-const atf_map_t *atf_tc_get_md_vars(const atf_tc_t *);
+char **atf_tc_get_md_vars(const atf_tc_t *);
 bool atf_tc_has_config_var(const atf_tc_t *, const char *);
 bool atf_tc_has_md_var(const atf_tc_t *, const char *);
 
@@ -99,7 +93,7 @@ atf_error_t atf_tc_set_md_var(atf_tc_t *, const char *, const char *, ...);
  * Free functions.
  * --------------------------------------------------------------------- */
 
-atf_error_t atf_tc_run(const atf_tc_t *, const struct atf_fs_path *);
+atf_error_t atf_tc_run(const atf_tc_t *, const char *);
 atf_error_t atf_tc_cleanup(const atf_tc_t *);
 
 /* To be run from test case bodies only. */
