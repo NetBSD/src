@@ -30,12 +30,12 @@
 #include <cstring>
 #include <iostream>
 
-#include "atf-c++/config.hpp"
-#include "atf-c++/env.hpp"
-#include "atf-c++/exceptions.hpp"
-#include "atf-c++/macros.hpp"
+#include "config.hpp"
+#include "macros.hpp"
 
-#include "test_helpers.hpp"
+#include "detail/env.hpp"
+#include "detail/exceptions.hpp"
+#include "detail/test_helpers.hpp"
 
 static const char *test_value = "env-value";
 
@@ -54,8 +54,8 @@ static struct varnames {
     { "atf_confdir",        "ATF_CONFDIR",        false },
     { "atf_includedir",     "ATF_INCLUDEDIR",     false },
     { "atf_libdir",         "ATF_LIBDIR",         false },
+    { "atf_libexecdir",     "ATF_LIBEXECDIR",     false },
     { "atf_machine",        "ATF_MACHINE",        false },
-    { "atf_m4",             "ATF_M4",             false },
     { "atf_pkgdatadir",     "ATF_PKGDATADIR",     false },
     { "atf_shell",          "ATF_SHELL",          false },
     { "atf_workdir",        "ATF_WORKDIR",        false },
@@ -78,7 +78,7 @@ set_env_var(const char* name, const char* val)
 {
     try {
         atf::env::set(name, val);
-    } catch (const atf::system_error& e) {
+    } catch (const atf::system_error&) {
         ATF_FAIL(std::string("set_env_var(") + name + ", " + val +
                  ") failed");
     }
@@ -90,7 +90,7 @@ unset_env_var(const char* name)
 {
     try {
         atf::env::unset(name);
-    } catch (const atf::system_error& e) {
+    } catch (const atf::system_error&) {
         ATF_FAIL(std::string("unset_env_var(") + name + ") failed");
     }
 }
@@ -117,14 +117,13 @@ static
 void
 compare_one(const char* var, const char* expvalue)
 {
-    std::cout << "Checking that " << var << " is set to " << expvalue
-              << std::endl;
+    std::cout << "Checking that " << var << " is set to " << expvalue << "\n";
 
     for (const struct varnames* v = all_vars; v->lc != NULL; v++) {
         if (std::strcmp(v->lc, var) == 0)
-            ATF_CHECK_EQUAL(atf::config::get(v->lc), test_value);
+            ATF_REQUIRE_EQ(atf::config::get(v->lc), test_value);
         else
-            ATF_CHECK(atf::config::get(v->lc) != test_value);
+            ATF_REQUIRE(atf::config::get(v->lc) != test_value);
     }
 }
 
@@ -144,7 +143,7 @@ ATF_TEST_CASE_BODY(get)
     unset_all();
     atf::config::__reinit();
     for (const struct varnames* v = all_vars; v->lc != NULL; v++)
-        ATF_CHECK(atf::config::get(v->lc) != test_value);
+        ATF_REQUIRE(atf::config::get(v->lc) != test_value);
 
     // Test the behavior of empty values.
     for (const struct varnames* v = all_vars; v->lc != NULL; v++) {
@@ -153,9 +152,9 @@ ATF_TEST_CASE_BODY(get)
             set_env_var(v->uc, "");
             atf::config::__reinit();
             if (v->can_be_empty)
-                ATF_CHECK(atf::config::get(v->lc).empty());
+                ATF_REQUIRE(atf::config::get(v->lc).empty());
             else
-                ATF_CHECK(!atf::config::get(v->lc).empty());
+                ATF_REQUIRE(!atf::config::get(v->lc).empty());
         }
     }
 
@@ -179,9 +178,9 @@ ATF_TEST_CASE_BODY(get_all)
 
     // Check that the valid variables, and only those, are returned.
     std::map< std::string, std::string > vars = atf::config::get_all();
-    ATF_CHECK_EQUAL(vars.size(), all_vars_count());
+    ATF_REQUIRE_EQ(vars.size(), all_vars_count());
     for (const struct varnames* v = all_vars; v->lc != NULL; v++)
-        ATF_CHECK(vars.find(v->lc) != vars.end());
+        ATF_REQUIRE(vars.find(v->lc) != vars.end());
 }
 
 ATF_TEST_CASE(has);
@@ -195,19 +194,19 @@ ATF_TEST_CASE_BODY(has)
 
     // Check for all the variables that must exist.
     for (const struct varnames* v = all_vars; v->lc != NULL; v++)
-        ATF_CHECK(atf::config::has(v->lc));
+        ATF_REQUIRE(atf::config::has(v->lc));
 
     // Same as above, but using uppercase (which is incorrect).
     for (const struct varnames* v = all_vars; v->lc != NULL; v++)
-        ATF_CHECK(!atf::config::has(v->uc));
+        ATF_REQUIRE(!atf::config::has(v->uc));
 
     // Check for some other variables that cannot exist.
-    ATF_CHECK(!atf::config::has("foo"));
-    ATF_CHECK(!atf::config::has("BAR"));
-    ATF_CHECK(!atf::config::has("atf_foo"));
-    ATF_CHECK(!atf::config::has("ATF_BAR"));
-    ATF_CHECK(!atf::config::has("atf_shel"));
-    ATF_CHECK(!atf::config::has("atf_shells"));
+    ATF_REQUIRE(!atf::config::has("foo"));
+    ATF_REQUIRE(!atf::config::has("BAR"));
+    ATF_REQUIRE(!atf::config::has("atf_foo"));
+    ATF_REQUIRE(!atf::config::has("ATF_BAR"));
+    ATF_REQUIRE(!atf::config::has("atf_shel"));
+    ATF_REQUIRE(!atf::config::has("atf_shells"));
 }
 
 // ------------------------------------------------------------------------

@@ -42,19 +42,19 @@ ATF_TEST_CASE_HEAD(diff)
 }
 ATF_TEST_CASE_BODY(diff)
 {
-    std::cout << "--- a	2007-11-04 14:00:41.000000000 +0100" << std::endl;
-    std::cout << "+++ b	2007-11-04 14:00:48.000000000 +0100" << std::endl;
-    std::cout << "@@ -1,7 +1,7 @@" << std::endl;
-    std::cout << " This test is meant to simulate a diff." << std::endl;
+    std::cout << "--- a	2007-11-04 14:00:41.000000000 +0100\n";
+    std::cout << "+++ b	2007-11-04 14:00:48.000000000 +0100\n";
+    std::cout << "@@ -1,7 +1,7 @@\n";
+    std::cout << " This test is meant to simulate a diff.\n";
     std::cout << " Blank space at beginning of context lines must be "
-                 "preserved." << std::endl;
-    std::cout << " " << std::endl;
-    std::cout << "-First original line." << std::endl;
-    std::cout << "-Second original line." << std::endl;
-    std::cout << "+First modified line." << std::endl;
-    std::cout << "+Second modified line." << std::endl;
-    std::cout << " " << std::endl;
-    std::cout << " EOF" << std::endl;
+                 "preserved.\n";
+    std::cout << " \n";
+    std::cout << "-First original line.\n";
+    std::cout << "-Second original line.\n";
+    std::cout << "+First modified line.\n";
+    std::cout << "+Second modified line.\n";
+    std::cout << " \n";
+    std::cout << " EOF\n";
 }
 
 // ------------------------------------------------------------------------

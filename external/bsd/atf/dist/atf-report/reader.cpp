@@ -31,9 +31,9 @@
 #include <sstream>
 #include <utility>
 
-#include "atf-c++/parser.hpp"
-#include "atf-c++/sanity.hpp"
-#include "atf-c++/text.hpp"
+#include "atf-c++/detail/parser.hpp"
+#include "atf-c++/detail/sanity.hpp"
+#include "atf-c++/detail/text.hpp"
 
 #include "reader.hpp"
 
@@ -61,27 +61,27 @@ string_to_size_t(const std::string& str)
 
 namespace atf_tps {
 
-static const atf::parser::token_type& eof_type = 0;
-static const atf::parser::token_type& nl_type = 1;
-static const atf::parser::token_type& text_type = 2;
-static const atf::parser::token_type& colon_type = 3;
-static const atf::parser::token_type& comma_type = 4;
-static const atf::parser::token_type& tps_count_type = 5;
-static const atf::parser::token_type& tp_start_type = 6;
-static const atf::parser::token_type& tp_end_type = 7;
-static const atf::parser::token_type& tc_start_type = 8;
-static const atf::parser::token_type& tc_so_type = 9;
-static const atf::parser::token_type& tc_se_type = 10;
-static const atf::parser::token_type& tc_end_type = 11;
-static const atf::parser::token_type& passed_type = 12;
-static const atf::parser::token_type& failed_type = 13;
-static const atf::parser::token_type& skipped_type = 14;
-static const atf::parser::token_type& info_type = 16;
-static const atf::parser::token_type& expected_death_type = 17;
-static const atf::parser::token_type& expected_exit_type = 18;
-static const atf::parser::token_type& expected_failure_type = 19;
-static const atf::parser::token_type& expected_signal_type = 20;
-static const atf::parser::token_type& expected_timeout_type = 21;
+static const atf::parser::token_type eof_type = 0;
+static const atf::parser::token_type nl_type = 1;
+static const atf::parser::token_type text_type = 2;
+static const atf::parser::token_type colon_type = 3;
+static const atf::parser::token_type comma_type = 4;
+static const atf::parser::token_type tps_count_type = 5;
+static const atf::parser::token_type tp_start_type = 6;
+static const atf::parser::token_type tp_end_type = 7;
+static const atf::parser::token_type tc_start_type = 8;
+static const atf::parser::token_type tc_so_type = 9;
+static const atf::parser::token_type tc_se_type = 10;
+static const atf::parser::token_type tc_end_type = 11;
+static const atf::parser::token_type passed_type = 12;
+static const atf::parser::token_type failed_type = 13;
+static const atf::parser::token_type skipped_type = 14;
+static const atf::parser::token_type info_type = 16;
+static const atf::parser::token_type expected_death_type = 17;
+static const atf::parser::token_type expected_exit_type = 18;
+static const atf::parser::token_type expected_failure_type = 19;
+static const atf::parser::token_type expected_signal_type = 20;
+static const atf::parser::token_type expected_timeout_type = 21;
 
 class tokenizer : public atf::parser::tokenizer< std::istream > {
 public:

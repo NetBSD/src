@@ -1,7 +1,7 @@
 .\"
 .\" Automated Testing Framework (atf)
 .\"
-.\" Copyright (c) 2007, 2008, 2009, 2010 The NetBSD Foundation, Inc.
+.\" Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -26,7 +26,7 @@
 .\" OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 .\" IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd June 18, 2010
+.Dd March 14, 2009
 .Dt ATF-CONFIG 1
 .Os
 .Sh NAME
@@ -103,6 +103,9 @@ files for ATF.
 The path to the directory that contains the ATF header files.
 .It Va atf_libdir
 The path to the directory that contains the ATF libraries.
+.It Va atf_libexecdir
+The path to the directory that contains the auxiliary utilities of ATF,
+used internally by the public tools.
 .It Va atf_machine
 The machine type name detected by ATF.
 This should not be tunable but is provided for symmetry with
@@ -161,6 +164,9 @@ Overrides the built-in value of
 .It Ev ATF_LIBDIR
 Overrides the built-in value of
 .Va atf_libdir .
+.It Ev ATF_LIBEXECDIR
+Overrides the built-in value of
+.Va atf_libexecdir .
 .It Ev ATF_MACHINE
 Overrides the built-in value of
 .Va atf_machine .

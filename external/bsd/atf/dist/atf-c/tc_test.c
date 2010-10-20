@@ -32,7 +32,7 @@
 
 #include <atf-c.h>
 
-#include "test_helpers.h"
+#include "detail/test_helpers.h"
 
 /* ---------------------------------------------------------------------
  * Auxiliary test cases.
@@ -138,10 +138,7 @@ ATF_TC_HEAD(config, tc)
 ATF_TC_BODY(config, tcin)
 {
     atf_tc_t tc;
-    atf_map_t config;
-
-    RE(atf_map_init(&config));
-    RE(atf_map_insert(&config, "test-var", strdup("test-value"), true));
+    const char *const config[] = { "test-var", "test-value", NULL };
 
     RE(atf_tc_init(&tc, "test1", ATF_TC_HEAD_NAME(empty),
                    ATF_TC_BODY_NAME(empty), NULL, NULL));
@@ -150,7 +147,7 @@ ATF_TC_BODY(config, tcin)
     atf_tc_fini(&tc);
 
     RE(atf_tc_init(&tc, "test1", ATF_TC_HEAD_NAME(empty),
-                   ATF_TC_BODY_NAME(empty), NULL, &config));
+                   ATF_TC_BODY_NAME(empty), NULL, config));
     ATF_REQUIRE(atf_tc_has_config_var(&tc, "test-var"));
     ATF_REQUIRE(strcmp(atf_tc_get_config_var(&tc, "test-var"),
                      "test-value") == 0);
@@ -159,8 +156,6 @@ ATF_TC_BODY(config, tcin)
     ATF_REQUIRE(strcmp(atf_tc_get_config_var_wd(&tc, "test-var2", "def-value"),
                      "def-value") == 0);
     atf_tc_fini(&tc);
-
-    atf_map_fini(&config);
 }
 
 /* ---------------------------------------------------------------------

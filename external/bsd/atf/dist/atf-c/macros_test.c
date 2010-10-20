@@ -41,11 +41,10 @@
 
 #include <atf-c.h>
 
-#include "atf-c/fs.h"
-#include "atf-c/process.h"
-#include "atf-c/text.h"
-
-#include "test_helpers.h"
+#include "detail/fs.h"
+#include "detail/process.h"
+#include "detail/test_helpers.h"
+#include "detail/text.h"
 
 /* ---------------------------------------------------------------------
  * Auxiliary functions.
@@ -83,13 +82,11 @@ init_and_run_h_tc(const char *name, void (*head)(atf_tc_t *),
                   void (*body)(const atf_tc_t *))
 {
     atf_tc_t tc;
-    atf_map_t config;
+    const char *const config[] = { NULL };
 
-    RE(atf_map_init(&config));
-    RE(atf_tc_init(&tc, name, head, body, NULL, &config));
+    RE(atf_tc_init(&tc, name, head, body, NULL, config));
     run_h_tc(&tc, "output", "error", "result");
     atf_tc_fini(&tc);
-    atf_map_fini(&config);
 }
 
 /* ---------------------------------------------------------------------

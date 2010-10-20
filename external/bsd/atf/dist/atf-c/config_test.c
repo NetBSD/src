@@ -33,9 +33,9 @@
 #include <atf-c.h>
 
 #include "atf-c/config.h"
-#include "atf-c/env.h"
 
-#include "test_helpers.h"
+#include "detail/env.h"
+#include "detail/test_helpers.h"
 
 static const char *test_value = "env-value";
 
@@ -54,8 +54,8 @@ static struct varnames {
     { "atf_confdir",        "ATF_CONFDIR",        false },
     { "atf_includedir",     "ATF_INCLUDEDIR",     false },
     { "atf_libdir",         "ATF_LIBDIR",         false },
+    { "atf_libexecdir",     "ATF_LIBEXECDIR",     false },
     { "atf_machine",        "ATF_MACHINE",        false },
-    { "atf_m4",             "ATF_M4",             false },
     { "atf_pkgdatadir",     "ATF_PKGDATADIR",     false },
     { "atf_shell",          "ATF_SHELL",          false },
     { "atf_workdir",        "ATF_WORKDIR",        false },

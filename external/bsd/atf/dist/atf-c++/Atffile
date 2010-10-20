@@ -2,22 +2,13 @@ Content-Type: application/X-atf-atffile; version="1"
 
 prop: test-suite = atf
 
-tp: env_test
+tp: detail
+
+tp: atf_c++_test
+tp: build_test
+tp: check_test
 tp: config_test
-tp: text_test
-tp: fs_test
 tp: macros_test
-tp: io_test
-tp: expand_test
-tp: user_test
-tp: parser_test
-tp: signals_test
+tp: pkg_config_test
 tp: tests_test
 tp: utils_test
-tp: process_test
-tp: build_test
-tp: application_test
-tp: exceptions_test
-tp: sanity_test
-tp: ui_test
-tp: pkg_config_test

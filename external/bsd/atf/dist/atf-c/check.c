@@ -40,12 +40,14 @@
 #include "atf-c/check.h"
 #include "atf-c/config.h"
 #include "atf-c/defs.h"
-#include "atf-c/dynstr.h"
 #include "atf-c/error.h"
-#include "atf-c/fs.h"
-#include "atf-c/list.h"
-#include "atf-c/process.h"
-#include "atf-c/sanity.h"
+#include "atf-c/utils.h"
+
+#include "detail/dynstr.h"
+#include "detail/fs.h"
+#include "detail/list.h"
+#include "detail/process.h"
+#include "detail/sanity.h"
 
 /* ---------------------------------------------------------------------
  * Auxiliary functions.
@@ -249,80 +251,31 @@ out:
     return err;
 }
 
-static
-atf_error_t
-list_to_array(const atf_list_t *l, const char ***ap)
+static void
+print_array(const char *const *array, const char *pfx)
 {
-    atf_error_t err;
-    const char **a;
-
-    a = (const char **)malloc((atf_list_size(l) + 1) * sizeof(const char *));
-    if (a == NULL)
-        err = atf_no_memory_error();
-    else {
-        const char **aiter;
-        atf_list_citer_t liter;
-
-        aiter = a;
-        atf_list_for_each_c(liter, l) {
-            *aiter = (const char *)atf_list_citer_data(liter);
-            aiter++;
-        }
-        *aiter = NULL;
-
-        err = atf_no_error();
-        *ap = a;
-    }
-
-    return err;
-}
-
-static
-void
-print_list(const atf_list_t *l, const char *pfx)
-{
-    atf_list_citer_t iter;
+    const char *const *ptr;
 
     printf("%s", pfx);
-    atf_list_for_each_c(iter, l)
-        printf(" %s", (const char *)atf_list_citer_data(iter));
+    for (ptr = array; *ptr != NULL; ptr++)
+        printf(" %s", *ptr);
     printf("\n");
 }
 
 static
 atf_error_t
-fork_and_wait_list(const atf_list_t *argvl, const atf_fs_path_t *outfile,
-                   const atf_fs_path_t *errfile, atf_process_status_t *status)
-{
-    atf_error_t err;
-    const char **argva;
-
-    err = list_to_array(argvl, &argva);
-    if (atf_is_error(err))
-        goto out;
-
-    err = fork_and_wait(argva, outfile, errfile, status);
-
-    free(argva);
-out:
-    return err;
-}
-
-static
-atf_error_t
-check_build_run(const atf_list_t *argv, bool *success)
+check_build_run(const char *const *argv, bool *success)
 {
     atf_error_t err;
     atf_process_status_t status;
 
-    print_list(argv, ">");
+    print_array(argv, ">");
 
-    err = fork_and_wait_list(argv, NULL, NULL, &status);
+    err = fork_and_wait(argv, NULL, NULL, &status);
     if (atf_is_error(err))
         goto out;
 
-    update_success_from_status((const char *)atf_list_index_c(argv, 0),
-                               &status, success);
+    update_success_from_status(argv[0], &status, success);
     atf_process_status_fini(&status);
 
     INV(!atf_is_error(err));
@@ -334,6 +287,14 @@ out:
  * The "atf_check_result" type.
  * --------------------------------------------------------------------- */
 
+struct atf_check_result_impl {
+    atf_list_t m_argv;
+    atf_fs_path_t m_dir;
+    atf_fs_path_t m_stdout;
+    atf_fs_path_t m_stderr;
+    atf_process_status_t m_status;
+};
+
 static
 atf_error_t
 atf_check_result_init(atf_check_result_t *r, const char *const *argv,
@@ -342,22 +303,26 @@ atf_check_result_init(atf_check_result_t *r, const char *const *argv,
     atf_error_t err;
     const char *workdir;
 
+    r->pimpl = malloc(sizeof(struct atf_check_result_impl));
+    if (r->pimpl == NULL)
+        return atf_no_memory_error();
+
     workdir = atf_config_get("atf_workdir");
 
-    err = array_to_list(argv, &r->m_argv);
+    err = array_to_list(argv, &r->pimpl->m_argv);
     if (atf_is_error(err))
         goto out;
 
-    err = atf_fs_path_copy(&r->m_dir, dir);
+    err = atf_fs_path_copy(&r->pimpl->m_dir, dir);
     if (atf_is_error(err))
         goto err_argv;
 
-    err = atf_fs_path_init_fmt(&r->m_stdout, "%s/stdout",
+    err = atf_fs_path_init_fmt(&r->pimpl->m_stdout, "%s/stdout",
                                atf_fs_path_cstring(dir));
     if (atf_is_error(err))
         goto err_dir;
 
-    err = atf_fs_path_init_fmt(&r->m_stderr, "%s/stderr",
+    err = atf_fs_path_init_fmt(&r->pimpl->m_stderr, "%s/stderr",
                                atf_fs_path_cstring(dir));
     if (atf_is_error(err))
         goto err_stdout;
@@ -366,11 +331,11 @@ atf_check_result_init(atf_check_result_t *r, const char *const *argv,
     goto out;
 
 err_stdout:
-    atf_fs_path_fini(&r->m_stdout);
+    atf_fs_path_fini(&r->pimpl->m_stdout);
 err_dir:
-    atf_fs_path_fini(&r->m_dir);
+    atf_fs_path_fini(&r->pimpl->m_dir);
 err_argv:
-    atf_list_fini(&r->m_argv);
+    atf_list_fini(&r->pimpl->m_argv);
 out:
     return err;
 }
@@ -378,56 +343,53 @@ out:
 void
 atf_check_result_fini(atf_check_result_t *r)
 {
-    atf_process_status_fini(&r->m_status);
+    atf_process_status_fini(&r->pimpl->m_status);
 
-    cleanup_tmpdir(&r->m_dir, &r->m_stdout, &r->m_stderr);
-    atf_fs_path_fini(&r->m_stdout);
-    atf_fs_path_fini(&r->m_stderr);
-    atf_fs_path_fini(&r->m_dir);
+    cleanup_tmpdir(&r->pimpl->m_dir, &r->pimpl->m_stdout,
+                   &r->pimpl->m_stderr);
+    atf_fs_path_fini(&r->pimpl->m_stdout);
+    atf_fs_path_fini(&r->pimpl->m_stderr);
+    atf_fs_path_fini(&r->pimpl->m_dir);
 
-    atf_list_fini(&r->m_argv);
+    atf_list_fini(&r->pimpl->m_argv);
+
+    free(r->pimpl);
 }
 
-const atf_list_t *
-atf_check_result_argv(const atf_check_result_t *r)
-{
-    return &r->m_argv;
-}
-
-const atf_fs_path_t *
+const char *
 atf_check_result_stdout(const atf_check_result_t *r)
 {
-    return &r->m_stdout;
+    return atf_fs_path_cstring(&r->pimpl->m_stdout);
 }
 
-const atf_fs_path_t *
+const char *
 atf_check_result_stderr(const atf_check_result_t *r)
 {
-    return &r->m_stderr;
+    return atf_fs_path_cstring(&r->pimpl->m_stderr);
 }
 
 bool
 atf_check_result_exited(const atf_check_result_t *r)
 {
-    return atf_process_status_exited(&r->m_status);
+    return atf_process_status_exited(&r->pimpl->m_status);
 }
 
 int
 atf_check_result_exitcode(const atf_check_result_t *r)
 {
-    return atf_process_status_exitstatus(&r->m_status);
+    return atf_process_status_exitstatus(&r->pimpl->m_status);
 }
 
 bool
 atf_check_result_signaled(const atf_check_result_t *r)
 {
-    return atf_process_status_signaled(&r->m_status);
+    return atf_process_status_signaled(&r->pimpl->m_status);
 }
 
 int
 atf_check_result_termsig(const atf_check_result_t *r)
 {
-    return atf_process_status_termsig(&r->m_status);
+    return atf_process_status_termsig(&r->pimpl->m_status);
 }
 
 /* ---------------------------------------------------------------------
@@ -444,15 +406,15 @@ atf_check_build_c_o(const char *sfile,
                     bool *success)
 {
     atf_error_t err;
-    atf_list_t argv;
+    char **argv;
 
     err = atf_build_c_o(sfile, ofile, optargs, &argv);
     if (atf_is_error(err))
         goto out;
 
-    err = check_build_run(&argv, success);
+    err = check_build_run((const char *const *)argv, success);
 
-    atf_list_fini(&argv);
+    atf_utils_free_charpp(argv);
 out:
     return err;
 }
@@ -464,15 +426,15 @@ atf_check_build_cpp(const char *sfile,
                     bool *success)
 {
     atf_error_t err;
-    atf_list_t argv;
+    char **argv;
 
     err = atf_build_cpp(sfile, ofile, optargs, &argv);
     if (atf_is_error(err))
         goto out;
 
-    err = check_build_run(&argv, success);
+    err = check_build_run((const char *const *)argv, success);
 
-    atf_list_fini(&argv);
+    atf_utils_free_charpp(argv);
 out:
     return err;
 }
@@ -484,15 +446,15 @@ atf_check_build_cxx_o(const char *sfile,
                       bool *success)
 {
     atf_error_t err;
-    atf_list_t argv;
+    char **argv;
 
     err = atf_build_cxx_o(sfile, ofile, optargs, &argv);
     if (atf_is_error(err))
         goto out;
 
-    err = check_build_run(&argv, success);
+    err = check_build_run((const char *const *)argv, success);
 
-    atf_list_fini(&argv);
+    atf_utils_free_charpp(argv);
 out:
     return err;
 }
@@ -511,7 +473,8 @@ atf_check_exec_array(const char *const *argv, atf_check_result_t *r)
     if (atf_is_error(err))
         goto err_dir;
 
-    err = fork_and_wait(argv, &r->m_stdout, &r->m_stderr, &r->m_status);
+    err = fork_and_wait(argv, &r->pimpl->m_stdout, &r->pimpl->m_stderr,
+                        &r->pimpl->m_status);
     if (atf_is_error(err))
         goto err_r;
 
@@ -527,24 +490,6 @@ err_dir:
     }
 out_dir:
     atf_fs_path_fini(&dir);
-out:
-    return err;
-}
-
-atf_error_t
-atf_check_exec_list(const atf_list_t *argv, atf_check_result_t *r)
-{
-    atf_error_t err;
-    const char **argv2;
-
-    argv2 = NULL; /* Silence GCC warning. */
-    err = list_to_array(argv, &argv2);
-    if (atf_is_error(err))
-        goto out;
-
-    err = atf_check_exec_array(argv2, r);
-
-    free(argv2);
 out:
     return err;
 }

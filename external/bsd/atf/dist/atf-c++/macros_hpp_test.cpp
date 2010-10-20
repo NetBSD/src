@@ -32,60 +32,60 @@
 #include <atf-c++/macros.hpp>
 
 void
-atf_check_inside_if(void)
-{
-    // Make sure that ATF_CHECK can be used inside an if statement that
-    // does not have braces.  Earlier versions of it generated an error
-    // if there was an else clause because they confused the compiler
-    // by defining an unprotected nested if.
-    if (true)
-        ATF_CHECK(true);
-    else
-        ATF_CHECK(true);
-}
-
-void
-atf_check_equal_inside_if(void)
-{
-    // Make sure that ATF_CHECK_EQUAL can be used inside an if statement
-    // that does not have braces.  Earlier versions of it generated an
-    // error if there was an else clause because they confused the
-    // compiler by defining an unprotected nested if.
-    if (true)
-        ATF_CHECK_EQUAL(true, true);
-    else
-        ATF_CHECK_EQUAL(true, true);
-}
-
-void
-atf_check_throw_runtime_error(void)
-{
-    // Check that we can pass std::runtime_error to ATF_CHECK_THROW.
-    // Earlier versions generated a warning because the macro's code also
-    // attempted to capture this exception, and thus we had a duplicate
-    // catch clause.
-    ATF_CHECK_THROW(std::runtime_error, (void)0);
-}
-
-void
-atf_check_throw_inside_if(void)
-{
-    // Make sure that ATF_CHECK_THROW can be used inside an if statement
-    // that does not have braces.  Earlier versions of it generated an
-    // error because a trailing ; after a catch block was not allowed.
-    if (true)
-        ATF_CHECK_THROW(std::runtime_error, (void)0);
-    else
-        ATF_CHECK_THROW(std::runtime_error, (void)1);
-}
-
-void
 atf_check_errno_semicolons(void)
 {
     // Check that ATF_CHECK_ERRNO does not contain a semicolon that would
     // cause an empty-statement that confuses some compilers.
     ATF_CHECK_ERRNO(1, 1 == 1);
     ATF_CHECK_ERRNO(2, 2 == 2);
+}
+
+void
+atf_require_inside_if(void)
+{
+    // Make sure that ATF_REQUIRE can be used inside an if statement that
+    // does not have braces.  Earlier versions of it generated an error
+    // if there was an else clause because they confused the compiler
+    // by defining an unprotected nested if.
+    if (true)
+        ATF_REQUIRE(true);
+    else
+        ATF_REQUIRE(true);
+}
+
+void
+atf_require_eq_inside_if(void)
+{
+    // Make sure that ATF_REQUIRE_EQ can be used inside an if statement
+    // that does not have braces.  Earlier versions of it generated an
+    // error if there was an else clause because they confused the
+    // compiler by defining an unprotected nested if.
+    if (true)
+        ATF_REQUIRE_EQ(true, true);
+    else
+        ATF_REQUIRE_EQ(true, true);
+}
+
+void
+atf_require_throw_runtime_error(void)
+{
+    // Check that we can pass std::runtime_error to ATF_REQUIRE_THROW.
+    // Earlier versions generated a warning because the macro's code also
+    // attempted to capture this exception, and thus we had a duplicate
+    // catch clause.
+    ATF_REQUIRE_THROW(std::runtime_error, (void)0);
+}
+
+void
+atf_require_throw_inside_if(void)
+{
+    // Make sure that ATF_REQUIRE_THROW can be used inside an if statement
+    // that does not have braces.  Earlier versions of it generated an
+    // error because a trailing ; after a catch block was not allowed.
+    if (true)
+        ATF_REQUIRE_THROW(std::runtime_error, (void)0);
+    else
+        ATF_REQUIRE_THROW(std::runtime_error, (void)1);
 }
 
 void

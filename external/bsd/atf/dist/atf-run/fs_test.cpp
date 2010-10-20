@@ -35,12 +35,13 @@ extern "C" {
 #include <cerrno>
 #include <fstream>
 
-#include "atf-c++/exceptions.hpp"
-#include "atf-c++/fs.hpp"
 #include "atf-c++/macros.hpp"
-#include "atf-c++/user.hpp"
+
+#include "atf-c++/detail/exceptions.hpp"
+#include "atf-c++/detail/fs.hpp"
 
 #include "fs.hpp"
+#include "user.hpp"
 
 // ------------------------------------------------------------------------
 // Auxiliary functions.
@@ -77,40 +78,40 @@ ATF_TEST_CASE_BODY(temp_dir_raii)
         temp_dir td2(tmpl);
         t1 = td1.get_path();
         t2 = td2.get_path();
-        ATF_CHECK(t1.str().find("XXXXXX") == std::string::npos);
-        ATF_CHECK(t2.str().find("XXXXXX") == std::string::npos);
-        ATF_CHECK(t1 != t2);
-        ATF_CHECK(!atf::fs::exists(tmpl));
-        ATF_CHECK( atf::fs::exists(t1));
-        ATF_CHECK( atf::fs::exists(t2));
+        ATF_REQUIRE(t1.str().find("XXXXXX") == std::string::npos);
+        ATF_REQUIRE(t2.str().find("XXXXXX") == std::string::npos);
+        ATF_REQUIRE(t1 != t2);
+        ATF_REQUIRE(!atf::fs::exists(tmpl));
+        ATF_REQUIRE( atf::fs::exists(t1));
+        ATF_REQUIRE( atf::fs::exists(t2));
 
         atf::fs::file_info fi1(t1);
-        ATF_CHECK( fi1.is_owner_readable());
-        ATF_CHECK( fi1.is_owner_writable());
-        ATF_CHECK( fi1.is_owner_executable());
-        ATF_CHECK(!fi1.is_group_readable());
-        ATF_CHECK(!fi1.is_group_writable());
-        ATF_CHECK(!fi1.is_group_executable());
-        ATF_CHECK(!fi1.is_other_readable());
-        ATF_CHECK(!fi1.is_other_writable());
-        ATF_CHECK(!fi1.is_other_executable());
+        ATF_REQUIRE( fi1.is_owner_readable());
+        ATF_REQUIRE( fi1.is_owner_writable());
+        ATF_REQUIRE( fi1.is_owner_executable());
+        ATF_REQUIRE(!fi1.is_group_readable());
+        ATF_REQUIRE(!fi1.is_group_writable());
+        ATF_REQUIRE(!fi1.is_group_executable());
+        ATF_REQUIRE(!fi1.is_other_readable());
+        ATF_REQUIRE(!fi1.is_other_writable());
+        ATF_REQUIRE(!fi1.is_other_executable());
 
         atf::fs::file_info fi2(t2);
-        ATF_CHECK( fi2.is_owner_readable());
-        ATF_CHECK( fi2.is_owner_writable());
-        ATF_CHECK( fi2.is_owner_executable());
-        ATF_CHECK(!fi2.is_group_readable());
-        ATF_CHECK(!fi2.is_group_writable());
-        ATF_CHECK(!fi2.is_group_executable());
-        ATF_CHECK(!fi2.is_other_readable());
-        ATF_CHECK(!fi2.is_other_writable());
-        ATF_CHECK(!fi2.is_other_executable());
+        ATF_REQUIRE( fi2.is_owner_readable());
+        ATF_REQUIRE( fi2.is_owner_writable());
+        ATF_REQUIRE( fi2.is_owner_executable());
+        ATF_REQUIRE(!fi2.is_group_readable());
+        ATF_REQUIRE(!fi2.is_group_writable());
+        ATF_REQUIRE(!fi2.is_group_executable());
+        ATF_REQUIRE(!fi2.is_other_readable());
+        ATF_REQUIRE(!fi2.is_other_writable());
+        ATF_REQUIRE(!fi2.is_other_executable());
     }
 
-    ATF_CHECK(t1.str() != "non-existent");
-    ATF_CHECK(!atf::fs::exists(t1));
-    ATF_CHECK(t2.str() != "non-existent");
-    ATF_CHECK(!atf::fs::exists(t2));
+    ATF_REQUIRE(t1.str() != "non-existent");
+    ATF_REQUIRE(!atf::fs::exists(t1));
+    ATF_REQUIRE(t2.str() != "non-existent");
+    ATF_REQUIRE(!atf::fs::exists(t2));
 }
 
 
@@ -135,13 +136,13 @@ ATF_TEST_CASE_BODY(cleanup)
     create_file("root/reg");
 
     atf::fs::path p("root");
-    ATF_CHECK(atf::fs::exists(p));
-    ATF_CHECK(atf::fs::exists(p / "dir"));
-    ATF_CHECK(atf::fs::exists(p / "dir/1"));
-    ATF_CHECK(atf::fs::exists(p / "dir/2"));
-    ATF_CHECK(atf::fs::exists(p / "reg"));
+    ATF_REQUIRE(atf::fs::exists(p));
+    ATF_REQUIRE(atf::fs::exists(p / "dir"));
+    ATF_REQUIRE(atf::fs::exists(p / "dir/1"));
+    ATF_REQUIRE(atf::fs::exists(p / "dir/2"));
+    ATF_REQUIRE(atf::fs::exists(p / "reg"));
     cleanup(p);
-    ATF_CHECK(!atf::fs::exists(p));
+    ATF_REQUIRE(!atf::fs::exists(p));
 }
 
 ATF_TEST_CASE(cleanup_eacces_on_root);
@@ -156,14 +157,14 @@ ATF_TEST_CASE_BODY(cleanup_eacces_on_root)
 
     ::mkdir("aux", 0755);
     ::mkdir("aux/root", 0755);
-    ATF_CHECK(::chmod("aux", 0555) != -1);
+    ATF_REQUIRE(::chmod("aux", 0555) != -1);
 
     try {
         cleanup(atf::fs::path("aux/root"));
-        ATF_CHECK(atf::user::is_root());
+        ATF_REQUIRE(atf::atf_run::is_root());
     } catch (const atf::system_error& e) {
-        ATF_CHECK(!atf::user::is_root());
-        ATF_CHECK_EQUAL(EACCES, e.code());
+        ATF_REQUIRE(!atf::atf_run::is_root());
+        ATF_REQUIRE_EQ(EACCES, e.code());
     }
 }
 
@@ -181,12 +182,12 @@ ATF_TEST_CASE_BODY(cleanup_eacces_on_subdir)
     ::mkdir("root/1", 0755);
     ::mkdir("root/1/2", 0755);
     ::mkdir("root/1/2/3", 0755);
-    ATF_CHECK(::chmod("root/1/2", 0555) != -1);
-    ATF_CHECK(::chmod("root/1", 0555) != -1);
+    ATF_REQUIRE(::chmod("root/1/2", 0555) != -1);
+    ATF_REQUIRE(::chmod("root/1", 0555) != -1);
 
     const atf::fs::path p("root");
     cleanup(p);
-    ATF_CHECK(!atf::fs::exists(p));
+    ATF_REQUIRE(!atf::fs::exists(p));
 }
 
 ATF_TEST_CASE(change_directory);
@@ -206,17 +207,17 @@ ATF_TEST_CASE_BODY(change_directory)
 
     const atf::fs::path old = get_current_dir();
 
-    ATF_CHECK_THROW(atf::system_error,
+    ATF_REQUIRE_THROW(atf::system_error,
                     change_directory(atf::fs::path("files/reg")));
-    ATF_CHECK(get_current_dir() == old);
+    ATF_REQUIRE(get_current_dir() == old);
 
     atf::fs::path old2 = change_directory(atf::fs::path("files"));
-    ATF_CHECK(old2 == old);
+    ATF_REQUIRE(old2 == old);
     atf::fs::path old3 = change_directory(atf::fs::path("dir"));
-    ATF_CHECK(old3 == old2 / "files");
+    ATF_REQUIRE(old3 == old2 / "files");
     atf::fs::path old4 = change_directory(atf::fs::path("../.."));
-    ATF_CHECK(old4 == old3 / "dir");
-    ATF_CHECK(get_current_dir() == old);
+    ATF_REQUIRE(old4 == old3 / "dir");
+    ATF_REQUIRE(get_current_dir() == old);
 }
 
 ATF_TEST_CASE(get_current_dir);
@@ -236,15 +237,15 @@ ATF_TEST_CASE_BODY(get_current_dir)
 
     atf::fs::path curdir = get_current_dir();
     change_directory(atf::fs::path("."));
-    ATF_CHECK(get_current_dir() == curdir);
+    ATF_REQUIRE(get_current_dir() == curdir);
     change_directory(atf::fs::path("files"));
-    ATF_CHECK(get_current_dir() == curdir / "files");
+    ATF_REQUIRE(get_current_dir() == curdir / "files");
     change_directory(atf::fs::path("dir"));
-    ATF_CHECK(get_current_dir() == curdir / "files/dir");
+    ATF_REQUIRE(get_current_dir() == curdir / "files/dir");
     change_directory(atf::fs::path(".."));
-    ATF_CHECK(get_current_dir() == curdir / "files");
+    ATF_REQUIRE(get_current_dir() == curdir / "files");
     change_directory(atf::fs::path(".."));
-    ATF_CHECK(get_current_dir() == curdir);
+    ATF_REQUIRE(get_current_dir() == curdir);
 }
 
 ATF_TEST_CASE(set_immutable);

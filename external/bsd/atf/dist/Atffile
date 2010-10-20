@@ -6,7 +6,6 @@ tp: atf-c
 tp: atf-c++
 tp: atf-sh
 tp: test-programs
-tp: atf-check
 tp: atf-config
 tp: atf-report
 tp: atf-run

@@ -139,7 +139,9 @@ config_unset_head()
 }
 config_unset_body()
 {
-    atf_config_has 'test' && atf_fail "Test variable already defined"
+    if atf_config_has 'test'; then
+        atf_fail "Test variable already defined"
+    fi
 }
 
 atf_test_case config_empty

@@ -30,6 +30,7 @@
 extern "C" {
 #include <sys/stat.h>
 
+#include <signal.h>
 #include <unistd.h>
 }
 
@@ -39,10 +40,12 @@ extern "C" {
 #include <iostream>
 #include <string>
 
-#include "atf-c++/env.hpp"
-#include "atf-c++/fs.hpp"
 #include "atf-c++/macros.hpp"
-#include "atf-c++/process.hpp"
+
+#include "atf-c++/detail/env.hpp"
+#include "atf-c++/detail/fs.hpp"
+#include "atf-c++/detail/process.hpp"
+#include "atf-c++/detail/sanity.hpp"
 
 // ------------------------------------------------------------------------
 // Auxiliary functions.
@@ -69,10 +72,10 @@ ATF_TEST_CASE_HEAD(config)
 }
 ATF_TEST_CASE_BODY(config)
 {
-    std::cout << "1st: " << get_config_var("1st") << std::endl;
-    std::cout << "2nd: " << get_config_var("2nd") << std::endl;
-    std::cout << "3rd: " << get_config_var("3rd") << std::endl;
-    std::cout << "4th: " << get_config_var("4th") << std::endl;
+    std::cout << "1st: " << get_config_var("1st") << "\n";
+    std::cout << "2nd: " << get_config_var("2nd") << "\n";
+    std::cout << "3rd: " << get_config_var("3rd") << "\n";
+    std::cout << "4th: " << get_config_var("4th") << "\n";
 }
 
 ATF_TEST_CASE(fds);
@@ -82,10 +85,41 @@ ATF_TEST_CASE_HEAD(fds)
 }
 ATF_TEST_CASE_BODY(fds)
 {
-    std::cout << "msg1 to stdout" << std::endl;
-    std::cout << "msg2 to stdout" << std::endl;
-    std::cerr << "msg1 to stderr" << std::endl;
-    std::cerr << "msg2 to stderr" << std::endl;
+    std::cout << "msg1 to stdout" << "\n";
+    std::cout << "msg2 to stdout" << "\n";
+    std::cerr << "msg1 to stderr" << "\n";
+    std::cerr << "msg2 to stderr" << "\n";
+}
+
+ATF_TEST_CASE_WITHOUT_HEAD(mux_streams);
+ATF_TEST_CASE_BODY(mux_streams)
+{
+    for (size_t i = 0; i < 10000; i++) {
+        switch (i % 5) {
+        case 0:
+            std::cout << "stdout " << i << "\n";
+            break;
+        case 1:
+            std::cerr << "stderr " << i << "\n";
+            break;
+        case 2:
+            std::cout << "stdout " << i << "\n";
+            std::cerr << "stderr " << i << "\n";
+            break;
+        case 3:
+            std::cout << "stdout " << i << "\n";
+            std::cout << "stdout " << i << "\n";
+            std::cerr << "stderr " << i << "\n";
+            break;
+        case 4:
+            std::cout << "stdout " << i << "\n";
+            std::cerr << "stderr " << i << "\n";
+            std::cerr << "stderr " << i << "\n";
+            break;
+        default:
+            UNREACHABLE;
+        }
+    }
 }
 
 ATF_TEST_CASE(testvar);
@@ -96,8 +130,8 @@ ATF_TEST_CASE_HEAD(testvar)
 ATF_TEST_CASE_BODY(testvar)
 {
     if (!has_config_var("testvar"))
-        atf_tc_fail("testvar variable not defined");
-    std::cout << "testvar: " << get_config_var("testvar") << std::endl;
+        fail("testvar variable not defined");
+    std::cout << "testvar: " << get_config_var("testvar") << "\n";
 }
 
 ATF_TEST_CASE(env_list);
@@ -112,8 +146,8 @@ ATF_TEST_CASE_BODY(env_list)
                            atf::process::argv_array("env", NULL),
                            atf::process::stream_inherit(),
                            atf::process::stream_inherit());
-    ATF_CHECK(s.exited());
-    ATF_CHECK(s.exitstatus() == EXIT_SUCCESS);
+    ATF_REQUIRE(s.exited());
+    ATF_REQUIRE(s.exitstatus() == EXIT_SUCCESS);
 }
 
 ATF_TEST_CASE(env_home);
@@ -123,12 +157,12 @@ ATF_TEST_CASE_HEAD(env_home)
 }
 ATF_TEST_CASE_BODY(env_home)
 {
-    ATF_CHECK(atf::env::has("HOME"));
+    ATF_REQUIRE(atf::env::has("HOME"));
     atf::fs::path p(atf::env::get("HOME"));
     atf::fs::file_info fi1(p);
     atf::fs::file_info fi2(atf::fs::path("."));
-    ATF_CHECK_EQUAL(fi1.get_device(), fi2.get_device());
-    ATF_CHECK_EQUAL(fi1.get_inode(), fi2.get_inode());
+    ATF_REQUIRE_EQ(fi1.get_device(), fi2.get_device());
+    ATF_REQUIRE_EQ(fi1.get_inode(), fi2.get_inode());
 }
 
 ATF_TEST_CASE(umask);
@@ -140,7 +174,7 @@ ATF_TEST_CASE_BODY(umask)
 {
     mode_t m = ::umask(0);
     std::cout << "umask: " << std::setw(4) << std::setfill('0')
-              << std::oct << m << std::endl;
+              << std::oct << m << "\n";
     (void)::umask(m);
 }
 
@@ -184,7 +218,7 @@ ATF_TEST_CASE_CLEANUP(cleanup_curdir)
     if (is) {
         int i;
         is >> i;
-        std::cout << "Old value: " << i << std::endl;
+        std::cout << "Old value: " << i << "\n";
         is.close();
     }
 }
@@ -207,8 +241,8 @@ ATF_TEST_CASE_HEAD(require_config)
 }
 ATF_TEST_CASE_BODY(require_config)
 {
-    std::cout << "var1: " << get_config_var("var1") << std::endl;
-    std::cout << "var2: " << get_config_var("var2") << std::endl;
+    std::cout << "var1: " << get_config_var("var1") << "\n";
+    std::cout << "var2: " << get_config_var("var2") << "\n";
 }
 
 ATF_TEST_CASE(require_machine);
@@ -253,6 +287,36 @@ ATF_TEST_CASE_BODY(timeout)
     touch(get_config_var("statedir") + "/finished");
 }
 
+ATF_TEST_CASE(timeout_forkexit);
+ATF_TEST_CASE_HEAD(timeout_forkexit)
+{
+    set_md_var("descr", "Helper test case for the t_integration test program");
+}
+ATF_TEST_CASE_BODY(timeout_forkexit)
+{
+    pid_t pid = fork();
+    ATF_REQUIRE(pid != -1);
+
+    if (pid == 0) {
+        sigset_t mask;
+        sigemptyset(&mask);
+
+        std::cout << "Waiting in subprocess\n";
+        std::cout.flush();
+        ::sigsuspend(&mask);
+
+        touch(get_config_var("statedir") + "/child-finished");
+        std::cout << "Subprocess exiting\n";
+        std::cout.flush();
+        exit(EXIT_SUCCESS);
+    } else {
+        // Don't wait for the child process and let atf-run deal with it.
+        touch(get_config_var("statedir") + "/parent-finished");
+        std::cout << "Parent process exiting\n";
+        ATF_PASS();
+    }
+}
+
 ATF_TEST_CASE(use_fs);
 ATF_TEST_CASE_HEAD(use_fs)
 {
@@ -278,6 +342,8 @@ ATF_INIT_TEST_CASES(tcs)
         ATF_ADD_TEST_CASE(tcs, config);
     if (which == "fds")
         ATF_ADD_TEST_CASE(tcs, fds);
+    if (which == "mux_streams")
+        ATF_ADD_TEST_CASE(tcs, mux_streams);
     if (which == "testvar")
         ATF_ADD_TEST_CASE(tcs, testvar);
     if (which == "env_list")
@@ -302,6 +368,8 @@ ATF_INIT_TEST_CASES(tcs)
         ATF_ADD_TEST_CASE(tcs, require_user);
     if (which == "timeout")
         ATF_ADD_TEST_CASE(tcs, timeout);
+    if (which == "timeout_forkexit")
+        ATF_ADD_TEST_CASE(tcs, timeout_forkexit);
     if (which == "use_fs")
         ATF_ADD_TEST_CASE(tcs, use_fs);
 }

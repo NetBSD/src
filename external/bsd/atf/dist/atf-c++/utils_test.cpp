@@ -29,10 +29,10 @@
 
 #include <iostream>
 
-#include "atf-c++/macros.hpp"
-#include "atf-c++/utils.hpp"
+#include "macros.hpp"
+#include "utils.hpp"
 
-#include "test_helpers.hpp"
+#include "detail/test_helpers.hpp"
 
 // ------------------------------------------------------------------------
 // Tests for the "auto_array" class.
@@ -61,7 +61,7 @@ public:
     {
         m_nblocks++;
         void* mem = ::operator new(size);
-        std::cout << "Allocated 'test_array' object " << mem << std::endl;
+        std::cout << "Allocated 'test_array' object " << mem << "\n";
         return mem;
     }
 
@@ -72,7 +72,7 @@ public:
 
     void operator delete[](void* mem)
     {
-        std::cout << "Releasing 'test_array' object " << mem << std::endl;
+        std::cout << "Releasing 'test_array' object " << mem << "\n";
         if (m_nblocks == 0)
             ATF_FAIL("Unbalanced delete[]");
         m_nblocks--;
@@ -92,12 +92,12 @@ ATF_TEST_CASE_BODY(auto_array_scope)
 {
     using atf::utils::auto_array;
 
-    ATF_CHECK_EQUAL(test_array::m_nblocks, 0);
+    ATF_REQUIRE_EQ(test_array::m_nblocks, 0);
     {
         auto_array< test_array > t(new test_array[10]);
-        ATF_CHECK_EQUAL(test_array::m_nblocks, 1);
+        ATF_REQUIRE_EQ(test_array::m_nblocks, 1);
     }
-    ATF_CHECK_EQUAL(test_array::m_nblocks, 0);
+    ATF_REQUIRE_EQ(test_array::m_nblocks, 0);
 }
 
 ATF_TEST_CASE(auto_array_copy);
@@ -110,18 +110,18 @@ ATF_TEST_CASE_BODY(auto_array_copy)
 {
     using atf::utils::auto_array;
 
-    ATF_CHECK_EQUAL(test_array::m_nblocks, 0);
+    ATF_REQUIRE_EQ(test_array::m_nblocks, 0);
     {
         auto_array< test_array > t1(new test_array[10]);
-        ATF_CHECK_EQUAL(test_array::m_nblocks, 1);
+        ATF_REQUIRE_EQ(test_array::m_nblocks, 1);
 
         {
             auto_array< test_array > t2(t1);
-            ATF_CHECK_EQUAL(test_array::m_nblocks, 1);
+            ATF_REQUIRE_EQ(test_array::m_nblocks, 1);
         }
-        ATF_CHECK_EQUAL(test_array::m_nblocks, 0);
+        ATF_REQUIRE_EQ(test_array::m_nblocks, 0);
     }
-    ATF_CHECK_EQUAL(test_array::m_nblocks, 0);
+    ATF_REQUIRE_EQ(test_array::m_nblocks, 0);
 }
 
 ATF_TEST_CASE(auto_array_copy_ref);
@@ -134,18 +134,18 @@ ATF_TEST_CASE_BODY(auto_array_copy_ref)
 {
     using atf::utils::auto_array;
 
-    ATF_CHECK_EQUAL(test_array::m_nblocks, 0);
+    ATF_REQUIRE_EQ(test_array::m_nblocks, 0);
     {
         auto_array< test_array > t1(new test_array[10]);
-        ATF_CHECK_EQUAL(test_array::m_nblocks, 1);
+        ATF_REQUIRE_EQ(test_array::m_nblocks, 1);
 
         {
             auto_array< test_array > t2 = test_array::do_copy(t1);
-            ATF_CHECK_EQUAL(test_array::m_nblocks, 1);
+            ATF_REQUIRE_EQ(test_array::m_nblocks, 1);
         }
-        ATF_CHECK_EQUAL(test_array::m_nblocks, 0);
+        ATF_REQUIRE_EQ(test_array::m_nblocks, 0);
     }
-    ATF_CHECK_EQUAL(test_array::m_nblocks, 0);
+    ATF_REQUIRE_EQ(test_array::m_nblocks, 0);
 }
 
 ATF_TEST_CASE(auto_array_get);
@@ -160,7 +160,7 @@ ATF_TEST_CASE_BODY(auto_array_get)
 
     test_array* ta = new test_array[10];
     auto_array< test_array > t(ta);
-    ATF_CHECK_EQUAL(t.get(), ta);
+    ATF_REQUIRE_EQ(t.get(), ta);
 }
 
 ATF_TEST_CASE(auto_array_release);
@@ -176,12 +176,12 @@ ATF_TEST_CASE_BODY(auto_array_release)
     test_array* ta1 = new test_array[10];
     {
         auto_array< test_array > t(ta1);
-        ATF_CHECK_EQUAL(test_array::m_nblocks, 1);
+        ATF_REQUIRE_EQ(test_array::m_nblocks, 1);
         test_array* ta2 = t.release();
-        ATF_CHECK_EQUAL(ta2, ta1);
-        ATF_CHECK_EQUAL(test_array::m_nblocks, 1);
+        ATF_REQUIRE_EQ(ta2, ta1);
+        ATF_REQUIRE_EQ(test_array::m_nblocks, 1);
     }
-    ATF_CHECK_EQUAL(test_array::m_nblocks, 1);
+    ATF_REQUIRE_EQ(test_array::m_nblocks, 1);
     delete [] ta1;
 }
 
@@ -197,17 +197,17 @@ ATF_TEST_CASE_BODY(auto_array_reset)
 
     test_array* ta1 = new test_array[10];
     test_array* ta2 = new test_array[10];
-    ATF_CHECK_EQUAL(test_array::m_nblocks, 2);
+    ATF_REQUIRE_EQ(test_array::m_nblocks, 2);
 
     {
         auto_array< test_array > t(ta1);
-        ATF_CHECK_EQUAL(test_array::m_nblocks, 2);
+        ATF_REQUIRE_EQ(test_array::m_nblocks, 2);
         t.reset(ta2);
-        ATF_CHECK_EQUAL(test_array::m_nblocks, 1);
+        ATF_REQUIRE_EQ(test_array::m_nblocks, 1);
         t.reset();
-        ATF_CHECK_EQUAL(test_array::m_nblocks, 0);
+        ATF_REQUIRE_EQ(test_array::m_nblocks, 0);
     }
-    ATF_CHECK_EQUAL(test_array::m_nblocks, 0);
+    ATF_REQUIRE_EQ(test_array::m_nblocks, 0);
 }
 
 ATF_TEST_CASE(auto_array_assign);
@@ -220,19 +220,19 @@ ATF_TEST_CASE_BODY(auto_array_assign)
 {
     using atf::utils::auto_array;
 
-    ATF_CHECK_EQUAL(test_array::m_nblocks, 0);
+    ATF_REQUIRE_EQ(test_array::m_nblocks, 0);
     {
         auto_array< test_array > t1(new test_array[10]);
-        ATF_CHECK_EQUAL(test_array::m_nblocks, 1);
+        ATF_REQUIRE_EQ(test_array::m_nblocks, 1);
 
         {
             auto_array< test_array > t2;
             t2 = t1;
-            ATF_CHECK_EQUAL(test_array::m_nblocks, 1);
+            ATF_REQUIRE_EQ(test_array::m_nblocks, 1);
         }
-        ATF_CHECK_EQUAL(test_array::m_nblocks, 0);
+        ATF_REQUIRE_EQ(test_array::m_nblocks, 0);
     }
-    ATF_CHECK_EQUAL(test_array::m_nblocks, 0);
+    ATF_REQUIRE_EQ(test_array::m_nblocks, 0);
 }
 
 ATF_TEST_CASE(auto_array_assign_ref);
@@ -246,19 +246,19 @@ ATF_TEST_CASE_BODY(auto_array_assign_ref)
 {
     using atf::utils::auto_array;
 
-    ATF_CHECK_EQUAL(test_array::m_nblocks, 0);
+    ATF_REQUIRE_EQ(test_array::m_nblocks, 0);
     {
         auto_array< test_array > t1(new test_array[10]);
-        ATF_CHECK_EQUAL(test_array::m_nblocks, 1);
+        ATF_REQUIRE_EQ(test_array::m_nblocks, 1);
 
         {
             auto_array< test_array > t2;
             t2 = test_array::do_copy(t1);
-            ATF_CHECK_EQUAL(test_array::m_nblocks, 1);
+            ATF_REQUIRE_EQ(test_array::m_nblocks, 1);
         }
-        ATF_CHECK_EQUAL(test_array::m_nblocks, 0);
+        ATF_REQUIRE_EQ(test_array::m_nblocks, 0);
     }
-    ATF_CHECK_EQUAL(test_array::m_nblocks, 0);
+    ATF_REQUIRE_EQ(test_array::m_nblocks, 0);
 }
 
 ATF_TEST_CASE(auto_array_access);
@@ -277,7 +277,7 @@ ATF_TEST_CASE_BODY(auto_array_access)
         t[i].m_value = i * 2;
 
     for (int i = 0; i < 10; i++)
-        ATF_CHECK_EQUAL(t[i].m_value, i * 2);
+        ATF_REQUIRE_EQ(t[i].m_value, i * 2);
 }
 
 // ------------------------------------------------------------------------

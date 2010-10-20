@@ -38,10 +38,11 @@
 
 #include "atf-c/check.h"
 #include "atf-c/config.h"
-#include "atf-c/fs.h"
-#include "atf-c/process.h"
 
-#include "test_helpers.h"
+#include "detail/fs.h"
+#include "detail/map.h"
+#include "detail/process.h"
+#include "detail/test_helpers.h"
 
 /* ---------------------------------------------------------------------
  * Auxiliary functions.
@@ -54,7 +55,7 @@ do_exec(const atf_tc_t *tc, const char *helper_name, atf_check_result_t *r)
     atf_fs_path_t process_helpers;
     const char *argv[3];
 
-    get_process_helpers_path(tc, &process_helpers);
+    get_process_helpers_path(tc, false, &process_helpers);
 
     argv[0] = atf_fs_path_cstring(&process_helpers);
     argv[1] = helper_name;
@@ -73,7 +74,7 @@ do_exec_with_arg(const atf_tc_t *tc, const char *helper_name, const char *arg,
     atf_fs_path_t process_helpers;
     const char *argv[4];
 
-    get_process_helpers_path(tc, &process_helpers);
+    get_process_helpers_path(tc, false, &process_helpers);
 
     argv[0] = atf_fs_path_cstring(&process_helpers);
     argv[1] = helper_name;
@@ -228,15 +229,11 @@ void
 init_and_run_h_tc(atf_tc_t *tc, const atf_tc_pack_t *tcpack,
                   const char *outname, const char *errname)
 {
-    atf_map_t config;
+    const char *const config[] = { NULL };
 
-    RE(atf_map_init(&config));
-
-    RE(atf_tc_init_pack(tc, tcpack, &config));
+    RE(atf_tc_init_pack(tc, tcpack, config));
     run_h_tc(tc, outname, errname, "result");
     atf_tc_fini(tc);
-
-    atf_map_fini(&config);
 }
 
 ATF_TC(build_c_o);
@@ -306,25 +303,37 @@ ATF_TC_BODY(build_cxx_o, tc)
     ATF_CHECK(grep_file("stderr", "UNDEFINED_SYMBOL"));
 }
 
-ATF_TC(exec_argv);
-ATF_TC_HEAD(exec_argv, tc)
+ATF_TC(exec_array);
+ATF_TC_HEAD(exec_array, tc)
 {
     atf_tc_set_md_var(tc, "descr", "Checks that atf_check_exec_array "
-                      "preserves the provided argv");
+                      "works properly");
 }
-ATF_TC_BODY(exec_argv, tc)
+ATF_TC_BODY(exec_array, tc)
 {
     atf_fs_path_t process_helpers;
     atf_check_result_t result;
 
-    get_process_helpers_path(tc, &process_helpers);
-    do_exec(tc, "exit-success", &result);
+    get_process_helpers_path(tc, false, &process_helpers);
 
-    const atf_list_t *argv = atf_check_result_argv(&result);
-    ATF_REQUIRE_EQ(atf_list_size(argv), 2);
-    ATF_CHECK_STREQ((const char *)atf_list_index_c(argv, 0),
-                    atf_fs_path_cstring(&process_helpers));
-    ATF_CHECK_STREQ((const char *)atf_list_index_c(argv, 1), "exit-success");
+    const char *argv[4];
+    argv[0] = atf_fs_path_cstring(&process_helpers);
+    argv[1] = "echo";
+    argv[2] = "test-message";
+    argv[3] = NULL;
+
+    RE(atf_check_exec_array(argv, &result));
+
+    ATF_CHECK(atf_check_result_exited(&result));
+    ATF_CHECK(atf_check_result_exitcode(&result) == EXIT_SUCCESS);
+
+    {
+        const char *path = atf_check_result_stdout(&result);
+        int fd = open(path, O_RDONLY);
+        ATF_CHECK(fd != -1);
+        check_line(fd, "test-message");
+        close(fd);
+    }
 
     atf_check_result_fini(&result);
     atf_fs_path_fini(&process_helpers);
@@ -343,8 +352,8 @@ ATF_TC_BODY(exec_cleanup, tc)
     bool exists;
 
     do_exec(tc, "exit-success", &result);
-    RE(atf_fs_path_copy(&out, atf_check_result_stdout(&result)));
-    RE(atf_fs_path_copy(&err, atf_check_result_stderr(&result)));
+    RE(atf_fs_path_init_fmt(&out, "%s", atf_check_result_stdout(&result)));
+    RE(atf_fs_path_init_fmt(&err, "%s", atf_check_result_stderr(&result)));
 
     RE(atf_fs_exists(&out, &exists)); ATF_CHECK(exists);
     RE(atf_fs_exists(&err, &exists)); ATF_CHECK(exists);
@@ -393,44 +402,6 @@ ATF_TC_BODY(exec_exitstatus, tc)
     }
 }
 
-ATF_TC(exec_list);
-ATF_TC_HEAD(exec_list, tc)
-{
-    atf_tc_set_md_var(tc, "descr", "Checks that atf_check_exec_list "
-                      "works properly; assumes that this method is "
-                      "backed by atf_check_exec_array, so the tests "
-                      "are not exhaustive");
-}
-ATF_TC_BODY(exec_list, tc)
-{
-    atf_fs_path_t process_helpers;
-    atf_list_t argv;
-    atf_check_result_t result;
-
-    RE(atf_list_init(&argv));
-
-    get_process_helpers_path(tc, &process_helpers);
-    atf_list_append(&argv, strdup(atf_fs_path_cstring(&process_helpers)), true);
-    atf_list_append(&argv, strdup("echo"), true);
-    atf_list_append(&argv, strdup("test-message"), true);
-    RE(atf_check_exec_list(&argv, &result));
-    atf_list_fini(&argv);
-
-    ATF_CHECK(atf_check_result_exited(&result));
-    ATF_CHECK(atf_check_result_exitcode(&result) == EXIT_SUCCESS);
-
-    {
-        const atf_fs_path_t *path = atf_check_result_stdout(&result);
-        int fd = open(atf_fs_path_cstring(path), O_RDONLY);
-        ATF_CHECK(fd != -1);
-        check_line(fd, "test-message");
-        close(fd);
-    }
-
-    atf_check_result_fini(&result);
-    atf_fs_path_fini(&process_helpers);
-}
-
 ATF_TC(exec_stdout_stderr);
 ATF_TC_HEAD(exec_stdout_stderr, tc)
 {
@@ -441,8 +412,8 @@ ATF_TC_HEAD(exec_stdout_stderr, tc)
 ATF_TC_BODY(exec_stdout_stderr, tc)
 {
     atf_check_result_t result1, result2;
-    const atf_fs_path_t *out1, *out2;
-    const atf_fs_path_t *err1, *err2;
+    const char *out1, *out2;
+    const char *err1, *err2;
 
     do_exec_with_arg(tc, "stdout-stderr", "result1", &result1);
     ATF_CHECK(atf_check_result_exited(&result1));
@@ -457,29 +428,27 @@ ATF_TC_BODY(exec_stdout_stderr, tc)
     err1 = atf_check_result_stderr(&result1);
     err2 = atf_check_result_stderr(&result2);
 
-    ATF_CHECK(strstr(atf_fs_path_cstring(out1), "check.XXXXXX") == NULL);
-    ATF_CHECK(strstr(atf_fs_path_cstring(out2), "check.XXXXXX") == NULL);
-    ATF_CHECK(strstr(atf_fs_path_cstring(err1), "check.XXXXXX") == NULL);
-    ATF_CHECK(strstr(atf_fs_path_cstring(err2), "check.XXXXXX") == NULL);
+    ATF_CHECK(strstr(out1, "check.XXXXXX") == NULL);
+    ATF_CHECK(strstr(out2, "check.XXXXXX") == NULL);
+    ATF_CHECK(strstr(err1, "check.XXXXXX") == NULL);
+    ATF_CHECK(strstr(err2, "check.XXXXXX") == NULL);
 
-    ATF_CHECK(strstr(atf_fs_path_cstring(out1), "/check") != NULL);
-    ATF_CHECK(strstr(atf_fs_path_cstring(out2), "/check") != NULL);
-    ATF_CHECK(strstr(atf_fs_path_cstring(err1), "/check") != NULL);
-    ATF_CHECK(strstr(atf_fs_path_cstring(err2), "/check") != NULL);
+    ATF_CHECK(strstr(out1, "/check") != NULL);
+    ATF_CHECK(strstr(out2, "/check") != NULL);
+    ATF_CHECK(strstr(err1, "/check") != NULL);
+    ATF_CHECK(strstr(err2, "/check") != NULL);
 
-    ATF_CHECK(strstr(atf_fs_path_cstring(out1), "/stdout") != NULL);
-    ATF_CHECK(strstr(atf_fs_path_cstring(out2), "/stdout") != NULL);
-    ATF_CHECK(strstr(atf_fs_path_cstring(err1), "/stderr") != NULL);
-    ATF_CHECK(strstr(atf_fs_path_cstring(err2), "/stderr") != NULL);
+    ATF_CHECK(strstr(out1, "/stdout") != NULL);
+    ATF_CHECK(strstr(out2, "/stdout") != NULL);
+    ATF_CHECK(strstr(err1, "/stderr") != NULL);
+    ATF_CHECK(strstr(err2, "/stderr") != NULL);
 
-    ATF_CHECK(strcmp(atf_fs_path_cstring(out1),
-                     atf_fs_path_cstring(out2)) != 0);
-    ATF_CHECK(strcmp(atf_fs_path_cstring(err1),
-                     atf_fs_path_cstring(err2)) != 0);
+    ATF_CHECK(strcmp(out1, out2) != 0);
+    ATF_CHECK(strcmp(err1, err2) != 0);
 
 #define CHECK_LINES(path, outname, resname) \
     do { \
-        int fd = open(atf_fs_path_cstring(path), O_RDONLY); \
+        int fd = open(path, O_RDONLY); \
         ATF_CHECK(fd != -1); \
         check_line(fd, "Line 1 to " outname " for " resname); \
         check_line(fd, "Line 2 to " outname " for " resname); \
@@ -510,7 +479,7 @@ ATF_TC_BODY(exec_umask, tc)
     atf_fs_path_t process_helpers;
     const char *argv[3];
 
-    get_process_helpers_path(tc, &process_helpers);
+    get_process_helpers_path(tc, false, &process_helpers);
     argv[0] = atf_fs_path_cstring(&process_helpers);
     argv[1] = "exit-success";
     argv[2] = NULL;
@@ -563,10 +532,9 @@ ATF_TP_ADD_TCS(tp)
     ATF_TP_ADD_TC(tp, build_c_o);
     ATF_TP_ADD_TC(tp, build_cpp);
     ATF_TP_ADD_TC(tp, build_cxx_o);
-    ATF_TP_ADD_TC(tp, exec_argv);
+    ATF_TP_ADD_TC(tp, exec_array);
     ATF_TP_ADD_TC(tp, exec_cleanup);
     ATF_TP_ADD_TC(tp, exec_exitstatus);
-    ATF_TP_ADD_TC(tp, exec_list);
     ATF_TP_ADD_TC(tp, exec_stdout_stderr);
     ATF_TP_ADD_TC(tp, exec_umask);
     ATF_TP_ADD_TC(tp, exec_unknown);

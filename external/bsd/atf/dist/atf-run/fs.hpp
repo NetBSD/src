@@ -32,7 +32,7 @@
 
 #include <memory>
 
-#include <atf-c++/fs.hpp>
+#include "atf-c++/detail/fs.hpp"
 
 namespace atf {
 namespace atf_run {

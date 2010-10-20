@@ -32,6 +32,7 @@
 
 #include <atf-c/tc.h>
 #include <atf-c/tp.h>
+#include <atf-c/utils.h>
 
 #define ATF_TC_NAME(tc) \
     (atfu_ ## tc ## _tc)
@@ -112,9 +113,13 @@
 #define ATF_TP_ADD_TC(tp, tc) \
     do { \
         atf_error_t atfu_err; \
+        char **atfu_config = atf_tp_get_config(tp); \
+        if (atfu_config == NULL) \
+            return atf_no_memory_error(); \
         atfu_err = atf_tc_init_pack(&atfu_ ## tc ## _tc, \
                                     &atfu_ ## tc ## _tc_pack, \
-                                    atf_tp_get_config(tp)); \
+                                    (const char *const *)atfu_config); \
+        atf_utils_free_charpp(atfu_config); \
         if (atf_is_error(atfu_err)) \
             return atfu_err; \
         atfu_err = atf_tp_add_tc(tp, &atfu_ ## tc ## _tc); \

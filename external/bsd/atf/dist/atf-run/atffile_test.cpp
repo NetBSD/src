@@ -36,12 +36,12 @@ extern "C" {
 #include <fstream>
 #include <memory>
 
-#include "atf-c++/exceptions.hpp"
 #include "atf-c++/macros.hpp"
 
-#include "atffile.hpp"
+#include "atf-c++/detail/exceptions.hpp"
+#include "atf-c++/detail/test_helpers.hpp"
 
-#include "test_helpers.hpp"
+#include "atffile.hpp"
 
 namespace detail = atf::atf_run::detail;
 
@@ -56,7 +56,7 @@ std::auto_ptr< std::ofstream >
 new_atffile(void)
 {
     std::auto_ptr< std::ofstream > os(new std::ofstream("Atffile"));
-    ATF_CHECK(*os);
+    ATF_REQUIRE(*os);
 
     (*os) << "Content-Type: application/X-atf-atffile; version=\"1\"\n\n";
     return os;
@@ -67,9 +67,9 @@ void
 touch_exec(const char* name)
 {
     std::ofstream os(name);
-    ATF_CHECK(os);
+    ATF_REQUIRE(os);
     os.close();
-    ATF_CHECK(::chmod(name, S_IRWXU) != -1);
+    ATF_REQUIRE(::chmod(name, S_IRWXU) != -1);
 }
 
 static inline
@@ -508,9 +508,9 @@ ATF_TEST_CASE_BODY(atffile_getters) {
 
     const atf::atf_run::atffile atffile(config_vars, test_program_names,
                                         properties);
-    ATF_CHECK(config_vars == atffile.conf());
-    ATF_CHECK(test_program_names == atffile.tps());
-    ATF_CHECK(properties == atffile.props());
+    ATF_REQUIRE(config_vars == atffile.conf());
+    ATF_REQUIRE(test_program_names == atffile.tps());
+    ATF_REQUIRE(properties == atffile.props());
 }
 
 // ------------------------------------------------------------------------
@@ -538,16 +538,16 @@ ATF_TEST_CASE_BODY(read_ok_simple) {
 
     const atf::atf_run::atffile atffile = atf::atf_run::read_atffile(
         atf::fs::path("Atffile"));
-    ATF_CHECK_EQUAL(2, atffile.conf().size());
-    ATF_CHECK_EQUAL("value1", atffile.conf().find("var1")->second);
-    ATF_CHECK_EQUAL("value2", atffile.conf().find("var2")->second);
-    ATF_CHECK_EQUAL(3, atffile.tps().size());
-    ATF_CHECK(is_in("tp-1", atffile.tps()));
-    ATF_CHECK(is_in("tp-2", atffile.tps()));
-    ATF_CHECK(is_in("tp-3", atffile.tps()));
-    ATF_CHECK_EQUAL(2, atffile.props().size());
-    ATF_CHECK_EQUAL("foo", atffile.props().find("test-suite")->second);
-    ATF_CHECK_EQUAL("propvalue1", atffile.props().find("prop1")->second);
+    ATF_REQUIRE_EQ(2, atffile.conf().size());
+    ATF_REQUIRE_EQ("value1", atffile.conf().find("var1")->second);
+    ATF_REQUIRE_EQ("value2", atffile.conf().find("var2")->second);
+    ATF_REQUIRE_EQ(3, atffile.tps().size());
+    ATF_REQUIRE(is_in("tp-1", atffile.tps()));
+    ATF_REQUIRE(is_in("tp-2", atffile.tps()));
+    ATF_REQUIRE(is_in("tp-3", atffile.tps()));
+    ATF_REQUIRE_EQ(2, atffile.props().size());
+    ATF_REQUIRE_EQ("foo", atffile.props().find("test-suite")->second);
+    ATF_REQUIRE_EQ("propvalue1", atffile.props().find("prop1")->second);
 }
 
 ATF_TEST_CASE(read_ok_some_globs);
@@ -572,12 +572,12 @@ ATF_TEST_CASE_BODY(read_ok_some_globs) {
 
     const atf::atf_run::atffile atffile = atf::atf_run::read_atffile(
         atf::fs::path("Atffile"));
-    ATF_CHECK_EQUAL(5, atffile.tps().size());
-    ATF_CHECK(is_in("foo", atffile.tps()));
-    ATF_CHECK(is_in("bar", atffile.tps()));
-    ATF_CHECK(is_in("aK", atffile.tps()));
-    ATF_CHECK(is_in("KKKKK", atffile.tps()));
-    ATF_CHECK(is_in("t_hello", atffile.tps()));
+    ATF_REQUIRE_EQ(5, atffile.tps().size());
+    ATF_REQUIRE(is_in("foo", atffile.tps()));
+    ATF_REQUIRE(is_in("bar", atffile.tps()));
+    ATF_REQUIRE(is_in("aK", atffile.tps()));
+    ATF_REQUIRE(is_in("KKKKK", atffile.tps()));
+    ATF_REQUIRE(is_in("t_hello", atffile.tps()));
 }
 
 ATF_TEST_CASE(read_missing_test_suite);
@@ -592,7 +592,7 @@ ATF_TEST_CASE_BODY(read_missing_test_suite) {
         (void)atf::atf_run::read_atffile(atf::fs::path("Atffile"));
         ATF_FAIL("Missing property 'test-suite' did not raise an error");
     } catch (const atf::not_found_error< std::string >& e) {
-        ATF_CHECK_EQUAL("test-suite", e.get_value());
+        ATF_REQUIRE_EQ("test-suite", e.get_value());
     }
 }
 
@@ -614,7 +614,7 @@ ATF_TEST_CASE_BODY(read_missing_test_program) {
         (void)atf::atf_run::read_atffile(atf::fs::path("Atffile"));
         ATF_FAIL("Missing file 'bar' did not raise an error");
     } catch (const atf::not_found_error< atf::fs::path >& e) {
-        ATF_CHECK_EQUAL("bar", e.get_value().str());
+        ATF_REQUIRE_EQ("bar", e.get_value().str());
     }
 }
 

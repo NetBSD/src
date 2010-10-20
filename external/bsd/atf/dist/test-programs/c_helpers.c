@@ -39,12 +39,12 @@
 
 #include <atf-c.h>
 
-#include "atf-c/env.h"
 #include "atf-c/error.h"
-#include "atf-c/fs.h"
-#include "atf-c/text.h"
 
-#include "atf-c/test_helpers.h"
+#include "atf-c/detail/env.h"
+#include "atf-c/detail/fs.h"
+#include "atf-c/detail/test_helpers.h"
+#include "atf-c/detail/text.h"
 
 /* ---------------------------------------------------------------------
  * Auxiliary functions.

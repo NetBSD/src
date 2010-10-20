@@ -33,9 +33,10 @@ extern "C" {
 #include "atf-c/config.h"
 }
 
-#include "atf-c++/config.hpp"
-#include "atf-c++/env.hpp"
-#include "atf-c++/sanity.hpp"
+#include "config.hpp"
+
+#include "detail/env.hpp"
+#include "detail/sanity.hpp"
 
 static std::map< std::string, std::string > m_variables;
 
@@ -61,8 +62,8 @@ init_variables(void)
     m_variables["atf_confdir"] = atf_config_get("atf_confdir");
     m_variables["atf_includedir"] = atf_config_get("atf_includedir");
     m_variables["atf_libdir"] = atf_config_get("atf_libdir");
+    m_variables["atf_libexecdir"] = atf_config_get("atf_libexecdir");
     m_variables["atf_machine"] = atf_config_get("atf_machine");
-    m_variables["atf_m4"] = atf_config_get("atf_m4");
     m_variables["atf_pkgdatadir"] = atf_config_get("atf_pkgdatadir");
     m_variables["atf_shell"] = atf_config_get("atf_shell");
     m_variables["atf_workdir"] = atf_config_get("atf_workdir");

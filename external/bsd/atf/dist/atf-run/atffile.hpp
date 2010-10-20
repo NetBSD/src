@@ -33,8 +33,9 @@
 #include <string>
 #include <vector>
 
-#include <atf-c++/fs.hpp>
-#include <atf-c++/tests.hpp>
+#include "atf-c++/tests.hpp"
+
+#include "atf-c++/detail/fs.hpp"
 
 namespace atf {
 namespace atf_run {

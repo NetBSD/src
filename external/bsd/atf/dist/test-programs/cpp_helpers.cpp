@@ -36,8 +36,9 @@ extern "C" {
 #include <fstream>
 #include <iostream>
 
-#include "atf-c++/fs.hpp"
 #include "atf-c++/macros.hpp"
+
+#include "atf-c++/detail/fs.hpp"
 
 // ------------------------------------------------------------------------
 // Helper tests for "t_config".
@@ -50,7 +51,7 @@ ATF_TEST_CASE_HEAD(config_unset)
 }
 ATF_TEST_CASE_BODY(config_unset)
 {
-    ATF_CHECK(!has_config_var("test"));
+    ATF_REQUIRE(!has_config_var("test"));
 }
 
 ATF_TEST_CASE(config_empty);
@@ -60,7 +61,7 @@ ATF_TEST_CASE_HEAD(config_empty)
 }
 ATF_TEST_CASE_BODY(config_empty)
 {
-    ATF_CHECK_EQUAL(get_config_var("test"), "");
+    ATF_REQUIRE_EQ(get_config_var("test"), "");
 }
 
 ATF_TEST_CASE(config_value);
@@ -70,7 +71,7 @@ ATF_TEST_CASE_HEAD(config_value)
 }
 ATF_TEST_CASE_BODY(config_value)
 {
-    ATF_CHECK_EQUAL(get_config_var("test"), "foo");
+    ATF_REQUIRE_EQ(get_config_var("test"), "foo");
 }
 
 ATF_TEST_CASE(config_multi_value);
@@ -80,7 +81,7 @@ ATF_TEST_CASE_HEAD(config_multi_value)
 }
 ATF_TEST_CASE_BODY(config_multi_value)
 {
-    ATF_CHECK_EQUAL(get_config_var("test"), "foo bar");
+    ATF_REQUIRE_EQ(get_config_var("test"), "foo bar");
 }
 
 // ------------------------------------------------------------------------
@@ -235,13 +236,13 @@ ATF_TEST_CASE_HEAD(fork_stop)
 ATF_TEST_CASE_BODY(fork_stop)
 {
     std::ofstream os(get_config_var("pidfile").c_str());
-    os << ::getpid() << std::endl;
+    os << ::getpid() << "\n";
     os.close();
-    std::cout << "Wrote pid file" << std::endl;
-    std::cout << "Waiting for done file" << std::endl;
+    std::cout << "Wrote pid file\n";
+    std::cout << "Waiting for done file\n";
     while (::access(get_config_var("donefile").c_str(), F_OK) != 0)
         ::usleep(10000);
-    std::cout << "Exiting" << std::endl;
+    std::cout << "Exiting\n";
 }
 
 // ------------------------------------------------------------------------

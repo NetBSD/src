@@ -33,8 +33,9 @@
 #include <string.h>
 
 #include "atf-c/config.h"
-#include "atf-c/env.h"
-#include "atf-c/sanity.h"
+
+#include "detail/env.h"
+#include "detail/sanity.h"
 
 static bool initialized = false;
 
@@ -54,8 +55,8 @@ static struct var {
     { "atf_confdir",        ATF_CONFDIR,        NULL, false, },
     { "atf_includedir",     ATF_INCLUDEDIR,     NULL, false, },
     { "atf_libdir",         ATF_LIBDIR,         NULL, false, },
+    { "atf_libexecdir",     ATF_LIBEXECDIR,     NULL, false, },
     { "atf_machine",        ATF_MACHINE,        NULL, false, },
-    { "atf_m4",             ATF_M4,             NULL, false, },
     { "atf_pkgdatadir",     ATF_PKGDATADIR,     NULL, false, },
     { "atf_shell",          ATF_SHELL,          NULL, false, },
     { "atf_workdir",        ATF_WORKDIR,        NULL, false, },

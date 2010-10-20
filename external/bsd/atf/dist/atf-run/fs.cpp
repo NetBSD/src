@@ -44,10 +44,10 @@ extern "C" {
 #include <cstdlib>
 #include <cstring>
 
-#include "atf-c++/process.hpp"
-#include "atf-c++/user.hpp"
+#include "atf-c++/detail/process.hpp"
 
 #include "fs.hpp"
+#include "user.hpp"
 
 namespace impl = atf::atf_run;
 #define IMPL_NAME "atf::atf_run"
@@ -233,7 +233,7 @@ impl::set_immutable(const atf::fs::path& p, bool value)
                                 "chflags(" + p.str() + ") failed", errno);
     return true;
 #elif HAVE_CHATTR
-    if (atf::user::is_root()) {
+    if (p.is_root()) {
         const atf::fs::path prog(CHATTR);
         const atf::process::argv_array argv("chattr", value ? "+i" : "-i",
             p.c_str(), NULL);

@@ -31,10 +31,11 @@
 #include <vector>
 
 #include "atf-c++/config.hpp"
-#include "atf-c++/env.hpp"
-#include "atf-c++/fs.hpp"
-#include "atf-c++/sanity.hpp"
-#include "atf-c++/parser.hpp"
+
+#include "atf-c++/detail/env.hpp"
+#include "atf-c++/detail/fs.hpp"
+#include "atf-c++/detail/sanity.hpp"
+#include "atf-c++/detail/parser.hpp"
 
 #include "config.hpp"
 
@@ -45,12 +46,12 @@ namespace {
 
 namespace atf_config {
 
-static const atf::parser::token_type& eof_type = 0;
-static const atf::parser::token_type& nl_type = 1;
-static const atf::parser::token_type& text_type = 2;
-static const atf::parser::token_type& dblquote_type = 3;
-static const atf::parser::token_type& equal_type = 4;
-static const atf::parser::token_type& hash_type = 5;
+static const atf::parser::token_type eof_type = 0;
+static const atf::parser::token_type nl_type = 1;
+static const atf::parser::token_type text_type = 2;
+static const atf::parser::token_type dblquote_type = 3;
+static const atf::parser::token_type equal_type = 4;
+static const atf::parser::token_type hash_type = 5;
 
 class tokenizer : public atf::parser::tokenizer< std::istream > {
 public:
