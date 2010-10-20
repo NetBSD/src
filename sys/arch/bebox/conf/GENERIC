@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.121 2010/10/16 05:49:03 kiyohara Exp $
+# $NetBSD: GENERIC,v 1.122 2010/10/20 02:39:19 kiyohara Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/bebox/conf/std.bebox"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.121 $"
+#ident 		"GENERIC-$Revision: 1.122 $"
 
 maxusers	32
 
@@ -149,7 +149,6 @@ options 	IPFILTER_COMPAT # Compat for IP-Filter
 options 	PCIVERBOSE	# verbose PCI device autoconfig messages
 options 	MIIVERBOSE	# verbose PHY autoconfig messages
 #options 	PCI_CONFIG_DUMP	# verbosely dump PCI config space
-options 	PCI_NETBSD_CONFIGURE
 options 	SCSIVERBOSE	# human readable SCSI error messages
 
 #options 	NFS_BOOT_BOOTPARAM,NFS_BOOT_BOOTP
