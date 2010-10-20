@@ -37,16 +37,12 @@ extern "C" {
 
 #include <memory>
 
-#include <atf-c++/signals.hpp>
-#include <atf-c++/utils.hpp>
+#include "atf-c++/utils.hpp"
 
 namespace atf {
-
-namespace signals {
-class signal_programmer;
-} // namespace signals
-
 namespace atf_run {
+
+class signal_programmer;
 
 // ------------------------------------------------------------------------
 // The "timer" class.
@@ -54,7 +50,7 @@ namespace atf_run {
 
 class timer : utils::noncopyable {
     ::itimerval m_old_timeval;
-    std::auto_ptr< signals::signal_programmer > m_sigalrm;
+    std::auto_ptr< signal_programmer > m_sigalrm;
 
 public:
     timer(const unsigned int);
@@ -70,9 +66,10 @@ public:
 
 class child_timer : public timer {
     const pid_t m_pid;
+    volatile bool& m_terminate;
 
 public:
-    child_timer(const unsigned int, const pid_t);
+    child_timer(const unsigned int, const pid_t, volatile bool&);
     virtual ~child_timer(void);
 
     void timeout_callback(void);

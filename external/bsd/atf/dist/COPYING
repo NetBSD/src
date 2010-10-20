@@ -51,8 +51,8 @@ clarify this fact.
 
   Author: Julio Merino <jmmv@NetBSD.org>
 
-* atf-c++/io.hpp, atf-c++/io.cpp, tests/atf-c++/t_io.cpp: These files
-  were derived from the file_handle, systembuf, pipe, pistream and postream
+* atf-c++/detail/io.hpp, atf-c++/detail/io.cpp, atf-c++/detail/io_test.cpp:
+  These files were derived from the file_handle, systembuf, pipe and pistream
   classes and tests found in the Boost.Process library.
 
   Author: Julio Merino <jmmv84@gmail.com>

@@ -31,17 +31,13 @@
 #define _ATF_CXX_CHECK_HPP_
 
 extern "C" {
-#include "atf-c/check.h"
+#include <atf-c/check.h>
 }
 
 #include <cstddef>
 #include <memory>
 #include <string>
 #include <vector>
-
-#include "atf-c++/fs.hpp"
-#include "atf-c++/text.hpp"
-#include "atf-c++/utils.hpp"
 
 namespace atf {
 
@@ -66,12 +62,8 @@ class check_result {
     //!
     //! \brief Internal representation of a result.
     //!
+    // XXX: This is non-copyable!  The class must define it as such.
     atf_check_result_t m_result;
-
-    //!
-    //! \brief Copy of m_result.m_argv but in a C++ collection.
-    //!
-    std::vector< std::string > m_argv;
 
     //!
     //! \brief Constructs a results object and grabs ownership of the
@@ -87,12 +79,6 @@ public:
     //! \brief Destroys object and removes all managed files.
     //!
     ~check_result(void);
-
-    //!
-    //! \brief Returns the argument list used by the command that caused
-    //! this result.
-    //!
-    const std::vector< std::string >& argv(void) const;
 
     //!
     //! \brief Returns whether the command exited correctly or not.
@@ -117,23 +103,23 @@ public:
     //!
     //! \brief Returns the path to file contaning command's stdout.
     //!
-    const atf::fs::path stdout_path(void) const;
+    const std::string stdout_path(void) const;
 
     //!
     //! \brief Returns the path to file contaning command's stderr.
     //!
-    const atf::fs::path stderr_path(void) const;
+    const std::string stderr_path(void) const;
 };
 
 // ------------------------------------------------------------------------
 // Free functions.
 // ------------------------------------------------------------------------
 
-bool build_c_o(const atf::fs::path&, const atf::fs::path&,
+bool build_c_o(const std::string&, const std::string&,
                const atf::process::argv_array&);
-bool build_cpp(const atf::fs::path&, const atf::fs::path&,
+bool build_cpp(const std::string&, const std::string&,
                const atf::process::argv_array&);
-bool build_cxx_o(const atf::fs::path&, const atf::fs::path&,
+bool build_cxx_o(const std::string&, const std::string&,
                  const atf::process::argv_array&);
 check_result exec(const atf::process::argv_array&);
 

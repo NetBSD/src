@@ -34,10 +34,11 @@ extern "C" {
 #include "atf-c/error.h"
 }
 
-#include "atf-c++/check.hpp"
-#include "atf-c++/exceptions.hpp"
-#include "atf-c++/process.hpp"
-#include "atf-c++/sanity.hpp"
+#include "check.hpp"
+
+#include "detail/exceptions.hpp"
+#include "detail/process.hpp"
+#include "detail/sanity.hpp"
 
 namespace impl = atf::check;
 #define IMPL_NAME "atf::check"
@@ -49,22 +50,11 @@ namespace impl = atf::check;
 impl::check_result::check_result(const atf_check_result_t* result)
 {
     std::memcpy(&m_result, result, sizeof(m_result));
-
-    atf_list_citer_t iter;
-    atf_list_for_each_c(iter, atf_check_result_argv(&m_result))
-        m_argv.push_back((const char *)atf_list_citer_data(iter));
 }
 
 impl::check_result::~check_result(void)
 {
     atf_check_result_fini(&m_result);
-}
-
-const std::vector< std::string >&
-impl::check_result::argv(void)
-    const
-{
-    return m_argv;
 }
 
 bool
@@ -97,16 +87,14 @@ impl::check_result::termsig(void)
     return atf_check_result_termsig(&m_result);
 }
 
-const atf::fs::path
-impl::check_result::stdout_path(void)
-    const
+const std::string
+impl::check_result::stdout_path(void) const
 {
     return atf_check_result_stdout(&m_result);
 }
 
-const atf::fs::path
-impl::check_result::stderr_path(void)
-        const
+const std::string
+impl::check_result::stderr_path(void) const
 {
     return atf_check_result_stderr(&m_result);
 }
@@ -116,7 +104,7 @@ impl::check_result::stderr_path(void)
 // ------------------------------------------------------------------------
 
 bool
-impl::build_c_o(const atf::fs::path& sfile, const atf::fs::path& ofile,
+impl::build_c_o(const std::string& sfile, const std::string& ofile,
                 const atf::process::argv_array& optargs)
 {
     bool success;
@@ -130,7 +118,7 @@ impl::build_c_o(const atf::fs::path& sfile, const atf::fs::path& ofile,
 }
 
 bool
-impl::build_cpp(const atf::fs::path& sfile, const atf::fs::path& ofile,
+impl::build_cpp(const std::string& sfile, const std::string& ofile,
                 const atf::process::argv_array& optargs)
 {
     bool success;
@@ -144,7 +132,7 @@ impl::build_cpp(const atf::fs::path& sfile, const atf::fs::path& ofile,
 }
 
 bool
-impl::build_cxx_o(const atf::fs::path& sfile, const atf::fs::path& ofile,
+impl::build_cxx_o(const std::string& sfile, const std::string& ofile,
                   const atf::process::argv_array& optargs)
 {
     bool success;

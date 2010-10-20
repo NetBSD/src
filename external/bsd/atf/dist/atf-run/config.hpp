@@ -30,7 +30,7 @@
 #include <string>
 #include <vector>
 
-#include <atf-c++/tests.hpp>
+#include "atf-c++/tests.hpp"
 
 namespace atf {
 namespace atf_run {

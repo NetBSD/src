@@ -35,10 +35,11 @@
 
 #include "atf-c/build.h"
 #include "atf-c/config.h"
-#include "atf-c/env.h"
+#include "atf-c/utils.h"
 
+#include "detail/env.h"
+#include "detail/test_helpers.h"
 #include "h_build.h"
-#include "test_helpers.h"
 
 /* ---------------------------------------------------------------------
  * Auxiliary functions.
@@ -48,25 +49,23 @@ void __atf_config_reinit(void);
 
 static
 bool
-equal_list_array(const atf_list_t *l, const char *const *a)
+equal_arrays(const char *const *exp_array, char **actual_array)
 {
     bool equal;
 
-    if (atf_list_size(l) == 0 && *a == NULL)
+    if (*exp_array == NULL && *actual_array == NULL)
         equal = true;
-    else if (atf_list_size(l) == 0 || *a == NULL)
+    else if (*exp_array == NULL || *actual_array == NULL)
         equal = false;
     else {
-        atf_list_citer_t liter;
-
         equal = true;
-        atf_list_for_each_c(liter, l) {
-            if (*a == NULL ||
-                strcmp((const char *)atf_list_citer_data(liter), *a) != 0) {
+        while (*actual_array != NULL) {
+            if (*exp_array == NULL || strcmp(*exp_array, *actual_array) != 0) {
                 equal = false;
                 break;
             }
-            a++;
+            exp_array++;
+            actual_array++;
         }
     }
 
@@ -75,34 +74,25 @@ equal_list_array(const atf_list_t *l, const char *const *a)
 
 static
 void
-print_list(const char *prefix, const atf_list_t *l)
+check_equal_array(const char *const *exp_array, char **actual_array)
 {
-    atf_list_citer_t iter;
+    {
+        const char *const *exp_ptr;
+        printf("Expected arguments:");
+        for (exp_ptr = exp_array; *exp_ptr != NULL; exp_ptr++)
+            printf(" '%s'", *exp_ptr);
+        printf("\n");
+    }
 
-    printf("%s:", prefix);
-    atf_list_for_each_c(iter, l)
-        printf(" '%s'", (const char *)atf_list_citer_data(iter));
-    printf("\n");
-}
+    {
+        char **actual_ptr;
+        printf("Returned arguments:");
+        for (actual_ptr = actual_array; *actual_ptr != NULL; actual_ptr++)
+            printf(" '%s'", *actual_ptr);
+        printf("\n");
+    }
 
-static
-void
-print_array(const char *prefix, const char *const *a)
-{
-    printf("%s:", prefix);
-    for (; *a != NULL; a++)
-        printf(" '%s'", *a);
-    printf("\n");
-}
-
-static
-void
-check_equal_list_array(const atf_list_t *l, const char *const *a)
-{
-    print_array("Expected arguments", a);
-    print_list("Arguments returned", l);
-
-    if (!equal_list_array(l, a))
+    if (!equal_arrays(exp_array, actual_array))
         atf_tc_fail_nonfatal("The constructed argv differs from the "
                              "expected values");
 }
@@ -119,50 +109,42 @@ verbose_set_env(const char *var, const char *val)
  * Internal test cases.
  * --------------------------------------------------------------------- */
 
-ATF_TC(equal_list_array);
-ATF_TC_HEAD(equal_list_array, tc)
+ATF_TC(equal_arrays);
+ATF_TC_HEAD(equal_arrays, tc)
 {
     atf_tc_set_md_var(tc, "descr", "Tests the test case internal "
-                      "equal_list_array function");
+                      "equal_arrays function");
 }
-ATF_TC_BODY(equal_list_array, tc)
+ATF_TC_BODY(equal_arrays, tc)
 {
     {
-        atf_list_t list;
-        const char *const array[] = { NULL };
+        const char *const exp[] = { NULL };
+        char *actual[] = { NULL };
 
-        RE(atf_list_init(&list));
-        ATF_CHECK(equal_list_array(&list, array));
-        atf_list_fini(&list);
+        ATF_CHECK(equal_arrays(exp, actual));
     }
 
     {
-        atf_list_t list;
-        const char *const array[] = { NULL };
+        const char *const exp[] = { NULL };
+        char *actual[2] = { strdup("foo"), NULL };
 
-        RE(atf_list_init(&list));
-        atf_list_append(&list, strdup("foo"), true);
-        ATF_CHECK(!equal_list_array(&list, array));
-        atf_list_fini(&list);
+        ATF_CHECK(!equal_arrays(exp, actual));
+        free(actual[0]);
     }
 
     {
-        atf_list_t list;
-        const char *const array[] = { "foo", NULL };
+        const char *const exp[] = { "foo", NULL };
+        char *actual[] = { NULL };
 
-        RE(atf_list_init(&list));
-        ATF_CHECK(!equal_list_array(&list, array));
-        atf_list_fini(&list);
+        ATF_CHECK(!equal_arrays(exp, actual));
     }
 
     {
-        atf_list_t list;
-        const char *const array[] = { "foo", NULL };
+        const char *const exp[] = { "foo", NULL };
+        char *actual[2] = { strdup("foo"), NULL };
 
-        RE(atf_list_init(&list));
-        atf_list_append(&list, strdup("foo"), true);
-        ATF_CHECK(equal_list_array(&list, array));
-        atf_list_fini(&list);
+        ATF_CHECK(equal_arrays(exp, actual));
+        free(actual[0]);
     }
 }
 
@@ -188,14 +170,14 @@ ATF_TC_BODY(c_o, tc)
         __atf_config_reinit();
 
         {
-            atf_list_t argv;
+            char **argv;
             if (test->hasoptargs)
                 RE(atf_build_c_o(test->sfile, test->ofile, test->optargs,
                                  &argv));
             else
                 RE(atf_build_c_o(test->sfile, test->ofile, NULL, &argv));
-            check_equal_list_array(&argv, test->expargv);
-            atf_list_fini(&argv);
+            check_equal_array(test->expargv, argv);
+            atf_utils_free_charpp(argv);
         }
     }
 }
@@ -217,14 +199,14 @@ ATF_TC_BODY(cpp, tc)
         __atf_config_reinit();
 
         {
-            atf_list_t argv;
+            char **argv;
             if (test->hasoptargs)
                 RE(atf_build_cpp(test->sfile, test->ofile, test->optargs,
                                  &argv));
             else
                 RE(atf_build_cpp(test->sfile, test->ofile, NULL, &argv));
-            check_equal_list_array(&argv, test->expargv);
-            atf_list_fini(&argv);
+            check_equal_array(test->expargv, argv);
+            atf_utils_free_charpp(argv);
         }
     }
 }
@@ -247,14 +229,14 @@ ATF_TC_BODY(cxx_o, tc)
         __atf_config_reinit();
 
         {
-            atf_list_t argv;
+            char **argv;
             if (test->hasoptargs)
                 RE(atf_build_cxx_o(test->sfile, test->ofile, test->optargs,
                                    &argv));
             else
                 RE(atf_build_cxx_o(test->sfile, test->ofile, NULL, &argv));
-            check_equal_list_array(&argv, test->expargv);
-            atf_list_fini(&argv);
+            check_equal_array(test->expargv, argv);
+            atf_utils_free_charpp(argv);
         }
     }
 }
@@ -272,7 +254,7 @@ HEADER_TC(include, "atf-c/build.h");
 ATF_TP_ADD_TCS(tp)
 {
     /* Add the internal test cases. */
-    ATF_TP_ADD_TC(tp, equal_list_array);
+    ATF_TP_ADD_TC(tp, equal_arrays);
 
     /* Add the test cases for the free functions. */
     ATF_TP_ADD_TC(tp, c_o);
