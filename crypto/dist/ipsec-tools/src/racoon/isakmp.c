@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp.c,v 1.61 2010/06/22 09:41:33 vanhu Exp $	*/
+/*	$NetBSD: isakmp.c,v 1.62 2010/10/20 13:37:37 tteras Exp $	*/
 
 /* Id: isakmp.c,v 1.74 2006/05/07 21:32:59 manubsd Exp */
 
@@ -810,7 +810,8 @@ ph1_main(iph1, msg)
 
 		if (iph1->side == RESPONDER && iph1->status == PHASE1ST_START) {
 			plog(LLV_ERROR, LOCATION, iph1->remote,
-				"failed to pre-process packet.\n");
+				"failed to pre-process ph1 packet (side: %d, status %d).\n",
+				iph1->side, iph1->status);
 			return -1;
 		} else {
 			/* ignore the error and keep phase 1 handler */
@@ -838,7 +839,8 @@ ph1_main(iph1, msg)
 			[iph1->side]
 			[iph1->status])(iph1, msg) != 0) {
 		plog(LLV_ERROR, LOCATION, iph1->remote,
-			"failed to process packet.\n");
+			"failed to process ph1 packet (side: %d, status: %d).\n",
+			iph1->side, iph1->status);
 		return -1;
 	}
 
@@ -990,7 +992,8 @@ quick_main(iph2, msg)
 			    [iph2->status])(iph2, msg);
 	if (error != 0) {
 		plog(LLV_ERROR, LOCATION, iph2->ph1->remote,
-			"failed to pre-process packet.\n");
+			"failed to pre-process ph2 packet (side: %d, status %d).\n",
+			iph2->side, iph2->status);
 		if (error == ISAKMP_INTERNAL_ERROR)
 			return 0;
 		isakmp_info_send_n1(iph2->ph1, error, NULL);
@@ -1018,7 +1021,8 @@ quick_main(iph2, msg)
 			[iph2->side]
 			[iph2->status])(iph2, msg) != 0) {
 		plog(LLV_ERROR, LOCATION, iph2->ph1->remote,
-			"failed to process packet.\n");
+			"failed to process ph2 packet (side: %d, status: %d).\n",
+			iph2->side, iph2->status);
 		return -1;
 	}
 
@@ -1226,7 +1230,8 @@ isakmp_ph1begin_r(msg, remote, local, etype)
 			[iph1->side]
 			[iph1->status])(iph1, msg) < 0) {
 		plog(LLV_ERROR, LOCATION, remote,
-			"failed to process packet.\n");
+			"failed to process ph1 packet (side: %d, status: %d).\n",
+			iph1->side, iph1->status);
 		remph1(iph1);
 		delph1(iph1);
 		return -1;
@@ -1379,7 +1384,8 @@ isakmp_ph2begin_r(iph1, msg)
 	                   [iph2->status])(iph2, msg);
 	if (error != 0) {
 		plog(LLV_ERROR, LOCATION, iph1->remote,
-			"failed to pre-process packet.\n");
+			"failed to pre-process ph2 packet (side: %d, status: %d).\n",
+			iph2->side, iph2->status);
 		if (error != ISAKMP_INTERNAL_ERROR)
 			isakmp_info_send_n1(iph2->ph1, error, NULL);
 		/*
@@ -1397,7 +1403,8 @@ isakmp_ph2begin_r(iph1, msg)
 			[iph2->side]
 			[iph2->status])(iph2, msg) < 0) {
 		plog(LLV_ERROR, LOCATION, iph2->ph1->remote,
-			"failed to process packet.\n");
+			"failed to process ph2 packet (side: %d, status: %d).\n",
+			iph2->side, iph2->status);
 		/* don't release handler */
 		return -1;
 	}
