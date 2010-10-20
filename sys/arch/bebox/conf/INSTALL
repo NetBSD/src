@@ -1,6 +1,6 @@
-#	$NetBSD: INSTALL,v 1.49 2010/10/16 05:39:34 kiyohara Exp $
+#	$NetBSD: INSTALL,v 1.50 2010/10/20 02:54:10 kiyohara Exp $
 #
-# First try for BEBOX config file
+# First try for BeBox config file
 #
 
 include "arch/bebox/conf/std.bebox"
@@ -38,17 +38,17 @@ options		PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 #options 	COMPAT_43
 #options 	COMPAT_09
-options 	COMPAT_10
-options 	COMPAT_12
-options 	COMPAT_13
-options 	COMPAT_14
-options 	COMPAT_15
-options 	COMPAT_16
-options 	COMPAT_20
-options 	COMPAT_30	# NetBSD 3.0 compatibility.
-options 	COMPAT_40	# NetBSD 4.0 compatibility.
+#options 	COMPAT_10
+#options 	COMPAT_12
+#options 	COMPAT_13
+#options 	COMPAT_14
+#options 	COMPAT_15
+#options 	COMPAT_16
+#options 	COMPAT_20
+#options 	COMPAT_30	# NetBSD 3.0 compatibility.
+#options 	COMPAT_40	# NetBSD 4.0 compatibility.
 #options 	COMPAT_386BSD_MBRPART	# recognize old partition ID
-#options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
+#options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 # File systems
 file-system 	FFS
@@ -64,7 +64,7 @@ file-system 	KERNFS
 #file-system 	UMAPFS
 #file-system 	UNION
 file-system	PTYFS		# /dev/pts/N support
-file-system	TMPFS
+#file-system	TMPFS
 
 # Filesystem options
 options 	NFS_V2_ONLY	# Exclude NFS3 code to save space
@@ -78,6 +78,15 @@ options 	INET
 options 	NFS_BOOT_DHCP,NFS_BOOT_BOOTPARAM
 
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
+
+# wscons options
+# builtin terminal emulations
+#options 	WSEMUL_SUN		# sun terminal emulation
+options 	WSEMUL_VT100		# VT100 / VT220 emulation
+options 	WS_DEFAULT_FG=WSCOL_LIGHT_WHITE
+# compatibility to other console drivers
+options 	WSDISPLAY_COMPAT_USL	# VT handling
+options 	WSDISPLAY_COMPAT_RAWKBD	# can get raw scancodes
 
 config		netbsd	root on ? type ffs
 
@@ -100,8 +109,6 @@ pchb*	at pci? dev ? function ?	# PCI-Host bridges
 pcib*	at pci? dev ? function ?	# PCI-ISA bridges
 
 isa*	at pcib?			# ISA on PCI-ISA bridge
-
-mcclock0 at isa? port 0x70		# generic time-of-day clock
 
 # Console Devices
 
@@ -129,6 +136,9 @@ com1	at isa? port 0x2f8 irq 3
 
 #lpt0	at isa? port 0x378 irq 7	# standard PC parallel ports
 
+mcclock0 at isa? port 0x70		# time-of-day clock
+attimer0 at isa?
+
 siop*	at pci? dev ? function ?	# NCR 538XX SCSI controllers
 scsibus* at siop?
 
@@ -148,6 +158,16 @@ wdc0	at isa? port 0x1f0 irq 14	# ST506, ESDI, and IDE controllers
 atabus* at ata?
 wd*	at atabus? drive ?
 
+# ATAPI bus support
+atapibus* at atapi?
+
+# ATAPI devices
+# flags have the same meaning as for IDE drives.
+cd*	at atapibus? drive ? flags 0x0000	# ATAPI CD-ROM drives
+#sd*	at atapibus? drive ? flags 0x0000	# ATAPI disk drives
+#st*	at atapibus? drive ? flags 0x0000	# ATAPI tape drives
+#uk*	at atapibus? drive ? flags 0x0000	# ATAPI unknown
+
 # Network devices
 ec0	at isa? port 0x250 iomem 0xd8000 irq 9	# 3Com 3c503 Ethernet
 ne0	at isa? port 0x300 irq 5	# NE[12]000 ethernet cards
@@ -155,8 +175,11 @@ fxp*	at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B
 ne*	at pci? dev ? function ?	# NE2000-compatible Ethernet
 tlp*	at pci? dev ? function ?	# DECchip 21x4x and clones
 
+# MII/PHY support
+ukphy*  at mii? phy ?                   # generic unknown PHYs
+
 #wss0	at isa? port 0x530 irq 10 drq 0	# Windows Sound System
-#spkr0	at pckbd? port 0x61
+#spkr0	at pcppi?
 
 # Joystick driver. Probe is a little strange; add only if you have one.
 #joy0	at isa? port 0x201
