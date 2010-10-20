@@ -30,33 +30,31 @@
 #if !defined(ATF_C_TP_H)
 #define ATF_C_TP_H
 
-#include <atf-c/error_fwd.h>
-#include <atf-c/list.h>
+#include <stdbool.h>
 
-struct atf_fs_path;
-struct atf_map;
+#include <atf-c/error_fwd.h>
+
 struct atf_tc;
-struct atf_tcr;
 
 /* ---------------------------------------------------------------------
  * The "atf_tp" type.
  * --------------------------------------------------------------------- */
 
+struct atf_tp_impl;
 struct atf_tp {
-    atf_list_t m_tcs;
-    const struct atf_map *m_config;
+    struct atf_tp_impl *pimpl;
 };
 typedef struct atf_tp atf_tp_t;
 
 /* Constructors/destructors. */
-atf_error_t atf_tp_init(atf_tp_t *, struct atf_map *);
+atf_error_t atf_tp_init(atf_tp_t *, const char *const *);
 void atf_tp_fini(atf_tp_t *);
 
 /* Getters. */
-const struct atf_map *atf_tp_get_config(const atf_tp_t *);
+char **atf_tp_get_config(const atf_tp_t *);
 bool atf_tp_has_tc(const atf_tp_t *, const char *);
 const struct atf_tc *atf_tp_get_tc(const atf_tp_t *, const char *);
-const atf_list_t *atf_tp_get_tcs(const atf_tp_t *);
+const struct atf_tc *const *atf_tp_get_tcs(const atf_tp_t *);
 
 /* Modifiers. */
 atf_error_t atf_tp_add_tc(atf_tp_t *, struct atf_tc *);
@@ -65,8 +63,7 @@ atf_error_t atf_tp_add_tc(atf_tp_t *, struct atf_tc *);
  * Free functions.
  * --------------------------------------------------------------------- */
 
-atf_error_t atf_tp_run(const atf_tp_t *, const char *,
-                       const struct atf_fs_path *);
+atf_error_t atf_tp_run(const atf_tp_t *, const char *, const char *);
 atf_error_t atf_tp_cleanup(const atf_tp_t *, const char *);
 
 #endif /* ATF_C_TP_H */

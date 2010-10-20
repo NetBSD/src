@@ -38,7 +38,9 @@ default_status_body()
 {
     h="$(atf_get_srcdir)/misc_helpers -s $(atf_get_srcdir)"
     atf_check -s eq:0 -o ignore -e ignore ${h} tc_pass_true
-    atf_check -s eq:0 -o ignore -e ignore ${h} tc_pass_false
+    atf_check -s eq:1 -o ignore -e ignore ${h} tc_pass_false
+    atf_check -s eq:1 -o match:'failed:.*body.*non-ok exit code' -e ignore \
+        ${h} tc_pass_return_error
     atf_check -s eq:1 -o ignore -e match:'An error' ${h} tc_fail
 }
 
