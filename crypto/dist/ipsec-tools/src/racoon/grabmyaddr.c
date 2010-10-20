@@ -1,4 +1,4 @@
-/*	$NetBSD: grabmyaddr.c,v 1.23 2009/07/03 06:41:46 tteras Exp $	*/
+/*	$NetBSD: grabmyaddr.c,v 1.24 2010/10/20 10:56:39 tteras Exp $	*/
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * Copyright (C) 2008 Timo Teras <timo.teras@iki.fi>.
@@ -187,8 +187,9 @@ myaddr_close_all_open(addr)
 	for (my = LIST_FIRST(&opened); my; my = next) {
 		next = LIST_NEXT(my, chain);
 
-		if (!cmpsaddr((struct sockaddr *) &addr,
-			      (struct sockaddr *) &my->addr))
+		if (cmpsaddr((struct sockaddr *) addr,
+			     (struct sockaddr *) &my->addr)
+		    <= CMPSADDR_WOP_MATCH)
 			myaddr_delete(my);
 	}
 }
