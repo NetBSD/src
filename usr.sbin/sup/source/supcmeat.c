@@ -1,4 +1,4 @@
-/*	$NetBSD: supcmeat.c,v 1.37 2009/10/17 20:46:03 christos Exp $	*/
+/*	$NetBSD: supcmeat.c,v 1.38 2010/10/20 17:05:54 christos Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -1407,20 +1407,24 @@ finishup(int x)
 	}
 	(void) sprintf(fname, FILEWHEN, collname, relsufix);
 	if (establishdir(fname)) {
+		int oerrno = errno;
 		Tfree(&lastT);
 		if (protver < 6)
 			return;
-		done(FDONEUSRERROR, "Couldn't timestamp");
+		done(FDONEUSRERROR, "Couldn't create directory `%s' (%s)",
+			fname, strerror(oerrno));
 		(void) requestend();
 		return;
 	}
 	if (!putwhen(fname, scantime)) {
+		int oerrno = errno;
 		notify("SUP: Can't record current time in %s (%s)\n",
-		    fname, strerror(errno));
+		    fname, strerror(oerrno));
 		Tfree(&lastT);
 		if (protver < 6)
 			return;
-		done(FDONEUSRERROR, "Couldn't timestamp");
+		done(FDONEUSRERROR, "Couldn't timestamp `%s' (%s)",
+			fname, strerror(oerrno));
 		(void) requestend();
 		return;
 	}
