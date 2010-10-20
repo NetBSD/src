@@ -328,7 +328,12 @@ check_stream(std::ostream& os)
 class mock_muxer : public atf::atf_run::muxer {
     void line_callback(const size_t index, const std::string& line)
     {
-        std::cout << "line_callback(" << index << ", " << line << ")\n";
+        // The following should be enabled but causes the output to be so big
+        // that it is annoying.  Reenable at some point if we make atf store
+        // the output of the test cases in some other way (e.g. only if a test
+        // failes), because this message is the only help in seeing how the
+        // test fails.
+        //std::cout << "line_callback(" << index << ", " << line << ")\n";
         check_stream(std::cout);
         switch (index) {
         case 0: lines0.push_back(line); break;
