@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.48 2010/10/19 11:58:01 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.49 2010/10/20 14:50:22 tsutsui Exp $
 
 .include <bsd.own.mk>
 
@@ -70,7 +70,7 @@ SUBDIR+=	xldscripts
 
 # Machine dependent section
 .if ${MACHINE_ARCH} == "i386" || \
-    ${MACHINE_ARCH} == "m68k"
+    ${MACHINE_CPU} == "m68k"
 SUBDIR+=	exec_aout
 .endif
 
@@ -118,7 +118,7 @@ SUBDIR+=	viadrm
 SUBDIR+=	pad
 .endif
 
-.if ${MACHINE_ARCH} == "m68k"
+.if ${MACHINE_CPU} == "m68k"
 SUBDIR+=	compat_aoutm68k
 #SUBDIR+=	compat_linux
 #SUBDIR+=	compat_sunos
