@@ -214,6 +214,16 @@ tc_pass_false_body()
     false
 }
 
+atf_test_case tc_pass_return_error
+tc_pass_return_error_head()
+{
+    atf_set "descr" "Helper test case for the t_tc test program"
+}
+tc_pass_return_error_body()
+{
+    return 1
+}
+
 atf_test_case tc_fail
 tc_fail_head()
 {
@@ -268,6 +278,7 @@ atf_init_test_cases()
     # Add helper tests for t_tc.
     atf_add_test_case tc_pass_true
     atf_add_test_case tc_pass_false
+    atf_add_test_case tc_pass_return_error
     atf_add_test_case tc_fail
 
     # Add helper tests for t_tp.

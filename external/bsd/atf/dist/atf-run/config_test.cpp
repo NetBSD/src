@@ -27,11 +27,10 @@
 // IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 
+#include "atf-c++/detail/test_helpers.hpp"
 #include "atf-c++/macros.hpp"
 
 #include "config.hpp"
-
-#include "test_helpers.hpp"
 
 namespace impl = atf::atf_run;
 namespace detail = atf::atf_run::detail;
@@ -311,7 +310,7 @@ ATF_TEST_CASE_HEAD(merge_configs_both_empty) {}
 ATF_TEST_CASE_BODY(merge_configs_both_empty) {
     vars_map lower, upper;
 
-    ATF_CHECK(impl::merge_configs(lower, upper).empty());
+    ATF_REQUIRE(impl::merge_configs(lower, upper).empty());
 }
 
 ATF_TEST_CASE(merge_configs_lower_empty);
@@ -321,7 +320,7 @@ ATF_TEST_CASE_BODY(merge_configs_lower_empty) {
     upper["var"] = "value";
 
     vars_map merged = impl::merge_configs(lower, upper);
-    ATF_CHECK_EQUAL("value", merged["var"]);
+    ATF_REQUIRE_EQ("value", merged["var"]);
 }
 
 ATF_TEST_CASE(merge_configs_upper_empty);
@@ -331,7 +330,7 @@ ATF_TEST_CASE_BODY(merge_configs_upper_empty) {
     lower["var"] = "value";
 
     vars_map merged = impl::merge_configs(lower, upper);
-    ATF_CHECK_EQUAL("value", merged["var"]);
+    ATF_REQUIRE_EQ("value", merged["var"]);
 }
 
 ATF_TEST_CASE(merge_configs_mixed);
@@ -344,15 +343,15 @@ ATF_TEST_CASE_BODY(merge_configs_mixed) {
     upper["var3"] = "value3";
 
     vars_map merged = impl::merge_configs(lower, upper);
-    ATF_CHECK_EQUAL("value1", merged["var1"]);
-    ATF_CHECK_EQUAL("value2-u", merged["var2"]);
-    ATF_CHECK_EQUAL("value3", merged["var3"]);
+    ATF_REQUIRE_EQ("value1", merged["var1"]);
+    ATF_REQUIRE_EQ("value2-u", merged["var2"]);
+    ATF_REQUIRE_EQ("value3", merged["var3"]);
 }
 
 ATF_TEST_CASE(read_config_files_none);
 ATF_TEST_CASE_HEAD(read_config_files_none) {}
 ATF_TEST_CASE_BODY(read_config_files_none) {
-    ATF_CHECK(vars_map() == impl::read_config_files("test-suite"));
+    ATF_REQUIRE(vars_map() == impl::read_config_files("test-suite"));
 }
 
 // -------------------------------------------------------------------------

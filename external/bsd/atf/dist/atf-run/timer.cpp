@@ -33,9 +33,10 @@ extern "C" {
 
 #include <cerrno>
 
-#include "atf-c++/exceptions.hpp"
-#include "atf-c++/sanity.hpp"
+#include "atf-c++/detail/exceptions.hpp"
+#include "atf-c++/detail/sanity.hpp"
 
+#include "signals.hpp"
 #include "timer.hpp"
 
 namespace impl = atf::atf_run;
@@ -69,7 +70,7 @@ impl::timer::timer(const unsigned int seconds)
 {
     sigalrm::m_fired = false;
     sigalrm::m_timer = this;
-    m_sigalrm.reset(new signals::signal_programmer(SIGALRM, sigalrm::handler));
+    m_sigalrm.reset(new signal_programmer(SIGALRM, sigalrm::handler));
 
     ::itimerval timeval;
     timeval.it_interval.tv_sec = 0;
@@ -101,9 +102,11 @@ impl::timer::fired(void)
 // The "child_timer" class.
 // ------------------------------------------------------------------------
 
-impl::child_timer::child_timer(const unsigned int seconds, const pid_t pid) :
+impl::child_timer::child_timer(const unsigned int seconds, const pid_t pid,
+                               volatile bool& terminate) :
     timer(seconds),
-    m_pid(pid)
+    m_pid(pid),
+    m_terminate(terminate)
 {
 }
 
@@ -114,6 +117,8 @@ impl::child_timer::~child_timer(void)
 void
 impl::child_timer::timeout_callback(void)
 {
+    m_terminate = true;
+
     // Should use killpg(2) but, according to signal(7), using this system
     // call in a signal handler context is not safe.
     ::kill(m_pid, SIGKILL);

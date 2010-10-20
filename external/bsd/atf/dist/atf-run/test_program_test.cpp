@@ -31,12 +31,12 @@
 #include <iostream>
 
 #include "atf-c++/macros.hpp"
-#include "atf-c++/parser.hpp"
-#include "atf-c++/text.hpp"
+
+#include "atf-c++/detail/parser.hpp"
+#include "atf-c++/detail/test_helpers.hpp"
+#include "atf-c++/detail/text.hpp"
 
 #include "test-program.hpp"
-
-#include "test_helpers.hpp"
 
 namespace impl = atf::atf_run;
 namespace detail = atf::atf_run::detail;
@@ -59,17 +59,17 @@ void
 check_property(const vars_map& props, const char* name, const char* value)
 {
     const vars_map::const_iterator iter = props.find(name);
-    ATF_CHECK(iter != props.end());
-    ATF_CHECK_EQUAL(value, (*iter).second);
+    ATF_REQUIRE(iter != props.end());
+    ATF_REQUIRE_EQ(value, (*iter).second);
 }
 
 static void
 check_result(const char* exp_state, const int exp_value, const char* exp_reason,
              const impl::test_case_result& tcr)
 {
-    ATF_CHECK_EQUAL(exp_state, tcr.state());
-    ATF_CHECK_EQUAL(exp_value, tcr.value());
-    ATF_CHECK_EQUAL(exp_reason, tcr.reason());
+    ATF_REQUIRE_EQ(exp_state, tcr.state());
+    ATF_REQUIRE_EQ(exp_value, tcr.value());
+    ATF_REQUIRE_EQ(exp_reason, tcr.reason());
 }
 
 static
@@ -77,7 +77,7 @@ void
 write_test_case_result(const char *results_path, const std::string& contents)
 {
     std::ofstream results_file(results_path);
-    ATF_CHECK(results_file);
+    ATF_REQUIRE(results_file);
 
     results_file << contents;
 }
@@ -89,26 +89,27 @@ print_indented(const std::string& str)
     std::vector< std::string > ws = atf::text::split(str, "\n");
     for (std::vector< std::string >::const_iterator iter = ws.begin();
          iter != ws.end(); iter++)
-        std::cout << ">>" << *iter << "<<" << std::endl;
+        std::cout << ">>" << *iter << "<<\n";
 }
 
 // XXX Should this string handling and verbosity level be part of the
-// ATF_CHECK_EQUAL macro?  It may be hard to predict sometimes that a
+// ATF_REQUIRE_EQ macro?  It may be hard to predict sometimes that a
 // string can have newlines in it, and so the error message generated
 // at the moment will be bogus if there are some.
 static
 void
-check_equal(const std::string& str, const std::string& exp)
+check_equal(const atf::tests::tc& tc, const std::string& str,
+            const std::string& exp)
 {
     if (str != exp) {
-        std::cout << "String equality check failed." << std::endl
+        std::cout << "String equality check failed.\n"
                   << "Adding >> and << to delimit the string boundaries "
-                     "below." << std::endl;
-        std::cout << "GOT:" << std::endl;
+                     "below.\n";
+        std::cout << "GOT:\n";
         print_indented(str);
-        std::cout << "EXPECTED:" << std::endl;
+        std::cout << "EXPECTED:\n";
         print_indented(exp);
-        atf_tc_fail("Constructed string differs from the expected one");
+        tc.fail("Constructed string differs from the expected one");
     }
 }
 
@@ -507,14 +508,13 @@ ATF_TEST_CASE_BODY(atf_tps_writer)
     ss.str("")
 
 #define CHECK \
-    check_equal(ss.str(), expss.str())
+    check_equal(*this, ss.str(), expss.str())
 
     {
         RESET;
 
         impl::atf_tps_writer w(ss);
-        expss << "Content-Type: application/X-atf-tps; version=\"2\""
-              << std::endl << std::endl;
+        expss << "Content-Type: application/X-atf-tps; version=\"2\"\n\n";
         CHECK;
     }
 
@@ -522,16 +522,15 @@ ATF_TEST_CASE_BODY(atf_tps_writer)
         RESET;
 
         impl::atf_tps_writer w(ss);
-        expss << "Content-Type: application/X-atf-tps; version=\"2\""
-              << std::endl << std::endl;
+        expss << "Content-Type: application/X-atf-tps; version=\"2\"\n\n";
         CHECK;
 
         w.info("foo", "bar");
-        expss << "info: foo, bar" << std::endl;
+        expss << "info: foo, bar\n";
         CHECK;
 
         w.info("baz", "second info");
-        expss << "info: baz, second info" << std::endl;
+        expss << "info: baz, second info\n";
         CHECK;
     }
 
@@ -539,12 +538,11 @@ ATF_TEST_CASE_BODY(atf_tps_writer)
         RESET;
 
         impl::atf_tps_writer w(ss);
-        expss << "Content-Type: application/X-atf-tps; version=\"2\""
-              << std::endl << std::endl;
+        expss << "Content-Type: application/X-atf-tps; version=\"2\"\n\n";
         CHECK;
 
         w.ntps(0);
-        expss << "tps-count: 0" << std::endl;
+        expss << "tps-count: 0\n";
         CHECK;
     }
 
@@ -552,12 +550,11 @@ ATF_TEST_CASE_BODY(atf_tps_writer)
         RESET;
 
         impl::atf_tps_writer w(ss);
-        expss << "Content-Type: application/X-atf-tps; version=\"2\""
-              << std::endl << std::endl;
+        expss << "Content-Type: application/X-atf-tps; version=\"2\"\n\n";
         CHECK;
 
         w.ntps(123);
-        expss << "tps-count: 123" << std::endl;
+        expss << "tps-count: 123\n";
         CHECK;
     }
 
@@ -565,28 +562,27 @@ ATF_TEST_CASE_BODY(atf_tps_writer)
         RESET;
 
         impl::atf_tps_writer w(ss);
-        expss << "Content-Type: application/X-atf-tps; version=\"2\""
-              << std::endl << std::endl;
+        expss << "Content-Type: application/X-atf-tps; version=\"2\"\n\n";
         CHECK;
 
         w.ntps(2);
-        expss << "tps-count: 2" << std::endl;
+        expss << "tps-count: 2\n";
         CHECK;
 
         w.start_tp("foo", 0);
-        expss << "tp-start: foo, 0" << std::endl;
+        expss << "tp-start: foo, 0\n";
         CHECK;
 
         w.end_tp("");
-        expss << "tp-end: foo" << std::endl;
+        expss << "tp-end: foo\n";
         CHECK;
 
         w.start_tp("bar", 0);
-        expss << "tp-start: bar, 0" << std::endl;
+        expss << "tp-start: bar, 0\n";
         CHECK;
 
         w.end_tp("failed program");
-        expss << "tp-end: bar, failed program" << std::endl;
+        expss << "tp-end: bar, failed program\n";
         CHECK;
     }
 
@@ -594,24 +590,23 @@ ATF_TEST_CASE_BODY(atf_tps_writer)
         RESET;
 
         impl::atf_tps_writer w(ss);
-        expss << "Content-Type: application/X-atf-tps; version=\"2\""
-              << std::endl << std::endl;
+        expss << "Content-Type: application/X-atf-tps; version=\"2\"\n\n";
         CHECK;
 
         w.ntps(1);
-        expss << "tps-count: 1" << std::endl;
+        expss << "tps-count: 1\n";
         CHECK;
 
         w.start_tp("foo", 1);
-        expss << "tp-start: foo, 1" << std::endl;
+        expss << "tp-start: foo, 1\n";
         CHECK;
 
         w.start_tc("brokentc");
-        expss << "tc-start: brokentc" << std::endl;
+        expss << "tc-start: brokentc\n";
         CHECK;
 
         w.end_tp("aborted");
-        expss << "tp-end: foo, aborted" << std::endl;
+        expss << "tp-end: foo, aborted\n";
         CHECK;
     }
 
@@ -619,44 +614,43 @@ ATF_TEST_CASE_BODY(atf_tps_writer)
         RESET;
 
         impl::atf_tps_writer w(ss);
-        expss << "Content-Type: application/X-atf-tps; version=\"2\""
-              << std::endl << std::endl;
+        expss << "Content-Type: application/X-atf-tps; version=\"2\"\n\n";
         CHECK;
 
         w.ntps(1);
-        expss << "tps-count: 1" << std::endl;
+        expss << "tps-count: 1\n";
         CHECK;
 
         w.start_tp("thetp", 3);
-        expss << "tp-start: thetp, 3" << std::endl;
+        expss << "tp-start: thetp, 3\n";
         CHECK;
 
         w.start_tc("passtc");
-        expss << "tc-start: passtc" << std::endl;
+        expss << "tc-start: passtc\n";
         CHECK;
 
         w.end_tc("passed", "");
-        expss << "tc-end: passtc, passed" << std::endl;
+        expss << "tc-end: passtc, passed\n";
         CHECK;
 
         w.start_tc("failtc");
-        expss << "tc-start: failtc" << std::endl;
+        expss << "tc-start: failtc\n";
         CHECK;
 
         w.end_tc("failed", "The reason");
-        expss << "tc-end: failtc, failed, The reason" << std::endl;
+        expss << "tc-end: failtc, failed, The reason\n";
         CHECK;
 
         w.start_tc("skiptc");
-        expss << "tc-start: skiptc" << std::endl;
+        expss << "tc-start: skiptc\n";
         CHECK;
 
         w.end_tc("skipped", "The reason");
-        expss << "tc-end: skiptc, skipped, The reason" << std::endl;
+        expss << "tc-end: skiptc, skipped, The reason\n";
         CHECK;
 
         w.end_tp("");
-        expss << "tp-end: thetp" << std::endl;
+        expss << "tp-end: thetp\n";
         CHECK;
     }
 
@@ -664,40 +658,39 @@ ATF_TEST_CASE_BODY(atf_tps_writer)
         RESET;
 
         impl::atf_tps_writer w(ss);
-        expss << "Content-Type: application/X-atf-tps; version=\"2\""
-              << std::endl << std::endl;
+        expss << "Content-Type: application/X-atf-tps; version=\"2\"\n\n";
         CHECK;
 
         w.ntps(1);
-        expss << "tps-count: 1" << std::endl;
+        expss << "tps-count: 1\n";
         CHECK;
 
         w.start_tp("thetp", 1);
-        expss << "tp-start: thetp, 1" << std::endl;
+        expss << "tp-start: thetp, 1\n";
         CHECK;
 
         w.start_tc("thetc");
-        expss << "tc-start: thetc" << std::endl;
+        expss << "tc-start: thetc\n";
         CHECK;
 
         w.stdout_tc("a line");
-        expss << "tc-so:a line" << std::endl;
+        expss << "tc-so:a line\n";
         CHECK;
 
         w.stdout_tc("another line");
-        expss << "tc-so:another line" << std::endl;
+        expss << "tc-so:another line\n";
         CHECK;
 
         w.stderr_tc("an error message");
-        expss << "tc-se:an error message" << std::endl;
+        expss << "tc-se:an error message\n";
         CHECK;
 
         w.end_tc("passed", "");
-        expss << "tc-end: thetc, passed" << std::endl;
+        expss << "tc-end: thetc, passed\n";
         CHECK;
 
         w.end_tp("");
-        expss << "tp-end: thetp" << std::endl;
+        expss << "tp-end: thetp\n";
         CHECK;
     }
 
@@ -705,28 +698,27 @@ ATF_TEST_CASE_BODY(atf_tps_writer)
         RESET;
 
         impl::atf_tps_writer w(ss);
-        expss << "Content-Type: application/X-atf-tps; version=\"2\""
-              << std::endl << std::endl;
+        expss << "Content-Type: application/X-atf-tps; version=\"2\"\n\n";
         CHECK;
 
         w.ntps(1);
-        expss << "tps-count: 1" << std::endl;
+        expss << "tps-count: 1\n";
         CHECK;
 
         w.start_tp("thetp", 0);
-        expss << "tp-start: thetp, 0" << std::endl;
+        expss << "tp-start: thetp, 0\n";
         CHECK;
 
         w.end_tp("");
-        expss << "tp-end: thetp" << std::endl;
+        expss << "tp-end: thetp\n";
         CHECK;
 
         w.info("foo", "bar");
-        expss << "info: foo, bar" << std::endl;
+        expss << "info: foo, bar\n";
         CHECK;
 
         w.info("baz", "second value");
-        expss << "info: baz, second value" << std::endl;
+        expss << "info: baz, second value\n";
         CHECK;
     }
 
@@ -742,7 +734,7 @@ ATF_TEST_CASE(get_metadata_bad);
 ATF_TEST_CASE_HEAD(get_metadata_bad) {}
 ATF_TEST_CASE_BODY(get_metadata_bad) {
     const atf::fs::path executable = get_helper(*this, "bad_metadata_helper");
-    ATF_CHECK_THROW(atf::parser::parse_errors,
+    ATF_REQUIRE_THROW(atf::parser::parse_errors,
                     impl::get_metadata(executable, vars_map()));
 }
 
@@ -750,7 +742,7 @@ ATF_TEST_CASE(get_metadata_zero_tcs);
 ATF_TEST_CASE_HEAD(get_metadata_zero_tcs) {}
 ATF_TEST_CASE_BODY(get_metadata_zero_tcs) {
     const atf::fs::path executable = get_helper(*this, "zero_tcs_helper");
-    ATF_CHECK_THROW(atf::parser::parse_errors,
+    ATF_REQUIRE_THROW(atf::parser::parse_errors,
                     impl::get_metadata(executable, vars_map()));
 }
 
@@ -759,14 +751,14 @@ ATF_TEST_CASE_HEAD(get_metadata_several_tcs) {}
 ATF_TEST_CASE_BODY(get_metadata_several_tcs) {
     const atf::fs::path executable = get_helper(*this, "several_tcs_helper");
     const impl::metadata md = impl::get_metadata(executable, vars_map());
-    ATF_CHECK_EQUAL(3, md.test_cases.size());
+    ATF_REQUIRE_EQ(3, md.test_cases.size());
 
     {
         const impl::test_cases_map::const_iterator iter =
             md.test_cases.find("first");
-        ATF_CHECK(iter != md.test_cases.end());
+        ATF_REQUIRE(iter != md.test_cases.end());
 
-        ATF_CHECK_EQUAL(5, (*iter).second.size());
+        ATF_REQUIRE_EQ(5, (*iter).second.size());
         check_property((*iter).second, "descr", "Description 1");
         check_property((*iter).second, "has.cleanup", "false");
         check_property((*iter).second, "ident", "first");
@@ -777,9 +769,9 @@ ATF_TEST_CASE_BODY(get_metadata_several_tcs) {
     {
         const impl::test_cases_map::const_iterator iter =
             md.test_cases.find("second");
-        ATF_CHECK(iter != md.test_cases.end());
+        ATF_REQUIRE(iter != md.test_cases.end());
 
-        ATF_CHECK_EQUAL(6, (*iter).second.size());
+        ATF_REQUIRE_EQ(6, (*iter).second.size());
         check_property((*iter).second, "descr", "Description 2");
         check_property((*iter).second, "has.cleanup", "true");
         check_property((*iter).second, "ident", "second");
@@ -791,9 +783,9 @@ ATF_TEST_CASE_BODY(get_metadata_several_tcs) {
     {
         const impl::test_cases_map::const_iterator iter =
             md.test_cases.find("third");
-        ATF_CHECK(iter != md.test_cases.end());
+        ATF_REQUIRE(iter != md.test_cases.end());
 
-        ATF_CHECK_EQUAL(4, (*iter).second.size());
+        ATF_REQUIRE_EQ(4, (*iter).second.size());
         check_property((*iter).second, "has.cleanup", "false");
         check_property((*iter).second, "ident", "third");
         check_property((*iter).second, "timeout", "300");
@@ -806,9 +798,9 @@ ATF_TEST_CASE_BODY(parse_test_case_result_expected_death) {
     check_result("expected_death", -1, "foo bar",
                  detail::parse_test_case_result("expected_death: foo bar"));
 
-    ATF_CHECK_THROW(std::runtime_error,
+    ATF_REQUIRE_THROW(std::runtime_error,
                     detail::parse_test_case_result("expected_death"));
-    ATF_CHECK_THROW(std::runtime_error,
+    ATF_REQUIRE_THROW(std::runtime_error,
                     detail::parse_test_case_result("expected_death(3): foo"));
 }
 
@@ -821,9 +813,9 @@ ATF_TEST_CASE_BODY(parse_test_case_result_expected_exit) {
     check_result("expected_exit", 5, "foo bar",
                  detail::parse_test_case_result("expected_exit(5): foo bar"));
 
-    ATF_CHECK_THROW(std::runtime_error,
+    ATF_REQUIRE_THROW(std::runtime_error,
                     detail::parse_test_case_result("expected_exit"));
-    ATF_CHECK_THROW(std::runtime_error,
+    ATF_REQUIRE_THROW(std::runtime_error,
                     detail::parse_test_case_result("expected_exit("));
 }
 
@@ -832,9 +824,9 @@ ATF_TEST_CASE_BODY(parse_test_case_result_expected_failure) {
     check_result("expected_failure", -1, "foo bar",
                  detail::parse_test_case_result("expected_failure: foo bar"));
 
-    ATF_CHECK_THROW(std::runtime_error,
+    ATF_REQUIRE_THROW(std::runtime_error,
                     detail::parse_test_case_result("expected_failure"));
-    ATF_CHECK_THROW(std::runtime_error,
+    ATF_REQUIRE_THROW(std::runtime_error,
                     detail::parse_test_case_result("expected_failure(3): foo"));
 }
 
@@ -847,9 +839,9 @@ ATF_TEST_CASE_BODY(parse_test_case_result_expected_signal) {
     check_result("expected_signal", 5, "foo bar",
                  detail::parse_test_case_result("expected_signal(5): foo bar"));
 
-    ATF_CHECK_THROW(std::runtime_error,
+    ATF_REQUIRE_THROW(std::runtime_error,
                     detail::parse_test_case_result("expected_signal"));
-    ATF_CHECK_THROW(std::runtime_error,
+    ATF_REQUIRE_THROW(std::runtime_error,
                     detail::parse_test_case_result("expected_signal("));
 }
 
@@ -858,9 +850,9 @@ ATF_TEST_CASE_BODY(parse_test_case_result_expected_timeout) {
     check_result("expected_timeout", -1, "foo bar",
                  detail::parse_test_case_result("expected_timeout: foo bar"));
 
-    ATF_CHECK_THROW(std::runtime_error,
+    ATF_REQUIRE_THROW(std::runtime_error,
                     detail::parse_test_case_result("expected_timeout"));
-    ATF_CHECK_THROW(std::runtime_error,
+    ATF_REQUIRE_THROW(std::runtime_error,
                     detail::parse_test_case_result("expected_timeout(3): foo"));
 }
 
@@ -869,9 +861,9 @@ ATF_TEST_CASE_BODY(parse_test_case_result_failed) {
     check_result("failed", -1, "foo bar",
                  detail::parse_test_case_result("failed: foo bar"));
 
-    ATF_CHECK_THROW(std::runtime_error,
+    ATF_REQUIRE_THROW(std::runtime_error,
                     detail::parse_test_case_result("failed"));
-    ATF_CHECK_THROW(std::runtime_error,
+    ATF_REQUIRE_THROW(std::runtime_error,
                     detail::parse_test_case_result("failed(3): foo"));
 }
 
@@ -880,9 +872,9 @@ ATF_TEST_CASE_BODY(parse_test_case_result_passed) {
     check_result("passed", -1, "",
                  detail::parse_test_case_result("passed"));
 
-    ATF_CHECK_THROW(std::runtime_error,
+    ATF_REQUIRE_THROW(std::runtime_error,
                     detail::parse_test_case_result("passed: foo"));
-    ATF_CHECK_THROW(std::runtime_error,
+    ATF_REQUIRE_THROW(std::runtime_error,
                     detail::parse_test_case_result("passed(3): foo"));
 }
 
@@ -891,19 +883,19 @@ ATF_TEST_CASE_BODY(parse_test_case_result_skipped) {
     check_result("skipped", -1, "foo bar",
                  detail::parse_test_case_result("skipped: foo bar"));
 
-    ATF_CHECK_THROW(std::runtime_error,
+    ATF_REQUIRE_THROW(std::runtime_error,
                     detail::parse_test_case_result("skipped"));
-    ATF_CHECK_THROW(std::runtime_error,
+    ATF_REQUIRE_THROW(std::runtime_error,
                     detail::parse_test_case_result("skipped(3): foo"));
 }
 
 ATF_TEST_CASE_WITHOUT_HEAD(parse_test_case_result_unknown);
 ATF_TEST_CASE_BODY(parse_test_case_result_unknown) {
-    ATF_CHECK_THROW(std::runtime_error,
+    ATF_REQUIRE_THROW(std::runtime_error,
                     detail::parse_test_case_result("foo"));
-    ATF_CHECK_THROW(std::runtime_error,
+    ATF_REQUIRE_THROW(std::runtime_error,
                     detail::parse_test_case_result("bar: foo"));
-    ATF_CHECK_THROW(std::runtime_error,
+    ATF_REQUIRE_THROW(std::runtime_error,
                     detail::parse_test_case_result("baz: foo"));
 }
 
@@ -915,8 +907,8 @@ ATF_TEST_CASE_BODY(read_test_case_result_failed) {
     write_test_case_result("resfile", "failed: foo bar\n");
     const impl::test_case_result tcr = impl::read_test_case_result(
         atf::fs::path("resfile"));
-    ATF_CHECK_EQUAL("failed", tcr.state());
-    ATF_CHECK_EQUAL("foo bar", tcr.reason());
+    ATF_REQUIRE_EQ("failed", tcr.state());
+    ATF_REQUIRE_EQ("foo bar", tcr.reason());
 }
 
 ATF_TEST_CASE(read_test_case_result_skipped);
@@ -927,15 +919,15 @@ ATF_TEST_CASE_BODY(read_test_case_result_skipped) {
     write_test_case_result("resfile", "skipped: baz bar\n");
     const impl::test_case_result tcr = impl::read_test_case_result(
         atf::fs::path("resfile"));
-    ATF_CHECK_EQUAL("skipped", tcr.state());
-    ATF_CHECK_EQUAL("baz bar", tcr.reason());
+    ATF_REQUIRE_EQ("skipped", tcr.state());
+    ATF_REQUIRE_EQ("baz bar", tcr.reason());
 }
 
 
 ATF_TEST_CASE(read_test_case_result_no_file);
 ATF_TEST_CASE_HEAD(read_test_case_result_no_file) {}
 ATF_TEST_CASE_BODY(read_test_case_result_no_file) {
-    ATF_CHECK_THROW(std::runtime_error,
+    ATF_REQUIRE_THROW(std::runtime_error,
                     impl::read_test_case_result(atf::fs::path("resfile")));
 }
 
@@ -945,7 +937,7 @@ ATF_TEST_CASE_HEAD(read_test_case_result_empty_file) {
 }
 ATF_TEST_CASE_BODY(read_test_case_result_empty_file) {
     write_test_case_result("resfile", "");
-    ATF_CHECK_THROW(std::runtime_error,
+    ATF_REQUIRE_THROW(std::runtime_error,
                     impl::read_test_case_result(atf::fs::path("resfile")));
 }
 
@@ -955,7 +947,7 @@ ATF_TEST_CASE_HEAD(read_test_case_result_invalid) {
 }
 ATF_TEST_CASE_BODY(read_test_case_result_invalid) {
     write_test_case_result("resfile", "passed: hello\n");
-    ATF_CHECK_THROW(std::runtime_error,
+    ATF_REQUIRE_THROW(std::runtime_error,
                     impl::read_test_case_result(atf::fs::path("resfile")));
 }
 
@@ -967,8 +959,8 @@ ATF_TEST_CASE_BODY(read_test_case_result_multiline) {
     write_test_case_result("resfile", "skipped: foo\nbar\n");
     const impl::test_case_result tcr = impl::read_test_case_result(
         atf::fs::path("resfile"));
-    ATF_CHECK_EQUAL("skipped", tcr.state());
-    ATF_CHECK_EQUAL("foo<<NEWLINE UNEXPECTED>>bar", tcr.reason());
+    ATF_REQUIRE_EQ("skipped", tcr.state());
+    ATF_REQUIRE_EQ("foo<<NEWLINE UNEXPECTED>>bar", tcr.reason());
 }
 
 // -------------------------------------------------------------------------

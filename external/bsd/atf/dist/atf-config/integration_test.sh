@@ -37,8 +37,8 @@ all_vars="atf_arch \
           atf_confdir \
           atf_includedir \
           atf_libdir \
+          atf_libexecdir \
           atf_machine \
-          atf_m4 \
           atf_pkgdatadir \
           atf_shell \
           atf_workdir"
@@ -105,8 +105,8 @@ query_multiple_head()
 }
 query_multiple_body()
 {
-    atf_check -s eq:0 -o save:stdout -o match:'atf_includedir' \
-        -o match:'atf_shell' -e empty atf-config atf_includedir atf_shell
+    atf_check -s eq:0 -o save:stdout -o match:'atf_libexecdir' \
+        -o match:'atf_shell' -e empty atf-config atf_libexecdir atf_shell
     atf_check -s eq:0 -o empty -e empty \
               test "$(wc -l stdout | awk '{ print $1 }')" = 2
 }

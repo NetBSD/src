@@ -32,9 +32,10 @@
 #include <map>
 #include <string>
 
-#include "atf-c++/application.hpp"
 #include "atf-c++/config.hpp"
-#include "atf-c++/sanity.hpp"
+
+#include "atf-c++/detail/application.hpp"
+#include "atf-c++/detail/sanity.hpp"
 
 class atf_config : public atf::application::app {
     static const char* m_description;
@@ -116,8 +117,7 @@ atf_config::main(void)
 
         for (std::map< std::string, std::string >::const_iterator iter =
              cv.begin(); iter != cv.end(); iter++)
-            std::cout << format_var((*iter).first, (*iter).second)
-                      << std::endl;
+            std::cout << format_var((*iter).first, (*iter).second) << "\n";
     } else {
         for (int i = 0; i < m_argc; i++) {
             if (!atf::config::has(m_argv[i]))
@@ -127,7 +127,7 @@ atf_config::main(void)
 
         for (int i = 0; i < m_argc; i++) {
             std::cout << format_var(m_argv[i], atf::config::get(m_argv[i]))
-                      << std::endl;
+                      << "\n";
         }
     }
 

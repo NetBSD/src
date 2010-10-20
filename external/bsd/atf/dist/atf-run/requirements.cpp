@@ -32,12 +32,14 @@
 #include <stdexcept>
 
 #include "atf-c++/config.hpp"
-#include "atf-c++/env.hpp"
-#include "atf-c++/sanity.hpp"
-#include "atf-c++/text.hpp"
-#include "atf-c++/user.hpp"
+
+#include "atf-c++/detail/fs.hpp"
+#include "atf-c++/detail/env.hpp"
+#include "atf-c++/detail/sanity.hpp"
+#include "atf-c++/detail/text.hpp"
 
 #include "requirements.hpp"
+#include "user.hpp"
 
 namespace impl = atf::atf_run;
 
@@ -138,12 +140,12 @@ std::string
 check_user(const std::string& user)
 {
     if (user == "root") {
-        if (!atf::user::is_root())
+        if (!impl::is_root())
             return "Requires root privileges";
         else
             return "";
     } else if (user == "unprivileged") {
-        if (atf::user::is_root())
+        if (impl::is_root())
             return "Requires an unprivileged user";
         else
             return "";

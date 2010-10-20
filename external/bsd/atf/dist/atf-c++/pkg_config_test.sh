@@ -60,6 +60,7 @@ version_head()
 {
     atf_set "descr" "Checks that the version in atf-c++ is correct"
     atf_set "require.progs" "pkg-config"
+    atf_set "use.fs" "true"
 }
 version_body()
 {
@@ -96,7 +97,7 @@ ATF_TEST_CASE_HEAD(tc) {
     set_md_var("descr", "A test case");
 }
 ATF_TEST_CASE_BODY(tc) {
-    std::cout << "Running" << std::endl;
+    std::cout << "Running\n";
 }
 
 ATF_INIT_TEST_CASES(tcs) {

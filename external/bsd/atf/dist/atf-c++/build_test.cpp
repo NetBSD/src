@@ -30,15 +30,15 @@
 #include <cstring>
 #include <iostream>
 
-#include "atf-c++/build.hpp"
-#include "atf-c++/config.hpp"
-#include "atf-c++/env.hpp"
-#include "atf-c++/macros.hpp"
-#include "atf-c++/process.hpp"
-
 #include "../atf-c/h_build.h"
 
-#include "test_helpers.hpp"
+#include "build.hpp"
+#include "config.hpp"
+#include "macros.hpp"
+
+#include "detail/env.hpp"
+#include "detail/process.hpp"
+#include "detail/test_helpers.hpp"
 
 // ------------------------------------------------------------------------
 // Auxiliary functions.
@@ -125,28 +125,28 @@ ATF_TEST_CASE_BODY(equal_argvs)
         const char* const array[] = { NULL };
         const char* const argv[] = { NULL };
 
-        ATF_CHECK(equal_argvs(atf::process::argv_array(argv), array));
+        ATF_REQUIRE(equal_argvs(atf::process::argv_array(argv), array));
     }
 
     {
         const char* const array[] = { NULL };
         const char* const argv[] = { "foo", NULL };
 
-        ATF_CHECK(!equal_argvs(atf::process::argv_array(argv), array));
+        ATF_REQUIRE(!equal_argvs(atf::process::argv_array(argv), array));
     }
 
     {
         const char* const array[] = { "foo", NULL };
         const char* const argv[] = { NULL };
 
-        ATF_CHECK(!equal_argvs(atf::process::argv_array(argv), array));
+        ATF_REQUIRE(!equal_argvs(atf::process::argv_array(argv), array));
     }
 
     {
         const char* const array[] = { "foo", NULL };
         const char* const argv[] = { "foo", NULL };
 
-        ATF_CHECK(equal_argvs(atf::process::argv_array(argv), array));
+        ATF_REQUIRE(equal_argvs(atf::process::argv_array(argv), array));
     }
 }
 
