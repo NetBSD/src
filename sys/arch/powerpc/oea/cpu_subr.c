@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.55 2010/02/25 23:31:47 matt Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.56 2010/10/20 18:52:33 phx Exp $	*/
 
 /*-
  * Copyright (c) 2001 Matt Thomas.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.55 2010/02/25 23:31:47 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.56 2010/10/20 18:52:33 phx Exp $");
 
 #include "opt_ppcparam.h"
 #include "opt_multiprocessor.h"
@@ -47,6 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.55 2010/02/25 23:31:47 matt Exp $");
 #include <sys/types.h>
 #include <sys/lwp.h>
 #include <sys/malloc.h>
+#include <sys/xcall.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -64,6 +65,7 @@ static void cpu_config_l2cr(int);
 static void cpu_config_l3cr(int);
 static void cpu_probe_speed(struct cpu_info *);
 static void cpu_idlespin(void);
+static void cpu_set_dfs_xcall(void *, void *);
 #if NSYSMON_ENVSYS > 0
 static void cpu_tau_setup(struct cpu_info *);
 static void cpu_tau_refresh(struct sysmon_envsys *, envsys_data_t *);
@@ -984,7 +986,95 @@ cpu_probe_speed(struct cpu_info *ci)
 
 	mtspr(SPR_MMCR0, MMCR0_FC);
 
-	ci->ci_khz = cps / 1000;
+	ci->ci_khz = (cps * cpu_get_dfs()) / 1000;
+}
+
+/*
+ * Read the Dynamic Frequency Switching state and return a divisor for
+ * the maximum frequency.
+ */
+int
+cpu_get_dfs(void)
+{
+	u_int hid1, pvr, vers;
+
+	pvr = mfpvr();
+	vers = pvr >> 16;
+	hid1 = mfspr(SPR_HID1);
+
+	switch (vers) {
+	case MPC7448:
+		if (hid1 & HID1_DFS4)
+			return 4;
+	case MPC7447A:
+		if (hid1 & HID1_DFS2)
+			return 2;
+	}
+	return 1;
+}
+
+/*
+ * Set the Dynamic Frequency Switching divisor the same for all cpus.
+ */
+void
+cpu_set_dfs(int div)
+{
+	uint64_t where;
+	u_int dfs_mask, pvr, vers;
+
+	pvr = mfpvr();
+	vers = pvr >> 16;
+	dfs_mask = 0;
+
+	switch (vers) {
+	case MPC7448:
+		dfs_mask |= HID1_DFS4;
+	case MPC7447A:
+		dfs_mask |= HID1_DFS2;
+		break;
+	default:
+		printf("cpu_set_dfs: DFS not supported\n");
+		return;
+
+	}
+
+	where = xc_broadcast(0, (xcfunc_t)cpu_set_dfs_xcall, &div, &dfs_mask);
+	xc_wait(where);
+}
+
+static void
+cpu_set_dfs_xcall(void *arg1, void *arg2)
+{
+	u_int dfs_mask, hid1, old_hid1;
+	int *divisor, s;
+
+	divisor = arg1;
+	dfs_mask = *(u_int *)arg2;
+
+	s = splhigh();
+	hid1 = old_hid1 = mfspr(SPR_HID1);
+
+	switch (*divisor) {
+	case 1:
+		hid1 &= ~dfs_mask;
+		break;
+	case 2:
+		hid1 &= ~(dfs_mask & HID1_DFS4);
+		hid1 |= dfs_mask & HID1_DFS2;
+		break;
+	case 4:
+		hid1 &= ~(dfs_mask & HID1_DFS2);
+		hid1 |= dfs_mask & HID1_DFS4;
+		break;
+	}
+
+	if (hid1 != old_hid1) {
+		__asm volatile("sync");
+		mtspr(SPR_HID1, hid1);
+		__asm volatile("sync;isync");
+	}
+
+	splx(s);
 }
 
 #if NSYSMON_ENVSYS > 0
