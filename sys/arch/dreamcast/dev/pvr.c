@@ -1,4 +1,4 @@
-/*	$NetBSD: pvr.c,v 1.28 2010/06/19 08:42:48 tsutsui Exp $	*/
+/*	$NetBSD: pvr.c,v 1.29 2010/10/20 13:00:06 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pvr.c,v 1.28 2010/06/19 08:42:48 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pvr.c,v 1.29 2010/10/20 13:00:06 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -150,15 +150,15 @@ struct fb_devconfig {
 #define	PVR_VGAMODE	0x02		/* VGA */
 
 struct pvr_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 	struct fb_devconfig *sc_dc;	/* device configuration */
 	int nscreens;
 };
 
-int	pvr_match(struct device *, struct cfdata *, void *);
-void	pvr_attach(struct device *, struct device *, void *);
+int	pvr_match(device_t, cfdata_t, void *);
+void	pvr_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(pvr, sizeof(struct pvr_softc),
+CFATTACH_DECL_NEW(pvr, sizeof(struct pvr_softc),
     pvr_match, pvr_attach, NULL, NULL);
 
 void	pvr_getdevconfig(struct fb_devconfig *);
@@ -205,7 +205,7 @@ void	pvrinit(struct fb_devconfig *);
 int	pvr_is_console;
 
 int
-pvr_match(struct device *parent, struct cfdata *match, void *aux)
+pvr_match(device_t parent, cfdata_t cf, void *aux)
 {
 
 	return 1;
@@ -278,14 +278,15 @@ pvr_getdevconfig(struct fb_devconfig *dc)
 }
 
 void
-pvr_attach(struct device *parent, struct device *self, void *aux)
+pvr_attach(device_t parent, device_t self, void *aux)
 {
-	struct pvr_softc *sc = (void *) self;
+	struct pvr_softc *sc = device_private(self);
 	struct wsemuldisplaydev_attach_args waa;
 	int console;
 	static const char *tvsystem_name[4] =
 		{ "NTSC", "PAL", "PAL-M", "PAL-N" };
 
+	sc->sc_dev = self;
 	console = pvr_is_console;
 	if (console) {
 		sc->sc_dc = &pvr_console_dc;
