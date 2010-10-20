@@ -27,7 +27,11 @@
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/types.h>
+#include <sys/stat.h>
+
 #include <errno.h>
+#include <fcntl.h>
 #include <stdarg.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -36,12 +40,14 @@
 #include <unistd.h>
 
 #include "atf-c/defs.h"
-#include "atf-c/env.h"
 #include "atf-c/error.h"
-#include "atf-c/fs.h"
-#include "atf-c/sanity.h"
 #include "atf-c/tc.h"
-#include "atf-c/text.h"
+
+#include "detail/env.h"
+#include "detail/fs.h"
+#include "detail/map.h"
+#include "detail/sanity.h"
+#include "detail/text.h"
 
 /* ---------------------------------------------------------------------
  * Auxiliary functions.
@@ -58,7 +64,7 @@ enum expect_type {
 
 struct context {
     const atf_tc_t *tc;
-    const atf_fs_path_t *resfile;
+    const char *resfile;
     size_t fail_count;
 
     enum expect_type expect;
@@ -69,14 +75,13 @@ struct context {
     int expect_signo;
 };
 
-static void context_init(struct context *, const atf_tc_t *,
-                         const atf_fs_path_t *);
+static void context_init(struct context *, const atf_tc_t *, const char *);
 static void check_fatal_error(atf_error_t);
 static void report_fatal_error(const char *, ...)
     ATF_DEFS_ATTRIBUTE_NORETURN;
-static atf_error_t write_resfile(FILE *, const char *, const int,
+static atf_error_t write_resfile(const int, const char *, const int,
                                  const atf_dynstr_t *);
-static void create_resfile(const atf_fs_path_t *, const char *, const int,
+static void create_resfile(const char *, const char *, const int,
                            atf_dynstr_t *);
 static void error_in_expect(struct context *, const char *, ...)
     ATF_DEFS_ATTRIBUTE_NORETURN;
@@ -101,8 +106,7 @@ static atf_error_t check_prog_in_dir(const char *, void *);
 static atf_error_t check_prog(struct context *, const char *, void *);
 
 static void
-context_init(struct context *ctx, const atf_tc_t *tc,
-             const atf_fs_path_t *resfile)
+context_init(struct context *ctx, const atf_tc_t *tc, const char *resfile)
 {
     ctx->tc = tc;
     ctx->resfile = resfile;
@@ -149,27 +153,35 @@ report_fatal_error(const char *msg, ...)
  * because the caller needs to clean up the reason object before terminating.
  */
 static atf_error_t
-write_resfile(FILE *file, const char *result, const int arg,
+write_resfile(const int fd, const char *result, const int arg,
               const atf_dynstr_t *reason)
 {
+    char buffer[1024];
+    int ret;
+
     if (arg == -1 && reason == NULL) {
-        if (fprintf(file, "%s\n", result) <= 0)
+        if (snprintf(buffer, sizeof(buffer), "%s\n", result) <= 0)
             goto err;
     } else if (arg == -1 && reason != NULL) {
-        if (fprintf(file, "%s: %s\n", result, atf_dynstr_cstring(reason)) <= 0)
+        if (snprintf(buffer, sizeof(buffer), "%s: %s\n", result,
+                     atf_dynstr_cstring(reason)) <= 0)
             goto err;
     } else if (arg != -1 && reason != NULL) {
-        if (fprintf(file, "%s(%d): %s\n", result, arg,
-                    atf_dynstr_cstring(reason)) <= 0)
+        if (snprintf(buffer, sizeof(buffer), "%s(%d): %s\n", result,
+                     arg, atf_dynstr_cstring(reason)) <= 0)
             goto err;
-    } else
+    } else {
         UNREACHABLE;
+    }
 
-    return atf_no_error();
+    while ((ret = write(fd, buffer, strlen(buffer))) == -1 && errno == EINTR)
+        ; /* Retry. */
+    if (ret != -1)
+        return atf_no_error();
 
 err:
-    return atf_libc_error(errno, "Failed to write results file; result %s, "
-        "reason %s", result,
+    return atf_libc_error(
+        errno, "Failed to write results file; result %s, reason %s", result,
         reason == NULL ? "null" : atf_dynstr_cstring(reason));
 }
 
@@ -181,23 +193,24 @@ err:
  * not return any error code.
  */
 static void
-create_resfile(const atf_fs_path_t *resfile, const char *result, const int arg,
+create_resfile(const char *resfile, const char *result, const int arg,
                atf_dynstr_t *reason)
 {
     atf_error_t err;
 
-    if (strcmp("/dev/stdout", atf_fs_path_cstring(resfile)) == 0) {
-        err = write_resfile(stdout, result, arg, reason);
-    } else if (strcmp("/dev/stderr", atf_fs_path_cstring(resfile)) == 0) {
-        err = write_resfile(stderr, result, arg, reason);
+    if (strcmp("/dev/stdout", resfile) == 0) {
+        err = write_resfile(STDOUT_FILENO, result, arg, reason);
+    } else if (strcmp("/dev/stderr", resfile) == 0) {
+        err = write_resfile(STDERR_FILENO, result, arg, reason);
     } else {
-        FILE *file = fopen(atf_fs_path_cstring(resfile), "w");
-        if (file == NULL) {
+        const int fd = open(resfile, O_WRONLY | O_CREAT | O_TRUNC,
+            S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+        if (fd == -1) {
             err = atf_libc_error(errno, "Cannot create results file '%s'",
-                                 atf_fs_path_cstring(resfile));
+                                 resfile);
         } else {
-            err = write_resfile(file, result, arg, reason);
-            fclose(file);
+            err = write_resfile(fd, result, arg, reason);
+            close(fd);
         }
     }
 
@@ -504,6 +517,17 @@ out:
  * The "atf_tc" type.
  * --------------------------------------------------------------------- */
 
+struct atf_tc_impl {
+    const char *m_ident;
+
+    atf_map_t m_vars;
+    atf_map_t m_config;
+
+    atf_tc_head_t m_head;
+    atf_tc_body_t m_body;
+    atf_tc_cleanup_t m_cleanup;
+};
+
 /*
  * Constructors/destructors.
  */
@@ -511,19 +535,28 @@ out:
 atf_error_t
 atf_tc_init(atf_tc_t *tc, const char *ident, atf_tc_head_t head,
             atf_tc_body_t body, atf_tc_cleanup_t cleanup,
-            const atf_map_t *config)
+            const char *const *config)
 {
     atf_error_t err;
 
-    tc->m_ident = ident;
-    tc->m_head = head;
-    tc->m_body = body;
-    tc->m_cleanup = cleanup;
-    tc->m_config = config;
+    tc->pimpl = malloc(sizeof(struct atf_tc_impl));
+    if (tc->pimpl == NULL) {
+        err = atf_no_memory_error();
+        goto err;
+    }
 
-    err = atf_map_init(&tc->m_vars);
+    tc->pimpl->m_ident = ident;
+    tc->pimpl->m_head = head;
+    tc->pimpl->m_body = body;
+    tc->pimpl->m_cleanup = cleanup;
+
+    err = atf_map_init_charpp(&tc->pimpl->m_config, config);
     if (atf_is_error(err))
         goto err;
+
+    err = atf_map_init(&tc->pimpl->m_vars);
+    if (atf_is_error(err))
+        goto err_vars;
 
     err = atf_tc_set_md_var(tc, "ident", ident);
     if (atf_is_error(err))
@@ -536,8 +569,8 @@ atf_tc_init(atf_tc_t *tc, const char *ident, atf_tc_head_t head,
     }
 
     /* XXX Should the head be able to return error codes? */
-    if (tc->m_head != NULL)
-        tc->m_head(tc);
+    if (tc->pimpl->m_head != NULL)
+        tc->pimpl->m_head(tc);
 
     if (strcmp(atf_tc_get_md_var(tc, "ident"), ident) != 0) {
         report_fatal_error("Test case head modified the read-only 'ident' "
@@ -549,14 +582,16 @@ atf_tc_init(atf_tc_t *tc, const char *ident, atf_tc_head_t head,
     return err;
 
 err_map:
-    atf_map_fini(&tc->m_vars);
+    atf_map_fini(&tc->pimpl->m_vars);
+err_vars:
+    atf_map_fini(&tc->pimpl->m_config);
 err:
     return err;
 }
 
 atf_error_t
 atf_tc_init_pack(atf_tc_t *tc, const atf_tc_pack_t *pack,
-                 const atf_map_t *config)
+                 const char *const *config)
 {
     return atf_tc_init(tc, pack->m_ident, pack->m_head, pack->m_body,
                        pack->m_cleanup, config);
@@ -565,7 +600,8 @@ atf_tc_init_pack(atf_tc_t *tc, const atf_tc_pack_t *pack,
 void
 atf_tc_fini(atf_tc_t *tc)
 {
-    atf_map_fini(&tc->m_vars);
+    atf_map_fini(&tc->pimpl->m_vars);
+    free(tc->pimpl);
 }
 
 /*
@@ -575,7 +611,7 @@ atf_tc_fini(atf_tc_t *tc)
 const char *
 atf_tc_get_ident(const atf_tc_t *tc)
 {
-    return tc->m_ident;
+    return tc->pimpl->m_ident;
 }
 
 const char *
@@ -585,7 +621,7 @@ atf_tc_get_config_var(const atf_tc_t *tc, const char *name)
     atf_map_citer_t iter;
 
     PRE(atf_tc_has_config_var(tc, name));
-    iter = atf_map_find_c(tc->m_config, name);
+    iter = atf_map_find_c(&tc->pimpl->m_config, name);
     val = atf_map_citer_data(iter);
     INV(val != NULL);
 
@@ -613,34 +649,27 @@ atf_tc_get_md_var(const atf_tc_t *tc, const char *name)
     atf_map_citer_t iter;
 
     PRE(atf_tc_has_md_var(tc, name));
-    iter = atf_map_find_c(&tc->m_vars, name);
+    iter = atf_map_find_c(&tc->pimpl->m_vars, name);
     val = atf_map_citer_data(iter);
     INV(val != NULL);
 
     return val;
 }
 
-const atf_map_t *
+char **
 atf_tc_get_md_vars(const atf_tc_t *tc)
 {
-    return &tc->m_vars;
+    return atf_map_to_charpp(&tc->pimpl->m_vars);
 }
 
 bool
 atf_tc_has_config_var(const atf_tc_t *tc, const char *name)
 {
-    bool found;
     atf_map_citer_t end, iter;
 
-    if (tc->m_config == NULL)
-        found = false;
-    else {
-        iter = atf_map_find_c(tc->m_config, name);
-        end = atf_map_end_c(tc->m_config);
-        found = !atf_equal_map_citer_map_citer(iter, end);
-    }
-
-    return found;
+    iter = atf_map_find_c(&tc->pimpl->m_config, name);
+    end = atf_map_end_c(&tc->pimpl->m_config);
+    return !atf_equal_map_citer_map_citer(iter, end);
 }
 
 bool
@@ -648,8 +677,8 @@ atf_tc_has_md_var(const atf_tc_t *tc, const char *name)
 {
     atf_map_citer_t end, iter;
 
-    iter = atf_map_find_c(&tc->m_vars, name);
-    end = atf_map_end_c(&tc->m_vars);
+    iter = atf_map_find_c(&tc->pimpl->m_vars, name);
+    end = atf_map_end_c(&tc->pimpl->m_vars);
     return !atf_equal_map_citer_map_citer(iter, end);
 }
 
@@ -669,7 +698,7 @@ atf_tc_set_md_var(atf_tc_t *tc, const char *name, const char *fmt, ...)
     va_end(ap);
 
     if (!atf_is_error(err))
-        err = atf_map_insert(&tc->m_vars, name, value, true);
+        err = atf_map_insert(&tc->pimpl->m_vars, name, value, true);
     else
         free(value);
 
@@ -899,11 +928,11 @@ _atf_tc_expect_timeout(struct context *ctx, const char *reason, va_list ap)
 static struct context Current;
 
 atf_error_t
-atf_tc_run(const atf_tc_t *tc, const atf_fs_path_t *resfile)
+atf_tc_run(const atf_tc_t *tc, const char *resfile)
 {
     context_init(&Current, tc, resfile);
 
-    tc->m_body(tc);
+    tc->pimpl->m_body(tc);
 
     validate_expect(&Current);
 
@@ -929,8 +958,8 @@ atf_tc_run(const atf_tc_t *tc, const atf_fs_path_t *resfile)
 atf_error_t
 atf_tc_cleanup(const atf_tc_t *tc)
 {
-    if (tc->m_cleanup != NULL)
-        tc->m_cleanup(tc);
+    if (tc->pimpl->m_cleanup != NULL)
+        tc->pimpl->m_cleanup(tc);
     return atf_no_error(); /* XXX */
 }
 
