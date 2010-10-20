@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1443 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1444 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -763,3 +763,4 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		on m68k ports.  [tsutsui 20101014]
 	sun3: Make common kernel module binaries work on both sun3 and sun3x.
 		[tsutsui 20101015]
+	atf(7): Import 0.11.  [jmmv 20101020]
