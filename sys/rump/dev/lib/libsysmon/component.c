@@ -1,4 +1,4 @@
-/*	$NetBSD: component.c,v 1.5 2010/10/19 11:58:01 pgoyette Exp $	*/
+/*	$NetBSD: component.c,v 1.6 2010/10/20 18:48:13 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: component.c,v 1.5 2010/10/19 11:58:01 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: component.c,v 1.6 2010/10/20 18:48:13 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -79,5 +79,4 @@ RUMP_COMPONENT(RUMP_COMPONENT_DEV)
 	sysmon_wdog_init();
 
 	rump_pdev_add(swwdogattach, 0);
-	rump_pdev_add(swsensorattach, 0);
 }
