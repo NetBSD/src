@@ -1,4 +1,4 @@
-/*	$NetBSD: swsensor.c,v 1.1 2010/10/19 11:55:38 pgoyette Exp $ */
+/*	$NetBSD: swsensor.c,v 1.2 2010/10/20 18:50:46 pooka Exp $ */
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: swsensor.c,v 1.1 2010/10/19 11:55:38 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: swsensor.c,v 1.2 2010/10/20 18:50:46 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -191,16 +191,4 @@ swsensor_modcmd(modcmd_t cmd, void *arg)
 	}
 
 	return ret;
-}
-
-/*
- * Initialization entry for rump
- */
-
-int
-swsensorattach(int n __unused)
-{
-	printf("%s: ", "swsensor0");
-
-	return swsensor_init(NULL);
 }
