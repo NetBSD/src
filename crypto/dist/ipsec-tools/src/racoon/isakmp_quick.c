@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_quick.c,v 1.26 2009/07/03 06:41:46 tteras Exp $	*/
+/*	$NetBSD: isakmp_quick.c,v 1.27 2010/10/20 13:37:37 tteras Exp $	*/
 
 /* Id: isakmp_quick.c,v 1.29 2006/08/22 18:17:17 manubsd Exp */
 
@@ -495,18 +495,27 @@ quick_i2recv(iph2, msg0)
 					"isn't supported.\n");
 				break;
 			}
-			if (isakmp_p2ph(&iph2->sa_ret, pa->ptr) < 0)
+			if (isakmp_p2ph(&iph2->sa_ret, pa->ptr) < 0) {
+				plog(LLV_ERROR, LOCATION, iph2->ph1->remote,
+					"duplicate ISAKMP_NPTYPE_SA.\n");
 				goto end;
+			}
 			break;
 
 		case ISAKMP_NPTYPE_NONCE:
-			if (isakmp_p2ph(&iph2->nonce_p, pa->ptr) < 0)
+			if (isakmp_p2ph(&iph2->nonce_p, pa->ptr) < 0) {
+				plog(LLV_ERROR, LOCATION, iph2->ph1->remote,
+					"duplicate ISAKMP_NPTYPE_NONCE.\n");
 				goto end;
+			}
 			break;
 
 		case ISAKMP_NPTYPE_KE:
-			if (isakmp_p2ph(&iph2->dhpub_p, pa->ptr) < 0)
+			if (isakmp_p2ph(&iph2->dhpub_p, pa->ptr) < 0) {
+				plog(LLV_ERROR, LOCATION, iph2->ph1->remote,
+					"duplicate ISAKMP_NPTYPE_KE.\n");
 				goto end;
+			}
 			break;
 
 		case ISAKMP_NPTYPE_ID:
@@ -517,6 +526,8 @@ quick_i2recv(iph2, msg0)
 				if (isakmp_p2ph(&idcr, pa->ptr) < 0)
 					goto end;
 			} else {
+				plog(LLV_ERROR, LOCATION, iph2->ph1->remote,
+					"too many ISAKMP_NPTYPE_ID payloads.\n");
 				goto end;
 			}
 			break;
@@ -557,6 +568,8 @@ quick_i2recv(iph2, msg0)
 				iph2->natoa_dst = daddr;
 			else {
 				racoon_free(daddr);
+				plog(LLV_ERROR, LOCATION, iph2->ph1->remote,
+					"too many ISAKMP_NPTYPE_NATOA payloads.\n");
 				goto end;
 			}
 		    }
@@ -718,6 +731,8 @@ quick_i2recv(iph2, msg0)
 
 	/* validity check SA payload sent from responder */
 	if (ipsecdoi_checkph2proposal(iph2) < 0) {
+		plog(LLV_ERROR, LOCATION, iph2->ph1->remote,
+			"proposal check failed.\n");
 		error = ISAKMP_NTYPE_NO_PROPOSAL_CHOSEN;
 		goto end;
 	}
@@ -1077,8 +1092,11 @@ quick_r1recv(iph2, msg0)
 	}
 	/* decrypt packet */
 	msg = oakley_do_decrypt(iph2->ph1, msg0, iph2->ivm->iv, iph2->ivm->ive);
-	if (msg == NULL)
+	if (msg == NULL) {
+		plog(LLV_ERROR, LOCATION, iph2->ph1->remote,
+			"Packet decryption failed.\n");
 		goto end;
+	}
 
 	/* create buffer for using to validate HASH(1) */
 	/*
@@ -1162,18 +1180,27 @@ quick_r1recv(iph2, msg0)
 					"Multi SAs isn't supported.\n");
 				goto end;
 			}
-			if (isakmp_p2ph(&iph2->sa, pa->ptr) < 0)
+			if (isakmp_p2ph(&iph2->sa, pa->ptr) < 0) {
+				plog(LLV_ERROR, LOCATION, iph2->ph1->remote,
+					"duplicate ISAKMP_NPTYPE_SA.\n");
 				goto end;
+			}
 			break;
 
 		case ISAKMP_NPTYPE_NONCE:
-			if (isakmp_p2ph(&iph2->nonce_p, pa->ptr) < 0)
+			if (isakmp_p2ph(&iph2->nonce_p, pa->ptr) < 0) {
+				plog(LLV_ERROR, LOCATION, iph2->ph1->remote,
+					"duplicate ISAKMP_NPTYPE_NONCE.\n");
 				goto end;
+			}
 			break;
 
 		case ISAKMP_NPTYPE_KE:
-			if (isakmp_p2ph(&iph2->dhpub_p, pa->ptr) < 0)
+			if (isakmp_p2ph(&iph2->dhpub_p, pa->ptr) < 0) {
+				plog(LLV_ERROR, LOCATION, iph2->ph1->remote,
+					"duplicate ISAKMP_NPTYPE_KE.\n");
 				goto end;
+			}
 			break;
 
 		case ISAKMP_NPTYPE_ID:
@@ -1241,6 +1268,9 @@ quick_r1recv(iph2, msg0)
 				iph2->natoa_src = daddr;
 			else {
 				racoon_free(daddr);
+				plog(LLV_ERROR, LOCATION, iph2->ph1->remote,
+					"received too many NAT-OA payloads.\n");
+				error = ISAKMP_NTYPE_PAYLOAD_MALFORMED;
 				goto end;
 			}
 		    }
@@ -1333,6 +1363,8 @@ quick_r1recv(iph2, msg0)
 	case 0:
 		/* select single proposal or reject it. */
 		if (ipsecdoi_selectph2proposal(iph2) < 0) {
+			plog(LLV_ERROR, LOCATION, iph2->ph1->remote,
+				"no proposal chosen.\n");
 			error = ISAKMP_NTYPE_NO_PROPOSAL_CHOSEN;
 			goto end;
 		}
