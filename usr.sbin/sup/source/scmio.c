@@ -1,4 +1,4 @@
-/*	$NetBSD: scmio.c,v 1.19 2009/10/18 15:23:54 christos Exp $	*/
+/*	$NetBSD: scmio.c,v 1.20 2010/10/20 17:05:54 christos Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -542,7 +542,7 @@ readmsg(int msg)
 	(void) readmend();
 	if (goawayreason == NULL)
 		return (SCMEOF);
-	logerr("SCM GOAWAY %s", goawayreason);
+	logerr("SCM GOAWAY for %s %s", remotehost(), goawayreason);
 	return (SCMEOF);
 }
 
