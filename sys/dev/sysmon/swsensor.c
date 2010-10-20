@@ -1,4 +1,4 @@
-/*	$NetBSD: swsensor.c,v 1.2 2010/10/20 18:50:46 pooka Exp $ */
+/*	$NetBSD: swsensor.c,v 1.3 2010/10/20 19:21:04 pooka Exp $ */
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: swsensor.c,v 1.2 2010/10/20 18:50:46 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: swsensor.c,v 1.3 2010/10/20 19:21:04 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -93,6 +93,7 @@ swsensor_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 {
 
 	edata->value_cur = sw_sensor_value;
+	edata->state = ENVSYS_SVALID;
 }
 
 /*
