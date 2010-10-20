@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto_openssl.c,v 1.19 2009/04/29 10:50:01 tteras Exp $	*/
+/*	$NetBSD: crypto_openssl.c,v 1.20 2010/10/20 13:40:02 tteras Exp $	*/
 
 /* Id: crypto_openssl.c,v 1.47 2006/05/06 20:42:09 manubsd Exp */
 
@@ -1800,6 +1800,42 @@ eay_hmac_init(key, md)
 	return (caddr_t)c;
 }
 
+static vchar_t *eay_hmac_one(key, data, type)
+	vchar_t *key, *data;
+	const EVP_MD *type;
+{
+	vchar_t *res;
+
+	if ((res = vmalloc(EVP_MD_size(type))) == 0)
+		return NULL;
+
+	if (!HMAC(type, (void *) key->v, key->l,
+		  (void *) data->v, data->l, (void *) res->v, NULL)) {
+		vfree(res);
+		return NULL;
+	}
+
+	return res;
+}
+
+static vchar_t *eay_digest_one(data, type)
+	vchar_t *data;
+	const EVP_MD *type;
+{
+	vchar_t *res;
+
+	if ((res = vmalloc(EVP_MD_size(type))) == 0)
+		return NULL;
+
+	if (!EVP_Digest((void *) data->v, data->l,
+			(void *) res->v, NULL, type, NULL)) {
+		vfree(res);
+		return NULL;
+	}
+
+	return res;
+}
+
 #ifdef WITH_SHA2
 /*
  * HMAC SHA2-512
@@ -1808,14 +1844,7 @@ vchar_t *
 eay_hmacsha2_512_one(key, data)
 	vchar_t *key, *data;
 {
-	vchar_t *res;
-	caddr_t ctx;
-
-	ctx = eay_hmacsha2_512_init(key);
-	eay_hmacsha2_512_update(ctx, data);
-	res = eay_hmacsha2_512_final(ctx);
-
-	return(res);
+	return eay_hmac_one(key, data, EVP_sha2_512());
 }
 
 caddr_t
@@ -1865,14 +1894,7 @@ vchar_t *
 eay_hmacsha2_384_one(key, data)
 	vchar_t *key, *data;
 {
-	vchar_t *res;
-	caddr_t ctx;
-
-	ctx = eay_hmacsha2_384_init(key);
-	eay_hmacsha2_384_update(ctx, data);
-	res = eay_hmacsha2_384_final(ctx);
-
-	return(res);
+	return eay_hmac_one(key, data, EVP_sha2_384());
 }
 
 caddr_t
@@ -1922,14 +1944,7 @@ vchar_t *
 eay_hmacsha2_256_one(key, data)
 	vchar_t *key, *data;
 {
-	vchar_t *res;
-	caddr_t ctx;
-
-	ctx = eay_hmacsha2_256_init(key);
-	eay_hmacsha2_256_update(ctx, data);
-	res = eay_hmacsha2_256_final(ctx);
-
-	return(res);
+	return eay_hmac_one(key, data, EVP_sha2_256());
 }
 
 caddr_t
@@ -1980,14 +1995,7 @@ vchar_t *
 eay_hmacsha1_one(key, data)
 	vchar_t *key, *data;
 {
-	vchar_t *res;
-	caddr_t ctx;
-
-	ctx = eay_hmacsha1_init(key);
-	eay_hmacsha1_update(ctx, data);
-	res = eay_hmacsha1_final(ctx);
-
-	return(res);
+	return eay_hmac_one(key, data, EVP_sha1());
 }
 
 caddr_t
@@ -2037,14 +2045,7 @@ vchar_t *
 eay_hmacmd5_one(key, data)
 	vchar_t *key, *data;
 {
-	vchar_t *res;
-	caddr_t ctx;
-
-	ctx = eay_hmacmd5_init(key);
-	eay_hmacmd5_update(ctx, data);
-	res = eay_hmacmd5_final(ctx);
-
-	return(res);
+	return eay_hmac_one(key, data, EVP_md5());
 }
 
 caddr_t
@@ -2130,14 +2131,7 @@ vchar_t *
 eay_sha2_512_one(data)
 	vchar_t *data;
 {
-	caddr_t ctx;
-	vchar_t *res;
-
-	ctx = eay_sha2_512_init();
-	eay_sha2_512_update(ctx, data);
-	res = eay_sha2_512_final(ctx);
-
-	return(res);
+	return eay_digest_one(data, EVP_sha512());
 }
 
 int
@@ -2190,14 +2184,7 @@ vchar_t *
 eay_sha2_384_one(data)
 	vchar_t *data;
 {
-	caddr_t ctx;
-	vchar_t *res;
-
-	ctx = eay_sha2_384_init();
-	eay_sha2_384_update(ctx, data);
-	res = eay_sha2_384_final(ctx);
-
-	return(res);
+	return eay_digest_one(data, EVP_sha2_384());
 }
 
 int
@@ -2250,14 +2237,7 @@ vchar_t *
 eay_sha2_256_one(data)
 	vchar_t *data;
 {
-	caddr_t ctx;
-	vchar_t *res;
-
-	ctx = eay_sha2_256_init();
-	eay_sha2_256_update(ctx, data);
-	res = eay_sha2_256_final(ctx);
-
-	return(res);
+	return eay_digest_one(data, EVP_sha2_256());
 }
 
 int
@@ -2309,14 +2289,7 @@ vchar_t *
 eay_sha1_one(data)
 	vchar_t *data;
 {
-	caddr_t ctx;
-	vchar_t *res;
-
-	ctx = eay_sha1_init();
-	eay_sha1_update(ctx, data);
-	res = eay_sha1_final(ctx);
-
-	return(res);
+	return eay_digest_one(data, EVP_sha1());
 }
 
 int
@@ -2367,14 +2340,7 @@ vchar_t *
 eay_md5_one(data)
 	vchar_t *data;
 {
-	caddr_t ctx;
-	vchar_t *res;
-
-	ctx = eay_md5_init();
-	eay_md5_update(ctx, data);
-	res = eay_md5_final(ctx);
-
-	return(res);
+	return eay_digest_one(data, EVP_md5());
 }
 
 int
