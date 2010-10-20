@@ -37,13 +37,13 @@ extern "C" {
 #include <iostream>
 #include <stdexcept>
 
-#include "atf-c++/fs.hpp"
-#include "atf-c++/macros.hpp"
-#include "atf-c++/process.hpp"
-#include "atf-c++/sanity.hpp"
-#include "atf-c++/text.hpp"
+#include "macros.hpp"
 
-#include "test_helpers.hpp"
+#include "detail/fs.hpp"
+#include "detail/process.hpp"
+#include "detail/sanity.hpp"
+#include "detail/test_helpers.hpp"
+#include "detail/text.hpp"
 
 // ------------------------------------------------------------------------
 // Auxiliary functions.
@@ -53,7 +53,7 @@ static
 void
 create_ctl_file(const atf::tests::tc& tc, const char *name)
 {
-    ATF_CHECK(open(name, O_CREAT | O_WRONLY | O_TRUNC, 0644) != -1);
+    ATF_REQUIRE(open(name, O_CREAT | O_WRONLY | O_TRUNC, 0644) != -1);
 }
 
 // ------------------------------------------------------------------------
@@ -96,51 +96,51 @@ ATF_TEST_CASE_BODY(h_skip)
     create_ctl_file(*this, "after");
 }
 
-ATF_TEST_CASE(h_check);
-ATF_TEST_CASE_HEAD(h_check)
+ATF_TEST_CASE(h_require);
+ATF_TEST_CASE_HEAD(h_require)
 {
     set_md_var("descr", "Helper test case");
 }
-ATF_TEST_CASE_BODY(h_check)
+ATF_TEST_CASE_BODY(h_require)
 {
     bool condition = atf::text::to_bool(get_config_var("condition"));
 
     create_ctl_file(*this, "before");
-    ATF_CHECK(condition);
+    ATF_REQUIRE(condition);
     create_ctl_file(*this, "after");
 }
 
-ATF_TEST_CASE(h_check_equal);
-ATF_TEST_CASE_HEAD(h_check_equal)
+ATF_TEST_CASE(h_require_eq);
+ATF_TEST_CASE_HEAD(h_require_eq)
 {
     set_md_var("descr", "Helper test case");
 }
-ATF_TEST_CASE_BODY(h_check_equal)
+ATF_TEST_CASE_BODY(h_require_eq)
 {
     long v1 = atf::text::to_type< long >(get_config_var("v1"));
     long v2 = atf::text::to_type< long >(get_config_var("v2"));
 
     create_ctl_file(*this, "before");
-    ATF_CHECK_EQUAL(v1, v2);
+    ATF_REQUIRE_EQ(v1, v2);
     create_ctl_file(*this, "after");
 }
 
-ATF_TEST_CASE(h_check_throw);
-ATF_TEST_CASE_HEAD(h_check_throw)
+ATF_TEST_CASE(h_require_throw);
+ATF_TEST_CASE_HEAD(h_require_throw)
 {
     set_md_var("descr", "Helper test case");
 }
-ATF_TEST_CASE_BODY(h_check_throw)
+ATF_TEST_CASE_BODY(h_require_throw)
 {
     create_ctl_file(*this, "before");
 
     if (get_config_var("what") == "throw_int")
-        ATF_CHECK_THROW(std::runtime_error, if (1) throw int(5));
+        ATF_REQUIRE_THROW(std::runtime_error, if (1) throw int(5));
     else if (get_config_var("what") == "throw_rt")
-        ATF_CHECK_THROW(std::runtime_error,
+        ATF_REQUIRE_THROW(std::runtime_error,
                         if (1) throw std::runtime_error("e"));
     else if (get_config_var("what") == "no_throw_rt")
-        ATF_CHECK_THROW(std::runtime_error,
+        ATF_REQUIRE_THROW(std::runtime_error,
                         if (0) throw std::runtime_error("e"));
 
     create_ctl_file(*this, "after");
@@ -214,9 +214,9 @@ ATF_TEST_CASE_HEAD(pass)
 ATF_TEST_CASE_BODY(pass)
 {
     run_h_tc< ATF_TEST_CASE_NAME(h_pass) >();
-    ATF_CHECK(grep_file("result", "^passed"));
-    ATF_CHECK(atf::fs::exists(atf::fs::path("before")));
-    ATF_CHECK(!atf::fs::exists(atf::fs::path("after")));
+    ATF_REQUIRE(grep_file("result", "^passed"));
+    ATF_REQUIRE(atf::fs::exists(atf::fs::path("before")));
+    ATF_REQUIRE(!atf::fs::exists(atf::fs::path("after")));
 }
 
 ATF_TEST_CASE(fail);
@@ -228,9 +228,9 @@ ATF_TEST_CASE_HEAD(fail)
 ATF_TEST_CASE_BODY(fail)
 {
     run_h_tc< ATF_TEST_CASE_NAME(h_fail) >();
-    ATF_CHECK(grep_file("result", "^failed: Failed on purpose"));
-    ATF_CHECK(atf::fs::exists(atf::fs::path("before")));
-    ATF_CHECK(!atf::fs::exists(atf::fs::path("after")));
+    ATF_REQUIRE(grep_file("result", "^failed: Failed on purpose"));
+    ATF_REQUIRE(atf::fs::exists(atf::fs::path("before")));
+    ATF_REQUIRE(!atf::fs::exists(atf::fs::path("after")));
 }
 
 ATF_TEST_CASE(skip);
@@ -242,18 +242,18 @@ ATF_TEST_CASE_HEAD(skip)
 ATF_TEST_CASE_BODY(skip)
 {
     run_h_tc< ATF_TEST_CASE_NAME(h_skip) >();
-    ATF_CHECK(grep_file("result", "^skipped: Skipped on purpose"));
-    ATF_CHECK(atf::fs::exists(atf::fs::path("before")));
-    ATF_CHECK(!atf::fs::exists(atf::fs::path("after")));
+    ATF_REQUIRE(grep_file("result", "^skipped: Skipped on purpose"));
+    ATF_REQUIRE(atf::fs::exists(atf::fs::path("before")));
+    ATF_REQUIRE(!atf::fs::exists(atf::fs::path("after")));
 }
 
-ATF_TEST_CASE(check);
-ATF_TEST_CASE_HEAD(check)
+ATF_TEST_CASE(require);
+ATF_TEST_CASE_HEAD(require)
 {
-    set_md_var("descr", "Tests the ATF_CHECK macro");
+    set_md_var("descr", "Tests the ATF_REQUIRE macro");
     set_md_var("use.fs", "true");
 }
-ATF_TEST_CASE_BODY(check)
+ATF_TEST_CASE_BODY(require)
 {
     struct test {
         const char *cond;
@@ -271,17 +271,17 @@ ATF_TEST_CASE_BODY(check)
         atf::tests::vars_map config;
         config["condition"] = t->cond;
 
-        std::cout << "Checking with a " << t->cond << " value" << std::endl;
+        std::cout << "Checking with a " << t->cond << " value\n";
 
-        run_h_tc< ATF_TEST_CASE_NAME(h_check) >(config);
+        run_h_tc< ATF_TEST_CASE_NAME(h_require) >(config);
 
-        ATF_CHECK(atf::fs::exists(before));
+        ATF_REQUIRE(atf::fs::exists(before));
         if (t->ok) {
-            ATF_CHECK(grep_file("result", "^passed"));
-            ATF_CHECK(atf::fs::exists(after));
+            ATF_REQUIRE(grep_file("result", "^passed"));
+            ATF_REQUIRE(atf::fs::exists(after));
         } else {
-            ATF_CHECK(grep_file("result", "^failed: .*condition not met"));
-            ATF_CHECK(!atf::fs::exists(after));
+            ATF_REQUIRE(grep_file("result", "^failed: .*condition not met"));
+            ATF_REQUIRE(!atf::fs::exists(after));
         }
 
         atf::fs::remove(before);
@@ -290,13 +290,13 @@ ATF_TEST_CASE_BODY(check)
     }
 }
 
-ATF_TEST_CASE(check_equal);
-ATF_TEST_CASE_HEAD(check_equal)
+ATF_TEST_CASE(require_eq);
+ATF_TEST_CASE_HEAD(require_eq)
 {
-    set_md_var("descr", "Tests the ATF_CHECK_EQUAL macro");
+    set_md_var("descr", "Tests the ATF_REQUIRE_EQ macro");
     set_md_var("use.fs", "true");
 }
-ATF_TEST_CASE_BODY(check_equal)
+ATF_TEST_CASE_BODY(require_eq)
 {
     struct test {
         const char *v1;
@@ -320,17 +320,17 @@ ATF_TEST_CASE_BODY(check_equal)
 
         std::cout << "Checking with " << t->v1 << ", " << t->v2
                   << " and expecting " << (t->ok ? "true" : "false")
-                  << std::endl;
+                  << "\n";
 
-        run_h_tc< ATF_TEST_CASE_NAME(h_check_equal) >(config);
+        run_h_tc< ATF_TEST_CASE_NAME(h_require_eq) >(config);
 
-        ATF_CHECK(atf::fs::exists(before));
+        ATF_REQUIRE(atf::fs::exists(before));
         if (t->ok) {
-            ATF_CHECK(grep_file("result", "^passed"));
-            ATF_CHECK(atf::fs::exists(after));
+            ATF_REQUIRE(grep_file("result", "^passed"));
+            ATF_REQUIRE(atf::fs::exists(after));
         } else {
-            ATF_CHECK(grep_file("result", "^failed: .*v1 != v2"));
-            ATF_CHECK(!atf::fs::exists(after));
+            ATF_REQUIRE(grep_file("result", "^failed: .*v1 != v2"));
+            ATF_REQUIRE(!atf::fs::exists(after));
         }
 
         atf::fs::remove(before);
@@ -339,13 +339,13 @@ ATF_TEST_CASE_BODY(check_equal)
     }
 }
 
-ATF_TEST_CASE(check_throw);
-ATF_TEST_CASE_HEAD(check_throw)
+ATF_TEST_CASE(require_throw);
+ATF_TEST_CASE_HEAD(require_throw)
 {
-    set_md_var("descr", "Tests the ATF_CHECK_THROW macro");
+    set_md_var("descr", "Tests the ATF_REQUIRE_THROW macro");
     set_md_var("use.fs", "true");
 }
-ATF_TEST_CASE_BODY(check_throw)
+ATF_TEST_CASE_BODY(require_throw)
 {
     struct test {
         const char *what;
@@ -366,20 +366,20 @@ ATF_TEST_CASE_BODY(check_throw)
         config["what"] = t->what;
 
         std::cout << "Checking with " << t->what << " and expecting "
-                  << (t->ok ? "true" : "false") << std::endl;
+                  << (t->ok ? "true" : "false") << "\n";
 
-        run_h_tc< ATF_TEST_CASE_NAME(h_check_throw) >(config);
+        run_h_tc< ATF_TEST_CASE_NAME(h_require_throw) >(config);
 
-        ATF_CHECK(atf::fs::exists(before));
+        ATF_REQUIRE(atf::fs::exists(before));
         if (t->ok) {
-            ATF_CHECK(grep_file("result", "^passed"));
-            ATF_CHECK(atf::fs::exists(after));
+            ATF_REQUIRE(grep_file("result", "^passed"));
+            ATF_REQUIRE(atf::fs::exists(after));
         } else {
             std::cout << "Checking that message contains '" << t->msg
-                      << "'" << std::endl;
+                      << "'\n";
             std::string exp_result = std::string("^failed: .*") + t->msg;
-            ATF_CHECK(grep_file("result", exp_result.c_str()));
-            ATF_CHECK(!atf::fs::exists(after));
+            ATF_REQUIRE(grep_file("result", exp_result.c_str()));
+            ATF_REQUIRE(!atf::fs::exists(after));
         }
 
         atf::fs::remove(before);
@@ -418,17 +418,17 @@ ATF_TEST_CASE_BODY(check_errno)
 
         run_h_tc< ATF_TEST_CASE_NAME(h_check_errno) >(config);
 
-        ATF_CHECK(atf::fs::exists(before));
-        ATF_CHECK(atf::fs::exists(after));
+        ATF_REQUIRE(atf::fs::exists(before));
+        ATF_REQUIRE(atf::fs::exists(after));
 
         if (t->ok) {
-            ATF_CHECK(grep_file("result", "^passed"));
+            ATF_REQUIRE(grep_file("result", "^passed"));
         } else {
-            ATF_CHECK(grep_file("result", "^failed"));
+            ATF_REQUIRE(grep_file("result", "^failed"));
 
             std::string exp_result = "macros_test.cpp:[0-9]+: " +
                 std::string(t->msg) + "$";
-            ATF_CHECK(grep_file("stderr", exp_result.c_str()));
+            ATF_REQUIRE(grep_file("stderr", exp_result.c_str()));
         }
 
         atf::fs::remove(before);
@@ -466,16 +466,16 @@ ATF_TEST_CASE_BODY(require_errno)
 
         run_h_tc< ATF_TEST_CASE_NAME(h_require_errno) >(config);
 
-        ATF_CHECK(atf::fs::exists(before));
+        ATF_REQUIRE(atf::fs::exists(before));
         if (t->ok) {
-            ATF_CHECK(grep_file("result", "^passed"));
-            ATF_CHECK(atf::fs::exists(after));
+            ATF_REQUIRE(grep_file("result", "^passed"));
+            ATF_REQUIRE(atf::fs::exists(after));
         } else {
             std::string exp_result = "^failed: .*macros_test.cpp:[0-9]+: " +
                 std::string(t->msg) + "$";
-            ATF_CHECK(grep_file("result", exp_result.c_str()));
+            ATF_REQUIRE(grep_file("result", exp_result.c_str()));
 
-            ATF_CHECK(!atf::fs::exists(after));
+            ATF_REQUIRE(!atf::fs::exists(after));
         }
 
         atf::fs::remove(before);
@@ -505,10 +505,10 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, pass);
     ATF_ADD_TEST_CASE(tcs, fail);
     ATF_ADD_TEST_CASE(tcs, skip);
-    ATF_ADD_TEST_CASE(tcs, check);
-    ATF_ADD_TEST_CASE(tcs, check_equal);
-    ATF_ADD_TEST_CASE(tcs, check_throw);
     ATF_ADD_TEST_CASE(tcs, check_errno);
+    ATF_ADD_TEST_CASE(tcs, require);
+    ATF_ADD_TEST_CASE(tcs, require_eq);
+    ATF_ADD_TEST_CASE(tcs, require_throw);
     ATF_ADD_TEST_CASE(tcs, require_errno);
 
     // Add the test cases for the header file.

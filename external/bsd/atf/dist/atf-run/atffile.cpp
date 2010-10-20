@@ -29,10 +29,10 @@
 
 #include <fstream>
 
-#include "atf-c++/exceptions.hpp"
-#include "atf-c++/expand.hpp"
-#include "atf-c++/parser.hpp"
-#include "atf-c++/sanity.hpp"
+#include "atf-c++/detail/exceptions.hpp"
+#include "atf-c++/detail/expand.hpp"
+#include "atf-c++/detail/parser.hpp"
+#include "atf-c++/detail/sanity.hpp"
 
 #include "atffile.hpp"
 

@@ -33,7 +33,8 @@
 #include <string.h>
 
 #include "atf-c/error.h"
-#include "atf-c/sanity.h"
+
+#include "detail/sanity.h"
 
 /* Theoretically, there can only be a single error intance at any given
  * point in time, because errors are raised at one point and must be

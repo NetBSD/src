@@ -36,7 +36,7 @@ ATF_TEST_CASE_HEAD(main)
 }
 ATF_TEST_CASE_BODY(main)
 {
-    atf_tc_fail("This always fails");
+    fail("This always fails");
 }
 
 ATF_INIT_TEST_CASES(tcs)
