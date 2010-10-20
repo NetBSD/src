@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.base,v 1.52 2010/09/25 10:34:13 wiz Exp $
+#	$NetBSD: NetBSD.dist.base,v 1.53 2010/10/20 09:22:32 jmmv Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -193,7 +193,9 @@
 ./usr/libdata/debug/usr/tests
 ./usr/libdata/debug/usr/tests/atf
 ./usr/libdata/debug/usr/tests/atf/atf-c
+./usr/libdata/debug/usr/tests/atf/atf-c/detail
 ./usr/libdata/debug/usr/tests/atf/atf-c++
+./usr/libdata/debug/usr/tests/atf/atf-c++/detail
 ./usr/libdata/debug/usr/tests/atf/atf-report
 ./usr/libdata/debug/usr/tests/atf/atf-run
 ./usr/libdata/debug/usr/tests/atf/formats
@@ -1123,8 +1125,9 @@
 ./usr/tests
 ./usr/tests/atf
 ./usr/tests/atf/atf-c
+./usr/tests/atf/atf-c/detail
 ./usr/tests/atf/atf-c++
-./usr/tests/atf/atf-check
+./usr/tests/atf/atf-c++/detail
 ./usr/tests/atf/atf-config
 ./usr/tests/atf/atf-report
 ./usr/tests/atf/atf-run

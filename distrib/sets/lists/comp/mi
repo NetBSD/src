@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1513 2010/10/16 10:41:50 skrll Exp $
+#	$NetBSD: mi,v 1.1514 2010/10/20 09:22:33 jmmv Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -118,52 +118,53 @@
 ./usr/include/atf-c				comp-atf-include
 ./usr/include/atf-c++				comp-atf-include
 ./usr/include/atf-c++.hpp			comp-atf-include	atf
-./usr/include/atf-c++/application.hpp		comp-atf-include	atf
+./usr/include/atf-c++/application.hpp		comp-obsolete		obsolete
 ./usr/include/atf-c++/atffile.hpp		comp-obsolete		obsolete
 ./usr/include/atf-c++/build.hpp			comp-atf-include	atf
 ./usr/include/atf-c++/check.hpp			comp-atf-include	atf
 ./usr/include/atf-c++/config.hpp		comp-atf-include	atf
-./usr/include/atf-c++/env.hpp			comp-atf-include	atf
-./usr/include/atf-c++/exceptions.hpp		comp-atf-include	atf
-./usr/include/atf-c++/expand.hpp		comp-atf-include	atf
+./usr/include/atf-c++/env.hpp			comp-obsolete		obsolete
+./usr/include/atf-c++/exceptions.hpp		comp-obsolete		obsolete
+./usr/include/atf-c++/expand.hpp		comp-obsolete		obsolete
 ./usr/include/atf-c++/formats.hpp		comp-obsolete		obsolete
-./usr/include/atf-c++/fs.hpp			comp-atf-include	atf
-./usr/include/atf-c++/io.hpp			comp-atf-include	atf
+./usr/include/atf-c++/fs.hpp			comp-obsolete		obsolete
+./usr/include/atf-c++/io.hpp			comp-obsolete		obsolete
 ./usr/include/atf-c++/macros.hpp		comp-atf-include	atf
-./usr/include/atf-c++/parser.hpp		comp-atf-include	atf
-./usr/include/atf-c++/process.hpp		comp-atf-include	atf
-./usr/include/atf-c++/sanity.hpp		comp-atf-include	atf
-./usr/include/atf-c++/signals.hpp		comp-atf-include	atf
+./usr/include/atf-c++/parser.hpp		comp-obsolete		obsolete
+./usr/include/atf-c++/process.hpp		comp-obsolete		obsolete
+./usr/include/atf-c++/sanity.hpp		comp-obsolete		obsolete
+./usr/include/atf-c++/signals.hpp		comp-obsolete		obsolete
 ./usr/include/atf-c++/tests.hpp			comp-atf-include	atf
-./usr/include/atf-c++/text.hpp			comp-atf-include	atf
-./usr/include/atf-c++/ui.hpp			comp-atf-include	atf
-./usr/include/atf-c++/user.hpp			comp-atf-include	atf
+./usr/include/atf-c++/text.hpp			comp-obsolete		obsolete
+./usr/include/atf-c++/ui.hpp			comp-obsolete		obsolete
+./usr/include/atf-c++/user.hpp			comp-obsolete		obsolete
 ./usr/include/atf-c++/utils.hpp			comp-atf-include	atf
 ./usr/include/atf-c.h				comp-atf-include	atf
 ./usr/include/atf-c/build.h			comp-atf-include	atf
 ./usr/include/atf-c/check.h			comp-atf-include	atf
 ./usr/include/atf-c/config.h			comp-atf-include	atf
 ./usr/include/atf-c/defs.h			comp-atf-include	atf
-./usr/include/atf-c/dynstr.h			comp-atf-include	atf
-./usr/include/atf-c/env.h			comp-atf-include	atf
+./usr/include/atf-c/dynstr.h			comp-obsolete		obsolete
+./usr/include/atf-c/env.h			comp-obsolete		obsolete
 ./usr/include/atf-c/error.h			comp-atf-include	atf
 ./usr/include/atf-c/error_fwd.h			comp-atf-include	atf
 ./usr/include/atf-c/expand.h			comp-obsolete		obsolete
-./usr/include/atf-c/fs.h			comp-atf-include	atf
+./usr/include/atf-c/fs.h			comp-obsolete		obsolete
 ./usr/include/atf-c/io.h			comp-obsolete		obsolete
-./usr/include/atf-c/list.h			comp-atf-include	atf
+./usr/include/atf-c/list.h			comp-obsolete		obsolete
 ./usr/include/atf-c/macros.h			comp-atf-include	atf
-./usr/include/atf-c/map.h			comp-atf-include	atf
+./usr/include/atf-c/map.h			comp-obsolete		obsolete
 ./usr/include/atf-c/object.h			comp-obsolete		obsolete
-./usr/include/atf-c/process.h			comp-atf-include	atf
-./usr/include/atf-c/sanity.h			comp-atf-include	atf
+./usr/include/atf-c/process.h			comp-obsolete		obsolete
+./usr/include/atf-c/sanity.h			comp-obsolete		obsolete
 ./usr/include/atf-c/signals.h			comp-obsolete		obsolete
 ./usr/include/atf-c/tc.h			comp-atf-include	atf
 ./usr/include/atf-c/tcr.h			comp-obsolete		obsolete
-./usr/include/atf-c/text.h			comp-atf-include	atf
+./usr/include/atf-c/text.h			comp-obsolete		obsolete
 ./usr/include/atf-c/tp.h			comp-atf-include	atf
 ./usr/include/atf-c/ui.h			comp-obsolete		obsolete
-./usr/include/atf-c/user.h			comp-atf-include	atf
+./usr/include/atf-c/user.h			comp-obsolete		obsolete
+./usr/include/atf-c/utils.h			comp-atf-include	atf
 ./usr/include/atf.hpp				comp-obsolete		obsolete
 ./usr/include/atf/application.hpp		comp-obsolete		obsolete
 ./usr/include/atf/atffile.hpp			comp-obsolete		obsolete
@@ -3008,7 +3009,7 @@
 ./usr/libdata/debug/usr/bin/as.debug		comp-util-debug		binutils,debug
 ./usr/libdata/debug/usr/bin/asa.debug		comp-fortran-debug	debug
 ./usr/libdata/debug/usr/bin/at.debug		comp-cron-debug		debug
-./usr/libdata/debug/usr/bin/atf-check.debug	comp-atf-debug		atf,debug
+./usr/libdata/debug/usr/bin/atf-check.debug	comp-obsolete		obsolete
 ./usr/libdata/debug/usr/bin/atf-compile.debug	comp-obsolete		obsolete
 ./usr/libdata/debug/usr/bin/atf-config.debug	comp-atf-debug		atf,debug
 ./usr/libdata/debug/usr/bin/atf-report.debug	comp-atf-debug		atf,debug
@@ -3420,6 +3421,7 @@
 ./usr/libdata/debug/usr/games/worm.debug	comp-games-debug	debug
 ./usr/libdata/debug/usr/games/worms.debug	comp-games-debug	debug
 ./usr/libdata/debug/usr/games/wump.debug	comp-games-debug	debug
+./usr/libdata/debug/usr/libexec/atf-check.debug	comp-atf-debug		atf,debug
 ./usr/libdata/debug/usr/libexec/atf-cleanup.debug	comp-obsolete		obsolete
 ./usr/libdata/debug/usr/libexec/atf-exec.debug	comp-atf-debug		obsolete
 ./usr/libdata/debug/usr/libexec/atf-format.debug	comp-obsolete		obsolete
