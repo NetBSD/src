@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.4 2010/07/03 08:14:11 jmmv Exp $
+# $NetBSD: Makefile,v 1.5 2010/10/20 09:20:10 jmmv Exp $
 
 NOLINT=		# defined
 
@@ -11,6 +11,7 @@ NOPIC=		# defined; interface is still too unstable
 SRCDIR=		${NETBSDSRCDIR}/external/bsd/atf/dist
 .PATH:		${SRCDIR}
 .PATH:		${SRCDIR}/atf-c++
+.PATH:		${SRCDIR}/atf-c++/detail
 
 CPPFLAGS+=	-I${.CURDIR}/../libatf-c
 CPPFLAGS+=	-I.
@@ -27,33 +28,17 @@ SRCS=		application.cpp \
 		exceptions.cpp \
 		expand.cpp \
 		fs.cpp \
-		io.cpp \
 		parser.cpp \
 		process.cpp \
-		signals.cpp \
 		tests.cpp \
 		text.cpp \
-		ui.cpp \
-		user.cpp
+		ui.cpp
 
-INCS=		application.hpp \
-		build.hpp \
+INCS=		build.hpp \
 		check.hpp \
 		config.hpp \
-		env.hpp \
-		exceptions.hpp \
-		expand.hpp \
-		fs.hpp \
-		io.hpp \
 		macros.hpp \
-		parser.hpp \
-		process.hpp \
-		sanity.hpp \
-		signals.hpp \
 		tests.hpp \
-		text.hpp \
-		ui.hpp \
-		user.hpp \
 		utils.hpp
 INCSDIR=	/usr/include/atf-c++
 
@@ -68,7 +53,7 @@ FILESDIR=	/usr/lib/pkgconfig
 
 realall: atf-c++.pc
 atf-c++.pc: Makefile atf-c++.pc.in
-	${TOOL_SED} -e 's,__ATF_VERSION__,0.10,g' \
+	${TOOL_SED} -e 's,__ATF_VERSION__,0.11,g' \
 	    -e 's,__CXX__,g++,g' \
 	    -e 's,__INCLUDEDIR__,/usr/include,g' \
 	    -e 's,__LIBDIR__,/usr/lib,g' \
