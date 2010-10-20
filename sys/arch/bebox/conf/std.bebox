@@ -1,4 +1,4 @@
-#	$NetBSD: std.bebox,v 1.16 2008/03/16 17:37:09 kiyohara Exp $
+#	$NetBSD: std.bebox,v 1.17 2010/10/20 02:39:19 kiyohara Exp $
 #
 # standard, required NetBSD/bebox 'options'
 
@@ -7,6 +7,8 @@ include		"conf/std"	# MI standard options
 
 options 	PPC_OEA		# BeBox uses Motorola PPC60x CPUs
 makeoptions	PPCDIR="oea"	# Tell Makefile.powerpc what dir to use
+
+options 	PCI_NETBSD_CONFIGURE	# MUST REQUIRED
 
 options 	EXEC_ELF32	# exec ELF binaries
 options 	EXEC_SCRIPT	# exec #! scripts
