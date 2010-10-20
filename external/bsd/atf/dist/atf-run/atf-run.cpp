@@ -47,19 +47,17 @@ extern "C" {
 #include <map>
 #include <string>
 
-#include "atf-c++/application.hpp"
+#include "atf-c++/detail/application.hpp"
 #include "atf-c++/config.hpp"
-#include "atf-c++/env.hpp"
-#include "atf-c++/exceptions.hpp"
-#include "atf-c++/fs.hpp"
-#include "atf-c++/io.hpp"
-#include "atf-c++/parser.hpp"
-#include "atf-c++/process.hpp"
-#include "atf-c++/sanity.hpp"
-#include "atf-c++/signals.hpp"
 #include "atf-c++/tests.hpp"
-#include "atf-c++/text.hpp"
-#include "atf-c++/user.hpp"
+
+#include "atf-c++/detail/env.hpp"
+#include "atf-c++/detail/exceptions.hpp"
+#include "atf-c++/detail/fs.hpp"
+#include "atf-c++/detail/parser.hpp"
+#include "atf-c++/detail/process.hpp"
+#include "atf-c++/detail/sanity.hpp"
+#include "atf-c++/detail/text.hpp"
 
 #include "atffile.hpp"
 #include "config.hpp"
@@ -232,7 +230,7 @@ atf_run::get_test_case_result(const std::string& broken_reason,
             } else {
                 return test_case_result("failed", -1, broken_reason);
             }
-        } catch (const std::runtime_error& e) {
+        } catch (const std::runtime_error&) {
             return test_case_result("failed", -1, broken_reason);
         }
     }
@@ -290,7 +288,7 @@ atf_run::get_test_case_result(const std::string& broken_reason,
 
         try {
             tcr = read_test_case_result(resfile);
-        } catch (const std::runtime_error& e) {
+        } catch (const std::runtime_error&) {
             return test_case_result("failed", -1, "Test program received "
                 "signal " + atf::text::to_string(s.termsig()) +
                 (s.coredump() ? " (core dumped)" : ""));

@@ -34,11 +34,11 @@
 #include <utility>
 #include <vector>
 
-#include "atf-c++/application.hpp"
-#include "atf-c++/fs.hpp"
-#include "atf-c++/sanity.hpp"
-#include "atf-c++/text.hpp"
-#include "atf-c++/ui.hpp"
+#include "atf-c++/detail/application.hpp"
+#include "atf-c++/detail/fs.hpp"
+#include "atf-c++/detail/sanity.hpp"
+#include "atf-c++/detail/text.hpp"
+#include "atf-c++/detail/ui.hpp"
 
 #include "reader.hpp"
 
@@ -126,12 +126,11 @@ public:
     write_tp_end(const std::string& reason)
     {
         if (!reason.empty())
-            (*m_os) << "tp, " << m_tpname << ", bogus, " << reason
-                    << std::endl;
+            (*m_os) << "tp, " << m_tpname << ", bogus, " << reason << "\n";
         else if (m_failed)
-            (*m_os) << "tp, " << m_tpname << ", failed" << std::endl;
+            (*m_os) << "tp, " << m_tpname << ", failed\n";
         else
-            (*m_os) << "tp, " << m_tpname << ", passed" << std::endl;
+            (*m_os) << "tp, " << m_tpname << ", passed\n";
     }
 
     virtual
@@ -148,7 +147,7 @@ public:
         std::string str = "tc, " + m_tpname + ", " + m_tcname + ", " + state;
         if (!reason.empty())
             str += ", " + reason;
-        (*m_os) << str << std::endl;
+        (*m_os) << str << "\n";
 
         if (state == "failed")
             m_failed = true;
@@ -174,15 +173,14 @@ class ticker_writer : public writer {
     size_t m_tcs_passed, m_tcs_failed, m_tcs_skipped, m_tcs_expected_failures;
     std::string m_tcname, m_tpname;
     std::vector< std::string > m_failed_tcs;
-    std::vector< std::string > m_expected_failures_tcs;
+    std::map< std::string, std::string > m_expected_failures_tcs;
     std::vector< std::string > m_failed_tps;
 
     void
     write_info(const std::string& what, const std::string& val)
     {
         if (what == "tests.root") {
-            (*m_os) << "Tests root: " << val << std::endl
-                    << std::endl;
+            (*m_os) << "Tests root: " << val << "\n\n";
         }
     }
 
@@ -208,7 +206,7 @@ class ticker_writer : public writer {
         (*m_os) << format_text(tp + " (" + to_string(m_curtp) +
                                "/" + to_string(m_ntps) + "): " +
                                to_string(ntcs) + " test cases")
-                << std::endl;
+                << "\n";
         (*m_os).flush();
     }
 
@@ -224,10 +222,10 @@ class ticker_writer : public writer {
                                             "trust its results because "
                                             "of `" + reason + "'",
                                             m_tpname + ": ", false)
-                    << std::endl;
+                    << "\n";
             m_failed_tps.push_back(m_tpname);
         }
-        (*m_os) << std::endl;
+        (*m_os) << "\n";
         (*m_os).flush();
 
         m_tpname.clear();
@@ -252,7 +250,7 @@ class ticker_writer : public writer {
             state == "expected_timeout") {
             str = "Expected failure: " + reason;
             m_tcs_expected_failures++;
-            m_expected_failures_tcs.push_back(m_tpname + ":" + m_tcname);
+            m_expected_failures_tcs[m_tpname + ":" + m_tcname] = reason;
         } else if (state == "failed") {
             str = "Failed: " + reason;
             m_tcs_failed++;
@@ -269,9 +267,28 @@ class ticker_writer : public writer {
         // XXX Wrap text.  format_text_with_tag does not currently allow
         // to specify the current column, which is needed because we have
         // already printed the tc's name.
-        (*m_os) << str << std::endl;
+        (*m_os) << str << "\n";
 
         m_tcname = "";
+    }
+
+    static void
+    write_expected_failures(const std::map< std::string, std::string >& xfails,
+                            std::ostream& os)
+    {
+        using atf::ui::format_text;
+        using atf::ui::format_text_with_tag;
+
+        os << format_text("Test cases for known bugs:") << "\n";
+
+        for (std::map< std::string, std::string >::const_iterator iter =
+             xfails.begin(); iter != xfails.end(); iter++) {
+            const std::string& name = (*iter).first;
+            const std::string& reason = (*iter).second;
+
+            os << format_text_with_tag(reason, "    " + name + ": ", false)
+               << "\n";
+        }
     }
 
     void
@@ -284,45 +301,36 @@ class ticker_writer : public writer {
 
         if (!m_failed_tps.empty()) {
             (*m_os) << format_text("Failed (bogus) test programs:")
-                    << std::endl;
+                    << "\n";
             (*m_os) << format_text_with_tag(join(m_failed_tps, ", "),
-                                            "    ", false) << std::endl
-                    << std::endl;
+                                            "    ", false) << "\n\n";
         }
 
         if (!m_expected_failures_tcs.empty()) {
-            (*m_os) << format_text("Test cases for known bugs:") << std::endl;
-            (*m_os) << format_text_with_tag(join(m_expected_failures_tcs, ", "),
-                                            "    ", false) << std::endl
-                    << std::endl;
+            write_expected_failures(m_expected_failures_tcs, *m_os);
+            (*m_os) << "\n";
         }
 
         if (!m_failed_tcs.empty()) {
-            (*m_os) << format_text("Failed test cases:") << std::endl;
+            (*m_os) << format_text("Failed test cases:") << "\n";
             (*m_os) << format_text_with_tag(join(m_failed_tcs, ", "),
-                                            "    ", false) << std::endl
-                    << std::endl;
+                                            "    ", false) << "\n\n";
         }
 
         (*m_os) << format_text("Summary for " + to_string(m_ntps) +
-                               " test programs:")
-                << std::endl;
+                               " test programs:") << "\n";
         (*m_os) << format_text_with_tag(to_string(m_tcs_passed) +
                                         " passed test cases.",
-                                        "    ", false)
-                << std::endl;
+                                        "    ", false) << "\n";
         (*m_os) << format_text_with_tag(to_string(m_tcs_failed) +
                                         " failed test cases.",
-                                        "    ", false)
-                << std::endl;
+                                        "    ", false) << "\n";
         (*m_os) << format_text_with_tag(to_string(m_tcs_expected_failures) +
                                         " expected failed test cases.",
-                                        "    ", false)
-                << std::endl;
+                                        "    ", false) << "\n";
         (*m_os) << format_text_with_tag(to_string(m_tcs_skipped) +
                                         " skipped test cases.",
-                                        "    ", false)
-                << std::endl;
+                                        "    ", false) << "\n";
     }
 
 public:
@@ -376,41 +384,39 @@ class xml_writer : public writer {
     void
     write_info(const std::string& what, const std::string& val)
     {
-        (*m_os) << "<info class=\"" << what << "\">" << val << "</info>"
-                << std::endl;
+        (*m_os) << "<info class=\"" << what << "\">" << val << "</info>\n";
     }
 
     void
     write_tp_start(const std::string& tp, size_t ntcs)
     {
-        (*m_os) << "<tp id=\"" << attrval(tp) << "\">" << std::endl;
+        (*m_os) << "<tp id=\"" << attrval(tp) << "\">\n";
     }
 
     void
     write_tp_end(const std::string& reason)
     {
         if (!reason.empty())
-            (*m_os) << "<failed>" << elemval(reason) << "</failed>"
-                    << std::endl;
-        (*m_os) << "</tp>" << std::endl;
+            (*m_os) << "<failed>" << elemval(reason) << "</failed>\n";
+        (*m_os) << "</tp>\n";
     }
 
     void
     write_tc_start(const std::string& tcname)
     {
-        (*m_os) << "<tc id=\"" << attrval(tcname) << "\">" << std::endl;
+        (*m_os) << "<tc id=\"" << attrval(tcname) << "\">\n";
     }
 
     void
     write_tc_stdout_line(const std::string& line)
     {
-        (*m_os) << "<so>" << elemval(line) << "</so>" << std::endl;
+        (*m_os) << "<so>" << elemval(line) << "</so>\n";
     }
 
     void
     write_tc_stderr_line(const std::string& line)
     {
-        (*m_os) << "<se>" << elemval(line) << "</se>" << std::endl;
+        (*m_os) << "<se>" << elemval(line) << "</se>\n";
     }
 
     void
@@ -422,37 +428,33 @@ class xml_writer : public writer {
             state == "expected_failure" || state == "expected_signal" ||
             state == "expected_timeout") {
             (*m_os) << "<" << state << ">" << elemval(reason)
-                    << "</" << state << ">" << std::endl;
+                    << "</" << state << ">\n";
         } else if (state == "passed") {
-            (*m_os) << "<passed />" << std::endl;
+            (*m_os) << "<passed />\n";
         } else if (state == "failed") {
-            (*m_os) << "<failed>" << elemval(reason)
-                    << "</failed>" << std::endl;
+            (*m_os) << "<failed>" << elemval(reason) << "</failed>\n";
         } else if (state == "skipped") {
-            (*m_os) << "<skipped>" << elemval(reason)
-                    << "</skipped>" << std::endl;
+            (*m_os) << "<skipped>" << elemval(reason) << "</skipped>\n";
         } else
             UNREACHABLE;
-        (*m_os) << "</tc>" << std::endl;
+        (*m_os) << "</tc>\n";
     }
 
     void
     write_eof(void)
     {
-        (*m_os) << "</tests-results>" << std::endl;
+        (*m_os) << "</tests-results>\n";
     }
 
 public:
     xml_writer(const atf::fs::path& p) :
         m_os(open_outfile(p))
     {
-        (*m_os) << "<?xml version=\"1.0\"?>" << std::endl
+        (*m_os) << "<?xml version=\"1.0\"?>\n"
                 << "<!DOCTYPE tests-results PUBLIC "
                    "\"-//NetBSD//DTD ATF Tests Results 0.1//EN\" "
-                   "\"http://www.NetBSD.org/XML/atf/tests-results.dtd\">"
-                << std::endl
-                << std::endl
-                << "<tests-results>" << std::endl;
+                   "\"http://www.NetBSD.org/XML/atf/tests-results.dtd\">\n\n"
+                   "<tests-results>\n";
     }
 };
 

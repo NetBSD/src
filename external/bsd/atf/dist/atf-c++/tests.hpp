@@ -31,13 +31,9 @@
 #define _ATF_CXX_TESTS_HPP_
 
 #include <map>
+#include <memory>
 #include <string>
 
-extern "C" {
-#include <atf-c/tc.h>
-}
-
-#include <atf-c++/fs.hpp>
 #include <atf-c++/utils.hpp>
 
 namespace atf {
@@ -70,11 +66,10 @@ typedef std::map< std::string, std::string > vars_map;
 // The "tc" class.
 // ------------------------------------------------------------------------
 
+struct tc_impl;
+
 class tc : utils::noncopyable {
-    std::string m_ident;
-    atf_map_t m_config;
-    atf_tc_t m_tc;
-    bool m_has_cleanup;
+    std::auto_ptr< tc_impl > pimpl;
 
 protected:
     virtual void head(void);
@@ -83,9 +78,7 @@ protected:
 
     void require_prog(const std::string&) const;
 
-    static void wrap_head(atf_tc_t *);
-    static void wrap_body(const atf_tc_t *);
-    static void wrap_cleanup(const atf_tc_t *);
+    friend struct tc_impl;
 
 public:
     tc(const std::string&, const bool);
@@ -102,7 +95,7 @@ public:
     bool has_md_var(const std::string&) const;
     void set_md_var(const std::string&, const std::string&);
 
-    void run(const fs::path&) const;
+    void run(const std::string&) const;
     void run_cleanup(void) const;
 
     // To be called from the child process only.

@@ -34,8 +34,8 @@
 #include <cstdlib>
 #include <iostream>
 
-#include "atf-c++/application.hpp"
-#include "atf-c++/ui.hpp"
+#include "atf-c++/detail/application.hpp"
+#include "atf-c++/detail/ui.hpp"
 
 #include "revision.h"
 

@@ -29,9 +29,10 @@
 
 #include <map>
 
-#include <atf-c++/fs.hpp>
-#include <atf-c++/process.hpp>
-#include <atf-c++/tests.hpp>
+#include "atf-c++/tests.hpp"
+
+#include "atf-c++/detail/fs.hpp"
+#include "atf-c++/detail/process.hpp"
 
 namespace atf {
 namespace atf_run {
