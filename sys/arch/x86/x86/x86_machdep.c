@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_machdep.c,v 1.43 2010/08/23 16:20:45 jruoho Exp $	*/
+/*	$NetBSD: x86_machdep.c,v 1.44 2010/10/21 11:17:54 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 YAMAMOTO Takashi,
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.43 2010/08/23 16:20:45 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.44 2010/10/21 11:17:54 yamt Exp $");
 
 #include "opt_modular.h"
 #include "opt_physmem.h"
@@ -53,6 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.43 2010/08/23 16:20:45 jruoho Exp 
 #include <x86/cpuvar.h>
 #include <x86/cputypes.h>
 #include <x86/machdep.h>
+#include <x86/nmi.h>
 #include <x86/pio.h>
 
 #include <dev/isa/isareg.h>
@@ -950,4 +951,19 @@ machdep_init(void)
 
 	x86_listener = kauth_listen_scope(KAUTH_SCOPE_MACHDEP,
 	    x86_listener_cb, NULL);
+}
+
+/*
+ * x86_startup: x86 common startup routine
+ *
+ * called by cpu_startup.
+ */
+
+void
+x86_startup(void)
+{
+
+#if !defined(XEN)
+	nmi_init();
+#endif /* !defined(XEN) */
 }
