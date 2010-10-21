@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.150 2010/10/21 11:17:55 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.151 2010/10/21 11:22:55 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.150 2010/10/21 11:17:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.151 2010/10/21 11:22:55 yamt Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -1863,6 +1863,8 @@ cpu_fsgs_zero(struct lwp *l)
 		update_descriptor(&curcpu()->ci_gdt[GUGS_SEL], &zero);
 		kpreempt_enable();
 	} else {
+		tf->tf_fs = 0;
+		tf->tf_gs = 0;
 		pcb->pcb_fs = 0;
 		pcb->pcb_gs = 0;
 	}
