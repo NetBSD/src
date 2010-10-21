@@ -1,4 +1,4 @@
-/*	$NetBSD: session.c,v 1.27 2010/03/04 15:13:53 vanhu Exp $	*/
+/*	$NetBSD: session.c,v 1.28 2010/10/21 06:15:28 tteras Exp $	*/
 
 /*	$KAME: session.c,v 1.32 2003/09/24 02:01:17 jinmei Exp $	*/
 
@@ -103,7 +103,12 @@
 struct fd_monitor {
 	int (*callback)(void *ctx, int fd);
 	void *ctx;
+	int prio;
+	int fd;
+	TAILQ_ENTRY(fd_monitor) chain;
 };
+
+#define NUM_PRIORITIES 2
 
 static void close_session __P((void));
 static void initfds __P((void));
@@ -115,13 +120,14 @@ static int close_sockets __P((void));
 
 static fd_set preset_mask, active_mask;
 static struct fd_monitor fd_monitors[FD_SETSIZE];
+static TAILQ_HEAD(fd_monitor_list, fd_monitor) fd_monitor_tree[NUM_PRIORITIES];
 static int nfds = 0;
 
 static volatile sig_atomic_t sigreq[NSIG + 1];
 static struct sched scflushsa = SCHED_INITIALIZER();
 
 void
-monitor_fd(int fd, int (*callback)(void *, int), void *ctx)
+monitor_fd(int fd, int (*callback)(void *, int), void *ctx, int priority)
 {
 	if (fd < 0 || fd >= FD_SETSIZE) {
 		plog(LLV_ERROR, LOCATION, NULL, "fd_set overrun");
@@ -131,9 +137,17 @@ monitor_fd(int fd, int (*callback)(void *, int), void *ctx)
 	FD_SET(fd, &preset_mask);
 	if (fd > nfds)
 		nfds = fd;
+	if (priority <= 0)
+		priority = 0;
+	if (priority >= NUM_PRIORITIES)
+		priority = NUM_PRIORITIES - 1;
 
 	fd_monitors[fd].callback = callback;
 	fd_monitors[fd].ctx = ctx;
+	fd_monitors[fd].prio = priority;
+	fd_monitors[fd].fd = fd;
+	TAILQ_INSERT_TAIL(&fd_monitor_tree[priority],
+			  &fd_monitors[fd], chain);
 }
 
 void
@@ -144,10 +158,15 @@ unmonitor_fd(int fd)
 		exit(1);
 	}
 
+	if (fd_monitors[fd].callback == NULL)
+		return;
+
 	FD_CLR(fd, &preset_mask);
 	FD_CLR(fd, &active_mask);
 	fd_monitors[fd].callback = NULL;
 	fd_monitors[fd].ctx = NULL;
+	TAILQ_REMOVE(&fd_monitor_tree[fd_monitors[fd].prio],
+		     &fd_monitors[fd], chain);
 }
 
 int
@@ -158,10 +177,14 @@ session(void)
 	char pid_file[MAXPATHLEN];
 	FILE *fp;
 	pid_t racoon_pid = 0;
-	int i;
+	int i, count;
+	struct fd_monitor *fdm;
 
 	nfds = 0;
 	FD_ZERO(&preset_mask);
+
+	for (i = 0; i < NUM_PRIORITIES; i++)
+		TAILQ_INIT(&fd_monitor_tree[i]);
 
 	/* initialize schedular */
 	sched_init();
@@ -291,16 +314,24 @@ session(void)
 			/*NOTREACHED*/
 		}
 
-		for (i = 0; i <= nfds; i++) {
-			if (!FD_ISSET(i, &active_mask))
-				continue;
+		count = 0;
+		for (i = 0; i < NUM_PRIORITIES; i++) {
+			TAILQ_FOREACH(fdm, &fd_monitor_tree[i], chain) {
+				if (!FD_ISSET(fdm->fd, &active_mask))
+					continue;
 
-			if (fd_monitors[i].callback != NULL)
-				fd_monitors[i].callback(fd_monitors[i].ctx, i);
-			else
-				plog(LLV_ERROR, LOCATION, NULL,
-				     "fd %d set, but no active callback\n", i);
+				FD_CLR(fdm->fd, &active_mask);
+				if (fdm->callback != NULL) {
+					fdm->callback(fdm->ctx, fdm->fd);
+					count++;
+				} else
+					plog(LLV_ERROR, LOCATION, NULL,
+					"fd %d set, but no active callback\n", i);
+			}
+			if (count != 0)
+				break;
 		}
+
 	}
 }
 

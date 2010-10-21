@@ -1,6 +1,6 @@
-/*	$NetBSD: pfkey.c,v 1.52 2010/02/09 23:05:16 wiz Exp $	*/
+/*	$NetBSD: pfkey.c,v 1.53 2010/10/21 06:15:28 tteras Exp $	*/
 
-/* $Id: pfkey.c,v 1.52 2010/02/09 23:05:16 wiz Exp $ */
+/* $Id: pfkey.c,v 1.53 2010/10/21 06:15:28 tteras Exp $ */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -487,7 +487,7 @@ pfkey_init()
 		return -1;
 	}
 #endif
-	monitor_fd(lcconf->sock_pfkey, pfkey_handler, NULL);
+	monitor_fd(lcconf->sock_pfkey, pfkey_handler, NULL, 0);
 	return 0;
 }
 
