@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.151 2010/10/21 11:22:55 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.152 2010/10/21 11:27:46 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.151 2010/10/21 11:22:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.152 2010/10/21 11:27:46 yamt Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -1831,24 +1831,22 @@ valid_user_selector(struct lwp *l, uint64_t seg, char *ldtp, int len)
 void
 cpu_fsgs_zero(struct lwp *l)
 {
-	struct trapframe *tf;
+	struct trapframe * const tf = l->l_md.md_regs;
 	struct pcb *pcb;
 	uint64_t zero = 0;
 
 	pcb = lwp_getpcb(l);
 	if (l == curlwp) {
-		tf = l->l_md.md_regs;
 		kpreempt_disable();
 		tf->tf_fs = 0;
 		tf->tf_gs = 0;
-		if (l->l_proc->p_flag & PK_32) {
-			setfs(0);
+		setfs(0);
 #ifndef XEN
-			setusergs(0);
+		setusergs(0);
 #else
-			HYPERVISOR_set_segment_base(SEGBASE_GS_USER_SEL, 0);
+		HYPERVISOR_set_segment_base(SEGBASE_GS_USER_SEL, 0);
 #endif
-		} else {
+		if ((l->l_proc->p_flag & PK_32) == 0) {
 #ifndef XEN
 			wrmsr(MSR_FSBASE, 0);
 			wrmsr(MSR_KERNELGSBASE, 0);
