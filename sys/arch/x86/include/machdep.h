@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.h,v 1.4 2010/08/23 16:20:44 jruoho Exp $ */
+/* $NetBSD: machdep.h,v 1.5 2010/10/21 11:17:54 yamt Exp $ */
 /*
  * Copyright (c) 2000, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -41,5 +41,7 @@ void	x86_cpu_idle_set(void (*)(void), const char *, bool);
 int	initx86_parse_memmap(struct btinfo_memmap *, struct extent *);
 int	initx86_fake_memmap(struct extent *);
 int	initx86_load_memmap(paddr_t first_avail);
+
+void	x86_startup(void);
 
 #endif	/* _X86_MACHDEP_H_ */
