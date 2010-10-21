@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.257.2.10 2010/10/07 08:54:16 uebayasi Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.257.2.11 2010/10/21 08:45:04 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.257.2.10 2010/10/07 08:54:16 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.257.2.11 2010/10/21 08:45:04 uebayasi Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1188,16 +1188,14 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 
 	void *physseg = NULL;
 
-	if ((mp->mnt_flag & MNT_RDONLY) == 0 ||
-	    (VOP_IOCTL(devvp, DIOCGPHYSSEG, &physseg, FREAD, cred) != 0) ||
-	    physseg == NULL ||
-	    !FS_IS_PAGE_ALIGNED_P(fs)) {
-		error = ENXIO;
-		free(fs->fs_csp, M_UFSMNT);
-		goto out;
+	if ((mp->mnt_flag & MNT_XIP) != 0 &&
+	    (mp->mnt_flag & MNT_RDONLY) != 0 &&
+	    VOP_IOCTL(devvp, DIOCGPHYSSEG, &physseg, FREAD, cred) == 0 &&
+	    physseg != NULL &&
+	    FS_IS_PAGE_ALIGNED_P(fs)) {
+		mp->mnt_flag |= MNT_XIP;
+		devvp->v_physseg = physseg;
 	}
-	mp->mnt_iflag |= IMNT_XIP;
-	devvp->v_physseg = physseg;
 #endif
 #ifdef FFS_EI
 	if (needswap)
@@ -1840,7 +1838,7 @@ ffs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 	ufs_vinit(mp, ffs_specop_p, ffs_fifoop_p, &vp);
 
 #ifdef XIP
-	if ((vp->v_mount->mnt_iflag & IMNT_XIP) != 0 &&
+	if ((vp->v_mount->mnt_flag & MNT_XIP) != 0 &&
 	    vp->v_type == VREG) {
 		vp->v_vflag |= VV_XIP;
 	}
