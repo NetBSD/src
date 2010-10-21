@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.58 2010/07/07 01:14:52 chs Exp $	*/
+/*	$NetBSD: locore.S,v 1.59 2010/10/21 11:39:45 yamt Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -1085,12 +1085,12 @@ IDTVEC(syscall)
 	pushq	$(LSEL(LUDATA_SEL, SEL_UPL))	/* Known to be user ss */
 	pushq	%r15				/* User space rsp */
 	movq	CPUVAR(SCRATCH),%r15
-	sti
 	subq	$TF_REGSIZE+(TF_RSP-TF_TRAPNO),%rsp
+	movw	%es,TF_ES(%rsp)
+	sti
 	INTR_SAVE_GPRS
 	movw	%fs,TF_FS(%rsp)
 	movw	%gs,TF_GS(%rsp)
-	movw	%es,TF_ES(%rsp)
 	movw	$(LSEL(LUDATA_SEL, SEL_UPL)),TF_DS(%rsp)
 	movq	%r11, TF_RFLAGS(%rsp)	/* old rflags from syscall insn */
 	movq	$(LSEL(LUCODE_SEL, SEL_UPL)), TF_CS(%rsp)
