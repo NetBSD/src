@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.149 2010/09/22 16:16:51 jakllsch Exp $	*/
+/*	$NetBSD: machdep.c,v 1.150 2010/10/21 11:17:55 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.149 2010/09/22 16:16:51 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.150 2010/10/21 11:17:55 yamt Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -359,6 +359,8 @@ cpu_startup(void)
 #if !defined(XEN)
 	ltr(cpu_info_primary.ci_tss_sel);
 #endif /* !defined(XEN) */
+
+	x86_startup();
 }
 
 #ifdef XEN
