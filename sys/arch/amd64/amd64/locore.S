@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.60 2010/10/21 11:41:31 yamt Exp $	*/
+/*	$NetBSD: locore.S,v 1.61 2010/10/21 11:42:26 yamt Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -1171,7 +1171,6 @@ IDTVEC(syscall)
 	call	_C_LABEL(do_pmap_load)
 	jmp	.Lsyscall_checkast	/* re-check ASTs */
 10:
-	/* Always returning to user mode here. */
 	CLEAR_ASTPENDING(%r14)
 	STI(si)
 	/* Pushed T_ASTFLT into tf_trapno on entry. */
