@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.61 2010/10/21 11:42:26 yamt Exp $	*/
+/*	$NetBSD: locore.S,v 1.62 2010/10/21 11:43:22 yamt Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -1258,36 +1258,40 @@ _C_LABEL(osyscall_return):
 .Losyscall_checkast:
 	/* Check for ASTs on exit to user mode. */
 	CLI(si)
-	CHECK_ASTPENDING(%r14)
-	je	1f
-	/* Always returning to user mode here. */
-	CLEAR_ASTPENDING(%r14)
-	STI(si)
-	/* Pushed T_ASTFLT into tf_trapno on entry. */
-	movq	%rsp,%rdi
-	call	_C_LABEL(trap)
-	jmp	.Losyscall_checkast
-1:	CHECK_DEFERRED_SWITCH
+	movl	L_MD_ASTPENDING(%r14), %eax
+	orl	CPUVAR(WANT_PMAPLOAD), %eax
 	jnz	9f
 iret_return:
-#ifndef DIAGNOSTIC
-	INTRFASTEXIT
-#else /* DIAGNOSTIC */
+#ifdef DIAGNOSTIC
 	cmpl	$IPL_NONE,CPUVAR(ILEVEL)
 	jne	3f
+#endif
 	INTRFASTEXIT
-3:
-	STI(si)
-	movabsq	$4f, %rdi
+#ifdef DIAGNOSTIC
+3:	movabsq	$4f, %rdi
+	movl	TF_RAX(%rsp),%esi
+	movl	TF_RDI(%rsp),%edx
+	movl	%ebx,%ecx
+	movl	CPUVAR(ILEVEL),%r8d
 	xorq	%rax,%rax
 	call	_C_LABEL(printf)
 	movl	$IPL_NONE,%edi
 	call	_C_LABEL(spllower)
 	jmp	.Losyscall_checkast
-4:	.asciz	"WARNING: SPL NOT LOWERED ON SYSCALL EXIT\n"
-#endif /* DIAGNOSTIC */
-9:	STI(si)
+4:	.asciz	"WARNING: SPL NOT LOWERED ON SYSCALL %d %d EXIT %x %x\n"
+#endif
+9:
+	cmpl	$0, CPUVAR(WANT_PMAPLOAD)
+	jz	10f
+	STI(si)
 	call	_C_LABEL(do_pmap_load)
+	jmp	.Losyscall_checkast	/* re-check ASTs */
+10:
+	CLEAR_ASTPENDING(%r14)
+	STI(si)
+	/* Pushed T_ASTFLT into tf_trapno on entry. */
+	movq	%rsp,%rdi
+	call	_C_LABEL(trap)
 	jmp	.Losyscall_checkast	/* re-check ASTs */
 
 /*
