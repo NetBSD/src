@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.130 2010/06/24 13:03:11 hannken Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.131 2010/10/21 11:13:43 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004, 2008, 2009 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.130 2010/06/24 13:03:11 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.131 2010/10/21 11:13:43 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1054,7 +1054,7 @@ unp_connect2(struct socket *so, struct socket *so2, int req)
 	 *
 	 * local endpoint (so)
 	 * remote endpoint (so2)
-	 * queue head (so->so_head, only if PR_CONNREQUIRED)
+	 * queue head (so2->so_head, only if PR_CONNREQUIRED)
 	 */
 	KASSERT(solocked2(so, so2));
 	KASSERT(so->so_head == NULL);
