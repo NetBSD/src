@@ -1,4 +1,4 @@
-/*	$NetBSD: handler.c,v 1.32 2010/03/11 15:44:48 christos Exp $	*/
+/*	$NetBSD: handler.c,v 1.33 2010/10/21 06:04:33 tteras Exp $	*/
 
 /* Id: handler.c,v 1.28 2006/05/26 12:17:29 manubsd Exp */
 
@@ -963,6 +963,22 @@ inscontacted(remote)
 	LIST_INSERT_HEAD(&ctdtree, new, chain);
 
 	return 0;
+}
+
+void
+remcontacted(remote)
+	struct sockaddr *remote;
+{
+	struct contacted *p;
+
+	LIST_FOREACH(p, &ctdtree, chain) {
+		if (cmpsaddr(remote, p->remote) == 0) {
+			LIST_REMOVE(p, chain);
+			racoon_free(p->remote);
+			racoon_free(p);
+			break;
+		}
+	}	
 }
 
 void
