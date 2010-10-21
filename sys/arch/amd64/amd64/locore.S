@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.59 2010/10/21 11:39:45 yamt Exp $	*/
+/*	$NetBSD: locore.S,v 1.60 2010/10/21 11:41:31 yamt Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -1128,7 +1128,6 @@ IDTVEC(syscall)
 	jnz	9f
 	testl	$MDP_IRET, L_MD_FLAGS(%r14)
 	jne	iret_return;
-syscall_return:
 #ifdef DIAGNOSTIC
 	cmpl	$IPL_NONE,CPUVAR(ILEVEL)
 	jne	3f
