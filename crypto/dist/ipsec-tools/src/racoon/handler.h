@@ -1,4 +1,4 @@
-/*	$NetBSD: handler.h,v 1.22 2009/09/03 09:29:07 tteras Exp $	*/
+/*	$NetBSD: handler.h,v 1.23 2010/10/21 06:04:33 tteras Exp $	*/
 
 /* Id: handler.h,v 1.19 2006/02/25 08:25:12 manubsd Exp */
 
@@ -518,6 +518,7 @@ extern void unbindph12 __P((struct ph2handle *));
 
 extern struct contacted *getcontacted __P((struct sockaddr *));
 extern int inscontacted __P((struct sockaddr *));
+extern void remcontacted __P((struct sockaddr *));
 extern void initctdtree __P((void));
 
 extern int check_recvdpkt __P((struct sockaddr *,
