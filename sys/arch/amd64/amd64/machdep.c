@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.152 2010/10/21 11:27:46 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.153 2010/10/21 11:28:34 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.152 2010/10/21 11:27:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.153 2010/10/21 11:28:34 yamt Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -1632,6 +1632,9 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 		if (error != 0)
 			return error;
 		/*
+		 * save and restore some values we don't want to change.
+		 * _FRAME_GREG(copy_to_tf) below overwrites them.
+		 *
 		 * XXX maybe inline this.
 		 */
 		rflags = tf->tf_rflags;
