@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.131 2010/10/21 11:13:43 yamt Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.132 2010/10/21 11:14:39 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004, 2008, 2009 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.131 2010/10/21 11:13:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.132 2010/10/21 11:14:39 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1001,7 +1001,7 @@ unp_connect(struct socket *so, struct mbuf *nam, struct lwp *l)
 		 * see SO_ACCEPTCONN set on the endpoint, then it must
 		 * be locked by the domain-wide uipc_lock.
 		 */
-		KASSERT((so->so_options & SO_ACCEPTCONN) == 0 ||
+		KASSERT((so2->so_options & SO_ACCEPTCONN) == 0 ||
 		    so2->so_lock == uipc_lock);
 		if ((so2->so_options & SO_ACCEPTCONN) == 0 ||
 		    (so3 = sonewconn(so2, 0)) == NULL) {
