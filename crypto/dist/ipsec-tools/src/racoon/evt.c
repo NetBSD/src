@@ -1,4 +1,4 @@
-/*	$NetBSD: evt.c,v 1.9 2009/01/23 08:05:58 tteras Exp $	*/
+/*	$NetBSD: evt.c,v 1.10 2010/10/21 06:15:28 tteras Exp $	*/
 
 /* Id: evt.c,v 1.5 2006/06/22 20:11:35 manubsd Exp */
 
@@ -373,7 +373,7 @@ evt_subscribe(list, fd)
 
 	LIST_INSERT_HEAD(list, l, ll_chain);
 	l->fd = fd;
-	monitor_fd(l->fd, evt_unsubscribe_cb, l);
+	monitor_fd(l->fd, evt_unsubscribe_cb, l, 0);
 
 	plog(LLV_DEBUG, LOCATION, NULL,
 	     "[%d] admin connection is polling events\n", fd);
