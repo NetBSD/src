@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.x11.mk,v 1.89 2010/08/17 08:40:57 christos Exp $
+#	$NetBSD: bsd.x11.mk,v 1.90 2010/10/22 16:48:38 yhardy Exp $
 
 .include <bsd.init.mk>
 
@@ -310,7 +310,7 @@ pkgconfig-install: ${_PKGDEST.${_pkg}}
 		s,@GL_PC_LIB_PRIV@,-lm -lpthread,; \
 		s,@GL_PC_CFLAGS@,,; \
 		s,@GLU_LIB@,GLU,; \
-		s,@GLU_PC_REQ@,osmesa,; \
+		s,@GLU_PC_REQ@,gl,; \
 		s,@GLU_PC_REQ_PRIV@,,; \
 		s,@GLU_PC_LIB_PRIV@,-lGLU,; \
 		s,@GLU_PC_CFLAGS@,,; \
