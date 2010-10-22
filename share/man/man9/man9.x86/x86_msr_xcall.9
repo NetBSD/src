@@ -1,0 +1,97 @@
+.\" $NetBSD: x86_msr_xcall.9,v 1.3.2.2 2010/10/22 09:23:11 uebayasi Exp $
+.\"
+.\" Copyright (c) 2010 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This code is derived from software contributed to The NetBSD Foundation
+.\" by Jukka Ruohonen.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd August 21, 2010
+.Dt X86_MSR_XCALL 9 x86
+.Os
+.Sh NAME
+.Nm x86_msr_xcall
+.Nd MSR specific cross-call
+.Sh SYNOPSIS
+.In x86/cpu_msr.h
+.Ft void
+.Fn x86_msr_xcall "void *arg1" "void *arg1"
+.Sh DESCRIPTION
+The
+.Fn x86_msr_xcall
+function provides a x86-specific IPI handler suitable for use with the
+.Xr xcall 9
+interface.
+It can be used to ensure that a given
+.Tn MSR
+call is executed on all processors.
+The prototype follows the
+.Ft xcfunc_t
+function pointer type and the opaque
+.Fa arg1
+pointer is casted to the following structure:
+.Bd -literal -offset indent
+struct msr_rw_info {
+	int		msr_read;
+	int		msr_type;
+	uint64_t	msr_value;
+	uint64_t	msr_mask;
+};
+.Ed
+.Pp
+This structure must be filled prior to the call.
+Two fields are compulsory:
+.Fa msr_type
+is used as the address of the
+.Tn MSR
+and
+.Fa msr_value
+is the value to be written.
+If
+.Fa msr_read
+is not zero,
+.Fn x86_msr_xcall
+will first read from
+.Fa msr_type
+and then clear the mask specified in
+.Fa msr_mask
+before the write operation.
+.Sh EXAMPLES
+The following example writes a value zero to the
+.Tn MSR_THERM_CONTROL
+model-specific register on all processors in the system:
+.Bd -literal -offset indent
+struct msr_rw_info msr;
+uint64_t xc;
+
+msr.msr_value = 0;
+msr.msr_read = true;
+msr.msr_type = MSR_THERM_CONTROL;
+msr.msr_mask = 0x1e;
+
+xc = xc_broadcast(0, (xcfunc_t)x86_msr_xcall, &msr, NULL);
+xc_wait(xc);
+.Ed
+.Sh SEE ALSO
+.Xr xcall 9
