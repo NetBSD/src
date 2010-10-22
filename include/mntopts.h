@@ -1,4 +1,4 @@
-/*	$NetBSD: mntopts.h,v 1.13.4.2 2010/08/17 06:40:01 uebayasi Exp $	*/
+/*	$NetBSD: mntopts.h,v 1.13.4.3 2010/10/22 11:32:57 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -57,6 +57,7 @@ struct mntopt {
 #define MOPT_SOFTDEP		{ "softdep",	0, MNT_SOFTDEP, 0 }
 #define MOPT_LOG		{ "log",	0, MNT_LOG, 0 }
 #define MOPT_IGNORE		{ "hidden",	0, MNT_IGNORE, 0 }
+#define MOPT_XIP		{ "xip",	0, MNT_XIP, 0 }
 
 /* Control flags. */
 #define MOPT_FORCE		{ "force",	0, MNT_FORCE, 0 }
