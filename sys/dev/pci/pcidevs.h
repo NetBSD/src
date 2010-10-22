@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1016.2.2 2010/08/17 06:46:28 uebayasi Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1016.2.3 2010/10/22 07:22:06 uebayasi Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1048 2010/08/01 18:45:24 msaitoh Exp
+ *	NetBSD: pcidevs,v 1.1050 2010/10/14 03:35:23 taca Exp
  */
 
 /*
@@ -600,7 +600,6 @@
 #define	PCI_VENDOR_NETSEC	0x1660		/* NetSec */
 #define	PCI_VENDOR_SIBYTE	0x166d		/* Broadcom (SiByte) */
 #define	PCI_VENDOR_MYSON	0x1516		/* Myson-Century Technology */
-#define	PCI_VENDOR_SYBATECH	0x1592		/* Syba Tech */
 #define	PCI_VENDOR_MELLANOX	0x15b3		/* Mellanox Technologies */
 #define	PCI_VENDOR_NDC	0x15e8		/* National Datacomm */
 #define	PCI_VENDOR_ACTIONTEC	0x1668		/* Action Tec Electronics */
@@ -1574,6 +1573,8 @@
 #define	PCI_PRODUCT_BROADCOM_BCM4307	0x4307		/* BCM4307 */
 #define	PCI_PRODUCT_BROADCOM_BCM4311	0x4311		/* BCM4311 */
 #define	PCI_PRODUCT_BROADCOM_BCM4312	0x4312		/* BCM4312 */
+#define	PCI_PRODUCT_BROADCOM_BCM4313	0x4313		/* BCM4313 */
+#define	PCI_PRODUCT_BROADCOM_BCM4315	0x4315		/* BCM4315 */
 #define	PCI_PRODUCT_BROADCOM_BCM4318	0x4318		/* BCM4318 AirForce One 54g */
 #define	PCI_PRODUCT_BROADCOM_BCM4319	0x4319		/* BCM4319 */
 #define	PCI_PRODUCT_BROADCOM_BCM4306	0x4320		/* BCM4306 */
@@ -1582,6 +1583,11 @@
 #define	PCI_PRODUCT_BROADCOM_BCM4309	0x4324		/* BCM4309 */
 #define	PCI_PRODUCT_BROADCOM_BCM43XG	0x4325		/* BCM43XG */
 #define	PCI_PRODUCT_BROADCOM_BCM4328	0x4328		/* BCM4328 802.11a/b/g/n */
+#define	PCI_PRODUCT_BROADCOM_BCM4329	0x4329		/* BCM4329 802.11b/g/n */
+#define	PCI_PRODUCT_BROADCOM_BCM432A	0x432a		/* BCM432A 802.11 */
+#define	PCI_PRODUCT_BROADCOM_BCM432B	0x432b		/* BCM432B 802.11a/b/g/n */
+#define	PCI_PRODUCT_BROADCOM_BCM432C	0x432c		/* BCM432C 802.11b/g/n */
+#define	PCI_PRODUCT_BROADCOM_BCM432D	0x432d		/* BCM432D 802.11 */
 #define	PCI_PRODUCT_BROADCOM_BCM4401	0x4401		/* BCM4401 10/100 Ethernet */
 #define	PCI_PRODUCT_BROADCOM_5801	0x5801		/* 5801 Security Processor */
 #define	PCI_PRODUCT_BROADCOM_5802	0x5802		/* 5802 Security Processor */
@@ -2551,7 +2557,6 @@
 #define	PCI_PRODUCT_INTEL_82925X_EX	0x2585		/* 82925X PCI Express Bridge */
 #define	PCI_PRODUCT_INTEL_E7221_HB	0x2588		/* E7221 Host Bridge */
 #define	PCI_PRODUCT_INTEL_E7221_IGD	0x258a		/* E7221 Integrated Graphics Device */
-#define	PCI_PRODUCT_INTEL_82915G_IGD	0x2582		/* 82915G/GL Integrated Graphics Device */
 #define	PCI_PRODUCT_INTEL_82915GM_HB	0x2590		/* 82915PM/GM/GMS,82910GML Host Bridge */
 #define	PCI_PRODUCT_INTEL_82915GM_EX	0x2591		/* 82915PM/GM PCI Express Bridge */
 #define	PCI_PRODUCT_INTEL_82915GM_IGD	0x2592		/* 82915GM/GMS,82910GML Integrated Graphics Device */

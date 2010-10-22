@@ -1,4 +1,4 @@
-/* $NetBSD: hdaudio_afg.c,v 1.19.2.2 2010/08/17 06:46:36 uebayasi Exp $ */
+/* $NetBSD: hdaudio_afg.c,v 1.19.2.3 2010/10/22 07:22:13 uebayasi Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdaudio_afg.c,v 1.19.2.2 2010/08/17 06:46:36 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdaudio_afg.c,v 1.19.2.3 2010/10/22 07:22:13 uebayasi Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -79,6 +79,7 @@ __KERNEL_RCSID(0, "$NetBSD: hdaudio_afg.c,v 1.19.2.2 2010/08/17 06:46:36 uebayas
 #include <dev/pci/hdaudio/hdaudioreg.h>
 #include <dev/pci/hdaudio/hdaudio_mixer.h>
 #include <dev/pci/hdaudio/hdaudioio.h>
+#include <dev/pci/hdaudio/hdaudio_ids.h>
 
 #ifndef AUFMT_SURROUND_7_1
 #define	AUFMT_SURROUND_7_1 (AUFMT_DOLBY_5_1|AUFMT_SIDE_LEFT|AUFMT_SIDE_RIGHT)
@@ -120,8 +121,8 @@ static const char *hdaudio_afg_mixer_names[] = HDAUDIO_DEVICE_NAMES;
 static const char *hdaudio_afg_port_connectivity[] = {
 	"Jack",
 	"Unconnected",
-	"Fixed Function",
-	"Jack & Fixed Function"
+	"Built-In",
+	"Jack & Built-In"
 };
 static const char *hdaudio_afg_default_device[] = {
 	"Line Out",
@@ -129,7 +130,7 @@ static const char *hdaudio_afg_default_device[] = {
 	"HP Out",
 	"CD",
 	"SPDIF Out",
-	"Digital Other Out",
+	"Digital Out",
 	"Modem Line Side",
 	"Modem Handset Side",
 	"Line In",
@@ -137,7 +138,7 @@ static const char *hdaudio_afg_default_device[] = {
 	"Mic In",
 	"Telephony",
 	"SPDIF In",
-	"Digital Other In",
+	"Digital In",
 	"Reserved",
 	"Other"
 };
@@ -330,12 +331,6 @@ CFATTACH_DECL2_NEW(
     NULL,
     hdaudio_afg_childdet
 );
-
-static const struct audio_device hdaudio_afg_audio_device = {
-	"HD Audio",
-	"1.0",
-	"hdaudio"
-};
 
 static int	hdaudio_afg_query_encoding(void *, struct audio_encoding *);
 static int	hdaudio_afg_set_params(void *, int, int,
@@ -792,7 +787,27 @@ hdaudio_afg_assoc_dump(struct hdaudio_afg_softc *sc)
 			    hdaudio_afg_default_device[curdev]);
 
 			for (curport = 0; curport < 4; curport++) {
+				bool devonport = false;
 				if ((portmask & (1 << curport)) == 0)
+					continue;
+
+				for (j = 0; j < HDAUDIO_MAXPINS; j++) {
+					if (as[i].as_dacs[j] == 0)
+						continue;
+
+					w = hdaudio_afg_widget_lookup(sc,
+					    as[i].as_pins[j]);
+					if (w == NULL)
+						continue;
+					conn = COP_CFG_PORT_CONNECTIVITY(w->w_pin.config);
+					defdev = COP_CFG_DEFAULT_DEVICE(w->w_pin.config);
+					if (conn != curport || defdev != curdev)
+						continue;
+
+					devonport = true;
+				}
+
+				if (devonport == false)
 					continue;
 
 				hda_print1(sc, " [%s",
@@ -3143,6 +3158,7 @@ hdaudio_afg_attach(device_t parent, device_t self, void *opaque)
 	struct hdaudio_afg_softc *sc = device_private(self);
 	audio_params_t defparams;
 	prop_dictionary_t args = opaque;
+	char vendor[16], product[16];
 	uint64_t fgptr = 0;
 	uint8_t nid = 0;
 	int err;
@@ -3160,8 +3176,15 @@ hdaudio_afg_attach(device_t parent, device_t self, void *opaque)
 	sc->sc_config = prop_dictionary_get(args, "pin-config");
 	if (sc->sc_config && prop_object_type(sc->sc_config) != PROP_TYPE_ARRAY)
 		sc->sc_config = NULL;
-	hda_print1(sc, " (%s configuration)\n", sc->sc_config ?
-	    "custom" : "firmware");
+
+	prop_dictionary_get_uint16(args, "vendor-id", &sc->sc_vendor);
+	prop_dictionary_get_uint16(args, "product-id", &sc->sc_product);
+	hdaudio_id2name(sc->sc_vendor, HDA_PRODUCT_ANY,
+	    vendor, sizeof(vendor));
+	hdaudio_id2name(sc->sc_vendor, sc->sc_product,
+	    product, sizeof(product));
+	hda_print1(sc, ": %s %s%s\n", vendor, product,
+	    sc->sc_config ? " (custom configuration)" : "");
 
 	rv = prop_dictionary_get_uint64(args, "function-group", &fgptr);
 	if (rv == false || fgptr == 0) {
@@ -3173,8 +3196,6 @@ hdaudio_afg_attach(device_t parent, device_t self, void *opaque)
 		hda_error(sc, "missing node-id property\n");
 		return;
 	}
-	prop_dictionary_get_uint16(args, "vendor-id", &sc->sc_vendor);
-	prop_dictionary_get_uint16(args, "product-id", &sc->sc_product);
 
 	sc->sc_nid = nid;
 	sc->sc_fg = (struct hdaudio_function_group *)(vaddr_t)fgptr;
@@ -3428,7 +3449,16 @@ hdaudio_afg_halt_input(void *opaque)
 static int
 hdaudio_afg_getdev(void *opaque, struct audio_device *audiodev)
 {
-	*audiodev = hdaudio_afg_audio_device;
+	struct hdaudio_audiodev *ad = opaque;
+	struct hdaudio_afg_softc *sc = ad->ad_sc;
+
+	hdaudio_id2name(sc->sc_vendor, HDA_PRODUCT_ANY,
+	    audiodev->name, sizeof(audiodev->name));
+	hdaudio_id2name(sc->sc_vendor, sc->sc_product,
+	    audiodev->version, sizeof(audiodev->version));
+	snprintf(audiodev->config, sizeof(audiodev->config) - 1,
+	    "%02Xh", sc->sc_nid);
+
 	return 0;
 }
 

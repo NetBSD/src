@@ -1,4 +1,4 @@
-/*	$NetBSD: esiop.c,v 1.49.2.2 2010/08/17 06:46:09 uebayasi Exp $	*/
+/*	$NetBSD: esiop.c,v 1.49.2.3 2010/10/22 07:21:57 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2002 Manuel Bouyer.
@@ -28,7 +28,7 @@
 /* SYM53c7/8xx PCI-SCSI I/O Processors driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esiop.c,v 1.49.2.2 2010/08/17 06:46:09 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esiop.c,v 1.49.2.3 2010/10/22 07:21:57 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,15 +56,12 @@ __KERNEL_RCSID(0, "$NetBSD: esiop.c,v 1.49.2.2 2010/08/17 06:46:09 uebayasi Exp 
 
 #include "opt_siop.h"
 
-#ifndef DEBUG
-#undef DEBUG
-#endif
 /*
 #define SIOP_DEBUG
 #define SIOP_DEBUG_DR
 #define SIOP_DEBUG_INTR
 #define SIOP_DEBUG_SCHED
-#define DUMP_SCRIPT
+#define SIOP_DUMP_SCRIPT
 */
 
 #define SIOP_STATS
@@ -197,7 +194,7 @@ esiop_attach(struct esiop_softc *sc)
 	 * siop_reset() will reset the chip, thus clearing pending interrupts
 	 */
 	esiop_reset(sc);
-#ifdef DUMP_SCRIPT
+#ifdef SIOP_DUMP_SCRIPT
 	esiop_dump_script(sc);
 #endif
 
@@ -575,7 +572,7 @@ none:
 			printf("scsi gross error\n");
 			if (esiop_target)
 				esiop_target->target_c.flags &= ~TARF_DT;
-#ifdef DEBUG
+#ifdef SIOP_DEBUG
 			printf("DSA=0x%x DSP=0x%lx\n",
 			    bus_space_read_4(sc->sc_c.sc_rt, sc->sc_c.sc_rh,
 			    SIOP_DSA),
@@ -1859,12 +1856,11 @@ esiop_dump_script(struct esiop_softc *sc)
 
 	for (i = 0; i < PAGE_SIZE / 4; i += 2) {
 		printf("0x%04x: 0x%08x 0x%08x", i * 4,
-		    le32toh(sc->sc_c.sc_script[i]),
-		    le32toh(sc->sc_c.sc_script[i + 1]));
-		if ((le32toh(sc->sc_c.sc_script[i]) & 0xe0000000) ==
-		    0xc0000000) {
+		    esiop_script_read(sc, i),
+		    esiop_script_read(sc, i + 1));
+		if ((esiop_script_read(sc, i) & 0xe0000000) == 0xc0000000) {
 			i++;
-			printf(" 0x%08x", le32toh(sc->sc_c.sc_script[i + 1]));
+			printf(" 0x%08x", esiop_script_read(sc, i + 1));
 		}
 		printf("\n");
 	}
@@ -1927,7 +1923,7 @@ esiop_morecbd(struct esiop_softc *sc)
 		    "unable to load cbd DMA map, error = %d\n", error);
 		goto bad0;
 	}
-#ifdef DEBUG
+#ifdef SIOP_DEBUG
 	aprint_debug_dev(sc->sc_c.sc_dev, "alloc newcdb at PHY addr 0x%lx\n",
 	    (unsigned long)newcbd->xferdma->dm_segs[0].ds_addr);
 #endif
@@ -2056,7 +2052,7 @@ esiop_moretagtbl(struct esiop_softc *sc)
 		    "unable to load tbl DMA map, error = %d\n", error);
 		goto bad0;
 	}
-#ifdef DEBUG
+#ifdef SIOP_DEBUG
 	printf("%s: alloc new tag DSA table at PHY addr 0x%lx\n",
 	    device_xname(sc->sc_c.sc_dev),
 	    (unsigned long)newtblblk->blkmap->dm_segs[0].ds_addr);

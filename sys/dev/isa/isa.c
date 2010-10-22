@@ -1,4 +1,4 @@
-/*	$NetBSD: isa.c,v 1.137 2009/08/19 16:23:28 cegger Exp $	*/
+/*	$NetBSD: isa.c,v 1.137.2.1 2010/10/22 07:22:01 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa.c,v 1.137 2009/08/19 16:23:28 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa.c,v 1.137.2.1 2010/10/22 07:22:01 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -162,7 +162,16 @@ isadetach(device_t self, int flags)
 int
 isarescan(device_t self, const char *ifattr, const int *locators)
 {
+	prop_dictionary_t dict;
 	int locs[ISACF_NLOCS];
+	bool no_legacy_devices = false;
+
+	dict = device_properties(self);
+	if (prop_dictionary_get_bool(dict, "no-legacy-devices",
+	    &no_legacy_devices) == true) {
+		aprint_debug_dev(self, "platform reports no legacy devices\n");
+		return 0;
+	}
 
 	memcpy(locs, locators, sizeof(locs));
 

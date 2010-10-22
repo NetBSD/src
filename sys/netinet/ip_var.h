@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_var.h,v 1.91.4.1 2010/08/17 06:47:47 uebayasi Exp $	*/
+/*	$NetBSD: ip_var.h,v 1.91.4.2 2010/10/22 07:22:40 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -49,7 +49,7 @@ struct ipovly {
 } __packed;
 
 /*
- * Ip (reassembly or sequence) queue structures.
+ * IP sequence queue structure.
  *
  * XXX -- The following explains why the ipqe_m field is here, for TCP's use:
  * We want to avoid doing m_pullup on incoming packets but that
@@ -77,7 +77,6 @@ struct ipqent {
 	u_int32_t ipqe_len;
 	u_int32_t ipqe_flags;
 };
-#define	ipqe_ip		_ipqe_u1._ip
 #define	ipqe_tcp	_ipqe_u1._tcp
 
 /*
@@ -161,7 +160,6 @@ struct ip_moptions {
 
 extern struct domain inetdomain;
 
-extern LIST_HEAD(ipqhead, ipq) ipq[];	/* ip reass. queue */
 extern int   ip_defttl;			/* default IP ttl */
 extern int   ipforwarding;		/* ip forwarding */
 extern int   ip_mtudisc;		/* mtu discovery */

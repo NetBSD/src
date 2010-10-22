@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil_netbsd.c,v 1.53.2.2 2010/08/17 06:46:49 uebayasi Exp $	*/
+/*	$NetBSD: ip_fil_netbsd.c,v 1.53.2.3 2010/10/22 07:22:22 uebayasi Exp $	*/
 
 /*
  * Copyright (C) 1993-2003 by Darren Reed.
@@ -8,7 +8,7 @@
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_fil_netbsd.c,v 1.53.2.2 2010/08/17 06:46:49 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_fil_netbsd.c,v 1.53.2.3 2010/10/22 07:22:22 uebayasi Exp $");
 #else
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_fil_netbsd.c,v 2.55.2.67 2009/12/19 05:41:08 darrenr Exp";
@@ -1076,6 +1076,7 @@ int dst;
 
 		hlen = sizeof(ip_t);
 		ohlen = fin->fin_hlen;
+		iclen = hlen + offsetof(struct icmp, icmp_ip) + ohlen;
 		if (fin->fin_hlen < fin->fin_plen)
 			xtra = MIN(fin->fin_dlen, 8);
 		else
@@ -1086,12 +1087,12 @@ int dst;
 	else if (fin->fin_v == 6) {
 		hlen = sizeof(ip6_t);
 		ohlen = sizeof(ip6_t);
+		iclen = hlen + offsetof(struct icmp, icmp_ip) + ohlen;
 		type = icmptoicmp6types[type];
 		if (type == ICMP6_DST_UNREACH)
 			code = icmptoicmp6unreach[code];
 
-		if (hlen + sizeof(*icmp) + max_linkhdr +
-		    fin->fin_plen > avail) {
+		if (iclen + max_linkhdr + fin->fin_plen > avail) {
 			MCLGET(m, M_DONTWAIT);
 			if (m == NULL)
 				return -1;
@@ -1102,7 +1103,14 @@ int dst;
 			avail = MCLBYTES;
 		}
 		xtra = MIN(fin->fin_plen,
-			   avail - hlen - sizeof(*icmp) - max_linkhdr);
+			   avail - iclen - max_linkhdr);
+		/* RFC4443 asks for 'as much of invoking packet
+		 * as possible without the ICMPv6 packet exceeding
+		 * the minimum IPv6 MTU'
+		 * fr_send_ip also drops packets larger than the
+		 * link mtu
+		 */
+		xtra = MIN(xtra, IPV6_MMTU - iclen);
 		if (dst == 0) {
 			if (fr_ifpaddr(6, FRI_NORMAL, ifp,
 				       (struct in_addr *)&dst6, NULL) == -1) {
@@ -1118,7 +1126,6 @@ int dst;
 		return -1;
 	}
 
-	iclen = hlen + sizeof(*icmp);
 	avail -= (max_linkhdr + iclen);
 	if (avail < 0) {
 		FREE_MB_T(m);
@@ -1584,9 +1591,7 @@ frdest_t *fdp;
 
 	{
 # if (__NetBSD_Version__ >= 106010000)
-#  if (__NetBSD_Version__ >= 399001400)
-		struct in6_ifextra *ife;
-#  else
+#  if (__NetBSD_Version__ < 399001400)
 		struct in6_addr finaldst = fin->fin_dst6;
 		int frag;
 #  endif
@@ -1605,8 +1610,7 @@ frdest_t *fdp;
 		mtu = nd_ifinfo[ifp->if_index].linkmtu;
 # else
 #  if (__NetBSD_Version__ >= 399001400)
-		ife = (struct in6_ifextra *)(ifp)->if_afdata[AF_INET6];
-		mtu = ife->nd_ifinfo[ifp->if_index].linkmtu;
+		mtu = IN6_LINKMTU(ifp);
 #  else
 		error = ip6_getpmtu(ro, ro, ifp, &finaldst, &mtu, &frag);
 #  endif

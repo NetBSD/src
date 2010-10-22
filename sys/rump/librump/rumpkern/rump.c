@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.151.2.2 2010/08/17 06:48:01 uebayasi Exp $	*/
+/*	$NetBSD: rump.c,v 1.151.2.3 2010/10/22 07:22:49 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.151.2.2 2010/08/17 06:48:01 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.151.2.3 2010/10/22 07:22:49 uebayasi Exp $");
 
 #include <sys/systm.h>
 #define ELFSIZE ARCH_ELFSIZE
@@ -153,6 +153,8 @@ __weak_alias(rump_vfs_fini,rump__unavailable);
 __weak_alias(biodone,rump__unavailable);
 __weak_alias(sopoll,rump__unavailable);
 
+__weak_alias(rump_vfs_drainbufs,rump__unavailable);
+
 void rump__unavailable_vfs_panic(void);
 void rump__unavailable_vfs_panic() {panic("vfs component not available");}
 __weak_alias(usermount_common_policy,rump__unavailable_vfs_panic);
@@ -269,7 +271,7 @@ rump__init(int rump_version)
 	}
 	rumpuser_thrinit(rump_user_schedule, rump_user_unschedule,
 	    rump_threads);
-	rump_intr_init();
+	rump_intr_init(numcpu);
 	rump_tsleep_init();
 
 	/* init minimal lwp/cpu context */
@@ -286,12 +288,14 @@ rump__init(int rump_version)
 	evcnt_init();
 
 	once_init();
+	kernconfig_lock_init();
 	prop_kern_init();
 
 	pool_subsystem_init();
 	kmem_init();
 
 	uvm_ra_init();
+	uao_init();
 
 	mutex_obj_init();
 	callout_startup();
@@ -302,15 +306,16 @@ rump__init(int rump_version)
 	kauth_init();
 	rump_susercred = rump_cred_create(0, 0, 0, NULL);
 
-	l->l_cred = rump_cred_suserget();
-	l->l_proc = &proc0;
-
 	procinit();
 	proc0_init();
+
+	l->l_proc = &proc0;
+	lwp_update_creds(l);
+
 	lwpinit_specificdata();
 	lwp_initspecific(&lwp0);
 
-	rump_scheduler_init();
+	rump_scheduler_init(numcpu);
 	/* revert temporary context and schedule a real context */
 	l->l_cpu = NULL;
 	rumpuser_set_curlwp(NULL);
@@ -326,8 +331,14 @@ rump__init(int rump_version)
 	tc_setclock(&ts);
 
 	/* we are mostly go.  do per-cpu subsystem init */
-	for (i = 0; i < ncpu; i++) {
+	for (i = 0; i < numcpu; i++) {
 		struct cpu_info *ci = cpu_lookup(i);
+
+		/* attach non-bootstrap CPUs */
+		if (i > 0) {
+			rump_cpu_attach(ci);
+			ncpu++;
+		}
 
 		callout_init_cpu(ci);
 		softint_init(ci);
@@ -335,6 +346,8 @@ rump__init(int rump_version)
 		pool_cache_cpu_init(ci);
 		selsysinit(ci);
 		percpu_init_cpu(ci);
+
+		aprint_verbose("cpu%d at thinair0: rump virtual cpu\n", i);
 	}
 
 	sysctl_init();
@@ -480,136 +493,6 @@ rump_uio_free(struct uio *uio)
 	return resid;
 }
 
-static pid_t nextpid = 1;
-struct lwp *
-rump_newproc_switch()
-{
-	struct lwp *l;
-	pid_t mypid;
-
-	mypid = atomic_inc_uint_nv(&nextpid);
-	if (__predict_false(mypid == 0))
-		mypid = atomic_inc_uint_nv(&nextpid);
-
-	l = rump_lwp_alloc(mypid, 0);
-	rump_lwp_switch(l);
-
-	return l;
-}
-
-struct lwp *
-rump_lwp_alloc_and_switch(pid_t pid, lwpid_t lid)
-{
-	struct lwp *l;
-
-	l = rump_lwp_alloc(pid, lid);
-	rump_lwp_switch(l);
-
-	return l;
-}
-
-struct lwp *
-rump_lwp_alloc(pid_t pid, lwpid_t lid)
-{
-	struct lwp *l;
-	struct proc *p;
-
-	l = kmem_zalloc(sizeof(*l), KM_SLEEP);
-	if (pid != 0) {
-		p = kmem_zalloc(sizeof(*p), KM_SLEEP);
-		if (rump_proc_vfs_init)
-			rump_proc_vfs_init(p);
-		p->p_stats = proc0.p_stats; /* XXX */
-		p->p_limit = lim_copy(proc0.p_limit);
-		p->p_pid = pid;
-		p->p_vmspace = &vmspace0;
-		p->p_emul = &emul_netbsd;
-		p->p_fd = fd_init(NULL);
-		p->p_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NONE);
-		p->p_pgrp = &rump_pgrp;
-		l->l_cred = rump_cred_suserget();
-
-		atomic_inc_uint(&nprocs);
-	} else {
-		p = &proc0;
-		l->l_cred = rump_susercred;
-	}
-
-	l->l_proc = p;
-	l->l_lid = lid;
-	l->l_fd = p->p_fd;
-	if (pid == 0)
-		fd_hold(l);
-	l->l_cpu = NULL;
-	l->l_target_cpu = rump_cpu;
-	lwp_initspecific(l);
-	LIST_INSERT_HEAD(&alllwp, l, l_list);
-
-	return l;
-}
-
-void
-rump_lwp_switch(struct lwp *newlwp)
-{
-	struct lwp *l = curlwp;
-
-	rumpuser_set_curlwp(NULL);
-	newlwp->l_cpu = newlwp->l_target_cpu = l->l_cpu;
-	newlwp->l_mutex = l->l_mutex;
-	l->l_mutex = NULL;
-	l->l_cpu = NULL;
-	rumpuser_set_curlwp(newlwp);
-	if (l->l_flag & LW_WEXIT)
-		rump_lwp_free(l);
-}
-
-/* XXX: this has effect only on non-pid0 lwps */
-void
-rump_lwp_release(struct lwp *l)
-{
-	struct proc *p;
-
-	p = l->l_proc;
-	if (p->p_pid != 0) {
-		mutex_obj_free(p->p_lock);
-		fd_free();
-		if (rump_proc_vfs_release)
-			rump_proc_vfs_release(p);
-		rump_cred_put(l->l_cred);
-		limfree(p->p_limit);
-		kmem_free(p, sizeof(*p));
-
-		atomic_dec_uint(&nprocs);
-	} else {
-		fd_free();
-	}
-	KASSERT((l->l_flag & LW_WEXIT) == 0);
-	l->l_flag |= LW_WEXIT;
-}
-
-void
-rump_lwp_free(struct lwp *l)
-{
-
-	KASSERT(l->l_flag & LW_WEXIT);
-	KASSERT(l->l_mutex == NULL);
-	if (l->l_name)
-		kmem_free(l->l_name, MAXCOMLEN);
-	lwp_finispecific(l);
-	LIST_REMOVE(l, l_list);
-	kmem_free(l, sizeof(*l));
-}
-
-struct lwp *
-rump_lwp_curlwp(void)
-{
-	struct lwp *l = curlwp;
-
-	if (l->l_flag & LW_WEXIT)
-		return NULL;
-	return l;
-}
-
 /* rump private.  NEEDS WORK! */
 void
 rump_set_vmspace(struct vmspace *vm)
@@ -645,36 +528,6 @@ rump_cred_put(kauth_cred_t cred)
 {
 
 	kauth_cred_free(cred);
-}
-
-kauth_cred_t
-rump_cred_suserget(void)
-{
-
-	kauth_cred_hold(rump_susercred);
-	return rump_susercred;
-}
-
-/*
- * Return the next system lwpid
- */
-lwpid_t
-rump_nextlid(void)
-{
-	lwpid_t retid;
-
-	mutex_enter(proc0.p_lock);
-	/*
-	 * Take next one, don't return 0
-	 * XXX: most likely we'll have collisions in case this
-	 * wraps around.
-	 */
-	if (++proc0.p_nlwpid == 0)
-		++proc0.p_nlwpid;
-	retid = proc0.p_nlwpid;
-	mutex_exit(proc0.p_lock);
-
-	return retid;
 }
 
 static int compcounter[RUMP_COMPONENT_MAX];
@@ -834,4 +687,19 @@ rump_printevcnts()
 	TAILQ_FOREACH(ev, &allevents, ev_list)
 		rumpuser_dprintf("%s / %s: %" PRIu64 "\n",
 		    ev->ev_group, ev->ev_name, ev->ev_count);
+}
+
+/*
+ * If you use this interface ... well ... all bets are off.
+ * The original purpose is for the p2k fs server library to be
+ * able to use the same pid/lid for VOPs as the host kernel.
+ */
+void
+rump_allbetsareoff_setid(pid_t pid, int lid)
+{
+	struct lwp *l = curlwp;
+	struct proc *p = l->l_proc;
+
+	l->l_lid = lid;
+	p->p_pid = pid;
 }

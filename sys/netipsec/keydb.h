@@ -1,4 +1,4 @@
-/*	$NetBSD: keydb.h,v 1.6 2007/07/07 18:38:23 degroote Exp $	*/
+/*	$NetBSD: keydb.h,v 1.6.54.1 2010/10/22 07:22:42 uebayasi Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/keydb.h,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$KAME: keydb.h,v 1.14 2000/08/02 17:58:26 sakane Exp $	*/
 
@@ -54,7 +54,7 @@ union sockaddr_union {
 /* Security Assocciation Index */
 /* NOTE: Ensure to be same address family */
 struct secasindex {
-	union sockaddr_union src;	/* srouce address for SA */
+	union sockaddr_union src;	/* source address for SA */
 	union sockaddr_union dst;	/* destination address for SA */
 	u_int16_t proto;		/* IPPROTO_ESP or IPPROTO_AH */
 	u_int8_t mode;			/* mode of protocol, see ipsec.h */

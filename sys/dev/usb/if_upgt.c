@@ -1,4 +1,4 @@
-/*	$NetBSD: if_upgt.c,v 1.2.4.2 2010/08/17 06:46:43 uebayasi Exp $	*/
+/*	$NetBSD: if_upgt.c,v 1.2.4.3 2010/10/22 07:22:18 uebayasi Exp $	*/
 /*	$OpenBSD: if_upgt.c,v 1.49 2010/04/20 22:05:43 tedu Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_upgt.c,v 1.2.4.2 2010/08/17 06:46:43 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_upgt.c,v 1.2.4.3 2010/10/22 07:22:18 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -664,10 +664,26 @@ upgt_fw_alloc(struct upgt_softc *sc)
 		error = firmware_load("upgt", name, &sc->sc_fw,
 		    &sc->sc_fw_size);
 		if (error != 0) {
-			aprint_error_dev(sc->sc_dev,
-			    "could not read firmware %s\n", name);
-			aprint_error_dev(sc->sc_dev,
-			    "see upgt(4) man page for details\n");
+			if (error == ENOENT) {
+				/*
+				 * The firmware file for upgt(4) is not in
+				 * the default distribution due to its lisence
+				 * so explicitly notify it if the firmware file
+				 * is not found.
+				 */
+				aprint_error_dev(sc->sc_dev,
+				    "firmware file %s is not installed\n",
+				    name);
+				aprint_error_dev(sc->sc_dev,
+				    "(it is not included in the default"
+				    " distribution)\n");
+				aprint_error_dev(sc->sc_dev,
+				    "see upgt(4) man page for details about "
+				    "firmware installation\n");
+			} else {
+				aprint_error_dev(sc->sc_dev,
+				    "could not read firmware %s\n", name);
+			}
 			return EIO;
 		}
 	}

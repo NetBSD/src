@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.1 2009/02/05 17:32:10 haad Exp $
+#	$NetBSD: Makefile,v 1.1.8.1 2010/10/22 07:22:38 uebayasi Exp $
 
 .include "../Makefile.inc"
 
-CPPFLAGS+= -D VND_COMPRESSION
+CPPFLAGS+= -DVND_COMPRESSION -DCOMPAT_30 -DCOMPAT_50
 
 .PATH:	${S}/dev
 

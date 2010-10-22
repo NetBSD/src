@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi_util.c,v 1.53 2009/11/12 08:28:31 uebayasi Exp $	*/
+/*	$NetBSD: usbdi_util.c,v 1.53.2.1 2010/10/22 07:22:20 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi_util.c,v 1.53 2009/11/12 08:28:31 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi_util.c,v 1.53.2.1 2010/10/22 07:22:20 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -538,6 +538,9 @@ usb_find_desc_if(usbd_device_handle dev, int type, int subtype,
 {
 	usbd_desc_iter_t iter;
 	const usb_cdc_descriptor_t *desc;
+
+	if (id == NULL)
+		return usb_find_desc(dev, type, subtype);
 
 	usb_desc_iter_init(dev, &iter);
 

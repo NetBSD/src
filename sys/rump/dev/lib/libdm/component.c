@@ -1,4 +1,4 @@
-/*	$NetBSD: component.c,v 1.1.2.1 2010/04/30 14:44:23 uebayasi Exp $	*/
+/*	$NetBSD: component.c,v 1.1.2.2 2010/10/22 07:22:44 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: component.c,v 1.1.2.1 2010/04/30 14:44:23 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: component.c,v 1.1.2.2 2010/10/22 07:22:44 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -39,8 +39,6 @@ __KERNEL_RCSID(0, "$NetBSD: component.c,v 1.1.2.1 2010/04/30 14:44:23 uebayasi E
 #include "rump_private.h"
 #include "rump_dev_private.h"
 #include "rump_vfs_private.h"
-
-void dmattach(int);
 
 RUMP_COMPONENT(RUMP_COMPONENT_DEV)
 {
@@ -63,5 +61,4 @@ RUMP_COMPONENT(RUMP_COMPONENT_DEV)
 		panic("cannot create device-mapper control device: %d", error);
 		 
 	}
-	rump_pdev_add(dmattach, 1);
 }

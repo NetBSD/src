@@ -1,4 +1,4 @@
-/* $NetBSD: pad.c,v 1.12.2.2 2010/08/17 06:46:21 uebayasi Exp $ */
+/* $NetBSD: pad.c,v 1.12.2.3 2010/10/22 07:22:04 uebayasi Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pad.c,v 1.12.2.2 2010/08/17 06:46:21 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pad.c,v 1.12.2.3 2010/10/22 07:22:04 uebayasi Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -53,12 +53,6 @@ __KERNEL_RCSID(0, "$NetBSD: pad.c,v 1.12.2.2 2010/08/17 06:46:21 uebayasi Exp $"
 #define PADUNIT(x)	minor(x)
 
 extern struct cfdriver pad_cd;
-
-static struct audio_device pad_device = {
-	"Pseudo Audio",
-	"1.0",
-	"pad",
-};
 
 typedef struct pad_block {
 	uint8_t		*pb_ptr;
@@ -180,6 +174,9 @@ static int
 pad_add_block(pad_softc_t *sc, uint8_t *blk, int blksize)
 {
 	int l;
+
+	if (sc->sc_open == 0)
+		return EIO;
 
 	if (sc->sc_buflen + blksize > PAD_BUFSIZE)
 		return ENOBUFS;
@@ -476,8 +473,9 @@ pad_halt_input(void *opaque)
 static int
 pad_getdev(void *opaque, struct audio_device *ret)
 {
-
-	*ret = pad_device;
+	strlcpy(ret->name, "Virtual Audio", sizeof(ret->name));
+	strlcpy(ret->version, osrelease, sizeof(ret->version));
+	strlcpy(ret->config, "pad", sizeof(ret->config));
 
 	return 0;
 }

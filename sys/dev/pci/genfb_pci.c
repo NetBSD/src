@@ -1,4 +1,4 @@
-/*	$NetBSD: genfb_pci.c,v 1.23.2.1 2010/04/30 14:43:33 uebayasi Exp $ */
+/*	$NetBSD: genfb_pci.c,v 1.23.2.2 2010/10/22 07:22:04 uebayasi Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb_pci.c,v 1.23.2.1 2010/04/30 14:43:33 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb_pci.c,v 1.23.2.2 2010/10/22 07:22:04 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,7 +66,7 @@ static paddr_t	pci_genfb_mmap(void *, void *, off_t, int);
 static int	pci_genfb_borrow(void *, bus_addr_t, bus_space_handle_t *);
 static int	pci_genfb_drm_print(void *, const char *);
 
-CFATTACH_DECL(genfb_pci, sizeof(struct pci_genfb_softc),
+CFATTACH_DECL_NEW(genfb_pci, sizeof(struct pci_genfb_softc),
     pci_genfb_match, pci_genfb_attach, NULL, NULL);
 
 static int
@@ -105,6 +105,7 @@ pci_genfb_attach(device_t parent, device_t self, void *aux)
 	aprint_naive("\n");
 	aprint_normal(": %s\n", devinfo);
 
+	sc->sc_gen.sc_dev = self;
 	sc->sc_memt = pa->pa_memt;
 	sc->sc_iot = pa->pa_iot;	
 	sc->sc_pc = pa->pa_pc;
@@ -244,7 +245,7 @@ pci_genfb_mmap(void *v, void *vs, off_t offset, int prot)
 	 */
 	if (kauth_authorize_generic(kauth_cred_get(), KAUTH_GENERIC_ISSUSER,
 	    NULL) != 0) {
-		aprint_normal_dev(&sc->sc_gen.sc_dev, "mmap() rejected.\n");
+		aprint_normal_dev(sc->sc_gen.sc_dev, "mmap() rejected.\n");
 		return -1;
 	}
 
