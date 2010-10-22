@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.57 2005/12/11 12:19:21 christos Exp $	*/
+/*	$NetBSD: param.h,v 1.57.98.1 2010/10/22 07:21:36 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -86,6 +86,9 @@
 
 #define	PGSHIFT		13		/* LOG2(NBPG) */
 
+#define	MAXBSIZE	0x8000		/* max FS block size */
+#define	MAXPHYS		0xe000		/* XXX: sun3 DMA can't handle 64KB? */
+
 #ifdef MSGBUFSIZE
 #error "MSGBUFSIZE is not user-adjustable for this arch"
 #endif
@@ -95,14 +98,17 @@
 /* This is needed by ps (actually USPACE). */
 #define	UPAGES		2		/* pages of u-area */
 
-#if defined(_KERNEL) || defined(_STANDALONE)
 #ifdef	_SUN3_
-#include <arch/sun3/include/param3.h>
+#include <machine/param3.h>
 #endif	/* SUN3 */
 #ifdef	_SUN3X_
-#include <arch/sun3/include/param3x.h>
+#include <machine/param3x.h>
 #endif	/* SUN3X */
-#endif	/* _KERNEL */
+
+/* default for rump etc. */
+#if !defined(_SUN3_) && !defined(_SUN3X_)
+#include <machine/param3.h>
+#endif
 
 #include <m68k/param.h>
 
@@ -116,6 +122,9 @@
 #if defined(_KERNEL) && !defined(_LOCORE)
 
 #include <machine/intr.h>
+
+extern const vaddr_t kernbase;
+extern const vaddr_t kern_end;
 
 extern void _delay(unsigned);
 #define delay(us)	_delay((us)<<8)

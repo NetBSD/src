@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.264.2.2 2010/08/17 06:43:53 uebayasi Exp $
+# $NetBSD: GENERIC,v 1.264.2.3 2010/10/22 07:20:57 uebayasi Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.264.2.2 $"
+#ident 		"GENERIC-$Revision: 1.264.2.3 $"
 
 maxusers	64		# estimated number of users
 
@@ -284,6 +284,8 @@ acpiecdt* 	at acpi?		# ACPI Embedded Controller (early binding)
 acpilid* 	at acpi?		# ACPI Lid Switch
 #acpismbus*	at acpi?		# ACPI SMBus CMI (experimental)
 acpitz* 	at acpi?		# ACPI Thermal Zone
+acpivga*	at acpi?		# ACPI Display Adapter
+acpiout*	at acpivga?		# ACPI Display Output Device
 acpiwmi*	at acpi?		# ACPI WMI Mapper
 
 # Mainboard devices
@@ -1107,6 +1109,9 @@ options		MEMORY_DISK_DYNAMIC	# loaded via kernel module
 
 pseudo-device	vnd			# disk-like interface to files
 #options 	VND_COMPRESSION		# compressed vnd(4)
+
+# NPF
+#pseudo-device	npf
 
 # network pseudo-devices
 pseudo-device	bpfilter		# Berkeley packet filter

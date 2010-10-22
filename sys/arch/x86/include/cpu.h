@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.20.2.2 2010/08/17 06:45:30 uebayasi Exp $	*/
+/*	$NetBSD: cpu.h,v 1.20.2.3 2010/10/22 07:21:40 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -341,6 +341,7 @@ extern int cpu_class;
 extern char cpu_brand_string[];
 
 extern int i386_use_fxsave;
+extern int i386_use_pae;
 extern int i386_has_sse;
 extern int i386_has_sse2;
 

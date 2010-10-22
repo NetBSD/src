@@ -1,4 +1,4 @@
-.\"	$NetBSD: audio.4,v 1.70 2009/09/29 15:58:54 sborrill Exp $
+.\"	$NetBSD: audio.4,v 1.70.2.1 2010/10/22 07:11:53 uebayasi Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -186,7 +186,7 @@ This command fetches the count of dropped input samples into its integer
 argument.
 There is no information regarding when in the sample stream
 they were dropped.
-.It Dv AUDIO_WSEEK (int)
+.It Dv AUDIO_WSEEK (u_long)
 This command fetches the count of samples that are queued ahead of the
 first sample in the most recent sample block written into its integer argument.
 .It Dv AUDIO_DRAIN

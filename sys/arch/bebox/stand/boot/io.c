@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.6 2008/05/26 16:28:39 kiyohara Exp $	*/
+/*	$NetBSD: io.c,v 1.6.18.1 2010/10/22 07:21:08 uebayasi Exp $	*/
 
 /*-
  * Copyright (C) 1995-1997 Gary Thomas (gdt@linuxppc.org)
@@ -35,11 +35,14 @@
 #include <lib/libsa/stand.h>
 #include "boot.h"
 
+volatile u_char *PCI_mem = (u_char *)0xc0000000;
 volatile u_char *ISA_io  = (u_char *)0x80000000;
-volatile u_char *ISA_mem = (u_char *)0xC0000000;
+volatile u_char *ISA_mem = (u_char *)0xc0000000;
+
+static int dcache_line_size = 32;
 
 void
-outb(int port, char val)
+outb(int port, u_char val)
 {
 
 	ISA_io[port] = val;
@@ -60,9 +63,103 @@ inb(int port)
 	return ISA_io[port];
 }
 
+u_short
+inw(int port)
+{
+
+	return *((volatile uint16_t *)(&ISA_io[port]));
+}
+
+u_short
+inwrb(int port)
+{
+
+	return le16toh(*((volatile uint16_t *)(&ISA_io[port])));
+}
+
+void
+writeb(u_long addr, u_char val)
+{
+
+	PCI_mem[addr] = val;
+}
+
+void
+writel(u_long addr, u_long val)
+{
+
+	*((u_long *)&PCI_mem[addr]) = htole32(val);
+}
+
+u_char
+readb(u_long addr)
+{
+
+	return PCI_mem[addr];
+}
+
+u_short
+readw(u_long addr)
+{
+
+	return le16toh(*((u_short *)&PCI_mem[addr]));
+}
+
+u_long
+readl(u_long addr)
+{
+
+	return le32toh(*((u_long *)&PCI_mem[addr]));
+}
+
 u_long
 local_to_PCI(u_long addr)
 {
 
 	return (addr & 0x7FFFFFFF) | 0x80000000;
+}
+
+void
+_wbinv(uint32_t adr, uint32_t siz)
+{
+	uint32_t bnd;
+
+	asm volatile("eieio");
+	for (bnd = adr + siz; adr < bnd; adr += dcache_line_size)
+		asm volatile ("dcbf 0,%0" :: "r"(adr));
+	asm volatile ("sync");
+}
+
+void
+_inv(uint32_t adr, uint32_t siz)
+{
+	uint32_t bnd, off;
+
+	off = adr & (dcache_line_size - 1);
+	adr -= off;
+	siz += off;
+	asm volatile ("eieio");
+	if (off != 0) {
+		/* wbinv() leading unaligned dcache line */
+		asm volatile ("dcbf 0,%0" :: "r"(adr));
+		if (siz < dcache_line_size)
+			goto done;
+		adr += dcache_line_size;
+		siz -= dcache_line_size;
+	}
+	bnd = adr + siz;
+	off = bnd & (dcache_line_size - 1);
+	if (off != 0) {
+		/* wbinv() trailing unaligned dcache line */
+		asm volatile ("dcbf 0,%0" :: "r"(bnd)); /* it's OK */
+		if (siz < dcache_line_size)
+			goto done;
+		siz -= off;
+	}
+	for (bnd = adr + siz; adr < bnd; adr += dcache_line_size) {
+		/* inv() intermediate dcache lines if ever */
+		asm volatile ("dcbi 0,%0" :: "r"(adr));
+	}
+  done:
+	asm volatile ("sync");
 }

@@ -1,4 +1,4 @@
-.\" $NetBSD: btmagic.4,v 1.1.2.2 2010/08/17 06:41:04 uebayasi Exp $
+.\" $NetBSD: btmagic.4,v 1.1.2.3 2010/10/22 07:11:53 uebayasi Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd May 22, 2010
+.Dd October 11, 2010
 .Dt BTMAGIC 4
 .Os
 .Sh NAME
@@ -44,6 +44,10 @@ driver provides support for the
 .Dq Magic Mouse
 from
 .Tn Apple, Inc .
+As remote devices cannot be discovered by autoconfig, configuring
+a mouse is normally carried out with the
+.Xr btdevctl 8
+program.
 .Pp
 The Magic Mouse uses the standard
 .Tn USB
@@ -65,14 +69,10 @@ along with the pressure needed to discern a firm touch, the minimum
 distance necessary to trigger scrolling and the additional downscale
 factor applied to scroll movements.
 .Pp
-The Magic Mouse should be configured with the
-.Xr btdevctl 8
-program and
 .Nm
 interfaces to the system as usual through the
-.Xr wscons 4
-driver.
-The following properties are used during autoconfiguration:
+.Xr wsmouse 4
+driver, and the following properties are used during autoconfiguration:
 .Bl -tag -width ".It remote-bdaddr"
 .It vendor-id
 Must be 0x05ac.
@@ -96,6 +96,10 @@ When the
 driver has configured, it will attempt to open a connection to the mouse
 and, if this fails or the connection is lost, will wait for the
 mouse to initiate connections.
+The Magic Mouse requires connections to be authenticated, and
+should accept a PIN of
+.Sq 0000
+during the pairing process.
 .Sh SEE ALSO
 .Xr bluetooth 4 ,
 .Xr bthub 4 ,

@@ -1,4 +1,4 @@
-/*	$NetBSD: stdlib.h,v 1.90.2.2 2010/08/17 06:40:01 uebayasi Exp $	*/
+/*	$NetBSD: stdlib.h,v 1.90.2.3 2010/10/22 07:11:52 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -160,7 +160,7 @@ unsigned short *
 	 seed48(unsigned short[3]);
 void	 srand48(long);
 
-int	 putenv(const char *);
+int	 putenv(char *);
 #endif
 
 

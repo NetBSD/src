@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.52.2.2 2010/04/30 14:39:58 uebayasi Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.52.2.3 2010/10/22 07:21:42 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2007 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.52.2.2 2010/04/30 14:39:58 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.52.2.3 2010/10/22 07:21:42 uebayasi Exp $");
 
 /*
  * The following is included because _bus_dma_uiomove is derived from
@@ -944,7 +944,7 @@ _bus_dma_free_bouncebuf(bus_dma_tag_t t, bus_dmamap_t map)
 
 #ifdef DIAGNOSTIC
 	if (cookie == NULL)
-		panic("_bus_dma_alloc_bouncebuf: no cookie");
+		panic("_bus_dma_free_bouncebuf: no cookie");
 #endif
 
 	STAT_DECR(nbouncebufs);

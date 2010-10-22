@@ -1,15 +1,10 @@
-/*	$NetBSD: link_elf.h,v 1.8 2009/11/04 19:28:03 pooka Exp $	*/
-
-/*
- * This only exists for GDB.
- */
+/*	$NetBSD: link_elf.h,v 1.8.2.1 2010/10/22 07:11:52 uebayasi Exp $	*/
 
 #ifndef _LINK_ELF_H_
 #define	_LINK_ELF_H_
 
 #include <sys/types.h>
-
-#include <machine/elf_machdep.h>
+#include <sys/exec_elf.h>
 
 typedef struct link_map {
 	caddr_t		 l_addr;	/* Base Address of library */
@@ -22,6 +17,9 @@ typedef struct link_map {
 	struct link_map *l_prev;
 } Link_map;
 
+/*
+ * This only exists for GDB.
+ */
 struct r_debug {
 	int r_version;			/* not used */
 	struct link_map *r_map;		/* list of loaded images */
@@ -32,5 +30,24 @@ struct r_debug {
 		RT_DELETE		/* removing a shared library */
 	} r_state;
 };
+
+struct dl_phdr_info
+{
+	Elf_Addr dlpi_addr;			/* module relocation base */
+	const char *dlpi_name;			/* module name */
+	const Elf_Phdr *dlpi_phdr;		/* pointer to module's phdr */
+	Elf_Half dlpi_phnum;			/* number of entries in phdr */
+	unsigned long long int dlpi_adds;	/* total # of loads */
+	unsigned long long int dlpi_subs;	/* total # of unloads */
+	size_t dlpi_tls_modid;
+	void *dlpi_tls_data;
+};
+
+__BEGIN_DECLS
+
+int dl_iterate_phdr(int (*)(struct dl_phdr_info *, size_t, void *),
+    void *);
+
+__END_DECLS
 
 #endif	/* _LINK_ELF_H_ */

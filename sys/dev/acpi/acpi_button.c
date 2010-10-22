@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_button.c,v 1.30.2.1 2010/04/30 14:43:05 uebayasi Exp $	*/
+/*	$NetBSD: acpi_button.c,v 1.30.2.2 2010/10/22 07:21:51 uebayasi Exp $	*/
 
 /*
  * Copyright 2001, 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_button.c,v 1.30.2.1 2010/04/30 14:43:05 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_button.c,v 1.30.2.2 2010/10/22 07:21:51 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -183,8 +183,11 @@ acpibut_notify_handler(ACPI_HANDLE handle, uint32_t notify, void *context)
 		(void)AcpiOsExecute(handler, acpibut_pressed_event, dv);
 		break;
 
+	case ACPI_NOTIFY_DEVICE_WAKE:
+		break;
+
 	default:
-		aprint_error_dev(dv, "unknown notify 0x%02X\n", notify);
+		aprint_debug_dev(dv, "unknown notify 0x%02X\n", notify);
 	}
 }
 

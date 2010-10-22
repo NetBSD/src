@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.164.2.1 2010/04/30 14:39:09 uebayasi Exp $	*/
+/*	$NetBSD: machdep.c,v 1.164.2.2 2010/10/22 07:21:04 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.164.2.1 2010/04/30 14:39:09 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.164.2.2 2010/10/22 07:21:04 uebayasi Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -103,6 +103,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.164.2.1 2010/04/30 14:39:09 uebayasi E
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
 #include <sys/ksyms.h>
+#include <sys/module.h>
 #include <sys/intr.h>
 #include <sys/exec.h>
 #include <sys/exec_aout.h>
@@ -876,6 +877,16 @@ cpu_exec_aout_makecmds(struct lwp *l, struct exec_package *epp)
 #endif
 	return error;
 }
+
+#ifdef MODULAR
+/*
+ * Push any modules loaded by the bootloader etc.
+ */
+void
+module_init_md(void)
+{
+}
+#endif
 
 #ifdef _MILANHW_
 

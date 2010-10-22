@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.9 2009/03/18 10:22:27 cegger Exp $	*/
+/*	$NetBSD: fd.c,v 1.9.2.1 2010/10/22 07:21:08 uebayasi Exp $	*/
 
 /*-
  * Copyright (C) 1997-1998 Kazuki Sakamoto (sakamoto@NetBSD.org)
@@ -136,7 +136,6 @@ int	fdsectors[] = {128, 256, 512, 1024, 2048, 4096};
 struct	fd_unit {
 	int	ctlr;
 	int	unit;
-	int	part;
 	u_int	un_flags;		/* unit status flag */
 	int	stat[STATUS_MAX];	/* result code */
 	FDDTYPE	*un_type;		/* floppy type (pointer) */
@@ -164,7 +163,7 @@ FD_UNIT	fd_unit[CTLR_MAX][UNIT_MAX];
  *	function declaration
  */
 int fdinit(FD_UNIT *);
-int fdopen(struct open_file *, int, int, int);
+int fdopen(struct open_file *, int, int);
 int fdclose(struct open_file *);
 int fdioctl(struct open_file *, u_long, void *);
 int fdstrategy(void *, int, daddr_t, size_t, void *, size_t *);
@@ -221,7 +220,7 @@ fdinit(FD_UNIT *un)
  *				   fdopen				     *
  *===========================================================================*/
 int
-fdopen(struct open_file *f, int ctlr, int unit, int part)
+fdopen(struct open_file *f, int ctlr, int unit)
 {
 	FD_UNIT	*un;
 	int *stat;

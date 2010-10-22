@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_types.h,v 1.11.4.1 2010/08/17 06:45:52 uebayasi Exp $ */
+/*	$NetBSD: linux32_types.h,v 1.11.4.2 2010/10/22 07:21:48 uebayasi Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -120,7 +120,7 @@ struct linux32_dirent {
 	linux32_ino_t	d_ino;
 	linux32_off_t	d_off;
 	u_short		d_reclen;
-	char		d_name[LINUX32_MAXNAMLEN + 1];
+	char		d_name[LINUX32_MAXNAMLEN + 2];
 };
 
 #endif /* !_LINUX32_TYPES_H */

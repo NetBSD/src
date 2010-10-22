@@ -1,4 +1,4 @@
-/*      $NetBSD: j720pcic.c,v 1.6 2009/05/29 14:15:45 rjs Exp $        */
+/*      $NetBSD: j720pcic.c,v 1.6.2.1 2010/10/22 07:21:18 uebayasi Exp $        */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 /* Jornada 720 PCMCIA support. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: j720pcic.c,v 1.6 2009/05/29 14:15:45 rjs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: j720pcic.c,v 1.6.2.1 2010/10/22 07:21:18 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -99,9 +99,14 @@ sacpcic_match(device_t parent, cfdata_t cf, void *aux)
 static void
 sacpcic_attach(device_t parent, device_t self, void *aux)
 {
+	struct sacc_softc *psc;
+	struct sacpcic_softc *sc;
 
-	sacpcic_attach_common(device_private(parent),
-	    device_private(self), aux, j720_socket_setup);
+	psc = device_private(parent);
+	sc = device_private(self);
+	sc->sc_pc.sc_dev = self;
+
+	sacpcic_attach_common(psc, sc, aux, j720_socket_setup);
 }
 
 static void

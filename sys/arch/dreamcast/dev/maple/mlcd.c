@@ -1,4 +1,4 @@
-/*	$NetBSD: mlcd.c,v 1.11.16.1 2010/04/30 14:39:14 uebayasi Exp $	*/
+/*	$NetBSD: mlcd.c,v 1.11.16.2 2010/10/22 07:21:12 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mlcd.c,v 1.11.16.1 2010/04/30 14:39:14 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mlcd.c,v 1.11.16.2 2010/10/22 07:21:12 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -43,6 +43,8 @@ __KERNEL_RCSID(0, "$NetBSD: mlcd.c,v 1.11.16.1 2010/04/30 14:39:14 uebayasi Exp 
 
 #include <dreamcast/dev/maple/maple.h>
 #include <dreamcast/dev/maple/mapleconf.h>
+
+#include "ioconf.h"
 
 #define MLCD_MAXACCSIZE	1012	/* (255*4) - 8  =  253*32 / 8 */
 
@@ -91,7 +93,7 @@ struct mlcd_buf {
 #define MLCD_BUF_SZ(sc) (offsetof(struct mlcd_buf, lb_data) + (sc)->sc_bsize)
 
 struct mlcd_softc {
-	struct device	sc_dev;
+	device_t sc_dev;
 
 	device_t sc_parent;
 	struct maple_unit *sc_unit;
@@ -148,7 +150,7 @@ struct mlcd_softc {
 #define MLCD_UNIT(dev)		(minor(dev) >> 8)
 #define MLCD_MINOR(unit, part)	(((unit) << 8) | (part))
 
-static int	mlcdmatch(device_t, struct cfdata *, void *);
+static int	mlcdmatch(device_t, cfdata_t, void *);
 static void	mlcdattach(device_t, device_t, void *);
 static int	mlcddetach(device_t, int);
 static void	mlcd_intr(void *, struct maple_response *, int, int);
@@ -171,10 +173,8 @@ const struct cdevsw mlcd_cdevsw = {
 	nostop, notty, nopoll, nommap, nokqfilter
 };
 
-CFATTACH_DECL(mlcd, sizeof(struct mlcd_softc),
+CFATTACH_DECL_NEW(mlcd, sizeof(struct mlcd_softc),
     mlcdmatch, mlcdattach, mlcddetach, NULL);
-
-extern struct cfdriver mlcd_cd;
 
 /* initial image "NetBSD dreamcast" */
 static const char initimg48x32[192] = {
@@ -198,7 +198,7 @@ static const char initimg48x32[192] = {
 
 /* ARGSUSED */
 static int
-mlcdmatch(device_t parent, struct cfdata *cf, void *aux)
+mlcdmatch(device_t parent, cfdata_t cf, void *aux)
 {
 	struct maple_attach_args *ma = aux;
 
@@ -216,6 +216,7 @@ mlcdattach(device_t parent, device_t self, void *aux)
 		struct mlcd_funcdef s;
 	} funcdef;
 
+	sc->sc_dev = self;
 	sc->sc_parent = parent;
 	sc->sc_unit = ma->ma_unit;
 	sc->sc_direction = ma->ma_basedevinfo->di_connector_direction;
@@ -223,7 +224,7 @@ mlcdattach(device_t parent, device_t self, void *aux)
 	funcdef.v = maple_get_function_data(ma->ma_devinfo, MAPLE_FN_LCD);
 	printf(": LCD display\n");
 	printf("%s: %d LCD, %d bytes/block, ",
-	    sc->sc_dev.dv_xname,
+	    device_xname(self),
 	    sc->sc_npt = funcdef.s.pt + 1,
 	    sc->sc_bsize = (funcdef.s.bb + 1) << 5);
 	if ((sc->sc_wacc = funcdef.s.wa) == 0)
@@ -246,17 +247,17 @@ mlcdattach(device_t parent, device_t self, void *aux)
 		sc->sc_waccsz = sc->sc_bsize / sc->sc_wacc;
 		if (sc->sc_bsize != sc->sc_waccsz * sc->sc_wacc) {
 			printf("%s: write access isn't equally divided\n",
-			    sc->sc_dev.dv_xname);
+			    device_xname(self));
 			sc->sc_wacc = 0;	/* no write */
 		} else if (sc->sc_waccsz > MLCD_MAXACCSIZE) {
 			printf("%s: write access size is too large\n",
-			    sc->sc_dev.dv_xname);
+			    device_xname(self));
 			sc->sc_wacc = 0;	/* no write */
 		}
 	}
 	if (sc->sc_wacc == 0) {
 		printf("%s: device doesn't support write\n",
-		    sc->sc_dev.dv_xname);
+		    device_xname(self));
 		return;
 	}
 
@@ -265,7 +266,7 @@ mlcdattach(device_t parent, device_t self, void *aux)
 	    M_WAITOK|M_ZERO);
 
 	for (i = 0; i < sc->sc_npt; i++) {
-		sprintf(sc->sc_pt[i].pt_name, "%s.%d", sc->sc_dev.dv_xname, i);
+		sprintf(sc->sc_pt[i].pt_name, "%s.%d", device_xname(self), i);
 	}
 
 	maple_set_callback(parent, sc->sc_unit, MAPLE_FN_LCD,
@@ -324,9 +325,9 @@ mlcddetach(device_t self, int flags)
  */
 /* ARGSUSED3 */
 static void
-mlcd_intr(void *dev, struct maple_response *response, int sz, int flags)
+mlcd_intr(void *arg, struct maple_response *response, int sz, int flags)
 {
-	struct mlcd_softc *sc = dev;
+	struct mlcd_softc *sc = arg;
 	struct mlcd_response_media_info *rm = (void *) response->data;
 	struct mlcd_buf *bp;
 	int part;

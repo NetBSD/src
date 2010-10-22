@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.141.2.3 2010/08/17 06:43:52 uebayasi Exp $	*/
+/*	$NetBSD: machdep.c,v 1.141.2.4 2010/10/22 07:20:57 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.141.2.3 2010/08/17 06:43:52 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.141.2.4 2010/10/22 07:20:57 uebayasi Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -359,6 +359,8 @@ cpu_startup(void)
 #if !defined(XEN)
 	ltr(cpu_info_primary.ci_tss_sel);
 #endif /* !defined(XEN) */
+
+	x86_startup();
 }
 
 #ifdef XEN
@@ -697,8 +699,10 @@ haltsys:
         if ((howto & RB_POWERDOWN) == RB_POWERDOWN) {
 #ifndef XEN
 #if NACPICA > 0
-		acpi_enter_sleep_state(acpi_softc, ACPI_STATE_S5);
-		printf("WARNING: powerdown failed!\n");
+		if (acpi_softc != NULL) {
+			acpi_enter_sleep_state(acpi_softc, ACPI_STATE_S5);
+			printf("WARNING: ACPI powerdown failed!\n");
+		}
 #endif
 #else /* XEN */
 		HYPERVISOR_shutdown();
@@ -1628,6 +1632,9 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 		if (error != 0)
 			return error;
 		/*
+		 * save and restore some values we don't want to change.
+		 * _FRAME_GREG(copy_to_tf) below overwrites them.
+		 *
 		 * XXX maybe inline this.
 		 */
 		rflags = tf->tf_rflags;
@@ -1827,24 +1834,22 @@ valid_user_selector(struct lwp *l, uint64_t seg, char *ldtp, int len)
 void
 cpu_fsgs_zero(struct lwp *l)
 {
-	struct trapframe *tf;
+	struct trapframe * const tf = l->l_md.md_regs;
 	struct pcb *pcb;
 	uint64_t zero = 0;
 
 	pcb = lwp_getpcb(l);
 	if (l == curlwp) {
-		tf = l->l_md.md_regs;
 		kpreempt_disable();
 		tf->tf_fs = 0;
 		tf->tf_gs = 0;
-		if (l->l_proc->p_flag & PK_32) {
-			setfs(0);
+		setfs(0);
 #ifndef XEN
-			setusergs(0);
+		setusergs(0);
 #else
-			HYPERVISOR_set_segment_base(SEGBASE_GS_USER_SEL, 0);
+		HYPERVISOR_set_segment_base(SEGBASE_GS_USER_SEL, 0);
 #endif
-		} else {
+		if ((l->l_proc->p_flag & PK_32) == 0) {
 #ifndef XEN
 			wrmsr(MSR_FSBASE, 0);
 			wrmsr(MSR_KERNELGSBASE, 0);
@@ -1859,6 +1864,8 @@ cpu_fsgs_zero(struct lwp *l)
 		update_descriptor(&curcpu()->ci_gdt[GUGS_SEL], &zero);
 		kpreempt_enable();
 	} else {
+		tf->tf_fs = 0;
+		tf->tf_gs = 0;
 		pcb->pcb_fs = 0;
 		pcb->pcb_gs = 0;
 	}

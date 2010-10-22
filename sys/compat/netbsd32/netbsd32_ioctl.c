@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.c,v 1.46.2.1 2010/04/30 14:43:00 uebayasi Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.c,v 1.46.2.2 2010/10/22 07:21:48 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.46.2.1 2010/04/30 14:43:00 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.46.2.2 2010/10/22 07:21:48 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,6 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.46.2.1 2010/04/30 14:43:00 ueba
 #include <sys/syscallargs.h>
 #include <sys/ktrace.h>
 #include <sys/kmem.h>
+#include <sys/envsys.h>
 
 #ifdef __sparc__
 #include <dev/sun/fbio.h>
@@ -70,6 +71,8 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.46.2.1 2010/04/30 14:43:00 ueba
 #include <compat/netbsd32/netbsd32.h>
 #include <compat/netbsd32/netbsd32_ioctl.h>
 #include <compat/netbsd32/netbsd32_syscallargs.h>
+
+#include <dev/vndvar.h>
 
 /* prototypes for the converters */
 static inline void netbsd32_to_partinfo(struct netbsd32_partinfo *,
@@ -216,6 +219,51 @@ netbsd32_to_sioc_sg_req(struct netbsd32_sioc_sg_req *s32p, struct sioc_sg_req *p
 	p->wrong_if = (u_long)s32p->wrong_if;
 }
 
+static inline void
+netbsd32_to_vnd_ioctl(struct netbsd32_vnd_ioctl *s32p, struct vnd_ioctl *p, u_long cmd)
+{
+
+	p->vnd_file = (char *)NETBSD32PTR64(s32p->vnd_file);
+	p->vnd_flags = s32p->vnd_flags;
+	p->vnd_geom = s32p->vnd_geom;
+	p->vnd_osize = s32p->vnd_osize;
+	p->vnd_size = s32p->vnd_size;
+}
+
+static inline void
+netbsd32_to_vnd_user(struct netbsd32_vnd_user *s32p, struct vnd_user *p, u_long cmd)
+{
+
+	p->vnu_unit = s32p->vnu_unit;
+	p->vnu_dev = s32p->vnu_dev;
+	p->vnu_ino = s32p->vnu_ino;
+}
+
+static inline void
+netbsd32_to_vnd_ioctl50(struct netbsd32_vnd_ioctl50 *s32p, struct vnd_ioctl50 *p, u_long cmd)
+{
+
+	p->vnd_file = (char *)NETBSD32PTR64(s32p->vnd_file);
+	p->vnd_flags = s32p->vnd_flags;
+	p->vnd_geom = s32p->vnd_geom;
+	p->vnd_size = s32p->vnd_size;
+}
+
+static inline void
+netbsd32_to_plistref(struct netbsd32_plistref *s32p, struct plistref *p, u_long cmd)
+{
+
+	p->pref_plist = NETBSD32PTR64(s32p->pref_plist);
+	p->pref_len = s32p->pref_len;
+}
+
+static inline void
+netbsd32_to_u_long(netbsd32_u_long *s32p, u_long *p, u_long cmd)
+{
+
+	*p = (u_long)*s32p;
+}
+
 /*
  * handle ioctl conversions from 64-bit kernel -> netbsd32
  */
@@ -324,6 +372,49 @@ netbsd32_from_sioc_sg_req(struct sioc_sg_req *p, struct netbsd32_sioc_sg_req *s3
 	s32p->pktcnt = (netbsd32_u_long)p->pktcnt;
 	s32p->bytecnt = (netbsd32_u_long)p->bytecnt;
 	s32p->wrong_if = (netbsd32_u_long)p->wrong_if;
+}
+
+static inline void
+netbsd32_from_vnd_ioctl(struct vnd_ioctl *p, struct netbsd32_vnd_ioctl *s32p, u_long cmd)
+{
+
+	s32p->vnd_flags = p->vnd_flags;
+	s32p->vnd_geom = p->vnd_geom;
+	s32p->vnd_osize = p->vnd_osize;
+	s32p->vnd_size = p->vnd_size;
+}
+
+static inline void
+netbsd32_from_vnd_user(struct vnd_user *p, struct netbsd32_vnd_user *s32p, u_long cmd)
+{
+
+	s32p->vnu_unit = p->vnu_unit;
+	s32p->vnu_dev = p->vnu_dev;
+	s32p->vnu_ino = p->vnu_ino;
+}
+
+static inline void
+netbsd32_from_vnd_ioctl50(struct vnd_ioctl50 *p, struct netbsd32_vnd_ioctl50 *s32p, u_long cmd)
+{
+
+	s32p->vnd_flags = p->vnd_flags;
+	s32p->vnd_geom = p->vnd_geom;
+	s32p->vnd_size = p->vnd_size;
+}
+
+static inline void
+netbsd32_from_plistref(struct plistref *p, struct netbsd32_plistref *s32p, u_long cmd)
+{
+
+	NETBSD32PTR32(s32p->pref_plist, p->pref_plist);
+	s32p->pref_len = p->pref_len;
+}
+
+static inline void
+netbsd32_from_u_long(u_long *p, netbsd32_u_long *s32p, u_long cmd)
+{
+
+	*s32p = (netbsd32_u_long)*p;
 }
 
 
@@ -455,6 +546,9 @@ printf("netbsd32_ioctl(%d, %x, %x): %s group %c base %d len %d\n",
 		error = (*fp->f_ops->fo_ioctl)(fp, FIOASYNC, (void *)&tmp);
 		break;
 
+	case AUDIO_WSEEK32:
+		IOCTL_CONV_TO(AUDIO_WSEEK, u_long);
+
 	case DIOCGPART32:
 		IOCTL_STRUCT_CONV_TO(DIOCGPART, partinfo);
 #if 0	/* not implemented by anything */
@@ -551,6 +645,28 @@ printf("netbsd32_ioctl(%d, %x, %x): %s group %c base %d len %d\n",
 
 	case SIOCGETSGCNT32:
 		IOCTL_STRUCT_CONV_TO(SIOCGETSGCNT, sioc_sg_req);
+
+	case VNDIOCSET32:
+		IOCTL_STRUCT_CONV_TO(VNDIOCSET, vnd_ioctl);
+
+	case VNDIOCCLR32:
+		IOCTL_STRUCT_CONV_TO(VNDIOCCLR, vnd_ioctl);
+
+	case VNDIOCGET32:
+		IOCTL_STRUCT_CONV_TO(VNDIOCGET, vnd_user);
+
+	case VNDIOCSET5032:
+		IOCTL_STRUCT_CONV_TO(VNDIOCSET50, vnd_ioctl50);
+
+	case VNDIOCCLR5032:
+		IOCTL_STRUCT_CONV_TO(VNDIOCCLR50, vnd_ioctl50);
+
+	case ENVSYS_GETDICTIONARY32:
+		IOCTL_STRUCT_CONV_TO(ENVSYS_GETDICTIONARY, plistref);
+	case ENVSYS_SETDICTIONARY32:
+		IOCTL_STRUCT_CONV_TO(ENVSYS_SETDICTIONARY, plistref);
+	case ENVSYS_REMOVEPROPS32:
+		IOCTL_STRUCT_CONV_TO(ENVSYS_REMOVEPROPS, plistref);
 
 	default:
 #ifdef NETBSD32_MD_IOCTL

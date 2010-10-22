@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.133 2009/07/19 02:37:33 rmind Exp $	*/
+/*	$NetBSD: db_command.c,v 1.133.2.1 2010/10/22 07:21:49 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 1999, 2002, 2009 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.133 2009/07/19 02:37:33 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.133.2.1 2010/10/22 07:21:49 uebayasi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_aio.h"
@@ -133,7 +133,8 @@ static const struct db_command db_command_table[];
 static const struct db_command db_show_cmds[];
 
 #ifdef DB_MACHINE_COMMANDS
-static const struct db_command db_machine_command_table[];
+/* arch/<arch>/<arch>/db_interface.c */
+extern const struct db_command db_machine_command_table[];
 #endif
 
 /* the global queue of all command tables */
@@ -290,11 +291,6 @@ static const struct db_command db_show_cmds[] = {
 #endif
 	{ DDB_ADD_CMD(NULL,		NULL,			0,NULL,NULL,NULL) }
 };
-
-/* arch/<arch>/<arch>/db_interface.c */
-#ifdef DB_MACHINE_COMMANDS
-extern const struct db_command db_machine_command_table[];
-#endif
 
 static const struct db_command db_command_table[] = {
 	{ DDB_ADD_CMD("b",		db_breakpoint_cmd,	0,

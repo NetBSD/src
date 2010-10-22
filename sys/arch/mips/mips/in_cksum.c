@@ -1,4 +1,4 @@
-/* $NetBSD: in_cksum.c,v 1.13 2007/01/24 13:08:11 hubertf Exp $ */
+/* $NetBSD: in_cksum.c,v 1.13.68.1 2010/10/22 07:21:25 uebayasi Exp $ */
 
 /*
  * Copyright (c) 1993 Regents of the University of California.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_cksum.c,v 1.13 2007/01/24 13:08:11 hubertf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_cksum.c,v 1.13.68.1 2010/10/22 07:21:25 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,11 +56,10 @@ __KERNEL_RCSID(0, "$NetBSD: in_cksum.c,v 1.13 2007/01/24 13:08:11 hubertf Exp $"
 #include <machine/endian.h>
 
 union memptr {
-	unsigned int *i;
-	unsigned long *l;
-	unsigned long u;
-	unsigned short *s;
-	unsigned char *c;
+	uint32_t *l;
+	uintptr_t u;
+	uint16_t *s;
+	uint8_t *c;
 };
 
 static inline uint32_t fastsum(union memptr, int, unsigned int, int);
@@ -83,10 +82,6 @@ fastsum(union memptr buf, int n, unsigned int oldsum, int odd_aligned)
 
 	/* Align to 32 bits. */
 	if (buf.u & 0x3) {
-		/* Skip to the end for very small mbufs */
-		if (n < 3)
-			goto verylittleleft;
-
 		/*
 	         * 16-bit-align.
 		 * If buf is odd-byte-aligned, add the byte and toggle
@@ -107,6 +102,9 @@ fastsum(union memptr buf, int n, unsigned int oldsum, int odd_aligned)
 			n -= 1;
 			odd_aligned = !odd_aligned;
 		}
+		/* Skip to the end for very small mbufs */
+		if (n <= 2)
+			goto postunaligned;
 
 		/* 32-bit-align */
 		if (buf.u & 0x2) {
@@ -198,7 +196,7 @@ fastsum(union memptr buf, int n, unsigned int oldsum, int odd_aligned)
 
  notmuchleft:
 	high = hilo = 0;
-	while (n >= 4) {
+	while (n >= sizeof(uint32_t)) {
 		w0 = *(buf.l++);
 		hilo += w0;
 		high += w0 >> 16;
@@ -208,19 +206,21 @@ fastsum(union memptr buf, int n, unsigned int oldsum, int odd_aligned)
 	sum += hilo;
 	sum += high;
 
-	while (n > 1) {
-		n -= sizeof(*buf.s);
+ postunaligned:
+	/* handle post 32bit unaligned payloads */
+	if (n >= sizeof(uint16_t)) {
 		sum += *(buf.s++);
+		n -= sizeof(uint16_t);
 	}
 
- verylittleleft:
-	/* handle trailing byte and short (possibly) unaligned payloads */
-	while (n-- > 0) {
+	/* handle a trailing odd byte */
+	if (n > 0) {
 #if BYTE_ORDER == BIG_ENDIAN
 		sum += *(buf.c++) << 8;
 #else
 		sum += *(buf.c++);
 #endif
+		n = 0;
 	}
 
 	/*
