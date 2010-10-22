@@ -1,4 +1,4 @@
-/*	$NetBSD: grabmyaddr.c,v 1.25 2010/10/21 06:15:28 tteras Exp $	*/
+/*	$NetBSD: grabmyaddr.c,v 1.26 2010/10/22 06:26:26 tteras Exp $	*/
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * Copyright (C) 2008 Timo Teras <timo.teras@iki.fi>.
@@ -358,65 +358,121 @@ netlink_enumerate(fd, family, type)
 		      (struct sockaddr *) &addr, sizeof(addr)) >= 0;
 }
 
+static void
+netlink_add_del_address(int add, struct sockaddr *saddr)
+{
+	plog(LLV_DEBUG, LOCATION, NULL,
+	     "Netlink: address %s %s\n",
+	     saddrwop2str((struct sockaddr *) saddr),
+	     add ? "added" : "deleted");
+
+	if (add)
+		myaddr_open_all_configured(saddr);
+	else
+		myaddr_close_all_open(saddr);
+}
+
+#ifdef INET6
 static int
-netlink_process(struct nlmsghdr *h)
+netlink_process_addr(struct nlmsghdr *h)
 {
 	struct sockaddr_storage addr;
 	struct ifaddrmsg *ifa;
 	struct rtattr *rta[IFA_MAX+1];
-	struct sockaddr_in *sin;
-#ifdef INET6
 	struct sockaddr_in6 *sin6;
-#endif
-
-	/* is this message interesting? */
-	if (h->nlmsg_type != RTM_NEWADDR &&
-	    h->nlmsg_type != RTM_DELADDR)
-		return 0;
 
 	ifa = NLMSG_DATA(h);
 	parse_rtattr(rta, IFA_MAX, IFA_RTA(ifa), IFA_PAYLOAD(h));
 
+	if (ifa->ifa_family != AF_INET6)
+		return 0;
 	if (ifa->ifa_flags & IFA_F_TENTATIVE)
 		return 0;
-
 	if (rta[IFA_LOCAL] == NULL)
 		rta[IFA_LOCAL] = rta[IFA_ADDRESS];
 	if (rta[IFA_LOCAL] == NULL)
 		return 0;
 
-	/* setup the socket address */
 	memset(&addr, 0, sizeof(addr));
 	addr.ss_family = ifa->ifa_family;
-	switch (ifa->ifa_family) {
+	sin6 = (struct sockaddr_in6 *) &addr;
+	memcpy(&sin6->sin6_addr, RTA_DATA(rta[IFA_LOCAL]),
+		sizeof(sin6->sin6_addr));
+	if (!IN6_IS_ADDR_LINKLOCAL(&sin6->sin6_addr))
+		return 0;
+	sin6->sin6_scope_id = ifa->ifa_index;
+
+	netlink_add_del_address(h->nlmsg_type == RTM_NEWADDR,
+				(struct sockaddr *) &addr);
+
+	return 0;
+}
+#endif
+
+static int
+netlink_process_route(struct nlmsghdr *h)
+{
+	struct sockaddr_storage addr;
+	struct rtmsg *rtm;
+	struct rtattr *rta[RTA_MAX+1];
+	struct sockaddr_in *sin;
+#ifdef INET6
+	struct sockaddr_in6 *sin6;
+#endif
+
+	rtm = NLMSG_DATA(h);
+
+	/* local IP addresses get local route in the local table */
+	if (rtm->rtm_type != RTN_LOCAL ||
+	    rtm->rtm_table != RT_TABLE_LOCAL)
+		return 0;
+
+	parse_rtattr(rta, IFA_MAX, RTM_RTA(rtm), IFA_PAYLOAD(h));
+	if (rta[RTA_DST] == NULL)
+ 		return 0;
+
+	/* setup the socket address */
+	memset(&addr, 0, sizeof(addr));
+	addr.ss_family = rtm->rtm_family;
+	switch (rtm->rtm_family) {
 	case AF_INET:
 		sin = (struct sockaddr_in *) &addr;
-		memcpy(&sin->sin_addr, RTA_DATA(rta[IFA_LOCAL]),
+		memcpy(&sin->sin_addr, RTA_DATA(rta[RTA_DST]),
 			sizeof(sin->sin_addr));
 		break;
 #ifdef INET6
 	case AF_INET6:
 		sin6 = (struct sockaddr_in6 *) &addr;
-		memcpy(&sin6->sin6_addr, RTA_DATA(rta[IFA_LOCAL]),
+		memcpy(&sin6->sin6_addr, RTA_DATA(rta[RTA_DST]),
 			sizeof(sin6->sin6_addr));
+		/* Link-local addresses are handled with RTM_NEWADDR
+		 * notifications */
 		if (IN6_IS_ADDR_LINKLOCAL(&sin6->sin6_addr))
-			sin6->sin6_scope_id = ifa->ifa_index;
+			return 0;
 		break;
 #endif
 	default:
 		return 0;
 	}
 
-	plog(LLV_DEBUG, LOCATION, NULL,
-	     "Netlink: address %s %s\n",
-	     saddrwop2str((struct sockaddr *) &addr),
-	     h->nlmsg_type == RTM_NEWADDR ? "added" : "deleted");
+	netlink_add_del_address(h->nlmsg_type == RTM_NEWROUTE,
+				(struct sockaddr *) &addr);
+	return 0;
+}
 
-	if (h->nlmsg_type == RTM_NEWADDR)
-		myaddr_open_all_configured((struct sockaddr *) &addr);
-	else
-		myaddr_close_all_open((struct sockaddr *) &addr);
-
+static int
+netlink_process(struct nlmsghdr *h)
+{
+	switch (h->nlmsg_type) {
+#ifdef INET6
+	case RTM_NEWADDR:
+	case RTM_DELADDR:
+		return netlink_process_addr(h);
+#endif
+	case RTM_NEWROUTE:
+	case RTM_DELROUTE:
+		return netlink_process_route(h);
+	}
 	return 0;
 }
 
@@ -479,9 +535,26 @@ kernel_open_socket()
 		plog(LLV_WARNING, LOCATION, NULL,
 		     "failed to put socket in non-blocking mode\n");
 
+	/* We monitor IPv4 addresses using RTMGRP_IPV4_ROUTE group
+	 * the get the RTN_LOCAL routes which are automatically added
+	 * by kernel. This is because:
+	 *  - Linux kernel has a bug that calling bind() immediately
+	 *    after IPv4 RTM_NEWADDR event can fail
+	 *  - if IP is configured in multiple interfaces, we get
+	 *    RTM_DELADDR for each of them. RTN_LOCAL gets deleted only
+	 *    after the last IP address is deconfigured.
+	 * The latter reason is also why I chose to use route
+	 * notifications for IPv6. However, we do need to use RTM_NEWADDR
+	 * for the link-local IPv6 addresses to get the interface index
+	 * that is needed in bind().
+	 */
 	memset(&nl, 0, sizeof(nl));
 	nl.nl_family = AF_NETLINK;
-	nl.nl_groups = RTMGRP_IPV4_IFADDR | RTMGRP_IPV6_IFADDR;
+	nl.nl_groups = RTMGRP_IPV4_ROUTE 
+#ifdef INET6
+			| RTMGRP_IPV6_IFADDR | RTMGRP_IPV6_ROUTE
+#endif
+			;
 	if (bind(fd, (struct sockaddr*) &nl, sizeof(nl)) < 0) {
 		plog(LLV_ERROR, LOCATION, NULL,
 		     "bind(PF_NETLINK) failed: %s\n",
@@ -498,15 +571,21 @@ kernel_sync()
 	int fd = lcconf->rtsock;
 
 	/* refresh addresses */
-	if (!netlink_enumerate(fd, PF_UNSPEC, RTM_GETADDR)) {
+	if (!netlink_enumerate(fd, PF_UNSPEC, RTM_GETROUTE)) {
 		plog(LLV_ERROR, LOCATION, NULL,
 		     "unable to enumerate addresses: %s\n",
 		     strerror(errno));
-		return;
 	}
-
-	/* receive replies */
 	while (kernel_receive(NULL, fd) == TRUE);
+
+#ifdef INET6
+	if (!netlink_enumerate(fd, PF_INET6, RTM_GETADDR)) {
+		plog(LLV_ERROR, LOCATION, NULL,
+		     "unable to enumerate addresses: %s\n",
+		     strerror(errno));
+	}
+	while (kernel_receive(NULL, fd) == TRUE);
+#endif
 }
 
 #elif defined(USE_ROUTE)
