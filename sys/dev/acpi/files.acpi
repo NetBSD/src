@@ -1,10 +1,11 @@
-#	$NetBSD: files.acpi,v 1.66.2.2 2010/08/17 06:46:02 uebayasi Exp $
+#	$NetBSD: files.acpi,v 1.66.2.3 2010/10/22 07:21:53 uebayasi Exp $
 
 include "dev/acpi/acpica/files.acpica"
 
 defflag	opt_acpi.h	ACPIVERBOSE ACPI_DEBUG ACPI_ACTIVATE_DEV
 			ACPI_DSDT_OVERRIDE ACPI_SCANPCI ACPI_BREAKPOINT
 defparam opt_acpi.h	ACPI_DSDT_FILE := "\"/dev/null\""
+defparam opt_acpi.h	ACPI_BLACKLIST_YEAR = 2000
 
 define	acpiapmbus { }
 define	acpinodebus { }
@@ -64,6 +65,13 @@ file	dev/acpi/acpi_cpu.c		acpicpu
 file	dev/acpi/acpi_cpu_cstate.c	acpicpu
 file	dev/acpi/acpi_cpu_pstate.c	acpicpu
 file	dev/acpi/acpi_cpu_tstate.c	acpicpu
+
+# ACPI Display
+device	acpivga {}
+attach	acpivga at acpinodebus
+device	acpiout
+attach	acpiout at acpivga
+file	dev/acpi/acpi_display.c		acpivga|acpiout
 
 # ACPI Thermal Zone
 device	acpitz: sysmon_envsys

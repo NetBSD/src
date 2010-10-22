@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.169.2.2 2010/08/17 06:47:34 uebayasi Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.169.2.3 2010/10/22 07:22:32 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.169.2.2 2010/08/17 06:47:34 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.169.2.3 2010/10/22 07:22:32 uebayasi Exp $");
 
 #include "veriexec.h"
 
@@ -139,6 +139,9 @@ vn_open(struct nameidata *ndp, int fmode, int cmode)
 	struct vattr va;
 	int error;
 	char *path;
+
+	if ((fmode & (O_CREAT | O_DIRECTORY)) == (O_CREAT | O_DIRECTORY))
+		return EINVAL;
 
 	ndp->ni_cnd.cn_flags &= TRYEMULROOT | NOCHROOT;
 
@@ -215,9 +218,6 @@ vn_open(struct nameidata *ndp, int fmode, int cmode)
 	}
 
 	if (fmode & O_TRUNC) {
-		VOP_UNLOCK(vp);			/* XXX */
-
-		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);	/* XXX */
 		vattr_null(&va);
 		va.va_size = 0;
 		error = VOP_SETATTR(vp, &va, cred);
@@ -262,6 +262,9 @@ vn_openchk(struct vnode *vp, kauth_cred_t cred, int fflags)
 {
 	int permbits = 0;
 	int error;
+
+	if ((fflags & O_DIRECTORY) != 0 && vp->v_type != VDIR)
+		return ENOTDIR;
 
 	if ((fflags & FREAD) != 0) {
 		permbits = VREAD;

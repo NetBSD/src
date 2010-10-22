@@ -1,4 +1,4 @@
-/*	$NetBSD: fwdev.c,v 1.17.2.2 2010/08/17 06:46:13 uebayasi Exp $	*/
+/*	$NetBSD: fwdev.c,v 1.17.2.3 2010/10/22 07:22:00 uebayasi Exp $	*/
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
  * Copyright (c) 1998-2002 Katsushi Kobayashi and Hidetoshi Shimokawa
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwdev.c,v 1.17.2.2 2010/08/17 06:46:13 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwdev.c,v 1.17.2.3 2010/10/22 07:22:00 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -803,12 +803,18 @@ fw_read_async(struct fw_drv1 *d, struct uio *uio, int ioflag)
 	int err = 0;
 
 	mutex_enter(&d->fc->fc_mtx);
-	while ((xfer = STAILQ_FIRST(&d->rq)) == NULL && err == 0)
-		err = tsleep(&d->rq, FWPRI, "fwra", 0);
 
-	if (err != 0) {
-		mutex_exit(&d->fc->fc_mtx);
-		return err;
+	for (;;) {
+		xfer = STAILQ_FIRST(&d->rq);
+		if (xfer == NULL && err == 0) {
+			mutex_exit(&d->fc->fc_mtx);
+			err = tsleep(&d->rq, FWPRI, "fwra", 0);
+			if (err != 0)
+				return err;
+			mutex_enter(&d->fc->fc_mtx);
+			continue;
+		}
+		break;
 	}
 
 	STAILQ_REMOVE_HEAD(&d->rq, link);

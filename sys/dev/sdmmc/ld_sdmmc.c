@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_sdmmc.c,v 1.4 2009/11/28 10:00:24 nonaka Exp $	*/
+/*	$NetBSD: ld_sdmmc.c,v 1.4.2.1 2010/10/22 07:22:15 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_sdmmc.c,v 1.4 2009/11/28 10:00:24 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_sdmmc.c,v 1.4.2.1 2010/10/22 07:22:15 uebayasi Exp $");
 
 #include "rnd.h"
 
@@ -115,7 +115,7 @@ ld_sdmmc_attach(device_t parent, device_t self, void *aux)
 
 	ld->sc_dv = self;
 
-	aprint_normal("\n");
+	aprint_normal(": <%s>\n", sa->sf->cid.pnm);
 	aprint_naive("\n");
 
 	callout_init(&sc->sc_task.task_callout, CALLOUT_MPSAFE);
@@ -146,8 +146,16 @@ ld_sdmmc_doattach(void *arg)
 {
 	struct ld_sdmmc_softc *sc = (struct ld_sdmmc_softc *)arg;
 	struct ld_softc *ld = &sc->sc_ld;
+	struct sdmmc_softc *ssc = device_private(device_parent(ld->sc_dv));
 
 	ldattach(ld);
+	aprint_normal_dev(ld->sc_dv, "%d-bit width, bus clock",
+	    sc->sc_sf->width);
+	if ((ssc->sc_busclk / 1000) != 0)
+		aprint_normal(" %u.%03u MHz\n",
+		    ssc->sc_busclk / 1000, ssc->sc_busclk % 1000);
+	else
+		aprint_normal(" %u KHz\n", ssc->sc_busclk % 1000);
 	kthread_exit(0);
 }
 

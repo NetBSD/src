@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bootdhcp.c,v 1.51 2009/07/10 12:16:31 roy Exp $	*/
+/*	$NetBSD: nfs_bootdhcp.c,v 1.51.2.1 2010/10/22 07:22:43 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bootdhcp.c,v 1.51 2009/07/10 12:16:31 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bootdhcp.c,v 1.51.2.1 2010/10/22 07:22:43 uebayasi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs_boot.h"
@@ -176,6 +176,8 @@ static const u_int8_t vm_rfc1048[4] = { 99, 130, 83, 99 };
 #define TAG_DOMAIN_NAME		((unsigned char)  15)
 #define TAG_SWAP_SERVER		((unsigned char)  16)
 #define TAG_ROOT_PATH		((unsigned char)  17)
+/* RFC 2132 */
+#define TAG_INTERFACE_MTU	((unsigned char)  26)
 /* End of stuff from bootp.h */
 
 #ifdef NFS_BOOT_DHCP
@@ -202,6 +204,8 @@ static const u_int8_t vm_rfc1048[4] = { 99, 130, 83, 99 };
 #define DHCPNAK 6
 #define DHCPRELEASE 7
 #endif
+
+#define IP_MIN_MTU 576
 
 #ifdef NFS_BOOT_DHCP
 #define BOOTP_SIZE_MAX	(sizeof(struct bootp)+312-64)
@@ -453,13 +457,14 @@ bootp_addvend(u_char *area)
 	int vcilen;
 	
 	*area++ = TAG_PARAM_REQ;
-	*area++ = 6;
+	*area++ = 7;
 	*area++ = TAG_SUBNET_MASK;
 	*area++ = TAG_GATEWAY;
 	*area++ = TAG_HOST_NAME;
 	*area++ = TAG_DOMAIN_NAME;
 	*area++ = TAG_ROOT_PATH;
 	*area++ = TAG_SWAP_SERVER;
+	*area++ = TAG_INTERFACE_MTU;
 
 	/* Insert a NetBSD Vendor Class Identifier option. */
 	snprintf(vci, sizeof(vci), "%s:%s:kernel:%s", ostype, MACHINE,
@@ -699,6 +704,7 @@ bootp_extract(struct bootp *bootp, int replylen,
 	char *myname;	/* my hostname */
 	char *mydomain;	/* my domainname */
 	char *rootpath;
+	uint16_t myinterfacemtu;
 	int mynamelen;
 	int mydomainlen;
 	int rootpathlen;
@@ -716,6 +722,8 @@ bootp_extract(struct bootp *bootp, int replylen,
 	rootserver = bootp->bp_siaddr;
 	/* assume that server name field is not overloaded by default */
 	overloaded = 0;
+	/* MTU can't be less than IP_MIN_MTU, set to 0 to indicate unset */
+	myinterfacemtu = 0;
 
 	p = &bootp->bp_vend[4];
 	limit = ((u_char*)bootp) + replylen;
@@ -776,6 +784,15 @@ bootp_extract(struct bootp *bootp, int replylen,
 			rootpath = p;
 			rootpathlen = len;
 			break;
+		    case TAG_INTERFACE_MTU:
+			if (len != 2) {
+				printf("nfs_boot: interface-mtu len != 2 (%d)",
+					len);
+				break;
+			}
+			memcpy(&myinterfacemtu, p, 2);
+			myinterfacemtu = ntohs(myinterfacemtu);
+			break;
 		    case TAG_SWAP_SERVER:
 			/* override NFS server address */
 			if (len < 4) {
@@ -830,6 +847,10 @@ bootp_extract(struct bootp *bootp, int replylen,
 		nd->nd_gwip = gateway;
 		printf("nfs_boot: gateway=%s\n", inet_ntoa(nd->nd_gwip));
 		*flags |= NFS_BOOT_HAS_GWIP;
+	}
+	if (myinterfacemtu >= IP_MIN_MTU) {
+		nd->nd_mtu = myinterfacemtu;
+		printf("nfs_boot: mtu=%d\n", nd->nd_mtu);
 	}
 
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: umidi.c,v 1.40 2009/11/12 19:58:27 dyoung Exp $	*/
+/*	$NetBSD: umidi.c,v 1.40.2.1 2010/10/22 07:22:19 uebayasi Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.40 2009/11/12 19:58:27 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.40.2.1 2010/10/22 07:22:19 uebayasi Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1301,7 +1301,7 @@ describe_mididev(struct umidi_mididev *md)
 		    md->out_jack->cable_number,
 		    md->out_jack->endpoint->addr);
 	else
-		in_label[0] = '\0';
+		out_label[0] = '\0';
 
 	unit_label = USBDEVNAME(sc->sc_dev);
 	

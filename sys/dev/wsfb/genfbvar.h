@@ -1,4 +1,4 @@
-/*	$NetBSD: genfbvar.h,v 1.12.2.1 2010/04/30 14:43:55 uebayasi Exp $ */
+/*	$NetBSD: genfbvar.h,v 1.12.2.2 2010/10/22 07:22:22 uebayasi Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfbvar.h,v 1.12.2.1 2010/04/30 14:43:55 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfbvar.h,v 1.12.2.2 2010/10/22 07:22:22 uebayasi Exp $");
 
 #ifndef GENFBVAR_H
 #define GENFBVAR_H
@@ -46,6 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: genfbvar.h,v 1.12.2.1 2010/04/30 14:43:55 uebayasi E
 #include <dev/rasops/rasops.h>
 
 #include <dev/wscons/wsdisplay_vconsvar.h>
+#include "opt_genfb.h"
 
 #ifdef SPLASHSCREEN
 #define GENFB_DISABLE_TEXT
@@ -65,13 +66,19 @@ struct genfb_colormap_callback {
 	void (*gcc_set_mapreg)(void *, int, int, int, int);
 };
 
+struct genfb_parameter_callback{
+	void *gpc_cookie;
+	void (*gpc_set_parameter)(void *, int);
+	int (*gpc_get_parameter)(void *);
+};
+
 struct genfb_pmf_callback {
 	bool (*gpc_suspend)(device_t, const pmf_qual_t *);
 	bool (*gpc_resume)(device_t, const pmf_qual_t *);
 };
 
 struct genfb_softc {
-	struct	device sc_dev;
+	device_t sc_dev;
 	struct vcons_data vd;
 	struct genfb_ops sc_ops;
 	struct vcons_screen sc_console_screen;
@@ -80,8 +87,12 @@ struct genfb_softc {
 	struct wsscreen_list sc_screenlist;
 	struct genfb_colormap_callback *sc_cmcb;
 	struct genfb_pmf_callback *sc_pmfcb;
+	struct genfb_parameter_callback *sc_backlight;
+	int sc_backlight_level, sc_backlight_on;
 	void *sc_fbaddr;	/* kva */
-	void *sc_shadowfb; 
+#ifdef GENFB_SHADOWFB
+	void *sc_shadowfb;
+#endif
 	bus_addr_t sc_fboffset;	/* bus address */
 	int sc_width, sc_height, sc_stride, sc_depth;
 	size_t sc_fbsize;

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.153.2.55 2010/08/27 09:40:52 uebayasi Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.153.2.56 2010/10/22 07:22:57 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.153.2.55 2010/08/27 09:40:52 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.153.2.56 2010/10/22 07:22:57 uebayasi Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -209,37 +209,39 @@ static void uvm_physseg_remove(struct vm_physseg **, struct vm_physseg *);
  */
 
 static signed int
-uvm_page_compare_nodes(const struct rb_node *n1, const struct rb_node *n2)
+uvm_page_compare_nodes(void *ctx, const void *n1, const void *n2)
 {
-	const struct vm_page *pg1 = (const void *)n1;
-	const struct vm_page *pg2 = (const void *)n2;
+	const struct vm_page *pg1 = n1;
+	const struct vm_page *pg2 = n2;
 	const voff_t a = pg1->offset;
 	const voff_t b = pg2->offset;
 
 	if (a < b)
-		return 1;
-	if (a > b)
 		return -1;
+	if (a > b)
+		return 1;
 	return 0;
 }
 
 static signed int
-uvm_page_compare_key(const struct rb_node *n, const void *key)
+uvm_page_compare_key(void *ctx, const void *n, const void *key)
 {
-	const struct vm_page *pg = (const void *)n;
+	const struct vm_page *pg = n;
 	const voff_t a = pg->offset;
 	const voff_t b = *(const voff_t *)key;
 
 	if (a < b)
-		return 1;
-	if (a > b)
 		return -1;
+	if (a > b)
+		return 1;
 	return 0;
 }
 
-const struct rb_tree_ops uvm_page_tree_ops = {
+const rb_tree_ops_t uvm_page_tree_ops = {
 	.rbto_compare_nodes = uvm_page_compare_nodes,
 	.rbto_compare_key = uvm_page_compare_key,
+	.rbto_node_offset = offsetof(struct vm_page, rb_node),
+	.rbto_context = NULL
 };
 
 /*
@@ -293,11 +295,11 @@ uvm_pageinsert_list(struct uvm_object *uobj, struct vm_page *pg,
 static inline void
 uvm_pageinsert_tree(struct uvm_object *uobj, struct vm_page *pg)
 {
-	bool success;
+	struct vm_page *ret;
 
 	KASSERT(uobj == pg->uobject);
-	success = rb_tree_insert_node(&uobj->rb_tree, &pg->rb_node);
-	KASSERT(success);
+	ret = rb_tree_insert_node(&uobj->rb_tree, pg);
+	KASSERT(ret == pg);
 }
 
 static inline void
@@ -351,7 +353,7 @@ uvm_pageremove_tree(struct uvm_object *uobj, struct vm_page *pg)
 {
 
 	KASSERT(uobj == pg->uobject);
-	rb_tree_remove_node(&uobj->rb_tree, &pg->rb_node);
+	rb_tree_remove_node(&uobj->rb_tree, pg);
 }
 
 static inline void
@@ -2056,12 +2058,12 @@ uvm_pagelookup(struct uvm_object *obj, voff_t off)
 
 	KASSERT(mutex_owned(&obj->vmobjlock));
 
-	pg = (struct vm_page *)rb_tree_find_node(&obj->rb_tree, &off);
+	pg = rb_tree_find_node(&obj->rb_tree, &off);
 
 	KASSERT(pg == NULL || obj->uo_npages != 0);
 	KASSERT(pg == NULL || (pg->flags & (PG_RELEASED|PG_PAGEOUT)) == 0 ||
 		(pg->flags & PG_BUSY) != 0);
-	return(pg);
+	return pg;
 }
 
 /*

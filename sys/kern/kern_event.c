@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.69.2.1 2010/08/17 06:47:26 uebayasi Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.69.2.2 2010/10/22 07:22:26 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.69.2.1 2010/08/17 06:47:26 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.69.2.2 2010/10/22 07:22:26 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1460,9 +1460,9 @@ kqueue_kqfilter(file_t *fp, struct knote *kn)
 void
 knote(struct klist *list, long hint)
 {
-	struct knote *kn;
+	struct knote *kn, *tmpkn;
 
-	SLIST_FOREACH(kn, list, kn_selnext) {
+	SLIST_FOREACH_SAFE(kn, list, kn_selnext, tmpkn) {
 		if ((*kn->kn_fop->f_event)(kn, hint))
 			knote_activate(kn);
 	}

@@ -1,4 +1,4 @@
-#	$NetBSD: files.sysmon,v 1.11.2.1 2010/08/17 06:46:40 uebayasi Exp $
+#	$NetBSD: files.sysmon,v 1.11.2.2 2010/10/22 07:22:17 uebayasi Exp $
 
 define	sysmon_taskq
 file	dev/sysmon/sysmon_taskq.c	sysmon_taskq 		needs-flag
@@ -19,4 +19,7 @@ file	dev/sysmon/sysmon.c		sysmon_envsys | sysmon_wdog |
 					sysmon_power
 
 defpseudodev swwdog: sysmon_wdog
-file    dev/sysmon/swwdog.c            swwdog
+file	dev/sysmon/swwdog.c		swwdog
+
+defpseudo swsensor:			sysmon_envsys
+file	dev/sysmon/swsensor.c		swsensor

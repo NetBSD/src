@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_module.c,v 1.10.2.1 2010/04/30 14:44:12 uebayasi Exp $	*/
+/*	$NetBSD: sys_module.c,v 1.10.2.2 2010/10/22 07:22:28 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_module.c,v 1.10.2.1 2010/04/30 14:44:12 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_module.c,v 1.10.2.2 2010/10/22 07:22:28 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -144,11 +144,11 @@ sys_modctl(struct lwp *l, const struct sys_modctl_args *uap,
 		if (error != 0) {
 			break;
 		}
-		mutex_enter(&module_lock);
+		kernconfig_lock();
 		mslen = (module_count+module_builtinlist+1) * sizeof(modstat_t);
 		mso = kmem_zalloc(mslen, KM_SLEEP);
 		if (mso == NULL) {
-			mutex_exit(&module_lock);
+			kernconfig_unlock();
 			return ENOMEM;
 		}
 		ms = mso;
@@ -187,7 +187,7 @@ sys_modctl(struct lwp *l, const struct sys_modctl_args *uap,
 			ms->ms_source = mod->mod_source;
 			ms++;
 		}
-		mutex_exit(&module_lock);
+		kernconfig_unlock();
 		error = copyout(mso, iov.iov_base,
 		    min(mslen - sizeof(modstat_t), iov.iov_len));
 		kmem_free(mso, mslen);

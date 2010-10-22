@@ -1,4 +1,4 @@
-/*	$NetBSD: umodem_common.c,v 1.17.2.1 2010/08/17 06:46:46 uebayasi Exp $	*/
+/*	$NetBSD: umodem_common.c,v 1.17.2.2 2010/10/22 07:22:19 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umodem_common.c,v 1.17.2.1 2010/08/17 06:46:46 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umodem_common.c,v 1.17.2.2 2010/10/22 07:22:19 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -218,6 +218,7 @@ umodem_common_attach(device_ptr_t self, struct umodem_softc *sc,
 	sc->sc_ctl_notify = -1;
 	sc->sc_notify_pipe = NULL;
 
+	id = usbd_get_interface_descriptor(sc->sc_ctl_iface);
 	for (i = 0; i < id->bNumEndpoints; i++) {
 		ed = usbd_interface2endpoint_descriptor(sc->sc_ctl_iface, i);
 		if (ed == NULL)
@@ -316,6 +317,8 @@ umodem_intr(usbd_xfer_handle xfer, usbd_private_handle priv,
 			return;
 		printf("%s: abnormal status: %s\n", USBDEVNAME(sc->sc_dev),
 		       usbd_errstr(status));
+		if (status == USBD_STALLED)
+			usbd_clear_endpoint_stall_async(sc->sc_notify_pipe);
 		return;
 	}
 
@@ -369,13 +372,18 @@ umodem_get_caps(usbd_device_handle dev, int *cm, int *acm,
 	const usb_cdc_cm_descriptor_t *cmd;
 	const usb_cdc_acm_descriptor_t *cad;
 	const usb_cdc_union_descriptor_t *cud;
+	u_int32_t uq_flags;
 
 	*cm = *acm = 0;
+	uq_flags = usbd_get_quirks(dev)->uq_flags;
 
-	if (usbd_get_quirks(dev)->uq_flags & UQ_NO_UNION_NRM) {
+	if (uq_flags & UQ_NO_UNION_NRM) {
 		DPRINTF(("umodem_get_caps: NO_UNION_NRM quirk - returning 0\n"));
 		return 0;
 	}
+
+	if (uq_flags & UQ_LOST_CS_DESC)
+		id = NULL;
 
 	cmd = (const usb_cdc_cm_descriptor_t *)usb_find_desc_if(dev,
 							  UDESC_CS_INTERFACE,

@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.100.2.1 2010/04/30 14:44:32 uebayasi Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.100.2.2 2010/10/22 07:22:54 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -46,14 +46,6 @@
 #include <inttypes.h>
 #endif /* _KERNEL || _STANDALONE */
 
-#if defined(ELFSIZE)
-#define	CONCAT(x,y)	__CONCAT(x,y)
-#define	ELFNAME(x)	CONCAT(elf,CONCAT(ELFSIZE,CONCAT(_,x)))
-#define	ELFNAME2(x,y)	CONCAT(x,CONCAT(_elf,CONCAT(ELFSIZE,CONCAT(_,y))))
-#define	ELFNAMEEND(x)	CONCAT(x,CONCAT(_elf,ELFSIZE))
-#define	ELFDEFNNAME(x)	CONCAT(ELF,CONCAT(ELFSIZE,CONCAT(_,x)))
-#endif
-
 #if HAVE_NBTOOL_CONFIG_H
 #include <nbinclude/machine/elf_machdep.h>
 #else
@@ -84,14 +76,10 @@ typedef	int64_t		Elf64_SOff;
 typedef	int32_t		Elf64_Shalf;
 #define	ELF64_FSZ_SHALF	4
 
-#ifndef ELF64_FSZ_SWORD
 typedef	int32_t		Elf64_Sword;
 #define	ELF64_FSZ_SWORD	4
-#endif /* ELF64_FSZ_SWORD */
-#ifndef ELF64_FSZ_WORD
 typedef	uint32_t	Elf64_Word;
 #define	ELF64_FSZ_WORD	4
-#endif /* ELF64_FSZ_WORD */
 
 typedef	int64_t		Elf64_Sxword;
 #define	ELF64_FSZ_SXWORD 8
@@ -99,10 +87,8 @@ typedef	uint64_t	Elf64_Xword;
 #define	ELF64_FSZ_XWORD	8
 typedef	uint64_t	Elf64_Lword;
 #define	ELF64_FSZ_LWORD	8
-typedef	uint32_t	Elf64_Half;
-#define	ELF64_FSZ_HALF	4
-typedef	uint16_t	Elf64_Quarter;
-#define	ELF64_FSZ_QUARTER 2
+typedef	uint16_t	Elf64_Half;
+#define	ELF64_FSZ_HALF 2
 
 /*
  * ELF Header
@@ -128,19 +114,19 @@ typedef struct {
 
 typedef struct {
 	unsigned char	e_ident[ELF_NIDENT];	/* Id bytes */
-	Elf64_Quarter	e_type;			/* file type */
-	Elf64_Quarter	e_machine;		/* machine type */
-	Elf64_Half	e_version;		/* version number */
+	Elf64_Half	e_type;			/* file type */
+	Elf64_Half	e_machine;		/* machine type */
+	Elf64_Word	e_version;		/* version number */
 	Elf64_Addr	e_entry;		/* entry point */
 	Elf64_Off	e_phoff;		/* Program hdr offset */
 	Elf64_Off	e_shoff;		/* Section hdr offset */
-	Elf64_Half	e_flags;		/* Processor flags */
-	Elf64_Quarter	e_ehsize;		/* sizeof ehdr */
-	Elf64_Quarter	e_phentsize;		/* Program header entry size */
-	Elf64_Quarter	e_phnum;		/* Number of program headers */
-	Elf64_Quarter	e_shentsize;		/* Section header entry size */
-	Elf64_Quarter	e_shnum;		/* Number of section headers */
-	Elf64_Quarter	e_shstrndx;		/* String table index */
+	Elf64_Word	e_flags;		/* Processor flags */
+	Elf64_Half	e_ehsize;		/* sizeof ehdr */
+	Elf64_Half	e_phentsize;		/* Program header entry size */
+	Elf64_Half	e_phnum;		/* Number of program headers */
+	Elf64_Half	e_shentsize;		/* Section header entry size */
+	Elf64_Half	e_shnum;		/* Number of section headers */
+	Elf64_Half	e_shstrndx;		/* String table index */
 } Elf64_Ehdr;
 
 /* e_ident offsets */
@@ -336,8 +322,8 @@ typedef struct {
 } Elf32_Phdr;
 
 typedef struct {
-	Elf64_Half	p_type;		/* entry type */
-	Elf64_Half	p_flags;	/* flags */
+	Elf64_Word	p_type;		/* entry type */
+	Elf64_Word	p_flags;	/* flags */
 	Elf64_Off	p_offset;	/* offset */
 	Elf64_Addr	p_vaddr;	/* virtual address */
 	Elf64_Addr	p_paddr;	/* physical address */
@@ -354,7 +340,8 @@ typedef struct {
 #define	PT_NOTE		4		/* Auxiliary information */
 #define	PT_SHLIB	5		/* Reserved, unspecified semantics */
 #define	PT_PHDR		6		/* Entry for header table itself */
-#define	PT_NUM		7
+#define	PT_TLS		7		/* TLS initialisation image */
+#define	PT_NUM		8
 
 #define	PT_LOOS         0x60000000	/* OS-specific range */
 #define	PT_HIOS         0x6fffffff
@@ -391,14 +378,14 @@ typedef struct {
 } Elf32_Shdr;
 
 typedef struct {
-	Elf64_Half	sh_name;	/* section name (.shstrtab index) */
-	Elf64_Half	sh_type;	/* section type */
+	Elf64_Word	sh_name;	/* section name (.shstrtab index) */
+	Elf64_Word	sh_type;	/* section type */
 	Elf64_Xword	sh_flags;	/* section flags */
 	Elf64_Addr	sh_addr;	/* virtual address */
 	Elf64_Off	sh_offset;	/* file offset */
 	Elf64_Xword	sh_size;	/* section size */
-	Elf64_Half	sh_link;	/* link to another */
-	Elf64_Half	sh_info;	/* misc info */
+	Elf64_Word	sh_link;	/* link to another */
+	Elf64_Word	sh_info;	/* misc info */
 	Elf64_Xword	sh_addralign;	/* memory alignment */
 	Elf64_Xword	sh_entsize;	/* table entry size */
 } Elf64_Shdr;
@@ -460,10 +447,10 @@ typedef struct {
 } Elf32_Sym;
 
 typedef struct {
-	Elf64_Half	st_name;	/* Symbol name (.strtab index) */
+	Elf64_Word	st_name;	/* Symbol name (.strtab index) */
 	Elf_Byte	st_info;	/* type / binding attrs */
 	Elf_Byte	st_other;	/* unused */
-	Elf64_Quarter	st_shndx;	/* section index of symbol */
+	Elf64_Half	st_shndx;	/* section index of symbol */
 	Elf64_Addr	st_value;	/* value of symbol */
 	Elf64_Xword	st_size;	/* size of symbol */
 } Elf64_Sym;
@@ -590,8 +577,8 @@ typedef struct {
 	Elf64_Lword	m_value;	/* symbol value */
 	Elf64_Xword	m_info;		/* size + index */
 	Elf64_Xword	m_poffset;	/* symbol offset */
-	Elf64_Half	m_repeat;	/* repeat count */
-	Elf64_Half	m_stride;	/* stride info */
+	Elf64_Word	m_repeat;	/* repeat count */
+	Elf64_Word	m_stride;	/* stride info */
 } Elf64_Move;
 
 #define	ELF64_M_SYM(info)	((info) >> 8)
@@ -691,7 +678,7 @@ typedef struct {
 } Aux32Info;
 
 typedef struct {
-	Elf64_Half	a_type;				/* 32-bit id */
+	Elf64_Word	a_type;				/* 32-bit id */
 	Elf64_Xword	a_v;				/* 64-bit id */
 } Aux64Info;
 
@@ -745,9 +732,9 @@ typedef struct {
 } Elf32_Nhdr;
 
 typedef struct {
-	Elf64_Half n_namesz;
-	Elf64_Half n_descsz;
-	Elf64_Half n_type;
+	Elf64_Word n_namesz;
+	Elf64_Word n_descsz;
+	Elf64_Word n_type;
 } Elf64_Nhdr;
 
 #define	ELF_NOTE_TYPE_ABI_TAG		1
@@ -847,6 +834,18 @@ struct netbsd_elfcore_procinfo {
 	int32_t		cpi_siglwp;	/* LWP target of killing signal */
 };
 
+#if !defined(ELFSIZE) && defined(ARCH_ELFSIZE)
+#define	ELFSIZE	ARCH_ELFSIZE
+#endif
+
+#if defined(ELFSIZE)
+#define	CONCAT(x,y)	__CONCAT(x,y)
+#define	ELFNAME(x)	CONCAT(elf,CONCAT(ELFSIZE,CONCAT(_,x)))
+#define	ELFNAME2(x,y)	CONCAT(x,CONCAT(_elf,CONCAT(ELFSIZE,CONCAT(_,y))))
+#define	ELFNAMEEND(x)	CONCAT(x,CONCAT(_elf,ELFSIZE))
+#define	ELFDEFNNAME(x)	CONCAT(ELF,CONCAT(ELFSIZE,CONCAT(_,x)))
+#endif
+
 #if defined(ELFSIZE) && (ELFSIZE == 32)
 #define	Elf_Ehdr	Elf32_Ehdr
 #define	Elf_Phdr	Elf32_Phdr
@@ -857,6 +856,7 @@ struct netbsd_elfcore_procinfo {
 #define	Elf_Dyn		Elf32_Dyn
 #define	Elf_Word	Elf32_Word
 #define	Elf_Sword	Elf32_Sword
+#define	Elf_Half	Elf32_Half
 #define	Elf_Addr	Elf32_Addr
 #define	Elf_Off		Elf32_Off
 #define	Elf_SOff	Elf32_SOff
@@ -877,6 +877,7 @@ struct netbsd_elfcore_procinfo {
 #define	Elf_Dyn		Elf64_Dyn
 #define	Elf_Word	Elf64_Word
 #define	Elf_Sword	Elf64_Sword
+#define	Elf_Half	Elf64_Half
 #define	Elf_Addr	Elf64_Addr
 #define	Elf_Off		Elf64_Off
 #define	Elf_SOff	Elf64_SOff
@@ -887,6 +888,10 @@ struct netbsd_elfcore_procinfo {
 #define	ELFCLASS	ELFCLASS64
 
 #define	AuxInfo		Aux64Info
+#endif
+
+#ifndef	Elf_Symindx
+#define	Elf_Symindx	uint32_t
 #endif
 
 #define	ELF32_ST_BIND(info)		ELF_ST_BIND(info)
@@ -905,8 +910,8 @@ typedef struct {
 } Elf32_Syminfo;
 
 typedef struct {
-	Elf64_Half	si_boundto;	/* direct bindings - symbol bound to */
-	Elf64_Half	si_flags;	/* per symbol flags */
+	Elf64_Word	si_boundto;	/* direct bindings - symbol bound to */
+	Elf64_Word	si_flags;	/* per symbol flags */
 } Elf64_Syminfo;
 
 #define	SYMINFO_FLG_DIRECT	0x0001	/* symbol ref has direct association

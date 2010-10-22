@@ -1,4 +1,4 @@
-/*      $NetBSD: ip6_etherip.c,v 1.12.2.1 2010/04/30 14:44:21 uebayasi Exp $        */
+/*      $NetBSD: ip6_etherip.c,v 1.12.2.2 2010/10/22 07:22:41 uebayasi Exp $        */
 
 /*
  *  Copyright (c) 2006, Hans Rosenfeld <rosenfeld@grumpf.hope-2000.org>
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_etherip.c,v 1.12.2.1 2010/04/30 14:44:21 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_etherip.c,v 1.12.2.2 2010/10/22 07:22:41 uebayasi Exp $");
 
 #include "opt_inet.h"
 
@@ -188,19 +188,15 @@ ip6_etherip_output(struct ifnet *ifp, struct mbuf *m)
 }
 
 int
-ip6_etherip_input(struct mbuf *m, ...)
+ip6_etherip_input(struct mbuf **mp, int *offp, int proto)
 {
+	struct mbuf *m = *mp;
+	int off = *offp;
 	struct etherip_softc *sc;
 	const struct ip6_hdr *ip6;
 	struct sockaddr_in6 *src6, *dst6;
 	struct ifnet *ifp = NULL;
-	int off, proto, s;
-	va_list ap;
-
-	va_start(ap, m);
-	off = va_arg(ap, int);
-	proto = va_arg(ap, int);
-	va_end(ap);
+	int s;
 
 	if (proto != IPPROTO_ETHERIP) {
 		m_freem(m);

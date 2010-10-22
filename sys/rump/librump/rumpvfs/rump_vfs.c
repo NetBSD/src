@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_vfs.c,v 1.42.2.2 2010/08/17 06:48:03 uebayasi Exp $	*/
+/*	$NetBSD: rump_vfs.c,v 1.42.2.3 2010/10/22 07:22:51 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump_vfs.c,v 1.42.2.2 2010/08/17 06:48:03 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump_vfs.c,v 1.42.2.3 2010/10/22 07:22:51 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -58,8 +58,6 @@ __KERNEL_RCSID(0, "$NetBSD: rump_vfs.c,v 1.42.2.2 2010/08/17 06:48:03 uebayasi E
 
 struct cwdinfo cwdi0;
 const char *rootfstype = ROOT_FSTYPE_ANY;
-
-static void rump_rcvp_lwpset(struct vnode *, struct vnode *, struct lwp *);
 
 static void
 pvfs_init(struct proc *p)
@@ -100,6 +98,13 @@ rump_vfs_init(void)
 		struct cpu_info *ci = cpu_lookup(i);
 		cache_cpu_init(ci);
 	}
+
+	/* make number of bufpages 5% of total memory limit */
+	if (rump_physmemlimit != RUMPMEM_UNLIMITED) {
+		extern u_int bufpages;
+		bufpages = rump_physmemlimit / (20 * PAGE_SIZE);
+	}
+
 	vfsinit();
 	bufinit();
 	cwd_sys_init();
@@ -485,43 +490,11 @@ rump_biodone(void *arg, size_t count, int error)
 	biodone(bp);
 }
 
-static void
-rump_rcvp_lwpset(struct vnode *rvp, struct vnode *cvp, struct lwp *l)
-{
-	struct cwdinfo *cwdi = l->l_proc->p_cwdi;
-
-	KASSERT(cvp);
-
-	rw_enter(&cwdi->cwdi_lock, RW_WRITER);
-	if (cwdi->cwdi_rdir)
-		vrele(cwdi->cwdi_rdir);
-	if (rvp)
-		vref(rvp);
-	cwdi->cwdi_rdir = rvp;
-
-	vrele(cwdi->cwdi_cdir);
-	vref(cvp);
-	cwdi->cwdi_cdir = cvp;
-	rw_exit(&cwdi->cwdi_lock);
-}
-
 void
-rump_rcvp_set(struct vnode *rvp, struct vnode *cvp)
+rump_vfs_drainbufs(int npages)
 {
 
-	rump_rcvp_lwpset(rvp, cvp, curlwp);
-}
-
-struct vnode *
-rump_cdir_get(void)
-{
-	struct vnode *vp;
-	struct cwdinfo *cwdi = curlwp->l_proc->p_cwdi;
-
-	rw_enter(&cwdi->cwdi_lock, RW_READER);
-	vp = cwdi->cwdi_cdir;
-	rw_exit(&cwdi->cwdi_lock);
-	vref(vp);
-
-	return vp;
+	mutex_enter(&bufcache_lock);
+	buf_drain(npages);
+	mutex_exit(&bufcache_lock);
 }

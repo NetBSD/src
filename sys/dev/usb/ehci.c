@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.165.2.2 2010/08/17 06:46:42 uebayasi Exp $ */
+/*	$NetBSD: ehci.c,v 1.165.2.3 2010/10/22 07:22:17 uebayasi Exp $ */
 
 /*
  * Copyright (c) 2004-2008 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.165.2.2 2010/08/17 06:46:42 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.165.2.3 2010/10/22 07:22:17 uebayasi Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -392,6 +392,8 @@ ehci_init(ehci_softc_t *sc)
 		aprint_error("%s: reset timeout\n", device_xname(sc->sc_dev));
 		return (USBD_IOERROR);
 	}
+	if (sc->sc_vendor_init)
+		sc->sc_vendor_init(sc);
 
 	/* XXX need proper intr scheduling */
 	sc->sc_rand = 96;
@@ -2254,6 +2256,8 @@ ehci_root_ctrl_start(usbd_xfer_handle xfer)
 		if (v & EHCI_PS_OCA)	i |= UPS_OVERCURRENT_INDICATOR;
 		if (v & EHCI_PS_PR)	i |= UPS_RESET;
 		if (v & EHCI_PS_PP)	i |= UPS_PORT_POWER;
+		if (sc->sc_vendor_port_status)
+			i = sc->sc_vendor_port_status(sc, v, i);
 		USETW(ps.wPortStatus, i);
 		i = 0;
 		if (v & EHCI_PS_CSC)	i |= UPS_C_CONNECT_STATUS;
@@ -2289,7 +2293,7 @@ ehci_root_ctrl_start(usbd_xfer_handle xfer)
 		case UHF_PORT_RESET:
 			DPRINTFN(5,("ehci_root_ctrl_start: reset port %d\n",
 				    index));
-			if (EHCI_PS_IS_LOWSPEED(v)) {
+			if (EHCI_PS_IS_LOWSPEED(v) && sc->sc_ncomp > 0) {
 				/* Low speed device, give up ownership. */
 				ehci_disown(sc, index, 1);
 				break;
@@ -2304,7 +2308,8 @@ ehci_root_ctrl_start(usbd_xfer_handle xfer)
 				goto ret;
 			}
 			/* Terminate reset sequence. */
-			EOWRITE4(sc, port, v);
+			v = EOREAD4(sc, port);
+			EOWRITE4(sc, port, v & ~EHCI_PS_PR);
 			/* Wait for HC to complete reset. */
 			usb_delay_ms(&sc->sc_bus, EHCI_PORT_RESET_COMPLETE);
 			if (sc->sc_dying) {

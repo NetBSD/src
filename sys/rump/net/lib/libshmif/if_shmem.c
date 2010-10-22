@@ -1,4 +1,4 @@
-/*	$NetBSD: if_shmem.c,v 1.10.2.1 2010/08/17 06:48:05 uebayasi Exp $	*/
+/*	$NetBSD: if_shmem.c,v 1.10.2.2 2010/10/22 07:22:53 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.10.2.1 2010/08/17 06:48:05 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.10.2.2 2010/10/22 07:22:53 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -51,6 +51,16 @@ __KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.10.2.1 2010/08/17 06:48:05 uebayasi E
 #include "rump_net_private.h"
 
 /*
+ * Do r/w prefault for backend pages when attaching the interface.
+ * This works aroud the most likely kernel/ffs/x86pmap bug described
+ * in http://mail-index.netbsd.org/tech-kern/2010/08/17/msg008749.html
+ *
+ * NOTE: read prefaulting is not enough (that's done always)!
+ */
+
+#define PREFAULT_RW
+
+/*
  * A virtual ethernet interface which uses shared memory from a
  * memory mapped file as the bus.
  */
@@ -69,8 +79,8 @@ struct shmif_sc {
 	int sc_memfd;
 	int sc_kq;
 
+	uint64_t sc_devgen;
 	uint32_t sc_nextpacket;
-	uint32_t sc_prevgen;
 };
 
 static const uint32_t busversion = SHMIF_VERSION;
@@ -127,6 +137,8 @@ rump_shmif_create(const char *path, int *ifnum)
 	uint8_t enaddr[ETHER_ADDR_LEN] = { 0xb2, 0xa0, 0x00, 0x00, 0x00, 0x00 };
 	uint32_t randnum;
 	unsigned mynum;
+	volatile uint8_t v;
+	volatile uint8_t *p;
 	int error;
 
 	randnum = arc4random();
@@ -149,6 +161,13 @@ rump_shmif_create(const char *path, int *ifnum)
 	if (sc->sc_busmem->shm_magic && sc->sc_busmem->shm_magic != SHMIF_MAGIC)
 		panic("bus is not magical");
 
+
+	/* Prefault in pages to minimize runtime penalty with buslock */
+	for (p = (uint8_t *)sc->sc_busmem;
+	    p < (uint8_t *)sc->sc_busmem + BUSMEM_SIZE;
+	    p += PAGE_SIZE)
+		v = *p;
+
 	shmif_lockbus(sc->sc_busmem);
 	/* we're first?  initialize bus */
 	if (sc->sc_busmem->shm_magic == 0) {
@@ -157,7 +176,16 @@ rump_shmif_create(const char *path, int *ifnum)
 	}
 
 	sc->sc_nextpacket = sc->sc_busmem->shm_last;
-	sc->sc_prevgen = sc->sc_busmem->shm_gen;
+	sc->sc_devgen = sc->sc_busmem->shm_gen;
+
+#ifdef PREFAULT_RW
+	for (p = (uint8_t *)sc->sc_busmem;
+	    p < (uint8_t *)sc->sc_busmem + BUSMEM_SIZE;
+	    p += PAGE_SIZE) {
+		v = *p;
+		*p = v;
+	}
+#endif
 	shmif_unlockbus(sc->sc_busmem);
 
 	sc->sc_kq = rumpuser_writewatchfile_setup(-1, sc->sc_memfd, 0, &error);
@@ -171,7 +199,7 @@ rump_shmif_create(const char *path, int *ifnum)
 	ifp->if_ioctl = shmif_ioctl;
 	ifp->if_start = shmif_start;
 	ifp->if_stop = shmif_stop;
-	ifp->if_mtu = 1518;
+	ifp->if_mtu = ETHERMTU;
 
 	if_attach(ifp);
 	ether_ifattach(ifp, enaddr);
@@ -223,12 +251,15 @@ static void
 shmif_start(struct ifnet *ifp)
 {
 	struct shmif_sc *sc = ifp->if_softc;
+	struct shmif_mem *busmem = sc->sc_busmem;
 	struct mbuf *m, *m0;
-	uint32_t lastoff, dataoff, npktlenoff;
-	uint32_t pktsize;
+	uint32_t dataoff;
+	uint32_t pktsize, pktwrote;
 	bool wrote = false;
 	bool wrap;
 	int error;
+
+	ifp->if_flags |= IFF_OACTIVE;
 
 	for (;;) {
 		struct shmif_pkthdr sp;
@@ -243,36 +274,42 @@ shmif_start(struct ifnet *ifp)
 		for (m = m0; m != NULL; m = m->m_next) {
 			pktsize += m->m_len;
 		}
+		KASSERT(pktsize <= ETHERMTU + ETHER_HDR_LEN);
 
 		getmicrouptime(&tv);
-
 		sp.sp_len = pktsize;
 		sp.sp_sec = tv.tv_sec;
 		sp.sp_usec = tv.tv_usec;
 
-		shmif_lockbus(sc->sc_busmem);
-		lastoff = sc->sc_busmem->shm_last;
-		npktlenoff = shmif_nextpktoff(sc->sc_busmem, lastoff);
+		shmif_lockbus(busmem);
+		KASSERT(busmem->shm_magic == SHMIF_MAGIC);
+		busmem->shm_last = shmif_nextpktoff(busmem, busmem->shm_last);
 
 		wrap = false;
-		dataoff = shmif_buswrite(sc->sc_busmem,
-		    npktlenoff, &sp, sizeof(sp), &wrap);
+		dataoff = shmif_buswrite(busmem,
+		    busmem->shm_last, &sp, sizeof(sp), &wrap);
+		pktwrote = 0;
 		for (m = m0; m != NULL; m = m->m_next) {
-			dataoff = shmif_buswrite(sc->sc_busmem, dataoff,
+			pktwrote += m->m_len;
+			dataoff = shmif_buswrite(busmem, dataoff,
 			    mtod(m, void *), m->m_len, &wrap);
 		}
-
-		if (wrap)
-			sc->sc_busmem->shm_gen++;
-		sc->sc_busmem->shm_last = npktlenoff;
-		shmif_unlockbus(sc->sc_busmem);
+		KASSERT(pktwrote == pktsize);
+		if (wrap) {
+			busmem->shm_gen++;
+			DPRINTF(("bus generation now %d\n", busmem->shm_gen));
+		}
+		shmif_unlockbus(busmem);
 
 		m_freem(m0);
 		wrote = true;
 
 		DPRINTF(("shmif_start: send %d bytes at off %d\n",
-		    pktsize, npktlenoff));
+		    pktsize, busmem->shm_last));
 	}
+
+	ifp->if_flags &= ~IFF_OACTIVE;
+
 	/* wakeup */
 	if (wrote)
 		rumpuser_pwrite(sc->sc_memfd,
@@ -286,14 +323,53 @@ shmif_stop(struct ifnet *ifp, int disable)
 	panic("%s: unimpl", __func__);
 }
 
+
+/*
+ * Check if we have been sleeping too long.  Basically,
+ * our in-sc nextpkt must by first <= nextpkt <= last"+1".
+ * We use the fact that first is guaranteed to never overlap
+ * with the last frame in the ring.
+ */
+static __inline bool
+stillvalid_p(struct shmif_sc *sc)
+{
+	struct shmif_mem *busmem = sc->sc_busmem;
+	unsigned gendiff = busmem->shm_gen - sc->sc_devgen;
+	uint32_t lastoff, devoff;
+
+	KASSERT(busmem->shm_first != busmem->shm_last);
+
+	/* normalize onto a 2x busmem chunk */
+	devoff = sc->sc_nextpacket;
+	lastoff = shmif_nextpktoff(busmem, busmem->shm_last);
+
+	/* trivial case */
+	if (gendiff > 1)
+		return false;
+	KASSERT(gendiff <= 1);
+
+	/* Normalize onto 2x busmem chunk */
+	if (busmem->shm_first >= lastoff) {
+		lastoff += BUSMEM_DATASIZE;
+		if (gendiff == 0)
+			devoff += BUSMEM_DATASIZE;
+	} else {
+		if (gendiff)
+			return false;
+	}
+
+	return devoff >= busmem->shm_first && devoff <= lastoff;
+}
+
 static void
 shmif_rcv(void *arg)
 {
 	struct ifnet *ifp = arg;
 	struct shmif_sc *sc = ifp->if_softc;
+	struct shmif_mem *busmem = sc->sc_busmem;
 	struct mbuf *m = NULL;
 	struct ether_header *eth;
-	uint32_t nextpkt, lastpkt, busgen, lastnext;
+	uint32_t nextpkt;
 	bool wrap;
 	int error;
 
@@ -305,26 +381,18 @@ shmif_rcv(void *arg)
 			MCLGET(m, M_WAIT);
 		}
 
-		DPRINTF(("waiting %d/%d\n", sc->sc_nextpacket, sc->sc_prevgen));
-
+		DPRINTF(("waiting %d/%d\n", sc->sc_nextpacket, sc->sc_devgen));
 		KASSERT(m->m_flags & M_EXT);
-		shmif_lockbus(sc->sc_busmem);
-		lastpkt = sc->sc_busmem->shm_last;
-		busgen = sc->sc_busmem->shm_gen;
-		lastnext = shmif_nextpktoff(sc->sc_busmem, lastpkt);
-		if ((lastnext > sc->sc_nextpacket && busgen > sc->sc_prevgen)
-		    || (busgen > sc->sc_prevgen+1)) {
-			nextpkt = lastpkt;
-			sc->sc_prevgen = busgen;
-			rumpuser_dprintf("shmif_rcv: generation overrun, "
-			    "skipping invalid packets\n");
-		} else {
-			nextpkt = sc->sc_nextpacket;
-		}
+
+		shmif_lockbus(busmem);
+		KASSERT(busmem->shm_magic == SHMIF_MAGIC);
+		KASSERT(busmem->shm_gen >= sc->sc_devgen);
 
 		/* need more data? */
-		if (lastnext == nextpkt && sc->sc_prevgen == busgen){
-			shmif_unlockbus(sc->sc_busmem);
+		if (sc->sc_devgen == busmem->shm_gen && 
+		    shmif_nextpktoff(busmem, busmem->shm_last)
+		     == sc->sc_nextpacket) {
+			shmif_unlockbus(busmem);
 			error = 0;
 			rumpuser_writewatchfile_wait(sc->sc_kq, NULL, &error);
 			if (__predict_false(error))
@@ -332,21 +400,44 @@ shmif_rcv(void *arg)
 			continue;
 		}
 
+		if (stillvalid_p(sc)) {
+			nextpkt = sc->sc_nextpacket;
+		} else {
+			KASSERT(busmem->shm_gen > 0);
+			nextpkt = busmem->shm_first;
+			if (busmem->shm_first > busmem->shm_last)
+				sc->sc_devgen = busmem->shm_gen - 1;
+			else
+				sc->sc_devgen = busmem->shm_gen;
+			DPRINTF(("dev %p overrun, new data: %d/%d\n",
+			    sc, nextpkt, sc->sc_devgen));
+		}
+
+		/*
+		 * If our read pointer is ahead the bus last write, our
+		 * generation must be one behind.
+		 */
+		KASSERT(!(nextpkt > busmem->shm_last
+		    && sc->sc_devgen == busmem->shm_gen));
+
 		wrap = false;
-		shmif_busread(sc->sc_busmem,
-		    &sp, nextpkt, sizeof(sp), &wrap);
-		KASSERT(sp.sp_len <= MCLBYTES);
-		shmif_busread(sc->sc_busmem, mtod(m, void *),
-		    shmif_advance(nextpkt, sizeof(sp)), sp.sp_len, &wrap);
-		if (wrap)
-			sc->sc_prevgen = sc->sc_busmem->shm_gen;
+		nextpkt = shmif_busread(busmem, &sp,
+		    nextpkt, sizeof(sp), &wrap);
+		KASSERT(sp.sp_len <= ETHERMTU + ETHER_HDR_LEN);
+		nextpkt = shmif_busread(busmem, mtod(m, void *),
+		    nextpkt, sp.sp_len, &wrap);
 
 		DPRINTF(("shmif_rcv: read packet of length %d at %d\n",
 		    sp.sp_len, nextpkt));
 
-		sc->sc_nextpacket = shmif_nextpktoff(sc->sc_busmem, nextpkt);
-		sc->sc_prevgen = busgen;
+		sc->sc_nextpacket = nextpkt;
 		shmif_unlockbus(sc->sc_busmem);
+
+		if (wrap) {
+			sc->sc_devgen++;
+			DPRINTF(("dev %p generation now %d\n",
+			    sc, sc->sc_devgen));
+		}
 
 		m->m_len = m->m_pkthdr.len = sp.sp_len;
 		m->m_pkthdr.rcvif = ifp;

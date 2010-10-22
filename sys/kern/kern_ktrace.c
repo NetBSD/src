@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.150.2.2 2010/08/17 06:47:27 uebayasi Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.150.2.3 2010/10/22 07:22:26 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.150.2.2 2010/08/17 06:47:27 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.150.2.3 2010/10/22 07:22:26 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -524,7 +524,6 @@ ktealloc(struct ktrace_entry **ktep, void **bufp, lwp_t *l, int type,
 	struct proc *p = l->l_proc;
 	struct ktrace_entry *kte;
 	struct ktr_header *kth;
-	struct timespec ts;
 	void *buf;
 
 	if (ktrenter(l))
@@ -550,27 +549,8 @@ ktealloc(struct ktrace_entry **ktep, void **bufp, lwp_t *l, int type,
 	kth->ktr_pid = p->p_pid;
 	memcpy(kth->ktr_comm, p->p_comm, MAXCOMLEN);
 	kth->ktr_version = KTRFAC_VERSION(p->p_traceflag);
-
-        nanotime(&ts);
-        switch (KTRFAC_VERSION(p->p_traceflag)) {
-        case 0:
-                /* This is the original format */
-                kth->ktr_otv.tv_sec = ts.tv_sec;
-                kth->ktr_otv.tv_usec = ts.tv_nsec / 1000;
-                break;
-        case 1: 
-		kth->ktr_olid = l->l_lid;
-                kth->ktr_ots.tv_sec = ts.tv_sec;
-                kth->ktr_ots.tv_nsec = ts.tv_nsec;       
-                break; 
-        case 2:
-		kth->ktr_lid = l->l_lid;
-                kth->ktr_ts.tv_sec = ts.tv_sec;
-                kth->ktr_ts.tv_nsec = ts.tv_nsec;       
-                break; 
-        default:
-                break; 
-        }
+	kth->ktr_lid = l->l_lid;
+	nanotime(&kth->ktr_ts);
 
 	*ktep = kte;
 	*bufp = buf;
@@ -861,13 +841,11 @@ ktr_csw(int out, int user)
 	 * from that is difficult to do. 
 	 */
 	if (out) {
-		struct timespec ts;
 		if (ktrenter(l))
 			return;
 
 		nanotime(&l->l_ktrcsw);
 		l->l_pflag |= LP_KTRCSW;
-		nanotime(&ts);
 		if (user)
 			l->l_pflag |= LP_KTRCSWUSER;
 		else

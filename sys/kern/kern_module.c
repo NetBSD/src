@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.57.2.2 2010/08/17 06:47:27 uebayasi Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.57.2.3 2010/10/22 07:22:26 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.57.2.2 2010/08/17 06:47:27 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.57.2.3 2010/10/22 07:22:26 uebayasi Exp $");
 
 #define _MODULE_INTERNAL
 
@@ -51,7 +51,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.57.2.2 2010/08/17 06:47:27 uebayas
 #include <sys/kobj.h>
 #include <sys/kmem.h>
 #include <sys/module.h>
-#include <sys/kauth.h>
 #include <sys/kthread.h>
 #include <sys/sysctl.h>
 #include <sys/lock.h>
@@ -72,7 +71,6 @@ static int	module_verbose_on;
 static int	module_autoload_on = 1;
 u_int		module_count;
 u_int		module_builtinlist;
-kmutex_t	module_lock;
 u_int		module_autotime = 10;
 u_int		module_gen = 1;
 static kcondvar_t module_thread_cv;
@@ -223,7 +221,7 @@ module_builtin_add(modinfo_t *const *mip, size_t nmodinfo, bool init)
 		modp[i] = module_newmodule(MODULE_SOURCE_KERNEL);
 		modp[i]->mod_info = mip[i+mipskip];
 	}
-	mutex_enter(&module_lock);
+	kernconfig_lock();
 
 	/* do this in three stages for error recovery and atomicity */
 
@@ -263,7 +261,7 @@ module_builtin_add(modinfo_t *const *mip, size_t nmodinfo, bool init)
 	}
 
  out:
-	mutex_exit(&module_lock);
+	kernconfig_unlock();
 	if (rv != 0) {
 		for (i = 0; i < nmodinfo; i++) {
 			if (modp[i])
@@ -291,13 +289,13 @@ module_builtin_remove(modinfo_t *mi, bool fini)
 		if (rv)
 			return rv;
 
-		mutex_enter(&module_lock);
+		kernconfig_lock();
 		rv = module_do_unload(mi->mi_name, true);
 		if (rv) {
 			goto out;
 		}
 	} else {
-		mutex_enter(&module_lock);
+		kernconfig_lock();
 	}
 	TAILQ_FOREACH(mod, &module_builtins, mod_chain) {
 		if (strcmp(mod->mod_info->mi_name, mi->mi_name) == 0)
@@ -312,7 +310,7 @@ module_builtin_remove(modinfo_t *mi, bool fini)
 	}
 
  out:
-	mutex_exit(&module_lock);
+	kernconfig_unlock();
 	return rv;
 }
 
@@ -332,7 +330,6 @@ module_init(void)
 	if (module_map == NULL) {
 		module_map = kernel_map;
 	}
-	mutex_init(&module_lock, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&module_thread_cv, "mod_unld");
 	mutex_init(&module_thread_lock, MUTEX_DEFAULT, IPL_NONE);
 
@@ -388,11 +385,11 @@ module_builtin_require_force(void)
 {
 	module_t *mod;
 
-	mutex_enter(&module_lock);
+	kernconfig_lock();
 	TAILQ_FOREACH(mod, &module_builtins, mod_chain) {
 		module_require_force(mod);
 	}
-	mutex_exit(&module_lock);
+	kernconfig_unlock();
 }
 
 static struct sysctllog *module_sysctllog;
@@ -444,7 +441,7 @@ module_init_class(modclass_t class)
 	module_t *mod;
 	modinfo_t *mi;
 
-	mutex_enter(&module_lock);
+	kernconfig_lock();
 	/*
 	 * Builtins first.  These will not depend on pre-loaded modules
 	 * (because the kernel would not link).
@@ -493,7 +490,7 @@ module_init_class(modclass_t class)
 		TAILQ_INSERT_TAIL(&module_builtins, mod, mod_chain);
 	}
 
-	mutex_exit(&module_lock);
+	kernconfig_unlock();
 }
 
 /*
@@ -534,10 +531,10 @@ module_load(const char *filename, int flags, prop_dictionary_t props,
 		return error;
 	}
 
-	mutex_enter(&module_lock);
+	kernconfig_lock();
 	error = module_do_load(filename, false, flags, props, NULL, class,
 	    false);
-	mutex_exit(&module_lock);
+	kernconfig_unlock();
 
 	return error;
 }
@@ -552,27 +549,31 @@ module_autoload(const char *filename, modclass_t class)
 {
 	int error;
 
-	KASSERT(mutex_owned(&module_lock));
+	kernconfig_lock();
 
 	/* Nothing if the user has disabled it. */
 	if (!module_autoload_on) {
+		kernconfig_unlock();
 		return EPERM;
 	}
 
         /* Disallow path separators and magic symlinks. */
         if (strchr(filename, '/') != NULL || strchr(filename, '@') != NULL ||
             strchr(filename, '.') != NULL) {
+		kernconfig_unlock();
         	return EPERM;
 	}
 
 	/* Authorize. */
 	error = kauth_authorize_system(kauth_cred_get(), KAUTH_SYSTEM_MODULE,
 	    0, (void *)(uintptr_t)MODCTL_LOAD, (void *)(uintptr_t)1, NULL);
-	if (error != 0) {
-		return error;
-	}
 
-	return module_do_load(filename, false, 0, NULL, NULL, class, true);
+	if (error == 0)
+		error = module_do_load(filename, false, 0, NULL, NULL, class,
+		    true);
+
+	kernconfig_unlock();
+	return error;
 }
 
 /*
@@ -592,9 +593,9 @@ module_unload(const char *name)
 		return error;
 	}
 
-	mutex_enter(&module_lock);
+	kernconfig_lock();
 	error = module_do_unload(name, true);
-	mutex_exit(&module_lock);
+	kernconfig_unlock();
 
 	return error;
 }
@@ -609,7 +610,7 @@ module_lookup(const char *name)
 {
 	module_t *mod;
 
-	KASSERT(mutex_owned(&module_lock));
+	KASSERT(kernconfig_is_held());
 
 	TAILQ_FOREACH(mod, &module_list, mod_chain) {
 		if (strcmp(mod->mod_info->mi_name, name) == 0) {
@@ -632,14 +633,14 @@ module_hold(const char *name)
 {
 	module_t *mod;
 
-	mutex_enter(&module_lock);
+	kernconfig_lock();
 	mod = module_lookup(name);
 	if (mod == NULL) {
-		mutex_exit(&module_lock);
+		kernconfig_unlock();
 		return ENOENT;
 	}
 	mod->mod_refcnt++;
-	mutex_exit(&module_lock);
+	kernconfig_unlock();
 
 	return 0;
 }
@@ -654,14 +655,14 @@ module_rele(const char *name)
 {
 	module_t *mod;
 
-	mutex_enter(&module_lock);
+	kernconfig_lock();
 	mod = module_lookup(name);
 	if (mod == NULL) {
-		mutex_exit(&module_lock);
+		kernconfig_unlock();
 		panic("module_rele: gone");
 	}
 	mod->mod_refcnt--;
-	mutex_exit(&module_lock);
+	kernconfig_unlock();
 }
 
 /*
@@ -674,7 +675,7 @@ module_enqueue(module_t *mod)
 {
 	int i;
 
-	KASSERT(mutex_owned(&module_lock));
+	KASSERT(kernconfig_is_held());
 
 	/*
 	 * If there are requisite modules, put at the head of the queue.
@@ -708,11 +709,11 @@ module_do_builtin(const char *name, module_t **modp)
 	const char *p, *s;
 	char buf[MAXMODNAME];
 	modinfo_t *mi = NULL;
-	module_t *mod, *mod2, *mod_loaded;
+	module_t *mod, *mod2, *mod_loaded, *prev_active;
 	size_t len;
 	int error;
 
-	KASSERT(mutex_owned(&module_lock));
+	KASSERT(kernconfig_is_held());
 
 	/*
 	 * Search the list to see if we have a module by this name.
@@ -775,10 +776,10 @@ module_do_builtin(const char *name, module_t **modp)
 	/*
 	 * Try to initialize the module.
 	 */
-	KASSERT(module_active == NULL);
+	prev_active = module_active;
 	module_active = mod;
 	error = (*mi->mi_modcmd)(MODULE_CMD_INIT, NULL);
-	module_active = NULL;
+	module_active = prev_active;
 	if (error != 0) {
 		module_error("builtin module `%s' "
 		    "failed to init", mi->mi_name);
@@ -809,18 +810,22 @@ module_do_load(const char *name, bool isdep, int flags,
 	       prop_dictionary_t props, module_t **modp, modclass_t class,
 	       bool autoload)
 {
-	static TAILQ_HEAD(,module) pending = TAILQ_HEAD_INITIALIZER(pending);
-	static int depth;
-	const int maxdepth = 6;
+#define MODULE_MAX_DEPTH 6
+
+	TAILQ_HEAD(pending_t, module);
+	static int depth = 0;
+	static struct pending_t *pending_lists[MODULE_MAX_DEPTH];
+	struct pending_t *pending;
+	struct pending_t new_pending = TAILQ_HEAD_INITIALIZER(new_pending);
 	modinfo_t *mi;
-	module_t *mod, *mod2;
+	module_t *mod, *mod2, *prev_active;
 	prop_dictionary_t filedict;
 	char buf[MAXMODNAME];
 	const char *s, *p;
 	int error;
 	size_t len;
 
-	KASSERT(mutex_owned(&module_lock));
+	KASSERT(kernconfig_is_held());
 
 	filedict = NULL;
 	error = 0;
@@ -828,11 +833,24 @@ module_do_load(const char *name, bool isdep, int flags,
 	/*
 	 * Avoid recursing too far.
 	 */
-	if (++depth > maxdepth) {
-		module_error("too many required modules");
+	if (++depth > MODULE_MAX_DEPTH) {
+		module_error("recursion too deep");
 		depth--;
 		return EMLINK;
 	}
+
+	/*
+	 * Set up the pending list for this depth.  If this is a
+	 * recursive entry, then use same list as for outer call,
+	 * else use the locally allocated list.  In either case,
+	 * remember which one we're using.
+	 */
+	if (isdep) {
+		KASSERT(depth > 1);
+		pending = pending_lists[depth - 2];
+	} else
+		pending = &new_pending;
+	pending_lists[depth - 1] = pending;
 
 	/*
 	 * Search the list of disabled builtins first.
@@ -869,18 +887,14 @@ module_do_load(const char *name, bool isdep, int flags,
 		}
 	}
 	if (mod != NULL) {
-		TAILQ_INSERT_TAIL(&pending, mod, mod_chain);
+		TAILQ_INSERT_TAIL(pending, mod, mod_chain);
 	} else {
 		/*
 		 * If a requisite module, check to see if it is
 		 * already present.
 		 */
 		if (isdep) {
-			TAILQ_FOREACH(mod, &module_list, mod_chain) {
-				if (strcmp(mod->mod_info->mi_name, name) == 0) {
-					break;
-				}
-			}
+			mod = module_lookup(name);
 			if (mod != NULL) {
 				if (modp != NULL) {
 					*modp = mod;
@@ -903,7 +917,7 @@ module_do_load(const char *name, bool isdep, int flags,
 			depth--;
 			return error;
 		}
-		TAILQ_INSERT_TAIL(&pending, mod, mod_chain);
+		TAILQ_INSERT_TAIL(pending, mod, mod_chain);
 
 		error = module_fetch_info(mod);
 		if (error != 0) {
@@ -971,7 +985,7 @@ module_do_load(const char *name, bool isdep, int flags,
 	/*
 	 * Block circular dependencies.
 	 */
-	TAILQ_FOREACH(mod2, &pending, mod_chain) {
+	TAILQ_FOREACH(mod2, pending, mod_chain) {
 		if (mod == mod2) {
 			continue;
 		}
@@ -1041,10 +1055,10 @@ module_do_load(const char *name, bool isdep, int flags,
 			goto fail;
 		}
 	}
-	KASSERT(module_active == NULL);
+	prev_active = module_active;
 	module_active = mod;
 	error = (*mi->mi_modcmd)(MODULE_CMD_INIT, filedict ? filedict : props);
-	module_active = NULL;
+	module_active = prev_active;
 	if (filedict) {
 		prop_object_release(filedict);
 		filedict = NULL;
@@ -1062,7 +1076,7 @@ module_do_load(const char *name, bool isdep, int flags,
 	 * Good, the module loaded successfully.  Put it onto the
 	 * list and add references to its requisite modules.
 	 */
-	TAILQ_REMOVE(&pending, mod, mod_chain);
+	TAILQ_REMOVE(pending, mod, mod_chain);
 	module_enqueue(mod);
 	if (modp != NULL) {
 		*modp = mod;
@@ -1085,7 +1099,7 @@ module_do_load(const char *name, bool isdep, int flags,
 		prop_object_release(filedict);
 		filedict = NULL;
 	}
-	TAILQ_REMOVE(&pending, mod, mod_chain);
+	TAILQ_REMOVE(pending, mod, mod_chain);
 	kmem_free(mod, sizeof(*mod));
 	depth--;
 	return error;
@@ -1099,11 +1113,11 @@ module_do_load(const char *name, bool isdep, int flags,
 static int
 module_do_unload(const char *name, bool load_requires_force)
 {
-	module_t *mod;
+	module_t *mod, *prev_active;
 	int error;
 	u_int i;
 
-	KASSERT(mutex_owned(&module_lock));
+	KASSERT(kernconfig_is_held());
 
 	mod = module_lookup(name);
 	if (mod == NULL) {
@@ -1114,10 +1128,10 @@ module_do_unload(const char *name, bool load_requires_force)
 		module_print("module `%s' busy", name);
 		return EBUSY;
 	}
-	KASSERT(module_active == NULL);
+	prev_active = module_active;
 	module_active = mod;
 	error = (*mod->mod_info->mi_modcmd)(MODULE_CMD_FINI, NULL);
-	module_active = NULL;
+	module_active = prev_active;
 	if (error != 0) {
 		module_print("cannot unload module `%s' error=%d", name,
 		    error);
@@ -1223,7 +1237,7 @@ int
 module_find_section(const char *name, void **addr, size_t *size)
 {
 
-	KASSERT(mutex_owned(&module_lock));
+	KASSERT(kernconfig_is_held());
 	KASSERT(module_active != NULL);
 
 	return kobj_find_section(module_active->mod_kobj, name, addr, size);
@@ -1244,7 +1258,7 @@ module_thread(void *cookie)
 	int error;
 
 	for (;;) {
-		mutex_enter(&module_lock);
+		kernconfig_lock();
 		for (mod = TAILQ_FIRST(&module_list); mod != NULL; mod = next) {
 			next = TAILQ_NEXT(mod, mod_chain);
 			if (mod->mod_source == MODULE_SOURCE_KERNEL)
@@ -1271,7 +1285,7 @@ module_thread(void *cookie)
 				(void)module_do_unload(mi->mi_name, false);
 			}
 		}
-		mutex_exit(&module_lock);
+		kernconfig_unlock();
 
 		mutex_enter(&module_thread_lock);
 		(void)cv_timedwait(&module_thread_cv, &module_thread_lock,

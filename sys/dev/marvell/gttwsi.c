@@ -1,4 +1,4 @@
-/*	$NetBSD: gttwsi.c,v 1.1.2.3 2010/08/17 06:46:17 uebayasi Exp $	*/
+/*	$NetBSD: gttwsi.c,v 1.1.2.4 2010/10/22 07:22:01 uebayasi Exp $	*/
 /*
  * Copyright (c) 2008 Eiji Kawauchi.
  * All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gttwsi.c,v 1.1.2.3 2010/08/17 06:46:17 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gttwsi.c,v 1.1.2.4 2010/10/22 07:22:01 uebayasi Exp $");
 #include "locators.h"
 
 #include <sys/param.h>
@@ -335,7 +335,10 @@ gttwsi_read_byte(void *v, uint8_t *valp, int flags)
 	struct gttwsi_softc *sc = v;
 	int error;
 
-	error = gttwsi_wait(sc, CONTROL_ACK, STAT_MRRD_AT, flags);
+	if (flags & I2C_F_LAST)
+		error = gttwsi_wait(sc, 0, STAT_MRRD_ANT, flags);
+	else
+		error = gttwsi_wait(sc, CONTROL_ACK, STAT_MRRD_AT, flags);
 	if (!error)
 		*valp = RREG(sc, TWSI_DATA);
 	if (flags & I2C_F_LAST)
@@ -357,13 +360,14 @@ gttwsi_wait(struct gttwsi_softc *sc, uint32_t control, uint32_t expect,
 	    int flags)
 {
 	uint32_t status;
-	int error = 0;
+	int timo, error = 0;
 
 	DELAY(5);
 	if (!(flags & I2C_F_POLL))
 		control |= CONTROL_INTEN;
 	WREG(sc, TWSI_CONTROL, control | CONTROL_TWSIEN);
 
+	timo = 0;
 	for (;;) {
 		control = RREG(sc, TWSI_CONTROL);
 		if (control & CONTROL_IFLG)
@@ -376,6 +380,8 @@ gttwsi_wait(struct gttwsi_softc *sc, uint32_t control, uint32_t expect,
 				return error;
 		}
 		DELAY(TWSI_RETRY_DELAY);
+		if (timo++ > 1000000)	/* 1sec */
+			break;
 	}
 
 	status = RREG(sc, TWSI_STATUS);
@@ -385,7 +391,8 @@ gttwsi_wait(struct gttwsi_softc *sc, uint32_t control, uint32_t expect,
 		return EIO;
 	}
 
-	if ((flags & I2C_F_STOP) && expect != STAT_MRRD_AT)
+	if ((flags & I2C_F_STOP) && expect != STAT_RSCT &&
+	    expect != STAT_MRRD_AT && expect != STAT_ARBT_AR)
 		error = gttwsi_send_stop(sc, flags);
 
 	return error;

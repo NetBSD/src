@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.23.2.2 2010/08/17 06:48:01 uebayasi Exp $	*/
+/*	$NetBSD: intr.c,v 1.23.2.3 2010/10/22 07:22:49 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.23.2.2 2010/08/17 06:48:01 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.23.2.3 2010/10/22 07:22:49 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -74,6 +74,7 @@ struct softint_lev {
 kcondvar_t lbolt; /* Oh Kath Ra */
 
 static u_int ticks;
+static int ncpu_final;
 
 static u_int
 rumptc_get(struct timecounter *tc)
@@ -198,10 +199,11 @@ sithread(void *arg)
 }
 
 void
-rump_intr_init()
+rump_intr_init(int numcpu)
 {
 
 	cv_init(&lbolt, "oh kath ra");
+	ncpu_final = numcpu;
 }
 
 void
@@ -243,16 +245,6 @@ softint_init(struct cpu_info *ci)
 		panic("clock thread creation failed: %d", rv);
 }
 
-/*
- * Soft interrupts bring two choices.  If we are running with thread
- * support enabled, defer execution, otherwise execute in place.
- * See softint_schedule().
- * 
- * As there is currently no clear concept of when a thread finishes
- * work (although rump_clear_curlwp() is close), simply execute all
- * softints in the timer thread.  This is probably not the most
- * efficient method, but good enough for now.
- */
 void *
 softint_establish(u_int flags, void (*func)(void *), void *arg)
 {
@@ -266,15 +258,20 @@ softint_establish(u_int flags, void (*func)(void *), void *arg)
 	si->si_flags = flags & SOFTINT_MPSAFE ? SI_MPSAFE : 0;
 	si->si_level = flags & SOFTINT_LVLMASK;
 	KASSERT(si->si_level < SOFTINT_COUNT);
-	si->si_entry = malloc(sizeof(*si->si_entry) * ncpu,
+	si->si_entry = malloc(sizeof(*si->si_entry) * ncpu_final,
 	    M_TEMP, M_WAITOK | M_ZERO);
-	for (i = 0; i < ncpu; i++) {
+	for (i = 0; i < ncpu_final; i++) {
 		sip = &si->si_entry[i];
 		sip->sip_parent = si;
 	}
 
 	return si;
 }
+
+/*
+ * Soft interrupts bring two choices.  If we are running with thread
+ * support enabled, defer execution, otherwise execute in place.
+ */
 
 void
 softint_schedule(void *arg)
@@ -304,7 +301,7 @@ softint_disestablish(void *cook)
 	struct softint *si = cook;
 	int i;
 
-	for (i = 0; i < ncpu; i++) {
+	for (i = 0; i < ncpu_final; i++) {
 		struct softint_percpu *sip;
 
 		sip = &si->si_entry[i];

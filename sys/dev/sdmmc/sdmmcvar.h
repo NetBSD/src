@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmcvar.h,v 1.2.2.1 2010/04/30 14:43:49 uebayasi Exp $	*/
+/*	$NetBSD: sdmmcvar.h,v 1.2.2.2 2010/10/22 07:22:16 uebayasi Exp $	*/
 /*	$OpenBSD: sdmmcvar.h,v 1.13 2009/01/09 10:55:22 jsg Exp $	*/
 
 /*
@@ -40,6 +40,7 @@ struct sdmmc_csd {
 	int	write_bl_len;	/* block length for writes */
 	int	r2w_factor;
 	int	tran_speed;	/* transfer speed (kbit/s) */
+	int	ccc;		/* Card Command Class for SD */
 	/* ... */
 };
 
@@ -85,6 +86,8 @@ struct sdmmc_command {
 	uint32_t	 c_arg;		/* SD/MMC command argument */
 	sdmmc_response	 c_resp;	/* response buffer */
 	bus_dmamap_t	 c_dmamap;
+	int		 c_dmaseg;	/* DMA segment number */
+	int		 c_dmaoff;	/* offset in DMA segment */
 	void		*c_data;	/* buffer to send or read into */
 	int		 c_datalen;	/* length of data buffer */
 	int		 c_blklen;	/* block length */
@@ -161,6 +164,8 @@ struct sdmmc_function {
 	/* common members */
 	struct sdmmc_softc *sc;		/* card slot softc */
 	uint16_t rca;			/* relative card address */
+	int interface;			/* SD/MMC:0, SDIO:standard interface */
+	int width;			/* bus width */
 	int flags;
 #define SFF_ERROR		0x0001	/* function is poo; ignore it */
 #define SFF_SDHC		0x0002	/* SD High Capacity card */
@@ -175,6 +180,9 @@ struct sdmmc_function {
 	sdmmc_response raw_cid;		/* temp. storage for decoding */
 	uint32_t raw_scr[2];
 	struct sdmmc_scr scr;		/* decoded CSR value */
+
+	void *bbuf;			/* bounce buffer */
+	bus_dmamap_t bbuf_dmap;		/* DMA map for bounce buffer */
 };
 
 /*
@@ -209,6 +217,8 @@ struct sdmmc_softc {
 #define SMC_CAPS_SPI_MODE	0x0008	/* SPI mode */
 #define SMC_CAPS_POLL_CARD_DET	0x0010	/* Polling card detect */
 #define SMC_CAPS_SINGLE_ONLY	0x0020	/* only single read/write */
+#define SMC_CAPS_8BIT_MODE	0x0040	/* 8-bits data bus width */
+#define SMC_CAPS_MULTI_SEG_DMA	0x0080	/* multiple segment DMA transfer */
 
 	/* function */
 	int sc_function_count;		/* number of I/O functions (SDIO) */
@@ -245,6 +255,7 @@ struct sdmmc_softc {
 struct sdmmc_attach_args {
 	uint16_t manufacturer;
 	uint16_t product;
+	int interface;
 	struct sdmmc_function *sf;
 };
 
@@ -322,7 +333,6 @@ int	sdmmc_mem_init(struct sdmmc_softc *, struct sdmmc_function *);
 int	sdmmc_mem_send_op_cond(struct sdmmc_softc *, uint32_t, uint32_t *);
 int	sdmmc_mem_send_if_cond(struct sdmmc_softc *, uint32_t, uint32_t *);
 int	sdmmc_mem_set_blocklen(struct sdmmc_softc *, struct sdmmc_function *);
-int	sdmmc_mem_send_extcsd(struct sdmmc_softc *sc);
 int	sdmmc_mem_read_block(struct sdmmc_function *, uint32_t, u_char *,
 	    size_t);
 int	sdmmc_mem_write_block(struct sdmmc_function *, uint32_t, u_char *,

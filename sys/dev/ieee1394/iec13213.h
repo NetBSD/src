@@ -1,4 +1,4 @@
-/*	$NetBSD: iec13213.h,v 1.3.20.1 2010/04/30 14:43:25 uebayasi Exp $	*/
+/*	$NetBSD: iec13213.h,v 1.3.20.2 2010/10/22 07:22:00 uebayasi Exp $	*/
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
  * Copyright (c) 1998-2002 Katsushi Kobayashi and Hidetoshi Shimokawa
@@ -105,8 +105,10 @@
 
 #define CROM_UDIR	(CSRTYPE_D | CSRKEY_UNIT)  /* 0x81 Unit directory */
 #define CROM_TEXTLEAF	(CSRTYPE_L | CSRKEY_DESC)  /* 0x81 Text leaf */
+#define CROM_TEXTLEAF2	(CSRTYPE_L | CSRKEY_BDINFO)/* 0x82 Text leaf2 */
 #define CROM_LUN	(CSRTYPE_I | CSRKEY_DINFO) /* 0x14 Logical unit num. */
 #define CROM_MGM	(CSRTYPE_C | CSRKEY_DINFO) /* 0x54 Management agent */
+#define CROM_NODEID	0x8d /* only valid for IEEE 1394-1995 digital camera */
 
 #define CSRVAL_VENDOR_PRIVATE	0xacde48
 #define CSRVAL_1394TA	0x00a02d

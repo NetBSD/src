@@ -1,4 +1,4 @@
-/*	$NetBSD: if_virt.c,v 1.16.2.2 2010/08/17 06:48:05 uebayasi Exp $	*/
+/*	$NetBSD: if_virt.c,v 1.16.2.3 2010/10/22 07:22:53 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_virt.c,v 1.16.2.2 2010/08/17 06:48:05 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_virt.c,v 1.16.2.3 2010/10/22 07:22:53 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>
@@ -74,29 +74,11 @@ struct virtif_sc {
 
 static void virtif_worker(void *);
 static void virtif_sender(void *);
+static int  virtif_clone(struct if_clone *, int);
+static int  virtif_unclone(struct ifnet *);
 
-#if 0
-/*
- * Create a socket and call ifioctl() to configure the interface.
- * This trickles down to virtif_ioctl().
- */
-static int
-configaddr(struct ifnet *ifp, struct ifaliasreq *ia)
-{
-	struct socket *so;
-	int error;
-
-	strcpy(ia->ifra_name, ifp->if_xname);
-	error = socreate(ia->ifra_addr.sa_family, &so, SOCK_DGRAM,
-	    0, curlwp, NULL);
-	if (error)
-		return error;
-	error = ifioctl(so, SIOCAIFADDR, ia, curlwp);
-	soclose(so);
-
-	return error;
-}
-#endif
+struct if_clone virtif_cloner =
+    IF_CLONE_INITIALIZER(VIRTIF_BASE, virtif_clone, virtif_unclone);
 
 int
 rump_virtif_create(int num)
@@ -137,6 +119,20 @@ rump_virtif_create(int num)
 	ether_ifattach(ifp, enaddr);
 
 	return 0;
+}
+
+static int
+virtif_clone(struct if_clone *ifc, int unit)
+{
+
+	return rump_virtif_create(unit);
+}
+
+static int
+virtif_unclone(struct ifnet *ifp)
+{
+
+	return EOPNOTSUPP;
 }
 
 static int

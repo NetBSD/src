@@ -1,4 +1,4 @@
-/*	$NetBSD: r128fb.c,v 1.10 2009/10/01 19:02:27 jmmv Exp $	*/
+/*	$NetBSD: r128fb.c,v 1.10.2.1 2010/10/22 07:22:11 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2007 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: r128fb.c,v 1.10 2009/10/01 19:02:27 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: r128fb.c,v 1.10.2.1 2010/10/22 07:22:11 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,6 +59,14 @@ __KERNEL_RCSID(0, "$NetBSD: r128fb.c,v 1.10 2009/10/01 19:02:27 jmmv Exp $");
 
 #include <dev/i2c/i2cvar.h>
 
+#include "opt_r128fb.h"
+
+#ifdef R128FB_DEBUG
+#define DPRINTF printf
+#else
+#define DPRINTF while(0) printf
+#endif
+
 struct r128fb_softc {
 	device_t sc_dev;
 
@@ -68,14 +76,12 @@ struct r128fb_softc {
 	bus_space_tag_t sc_memt;
 	bus_space_tag_t sc_iot;
 
-	bus_space_handle_t sc_fbh;
 	bus_space_handle_t sc_regh;
 	bus_addr_t sc_fb, sc_reg;
 	bus_size_t sc_fbsize, sc_regsize;
 
 	int sc_width, sc_height, sc_depth, sc_stride;
-	int sc_locked;
-	void *sc_fbaddr;
+	int sc_locked, sc_have_backlight, sc_bl_level, sc_bl_on;
 	struct vcons_screen sc_console_screen;
 	struct wsscreen_descr sc_defaultscreen_descr;
 	const struct wsscreen_descr *sc_screens[1];
@@ -116,13 +122,18 @@ static void	r128fb_bitblt(struct r128fb_softc *, int, int, int, int, int,
 			    int, int);
 
 static void	r128fb_cursor(void *, int, int, int);
-#if 0
 static void	r128fb_putchar(void *, int, int, u_int, long);
-#endif
 static void	r128fb_copycols(void *, int, int, int, int);
 static void	r128fb_erasecols(void *, int, int, int, long);
 static void	r128fb_copyrows(void *, int, int, int);
 static void	r128fb_eraserows(void *, int, int, long);
+
+static void	r128fb_brightness_up(device_t);
+static void	r128fb_brightness_down(device_t);
+/* set backlight level */
+static void	r128fb_set_backlight(struct r128fb_softc *, int);
+/* turn backlight on and off without messing with the level */
+static void	r128fb_switch_backlight(struct r128fb_softc *, int);
 
 struct wsdisplay_accessops r128fb_accessops = {
 	r128fb_ioctl,
@@ -185,12 +196,14 @@ r128fb_attach(device_t parent, device_t self, void *aux)
 	struct r128fb_softc	*sc = device_private(self);
 	struct pci_attach_args	*pa = aux;
 	struct rasops_info	*ri;
+	bus_space_tag_t		tag;
 	char devinfo[256];
 	struct wsemuldisplaydev_attach_args aa;
 	prop_dictionary_t	dict;
 	unsigned long		defattr;
 	bool			is_console;
 	int i, j;
+	uint32_t reg, flags;
 
 	sc->sc_pc = pa->pa_pc;
 	sc->sc_pcitag = pa->pa_tag;
@@ -223,24 +236,18 @@ r128fb_attach(device_t parent, device_t self, void *aux)
 
 	prop_dictionary_get_bool(dict, "is_console", &is_console);
 
-	if (pci_mapreg_map(pa, 0x10, PCI_MAPREG_TYPE_MEM,
-	    BUS_SPACE_MAP_LINEAR,
-	    &sc->sc_memt, &sc->sc_fbh, &sc->sc_fb, &sc->sc_fbsize)) {
+	if (pci_mapreg_info(pa->pa_pc, pa->pa_tag, 0x10, PCI_MAPREG_TYPE_MEM,
+	    &sc->sc_fb, &sc->sc_fbsize, &flags)) {
 		aprint_error("%s: failed to map the frame buffer.\n",
 		    device_xname(sc->sc_dev));
 	}
-	sc->sc_fbaddr = bus_space_vaddr(sc->sc_memt, sc->sc_fbh);
 
 	if (pci_mapreg_map(pa, 0x18, PCI_MAPREG_TYPE_MEM, 0,
-	    &sc->sc_memt, &sc->sc_regh, &sc->sc_reg, &sc->sc_regsize)) {
+	    &tag, &sc->sc_regh, &sc->sc_reg, &sc->sc_regsize)) {
 		aprint_error("%s: failed to map registers.\n",
 		    device_xname(sc->sc_dev));
 	}
 
-	/*
-	 * XXX yeah, casting the fb address to uint32_t is formally wrong
-	 * but as far as I know there are no mach64 with 64bit BARs
-	 */
 	aprint_normal("%s: %d MB aperture at 0x%08x\n", device_xname(self),
 	    (int)(sc->sc_fbsize >> 20), (uint32_t)sc->sc_fb);
 
@@ -299,13 +306,30 @@ r128fb_attach(device_t parent, device_t self, void *aux)
 		(*ri->ri_ops.allocattr)(ri, 0, 0, 0, &defattr);
 	}
 
+	/* no suspend/resume support yet */
+	pmf_device_register(sc->sc_dev, NULL, NULL);
+	reg = bus_space_read_4(sc->sc_memt, sc->sc_regh, R128_LVDS_GEN_CNTL);
+	DPRINTF("reg: %08x\n", reg);
+	if (reg & R128_LVDS_ON) {
+		sc->sc_have_backlight = 1;
+		sc->sc_bl_on = 1;
+		sc->sc_bl_level = 255 -
+		    ((reg & R128_LEVEL_MASK) >> R128_LEVEL_SHIFT);
+		pmf_event_register(sc->sc_dev, PMFE_DISPLAY_BRIGHTNESS_UP,
+		    r128fb_brightness_up, TRUE);
+		pmf_event_register(sc->sc_dev, PMFE_DISPLAY_BRIGHTNESS_DOWN,
+		    r128fb_brightness_down, TRUE);
+		aprint_verbose("%s: LVDS output is active, enabling backlight"
+			       " control\n", device_xname(self));
+	} else
+		sc->sc_have_backlight = 0;	
+
 	aa.console = is_console;
 	aa.scrdata = &sc->sc_screenlist;
 	aa.accessops = &r128fb_accessops;
 	aa.accesscookie = &sc->vd;
 
 	config_found(sc->sc_dev, &aa, wsemuldisplaydevprint);
-	
 }
 
 static int
@@ -316,6 +340,7 @@ r128fb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 	struct r128fb_softc *sc = vd->cookie;
 	struct wsdisplay_fbinfo *wdf;
 	struct vcons_screen *ms = vd->active;
+	struct wsdisplay_param  *param;
 
 	switch (cmd) {
 
@@ -355,7 +380,6 @@ r128fb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 			{
 				int new_mode = *(int*)data;
 
-				/* notify the bus backend */
 				if (new_mode != sc->sc_mode) {
 					sc->sc_mode = new_mode;
 					if(new_mode == WSDISPLAYIO_MODE_EMUL) {
@@ -365,6 +389,38 @@ r128fb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 				}
 			}
 			return 0;
+
+		case WSDISPLAYIO_GETPARAM:
+			param = (struct wsdisplay_param *)data;
+			if (sc->sc_have_backlight == 0)
+				return EPASSTHROUGH;
+			switch (param->param) {
+			case WSDISPLAYIO_PARAM_BRIGHTNESS:
+				param->min = 0;
+				param->max = 255;
+				param->curval = sc->sc_bl_level;
+				return 0;
+			case WSDISPLAYIO_PARAM_BACKLIGHT:
+				param->min = 0;
+				param->max = 1;
+				param->curval = sc->sc_bl_on;
+				return 0;
+			}
+			return EPASSTHROUGH;
+
+		case WSDISPLAYIO_SETPARAM:
+			param = (struct wsdisplay_param *)data;
+			if (sc->sc_have_backlight == 0)
+				return EPASSTHROUGH;
+			switch (param->param) {
+			case WSDISPLAYIO_PARAM_BRIGHTNESS:
+				r128fb_set_backlight(sc, param->curval);
+				return 0;
+			case WSDISPLAYIO_PARAM_BACKLIGHT:
+				r128fb_switch_backlight(sc,  param->curval);
+				return 0;
+			}
+			return EPASSTHROUGH;
 	}
 	return EPASSTHROUGH;
 }
@@ -438,13 +494,7 @@ r128fb_init_screen(void *cookie, struct vcons_screen *scr,
 	ri->ri_width = sc->sc_width;
 	ri->ri_height = sc->sc_height;
 	ri->ri_stride = sc->sc_stride;
-	ri->ri_flg = RI_CENTER | RI_FULLCLEAR;
-
-	ri->ri_bits = (char *)sc->sc_fbaddr;
-
-	if (existing) {
-		ri->ri_flg |= RI_CLEAR;
-	}
+	ri->ri_flg = RI_CENTER;
 
 	rasops_init(ri, sc->sc_height / 8, sc->sc_width / 8);
 	ri->ri_caps = WSSCREEN_WSCOLORS;
@@ -458,9 +508,7 @@ r128fb_init_screen(void *cookie, struct vcons_screen *scr,
 	ri->ri_ops.eraserows = r128fb_eraserows;
 	ri->ri_ops.erasecols = r128fb_erasecols;
 	ri->ri_ops.cursor = r128fb_cursor;
-#if 0
 	ri->ri_ops.putchar = r128fb_putchar;
-#endif
 }
 
 static int
@@ -558,7 +606,7 @@ r128fb_init(struct r128fb_softc *sc)
 
 	r128fb_flush_engine(sc);
 
-	r128fb_wait(sc, 8);
+	r128fb_wait(sc, 9);
 	bus_space_write_4(sc->sc_memt, sc->sc_regh, R128_CRTC_OFFSET, 0);
 	bus_space_write_4(sc->sc_memt, sc->sc_regh, R128_DEFAULT_OFFSET, 0);
 	bus_space_write_4(sc->sc_memt, sc->sc_regh, R128_DEFAULT_PITCH,
@@ -570,8 +618,17 @@ r128fb_init(struct r128fb_softc *sc)
 	bus_space_write_4(sc->sc_memt, sc->sc_regh, R128_SC_TOP_LEFT, 0);
 	bus_space_write_4(sc->sc_memt, sc->sc_regh, R128_SC_BOTTOM_RIGHT,
 	    R128_DEFAULT_SC_RIGHT_MAX | R128_DEFAULT_SC_BOTTOM_MAX);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, 
+	    R128_DEFAULT_SC_BOTTOM_RIGHT,
+	    R128_DEFAULT_SC_RIGHT_MAX | R128_DEFAULT_SC_BOTTOM_MAX);
+
+#if BYTE_ORDER == BIG_ENDIAN
 	bus_space_write_4(sc->sc_memt, sc->sc_regh, R128_DP_DATATYPE,
 	    R128_HOST_BIG_ENDIAN_EN);
+#else
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, R128_DP_DATATYPE,
+	    R128_HOST_LITTLE_ENDIAN_EN);
+#endif
 
 	r128fb_wait(sc, 5);
 	bus_space_write_4(sc->sc_memt, sc->sc_regh, R128_SRC_PITCH,
@@ -615,7 +672,7 @@ r128fb_rectfill(struct r128fb_softc *sc, int x, int y, int wi, int he,
      uint32_t colour)
 {
 
-	r128fb_wait(sc, 6);
+	r128fb_wait(sc, 5);
 	bus_space_write_4(sc->sc_memt, sc->sc_regh, R128_DP_GUI_MASTER_CNTL,
 	    R128_GMC_BRUSH_SOLID_COLOR |
 	    R128_GMC_SRC_DATATYPE_COLOR |
@@ -631,7 +688,6 @@ r128fb_rectfill(struct r128fb_softc *sc, int x, int y, int wi, int he,
 	    (x << 16) | y);
 	bus_space_write_4(sc->sc_memt, sc->sc_regh, R128_DST_WIDTH_HEIGHT,
 	    (wi << 16) | he);
-	r128fb_flush_engine(sc);
 }
 
 static void
@@ -669,7 +725,6 @@ r128fb_bitblt(struct r128fb_softc *sc, int xs, int ys, int xd, int yd,
 	    (xd << 16) | yd);
 	bus_space_write_4(sc->sc_memt, sc->sc_regh, R128_DST_WIDTH_HEIGHT,
 	    (wi << 16) | he);
-	r128fb_flush_engine(sc);
 }
 
 static void
@@ -706,12 +761,107 @@ r128fb_cursor(void *cookie, int on, int row, int col)
 
 }
 
-#if 0
 static void
 r128fb_putchar(void *cookie, int row, int col, u_int c, long attr)
 {
+	struct rasops_info *ri = cookie;
+	struct wsdisplay_font *font = PICK_FONT(ri, c);
+	struct vcons_screen *scr = ri->ri_hw;
+	struct r128fb_softc *sc = scr->scr_cookie;
+
+	if (sc->sc_mode == WSDISPLAYIO_MODE_EMUL) {
+		void *data;
+		uint32_t fg, bg;
+		int uc, i;
+		int x, y, wi, he, offset;
+
+		wi = font->fontwidth;
+		he = font->fontheight;
+
+		if (!CHAR_IN_FONT(c, font))
+			return;
+		bg = ri->ri_devcmap[(attr >> 16) & 0xf];
+		fg = ri->ri_devcmap[(attr >> 24) & 0xf];
+		x = ri->ri_xorigin + col * wi;
+		y = ri->ri_yorigin + row * he;
+		if (c == 0x20) {
+			r128fb_rectfill(sc, x, y, wi, he, bg);
+		} else {
+			uc = c - font->firstchar;
+			data = (uint8_t *)font->data + uc * ri->ri_fontscale;
+
+			r128fb_wait(sc, 8);
+
+			bus_space_write_4(sc->sc_memt, sc->sc_regh, 
+			    R128_DP_GUI_MASTER_CNTL,
+			    R128_GMC_BRUSH_SOLID_COLOR |
+			    R128_GMC_SRC_DATATYPE_MONO_FG_BG |
+			    R128_ROP3_S |
+			    R128_DP_SRC_SOURCE_HOST_DATA |
+			    R128_GMC_DST_CLIPPING |
+			    sc->sc_master_cntl);
+
+			bus_space_write_4(sc->sc_memt, sc->sc_regh, 
+			    R128_DP_CNTL, 
+			    R128_DST_Y_TOP_TO_BOTTOM | 
+			    R128_DST_X_LEFT_TO_RIGHT);
+
+			bus_space_write_4(sc->sc_memt, sc->sc_regh, 
+			    R128_DP_SRC_FRGD_CLR, fg);
+			bus_space_write_4(sc->sc_memt, sc->sc_regh, 
+			    R128_DP_SRC_BKGD_CLR, bg);
+
+			/*
+			 * The Rage 128 doesn't have anything to skip pixels
+			 * when colour expanding but all coordinates
+			 * are signed so we just clip the leading bytes and 
+			 * trailing bits away
+			 */
+			bus_space_write_4(sc->sc_memt, sc->sc_regh, 
+			    R128_SC_RIGHT, x + wi - 1);
+			bus_space_write_4(sc->sc_memt, sc->sc_regh, 
+			    R128_SC_LEFT, x);
+
+			/* needed? */
+			bus_space_write_4(sc->sc_memt, sc->sc_regh, 
+			    R128_SRC_X_Y, 0);
+
+			offset = 32 - (ri->ri_font->stride << 3);
+			bus_space_write_4(sc->sc_memt, sc->sc_regh, 
+			    R128_DST_X_Y, ((x - offset) << 16) | y);
+			bus_space_write_4(sc->sc_memt, sc->sc_regh, 
+			    R128_DST_WIDTH_HEIGHT, (32 << 16) | he);
+
+			r128fb_wait(sc, he);
+			switch (ri->ri_font->stride) {
+			case 1: {
+				uint8_t *data8 = data;
+				uint32_t reg;
+				for (i = 0; i < he; i++) {
+					reg = *data8;
+					bus_space_write_stream_4(sc->sc_memt, 
+					    sc->sc_regh,
+					    R128_HOST_DATA0, reg);
+					data8++;
+				}
+			break;
+			}
+			case 2: {
+				uint16_t *data16 = data;
+				uint32_t reg;
+				for (i = 0; i < he; i++) {
+					reg = *data16;
+					bus_space_write_stream_4(sc->sc_memt, 
+					    sc->sc_regh,
+					    R128_HOST_DATA0, reg);
+					data16++;
+				}
+				break;
+			}
+			}
+		}
+	}
 }
-#endif
 
 static void
 r128fb_copycols(void *cookie, int row, int srccol, int dstcol, int ncols)
@@ -763,7 +913,7 @@ r128fb_copyrows(void *cookie, int srcrow, int dstrow, int nrows)
 		ys = ri->ri_yorigin + ri->ri_font->fontheight * srcrow;
 		yd = ri->ri_yorigin + ri->ri_font->fontheight * dstrow;
 		width = ri->ri_emuwidth;
-		height = ri->ri_font->fontheight*nrows;
+		height = ri->ri_font->fontheight * nrows;
 		r128fb_bitblt(sc, x, ys, x, yd, width, height, R128_ROP3_S);
 	}
 }
@@ -787,3 +937,63 @@ r128fb_eraserows(void *cookie, int row, int nrows, long fillattr)
 	}
 }
 
+static void
+r128fb_set_backlight(struct r128fb_softc *sc, int level)
+{
+	uint32_t reg;
+
+	/*
+	 * should we do nothing when backlight is off, should we just store the
+	 * level and use it when turning back on or should we just flip sc_bl_on
+	 * and turn the backlight on?
+	 * For now turn it on so a crashed screensaver can't get the user stuck
+	 * with a dark screen as long as hotkeys work
+	 */
+	if (level > 255) level = 255;
+	if (level < 0) level = 0;
+	if (level == sc->sc_bl_level)
+		return;
+	sc->sc_bl_level = level;
+	if (sc->sc_bl_on == 0)
+		sc->sc_bl_on = 1;
+	level = 255 - level;
+	reg = bus_space_read_4(sc->sc_memt, sc->sc_regh, R128_LVDS_GEN_CNTL);
+	reg &= ~R128_LEVEL_MASK;
+	reg |= level << R128_LEVEL_SHIFT;
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, R128_LVDS_GEN_CNTL, reg);
+	DPRINTF("backlight level: %d reg %08x\n", level, reg);
+}
+
+static void
+r128fb_switch_backlight(struct r128fb_softc *sc, int on)
+{
+	uint32_t reg;
+	int level;
+
+	if (on == sc->sc_bl_on)
+		return;
+	sc->sc_bl_on = on;
+	reg = bus_space_read_4(sc->sc_memt, sc->sc_regh, R128_LVDS_GEN_CNTL);
+	reg &= ~R128_LEVEL_MASK;
+	level = on ? 255 - sc->sc_bl_level : 255;
+	reg |= level << R128_LEVEL_SHIFT;
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, R128_LVDS_GEN_CNTL, reg);
+	DPRINTF("backlight state: %d reg %08x\n", on, reg);
+}
+	
+
+static void
+r128fb_brightness_up(device_t dev)
+{
+	struct r128fb_softc *sc = device_private(dev);
+
+	r128fb_set_backlight(sc, sc->sc_bl_level + 8);
+}
+
+static void
+r128fb_brightness_down(device_t dev)
+{
+	struct r128fb_softc *sc = device_private(dev);
+
+	r128fb_set_backlight(sc, sc->sc_bl_level - 8);
+}

@@ -1,4 +1,4 @@
-/*      $NetBSD: ip6_etherip.h,v 1.1 2006/11/23 04:07:07 rpaulo Exp $        */
+/*      $NetBSD: ip6_etherip.h,v 1.1.80.1 2010/10/22 07:22:41 uebayasi Exp $        */
 
 /*
  *  Copyright (c) 2006, Hans Rosenfeld <rosenfeld@grumpf.hope-2000.org>
@@ -33,6 +33,6 @@
 #define _NETINET6_IP6_ETHERIP_H_
 
 int ip6_etherip_output(struct ifnet *, struct mbuf *);
-int ip6_etherip_input(struct mbuf *, ...);
+int ip6_etherip_input(struct mbuf **, int *, int);
 
 #endif /* !_NETINET6_IP6_ETHERIP_H_ */

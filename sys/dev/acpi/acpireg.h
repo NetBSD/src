@@ -1,4 +1,4 @@
-/*	$NetBSD: acpireg.h,v 1.6.2.1 2010/04/30 14:43:06 uebayasi Exp $	*/
+/*	$NetBSD: acpireg.h,v 1.6.2.2 2010/10/22 07:21:53 uebayasi Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -44,6 +44,16 @@
 #define ACPI_STA_OK		(ACPI_STA_DEVICE_PRESENT	|	\
 				 ACPI_STA_DEVICE_ENABLED	|	\
 				 ACPI_STA_DEVICE_FUNCTIONING)
+
+/*
+ * Operating System Capabilities, _OSC.
+ */
+#define ACPI_OSC_QUERY		__BIT(0)
+#define ACPI_OSC_ERROR		__BIT(1)
+#define ACPI_OSC_ERROR_UUID	__BIT(2)
+#define ACPI_OSC_ERROR_REV	__BIT(3)
+#define ACPI_OSC_ERROR_MASKED	__BIT(4)
+
 /*
  * PCI functions.
  */
@@ -62,5 +72,6 @@
 #define	ACPI_LID_COMPONENT	0x00200000
 #define	ACPI_RESOURCE_COMPONENT	0x00400000
 #define	ACPI_TZ_COMPONENT	0x00800000
+#define	ACPI_DISPLAY_COMPONENT	0x01000000
 
 #endif	/* !_SYS_DEV_ACPI_ACPIREG_H */

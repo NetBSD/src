@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.239 2010/01/31 02:04:43 pooka Exp $	*/
+/*	$NetBSD: systm.h,v 1.239.2.1 2010/10/22 07:22:55 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -301,6 +301,7 @@ void	statclock(struct clockframe *);
 #ifdef NTP
 void	ntp_init(void);
 #ifdef PPS_SYNC
+struct timespec;
 void	hardpps(struct timespec *, long);
 #endif /* PPS_SYNC */
 #else
@@ -491,6 +492,13 @@ void scdebug_ret(register_t, int, const register_t[]);
 void	kernel_lock_init(void);
 void	_kernel_lock(int);
 void	_kernel_unlock(int, int *);
+
+#ifdef _KERNEL
+void	kernconfig_lock_init(void);
+void	kernconfig_lock(void);
+void	kernconfig_unlock(void);
+bool	kernconfig_is_held(void);
+#endif
 
 #if defined(MULTIPROCESSOR) || defined(_MODULE)
 #define	KERNEL_LOCK(count, lwp)			\

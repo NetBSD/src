@@ -1,4 +1,4 @@
-/*	$NetBSD: wsdisplay_vconsvar.h,v 1.10 2009/08/20 02:01:08 macallan Exp $ */
+/*	$NetBSD: wsdisplay_vconsvar.h,v 1.10.2.1 2010/10/22 07:22:21 uebayasi Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Michael Lorenz
@@ -53,6 +53,14 @@ struct vcons_screen {
 					 * - for drivers that use software
 					 * drawing */
 #define VCONS_DONT_DRAW		8	/* don't draw on this screen at all */
+/*
+ * the following flags are for drivers which either can't accelerate (all) copy 
+ * operations or where drawing characters is faster than the blitter
+ * for example, Sun's Creator boards can't accelerate copycols()
+ */
+#define VCONS_NO_COPYCOLS	0x10	/* use putchar() based copycols() */
+#define VCONS_NO_COPYROWS	0x20	/* use putchar() basec copyrows() */
+#define VCONS_DONT_READ		0x30	/* avoid framebuffer reads */
 	/* status flags used by vcons */
 	uint32_t scr_status;
 #define VCONS_IS_VISIBLE	1	/* this screen is currently visible */

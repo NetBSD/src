@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.128.2.2 2010/08/17 06:47:33 uebayasi Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.128.2.3 2010/10/22 07:22:31 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004, 2008, 2009 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.128.2.2 2010/08/17 06:47:33 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.128.2.3 2010/10/22 07:22:31 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1001,7 +1001,7 @@ unp_connect(struct socket *so, struct mbuf *nam, struct lwp *l)
 		 * see SO_ACCEPTCONN set on the endpoint, then it must
 		 * be locked by the domain-wide uipc_lock.
 		 */
-		KASSERT((so->so_options & SO_ACCEPTCONN) == 0 ||
+		KASSERT((so2->so_options & SO_ACCEPTCONN) == 0 ||
 		    so2->so_lock == uipc_lock);
 		if ((so2->so_options & SO_ACCEPTCONN) == 0 ||
 		    (so3 = sonewconn(so2, 0)) == NULL) {
@@ -1054,7 +1054,7 @@ unp_connect2(struct socket *so, struct socket *so2, int req)
 	 *
 	 * local endpoint (so)
 	 * remote endpoint (so2)
-	 * queue head (so->so_head, only if PR_CONNREQUIRED)
+	 * queue head (so2->so_head, only if PR_CONNREQUIRED)
 	 */
 	KASSERT(solocked2(so, so2));
 	KASSERT(so->so_head == NULL);

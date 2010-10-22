@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_accf.c,v 1.10.2.1 2010/04/30 14:44:13 uebayasi Exp $	*/
+/*	$NetBSD: uipc_accf.c,v 1.10.2.2 2010/10/22 07:22:30 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_accf.c,v 1.10.2.1 2010/04/30 14:44:13 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_accf.c,v 1.10.2.2 2010/10/22 07:22:30 uebayasi Exp $");
 
 #define ACCEPT_FILTER_MOD
 
@@ -167,10 +167,8 @@ accept_filt_get(char *name)
 		/* Try to autoload a module to satisfy the request. */
 		strcpy(buf, "accf_");
 		strlcat(buf, name, sizeof(buf));
-		mutex_enter(&module_lock);
 		gen = module_gen;
 		(void)module_autoload(buf, MODULE_CLASS_ANY);
-		mutex_exit(&module_lock);
 	} while (gen != module_gen);
 
 	return p;

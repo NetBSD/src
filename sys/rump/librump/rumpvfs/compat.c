@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.5.2.1 2010/08/17 06:48:03 uebayasi Exp $	*/
+/*	$NetBSD: compat.c,v 1.5.2.2 2010/10/22 07:22:51 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat.c,v 1.5.2.1 2010/08/17 06:48:03 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat.c,v 1.5.2.2 2010/10/22 07:22:51 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -112,6 +112,26 @@ rump_sys_nb5_lstat(const char *path, struct stat *sb)
 
 	rump_schedule();
 	error = compat_50_sys___lstat30(curlwp, &args, &retval);
+	if (error) {
+		retval = -1;
+		rumpuser_seterrno(error);
+	}
+	rump_unschedule();
+	return retval;
+}
+
+int
+rump_sys_nb5_fstat(int fd, struct stat *sb)
+{
+	struct compat_50_sys___fstat30_args args;
+	register_t retval = 0;
+	int error = 0;
+
+	SPARG(&args, fd) = fd;
+	SPARG(&args, sb) = (struct stat30 *)sb;
+
+	rump_schedule();
+	error = compat_50_sys___fstat30(curlwp, &args, &retval);
 	if (error) {
 		retval = -1;
 		rumpuser_seterrno(error);

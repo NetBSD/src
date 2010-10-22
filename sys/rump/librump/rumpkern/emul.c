@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.121.2.2 2010/08/17 06:48:00 uebayasi Exp $	*/
+/*	$NetBSD: emul.c,v 1.121.2.3 2010/10/22 07:22:48 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.121.2.2 2010/08/17 06:48:00 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.121.2.3 2010/10/22 07:22:48 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/null.h>
@@ -103,9 +103,10 @@ int pgofset = 4096-1;
 int pgshift = 12;
 #endif
 
-/* sun3 is sun3 with broken kernel modules */
+/* on sun3 VM_MAX_ADDRESS is a const variable */
+/* XXX: should be moved into rump.c and initialize for sun3 and sun3x? */
 #ifdef sun3
-char KERNBASE[1]; /* this is completely random ... */
+const vaddr_t kernbase = KERNBASE3;
 #endif
 
 struct loadavg averunnable = {
@@ -156,6 +157,25 @@ lwp_unsleep(lwp_t *l, bool cleanup)
 	KASSERT(mutex_owned(l->l_mutex));
 
 	(*l->l_syncobj->sobj_unsleep)(l, cleanup);
+}
+
+void
+lwp_update_creds(struct lwp *l)
+{
+	struct proc *p;
+	kauth_cred_t oldcred;
+
+	p = l->l_proc;
+	oldcred = l->l_cred;
+	l->l_prflag &= ~LPR_CRMOD;
+
+	mutex_enter(p->p_lock);
+	kauth_cred_hold(p->p_cred);
+	l->l_cred = p->p_cred;
+	mutex_exit(p->p_lock);
+
+	if (oldcred != NULL)
+		kauth_cred_free(oldcred);
 }
 
 vaddr_t

@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.16 2009/02/06 20:01:41 pooka Exp $	*/
+/*	$NetBSD: intr.h,v 1.16.4.1 2010/10/22 07:22:46 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -37,10 +37,8 @@ typedef struct {
         ipl_t _ipl;
 } ipl_cookie_t;
 
-static inline ipl_cookie_t makeiplcookie(ipl_t);
-
-static inline
-ipl_cookie_t makeiplcookie(ipl_t ipl)
+static inline ipl_cookie_t
+makeiplcookie(ipl_t ipl)
 {
 	ipl_cookie_t c;
 	c._ipl = ipl;
@@ -60,12 +58,12 @@ ipl_cookie_t makeiplcookie(ipl_t ipl)
 #define spl0() ((void)0)
 
 #define IPL_NONE 0
-#define	IPL_SOFTBIO 0
-#define	IPL_SOFTCLOCK 0
-#define IPL_SOFTSERIAL 0
-#define	IPL_SOFTNET 0
-#define IPL_SCHED 0
-#define IPL_VM 0
-#define IPL_HIGH 0
+#define	IPL_SOFTBIO 1
+#define	IPL_SOFTCLOCK 1
+#define IPL_SOFTSERIAL 1
+#define	IPL_SOFTNET 1
+#define IPL_SCHED 2
+#define IPL_VM 2
+#define IPL_HIGH 2
 
 #endif /* _SYS_RUMP_INTR_H_ */

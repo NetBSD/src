@@ -1,4 +1,4 @@
-#	$NetBSD: files.discovery,v 1.10.96.2 2010/08/17 06:46:16 uebayasi Exp $
+#	$NetBSD: files.discovery,v 1.10.96.3 2010/10/22 07:22:01 uebayasi Exp $
 #
 # Config file and device description for machine-independent support for
 # the Marvell (formerly Galileo Technology) Discovery system controllers.
@@ -68,8 +68,8 @@ attach	mvgbe at mvgbec
 file	dev/marvell/if_mvgbe.c		mvgbec | mvgbe
 
 # USB 2.0 Interface
-#attach	ehci at gt with mvusb_gt
-#file	dev/marvell/ehci_mv.c		mvusb_gt | mvusb_mbus
+attach	ehci at gt with mvusb_gt
+file	dev/marvell/ehci_mv.c		mvusb_gt | mvusb_mbus
 
 # Cryptographic Engines and Security Accelerator
 #device	mvcesa: opencrypto
@@ -89,3 +89,9 @@ file	dev/marvell/com_mv.c		mvuart_gt | mvuart_mbus
 device	gtidmac: dmover_service
 file	dev/marvell/gtidmac.c		gtidmac
 attach	gtidmac at gt with gtidmac_gt
+
+# Secure Digital Input/Output (SDIO) Interface
+device	mvsdio: sdmmcbus
+file	dev/marvell/mvsdio.c		mvsdio
+defparam	opt_mvsdio.h		MVSDIO_CARD_DETECT
+					MVSDIO_WRITE_PROTECT
