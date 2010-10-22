@@ -1,0 +1,119 @@
+.\" $NetBSD: acpivga.4,v 1.1.2.2 2010/10/22 07:11:53 uebayasi Exp $
+.\"
+.\" Copyright (c) 2010 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd October 12, 2010
+.Dt ACPIVGA 4
+.Os
+.Sh NAME
+.Nm acpivga
+.Nd ACPI Display Adapter and Output Devices
+.Sh SYNOPSIS
+.Cd "acpivga* at acpi?"
+.Cd "acpiout* at acpivga?"
+.Sh DESCRIPTION
+The
+.Nm
+driver provides generic support for brightness control and output switching,
+through
+.Tn ACPI
+video extensions.
+The
+.Tn ACPI
+specification requires that systems containing a built-in display adapter
+implement these extensions in their
+.Tn ACPI
+BIOS.
+.Pp
+The driver handles brightness hotkeys and output switch hotkeys.
+In addition, the following
+.Xr sysctl 8
+read/write variables are provided (when hardware support is available):
+.Bl -tag -width Ds
+.It Va hw.acpi.acpivga0.policy
+BIOS switch policy.
+Accepted values range from 0 to 7.
+For more information, refer to the documentation of the _DOS method,
+in Section B.4.1 of the
+.Tn ACPI
+specification (revision 4.0a).
+.It Va hw.acpi.acpiout0.brightness
+Brightness level.
+Typical values range from 0 to 100, but any integer value is accepted (the
+driver uses the closest brightness level supported by the device).
+.El
+.Pp
+Please note, however, that future versions of
+.Nm
+may remove these
+.Xr sysctl 8
+variables without prior notice.
+.Sh SEE ALSO
+.Xr acpi 4 ,
+.Xr sysctl 8
+.Sh STANDARDS
+The
+.Nm
+driver supports the
+.Em ACPI Extensions for Display Adapters
+given in Appendix B of the
+.Tn ACPI
+specification.
+.Pp
+.Rs
+.%A Hewlett-Packard Corporation
+.%A Intel Corporation
+.%A Microsoft Corporation
+.%A Phoenix Technologies Ltd.
+.%A Toshiba Corporation
+.%B Advanced Configuration and Power Interface Specification
+.%V Revision 4.0a
+.%D April 5, 2010
+.%U http://www.acpi.info/spec.htm
+.Re
+.Sh HISTORY
+The
+.Nm
+driver appeared in
+.Nx 6.0 .
+.Sh AUTHORS
+.An Gr\('egoire Sutre
+.Aq gsutre@NetBSD.org
+.Sh CAVEATS
+The
+.Nm
+driver only supports PCI/PCI-X/PCI-E display adapters.
+.Pp
+Many
+.Tn ACPI
+BIOSes implement only part of the
+.Tn ACPI
+video extensions.
+In particular, display output switching often does not work.
+.Pp
+Brightness level should be controlled via
+.Xr wsconsctl 8
+instead of
+.Xr sysctl 8 .

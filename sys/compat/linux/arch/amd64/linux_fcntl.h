@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_fcntl.h,v 1.2 2005/12/11 12:20:14 christos Exp $ */
+/*	$NetBSD: linux_fcntl.h,v 1.2.96.1 2010/10/22 07:21:45 uebayasi Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved.
@@ -42,6 +42,7 @@
 #define LINUX_O_NDELAY		04000
 #define LINUX_O_SYNC		010000
 #define LINUX_FASYNC		020000
+#define LINUX_O_DIRECTORY	0x10000
 
 #define LINUX_F_RDLCK		0
 #define LINUX_F_WRLCK		1	

@@ -1,4 +1,4 @@
-/* $NetBSD: tsreg.h,v 1.3 2001/07/05 08:38:24 toshii Exp $ */
+/* $NetBSD: tsreg.h,v 1.3.150.1 2010/10/22 07:20:56 uebayasi Exp $ */
 
 /*-
  * Copyright (c) 1999 by Ross Harvey.  All rights reserved.
@@ -89,6 +89,8 @@
 
 #define TS_C_MISC	0x101##a000##0080UL	/* Miscellaneous Register */
 
+#	define	MISC_NXM(r)	TSFIELD((r), 28, 1)
+#	define	MISC_NXM_SRC(r)	TSFIELD((r), 29, 3)
 #	define	MISC_REV(r)	TSFIELD((r), 39, 8)
 
 #define TS_C_MPD	0x101##a000##00c0UL
@@ -157,6 +159,15 @@
 #define P_PLAT		0x0340
 	/* reserved	0x0380 */
 #define P_PERROR	0x03c0
+
+#	define	PER_ERR(r)	TSFIELD((r),  0, 12)
+#	define	PER_ECC(r)	TSFIELD((r), 10, 2)
+#	define	PER_SADR(r)	TSFIELD((r), 16, 34)
+#	define	PER_PADR(r)	(TSFIELD((r), 18, 32) << 2)
+#	define	PER_TRNS(r)	TSFIELD((r), 16, 2)
+#	define	PER_INV(r)	TSFIELD((r), 51, 1)
+#	define	PER_CMD(r)	TSFIELD((r), 52, 4)
+#	define	PER_SYN(r)	TSFIELD((r), 56, 8)
 
 #define P_PERRMASK	0x0400
 #define P_PERRSET	0x0440

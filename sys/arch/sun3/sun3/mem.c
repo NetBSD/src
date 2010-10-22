@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.51 2007/03/04 14:03:03 tsutsui Exp $	*/
+/*	$NetBSD: mem.c,v 1.51.64.1 2010/10/22 07:21:37 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.51 2007/03/04 14:03:03 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.51.64.1 2010/10/22 07:21:37 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -178,7 +178,7 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 			 * Also note: unlock done at end of function.
 			 */
 			if (v < avail_start) {
-				v += KERNBASE;
+				v += KERNBASE3;
 				goto use_kmem;
 			}
 			/* Temporarily map the memory at vmmap. */

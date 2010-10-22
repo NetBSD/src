@@ -1,6 +1,6 @@
-#	$NetBSD: INSTALL,v 1.47.2.1 2010/04/30 14:39:13 uebayasi Exp $
+#	$NetBSD: INSTALL,v 1.47.2.2 2010/10/22 07:21:06 uebayasi Exp $
 #
-# First try for BEBOX config file
+# First try for BeBox config file
 #
 
 include "arch/bebox/conf/std.bebox"
@@ -15,7 +15,7 @@ makeoptions	COPTS="-Os"		# Optimise for space. Implies -O2
 options 	MEMORY_DISK_HOOKS
 options 	MEMORY_DISK_IS_ROOT	# force root on memory disk
 options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
-options 	MEMORY_DISK_ROOT_SIZE=3074	# size of memory disk, in blocks
+options 	MEMORY_DISK_ROOT_SIZE=4096	# size of memory disk, in blocks
 options 	MEMORY_DISK_RBFLAGS=RB_SINGLE	# boot in single-user mode
 
 #options 	IPKDBUSERHACK	# Allow access to mapped memory via kgdb
@@ -38,21 +38,21 @@ options		PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 #options 	COMPAT_43
 #options 	COMPAT_09
-options 	COMPAT_10
-options 	COMPAT_12
-options 	COMPAT_13
-options 	COMPAT_14
-options 	COMPAT_15
-options 	COMPAT_16
-options 	COMPAT_20
-options 	COMPAT_30	# NetBSD 3.0 compatibility.
-options 	COMPAT_40	# NetBSD 4.0 compatibility.
-options 	COMPAT_386BSD_MBRPART	# recognize old partition ID
-options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
+#options 	COMPAT_10
+#options 	COMPAT_12
+#options 	COMPAT_13
+#options 	COMPAT_14
+#options 	COMPAT_15
+#options 	COMPAT_16
+#options 	COMPAT_20
+#options 	COMPAT_30	# NetBSD 3.0 compatibility.
+#options 	COMPAT_40	# NetBSD 4.0 compatibility.
+#options 	COMPAT_386BSD_MBRPART	# recognize old partition ID
+#options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 # File systems
 file-system 	FFS
-file-system	EXT2FS
+#file-system	EXT2FS
 file-system 	MFS
 file-system 	NFS
 file-system 	CD9660
@@ -64,35 +64,38 @@ file-system 	KERNFS
 #file-system 	UMAPFS
 #file-system 	UNION
 file-system	PTYFS		# /dev/pts/N support
+#file-system	TMPFS
 
 # Filesystem options
-#options 	NFS_V2_ONLY	# Exclude NFS3 code to save space
-options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
-options 	WAPBL		# File system journaling support - Experimental
+options 	NFS_V2_ONLY	# Exclude NFS3 code to save space
+#options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
+#options 	WAPBL		# File system journaling support - Experimental
 
 #options 	NFSSERVER
 
 options 	INET
 
-#options 	NFS_BOOT_BOOTPARAM
+options 	NFS_BOOT_DHCP,NFS_BOOT_BOOTPARAM
 
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
-config		netbsd	root on ? type ffs
+# wscons options
+# builtin terminal emulations
+#options 	WSEMUL_SUN		# sun terminal emulation
+options 	WSEMUL_VT100		# VT100 / VT220 emulation
+options 	WS_DEFAULT_FG=WSCOL_LIGHT_WHITE
+# compatibility to other console drivers
+options 	WSDISPLAY_COMPAT_USL	# VT handling
+options 	WSDISPLAY_COMPAT_RAWKBD	# can get raw scancodes
 
-#pseudo-device	vnd		
-#pseudo-device	fss			# file system snapshot device
-pseudo-device	md		1
-pseudo-device	loop
-#pseudo-device	bpfilter		# packet filter
-pseudo-device	pty		2	# pseudo-terminals (Sysinst needs two)
+config		netbsd	root on ? type ffs
 
 #
 # device
 #
 options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 
-options 	PCIVERBOSE	# verbose PCI device messages
+#options 	PCIVERBOSE	# verbose PCI device messages
 #options 	PCI_CONFIG_DUMP	# verbosely dump PCI config space
 
 mainbus0 at root
@@ -100,35 +103,48 @@ mainbus0 at root
 cpu*	at mainbus0
 pci0	at mainbus0 bus ?
 
-ppb*	at pci? dev ? function ?	# PCI-PCI bridges
-pci*	at ppb? bus ?
+#ppb*	at pci? dev ? function ?	# PCI-PCI bridges
+#pci*	at ppb? bus ?
 pchb*	at pci? dev ? function ?	# PCI-Host bridges
 pcib*	at pci? dev ? function ?	# PCI-ISA bridges
 
 isa*	at pcib?			# ISA on PCI-ISA bridge
 
-mcclock0 at isa? port 0x70		# generic time-of-day clock
+# Console Devices
+
+# wscons
+pckbc0		at isa?			# pc keyboard controller
+pckbd*		at pckbc?		# PC keyboard
+#pms*		at pckbc?		# PS/2 mouse for wsmouse
+#options	PMS_DISABLE_POWERHOOK	# Disable PS/2 reset on resume
+#options 	PMS_SYNAPTICS_TOUCHPAD	# Enable support for Synaptics Touchpads
+genfb*		at pci? dev ? function ?
+options 	WSFB_FAKE_VGA_FB
+vga*		at pci? dev ? function ?
+wsdisplay*	at vga? console ?
+wskbd*		at pckbd? console ?
+#wsmouse*	at pms? mux 0
+
+# make sure the console display is always wsdisplay0
+wsdisplay0	at wsemuldisplaydev? console 1
+wsdisplay*	at wsemuldisplaydev?
 
 com0	at isa? port 0x3f8 irq 4	# standard PC serial ports
 com1	at isa? port 0x2f8 irq 3
 #com2	at isa? port 0x380 irq 16
 #com3	at isa? port 0x388 irq 17
 
-lpt0	at isa? port 0x378 irq 7	# standard PC parallel ports
-#lpt1	at isa? port 0x278
-#lpt2	at isa? port 0x3bc
+#lpt0	at isa? port 0x378 irq 7	# standard PC parallel ports
 
-#lms0	at isa? port 0x23c irq 5	# Logitech bus mouse
-#lms1	at isa? port 0x238 irq 5
-#mms0	at isa? port 0x23c irq 5	# Microsoft InPort mouse
-#mms1	at isa? port 0x238 irq 5
+mcclock0 at isa? port 0x70		# time-of-day clock
+attimer0 at isa?
 
-#siop*	at pci? dev ? function ?	# NCR 538XX SCSI controllers
-#scsibus* at siop?
+siop*	at pci? dev ? function ?	# NCR 538XX SCSI controllers
+scsibus* at siop?
 
-#sd*	at scsibus? target ? lun ?	# SCSI disk drives
+sd*	at scsibus? target ? lun ?	# SCSI disk drives
 #st*	at scsibus? target ? lun ?	# SCSI tape drives
-#cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
+cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
 #ch*	at scsibus? target ? lun ?	# SCSI autochangers
 #ss*	at scsibus? target ? lun ?	# SCSI scanners
 #uk*	at scsibus? target ? lun ?	# SCSI unknown
@@ -142,13 +158,36 @@ wdc0	at isa? port 0x1f0 irq 14	# ST506, ESDI, and IDE controllers
 atabus* at ata?
 wd*	at atabus? drive ?
 
+# ATAPI bus support
+atapibus* at atapi?
+
+# ATAPI devices
+# flags have the same meaning as for IDE drives.
+cd*	at atapibus? drive ? flags 0x0000	# ATAPI CD-ROM drives
+#sd*	at atapibus? drive ? flags 0x0000	# ATAPI disk drives
+#st*	at atapibus? drive ? flags 0x0000	# ATAPI tape drives
+#uk*	at atapibus? drive ? flags 0x0000	# ATAPI unknown
+
+# Network devices
+ec0	at isa? port 0x250 iomem 0xd8000 irq 9	# 3Com 3c503 Ethernet
 ne0	at isa? port 0x300 irq 5	# NE[12]000 ethernet cards
-#ipkdbif0 at ne?
+fxp*	at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B
+ne*	at pci? dev ? function ?	# NE2000-compatible Ethernet
+tlp*	at pci? dev ? function ?	# DECchip 21x4x and clones
+
+# MII/PHY support
+ukphy*  at mii? phy ?                   # generic unknown PHYs
 
 #wss0	at isa? port 0x530 irq 10 drq 0	# Windows Sound System
-#spkr0	at pckbd? port 0x61
+#spkr0	at pcppi?
 
 # Joystick driver. Probe is a little strange; add only if you have one.
 #joy0	at isa? port 0x201
 
+#pseudo-device	vnd		
+#pseudo-device	fss			# file system snapshot device
+pseudo-device	md		1
+pseudo-device	loop
+#pseudo-device	bpfilter		# packet filter
+pseudo-device	pty		2	# pseudo-terminals (Sysinst needs two)
 pseudo-device	rnd			# /dev/random and in-kernel generator

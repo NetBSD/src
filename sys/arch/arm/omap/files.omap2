@@ -1,4 +1,4 @@
-#	$NetBSD: files.omap2,v 1.3.14.1 2010/08/17 06:44:05 uebayasi Exp $
+#	$NetBSD: files.omap2,v 1.3.14.2 2010/10/22 07:21:02 uebayasi Exp $
 #
 # Configuration info for Texas Instruments OMAP2/OMAP3 CPU support
 # Based on xscale/files.pxa2x0
@@ -19,9 +19,9 @@ defflag opt_omap.h				OMAP_2420: OMAP2
 defflag opt_omap.h				OMAP_3530: OMAP3
 
 # OBIO just an attach point
-device obio { [addr=-1], [size=0], [intr=-1], [mult=1], [intrbase=-1], [nobyteacc=0]
+device	obio { [addr=-1], [size=0], [intr=-1], [mult=1], [intrbase=-1], [nobyteacc=0]
 	     } : bus_space_generic
-attach obio at mainbus
+attach	obio at mainbus
 file	arch/arm/omap/omap2_obio.c		obio needs-count
 
 # OBIO files
@@ -59,33 +59,38 @@ file	arch/arm/omap/omap2_gptmr.c		omapgptmr
 
 # Watchdog timers
 
-device omapwdt32k: sysmon_wdog
-file arch/arm/omap/omap_wdt.c			omapwdt32k needs-flag
+device	omapwdt32k: sysmon_wdog
+file	arch/arm/omap/omap_wdt.c		omapwdt32k needs-flag
 
-attach omapwdt32k at obio with obiowdt32k
-file arch/arm/omap/obio_wdt.c			obiowdt32k
+attach	omapwdt32k at obio with obiowdt32k
+file	arch/arm/omap/obio_wdt.c		obiowdt32k
 
 # L3 Interconnect
-device L3i { [addr=-1], [size=0], [intr=-1], [mult=1], [nobyteacc=0]
-	     } : bus_space_generic
-attach L3i at mainbus
+device	L3i { [addr=-1], [size=0], [intr=-1], [mult=1], [nobyteacc=0]
+	      } : bus_space_generic
+attach	L3i at mainbus
 file	arch/arm/omap/omap2_l3i.c		omap2 | omap3
 
 # General Purpose Memory Controller
 # XXX some addl. chip select config parms may be desired here (e.g. timing)
 # XXX so far we just use the setup established by boot firmware
-device gpmc { [addr=-1], [size=0], [intr=-1], [mult=1], [nobyteacc=0]
-	     } : bus_space_generic
-attach gpmc at mainbus
+device	gpmc { [addr=-1], [size=0], [intr=-1], [mult=1], [nobyteacc=0]
+	      } : bus_space_generic
+attach	gpmc at mainbus
 file	arch/arm/omap/omap2_gpmc.c		gpmc
+
+# PRCM interface
+device	prcm
+attach	prcm at obio
+file	arch/arm/omap/omap2_prcm.c		prcm needs-flag
 
 # OHCI USB controller
 ##attach	ohci at obio with obioohci:		omapgpio
 attach	ohci at obio with obioohci
 file	arch/arm/omap/obio_ohci.c		obioohci
 
-device omapfb: rasops16, rasops8, wsemuldisplaydev, vcons
-attach omapfb at obio
+device	omapfb: rasops16, rasops8, wsemuldisplaydev, vcons
+attach	omapfb at obio
 file	arch/arm/omap/omapfb.c			omapfb
 
 # these bus space methods are not bus-specific ...

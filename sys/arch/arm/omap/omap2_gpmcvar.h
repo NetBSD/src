@@ -1,4 +1,4 @@
-/*	$NetBSD: omap2_gpmcvar.h,v 1.1.22.1 2010/08/17 06:44:05 uebayasi Exp $	*/
+/*	$NetBSD: omap2_gpmcvar.h,v 1.1.22.2 2010/10/22 07:21:02 uebayasi Exp $	*/
 /*
  * Copyright (c) 2007 Microsoft
  * All rights reserved.
@@ -40,5 +40,11 @@ struct gpmc_attach_args {
 	unsigned int	gpmc_mult;
 	int		gpmc_cs;
 };
+
+struct gpmc_softc;
+
+uint32_t gpmc_register_read(struct gpmc_softc *sc, bus_size_t reg);
+void gpmc_register_write(struct gpmc_softc *sc, bus_size_t reg,
+    const uint32_t data);
 
 #endif /* _OMAP2430GPMCVAR_H */

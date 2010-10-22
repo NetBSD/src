@@ -1,11 +1,10 @@
-# $NetBSD: std.dreamcast,v 1.8 2006/03/17 16:06:51 uebayasi Exp $
+# $NetBSD: std.dreamcast,v 1.8.86.1 2010/10/22 07:21:10 uebayasi Exp $
 #
 # standard, required NetBSD/dreamcast 'options'
 
 machine dreamcast sh3
-include		"conf/std"	# MI standard options
-
-options 	EXEC_SCRIPT	# exec #! scripts
+include		"conf/std"			# MI standard options
+include		"arch/sh3/conf/std.sh3"		# arch standard options
 
 # CPU support
 options 	SH4

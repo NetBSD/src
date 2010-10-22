@@ -1,4 +1,4 @@
-#	$NetBSD: files.bebox,v 1.53.18.1 2010/08/17 06:44:10 uebayasi Exp $
+#	$NetBSD: files.bebox,v 1.53.18.2 2010/10/22 07:21:06 uebayasi Exp $
 #
 # First try for bebox specific configuration info
 #
@@ -91,10 +91,6 @@ file    arch/powerpc/isa/isadma_machdep.c       isa
 device	mcclock: mc146818
 attach	mcclock at isa with mcclock_isa
 file	arch/bebox/isa/mcclock_isa.c		mcclock_isa
-
-# attribute used to represent the "keyboard controller"
-# XXX should be a real device
-define pckbcport { [irq = -1], [port = -1] }
 
 include "dev/pckbport/files.pckbport"
 

@@ -1,0 +1,39 @@
+#	$NetBSD: mk.marvell,v 1.1.4.2 2010/10/22 07:21:15 uebayasi Exp $
+
+SYSTEM_FIRST_OBJ=	marvell_start.o
+SYSTEM_FIRST_SFILE=	${THISARM}/marvell/marvell_start.S
+
+_OSRELEASE!=		${HOST_SH} $S/conf/osrelease.sh
+
+KERNEL_BASE_PHYS=0x00008000
+KERNEL_BASE_VIRT=0xc0008000
+
+.if ${USETOOLS} == "yes"
+MKUBOOTIMAGE=		${TOOLDIR}/bin/${_TOOL_PREFIX}mkubootimage
+.else
+MKUBOOTIMAGE=		mkubootimage
+.endif
+MKUBOOTIMAGEARGS=	-A arm -T kernel
+MKUBOOTIMAGEARGS+=	-a $(KERNEL_BASE_PHYS)
+MKUBOOTIMAGEARGS+=	-n "NetBSD/$(BOARDTYPE) ${_OSRELEASE}"
+MKUBOOTIMAGEARGS_NONE=	${MKUBOOTIMAGEARGS} -C none
+MKUBOOTIMAGEARGS_GZ=	${MKUBOOTIMAGEARGS} -C gz
+
+#
+# These not have expanding buffer over 4Mbyte. (before version 1.1.5)
+# And these cannot handle the endian of entry point. (1.1.4 and older)
+#
+SYSTEM_LD_TAIL_EXTRA+=; \
+	echo ${OBJCOPY} -S -O binary $@ $@.bin; \
+	${OBJCOPY} -S -O binary $@ $@.bin; \
+	echo gzip -c $@.bin > $@.bin.gz; \
+	gzip -c $@.bin > $@.bin.gz; \
+	echo ${MKUBOOTIMAGE} ${MKUBOOTIMAGEARGS_GZ} $@.bin.gz $@.gz.ub; \
+	${MKUBOOTIMAGE} ${MKUBOOTIMAGEARGS_GZ} $@.bin.gz $@.gz.ub; \
+	echo ${MKUBOOTIMAGE} ${MKUBOOTIMAGEARGS_NONE} $@.bin $@.ub; \
+	${MKUBOOTIMAGE} ${MKUBOOTIMAGEARGS_NONE} $@.bin $@.ub; \
+	echo ${MKUBOOTIMAGE} ${MKUBOOTIMAGEARGS_NONE:C/((-a (0x)*)([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2}))/\1 -e \3\7\6\5\4/W} $@.bin $@-old.ub; \
+	${MKUBOOTIMAGE} ${MKUBOOTIMAGEARGS_NONE:C/((-a (0x)*)([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2}))/\1 -e \3\7\6\5\4/W} $@.bin $@-old.ub; \
+	echo
+
+EXTRA_KERNELS+= ${KERNELS:@.KERNEL.@${.KERNEL.}.bin@}

@@ -1,4 +1,4 @@
-/*	$NetBSD: awacs.c,v 1.36 2009/11/05 05:37:30 dyoung Exp $	*/
+/*	$NetBSD: awacs.c,v 1.36.2.1 2010/10/22 07:21:24 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awacs.c,v 1.36 2009/11/05 05:37:30 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awacs.c,v 1.36.2.1 2010/10/22 07:21:24 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/audioio.h>
@@ -529,6 +529,7 @@ awacs_attach(device_t parent, device_t self, void *aux)
 	    &sc->sc_thread, "%s", "awacs") != 0) {
 		printf("awacs: unable to create event kthread");
 	}
+	pmf_device_register(sc->sc_dev, NULL, NULL);
 }
 
 static int
@@ -952,7 +953,7 @@ awacs_query_devinfo(void *h, mixer_devinfo_t *dip)
 	switch (dip->index) {
 
 	case AWACS_OUTPUT_SELECT:
-		dip->mixer_class = AWACS_MONITOR_CLASS;
+		dip->mixer_class = AWACS_OUTPUT_CLASS;
 		strcpy(dip->label.name, AudioNoutput);
 		dip->type = AUDIO_MIXER_SET;
 		dip->prev = dip->next = AUDIO_MIXER_LAST;
@@ -964,11 +965,12 @@ awacs_query_devinfo(void *h, mixer_devinfo_t *dip)
 		return 0;
 
 	case AWACS_VOL_MASTER:
-		dip->mixer_class = AWACS_MONITOR_CLASS;
+		dip->mixer_class = AWACS_OUTPUT_CLASS;
 		strcpy(dip->label.name, AudioNmaster);
 		dip->type = AUDIO_MIXER_VALUE;
 		dip->prev = dip->next = AUDIO_MIXER_LAST;
 		dip->un.v.num_channels = 2;
+		dip->un.v.delta = 16;
 		strcpy(dip->un.v.units.name, AudioNvolume);
 		return 0;
 
@@ -985,7 +987,7 @@ awacs_query_devinfo(void *h, mixer_devinfo_t *dip)
 	case AWACS_BASS:
 		if (sc->sc_sgsmix == NULL)
 			return ENXIO;
-		dip->mixer_class = AWACS_MONITOR_CLASS;
+		dip->mixer_class = AWACS_OUTPUT_CLASS;
 		strcpy(dip->label.name, AudioNbass);
 		dip->type = AUDIO_MIXER_VALUE;
 		dip->prev = dip->next = AUDIO_MIXER_LAST;
@@ -996,7 +998,7 @@ awacs_query_devinfo(void *h, mixer_devinfo_t *dip)
 	case AWACS_TREBLE:
 		if (sc->sc_sgsmix == NULL)
 			return ENXIO;
-		dip->mixer_class = AWACS_MONITOR_CLASS;
+		dip->mixer_class = AWACS_OUTPUT_CLASS;
 		strcpy(dip->label.name, AudioNtreble);
 		dip->type = AUDIO_MIXER_VALUE;
 		dip->prev = dip->next = AUDIO_MIXER_LAST;

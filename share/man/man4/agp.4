@@ -1,4 +1,4 @@
-.\"     $NetBSD: agp.4,v 1.12 2008/04/30 13:10:53 martin Exp $
+.\"     $NetBSD: agp.4,v 1.12.12.1 2010/10/22 07:11:53 uebayasi Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd September 11, 2001
+.Dd October 3, 2010
 .Dt AGP 4
 .Os
 .Sh NAME
@@ -39,16 +39,17 @@
 The
 .Nm
 driver provides machine-independent support for the accelerated
-graphics port (AGP) found on many PC-based and PCI systems.  The AGP
-specification was designed by Intel.
+graphics port (AGP) found on many PC-based and PCI systems.
+The AGP specification was designed by Intel.
 .Pp
 The AGP chipset is positioned between the PCI-Host bridge and the
 graphics accelerator to provide a high-performance dedicated graphics
 bus for moving large amounts of data directly from host memory to the
-graphics accelerator.  The specification currently supports a peak
-bandwidth of 528 MB/s.  AGP uses a Graphics Address Remapping Table
-(GART) to provide a physically-contiguous view of scattered pages in
-host memory for DMA transfers.
+graphics accelerator.
+The specification currently supports a peak bandwidth of 528 MB/s.
+AGP uses a Graphics Address Remapping Table (GART) to provide a
+physically-contiguous view of scattered pages in host memory for
+DMA transfers.
 .Pp
 The
 .Nm
@@ -70,10 +71,11 @@ VIA
 The
 .Nm
 driver also provides an interface to user processes for use by X
-servers.  A user process communicates to the device initially by means
-of
+servers.
+A user process communicates to the device initially by means of
 .Xr ioctl 2
-calls.  The calls supported are:
+calls.
+The calls supported are:
 .Bl -tag -width indent
 .It Dv AGPIOC_INFO
 Get AGP information, setting the members in the
@@ -82,8 +84,8 @@ structure as defined in \*[Lt]sys/agpio.h\*[Gt]:
 .Bd -literal
 typedef struct _agp_info {
         agp_version version;    /* version of the driver        */
-        uint32_t bridge_id;    /* bridge vendor/device         */
-        uint32_t agp_mode;     /* mode info of bridge          */
+        uint32_t bridge_id;     /* bridge vendor/device         */
+        uint32_t agp_mode;      /* mode info of bridge          */
         off_t aper_base;        /* base of aperture             */
         size_t aper_size;       /* size of aperture             */
         size_t pg_total;        /* max pages (swap + system)    */
@@ -101,7 +103,7 @@ Set up AGP, using the members in the
 structure as defined in \*[Lt]sys/agpio.h\*[Gt]:
 .Bd -literal
 typedef struct _agp_setup {
-        uint32_t agp_mode;     /* mode info of bridge          */
+        uint32_t agp_mode;      /* mode info of bridge          */
 } agp_setup;
 .Ed
 .It Dv AGPIOC_ALLOCATE
@@ -112,8 +114,8 @@ structure as defined in \*[Lt]sys/agpio.h\*[Gt]:
 typedef struct _agp_allocate {
         int key;                /* tag of allocation            */
         size_t pg_count;        /* number of pages              */
-        uint32_t type;         /* 0 == normal, other devspec   */
-        paddr_t physical;       /* device specific (some devices
+        uint32_t type;          /* 0 == normal, other devspec   */
+        uint32_t physical;      /* device specific (some devices
                                  * need a phys address of the
                                  * actual page behind the gatt
                                  * table)                       */
@@ -138,7 +140,7 @@ structure as defined in \*[Lt]sys/agpio.h\*[Gt]:
 .Bd -literal
 typedef struct _agp_unbind {
         int key;                /* tag of allocation            */
-        uint32_t priority;     /* priority for paging out      */
+        uint32_t priority;      /* priority for paging out      */
 } agp_unbind;
 .Ed
 .El

@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_tstate.c,v 1.11.2.2 2010/08/17 06:45:59 uebayasi Exp $ */
+/* $NetBSD: acpi_cpu_tstate.c,v 1.11.2.3 2010/10/22 07:21:52 uebayasi Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_tstate.c,v 1.11.2.2 2010/08/17 06:45:59 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_tstate.c,v 1.11.2.3 2010/10/22 07:21:52 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/evcnt.h>
@@ -49,12 +49,14 @@ static ACPI_STATUS	 acpicpu_tstate_tss_add(struct acpicpu_tstate *,
 static ACPI_STATUS	 acpicpu_tstate_ptc(struct acpicpu_softc *);
 static ACPI_STATUS	 acpicpu_tstate_fadt(struct acpicpu_softc *);
 static ACPI_STATUS	 acpicpu_tstate_change(struct acpicpu_softc *);
+static void		 acpicpu_tstate_reset(struct acpicpu_softc *);
 
 void
 acpicpu_tstate_attach(device_t self)
 {
 	struct acpicpu_softc *sc = device_private(self);
 	const char *str;
+	ACPI_HANDLE tmp;
 	ACPI_STATUS rv;
 
 	/*
@@ -82,7 +84,12 @@ acpicpu_tstate_attach(device_t self)
 	 * be absent in some systems, even though it is
 	 * required by ACPI 3.0 along with _TSS and _PTC.
 	 */
-	(void)acpicpu_tstate_change(sc);
+	rv = AcpiGetHandle(sc->sc_node->ad_handle, "_TPC", &tmp);
+
+	if (ACPI_FAILURE(rv)) {
+		aprint_debug_dev(self, "_TPC missing\n");
+		rv = AE_OK;
+	}
 
 out:
 	if (ACPI_FAILURE(rv)) {
@@ -101,6 +108,7 @@ out:
 
 	sc->sc_flags |= ACPICPU_FLAG_T;
 
+	acpicpu_tstate_reset(sc);
 	acpicpu_tstate_attach_evcnt(sc);
 	acpicpu_tstate_attach_print(sc);
 }
@@ -190,16 +198,20 @@ acpicpu_tstate_detach_evcnt(struct acpicpu_softc *sc)
 	}
 }
 
-int
+void
 acpicpu_tstate_start(device_t self)
 {
-
-	return 0;
+	/* Nothing. */
 }
 
 bool
 acpicpu_tstate_suspend(device_t self)
 {
+	struct acpicpu_softc *sc = device_private(self);
+
+	mutex_enter(&sc->sc_mtx);
+	acpicpu_tstate_reset(sc);
+	mutex_exit(&sc->sc_mtx);
 
 	return true;
 }
@@ -207,10 +219,6 @@ acpicpu_tstate_suspend(device_t self)
 bool
 acpicpu_tstate_resume(device_t self)
 {
-	struct acpicpu_softc *sc = device_private(self);
-
-	if ((sc->sc_flags & ACPICPU_FLAG_T_FADT) == 0)
-		acpicpu_tstate_callback(self);
 
 	return true;
 }
@@ -576,8 +584,7 @@ acpicpu_tstate_change(struct acpicpu_softc *sc)
 	ACPI_INTEGER val;
 	ACPI_STATUS rv;
 
-	sc->sc_tstate_max = 0;
-	sc->sc_tstate_min = sc->sc_tstate_count - 1;
+	acpicpu_tstate_reset(sc);
 
 	/*
 	 * Evaluate the available T-state window:
@@ -592,14 +599,14 @@ acpicpu_tstate_change(struct acpicpu_softc *sc)
 	 */
 	rv = acpi_eval_integer(sc->sc_node->ad_handle, "_TPC", &val);
 
-	if (ACPI_FAILURE(rv))
-		return rv;
-
-	if (val < sc->sc_tstate_count) {
+	if (ACPI_SUCCESS(rv) && val < sc->sc_tstate_count) {
 
 		if (sc->sc_tstate[val].ts_percent != 0)
 			sc->sc_tstate_max = val;
 	}
+
+	if (sc->sc_passive != true)
+		return AE_OK;
 
 	rv = acpi_eval_integer(sc->sc_node->ad_handle, "_TDL", &val);
 
@@ -611,6 +618,14 @@ acpicpu_tstate_change(struct acpicpu_softc *sc)
 	}
 
 	return AE_OK;
+}
+
+static void
+acpicpu_tstate_reset(struct acpicpu_softc *sc)
+{
+
+	sc->sc_tstate_max = 0;
+	sc->sc_tstate_min = sc->sc_tstate_count - 1;
 }
 
 int
@@ -667,15 +682,6 @@ acpicpu_tstate_get(struct acpicpu_softc *sc, uint32_t *percent)
 
 			if (sc->sc_tstate[i].ts_percent == 0)
 				continue;
-
-			/*
-			 * As the status field may be zero, compare
-			 * against the control field value as well.
-			 */
-			if (val == sc->sc_tstate[i].ts_control) {
-				ts = &sc->sc_tstate[i];
-				break;
-			}
 
 			if (val == sc->sc_tstate[i].ts_status) {
 				ts = &sc->sc_tstate[i];
@@ -734,6 +740,11 @@ acpicpu_tstate_set(struct acpicpu_softc *sc, uint32_t percent)
 	}
 
 	mutex_enter(&sc->sc_mtx);
+
+	if (sc->sc_tstate_current == percent) {
+		mutex_exit(&sc->sc_mtx);
+		return 0;
+	}
 
 	for (i = sc->sc_tstate_max; i <= sc->sc_tstate_min; i++) {
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.24 2007/03/04 06:00:47 christos Exp $ */
+/*	$NetBSD: boot.c,v 1.24.64.1 2010/10/22 07:21:32 uebayasi Exp $ */
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -42,6 +42,7 @@
 
 #include <machine/promlib.h>
 #include <sparc/stand/common/promdev.h>
+#include <sparc/stand/common/isfloppy.h>
 
 #include "bootinfo.h"
 
@@ -170,6 +171,7 @@ loadk(char *kernel, u_long *marks)
 	vaddr_t va;
 	paddr_t pa;
 	u_long size;
+	int flags = LOAD_KERNEL;
 
 	if ((fd = open(kernel, 0)) < 0)
 		return (errno ? errno : ENOENT);
@@ -224,8 +226,11 @@ loadk(char *kernel, u_long *marks)
 		loadaddrmask = 0x07ffffffUL;
 	}
 
+	if (bootdev_isfloppy(prom_bootdevice))
+		flags &= ~LOAD_BACKWARDS;
+
 	marks[MARK_START] = 0;
-	error = fdloadfile(fd, marks, LOAD_KERNEL);
+	error = fdloadfile(fd, marks, flags);
 out:
 	close(fd);
 	return (error);

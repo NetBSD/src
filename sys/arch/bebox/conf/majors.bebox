@@ -1,4 +1,4 @@
-#	$NetBSD: majors.bebox,v 1.21.6.1 2010/08/17 06:44:11 uebayasi Exp $
+#	$NetBSD: majors.bebox,v 1.21.6.2 2010/10/22 07:21:07 uebayasi Exp $
 #
 # Device majors for bebox
 #
@@ -32,9 +32,9 @@ device-major	md		char 24  block 17	md
 device-major	joy		char 26			joy
 device-major	spkr		char 27			spkr
 
-device-major	mms		char 35			mms
-device-major	lms		char 36			lms
-
+# next two are obsolete
+#device-major	omms		char 35			omms
+#device-major	olms		char 36			olms
 device-major	cy		char 38			cy
 device-major	mcd		char 39  block 7	mcd
 device-major	tun		char 40			tun
@@ -60,6 +60,7 @@ device-major	cgd		char 60  block 19	cgd
 device-major	ksyms		char 61			ksyms
 device-major	wsfont		char 62			wsfont
 device-major	pci		char 63			pci
+device-major	bktr		char 71			bktr
 
 device-major	nsmb		char 98			nsmb
 

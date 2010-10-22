@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.141.2.2 2010/08/17 06:44:54 uebayasi Exp $	*/
+/*	$NetBSD: machdep.c,v 1.141.2.3 2010/10/22 07:21:26 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.141.2.2 2010/08/17 06:44:54 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.141.2.3 2010/10/22 07:21:26 uebayasi Exp $");
 
 #include "opt_ddb.h"
 #include "opt_m060sp.h"
@@ -107,6 +107,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.141.2.2 2010/08/17 06:44:54 uebayasi E
 #include <sys/vnode.h>
 #include <sys/syscallargs.h>
 #include <sys/ksyms.h>
+#include <sys/module.h>
 #include <sys/device.h>
 
 #include "ksyms.h"
@@ -1170,6 +1171,16 @@ cpu_exec_aout_makecmds(struct lwp *l, struct exec_package *epp)
 
     return ENOEXEC;
 }
+
+#ifdef MODULAR
+/*
+ * Push any modules loaded by the bootloader etc.
+ */
+void
+module_init_md(void)
+{
+}
+#endif
 
 const uint16_t ipl2psl_table[NIPL] = {
 	[IPL_NONE]       = PSL_S | PSL_IPL0,

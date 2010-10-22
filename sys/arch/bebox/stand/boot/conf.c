@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.6 2005/12/11 12:17:04 christos Exp $	*/
+/*	$NetBSD: conf.c,v 1.6.98.1 2010/10/22 07:21:08 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -34,17 +34,29 @@
 #include <sys/param.h>
 #include <lib/libsa/stand.h>
 
-int fdstrategy(void *, int, daddr_t, size_t, void *, size_t *);
-int fdopen(struct open_file *, ...);
-int fdclose(struct open_file *);
+extern int fdstrategy(void *, int, daddr_t, size_t, void *, size_t *);
+extern int fdopen(struct open_file *, ...);
+extern int fdclose(struct open_file *);
 
-int instrategy(void *, int, daddr_t, size_t, void *, size_t *);
-int inopen(struct open_file *, ...);
-int inclose(struct open_file *);
+extern int instrategy(void *, int, daddr_t, size_t, void *, size_t *);
+extern int inopen(struct open_file *, ...);
+extern int inclose(struct open_file *);
+
+extern int sdstrategy(void *, int, daddr_t, size_t, void *, size_t *);
+extern int sdopen(struct open_file *, ...);
+extern int sdclose(struct open_file *);
+
+extern int wdstrategy(void *, int, daddr_t, size_t, void *, size_t *);
+extern int wdopen(struct open_file *, ...);
+extern int wdclose(struct open_file *);
 
 struct devsw devsw[] = {
 	{ "fd", fdstrategy, fdopen, fdclose, noioctl },
-	{ "in", instrategy, inopen, inclose, noioctl },
+	{ "sd", sdstrategy, sdopen, sdclose, noioctl },
+	{ "wd", wdstrategy, wdopen, wdclose, noioctl },
+
+	{ NULL, NULL,       NULL,   NULL,    NULL },
 };
+struct devsw pseudo_devsw = { "in", instrategy, inopen, inclose, noioctl };
 
 int ndevs = sizeof(devsw) / sizeof(devsw[0]);

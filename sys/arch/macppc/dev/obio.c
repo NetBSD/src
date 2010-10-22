@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.29 2009/03/14 15:36:09 dsl Exp $	*/
+/*	$NetBSD: obio.c,v 1.29.2.1 2010/10/22 07:21:24 uebayasi Exp $	*/
 
 /*-
  * Copyright (C) 1998	Internet Research Institute, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.29 2009/03/14 15:36:09 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.29.2.1 2010/10/22 07:21:24 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,6 +48,8 @@ __KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.29 2009/03/14 15:36:09 dsl Exp $");
 #include <machine/autoconf.h>
 
 #include <macppc/dev/obiovar.h>
+
+#include <powerpc/cpu.h>
 
 #include "opt_obio.h"
 
@@ -328,9 +330,9 @@ static void
 obio_setup_gpios(struct obio_softc *sc, int node)
 {
 	uint32_t reg[6];
-	struct sysctlnode *sysctl_node = NULL;
+	struct sysctlnode *sysctl_node;
 	char name[32];
-	int gpio_base, child;
+	int gpio_base, child, use_dfs;
 
 	if (of_compatible(sc->sc_node, keylargo) == -1)
 		return;
@@ -342,6 +344,7 @@ obio_setup_gpios(struct obio_softc *sc, int node)
 	DPRINTF("gpio_base: %02x\n", gpio_base);
 
 	/* now look for voltage and bus speed gpios */
+	use_dfs = 0;
 	for (child = OF_child(node); child; child = OF_peer(child)) {
 
 		if (OF_getprop(child, "name", name, sizeof(name)) < 1)
@@ -358,14 +361,21 @@ obio_setup_gpios(struct obio_softc *sc, int node)
 			DPRINTF("found voltage_gpio at %02x\n", reg[0]);
 			sc->sc_voltage = gpio_base + reg[0];
 		}
+		if (strcmp(name, "cpu-vcore-select") == 0) {
+			DPRINTF("found cpu-vcore-select at %02x\n", reg[0]);
+			sc->sc_voltage = gpio_base + reg[0];
+			/* frequency gpio is not needed, we use cpu's DFS */
+			use_dfs = 1;
+		}
 	}
 
-	if ((sc->sc_voltage < 0) || (sc->sc_busspeed < 0))
+	if ((sc->sc_voltage < 0) || (sc->sc_busspeed < 0 && !use_dfs))
 		return;
 
 	printf("%s: enabling Intrepid CPU speed control\n",
 	    sc->sc_dev.dv_xname);
 
+	sysctl_node = NULL;
 	sysctl_createv(NULL, 0, NULL, 
 	    (const struct sysctlnode **)&sysctl_node, 
 	    CTLFLAG_READWRITE | CTLFLAG_OWNDESC | CTLFLAG_IMMEDIATE,
@@ -380,15 +390,40 @@ static void
 obio_set_cpu_speed(struct obio_softc *sc, int fast)
 {
 
-	if ((sc->sc_voltage < 0) || (sc->sc_busspeed < 0))
+	if (sc->sc_voltage < 0)
 		return;
 
-	if (fast) {
-		bus_space_write_1(sc->sc_tag, sc->sc_bh, sc->sc_voltage, 5);
-		bus_space_write_1(sc->sc_tag, sc->sc_bh, sc->sc_busspeed, 5);
-	} else {
-		bus_space_write_1(sc->sc_tag, sc->sc_bh, sc->sc_busspeed, 4);
-		bus_space_write_1(sc->sc_tag, sc->sc_bh, sc->sc_voltage, 4);
+	if (sc->sc_busspeed >= 0) {
+		/* set voltage and speed via gpio */
+		if (fast) {
+			bus_space_write_1(sc->sc_tag, sc->sc_bh,
+			    sc->sc_voltage, 5);
+			bus_space_write_1(sc->sc_tag, sc->sc_bh,
+			    sc->sc_busspeed, 5);
+		} else {
+			bus_space_write_1(sc->sc_tag, sc->sc_bh,
+			    sc->sc_busspeed, 4);
+			bus_space_write_1(sc->sc_tag, sc->sc_bh,
+			    sc->sc_voltage, 4);
+		}
+	}
+	else {
+		/* set voltage via gpio and speed via the 7447A's DFS bit */
+		if (fast) {
+			bus_space_write_1(sc->sc_tag, sc->sc_bh,
+			    sc->sc_voltage, 5);
+			DELAY(1000);
+		}
+
+		/* set DFS for all cpus */
+		cpu_set_dfs(fast ? 1 : 2);
+		DELAY(100);
+
+		if (!fast) {
+			bus_space_write_1(sc->sc_tag, sc->sc_bh,
+			    sc->sc_voltage, 4);
+			DELAY(1000);
+		}
 	}
 }
 
@@ -396,11 +431,16 @@ static int
 obio_get_cpu_speed(struct obio_softc *sc)
 {
 	
-	if ((sc->sc_voltage < 0) || (sc->sc_busspeed < 0))
+	if (sc->sc_voltage < 0)
 		return 0;
 
-	if (bus_space_read_1(sc->sc_tag, sc->sc_bh, sc->sc_busspeed) & 1)
+	if (sc->sc_busspeed >= 0) {
+		if (bus_space_read_1(sc->sc_tag, sc->sc_bh, sc->sc_busspeed)
+		    & 1)
 		return 1;
+	}
+	else
+		return cpu_get_dfs() == 1;
 
 	return 0;
 }
@@ -421,7 +461,7 @@ sysctl_cpuspeed_temp(SYSCTLFN_ARGS)
 		node.sysctl_data = &speed;
 		if (sysctl_lookup(SYSCTLFN_CALL(&node)) == 0) {
 			int new_reg;
-			
+
 			new_reg = (max(0, min(1, node.sysctl_idata)));
 			obio_set_cpu_speed(sc, new_reg);
 			return 0;
@@ -434,4 +474,3 @@ sysctl_cpuspeed_temp(SYSCTLFN_ARGS)
 }
 
 #endif /* OBIO_SPEEDCONTROL */
-

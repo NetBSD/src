@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu.h,v 1.17.2.2 2010/08/17 06:45:59 uebayasi Exp $ */
+/* $NetBSD: acpi_cpu.h,v 1.17.2.3 2010/10/22 07:21:52 uebayasi Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -100,13 +100,18 @@
 #define ACPICPU_FLAG_C_BM	 __BIT(6)	/* Bus master control        */
 #define ACPICPU_FLAG_C_BM_STS	 __BIT(7)	/* Bus master check required */
 #define ACPICPU_FLAG_C_ARB	 __BIT(8)	/* Bus master arbitration    */
-#define ACPICPU_FLAG_C_C1E	 __BIT(9)	/* AMD C1E detected	     */
+#define ACPICPU_FLAG_C_TSC	 __BIT(9)	/* TSC broken, > C1, Px, Tx  */
+#define ACPICPU_FLAG_C_APIC	 __BIT(10)	/* APIC timer broken, > C1   */
+#define ACPICPU_FLAG_C_C1E	 __BIT(11)	/* AMD C1E detected	     */
 
-#define ACPICPU_FLAG_P_FFH	 __BIT(10)	/* Native P-states           */
-#define ACPICPU_FLAG_P_XPSS	 __BIT(11)	/* Microsoft XPSS in use     */
+#define ACPICPU_FLAG_P_FFH	 __BIT(12)	/* Native P-states           */
+#define ACPICPU_FLAG_P_HW	 __BIT(13)	/* HW coordination supported */
+#define ACPICPU_FLAG_P_XPSS	 __BIT(14)	/* Microsoft XPSS in use     */
+#define ACPICPU_FLAG_P_TURBO	 __BIT(15)	/* Turbo Boost / Turbo Core  */
+#define ACPICPU_FLAG_P_FIDVID	 __BIT(16)	/* AMD "FID/VID algorithm"   */
 
-#define ACPICPU_FLAG_T_FFH	 __BIT(12)	/* Native throttling         */
-#define ACPICPU_FLAG_T_FADT	 __BIT(13)	/* Throttling with FADT      */
+#define ACPICPU_FLAG_T_FFH	 __BIT(17)	/* Native throttling         */
+#define ACPICPU_FLAG_T_FADT	 __BIT(18)	/* Throttling with FADT      */
 
 /*
  * This is AML_RESOURCE_GENERIC_REGISTER,
@@ -185,6 +190,7 @@ struct acpicpu_softc {
 	uint32_t		 sc_pstate_current;
 	uint32_t		 sc_pstate_count;
 	uint32_t		 sc_pstate_max;
+	uint32_t		 sc_pstate_min;
 
 	struct acpicpu_tstate	*sc_tstate;
 	struct acpicpu_reg	 sc_tstate_control;
@@ -195,19 +201,16 @@ struct acpicpu_softc {
 	uint32_t		 sc_tstate_min;
 
 	kmutex_t		 sc_mtx;
-	bus_space_tag_t		 sc_iot;
-	bus_space_handle_t	 sc_ioh;
-
 	uint32_t		 sc_cap;
 	uint32_t		 sc_flags;
 	cpuid_t			 sc_cpuid;
 	bool			 sc_cold;
-	bool			 sc_mapped;
+	bool			 sc_passive;
 };
 
 void		acpicpu_cstate_attach(device_t);
 int		acpicpu_cstate_detach(device_t);
-int		acpicpu_cstate_start(device_t);
+void		acpicpu_cstate_start(device_t);
 bool		acpicpu_cstate_suspend(device_t);
 bool		acpicpu_cstate_resume(device_t);
 void		acpicpu_cstate_callback(void *);
@@ -215,7 +218,7 @@ void		acpicpu_cstate_idle(void);
 
 void		acpicpu_pstate_attach(device_t);
 int		acpicpu_pstate_detach(device_t);
-int		acpicpu_pstate_start(device_t);
+void		acpicpu_pstate_start(device_t);
 bool		acpicpu_pstate_suspend(device_t);
 bool		acpicpu_pstate_resume(device_t);
 void		acpicpu_pstate_callback(void *);
@@ -224,7 +227,7 @@ int		acpicpu_pstate_set(struct acpicpu_softc *, uint32_t);
 
 void		acpicpu_tstate_attach(device_t);
 int		acpicpu_tstate_detach(device_t);
-int		acpicpu_tstate_start(device_t);
+void		acpicpu_tstate_start(device_t);
 bool		acpicpu_tstate_suspend(device_t);
 bool		acpicpu_tstate_resume(device_t);
 void		acpicpu_tstate_callback(void *);
@@ -234,11 +237,12 @@ int		acpicpu_tstate_set(struct acpicpu_softc *, uint32_t);
 uint32_t	acpicpu_md_cap(void);
 uint32_t	acpicpu_md_quirks(void);
 uint32_t	acpicpu_md_cpus_running(void);
-int		acpicpu_md_idle_start(void);
+int		acpicpu_md_idle_start(struct acpicpu_softc *);
 int		acpicpu_md_idle_stop(void);
 void		acpicpu_md_idle_enter(int, int);
 int		acpicpu_md_pstate_start(void);
 int		acpicpu_md_pstate_stop(void);
+int		acpicpu_md_pstate_pss(struct acpicpu_softc *);
 int		acpicpu_md_pstate_get(struct acpicpu_softc *, uint32_t *);
 int		acpicpu_md_pstate_set(struct acpicpu_pstate *);
 int		acpicpu_md_tstate_get(struct acpicpu_softc *, uint32_t *);

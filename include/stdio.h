@@ -1,4 +1,4 @@
-/*	$NetBSD: stdio.h,v 1.75.2.1 2010/04/30 14:36:18 uebayasi Exp $	*/
+/*	$NetBSD: stdio.h,v 1.75.2.2 2010/10/22 07:11:52 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -492,6 +492,13 @@ static __inline int __sputc(int _c, FILE *_p) {
 #endif /* !_REENTRANT && !_PTHREADS */
 #endif /* !_ANSI_SOURCE */
 
+#if (_POSIX_C_SOURCE - 0) >= 200809L || defined(_NETBSD_SOURCE)
+int	 vdprintf(int, const char * __restrict, _BSD_VA_LIST_)
+		__printflike(2, 0);
+int	 dprintf(int, const char * __restrict, ...)
+		__printflike(2, 3);
+#endif /* (_POSIX_C_SOURCE - 0) >= 200809L || defined(_NETBSD_SOURCE) */
+
 #if (_POSIX_C_SOURCE - 0) >= 199506L || (_XOPEN_SOURCE - 0) >= 500 || \
     defined(_REENTRANT) || defined(_NETBSD_SOURCE)
 #define getc_unlocked(fp)	__sgetc(fp)
@@ -500,6 +507,11 @@ static __inline int __sputc(int _c, FILE *_p) {
 #define getchar_unlocked()	getc_unlocked(stdin)
 #define putchar_unlocked(x)	putc_unlocked(x, stdout)
 #endif /* _POSIX_C_SOURCE >= 199506 || _XOPEN_SOURCE >= 500 || _REENTRANT... */
+
+#if (_POSIX_C_SOURCE - 0) >= 200809L || (_XOPEN_SOURCE - 0) >= 700 || \
+    defined(_NETBSD_SOURCE)
+FILE *fmemopen(void * __restrict, size_t, const char * __restrict);
+#endif
 
 #if _FORTIFY_SOURCE > 0
 #include <ssp/stdio.h>

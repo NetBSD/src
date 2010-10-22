@@ -1,4 +1,4 @@
-#	$NetBSD: files.evbarm,v 1.21 2008/03/17 09:30:02 kiyohara Exp $
+#	$NetBSD: files.evbarm,v 1.21.24.1 2010/10/22 07:21:15 uebayasi Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -35,6 +35,7 @@ include "dev/isa/files.isa"			# ISA devices
 include "dev/pci/files.pci"			# PCI devices
 include "dev/cardbus/files.cardbus"		#   and CardBus devices
 include "dev/pcmcia/files.pcmcia"		# PCMCIA devices
+include "dev/sdmmc/files.sdmmc"			# SD/MMC devices
 include "dev/scsipi/files.scsipi"		# SCSI devices
 include "dev/usb/files.usb"			# USB devices
 

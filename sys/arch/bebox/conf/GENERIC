@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.116.2.2 2010/08/17 06:44:10 uebayasi Exp $
+# $NetBSD: GENERIC,v 1.116.2.3 2010/10/22 07:21:06 uebayasi Exp $
 #
 # GENERIC machine description file
 #
@@ -22,13 +22,11 @@ include 	"arch/bebox/conf/std.bebox"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.116.2.2 $"
+#ident 		"GENERIC-$Revision: 1.116.2.3 $"
 
 maxusers	32
 
 # Standard system options
-
-options 	INSECURE	# disable kernel security levels - X needs this
 
 options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 options 	NTP		# NTP phase/frequency locked loop
@@ -151,7 +149,6 @@ options 	IPFILTER_COMPAT # Compat for IP-Filter
 options 	PCIVERBOSE	# verbose PCI device autoconfig messages
 options 	MIIVERBOSE	# verbose PHY autoconfig messages
 #options 	PCI_CONFIG_DUMP	# verbosely dump PCI config space
-options 	PCI_NETBSD_CONFIGURE
 options 	SCSIVERBOSE	# human readable SCSI error messages
 
 #options 	NFS_BOOT_BOOTPARAM,NFS_BOOT_BOOTP
@@ -187,7 +184,7 @@ pckbc0		at isa?			# pc keyboard controller
 pckbd*		at pckbc?		# PC keyboard
 pms*		at pckbc?		# PS/2 mouse for wsmouse
 #options	PMS_DISABLE_POWERHOOK	# Disable PS/2 reset on resume
-options		PMS_SYNAPTICS_TOUCHPAD	# Enable support for Synaptics Touchpads
+#options 	PMS_SYNAPTICS_TOUCHPAD	# Enable support for Synaptics Touchpads
 genfb*		at pci? dev ? function ?
 options 	WSFB_FAKE_VGA_FB
 vga*		at pci? dev ? function ?
@@ -261,6 +258,11 @@ tlp*	at pci? dev ? function ?	# DECchip 21x4x and clones
 
 # MII/PHY support
 ukphy*  at mii? phy ?                   # generic unknown PHYs
+
+# TV cards
+
+# Brooktree 848/849/878/879 based TV cards
+bktr*	at pci? dev ? function ?	# Brooktree video/audio capture/tuner
 
 
 # Pseudo-Devices

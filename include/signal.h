@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.51.4.1 2010/08/17 06:40:01 uebayasi Exp $	*/
+/*	$NetBSD: signal.h,v 1.51.4.2 2010/10/22 07:11:52 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -180,6 +180,7 @@ void	(*sigset (int, void (*)(int)))(int);
     defined(_NETBSD_SOURCE)
 int	sigwait	(const sigset_t * __restrict, int * __restrict);
 int	sigwaitinfo(const sigset_t * __restrict, siginfo_t * __restrict);
+void	psiginfo(const siginfo_t *, const char *);
 
 #ifndef __LIBC12_SOURCE__
 struct timespec;
@@ -197,7 +198,7 @@ int	__sigtimedwait(const sigset_t * __restrict,
 #ifndef __PSIGNAL_DECLARED
 #define __PSIGNAL_DECLARED
 /* also in unistd.h */
-void	psignal(unsigned int, const char *);
+void	psignal(int, const char *);
 #endif /* __PSIGNAL_DECLARED */
 int	sigblock(int);
 int	sigsetmask(int);

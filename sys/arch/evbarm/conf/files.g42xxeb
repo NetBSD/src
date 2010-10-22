@@ -1,4 +1,4 @@
-#	$NetBSD: files.g42xxeb,v 1.5.24.1 2010/04/30 14:39:15 uebayasi Exp $
+#	$NetBSD: files.g42xxeb,v 1.5.24.2 2010/10/22 07:21:15 uebayasi Exp $
 #
 # Genetec corp. G4255EB evaluation board configuration info
 #
@@ -7,9 +7,6 @@ file	arch/evbarm/g42xxeb/g42xxeb_machdep.c
 
 # CPU support and integrated peripherals
 include "arch/arm/xscale/files.pxa2x0"
-
-# Machine-independent SD/MMC drivers
-include "dev/sdmmc/files.sdmmc"
 
 # G4250EBX on-board devices (including CPLD)
 device	obio {[addr=-1], [intr=-1]}

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sm_gxio.c,v 1.7.2.1 2010/04/30 14:39:15 uebayasi Exp $ */
+/*	$NetBSD: if_sm_gxio.c,v 1.7.2.2 2010/10/22 07:21:16 uebayasi Exp $ */
 /*
  * Copyright (C) 2005, 2006 WIDE Project and SOUM Corporation.
  * All rights reserved.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sm_gxio.c,v 1.7.2.1 2010/04/30 14:39:15 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sm_gxio.c,v 1.7.2.2 2010/10/22 07:21:16 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -100,7 +100,7 @@ static int ether_serial_digit = 1;
 
 struct sm_gxio_softc {
 	struct	smc91cxx_softc sc_smc;
-	void	*sc_ih;	
+	void	*sc_ih;
 };
 
 CFATTACH_DECL(sm_gxio, sizeof(struct sm_gxio_softc),

@@ -1,4 +1,4 @@
-/*	$NetBSD: dirent.h,v 1.33 2009/02/24 18:41:40 christos Exp $	*/
+/*	$NetBSD: dirent.h,v 1.33.2.1 2010/10/22 07:11:52 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -74,6 +74,8 @@ struct _dirdesc {
 #define DTF_NODUP	0x0002	/* don't return duplicate names */
 #define DTF_REWIND	0x0004	/* rewind after reading union stack */
 #define __DTF_READALL	0x0008	/* everything has been read */
+#define __DTF_RETRY_ON_BADCOOKIE 0x0001	/* retry on EINVAL
+					(only valid with __DTF_READALL) */
 
 #include <sys/null.h>
 

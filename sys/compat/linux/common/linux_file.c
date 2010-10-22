@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file.c,v 1.98.2.1 2010/08/17 06:45:48 uebayasi Exp $	*/
+/*	$NetBSD: linux_file.c,v 1.98.2.2 2010/10/22 07:21:47 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.98.2.1 2010/08/17 06:45:48 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.98.2.2 2010/10/22 07:21:47 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,6 +101,7 @@ linux_to_bsd_ioflags(int lflags)
 	res |= cvtto_bsd_mask(lflags, LINUX_O_SYNC, O_FSYNC);
 	res |= cvtto_bsd_mask(lflags, LINUX_FASYNC, O_ASYNC);
 	res |= cvtto_bsd_mask(lflags, LINUX_O_APPEND, O_APPEND);
+	res |= cvtto_bsd_mask(lflags, LINUX_O_DIRECTORY, O_DIRECTORY);
 
 	return res;
 }
@@ -121,6 +122,7 @@ bsd_to_linux_ioflags(int bflags)
 	res |= cvtto_linux_mask(bflags, O_FSYNC, LINUX_O_SYNC);
 	res |= cvtto_linux_mask(bflags, O_ASYNC, LINUX_FASYNC);
 	res |= cvtto_linux_mask(bflags, O_APPEND, LINUX_O_APPEND);
+	res |= cvtto_linux_mask(bflags, O_DIRECTORY, LINUX_O_DIRECTORY);
 
 	return res;
 }
@@ -632,4 +634,3 @@ LINUX_NOT_SUPPORTED(linux_sys_flistxattr)
 LINUX_NOT_SUPPORTED(linux_sys_removexattr)
 LINUX_NOT_SUPPORTED(linux_sys_lremovexattr)
 LINUX_NOT_SUPPORTED(linux_sys_fremovexattr)
-

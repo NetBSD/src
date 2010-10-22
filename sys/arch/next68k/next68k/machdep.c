@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.97.2.1 2010/04/30 14:39:40 uebayasi Exp $	*/
+/*	$NetBSD: machdep.c,v 1.97.2.2 2010/10/22 07:21:28 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1998 Darrin B. Jewell
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.97.2.1 2010/04/30 14:39:40 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.97.2.2 2010/10/22 07:21:28 uebayasi Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -108,6 +108,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.97.2.1 2010/04/30 14:39:40 uebayasi Ex
 #include <sys/vnode.h>
 #include <sys/syscallargs.h>
 #include <sys/ksyms.h>
+#include <sys/module.h>
 #ifdef KGDB
 #include <sys/kgdb.h>
 #endif
@@ -936,3 +937,13 @@ cpu_exec_aout_makecmds(struct lwp *l, struct exec_package *epp)
 {
 	return ENOEXEC;
 }
+
+#ifdef MODULAR
+/*
+ * Push any modules loaded by the bootloader etc.
+ */
+void
+module_init_md(void)
+{
+}
+#endif

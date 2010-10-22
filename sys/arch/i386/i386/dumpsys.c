@@ -1,4 +1,4 @@
-/*	$NetBSD: dumpsys.c,v 1.8.2.2 2010/04/30 14:39:29 uebayasi Exp $	*/
+/*	$NetBSD: dumpsys.c,v 1.8.2.3 2010/10/22 07:21:20 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dumpsys.c,v 1.8.2.2 2010/04/30 14:39:29 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dumpsys.c,v 1.8.2.3 2010/10/22 07:21:20 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -608,7 +608,6 @@ cpu_dump_mempagecnt(void)
 static int
 cpu_dump(void)
 {
-	int (*dump)(dev_t, daddr_t, void *, size_t);
 	kcore_seg_t seg;
 	cpu_kcore_hdr_t cpuhdr;
 	const struct bdevsw *bdev;
@@ -616,7 +615,6 @@ cpu_dump(void)
 	bdev = bdevsw_lookup(dumpdev);
 	if (bdev == NULL)
 		return (ENXIO);
-	dump = bdev->d_dump;
 
 	/*
 	 * Generate a segment header.
@@ -629,6 +627,8 @@ cpu_dump(void)
 	 * Add the machine-dependent header info.
 	 */
 	cpuhdr.pdppaddr = PDPpaddr;
+	if (i386_use_pae == 1)
+		cpuhdr.pdppaddr |= I386_KCORE_PAE;
 	cpuhdr.nmemsegs = dump_nmemsegs;
 	(void)dump_header_addbytes(&cpuhdr, ALIGN(sizeof(cpuhdr)));
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.67.2.1 2010/04/30 14:39:43 uebayasi Exp $	*/
+/*	$NetBSD: cpu.h,v 1.67.2.2 2010/10/22 07:21:29 uebayasi Exp $	*/
 
 /*
  * Copyright (C) 1999 Wolfgang Solfrank.
@@ -353,6 +353,8 @@ extern char cpu_model[];
 struct cpu_info *cpu_attach_common(struct device *, int);
 void cpu_setup(struct device *, struct cpu_info *);
 void cpu_identify(char *, size_t);
+int cpu_get_dfs(void);
+void cpu_set_dfs(int);
 void delay (unsigned int);
 void cpu_probe_cache(void);
 void dcache_flush_page(vaddr_t);

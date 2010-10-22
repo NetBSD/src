@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.148.2.2 2010/08/17 06:45:58 uebayasi Exp $	*/
+/*	$NetBSD: acpi.c,v 1.148.2.3 2010/10/22 07:21:51 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.148.2.2 2010/08/17 06:45:58 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.148.2.3 2010/10/22 07:21:51 uebayasi Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -154,7 +154,8 @@ static int acpi_dbgr = 0x00;
  * subsystems that ACPI supercedes) when ACPI is active.
  */
 int	acpi_active;
-int	acpi_force_load;
+
+int	acpi_force_load = 0;
 int	acpi_suspended = 0;
 int	acpi_verbose_loaded = 0;
 
@@ -183,10 +184,7 @@ static const char * const acpi_ignored_ids[] = {
 	"PNP0200",	/* AT DMA controller is handled internally */
 	"PNP0A??",	/* PCI Busses are handled internally */
 	"PNP0B00",	/* AT RTC is handled internally */
-	"PNP0C0B",	/* No need for "ACPI fan" driver */
 	"PNP0C0F",	/* ACPI PCI link devices are handled internally */
-	"IFX0102",	/* No driver for Infineon TPM */
-	"INT0800",	/* No driver for Intel Firmware Hub device */
 #endif
 #if defined(x86_64)
 	"PNP0C04",	/* FPU is handled internally */
@@ -331,6 +329,13 @@ acpi_probe(void)
 			rsdt->AslCompilerId,
 		        rsdt->AslCompilerRevision);
 		aprint_normal("ACPI: Not used. Set acpi_force_load to use.\n");
+		acpi_unmap_rsdt(rsdt);
+		AcpiTerminate();
+		return 0;
+	}
+	if (acpi_force_load == 0 && (acpi_find_quirks() & ACPI_QUIRK_OLDBIOS)) {
+		aprint_normal("ACPI: BIOS is too old (%s). Set acpi_force_load to use.\n",
+		    pmf_get_platform("firmware-date"));
 		acpi_unmap_rsdt(rsdt);
 		AcpiTerminate();
 		return 0;
@@ -660,11 +665,10 @@ acpi_build_tree(struct acpi_softc *sc)
 	/*
 	 * Scan the internal namespace.
 	 */
+	(void)acpi_pcidev_scan(sc->sc_root);
 	(void)acpi_rescan(sc->sc_dev, NULL, NULL);
 
 	acpi_rescan_capabilities(sc);
-
-	(void)acpi_pcidev_scan(sc->sc_root);
 }
 
 static ACPI_STATUS
@@ -972,15 +976,6 @@ acpi_rescan_nodes(struct acpi_softc *sc)
 			    (di->CurrentStatus & ACPI_STA_OK) != ACPI_STA_OK)
 				continue;
 		}
-
-		/*
-		 * The same problem as above. As for example
-		 * thermal zones and power resources do not
-		 * have a valid HID, only evaluate devices.
-		 */
-		if (di->Type == ACPI_TYPE_DEVICE &&
-		   (di->Valid & ACPI_VALID_HID) == 0)
-			continue;
 
 		/*
 		 * Handled internally.
@@ -1793,11 +1788,8 @@ void
 acpi_load_verbose(void)
 {
 
-	if (acpi_verbose_loaded == 0) {
-		mutex_enter(&module_lock);
+	if (acpi_verbose_loaded == 0)
 		module_autoload("acpiverbose", MODULE_CLASS_MISC);
-		mutex_exit(&module_lock);
-	}
 }
 
 void

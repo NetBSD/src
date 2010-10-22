@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.55.2.2 2010/08/17 06:43:51 uebayasi Exp $	*/
+/*	$NetBSD: locore.S,v 1.55.2.3 2010/10/22 07:20:57 uebayasi Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -1085,12 +1085,12 @@ IDTVEC(syscall)
 	pushq	$(LSEL(LUDATA_SEL, SEL_UPL))	/* Known to be user ss */
 	pushq	%r15				/* User space rsp */
 	movq	CPUVAR(SCRATCH),%r15
-	sti
 	subq	$TF_REGSIZE+(TF_RSP-TF_TRAPNO),%rsp
+	movw	%es,TF_ES(%rsp)
+	sti
 	INTR_SAVE_GPRS
 	movw	%fs,TF_FS(%rsp)
 	movw	%gs,TF_GS(%rsp)
-	movw	%es,TF_ES(%rsp)
 	movw	$(LSEL(LUDATA_SEL, SEL_UPL)),TF_DS(%rsp)
 	movq	%r11, TF_RFLAGS(%rsp)	/* old rflags from syscall insn */
 	movq	$(LSEL(LUCODE_SEL, SEL_UPL)), TF_CS(%rsp)
@@ -1128,7 +1128,6 @@ IDTVEC(syscall)
 	jnz	9f
 	testl	$MDP_IRET, L_MD_FLAGS(%r14)
 	jne	iret_return;
-syscall_return:
 #ifdef DIAGNOSTIC
 	cmpl	$IPL_NONE,CPUVAR(ILEVEL)
 	jne	3f
@@ -1172,7 +1171,6 @@ syscall_return:
 	call	_C_LABEL(do_pmap_load)
 	jmp	.Lsyscall_checkast	/* re-check ASTs */
 10:
-	/* Always returning to user mode here. */
 	CLEAR_ASTPENDING(%r14)
 	STI(si)
 	/* Pushed T_ASTFLT into tf_trapno on entry. */
@@ -1260,36 +1258,40 @@ _C_LABEL(osyscall_return):
 .Losyscall_checkast:
 	/* Check for ASTs on exit to user mode. */
 	CLI(si)
-	CHECK_ASTPENDING(%r14)
-	je	1f
-	/* Always returning to user mode here. */
-	CLEAR_ASTPENDING(%r14)
-	STI(si)
-	/* Pushed T_ASTFLT into tf_trapno on entry. */
-	movq	%rsp,%rdi
-	call	_C_LABEL(trap)
-	jmp	.Losyscall_checkast
-1:	CHECK_DEFERRED_SWITCH
+	movl	L_MD_ASTPENDING(%r14), %eax
+	orl	CPUVAR(WANT_PMAPLOAD), %eax
 	jnz	9f
 iret_return:
-#ifndef DIAGNOSTIC
-	INTRFASTEXIT
-#else /* DIAGNOSTIC */
+#ifdef DIAGNOSTIC
 	cmpl	$IPL_NONE,CPUVAR(ILEVEL)
 	jne	3f
+#endif
 	INTRFASTEXIT
-3:
-	STI(si)
-	movabsq	$4f, %rdi
+#ifdef DIAGNOSTIC
+3:	movabsq	$4f, %rdi
+	movl	TF_RAX(%rsp),%esi
+	movl	TF_RDI(%rsp),%edx
+	movl	%ebx,%ecx
+	movl	CPUVAR(ILEVEL),%r8d
 	xorq	%rax,%rax
 	call	_C_LABEL(printf)
 	movl	$IPL_NONE,%edi
 	call	_C_LABEL(spllower)
 	jmp	.Losyscall_checkast
-4:	.asciz	"WARNING: SPL NOT LOWERED ON SYSCALL EXIT\n"
-#endif /* DIAGNOSTIC */
-9:	STI(si)
+4:	.asciz	"WARNING: SPL NOT LOWERED ON SYSCALL %d %d EXIT %x %x\n"
+#endif
+9:
+	cmpl	$0, CPUVAR(WANT_PMAPLOAD)
+	jz	10f
+	STI(si)
 	call	_C_LABEL(do_pmap_load)
+	jmp	.Losyscall_checkast	/* re-check ASTs */
+10:
+	CLEAR_ASTPENDING(%r14)
+	STI(si)
+	/* Pushed T_ASTFLT into tf_trapno on entry. */
+	movq	%rsp,%rdi
+	call	_C_LABEL(trap)
 	jmp	.Losyscall_checkast	/* re-check ASTs */
 
 /*

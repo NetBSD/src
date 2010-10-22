@@ -1,4 +1,4 @@
-.\"	$NetBSD: module.9,v 1.15.2.2 2010/08/17 06:41:05 uebayasi Exp $
+.\"	$NetBSD: module.9,v 1.15.2.3 2010/10/22 07:11:54 uebayasi Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd August 11, 2010
+.Dd August 25, 2010
 .Dt MODULE 9
 .Os
 .Sh NAME
@@ -86,6 +86,8 @@ The
 .Vt modinfo_t
 type resides within the module itself, and contains module header info.
 .El
+.Pp
+The module subsystem is protected by the global kernconfig_mutex.
 .Sh FUNCTIONS
 .Bl -tag -width abcd
 .It Fn MODULE "class" "name" "required"
@@ -130,10 +132,6 @@ The other commands are optional,
 and should return
 .Er ENOTTY
 if not implemented.
-The return values from
-.Fn modcmd
-are ignored for
-.Dv MODULE_CMD_FINI .
 .Pp
 For the
 .Dv MODULE_CMD_INIT
@@ -162,10 +160,11 @@ argument of
 If the specified module requires other modules, they are loaded first; if
 any required module cannot be loaded or if any of their
 .Fn modcmd
-control routines returns a non-zero status, loading of this module and all
-required modules will fail.
-Thus, the loading of a module and its required modules is an atomic
-operation.
+control routines returns a non-zero status, loading of this module and
+the specific required module will fail.
+The required modules are marked for automatic unloading.
+Thus, if the loading of the module failed, the required modules will
+be automatically unloaded after a short delay.
 .Pp
 The loader will look first for a built-in module with the specified
 .Fa name
@@ -202,9 +201,9 @@ flag is not set, the system searches for a file with the same name as the
 module file, but with the suffix
 .Dq Pa .prop .
 If this file is found, the prop_dictionary it contains is loaded and
-passed to the module's
-.Fn modcmd
-routine.
+merged with the prop_dictionary from the
+.Fa props
+argument.
 .Pp
 The
 .Fa class
@@ -232,8 +231,17 @@ the class of the module being loaded
 must match the requested
 .Fa class .
 Except when verifying a module's class when it is being loaded, module
-classes are transparent to the module subsystem.
+classes other than
+.Dv MODULE_CLASS_SECMODEL
+are transparent to the module subsystem.
 They are provided only for the benefit of the subsystem's clients.
+Modules with class
+.Dv MODULE_CLASS_SECMODEL
+are automatically registered with
+.Fn secmodel_register
+after being successfully loaded, and automatically deregistered with
+.Fn secmodel_deregister
+when being unloaded.
 .Pp
 The
 .Fn module_load
@@ -278,8 +286,11 @@ Otherwise, the module's
 routine is called with a
 .Fa cmd
 argument of
-.Dv MODULE_CMD_FINI ,
-and the module is unloaded.
+.Dv MODULE_CMD_FINI .
+If the
+.Fn modcmd
+routine returns with an error, then the error is returned to the caller
+otherwise the module is unloaded.
 .Pp
 The reference counts of all modules that were required by this module are
 decremented, but the required modules are not unloaded by the call to
@@ -301,6 +312,7 @@ function may be called by the
 .Xr modctl 2
 system call, by the module subsystem's internal auto-unload thread, or by
 other kernel facilities.
+Generally, other kernel facilities should not be calling this function.
 .It Fn module_init_class "class"
 Load and initialize all available modules of the specified
 .Fa class .
@@ -316,7 +328,7 @@ Find the start address and size of linker section
 .Ar name
 within a module.
 The miniroot module uses this routine to find the address and size of the
-embedded filesystem image.
+embedded file system image.
 This routine can only examine the linker data for the module that is
 currently being initialized;  it cannot examine data for any other module.
 .It Fn module_init "void"
@@ -333,8 +345,8 @@ Create the thread that attempts to automatically unload modules that were
 loaded via the
 .Fn module_autoload
 routine.
-.Fn module_start_unload_thread
-is called once the scheduler and timer functions are initialized.
+The function is called only once,
+after the scheduler and timer functions are initialized.
 .It Fn module_builtin_require_force "void"
 Mark as "disabled" any built-in modules that have not been successfully
 initialized.
@@ -354,21 +366,41 @@ is used to enable loading modules from the file system.
 Until this routine is called, modules can only be loaded if they were
 built-in to the kernel image or provided by the boot loader.
 .El
-.Sh LOCK PROTOCOL
-The
-.Nm
-subsystem is protected with the global
-.Vt module_mutex .
-This
-.Xr mutex 9
-must be acquired before calling any of these routines.
-As an exception, the
+.Sh PROGRAMMING CONSIDERATIONS
+The module subsystem is designed to be called recursively, but only within
+a single LWP.
+This permits one module's
+.Fn modcmd
+routine to load or unload other modules.
+.Pp
+Additional considerations:
+.Bl -bullet -offset indent
+.It
+A module is not permitted to load or unload itself.
+Attempts to load or unload a module from within its own
+.Fn modcmd
+routine will fail with
+.Er EEXIST
+or
+.Er EBUSY ,
+respectively.
+.It
+Although a module can be loaded by using either
 .Fn module_load
-routine acquires the mutex itself, so one does not need to acquire it
-before calling
-.Fn module_load .
-Loading of a module and its required modules occurs as an atomic
-operation, and either completely succeeds or completely fails.
+or
+.Fn module_autoload ,
+it is not possible for the module's
+.Fn modcmd
+routine to distinguish between the two methods.
+Any module which needs to ensure that it does not get auto-unloaded must
+either handle the
+.Dv MODULE_CMD_AUTOUNLOAD
+command in its
+.Fn modcmd
+routine, or use
+.Fn module_hold
+to increment its reference count.
+.El
 .Sh CODE REFERENCES
 This section describes places within the
 .Nx
@@ -381,9 +413,28 @@ The core of the kernel module implementation is in
 and
 .Pa sys/kern/kern_module_vfs.c .
 .Pp
+The routines for linking the module are in
+.Pa sys/kern/subr_kobj.c .
+.Pp
+The routines for reading a module from the file system are in
+.Pa sys/kern/subr_kobj_vfs.c .
+.Pp
 The header file
 .In sys/sys/module.h
 describes the public interface.
+.Pp
+In addition, each architecture is expected to provide
+.Fn kobj_machdep ,
+.Fn kobj_reloc ,
+and
+.Fn module_init_md .
+.Fn kobj_machdep
+is for any machine dependent actions, such as flushing caches, that are
+needed when a module is loaded or unloaded.
+.Fn kobj_reloc
+deals with resolution of relocatable symbols.
+.Fn module_init_md
+is for finding modules passed in by the boot loader.
 .Sh SEE ALSO
 .Xr modctl 2
 .Sh HISTORY

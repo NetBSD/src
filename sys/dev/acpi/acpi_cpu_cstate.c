@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_cstate.c,v 1.29.2.2 2010/08/17 06:45:59 uebayasi Exp $ */
+/* $NetBSD: acpi_cpu_cstate.c,v 1.29.2.3 2010/10/22 07:21:52 uebayasi Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_cstate.c,v 1.29.2.2 2010/08/17 06:45:59 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_cstate.c,v 1.29.2.3 2010/10/22 07:21:52 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -98,6 +98,8 @@ acpicpu_cstate_attach(device_t self)
 		acpicpu_cstate_fadt(sc);
 		break;
 	}
+
+	sc->sc_flags |= ACPICPU_FLAG_C;
 
 	acpicpu_cstate_quirks(sc);
 	acpicpu_cstate_attach_evcnt(sc);
@@ -211,23 +213,12 @@ acpicpu_cstate_detach_evcnt(struct acpicpu_softc *sc)
 	}
 }
 
-int
+void
 acpicpu_cstate_start(device_t self)
 {
 	struct acpicpu_softc *sc = device_private(self);
-	static ONCE_DECL(once_start);
-	int rv;
 
-	/*
-	 * Save the existing idle-mechanism and claim the cpu_idle(9).
-	 * This should be called after all ACPI CPUs have been attached.
-	 */
-	rv = RUN_ONCE(&once_start, acpicpu_md_idle_start);
-
-	if (rv == 0)
-		sc->sc_flags |= ACPICPU_FLAG_C;
-
-	return rv;
+	(void)acpicpu_md_idle_start(sc);
 }
 
 bool
@@ -663,32 +654,31 @@ acpicpu_cstate_latency(struct acpicpu_softc *sc)
 void
 acpicpu_cstate_idle(void)
 {
-        struct cpu_info *ci = curcpu();
+	struct cpu_info *ci = curcpu();
 	struct acpicpu_softc *sc;
 	int state;
 
-	if (__predict_false(ci->ci_want_resched) != 0)
-		return;
-
 	acpi_md_OsDisableInterrupt();
+
+	if (__predict_false(ci->ci_want_resched != 0))
+		goto out;
 
 	KASSERT(acpicpu_sc != NULL);
 	KASSERT(ci->ci_acpiid < maxcpus);
-	KASSERT(ci->ci_ilevel == IPL_NONE);
 
 	sc = acpicpu_sc[ci->ci_acpiid];
 
 	if (__predict_false(sc == NULL))
-		goto halt;
+		goto out;
+
+	KASSERT(ci->ci_ilevel == IPL_NONE);
+	KASSERT((sc->sc_flags & ACPICPU_FLAG_C) != 0);
 
 	if (__predict_false(sc->sc_cold != false))
-		goto halt;
-
-	if (__predict_false((sc->sc_flags & ACPICPU_FLAG_C) == 0))
-		goto halt;
+		goto out;
 
 	if (__predict_false(mutex_tryenter(&sc->sc_mtx) == 0))
-		goto halt;
+		goto out;
 
 	mutex_exit(&sc->sc_mtx);
 	state = acpicpu_cstate_latency(sc);
@@ -750,8 +740,8 @@ acpicpu_cstate_idle(void)
 
 	return;
 
-halt:
-	acpicpu_md_idle_enter(ACPICPU_C_STATE_HALT, ACPI_STATE_C1);
+out:
+	acpi_md_OsEnableInterrupt();
 }
 
 static void
@@ -760,7 +750,7 @@ acpicpu_cstate_idle_enter(struct acpicpu_softc *sc, int state)
 	struct acpicpu_cstate *cs = &sc->sc_cstate[state];
 	uint32_t end, start, val;
 
-	start = acpitimer_read_safe(NULL);
+	start = acpitimer_read_fast(NULL);
 
 	switch (cs->cs_method) {
 
@@ -772,18 +762,13 @@ acpicpu_cstate_idle_enter(struct acpicpu_softc *sc, int state)
 	case ACPICPU_C_STATE_SYSIO:
 		(void)AcpiOsReadPort(cs->cs_addr, &val, 8);
 		break;
-
-	default:
-		acpicpu_md_idle_enter(ACPICPU_C_STATE_HALT, ACPI_STATE_C1);
-		break;
 	}
 
-	cs->cs_evcnt.ev_count++;
-
-	end = acpitimer_read_safe(NULL);
-	sc->sc_cstate_sleep = hztoms(acpitimer_delta(end, start)) * 1000;
-
 	acpi_md_OsEnableInterrupt();
+
+	cs->cs_evcnt.ev_count++;
+	end = acpitimer_read_fast(NULL);
+	sc->sc_cstate_sleep = hztoms(acpitimer_delta(end, start)) * 1000;
 }
 
 static bool
