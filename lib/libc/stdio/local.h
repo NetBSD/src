@@ -1,4 +1,4 @@
-/*	$NetBSD: local.h,v 1.25 2010/09/06 14:52:55 christos Exp $	*/
+/*	$NetBSD: local.h,v 1.26 2010/10/22 21:29:45 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -113,3 +113,9 @@ extern int	 __vfwscanf_unlocked __P((FILE * __restrict,
 
 extern void __flockfile_internal __P((FILE *, int));
 extern void __funlockfile_internal __P((FILE *, int));
+
+/*
+ * Detect if the current file position fits in a long int.
+ */
+#define _FPOS_OVERFLOW(pos) (sizeof(fpos_t) != sizeof(long) && \
+	((pos) & (~0ULL << ((sizeof(fpos_t) - sizeof(long)) * NBBY))) != 0)
