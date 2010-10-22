@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660.h,v 1.13 2009/01/10 22:06:29 bjh21 Exp $	*/
+/*	$NetBSD: cd9660.h,v 1.14 2010/10/22 00:49:15 christos Exp $	*/
 
 /*
  * Copyright (c) 2005 Daniel Watt, Walter Deignan, Ryan Gabrys, Alan
@@ -130,11 +130,12 @@ typedef struct {
 #define CD9660_TYPE_DIR		0x02
 #define CD9660_TYPE_DOT		0x04
 #define CD9660_TYPE_DOTDOT	0x08
-#define CD9660_TYPE_VIRTUAL 0x80
+#define CD9660_TYPE_VIRTUAL	0x80
 
-#define CD9660_INODE_HASH_SIZE 1024
+#define CD9660_INODE_HASH_SIZE	1024
+#define CD9660_SECTOR_SIZE	2048
 
-#define CD9660_END_PADDING 150
+#define CD9660_END_PADDING	150
 
 /* Slight modification of the ISO structure in iso.h */
 typedef struct _iso_directory_record_cd9660 {
@@ -344,7 +345,7 @@ int	cd9660_setup_boot_volume_descriptor(volume_descriptor *);
 
 /*** Write Functions ***/
 int	cd9660_write_image(const char *image);
-int	cd9660_copy_file(FILE *, int, const char *);
+int	cd9660_copy_file(FILE *, off_t, const char *);
 
 void	cd9660_compute_full_filename(cd9660node *, char *, int);
 int	cd9660_compute_record_size(cd9660node *);
@@ -354,7 +355,7 @@ void	debug_print_tree(cd9660node *,int);
 void	debug_print_path_tree(cd9660node *);
 void	debug_print_volume_descriptor_information(void);
 void	debug_dump_to_xml_ptentry(path_table_entry *,int, int);
-void	debug_dump_to_xml_path_table(FILE *, int, int, int);
+void	debug_dump_to_xml_path_table(FILE *, off_t, int, int);
 void	debug_dump_to_xml(FILE *);
 int	debug_get_encoded_number(unsigned char *, int);
 void	debug_dump_integer(const char *, char *,int);

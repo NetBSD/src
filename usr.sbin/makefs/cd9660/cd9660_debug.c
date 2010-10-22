@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_debug.c,v 1.9 2009/01/08 22:28:45 bjh21 Exp $	*/
+/*	$NetBSD: cd9660_debug.c,v 1.10 2010/10/22 00:49:15 christos Exp $	*/
 
 /*
  * Copyright (c) 2005 Daniel Watt, Walter Deignan, Ryan Gabrys, Alan
@@ -40,7 +40,7 @@
 #include <sys/param.h>
 
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: cd9660_debug.c,v 1.9 2009/01/08 22:28:45 bjh21 Exp $");
+__RCSID("$NetBSD: cd9660_debug.c,v 1.10 2010/10/22 00:49:15 christos Exp $");
 #endif  /* !__lint */
 
 #if !HAVE_NBTOOL_CONFIG_H
@@ -153,12 +153,12 @@ void
 debug_print_volume_descriptor_information(void)
 {
 	volume_descriptor *tmp = diskStructure.firstVolumeDescriptor;
-	char temp[2048];
+	char temp[CD9660_SECTOR_SIZE];
 
 	printf("==Listing Volume Descriptors==\n");
 
 	while (tmp != NULL) {
-		memset(temp, 0, 2048);
+		memset(temp, 0, CD9660_SECTOR_SIZE);
 		memcpy(temp, tmp->volumeDescriptorData + 1, 5);
 		printf("Volume descriptor in sector %i: type %i, ID %s\n",
 		    tmp->sector, tmp->volumeDescriptorData[0], temp);
@@ -199,13 +199,14 @@ debug_dump_to_xml_ptentry(path_table_entry *pttemp, int num, int mode)
 }
 
 void
-debug_dump_to_xml_path_table(FILE *fd, int sector, int size, int mode)
+debug_dump_to_xml_path_table(FILE *fd, off_t sector, int size, int mode)
 {
 	path_table_entry pttemp;
 	int t = 0;
 	int n = 0;
 
-	fseek(fd, 2048 * sector, SEEK_SET);
+	if (fseeko(fd, CD9660_SECTOR_SIZE * sector, SEEK_SET) == -1)
+		err(1, "fseeko");
 
 	while (t < size) {
 		/* Read fixed data first */
@@ -229,8 +230,8 @@ debug_dump_to_xml_path_table(FILE *fd, int sector, int size, int mode)
 void
 debug_dump_to_xml(FILE *fd)
 {
-	unsigned char buf[2048];
-	int sector;
+	unsigned char buf[CD9660_SECTOR_SIZE];
+	off_t sector;
 	int t, t2;
 	struct iso_primary_descriptor primaryVD;
 	struct _boot_volume_descriptor bootVD;
@@ -240,15 +241,16 @@ debug_dump_to_xml(FILE *fd)
 	/* Display Volume Descriptors */
 	sector = 16;
 	do {
-		fseek(fd, 2048*sector, SEEK_SET);
-		fread(buf, 1, 2048, fd);
+		if (fseeko(fd, CD9660_SECTOR_SIZE * sector, SEEK_SET) == -1)
+			err(1, "fseeko");
+		fread(buf, 1, CD9660_SECTOR_SIZE, fd);
 		t = (int)((unsigned char)buf[0]);
 		switch (t) {
 		case 0:
-			memcpy(&bootVD, buf, 2048);
+			memcpy(&bootVD, buf, CD9660_SECTOR_SIZE);
 			break;
 		case 1:
-			memcpy(&primaryVD, buf, 2048);
+			memcpy(&primaryVD, buf, CD9660_SECTOR_SIZE);
 			break;
 		}
 		debug_dump_to_xml_volume_descriptor(buf, sector);
