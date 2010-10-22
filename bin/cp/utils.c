@@ -1,4 +1,4 @@
-/* $NetBSD: utils.c,v 1.34 2007/10/26 16:21:25 hira Exp $ */
+/* $NetBSD: utils.c,v 1.35 2010/10/22 17:56:06 pooka Exp $ */
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)utils.c	8.3 (Berkeley) 4/1/94";
 #else
-__RCSID("$NetBSD: utils.c,v 1.34 2007/10/26 16:21:25 hira Exp $");
+__RCSID("$NetBSD: utils.c,v 1.35 2010/10/22 17:56:06 pooka Exp $");
 #endif
 #endif /* not lint */
 
@@ -75,7 +75,6 @@ copy_file(FTSENT *entp, int dne)
 	static char buf[MAXBSIZE];
 	struct stat to_stat, *fs;
 	int ch, checkch, from_fd, rcount, rval, to_fd, tolnk, wcount;
-	char *p;
 	
 	if ((from_fd = open(entp->fts_path, O_RDONLY, 0)) == -1) {
 		warn("%s", entp->fts_path);
@@ -147,6 +146,16 @@ copy_file(FTSENT *entp, int dne)
 
 	if (fs->st_size > 0) {
 
+	/*
+	 * Disable use of mmap.  With the current vnode locking
+	 * scheme it has a very annoying property: if the source
+	 * media is slow (like a slow network), the target file
+	 * will be locked for the duration of the entire max 8MB
+	 * write and cause processes attempting to e.g. stat() it
+	 * to "tstile".  Revisit when vnode locking gets a little
+	 * smarter.
+	 */
+#ifdef VNODE_LOCKING_IS_SMARTER_NOW
 		/*
 		 * Mmap and write if less than 8M (the limit is so
 		 * we don't totally trash memory on big files).
@@ -155,6 +164,8 @@ copy_file(FTSENT *entp, int dne)
 
 		if (fs->st_size <= 8 * 1048576) {
 			size_t fsize = (size_t)fs->st_size;
+			char *p;
+
 			p = mmap(NULL, fsize, PROT_READ, MAP_FILE|MAP_SHARED,
 			    from_fd, (off_t)0);
 			if (p == MAP_FAILED) {
@@ -174,6 +185,7 @@ copy_file(FTSENT *entp, int dne)
 			}
 		} else {
 mmap_failed:
+#endif
 			while ((rcount = read(from_fd, buf, MAXBSIZE)) > 0) {
 				wcount = write(to_fd, buf, (size_t)rcount);
 				if (rcount != wcount || wcount == -1) {
@@ -186,7 +198,9 @@ mmap_failed:
 				warn("%s", entp->fts_path);
 				rval = 1;
 			}
+#ifdef VNODE_LOCKING_IS_SMARTER_NOW
 		}
+#endif
 	}
 
 	if (rval == 1) {
