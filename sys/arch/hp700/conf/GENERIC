@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.91.2.2 2010/08/17 06:44:23 uebayasi Exp $
+# $NetBSD: GENERIC,v 1.91.2.3 2010/10/22 07:21:17 uebayasi Exp $
 #
 # GENERIC machine description file
 #
@@ -23,7 +23,7 @@ include 	"arch/hp700/conf/std.hp700"
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
-#ident 		"GENERIC-$Revision: 1.91.2.2 $"
+#ident 		"GENERIC-$Revision: 1.91.2.3 $"
 
 maxusers	32		# estimated number of users
 
@@ -770,6 +770,9 @@ pseudo-device	wsfont
 pseudo-device	ksyms			# /dev/ksyms
 #pseudo-device	pf			# PF packet filter
 #pseudo-device	pflog			# PF log if
+
+# userland interface to drivers, including autoconf and properties retrieval
+pseudo-device	drvctl
 
 # Veriexec
 #

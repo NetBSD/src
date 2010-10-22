@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.18 2009/03/18 10:22:26 cegger Exp $	*/
+/*	$NetBSD: boot.c,v 1.18.2.1 2010/10/22 07:21:08 uebayasi Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -40,12 +40,17 @@
 #include <machine/cpu.h>
 
 #include "boot.h"
+#include "sdvar.h"
+#include "wdvar.h"
 
 char *names[] = {
-	"in()",
-	"fd(0,1,0)netbsd", "fd(0,1,0)netbsd.gz",
-	"fd(0,1,0)netbsd.old", "fd(0,1,0)netbsd.old.gz",
-	"fd(0,1,0)onetbsd", "fd(0,1,0)onetbsd.gz"
+	"/dev/disk/scsi/0/0/0_0:/netbsd",
+	"/dev/disk/ide/0/master/0_0:/netbsd",
+	"/dev/disk/floppy:netbsd",	"/dev/disk/floppy:netbsd.gz",
+	"/dev/disk/scsi/0/0/0_0:/onetbsd",
+	"/dev/disk/ide/0/master/0_0:/onetbsd",
+	"/dev/disk/floppy:onetbsd",	"/dev/disk/floppy:onetbsd.gz"
+	"in",
 };
 #define	NUMNAMES (sizeof (names) / sizeof (names[0]))
 
@@ -73,6 +78,8 @@ main(void)
 	if (whichCPU() == 1)
 		cpu1();
 	resetCPU1();
+
+	scanPCI();
 
 	/*
 	 * console init
@@ -114,17 +121,25 @@ main(void)
 	p += sizeof (btinfo_console);
 	memcpy(p, (void *)&btinfo_clock, sizeof (btinfo_clock));
 
-	/*
-	 * attached kernel check
-	 */
-	init_in();
-
 	runCPU1((void *)start_CPU1);
 	wait_for(&CPU1_alive);
 
 	printf(">> %s, Revision %s\n", bootprog_name, bootprog_rev);
 	printf(">> (%s, %s)\n", bootprog_maker, bootprog_date);
 	printf(">> Memory: %d k\n", btinfo_memory.memsize / 1024);
+
+	/*
+	 * attached kernel check and copy.
+	 */
+	init_in();
+
+	printf("\n");
+
+	/* Initialize siop@pci0 dev 12 func 0 */
+	siop_init(0, 12, 0);
+
+	/* Initialize wdc@isa port 0x1f0 */
+	wdc_init(0x1f0);
 
 	for (;;) {
 		name = names[n++];
@@ -206,4 +221,11 @@ next:
 		    bootinfo,
 		    (void *)marks[MARK_ENTRY]);
 	}
+}
+
+void
+_rtt(void)
+{
+
+	/* XXXX */
 }

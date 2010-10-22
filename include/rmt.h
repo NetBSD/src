@@ -1,4 +1,4 @@
-/*	$NetBSD: rmt.h,v 1.5 2005/02/03 04:39:32 perry Exp $	*/
+/*	$NetBSD: rmt.h,v 1.5.44.1 2010/10/22 07:11:52 uebayasi Exp $	*/
 
 /*
  *	rmt.h
@@ -20,6 +20,7 @@
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
+int	isrmt(int);
 int	rmtaccess(const char *, int);
 int	rmtclose(int);
 int	rmtcreat(const char *, mode_t);

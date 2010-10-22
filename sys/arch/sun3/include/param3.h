@@ -1,4 +1,4 @@
-/*	$NetBSD: param3.h,v 1.52 2009/12/11 13:52:57 tsutsui Exp $	*/
+/*	$NetBSD: param3.h,v 1.52.2.1 2010/10/22 07:21:36 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -78,9 +78,5 @@
  * Machine dependent constants for the Sun3 series.
  */
 
-#define	KERNBASE	0x0E000000	/* start of kernel virtual */
-#define	KERNTEXTOFF	0x0E004000	/* start of kernel text */
-#define	KERN_END	0x0FE00000	/* end of kernel virtual */
-
-#define	MAXBSIZE	0x8000		/* max FS block size */
-#define	MAXPHYS		0xe000
+#define	KERNBASE3	0x0E000000	/* start of kernel virtual */
+#define	KERN_END3	0x0FE00000	/* end of kernel virtual */

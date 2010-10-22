@@ -1,4 +1,4 @@
-/*	$NetBSD: if_smsh_gxio.c,v 1.2 2009/11/29 10:08:15 kiyohara Exp $	*/
+/*	$NetBSD: if_smsh_gxio.c,v 1.2.2.1 2010/10/22 07:21:16 uebayasi Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_smsh_gxio.c,v 1.2 2009/11/29 10:08:15 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_smsh_gxio.c,v 1.2.2.1 2010/10/22 07:21:16 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -51,21 +51,9 @@ __KERNEL_RCSID(0, "$NetBSD: if_smsh_gxio.c,v 1.2 2009/11/29 10:08:15 kiyohara Ex
 static int smsh_gxio_match(device_t, struct cfdata *, void *);
 static void smsh_gxio_attach(device_t, device_t, void *);
 
-static int ether_serial_digit = 1;  
+static int ether_serial_digit = 1;
 
-struct smsh_gxio_softc {
-	struct lan9118_softc sc_smsh;
-	void *sc_ih;
-
-	/*
-	 * Board independent DMA stuffs, if uses master DMA.
-	 * We use PXA2x0's DMA.
-	 */
-	struct dmac_xfer *sc_txfer;
-	struct dmac_xfer *sc_rxfer;
-};
-
-CFATTACH_DECL_NEW(smsh_gxio, sizeof(struct smsh_gxio_softc),
+CFATTACH_DECL_NEW(smsh_gxio, sizeof(struct lan9118_softc),
     smsh_gxio_match, smsh_gxio_attach, NULL, NULL);
 
 
@@ -104,9 +92,9 @@ smsh_gxio_match(device_t parent, struct cfdata *match, void *aux)
 static void
 smsh_gxio_attach(device_t parent, device_t self, void *aux)
 {
-	struct smsh_gxio_softc *gsc = device_private(self);
-	struct lan9118_softc *sc = &gsc->sc_smsh;
+	struct lan9118_softc *sc = device_private(self);
 	struct gxio_attach_args *gxa = aux;
+	void *ih;
 
 	KASSERT(system_serial_high != 0 || system_serial_low != 0);
 
@@ -115,7 +103,7 @@ smsh_gxio_attach(device_t parent, device_t self, void *aux)
 	/* Map i/o space. */
 	if (bus_space_map(gxa->gxa_iot, gxa->gxa_addr, LAN9118_IOSIZE, 0,
 	    &sc->sc_ioh))
-		panic("sms_gxio_attach: can't map i/o space");
+		panic("smsh_gxio_attach: can't map i/o space");
 	sc->sc_iot = gxa->gxa_iot;
 
 	sc->sc_enaddr[0] = ((system_serial_high >> 8) & 0xfe) | 0x02;
@@ -132,9 +120,9 @@ smsh_gxio_attach(device_t parent, device_t self, void *aux)
 	}
 
 	/* Establish the interrupt handler. */
-	gsc->sc_ih = gxio_intr_establish(gxa->gxa_sc,
+	ih = gxio_intr_establish(gxa->gxa_sc,
 	    gxa->gxa_gpirq, IST_EDGE_FALLING, IPL_NET, lan9118_intr, sc);
-	if (gsc->sc_ih == NULL) {
+	if (ih == NULL) {
 		aprint_error_dev(self,
 		    "couldn't establish interrupt handler\n");
 		bus_space_unmap(sc->sc_iot, sc->sc_ioh, LAN9118_IOSIZE);

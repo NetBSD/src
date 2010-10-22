@@ -1,4 +1,4 @@
-/* 	$NetBSD: cpuvar.h,v 1.31.2.2 2010/08/17 06:45:30 uebayasi Exp $ */
+/* 	$NetBSD: cpuvar.h,v 1.31.2.3 2010/10/22 07:21:41 uebayasi Exp $ */
 
 /*-
  * Copyright (c) 2000, 2007 The NetBSD Foundation, Inc.
@@ -65,8 +65,6 @@
 
 #ifndef _X86_CPUVAR_H_
 #define	_X86_CPUVAR_H_
-
-#include <sys/sysctl.h>
 
 struct cpu_functions {
 	int (*start)(struct cpu_info *, paddr_t);
@@ -141,9 +139,6 @@ int	viac7_get_bus_clock(struct cpu_info *);
 int	p3_get_bus_clock(struct cpu_info *);
 int	p4_get_bus_clock(struct cpu_info *);
 #endif
-
-extern void (*cpu_freq_init)(int);
-extern struct sysctllog *cpu_freq_sysctllog;
 
 void	cpu_get_tsc_freq(struct cpu_info *);
 void	pat_init(struct cpu_info *);

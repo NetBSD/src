@@ -365,7 +365,7 @@ extern unsigned arm9_dcache_index_max;
 extern unsigned arm9_dcache_index_inc;
 #endif
 
-#if defined(CPU_ARM9E) || defined(CPU_ARM10)
+#if defined(CPU_ARM9E) || defined(CPU_ARM10) || defined(CPU_SHEEVA)
 void	arm10_tlb_flushID_SE	(u_int);
 void	arm10_tlb_flushI_SE	(u_int);
 
@@ -374,7 +374,7 @@ void	arm10_context_switch	(u_int);
 void	arm10_setup		(char *);
 #endif
 
-#if defined(CPU_ARM9E) || defined (CPU_ARM10)
+#if defined(CPU_ARM9E) || defined (CPU_ARM10) || defined(CPU_SHEEVA)
 void	armv5_ec_setttb			(u_int);
 
 void	armv5_ec_icache_sync_all	(void);
@@ -481,7 +481,7 @@ void	arm1136_sleep_rev0		(int);	/* for errata 336501 */
     defined(CPU_FA526) || \
     defined(CPU_XSCALE_80200) || defined(CPU_XSCALE_80321) || \
     defined(__CPU_XSCALE_PXA2XX) || defined(CPU_XSCALE_IXP425) || \
-    defined(CPU_CORTEX)
+    defined(CPU_CORTEX) || defined(CPU_SHEEVA)
 
 void	armv4_tlb_flushID	(void);
 void	armv4_tlb_flushI	(void);
@@ -540,6 +540,14 @@ void	xscale_context_switch	(u_int);
 
 void	xscale_setup		(char *);
 #endif	/* CPU_XSCALE_80200 || CPU_XSCALE_80321 || __CPU_XSCALE_PXA2XX || CPU_XSCALE_IXP425 || CPU_CORTEX */
+
+#if defined(CPU_SHEEVA)
+void	sheeva_dcache_wbinv_range (vaddr_t, vsize_t);
+void	sheeva_dcache_inv_range	(vaddr_t, vsize_t);
+void	sheeva_dcache_wb_range	(vaddr_t, vsize_t);
+void	sheeva_idcache_wbinv_range (vaddr_t, vsize_t);
+void	sheeva_setup(char *);
+#endif
 
 #define tlb_flush	cpu_tlb_flushID
 #define setttb		cpu_setttb

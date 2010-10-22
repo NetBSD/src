@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_pstate.c,v 1.26.2.2 2010/08/17 06:45:59 uebayasi Exp $ */
+/* $NetBSD: acpi_cpu_pstate.c,v 1.26.2.3 2010/10/22 07:21:52 uebayasi Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_pstate.c,v 1.26.2.2 2010/08/17 06:45:59 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_pstate.c,v 1.26.2.3 2010/10/22 07:21:52 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/evcnt.h>
@@ -52,23 +52,21 @@ static ACPI_STATUS	 acpicpu_pstate_xpss_add(struct acpicpu_pstate *,
 						 ACPI_OBJECT *);
 static ACPI_STATUS	 acpicpu_pstate_pct(struct acpicpu_softc *);
 static int		 acpicpu_pstate_max(struct acpicpu_softc *);
+static int		 acpicpu_pstate_min(struct acpicpu_softc *);
 static void		 acpicpu_pstate_change(struct acpicpu_softc *);
+static void		 acpicpu_pstate_reset(struct acpicpu_softc *);
 static void		 acpicpu_pstate_bios(void);
+
+static uint32_t		 acpicpu_pstate_saved = 0;
 
 void
 acpicpu_pstate_attach(device_t self)
 {
 	struct acpicpu_softc *sc = device_private(self);
 	const char *str;
+	ACPI_HANDLE tmp;
 	ACPI_STATUS rv;
 
-	/*
-	 * The ACPI 3.0 and 4.0 specifications mandate three
-	 * objects for P-states: _PSS, _PCT, and _PPC. A less
-	 * strict wording is however used in the earlier 2.0
-	 * standard, and some systems conforming to ACPI 2.0
-	 * do not have _PPC, the method for dynamic maximum.
-	 */
 	rv = acpicpu_pstate_pss(sc);
 
 	if (ACPI_FAILURE(rv)) {
@@ -83,16 +81,10 @@ acpicpu_pstate_attach(device_t self)
 	 * systems where _PDC or _OSC may be used.
 	 */
 	if (sc->sc_cap == 0) {
-
 		rv = acpicpu_pstate_xpss(sc);
 
 		if (ACPI_SUCCESS(rv))
 			sc->sc_flags |= ACPICPU_FLAG_P_XPSS;
-
-		if (ACPI_FAILURE(rv) && rv != AE_NOT_FOUND) {
-			str = "XPSS";
-			goto fail;
-		}
 	}
 
 	rv = acpicpu_pstate_pct(sc);
@@ -102,12 +94,33 @@ acpicpu_pstate_attach(device_t self)
 		goto fail;
 	}
 
-	(void)acpicpu_pstate_max(sc);
+	/*
+	 * The ACPI 3.0 and 4.0 specifications mandate three
+	 * objects for P-states: _PSS, _PCT, and _PPC. A less
+	 * strict wording is however used in the earlier 2.0
+	 * standard, and some systems conforming to ACPI 2.0
+	 * do not have _PPC, the method for dynamic maximum.
+	 */
+	rv = AcpiGetHandle(sc->sc_node->ad_handle, "_PPC", &tmp);
+
+	if (ACPI_FAILURE(rv))
+		aprint_debug_dev(self, "_PPC missing\n");
+
+	/*
+	 * Employ the XPSS structure by filling
+	 * it with MD information required for FFH.
+	 */
+	rv = acpicpu_md_pstate_pss(sc);
+
+	if (rv != 0) {
+		rv = AE_SUPPORT;
+		goto fail;
+	}
 
 	sc->sc_flags |= ACPICPU_FLAG_P;
-	sc->sc_pstate_current = sc->sc_pstate[0].ps_freq;
 
 	acpicpu_pstate_bios();
+	acpicpu_pstate_reset(sc);
 	acpicpu_pstate_attach_evcnt(sc);
 	acpicpu_pstate_attach_print(sc);
 
@@ -221,21 +234,90 @@ acpicpu_pstate_detach_evcnt(struct acpicpu_softc *sc)
 	}
 }
 
-int
+void
 acpicpu_pstate_start(device_t self)
 {
 	struct acpicpu_softc *sc = device_private(self);
-	static ONCE_DECL(once_start);
+	struct acpicpu_pstate *ps;
+	uint32_t i;
+	int rv;
 
-	if ((sc->sc_flags & ACPICPU_FLAG_P) == 0)
-		return 0;
+	rv = acpicpu_md_pstate_start();
 
-	return RUN_ONCE(&once_start, acpicpu_md_pstate_start);
+	if (rv != 0)
+		goto fail;
+
+	/*
+	 * Initialize the state to P0.
+	 */
+	for (i = 0, rv = ENXIO; i < sc->sc_pstate_count; i++) {
+
+		ps = &sc->sc_pstate[i];
+
+		if (ps->ps_freq != 0) {
+			sc->sc_cold = false;
+			rv = acpicpu_pstate_set(sc, ps->ps_freq);
+			break;
+		}
+	}
+
+	if (rv != 0)
+		goto fail;
+
+	return;
+
+fail:
+	sc->sc_flags &= ~ACPICPU_FLAG_P;
+
+	if (rv == EEXIST) {
+		aprint_error_dev(self, "driver conflicts with existing one\n");
+		return;
+	}
+
+	aprint_error_dev(self, "failed to start P-states (err %d)\n", rv);
 }
 
 bool
 acpicpu_pstate_suspend(device_t self)
 {
+	struct acpicpu_softc *sc = device_private(self);
+	struct acpicpu_pstate *ps = NULL;
+	int32_t i;
+
+	mutex_enter(&sc->sc_mtx);
+	acpicpu_pstate_reset(sc);
+	mutex_exit(&sc->sc_mtx);
+
+	if (acpicpu_pstate_saved != 0)
+		return true;
+
+	/*
+	 * Following design notes for Windows, we set the highest
+	 * P-state when entering any of the system sleep states.
+	 * When resuming, the saved P-state will be restored.
+	 *
+	 *	Microsoft Corporation: Windows Native Processor
+	 *	Performance Control. Version 1.1a, November, 2002.
+	 */
+	for (i = sc->sc_pstate_count - 1; i >= 0; i--) {
+
+		if (sc->sc_pstate[i].ps_freq != 0) {
+			ps = &sc->sc_pstate[i];
+			break;
+		}
+	}
+
+	if (__predict_false(ps == NULL))
+		return true;
+
+	mutex_enter(&sc->sc_mtx);
+	acpicpu_pstate_saved = sc->sc_pstate_current;
+	mutex_exit(&sc->sc_mtx);
+
+	if (acpicpu_pstate_saved == ps->ps_freq)
+		return true;
+
+	(void)acpicpu_pstate_set(sc, ps->ps_freq);
 
 	return true;
 }
@@ -243,8 +325,12 @@ acpicpu_pstate_suspend(device_t self)
 bool
 acpicpu_pstate_resume(device_t self)
 {
+	struct acpicpu_softc *sc = device_private(self);
 
-	acpicpu_pstate_callback(self);
+	if (acpicpu_pstate_saved != 0) {
+		(void)acpicpu_pstate_set(sc, acpicpu_pstate_saved);
+		acpicpu_pstate_saved = 0;
+	}
 
 	return true;
 }
@@ -275,7 +361,7 @@ acpicpu_pstate_callback(void *aux)
 		 * If the maximum changed, proactively
 		 * raise or lower the target frequency.
 		 */
-		acpicpu_pstate_set(sc, sc->sc_pstate[new].ps_freq);
+		(void)acpicpu_pstate_set(sc, sc->sc_pstate[new].ps_freq);
 
 #endif
 	}
@@ -401,11 +487,11 @@ static ACPI_STATUS
 acpicpu_pstate_xpss(struct acpicpu_softc *sc)
 {
 	static const size_t size = sizeof(struct acpicpu_pstate);
-	struct acpicpu_pstate *ps;
+	struct acpicpu_pstate *ps, *pstate = NULL;
 	ACPI_OBJECT *obj;
 	ACPI_BUFFER buf;
 	ACPI_STATUS rv;
-	uint32_t count;
+	uint32_t count, pstate_count;
 	uint32_t i, j;
 
 	rv = acpi_eval_struct(sc->sc_node->ad_handle, "XPSS", &buf);
@@ -420,7 +506,7 @@ acpicpu_pstate_xpss(struct acpicpu_softc *sc)
 		goto out;
 	}
 
-	count = obj->Package.Count;
+	pstate_count = count = obj->Package.Count;
 
 	if (count == 0) {
 		rv = AE_NOT_EXIST;
@@ -432,21 +518,16 @@ acpicpu_pstate_xpss(struct acpicpu_softc *sc)
 		goto out;
 	}
 
-	if (sc->sc_pstate != NULL)
-		kmem_free(sc->sc_pstate, sc->sc_pstate_count * size);
+	pstate = kmem_zalloc(count * size, KM_SLEEP);
 
-	sc->sc_pstate = kmem_zalloc(count * size, KM_SLEEP);
-
-	if (sc->sc_pstate == NULL) {
+	if (pstate == NULL) {
 		rv = AE_NO_MEMORY;
 		goto out;
 	}
 
-	sc->sc_pstate_count = count;
+	for (count = i = 0; i < pstate_count; i++) {
 
-	for (count = i = 0; i < sc->sc_pstate_count; i++) {
-
-		ps = &sc->sc_pstate[i];
+		ps = &pstate[i];
 		rv = acpicpu_pstate_xpss_add(ps, &obj->Package.Elements[i]);
 
 		if (ACPI_FAILURE(rv)) {
@@ -456,7 +537,7 @@ acpicpu_pstate_xpss(struct acpicpu_softc *sc)
 
 		for (j = 0; j < i; j++) {
 
-			if (ps->ps_freq >= sc->sc_pstate[j].ps_freq) {
+			if (ps->ps_freq >= pstate[j].ps_freq) {
 				ps->ps_freq = 0;
 				break;
 			}
@@ -466,7 +547,16 @@ acpicpu_pstate_xpss(struct acpicpu_softc *sc)
 			count++;
 	}
 
-	rv = (count != 0) ? AE_OK : AE_NOT_EXIST;
+	if (count > 0) {
+		if (sc->sc_pstate != NULL)
+			kmem_free(sc->sc_pstate, sc->sc_pstate_count * size);
+		sc->sc_pstate = pstate;
+		sc->sc_pstate_count = pstate_count;
+		rv = AE_OK;
+	} else {
+		kmem_free(pstate, pstate_count * size);
+		rv = AE_NOT_EXIST;
+	}
 
 out:
 	if (buf.Pointer != NULL)
@@ -478,7 +568,6 @@ out:
 static ACPI_STATUS
 acpicpu_pstate_xpss_add(struct acpicpu_pstate *ps, ACPI_OBJECT *obj)
 {
-	static const size_t size = sizeof(uint64_t);
 	ACPI_OBJECT *elm;
 	int i;
 
@@ -504,7 +593,7 @@ acpicpu_pstate_xpss_add(struct acpicpu_pstate *ps, ACPI_OBJECT *obj)
 		if (elm[i].Type != ACPI_TYPE_BUFFER)
 			return AE_TYPE;
 
-		if (elm[i].Buffer.Length > size)
+		if (elm[i].Buffer.Length != 8)
 			return AE_LIMIT;
 	}
 
@@ -516,11 +605,10 @@ acpicpu_pstate_xpss_add(struct acpicpu_pstate *ps, ACPI_OBJECT *obj)
 	if (ps->ps_freq == 0 || ps->ps_freq > 9999)
 		return AE_BAD_DECIMAL_CONSTANT;
 
-	(void)memcpy(&ps->ps_control, elm[4].Buffer.Pointer, size);
-	(void)memcpy(&ps->ps_status,  elm[5].Buffer.Pointer, size);
-
-	(void)memcpy(&ps->ps_control_mask, elm[6].Buffer.Pointer, size);
-	(void)memcpy(&ps->ps_status_mask,  elm[7].Buffer.Pointer, size);
+	ps->ps_control = ACPI_GET64(elm[4].Buffer.Pointer);
+	ps->ps_status = ACPI_GET64(elm[5].Buffer.Pointer);
+	ps->ps_control_mask = ACPI_GET64(elm[6].Buffer.Pointer);
+	ps->ps_status_mask = ACPI_GET64(elm[7].Buffer.Pointer);
 
 	/*
 	 * The latency is often defined to be
@@ -604,10 +692,6 @@ acpicpu_pstate_pct(struct acpicpu_softc *sc)
 
 		case ACPI_ADR_SPACE_FIXED_HARDWARE:
 
-			/*
-			 * With XPSS the _PCT registers incorporate
-			 * the addresses of the appropriate MSRs.
-			 */
 			if ((sc->sc_flags & ACPICPU_FLAG_P_XPSS) != 0) {
 
 				if (reg[i]->reg_bitwidth != 64) {
@@ -649,8 +733,8 @@ acpicpu_pstate_pct(struct acpicpu_softc *sc)
 
 	/*
 	 * In XPSS the control address can not be zero,
-	 * but the status address may be. Comparable to
-	 * T-states, in this we can ignore the status
+	 * but the status address may be. In this case,
+	 * comparable to T-states, we can ignore the status
 	 * check during the P-state (FFH) transition.
 	 */
 	if (sc->sc_pstate_control.reg_addr == 0) {
@@ -690,30 +774,56 @@ acpicpu_pstate_max(struct acpicpu_softc *sc)
 	 * Evaluate the currently highest P-state that can be used.
 	 * If available, we can use either this state or any lower
 	 * power (i.e. higher numbered) state from the _PSS object.
+	 * Note that the return value must match the _OST parameter.
 	 */
 	rv = acpi_eval_integer(sc->sc_node->ad_handle, "_PPC", &val);
 
-	sc->sc_pstate_max = 0;
+	if (ACPI_SUCCESS(rv) && val < sc->sc_pstate_count) {
 
-	if (ACPI_FAILURE(rv))
-		return 1;
+		if (sc->sc_pstate[val].ps_freq != 0) {
+			sc->sc_pstate_max = val;
+			return 0;
+		}
+	}
 
-	if (val > sc->sc_pstate_count - 1)
-		return 1;
+	return 1;
+}
 
-	if (sc->sc_pstate[val].ps_freq == 0)
-		return 1;
+static int
+acpicpu_pstate_min(struct acpicpu_softc *sc)
+{
+	ACPI_INTEGER val;
+	ACPI_STATUS rv;
 
-	sc->sc_pstate_max = val;
+	/*
+	 * The _PDL object defines the minimum when passive cooling
+	 * is being performed. If available, we can use the returned
+	 * state or any higher power (i.e. lower numbered) state.
+	 */
+	rv = acpi_eval_integer(sc->sc_node->ad_handle, "_PDL", &val);
 
-	return 0;
+	if (ACPI_SUCCESS(rv) && val < sc->sc_pstate_count) {
+
+		if (sc->sc_pstate[val].ps_freq == 0)
+			return 1;
+
+		if (val >= sc->sc_pstate_max) {
+			sc->sc_pstate_min = val;
+			return 0;
+		}
+	}
+
+	return 1;
 }
 
 static void
 acpicpu_pstate_change(struct acpicpu_softc *sc)
 {
+	static ACPI_STATUS rv = AE_OK;
 	ACPI_OBJECT_LIST arg;
 	ACPI_OBJECT obj[2];
+
+	acpicpu_pstate_reset(sc);
 
 	arg.Count = 2;
 	arg.Pointer = obj;
@@ -724,7 +834,22 @@ acpicpu_pstate_change(struct acpicpu_softc *sc)
 	obj[0].Integer.Value = ACPICPU_P_NOTIFY;
 	obj[1].Integer.Value = acpicpu_pstate_max(sc);
 
-	(void)AcpiEvaluateObject(sc->sc_node->ad_handle, "_OST", &arg, NULL);
+	if (sc->sc_passive != false)
+		(void)acpicpu_pstate_min(sc);
+
+	if (ACPI_FAILURE(rv))
+		return;
+
+	rv = AcpiEvaluateObject(sc->sc_node->ad_handle, "_OST", &arg, NULL);
+}
+
+static void
+acpicpu_pstate_reset(struct acpicpu_softc *sc)
+{
+
+	sc->sc_pstate_max = 0;
+	sc->sc_pstate_min = sc->sc_pstate_count - 1;
+
 }
 
 static void
@@ -855,7 +980,12 @@ acpicpu_pstate_set(struct acpicpu_softc *sc, uint32_t freq)
 
 	mutex_enter(&sc->sc_mtx);
 
-	for (i = sc->sc_pstate_max; i < sc->sc_pstate_count; i++) {
+	if (sc->sc_pstate_current == freq) {
+		mutex_exit(&sc->sc_mtx);
+		return 0;
+	}
+
+	for (i = sc->sc_pstate_max; i <= sc->sc_pstate_min; i++) {
 
 		if (sc->sc_pstate[i].ps_freq == 0)
 			continue;

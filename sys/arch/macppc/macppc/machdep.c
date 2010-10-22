@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.153 2009/11/27 03:23:11 rmind Exp $	*/
+/*	$NetBSD: machdep.c,v 1.153.2.1 2010/10/22 07:21:25 uebayasi Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.153 2009/11/27 03:23:11 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.153.2.1 2010/10/22 07:21:25 uebayasi Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -107,9 +107,18 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.153 2009/11/27 03:23:11 rmind Exp $");
 #endif
 
 struct genfb_colormap_callback gfb_cb;
+struct genfb_parameter_callback gpc;
+
+/*
+ * this is bogus - we need to read the actual default from the PMU and then
+ * put it here
+ */
+int backlight_level = 200;
 
 static void of_set_palette(void *, int, int, int, int);
 static void add_model_specifics(prop_dictionary_t);
+static void of_set_backlight(void *, int);
+static int of_get_backlight(void *);
 
 void
 initppc(u_int startkernel, u_int endkernel, char *args)
@@ -258,7 +267,8 @@ void
 copy_disp_props(struct device *dev, int node, prop_dictionary_t dict)
 {
 	uint32_t temp;
-	uint64_t cmap_cb;
+	uint64_t cmap_cb, backlight_cb;
+	int have_backlight = 0;
 
 	if (node != console_node) {
 		/*
@@ -319,6 +329,30 @@ copy_disp_props(struct device *dev, int node, prop_dictionary_t dict)
 	gfb_cb.gcc_set_mapreg = of_set_palette;
 	cmap_cb = (uint64_t)&gfb_cb;
 	prop_dictionary_set_uint64(dict, "cmap_callback", cmap_cb);
+
+	/* not let's look for backlight control */
+	have_backlight = 0;
+	if (OF_getprop(node, "backlight-control", &temp, sizeof(temp)) == 4) {
+		have_backlight = 1;
+	} else if (OF_getprop(OF_parent(node), "backlight-control", &temp, 
+		    sizeof(temp)) == 4) {
+		have_backlight = 1;
+	}
+	if (have_backlight) {
+		gpc.gpc_cookie = (void *)console_instance;
+		gpc.gpc_set_parameter = of_set_backlight;
+		gpc.gpc_get_parameter = of_get_backlight;
+		backlight_cb = (uint64_t)&gpc;
+		prop_dictionary_set_uint64(dict, "backlight_callback", 
+		    backlight_cb);
+		/*
+		 * since we don't know how to read the backlight level without
+		 * access to the PMU we just set it to the default defined
+		 * above so the hotkeys work as expected
+		 */
+		OF_call_method_1("set-contrast", console_instance, 1, 
+		    backlight_level);
+	}
 }
 
 static void
@@ -341,4 +375,27 @@ of_set_palette(void *cookie, int index, int r, int g, int b)
 	int ih = (int)cookie;
 
 	OF_call_method_1("color!", ih, 4, r, g, b, index);
+}
+
+static void
+of_set_backlight(void *cookie, int level)
+{
+	int ih = (int)cookie;
+
+	if (level < 0) level = 0;
+	if (level > 255) level = 255;
+	backlight_level = level;
+	OF_call_method_1("set-contrast", ih, 1, level);
+}
+
+static int
+of_get_backlight(void *cookie)
+{
+
+	/*
+	 * we don't know how to read the backlight level from OF alone - we
+	 * should read the default from the PMU and then just cache whatever
+	 * we set last
+	 */
+	return backlight_level;
 }

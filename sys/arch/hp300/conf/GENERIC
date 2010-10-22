@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.151.2.2 2010/08/17 06:44:22 uebayasi Exp $
+# $NetBSD: GENERIC,v 1.151.2.3 2010/10/22 07:21:17 uebayasi Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/hp300/conf/std.hp300"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.151.2.2 $"
+#ident 		"GENERIC-$Revision: 1.151.2.3 $"
 
 maxusers	32		# estimated number of users
 
@@ -57,6 +57,8 @@ options 	SYSVMSG		# System V-style message queues
 options 	SYSVSEM		# System V-style semaphores
 options 	P1003_1B_SEMAPHORE # p1003.1b semaphore support
 
+#options 	MODULAR		# new style module framework
+
 # Enable experimental buffer queue strategy for better responsiveness under 
 # high disk I/O load. Use it with caution - it's not proven to be stable yet.
 #options 	BUFQ_READPRIO
@@ -73,7 +75,7 @@ options 	DDB_HISTORY_SIZE=512	# Enable history editing in DDB
 
 # Compatibility options
 options 	COMPAT_43	# compatibility with 4.3BSD interfaces
-options 	COMPAT_44	# compatibility with 4.4BSD binaries
+#options 	COMPAT_44	# compatibility with 4.4BSD binaries
 options 	COMPAT_09	# compatibility with NetBSD 0.9
 options 	COMPAT_10	# compatibility with NetBSD 1.0
 options 	COMPAT_11	# compatibility with NetBSD 1.1

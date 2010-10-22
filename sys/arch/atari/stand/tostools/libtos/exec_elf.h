@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.5 2008/04/28 20:23:15 martin Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.5.20.1 2010/10/22 07:21:05 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -95,10 +95,8 @@ typedef	__int64_t	Elf64_Sxword;
 #define	ELF64_FSZ_XWORD	8
 typedef	__uint64_t	Elf64_Xword;
 #define	ELF64_FSZ_XWORD	8
-typedef	__uint32_t	Elf64_Half;
-#define	ELF64_FSZ_HALF	4
-typedef	__uint16_t	Elf64_Quarter;
-#define	ELF64_FSZ_QUARTER 2
+typedef	__uint16_t	Elf64_Half;
+#define	ELF64_FSZ_HALF 2
 
 /*
  * ELF Header

@@ -1,4 +1,4 @@
-/*	$NetBSD: sbic.c,v 1.66.2.1 2010/08/17 06:43:57 uebayasi Exp $ */
+/*	$NetBSD: sbic.c,v 1.66.2.2 2010/10/22 07:21:00 uebayasi Exp $ */
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -76,10 +76,12 @@
  */
 
 #include "opt_ddb.h"
+#ifdef __m68k__
 #include "opt_m68k_arch.h"
+#endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbic.c,v 1.66.2.1 2010/08/17 06:43:57 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbic.c,v 1.66.2.2 2010/10/22 07:21:00 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

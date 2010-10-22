@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_dirent.c,v 1.9.2.2 2010/08/17 06:45:51 uebayasi Exp $ */
+/*	$NetBSD: linux32_dirent.c,v 1.9.2.3 2010/10/22 07:21:48 uebayasi Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_dirent.c,v 1.9.2.2 2010/08/17 06:45:51 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_dirent.c,v 1.9.2.3 2010/10/22 07:21:48 uebayasi Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -213,6 +213,7 @@ again:
 			idb.d_reclen = (u_short)linux32_reclen;
 		}
 		strcpy(idb.d_name, bdp->d_name);
+		idb.d_name[strlen(idb.d_name) + 1] = bdp->d_type;
 		if ((error = copyout((void *)&idb, outp, linux32_reclen)))
 			goto out;
 		/* advance past this real entry */

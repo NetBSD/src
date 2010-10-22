@@ -1,4 +1,4 @@
-/*	$NetBSD: vreset.c,v 1.11 2008/05/26 16:28:39 kiyohara Exp $	*/
+/*	$NetBSD: vreset.c,v 1.11.18.1 2010/10/22 07:21:09 uebayasi Exp $	*/
 
 /*
  * Copyright (C) 1995-1997 Gary Thomas (gdt@linuxppc.org)
@@ -42,13 +42,8 @@
 
 #ifdef CONS_VGA
 #include <lib/libsa/stand.h>
-#include <sys/bswap.h>
 #include "boot.h"
 #include "iso_font.h"
-
-#if 0
-static char rcsid[] = "vreset.c 2.0 1997 kane  PEK'97 Exp $";
-#endif
 
 /*
  * VGA Register
@@ -436,18 +431,14 @@ u_char AC[21] = {
 	0x0C, 0x00, 0x0F, 0x08, 0x00
 };
 
-void enablePCIvideo(int);
-static int scanPCI(void);
-static int PCIVendor(int);
-int delayLoop(int);
-void writeAttr(u_char, u_char, u_char);
-void setTextRegs(struct VgaRegs *);
-void setTextCLUT(void);
-void loadFont(u_char *);
-void unlockS3(void);
-#ifdef DEBUG
-static void printslots(void);
-#endif
+
+static int delayLoop(int);
+static void writeAttr(u_char, u_char, u_char);
+static void setTextRegs(struct VgaRegs *);
+static void setTextCLUT(void);
+static void loadFont(u_char *);
+static void unlockS3(void);
+static void enablePCIvideo(int);
 
 void
 vga_reset(u_char *ISA_mem)
@@ -461,8 +452,8 @@ vga_reset(u_char *ISA_mem)
 		return;
 
 	/* If no VGA responding in text mode, then we have some work to do... */
-	slot = scanPCI();            	/* find video card in use  */
-	enablePCIvideo(slot);          	/* enable I/O to card      */
+	slot = findPCIVga();		/* find video card in use */
+	enablePCIvideo(slot);		/* enable I/O to card */
 
 	/*
          * Note: the PCI scanning code does not yet work correctly
@@ -527,16 +518,33 @@ vga_reset(u_char *ISA_mem)
 	};
 
 #ifdef DEBUG
-	printslots();
+	printPCIslots();
 	delayLoop(5);
 #endif
 	delayLoop(2);		/* give time for the video monitor to come up */
 }
 
+static int
+delayLoop(int k)
+{
+	volatile int a, b;
+	volatile int i, j;
+	a = 0;
+	do {
+		for (i = 0; i < 500; i++) {
+			b = i;
+			for (j = 0; j < 200; j++) {
+				a = b+j;
+			}
+		}
+	} while (k--);
+	return a;
+}
+
 /*
  * Write to VGA Attribute registers.
  */
-void
+static void
 writeAttr(u_char index, u_char data, u_char videoOn)
 {
 	u_char v;
@@ -548,7 +556,7 @@ writeAttr(u_char index, u_char data, u_char videoOn)
 	outb(0x3c0, data);
 }
 
-void
+static void
 setTextRegs(struct VgaRegs *svp)
 {
 	int i;
@@ -574,7 +582,7 @@ setTextRegs(struct VgaRegs *svp)
 	writeAttr(0x14, 0x00, 1);	/* color select; video on */
 }
 
-void
+static void
 setTextCLUT(void)
 {
 	int i;
@@ -591,7 +599,7 @@ setTextCLUT(void)
 	}
 }
 
-void
+static void
 loadFont(u_char *ISA_mem)
 {
 	int i, j;
@@ -603,7 +611,7 @@ loadFont(u_char *ISA_mem)
 	 */
 	i = inb(0x3DA);		/* Reset Attr toggle */
 
-	outb(0x3C0,0x30);
+	outb(0x3C0, 0x30);
 	outb(0x3C0, 0x01);	/* graphics mode */
 
 	outw(0x3C4, 0x0001);	/* reset sequencer */
@@ -622,7 +630,7 @@ loadFont(u_char *ISA_mem)
 	}
 }
 
-void
+static void
 unlockS3(void)
 {
 	/* From the S3 manual */
@@ -670,118 +678,17 @@ unlockS3(void)
 	outb(0x3D5, inb(0x3D5)&~0x10);
 }
 
-/* ============ */
-
-
-#define NSLOTS 5
-#define NPCIREGS  5
-
-/*
- * should use devfunc number/indirect method to be totally safe on
- * all machines, this works for now on 3 slot Moto boxes
- */
-
-struct PCI_ConfigInfo {
-	u_long * config_addr;
-	u_long regs[NPCIREGS];
-} PCI_slots [NSLOTS] = {
-	{ (u_long *)0x80800800, { 0xDE, 0xAD, 0xBE, 0xEF } },
-	{ (u_long *)0x80801000, { 0xDE, 0xAD, 0xBE, 0xEF } },
-	{ (u_long *)0x80802000, { 0xDE, 0xAD, 0xBE, 0xEF } },
-	{ (u_long *)0x80804000, { 0xDE, 0xAD, 0xBE, 0xEF } },
-	{ (u_long *)0x80808000, { 0xDE, 0xAD, 0xBE, 0xEF } },
-};
-
-
 /*
  * The following code modifies the PCI Command register
  * to enable memory and I/O accesses.
  */
-void
+static void
 enablePCIvideo(int slot)
 {
-	volatile u_char *ppci;
 
-	ppci = (u_char *)PCI_slots[slot].config_addr;
-	ppci[4] = 0x0003;	/* enable memory and I/O accesses */
-	__asm volatile("eieio");
+	enablePCI(slot, 1, 1, 0);	/* Enable IO and Memory */
 
 	outb(0x3d4, 0x11);
 	outb(0x3d5, 0x0e);	/* unlock CR0-CR7 */
 }
-
-#define DEVID   0
-#define CMD     1
-#define CLASS   2
-#define MEMBASE 4
-
-int
-scanPCI(void)
-{
-	int slt, r;
-	struct PCI_ConfigInfo *pslot;
-	int theSlot = -1;
-	int highVgaSlot = -1;
-
-	for (slt = 0; slt < NSLOTS; slt++) {
-		pslot = &PCI_slots[slt];
-		for (r = 0; r < NPCIREGS; r++) {
-			pslot->regs[r] = bswap32(pslot->config_addr[r]);
-		}
-
-		if (pslot->regs[DEVID] != 0xFFFFFFFF) {     /* card in slot ? */
-			if ((pslot->regs[CLASS] & 0xFFFFFF00) == 0x03000000) { /* VGA ? */
-				highVgaSlot = slt;
-				if ((pslot->regs[CMD] & 0x03)) { /* did firmware enable it ? */
-					theSlot = slt;
-				}
-			}
-		}
-	}
-
-	if (theSlot == -1)
-		theSlot = highVgaSlot;
-
-	return theSlot;
-}
-
-int
-delayLoop(int k)
-{
-	volatile int a, b;
-	volatile int i, j;
-	a = 0;
-	do {
-		for (i = 0; i < 500; i++) {
-			b = i;
-			for (j = 0; j < 200; j++) {
-				a = b+j;
-			}
-		}
-	} while (k--);
-	return a;
-}
-
-/* return Vendor ID of card in the slot */
-static int
-PCIVendor(int slotnum)
-{
-	struct PCI_ConfigInfo *pslot;
-
-	pslot = &PCI_slots[slotnum];
-
-	return (pslot->regs[DEVID] & 0xFFFF);
-}
-
-#ifdef DEBUG
-static void
-printslots(void)
-{
-	int i;
-	for (i = 0; i < NSLOTS; i++) {
-		printf("PCI Slot number: %d", i);
-		printf(" Vendor ID: 0x%x\n", PCIVendor(i));
-	}
-}
-#endif /* DEBUG */
 #endif /* CONS_VGA */

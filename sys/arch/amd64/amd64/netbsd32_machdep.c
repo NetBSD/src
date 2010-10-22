@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.61.2.2 2010/08/17 06:43:52 uebayasi Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.61.2.3 2010/10/22 07:20:57 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.61.2.2 2010/08/17 06:43:52 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.61.2.3 2010/10/22 07:20:57 uebayasi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -962,7 +962,7 @@ check_sigcontext32(struct lwp *l, const struct netbsd32_sigcontext *scp)
 	pcb = lwp_getpcb(curlwp);
 
 	if (((scp->sc_eflags ^ tf->tf_rflags) & PSL_USERSTATIC) != 0 ||
-	    scp->sc_cs != GSEL(GUCODE32_SEL, SEL_UPL))
+	    !VALID_USER_CSEL32(scp->sc_cs))
 		return EINVAL;
 	if (scp->sc_fs != 0 && !VALID_USER_DSEL32(scp->sc_fs) &&
 	    !(scp->sc_fs == GSEL(GUFS_SEL, SEL_UPL) && pcb->pcb_fs != 0))
@@ -991,7 +991,7 @@ check_mcontext32(struct lwp *l, const mcontext32_t *mcp)
 	pcb = lwp_getpcb(l);
 
 	if (((gr[_REG32_EFL] ^ tf->tf_rflags) & PSL_USERSTATIC) != 0 ||
-	    gr[_REG32_CS] != GSEL(GUCODE32_SEL, SEL_UPL))
+	    !VALID_USER_CSEL32(gr[_REG32_CS]))
 		return EINVAL;
 	if (gr[_REG32_FS] != 0 && !VALID_USER_DSEL32(gr[_REG32_FS]) &&
 	    !(gr[_REG32_FS] == GSEL(GUFS_SEL, SEL_UPL) && pcb->pcb_fs != 0))

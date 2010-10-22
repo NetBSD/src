@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.224.2.2 2010/08/17 06:43:55 uebayasi Exp $	*/
+/*	$NetBSD: machdep.c,v 1.224.2.3 2010/10/22 07:20:58 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -87,7 +87,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.224.2.2 2010/08/17 06:43:55 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.224.2.3 2010/10/22 07:20:58 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -109,6 +109,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.224.2.2 2010/08/17 06:43:55 uebayasi E
 #include <sys/core.h>
 #include <sys/kcore.h>
 #include <sys/ksyms.h>
+#include <sys/module.h>
 #include <sys/cpu.h>
 #include <sys/exec.h>
 
@@ -1263,6 +1264,13 @@ cpu_exec_aout_makecmds(struct lwp *l, struct exec_package *epp)
 }
 
 #ifdef MODULAR
+/*
+ * Push any modules loaded by the bootloader etc.
+ */
+void
+module_init_md(void)
+{
+}
 
 int _spllkm6(void);
 int _spllkm7(void);

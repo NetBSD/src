@@ -1,4 +1,4 @@
-.\" $NetBSD: acpi.4,v 1.50.2.2 2010/08/17 06:40:01 uebayasi Exp $
+.\" $NetBSD: acpi.4,v 1.50.2.3 2010/10/22 07:11:53 uebayasi Exp $
 .\"
 .\" Copyright (c) 2002, 2004, 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd August 8, 2010
+.Dd September 6, 2010
 .Dt ACPI 4
 .Os
 .Sh NAME
@@ -38,6 +38,7 @@
 .Cd "options	ACPI_ACTIVATE_DEV"
 .Cd "options	ACPI_DSDT_OVERRIDE"
 .Cd "options	ACPI_DSDT_FILE=\*[q]\*[q]"
+.Cd "options	ACPI_BLACKLIST_YEAR=2000"
 .Sh DESCRIPTION
 .Nx
 provides machine-independent bus support for
@@ -94,6 +95,8 @@ If
 is not specified, default to
 .Dq dsdt.hex
 in the build directory.
+.It Dv ACPI_BLACKLIST_YEAR=2000
+Do not use ACPI with any BIOS made on or before the specified year.
 .El
 .Sh SYSCTL SUPPORT
 Few
@@ -483,7 +486,7 @@ but the
 specific parts are typically limited to
 .Dv ACPI_LV_DEBUG_OBJECT
 and
-.Dv ACPI_LV_DEBUG_INFO .
+.Dv ACPI_LV_INFO .
 The debug output can be stopped by setting
 .Ic hw.acpi.debug.level
 to
@@ -561,6 +564,12 @@ is printed every time the method is called by the interpreter.
 .%N Revision 1.27
 .%D January 20, 2010
 .%U http://www.acpica.org/download/acpica-reference.pdf
+.Re
+.Rs
+.%A Len Brown
+.%T ACPI in Linux - Myths vs. Reality
+.%D June 27-30, 2007
+.%U http://www.linuxsymposium.org/archives/OLS/Reprints-2007/brown_1-Reprint.pdf
 .Re
 .Rs
 .%A Joerg Sonnenberger

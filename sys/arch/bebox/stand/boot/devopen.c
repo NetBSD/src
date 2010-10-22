@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.9 2008/05/26 16:28:39 kiyohara Exp $	*/
+/*	$NetBSD: devopen.c,v 1.9.18.1 2010/10/22 07:21:08 uebayasi Exp $	*/
 
 /*-
  *  Copyright (c) 1993 John Brezak
@@ -33,125 +33,132 @@
 #include <sys/param.h>
 #include <sys/reboot.h>
 
-#define	ispart(c)	((c) >= 'a' && (c) <= 'h')
-
-static int atoi(char *);
-static int devlookup(char *);
 static int devparse(const char *, int *, int *, int *, int *, int *, char **);
 
 
-static int
-atoi(char *cp)
-{
-	int val = 0;
-
-	while (isdigit(*cp))
-		val = val * 10 + (*cp++ - '0');
-	return val;
-}
-
-static int
-devlookup(char *d)
-{
-	struct devsw *dp = devsw;
-	int i;
-
-	for (i = 0; i < ndevs; i++, dp++)
-		if (dp->dv_name && strcmp(dp->dv_name, d) == 0)
-			return i;
-
-	printf("No such device - Configured devices are:\n");
-	for (dp = devsw, i = 0; i < ndevs; i++, dp++)
-		if (dp->dv_name)
-			printf(" %s", dp->dv_name);
-	printf("\n");
-	return -1;
-}
-
 /*
- * Parse a device spec in one of two forms.
- *   dev(ctlr, unit, part)file
+ * Parse a device spec.
+ *   i.e.
+ *     /dev/disk/floppy
+ *     /dev/disk/ide/0/master/0
+ *     /dev/disk/ide/0/slave/0
+ *     /dev/disk/scsi/0/0/0
+ *     /dev/disk/scsi/0/3/0
  */
 static int
-devparse(const char *fname, int *dev, int *adapt, int *ctlr, int *unit,
+devparse(const char *fname, int *dev, int *ctlr, int *unit, int *lunit,
 	 int *part, char **file)
 {
-	int argc, flag;
-	char *s, *args[3];
-	extern char nametmp[];
+	int i;
+	char devdir[] = "/dev/disk/";
+	char floppy[] = "floppy";
+	char ide[] = "ide";
+	char scsi[] = "scsi";
+	char *p;
 
-	/* get device name and make lower case */
-	strcpy(nametmp, (char *)fname);
-	for (s = nametmp; *s && *s != '('; s++)
-		if (isupper(*s)) *s = tolower(*s);
+	if (strncmp(fname, devdir, strlen(devdir)) != 0)
+		return EINVAL;
+	p = __UNCONST(fname) + strlen(devdir);
 
-	if (*s == '(') {
-		/* lookup device and get index */
-		*s = NULL;
-		if ((*dev = devlookup(nametmp)) < 0)
-		    goto baddev;
-
-		/* tokenize device ident */
-		for (++s, flag = 0, argc = 0; *s && *s != ')'; s++) {
-			if (*s != ',') {
-				if (!flag) {
-					flag++;
-					args[argc++] = s;
-				}
-			} else {
-				if (flag) {
-					*s = NULL;
-					flag = 0;
-				}
+	if (strncmp(p, floppy, strlen(floppy)) == 0) {
+		p += strlen(floppy);
+		for (i = 0; devsw[i].dv_name != NULL; i++)
+			if (strcmp(devsw[i].dv_name, "fd") == 0) {
+				*dev = i;
+				*ctlr = 0;
+				*unit = 1;
+				*lunit = 0;
+				break;
 			}
-		}
-		if (*s == ')')
-			*s = NULL;
+	} else if (strncmp(p, ide, strlen(ide)) == 0) {
+		char master[] = "master";
+		char slave[] = "slave";
 
-		switch (argc) {
-		case 3:
-			*part = atoi(args[2]);
-			/* FALLTHROUGH */
-		case 2:
-			*unit = atoi(args[1]);
-			/* FALLTHROUGH */
-		case 1:
-			*ctlr = atoi(args[0]);
-			break;
-		}
-		*file = ++s;
-	} else {
-		/* no device present */
-		*file = (char *)fname;
+		p += strlen(ide);
+		if (*p++ != '/' ||
+		    !isdigit(*p++) ||
+		    *p++ != '/')
+			return EINVAL;
+		*ctlr = *(p - 2) - '0';
+		if (strncmp(p, master, strlen(master)) == 0) {
+			*unit = 0;
+			p += strlen(master);
+		} else if (strncmp(p, slave, strlen(slave)) == 0) {
+			*unit = 1;
+			p += strlen(slave);
+		} else
+			return EINVAL;
+		if (*p++ != '/' ||
+		    !isdigit(*p++) ||
+		    *p++ != '_' ||
+		    !isdigit(*p++))
+			return EINVAL;
+		*lunit = *(p - 3) - '0';
+		*part = *(p - 1) - '0';
+		for (i = 0; devsw[i].dv_name != NULL; i++)
+			if (strcmp(devsw[i].dv_name, "wd") == 0) {
+				*dev = i;
+				break;
+			}
+		if (devsw[i].dv_name == NULL)
+			return EINVAL;
+	} else if (strncmp(p, scsi, strlen(scsi)) == 0) {
+		p += strlen(scsi);
+		if (*p++ != '/' ||
+		    !isdigit(*p++) ||
+		    *p++ != '/' ||
+		    !isdigit(*p++) ||
+		    *p++ != '/' ||
+		    !isdigit(*p++) ||
+		    *p++ != '_' ||
+		    !isdigit(*p++))
+			return EINVAL;
+		*ctlr = *(p - 7) - '0';
+		*unit = *(p - 5) - '0';
+		*lunit = *(p - 3) - '0';
+		*part = *(p - 1) - '0';
+		for (i = 0; devsw[i].dv_name != NULL; i++)
+			if (strcmp(devsw[i].dv_name, "sd") == 0) {
+				*dev = i;
+				break;
+			}
+		if (devsw[i].dv_name == NULL)
+			return EINVAL;
 	}
-	return 0;
 
-baddev:
-	return EINVAL;
+	if (*p++ != ':')
+		return EINVAL;
+	*file = p;
+	return 0;
 }
 
 int
 devopen(struct open_file *f, const char *fname, char **file)
 {
 	int error;
-	int dev = 0, ctlr = 0, unit = 0, part = 0;
-	int adapt = 0;
+	int dev = 0, ctlr = 0, unit = 0, lunit = 0, part = 0;
 	struct devsw *dp = &devsw[0];
+	extern struct devsw pseudo_devsw;
 
-	if ((error =
-	    devparse(fname, &dev, &adapt, &ctlr, &unit, &part, file)) != 0)
-		return error;
-
-	dp = &devsw[dev];
-	if (!dp->dv_open)
-		return ENODEV;
+	**file = '\0';
+	error = devparse(fname, &dev, &ctlr, &unit, &lunit, &part, file);
+	if (error == 0) {
+		dp = &devsw[dev];
+		if (!dp->dv_open)
+			return ENODEV;
+	} else {
+		if (strcmp(fname, "in") == 0)
+			/* special case: kernel in memory */
+			dp = &pseudo_devsw;
+		else
+			return error;
+	}
 
 	f->f_dev = dp;
-	if ((error = (*dp->dv_open)(f, ctlr, unit, part)) == 0)
+	if ((error = (*dp->dv_open)(f, ctlr, unit, lunit, part)) == 0)
 		return 0;
 
-	printf("%s(%d,%d,%d): %s\n", devsw[dev].dv_name,
-		ctlr, unit, part, strerror(error));
+	printf("%s %s\n", fname, strerror(error));
 
 	return error;
 }

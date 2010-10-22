@@ -1,4 +1,4 @@
-/*	$NetBSD: locore2.c,v 1.98 2009/11/29 15:13:22 pooka Exp $	*/
+/*	$NetBSD: locore2.c,v 1.98.2.1 2010/10/22 07:21:37 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: locore2.c,v 1.98 2009/11/29 15:13:22 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore2.c,v 1.98.2.1 2010/10/22 07:21:37 uebayasi Exp $");
 
 #include "opt_ddb.h"
 #include "opt_modular.h"
@@ -153,7 +153,7 @@ _save_symtab(void)
 	 */
 
 	if ((cpu_machine_id == ID_SUN3_50) &&
-	    ((vaddr_t)maxsym > (KERNBASE + OBMEM_BW50_ADDR - USPACE))) {
+	    ((vaddr_t)maxsym > (KERNBASE3 + OBMEM_BW50_ADDR - USPACE))) {
 		mon_printf("_save_symtab: too large for 3/50");
 		return;
 	}

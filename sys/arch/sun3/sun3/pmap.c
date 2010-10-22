@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.164 2009/12/11 13:52:57 tsutsui Exp $	*/
+/*	$NetBSD: pmap.c,v 1.164.2.1 2010/10/22 07:21:37 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.164 2009/12/11 13:52:57 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.164.2.1 2010/10/22 07:21:37 uebayasi Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -132,7 +132,7 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.164 2009/12/11 13:52:57 tsutsui Exp $");
 #define DVMA_MAP_END	(DVMA_MAP_BASE + DVMA_MAP_AVAIL)
 
 /* User segments from 0 to KERNBASE */
-#define	NUSEG	(KERNBASE / NBSG)
+#define	NUSEG	(KERNBASE3 / NBSG)
 /* The remainder are kernel segments. */
 #define	NKSEG	(NSEGMAP - NUSEG)
 
@@ -1523,7 +1523,7 @@ pmap_bootstrap(vaddr_t nextva)
 	 * Determine the range of physical memory available.
 	 * Physical memory at zero was remapped to KERNBASE.
 	 */
-	avail_start = nextva - KERNBASE;
+	avail_start = nextva - KERNBASE3;
 	if (rvec->romvecVersion < 1) {
 		mon_printf("Warning: ancient PROM version=%d\n",
 			   rvec->romvecVersion);
@@ -1575,7 +1575,7 @@ pmap_bootstrap(vaddr_t nextva)
 	 * Unmap user virtual segments.
 	 * VA range: [0 .. KERNBASE]
 	 */
-	for (va = 0; va < KERNBASE; va += NBSG)
+	for (va = 0; va < KERNBASE3; va += NBSG)
 		set_segmap(va, SEGINV);
 
 	/*
@@ -1641,7 +1641,7 @@ pmap_bootstrap(vaddr_t nextva)
 	 * (physical address zero) so its contents will be
 	 * preserved through a reboot.
 	 */
-	va = KERNBASE;
+	va = KERNBASE3;
 	pte = get_pte(va);
 	pte |= (PG_SYSTEM | PG_WRITE | PG_NC);
 	set_pte(va, pte);
@@ -3654,7 +3654,7 @@ pmap_kcore_hdr(struct sun3_kcore_hdr *sh)
 	sh->pg_valid = PG_VALID;
 
 	/* Copy the kernel segmap (256 bytes). */
-	va = KERNBASE;
+	va = KERNBASE3;
 	cp = sh->ksegmap;
 	ep = cp + sizeof(sh->ksegmap);
 	do {

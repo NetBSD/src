@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.974.2.9 2010/08/25 14:32:30 uebayasi Exp $
+#	$NetBSD: files,v 1.974.2.10 2010/10/22 07:21:49 uebayasi Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20100430
@@ -191,7 +191,6 @@ include "net80211/files.net80211"
 include "netatalk/files.netatalk"
 include "netbt/files.netbt"
 include "netinet/files.netinet"
-include "netinet/files.ipfilter"
 include "netinet6/files.netinet6"
 include "netinet6/files.ipsec"
 include "netipsec/files.netipsec"
@@ -199,6 +198,9 @@ include "netiso/files.netiso"
 include "netmpls/files.netmpls"
 include "netnatm/files.netnatm"
 include "netsmb/files.netsmb"
+
+include "net/npf/files.npf"
+include "netinet/files.ipfilter"
 include "net/files.pf"
 
 obsolete defflag		CCITT		# obsolete
@@ -1252,6 +1254,11 @@ file	dev/ic/iavc.c			iavc
 device	bwi: arp, ifnet, firmload, wlan
 file	dev/ic/bwi.c			bwi
 
+# DM9000 Ethernet controllers
+#
+device	dme: arp, ether, ifnet
+file	dev/ic/dm9000.c			dme
+
 # legitimate pseudo-devices
 #
 defpseudodev vnd:	disk
@@ -1443,6 +1450,7 @@ file	kern/init_sysctl_base.c
 file	kern/init_sysent.c
 file	kern/kern_acct.c
 file	kern/kern_auth.c
+file	kern/kern_cfglock.c
 file	kern/kern_clock.c
 file	kern/kern_condvar.c
 file	kern/kern_core.c		coredump

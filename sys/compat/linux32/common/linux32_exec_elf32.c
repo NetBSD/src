@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_exec_elf32.c,v 1.9.2.2 2010/08/17 06:45:52 uebayasi Exp $ */
+/*	$NetBSD: linux32_exec_elf32.c,v 1.9.2.3 2010/10/22 07:21:48 uebayasi Exp $ */
 
 /*-                     
  * Copyright (c) 1995, 1998, 2000, 2001,2006 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_exec_elf32.c,v 1.9.2.2 2010/08/17 06:45:52 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_exec_elf32.c,v 1.9.2.3 2010/10/22 07:21:48 uebayasi Exp $");
 
 #define	ELFSIZE		32
 
@@ -92,7 +92,7 @@ ELFNAME2(linux32,probe)(struct lwp *l, struct exec_package *epp,
 	DPRINTF(("linux32_probe: returning 0\n"));
 #endif
 
-	epp->ep_flags |= EXEC_32;
+	epp->ep_flags |= EXEC_32 | EXEC_FORCEAUX;
 	epp->ep_vm_minaddr = VM_MIN_ADDRESS;
 	epp->ep_vm_maxaddr = USRSTACK32;
 
@@ -231,4 +231,3 @@ linux32_elf32_copyargs(struct lwp *l, struct exec_package *pack,
 
 	return 0;
 }
-

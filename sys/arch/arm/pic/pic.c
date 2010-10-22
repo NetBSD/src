@@ -1,4 +1,4 @@
-/*	$NetBSD: pic.c,v 1.4 2008/12/30 05:43:14 matt Exp $	*/
+/*	$NetBSD: pic.c,v 1.4.4.1 2010/10/22 07:21:03 uebayasi Exp $	*/
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -28,7 +28,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.4 2008/12/30 05:43:14 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.4.4.1 2010/10/22 07:21:03 uebayasi Exp $");
 
 #define _INTR_PRIVATE
 #include <sys/param.h>
@@ -193,6 +193,7 @@ pic_deliver_irqs(struct pic_softc *pic, int ipl, void *frame)
 	size_t irq_base;
 #if PIC_MAXSOURCES > 32
 	size_t irq_count;
+	int poi = 0;		/* Possibility of interrupting */
 #endif
 	uint32_t pending_irqs;
 	uint32_t blocked_irqs;
@@ -214,14 +215,20 @@ pic_deliver_irqs(struct pic_softc *pic, int ipl, void *frame)
 		if (pending_irqs == 0) {
 #if PIC_MAXSOURCES > 32
 			irq_count += 32;
-			if (__predict_true(irq_count >= pic->pic_maxsources))
-				break;
-			irq_base += 32;
-			ipending++;
-			iblocked++;
-			if (irq_base >= pic->pic_maxsources) {
+			if (__predict_true(irq_count >= pic->pic_maxsources)) {
+				if (!poi)
+					/*Interrupt at this level was handled.*/
+					break;
+				irq_base = 0;
+				irq_count = 0;
+				poi = 0;
 				ipending = pic->pic_pending_irqs;
 				iblocked = pic->pic_blocked_irqs;
+			} else {
+				irq_base += 32;
+				ipending++;
+				iblocked++;
+				KASSERT(irq_base <= pic->pic_maxsources);
 			}
 			continue;
 #else
@@ -229,7 +236,7 @@ pic_deliver_irqs(struct pic_softc *pic, int ipl, void *frame)
 #endif
 		}
 		progress = true;
-		blocked_irqs = pending_irqs;
+		blocked_irqs = 0;
 		do {
 			irq = ffs(pending_irqs) - 1;
 			KASSERT(irq >= 0);
@@ -240,9 +247,16 @@ pic_deliver_irqs(struct pic_softc *pic, int ipl, void *frame)
 				cpsie(I32_bit);
 				pic_dispatch(is, frame);
 				cpsid(I32_bit);
+#if PIC_MAXSOURCES > 32
+				/*
+				 * There is a possibility of interrupting
+				 * from cpsie() to cpsid().
+				 */
+				poi = 1;
+#endif
+				blocked_irqs |= __BIT(irq);
 			} else {
 				KASSERT(0);
-				blocked_irqs &= ~__BIT(irq);
 			}
 			pending_irqs = pic_find_pending_irqs_by_ipl(pic,
 			    irq_base, *ipending, ipl);

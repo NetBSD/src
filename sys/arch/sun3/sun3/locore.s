@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.91.2.1 2010/04/30 14:39:55 uebayasi Exp $	*/
+/*	$NetBSD: locore.s,v 1.91.2.2 2010/10/22 07:21:37 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -117,7 +117,7 @@ ASGLOBAL(start)
 | We will unscramble which PMEGs we actually need later.
 
 	movl	#(SEGMAP_BASE+0),%a0		| src
-	movl	#(SEGMAP_BASE+KERNBASE),%a1	| dst
+	movl	#(SEGMAP_BASE+KERNBASE3),%a1	| dst
 	movl	#(0x400000/NBSG),%d0		| count
 
 L_per_pmeg:
@@ -155,7 +155,7 @@ L_high_code:
 	lea	_C_LABEL(lwp0),%a0	| lwp0
 	movl	%a0@(L_PCB),%a1		| XXXuvm_lwp_getuarea
 	lea	%a1@(USPACE-4),%sp	| set SSP to last word
-	movl	#USRSTACK-4,%a2
+	movl	#USRSTACK3-4,%a2
 	movl	%a2,%usp		| init user SP
 
 | Note curpcb was already set in _bootstrap().
@@ -789,7 +789,7 @@ ENTRY(set_segmap_allctx)
 | Not using _C_LABEL() here because these symbols are never
 | referenced by any C code, and if the leading underscore
 | ever goes away, these lines turn into syntax errors...
-	.set	_KERNBASE,KERNBASE
+	.set	_KERNBASE3,KERNBASE3
 	.set	_MONSTART,SUN3_MONSTART
 	.set	_PROM_BASE,SUN3_PROM_BASE
 	.set	_MONEND,SUN3_MONEND

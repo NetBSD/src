@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.23.4.1 2010/04/30 14:39:35 uebayasi Exp $	*/
+/*	$NetBSD: boot.c,v 1.23.4.2 2010/10/22 07:21:25 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -288,7 +288,7 @@ main(void)
 
 			loadflag = LOAD_KERNEL;
 			if (floppyboot)
-				loadflag &= ~LOAD_NOTE;
+				loadflag &= ~LOAD_BACKWARDS;
 
 			marks[MARK_START] = 0;
 			if (loadfile(kernels[i], marks, loadflag) >= 0)

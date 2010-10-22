@@ -1,4 +1,4 @@
-/*	$NetBSD: m68k_syscall.c,v 1.38.2.1 2010/04/30 14:39:33 uebayasi Exp $	*/
+/*	$NetBSD: m68k_syscall.c,v 1.38.2.2 2010/10/22 07:21:23 uebayasi Exp $	*/
 
 /*-
  * Portions Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: m68k_syscall.c,v 1.38.2.1 2010/04/30 14:39:33 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: m68k_syscall.c,v 1.38.2.2 2010/10/22 07:21:23 uebayasi Exp $");
 
 #include "opt_execfmt.h"
 #include "opt_compat_netbsd.h"
@@ -144,9 +144,7 @@ extern void machine_userret(struct lwp *, struct frame *, u_quad_t);
 
 void syscall(register_t, struct frame);
 
-#ifdef COMPAT_AOUT_M68K
 void	aoutm68k_syscall_intern(struct proc *);
-#endif
 static void syscall_plain(register_t, struct lwp *, struct frame *);
 static void syscall_fancy(register_t, struct lwp *, struct frame *);
 
@@ -192,7 +190,6 @@ syscall_intern(struct proc *p)
 		p->p_md.md_syscall = syscall_plain;
 }
 
-#ifdef COMPAT_AOUT_M68K
 /*
  * Not worth the effort of a whole new set of syscall_{plain,fancy} functions
  */
@@ -205,7 +202,6 @@ aoutm68k_syscall_intern(struct proc *p)
 	else
 		p->p_md.md_syscall = syscall_plain;
 }
-#endif
 
 static void
 syscall_plain(register_t code, struct lwp *l, struct frame *frame)
@@ -294,22 +290,15 @@ syscall_plain(register_t code, struct lwp *l, struct frame *frame)
 		 * value there. However, -current binaries post 4.0
 		 * but pre-5.0 might still require this copy, so we
 		 * select this behaviour based on COMPAT_50 as we have
-		 * no equivvalent for the exact in-between version.
+		 * no equivalent for the exact in-between version.
 		 */
-#ifdef COMPAT_AOUT_M68K
-		{
-			extern struct emul emul_netbsd_aoutm68k;
 
-			/*
-			 * Some pre-m68k ELF libc assembler stubs assume
-			 * %a0 is preserved across system calls...
-			 */
-			if (p->p_emul != &emul_netbsd_aoutm68k)
-				frame->f_regs[A0] = rval[0];
-		}
-#else
-		frame->f_regs[A0] = rval[0];
-#endif
+		/*
+		 * Some pre-m68k ELF libc assembler stubs assume
+		 * %a0 is preserved across system calls...
+		 */
+		if (p->p_emul == &emul_netbsd)
+			frame->f_regs[A0] = rval[0];
 #endif
 		break;
 	case ERESTART:
@@ -420,20 +409,13 @@ out:
 		frame->f_sr &= ~PSL_C;	/* carry bit */
 #ifdef COMPAT_50
 		/* see syscall_plain for a comment explaining this */
-#ifdef COMPAT_AOUT_M68K
-		{
-			extern struct emul emul_netbsd_aoutm68k;
 
-			/*
-			 * Some pre-m68k ELF libc assembler stubs assume
-			 * %a0 is preserved across system calls...
-			 */
-			if (p->p_emul != &emul_netbsd_aoutm68k)
-				frame->f_regs[A0] = rval[0];
-		}
-#else
-		frame->f_regs[A0] = rval[0];
-#endif
+		/*
+		 * Some pre-m68k ELF libc assembler stubs assume
+		 * %a0 is preserved across system calls...
+		 */
+		if (p->p_emul == &emul_netbsd)
+			frame->f_regs[A0] = rval[0];
 #endif
 		break;
 	case ERESTART:
