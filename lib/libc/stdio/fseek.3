@@ -1,4 +1,4 @@
-.\"	$NetBSD: fseek.3,v 1.24 2003/08/07 16:43:25 agc Exp $
+.\"	$NetBSD: fseek.3,v 1.25 2010/10/22 21:29:31 christos Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)fseek.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd July 8, 2000
+.Dd October 22, 2010
 .Dt FSEEK 3
 .Os
 .Sh NAME
@@ -135,7 +135,7 @@ functions
 are alternative interfaces equivalent to
 .Fn ftell ,
 .Fn ftello ,
-.Fn fseek
+.Fn fseek ,
 and
 .Fn fseeko
 (with whence set to
@@ -155,20 +155,34 @@ returns no value.
 Upon successful completion,
 .Fn fgetpos ,
 .Fn fseek ,
+.Fn fseeko ,
+and
 .Fn fsetpos
-return 0,
-and
+return 0.
+The functions
 .Fn ftell
-returns the current offset.
+and
+.Fn ftello
+return the current offset.
 Otherwise,
-.Fn fseek
+.Fn fseek ,
+.Fn fseeko ,
+.Fn ftell ,
 and
-.Fn ftell
-return \-1 and
-the others
-return a nonzero value and the global variable
+.Fn ftello
+return \-1 while
+.Fn fgetpos
+and
+.Fn fsetpos
+return a nonzero value.
+On error all functions the global variable
 .Va errno
 is set to indicate the error.
+Since the
+.Fn rewind
+function does not return an error code, applications need to clear
+.Va errno
+before calling it in order to detect errors.
 .Sh ERRORS
 .Bl -tag -width Er
 .It Bq Er EBADF
@@ -186,17 +200,11 @@ was not
 .Dv SEEK_END ,
 or
 .Dv SEEK_CUR .
-.\" .It Bq Er EOVERFLOW
-.\" For
-.\" .Fn ftell ,
-.\" the current file offset cannot be represented correctly in an object of type
-.\" .Fa long .
-.\" .Pp
-.\" For
-.\" .Fn fseek ,
-.\" the resulting file offset would be a value which cannot be represented
-.\" correctly in an object of type
-.\" .Fa long.
+.It Bq Er EOVERFLOW
+For
+.Fn ftell ,
+the current file offset cannot be represented correctly in an object of type
+.Fa long .
 .El
 .Pp
 The function
