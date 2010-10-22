@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_userconf.c,v 1.19 2009/10/20 00:51:13 snj Exp $	*/
+/*	$NetBSD: subr_userconf.c,v 1.19.2.1 2010/10/22 07:22:28 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1996 Mats O Jansson <moj@stacken.kth.se>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_userconf.c,v 1.19 2009/10/20 00:51:13 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_userconf.c,v 1.19.2.1 2010/10/22 07:22:28 uebayasi Exp $");
 
 #include "opt_userconf.h"
 
@@ -803,7 +803,7 @@ extern void user_config(void);
 void
 user_config(void)
 {
-	char prompt[] = "uc> ";
+	const char prompt[] = "uc> ";
 
 	userconf_init();
 	printf("userconf: configure system autoconfiguration:\n");

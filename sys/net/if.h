@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.146 2010/01/17 19:45:06 pooka Exp $	*/
+/*	$NetBSD: if.h,v 1.146.2.1 2010/10/22 07:22:38 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -112,7 +112,6 @@
  * routing and gateway routines maintaining information used to locate
  * interfaces.  These routines live in the files if.c and route.c
  */
-/*  XXX fast fix for SNMP, going away soon */
 #include <sys/time.h>
 
 #if defined(_KERNEL_OPT)

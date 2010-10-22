@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.c,v 1.36.20.1 2010/08/17 06:46:39 uebayasi Exp $	*/
+/*	$NetBSD: scsipiconf.c,v 1.36.20.2 2010/10/22 07:22:14 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipiconf.c,v 1.36.20.1 2010/08/17 06:46:39 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipiconf.c,v 1.36.20.2 2010/10/22 07:22:14 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -107,11 +107,8 @@ scsipi_command(struct scsipi_periph *periph, struct scsipi_generic *cmd,
 void
 scsipi_load_verbose(void)
 {
-	if (scsi_verbose_loaded == 0) {
-		mutex_enter(&module_lock);
+	if (scsi_verbose_loaded == 0)
 		module_autoload("scsiverbose", MODULE_CLASS_MISC);
-		mutex_exit(&module_lock);
-	}
 }
 
 /*

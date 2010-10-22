@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_mroute.c,v 1.98.2.1 2010/08/17 06:47:47 uebayasi Exp $	*/
+/*	$NetBSD: ip6_mroute.c,v 1.98.2.2 2010/10/22 07:22:41 uebayasi Exp $	*/
 /*	$KAME: ip6_mroute.c,v 1.49 2001/07/25 09:21:18 jinmei Exp $	*/
 
 /*
@@ -117,7 +117,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.98.2.1 2010/08/17 06:47:47 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.98.2.2 2010/10/22 07:22:41 uebayasi Exp $");
 
 #include "opt_inet.h"
 #include "opt_mrouting.h"
@@ -567,7 +567,7 @@ ip6_mrouter_done(void)
 			for (rte = rt->mf6c_stall; rte != NULL; ) {
 				struct rtdetq *n = rte->next;
 
-				m_free(rte->m);
+				m_freem(rte->m);
 				free(rte, M_MRTABLE);
 				rte = n;
 			}

@@ -1,4 +1,4 @@
-/* $NetBSD: w83l518d.c,v 1.1 2009/09/30 20:44:50 jmcneill Exp $ */
+/* $NetBSD: w83l518d.c,v 1.1.4.1 2010/10/22 07:21:58 uebayasi Exp $ */
 
 /*
  * Copyright (c) 2009 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: w83l518d.c,v 1.1 2009/09/30 20:44:50 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: w83l518d.c,v 1.1.4.1 2010/10/22 07:21:58 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -136,4 +136,25 @@ wb_intr(void *opaque)
 	}
 
 	return 0;
+}
+
+/*
+ * pmf
+ */
+bool
+wb_suspend(struct wb_softc *wb)
+{
+	if (wb->wb_type == WB_DEVNO_SD)	
+		return wb_sdmmc_suspend(wb);
+
+	return false;
+}
+
+bool
+wb_resume(struct wb_softc *wb)
+{
+	if (wb->wb_type == WB_DEVNO_SD)
+		return wb_sdmmc_resume(wb);
+
+	return false;
 }

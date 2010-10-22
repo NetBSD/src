@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_wakedev.c,v 1.2.6.2 2010/08/17 06:46:01 uebayasi Exp $ */
+/* $NetBSD: acpi_wakedev.c,v 1.2.6.3 2010/10/22 07:21:53 uebayasi Exp $ */
 
 /*-
  * Copyright (c) 2009, 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_wakedev.c,v 1.2.6.2 2010/08/17 06:46:01 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_wakedev.c,v 1.2.6.3 2010/10/22 07:21:53 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -50,7 +50,8 @@ static const char * const acpi_wakedev_default[] = {
 	NULL,
 };
 
-static const struct sysctlnode *rnode = NULL;
+static int32_t acpi_wakedev_acpinode = CTL_EOL;
+static int32_t acpi_wakedev_wakenode = CTL_EOL;
 
 static void	acpi_wakedev_method(struct acpi_devnode *, int, int);
 static void	acpi_wakedev_gpe(struct acpi_devnode *, int, int);
@@ -58,6 +59,7 @@ static void	acpi_wakedev_power(struct acpi_devnode *, ACPI_OBJECT *);
 
 SYSCTL_SETUP(sysctl_acpi_wakedev_setup, "sysctl hw.acpi.wake subtree setup")
 {
+	const struct sysctlnode *rnode;
 	int err;
 
 	err = sysctl_createv(NULL, 0, NULL, &rnode,
@@ -66,7 +68,7 @@ SYSCTL_SETUP(sysctl_acpi_wakedev_setup, "sysctl hw.acpi.wake subtree setup")
 	    CTL_HW, CTL_EOL);
 
 	if (err != 0)
-		goto fail;
+		return;
 
 	err = sysctl_createv(NULL, 0, &rnode, &rnode,
 	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "acpi",
@@ -74,7 +76,9 @@ SYSCTL_SETUP(sysctl_acpi_wakedev_setup, "sysctl hw.acpi.wake subtree setup")
 	    CTL_CREATE, CTL_EOL);
 
 	if (err != 0)
-		goto fail;
+		return;
+
+	acpi_wakedev_acpinode = rnode->sysctl_num;
 
 	err = sysctl_createv(NULL, 0, &rnode, &rnode,
 	    CTLFLAG_PERMANENT, CTLTYPE_NODE,
@@ -83,12 +87,9 @@ SYSCTL_SETUP(sysctl_acpi_wakedev_setup, "sysctl hw.acpi.wake subtree setup")
 	    CTL_CREATE, CTL_EOL);
 
 	if (err != 0)
-		goto fail;
+		return;
 
-	return;
-
-fail:
-	rnode = NULL;
+	acpi_wakedev_wakenode = rnode->sysctl_num;
 }
 
 void
@@ -104,12 +105,14 @@ acpi_wakedev_add(struct acpi_devnode *ad)
 	if (acpi_match_hid(ad->ad_devinfo, acpi_wakedev_default))
 		ad->ad_wake = 1;
 
-	if (rnode == NULL)
+	if (acpi_wakedev_acpinode == CTL_EOL ||
+	    acpi_wakedev_wakenode == CTL_EOL)
 		return;
 
-	err = sysctl_createv(NULL, 0, &rnode, NULL,
+	err = sysctl_createv(NULL, 0, NULL, NULL,
 	    CTLFLAG_READWRITE, CTLTYPE_BOOL, ad->ad_name,
 	    NULL, NULL, 0, &ad->ad_wake, 0,
+	    CTL_HW, acpi_wakedev_acpinode, acpi_wakedev_wakenode,
 	    CTL_CREATE, CTL_EOL);
 
 	if (err != 0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhc.c,v 1.5.2.1 2010/04/30 14:43:49 uebayasi Exp $	*/
+/*	$NetBSD: sdhc.c,v 1.5.2.2 2010/10/22 07:22:15 uebayasi Exp $	*/
 /*	$OpenBSD: sdhc.c,v 1.25 2009/01/13 19:44:20 grange Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.5.2.1 2010/04/30 14:43:49 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.5.2.2 2010/10/22 07:22:15 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -112,6 +112,7 @@ static int	sdhc_write_protect(sdmmc_chipset_handle_t);
 static int	sdhc_bus_power(sdmmc_chipset_handle_t, uint32_t);
 static int	sdhc_bus_clock(sdmmc_chipset_handle_t, int);
 static int	sdhc_bus_width(sdmmc_chipset_handle_t, int);
+static int	sdhc_bus_rod(sdmmc_chipset_handle_t, int);
 static void	sdhc_card_enable_intr(sdmmc_chipset_handle_t, int);
 static void	sdhc_card_intr_ack(sdmmc_chipset_handle_t);
 static void	sdhc_exec_command(sdmmc_chipset_handle_t,
@@ -144,6 +145,7 @@ static struct sdmmc_chip_functions sdhc_functions = {
 	sdhc_bus_power,
 	sdhc_bus_clock,
 	sdhc_bus_width,
+	sdhc_bus_rod,
 
 	/* command execution */
 	sdhc_exec_command,
@@ -630,6 +632,11 @@ sdhc_bus_clock(sdmmc_chipset_handle_t sch, int freq)
 	 */
 	HSET2(hp, SDHC_CLOCK_CTL, SDHC_SDCLK_ENABLE);
 
+	if (freq > 25000)
+		HSET1(hp, SDHC_HOST_CTL, SDHC_HIGH_SPEED);
+	else
+		HCLR1(hp, SDHC_HOST_CTL, SDHC_HIGH_SPEED);
+
 out:
 	mutex_exit(&hp->host_mtx);
 
@@ -661,6 +668,14 @@ sdhc_bus_width(sdmmc_chipset_handle_t sch, int width)
 	HWRITE1(hp, SDHC_HOST_CTL, reg);
 	mutex_exit(&hp->host_mtx);
 
+	return 0;
+}
+
+static int
+sdhc_bus_rod(sdmmc_chipset_handle_t sch, int on)
+{
+
+	/* Nothing ?? */
 	return 0;
 }
 

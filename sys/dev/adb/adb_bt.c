@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_bt.c,v 1.5 2008/05/15 19:19:50 macallan Exp $ */
+/*	$NetBSD: adb_bt.c,v 1.5.18.1 2010/10/22 07:21:54 uebayasi Exp $ */
 
 /*-
  * Copyright (c) 2006 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adb_bt.c,v 1.5 2008/05/15 19:19:50 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adb_bt.c,v 1.5.18.1 2010/10/22 07:21:54 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -117,8 +117,9 @@ adbbt_handler(void *cookie, int len, uint8_t *data)
 	uint8_t k, scancode;
 
 #ifdef ADBBT_DEBUG
+	struct adbbt_softc *sc = cookie;
 	int i;
-	printf("%s: %02x - ", device_xname(&sc->sc_dev), sc->sc_us);
+	printf("%s: %02x - ", device_xname(sc->sc_dev), sc->sc_us);
 	for (i = 0; i < len; i++) {
 		printf(" %02x", data[i]);
 	}

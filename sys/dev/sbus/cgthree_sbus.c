@@ -1,4 +1,4 @@
-/*	$NetBSD: cgthree_sbus.c,v 1.29 2009/09/18 16:43:19 tsutsui Exp $ */
+/*	$NetBSD: cgthree_sbus.c,v 1.29.2.1 2010/10/22 07:22:14 uebayasi Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgthree_sbus.c,v 1.29 2009/09/18 16:43:19 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgthree_sbus.c,v 1.29.2.1 2010/10/22 07:22:14 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -155,8 +155,7 @@ cgthreeattach_sbus(device_t parent, device_t self, void *args)
 	/*
 	 * When the ROM has mapped in a cgthree display, the address
 	 * maps only the video RAM, so in any case we have to map the
-	 * registers ourselves.  We only need the video RAM if we are
-	 * going to print characters via rconsole.
+	 * registers ourselves.
 	 */
 	if (sbus_bus_map(sa->sa_bustag,
 			 sa->sa_slot,
@@ -175,7 +174,7 @@ cgthreeattach_sbus(device_t parent, device_t self, void *args)
 
 	if (sa->sa_npromvaddrs != 0)
 		fb->fb_pixels = (void *)(u_long)sa->sa_promvaddrs[0];
-	if (isconsole && fb->fb_pixels == NULL) {
+	if (fb->fb_pixels == NULL) {
 		int ramsize = fb->fb_type.fb_height * fb->fb_linebytes;
 		if (sbus_bus_map(sa->sa_bustag,
 				 sa->sa_slot,

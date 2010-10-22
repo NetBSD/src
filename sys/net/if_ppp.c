@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ppp.c,v 1.130.2.1 2010/04/30 14:44:19 uebayasi Exp $	*/
+/*	$NetBSD: if_ppp.c,v 1.130.2.2 2010/10/22 07:22:38 uebayasi Exp $	*/
 /*	Id: if_ppp.c,v 1.6 1997/03/04 03:33:00 paulus Exp 	*/
 
 /*
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.130.2.1 2010/04/30 14:44:19 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.130.2.2 2010/10/22 07:22:38 uebayasi Exp $");
 
 #include "ppp.h"
 
@@ -1820,7 +1820,7 @@ ppp_get_compressor(uint8_t ci)
 	if (cp != NULL)
 		return cp;
 
-	mutex_enter(&module_lock);
+	kernconfig_lock();
 	mutex_enter(&ppp_compressors_mtx);
 	cp = ppp_get_compressor_noload(ci, true);
 	mutex_exit(&ppp_compressors_mtx);
@@ -1838,7 +1838,7 @@ ppp_get_compressor(uint8_t ci)
 			}
 		}
 	}
-	mutex_exit(&module_lock);
+	kernconfig_unlock();
 
 	return cp;
 }

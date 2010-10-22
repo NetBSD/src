@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.38.2.2 2010/08/17 06:47:40 uebayasi Exp $
+#	$NetBSD: Makefile,v 1.38.2.3 2010/10/22 07:22:37 uebayasi Exp $
 
 .include <bsd.own.mk>
 
@@ -53,6 +53,7 @@ SUBDIR+=	securelevel
 SUBDIR+=	smbfs
 SUBDIR+=	sysvbfs
 SUBDIR+=	suser
+SUBDIR+=	swsensor
 SUBDIR+=	tmpfs
 SUBDIR+=	udf
 SUBDIR+=	umap
@@ -68,6 +69,11 @@ SUBDIR+=	xldscripts
 .endif
 
 # Machine dependent section
+.if ${MACHINE_ARCH} == "i386" || \
+    ${MACHINE_CPU} == "m68k"
+SUBDIR+=	exec_aout
+.endif
+
 .if ${MACHINE_ARCH} != "alpha"
 SUBDIR+=	exec_elf32
 .endif
@@ -106,11 +112,17 @@ SUBDIR+=	compat_ibcs2
 SUBDIR+=	compat_linux
 SUBDIR+=	compat_svr4
 SUBDIR+=	drm
-SUBDIR+=	exec_aout
 SUBDIR+=	i915drm
 SUBDIR+=	radeondrm
 SUBDIR+=	viadrm
 SUBDIR+=	pad
+.endif
+
+.if ${MACHINE_CPU} == "m68k"
+SUBDIR+=	compat_aoutm68k
+#SUBDIR+=	compat_linux
+#SUBDIR+=	compat_sunos
+#SUBDIR+=	compat_svr4
 .endif
 
 .include <bsd.own.mk>

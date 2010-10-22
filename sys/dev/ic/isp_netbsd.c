@@ -1,4 +1,4 @@
-/* $NetBSD: isp_netbsd.c,v 1.82.2.1 2010/04/30 14:43:17 uebayasi Exp $ */
+/* $NetBSD: isp_netbsd.c,v 1.82.2.2 2010/10/22 07:21:57 uebayasi Exp $ */
 /*
  * Platform (NetBSD) dependent common attachment code for Qlogic adapters.
  */
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp_netbsd.c,v 1.82.2.1 2010/04/30 14:43:17 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp_netbsd.c,v 1.82.2.2 2010/10/22 07:21:57 uebayasi Exp $");
 
 #include <dev/ic/isp_netbsd.h>
 #include <dev/ic/isp_ioctl.h>
@@ -713,8 +713,6 @@ isprequest(struct scsipi_channel *chan, scsipi_adapter_req_t req, void *arg)
 		int dflags = 0;
 		sdparam *sdp = SDPARAM(isp, chan->chan_channel);
 
-printf("CHAN %d\n", chan->chan_channel);
-if (1) break;
 		if (xm->xm_mode & PERIPH_CAP_TQING)
 			dflags |= DPARM_TQING;
 		if (xm->xm_mode & PERIPH_CAP_WIDE16)

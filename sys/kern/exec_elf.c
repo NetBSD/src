@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.c,v 1.12.2.2 2010/08/17 06:47:24 uebayasi Exp $	*/
+/*	$NetBSD: exec_elf.c,v 1.12.2.3 2010/10/22 07:22:24 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1994, 2000, 2005 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.12.2.2 2010/08/17 06:47:24 uebayasi Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.12.2.3 2010/10/22 07:22:24 uebayasi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pax.h"
@@ -636,11 +636,12 @@ exec_elf_makecmds(struct lwp *l, struct exec_package *epp)
 {
 	Elf_Ehdr *eh = epp->ep_hdr;
 	Elf_Phdr *ph, *pp;
-	Elf_Addr phdr = 0, pos = 0;
+	Elf_Addr phdr = 0, computed_phdr = 0, pos = 0, end_text = 0;
 	int error, i, nload;
 	char *interp = NULL;
 	u_long phsize;
 	struct proc *p;
+	struct elf_args *ap = NULL;
 	bool is_dyn;
 
 	if (epp->ep_hdrvalid < sizeof(Elf_Ehdr))
@@ -730,32 +731,27 @@ exec_elf_makecmds(struct lwp *l, struct exec_package *epp)
 
 		switch (ph[i].p_type) {
 		case PT_LOAD:
-			/*
-			 * XXX
-			 * Can handle only 2 sections: text and data
-			 */
-			if (nload++ == 2) {
-				error = ENOEXEC;
-				goto bad;
-			}
 			elf_load_psection(&epp->ep_vmcmds, epp->ep_vp,
 			    &ph[i], &addr, &size, &prot, VMCMD_FIXED);
 
 			/*
-			 * Decide whether it's text or data by looking
-			 * at the entry point.
+			 * Consider this as text segment, if it is executable.
+			 * If there is more than one text segment, pick the
+			 * largest.
 			 */
-			if (eh->e_entry >= addr &&
-			    eh->e_entry < (addr + size)) {
-				epp->ep_taddr = addr;
-				epp->ep_tsize = size;
-				if (epp->ep_daddr == ELFDEFNNAME(NO_ADDR)) {
-					epp->ep_daddr = addr;
-					epp->ep_dsize = size;
+			if (ph[i].p_flags & PF_X) {
+				if (epp->ep_taddr == ELFDEFNNAME(NO_ADDR) ||
+				    size > epp->ep_tsize) {
+					epp->ep_taddr = addr;
+					epp->ep_tsize = size;
 				}
+				end_text = addr + size;
 			} else {
 				epp->ep_daddr = addr;
 				epp->ep_dsize = size;
+			}
+			if (ph[i].p_offset == 0) {
+				computed_phdr = ph[i].p_vaddr + eh->e_phoff;
 			}
 			break;
 
@@ -779,36 +775,41 @@ exec_elf_makecmds(struct lwp *l, struct exec_package *epp)
 			break;
 		}
 	}
+	if (interp || (epp->ep_flags & EXEC_FORCEAUX) != 0) {
+		ap = malloc(sizeof(struct elf_args), M_TEMP, M_WAITOK);
+		ap->arg_interp = (vaddr_t)NULL;
+	}
+
+	if (epp->ep_daddr == ELFDEFNNAME(NO_ADDR)) {
+		epp->ep_daddr = round_page(end_text);
+		epp->ep_dsize = 0;
+	}
 
 	/*
 	 * Check if we found a dynamically linked binary and arrange to load
 	 * its interpreter
 	 */
 	if (interp) {
-		struct elf_args *ap;
 		int j = epp->ep_vmcmds.evs_used;
 		u_long interp_offset;
 
-		ap = (struct elf_args *)malloc(sizeof(struct elf_args),
-		    M_TEMP, M_WAITOK);
 		if ((error = elf_load_file(l, epp, interp,
 		    &epp->ep_vmcmds, &interp_offset, ap, &pos)) != 0) {
-			free(ap, M_TEMP);
 			goto bad;
 		}
 		ap->arg_interp = epp->ep_vmcmds.evs_cmds[j].ev_addr;
 		epp->ep_entry = ap->arg_interp + interp_offset;
-		ap->arg_phaddr = phdr;
-
-		ap->arg_phentsize = eh->e_phentsize;
-		ap->arg_phnum = eh->e_phnum;
-		ap->arg_entry = eh->e_entry;
-
-		epp->ep_emul_arg = ap;
-
 		PNBUF_PUT(interp);
 	} else
 		epp->ep_entry = eh->e_entry;
+
+	if (ap) {
+		ap->arg_phaddr = phdr ? phdr : computed_phdr;
+		ap->arg_phentsize = eh->e_phentsize;
+		ap->arg_phnum = eh->e_phnum;
+		ap->arg_entry = eh->e_entry;
+		epp->ep_emul_arg = ap;
+	}
 
 #ifdef ELF_MAP_PAGE_ZERO
 	/* Dell SVR4 maps page zero, yeuch! */
@@ -821,6 +822,8 @@ exec_elf_makecmds(struct lwp *l, struct exec_package *epp)
 bad:
 	if (interp)
 		PNBUF_PUT(interp);
+	if (ap)
+		free(ap, M_TEMP);
 	kmem_free(ph, phsize);
 	kill_vmcmds(&epp->ep_vmcmds);
 	return error;

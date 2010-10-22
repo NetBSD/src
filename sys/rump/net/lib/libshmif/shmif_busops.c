@@ -1,4 +1,4 @@
-/*	$NetBSD: shmif_busops.c,v 1.5.2.2 2010/08/17 06:48:05 uebayasi Exp $	*/
+/*	$NetBSD: shmif_busops.c,v 1.5.2.3 2010/10/22 07:22:53 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: shmif_busops.c,v 1.5.2.2 2010/08/17 06:48:05 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: shmif_busops.c,v 1.5.2.3 2010/10/22 07:22:53 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -49,9 +49,8 @@ shmif_advance(uint32_t oldoff, uint32_t delta)
 
 	newoff = oldoff + delta;
 	if (newoff >= BUSMEM_DATASIZE)
-		newoff -= (BUSMEM_DATASIZE);
+		newoff -= BUSMEM_DATASIZE;
 	return newoff;
-
 }
 
 uint32_t
@@ -60,21 +59,21 @@ shmif_busread(struct shmif_mem *busmem, void *dest, uint32_t off, size_t len,
 {
 	size_t chunk;
 
-	KASSERT(len < (BUSMEM_DATASIZE) && off <= BUSMEM_DATASIZE);
+	KASSERT(len < (BUSMEM_DATASIZE/2) && off <= BUSMEM_DATASIZE);
 	chunk = MIN(len, BUSMEM_DATASIZE - off);
 	memcpy(dest, busmem->shm_data + off, chunk);
 	len -= chunk;
 
-	if (len == 0)
-		return off + chunk;
+	if (off + chunk == BUSMEM_DATASIZE)
+		*wrap = true;
 
-	/* else, wraps around */
-	off = 0;
-	*wrap = true;
+	if (len == 0) {
+		return (off + chunk) % BUSMEM_DATASIZE;
+	}
 
 	/* finish reading */
-	memcpy((uint8_t *)dest + chunk, busmem->shm_data + off, len);
-	return off + len;
+	memcpy((uint8_t *)dest + chunk, busmem->shm_data, len);
+	return len;
 }
 
 void
@@ -94,34 +93,36 @@ shmif_buswrite(struct shmif_mem *busmem, uint32_t off, void *data, size_t len,
 	bool *wrap)
 {
 	size_t chunk;
+	bool filledbus;
 
-	KASSERT(len < (BUSMEM_DATASIZE) && off <= BUSMEM_DATASIZE);
+	KASSERT(len < (BUSMEM_DATASIZE/2) && off <= BUSMEM_DATASIZE);
 
 	chunk = MIN(len, BUSMEM_DATASIZE - off);
 	len -= chunk;
+	filledbus = (off+chunk == BUSMEM_DATASIZE);
 
-	shmif_advancefirst(busmem, off, chunk + (len ? 1 : 0));
+	shmif_advancefirst(busmem, off, chunk + (filledbus ? 1 : 0));
 
 	memcpy(busmem->shm_data + off, data, chunk);
 
 	DPRINTF(("buswrite: wrote %d bytes to %d", chunk, off));
 
+	if (filledbus) {
+		*wrap = true;
+	}
+
 	if (len == 0) {
 		DPRINTF(("\n"));
-		return off + chunk;
+		return (off + chunk) % BUSMEM_DATASIZE;
 	}
 
 	DPRINTF((", wrapped bytes %d to 0\n", len));
 
-	/* else, wraps around */
-	off = 0;
-	*wrap = true;
-
-	shmif_advancefirst(busmem, off, len);
+	shmif_advancefirst(busmem, 0, len);
 
 	/* finish writing */
-	memcpy(busmem->shm_data + off, (uint8_t *)data + chunk, len);
-	return off + len;
+	memcpy(busmem->shm_data, (uint8_t *)data + chunk, len);
+	return len;
 }
 
 uint32_t

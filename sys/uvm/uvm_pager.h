@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.h,v 1.38 2008/08/22 10:48:22 hannken Exp $	*/
+/*	$NetBSD: uvm_pager.h,v 1.38.14.1 2010/10/22 07:22:57 uebayasi Exp $	*/
 
 /*
  *
@@ -164,6 +164,7 @@ struct uvm_pagerops {
 #define PGO_NOBLOCKALLOC 0x800	/* backing block allocation is not needed */
 #define PGO_NOTIMESTAMP 0x1000	/* don't mark object accessed/modified */
 #define PGO_RECLAIM	0x2000	/* object is being reclaimed */
+#define PGO_GLOCKHELD	0x4000	/* genfs_node's lock is already held */
 
 /* page we are not interested in getting */
 #define PGO_DONTCARE ((struct vm_page *) -1L)	/* [get only] */

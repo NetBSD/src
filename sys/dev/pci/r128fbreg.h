@@ -1,4 +1,4 @@
-/*	$NetBSD: r128fbreg.h,v 1.1 2007/11/07 19:09:09 macallan Exp $	*/
+/*	$NetBSD: r128fbreg.h,v 1.1.48.1 2010/10/22 07:22:12 uebayasi Exp $	*/
 
 /*
  * Copyright 1999, 2000 ATI Technologies Inc., Markham, Ontario,
@@ -55,9 +55,35 @@
 #ifndef R128FB_REG_H
 #define R128FB_REG_H
 
-#define R128_PALETTE_DATA                 0x00b4
-#define R128_PALETTE_INDEX                0x00b0
+/* RAMDAC */
+#define R128_PALETTE_DATA		0x00b4
+#define R128_PALETTE_INDEX		0x00b0
 
+/* flat panel registers */
+#define R128_FP_PANEL_CNTL		0x0288
+	#define FPCNT_DIGON		  0x00000001	/* FP dig. voltage */
+	#define FPCNT_BACKLIGHT_ON	  0x00000002
+	#define FPCNT_BL_MODULATION_ON	  0x00000004
+	#define FPCNT_BL_CLK_SEL	  0x00000008	/* 1 - divide by 3 */
+	#define FPCNT_MONID_EN		  0x00000010	/* use MONID pins for
+							   backlight control */
+	#define FPCNT_FPENABLE_POL	  0x00000020	/* 1 - active low */
+	#define FPCNT_LEVEL_MASK	  0x0000ff00
+	#define FPCNT_LEVEL_SHIFT	  8
+
+#define R128_LVDS_GEN_CNTL                0x02d0
+#       define R128_LVDS_ON               (1   <<  0)
+#       define R128_LVDS_DISPLAY_DIS      (1   <<  1)
+#       define R128_LVDS_EN               (1   <<  7)
+#       define R128_LVDS_DIGON            (1   << 18)
+#       define R128_LVDS_BLON             (1   << 19)
+#       define R128_LVDS_SEL_CRTC2        (1   << 23)
+#       define R128_HSYNC_DELAY_SHIFT     28
+#       define R128_HSYNC_DELAY_MASK      (0xf << 28)
+#	define R128_LEVEL_MASK	          0x0000ff00
+#	define R128_LEVEL_SHIFT	          8
+
+/* drawing engine */
 #define R128_PC_NGUI_CTLSTAT              0x0184
 #       define R128_PC_FLUSH_GUI          (3 << 0)
 #       define R128_PC_RI_GUI             (1 << 2)
@@ -115,6 +141,7 @@
 #       define R128_DP_SRC_SOURCE_MASK        (7    << 24)
 #       define R128_DP_SRC_SOURCE_MEMORY      (2    << 24)
 #       define R128_DP_SRC_SOURCE_HOST_DATA   (3    << 24)
+#       define R128_DP_SRC_SOURCE_HOST_ALIGN  (4    << 24)
 #       define R128_GMC_3D_FCN_EN             (1    << 27)
 #       define R128_GMC_CLR_CMP_CNTL_DIS      (1    << 28)
 #       define R128_GMC_AUX_CLIP_DIS          (1    << 29)
@@ -177,7 +204,15 @@
 #define R128_DP_DATATYPE                  0x16c4
 #       define R128_HOST_BIG_ENDIAN_EN    (1 << 29)
 
+#define R128_DP_MIX                       0x16c8
+#	define R128_MIX_SRC_VRAM		  (2 << 8)
+#	define R128_MIX_SRC_HOSTDATA		  (3 << 8)
+#	define R128_MIX_SRC_HOST_BYTEALIGN	  (4 << 8)
+#	define R128_MIX_SRC_ROP3_MASK		  (0xff << 16)
+
 #define R128_DP_WRITE_MASK                0x16cc
+#define R128_DP_SRC_BKGD_CLR              0x15dc
+#define R128_DP_SRC_FRGD_CLR              0x15d8
 
 #define R128_DP_CNTL_XDIR_YDIR_YMAJOR     0x16d0
 #       define R128_DST_Y_MAJOR             (1 <<  2)
@@ -190,11 +225,27 @@
 #       define R128_DEFAULT_SC_RIGHT_MAX  (0x1fff <<  0)
 #       define R128_DEFAULT_SC_BOTTOM_MAX (0x1fff << 16)
 
-#define R128_SC_TOP_LEFT                  0x16ec
+/* scissor registers */
+#define R128_SC_BOTTOM                    0x164c
 #define R128_SC_BOTTOM_RIGHT              0x16f0
+#define R128_SC_BOTTOM_RIGHT_C            0x1c8c
+#define R128_SC_LEFT                      0x1640
+#define R128_SC_RIGHT                     0x1644
+#define R128_SC_TOP                       0x1648
+#define R128_SC_TOP_LEFT                  0x16ec
+#define R128_SC_TOP_LEFT_C                0x1c88
 
 #define R128_GUI_STAT                     0x1740
 #       define R128_GUI_FIFOCNT_MASK      0x0fff
 #       define R128_GUI_ACTIVE            (1 << 31)
+
+#define R128_HOST_DATA0                   0x17c0
+#define R128_HOST_DATA1                   0x17c4
+#define R128_HOST_DATA2                   0x17c8
+#define R128_HOST_DATA3                   0x17cc
+#define R128_HOST_DATA4                   0x17d0
+#define R128_HOST_DATA5                   0x17d4
+#define R128_HOST_DATA6                   0x17d8
+#define R128_HOST_DATA7                   0x17dc
 
 #endif /* R128FB_REG_H */
