@@ -1,4 +1,4 @@
-/*	$NetBSD: swsensor.c,v 1.3 2010/10/20 19:21:04 pooka Exp $ */
+/*	$NetBSD: swsensor.c,v 1.4 2010/10/23 11:24:16 pooka Exp $ */
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: swsensor.c,v 1.3 2010/10/20 19:21:04 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: swsensor.c,v 1.4 2010/10/23 11:24:16 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -192,4 +192,12 @@ swsensor_modcmd(modcmd_t cmd, void *arg)
 	}
 
 	return ret;
+}
+
+int
+swsensorattach(int n __unused)
+{
+	printf("%s: ", "swsensor0");
+
+	return swsensor_init(NULL);
 }
