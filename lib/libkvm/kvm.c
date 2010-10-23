@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm.c,v 1.95 2010/09/20 23:23:16 jym Exp $	*/
+/*	$NetBSD: kvm.c,v 1.96 2010/10/23 14:34:12 stacktic Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm.c	8.2 (Berkeley) 2/13/94";
 #else
-__RCSID("$NetBSD: kvm.c,v 1.95 2010/09/20 23:23:16 jym Exp $");
+__RCSID("$NetBSD: kvm.c,v 1.96 2010/10/23 14:34:12 stacktic Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -216,7 +216,7 @@ _kvm_pread(kvm_t *kd, int fd, void *buf, size_t size, off_t off)
 		kd->iobufsz = dsize;
 	}
 	rv = pread(fd, kd->iobuf, dsize, doff);
-	if (rv < dsize)
+	if (rv < size + moff)
 		return -1;
 	memcpy(buf, kd->iobuf + moff, size);
 	return size;
