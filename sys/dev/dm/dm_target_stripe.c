@@ -1,4 +1,4 @@
-/*$NetBSD: dm_target_stripe.c,v 1.10 2010/05/18 15:10:41 haad Exp $*/
+/*$NetBSD: dm_target_stripe.c,v 1.11 2010/10/23 21:18:54 haad Exp $*/
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -102,6 +102,8 @@ dm_target_stripe_modcmd(modcmd_t cmd, void *arg)
 
 /*
  * Init function called from dm_table_load_ioctl.
+ * DM_STRIPE_DEV_OFFSET should always hold the index of the first device-offset
+ * pair in the parameters.
  * Example line sent to dm from lvm tools when using striped target.
  * start length striped #stripes chunk_size device1 offset1 ... deviceN offsetN
  * 0 65536 striped 2 512 /dev/hda 0 /dev/hdb 0
@@ -109,9 +111,11 @@ dm_target_stripe_modcmd(modcmd_t cmd, void *arg)
 int
 dm_target_stripe_init(dm_dev_t * dmv, void **target_config, char *params)
 {
+	dm_target_linear_config_t *tlc;
 	dm_target_stripe_config_t *tsc;
 	size_t len;
 	char **ap, *argv[10];
+	int strpc, strpi;
 
 	if (params == NULL)
 		return EINVAL;
@@ -130,32 +134,33 @@ dm_target_stripe_init(dm_dev_t * dmv, void **target_config, char *params)
 
 	printf("Stripe target init function called!!\n");
 
-	printf("Stripe target chunk size %s number of stripes %s\n", argv[1], argv[0]);
-	printf("Stripe target device name %s -- offset %s\n", argv[2], argv[3]);
-	printf("Stripe target device name %s -- offset %s\n", argv[4], argv[5]);
+	printf("Stripe target chunk size %s number of stripes %s\n",
+	    argv[1], argv[0]);
 
-	if (atoi(argv[0]) > MAX_STRIPES)
-		return ENOTSUP;
-
-	if ((tsc = kmem_alloc(sizeof(dm_target_stripe_config_t), KM_NOSLEEP))
-	    == NULL)
+	if ((tsc = kmem_alloc(sizeof(*tsc), KM_NOSLEEP)) == NULL)
 		return ENOMEM;
 
-	/* Insert dmp to global pdev list */
-	if ((tsc->stripe_devs[0].pdev = dm_pdev_insert(argv[2])) == NULL)
-		return ENOENT;
-
-	/* Insert dmp to global pdev list */
-	if ((tsc->stripe_devs[1].pdev = dm_pdev_insert(argv[4])) == NULL)
-		return ENOENT;
-
-	tsc->stripe_devs[0].offset = atoi(argv[3]);
-	tsc->stripe_devs[1].offset = atoi(argv[5]);
+	/* Initialize linked list for striping devices */
+	TAILQ_INIT(&tsc->stripe_devs);
 
 	/* Save length of param string */
 	tsc->params_len = len;
 	tsc->stripe_chunksize = atoi(argv[1]);
 	tsc->stripe_num = (uint8_t) atoi(argv[0]);
+
+	strpc = DM_STRIPE_DEV_OFFSET + (tsc->stripe_num * 2);
+	for (strpi = DM_STRIPE_DEV_OFFSET; strpi < strpc; strpi += 2) {
+		printf("Stripe target device name %s -- offset %s\n",
+		       argv[strpi], argv[strpi+1]);
+
+		tlc = kmem_alloc(sizeof(*tlc), KM_NOSLEEP);
+		if ((tlc->pdev = dm_pdev_insert(argv[strpi])) == NULL)
+			return ENOENT; 
+		tlc->offset = atoi(argv[strpi+1]);
+
+		/* Insert striping device to linked list. */
+		TAILQ_INSERT_TAIL(&tsc->stripe_devs, tlc, entries);
+	}
 
 	*target_config = tsc;
 
@@ -167,18 +172,28 @@ dm_target_stripe_init(dm_dev_t * dmv, void **target_config, char *params)
 char *
 dm_target_stripe_status(void *target_config)
 {
+	dm_target_linear_config_t *tlc;
 	dm_target_stripe_config_t *tsc;
-	char *params;
+	char *params, *tmp;
 
 	tsc = target_config;
 
 	if ((params = kmem_alloc(DM_MAX_PARAMS_SIZE, KM_SLEEP)) == NULL)
 		return NULL;
 
-	snprintf(params, DM_MAX_PARAMS_SIZE, "%d %" PRIu64 " %s %" PRIu64 " %s %" PRIu64,
-	    tsc->stripe_num, tsc->stripe_chunksize,
-	    tsc->stripe_devs[0].pdev->name, tsc->stripe_devs[0].offset,
-	    tsc->stripe_devs[1].pdev->name, tsc->stripe_devs[1].offset);
+	if ((tmp = kmem_alloc(DM_MAX_PARAMS_SIZE, KM_SLEEP)) == NULL)
+		return NULL;
+
+	snprintf(params, DM_MAX_PARAMS_SIZE, "%d %" PRIu64,
+	    tsc->stripe_num, tsc->stripe_chunksize);
+
+	TAILQ_FOREACH(tlc, &tsc->stripe_devs, entries) {
+		snprintf(tmp, DM_MAX_PARAMS_SIZE, " %s %" PRIu64,
+		    tlc->pdev->name, tlc->offset);
+		strcat(params, tmp);
+	}
+
+	kmem_free(tmp, DM_MAX_PARAMS_SIZE);
 
 	return params;
 }
@@ -186,12 +201,13 @@ dm_target_stripe_status(void *target_config)
 int
 dm_target_stripe_strategy(dm_table_entry_t * table_en, struct buf * bp)
 {
+	dm_target_linear_config_t *tlc;
 	dm_target_stripe_config_t *tsc;
 	struct buf *nestbuf;
 	uint64_t blkno, blkoff;
 	uint64_t stripe, stripe_blknr;
 	uint32_t stripe_off, stripe_rest, num_blks, issue_blks;
-	int stripe_devnr;
+	int i, stripe_devnr;
 
 	tsc = table_en->target_config;
 	if (tsc == NULL)
@@ -224,9 +240,17 @@ dm_target_stripe_strategy(dm_table_entry_t * table_en, struct buf * bp)
 
 		nestiobuf_setup(bp, nestbuf, blkoff, issue_blks * DEV_BSIZE);
 		nestbuf->b_blkno = stripe_blknr * tsc->stripe_chunksize + stripe_off;
-		nestbuf->b_blkno += tsc->stripe_devs[stripe_devnr].offset;
 
-		VOP_STRATEGY(tsc->stripe_devs[stripe_devnr].pdev->pdev_vnode, nestbuf);
+		tlc = TAILQ_FIRST(&tsc->stripe_devs);
+		for (i = 0; i < stripe_devnr && tlc == NULL; i++)
+			tlc = TAILQ_NEXT(tlc, entries);
+
+		/* by this point we should have an tlc */
+		KASSERT(tlc == NULL);
+
+		nestbuf->b_blkno += tlc->offset;
+
+		VOP_STRATEGY(tlc->pdev->pdev_vnode, nestbuf);
 
 		blkno += issue_blks;
 		blkoff += issue_blks * DEV_BSIZE;
@@ -242,16 +266,17 @@ dm_target_stripe_strategy(dm_table_entry_t * table_en, struct buf * bp)
 int
 dm_target_stripe_sync(dm_table_entry_t * table_en)
 {
-	int cmd, err, i;
+	int cmd, err;
 	dm_target_stripe_config_t *tsc;
+	dm_target_linear_config_t *tlc;
 
 	tsc = table_en->target_config;
 
 	err = 0;
 	cmd = 1;
 
-	for (i = 0; i < tsc->stripe_num; i++) {
-		if ((err = VOP_IOCTL(tsc->stripe_devs[i].pdev->pdev_vnode, DIOCCACHESYNC,
+	TAILQ_FOREACH(tlc, &tsc->stripe_devs, entries) {
+		if ((err = VOP_IOCTL(tlc->pdev->pdev_vnode, DIOCCACHESYNC,
 			    &cmd, FREAD|FWRITE, kauth_cred_get())) != 0)
 			return err;
 	}
@@ -264,19 +289,23 @@ int
 dm_target_stripe_destroy(dm_table_entry_t * table_en)
 {
 	dm_target_stripe_config_t *tsc;
+	dm_target_linear_config_t *tlc;
 
 	tsc = table_en->target_config;
 
 	if (tsc == NULL)
 		return 0;
 
-	dm_pdev_decr(tsc->stripe_devs[0].pdev);
-	dm_pdev_decr(tsc->stripe_devs[1].pdev);
+	while ((tlc = TAILQ_FIRST(&tsc->stripe_devs)) != NULL) {
+		TAILQ_REMOVE(&tsc->stripe_devs, tlc, entries);
+		dm_pdev_decr(tlc->pdev);
+		kmem_free(tlc, sizeof(*tlc));
+	}
 
 	/* Unbusy target so we can unload it */
 	dm_target_unbusy(table_en->target);
 
-	kmem_free(tsc, sizeof(dm_target_stripe_config_t));
+	kmem_free(tsc, sizeof(*tsc));
 
 	table_en->target_config = NULL;
 
@@ -287,6 +316,7 @@ int
 dm_target_stripe_deps(dm_table_entry_t * table_en, prop_array_t prop_array)
 {
 	dm_target_stripe_config_t *tsc;
+	dm_target_linear_config_t *tlc;
 	struct vattr va;
 
 	int error;
@@ -296,15 +326,12 @@ dm_target_stripe_deps(dm_table_entry_t * table_en, prop_array_t prop_array)
 
 	tsc = table_en->target_config;
 
-	if ((error = VOP_GETATTR(tsc->stripe_devs[0].pdev->pdev_vnode, &va, curlwp->l_cred)) != 0)
-		return error;
+	TAILQ_FOREACH(tlc, &tsc->stripe_devs, entries) {
+		if ((error = VOP_GETATTR(tlc->pdev->pdev_vnode, &va, curlwp->l_cred)) != 0)
+			return error;
 
-	prop_array_add_uint64(prop_array, (uint64_t) va.va_rdev);
-
-	if ((error = VOP_GETATTR(tsc->stripe_devs[1].pdev->pdev_vnode, &va, curlwp->l_cred)) != 0)
-		return error;
-
-	prop_array_add_uint64(prop_array, (uint64_t) va.va_rdev);
+		prop_array_add_uint64(prop_array, (uint64_t) va.va_rdev);
+	}
 
 	return 0;
 }

@@ -1,4 +1,4 @@
-/*        $NetBSD: dm.h,v 1.18 2010/05/18 15:10:41 haad Exp $      */
+/*        $NetBSD: dm.h,v 1.19 2010/10/23 21:18:54 haad Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -170,12 +170,23 @@ typedef struct dm_dev {
 typedef struct target_linear_config {
 	dm_pdev_t *pdev;
 	uint64_t offset;
+	TAILQ_ENTRY(target_linear_config) entries;
 } dm_target_linear_config_t;
+
+/*
+ * Striping devices are stored in a linked list, this might be inefficient
+ * for more than 8 striping devices and can be changed to something more
+ * scalable.
+ * TODO: look for other options than linked list.
+ */
+TAILQ_HEAD(target_linear_devs, target_linear_config);
+
+typedef struct target_linear_devs dm_target_linear_devs_t;
 
 /* for stripe : */
 typedef struct target_stripe_config {
-#define MAX_STRIPES 2
-	struct target_linear_config stripe_devs[MAX_STRIPES];
+#define DM_STRIPE_DEV_OFFSET 2
+	struct target_linear_devs stripe_devs;
 	uint8_t stripe_num;
 	uint64_t stripe_chunksize;
 	size_t params_len;
