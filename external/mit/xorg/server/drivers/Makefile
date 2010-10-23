@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.46 2010/08/01 06:24:31 kiyohara Exp $
+#	$NetBSD: Makefile,v 1.47 2010/10/23 14:48:17 tsutsui Exp $
 
 SUBDIR= \
 	xf86-input-keyboard \
@@ -49,7 +49,9 @@ SUBDIR+= \
 	xf86-video-tseng \
 	xf86-video-vesa \
 	xf86-video-wsfb
-.elif ${MACHINE} == "macppc"
+.endif	# ${MACHINE} == "cats"
+
+.if ${MACHINE} == "macppc"
 SUBDIR+= \
 	xf86-video-ati \
 	xf86-video-chips \
@@ -61,11 +63,15 @@ SUBDIR+= \
 	xf86-video-tdfx \
 	xf86-video-wsfb
 #	xf86-video-imstt
-.elif ${MACHINE} == "netwinder"
+.endif	# ${MACHINE} == "macppc"
+
+.if ${MACHINE} == "netwinder"
 SUBDIR+= \
 	xf86-video-wsfb
 #	xf86-video-igs
-.elif ${MACHINE_ARCH} == "sparc64" || ${MACHINE_ARCH} == "sparc"
+.endif	# ${MACHINE} == "netwinder"
+
+.if ${MACHINE_ARCH} == "sparc64" || ${MACHINE_ARCH} == "sparc"
 SUBDIR+= \
 	xf86-video-ag10e \
 	xf86-video-ati \
@@ -83,18 +89,24 @@ SUBDIR+= \
 	xf86-video-pnozz \
 	xf86-video-suncg14 \
 	xf86-video-suntcx
-.endif
-.elif ${MACHINE} == "shark"
+.endif	# ${MACHINE} == "sparc"
+.endif	# ${MACHINE_ARCH} == "sparc64" || ${MACHINE_ARCH} == "sparc"
+
+.if ${MACHINE} == "shark"
 SUBDIR+= \
 	xf86-video-chips \
         xf86-video-igs \
         xf86-video-wsfb
-.elif ${MACHINE} == "sgimips"
+.endif	# ${MACHINE} == "shark"
+
+.if ${MACHINE} == "sgimips"
 SUBDIR+= \
 	xf86-video-crime \
 	xf86-video-wsfb \
 	xf86-video-newport
-.elif ${MACHINE} == "alpha"
+.endif	# ${MACHINE} == "sgimips"
+
+.if ${MACHINE} == "alpha"
 SUBDIR+= \
 	xf86-video-apm \
 	xf86-video-ark \
@@ -124,7 +136,9 @@ SUBDIR+= \
 	xf86-video-tseng \
 	xf86-video-wsfb
 #	xf86-video-imstt
-.elif ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
+.endif	# ${MACHINE} == "alpha"
+
+.if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
 SUBDIR+= \
 	xf86-video-apm \
 	xf86-video-ark \
@@ -161,23 +175,33 @@ SUBDIR+= \
 	xf86-video-trident \
 	xf86-video-tseng \
 
-.elif ${MACHINE} == "dreamcast"
+.endif	# ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
+
+.if ${MACHINE} == "dreamcast"
 SUBDIR+= \
 	xf86-video-wsfb
-.elif ${MACHINE} == "hpcarm" || ${MACHINE} == "hpcmips" || ${MACHINE} == "hpcsh"
+.endif	# ${MACHINE} == "dreamcast"
+
+.if ${MACHINE} == "hpcarm" || ${MACHINE} == "hpcmips" || ${MACHINE} == "hpcsh"
 SUBDIR+= \
 	xf86-video-wsfb
-.elif ${MACHINE} == "zaurus"
+.endif # ${MACHINE} == "hpcarm" || ${MACHINE} == "hpcmips" || ${MACHINE} == "hpcsh"
+
+.if ${MACHINE} == "zaurus"
 SUBDIR+= \
 	xf86-video-wsfb
-.elif ${MACHINE} == "prep"
+.endif ${MACHINE} == "zaurus"
+
+.if ${MACHINE} == "prep"
 SUBDIR+= \
 	xf86-video-cirrus \
 	xf86-video-cirrus_alpine \
 	xf86-video-mga \
 	xf86-video-s3 \
 	xf86-video-vga
-.elif ${MACHINE} == "bebox"
+.endif	# ${MACHINE} == "prep"
+
+.if ${MACHINE} == "bebox"
 SUBDIR+= \
 	xf86-video-cirrus \
 	xf86-video-cirrus_alpine \
@@ -185,7 +209,7 @@ SUBDIR+= \
 	xf86-video-s3 \
 	xf86-video-s3virge \
 	xf86-video-vga
-.endif
+.endif	# ${MACHINE} == "bebox"
 
 # broken with xorg-server 1.6
 # x86
