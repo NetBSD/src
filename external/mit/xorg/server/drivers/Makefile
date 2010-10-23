@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.47 2010/10/23 14:48:17 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.48 2010/10/23 15:16:04 tsutsui Exp $
 
 SUBDIR= \
 	xf86-input-keyboard \
@@ -30,7 +30,6 @@ SUBDIR+= \
 	xf86-video-cirrus \
 	xf86-video-cirrus_alpine \
 	xf86-video-cirrus_laguna \
-	xf86-video-cirrus \
 	xf86-video-glint \
 	xf86-video-i128 \
 	xf86-video-i740 \
