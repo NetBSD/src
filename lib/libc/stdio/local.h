@@ -1,4 +1,4 @@
-/*	$NetBSD: local.h,v 1.27 2010/10/22 22:00:32 christos Exp $	*/
+/*	$NetBSD: local.h,v 1.28 2010/10/23 14:12:50 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -117,5 +117,5 @@ extern void __funlockfile_internal __P((FILE *, int));
 /*
  * Detect if the current file position fits in a long int.
  */
-#define _FPOS_OVERFLOW(pos) (sizeof(fpos_t) > sizeof(long) && \
+#define _FPOS_OVERFLOW(pos) (/*CONSTCOND*/sizeof(fpos_t) > sizeof(long) && \
 	((pos) & (~0ULL << ((sizeof(fpos_t) - sizeof(long)) * NBBY))) != 0)
