@@ -1,4 +1,4 @@
-/*        $NetBSD: device-mapper.c,v 1.24 2010/10/09 12:56:06 haad Exp $ */
+/*        $NetBSD: device-mapper.c,v 1.25 2010/10/23 21:18:54 haad Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -350,7 +350,6 @@ dmioctl(dev_t dev, const u_long cmd, void *data, int flag, struct lwp *l)
 	r = 0;
 
 	aprint_debug("dmioctl called\n");
-	
 	KASSERT(data != NULL);
 	
 	if (( r = disk_ioctl_switch(dev, cmd, data)) == ENOTTY) {
