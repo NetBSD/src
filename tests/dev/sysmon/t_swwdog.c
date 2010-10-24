@@ -1,4 +1,4 @@
-/*	$NetBSD: t_swwdog.c,v 1.3 2010/10/24 13:11:41 pgoyette Exp $	*/
+/*	$NetBSD: t_swwdog.c,v 1.4 2010/10/24 13:16:12 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -105,7 +105,7 @@ testbody(int max)
 		if (rump_sys_ioctl(fd, WDOGIOC_SMODE, &wm) == -1)
 			atf_tc_fail_errno("failed to set tickle");
 
-		usleep(500000);
+		usleep(400000);
 		if (max == 1)
 			rump_sys_ioctl(fd, WDOGIOC_TICKLE);
 		else {
