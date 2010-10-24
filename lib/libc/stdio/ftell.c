@@ -1,4 +1,4 @@
-/*	$NetBSD: ftell.c,v 1.16 2010/10/22 21:29:45 christos Exp $	*/
+/*	$NetBSD: ftell.c,v 1.17 2010/10/24 17:44:32 tron Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)ftell.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: ftell.c,v 1.16 2010/10/22 21:29:45 christos Exp $");
+__RCSID("$NetBSD: ftell.c,v 1.17 2010/10/24 17:44:32 tron Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -97,7 +97,8 @@ ftell(fp)
 		pos += fp->_p - fp->_bf._base;
 	}
 	FUNLOCKFILE(fp);
-	if (_FPOS_OVERFLOW(pos)) {
+
+	if (__fpos_overflow(pos)) {
 		errno = EOVERFLOW;
 		return -1L;
 	}
