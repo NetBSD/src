@@ -1,4 +1,4 @@
-/*	$NetBSD: local.h,v 1.28 2010/10/23 14:12:50 christos Exp $	*/
+/*	$NetBSD: local.h,v 1.29 2010/10/24 17:44:32 tron Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -36,6 +36,9 @@
 
 #include "wcio.h"
 #include "fileext.h"
+
+#include <limits.h>
+#include <stdbool.h>
 
 /*
  * Information local to this implementation of stdio,
@@ -117,5 +120,9 @@ extern void __funlockfile_internal __P((FILE *, int));
 /*
  * Detect if the current file position fits in a long int.
  */
-#define _FPOS_OVERFLOW(pos) (/*CONSTCOND*/sizeof(fpos_t) > sizeof(long) && \
-	((pos) & (~0ULL << ((sizeof(fpos_t) - sizeof(long)) * NBBY))) != 0)
+
+static __inline bool
+__fpos_overflow(fpos_t pos)
+{
+  return (pos < LONG_MIN) || (pos > LONG_MAX);
+}
