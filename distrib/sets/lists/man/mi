@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1241 2010/10/19 11:58:00 pgoyette Exp $
+# $NetBSD: mi,v 1.1242 2010/10/24 08:54:14 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1719,6 +1719,7 @@
 ./usr/share/man/cat4/wm.0			man-sys-catman		.cat
 ./usr/share/man/cat4/wmidell.0			man-sys-catman		.cat
 ./usr/share/man/cat4/wmihp.0			man-sys-catman		.cat
+./usr/share/man/cat4/wmimsi.0			man-sys-catman		.cat
 ./usr/share/man/cat4/wpi.0			man-sys-catman		.cat
 ./usr/share/man/cat4/wscons.0			man-sys-catman		.cat
 ./usr/share/man/cat4/wsdisplay.0		man-sys-catman		.cat
@@ -4326,6 +4327,7 @@
 ./usr/share/man/html4/wm.html			man-sys-htmlman		html
 ./usr/share/man/html4/wmidell.html		man-sys-htmlman		html
 ./usr/share/man/html4/wmihp.html		man-sys-htmlman		html
+./usr/share/man/html4/wmimsi.html		man-sys-htmlman		html
 ./usr/share/man/html4/wpi.html			man-sys-htmlman		html
 ./usr/share/man/html4/wscons.html		man-sys-htmlman		html
 ./usr/share/man/html4/wsdisplay.html		man-sys-htmlman		html
@@ -6871,6 +6873,7 @@
 ./usr/share/man/man4/wm.4			man-sys-man		.man
 ./usr/share/man/man4/wmidell.4			man-sys-man		.man
 ./usr/share/man/man4/wmihp.4			man-sys-man		.man
+./usr/share/man/man4/wmimsi.4			man-sys-man		.man
 ./usr/share/man/man4/wpi.4			man-sys-man		.man
 ./usr/share/man/man4/wscons.4			man-sys-man		.man
 ./usr/share/man/man4/wsdisplay.4		man-sys-man		.man
