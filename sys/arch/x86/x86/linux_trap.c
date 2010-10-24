@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_trap.c,v 1.7 2008/10/21 11:51:23 ad Exp $	*/
+/*	$NetBSD: linux_trap.c,v 1.7.8.1 2010/10/24 22:48:19 jym Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,16 +30,15 @@
  */
 
 /*
- * 386 Trap and System call handling
+ * x86 Trap and System call handling
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_trap.c,v 1.7 2008/10/21 11:51:23 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_trap.c,v 1.7.8.1 2010/10/24 22:48:19 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/sa.h>
 #include <sys/savar.h>
 #include <sys/acct.h>
@@ -58,6 +57,24 @@ __KERNEL_RCSID(0, "$NetBSD: linux_trap.c,v 1.7 2008/10/21 11:51:23 ad Exp $");
 #include <machine/userret.h>
 
 #include <compat/linux/common/linux_exec.h>
+
+#ifndef DEBUG_LINUX
+#define DPRINTF(a)
+#else
+#define DPRINTF(a)	uprintf a
+#endif
+
+struct linux_user_desc {
+	unsigned int		entry_number;
+	unsigned int		base_addr;
+	unsigned int		limit;
+	unsigned int		seg_32bit:1;
+	unsigned int		contents:2;
+	unsigned int		read_exec_only:1;
+	unsigned int		limit_in_pages:1;
+	unsigned int		seg_not_present:1;
+	unsigned int		useable:1;
+};
 
 #define LINUX_T_DIVIDE			0
 #define LINUX_T_DEBUG			1
@@ -126,11 +143,10 @@ static const int linux_x86_vec_to_sig[] = {
 	SIGSEGV				/* 18 LINUX_T_MACHINE_CHECK */
 };
 
-#define ASIZE(a) (sizeof(a) / sizeof(a[0]))
-
 void
 linux_trapsignal(struct lwp *l, ksiginfo_t *ksi)
 {
+	ksiginfo_t nksi;
 
 	switch (ksi->ksi_signo) {
 	case SIGILL:
@@ -140,10 +156,10 @@ linux_trapsignal(struct lwp *l, ksiginfo_t *ksi)
 	case SIGFPE:
 	case SIGSEGV:
 		KASSERT(KSI_TRAP_P(ksi));
-		if (ksi->ksi_trap < ASIZE(trapno_to_x86_vec)) {
-			ksiginfo_t nksi = *ksi;
+		if (ksi->ksi_trap < __arraycount(trapno_to_x86_vec)) {
+			nksi = *ksi;
 			nksi.ksi_trap = trapno_to_x86_vec[ksi->ksi_trap];
-			if (nksi.ksi_trap < ASIZE(linux_x86_vec_to_sig)) {
+			if (nksi.ksi_trap < __arraycount(linux_x86_vec_to_sig)) {
 				nksi.ksi_signo 
 				    = linux_x86_vec_to_sig[nksi.ksi_trap];
 			} else {
@@ -155,8 +171,38 @@ linux_trapsignal(struct lwp *l, ksiginfo_t *ksi)
 			uprintf("Unhandled trap type %d\n", ksi->ksi_trap);
 		}
 		/*FALLTHROUGH*/
+
 	default:
 		trapsignal(l, ksi);
 		return;
 	}
+}
+
+int
+linux_lwp_setprivate(struct lwp *l, void *ptr)
+{
+	struct linux_user_desc info;
+	int error;
+
+#ifdef __x86_64__
+	if ((l->l_proc->p_flag & PK_32) == 0) {
+		return lwp_setprivate(l, ptr);
+	}
+#endif
+	error = copyin(ptr, &info, sizeof(info));
+	if (error)
+		return error;
+
+	DPRINTF(("linux_lwp_setprivate: %i, %x, %x, %i, %i, %i, %i, %i, %i\n",
+	    info.entry_number, info.base_addr, info.limit, info.seg_32bit,
+	    info.contents, info.read_exec_only, info.limit_in_pages,
+	    info.seg_not_present, info.useable));
+
+	if (info.entry_number != GUGS_SEL) {
+		info.entry_number = GUGS_SEL;
+		error = copyout(&info, ptr, sizeof(info));
+		if (error)
+			return error;
+	}
+	return lwp_setprivate(l, (void *)(uintptr_t)info.base_addr);
 }

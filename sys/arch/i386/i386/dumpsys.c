@@ -1,4 +1,4 @@
-/*	$NetBSD: dumpsys.c,v 1.6.2.2 2009/11/01 13:58:20 jym Exp $	*/
+/*	$NetBSD: dumpsys.c,v 1.6.2.3 2010/10/24 22:48:00 jym Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dumpsys.c,v 1.6.2.2 2009/11/01 13:58:20 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dumpsys.c,v 1.6.2.3 2010/10/24 22:48:00 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -342,8 +342,7 @@ dump_misc_init(void)
 			max_paddr = top;
 	}
 #ifdef DUMP_DEBUG
-	printf("dump_misc_init: max_paddr = 0x%lx\n",
-	    (unsigned long)max_paddr);
+	printf("dump_misc_init: max_paddr = %#" PRIxPADDR "\n", max_paddr);
 #endif
 
 	sparse_dump_physmap = (void*)uvm_km_alloc(kernel_map,
@@ -610,7 +609,6 @@ cpu_dump_mempagecnt(void)
 static int
 cpu_dump(void)
 {
-	int (*dump)(dev_t, daddr_t, void *, size_t);
 	kcore_seg_t seg;
 	cpu_kcore_hdr_t cpuhdr;
 	const struct bdevsw *bdev;
@@ -618,7 +616,6 @@ cpu_dump(void)
 	bdev = bdevsw_lookup(dumpdev);
 	if (bdev == NULL)
 		return (ENXIO);
-	dump = bdev->d_dump;
 
 	/*
 	 * Generate a segment header.
@@ -631,6 +628,8 @@ cpu_dump(void)
 	 * Add the machine-dependent header info.
 	 */
 	cpuhdr.pdppaddr = PDPpaddr;
+	if (i386_use_pae == 1)
+		cpuhdr.pdppaddr |= I386_KCORE_PAE;
 	cpuhdr.nmemsegs = dump_nmemsegs;
 	(void)dump_header_addbytes(&cpuhdr, ALIGN(sizeof(cpuhdr)));
 
@@ -666,7 +665,7 @@ dumpsys_seg(paddr_t maddr, paddr_t bytes)
 
 		for (m = 0; m < n; m += NBPG)
 			pmap_kenter_pa(dumpspace + m, maddr + m,
-			    VM_PROT_READ);
+			    VM_PROT_READ, 0);
 		pmap_update(pmap_kernel());
 
 		error = (*dump)(dumpdev, blkno, (void *)dumpspace, n);

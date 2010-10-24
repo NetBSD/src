@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.16 2008/04/28 20:23:12 martin Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.16.14.1 2010/10/24 22:47:52 jym Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -53,14 +53,13 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.16 2008/04/28 20:23:12 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.16.14.1 2010/10/24 22:47:52 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/time.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/vnode.h>
 #include <sys/ptrace.h>
 
@@ -88,8 +87,9 @@ process_frame(struct lwp *l)
 static inline struct fxsave64 *
 process_fpframe(struct lwp *l)
 {
+	struct pcb *pcb = lwp_getpcb(l);
 
-	return (&l->l_addr->u_pcb.pcb_savefpu.fp_fxsave);
+	return &pcb->pcb_savefpu.fp_fxsave;
 }
 
 int

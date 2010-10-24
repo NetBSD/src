@@ -1,4 +1,4 @@
-/*	$NetBSD: vm86.c,v 1.49.4.2 2009/11/01 13:58:22 jym Exp $	*/
+/*	$NetBSD: vm86.c,v 1.49.4.3 2010/10/24 22:48:02 jym Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -30,14 +30,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm86.c,v 1.49.4.2 2009/11/01 13:58:22 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm86.c,v 1.49.4.3 2010/10/24 22:48:02 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/signalvar.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/exec.h>
 #include <sys/buf.h>
 #include <sys/reboot.h>
@@ -125,6 +124,7 @@ static void
 fast_intxx(struct lwp *l, int intrno)
 {
 	struct trapframe *tf = l->l_md.md_regs;
+	struct pcb *pcb;
 	/*
 	 * handle certain interrupts directly by pushing the interrupt
 	 * frame and resetting registers, but only if user said that's ok
@@ -140,7 +140,8 @@ fast_intxx(struct lwp *l, int intrno)
 	 * and don't deref it. is_revectored() above does fubyte() to
 	 * get stuff from it
 	 */
-	u_vm86p = (struct vm86_struct *)l->l_addr->u_pcb.vm86_userp;
+	pcb = lwp_getpcb(l);
+	u_vm86p = (struct vm86_struct *)pcb->vm86_userp;
 
 	/* 
 	 * If user requested special handling, return to user space with
@@ -369,7 +370,7 @@ int
 x86_vm86(struct lwp *l, char *args, register_t *retval)
 {
 	struct trapframe *tf = l->l_md.md_regs;
-	struct pcb *pcb = &l->l_addr->u_pcb;
+	struct pcb *pcb = lwp_getpcb(l);
 	struct vm86_kern vm86s;
 	struct proc *p;
 	int error;
@@ -453,7 +454,7 @@ int
 compat_16_x86_vm86(struct lwp *l, char *args, register_t *retval)
 {
 	struct trapframe *tf = l->l_md.md_regs;
-	struct pcb *pcb = &l->l_addr->u_pcb;
+	struct pcb *pcb = lwp_getpcb(l);
 	struct compat_16_vm86_kern vm86s;
 	struct proc *p = l->l_proc;
 	int error;

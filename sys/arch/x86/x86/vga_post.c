@@ -1,4 +1,4 @@
-/* $NetBSD: vga_post.c,v 1.11.8.2 2009/11/01 13:58:18 jym Exp $ */
+/* $NetBSD: vga_post.c,v 1.11.8.3 2010/10/24 22:48:20 jym Exp $ */
 
 /*-
  * Copyright (c) 2007 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga_post.c,v 1.11.8.2 2009/11/01 13:58:18 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga_post.c,v 1.11.8.3 2010/10/24 22:48:20 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -143,48 +143,54 @@ vga_post_init(int bus, int device, int function)
 	vaddr_t sys_image, sys_bios_data;
 	int err;
 
-	sys_bios_data = uvm_km_alloc(kernel_map, PAGE_SIZE, 0, UVM_KMF_VAONLY);
-	if (sys_bios_data == 0)
-		return NULL;
-
 	sys_image = uvm_km_alloc(kernel_map, 1024 * 1024, 0, UVM_KMF_VAONLY);
 	if (sys_image == 0) {
-		uvm_km_free(kernel_map, sys_bios_data, PAGE_SIZE,
-				UVM_KMF_VAONLY);
 		return NULL;
 	}
 	sc = kmem_alloc(sizeof(*sc), KM_SLEEP);
+	sc->sys_image = sys_image;
+	sc->emu.sys_private = sc;
 
 	err = uvm_pglistalloc(BASE_MEMORY, 0, (paddr_t)-1, 0, 0,
 	    &sc->ram_backing, BASE_MEMORY/PAGE_SIZE, 1);
 	if (err) {
-		uvm_km_free(kernel_map, sc->sys_image, 1024 * 1024,
-				UVM_KMF_VAONLY);
-		pmap_kremove(sc->sys_image, 1024 * 1024);
+		uvm_km_free(kernel_map, sc->sys_image,
+		    1024 * 1024, UVM_KMF_VAONLY);
 		kmem_free(sc, sizeof(*sc));
 		return NULL;
 	}
 
-	sc->sys_image = sys_image;
-	sc->emu.sys_private = sc;
-
-	pmap_kenter_pa(sys_bios_data, 0, VM_PROT_READ);
+	/*
+	 * Map and copy BIOS data.
+	 */
+	sys_bios_data = uvm_km_alloc(kernel_map, PAGE_SIZE, 0, UVM_KMF_VAONLY);
+	if (sys_bios_data == 0) {
+		return NULL;
+	}
+	pmap_kenter_pa(sys_bios_data, 0, VM_PROT_READ, 0);
 	pmap_update(pmap_kernel());
+
 	memcpy((void *)sc->bios_data, (void *)sys_bios_data, PAGE_SIZE);
+
 	pmap_kremove(sys_bios_data, PAGE_SIZE);
+	pmap_update(pmap_kernel());
 	uvm_km_free(kernel_map, sys_bios_data, PAGE_SIZE, UVM_KMF_VAONLY);
 
+	/*
+	 * Map 0 .. 64KB and 640KB .. 1MB ranges.
+	 */
 	iter = 0;
 	TAILQ_FOREACH(pg, &sc->ram_backing, pageq.queue) {
 		pmap_kenter_pa(sc->sys_image + iter, VM_PAGE_TO_PHYS(pg),
-				VM_PROT_READ | VM_PROT_WRITE);
+		    VM_PROT_READ | VM_PROT_WRITE, 0);
 		iter += PAGE_SIZE;
 	}
-	KASSERT(iter == 65536);
+	KASSERT(iter == BASE_MEMORY);
 
-	for (iter = 640 * 1024; iter < 1024 * 1024; iter += PAGE_SIZE)
+	for (iter = 640 * 1024; iter < 1024 * 1024; iter += PAGE_SIZE) {
 		pmap_kenter_pa(sc->sys_image + iter, iter,
-				VM_PROT_READ | VM_PROT_WRITE);
+		    VM_PROT_READ | VM_PROT_WRITE, 0);
+	}
 	pmap_update(pmap_kernel());
 
 	memset(&sc->emu, 0, sizeof(sc->emu));
@@ -237,10 +243,11 @@ vga_post_set_vbe(struct vga_post *sc, uint16_t vbemode)
 void
 vga_post_free(struct vga_post *sc)
 {
+
 	uvm_pglistfree(&sc->ram_backing);
 	pmap_kremove(sc->sys_image, 1024 * 1024);
-	uvm_km_free(kernel_map, sc->sys_image, 1024 * 1024, UVM_KMF_VAONLY);
 	pmap_update(pmap_kernel());
+	uvm_km_free(kernel_map, sc->sys_image, 1024 * 1024, UVM_KMF_VAONLY);
 	kmem_free(sc, sizeof(*sc));
 }
 

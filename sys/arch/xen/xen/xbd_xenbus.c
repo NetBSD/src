@@ -1,4 +1,4 @@
-/*      $NetBSD: xbd_xenbus.c,v 1.38.2.6 2009/11/01 21:43:28 jym Exp $      */
+/*      $NetBSD: xbd_xenbus.c,v 1.38.2.7 2010/10/24 22:48:23 jym Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.38.2.6 2009/11/01 21:43:28 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.38.2.7 2010/10/24 22:48:23 jym Exp $");
 
 #include "opt_xen.h"
 #include "rnd.h"
@@ -144,8 +144,8 @@ static int  xbd_xenbus_match(device_t, cfdata_t, void *);
 static void xbd_xenbus_attach(device_t, device_t, void *);
 static int  xbd_xenbus_detach(device_t, int);
 
-static bool xbd_xenbus_suspend(device_t PMF_FN_PROTO);
-static bool xbd_xenbus_resume(device_t PMF_FN_PROTO);
+static bool xbd_xenbus_suspend(device_t, const pmf_qual_t *);
+static bool xbd_xenbus_resume(device_t, const pmf_qual_t *);
 
 static int  xbd_handler(void *);
 static int  xbdstart(struct dk_softc *, struct buf *);
@@ -362,7 +362,7 @@ xbd_xenbus_detach(device_t dev, int flags)
 }
 
 static bool
-xbd_xenbus_suspend(device_t dev PMF_FN_ARGS) {
+xbd_xenbus_suspend(device_t dev, const pmf_qual_t *qual) {
 
 	int s;
 	struct xbd_xenbus_softc *sc;
@@ -388,7 +388,7 @@ xbd_xenbus_suspend(device_t dev PMF_FN_ARGS) {
 }
 
 static bool
-xbd_xenbus_resume(device_t dev PMF_FN_ARGS)
+xbd_xenbus_resume(device_t dev, const pmf_qual_t *qual)
 {
 	struct xbd_xenbus_softc *sc;
 	struct xenbus_transaction *xbt;

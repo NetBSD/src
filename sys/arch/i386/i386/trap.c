@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.241.8.2 2009/11/01 13:58:22 jym Exp $	*/
+/*	$NetBSD: trap.c,v 1.241.8.3 2010/10/24 22:48:02 jym Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2005, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.241.8.2 2009/11/01 13:58:22 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.241.8.3 2010/10/24 22:48:02 jym Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -78,15 +78,15 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.241.8.2 2009/11/01 13:58:22 jym Exp $");
 #include "opt_kvm86.h"
 #include "opt_kstack_dr0.h"
 #include "opt_xen.h"
+#include "opt_dtrace.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/acct.h>
 #include <sys/kauth.h>
 #include <sys/kernel.h>
-#include <sys/pool.h>
+#include <sys/kmem.h>
 #include <sys/ras.h>
 #include <sys/signal.h>
 #include <sys/syscall.h>
@@ -121,9 +121,24 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.241.8.2 2009/11/01 13:58:22 jym Exp $");
 
 #include "npx.h"
 
+#ifdef KDTRACE_HOOKS
+#include <sys/dtrace_bsd.h>
+
+/*
+ * This is a hook which is initialised by the dtrace module
+ * to handle traps which might occur during DTrace probe
+ * execution.
+ */
+dtrace_trap_func_t	dtrace_trap_func = NULL;
+
+dtrace_doubletrap_func_t	dtrace_doubletrap_func = NULL;
+#endif
+
+
 static inline int xmm_si_code(struct lwp *);
 void trap(struct trapframe *);
 void trap_tss(struct i386tss *, int, int);
+void trap_return_fault_return(struct trapframe *) __dead;
 
 #ifdef KVM86
 #include <machine/kvm86.h>
@@ -192,6 +207,7 @@ trap_tss(struct i386tss *tss, int trapno, int code)
 static inline int
 xmm_si_code(struct lwp *l)
 {
+	struct pcb *pcb;
 	uint32_t mxcsr, mask;
 
 	if (!i386_use_fxsave) {
@@ -200,7 +216,8 @@ xmm_si_code(struct lwp *l)
 #endif
 		return 0;
 	}
-	mxcsr = l->l_addr->u_pcb.pcb_savefpu.sv_xmm.sv_env.en_mxcsr;
+	pcb = lwp_getpcb(l);
+	mxcsr = pcb->pcb_savefpu.sv_xmm.sv_env.en_mxcsr;
 
 	/*
          * Since we only have a single status and control register,
@@ -297,7 +314,8 @@ trap(struct trapframe *frame)
 	struct lwp *l = curlwp;
 	struct proc *p;
 	struct pcb *pcb;
-	extern char fusubail[], kcopy_fault[], trapreturn[], IDTVEC(osyscall)[];
+	extern char fusubail[], kcopy_fault[], return_address_fault[],
+	    IDTVEC(osyscall)[];
 	struct trapframe *vframe;
 	ksiginfo_t ksi;
 	void *onfault;
@@ -306,7 +324,7 @@ trap(struct trapframe *frame)
 	bool pfail;
 
 	if (__predict_true(l != NULL)) {
-		pcb = &l->l_addr->u_pcb;
+		pcb = lwp_getpcb(l);
 		p = l->l_proc;
 	} else {
 		/*
@@ -334,6 +352,27 @@ trap(struct trapframe *frame)
 		pcb->pcb_cr2 = 0;
 		LWP_CACHE_CREDS(l, p);
 	}
+
+#ifdef KDTRACE_HOOKS
+	/*
+	 * A trap can occur while DTrace executes a probe. Before
+	 * executing the probe, DTrace blocks re-scheduling and sets
+	 * a flag in it's per-cpu flags to indicate that it doesn't
+	 * want to fault. On returning from the the probe, the no-fault
+	 * flag is cleared and finally re-scheduling is enabled.
+	 *
+	 * If the DTrace kernel module has registered a trap handler,
+	 * call it and if it returns non-zero, assume that it has
+	 * handled the trap and modified the trap frame so that this
+	 * function can return normally.
+	 */
+	if ((type == T_PROTFLT || type == T_PAGEFLT) &&
+	    dtrace_trap_func != NULL) {
+		if ((*dtrace_trap_func)(frame, type)) {
+			return;
+		}
+	}
+#endif
 
 	switch (type) {
 
@@ -395,67 +434,77 @@ copyfault:
 
 		/*
 		 * Check for failure during return to user mode.
+		 * This can happen loading invalid values into the segment
+		 * registers, or during the 'iret' itself.
 		 *
 		 * We do this by looking at the instruction we faulted on.
 		 * The specific instructions we recognize only happen when
 		 * returning from a trap, syscall, or interrupt.
-		 *
-		 * At this point, there are (at least) two trap frames on
-		 * the kernel stack; we presume here that we faulted while
-		 * loading our registers out of the outer one.
 		 */
+
+kernelfault:
+		KSI_INIT_TRAP(&ksi);
+		ksi.ksi_signo = SIGSEGV;
+		ksi.ksi_code = SEGV_ACCERR;
+		ksi.ksi_trap = type;
+
 		switch (*(u_char *)frame->tf_eip) {
 		case 0xcf:	/* iret */
-			vframe = (void *)((int)&frame->tf_esp -
+			/*
+			 * The 'iret' instruction faulted, so we have the
+			 * 'user' registers saved after the kernel %eip:%cs:%fl
+			 * of the 'iret' and below that the user %eip:%cs:%fl
+			 * the 'iret' was processing.
+			 * We must delete the 3 words of kernel return address
+			 * from the stack to generate a normal stack frame
+			 * (eg for sending a SIGSEGV).
+			 */
+			vframe = (void *)((int *)frame + 3);
+			if (KERNELMODE(vframe->tf_cs, vframe->tf_eflags))
+				goto we_re_toast;
+			memmove(vframe, frame,
 			    offsetof(struct trapframe, tf_eip));
+			/* Set the faulting address to the user %eip */
+			ksi.ksi_addr = (void *)vframe->tf_eip;
 			break;
 		case 0x8e:
 			switch (*(uint32_t *)frame->tf_eip) {
-			case 0x0c245c8e:	/* movl 0xc(%esp,1),%ds */
-			case 0x0824448e:	/* movl 0x8(%esp,1),%es */
-			case 0x0424648e:	/* movl 0x4(%esp,1),%fs */
-			case 0x00246c8e:	/* movl 0x0(%esp,1),%gs */
+			case 0x8e242c8e:	/* mov (%esp,%gs), then */
+			case 0x0424648e:	/* mov 0x4(%esp),%fs */
+			case 0x0824448e:	/* mov 0x8(%esp),%es */
+			case 0x0c245c8e:	/* mov 0xc(%esp),%ds */
 				break;
 			default:
 				goto we_re_toast;
 			}
-			vframe = (void *)(int)&frame->tf_esp;
+			/*
+			 * We faulted loading one if the user segment registers.
+			 * The stack frame containing the user registers is
+			 * still valid and is just below the %eip:%cs:%fl of
+			 * the kernel fault frame.
+			 */
+			vframe = (void *)(&frame->tf_eflags + 1);
+			if (KERNELMODE(vframe->tf_cs, vframe->tf_eflags))
+				goto we_re_toast;
+			/* There is no valid address for the fault */
 			break;
 		default:
 			goto we_re_toast;
 		}
-		if (KERNELMODE(vframe->tf_cs, vframe->tf_eflags))
-			goto we_re_toast;
-
 		/*
-		 * Arrange to signal the thread, which will reset its
-		 * registers in the outer frame.  This also allows us to
-		 * capture the invalid register state in sigcontext,
-		 * packaged up with the signal delivery.  We restart
-		 * on return at 'trapreturn', acting as if nothing
-		 * happened, restarting the return to user with our new
-		 * set of registers.
-		 *
-		 * Clear PSL_NT.  It can be set by userland because setting
-		 * it isn't a privileged operation.
-		 *
-		 * Set PSL_I.  Otherwise, if SIGSEGV is ignored, we'll
-		 * continue to generate traps infinitely with
-		 * interrupts disabled.
+		 * We might have faulted trying to execute the
+		 * trampoline for a local (nested) signal handler.
+		 * Only generate SIGSEGV if the user %cs isn't changed.
+		 * (This is only strictly necessary in the 'iret' case.)
 		 */
-		frame->tf_ds = GSEL(GDATA_SEL, SEL_KPL);
-		frame->tf_es = GSEL(GDATA_SEL, SEL_KPL);
-		frame->tf_gs = GSEL(GDATA_SEL, SEL_KPL);
-		frame->tf_fs = GSEL(GCPU_SEL, SEL_KPL);
-		frame->tf_eip = (uintptr_t)trapreturn;
-		frame->tf_eflags = (frame->tf_eflags & ~PSL_NT) | PSL_I;
-		KSI_INIT_TRAP(&ksi);
-		ksi.ksi_signo = SIGSEGV;
-		ksi.ksi_addr = (void *)rcr2();
-		ksi.ksi_code = SEGV_ACCERR;
-		ksi.ksi_trap = type & ~T_USER;
-		(*p->p_emul->e_trapsignal)(l, &ksi);
-		return;
+		if (!pmap_exec_fixup(&p->p_vmspace->vm_map, vframe, pcb)) {
+			/* Save outer frame for any signal return */
+			l->l_md.md_regs = vframe;
+			(*p->p_emul->e_trapsignal)(l, &ksi);
+		}
+		/* Return to user by reloading the user frame */
+		trap_return_fault_return(vframe);
+		/* NOTREACHED */
 
 	case T_PROTFLT|T_USER:		/* protection fault */
 	case T_TSSFLT|T_USER:
@@ -490,8 +539,7 @@ copyfault:
 			 * If pmap_exec_fixup does something,
 			 * let's retry the trap.
 			 */
-			if (pmap_exec_fixup(&p->p_vmspace->vm_map, frame,
-			    &l->l_addr->u_pcb)) {
+			if (pmap_exec_fixup(&p->p_vmspace->vm_map, frame, pcb)){
 				goto out;
 			}
 			ksi.ksi_signo = SIGSEGV;
@@ -556,14 +604,16 @@ copyfault:
 			ksi.ksi_code = xmm_si_code(l);
 			break;
 		case T_BOUND|T_USER:
+			ksi.ksi_code = FPE_FLTSUB;
+			break;
 		case T_OFLOW|T_USER:
-			ksi.ksi_code = FPE_FLTOVF;
+			ksi.ksi_code = FPE_INTOVF;
 			break;
 		case T_DIVIDE|T_USER:
-			ksi.ksi_code = FPE_FLTDIV;
+			ksi.ksi_code = FPE_INTDIV;
 			break;
 		case T_ARITHTRAP|T_USER:
-			ksi.ksi_code = FPE_INTOVF;
+			ksi.ksi_code = npxtrap(l);
 			break;
 		default:
 			ksi.ksi_code = 0;
@@ -581,7 +631,7 @@ copyfault:
 		 * from inside the profiling interrupt.
 		 */
 		onfault = pcb->pcb_onfault;
-		if (onfault == fusubail) {
+		if (onfault == fusubail || onfault == return_address_fault) {
 			goto copyefault;
 		}
 		if (cpu_intr_p() || (l->l_pflag & LP_INTR) != 0) {
@@ -624,6 +674,8 @@ faultcommon:
 			map = &vm->vm_map;
 		if (frame->tf_err & PGEX_W)
 			ftype = VM_PROT_WRITE;
+		else if (frame->tf_err & PGEX_X)
+			ftype = VM_PROT_EXECUTE;
 		else
 			ftype = VM_PROT_READ;
 
@@ -708,7 +760,7 @@ faultcommon:
 				goto copyfault;
 			printf("uvm_fault(%p, %#lx, %d) -> %#x\n",
 			    map, va, ftype, error);
-			goto we_re_toast;
+			goto kernelfault;
 		}
 		if (error == ENOMEM) {
 			ksi.ksi_signo = SIGKILL;
@@ -813,7 +865,8 @@ startlwp(void *arg)
 
 	error = cpu_setmcontext(l, &uc->uc_mcontext, uc->uc_flags);
 	KASSERT(error == 0);
-	pool_put(&lwp_uc_pool, uc);
+
+	kmem_free(uc, sizeof(ucontext_t));
 	userret(l);
 }
 

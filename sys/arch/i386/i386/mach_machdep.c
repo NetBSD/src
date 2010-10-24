@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_machdep.c,v 1.24.12.2 2009/11/01 13:58:21 jym Exp $	 */
+/*	$NetBSD: mach_machdep.c,v 1.24.12.3 2010/10/24 22:48:00 jym Exp $	 */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_machdep.c,v 1.24.12.2 2009/11/01 13:58:21 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_machdep.c,v 1.24.12.3 2010/10/24 22:48:00 jym Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -44,7 +44,6 @@ __KERNEL_RCSID(0, "$NetBSD: mach_machdep.c,v 1.24.12.2 2009/11/01 13:58:21 jym E
 #include <sys/namei.h>
 #include <sys/proc.h>
 #include <sys/exec.h>
-#include <sys/user.h>
 #include <sys/filedesc.h>
 #include <sys/ioctl.h>
 #include <sys/kernel.h>

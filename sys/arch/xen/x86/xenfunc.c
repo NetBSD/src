@@ -1,4 +1,4 @@
-/*	$NetBSD: xenfunc.c,v 1.7.12.1 2009/11/01 13:58:46 jym Exp $	*/
+/*	$NetBSD: xenfunc.c,v 1.7.12.2 2010/10/24 22:48:22 jym Exp $	*/
 
 /*
  *
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenfunc.c,v 1.7.12.1 2009/11/01 13:58:46 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenfunc.c,v 1.7.12.2 2010/10/24 22:48:22 jym Exp $");
 
 #include <sys/param.h>
 
@@ -55,14 +55,13 @@ invlpg(vaddr_t addr)
 {
 	int s = splvm();
 	xpq_queue_invlpg(addr);
-	xpq_flush_queue();
 	splx(s);
 }  
 
-#ifndef __x86_64__
 void
 lldt(u_short sel)
 {
+#ifndef __x86_64__
 	struct cpu_info *ci;
 
 	ci = curcpu();
@@ -76,8 +75,8 @@ lldt(u_short sel)
 		xen_set_ldt(ci->ci_gdt[IDXSELN(sel)].ld.ld_base,
 		    ci->ci_gdt[IDXSELN(sel)].ld.ld_entries);
 	ci->ci_curldt = sel;
-}
 #endif
+}
 
 void
 ltr(u_short sel)
@@ -104,7 +103,6 @@ lcr3(vaddr_t val)
 {
 	int s = splvm();
 	xpq_queue_pt_switch(xpmap_ptom_masked(val));
-	xpq_flush_queue();
 	splx(s);
 }
 #endif
@@ -114,7 +112,6 @@ tlbflush(void)
 {
 	int s = splvm();
 	xpq_queue_tlb_flush();
-	xpq_flush_queue();
 	splx(s);
 }
 

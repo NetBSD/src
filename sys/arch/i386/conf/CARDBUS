@@ -1,9 +1,9 @@
-# $NetBSD: CARDBUS,v 1.79 2008/09/30 16:45:33 jmcneill Exp $
+# $NetBSD: CARDBUS,v 1.79.8.1 2010/10/24 22:47:59 jym Exp $
 #
 #	CARDBUS: GENERIC + CardBus support
 
 include 	"arch/i386/conf/GENERIC"
- 
+
 # Following makes ARMADA M700's happy
 #options 	RBUS_MIN_START=0x20000000
 #options 	RBUS_IO_BASE=0x600
@@ -20,37 +20,37 @@ options 	PCIBIOS_INTR_GUESS	# see pcibios(4)
 options 	PCI_ADDR_FIXUP		# fixup PCI I/O addresses
 options 	PCI_BUS_FIXUP		# fixup PCI bus numbering
 options 	PCI_INTR_FIXUP		# fixup PCI interrupt routing
- 
- # Cardbus bridges
+
+# Cardbus bridges
 ppb*	at cardbus? function ?	# Cardbus-PCI bridges (www.magma.com)
- 
- # CardBus bridge support
+
+# CardBus bridge support
 cbb*		at pci? dev ? function ?
 cardslot*	at cbb?
- 
+
 # CardBus bus support
 cardbus*	at cardslot?
-pcmcia*		at cardslot?
- 
+pcmcia* 	at cardslot?
+
 # CardBus serial interfaces
 com*	at cardbus? function ?	# Modems and serial cards
- 
+
 # CardBus SCSI cards
 adv*	at cardbus? function ?	# AdvanSys 1200[A,B], 9xx[U,UA] SCSI
 ahc*	at cardbus? function ?	# Adaptec ADP-1480
 njs*	at cardbus? function ?	# Workbit NinjaSCSI-32
- 
+
 # CardBus IDE controllers
 njata*	at cardbus? function ? flags 0x01	# Workbit NinjaATA-32
 
 # CardBus network cards
 ath*	at cardbus? function ?	# Atheros 5210/5211/5212 802.11
 atw*	at cardbus? function ?	# ADMtek ADM8211 (802.11)
-ex*	at cardbus? function ?	# 3Com 3C575TX
+ex*	at cardbus? function ?	# 3Com 3c575TX
 fxp*	at cardbus? function ?	# Intel i8255x
 rtk*	at cardbus? function ?	# Realtek 8129/8139
 tlp*	at cardbus? function ?	# DECchip 21143
- 
+
 # CardBus USB controllers
 ehci*	at cardbus? function ?	# Enhanced Host Controller
 ohci*	at cardbus? function ?	# Open Host Controller

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.53.4.3 2009/11/01 13:58:49 jym Exp $	*/
+/*	$NetBSD: trap.c,v 1.53.4.4 2010/10/24 22:47:52 jym Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -68,20 +68,20 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.53.4.3 2009/11/01 13:58:49 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.53.4.4 2010/10/24 22:47:52 jym Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
 #include "opt_xen.h"
+#include "opt_dtrace.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/acct.h>
 #include <sys/kauth.h>
 #include <sys/kernel.h>
-#include <sys/pool.h>
+#include <sys/kmem.h>
 #include <sys/ras.h>
 #include <sys/signal.h>
 #include <sys/syscall.h>
@@ -110,6 +110,19 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.53.4.3 2009/11/01 13:58:49 jym Exp $");
 
 #ifdef KGDB
 #include <sys/kgdb.h>
+#endif
+
+#ifdef KDTRACE_HOOKS
+#include <sys/dtrace_bsd.h>
+
+/*
+ * This is a hook which is initialized by the dtrace module
+ * to handle traps which might occur during DTrace probe
+ * execution.
+ */
+dtrace_trap_func_t	dtrace_trap_func = NULL;
+
+dtrace_doubletrap_func_t	dtrace_doubletrap_func = NULL;
 #endif
 
 void trap(struct trapframe *);
@@ -184,6 +197,7 @@ onfault_handler(const struct pcb *pcb, const struct trapframe *tf)
  * exception has been processed. Note that the effect is as if the arguments
  * were passed call by reference.
  */
+
 void
 trap(struct trapframe *frame)
 {
@@ -193,6 +207,8 @@ trap(struct trapframe *frame)
 	extern char fusuintrfailure[], kcopy_fault[],
 		    resume_iret[];
 	extern char IDTVEC(oosyscall)[];
+	extern char IDTVEC(osyscall)[];
+	extern char IDTVEC(syscall32)[];
 #if 0
 	extern char resume_pop_ds[], resume_pop_es[];
 #endif
@@ -205,7 +221,7 @@ trap(struct trapframe *frame)
 	bool pfail;
 
 	if (__predict_true(l != NULL)) {
-		pcb = &l->l_addr->u_pcb;
+		pcb = lwp_getpcb(l);
 		p = l->l_proc;
 	} else {
 		/*
@@ -232,6 +248,27 @@ trap(struct trapframe *frame)
 		l->l_md.md_regs = frame;
 		LWP_CACHE_CREDS(l, p);
 	}
+
+#ifdef KDTRACE_HOOKS
+	/*
+	 * A trap can occur while DTrace executes a probe. Before
+	 * executing the probe, DTrace blocks re-scheduling and sets
+	 * a flag in it's per-cpu flags to indicate that it doesn't
+	 * want to fault. On returning from the the probe, the no-fault
+	 * flag is cleared and finally re-scheduling is enabled.
+	 *
+	 * If the DTrace kernel module has registered a trap handler,
+	 * call it and if it returns non-zero, assume that it has
+	 * handled the trap and modified the trap frame so that this
+	 * function can return normally.
+	 */
+	if ((type == T_PROTFLT || type == T_PAGEFLT) &&
+	    dtrace_trap_func != NULL) {
+		if ((*dtrace_trap_func)(frame, type)) {
+			return;
+		}
+	}
+#endif
 
 	switch (type) {
 
@@ -427,13 +464,15 @@ copyfault:
 		ksi.ksi_signo = SIGFPE;
 		ksi.ksi_trap = type & ~T_USER;
 		ksi.ksi_addr = (void *)frame->tf_rip;
-		switch (type ) {
+		switch (type) {
 		case T_BOUND|T_USER:
+			ksi.ksi_code = FPE_FLTSUB;
+			break;
 		case T_OFLOW|T_USER:
-			ksi.ksi_code = FPE_FLTOVF;
+			ksi.ksi_code = FPE_INTOVF;
 			break;
 		case T_DIVIDE|T_USER:
-			ksi.ksi_code = FPE_FLTDIV;
+			ksi.ksi_code = FPE_INTDIV;
 			break;
 		default:
 #ifdef DIAGNOSTIC
@@ -608,9 +647,9 @@ faultcommon:
 
 	case T_TRCTRAP:
 		/* Check whether they single-stepped into a lcall. */
-		if (frame->tf_rip == (int)IDTVEC(oosyscall))
-			return;
-		if (frame->tf_rip == (int)IDTVEC(oosyscall) + 1) {
+		if (frame->tf_rip == (uint64_t)IDTVEC(oosyscall) ||
+		    frame->tf_rip == (uint64_t)IDTVEC(osyscall) ||
+		    frame->tf_rip == (uint64_t)IDTVEC(syscall32)) {
 			frame->tf_rflags &= ~PSL_T;
 			return;
 		}
@@ -621,6 +660,7 @@ faultcommon:
 		/*
 		 * Don't go single-stepping into a RAS.
 		 */
+
 		if (p->p_raslist == NULL ||
 		    (ras_lookup(p, (void *)frame->tf_rip) == (void *)-1)) {
 			KSI_INIT_TRAP(&ksi);
@@ -685,7 +725,8 @@ startlwp(void *arg)
 
 	error = cpu_setmcontext(l, &uc->uc_mcontext, uc->uc_flags);
 	KASSERT(error == 0);
-	pool_put(&lwp_uc_pool, uc);
+
+	kmem_free(uc, sizeof(ucontext_t));
 	userret(l);
 }
 

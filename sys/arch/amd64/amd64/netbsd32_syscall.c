@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_syscall.c,v 1.29 2008/10/21 12:16:59 ad Exp $	*/
+/*	$NetBSD: netbsd32_syscall.c,v 1.29.8.1 2010/10/24 22:47:52 jym Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -30,12 +30,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_syscall.c,v 1.29 2008/10/21 12:16:59 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_syscall.c,v 1.29.8.1 2010/10/24 22:47:52 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/signal.h>
 /* XXX this file ought to include the netbsd32 version of these 2 headers */
 #include <sys/syscall.h>

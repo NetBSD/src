@@ -1,4 +1,4 @@
-/* $NetBSD: kvm86.c,v 1.15.16.3 2009/11/01 13:58:21 jym Exp $ */
+/* $NetBSD: kvm86.c,v 1.15.16.4 2010/10/24 22:48:00 jym Exp $ */
 
 /*
  * Copyright (c) 2002
@@ -27,14 +27,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kvm86.c,v 1.15.16.3 2009/11/01 13:58:21 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kvm86.c,v 1.15.16.4 2010/10/24 22:48:00 jym Exp $");
 
 #include "opt_multiprocessor.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/malloc.h>
 #include <sys/mutex.h>
 #include <sys/cpu.h>
@@ -207,7 +206,7 @@ kvm86_bios_read(uint32_t vmva, char *buf, size_t len)
 		if (!bioscallvmd->pgtbl[vmva >> 12])
 			break;
 		vmpa = bioscallvmd->pgtbl[vmva >> 12] & ~(PAGE_SIZE - 1);
-		pmap_kenter_pa(bioscalltmpva, vmpa, VM_PROT_READ);
+		pmap_kenter_pa(bioscalltmpva, vmpa, VM_PROT_READ, 0);
 		pmap_update(pmap_kernel());
 
 		memcpy(buf, (void *)(bioscalltmpva + (vmva & (PAGE_SIZE - 1))),

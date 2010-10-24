@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_13_machdep.c,v 1.24 2008/11/14 14:00:11 ad Exp $	*/
+/*	$NetBSD: compat_13_machdep.c,v 1.24.4.1 2010/10/24 22:48:00 jym Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.24 2008/11/14 14:00:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.24.4.1 2010/10/24 22:48:00 jym Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_vm86.h"
@@ -41,7 +41,6 @@ __KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.24 2008/11/14 14:00:11 ad Ex
 #include <sys/signalvar.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
 

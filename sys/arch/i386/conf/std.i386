@@ -1,4 +1,4 @@
-# $NetBSD: std.i386,v 1.29 2008/12/11 05:42:18 alc Exp $
+# $NetBSD: std.i386,v 1.29.2.1 2010/10/24 22:47:59 jym Exp $
 #
 # standard, required NetBSD/i386 'options'
 
@@ -13,7 +13,7 @@ options 	CPU_IN_CKSUM
 #options 	CRYPTO_MD_DES_CBC	# machine-dependant DES CBC code
 #options 	CRYPTO_MD_BF_ENC	# machine-dependant code for BF_encrypt
 #options 	CRYPTO_MD_BF_CBC	# careful: uses bswapl, requires 486
-options		MULTIPROCESSOR		# multiprocessor supprot
+options		MULTIPROCESSOR		# multiprocessor support
 options 	MPBIOS			# configure CPUs and APICs using MPBIOS
 
 mainbus0 at root

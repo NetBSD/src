@@ -1,5 +1,5 @@
 /*	$OpenBSD: via.c,v 1.8 2006/11/17 07:47:56 tom Exp $	*/
-/*	$NetBSD: via_padlock.c,v 1.10.2.2 2009/11/01 13:58:19 jym Exp $ */
+/*	$NetBSD: via_padlock.c,v 1.10.2.3 2010/10/24 22:48:20 jym Exp $ */
 
 /*-
  * Copyright (c) 2003 Jason Wright
@@ -20,7 +20,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: via_padlock.c,v 1.10.2.2 2009/11/01 13:58:19 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: via_padlock.c,v 1.10.2.3 2010/10/24 22:48:20 jym Exp $");
 
 #include "rnd.h"
 
@@ -43,6 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: via_padlock.c,v 1.10.2.2 2009/11/01 13:58:19 jym Exp
 #include <x86/specialreg.h>
 
 #include <machine/cpufunc.h>
+#include <machine/cpuvar.h>
 
 #include <opencrypto/cryptodev.h>
 #include <opencrypto/cryptosoft.h>
@@ -180,10 +181,10 @@ via_padlock_attach(void)
 
 	printf("%s", xxx_via_buffer);
 
-	if (!((cpu_feature_padlock & CPUID_VIA_HAS_ACE) ||
-	      (cpu_feature_padlock & CPUID_VIA_HAS_RNG))) {
+	if (!((cpu_feature[4] & CPUID_VIA_HAS_ACE) ||
+	      (cpu_feature[4] & CPUID_VIA_HAS_RNG))) {
 		printf("PadLock: Nothing (%08x ! %08X ! %08X)\n",
-			cpu_feature_padlock, CPUID_VIA_HAS_ACE,
+			cpu_feature[4], CPUID_VIA_HAS_ACE,
 			CPUID_VIA_HAS_RNG);
 		return;		/* Nothing to see here, move along. */
 	}
@@ -192,12 +193,12 @@ via_padlock_attach(void)
 		return;
 	memset(vp_sc, 0, sizeof(*vp_sc));
 
-	if (cpu_feature_padlock & CPUID_VIA_HAS_RNG) {
+	if (cpu_feature[4] & CPUID_VIA_HAS_RNG) {
 		via_c3_rnd_init(vp_sc);
 		printf("PadLock: RNG attached\n");
 	}
 
-	if (cpu_feature_padlock & CPUID_VIA_HAS_ACE) {
+	if (cpu_feature[4] & CPUID_VIA_HAS_ACE) {
 		via_c3_ace_init(vp_sc);
 		printf("PadLock: AES-CBC attached\n");
 	}

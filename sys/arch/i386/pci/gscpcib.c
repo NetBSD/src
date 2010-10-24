@@ -1,4 +1,4 @@
-/*	$NetBSD: gscpcib.c,v 1.11.14.2 2009/11/01 13:58:35 jym Exp $	*/
+/*	$NetBSD: gscpcib.c,v 1.11.14.3 2010/10/24 22:48:03 jym Exp $	*/
 /*	$OpenBSD: gscpcib.c,v 1.3 2004/10/05 19:02:33 grange Exp $	*/
 /*
  * Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gscpcib.c,v 1.11.14.2 2009/11/01 13:58:35 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gscpcib.c,v 1.11.14.3 2010/10/24 22:48:03 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,13 +80,6 @@ gscpcib_childdetached(device_t self, device_t child)
 		sc->sc_gpiobus = NULL;
 	else
 		pcibchilddet(self, child);
-}
-
-/* XXX share this with sys/arch/i386/pci/elan520.c */
-static bool
-ifattr_match(const char *snull, const char *t)
-{
-	return (snull == NULL) || strcmp(snull, t) == 0;
 }
 
 int

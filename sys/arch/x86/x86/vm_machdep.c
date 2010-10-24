@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.1.6.3 2009/11/01 13:58:19 jym Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.1.6.4 2010/10/24 22:48:20 jym Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.1.6.3 2009/11/01 13:58:19 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.1.6.4 2010/10/24 22:48:20 jym Exp $");
 
 #include "opt_mtrr.h"
 
@@ -89,7 +89,6 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.1.6.3 2009/11/01 13:58:19 jym Exp $
 #include <sys/proc.h>
 #include <sys/vnode.h>
 #include <sys/buf.h>
-#include <sys/user.h>
 #include <sys/core.h>
 #include <sys/exec.h>
 #include <sys/ptrace.h>
@@ -141,9 +140,10 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 {
 	struct pcb *pcb1, *pcb2;
 	struct trapframe *tf;
+	vaddr_t uv;
 
-	pcb1 = &l1->l_addr->u_pcb;
-	pcb2 = &l2->l_addr->u_pcb;
+	pcb1 = lwp_getpcb(l1);
+	pcb2 = lwp_getpcb(l2);
 
 	/*
 	 * If parent LWP was using FPU, then we have to save the FPU h/w
@@ -179,34 +179,32 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	 * newly-created child process to go directly to user level with a
 	 * parent return value of 0 from fork(), while the parent process
 	 * returns normally.
-	 * 
-	 * Also, copy PCB %fs/%gs base from parent.
 	 */
-#ifdef __x86_64__
-	pcb2->pcb_rsp0 = (USER_TO_UAREA(l2->l_addr) + KSTACK_SIZE - 16) & ~0xf;
-	tf = (struct trapframe *)pcb2->pcb_rsp0 - 1;
+	uv = uvm_lwp_getuarea(l2);
 
-	pcb2->pcb_fs = pcb1->pcb_fs;
-	pcb2->pcb_gs = pcb1->pcb_gs;
+#ifdef __x86_64__
+	pcb2->pcb_rsp0 = (uv + KSTACK_SIZE - 16) & ~0xf;
+	tf = (struct trapframe *)pcb2->pcb_rsp0 - 1;
 #else
-	pcb2->pcb_esp0 = (USER_TO_UAREA(l2->l_addr) + KSTACK_SIZE - 16);
+	pcb2->pcb_esp0 = (uv + KSTACK_SIZE - 16);
 	tf = (struct trapframe *)pcb2->pcb_esp0 - 1;
 
-	memcpy(&pcb2->pcb_fsd, pcb1->pcb_fsd, sizeof(pcb2->pcb_fsd));
-	memcpy(&pcb2->pcb_gsd, pcb1->pcb_gsd, sizeof(pcb2->pcb_gsd));
 	pcb2->pcb_iomap = NULL;
 #endif
 	l2->l_md.md_regs = tf;
 
-	/* Copy the trapframe from parent. */
+	/*
+	 * Copy the trapframe from parent, so that return to userspace
+	 * will be to right address, with correct registers.
+	 */
 	memcpy(tf, l1->l_md.md_regs, sizeof(struct trapframe));
 
 	/* Child LWP might get aston() before returning to userspace. */
 	tf->tf_trapno = T_ASTFLT;
 
-#ifdef DIAGNOSTIC
+#if 0 /* DIAGNOSTIC */
 	/* Set a red zone in the kernel stack after the uarea. */
-	pmap_kremove(USER_TO_UAREA(l2->l_addr), PAGE_SIZE);
+	pmap_kremove(uv, PAGE_SIZE);
 	pmap_update(pmap_kernel());
 #endif
 
@@ -228,7 +226,7 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 void
 cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
 {
-	struct pcb *pcb = &l->l_addr->u_pcb;
+	struct pcb *pcb = lwp_getpcb(l);
 	struct trapframe *tf = l->l_md.md_regs;
 	struct switchframe *sf = (struct switchframe *)tf - 1;
 
@@ -258,9 +256,10 @@ cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
 void
 cpu_lwp_free(struct lwp *l, int proc)
 {
+	struct pcb *pcb = lwp_getpcb(l);
 
 	/* If we were using the FPU, forget about it. */
-	if (l->l_addr->u_pcb.pcb_fpcpu != NULL) {
+	if (pcb->pcb_fpcpu != NULL) {
 		fpusave_lwp(l, false);
 	}
 
@@ -329,7 +328,7 @@ vmapbuf(struct buf *bp, vsize_t len)
 	while (len) {
 		(void) pmap_extract(vm_map_pmap(&bp->b_proc->p_vmspace->vm_map),
 		    faddr, &fpa);
-		pmap_kenter_pa(taddr, fpa, VM_PROT_READ|VM_PROT_WRITE);
+		pmap_kenter_pa(taddr, fpa, VM_PROT_READ|VM_PROT_WRITE, 0);
 		faddr += PAGE_SIZE;
 		taddr += PAGE_SIZE;
 		len -= PAGE_SIZE;

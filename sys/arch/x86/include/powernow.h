@@ -1,4 +1,4 @@
-/*	$NetBSD: powernow.h,v 1.9 2007/03/24 15:35:15 xtraeme Exp $	*/
+/*	$NetBSD: powernow.h,v 1.9.52.1 2010/10/24 22:48:16 jym Exp $	*/
 
 /*-
  * Copyright (c) 2004 Martin Végiard.

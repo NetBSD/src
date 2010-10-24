@@ -1,4 +1,4 @@
-/*	$NetBSD: frameasm.h,v 1.13 2008/11/21 10:05:41 ad Exp $	*/
+/*	$NetBSD: frameasm.h,v 1.13.4.1 2010/10/24 22:47:52 jym Exp $	*/
 
 #ifndef _AMD64_MACHINE_FRAMEASM_H
 #define _AMD64_MACHINE_FRAMEASM_H
@@ -66,7 +66,7 @@
 	movw	%fs,TF_FS(%rsp)		; \
 	movw	%es,TF_ES(%rsp)		; \
 	movw	%ds,TF_DS(%rsp)		; \
-98: 	INTR_SAVE_GPRS
+98:	INTR_SAVE_GPRS
 
 #ifndef XEN
 #define INTRFASTEXIT \
@@ -74,11 +74,9 @@
 	testq	$SEL_UPL,TF_CS(%rsp)	/* Interrupted %cs */ ; \
 	je	99f			; \
 	cli				; \
-	swapgs				; \
-	movw	TF_GS(%rsp),%gs		; \
-	movw	TF_FS(%rsp),%fs		; \
 	movw	TF_ES(%rsp),%es		; \
 	movw	TF_DS(%rsp),%ds		; \
+	swapgs				; \
 99:	addq	$TF_REGSIZE+16,%rsp	/* + T_xxx and error code */ ; \
 	iretq
 
@@ -101,7 +99,6 @@
  	INTR_RESTORE_GPRS 		; \
  	testq	$SEL_UPL,TF_CS(%rsp)	; \
  	je	99f			; \
- 	movw	TF_FS(%rsp),%fs		; \
  	movw	TF_ES(%rsp),%es		; \
  	movw	TF_DS(%rsp),%ds		; \
 99:	addq	$TF_REGSIZE+16,%rsp	/* + T_xxx and error code */ ; \
@@ -122,13 +119,13 @@
 #endif	/* !XEN */
  
 #define	DO_DEFERRED_SWITCH \
-	cmpq	$0, CPUVAR(WANT_PMAPLOAD)		; \
+	cmpl	$0, CPUVAR(WANT_PMAPLOAD)		; \
 	jz	1f					; \
 	call	_C_LABEL(do_pmap_load)			; \
 	1:
 
 #define	CHECK_DEFERRED_SWITCH \
-	cmpq	$0, CPUVAR(WANT_PMAPLOAD)
+	cmpl	$0, CPUVAR(WANT_PMAPLOAD)
 
 #define CHECK_ASTPENDING(reg)	cmpl	$0, L_MD_ASTPENDING(reg)
 #define CLEAR_ASTPENDING(reg)	movl	$0, L_MD_ASTPENDING(reg)

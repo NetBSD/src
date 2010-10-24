@@ -1,4 +1,4 @@
-/*	$NetBSD: pcib.c,v 1.7.8.2 2009/11/01 13:58:17 jym Exp $	*/
+/*	$NetBSD: pcib.c,v 1.7.8.3 2010/10/24 22:48:17 jym Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.7.8.2 2009/11/01 13:58:17 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.7.8.3 2010/10/24 22:48:17 jym Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -231,13 +231,6 @@ pcibchilddet(device_t self, device_t child)
 		sc->sc_isabus = NULL;
 }
 
-/* XXX share this with sys/arch/i386/pci/elan520.c */
-static bool
-ifattr_match(const char *snull, const char *t)
-{
-	return (snull == NULL) || strcmp(snull, t) == 0;
-}
-
 int
 pcibrescan(device_t self, const char *ifattr, const int *loc)
 {
@@ -249,8 +242,8 @@ pcibrescan(device_t self, const char *ifattr, const int *loc)
 		 * Attach the ISA bus behind this bridge.
 		 */
 		memset(&iba, 0, sizeof(iba));
-		iba.iba_iot = X86_BUS_SPACE_IO;
-		iba.iba_memt = X86_BUS_SPACE_MEM;
+		iba.iba_iot = x86_bus_space_io;
+		iba.iba_memt = x86_bus_space_mem;
 #if NISA > 0
 		iba.iba_dmat = &isa_bus_dma_tag;
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: xenio.h,v 1.6 2008/02/17 16:21:19 bouyer Exp $	*/
+/*	$NetBSD: xenio.h,v 1.6.24.1 2010/10/24 22:48:21 jym Exp $	*/
 
 /******************************************************************************
  * privcmd.h
@@ -27,8 +27,8 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef __XEN_XENIO3_H__
-#define __XEN_XENIO3_H__
+#ifndef __XEN_XENIO_H__
+#define __XEN_XENIO_H__
 
 /* Interface to /proc/xen/privcmd */
 
@@ -112,4 +112,4 @@ typedef struct oprivcmd_hypercall
 /* EVTCHN_UNBIND: Unbind from the specified event-channel port. */
 #define EVTCHN_UNBIND _IOW('E', 3, unsigned long)
 
-#endif /* __XEN_XENIO3_H__ */
+#endif /* __XEN_XENIO_H__ */

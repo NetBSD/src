@@ -1,4 +1,4 @@
-/* $NetBSD: gcscehci.c,v 1.4.10.2 2009/11/01 13:58:35 jym Exp $ */
+/* $NetBSD: gcscehci.c,v 1.4.10.3 2010/10/24 22:48:03 jym Exp $ */
 
 /*
  * Copyright (c) 2001, 2002, 2007 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gcscehci.c,v 1.4.10.2 2009/11/01 13:58:35 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gcscehci.c,v 1.4.10.3 2010/10/24 22:48:03 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -141,8 +141,8 @@ gcscehci_attach(device_t parent, device_t self, void *aux)
 	if (sc->sc_ih == NULL) {
 		aprint_error("%s: couldn't establish interrupt", devname);
 		if (intrstr != NULL)
-			aprint_normal(" at %s", intrstr);
-		aprint_normal("\n");
+			aprint_error(" at %s", intrstr);
+		aprint_error("\n");
 		return;
 	}
 	aprint_normal("%s: interrupting at %s\n", devname, intrstr);

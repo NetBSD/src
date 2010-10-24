@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.13.2.2 2009/11/01 13:58:17 jym Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.13.2.3 2010/10/24 22:48:18 jym Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.13.2.2 2009/11/01 13:58:17 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.13.2.3 2010/10/24 22:48:18 jym Exp $");
 
 #include "opt_enhanced_speedstep.h"
 #include "opt_intel_odcm.h"
@@ -266,10 +266,10 @@ cpu_probe_k5(struct cpu_info *ci)
 		 * support for global PTEs, instead using bit 9 (APIC)
 		 * rather than bit 13 (i.e. "0x200" vs. 0x2000".  Oops!).
 		 */
-		flag = ci->ci_feature_flags;
+		flag = ci->ci_feat_val[0];
 		if ((flag & CPUID_APIC) != 0)
 			flag = (flag & ~CPUID_APIC) | CPUID_PGE;
-		ci->ci_feature_flags = flag;
+		ci->ci_feat_val[0] = flag;
 	}
 
 	cpu_probe_amd_cache(ci);
@@ -288,8 +288,8 @@ cpu_probe_k678(struct cpu_info *ci)
 	x86_cpuid(0x80000000, descs);
 	if (descs[0] >= 0x80000001) {
 		x86_cpuid(0x80000001, descs);
-		ci->ci_feature3_flags |= descs[3]; /* %edx */
-		ci->ci_feature4_flags = descs[2];  /* %ecx */
+		ci->ci_feat_val[3] = descs[2]; /* %ecx */
+		ci->ci_feat_val[2] = descs[3]; /* %edx */
 	}
 
 	cpu_probe_amd_cache(ci);
@@ -358,7 +358,7 @@ cpu_probe_cyrix_cmn(struct cpu_info *ci)
 	 * work fine.
 	 */
 	if (ci->ci_signature != 0x552)
-		ci->ci_feature_flags &= ~CPUID_TSC;
+		ci->ci_feat_val[0] &= ~CPUID_TSC;
 
 	/* enable access to ccr4/ccr5 */
 	c3 = cyrix_read_reg(0xC3);
@@ -394,7 +394,7 @@ cpu_probe_winchip(struct cpu_info *ci)
 
 	if (CPUID2MODEL(ci->ci_signature) == 4) {
 		/* WinChip C6 */
-		ci->ci_feature_flags &= ~CPUID_TSC;
+		ci->ci_feat_val[0] &= ~CPUID_TSC;
 	}
 }
 
@@ -419,7 +419,7 @@ cpu_probe_c3(struct cpu_info *ci)
 	/* Determine the extended feature flags. */
 	if (lfunc >= 0x80000001) {
 		x86_cpuid(0x80000001, descs);
-		ci->ci_feature_flags |= descs[3];
+		ci->ci_feat_val[2] = descs[3];
 	}
 
 	if (family > 6 || model > 0x9 || (model == 0x9 && stepping >= 3)) {
@@ -430,40 +430,40 @@ cpu_probe_c3(struct cpu_info *ci)
 		    int rng_enable = 0, ace_enable = 0;
 		    x86_cpuid(0xc0000001, descs);
 		    lfunc = descs[3];
-		    ci->ci_padlock_flags = lfunc;
+		    ci->ci_feat_val[4] = lfunc;
 		    /* Check for and enable RNG */
 		    if (lfunc & CPUID_VIA_HAS_RNG) {
 		    	if (!(lfunc & CPUID_VIA_DO_RNG)) {
 			    rng_enable++;
-			    ci->ci_padlock_flags |= CPUID_VIA_HAS_RNG;
+			    ci->ci_feat_val[4] |= CPUID_VIA_HAS_RNG;
 			}
 		    }
 		    /* Check for and enable ACE (AES-CBC) */
 		    if (lfunc & CPUID_VIA_HAS_ACE) {
 			if (!(lfunc & CPUID_VIA_DO_ACE)) {
 			    ace_enable++;
-			    ci->ci_padlock_flags |= CPUID_VIA_DO_ACE;
+			    ci->ci_feat_val[4] |= CPUID_VIA_DO_ACE;
 			}
 		    }
 		    /* Check for and enable SHA */
 		    if (lfunc & CPUID_VIA_HAS_PHE) {
 			if (!(lfunc & CPUID_VIA_DO_PHE)) {
 			    ace_enable++;
-			    ci->ci_padlock_flags |= CPUID_VIA_DO_PHE;
+			    ci->ci_feat_val[4] |= CPUID_VIA_DO_PHE;
 			}
 		    }
 		    /* Check for and enable ACE2 (AES-CTR) */
 		    if (lfunc & CPUID_VIA_HAS_ACE2) {
 			if (!(lfunc & CPUID_VIA_DO_ACE2)) {
 			    ace_enable++;
-			    ci->ci_padlock_flags |= CPUID_VIA_DO_ACE2;
+			    ci->ci_feat_val[4] |= CPUID_VIA_DO_ACE2;
 			}
 		    }
 		    /* Check for and enable PMM (modmult engine) */
 		    if (lfunc & CPUID_VIA_HAS_PMM) {
 			if (!(lfunc & CPUID_VIA_DO_PMM)) {
 			    ace_enable++;
-			    ci->ci_padlock_flags |= CPUID_VIA_DO_PMM;
+			    ci->ci_feat_val[4] |= CPUID_VIA_DO_PMM;
 			}
 		    }
 
@@ -568,6 +568,10 @@ cpu_probe(struct cpu_info *ci)
 	if (cpuid_level < 0)
 		return;
 
+	for (i = 0; i < __arraycount(ci->ci_feat_val); i++) {
+		ci->ci_feat_val[i] = 0;
+	}
+
 	x86_cpuid(0, descs);
 	cpuid_level = descs[0];
 	ci->ci_vendor[0] = descs[1];
@@ -606,8 +610,8 @@ cpu_probe(struct cpu_info *ci)
 		x86_cpuid(1, descs);
 		ci->ci_signature = descs[0];
 		miscbytes = descs[1];
-		ci->ci_feature2_flags = descs[2];
-		ci->ci_feature_flags = descs[3];
+		ci->ci_feat_val[1] = descs[2];
+		ci->ci_feat_val[0] = descs[3];
 
 		/* Determine family + class. */
 		cpu_class = CPUID2FAMILY(ci->ci_signature) + (CPUCLASS_386 - 3);
@@ -615,7 +619,7 @@ cpu_probe(struct cpu_info *ci)
 			cpu_class = CPUCLASS_686;
 
 		/* CLFLUSH line size is next 8 bits */
-		if (ci->ci_feature_flags & CPUID_CFLUSH)
+		if (ci->ci_feat_val[0] & CPUID_CFLUSH)
 			ci->ci_cflush_lsize = ((miscbytes >> 8) & 0xff) << 3;
 		ci->ci_initapicid = (miscbytes >> 24) & 0xff;
 	}
@@ -652,26 +656,35 @@ cpu_probe(struct cpu_info *ci)
 	cpu_probe_c3(ci);
 	cpu_probe_geode(ci);
 
-	x86_cpu_toplogy(ci);
+	x86_cpu_topology(ci);
 
-	if (cpu_vendor != CPUVENDOR_AMD && (ci->ci_feature_flags & CPUID_TM) &&
+	if (cpu_vendor != CPUVENDOR_AMD && (ci->ci_feat_val[0] & CPUID_TM) &&
 	    (rdmsr(MSR_MISC_ENABLE) & (1 << 3)) == 0) {
 		/* Enable thermal monitor 1. */
 		wrmsr(MSR_MISC_ENABLE, rdmsr(MSR_MISC_ENABLE) | (1<<3));
 	}
 
-	if ((cpu_feature | cpu_feature2) == 0) {
-		/* If first. */
-		cpu_feature = ci->ci_feature_flags;
-		cpu_feature2 = ci->ci_feature2_flags;
-		/* Early patch of text segment. */
+	if (ci == &cpu_info_primary) {
+		/* If first. Boot Processor is the cpu_feature reference. */
+		for (i = 0; i < __arraycount(cpu_feature); i++) {
+			cpu_feature[i] = ci->ci_feat_val[i];
+		}
 #ifndef XEN
+		/* Early patch of text segment. */
 		x86_patch(true);
 #endif
 	} else {
-		/* If not first. */
-		cpu_feature &= ci->ci_feature_flags;
-		cpu_feature2 &= ci->ci_feature2_flags;
+		/*
+		 * If not first. Warn about cpu_feature mismatch for
+		 * secondary CPUs.
+		 */
+		for (i = 0; i < __arraycount(cpu_feature); i++) {
+			if (cpu_feature[i] != ci->ci_feat_val[i])
+				aprint_error_dev(ci->ci_dev,
+				    "feature mismatch: cpu_feature[%d] is "
+				    "%#x, but CPU reported %#x\n",
+				    i, cpu_feature[i], ci->ci_feat_val[i]);
+		}
 	}
 }
 
@@ -700,7 +713,7 @@ cpu_identify(struct cpu_info *ci)
 
 	if ((cpu_vendor == CPUVENDOR_AMD) /* check enablement of an */
 	  && (device_unit(ci->ci_dev) == 0) /* AMD feature only once */
-	  && ((ci->ci_feature4_flags & CPUID_SVM) == CPUID_SVM)
+	  && ((cpu_feature[3] & CPUID_SVM) == CPUID_SVM)
 #if defined(XEN) && !defined(DOM0OPS)
 	  && (false)  /* on Xen rdmsr is for Dom0 only */
 #endif
@@ -726,22 +739,22 @@ cpu_identify(struct cpu_info *ci)
 	}
 
 	/* If we have FXSAVE/FXRESTOR, use them. */
-	if (cpu_feature & CPUID_FXSR) {
+	if (cpu_feature[0] & CPUID_FXSR) {
 		i386_use_fxsave = 1;
 		/*
 		 * If we have SSE/SSE2, enable XMM exceptions, and
 		 * notify userland.
 		 */
-		if (cpu_feature & CPUID_SSE)
+		if (cpu_feature[0] & CPUID_SSE)
 			i386_has_sse = 1;
-		if (cpu_feature & CPUID_SSE2)
+		if (cpu_feature[0] & CPUID_SSE2)
 			i386_has_sse2 = 1;
 	} else
 		i386_use_fxsave = 0;
 #endif	/* i386 */
 
 #ifdef ENHANCED_SPEEDSTEP
-	if (cpu_feature2 & CPUID2_EST) {
+	if (cpu_feature[1] & CPUID2_EST) {
 		if (rdmsr(MSR_MISC_ENABLE) & (1 << 16))
 			est_init(cpu_vendor);
 	}

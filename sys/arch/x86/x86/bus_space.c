@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.21.2.2 2009/11/01 13:58:17 jym Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.21.2.3 2010/10/24 22:48:18 jym Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.21.2.2 2009/11/01 13:58:17 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.21.2.3 2010/10/24 22:48:18 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -42,15 +42,12 @@ __KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.21.2.2 2009/11/01 13:58:17 jym Exp $
 
 #include <dev/isa/isareg.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/pio.h>
 #include <machine/isa_machdep.h>
 
 #ifdef XEN
 #include <xen/hypervisor.h>
-#include <xen/xenpmap.h>
-
-#define	pmap_extract(a, b, c)	pmap_extract_ma(a, b, c)
 #endif
 
 /*
@@ -66,7 +63,7 @@ __KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.21.2.2 2009/11/01 13:58:17 jym Exp $
 #define	BUS_SPACE_ADDRESS_SANITY(p, t, d)				\
 ({									\
 	if (BUS_SPACE_ALIGNED_ADDRESS((p), t) == 0) {			\
-		printf("%s 0x%lx not aligned to %d bytes %s:%d\n",	\
+		printf("%s 0x%lx not aligned to %zu bytes %s:%d\n",	\
 		    d, (u_long)(p), sizeof(t), __FILE__, __LINE__);	\
 	}								\
 	(void) 0;							\
@@ -93,8 +90,26 @@ struct	extent *ioport_ex;
 struct	extent *iomem_ex;
 static	int ioport_malloc_safe;
 
+static struct bus_space_tag x86_io = { .bst_type = X86_BUS_SPACE_IO };
+static struct bus_space_tag x86_mem = { .bst_type = X86_BUS_SPACE_MEM };
+
+bus_space_tag_t x86_bus_space_io = &x86_io;
+bus_space_tag_t x86_bus_space_mem = &x86_mem;
+
 int x86_mem_add_mapping(bus_addr_t, bus_size_t,
 	    int, bus_space_handle_t *);
+
+static inline bool
+x86_bus_space_is_io(bus_space_tag_t t)
+{
+	return t->bst_type == X86_BUS_SPACE_IO;
+}
+
+static inline bool
+x86_bus_space_is_mem(bus_space_tag_t t)
+{
+	return t->bst_type == X86_BUS_SPACE_MEM;
+}
 
 void
 x86_bus_space_init(void)
@@ -147,11 +162,11 @@ bus_space_map(bus_space_tag_t t, bus_addr_t bpa, bus_size_t size,
 	/*
 	 * Pick the appropriate extent map.
 	 */
-	if (t == X86_BUS_SPACE_IO) {
+	if (x86_bus_space_is_io(t)) {
 		if (flags & BUS_SPACE_MAP_LINEAR)
 			return (EOPNOTSUPP);
 		ex = ioport_ex;
-	} else if (t == X86_BUS_SPACE_MEM)
+	} else if (x86_bus_space_is_mem(t))
 		ex = iomem_ex;
 	else
 		panic("x86_memio_map: bad bus space tag");
@@ -168,7 +183,7 @@ bus_space_map(bus_space_tag_t t, bus_addr_t bpa, bus_size_t size,
 	/*
 	 * For I/O space, that's all she wrote.
 	 */
-	if (t == X86_BUS_SPACE_IO) {
+	if (x86_bus_space_is_io(t)) {
 		*bshp = bpa;
 		return (0);
 	}
@@ -184,8 +199,7 @@ bus_space_map(bus_space_tag_t t, bus_addr_t bpa, bus_size_t size,
 	 * For memory space, map the bus physical address to
 	 * a kernel virtual address.
 	 */
-	error = x86_mem_add_mapping(bpa, size,
-		(flags & BUS_SPACE_MAP_CACHEABLE) != 0, bshp);
+	error = x86_mem_add_mapping(bpa, size, flags, bshp);
 	if (error) {
 		if (extent_free(ex, bpa, size, EX_NOWAIT |
 		    (ioport_malloc_safe ? EX_MALLOCOK : 0))) {
@@ -206,7 +220,7 @@ _x86_memio_map(bus_space_tag_t t, bus_addr_t bpa, bus_size_t size,
 	/*
 	 * For I/O space, just fill in the handle.
 	 */
-	if (t == X86_BUS_SPACE_IO) {
+	if (x86_bus_space_is_io(t)) {
 		if (flags & BUS_SPACE_MAP_LINEAR)
 			return (EOPNOTSUPP);
 		*bshp = bpa;
@@ -217,8 +231,7 @@ _x86_memio_map(bus_space_tag_t t, bus_addr_t bpa, bus_size_t size,
 	 * For memory space, map the bus physical address to
 	 * a kernel virtual address.
 	 */
-	return (x86_mem_add_mapping(bpa, size,
-	    (flags & BUS_SPACE_MAP_CACHEABLE) != 0, bshp));
+	return x86_mem_add_mapping(bpa, size, flags, bshp);
 }
 
 int
@@ -233,11 +246,11 @@ bus_space_alloc(bus_space_tag_t t, bus_addr_t rstart, bus_addr_t rend,
 	/*
 	 * Pick the appropriate extent map.
 	 */
-	if (t == X86_BUS_SPACE_IO) {
+	if (x86_bus_space_is_io(t)) {
 		if (flags & BUS_SPACE_MAP_LINEAR)
 			return (EOPNOTSUPP);
 		ex = ioport_ex;
-	} else if (t == X86_BUS_SPACE_MEM)
+	} else if (x86_bus_space_is_mem(t))
 		ex = iomem_ex;
 	else
 		panic("x86_memio_alloc: bad bus space tag");
@@ -262,7 +275,7 @@ bus_space_alloc(bus_space_tag_t t, bus_addr_t rstart, bus_addr_t rend,
 	/*
 	 * For I/O space, that's all she wrote.
 	 */
-	if (t == X86_BUS_SPACE_IO) {
+	if (x86_bus_space_is_io(t)) {
 		*bshp = *bpap = bpa;
 		return (0);
 	}
@@ -271,8 +284,7 @@ bus_space_alloc(bus_space_tag_t t, bus_addr_t rstart, bus_addr_t rend,
 	 * For memory space, map the bus physical address to
 	 * a kernel virtual address.
 	 */
-	error = x86_mem_add_mapping(bpa, size,
-	    (flags & BUS_SPACE_MAP_CACHEABLE) != 0, bshp);
+	error = x86_mem_add_mapping(bpa, size, flags, bshp);
 	if (error) {
 		if (extent_free(iomem_ex, bpa, size, EX_NOWAIT |
 		    (ioport_malloc_safe ? EX_MALLOCOK : 0))) {
@@ -289,14 +301,20 @@ bus_space_alloc(bus_space_tag_t t, bus_addr_t rstart, bus_addr_t rend,
 
 int
 x86_mem_add_mapping(bus_addr_t bpa, bus_size_t size,
-		int cacheable, bus_space_handle_t *bshp)
+		int flags, bus_space_handle_t *bshp)
 {
 	paddr_t pa, endpa;
 	vaddr_t va, sva;
-	pt_entry_t *pte, xpte;
+	u_int pmapflags;
 
 	pa = x86_trunc_page(bpa);
 	endpa = x86_round_page(bpa + size);
+
+	pmapflags = PMAP_NOCACHE;
+	if ((flags & BUS_SPACE_MAP_CACHEABLE) != 0)
+		pmapflags = 0;
+	else if (flags & BUS_SPACE_MAP_PREFETCHABLE)
+		pmapflags = PMAP_WRITE_COMBINE;
 
 #ifdef DIAGNOSTIC
 	if (endpa != 0 && endpa <= pa)
@@ -316,37 +334,21 @@ x86_mem_add_mapping(bus_addr_t bpa, bus_size_t size,
 	}
 
 	*bshp = (bus_space_handle_t)(sva + (bpa & PGOFSET));
-	va = sva;
-	xpte = 0;
 
-	for (; pa != endpa; pa += PAGE_SIZE, va += PAGE_SIZE) {
-		/*
-		 * PG_N doesn't exist on 386's, so we assume that
-		 * the mainboard has wired up device space non-cacheable
-		 * on those machines.
-		 *
-		 * XXX should hand this bit to pmap_kenter_pa to
-		 * save the extra invalidate!
-		 */
-#ifdef XEN
-		pmap_kenter_ma(va, pa, VM_PROT_READ | VM_PROT_WRITE);
-#else
-		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE);
-#endif /* XEN */
-
-		pte = kvtopte(va);
-		if (cacheable)
-			pmap_pte_clearbits(pte, PG_N);
-		else
-			pmap_pte_setbits(pte, PG_N);
-		xpte |= *pte;
+	for (va = sva; pa != endpa; pa += PAGE_SIZE, va += PAGE_SIZE) {
+		pmap_kenter_ma(va, pa, VM_PROT_READ | VM_PROT_WRITE, pmapflags);
 	}
-	kpreempt_disable();
-	pmap_tlb_shootdown(pmap_kernel(), sva, sva + (endpa - pa), xpte);
-	pmap_tlb_shootwait();
-	kpreempt_enable();
+	pmap_update(pmap_kernel());
 
 	return 0;
+}
+
+bool
+bus_space_is_equal(bus_space_tag_t t1, bus_space_tag_t t2)
+{
+	if (t1 == NULL || t2 == NULL)
+		return false;
+	return t1->bst_type == t2->bst_type;
 }
 
 /*
@@ -369,9 +371,9 @@ _x86_memio_unmap(bus_space_tag_t t, bus_space_handle_t bsh,
 	/*
 	 * Find the correct extent and bus physical address.
 	 */
-	if (t == X86_BUS_SPACE_IO) {
+	if (x86_bus_space_is_io(t)) {
 		bpa = bsh;
-	} else if (t == X86_BUS_SPACE_MEM) {
+	} else if (x86_bus_space_is_mem(t)) {
 		if (bsh >= atdevbase && (bsh + size) != 0 &&
 		    (bsh + size) <= (atdevbase + IOM_SIZE)) {
 			bpa = (bus_addr_t)ISA_PHYSADDR(bsh);
@@ -386,7 +388,7 @@ _x86_memio_unmap(bus_space_tag_t t, bus_space_handle_t bsh,
 			}
 #endif
 
-			if (pmap_extract(pmap_kernel(), va, &bpa) == FALSE) {
+			if (pmap_extract_ma(pmap_kernel(), va, &bpa) == FALSE) {
 				panic("_x86_memio_unmap:"
 				    " wrong virtual address");
 			}
@@ -418,10 +420,10 @@ bus_space_unmap(bus_space_tag_t t, bus_space_handle_t bsh, bus_size_t size)
 	/*
 	 * Find the correct extent and bus physical address.
 	 */
-	if (t == X86_BUS_SPACE_IO) {
+	if (x86_bus_space_is_io(t)) {
 		ex = ioport_ex;
 		bpa = bsh;
-	} else if (t == X86_BUS_SPACE_MEM) {
+	} else if (x86_bus_space_is_mem(t)) {
 		ex = iomem_ex;
 
 		if (bsh >= atdevbase && (bsh + size) != 0 &&
@@ -438,7 +440,7 @@ bus_space_unmap(bus_space_tag_t t, bus_space_handle_t bsh, bus_size_t size)
 			panic("x86_memio_unmap: overflow");
 #endif
 
-		(void) pmap_extract(pmap_kernel(), va, &bpa);
+		(void) pmap_extract_ma(pmap_kernel(), va, &bpa);
 		bpa += (bsh & PGOFSET);
 
 		pmap_kremove(va, endva - va);
@@ -455,7 +457,7 @@ ok:
 	if (extent_free(ex, bpa, size,
 	    EX_NOWAIT | (ioport_malloc_safe ? EX_MALLOCOK : 0))) {
 		printf("x86_memio_unmap: %s 0x%jx, size 0x%jx\n",
-		    (t == X86_BUS_SPACE_IO) ? "port" : "pa",
+		    x86_bus_space_is_io(t) ? "port" : "pa",
 		    (uintmax_t)bpa, (uintmax_t)size);
 		printf("x86_memio_unmap: can't free region\n");
 	}
@@ -484,7 +486,7 @@ bus_space_mmap(bus_space_tag_t t, bus_addr_t addr, off_t off, int prot,
 {
 
 	/* Can't mmap I/O space. */
-	if (t == X86_BUS_SPACE_IO)
+	if (x86_bus_space_is_io(t))
 		return (-1);
 
 	/*
@@ -503,7 +505,7 @@ bus_space_set_multi_1(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o,
 {
 	vaddr_t addr = h + o;
 
-	if (t == X86_BUS_SPACE_IO)
+	if (x86_bus_space_is_io(t))
 		while (c--)
 			outb(addr, v);
 	else
@@ -519,7 +521,7 @@ bus_space_set_multi_2(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o,
 
 	BUS_SPACE_ADDRESS_SANITY(addr, uint16_t, "bus addr");
 
-	if (t == X86_BUS_SPACE_IO)
+	if (x86_bus_space_is_io(t))
 		while (c--)
 			outw(addr, v);
 	else
@@ -535,7 +537,7 @@ bus_space_set_multi_4(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o,
 
 	BUS_SPACE_ADDRESS_SANITY(addr, uint32_t, "bus addr");
 
-	if (t == X86_BUS_SPACE_IO)
+	if (x86_bus_space_is_io(t))
 		while (c--)
 			outl(addr, v);
 	else
@@ -549,7 +551,7 @@ bus_space_set_region_1(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o,
 {
 	vaddr_t addr = h + o;
 
-	if (t == X86_BUS_SPACE_IO)
+	if (x86_bus_space_is_io(t))
 		for (; c != 0; c--, addr++)
 			outb(addr, v);
 	else
@@ -565,7 +567,7 @@ bus_space_set_region_2(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o,
 
 	BUS_SPACE_ADDRESS_SANITY(addr, uint16_t, "bus addr");
 
-	if (t == X86_BUS_SPACE_IO)
+	if (x86_bus_space_is_io(t))
 		for (; c != 0; c--, addr += 2)
 			outw(addr, v);
 	else
@@ -581,7 +583,7 @@ bus_space_set_region_4(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o,
 
 	BUS_SPACE_ADDRESS_SANITY(addr, uint32_t, "bus addr");
 
-	if (t == X86_BUS_SPACE_IO)
+	if (x86_bus_space_is_io(t))
 		for (; c != 0; c--, addr += 4)
 			outl(addr, v);
 	else
@@ -597,7 +599,7 @@ bus_space_copy_region_1(bus_space_tag_t t, bus_space_handle_t h1,
 	vaddr_t addr1 = h1 + o1;
 	vaddr_t addr2 = h2 + o2;
 
-	if (t == X86_BUS_SPACE_IO) {
+	if (x86_bus_space_is_io(t)) {
 		if (addr1 >= addr2) {
 			/* src after dest: copy forward */
 			for (; c != 0; c--, addr1++, addr2++)
@@ -635,7 +637,7 @@ bus_space_copy_region_2(bus_space_tag_t t, bus_space_handle_t h1,
 	BUS_SPACE_ADDRESS_SANITY(addr1, uint16_t, "bus addr 1");
 	BUS_SPACE_ADDRESS_SANITY(addr2, uint16_t, "bus addr 2");
 
-	if (t == X86_BUS_SPACE_IO) {
+	if (x86_bus_space_is_io(t)) {
 		if (addr1 >= addr2) {
 			/* src after dest: copy forward */
 			for (; c != 0; c--, addr1 += 2, addr2 += 2)
@@ -673,7 +675,7 @@ bus_space_copy_region_4(bus_space_tag_t t, bus_space_handle_t h1,
 	BUS_SPACE_ADDRESS_SANITY(addr1, uint32_t, "bus addr 1");
 	BUS_SPACE_ADDRESS_SANITY(addr2, uint32_t, "bus addr 2");
 
-	if (t == X86_BUS_SPACE_IO) {
+	if (x86_bus_space_is_io(t)) {
 		if (addr1 >= addr2) {
 			/* src after dest: copy forward */
 			for (; c != 0; c--, addr1 += 4, addr2 += 4)
@@ -712,5 +714,5 @@ void *
 bus_space_vaddr(bus_space_tag_t tag, bus_space_handle_t bsh)
 {
 
-	return tag == X86_BUS_SPACE_MEM ? (void *)bsh : NULL;
+	return x86_bus_space_is_mem(tag) ? (void *)bsh : NULL;
 }

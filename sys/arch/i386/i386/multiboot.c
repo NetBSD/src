@@ -1,4 +1,4 @@
-/*	$NetBSD: multiboot.c,v 1.18.4.2 2009/11/01 13:58:21 jym Exp $	*/
+/*	$NetBSD: multiboot.c,v 1.18.4.3 2010/10/24 22:48:01 jym Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: multiboot.c,v 1.18.4.2 2009/11/01 13:58:21 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: multiboot.c,v 1.18.4.3 2010/10/24 22:48:01 jym Exp $");
 
 #include "opt_multiboot.h"
 
@@ -276,12 +276,11 @@ copy_syms(struct multiboot_info *mi)
 {
 #define RELOC(type, x) ((type)((vaddr_t)(x) - KERNBASE))
 	int i;
-	Elf32_Shdr *symtabp, *strtabp;
 	struct multiboot_symbols *ms;
-	size_t symsize, strsize;
-	paddr_t symaddr, straddr;
-	paddr_t symstart, strstart;
-
+	Elf32_Shdr *symtabp, *strtabp;
+	Elf32_Word symsize, strsize;
+	Elf32_Addr symaddr, straddr;
+	Elf32_Addr symstart, strstart;
 
 	/*
 	 * Check if the Multiboot information header has symbols or not.
@@ -336,38 +335,32 @@ copy_syms(struct multiboot_info *mi)
 	 * that if the tables start before the kernel's end address,
 	 * they will not grow over this address.
 	 */
-        if ((paddr_t)symtabp < (paddr_t)&end - KERNBASE &&
-	    (paddr_t)strtabp < (paddr_t)&end - KERNBASE) {
-		symstart = (paddr_t)((vaddr_t)&end - KERNBASE);
+        if ((void *)symtabp < RELOC(void *, &end) &&
+	    (void *)strtabp < RELOC(void *, &end)) {
+		symstart = RELOC(Elf32_Addr, &end);
 		strstart = symstart + symsize;
-		memcpy((void *)symstart, (void *)symaddr, symsize);
-		memcpy((void *)strstart, (void *)straddr, strsize);
-        } else if ((paddr_t)symtabp > (paddr_t)&end - KERNBASE &&
-	           (paddr_t)strtabp < (paddr_t)&end - KERNBASE) {
-		symstart = (paddr_t)((vaddr_t)&end - KERNBASE);
+        } else if ((void *)symtabp > RELOC(void *, &end) &&
+	           (void *)strtabp < RELOC(void *, &end)) {
+		symstart = RELOC(Elf32_Addr, &end);
 		strstart = symstart + symsize;
-		memcpy((void *)symstart, (void *)symaddr, symsize);
-		memcpy((void *)strstart, (void *)straddr, strsize);
-        } else if ((paddr_t)symtabp < (paddr_t)&end - KERNBASE &&
-	           (paddr_t)strtabp > (paddr_t)&end - KERNBASE) {
-		strstart = (paddr_t)((vaddr_t)&end - KERNBASE);
+        } else if ((void *)symtabp < RELOC(void *, &end) &&
+	           (void *)strtabp > RELOC(void *, &end)) {
+		strstart = RELOC(Elf32_Addr, &end);
 		symstart = strstart + strsize;
-		memcpy((void *)strstart, (void *)straddr, strsize);
-		memcpy((void *)symstart, (void *)symaddr, symsize);
 	} else {
 		/* symtabp and strtabp are both over end */
-		if ((paddr_t)symtabp < (paddr_t)strtabp) {
-			symstart = (paddr_t)((vaddr_t)&end - KERNBASE);
+		if (symtabp < strtabp) {
+			symstart = RELOC(Elf32_Addr, &end);
 			strstart = symstart + symsize;
-			memcpy((void *)symstart, (void *)symaddr, symsize);
-			memcpy((void *)strstart, (void *)straddr, strsize);
 		} else {
-			strstart = (paddr_t)((vaddr_t)&end - KERNBASE);
+			strstart = RELOC(Elf32_Addr, &end);
 			symstart = strstart + strsize;
-			memcpy((void *)strstart, (void *)straddr, strsize);
-			memcpy((void *)symstart, (void *)symaddr, symsize);
 		}
 	}
+
+	memcpy((void *)strstart, (void *)straddr, strsize);
+	memcpy((void *)symstart, (void *)symaddr, symsize);
+
 	*RELOC(int *, &esym) =
 	    (int)(symstart + symsize + strsize + KERNBASE);
 
