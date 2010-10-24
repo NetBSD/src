@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_apm.c,v 1.19 2010/04/27 08:37:07 jruoho Exp $	*/
+/*	$NetBSD: acpi_apm.c,v 1.20 2010/10/24 07:53:04 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_apm.c,v 1.19 2010/04/27 08:37:07 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_apm.c,v 1.20 2010/10/24 07:53:04 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -97,7 +97,7 @@ static int capabilities = ACPI_APM_DEFAULT_CAP;
 static int acpiapm_node = CTL_EOL, standby_node = CTL_EOL;
 
 struct acpi_softc;
-extern void acpi_enter_sleep_state(struct acpi_softc *, int);
+extern void acpi_enter_sleep_state(int);
 static int acpiapm_match(device_t, cfdata_t , void *);
 static void acpiapm_attach(device_t, device_t, void *);
 static int sysctl_state(SYSCTLFN_PROTO);
@@ -232,7 +232,6 @@ acpiapm_enable(void *opaque, int onoff)
 static int
 acpiapm_set_powstate(void *opaque, u_int devid, u_int powstat)
 {
-	struct acpi_softc *sc = device_private((device_t)opaque);
 
 	if (devid != APM_DEV_ALLDEVS)
 		return APM_ERR_UNRECOG_DEV;
@@ -241,11 +240,11 @@ acpiapm_set_powstate(void *opaque, u_int devid, u_int powstat)
 	case APM_SYS_READY:
 		break;
 	case APM_SYS_STANDBY:
-		acpi_enter_sleep_state(sc, get_state_value(standby_state));
+		acpi_enter_sleep_state(get_state_value(standby_state));
 		resumed = 1;
 		break;
 	case APM_SYS_SUSPEND:
-		acpi_enter_sleep_state(sc, get_state_value(suspend_state));
+		acpi_enter_sleep_state(get_state_value(suspend_state));
 		resumed = 1;
 		break;
 	case APM_SYS_OFF:
