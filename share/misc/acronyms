@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.190 2010/09/21 07:14:20 soda Exp $
+$NetBSD: acronyms,v 1.191 2010/10/24 22:36:41 dholland Exp $
 AFAIC	as far as I'm concerned
 AFAICR	as far as I can recall
 AFAICT	as far as I can tell
@@ -46,6 +46,7 @@ BTDT	been there, done that
 BTTH	boot to the head
 BTW	by the way
 CFV	call for votes
+CG	center of gravity
 CMIIW	correct me if I'm wrong
 CNP	continued [in my] next post
 COB	close of business [day]
