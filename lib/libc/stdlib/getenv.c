@@ -1,4 +1,4 @@
-/*	$NetBSD: getenv.c,v 1.25 2010/10/02 10:51:07 tron Exp $	*/
+/*	$NetBSD: getenv.c,v 1.26 2010/10/24 17:53:27 tron Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)getenv.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: getenv.c,v 1.25 2010/10/02 10:51:07 tron Exp $");
+__RCSID("$NetBSD: getenv.c,v 1.26 2010/10/24 17:53:27 tron Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -105,7 +105,7 @@ int
 __allocenv(int offset)
 {
 	char **p;
-	size_t nl;
+	size_t required_len, new_len;
 
 	if (offset == -1 || saveenv != environ) {
 		char **ptr;
@@ -113,33 +113,42 @@ __allocenv(int offset)
 			offset++;
 	}
 
-	nl = offset + 2; 	/* one for potentially new entry one for NULL */
-	if (nl <= environ_malloced_len && saveenv == environ)
+	/* one for potentially new entry one for NULL */
+	required_len = offset + 2;
+
+	if (required_len <= environ_malloced_len && saveenv == environ)
 		return 0;
 
+	/* Make sure we at least double the size of the arrays. */
+	new_len = (environ_malloced_len >= 16) ?
+	    (environ_malloced_len << 1) : 16;
+	while (new_len < required_len)
+		new_len = new_len << 1;
+
 	if (saveenv == environ) {		/* just increase size */
-		if ((p = realloc(saveenv, nl * sizeof(*p))) == NULL)
+		if ((p = realloc(saveenv, new_len * sizeof(*p))) == NULL)
 			return -1;
 		(void)memset(&p[environ_malloced_len], 0,
-		    (nl - environ_malloced_len) * sizeof(*p));
+		    (new_len - environ_malloced_len) * sizeof(*p));
 		saveenv = p;
 	} else {				/* get new space */
 		free(saveenv);
-		if ((saveenv = malloc(nl * sizeof(*saveenv))) == NULL)
+		if ((saveenv = malloc(new_len * sizeof(*saveenv))) == NULL)
 			return -1;
-		(void)memcpy(saveenv, environ, (nl - 2) * sizeof(*saveenv));
-		saveenv[nl - 2] = NULL;
-		saveenv[nl - 1] = NULL;
+		(void)memcpy(saveenv, environ,
+		    (required_len - 2) * sizeof(*saveenv));
+		(void)memset(&saveenv[required_len - 2], 0,
+		    (new_len - (required_len - 2)) * sizeof(*saveenv));
 	}
 	environ = saveenv;
 
-	p = realloc(__environ_malloced, nl * sizeof(*p));
+	p = realloc(__environ_malloced, new_len * sizeof(*p));
 	if (p == NULL)
 		return -1;
 
 	(void)memset(&p[environ_malloced_len], 0,
-	    (nl - environ_malloced_len) * sizeof(*p));
-	environ_malloced_len = nl;
+	    (new_len - environ_malloced_len) * sizeof(*p));
+	environ_malloced_len = new_len;
 	__environ_malloced = p;
 
 	return 0;
