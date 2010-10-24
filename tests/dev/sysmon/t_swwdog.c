@@ -1,4 +1,4 @@
-/*	$NetBSD: t_swwdog.c,v 1.2 2010/08/30 08:30:17 pooka Exp $	*/
+/*	$NetBSD: t_swwdog.c,v 1.3 2010/10/24 13:11:41 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -60,7 +60,7 @@ sigcount(int sig)
  * something sensible back to atf.
  */
 static int
-testbody(void)
+testbody(int max)
 {
 	char wname[WDOG_NAMESIZE];
 	struct wdog_conf wc;
@@ -80,7 +80,7 @@ testbody(void)
 	default:
 		p2 = wait(&status);
 		ATF_REQUIRE_EQ(p1, p2);
-		ATF_REQUIRE_EQ(tcount, 1);
+		ATF_REQUIRE_EQ(tcount, max);
 		return status;
 	}
 
@@ -106,11 +106,18 @@ testbody(void)
 			atf_tc_fail_errno("failed to set tickle");
 
 		usleep(500000);
-		rump_sys_ioctl(fd, WDOGIOC_TICKLE);
+		if (max == 1)
+			rump_sys_ioctl(fd, WDOGIOC_TICKLE);
+		else {
+			wm.wm_mode = WDOG_MODE_DISARMED;
+			rump_sys_ioctl(fd, WDOGIOC_SMODE, &wm);
+		}
 		kill(getppid(), SIGUSR1);
 
 		sleep(2);
 		printf("staying alive\n");
+		kill(getppid(), SIGUSR1);
+		_exit(2);
 	}
 	/* fail */
 	_exit(1);
@@ -130,7 +137,7 @@ ATF_TC_BODY(reboot, tc)
 
 	/* XXX: should use sysctl */
 	rumpns_swwdog_reboot = true;
-	status = testbody();
+	status = testbody(1);
 
 	ATF_REQUIRE(WIFEXITED(status));
 	ATF_REQUIRE_EQ(WEXITSTATUS(status), 0);
@@ -150,10 +157,27 @@ ATF_TC_BODY(panic, tc)
 
 	/* XXX: should use sysctl */
 	rumpns_swwdog_reboot = false;
-	status = testbody();
+	status = testbody(1);
 
 	ATF_REQUIRE(WIFSIGNALED(status));
 	ATF_REQUIRE_EQ(WTERMSIG(status), SIGABRT);
+}
+
+ATF_TC(disarm);
+ATF_TC_HEAD(disarm, tc)
+{
+
+	atf_tc_set_md_var(tc, "descr", "check swwdog disarm capability");
+}
+
+ATF_TC_BODY(disarm, tc)
+{
+	int status;
+
+	status = testbody(2);
+
+	ATF_REQUIRE(WIFEXITED(status));
+	ATF_REQUIRE_EQ(WEXITSTATUS(status), 2);
 }
 
 ATF_TP_ADD_TCS(tp)
@@ -161,6 +185,7 @@ ATF_TP_ADD_TCS(tp)
 
 	ATF_TP_ADD_TC(tp, panic);
 	ATF_TP_ADD_TC(tp, reboot);
+	ATF_TP_ADD_TC(tp, disarm);
 
 	return atf_no_error();
 }
