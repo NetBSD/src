@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.994 2010/10/12 19:10:50 gsutre Exp $
+# $NetBSD: GENERIC,v 1.995 2010/10/24 08:54:14 jruoho Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.994 $"
+#ident 		"GENERIC-$Revision: 1.995 $"
 
 maxusers	64		# estimated number of users
 
@@ -390,6 +390,7 @@ wb*		at acpi?		# Winbond W83L518D SD/MMC reader
 sdmmc*		at wb?			# SD/MMC bus
 wmidell*	at acpiwmibus?		# Dell WMI mappings
 #wmihp*		at acpiwmibus?		# HP WMI mappings
+wmimsi*		at acpiwmibus?		# MSI WMI mappings
 wss*		at acpi?		# NeoMagic 256AV in wss mode
 ym*		at acpi?		# Yamaha OPL3-SA[23] audio
 

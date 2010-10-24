@@ -1,4 +1,4 @@
-.\" $NetBSD: acpiwmi.4,v 1.4 2010/04/08 18:31:53 jruoho Exp $
+.\" $NetBSD: acpiwmi.4,v 1.5 2010/10/24 08:54:15 jruoho Exp $
 .\"
 .\" Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
 .\" All rights reserved.
@@ -36,10 +36,11 @@
 .Cd "acpiwmibus* at acpiwmi?"
 .Cd "wmidell* at acpiwmibus?"
 .Cd "wmihp* at acpiwmibus?"
+.Cd "wmimsi* at acpiwmibus?"
 .Sh DESCRIPTION
 The
 .Nm
-driver provides an
+device driver provides an
 .Tn ACPI
 interface for Windows Management Instrumentation
 .Pq Tn WMI .
@@ -57,13 +58,16 @@ mappings are supported:
 Dell laptops
 .It Sy wmihp
 Hewlett-Packard laptops
+.It Sy wmimsi
+MSI laptops
 .El
 .Pp
 The functionality varies from vendor to vendor.
 Typically the interface is used for function and hotkey handling,
 but additional features may be present.
 .Sh SEE ALSO
-.Xr acpi 4
+.Xr acpi 4 ,
+.Xr acpidalb 4
 .Rs
 .%A Microsoft Corporation
 .%D December 4, 2001
@@ -78,19 +82,9 @@ device driver appeared in
 .Sh AUTHORS
 .An Jukka Ruohonen
 .Aq jruohonen@iki.fi
-wrote the actual
+wrote
 .Nm
-as well as
-.Sy wmidell
-and
-.Sy wmihp .
-The
-.Sy wmihp
-was based on the earlier work done by
-.An Michael Gmelin
-.Aq freebsd@grem.de
-for
-.Fx .
+and most of the mappings.
 .Sh CAVEATS
 While
 .Tn WMI
@@ -100,5 +94,5 @@ are functional in all models.
 .Pp
 The
 .Sy wmihp
-driver conflicts with
+driver may conflict with
 .Xr hpqlb 4 .
