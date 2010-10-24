@@ -1,4 +1,4 @@
-/*	$NetBSD: wmi_acpi.c,v 1.7 2010/08/06 22:45:00 jruoho Exp $	*/
+/*	$NetBSD: wmi_acpi.c,v 1.8 2010/10/24 15:07:20 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2009, 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wmi_acpi.c,v 1.7 2010/08/06 22:45:00 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wmi_acpi.c,v 1.8 2010/10/24 15:07:20 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -54,6 +54,8 @@ ACPI_MODULE_NAME            ("wmi_acpi")
 static int         acpi_wmi_match(device_t, cfdata_t, void *);
 static void        acpi_wmi_attach(device_t, device_t, void *);
 static int         acpi_wmi_detach(device_t, int);
+static int         acpi_wmi_rescan(device_t, const char *, const int *);
+static void        acpi_wmi_childdet(device_t, device_t);
 static int         acpi_wmi_print(void *, const char *);
 static bool        acpi_wmi_init(struct acpi_wmi_softc *);
 static bool        acpi_wmi_add(struct acpi_wmi_softc *, ACPI_OBJECT *);
@@ -76,8 +78,9 @@ const char * const acpi_wmi_ids[] = {
 	NULL
 };
 
-CFATTACH_DECL_NEW(acpiwmi, sizeof(struct acpi_wmi_softc),
-    acpi_wmi_match, acpi_wmi_attach, acpi_wmi_detach, NULL);
+CFATTACH_DECL2_NEW(acpiwmi, sizeof(struct acpi_wmi_softc),
+    acpi_wmi_match, acpi_wmi_attach, acpi_wmi_detach, NULL,
+    acpi_wmi_rescan, acpi_wmi_childdet);
 
 static int
 acpi_wmi_match(device_t parent, cfdata_t match, void *aux)
@@ -111,8 +114,7 @@ acpi_wmi_attach(device_t parent, device_t self, void *aux)
 	acpi_wmi_dump(sc);
 	acpi_wmi_event_add(sc);
 
-	sc->sc_child = config_found_ia(self, "acpiwmibus",
-	    NULL, acpi_wmi_print);
+	acpi_wmi_rescan(self, NULL, NULL);
 
 	(void)pmf_device_register(self, acpi_wmi_suspend, acpi_wmi_resume);
 }
@@ -131,6 +133,27 @@ acpi_wmi_detach(device_t self, int flags)
 	pmf_device_deregister(self);
 
 	return 0;
+}
+
+static int
+acpi_wmi_rescan(device_t self, const char *ifattr, const int *locators)
+{
+	struct acpi_wmi_softc *sc = device_private(self);
+
+	if (ifattr_match(ifattr, "acpiwmibus") && sc->sc_child == NULL)
+		sc->sc_child = config_found_ia(self, "acpiwmibus",
+		    NULL, acpi_wmi_print);
+
+	return 0;
+}
+
+static void
+acpi_wmi_childdet(device_t self, device_t child)
+{
+	struct acpi_wmi_softc *sc = device_private(self);
+
+	if (sc->sc_child == child)
+		sc->sc_child = NULL;
 }
 
 static int
