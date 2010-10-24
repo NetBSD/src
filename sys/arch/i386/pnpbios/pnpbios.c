@@ -1,4 +1,4 @@
-/* $NetBSD: pnpbios.c,v 1.64.8.2 2009/11/01 13:58:35 jym Exp $ */
+/* $NetBSD: pnpbios.c,v 1.64.8.3 2010/10/24 22:48:04 jym Exp $ */
 
 /*
  * Copyright (c) 2000 Jason R. Thorpe.  All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pnpbios.c,v 1.64.8.2 2009/11/01 13:58:35 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pnpbios.c,v 1.64.8.3 2010/10/24 22:48:04 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -124,7 +124,7 @@ static int	pnpbios_sendmessage(int);
 #endif
 
 /* configuration stuff */
-static void *	pnpbios_mapit(paddr_t, u_long, int);
+static void *	pnpbios_mapit(paddr_t, u_long, vm_prot_t);
 static void *	pnpbios_find(void);
 static int	pnpbios_match(device_t, cfdata_t, void *);
 static void	pnpbios_attach(device_t, device_t, void *);
@@ -253,7 +253,7 @@ pnpbios_match(device_t parent, cfdata_t match, void *aux)
 }
 
 static void *
-pnpbios_mapit(paddr_t addr, u_long len, int prot)
+pnpbios_mapit(paddr_t addr, u_long len, vm_prot_t prot)
 {
 	paddr_t startpa, pa, endpa;
 	vaddr_t startva, va;
@@ -266,10 +266,10 @@ pnpbios_mapit(paddr_t addr, u_long len, int prot)
 	if (!startva)
 		return (0);
 	for (; pa < endpa; pa += PAGE_SIZE, va += PAGE_SIZE)
-		pmap_kenter_pa(va, pa, prot);
+		pmap_kenter_pa(va, pa, prot, 0);
 	pmap_update(pmap_kernel());
 
-	return ((void *)(startva + (addr - startpa)));
+	return ((void *)(startva + (vaddr_t)(addr - startpa)));
 }
 
 static void
@@ -1278,8 +1278,8 @@ pnpbios_io_map(pnpbios_tag_t pbt, struct pnpresources *resc,
 	while (idx--)
 		io = SIMPLEQ_NEXT(io, next);
 
-	*tagp = X86_BUS_SPACE_IO;
-	return (bus_space_map(X86_BUS_SPACE_IO, io->minbase, io->len,
+	*tagp = x86_bus_space_io;
+	return (bus_space_map(x86_bus_space_io, io->minbase, io->len,
 			       0, hdlp));
 }
 
@@ -1313,7 +1313,7 @@ pnpbios_getiobase(pnpbios_tag_t pbt, struct pnpresources *resc,
 		io = SIMPLEQ_NEXT(io, next);
 
 	if (tagp)
-		*tagp = X86_BUS_SPACE_IO;
+		*tagp = x86_bus_space_io;
 	if (basep)
 		*basep = io->minbase;
 	return (0);

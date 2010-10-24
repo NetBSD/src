@@ -1,4 +1,4 @@
-#	$NetBSD: majors.i386,v 1.37 2008/11/12 12:36:02 ad Exp $
+#	$NetBSD: majors.i386,v 1.37.4.1 2010/10/24 22:47:59 jym Exp $
 #
 # Device majors for i386
 #
@@ -6,7 +6,7 @@
 device-major	cons		char 0
 device-major	ctty		char 1
 device-major	mem		char 2
-device-major	wd		char 3   block 0	wd
+device-major	wd		char 3   block 0	wd	vector=8:8
 device-major	swap		char 4   block 1	vmswap
 device-major	pts		char 5			pty
 device-major	ptc		char 6			pty
@@ -26,7 +26,7 @@ device-major	ss		char 19			ss
 device-major	uk		char 20			uk
 device-major	apm		char 21			apm
 device-major	filedesc	char 22
-device-major	bpf		char 23			bpfilter
+device-major	bpf		char 23			bpfilter  vector=8,linkzero
 device-major	md		char 24  block 17	md
 
 device-major	joy		char 26			joy
@@ -39,7 +39,7 @@ device-major	spkr		char 27			spkr
 device-major	cy		char 38			cy
 device-major	mcd		char 39  block 7	mcd
 device-major	tun		char 40			tun
-device-major	vnd		char 41  block 14	vnd
+device-major	vnd		char 41  block 14	vnd	vector=8:8
 device-major	audio		char 42			audio
 device-major	svr4_net	char 43			compat_svr4
 device-major	ipl		char 44			ipfilter

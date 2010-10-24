@@ -1,4 +1,4 @@
-/*	$NetBSD: ieeefp.h,v 1.2 2008/08/05 16:47:42 matt Exp $	*/
+/*	$NetBSD: ieeefp.h,v 1.2.8.1 2010/10/24 22:48:16 jym Exp $	*/
 
 /* 
  * Written by J.T. Conklin, Apr 6, 1995
@@ -9,27 +9,7 @@
 #define _X86_IEEEFP_H_
 
 #include <sys/featuretest.h>
-
-#if defined(_NETBSD_SOURCE) || defined(_ISOC99_SOURCE)
-
-typedef int fenv_t;
-typedef int fexcept_t;
-
-#define	FE_INVALID	0x01	/* invalid operation exception */
-#define	FE_DENORMAL	0x02	/* denormalization exception */
-#define	FE_DIVBYZERO	0x04	/* divide-by-zero exception */
-#define	FE_OVERFLOW	0x08	/* underflow exception */
-#define	FE_UNDERFLOW	0x10	/* overflow exception */
-#define	FE_INEXACT	0x20	/* imprecise (loss of precision) */
-
-#define	FE_ALL_EXCEPT	0x3f
-
-#define	FE_TONEAREST	0	/* round to nearest representable number */
-#define	FE_DOWNWARD	1	/* round toward negative infinity */
-#define	FE_UPWARD	2	/* round toward positive infinity */
-#define	FE_TOWARDZERO	3	/* round to zero (truncate) */
-
-#if !defined(_ISOC99_SOURCE)
+#include <machine/fenv.h>
 
 typedef int fp_except;
 #define FP_X_INV	FE_INVALID	/* invalid operation exception */
@@ -45,9 +25,5 @@ typedef enum {
     FP_RP=FE_UPWARD,		/* round toward positive infinity */
     FP_RZ=FE_TOWARDZERO		/* round to zero (truncate) */
 } fp_rnd;
-
-#endif /* !_ISOC99_SOURCE */
-
-#endif /* _NETBSD_SOURCE || _ISOC99_SOURCE */
 
 #endif /* _X86_IEEEFP_H_ */

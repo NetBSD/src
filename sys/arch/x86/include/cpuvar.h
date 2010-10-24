@@ -1,4 +1,4 @@
-/* 	$NetBSD: cpuvar.h,v 1.27.12.2 2009/11/01 13:58:16 jym Exp $ */
+/* 	$NetBSD: cpuvar.h,v 1.27.12.3 2010/10/24 22:48:16 jym Exp $ */
 
 /*-
  * Copyright (c) 2000, 2007 The NetBSD Foundation, Inc.
@@ -79,6 +79,7 @@ extern const struct cpu_functions mp_cpu_funcs;
 #define CPU_ROLE_AP	2
 
 struct cpu_attach_args {
+	int cpu_id;
 	int cpu_number;
 	int cpu_role;
 	const struct cpu_functions *cpu_func;
@@ -140,10 +141,13 @@ int	p4_get_bus_clock(struct cpu_info *);
 #endif
 
 void	cpu_get_tsc_freq(struct cpu_info *);
+void	pat_init(struct cpu_info *);
 
 extern int cpu_vendor;
 extern bool x86_mp_online;
 
-#endif
+extern uint32_t cpu_feature[5];
+
+#endif /* _KERNEL */
 
 #endif /* !_X86_CPUVAR_H_ */

@@ -1,4 +1,4 @@
-#	$NetBSD: majors.amd64,v 1.21 2008/11/12 12:35:56 ad Exp $
+#	$NetBSD: majors.amd64,v 1.21.4.1 2010/10/24 22:47:52 jym Exp $
 #
 # Device majors for amd64
 #

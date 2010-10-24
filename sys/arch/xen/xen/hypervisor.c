@@ -1,4 +1,4 @@
-/* $NetBSD: hypervisor.c,v 1.43.2.4 2009/11/01 21:43:28 jym Exp $ */
+/* $NetBSD: hypervisor.c,v 1.43.2.5 2010/10/24 22:48:22 jym Exp $ */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -53,7 +53,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.43.2.4 2009/11/01 21:43:28 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.43.2.5 2010/10/24 22:48:22 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,7 +93,6 @@ __KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.43.2.4 2009/11/01 21:43:28 jym Exp 
 #include <dev/pci/pcivar.h>
 #if NACPICA > 0
 #include <dev/acpi/acpivar.h>
-#include <dev/acpi/acpi_madt.h>       
 #include <machine/mpconfig.h>
 #include <xen/mpacpi.h>       
 #endif
@@ -170,8 +169,8 @@ struct  x86_isa_chipset x86_isa_chipset;
 #endif
 
 /* power management, for save/restore */
-static bool hypervisor_suspend(device_t PMF_FN_PROTO);
-static bool hypervisor_resume(device_t PMF_FN_PROTO);
+static bool hypervisor_suspend(device_t, const pmf_qual_t *);
+static bool hypervisor_resume(device_t, const pmf_qual_t *);
 
 /*
  * Probe for the hypervisor; always succeeds.
@@ -211,7 +210,7 @@ hypervisor_attach(device_t parent, device_t self, void *aux)
 
 	xengnt_init();
 
-	memset(&hac.hac_vcaa, 0, sizeof(hac.hac_vcaa));
+	memset(&hac, 0, sizeof(hac));
 	hac.hac_vcaa.vcaa_name = "vcpu";
 	hac.hac_vcaa.vcaa_caa.cpu_number = 0;
 	hac.hac_vcaa.vcaa_caa.cpu_role = CPU_ROLE_SP;
@@ -221,22 +220,27 @@ hypervisor_attach(device_t parent, device_t self, void *aux)
 	events_init();
 
 #if NXENBUS > 0
+	memset(&hac, 0, sizeof(hac));
 	hac.hac_xenbus.xa_device = "xenbus";
 	config_found_ia(self, "xendevbus", &hac.hac_xenbus, hypervisor_print);
 #endif
 #if NXENCONS > 0
+	memset(&hac, 0, sizeof(hac));
 	hac.hac_xencons.xa_device = "xencons";
 	config_found_ia(self, "xendevbus", &hac.hac_xencons, hypervisor_print);
 #endif
 #if NXENNET_HYPERVISOR > 0
+	memset(&hac, 0, sizeof(hac));
 	hac.hac_xennet.xa_device = "xennet";
 	xennet_scan(self, &hac.hac_xennet, hypervisor_print);
 #endif
 #if NXBD_HYPERVISOR > 0
+	memset(&hac, 0, sizeof(hac));
 	hac.hac_xbd.xa_device = "xbd";
 	xbd_scan(self, &hac.hac_xbd, hypervisor_print);
 #endif
 #if NNPX > 0
+	memset(&hac, 0, sizeof(hac));
 	hac.hac_xennpx.xa_device = "npx";
 	config_found_ia(self, "xendevbus", &hac.hac_xennpx, hypervisor_print);
 #endif
@@ -244,8 +248,9 @@ hypervisor_attach(device_t parent, device_t self, void *aux)
 #if NPCI > 0
 #if NACPICA > 0
 	if (acpi_present) {
-		hac.hac_acpi.aa_iot = X86_BUS_SPACE_IO;
-		hac.hac_acpi.aa_memt = X86_BUS_SPACE_MEM;
+		memset(&hac, 0, sizeof(hac));
+		hac.hac_acpi.aa_iot = x86_bus_space_io;
+		hac.hac_acpi.aa_memt = x86_bus_space_mem;
 		hac.hac_acpi.aa_pc = NULL;
 		hac.hac_acpi.aa_pciflags =
 			PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED |
@@ -255,8 +260,9 @@ hypervisor_attach(device_t parent, device_t self, void *aux)
 		config_found_ia(self, "acpibus", &hac.hac_acpi, 0);
 	}
 #endif /* NACPICA */
-	hac.hac_pba.pba_iot = X86_BUS_SPACE_IO;
-	hac.hac_pba.pba_memt = X86_BUS_SPACE_MEM;
+	memset(&hac, 0, sizeof(hac));
+	hac.hac_pba.pba_iot = x86_bus_space_io;
+	hac.hac_pba.pba_memt = x86_bus_space_mem;
 	hac.hac_pba.pba_dmat = &pci_bus_dma_tag;
 #ifdef _LP64
 	hac.hac_pba.pba_dmat64 = &pci_bus_dma64_tag;
@@ -283,9 +289,10 @@ hypervisor_attach(device_t parent, device_t self, void *aux)
 #endif
 #if NISA > 0
 	if (isa_has_been_seen == 0) {
+		memset(&hac, 0, sizeof(hac));
 		hac.hac_iba._iba_busname = "isa";
-		hac.hac_iba.iba_iot = X86_BUS_SPACE_IO;
-		hac.hac_iba.iba_memt = X86_BUS_SPACE_MEM;
+		hac.hac_iba.iba_iot = x86_bus_space_io;
+		hac.hac_iba.iba_memt = x86_bus_space_mem;
 		hac.hac_iba.iba_dmat = &isa_bus_dma_tag;
 		hac.hac_iba.iba_ic = NULL; /* No isa DMA yet */
 		config_found_ia(self, "isabus", &hac.hac_iba, isabusprint);
@@ -307,7 +314,7 @@ hypervisor_attach(device_t parent, device_t self, void *aux)
 }
 
 static bool
-hypervisor_suspend(device_t dev PMF_FN_ARGS) {
+hypervisor_suspend(device_t dev, const pmf_qual_t *qual) {
 
 	events_suspend();
 	xengnt_suspend();
@@ -316,7 +323,7 @@ hypervisor_suspend(device_t dev PMF_FN_ARGS) {
 }
 
 static bool
-hypervisor_resume(device_t dev PMF_FN_ARGS) {
+hypervisor_resume(device_t dev, const pmf_qual_t *qual) {
 
 	hypervisor_machdep_resume();
 

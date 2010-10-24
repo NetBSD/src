@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_autoconf.c,v 1.35.8.2 2009/11/01 13:58:19 jym Exp $	*/
+/*	$NetBSD: x86_autoconf.c,v 1.35.8.3 2010/10/24 22:48:20 jym Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_autoconf.c,v 1.35.8.2 2009/11/01 13:58:19 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_autoconf.c,v 1.35.8.3 2010/10/24 22:48:20 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,9 +55,14 @@ __KERNEL_RCSID(0, "$NetBSD: x86_autoconf.c,v 1.35.8.2 2009/11/01 13:58:19 jym Ex
 
 #include "acpica.h"
 #include "pci.h"
+#include "isa.h"
 #include "genfb.h"
 #include "wsdisplay.h"
 #include "opt_vga.h"
+
+#if NACPICA > 0
+#include <dev/acpi/acpivar.h>
+#endif
 
 #ifdef VGA_POST
 #include <x86/vga_post.h>
@@ -67,11 +72,15 @@ __KERNEL_RCSID(0, "$NetBSD: x86_autoconf.c,v 1.35.8.2 2009/11/01 13:58:19 jym Ex
 #include <dev/pci/pcivar.h>
 #endif
 #include <dev/wsfb/genfbvar.h>
+#if NPCI > 0
 #include <dev/pci/genfb_pcivar.h>
+#endif
 #include <dev/ic/vgareg.h>
 
+#if NPCI > 0
 static struct genfb_colormap_callback gfb_cb;
 static struct genfb_pmf_callback pmf_cb;
+#endif
 #ifdef VGA_POST
 static struct vga_post *vga_posth = NULL;
 #endif
@@ -90,13 +99,13 @@ x86_genfb_set_mapreg(void *opaque, int index, int r, int g, int b)
 }
 
 static bool
-x86_genfb_suspend(device_t dev PMF_FN_ARGS)
+x86_genfb_suspend(device_t dev, const pmf_qual_t *qual)
 {
 	return true;
 }
 
 static bool
-x86_genfb_resume(device_t dev PMF_FN_ARGS)
+x86_genfb_resume(device_t dev, const pmf_qual_t *qual)
 {
 #if NGENFB > 0
 	struct pci_genfb_softc *psc = device_private(dev);
@@ -152,6 +161,7 @@ matchbiosdisks(void)
 	struct btinfo_biosgeom *big;
 	struct bi_biosgeom_entry *be;
 	device_t dv;
+	deviter_t di;
 	int i, ck, error, m, n;
 	struct vnode *tv;
 	char mbr[DEV_BSIZE];
@@ -163,10 +173,12 @@ matchbiosdisks(void)
 	numbig = big ? big->num : 0;
 
 	/* First, count all native disks. */
-	TAILQ_FOREACH(dv, &alldevs, dv_list) {
+	for (dv = deviter_first(&di, DEVITER_F_ROOT_FIRST); dv != NULL;
+	     dv = deviter_next(&di)) {
 		if (is_valid_disk(dv))
 			x86_ndisks++;
 	}
+	deviter_release(&di);
 
 	dklist_size = sizeof(struct disklist) + (x86_ndisks - 1) *
 	    sizeof(struct nativedisk_info);
@@ -196,7 +208,8 @@ matchbiosdisks(void)
 
 	/* XXX Code duplication from findroot(). */
 	n = -1;
-	TAILQ_FOREACH(dv, &alldevs, dv_list) {
+	for (dv = deviter_first(&di, DEVITER_F_ROOT_FIRST); dv != NULL;
+	     dv = deviter_next(&di)) {
 		if (device_class(dv) != DV_DISK)
 			continue;
 #ifdef GEOM_DEBUG
@@ -251,6 +264,7 @@ matchbiosdisks(void)
 			vput(tv);
 		}
 	}
+	deviter_release(&di);
 }
 
 /*
@@ -364,6 +378,7 @@ findroot(void)
 	struct btinfo_bootwedge *biw;
 	struct btinfo_biosgeom *big;
 	device_t dv;
+	deviter_t di;
 
 	if (booted_device)
 		return;
@@ -380,7 +395,9 @@ findroot(void)
 	}
 
 	if ((biv = lookup_bootinfo(BTINFO_ROOTDEVICE)) != NULL) {
-		TAILQ_FOREACH(dv, &alldevs, dv_list) {
+		for (dv = deviter_first(&di, DEVITER_F_ROOT_FIRST);
+		     dv != NULL;
+		     dv = deviter_next(&di)) {
 			cfdata_t cd;
 			size_t len;
 
@@ -393,9 +410,12 @@ findroot(void)
 			if (strncmp(cd->cf_name, biv->devname, len) == 0 &&
 			    biv->devname[len] - '0' == cd->cf_unit) {
 				handle_wedges(dv, biv->devname[len + 1] - 'a');
-				return;
+				break;
 			}
 		}
+		deviter_release(&di);
+		if (dv != NULL)
+			return;
 	}
 
 	if ((biw = lookup_bootinfo(BTINFO_BOOTWEDGE)) != NULL) {
@@ -406,7 +426,9 @@ findroot(void)
 		 * because lower devices numbers are more likely to be the
 		 * boot device.
 		 */
-		TAILQ_FOREACH(dv, &alldevs, dv_list) {
+		for (dv = deviter_first(&di, DEVITER_F_ROOT_FIRST);
+		     dv != NULL;
+		     dv = deviter_next(&di)) {
 			if (device_class(dv) != DV_DISK)
 				continue;
 
@@ -433,6 +455,7 @@ findroot(void)
 			}
 			dkwedge_set_bootwedge(dv, biw->startblk, biw->nblks);
 		}
+		deviter_release(&di);
 
 		if (booted_wedge)
 			return;
@@ -446,7 +469,9 @@ findroot(void)
 		 * because lower device numbers are more likely to be the
 		 * boot device.
 		 */
-		TAILQ_FOREACH(dv, &alldevs, dv_list) {
+		for (dv = deviter_first(&di, DEVITER_F_ROOT_FIRST);
+		     dv != NULL;
+		     dv = deviter_next(&di)) {
 			if (device_class(dv) != DV_DISK)
 				continue;
 
@@ -487,6 +512,7 @@ findroot(void)
 			}
 			handle_wedges(dv, bid->partition);
 		}
+		deviter_release(&di);
 
 		if (booted_device)
 			return;
@@ -509,7 +535,9 @@ findroot(void)
 			 * recognized as a bootable CD-ROM drive by the BIOS.
 			 * Assume the first unit is the one.
 			 */
-			TAILQ_FOREACH(dv, &alldevs, dv_list) {
+			for (dv = deviter_first(&di, DEVITER_F_ROOT_FIRST);
+			     dv != NULL;
+			     dv = deviter_next(&di)) {
 				if (device_class(dv) == DV_DISK &&
 				    device_is_a(dv, "cd")) {
 					booted_device = dv;
@@ -517,6 +545,7 @@ findroot(void)
 					break;
 				}
 			}
+			deviter_release(&di);
 		}
 	}
 }
@@ -530,11 +559,11 @@ cpu_rootconf(void)
 
 	if (booted_wedge) {
 		KASSERT(booted_device != NULL);
-		printf("boot device: %s (%s)\n",
+		aprint_normal("boot device: %s (%s)\n",
 		    device_xname(booted_wedge), device_xname(booted_device));
 		setroot(booted_wedge, 0);
 	} else {
-		printf("boot device: %s\n",
+		aprint_normal("boot device: %s\n",
 		    booted_device ? device_xname(booted_device) : "<unknown>");
 		setroot(booted_device, booted_partition);
 	}
@@ -594,6 +623,15 @@ device_register(device_t dev, void *aux)
 		}
 #endif /* NPCI > 0 */
 	}
+#if NISA > 0 && NACPICA > 0
+#if notyet
+	if (device_is_a(dev, "isa") && acpi_active) {
+		if (!(AcpiGbl_FADT.BootFlags & ACPI_FADT_LEGACY_DEVICES))
+			prop_dictionary_set_bool(device_properties(dev),
+			    "no-legacy-devices", true);
+	}
+#endif
+#endif /* NISA > 0 && NACPICA > 0 */
 #if NPCI > 0
 	if (device_parent(dev) && device_is_a(device_parent(dev), "pci") &&
 	    found_console == false) {

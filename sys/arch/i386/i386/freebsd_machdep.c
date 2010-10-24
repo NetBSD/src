@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_machdep.c,v 1.52.8.2 2009/11/01 13:58:20 jym Exp $	*/
+/*	$NetBSD: freebsd_machdep.c,v 1.52.8.3 2010/10/24 22:48:00 jym Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_machdep.c,v 1.52.8.2 2009/11/01 13:58:20 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_machdep.c,v 1.52.8.3 2010/10/24 22:48:00 jym Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -41,7 +41,6 @@ __KERNEL_RCSID(0, "$NetBSD: freebsd_machdep.c,v 1.52.8.2 2009/11/01 13:58:20 jym
 #include <sys/signalvar.h>
 #include <sys/proc.h>
 #include <sys/exec.h>
-#include <sys/user.h>
 #include <sys/mount.h>
 
 #include <compat/sys/signal.h>
@@ -60,9 +59,9 @@ __KERNEL_RCSID(0, "$NetBSD: freebsd_machdep.c,v 1.52.8.2 2009/11/01 13:58:20 jym
 #include <compat/freebsd/freebsd_ptrace.h>
 
 void
-freebsd_setregs(struct lwp *l, struct exec_package *epp, u_long stack)
+freebsd_setregs(struct lwp *l, struct exec_package *epp, vaddr_t stack)
 {
-	struct pcb *pcb = &l->l_addr->u_pcb;
+	struct pcb *pcb = lwp_getpcb(l);
 
 	setregs(l, epp, stack);
 	if (i386_use_fxsave)

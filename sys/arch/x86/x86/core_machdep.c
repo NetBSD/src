@@ -1,4 +1,4 @@
-/*	$NetBSD: core_machdep.c,v 1.1.6.3 2009/11/01 13:58:17 jym Exp $	*/
+/*	$NetBSD: core_machdep.c,v 1.1.6.4 2010/10/24 22:48:18 jym Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -80,14 +80,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: core_machdep.c,v 1.1.6.3 2009/11/01 13:58:17 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: core_machdep.c,v 1.1.6.4 2010/10/24 22:48:18 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/vnode.h>
 #include <sys/buf.h>
-#include <sys/user.h>
 #include <sys/core.h>
 #include <sys/exec.h>
 #include <sys/ptrace.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: est.c,v 1.9.14.2 2009/11/01 13:58:17 jym Exp $	*/
+/*	$NetBSD: est.c,v 1.9.14.3 2010/10/24 22:48:18 jym Exp $	*/
 /*
  * Copyright (c) 2003 Michael Eriksson.
  * All rights reserved.
@@ -81,7 +81,7 @@
 /* #define EST_DEBUG */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: est.c,v 1.9.14.2 2009/11/01 13:58:17 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: est.c,v 1.9.14.3 2010/10/24 22:48:18 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1087,9 +1087,6 @@ est_init_main(int vendor)
 	int			i, mv, rc;
 	size_t			len, freq_len;
 	char			*freq_names;
-	const char *cpuname;
-       
-	cpuname	= device_xname(curcpu()->ci_dev);
 
 	if (CPUID2FAMILY(curcpu()->ci_signature) == 15)
 		bus_clock = p4_get_bus_clock(curcpu());
@@ -1125,25 +1122,23 @@ est_init_main(int vendor)
 	if (idhi == 0 || idlo == 0 || cur == 0 ||
 	    ((cur >> 8) & 0xff) < ((idlo >> 8) & 0xff) ||
 	    ((cur >> 8) & 0xff) > ((idhi >> 8) & 0xff)) {
-		aprint_debug("%s: strange msr value 0x%016llx\n", __func__, msr);
+		aprint_debug("%s: strange msr value 0x%016llx\n",
+		    __func__, msr);
 		return;
 	}
 #endif
 
 #ifdef __amd64__
-	if (crlo == 0 || crhi == crlo) {
-		aprint_debug("%s: crlo == 0 || crhi == crlo\n", __func__);
-		return;
-	}
-
-	if (crhi == 0 || crcur == 0 || crlo > crhi ||
-	    crcur < crlo || crcur > crhi) {
+	if (crlo == 0 || crhi == 0 || crcur == 0 || crhi == crlo ||
+	    crlo > crhi || crcur < crlo || crcur > crhi) {
 		/*
 		 * Do complain about other weirdness, because we first want to
 		 * know about it, before we decide what to do with it
 		 */
 		aprint_debug("%s: strange msr value 0x%" PRIu64 "\n",
 		    __func__, msr);
+		aprint_debug("%s: crhi=%" PRIu8 ", crlo=%" PRIu8 ", crcur=%"
+		    PRIu8 "\n", __func__, crhi, crlo, crcur);
 		return;
 	}
 #endif
@@ -1260,7 +1255,7 @@ est_init_main(int vendor)
 		    i < est_fqlist->n - 1 ? " " : "");
 	}
 
-	aprint_debug("%s: %s (%d mV) ", cpuname, est_desc, mv);
+	aprint_debug_dev(curcpu()->ci_dev, "%s (%d mV) ", est_desc, mv);
 	aprint_debug("%d (MHz): %s\n", MSR2MHZ(msr, bus_clock), freq_names);
 
 	/*

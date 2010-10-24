@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb.c,v 1.17.2.2 2009/11/01 13:58:17 jym Exp $ */
+/*	$NetBSD: pchb.c,v 1.17.2.3 2010/10/24 22:48:17 jym Exp $ */
 
 /*-
  * Copyright (c) 1996, 1998, 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.17.2.2 2009/11/01 13:58:17 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.17.2.3 2010/10/24 22:48:17 jym Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -75,8 +75,8 @@ int	pchbmatch(device_t, cfdata_t, void *);
 void	pchbattach(device_t, device_t, void *);
 int	pchbdetach(device_t, int);
 
-static bool	pchb_resume(device_t PMF_FN_ARGS);
-static bool	pchb_suspend(device_t PMF_FN_ARGS);
+static bool	pchb_resume(device_t, const pmf_qual_t *);
+static bool	pchb_suspend(device_t, const pmf_qual_t *);
 
 CFATTACH_DECL3_NEW(pchb, sizeof(struct pchb_softc),
     pchbmatch, pchbattach, pchbdetach, NULL, NULL, NULL, DVF_DETACH_SHUTDOWN);
@@ -386,6 +386,14 @@ pchbattach(device_t parent, device_t self, void *aux)
 		case PCI_PRODUCT_INTEL_82IGD_E_HB:
 		case PCI_PRODUCT_INTEL_82Q45_HB:
 		case PCI_PRODUCT_INTEL_82G45_HB:
+		case PCI_PRODUCT_INTEL_82G41_HB:
+		case PCI_PRODUCT_INTEL_E7221_HB:
+		case PCI_PRODUCT_INTEL_82965GME_HB:
+		case PCI_PRODUCT_INTEL_82B43_HB:
+		case PCI_PRODUCT_INTEL_IRONLAKE_D_HB:
+		case PCI_PRODUCT_INTEL_IRONLAKE_M_HB:
+		case PCI_PRODUCT_INTEL_IRONLAKE_MA_HB:
+		case PCI_PRODUCT_INTEL_IRONLAKE_MC2_HB:
 			/*
 			 * The host bridge is either in GFX mode (internal
 			 * graphics) or in AGP mode. In GFX mode, we pretend
@@ -400,13 +408,6 @@ pchbattach(device_t parent, device_t self, void *aux)
 		}
 		break;
 	}
-
-#if NRND > 0
-	/*
-	 * Attach a random number generator, if there is one.
-	 */
-	pchb_attach_rnd(sc, pa);
-#endif
 
 	if (!pmf_device_register(self, pchb_suspend, pchb_resume))
 		aprint_error_dev(self, "couldn't establish power handler\n");
@@ -442,26 +443,17 @@ int
 pchbdetach(device_t self, int flags)
 {
 	int rc;
-#if NRND > 0
-	struct pchb_softc *sc = device_private(self);
-#endif
 
 	if ((rc = config_detach_children(self, flags)) != 0)
 		return rc;
 
 	pmf_device_deregister(self);
 
-#if NRND > 0
-	/*
-	 * Attach a random number generator, if there is one.
-	 */
-	pchb_detach_rnd(sc);
-#endif
 	return 0;
 }
 
 static bool
-pchb_suspend(device_t dv PMF_FN_ARGS)
+pchb_suspend(device_t dv, const pmf_qual_t *qual)
 {
 	struct pchb_softc *sc = device_private(dv);
 	pci_chipset_tag_t pc;
@@ -478,7 +470,7 @@ pchb_suspend(device_t dv PMF_FN_ARGS)
 }
 
 static bool
-pchb_resume(device_t dv PMF_FN_ARGS)
+pchb_resume(device_t dv, const pmf_qual_t *qual)
 {
 	struct pchb_softc *sc = device_private(dv);
 	pci_chipset_tag_t pc;

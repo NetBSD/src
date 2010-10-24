@@ -1,4 +1,4 @@
-/*	$NetBSD: pchbvar.h,v 1.5 2008/04/28 20:23:40 martin Exp $	*/
+/*	$NetBSD: pchbvar.h,v 1.5.14.1 2010/10/24 22:48:17 jym Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -29,11 +29,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _I386_PCI_PCHBVAR_H_
-#define	_I386_PCI_PCHBVAR_H_
-
-#include <sys/callout.h>
-#include <sys/rnd.h>
+#ifndef _X86_PCI_PCHBVAR_H_
+#define _X86_PCI_PCHBVAR_H_
 
 struct pchb_softc {
 	device_t sc_dev;
@@ -41,20 +38,7 @@ struct pchb_softc {
 	pci_chipset_tag_t sc_pc;
 	pcitag_t sc_tag;
 
-	bus_space_tag_t sc_st;
-	bus_space_handle_t sc_sh;
-
-	struct callout sc_rnd_ch;
-	rndsource_element_t sc_rnd_source;
-
-	int sc_rnd_i;
-	uint32_t sc_rnd_ax;
-	bool sc_rnd_attached;
-
 	pcireg_t sc_pciconfext[48];
 };
 
-void	pchb_attach_rnd(struct pchb_softc *, struct pci_attach_args *);
-void	pchb_detach_rnd(struct pchb_softc *);
-
-#endif /* _I386_PCI_PCHBVAR_H_ */
+#endif /* _X86_PCI_PCHBVAR_H_ */

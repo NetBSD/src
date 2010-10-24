@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.xen,v 1.28 2008/12/11 05:27:42 alc Exp $
+#	$NetBSD: Makefile.xen,v 1.28.2.1 2010/10/24 22:48:20 jym Exp $
 #	NetBSD: Makefile.i386,v 1.132 2003/07/05 16:56:10 simonb Exp 
 
 # Makefile for NetBSD
@@ -22,6 +22,8 @@
 USETOOLS?=	no
 NEED_OWN_INSTALL_TARGET?=no
 .include <bsd.own.mk>
+
+USE_SSP?=	yes
 
 ##
 ## (1) port identification
@@ -99,12 +101,8 @@ TEXTADDR?=	0xc0100000
 TEXTADDR?=	0xffffffff80100000
 .endif
 LINKFLAGS_NORMAL=	-X
-.if (${OBJECT_FMT} == "ELF")
 KERN_LDSCRIPT?=	kern.ldscript.Xen
 LINKFORMAT=	-T $S/arch/${XEN_BUILD}/conf/${KERN_LDSCRIPT}
-.else
-LINKFORMAT=	-z
-.endif
 
 ##
 ## (6) port specific target dependencies

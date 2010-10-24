@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.60.10.2 2009/11/01 13:58:20 jym Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.60.10.3 2010/10/24 22:48:00 jym Exp $	*/
 
 /* 
  * Mach Operating System
@@ -27,12 +27,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.60.10.2 2009/11/01 13:58:20 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.60.10.3 2010/10/24 22:48:00 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
-#include <sys/user.h> 
 #include <sys/intr.h> 
 #include <sys/cpu.h> 
 
@@ -432,7 +431,7 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 		callpc = (db_addr_t)ddb_regs.tf_eip;
 	} else {
 		if (trace_thread) {
-			struct user *u;
+			struct pcb *pcb;
 			proc_t p;
 			lwp_t l;
 			if (lwpaddr) {
@@ -453,7 +452,7 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 				    sizeof(l), (char *)&l);
 			}
 			(*pr)("lid %d ", l.l_lid);
-			u = l.l_addr;
+			pcb = lwp_getpcb(&l);
 #ifdef _KERNEL
 			if (l.l_proc == curproc &&
 			    (lwp_t *)lwpaddr == curlwp) {
@@ -463,7 +462,7 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 			} else
 #endif
 			{
-				db_read_bytes((db_addr_t)&u->u_pcb.pcb_ebp,
+				db_read_bytes((db_addr_t)&pcb->pcb_ebp,
 				    sizeof(frame), (char *)&frame);
 				db_read_bytes((db_addr_t)(frame + 1),
 				    sizeof(callpc), (char *)&callpc);

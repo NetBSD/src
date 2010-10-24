@@ -1,4 +1,4 @@
-/* $NetBSD: xenbus_probe.c,v 1.27.2.4 2009/11/01 21:43:29 jym Exp $ */
+/* $NetBSD: xenbus_probe.c,v 1.27.2.5 2010/10/24 22:48:23 jym Exp $ */
 /******************************************************************************
  * Talks to Xen Store to figure out what devices we have.
  *
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenbus_probe.c,v 1.27.2.4 2009/11/01 21:43:29 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenbus_probe.c,v 1.27.2.5 2010/10/24 22:48:23 jym Exp $");
 
 #if 0
 #define DPRINTK(fmt, args...) \
@@ -55,6 +55,10 @@ __KERNEL_RCSID(0, "$NetBSD: xenbus_probe.c,v 1.27.2.4 2009/11/01 21:43:29 jym Ex
 #include <xen/evtchn.h>
 #include <xen/shutdown_xenbus.h>
 
+#ifdef XEN_BALLOON
+#include <xen/balloon.h>
+#endif
+
 #include "xenbus_comms.h"
 
 extern struct semaphore xenwatch_mutex;
@@ -70,8 +74,8 @@ static void xenbus_probe_init(void *);
 static struct xenbus_device *xenbus_lookup_device_path(const char *);
 
 /* power management, for save/restore */
-static bool xenbus_suspend(device_t PMF_FN_PROTO);
-static bool xenbus_resume(device_t PMF_FN_PROTO);
+static bool xenbus_suspend(device_t, const pmf_qual_t *);
+static bool xenbus_resume(device_t, const pmf_qual_t *);
 
 /* routines gathering device information from XenStore */
 static int  read_otherend_details(struct xenbus_device *,
@@ -119,7 +123,7 @@ xenbus_attach(device_t parent, device_t self, void *aux)
 }
 
 static bool
-xenbus_suspend(device_t dev PMF_FN_ARGS) {
+xenbus_suspend(device_t dev, const pmf_qual_t *qual) {
 
 	xs_suspend();
 	xb_suspend_comms(dev);
@@ -128,7 +132,7 @@ xenbus_suspend(device_t dev PMF_FN_ARGS) {
 }
 
 static bool
-xenbus_resume(device_t dev PMF_FN_ARGS) {
+xenbus_resume(device_t dev, const pmf_qual_t *qual) {
 
 	xb_init_comms(dev);
 	xs_resume();
@@ -577,6 +581,10 @@ xenbus_probe(void *unused)
 	be_watch.xbw_callback = backend_changed;
 	register_xenbus_watch(&be_watch);
 	shutdown_xenbus_setup();
+
+#ifdef XEN_BALLOON
+	balloon_xenbus_setup();
+#endif
 
 	/* Notify others that xenstore is up */
 	//notifier_call_chain(&xenstore_chain, 0, NULL);

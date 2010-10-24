@@ -1,4 +1,4 @@
-/* $NetBSD: ipmivar.h,v 1.9.4.2 2009/11/01 13:58:16 jym Exp $ */
+/* $NetBSD: ipmivar.h,v 1.9.4.3 2010/10/24 22:48:16 jym Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave
@@ -92,6 +92,7 @@ struct ipmi_softc {
 	kcondvar_t		sc_poll_cv;
 
 	kmutex_t		sc_cmd_mtx;
+	kmutex_t		sc_sleep_mtx;
 	kcondvar_t		sc_cmd_sleep;
 
 	struct ipmi_bmc_args	*sc_iowait_args;
@@ -103,7 +104,6 @@ struct ipmi_softc {
 	struct sysmon_envsys	*sc_envsys;
 	envsys_data_t		*sc_sensor;
 	int 		sc_nsensors; /* total number of sensors */
-	int		sc_nsensors_typ[ENVSYS_NSENSORS]; /* number per type */
 
 	char		sc_buf[64];
 	bool		sc_buf_rsvd;

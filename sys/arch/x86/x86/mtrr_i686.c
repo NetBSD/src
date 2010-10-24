@@ -1,4 +1,4 @@
-/*	$NetBSD: mtrr_i686.c,v 1.19 2008/10/13 10:27:10 sborrill Exp $ */
+/*	$NetBSD: mtrr_i686.c,v 1.19.8.1 2010/10/24 22:48:19 jym Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,14 +30,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mtrr_i686.c,v 1.19 2008/10/13 10:27:10 sborrill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mtrr_i686.c,v 1.19.8.1 2010/10/24 22:48:19 jym Exp $");
 
 #include "opt_multiprocessor.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/malloc.h>
 #include <sys/atomic.h>
 #include <sys/cpu.h>
@@ -99,7 +98,7 @@ mtrr_raw[] = {
 
 };
 
-static const int nmtrr_raw = sizeof(mtrr_raw)/sizeof(mtrr_raw[0]);
+static const int nmtrr_raw = __arraycount(mtrr_raw);
 static int i686_mtrr_vcnt = 0;
 
 static struct mtrr_state *mtrr_var_raw;
@@ -302,8 +301,8 @@ i686_mtrr_init_first(void)
 	i686_mtrr_vcnt = i686_mtrr_cap & MTRR_I686_CAP_VCNT_MASK;
 
 	if (i686_mtrr_vcnt > MTRR_I686_NVAR_MAX)
-		printf("\%s: FIXME: more than %d MTRRs\n", __FILE__,
-		    MTRR_I686_NVAR_MAX);
+		printf("\%s: FIXME: more than %d MTRRs (%d)\n", __FILE__,
+		    MTRR_I686_NVAR_MAX, i686_mtrr_vcnt);
 	else if (i686_mtrr_vcnt < MTRR_I686_NVAR_MAX) {
 		for (i = MTRR_I686_NVAR_MAX - i686_mtrr_vcnt; i; i--) {
 			mtrr_raw[16 - (i*2)].msraddr = 0;

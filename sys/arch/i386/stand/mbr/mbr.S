@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.S,v 1.20 2008/11/28 18:18:16 dsl Exp $	*/
+/*	$NetBSD: mbr.S,v 1.20.4.1 2010/10/24 22:48:05 jym Exp $	*/
 
 /*
  * Copyright (c) 1999-2004 The NetBSD Foundation, Inc. 
@@ -63,6 +63,8 @@
 #if !defined(COM_FREQ)
 #define COM_FREQ 1843200
 #endif
+#else
+#undef COM_BAUD
 #endif
 
 #ifdef BOOTSEL
@@ -72,8 +74,7 @@
 #include <machine/asm.h>
 #include <sys/bootblock.h>
 
-#define BOOTADDR	0x7c00
-#define LOADADDR	0x0600		/* address were are linked to */
+#define BOOTADDR	0x7c00		/* where we get loaded to */
 
 #define TABENTRYSIZE	(MBR_BS_PARTNAMESIZE + 1)
 #define NAMETABSIZE	(MBR_PART_COUNT * TABENTRYSIZE)
@@ -130,7 +131,7 @@ ENTRY(start)
 	mov	%ax, %es
 	mov	%ax, %ds
 	movw	$mbr, %di
-	mov     $mbr - LOADADDR + BOOTADDR, %si
+	mov     $BOOTADDR + (mbr - start), %si
 	push	%ax			/* zero for %cs of lret */
 	push	%di
 	movw	$(bss_start - mbr), %cx
@@ -153,7 +154,7 @@ mbr:
 	push	%dx			/* save drive number */
 	push	%dx			/* twice - for err_msg loop */
 
-#if defined(COM_PORT) && defined(COM_BAUD)
+#if defined(COM_BAUD)
 	mov	$com_args, %si
 	mov	$num_com_args, %cl	/* %ch is zero from above */
 	mov	COM_PORT_VAL, %dx
@@ -258,7 +259,7 @@ next_ptn:
 	pop	%dx			/* recover drive # */
 	push	%dx			/* save drive */
 	int	$0x13
-	movw	$nametab - LOADADDR + BOOTADDR, %bx
+	movw	$BOOTADDR + (nametab - start), %bx
 	jnc	next_extended		/* abort menu on read fail */
 #endif
 
@@ -284,7 +285,7 @@ wait_key:
 	int	$0x1a
 	mov	%dx, %di		/* start time to di */
 3:
-#ifdef COM_PORT
+#ifdef COM_PORT_VAL
 	mov	COM_PORT_VAL, %dx
 	push	%dx
 	add	$5, %dx
@@ -391,7 +392,7 @@ err_msg:
 	pop	%dx			/* original drive number */
 	push	%dx
 	push	%dx
-#ifdef COM_PORT
+#ifdef COM_PORT_VAL
 	jmp	wait_key		/* Read with timeout (again) */
 #else
 	jmp	get_key			/* Blocking read */
@@ -514,7 +515,7 @@ do_read:
 */
 	movl	%ebp, %esi
 	pop	%dx			/* recover drive # */
-	jmp	start - LOADADDR + BOOTADDR
+	jmp	BOOTADDR
 
 
 #ifndef NO_CHS
@@ -552,7 +553,7 @@ crlf:	.asciz	"\r\n"
 
 #ifndef NO_BANNER
 #ifdef BOOTSEL
-#ifdef COM_PORT
+#ifdef COM_PORT_VAL
 banner:	.asciz	"a: disk"
 #else
 banner:	.asciz	"Fn: diskn"
@@ -578,7 +579,7 @@ ERR_KEY:	.asciz	"bad key"
 #endif
 #endif
 
-#if defined(COM_PORT) && defined(COM_BAUD)
+#if defined(COM_BAUD)
 #define COM_DIVISOR (((COM_FREQ / COM_BAUD) + 8) / 16)
 com_args:
 	.byte	0x80			/* divisor latch enable */
@@ -601,26 +602,7 @@ num_com_args = (. - com_args)/2
 message_crlf:
 	call	message
 	movw	$crlf, %si
-#ifdef COM_PORT
-message:
-	pusha
-message_1:
-	lodsb
-	test	%al, %al
-	jz	3f
-	mov	COM_PORT_VAL, %dx
-	outb	%al, %dx
-	add	$5, %dl
-2:	inb	%dx
-	test	$0x40, %al
-	jz	2b
-	jmp	message_1
-3:	popa
-	ret
-#else
 #include <message.S>
-#endif
-
 #if 0
 #include <dump_eax.S>
 #endif

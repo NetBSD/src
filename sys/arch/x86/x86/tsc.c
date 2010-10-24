@@ -1,4 +1,4 @@
-/*	$NetBSD: tsc.c,v 1.24.2.2 2009/11/01 13:58:18 jym Exp $	*/
+/*	$NetBSD: tsc.c,v 1.24.2.3 2010/10/24 22:48:20 jym Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.24.2.2 2009/11/01 13:58:18 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.24.2.3 2010/10/24 22:48:20 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,7 +69,7 @@ tsc_tc_init(void)
 	uint32_t descs[4];
 	bool safe;
 
-	if ((cpu_feature & CPUID_TSC) == 0) {
+	if (!cpu_hascounter()) {
 		return;
 	}
 
@@ -128,7 +128,7 @@ tsc_tc_init(void)
 		case 0x0f:
 			/* Check for "invariant TSC", bit 8 of %edx. */
 			x86_cpuid(0x80000007, descs);
-			safe = (descs[3] & (1 << 8)) != 0;
+			safe = (descs[3] & CPUID_APM_TSC) != 0;
 			break;
 		}
 	}
@@ -255,5 +255,5 @@ int
 cpu_hascounter(void)
 {
 
-	return cpu_feature & CPUID_TSC;
+	return cpu_feature[0] & CPUID_TSC;
 }

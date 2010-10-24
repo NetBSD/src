@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.10.2.4 2009/11/01 21:43:29 jym Exp $	*/
+/*	$NetBSD: cpu.h,v 1.10.2.5 2010/10/24 22:48:16 jym Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -50,6 +50,7 @@
  * Definitions unique to x86 cpu support.
  */
 #include <machine/frame.h>
+#include <machine/pte.h>
 #include <machine/segments.h>
 #include <machine/tss.h>
 #include <machine/intrdefs.h>
@@ -59,6 +60,7 @@
 
 #include <sys/cpu_data.h>
 #include <sys/evcnt.h>
+#include <sys/device_if.h> /* for device_t */
 
 struct intrsource;
 struct pmap;
@@ -76,7 +78,7 @@ struct device;
  */
 
 struct cpu_info {
-	struct device *ci_dev;		/* pointer to our device */
+	device_t ci_dev;		/* pointer to our device */
 	struct cpu_info *ci_self;	/* self-pointer */
 	volatile struct vcpu_info *ci_vcpu; /* for XEN */
 	void	*ci_tlog_base;		/* Trap log base */
@@ -93,10 +95,8 @@ struct cpu_info {
 	int	ci_fpused;		/* XEN: FPU was used by curlwp */
 	cpuid_t ci_cpuid;		/* our CPU ID */
 	int	ci_cpumask;		/* (1 << CPU ID) */
-	uint8_t ci_initapicid;		/* our intitial APIC ID */
-	uint8_t ci_packageid;
-	uint8_t ci_coreid;
-	uint8_t ci_smtid;
+	uint32_t ci_acpiid;		/* our ACPI/MADT ID */
+	uint32_t ci_initapicid;		/* our intitial APIC ID */
 	struct cpu_data ci_data;	/* MI per-cpu data */
 
 	/*
@@ -137,18 +137,21 @@ struct cpu_info {
 
 	uint32_t ci_flags;		/* flags; see below */
 	uint32_t ci_ipis;		/* interprocessor interrupts pending */
-	int sc_apic_version;		/* local APIC version */
+	uint32_t sc_apic_version;	/* local APIC version */
 
 	uint32_t	ci_signature;	 /* X86 cpuid type */
-	uint32_t	ci_feature_flags;/* X86 %edx CPUID feature bits */
-	uint32_t	ci_feature2_flags;/* X86 %ecx CPUID feature bits */
-	uint32_t	ci_feature3_flags;/* X86 extended %edx feature bits */
-	uint32_t	ci_feature4_flags;/* X86 extended %ecx feature bits */
-	uint32_t	ci_padlock_flags;/* VIA PadLock feature bits */
 	uint32_t	ci_vendor[4];	 /* vendor string */
 	uint32_t	ci_cpu_serial[3]; /* PIII serial number */
 	volatile uint32_t	ci_lapic_counter;
 
+	uint32_t	ci_feat_val[5]; /* X86 CPUID feature bits
+					 *	[0] basic features %edx
+					 *	[1] basic features %ecx
+					 *	[2] extended features %edx
+					 *	[3] extended features %ecx
+					 *	[4] VIA padlock features
+					 */
+	
 	const struct cpu_functions *ci_func;  /* start/stop functions */
 	struct trapframe *ci_ddb_regs;
 
@@ -161,6 +164,17 @@ struct cpu_info {
 	struct i386tss	ci_doubleflt_tss;
 	struct i386tss	ci_ddbipi_tss;
 #endif
+
+#ifdef PAE
+	uint32_t	ci_pae_l3_pdirpa; /* PA of L3 PD */
+	pd_entry_t *	ci_pae_l3_pdir; /* VA pointer to L3 PD */
+#endif
+
+#if defined(XEN) && defined(__x86_64__)
+	/* Currently active user PGD (can't use rcr3() with Xen) */
+	paddr_t		ci_xen_current_user_pgd;
+#endif
+
 	char *ci_doubleflt_stack;
 	char *ci_ddbipi_stack;
 
@@ -275,6 +289,7 @@ lwp_t   *x86_curlwp(void);
 void cpu_boot_secondary_processors(void);
 void cpu_init_idle_lwps(void);
 void cpu_init_msrs(struct cpu_info *, bool);
+void cpu_load_pmap(struct pmap *);
 
 extern uint32_t cpus_attached;
 #ifndef XEN
@@ -285,7 +300,7 @@ extern uint32_t cpus_attached;
 #define curcpu()		(&cpu_info_primary)
 #define curlwp			curcpu()->ci_curlwp
 #endif
-#define	curpcb			(&curlwp->l_addr->u_pcb)
+#define	curpcb			((struct pcb *)lwp_getpcb(curlwp))
 
 /*
  * Arguments to hardclock, softclock and statclock
@@ -320,15 +335,13 @@ struct timeval;
 
 extern int biosbasemem;
 extern int biosextmem;
-extern unsigned int cpu_feature;
-extern unsigned int cpu_feature2;
-extern unsigned int cpu_feature_padlock;
 extern int cpu;
 extern int cpuid_level;
 extern int cpu_class;
 extern char cpu_brand_string[];
 
 extern int i386_use_fxsave;
+extern int i386_use_pae;
 extern int i386_has_sse;
 extern int i386_has_sse2;
 
@@ -354,7 +367,7 @@ void 	cpu_probe(struct cpu_info *);
 void	cpu_identify(struct cpu_info *);
 
 /* cpu_topology.c */
-void	x86_cpu_toplogy(struct cpu_info *);
+void	x86_cpu_topology(struct cpu_info *);
 
 /* vm_machdep.c */
 void	cpu_proc_fork(struct proc *, struct proc *);

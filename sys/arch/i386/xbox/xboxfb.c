@@ -1,4 +1,4 @@
-/*	$NetBSD: xboxfb.c,v 1.12 2008/07/09 20:40:16 joerg Exp $	*/
+/*	$NetBSD: xboxfb.c,v 1.12.8.1 2010/10/24 22:48:06 jym Exp $	*/
 
 /*
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xboxfb.c,v 1.12 2008/07/09 20:40:16 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xboxfb.c,v 1.12.8.1 2010/10/24 22:48:06 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -200,7 +200,7 @@ xboxfb_attach(device_t parent, device_t self, void *aux)
 
 	ri = &xboxfb_console_screen.scr_ri;
 
-	sc->sc_memt = X86_BUS_SPACE_MEM;
+	sc->sc_memt = x86_bus_space_mem;
 	sc->sc_memh = xboxfb_console_memh;
 	sc->sc_mode = WSDISPLAYIO_MODE_EMUL;
 
@@ -293,7 +293,7 @@ xboxfb_mmap(void *v, void *vs, off_t offset, int prot)
 	sc = (struct xboxfb_softc *)vd->cookie;
 
 	if (offset >= 0 && offset < XBOX_FB_SIZE) {
-		pa = bus_space_mmap(X86_BUS_SPACE_MEM, XBOX_FB_START,
+		pa = bus_space_mmap(x86_bus_space_mem, XBOX_FB_START,
 		    offset, prot, BUS_SPACE_MAP_LINEAR);
 		return pa;
 	}
@@ -389,7 +389,7 @@ xboxfb_smbus_pic_read(bus_space_tag_t t, bus_space_handle_t h, uint8_t cmd)
 static uint8_t
 xboxfb_get_encoder(void)
 {
-	bus_space_tag_t t = X86_BUS_SPACE_IO;
+	bus_space_tag_t t = x86_bus_space_io;
 	bus_space_handle_t h;
 	uint8_t rv;
 
@@ -415,7 +415,7 @@ xboxfb_get_encoder(void)
 static uint8_t
 xboxfb_is_widescreen(void)
 {
-	bus_space_tag_t t = X86_BUS_SPACE_IO;
+	bus_space_tag_t t = x86_bus_space_io;
 	bus_space_handle_t h;
 	uint8_t rv;
 
@@ -437,7 +437,7 @@ xboxfb_get_avpack(void)
 	bus_space_handle_t h;
 	uint8_t rv;
 
-	t = X86_BUS_SPACE_IO;
+	t = x86_bus_space_io;
 	rv = bus_space_map(t, XBOX_SMBUS_BA, 16, 0, &h);
 	if (rv)
 		return PIC16LC_REG_AVPACK_COMPOSITE; /* shouldn't happen */
@@ -518,7 +518,7 @@ xboxfb_cnattach(void)
 	if (xboxfb_console_shadowbits == NULL)
 		aprint_error("xboxfb_cnattach: failed to allocate shadowfb\n");
 
-	if (bus_space_map(X86_BUS_SPACE_MEM, XBOX_FB_START, fbsize,
+	if (bus_space_map(x86_bus_space_mem, XBOX_FB_START, fbsize,
 	    BUS_SPACE_MAP_LINEAR, &xboxfb_console_memh)) {
 		aprint_error("xboxfb_cnattach: failed to map memory.\n");
 		return 1;
@@ -529,11 +529,11 @@ xboxfb_cnattach(void)
 	ri->ri_flg = 0; /* RI_CENTER does not work with shadowfb */
 	if (xboxfb_console_shadowbits) {
 		ri->ri_bits = xboxfb_console_shadowbits;
-		ri->ri_hwbits = bus_space_vaddr(X86_BUS_SPACE_MEM,
+		ri->ri_hwbits = bus_space_vaddr(x86_bus_space_mem,
 		    xboxfb_console_memh);
 		xboxfb_console_bits = ri->ri_hwbits;
 	} else {
-		ri->ri_bits = bus_space_vaddr(X86_BUS_SPACE_MEM,
+		ri->ri_bits = bus_space_vaddr(x86_bus_space_mem,
 		    xboxfb_console_memh);
 		ri->ri_hwbits = NULL;
 		xboxfb_console_bits = ri->ri_bits;

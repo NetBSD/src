@@ -1,4 +1,4 @@
-/*	$NetBSD: elan520.c,v 1.37.2.2 2009/11/01 13:58:35 jym Exp $	*/
+/*	$NetBSD: elan520.c,v 1.37.2.3 2010/10/24 22:48:03 jym Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: elan520.c,v 1.37.2.2 2009/11/01 13:58:35 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elan520.c,v 1.37.2.3 2010/10/24 22:48:03 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,6 +106,11 @@ struct elansc_softc {
 	struct gpio_chipset_tag sc_gpio_gc;
 	gpio_pin_t sc_gpio_pins[ELANSC_PIO_NPINS];
 #endif
+};
+
+struct pareg {
+	paddr_t start;
+	paddr_t end;
 };
 
 static bool elansc_attached = false;
@@ -647,11 +652,6 @@ elansc_disable_par(bus_space_tag_t memt, bus_space_handle_t memh, int idx)
 	bus_space_write_4(memt, memh, MMCR_PAR(idx), par);
 }
 
-struct pareg {
-	paddr_t start;
-	paddr_t end;
-};
-
 static int
 region_paddr_to_par(struct pareg *region0, struct pareg *regions, uint32_t unit)
 {
@@ -725,8 +725,9 @@ elansc_protect_text(device_t self, struct elansc_softc *sc)
 	par = bus_space_read_4(memt, memh, MMCR_PAR(pidx));
 
 	aprint_debug_dev(self,
-	    "protect kernel text at physical addresses %p - %p\n",
-	    (void *)region0.start, (void *)region0.end);
+	    "protect kernel text at physical addresses "
+	    "%#" PRIxPADDR " - %#" PRIxPADDR "\n",
+	    region0.start, region0.end);
 
 	nregion = region_paddr_to_par(&region0, regions, sfkb);
 	if (nregion == 0) {
@@ -742,8 +743,9 @@ elansc_protect_text(device_t self, struct elansc_softc *sc)
 	end_pa = regions[0].end;
 
 	aprint_debug_dev(self,
-	    "actually protect kernel text at physical addresses %p - %p\n",
-	    (void *)start_pa, (void *)end_pa);
+	    "actually protect kernel text at physical addresses "
+	    "%#" PRIxPADDR " - %#" PRIxPADDR "\n",
+	    start_pa, end_pa);
 
 	aprint_verbose_dev(self,
 	    "%" PRIu32 " bytes of kernel text are unprotected\n", unprotsize);
@@ -758,8 +760,9 @@ elansc_protect_text(device_t self, struct elansc_softc *sc)
 	for (i = 1; i < nregion; i++) {
 		xnregion = region_paddr_to_par(&regions[i], xregions, fkb);
 		if (xnregion == 0) {
-			aprint_verbose_dev(self, "skip region %p - %p\n",
-			    (void *)regions[i].start, (void *)regions[i].end);
+			aprint_verbose_dev(self, "skip region "
+			    "%#" PRIxPADDR " - %#" PRIxPADDR "\n",
+			    regions[i].start, regions[i].end);
 			continue;
 		}
 		if ((pidx = elansc_alloc_par(memt, memh)) == -1) {
@@ -771,8 +774,9 @@ elansc_protect_text(device_t self, struct elansc_softc *sc)
 		sc->sc_textpar[tidx++] = pidx;
 
 		aprint_debug_dev(self,
-		    "protect add'l kernel text at physical addresses %p - %p\n",
-		    (void *)xregions[0].start, (void *)xregions[0].end);
+		    "protect add'l kernel text at physical addresses "
+		    "%#" PRIxPADDR " - %#" PRIxPADDR "\n",
+		    xregions[0].start, xregions[0].end);
 
 		for (j = 1; j < xnregion; j++)
 			unprotsize += xregions[j].end - xregions[j].start;
@@ -847,7 +851,7 @@ elanpex_intr_ack(bus_space_tag_t memt, bus_space_handle_t memh)
 }
 
 static bool
-elansc_suspend(device_t dev PMF_FN_ARGS)
+elansc_suspend(device_t dev, const pmf_qual_t *qual)
 {
 	bool rc;
 	struct elansc_softc *sc = device_private(dev);
@@ -861,7 +865,7 @@ elansc_suspend(device_t dev PMF_FN_ARGS)
 }
 
 static bool
-elansc_resume(device_t dev PMF_FN_ARGS)
+elansc_resume(device_t dev, const pmf_qual_t *qual)
 {
 	struct elansc_softc *sc = device_private(dev);
 
@@ -947,7 +951,7 @@ elansc_intr_establish(device_t dev, int (*handler)(void *), void *arg)
 }
 
 static bool
-elanpex_resume(device_t self PMF_FN_ARGS)
+elanpex_resume(device_t self, const pmf_qual_t *qual)
 {
 	struct elansc_softc *sc = device_private(device_parent(self));
 
@@ -956,7 +960,7 @@ elanpex_resume(device_t self PMF_FN_ARGS)
 }
 
 static bool
-elanpex_suspend(device_t self PMF_FN_ARGS)
+elanpex_suspend(device_t self, const pmf_qual_t *qual)
 {
 	struct elansc_softc *sc = device_private(device_parent(self));
 
@@ -966,7 +970,7 @@ elanpex_suspend(device_t self PMF_FN_ARGS)
 }
 
 static bool
-elanpar_resume(device_t self PMF_FN_ARGS)
+elanpar_resume(device_t self, const pmf_qual_t *qual)
 {
 	struct elansc_softc *sc = device_private(device_parent(self));
 
@@ -975,7 +979,7 @@ elanpar_resume(device_t self PMF_FN_ARGS)
 }
 
 static bool
-elanpar_suspend(device_t self PMF_FN_ARGS)
+elanpar_suspend(device_t self, const pmf_qual_t *qual)
 {
 	struct elansc_softc *sc = device_private(device_parent(self));
 
@@ -1422,12 +1426,6 @@ elanpar_match(device_t parent, cfdata_t match, void *aux)
 	struct elansc_softc *sc = device_private(parent);
 
 	return sc->sc_par == NULL;
-}
-
-static bool
-ifattr_match(const char *snull, const char *t)
-{
-	return (snull == NULL) || strcmp(snull, t) == 0;
 }
 
 /* scan for new children */

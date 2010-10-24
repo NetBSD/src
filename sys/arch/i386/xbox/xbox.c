@@ -1,4 +1,4 @@
-/* $NetBSD: xbox.c,v 1.4 2008/05/05 00:18:50 jmcneill Exp $ */
+/* $NetBSD: xbox.c,v 1.4.14.1 2010/10/24 22:48:06 jym Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbox.c,v 1.4 2008/05/05 00:18:50 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbox.c,v 1.4.14.1 2010/10/24 22:48:06 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,11 +75,11 @@ xbox_startup(void)
 	 * nfe(4) attach correctly. As the NIC always resides at
 	 * 0xfef00000-0xfef003ff on an XBOX, we simply hardcode this address.
 	 */
-	rv = bus_space_map(X86_BUS_SPACE_MEM, XBOX_NFORCE_NIC,
+	rv = bus_space_map(x86_bus_space_mem, XBOX_NFORCE_NIC,
 	    0x400, 0, &h);
 	if (!rv) {
-		bus_space_write_4(X86_BUS_SPACE_MEM, h, 0x188, 0);
-		bus_space_unmap(X86_BUS_SPACE_MEM, h, 0x400);
+		bus_space_write_4(x86_bus_space_mem, h, 0x188, 0);
+		bus_space_unmap(x86_bus_space_mem, h, 0x400);
 	}
 
 	

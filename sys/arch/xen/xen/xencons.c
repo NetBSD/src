@@ -1,4 +1,4 @@
-/*	$NetBSD: xencons.c,v 1.31.2.6 2009/11/01 21:43:28 jym Exp $	*/
+/*	$NetBSD: xencons.c,v 1.31.2.7 2010/10/24 22:48:23 jym Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -53,7 +53,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xencons.c,v 1.31.2.6 2009/11/01 21:43:28 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xencons.c,v 1.31.2.7 2010/10/24 22:48:23 jym Exp $");
 
 #include "opt_xen.h"
 
@@ -134,8 +134,8 @@ int xenconscn_getc(dev_t);
 void xenconscn_putc(dev_t, int);
 void xenconscn_pollc(dev_t, int);
 
-static bool xencons_suspend(device_t PMF_FN_PROTO);
-static bool xencons_resume(device_t PMF_FN_PROTO);
+static bool xencons_suspend(device_t, const pmf_qual_t *);
+static bool xencons_resume(device_t, const pmf_qual_t *);
 
 static struct consdev xencons = {
 	NULL, NULL, xenconscn_getc, xenconscn_putc, xenconscn_pollc,
@@ -200,7 +200,7 @@ xencons_attach(device_t parent, device_t self, void *aux)
 }
 
 static bool
-xencons_suspend(device_t dev PMF_FN_ARGS) {
+xencons_suspend(device_t dev, const pmf_qual_t *qual) {
 
 	int evtch;
 
@@ -222,7 +222,7 @@ xencons_suspend(device_t dev PMF_FN_ARGS) {
 }
 
 static bool
-xencons_resume(device_t dev PMF_FN_ARGS) {
+xencons_resume(device_t dev, const pmf_qual_t *qual) {
 
 	int evtch = -1;
 

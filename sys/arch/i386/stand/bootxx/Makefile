@@ -1,7 +1,12 @@
-# $NetBSD: Makefile,v 1.11 2006/11/14 14:03:12 drochner Exp $
+# $NetBSD: Makefile,v 1.11.70.1 2010/10/24 22:48:04 jym Exp $
 
 SUBDIR=	bootxx_cd9660 bootxx_ffsv1 .WAIT bootxx_ffsv2 bootxx_lfsv1 bootxx_lfsv2
 SUBDIR+=bootxx_msdos bootxx_ustarfs
+
+# Ext2fs doesn't have enough free space (it has only 1KB)
+# to store this primary bootloader, but we can put it into
+# an independent small 'boot' partition as NetBSD/hp300 does.
+SUBDIR+=bootxx_ext2fs
 
 LIBOBJ= ${.OBJDIR}
 .MAKEOVERRIDES+= LIBOBJ
@@ -9,7 +14,7 @@ LIBOBJ= ${.OBJDIR}
 .include <bsd.subdir.mk>
 .include <bsd.obj.mk>
 
-cleandir distclean: cleanlibdir
+cleandir distclean: .WAIT cleanlibdir
 
 cleanlibdir:
 	-rm -rf lib

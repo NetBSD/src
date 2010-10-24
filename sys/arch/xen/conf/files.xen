@@ -1,4 +1,4 @@
-#	$NetBSD: files.xen,v 1.92.2.3 2009/11/01 13:58:44 jym Exp $
+#	$NetBSD: files.xen,v 1.92.2.4 2010/10/24 22:48:20 jym Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 #	NetBSD: files.i386,v 1.254 2004/03/25 23:32:10 jmc Exp 
 
@@ -13,6 +13,9 @@ defflag opt_mpbios.h MPBIOS MPVERBOSE MPDEBUG MPBIOS_SCANPCI
 
 # delay before cpu_reset() for reboot.
 defparam		CPURESET_DELAY
+
+# splraise()/spllower() debug
+defflag	opt_spldebug.h			SPLDEBUG
 
 # Beep on halt
 defflag opt_beep.h		BEEP_ONHALT
@@ -59,7 +62,6 @@ file	arch/i386/i386/longrun.c
 file	arch/i386/i386/mem.c
 file	arch/i386/i386/mtrr_k6.c	mtrr
 file	arch/i386/i386/process_machdep.c
-file	arch/i386/i386/procfs_machdep.c	procfs
 file	arch/i386/i386/trap.c
 file	arch/i386/i386/lock_stubs.S
 
@@ -91,7 +93,6 @@ file	arch/amd64/amd64/gdt.c
 file	arch/amd64/amd64/machdep.c
 file	arch/amd64/amd64/mem.c
 file	arch/amd64/amd64/process_machdep.c
-file	arch/amd64/amd64/procfs_machdep.c	procfs
 file	arch/amd64/amd64/trap.c
 file	arch/amd64/amd64/fpu.c
 file	arch/amd64/amd64/lock_stubs.S
@@ -103,6 +104,7 @@ file	arch/xen/x86/hypervisor_machdep.c
 # file 	arch/x86/x86/mtrr_i686.c	mtrr
 file	arch/x86/x86/syscall.c
 file	arch/xen/x86/x86_xpmap.c
+file	arch/xen/x86/xen_pmap.c
 file	arch/xen/x86/xen_intr.c
 file	arch/xen/x86/xenfunc.c
 
@@ -142,6 +144,7 @@ file	arch/x86/x86/identcpu.c
 file	arch/xen/x86/intr.c
 file	arch/x86/x86/ipi.c
 file	arch/x86/x86/pmap.c
+file	arch/x86/x86/procfs_machdep.c	procfs
 file	arch/x86/x86/sys_machdep.c
 file	arch/x86/x86/tsc.c
 file	arch/x86/x86/vm_machdep.c
@@ -392,7 +395,7 @@ endif
 include	"dev/pcmcia/files.pcmcia"
 
 # Domain-0 operations
-defflag	opt_xen.h			DOM0OPS XEN_COMPAT_030001
+defflag	opt_xen.h			DOM0OPS XEN_COMPAT_030001 XEN_BALLOON
 file	arch/xen/xen/privcmd.c		dom0ops
 file 	arch/xen/x86/xen_shm_machdep.c	dom0ops
 file	arch/x86/pci/pci_machdep.c	hypervisor & pci & dom0ops
@@ -402,6 +405,7 @@ file	arch/xen/xen/xenevt.c		xenevt & dom0ops
 file	arch/xen/xen/xennetback_xenbus.c xvif
 file	arch/xen/xen/xennet_checksum.c	xvif | xennet
 file	arch/xen/xen/xbdback_xenbus.c xbdback
+file    arch/xen/xen/balloon.c          hypervisor
 
 ifdef i386
 include "arch/i386/conf/majors.i386"

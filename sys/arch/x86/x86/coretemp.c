@@ -1,4 +1,4 @@
-/* $NetBSD: coretemp.c,v 1.11.8.2 2009/11/01 13:58:17 jym Exp $ */
+/* $NetBSD: coretemp.c,v 1.11.8.3 2010/10/24 22:48:18 jym Exp $ */
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coretemp.c,v 1.11.8.2 2009/11/01 13:58:17 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coretemp.c,v 1.11.8.3 2010/10/24 22:48:18 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -67,14 +67,20 @@ coretemp_register(struct cpu_info *ci)
 	struct coretemp_softc *sc;
 	uint32_t regs[4];
 	uint64_t msr;
-	int cpumodel, cpumask;
+	int cpumodel, cpuextmodel, cpumask;
+
+	/*
+	 * Don't attach on anything but the first SMT ID.
+	 */
+	if (ci->ci_smt_id != 0)
+		return;
 
 	/*
 	 * CPUID 0x06 returns 1 if the processor has on-die thermal
 	 * sensors. EBX[0:3] contains the number of sensors.
 	 */
 	x86_cpuid(0x06, regs);
-	if ((regs[0] & 0x1) != 1)
+	if ((regs[0] & CPUID_DSPM_DTS) == 0)
 		return;
 
 	sc = kmem_zalloc(sizeof(struct coretemp_softc), KM_NOSLEEP);
@@ -85,7 +91,7 @@ coretemp_register(struct cpu_info *ci)
 	    (int)device_unit(ci->ci_dev));
 	cpumodel = CPUID2MODEL(ci->ci_signature);
 	/* extended model */
-	cpumodel += CPUID2EXTMODEL(ci->ci_signature);
+	cpuextmodel = CPUID2EXTMODEL(ci->ci_signature);
 	cpumask = ci->ci_signature & 15;
 
 	/*
@@ -111,9 +117,12 @@ coretemp_register(struct cpu_info *ci)
 	 *
 	 * The if-clause for CPUs having the MSR_IA32_EXT_CONFIG was adapted
 	 * from the Linux coretemp driver.
+	 *
+	 * MSR_IA32_EXT_CONFIG is NOT safe on all CPUs
 	 */
 	sc->sc_tjmax = 100;
-	if ((cpumodel == 0xf && cpumask >= 2) || cpumodel == 0xe) {
+	if ((cpumodel == 0xf && cpumask >= 2) ||
+	    (cpumodel == 0xe && cpuextmodel != 1)) {
 		msr = rdmsr(MSR_IA32_EXT_CONFIG);
 		if (msr & (1 << 30))
 			sc->sc_tjmax = 85;
@@ -135,7 +144,6 @@ coretemp_register(struct cpu_info *ci)
 	 */
 	sc->sc_sensor.units = ENVSYS_STEMP;
 	sc->sc_sensor.flags = ENVSYS_FMONCRITICAL;
-	sc->sc_sensor.monitor = true;
 	(void)snprintf(sc->sc_sensor.desc, sizeof(sc->sc_sensor.desc),
 	    "%s temperature", device_xname(ci->ci_dev));
 

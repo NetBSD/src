@@ -1,4 +1,4 @@
-/*	$NetBSD: eisa_machdep.h,v 1.11 2008/06/27 11:12:06 cegger Exp $	*/
+/*	$NetBSD: eisa_machdep.h,v 1.11.10.1 2010/10/24 22:48:02 jym Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -67,10 +67,6 @@ const struct evcnt *eisa_intr_evcnt(eisa_chipset_tag_t, eisa_intr_handle_t);
 void		*eisa_intr_establish(eisa_chipset_tag_t,
 		    eisa_intr_handle_t, int, int, int (*)(void *), void *);
 void		eisa_intr_disestablish(eisa_chipset_tag_t, void *);
-int		eisa_mem_alloc(bus_space_tag_t, bus_size_t, bus_size_t,
-		    bus_addr_t, int, bus_addr_t *, bus_space_handle_t *);
-void		eisa_mem_free(bus_space_tag_t, bus_space_handle_t,
-		    bus_size_t);
 
 int		eisa_conf_read_mem(eisa_chipset_tag_t, int, int, int,
 		    struct eisa_cfg_mem *);

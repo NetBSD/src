@@ -1,4 +1,4 @@
-/*	$NetBSD: powernow_k8.c,v 1.24.4.1 2009/11/01 13:58:18 jym Exp $ */
+/*	$NetBSD: powernow_k8.c,v 1.24.4.2 2010/10/24 22:48:19 jym Exp $ */
 /*	$OpenBSD: powernow-k8.c,v 1.8 2006/06/16 05:58:50 gwk Exp $ */
 
 /*-
@@ -59,7 +59,7 @@
 /* AMD POWERNOW K8 driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: powernow_k8.c,v 1.24.4.1 2009/11/01 13:58:18 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: powernow_k8.c,v 1.24.4.2 2010/10/24 22:48:19 jym Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

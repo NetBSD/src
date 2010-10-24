@@ -1,4 +1,4 @@
-/*	$NetBSD: mptramp.S,v 1.18 2008/08/26 13:07:48 drochner Exp $	*/
+/*	$NetBSD: mptramp.S,v 1.18.8.1 2010/10/24 22:48:01 jym Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: mptramp.S,v 1.18 2008/08/26 13:07:48 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mptramp.S,v 1.18.8.1 2010/10/24 22:48:01 jym Exp $");
 	
 #include "opt_mpbios.h"		/* for MPDEBUG */
 		
@@ -125,8 +125,8 @@ _C_LABEL(cpu_spinup_trampoline):
 	movw    %ax, %es
 	movw    %ax, %ss
 	data32 addr32 lgdt    (gdt_desc)      # load flat descriptor table
-	movl    %cr0, %eax       # get cr0
-	orl     $0x1, %eax      # enable protected mode
+	movl    %cr0, %eax      # get cr0
+	orl     $CR0_PE, %eax   # enable protected mode
 	movl    %eax, %cr0      # doit
 	ljmpl    $0x8, $mp_startup
 
@@ -158,7 +158,14 @@ _TRMP_LABEL(mp_startup)
 	movl	%cr4,%eax
 	orl	$CR4_PSE,%eax
 	movl	%eax,%cr4
+
 1:
+
+#ifdef PAE /* Enable PAE */
+	movl	%cr4,%eax
+	or	$CR4_PAE,%eax
+	movl	%eax,%cr4
+#endif
 
 	movl	RELOC(mp_pdirpa),%ecx
 	HALTT(0x5,%ecx)
@@ -174,6 +181,18 @@ _TRMP_LABEL(mp_startup)
 	leal    _C_LABEL(cpu_trace),%edi
 #endif
 	HALT(0x6)
+
+	/*
+	 * If EFER_NXE is not enabled, fetching a page with a NX bit set
+	 * will raise a #GP. Avoid that by setting the NXE feature now.
+	 */
+	movl	_C_LABEL(cpu_feature)+2*4,%eax	/* cpu_feature[2] */
+	andl	$CPUID_NOX,%eax
+	jz	1f
+	movl	$MSR_EFER,%ecx
+	rdmsr
+	orl	$EFER_NXE,%eax	/* enable No-Execute feature */
+	wrmsr
 
 /*
  * ok, we are now running with paging enabled and sharing page tables
@@ -224,7 +243,7 @@ mp_cont:
 	HALT(0x15)
 
 	movl	CPU_INFO_IDLELWP(%ecx),%esi
-	movl	L_ADDR(%esi),%esi
+	movl	L_PCB(%esi),%esi
 	
 	/* %esi now points at our PCB. */
 		

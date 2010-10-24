@@ -1,4 +1,4 @@
-/*	$NetBSD: pceb.c,v 1.22 2008/05/05 11:49:40 xtraeme Exp $	*/
+/*	$NetBSD: pceb.c,v 1.22.14.1 2010/10/24 22:48:03 jym Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pceb.c,v 1.22 2008/05/05 11:49:40 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pceb.c,v 1.22.14.1 2010/10/24 22:48:03 jym Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -121,8 +121,8 @@ pceb_callback(device_t self)
 	 * Attach the EISA bus behind this bridge.
 	 */
 	memset(&ea, 0, sizeof(ea));
-	ea.ea_eba.eba_iot = X86_BUS_SPACE_IO;
-	ea.ea_eba.eba_memt = X86_BUS_SPACE_MEM;
+	ea.ea_eba.eba_iot = x86_bus_space_io;
+	ea.ea_eba.eba_memt = x86_bus_space_mem;
 #if NEISA > 0
 	ea.ea_eba.eba_dmat = &eisa_bus_dma_tag;
 #endif
@@ -132,8 +132,8 @@ pceb_callback(device_t self)
 	 * Attach the ISA bus behind this bridge.
 	 */
 	memset(&ea, 0, sizeof(ea));
-	ea.ea_iba.iba_iot = X86_BUS_SPACE_IO;
-	ea.ea_iba.iba_memt = X86_BUS_SPACE_MEM;
+	ea.ea_iba.iba_iot = x86_bus_space_io;
+	ea.ea_iba.iba_memt = x86_bus_space_mem;
 #if NISA > 0
 	ea.ea_iba.iba_dmat = &isa_bus_dma_tag;
 #endif

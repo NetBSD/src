@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_topology.c,v 1.1.4.4 2009/11/01 13:58:17 jym Exp $	*/
+/*	$NetBSD: cpu_topology.c,v 1.1.4.5 2010/10/24 22:48:18 jym Exp $	*/
 
 /*-
  * Copyright (c) 2009 Mindaugas Rasiukevicius <rmind at NetBSD org>,
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_topology.c,v 1.1.4.4 2009/11/01 13:58:17 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_topology.c,v 1.1.4.5 2010/10/24 22:48:18 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/bitops.h>
@@ -49,9 +49,9 @@ __KERNEL_RCSID(0, "$NetBSD: cpu_topology.c,v 1.1.4.4 2009/11/01 13:58:17 jym Exp
 #include <x86/cpuvar.h>
 
 void
-x86_cpu_toplogy(struct cpu_info *ci)
+x86_cpu_topology(struct cpu_info *ci)
 {
-	u_int lp_max;		/* Logical processors per package */
+	u_int lp_max;		/* Logical processors per package (node) */
 	u_int core_max;		/* Core per package */
 	int n, cpu_family, apic_id, smt_bits, core_bits = 0;
 	uint32_t descs[4], lextmode;
@@ -60,9 +60,9 @@ x86_cpu_toplogy(struct cpu_info *ci)
 	cpu_family = CPUID2FAMILY(ci->ci_signature);
 
 	/* Initial values. */
-	ci->ci_packageid = apic_id;
-	ci->ci_coreid = 0;
-	ci->ci_smtid = 0;
+	ci->ci_package_id = apic_id;
+	ci->ci_core_id = 0;
+	ci->ci_smt_id = 0;
 
 	switch (cpu_vendor) {
 	case CPUVENDOR_INTEL:
@@ -82,11 +82,12 @@ x86_cpu_toplogy(struct cpu_info *ci)
 	lextmode = descs[0];
 	if (lextmode >= 0x80000001) {
 		x86_cpuid(0x80000001, descs);
-		ci->ci_feature3_flags |= descs[3]; /* edx */
+		ci->ci_feat_val[2] = descs[3]; /* edx */
+		ci->ci_feat_val[3] = descs[2]; /* ecx */
 	}
 
 	/* Check for HTT support.  See notes below regarding AMD. */
-	if ((ci->ci_feature_flags & CPUID_HTT) != 0) {
+	if ((ci->ci_feat_val[0] & CPUID_HTT) != 0) {
 		/* Maximum number of LPs sharing a cache (ebx[23:16]). */
 		x86_cpuid(1, descs);
 		lp_max = (descs[1] >> 16) & 0xff;
@@ -108,7 +109,7 @@ x86_cpu_toplogy(struct cpu_info *ci)
 		break;
 	case CPUVENDOR_AMD:
 		/* In a case of AMD, HTT flag means CMP support. */
-		if ((ci->ci_feature_flags & CPUID_HTT) == 0) {
+		if ((ci->ci_feat_val[0] & CPUID_HTT) == 0) {
 			core_max = 1;
 			break;
 		}
@@ -160,14 +161,14 @@ x86_cpu_toplogy(struct cpu_info *ci)
 	}
 
 	if (smt_bits + core_bits) {
-		ci->ci_packageid = apic_id >> (smt_bits + core_bits);
+		ci->ci_package_id = apic_id >> (smt_bits + core_bits);
 	}
 	if (core_bits) {
 		u_int core_mask = __BITS(smt_bits, smt_bits + core_bits - 1);
-		ci->ci_coreid = __SHIFTOUT(apic_id, core_mask);
+		ci->ci_core_id = __SHIFTOUT(apic_id, core_mask);
 	}
 	if (smt_bits) {
 		u_int smt_mask = __BITS(0, smt_bits - 1);
-		ci->ci_smtid = __SHIFTOUT(apic_id, smt_mask);
+		ci->ci_smt_id = __SHIFTOUT(apic_id, smt_mask);
 	}
 }

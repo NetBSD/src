@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.49.2.4 2009/11/01 21:43:28 jym Exp $	*/
+/*	$NetBSD: clock.c,v 1.49.2.5 2010/10/24 22:48:22 jym Exp $	*/
 
 /*
  *
@@ -29,7 +29,7 @@
 #include "opt_xen.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.49.2.4 2009/11/01 21:43:28 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.49.2.5 2010/10/24 22:48:22 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -233,7 +233,7 @@ xen_wall_time(struct timespec *wt)
 }
 
 static int
-xen_rtc_get(todr_chip_handle_t todr, volatile struct timeval *tvp)
+xen_rtc_get(todr_chip_handle_t todr, struct timeval *tvp)
 {
 	struct timespec wt;
 
@@ -245,7 +245,7 @@ xen_rtc_get(todr_chip_handle_t todr, volatile struct timeval *tvp)
 }
 
 static int
-xen_rtc_set(todr_chip_handle_t todr, volatile struct timeval *tvp)
+xen_rtc_set(todr_chip_handle_t todr, struct timeval *tvp)
 {
 #ifdef DOM0OPS
 #if __XEN_INTERFACE_VERSION__ < 0x00030204
@@ -303,7 +303,7 @@ xen_delay(unsigned int n)
 	if (n < 500000) {
 		/*
 		 * shadow_system_time is updated every hz tick, it's not
-		 * precise enouth for short delays. Use the CPU counter
+		 * precise enough for short delays. Use the CPU counter
 		 * instead. We assume it's working at this point.
 		 */
 		uint64_t cc, cc2, when;

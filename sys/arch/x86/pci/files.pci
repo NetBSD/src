@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.7.8.1 2009/11/01 13:58:17 jym Exp $
+#	$NetBSD: files.pci,v 1.7.8.2 2010/10/24 22:48:17 jym Exp $
 
 device 	aapic
 attach 	aapic at pci
@@ -11,13 +11,12 @@ device	pchb:	pcibus, agpbus, agp_ali, agp_amd, agp_amd64, agp_i810,
 		agp_intel, agp_sis, agp_via
 attach	pchb at pci
 file	arch/x86/pci/pchb.c		pchb		needs-flag
-file	arch/x86/pci/pchb_rnd.c		pchb & rnd
 
 # PCI-ISA bridges
 device	pcib: isabus
 attach	pcib at pci
-file	arch/x86/pci/pcib.c		pcib | ichlpcib | gscpcib | piixpcib | viapcib |
-					amdpcib
+file	arch/x86/pci/pcib.c		pcib | ichlpcib | gscpcib | piixpcib |
+					viapcib | amdpcib | gcscpcib
 
 device	amdpcib {} : isabus
 attach	amdpcib at pci
@@ -32,9 +31,14 @@ attach	amdtemp at pci
 file	arch/x86/pci/amdtemp.c		amdtemp
 
 # PCI-LPC bridges
+define	fwhichbus {}
 define	hpetichbus {}
-device	ichlpcib: acpipmtimer, isabus, sysmon_wdog, hpetichbus, gpiobus
+device	ichlpcib: acpipmtimer, isabus, sysmon_wdog, fwhichbus, hpetichbus, gpiobus
 attach	ichlpcib at pci
 attach	hpet at hpetichbus with ichlpcib_hpet
 
 file 	arch/x86/pci/ichlpcib.c 	ichlpcib
+
+device	fwhrng
+attach	fwhrng at fwhichbus
+file	arch/x86/pci/fwhrng.c		fwhrng needs-flag

@@ -1,4 +1,4 @@
-/*	$NetBSD: ipmi.c,v 1.28.2.3 2009/11/01 13:58:18 jym Exp $ */
+/*	$NetBSD: ipmi.c,v 1.28.2.4 2010/10/24 22:48:18 jym Exp $ */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.28.2.3 2009/11/01 13:58:18 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.28.2.4 2010/10/24 22:48:18 jym Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -84,7 +84,8 @@ struct ipmi_sensor {
 	char		i_envdesc[64];
 	int 		i_envtype; /* envsys compatible type */
 	int		i_envnum; /* envsys index */
-	sysmon_envsys_lim_t i_limits;
+	sysmon_envsys_lim_t i_limits, i_deflims;
+	uint32_t	i_props, i_defprops;
 	SLIST_ENTRY(ipmi_sensor) i_list;
 };
 
@@ -187,7 +188,6 @@ int	ipmi_match(device_t, cfdata_t, void *);
 void	ipmi_attach(device_t, device_t, void *);
 static int ipmi_detach(device_t, int);
 
-long	ipow(long, int);
 long	ipmi_convert(uint8_t, struct sdrtype1 *, long);
 void	ipmi_sensor_name(char *, int, uint8_t, uint8_t *);
 
@@ -213,16 +213,18 @@ void	*scan_sig(long, long, int, int, const void *);
 
 int32_t	ipmi_convert_sensor(uint8_t *, struct ipmi_sensor *);
 void	ipmi_set_limits(struct sysmon_envsys *, envsys_data_t *,
-			sysmon_envsys_lim_t *);
+			sysmon_envsys_lim_t *, uint32_t *);
 void	ipmi_get_limits(struct sysmon_envsys *, envsys_data_t *,
-			sysmon_envsys_lim_t *);
+			sysmon_envsys_lim_t *, uint32_t *);
 void	ipmi_get_sensor_limits(struct ipmi_softc *, struct ipmi_sensor *,
-			       sysmon_envsys_lim_t *);
+			       sysmon_envsys_lim_t *, uint32_t *);
 int	ipmi_sensor_status(struct ipmi_softc *, struct ipmi_sensor *,
 			   envsys_data_t *, uint8_t *);
 
 int	 add_child_sensors(struct ipmi_softc *, uint8_t *, int, int, int,
     int, int, int, const char *);
+
+bool	ipmi_suspend(device_t, const pmf_qual_t *);
 
 struct ipmi_if kcs_if = {
 	"KCS",
@@ -301,7 +303,9 @@ bmc_io_wait_sleep(struct ipmi_softc *sc, int offset, uint8_t mask,
 		v = bmc_read(sc, offset);
 		if ((v & mask) == value)
 			return v;
-		cv_timedwait(&sc->sc_cmd_sleep, &sc->sc_cmd_mtx, 1);
+		mutex_enter(&sc->sc_sleep_mtx);
+		cv_timedwait(&sc->sc_cmd_sleep, &sc->sc_sleep_mtx, 1);
+		mutex_exit(&sc->sc_sleep_mtx);
 	}
 	return -1;
 }
@@ -324,7 +328,7 @@ bmc_io_wait_spin(struct ipmi_softc *sc, int offset, uint8_t mask,
     uint8_t value)
 {
 	uint8_t	v;
-	int			count = cold ? 5000 : 500;
+	int			count = cold ? 15000 : 500;
 	/* ~us */
 
 	while (count--) {
@@ -1032,7 +1036,7 @@ ipmi_sendcmd(struct ipmi_softc *sc, int rssa, int rslun, int netfn, int cmd,
 		    txlen, data, &txlen);
 
 	if (buf == NULL) {
-		printf("ipmi: sendcmd malloc fails\n");
+		printf("ipmi: sendcmd buffer busy\n");
 		goto done;
 	}
 	rc = sc->sc_if->sendmsg(sc, txlen, buf);
@@ -1079,8 +1083,10 @@ ipmi_recvcmd(struct ipmi_softc *sc, int maxlen, int *rxlen, void *data)
 		return (-1);
 	}
 	/* Receive message from interface, copy out result data */
-	if (sc->sc_if->recvmsg(sc, maxlen + 3, &rawlen, buf))
+	if (sc->sc_if->recvmsg(sc, maxlen + 3, &rawlen, buf)) {
+		ipmi_buf_release(sc, buf);
 		return (-1);
+	}
 
 	*rxlen = rawlen - IPMI_MSG_DATARCV;
 	if (*rxlen > 0 && data)
@@ -1108,8 +1114,11 @@ ipmi_delay(struct ipmi_softc *sc, int ms)
 {
 	if (cold)
 		delay(ms * 1000);
-	else
-		cv_timedwait(&sc->sc_cmd_sleep, &sc->sc_cmd_mtx, mstohz(ms));
+	else {
+		mutex_enter(&sc->sc_sleep_mtx);
+		cv_timedwait(&sc->sc_cmd_sleep, &sc->sc_sleep_mtx, mstohz(ms));
+		mutex_exit(&sc->sc_sleep_mtx);
+	}
 }
 
 /* Read a partial SDR entry */
@@ -1266,23 +1275,6 @@ ipmi_sensor_name(char *name, int len, uint8_t typelen, uint8_t *bits)
 	*name = 0;
 }
 
-/* Calculate val * 10^exp */
-long
-ipow(long val, int exp)
-{
-	while (exp > 0) {
-		val *= 10;
-		exp--;
-	}
-
-	while (exp < 0) {
-		val /= 10;
-		exp++;
-	}
-
-	return (val);
-}
-
 /* Sign extend a n-bit value */
 long
 signextend(unsigned long val, int bits)
@@ -1292,13 +1284,159 @@ signextend(unsigned long val, int bits)
 	return (-(val & ~msk) | val);
 }
 
+
+/* fixpoint arithmetic */
+#define FIX2INT(x)   ((int64_t)((x) >> 32))
+#define INT2FIX(x)   ((int64_t)((int64_t)(x) << 32))
+
+#define FIX2            0x0000000200000000ll /* 2.0 */
+#define FIX3            0x0000000300000000ll /* 3.0 */
+#define FIXE            0x00000002b7e15163ll /* 2.71828182845904523536 */
+#define FIX10           0x0000000a00000000ll /* 10.0 */
+#define FIXMONE         0xffffffff00000000ll /* -1.0 */
+#define FIXHALF         0x0000000080000000ll /* 0.5 */
+#define FIXTHIRD        0x0000000055555555ll /* 0.33333333333333333333 */
+
+#define FIX1LOG2        0x0000000171547653ll /* 1.0/log(2) */
+#define FIX1LOGE        0x0000000100000000ll /* 1.0/log(2.71828182845904523536) */
+#define FIX1LOG10       0x000000006F2DEC55ll /* 1.0/log(10) */
+
+#define FIX1E           0x000000005E2D58D9ll /* 1.0/2.71828182845904523536 */
+
+static int64_t fixlog_a[] = {
+	0x0000000100000000ll /* 1.0/1.0 */,
+	0xffffffff80000000ll /* -1.0/2.0 */,
+	0x0000000055555555ll /* 1.0/3.0 */,
+	0xffffffffc0000000ll /* -1.0/4.0 */,
+	0x0000000033333333ll /* 1.0/5.0 */,
+	0x000000002aaaaaabll /* -1.0/6.0 */,
+	0x0000000024924925ll /* 1.0/7.0 */,
+	0x0000000020000000ll /* -1.0/8.0 */,
+	0x000000001c71c71cll /* 1.0/9.0 */
+}; 
+
+static int64_t fixexp_a[] = {
+	0x0000000100000000ll /* 1.0/1.0 */,
+	0x0000000100000000ll /* 1.0/1.0 */,
+	0x0000000080000000ll /* 1.0/2.0 */,
+	0x000000002aaaaaabll /* 1.0/6.0 */,
+	0x000000000aaaaaabll /* 1.0/24.0 */,
+	0x0000000002222222ll /* 1.0/120.0 */, 
+	0x00000000005b05b0ll /* 1.0/720.0 */,
+	0x00000000000d00d0ll /* 1.0/5040.0 */,
+	0x000000000001a01all /* 1.0/40320.0 */
+};      
+
+static int64_t
+fixmul(int64_t x, int64_t y)
+{
+	int64_t z;
+	int64_t a,b,c,d; 
+	int neg;
+
+	neg = 0;
+	if (x < 0) {
+		x = -x;
+		neg = !neg;
+	}
+	if (y < 0) { 
+		y = -y;
+		neg = !neg;
+	}
+
+	a = FIX2INT(x);
+	b = x - INT2FIX(a);
+	c = FIX2INT(y);
+	d = y - INT2FIX(c);
+
+	z = INT2FIX(a*c) + a * d + b * c + (b/2 * d/2 >> 30);
+
+	return neg ? -z : z;
+}
+
+static int64_t
+poly(int64_t x0, int64_t x, int64_t a[], int n)
+{
+	int64_t z;
+	int i;
+
+	z  = fixmul(x0, a[0]);
+	for (i=1; i<n; ++i) {
+		x0 = fixmul(x0, x);
+		z  = fixmul(x0, a[i]) + z;
+	}
+	return z;
+}
+
+static int64_t
+logx(int64_t x, int64_t y)
+{
+	int64_t z; 
+
+	if (x <= INT2FIX(0)) {
+		z = INT2FIX(-99999);
+		goto done;
+	}
+
+	z = INT2FIX(0);
+	while (x >= FIXE) {
+		x = fixmul(x, FIX1E);
+		z += INT2FIX(1);
+	}
+	while (x < INT2FIX(1)) {
+		x = fixmul(x, FIXE);
+		z -= INT2FIX(1);
+	}
+
+	x -= INT2FIX(1);
+	z += poly(x, x, fixlog_a, sizeof(fixlog_a)/sizeof(fixlog_a[0]));
+	z  = fixmul(z, y);
+
+done:
+	return z;
+}
+
+static int64_t
+powx(int64_t x, int64_t y)
+{
+	int64_t k;
+
+	if (x == INT2FIX(0))
+		goto done;
+
+	x = logx(x,y);
+
+	if (x < INT2FIX(0)) {
+		x = INT2FIX(0) - x;
+		k = -FIX2INT(x);
+		x = INT2FIX(-k) - x;
+	} else {
+		k = FIX2INT(x);
+		x = x - INT2FIX(k);
+	}
+
+	x = poly(INT2FIX(1), x, fixexp_a, sizeof(fixexp_a)/sizeof(fixexp_a[0]));
+
+	while (k < 0) {
+		x = fixmul(x, FIX1E);
+		++k;
+	}
+	while (k > 0) {
+		x = fixmul(x, FIXE);
+		--k;
+	}
+
+done:
+	return x;
+}
+
 /* Convert IPMI reading from sensor factors */
 long
 ipmi_convert(uint8_t v, struct sdrtype1 *s1, long adj)
 {
-	short	M, B;
+	int64_t	M, B;
 	char	K1, K2;
-	long	val;
+	int64_t	val, v1, v2;
 
 	/* Calculate linear reading variables */
 	M  = signextend((((short)(s1->m_tolerance & 0xC0)) << 2) + s1->m, 10);
@@ -1311,13 +1449,30 @@ ipmi_convert(uint8_t v, struct sdrtype1 *s1, long adj)
 	 *
 	 * This commutes out to:
 	 *  y = L(M*v * 10^(K2+adj) + B * 10^(K1+K2+adj)); */
-	val = ipow(M * v, K2 + adj) + ipow(B, K1 + K2 + adj);
+	v1 = powx(FIX10, INT2FIX(K2 + adj));
+	v2 = powx(FIX10, INT2FIX(K1 + K2 + adj));
+	val = M * v * v1 + B * v2;
 
 	/* Linearization function: y = f(x) 0 : y = x 1 : y = ln(x) 2 : y =
 	 * log10(x) 3 : y = log2(x) 4 : y = e^x 5 : y = 10^x 6 : y = 2^x 7 : y
 	 * = 1/x 8 : y = x^2 9 : y = x^3 10 : y = square root(x) 11 : y = cube
 	 * root(x) */
-	return (val);
+	switch (s1->linear & 0x7f) {
+	case 0: break;
+	case 1: val = logx(val,FIX1LOGE); break;
+	case 2: val = logx(val,FIX1LOG10); break;
+	case 3: val = logx(val,FIX1LOG2); break;
+	case 4: val = powx(FIXE,val); break;
+	case 5: val = powx(FIX10,val); break;
+	case 6: val = powx(FIX2,val); break;
+	case 7: val = powx(val,FIXMONE); break;
+	case 8: val = powx(val,FIX2); break;
+	case 9: val = powx(val,FIX3); break;
+	case 10: val = powx(val,FIXHALF); break;
+	case 11: val = powx(val,FIXTHIRD); break;
+	}
+
+	return FIX2INT(val);
 }
 
 int32_t
@@ -1349,15 +1504,20 @@ ipmi_convert_sensor(uint8_t *reading, struct ipmi_sensor *psensor)
 
 void
 ipmi_set_limits(struct sysmon_envsys *sme, envsys_data_t *edata,
-		sysmon_envsys_lim_t *limits)
+		sysmon_envsys_lim_t *limits, uint32_t *props)
 {
 	struct ipmi_sensor *ipmi_s;
 
 	/* Find the ipmi_sensor corresponding to this edata */
 	SLIST_FOREACH(ipmi_s, &ipmi_sensor_list, i_list) {
 		if (ipmi_s->i_envnum == edata->sensor) {
-			limits->sel_flags |= PROP_DRIVER_LIMITS;
+			if (limits == NULL) {
+				limits = &ipmi_s->i_deflims;
+				props  = &ipmi_s->i_defprops;
+			}
+			*props |= PROP_DRIVER_LIMITS;
 			ipmi_s->i_limits = *limits;
+			ipmi_s->i_props  = *props;
 			return;
 		}
 	}
@@ -1366,7 +1526,7 @@ ipmi_set_limits(struct sysmon_envsys *sme, envsys_data_t *edata,
 
 void
 ipmi_get_limits(struct sysmon_envsys *sme, envsys_data_t *edata,
-		sysmon_envsys_lim_t *limits)
+		sysmon_envsys_lim_t *limits, uint32_t *props)
 {
 	struct ipmi_sensor *ipmi_s;
 	struct ipmi_softc *sc = sme->sme_cookie;
@@ -1374,8 +1534,13 @@ ipmi_get_limits(struct sysmon_envsys *sme, envsys_data_t *edata,
 	/* Find the ipmi_sensor corresponding to this edata */
 	SLIST_FOREACH(ipmi_s, &ipmi_sensor_list, i_list) {
 		if (ipmi_s->i_envnum == edata->sensor) {
-			ipmi_get_sensor_limits(sc, ipmi_s, limits);
+			ipmi_get_sensor_limits(sc, ipmi_s, limits, props);
 			ipmi_s->i_limits = *limits;
+			ipmi_s->i_props  = *props;
+			if (ipmi_s->i_defprops == 0) {
+				ipmi_s->i_defprops = *props;
+				ipmi_s->i_deflims  = *limits;
+			}
 			return;
 		}
 	}
@@ -1384,14 +1549,16 @@ ipmi_get_limits(struct sysmon_envsys *sme, envsys_data_t *edata,
 
 void
 ipmi_get_sensor_limits(struct ipmi_softc *sc, struct ipmi_sensor *psensor,
-		       sysmon_envsys_lim_t *limits)
+		       sysmon_envsys_lim_t *limits, uint32_t *props)
 {
 	struct sdrtype1	*s1 = (struct sdrtype1 *)psensor->i_sdr;
 	bool failure;
 	int	rxlen;
 	uint8_t	data[32];
+	uint32_t prop_critmax, prop_warnmax, prop_critmin, prop_warnmin;
+	int32_t *pcritmax, *pwarnmax, *pcritmin, *pwarnmin;
 
-	limits->sel_flags = 0;
+	*props &= ~(PROP_CRITMIN | PROP_CRITMAX | PROP_WARNMIN | PROP_WARNMAX);
 	data[0] = psensor->i_num;
 	mutex_enter(&sc->sc_cmd_mtx);
 	failure =
@@ -1405,29 +1572,52 @@ ipmi_get_sensor_limits(struct ipmi_softc *sc, struct ipmi_sensor *psensor,
 	dbg_printf(25, "recvdata: %.2x %.2x %.2x %.2x %.2x %.2x %.2x\n",
 	    data[0], data[1], data[2], data[3], data[4], data[5], data[6]);
 
+	switch (s1->linear & 0x7f) {
+	case 7: /* 1/x sensor, exchange upper and lower limits */
+		prop_critmax = PROP_CRITMIN;
+		prop_warnmax = PROP_WARNMIN;
+		prop_critmin = PROP_CRITMAX;
+		prop_warnmin = PROP_WARNMAX;
+		pcritmax = &limits->sel_critmin;
+		pwarnmax = &limits->sel_warnmin;
+		pcritmin = &limits->sel_critmax;
+		pwarnmin = &limits->sel_warnmax;
+		break;
+	default:
+		prop_critmax = PROP_CRITMAX;
+		prop_warnmax = PROP_WARNMAX;
+		prop_critmin = PROP_CRITMIN;
+		prop_warnmin = PROP_WARNMIN;
+		pcritmax = &limits->sel_critmax;
+		pwarnmax = &limits->sel_warnmax;
+		pcritmin = &limits->sel_critmin;
+		pwarnmin = &limits->sel_warnmin;
+		break;
+	}
+
 	if (data[0] & 0x20 && data[6] != 0xff) {
-		limits->sel_critmax = ipmi_convert_sensor(&data[6], psensor);
-		limits->sel_flags |= PROP_CRITMAX;
+		*pcritmax = ipmi_convert_sensor(&data[6], psensor);
+		*props |= prop_critmax;
 	}
 	if (data[0] & 0x10 && data[5] != 0xff) {
-		limits->sel_critmax = ipmi_convert_sensor(&data[5], psensor);
-		limits->sel_flags |= PROP_CRITMAX;
+		*pcritmax = ipmi_convert_sensor(&data[5], psensor);
+		*props |= prop_critmax;
 	}
 	if (data[0] & 0x08 && data[4] != 0xff) {
-		limits->sel_warnmax = ipmi_convert_sensor(&data[4], psensor);
-		limits->sel_flags |= PROP_WARNMAX;
+		*pwarnmax = ipmi_convert_sensor(&data[4], psensor);
+		*props |= prop_warnmax;
 	}
 	if (data[0] & 0x04 && data[3] != 0x00) {
-		limits->sel_critmin = ipmi_convert_sensor(&data[3], psensor);
-		limits->sel_flags |= PROP_CRITMIN;
+		*pcritmin = ipmi_convert_sensor(&data[3], psensor);
+		*props |= prop_critmin;
 	}
 	if (data[0] & 0x02 && data[2] != 0x00) {
-		limits->sel_critmin = ipmi_convert_sensor(&data[2], psensor);
-		limits->sel_flags |= PROP_CRITMIN;
+		*pcritmin = ipmi_convert_sensor(&data[2], psensor);
+		*props |= prop_critmin;
 	}
 	if (data[0] & 0x01 && data[1] != 0x00) {
-		limits->sel_warnmin = ipmi_convert_sensor(&data[1], psensor);
-		limits->sel_flags |= PROP_WARNMIN;
+		*pwarnmin = ipmi_convert_sensor(&data[1], psensor);
+		*props |= prop_warnmin;
 	}
 	return;
 }
@@ -1447,19 +1637,19 @@ ipmi_sensor_status(struct ipmi_softc *sc, struct ipmi_sensor *psensor,
 	case IPMI_SENSOR_TYPE_TEMP:
 	case IPMI_SENSOR_TYPE_VOLT:
 	case IPMI_SENSOR_TYPE_FAN:
-		if (psensor->i_limits.sel_flags & PROP_CRITMAX &&
+		if (psensor->i_props & PROP_CRITMAX &&
 		    edata->value_cur > psensor->i_limits.sel_critmax)
 			return ENVSYS_SCRITOVER;
 
-		if (psensor->i_limits.sel_flags & PROP_WARNMAX &&
+		if (psensor->i_props & PROP_WARNMAX &&
 		    edata->value_cur > psensor->i_limits.sel_warnmax)
 			return ENVSYS_SWARNOVER;
 
-		if (psensor->i_limits.sel_flags & PROP_WARNMIN &&
+		if (psensor->i_props & PROP_WARNMIN &&
 		    edata->value_cur < psensor->i_limits.sel_warnmin)
 			return ENVSYS_SWARNUNDER;
 
-		if (psensor->i_limits.sel_flags & PROP_CRITMIN &&
+		if (psensor->i_props & PROP_CRITMIN &&
 		    edata->value_cur < psensor->i_limits.sel_critmin)
 			return ENVSYS_SCRITUNDER;
 
@@ -1512,6 +1702,8 @@ read_sensor(struct ipmi_softc *sc, struct ipmi_sensor *psensor)
 		goto err;
 	mutex_exit(&sc->sc_cmd_mtx);
 
+	dbg_printf(10, "m=%u, m_tolerance=%u, b=%u, b_accuracy=%u, rbexp=%u, linear=%d\n",
+	    s1->m, s1->m_tolerance, s1->b, s1->b_accuracy, s1->rbexp, s1->linear);
 	dbg_printf(10, "values=%.2x %.2x %.2x %.2x %s\n",
 	    data[0],data[1],data[2],data[3], edata->desc);
 	if (data[1] & IPMI_INVALID_SENSOR) {
@@ -1612,7 +1804,6 @@ add_child_sensors(struct ipmi_softc *sc, uint8_t *psdr, int count,
 	}
 	dupcnt = 0;
 	sc->sc_nsensors += count;
-	sc->sc_nsensors_typ[typ] += count;
 	for (idx = 0; idx < count; idx++) {
 		psensor = malloc(sizeof(struct ipmi_sensor), M_DEVBUF,
 		    M_WAITOK|M_CANFAIL);
@@ -1719,8 +1910,8 @@ ipmi_map_regs(struct ipmi_softc *sc, struct ipmi_attach_args *ia)
 	if (bus_space_map(sc->sc_iot, ia->iaa_if_iobase,
 	    sc->sc_if->nregs * sc->sc_if_iospacing,
 	    0, &sc->sc_ioh)) {
-		printf("ipmi: bus_space_map(%x %x %x 0 %p) failed\n",
-		    sc->sc_iot, ia->iaa_if_iobase,
+		printf("ipmi: bus_space_map(..., %x, %x, 0, %p) failed\n",
+		    ia->iaa_if_iobase,
 		    sc->sc_if->nregs * sc->sc_if_iospacing, &sc->sc_ioh);
 		return (-1);
 	}
@@ -1785,7 +1976,7 @@ ipmi_match(device_t parent, cfdata_t cf, void *aux)
 	sc.sc_if->probe(&sc);
 
 	mutex_init(&sc.sc_cmd_mtx, MUTEX_DEFAULT, IPL_SOFTCLOCK);
-	cv_init(&sc.sc_cmd_sleep, "ipmimatch");
+	cv_init(&sc.sc_cmd_sleep, "ipmimtch");
 	mutex_enter(&sc.sc_cmd_mtx);
 	/* Identify BMC device early to detect lying bios */
 	if (ipmi_sendcmd(&sc, BMC_SA, 0, APP_NETFN, APP_GET_DEVICE_ID,
@@ -1821,16 +2012,8 @@ ipmi_thread(void *cookie)
 	uint16_t		rec;
 	struct ipmi_sensor *ipmi_s;
 	int i;
-	int current_index_typ[ENVSYS_NSENSORS];
 
 	sc->sc_thread_running = true;
-
-	/* lock around read_sensor so that no one messes with the bmc regs */
-	mutex_init(&sc->sc_cmd_mtx, MUTEX_DEFAULT, IPL_SOFTCLOCK);
-	cv_init(&sc->sc_cmd_sleep, "ipmicmd");
-
-	mutex_init(&sc->sc_poll_mtx, MUTEX_DEFAULT, IPL_SOFTCLOCK);
-	cv_init(&sc->sc_poll_cv, "ipmi_poll");
 
 	/* setup ticker */
 	sc->sc_max_retries = hz * 90; /* 90 seconds max */
@@ -1842,14 +2025,6 @@ ipmi_thread(void *cookie)
 	for (rec = 0; rec != 0xFFFF;)
 		if (get_sdr(sc, rec, &rec))
 			break;
-
-	/* fill in sensor infos: */
-	/* get indexes for each unit, and number of units */
-	current_index_typ[0] = 0;
-	for (i = 1; i < ENVSYS_NSENSORS; i++) {
-		current_index_typ[i] =
-		    current_index_typ[i-1] + sc->sc_nsensors_typ[i - 1];
-	}
 
 	/* allocate and fill sensor arrays */
 	sc->sc_sensor =
@@ -1865,14 +2040,12 @@ ipmi_thread(void *cookie)
 	sc->sc_envsys->sme_get_limits = ipmi_get_limits;
 	sc->sc_envsys->sme_set_limits = ipmi_set_limits;
 
+	i = 0;
 	SLIST_FOREACH(ipmi_s, &ipmi_sensor_list, i_list) {
-		i = current_index_typ[ipmi_s->i_envtype];
-		current_index_typ[ipmi_s->i_envtype]++;
-		ipmi_s->i_envnum = i;
-		ipmi_s->i_limits.sel_flags = 0;
+		ipmi_s->i_props = 0;
+		ipmi_s->i_envnum = -1;
 		sc->sc_sensor[i].units = ipmi_s->i_envtype;
 		sc->sc_sensor[i].state = ENVSYS_SINVALID;
-		sc->sc_sensor[i].monitor = true;
 		/*
 		 * Monitor threshold limits in the sensors.
 		 */
@@ -1887,9 +2060,14 @@ ipmi_thread(void *cookie)
 		}
 		(void)strlcpy(sc->sc_sensor[i].desc, ipmi_s->i_envdesc,
 		    sizeof(sc->sc_sensor[i].desc));
+		++i;
+
 		if (sysmon_envsys_sensor_attach(sc->sc_envsys,
-						&sc->sc_sensor[i]))
+						&sc->sc_sensor[i-1]))
 			continue;
+
+		/* get reference number from envsys */
+		ipmi_s->i_envnum = sc->sc_sensor[i-1].sensor;
 	}
 
 	sc->sc_envsys->sme_name = device_xname(sc->sc_dev);
@@ -1922,6 +2100,10 @@ ipmi_thread(void *cookie)
 	sc->sc_wdog.smw_tickle = ipmi_watchdog_tickle;
 	sysmon_wdog_register(&sc->sc_wdog);
 
+	/* Set up a power handler so we can possibly sleep */
+	if (!pmf_device_register(self, ipmi_suspend, NULL))
+                aprint_error_dev(self, "couldn't establish a power handler\n");
+
 	mutex_enter(&sc->sc_poll_mtx);
 	while (sc->sc_thread_running) {
 		ipmi_refresh_sensors(sc);
@@ -1944,6 +2126,14 @@ ipmi_attach(device_t parent, device_t self, void *aux)
 	sc->sc_ia = *(struct ipmi_attach_args *)aux;
 	sc->sc_dev = self;
 	aprint_normal("\n");
+
+	/* lock around read_sensor so that no one messes with the bmc regs */
+	mutex_init(&sc->sc_cmd_mtx, MUTEX_DEFAULT, IPL_SOFTCLOCK);
+	mutex_init(&sc->sc_sleep_mtx, MUTEX_DEFAULT, IPL_SOFTCLOCK);
+	cv_init(&sc->sc_cmd_sleep, "ipmicmd");
+
+	mutex_init(&sc->sc_poll_mtx, MUTEX_DEFAULT, IPL_SOFTCLOCK);
+	cv_init(&sc->sc_poll_cv, "ipmipoll");
 
 	if (kthread_create(PRI_NONE, 0, NULL, ipmi_thread, self,
 	    &sc->sc_kthread, "ipmi") != 0) {
@@ -2000,6 +2190,7 @@ ipmi_detach(device_t self, int flags)
 	cv_destroy(&sc->sc_poll_cv);
 	mutex_destroy(&sc->sc_poll_mtx);
 	cv_destroy(&sc->sc_cmd_sleep);
+	mutex_destroy(&sc->sc_sleep_mtx);
 	mutex_destroy(&sc->sc_cmd_mtx);
 
 	return 0;
@@ -2080,4 +2271,15 @@ ipmi_dotickle(struct ipmi_softc *sc)
 		printf("%s: watchdog tickle returned 0x%x\n",
 		    device_xname(sc->sc_dev), rc);
 	}
+}
+
+bool
+ipmi_suspend(device_t dev, const pmf_qual_t *qual)
+{
+	struct ipmi_softc *sc = device_private(dev);
+
+	/* Don't allow suspend if watchdog is armed */
+	if ((sc->sc_wdog.smw_mode & WDOG_MODE_MASK) != WDOG_MODE_DISARMED)
+		return false;
+	return true;
 }

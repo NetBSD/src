@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_machdep.h,v 1.4.24.2 2009/11/01 13:58:16 jym Exp $	*/
+/*	$NetBSD: acpi_machdep.h,v 1.4.24.3 2010/10/24 22:48:16 jym Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -35,17 +35,18 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * Machine-dependent code for ACPI.  This is provided to the Osd
- * portion of the ACPICA.
- */
+#ifndef _X86_ACPI_MACHDEP_H_
+#define _X86_ACPI_MACHDEP_H_
 
+/*
+ * Machine-dependent code for ACPI.
+ */
 #include <machine/pio.h>
 #include <machine/i82489var.h>
 #include <machine/i82489reg.h>
 
-ACPI_STATUS	acpi_md_OsInitialize(void);
-ACPI_STATUS	acpi_md_OsTerminate(void);
+ACPI_STATUS		acpi_md_OsInitialize(void);
+ACPI_STATUS		acpi_md_OsTerminate(void);
 ACPI_PHYSICAL_ADDRESS	acpi_md_OsGetRootPointer(void);
 
 #define	acpi_md_OsIn8(x)	inb((x))
@@ -73,3 +74,5 @@ void		acpi_md_OsEnableInterrupt(void);
 int		acpi_md_sleep(int);
 void		acpi_md_sleep_init(void);
 void		acpi_md_callback(void);
+
+#endif /* !_X86_ACPI_MACHDEP_H_ */

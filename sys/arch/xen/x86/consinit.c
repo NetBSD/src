@@ -1,4 +1,4 @@
-/*	$NetBSD: consinit.c,v 1.11.8.2 2009/11/01 13:58:46 jym Exp $	*/
+/*	$NetBSD: consinit.c,v 1.11.8.3 2010/10/24 22:48:21 jym Exp $	*/
 /*	NetBSD: consinit.c,v 1.4 2004/03/13 17:31:34 bjh21 Exp 	*/
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.11.8.2 2009/11/01 13:58:46 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.11.8.3 2010/10/24 22:48:21 jym Exp $");
 
 #include "opt_kgdb.h"
 
@@ -162,11 +162,11 @@ consinit(void)
 		    strcmp(xcp.xcp_console, "pc") == 0) { /* NetBSD name */
 #endif /* CONS_OVERRIDE */
 			int error;
-			vga_cnattach(X86_BUS_SPACE_IO, X86_BUS_SPACE_MEM,
+			vga_cnattach(x86_bus_space_io, x86_bus_space_mem,
 			    -1, 1);
 			error = ENODEV;
 #if (NPCKBC > 0)
-			error = pckbc_cnattach(X86_BUS_SPACE_IO, IO_KBD, KBCMDP,
+			error = pckbc_cnattach(x86_bus_space_io, IO_KBD, KBCMDP,
 			    PCKBC_KBD_SLOT);
 #endif
 #if (NUKBD > 0)
@@ -193,7 +193,7 @@ kgdb_port_init(void)
 {
 #if (NCOM > 0)
 	if(!strcmp(kgdb_devname, "com")) {
-		bus_space_tag_t tag = X86_BUS_SPACE_IO;
+		bus_space_tag_t tag = x86_bus_space_io;
 
 		com_kgdb_attach(tag, comkgdbaddr, comkgdbrate, COM_FREQ, 
 		    COM_TYPE_NORMAL, comkgdbmode);
