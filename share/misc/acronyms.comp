@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.110 2010/10/24 06:35:00 jruoho Exp $
+$NetBSD: acronyms.comp,v 1.111 2010/10/24 22:37:35 dholland Exp $
 
 3WHS	three-way handshake
 ABI	application binary interface
@@ -727,6 +727,7 @@ XSS	cross site scripting
 XT	extended technology
 XUL	XML user interface language
 YACC	yet another compiler compiler
+YAWPFAPR you are welcome; please file a problem report
 YP	yellow pages (aka NIS)
 ZFOD	zero-filled on demand
 ZIFS	zero insertion force socket
