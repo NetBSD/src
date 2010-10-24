@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.109 2010/09/05 23:50:48 ahoka Exp $
+$NetBSD: acronyms.comp,v 1.110 2010/10/24 06:35:00 jruoho Exp $
 
 3WHS	three-way handshake
 ABI	application binary interface
@@ -20,6 +20,7 @@ ANSI	American National Standards Institute
 AP	access point
 API	application programming interface
 APIC	advanced programmable interrupt controller
+ARAT	always running APIC timer
 ARC	adaptive replacement cache
 ARM	Advanced RISC Machines
 ARP	address resolution protocol
@@ -80,8 +81,10 @@ CDRAM	cache dynamic random access memory
 CER	canonical encoding rules
 CFG	context-free grammar
 CFG	control-flow graph
+CG	control gate
 CGA	color graphics {array,adapter}
 CGI	common gateway interface
+CHAP	challenge-handshake authentication protocol
 CHS	cylinder/head/sector
 CIDR	classless inter-domain routing
 CIFS	common internet file system
@@ -92,11 +95,13 @@ CLUT	color look-up table
 CLV	constant linear velocity (as opposed to CAV)
 CMI	control management interface
 CMI	control method interface
+CMOS	complementary metal-oxide-semiconductor
 CMYK	cyan magenta yellow black
 COF	current operating frequency
 COFF	common object file format
 COMA	cache-only memory architecture
 COW	copy-on-write
+CPL	current privilege level
 CPU	central processing unit
 CR	carriage return
 CRLF	carriage return line feed
@@ -124,6 +129,7 @@ DDR	double data rate
 DDWG	digital display working group
 DE	desktop environment
 DE	debugging extensions
+DEP	data execution prevention
 DER	distinguished encoding rules
 DES	Data Encryption Standard
 DFS	depth first search
@@ -132,28 +138,35 @@ DFT	discrete Fourier transform
 DHCP	dynamic host configuration protocol
 DIFS	distributed inter-frame space
 DIMM	dual inline memory module
+DL	diode logic
 DLE	data link escape
 DLL	dynamic link library
 DMA	direct memory access
+DMI	desktop management interface
 DNARD	Digital network appliance reference design
 DNS	domain name system
 DOM	document object model
 DOS	denial of service
+DOS	disk operating system
 DPCM	differential pulse code modulation
 DPD	dead peer detection
 DPI	dots per inch
 DPI	deep packet inspection
+DPL	descriptor privilege level
 DRAM	dynamic random access memory
 DRI	direct rendering infrastructure
+DRM	digital rights management
 DS	debug store
 DSDT	differentiated system descriptor table
 DSL	digital subscriber line
 DSLAM	digital subscriber line access multiplexer
 DSO	dynamic shared object
+DSP	digital signal processor
 DSSS	direct sequence spread spectrum
 DTD	document type definition
 DTE	data terminal equipment
 DTE	dumb terminal emulator
+DTL	diode-transistor logic
 DVB	digital video broadcasting
 DVD	digital versatile disc
 DVFS	dynamic voltage and frequency scaling
@@ -161,6 +174,7 @@ DVR	digital video recorder
 DVI	digital visual interface
 E-XER	extended XML encoding rules
 EAP	extensible authentication protocol
+ECL	emitter-coupled logic
 ECN	explicit congestion notification
 ECP	enhanced capability port
 EDID	extended display identification data
@@ -183,14 +197,16 @@ EPROM	erasable programmable read only memory
 ESDRAM	enhanced synchronous dynamic random access memory
 EST	enhanced speedstep
 FAT	file allocation table
-FEC	forward error correction
-FFH	functional fixed hardware
 FBRAM	frame buffer random access memory
 FCS	frame check sequence
 FDDI	fiber distributed data interface
+FEC	forward error correction
+FFH	functional fixed hardware
 FFI	foreign function interface
 FFS	fast file system
 FFS	find first set
+FFT	fast Fourier transform
+FG	floating gate
 FHSS	frequency hop spread spectrum
 FID	frequency identifier
 FIFO	first in first out
@@ -211,6 +227,8 @@ GAS	generic address structure
 GC	garbage collector
 GCR	group-coded recording
 GDT	global descriptor table
+GEM	graphics execution manager
+GEM	graphics environment manager
 GID	group identifier
 GIF	graphics interchange format
 GMCH	graphics and memory controller hub
@@ -264,6 +282,7 @@ IFCM	isochronous flow control mode
 IGMP	Internet group management protocol
 IGP	interior gateway protocol
 IKE	Internet key exchange
+ILP	instruction level parallelism
 IMC	integrated memory controller
 IMAP	Internet mail access protocol
 INCITS	international committee on information technology standards
@@ -276,6 +295,7 @@ IPC	interprocess communication
 IPI	interprocessor interrupt
 IPNG	Internet protocol, next generation
 IPS	intrusion prevention system
+IPS	in-plane switching
 IPSEC	Internet protocol security
 IRC	Internet relay chat
 IRDA	infrared data association
@@ -299,6 +319,7 @@ JPEG	joint photographic experts group
 JRE	Java runtime environment
 JTAG	joint test action group
 KLOC	thousand lines of code
+KMS	kernel-mode setting
 KPI	kernel programming interface
 KVA	kernel virtual address
 KVM	kernel virtual memory
@@ -311,6 +332,7 @@ LCD	liquid crystal display
 LCP	link control protocol
 LDAP	lightweight directory access protocol
 LDT	local descriptor table
+LE	logical extent
 LED	light emitting diode
 LFM	lowest frequency mode
 LFS	log-structured file system
@@ -352,12 +374,15 @@ MDA	monochrome display adapter
 MDRAM	multibank dynamic random access memory
 MFC	merge from current
 MFM	modified frequency modulation
+MIB	management information base
 MID	mobile internet device
 MIDI	musical instrument digital interface
+MIF	management information format
 MIME	multipurpose Internet mail extensions
 MIMO	multiple input multiple output
 MIPS	million instructions per second
 MIT	Massachusetts Institute of Technology
+MLC	multi-level cell
 MMIO	memory mapped input/output
 MMU	memory management unit
 MMX	multimedia extension
@@ -392,9 +417,11 @@ NNTP	network news transfer protocol
 NOP	no operation
 NRZ	non-return to zero
 NSA	National Security Agency
+NTP	network time protocol
 NUMA	non-uniform memory access
 NVRAM	non-volatile random access memory
 NX	no execute
+OAEP	optimal asymmetric encryption padding
 OBO	off by one
 OBOE	off by one error
 OCL	object constraint language
@@ -429,6 +456,7 @@ PA	physical address
 PAE	physical address extension
 PAM	pluggable authentication modules
 PAM	pulse amplitude modulation
+PAP	password authentication protocol
 PAT	page attribute table
 PAT	port address translation
 PATA	parallel ATA
@@ -436,12 +464,14 @@ PAX	portable archive exchange
 PBE	pending break encoding
 PBE	programming by example
 PC	personal computer
+PCB	printed circuit board
 PCC	Portable C Compiler
 PCI	peripheral component interconnect
 PCM	pulse code modulation
 PCMCIA	personal computer memory card international association
 PDA	personal digital assistant
 PDF	portable document format
+PDN	pull-down network
 PDP	page descriptor page
 PDU	protocol data unit
 PER	packed encoding rules
@@ -456,6 +486,7 @@ PIE	position independent executable
 PIN	personal identification number
 PIO	programmed input/output
 PKI	public key infrastructure
+PKCS	public-key cryptography standards
 PLL	phase locked loop
 PMI	platform management interrupt
 PMIO	port-mapped input/output
@@ -471,6 +502,7 @@ PPB	PCI [to] PCI bridge
 PPP	point-to-point protocol
 PPPOA	point-to-point protocol over ATM
 PPPOE	point-to-point protocol over ethernet
+PPU	physics processing unit
 PRBS	pseudo-random bit sequence
 PRML	partial response, maximum likelihood
 PRNG	pseudo random number generator
@@ -481,6 +513,8 @@ PSTN	public switched telephone network
 PTE	page table entry
 PTLA	pseudo top level aggregator
 PTP	page table page
+PV	physical volume
+PVG	physical volume group
 PWM	pulse width modulation
 PXE	preboot execution environment
 QA	quality assurance
@@ -491,6 +525,8 @@ RAM	random access memory
 RAS	restartable atomic sequence
 RAS	remote access service
 RAS	row address strobe
+RC	release candidate
+RC	remote control
 RCS	revision control system
 RCU	read-copy-update
 RDF	resource description format
@@ -506,12 +542,15 @@ RLL	run length limited
 RNG	random number generator
 ROM	read only memory
 RPC	remote procedure call
+RPL	requested privilege level
 RPM	revolutions per minute
+RSA	Rivest, Shamir and Adleman
 RSS	really simple syndication
 RT	real time
 RTC	real time clock
 RTC	real time computing
 RTF	rich text format
+RTL	resistor-transistor logic
 RTOS	real time operating system
 RTS	request to send
 RTT	round time trip
@@ -541,9 +580,14 @@ SIMD	single instruction multiple data
 SIMM	single inline memory module
 SIP	session initiation protocol
 SIR	slow infrared
+SLC	single-level cell
 SLDRAM	synchronous-link dynamic random access memory
+SLI	scalable link interface
+SLI	scan-line interleave
 SMART	self-monitoring analysis and reporting technology
+SMBIOS	system management BIOS
 SMI	system management interrupt
+SMI	structure of management information
 SMM	system management mode
 SMP	symmetric multiprocessing
 SMT	simultaneous multithreading
@@ -595,15 +639,23 @@ TLD	top level domain
 TLS	transport layer security
 TLS	thread local storage
 TMDS	transition minimized differential signaling
+TMO	timeout
 TOS	terms of service
 TOS	type of service
 TPM	trusted platform module
 TR	token ring
 TR	task register
 TRNG	true random number generator
+TS	time stamp
+TS	time series
+TS	terminal services
 TSC	time stamp counter
+TSP	time stamp protocol
+TSP	tunnel setup protocol
 TSS	task state segment
 TTL	time to live
+TTL	transistor-transistor logic
+TTM	translation table maps
 TTY	teletype
 TX	transmit out, transmitter
 TZ	time zone
@@ -632,14 +684,17 @@ UUCP	Unix-to-Unix copy protocol
 UUID	universally unique identifier
 UUOC	useless use of cat
 VA	virtual address
+VA	vertical alignment
 VAX	virtual address extension
 VCC	common collector voltage
 VCM	virtual channel memory
 VESA	video electronics standards association
 VG	volume group
 VGA	video graphics {array,adapter}
+VHDCI	very high density cable interconnect
 VID	voltage level identifier
 VLAN	virtual local area network
+VLIW	very long instruction word
 VLSI	very large scale integration
 VLSM	variable length subnet mask
 VM	virtual {machine,memory}
