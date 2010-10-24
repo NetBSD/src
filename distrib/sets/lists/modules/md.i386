@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.4 2010/05/31 20:32:28 pgoyette Exp $
+# $NetBSD: md.i386,v 1.5 2010/10/24 16:31:35 jmcneill Exp $
 ./@MODULEDIR@/acpiverbose			base-kernel-modules	kmod
 ./@MODULEDIR@/acpiverbose/acpiverbose.kmod	base-kernel-modules	kmod
 ./@MODULEDIR@/azalia				base-kernel-modules	kmod
@@ -27,3 +27,9 @@
 ./@MODULEDIR@/tprof_pmi/tprof_pmi.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/viadrm				base-kernel-modules	kmod
 ./@MODULEDIR@/viadrm/viadrm.kmod		base-kernel-modules	kmod
+./@MODULEDIR@/wmidell				base-kernel-modules	kmod
+./@MODULEDIR@/wmidell/wmidell.kmod		base-kernel-modules	kmod
+./@MODULEDIR@/wmihp				base-kernel-modules	kmod
+./@MODULEDIR@/wmihp/wmihp.kmod			base-kernel-modules	kmod
+./@MODULEDIR@/wmimsi				base-kernel-modules	kmod
+./@MODULEDIR@/wmimsi/wmimsi.kmod		base-kernel-modules	kmod
