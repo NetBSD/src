@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.21.2.6 2009/11/01 21:43:29 jym Exp $	*/
+/*	$NetBSD: pmap.h,v 1.21.2.7 2010/10/24 22:48:16 jym Exp $	*/
 
 /*
  *
@@ -106,7 +106,7 @@
 
 #define ptp_va2o(va, lvl)	(pl_i(va, (lvl)+1) * PAGE_SIZE)
 
-/* size of a PDP: usually one page, exept for PAE */
+/* size of a PDP: usually one page, except for PAE */
 #ifdef PAE
 #define PDP_SIZE 4
 #else
@@ -144,11 +144,7 @@ struct pmap {
 #define	pm_lock	pm_obj[0].vmobjlock
 	LIST_ENTRY(pmap) pm_list;	/* list (lck by pm_list lock) */
 	pd_entry_t *pm_pdir;		/* VA of PD (lck by object lock) */
-#ifdef PAE
-	paddr_t pm_pdirpa[PDP_SIZE];
-#else
-	paddr_t pm_pdirpa;		/* PA of PD (read-only after create) */
-#endif
+	paddr_t pm_pdirpa[PDP_SIZE];	/* PA of PDs (read-only after create) */
 	struct vm_page *pm_ptphint[PTP_LEVELS-1];
 					/* pointer to a PTP in our pmap */
 	struct pmap_statistics pm_stats;  /* pmap stats (lck by object lock) */
@@ -166,25 +162,31 @@ struct pmap {
 					 of pmap */
 };
 
-/* macro to access pm_pdirpa */
+/* macro to access pm_pdirpa slots */
 #ifdef PAE
 #define pmap_pdirpa(pmap, index) \
 	((pmap)->pm_pdirpa[l2tol3(index)] + l2tol2(index) * sizeof(pd_entry_t))
 #else
 #define pmap_pdirpa(pmap, index) \
-	((pmap)->pm_pdirpa + (index) * sizeof(pd_entry_t))
+	((pmap)->pm_pdirpa[0] + (index) * sizeof(pd_entry_t))
 #endif
 
 /*
- * MD flags that we use for pmap_enter:
+ * MD flags that we use for pmap_enter and pmap_kenter_pa:
  */
-#define PMAP_NOCACHE	0x01000000	/* set the non-cacheable bit */
 
 /*
  * global kernel variables
  */
 
-/* PDPpaddr: is the physical address of the kernel's PDP */
+/*
+ * PDPpaddr is the physical address of the kernel's PDP.
+ * - i386 non-PAE and amd64: PDPpaddr corresponds directly to the %cr3
+ * value associated to the kernel process, proc0.
+ * - i386 PAE: it still represents the PA of the kernel's PDP (L2). Due to
+ * the L3 PD, it cannot be considered as the equivalent of a %cr3 any more.
+ * - Xen: it corresponds to the PFN of the kernel's PDP.
+ */
 extern u_long PDPpaddr;
 
 extern int pmap_pg_g;			/* do we support PG_G? */
@@ -228,6 +230,12 @@ void		pmap_emap_enter(vaddr_t, paddr_t, vm_prot_t);
 void		pmap_emap_remove(vaddr_t, vsize_t);
 void		pmap_emap_sync(bool);
 
+void		pmap_map_ptes(struct pmap *, struct pmap **, pd_entry_t **,
+		    pd_entry_t * const **);
+void		pmap_unmap_ptes(struct pmap *, struct pmap *);
+
+int		pmap_pdes_invalid(vaddr_t, pd_entry_t * const *, pd_entry_t *);
+
 vaddr_t reserve_dumppages(vaddr_t); /* XXX: not a pmap fn */
 
 void	pmap_tlb_shootdown(pmap_t, vaddr_t, vaddr_t, pt_entry_t);
@@ -247,6 +255,12 @@ bool	pmap_pageidlezero(paddr_t);
 /*
  * inline functions
  */
+
+__inline static bool __unused
+pmap_pdes_valid(vaddr_t va, pd_entry_t * const *pdes, pd_entry_t *lastpde)
+{
+	return pmap_pdes_invalid(va, pdes, lastpde) == 0;
+}
 
 /*
  * pmap_update_pg: flush one page from the TLB (or flush the whole thing
@@ -407,16 +421,16 @@ xpmap_update (pt_entry_t *pte, pt_entry_t npte)
 /* Xen helpers to change bits of a pte */
 #define XPMAP_UPDATE_DIRECT	1	/* Update direct map entry flags too */
 
-/* pmap functions with machine addresses */
-void	pmap_kenter_ma(vaddr_t, paddr_t, vm_prot_t);
-int	pmap_enter_ma(struct pmap *, vaddr_t, paddr_t, paddr_t,
-	    vm_prot_t, u_int, int);
-bool	pmap_extract_ma(pmap_t, vaddr_t, paddr_t *);
-
 paddr_t	vtomach(vaddr_t);
 #define vtomfn(va) (vtomach(va) >> PAGE_SHIFT)
 
 #endif	/* XEN */
+
+/* pmap functions with machine addresses */
+void	pmap_kenter_ma(vaddr_t, paddr_t, vm_prot_t, u_int);
+int	pmap_enter_ma(struct pmap *, vaddr_t, paddr_t, paddr_t,
+	    vm_prot_t, u_int, int);
+bool	pmap_extract_ma(pmap_t, vaddr_t, paddr_t *);
 
 /*
  * Hooks for the pool allocator.

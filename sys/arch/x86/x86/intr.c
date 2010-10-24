@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.58.2.2 2009/11/01 13:58:18 jym Exp $	*/
+/*	$NetBSD: intr.c,v 1.58.2.3 2010/10/24 22:48:18 jym Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.58.2.2 2009/11/01 13:58:18 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.58.2.3 2010/10/24 22:48:18 jym Exp $");
 
 #include "opt_intrdebug.h"
 #include "opt_multiprocessor.h"
@@ -325,7 +325,7 @@ intr_add_pcibus(struct pcibus_attach_args *pba)
 
 static int
 intr_find_pcibridge(int bus, pcitag_t *pci_bridge_tag,
-		    pci_chipset_tag_t *pci_chipset_tag)
+		    pci_chipset_tag_t *pc)
 {
 	struct intr_extra_bus *iebp;
 	struct mp_bus *mpb;
@@ -338,7 +338,7 @@ intr_find_pcibridge(int bus, pcitag_t *pci_bridge_tag,
 		if (mpb->mb_pci_bridge_tag == NULL)
 			return ENOENT;
 		*pci_bridge_tag = *mpb->mb_pci_bridge_tag;
-		*pci_chipset_tag = mpb->mb_pci_chipset_tag;
+		*pc = mpb->mb_pci_chipset_tag;
 		return 0;
 	}
 
@@ -347,7 +347,7 @@ intr_find_pcibridge(int bus, pcitag_t *pci_bridge_tag,
 			if (iebp->pci_bridge_tag == NULL)
 				return ENOENT;
 			*pci_bridge_tag = *iebp->pci_bridge_tag;
-			*pci_chipset_tag = iebp->pci_chipset_tag;
+			*pc = iebp->pci_chipset_tag;
 			return 0;
 		}
 	}
@@ -362,18 +362,18 @@ intr_find_mpmapping(int bus, int pin, int *handle)
 #if NPCI > 0
 	int dev, func;
 	pcitag_t pci_bridge_tag;
-	pci_chipset_tag_t pci_chipset_tag;
+	pci_chipset_tag_t pc;
 #endif
 
 #if NPCI > 0
 	while (intr_scan_bus(bus, pin, handle) != 0) {
 		if (intr_find_pcibridge(bus, &pci_bridge_tag,
-		    &pci_chipset_tag) != 0)
+		    &pc) != 0)
 			return ENOENT;
 		dev = pin >> 2;
 		pin = pin & 3;
 		pin = PPB_INTERRUPT_SWIZZLE(pin + 1, dev) - 1;
-		pci_decompose_tag(pci_chipset_tag, pci_bridge_tag, &bus,
+		pci_decompose_tag(pc, pci_bridge_tag, &bus,
 		    &dev, &func);
 		pin |= (dev << 2);
 	}
@@ -983,6 +983,7 @@ cpu_intr_init(struct cpu_info *ci)
 	struct intrsource *isp;
 #if NLAPIC > 0 && defined(MULTIPROCESSOR)
 	int i;
+	static int first = 1;
 #endif
 #ifdef INTRSTACKSIZE
 	vaddr_t istack;
@@ -997,15 +998,17 @@ cpu_intr_init(struct cpu_info *ci)
 	isp->is_handlers = &fake_timer_intrhand;
 	isp->is_pic = &local_pic;
 	ci->ci_isources[LIR_TIMER] = isp;
-	evcnt_attach_dynamic(&isp->is_evcnt, EVCNT_TYPE_MISC, NULL,
+	evcnt_attach_dynamic(&isp->is_evcnt,
+	    first ? EVCNT_TYPE_INTR : EVCNT_TYPE_MISC, NULL,
 	    device_xname(ci->ci_dev), "timer");
+	first = 0;
 
 #ifdef MULTIPROCESSOR
 	isp = kmem_zalloc(sizeof(*isp), KM_SLEEP);
 	KASSERT(isp != NULL);
 	isp->is_recurse = Xrecurse_lapic_ipi;
 	isp->is_resume = Xresume_lapic_ipi;
-	fake_ipi_intrhand.ih_level = IPL_IPI;
+	fake_ipi_intrhand.ih_level = IPL_HIGH;
 	isp->is_handlers = &fake_ipi_intrhand;
 	isp->is_pic = &local_pic;
 	ci->ci_isources[LIR_IPI] = isp;

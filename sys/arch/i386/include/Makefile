@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.36 2007/12/20 23:46:12 ad Exp $
+#	$NetBSD: Makefile,v 1.36.24.1 2010/10/24 22:48:02 jym Exp $
 
 INCSDIR= /usr/include/i386
 
@@ -7,7 +7,7 @@ INCS=	ansi.h aout_machdep.h apmvar.h asm.h \
 	cdefs.h cpu.h cpufunc.h cputypes.h \
 	disklabel.h \
 	elf_machdep.h endian.h endian_machdep.h \
-	float.h frame.h freebsd_machdep.h \
+	fenv.h float.h frame.h freebsd_machdep.h \
 	gdt.h \
 	ibcs2_machdep.h ieee.h ieeefp.h \
 	int_const.h int_fmtio.h int_limits.h int_mwgwtypes.h int_types.h \

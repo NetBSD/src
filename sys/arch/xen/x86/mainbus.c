@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.7.2.3 2009/11/01 21:43:28 jym Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.7.2.4 2010/10/24 22:48:22 jym Exp $	*/
 /*	NetBSD: mainbus.c,v 1.53 2003/10/27 14:11:47 junyoung Exp 	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.7.2.3 2009/11/01 21:43:28 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.7.2.4 2010/10/24 22:48:22 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,7 +66,6 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.7.2.3 2009/11/01 21:43:28 jym Exp $");
 #include <dev/pci/pcivar.h>
 #if NACPICA > 0
 #include <dev/acpi/acpivar.h>
-#include <dev/acpi/acpi_madt.h>       
 #include <xen/mpacpi.h>       
 #endif /* NACPICA > 0 */
 #ifdef MPBIOS
@@ -134,6 +133,9 @@ mainbus_match(device_t parent, cfdata_t match, void *aux)
 void
 mainbus_attach(device_t parent, device_t self, void *aux)
 {
+#if NPCI > 0
+	int mode;
+#endif
 	union mainbus_attach_args mba;
 #if defined(DOM0OPS)
 	int numcpus = 0;
@@ -155,9 +157,9 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 #endif
 #if NPCI > 0
 		/* ACPI needs to be able to access PCI configuration space. */
-		pci_mode = pci_mode_detect();
+		mode = pci_mode_detect();
 #ifdef PCI_BUS_FIXUP
-		if (pci_mode != 0) {
+		if (mode != 0) {
 			pci_maxbus = pci_bus_fixup(NULL, 0);
 			aprint_debug_dev(self, "PCI bus max, after "
 			    "pci_bus_fixup: %i\n", pci_maxbus);
@@ -198,8 +200,8 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 
 #if NIPMI > 0
 	memset(&mba.mba_ipmi, 0, sizeof(mba.mba_ipmi));
-	mba.mba_ipmi.iaa_iot = X86_BUS_SPACE_IO;
-	mba.mba_ipmi.iaa_memt = X86_BUS_SPACE_MEM;
+	mba.mba_ipmi.iaa_iot = x86_bus_space_io;
+	mba.mba_ipmi.iaa_memt = x86_bus_space_mem;
 	if (ipmi_probe(&mba.mba_ipmi))
 		config_found_ia(self, "ipmibus", &mba.mba_ipmi, 0);
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: isapnp_machdep.c,v 1.13 2008/04/28 20:23:24 martin Exp $	*/
+/*	$NetBSD: isapnp_machdep.c,v 1.13.14.1 2010/10/24 22:48:03 jym Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isapnp_machdep.c,v 1.13 2008/04/28 20:23:24 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isapnp_machdep.c,v 1.13.14.1 2010/10/24 22:48:03 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,7 +67,7 @@ isapnp_map(struct isapnp_softc *sc)
 {
 
 #ifdef DIAGNOSTIC
-	if (sc->sc_iot != X86_BUS_SPACE_IO)
+	if (!bus_space_is_equal(sc->sc_iot, x86_bus_space_io))
 		panic("isapnp_map: bogus bus space tag");
 #endif
 
@@ -100,7 +100,7 @@ isapnp_map_readport(struct isapnp_softc *sc)
 #endif
 
 #ifdef DIAGNOSTIC
-	if (sc->sc_iot != X86_BUS_SPACE_IO)
+	if (!bus_space_is_equal(sc->sc_iot, x86_bus_space_io))
 		panic("isapnp_map_readport: bogus bus space tag");
 #endif
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: bioscall.S,v 1.8 2008/04/28 20:23:24 martin Exp $ */
+/*	$NetBSD: bioscall.S,v 1.8.14.1 2010/10/24 22:47:59 jym Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: bioscall.S,v 1.8 2008/04/28 20:23:24 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bioscall.S,v 1.8.14.1 2010/10/24 22:47:59 jym Exp $");
 
 #include <machine/bioscall.h>
 
@@ -38,8 +38,6 @@ __KERNEL_RCSID(0, "$NetBSD: bioscall.S,v 1.8 2008/04/28 20:23:24 martin Exp $");
 
 /* LINTSTUB: include <sys/types.h> */
 /* LINTSTUB: include <machine/bioscall.h> */
-
-	.globl	_C_LABEL(PDPpaddr)	/* from locore.S */
 
 	.section ".rodata"
 _C_LABEL(biostramp_image):
@@ -69,11 +67,11 @@ NENTRY(bioscall)
 	pushl	%ebp
 	movl	%esp,%ebp		/* set up frame ptr */
 
-	movl	%cr3,%eax		/* save PDP base register */
+	/* install lwp0 pmap */
+	movl	_C_LABEL(kernel_pmap_ptr),%eax
 	pushl	%eax
-
-	movl	_C_LABEL(PDPpaddr),%eax	/* install proc0 PDP */
-	movl	%eax,%cr3
+	call	_C_LABEL(cpu_load_pmap)
+	addl	$4,%esp
 
 	movl	$(BIOSTRAMP_BASE),%eax	/* address of trampoline area */
 	pushl	12(%ebp)
@@ -81,8 +79,11 @@ NENTRY(bioscall)
 	call	*%eax			/* machdep.c initializes it */
 	addl	$8,%esp			/* clear args from stack */
 
-	popl	%eax
-	movl	%eax,%cr3			/* restore PTDB register */
+	/* restore pmap - saved value is in curcpu()->ci_pmap */
+	movl	%fs:(CPU_INFO_PMAP),%eax
+	pushl	%eax
+	call	_C_LABEL(cpu_load_pmap)
+	addl	$4,%esp
 
 	leave
 	ret

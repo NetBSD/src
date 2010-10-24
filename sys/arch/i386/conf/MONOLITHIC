@@ -1,3 +1,4 @@
+# $NetBSD: MONOLITHIC,v 1.3.2.3 2010/10/24 22:47:59 jym Exp $
 #
 # Non MODULAR, used mostly as a reference as to what we modularized.
 #
@@ -33,7 +34,6 @@ file-system 	FDESC		# /dev/fd
 file-system 	KERNFS		# /kern
 file-system 	NULLFS		# loopback file system
 file-system 	OVERLAY		# overlay file system
-file-system 	PORTAL		# portal filesystem (still experimental)
 file-system 	PROCFS		# /proc
 file-system 	UMAPFS		# NULLFS + uid and gid remapping
 file-system 	UNION		# union file system
@@ -50,6 +50,9 @@ options 	NFSSERVER
 options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 options 	PPP_DEFLATE	# Deflate compression support for PPP
 
+# NPF
+#pseudo-device	npf
+
 pseudo-device	accf_data	# "dataready" accept filter
 pseudo-device	accf_http	# "httpready" accept filter
 
@@ -58,3 +61,6 @@ pseudo-device	vcoda		4	# coda minicache <-> venus comm.
 pseudo-device	nsmb		# experimental - SMB requester
 
 pseudo-device	putter		# for puffs and pud
+
+pseudo-device	pad		# pseudo audio device driver
+

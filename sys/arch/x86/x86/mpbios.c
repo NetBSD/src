@@ -1,4 +1,4 @@
-/*	$NetBSD: mpbios.c,v 1.52.2.2 2009/11/01 13:58:18 jym Exp $	*/
+/*	$NetBSD: mpbios.c,v 1.52.2.3 2010/10/24 22:48:19 jym Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpbios.c,v 1.52.2.2 2009/11/01 13:58:18 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpbios.c,v 1.52.2.3 2010/10/24 22:48:19 jym Exp $");
 
 #include "acpica.h"
 #include "lapic.h"
@@ -256,7 +256,7 @@ mpbios_map(paddr_t pa, int len, struct mp_map *handle)
 	handle->vsize = endpa-pgpa;
 
 	do {
-		pmap_kenter_pa(va, pgpa, VM_PROT_READ);
+		pmap_kenter_pa(va, pgpa, VM_PROT_READ, 0);
 		va += PAGE_SIZE;
 		pgpa += PAGE_SIZE;
 	} while (pgpa < endpa);
@@ -717,6 +717,7 @@ mpbios_cpu(const uint8_t *ent, device_t self)
 	else
 		caa.cpu_role = CPU_ROLE_AP;
 
+	caa.cpu_id = entry->apic_id;
 	caa.cpu_number = entry->apic_id;
 	caa.cpu_func = &mp_cpu_funcs;
 	locs[CPUBUSCF_APID] = caa.cpu_number;
@@ -732,8 +733,6 @@ mpbios_cpus(device_t self)
 	/* use default addresses */
 	pe.apic_id = lapic_cpu_number();
 	pe.cpu_flags = PROCENTRY_FLAG_EN|PROCENTRY_FLAG_BP;
-	pe.cpu_signature = cpu_info_primary.ci_signature;
-	pe.feature_flags = cpu_info_primary.ci_feature_flags;
 
 	mpbios_cpu((uint8_t *)&pe, self);
 

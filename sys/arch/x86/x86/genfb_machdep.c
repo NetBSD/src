@@ -1,4 +1,4 @@
-/* $NetBSD: genfb_machdep.c,v 1.2.6.3 2009/11/01 13:58:17 jym Exp $ */
+/* $NetBSD: genfb_machdep.c,v 1.2.6.4 2010/10/24 22:48:18 jym Exp $ */
 
 /*-
  * Copyright (c) 2009 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb_machdep.c,v 1.2.6.3 2009/11/01 13:58:17 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb_machdep.c,v 1.2.6.4 2010/10/24 22:48:18 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -76,7 +76,7 @@ x86_genfb_cnattach(void)
 	static int ncalls = 0;
 	struct rasops_info *ri = &x86_genfb_console_screen.scr_ri;
 	const struct btinfo_framebuffer *fbinfo;
-	bus_space_tag_t t = X86_BUS_SPACE_MEM;
+	bus_space_tag_t t = x86_bus_space_mem;
 	bus_space_handle_t h;
 	void *bits;
 	long defattr;

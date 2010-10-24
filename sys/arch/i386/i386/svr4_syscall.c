@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_syscall.c,v 1.43.8.2 2009/11/01 13:58:22 jym Exp $	*/
+/*	$NetBSD: svr4_syscall.c,v 1.43.8.3 2010/10/24 22:48:01 jym Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_syscall.c,v 1.43.8.2 2009/11/01 13:58:22 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_syscall.c,v 1.43.8.3 2010/10/24 22:48:01 jym Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -39,7 +39,6 @@ __KERNEL_RCSID(0, "$NetBSD: svr4_syscall.c,v 1.43.8.2 2009/11/01 13:58:22 jym Ex
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/signal.h>
 #include <sys/syscall.h>
 #include <sys/syscallvar.h>

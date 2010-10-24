@@ -1,4 +1,4 @@
-/*      $NetBSD: xpci_xenbus.c,v 1.2.4.3 2009/11/01 13:58:48 jym Exp $      */
+/*      $NetBSD: xpci_xenbus.c,v 1.2.4.4 2010/10/24 22:48:23 jym Exp $      */
 
 /*
  * Copyright (c) 2009 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xpci_xenbus.c,v 1.2.4.3 2009/11/01 13:58:48 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xpci_xenbus.c,v 1.2.4.4 2010/10/24 22:48:23 jym Exp $");
 
 #include "opt_xen.h"
 #include "rnd.h"
@@ -382,8 +382,8 @@ xpci_attach_pcibus(int domain, int busn)
 	struct pcibus_attach_args pba;
 
 	memset(&pba, 0, sizeof(struct pcibus_attach_args));
-	pba.pba_iot = X86_BUS_SPACE_IO;
-	pba.pba_memt = X86_BUS_SPACE_MEM;
+	pba.pba_iot = x86_bus_space_io;
+	pba.pba_memt = x86_bus_space_mem;
 	pba.pba_dmat = &pci_bus_dma_tag;
 #ifdef _LP64
 	pba.pba_dmat64 = &pci_bus_dma64_tag;

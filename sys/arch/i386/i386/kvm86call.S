@@ -1,4 +1,4 @@
-/* $NetBSD: kvm86call.S,v 1.9 2008/01/04 15:55:31 yamt Exp $ */
+/* $NetBSD: kvm86call.S,v 1.9.24.1 2010/10/24 22:48:00 jym Exp $ */
 
 /*-
  * Copyright (c) 1998 Jonathan Lemon
@@ -34,7 +34,7 @@
 
 #include "assym.h"
 
-__KERNEL_RCSID(0, "$NetBSD: kvm86call.S,v 1.9 2008/01/04 15:55:31 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kvm86call.S,v 1.9.24.1 2010/10/24 22:48:00 jym Exp $");
 
 	.data
 	.align 4
@@ -79,10 +79,7 @@ ENTRY(kvm86_call)
 	andl	$~0x0200,4(%eax,%edi,1)	/* reset "task busy" */
 	ltr	%di
 
-	movl	%cr3,%eax
-	pushl	%eax			/* save address space */
-	movl	PDPpaddr,%ecx
-	movl	%ecx,%ebx
+	movl	_C_LABEL(PDPpaddr),%ebx
 	addl	$KERNBASE,%ebx		/* va of Idle PDP */
 	movl	0(%ebx),%eax
 	pushl	%eax			/* old pde */
@@ -93,7 +90,12 @@ ENTRY(kvm86_call)
 	movl	vm86newptd,%eax		/* mapping for vm86 page table */
 	movl	%eax,0(%ebx)		/* ... install as PDP entry 0 */
 
-	movl	%ecx,%cr3		/* new page tables */
+	/* install Idle pmap (lwp0 pmap) */
+	movl	_C_LABEL(kernel_pmap_ptr),%eax
+	pushl	%eax
+	call	_C_LABEL(cpu_load_pmap)
+	addl	$4,%esp
+
 	movl	vm86frame,%esp		/* switch to new stack */
 
 	movl	$1,kvm86_incall		/* set flag for trap() */
@@ -129,8 +131,12 @@ ENTRY(kvm86_ret)
 	popl	%ebx			/* saved va of Idle PDP */
 	popl	%eax
 	movl	%eax,0(%ebx)		/* restore old pde */
-	popl	%eax
-	movl	%eax,%cr3		/* install old page table */
+
+	/* restore pmap - saved value is in curcpu()->ci_pmap */
+	movl	%fs:(CPU_INFO_PMAP),%eax
+	pushl	%eax
+	call	_C_LABEL(cpu_load_pmap)
+	addl	$4,%esp
 
 	movl	$0,kvm86_incall		/* reset trapflag */
 

@@ -1,6 +1,5 @@
-#	$NetBSD: Makefile,v 1.2 2008/04/30 16:18:26 ad Exp $
+#	$NetBSD: Makefile,v 1.2.14.1 2010/10/24 22:48:06 jym Exp $
 
 PROG= mbr
-CPPFLAGS+=	-DNO_BANNER
 
 .include <../Makefile.mbr>

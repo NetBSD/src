@@ -1,4 +1,4 @@
-/*	$NetBSD: eisa_machdep.c,v 1.32 2008/06/27 11:12:06 cegger Exp $	*/
+/*	$NetBSD: eisa_machdep.c,v 1.32.10.1 2010/10/24 22:47:59 jym Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eisa_machdep.c,v 1.32 2008/06/27 11:12:06 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eisa_machdep.c,v 1.32.10.1 2010/10/24 22:47:59 jym Exp $");
 
 #include "ioapic.h"
 
@@ -75,7 +75,6 @@ __KERNEL_RCSID(0, "$NetBSD: eisa_machdep.c,v 1.32 2008/06/27 11:12:06 cegger Exp
 #include <sys/systm.h>
 #include <sys/errno.h>
 #include <sys/device.h>
-#include <sys/extent.h>
 
 #include <machine/bus.h>
 #include <machine/bus_private.h>
@@ -234,27 +233,6 @@ eisa_intr_disestablish(eisa_chipset_tag_t ec, void *cookie)
 {
 
 	intr_disestablish(cookie);
-}
-
-int
-eisa_mem_alloc(bus_space_tag_t t, bus_size_t size, bus_size_t align,
-    bus_addr_t boundary, int cacheable,
-    bus_addr_t *addrp, bus_space_handle_t *bahp)
-{
-	extern struct extent *iomem_ex;
-
-	/*
-	 * Allocate physical address space after the ISA hole.
-	 */
-	return bus_space_alloc(t, IOM_END, iomem_ex->ex_end, size, align,
-	    boundary, cacheable, addrp, bahp);
-}
-
-void
-eisa_mem_free(bus_space_tag_t t, bus_space_handle_t bah, bus_size_t size)
-{
-
-	bus_space_free(t, bah, size);
 }
 
 int

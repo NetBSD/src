@@ -1,4 +1,4 @@
-/*	$NetBSD: tprof_pmi.c,v 1.3.12.2 2009/11/01 13:58:18 jym Exp $	*/
+/*	$NetBSD: tprof_pmi.c,v 1.3.12.3 2010/10/24 22:48:20 jym Exp $	*/
 
 /*-
  * Copyright (c)2008,2009 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tprof_pmi.c,v 1.3.12.2 2009/11/01 13:58:18 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tprof_pmi.c,v 1.3.12.3 2010/10/24 22:48:20 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -114,17 +114,18 @@ tprof_pmi_start_cpu(void *arg1, void *arg2)
 	uint64_t cccr;
 	uint64_t escr;
 
-	if (ci->ci_smtid >= 2) {
-		printf("%s: ignoring %s smtid=%u",
-		    __func__, device_xname(ci->ci_dev), ci->ci_smtid);
+	if (ci->ci_smt_id >= 2) {
+		printf("%s: ignoring %s smt id=%u",
+		    __func__, device_xname(ci->ci_dev),
+		    (u_int)ci->ci_smt_id);
 		return;
 	}
-	msr = &msrs[ci->ci_smtid];
+	msr = &msrs[ci->ci_smt_id];
 	escr = __SHIFTIN(escr_event_mask, ESCR_EVENT_MASK) |
 	    __SHIFTIN(escr_event_select, ESCR_EVENT_SELECT);
 	cccr = CCCR_ENABLE | __SHIFTIN(cccr_escr_select, CCCR_ESCR_SELECT) |
 	    CCCR_MUST_BE_SET;
-	if (ci->ci_smtid == 0) {
+	if (ci->ci_smt_id == 0) {
 		escr |= ESCR_T0_OS;
 		cccr |= CCCR_OVF_PMI_T0;
 	} else {
@@ -145,12 +146,13 @@ tprof_pmi_stop_cpu(void *arg1, void *arg2)
 	struct cpu_info * const ci = curcpu();
 	const struct msrs *msr;
 
-	if (ci->ci_smtid >= 2) {
-		printf("%s: ignoring %s smtid=%u",
-		    __func__, device_xname(ci->ci_dev), ci->ci_smtid);
+	if (ci->ci_smt_id >= 2) {
+		printf("%s: ignoring %s smt id=%u",
+		    __func__, device_xname(ci->ci_dev),
+		    (u_int)ci->ci_smt_id);
 		return;
 	}
-	msr = &msrs[ci->ci_smtid];
+	msr = &msrs[ci->ci_smt_id];
 
 	wrmsr(msr->msr_escr, 0);
 	wrmsr(msr->msr_cccr, 0);
@@ -168,11 +170,11 @@ tprof_pmi_nmi(const struct trapframe *tf, void *dummy)
 
 	KASSERT(dummy == NULL);
 
-	if (ci->ci_smtid >= 2) {
+	if (ci->ci_smt_id >= 2) {
 		/* not ours */
 		return 0;
 	}
-	msr = &msrs[ci->ci_smtid];
+	msr = &msrs[ci->ci_smt_id];
 
 	/* check if it's for us */
 	cccr = rdmsr(msr->msr_cccr);

@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.79.4.3 2009/11/01 13:58:21 jym Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.79.4.4 2010/10/24 22:48:01 jym Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.79.4.3 2009/11/01 13:58:21 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.79.4.4 2010/10/24 22:48:01 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -145,11 +145,10 @@ union mainbus_attach_args {
 int	isa_has_been_seen;
 struct x86_isa_chipset x86_isa_chipset;
 #if NISA > 0
-struct isabus_attach_args mba_iba = {
-	"isa",
-	X86_BUS_SPACE_IO, X86_BUS_SPACE_MEM,
-	&isa_bus_dma_tag,
-	&x86_isa_chipset
+static const struct isabus_attach_args mba_iba = {
+	._iba_busname = "isa",
+	.iba_dmat = &isa_bus_dma_tag,
+	.iba_ic = &x86_isa_chipset
 };
 #endif
 
@@ -211,6 +210,9 @@ mainbus_match(device_t parent, cfdata_t match, void *aux)
 void
 mainbus_attach(device_t parent, device_t self, void *aux)
 {
+#if NPCI > 0
+	int mode;
+#endif
 	struct mainbus_softc *sc = device_private(self);
 	union mainbus_attach_args mba;
 #ifdef MPBIOS
@@ -234,9 +236,9 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 	/*
 	 * ACPI needs to be able to access PCI configuration space.
 	 */
-	pci_mode = pci_mode_detect();
+	mode = pci_mode_detect();
 #if defined(PCI_BUS_FIXUP)
-	if (pci_mode != 0) {
+	if (mode != 0) {
 		pci_maxbus = pci_bus_fixup(NULL, 0);
 		aprint_debug("PCI bus max, after pci_bus_fixup: %i\n",
 		    pci_maxbus);
@@ -283,7 +285,7 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 	/*
 	 * ACPI and PNPBIOS need ISA DMA initialized before they start probing.
 	 */
-	isa_dmainit(&x86_isa_chipset, X86_BUS_SPACE_IO, &isa_bus_dma_tag,
+	isa_dmainit(&x86_isa_chipset, x86_bus_space_io, &isa_bus_dma_tag,
 	    self);
 #endif
 
@@ -299,8 +301,8 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 
 	if (memcmp(ISA_HOLE_VADDR(EISA_ID_PADDR), EISA_ID, EISA_ID_LEN) == 0 &&
 	    eisa_has_been_seen == 0) {
-		mba.mba_eba.eba_iot = X86_BUS_SPACE_IO;
-		mba.mba_eba.eba_memt = X86_BUS_SPACE_MEM;
+		mba.mba_eba.eba_iot = x86_bus_space_io;
+		mba.mba_eba.eba_memt = x86_bus_space_mem;
 #if NEISA > 0
 		mba.mba_eba.eba_dmat = &eisa_bus_dma_tag;
 #endif
@@ -308,8 +310,12 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 	}
 
 #if NISA > 0
-	if (isa_has_been_seen == 0)
-		config_found_ia(self, "isabus", &mba_iba, isabusprint);
+	if (isa_has_been_seen == 0) {
+		mba.mba_iba = mba_iba;
+		mba.mba_iba.iba_iot = x86_bus_space_io;
+		mba.mba_iba.iba_memt = x86_bus_space_mem;
+		config_found_ia(self, "isabus", &mba.mba_iba, isabusprint);
+	}
 #endif
 
 #if NAPMBIOS > 0
@@ -324,13 +330,6 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "couldn't establish power handler\n");
 }
 
-/* XXX share this with sys/arch/i386/pci/elan520.c */
-static bool
-ifattr_match(const char *snull, const char *t)
-{
-	return (snull == NULL) || strcmp(snull, t) == 0;
-}
-
 /* scan for new children */
 static int
 mainbus_rescan(device_t self, const char *ifattr, const int *locators)
@@ -343,8 +342,8 @@ mainbus_rescan(device_t self, const char *ifattr, const int *locators)
 	if (ifattr_match(ifattr, "acpibus") && sc->sc_acpi == NULL &&
 	    sc->sc_acpi_present) {
 #if NACPICA > 0
-		mba.mba_acpi.aa_iot = X86_BUS_SPACE_IO;
-		mba.mba_acpi.aa_memt = X86_BUS_SPACE_MEM;
+		mba.mba_acpi.aa_iot = x86_bus_space_io;
+		mba.mba_acpi.aa_memt = x86_bus_space_mem;
 		mba.mba_acpi.aa_pc = NULL;
 		mba.mba_acpi.aa_pciflags =
 		    PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED |
@@ -381,8 +380,8 @@ mainbus_rescan(device_t self, const char *ifattr, const int *locators)
 	if (ifattr_match(ifattr, "ipmibus") && sc->sc_ipmi == NULL) {
 #if NIPMI > 0
 		memset(&mba.mba_ipmi, 0, sizeof(mba.mba_ipmi));
-		mba.mba_ipmi.iaa_iot = X86_BUS_SPACE_IO;
-		mba.mba_ipmi.iaa_memt = X86_BUS_SPACE_MEM;
+		mba.mba_ipmi.iaa_iot = x86_bus_space_io;
+		mba.mba_ipmi.iaa_memt = x86_bus_space_mem;
 		if (ipmi_probe(&mba.mba_ipmi)) {
 			sc->sc_ipmi =
 			    config_found_ia(self, "ipmibus", &mba.mba_ipmi, 0);
@@ -397,11 +396,11 @@ mainbus_rescan(device_t self, const char *ifattr, const int *locators)
 	 * XXX that's not currently possible.
 	 */
 #if NPCI > 0
-	if (pci_mode != 0 && ifattr_match(ifattr, "pcibus")) {
+	if (pci_mode_detect() != 0 && ifattr_match(ifattr, "pcibus")) {
 		int npcibus = 0;
 
-		mba.mba_pba.pba_iot = X86_BUS_SPACE_IO;
-		mba.mba_pba.pba_memt = X86_BUS_SPACE_MEM;
+		mba.mba_pba.pba_iot = x86_bus_space_io;
+		mba.mba_pba.pba_memt = x86_bus_space_mem;
 		mba.mba_pba.pba_dmat = &pci_bus_dma_tag;
 		mba.mba_pba.pba_dmat64 = NULL;
 		mba.mba_pba.pba_pc = NULL;
@@ -432,8 +431,8 @@ mainbus_rescan(device_t self, const char *ifattr, const int *locators)
 #if NMCA > 0
 	/* Note: MCA bus probe is done in i386/machdep.c */
 		if (MCA_system) {
-			mba.mba_mba.mba_iot = X86_BUS_SPACE_IO;
-			mba.mba_mba.mba_memt = X86_BUS_SPACE_MEM;
+			mba.mba_mba.mba_iot = x86_bus_space_io;
+			mba.mba_mba.mba_memt = x86_bus_space_mem;
 			mba.mba_mba.mba_dmat = &mca_bus_dma_tag;
 			mba.mba_mba.mba_mc = NULL;
 			mba.mba_mba.mba_bus = 0;

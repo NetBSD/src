@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.46.4.2 2009/11/01 13:58:17 jym Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.46.4.3 2010/10/24 22:48:18 jym Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2007 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.46.4.2 2009/11/01 13:58:17 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.46.4.3 2010/10/24 22:48:18 jym Exp $");
 
 /*
  * The following is included because _bus_dma_uiomove is derived from
@@ -155,14 +155,28 @@ _bus_dmamem_alloc_range(bus_dma_tag_t t, bus_size_t size,
 	struct vm_page *m;
 	struct pglist mlist;
 	int curseg, error;
+	bus_size_t uboundary;
 
 	/* Always round the size. */
 	size = round_page(size);
 
+	KASSERT(boundary >= PAGE_SIZE || boundary == 0);
+
 	/*
 	 * Allocate pages from the VM system.
-	 */
-	error = uvm_pglistalloc(size, low, high, alignment, boundary,
+	 * We accept boundaries < size, splitting in multiple segments
+	 * if needed. uvm_pglistalloc does not, so compute an appropriate
+         * boundary: next power of 2 >= size
+         */
+
+	if (boundary == 0)
+		uboundary = 0;
+	else {
+		uboundary = boundary;
+		while (uboundary < size)
+			uboundary = uboundary << 1;
+	}
+	error = uvm_pglistalloc(size, low, high, alignment, uboundary,
 	    &mlist, nsegs, (flags & BUS_DMA_NOWAIT) == 0);
 	if (error)
 		return (error);
@@ -182,14 +196,17 @@ _bus_dmamem_alloc_range(bus_dma_tag_t t, bus_size_t size,
 #ifdef DIAGNOSTIC
 		if (curaddr < low || curaddr >= high) {
 			printf("vm_page_alloc_memory returned non-sensical"
-			    " address 0x%lx\n", curaddr);
+			    " address %#" PRIxPADDR "\n", curaddr);
 			panic("_bus_dmamem_alloc_range");
 		}
 #endif
-		if (curaddr == (lastaddr + PAGE_SIZE))
+		if (curaddr == (lastaddr + PAGE_SIZE) &&
+		    (lastaddr & boundary) == (curaddr & boundary)) {
 			segs[curseg].ds_len += PAGE_SIZE;
-		else {
+		} else {
 			curseg++;
+			if (curseg >= nsegs)
+				return EFBIG;
 			segs[curseg].ds_addr = curaddr;
 			segs[curseg].ds_len = PAGE_SIZE;
 		}
@@ -896,13 +913,16 @@ _bus_dma_alloc_bouncebuf(bus_dma_tag_t t, bus_dmamap_t map,
 	error = _bus_dmamem_alloc(t, cookie->id_bouncebuflen,
 	    PAGE_SIZE, map->_dm_boundary, cookie->id_bouncesegs,
 	    map->_dm_segcnt, &cookie->id_nbouncesegs, flags);
-	if (error)
-		goto out;
+	if (error) {
+		cookie->id_bouncebuflen = 0;
+		cookie->id_nbouncesegs = 0;
+		return error;
+	}
+
 	error = _bus_dmamem_map(t, cookie->id_bouncesegs,
 	    cookie->id_nbouncesegs, cookie->id_bouncebuflen,
 	    (void **)&cookie->id_bouncebuf, flags);
 
- out:
 	if (error) {
 		_bus_dmamem_free(t, cookie->id_bouncesegs,
 		    cookie->id_nbouncesegs);
@@ -923,7 +943,7 @@ _bus_dma_free_bouncebuf(bus_dma_tag_t t, bus_dmamap_t map)
 
 #ifdef DIAGNOSTIC
 	if (cookie == NULL)
-		panic("_bus_dma_alloc_bouncebuf: no cookie");
+		panic("_bus_dma_free_bouncebuf: no cookie");
 #endif
 
 	STAT_DECR(nbouncebufs);
