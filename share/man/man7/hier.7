@@ -1,4 +1,4 @@
-.\"	$NetBSD: hier.7,v 1.90 2009/12/05 20:11:02 pooka Exp $
+.\"	$NetBSD: hier.7,v 1.91 2010/10/24 16:46:38 christos Exp $
 .\"
 .\" Copyright (c) 1990, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)hier.7	8.5 (Berkeley) 6/1/94
 .\"
-.Dd December 5, 2009
+.Dd October 24, 2010
 .Dt HIER 7
 .Os
 .Sh NAME
@@ -629,7 +629,9 @@ cryptographic source, which may have import or export restrictions
 .It Sy dist/
 third-party
 .Sq virgin
-source code, referenced by other parts of the source tree
+source code, referenced by other parts of the source tree (deprecated, use 
+.Sy external/
+instead)
 .It Sy distrib/
 tools and data-files for making distributions
 .It Sy doc/
@@ -645,11 +647,36 @@ source for programs from external third parties
 is the not the primary maintainer),
 grouped by license, and then products per license
 .Pp
-.Bl -tag -width "bsd/" -compact
+.Bl -tag -width "intel-fw-public/" -compact
+.It Sy apache2/
+Apache 2.0 license.
 .It Sy bsd/
 BSD (or equivalent) licensed software,
 possibly with the
-.Dq advertising clause
+.Dq advertising clause.
+.It Sy cddl/
+Common Development and Distribution License (the sun license which is
+based on the Mozilla Public License version 1.1).
+.It Sy gpl2/
+GNU Public License, version 2 (or earlier).
+.It Sy gpl3/
+GNU Public License, version 3.
+.It Sy historical/
+Lucent's old license.
+.It Sy ibm-public/
+IBM's public license.
+.It Sy intel-fw-eula/
+Intel firmware license with redistribution restricted to OEM.
+.It Sy intel-fw-public/
+Intel firmware license permitting redistribution with
+terms similar to BSD licensed software.
+.It Sy intel-public/
+Intel license permitting redistribution with terms similar to
+BSD licensed software.
+.It Sy mit/
+MIT (X11) style license.
+.It Sy zlib/
+BSD-like zlib license.
 .El
 .Pp
 .It Sy games/
@@ -658,7 +685,11 @@ source for utilities/files in
 .It Sy gnu/
 source for programs covered by the
 .Tn GNU
-license (or similar)
+license (or similar) (deprecated; use
+.Sy external/gpl2/
+or
+.Sy external/gpl3/
+as appropriate)
 .It Sy include/
 source for files in
 .Pa /usr/include
