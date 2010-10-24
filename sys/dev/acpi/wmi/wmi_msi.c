@@ -1,4 +1,4 @@
-/*	$NetBSD: wmi_msi.c,v 1.1 2010/10/24 08:54:15 jruoho Exp $ */
+/*	$NetBSD: wmi_msi.c,v 1.2 2010/10/24 16:25:31 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,10 +31,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wmi_msi.c,v 1.1 2010/10/24 08:54:15 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wmi_msi.c,v 1.2 2010/10/24 16:25:31 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
+#include <sys/module.h>
 
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
@@ -192,3 +193,79 @@ out:
 		aprint_error_dev(sc->sc_dev, "failed to get data for "
 		    "event 0x%02X: %s\n", evt, AcpiFormatException(rv));
 }
+
+#ifdef _MODULE
+
+MODULE(MODULE_CLASS_DRIVER, wmimsi, NULL);
+CFDRIVER_DECL(wmimsi, DV_DULL, NULL);
+
+static int wmimsiloc[] = { -1 };
+extern struct cfattach wmimsi_ca;
+
+static struct cfparent wmiparent = {
+	"acpiwmibus", NULL, DVUNIT_ANY
+};
+
+static struct cfdata wmimsi_cfdata[] = {
+	{
+		.cf_name = "wmimsi",
+		.cf_atname = "wmimsi",
+		.cf_unit = 0,
+		.cf_fstate = FSTATE_STAR,
+		.cf_loc = wmimsiloc,
+		.cf_flags = 0,
+		.cf_pspec = &wmiparent,
+	},
+
+	{ NULL }
+};
+
+static int
+wmimsi_modcmd(modcmd_t cmd, void *opaque)
+{
+	int err;
+
+	switch (cmd) {
+
+	case MODULE_CMD_INIT:
+
+		err = config_cfdriver_attach(&wmimsi_cd);
+
+		if (err != 0)
+			return err;
+
+		err = config_cfattach_attach("wmimsi", &wmimsi_ca);
+
+		if (err != 0) {
+			config_cfdriver_detach(&wmimsi_cd);
+			return err;
+		}
+
+		err = config_cfdata_attach(wmimsi_cfdata, 1);
+
+		if (err != 0) {
+			config_cfattach_detach("wmimsi", &wmimsi_ca);
+			config_cfdriver_detach(&wmimsi_cd);
+			return err;
+		}
+
+		return 0;
+
+	case MODULE_CMD_FINI:
+
+		err = config_cfdata_detach(wmimsi_cfdata);
+
+		if (err != 0)
+			return err;
+
+		config_cfattach_detach("wmimsi", &wmimsi_ca);
+		config_cfdriver_detach(&wmimsi_cd);
+
+		return 0;
+
+	default:
+		return ENOTTY;
+	}
+}
+
+#endif	/* _MODULE */
