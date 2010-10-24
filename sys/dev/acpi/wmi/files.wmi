@@ -1,4 +1,4 @@
-#	$NetBSD: files.wmi,v 1.6 2010/08/06 22:45:00 jruoho Exp $
+#	$NetBSD: files.wmi,v 1.7 2010/10/24 08:54:15 jruoho Exp $
 
 define	acpiwmibus { }
 
@@ -16,3 +16,8 @@ file	dev/acpi/wmi/wmi_dell.c		wmidell
 device	wmihp: sysmon_envsys
 attach	wmihp at acpiwmibus
 file	dev/acpi/wmi/wmi_hp.c		wmihp
+
+# MSI WMI mappings
+device	wmimsi
+attach	wmimsi at acpiwmibus
+file	dev/acpi/wmi/wmi_msi.c		wmimsi
