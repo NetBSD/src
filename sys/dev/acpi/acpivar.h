@@ -1,4 +1,4 @@
-/*	$NetBSD: acpivar.h,v 1.63 2010/09/24 07:48:59 gsutre Exp $	*/
+/*	$NetBSD: acpivar.h,v 1.64 2010/10/24 07:53:04 jruoho Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -309,7 +309,7 @@ struct acpi_drq		*acpi_res_drq(struct acpi_resources *, int);
 /*
  * Sleep state transition.
  */
-void			acpi_enter_sleep_state(struct acpi_softc *, int);
+void			acpi_enter_sleep_state(int);
 
 /*
  * MADT.
