@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.50 2010/10/24 16:31:35 jmcneill Exp $
+#	$NetBSD: Makefile,v 1.51 2010/10/24 18:29:33 jmcneill Exp $
 
 .include <bsd.own.mk>
 
@@ -97,6 +97,7 @@ SUBDIR+=	acpiverbose
 
 .if ${MACHINE_ARCH} == "i386" || \
     ${MACHINE_ARCH} == "x86_64"
+SUBDIR+=	acpiwmi
 SUBDIR+=	wmidell
 SUBDIR+=	wmihp
 SUBDIR+=	wmimsi
