@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1514 2010/10/20 09:22:33 jmmv Exp $
+#	$NetBSD: mi,v 1.1515 2010/10/24 06:57:04 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -7773,7 +7773,8 @@
 ./usr/share/man/cat3/randomid_delete.0		comp-c-catman		.cat
 ./usr/share/man/cat3/randomid_new.0		comp-c-catman		.cat
 ./usr/share/man/cat3/raw.0			comp-c-catman		.cat
-./usr/share/man/cat3/rb.0			comp-c-catman		.cat
+./usr/share/man/cat3/rb.0			comp-obsolete		obsolete
+./usr/share/man/cat3/rbtree.0			comp-c-catman		.cat
 ./usr/share/man/cat3/rb_tree_find_node.0	comp-c-catman		.cat
 ./usr/share/man/cat3/rb_tree_find_node_geq.0	comp-c-catman		.cat
 ./usr/share/man/cat3/rb_tree_find_node_leq.0	comp-c-catman		.cat
@@ -13677,7 +13678,8 @@
 ./usr/share/man/html3/randomid_delete.html	comp-c-htmlman		html
 ./usr/share/man/html3/randomid_new.html		comp-c-htmlman		html
 ./usr/share/man/html3/raw.html			comp-c-htmlman		html
-./usr/share/man/html3/rb.html			comp-c-htmlman		html
+./usr/share/man/html3/rb.html			comp-obsolete		obsolete
+./usr/share/man/html3/rbtree.html		comp-c-htmlman		html
 ./usr/share/man/html3/rb_tree_find_node.html	comp-c-htmlman		html
 ./usr/share/man/html3/rb_tree_find_node_geq.html	comp-c-htmlman		html
 ./usr/share/man/html3/rb_tree_find_node_leq.html	comp-c-htmlman		html
@@ -19581,7 +19583,8 @@
 ./usr/share/man/man3/randomid_delete.3		comp-c-man		.man
 ./usr/share/man/man3/randomid_new.3		comp-c-man		.man
 ./usr/share/man/man3/raw.3			comp-c-man		.man
-./usr/share/man/man3/rb.3			comp-c-man		.man
+./usr/share/man/man3/rb.3			comp-obsolete		obsolete
+./usr/share/man/man3/rbtree.3			comp-c-man		.man
 ./usr/share/man/man3/rb_tree_find_node.3	comp-c-man		.man
 ./usr/share/man/man3/rb_tree_find_node_geq.3	comp-c-man		.man
 ./usr/share/man/man3/rb_tree_find_node_leq.3	comp-c-man		.man

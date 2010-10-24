@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.56 2010/10/16 10:27:08 skrll Exp $
+#	$NetBSD: Makefile,v 1.57 2010/10/24 06:57:04 jruoho Exp $
 #	@(#)Makefile	8.2 (Berkeley) 12/13/93
 
 MAN=	_DIAGASSERT.3 __CONCAT.3 __UNCONST.3 CMSG_DATA.3 \
@@ -6,7 +6,7 @@ MAN=	_DIAGASSERT.3 __CONCAT.3 __UNCONST.3 CMSG_DATA.3 \
 	dlfcn.3 dl_iterate_phdr.3 end.3 \
 	fast_divide32.3 ffs32.3 gcq.3 \
 	ilog2.3 intro.3 inttypes.3 iso646.3 \
-	offsetof.3 queue.3 rb.3 sigevent.3 \
+	offsetof.3 queue.3 rbtree.3 sigevent.3 \
 	stdarg.3 stdbool.3 stddef.3 stdint.3 stdlib.3 sysexits.3 \
 	tgmath.3 timeradd.3 timeval.3 tree.3 types.3 varargs.3
 
@@ -195,12 +195,12 @@ MLINKS+=queue.3 CIRCLEQ_HEAD.3 \
 	queue.3 CIRCLEQ_PREV.3 \
 	queue.3 CIRCLEQ_LOOP_NEXT.3 \
 	queue.3 CIRCLEQ_LOOP_PREV.3
-MLINKS+=rb.3 rb_tree_init.3 \
-	rb.3 rb_tree_insert_node.3 \
-	rb.3 rb_tree_find_node.3 \
-	rb.3 rb_tree_find_node_geq.3 \
-	rb.3 rb_tree_find_node_leq.3 \
-	rb.3 rb_tree_iterate.3
+MLINKS+=rbtree.3 rb_tree_init.3 \
+	rbtree.3 rb_tree_insert_node.3 \
+	rbtree.3 rb_tree_find_node.3 \
+	rbtree.3 rb_tree_find_node_geq.3 \
+	rbtree.3 rb_tree_find_node_leq.3 \
+	rbtree.3 rb_tree_iterate.3
 MLINKS+=stdarg.3 va_arg.3 stdarg.3 va_copy.3 \
 	stdarg.3 va_end.3 stdarg.3 va_start.3
 MLINKS+=dirent.3 dir.3 \
