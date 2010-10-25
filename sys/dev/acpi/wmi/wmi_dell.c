@@ -1,4 +1,4 @@
-/*	$NetBSD: wmi_dell.c,v 1.5 2010/10/24 16:25:31 jmcneill Exp $ */
+/*	$NetBSD: wmi_dell.c,v 1.6 2010/10/25 07:53:22 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wmi_dell.c,v 1.5 2010/10/24 16:25:31 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wmi_dell.c,v 1.6 2010/10/25 07:53:22 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -122,7 +122,7 @@ wmi_dell_detach(device_t self, int flags)
 {
 	struct wmi_dell_softc *sc = device_private(self);
 	device_t parent = sc->sc_parent;
-	int i;
+	size_t i;
 
 	(void)pmf_device_deregister(self);
 	(void)acpi_wmi_event_deregister(parent);
@@ -256,7 +256,7 @@ static struct cfdata wmidell_cfdata[] = {
 		.cf_pspec = &wmiparent,
 	},
 
-	{ NULL }
+	{ NULL, NULL, 0, 0, NULL, 0, NULL }
 };
 
 static int
