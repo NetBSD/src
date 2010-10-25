@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.52 2010/10/25 06:40:32 jruoho Exp $
+#	$NetBSD: Makefile,v 1.53 2010/10/25 17:17:56 jruoho Exp $
 
 .include <bsd.own.mk>
 
@@ -101,8 +101,12 @@ SUBDIR+=	acpiacad
 SUBDIR+=	acpibat
 SUBDIR+=	acpibut
 SUBDIR+=	acpicpu
+SUBDIR+=	acpidalb
 SUBDIR+=	acpilid
+SUBDIR+=	acpitz
+SUBDIR+=	acpivga
 SUBDIR+=	acpiwmi
+SUBDIR+=	aibs
 SUBDIR+=	thinkpad
 SUBDIR+=	wmidell
 SUBDIR+=	wmihp
