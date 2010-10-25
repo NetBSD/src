@@ -1,4 +1,4 @@
-/*	$NetBSD: wmi_hp.c,v 1.3 2010/10/24 16:25:31 jmcneill Exp $ */
+/*	$NetBSD: wmi_hp.c,v 1.4 2010/10/25 07:53:22 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wmi_hp.c,v 1.3 2010/10/24 16:25:31 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wmi_hp.c,v 1.4 2010/10/25 07:53:22 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -554,7 +554,7 @@ static struct cfdata wmihp_cfdata[] = {
 		.cf_pspec = &wmiparent,
 	},
 
-	{ NULL }
+	{ NULL, NULL, 0, 0, NULL, 0, NULL }
 };
 
 static int

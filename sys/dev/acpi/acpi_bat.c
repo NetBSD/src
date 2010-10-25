@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_bat.c,v 1.104 2010/08/14 05:41:22 jruoho Exp $	*/
+/*	$NetBSD: acpi_bat.c,v 1.105 2010/10/25 07:48:03 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.104 2010/08/14 05:41:22 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.105 2010/10/25 07:48:03 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>
@@ -179,7 +179,7 @@ static int	    acpibat_match(device_t, cfdata_t, void *);
 static void	    acpibat_attach(device_t, device_t, void *);
 static int	    acpibat_detach(device_t, int);
 static int          acpibat_get_sta(device_t);
-static ACPI_OBJECT *acpibat_get_object(ACPI_HANDLE, const char *, int);
+static ACPI_OBJECT *acpibat_get_object(ACPI_HANDLE, const char *, uint32_t);
 static void         acpibat_get_info(device_t);
 static void	    acpibat_print_info(device_t, ACPI_OBJECT *);
 static void         acpibat_get_status(device_t);
@@ -311,7 +311,7 @@ acpibat_get_sta(device_t dv)
 }
 
 static ACPI_OBJECT *
-acpibat_get_object(ACPI_HANDLE hdl, const char *pth, int count)
+acpibat_get_object(ACPI_HANDLE hdl, const char *pth, uint32_t count)
 {
 	ACPI_OBJECT *obj;
 	ACPI_BUFFER buf;
@@ -347,9 +347,10 @@ acpibat_get_info(device_t dv)
 {
 	struct acpibat_softc *sc = device_private(dv);
 	ACPI_HANDLE hdl = sc->sc_node->ad_handle;
-	int capunit, i, rateunit, val;
 	ACPI_OBJECT *elm, *obj;
 	ACPI_STATUS rv = AE_OK;
+	int capunit, i, rateunit;
+	uint64_t val;
 
 	obj = acpibat_get_object(hdl, "_BIF", ACPIBAT_BIF_COUNT);
 
@@ -505,9 +506,10 @@ acpibat_get_status(device_t dv)
 {
 	struct acpibat_softc *sc = device_private(dv);
 	ACPI_HANDLE hdl = sc->sc_node->ad_handle;
-	int i, rate, state, val;
 	ACPI_OBJECT *elm, *obj;
 	ACPI_STATUS rv = AE_OK;
+	int i, rate, state;
+	uint64_t val;
 
 	obj = acpibat_get_object(hdl, "_BST", ACPIBAT_BST_COUNT);
 
