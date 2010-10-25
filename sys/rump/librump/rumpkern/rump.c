@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.188 2010/09/07 21:11:10 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.189 2010/10/25 17:49:36 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.188 2010/09/07 21:11:10 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.189 2010/10/25 17:49:36 pooka Exp $");
 
 #include <sys/systm.h>
 #define ELFSIZE ARCH_ELFSIZE
@@ -240,7 +240,7 @@ rump__init(int rump_version)
 	}
 #else
 	if (error == 0)
-		printf("NCPU limited to 1 on this host\n");
+		printf("NCPU limited to 1 on this machine architecture\n");
 	numcpu = 1;
 #endif
 	rump_cpus_bootstrap(numcpu);
