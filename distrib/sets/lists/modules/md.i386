@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.7 2010/10/25 06:40:32 jruoho Exp $
+# $NetBSD: md.i386,v 1.8 2010/10/25 17:19:05 jruoho Exp $
 ./@MODULEDIR@/acpiacad				base-kernel-modules	kmod
 ./@MODULEDIR@/acpiacad/acpiacad.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/acpibat				base-kernel-modules	kmod
@@ -7,12 +7,20 @@
 ./@MODULEDIR@/acpibut/acpibut.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/acpicpu				base-kernel-modules	kmod
 ./@MODULEDIR@/acpicpu/acpicpu.kmod		base-kernel-modules	kmod
+./@MODULEDIR@/acpidalb				base-kernel-modules	kmod
+./@MODULEDIR@/acpidalb/acpidalb.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/acpilid				base-kernel-modules	kmod
 ./@MODULEDIR@/acpilid/acpilid.kmod		base-kernel-modules	kmod
+./@MODULEDIR@/acpitz				base-kernel-modules	kmod
+./@MODULEDIR@/acpitz/acpitz.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/acpiverbose			base-kernel-modules	kmod
 ./@MODULEDIR@/acpiverbose/acpiverbose.kmod	base-kernel-modules	kmod
+./@MODULEDIR@/acpivga				base-kernel-modules	kmod
+./@MODULEDIR@/acpivga/acpivga.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/acpiwmi				base-kernel-modules	kmod
 ./@MODULEDIR@/acpiwmi/acpiwmi.kmod		base-kernel-modules	kmod
+./@MODULEDIR@/aibs				base-kernel-modules	kmod
+./@MODULEDIR@/aibs/aibs.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/azalia				base-kernel-modules	kmod
 ./@MODULEDIR@/azalia/azalia.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/compat_freebsd			base-kernel-modules	kmod
