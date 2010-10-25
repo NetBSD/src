@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_display.c,v 1.1 2010/10/12 19:10:50 gsutre Exp $	*/
+/*	$NetBSD: acpi_display.c,v 1.2 2010/10/25 17:06:58 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -66,11 +66,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_display.c,v 1.1 2010/10/12 19:10:50 gsutre Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_display.c,v 1.2 2010/10/25 17:06:58 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/kmem.h>
+#include <sys/module.h>
 #include <sys/mutex.h>
 #include <sys/sysctl.h>
 #include <sys/systm.h>
@@ -2004,3 +2005,30 @@ acpidisp_array_search(const uint8_t *a, uint16_t n, int v, uint8_t *l, uint8_t *
 	*u = a[j];
 	return;
 }
+
+#ifdef _MODULE
+
+MODULE(MODULE_CLASS_DRIVER, acpivga, NULL);
+
+#include "ioconf.c"
+
+static int
+acpivga_modcmd(modcmd_t cmd, void *context)
+{
+
+	switch (cmd) {
+
+	case MODULE_CMD_INIT:
+		return config_init_component(cfdriver_ioconf_acpivga,
+		    cfattach_ioconf_acpivga, cfdata_ioconf_acpivga);
+
+	case MODULE_CMD_FINI:
+		return config_fini_component(cfdriver_ioconf_acpivga,
+		    cfattach_ioconf_acpivga, cfdata_ioconf_acpivga);
+
+	default:
+		return ENOTTY;
+	}
+}
+
+#endif	/* _MODULE */
