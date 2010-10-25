@@ -1,4 +1,5 @@
-$NetBSD: acronyms,v 1.191 2010/10/24 22:36:41 dholland Exp $
+$NetBSD: acronyms,v 1.192 2010/10/25 06:14:10 jruoho Exp $
+AEAP	as early as possible
 AFAIC	as far as I'm concerned
 AFAICR	as far as I can recall
 AFAICT	as far as I can tell
@@ -14,6 +15,7 @@ AIUI	as I understand it
 AKA	also known as
 ASAIC	as soon as I can
 ASAP	as soon as possible
+ATEOTD	at the end of the day
 ATM	at the moment
 ATM	automatic teller machine
 AWOL	absent without official leave
@@ -51,11 +53,13 @@ CMIIW	correct me if I'm wrong
 CNP	continued [in my] next post
 COB	close of business [day]
 COTS	commercial off-the-shelf
+CU	see you
 CYA	see you around
 D/L	download
 DGAS	don't give a shit
 DIY	do it yourself
 DKDC	don't know, don't care
+DND	do not disturb
 DOA	dead on arrival
 DRY	don't repeat yourself
 DSTM	don't shoot the messenger
@@ -67,6 +71,7 @@ EMSG	email message
 EOB	end of business [day]
 EOD	end of discussion
 EOL	end of life
+EOM	end of message
 ETA	estimated time of arrival
 ETLA	extended three letter acronym
 EWAG	experienced wild-ass guess
@@ -77,6 +82,8 @@ FIGJAM	fuck I'm good, just ask me
 FIIK	fuck[ed] if I know
 FIIR	fuck[ed] if I remember
 FM	fucking magic
+FNO	from now on
+FNO	for nerds only
 FOAD	{fuck off,fall over} and die
 FOS	full of shit
 FSDO	for some definition of
@@ -94,12 +101,17 @@ G	grin
 G/C	garbage collect
 GAC	get a clue
 GAL	get a life
+GBTW	get back to work
+GFU	good for you
 GIGO	garbage in, garbage out
+GJ	good job
+GL	good luck
 GMTA	great minds think alike
 GTFO	get the fuck out
 GTG	got to go
 GWS	get well soon
 HAND	have a nice day
+HF	have fun
 HFIW	HOLY FUCK IT WORKS
 HHIS	hanging head in shame
 HHOS	ha ha, only serious
@@ -133,9 +145,11 @@ ISTM	it seems to me
 ISTR	I seem to recall
 ITYM	I think you mean
 IWBNI	it would be nice if
+IYKWIM	if you know what I mean
 IYSS	if you say so
 IYSWIM	if you see what I mean
 J/K	just kidding
+JFTR	just for the record
 JFW	just fucking works
 JHD	just hit ``delete''
 JIC	just in case
@@ -146,6 +160,7 @@ JTLYK	just to let you know
 KISS	keep it simple, stupid
 KITA	kick in the ass
 KNF	kernel normal form
+KOS	kill on sight
 L8R	later
 LART	luser attitude readjustment tool (ie, hammer)
 LBNL	last but not least
@@ -203,6 +218,7 @@ POLA	principle of least astonishment
 POLS	principle of least surprise
 POS	piece of shit
 POV	point of view
+PPL	people
 PPL	pretty please
 PTV	parental tunnel vision
 QED	quod erat demonstrandum
@@ -277,6 +293,7 @@ TRT	the right thing
 TTBOMK	to the best of my knowledge
 TTFN	ta ta for now
 TTYL	talk to you later
+TTYS	talk to you soon
 TWIAVBP	the world is a very big place
 TY	thank you
 TYVM	thank you very much
@@ -298,10 +315,12 @@ WOMBAT	waste of money, brain, and time
 WRT	with respect to
 WTF	{what,when,where,who,why} the fuck
 WTFRUD	what the fuck are you doing
+WTG	way to go
 WTH	{what,when,where,who,why} the hell
 WYSIWYG	what you see is what you get
 YAGNI	you ain't gonna need it
 YALIMO	you are lame, in my opinion
+YGM	you got mail
 YHBT	you have been trolled
 YHL	you have lost
 YKWIM	you know what I mean
