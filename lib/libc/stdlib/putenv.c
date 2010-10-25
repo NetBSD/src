@@ -1,4 +1,4 @@
-/*	$NetBSD: putenv.c,v 1.16 2010/10/05 02:23:38 enami Exp $	*/
+/*	$NetBSD: putenv.c,v 1.17 2010/10/25 20:35:36 njoly Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)putenv.c	8.2 (Berkeley) 3/27/94";
 #else
-__RCSID("$NetBSD: putenv.c,v 1.16 2010/10/05 02:23:38 enami Exp $");
+__RCSID("$NetBSD: putenv.c,v 1.17 2010/10/25 20:35:36 njoly Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -59,8 +59,10 @@ putenv(char *str)
 
 	_DIAGASSERT(str != NULL);
 
-	if (strchr(str, '=') == NULL)
+	if (str == NULL || strchr(str, '=') == NULL || *str == '=') {
+		errno = EINVAL;
 		return -1;
+	}
 
 	if (rwlock_wrlock(&__environ_lock) != 0)
 		return -1;
