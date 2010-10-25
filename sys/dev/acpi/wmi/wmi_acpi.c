@@ -1,4 +1,4 @@
-/*	$NetBSD: wmi_acpi.c,v 1.9 2010/10/24 18:26:29 jmcneill Exp $	*/
+/*	$NetBSD: wmi_acpi.c,v 1.10 2010/10/25 15:38:05 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2009, 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wmi_acpi.c,v 1.9 2010/10/24 18:26:29 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wmi_acpi.c,v 1.10 2010/10/25 15:38:05 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -751,7 +751,7 @@ static struct cfdata acpiwmi_cfdata[] = {
 		.cf_pspec = &acpiparent,
 	},
 
-	{ NULL }
+	{ NULL, NULL, 0, 0, NULL, 0, NULL }
 };
 
 static int
