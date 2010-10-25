@@ -1,4 +1,4 @@
-/* $NetBSD: utils.c,v 1.35 2010/10/22 17:56:06 pooka Exp $ */
+/* $NetBSD: utils.c,v 1.36 2010/10/25 08:19:47 tron Exp $ */
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)utils.c	8.3 (Berkeley) 4/1/94";
 #else
-__RCSID("$NetBSD: utils.c,v 1.35 2010/10/22 17:56:06 pooka Exp $");
+__RCSID("$NetBSD: utils.c,v 1.36 2010/10/25 08:19:47 tron Exp $");
 #endif
 #endif /* not lint */
 
@@ -47,12 +47,16 @@ __RCSID("$NetBSD: utils.c,v 1.35 2010/10/22 17:56:06 pooka Exp $");
 #include <errno.h>
 #include <fcntl.h>
 #include <fts.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
 #include "extern.h"
+
+#define	MMAP_MAX_SIZE	(8 * 1048576)
+#define	MMAP_MAX_WRITE	(64 * 1024)
 
 int
 set_utimes(const char *file, struct stat *fs)
@@ -75,6 +79,7 @@ copy_file(FTSENT *entp, int dne)
 	static char buf[MAXBSIZE];
 	struct stat to_stat, *fs;
 	int ch, checkch, from_fd, rcount, rval, to_fd, tolnk, wcount;
+	char *p;
 	
 	if ((from_fd = open(entp->fts_path, O_RDONLY, 0)) == -1) {
 		warn("%s", entp->fts_path);
@@ -145,47 +150,55 @@ copy_file(FTSENT *entp, int dne)
 	 */
 
 	if (fs->st_size > 0) {
-
-	/*
-	 * Disable use of mmap.  With the current vnode locking
-	 * scheme it has a very annoying property: if the source
-	 * media is slow (like a slow network), the target file
-	 * will be locked for the duration of the entire max 8MB
-	 * write and cause processes attempting to e.g. stat() it
-	 * to "tstile".  Revisit when vnode locking gets a little
-	 * smarter.
-	 */
-#ifdef VNODE_LOCKING_IS_SMARTER_NOW
 		/*
 		 * Mmap and write if less than 8M (the limit is so
 		 * we don't totally trash memory on big files).
 		 * This is really a minor hack, but it wins some CPU back.
 		 */
+		bool use_read;
 
-		if (fs->st_size <= 8 * 1048576) {
+		use_read = true;
+		if (fs->st_size <= MMAP_MAX_SIZE) {
 			size_t fsize = (size_t)fs->st_size;
-			char *p;
-
 			p = mmap(NULL, fsize, PROT_READ, MAP_FILE|MAP_SHARED,
 			    from_fd, (off_t)0);
-			if (p == MAP_FAILED) {
-				goto mmap_failed;
-			} else {
+			if (p != MAP_FAILED) {
+				size_t remainder;
+
+				use_read = false;
+
 				(void) madvise(p, (size_t)fs->st_size,
 				     MADV_SEQUENTIAL);
-				if (write(to_fd, p, fsize) !=
-				    fs->st_size) {
-					warn("%s", to.p_path);
-					rval = 1;
-				}
+
+				/*
+				 * Write out the data in small chunks to
+				 * avoid locking the output file for a
+				 * long time if the reading the data from
+				 * the source is slow.
+				 */
+				remainder = fsize;
+				do {
+					ssize_t chunk;
+
+					chunk = (remainder > MMAP_MAX_WRITE) ?
+					    MMAP_MAX_WRITE : remainder;
+					if (write(to_fd, &p[fsize - remainder],
+					    chunk) != chunk) {
+						warn("%s", to.p_path);
+						rval = 1;
+						break;
+					}
+					remainder -= chunk;
+				} while (remainder > 0);
+
 				if (munmap(p, fsize) < 0) {
 					warn("%s", entp->fts_path);
 					rval = 1;
 				}
 			}
-		} else {
-mmap_failed:
-#endif
+		}
+
+		if (use_read) {
 			while ((rcount = read(from_fd, buf, MAXBSIZE)) > 0) {
 				wcount = write(to_fd, buf, (size_t)rcount);
 				if (rcount != wcount || wcount == -1) {
@@ -198,9 +211,7 @@ mmap_failed:
 				warn("%s", entp->fts_path);
 				rval = 1;
 			}
-#ifdef VNODE_LOCKING_IS_SMARTER_NOW
 		}
-#endif
 	}
 
 	if (rval == 1) {
