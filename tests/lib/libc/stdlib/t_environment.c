@@ -1,4 +1,4 @@
-/*	$NetBSD: t_environment.c,v 1.3 2010/10/16 11:23:41 njoly Exp $	*/
+/*	$NetBSD: t_environment.c,v 1.4 2010/10/25 20:35:36 njoly Exp $	*/
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_environment.c,v 1.3 2010/10/16 11:23:41 njoly Exp $");
+__RCSID("$NetBSD: t_environment.c,v 1.4 2010/10/25 20:35:36 njoly Exp $");
 
 #include <atf-c.h>
 #include <errno.h>
@@ -95,7 +95,10 @@ ATF_TC_BODY(t_putenv, tc)
 	string[1] = 'r';
 	unsetenv("crap");
 	ATF_CHECK(getenv("crap") == NULL);
-		
+
+	ATF_CHECK_ERRNO(EINVAL, putenv(NULL) == -1);
+	ATF_CHECK_ERRNO(EINVAL, putenv("val") == -1);
+	ATF_CHECK_ERRNO(EINVAL, putenv("=val") == -1);
 }
 
 ATF_TP_ADD_TCS(tp)
