@@ -1,4 +1,14 @@
-# $NetBSD: md.amd64,v 1.5 2010/10/24 18:29:33 jmcneill Exp $
+# $NetBSD: md.amd64,v 1.6 2010/10/25 06:40:32 jruoho Exp $
+./@MODULEDIR@/acpiacad				base-kernel-modules	kmod
+./@MODULEDIR@/acpiacad/acpiacad.kmod		base-kernel-modules	kmod
+./@MODULEDIR@/acpibat				base-kernel-modules	kmod
+./@MODULEDIR@/acpibat/acpibat.kmod		base-kernel-modules	kmod
+./@MODULEDIR@/acpibut				base-kernel-modules	kmod
+./@MODULEDIR@/acpibut/acpibut.kmod		base-kernel-modules	kmod
+./@MODULEDIR@/acpicpu				base-kernel-modules	kmod
+./@MODULEDIR@/acpicpu/acpicpu.kmod		base-kernel-modules	kmod
+./@MODULEDIR@/acpilid				base-kernel-modules	kmod
+./@MODULEDIR@/acpilid/acpilid.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/acpiverbose			base-kernel-modules	kmod
 ./@MODULEDIR@/acpiverbose/acpiverbose.kmod	base-kernel-modules	kmod
 ./@MODULEDIR@/acpiwmi				base-kernel-modules	kmod
@@ -21,6 +31,8 @@
 ./@MODULEDIR@/i915drm/i915drm.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/pad				base-kernel-modules	kmod
 ./@MODULEDIR@/pad/pad.kmod			base-kernel-modules	kmod
+./@MODULEDIR@/thinkpad				base-kernel-modules	kmod
+./@MODULEDIR@/thinkpad/thinkpad.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/tprof_pmi				base-kernel-modules	kmod
 ./@MODULEDIR@/tprof_pmi/tprof_pmi.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/wmidell				base-kernel-modules	kmod
