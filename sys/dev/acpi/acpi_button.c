@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_button.c,v 1.38 2010/08/24 15:03:34 jruoho Exp $	*/
+/*	$NetBSD: acpi_button.c,v 1.39 2010/10/25 07:48:03 jruoho Exp $	*/
 
 /*
  * Copyright 2001, 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_button.c,v 1.38 2010/08/24 15:03:34 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_button.c,v 1.39 2010/10/25 07:48:03 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -214,7 +214,7 @@ static struct cfdata acpibut_cfdata[] = {
 		.cf_pspec = &acpiparent,
 	},
 
-	{ NULL }
+	{ NULL, NULL, 0, 0, NULL, 0, NULL }
 };
 
 static int

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2010/10/24 18:29:33 jmcneill Exp $
+# $NetBSD: Makefile,v 1.2 2010/10/25 07:53:22 jruoho Exp $
 
 .include "../Makefile.inc"
 
@@ -6,5 +6,7 @@
 
 KMOD=   acpiwmi
 SRCS=	wmi_acpi.c
+
+WARNS=	4
 
 .include <bsd.kmodule.mk>
