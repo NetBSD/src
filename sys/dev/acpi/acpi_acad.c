@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_acad.c,v 1.45 2010/08/14 05:41:22 jruoho Exp $	*/
+/*	$NetBSD: acpi_acad.c,v 1.46 2010/10/25 07:48:03 jruoho Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_acad.c,v 1.45 2010/08/14 05:41:22 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_acad.c,v 1.46 2010/10/25 07:48:03 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -189,7 +189,7 @@ acpiacad_get_status(void *arg)
 		goto fail;
 	}
 
-	if (sc->sc_status != status) {
+	if (sc->sc_status != (int)status) {
 
 		/*
 		 * If status has changed, send the event:
@@ -315,7 +315,7 @@ static struct cfdata acpiacad_cfdata[] = {
 		.cf_pspec = &acpiparent,
 	},
 
-	{ NULL }
+	{ NULL, NULL, 0, 0, NULL, 0, NULL }
 };
 
 static int
