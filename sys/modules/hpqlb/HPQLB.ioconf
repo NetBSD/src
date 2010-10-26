@@ -1,0 +1,10 @@
+#	$NetBSD: HPQLB.ioconf,v 1.1 2010/10/26 05:36:49 jruoho Exp $
+
+ioconf hpqlb
+
+include "conf/files"
+include "dev/acpi/files.acpi"
+
+pseudo-root acpi*
+
+hpqlb* at acpi?
