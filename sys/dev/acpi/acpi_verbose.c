@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_verbose.c,v 1.11 2010/09/24 07:48:59 gsutre Exp $ */
+/*	$NetBSD: acpi_verbose.c,v 1.12 2010/10/26 22:27:44 gsutre Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007, 2010 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_verbose.c,v 1.11 2010/09/24 07:48:59 gsutre Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_verbose.c,v 1.12 2010/10/26 22:27:44 gsutre Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -466,29 +466,35 @@ acpi_print_tree(struct acpi_devnode *ad, uint32_t level)
 	for (i = 0; i < level; i++)
 		aprint_normal("    ");
 
-	aprint_normal("%-5s [%02u] [%c%c] ", ad->ad_name, ad->ad_type,
+	aprint_normal("%-5s [%02u] [%c%c]", ad->ad_name, ad->ad_type,
 	    ((ad->ad_flags & ACPI_DEVICE_POWER)  != 0) ? 'P' : ' ',
 	    ((ad->ad_flags & ACPI_DEVICE_WAKEUP) != 0) ? 'W' : ' ');
 
 	if (ad->ad_device != NULL)
-		aprint_normal("<%s> ", device_xname(ad->ad_device));
+		aprint_normal(" <%s>", device_xname(ad->ad_device));
 
 	if (ad->ad_pciinfo != NULL) {
 
-		aprint_normal("(PCI) @ 0x%02X:0x%02X:0x%02X:0x%02X ",
-		    ad->ad_pciinfo->ap_segment, ad->ad_pciinfo->ap_bus,
-		    ad->ad_pciinfo->ap_device, ad->ad_pciinfo->ap_function);
+		aprint_normal(" (PCI)");
+
+		if ((ad->ad_pciinfo->ap_flags & ACPI_PCI_INFO_DEVICE) != 0)
+			aprint_normal(" @ 0x%02X:0x%02X:0x%02X:0x%02X",
+			    ad->ad_pciinfo->ap_segment,
+			    ad->ad_pciinfo->ap_bus,
+			    ad->ad_pciinfo->ap_device,
+			    ad->ad_pciinfo->ap_function);
 
 		if ((ad->ad_devinfo->Flags & ACPI_PCI_ROOT_BRIDGE) != 0)
-			aprint_normal("[R] ");
+			aprint_normal(" [R]");
 
-		if (ad->ad_pciinfo->ap_bridge != false)
-			aprint_normal("[B] -> 0x%02X ",
+		if ((ad->ad_pciinfo->ap_flags & ACPI_PCI_INFO_BRIDGE) != 0)
+			aprint_normal(" [B] -> 0x%02X:0x%02X",
+			    ad->ad_pciinfo->ap_segment,
 			    ad->ad_pciinfo->ap_downbus);
 
 		pcidev = device_find_by_acpi_pci_info(ad->ad_pciinfo);
 		if (pcidev != NULL)
-			aprint_normal("<%s>", device_xname(pcidev));
+			aprint_normal(" <%s>", device_xname(pcidev));
 	}
 
 	aprint_normal("\n");
