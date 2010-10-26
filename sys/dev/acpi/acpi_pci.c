@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_pci.c,v 1.15 2010/09/24 07:48:59 gsutre Exp $ */
+/* $NetBSD: acpi_pci.c,v 1.16 2010/10/26 22:27:44 gsutre Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_pci.c,v 1.15 2010/09/24 07:48:59 gsutre Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_pci.c,v 1.16 2010/10/26 22:27:44 gsutre Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -158,6 +158,10 @@ acpi_pcidev_pciroot_bus_callback(ACPI_RESOURCE *res, void *context)
  *	PCI device if it has an ancestor that is a PCI root bridge and such
  *	that all intermediate nodes are PCI-to-PCI bridges.  Depth-first
  *	recursive implementation.
+ *
+ *	PCI root bridges do not necessarily contain an _ADR, since they already
+ *	contain an _HID (ACPI 4.0a, p. 197).  However we require an _ADR for
+ *	all non-root PCI devices.
  */
 ACPI_STATUS
 acpi_pcidev_scan(struct acpi_devnode *ad)
@@ -169,16 +173,14 @@ acpi_pcidev_scan(struct acpi_devnode *ad)
 
 	ad->ad_pciinfo = NULL;
 
-	if (ad->ad_devinfo->Type != ACPI_TYPE_DEVICE ||
-	    !(ad->ad_devinfo->Valid & ACPI_VALID_ADR))
-		goto rec;
-
 	/*
 	 * We attach PCI information only to devices that are present,
 	 * enabled, and functioning properly.
 	 * Note: there is a possible race condition, because _STA may
 	 * have changed since ad->ad_devinfo->CurrentStatus was set.
 	 */
+	if (ad->ad_devinfo->Type != ACPI_TYPE_DEVICE)
+		goto rec;
 	if ((ad->ad_devinfo->Valid & ACPI_VALID_STA) != 0 &&
 	    (ad->ad_devinfo->CurrentStatus & ACPI_STA_OK) != ACPI_STA_OK)
 		goto rec;
@@ -201,29 +203,43 @@ acpi_pcidev_scan(struct acpi_devnode *ad)
 		if (ACPI_SUCCESS(rv))
 			ap->ap_segment = ACPI_LOWORD(val);
 
-		/* Try to get bus number using _CRS first. */
-		rv = acpi_pcidev_pciroot_bus(ad->ad_handle, &ap->ap_bus);
+		/* Try to get downstream bus number using _CRS first. */
+		rv = acpi_pcidev_pciroot_bus(ad->ad_handle, &ap->ap_downbus);
 
 		if (ACPI_FAILURE(rv)) {
 			rv = acpi_eval_integer(ad->ad_handle, "_BBN", &val);
 
 			if (ACPI_SUCCESS(rv))
-				ap->ap_bus = ACPI_LOWORD(val);
+				ap->ap_downbus = ACPI_LOWORD(val);
 		}
 
-		ap->ap_device = ACPI_HILODWORD(ad->ad_devinfo->Address);
-		ap->ap_function = ACPI_LOLODWORD(ad->ad_devinfo->Address);
-
-		if (ap->ap_bus > 255 || ap->ap_device > 31 ||
-		    (ap->ap_function > 7 && ap->ap_function != 0xFFFF)) {
+		if (ap->ap_downbus > 255) {
 			aprint_error_dev(ad->ad_root,
-			    "invalid PCI address for %s\n", ad->ad_name);
+			    "invalid PCI downstream bus for %s\n", ad->ad_name);
 			kmem_free(ap, sizeof(*ap));
 			goto rec;
 		}
 
-		ap->ap_bridge = true;
-		ap->ap_downbus = ap->ap_bus;
+		ap->ap_flags |= ACPI_PCI_INFO_BRIDGE;
+
+		/*
+		 * This ACPI node denotes a PCI root bridge, but it may also
+		 * denote a PCI device on the bridge's downstream bus segment.
+		 */
+		if (ad->ad_devinfo->Valid & ACPI_VALID_ADR) {
+			ap->ap_bus = ap->ap_downbus;
+			ap->ap_device =
+			    ACPI_HILODWORD(ad->ad_devinfo->Address);
+			ap->ap_function =
+			    ACPI_LOLODWORD(ad->ad_devinfo->Address);
+
+			if (ap->ap_device > 31 ||
+			    (ap->ap_function > 7 && ap->ap_function != 0xFFFF))
+				aprint_error_dev(ad->ad_root,
+				    "invalid PCI address for %s\n", ad->ad_name);
+			else
+				ap->ap_flags |= ACPI_PCI_INFO_DEVICE;
+		}
 
 		ad->ad_pciinfo = ap;
 
@@ -232,7 +248,8 @@ acpi_pcidev_scan(struct acpi_devnode *ad)
 
 	if ((ad->ad_parent != NULL) &&
 	    (ad->ad_parent->ad_pciinfo != NULL) &&
-	    (ad->ad_parent->ad_pciinfo->ap_bridge)) {
+	    (ad->ad_parent->ad_pciinfo->ap_flags & ACPI_PCI_INFO_BRIDGE) &&
+	    (ad->ad_devinfo->Valid & ACPI_VALID_ADR)) {
 
 		/*
 		 * Our parent is a PCI root bridge or a PCI-to-PCI
@@ -258,12 +275,13 @@ acpi_pcidev_scan(struct acpi_devnode *ad)
 			goto rec;
 		}
 
+		ap->ap_flags |= ACPI_PCI_INFO_DEVICE;
+
 		if (ap->ap_function == 0xFFFF) {
 			/*
 			 * Assume that this device is not a PCI-to-PCI bridge.
 			 * XXX: Do we need to be smarter?
 			 */
-			ap->ap_bridge = false;
 		} else {
 			/*
 			 * Check whether this device is a PCI-to-PCI
@@ -272,7 +290,8 @@ acpi_pcidev_scan(struct acpi_devnode *ad)
 			rv = acpi_pcidev_ppb_downbus(ap->ap_segment, ap->ap_bus,
 			    ap->ap_device, ap->ap_function, &ap->ap_downbus);
 
-			ap->ap_bridge = (rv != AE_OK) ? false : true;
+			if (ACPI_SUCCESS(rv))
+				ap->ap_flags |= ACPI_PCI_INFO_BRIDGE;
 		}
 
 		ad->ad_pciinfo = ap;
@@ -356,6 +375,7 @@ acpi_pcidev_find(uint16_t segment, uint16_t bus,
 	SIMPLEQ_FOREACH(ad, &sc->ad_head, ad_list) {
 
 		if (ad->ad_pciinfo != NULL &&
+		    (ad->ad_pciinfo->ap_flags & ACPI_PCI_INFO_DEVICE) &&
 		    ad->ad_pciinfo->ap_segment == segment &&
 		    ad->ad_pciinfo->ap_bus == bus &&
 		    ad->ad_pciinfo->ap_device == device &&
