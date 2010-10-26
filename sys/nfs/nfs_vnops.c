@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.284 2010/06/24 13:03:17 hannken Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.285 2010/10/26 11:44:53 cegger Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.284 2010/06/24 13:03:17 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.285 2010/10/26 11:44:53 cegger Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -1378,6 +1378,14 @@ retry:
 		if (v3) {
 			wccflag = NFSV3_WCCCHK;
 			nfsm_wcc_data(vp, wccflag, NAC_NOTRUNC, !error);
+
+			/* Diagnostic check: The KASSERT hits when PR 42455
+			 * is reproduced.
+			 */
+			if (ctx.nwc_mbufcount >= 2) {
+				KASSERT(mb->m_next != NULL);
+			}
+
 			if (!error) {
 				nfsm_dissect(tl, u_int32_t *, 2 * NFSX_UNSIGNED
 					+ NFSX_V3WRITEVERF);
