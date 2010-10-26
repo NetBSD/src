@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_display.c,v 1.2 2010/10/25 17:06:58 jruoho Exp $	*/
+/*	$NetBSD: acpi_display.c,v 1.3 2010/10/26 22:27:44 gsutre Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_display.c,v 1.2 2010/10/25 17:06:58 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_display.c,v 1.3 2010/10/26 22:27:44 gsutre Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -406,7 +406,9 @@ acpidisp_vga_match(device_t parent, cfdata_t match, void *aux)
 		return 0;
 
 	ap = ad->ad_pciinfo;
-	if ((ap == NULL) || (ap->ap_function == 0xffff))
+	if ((ap == NULL) ||
+	    !(ap->ap_flags & ACPI_PCI_INFO_DEVICE) ||
+	    (ap->ap_function == 0xffff))
 		return 0;
 
 	KASSERT(ap->ap_bus < 256 && ap->ap_device < 32 && ap->ap_function < 8);

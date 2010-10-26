@@ -1,4 +1,4 @@
-/*	$NetBSD: acpivar.h,v 1.64 2010/10/24 07:53:04 jruoho Exp $	*/
+/*	$NetBSD: acpivar.h,v 1.65 2010/10/26 22:27:44 gsutre Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -72,20 +72,32 @@ struct acpibus_attach_args {
  *	ap_bus		<= 255
  *	ap_device	<= 31
  *	ap_function	<= 7		or	ap_function == 0xFFFF
- *	ap_downbus	<= 255		if	ap_bridge == true
+ *	ap_downbus	<= 255
+ *
+ * Validity of some fields depends on the value of ap_flags:
+ *
+ *	ap_segment				always valid
+ *	ap_bus, ap_device, ap_function		valid for PCI devices
+ *	ap_downbus				valid for PCI bridges
  *
  * The device and function numbers are encoded in the value returned by
  * _ADR.  A function number of 0xFFFF is used to refer to all the
  * functions on a PCI device (ACPI 4.0a, p. 200).
  */
 struct acpi_pci_info {
+	uint16_t		 ap_flags;	/* Flags (cf. below) */
 	uint16_t		 ap_segment;	/* PCI segment group */
 	uint16_t		 ap_bus;	/* PCI bus */
 	uint16_t		 ap_device;	/* PCI device */
 	uint16_t		 ap_function;	/* PCI function */
-	bool			 ap_bridge;	/* PCI bridge (PHB or PPB) */
 	uint16_t		 ap_downbus;	/* PCI bridge downstream bus */
 };
+
+/*
+ * Flags for PCI information.
+ */
+#define ACPI_PCI_INFO_DEVICE	__BIT(0)	/* PCI device */
+#define ACPI_PCI_INFO_BRIDGE	__BIT(1)	/* PCI bridge */
 
 /*
  * An ACPI device node.
