@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.53 2010/10/25 17:17:56 jruoho Exp $
+#	$NetBSD: Makefile,v 1.54 2010/10/26 05:42:51 jruoho Exp $
 
 .include <bsd.own.mk>
 
@@ -107,6 +107,8 @@ SUBDIR+=	acpitz
 SUBDIR+=	acpivga
 SUBDIR+=	acpiwmi
 SUBDIR+=	aibs
+SUBDIR+=	asus
+SUBDIR+=	hpqlb
 SUBDIR+=	thinkpad
 SUBDIR+=	wmidell
 SUBDIR+=	wmihp
