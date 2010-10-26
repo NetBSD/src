@@ -1,10 +1,10 @@
-/*	$NetBSD: acpidevs_data.h,v 1.19 2010/06/16 06:19:16 jruoho Exp $	*/
+/*	$NetBSD: acpidevs_data.h,v 1.20 2010/10/26 08:59:06 jruoho Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	# NetBSD: acpidevs,v 1.23 2010/06/16 06:17:48 jruoho Exp
+ *	# NetBSD: acpidevs,v 1.27 2010/10/26 08:57:46 jruoho Exp
  */
 
 const struct { const char *pnp, *str; } acpi_knowndevs[] = {
@@ -377,8 +377,16 @@ const struct { const char *pnp, *str; } acpi_knowndevs[] = {
 	    "AT Real-Time Clock",
 	},
 	{
+	    "PNP0B01",
+	    "AT Real-Time Clock (PIIX4)",
+	},
+	{
+	    "PNP0B02",
+	    "AT Real-Time Clock (Dallas Semiconductor)",
+	},
+	{
 	    "PNP0C00",
-	    "Plug and Play BIOS (only created by the root enumerator)",
+	    "Plug and Play BIOS",
 	},
 	{
 	    "PNP0C01",
@@ -386,11 +394,11 @@ const struct { const char *pnp, *str; } acpi_knowndevs[] = {
 	},
 	{
 	    "PNP0C02",
-	    "Plug and Play motherboard register resources",
+	    "Motherboard Register Resources",
 	},
 	{
 	    "PNP0C03",
-	    "Plug and Play BIOS Event Notification Interrupt",
+	    "BIOS Event Notification Interrupt",
 	},
 	{
 	    "PNP0C04",
@@ -398,15 +406,15 @@ const struct { const char *pnp, *str; } acpi_knowndevs[] = {
 	},
 	{
 	    "PNP0C05",
-	    "APM BIOS (Version independent)",
+	    "APM BIOS",
 	},
 	{
 	    "PNP0C06",
-	    "Reserved for identification of early Plug and Play BIOS implementation",
+	    "Reserved",
 	},
 	{
 	    "PNP0C07",
-	    "Reserved for identification of early Plug and Play BIOS implementation",
+	    "Reserved",
 	},
 	{
 	    "PNP0C08",
@@ -454,7 +462,7 @@ const struct { const char *pnp, *str; } acpi_knowndevs[] = {
 	},
 	{
 	    "PNP0C13",
-	    "Plug and Play BIOS (used when ACPI mode cannot be used)",
+	    "Plug and Play BIOS (for non-ACPI)",
 	},
 	{
 	    "PNP0C14",
@@ -463,6 +471,10 @@ const struct { const char *pnp, *str; } acpi_knowndevs[] = {
 	{
 	    "PNP0C15",
 	    "ACPI Docking Station",
+	},
+	{
+	    "PNP0C32",
+	    "ACPI Quickstart Button",
 	},
 	{
 	    "PNP0C33",
@@ -1262,7 +1274,7 @@ const struct { const char *pnp, *str; } acpi_knowndevs[] = {
 	},
 	{
 	    "PNPB00A",
-	    "MediaVision Pro Audio Spectrum (Trantor SCSI enabled, Thunder Chip Disabled)",
+	    "MediaVision Pro Audio Spectrum (SCSI)",
 	},
 	{
 	    "PNPB00B",
@@ -1274,11 +1286,11 @@ const struct { const char *pnp, *str; } acpi_knowndevs[] = {
 	},
 	{
 	    "PNPB00D",
-	    "MediaVision Pro Audio Spectrum Basic (No Trantor SCSI, Thunder Chip Enabled)",
+	    "MediaVision Pro Audio Spectrum Basic (Thunder Chip)",
 	},
 	{
 	    "PNPB00E",
-	    "MediaVision Pro Audio Spectrum (Trantor SCSI enabled, Thunder Chip Enabled)",
+	    "MediaVision Pro Audio Spectrum (SCSI, Thunder Chip)",
 	},
 	{
 	    "PNPB00F",
@@ -1294,7 +1306,7 @@ const struct { const char *pnp, *str; } acpi_knowndevs[] = {
 	},
 	{
 	    "PNPB019",
-	    "MediaVision Pro Audio Spectrum Basic (no Trantor SCSI, Thunder chip Disabled)",
+	    "MediaVision Pro Audio Spectrum Basic",
 	},
 	{
 	    "PNPB020",
@@ -1329,12 +1341,32 @@ const struct { const char *pnp, *str; } acpi_knowndevs[] = {
 	    "Atmel Trusted Platform Module",
 	},
 	{
+	    "BCM0101",
+	    "Broadcom Trusted Platform Module",
+	},
+	{
+	    "BCM0102",
+	    "Broadcom Trusted Platform Module",
+	},
+	{
+	    "ICO0102",
+	    "Intel Trusted Platform Module",
+	},
+	{
 	    "IFX0102",
 	    "Infineon Trusted Platform Module",
 	},
 	{
 	    "NSC1100",
 	    "NSC Trusted Platform Module",
+	},
+	{
+	    "NSC1200",
+	    "NSC Trusted Platform Module",
+	},
+	{
+	    "PNP0C31",
+	    "Trusted Platform Module",
 	},
 	{
 	    "ACPI0001",
@@ -1391,6 +1423,10 @@ const struct { const char *pnp, *str; } acpi_knowndevs[] = {
 	{
 	    "ACPI000E",
 	    "Wake Alarm Device",
+	},
+	{
+	    "HPQ0004",
+	    "Hewlett-Packard 3D DriveGuard accelerometer",
 	},
 	{
 	    "INT0800",
