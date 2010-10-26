@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_tz.c,v 1.75 2010/10/25 17:06:58 jruoho Exp $ */
+/* $NetBSD: acpi_tz.c,v 1.76 2010/10/26 04:37:33 jruoho Exp $ */
 
 /*
  * Copyright (c) 2003 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.75 2010/10/25 17:06:58 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.76 2010/10/26 04:37:33 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -180,7 +180,7 @@ acpitz_attach(device_t parent, device_t self, void *aux)
 	if (ACPI_SUCCESS(rv) && val != 0)
 		sc->sc_zone.tzp = val;
 
-	aprint_debug_dev(self, "sample rate %d.%ds\n",
+	aprint_debug_dev(self, "polling interval %d.%d seconds\n",
 	    sc->sc_zone.tzp / 10, sc->sc_zone.tzp % 10);
 
 	sc->sc_zone_expire = ATZ_ZONE_EXPIRE / sc->sc_zone.tzp;
@@ -263,8 +263,8 @@ acpitz_get_status(void *opaque)
 {
 	device_t dv = opaque;
 	struct acpitz_softc *sc = device_private(dv);
-	uint32_t tmp, active, fmin, fmax, fcurrent;
-	int changed, flags, i;
+	uint32_t tmp, fmin, fmax, fcurrent;
+	int active, changed, flags, i;
 
 	sc->sc_zone_expire--;
 
@@ -362,7 +362,7 @@ acpitz_get_status(void *opaque)
 			acpitz_power_zone(sc, sc->sc_active, 0);
 
 		ACPI_DEBUG_PRINT((ACPI_DB_INFO, "%s: active cooling "
-			"level %u\n", device_xname(dv), active));
+			"level %d\n", device_xname(dv), active));
 
 		if (active != ATZ_ACTIVE_NONE)
 			acpitz_power_zone(sc, active, 1);
@@ -540,7 +540,7 @@ acpitz_get_zone(void *opaque, int verbose)
 	if (verbose != 0) {
 		comma = 0;
 
-		aprint_verbose_dev(dv, "");
+		aprint_verbose_dev(dv, "levels: ");
 
 		if (sc->sc_zone.crt != ATZ_TMP_INVALID) {
 			aprint_verbose("critical %s C",
