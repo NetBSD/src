@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2010/10/25 17:17:57 jruoho Exp $
+#	$NetBSD: Makefile,v 1.2 2010/10/26 03:11:10 jruoho Exp $
 
 .include "../Makefile.inc"
 
@@ -8,6 +8,6 @@ KMOD=	aibs
 IOCONF=	AIBS.ioconf
 SRCS=	atk0110.c
 
-WARNS=	3
+WARNS=	4
 
 .include <bsd.kmodule.mk>

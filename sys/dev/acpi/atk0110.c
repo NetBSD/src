@@ -1,4 +1,4 @@
-/*	$NetBSD: atk0110.c,v 1.13 2010/10/25 17:06:58 jruoho Exp $	*/
+/*	$NetBSD: atk0110.c,v 1.14 2010/10/26 03:11:10 jruoho Exp $	*/
 /*	$OpenBSD: atk0110.c,v 1.1 2009/07/23 01:38:16 cnst Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atk0110.c,v 1.13 2010/10/25 17:06:58 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atk0110.c,v 1.14 2010/10/26 03:11:10 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -42,8 +42,6 @@ __KERNEL_RCSID(0, "$NetBSD: atk0110.c,v 1.13 2010/10/25 17:06:58 jruoho Exp $");
 
 #define _COMPONENT		 ACPI_RESOURCE_COMPONENT
 ACPI_MODULE_NAME		 ("acpi_aibs")
-
-#define AIBS_MORE_SENSORS
 
 struct aibs_sensor {
 	envsys_data_t	s;
@@ -138,14 +136,15 @@ static void
 aibs_attach_sif(device_t self, enum envsys_units st)
 {
 	struct aibs_softc	*sc = device_private(self);
-	ACPI_STATUS		s;
+	ACPI_OBJECT		*bp, *o, *oi;
 	ACPI_BUFFER		b;
-	ACPI_OBJECT		*bp, *o;
-	int			i, n;
+	ACPI_STATUS		rv;
+	uint32_t		i, n;
 	char			name[] = "?SIF";
 	struct aibs_sensor	*as;
 
 	switch (st) {
+
 	case ENVSYS_STEMP:
 		name[0] = 'T';
 		break;
@@ -159,50 +158,51 @@ aibs_attach_sif(device_t self, enum envsys_units st)
 		return;
 	}
 
-	b.Length = ACPI_ALLOCATE_BUFFER;
-	s = AcpiEvaluateObjectTyped(sc->sc_node->ad_handle, name, NULL, &b,
-	    ACPI_TYPE_PACKAGE);
-	if (ACPI_FAILURE(s)) {
-		aprint_error_dev(self, "%s not found\n", name);
-		return;
-	}
+	rv = acpi_eval_struct(sc->sc_node->ad_handle, name, &b);
+
+	if (ACPI_FAILURE(rv))
+		goto out;
 
 	bp = b.Pointer;
+
+	if (bp->Type != ACPI_TYPE_PACKAGE) {
+		rv = AE_TYPE;
+		goto out;
+	}
+
 	o = bp->Package.Elements;
+
 	if (o[0].Type != ACPI_TYPE_INTEGER) {
-		aprint_error_dev(self, "%s[0]: invalid type\n", name);
-		ACPI_FREE(b.Pointer);
-		return;
+		rv = AE_TYPE;
+		goto out;
+	}
+
+	if (o[0].Integer.Value > UINT32_MAX) {
+		rv = AE_AML_NUMERIC_OVERFLOW;
+		goto out;
 	}
 
 	n = o[0].Integer.Value;
-	if (bp->Package.Count - 1 < n) {
-		aprint_error_dev(self, "%s: invalid package\n", name);
-		ACPI_FREE(b.Pointer);
-		return;
-	} else if (bp->Package.Count - 1 > n) {
-		int on = n;
 
-#ifdef AIBS_MORE_SENSORS
-		n = bp->Package.Count - 1;
-#endif
-		aprint_error_dev(self, "%s: malformed package: %i/%i"
-		    ", assume %i\n", name, on, bp->Package.Count - 1, n);
+	if (n == 0) {
+		rv = AE_LIMIT;
+		goto out;
 	}
-	if (n < 1) {
-		aprint_error_dev(self, "%s: no members in the package\n",
-		    name);
-		ACPI_FREE(b.Pointer);
-		return;
+
+	if (bp->Package.Count - 1 != n) {
+		rv = AE_BAD_VALUE;
+		goto out;
 	}
 
 	as = malloc(sizeof(*as) * n, M_DEVBUF, M_NOWAIT | M_ZERO);
+
 	if (as == NULL) {
-		aprint_error_dev(self, "%s: malloc fail\n", name);
-		ACPI_FREE(b.Pointer);
-		return;
+		rv = AE_NO_MEMORY;
+		goto out;
 	}
+
 	switch (st) {
+
 	case ENVSYS_STEMP:
 		sc->sc_asens_temp = as;
 		break;
@@ -218,9 +218,7 @@ aibs_attach_sif(device_t self, enum envsys_units st)
 	}
 
 	for (i = 0, o++; i < n; i++, o++) {
-		ACPI_OBJECT	*oi;
 
-		/* acpica5 automatically evaluates the referenced package */
 		if(o[0].Type != ACPI_TYPE_PACKAGE) {
 			aprint_error_dev(self,
 			    "%s: %i: not a package: %u type\n",
@@ -257,8 +255,13 @@ aibs_attach_sif(device_t self, enum envsys_units st)
 			    name[0], i);
 	}
 
-	ACPI_FREE(b.Pointer);
-	return;
+out:
+	if (b.Pointer != NULL)
+		ACPI_FREE(b.Pointer);
+
+	if (ACPI_FAILURE(rv))
+		aprint_error_dev(self, "failed to evaluate %s: %s\n",
+		    name, AcpiFormatException(rv));
 }
 
 static int
