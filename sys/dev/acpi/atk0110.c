@@ -1,4 +1,4 @@
-/*	$NetBSD: atk0110.c,v 1.14 2010/10/26 03:11:10 jruoho Exp $	*/
+/*	$NetBSD: atk0110.c,v 1.15 2010/10/26 04:24:21 jruoho Exp $	*/
 /*	$OpenBSD: atk0110.c,v 1.1 2009/07/23 01:38:16 cnst Exp $	*/
 
 /*
@@ -18,10 +18,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atk0110.c,v 1.14 2010/10/26 03:11:10 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atk0110.c,v 1.15 2010/10/26 04:24:21 jruoho Exp $");
 
 #include <sys/param.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/module.h>
 #include <sys/systm.h>
 
@@ -52,12 +52,13 @@ struct aibs_sensor {
 
 struct aibs_softc {
 	struct acpi_devnode	*sc_node;
-
+	struct sysmon_envsys	*sc_sme;
 	struct aibs_sensor	*sc_asens_volt;
 	struct aibs_sensor	*sc_asens_temp;
 	struct aibs_sensor	*sc_asens_fan;
-
-	struct sysmon_envsys	*sc_sme;
+	uint32_t		 sc_asens_volt_count;
+	uint32_t		 sc_asens_temp_count;
+	uint32_t		 sc_asens_fan_count;
 };
 
 static int aibs_match(device_t, cfdata_t, void *);
@@ -93,7 +94,6 @@ aibs_attach(device_t parent, device_t self, void *aux)
 {
 	struct aibs_softc *sc = device_private(self);
 	struct acpi_attach_args *aa = aux;
-	int err;
 
 	sc->sc_node = aa->aa_node;
 
@@ -110,26 +110,16 @@ aibs_attach(device_t parent, device_t self, void *aux)
 	aibs_attach_sif(self, ENVSYS_STEMP);
 	aibs_attach_sif(self, ENVSYS_SFANRPM);
 
+	(void)pmf_device_register(self, NULL, NULL);
+
 	if (sc->sc_sme->sme_nsensors == 0) {
 		aprint_error_dev(self, "no sensors found\n");
 		sysmon_envsys_destroy(sc->sc_sme);
 		return;
 	}
 
-	if ((err = sysmon_envsys_register(sc->sc_sme))) {
-		aprint_error_dev(self, "unable to register with sysmon: %d\n",
-		    err);
-		if (sc->sc_asens_volt != NULL)
-			free(sc->sc_asens_volt, M_DEVBUF);
-		if (sc->sc_asens_temp != NULL)
-			free(sc->sc_asens_temp, M_DEVBUF);
-		if (sc->sc_asens_fan != NULL)
-			free(sc->sc_asens_fan, M_DEVBUF);
-		return;
-	}
-
-	if (!pmf_device_register(self, NULL, NULL))
-		aprint_error_dev(self, "could not establish power handler\n");
+	if (sysmon_envsys_register(sc->sc_sme) != 0)
+		aprint_error_dev(self, "failed to register with sysmon\n");
 }
 
 static void
@@ -148,9 +138,11 @@ aibs_attach_sif(device_t self, enum envsys_units st)
 	case ENVSYS_STEMP:
 		name[0] = 'T';
 		break;
+
 	case ENVSYS_SFANRPM:
 		name[0] = 'F';
 		break;
+
 	case ENVSYS_SVOLTS_DC:
 		name[0] = 'V';
 		break;
@@ -194,7 +186,7 @@ aibs_attach_sif(device_t self, enum envsys_units st)
 		goto out;
 	}
 
-	as = malloc(sizeof(*as) * n, M_DEVBUF, M_NOWAIT | M_ZERO);
+	as = kmem_zalloc(sizeof(*as) * n, KM_SLEEP);
 
 	if (as == NULL) {
 		rv = AE_NO_MEMORY;
@@ -205,15 +197,20 @@ aibs_attach_sif(device_t self, enum envsys_units st)
 
 	case ENVSYS_STEMP:
 		sc->sc_asens_temp = as;
+		sc->sc_asens_temp_count = n;
 		break;
+
 	case ENVSYS_SFANRPM:
 		sc->sc_asens_fan = as;
+		sc->sc_asens_fan_count = n;
 		break;
+
 	case ENVSYS_SVOLTS_DC:
 		sc->sc_asens_volt = as;
+		sc->sc_asens_volt_count = n;
 		break;
+
 	default:
-		/* NOTREACHED */
 		return;
 	}
 
@@ -267,16 +264,21 @@ out:
 static int
 aibs_detach(device_t self, int flags)
 {
+	static const size_t	size = sizeof(struct aibs_sensor);
 	struct aibs_softc	*sc = device_private(self);
 
 	pmf_device_deregister(self);
 	sysmon_envsys_unregister(sc->sc_sme);
+
 	if (sc->sc_asens_volt != NULL)
-		free(sc->sc_asens_volt, M_DEVBUF);
+		kmem_free(sc->sc_asens_volt, sc->sc_asens_volt_count * size);
+
 	if (sc->sc_asens_temp != NULL)
-		free(sc->sc_asens_temp, M_DEVBUF);
+		kmem_free(sc->sc_asens_temp, sc->sc_asens_temp_count * size);
+
 	if (sc->sc_asens_fan != NULL)
-		free(sc->sc_asens_fan, M_DEVBUF);
+		kmem_free(sc->sc_asens_fan, sc->sc_asens_fan_count * size);
+
 	return 0;
 }
 
