@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.7 2010/10/25 17:19:05 jruoho Exp $
+# $NetBSD: md.amd64,v 1.8 2010/10/26 05:36:49 jruoho Exp $
 ./@MODULEDIR@/acpiacad				base-kernel-modules	kmod
 ./@MODULEDIR@/acpiacad/acpiacad.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/acpibat				base-kernel-modules	kmod
@@ -21,6 +21,8 @@
 ./@MODULEDIR@/acpiwmi/acpiwmi.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/aibs				base-kernel-modules	kmod
 ./@MODULEDIR@/aibs/aibs.kmod			base-kernel-modules	kmod
+./@MODULEDIR@/asus				base-kernel-modules	kmod
+./@MODULEDIR@/asus/asus.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/azalia				base-kernel-modules	kmod
 ./@MODULEDIR@/azalia/azalia.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/compat_linux			base-kernel-modules	kmod
@@ -35,6 +37,8 @@
 ./@MODULEDIR@/exec_elf32/exec_elf32.kmod	base-kernel-modules	kmod
 ./@MODULEDIR@/exec_elf64			base-kernel-modules	kmod
 ./@MODULEDIR@/exec_elf64/exec_elf64.kmod	base-kernel-modules	kmod
+./@MODULEDIR@/hpqlb				base-kernel-modules	kmod
+./@MODULEDIR@/hpqlb/hpqlb.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/i915drm				base-kernel-modules	kmod
 ./@MODULEDIR@/i915drm/i915drm.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/pad				base-kernel-modules	kmod
