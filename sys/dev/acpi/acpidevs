@@ -1,4 +1,4 @@
-# $NetBSD: acpidevs,v 1.27 2010/10/26 08:57:46 jruoho Exp $
+# $NetBSD: acpidevs,v 1.28 2010/10/26 09:13:54 jruoho Exp $
 #
 # Originally extracted from:
 
@@ -389,3 +389,4 @@ ACPI000E	Wake Alarm Device
 # **** Others ****
 HPQ0004	Hewlett-Packard 3D DriveGuard accelerometer
 INT0800	Intel Firmware Hub Device
+LEN0014	Lenovo ThinkPad Extras
