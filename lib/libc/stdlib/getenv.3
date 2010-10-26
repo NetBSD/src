@@ -1,4 +1,4 @@
-.\"	$NetBSD: getenv.3,v 1.24 2010/10/25 20:35:36 njoly Exp $
+.\"	$NetBSD: getenv.3,v 1.25 2010/10/26 22:34:33 wiz Exp $
 .\"
 .\" Copyright (c) 1988, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -174,9 +174,9 @@ The
 .Fa string
 argument to
 .Fn putenv
-is a null pointer, or points to a string that either miss or start with a
+is a null pointer, or points to a string that either starts with a
 .Dq Li \&=
-character.
+character or does not contain one at all.
 .It Bq Er ENOMEM
 The function
 .Fn setenv
