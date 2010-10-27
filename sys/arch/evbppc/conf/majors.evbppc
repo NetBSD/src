@@ -1,4 +1,4 @@
-#	$NetBSD: majors.evbppc,v 1.28.6.2 2010/08/19 12:36:58 uebayasi Exp $
+#	$NetBSD: majors.evbppc,v 1.28.6.3 2010/10/27 14:13:57 uebayasi Exp $
 #
 # Device majors for evbppc
 # (When possible, make entries the same as macppc)
@@ -80,8 +80,6 @@ device-major	twe		char 76 		twe
 
 device-major	nsmb		char 98			nsmb
 device-major 	xlcom 		char 99 		xlcom
-device-major 	flash 		char 100  block 15 	flash
-device-major	xmd		char 101  block 16	xmd
 
 # Majors up to 143 are reserved for machine-dependant drivers.
 # New machine-independent driver majors are assigned in 

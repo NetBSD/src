@@ -1,4 +1,4 @@
-#	$NetBSD: majors.amd64,v 1.21.6.1 2010/08/27 09:41:52 uebayasi Exp $
+#	$NetBSD: majors.amd64,v 1.21.6.2 2010/10/27 14:13:56 uebayasi Exp $
 #
 # Device majors for amd64
 #
@@ -89,7 +89,6 @@ device-major	kttcp		char 92			kttcp
 device-major	dpt		char 96			dpt
 device-major	twe		char 97			twe
 device-major	nsmb		char 98			nsmb		
-device-major	xmd		char 99  block 21	xmd
 
 #
 # Device majors for Xen. These are assigned here so that:
