@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.6 2005/12/11 12:17:49 christos Exp $
+#	$NetBSD: Makefile,v 1.7 2010/10/27 18:29:46 martin Exp $
 
 MISC_FILES=	rawrite.c
 UUDECODE_FILES=	pfdisk.doc pfdisk.exe pfdisktc.zip \
-		rawr32.zip rawr32src.zip \
+		rawr32.exe \
 		rawrite.doc rawrite.exe
 
 .include <bsd.files.mk>
