@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.h,v 1.59.2.31 2010/10/22 07:22:57 uebayasi Exp $	*/
+/*	$NetBSD: uvm_page.h,v 1.59.2.32 2010/10/27 14:51:30 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -269,10 +269,8 @@ extern bool vm_page_zero_enable;
 
 extern struct vm_physseg *vm_physmem_ptrs[VM_PHYSSEG_MAX];
 extern int vm_nphysmem;
-#ifdef XIP
 extern struct vm_physseg *vm_physdev_ptrs[VM_PHYSSEG_MAX];
 extern int vm_nphysdev;
-#endif
 
 #define	vm_nphysseg	vm_nphysmem	/* XXX backward compat */
 
@@ -311,9 +309,7 @@ int uvm_page_lookup_freelist(struct vm_page *);
 int vm_physseg_find(paddr_t, int *);
 struct vm_page *uvm_phys_to_vm_page(paddr_t);
 paddr_t uvm_vm_page_to_phys(const struct vm_page *);
-#ifdef XIP
 int vm_physseg_find_device(paddr_t, int *);
-#endif
 
 /*
  * macros
