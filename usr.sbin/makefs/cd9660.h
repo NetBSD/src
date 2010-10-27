@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660.h,v 1.14 2010/10/22 00:49:15 christos Exp $	*/
+/*	$NetBSD: cd9660.h,v 1.15 2010/10/27 18:51:34 christos Exp $	*/
 
 /*
  * Copyright (c) 2005 Daniel Watt, Walter Deignan, Ryan Gabrys, Alan
@@ -181,10 +181,7 @@ typedef struct _cd9660node {
 	 */
 	int64_t fileDataLength;
 
-	/*
-	 * XXXfvdl sectors are int
-	 */
-	int fileSectorsUsed;
+	int64_t fileSectorsUsed;
 	int fileRecordSize;/*copy of a variable, int for quicker calculations*/
 
 	/* Old name, used for renaming - needs to be optimized but low priority */
@@ -196,21 +193,21 @@ typedef struct _cd9660node {
 	/* For Rock Ridge */
 	struct _cd9660node *rr_real_parent, *rr_relocated;
 
-	int susp_entry_size;
-	int susp_dot_entry_size;
-	int susp_dot_dot_entry_size;
+	int64_t susp_entry_size;
+	int64_t susp_dot_entry_size;
+	int64_t susp_dot_dot_entry_size;
 
 	/* Continuation area stuff */
-	int susp_entry_ce_start;
-	int susp_dot_ce_start;
-	int susp_dot_dot_ce_start;
+	int64_t susp_entry_ce_start;
+	int64_t susp_dot_ce_start;
+	int64_t susp_dot_dot_ce_start;
 
-	int susp_entry_ce_length;
-	int susp_dot_ce_length;
-	int susp_dot_dot_ce_length;
+	int64_t susp_entry_ce_length;
+	int64_t susp_dot_ce_length;
+	int64_t susp_dot_dot_ce_length;
 
 	/* Data to put at the end of the System Use field */
-	int su_tail_size;
+	int64_t su_tail_size;
 	char *su_tail_data;
 
 	/*** PATH TABLE STUFF ***/
@@ -234,7 +231,7 @@ typedef struct _path_table_entry
 typedef struct _volume_descriptor
 {
 	u_char *volumeDescriptorData; /*ALWAYS 2048 bytes long*/
-	int sector;
+	int64_t sector;
 	struct _volume_descriptor *next;
 } volume_descriptor;
 
@@ -251,22 +248,22 @@ typedef struct _iso9660_disk {
 
 	/* Important sector numbers here */
 	/* primaryDescriptor.type_l_path_table*/
-	int primaryBigEndianTableSector;
+	int64_t primaryBigEndianTableSector;
 
 	/* primaryDescriptor.type_m_path_table*/
-	int primaryLittleEndianTableSector;
+	int64_t primaryLittleEndianTableSector;
 
 	/* primaryDescriptor.opt_type_l_path_table*/
-	int secondaryBigEndianTableSector;
+	int64_t secondaryBigEndianTableSector;
 
 	/* primaryDescriptor.opt_type_m_path_table*/
-	int secondaryLittleEndianTableSector;
+	int64_t secondaryLittleEndianTableSector;
 
 	/* primaryDescriptor.path_table_size*/
 	int pathTableLength;
-	int dataFirstSector;
+	int64_t dataFirstSector;
 
-	int totalSectors;
+	int64_t totalSectors;
 	/* OPTIONS GO HERE */
 	int	isoLevel;
 
@@ -278,9 +275,9 @@ typedef struct _iso9660_disk {
 	int keep_bad_images;
 
 	/* SUSP options and variables */
-	int susp_continuation_area_start_sector;
-	int susp_continuation_area_size;
-	int susp_continuation_area_current_free;
+	int64_t susp_continuation_area_start_sector;
+	int64_t susp_continuation_area_size;
+	int64_t susp_continuation_area_current_free;
 
 	int rock_ridge_enabled;
 	/* Other Rock Ridge Variables */
@@ -304,7 +301,7 @@ typedef struct _iso9660_disk {
 	char *generic_bootimage;
 
 	int is_bootable;/* Default to 0 */
-	int boot_catalog_sector;
+	int64_t boot_catalog_sector;
 	boot_volume_descriptor *boot_descriptor;
 	char * boot_image_directory;
 

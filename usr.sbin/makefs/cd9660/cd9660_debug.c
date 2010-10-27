@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_debug.c,v 1.10 2010/10/22 00:49:15 christos Exp $	*/
+/*	$NetBSD: cd9660_debug.c,v 1.11 2010/10/27 18:51:35 christos Exp $	*/
 
 /*
  * Copyright (c) 2005 Daniel Watt, Walter Deignan, Ryan Gabrys, Alan
@@ -40,7 +40,7 @@
 #include <sys/param.h>
 
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: cd9660_debug.c,v 1.10 2010/10/22 00:49:15 christos Exp $");
+__RCSID("$NetBSD: cd9660_debug.c,v 1.11 2010/10/27 18:51:35 christos Exp $");
 #endif  /* !__lint */
 
 #if !HAVE_NBTOOL_CONFIG_H
@@ -105,12 +105,12 @@ debug_print_tree(cd9660node *node, int level)
 		printf("..(%i)\n",
 		    isonum_733(node->isoDirRecord->extent));
 	} else if (node->isoDirRecord->name[0]=='\0') {
-		printf("(ROOT) (%i to %i)\n",
+		printf("(ROOT) (%" PRIu32 " to %" PRId64 ")\n",
 		    node->fileDataSector,
 		    node->fileDataSector +
 			node->fileSectorsUsed - 1);
 	} else {
-		printf("%s (%s) (%i to %i)\n",
+		printf("%s (%s) (%" PRIu32 " to %" PRId64 ")\n",
 		    node->isoDirRecord->name,
 		    (node->isoDirRecord->flags[0]
 			& ISO_FLAG_DIRECTORY) ?  "DIR" : "FILE",
@@ -160,7 +160,8 @@ debug_print_volume_descriptor_information(void)
 	while (tmp != NULL) {
 		memset(temp, 0, CD9660_SECTOR_SIZE);
 		memcpy(temp, tmp->volumeDescriptorData + 1, 5);
-		printf("Volume descriptor in sector %i: type %i, ID %s\n",
+		printf("Volume descriptor in sector %" PRId64
+		    ": type %i, ID %s\n",
 		    tmp->sector, tmp->volumeDescriptorData[0], temp);
 		switch(tmp->volumeDescriptorData[0]) {
 		case 0:/*boot record*/
