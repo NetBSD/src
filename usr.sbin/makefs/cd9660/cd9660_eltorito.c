@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_eltorito.c,v 1.13 2010/10/22 00:49:15 christos Exp $	*/
+/*	$NetBSD: cd9660_eltorito.c,v 1.14 2010/10/27 18:51:35 christos Exp $	*/
 
 /*
  * Copyright (c) 2005 Daniel Watt, Walter Deignan, Ryan Gabrys, Alan
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: cd9660_eltorito.c,v 1.13 2010/10/22 00:49:15 christos Exp $");
+__RCSID("$NetBSD: cd9660_eltorito.c,v 1.14 2010/10/27 18:51:35 christos Exp $");
 #endif  /* !__lint */
 
 #ifdef DEBUG
@@ -511,7 +511,7 @@ cd9660_write_boot(FILE *fd)
 		err(1, "fseeko");
 
 	if (diskStructure.verbose_level > 0) {
-		printf("Writing boot catalog to sector %d\n",
+		printf("Writing boot catalog to sector %" PRId64 "\n",
 		    diskStructure.boot_catalog_sector);
 	}
 	LIST_FOREACH(e, &diskStructure.boot_entries, ll_struct) {
