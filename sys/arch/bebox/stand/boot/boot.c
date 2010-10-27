@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.23 2010/10/14 06:58:22 kiyohara Exp $	*/
+/*	$NetBSD: boot.c,v 1.24 2010/10/27 10:37:38 kiyohara Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -61,6 +61,7 @@ char nametmp[NAMELEN];
 struct btinfo_memory btinfo_memory;
 struct btinfo_console btinfo_console;
 struct btinfo_clock btinfo_clock;
+struct btinfo_rootdevice btinfo_rootdevice;
 
 extern char bootprog_name[], bootprog_rev[], bootprog_maker[], bootprog_date[];
 
@@ -73,7 +74,7 @@ main(void)
 	int n = 0;
 	int addr, speed;
 	char *name, *cnname;
-	void *p, *bootinfo;
+	void *bootinfo;
 
 	if (whichCPU() == 1)
 		cpu1();
@@ -114,13 +115,6 @@ main(void)
 	btinfo_clock.common.type = BTINFO_CLOCK;
 	btinfo_clock.ticks_per_sec = TICKS_PER_SEC;
 
-	p = bootinfo;
-	memcpy(p, (void *)&btinfo_memory, sizeof (btinfo_memory));
-	p += sizeof (btinfo_memory);
-	memcpy(p, (void *)&btinfo_console, sizeof (btinfo_console));
-	p += sizeof (btinfo_console);
-	memcpy(p, (void *)&btinfo_clock, sizeof (btinfo_clock));
-
 	runCPU1((void *)start_CPU1);
 	wait_for(&CPU1_alive);
 
@@ -156,9 +150,10 @@ main(void)
 void
 exec_kernel(char *name, void *bootinfo)
 {
-	int howto = 0;
+	int howto = 0, i;
 	char c, *ptr;
 	u_long marks[MARK_MAX];
+	void *p;
 #ifdef DBMONITOR
 	int go_monitor;
 
@@ -208,6 +203,37 @@ next:
 			printf("\n");
 		}
 #endif /* DBMONITOR */
+
+		p = bootinfo;
+
+		/*
+		 * root device
+		 */
+		btinfo_rootdevice.common.next = sizeof (btinfo_rootdevice);
+		btinfo_rootdevice.common.type = BTINFO_ROOTDEVICE;
+		strncpy(btinfo_rootdevice.rootdevice, name,
+		    sizeof (btinfo_rootdevice.rootdevice));
+		i = 0;
+		while (btinfo_rootdevice.rootdevice[i] != '\0') {
+			if (btinfo_rootdevice.rootdevice[i] == ':')
+				break;
+			i++;
+		}
+		if (btinfo_rootdevice.rootdevice[i] == ':') {
+			/* It is NOT in-kernel. */
+
+			btinfo_rootdevice.rootdevice[i] = '\0';
+
+			memcpy(p, (void *)&btinfo_rootdevice,
+			    sizeof (btinfo_rootdevice));
+			p += sizeof (btinfo_rootdevice);
+		}
+
+		memcpy(p, (void *)&btinfo_memory, sizeof (btinfo_memory));
+		p += sizeof (btinfo_memory);
+		memcpy(p, (void *)&btinfo_console, sizeof (btinfo_console));
+		p += sizeof (btinfo_console);
+		memcpy(p, (void *)&btinfo_clock, sizeof (btinfo_clock));
 
 		printf("start=0x%lx\n\n", marks[MARK_ENTRY]);
 		delay(1000);
