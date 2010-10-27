@@ -1,4 +1,4 @@
-# $NetBSD: majors,v 1.47.2.3 2010/10/22 07:21:49 uebayasi Exp $
+# $NetBSD: majors,v 1.47.2.4 2010/10/27 14:13:56 uebayasi Exp $
 #
 # Device majors for Machine-Independent drivers.
 #
@@ -44,3 +44,5 @@ device-major hdaudio   char 195		   hdaudio	vector=4
 device-major uhso      char 196		   uhso
 device-major rumpblk   char 197 block 197  rumpblk
 device-major npf       char 198		   npf
+device-major flash     char 199	block 199  flash
+device-major xmd       char 200	block 200  xmd
