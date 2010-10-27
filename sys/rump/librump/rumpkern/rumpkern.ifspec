@@ -1,4 +1,4 @@
-;	$NetBSD: rumpkern.ifspec,v 1.6 2010/09/01 19:13:38 pooka Exp $
+;	$NetBSD: rumpkern.ifspec,v 1.7 2010/10/27 20:34:50 pooka Exp $
 
 NAME|kern
 PUBHDR|include/rump/rumpkern_if_pub.h
@@ -32,6 +32,4 @@ struct lwp *	|lwproc_curlwp		|void
 
 void		|allbetsareoff_setid	|pid_t, int
 
-int		|sysproxy_set			|rump_sysproxy_t, void *
-int		|sysproxy_socket_setup_client	|int
-int		|sysproxy_socket_setup_server	|int
+int		|syscall	|int, void *, register_t *
