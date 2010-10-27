@@ -1,4 +1,4 @@
-.\"	$NetBSD: ctime.3,v 1.33 2010/10/27 19:16:04 christos Exp $
+.\"	$NetBSD: ctime.3,v 1.34 2010/10/27 19:18:00 wiz Exp $
 .Dd October 27, 2010
 .Dt CTIME 3
 .Os
@@ -41,7 +41,7 @@
 .Fn mktime "struct tm *tm"
 .Sh DESCRIPTION
 .Fn ctime
-converts a 
+converts a
 .Tp time_t ,
 pointed to by
 .Fa clock ,
@@ -61,7 +61,7 @@ misleading values for out-of-range years.
 .Fn ctime_r
 is similar to
 .Fn ctime ,
-except it places the result of the convertion on the
+except it places the result of the conversion on the
 .Fa buf
 argument which should be 26 or more bytes long, instead of using a global
 static buffer.
