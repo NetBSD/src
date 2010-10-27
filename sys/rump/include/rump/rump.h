@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.h,v 1.45 2010/09/06 18:43:28 pooka Exp $	*/
+/*	$NetBSD: rump.h,v 1.46 2010/10/27 20:44:50 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -64,7 +64,6 @@ typedef struct prop_dictionary *prop_dictionary_t;
 
 /* rumpkern */
 enum rump_uiorw { RUMPUIO_READ, RUMPUIO_WRITE };
-typedef int (*rump_sysproxy_t)(int, void *, uint8_t *, size_t, register_t *);
 
 enum rump_sigmodel {
 	RUMP_SIGMODEL_PANIC,

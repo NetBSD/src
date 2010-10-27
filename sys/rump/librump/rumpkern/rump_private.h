@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_private.h,v 1.58 2010/09/07 21:11:10 pooka Exp $	*/
+/*	$NetBSD: rump_private.h,v 1.59 2010/10/27 20:44:49 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -105,12 +105,6 @@ extern rump_proc_vfs_release_fn rump_proc_vfs_release;
 
 extern struct cpu_info *rump_cpu;
 
-extern rump_sysproxy_t rump_sysproxy;
-extern void *rump_sysproxy_arg;
-
-int		rump_sysproxy_copyout(const void *, void *, size_t);
-int		rump_sysproxy_copyin(const void *, void *, size_t);
-
 struct lwp *	rump__lwproc_allockernlwp(void);
 
 void	rump_cpus_bootstrap(int);
@@ -143,5 +137,8 @@ void	rump_softint_run(struct cpu_info *);
 
 void	*rump_hypermalloc(size_t, int, bool, const char *);
 void	rump_hyperfree(void *, size_t);
+
+int	rump_sysproxy(int, void *, uint8_t *, size_t, register_t *);
+extern void *rump_sysproxy_arg;
 
 #endif /* _SYS_RUMP_PRIVATE_H_ */
