@@ -1,4 +1,4 @@
-#	$NetBSD: majors.i386,v 1.37.6.2 2010/08/20 07:04:38 uebayasi Exp $
+#	$NetBSD: majors.i386,v 1.37.6.3 2010/10/27 14:13:57 uebayasi Exp $
 #
 # Device majors for i386
 #
@@ -104,7 +104,6 @@ device-major	ppi		char 104		ppi
 device-major	rd		char 105 block 22	rd
 device-major	ct		char 106 block 23	ct
 device-major	mt		char 107 block 24	mt
-device-major	xmd		char 108 block 25	xmd
 
 #
 # Device majors for Xen. These are assigned here so that:
