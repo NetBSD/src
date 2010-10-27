@@ -1,5 +1,5 @@
-.\"	$NetBSD: ctime.3,v 1.32 2010/05/15 13:54:52 pgoyette Exp $
-.Dd February 2, 2010
+.\"	$NetBSD: ctime.3,v 1.33 2010/10/27 19:16:04 christos Exp $
+.Dd October 27, 2010
 .Dt CTIME 3
 .Os
 .Sh NAME
@@ -41,7 +41,9 @@
 .Fn mktime "struct tm *tm"
 .Sh DESCRIPTION
 .Fn ctime
-converts a long integer, pointed to by
+converts a 
+.Tp time_t ,
+pointed to by
 .Fa clock ,
 representing the time in seconds since
 00:00:00 UTC, 1970-01-01,
@@ -56,7 +58,15 @@ These unusual formats are designed to make it less likely that older
 software that expects exactly 26 bytes of output will mistakenly output
 misleading values for out-of-range years.
 .Pp
-.Fn Localtime
+.Fn ctime_r
+is similar to
+.Fn ctime ,
+except it places the result of the convertion on the
+.Fa buf
+argument which should be 26 or more bytes long, instead of using a global
+static buffer.
+.Pp
+.Fn localtime
 and
 .Fn gmtime
 return pointers to
@@ -99,7 +109,8 @@ the application may need to do so by calling
 .Pp
 .Fn asctime
 converts a time value contained in a
-``tm'' structure to a string,
+.Dq tm
+structure to a string,
 as shown in the above example,
 and returns a pointer to the string.
 .Pp
