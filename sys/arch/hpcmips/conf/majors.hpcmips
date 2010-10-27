@@ -1,4 +1,4 @@
-#	$NetBSD: majors.hpcmips,v 1.29 2010/03/06 23:45:39 plunky Exp $
+#	$NetBSD: majors.hpcmips,v 1.30 2010/10/27 14:08:08 uebayasi Exp $
 #
 # Device majors for hpcmips
 #
@@ -57,7 +57,6 @@ device-major	midi		char 52			midi
 device-major	sequencer	char 53			sequencer
 device-major	pci		char 54			pci
 device-major	ksyms		char 55			ksyms
-device-major	flash		char 100		flash
 device-major	vr4181aiu	char 101		vr4181aiu
 device-major	wsfont		char 102		wsfont
 device-major	ses		char 103		ses
