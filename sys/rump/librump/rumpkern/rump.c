@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.189 2010/10/25 17:49:36 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.190 2010/10/27 15:50:03 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.189 2010/10/25 17:49:36 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.190 2010/10/27 15:50:03 pooka Exp $");
 
 #include <sys/systm.h>
 #define ELFSIZE ARCH_ELFSIZE
@@ -84,22 +84,7 @@ __KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.189 2010/10/25 17:49:36 pooka Exp $");
 #include "rump_vfs_private.h"
 #include "rump_dev_private.h"
 
-/* is this still necessary or use kern_proc stuff? */
-struct session rump_session = {
-	.s_count = 1,
-	.s_flags = 0,
-	.s_leader = &proc0,
-	.s_login = "rumphobo",
-	.s_sid = 0,
-};
-struct pgrp rump_pgrp = {
-	.pg_members = LIST_HEAD_INITIALIZER(pg_members),
-	.pg_session = &rump_session,
-	.pg_jobc = 1,
-};
-
 char machine[] = MACHINE;
-static kauth_cred_t rump_susercred;
 
 /* pretend the master rump proc is init */
 struct proc *initproc = &proc0;
@@ -304,7 +289,6 @@ rump__init(int rump_version)
 	loginit();
 
 	kauth_init();
-	rump_susercred = rump_cred_create(0, 0, 0, NULL);
 
 	procinit();
 	proc0_init();
