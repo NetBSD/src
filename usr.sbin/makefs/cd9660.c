@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660.c,v 1.26 2009/01/16 18:02:24 pooka Exp $	*/
+/*	$NetBSD: cd9660.c,v 1.27 2010/10/27 18:51:34 christos Exp $	*/
 
 /*
  * Copyright (c) 2005 Daniel Watt, Walter Deignan, Ryan Gabrys, Alan
@@ -103,7 +103,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: cd9660.c,v 1.26 2009/01/16 18:02:24 pooka Exp $");
+__RCSID("$NetBSD: cd9660.c,v 1.27 2010/10/27 18:51:34 christos Exp $");
 #endif  /* !__lint */
 
 #include <string.h>
@@ -158,7 +158,7 @@ static int cd9660_joliet_convert_filename(const char *, char *, int);
 #endif
 static int cd9660_convert_filename(const char *, char *, int);
 static void cd9660_populate_dot_records(cd9660node *);
-static int cd9660_compute_offsets(cd9660node *, int);
+static int64_t cd9660_compute_offsets(cd9660node *, int64_t);
 #if 0
 static int cd9660_copy_stat_info(cd9660node *, cd9660node *, int);
 #endif
@@ -451,11 +451,11 @@ void
 cd9660_makefs(const char *image, const char *dir, fsnode *root,
 	      fsinfo_t *fsopts)
 {
-	int startoffset;
+	int64_t startoffset;
 	int numDirectories;
-	int pathTableSectors;
-	int firstAvailableSector;
-	int totalSpace;
+	uint64_t pathTableSectors;
+	int64_t firstAvailableSector;
+	int64_t totalSpace;
 	int error;
 	cd9660node *real_root;
 
@@ -563,7 +563,7 @@ cd9660_makefs(const char *image, const char *dir, fsnode *root,
 	    diskStructure.primaryBigEndianTableSector + pathTableSectors;
 	if (diskStructure.verbose_level > 0)
 		printf("cd9660_makefs: Path table conversion complete. "
-		       "Each table is %i bytes, or %i sectors.\n",
+		       "Each table is %i bytes, or %" PRIu64 " sectors.\n",
 		    diskStructure.pathTableLength, pathTableSectors);
 
 	startoffset = diskStructure.sectorSize*diskStructure.dataFirstSector;
@@ -592,11 +592,12 @@ cd9660_makefs(const char *image, const char *dir, fsnode *root,
 	/* Debugging output */
 	if (diskStructure.verbose_level > 0) {
 		printf("cd9660_makefs: Sectors 0-15 reserved\n");
-		printf("cd9660_makefs: Primary path tables starts in sector %i\n",
-			diskStructure.primaryLittleEndianTableSector);
-		printf("cd9660_makefs: File data starts in sector %i\n",
-			diskStructure.dataFirstSector);
-		printf("cd9660_makefs: Total sectors: %i\n",diskStructure.totalSectors);
+		printf("cd9660_makefs: Primary path tables starts in sector %"
+		    PRId64 "\n", diskStructure.primaryLittleEndianTableSector);
+		printf("cd9660_makefs: File data starts in sector %"
+		    PRId64 "\n", diskStructure.dataFirstSector);
+		printf("cd9660_makefs: Total sectors: %"
+		    PRId64 "\n", diskStructure.totalSectors);
 	}
 
 	/*
@@ -1822,19 +1823,19 @@ cd9660_populate_dot_records(cd9660node *node)
  * @returns int The total size of files and directory entries (should be
  *              a multiple of sector size)
 */
-static int
-cd9660_compute_offsets(cd9660node *node, int startOffset)
+static int64_t
+cd9660_compute_offsets(cd9660node *node, int64_t startOffset)
 {
 	/*
 	 * This function needs to compute the size of directory records and
 	 * runs, file lengths, and set the appropriate variables both in
 	 * cd9660node and isoDirEntry
 	 */
-	int used_bytes = 0;
-	int current_sector_usage = 0;
+	int64_t used_bytes = 0;
+	int64_t current_sector_usage = 0;
 	cd9660node *child;
 	fsinode *inode;
-	int r;
+	int64_t r;
 
 	assert(node != NULL);
 
