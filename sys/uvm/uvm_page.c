@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.153.2.56 2010/10/22 07:22:57 uebayasi Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.153.2.57 2010/10/27 14:51:29 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.153.2.56 2010/10/22 07:22:57 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.153.2.57 2010/10/27 14:51:29 uebayasi Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -134,13 +134,11 @@ static struct vm_physseg vm_physmem_store[VM_PHYSSEG_MAX];
 static struct vm_physseg_freelist vm_physmem_freelist =
     SIMPLEQ_HEAD_INITIALIZER(vm_physmem_freelist);
 
-#ifdef XIP
 struct vm_physseg *vm_physdev_ptrs[VM_PHYSSEG_MAX];
 int vm_nphysdev = 0;
 static struct vm_physseg vm_physdev_store[VM_PHYSSEG_MAX];
 static struct vm_physseg_freelist vm_physdev_freelist =
     SIMPLEQ_HEAD_INITIALIZER(vm_physdev_freelist);
-#endif
 
 /*
  * Some supported CPUs in a given architecture don't support all
@@ -832,7 +830,6 @@ uvm_page_physunload(void *cookie)
 	vm_nphysmem--;
 }
 
-#ifdef XIP
 void *
 uvm_page_physload_device(paddr_t start, paddr_t end, paddr_t avail_start,
     paddr_t avail_end, int prot, int flags)
@@ -905,7 +902,6 @@ uvm_page_physunload_device(void *cookie)
 	uvm_physseg_free(&vm_physdev_freelist, vm_physdev_ptrs, seg);
 	vm_nphysdev--;
 }
-#endif
 
 int uvm_physseg_inited;
 
@@ -962,12 +958,10 @@ uvm_physseg_init(void)
 		SIMPLEQ_INSERT_TAIL(&vm_physmem_freelist,
 		    &vm_physmem_store[lcv], list);
 	}
-#ifdef XIP
 	for (lcv = 0; lcv < VM_PHYSSEG_MAX; lcv++) {
 		SIMPLEQ_INSERT_TAIL(&vm_physdev_freelist,
 		    &vm_physdev_store[lcv], list);
 	}
-#endif
 }
 
 static void
@@ -1059,7 +1053,6 @@ vm_physseg_find(paddr_t pframe, int *offp)
 	    pframe, NULL, offp);
 }
 
-#ifdef XIP
 int
 vm_physseg_find_device(paddr_t pframe, int *offp)
 {
@@ -1067,7 +1060,6 @@ vm_physseg_find_device(paddr_t pframe, int *offp)
 	return VM_PHYSSEG_FIND(vm_physdev_ptrs, vm_nphysdev, VM_PHYSSEG_OP_PF,
 	    pframe, NULL, offp);
 }
-#endif
 
 #if VM_PHYSSEG_MAX == 1
 static inline int
@@ -1201,11 +1193,9 @@ uvm_phys_to_vm_page(paddr_t pa)
 	int	off;
 	int	psi;
 
-#ifdef XIP
 	psi = vm_physseg_find_device(pf, &off);
 	if (psi != -1)
 		return(&vm_physdev_ptrs[psi]->pgs[off]);
-#endif
 	psi = vm_physseg_find(pf, &off);
 	if (psi != -1)
 		return(&vm_physmem_ptrs[psi]->pgs[off]);
@@ -2221,9 +2211,7 @@ uvm_pageismanaged(paddr_t pa)
 {
 
 	return
-#ifdef XIP
 	    (vm_physseg_find_device(atop(pa), NULL) != -1) ||
-#endif
 	    (vm_physseg_find(atop(pa), NULL) != -1);
 }
 
