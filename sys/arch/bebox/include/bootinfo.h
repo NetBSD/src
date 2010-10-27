@@ -1,4 +1,4 @@
-/*	$NetBSD: bootinfo.h,v 1.5 2009/03/14 14:45:58 dsl Exp $	*/
+/*	$NetBSD: bootinfo.h,v 1.6 2010/10/27 10:33:23 kiyohara Exp $	*/
 
 /*
  * Copyright (c) 1997
@@ -34,9 +34,10 @@ struct btinfo_common {
 	int type;
 };
 
-#define BTINFO_MEMORY	0
-#define BTINFO_CONSOLE	1
-#define	BTINFO_CLOCK	2
+#define BTINFO_MEMORY		0
+#define BTINFO_CONSOLE		1
+#define BTINFO_CLOCK		2
+#define BTINFO_ROOTDEVICE	3
 
 struct btinfo_memory {
 	struct btinfo_common common;
@@ -53,6 +54,11 @@ struct btinfo_console {
 struct btinfo_clock {
 	struct btinfo_common common;
 	int ticks_per_sec;
+};
+
+struct btinfo_rootdevice {
+	struct btinfo_common common;
+	char rootdevice[80];			/* XXXX */
 };
 
 #ifdef _KERNEL
