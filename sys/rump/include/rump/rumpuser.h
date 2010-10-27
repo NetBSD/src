@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.h,v 1.45 2010/06/09 14:08:17 pooka Exp $	*/
+/*	$NetBSD: rumpuser.h,v 1.46 2010/10/27 20:44:50 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -201,5 +201,15 @@ typedef int (*rump_symload_fn)(void *, uint64_t, char *, uint64_t);
 typedef void (*rump_component_init_fn)(struct rump_component *, int);
 void rumpuser_dl_bootstrap(rump_modinit_fn, rump_symload_fn);
 void rumpuser_dl_component_init(int, rump_component_init_fn);
+
+/* syscall proxy routines */
+#define RUMP_SP_NONE	0
+#define RUMP_SP_CLIENT	1
+#define RUMP_SP_SERVER	2
+int	rumpuser_sp_init(int *);
+int	rumpuser_sp_copyin(const void *, void *, size_t);
+int	rumpuser_sp_copyout(const void *, void *, size_t);
+int	rumpuser_sp_syscall(int, const void *, size_t, register_t *);
+int	rumpuser_sp_anonmmap(size_t, void **);
 
 #endif /* _RUMP_RUMPUSER_H_ */
