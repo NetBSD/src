@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.190 2010/10/27 15:50:03 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.191 2010/10/27 20:44:49 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.190 2010/10/27 15:50:03 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.191 2010/10/27 20:44:49 pooka Exp $");
 
 #include <sys/systm.h>
 #define ELFSIZE ARCH_ELFSIZE
@@ -100,6 +100,13 @@ int rump_threads = 0;
 #else
 int rump_threads = 1;
 #endif
+
+/*
+ * System call proxying support.  These deserve another look later,
+ * but good enough for now.
+ */
+static struct vmspace sp_vmspace;
+static int rumpsp_type;
 
 static char rump_msgbuf[16*1024]; /* 16k should be enough for std rump needs */
 
@@ -199,6 +206,19 @@ rump__init(int rump_version)
 		panic("rump_init: host process restart required");
 	else
 		rump_inited = 1;
+
+	/* Check our role as a rump proxy */
+	if ((error = rumpuser_sp_init(&rumpsp_type)) != 0)
+		return error;
+
+	/* If we're a client, we can return directly.  Otherwise, proceed. */
+	switch (rumpsp_type) {
+	case RUMP_SP_CLIENT:
+		return 0;
+	case RUMP_SP_SERVER:
+	case RUMP_SP_NONE:
+		break;
+	}
 
 	if (rumpuser_getversion() != RUMPUSER_VERSION) {
 		/* let's hope the ABI of rumpuser_dprintf is the same ;) */
@@ -335,6 +355,7 @@ rump__init(int rump_version)
 	}
 
 	sysctl_init();
+	mksysctls();
 	kqueue_init();
 	iostat_init();
 	uid_init();
@@ -373,7 +394,6 @@ rump__init(int rump_version)
 			panic("aiodoned");
 	}
 
-	mksysctls();
 	sysctl_finalize();
 
 	module_init_class(MODULE_CLASS_ANY);
@@ -596,9 +616,9 @@ rump_kernelfsym_load(void *symtab, uint64_t symsize,
 	return 0;
 }
 
-static int
-rump_sysproxy_local(int num, void *arg, uint8_t *data, size_t dlen,
-	register_t *retval)
+void *rump_sysproxy_arg; /* XXX: nukeme */
+int
+rump_syscall(int num, void *arg, register_t *retval)
 {
 	struct lwp *l;
 	struct sysent *callp;
@@ -608,10 +628,29 @@ rump_sysproxy_local(int num, void *arg, uint8_t *data, size_t dlen,
 		return ENOSYS;
 
 	callp = rump_sysent + num;
-	rump_schedule();
 	l = curlwp;
-	rv = sy_call(callp, l, (void *)data, retval);
-	rump_unschedule();
+	if (rumpsp_type == RUMP_SP_SERVER)
+		curproc->p_vmspace = &sp_vmspace;
+	rv = sy_call(callp, l, (void *)arg, retval);
+	if (rumpsp_type == RUMP_SP_SERVER)
+		curproc->p_vmspace = &vmspace0;
+
+	return rv;
+}
+
+int
+rump_sysproxy(int num, void *arg, uint8_t *data, size_t dlen,
+	register_t *retval)
+{
+	int rv;
+
+	if (rumpsp_type == RUMP_SP_CLIENT) {
+		rv = rumpuser_sp_syscall(num, data, dlen, retval);
+	} else {
+		rump_schedule();
+		rv = rump_syscall(num, data, retval);
+		rump_unschedule();
+	}
 
 	return rv;
 }
@@ -628,28 +667,6 @@ rump_boot_sethowto(int howto)
 {
 
 	boothowto = howto;
-}
-
-rump_sysproxy_t rump_sysproxy = rump_sysproxy_local;
-void *rump_sysproxy_arg;
-
-/*
- * This whole syscall-via-rpc is still taking form.  For example, it
- * may be necessary to set syscalls individually instead of lobbing
- * them all to the same place.  So don't think this interface is
- * set in stone.
- */
-int
-rump_sysproxy_set(rump_sysproxy_t proxy, void *arg)
-{
-
-	if (rump_sysproxy_arg)
-		return EBUSY;
-
-	rump_sysproxy_arg = arg;
-	rump_sysproxy = proxy;
-
-	return 0;
 }
 
 int
