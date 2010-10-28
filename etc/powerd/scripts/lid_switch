@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: lid_switch,v 1.7 2010/09/19 21:47:28 abs Exp $
+#	$NetBSD: lid_switch,v 1.8 2010/10/28 02:06:02 macallan Exp $
 #
 # Generic script for lid switch events.  We try to put the system to sleep.
 #
@@ -10,19 +10,16 @@
 
 case "${2}" in
 pressed)
-	#if /etc/rc.d/apmd onestatus >/dev/null ; then
+	#if /etc/rc.d/apmd status >/dev/null ; then
 	#	/usr/sbin/apm -S
 	#else
 	#	/usr/sbin/apm -d -S
 	#fi
-	wsconsctl -d backlight >/tmp/backlight
 	wsconsctl -d -w backlight=0 >/dev/null
 	exit 0
 	;;
 released)
-	if [ -f "/tmp/backlight" ]; then
-		wsconsctl -d -w `cat /tmp/backlight`	
-	fi
+	wsconsctl -d -w backlight=1 >/dev/null
 	exit 0
 	;;
 *)
