@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.56 2010/10/20 18:52:33 phx Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.57 2010/10/28 13:58:03 macallan Exp $	*/
 
 /*-
  * Copyright (c) 2001 Matt Thomas.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.56 2010/10/20 18:52:33 phx Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.57 2010/10/28 13:58:03 macallan Exp $");
 
 #include "opt_ppcparam.h"
 #include "opt_multiprocessor.h"
@@ -475,8 +475,6 @@ cpu_setup(struct device *self, struct cpu_info *ci)
 	case MPC603:
 	case MPC603e:
 	case MPC603ev:
-	case MPC750:
-	case IBM750FX:
 	case MPC7400:
 	case MPC7410:
 	case MPC8240:
@@ -485,6 +483,14 @@ cpu_setup(struct device *self, struct cpu_info *ci)
 		/* Select DOZE mode. */
 		hid0 &= ~(HID0_DOZE | HID0_NAP | HID0_SLEEP);
 		hid0 |= HID0_DOZE | HID0_DPM;
+		powersave = 1;
+		break;
+
+	case MPC750:
+	case IBM750FX:
+		/* Select NAP mode. */
+		hid0 &= ~(HID0_DOZE | HID0_NAP | HID0_SLEEP);
+		hid0 |= HID0_NAP | HID0_DPM;
 		powersave = 1;
 		break;
 
