@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_pstate.c,v 1.33 2010/08/21 13:12:15 jmcneill Exp $ */
+/* $NetBSD: acpi_cpu_pstate.c,v 1.34 2010/10/28 04:27:40 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_pstate.c,v 1.33 2010/08/21 13:12:15 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_pstate.c,v 1.34 2010/10/28 04:27:40 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/evcnt.h>
@@ -75,12 +75,13 @@ acpicpu_pstate_attach(device_t self)
 	}
 
 	/*
-	 * Check the availability of extended _PSS.
-	 * If present, this will override the data.
-	 * Note that XPSS can not be used on Intel
-	 * systems where _PDC or _OSC may be used.
+	 * Append additional information from the
+	 * extended _PSS, if available. Note that
+	 * XPSS can not be used on Intel systems
+	 * that use either _PDC or _OSC.
 	 */
 	if (sc->sc_cap == 0) {
+
 		rv = acpicpu_pstate_xpss(sc);
 
 		if (ACPI_SUCCESS(rv))
@@ -486,13 +487,11 @@ acpicpu_pstate_pss_add(struct acpicpu_pstate *ps, ACPI_OBJECT *obj)
 static ACPI_STATUS
 acpicpu_pstate_xpss(struct acpicpu_softc *sc)
 {
-	static const size_t size = sizeof(struct acpicpu_pstate);
-	struct acpicpu_pstate *ps, *pstate = NULL;
+	struct acpicpu_pstate *ps;
 	ACPI_OBJECT *obj;
 	ACPI_BUFFER buf;
 	ACPI_STATUS rv;
-	uint32_t count, pstate_count;
-	uint32_t i, j;
+	uint32_t i = 0;
 
 	rv = acpi_eval_struct(sc->sc_node->ad_handle, "XPSS", &buf);
 
@@ -506,56 +505,17 @@ acpicpu_pstate_xpss(struct acpicpu_softc *sc)
 		goto out;
 	}
 
-	pstate_count = count = obj->Package.Count;
-
-	if (count == 0) {
-		rv = AE_NOT_EXIST;
-		goto out;
-	}
-
-	if (count > ACPICPU_P_STATE_MAX) {
+	if (obj->Package.Count != sc->sc_pstate_count) {
 		rv = AE_LIMIT;
 		goto out;
 	}
 
-	pstate = kmem_zalloc(count * size, KM_SLEEP);
+	while (i < sc->sc_pstate_count) {
 
-	if (pstate == NULL) {
-		rv = AE_NO_MEMORY;
-		goto out;
-	}
+		ps = &sc->sc_pstate[i];
+		acpicpu_pstate_xpss_add(ps, &obj->Package.Elements[i]);
 
-	for (count = i = 0; i < pstate_count; i++) {
-
-		ps = &pstate[i];
-		rv = acpicpu_pstate_xpss_add(ps, &obj->Package.Elements[i]);
-
-		if (ACPI_FAILURE(rv)) {
-			ps->ps_freq = 0;
-			continue;
-		}
-
-		for (j = 0; j < i; j++) {
-
-			if (ps->ps_freq >= pstate[j].ps_freq) {
-				ps->ps_freq = 0;
-				break;
-			}
-		}
-
-		if (ps->ps_freq != 0)
-			count++;
-	}
-
-	if (count > 0) {
-		if (sc->sc_pstate != NULL)
-			kmem_free(sc->sc_pstate, sc->sc_pstate_count * size);
-		sc->sc_pstate = pstate;
-		sc->sc_pstate_count = pstate_count;
-		rv = AE_OK;
-	} else {
-		kmem_free(pstate, pstate_count * size);
-		rv = AE_NOT_EXIST;
+		i++;
 	}
 
 out:
@@ -597,18 +557,33 @@ acpicpu_pstate_xpss_add(struct acpicpu_pstate *ps, ACPI_OBJECT *obj)
 			return AE_LIMIT;
 	}
 
-	ps->ps_freq       = elm[0].Integer.Value;
-	ps->ps_power      = elm[1].Integer.Value;
-	ps->ps_latency    = elm[2].Integer.Value;
-	ps->ps_latency_bm = elm[3].Integer.Value;
+	/*
+	 * Only overwrite the elements that were
+	 * not available from the conventional _PSS.
+	 */
+	if (ps->ps_freq == 0)
+		ps->ps_freq = elm[0].Integer.Value;
 
-	if (ps->ps_freq == 0 || ps->ps_freq > 9999)
-		return AE_BAD_DECIMAL_CONSTANT;
+	if (ps->ps_power == 0)
+		ps->ps_power = elm[1].Integer.Value;
 
-	ps->ps_control = ACPI_GET64(elm[4].Buffer.Pointer);
-	ps->ps_status = ACPI_GET64(elm[5].Buffer.Pointer);
-	ps->ps_control_mask = ACPI_GET64(elm[6].Buffer.Pointer);
-	ps->ps_status_mask = ACPI_GET64(elm[7].Buffer.Pointer);
+	if (ps->ps_latency == 0)
+		ps->ps_latency = elm[2].Integer.Value;
+
+	if (ps->ps_latency_bm == 0)
+		ps->ps_latency_bm = elm[3].Integer.Value;
+
+	if (ps->ps_control == 0)
+		ps->ps_control = ACPI_GET64(elm[4].Buffer.Pointer);
+
+	if (ps->ps_status == 0)
+		ps->ps_status = ACPI_GET64(elm[5].Buffer.Pointer);
+
+	if (ps->ps_control_mask == 0)
+		ps->ps_control_mask = ACPI_GET64(elm[6].Buffer.Pointer);
+
+	if (ps->ps_status_mask == 0)
+		ps->ps_status_mask = ACPI_GET64(elm[7].Buffer.Pointer);
 
 	/*
 	 * The latency is often defined to be
@@ -618,6 +593,9 @@ acpicpu_pstate_xpss_add(struct acpicpu_pstate *ps, ACPI_OBJECT *obj)
 		ps->ps_latency = 1;
 
 	ps->ps_flags |= ACPICPU_FLAG_P_XPSS;
+
+	if (ps->ps_freq > 9999)
+		return AE_BAD_DECIMAL_CONSTANT;
 
 	return AE_OK;
 }
