@@ -1,8 +1,8 @@
-.\" $NetBSD: xmd.4,v 1.1.2.1 2010/08/19 12:36:59 uebayasi Exp $
+.\" $NetBSD: xmd.4,v 1.1.2.2 2010/10/28 03:27:55 uebayasi Exp $
 .\"
 .\" This file is in the public domain.
 .\"
-.Dd August 19, 2010
+.Dd October 28, 2010
 .Dt XMD 4
 .Os
 .Sh NAME
@@ -28,3 +28,12 @@ disks should be mounted as read-only to enable XIP.
 .Xr md 4 ,
 .Xr options 4 ,
 .Xr mdsetimage 8
+.Sh BUGS
+Due to the design of XIP, device pages in a physical segment must
+be contiguous.
+This leads to a restriction that the page array in the
+.Nm
+driver must be also contiguous.
+It is highly expectable that the
+.Nm
+kernel module will not work.
