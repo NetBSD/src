@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpuser_sp.c,v 1.1 2010/10/27 20:44:50 pooka Exp $	*/
+/*      $NetBSD: rumpuser_sp.c,v 1.2 2010/10/28 14:37:29 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: rumpuser_sp.c,v 1.1 2010/10/27 20:44:50 pooka Exp $");
+__RCSID("$NetBSD: rumpuser_sp.c,v 1.2 2010/10/28 14:37:29 pooka Exp $");
 
 #include <sys/types.h>
 #include <sys/mman.h>
@@ -121,6 +121,7 @@ struct rsp_sysresp {
 
 struct spclient {
 	int spc_fd;
+	struct lwp *spc_lwp;
 
 	/* incoming */
 	struct rsp_hdr spc_hdr;
@@ -312,12 +313,15 @@ send_anonmmap_resp(struct spclient *spc, uint64_t reqno, void *addr)
 }
 
 static void
-serv_handle_disco(unsigned int idx)
+serv_handledisco(unsigned int idx)
 {
 	struct spclient *spc = &spclist[idx];
 	int fd = spc->spc_fd;
 
 	DPRINTF(("rump_sp: disconnecting [%u]\n", idx));
+
+	rump_pub_lwproc_switch(spc->spc_lwp);
+	rump_pub_lwproc_releaselwp();
 
 	free(spc->spc_buf);
 	memset(spc, 0, sizeof(*spc));
@@ -369,10 +373,15 @@ serv_handleconn(int fd, connecthook_fn connhook)
 		return error;
 	}
 
+	if ((error = rump_pub_lwproc_newproc()) != 0) {
+		close(newfd);
+		return error;
+	}
+
 	/* find empty slot the simple way */
 	for (i = 0; i < MAXCLI; i++) {
 		if (pfdlist[i].fd == -1)
-		break;
+			break;
 	}
 
 	assert(i < MAXCLI);
@@ -380,10 +389,14 @@ serv_handleconn(int fd, connecthook_fn connhook)
 
 	pfdlist[i].fd = newfd;
 	spclist[i].spc_fd = newfd;
+	spclist[i].spc_lwp = rump_pub_lwproc_curlwp();
 	if (maxidx < i)
 		maxidx = i;
 
-	DPRINTF(("rump_sp: added new connection at idx %u\n", i));
+	DPRINTF(("rump_sp: added new connection at idx %u, pid %d\n",
+	    i, rump_sys_getpid()));
+
+	rump_pub_lwproc_switch(NULL);
 
 	return 0;
 }
@@ -399,7 +412,9 @@ serv_handlesyscall(struct spclient *spc, struct rsp_hdr *rhdr, uint8_t *data)
 	    sysnum, 0));
 
 	pthread_setspecific(spclient_tls, spc);
+	rump_pub_lwproc_switch(spc->spc_lwp);
 	rv = rump_pub_syscall(sysnum, data, retval);
+	rump_pub_lwproc_switch(NULL);
 	pthread_setspecific(spclient_tls, NULL);
 
 	send_syscall_resp(spc, rhdr->rsp_reqno, rv, retval);
@@ -812,7 +827,7 @@ spserver(void *arg)
 				case 0:
 					break;
 				case -1:
-					serv_handle_disco(idx);
+					serv_handledisco(idx);
 					break;
 				default:
 					spc->spc_off = 0;
