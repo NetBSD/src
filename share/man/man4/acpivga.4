@@ -1,4 +1,4 @@
-.\" $NetBSD: acpivga.4,v 1.2 2010/10/28 14:36:04 jruoho Exp $
+.\" $NetBSD: acpivga.4,v 1.3 2010/10/28 21:45:02 gsutre Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -47,22 +47,29 @@ implement these extensions in their
 .Tn ACPI
 BIOS.
 .Pp
-The driver handles brightness hotkeys and output switch hotkeys.
+The driver handles brightness hotkeys and display switch hotkeys.
 In addition, the following
 .Xr sysctl 8
 read/write variables are provided (when hardware support is available):
 .Bl -tag -width Ds
-.It Va hw.acpi.acpivga0.policy
-BIOS switch policy.
-Accepted values range from 0 to 7.
-For more information, refer to the documentation of the _DOS method,
-in Section B.4.1 of the
-.Tn ACPI
-specification (revision 4.0a).
+.It Va hw.acpi.acpivga0.bios_switch
+BIOS output switching policy.
+This boolean variable controls the behavior of the BIOS when a display
+switch hotkey is pressed.
+.Bl -tag -width xxx -compact
+.It Sy 1
+the BIOS should automatically switch outputs, with no interaction from
+.Nm .
+.It Sy 0
+the BIOS should only notify
+.Nm
+of the desired output state changes.
+.El
 .It Va hw.acpi.acpiout0.brightness
 Brightness level.
-Typical values range from 0 to 100, but any integer value is accepted (the
-driver uses the closest brightness level supported by the device).
+This integer variable typically ranges from 0 to 100, but any integer value
+is accepted (the driver uses the closest brightness level supported by the
+device).
 .El
 .Pp
 Please note, however, that future versions of
@@ -99,7 +106,17 @@ Many
 BIOSes implement only part of the
 .Tn ACPI
 video extensions.
-In particular, display output switching often does not work.
+In particular, display output switching via these extensions often does not
+work.
+For this reason,
+.Nm
+enables
+.Va hw.acpi.acpivga0.bios_switch
+by default.
+If the display switch hotkey does not work with this default setting, try
+setting
+.Va hw.acpi.acpivga0.bios_switch
+to 0.
 .Pp
 Brightness level should be controlled via
 .Xr wsconsctl 8
