@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.178 2010/09/21 19:26:19 chs Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.179 2010/10/28 20:32:45 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.178 2010/09/21 19:26:19 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.179 2010/10/28 20:32:45 pooka Exp $");
 
 #include "veriexec.h"
 
@@ -611,6 +611,7 @@ vn_stat(struct vnode *vp, struct stat *sb)
 	/*
 	 * Copy from vattr table
 	 */
+	memset(sb, 0, sizeof(*sb));
 	sb->st_dev = va.va_fsid;
 	sb->st_ino = va.va_fileid;
 	mode = va.va_mode;
@@ -653,7 +654,6 @@ vn_stat(struct vnode *vp, struct stat *sb)
 	sb->st_flags = va.va_flags;
 	sb->st_gen = 0;
 	sb->st_blocks = va.va_bytes / S_BLKSIZE;
-	memset(sb->st_spare, 0, sizeof(sb->st_spare));
 	return (0);
 }
 
