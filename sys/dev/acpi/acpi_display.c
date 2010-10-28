@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_display.c,v 1.3 2010/10/26 22:27:44 gsutre Exp $	*/
+/*	$NetBSD: acpi_display.c,v 1.4 2010/10/28 21:45:02 gsutre Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_display.c,v 1.3 2010/10/26 22:27:44 gsutre Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_display.c,v 1.4 2010/10/28 21:45:02 gsutre Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -347,7 +347,10 @@ static void	acpidisp_out_zero_brightness_callback(void *);
 
 static void	acpidisp_vga_sysctl_setup(struct acpidisp_vga_softc *);
 static void	acpidisp_out_sysctl_setup(struct acpidisp_out_softc *);
+#ifdef ACPI_DEBUG
 static int	acpidisp_vga_sysctl_policy(SYSCTLFN_PROTO);
+#endif
+static int	acpidisp_vga_sysctl_policy_output(SYSCTLFN_PROTO);
 #ifdef ACPI_DISP_SWITCH_SYSCTLS
 static int	acpidisp_out_sysctl_status(SYSCTLFN_PROTO);
 static int	acpidisp_out_sysctl_state(SYSCTLFN_PROTO);
@@ -1114,10 +1117,18 @@ acpidisp_vga_sysctl_setup(struct acpidisp_vga_softc *asc)
 		    CTL_CREATE, CTL_EOL)) != 0)
 			goto fail;
 
+#ifdef ACPI_DEBUG
 		(void)sysctl_createv(&asc->sc_log, 0, &rnode, NULL,
-		    CTLFLAG_READWRITE | CTLFLAG_HEX, CTLTYPE_INT, "policy",
-		    SYSCTL_DESCR("Current BIOS switch policy"),
+		    CTLFLAG_READWRITE | CTLFLAG_HEX, CTLTYPE_INT, "bios_policy",
+		    SYSCTL_DESCR("Current BIOS switch policies (debug)"),
 		    acpidisp_vga_sysctl_policy, 0, asc, 0,
+		    CTL_CREATE, CTL_EOL);
+#endif
+
+		(void)sysctl_createv(&asc->sc_log, 0, &rnode, NULL,
+		    CTLFLAG_READWRITE, CTLTYPE_BOOL, "bios_switch",
+		    SYSCTL_DESCR("Current BIOS output switching policy"),
+		    acpidisp_vga_sysctl_policy_output, 0, asc, 0,
 		    CTL_CREATE, CTL_EOL);
 	}
 
@@ -1202,6 +1213,7 @@ acpidisp_out_sysctl_setup(struct acpidisp_out_softc *osc)
  * Sysctl callbacks.
  */
 
+#ifdef ACPI_DEBUG
 static int
 acpidisp_vga_sysctl_policy(SYSCTLFN_ARGS)
 {
@@ -1227,6 +1239,38 @@ acpidisp_vga_sysctl_policy(SYSCTLFN_ARGS)
 
 	mutex_enter(&asc->sc_mtx);
 	asc->sc_policy.raw = (uint8_t)val;
+	error = acpidisp_set_policy(asc, asc->sc_policy.raw);
+	mutex_exit(&asc->sc_mtx);
+
+	return error;
+}
+#endif
+
+static int
+acpidisp_vga_sysctl_policy_output(SYSCTLFN_ARGS)
+{
+	struct sysctlnode node;
+	struct acpidisp_vga_softc *asc;
+	bool val;
+	int error;
+
+	node = *rnode;
+	asc = (struct acpidisp_vga_softc *)node.sysctl_data;
+
+	mutex_enter(&asc->sc_mtx);
+	val = (asc->sc_policy.fmt.output == ACPI_DISP_POLICY_OUTPUT_AUTO);
+	mutex_exit(&asc->sc_mtx);
+
+	node.sysctl_data = &val;
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (error || newp == NULL)
+		return error;
+
+	mutex_enter(&asc->sc_mtx);
+	if (val)
+		asc->sc_policy.fmt.output = ACPI_DISP_POLICY_OUTPUT_AUTO;
+	else
+		asc->sc_policy.fmt.output = ACPI_DISP_POLICY_OUTPUT_NORMAL;
 	error = acpidisp_set_policy(asc, asc->sc_policy.raw);
 	mutex_exit(&asc->sc_mtx);
 
