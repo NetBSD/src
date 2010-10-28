@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu.c,v 1.22 2010/08/27 03:05:26 jruoho Exp $ */
+/* $NetBSD: acpi_cpu.c,v 1.23 2010/10/28 04:28:29 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu.c,v 1.22 2010/08/27 03:05:26 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu.c,v 1.23 2010/10/28 04:28:29 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -468,7 +468,7 @@ again:
 	 * bits cleared, but this is specified to
 	 * vary on per-device basis. Assume that
 	 * everything rather than nothing will be
-	 * supported in thise case; we do not need
+	 * supported in this case; we do not need
 	 * the firmware to know the CPU features.
 	 */
 	*val = (ptr[1] != 0) ? ptr[1] : cap[1];
