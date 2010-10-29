@@ -1,4 +1,4 @@
-/*	$NetBSD: t_lwproc.c,v 1.3 2010/09/07 17:09:28 pooka Exp $	*/
+/*	$NetBSD: t_lwproc.c,v 1.4 2010/10/29 15:32:51 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -169,7 +169,7 @@ ATF_TC_BODY(lwps, tc)
 		ATF_REQUIRE_EQ(rump_sys_getpid(), mypid);
 		ATF_REQUIRE_EQ(rump_sys_getuid(), 375);
 		rump_pub_lwproc_releaselwp();
-		ATF_REQUIRE_EQ(rump_sys_getpid(), 0);
+		ATF_REQUIRE_EQ(rump_sys_getpid(), 1);
 		ATF_REQUIRE_EQ(rump_sys_getuid(), 0);
 	}
 
