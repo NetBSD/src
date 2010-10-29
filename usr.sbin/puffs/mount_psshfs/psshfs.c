@@ -1,4 +1,4 @@
-/*	$NetBSD: psshfs.c,v 1.61 2010/02/17 15:54:10 pooka Exp $	*/
+/*	$NetBSD: psshfs.c,v 1.62 2010/10/29 16:13:51 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006-2009  Antti Kantee.  All Rights Reserved.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: psshfs.c,v 1.61 2010/02/17 15:54:10 pooka Exp $");
+__RCSID("$NetBSD: psshfs.c,v 1.62 2010/10/29 16:13:51 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -415,7 +415,7 @@ pssh_connect(struct puffs_usermount *pu, int which)
 	}
 
 	if (psshfs_handshake(pu, *sshfd) != 0)
-		errx(1, "psshfs_handshake %d", which);
+		errx(1, "handshake failed, server does not support sftp?");
 	x = 1;
 	if (ioctl(*sshfd, FIONBIO, &x) == -1)
 		err(1, "nonblocking descriptor %d", which);
