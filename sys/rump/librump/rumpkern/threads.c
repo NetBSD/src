@@ -1,4 +1,4 @@
-/*	$NetBSD: threads.c,v 1.12 2010/09/01 19:37:59 pooka Exp $	*/
+/*	$NetBSD: threads.c,v 1.13 2010/10/29 15:32:24 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2009 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: threads.c,v 1.12 2010/09/01 19:37:59 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: threads.c,v 1.13 2010/10/29 15:32:24 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -139,7 +139,7 @@ kthread_create(pri_t pri, int flags, struct cpu_info *ci,
 	k = malloc(sizeof(*k), M_TEMP, M_WAITOK);
 	k->f = func;
 	k->arg = arg;
-	k->mylwp = l = rump__lwproc_allockernlwp();
+	k->mylwp = l = rump__lwproc_alloclwp(&proc0);
 	l->l_flag |= LW_SYSTEM;
 	if (flags & KTHREAD_MPSAFE)
 		l->l_pflag |= LP_MPSAFE;

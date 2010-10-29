@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.206 2010/09/01 15:15:18 pooka Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.207 2010/10/29 15:32:23 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.206 2010/09/01 15:15:18 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.207 2010/10/29 15:32:23 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1339,7 +1339,6 @@ fd_hold(lwp_t *l)
 {
 	filedesc_t *fdp = l->l_fd;
 
-	KASSERT(fdp == curlwp->l_fd || fdp == lwp0.l_fd);
 	atomic_inc_uint(&fdp->fd_refcnt);
 }
 
