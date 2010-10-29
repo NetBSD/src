@@ -1,4 +1,4 @@
-/*	$NetBSD: fs.c,v 1.22 2010/04/01 02:34:09 pooka Exp $	*/
+/*	$NetBSD: fs.c,v 1.23 2010/10/29 16:13:51 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006-2009  Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fs.c,v 1.22 2010/04/01 02:34:09 pooka Exp $");
+__RCSID("$NetBSD: fs.c,v 1.23 2010/10/29 16:13:51 pooka Exp $");
 #endif /* !lint */
 
 #include <err.h>
@@ -47,8 +47,6 @@ do {									\
 	*(a4) = 0;							\
 	rv = fname(a1, a2, a3, a4);					\
 	if (rv || a4 == 0) {						\
-		fprintf(stderr, "psshfs_handshake failed %d (%s) %d\n",	\
-		    rv, strerror(rv), *a4);				\
 		return rv ? rv : EPROTO;				\
 	}								\
 } while (/*CONSTCOND*/0)
@@ -82,7 +80,7 @@ static const struct extunit {
 	NULL,
 	0
 }};
-	
+
 int
 psshfs_handshake(struct puffs_usermount *pu, int fd)
 {
