@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpcopy.c,v 1.6 2010/10/27 20:44:49 pooka Exp $	*/
+/*	$NetBSD: rumpcopy.c,v 1.7 2010/10/29 15:27:50 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpcopy.c,v 1.6 2010/10/27 20:44:49 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpcopy.c,v 1.7 2010/10/29 15:27:50 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/lwp.h>
@@ -39,6 +39,7 @@ __KERNEL_RCSID(0, "$NetBSD: rumpcopy.c,v 1.6 2010/10/27 20:44:49 pooka Exp $");
 int
 copyin(const void *uaddr, void *kaddr, size_t len)
 {
+
 	if (__predict_false(uaddr == NULL && len)) {
 		return EFAULT;
 	}
@@ -54,6 +55,7 @@ copyin(const void *uaddr, void *kaddr, size_t len)
 int
 copyout(const void *kaddr, void *uaddr, size_t len)
 {
+
 	if (__predict_false(uaddr == NULL && len)) {
 		return EFAULT;
 	}
