@@ -1,4 +1,4 @@
-/*	$NetBSD: node.c,v 1.61 2010/04/01 02:34:09 pooka Exp $	*/
+/*	$NetBSD: node.c,v 1.62 2010/10/29 16:13:51 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006-2009  Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: node.c,v 1.61 2010/04/01 02:34:09 pooka Exp $");
+__RCSID("$NetBSD: node.c,v 1.62 2010/10/29 16:13:51 pooka Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -362,8 +362,9 @@ psshfs_node_readdir(struct puffs_usermount *pu, puffs_cookie_t opc,
 
 	*ncookies = 0;
 	rv = sftp_readdir(pu, pctx, pn);
-	if (rv)
+	if (rv) {
 		goto out;
+	}
 
 	/* find next dirent */
 	for (i = *readoff;;i++) {
