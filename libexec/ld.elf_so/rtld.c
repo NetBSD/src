@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.131 2010/10/16 10:27:07 skrll Exp $	 */
+/*	$NetBSD: rtld.c,v 1.132 2010/10/29 15:08:17 christos Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rtld.c,v 1.131 2010/10/16 10:27:07 skrll Exp $");
+__RCSID("$NetBSD: rtld.c,v 1.132 2010/10/29 15:08:17 christos Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -444,7 +444,7 @@ _rtld(Elf_Addr *sp, Elf_Addr relocbase)
 		    getenv("LD_LIBRARY_PATH"));
 	} else {
 		execname = NULL;
-		if (unsetenv("LD_DEBUG") || unsetenv("LD_LIBRARY_PATH"))
+		if (xunsetenv("LD_DEBUG") || xunsetenv("LD_LIBRARY_PATH"))
 			_rtld_die();
 	}
 	_rtld_process_hints(execname, &_rtld_paths, &_rtld_xforms,
@@ -521,7 +521,7 @@ _rtld(Elf_Addr *sp, Elf_Addr relocbase)
 		if (_rtld_preload(getenv("LD_PRELOAD")) == -1)
 			_rtld_die();
 	} else
-		if (unsetenv("LD_PRELOAD"))
+		if (xunsetenv("LD_PRELOAD"))
 			_rtld_die();
 
 	dbg(("loading needed objects"));

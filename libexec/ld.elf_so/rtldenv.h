@@ -1,4 +1,4 @@
-/*	$NetBSD: rtldenv.h,v 1.9 2007/10/05 22:21:07 ad Exp $	 */
+/*	$NetBSD: rtldenv.h,v 1.10 2010/10/29 15:08:17 christos Exp $	 */
 
 /*
  * Copyright 1996 Matt Thomas <matt@3am-software.com>
@@ -59,6 +59,7 @@ void xerrx(int, const char *, ...)
 
 void     xassert(const char *, int, const char *);
 const char *xstrerror(int);
+int	xunsetenv(const char *);
 
 # ifdef DEBUG
 #  define assert(cond)	((cond) ? (void) 0 : xassert(__FILE__, __LINE__, #cond))
