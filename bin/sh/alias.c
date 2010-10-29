@@ -1,4 +1,4 @@
-/*	$NetBSD: alias.c,v 1.12 2003/08/07 09:05:29 agc Exp $	*/
+/*	$NetBSD: alias.c,v 1.13 2010/10/29 17:04:48 stacktic Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)alias.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: alias.c,v 1.12 2003/08/07 09:05:29 agc Exp $");
+__RCSID("$NetBSD: alias.c,v 1.13 2010/10/29 17:04:48 stacktic Exp $");
 #endif
 #endif /* not lint */
 
@@ -80,6 +80,7 @@ setalias(char *name, char *val)
 	INTOFF;
 	ap = ckmalloc(sizeof (struct alias));
 	ap->name = savestr(name);
+	ap->flag = 0;
 	/*
 	 * XXX - HACK: in order that the parser will not finish reading the
 	 * alias value off the input before processing the next alias, we
