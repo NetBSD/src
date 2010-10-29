@@ -1,4 +1,4 @@
-.\"     $NetBSD: rump_lwproc.3,v 1.2 2010/09/03 07:12:51 wiz Exp $
+.\"     $NetBSD: rump_lwproc.3,v 1.3 2010/10/29 15:38:15 pooka Exp $
 .\"
 .\" Copyright (c) 2010 Antti Kantee.  All rights reserved.
 .\"
@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd September 2, 2010
+.Dd October 29, 2010
 .Dt RUMP_LWPROC 3
 .Os
 .Sh NAME
@@ -57,10 +57,10 @@ for how thread context is determined are different.
 .Pp
 In the rump model, each host thread (pthread) is either bound to
 a rump kernel lwp or accesses the rump kernel with an implicit thread
-context associated with the system process proc0.
-The implicit thread context is created every time the rump kernel
+context associated with pid 1.
+An implicit thread context is created every time the rump kernel
 is entered and disbanded upon exit.
-While convenient for occasional calls, creating the implicit thread
+While convenient for occasional calls, creating an implicit thread
 uses a shared resource which can become highly contended in a
 multithreaded situation.
 It is therefore recommended that dedicated threads are created.
@@ -97,18 +97,18 @@ In case the new thread is associated with a different process than the
 current one, the process context is also switched.
 The special value
 .Dv NULL
-sets curlwp to implicit proc0 context.
+sets curlwp to implicit context.
 Switching to an already running lwp, i.e. attempting to use the
 same curlwp in two host threads simultaneously causes a fatal error.
 .It Fn rump_pub_lwproc_releaselwp
-Release curlwp and set curlwp to proc0 context.
+Release curlwp and set curlwp to context.
 In case curlwp was the last thread inside the current process, the
 process container is also released.
 Calling this routine without a dedicated curlwp is a fatal error.
 .It Fn rump_pub_lwproc_curlwp
 Returns curlwp or
 .Dv NULL
-if the current context is the implicit proc0 context.
+if the current context is an implicit context.
 .El
 .Sh SEE ALSO
 .Xr getpid 2 ,
