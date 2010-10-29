@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_display.c,v 1.4 2010/10/28 21:45:02 gsutre Exp $	*/
+/*	$NetBSD: acpi_display.c,v 1.5 2010/10/29 09:04:38 gsutre Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_display.c,v 1.4 2010/10/28 21:45:02 gsutre Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_display.c,v 1.5 2010/10/29 09:04:38 gsutre Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -911,6 +911,7 @@ acpidisp_vga_cycle_output_device_callback(void *arg)
 	struct acpidisp_out_softc *osc, *last_osc;
 	acpidisp_od_state_t state, last_state;
 	acpidisp_od_status_t status;
+	acpidisp_bios_policy_t lock_policy;
 	uint32_t i;
 
 	if (oi == NULL)
@@ -918,6 +919,11 @@ acpidisp_vga_cycle_output_device_callback(void *arg)
 
 	/* Mutual exclusion with callbacks of connected output devices. */
 	mutex_enter(&asc->sc_mtx);
+
+	/* Lock the _DGS values. */
+	lock_policy = asc->sc_policy;
+	lock_policy.fmt.output = ACPI_DISP_POLICY_OUTPUT_LOCKED;
+	(void)acpidisp_set_policy(asc, lock_policy.raw);
 
 	last_osc = NULL;
 	for (i = 0, od = oi->oi_dev; i < oi->oi_dev_count; i++, od++) {
@@ -954,6 +960,9 @@ acpidisp_vga_cycle_output_device_callback(void *arg)
 		last_state.fmt.commit = 1;
 		(void)acpidisp_set_state(last_osc, last_state.raw);
 	}
+
+	/* Restore the original BIOS policy. */
+	(void)acpidisp_set_policy(asc, asc->sc_policy.raw);
 
 	mutex_exit(&asc->sc_mtx);
 }
