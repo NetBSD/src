@@ -1,4 +1,4 @@
-/*      $NetBSD: lwproc.c,v 1.2 2010/09/01 21:16:56 pooka Exp $	*/
+/*      $NetBSD: lwproc.c,v 1.3 2010/10/29 15:32:24 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lwproc.c,v 1.2 2010/09/01 21:16:56 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lwproc.c,v 1.3 2010/10/29 15:32:24 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -222,16 +222,20 @@ lwproc_makelwp(struct proc *p, struct lwp *l, bool doswitch, bool procmake)
 }
 
 struct lwp *
-rump__lwproc_allockernlwp(void)
+rump__lwproc_alloclwp(struct proc *p)
 {
-	struct proc *p;
 	struct lwp *l;
+	bool newproc = false;
+
+	if (p == NULL) {
+		p = lwproc_newproc(&proc0);
+		newproc = true;
+	}
 
 	l = kmem_zalloc(sizeof(*l), KM_SLEEP);
 
-	p = &proc0;
 	mutex_enter(p->p_lock);
-	lwproc_makelwp(p, l, false, false);
+	lwproc_makelwp(p, l, false, newproc);
 
 	return l;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.192 2010/10/28 11:30:07 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.193 2010/10/29 15:32:24 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.192 2010/10/28 11:30:07 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.193 2010/10/29 15:32:24 pooka Exp $");
 
 #include <sys/systm.h>
 #define ELFSIZE ARCH_ELFSIZE
@@ -86,8 +86,7 @@ __KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.192 2010/10/28 11:30:07 pooka Exp $");
 
 char machine[] = MACHINE;
 
-/* pretend the master rump proc is init */
-struct proc *initproc = &proc0;
+struct proc *initproc;
 
 struct rumpuser_mtx *rump_giantlock;
 
@@ -322,9 +321,10 @@ rump__init(int rump_version)
 	lwp_initspecific(&lwp0);
 
 	rump_scheduler_init(numcpu);
-	/* revert temporary context and schedule a real context */
+	/* revert temporary context and schedule a semireal context */
 	l->l_cpu = NULL;
 	rumpuser_set_curlwp(NULL);
+	initproc = &proc0; /* borrow proc0 before we get initproc started */
 	rump_schedule();
 
 	percpu_init();
@@ -407,6 +407,18 @@ rump__init(int rump_version)
 	if (rump_threads)
 		vmem_rehash_start();
 
+	/*
+	 * Create init, used to attach implicit threads in rump.
+	 * (note: must be done after vfsinit to get cwdi)
+	 */
+	(void)rump__lwproc_alloclwp(NULL); /* dummy thread for initproc */
+	mutex_enter(proc_lock);
+	initproc = proc_find_raw(1);
+	mutex_exit(proc_lock);
+	if (initproc == NULL)
+		panic("where in the world is initproc?");
+
+	/* release cpu */
 	rump_unschedule();
 
 	return 0;
