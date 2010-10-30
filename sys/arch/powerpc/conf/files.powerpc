@@ -1,4 +1,4 @@
-#	$NetBSD: files.powerpc,v 1.71.4.4 2010/08/25 14:33:07 uebayasi Exp $
+#	$NetBSD: files.powerpc,v 1.71.4.5 2010/10/30 08:43:12 uebayasi Exp $
 
 defflag	opt_altivec.h	ALTIVEC K_ALTIVEC
 defflag	opt_openpic.h	OPENPIC OPENPIC_SERIAL_MODE
@@ -94,5 +94,3 @@ include "compat/linux/arch/powerpc/files.linux_powerpc"
 file arch/powerpc/powerpc/linux_sigcode.S		compat_linux
 file arch/powerpc/powerpc/linux_trap.c			compat_linux
 file arch/powerpc/powerpc/linux_syscall.c		compat_linux
-
-file	arch/powerpc/powerpc/xmd_machdep.c		xmd
