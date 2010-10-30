@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.71 2010/02/25 23:31:47 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.72 2010/10/30 18:08:48 uebayasi Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.71 2010/02/25 23:31:47 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.72 2010/10/30 18:08:48 uebayasi Exp $");
 
 #define	PMAP_NOOPNAMES
 
@@ -90,6 +90,8 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.71 2010/02/25 23:31:47 matt Exp $");
 #include <powerpc/stdarg.h>
 #include <powerpc/oea/spr.h>
 #include <powerpc/oea/sr_601.h>
+
+#define	VM_PAGE_TO_MD(pg)	(&(pg)->mdpage)
 
 #ifdef ALTIVEC
 int pmap_use_altivec;
@@ -690,38 +692,48 @@ static inline struct pvo_head *
 pa_to_pvoh(paddr_t pa, struct vm_page **pg_p)
 {
 	struct vm_page *pg;
+	struct vm_page_md *md;
 
 	pg = PHYS_TO_VM_PAGE(pa);
 	if (pg_p != NULL)
 		*pg_p = pg;
 	if (pg == NULL)
 		return &pmap_pvo_unmanaged;
-	return &pg->mdpage.mdpg_pvoh;
+	md = VM_PAGE_TO_MD(pg);
+	return &md->mdpg_pvoh;
 }
 
 static inline struct pvo_head *
 vm_page_to_pvoh(struct vm_page *pg)
 {
-	return &pg->mdpage.mdpg_pvoh;
+	struct vm_page_md * const md = VM_PAGE_TO_MD(pg);
+
+	return &md->mdpg_pvoh;
 }
 
 
 static inline void
 pmap_attr_clear(struct vm_page *pg, int ptebit)
 {
-	pg->mdpage.mdpg_attrs &= ~ptebit;
+	struct vm_page_md * const md = VM_PAGE_TO_MD(pg);
+
+	md->mdpg_attrs &= ~ptebit;
 }
 
 static inline int
 pmap_attr_fetch(struct vm_page *pg)
 {
-	return pg->mdpage.mdpg_attrs;
+	struct vm_page_md * const md = VM_PAGE_TO_MD(pg);
+
+	return md->mdpg_attrs;
 }
 
 static inline void
 pmap_attr_save(struct vm_page *pg, int ptebit)
 {
-	pg->mdpage.mdpg_attrs |= ptebit;
+	struct vm_page_md * const md = VM_PAGE_TO_MD(pg);
+
+	md->mdpg_attrs |= ptebit;
 }
 
 static inline int
