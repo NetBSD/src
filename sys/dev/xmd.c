@@ -1,4 +1,4 @@
-/*	$NetBSD: xmd.c,v 1.1.2.4 2010/08/28 16:27:02 uebayasi Exp $	*/
+/*	$NetBSD: xmd.c,v 1.1.2.5 2010/10/30 08:51:10 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2010 Tsubai Masanari.  All rights reserved.
@@ -28,14 +28,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xmd.c,v 1.1.2.4 2010/08/28 16:27:02 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xmd.c,v 1.1.2.5 2010/10/30 08:51:10 uebayasi Exp $");
 
 #include "opt_xip.h"
 #include "opt_xmd.h"
-
-#ifndef XIP
-#error xmd(4) needs options XIP
-#endif
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -53,7 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: xmd.c,v 1.1.2.4 2010/08/28 16:27:02 uebayasi Exp $")
 
 #include <machine/vmparam.h>
 
-#include <dev/xmdvar.h>
+#include <uvm/uvm_extern.h>
 
 struct xmd_softc {
 	vaddr_t sc_addr;
@@ -127,9 +123,7 @@ xmd_attach(device_t parent, device_t self, void *aux)
 	sc->sc_addr = (vaddr_t)md_root_image;
 	sc->sc_size = (size_t)md_root_size;
 
-#ifdef XIP
-	sc->sc_phys = xmd_machdep_physload(sc->sc_addr, sc->sc_size);
-#endif
+	sc->sc_phys = pmap_physload_device(sc->sc_addr, sc->sc_size, PROT_READ, 0);
 
 	disk_init(&sc->sc_dkdev, device_xname(self), NULL);
 	disk_attach(&sc->sc_dkdev);
@@ -159,9 +153,7 @@ xmd_detach(device_t self, int flags)
 	disk_detach(&sc->sc_dkdev);
 	disk_destroy(&sc->sc_dkdev);
 
-#ifdef XIP
-	xmd_machdep_physunload(sc->sc_phys);
-#endif
+	pmap_physunload_device(sc->sc_phys);
 
 	return 0;
 }
@@ -210,14 +202,12 @@ xmd_ioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		return -1;
 
 	switch (cmd) {
-#ifdef XIP
 	case DIOCGPHYSSEG:
 		if (sc->sc_phys == NULL)
 			error = EINVAL;
 		else
 			*(void **)data = sc->sc_phys;
 		break;
-#endif
 
 	case DIOCGDINFO:
 		*(struct disklabel *)data = *sc->sc_dkdev.dk_label;
@@ -261,7 +251,7 @@ xmd_mmap(dev_t dev, off_t off, int prot)
 	if ((u_int64_t)off >= sc->sc_size)
 		return -1;
 
-	return xmd_machdep_mmap(sc->sc_addr, off, prot);
+	return pmap_mmap(sc->sc_addr, off);
 }
 
 static void
