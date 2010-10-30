@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.24 2009/11/07 07:27:44 cegger Exp $ */
+/* $NetBSD: pmap.c,v 1.25 2010/10/30 17:27:17 uebayasi Exp $ */
 
 
 /*-
@@ -85,7 +85,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.24 2009/11/07 07:27:44 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.25 2010/10/30 17:27:17 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,6 +101,8 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.24 2009/11/07 07:27:44 cegger Exp $");
 #include <sys/sched.h>
 #include <machine/cpufunc.h>
 #include <machine/md_var.h>
+
+#define	VM_PAGE_TO_MD(pg)	(&(pg)->mdpage)
 
 
 /*
@@ -1233,6 +1235,7 @@ pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pap)
 bool
 pmap_clear_modify(struct vm_page *pg)
 {
+	struct vm_page_md * const md = VM_PAGE_TO_MD(pg);
 	bool rv = false;
 	struct ia64_lpte *pte;
 	pmap_t oldpmap;
@@ -1241,7 +1244,7 @@ pmap_clear_modify(struct vm_page *pg)
 	if (pg->flags & PG_FAKE)
 		return rv;
 
-	TAILQ_FOREACH(pv, &pg->mdpage.pv_list, pv_list) {
+	TAILQ_FOREACH(pv, &md->pv_list, pv_list) {
 		PMAP_LOCK(pv->pv_pmap);
 		oldpmap = pmap_install(pv->pv_pmap);
 		pte = pmap_find_vhpt(pv->pv_va);
@@ -1266,6 +1269,7 @@ pmap_clear_modify(struct vm_page *pg)
 void
 pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 {
+	struct vm_page_md * const md = VM_PAGE_TO_MD(pg);
         struct ia64_lpte *pte;
         pmap_t oldpmap, pmap;
         pv_entry_t pv;
@@ -1275,7 +1279,7 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
         if (prot & (VM_PROT_READ | VM_PROT_EXECUTE)) {
                 if (pg->flags & PG_RDONLY)
                         return;
-                TAILQ_FOREACH(pv, &pg->mdpage.pv_list, pv_list) {
+                TAILQ_FOREACH(pv, &md->pv_list, pv_list) {
                         pmap = pv->pv_pmap;
                         PMAP_LOCK(pmap);
                         oldpmap = pmap_install(pmap);
@@ -1489,8 +1493,9 @@ validate:
  */
 
 void
-pmap_page_purge(struct vm_page * pg)
+pmap_page_purge(struct vm_page *pg)
 {
+	struct vm_page_md * const md = VM_PAGE_TO_MD(pg);
 	pmap_t oldpmap;
 	pv_entry_t pv;
 
@@ -1505,7 +1510,7 @@ pmap_page_purge(struct vm_page * pg)
 #endif
 	//UVM_LOCK_ASSERT_PAGEQ();
 
-	while ((pv = TAILQ_FIRST(&pg->mdpage.pv_list)) != NULL) {
+	while ((pv = TAILQ_FIRST(&md->pv_list)) != NULL) {
 		struct ia64_lpte *pte;
 		pmap_t pmap = pv->pv_pmap;
 		vaddr_t va = pv->pv_va;
@@ -1972,11 +1977,13 @@ pmap_find_vhpt(vaddr_t va)
  * Remove an entry from the list of managed mappings.
  */
 static int
-pmap_remove_entry(pmap_t pmap, struct vm_page * pg, vaddr_t va, pv_entry_t pv)
+pmap_remove_entry(pmap_t pmap, struct vm_page *pg, vaddr_t va, pv_entry_t pv)
 {
+	struct vm_page_md * const md = VM_PAGE_TO_MD(pg);
+
 	if (!pv) {
-		if (pg->mdpage.pv_list_count < pmap->pm_stats.resident_count) {
-			TAILQ_FOREACH(pv, &pg->mdpage.pv_list, pv_list) {
+		if (md->pv_list_count < pmap->pm_stats.resident_count) {
+			TAILQ_FOREACH(pv, &md->pv_list, pv_list) {
 				if (pmap == pv->pv_pmap && va == pv->pv_va) 
 					break;
 			}
@@ -1989,9 +1996,9 @@ pmap_remove_entry(pmap_t pmap, struct vm_page * pg, vaddr_t va, pv_entry_t pv)
 	}
 
 	if (pv) {
-		TAILQ_REMOVE(&pg->mdpage.pv_list, pv, pv_list);
-		pg->mdpage.pv_list_count--;
-		if (TAILQ_FIRST(&pg->mdpage.pv_list) == NULL) {
+		TAILQ_REMOVE(&md->pv_list, pv, pv_list);
+		md->pv_list_count--;
+		if (TAILQ_FIRST(&md->pv_list) == NULL) {
 			//UVM_LOCK_ASSERT_PAGEQ(); 
 			pg->flags |= PG_RDONLY;
 		}
@@ -2012,6 +2019,7 @@ pmap_remove_entry(pmap_t pmap, struct vm_page * pg, vaddr_t va, pv_entry_t pv)
 static void
 pmap_insert_entry(pmap_t pmap, vaddr_t va, struct vm_page *pg)
 {
+	struct vm_page_md * const md = VM_PAGE_TO_MD(pg);
 	pv_entry_t pv;
 
 	pv = get_pv_entry(pmap);
@@ -2021,8 +2029,8 @@ pmap_insert_entry(pmap_t pmap, vaddr_t va, struct vm_page *pg)
 	//LOCK_ASSERT(simple_lock_held(pmap->slock));
 	//UVM_LOCK_ASSERT_PAGEQ(); 
 	TAILQ_INSERT_TAIL(&pmap->pm_pvlist, pv, pv_plist);
-	TAILQ_INSERT_TAIL(&pg->mdpage.pv_list, pv, pv_list);
-	pg->mdpage.pv_list_count++;
+	TAILQ_INSERT_TAIL(&md->pv_list, pv, pv_list);
+	md->pv_list_count++;
 }
 
 
@@ -2092,13 +2100,14 @@ pmap_poolpage_alloc(paddr_t *pap)
 		pa = VM_PAGE_TO_PHYS(pg);
 
 #ifdef DEBUG
-		mutex_enter(&pg->mdpage.pv_mutex);
+		struct vm_page_md * const md = VM_PAGE_TO_MD(pg);
+		mutex_enter(&md->pv_mutex);
 		if (pg->wire_count != 0) {
 			printf("pmap_physpage_alloc: page 0x%lx has "
 			    "%d references\n", pa, pg->wire_count);
 			panic("pmap_physpage_alloc");
 		}
-		mutex_exit(&pg->mdpage.pv_mutex);
+		mutex_exit(&md->pv_mutex);
 #endif
 		*pap = pa;
 		return true;
@@ -2120,10 +2129,11 @@ pmap_poolpage_free(paddr_t pa)
 		panic("pmap_physpage_free: bogus physical page address");
 
 #ifdef DEBUG
-	mutex_enter(&pg->mdpage.pv_mutex);
+	struct vm_page_md * const md = VM_PAGE_TO_MD(pg);
+	mutex_enter(&md->pv_mutex);
 	if (pg->wire_count != 0)
 		panic("pmap_physpage_free: page still has references");
-	mutex_exit(&pg->mdpage.pv_mutex);
+	mutex_exit(&md->pv_mutex);
 #endif
 
 	uvm_pagefree(pg);
