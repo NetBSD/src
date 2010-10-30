@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.74.2.3 2010/04/28 08:31:07 uebayasi Exp $	*/
+/*	$NetBSD: pmap.c,v 1.74.2.4 2010/10/30 08:41:11 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.74.2.3 2010/04/28 08:31:07 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.74.2.4 2010/10/30 08:41:11 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -624,6 +624,13 @@ pmap_kremove(vaddr_t va, vsize_t len)
 
 		sh_tlb_invalidate_addr(0, va);
 	}
+}
+
+paddr_t
+pmap_mmap(vaddr_t addr, off_t off)
+{
+
+	return sh3_btop((paddr_t)addr + off);
 }
 
 bool

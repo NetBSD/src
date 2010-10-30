@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.63.2.7 2010/08/17 06:44:32 uebayasi Exp $	*/
+/*	$NetBSD: pmap.c,v 1.63.2.8 2010/10/30 08:41:07 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.63.2.7 2010/08/17 06:44:32 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.63.2.8 2010/10/30 08:41:07 uebayasi Exp $");
 
 #include "opt_xip.h"
 
@@ -1563,6 +1563,18 @@ pmap_testbit(struct vm_page *pg, u_int bit)
 	mutex_exit(&md->pvh_lock);
 
 	return ret;
+}
+
+/*
+ * pmap_mmap(addr, off)
+ *	Convert the given kernel virtual address to the page frame
+ *	number (mmap cookie).
+ */
+paddr_t
+pmap_mmap(vaddr_t addr, off_t off)
+{
+
+	return btop(addr + off);
 }
 
 /*

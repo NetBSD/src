@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.60.2.5 2010/08/14 02:09:57 uebayasi Exp $	*/
+/*	$NetBSD: pmap.c,v 1.60.2.6 2010/10/30 08:41:10 uebayasi Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.60.2.5 2010/08/14 02:09:57 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.60.2.6 2010/10/30 08:41:10 uebayasi Exp $");
 
 #include "opt_xip.h"
 
@@ -1041,6 +1041,17 @@ pmap_remove(struct pmap *pm, vaddr_t va, vaddr_t endva)
 	}
 
 	splx(s);
+}
+
+/*
+ * Convert the given kernel virtual address to the page frame
+ * number (mmap cookie).
+ */
+paddr_t
+pmap_mmap(vaddr_t addr, off_t off)
+{
+
+	return trunc_page((paddr_t)addr + off);
 }
 
 /*

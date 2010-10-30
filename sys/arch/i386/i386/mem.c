@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.72 2009/03/29 01:10:28 rmind Exp $	*/
+/*	$NetBSD: mem.c,v 1.72.2.1 2010/10/30 08:41:08 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -106,7 +106,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.72 2009/03/29 01:10:28 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.72.2.1 2010/10/30 08:41:08 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -266,5 +266,5 @@ mmmmap(dev_t dev, off_t off, int prot)
 	if (check_pa_acc(off, prot) != 0)
 		return -1;
 
-	return x86_btop(off);
+	return pmap_mmap(0, off);
 }

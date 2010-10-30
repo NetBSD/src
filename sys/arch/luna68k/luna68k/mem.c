@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.15 2009/03/14 15:36:08 dsl Exp $	*/
+/*	$NetBSD: mem.c,v 1.15.2.1 2010/10/30 08:41:08 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -74,7 +74,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.15 2009/03/14 15:36:08 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.15.2.1 2010/10/30 08:41:08 uebayasi Exp $");
 
 /*
  * Memory special file
@@ -232,5 +232,6 @@ mmmmap(dev_t dev, off_t off, int prot)
 	 */
 	if ((u_int)off < lowram || (u_int)off >= 0xFFFFFFFC)
 		return (-1);
-	return (m68k_btop((u_int)off));
+
+	return pmap_mmap(0, off);
 }

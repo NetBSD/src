@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.188.2.4 2010/08/17 06:44:52 uebayasi Exp $	*/
+/*	$NetBSD: pmap.c,v 1.188.2.5 2010/10/30 08:41:09 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.188.2.4 2010/08/17 06:44:52 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.188.2.5 2010/10/30 08:41:09 uebayasi Exp $");
 
 /*
  *	Manages physical address maps.
@@ -1541,6 +1541,19 @@ pmap_unwire(pmap_t pmap, vaddr_t va)
 		    "didn't change!\n", pmap, va);
 	}
 #endif
+}
+
+/*
+ *	Routine:	pmap_mmap
+ *	Function:
+ *              Convert the given kernel virtual address to the
+ *		page frame number (mmap cookie).
+ */
+paddr_t
+pmap_mmap(vaddr_t addr, off_t off)
+{
+
+	return mips_btop(vtophys(addr + off));
 }
 
 /*

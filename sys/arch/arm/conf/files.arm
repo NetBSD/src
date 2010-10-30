@@ -1,4 +1,4 @@
-#	$NetBSD: files.arm,v 1.97.2.4 2010/10/22 07:21:01 uebayasi Exp $
+#	$NetBSD: files.arm,v 1.97.2.5 2010/10/30 08:41:07 uebayasi Exp $
 
 # temporary define to allow easy moving to ../arch/arm/arm32
 defflag				ARM32
@@ -188,5 +188,3 @@ include "compat/linux/arch/arm/files.linux_arm"
 file	arch/arm/arm/linux_sigcode.S		compat_linux
 file	arch/arm/arm/linux_syscall.c		compat_linux
 file	arch/arm/arm/linux_trap.c		compat_linux
-
-file	arch/arm/arm/xmd_machdep.c		xmd

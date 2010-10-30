@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_motorola.c,v 1.55.2.3 2010/08/17 06:44:48 uebayasi Exp $        */
+/*	$NetBSD: pmap_motorola.c,v 1.55.2.4 2010/10/30 08:41:08 uebayasi Exp $        */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -119,7 +119,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.55.2.3 2010/08/17 06:44:48 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.55.2.4 2010/10/30 08:41:08 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1655,6 +1655,19 @@ pmap_unwire(pmap_t pmap, vaddr_t va)
 		pmap_pte_set_w(pte, false);
 		pmap->pm_stats.wired_count--;
 	}
+}
+
+/*
+ * pmap_mmap:			[ INTERFACE ]
+ *
+ *	Convert the given kernel virtual address to the page frame
+ *	number (mmap cookie).
+ */
+paddr_t
+pmap_mmap(vaddr_t addr, off_t off)
+{
+
+	return m68k_btop(addr + (u_int)off);
 }
 
 /*

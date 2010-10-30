@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.100.2.4 2010/08/17 06:45:34 uebayasi Exp $	*/
+/*	$NetBSD: pmap.c,v 1.100.2.5 2010/10/30 08:41:13 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -149,7 +149,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.100.2.4 2010/08/17 06:45:34 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.100.2.5 2010/10/30 08:41:13 uebayasi Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -2894,6 +2894,13 @@ pmap_pdes_invalid(vaddr_t va, pd_entry_t * const *pdes, pd_entry_t *lastpde)
 	if (lastpde != NULL)
 		*lastpde = pde;
 	return 0;
+}
+
+paddr_t
+pmap_mmap(vaddr_t addr, off_t off)
+{
+
+	return x86_btop(vtophys(addr + off));
 }
 
 /*

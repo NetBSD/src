@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.16 2007/03/10 22:29:24 thorpej Exp $	*/
+/*	$NetBSD: mem.c,v 1.16.62.1 2010/10/30 08:41:11 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.16 2007/03/10 22:29:24 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.16.62.1 2010/10/30 08:41:11 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -281,8 +281,8 @@ mmmmap(dev_t dev, off_t off, int prot)
 	case DEV_MEM:
 		/* Allow access only in "managed" RAM. */
 		if (off < avail_start || off >= avail_end)
-			break;
-		return (off);
+			return -1;
+		return pmap_mmap(0, off);
 
 	case DEV_VME16D16:
 		if (off & 0xffff0000)

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.211.2.15 2010/08/17 06:44:02 uebayasi Exp $	*/
+/*	$NetBSD: pmap.c,v 1.211.2.16 2010/10/30 08:41:06 uebayasi Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -212,7 +212,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.211.2.15 2010/08/17 06:44:02 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.211.2.16 2010/10/30 08:41:06 uebayasi Exp $");
 
 #ifdef PMAP_DEBUG
 
@@ -3513,6 +3513,13 @@ pmap_kremove(vaddr_t va, vsize_t len)
 		PTE_SYNC_RANGE(sptep, (u_int)(ptep - sptep));
 	}
 	cpu_cpwait();
+}
+
+paddr_t
+pmap_mmap(vaddr_t addr, off_t off)
+{
+
+	return arm_btop(vtophys(addr + off));
 }
 
 bool

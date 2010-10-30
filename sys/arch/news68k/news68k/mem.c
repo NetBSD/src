@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.19 2007/03/04 11:00:01 tsutsui Exp $	*/
+/*	$NetBSD: mem.c,v 1.19.64.1 2010/10/30 08:41:09 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.19 2007/03/04 11:00:01 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.19.64.1 2010/10/30 08:41:09 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -236,5 +236,6 @@ mmmmap(dev_t dev, off_t off, int prot)
 	 */
 	if ((u_int)off < lowram || (u_int)off >= 0xFFFFFFFC)
 		return -1;
-	return m68k_btop((u_int)off);
+
+	return pmap_mmap(0, off);
 }

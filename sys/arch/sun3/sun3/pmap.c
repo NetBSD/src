@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.164.2.1 2010/10/22 07:21:37 uebayasi Exp $	*/
+/*	$NetBSD: pmap.c,v 1.164.2.2 2010/10/30 08:41:11 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.164.2.1 2010/10/22 07:21:37 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.164.2.2 2010/10/30 08:41:11 uebayasi Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -2857,6 +2857,19 @@ void
 pmap_copy(pmap_t dst_pmap, pmap_t src_pmap, vaddr_t dst_addr, vsize_t len,
 	  vaddr_t src_addr)
 {
+}
+
+/*
+ *	Routine:	pmap_mmap
+ *	Function:
+ *		Convert the given kernel virtual address to the page frame
+ *		number (mmap cookie).
+ */
+paddr_t
+pmap_mmap(vaddr_t addr, off_t off)
+{
+
+	return addr + off;
 }
 
 /*
