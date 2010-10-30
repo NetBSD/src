@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.161.2.8 2010/07/26 10:11:39 uebayasi Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.161.2.9 2010/10/30 05:56:00 uebayasi Exp $	*/
 
 /*
  *
@@ -476,6 +476,7 @@ extern struct uvmexp uvmexp;
 #include <sys/lock.h>
 #include <uvm/uvm_param.h>
 #include <uvm/uvm_prot.h>
+#include <uvm/uvm_page.h>
 #include <uvm/uvm_pmap.h>
 #include <uvm/uvm_map.h>
 #include <uvm/uvm_pager.h>
