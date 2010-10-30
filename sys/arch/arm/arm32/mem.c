@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.26 2008/11/19 06:24:04 matt Exp $	*/
+/*	$NetBSD: mem.c,v 1.27 2010/10/30 18:35:38 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -76,7 +76,7 @@
 #include "opt_compat_netbsd.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.26 2008/11/19 06:24:04 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.27 2010/10/30 18:35:38 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -91,6 +91,8 @@ __KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.26 2008/11/19 06:24:04 matt Exp $");
 #include <machine/cpu.h>
 
 #include <uvm/uvm_extern.h>
+
+#define	VM_PAGE_TO_MD(pg)	(&(pg)->mdpage)
 
 extern vaddr_t memhook;			/* in pmap.c (poor name!) */
 extern kmutex_t memlock;		/* in pmap.c */
@@ -145,7 +147,7 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 				struct vm_page *pg;
 				pg = PHYS_TO_VM_PAGE(trunc_page(v));
 				if (pg != NULL && pmap_is_page_colored_p(pg))
-					o = pg->mdpage.pvh_attrs;
+					o = VM_PAGE_TO_MD(pg)->pvh_attrs;
 				else
 					o = v;
 				m += o & arm_cache_prefer_mask;
