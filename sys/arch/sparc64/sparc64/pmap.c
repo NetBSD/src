@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.265 2010/07/29 10:54:50 hannken Exp $	*/
+/*	$NetBSD: pmap.c,v 1.266 2010/10/30 18:30:55 uebayasi Exp $	*/
 /*
  *
  * Copyright (C) 1996-1999 Eduardo Horvath.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.265 2010/07/29 10:54:50 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.266 2010/10/30 18:30:55 uebayasi Exp $");
 
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
@@ -72,6 +72,8 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.265 2010/07/29 10:54:50 hannken Exp $");
 #define Debugger()
 #define db_printf	printf
 #endif
+
+#define	VM_PAGE_TO_MD(pg)	(&(pg)->mdpage)
 
 #define	MEG		(1<<20) /* 1MB */
 #define	KB		(1<<10)	/* 1KB */
@@ -1447,7 +1449,7 @@ pmap_destroy(struct pmap *pm)
 		KASSERT((pg->flags & PG_MARKER) == 0);
 		nextpg = TAILQ_NEXT(pg, listq.queue);
 		TAILQ_REMOVE(&pm->pm_obj.memq, pg, listq.queue);
-		KASSERT(pg->mdpage.mdpg_pvh.pv_pmap == NULL);
+		KASSERT(md->mdpg_pvh.pv_pmap == NULL);
 		dcache_flush_page_cpuset(VM_PAGE_TO_PHYS(pg), pmap_cpus_active);
 		uvm_pagefree(pg);
 	}
@@ -1714,7 +1716,9 @@ pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 	 */
 	pg = PHYS_TO_VM_PAGE(pa);
 	if (pg) {
-		pvh = &pg->mdpage.mdpg_pvh;
+		struct vm_page_md * const md = VM_PAGE_TO_MD(pg);
+
+		pvh = &md->mdpg_pvh;
 		uncached = (pvh->pv_va & (PV_ALIAS|PV_NVC));
 #ifdef DIAGNOSTIC
 		if ((flags & VM_PROT_ALL) & ~prot)
@@ -2132,8 +2136,10 @@ pmap_protect(struct pmap *pm, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 
 		pg = PHYS_TO_VM_PAGE(pa);
 		if (pg) {
+			struct vm_page_md * const md = VM_PAGE_TO_MD(pg);
+
 			/* Save REF/MOD info */
-			pv = &pg->mdpage.mdpg_pvh;
+			pv = &md->mdpg_pvh;
 			if (data & TLB_ACCESS)
 				pv->pv_va |= PV_REF;
 			if (data & TLB_MODIFY)
@@ -2472,6 +2478,7 @@ ptelookup_va(vaddr_t va)
 bool
 pmap_clear_modify(struct vm_page *pg)
 {
+	struct vm_page_md * const md = VM_PAGE_TO_MD(pg);
 	pv_entry_t pv;
 	int rv;
 	int changed = 0;
@@ -2484,7 +2491,7 @@ pmap_clear_modify(struct vm_page *pg)
 #endif
 	mutex_enter(&pmap_lock);
 	/* Clear all mappings */
-	pv = &pg->mdpage.mdpg_pvh;
+	pv = &md->mdpg_pvh;
 #ifdef DEBUG
 	if (pv->pv_va & PV_MOD)
 		pv->pv_va |= PV_WE;	/* Remember this was modified */
@@ -2553,6 +2560,7 @@ pmap_clear_modify(struct vm_page *pg)
 bool
 pmap_clear_reference(struct vm_page *pg)
 {
+	struct vm_page_md * const md = VM_PAGE_TO_MD(pg);
 	pv_entry_t pv;
 	int rv;
 	int changed = 0;
@@ -2566,7 +2574,7 @@ pmap_clear_reference(struct vm_page *pg)
 	referenced = pmap_is_referenced_locked(pg);
 #endif
 	/* Clear all references */
-	pv = &pg->mdpage.mdpg_pvh;
+	pv = &md->mdpg_pvh;
 	if (pv->pv_va & PV_REF) {
 		changed |= 1;
 		pv->pv_va &= ~PV_REF;
@@ -2619,7 +2627,7 @@ pmap_clear_reference(struct vm_page *pg)
 	pv_check();
 #ifdef DEBUG
 	if (pmap_is_referenced_locked(pg)) {
-		pv = &pg->mdpage.mdpg_pvh;
+		pv = &md->mdpg_pvh;
 		printf("pmap_clear_reference(): %p still referenced "
 			"(pmap = %p, ctx = %d)\n", pg, pv->pv_pmap,
 			pv->pv_pmap ? pmap_ctx(pv->pv_pmap) : 0);
@@ -2644,11 +2652,12 @@ pmap_clear_reference(struct vm_page *pg)
 bool
 pmap_is_modified(struct vm_page *pg)
 {
+	struct vm_page_md * const md = VM_PAGE_TO_MD(pg);
 	pv_entry_t pv, npv;
 	bool res = false;
 
 	/* Check if any mapping has been modified */
-	pv = &pg->mdpage.mdpg_pvh;
+	pv = &md->mdpg_pvh;
 	if (pv->pv_va & PV_MOD)
 		res = true;
 #ifdef HWREF
@@ -2698,13 +2707,14 @@ pmap_is_modified(struct vm_page *pg)
 static bool
 pmap_is_referenced_locked(struct vm_page *pg)
 {
+	struct vm_page_md * const md = VM_PAGE_TO_MD(pg);
 	pv_entry_t pv, npv;
 	bool res = false;
 
 	KASSERT(mutex_owned(&pmap_lock));
 
 	/* Check if any mapping has been referenced */
-	pv = &pg->mdpage.mdpg_pvh;
+	pv = &md->mdpg_pvh;
 	if (pv->pv_va & PV_REF)
 		return true;
 
@@ -2746,11 +2756,12 @@ pmap_is_referenced_locked(struct vm_page *pg)
 bool
 pmap_is_referenced(struct vm_page *pg)
 {
+	struct vm_page_md * const md = VM_PAGE_TO_MD(pg);
 	pv_entry_t pv;
 	bool res = false;
 
 	/* Check if any mapping has been referenced */
-	pv = &pg->mdpage.mdpg_pvh;
+	pv = &md->mdpg_pvh;
 	if (pv->pv_va & PV_REF)
 		return true;
 
@@ -2822,6 +2833,7 @@ pmap_unwire(pmap_t pmap, vaddr_t va)
 void
 pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 {
+	struct vm_page_md * const md = VM_PAGE_TO_MD(pg);
 	int64_t clear, set;
 	int64_t data = 0;
 	int rv;
@@ -2834,7 +2846,7 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 	    ("pmap_page_protect: pg %p prot %x\n", pg, prot));
 
 	mutex_enter(&pmap_lock);
-	pv = &pg->mdpage.mdpg_pvh;
+	pv = &md->mdpg_pvh;
 	if (prot & (VM_PROT_READ|VM_PROT_EXECUTE)) {
 		/* copy_on_write */
 
@@ -3192,11 +3204,12 @@ void
 pmap_enter_pv(struct pmap *pmap, vaddr_t va, paddr_t pa, struct vm_page *pg,
 	      pv_entry_t npv)
 {
+	struct vm_page_md * const md = VM_PAGE_TO_MD(pg);
 	pv_entry_t pvh;
 
 	KASSERT(mutex_owned(&pmap_lock));
 
-	pvh = &pg->mdpage.mdpg_pvh;
+	pvh = &md->mdpg_pvh;
 	DPRINTF(PDB_ENTER, ("pmap_enter: pvh %p: was %lx/%p/%p\n",
 	    pvh, pvh->pv_va, pvh->pv_pmap, pvh->pv_next));
 	if (pvh->pv_pmap == NULL) {
@@ -3253,12 +3266,13 @@ pmap_enter_pv(struct pmap *pmap, vaddr_t va, paddr_t pa, struct vm_page *pg,
 pv_entry_t
 pmap_remove_pv(struct pmap *pmap, vaddr_t va, struct vm_page *pg)
 {
+	struct vm_page_md * const md = VM_PAGE_TO_MD(pg);
 	pv_entry_t pvh, npv, pv;
 	int64_t data = 0;
 
 	KASSERT(mutex_owned(&pmap_lock));
 
-	pvh = &pg->mdpage.mdpg_pvh;
+	pvh = &md->mdpg_pvh;
 
 	DPRINTF(PDB_REMOVE, ("pmap_remove_pv(pm=%p, va=%p, pg=%p)\n", pmap,
 	    (void *)(u_long)va, pg));
@@ -3329,6 +3343,7 @@ void
 pmap_page_cache(struct pmap *pm, paddr_t pa, int mode)
 {
 	struct vm_page *pg;
+	struct vm_page_md *md;
 	pv_entry_t pv;
 	vaddr_t va;
 	int rv;
@@ -3338,7 +3353,8 @@ pmap_page_cache(struct pmap *pm, paddr_t pa, int mode)
 	DPRINTF(PDB_ENTER, ("pmap_page_uncache(%llx)\n",
 	    (unsigned long long)pa));
 	pg = PHYS_TO_VM_PAGE(pa);
-	pv = &pg->mdpage.mdpg_pvh;
+	md = VM_PAGE_TO_MD(pg);
+	pv = &md->mdpg_pvh;
 	while (pv) {
 		va = pv->pv_va & PV_VAMASK;
 		if (pv->pv_va & PV_NC) {
@@ -3431,6 +3447,7 @@ void
 db_dump_pv(db_expr_t addr, int have_addr, db_expr_t count, const char *modif)
 {
 	struct vm_page *pg;
+	struct vm_page_md *md;
 	struct pv_entry *pv;
 
 	if (!have_addr) {
@@ -3443,7 +3460,8 @@ db_dump_pv(db_expr_t addr, int have_addr, db_expr_t count, const char *modif)
 		db_printf("page is not managed\n");
 		return;
 	}
-	for (pv = &pg->mdpage.mdpg_pvh; pv; pv = pv->pv_next)
+	md = VM_PAGE_TO_MD(pg);
+	for (pv = &md->mdpg_pvh; pv; pv = pv->pv_next)
 		db_printf("pv@%p: next=%p pmap=%p va=0x%llx\n",
 			  pv, pv->pv_next, pv->pv_pmap,
 			  (unsigned long long)pv->pv_va);
