@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.122 2010/10/20 02:39:19 kiyohara Exp $
+# $NetBSD: GENERIC,v 1.123 2010/10/30 05:57:41 kiyohara Exp $
 #
 # GENERIC machine description file
 #
@@ -20,9 +20,9 @@
 
 include 	"arch/bebox/conf/std.bebox"
 
-#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
+options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.122 $"
+#ident 		"GENERIC-$Revision: 1.123 $"
 
 maxusers	32
 
@@ -80,7 +80,6 @@ file-system	FFS		# UFS
 #file-system	LFS		# log-structured file system
 file-system	MFS		# memory file system
 file-system	NFS		# Network File System client
-#file-system 	NTFS		# Windows/NT file system (experimental)
 file-system	CD9660		# ISO 9660 + Rock Ridge file system
 file-system	MSDOSFS		# MS-DOS file system
 #file-system	FDESC		# /dev/fd
