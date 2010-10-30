@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.21.2.2 2010/08/17 06:44:24 uebayasi Exp $	*/
+/*	$NetBSD: mem.c,v 1.21.2.3 2010/10/30 08:41:07 uebayasi Exp $	*/
 
 /*	$OpenBSD: mem.c,v 1.30 2007/09/22 16:21:32 krw Exp $	*/
 /*
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.21.2.2 2010/08/17 06:44:24 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.21.2.3 2010/10/30 08:41:07 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -418,5 +418,5 @@ mmmmap(dev_t dev, off_t off, int prot)
 	if (off > ptoa(physmem))
 		return -1;
 
-	return btop(off);
+	return pmap_mmap(0, off);
 }

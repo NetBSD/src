@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.43 2009/12/11 13:56:16 tsutsui Exp $	*/
+/*	$NetBSD: pmap.c,v 1.43.2.1 2010/10/30 08:41:11 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.43 2009/12/11 13:56:16 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.43.2.1 2010/10/30 08:41:11 uebayasi Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -2850,6 +2850,13 @@ void
 pmap_copy(pmap_t dst_pmap, pmap_t src_pmap, vaddr_t dst_addr, vsize_t len,
     vaddr_t src_addr)
 {
+}
+
+paddr_t
+pmap_mmap(vaddr_t addr, off_t off)
+{
+
+	return addr + off;
 }
 
 /*

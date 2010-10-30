@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.5 2009/11/07 07:27:48 cegger Exp $ */
+/* $NetBSD: pmap.c,v 1.5.2.1 2010/10/30 08:41:12 uebayasi Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.5 2009/11/07 07:27:48 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.5.2.1 2010/10/30 08:41:12 uebayasi Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -167,6 +167,13 @@ pmap_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 void
 pmap_unwire(pmap_t pmap, vaddr_t va)
 {
+}
+
+paddr_t
+pmap_mmap(vaddr_t addr, off_t off)
+{
+
+	return -1;
 }
 
 bool

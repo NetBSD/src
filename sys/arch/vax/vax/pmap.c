@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.175.2.3 2010/08/17 06:45:26 uebayasi Exp $	   */
+/*	$NetBSD: pmap.c,v 1.175.2.4 2010/10/30 08:41:12 uebayasi Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999, 2003 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.175.2.3 2010/08/17 06:45:26 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.175.2.4 2010/10/30 08:41:12 uebayasi Exp $");
 
 #include "opt_ddb.h"
 #include "opt_cputype.h"
@@ -1231,6 +1231,13 @@ pmap_map(vaddr_t virtual, paddr_t pstart, paddr_t pend, int prot)
 		    (prot & VM_PROT_WRITE ? PG_KW : PG_KR);
 	}
 	return virtual + (count - pstart) + KERNBASE;
+}
+
+paddr_t
+pmap_mmap(vaddr_t addr, off_t off)
+{
+
+	return btop(addr + (u_int)off);
 }
 
 #if 0

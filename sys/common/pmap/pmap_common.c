@@ -1,4 +1,4 @@
-/*	$NetBSD: xmd_machdep.c,v 1.1.2.1 2010/08/28 18:24:07 uebayasi Exp $	*/
+/*	$NetBSD: pmap_common.c,v 1.1.2.1 2010/10/30 08:41:14 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -27,41 +27,26 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xmd_machdep.c,v 1.1.2.1 2010/08/28 18:24:07 uebayasi Exp $");
-
-#include "opt_xip.h"
-
-#ifndef XIP
-#error xmd(4) needs options XIP
-#endif
+__KERNEL_RCSID(0, "$NetBSD: pmap_common.c,v 1.1.2.1 2010/10/30 08:41:14 uebayasi Exp $");
 
 #include <sys/param.h>
-#include <sys/mman.h>
+#include <sys/types.h>
 
-#include <uvm/uvm_page.h>
-
-#include <dev/xmdvar.h>
-
-paddr_t
-xmd_machdep_mmap(vaddr_t addr, off_t off, int prot)
-{
-
-	return mips_btop(vtophys(addr + off));
-}
+#include <uvm/uvm.h>
 
 void *
-xmd_machdep_physload(vaddr_t addr, size_t size)
+pmap_physload_device(vaddr_t addr, size_t size, int prot, int flags)
 {
 	paddr_t start, end;
 
-	start = mips_btop(vtophys(addr));
-	end = mips_btop(vtophys(addr + size));
+	start = pmap_mmap(addr, 0);
+	end = pmap_mmap(addr, size);
 
-	return uvm_page_physload_device(start, end, start, end, PROT_READ, 0);
+	return uvm_page_physload_device(start, end, start, end, prot, flags);
 }
 
 void
-xmd_machdep_physunload(void *phys)
+pmap_physunload_device(void *phys)
 {
 
 	uvm_page_physunload_device(phys);
