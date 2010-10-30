@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.74 2009/11/07 07:27:46 cegger Exp $	*/
+/*	$NetBSD: pmap.c,v 1.75 2010/10/30 18:15:04 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.74 2009/11/07 07:27:46 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.75 2010/10/30 18:15:04 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -42,6 +42,8 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.74 2009/11/07 07:27:46 cegger Exp $");
 
 #include <sh3/mmu.h>
 #include <sh3/cache.h>
+
+#define	VM_PAGE_TO_MD(pg)	(&(pg)->mdpage)
 
 #ifdef DEBUG
 #define	STATIC
@@ -339,7 +341,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 		entry |= _PG_WIRED;
 
 	if (pg != NULL) {	/* memory-space */
-		pvh = &pg->mdpage;
+		pvh = VM_PAGE_TO_MD(pg);
 		entry |= PG_C;	/* always cached */
 
 		/* Seed modified/reference tracking */
@@ -483,7 +485,7 @@ __pmap_pv_enter(pmap_t pmap, struct vm_page *pg, vaddr_t va)
 		 * XXX mapping them uncached (like arm and mips do).
 		 */
  again:
-		pvh = &pg->mdpage;
+		pvh = VM_PAGE_TO_MD(pg);
 		SLIST_FOREACH(pv, &pvh->pvh_head, pv_link) {
 			if (sh_cache_indexof(va) !=
 			    sh_cache_indexof(pv->pv_va)) {
@@ -495,7 +497,7 @@ __pmap_pv_enter(pmap_t pmap, struct vm_page *pg, vaddr_t va)
 	}
 
 	/* Register pv map */
-	pvh = &pg->mdpage;
+	pvh = VM_PAGE_TO_MD(pg);
 	pv = __pmap_pv_alloc();
 	pv->pv_pmap = pmap;
 	pv->pv_va = va;
@@ -547,12 +549,12 @@ __pmap_pv_remove(pmap_t pmap, struct vm_page *pg, vaddr_t vaddr)
 	int s;
 
 	s = splvm();
-	pvh = &pg->mdpage;
+	pvh = VM_PAGE_TO_MD(pg);
 	SLIST_FOREACH(pv, &pvh->pvh_head, pv_link) {
 		if (pv->pv_pmap == pmap && pv->pv_va == vaddr) {
 			if (SH_HAS_VIRTUAL_ALIAS ||
 			    (SH_HAS_WRITEBACK_CACHE &&
-				(pg->mdpage.pvh_flags & PVH_MODIFIED))) {
+				(pvh->pvh_flags & PVH_MODIFIED))) {
 				/*
 				 * Always use index ops. since I don't want to
 				 * worry about address space.
@@ -699,7 +701,7 @@ pmap_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 void
 pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 {
-	struct vm_page_md *pvh = &pg->mdpage;
+	struct vm_page_md *pvh = VM_PAGE_TO_MD(pg);
 	struct pv_entry *pv;
 	struct pmap *pmap;
 	vaddr_t va;
@@ -789,24 +791,25 @@ pmap_copy_page(paddr_t src, paddr_t dst)
 bool
 pmap_is_referenced(struct vm_page *pg)
 {
+	struct vm_page_md *pvh = VM_PAGE_TO_MD(pg);
 
-	return ((pg->mdpage.pvh_flags & PVH_REFERENCED) ? true : false);
+	return ((pvh->pvh_flags & PVH_REFERENCED) ? true : false);
 }
 
 bool
 pmap_clear_reference(struct vm_page *pg)
 {
-	struct vm_page_md *pvh = &pg->mdpage;
+	struct vm_page_md *pvh = VM_PAGE_TO_MD(pg);
 	struct pv_entry *pv;
 	pt_entry_t *pte;
 	pmap_t pmap;
 	vaddr_t va;
 	int s;
 
-	if ((pg->mdpage.pvh_flags & PVH_REFERENCED) == 0)
+	if ((pvh->pvh_flags & PVH_REFERENCED) == 0)
 		return (false);
 
-	pg->mdpage.pvh_flags &= ~PVH_REFERENCED;
+	pvh->pvh_flags &= ~PVH_REFERENCED;
 
 	s = splvm();
 	/* Restart reference bit emulation */
@@ -831,14 +834,15 @@ pmap_clear_reference(struct vm_page *pg)
 bool
 pmap_is_modified(struct vm_page *pg)
 {
+	struct vm_page_md *pvh = VM_PAGE_TO_MD(pg);
 
-	return ((pg->mdpage.pvh_flags & PVH_MODIFIED) ? true : false);
+	return ((pvh->pvh_flags & PVH_MODIFIED) ? true : false);
 }
 
 bool
 pmap_clear_modify(struct vm_page *pg)
 {
-	struct vm_page_md *pvh = &pg->mdpage;
+	struct vm_page_md *pvh = VM_PAGE_TO_MD(pg);
 	struct pv_entry *pv;
 	struct pmap *pmap;
 	pt_entry_t *pte, entry;
@@ -1023,12 +1027,14 @@ __pmap_pte_load(pmap_t pmap, vaddr_t va, int flags)
 
 	/* Emulate reference/modified tracking for managed page. */
 	if (flags != 0 && (pg = PHYS_TO_VM_PAGE(entry & PG_PPN)) != NULL) {
+		struct vm_page_md *pvh = VM_PAGE_TO_MD(pg);
+
 		if (flags & PVH_REFERENCED) {
-			pg->mdpage.pvh_flags |= PVH_REFERENCED;
+			pvh->pvh_flags |= PVH_REFERENCED;
 			entry |= PG_V;
 		}
 		if (flags & PVH_MODIFIED) {
-			pg->mdpage.pvh_flags |= PVH_MODIFIED;
+			pvh->pvh_flags |= PVH_MODIFIED;
 			entry |= PG_D;
 		}
 		*pte = entry;
