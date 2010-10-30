@@ -1,8 +1,9 @@
-#	$NetBSD: XIP,v 1.1.2.1 2010/08/27 09:41:51 uebayasi Exp $
+#	$NetBSD: XIP,v 1.1.2.2 2010/10/30 05:02:28 uebayasi Exp $
 
 include "arch/amd64/conf/GENERIC"
 
 options 	XIP
 
+no pseudo-device md
 pseudo-device	xmd		1	# XIP memory disk device (ramdisk)
 options 	XMD_ROOT_SIZE=10240	# 5MB
