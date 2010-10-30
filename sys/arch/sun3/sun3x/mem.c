@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.33.64.1 2010/10/22 07:21:38 uebayasi Exp $	*/
+/*	$NetBSD: mem.c,v 1.33.64.2 2010/10/30 08:41:12 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.33.64.1 2010/10/22 07:21:38 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.33.64.2 2010/10/30 08:41:12 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -276,7 +276,7 @@ mmmmap(dev_t dev, off_t off, int prot)
 		/* Allow access only in valid memory. */
 		if (!pmap_pa_exists(off))
 			break;
-		return (off);
+		return pmap_mmap(0, off);
 
 #if 0	/* XXX - NOTYET */
 		/* XXX - Move this to bus_subr.c? */

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.250.2.4 2010/08/17 06:45:20 uebayasi Exp $	*/
+/*	$NetBSD: pmap.c,v 1.250.2.5 2010/10/30 08:41:11 uebayasi Exp $	*/
 /*
  *
  * Copyright (C) 1996-1999 Eduardo Horvath.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.250.2.4 2010/08/17 06:45:20 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.250.2.5 2010/10/30 08:41:11 uebayasi Exp $");
 
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
@@ -2170,6 +2170,13 @@ pmap_protect(struct pmap *pm, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 	}
 	pv_check();
 	mutex_exit(&pmap_lock);
+}
+
+paddr_t
+pmap_mmap(vaddr_t addr, off_t off)
+{
+
+	return -1;
 }
 
 /*

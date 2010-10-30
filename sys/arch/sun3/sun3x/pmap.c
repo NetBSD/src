@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.110.2.1 2010/10/22 07:21:38 uebayasi Exp $	*/
+/*	$NetBSD: pmap.c,v 1.110.2.2 2010/10/30 08:41:12 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.110.2.1 2010/10/22 07:21:38 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.110.2.2 2010/10/30 08:41:12 uebayasi Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -2910,6 +2910,18 @@ pmap_clear_pv(paddr_t pa, int flag)
 		va = pmap_get_pteinfo(idx, &pmap, &c_tbl);
 		TBIS(va);
 	}
+}
+
+/* pmap_mmap			INTERFACE
+ **
+ * Convert the given kernel virtual address to the page frame number
+ * (mmap cookie).
+ */
+paddr_t
+pmap_mmap(vaddr_t addr, off_t off)
+{
+
+	return addr + off;
 }
 
 /* pmap_extract_kernel		INTERNAL

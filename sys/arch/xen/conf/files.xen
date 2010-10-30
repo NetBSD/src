@@ -1,4 +1,4 @@
-#	$NetBSD: files.xen,v 1.106.2.2 2010/08/27 09:41:16 uebayasi Exp $
+#	$NetBSD: files.xen,v 1.106.2.3 2010/10/30 08:41:13 uebayasi Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 #	NetBSD: files.i386,v 1.254 2004/03/25 23:32:10 jmc Exp 
 
@@ -285,8 +285,6 @@ file	arch/x86/x86/ioapic.c		ioapic needs-flag
 device ipmi : sysmon_envsys, sysmon_wdog
 attach ipmi at ipmibus
 file	arch/x86/x86/ipmi.c		ipmi needs-flag
-
-file	arch/x86/x86/xmd_machdep.c	xmd
 
 # CPUS
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.69.2.3 2010/04/30 14:39:44 uebayasi Exp $	*/
+/*	$NetBSD: pmap.c,v 1.69.2.4 2010/10/30 08:41:10 uebayasi Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.69.2.3 2010/04/30 14:39:44 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.69.2.4 2010/10/30 08:41:10 uebayasi Exp $");
 
 #define	PMAP_NOOPNAMES
 
@@ -2095,6 +2095,18 @@ pmap_remove(pmap_t pm, vaddr_t va, vaddr_t endva)
 	pmap_interrupts_restore(msr);
 	pmap_pvo_free_list(&pvol);
 	PMAP_UNLOCK();
+}
+
+/*
+ * Convert the given kernel virtual address to the page frame
+ * number (mmap cookie).
+ */
+paddr_t
+pmap_mmap(vaddr_t addr, off_t off)
+{
+	struct lwp *l = curlwp;
+
+	return trunc_page((paddr_t)addr + off);
 }
 
 /*
