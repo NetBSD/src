@@ -1,4 +1,4 @@
-/*	$NetBSD: resize_ffs.c,v 1.12 2007/12/15 19:44:47 perry Exp $	*/
+/*	$NetBSD: resize_ffs.c,v 1.13 2010/10/30 21:16:07 haad Exp $	*/
 /* From sources sent on February 17, 2003 */
 /*-
  * As its sole author, I explicitly place this code in the public
@@ -48,6 +48,10 @@
 #include <unistd.h>
 #include <strings.h>
 #include <err.h>
+#include <sys/disk.h>
+#include <sys/disklabel.h>
+#include <sys/dkio.h>
+#include <sys/ioctl.h>
 #include <sys/stat.h>
 #include <sys/mman.h>
 #include <sys/param.h>		/* MAXFRAG */
@@ -56,21 +60,8 @@
 #include <ufs/ufs/dinode.h>
 #include <ufs/ufs/ufs_bswap.h>	/* ufs_rw32 */
 
-/* Suppress warnings about unused arguments */
-#if	defined(__GNUC__) &&				\
-	( (__GNUC__ > 2) ||				\
-	  ( (__GNUC__ == 2) &&				\
-	    defined(__GNUC_MINOR__) &&			\
-	    (__GNUC_MINOR__ >= 7) ) )
-#define UNUSED_ARG(x) x __unused
-#define INLINE inline
-#else
-#define UNUSED_ARG(x) x
-#define INLINE			/**/
-#endif
-
 /* new size of filesystem, in sectors */
-static int newsize;
+static uint32_t newsize;
 
 /* fd open onto disk device */
 static int fd;
@@ -156,6 +147,8 @@ static unsigned char *iflags;
 #define NSPB(fs)	((fs)->fs_old_nspf << (fs)->fs_fragshift)
 #define NSPF(fs)	((fs)->fs_old_nspf)
 
+static void usage(void) __dead;
+
 /*
  * See if we need to break up large I/O operations.  This should never
  *  be needed, but under at least one <version,platform> combination,
@@ -195,7 +188,7 @@ readat(off_t blkno, void *buf, int size)
 			n = (left > 8192) ? 8192 : left;
 			rv = read(fd, bp, n);
 			if (rv < 0)
-				err(1, "read failed");
+				err(EXIT_FAILURE, "read failed");
 			if (rv != n)
 				errx(1, "read: wanted %d, got %d", n, rv);
 			bp += n;
@@ -205,7 +198,7 @@ readat(off_t blkno, void *buf, int size)
 		int rv;
 		rv = read(fd, buf, size);
 		if (rv < 0)
-			err(1, "read failed");
+			err(EXIT_FAILURE, "read failed");
 		if (rv != size)
 			errx(1, "read: wanted %d, got %d", size, rv);
 	}
@@ -219,7 +212,7 @@ writeat(off_t blkno, const void *buf, int size)
 {
 	/* Seek to the correct place. */
 	if (lseek(fd, blkno * DEV_BSIZE, L_SET) < 0)
-		err(1, "lseek failed");
+		err(EXIT_FAILURE, "lseek failed");
 	/* See if we have to break up the transfer... */
 	if (smallio) {
 		const char *bp;	/* pointer into buf */
@@ -232,7 +225,7 @@ writeat(off_t blkno, const void *buf, int size)
 			n = (left > 8192) ? 8192 : left;
 			rv = write(fd, bp, n);
 			if (rv < 0)
-				err(1, "write failed");
+				err(EXIT_FAILURE, "write failed");
 			if (rv != n)
 				errx(1, "write: wanted %d, got %d", n, rv);
 			bp += n;
@@ -242,7 +235,7 @@ writeat(off_t blkno, const void *buf, int size)
 		int rv;
 		rv = write(fd, buf, size);
 		if (rv < 0)
-			err(1, "write failed");
+			err(EXIT_FAILURE, "write failed");
 		if (rv != size)
 			errx(1, "write: wanted %d, got %d", size, rv);
 	}
@@ -264,7 +257,7 @@ nfmalloc(size_t nb, const char *tag)
 	rv = malloc(nb);
 	if (rv)
 		return (rv);
-	err(1, "Can't allocate %lu bytes for %s",
+	err(EXIT_FAILURE, "Can't allocate %lu bytes for %s",
 	    (unsigned long int) nb, tag);
 }
 /*
@@ -278,7 +271,7 @@ nfrealloc(void *blk, size_t nb, const char *tag)
 	rv = realloc(blk, nb);
 	if (rv)
 		return (rv);
-	err(1, "Can't re-allocate %lu bytes for %s",
+	err(EXIT_FAILURE, "Can't re-allocate %lu bytes for %s",
 	    (unsigned long int) nb, tag);
 }
 /*
@@ -296,7 +289,7 @@ alloconce(size_t nb, const char *tag)
 	rv = mmap(0, nb, PROT_READ | PROT_WRITE, MAP_ANON | MAP_PRIVATE, -1, 0);
 	if (rv != MAP_FAILED)
 		return (rv);
-	err(1, "Can't map %lu bytes for %s",
+	err(EXIT_FAILURE, "Can't map %lu bytes for %s",
 	    (unsigned long int) nb, tag);
 }
 /*
@@ -381,7 +374,7 @@ clr_bits(unsigned char *bitvec, int base, int n)
 /*
  * Test whether bit #bit is set in the bitmap pointed to by bitvec.
  */
-INLINE static int
+static int
 bit_is_set(unsigned char *bitvec, int bit)
 {
 	return (bitvec[bit >> 3] & (1 << (bit & 7)));
@@ -389,7 +382,7 @@ bit_is_set(unsigned char *bitvec, int bit)
 /*
  * Test whether bit #bit is clear in the bitmap pointed to by bitvec.
  */
-INLINE static int
+static int
 bit_is_clr(unsigned char *bitvec, int bit)
 {
 	return (!bit_is_set(bitvec, bit));
@@ -402,7 +395,7 @@ bit_is_clr(unsigned char *bitvec, int bit)
  *  iff _all_ the bits are set; it is not just the complement of
  *  blk_is_clr on the same arguments (unless blkfrags==1).
  */
-INLINE static int
+static int
 blk_is_set(unsigned char *bitvec, int blkbase, int blkfrags)
 {
 	unsigned int mask;
@@ -416,7 +409,7 @@ blk_is_set(unsigned char *bitvec, int blkbase, int blkfrags)
  *  the bits are clear; it is not just the complement of blk_is_set on
  *  the same arguments (unless blkfrags==1).
  */
-INLINE static int
+static int
 blk_is_clr(unsigned char *bitvec, int blkbase, int blkfrags)
 {
 	unsigned int mask;
@@ -890,8 +883,10 @@ grow(void)
 	/* Did we actually not grow?  (This can happen if newsize is less than
 	 * a frag larger than the old size - unlikely, but no excuse to
 	 * misbehave if it happens.) */
-	if (newsb->fs_size == oldsb->fs_size)
+	if (newsb->fs_size == oldsb->fs_size) {
+		printf("New fs size %"PRIu64" = odl fs size %"PRIu64", not growing.\n", newsb->fs_size, oldsb->fs_size);
 		return;
+	}
 	/* Check that the new last sector (frag, actually) is writable.  Since
 	 * it's at least one frag larger than it used to be, we know we aren't
 	 * overwriting anything important by this.  (The choice of sbbuf as
@@ -965,7 +960,7 @@ grow(void)
  *  over either the old or the new filesystem's set of inodes.
  */
 static void
-     map_inodes(void (*fn) (struct ufs1_dinode * di, unsigned int, void *arg), int ncg, void *cbarg) {
+map_inodes(void (*fn) (struct ufs1_dinode * di, unsigned int, void *arg), int ncg, void *cbarg) {
 	int i;
 	int ni;
 
@@ -1821,24 +1816,98 @@ write_sbs(void)
 		writeat(fsbtodb(newsb, cgsblock(newsb, i)), newsb, SBLOCKSIZE);
 	}
 }
+
+static uint32_t
+get_dev_size(char *dev_name)
+{
+	struct dkwedge_info dkw;
+	struct partition *pp;
+	struct disklabel lp;
+	size_t ptn;
+	
+	/* Get info about partition/wedge */
+	if (ioctl(fd, DIOCGWEDGEINFO, &dkw) == -1) {
+		if (ioctl(fd, DIOCGDINFO, &lp) == -1)
+			return 0;
+
+		ptn = strchr(dev_name, '\0')[-1] - 'a';
+		if (ptn >= lp.d_npartitions)
+			return 0;
+
+		pp = &lp.d_partitions[ptn];
+		return pp->p_size;
+	}
+
+	return dkw.dkw_size;
+}
+
 /*
  * main().
  */
-int main(int, char **);
 int
-main(int ac, char **av)
+main(int argc, char **argv)
 {
+	int ch;
+	int ExpertFlag;
+	int SFlag;
 	size_t i;
-	if (ac != 3) {
-		fprintf(stderr, "usage: %s filesystem new-size\n",
-		    getprogname());
-		exit(1);
+
+	char *device;
+	char reply[5];
+	
+	newsize = 0;
+	ExpertFlag = 0;
+	SFlag = 0;
+	
+	while ((ch = getopt(argc, argv, "s:y")) != -1) {
+		switch (ch) {
+		case 's':
+			SFlag = 1;
+			newsize = (size_t)strtoul(optarg, NULL, 10);
+			if(newsize < 1) {
+				usage();
+			}
+			break;
+		case 'y':
+			ExpertFlag = 1;
+			break;
+		case '?':
+			/* FALLTHROUGH */
+		default:
+			usage();
+		}
 	}
-	fd = open(av[1], O_RDWR, 0);
+	argc -= optind;
+	argv += optind;
+
+	if (argc != 1) {
+		usage();
+	}
+
+	device = *argv;
+
+	if (ExpertFlag == 0) {
+		printf("It's required to manually run fsck on filesystem device "
+		    "before you can resize it\n\n"
+		    " Did you run fsck on your disk (Yes/No) ? ");
+		fgets(reply, (int)sizeof(reply), stdin);
+		if (strcasecmp(reply, "Yes\n")) {
+			printf("\n Nothing done \n");
+			exit(EXIT_SUCCESS);
+		}
+	}
+	
+	fd = open(device, O_RDWR, 0);
 	if (fd < 0)
-		err(1, "Cannot open `%s'", av[1]);
+		err(EXIT_FAILURE, "Cannot open `%s'", device);
 	checksmallio();
-	newsize = atoi(av[2]);
+
+	if (SFlag == 0) {
+		newsize = get_dev_size(device);
+		if (newsize == 0)
+			err(EXIT_FAILURE, "Cannot resize filesystem, newsize not known.");
+	}
+	
 	oldsb = (struct fs *) & sbbuf;
 	newsb = (struct fs *) (SBLOCKSIZE + (char *) &sbbuf);
 	for (where = search[i = 0]; search[i] != -1; where = search[++i]) {
@@ -1848,16 +1917,16 @@ main(int ac, char **av)
 		if (where == SBLOCK_UFS2)
 			continue;
 		if (oldsb->fs_old_flags & FS_FLAGS_UPDATED)
-			err(1, "Cannot resize ffsv2 format suberblock!");
+			err(EXIT_FAILURE, "Cannot resize ffsv2 format suberblock!");
 	}
 	if (where == (off_t)-1)
-		errx(1, "Bad magic number");
+		errx(EXIT_FAILURE, "Bad magic number");
 	oldsb->fs_qbmask = ~(int64_t) oldsb->fs_bmask;
 	oldsb->fs_qfmask = ~(int64_t) oldsb->fs_fmask;
 	if (oldsb->fs_ipg % INOPB(oldsb)) {
-		printf("ipg[%d] %% INOPB[%d] != 0\n", (int) oldsb->fs_ipg,
+		(void)fprintf(stderr, "ipg[%d] %% INOPB[%d] != 0\n", (int) oldsb->fs_ipg,
 		    (int) INOPB(oldsb));
-		exit(1);
+		exit(EXIT_FAILURE);
 	}
 	/* The superblock is bigger than struct fs (there are trailing tables,
 	 * of non-fixed size); make sure we copy the whole thing.  SBLOCKSIZE may
@@ -1872,5 +1941,13 @@ main(int ac, char **av)
 	}
 	flush_cgs();
 	write_sbs();
-	exit(0);
+	return 0;
+}
+
+static void
+usage(void)
+{
+
+	(void)fprintf(stderr, "usage: %s [-y] [-s size] device\n", getprogname());
+	exit(EXIT_FAILURE);
 }
