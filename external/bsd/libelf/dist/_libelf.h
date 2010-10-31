@@ -1,4 +1,4 @@
-/*	$NetBSD: _libelf.h,v 1.5 2010/03/02 21:08:36 darran Exp $	*/
+/*	$NetBSD: _libelf.h,v 1.6 2010/10/31 05:03:12 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006 Joseph Koshy
@@ -75,6 +75,7 @@ extern struct _libelf_globals _libelf;
 #define	LIBELF_F_MALLOCED	0x010000 /* whether data was malloc'ed */
 #define	LIBELF_F_MMAP		0x020000 /* whether e_rawfile was mmap'ed */
 #define	LIBELF_F_SHDRS_LOADED	0x040000 /* whether all shdrs were read in */
+#define	LIBELF_F_MALLOC		0x080000 /* whether e_rawfile was mmap'ed */
 
 struct _Elf {
 	int		e_activations;	/* activation count */
