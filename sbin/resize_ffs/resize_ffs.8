@@ -1,4 +1,4 @@
-.\"     $NetBSD: resize_ffs.8,v 1.4 2010/10/30 21:16:07 haad Exp $
+.\"     $NetBSD: resize_ffs.8,v 1.5 2010/10/31 11:39:46 wiz Exp $
 .\"
 .\" As its sole author, I explicitly place this man page in the public
 .\" domain.  Anyone may use it in any way for any purpose (though I would
@@ -9,7 +9,7 @@
 .\"  X  Against HTML               mouse@rodents.montreal.qc.ca
 .\" / \ Email!           7D C8 61 52 5D E7 2D 39  4E F1 31 3E E8 B3 27 4B
 .\"
-.Dd February 20, 2003
+.Dd October 30, 2010
 .Dt RESIZE_FFS 8
 .Sh NAME
 .Nm resize_ffs
@@ -24,6 +24,7 @@
 resizes a file system on disk.
 .Ar file-system-raw-device
 is the name of the raw disk device where the file system resides;
+(Sectors are almost always 512 bytes, and
 .Nm
 can both grow and shrink file systems.
 When growing, the disk device
@@ -45,23 +46,29 @@ the file system in a consistent state, but it is probably a good idea to
 check the file system with
 .Xr fsck 8 .
 .Pp
-If there is no
-.Fl s 
-used resize_ffs will grow filesystem to underlyining device size which is get
-from device.
+If no
+.Fl s
+option is provided,
+.Nm
+will grow the file system to the underlying device size which is
+determined from
+.Ar file-system-raw-device .
 .Pp
-The options are as foolows:
+The options are as follows:
 .Bl -tag -width indent
+.It Fl s
+Specify the file system size to which the file system should be
+resized.
+Mostly used to shrink file systems.
 .It Fl y
-option will disable sanity question made by resize_ffs.
-.It Fl s 
-Can be used to specify filesystem size to which we want to resize fs.
-This is only way hot to shrink filesystem now.
+Disable sanity questions made by
+.Nm .
 .El
 .Sh WARNING
 .Nm
-should still be considered experimental.  It still needs to be validated
-with a rigorous regression test suite.
+should still be considered experimental.
+It still needs to be validated with a rigorous regression test
+suite.
 .Em Interrupting
 .Nm
 .Em "may leave your file system in an inconsistent state and require a"
@@ -82,19 +89,19 @@ It's probably wise to
 the file system before and after, just to be safe.
 .\" Remove this when (if) fsck gets fixed.
 .Pp
-There is a bug somewhere in fsck; it does not check certain data
-structures enough.
+There is a bug somewhere in
+.Xr fsck 8 ;
+it does not check certain data structures enough.
 A past version of this program had a bug that produced corrupted
 rotation layout summary tables, which would panic the kernel.
 This bug is believed fixed, and there are currently no
 known bugs in the program.
-However, you should be aware that just
-because fsck is happy with the file system does not mean it is intact.
+However, you should be aware that just because
+.Xr fsck 8
+is happy with the file system does not mean it is intact.
 .Sh EXIT STATUS
 .Nm
-exits with
-.Dv 0
-on success.
+exits with 0 on success.
 Any major problems will cause
 .Nm
 to exit with the non-zero
@@ -103,10 +110,10 @@ codes, so as to alert any invoking program or script that human
 intervention is required.
 .Sh EXAMPLES
 .Dl resize_ffs Cm /dev/vg00/rlv1
-.Pp 
-will enlarge filesystem on Logical Volume
+.Pp
+will enlarge the file system on the Logical Volume
 .Pa /dev/vg00/lv1
-from Volume Group vg00 to current device size.
+from Volume Group vg00 to the current device size.
 .Sh SEE ALSO
 .Xr fs 5 ,
 .Xr fsck 8 ,
