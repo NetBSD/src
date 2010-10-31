@@ -1,4 +1,4 @@
-/*	$NetBSD: fstest_puffs.c,v 1.3 2010/09/01 19:41:27 pooka Exp $	*/
+/*	$NetBSD: fstest_puffs.c,v 1.4 2010/10/31 22:05:35 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -72,20 +72,24 @@ readshovel(void *arg)
 	phdr = (void *)buf;
 	preq = (void *)buf;
 
-	rump_pub_lwproc_newlwp(0);
+	rump_pub_lwproc_newlwp(1);
 
 	for (;;) {
 		ssize_t n;
 
 		n = rump_sys_read(puffsfd, buf, sizeof(*phdr));
-		if (n <= 0)
+		if (n <= 0) {
+			fprintf(stderr, "readshovel r1 %d / %d\n", n, errno);
 			break;
+		}
 
 		assert(phdr->pth_framelen < BUFSIZE);
 		n = rump_sys_read(puffsfd, buf+sizeof(*phdr), 
 		    phdr->pth_framelen - sizeof(*phdr));
-		if (n <= 0)
+		if (n <= 0) {
+			fprintf(stderr, "readshovel r2 %d / %d\n", n, errno);
 			break;
+		}
 
 		/* Analyze request */
 		if (PUFFSOP_OPCLASS(preq->preq_opclass) == PUFFSOP_VFS) {
@@ -97,11 +101,13 @@ readshovel(void *arg)
 		}
 
 		n = phdr->pth_framelen;
-		if (write(comfd, buf, n) != n)
+		if (write(comfd, buf, n) != n) {
+			fprintf(stderr, "readshovel write %d / %d\n", n, errno);
 			break;
+		}
 	}
 
-	return NULL;
+	abort();
 }
 
 static void *
@@ -113,7 +119,7 @@ writeshovel(void *arg)
 	size_t toread;
 	int comfd, puffsfd;
 
-	rump_pub_lwproc_newlwp(0);
+	rump_pub_lwproc_newlwp(1);
 
 	comfd = args->pta_servfd;
 	puffsfd = args->pta_rumpfd;
@@ -134,6 +140,8 @@ writeshovel(void *arg)
 		do {
 			n = read(comfd, buf+off, toread);
 			if (n <= 0) {
+				fprintf(stderr, "writeshovel read %d / %d\n",
+				    n, errno);
 				break;
 			}
 			off += n;
@@ -144,11 +152,13 @@ writeshovel(void *arg)
 		} while (toread);
 
 		n = rump_sys_write(puffsfd, buf, phdr->pth_framelen);
-		if ((size_t)n != phdr->pth_framelen)
+		if ((size_t)n != phdr->pth_framelen) {
+			fprintf(stderr, "writeshovel wr %d / %d\n", n, errno);
 			break;
+		}
 	}
 
-	return NULL;
+	abort();
 }
 
 static void
