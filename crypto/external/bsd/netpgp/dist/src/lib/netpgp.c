@@ -34,7 +34,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: netpgp.c,v 1.77 2010/10/19 00:00:00 agc Exp $");
+__RCSID("$NetBSD: netpgp.c,v 1.78 2010/10/31 19:45:53 stacktic Exp $");
 #endif
 
 #include <sys/types.h>
@@ -423,6 +423,8 @@ resolve_userid(netpgp_t *netpgp, const __ops_keyring_t *keyring, const char *use
 
 	if (userid == NULL) {
 		userid = netpgp_getvar(netpgp, "userid");
+		if (userid == NULL)
+			return NULL;
 	} else if (userid[0] == '0' && userid[1] == 'x') {
 		userid += 2;
 	}
