@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.782 2010/10/31 11:52:52 mbalmer Exp $
+#	$NetBSD: 3RDPARTY,v 1.783 2010/10/31 17:17:45 snj Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -614,7 +614,7 @@ Responsible:	mbalmer
 License:	MIT
 Notes:
 The default module paths have been changed to not include the current
-working director '.' to avoid potential security problems.
+working directory '.' to avoid potential security problems.
 
 Package:	m4
 Version:	20091026
