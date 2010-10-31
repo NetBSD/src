@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.63.2.8 2010/10/30 08:41:07 uebayasi Exp $	*/
+/*	$NetBSD: pmap.c,v 1.63.2.9 2010/10/31 03:46:17 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.63.2.8 2010/10/30 08:41:07 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.63.2.9 2010/10/31 03:46:17 uebayasi Exp $");
 
 #include "opt_xip.h"
 
@@ -1232,7 +1232,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 			ptp->wire_count++;
 	}
 
-	if (pmap_initialized && ((flags & PMAP_UNMANAGED) == 0) &&
+	if (pmap_initialized && ((flags & PMAP_NOCACHE) == 0) &&
 	    (pg = PHYS_TO_VM_PAGE(pa))) {
 		struct vm_page_md * const md = VM_PAGE_TO_MD(pg);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_device.c,v 1.57.2.2 2010/05/28 15:26:22 uebayasi Exp $	*/
+/*	$NetBSD: uvm_device.c,v 1.57.2.3 2010/10/31 03:46:19 uebayasi Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_device.c,v 1.57.2.2 2010/05/28 15:26:22 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_device.c,v 1.57.2.3 2010/10/31 03:46:19 uebayasi Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -428,12 +428,12 @@ udv_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr, struct vm_page **pps,
 		    ufi->orig_map->pmap, curr_va, paddr, mapprot);
 		/*
 		 * XXXUEBS
-		 * always map device pages as unmanaged (uncached) for
-		 * now.  this may be changed when UVM will support some
+		 * always map device pages as uncached for now.
+		 * this may be changed when UVM will support some
 		 * "managed" device pages like PAT in the future.
 		 */
 		if (pmap_enter(ufi->orig_map->pmap, curr_va, paddr,
-		    mapprot, PMAP_CANFAIL | PMAP_UNMANAGED | mapprot) != 0) {
+		    mapprot, PMAP_CANFAIL | PMAP_NOCACHE | mapprot) != 0) {
 			/*
 			 * pmap_enter() didn't have the resource to
 			 * enter this mapping.  Unlock everything,

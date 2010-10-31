@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.250.2.5 2010/10/30 08:41:11 uebayasi Exp $	*/
+/*	$NetBSD: pmap.c,v 1.250.2.6 2010/10/31 03:46:19 uebayasi Exp $	*/
 /*
  *
  * Copyright (C) 1996-1999 Eduardo Horvath.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.250.2.5 2010/10/30 08:41:11 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.250.2.6 2010/10/31 03:46:19 uebayasi Exp $");
 
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
@@ -1715,7 +1715,7 @@ pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 	/*
 	 * Construct the TTE.
 	 */
-	if ((flags & PMAP_UNMANAGED) != 0)
+	if ((flags & PMAP_NOCACHE) != 0)
 		pg = NULL;
 	else
 		pg = PHYS_TO_VM_PAGE(pa);
