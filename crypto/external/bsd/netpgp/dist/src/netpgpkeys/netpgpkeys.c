@@ -53,7 +53,7 @@
 
 static const char *usage =
 	" --help OR\n"
-	"\t--export-keys [options] OR\n"
+	"\t--export-key [options] OR\n"
 	"\t--find-key [options] OR\n"
 	"\t--generate-key [options] OR\n"
 	"\t--import-key [options] OR\n"
