@@ -57,7 +57,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: compress.c,v 1.17 2010/08/15 16:10:56 agc Exp $");
+__RCSID("$NetBSD: compress.c,v 1.18 2010/10/31 18:31:03 agc Exp $");
 #endif
 
 #ifdef HAVE_ZLIB_H
@@ -89,6 +89,7 @@ typedef struct {
 	int             inflate_ret;
 } z_decompress_t;
 
+#ifdef HAVE_BZLIB_H
 typedef struct {
 	__ops_compression_type_t type;
 	__ops_region_t   *region;
@@ -98,6 +99,7 @@ typedef struct {
 	size_t          offset;
 	int             inflate_ret;
 } bz_decompress_t;
+#endif
 
 typedef struct {
 	z_stream        stream;
@@ -202,6 +204,7 @@ zlib_compressed_data_reader(void *dest, size_t length,
 	return (int)length;
 }
 
+#ifdef HAVE_BZLIB_H
 /* \todo remove code duplication between this and zlib_compressed_data_reader */
 static int 
 bzip2_compressed_data_reader(void *dest, size_t length,
@@ -285,6 +288,7 @@ bzip2_compressed_data_reader(void *dest, size_t length,
 
 	return (int)length;
 }
+#endif
 
 /**
  * \ingroup Core_Compress
@@ -299,7 +303,9 @@ __ops_decompress(__ops_region_t *region, __ops_stream_t *stream,
 	       __ops_compression_type_t type)
 {
 	z_decompress_t z;
+#ifdef HAVE_BZLIB_H
 	bz_decompress_t bz;
+#endif
 	const int	printerrors = 1;
 	int             ret;
 
@@ -321,6 +327,7 @@ __ops_decompress(__ops_region_t *region, __ops_stream_t *stream,
 
 		break;
 
+#ifdef HAVE_BZLIB_H
 	case OPS_C_BZIP2:
 		(void) memset(&bz, 0x0, sizeof(bz));
 
@@ -334,6 +341,7 @@ __ops_decompress(__ops_region_t *region, __ops_stream_t *stream,
 		bz.bzstream.bzalloc = NULL;
 		bz.bzstream.bzfree = NULL;
 		bz.bzstream.opaque = NULL;
+#endif
 
 		break;
 
@@ -355,9 +363,11 @@ __ops_decompress(__ops_region_t *region, __ops_stream_t *stream,
 		ret = (int)inflateInit(&z.zstream);
 		break;
 
+#ifdef HAVE_BZLIB_H
 	case OPS_C_BZIP2:
 		ret = BZ2_bzDecompressInit(&bz.bzstream, 1, 0);
 		break;
+#endif
 
 	default:
 		OPS_ERROR_1(&stream->errors,
@@ -379,6 +389,7 @@ __ops_decompress(__ops_region_t *region, __ops_stream_t *stream,
 					NULL, &z);
 		break;
 
+#ifdef HAVE_BZLIB_H
 	case OPS_C_BZIP2:
 		if (ret != BZ_OK) {
 			OPS_ERROR_1(&stream->errors,
@@ -389,6 +400,7 @@ __ops_decompress(__ops_region_t *region, __ops_stream_t *stream,
 		__ops_reader_push(stream, bzip2_compressed_data_reader,
 					NULL, &bz);
 		break;
+#endif
 
 	default:
 		OPS_ERROR_1(&stream->errors,
