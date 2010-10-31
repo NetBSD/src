@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.211.2.16 2010/10/30 08:41:06 uebayasi Exp $	*/
+/*	$NetBSD: pmap.c,v 1.211.2.17 2010/10/31 03:43:02 uebayasi Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -212,7 +212,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.211.2.16 2010/10/30 08:41:06 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.211.2.17 2010/10/31 03:43:02 uebayasi Exp $");
 
 #ifdef PMAP_DEBUG
 
@@ -663,7 +663,7 @@ static void		pmap_vac_me_kpmap(struct vm_page_md *, paddr_t, pmap_t, vaddr_t);
 static void		pmap_vac_me_user(struct vm_page_md *, paddr_t, pmap_t, vaddr_t);
 #endif
 
-static void		pmap_clearbit(struct vm_page *, u_int);
+static void		pmap_clearbit(struct vm_page_md *, paddr_t, u_int);
 #ifdef PMAP_CACHE_VIVT
 static int		pmap_clean_page(struct pv_entry *, bool);
 #endif
@@ -676,7 +676,7 @@ enum pmap_flush_op {
 };
 static void		pmap_flush_page(struct vm_page_md *, paddr_t, enum pmap_flush_op);
 #endif
-static void		pmap_page_remove(struct vm_page *);
+static void		pmap_page_remove(struct vm_page_md *, paddr_t);
 
 static void		pmap_init_l1(struct l1_ttable *, pd_entry_t *);
 static vaddr_t		kernel_pt_lookup(paddr_t);
@@ -974,7 +974,7 @@ pmap_remove_pv(struct vm_page_md *md, paddr_t pa, pmap_t pm, vaddr_t va)
 	while (pv) {
 		if (pv->pv_pmap == pm && pv->pv_va == va) {	/* match? */
 			NPDEBUG(PDB_PVDUMP, printf("pmap_remove_pv: pm %p, md "
-			    "%p\n", pm, md));
+			    "%p, flags 0x%x\n", pm, md, pv->pv_flags));
 			if (pv->pv_flags & PVF_WIRED) {
 				--pm->pm_stats.wired_count;
 			}
@@ -2121,9 +2121,8 @@ pmap_vac_me_harder(struct vm_page_md *md, paddr_t pa, pmap_t pm, vaddr_t va)
  * constants and the latter would require an extra inversion at run-time.
  */
 static void
-pmap_clearbit(struct vm_page *pg, u_int maskbits)
+pmap_clearbit(struct vm_page_md *md, paddr_t pa, u_int maskbits)
 {
-	struct vm_page_md *md = VM_PAGE_TO_MD(pg);
 	struct l2_bucket *l2b;
 	struct pv_entry *pv;
 	pt_entry_t *ptep, npte, opte;
@@ -2138,8 +2137,8 @@ pmap_clearbit(struct vm_page *pg, u_int maskbits)
 #endif
 
 	NPDEBUG(PDB_BITS,
-	    printf("pmap_clearbit: pg %p (0x%08lx) mask 0x%x\n",
-	    pg, VM_PAGE_TO_PHYS(pg), maskbits));
+	    printf("pmap_clearbit: md %p mask 0x%x\n",
+	    md, maskbits));
 
 	PMAP_HEAD_TO_MAP_LOCK();
 	simple_lock(&md->pvh_slock);
@@ -2317,7 +2316,7 @@ pmap_clearbit(struct vm_page *pg, u_int maskbits)
 	 * If we need to sync the I-cache and we haven't done it yet, do it.
 	 */
 	if (need_syncicache && !did_syncicache) {
-		pmap_syncicache_page(md, VM_PAGE_TO_PHYS(pg));
+		pmap_syncicache_page(md, pa);
 		PMAPCOUNT(exec_synced_clearbit);
 	}
 	/*
@@ -2327,7 +2326,7 @@ pmap_clearbit(struct vm_page *pg, u_int maskbits)
 	 */
 	if (need_vac_me_harder) {
 		if (md->pvh_attrs & PVF_NC)
-			pmap_vac_me_harder(md, VM_PAGE_TO_PHYS(pg), NULL, 0);
+			pmap_vac_me_harder(md, pa, NULL, 0);
 	}
 #endif
 
@@ -2567,10 +2566,8 @@ pmap_flush_page(struct vm_page_md *md, paddr_t pa, enum pmap_flush_op flush)
  *		Reflects back modify bits to the pager.
  */
 static void
-pmap_page_remove(struct vm_page *pg)
+pmap_page_remove(struct vm_page_md *md, paddr_t pa)
 {
-	struct vm_page_md *md = VM_PAGE_TO_MD(pg);
-	paddr_t pa = VM_PAGE_TO_PHYS(pg);
 	struct l2_bucket *l2b;
 	struct pv_entry *pv, *npv, **pvp;
 	pmap_t pm;
@@ -2579,7 +2576,7 @@ pmap_page_remove(struct vm_page *pg)
 	u_int flags;
 
 	NPDEBUG(PDB_FOLLOW,
-	    printf("pmap_page_remove: pg %p (0x%08lx)\n", pg,
+	    printf("pmap_page_remove: md %p (0x%08lx)\n", md,
 	    pa));
 
 	PMAP_HEAD_TO_MAP_LOCK();
@@ -2896,9 +2893,7 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 			 */
 			if (opg) {
 				struct vm_page_md *omd = VM_PAGE_TO_MD(opg);
-				paddr_t opa;
-
-				opa = VM_PAGE_TO_PHYS(opg);
+				paddr_t opa = VM_PAGE_TO_PHYS(opg);
 
 				/*
 				 * Replacing an existing mapping with a new one.
@@ -2945,7 +2940,7 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 				return (ENOMEM);
 			}
 
-			pmap_enter_pv(md, VM_PAGE_TO_PHYS(pg), pv, pm, va, nflags);
+			pmap_enter_pv(md, pa, pv, pm, va, nflags);
 		}
 	} else {
 		/*
@@ -2969,9 +2964,11 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 			 * at this address.
 			 */
 			struct vm_page_md *omd = VM_PAGE_TO_MD(opg);
+			paddr_t opa = VM_PAGE_TO_PHYS(opg);
+
 			simple_lock(&omd->pvh_slock);
-			pv = pmap_remove_pv(omd, VM_PAGE_TO_PHYS(opg), pm, va);
-			pmap_vac_me_harder(omd, VM_PAGE_TO_PHYS(opg), pm, 0);
+			pv = pmap_remove_pv(omd, opa, pm, va);
+			pmap_vac_me_harder(omd, opa, pm, 0);
 			simple_unlock(&omd->pvh_slock);
 			oflags = pv->pv_flags;
 
@@ -3052,14 +3049,16 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 
 		if (pg != NULL) {
 			struct vm_page_md *md = VM_PAGE_TO_MD(pg);
+
 			simple_lock(&md->pvh_slock);
-			pmap_vac_me_harder(md, VM_PAGE_TO_PHYS(pg), pm, va);
+			pmap_vac_me_harder(md, pa, pm, va);
 			simple_unlock(&md->pvh_slock);
 		}
 	}
 #if defined(PMAP_CACHE_VIPT) && defined(DIAGNOSTIC)
 	if (pg) {
 		struct vm_page_md *md = VM_PAGE_TO_MD(pg);
+
 		simple_lock(&md->pvh_slock);
 		KASSERT((md->pvh_attrs & PVF_DMOD) == 0 || (md->pvh_attrs & (PVF_DIRTY|PVF_NC)));
 		KASSERT(((md->pvh_attrs & PVF_WRITE) == 0) == (md->urw_mappings + md->krw_mappings == 0));
@@ -3166,9 +3165,10 @@ pmap_remove(pmap_t pm, vaddr_t sva, vaddr_t eva)
 			if ((pg = PHYS_TO_VM_PAGE(pa)) != NULL) {
 				struct vm_page_md *md = VM_PAGE_TO_MD(pg);
 				struct pv_entry *pv;
+
 				simple_lock(&md->pvh_slock);
-				pv = pmap_remove_pv(md, VM_PAGE_TO_PHYS(pg), pm, sva);
-				pmap_vac_me_harder(md, VM_PAGE_TO_PHYS(pg), pm, 0);
+				pv = pmap_remove_pv(md, pa, pm, sva);
+				pmap_vac_me_harder(md, pa, pm, 0);
 				simple_unlock(&md->pvh_slock);
 				if (pv != NULL) {
 					if (pm->pm_remove_all == false) {
@@ -3290,13 +3290,14 @@ static struct pv_entry *
 pmap_kremove_pg(struct vm_page *pg, vaddr_t va)
 {
 	struct vm_page_md *md = VM_PAGE_TO_MD(pg);
+	paddr_t pa = VM_PAGE_TO_PHYS(pg);
 	struct pv_entry *pv;
 
 	simple_lock(&md->pvh_slock);
 	KASSERT(arm_cache_prefer_mask == 0 || md->pvh_attrs & (PVF_COLORED|PVF_NC));
 	KASSERT((md->pvh_attrs & PVF_KMPAGE) == 0);
 
-	pv = pmap_remove_pv(md, VM_PAGE_TO_PHYS(pg), pmap_kernel(), va);
+	pv = pmap_remove_pv(md, pa, pmap_kernel(), va);
 	KASSERT(pv);
 	KASSERT(pv->pv_flags & PVF_KENTRY);
 
@@ -3311,11 +3312,11 @@ pmap_kremove_pg(struct vm_page *pg, vaddr_t va)
 			md->pvh_attrs &= ~PVF_EXEC;
 			PMAPCOUNT(exec_discarded_kremove);
 		} else {
-			pmap_syncicache_page(md, VM_PAGE_TO_PHYS(pg));
+			pmap_syncicache_page(md, pa);
 			PMAPCOUNT(exec_synced_kremove);
 		}
 	}
-	pmap_vac_me_harder(md, VM_PAGE_TO_PHYS(pg), pmap_kernel(), 0);
+	pmap_vac_me_harder(md, pa, pmap_kernel(), 0);
 	simple_unlock(&md->pvh_slock);
 
 	return pv;
@@ -3345,8 +3346,8 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 	struct vm_page_md *md = VM_PAGE_TO_MD(pg);
 
 	NPDEBUG(PDB_KENTER,
-	    printf("pmap_kenter_pa: va 0x%08lx, pa 0x%08lx, prot 0x%x pg %p md %p\n",
-	    va, pa, prot, pg, md));
+	    printf("pmap_kenter_pa: va 0x%08lx, pa 0x%08lx, prot 0x%x\n",
+	    va, pa, prot));
 
 	l2b = pmap_get_l2_bucket(pmap_kernel(), va);
 	KDASSERT(l2b != NULL);
@@ -3399,14 +3400,14 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 			if (pmap_is_page_colored_p(md)
 			    && ((va ^ md->pvh_attrs) & arm_cache_prefer_mask)) {
 				PMAPCOUNT(vac_color_change);
-				pmap_flush_page(md, VM_PAGE_TO_PHYS(pg), PMAP_FLUSH_PRIMARY);
+				pmap_flush_page(md, pa, PMAP_FLUSH_PRIMARY);
 			} else if (md->pvh_attrs & PVF_MULTCLR) {
 				/*
 				 * If this page has multiple colors, expunge
 				 * them.
 				 */
 				PMAPCOUNT(vac_flush_lots2);
-				pmap_flush_page(md, VM_PAGE_TO_PHYS(pg), PMAP_FLUSH_SECONDARY);
+				pmap_flush_page(md, pa, PMAP_FLUSH_SECONDARY);
 			}
 			md->pvh_attrs &= PAGE_SIZE - 1;
 			md->pvh_attrs |= PVF_KMPAGE
@@ -3424,7 +3425,7 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 				pv = pool_get(&pmap_pv_pool, PR_NOWAIT);
 				KASSERT(pv != NULL);
 			}
-			pmap_enter_pv(md, VM_PAGE_TO_PHYS(pg), pv, pmap_kernel(), va,
+			pmap_enter_pv(md, pa, pv, pmap_kernel(), va,
 			    PVF_WIRED | PVF_KENTRY
 			    | (prot & VM_PROT_WRITE ? PVF_WRITE : 0));
 			if ((prot & VM_PROT_WRITE)
@@ -3432,7 +3433,7 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 				md->pvh_attrs |= PVF_DIRTY;
 			KASSERT((prot & VM_PROT_WRITE) == 0 || (md->pvh_attrs & (PVF_DIRTY|PVF_NC)));
 			simple_lock(&md->pvh_slock);
-			pmap_vac_me_harder(md, VM_PAGE_TO_PHYS(pg), pmap_kernel(), va);
+			pmap_vac_me_harder(md, pa, pmap_kernel(), va);
 			simple_unlock(&md->pvh_slock);
 #endif
 		}
@@ -3476,6 +3477,7 @@ pmap_kremove(vaddr_t va, vsize_t len)
 			opg = PHYS_TO_VM_PAGE(l2pte_pa(opte));
 			if (opg) {
 				struct vm_page_md *omd = VM_PAGE_TO_MD(opg);
+
 				if (omd->pvh_attrs & PVF_KMPAGE) {
 					simple_lock(&omd->pvh_slock);
 					KASSERT(omd->urw_mappings == 0);
@@ -3652,10 +3654,12 @@ pmap_protect(pmap_t pm, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 
 				if (pg != NULL) {
 					struct vm_page_md *md = VM_PAGE_TO_MD(pg);
+					paddr_t pa = VM_PAGE_TO_PHYS(pg);
+
 					simple_lock(&md->pvh_slock);
-					f = pmap_modify_pv(md, VM_PAGE_TO_PHYS(pg), pm, sva,
+					f = pmap_modify_pv(md, pa, pm, sva,
 					    clr_mask, 0);
-					pmap_vac_me_harder(md, VM_PAGE_TO_PHYS(pg), pm, sva);
+					pmap_vac_me_harder(md, pa, pm, sva);
 					simple_unlock(&md->pvh_slock);
 				} else
 					f = PVF_REF | PVF_EXEC;
@@ -3731,15 +3735,17 @@ pmap_icache_sync_range(pmap_t pm, vaddr_t sva, vaddr_t eva)
 void
 pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 {
+	struct vm_page_md *md = VM_PAGE_TO_MD(pg);
+	paddr_t pa = VM_PAGE_TO_PHYS(pg);
 
 	NPDEBUG(PDB_PROTECT,
-	    printf("pmap_page_protect: pg %p (0x%08lx), prot 0x%x\n",
-	    pg, VM_PAGE_TO_PHYS(pg), prot));
+	    printf("pmap_page_protect: md %p (0x%08lx), prot 0x%x\n",
+	    md, pa, prot));
 
 	switch(prot) {
 	case VM_PROT_READ|VM_PROT_WRITE:
 #if defined(PMAP_CHECK_VIPT) && defined(PMAP_APX)
-		pmap_clearbit(pg, PVF_EXEC);
+		pmap_clearbit(md, pa, PVF_EXEC);
 		break;
 #endif
 	case VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE:
@@ -3747,15 +3753,15 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 
 	case VM_PROT_READ:
 #if defined(PMAP_CHECK_VIPT) && defined(PMAP_APX)
-		pmap_clearbit(pg, PVF_WRITE|PVF_EXEC);
+		pmap_clearbit(md, pa, PVF_WRITE|PVF_EXEC);
 		break;
 #endif
 	case VM_PROT_READ|VM_PROT_EXECUTE:
-		pmap_clearbit(pg, PVF_WRITE);
+		pmap_clearbit(md, pa, PVF_WRITE);
 		break;
 
 	default:
-		pmap_page_remove(pg);
+		pmap_page_remove(md, pa);
 		break;
 	}
 }
@@ -3769,6 +3775,7 @@ bool
 pmap_clear_modify(struct vm_page *pg)
 {
 	struct vm_page_md *md = VM_PAGE_TO_MD(pg);
+	paddr_t pa = VM_PAGE_TO_PHYS(pg);
 	bool rv;
 
 	if (md->pvh_attrs & PVF_MOD) {
@@ -3780,9 +3787,9 @@ pmap_clear_modify(struct vm_page *pg)
 		 * mark it clean.
 		 */
 		if ((md->pvh_attrs & (PVF_DMOD|PVF_NC)) == PVF_MOD)
-			pmap_flush_page(md, VM_PAGE_TO_PHYS(pg), PMAP_CLEAN_PRIMARY);
+			pmap_flush_page(md, pa, PMAP_CLEAN_PRIMARY);
 #endif
-		pmap_clearbit(pg, PVF_MOD);
+		pmap_clearbit(md, pa, PVF_MOD);
 	} else
 		rv = false;
 
@@ -3798,11 +3805,12 @@ bool
 pmap_clear_reference(struct vm_page *pg)
 {
 	struct vm_page_md *md = VM_PAGE_TO_MD(pg);
+	paddr_t pa = VM_PAGE_TO_PHYS(pg);
 	bool rv;
 
 	if (md->pvh_attrs & PVF_REF) {
 		rv = true;
-		pmap_clearbit(pg, PVF_REF);
+		pmap_clearbit(md, pa, PVF_REF);
 	} else
 		rv = false;
 
@@ -3910,7 +3918,7 @@ pmap_fault_fixup(pmap_t pm, vaddr_t va, vm_prot_t ftype, int user)
 
 		NPDEBUG(PDB_FOLLOW,
 		    printf("pmap_fault_fixup: mod emul. pm %p, va 0x%08lx, pa 0x%08lx\n",
-		    pm, va, VM_PAGE_TO_PHYS(pg)));
+		    pm, va, pa));
 
 		md->pvh_attrs |= PVF_REF | PVF_MOD;
 		pv->pv_flags |= PVF_REF | PVF_MOD;
@@ -3963,7 +3971,7 @@ pmap_fault_fixup(pmap_t pm, vaddr_t va, vm_prot_t ftype, int user)
 
 		NPDEBUG(PDB_FOLLOW,
 		    printf("pmap_fault_fixup: ref emul. pm %p, va 0x%08lx, pa 0x%08lx\n",
-		    pm, va, VM_PAGE_TO_PHYS(pg)));
+		    pm, va, pa));
 
 		*ptep = l2pte_set_readonly((pte & ~L2_TYPE_MASK) | L2_S_PROTO);
 		PTE_SYNC(ptep);
@@ -4111,8 +4119,9 @@ pmap_unwire(pmap_t pm, vaddr_t va)
 	if ((pg = PHYS_TO_VM_PAGE(pa)) != NULL) {
 		/* Update the wired bit in the pv entry for this page. */
 		struct vm_page_md *md = VM_PAGE_TO_MD(pg);
+
 		simple_lock(&md->pvh_slock);
-		(void) pmap_modify_pv(md, VM_PAGE_TO_PHYS(pg), pm, va, PVF_WIRED, 0);
+		(void) pmap_modify_pv(md, pa, pm, va, PVF_WIRED, 0);
 		simple_unlock(&md->pvh_slock);
 	}
 
