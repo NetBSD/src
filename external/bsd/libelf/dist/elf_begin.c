@@ -1,4 +1,4 @@
-/*	$NetBSD: elf_begin.c,v 1.6 2010/02/22 10:59:08 darran Exp $	*/
+/*	$NetBSD: elf_begin.c,v 1.7 2010/10/31 05:03:12 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006 Joseph Koshy
@@ -41,6 +41,9 @@
 #include <err.h>
 #include <errno.h>
 #include <libelf.h>
+#include <stdbool.h>
+#include <stdlib.h>
+#include <unistd.h>
 
 #include "_libelf.h"
 
@@ -49,7 +52,9 @@ _libelf_open_object(int fd, Elf_Cmd c)
 {
 	Elf *e;
 	void *m;
+	void *p; /* malloc'ed pointer */
 	struct stat sb;
+	size_t objsize;
 
 	/*
 	 * 'Raw' files are always mapped with 'PROT_READ'.  At
@@ -63,18 +68,76 @@ _libelf_open_object(int fd, Elf_Cmd c)
 	}
 
 	m = NULL;
-	if ((m = mmap(NULL, (size_t) sb.st_size, PROT_READ, MAP_PRIVATE, fd,
+	p = NULL;
+	if (sb.st_size == 0) {
+		/*
+		 * Might be a special device like /dev/ksyms.  Try read(2)ing.
+		 */
+		goto doread;
+	}
+	objsize = (size_t) sb.st_size;
+	if ((m = mmap(NULL, objsize, PROT_READ, MAP_PRIVATE, fd,
 	    (off_t) 0)) == MAP_FAILED) {
-		LIBELF_SET_ERROR(IO, errno);
+		size_t bufsize;
+
+		if (errno != EINVAL) {
+			LIBELF_SET_ERROR(IO, errno);
+			return (NULL);
+		}
+doread:
+		/*
+		 * Fall back to malloc+read.
+		 */
+		bufsize = 1024 * 1024;
+		while (/*CONSTCOND*/true) {
+			void *newp = realloc(p, bufsize);
+			ssize_t rsz;
+
+			if (newp == NULL) {
+				free(p);
+				LIBELF_SET_ERROR(RESOURCE, 0);
+				return (NULL);
+			}
+			p = newp;
+			rsz = pread(fd, p, bufsize, 0);
+			if (rsz == -1) {
+				free(p);
+				LIBELF_SET_ERROR(IO, errno);
+				return (NULL);
+			} else if ((size_t) rsz > bufsize) {
+				free(p);
+				LIBELF_SET_ERROR(IO, EIO); /* XXX */
+				return (NULL);
+			} else if ((size_t) rsz < bufsize) {
+				/*
+				 * try to shrink the buffer.
+				 */
+				newp = realloc(p, (size_t) rsz);
+				if (newp != NULL) {
+					p = newp;
+				}
+				break;
+			}
+			bufsize *= 2;
+		}
+		m = p;
+		objsize = bufsize;
+	}
+
+	if ((e = elf_memory(m, objsize)) == NULL) {
+		if (p != NULL) {
+			free(p);
+		} else {
+			(void) munmap(m, objsize);
+		}
 		return (NULL);
 	}
 
-	if ((e = elf_memory(m, (size_t) sb.st_size)) == NULL) {
-		(void) munmap(m, (size_t) sb.st_size);
-		return (NULL);
+	if (p != NULL) {
+		e->e_flags |= LIBELF_F_MALLOC;
+	} else {
+		e->e_flags |= LIBELF_F_MMAP;
 	}
-
-	e->e_flags |= LIBELF_F_MMAP;
 	e->e_fd = fd;
 	e->e_cmd = c;
 
