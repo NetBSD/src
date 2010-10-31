@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.base,v 1.53 2010/10/20 09:22:32 jmmv Exp $
+#	$NetBSD: NetBSD.dist.base,v 1.54 2010/10/31 11:52:53 mbalmer Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -172,6 +172,8 @@
 ./usr/include/uvm
 ./usr/lib
 ./usr/lib/i18n
+./usr/lib/lua
+./usr/lib/lua/5.1
 ./usr/lib/pkgconfig
 ./usr/lib/security
 ./usr/libdata
@@ -756,6 +758,8 @@
 ./usr/share/locale/zh_TW.Big5/LC_MESSAGES
 ./usr/share/locale/zh_TW.eucTW
 ./usr/share/locale/zh_TW.eucTW/LC_MESSAGES
+./usr/share/lua
+./usr/share/lua/5.1
 ./usr/share/man
 ./usr/share/man/cat1
 ./usr/share/man/cat1/atari
