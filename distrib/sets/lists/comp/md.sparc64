@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.64 2010/10/31 16:31:12 mbalmer Exp $
+# $NetBSD: md.sparc64,v 1.65 2010/10/31 23:29:16 njoly Exp $
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/sparc				comp-c-include
 ./usr/include/sparc/_G_config.h			comp-obsolete		obsolete
@@ -665,6 +665,7 @@
 ./usr/libdata/debug/usr/lib/sparc/liblber.so.3.1.debug			comp-compat-shlib	compat,pic,debug,ldap
 ./usr/libdata/debug/usr/lib/sparc/libldap.so.4.1.debug			comp-compat-shlib	compat,pic,debug,ldap
 ./usr/libdata/debug/usr/lib/sparc/libldap_r.so.4.1.debug		comp-compat-shlib	compat,pic,debug,ldap
+./usr/libdata/debug/usr/lib/sparc/liblua.so.1.0.debug			comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/liblwres.so.5.1.debug			comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libm.so.0.8.debug			comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libmagic.so.3.0.debug			comp-compat-shlib	compat,pic,debug

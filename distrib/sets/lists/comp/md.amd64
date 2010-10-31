@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.75 2010/10/31 16:31:12 mbalmer Exp $
+# $NetBSD: md.amd64,v 1.76 2010/10/31 23:29:16 njoly Exp $
 ./usr/include/amd64				comp-c-include
 ./usr/include/amd64/ansi.h			comp-c-include
 ./usr/include/amd64/aout_machdep.h		comp-c-include
@@ -889,6 +889,7 @@
 ./usr/libdata/debug/usr/lib/i386/liblber.so.3.1.debug	comp-compat-shlib	compat,pic,ldap,debug
 ./usr/libdata/debug/usr/lib/i386/libldap.so.4.1.debug	comp-compat-shlib	compat,pic,ldap,debug
 ./usr/libdata/debug/usr/lib/i386/libldap_r.so.4.1.debug	comp-compat-shlib	compat,pic,ldap,debug
+./usr/libdata/debug/usr/lib/i386/liblua.so.1.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/liblwres.so.5.1.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libm.so.0.8.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libmagic.so.3.0.debug	comp-compat-shlib	compat,pic,debug
