@@ -1,4 +1,4 @@
-/*	$NetBSD: luaconf.h,v 1.1.1.1 2010/10/31 11:16:54 mbalmer Exp $ */
+/*	$NetBSD: luaconf.h,v 1.2 2010/10/31 11:19:42 mbalmer Exp $ */
 
 /*
 ** Id: luaconf.h,v 1.82.1.7 2008/02/11 16:25:08 roberto Exp $
@@ -96,14 +96,21 @@
 	".\\?.dll;"  LUA_CDIR"?.dll;" LUA_CDIR"loadall.dll"
 
 #else
-#define LUA_ROOT	"/usr/local/"
+#define LUA_ROOT	"/usr/"
 #define LUA_LDIR	LUA_ROOT "share/lua/5.1/"
 #define LUA_CDIR	LUA_ROOT "lib/lua/5.1/"
+
+/*
+ * The original Lua distribution contain "./?.lua" at the beginning
+ * of LUA_PATH_DEFAULT and "./?.so" at the beginning of LUA_CPATH_DEFAULT.
+ * These path elements have been removed for the NetBSD version of Lua
+ * to avoid potential security problems.
+ */
 #define LUA_PATH_DEFAULT  \
-		"./?.lua;"  LUA_LDIR"?.lua;"  LUA_LDIR"?/init.lua;" \
-		            LUA_CDIR"?.lua;"  LUA_CDIR"?/init.lua"
+	LUA_LDIR"?.lua;"  LUA_LDIR"?/init.lua;" \
+	LUA_CDIR"?.lua;"  LUA_CDIR"?/init.lua"
 #define LUA_CPATH_DEFAULT \
-	"./?.so;"  LUA_CDIR"?.so;" LUA_CDIR"loadall.so"
+	LUA_CDIR"?.so;" LUA_CDIR"loadall.so"
 #endif
 
 
