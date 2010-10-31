@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.151 2010/09/01 16:01:27 agc Exp $
+#	$NetBSD: Makefile,v 1.152 2010/10/31 11:52:50 mbalmer Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
@@ -12,6 +12,7 @@ SUBDIR=	csu libc .WAIT libarch \
 	libterminfo libusbhid libutil libwrap liby libz
 
 SUBDIR+=../external/bsd/flex/lib
+SUBDIR+=../external/mit/lua/lib
 
 # libcurses needs libtermlib
 SUBDIR+=	.WAIT libcurses
