@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1243 2010/10/30 21:16:08 haad Exp $
+# $NetBSD: mi,v 1.1244 2010/10/31 11:52:52 mbalmer Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -264,6 +264,7 @@
 ./usr/share/man/cat1/lptest.0			man-lpr-catman		.cat
 ./usr/share/man/cat1/ls.0			man-util-catman		.cat
 ./usr/share/man/cat1/lsextattr.0		man-util-catman		.cat
+./usr/share/man/cat1/lua.0			man-util-catman		.cat
 ./usr/share/man/cat1/m4.0			man-util-catman		.cat
 ./usr/share/man/cat1/machine.0			man-util-catman		.cat
 ./usr/share/man/cat1/mail.0			man-mail-catman		.cat
@@ -3019,6 +3020,7 @@
 ./usr/share/man/html1/lptest.html		man-lpr-htmlman		html
 ./usr/share/man/html1/ls.html			man-util-htmlman	html
 ./usr/share/man/html1/lsextattr.html		man-util-htmlman	html
+./usr/share/man/html1/lua.html			man-util-htmlman	html
 ./usr/share/man/html1/m4.html			man-util-htmlman	html
 ./usr/share/man/html1/machine.html		man-util-htmlman	html
 ./usr/share/man/html1/mail.html			man-mail-htmlman	html
@@ -5420,6 +5422,7 @@
 ./usr/share/man/man1/lptest.1			man-lpr-man		.man
 ./usr/share/man/man1/ls.1			man-util-man		.man
 ./usr/share/man/man1/lsextattr.1		man-util-man		.man
+./usr/share/man/man1/lua.1			man-util-man		.man
 ./usr/share/man/man1/m4.1			man-util-man		.man
 ./usr/share/man/man1/machine.1			man-util-man		.man
 ./usr/share/man/man1/mail.1			man-mail-man		.man

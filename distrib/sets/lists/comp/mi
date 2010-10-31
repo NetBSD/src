@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1515 2010/10/24 06:57:04 jruoho Exp $
+#	$NetBSD: mi,v 1.1516 2010/10/31 11:52:51 mbalmer Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -45,6 +45,7 @@
 ./usr/bin/lex					comp-c-bin
 ./usr/bin/lint					comp-c-bin
 ./usr/bin/lorder				comp-util-bin
+./usr/bin/luac					comp-util-bin
 ./usr/bin/menuc					comp-c-bin
 ./usr/bin/mkstr					comp-c-bin
 ./usr/bin/mkubootimage				comp-util-bin
@@ -1379,6 +1380,7 @@
 ./usr/include/krb5/xdbm.h			comp-krb5-include	kerberos
 ./usr/include/kvm.h				comp-c-include
 ./usr/include/langinfo.h			comp-c-include
+./usr/include/lauxlib.h				comp-c-include
 ./usr/include/lber.h				comp-ldap-include	ldap
 ./usr/include/lber_types.h			comp-ldap-include	ldap
 ./usr/include/ldap.h				comp-ldap-include	ldap
@@ -1398,6 +1400,9 @@
 ./usr/include/link_elf.h			comp-c-include
 ./usr/include/locale.h				comp-c-include
 ./usr/include/login_cap.h			comp-c-include
+./usr/include/lua.h				comp-c-include
+./usr/include/luaconf.h				comp-c-include
+./usr/include/lualib.h				comp-c-include
 ./usr/include/lwp.h				comp-c-include
 ./usr/include/lzf.h				comp-c-include
 ./usr/include/lzfP.h				comp-c-include
@@ -2503,6 +2508,8 @@
 ./usr/lib/libldap_r.a				comp-ldap-lib		ldap
 ./usr/lib/libldap_r_g.a				-unknown-		debuglib,ldap
 ./usr/lib/libldap_r_p.a				comp-ldap-proflib	profile,ldap
+./usr/lib/liblua.a				comp-c-lib
+./usr/lib/liblua_p.a				comp-c-proflib		profile
 ./usr/lib/liblwres.a				comp-bind-lib
 ./usr/lib/liblwres_g.a				-unknown-		debuglib
 ./usr/lib/liblwres_p.a				comp-bind-proflib	profile
@@ -3815,6 +3822,7 @@
 ./usr/libdata/lint/llib-llber.ln		comp-ldap-lintlib	lint,ldap
 ./usr/libdata/lint/llib-lldap.ln		comp-ldap-lintlib	lint,ldap
 ./usr/libdata/lint/llib-lldap_r.ln		comp-ldap-lintlib	lint,ldap
+./usr/libdata/lint/llib-llua.ln			comp-c-lintlib		lint
 ./usr/libdata/lint/llib-llwres.ln		comp-bind-lintlib	lint
 ./usr/libdata/lint/llib-llzf.ln			comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lm.ln			comp-c-lintlib		lint
@@ -4046,6 +4054,7 @@
 ./usr/share/man/cat1/lexdoc.0			comp-obsolete		obsolete
 ./usr/share/man/cat1/lint.0			comp-c-catman		.cat
 ./usr/share/man/cat1/lorder.0			comp-util-catman	.cat
+./usr/share/man/cat1/luac.0			comp-util-catman	.cat
 ./usr/share/man/cat1/menuc.0			comp-c-catman		.cat
 ./usr/share/man/cat1/mkstr.0			comp-c-catman		.cat
 ./usr/share/man/cat1/msg_clear.0		comp-obsolete		obsolete
@@ -10082,6 +10091,7 @@
 ./usr/share/man/html1/lex.html			comp-c-htmlman		html
 ./usr/share/man/html1/lint.html			comp-c-htmlman		html
 ./usr/share/man/html1/lorder.html		comp-util-htmlman	html
+./usr/share/man/html1/luac.html			comp-util-htmlman	html
 ./usr/share/man/html1/menuc.html		comp-c-htmlman		html
 ./usr/share/man/html1/mkstr.html		comp-c-htmlman		html
 ./usr/share/man/html1/msgc.html			comp-c-htmlman		html
@@ -15858,6 +15868,7 @@
 ./usr/share/man/man1/lex.1			comp-c-man		.man
 ./usr/share/man/man1/lint.1			comp-c-man		.man
 ./usr/share/man/man1/lorder.1			comp-util-man		.man
+./usr/share/man/man1/luac.1			comp-util-man		.man
 ./usr/share/man/man1/menuc.1			comp-c-man		.man
 ./usr/share/man/man1/mkstr.1			comp-c-man		.man
 ./usr/share/man/man1/msg_clear.1		comp-obsolete		obsolete

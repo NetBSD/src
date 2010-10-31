@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.781 2010/10/07 14:41:02 roy Exp $
+#	$NetBSD: 3RDPARTY,v 1.782 2010/10/31 11:52:52 mbalmer Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -603,6 +603,18 @@ Notes:
 We import only libwrap (under src/lib), tcpdchk and tcpdmatch (both
 under src/usr.sbin). We don't use tcpd; that functionality is built
 into inetd. The provided libwrap2netbsd script handles just libwrap.
+
+Package:	Lua
+Version:	Lua 5.1.4
+Current Vers:	Lua 5.1.4
+Maintainer:	PUC Rio
+Home Page:	http://www.lua.org/
+Mailing List:
+Responsible:	mbalmer
+License:	MIT
+Notes:
+The default module paths have been changed to not include the current
+working director '.' to avoid potential security problems.
 
 Package:	m4
 Version:	20091026

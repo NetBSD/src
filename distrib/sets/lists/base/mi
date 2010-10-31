@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.883 2010/10/30 21:16:08 haad Exp $
+# $NetBSD: mi,v 1.884 2010/10/31 11:52:51 mbalmer Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -489,6 +489,7 @@
 ./usr/bin/lpr					base-lpr-bin
 ./usr/bin/lprm					base-lpr-bin
 ./usr/bin/lsextattr				base-util-bin
+./usr/bin/lua					base-util-bin
 ./usr/bin/m4					base-util-bin
 ./usr/bin/machine				base-util-bin
 ./usr/bin/mail					base-mail-bin
@@ -833,6 +834,8 @@
 ./usr/lib/libssp.so				base-obsolete		obsolete
 ./usr/lib/libusb.a				base-obsolete		obsolete
 ./usr/lib/libusb.so				base-obsolete		obsolete
+./usr/lib/lua					base-sys-root
+./usr/lib/lua/5.1				base-sys-root
 ./usr/lib/runemodule				base-obsolete		obsolete
 ./usr/lib/runemodule/libBIG5.a			base-obsolete		obsolete
 ./usr/lib/runemodule/libBIG5.so			base-obsolete		obsolete
@@ -3245,6 +3248,8 @@
 ./usr/share/locale/zh_TW.eucTW/LC_TIME		base-locale-zh		nls
 ./usr/share/locale/zh_TW/LC_MESSAGES		base-locale-zh
 ./usr/share/locale/zh_TW/LC_MESSAGES/texinfo.mo	base-texinfo_locale-zh	nls
+./usr/share/lua					base-sys-root
+./usr/share/lua/5.1				base-sys-root
 ./usr/share/man					base-man-share
 ./usr/share/man/COPYRIGHT			base-obsolete		obsolete
 ./usr/share/man/cat1				base-man-share
