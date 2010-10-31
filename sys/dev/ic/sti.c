@@ -1,4 +1,4 @@
-/* $NetBSD: sti.c,v 1.10 2009/05/07 15:34:50 skrll Exp $ */
+/*	$NetBSD: sti.c,v 1.11 2010/10/31 15:47:53 skrll Exp $	*/
 
 /*	$OpenBSD: sti.c,v 1.35 2003/12/16 06:07:13 mickey Exp $	*/
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sti.c,v 1.10 2009/05/07 15:34:50 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sti.c,v 1.11 2010/10/31 15:47:53 skrll Exp $");
 
 #include "wsdisplay.h"
 
