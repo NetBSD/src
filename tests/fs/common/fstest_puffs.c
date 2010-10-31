@@ -1,4 +1,4 @@
-/*	$NetBSD: fstest_puffs.c,v 1.4 2010/10/31 22:05:35 pooka Exp $	*/
+/*	$NetBSD: fstest_puffs.c,v 1.5 2010/10/31 22:33:16 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@ readshovel(void *arg)
 
 		n = rump_sys_read(puffsfd, buf, sizeof(*phdr));
 		if (n <= 0) {
-			fprintf(stderr, "readshovel r1 %d / %d\n", n, errno);
+			fprintf(stderr, "readshovel r1 %zd / %d\n", n, errno);
 			break;
 		}
 
@@ -87,7 +87,7 @@ readshovel(void *arg)
 		n = rump_sys_read(puffsfd, buf+sizeof(*phdr), 
 		    phdr->pth_framelen - sizeof(*phdr));
 		if (n <= 0) {
-			fprintf(stderr, "readshovel r2 %d / %d\n", n, errno);
+			fprintf(stderr, "readshovel r2 %zd / %d\n", n, errno);
 			break;
 		}
 
@@ -102,7 +102,7 @@ readshovel(void *arg)
 
 		n = phdr->pth_framelen;
 		if (write(comfd, buf, n) != n) {
-			fprintf(stderr, "readshovel write %d / %d\n", n, errno);
+			fprintf(stderr, "readshovel write %zd / %d\n", n, errno);
 			break;
 		}
 	}
@@ -140,7 +140,7 @@ writeshovel(void *arg)
 		do {
 			n = read(comfd, buf+off, toread);
 			if (n <= 0) {
-				fprintf(stderr, "writeshovel read %d / %d\n",
+				fprintf(stderr, "writeshovel read %zd / %d\n",
 				    n, errno);
 				break;
 			}
@@ -153,7 +153,7 @@ writeshovel(void *arg)
 
 		n = rump_sys_write(puffsfd, buf, phdr->pth_framelen);
 		if ((size_t)n != phdr->pth_framelen) {
-			fprintf(stderr, "writeshovel wr %d / %d\n", n, errno);
+			fprintf(stderr, "writeshovel wr %zd / %d\n", n, errno);
 			break;
 		}
 	}
