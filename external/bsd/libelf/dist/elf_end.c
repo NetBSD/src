@@ -1,4 +1,4 @@
-/*	$NetBSD: elf_end.c,v 1.2 2010/02/22 10:48:32 darran Exp $	*/
+/*	$NetBSD: elf_end.c,v 1.3 2010/10/31 05:03:12 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006 Joseph Koshy
@@ -82,6 +82,8 @@ elf_end(Elf *e)
 
 		if (e->e_flags & LIBELF_F_MMAP)
 			(void) munmap(e->e_rawfile, e->e_rawsize);
+		if (e->e_flags & LIBELF_F_MALLOC)
+			(void) free(e->e_rawfile);
 
 		sv = e;
 		if ((e = e->e_parent) != NULL)
