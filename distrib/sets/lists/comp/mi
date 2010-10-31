@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1516 2010/10/31 11:52:51 mbalmer Exp $
+#	$NetBSD: mi,v 1.1517 2010/10/31 16:31:31 njoly Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2984,6 +2984,7 @@
 ./usr/libdata/debug/sbin/raidctl.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/rcorder.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/reboot.debug		comp-sysutil-debug	debug
+./usr/libdata/debug/sbin/resize_ffs.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/resize_lfs.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/restore.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/rndctl.debug		comp-sysutil-debug	debug
