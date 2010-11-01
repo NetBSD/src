@@ -1,4 +1,4 @@
-/*	$NetBSD: getenv.c,v 1.26 2010/10/24 17:53:27 tron Exp $	*/
+/*	$NetBSD: getenv.c,v 1.27 2010/11/01 02:41:27 enami Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)getenv.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: getenv.c,v 1.26 2010/10/24 17:53:27 tron Exp $");
+__RCSID("$NetBSD: getenv.c,v 1.27 2010/11/01 02:41:27 enami Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -120,8 +120,7 @@ __allocenv(int offset)
 		return 0;
 
 	/* Make sure we at least double the size of the arrays. */
-	new_len = (environ_malloced_len >= 16) ?
-	    (environ_malloced_len << 1) : 16;
+	new_len = environ_malloced_len >= 16 ? environ_malloced_len : 16;
 	while (new_len < required_len)
 		new_len = new_len << 1;
 
