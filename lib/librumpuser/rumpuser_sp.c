@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpuser_sp.c,v 1.2 2010/10/28 14:37:29 pooka Exp $	*/
+/*      $NetBSD: rumpuser_sp.c,v 1.3 2010/11/01 13:49:10 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: rumpuser_sp.c,v 1.2 2010/10/28 14:37:29 pooka Exp $");
+__RCSID("$NetBSD: rumpuser_sp.c,v 1.3 2010/11/01 13:49:10 pooka Exp $");
 
 #include <sys/types.h>
 #include <sys/mman.h>
@@ -60,6 +60,7 @@ __RCSID("$NetBSD: rumpuser_sp.c,v 1.2 2010/10/28 14:37:29 pooka Exp $");
 #include <unistd.h>
 
 #include <rump/rump.h>
+#include <rump/rump_syscalls.h>
 #include <rump/rumpuser.h>
 
 //#define DEBUG
@@ -149,6 +150,66 @@ static pthread_key_t spclient_tls;
 
 static struct spclient clispc;
 
+static struct rumpuser_sp_ops spops;
+
+/*
+ * Manual wrappers, since librump does not have access to the
+ * user namespace wrapped interfaces.
+ */
+
+static void
+lwproc_switch(struct lwp *l)
+{
+
+	rump_schedule();
+	spops.spop_lwproc_switch(l);
+	rump_unschedule();
+}
+
+static void
+lwproc_release(void)
+{
+
+	rump_schedule();
+	spops.spop_lwproc_release();
+	rump_unschedule();
+}
+
+static int
+lwproc_newproc(void)
+{
+	int rv;
+
+	rump_schedule();
+	rv = spops.spop_lwproc_newproc();
+	rump_unschedule();
+
+	return rv;
+}
+
+static struct lwp *
+lwproc_curlwp(void)
+{
+	struct lwp *l;
+
+	rump_schedule();
+	l = spops.spop_lwproc_curlwp();
+	rump_unschedule();
+
+	return l;
+}
+
+static int
+rumpsyscall(int sysnum, void *data, register_t *retval)
+{
+	int rv;
+
+	rump_schedule();
+	rv = spops.spop_syscall(sysnum, data, retval);
+	rump_unschedule();
+
+	return rv;
+}
 
 static int
 dosend(struct spclient *spc, const void *data, size_t dlen)
@@ -320,8 +381,8 @@ serv_handledisco(unsigned int idx)
 
 	DPRINTF(("rump_sp: disconnecting [%u]\n", idx));
 
-	rump_pub_lwproc_switch(spc->spc_lwp);
-	rump_pub_lwproc_releaselwp();
+	lwproc_switch(spc->spc_lwp);
+	lwproc_release();
 
 	free(spc->spc_buf);
 	memset(spc, 0, sizeof(*spc));
@@ -373,7 +434,7 @@ serv_handleconn(int fd, connecthook_fn connhook)
 		return error;
 	}
 
-	if ((error = rump_pub_lwproc_newproc()) != 0) {
+	if ((error = lwproc_newproc()) != 0) {
 		close(newfd);
 		return error;
 	}
@@ -389,14 +450,14 @@ serv_handleconn(int fd, connecthook_fn connhook)
 
 	pfdlist[i].fd = newfd;
 	spclist[i].spc_fd = newfd;
-	spclist[i].spc_lwp = rump_pub_lwproc_curlwp();
+	spclist[i].spc_lwp = lwproc_curlwp();
 	if (maxidx < i)
 		maxidx = i;
 
 	DPRINTF(("rump_sp: added new connection at idx %u, pid %d\n",
-	    i, rump_sys_getpid()));
+	    i, rump_sys_getpid())); /* XXX: getpid not spop */
 
-	rump_pub_lwproc_switch(NULL);
+	lwproc_switch(NULL);
 
 	return 0;
 }
@@ -412,9 +473,9 @@ serv_handlesyscall(struct spclient *spc, struct rsp_hdr *rhdr, uint8_t *data)
 	    sysnum, 0));
 
 	pthread_setspecific(spclient_tls, spc);
-	rump_pub_lwproc_switch(spc->spc_lwp);
-	rv = rump_pub_syscall(sysnum, data, retval);
-	rump_pub_lwproc_switch(NULL);
+	lwproc_switch(spc->spc_lwp);
+	rv = rumpsyscall(sysnum, data, retval);
+	lwproc_switch(NULL);
 	pthread_setspecific(spclient_tls, NULL);
 
 	send_syscall_resp(spc, rhdr->rsp_reqno, rv, retval);
@@ -848,7 +909,7 @@ spserver(void *arg)
 }
 
 int
-rumpuser_sp_init(int *typep)
+rumpuser_sp_init(const struct rumpuser_sp_ops *spopsp, int *typep)
 {
 	struct spservarg *sarg;
 	struct sockaddr *sap;
@@ -860,6 +921,7 @@ rumpuser_sp_init(int *typep)
 
 	p = NULL;
 	error = 0;
+	spops = *spopsp;
 
 	type = RUMP_SP_NONE;
 	if ((p = getenv("RUMP_SP_SERVER")) != NULL) {
