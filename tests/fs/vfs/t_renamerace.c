@@ -1,4 +1,4 @@
-/*	$NetBSD: t_renamerace.c,v 1.12 2010/09/01 19:41:28 pooka Exp $	*/
+/*	$NetBSD: t_renamerace.c,v 1.13 2010/11/01 14:04:02 pooka Exp $	*/
 
 /*
  * Modified for rump and atf from a program supplied
@@ -86,6 +86,9 @@ renamerace(const atf_tc_t *tc, const char *mp)
 
 	if (FSTYPE_MSDOS(tc))
 		atf_tc_skip("test fails in some setups, reason unknown");
+
+	RZ(rump_pub_lwproc_newproc());
+	RL(wrkpid = rump_sys_getpid());
 
 	RL(rump_sys_chdir(mp));
 	for (i = 0; i < NWRK; i++)
