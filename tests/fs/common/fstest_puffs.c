@@ -1,4 +1,4 @@
-/*	$NetBSD: fstest_puffs.c,v 1.5 2010/10/31 22:33:16 pgoyette Exp $	*/
+/*	$NetBSD: fstest_puffs.c,v 1.6 2010/11/01 16:27:07 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -53,6 +53,8 @@
 #define BUFSIZE (128*1024)
 #define DTFS_DUMP "-o","dump"
 
+static bool mayquit = false;
+
 /*
  * Threads which shovel data between comfd and /dev/puffs.
  * (cannot use polling since fd's are in different namespaces)
@@ -64,6 +66,7 @@ readshovel(void *arg)
 	struct puffs_req *preq;
 	struct puffstestargs *args = arg;
 	char buf[BUFSIZE];
+	ssize_t n;
 	int comfd, puffsfd;
 
 	comfd = args->pta_servfd;
@@ -75,8 +78,6 @@ readshovel(void *arg)
 	rump_pub_lwproc_newlwp(1);
 
 	for (;;) {
-		ssize_t n;
-
 		n = rump_sys_read(puffsfd, buf, sizeof(*phdr));
 		if (n <= 0) {
 			fprintf(stderr, "readshovel r1 %zd / %d\n", n, errno);
@@ -107,7 +108,9 @@ readshovel(void *arg)
 		}
 	}
 
-	abort();
+	if (n != 0 && mayquit == false)
+		abort();
+	return NULL;
 }
 
 static void *
@@ -115,8 +118,10 @@ writeshovel(void *arg)
 {
 	struct puffstestargs *args = arg;
 	struct putter_hdr *phdr;
+	struct puffs_req *preq;
 	char buf[BUFSIZE];
 	size_t toread;
+	ssize_t n;
 	int comfd, puffsfd;
 
 	rump_pub_lwproc_newlwp(1);
@@ -125,10 +130,10 @@ writeshovel(void *arg)
 	puffsfd = args->pta_rumpfd;
 
 	phdr = (struct putter_hdr *)buf;
+	preq = (void *)buf;
 
 	for (;;) {
 		uint64_t off;
-		ssize_t n;
 
 		/*
 		 * Need to write everything to the "kernel" in one chunk,
@@ -142,7 +147,7 @@ writeshovel(void *arg)
 			if (n <= 0) {
 				fprintf(stderr, "writeshovel read %zd / %d\n",
 				    n, errno);
-				break;
+				goto out;
 			}
 			off += n;
 			if (off >= sizeof(struct putter_hdr))
@@ -151,6 +156,13 @@ writeshovel(void *arg)
 				toread = off - sizeof(struct putter_hdr);
 		} while (toread);
 
+		if (__predict_false(
+		    PUFFSOP_OPCLASS(preq->preq_opclass) == PUFFSOP_VFS
+		    && preq->preq_optype == PUFFS_VFS_UNMOUNT)) {
+			if (preq->preq_rv == 0)
+				mayquit = true;
+		}
+
 		n = rump_sys_write(puffsfd, buf, phdr->pth_framelen);
 		if ((size_t)n != phdr->pth_framelen) {
 			fprintf(stderr, "writeshovel wr %zd / %d\n", n, errno);
@@ -158,7 +170,10 @@ writeshovel(void *arg)
 		}
 	}
 
-	abort();
+ out:
+	if (n != 0)
+		abort();
+	return NULL;
 }
 
 static void
