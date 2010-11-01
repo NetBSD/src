@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.h,v 1.46 2010/10/27 20:44:50 pooka Exp $	*/
+/*	$NetBSD: rumpuser.h,v 1.47 2010/11/01 13:49:10 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -36,7 +36,7 @@
 #include <stdint.h>
 #endif
 
-#define RUMPUSER_VERSION 1
+#define RUMPUSER_VERSION 2
 int rumpuser_getversion(void);
 
 struct msghdr;
@@ -203,13 +203,23 @@ void rumpuser_dl_bootstrap(rump_modinit_fn, rump_symload_fn);
 void rumpuser_dl_component_init(int, rump_component_init_fn);
 
 /* syscall proxy routines */
-#define RUMP_SP_NONE	0
-#define RUMP_SP_CLIENT	1
-#define RUMP_SP_SERVER	2
-int	rumpuser_sp_init(int *);
+
+struct rumpuser_sp_ops {
+	void (*spop_lwproc_switch)(struct lwp *);
+	void (*spop_lwproc_release)(void);
+	int (*spop_lwproc_newproc)(void);
+	struct lwp * (*spop_lwproc_curlwp)(void);
+	int (*spop_syscall)(int, void *, register_t *);
+};
+
+int	rumpuser_sp_init(const struct rumpuser_sp_ops *, int *);
 int	rumpuser_sp_copyin(const void *, void *, size_t);
 int	rumpuser_sp_copyout(const void *, void *, size_t);
 int	rumpuser_sp_syscall(int, const void *, size_t, register_t *);
 int	rumpuser_sp_anonmmap(size_t, void **);
+
+#define RUMP_SP_NONE	0
+#define RUMP_SP_CLIENT	1
+#define RUMP_SP_SERVER	2
 
 #endif /* _RUMP_RUMPUSER_H_ */
