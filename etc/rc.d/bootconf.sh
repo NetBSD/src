@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: bootconf.sh,v 1.13 2009/09/12 17:40:01 apb Exp $
+# $NetBSD: bootconf.sh,v 1.14 2010/11/01 14:42:08 christos Exp $
 #
 
 # PROVIDE: bootconf
@@ -50,13 +50,12 @@ bootconf_start()
 		esac
 	done
 	echo
-	master=$$
 	_DUMMY=/etc/passwd
 	conf=${_DUMMY}
 	while [ ! -d /etc/etc.$conf/. ]; do
 		trap "conf=$default; echo; echo Using default of $default" ALRM
 		echo -n "Which configuration [$default] ? "
-		(sleep 30 && kill -ALRM $master) >/dev/null 2>&1 &
+		(sleep 30 && kill -ALRM $RC_PID) >/dev/null 2>&1 &
 		read conf
 		trap : ALRM
 		if [ -z $conf ] ; then
