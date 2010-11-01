@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: cgd,v 1.7 2009/09/11 18:18:03 apb Exp $
+# $NetBSD: cgd,v 1.8 2010/11/01 14:41:11 christos Exp $
 #
 
 # PROVIDE: cgd
@@ -20,6 +20,14 @@ cgd_start()
 	if [ -f /etc/cgd/cgd.conf ]; then
 		print_rc_normal "Configuring CGD devices."
 		cgdconfig -C
+	fi
+}
+
+cgd_stop()
+{
+	if [ -f /etc/cgd/cgd.conf ]; then
+		print_rc_normal "Unconfiguring CGD devices."
+		cgdconfig -U
 	fi
 }
 
