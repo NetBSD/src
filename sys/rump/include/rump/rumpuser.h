@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.h,v 1.47 2010/11/01 13:49:10 pooka Exp $	*/
+/*	$NetBSD: rumpuser.h,v 1.48 2010/11/01 13:55:19 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -205,6 +205,9 @@ void rumpuser_dl_component_init(int, rump_component_init_fn);
 /* syscall proxy routines */
 
 struct rumpuser_sp_ops {
+	void (*spop_schedule)(void);
+	void (*spop_unschedule)(void);
+
 	void (*spop_lwproc_switch)(struct lwp *);
 	void (*spop_lwproc_release)(void);
 	int (*spop_lwproc_newproc)(void);

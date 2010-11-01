@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpuser_sp.c,v 1.3 2010/11/01 13:49:10 pooka Exp $	*/
+/*      $NetBSD: rumpuser_sp.c,v 1.4 2010/11/01 13:55:19 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: rumpuser_sp.c,v 1.3 2010/11/01 13:49:10 pooka Exp $");
+__RCSID("$NetBSD: rumpuser_sp.c,v 1.4 2010/11/01 13:55:19 pooka Exp $");
 
 #include <sys/types.h>
 #include <sys/mman.h>
@@ -59,12 +59,12 @@ __RCSID("$NetBSD: rumpuser_sp.c,v 1.3 2010/11/01 13:49:10 pooka Exp $");
 #include <string.h>
 #include <unistd.h>
 
-#include <rump/rump.h>
-#include <rump/rump_syscalls.h>
 #include <rump/rumpuser.h>
 
 //#define DEBUG
 #ifdef DEBUG
+#include <rump/rump.h>
+#include <rump/rump_syscalls.h>
 #define DPRINTF(x) mydprintf x
 static void
 mydprintf(const char *fmt, ...)
@@ -161,18 +161,18 @@ static void
 lwproc_switch(struct lwp *l)
 {
 
-	rump_schedule();
+	spops.spop_schedule();
 	spops.spop_lwproc_switch(l);
-	rump_unschedule();
+	spops.spop_unschedule();
 }
 
 static void
 lwproc_release(void)
 {
 
-	rump_schedule();
+	spops.spop_schedule();
 	spops.spop_lwproc_release();
-	rump_unschedule();
+	spops.spop_unschedule();
 }
 
 static int
@@ -180,9 +180,9 @@ lwproc_newproc(void)
 {
 	int rv;
 
-	rump_schedule();
+	spops.spop_schedule();
 	rv = spops.spop_lwproc_newproc();
-	rump_unschedule();
+	spops.spop_unschedule();
 
 	return rv;
 }
@@ -192,9 +192,9 @@ lwproc_curlwp(void)
 {
 	struct lwp *l;
 
-	rump_schedule();
+	spops.spop_schedule();
 	l = spops.spop_lwproc_curlwp();
-	rump_unschedule();
+	spops.spop_unschedule();
 
 	return l;
 }
@@ -204,9 +204,9 @@ rumpsyscall(int sysnum, void *data, register_t *retval)
 {
 	int rv;
 
-	rump_schedule();
+	spops.spop_schedule();
 	rv = spops.spop_syscall(sysnum, data, retval);
-	rump_unschedule();
+	spops.spop_unschedule();
 
 	return rv;
 }
