@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.193 2010/10/29 15:32:24 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.194 2010/11/01 13:49:10 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.193 2010/10/29 15:32:24 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.194 2010/11/01 13:49:10 pooka Exp $");
 
 #include <sys/systm.h>
 #define ELFSIZE ARCH_ELFSIZE
@@ -191,6 +191,7 @@ mksysctls(void)
 int
 rump__init(int rump_version)
 {
+	struct rumpuser_sp_ops spops;
 	char buf[256];
 	struct timespec ts;
 	uint64_t sec, nsec;
@@ -207,7 +208,12 @@ rump__init(int rump_version)
 		rump_inited = 1;
 
 	/* Check our role as a rump proxy */
-	if ((error = rumpuser_sp_init(&rumpsp_type)) != 0)
+	spops.spop_lwproc_switch	= rump_lwproc_switch;
+	spops.spop_lwproc_release	= rump_lwproc_releaselwp;
+	spops.spop_lwproc_newproc	= rump_lwproc_newproc;
+	spops.spop_lwproc_curlwp	= rump_lwproc_curlwp;
+	spops.spop_syscall		= rump_syscall;
+	if ((error = rumpuser_sp_init(&spops, &rumpsp_type)) != 0)
 		return error;
 
 	/* If we're a client, we can return directly.  Otherwise, proceed. */
