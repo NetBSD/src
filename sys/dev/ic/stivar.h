@@ -1,4 +1,4 @@
-/*	$NetBSD: stivar.h,v 1.4 2010/10/31 15:47:53 skrll Exp $	*/
+/*	$NetBSD: stivar.h,v 1.5 2010/11/01 06:41:50 skrll Exp $	*/
 
 /*	$OpenBSD: stivar.h,v 1.15 2003/12/16 06:07:13 mickey Exp $	*/
 
@@ -58,7 +58,7 @@ struct sti_softc {
 	u_int	sc_fontmaxcol;		/* ...or in off-screen frame buffer */
 	u_int	sc_fontbase;
 
-	u_int8_t sc_rcmap[STI_NCMAP], sc_gcmap[STI_NCMAP], sc_bcmap[STI_NCMAP];
+	uint8_t sc_rcmap[STI_NCMAP], sc_gcmap[STI_NCMAP], sc_bcmap[STI_NCMAP];
 	vaddr_t	sc_code;
 
 	sti_init_t	init;
