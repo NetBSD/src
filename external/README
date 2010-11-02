@@ -1,4 +1,4 @@
-$NetBSD: README,v 1.12 2010/10/24 23:38:06 wiz Exp $
+$NetBSD: README,v 1.13 2010/11/02 19:17:02 joerg Exp $
 
 Organization of Sources:
 
@@ -76,6 +76,9 @@ The licenses currently used are:
 
 	mit		MIT (X11) style license.
 			http://www.opensource.org/licenses/mit-license.php
+
+	public-domain	Non-license for code that has been explicitly put
+			into the Public Domain.
 
 	zlib		Zlib (BSD-like) license.
 			http://www.zlib.net/zlib_license.html
