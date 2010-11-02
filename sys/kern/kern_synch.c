@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.283 2010/04/30 10:02:00 martin Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.284 2010/11/02 15:17:37 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008, 2009
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.283 2010/04/30 10:02:00 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.284 2010/11/02 15:17:37 pooka Exp $");
 
 #include "opt_kstack.h"
 #include "opt_perfctrs.h"
@@ -255,6 +255,8 @@ kpause(const char *wmesg, bool intr, int timo, kmutex_t *mtx)
 	kmutex_t *mp;
 	sleepq_t *sq;
 	int error;
+
+	KASSERT(!(timo == 0 && intr == false));
 
 	if (sleepq_dontsleep(l))
 		return sleepq_abort(NULL, 0);
