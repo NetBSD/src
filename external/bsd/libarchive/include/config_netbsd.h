@@ -305,7 +305,7 @@
 /* #undef HAVE_LIBEXPAT */
 
 /* Define to 1 if you have the `lzma' library (-llzma). */
-/* #undef HAVE_LIBLZMA */
+#define HAVE_LIBLZMA 1
 
 /* Define to 1 if you have the `lzmadec' library (-llzmadec). */
 /* #undef HAVE_LIBLZMADEC */
@@ -357,7 +357,7 @@
 /* #undef HAVE_LZMADEC_H */
 
 /* Define to 1 if you have the <lzma.h> header file. */
-/* #undef HAVE_LZMA_H */
+#define HAVE_LZMA_H 1
 
 /* Define to 1 if you have the `memmove' function. */
 #define HAVE_MEMMOVE 1
