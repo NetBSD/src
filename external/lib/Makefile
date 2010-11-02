@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 2010/06/09 23:02:44 christos Exp $
+#	$NetBSD: Makefile,v 1.17 2010/11/02 16:34:35 joerg Exp $
 
 #
 # This Makefile exists to provide a single point to build
@@ -27,6 +27,8 @@ SUBDIR+= ../bsd/openldap/lib
 .if (${MKISCSI} != "no")
 SUBDIR+=	../bsd/iscsi/lib	# depends on libpthread
 .endif
+
+SUBDIR+= ../public-domain/xz/lib .WAIT
 
 SUBDIR+= ../bsd/fetch/lib
 SUBDIR+= ../bsd/libarchive/lib
