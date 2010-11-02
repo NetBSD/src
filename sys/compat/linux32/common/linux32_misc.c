@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_misc.c,v 1.20 2010/11/02 18:14:06 chs Exp $	*/
+/*	$NetBSD: linux32_misc.c,v 1.21 2010/11/02 18:18:07 chs Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_misc.c,v 1.20 2010/11/02 18:14:06 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_misc.c,v 1.21 2010/11/02 18:18:07 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -223,18 +223,10 @@ linux32_sys_personality(struct lwp *l, const struct linux32_sys_personality_args
 	/* {
 		syscallarg(netbsd32_u_long) per;
 	} */
+	struct linux_sys_personality_args ua;
 
-	switch (SCARG(uap, per)) {
-	case LINUX_PER_LINUX:
-	case LINUX_PER_LINUX32:
-	case LINUX_PER_QUERY:
-		break;
-	default:
-		return EINVAL;
-	}
-
-	retval[0] = LINUX_PER_LINUX;
-	return 0;
+	NETBSD32TOX_UAP(per, long);
+	return linux_sys_personality(l, &ua, retval);
 }
 
 int
