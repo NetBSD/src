@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.20.20.2 2010/08/11 13:20:08 uebayasi Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.20.20.3 2010/11/02 14:05:28 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.20.20.2 2010/08/11 13:20:08 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.20.20.3 2010/11/02 14:05:28 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -793,7 +793,7 @@ memio_physload_device(bus_space_tag_t t, bus_addr_t bpa, bus_size_t size, int pr
 	const paddr_t start = memio_mmap(t, bpa, 0, prot, flags) >> PAGE_SHIFT;
 	const paddr_t end = memio_mmap(t, bpa + size, 0, prot, flags) >> PAGE_SHIFT;
 
-	return uvm_page_physload_device(start, end, start, end, prot, flags);
+	return uvm_page_physload_device(start, end, prot, flags);
 }
 
 static void
