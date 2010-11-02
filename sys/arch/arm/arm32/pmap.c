@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.215 2010/10/30 16:14:08 uebayasi Exp $	*/
+/*	$NetBSD: pmap.c,v 1.216 2010/11/02 06:33:22 uebayasi Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -211,7 +211,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.215 2010/10/30 16:14:08 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.216 2010/11/02 06:33:22 uebayasi Exp $");
 
 #define	VM_PAGE_TO_MD(pg)	(&(pg)->mdpage)
 
@@ -4715,9 +4715,9 @@ pmap_copy_page_generic(paddr_t src, paddr_t dst)
 void
 pmap_copy_page_xscale(paddr_t src, paddr_t dst)
 {
-	struct vm_page *src_pg = PHYS_TO_VM_PAGE(src);
+	struct vm_page_md *src_md = VM_PAGE_TO_MD(PHYS_TO_VM_PAGE(src));
 #ifdef DEBUG
-	struct vm_page *dst_pg = PHYS_TO_VM_PAGE(dst);
+	struct vm_page_md *dst_md = VM_PAGE_TO_MD(PHYS_TO_VM_PAGE(dst));
 
 	if (!SLIST_EMPTY(&dst_md->pvh_list))
 		panic("pmap_copy_page: dst page has mappings");
