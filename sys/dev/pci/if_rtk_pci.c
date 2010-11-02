@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rtk_pci.c,v 1.41 2010/07/27 21:02:00 jakllsch Exp $	*/
+/*	$NetBSD: if_rtk_pci.c,v 1.42 2010/11/02 16:54:29 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rtk_pci.c,v 1.41 2010/07/27 21:02:00 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rtk_pci.c,v 1.42 2010/11/02 16:54:29 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -158,6 +158,7 @@ rtk_pci_attach(device_t parent, device_t self, void *aux)
 	bus_space_tag_t iot, memt;
 	bus_space_handle_t ioh, memh;
 	bus_size_t iosize, memsize;
+	pcireg_t csr;
 	const char *intrstr = NULL;
 	const struct rtk_type *t;
 	bool ioh_valid, memh_valid;
@@ -226,6 +227,10 @@ rtk_pci_attach(device_t parent, device_t self, void *aux)
 		sc->sc_quirk |= RTKQ_8129;
 
 	aprint_normal_dev(self, "interrupting at %s\n", intrstr);
+
+	csr = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
+	csr |= PCI_COMMAND_MASTER_ENABLE;
+	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG, csr);
 
 	sc->sc_dmat = pa->pa_dmat;
 	sc->sc_flags |= RTK_ENABLED;
