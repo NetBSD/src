@@ -15,6 +15,9 @@
 
 #include "common.h"
 
+#ifdef NETBSD_NATIVE_SHA256
+#include <sha2.h>
+#endif
 
 // Index hashing needs the best possible hash function (preferably
 // a cryptographic hash) for maximum reliability.
@@ -43,7 +46,9 @@ typedef struct {
 	union {
 		uint32_t crc32;
 		uint64_t crc64;
-
+#ifdef NETBSD_NATIVE_SHA256
+		SHA256_CTX sha256;
+#else
 		struct {
 			/// Internal state
 			uint32_t state[8];
@@ -51,6 +56,7 @@ typedef struct {
 			/// Size of the message excluding padding
 			uint64_t size;
 		} sha256;
+#endif
 	} state;
 
 } lzma_check_state;
@@ -81,7 +87,14 @@ extern void lzma_check_update(lzma_check_state *check, lzma_check type,
 /// Finish the check calculation and store the result to check->buffer.u8.
 extern void lzma_check_finish(lzma_check_state *check, lzma_check type);
 
-
+#ifdef NETBSD_NATIVE_SHA256
+#define lzma_sha256_init(check)	\
+	SHA256_Init(&(check)->state.sha256)
+#define lzma_sha256_update(buf,size,check) \
+	SHA256_Update(&(check)->state.sha256, buf, size)
+#define lzma_sha256_finish(check) \
+	SHA256_Final((check)->buffer.u8, &(check)->state.sha256)
+#else
 /// Prepare SHA-256 state for new input.
 extern void lzma_sha256_init(lzma_check_state *check);
 
@@ -91,5 +104,6 @@ extern void lzma_sha256_update(
 
 /// Finish the SHA-256 calculation and store the result to check->buffer.u8.
 extern void lzma_sha256_finish(lzma_check_state *check);
+#endif
 
 #endif
