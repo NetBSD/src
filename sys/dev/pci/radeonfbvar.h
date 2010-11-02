@@ -1,4 +1,4 @@
-/* $NetBSD: radeonfbvar.h,v 1.8 2010/08/17 18:53:16 macallan Exp $ */
+/* $NetBSD: radeonfbvar.h,v 1.9 2010/11/02 14:32:58 macallan Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -190,7 +190,7 @@ struct radeonfb_display {
 	struct wsscreen_descr	*rd_wsscreens;
 	struct vcons_screen	rd_vscreen;
 	struct vcons_data	rd_vd;
-
+	void (*rd_putchar)(void *, int, int, u_int, long);
 
 #if 0
 	uint8_t			rd_cmap_red[256];
