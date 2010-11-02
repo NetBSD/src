@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_fcntl.h,v 1.3 2010/09/21 19:26:19 chs Exp $ */
+/*	$NetBSD: linux_fcntl.h,v 1.4 2010/11/02 18:01:25 chs Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved.
@@ -31,23 +31,29 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Various flag values used in Linux for open(2) and fcntl(2).
+ */
+
 #ifndef _AMD64_LINUX_FCNTL_H
 #define _AMD64_LINUX_FCNTL_H
 
-#define LINUX_O_CREAT		0100
-#define LINUX_O_EXCL		0200
-#define LINUX_O_NOCTTY		0400
-#define LINUX_O_TRUNC		01000
-#define LINUX_O_APPEND		02000
-#define LINUX_O_NDELAY		04000
-#define LINUX_O_SYNC		010000
-#define LINUX_FASYNC		020000
+/* read/write mode for open(2) defined in common/linux_fcntl.h */
+
+/* flags used in open(2) */
+#define LINUX_O_CREAT		0x00040
+#define LINUX_O_EXCL		0x00080
+#define LINUX_O_NOCTTY		0x00100
+#define LINUX_O_TRUNC		0x00200
+#define LINUX_O_APPEND		0x00400
+#define LINUX_O_NONBLOCK	0x00800
+#define LINUX_O_NDELAY		LINUX_O_NONBLOCK
+#define LINUX_O_SYNC		0x01000
+#define LINUX_FASYNC		0x02000
 #define LINUX_O_DIRECTORY	0x10000
+#define LINUX_O_CLOEXEC		0x80000
 
-#define LINUX_F_RDLCK		0
-#define LINUX_F_WRLCK		1	
-#define LINUX_F_UNLCK		2
-
+/* fcntl(2) operations */
 #define LINUX_F_DUPFD		0
 #define LINUX_F_GETFD		1
 #define LINUX_F_SETFD		2
@@ -61,5 +67,9 @@
 #define LINUX_F_GETLK64		12
 #define LINUX_F_SETLK64		13
 #define LINUX_F_SETLKW64	14
+
+#define LINUX_F_RDLCK		0
+#define LINUX_F_WRLCK		1	
+#define LINUX_F_UNLCK		2
 
 #endif /* !_AMD64_LINUX_FCNTL_H */

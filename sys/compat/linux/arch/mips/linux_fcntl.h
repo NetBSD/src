@@ -1,4 +1,4 @@
-/* $NetBSD: linux_fcntl.h,v 1.6 2010/09/21 19:26:20 chs Exp $ */
+/* $NetBSD: linux_fcntl.h,v 1.7 2010/11/02 18:01:26 chs Exp $ */
 
 /*-
  * Copyright (c) 1995, 1998, 2001 The NetBSD Foundation, Inc.
@@ -40,25 +40,20 @@
  * read/write mode for open(2) are defined in common/linux_fcntl.h
  */
 
-/*
- * flags used in open(2)
- * From Linux's include/asm-mips/fcntl.h
- */
-#define LINUX_O_CREAT		0x0100
-#define LINUX_O_EXCL		0x0400
-#define LINUX_O_NOCTTY		0x0800
-#define LINUX_O_TRUNC		0x0200
-#define LINUX_O_APPEND		0x0008
-#define LINUX_O_NONBLOCK	0x0080
+/* flags used in open(2) */
+#define LINUX_O_APPEND		0x00008
+#define LINUX_O_SYNC		0x00010
+#define LINUX_O_NONBLOCK	0x00080
 #define LINUX_O_NDELAY		LINUX_O_NONBLOCK
-#define LINUX_O_SYNC		0x0010
-#define LINUX_FASYNC		0x1000
+#define LINUX_O_CREAT		0x00100
+#define LINUX_O_TRUNC		0x00200
+#define LINUX_O_EXCL		0x00400
+#define LINUX_O_NOCTTY		0x00800
+#define LINUX_FASYNC		0x01000
 #define LINUX_O_DIRECTORY	0x10000
+#define LINUX_O_CLOEXEC		0x80000
 
-/*
- * fcntl(2) operations
- * From Linux's include/asm-mips/fcntl.h
- */
+/* fcntl(2) operations */
 #define LINUX_F_DUPFD		0
 #define LINUX_F_GETFD		1
 #define LINUX_F_SETFD		2
@@ -77,9 +72,6 @@
 #define LINUX_LOCK_EX		4  /* F_EXLCK in Linux, and comment "or 3 " */
 #define LINUX_LOCK_SH		8  /* F_SHLCK in Linux, and comment "or 4'  */
 
-/*
- * From Linux's include/asm-mips64/fcntl.h
- */
 #define LINUX_F_GETLK64		33
 #define LINUX_F_SETLK64		34
 #define LINUX_F_SETLKW64	35
