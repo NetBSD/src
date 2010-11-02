@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1519 2010/11/02 16:34:34 joerg Exp $
+#	$NetBSD: mi,v 1.1520 2010/11/02 19:12:47 joerg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1406,6 +1406,21 @@
 ./usr/include/lwp.h				comp-c-include
 ./usr/include/lzf.h				comp-c-include
 ./usr/include/lzfP.h				comp-c-include
+./usr/include/lzma.h				comp-c-include
+./usr/include/lzma/base.h			comp-c-include
+./usr/include/lzma/bcj.h			comp-c-include
+./usr/include/lzma/block.h			comp-c-include
+./usr/include/lzma/check.h			comp-c-include
+./usr/include/lzma/container.h			comp-c-include
+./usr/include/lzma/delta.h			comp-c-include
+./usr/include/lzma/filter.h			comp-c-include
+./usr/include/lzma/hardware.h			comp-c-include
+./usr/include/lzma/index.h			comp-c-include
+./usr/include/lzma/index_hash.h			comp-c-include
+./usr/include/lzma/lzma.h			comp-c-include
+./usr/include/lzma/stream_flags.h		comp-c-include
+./usr/include/lzma/version.h			comp-c-include
+./usr/include/lzma/vli.h			comp-c-include
 ./usr/include/magic.h				comp-c-include
 ./usr/include/malloc.h				comp-c-include
 ./usr/include/math.h				comp-c-include
