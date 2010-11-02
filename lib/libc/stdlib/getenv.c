@@ -1,4 +1,4 @@
-/*	$NetBSD: getenv.c,v 1.27 2010/11/01 02:41:27 enami Exp $	*/
+/*	$NetBSD: getenv.c,v 1.28 2010/11/02 03:44:05 enami Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)getenv.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: getenv.c,v 1.27 2010/11/01 02:41:27 enami Exp $");
+__RCSID("$NetBSD: getenv.c,v 1.28 2010/11/02 03:44:05 enami Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -119,10 +119,10 @@ __allocenv(int offset)
 	if (required_len <= environ_malloced_len && saveenv == environ)
 		return 0;
 
-	/* Make sure we at least double the size of the arrays. */
-	new_len = environ_malloced_len >= 16 ? environ_malloced_len : 16;
+	/* Double the size of the arrays until we meet the requirement. */
+	new_len = environ_malloced_len ? environ_malloced_len : 16;
 	while (new_len < required_len)
-		new_len = new_len << 1;
+		new_len <<= 1;
 
 	if (saveenv == environ) {		/* just increase size */
 		if ((p = realloc(saveenv, new_len * sizeof(*p))) == NULL)
