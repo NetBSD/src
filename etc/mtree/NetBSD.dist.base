@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.base,v 1.54 2010/10/31 11:52:53 mbalmer Exp $
+#	$NetBSD: NetBSD.dist.base,v 1.55 2010/11/02 19:12:48 joerg Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -125,6 +125,7 @@
 ./usr/include/isofs/cd9660
 ./usr/include/kadm5
 ./usr/include/krb5
+./usr/include/lzma
 ./usr/include/miscfs
 ./usr/include/miscfs/fdesc
 ./usr/include/miscfs/fifofs
