@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc_notalpha.c,v 1.107 2010/07/07 01:30:35 chs Exp $	*/
+/*	$NetBSD: linux_misc_notalpha.c,v 1.108 2010/11/02 18:14:05 chs Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc_notalpha.c,v 1.107 2010/07/07 01:30:35 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc_notalpha.c,v 1.108 2010/11/02 18:14:05 chs Exp $");
+
+/*
+ * Note that we must NOT include "opt_compat_linux32.h" here,
+ * the maze of ifdefs below relies on COMPAT_LINUX32 only being
+ * defined when this file is built for linux32.
+ */
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,6 +67,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_misc_notalpha.c,v 1.107 2010/07/07 01:30:35 ch
 #include <compat/linux/common/linux_util.h>
 #include <compat/linux/common/linux_ipc.h>
 #include <compat/linux/common/linux_sem.h>
+#include <compat/linux/common/linux_statfs.h>
 
 #include <compat/linux/linux_syscallargs.h>
 
@@ -79,10 +86,6 @@ __KERNEL_RCSID(0, "$NetBSD: linux_misc_notalpha.c,v 1.107 2010/07/07 01:30:35 ch
 #endif
 
 #ifndef COMPAT_LINUX32
-#if !defined(__amd64__)
-static void bsd_to_linux_statfs64(const struct statvfs *,
-	struct linux_statfs64  *);
-#endif
 
 /*
  * Alarm. This is a libc call which uses setitimer(2) in NetBSD.
@@ -401,49 +404,6 @@ linux_sys_stime(struct lwp *l, const struct linux_sys_stime_args *uap, register_
 
 	return 0;
 }
-#endif /* !amd64 */
-
-#if !defined(__amd64__)
-/*
- * Convert NetBSD statvfs structure to Linux statfs64 structure.
- * See comments in bsd_to_linux_statfs() for further background.
- * We can safely pass correct bsize and frsize here, since Linux glibc
- * statvfs() doesn't use statfs64().
- */
-static void
-bsd_to_linux_statfs64(const struct statvfs *bsp, struct linux_statfs64 *lsp)
-{
-	int i, div;
-
-	for (i = 0; i < linux_fstypes_cnt; i++) {
-		if (strcmp(bsp->f_fstypename, linux_fstypes[i].bsd) == 0) {
-			lsp->l_ftype = linux_fstypes[i].linux;
-			break;
-		}
-	}
-
-	if (i == linux_fstypes_cnt) {
-		DPRINTF(("unhandled fstype in linux emulation: %s\n",
-		    bsp->f_fstypename));
-		lsp->l_ftype = LINUX_DEFAULT_SUPER_MAGIC;
-	}
-
-	div = bsp->f_frsize ? (bsp->f_bsize / bsp->f_frsize) : 1;
-	if (div == 0)
-		div = 1;
-	lsp->l_fbsize = bsp->f_bsize;
-	lsp->l_ffrsize = bsp->f_frsize;
-	lsp->l_fblocks = bsp->f_blocks / div;
-	lsp->l_fbfree = bsp->f_bfree / div;
-	lsp->l_fbavail = bsp->f_bavail / div;
-	lsp->l_ffiles = bsp->f_files;
-	lsp->l_fffree = bsp->f_ffree / div;
-	/* Linux sets the fsid to 0..., we don't */
-	lsp->l_ffsid.val[0] = bsp->f_fsidx.__fsid_val[0];
-	lsp->l_ffsid.val[1] = bsp->f_fsidx.__fsid_val[1];
-	lsp->l_fnamelen = bsp->f_namemax;
-	(void)memset(lsp->l_fspare, 0, sizeof(lsp->l_fspare));
-}
 
 /*
  * Implement the fs stat functions. Straightforward.
@@ -497,5 +457,5 @@ linux_sys_fstatfs64(struct lwp *l, const struct linux_sys_fstatfs64_args *uap, r
 	STATVFSBUF_PUT(sb);
 	return error;
 }
-#endif /* !__m68k__ && !__amd64__ */
+#endif /* !__amd64__ */
 #endif /* !COMPAT_LINUX32 */

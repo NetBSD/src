@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_types.h,v 1.13 2010/09/11 20:53:04 chs Exp $ */
+/*	$NetBSD: linux32_types.h,v 1.14 2010/11/02 18:14:06 chs Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -46,6 +46,7 @@ typedef netbsd32_pointer_t linux32_utsnamep;
 typedef netbsd32_pointer_t linux32_stat64p;
 typedef netbsd32_pointer_t linux32_statp;
 typedef netbsd32_pointer_t linux32_statfsp;
+typedef netbsd32_pointer_t linux32_statfs64p;
 typedef netbsd32_pointer_t linux32_sigactionp_t;
 typedef netbsd32_pointer_t linux32_sigsetp_t;
 typedef netbsd32_pointer_t linux32___sysctlp_t;
