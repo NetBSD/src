@@ -1,4 +1,4 @@
-/*	$NetBSD: if_nfe.c,v 1.51 2010/04/05 07:20:26 joerg Exp $	*/
+/*	$NetBSD: if_nfe.c,v 1.52 2010/11/02 16:56:47 jakllsch Exp $	*/
 /*	$OpenBSD: if_nfe.c,v 1.77 2008/02/05 16:52:50 brad Exp $	*/
 
 /*-
@@ -21,7 +21,7 @@
 /* Driver for NVIDIA nForce MCP Fast Ethernet and Gigabit Ethernet */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_nfe.c,v 1.51 2010/04/05 07:20:26 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_nfe.c,v 1.52 2010/11/02 16:56:47 jakllsch Exp $");
 
 #include "opt_inet.h"
 #include "vlan.h"
@@ -219,7 +219,7 @@ nfe_attach(device_t parent, device_t self, void *aux)
 	const char *intrstr;
 	struct ifnet *ifp;
 	bus_size_t memsize;
-	pcireg_t memtype;
+	pcireg_t memtype, csr;
 	char devinfo[256];
 	int mii_flags = 0;
 
@@ -257,6 +257,10 @@ nfe_attach(device_t parent, device_t self, void *aux)
 	aprint_normal_dev(self, "interrupting at %s\n", intrstr);
 
 	sc->sc_dmat = pa->pa_dmat;
+
+	csr = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
+	csr |= PCI_COMMAND_MASTER_ENABLE;
+	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG, csr);
 
 	sc->sc_flags = 0;
 
