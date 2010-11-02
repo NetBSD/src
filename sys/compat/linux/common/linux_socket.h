@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.h,v 1.19 2009/11/28 22:11:42 dsl Exp $	*/
+/*	$NetBSD: linux_socket.h,v 1.20 2010/11/02 18:03:00 chs Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -214,6 +214,17 @@ struct linux_cmsghdr {
 #include <compat/linux/arch/amd64/linux_socket.h>
 #else
 #error Undefined linux_socket.h machine type.
+#endif
+
+/*
+ * Flags for socket().
+ * These are provided in the "type" parameter.
+ */
+
+#define LINUX_SOCK_TYPE_MASK	0xf
+#define LINUX_SOCK_CLOEXEC	LINUX_O_CLOEXEC
+#ifndef LINUX_SOCK_NONBLOCK
+#define LINUX_SOCK_NONBLOCK	LINUX_O_NONBLOCK
 #endif
 
 #endif /* !_LINUX_SOCKET_H */
