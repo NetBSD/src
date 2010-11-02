@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.783 2010/10/31 17:17:45 snj Exp $
+#	$NetBSD: 3RDPARTY,v 1.784 2010/11/02 16:39:31 joerg Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -1147,3 +1147,16 @@ Mailing List:	http://mail.zlib.net/mailman/listinfo/pigz-announce_zlib.net
 Responsible:	mrg
 License:	zlib
 Notes:
+
+Package:	xz
+Version:	5.0.0
+Current Vers:	5.0.0
+Maintainer:	Lasse Collin <lasse.collin@tukanni.org>
+Archive Site:	http://tukaani.org/xz/
+Home Page:	http://tukaani.org/xz/
+Responsible:	joerg
+License:	public-domain
+Notes:
+1. See prepare-import script for stripping down the distribution.
+2. Update configure.ac and use it to generate include/config.h.
+3. Carefully check for GPL components leaked into the dist area.
