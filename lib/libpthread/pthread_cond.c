@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_cond.c,v 1.55 2010/03/23 20:35:44 drochner Exp $	*/
+/*	$NetBSD: pthread_cond.c,v 1.56 2010/11/02 20:49:47 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_cond.c,v 1.55 2010/03/23 20:35:44 drochner Exp $");
+__RCSID("$NetBSD: pthread_cond.c,v 1.56 2010/11/02 20:49:47 skrll Exp $");
 
 #include <errno.h>
 #include <sys/time.h>
@@ -234,7 +234,7 @@ pthread__cond_wake_one(pthread_cond_t *cond)
 	/*
 	 * For all valid uses of pthread_cond_signal(), the caller will
 	 * hold the mutex that the target is using to synchronize with.
-	 * To avoid the target awakening and immediatley blocking on the
+	 * To avoid the target awakening and immediately blocking on the
 	 * mutex, transfer the thread to be awoken to the current thread's
 	 * deferred wakeup list.  The waiter will be set running when the
 	 * caller (this thread) releases the mutex.
