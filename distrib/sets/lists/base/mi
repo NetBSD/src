@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.884 2010/10/31 11:52:51 mbalmer Exp $
+# $NetBSD: mi,v 1.885 2010/11/02 16:34:33 joerg Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -646,6 +646,7 @@
 ./usr/bin/uniq					base-util-bin
 ./usr/bin/units					base-util-bin
 ./usr/bin/unvis					base-util-bin
+./usr/bin/unxz					base-util-bin
 ./usr/bin/unzip					base-util-bin
 ./usr/bin/uptime				base-util-bin
 ./usr/bin/usbhidaction				base-util-bin
@@ -683,6 +684,8 @@
 ./usr/bin/window				base-util-bin
 ./usr/bin/write					base-util-bin
 ./usr/bin/xargs					base-util-bin
+./usr/bin/xz					base-util-bin
+./usr/bin/xzcat					base-util-bin
 ./usr/bin/yes					base-util-bin
 ./usr/bin/ypcat					base-nis-bin		yp
 ./usr/bin/ypmatch				base-nis-bin		yp
@@ -2440,6 +2443,7 @@
 ./usr/share/locale/cs/LC_MESSAGES/grep.mo	base-util_locale-cs	nls
 ./usr/share/locale/cs/LC_MESSAGES/tar.mo	base-obsolete		obsolete
 ./usr/share/locale/cs/LC_MESSAGES/texinfo.mo	base-texinfo_locale-cs	nls
+./usr/share/locale/cs/LC_MESSAGES/xz.mo	base-util_locale-cs	nls
 ./usr/share/locale/cs_CZ.ISO8859-2		base-locale-cs
 ./usr/share/locale/cs_CZ.ISO8859-2/LC_CTYPE	base-locale-cs		nls
 ./usr/share/locale/cs_CZ.ISO8859-2/LC_MESSAGES	base-locale-cs
@@ -2470,6 +2474,7 @@
 ./usr/share/locale/de/LC_MESSAGES/grep.mo	base-util_locale-de	nls
 ./usr/share/locale/de/LC_MESSAGES/tar.mo	base-obsolete		obsolete
 ./usr/share/locale/de/LC_MESSAGES/texinfo.mo	base-texinfo_locale-de	nls
+./usr/share/locale/de/LC_MESSAGES/xz.mo		base-util_locale-de	nls
 ./usr/share/locale/de_AT			base-locale-de
 ./usr/share/locale/de_AT.ISO8859-1		base-locale-de
 ./usr/share/locale/de_AT.ISO8859-1/LC_CTYPE	base-locale-de		nls
@@ -2820,6 +2825,7 @@
 ./usr/share/locale/it/LC_MESSAGES		base-locale-it
 ./usr/share/locale/it/LC_MESSAGES/grep.mo	base-util_locale-it	nls
 ./usr/share/locale/it/LC_MESSAGES/tar.mo	base-obsolete		obsolete
+./usr/share/locale/it/LC_MESSAGES/xz.mo		base-util_locale-it	nls
 ./usr/share/locale/it_CH.ISO8859-1		base-locale-it
 ./usr/share/locale/it_CH.ISO8859-1/LC_CTYPE	base-locale-it		nls
 ./usr/share/locale/it_CH.ISO8859-1/LC_MESSAGES	base-locale-it

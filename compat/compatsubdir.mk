@@ -1,4 +1,4 @@
-#	$NetBSD: compatsubdir.mk,v 1.3 2009/12/15 05:23:25 mrg Exp $
+#	$NetBSD: compatsubdir.mk,v 1.4 2010/11/02 16:34:33 joerg Exp $
 
 # Build netbsd libraries.
 
@@ -27,6 +27,7 @@ SUBDIR= ../../../gnu/lib/crtstuff4 .WAIT \
 	../../../external/bsd/bind/lib \
 	../../../external/bsd/libevent/lib \
 	../../../external/bsd/file/lib \
+	../../../external/public-domain/xz/lib \
 	../../../libexec/ld.elf_so
 
 .if ${MKATF} != "no"

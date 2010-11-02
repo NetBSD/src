@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1518 2010/10/31 23:29:16 njoly Exp $
+#	$NetBSD: mi,v 1.1519 2010/11/02 16:34:34 joerg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2516,6 +2516,9 @@
 ./usr/lib/liblzf.a				comp-c-lib
 ./usr/lib/liblzf_g.a				-unknown-		debuglib
 ./usr/lib/liblzf_p.a				comp-c-proflib		profile
+./usr/lib/liblzma.a				comp-c-lib
+./usr/lib/liblzma_g.a				-unknown-		debuglib
+./usr/lib/liblzma_p.a				comp-c-proflib		profile
 ./usr/lib/libm.a				comp-c-lib
 ./usr/lib/libm_g.a				-unknown-		debuglib
 ./usr/lib/libm_p.a				comp-c-proflib		profile
