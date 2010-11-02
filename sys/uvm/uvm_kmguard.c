@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_kmguard.c,v 1.3 2010/05/14 05:02:06 cegger Exp $	*/
+/*	$NetBSD: uvm_kmguard.c,v 1.4 2010/11/02 20:49:48 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  * - Use-after-free
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_kmguard.c,v 1.3 2010/05/14 05:02:06 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_kmguard.c,v 1.4 2010/11/02 20:49:48 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -155,7 +155,7 @@ uvm_kmguard_alloc(struct uvm_kmguard *kg, size_t len, bool waitok)
 
 	/*
 	 * offset the returned pointer so that the unmapped guard page
-	 * sits immediatley after the returned object.
+	 * sits immediately after the returned object.
 	 */
 
 	p = (void **)((va + PAGE_SIZE - len) & ~(uintptr_t)ALIGNBYTES);

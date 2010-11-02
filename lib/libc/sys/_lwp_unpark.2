@@ -1,4 +1,4 @@
-.\"	$NetBSD: _lwp_unpark.2,v 1.3 2008/04/30 13:10:51 martin Exp $
+.\"	$NetBSD: _lwp_unpark.2,v 1.4 2010/11/02 20:49:47 skrll Exp $
 .\"
 .\" Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -47,7 +47,7 @@ resumes execution of the light-weight process
 The target LWP is assumed to be waiting in the kernel as a result of a
 call to
 .Fn _lwp_park .
-If the target LWP is not currently waiting, it will return immediatley
+If the target LWP is not currently waiting, it will return immediately
 upon the next call to
 .Fn _lwp_park .
 .Pp
