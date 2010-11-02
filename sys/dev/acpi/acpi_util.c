@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_util.c,v 1.5 2010/06/07 17:13:52 jruoho Exp $ */
+/*	$NetBSD: acpi_util.c,v 1.6 2010/11/02 16:45:48 gsutre Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_util.c,v 1.5 2010/06/07 17:13:52 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_util.c,v 1.6 2010/11/02 16:45:48 gsutre Exp $");
 
 #include <sys/param.h>
 
@@ -90,6 +90,7 @@ acpi_eval_integer(ACPI_HANDLE handle, const char *path, ACPI_INTEGER *valp)
 	if (handle == NULL)
 		handle = ACPI_ROOT_OBJECT;
 
+	(void)memset(&obj, 0, sizeof(obj));
 	buf.Pointer = &obj;
 	buf.Length = sizeof(obj);
 
@@ -97,6 +98,10 @@ acpi_eval_integer(ACPI_HANDLE handle, const char *path, ACPI_INTEGER *valp)
 
 	if (ACPI_FAILURE(rv))
 		return rv;
+
+	/* Check that evaluation produced a return value. */
+	if (buf.Length == 0)
+		return AE_NULL_OBJECT;
 
 	if (obj.Type != ACPI_TYPE_INTEGER)
 		return AE_TYPE;
