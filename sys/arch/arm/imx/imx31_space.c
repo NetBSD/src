@@ -1,7 +1,7 @@
-/* $Id: imx31_space.c,v 1.3.2.5 2010/07/28 04:16:12 uebayasi Exp $ */
+/* $Id: imx31_space.c,v 1.3.2.6 2010/11/02 14:05:27 uebayasi Exp $ */
 
 /* derived from: */
-/*	$NetBSD: imx31_space.c,v 1.3.2.5 2010/07/28 04:16:12 uebayasi Exp $ */
+/*	$NetBSD: imx31_space.c,v 1.3.2.6 2010/11/02 14:05:27 uebayasi Exp $ */
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -306,7 +306,7 @@ imx31_bs_physload_device(void *t, bus_addr_t addr, bus_size_t size, int prot, in
 	const paddr_t start = imx31_bs_mmap(t, addr, 0, prot, flags);
 	const paddr_t end = imx31_bs_mmap(t, addr + size, 0, prot, flags);
 
-	return uvm_page_physload_device(start, end, start, end, prot, flags);
+	return uvm_page_physload_device(start, end, prot, flags);
 }
 
 void

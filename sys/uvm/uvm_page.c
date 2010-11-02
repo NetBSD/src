@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.153.2.57 2010/10/27 14:51:29 uebayasi Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.153.2.58 2010/11/02 14:05:28 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.153.2.57 2010/10/27 14:51:29 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.153.2.58 2010/11/02 14:05:28 uebayasi Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -831,8 +831,7 @@ uvm_page_physunload(void *cookie)
 }
 
 void *
-uvm_page_physload_device(paddr_t start, paddr_t end, paddr_t avail_start,
-    paddr_t avail_end, int prot, int flags)
+uvm_page_physload_device(paddr_t start, paddr_t end, int prot, int flags)
 {
 	struct vm_physseg *seg;
 	int i;
