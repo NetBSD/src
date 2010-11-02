@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.76 2010/10/31 23:29:16 njoly Exp $
+# $NetBSD: md.amd64,v 1.77 2010/11/02 16:34:34 joerg Exp $
 ./usr/include/amd64				comp-c-include
 ./usr/include/amd64/ansi.h			comp-c-include
 ./usr/include/amd64/aout_machdep.h		comp-c-include
@@ -563,6 +563,7 @@
 ./usr/lib/i386/libkvm_g.a			comp-c-proflib		compat,debuglib
 ./usr/lib/i386/libkvm_p.a			comp-c-proflib		compat,profile
 ./usr/lib/i386/libkvm_pic.a			comp-c-piclib		compat,pic
+./usr/lib/i386/liblzma_pic.a			comp-c-piclib		compat,pic
 ./usr/lib/i386/libl.a				comp-c-lib		compat
 ./usr/lib/i386/libl_g.a				comp-c-proflib		compat,debuglib
 ./usr/lib/i386/libl_p.a				comp-c-proflib		compat,profile
@@ -590,6 +591,10 @@
 ./usr/lib/i386/liblwres_g.a			comp-c-proflib		compat,debuglib
 ./usr/lib/i386/liblwres_p.a			comp-c-proflib		compat,profile
 ./usr/lib/i386/liblwres_pic.a			comp-c-piclib		compat,pic
+./usr/lib/i386/liblzma.a			comp-c-lib		compat
+./usr/lib/i386/liblzma.so			comp-sys-shlib		compat,pic
+./usr/lib/i386/liblzma_g.a			comp-c-proflib		compat,debuglib
+./usr/lib/i386/liblzma_p.a			comp-c-proflib		compat,profile
 ./usr/lib/i386/libm.a				comp-c-lib		compat
 ./usr/lib/i386/libm.so				comp-sys-shlib		compat,pic
 ./usr/lib/i386/libm_g.a				comp-c-proflib		compat,debuglib
@@ -891,6 +896,7 @@
 ./usr/libdata/debug/usr/lib/i386/libldap_r.so.4.1.debug	comp-compat-shlib	compat,pic,ldap,debug
 ./usr/libdata/debug/usr/lib/i386/liblua.so.1.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/liblwres.so.5.1.debug	comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/liblzma.so.1.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libm.so.0.8.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libmagic.so.3.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libmenu.so.6.0.debug	comp-compat-shlib	compat,pic,debug

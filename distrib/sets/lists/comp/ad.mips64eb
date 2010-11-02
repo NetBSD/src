@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips64eb,v 1.10 2010/08/07 05:53:20 agc Exp $
+# $NetBSD: ad.mips64eb,v 1.11 2010/11/02 16:34:34 joerg Exp $
 ./usr/bin/elf2aout				comp-obsolete	obsolete
 ./usr/bin/elf2ecoff				comp-sysutil-bin
 ./usr/include/mips				comp-c-include
@@ -340,6 +340,10 @@
 ./usr/lib/64/liblwres.so			base-sys-shlib		compat,pic
 ./usr/lib/64/liblwres_p.a			comp-c-proflib		compat,profile
 ./usr/lib/64/liblwres_pic.a			comp-c-piclib		compat,pic
+./usr/lib/64/liblzma.a				comp-c-lib		compat
+./usr/lib/64/liblzma.so				base-sys-shlib		compat,pic
+./usr/lib/64/liblzma_p.a			comp-c-proflib		compat,profile
+./usr/lib/64/liblzma_pic.a			comp-c-piclib		compat,pic
 ./usr/lib/64/libm.a				comp-c-lib		compat
 ./usr/lib/64/libm.so				base-sys-shlib		compat,pic
 ./usr/lib/64/libm_p.a				comp-c-proflib		compat,profile
@@ -809,6 +813,10 @@
 ./usr/lib/o32/liblwres.so			base-sys-shlib		compat,pic
 ./usr/lib/o32/liblwres_p.a			comp-c-proflib		compat,profile
 ./usr/lib/o32/liblwres_pic.a			comp-c-piclib		compat,pic
+./usr/lib/o32/liblzma.a				comp-c-lib		compat
+./usr/lib/o32/liblzma.so			base-sys-shlib		compat,pic
+./usr/lib/o32/liblzma_p.a			comp-c-proflib		compat,profile
+./usr/lib/o32/liblzma_pic.a			comp-c-piclib		compat,pic
 ./usr/lib/o32/libm.a				comp-c-lib		compat
 ./usr/lib/o32/libm.so				base-sys-shlib		compat,pic
 ./usr/lib/o32/libm_p.a				comp-c-proflib		compat,profile

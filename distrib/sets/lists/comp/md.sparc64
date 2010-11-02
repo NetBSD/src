@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.65 2010/10/31 23:29:16 njoly Exp $
+# $NetBSD: md.sparc64,v 1.66 2010/11/02 16:34:34 joerg Exp $
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/sparc				comp-c-include
 ./usr/include/sparc/_G_config.h			comp-obsolete		obsolete
@@ -416,6 +416,10 @@
 ./usr/lib/sparc/liblwres.so			base-sys-shlib		compat,pic
 ./usr/lib/sparc/liblwres_p.a			comp-c-proflib		compat,profile
 ./usr/lib/sparc/liblwres_pic.a			comp-c-piclib		compat,pic
+./usr/lib/sparc/liblzma.a			comp-c-lib		compat
+./usr/lib/sparc/liblzma.so			base-sys-shlib		compat,pic
+./usr/lib/sparc/liblzma_p.a			comp-c-proflib		compat,profile
+./usr/lib/sparc/liblzma_pic.a			comp-c-piclib		compat,pic
 ./usr/lib/sparc/libm.a				comp-c-lib		compat
 ./usr/lib/sparc/libm.so				base-sys-shlib		compat,pic
 ./usr/lib/sparc/libm_p.a			comp-c-proflib		compat,profile
@@ -667,6 +671,7 @@
 ./usr/libdata/debug/usr/lib/sparc/libldap_r.so.4.1.debug		comp-compat-shlib	compat,pic,debug,ldap
 ./usr/libdata/debug/usr/lib/sparc/liblua.so.1.0.debug			comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/liblwres.so.5.1.debug			comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/sparc/liblzma.so.1.0.debug			comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libm.so.0.8.debug			comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libmagic.so.3.0.debug			comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libmenu.so.6.0.debug			comp-compat-shlib	compat,pic,debug

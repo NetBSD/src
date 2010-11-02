@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.96 2010/10/31 16:31:12 mbalmer Exp $
+# $NetBSD: md.amd64,v 1.97 2010/11/02 16:34:33 joerg Exp $
 ./dev/lms0					base-obsolete		obsolete
 ./dev/mms0					base-obsolete		obsolete
 ./libexec/ld.elf_so-i386			base-sys-shlib		compat,pic
@@ -131,6 +131,8 @@
 ./usr/lib/i386/liblua.so.1.0			base-compat-shlib	compat,pic
 ./usr/lib/i386/liblwres.so.5			base-compat-shlib	compat,pic
 ./usr/lib/i386/liblwres.so.5.1			base-compat-shlib	compat,pic
+./usr/lib/i386/liblzma.so.1			base-compat-shlib	compat,pic
+./usr/lib/i386/liblzma.so.1.0			base-compat-shlib	compat,pic
 ./usr/lib/i386/libm.so.0			base-compat-shlib	compat,pic
 ./usr/lib/i386/libm.so.0.8			base-compat-shlib	compat,pic
 ./usr/lib/i386/libmagic.so.3			base-compat-shlib	compat,pic

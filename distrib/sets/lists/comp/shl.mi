@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.135 2010/10/31 23:29:17 njoly Exp $
+# $NetBSD: shl.mi,v 1.136 2010/11/02 16:34:34 joerg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -65,6 +65,7 @@
 ./usr/lib/libldap_r_pic.a			comp-ldap-piclib	ldap
 ./usr/lib/liblua_pic.a				comp-c-piclib
 ./usr/lib/liblwres_pic.a			comp-bind-piclib
+./usr/lib/liblzma_pic.a				comp-c-piclib
 ./usr/lib/liblzf_pic.a				comp-c-piclib
 ./usr/lib/libm_pic.a				comp-c-piclib
 ./usr/lib/libmagic_pic.a			comp-c-piclib
@@ -250,6 +251,7 @@
 ./usr/libdata/debug/usr/lib/libldap_r.so.4.1.debug	comp-ldap-debug	ldap,debug
 ./usr/libdata/debug/usr/lib/liblua.so.1.0.debug		comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/liblwres.so.5.1.debug	comp-bind-debug	debug
+./usr/libdata/debug/usr/lib/liblzma.so.1.0.debug	comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/liblzf.so.0.0.debug		comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libm.so.0.8.debug		comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libmagic.so.3.0.debug	comp-sys-debug	debug

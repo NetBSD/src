@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1244 2010/10/31 11:52:52 mbalmer Exp $
+# $NetBSD: mi,v 1.1245 2010/11/02 16:34:34 joerg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -561,6 +561,7 @@
 ./usr/share/man/cat1/x68k/tvctrl.0		man-util-catman		.cat
 ./usr/share/man/cat1/xargs.0			man-util-catman		.cat
 ./usr/share/man/cat1/xgettext.0			man-locale-catman	.cat
+./usr/share/man/cat1/xz.0			man-util-catman		.cat
 ./usr/share/man/cat1/yes.0			man-util-catman		.cat
 ./usr/share/man/cat1/ypcat.0			man-nis-catman		yp,.cat
 ./usr/share/man/cat1/ypmatch.0			man-nis-catman		yp,.cat
@@ -3306,6 +3307,7 @@
 ./usr/share/man/html1/x68k/tvctrl.html		man-util-htmlman	html
 ./usr/share/man/html1/xargs.html		man-util-htmlman	html
 ./usr/share/man/html1/xgettext.html		man-locale-htmlman	html
+./usr/share/man/html1/xz.html			man-util-htmlman	html
 ./usr/share/man/html1/yes.html			man-util-htmlman	html
 ./usr/share/man/html1/ypcat.html		man-nis-htmlman		yp,html
 ./usr/share/man/html1/ypmatch.html		man-nis-htmlman		yp,html
@@ -5719,6 +5721,7 @@
 ./usr/share/man/man1/x68k/tvctrl.1		man-util-man		.man
 ./usr/share/man/man1/xargs.1			man-util-man		.man
 ./usr/share/man/man1/xgettext.1			man-locale-man		.man
+./usr/share/man/man1/xz.1			man-util-man		.man
 ./usr/share/man/man1/yes.1			man-util-man		.man
 ./usr/share/man/man1/ypcat.1			man-nis-man		yp,.man
 ./usr/share/man/man1/ypmatch.1			man-nis-man		yp,.man
