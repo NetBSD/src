@@ -1,5 +1,6 @@
-.\"	$NetBSD: uvm.9,v 1.102.2.2 2010/10/21 17:16:28 uebayasi Exp $
+.\"	$NetBSD: uvm.9,v 1.102.2.3 2010/11/02 14:05:27 uebayasi Exp $
 .\"
+.\" Copyright (c) 2010 The NetBSD Froundation, Inc.
 .\" Copyright (c) 1998 Matthew R. Green
 .\" All rights reserved.
 .\"
@@ -24,7 +25,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd October 21, 2010
+.Dd November 2, 2010
 .Dt UVM 9
 .Os
 .Sh NAME
@@ -659,7 +660,7 @@ requests efficiently.
 .It Ft void
 .Fn uvm_page_physunload "void *physseg" ;
 .It Ft void *
-.Fn uvm_page_physload_device "paddr_t start" "paddr_t end" "paddr_t avail_start" "paddr_t avail_end" "int prot" "int flags" ;
+.Fn uvm_page_physload_device "paddr_t start" "paddr_t end" "int prot" "int flags" ;
 .It Ft void
 .Fn uvm_page_physunload_device "void *physseg" ;
 .El
@@ -707,11 +708,7 @@ The arguments describe the
 .Fa start
 and
 .Fa end
-of the physical addresses of the segment, and the
-.Fa avail_start
-and
-.Fa avail_end
-addresses of pages not already in use.
+of the physical addresses of the segment.
 The
 .Fa prot
 describes the potential protection (region accessibility) of the

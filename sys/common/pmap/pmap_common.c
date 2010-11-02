@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_common.c,v 1.1.2.1 2010/10/30 08:41:14 uebayasi Exp $	*/
+/*	$NetBSD: pmap_common.c,v 1.1.2.2 2010/11/02 14:05:28 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_common.c,v 1.1.2.1 2010/10/30 08:41:14 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_common.c,v 1.1.2.2 2010/11/02 14:05:28 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -42,7 +42,7 @@ pmap_physload_device(vaddr_t addr, size_t size, int prot, int flags)
 	start = pmap_mmap(addr, 0);
 	end = pmap_mmap(addr, size);
 
-	return uvm_page_physload_device(start, end, start, end, prot, flags);
+	return uvm_page_physload_device(start, end, prot, flags);
 }
 
 void

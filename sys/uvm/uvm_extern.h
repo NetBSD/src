@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.161.2.9 2010/10/30 05:56:00 uebayasi Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.161.2.10 2010/11/02 14:05:28 uebayasi Exp $	*/
 
 /*
  *
@@ -723,7 +723,7 @@ void			*uvm_page_physload(paddr_t, paddr_t,
 			    paddr_t, paddr_t, int);
 void			uvm_page_physunload(void *);
 void			*uvm_page_physload_device(paddr_t, paddr_t,
-			    paddr_t, paddr_t, int, int);
+			    int, int);
 void			uvm_page_physunload_device(void *);
 void			uvm_setpagesize(void);
 
