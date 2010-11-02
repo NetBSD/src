@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.3 2010/06/04 08:33:41 jmmv Exp $
+# $NetBSD: Makefile,v 1.4 2010/11/02 14:41:32 njoly Exp $
 
 .include <bsd.own.mk>
 
@@ -18,7 +18,9 @@ MAN=	atf.7 atf-formats.5 atf-test-case.4 atf-test-program.1
 
 CLEANFILES+=	atf.7 atf.7.tmp
 atf.7: atf.7.in
-	${TOOL_SED} -e 's,__DOCDIR__,/usr/share/doc/atf,g' \
+	${TOOL_SED} \
+	    -e 's,__DOCDIR__,/usr/share/doc/atf,g' \
+	    -e 's,__TESTSDIR__,/usr/tests,g' \
 	    <${SRCDIR}/doc/atf.7.in >atf.7.tmp
 	mv atf.7.tmp atf.7
 
