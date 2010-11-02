@@ -1,4 +1,4 @@
-.\" $NetBSD: rfcomm_sppd.1,v 1.7 2009/09/24 18:30:37 plunky Exp $
+.\" $NetBSD: rfcomm_sppd.1,v 1.8 2010/11/02 19:44:09 plunky Exp $
 .\"
 .\" Copyright (c) 2006 Itronix Inc.
 .\" All rights reserved.
@@ -52,7 +52,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd September 24, 2009
+.Dd November 2, 2010
 .Dt RFCOMM_SPPD 1
 .Os
 .Sh NAME
@@ -137,7 +137,7 @@ value to be used for the RFCOMM protocol.
 In client mode where Service Discovery is being used, this value
 will be ignored.
 .It Fl s Ar service
-This is the service class that will be searched for on the remote device.
+Name of service class to connect to or register.
 If no
 .Ar service
 is given, the default
