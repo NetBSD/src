@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.56 2010/07/07 01:30:35 chs Exp $
+	$NetBSD: syscalls.master,v 1.57 2010/11/02 18:14:06 chs Exp $
 
 ; NetBSD i386 COMPAT_LINUX32 system call name/number "master" file.
 ; (See syscalls.conf to see what it is processed into.)
@@ -193,11 +193,14 @@
 		    linux32_gid16_t gid); }
 96	STD	{ int|linux32_sys||getpriority(int which, int who); }
 97	NOARGS	{ int|netbsd32||setpriority(int which, int who, int prio); }
-98	UNIMPL	profil
+98	NOARGS	{ int|netbsd32||profil(netbsd32_voidp samples, \
+		    netbsd32_size_t size, netbsd32_u_long offset, \
+		    u_int scale); }
 99	STD	{ int|linux32_sys||statfs(netbsd32_charp path, \
 		    linux32_statfsp sp); }
 100	STD	{ int|linux32_sys||fstatfs(int fd, linux32_statfsp sp); }
-101	UNIMPL	ioperm
+101	NOARGS	{ int|linux_sys||ioperm(unsigned int lo, \
+		    unsigned int hi, int val); }
 102	STD	{ int|linux32_sys||socketcall(int what, netbsd32_voidp args); }
 103	UNIMPL	syslog
 104	NOARGS	{ int|compat_50_netbsd32||setitimer(int which, \
@@ -211,7 +214,7 @@
 108	STD	{ int|linux32_sys||fstat(int fd, \
 		    linux32_statp sp); }
 109	STD	{ int|linux32_sys||olduname(linux32_oldutsnamep_t up); }
-110	UNIMPL	iopl
+110	NOARGS	{ int|linux_sys||iopl(int level); }
 111	UNIMPL	vhangup
 112	UNIMPL	idle
 113	UNIMPL	vm86old
@@ -226,9 +229,11 @@
 120	STD	{ int|linux32_sys||clone(int flags, netbsd32_voidp stack, \
 		    netbsd32_voidp parent_tidptr, netbsd32_voidp tls, \
 		    netbsd32_voidp child_tidptr); }
-121	UNIMPL	setdomainname
+121	STD	{ int|linux32_sys||setdomainname(netbsd32_charp domainname, \
+		    int len); }
 122	STD	{ int|linux32_sys||uname(linux32_utsnamep up); }
-123	UNIMPL	modify_ldt
+123	STD	{ int|linux32_sys||modify_ldt(int func, netbsd32_charp ptr, \
+		    netbsd32_size_t bytecount); }
 124	UNIMPL	adjtimex
 125	STD	{ int|linux32_sys||mprotect(netbsd32_voidp start, \
 		    netbsd32_size_t len, int prot); } 
@@ -339,8 +344,10 @@
 192	STD	{ linux32_off_t|linux32_sys||mmap2(netbsd32_u_long addr, \
 		    netbsd32_size_t len, int prot, int flags, int fd, \
 		    linux32_off_t offset); }
-193	UNIMPL	truncate64
-194	UNIMPL	ftruncate64
+193	STD	{ int|linux32_sys||truncate64(netbsd32_charp path, \
+		    uint32_t lenlo, uint32_t lenhi); }
+194	STD	{ int|linux32_sys||ftruncate64(unsigned int fd, \
+		    uint32_t lenlo, uint32_t lenhi); }
 195	STD	{ int|linux32_sys||stat64(netbsd32_charp path, \
 		    linux32_stat64p sp); }
 196	STD	{ int|linux32_sys||lstat64(netbsd32_charp path, \
@@ -440,8 +447,10 @@
 		    linux32_timespecp_t tp); }
 267	STD	{ int|linux32_sys||clock_nanosleep(clockid_t which, int flags, \
 		    linux32_timespecp_t rqtp, linux32_timespecp_t rmtp); }
-268	UNIMPL	statfs64
-269	UNIMPL	fstatfs64
+268	STD	{ int|linux32_sys||statfs64(netbsd32_charp path, \
+		    netbsd32_size_t sz, linux32_statfs64p sp); }
+269	STD	{ int|linux32_sys||fstatfs64(int fd, \
+		    netbsd32_size_t sz, linux32_statfs64p sp); }
 270	STD	{ int|linux32_sys||tgkill(int tgid, int tid, int sig); }
 271	UNIMPL	utimes
 272	UNIMPL	fadvise64_64

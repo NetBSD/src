@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_machdep.c,v 1.26 2010/07/12 02:55:17 christos Exp $ */
+/*	$NetBSD: linux32_machdep.c,v 1.27 2010/11/02 18:14:06 chs Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -31,7 +31,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_machdep.c,v 1.26 2010/07/12 02:55:17 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_machdep.c,v 1.27 2010/11/02 18:14:06 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -512,4 +512,20 @@ linux32_sys_get_thread_area(struct lwp *l,
 
 	/* glibc doesn't actually call this. */
 	return ENOSYS;
+}
+
+int
+linux32_sys_modify_ldt(struct lwp *l, const struct linux32_sys_modify_ldt_args *uap, register_t *retval)
+{
+	/* {
+		syscallarg(int) func;
+		syscallarg(netbsd32_charp) ptr;
+		syscallarg(netbsd32_size_t) bytecount;
+	} */
+	struct linux_sys_modify_ldt_args ua;
+
+	NETBSD32TO64_UAP(func);
+	NETBSD32TOP_UAP(ptr, void *);
+	NETBSD32TOX_UAP(bytecount, size_t);
+	return linux_sys_modify_ldt(l, &ua, retval);
 }
