@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.217 2010/09/11 20:53:04 chs Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.218 2010/11/02 18:18:07 chs Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.217 2010/09/11 20:53:04 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.218 2010/11/02 18:18:07 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -929,16 +929,27 @@ linux_sys_personality(struct lwp *l, const struct linux_sys_personality_args *ua
 	/* {
 		syscallarg(unsigned long) per;
 	} */
+	struct linux_emuldata *led;
+	int per;
 
-	switch (SCARG(uap, per)) {
+	per = SCARG(uap, per);
+	led = l->l_emuldata;
+	if (per == LINUX_PER_QUERY) {
+		retval[0] = led->led_personality;
+		return 0;
+	}
+	 
+	switch (per & LINUX_PER_MASK) {
 	case LINUX_PER_LINUX:
-	case LINUX_PER_QUERY:
+	case LINUX_PER_LINUX32:
+		led->led_personality = per;
 		break;
+
 	default:
 		return EINVAL;
 	}
 
-	retval[0] = LINUX_PER_LINUX;
+	retval[0] = per;
 	return 0;
 }
 
