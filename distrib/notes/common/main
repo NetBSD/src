@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.425.2.7 2010/04/24 06:48:22 snj Exp $
+.\"	$NetBSD: main,v 1.425.2.8 2010/11/03 08:03:32 snj Exp $
 .\"
 .\" Copyright (c) 1999-2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -558,6 +558,11 @@ openldap: Fix CVE-2009-3767.
 Fix an NX regression observed on amd64 kernels, where per-page execution right
 was disabled (therefore leading to the inability of the kernel to detect
 fraudulent use of memory mappings marked as not being executable).
+.It
+.Xr ftpd 8
+and
+.Xr sftp 1 :
+Prevent remote DoS attack with glob patterns.
 .bullet)
 .
 .Ss2 Kernel
@@ -600,6 +605,8 @@ file would get locked.
 PR 41620.
 .It
 Fix ktrace of data from iovec based system calls. PR 41819.
+.It
+Fix stack size enforcement.
 .bullet)
 .
 .Ss2 File Systems
@@ -642,6 +649,8 @@ PR 42175.
 .
 .It
 Add support for file sizes greater than 4GB.
+.It
+Prevent malicious local program from causing a kernel crash.
 .bullet)
 .
 .It
@@ -669,6 +678,15 @@ sysctlfs: Fix a crash while trying to read nodes on amd64.
 PR 41494.
 .It
 Various improvements to UDF.
+.It
+xattr: Fix system crash which could be triggered by a malicious command.
+.It
+coda: Fix incomplete ioctl parameter verification.
+.It
+ffs: Fix a race condition which could lead to data corruption.
+.It
+.Xr wapbl 4 :
+Fix replay problems which could corrupt the fs. PR 43336.
 .bullet)
 .
 .Ss2 Networking
@@ -785,6 +803,10 @@ works as one would expect.
 .It
 .Xr tap 4 :
 Fix a potential leak on device close.
+.Xr bpf 4 :
+Prevent malicious bytecode from crashing the kernel with a divide-by-zero trap.
+.It
+UDPv6: Prevent local crash by malicious user program.
 .bullet)
 .
 .Ss2 Miscellaneous Drivers
@@ -1006,11 +1028,17 @@ memory allocation failures for 32bit DMA on large-memory machines.
 .bullet)
 .
 .It
-i386: The FPU Tag word is a 16bit register, in FPU (387) mode it defines 2-bit
+i386
+.(bullet
+.It
+The FPU Tag word is a 16bit register, in FPU (387) mode it defines 2-bit
 tags for each FPU data register, in MMX mode it defines 1-bit tags for each
 data register.
 The single bit tags are stored in the lower 8 bits and thus in the first byte
 of the save frame.
+.It
+Fix a local user crash.
+.bullet)
 .It
 ARM: Work-around a possible process exit corner case which can leave stale
 data in the cache after a context-switch.
@@ -1055,6 +1083,10 @@ Switch amiga to the common m68k pmap.
 .It
 Fix a problem with the timecounter running backwards everytime the hardware
 counter wraps and the clock-interrupt is not yet serviced by hardclock().
+.It
+Improve precision of small kernel delays.
+.It
+Fix keyboard handshaking problems on Amiga 1200.
 .bullet)
 .
 .It
@@ -1220,6 +1252,10 @@ Make nanosleep cancelable again.
 .It
 Improve the algorithm used in pthread creation so that it does a better job of
 reusing dead threads.
+.It
+Make sure thread id is set correctly in case a threaded program forks from a
+thread other than the main thread.
+Fixes issues with, e.g., ruby.
 .bullet)
 .
 .It
@@ -1286,9 +1322,8 @@ PR 42124.
 Check validity of parent to avoid a potential segfault.
 .It
 .Xr sort 1 :
-Fix a ton of bugs.
-PR 18614 PR 27257 PR 25551 PR 22182 PR 31095 PR 30504 PR 36816 PR 37860 PR
-39308 PR 42094.
+Fix a ton of bugs including but not limited to PR 18614 PR 27257 PR 25551 PR 221
+82 PR 31095 PR 30504 PR 36816 PR 37860 PR 39308 PR 42094.
 .It
 .Xr user 8 :
 Fix -p flag: rm_eo is the first character *after* the match, so no need for a +1. Blowfish hashes are only 53 chars long, not 54.
