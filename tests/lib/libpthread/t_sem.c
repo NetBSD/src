@@ -1,4 +1,4 @@
-/* $NetBSD: t_sem.c,v 1.4 2010/07/21 17:23:08 jmmv Exp $ */
+/* $NetBSD: t_sem.c,v 1.5 2010/11/03 16:10:22 christos Exp $ */
 
 /*
  * Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008, 2010\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_sem.c,v 1.4 2010/07/21 17:23:08 jmmv Exp $");
+__RCSID("$NetBSD: t_sem.c,v 1.5 2010/11/03 16:10:22 christos Exp $");
 
 #include <errno.h>
 #include <fcntl.h>
@@ -119,16 +119,16 @@ ATF_TC_HEAD(named, tc)
 }
 ATF_TC_BODY(named, tc)
 {
-	sem_t *sem;
+	sem_t *semp;
 
 	ATF_REQUIRE_MSG(-1 != sysconf(_SC_SEMAPHORES), "%s", strerror(errno));
 
 	printf("Test begin\n");
 
 	(void) sem_unlink("/foo");
-	sem = sem_open("/foo", O_CREAT | O_EXCL, 0644, 0);
-	ATF_REQUIRE_MSG(sem != SEM_FAILED, "%s", strerror(errno));
-	SEM_REQUIRE(sem_close(sem));
+	semp = sem_open("/foo", O_CREAT | O_EXCL, 0644, 0);
+	ATF_REQUIRE_MSG(semp != SEM_FAILED, "%s", strerror(errno));
+	SEM_REQUIRE(sem_close(semp));
 	SEM_REQUIRE(sem_unlink("/foo"));
 
 	printf("Test end\n");
@@ -144,10 +144,10 @@ static void *
 entry(void * a_arg)
 {
 	pthread_t self = pthread_self();
-	sem_t * sem = (sem_t *) a_arg;
+	sem_t *semp = (sem_t *) a_arg;
 
 	printf("Thread %p waiting for semaphore...\n", self);
-	sem_wait(sem);
+	sem_wait(semp);
 	printf("Thread %p got semaphore\n", self);
 
 	return NULL;

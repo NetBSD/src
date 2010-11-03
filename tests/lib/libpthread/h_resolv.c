@@ -1,4 +1,4 @@
-/* $NetBSD: h_resolv.c,v 1.1 2010/07/16 15:42:53 jmmv Exp $ */
+/* $NetBSD: h_resolv.c,v 1.2 2010/11/03 16:10:22 christos Exp $ */
 
 /*-
  * Copyright (c) 2004, 2008 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: h_resolv.c,v 1.1 2010/07/16 15:42:53 jmmv Exp $");
+__RCSID("$NetBSD: h_resolv.c,v 1.2 2010/11/03 16:10:22 christos Exp $");
 
 #include <pthread.h>
 #include <stdio.h>
@@ -193,7 +193,7 @@ main(int argc, char *argv[])
 		sleep(1);
 	}
 	c = 0;
-	for (i = 0; i < hosts->sl_cur; i++) {
+	for (i = 0; i < (int)hosts->sl_cur; i++) {
 		if (ask[i] != got[i] && got[i] != 0) {
 			warnx("Error: host %s ask %d got %d\n",
 				hosts->sl_str[i], ask[i], got[i]);

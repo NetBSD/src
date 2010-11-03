@@ -1,4 +1,4 @@
-/*	$NetBSD: t_builtin.c,v 1.1 2010/08/27 09:56:40 pooka Exp $	*/
+/*	$NetBSD: t_builtin.c,v 1.2 2010/11/03 16:10:23 christos Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.  All rights reserved.
@@ -44,6 +44,8 @@
 #define MYMP "/mnt"
 #define HZFILE MYMP "/hz"
 
+static char kernfs[] = "kernfs";
+
 static bool
 check_kernfs(void)
 {
@@ -77,7 +79,7 @@ ATF_TC_BODY(disable, tc)
 	RL(rump_sys_mount(MOUNT_KERNFS, MYMP, 0, NULL, 0));
 	ATF_REQUIRE(check_kernfs());
 	RL(rump_sys_unmount(MYMP, 0));
-	RL(rump_sys_modctl(MODCTL_UNLOAD, "kernfs"));
+	RL(rump_sys_modctl(MODCTL_UNLOAD, kernfs));
 }
 
 ATF_TC(noauto);
@@ -93,7 +95,7 @@ ATF_TC_BODY(noauto, tc)
 	rump_init();
 	RL(rump_sys_mkdir(MYMP, 0777));
 
-	RL(rump_sys_modctl(MODCTL_UNLOAD, "kernfs"));
+	RL(rump_sys_modctl(MODCTL_UNLOAD, kernfs));
 
 	ATF_REQUIRE_ERRNO(ENODEV,
 	    rump_sys_mount(MOUNT_KERNFS, MYMP, 0, NULL, 0) == -1);
@@ -113,12 +115,12 @@ ATF_TC_BODY(forcereload, tc)
 	rump_init();
 	RL(rump_sys_mkdir(MYMP, 0777));
 
-	RL(rump_sys_modctl(MODCTL_UNLOAD, "kernfs"));
+	RL(rump_sys_modctl(MODCTL_UNLOAD, kernfs));
 	ATF_REQUIRE_ERRNO(ENODEV,
 	    rump_sys_mount(MOUNT_KERNFS, MYMP, 0, NULL, 0) == -1);
 
 	memset(&mod, 0, sizeof(mod));
-	mod.ml_filename = "kernfs";
+	mod.ml_filename = kernfs;
 	mod.ml_flags = MODCTL_LOAD_FORCE;
 
 	RL(rump_sys_modctl(MODCTL_LOAD, &mod));
@@ -139,21 +141,21 @@ ATF_TC_BODY(disabledstat, tc)
 {
 	struct modstat ms[128];
 	struct iovec iov;
-	int i;
+	size_t i;
 	bool found = false;
 
 	rump_init();
 	RL(rump_sys_mkdir(MYMP, 0777));
 
-	RL(rump_sys_modctl(MODCTL_UNLOAD, "kernfs"));
+	RL(rump_sys_modctl(MODCTL_UNLOAD, kernfs));
 
 	iov.iov_base = ms;
 	iov.iov_len = sizeof(ms);
 	RL(rump_sys_modctl(MODCTL_STAT, &iov));
 
 	for (i = 0; i < __arraycount(ms); i++) {
-		if (strcmp(ms[i].ms_name, "kernfs") == 0) {
-			ATF_REQUIRE_EQ(ms[i].ms_refcnt, -1);
+		if (strcmp(ms[i].ms_name, kernfs) == 0) {
+			ATF_REQUIRE_EQ(ms[i].ms_refcnt, (u_int)-1);
 			found = 1;
 			break;
 		}
@@ -176,7 +178,7 @@ ATF_TC_BODY(busydisable, tc)
 	RL(rump_sys_mount(MOUNT_KERNFS, MYMP, 0, NULL, 0));
 	ATF_REQUIRE(check_kernfs());
 	ATF_REQUIRE_ERRNO(EBUSY,
-	    rump_sys_modctl(MODCTL_UNLOAD, "kernfs") == -1);
+	    rump_sys_modctl(MODCTL_UNLOAD, kernfs) == -1);
 }
 
 ATF_TP_ADD_TCS(tp)

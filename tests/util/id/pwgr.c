@@ -1,4 +1,4 @@
-/* $NetBSD: pwgr.c,v 1.2 2008/04/28 20:24:12 martin Exp $ */
+/* $NetBSD: pwgr.c,v 1.3 2010/11/03 16:10:26 christos Exp $ */
 /*
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -39,6 +39,7 @@
 #include <grp.h>
 #include <pwd.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include <string.h>
 
 char Login[16];
@@ -89,10 +90,10 @@ getgrgid(gid_t gid)
 
 	memset(g, 0, sizeof(*g));
 	if (gid == 0) {
-		g->gr_name = "wheel";
+		g->gr_name = __UNCONST("wheel");
 		g->gr_gid = 0;
 	} else if (gid == 100) {
-		g->gr_name = "users";
+		g->gr_name = __UNCONST("users");
 		g->gr_gid = 100;
 	} else
 		g = NULL;
@@ -101,11 +102,11 @@ getgrgid(gid_t gid)
 }
 
 int
-getgrouplist(const char *name, int basegid, int *groups, int *ngroups)
+getgrouplist(const char *name, gid_t basegid, gid_t *groups, int *ngroups)
 {
 	int cnt, ret;
 
-	if (name == "root") {
+	if (strcmp(name, "root") == 0) {
 		if (*ngroups >= 1) {
 			groups[0] = basegid;
 			cnt = 1;
@@ -113,7 +114,7 @@ getgrouplist(const char *name, int basegid, int *groups, int *ngroups)
 
 		ret = (*ngroups >= cnt) ? 0 : -1;
 		*ngroups = cnt;
-	} else if (name == "test") {
+	} else if (strcmp(name, "test") == 0) {
 		if (*ngroups >= 1) {
 			groups[0] = basegid;
 			cnt = 1;
@@ -152,11 +153,11 @@ getpwnam(const char *login)
 
 	memset(p, 0, sizeof(*p));
 	if (strcmp(login, "root") == 0) {
-		p->pw_name = "root";
+		p->pw_name = __UNCONST("root");
 		p->pw_uid = 0;
 		p->pw_gid = 0;
 	} else if (strcmp(login, "test") == 0) {
-		p->pw_name = "test";
+		p->pw_name = __UNCONST("test");
 		p->pw_uid = 100;
 		p->pw_gid = 100;
 	} else
@@ -172,11 +173,11 @@ getpwuid(uid_t uid)
 
 	memset(p, 0, sizeof(*p));
 	if (uid == 0) {
-		p->pw_name = "root";
+		p->pw_name = __UNCONST("root");
 		p->pw_uid = 0;
 		p->pw_gid = 0;
 	} else if (uid == 100) {
-		p->pw_name = "test";
+		p->pw_name = __UNCONST("test");
 		p->pw_uid = 100;
 		p->pw_gid = 100;
 	} else
