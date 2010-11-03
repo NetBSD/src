@@ -1,4 +1,4 @@
-$NetBSD: README,v 1.13 2010/11/02 19:17:02 joerg Exp $
+$NetBSD: README,v 1.14 2010/11/03 18:52:44 christos Exp $
 
 Organization of Sources:
 
@@ -43,6 +43,8 @@ The licenses currently used are:
 
 	apache2		Apache 2.0 license.
 			http://www.opensource.org/licenses/apache2.0.php
+
+	atheros		Atheros License.
 
 	bsd		BSD (or equivalent) licensed software, possibly with
 			the "advertising clause".
