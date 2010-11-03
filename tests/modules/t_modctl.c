@@ -1,4 +1,4 @@
-/*	$NetBSD: t_modctl.c,v 1.4 2010/08/21 13:21:48 pgoyette Exp $	*/
+/*	$NetBSD: t_modctl.c,v 1.5 2010/11/03 16:10:23 christos Exp $	*/
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: t_modctl.c,v 1.4 2010/08/21 13:21:48 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: t_modctl.c,v 1.5 2010/11/03 16:10:23 christos Exp $");
 
 #include <sys/module.h>
 #include <sys/sysctl.h>
@@ -202,7 +202,8 @@ k_helper_is_present(enum presence_check how)
 		break;
 
 	default:
-		assert(false);
+		found = false;
+		assert(found);
 	}
 
 	return found;
@@ -283,7 +284,7 @@ unload(const char *name, bool fatal)
  * process only.
  */
 static
-int
+void
 unload_cleanup(const char *name)
 {
 

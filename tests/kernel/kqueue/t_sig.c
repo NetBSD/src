@@ -1,4 +1,4 @@
-/* $NetBSD: t_sig.c,v 1.1 2009/02/20 21:39:57 jmmv Exp $ */
+/* $NetBSD: t_sig.c,v 1.2 2010/11/03 16:10:20 christos Exp $ */
 
 /*-
  * Copyright (c) 2002, 2008 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_sig.c,v 1.1 2009/02/20 21:39:57 jmmv Exp $");
+__RCSID("$NetBSD: t_sig.c,v 1.2 2010/11/03 16:10:20 christos Exp $");
 
 #include <sys/event.h>
 #include <sys/ioctl.h>
@@ -111,8 +111,8 @@ ATF_TC_BODY(sig, tc)
 		RL(gettimeofday(&now, NULL));
 		timersub(&now, &then, &diff);
 
-		(void)printf("sig: kevent returned %d in %ld.%06ld\n",
-		    n, diff.tv_sec, diff.tv_usec);
+		(void)printf("sig: kevent returned %d in %lld.%06ld\n",
+		    n, (long long)diff.tv_sec, (long)diff.tv_usec);
 
 		if (n == 0)
 			continue;

@@ -1,4 +1,4 @@
-/*	$NetBSD: t_pr.c,v 1.2 2010/07/26 14:07:04 pooka Exp $	*/
+/*	$NetBSD: t_pr.c,v 1.3 2010/11/03 16:10:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: t_pr.c,v 1.2 2010/07/26 14:07:04 pooka Exp $");
+__RCSID("$NetBSD: t_pr.c,v 1.3 2010/11/03 16:10:25 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -62,7 +62,6 @@ ATF_TC_HEAD(loopmtu, tc)
 ATF_TC_BODY(loopmtu, tc)
 {
 	char ifname[IFNAMSIZ];
-	size_t len;
 	struct {
 		struct rt_msghdr m_rtm;
 		struct sockaddr_in m_sin;

@@ -1,4 +1,4 @@
-/*	$NetBSD: getmntinfo.c,v 1.3 2008/04/28 20:24:12 martin Exp $	*/
+/*	$NetBSD: getmntinfo.c,v 1.4 2010/11/03 16:10:25 christos Exp $	*/
 /*
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -179,7 +179,7 @@ setup_strpct(void)
  * Parameter taken from:
  * http://www.netbsd.org/cgi-bin/query-pr-single.pl?number=23600
  */
-void
+static void
 setup_pr23600(void)
 {
 	static const struct statvfs tmpl = {

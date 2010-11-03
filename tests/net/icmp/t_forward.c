@@ -1,4 +1,4 @@
-/*	$NetBSD: t_forward.c,v 1.5 2010/07/26 14:10:31 pooka Exp $	*/
+/*	$NetBSD: t_forward.c,v 1.6 2010/11/03 16:10:24 christos Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: t_forward.c,v 1.5 2010/07/26 14:10:31 pooka Exp $");
+__RCSID("$NetBSD: t_forward.c,v 1.6 2010/11/03 16:10:24 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -67,7 +67,6 @@ __RCSID("$NetBSD: t_forward.c,v 1.5 2010/07/26 14:10:31 pooka Exp $");
 static void
 sendttl(void)
 {
-	extern int rumpns_ip_defttl;
 	struct sockaddr_in sin;
 	char payload[1024];
 	char ifname[IFNAMSIZ];
