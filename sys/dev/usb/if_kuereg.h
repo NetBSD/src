@@ -1,4 +1,4 @@
-/*	$NetBSD: if_kuereg.h,v 1.15 2010/08/16 11:21:43 tsutsui Exp $	*/
+/*	$NetBSD: if_kuereg.h,v 1.16 2010/11/03 22:30:50 dyoung Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -159,7 +159,7 @@ struct kue_cdata {
 };
 
 struct kue_softc {
-	USBBASEDEVICE		kue_dev;
+	device_t kue_dev;
 
 	struct ethercom		kue_ec;
 #if NRND > 0
