@@ -1,4 +1,4 @@
-/*	$NetBSD: t_environment.c,v 1.4 2010/10/25 20:35:36 njoly Exp $	*/
+/*	$NetBSD: t_environment.c,v 1.5 2010/11/03 16:09:43 christos Exp $	*/
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_environment.c,v 1.4 2010/10/25 20:35:36 njoly Exp $");
+__RCSID("$NetBSD: t_environment.c,v 1.5 2010/11/03 16:09:43 christos Exp $");
 
 #include <atf-c.h>
 #include <errno.h>
@@ -42,6 +42,7 @@ __RCSID("$NetBSD: t_environment.c,v 1.4 2010/10/25 20:35:36 njoly Exp $");
 
 ATF_TC(t_setenv);
 ATF_TC(t_putenv);
+ATF_TC(t_clearenv);
 
 ATF_TC_HEAD(t_setenv, tc)
 {
@@ -53,6 +54,12 @@ ATF_TC_HEAD(t_putenv, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Test putenv(3), getenv(3), unsetenv(3)");
+}
+
+ATF_TC_HEAD(t_clearenv, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Test user clearing environment directly");
 }
 
 ATF_TC_BODY(t_setenv, tc)
@@ -97,14 +104,40 @@ ATF_TC_BODY(t_putenv, tc)
 	ATF_CHECK(getenv("crap") == NULL);
 
 	ATF_CHECK_ERRNO(EINVAL, putenv(NULL) == -1);
-	ATF_CHECK_ERRNO(EINVAL, putenv("val") == -1);
-	ATF_CHECK_ERRNO(EINVAL, putenv("=val") == -1);
+	ATF_CHECK_ERRNO(EINVAL, putenv(__UNCONST("val")) == -1);
+	ATF_CHECK_ERRNO(EINVAL, putenv(__UNCONST("=val")) == -1);
+}
+
+extern char **environ;
+
+ATF_TC_BODY(t_clearenv, tc)
+{
+	char name[1024], value[1024];
+
+	for (size_t i = 0; i < 1024; i++) {
+		snprintf(name, sizeof(name), "crap%zu", i);
+		snprintf(value, sizeof(value), "%zu", i);
+		ATF_CHECK(setenv(name, value, 1) != -1);
+	}
+
+	*environ = NULL;
+
+	for (size_t i = 0; i < 1; i++) {
+		snprintf(name, sizeof(name), "crap%zu", i);
+		snprintf(value, sizeof(value), "%zu", i);
+		ATF_CHECK(setenv(name, value, 1) != -1);
+	}
+
+	ATF_CHECK_STREQ(getenv("crap0"), "0");
+	ATF_CHECK(getenv("crap1") == NULL);
+	ATF_CHECK(getenv("crap2") == NULL);
 }
 
 ATF_TP_ADD_TCS(tp)
 {
 	ATF_TP_ADD_TC(tp, t_setenv);
 	ATF_TP_ADD_TC(tp, t_putenv);
+	ATF_TP_ADD_TC(tp, t_clearenv);
 
 	return atf_no_error();
 }
