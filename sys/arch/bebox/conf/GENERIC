@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.123 2010/10/30 05:57:41 kiyohara Exp $
+# $NetBSD: GENERIC,v 1.124 2010/11/03 05:19:29 kiyohara Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/bebox/conf/std.bebox"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.123 $"
+#ident 		"GENERIC-$Revision: 1.124 $"
 
 maxusers	32
 
@@ -207,10 +207,10 @@ attimer0 at isa?
 pcppi0	at isa?
 spkr0	at pcppi?
 
-#wss0	at isa? port ? irq 30 drq 6 drq2 7	# Windows Sound System
+wss0	at isa? port 0x82c irq 30 drq 6 drq2 7	# Windows Sound System
 
 # Audio support
-#audio*  at audiobus?
+audio*	at audiobus?
 
 # MIDI support
 midi*	at pcppi?			# MIDI interface to the PC speaker
