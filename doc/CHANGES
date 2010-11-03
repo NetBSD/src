@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1448 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1449 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -764,7 +764,7 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	sun3: Make common kernel module binaries work on both sun3 and sun3x.
 		[tsutsui 20101015]
 	atf(7): Import 0.11.  [jmmv 20101020]
-	Lua: Import of Lua 5.1.4. [mbalmer 20101031]
-	XZ: Import of XZ 5.0.0. [joerg 20101102]
+	lua(1): Import of Lua 5.1.4. [mbalmer 20101031]
+	xz(1): Import of XZ 5.0.0. [joerg 20101102]
 	if_otus(4): Port the Atheros AR9001U from OpenBSD (Anon Ymous)
 		[christos 20101103]
