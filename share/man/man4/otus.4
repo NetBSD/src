@@ -1,4 +1,4 @@
-.\" $NetBSD: otus.4,v 1.1 2010/11/03 18:57:57 christos Exp $
+.\" $NetBSD: otus.4,v 1.2 2010/11/03 20:11:33 christos Exp $
 .\" $OpenBSD: otus.4,v 1.14 2010/08/18 18:49:36 damien Exp $
 .\"
 .\" Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -73,8 +73,8 @@ The driver needs at least version 1.0 of the following firmware files,
 which are loaded when an interface is attached:
 .Pp
 .Bl -tag -width Ds -offset indent -compact
-.It /etc/firmware/otus-init
-.It /etc/firmware/otus-main
+.It /libdata/firmware/if_otus/otus-init
+.It /libdata/firmware/if_otus/otus-main
 .El
 .Pp
 Although these firmware files are freely redistributable, their usage
