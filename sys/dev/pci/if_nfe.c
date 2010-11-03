@@ -1,4 +1,4 @@
-/*	$NetBSD: if_nfe.c,v 1.52 2010/11/02 16:56:47 jakllsch Exp $	*/
+/*	$NetBSD: if_nfe.c,v 1.53 2010/11/03 14:03:40 jakllsch Exp $	*/
 /*	$OpenBSD: if_nfe.c,v 1.77 2008/02/05 16:52:50 brad Exp $	*/
 
 /*-
@@ -21,7 +21,7 @@
 /* Driver for NVIDIA nForce MCP Fast Ethernet and Gigabit Ethernet */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_nfe.c,v 1.52 2010/11/02 16:56:47 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_nfe.c,v 1.53 2010/11/03 14:03:40 jakllsch Exp $");
 
 #include "opt_inet.h"
 #include "vlan.h"
@@ -75,6 +75,7 @@ static int nfe_ifflags_cb(struct ethercom *);
 
 int	nfe_match(device_t, cfdata_t, void *);
 void	nfe_attach(device_t, device_t, void *);
+int	nfe_detach(device_t, int);
 void	nfe_power(int, void *);
 void	nfe_miibus_statchg(device_t);
 int	nfe_miibus_readreg(device_t, int, int);
@@ -111,8 +112,8 @@ void	nfe_tick(void *);
 void	nfe_poweron(device_t);
 bool	nfe_resume(device_t, const pmf_qual_t *);
 
-CFATTACH_DECL_NEW(nfe, sizeof(struct nfe_softc), nfe_match, nfe_attach,
-    NULL, NULL);
+CFATTACH_DECL_NEW(nfe, sizeof(struct nfe_softc),
+    nfe_match, nfe_attach, nfe_detach, NULL);
 
 /* #define NFE_NO_JUMBO */
 
@@ -218,12 +219,12 @@ nfe_attach(device_t parent, device_t self, void *aux)
 	pci_intr_handle_t ih;
 	const char *intrstr;
 	struct ifnet *ifp;
-	bus_size_t memsize;
 	pcireg_t memtype, csr;
 	char devinfo[256];
 	int mii_flags = 0;
 
 	sc->sc_dev = self;
+	sc->sc_pc = pa->pa_pc;
 	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
 	aprint_normal(": %s (rev. 0x%02x)\n", devinfo, PCI_REVISION(pa->pa_class));
 
@@ -232,7 +233,7 @@ nfe_attach(device_t parent, device_t self, void *aux)
 	case PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT:
 	case PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_64BIT:
 		if (pci_mapreg_map(pa, NFE_PCI_BA, memtype, 0, &sc->sc_memt,
-		    &sc->sc_memh, NULL, &memsize) == 0)
+		    &sc->sc_memh, NULL, &sc->sc_mems) == 0)
 			break;
 		/* FALLTHROUGH */
 	default:
@@ -425,8 +426,56 @@ fail:
 		pci_intr_disestablish(pc, sc->sc_ih);
 		sc->sc_ih = NULL;
 	}
-	if (memsize)
-		bus_space_unmap(sc->sc_memt, sc->sc_memh, memsize);
+	if (sc->sc_mems != 0) {
+		bus_space_unmap(sc->sc_memt, sc->sc_memh, sc->sc_mems);
+		sc->sc_mems = 0;
+	}
+}
+
+int
+nfe_detach(device_t self, int flags)
+{
+	struct nfe_softc *sc = device_private(self);
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	int s;
+
+	s = splnet();
+
+	nfe_stop(ifp, 1);
+
+	pmf_device_deregister(self);
+	callout_destroy(&sc->sc_tick_ch);
+	ether_ifdetach(ifp);
+	if_detach(ifp);
+	mii_detach(&sc->sc_mii, MII_PHY_ANY, MII_OFFSET_ANY);
+
+	nfe_free_rx_ring(sc, &sc->rxq);
+	mutex_destroy(&sc->rxq.mtx);
+	nfe_free_tx_ring(sc, &sc->txq);
+
+	if (sc->sc_ih != NULL) {
+		pci_intr_disestablish(sc->sc_pc, sc->sc_ih);
+		sc->sc_ih = NULL;
+	}
+
+	if ((sc->sc_flags & NFE_CORRECT_MACADDR) != 0) {
+		nfe_set_macaddr(sc, sc->sc_enaddr);
+	} else {
+		NFE_WRITE(sc, NFE_MACADDR_LO,
+		    sc->sc_enaddr[0] <<  8 | sc->sc_enaddr[1]);
+		NFE_WRITE(sc, NFE_MACADDR_HI,
+		    sc->sc_enaddr[2] << 24 | sc->sc_enaddr[3] << 16 |
+		    sc->sc_enaddr[4] <<  8 | sc->sc_enaddr[5]);
+	}
+
+	if (sc->sc_mems != 0) {
+		bus_space_unmap(sc->sc_memt, sc->sc_memh, sc->sc_mems);
+		sc->sc_mems = 0;
+	}
+
+	splx(s);
+
+	return 0;
 }
 
 void
@@ -1540,6 +1589,8 @@ nfe_free_rx_ring(struct nfe_softc *sc, struct nfe_rx_ring *ring)
 		if (data->m != NULL)
 			m_freem(data->m);
 	}
+
+	nfe_jpool_free(sc);
 }
 
 struct nfe_jbuf *
@@ -1667,10 +1718,12 @@ nfe_jpool_free(struct nfe_softc *sc)
 		    ring->jmap->dm_mapsize, BUS_DMASYNC_POSTWRITE);
 		bus_dmamap_unload(sc->sc_dmat, ring->jmap);
 		bus_dmamap_destroy(sc->sc_dmat, ring->jmap);
+		ring->jmap = NULL;
 	}
 	if (ring->jpool != NULL) {
 		bus_dmamem_unmap(sc->sc_dmat, ring->jpool, NFE_JPOOL_SIZE);
 		bus_dmamem_free(sc->sc_dmat, &ring->jseg, 1);
+		ring->jpool = NULL;
 	}
 }
 
