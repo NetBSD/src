@@ -1,4 +1,4 @@
-/* $NetBSD: t_barrier.c,v 1.1 2010/07/16 15:42:53 jmmv Exp $ */
+/* $NetBSD: t_barrier.c,v 1.2 2010/11/03 16:10:22 christos Exp $ */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_barrier.c,v 1.1 2010/07/16 15:42:53 jmmv Exp $");
+__RCSID("$NetBSD: t_barrier.c,v 1.2 2010/11/03 16:10:22 christos Exp $");
 
 #include <pthread.h>
 #include <stdio.h>
@@ -50,15 +50,15 @@ static void *
 threadfunc(void *arg)
 {
 	int which = (int)(long)arg;
-	int ret;
+	int rv;
 
 	printf("thread %d entering barrier\n", which);
-	ret = pthread_barrier_wait(&barrier);
-	printf("thread %d leaving barrier -> %d\n", which, ret);
+	rv = pthread_barrier_wait(&barrier);
+	printf("thread %d leaving barrier -> %d\n", which, rv);
 
 	PTHREAD_REQUIRE(pthread_mutex_lock(&mutex));
 	after_barrier_count++;
-	if (ret == PTHREAD_BARRIER_SERIAL_THREAD)
+	if (rv == PTHREAD_BARRIER_SERIAL_THREAD)
 		serial_count++;
 	PTHREAD_REQUIRE(pthread_mutex_unlock(&mutex));
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: k_helper2.c,v 1.1 2010/08/21 13:21:48 pgoyette Exp $ */
+/*	$NetBSD: k_helper2.c,v 1.2 2010/11/03 16:10:23 christos Exp $ */
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: k_helper2.c,v 1.1 2010/08/21 13:21:48 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: k_helper2.c,v 1.2 2010/11/03 16:10:23 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -45,7 +45,7 @@ MODULE(MODULE_CLASS_MISC, k_helper2, NULL);
 /* TODO: Change the integer variables below that represent booleans to
  * bools, once sysctl(8) supports CTLTYPE_BOOL nodes. */
 
-static struct sysctllog *clog;
+static struct sysctllog *clogp;
 static int present = 1;
 
 #define K_HELPER2 0x23456781
@@ -76,7 +76,7 @@ static
 int
 k_helper2_init(prop_dictionary_t props)
 {
-	sysctl_k_helper2_setup(&clog);
+	sysctl_k_helper2_setup(&clogp);
 
 	return 0;
 }
@@ -86,7 +86,7 @@ int
 k_helper2_fini(void *arg)
 {
 
-	sysctl_teardown(&clog);
+	sysctl_teardown(&clogp);
 
 	return 0;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: t_sha2.c,v 1.1 2010/01/24 21:12:17 joerg Exp $	*/
+/*	$NetBSD: t_sha2.c,v 1.2 2010/11/03 16:10:22 christos Exp $	*/
 /*-
  * Copyright (c) 20010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_sha2.c,v 1.1 2010/01/24 21:12:17 joerg Exp $");
+__RCSID("$NetBSD: t_sha2.c,v 1.2 2010/11/03 16:10:22 christos Exp $");
 
 #include <atf-c.h>
 #include <sys/types.h>
@@ -144,7 +144,7 @@ static const struct testvector test512[] = {
 	{ "abcdefghijklmnopqrstuvwq", "404eb5652173323320cac6bf8d9714aef0747693a8ab4570700c6262268d367f30e31c44fa66860568ff058fe39c9aa8dac76bc78566c691a884cb9052c4aa0a" },
 };
 
-void
+static void
 digest2string(const uint8_t *digest, char *string, size_t len)
 {
 	while (len--) {
@@ -171,8 +171,8 @@ ATF_TC_BODY(t_sha256, tc)
 {
 	size_t i, j, len;
 	SHA256_CTX ctx;
-	char buf[256];
-	char digest[8 + SHA256_DIGEST_LENGTH];
+	unsigned char buf[256];
+	unsigned char digest[8 + SHA256_DIGEST_LENGTH];
 	char output[SHA256_DIGEST_STRING_LENGTH];
 
 	for (i = 0; i < sizeof(test256) / sizeof(test256[0]); ++i) {
@@ -198,8 +198,8 @@ ATF_TC_BODY(t_sha384, tc)
 {
 	size_t i, j, len;
 	SHA384_CTX ctx;
-	char buf[384];
-	char digest[8 + SHA384_DIGEST_LENGTH];
+	unsigned char buf[384];
+	unsigned char digest[8 + SHA384_DIGEST_LENGTH];
 	char output[SHA384_DIGEST_STRING_LENGTH];
 
 	for (i = 0; i < sizeof(test384) / sizeof(test384[0]); ++i) {
@@ -225,8 +225,8 @@ ATF_TC_BODY(t_sha512, tc)
 {
 	size_t i, j, len;
 	SHA512_CTX ctx;
-	char buf[512];
-	char digest[8 + SHA512_DIGEST_LENGTH];
+	unsigned char buf[512];
+	unsigned char digest[8 + SHA512_DIGEST_LENGTH];
 	char output[SHA512_DIGEST_STRING_LENGTH];
 
 	for (i = 0; i < sizeof(test512) / sizeof(test512[0]); ++i) {

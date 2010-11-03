@@ -1,4 +1,4 @@
-/* $NetBSD: t_sigmask.c,v 1.1 2010/07/16 15:42:53 jmmv Exp $ */
+/* $NetBSD: t_sigmask.c,v 1.2 2010/11/03 16:10:22 christos Exp $ */
 
 /*
  * Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008, 2010\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_sigmask.c,v 1.1 2010/07/16 15:42:53 jmmv Exp $");
+__RCSID("$NetBSD: t_sigmask.c,v 1.2 2010/11/03 16:10:22 christos Exp $");
 
 /*
  * Regression test for pthread_sigmask when SA upcalls aren't started yet.
@@ -179,7 +179,7 @@ ATF_TC_BODY(respected_while_running, tc)
 {
 	struct sigaction act;
 	pthread_t thread;
-	int ret;
+	int rv;
 
 	act.sa_sigaction = respected_while_running_handler1;
 	sigemptyset(&act.sa_mask);
@@ -191,7 +191,7 @@ ATF_TC_BODY(respected_while_running, tc)
 	act.sa_sigaction = respected_while_running_handler2;
 	sigemptyset(&act.sa_mask);
 	act.sa_flags = SA_SIGINFO;
-	ret = sigaction(SIGUSR2, &act, NULL);
+	rv = sigaction(SIGUSR2, &act, NULL);
 
 	PTHREAD_REQUIRE(pthread_create(&thread, NULL,
 	    respected_while_running_threadroutine, NULL));

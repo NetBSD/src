@@ -1,4 +1,4 @@
-/* $NetBSD: t_basic.c,v 1.1 2010/07/16 13:56:31 jmmv Exp $ */
+/* $NetBSD: t_basic.c,v 1.2 2010/11/03 16:10:22 christos Exp $ */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,10 +34,11 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_basic.c,v 1.1 2010/07/16 13:56:31 jmmv Exp $");
+__RCSID("$NetBSD: t_basic.c,v 1.2 2010/11/03 16:10:22 christos Exp $");
 
-#include <prop/proplib.h>
 #include <stdlib.h>
+#include <string.h>
+#include <prop/proplib.h>
 
 #include <atf-c.h>
 

@@ -1,4 +1,4 @@
-/* $NetBSD: t_cond.c,v 1.1 2010/07/16 15:42:53 jmmv Exp $ */
+/* $NetBSD: t_cond.c,v 1.2 2010/11/03 16:10:22 christos Exp $ */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_cond.c,v 1.1 2010/07/16 15:42:53 jmmv Exp $");
+__RCSID("$NetBSD: t_cond.c,v 1.2 2010/11/03 16:10:22 christos Exp $");
 
 #include <sys/time.h>
 
@@ -51,15 +51,15 @@ static int count, share, toggle, total;
 static void *
 signal_delay_wait_threadfunc(void *arg)
 {
-	int *share = (int *) arg;
+	int *shared = (int *) arg;
 
 	printf("2: Second thread.\n");
 
 	printf("2: Locking mutex\n");
 	PTHREAD_REQUIRE(pthread_mutex_lock(&mutex));
 	printf("2: Got mutex.\n");
-	printf("Shared value: %d. Changing to 0.\n", *share);
-	*share = 0;
+	printf("Shared value: %d. Changing to 0.\n", *shared);
+	*shared = 0;
 
 	PTHREAD_REQUIRE(pthread_mutex_unlock(&mutex));
 	PTHREAD_REQUIRE(pthread_cond_signal(&cond));
@@ -112,15 +112,15 @@ ATF_TC_BODY(signal_delay_wait, tc)
 static void *
 signal_before_unlock_threadfunc(void *arg)
 {
-	int *share = (int *) arg;
+	int *shared = (int *) arg;
 
 	printf("2: Second thread.\n");
 
 	printf("2: Locking mutex\n");
 	PTHREAD_REQUIRE(pthread_mutex_lock(&mutex));
 	printf("2: Got mutex.\n");
-	printf("Shared value: %d. Changing to 0.\n", *share);
-	*share = 0;
+	printf("Shared value: %d. Changing to 0.\n", *shared);
+	*shared = 0;
 
 	/* Signal first, then unlock, for a different test than #1. */
 	PTHREAD_REQUIRE(pthread_cond_signal(&cond));
@@ -175,15 +175,15 @@ ATF_TC_BODY(signal_before_unlock, tc)
 static void *
 signal_before_unlock_static_init_threadfunc(void *arg)
 {
-	int *share = (int *) arg;
+	int *shared = (int *) arg;
 
 	printf("2: Second thread.\n");
 
 	printf("2: Locking mutex\n");
 	PTHREAD_REQUIRE(pthread_mutex_lock(&static_mutex));
 	printf("2: Got mutex.\n");
-	printf("Shared value: %d. Changing to 0.\n", *share);
-	*share = 0;
+	printf("Shared value: %d. Changing to 0.\n", *shared);
+	*shared = 0;
 
 	/* Signal first, then unlock, for a different test than #1. */
 	PTHREAD_REQUIRE(pthread_cond_signal(&static_cond));

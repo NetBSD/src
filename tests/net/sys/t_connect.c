@@ -1,4 +1,4 @@
-/*	$NetBSD: t_connect.c,v 1.3 2010/06/12 15:01:04 wiz Exp $	*/
+/*	$NetBSD: t_connect.c,v 1.4 2010/11/03 16:10:25 christos Exp $	*/
 /*
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -74,10 +74,11 @@ ATF_TC_BODY(low_port, tc)
 	sin.sin_family = AF_INET;
 
 	if (connect(sd, (struct sockaddr *)&sin, sizeof(sin)) == -1) {
-		int err = errno;
+		int serrno = errno;
 		atf_tc_fail("connect failed: %s%s",
-		    strerror(err),
-		    err != EACCES ? "" : " (see http://mail-index.netbsd.org/"
+		    strerror(serrno),
+		    serrno != EACCES ? "" :
+		    " (see http://mail-index.netbsd.org/"
 		    "source-changes/2007/12/16/0011.html)");
 	}
 

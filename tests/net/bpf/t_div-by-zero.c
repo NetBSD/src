@@ -8,6 +8,7 @@
 
 #include <rump/rump.h>
 #include <rump/rumpuser.h>
+#include <rump/rump_syscalls.h>
 
 ATF_TC(div_by_zero);
 ATF_TC_HEAD(div_by_zero, tc)
@@ -39,8 +40,7 @@ ATF_TC_BODY(div_by_zero, tc)
 
 	rump_init();
 	fd = rump_sys_open("/dev/bpf", O_RDWR);
-	if (fd == -1)
-		err(1, "open bpf");
+	ATF_CHECK(fd != -1);
 	ATF_REQUIRE_EQ_MSG(rump_sys_ioctl(fd, BIOCSETF, &bp), -1,
 	    "bpf accepted program with division by zero");
 }

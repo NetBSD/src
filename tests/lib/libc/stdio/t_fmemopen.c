@@ -1,4 +1,4 @@
-/* $NetBSD: t_fmemopen.c,v 1.1 2010/09/24 09:21:53 tnozaki Exp $ */
+/* $NetBSD: t_fmemopen.c,v 1.2 2010/11/03 16:10:22 christos Exp $ */
 
 /*-
  * Copyright (c)2010 Takehiko NOZAKI,
@@ -68,7 +68,7 @@ const char *mode_a[] = { "a", "ab", "a+", "ab+", "a+b", NULL };
 
 struct testcase {
 	const char *s;
-	size_t n;
+	off_t n;
 } testcases[] = {
 #define TESTSTR(s)	{ s, sizeof(s)-1 }
 	TESTSTR("\0he quick brown fox jumps over the lazy dog"),
@@ -751,9 +751,9 @@ ATF_TC_BODY(test15, tc)
 {
 	struct testcase *t;
 	const char **p;
-	char buf0[BUFSIZ], buf1[BUFSIZ];
+	char buf0[BUFSIZ];
 	FILE *fp;
-	size_t i;
+	int i;
 
 	for (t = &testcases[0]; t->s != NULL; ++t) {
 		for (p = &mode_rw1[0]; *p != NULL; ++p) {
@@ -764,7 +764,7 @@ ATF_TC_BODY(test15, tc)
 /*
  * test fmemopen_read + fgetc(3)
  */
-			for (i = (size_t)0; i < t->n; ++i) {
+			for (i = 0; i < t->n; ++i) {
 				ATF_CHECK(ftello(fp) == (off_t)i);
 				ATF_CHECK(fgetc(fp) == buf0[i]);
 				ATF_CHECK(feof(fp) == 0);
@@ -801,7 +801,7 @@ ATF_TC_BODY(test16, tc)
  * test fmemopen_read + fread(4)
  */
 			ATF_CHECK(ftello(fp) == (off_t)0);
-			ATF_CHECK(fread(&buf1[0], 1, sizeof(buf1), fp) == t->n);
+			ATF_CHECK(fread(&buf1[0], 1, sizeof(buf1), fp) == (size_t)t->n);
 			ATF_CHECK(feof(fp) != 0);
 			ATF_CHECK(memcmp(&buf0[0], &buf1[0], t->n) == 0);
 			ATF_CHECK((unsigned char)buf1[t->n] == 0x1);
@@ -821,7 +821,8 @@ ATF_TC_HEAD(test17, tc)
 ATF_TC_BODY(test17, tc)
 {
 	struct testcase *t;
-	size_t len, i;
+	size_t len;
+	int i;
 	const char **p;
 	char buf[BUFSIZ];
 	FILE *fp;
@@ -849,7 +850,7 @@ ATF_TC_BODY(test17, tc)
 			ATF_CHECK(feof(fp) != 0);
 			ATF_CHECK(ftello(fp) == (off_t)t->n);
 			rewind(fp);
-			for (i = (size_t)0; i < t->n; ++i) {
+			for (i = 0; i < t->n; ++i) {
 				ATF_CHECK(ftello(fp) == (off_t)i);
 				ATF_CHECK(fgetc(fp) == buf[i]);
 				ATF_CHECK(feof(fp) == 0);
@@ -874,7 +875,7 @@ ATF_TC_HEAD(test18, tc)
 ATF_TC_BODY(test18, tc)
 {
 	struct testcase *t;
-	size_t len, i;
+	size_t len;
 	const char **p;
 	char buf0[BUFSIZ], buf1[BUFSIZ];
 	FILE *fp;
@@ -903,7 +904,7 @@ ATF_TC_BODY(test18, tc)
 			buf1[t->n] = 0x1;
 			ATF_CHECK(ftello(fp) == (off_t)0);
 			ATF_CHECK(fread(&buf1[0], 1, sizeof(buf1), fp)
-			    == t->n);
+			    == (size_t)t->n);
 			ATF_CHECK(feof(fp) != 0);
 			ATF_CHECK(!memcmp(&buf0[0], &buf1[0], t->n));
 			ATF_CHECK((unsigned char)buf1[t->n] == 0x1);
@@ -936,7 +937,8 @@ ATF_TC_HEAD(test19, tc)
 ATF_TC_BODY(test19, tc)
 {
 	struct testcase *t;
-	size_t len, i;
+	size_t len;
+	int i;
 	const char **p;
 	char buf[BUFSIZ];
 	FILE *fp;
@@ -953,7 +955,7 @@ ATF_TC_BODY(test19, tc)
 /*
  * test fmemopen_write + fputc(3)
  */
-			for (i = (size_t)0; i < t->n; ++i) {
+			for (i = 0; i < t->n; ++i) {
 				ATF_CHECK(ftello(fp) == (off_t)i);
 				ATF_CHECK(fputc(t->s[i], fp) == t->s[i]);
 				ATF_CHECK(buf[i] == t->s[i]);
@@ -995,7 +997,7 @@ ATF_TC_HEAD(test20, tc)
 ATF_TC_BODY(test20, tc)
 {
 	struct testcase *t;
-	size_t len, i;
+	size_t len;
 	const char **p;
 	char buf[BUFSIZ];
 	FILE *fp;
@@ -1009,7 +1011,7 @@ ATF_TC_BODY(test20, tc)
 			fp = fmemopen(&buf[0], t->n + 1, *p);
 			ATF_CHECK(fp != NULL);
 			setbuf(fp, NULL);
-			ATF_CHECK(fwrite(t->s, 1, t->n, fp) == t->n);
+			ATF_CHECK(fwrite(t->s, 1, t->n, fp) == (size_t)t->n);
 /*
  * test fmemopen_write + fwrite(3)
  */
@@ -1048,7 +1050,7 @@ ATF_TC_HEAD(test21, tc)
 ATF_TC_BODY(test21, tc)
 {
 	struct testcase *t;
-	size_t len, i;
+	int len, i;
 	const char **p;
 	char buf[BUFSIZ];
 	FILE *fp;
@@ -1104,7 +1106,7 @@ ATF_TC_HEAD(test22, tc)
 ATF_TC_BODY(test22, tc)
 {
 	struct testcase *t0, *t1;
-	size_t len0, len1, i, nleft;
+	size_t len0, len1, nleft;
 	const char **p;
 	char buf[BUFSIZ];
 	FILE *fp;

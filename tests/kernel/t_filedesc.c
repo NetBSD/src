@@ -1,4 +1,4 @@
-/*	$NetBSD: t_filedesc.c,v 1.3 2010/08/04 14:28:28 pooka Exp $	*/
+/*	$NetBSD: t_filedesc.c,v 1.4 2010/11/03 16:10:20 christos Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_filedesc.c,v 1.3 2010/08/04 14:28:28 pooka Exp $");
+__RCSID("$NetBSD: t_filedesc.c,v 1.4 2010/11/03 16:10:20 christos Exp $");
 
 #include <sys/types.h>
 
@@ -35,6 +35,7 @@ __RCSID("$NetBSD: t_filedesc.c,v 1.3 2010/08/04 14:28:28 pooka Exp $");
 #include <atf-c.h>
 #include <fcntl.h>
 #include <stdlib.h>
+#include <pthread.h>
 
 #include <rump/rump.h>
 #include <rump/rump_syscalls.h>

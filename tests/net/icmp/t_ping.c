@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ping.c,v 1.8 2010/08/26 17:24:14 pooka Exp $	*/
+/*	$NetBSD: t_ping.c,v 1.9 2010/11/03 16:10:24 christos Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: t_ping.c,v 1.8 2010/08/26 17:24:14 pooka Exp $");
+__RCSID("$NetBSD: t_ping.c,v 1.9 2010/11/03 16:10:24 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -129,7 +129,7 @@ in_cksum(void *data, size_t len)
 }
 
 static int
-doping(const char *target, int loops, int pktsize)
+doping(const char *target, int loops, size_t pktsize)
 {
 	char sndbuf[IP_MAXPACKET - sizeof(struct ip)];
 	char recvbuf[IP_MAXPACKET];
@@ -137,7 +137,7 @@ doping(const char *target, int loops, int pktsize)
 	struct icmp *icmp;
 	socklen_t slen;
 	ssize_t n;
-	int loop, i, succ;
+	int loop, succ;
 	int x, xnon, s;
 
 	RL(s = rump_sys_socket(PF_INET, SOCK_RAW, IPPROTO_ICMP));
@@ -397,7 +397,7 @@ ATF_TC_BODY(ping_of_death, tc)
 		    tot += (frag - sizeof(*ip))) {
 			frag = MIN(65538 - tot, sizeof(data));
 			ip->ip_off = tot >> 3;
-			assert(ip->ip_off << 3 == tot);
+			assert((size_t)ip->ip_off << 3 == tot);
 			ip->ip_len = frag;
 
 			if (frag == sizeof(data)) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: t_glob_star.c,v 1.5 2010/10/13 11:19:28 pooka Exp $	*/
+/*	$NetBSD: t_glob_star.c,v 1.6 2010/11/03 16:10:21 christos Exp $	*/
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_glob_star.c,v 1.5 2010/10/13 11:19:28 pooka Exp $");
+__RCSID("$NetBSD: t_glob_star.c,v 1.6 2010/11/03 16:10:21 christos Exp $");
 
 #include <atf-c.h>
 
@@ -127,12 +127,12 @@ static struct dirent *
 gl_readdir(void *v)
 {
 	static struct dirent dir;
-	struct gl_dir *d = v;
-	if (d->pos < d->len) {
-		const struct gl_file *f = &d->dir[d->pos++];
+	struct gl_dir *dd = v;
+	if (dd->pos < dd->len) {
+		const struct gl_file *f = &dd->dir[dd->pos++];
 		strcpy(dir.d_name, f->name);
 		dir.d_namlen = strlen(f->name);
-		dir.d_ino = d->pos;
+		dir.d_ino = dd->pos;
 		dir.d_type = f->dir ? DT_DIR : DT_REG;
 		DPRINTF(("readdir %s %d\n", dir.d_name, dir.d_type));
 		dir.d_reclen = _DIRENT_RECLEN(&dir, dir.d_namlen);
@@ -162,9 +162,9 @@ gl_lstat(const char *name , __gl_stat_t *st)
 static void
 gl_closedir(void *v)
 {
-	struct gl_dir *d = v;
-	d->pos = 0;
-	DPRINTF(("closedir %p\n", d));
+	struct gl_dir *dd = v;
+	dd->pos = 0;
+	DPRINTF(("closedir %p\n", dd));
 }
 
 static void
