@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.111 2010/11/03 22:34:24 dyoung Exp $	*/
+/*	$NetBSD: uhub.c,v 1.112 2010/11/03 22:59:40 dyoung Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 
 /*
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.111 2010/11/03 22:34:24 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.112 2010/11/03 22:59:40 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -529,7 +529,7 @@ uhub_explore(usbd_device_handle dev)
 			/* Not allowed send/receive packet. */
 #ifdef DIAGNOSTIC
 			printf("%s: port %d, device not enable\n",
-			       USBDEVNAME(sc->sc_dev), port);
+			       device_xname(sc->sc_dev), port);
 #endif
 			continue;
 		}
