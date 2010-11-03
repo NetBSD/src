@@ -1,4 +1,4 @@
-/*	$NetBSD: uthum.c,v 1.5 2010/03/12 09:02:15 jdc Exp $   */
+/*	$NetBSD: uthum.c,v 1.6 2010/11/03 22:34:24 dyoung Exp $   */
 /*	$OpenBSD: uthum.c,v 1.6 2010/01/03 18:43:02 deraadt Exp $   */
 
 /*
@@ -114,18 +114,21 @@ extern struct cfdriver uthum_cd;
 CFATTACH_DECL_NEW(uthum, sizeof(struct uthum_softc), uthum_match, uthum_attach,
     uthum_detach, uthum_activate);
 
-USB_MATCH(uthum)
+int 
+uthum_match(device_t parent, cfdata_t match, void *aux)
 {
-	USB_MATCH_START(uthum, uaa);
+	struct usb_attach_arg *uaa = aux;
 	struct uhidev_attach_arg *uha = (struct uhidev_attach_arg *)uaa;
 
 	return (uthum_lookup(uha->uaa->vendor, uha->uaa->product) != NULL ?
 		UMATCH_VENDOR_PRODUCT : UMATCH_NONE);
 }
 
-USB_ATTACH(uthum)
+void 
+uthum_attach(device_t parent, device_t self, void *aux)
 {
-	USB_ATTACH_START(uthum, sc, uaa);
+	struct uthum_softc *sc = device_private(self);
+	struct usb_attach_arg *uaa = aux;
 	struct uhidev_attach_arg *uha = (struct uhidev_attach_arg *)uaa;
 	usbd_device_handle dev = uha->parent->sc_udev;
 	int size, repid;
@@ -211,9 +214,10 @@ USB_ATTACH(uthum)
 	DPRINTF(("uthum_attach: complete\n"));
 }
 
-USB_DETACH(uthum)
+int 
+uthum_detach(device_t self, int flags)
 {
-	USB_DETACH_START(uthum, sc);
+	struct uthum_softc *sc = device_private(self);
 	int rv = 0;
 
 	sc->sc_dying = 1;

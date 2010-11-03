@@ -1,4 +1,4 @@
-/*	$NetBSD: ucycom.c,v 1.30 2009/12/06 21:40:31 dyoung Exp $	*/
+/*	$NetBSD: ucycom.c,v 1.31 2010/11/03 22:34:23 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucycom.c,v 1.30 2009/12/06 21:40:31 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucycom.c,v 1.31 2010/11/03 22:34:23 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,8 +64,8 @@ __KERNEL_RCSID(0, "$NetBSD: ucycom.c,v 1.30 2009/12/06 21:40:31 dyoung Exp $");
 #include "ioconf.h"
 
 #ifdef UCYCOM_DEBUG
-#define DPRINTF(x)	if (ucycomdebug) logprintf x
-#define DPRINTFN(n, x)	if (ucycomdebug > (n)) logprintf x
+#define DPRINTF(x)	if (ucycomdebug) printf x
+#define DPRINTFN(n, x)	if (ucycomdebug > (n)) printf x
 int	ucycomdebug = 20;
 #else
 #define DPRINTF(x)
@@ -173,7 +173,12 @@ Static const struct usb_devno ucycom_devs[] = {
 };
 #define ucycom_lookup(v, p) usb_lookup(ucycom_devs, v, p)
 
-USB_DECLARE_DRIVER(ucycom);
+int             ucycom_match(device_t, cfdata_t, void *);
+void            ucycom_attach(device_t, device_t, void *);
+int             ucycom_detach(device_t, int);
+int             ucycom_activate(device_t, enum devact);
+extern struct cfdriver ucycom_cd;
+CFATTACH_DECL_NEW(ucycom, sizeof(struct ucycom_softc), ucycom_match, ucycom_attach, ucycom_detach, ucycom_activate);
 
 int
 ucycom_match(device_t parent, cfdata_t match, void *aux)
@@ -239,7 +244,7 @@ ucycom_detach(device_t self, int flags)
 		mutex_spin_exit(&tty_lock);
 	}
 	/* Wait for processes to go away. */
-	usb_detach_wait(USBDEV(sc->sc_hdev.sc_dev));
+	usb_detach_wait(sc->sc_hdev.sc_dev);
 	splx(s);
 
 	/* locate the major number */
@@ -265,7 +270,7 @@ ucycom_detach(device_t self, int flags)
 }
 
 int
-ucycom_activate(device_ptr_t self, enum devact act)
+ucycom_activate(device_t self, enum devact act)
 {
 	struct ucycom_softc *sc = device_private(self);
 
