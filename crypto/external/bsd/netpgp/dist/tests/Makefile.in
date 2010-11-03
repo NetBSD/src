@@ -284,6 +284,7 @@ clean-am: clean-generic clean-libtool clean-local mostlyclean-am
 
 distclean: distclean-am
 	-rm -f Makefile
+	-rm -rf homedir
 distclean-am: clean-am distclean-generic
 
 dvi: dvi-am
