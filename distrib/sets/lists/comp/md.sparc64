@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.66 2010/11/02 16:34:34 joerg Exp $
+# $NetBSD: md.sparc64,v 1.67 2010/11/03 14:37:56 njoly Exp $
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/sparc				comp-c-include
 ./usr/include/sparc/_G_config.h			comp-obsolete		obsolete
@@ -425,7 +425,7 @@
 ./usr/lib/sparc/libm_p.a			comp-c-proflib		compat,profile
 ./usr/lib/sparc/libm_pic.a			comp-c-piclib		compat,pic
 ./usr/lib/sparc/libmagic.a			comp-c-lib		compat
-./usr/lib/sparc/libmagic.so			base-obsolete		obsolete
+./usr/lib/sparc/libmagic.so			comp-sys-shlib		compat,pic
 ./usr/lib/sparc/libmagic_p.a			comp-c-proflib		compat,profile
 ./usr/lib/sparc/libmagic_pic.a			comp-c-piclib		compat,pic
 ./usr/lib/sparc/libmenu.a			comp-c-lib		compat
