@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rumvar.h,v 1.7 2010/01/19 22:07:44 pooka Exp $	*/
+/*	$NetBSD: if_rumvar.h,v 1.8 2010/11/03 22:30:50 dyoung Exp $	*/
 /*	$OpenBSD: if_rumvar.h,v 1.7 2006/11/13 20:06:38 damien Exp $	*/
 
 /*-
@@ -71,7 +71,7 @@ struct rum_rx_data {
 };
 
 struct rum_softc {
-	USBBASEDEVICE			sc_dev;
+	device_t			sc_dev;
 	struct ethercom			sc_ec;
 #define sc_if	sc_ec.ec_if
 	struct ieee80211com		sc_ic;
@@ -109,8 +109,8 @@ struct rum_softc {
 
 	struct ieee80211_beacon_offsets	sc_bo;
 
-	usb_callout_t			sc_scan_ch;
-	usb_callout_t			sc_amrr_ch;
+	struct callout			sc_scan_ch;
+	struct callout			sc_amrr_ch;
 
 	int				sc_tx_timer;
 
