@@ -1,4 +1,4 @@
-/*	$NetBSD: rfcomm_sppd.c,v 1.12 2009/09/24 18:30:37 plunky Exp $	*/
+/*	$NetBSD: rfcomm_sppd.c,v 1.13 2010/11/03 08:27:27 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -62,7 +62,7 @@ __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc.\
   Copyright (c) 2006 Itronix, Inc.\
   Copyright (c) 2003 Maksim Yevmenkin m_evmenkin@yahoo.com.\
   All rights reserved.");
-__RCSID("$NetBSD: rfcomm_sppd.c,v 1.12 2009/09/24 18:30:37 plunky Exp $");
+__RCSID("$NetBSD: rfcomm_sppd.c,v 1.13 2010/11/03 08:27:27 plunky Exp $");
 
 #include <sys/param.h>
 
@@ -128,7 +128,7 @@ main(int argc, char *argv[])
 	bdaddr_copy(&raddr, BDADDR_ANY);
 	service = "SP";
 	tty = NULL;
-	channel = 0;
+	channel = RFCOMM_CHANNEL_ANY;
 	psm = L2CAP_PSM_RFCOMM;
 	lm = 0;
 
@@ -149,7 +149,9 @@ main(int argc, char *argv[])
 
 		case 'c': /* RFCOMM channel */
 			channel = strtoul(optarg, &ep, 10);
-			if (*ep != '\0' || channel < 1 || channel > 30)
+			if (*ep != '\0'
+			    || channel < RFCOMM_CHANNEL_MIN
+			    || channel > RFCOMM_CHANNEL_MAX)
 				errx(EXIT_FAILURE, "Invalid channel: %s", optarg);
 
 			break;
@@ -200,10 +202,9 @@ main(int argc, char *argv[])
 
 	/*
 	 * validate options:
-	 *	must have channel or remote address but not both
+	 *	cannot have remote address if channel was given
 	 */
-	if ((channel == 0 && bdaddr_any(&raddr))
-	    || (channel != 0 && !bdaddr_any(&raddr)))
+	if (channel != RFCOMM_CHANNEL_ANY && !bdaddr_any(&raddr))
 		usage();
 
 	/*
@@ -218,7 +219,7 @@ main(int argc, char *argv[])
 	}
 
 	/* open RFCOMM */
-	if (channel == 0)
+	if (!bdaddr_any(&raddr))
 		rfcomm = open_client(&laddr, &raddr, lm, psm, service);
 	else
 		rfcomm = open_server(&laddr, psm, channel, lm, service);
@@ -433,6 +434,12 @@ open_server(bdaddr_t *laddr, uint16_t psm, uint8_t channel, int lm, const char *
 	if (listen(sv, 1) < 0)
 		err(EXIT_FAILURE, "listen()");
 
+	len = sizeof(sa);
+	if (getsockname(sv, (struct sockaddr *)&sa, &len) < 0)
+		err(EXIT_FAILURE, "getsockname()");
+	if (len != sizeof(sa))
+		errx(EXIT_FAILURE, "getsockname()");
+
 	/* Build SDP record */
 	rec.next = buffer;
 	rec.end = buffer + sizeof(buffer);
@@ -454,7 +461,7 @@ open_server(bdaddr_t *laddr, uint16_t psm, uint8_t channel, int lm, const char *
 		sdp_put_uint16(&rec, psm);
 	sdp_put_seq(&rec, 5);
 	sdp_put_uuid16(&rec, SDP_UUID_PROTOCOL_RFCOMM);
-	sdp_put_uint8(&rec, channel);
+	sdp_put_uint8(&rec, sa.bt_channel);
 
 	sdp_put_uint16(&rec, SDP_ATTR_BROWSE_GROUP_LIST);
 	sdp_put_seq(&rec, 3);
@@ -671,7 +678,7 @@ usage(void)
 	struct service *s;
 
 	fprintf(stderr, "Usage: %s [-d device] [-m mode] [-p psm] [-s service] [-t tty]\n"
-			"       %*s {-a bdaddr | -c channel}\n"
+			"       %*s {-a bdaddr | [-c channel]}\n"
 			"\n"
 			"Where:\n"
 			"\t-a bdaddr    remote device address\n"

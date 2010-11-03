@@ -1,4 +1,4 @@
-.\" $NetBSD: rfcomm_sppd.1,v 1.8 2010/11/02 19:44:09 plunky Exp $
+.\" $NetBSD: rfcomm_sppd.1,v 1.9 2010/11/03 08:27:27 plunky Exp $
 .\"
 .\" Copyright (c) 2006 Itronix Inc.
 .\" All rights reserved.
@@ -65,7 +65,7 @@
 .Op Fl p Ar psm
 .Op Fl s Ar service
 .Op Fl t Ar tty
-.Brq Fl a Ar address | Fl c Ar channel
+.Brq Fl a Ar address | Op Fl c Ar channel
 .Sh DESCRIPTION
 The
 .Nm
@@ -87,7 +87,8 @@ registers the
 .Ar service
 with the local SDP server and listens on the specified RFCOMM
 .Ar channel
-for an incoming connection.
+for an incoming connection, or the first unused channel if none
+was given.
 .Pp
 The options are as follows:
 .Bl -tag -width ".Fl c Ar channel"
@@ -100,8 +101,7 @@ If given as a name, then the
 utility will attempt to resolve the name via
 .Xr bt_gethostbyname 3 .
 .It Fl c Ar channel
-Server mode.
-Specify the RFCOMM channel number to listen on.
+In server mode, specify the RFCOMM channel number to listen on.
 .Nm
 will register the service with the local
 .Xr sdpd 8
