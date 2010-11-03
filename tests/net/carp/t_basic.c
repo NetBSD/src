@@ -1,4 +1,4 @@
-/*	$NetBSD: t_basic.c,v 1.2 2010/08/11 13:10:03 pooka Exp $	*/
+/*	$NetBSD: t_basic.c,v 1.3 2010/11/03 16:10:24 christos Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -29,11 +29,12 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: t_basic.c,v 1.2 2010/08/11 13:10:03 pooka Exp $");
+__RCSID("$NetBSD: t_basic.c,v 1.3 2010/11/03 16:10:24 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/wait.h>
 
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
@@ -126,7 +127,7 @@ child(bool master)
 	else
 		cr.carpr_advskew = 200;
 	cr.carpr_advbase = 1;
-	strcpy(cr.carpr_key, "s3cret");
+	strcpy((char *)cr.carpr_key, "s3cret");
 
 	RL(rump_sys_ioctl(s, SIOCSVH, &ifr));
 	netcfg_rump_if(carpif, "10.1.1.100", "255.255.255.0");

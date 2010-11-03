@@ -1,4 +1,4 @@
-/*	$NetBSD: t_pr.c,v 1.2 2010/07/03 08:18:30 jmmv Exp $	*/
+/*	$NetBSD: t_pr.c,v 1.3 2010/11/03 16:10:20 christos Exp $	*/
 
 #include <sys/types.h>
 #include <sys/ioctl.h>
@@ -24,8 +24,7 @@ ATF_TC_BODY(ptyioctl, tc)
 
 	rump_init();
 	fd = rump_sys_open("/dev/ptyp1", O_RDWR);
-	if (fd == -1)
-		err(1, "open");
+	ATF_CHECK(fd != -1);
 
 	/* boom, dies with null deref under ptcwakeup() */
 	atf_tc_expect_signal(-1, "PR kern/40688");

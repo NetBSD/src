@@ -1,4 +1,4 @@
-/*	$NetBSD: t_listen.c,v 1.1 2008/05/01 15:38:17 jmmv Exp $	*/
+/*	$NetBSD: t_listen.c,v 1.2 2010/11/03 16:10:25 christos Exp $	*/
 /*
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -54,10 +54,11 @@ ATF_TC_BODY(low_port, tc)
 		atf_tc_fail("setsockopt failed: %s", strerror(errno));
 
 	if (listen(sd, 5) == -1) {
-		int err = errno;
+		int serrno = errno;
 		atf_tc_fail("listen failed: %s%s",
-		    strerror(err),
-		    err != EACCES ? "" : " (see http://mail-index.netbsd.org/"
+		    strerror(serrno),
+		    serrno != EACCES ? "" :
+		    " (see http://mail-index.netbsd.org/"
 		    "source-changes/2007/12/16/0011.html)");
 	}
 
@@ -67,4 +68,5 @@ ATF_TC_BODY(low_port, tc)
 ATF_TP_ADD_TCS(tp)
 {
 	ATF_TP_ADD_TC(tp, low_port);
+	return 0;
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: t_extent.c,v 1.1 2009/02/20 21:39:57 jmmv Exp $ */
+/* $NetBSD: t_extent.c,v 1.2 2010/11/03 16:10:20 christos Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_extent.c,v 1.1 2009/02/20 21:39:57 jmmv Exp $");
+__RCSID("$NetBSD: t_extent.c,v 1.2 2010/11/03 16:10:20 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/queue.h>
@@ -82,7 +82,7 @@ h_alloc_subregion(u_long substart, u_long subend, u_long size,
 
 static void
 h_require(const char *name, u_long start,
-	u_long end, u_long flags, const char *exp)
+	u_long end, long flags, const char *exp)
 {
 	char buf[4096];
 	struct extent_region *rp;

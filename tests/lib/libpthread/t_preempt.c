@@ -1,4 +1,4 @@
-/* $NetBSD: t_preempt.c,v 1.1 2010/07/16 15:42:53 jmmv Exp $ */
+/* $NetBSD: t_preempt.c,v 1.2 2010/11/03 16:10:22 christos Exp $ */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_preempt.c,v 1.1 2010/07/16 15:42:53 jmmv Exp $");
+__RCSID("$NetBSD: t_preempt.c,v 1.2 2010/11/03 16:10:22 christos Exp $");
 
 #include <errno.h>
 #include <fcntl.h>
@@ -75,7 +75,8 @@ ATF_TC_HEAD(preempt1, tc)
 }
 ATF_TC_BODY(preempt1, tc)
 {
-	int ret, i;
+	int i;
+	ssize_t rv;
 	pthread_t new;
 	void *joinval;
 
@@ -110,9 +111,9 @@ ATF_TC_BODY(preempt1, tc)
 	PTHREAD_REQUIRE(pthread_mutex_unlock(&mutex));
 	printf("1: After releasing the mutex.\n");
 
-	ret = read(fd, mem, HUGE_BUFFER);
+	rv = read(fd, mem, HUGE_BUFFER);
 	close(fd);
-	ATF_REQUIRE_EQ(ret, HUGE_BUFFER);
+	ATF_REQUIRE_EQ(rv, HUGE_BUFFER);
 
 	PTHREAD_REQUIRE(pthread_join(new, &joinval));
 

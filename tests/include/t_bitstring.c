@@ -1,4 +1,4 @@
-/* $NetBSD: t_bitstring.c,v 1.1 2010/07/17 19:26:27 jmmv Exp $ */
+/* $NetBSD: t_bitstring.c,v 1.2 2010/11/03 16:10:20 christos Exp $ */
 
 /*-
  * Copyright (c) 1993, 2008, 2010 The NetBSD Foundation, Inc.
@@ -63,9 +63,8 @@ printbits(FILE *file, bitstr_t *b, int n)
 static void
 calculate_data(FILE *file, const int test_length)
 {
-	int b, i;
+	int i;
 	bitstr_t *bs;
-	bitstr_t bit_decl(bss, 37);  /* Mostly a random number. */
 
 	assert(test_length >= 4);
 
@@ -75,7 +74,7 @@ calculate_data(FILE *file, const int test_length)
 	(void) fprintf(file, "  i   _bit_byte(i)   _bit_mask(i) bitstr_size(i)\n");
 
 	for (i=0; i < test_length; i++) {
-		(void) fprintf(file, "%3d%15d%15d%15d\n",
+		(void) fprintf(file, "%3d%15u%15u%15zu\n",
 			i, _bit_byte(i), _bit_mask(i), bitstr_size(i));
 	}
 
@@ -205,7 +204,7 @@ calculate_data(FILE *file, const int test_length)
 	(void) free(bs);
 }
 
-void
+static void
 one_check(const atf_tc_t *tc, const int test_length)
 {
 	FILE *out;
