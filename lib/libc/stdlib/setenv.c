@@ -1,4 +1,4 @@
-/*	$NetBSD: setenv.c,v 1.41 2010/10/16 11:23:41 njoly Exp $	*/
+/*	$NetBSD: setenv.c,v 1.42 2010/11/03 15:01:07 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)setenv.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: setenv.c,v 1.41 2010/10/16 11:23:41 njoly Exp $");
+__RCSID("$NetBSD: setenv.c,v 1.42 2010/11/03 15:01:07 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -59,7 +59,7 @@ __weak_alias(setenv,_setenv)
 int
 setenv(const char *name, const char *value, int rewrite)
 {
-	char *c;
+	char *c, *f;
 	size_t l_value, size;
 	int offset;
 
@@ -81,14 +81,14 @@ setenv(const char *name, const char *value, int rewrite)
 		return -1;
 
 	/* find if already exists */
-	c = __findenv(name, &offset);
+	f = __findenv(name, &offset);
 
 	if (__allocenv(offset) == -1)
 		goto bad;
 
 	l_value = strlen(value);
 
-	if (c != NULL) {
+	if (f != NULL) {
 		if (!rewrite)
 			goto good;
 		/*
@@ -97,7 +97,8 @@ setenv(const char *name, const char *value, int rewrite)
 		 * existing value.
 		 */
 		if (environ[offset] == __environ_malloced[offset] &&
-		    strlen(c) >= l_value) {
+		    strlen(f) >= l_value) {
+			c = f;
 			goto copy;
 		}
 	}
@@ -110,6 +111,10 @@ setenv(const char *name, const char *value, int rewrite)
 
 	environ[offset] = c;
 	__environ_malloced[offset] = c;
+
+	if (f == NULL)
+		__scrubenv(offset);
+
 	(void)memcpy(c, name, size);
 	c += size;
 	*c++ = '=';

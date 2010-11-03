@@ -1,4 +1,4 @@
-/*	$NetBSD: putenv.c,v 1.17 2010/10/25 20:35:36 njoly Exp $	*/
+/*	$NetBSD: putenv.c,v 1.18 2010/11/03 15:01:07 christos Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)putenv.c	8.2 (Berkeley) 3/27/94";
 #else
-__RCSID("$NetBSD: putenv.c,v 1.17 2010/10/25 20:35:36 njoly Exp $");
+__RCSID("$NetBSD: putenv.c,v 1.18 2010/11/03 15:01:07 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -78,6 +78,8 @@ putenv(char *str)
 	}
 
 	environ[offset] = str;
+	if (p == NULL)
+		__scrubenv(offset);
 	rwlock_unlock(&__environ_lock);
 	return 0;
 bad:
