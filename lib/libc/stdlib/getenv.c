@@ -1,4 +1,4 @@
-/*	$NetBSD: getenv.c,v 1.28 2010/11/02 03:44:05 enami Exp $	*/
+/*	$NetBSD: getenv.c,v 1.29 2010/11/03 15:01:07 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)getenv.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: getenv.c,v 1.28 2010/11/02 03:44:05 enami Exp $");
+__RCSID("$NetBSD: getenv.c,v 1.29 2010/11/03 15:01:07 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -151,6 +151,28 @@ __allocenv(int offset)
 	__environ_malloced = p;
 
 	return 0;
+}
+
+/*
+ * Handle the case where a program tried to cleanup the environment
+ * by setting *environ = NULL; we attempt to cleanup all the malloced
+ * environ entries and we make sure that the entry following the new
+ * entry is NULL.
+ */
+void
+__scrubenv(int offset)
+{
+	if (environ[++offset] == NULL)
+		return;
+
+	while (environ[offset] &&
+	    environ[offset] == __environ_malloced[offset]) {
+		free(__environ_malloced[offset]);
+		environ[offset] = __environ_malloced[offset] = NULL;
+		offset++;
+	}
+
+	environ[offset] = __environ_malloced[offset] = NULL;
 }
 
 /*

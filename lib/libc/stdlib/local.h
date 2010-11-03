@@ -1,4 +1,4 @@
-/*	$NetBSD: local.h,v 1.4 2010/09/25 18:11:40 tron Exp $	*/
+/*	$NetBSD: local.h,v 1.5 2010/11/03 15:01:07 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -26,6 +26,7 @@
 
 char *__findenv(const char *, int *);
 int __allocenv(int);
+void __scrubenv(int);
 
 #ifdef _REENTRANT
 extern rwlock_t __environ_lock;
