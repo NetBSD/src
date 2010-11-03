@@ -1,4 +1,4 @@
-.\" $NetBSD: rfcomm_sppd.1,v 1.9 2010/11/03 08:27:27 plunky Exp $
+.\" $NetBSD: rfcomm_sppd.1,v 1.10 2010/11/03 12:21:50 wiz Exp $
 .\"
 .\" Copyright (c) 2006 Itronix Inc.
 .\" All rights reserved.
@@ -166,8 +166,6 @@ made, and operate over the named
 pair.
 Otherwise, stdin/stdout will be used.
 .El
-.Sh EXIT STATUS
-.Ex -std
 .Sh FILES
 .Bl -tag -width ".Pa /dev/tty[p-sP-S][0-9a-v]" -compact
 .It Pa /dev/pty[p-sP-S][0-9a-v]
@@ -175,6 +173,8 @@ master pseudo terminals
 .It Pa /dev/tty[p-sP-S][0-9a-v]
 slave pseudo terminals
 .El
+.Sh EXIT STATUS
+.Ex -std
 .Sh EXAMPLES
 .Dl rfcomm_sppd -a 00:01:02:03:04:05 -s 1 -t /dev/ttyp1
 .Pp
