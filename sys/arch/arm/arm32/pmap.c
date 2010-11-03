@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.216 2010/11/02 06:33:22 uebayasi Exp $	*/
+/*	$NetBSD: pmap.c,v 1.217 2010/11/03 16:59:19 uebayasi Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -211,7 +211,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.216 2010/11/02 06:33:22 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.217 2010/11/03 16:59:19 uebayasi Exp $");
 
 #define	VM_PAGE_TO_MD(pg)	(&(pg)->mdpage)
 
@@ -2577,7 +2577,7 @@ pmap_page_remove(struct vm_page_md *md, paddr_t pa)
 	u_int flags;
 
 	NPDEBUG(PDB_FOLLOW,
-	    printf("pmap_page_remove: pg %p (0x%08lx)\n", pg,
+	    printf("pmap_page_remove: md %p (0x%08lx)\n", md,
 	    pa));
 
 	PMAP_HEAD_TO_MAP_LOCK();
