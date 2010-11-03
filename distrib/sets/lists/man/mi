@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1245 2010/11/02 16:34:34 joerg Exp $
+# $NetBSD: mi,v 1.1246 2010/11/03 18:57:33 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1293,6 +1293,7 @@
 ./usr/share/man/cat4/optiide.0			man-sys-catman		.cat
 ./usr/share/man/cat4/options.0			man-sys-catman		.cat
 ./usr/share/man/cat4/osiop.0			man-sys-catman		.cat
+./usr/share/man/cat4/otus.0			man-sys-catman		.cat
 ./usr/share/man/cat4/owtemp.0			man-sys-catman		.cat
 ./usr/share/man/cat4/pad.0			man-sys-catman		.cat
 ./usr/share/man/cat4/pas.0			man-sys-catman		.cat
@@ -3940,6 +3941,7 @@
 ./usr/share/man/html4/optiide.html		man-sys-htmlman		html
 ./usr/share/man/html4/options.html		man-sys-htmlman		html
 ./usr/share/man/html4/osiop.html		man-sys-htmlman		html
+./usr/share/man/html4/otus.html		man-sys-htmlman		html
 ./usr/share/man/html4/owtemp.html		man-sys-htmlman		html
 ./usr/share/man/html4/pad.html			man-sys-htmlman		html
 ./usr/share/man/html4/pas.html			man-sys-htmlman		html
@@ -6453,6 +6455,7 @@
 ./usr/share/man/man4/optiide.4			man-sys-man		.man
 ./usr/share/man/man4/options.4			man-sys-man		.man
 ./usr/share/man/man4/osiop.4			man-sys-man		.man
+./usr/share/man/man4/otus.4			man-sys-man		.man
 ./usr/share/man/man4/owtemp.4			man-sys-man		.man
 ./usr/share/man/man4/pad.4			man-sys-man		.man
 ./usr/share/man/man4/pas.4			man-sys-man		.man
