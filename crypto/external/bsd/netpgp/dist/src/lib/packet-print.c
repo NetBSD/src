@@ -58,7 +58,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: packet-print.c,v 1.37 2010/08/15 07:52:27 agc Exp $");
+__RCSID("$NetBSD: packet-print.c,v 1.38 2010/11/03 02:27:56 agc Exp $");
 #endif
 
 #include <string.h>
@@ -1406,7 +1406,7 @@ __ops_print_packet(__ops_printstate_t *print, const __ops_packet_t *pkt)
 		print_tagname(print->indent, "UNKNOWN PACKET TYPE");
 		fprintf(stderr, "__ops_print_packet: unknown tag=%d (0x%x)\n",
 			pkt->tag, pkt->tag);
-		exit(EXIT_FAILURE);
+		return 0;
 	}
 	return 1;
 }
