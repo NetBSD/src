@@ -1,4 +1,4 @@
-/* $NetBSD: uslsa.c,v 1.11 2009/11/12 20:01:15 dyoung Exp $ */
+/* $NetBSD: uslsa.c,v 1.12 2010/11/03 22:34:24 dyoung Exp $ */
 
 /* from ugensa.c */
 
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uslsa.c,v 1.11 2009/11/12 20:01:15 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uslsa.c,v 1.12 2010/11/03 22:34:24 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -150,7 +150,7 @@ int uslsadebug = 0;
 #define USLSA_FLOW_DTR		0x0001
 
 struct uslsa_softc {
-	USBBASEDEVICE		sc_dev;		/* base device */
+	device_t		sc_dev;		/* base device */
 	usbd_device_handle	sc_udev;	/* device */
 	usbd_interface_handle	sc_iface;	/* interface */
 
@@ -216,17 +216,20 @@ extern struct cfdriver uslsa_cd;
 CFATTACH_DECL2_NEW(uslsa, sizeof(struct uslsa_softc), uslsa_match,
     uslsa_attach, uslsa_detach, uslsa_activate, NULL, uslsa_childdet);
 
-USB_MATCH(uslsa)
+int 
+uslsa_match(device_t parent, cfdata_t match, void *aux)
 {
-	USB_MATCH_START(uslsa, uaa);
+	struct usb_attach_arg *uaa = aux;
 
 	return (uslsa_lookup(uaa->vendor, uaa->product) != NULL ?
 	        UMATCH_VENDOR_PRODUCT : UMATCH_NONE);
 }
 
-USB_ATTACH(uslsa)
+void 
+uslsa_attach(device_t parent, device_t self, void *aux)
 {
-	USB_ATTACH_START(uslsa, sc, uaa);
+	struct uslsa_softc *sc = device_private(self);
+	struct usb_attach_arg *uaa = aux;
 	usbd_device_handle dev = uaa->device;
 	usbd_interface_handle iface;
 	usb_interface_descriptor_t *id;
@@ -279,7 +282,7 @@ USB_ATTACH(uslsa)
 	uca.arg = sc;
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
-	                   USBDEV(sc->sc_dev));
+	                   sc->sc_dev);
 
 	uca.bulkin = uca.bulkout = -1;
 	for (i = 0; i < id->bNumEndpoints; i++) {
@@ -315,12 +318,12 @@ USB_ATTACH(uslsa)
 	sc->sc_subdev = config_found_sm_loc(self, "ucombus", NULL, &uca,
 	                                    ucomprint, ucomsubmatch);
 
-	USB_ATTACH_SUCCESS_RETURN;
+	return;
 
 bad:
 	DPRINTF(("uslsa_attach: ATTACH ERROR\n"));
 	sc->sc_dying = 1;
-	USB_ATTACH_ERROR_RETURN;
+	return;
 }
 
 int
@@ -346,9 +349,10 @@ uslsa_childdet(device_t self, device_t child)
 	sc->sc_subdev = NULL;
 }
 
-USB_DETACH(uslsa)
+int 
+uslsa_detach(device_t self, int flags)
 {
-	USB_DETACH_START(uslsa, sc);
+	struct uslsa_softc *sc = device_private(self);
 	int rv = 0;
 
 	DPRINTF(("uslsa_detach: sc=%p flags=%d\n", sc, flags));
@@ -359,7 +363,7 @@ USB_DETACH(uslsa)
 		rv = config_detach(sc->sc_subdev, flags);
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
-	                   USBDEV(sc->sc_dev));
+	                   sc->sc_dev);
 
 	return (rv);
 }
@@ -387,7 +391,7 @@ uslsa_get_status(void *vsc, int portno, u_char *lsr, u_char *msr)
 	    USBD_SHORT_XFER_OK, &actlen, USBD_DEFAULT_TIMEOUT);
 	if (err)
 		printf("%s: uslsa_get_status: %s\n",
-		    USBDEVNAME(sc->sc_dev), usbd_errstr(err));
+		    device_xname(sc->sc_dev), usbd_errstr(err));
 
 	DPRINTF(("uslsa_get_status: flowreg=0x%x\n", flowreg));
 
@@ -415,21 +419,21 @@ uslsa_set(void *vsc, int portno, int reg, int onoff)
 			(onoff ? (USLSA_FLOW_DTR | USLSA_FLOW_SET_DTR) :
 			    USLSA_FLOW_SET_DTR)))
 			printf("%s: uslsa_set_dtr failed\n",
-			       USBDEVNAME(sc->sc_dev));
+			       device_xname(sc->sc_dev));
 		break;
 	case UCOM_SET_RTS:
 		if (uslsa_request_set(sc, USLSA_REQ_SET_FLOW,
 			(onoff ? (USLSA_FLOW_RTS | USLSA_FLOW_SET_RTS) :
 			    USLSA_FLOW_SET_RTS)))
 			printf("%s: uslsa_set_rts failed\n",
-			       USBDEVNAME(sc->sc_dev));
+			       device_xname(sc->sc_dev));
 		break;
 	case UCOM_SET_BREAK:
 		if (uslsa_request_set(sc, USLSA_REQ_SET_BREAK,
 			(onoff ? USLSA_BREAK_ENABLE :
 			    USLSA_BREAK_DISABLE)))
 			printf("%s: uslsa_set_break failed\n",
-			       USBDEVNAME(sc->sc_dev));
+			       device_xname(sc->sc_dev));
 		break;
 	default:
 		break;
@@ -464,13 +468,13 @@ uslsa_param(void *vsc, int portno, struct termios * t)
 	default:
 		printf("%s: uslsa_param: unsupported data rate, "
 		       "forcing default of 115200bps\n",
-		       USBDEVNAME(sc->sc_dev));
+		       device_xname(sc->sc_dev));
 		data = USLSA_BPS(B115200);
 	};
 
 	if (uslsa_request_set(sc, USLSA_REQ_SET_BPS, data))
 		printf("%s: uslsa_param: setting data rate failed\n",
-		       USBDEVNAME(sc->sc_dev));
+		       device_xname(sc->sc_dev));
 
 	data = 0;
 
@@ -505,7 +509,7 @@ uslsa_param(void *vsc, int portno, struct termios * t)
 	DPRINTF(("uslsa_param: setting DPS register to 0x%x\n", data));
 	if (uslsa_request_set(sc, USLSA_REQ_SET_DPS, data))
 		printf("%s: setting DPS register failed: invalid argument\n",
-		       USBDEVNAME(sc->sc_dev));
+		       device_xname(sc->sc_dev));
 
 	uslsa_set_flow(sc, t->c_cflag, t->c_iflag);
 
@@ -546,7 +550,7 @@ uslsa_close(void *vsc, int portno)
 	if (uslsa_request_set(sc, USLSA_REQ_SET_STATE,
 	    USLSA_STATE_DISABLE))
 		printf("%s: disable-on-close failed\n",
-		       USBDEVNAME(sc->sc_dev));
+		       device_xname(sc->sc_dev));
 }
 
 /*
@@ -567,7 +571,7 @@ uslsa_request_set(struct uslsa_softc * sc, uint8_t request, uint16_t value)
 	err = usbd_do_request(sc->sc_udev, &req, 0);
 	if (err)
 		printf("%s: uslsa_request: %s\n",
-		       USBDEVNAME(sc->sc_dev), usbd_errstr(err));
+		       device_xname(sc->sc_dev), usbd_errstr(err));
 	return err;
 }
 
@@ -593,7 +597,7 @@ uslsa_set_flow(struct uslsa_softc *sc, tcflag_t cflag, tcflag_t iflag)
 	err = usbd_do_request(sc->sc_udev, &req, mysterydata);
 	if (err)
 		printf("%s: uslsa_set_flow: %s\n",
-		       USBDEVNAME(sc->sc_dev), usbd_errstr(err));
+		       device_xname(sc->sc_dev), usbd_errstr(err));
 
 	if (ISSET(cflag, CRTSCTS)) {
 		mysterydata[0] &= ~0x7b;
@@ -614,5 +618,5 @@ uslsa_set_flow(struct uslsa_softc *sc, tcflag_t cflag, tcflag_t iflag)
 	err = usbd_do_request(sc->sc_udev, &req, mysterydata);
 	if (err)
 		printf("%s: uslsa_set_flow: %s\n",
-		       USBDEVNAME(sc->sc_dev), usbd_errstr(err));
+		       device_xname(sc->sc_dev), usbd_errstr(err));
 }

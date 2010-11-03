@@ -1,4 +1,4 @@
-/*	$NetBSD: ugensa.c,v 1.27 2010/06/14 22:24:14 riz Exp $	*/
+/*	$NetBSD: ugensa.c,v 1.28 2010/11/03 22:34:23 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugensa.c,v 1.27 2010/06/14 22:24:14 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugensa.c,v 1.28 2010/11/03 22:34:23 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,7 +60,7 @@ int ugensadebug = 0;
 #endif
 
 struct ugensa_softc {
-	USBBASEDEVICE		sc_dev;		/* base device */
+	device_t		sc_dev;		/* base device */
 	usbd_device_handle	sc_udev;	/* device */
 	usbd_interface_handle	sc_iface;	/* interface */
 
@@ -122,9 +122,10 @@ extern struct cfdriver ugensa_cd;
 CFATTACH_DECL2_NEW(ugensa, sizeof(struct ugensa_softc), ugensa_match,
     ugensa_attach, ugensa_detach, ugensa_activate, NULL, ugensa_childdet);
 
-USB_MATCH(ugensa)
+int 
+ugensa_match(device_t parent, cfdata_t match, void *aux)
 {
-	USB_MATCH_START(ugensa, uaa);
+	struct usb_attach_arg *uaa = aux;
 
 	DPRINTFN(20,("ugensa: vendor=0x%x, product=0x%x\n",
 		     uaa->vendor, uaa->product));
@@ -133,9 +134,11 @@ USB_MATCH(ugensa)
 		UMATCH_VENDOR_PRODUCT : UMATCH_NONE);
 }
 
-USB_ATTACH(ugensa)
+void 
+ugensa_attach(device_t parent, device_t self, void *aux)
 {
-	USB_ATTACH_START(ugensa, sc, uaa);
+	struct ugensa_softc *sc = device_private(self);
+	struct usb_attach_arg *uaa = aux;
 	usbd_device_handle dev = uaa->device;
 	usbd_interface_handle iface;
 	usb_interface_descriptor_t *id;
@@ -193,7 +196,7 @@ USB_ATTACH(ugensa)
 	uca.arg = sc;
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
-			   USBDEV(sc->sc_dev));
+			   sc->sc_dev);
 
 	uca.bulkin = uca.bulkout = -1;
 	for (i = 0; i < id->bNumEndpoints; i++) {
@@ -239,12 +242,12 @@ USB_ATTACH(ugensa)
 
 	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
-	USB_ATTACH_SUCCESS_RETURN;
+	return;
 
 bad:
 	DPRINTF(("ugensa_attach: ATTACH ERROR\n"));
 	sc->sc_dying = 1;
-	USB_ATTACH_ERROR_RETURN;
+	return;
 }
 
 void
@@ -272,9 +275,10 @@ ugensa_activate(device_t self, enum devact act)
 	}
 }
 
-USB_DETACH(ugensa)
+int 
+ugensa_detach(device_t self, int flags)
 {
-	USB_DETACH_START(ugensa, sc);
+	struct ugensa_softc *sc = device_private(self);
 	int rv = 0;
 
 	DPRINTF(("ugensa_detach: sc=%p flags=%d\n", sc, flags));
@@ -286,7 +290,7 @@ USB_DETACH(ugensa)
 		rv = config_detach(sc->sc_subdev, flags);
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
-			   USBDEV(sc->sc_dev));
+			   sc->sc_dev);
 
 	return (rv);
 }
