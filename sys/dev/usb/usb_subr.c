@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.176 2010/08/21 13:18:36 pgoyette Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.177 2010/11/03 22:34:24 dyoung Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.176 2010/08/21 13:18:36 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.177 2010/11/03 22:34:24 dyoung Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_usbverbose.h"
@@ -60,8 +60,8 @@ __KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.176 2010/08/21 13:18:36 pgoyette Exp 
 #include "locators.h"
 
 #ifdef USB_DEBUG
-#define DPRINTF(x)	if (usbdebug) logprintf x
-#define DPRINTFN(n,x)	if (usbdebug>(n)) logprintf x
+#define DPRINTF(x)	if (usbdebug) printf x
+#define DPRINTFN(n,x)	if (usbdebug>(n)) printf x
 extern int usbdebug;
 #else
 #define DPRINTF(x)

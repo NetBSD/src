@@ -1,4 +1,4 @@
-/*	$NetBSD: uvisor.c,v 1.42 2009/11/12 20:01:15 dyoung Exp $	*/
+/*	$NetBSD: uvisor.c,v 1.43 2010/11/03 22:34:24 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvisor.c,v 1.42 2009/11/12 20:01:15 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvisor.c,v 1.43 2010/11/03 22:34:24 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -129,11 +129,11 @@ struct uvisor_palm_connection_info {
 #define UVISOROBUFSIZE 1024
 
 struct uvisor_softc {
-	USBBASEDEVICE		sc_dev;		/* base device */
+	device_t		sc_dev;		/* base device */
 	usbd_device_handle	sc_udev;	/* device */
 	usbd_interface_handle	sc_iface;	/* interface */
 
-	device_ptr_t		sc_subdevs[UVISOR_MAX_CONN];
+	device_t		sc_subdevs[UVISOR_MAX_CONN];
 	int			sc_numcon;
 
 	u_int16_t		sc_flags;
@@ -198,9 +198,10 @@ extern struct cfdriver uvisor_cd;
 CFATTACH_DECL2_NEW(uvisor, sizeof(struct uvisor_softc), uvisor_match,
     uvisor_attach, uvisor_detach, uvisor_activate, NULL, uvisor_childdet);
 
-USB_MATCH(uvisor)
+int 
+uvisor_match(device_t parent, cfdata_t match, void *aux)
 {
-	USB_MATCH_START(uvisor, uaa);
+	struct usb_attach_arg *uaa = aux;
 
 	DPRINTFN(20,("uvisor: vendor=0x%x, product=0x%x\n",
 		     uaa->vendor, uaa->product));
@@ -209,9 +210,11 @@ USB_MATCH(uvisor)
 		UMATCH_VENDOR_PRODUCT : UMATCH_NONE);
 }
 
-USB_ATTACH(uvisor)
+void 
+uvisor_attach(device_t parent, device_t self, void *aux)
 {
-	USB_ATTACH_START(uvisor, sc, uaa);
+	struct uvisor_softc *sc = device_private(self);
+	struct usb_attach_arg *uaa = aux;
 	usbd_device_handle dev = uaa->device;
 	usbd_interface_handle iface;
 	usb_interface_descriptor_t *id;
@@ -279,7 +282,7 @@ USB_ATTACH(uvisor)
 	}
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
-			   USBDEV(sc->sc_dev));
+			   sc->sc_dev);
 
 	if (sc->sc_flags & VISOR) {
 		sc->sc_numcon = UGETW(coninfo.num_ports);
@@ -365,16 +368,16 @@ USB_ATTACH(uvisor)
 		}
 	}
 
-	USB_ATTACH_SUCCESS_RETURN;
+	return;
 
 bad:
 	DPRINTF(("uvisor_attach: ATTACH ERROR\n"));
 	sc->sc_dying = 1;
-	USB_ATTACH_ERROR_RETURN;
+	return;
 }
 
 int
-uvisor_activate(device_ptr_t self, enum devact act)
+uvisor_activate(device_t self, enum devact act)
 {
 	struct uvisor_softc *sc = device_private(self);
 
@@ -417,7 +420,7 @@ uvisor_detach(device_t self, int flags)
 
 	if (sc->sc_udev)
 		usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
-				   USBDEV(sc->sc_dev));
+				   sc->sc_dev);
 
 
 	return (rv);

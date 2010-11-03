@@ -1,4 +1,4 @@
-/* $NetBSD: pseye.c,v 1.16 2010/04/22 08:45:55 pooka Exp $ */
+/* $NetBSD: pseye.c,v 1.17 2010/11/03 22:34:23 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2008 Jared D. McNeill <jmcneill@invisible.ca>
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pseye.c,v 1.16 2010/04/22 08:45:55 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pseye.c,v 1.17 2010/11/03 22:34:23 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,7 +81,7 @@ __KERNEL_RCSID(0, "$NetBSD: pseye.c,v 1.16 2010/04/22 08:45:55 pooka Exp $");
 #define PSEYE_SCCB_OP_READ_2	0xf9
 
 struct pseye_softc {
-	USBBASEDEVICE		sc_dev;
+	device_t		sc_dev;
 
 	usbd_device_handle	sc_udev;
 	usbd_interface_handle	sc_iface;
@@ -261,7 +261,7 @@ pseye_attach(device_t parent, device_t self, void *opaque)
 	}
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
-	    USBDEV(self));
+	    self);
 
 }
 
@@ -300,13 +300,13 @@ pseye_detach(device_t self, int flags)
 	mutex_destroy(&sc->sc_mtx);
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
-	    USBDEV(sc->sc_dev));
+	    sc->sc_dev);
 
 	return 0;
 }
 
 int
-pseye_activate(device_ptr_t self, enum devact act)
+pseye_activate(device_t self, enum devact act)
 {
 	struct pseye_softc *sc = device_private(self);
 

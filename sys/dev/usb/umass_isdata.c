@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_isdata.c,v 1.18 2008/05/24 16:40:58 cube Exp $	*/
+/*	$NetBSD: umass_isdata.c,v 1.19 2010/11/03 22:34:24 dyoung Exp $	*/
 
 /*
  * TODO:
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass_isdata.c,v 1.18 2008/05/24 16:40:58 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass_isdata.c,v 1.19 2010/11/03 22:34:24 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,8 +96,8 @@ struct uisdata_softc {
 #undef DPRINTF
 #undef DPRINTFN
 #ifdef UISDATA_DEBUG
-#define DPRINTF(x)	if (uisdatadebug) logprintf x
-#define DPRINTFN(n,x)	if (uisdatadebug>(n)) logprintf x
+#define DPRINTF(x)	if (uisdatadebug) printf x
+#define DPRINTFN(n,x)	if (uisdatadebug>(n)) printf x
 int	uisdatadebug = 0;
 #else
 #define DPRINTF(x)

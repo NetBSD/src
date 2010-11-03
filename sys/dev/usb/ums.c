@@ -1,4 +1,4 @@
-/*	$NetBSD: ums.c,v 1.80 2010/01/14 09:30:39 matthias Exp $	*/
+/*	$NetBSD: ums.c,v 1.81 2010/11/03 22:34:24 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ums.c,v 1.80 2010/01/14 09:30:39 matthias Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ums.c,v 1.81 2010/11/03 22:34:24 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,8 +63,8 @@ __KERNEL_RCSID(0, "$NetBSD: ums.c,v 1.80 2010/01/14 09:30:39 matthias Exp $");
 #include <dev/wscons/wsmousevar.h>
 
 #ifdef USB_DEBUG
-#define DPRINTF(x)	if (umsdebug) logprintf x
-#define DPRINTFN(n,x)	if (umsdebug>(n)) logprintf x
+#define DPRINTF(x)	if (umsdebug) printf x
+#define DPRINTFN(n,x)	if (umsdebug>(n)) printf x
 int	umsdebug = 0;
 #else
 #define DPRINTF(x)
@@ -187,8 +187,8 @@ ums_attach(device_t parent, device_t self, void *aux)
 	if (!hid_locate(desc, size, HID_USAGE2(HUP_GENERIC_DESKTOP, HUG_X),
 	       uha->reportid, hid_input, &sc->sc_loc_x, &flags)) {
 		aprint_error("\n%s: mouse has no X report\n",
-		       USBDEVNAME(sc->sc_hdev.sc_dev));
-		USB_ATTACH_ERROR_RETURN;
+		       device_xname(sc->sc_hdev.sc_dev));
+		return;
 	}
 	switch (flags & MOUSE_FLAGS_MASK) {
 	case 0:
@@ -198,15 +198,15 @@ ums_attach(device_t parent, device_t self, void *aux)
 		break;
 	default:
 		aprint_error("\n%s: X report 0x%04x not supported\n",
-		       USBDEVNAME(sc->sc_hdev.sc_dev), flags);
-		USB_ATTACH_ERROR_RETURN;
+		       device_xname(sc->sc_hdev.sc_dev), flags);
+		return;
 	}
 
 	if (!hid_locate(desc, size, HID_USAGE2(HUP_GENERIC_DESKTOP, HUG_Y),
 	       uha->reportid, hid_input, &sc->sc_loc_y, &flags)) {
 		aprint_error("\n%s: mouse has no Y report\n",
-		       USBDEVNAME(sc->sc_hdev.sc_dev));
-		USB_ATTACH_ERROR_RETURN;
+		       device_xname(sc->sc_hdev.sc_dev));
+		return;
 	}
 	switch (flags & MOUSE_FLAGS_MASK) {
 	case 0:
@@ -216,8 +216,8 @@ ums_attach(device_t parent, device_t self, void *aux)
 		break;
 	default:
 		aprint_error("\n%s: Y report 0x%04x not supported\n",
-		       USBDEVNAME(sc->sc_hdev.sc_dev), flags);
-		USB_ATTACH_ERROR_RETURN;
+		       device_xname(sc->sc_hdev.sc_dev), flags);
+		return;
 	}
 
 	/* Try the wheel first as the Z activator since it's tradition. */
@@ -233,7 +233,7 @@ ums_attach(device_t parent, device_t self, void *aux)
 	if (hl) {
 		if ((flags & MOUSE_FLAGS_MASK) != HIO_RELATIVE) {
 			aprint_verbose("\n%s: Wheel report 0x%04x not "
-			    "supported\n", USBDEVNAME(sc->sc_hdev.sc_dev),
+			    "supported\n", device_xname(sc->sc_hdev.sc_dev),
 			    flags);
 			sc->sc_loc_z.size = 0;	/* Bad Z coord, ignore it */
 		} else {
@@ -271,7 +271,7 @@ ums_attach(device_t parent, device_t self, void *aux)
 	if (hl) {
 		if ((flags & MOUSE_FLAGS_MASK) != HIO_RELATIVE) {
 			aprint_verbose("\n%s: Z report 0x%04x not supported\n",
-			       USBDEVNAME(sc->sc_hdev.sc_dev), flags);
+			       device_xname(sc->sc_hdev.sc_dev), flags);
 			zloc->size = 0;	/* Bad Z coord, ignore it */
 		} else {
 			if (sc->flags & UMS_Z)
@@ -336,11 +336,11 @@ ums_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_wsmousedev = config_found(self, &a, wsmousedevprint);
 
-	USB_ATTACH_SUCCESS_RETURN;
+	return;
 }
 
 int
-ums_activate(device_ptr_t self, enum devact act)
+ums_activate(device_t self, enum devact act)
 {
 	struct ums_softc *sc = device_private(self);
 

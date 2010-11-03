@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_quirks.c,v 1.82 2010/10/18 16:13:09 sborrill Exp $	*/
+/*	$NetBSD: umass_quirks.c,v 1.83 2010/11/03 22:34:24 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2001, 2004 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass_quirks.c,v 1.82 2010/10/18 16:13:09 sborrill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass_quirks.c,v 1.83 2010/11/03 22:34:24 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -295,7 +295,7 @@ umass_init_insystem(struct umass_softc *sc)
 	if (err) {
 		DPRINTF(UDMASS_USB,
 			("%s: could not switch to Alt Interface 1\n",
-			USBDEVNAME(sc->sc_dev)));
+			device_xname(sc->sc_dev)));
 		return (err);
 	}
 
