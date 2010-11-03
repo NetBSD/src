@@ -1,4 +1,4 @@
-/*	$NetBSD: umodem.c,v 1.59 2008/06/27 16:05:59 drochner Exp $	*/
+/*	$NetBSD: umodem.c,v 1.60 2010/11/03 22:34:24 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umodem.c,v 1.59 2008/06/27 16:05:59 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umodem.c,v 1.60 2010/11/03 22:34:24 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,11 +81,20 @@ Static struct ucom_methods umodem_methods = {
 	NULL,
 };
 
-USB_DECLARE_DRIVER(umodem);
+int             umodem_match(device_t, cfdata_t, void *);
+void            umodem_attach(device_t, device_t, void *);
+int             umodem_detach(device_t, int);
+int             umodem_activate(device_t, enum devact);
 
-USB_MATCH(umodem)
+extern struct cfdriver umodem_cd;
+
+CFATTACH_DECL_NEW(umodem, sizeof(struct umodem_softc), umodem_match,
+    umodem_attach, umodem_detach, umodem_activate);
+
+int 
+umodem_match(device_t parent, cfdata_t match, void *aux)
 {
-	USB_IFMATCH_START(umodem, uaa);
+	struct usbif_attach_arg *uaa = aux;
 	usb_interface_descriptor_t *id;
 	int cm, acm;
 
@@ -101,9 +110,11 @@ USB_MATCH(umodem)
 	return (UMATCH_IFACECLASS_IFACESUBCLASS_IFACEPROTO);
 }
 
-USB_ATTACH(umodem)
+void 
+umodem_attach(device_t parent, device_t self, void *aux)
 {
-	USB_IFATTACH_START(umodem, sc, uaa);
+	struct umodem_softc *sc = device_private(self);
+	struct usbif_attach_arg *uaa = aux;
 	struct ucom_attach_args uca;
 
 	uca.portno = UCOM_UNK_PORTNO;
@@ -111,21 +122,22 @@ USB_ATTACH(umodem)
 	uca.info = NULL;
 
 	if (umodem_common_attach(self, sc, uaa, &uca))
-		USB_ATTACH_ERROR_RETURN;
-	USB_ATTACH_SUCCESS_RETURN;
+		return;
+	return;
 }
 
 int
-umodem_activate(device_ptr_t self, enum devact act)
+umodem_activate(device_t self, enum devact act)
 {
 	struct umodem_softc *sc = device_private(self);
 
 	return umodem_common_activate(sc, act);
 }
 
-USB_DETACH(umodem)
+int 
+umodem_detach(device_t self, int flags)
 {
-	USB_DETACH_START(umodem, sc);
+	struct umodem_softc *sc = device_private(self);
 #ifdef __FreeBSD__
 	int flags = 0;
 #endif
