@@ -94,7 +94,7 @@ main(int argc, char **argv)
 	/* write challenge to temp file */
 	paa_write_file("challenge", buf, cc);
 	/* get the client to authenticate via paa, writing to temp response file */
-	system("clnt/paaclient -r authentication@bigco.com < challenge > response");
+	system("client/paaclient -r authentication@bigco.com < challenge > response");
 	/* read in response */
 	cc = paa_read_file("response", buf, sizeof(buf));
 	if (!paa_check_response(&challenge, &id, &netpgp, buf)) {

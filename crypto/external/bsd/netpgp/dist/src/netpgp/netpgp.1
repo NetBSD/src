@@ -1,4 +1,4 @@
-.\" $NetBSD: netpgp.1,v 1.14 2010/08/13 18:29:41 agc Exp $
+.\" $NetBSD: netpgp.1,v 1.15 2010/11/03 02:36:12 agc Exp $
 .\"
 .\" Copyright (c) 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -42,7 +42,7 @@
 .Nm
 .Fl Fl decrypt
 .Op Fl Fl output Ns = Ns Ar filename
-.Op Fl Fl pass-fd Ns = Ns Ar fd
+.Op Fl Fl pass\-fd Ns = Ns Ar fd
 .Op options
 .Ar file ...
 .Pp
@@ -52,7 +52,7 @@
 .Op Fl Fl detach
 .Op Fl Fl hash Ns = Ns Ar algorithm
 .Op Fl Fl output Ns = Ns Ar filename
-.Op Fl Fl pass-fd Ns = Ns Ar fd
+.Op Fl Fl pass\-fd Ns = Ns Ar fd
 .Op Fl Fl from Ns = Ns Ar sig-valid-from
 .Op Fl Fl duration Ns = Ns Ar sig-valid-duration
 .Op options
@@ -69,12 +69,12 @@
 .Nm
 .Fl Fl clearsign
 .Op Fl Fl output Ns = Ns Ar filename
-.Op Fl Fl pass-fd Ns = Ns Ar fd
+.Op Fl Fl pass\-fd Ns = Ns Ar fd
 .Op options
 .Ar file ...
 .Nm
-.Fl Fl list-packets
-.Op Fl Fl pass-fd Ns = Ns Ar fd
+.Fl Fl list\-packets
+.Op Fl Fl pass\-fd Ns = Ns Ar fd
 .Ar file ...
 .Nm
 .Fl Fl version
@@ -93,7 +93,7 @@ where the long options for all commands are:
 .br
 .Op Fl Fl results Ns = Ns Ar filename
 .br
-.Op Fl Fl ssh-keys
+.Op Fl Fl ssh\-keys
 .br
 .Op Fl Fl userid Ns = Ns Ar userid
 .br
@@ -142,7 +142,7 @@ Keys can be listed, exported (i.e. made available to others),
 and imported (i.e. users who have signed our public key).
 .Pp
 The
-.Fl Fl list-packets
+.Fl Fl list\-packets
 command can be used for debugging purposes.
 .Pp
 The following commands are used to sign and verify signatures:
@@ -181,7 +181,7 @@ to type it in, using
 .Xr getpass 3 .
 .It Fl Fl encrypt
 Use the user's public key to encrypt the files named on the command line.
-.It Fl Fl list-packets
+.It Fl Fl list\-packets
 List all the
 .Dq packets
 in an encrypted or signed file.
@@ -237,7 +237,7 @@ value.
 specifies a filename to which the results of the operation
 should be sent.
 The default is to send the results to stderr.
-.It Fl Fl ssh-keys
+.It Fl Fl ssh\-keys
 specifies that the public and private keys should be taken
 from the
 .Xr ssh 1
@@ -258,7 +258,7 @@ that a key belongs to a certain individual.
 The trust for a signed key is given by the other signers of that key.
 The 16 hexadecimal digit user identity should be used when specifying
 user identities - email addresses and names are provided as aliases.
-.It Fl Fl pass-fd Ns = Ns Ar fd
+.It Fl Fl pass\-fd Ns = Ns Ar fd
 This option is intended for the use of external programs which may
 like to use the
 .Xr libnetpgp 3
