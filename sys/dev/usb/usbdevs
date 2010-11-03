@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.565 2010/11/03 20:03:02 christos Exp $
+$NetBSD: usbdevs,v 1.566 2010/11/03 20:46:15 christos Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -733,7 +733,7 @@ product APPLE SPEAKERS		0x1101	Speakers
 product APPLE IPHONE		0x1290	iPhone
 product APPLE IPOD_TOUCH	0x1291	iPod Touch
 product APPLE IPHONE_3G		0x1292	iPhone 3G
-product	APPLE IPHONE_3GS	0x1294	iPhone 3GS
+product APPLE IPHONE_3GS	0x1294	iPhone 3GS
 product APPLE ETHERNET		0x1402	Apple USB to Ethernet
 
 /* ArkMicroChips products */
@@ -1064,7 +1064,10 @@ product DLINK DWLAG122		0x3a04	DWL-AG122
 product DLINK DWLAG122_NF	0x3a05	DWL-AG122
 product DLINK DWLG122		0x3c00	AirPlus G Wireless USB Adapter
 /* product DLINK RT2570		0x3c00	RT2570 */
+product DLINK2 DWLG122C1	0x3c03	DWL-G122 rev C1
+product DLINK2 WUA1340		0x3c04	WUA-1340
 product DLINK DUBE100B1		0x3c05	DUB-E100 rev B1
+product DLINK2 DWA111		0x3c06	DWA-111
 product DLINK RT2870		0x3c09	RT2870
 product DLINK RT3072		0x3c0a	RT3072
 product DLINK DSB650C		0x4000	10Mbps ethernet adapter
@@ -1256,7 +1259,7 @@ product GIGASET RT2573		0x0722	RT2573
 product GMATE YP3X00		0x1001	YP3X00 PDA
 
 /* MTK products */
-product	MTK GPS_RECEIVER	0x3329	GPS receiver
+product MTK GPS_RECEIVER	0x3329	GPS receiver
 
 /* Garmin products */
 product GARMIN FORERUNNER305	0x0003	Forerunner 305
@@ -1283,7 +1286,7 @@ product GRIFFIN IMATE		0x0405	iMate, ADB adapter
 product GRIFFIN POWERMATE	0x0410	PowerMate Assignable Controller
 
 /* Gude ADS */
-product	GUDE DCF		0xdcf7	Exper mouseCLOCK USB
+product GUDE DCF		0xdcf7	Exper mouseCLOCK USB
 
 /* Guillemot Corporation */
 product GUILLEMOT DALEADER	0xa300	DA Leader
@@ -1544,6 +1547,7 @@ product KEYSPAN UIA11		0x0202	UIA-11 remote control
 /* Kingston products */
 product KINGSTON XX1		0x0008	Ethernet Adapter
 product KINGSTON KNU101TX	0x000a	KNU101TX USB Ethernet
+product KINGSTON DTMINI10	0x162c	DT Mini 10
 
 /* Kodak products */
 product KODAK DC220		0x0100	Digital Science DC220
@@ -1658,10 +1662,10 @@ product MCT ML_4500		0x0302	ML-4500
 product MEDIAGEAR READER9IN1	0x5003	USB2.0 9 in 1 Reader
 
 /* Meinberg Funkuhren products */
-product	MEINBERG USB5131	0x0301	USB 5131 DCF77 - Radio Clock
+product MEINBERG USB5131	0x0301	USB 5131 DCF77 - Radio Clock
 
 /* Meizo Electronics */
-product	MEIZU M6_SL		0x0140	MiniPlayer M6 (SL)
+product MEIZU M6_SL		0x0140	MiniPlayer M6 (SL)
 
 /* Melco, Inc products */
 product MELCO LUATX1		0x0001	LUA-TX Ethernet
@@ -2620,7 +2624,7 @@ product WINCHIPHEAD CH341SER	0x5523	CH341/CH340 USB-Serial Bridge
 product WINCHIPHEAD2 CH341	0x7523	CH341 serial/parallel
 
 /* Wistron NeWeb products */
-product	WISTRONNEWEB WNC0600	0x0326	WNC-0600USB
+product WISTRONNEWEB WNC0600	0x0326	WNC-0600USB
 product WISTRONNEWEB UR045G	0x0427	PrismGT USB 2.0 WLAN
 product WISTRONNEWEB UR055G	0x0711	UR055G
 product WISTRONNEWEB O8494	0x0804	ORiNOCO 802.11n
