@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.base,v 1.55 2010/11/02 19:12:48 joerg Exp $
+#	$NetBSD: NetBSD.dist.base,v 1.56 2010/11/03 21:46:36 christos Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -61,6 +61,7 @@
 ./libdata/firmware/if_ipw
 ./libdata/firmware/if_iwi
 ./libdata/firmware/if_iwn
+./libdata/firmware/if_otus
 ./libdata/firmware/if_wpi
 ./libdata/firmware/ral
 ./libdata/firmware/rum
