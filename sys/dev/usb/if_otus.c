@@ -1,4 +1,4 @@
-/*	$NetBSD: if_otus.c,v 1.2 2010/11/03 20:03:02 christos Exp $	*/
+/*	$NetBSD: if_otus.c,v 1.3 2010/11/03 20:46:33 christos Exp $	*/
 /*	$OpenBSD: if_otus.c,v 1.18 2010/08/27 17:08:00 jsg Exp $	*/
 
 /*-
@@ -118,8 +118,10 @@ Static void	otus_start(struct ifnet *);
 Static void	otus_watchdog(struct ifnet *);
 Static int	otus_ioctl(struct ifnet *, u_long, void *);
 Static int	otus_set_multi(struct otus_softc *);
+#ifdef HAVE_EDCA
 Static void	otus_updateedca(struct ieee80211com *);
 Static void	otus_updateedca_cb(struct otus_softc *, void *);
+#endif
 Static void	otus_updateedca_cb_locked(struct otus_softc *);
 Static void	otus_updateslot(struct ifnet *);
 Static void	otus_updateslot_cb(struct otus_softc *, void *);
@@ -2078,6 +2080,7 @@ otus_set_multi(struct otus_softc *sc)
 	return error;
 }
 
+#ifdef HAVE_EDCA
 Static void
 otus_updateedca(struct ieee80211com *ic)
 {
@@ -2094,6 +2097,7 @@ otus_updateedca_cb(struct otus_softc *sc, void *arg __used)
 	otus_updateedca_cb_locked(sc);
 	mutex_exit(&sc->sc_write_mtx);
 }
+#endif
 
 Static void
 otus_updateedca_cb_locked(struct otus_softc *sc)
