@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1520 2010/11/02 19:12:47 joerg Exp $
+#	$NetBSD: mi,v 1.1521 2010/11/03 12:15:54 njoly Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3395,6 +3395,7 @@
 ./usr/libdata/debug/usr/bin/xargs.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/xgettext.debug	comp-c-debug		debug
 ./usr/libdata/debug/usr/bin/xstr.debug		comp-c-debug		debug
+./usr/libdata/debug/usr/bin/xz.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/yacc.debug		comp-c-debug		debug
 ./usr/libdata/debug/usr/bin/yes.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/ypcat.debug		comp-nis-debug		yp,debug
