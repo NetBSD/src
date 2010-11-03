@@ -1,4 +1,4 @@
-.\" $NetBSD: netpgpkeys.1,v 1.14 2010/08/13 18:29:41 agc Exp $
+.\" $NetBSD: netpgpkeys.1,v 1.15 2010/11/03 02:36:13 agc Exp $
 .\"
 .\" Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -35,27 +35,27 @@
 .Nd PGP key management utility
 .Sh SYNOPSIS
 .Nm
-.Fl Fl export-key
+.Fl Fl export\-key
 .Op options
 .Ar file ...
 .Nm
-.Fl Fl find-key
+.Fl Fl find\-key
 .Op options
 .Ar file ...
 .Nm
-.Fl Fl generate-key
+.Fl Fl generate\-key
 .Op options
 .Ar file ...
 .Nm
-.Fl Fl import-key
+.Fl Fl import\-key
 .Op options
 .Ar file ...
 .Nm
-.Fl Fl list-keys
+.Fl Fl list\-keys
 .Op options
 .Ar file ...
 .Nm
-.Fl Fl list-sigs
+.Fl Fl list\-sigs
 .Op options
 .Ar file ...
 .Nm
@@ -137,12 +137,12 @@ The other use of
 .Nm
 is to maintain keyrings.
 Key and keyring management commands available are:
-.Fl Fl export-key ,
-.Fl Fl find-key ,
-.Fl Fl generate-key ,
-.Fl Fl import-key ,
+.Fl Fl export\-key ,
+.Fl Fl find\-key ,
+.Fl Fl generate\-key ,
+.Fl Fl import\-key ,
 and
-.Fl Fl list-keys .
+.Fl Fl list\-keys .
 Keyrings are collections of public keys belonging to other users.
 By using other means of identification, it is possible to establish
 the bona fides of other users.
@@ -157,14 +157,14 @@ and imported (i.e. users who have signed our public key).
 Key and keyring management can be done with the
 following commands:
 .Bl -tag -width Ar
-.It Fl Fl export-key
+.It Fl Fl export\-key
 Display the current public key in a format suitable for export.
 This can be used to place the keyring on one of the
 public key servers, for example.
-.It Fl Fl find-key
+.It Fl Fl find\-key
 Find the appropriate public key from the current keyring.
 If no keyring is provided, the user's public keyring is used.
-.It Fl Fl generate-key
+.It Fl Fl generate\-key
 This command is used to generate a new public and private key pair.
 If provided on the command line, the argument will be given to the
 key generation routine to be used as the identity of the key.
@@ -176,14 +176,14 @@ which is created at key generation time.
 At present, only RSA keys can be generated.
 The hash algorithm and keysize can be specified on the command
 line.
-.It Fl Fl import-key
+.It Fl Fl import\-key
 Import a public key as retrieved from one of the public key servers.
 This is in the form of a file which has previously been
 retrieved from elsewhere.
-.It Fl Fl list-keys
+.It Fl Fl list\-keys
 List all the public keys in the current keyring.
 If no keyring is provided, the user's public keyring is used.
-.It Fl Fl list-sigs
+.It Fl Fl list\-sigs
 List all the public keys in the current keyring, along with
 the sub-key signatures which provide the key with trust.
 If no keyring is provided, the user's public keyring is used.
@@ -280,9 +280,9 @@ using their
 .Nm
 .Dq fingerprint .
 This can be found in the output from normal
-.Fl Fl list-keys
+.Fl Fl list\-keys
 and
-.Fl Fl list-sigs
+.Fl Fl list\-sigs
 commands.
 .Sh PASS PHRASES
 The pass phrase cannot be changed by
@@ -330,7 +330,7 @@ uid              osx-vm1.crowthorne.alistaircrooks.co.uk (/etc/ssh/ssh_host_rsa_
 .Pp
 The following is an example of RSA key generation:
 .Bd -literal
-% netpgpkeys --generate-key
+% netpgpkeys --generate\-key
 netpgp: default key set to "C0596823"
 pub 2048/RSA (Encrypt or Sign) 5bc707d1b495aaf2 2010-04-14
 Key fingerprint: 08cb 4867 eeed 454c ce30 610d 5bc7 07d1 b495 aaf2
