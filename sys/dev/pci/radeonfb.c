@@ -1,4 +1,4 @@
-/*	$NetBSD: radeonfb.c,v 1.38 2010/11/02 14:32:58 macallan Exp $ */
+/*	$NetBSD: radeonfb.c,v 1.39 2010/11/03 00:49:02 macallan Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.38 2010/11/02 14:32:58 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.39 2010/11/03 00:49:02 macallan Exp $");
 
 #define RADEONFB_DEFAULT_DEPTH 8
 
@@ -572,10 +572,9 @@ radeonfb_attach(device_t parent, device_t dev, void *aux)
 
 	radeonfb_loadbios(sc, pa);
 
-#ifdef	RADEON_BIOS_INIT
+#ifdef	RADEONFB_BIOS_INIT
 	if (radeonfb_bios_init(sc)) {
 		aprint_error("%s: BIOS inititialization failed\n", XNAME(sc));
-		goto error;
 	}
 #endif
 
