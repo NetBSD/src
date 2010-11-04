@@ -54,7 +54,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: symmetric.c,v 1.15 2010/11/04 07:35:08 agc Exp $");
+__RCSID("$NetBSD: symmetric.c,v 1.16 2010/11/04 15:38:45 agc Exp $");
 #endif
 
 #include "crypto.h"
@@ -757,6 +757,10 @@ __ops_is_sa_supported(__ops_symm_alg_t alg)
 	case OPS_SA_AES_256:
 	case OPS_SA_CAST5:
 	case OPS_SA_TRIPLEDES:
+#ifndef OPENSSL_NO_CAMELLIA
+	case OPS_SA_CAMELLIA_128:
+	case OPS_SA_CAMELLIA_256:
+#endif
 #ifndef OPENSSL_NO_IDEA
 	case OPS_SA_IDEA:
 #endif
