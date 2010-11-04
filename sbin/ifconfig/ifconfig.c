@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.220 2009/08/07 18:53:37 dyoung Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.221 2010/11/04 23:31:12 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1983, 1993\
  The Regents of the University of California.  All rights reserved.");
-__RCSID("$NetBSD: ifconfig.c,v 1.220 2009/08/07 18:53:37 dyoung Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.221 2010/11/04 23:31:12 pooka Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -541,7 +541,10 @@ main(int argc, char **argv)
 	const char *ifname;
 
 #ifdef RUMP_ACTION
-	rump_init();
+	int error;
+
+	if ((error = rumpclient_init()) != 0)
+		errx(1, "rump client init: %s", strerror(error));
 #endif
 	memset(match, 0, sizeof(match));
 
