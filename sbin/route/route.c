@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.122 2010/11/04 23:36:10 pooka Exp $	*/
+/*	$NetBSD: route.c,v 1.123 2010/11/04 23:37:27 pooka Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1991, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)route.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: route.c,v 1.122 2010/11/04 23:36:10 pooka Exp $");
+__RCSID("$NetBSD: route.c,v 1.123 2010/11/04 23:37:27 pooka Exp $");
 #endif
 #endif /* not lint */
 
@@ -1173,10 +1173,12 @@ getaddr(int which, const char *s, struct hostent **hpp, struct sou *soup)
 		su = &soup->so_ifa;
 		su->sa.sa_family = af;
 		break;
+#ifndef SMALL
 	case RTA_TAG:
 		su = &soup->so_mpls;
 		afamily = AF_MPLS;
 		break;
+#endif
 	default:
 		su = NULL;
 		usage("Internal Error");
@@ -1516,7 +1518,9 @@ rtmsg(int cmd, int flags, struct sou *soup)
 	NEXTADDR(RTA_GENMASK, soup->so_genmask);
 	NEXTADDR(RTA_IFP, soup->so_ifp);
 	NEXTADDR(RTA_IFA, soup->so_ifa);
+#ifndef SMALL
 	NEXTADDR(RTA_TAG, soup->so_mpls);
+#endif
 	rtm.rtm_msglen = l = cp - (char *)&m_rtmsg;
 	if (verbose && ! shortoutput) {
 		if (rtm_addrs)
