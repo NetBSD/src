@@ -54,7 +54,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: symmetric.c,v 1.11 2010/08/15 07:52:27 agc Exp $");
+__RCSID("$NetBSD: symmetric.c,v 1.12 2010/11/04 01:18:34 agc Exp $");
 #endif
 
 #include "crypto.h"
@@ -122,16 +122,23 @@ std_finish(__ops_crypt_t *crypt)
 	}
 }
 
-static void 
+static int 
 cast5_init(__ops_crypt_t *crypt)
 {
 	if (crypt->encrypt_key) {
 		free(crypt->encrypt_key);
 	}
-	crypt->encrypt_key = calloc(1, sizeof(CAST_KEY));
+	if ((crypt->encrypt_key = calloc(1, sizeof(CAST_KEY))) == NULL) {
+		(void) fprintf(stderr, "cast5_init: alloc failure\n");
+		return 0;
+	}
 	CAST_set_key(crypt->encrypt_key, (int)crypt->keysize, crypt->key);
-	crypt->decrypt_key = calloc(1, sizeof(CAST_KEY));
+	if ((crypt->decrypt_key = calloc(1, sizeof(CAST_KEY))) == NULL) {
+		(void) fprintf(stderr, "cast5_init: alloc failure\n");
+		return 0;
+	}
 	CAST_set_key(crypt->decrypt_key, (int)crypt->keysize, crypt->key);
+	return 1;
 }
 
 static void 
@@ -182,18 +189,21 @@ static __ops_crypt_t cast5 =
 };
 
 #ifndef OPENSSL_NO_IDEA
-static void 
+static int 
 idea_init(__ops_crypt_t *crypt)
 {
 	if (crypt->keysize != IDEA_KEY_LENGTH) {
 		(void) fprintf(stderr, "idea_init: keysize wrong\n");
-		return;
+		return 0;
 	}
 
 	if (crypt->encrypt_key) {
 		free(crypt->encrypt_key);
 	}
-	crypt->encrypt_key = calloc(1, sizeof(IDEA_KEY_SCHEDULE));
+	if ((crypt->encrypt_key = calloc(1, sizeof(IDEA_KEY_SCHEDULE))) == NULL) {
+		(void) fprintf(stderr, "idea_init: alloc failure\n");
+		return 0;
+	}
 
 	/* note that we don't invert the key when decrypting for CFB mode */
 	idea_set_encrypt_key(crypt->key, crypt->encrypt_key);
@@ -201,9 +211,13 @@ idea_init(__ops_crypt_t *crypt)
 	if (crypt->decrypt_key) {
 		free(crypt->decrypt_key);
 	}
-	crypt->decrypt_key = calloc(1, sizeof(IDEA_KEY_SCHEDULE));
+	if ((crypt->decrypt_key = calloc(1, sizeof(IDEA_KEY_SCHEDULE))) == NULL) {
+		(void) fprintf(stderr, "idea_init: alloc failure\n");
+		return 0;
+	}
 
 	idea_set_decrypt_key(crypt->encrypt_key, crypt->decrypt_key);
+	return 1;
 }
 
 static void 
@@ -256,13 +270,16 @@ static const __ops_crypt_t idea =
 
 #define KEYBITS_AES128 128
 
-static void 
+static int 
 aes128_init(__ops_crypt_t *crypt)
 {
 	if (crypt->encrypt_key) {
 		free(crypt->encrypt_key);
 	}
-	crypt->encrypt_key = calloc(1, sizeof(AES_KEY));
+	if ((crypt->encrypt_key = calloc(1, sizeof(AES_KEY))) == NULL) {
+		(void) fprintf(stderr, "aes128_init: alloc failure\n");
+		return 0;
+	}
 	if (AES_set_encrypt_key(crypt->key, KEYBITS_AES128,
 			crypt->encrypt_key)) {
 		fprintf(stderr, "aes128_init: Error setting encrypt_key\n");
@@ -271,11 +288,15 @@ aes128_init(__ops_crypt_t *crypt)
 	if (crypt->decrypt_key) {
 		free(crypt->decrypt_key);
 	}
-	crypt->decrypt_key = calloc(1, sizeof(AES_KEY));
+	if ((crypt->decrypt_key = calloc(1, sizeof(AES_KEY))) == NULL) {
+		(void) fprintf(stderr, "aes128_init: alloc failure\n");
+		return 0;
+	}
 	if (AES_set_decrypt_key(crypt->key, KEYBITS_AES128,
 				crypt->decrypt_key)) {
 		fprintf(stderr, "aes128_init: Error setting decrypt_key\n");
 	}
+	return 1;
 }
 
 static void 
@@ -327,25 +348,42 @@ static const __ops_crypt_t aes128 =
 
 #define KEYBITS_AES256 256
 
-static void 
+static int 
 aes256_init(__ops_crypt_t *crypt)
 {
 	if (crypt->encrypt_key) {
 		free(crypt->encrypt_key);
 	}
-	crypt->encrypt_key = calloc(1, sizeof(AES_KEY));
+	if ((crypt->encrypt_key = calloc(1, sizeof(AES_KEY))) == NULL) {
+		(void) fprintf(stderr, "aes256_init: alloc failure\n");
+		return 0;
+	}
 	if (AES_set_encrypt_key(crypt->key, KEYBITS_AES256,
 			crypt->encrypt_key)) {
 		fprintf(stderr, "aes256_init: Error setting encrypt_key\n");
+		free(crypt->encrypt_key);
+		crypt->encrypt_key = NULL;
+		return 0;
 	}
-
-	if (crypt->decrypt_key)
+	if (crypt->decrypt_key) {
 		free(crypt->decrypt_key);
-	crypt->decrypt_key = calloc(1, sizeof(AES_KEY));
+	}
+	if ((crypt->decrypt_key = calloc(1, sizeof(AES_KEY))) == NULL) {
+		(void) fprintf(stderr, "aes256_init: alloc failure\n");
+		free(crypt->encrypt_key);
+		crypt->encrypt_key = NULL;
+		return 0;
+	}
 	if (AES_set_decrypt_key(crypt->key, KEYBITS_AES256,
 			crypt->decrypt_key)) {
 		fprintf(stderr, "aes256_init: Error setting decrypt_key\n");
+		free(crypt->encrypt_key);
+		crypt->encrypt_key = NULL;
+		free(crypt->decrypt_key);
+		crypt->decrypt_key = NULL;
+		return 0;
 	}
+	return 1;
 }
 
 static const __ops_crypt_t aes256 =
@@ -367,7 +405,7 @@ static const __ops_crypt_t aes256 =
 
 /* Triple DES */
 
-static void 
+static int 
 tripledes_init(__ops_crypt_t *crypt)
 {
 	DES_key_schedule *keys;
@@ -376,12 +414,15 @@ tripledes_init(__ops_crypt_t *crypt)
 	if (crypt->encrypt_key) {
 		free(crypt->encrypt_key);
 	}
-	keys = crypt->encrypt_key = calloc(1, 3 * sizeof(DES_key_schedule));
-
+	if ((keys = crypt->encrypt_key = calloc(1, 3 * sizeof(DES_key_schedule))) == NULL) {
+		(void) fprintf(stderr, "tripledes_init: alloc failure\n");
+		return 0;
+	}
 	for (n = 0; n < 3; ++n) {
 		DES_set_key((DES_cblock *)(void *)(crypt->key + n * 8),
 			&keys[n]);
 	}
+	return 1;
 }
 
 static void 

@@ -62,58 +62,42 @@
 
 #define OPS_MIN_HASH_SIZE	16
 
-typedef int __ops_hash_init_t(__ops_hash_t *);
-typedef void __ops_hash_add_t(__ops_hash_t *, const uint8_t *, unsigned);
-typedef unsigned __ops_hash_finish_t(__ops_hash_t *, uint8_t *);
-
 /** _ops_hash_t */
 struct _ops_hash_t {
 	__ops_hash_alg_t	 alg;		/* algorithm */
 	size_t			 size;		/* size */
 	const char		*name;		/* what it's known as */
-	__ops_hash_init_t	*init;		/* initialisation func */
-	__ops_hash_add_t	*add;		/* add text func */
-	__ops_hash_finish_t	*finish;	/* finalise func */
+	int			(*init)(__ops_hash_t *);
+	void			(*add)(__ops_hash_t *, const uint8_t *, unsigned);
+	unsigned		(*finish)(__ops_hash_t *, uint8_t *);
 	void		 	*data;		/* blob for data */
 };
 
-typedef void __ops_setiv_func_t(__ops_crypt_t *, const uint8_t *);
-typedef void __ops_setkey_func_t(__ops_crypt_t *, const uint8_t *);
-typedef void __ops_crypt_init_t(__ops_crypt_t *);
-typedef void __ops_crypt_resync_t(__ops_crypt_t *);
-typedef void __ops_blkenc_t(__ops_crypt_t *, void *, const void *);
-typedef void __ops_blkdec_t(__ops_crypt_t *, void *, const void *);
-typedef void __ops_crypt_cfb_encrypt_t(__ops_crypt_t *, void *, const void *,
-					size_t);
-typedef void __ops_crypt_cfb_decrypt_t(__ops_crypt_t *, void *, const void *,
-					size_t);
-typedef void __ops_crypt_finish_t(__ops_crypt_t *);
-
 /** _ops_crypt_t */
 struct _ops_crypt_t {
-	__ops_symm_alg_t		alg;
-	size_t				blocksize;
-	size_t				keysize;
-	__ops_setiv_func_t		*set_iv;
-	__ops_setkey_func_t		*set_crypt_key;
-	__ops_crypt_init_t		*base_init;
-	__ops_crypt_resync_t		*decrypt_resync;
-	/* encrypt/decrypt one block  */
-	__ops_blkenc_t			*block_encrypt;
-	__ops_blkdec_t			*block_decrypt;
+	__ops_symm_alg_t	alg;
+	size_t			blocksize;
+	size_t			keysize;
+	void 			(*set_iv)(__ops_crypt_t *, const uint8_t *);
+	void			(*set_crypt_key)(__ops_crypt_t *, const uint8_t *);
+	int			(*base_init)(__ops_crypt_t *);
+	void			(*decrypt_resync)(__ops_crypt_t *);
+	/* encrypt/decrypt one block */
+	void			(*block_encrypt)(__ops_crypt_t *, void *, const void *);
+	void			(*block_decrypt)(__ops_crypt_t *, void *, const void *);
 	/* Standard CFB encrypt/decrypt (as used by Sym Enc Int Prot packets) */
-	__ops_crypt_cfb_encrypt_t	*cfb_encrypt;
-	__ops_crypt_cfb_decrypt_t	*cfb_decrypt;
-	__ops_crypt_finish_t		*decrypt_finish;
-	uint8_t				iv[OPS_MAX_BLOCK_SIZE];
-	uint8_t				civ[OPS_MAX_BLOCK_SIZE];
-	uint8_t				siv[OPS_MAX_BLOCK_SIZE];
+	void 			(*cfb_encrypt)(__ops_crypt_t *, void *, const void *, size_t);
+	void			(*cfb_decrypt)(__ops_crypt_t *, void *, const void *, size_t);
+	void			(*decrypt_finish)(__ops_crypt_t *);
+	uint8_t			iv[OPS_MAX_BLOCK_SIZE];
+	uint8_t			civ[OPS_MAX_BLOCK_SIZE];
+	uint8_t			siv[OPS_MAX_BLOCK_SIZE];
 		/* siv is needed for weird v3 resync */
-	uint8_t				key[OPS_MAX_KEY_SIZE];
-	int				num;
+	uint8_t			key[OPS_MAX_KEY_SIZE];
+	int			num;
 		/* num is offset - see openssl _encrypt doco */
-	void				*encrypt_key;
-	void				*decrypt_key;
+	void			*encrypt_key;
+	void			*decrypt_key;
 };
 
 void __ops_crypto_finish(void);
