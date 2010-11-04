@@ -1,4 +1,4 @@
-.\" $NetBSD: netpgpkeys.1,v 1.15 2010/11/03 02:36:13 agc Exp $
+.\" $NetBSD: netpgpkeys.1,v 1.16 2010/11/04 06:46:15 agc Exp $
 .\"
 .\" Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -67,11 +67,13 @@
 .Pp
 where the long options for all commands are:
 .Pp
+.Op Fl Fl cipher Ns = Ns Ar cipher\-algorithm
+.br
 .Op Fl Fl coredumps
 .br
-.Op Fl Fl hash Ns = Ns Ar hash-algorithm
+.Op Fl Fl hash Ns = Ns Ar hash\-algorithm
 .br
-.Op Fl Fl homedir Ns = Ns Ar home-directory
+.Op Fl Fl homedir Ns = Ns Ar home\-directory
 .br
 .Op Fl Fl keyring Ns = Ns Ar keyring
 .br
@@ -196,14 +198,17 @@ library.
 In addition to one of the preceding commands, a number of qualifiers
 or options may be given.
 .Bl -tag -width Ar
-.It Fl Fl hash Ar hash-algorithm
+.It Fl Fl cipher Ar cipher\-algorithm
+Specify the cipher to be used for symmetric encryption.
+The default cipher is "CAST5".
+.It Fl Fl hash Ar hash\-algorithm
 Specify the hash algorithm which is used during fingerprint calculation.
 For reference, at the present time,
 .Xr ssh-keygen 1
 uses
 .Dq MD5
 for its fingerprint values.
-.It Fl Fl homedir Ar home-directory
+.It Fl Fl homedir Ar home\-directory
 Keyrings are normally located, for historical reasons, within
 the user's home directory in a subdirectory called
 .Dq Pa .gnupg
@@ -232,7 +237,7 @@ that a key belongs to a certain individual.
 The trust for a signed key is given by the other signers of that key.
 The 16 hexadecimal digit user identity should be used when specifying
 user identities - email addresses and names are provided as aliases.
-.It Fl Fl pass-fd Ns = Ns Ar fd
+.It Fl Fl pass\-fd Ns = Ns Ar fd
 This option is intended for the use of external programs which may
 like to use the
 .Xr libnetpgp 3

@@ -93,6 +93,7 @@ enum optdefs {
 	PASSWDFD,
 	RESULTS,
 	SSHKEYFILE,
+	CIPHER,
 
 	/* debug */
 	OPS_DEBUG
@@ -135,6 +136,7 @@ static struct option options[] = {
 	{"verbose",	no_argument, 		NULL,	VERBOSE},
 	{"pass-fd",	required_argument, 	NULL,	PASSWDFD},
 	{"results",	required_argument, 	NULL,	RESULTS},
+	{"cipher",	required_argument, 	NULL,	CIPHER},
 	{ NULL,		0,			NULL,	0},
 };
 
@@ -317,6 +319,9 @@ setoption(netpgp_t *netpgp, prog_t *p, int val, char *arg, int *homeset)
 	case SSHKEYFILE:
 		netpgp_setvar(netpgp, "ssh keys", "1");
 		netpgp_setvar(netpgp, "sshkeyfile", arg);
+		break;
+	case CIPHER:
+		netpgp_setvar(netpgp, "cipher", arg);
 		break;
 	case OPS_DEBUG:
 		netpgp_set_debug(arg);
