@@ -1,5 +1,5 @@
 #! /bin/sh -
-#	$NetBSD: makesyscalls.sh,v 1.100 2010/11/01 16:21:29 pooka Exp $
+#	$NetBSD: makesyscalls.sh,v 1.101 2010/11/04 17:02:34 pooka Exp $
 #
 # Copyright (c) 1994, 1996, 2000 Christopher G. Demetriou
 # All rights reserved.
@@ -280,7 +280,7 @@ NR == 1 {
 	printf "\t\t} be;\t\t\t\t\t\t\t\\\n" > sysarghdr
 	printf "\t}\n" > sysarghdr
 	printf("\n#undef check_syscall_args\n") >sysarghdr
-	printf("#define check_syscall_args(call) \\\n" \
+	printf("#define check_syscall_args(call) /*LINTED*/ \\\n" \
 		"\ttypedef char call##_check_args" \
 		    "[sizeof (struct call##_args) \\\n" \
 		"\t\t<= %sMAXSYSARGS * sizeof (%s) ? 1 : -1];\n", \
