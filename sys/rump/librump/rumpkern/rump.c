@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.195 2010/11/01 13:55:20 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.196 2010/11/04 20:54:07 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.195 2010/11/01 13:55:20 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.196 2010/11/04 20:54:07 pooka Exp $");
 
 #include <sys/systm.h>
 #define ELFSIZE ARCH_ELFSIZE
@@ -105,7 +105,7 @@ int rump_threads = 1;
  * but good enough for now.
  */
 static struct vmspace sp_vmspace;
-static int rumpsp_type;
+static bool iamtheserver = false;
 
 static char rump_msgbuf[16*1024]; /* 16k should be enough for std rump needs */
 
@@ -215,16 +215,12 @@ rump__init(int rump_version)
 	spops.spop_lwproc_newproc	= rump_lwproc_newproc;
 	spops.spop_lwproc_curlwp	= rump_lwproc_curlwp;
 	spops.spop_syscall		= rump_syscall;
-	if ((error = rumpuser_sp_init(&spops, &rumpsp_type)) != 0)
-		return error;
 
-	/* If we're a client, we can return directly.  Otherwise, proceed. */
-	switch (rumpsp_type) {
-	case RUMP_SP_CLIENT:
-		return 0;
-	case RUMP_SP_SERVER:
-	case RUMP_SP_NONE:
-		break;
+	if (rumpuser_getenv("RUMP_SP_SERVER", buf, sizeof(buf), &error) == 0) {
+		error = rumpuser_sp_init(&spops, buf);
+		if (error)
+			return error;
+		iamtheserver = true;
 	}
 
 	if (rumpuser_getversion() != RUMPUSER_VERSION) {
@@ -637,7 +633,6 @@ rump_kernelfsym_load(void *symtab, uint64_t symsize,
 	return 0;
 }
 
-void *rump_sysproxy_arg; /* XXX: nukeme */
 int
 rump_syscall(int num, void *arg, register_t *retval)
 {
@@ -650,28 +645,11 @@ rump_syscall(int num, void *arg, register_t *retval)
 
 	callp = rump_sysent + num;
 	l = curlwp;
-	if (rumpsp_type == RUMP_SP_SERVER)
+	if (iamtheserver)
 		curproc->p_vmspace = &sp_vmspace;
 	rv = sy_call(callp, l, (void *)arg, retval);
-	if (rumpsp_type == RUMP_SP_SERVER)
+	if (iamtheserver)
 		curproc->p_vmspace = &vmspace0;
-
-	return rv;
-}
-
-int
-rump_sysproxy(int num, void *arg, uint8_t *data, size_t dlen,
-	register_t *retval)
-{
-	int rv;
-
-	if (rumpsp_type == RUMP_SP_CLIENT) {
-		rv = rumpuser_sp_syscall(num, data, dlen, retval);
-	} else {
-		rump_schedule();
-		rv = rump_syscall(num, data, retval);
-		rump_unschedule();
-	}
 
 	return rv;
 }

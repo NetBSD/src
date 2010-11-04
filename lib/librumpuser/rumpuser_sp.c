@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpuser_sp.c,v 1.4 2010/11/01 13:55:19 pooka Exp $	*/
+/*      $NetBSD: rumpuser_sp.c,v 1.5 2010/11/04 20:54:07 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: rumpuser_sp.c,v 1.4 2010/11/01 13:55:19 pooka Exp $");
+__RCSID("$NetBSD: rumpuser_sp.c,v 1.5 2010/11/04 20:54:07 pooka Exp $");
 
 #include <sys/types.h>
 #include <sys/mman.h>
@@ -61,84 +61,7 @@ __RCSID("$NetBSD: rumpuser_sp.c,v 1.4 2010/11/01 13:55:19 pooka Exp $");
 
 #include <rump/rumpuser.h>
 
-//#define DEBUG
-#ifdef DEBUG
-#include <rump/rump.h>
-#include <rump/rump_syscalls.h>
-#define DPRINTF(x) mydprintf x
-static void
-mydprintf(const char *fmt, ...)
-{
-	va_list ap;
-
-	va_start(ap, fmt);
-	vfprintf(stderr, fmt, ap);
-	va_end(ap);
-}
-#else
-#define DPRINTF(x)
-#endif
-
-/*
- * Bah, I hate writing on-off-wire conversions in C
- */
-
-enum {
-	RUMPSP_SYSCALL_REQ,	RUMPSP_SYSCALL_RESP,
-	RUMPSP_COPYIN_REQ,	RUMPSP_COPYIN_RESP,
-	RUMPSP_COPYOUT_REQ,	/* no copyout resp */
-	RUMPSP_ANONMMAP_REQ,	RUMPSP_ANONMMAP_RESP
-};
-
-struct rsp_hdr {
-	uint64_t rsp_len;
-	uint64_t rsp_reqno;
-	uint32_t rsp_type;
-	/*
-	 * We want this structure 64bit-aligned for typecast fun,
-	 * so might as well use the following for something.
-	 */
-	uint32_t rsp_sysnum;
-};
-#define HDRSZ sizeof(struct rsp_hdr)
-
-/*
- * Data follows the header.  We have two types of structured data.
- */
-
-/* copyin/copyout */
-struct rsp_copydata {
-	size_t rcp_len;
-	void *rcp_addr;
-	uint8_t rcp_data[0];
-};
-
-/* syscall response */
-struct rsp_sysresp {
-	int rsys_error;
-	register_t rsys_retval[2];
-};
-
-
-struct spclient {
-	int spc_fd;
-	struct lwp *spc_lwp;
-
-	/* incoming */
-	struct rsp_hdr spc_hdr;
-	uint8_t *spc_buf;
-	size_t spc_off;
-
-#if 0
-	/* outgoing */
-	int spc_obusy;
-	pthread_mutex_t spc_omtx;
-	pthread_cond_t spc_cv;
-#endif
-};
-
-typedef int (*addrparse_fn)(const char *, int, struct sockaddr **);
-typedef int (*connecthook_fn)(int);
+#include "sp_common.c"
 
 #define MAXCLI 4
 
@@ -147,8 +70,6 @@ static struct spclient spclist[MAXCLI];
 static unsigned int nfds, maxidx;
 static uint64_t nextreq;
 static pthread_key_t spclient_tls;
-
-static struct spclient clispc;
 
 static struct rumpuser_sp_ops spops;
 
@@ -212,57 +133,6 @@ rumpsyscall(int sysnum, void *data, register_t *retval)
 }
 
 static int
-dosend(struct spclient *spc, const void *data, size_t dlen)
-{
-	struct pollfd pfd;
-	const uint8_t *sdata = data;
-	ssize_t n;
-	size_t sent;
-	int fd = spc->spc_fd;
-
-	pfd.fd = fd;
-	pfd.events = POLLOUT;
-
-	for (sent = 0, n = 0; sent < dlen; ) {
-		if (n) {
-			if (poll(&pfd, 1, INFTIM) == -1) {
-				if (errno == EINTR)
-					continue;
-				return errno;
-			}
-		}
-
-		n = write(fd, sdata + sent, dlen - sent);
-		if (n == 0) {
-			return EFAULT;
-		}
-		if (n == -1 && errno != EAGAIN) {
-			return EFAULT;
-		}
-		sent += n;
-	}
-
-	return 0;
-}
-
-static int
-send_syscall_req(struct spclient *spc, int sysnum,
-	const void *data, size_t dlen)
-{
-	struct rsp_hdr rhdr;
-
-	rhdr.rsp_len = sizeof(rhdr) + dlen;
-	rhdr.rsp_reqno = nextreq++;
-	rhdr.rsp_type = RUMPSP_SYSCALL_REQ;
-	rhdr.rsp_sysnum = sysnum;
-
-	dosend(spc, &rhdr, sizeof(rhdr));
-	dosend(spc, data, dlen);
-
-	return 0;
-}
-
-static int
 send_syscall_resp(struct spclient *spc, uint64_t reqno, int error,
 	register_t retval[2])
 {
@@ -304,22 +174,6 @@ send_copyin_req(struct spclient *spc, const void *remaddr, size_t dlen)
 }
 
 static int
-send_copyin_resp(struct spclient *spc, uint64_t reqno, void *data, size_t dlen)
-{
-	struct rsp_hdr rhdr;
-
-	rhdr.rsp_len = sizeof(rhdr) + dlen;
-	rhdr.rsp_reqno = reqno;
-	rhdr.rsp_type = RUMPSP_COPYIN_RESP;
-	rhdr.rsp_sysnum = 0;
-
-	dosend(spc, &rhdr, sizeof(rhdr));
-	dosend(spc, data, dlen);
-
-	return 0;
-}
-
-static int
 send_copyout_req(struct spclient *spc, const void *remaddr,
 	const void *data, size_t dlen)
 {
@@ -353,22 +207,6 @@ send_anonmmap_req(struct spclient *spc, size_t howmuch)
 
 	dosend(spc, &rhdr, sizeof(rhdr));
 	dosend(spc, &howmuch, sizeof(howmuch));
-
-	return 0;
-}
-
-static int
-send_anonmmap_resp(struct spclient *spc, uint64_t reqno, void *addr)
-{
-	struct rsp_hdr rhdr;
-
-	rhdr.rsp_len = sizeof(rhdr) + sizeof(addr);
-	rhdr.rsp_reqno = reqno;
-	rhdr.rsp_type = RUMPSP_ANONMMAP_RESP;
-	rhdr.rsp_sysnum = 0;
-
-	dosend(spc, &rhdr, sizeof(rhdr));
-	dosend(spc, &addr, sizeof(addr));
 
 	return 0;
 }
@@ -455,7 +293,7 @@ serv_handleconn(int fd, connecthook_fn connhook)
 		maxidx = i;
 
 	DPRINTF(("rump_sp: added new connection at idx %u, pid %d\n",
-	    i, rump_sys_getpid())); /* XXX: getpid not spop */
+	    i, 9)); /* XXX: getpid not spop */
 
 	lwproc_switch(NULL);
 
@@ -478,83 +316,9 @@ serv_handlesyscall(struct spclient *spc, struct rsp_hdr *rhdr, uint8_t *data)
 	lwproc_switch(NULL);
 	pthread_setspecific(spclient_tls, NULL);
 
+	DPRINTF(("rump_sp: got return value %d\n", rv));
+
 	send_syscall_resp(spc, rhdr->rsp_reqno, rv, retval);
-}
-
-static int
-readframe(struct spclient *spc)
-{
-	int fd = spc->spc_fd;
-	size_t left;
-	size_t framelen;
-	ssize_t n;
-
-	/* still reading header? */
-	if (spc->spc_off < HDRSZ) {
-		DPRINTF(("rump_sp: readframe getting header at offset %zu\n",
-		    spc->spc_off));
-
-		left = HDRSZ - spc->spc_off;
-		/*LINTED: cast ok */
-		n = read(fd, (uint8_t *)&spc->spc_hdr + spc->spc_off, left);
-		if (n == 0) {
-			return -1;
-		}
-		if (n == -1) {
-			if (errno == EAGAIN)
-				return 0;
-			return -1;
-		}
-
-		spc->spc_off += n;
-		if (spc->spc_off < HDRSZ)
-			return -1;
-
-		/*LINTED*/
-		framelen = spc->spc_hdr.rsp_len;
-
-		if (framelen < HDRSZ) {
-			return -1;
-		} else if (framelen == HDRSZ) {
-			return 1;
-		}
-
-		spc->spc_buf = malloc(framelen - HDRSZ);
-		if (spc->spc_buf == NULL) {
-			return -1;
-		}
-		memset(spc->spc_buf, 0, framelen - HDRSZ);
-
-		/* "fallthrough" */
-	} else {
-		/*LINTED*/
-		framelen = spc->spc_hdr.rsp_len;
-	}
-
-	left = framelen - spc->spc_off;
-
-	DPRINTF(("rump_sp: readframe getting body at offset %zu, left %zu\n",
-	    spc->spc_off, left));
-
-	if (left == 0)
-		return 1;
-	n = read(fd, spc->spc_buf + (spc->spc_off - HDRSZ), left);
-	if (n == 0) {
-		return -1;
-	}
-	if (n == -1) {
-		if (errno == EAGAIN)
-			return 0;
-		return -1;
-	}
-	spc->spc_off += n;
-	left -= n;
-
-	/* got everything? */
-	if (left == 0)
-		return 1;
-	else
-		return 0;
 }
 
 int
@@ -636,202 +400,11 @@ rumpuser_sp_anonmmap(size_t howmuch, void **addr)
 	return 0;
 }
 
-int
-rumpuser_sp_syscall(int sysnum, const void *data, size_t dlen,
-	register_t *retval)
-{
-	struct rsp_sysresp *resp;
-	struct rsp_copydata *copydata;
-	struct pollfd pfd;
-	size_t maplen;
-	void *mapaddr;
-	int gotresp;
-
-	DPRINTF(("rump_sp_syscall: executing syscall %d\n", sysnum));
-
-	send_syscall_req(&clispc, sysnum, data, dlen);
-
-	DPRINTF(("rump_sp_syscall: syscall %d request sent.  "
-	    "waiting for response\n", sysnum));
-
-	pfd.fd = clispc.spc_fd;
-	pfd.events = POLLIN;
-
-	gotresp = 0;
-	while (!gotresp) {
-		while (readframe(&clispc) < 1)
-			poll(&pfd, 1, INFTIM);
-
-		switch (clispc.spc_hdr.rsp_type) {
-		case RUMPSP_COPYIN_REQ:
-			/*LINTED*/
-			copydata = (struct rsp_copydata *)clispc.spc_buf;
-			DPRINTF(("rump_sp_syscall: copyin request: %p/%zu\n",
-			    copydata->rcp_addr, copydata->rcp_len));
-			send_copyin_resp(&clispc, clispc.spc_hdr.rsp_reqno,
-			    copydata->rcp_addr, copydata->rcp_len);
-			clispc.spc_off = 0;
-			break;
-		case RUMPSP_COPYOUT_REQ:
-			/*LINTED*/
-			copydata = (struct rsp_copydata *)clispc.spc_buf;
-			DPRINTF(("rump_sp_syscall: copyout request: %p/%zu\n",
-			    copydata->rcp_addr, copydata->rcp_len));
-			/*LINTED*/
-			memcpy(copydata->rcp_addr, copydata->rcp_data,
-			    copydata->rcp_len);
-			clispc.spc_off = 0;
-			break;
-		case RUMPSP_ANONMMAP_REQ:
-			/*LINTED*/
-			maplen = *(size_t *)clispc.spc_buf;
-			mapaddr = mmap(NULL, maplen, PROT_READ|PROT_WRITE,
-			    MAP_ANON, -1, 0);
-			if (mapaddr == MAP_FAILED)
-				mapaddr = NULL;
-			send_anonmmap_resp(&clispc,
-			    clispc.spc_hdr.rsp_reqno, mapaddr);
-			clispc.spc_off = 0;
-			break;
-		case RUMPSP_SYSCALL_RESP:
-			DPRINTF(("rump_sp_syscall: got response \n"));
-			gotresp = 1;
-			break;
-		}
-	}
-
-	/*LINTED*/
-	resp = (struct rsp_sysresp *)clispc.spc_buf;
-	memcpy(retval, &resp->rsys_retval, sizeof(resp->rsys_retval));
-	clispc.spc_off = 0;
-
-	return resp->rsys_error;
-}
-
 /*
  *
  * Startup routines and mainloop for server.
  *
  */
-
-static int
-tcp_parse(const char *addr, int type, struct sockaddr **sa)
-{
-	struct sockaddr_in sin;
-	char buf[64];
-	const char *p;
-	size_t l;
-	int port;
-
-	memset(&sin, 0, sizeof(sin));
-	sin.sin_len = sizeof(sin);
-	sin.sin_family = AF_INET;
-
-	p = strchr(addr, ':');
-	if (!p) {
-		fprintf(stderr, "rump_sp_tcp: missing port specifier\n");
-		return EINVAL;
-	}
-
-	l = p - addr;
-	if (l > sizeof(buf)-1) {
-		fprintf(stderr, "rump_sp_tcp: address too long\n");
-		return EINVAL;
-	}
-	strncpy(buf, addr, l);
-	buf[l] = '\0';
-
-	/* special INADDR_ANY treatment */
-	if (strcmp(buf, "*") == 0 || strcmp(buf, "0") == 0) {
-		sin.sin_addr.s_addr = INADDR_ANY;
-	} else {
-		switch (inet_pton(AF_INET, buf, &sin.sin_addr)) {
-		case 1:
-			break;
-		case 0:
-			fprintf(stderr, "rump_sp_tcp: cannot parse %s\n", buf);
-			return EINVAL;
-		case -1:
-			fprintf(stderr, "rump_sp_tcp: inet_pton failed\n");
-			return errno;
-		default:
-			assert(/*CONSTCOND*/0);
-			return EINVAL;
-		}
-	}
-
-	if (type == RUMP_SP_CLIENT && sin.sin_addr.s_addr == INADDR_ANY) {
-		fprintf(stderr, "rump_sp_tcp: client needs !INADDR_ANY\n");
-		return EINVAL;
-	}
-
-	/* advance to port number & parse */
-	p++;
-	l = strspn(p, "0123456789");
-	if (l == 0) {
-		fprintf(stderr, "rump_sp_tcp: port now found: %s\n", p);
-		return EINVAL;
-	}
-	strncpy(buf, p, l);
-	buf[l] = '\0';
-
-	if (*(p+l) != '/' && *(p+l) != '\0') {
-		fprintf(stderr, "rump_sp_tcp: junk at end of port: %s\n", addr);
-		return EINVAL;
-	}
-
-	port = atoi(buf);
-	if (port < 0 || port >= (1<<(8*sizeof(in_port_t)))) {
-		fprintf(stderr, "rump_sp_tcp: port %d out of range\n", port);
-		return ERANGE;
-	}
-	sin.sin_port = htons(port);
-
-	*sa = malloc(sizeof(sin));
-	if (*sa == NULL)
-		return errno;
-	memcpy(*sa, &sin, sizeof(sin));
-	return 0;
-}
-
-static int
-tcp_connecthook(int s)
-{
-	int x;
-
-	x = 1;
-	setsockopt(s, IPPROTO_TCP, TCP_NODELAY, &x, sizeof(x));
-
-	return 0;
-}
-
-/*ARGSUSED*/
-static int
-notsupp(void)
-{
-
-	fprintf(stderr, "rump_sp: support not yet implemented\n");
-	return EOPNOTSUPP;
-}
-
-static int
-success(void)
-{
-
-	return 0;
-}
-
-struct {
-	const char *id;
-	int domain;
-	addrparse_fn ap;
-	connecthook_fn connhook;
-} parsetab[] = {
-	{ "tcp", PF_INET, tcp_parse, tcp_connecthook },
-	{ "unix", PF_LOCAL, (addrparse_fn)notsupp, (connecthook_fn)success },
-	{ "tcp6", PF_INET6, (addrparse_fn)notsupp, (connecthook_fn)success },
-};
-#define NPARSE (sizeof(parsetab)/sizeof(parsetab[0]))
 
 struct spservarg {
 	int sps_sock;
@@ -909,119 +482,60 @@ spserver(void *arg)
 }
 
 int
-rumpuser_sp_init(const struct rumpuser_sp_ops *spopsp, int *typep)
+rumpuser_sp_init(const struct rumpuser_sp_ops *spopsp, const char *url)
 {
+	pthread_t pt;
 	struct spservarg *sarg;
 	struct sockaddr *sap;
-	char id[16];
-	char *p, *p2;
-	size_t l;
-	unsigned i;
-	int error, type, s;
+	char *p;
+	unsigned idx;
+	int error, s;
 
-	p = NULL;
-	error = 0;
-	spops = *spopsp;
+	p = strdup(url);
+	if (p == NULL)
+		return ENOMEM;
+	error = parseurl(p, &sap, &idx, 1);
+	free(p);
+	if (error)
+		return error;
 
-	type = RUMP_SP_NONE;
-	if ((p = getenv("RUMP_SP_SERVER")) != NULL) {
-		type = RUMP_SP_SERVER;
-	}
-	if ((p2 = getenv("RUMP_SP_CLIENT")) != NULL) {
-		if (type != RUMP_SP_NONE)
-			return EEXIST;
-		type = RUMP_SP_CLIENT;
-		p = p2;
-	}
-
-	/*
-	 * Parse the url
-	 */
-
-	if (type == RUMP_SP_NONE)
-		return RUMP_SP_NONE;
-
-	p2 = strstr(p, "://");
-	if (!p2) {
-		fprintf(stderr, "rump_sp: invalid locator ``%s''\n", p);
-		return EINVAL;
-	}
-	l = p2-p;
-	if (l > sizeof(id)-1) {
-		fprintf(stderr, "rump_sp: identifier too long in ``%s''\n", p);
-		return EINVAL;
-	}
-
-	strncpy(id, p, l);
-	id[l] = '\0';
-	p2 += 3; /* beginning of address */
-
-	for (i = 0; i < NPARSE; i++) {
-		if (strcmp(id, parsetab[i].id) == 0) {
-			error = parsetab[i].ap(p2, type, &sap);
-			if (error)
-				return error;
-			break;
-		}
-	}
-	if (i == NPARSE) {
-		fprintf(stderr, "rump_sp: invalid identifier ``%s''\n", p);
-		return EINVAL;
-	}
-
-	s = socket(parsetab[i].domain, SOCK_STREAM, 0);
+	s = socket(parsetab[idx].domain, SOCK_STREAM, 0);
 	if (s == -1)
 		return errno;
 
-	if (type == RUMP_SP_CLIENT) {
-		/*LINTED*/
-		if (connect(s, sap, sap->sa_len) == -1) {
-			fprintf(stderr, "rump_sp: client connect failed\n");
-			return errno;
-		}
-		if ((error = parsetab[i].connhook(s)) != 0) {
-			fprintf(stderr, "rump_sp: connect hook failed\n");
-			return error;
-		}
-
-		clispc.spc_fd = s;
-	} else {
-		pthread_t pt;
-
-		sarg = malloc(sizeof(*sarg));
-		if (sarg == NULL) {
-			close(s);
-			return ENOMEM;
-		}
-
-		sarg->sps_sock = s;
-		sarg->sps_connhook = parsetab[i].connhook;
-
-		/* sloppy error recovery */
-
-		error = pthread_key_create(&spclient_tls, NULL);
-		if (error) {
-			fprintf(stderr, "rump_sp: tls create failed\n");
-			return error;
-		}
-
-		/*LINTED*/
-		if (bind(s, sap, sap->sa_len) == -1) {
-			fprintf(stderr, "rump_sp: server bind failed\n");
-			return errno;
-		}
-		if (listen(s, 20) == -1) {
-			fprintf(stderr, "rump_sp: server listen failed\n");
-			return errno;
-		}
-
-		if ((error = pthread_create(&pt, NULL, spserver, sarg)) != 0) {
-			fprintf(stderr, "rump_sp: cannot create wrkr thread\n");
-			return errno;
-		}
-		pthread_detach(pt);
+	spops = *spopsp;
+	sarg = malloc(sizeof(*sarg));
+	if (sarg == NULL) {
+		close(s);
+		return ENOMEM;
 	}
 
-	*typep = type;
+	sarg->sps_sock = s;
+	sarg->sps_connhook = parsetab[idx].connhook;
+
+	/* sloppy error recovery */
+
+	error = pthread_key_create(&spclient_tls, NULL);
+	if (error) {
+		fprintf(stderr, "rump_sp: tls create failed\n");
+		return error;
+	}
+
+	/*LINTED*/
+	if (bind(s, sap, sap->sa_len) == -1) {
+		fprintf(stderr, "rump_sp: server bind failed\n");
+		return errno;
+	}
+	if (listen(s, 20) == -1) {
+		fprintf(stderr, "rump_sp: server listen failed\n");
+		return errno;
+	}
+
+	if ((error = pthread_create(&pt, NULL, spserver, sarg)) != 0) {
+		fprintf(stderr, "rump_sp: cannot create wrkr thread\n");
+		return errno;
+	}
+	pthread_detach(pt);
+
 	return 0;
 }
