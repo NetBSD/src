@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.152 2010/10/31 11:52:50 mbalmer Exp $
+#	$NetBSD: Makefile,v 1.153 2010/11/04 21:01:28 pooka Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
@@ -9,7 +9,7 @@ SUBDIR=	csu libc .WAIT libarch \
 	libintl libkvm libm \
 	libossaudio libpcap libpci libpmc libposix libprop libpthread \
 	libpthread_dbg libpuffs libresolv librmt librpcsvc librt \
-	libterminfo libusbhid libutil libwrap liby libz
+	librumpclient libterminfo libusbhid libutil libwrap liby libz
 
 SUBDIR+=../external/bsd/flex/lib
 SUBDIR+=../external/mit/lua/lib
