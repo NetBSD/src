@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.123 2010/11/04 23:37:27 pooka Exp $	*/
+/*	$NetBSD: route.c,v 1.124 2010/11/04 23:38:18 pooka Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1991, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)route.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: route.c,v 1.123 2010/11/04 23:37:27 pooka Exp $");
+__RCSID("$NetBSD: route.c,v 1.124 2010/11/04 23:38:18 pooka Exp $");
 #endif
 #endif /* not lint */
 
@@ -160,9 +160,10 @@ usage(const char *cp)
 int
 main(int argc, char * const *argv)
 {
-	int ch, error;
+	int ch;
 
 #ifdef RUMP_ACTION
+	int error;
 	if ((error = rumpclient_init()) != 0)
 		errx(1, "rump client init: %s", strerror(error));
 #endif
