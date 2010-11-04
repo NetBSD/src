@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.148 2010/10/20 09:22:34 jmmv Exp $
+# $NetBSD: mi,v 1.149 2010/11/04 13:00:07 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1490,6 +1490,9 @@
 ./usr/tests/lib/libc/stdlib/Atffile		tests-lib-tests		atf
 ./usr/tests/lib/libc/stdlib/t_environment	tests-lib-tests		atf
 ./usr/tests/lib/libc/stdlib/t_mi_vector_hash	tests-lib-tests		atf
+./usr/tests/lib/libc/stdio			tests-lib-tests
+./usr/tests/lib/libc/stdio/Atffile		tests-lib-tests		atf
+./usr/tests/lib/libc/stdio/t_fmemopen		tests-lib-tests		atf
 ./usr/tests/lib/libc/string			tests-obsolete		obsolete
 ./usr/tests/lib/libc/string/Atffile		tests-obsolete		obsolete
 ./usr/tests/lib/libc/string/t_popcount		tests-obsolete		obsolete
