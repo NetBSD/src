@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.121 2010/06/26 14:29:36 kefren Exp $	*/
+/*	$NetBSD: route.c,v 1.122 2010/11/04 23:36:10 pooka Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1991, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)route.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: route.c,v 1.121 2010/06/26 14:29:36 kefren Exp $");
+__RCSID("$NetBSD: route.c,v 1.122 2010/11/04 23:36:10 pooka Exp $");
 #endif
 #endif /* not lint */
 
@@ -70,6 +70,12 @@ __RCSID("$NetBSD: route.c,v 1.121 2010/06/26 14:29:36 kefren Exp $");
 #include <time.h>
 #include <paths.h>
 #include <err.h>
+
+#ifdef RUMP_ACTION
+#include <rump/rump.h>
+#include <rump/rump_syscalls.h>
+#include <rump/rumpclient.h>
+#endif
 
 #include "keywords.h"
 #include "extern.h"
@@ -154,7 +160,12 @@ usage(const char *cp)
 int
 main(int argc, char * const *argv)
 {
-	int ch;
+	int ch, error;
+
+#ifdef RUMP_ACTION
+	if ((error = rumpclient_init()) != 0)
+		errx(1, "rump client init: %s", strerror(error));
+#endif
 
 	if (argc < 2)
 		usage(NULL);
