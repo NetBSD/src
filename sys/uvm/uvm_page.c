@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.153.2.59 2010/11/04 08:47:38 uebayasi Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.153.2.60 2010/11/04 11:57:49 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.153.2.59 2010/11/04 08:47:38 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.153.2.60 2010/11/04 11:57:49 uebayasi Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -2208,8 +2208,7 @@ bool
 uvm_pageismanaged(paddr_t pa)
 {
 
-	return
-	    (vm_physseg_find(atop(pa), NULL) != -1);
+	return vm_physseg_find(atop(pa), NULL) != -1;
 }
 
 /*
@@ -2221,8 +2220,7 @@ bool
 uvm_pageismanaged_device(paddr_t pa)
 {
 
-	return
-	    (vm_physseg_find_device(atop(pa), NULL) != -1);
+	return vm_physseg_find_device(atop(pa), NULL) != -1;
 }
 
 /*
