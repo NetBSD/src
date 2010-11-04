@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips64eb,v 1.11 2010/11/02 16:34:34 joerg Exp $
+# $NetBSD: ad.mips64eb,v 1.12 2010/11/04 21:15:55 pooka Exp $
 ./usr/bin/elf2aout				comp-obsolete	obsolete
 ./usr/bin/elf2ecoff				comp-sysutil-bin
 ./usr/include/mips				comp-c-include
@@ -443,6 +443,10 @@
 ./usr/lib/64/librump.so				base-sys-shlib		compat,pic
 ./usr/lib/64/librump_p.a			comp-c-proflib		compat,profile
 ./usr/lib/64/librump_pic.a			comp-c-piclib		compat,pic
+./usr/lib/64/librumpclient.a			comp-c-lib		compat
+./usr/lib/64/librumpclient.so			base-sys-shlib		compat,pic
+./usr/lib/64/librumpclient_p.a			comp-c-proflib		compat,profile
+./usr/lib/64/librumpclient_pic.a			comp-c-piclib		compat,pic
 ./usr/lib/64/librumpcrypto.a			comp-c-lib		compat,crypto
 ./usr/lib/64/librumpcrypto.so			base-sys-shlib		compat,pic,crypto
 ./usr/lib/64/librumpcrypto_p.a			comp-c-proflib		compat,profile,crypto
@@ -916,6 +920,10 @@
 ./usr/lib/o32/librump.so			base-sys-shlib		compat,pic
 ./usr/lib/o32/librump_p.a			comp-c-proflib		compat,profile
 ./usr/lib/o32/librump_pic.a			comp-c-piclib		compat,pic
+./usr/lib/o32/librumpclient.a			comp-c-lib		compat
+./usr/lib/o32/librumpclient.so			base-sys-shlib		compat,pic
+./usr/lib/o32/librumpclient_p.a			comp-c-proflib		compat,profile
+./usr/lib/o32/librumpclient_pic.a			comp-c-piclib		compat,pic
 ./usr/lib/o32/librumpcrypto.a			comp-c-lib		compat,crypto
 ./usr/lib/o32/librumpcrypto.so			base-sys-shlib		compat,pic,crypto
 ./usr/lib/o32/librumpcrypto_p.a			comp-c-proflib		compat,profile,crypto

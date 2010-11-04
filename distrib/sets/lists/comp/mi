@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1521 2010/11/03 12:15:54 njoly Exp $
+#	$NetBSD: mi,v 1.1522 2010/11/04 21:15:55 pooka Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1930,6 +1930,7 @@
 ./usr/include/rump/rump_namei.h			comp-c-include
 ./usr/include/rump/rump_syscalls.h		comp-c-include
 ./usr/include/rump/rump_syscalls_compat.h	comp-c-include
+./usr/include/rump/rumpclient.h			comp-c-include
 ./usr/include/rump/rumpdefs.h			comp-c-include
 ./usr/include/rump/rumpkern_if_pub.h		comp-c-include
 ./usr/include/rump/rumpnet_if_pub.h		comp-c-include
@@ -2618,6 +2619,9 @@
 ./usr/lib/librump.a				comp-c-lib
 ./usr/lib/librump_g.a				-unknown-		debuglib
 ./usr/lib/librump_p.a				comp-c-proflib		profile
+./usr/lib/librumpclient.a				comp-c-lib
+./usr/lib/librumpclient_g.a			-unknown-		debuglib
+./usr/lib/librumpclient_p.a			comp-c-proflib		profile
 ./usr/lib/librumpcrypto.a			comp-c-lib		crypto
 ./usr/lib/librumpcrypto_g.a			-unknown-		debuglib,crypto
 ./usr/lib/librumpcrypto_p.a			comp-c-proflib		profile,crypto
