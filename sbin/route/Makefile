@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.23 2006/08/26 15:26:02 matt Exp $
+#	$NetBSD: Makefile,v 1.24 2010/11/04 23:36:10 pooka Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/5/93
 
 .include <bsd.own.mk>
@@ -19,5 +19,16 @@ CPPFLAGS+=-DINET6
 # CLEANFILES+= keywords.c keywords.h
 # keywords.c keywords.h : keywords.sh
 # 	${HOST_SH} keywords.sh
+
+#
+# Compile-time debug flag.  If compiled with "make RUMP_ACTION=1",
+# make rump system calls.
+#
+.ifdef RUMP_ACTION
+CPPFLAGS+=      -DRUMP_SYS_NETWORKING -DRUMP_SYS_READWRITE -DRUMP_SYS_CLOSE
+CPPFLAGS+=      -DRUMP_ACTION -DSMALL -Dsysctl=rump_sys___sysctl
+LDADD+=         -lrumpclient
+DBG=            -g
+.endif
 
 .include <bsd.prog.mk>
