@@ -62,6 +62,7 @@ static const char *usage =
 	"\t--get-key keyid [options] OR\n"
 	"\t--version\n"
 	"where options are:\n"
+	"\t[--cipher=<cipher name>] AND/OR\n"
 	"\t[--coredumps] AND/OR\n"
 	"\t[--hash=<hash alg>] AND/OR\n"
 	"\t[--homedir=<homedir>] AND/OR\n"
