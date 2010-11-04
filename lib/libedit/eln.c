@@ -1,4 +1,4 @@
-/*	$NetBSD: eln.c,v 1.8 2010/08/28 15:44:59 christos Exp $	*/
+/*	$NetBSD: eln.c,v 1.9 2010/11/04 13:53:12 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: eln.c,v 1.8 2010/08/28 15:44:59 christos Exp $");
+__RCSID("$NetBSD: eln.c,v 1.9 2010/11/04 13:53:12 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include "histedit.h"
@@ -217,8 +217,7 @@ el_set(EditLine *el, int op, ...)
 		hist_fun_t fun = va_arg(ap, hist_fun_t);
 		ptr_t ptr = va_arg(ap, ptr_t);
 		ret = hist_set(el, fun, ptr);
-		if (!(el->el_flags & CHARSET_IS_UTF8))
-			el->el_flags |= NARROW_HISTORY;
+		el->el_flags |= NARROW_HISTORY;
 		break;
 	}
 	/* XXX: do we need to change el_rfunc_t? */
