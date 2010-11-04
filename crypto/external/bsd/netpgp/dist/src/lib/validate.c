@@ -54,7 +54,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: validate.c,v 1.40 2010/11/04 16:13:35 agc Exp $");
+__RCSID("$NetBSD: validate.c,v 1.41 2010/11/04 16:24:22 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -508,7 +508,7 @@ validate_data_cb(const __ops_packet_t *pkt, __ops_cbdata_t *cbinfo)
 			    data->detachname) {
 				/* check we have seen some data */
 				/* if not, need to read from detached name */
-				(void) fprintf(io->outs,
+				(void) fprintf(io->errs,
 				"netpgp: assuming signed data in \"%s\"\n",
 					data->detachname);
 				data->mem = __ops_memory_new();
