@@ -1,4 +1,4 @@
-/* $NetBSD: mdsetimage.c,v 1.1 2009/08/18 20:22:20 skrll Exp $ */
+/* $NetBSD: mdsetimage.c,v 1.1.2.1 2010/11/04 07:30:00 uebayasi Exp $ */
 /* from: NetBSD: mdsetimage.c,v 1.15 2001/03/21 23:46:48 cgd Exp $ */
 
 /*
@@ -38,7 +38,7 @@
 #if !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1996\
  Christopher G. Demetriou.  All rights reserved.");
-__RCSID("$NetBSD: mdsetimage.c,v 1.1 2009/08/18 20:22:20 skrll Exp $");
+__RCSID("$NetBSD: mdsetimage.c,v 1.1.2.1 2010/11/04 07:30:00 uebayasi Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -58,13 +58,9 @@ __RCSID("$NetBSD: mdsetimage.c,v 1.1 2009/08/18 20:22:20 skrll Exp $");
 struct symbols {
 	char *name;
 	size_t offset;
-} md_root_symbols[] = {
-#define	X_MD_ROOT_IMAGE	0
-	{ "_md_root_image", 0 },
-#define	X_MD_ROOT_SIZE	1
-	{ "_md_root_size", 0 },
-	{ NULL, 0 }
 };
+#define	X_MD_ROOT_IMAGE	0
+#define	X_MD_ROOT_SIZE	1
 
 #define	CHUNKSIZE	(64 * 1024)
 
@@ -94,11 +90,21 @@ main(int argc, char *argv[])
 	char *bfdname = NULL;
 	bfd *abfd;
 	ssize_t left_to_copy;
+	struct symbols md_root_symbols[3] = { { 0 } };
+
+	md_root_symbols[X_MD_ROOT_IMAGE].name = "_md_root_image";
+	md_root_symbols[X_MD_ROOT_SIZE].name = "_md_root_size";
 
 	setprogname(argv[0]);
 
-	while ((ch = getopt(argc, argv, "b:svx")) != -1)
+	while ((ch = getopt(argc, argv, "I:S:b:svx")) != -1)
 		switch (ch) {
+		case 'I':
+			md_root_symbols[X_MD_ROOT_IMAGE].name = optarg;
+			break;
+		case 'S':
+			md_root_symbols[X_MD_ROOT_SIZE].name = optarg;
+			break;
 		case 'b':
 			bfdname = optarg;
 			break;
