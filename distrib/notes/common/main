@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.425.2.8 2010/11/03 08:03:32 snj Exp $
+.\"	$NetBSD: main,v 1.425.2.9 2010/11/04 16:48:29 pooka Exp $
 .\"
 .\" Copyright (c) 1999-2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -451,6 +451,24 @@ possible, it's likely that
 .Nx
 wouldn't exist.
 .
+.Ss "Dedication"
+.Pp
+.
+.Nx
+5.1 is dedicated to the memory of Martti Kuparinen, who
+was the victim of a traffic accident in June 2010.
+.Pp
+Martti's technical contributions are too many to list here in full.
+He created and maintained numerous packages in pkgsrc, updated two
+packet filter solutions distributed with
+.Nx
+and improved several
+hardware drivers. Beyond that he was always helpful and friendly. His
+example encouraged users to contribute to the project and share their
+work with the community. Some of these users later became
+.Nx
+developers themselves thanks to Martti's efforts.
+.
 .if \n[FOR_RELEASE] \{\
 .Ss Changes Between the NetBSD 5.0 and 5.1 Releases
 .Pp
@@ -507,6 +525,33 @@ NetBSD-SA2009-012 (SHA2 implementation potential buffer overflow):
 .It
 NetBSD-SA2009-013 (BIND named dynamic update Denial of Service vulnerability):
 .Lk http://ftp.NetBSD.org/pub/NetBSD/security/advisories/NetBSD-SA2009-013.txt.asc
+.It
+NetBSD-SA2010-002 (OpenSSL TLS renegotiation man in the middle vulnerability):
+.Lk http://ftp.NetBSD.org/pub/NetBSD/security/advisories/NetBSD-SA2010-002.txt.asc
+.It
+NetBSD-SA2010-003 (azalia(4)/hdaudio(4) negative mixer index panic):
+.Lk http://ftp.NetBSD.org/pub/NetBSD/security/advisories/NetBSD-SA2010-003.txt.asc
+.It
+NetBSD-SA2010-004 (amd64 per-page No-execute (NX) bit disabled):
+.Lk http://ftp.NetBSD.org/pub/NetBSD/security/advisories/NetBSD-SA2010-004.txt.asc
+.It
+NetBSD-SA2010-005 (NTP server Denial of Service vulnerability):
+.Lk http://ftp.NetBSD.org/pub/NetBSD/security/advisories/NetBSD-SA2010-005.txt.asc
+.It
+NetBSD-SA2010-006 (Buffer length checking errors in CODA):
+.Lk http://ftp.NetBSD.org/pub/NetBSD/security/advisories/NetBSD-SA2010-006.txt.asc
+.It
+NetBSD-SA2010-007 (Integer overflow in libbz2 decompression code):
+.Lk http://ftp.NetBSD.org/pub/NetBSD/security/advisories/NetBSD-SA2010-007.txt.asc
+.It
+NetBSD-SA2010-008 (sftp(1)/ftp(1)/glob(3) related resource exhaustion):
+.Lk http://ftp.NetBSD.org/pub/NetBSD/security/advisories/NetBSD-SA2010-008.txt.asc
+.It
+NetBSD-SA2010-010 (Buffer Length Handling Errors in netsmb):
+.Lk http://ftp.NetBSD.org/pub/NetBSD/security/advisories/NetBSD-SA2010-010.txt.asc
+.It
+NetBSD-SA2010-011 (OpenSSL Double Free Arbitrary Code Execution):
+.Lk http://ftp.NetBSD.org/pub/NetBSD/security/advisories/NetBSD-SA2010-011.txt.asc
 .bullet)
 .
 .Pp
@@ -1523,8 +1568,6 @@ gdb cannot debug running threaded programs correctly.
 Workaround: generate a core file from the program using
 .Xr gcore 1
 and pass the core to gdb, instead of debugging the running program.
-.Pp
-Statically linked binaries using pthreads are currently broken.
 .
 .Pp
 The sparc port does not have functional SMP support in this release.
