@@ -54,7 +54,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: symmetric.c,v 1.14 2010/11/04 07:03:41 agc Exp $");
+__RCSID("$NetBSD: symmetric.c,v 1.15 2010/11/04 07:35:08 agc Exp $");
 #endif
 
 #include "crypto.h"
@@ -486,6 +486,7 @@ static const __ops_crypt_t tripledes =
 	TRAILER
 };
 
+#ifndef OPENSSL_NO_CAMELLIA
 /* Camellia with 128-bit key (CAMELLIA) */
 
 #define KEYBITS_CAMELLIA128 128
@@ -607,6 +608,7 @@ static const __ops_crypt_t camellia256 =
 	std_finish,
 	TRAILER
 };
+#endif
 
 
 static const __ops_crypt_t *
@@ -623,10 +625,12 @@ get_proto(__ops_symm_alg_t alg)
 		return &aes128;
 	case OPS_SA_AES_256:
 		return &aes256;
+#ifndef OPENSSL_NO_CAMELLIA
 	case OPS_SA_CAMELLIA_128:
 		return &camellia128;
 	case OPS_SA_CAMELLIA_256:
 		return &camellia256;
+#endif
 	case OPS_SA_TRIPLEDES:
 		return &tripledes;
 	default:
