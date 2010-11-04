@@ -1,4 +1,4 @@
-/*	$NetBSD: if_otus.c,v 1.5 2010/11/03 22:28:31 dyoung Exp $	*/
+/*	$NetBSD: if_otus.c,v 1.6 2010/11/04 13:21:08 christos Exp $	*/
 /*	$OpenBSD: if_otus.c,v 1.18 2010/08/27 17:08:00 jsg Exp $	*/
 
 /*-
@@ -566,7 +566,7 @@ static const struct usb_devno otus_devs[] = {
 CFATTACH_DECL_NEW(otus, sizeof(struct otus_softc), otus_match, otus_attach,
     otus_detach, otus_activate);
 
-int
+Static int
 otus_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
@@ -578,7 +578,7 @@ otus_match(device_t parent, cfdata_t match, void *aux)
 	    UMATCH_VENDOR_PRODUCT : UMATCH_NONE;
 }
 
-void
+Static void
 otus_attach(device_t parent, device_t self, void *aux)
 {
 	struct otus_softc *sc = device_private(self);
