@@ -57,7 +57,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: create.c,v 1.34 2010/09/01 17:25:57 agc Exp $");
+__RCSID("$NetBSD: create.c,v 1.35 2010/11/04 15:38:45 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -843,31 +843,23 @@ __ops_calc_sesskey_checksum(__ops_pk_sesskey_t *sesskey, uint8_t cs[2])
 }
 
 static unsigned 
-create_unencoded_m_buf(__ops_pk_sesskey_t *sesskey, uint8_t *m_buf)
+create_unencoded_m_buf(__ops_pk_sesskey_t *sesskey, __ops_crypt_t *cipherinfo, uint8_t *m_buf)
 {
-	int             i;
+	unsigned	i;
 
-	/* m_buf is the buffer which will be encoded in PKCS#1 block */
-	/* encoding to form the "m" value used in the  */
-	/* Public Key Encrypted Session Key Packet */
-	/*
-	 * as defined in RFC Section 5.1 "Public-Key Encrypted Session Key
-	 * Packet"
+	/* m_buf is the buffer which will be encoded in PKCS#1 block
+	* encoding to form the "m" value used in the Public Key
+	* Encrypted Session Key Packet as defined in RFC Section 5.1
+	* "Public-Key Encrypted Session Key Packet"
 	 */
-
 	m_buf[0] = sesskey->symm_alg;
-
-	if (sesskey->symm_alg != OPS_SA_CAST5) {
-		(void) fprintf(stderr, "create_unencoded_m_buf: symm alg\n");
-		return 0;
-	}
-	for (i = 0; i < CAST_KEY_LENGTH; i++) {
+	for (i = 0; i < cipherinfo->keysize ; i++) {
 		/* XXX - Flexelint - Warning 679: Suspicious Truncation in arithmetic expression combining with pointer */
 		m_buf[1 + i] = sesskey->key[i];
 	}
 
-	return (__ops_calc_sesskey_checksum(sesskey,
-				m_buf + 1 + CAST_KEY_LENGTH));
+	return __ops_calc_sesskey_checksum(sesskey,
+				m_buf + 1 + cipherinfo->keysize);
 }
 
 /**
@@ -940,24 +932,21 @@ encode_m_buf(const uint8_t *M, size_t mLen, const __ops_pubkey_t * pubkey,
 \note Currently hard-coded to use RSA
 */
 __ops_pk_sesskey_t *
-__ops_create_pk_sesskey(const __ops_key_t *key)
+__ops_create_pk_sesskey(const __ops_key_t *key, const char *ciphername)
 {
 	/*
          * Creates a random session key and encrypts it for the given key
-         *
-         * Session Key is for use with a SK algo,
-         * can be any, we're hardcoding CAST5 for now
          *
          * Encryption used is PK,
          * can be any, we're hardcoding RSA for now
          */
 
-#define SZ_UNENCODED_M_BUF (CAST_KEY_LENGTH + 1 + 2)
-
 	const __ops_pubkey_t	*pubkey;
 	__ops_pk_sesskey_t	*sesskey;
+	__ops_symm_alg_t	 cipher;
 	const uint8_t		*id;
-	uint8_t			 unencoded_m_buf[SZ_UNENCODED_M_BUF];
+	__ops_crypt_t		 cipherinfo;
+	uint8_t			*unencoded_m_buf;
 	uint8_t			*encoded_m_buf;
 	size_t			 sz_encoded_m_buf;
 
@@ -968,21 +957,34 @@ __ops_create_pk_sesskey(const __ops_key_t *key)
 		pubkey = &key->enckey;
 		id = key->encid;
 	}
+	/* allocate unencoded_m_buf here */
+	(void) memset(&cipherinfo, 0x0, sizeof(cipherinfo));
+	__ops_crypt_any(&cipherinfo,
+		cipher = __ops_str_to_cipher((ciphername) ? ciphername : "cast5"));
+	unencoded_m_buf = calloc(1, cipherinfo.keysize + 1 + 2);
+	if (unencoded_m_buf == NULL) {
+		(void) fprintf(stderr,
+			"__ops_create_pk_sesskey: can't allocate\n");
+		return NULL;
+	}
 	sz_encoded_m_buf = BN_num_bytes(pubkey->key.rsa.n);
 	if ((encoded_m_buf = calloc(1, sz_encoded_m_buf)) == NULL) {
 		(void) fprintf(stderr,
 			"__ops_create_pk_sesskey: can't allocate\n");
+		free(unencoded_m_buf);
 		return NULL;
 	}
 	if ((sesskey = calloc(1, sizeof(*sesskey))) == NULL) {
 		(void) fprintf(stderr,
 			"__ops_create_pk_sesskey: can't allocate\n");
+		free(unencoded_m_buf);
 		free(encoded_m_buf);
 		return NULL;
 	}
 	if (key->type != OPS_PTAG_CT_PUBLIC_KEY) {
 		(void) fprintf(stderr,
 			"__ops_create_pk_sesskey: bad type\n");
+		free(unencoded_m_buf);
 		free(encoded_m_buf);
 		free(sesskey);
 		return NULL;
@@ -1001,34 +1003,37 @@ __ops_create_pk_sesskey(const __ops_key_t *key)
 	default:
 		(void) fprintf(stderr,
 			"__ops_create_pk_sesskey: bad pubkey algorithm\n");
+		free(unencoded_m_buf);
 		free(encoded_m_buf);
 		free(sesskey);
 		return NULL;
 	}
 	sesskey->alg = pubkey->alg;
 
-	/* \todo allow user to specify other algorithm */
-	sesskey->symm_alg = OPS_SA_CAST5;
-	__ops_random(sesskey->key, CAST_KEY_LENGTH);
+	sesskey->symm_alg = cipher;
+	__ops_random(sesskey->key, cipherinfo.keysize);
 
 	if (__ops_get_debug_level(__FILE__)) {
-		hexdump(stderr, "CAST5 sesskey created", sesskey->key, CAST_KEY_LENGTH);
+		hexdump(stderr, "sesskey created", sesskey->key,
+			cipherinfo.keysize + 1 + 2);
 	}
-	if (create_unencoded_m_buf(sesskey, &unencoded_m_buf[0]) == 0) {
+	if (create_unencoded_m_buf(sesskey, &cipherinfo, &unencoded_m_buf[0]) == 0) {
+		free(unencoded_m_buf);
 		free(encoded_m_buf);
 		free(sesskey);
 		return NULL;
 	}
 	if (__ops_get_debug_level(__FILE__)) {
-		hexdump(stderr, "uuencoded m buf", unencoded_m_buf, SZ_UNENCODED_M_BUF);
+		hexdump(stderr, "uuencoded m buf", unencoded_m_buf, cipherinfo.keysize + 1 + 2);
 	}
-	encode_m_buf(unencoded_m_buf, SZ_UNENCODED_M_BUF, pubkey, encoded_m_buf);
+	encode_m_buf(unencoded_m_buf, cipherinfo.keysize + 1 + 2, pubkey, encoded_m_buf);
 
 	/* and encrypt it */
 	switch (key->key.pubkey.alg) {
 	case OPS_PKA_RSA:
 		if (!__ops_rsa_encrypt_mpi(encoded_m_buf, sz_encoded_m_buf, pubkey,
 				&sesskey->params)) {
+			free(unencoded_m_buf);
 			free(encoded_m_buf);
 			free(sesskey);
 			return NULL;
@@ -1037,6 +1042,7 @@ __ops_create_pk_sesskey(const __ops_key_t *key)
 	case OPS_PKA_DSA:
 	case OPS_PKA_ELGAMAL:
 		(void) fprintf(stderr, "DSA/Elgamal encryption not supported yet\n");
+		free(unencoded_m_buf);
 		free(encoded_m_buf);
 		free(sesskey);
 		return NULL;
@@ -1044,6 +1050,7 @@ __ops_create_pk_sesskey(const __ops_key_t *key)
 		/* will not get here - for lint only */
 		break;
 	}
+	free(unencoded_m_buf);
 	free(encoded_m_buf);
 	return sesskey;
 }

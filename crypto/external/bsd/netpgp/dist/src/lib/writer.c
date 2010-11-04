@@ -58,7 +58,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: writer.c,v 1.28 2010/08/15 16:36:24 agc Exp $");
+__RCSID("$NetBSD: writer.c,v 1.29 2010/11/04 15:38:45 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -1026,7 +1026,7 @@ static void     encrypt_se_ip_destroyer(__ops_writer_t *);
 \brief Push Encrypted SE IP Writer onto stack
 */
 int 
-__ops_push_enc_se_ip(__ops_output_t *output, const __ops_key_t *pubkey)
+__ops_push_enc_se_ip(__ops_output_t *output, const __ops_key_t *pubkey, const char *cipher)
 {
 	__ops_pk_sesskey_t *encrypted_pk_sesskey;
 	encrypt_se_ip_t *se_ip;
@@ -1039,7 +1039,7 @@ __ops_push_enc_se_ip(__ops_output_t *output, const __ops_key_t *pubkey)
 	}
 
 	/* Create and write encrypted PK session key */
-	if ((encrypted_pk_sesskey = __ops_create_pk_sesskey(pubkey)) == NULL) {
+	if ((encrypted_pk_sesskey = __ops_create_pk_sesskey(pubkey, cipher)) == NULL) {
 		(void) fprintf(stderr, "__ops_push_enc_se_ip: null pk sesskey\n");
 		return 0;
 	}
@@ -1409,7 +1409,7 @@ static void     str_enc_se_ip_destroyer(__ops_writer_t *writer);
 \param pubkey
 */
 void 
-__ops_push_stream_enc_se_ip(__ops_output_t *output, const __ops_key_t *pubkey)
+__ops_push_stream_enc_se_ip(__ops_output_t *output, const __ops_key_t *pubkey, const char *cipher)
 {
 	__ops_pk_sesskey_t	*encrypted_pk_sesskey;
 	str_enc_se_ip_t		*se_ip;
@@ -1422,7 +1422,7 @@ __ops_push_stream_enc_se_ip(__ops_output_t *output, const __ops_key_t *pubkey)
 			"__ops_push_stream_enc_se_ip: bad alloc\n");
 		return;
 	}
-	encrypted_pk_sesskey = __ops_create_pk_sesskey(pubkey);
+	encrypted_pk_sesskey = __ops_create_pk_sesskey(pubkey, cipher);
 	__ops_write_pk_sesskey(output, encrypted_pk_sesskey);
 
 	/* Setup the se_ip */
