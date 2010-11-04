@@ -57,12 +57,12 @@ am_libnetpgp_la_OBJECTS = libnetpgp_la-bufgap.lo \
 	libnetpgp_la-compress.lo libnetpgp_la-create.lo \
 	libnetpgp_la-crypto.lo libnetpgp_la-fastctype.lo \
 	libnetpgp_la-keyring.lo libnetpgp_la-misc.lo \
-	libnetpgp_la-mj.lo libnetpgp_la-netpgp.lo \
-	libnetpgp_la-openssl_crypto.lo libnetpgp_la-packet-parse.lo \
-	libnetpgp_la-packet-print.lo libnetpgp_la-packet-show.lo \
-	libnetpgp_la-reader.lo libnetpgp_la-signature.lo \
-	libnetpgp_la-ssh2pgp.lo libnetpgp_la-symmetric.lo \
-	libnetpgp_la-validate.lo libnetpgp_la-writer.lo
+	libnetpgp_la-netpgp.lo libnetpgp_la-openssl_crypto.lo \
+	libnetpgp_la-packet-parse.lo libnetpgp_la-packet-print.lo \
+	libnetpgp_la-packet-show.lo libnetpgp_la-reader.lo \
+	libnetpgp_la-signature.lo libnetpgp_la-ssh2pgp.lo \
+	libnetpgp_la-symmetric.lo libnetpgp_la-validate.lo \
+	libnetpgp_la-writer.lo
 libnetpgp_la_OBJECTS = $(am_libnetpgp_la_OBJECTS)
 DEFAULT_INCLUDES = -I.@am__isrc@
 depcomp = $(SHELL) $(top_srcdir)/buildaux/depcomp
@@ -213,7 +213,6 @@ libnetpgp_la_SOURCES = \
 	fastctype.c \
 	keyring.c \
 	misc.c \
-	mj.c \
 	netpgp.c \
 	openssl_crypto.c \
 	packet-parse.c \
@@ -322,7 +321,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libnetpgp_la-fastctype.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libnetpgp_la-keyring.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libnetpgp_la-misc.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libnetpgp_la-mj.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libnetpgp_la-netpgp.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libnetpgp_la-openssl_crypto.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libnetpgp_la-packet-parse.Plo@am__quote@
@@ -404,13 +402,6 @@ libnetpgp_la-misc.lo: misc.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='misc.c' object='libnetpgp_la-misc.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libnetpgp_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libnetpgp_la-misc.lo `test -f 'misc.c' || echo '$(srcdir)/'`misc.c
-
-libnetpgp_la-mj.lo: mj.c
-@am__fastdepCC_TRUE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libnetpgp_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libnetpgp_la-mj.lo -MD -MP -MF $(DEPDIR)/libnetpgp_la-mj.Tpo -c -o libnetpgp_la-mj.lo `test -f 'mj.c' || echo '$(srcdir)/'`mj.c
-@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/libnetpgp_la-mj.Tpo $(DEPDIR)/libnetpgp_la-mj.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='mj.c' object='libnetpgp_la-mj.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libnetpgp_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libnetpgp_la-mj.lo `test -f 'mj.c' || echo '$(srcdir)/'`mj.c
 
 libnetpgp_la-netpgp.lo: netpgp.c
 @am__fastdepCC_TRUE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libnetpgp_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libnetpgp_la-netpgp.lo -MD -MP -MF $(DEPDIR)/libnetpgp_la-netpgp.Tpo -c -o libnetpgp_la-netpgp.lo `test -f 'netpgp.c' || echo '$(srcdir)/'`netpgp.c
