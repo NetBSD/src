@@ -1,4 +1,4 @@
-/* $NetBSD: xboxcontroller.c,v 1.13 2010/11/03 23:46:35 dyoung Exp $ */
+/* $NetBSD: xboxcontroller.c,v 1.14 2010/11/04 01:58:07 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xboxcontroller.c,v 1.13 2010/11/03 23:46:35 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xboxcontroller.c,v 1.14 2010/11/04 01:58:07 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -43,8 +43,6 @@ __KERNEL_RCSID(0, "$NetBSD: xboxcontroller.c,v 1.13 2010/11/03 23:46:35 dyoung E
 #include <dev/usb/usbdi.h>
 #include <dev/usb/usbdi_util.h>
 #include <dev/usb/usbdevs.h>
-
-#include <dev/usb/usb_port.h>
 
 #define XBOX_CONTROLLER_BUFSZ	32
 
