@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.47 2010/07/01 16:28:21 dyoung Exp $
+#	$NetBSD: Makefile,v 1.48 2010/11/04 23:31:12 pooka Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/5/93
 
 # when making a change to this file, please check if the change is
@@ -28,14 +28,12 @@ COPTS.ifconfig.c+= -fno-loop-optimize
 
 #
 # Compile-time debug flag.  If compiled with "make RUMP_ACTION=1",
-# make rump system calls.  This allows to single-step ioctl commands
-# to figure out where ioctl's go in the kernel.
+# make rump system calls to a server in another process.
 #
 .ifdef RUMP_ACTION
 CPPFLAGS+=	-DRUMP_SYS_NETWORKING -DRUMP_SYS_IOCTL -DRUMP_SYS_CLOSE
 CPPFLAGS+=	-DRUMP_ACTION
-LDADD+=		-lrumpnet_virtif -lrumpnet_netinet -lrumpnet_net -lrumpnet
-LDADD+=		-lrump -lrumpuser -lpthread
+LDADD+=		-lrumpclient
 DBG=		-g
 .endif
 

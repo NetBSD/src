@@ -19,6 +19,7 @@ prop_dictionary_t prop_dictionary_augment(prop_dictionary_t, prop_dictionary_t);
 #ifdef RUMP_ACTION
 #include <rump/rump.h>
 #include <rump/rump_syscalls.h>
+#include <rump/rumpclient.h>
 #endif /* RUMP_ACTION */
 
 #endif /* _IFCONFIG_ENV_H */
