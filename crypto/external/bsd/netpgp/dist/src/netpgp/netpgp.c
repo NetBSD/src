@@ -1,4 +1,4 @@
-/* $NetBSD: netpgp.c,v 1.15 2010/09/08 03:21:22 agc Exp $ */
+/* $NetBSD: netpgp.c,v 1.16 2010/11/04 15:39:08 agc Exp $ */
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -61,6 +61,7 @@ static const char *usage =
 	"\t--list-packets [options] OR\n"
 	"\t--version\n"
 	"where options are:\n"
+	"\t[--cipher=<ciphername>] AND/OR\n"
 	"\t[--coredumps] AND/OR\n"
 	"\t[--homedir=<homedir>] AND/OR\n"
 	"\t[--keyring=<keyring>] AND/OR\n"
@@ -98,6 +99,7 @@ enum optdefs {
 	MAX_MEM_ALLOC,
 	DURATION,
 	BIRTHTIME,
+	CIPHER,
 
 	/* debug */
 	OPS_DEBUG
@@ -155,6 +157,7 @@ static struct option options[] = {
 	{"creation",	required_argument, 	NULL,	BIRTHTIME},
 	{"duration",	required_argument, 	NULL,	DURATION},
 	{"expiry",	required_argument, 	NULL,	DURATION},
+	{"cipher",	required_argument, 	NULL,	CIPHER},
 	{ NULL,		0,			NULL,	0},
 };
 
@@ -457,6 +460,9 @@ setoption(netpgp_t *netpgp, prog_t *p, int val, char *arg, int *homeset)
 		break;
 	case BIRTHTIME:
 		netpgp_setvar(netpgp, "birthtime", arg);
+		break;
+	case CIPHER:
+		netpgp_setvar(netpgp, "cipher", arg);
 		break;
 	case OPS_DEBUG:
 		netpgp_set_debug(arg);
