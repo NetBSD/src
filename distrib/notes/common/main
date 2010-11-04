@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.425.2.9 2010/11/04 16:48:29 pooka Exp $
+.\"	$NetBSD: main,v 1.425.2.10 2010/11/04 20:02:45 sborrill Exp $
 .\"
 .\" Copyright (c) 1999-2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1835,8 +1835,17 @@ before extracting the xbase set.
 In the version of X.Org shipped with 5.0, this was a directory, but in more
 recent X.Org versions it is a file.
 .Pp
-On ports using X.Org, libpixman and libXfont had their major versions bumped.
-This can be a source of trouble if using binary packages built on 5.0.x.
+On ports using X.Org (amd64, i386, macppc, sgimips, shark and sparc64),
+libpixman and libXfont had their major versions bumped.
+This can be a source of trouble if using binary packages built on 5.0.x with
+a clean install of \*V (upgrades from 5.0.x will include both old and new
+versions of libpixman and libXfont).
+Compatibility packages have been prepared and are available from:
+.Lk ftp://ftp.NetBSD.org/pub/pkgsrc/packages/NetBSD/\*M/5.0/emulators/netbsd-compat50-5.1.tgz
+(or a convenient mirror).
+This URL can be passed directly to the
+.Xr pkg_add 1
+command.
 .Pp
 pkg_install now depends on the pkgdb cache for automatic conflict detection.
 It is recommended to rebuild the cache with
@@ -1859,7 +1868,7 @@ and
 has moved into
 .Xr pkg_admin 1 .
 However, wrapper scripts that handle the common use cases are provided.
-.Ss2 Issues affecting an upgrade from NetBSD 4.x releases
+.Ss2 Issues when running older binaries on NetBSD \*V
 .Pp
 The pthread libraries from previous versions of
 .Nx
@@ -1871,19 +1880,19 @@ be set to
 .Dv 0 .
 This affects the following environments:
 .(bullet
-Running a 5.0 kernel with an older userland.
+Running a 5.x kernel with an older userland.
 .It
-Running an older userland inside a chroot'ed environment on a 5.0 system.
+Running an older userland inside a chroot'ed environment on a 5.x system.
 .It
 Running older statically linked pthread applications.
 .bullet)
 .Pp
-The 5.0 kernel defaults to
+The 5.x kernel defaults to
 .Dv 0
 for 
 .Dv kern.no_sa_support ,
 which covers the first case.
-However, please note that a full installation of 5.0
+However, please note that a full installation of 5.x
 .Pq either from scratch or through an upgrade
 will set
 .Dv kern.no_sa_support
