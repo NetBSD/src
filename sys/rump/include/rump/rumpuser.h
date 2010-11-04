@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.h,v 1.48 2010/11/01 13:55:19 pooka Exp $	*/
+/*	$NetBSD: rumpuser.h,v 1.49 2010/11/04 20:54:08 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -215,14 +215,9 @@ struct rumpuser_sp_ops {
 	int (*spop_syscall)(int, void *, register_t *);
 };
 
-int	rumpuser_sp_init(const struct rumpuser_sp_ops *, int *);
+int	rumpuser_sp_init(const struct rumpuser_sp_ops *, const char *);
 int	rumpuser_sp_copyin(const void *, void *, size_t);
 int	rumpuser_sp_copyout(const void *, void *, size_t);
-int	rumpuser_sp_syscall(int, const void *, size_t, register_t *);
 int	rumpuser_sp_anonmmap(size_t, void **);
-
-#define RUMP_SP_NONE	0
-#define RUMP_SP_CLIENT	1
-#define RUMP_SP_SERVER	2
 
 #endif /* _RUMP_RUMPUSER_H_ */
