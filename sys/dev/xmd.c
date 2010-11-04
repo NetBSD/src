@@ -1,4 +1,4 @@
-/*	$NetBSD: xmd.c,v 1.1.2.5 2010/10/30 08:51:10 uebayasi Exp $	*/
+/*	$NetBSD: xmd.c,v 1.1.2.6 2010/11/04 07:30:00 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2010 Tsubai Masanari.  All rights reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xmd.c,v 1.1.2.5 2010/10/30 08:51:10 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xmd.c,v 1.1.2.6 2010/11/04 07:30:00 uebayasi Exp $");
 
 #include "opt_xip.h"
 #include "opt_xmd.h"
@@ -86,9 +86,9 @@ extern struct cfdriver xmd_cd;
 CFATTACH_DECL3_NEW(xmd, sizeof(struct xmd_softc),
     NULL, xmd_attach, xmd_detach, NULL, NULL, NULL, DVF_DETACH_SHUTDOWN);
 
-const char md_root_image[XMD_ROOT_SIZE << DEV_BSHIFT] __aligned(PAGE_SIZE) =
+const char xmd_root_image[XMD_ROOT_SIZE << DEV_BSHIFT] __aligned(PAGE_SIZE) =
     "|This is the root ramdisk!\n";
-const size_t md_root_size = XMD_ROOT_SIZE << DEV_BSHIFT;
+const size_t xmd_root_size = XMD_ROOT_SIZE << DEV_BSHIFT;
 
 void
 xmdattach(int n)
@@ -120,8 +120,8 @@ xmd_attach(device_t parent, device_t self, void *aux)
 {
 	struct xmd_softc *sc = device_private(self);
 
-	sc->sc_addr = (vaddr_t)md_root_image;
-	sc->sc_size = (size_t)md_root_size;
+	sc->sc_addr = (vaddr_t)xmd_root_image;
+	sc->sc_size = (size_t)xmd_root_size;
 
 	sc->sc_phys = pmap_physload_device(sc->sc_addr, sc->sc_size, PROT_READ, 0);
 
