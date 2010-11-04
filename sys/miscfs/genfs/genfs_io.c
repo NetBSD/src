@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.36.2.27 2010/10/22 07:22:34 uebayasi Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.36.2.28 2010/11/04 07:31:27 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.36.2.27 2010/10/22 07:22:34 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.36.2.28 2010/11/04 07:31:27 uebayasi Exp $");
 
 #include "opt_xip.h"
 
@@ -781,9 +781,6 @@ out_err:
  *      Return "direct pages" of XIP vnode.  The block addresses of XIP
  *      vnode pages are returned back to the VM fault handler as the
  *	actually mapped physical addresses.
- *
- * XXX Should be merged into genfs_do_getpages() after
- * XXX genfs_do_getpages() and genfs_do_io() are merged.
  */
 static int
 genfs_do_getpages_xip(void *v)
