@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.60.2.7 2010/10/31 03:46:18 uebayasi Exp $	*/
+/*	$NetBSD: pmap.c,v 1.60.2.8 2010/11/04 08:47:37 uebayasi Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.60.2.7 2010/10/31 03:46:18 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.60.2.8 2010/11/04 08:47:37 uebayasi Exp $");
 
 #include "opt_xip.h"
 
@@ -851,7 +851,8 @@ pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 	if (flags & PMAP_WIRED)
 		flags |= prot;
 
-	managed = ((flags & PMAP_NOCACHE) == 0) && uvm_pageismanaged(pa);
+	managed = ((flags & PMAP_NOCACHE) == 0) &&
+	    (uvm_pageismanaged(pa) || uvm_pageismanaged_device(pa));
 
 	/*
 	 * Generate TTE.

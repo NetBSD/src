@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.h,v 1.59.2.32 2010/10/27 14:51:30 uebayasi Exp $	*/
+/*	$NetBSD: uvm_page.h,v 1.59.2.33 2010/11/04 08:47:38 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -181,6 +181,7 @@ struct vm_page {
 #define	PG_RDONLY	0x0080		/* page must be mapped read-only */
 #define	PG_ZERO		0x0100		/* page is pre-zero'd */
 #define	PG_MARKER	0x0200		/* dummy marker page */
+#define	PG_DEVICE	0x0400		/* page is on device segment */
 
 #define PG_PAGER1	0x1000		/* pager-specific flag */
 
@@ -195,7 +196,6 @@ struct vm_page {
 					   uvm_object */
 #define PQ_SWAPBACKED	(PQ_ANON|PQ_AOBJ)
 #define PQ_READAHEAD	0x0008	/* read-ahead but has not been "hit" yet */
-#define PQ_FIXED	0x0010	/* resident page (never paged out) */
 
 #define PQ_PRIVATE1	0x0100
 #define PQ_PRIVATE2	0x0200
@@ -303,6 +303,7 @@ void uvm_pagewake(struct vm_page *);
 void uvm_pagewire(struct vm_page *);
 void uvm_pagezero(struct vm_page *);
 bool uvm_pageismanaged(paddr_t);
+bool uvm_pageismanaged_device(paddr_t);
 
 int uvm_page_lookup_freelist(struct vm_page *);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_bio.c,v 1.68.2.11 2010/08/17 06:48:14 uebayasi Exp $	*/
+/*	$NetBSD: uvm_bio.c,v 1.68.2.12 2010/11/04 08:47:38 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.68.2.11 2010/08/17 06:48:14 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.68.2.12 2010/11/04 08:47:38 uebayasi Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_ubc.h"
@@ -283,7 +283,7 @@ ubc_fault_page(const struct uvm_faultinfo *ufi, const struct ubc_map *umap,
 	error = pmap_enter(ufi->orig_map->pmap, va, VM_PAGE_TO_PHYS(pg),
 	    prot & mask, PMAP_CANFAIL | (access_type & mask));
 
-	if (__predict_true((pg->pqflags & PQ_FIXED) == 0)) {
+	if (__predict_true((pg->flags & PG_DEVICE) == 0)) {
 		mutex_enter(&uvm_pageqlock);
 		uvm_pageactivate(pg);
 		mutex_exit(&uvm_pageqlock);

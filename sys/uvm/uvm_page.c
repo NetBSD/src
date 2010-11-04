@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.153.2.58 2010/11/02 14:05:28 uebayasi Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.153.2.59 2010/11/04 08:47:38 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.153.2.58 2010/11/02 14:05:28 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.153.2.59 2010/11/04 08:47:38 uebayasi Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -862,10 +862,9 @@ uvm_page_physload_device(paddr_t start, paddr_t end, int prot, int flags)
 		paddr_t paddr = (start + i) << PAGE_SHIFT;
 
 		pg->phys_addr = paddr;
-		pg->flags |= PG_FAKE | PG_CLEAN;
+		pg->flags |= PG_FAKE | PG_CLEAN | PG_DEVICE;
 		if (prot == VM_PROT_READ)
 			pg->flags |= PG_RDONLY;
-		pg->pqflags = PQ_FIXED;
 #ifdef __HAVE_VM_PAGE_MD
 		VM_MDPAGE_INIT(&pg->mdpage, paddr);
 #endif
@@ -1581,7 +1580,7 @@ uvm_pagealloc_strat(struct uvm_object *obj, voff_t off, struct vm_anon *anon,
 			pmap_zero_page(VM_PAGE_TO_PHYS(pg));
 	}
 
-	KASSERT((pg->pqflags & PQ_FIXED) == 0);
+	KASSERT((pg->flags & PG_DEVICE) == 0);
 
 	return(pg);
 
@@ -2110,7 +2109,7 @@ uvm_pagedeactivate(struct vm_page *pg)
 {
 
 	KASSERT(mutex_owned(&uvm_pageqlock));
-	KASSERT((pg->pqflags & PQ_FIXED) == 0);
+	KASSERT((pg->flags & PG_DEVICE) == 0);
 	KASSERT(pg->wire_count != 0 || uvmpdpol_pageisqueued_p(pg));
 	uvmpdpol_pagedeactivate(pg);
 }
@@ -2126,7 +2125,7 @@ uvm_pageactivate(struct vm_page *pg)
 {
 
 	KASSERT(mutex_owned(&uvm_pageqlock));
-	KASSERT((pg->pqflags & PQ_FIXED) == 0);
+	KASSERT((pg->flags & PG_DEVICE) == 0);
 #if defined(READAHEAD_STATS)
 	if ((pg->pqflags & PQ_READAHEAD) != 0) {
 		uvm_ra_hit.ev_count++;
@@ -2147,7 +2146,7 @@ void
 uvm_pagedequeue(struct vm_page *pg)
 {
 
-	KASSERT((pg->pqflags & PQ_FIXED) == 0);
+	KASSERT((pg->flags & PG_DEVICE) == 0);
 	if (uvmpdpol_pageisqueued_p(pg)) {
 		KASSERT(mutex_owned(&uvm_pageqlock));
 	}
@@ -2165,7 +2164,7 @@ uvm_pageenqueue(struct vm_page *pg)
 {
 
 	KASSERT(mutex_owned(&uvm_pageqlock));
-	KASSERT((pg->pqflags & PQ_FIXED) == 0);
+	KASSERT((pg->flags & PG_DEVICE) == 0);
 	if (pg->wire_count != 0) {
 		return;
 	}
@@ -2210,8 +2209,20 @@ uvm_pageismanaged(paddr_t pa)
 {
 
 	return
-	    (vm_physseg_find_device(atop(pa), NULL) != -1) ||
 	    (vm_physseg_find(atop(pa), NULL) != -1);
+}
+
+/*
+ * uvm_pageismanaged_device: test it see that a page (specified by
+ * PA) is on a managed device physcal segment.
+ */
+
+bool
+uvm_pageismanaged_device(paddr_t pa)
+{
+
+	return
+	    (vm_physseg_find_device(atop(pa), NULL) != -1);
 }
 
 /*
