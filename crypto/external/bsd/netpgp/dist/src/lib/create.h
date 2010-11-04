@@ -91,7 +91,7 @@ unsigned __ops_write_litdata(__ops_output_t *,
 				const uint8_t *,
 				const int,
 				const __ops_litdata_enum);
-__ops_pk_sesskey_t *__ops_create_pk_sesskey(const __ops_key_t *);
+__ops_pk_sesskey_t *__ops_create_pk_sesskey(const __ops_key_t *, const char *);
 unsigned __ops_write_pk_sesskey(__ops_output_t *, __ops_pk_sesskey_t *);
 unsigned __ops_write_xfer_pubkey(__ops_output_t *,
 				const __ops_key_t *, const unsigned);

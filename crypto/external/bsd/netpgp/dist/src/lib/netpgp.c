@@ -34,7 +34,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: netpgp.c,v 1.79 2010/11/04 06:45:28 agc Exp $");
+__RCSID("$NetBSD: netpgp.c,v 1.80 2010/11/04 15:38:45 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -1189,7 +1189,7 @@ netpgp_encrypt_file(netpgp_t *netpgp,
 		out = outname;
 	}
 	return (int)__ops_encrypt_file(io, f, out, key, (unsigned)armored,
-					overwrite);
+				overwrite, netpgp_getvar(netpgp, "cipher"));
 }
 
 #define ARMOR_HEAD	"-----BEGIN PGP MESSAGE-----"
@@ -1494,7 +1494,8 @@ netpgp_encrypt_memory(netpgp_t *netpgp,
 			"netpgp_encrypt_buf: input size is larger than output size\n");
 		return 0;
 	}
-	enc = __ops_encrypt_buf(io, in, insize, keypair, (unsigned)armored);
+	enc = __ops_encrypt_buf(io, in, insize, keypair, (unsigned)armored,
+				netpgp_getvar(netpgp, "cipher"));
 	m = MIN(__ops_mem_len(enc), outsize);
 	(void) memcpy(out, __ops_mem_data(enc), m);
 	__ops_memory_free(enc);

@@ -75,7 +75,7 @@ unsigned __ops_write_se_ip_pktset(__ops_output_t *, const uint8_t *,
 		       const unsigned,
 		       __ops_crypt_t *);
 void __ops_push_enc_crypt(__ops_output_t *, __ops_crypt_t *);
-int __ops_push_enc_se_ip(__ops_output_t *, const __ops_key_t *);
+int __ops_push_enc_se_ip(__ops_output_t *, const __ops_key_t *, const char *);
 
 /* Secret Key checksum */
 void __ops_push_checksum_writer(__ops_output_t *, __ops_seckey_t *);
