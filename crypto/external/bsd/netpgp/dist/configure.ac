@@ -1,10 +1,10 @@
-# $NetBSD: configure.ac,v 1.35 2010/09/02 06:00:11 agc Exp $
+# $NetBSD: configure.ac,v 1.36 2010/11/04 07:01:52 agc Exp $
 #
 # Process this file with autoconf to produce a configure script.
 
-AC_INIT([netpgp],[20100901],[Alistair Crooks <agc@netbsd.org> c0596823])
+AC_INIT([netpgp],[20101103],[Alistair Crooks <agc@netbsd.org> c0596823])
 AC_PREREQ(2.63)
-AC_REVISION([$Revision: 1.35 $])
+AC_REVISION([$Revision: 1.36 $])
 
 AS_SHELL_SANITIZE
 
@@ -47,10 +47,10 @@ AC_HEADER_STDC
 AC_CHECK_HEADERS([CommonCrypto/CommonDigest.h])
 AC_CHECK_HEADERS([dmalloc.h direct.h errno.h fcntl.h \
                  inttypes.h limits.h malloc.h zlib.h])
-AC_CHECK_HEADERS([openssl/aes.h openssl/bn.h openssl/cast.h openssl/des.h \
-                  openssl/dsa.h openssl/err.h openssl/idea.h openssl/md5.h \
-                  openssl/rand.h openssl/rsa.h openssl/sha.h openssl/err.h \
-                  openssl/sha.h])
+AC_CHECK_HEADERS([openssl/aes.h openssl/bn.h openssl/camellia.h openssl/cast.h \
+		  openssl/des.h openssl/dsa.h openssl/err.h openssl/idea.h \
+		  openssl/md5.h openssl/rand.h openssl/rsa.h openssl/sha.h \
+		  openssl/err.h openssl/sha.h])
 AC_CHECK_HEADERS([sys/cdefs.h sys/file.h sys/mman.h sys/param.h \
                   sys/resource.h sys/uio.h])
 
