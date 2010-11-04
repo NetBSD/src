@@ -1,14 +1,12 @@
-/*	$NetBSD: ip_id.c,v 1.12 2008/02/06 03:20:51 matt Exp $	*/
+/*	$NetBSD: ip_id.c,v 1.13 2010/11/04 22:00:51 matt Exp $	*/
 /*	$OpenBSD: ip_id.c,v 1.6 2002/03/15 18:19:52 millert Exp $	*/
 
-/*
- * Copyright 1998 Niels Provos <provos@citi.umich.edu>
+/*-
+ * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
- * Theo de Raadt <deraadt@openbsd.org> came up with the idea of using
- * such a mathematical system to generate more random (yet non-repeating)
- * ids to solve the resolver/named problem.  But Niels designed the
- * actual system based on the constraints.
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by the 3am Software Foundry ("3am").  It was developed by Matt Thomas.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -19,40 +17,21 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
- * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
- * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
- * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
- * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
- * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
- * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */
-
-/*
- * seed = random 15bit
- * n = prime, g0 = generator to n,
- * j = random so that gcd(j,n-1) == 1
- * g = g0^j mod n will be a generator again.
- *
- * X[0] = random seed.
- * X[n] = a*X[n-1]+b mod m is a Linear Congruential Generator
- * with a = 7^(even random) mod m,
- *      b = random with gcd(b,m) == 1
- *      m = 31104 and a maximal period of m-1.
- *
- * The transaction id is determined by:
- * id[n] = seed xor (g^X[n] mod n)
- *
- * Effectively the id is restricted to the lower 15 bits, thus
- * yielding two different cycles by toggling the msb on and off.
- * This avoids reuse issues caused by reseeding.
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_id.c,v 1.12 2008/02/06 03:20:51 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_id.c,v 1.13 2010/11/04 22:00:51 matt Exp $");
 
 #include "opt_inet.h"
 
