@@ -60,7 +60,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: packet-show.c,v 1.17 2010/08/15 16:36:24 agc Exp $");
+__RCSID("$NetBSD: packet-show.c,v 1.18 2010/11/04 06:45:28 agc Exp $");
 #endif
 
 #include <stdlib.h>
@@ -244,6 +244,9 @@ static __ops_map_t symm_alg_map[] =
 	{OPS_SA_AES_192, "AES (192-bit key)"},
 	{OPS_SA_AES_256, "AES (256-bit key)"},
 	{OPS_SA_TWOFISH, "Twofish(256-bit key)"},
+	{OPS_SA_CAMELLIA_128, "Camellia (128-bit key)"},
+	{OPS_SA_CAMELLIA_192, "Camellia (192-bit key)"},
+	{OPS_SA_CAMELLIA_256, "Camellia (256-bit key)"},
 	{0x00, NULL},		/* this is the end-of-array marker */
 };
 

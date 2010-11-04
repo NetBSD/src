@@ -479,8 +479,13 @@ typedef enum {
 	OPS_SA_AES_128 = 7,	/* AES with 128-bit key (AES) */
 	OPS_SA_AES_192 = 8,	/* AES with 192-bit key */
 	OPS_SA_AES_256 = 9,	/* AES with 256-bit key */
-	OPS_SA_TWOFISH = 10	/* Twofish with 256-bit key (TWOFISH) */
+	OPS_SA_TWOFISH = 10,	/* Twofish with 256-bit key (TWOFISH) */
+	OPS_SA_CAMELLIA_128 = 100,	/* Camellia with 128-bit key (CAMELLIA) */
+	OPS_SA_CAMELLIA_192 = 101,	/* Camellia with 192-bit key */
+	OPS_SA_CAMELLIA_256 = 102	/* Camellia with 256-bit key */
 } __ops_symm_alg_t;
+
+#define OPS_SA_DEFAULT_CIPHER	OPS_SA_CAST5
 
 /** Hashing Algorithm Numbers.
  * OpenPGP assigns a unique Algorithm Number to each algorithm that is

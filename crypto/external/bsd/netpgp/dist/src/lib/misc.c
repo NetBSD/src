@@ -57,7 +57,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: misc.c,v 1.36 2010/08/15 16:36:24 agc Exp $");
+__RCSID("$NetBSD: misc.c,v 1.37 2010/11/04 06:45:28 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -791,6 +791,37 @@ __ops_is_hash_alg_supported(const __ops_hash_alg_t *hash_alg)
 	default:
 		return 0;
 	}
+}
+
+/* structure to map string to cipher def */
+typedef struct str2cipher_t {
+	const char	*s;	/* cipher name */
+	__ops_symm_alg_t i;	/* cipher def */
+} str2cipher_t;
+
+static str2cipher_t	str2cipher[] = {
+	{	"cast5",		OPS_SA_CAST5		},
+	{	"idea",			OPS_SA_IDEA		},
+	{	"aes128",		OPS_SA_AES_128		},
+	{	"aes256",		OPS_SA_AES_256		},
+	{	"camellia128",		OPS_SA_CAMELLIA_128	},
+	{	"camellia256",		OPS_SA_CAMELLIA_256	},
+	{	"tripledes",		OPS_SA_TRIPLEDES	},
+	{	NULL,			0			}
+};
+
+/* convert from a string to a cipher definition */
+__ops_symm_alg_t 
+__ops_str_to_cipher(const char *cipher)
+{
+	str2cipher_t	*sp;
+
+	for (sp = str2cipher ; cipher && sp->s ; sp++) {
+		if (netpgp_strcasecmp(cipher, sp->s) == 0) {
+			return sp->i;
+		}
+	}
+	return OPS_SA_DEFAULT_CIPHER;
 }
 
 void 

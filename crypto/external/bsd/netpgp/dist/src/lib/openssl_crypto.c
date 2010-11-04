@@ -57,7 +57,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: openssl_crypto.c,v 1.29 2010/09/08 03:21:22 agc Exp $");
+__RCSID("$NetBSD: openssl_crypto.c,v 1.30 2010/11/04 06:45:28 agc Exp $");
 #endif
 
 #ifdef HAVE_OPENSSL_DSA_H
@@ -685,7 +685,8 @@ static unsigned
 rsa_generate_keypair(__ops_key_t *keydata,
 			const int numbits,
 			const unsigned long e,
-			const char *hashalg)
+			const char *hashalg,
+			const char *cipher)
 {
 	__ops_seckey_t *seckey;
 	RSA            *rsa;
@@ -714,10 +715,10 @@ rsa_generate_keypair(__ops_key_t *keydata,
 	seckey->s2k_usage = OPS_S2KU_ENCRYPTED_AND_HASHED;
 	seckey->s2k_specifier = OPS_S2KS_SALTED;
 	/* seckey->s2k_specifier=OPS_S2KS_SIMPLE; */
-	seckey->alg = OPS_SA_CAST5;	/* \todo make param */
 	if ((seckey->hash_alg = __ops_str_to_hash_alg(hashalg)) == OPS_HASH_UNKNOWN) {
 		seckey->hash_alg = OPS_HASH_SHA1;
 	}
+	seckey->alg = __ops_str_to_cipher(cipher);
 	seckey->octetc = 0;
 	seckey->checksum = 0;
 
@@ -796,12 +797,13 @@ __ops_key_t  *
 __ops_rsa_new_selfsign_key(const int numbits,
 				const unsigned long e,
 				uint8_t *userid,
-				const char *hashalg)
+				const char *hashalg,
+				const char *cipher)
 {
 	__ops_key_t  *keydata;
 
 	keydata = __ops_keydata_new();
-	if (!rsa_generate_keypair(keydata, numbits, e, hashalg) ||
+	if (!rsa_generate_keypair(keydata, numbits, e, hashalg, cipher) ||
 	    !__ops_add_selfsigned_userid(keydata, userid)) {
 		__ops_keydata_free(keydata);
 		return NULL;
