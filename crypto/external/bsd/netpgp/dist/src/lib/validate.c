@@ -54,7 +54,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: validate.c,v 1.39 2010/08/15 16:36:24 agc Exp $");
+__RCSID("$NetBSD: validate.c,v 1.40 2010/11/04 16:13:35 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -461,8 +461,8 @@ validate_data_cb(const __ops_packet_t *pkt, __ops_cbdata_t *cbinfo)
 	case OPS_PTAG_CT_SIGNED_CLEARTEXT_BODY:
 		data->data.cleartext_body = content->cleartext_body;
 		data->type = SIGNED_CLEARTEXT;
-		__ops_memory_add(data->mem, data->data.litdata_body.data,
-			       data->data.litdata_body.length);
+		__ops_memory_add(data->mem, data->data.cleartext_body.data,
+			       data->data.cleartext_body.length);
 		return OPS_KEEP_MEMORY;
 
 	case OPS_PTAG_CT_SIGNED_CLEARTEXT_TRAILER:
