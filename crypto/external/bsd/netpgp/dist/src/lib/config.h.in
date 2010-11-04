@@ -42,6 +42,9 @@
 /* Define to 1 if you have the <openssl/bn.h> header file. */
 #undef HAVE_OPENSSL_BN_H
 
+/* Define to 1 if you have the <openssl/camellia.h> header file. */
+#undef HAVE_OPENSSL_CAMELLIA_H
+
 /* Define to 1 if you have the <openssl/cast.h> header file. */
 #undef HAVE_OPENSSL_CAST_H
 
