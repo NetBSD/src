@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.296 2010/10/29 16:15:40 uebayasi Exp $
+#	$NetBSD: BRANCHES,v 1.297 2010/11/04 04:33:35 uebayasi Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -1210,6 +1210,8 @@ Maintainer:	Masao Uebayashi <uebayasi@NetBSD.org>
 Scope:		src/include src/sbin/mount src/sbin/mount_ffs
 		src/share/man/man4 src/share/man/man9 src/sys
 		src/share/man/man5/statvfs.5
+		src/external/gpl3/binutils/usr.sbin/mdsetimage
+		src/usr.sbin/mdsetimage
 Notes:		Goals:
 		- Clean up oddities in fault handler
 		- Add a notion of device page
