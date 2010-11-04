@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_display.c,v 1.5 2010/10/29 09:04:38 gsutre Exp $	*/
+/*	$NetBSD: acpi_display.c,v 1.6 2010/11/04 20:08:12 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_display.c,v 1.5 2010/10/29 09:04:38 gsutre Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_display.c,v 1.6 2010/11/04 20:08:12 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -1416,6 +1416,7 @@ acpidisp_init_odinfo(const struct acpidisp_vga_softc *asc)
 		return NULL;
 
 	oi = NULL;
+	pkg = NULL;
 
 	rv = acpidisp_eval_package(hdl, "_DOD", &pkg, 1);
 	if (ACPI_FAILURE(rv))
@@ -1600,6 +1601,7 @@ acpidisp_init_brctl(const struct acpidisp_out_softc *osc)
 		return NULL;
 
 	bc = NULL;
+	pkg = NULL;
 
 	rv = acpidisp_eval_package(hdl, "_BCL", &pkg, 2);
 	if (ACPI_FAILURE(rv))
