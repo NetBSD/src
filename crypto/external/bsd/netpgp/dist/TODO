@@ -106,3 +106,4 @@ PEM ssh keys and passphrases
 camellia addition
 fix calloc return values in symmetric.c/ops_crypt_t
 prog to convert from pgp sec to ssh sec
+add user-specifiable ciphers for encryption
