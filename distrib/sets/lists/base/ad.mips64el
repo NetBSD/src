@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips64el,v 1.22 2010/11/02 16:34:33 joerg Exp $
+# $NetBSD: ad.mips64el,v 1.23 2010/11/04 21:15:54 pooka Exp $
 ./libexec/ld.elf_so-64				base-compat-shlib	compat,pic
 ./libexec/ld.elf_so-o32				base-sysutil-bin	compat,pic
 ./usr/lib/64					base-compat-lib
@@ -173,6 +173,8 @@
 ./usr/lib/64/librt.so.1.0			base-compat-shlib	compat,pic
 ./usr/lib/64/librump.so.0			base-compat-shlib	compat,pic
 ./usr/lib/64/librump.so.0.0			base-compat-shlib	compat,pic
+./usr/lib/64/librumpclient.so.0			base-compat-shlib	compat,pic
+./usr/lib/64/librumpclient.so.0.0			base-compat-shlib	compat,pic
 ./usr/lib/64/librumpnet.so.0			base-compat-shlib	compat,pic
 ./usr/lib/64/librumpnet.so.0.0			base-compat-shlib	compat,pic
 ./usr/lib/64/librumpuser.so.0			base-compat-shlib	compat,pic
@@ -410,6 +412,8 @@
 ./usr/lib/o32/librt.so.1.0			base-compat-shlib	compat,pic
 ./usr/lib/o32/librump.so.0			base-compat-shlib	compat,pic
 ./usr/lib/o32/librump.so.0.0			base-compat-shlib	compat,pic
+./usr/lib/o32/librumpclient.so.0			base-compat-shlib	compat,pic
+./usr/lib/o32/librumpclient.so.0.0		base-compat-shlib	compat,pic
 ./usr/lib/o32/librumpnet.so.0			base-compat-shlib	compat,pic
 ./usr/lib/o32/librumpnet.so.0.0			base-compat-shlib	compat,pic
 ./usr/lib/o32/librumpuser.so.0			base-compat-shlib	compat,pic
