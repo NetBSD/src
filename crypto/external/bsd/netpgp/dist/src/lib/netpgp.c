@@ -34,7 +34,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: netpgp.c,v 1.78 2010/10/31 19:45:53 stacktic Exp $");
+__RCSID("$NetBSD: netpgp.c,v 1.79 2010/11/04 06:45:28 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -1108,10 +1108,13 @@ netpgp_generate_key(netpgp_t *netpgp, char *id, int numbits)
 	if (id) {
 		(void) snprintf(newid, sizeof(newid), "%s", id);
 	} else {
-		(void) snprintf(newid, sizeof(newid), "RSA %d-bit key <%s@localhost>", numbits, getenv("LOGNAME"));
+		(void) snprintf(newid, sizeof(newid),
+			"RSA %d-bit key <%s@localhost>", numbits, getenv("LOGNAME"));
 	}
 	uid = (uint8_t *)newid;
-	key = __ops_rsa_new_selfsign_key(numbits, 65537UL, uid, netpgp_getvar(netpgp, "hash"));
+	key = __ops_rsa_new_selfsign_key(numbits, 65537UL, uid,
+			netpgp_getvar(netpgp, "hash"),
+			netpgp_getvar(netpgp, "cipher"));
 	if (key == NULL) {
 		(void) fprintf(io->errs, "Cannot generate key\n");
 		return 0;
