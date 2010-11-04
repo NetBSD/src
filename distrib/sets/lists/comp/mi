@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1522 2010/11/04 21:15:55 pooka Exp $
+#	$NetBSD: mi,v 1.1523 2010/11/04 22:05:43 pooka Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3877,6 +3877,7 @@
 ./usr/libdata/lint/llib-lrpcsvc.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lrt.ln			comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lrumpuser.ln		comp-c-lintlib		lint
+./usr/libdata/lint/llib-lrumpclient.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lsdp.ln			comp-obsolete		obsolete
 ./usr/libdata/lint/llib-lskey.ln		comp-c-lintlib		lint,skey
 ./usr/libdata/lint/llib-lsm.ln			comp-obsolete		obsolete
