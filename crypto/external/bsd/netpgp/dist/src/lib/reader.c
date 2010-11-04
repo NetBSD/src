@@ -54,7 +54,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: reader.c,v 1.42 2010/08/15 16:36:24 agc Exp $");
+__RCSID("$NetBSD: reader.c,v 1.43 2010/11/04 16:13:35 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -681,8 +681,8 @@ process_dash_escaped(dearmour_t *dearmour,
 			"process_dash_escaped: bad body length\n");
 		return -1;
 	}
-
 	/* don't send that one character, because it's part of the trailer */
+	(void) memset(&content2, 0x0, sizeof(content2));
 	CALLBACK(OPS_PTAG_CT_SIGNED_CLEARTEXT_TRAILER, cbinfo, &content2);
 	return total;
 }
