@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.188.2.6 2010/10/31 03:46:18 uebayasi Exp $	*/
+/*	$NetBSD: pmap.c,v 1.188.2.7 2010/11/04 08:47:37 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.188.2.6 2010/10/31 03:46:18 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.188.2.7 2010/11/04 08:47:37 uebayasi Exp $");
 
 /*
  *	Manages physical address maps.
@@ -225,7 +225,8 @@ int		pmap_pv_lowat = PMAP_PV_LOWAT;
 
 bool		pmap_initialized = false;
 
-#define PAGE_IS_MANAGED(pa)	(pmap_initialized && uvm_pageismanaged(pa))
+#define PAGE_IS_MANAGED(pa)	(pmap_initialized && \
+	(uvm_pageismanaged(pa) || uvm_pageismanaged_device(pa))
 
 #define PMAP_IS_ACTIVE(pm)						\
 	((pm) == pmap_kernel() || 					\
@@ -1553,7 +1554,7 @@ paddr_t
 pmap_mmap(vaddr_t addr, off_t off)
 {
 
-	return mips_btop(vtophys(addr + off));
+	return mips_btop(MIPS_KSEG0_TO_PHYS(addr + off));
 }
 
 /*
