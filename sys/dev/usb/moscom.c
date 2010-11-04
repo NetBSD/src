@@ -1,4 +1,4 @@
-/*	$NetBSD: moscom.c,v 1.4 2010/11/03 23:46:35 dyoung Exp $	*/
+/*	$NetBSD: moscom.c,v 1.5 2010/11/04 01:58:07 dyoung Exp $	*/
 /*	$OpenBSD: moscom.c,v 1.11 2007/10/11 18:33:14 deraadt Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: moscom.c,v 1.4 2010/11/03 23:46:35 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: moscom.c,v 1.5 2010/11/04 01:58:07 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -34,8 +34,6 @@ __KERNEL_RCSID(0, "$NetBSD: moscom.c,v 1.4 2010/11/03 23:46:35 dyoung Exp $");
 
 #include <dev/usb/usbdevs.h>
 #include <dev/usb/ucomvar.h>
-
-#include <dev/usb/usb_port.h>
 
 #define MOSCOMBUFSZ		256
 #define MOSCOM_CONFIG_NO	0

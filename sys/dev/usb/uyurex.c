@@ -1,4 +1,4 @@
-/*	$NetBSD: uyurex.c,v 1.3 2010/11/03 23:46:35 dyoung Exp $ */
+/*	$NetBSD: uyurex.c,v 1.4 2010/11/04 01:58:07 dyoung Exp $ */
 /*	$OpenBSD: uyurex.c,v 1.3 2010/03/04 03:47:22 deraadt Exp $ */
 
 /*
@@ -37,8 +37,6 @@
 #include <dev/usb/usbdevs.h>
 #include <dev/usb/uhidev.h>
 #include <dev/usb/hid.h>
-
-#include <dev/usb/usb_port.h>
 
 #ifdef USB_DEBUG
 #define UYUREX_DEBUG
