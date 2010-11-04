@@ -1,4 +1,4 @@
-/*	$NetBSD: if_otus.c,v 1.6 2010/11/04 13:21:08 christos Exp $	*/
+/*	$NetBSD: if_otus.c,v 1.7 2010/11/04 14:08:31 christos Exp $	*/
 /*	$OpenBSD: if_otus.c,v 1.18 2010/08/27 17:08:00 jsg Exp $	*/
 
 /*-
@@ -636,7 +636,7 @@ otus_attach(device_t parent, device_t self, void *aux)
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev, sc->sc_dev);
 }
 
-int
+Static int
 otus_detach(device_t self, int flags)
 {
 	struct otus_softc *sc = device_private(self);
