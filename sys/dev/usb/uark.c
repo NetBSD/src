@@ -1,4 +1,4 @@
-/*	$NetBSD: uark.c,v 1.2 2010/11/03 23:46:35 dyoung Exp $	*/
+/*	$NetBSD: uark.c,v 1.3 2010/11/04 01:58:07 dyoung Exp $	*/
 /*	$OpenBSD: uark.c,v 1.13 2009/10/13 19:33:17 pirofti Exp $	*/
 
 /*
@@ -30,8 +30,6 @@
 #include <dev/usb/usbdevs.h>
 
 #include <dev/usb/ucomvar.h>
-
-#include <dev/usb/usb_port.h>
 
 #ifdef UARK_DEBUG
 #define DPRINTFN(n, x)  do { if (uarkdebug > (n)) printf x; } while (0)

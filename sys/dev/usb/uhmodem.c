@@ -1,4 +1,4 @@
-/*	$NetBSD: uhmodem.c,v 1.10 2010/11/03 23:46:35 dyoung Exp $	*/
+/*	$NetBSD: uhmodem.c,v 1.11 2010/11/04 01:58:07 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2008 Yojiro UO <yuo@nui.org>.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhmodem.c,v 1.10 2010/11/03 23:46:35 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhmodem.c,v 1.11 2010/11/04 01:58:07 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,8 +93,6 @@ __KERNEL_RCSID(0, "$NetBSD: uhmodem.c,v 1.10 2010/11/03 23:46:35 dyoung Exp $");
 #include <dev/usb/usbdi.h>
 #include <dev/usb/usbdi_util.h>
 #include <dev/usb/usbdivar.h>
-
-#include <dev/usb/usb_port.h>
 
 #include <dev/usb/usbcdc.h>
 #include <dev/usb/usbdevs.h>
