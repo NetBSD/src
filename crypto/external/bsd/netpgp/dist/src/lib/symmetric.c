@@ -54,7 +54,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: symmetric.c,v 1.13 2010/11/04 06:45:28 agc Exp $");
+__RCSID("$NetBSD: symmetric.c,v 1.14 2010/11/04 07:03:41 agc Exp $");
 #endif
 
 #include "crypto.h"
@@ -78,7 +78,9 @@ __RCSID("$NetBSD: symmetric.c,v 1.13 2010/11/04 06:45:28 agc Exp $");
 #include <openssl/des.h>
 #endif
 
+#ifdef HAVE_OPENSSL_CAMELLIA_H
 #include <openssl/camellia.h>
+#endif
 
 #include "crypto.h"
 #include "netpgpdefs.h"
