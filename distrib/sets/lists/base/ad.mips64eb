@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips64eb,v 1.23 2010/11/02 16:34:33 joerg Exp $
+# $NetBSD: ad.mips64eb,v 1.24 2010/11/04 08:54:44 plunky Exp $
 ./libexec/ld.elf_so-64				base-compat-shlib	compat,pic
 ./libexec/ld.elf_so-o32				base-sysutil-bin	compat,pic
 ./usr/lib/64					base-compat-lib
@@ -51,8 +51,8 @@
 ./usr/lib/64/i18n/libmapper_zone.so.5.0		base-i18n-shlib		compat,pic
 ./usr/lib/64/libasn1.so.8			base-compat-shlib	compat,pic,kerberos
 ./usr/lib/64/libasn1.so.8.0			base-compat-shlib	compat,pic,kerberos
-./usr/lib/64/libbfd.so.11			base-compat-shlib	compat,pic
-./usr/lib/64/libbfd.so.11.0			base-compat-shlib	compat,pic
+./usr/lib/64/libbfd.so.11			base-compat-shlib	compat,pic,binutils
+./usr/lib/64/libbfd.so.11.0			base-compat-shlib	compat,pic,binutils
 ./usr/lib/64/libbind9.so.5			base-compat-shlib	compat,pic
 ./usr/lib/64/libbind9.so.5.1			base-compat-shlib	compat,pic
 ./usr/lib/64/libbluetooth.so.4			base-compat-shlib	compat,pic
@@ -137,12 +137,12 @@
 ./usr/lib/64/libnetpgp.so.3.0			base-compat-shlib	compat,pic,crypto
 ./usr/lib/64/libobjc.so.3			base-compat-shlib	compat,pic
 ./usr/lib/64/libobjc.so.3.0			base-compat-shlib	compat,pic
-./usr/lib/64/libopcodes.so.4			base-compat-shlib	compat,pic
-./usr/lib/64/libopcodes.so.4.0			base-compat-shlib	compat,pic
+./usr/lib/64/libopcodes.so.4			base-compat-shlib	compat,pic,binutils
+./usr/lib/64/libopcodes.so.4.0			base-compat-shlib	compat,pic,binutils
 ./usr/lib/64/libossaudio.so.1			base-compat-shlib	compat,pic
 ./usr/lib/64/libossaudio.so.1.0			base-compat-shlib	compat,pic
-./usr/lib/64/libpam.so.3			base-compat-shlib	compat,pic
-./usr/lib/64/libpam.so.3.0			base-compat-shlib	compat,pic
+./usr/lib/64/libpam.so.3			base-compat-shlib	compat,pic,pam
+./usr/lib/64/libpam.so.3.0			base-compat-shlib	compat,pic,pam
 ./usr/lib/64/librefuse.so.2			base-compat-shlib	compat,pic
 ./usr/lib/64/librefuse.so.2.0			base-compat-shlib	compat,pic
 ./usr/lib/64/libp2k.so.2			base-compat-shlib	compat,pic
