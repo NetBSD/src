@@ -54,7 +54,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: symmetric.c,v 1.12 2010/11/04 01:18:34 agc Exp $");
+__RCSID("$NetBSD: symmetric.c,v 1.13 2010/11/04 06:45:28 agc Exp $");
 #endif
 
 #include "crypto.h"
@@ -77,6 +77,8 @@ __RCSID("$NetBSD: symmetric.c,v 1.12 2010/11/04 01:18:34 agc Exp $");
 #ifdef HAVE_OPENSSL_DES_H
 #include <openssl/des.h>
 #endif
+
+#include <openssl/camellia.h>
 
 #include "crypto.h"
 #include "netpgpdefs.h"
@@ -482,32 +484,153 @@ static const __ops_crypt_t tripledes =
 	TRAILER
 };
 
+/* Camellia with 128-bit key (CAMELLIA) */
+
+#define KEYBITS_CAMELLIA128 128
+
+static int 
+camellia128_init(__ops_crypt_t *crypt)
+{
+	if (crypt->encrypt_key) {
+		free(crypt->encrypt_key);
+	}
+	if ((crypt->encrypt_key = calloc(1, sizeof(CAMELLIA_KEY))) == NULL) {
+		(void) fprintf(stderr, "camellia128_init: alloc failure\n");
+		return 0;
+	}
+	if (Camellia_set_key(crypt->key, KEYBITS_CAMELLIA128, crypt->encrypt_key)) {
+		fprintf(stderr, "camellia128_init: Error setting encrypt_key\n");
+	}
+	if (crypt->decrypt_key) {
+		free(crypt->decrypt_key);
+	}
+	if ((crypt->decrypt_key = calloc(1, sizeof(CAMELLIA_KEY))) == NULL) {
+		(void) fprintf(stderr, "camellia128_init: alloc failure\n");
+		return 0;
+	}
+	if (Camellia_set_key(crypt->key, KEYBITS_CAMELLIA128, crypt->decrypt_key)) {
+		fprintf(stderr, "camellia128_init: Error setting decrypt_key\n");
+	}
+	return 1;
+}
+
+static void 
+camellia_block_encrypt(__ops_crypt_t *crypt, void *out, const void *in)
+{
+	Camellia_encrypt(in, out, crypt->encrypt_key);
+}
+
+static void 
+camellia_block_decrypt(__ops_crypt_t *crypt, void *out, const void *in)
+{
+	Camellia_decrypt(in, out, crypt->decrypt_key);
+}
+
+static void 
+camellia_cfb_encrypt(__ops_crypt_t *crypt, void *out, const void *in, size_t count)
+{
+	Camellia_cfb128_encrypt(in, out, (unsigned)count,
+			   crypt->encrypt_key, crypt->iv, &crypt->num,
+			   CAMELLIA_ENCRYPT);
+}
+
+static void 
+camellia_cfb_decrypt(__ops_crypt_t *crypt, void *out, const void *in, size_t count)
+{
+	Camellia_cfb128_encrypt(in, out, (unsigned)count,
+			   crypt->encrypt_key, crypt->iv, &crypt->num,
+			   CAMELLIA_DECRYPT);
+}
+
+static const __ops_crypt_t camellia128 =
+{
+	OPS_SA_CAMELLIA_128,
+	CAMELLIA_BLOCK_SIZE,
+	KEYBITS_CAMELLIA128 / 8,
+	std_set_iv,
+	std_set_key,
+	camellia128_init,
+	std_resync,
+	camellia_block_encrypt,
+	camellia_block_decrypt,
+	camellia_cfb_encrypt,
+	camellia_cfb_decrypt,
+	std_finish,
+	TRAILER
+};
+
+/* Camellia with 256-bit key (CAMELLIA) */
+
+#define KEYBITS_CAMELLIA256 256
+
+static int 
+camellia256_init(__ops_crypt_t *crypt)
+{
+	if (crypt->encrypt_key) {
+		free(crypt->encrypt_key);
+	}
+	if ((crypt->encrypt_key = calloc(1, sizeof(CAMELLIA_KEY))) == NULL) {
+		(void) fprintf(stderr, "camellia256_init: alloc failure\n");
+		return 0;
+	}
+	if (Camellia_set_key(crypt->key, KEYBITS_CAMELLIA256, crypt->encrypt_key)) {
+		fprintf(stderr, "camellia256_init: Error setting encrypt_key\n");
+	}
+	if (crypt->decrypt_key) {
+		free(crypt->decrypt_key);
+	}
+	if ((crypt->decrypt_key = calloc(1, sizeof(CAMELLIA_KEY))) == NULL) {
+		(void) fprintf(stderr, "camellia256_init: alloc failure\n");
+		return 0;
+	}
+	if (Camellia_set_key(crypt->key, KEYBITS_CAMELLIA256, crypt->decrypt_key)) {
+		fprintf(stderr, "camellia256_init: Error setting decrypt_key\n");
+	}
+	return 1;
+}
+
+static const __ops_crypt_t camellia256 =
+{
+	OPS_SA_CAMELLIA_256,
+	CAMELLIA_BLOCK_SIZE,
+	KEYBITS_CAMELLIA256 / 8,
+	std_set_iv,
+	std_set_key,
+	camellia256_init,
+	std_resync,
+	camellia_block_encrypt,
+	camellia_block_decrypt,
+	camellia_cfb_encrypt,
+	camellia_cfb_decrypt,
+	std_finish,
+	TRAILER
+};
+
+
 static const __ops_crypt_t *
 get_proto(__ops_symm_alg_t alg)
 {
 	switch (alg) {
 	case OPS_SA_CAST5:
 		return &cast5;
-
 #ifndef OPENSSL_NO_IDEA
 	case OPS_SA_IDEA:
 		return &idea;
 #endif				/* OPENSSL_NO_IDEA */
-
 	case OPS_SA_AES_128:
 		return &aes128;
-
 	case OPS_SA_AES_256:
 		return &aes256;
-
+	case OPS_SA_CAMELLIA_128:
+		return &camellia128;
+	case OPS_SA_CAMELLIA_256:
+		return &camellia256;
 	case OPS_SA_TRIPLEDES:
 		return &tripledes;
-
 	default:
 		(void) fprintf(stderr, "Unknown algorithm: %d (%s)\n",
 			alg, __ops_show_symm_alg(alg));
 	}
-
 	return NULL;
 }
 
