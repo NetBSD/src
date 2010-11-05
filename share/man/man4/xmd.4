@@ -1,4 +1,4 @@
-.\" $NetBSD: xmd.4,v 1.1.2.2 2010/10/28 03:27:55 uebayasi Exp $
+.\" $NetBSD: xmd.4,v 1.1.2.3 2010/11/05 08:54:57 uebayasi Exp $
 .\"
 .\" This file is in the public domain.
 .\"
@@ -24,11 +24,77 @@ before the
 device may be used as a disk.
 .Nm
 disks should be mounted as read-only to enable XIP.
+.Sh EXAMPLES
+.Bl -enum
+.It
+Prepare a kernel compiled with the
+.Xr xip 4
+option:
+.Bd -literal -offset indent
+options XIP
+pseudo-device xmd 1
+options XMD_ROOT_SIZE XXX
+.Ed
+.It
+Prepare an
+.Xr ffs 4
+image, typically created by
+.Xr makefs 8 :
+.Bd -literal -offset indent
+% cd /
+% makefs /tmp/xmd.fs bin
+.Ed
+.It
+Embed the
+.Xr ffs 4
+image into the kernel image:
+.Bd -literal -offset indent
+% mdsetimage -I _xmd_root_image -S _xmd_root_size /tmp/netbsd.xmd /tmp/xmd.fs
+.Ed
+.It
+Run the kernel, prepare device file entry:
+.Bd -literal -offset indent
+% mknod /dev/xmd0a b XXX XXX
+.Ed
+.It
+Mount the
+.Xr xmd
+disk partition as XIP:
+.Bd -literal -offset indent
+% mount -o ro,xip /dev/xmd0a /xmd
+.Ed
+.It
+Execute a program and see if it works as expected:
+.Bd -literal -offset indent
+% time -l /xmd/date
+Fri Oct 15 09:08:57 GMT 2010
+        0.02 real         0.00 user         0.00 sys
+         0  maximum resident set size
+         0  average shared memory size
+         0  average unshared data size
+         0  average unshared stack size
+        72  page reclaims
+         0  page faults
+         0  swaps
+         0  block input operations
+         0  block output operations
+         2  messages sent
+         2  messages received
+         0  signals received
+         2  voluntary context switches
+         1  involuntary context switches
+%
+.Ed
+.Pp
+Note the "page faults" counter shows that no I/O paging activity
+was executed during the process's lifetime.
+.El
 .Sh SEE ALSO
 .Xr md 4 ,
 .Xr options 4 ,
 .Xr mdsetimage 8
 .Sh BUGS
+.Pp
 Due to the design of XIP, device pages in a physical segment must
 be contiguous.
 This leads to a restriction that the page array in the
@@ -37,3 +103,7 @@ driver must be also contiguous.
 It is highly expectable that the
 .Nm
 kernel module will not work.
+.Pp
+Only one instace can be compiled in one kernel.
+You can add more by modifying the source code (src/sys/dev/xmd.c)
+directly, but there's no good user interface to configure it.
