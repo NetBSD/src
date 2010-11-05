@@ -1,4 +1,4 @@
-/*	$NetBSD: getch.c,v 1.55 2010/02/03 15:34:40 roy Exp $	*/
+/*	$NetBSD: getch.c,v 1.56 2010/11/05 11:38:54 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)getch.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: getch.c,v 1.55 2010/02/03 15:34:40 roy Exp $");
+__RCSID("$NetBSD: getch.c,v 1.56 2010/11/05 11:38:54 blymn Exp $");
 #endif
 #endif					/* not lint */
 
@@ -906,7 +906,7 @@ wgetch(WINDOW *win)
 
 	__restore_termios();
 
-	if (__echoit)
+	if ((__echoit) && (inp < KEY_MIN))
 		waddch(win, (chtype) inp);
 
 	if (weset)
