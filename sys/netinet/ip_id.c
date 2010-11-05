@@ -1,5 +1,4 @@
-/*	$NetBSD: ip_id.c,v 1.13 2010/11/04 22:00:51 matt Exp $	*/
-/*	$OpenBSD: ip_id.c,v 1.6 2002/03/15 18:19:52 millert Exp $	*/
+/*	$NetBSD: ip_id.c,v 1.14 2010/11/05 01:35:57 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -31,24 +30,26 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_id.c,v 1.13 2010/11/04 22:00:51 matt Exp $");
-
-#include "opt_inet.h"
+__KERNEL_RCSID(0, "$NetBSD: ip_id.c,v 1.14 2010/11/05 01:35:57 rmind Exp $");
 
 #include <sys/param.h>
-#include <lib/libkern/libkern.h>
+#include <sys/kmem.h>
+#include <sys/mutex.h>
 
 #include <net/if.h>
 #include <netinet/in.h>
 #include <netinet/in_var.h>
 
+#include <lib/libkern/libkern.h>
+
 #define	IPID_MAXID	65535
 #define	IPID_NUMIDS	32768
 
-static struct ipid_state {
-	uint16_t ids_start_slot;
-	uint16_t ids_slots[IPID_MAXID];
-} idstate;
+struct ipid_state {
+	kmutex_t	ids_lock;
+	uint16_t	ids_start_slot;
+	uint16_t	ids_slots[IPID_MAXID];
+};
 
 static inline uint32_t
 ipid_random(void)
@@ -64,34 +65,46 @@ ipid_random(void)
  * This function is called from id_randomid() when needed, an
  * application does not have to worry about it.
  */
-void
-ip_initid(void)
+ipid_state_t *
+ip_id_init(void)
 {
+	ipid_state_t *ids;
 	size_t i;
 
-	idstate.ids_start_slot = ipid_random();
-	for (i = 0; i < __arraycount(idstate.ids_slots); i++)
-		idstate.ids_slots[i] = i;
+	ids = kmem_alloc(sizeof(ipid_state_t), KM_SLEEP);
+	mutex_init(&ids->ids_lock, MUTEX_DEFAULT, IPL_SOFTNET);
+
+	ids->ids_start_slot = ipid_random();
+	for (i = 0; i < __arraycount(ids->ids_slots); i++) {
+		ids->ids_slots[i] = i;
+	}
 
 	/*
 	 * Shuffle the array.
 	 */
-	for (i = __arraycount(idstate.ids_slots); --i > 0;) {
+	for (i = __arraycount(ids->ids_slots); --i > 0;) {
 		size_t k = ipid_random() % (i + 1);
-		uint16_t t = idstate.ids_slots[i];
-		idstate.ids_slots[i] = idstate.ids_slots[k];
-		idstate.ids_slots[k] = t;
+		uint16_t t = ids->ids_slots[i];
+		ids->ids_slots[i] = ids->ids_slots[k];
+		ids->ids_slots[k] = t;
 	}
+	return ids;
+}
+
+void
+ip_id_fini(ipid_state_t *ids)
+{
+
+	mutex_destroy(&ids->ids_lock);
+	kmem_free(ids, sizeof(ipid_state_t));
 }
 
 uint16_t
-ip_randomid(uint16_t salt)
+ip_randomid(ipid_state_t *ids, uint16_t salt)
 {
 	uint32_t r, k, id;
 
-	/*
-	 * We need a random number 
-	 */
+	/* A random number. */
 	r = ipid_random();
 
 	/*
@@ -100,7 +113,7 @@ ip_randomid(uint16_t salt)
 	 * then advance the start of the window by 1.  The next time that 
 	 * swapped-out entry can be used is at least 32768 iterations in the
 	 * future.
- 	 *
+	 *
 	 * The easiest way to visual this is to imagine a card deck with 52
 	 * cards.  First thing we do is split that into two sets, each with
 	 * half of the cards; call them deck A and deck B.  Pick a card
@@ -108,23 +121,27 @@ ip_randomid(uint16_t salt)
 	 * bottom of deck B.  Then take the top card from deck B and add it
 	 * to deck A.  Pick another card randomly from deck A and ...
 	 */
-	k = (r & (IPID_NUMIDS-1)) + idstate.ids_start_slot;
-	if (k >= IPID_MAXID)
+	mutex_enter(&ids->ids_lock);
+	k = (r & (IPID_NUMIDS - 1)) + ids->ids_start_slot;
+	if (k >= IPID_MAXID) {
 		k -= IPID_MAXID;
-
-	id = idstate.ids_slots[k];
-	if (k != idstate.ids_start_slot) {
-		idstate.ids_slots[k] = idstate.ids_slots[idstate.ids_start_slot];
-		idstate.ids_slots[idstate.ids_start_slot] = id;
 	}
-	if (++idstate.ids_start_slot == IPID_MAXID)
-		idstate.ids_start_slot = 0;
+	id = ids->ids_slots[k];
+	if (k != ids->ids_start_slot) {
+		ids->ids_slots[k] = ids->ids_slots[ids->ids_start_slot];
+		ids->ids_slots[ids->ids_start_slot] = id;
+	}
+	if (++ids->ids_start_slot == IPID_MAXID) {
+		ids->ids_start_slot = 0;
+	}
+	mutex_exit(&ids->ids_lock);
+
 	/*
 	 * Add an optional salt to the id to further obscure it.
 	 */
 	id += salt;
-	if (id >= IPID_MAXID)
+	if (id >= IPID_MAXID) {
 		id -= IPID_MAXID;
-
-	return (uint16_t) htons(id + 1);
+	}
+	return (uint16_t)htons(id + 1);
 }
