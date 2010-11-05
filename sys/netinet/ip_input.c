@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.290 2010/11/05 00:21:51 rmind Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.291 2010/11/05 01:35:57 rmind Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.290 2010/11/05 00:21:51 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.291 2010/11/05 01:35:57 rmind Exp $");
 
 #include "opt_inet.h"
 #include "opt_compat_netbsd.h"
@@ -231,6 +231,7 @@ int	in_multientries;			/* total number of addrs */
 struct	in_multihashhead *in_multihashtbl;
 struct	ifqueue ipintrq;
 
+ipid_state_t *		ip_ids;
 uint16_t ip_id;
 
 percpu_t *ipstat_percpu;
@@ -315,7 +316,7 @@ ip_init(void)
 
 	ip_reass_init();
 
-	ip_initid();
+	ip_ids = ip_id_init();
 	ip_id = time_second & 0xfffff;
 
 	ipintrq.ifq_maxlen = ipqmaxlen;
