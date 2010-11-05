@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2010/09/23 09:39:14 he Exp $
+#	$NetBSD: Makefile,v 1.13 2010/11/05 11:32:09 pooka Exp $
 #
 
 .include <bsd.own.mk>
@@ -8,6 +8,7 @@ WARNS=		4
 
 TESTS_C+=	t_fifos
 TESTS_C+=	t_snapshot
+TESTS_C+=	t_snapshot_log
 TESTS_C+=	t_mount
 
 LDADD+=-lrumpfs_ffs						# ffs
