@@ -1,4 +1,4 @@
-/*      $NetBSD: sp_common.c,v 1.1 2010/11/04 20:54:07 pooka Exp $	*/
+/*      $NetBSD: sp_common.c,v 1.2 2010/11/05 14:23:45 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -34,6 +34,7 @@
 #include <sys/types.h>
 #include <sys/mman.h>
 #include <sys/socket.h>
+#include <sys/un.h>
 
 #include <arpa/inet.h>
 #include <netinet/in.h>
@@ -329,6 +330,31 @@ tcp_connecthook(int s)
 	return 0;
 }
 
+static int
+unix_parse(const char *addr, struct sockaddr **sa, int allow_wildcard)
+{
+	struct sockaddr_un sun;
+
+	if (strlen(addr) > sizeof(sun.sun_path))
+		return ENAMETOOLONG;
+
+	/*
+	 * The pathname can be all kinds of spaghetti elementals,
+	 * so meek and obidient we accept everything.
+	 */
+	memset(&sun, 0, sizeof(sun));
+	sun.sun_family = AF_LOCAL;
+	strlcpy(sun.sun_path, addr, sizeof(sun.sun_path));
+	sun.sun_len = SUN_LEN(&sun);
+
+	*sa = malloc(sun.sun_len);
+	if (*sa == NULL)
+		return errno;
+	memcpy(*sa, &sun, sun.sun_len);
+
+	return 0;
+}
+
 /*ARGSUSED*/
 static int
 notsupp(void)
@@ -352,7 +378,7 @@ struct {
 	connecthook_fn connhook;
 } parsetab[] = {
 	{ "tcp", PF_INET, tcp_parse, tcp_connecthook },
-	{ "unix", PF_LOCAL, (addrparse_fn)notsupp, (connecthook_fn)success },
+	{ "unix", PF_LOCAL, unix_parse, (connecthook_fn)success },
 	{ "tcp6", PF_INET6, (addrparse_fn)notsupp, (connecthook_fn)success },
 };
 #define NPARSE (sizeof(parsetab)/sizeof(parsetab[0]))
