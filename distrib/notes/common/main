@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.425.2.12 2010/11/05 07:55:58 sborrill Exp $
+.\"	$NetBSD: main,v 1.425.2.13 2010/11/05 09:28:46 sborrill Exp $
 .\"
 .\" Copyright (c) 1999-2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1841,7 +1841,7 @@ This can be a source of trouble if using binary packages built on 5.0.x with
 a clean install of \*V (upgrades from 5.0.x will include both old and new
 versions of libpixman and libXfont).
 Compatibility packages have been prepared and are available from:
-.Lk ftp://ftp.NetBSD.org/pub/pkgsrc/packages/NetBSD/\*M/5.0/emulators/netbsd-compat50-5.1.tgz
+.Lk ftp://ftp.NetBSD.org/pub/pkgsrc/packages/NetBSD/\*M/5.0/emulators/compat50-5.1.tgz
 (or a convenient mirror).
 This URL can be passed directly to the
 .Xr pkg_add 1
