@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctlgetmibinfo.c,v 1.7 2009/02/12 04:13:08 lukem Exp $ */
+/*	$NetBSD: sysctlgetmibinfo.c,v 1.8 2010/11/05 15:55:23 pooka Exp $ */
 
 /*-
  * Copyright (c) 2003,2004 The NetBSD Foundation, Inc.
@@ -31,13 +31,15 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: sysctlgetmibinfo.c,v 1.7 2009/02/12 04:13:08 lukem Exp $");
+__RCSID("$NetBSD: sysctlgetmibinfo.c,v 1.8 2010/11/05 15:55:23 pooka Exp $");
 #endif /* LIBC_SCCS and not lint */
 
+#ifndef RUMP_ACTION
 #include "namespace.h"
 #ifdef _REENTRANT
 #include "reentrant.h"
 #endif /* _REENTRANT */
+#endif /* RUMP_ACTION */
 #include <sys/param.h>
 #include <sys/sysctl.h>
 
@@ -49,6 +51,11 @@ __RCSID("$NetBSD: sysctlgetmibinfo.c,v 1.7 2009/02/12 04:13:08 lukem Exp $");
 #ifdef __weak_alias
 __weak_alias(__learn_tree,___learn_tree)
 __weak_alias(sysctlgetmibinfo,_sysctlgetmibinfo)
+#endif
+
+#ifdef RUMP_ACTION
+#include <rump/rump_syscalls.h>
+#define sysctl(a,b,c,d,e,f) rump_sys___sysctl(a,b,c,d,e,f)
 #endif
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.131 2010/04/11 01:52:10 mrg Exp $ */
+/*	$NetBSD: sysctl.c,v 1.132 2010/11/05 15:55:23 pooka Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.131 2010/04/11 01:52:10 mrg Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.132 2010/11/05 15:55:23 pooka Exp $");
 #endif
 #endif /* not lint */
 
@@ -104,6 +104,13 @@ __RCSID("$NetBSD: sysctl.c,v 1.131 2010/04/11 01:52:10 mrg Exp $");
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
+
+#ifdef RUMP_ACTION
+#include <rump/rumpclient.h>
+#include <rump/rump_syscalls.h>
+
+#define sysctl(a,b,c,d,e,f) rump_sys___sysctl(a,b,c,d,e,f)
+#endif
 
 /*
  * this needs to be able to do the printing and the setting
@@ -268,6 +275,11 @@ main(int argc, char *argv[])
 {
 	int name[CTL_MAXNAME];
 	int ch;
+
+#ifdef RUMP_ACTION
+	if (rumpclient_init() == -1)
+		err(1, "rumpclient init failed");
+#endif
 
 	while ((ch = getopt(argc, argv, "Aabdef:Mnqrwx")) != -1) {
 		switch (ch) {
