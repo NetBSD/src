@@ -1,4 +1,4 @@
-#	$NetBSD: files.acpi,v 1.81 2010/10/12 19:10:50 gsutre Exp $
+#	$NetBSD: files.acpi,v 1.82 2010/11/05 10:28:20 gsutre Exp $
 
 include "dev/acpi/acpica/files.acpica"
 
@@ -181,5 +181,12 @@ file	dev/acpi/atk0110.c		aibs
 device	acpismbus: i2cbus
 attach	acpismbus at acpinodebus
 file	dev/acpi/smbus_acpi.c		acpismbus
+
+# Fujitsu Brightness, Pointer and Hotkeys
+device	fujbp
+attach	fujbp at acpinodebus
+device	fujhk: sysmon_power
+attach	fujhk at acpinodebus
+file	dev/acpi/fujitsu_acpi.c		fujbp|fujhk
 
 include	"dev/acpi/wmi/files.wmi"
