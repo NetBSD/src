@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2010/10/31 11:26:02 mbalmer Exp $
+# $NetBSD: Makefile,v 1.2 2010/11/05 10:50:50 he Exp $
 
 PROG=		lua
 SRCS=		lua.c
@@ -8,6 +8,9 @@ CPPFLAGS+=	-DLUA_USE_READLINE
 
 LDADD+=		${LIBLUA} -lm -ledit
 DPADD+=		${LIBLUA}
+
+LDADD+=		-lterminfo
+DPADD+=		${LIBTERMINFO}
 
 .include <bsd.own.mk>
 
