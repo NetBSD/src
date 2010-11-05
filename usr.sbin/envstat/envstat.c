@@ -1,4 +1,4 @@
-/* $NetBSD: envstat.c,v 1.81 2010/11/05 13:42:37 pooka Exp $ */
+/* $NetBSD: envstat.c,v 1.82 2010/11/05 13:52:42 pooka Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: envstat.c,v 1.81 2010/11/05 13:42:37 pooka Exp $");
+__RCSID("$NetBSD: envstat.c,v 1.82 2010/11/05 13:52:42 pooka Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -150,9 +150,8 @@ int main(int argc, char **argv)
 	FILE *cf;
 
 #ifdef RUMP_ACTION
-	int error;
-	if ((error = rumpclient_init()) != 0)
-		errx(1, "rumpclient init failed: %s", strerror(error));
+	if (rumpclient_init() == -1)
+		err(1, "rumpclient init failed");
 #endif
 
 	setprogname(argv[0]);
