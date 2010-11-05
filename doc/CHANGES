@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1449 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1450 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -768,3 +768,5 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	xz(1): Import of XZ 5.0.0. [joerg 20101102]
 	if_otus(4): Port the Atheros AR9001U from OpenBSD (Anon Ymous)
 		[christos 20101103]
+	fujitsu(4): Add brightness and hotkey drivers for Fujitsu laptops.
+		[gsutre 20101105]
