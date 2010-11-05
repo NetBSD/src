@@ -1,4 +1,4 @@
-/*	$NetBSD: svwsata.c,v 1.11 2009/11/26 15:17:10 njoly Exp $	*/
+/*	$NetBSD: svwsata.c,v 1.12 2010/11/05 18:07:24 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svwsata.c,v 1.11 2009/11/26 15:17:10 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svwsata.c,v 1.12 2010/11/05 18:07:24 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -122,7 +122,7 @@ svwsata_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 			   PCI_MAPREG_TYPE_MEM |
 			   PCI_MAPREG_MEM_TYPE_32BIT, 0,
 			   &sc->sc_ba5_st, &sc->sc_ba5_sh,
-			   NULL, NULL) != 0) {
+			   NULL, &sc->sc_ba5_ss) != 0) {
 		aprint_error(": unable to map BA5 register space\n");
 		return;
 	}
