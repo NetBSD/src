@@ -1,4 +1,4 @@
-/*	$NetBSD: wdcvar.h,v 1.90 2009/12/01 01:06:31 dyoung Exp $	*/
+/*	$NetBSD: wdcvar.h,v 1.91 2010/11/05 18:07:24 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -47,9 +47,11 @@ struct wdc_regs {
 	/* Our registers */
 	bus_space_tag_t       cmd_iot;
 	bus_space_handle_t    cmd_baseioh;
+	bus_size_t            cmd_ios;
 	bus_space_handle_t    cmd_iohs[WDC_NREG+WDC_NSHADOWREG];
 	bus_space_tag_t       ctl_iot;
 	bus_space_handle_t    ctl_ioh;
+	bus_size_t            ctl_ios;
 
 	/* data32{iot,ioh} are only used for 32-bit data xfers */
 	bus_space_tag_t       data32iot;
