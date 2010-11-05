@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.57 2010/10/28 13:58:03 macallan Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.58 2010/11/05 08:34:35 phx Exp $	*/
 
 /*-
  * Copyright (c) 2001 Matt Thomas.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.57 2010/10/28 13:58:03 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.58 2010/11/05 08:34:35 phx Exp $");
 
 #include "opt_ppcparam.h"
 #include "opt_multiprocessor.h"
@@ -1002,18 +1002,17 @@ cpu_probe_speed(struct cpu_info *ci)
 int
 cpu_get_dfs(void)
 {
-	u_int hid1, pvr, vers;
+	u_int pvr, vers;
 
 	pvr = mfpvr();
 	vers = pvr >> 16;
-	hid1 = mfspr(SPR_HID1);
 
 	switch (vers) {
 	case MPC7448:
-		if (hid1 & HID1_DFS4)
+		if (mfspr(SPR_HID1) & HID1_DFS4)
 			return 4;
 	case MPC7447A:
-		if (hid1 & HID1_DFS2)
+		if (mfspr(SPR_HID1) & HID1_DFS2)
 			return 2;
 	}
 	return 1;
