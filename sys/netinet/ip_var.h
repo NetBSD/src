@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_var.h,v 1.95 2010/08/25 00:05:14 rmind Exp $	*/
+/*	$NetBSD: ip_var.h,v 1.96 2010/11/05 00:21:51 rmind Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -196,7 +196,7 @@ int	 ip_fragment(struct mbuf *, struct ifnet *, u_long);
 int	 ip_pcbopts(struct mbuf **, const struct sockopt *);
 
 void	 ip_reass_init(void);
-int	 ip_reass_packet(struct mbuf *, struct ip *, bool, struct mbuf **);
+int	 ip_reass_packet(struct mbuf **, struct ip *);
 void	 ip_reass_slowtimo(void);
 void	 ip_reass_drain(void);
 
