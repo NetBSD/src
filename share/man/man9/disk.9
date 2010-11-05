@@ -1,4 +1,4 @@
-.\"	$NetBSD: disk.9,v 1.35 2009/12/30 14:53:02 wiz Exp $
+.\"	$NetBSD: disk.9,v 1.35.2.1 2010/11/05 08:55:57 uebayasi Exp $
 .\"
 .\" Copyright (c) 1995, 1996 Jason R. Thorpe.
 .\" All rights reserved.
@@ -30,7 +30,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd December 30, 2009
+.Dd November 5, 2010
 .Dt DISK 9
 .Os
 .Sh NAME
@@ -299,6 +299,11 @@ Get disk buffer queue strategy.
 Set disk buffer queue strategy.
 .It Dv DIOCGDISKINFO "struct plistref"
 Get disk-info dictionary.
+.It Dv DIOCGPHYSSEG "void *phys"
+Return a VM physical segment cookie allocated for the device to
+VFS, to support
+.Xr xip 4
+functionality.
 .El
 .Sh USING THE FRAMEWORK
 This section includes a description on basic use of the framework
