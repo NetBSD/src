@@ -1,5 +1,4 @@
-/* XXX REMOVE ME $Id: fujitsu_acpi.c,v 1.1 2010/11/05 10:28:21 gsutre Exp $ */
-/*	$NetBSD: fujitsu_acpi.c,v 1.1 2010/11/05 10:28:21 gsutre Exp $	*/
+/*	$NetBSD: fujitsu_acpi.c,v 1.2 2010/11/05 10:35:00 gsutre Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -78,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fujitsu_acpi.c,v 1.1 2010/11/05 10:28:21 gsutre Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fujitsu_acpi.c,v 1.2 2010/11/05 10:35:00 gsutre Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
