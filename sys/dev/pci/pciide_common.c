@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_common.c,v 1.44 2010/11/05 18:07:24 jakllsch Exp $	*/
+/*	$NetBSD: pciide_common.c,v 1.45 2010/11/05 19:48:43 jakllsch Exp $	*/
 
 
 /*
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide_common.c,v 1.44 2010/11/05 18:07:24 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide_common.c,v 1.45 2010/11/05 19:48:43 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -217,7 +217,7 @@ pciide_common_detach(struct pciide_softc *sc, int flags)
 	if (sc->sc_dma_ios != 0)
 		bus_space_unmap(sc->sc_dma_iot, sc->sc_dma_ioh, sc->sc_dma_ios);
 	if (sc->sc_ba5_ss != 0)
-		bus_space_unmap(sc->sc_dma_iot, sc->sc_dma_ioh, sc->sc_dma_ios);
+		bus_space_unmap(sc->sc_ba5_st, sc->sc_ba5_sh, sc->sc_ba5_ss);
 
 	return 0;
 }
