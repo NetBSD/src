@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpclient.c,v 1.1 2010/11/04 21:01:29 pooka Exp $	*/
+/*      $NetBSD: rumpclient.c,v 1.2 2010/11/05 13:50:48 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -186,25 +186,32 @@ rumpclient_init()
 	unsigned idx;
 	int error, s;
 
-	if ((p = getenv("RUMP_SP_CLIENT")) == NULL)
-		return ENOENT;
+	if ((p = getenv("RUMP_SP_CLIENT")) == NULL) {
+		errno = ENOENT;
+		return -1;
+	}
 
-	if ((error = parseurl(p, &sap, &idx, 0)) != 0)
-		return error;
+	if ((error = parseurl(p, &sap, &idx, 0)) != 0) {
+		errno = error;
+		return -1;
+	}
 
 	s = socket(parsetab[idx].domain, SOCK_STREAM, 0);
 	if (s == -1)
-		return errno;
+		return -1;
 
 	if (connect(s, sap, sap->sa_len) == -1) {
+		error = errno;
 		fprintf(stderr, "rump_sp: client connect failed\n");
-		return errno;
+		errno = error;
+		return -1;
 	}
 	if ((error = parsetab[idx].connhook(s)) != 0) {
+		error = errno;
 		fprintf(stderr, "rump_sp: connect hook failed\n");
-		return error;
+		errno = error;
+		return -1;
 	}
-
 	clispc.spc_fd = s;
 
 	return 0;
