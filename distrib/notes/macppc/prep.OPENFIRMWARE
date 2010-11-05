@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep.OPENFIRMWARE,v 1.11.2.1 2009/04/25 23:16:35 snj Exp $
+.\"	$NetBSD: prep.OPENFIRMWARE,v 1.11.2.2 2010/11/05 07:29:48 snj Exp $
 .if \*[OF_VERSION_3] \{\
 .
 .Ss2 Updating your BootROM
@@ -1268,7 +1268,7 @@ program from the
 distribution or
 .Ic rawrite32.exe
 from
-.Lk http://www.duskware.com/rawrite32/
+.Lk http://www.NetBSD.org/~martin/rawrite32/
 .Pp
 .It
 .Em "From a MacOS 9 (or earlier) machine"
@@ -1572,7 +1572,7 @@ Be certain you have typed this correctly, as it will erase the disk.
 Get
 .Ic rawrite32.exe
 from
-.Lk http://www.duskware.com/rawrite32/
+.Lk http://www.NetBSD.org/~martin/rawrite32/
 .Pp
 Be certain you have selected the correct disk, as it will erase the
 contents.
