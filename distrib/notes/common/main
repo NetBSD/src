@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.425.2.11 2010/11/05 07:30:24 snj Exp $
+.\"	$NetBSD: main,v 1.425.2.12 2010/11/05 07:55:58 sborrill Exp $
 .\"
 .\" Copyright (c) 1999-2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1834,9 +1834,9 @@ to remove
 before extracting the xbase set.
 In the version of X.Org shipped with 5.0, this was a directory, but in more
 recent X.Org versions it is a file.
+.if \n[i386]:\n[macppc]:\n[sparc]:\n[sparc64]:\n[amd64]:\n[sgimips] \{\
 .Pp
-On ports using X.Org (amd64, i386, macppc, sgimips, shark and sparc64),
-libpixman and libXfont had their major versions bumped.
+On ports using X.Org, libpixman and libXfont had their major versions bumped.
 This can be a source of trouble if using binary packages built on 5.0.x with
 a clean install of \*V (upgrades from 5.0.x will include both old and new
 versions of libpixman and libXfont).
@@ -1846,6 +1846,7 @@ Compatibility packages have been prepared and are available from:
 This URL can be passed directly to the
 .Xr pkg_add 1
 command.
+.\}
 .Pp
 pkg_install now depends on the pkgdb cache for automatic conflict detection.
 It is recommended to rebuild the cache with
