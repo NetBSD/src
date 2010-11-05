@@ -1,4 +1,4 @@
-/*	$NetBSD: t_snapshot.c,v 1.4 2010/05/31 23:44:54 pooka Exp $	*/
+/*	$NetBSD: t_snapshot.c,v 1.5 2010/11/05 11:31:15 pooka Exp $	*/
 
 #include <sys/types.h>
 #include <sys/mount.h>
@@ -29,7 +29,7 @@ mount_diskfs(const char *fspec, const char *path)
 	uargs.fspec = __UNCONST(fspec);
 
 	if (rump_sys_mount(MOUNT_FFS, path, 0, &uargs, sizeof(uargs)) == -1)
-		atf_tc_fail_errno("mount ffs %s\n", path);
+		atf_tc_fail_errno("mount ffs %s", path);
 }
 
 static void
