@@ -1,4 +1,4 @@
-/*	$NetBSD: rccide.c,v 1.19 2009/03/14 15:36:19 dsl Exp $	*/
+/*	$NetBSD: rccide.c,v 1.20 2010/11/05 18:07:24 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2003 By Noon Software, Inc.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rccide.c,v 1.19 2009/03/14 15:36:19 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rccide.c,v 1.20 2010/11/05 18:07:24 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -116,7 +116,6 @@ serverworks_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	pcireg_t interface = PCI_INTERFACE(pa->pa_class);
 	pcitag_t pcib_tag;
 	int channel;
-	bus_size_t cmdsize, ctlsize;
 
 	if (pciide_chipen(sc, pa) == 0)
 		return;
@@ -164,11 +163,11 @@ serverworks_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 		switch (sc->sc_pp->ide_product) {
 		case PCI_PRODUCT_SERVERWORKS_CSB6_IDE:
 		case PCI_PRODUCT_SERVERWORKS_CSB6_RAID:
-			pciide_mapchan(pa, cp, interface, &cmdsize, &ctlsize,
+			pciide_mapchan(pa, cp, interface,
 			    serverworkscsb6_pci_intr);
 			break;
 		default:
-			pciide_mapchan(pa, cp, interface, &cmdsize, &ctlsize,
+			pciide_mapchan(pa, cp, interface,
 			    serverworks_pci_intr);
 		}
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: jmide.c,v 1.8 2010/07/27 22:07:51 jakllsch Exp $	*/
+/*	$NetBSD: jmide.c,v 1.9 2010/11/05 18:07:24 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: jmide.c,v 1.8 2010/07/27 22:07:51 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: jmide.c,v 1.9 2010/11/05 18:07:24 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -308,7 +308,6 @@ jmpata_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	struct jmide_softc *jmidesc = (struct jmide_softc *)sc;
 	int channel;
 	pcireg_t interface;
-	bus_size_t cmdsize, ctlsize;
 	struct pciide_channel *cp;
 
 	if (pciide_chipen(sc, pa) == 0)
@@ -358,8 +357,7 @@ jmpata_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 			cp->ata_channel.ch_flags |= ATACH_DISABLED;
 			continue;
 		}
-		pciide_mapchan(pa, cp, interface, &cmdsize, &ctlsize,
-			pciide_pci_intr);
+		pciide_mapchan(pa, cp, interface, pciide_pci_intr);
 	}
 }
 

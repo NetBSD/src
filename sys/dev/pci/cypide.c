@@ -1,4 +1,4 @@
-/*	$NetBSD: cypide.c,v 1.22 2009/10/19 18:41:14 bouyer Exp $	*/
+/*	$NetBSD: cypide.c,v 1.23 2010/11/05 18:07:24 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cypide.c,v 1.22 2009/10/19 18:41:14 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cypide.c,v 1.23 2010/11/05 18:07:24 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,7 +93,6 @@ cy693_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 {
 	struct pciide_channel *cp;
 	pcireg_t interface = PCI_INTERFACE(pa->pa_class);
-	bus_size_t cmdsize, ctlsize;
 
 	if (pciide_chipen(sc, pa) == 0)
 		return;
@@ -164,12 +163,10 @@ cy693_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	    "configured" : "wired");
 	if (interface & PCIIDE_INTERFACE_PCI(0)) {
 		aprint_normal("native-PCI mode\n");
-		pciide_mapregs_native(pa, cp, &cmdsize, &ctlsize,
-		    pciide_pci_intr);
+		pciide_mapregs_native(pa, cp, pciide_pci_intr);
 	} else {
 		aprint_normal("compatibility mode\n");
-		pciide_mapregs_compat(pa, cp, sc->sc_cy_compatchan, &cmdsize,
-		    &ctlsize);
+		pciide_mapregs_compat(pa, cp, sc->sc_cy_compatchan);
 		if ((cp->ata_channel.ch_flags & ATACH_DISABLED) == 0)
 			pciide_map_compat_intr(pa, cp, sc->sc_cy_compatchan);
 	}

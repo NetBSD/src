@@ -1,4 +1,4 @@
-/*	$NetBSD: pdcsata.c,v 1.18 2009/11/26 15:17:10 njoly Exp $	*/
+/*	$NetBSD: pdcsata.c,v 1.19 2010/11/05 18:07:24 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2004, Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pdcsata.c,v 1.18 2009/11/26 15:17:10 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pdcsata.c,v 1.19 2010/11/05 18:07:24 jakllsch Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -226,7 +226,6 @@ pdcsata_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	struct ata_channel *wdc_cp;
 	struct wdc_regs *wdr;
 	int channel, i;
-	bus_size_t dmasize;
 	pci_intr_handle_t intrhandle;
 	const char *intrstr;
 
@@ -257,7 +256,7 @@ pdcsata_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 
 	sc->sc_dma_ok = (pci_mapreg_map(pa, PCIIDE_REG_BUS_MASTER_DMA,
 	    PCI_MAPREG_MEM_TYPE_32BIT, 0, &sc->sc_dma_iot,
-	    &sc->sc_dma_ioh, NULL, &dmasize) == 0);
+	    &sc->sc_dma_ioh, NULL, &sc->sc_dma_ios) == 0);
 	if (!sc->sc_dma_ok) {
 		aprint_error_dev(sc->sc_wdcdev.sc_atac.atac_dev,
 		    "couldn't map bus-master DMA registers\n");
@@ -269,10 +268,10 @@ pdcsata_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 
 	if (pci_mapreg_map(pa, PDC203xx_BAR_IDEREGS,
 	    PCI_MAPREG_MEM_TYPE_32BIT, 0, &sc->sc_ba5_st,
-	    &sc->sc_ba5_sh, NULL, NULL) != 0) {
+	    &sc->sc_ba5_sh, NULL, &sc->sc_ba5_ss) != 0) {
 		aprint_error_dev(sc->sc_wdcdev.sc_atac.atac_dev,
 		    "couldn't map IDE registers\n");
-		bus_space_unmap(sc->sc_dma_iot, sc->sc_dma_ioh, dmasize);
+		bus_space_unmap(sc->sc_dma_iot, sc->sc_dma_ioh, sc->sc_dma_ios);
 		pci_intr_disestablish(pa->pa_pc, sc->sc_pci_ih);
 		return;
 	}
