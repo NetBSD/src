@@ -1,4 +1,4 @@
-/*	$NetBSD: aceride.c,v 1.28 2010/11/03 11:46:30 nakayama Exp $	*/
+/*	$NetBSD: aceride.c,v 1.29 2010/11/05 18:07:24 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aceride.c,v 1.28 2010/11/03 11:46:30 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aceride.c,v 1.29 2010/11/05 18:07:24 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -114,7 +114,6 @@ acer_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	struct pciide_channel *cp;
 	int channel;
 	pcireg_t cr, interface;
-	bus_size_t cmdsize, ctlsize;
 	pcireg_t rev = PCI_REVISION(pa->pa_class);
 	struct aceride_softc *acer_sc = (struct aceride_softc *)sc;
 
@@ -223,7 +222,7 @@ acer_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 			continue;
 		}
 		/* newer controllers seems to lack the ACER_CHIDS. Sigh */
-		pciide_mapchan(pa, cp, interface, &cmdsize, &ctlsize,
+		pciide_mapchan(pa, cp, interface,
 		     (rev >= 0xC2) ? pciide_pci_intr : acer_pci_intr);
 	}
 }

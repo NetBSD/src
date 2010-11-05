@@ -1,4 +1,4 @@
-/*	$NetBSD: gcscide.c,v 1.7 2008/03/18 20:46:36 cube Exp $	*/
+/*	$NetBSD: gcscide.c,v 1.8 2010/11/05 18:07:23 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gcscide.c,v 1.7 2008/03/18 20:46:36 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gcscide.c,v 1.8 2010/11/05 18:07:23 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -153,7 +153,6 @@ static void
 gcscide_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 {
 	pcireg_t interface;
-	bus_size_t cmdsize, ctlsize;
 
 	if (pciide_chipen(sc, pa) == 0)
 		return;
@@ -184,7 +183,7 @@ gcscide_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 		return;
 
 	pciide_mapchan(pa, &sc->pciide_channels[0], interface,
-	    &cmdsize, &ctlsize, pciide_pci_intr);
+	    pciide_pci_intr);
 }
 
 static void

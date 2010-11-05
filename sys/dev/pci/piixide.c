@@ -1,4 +1,4 @@
-/*	$NetBSD: piixide.c,v 1.55 2010/07/30 15:28:09 njoly Exp $	*/
+/*	$NetBSD: piixide.c,v 1.56 2010/11/05 18:07:24 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: piixide.c,v 1.55 2010/07/30 15:28:09 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: piixide.c,v 1.56 2010/11/05 18:07:24 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -398,7 +398,6 @@ piix_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	struct pciide_channel *cp;
 	int channel;
 	u_int32_t idetim;
-	bus_size_t cmdsize, ctlsize;
 	pcireg_t interface = PCI_INTERFACE(pa->pa_class);
 
 	if (pciide_chipen(sc, pa) == 0)
@@ -523,8 +522,7 @@ piix_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 			    channel, idetim, interface);
 #endif
 		}
-		pciide_mapchan(pa, cp, interface,
-		    &cmdsize, &ctlsize, pciide_pci_intr);
+		pciide_mapchan(pa, cp, interface, pciide_pci_intr);
 	}
 
 	ATADEBUG_PRINT(("piix_setup_chip: idetim=0x%x",
@@ -894,7 +892,6 @@ static void
 piixsata_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 {
 	struct pciide_channel *cp;
-	bus_size_t cmdsize, ctlsize;
 	pcireg_t interface, cmdsts;
 	int channel;
 
@@ -938,8 +935,7 @@ piixsata_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 		cp = &sc->pciide_channels[channel];
 		if (pciide_chansetup(sc, channel, interface) == 0)
 			continue;
-		pciide_mapchan(pa, cp, interface, &cmdsize, &ctlsize,
-		    pciide_pci_intr);
+		pciide_mapchan(pa, cp, interface, pciide_pci_intr);
 	}
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pdcide.c,v 1.27 2009/10/19 18:41:16 bouyer Exp $	*/
+/*	$NetBSD: pdcide.c,v 1.28 2010/11/05 18:07:24 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pdcide.c,v 1.27 2009/10/19 18:41:16 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pdcide.c,v 1.28 2010/11/05 18:07:24 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -181,7 +181,6 @@ pdc202xx_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	struct pciide_channel *cp;
 	int channel;
 	pcireg_t interface, st, mode;
-	bus_size_t cmdsize, ctlsize;
 
 	if (!PDC_IS_268(sc)) {
 		st = pci_conf_read(sc->sc_pc, sc->sc_tag, PDC2xx_STATE);
@@ -313,7 +312,7 @@ pdc202xx_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 			cp->ata_channel.ch_flags |= ATACH_DISABLED;
 			continue;
 		}
-		pciide_mapchan(pa, cp, interface, &cmdsize, &ctlsize,
+		pciide_mapchan(pa, cp, interface,
 		    PDC_IS_265(sc) ? pdc20265_pci_intr : pdc202xx_pci_intr);
 		/* clear interrupt, in case there is one pending */
 		bus_space_write_1(sc->sc_dma_iot, cp->dma_iohs[IDEDMA_CTL], 0,
