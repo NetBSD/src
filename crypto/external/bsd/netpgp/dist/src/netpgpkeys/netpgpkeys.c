@@ -178,9 +178,6 @@ match_keys(netpgp_t *netpgp, FILE *fp, char *f, const int psigs)
 			return 0;
 		}
 	}
-	if (__ops_get_debug_level(__FILE__)) {
-		(void) fprintf(stderr, "match_keys: json is '%s'\n", json);
-	}
 	idc = netpgp_format_json(fp, json, psigs);
 	/* clean up */
 	free(json);
