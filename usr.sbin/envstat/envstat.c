@@ -1,4 +1,4 @@
-/* $NetBSD: envstat.c,v 1.80 2010/10/05 00:14:55 pgoyette Exp $ */
+/* $NetBSD: envstat.c,v 1.81 2010/11/05 13:42:37 pooka Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -27,12 +27,13 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: envstat.c,v 1.80 2010/10/05 00:14:55 pgoyette Exp $");
+__RCSID("$NetBSD: envstat.c,v 1.81 2010/11/05 13:42:37 pooka Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <stdarg.h>
 #include <string.h>
 #include <unistd.h>
 #include <fcntl.h>
@@ -41,11 +42,18 @@ __RCSID("$NetBSD: envstat.c,v 1.80 2010/10/05 00:14:55 pgoyette Exp $");
 #include <paths.h>
 #include <syslog.h>
 #include <sys/envsys.h>
+#include <sys/ioctl.h>
 #include <sys/types.h>
 #include <sys/queue.h>
 #include <prop/proplib.h>
 
 #include "envstat.h"
+
+#ifdef RUMP_ACTION
+#include <rump/rump.h>
+#include <rump/rumpclient.h>
+#include <rump/rump_syscalls.h>
+#endif
 
 #define ENVSYS_DFLAG	0x00000001	/* list registered devices */
 #define ENVSYS_FFLAG	0x00000002	/* show temp in farenheit */
@@ -106,19 +114,46 @@ static bool 		statistics;
 static u_int		header_passes;
 
 static int 		parse_dictionary(int);
-static int 		send_dictionary(FILE *, int);
+static int 		send_dictionary(FILE *);
 static int 		find_sensors(prop_array_t, const char *, dvprops_t);
 static void 		print_sensors(void);
 static int 		check_sensors(char *);
 static int 		usage(void);
 
+static int		sysmonfd; /* fd of /dev/sysmon */
+
+/* sneak in between ioctl() */
+#ifdef RUMP_ACTION
+#include <sys/syscall.h>
+int
+ioctl(int fd, unsigned long request, ...)
+{
+	va_list ap;
+	int rv;
+
+	va_start(ap, request);
+	if (fd == sysmonfd)
+		rv = rump_sys_ioctl(fd, request, va_arg(ap, void *));
+	else
+		rv = syscall(SYS_ioctl, fd, request, va_arg(ap, void *));
+	va_end(ap);
+
+	return rv;
+}
+#endif
 
 int main(int argc, char **argv)
 {
 	prop_dictionary_t dict;
-	int c, fd, rval = 0;
+	int c, rval = 0;
 	char *endptr, *configfile = NULL;
 	FILE *cf;
+
+#ifdef RUMP_ACTION
+	int error;
+	if ((error = rumpclient_init()) != 0)
+		errx(1, "rumpclient init failed: %s", strerror(error));
+#endif
 
 	setprogname(argv[0]);
 
@@ -207,12 +242,12 @@ int main(int argc, char **argv)
 		errx(EXIT_FAILURE, "-d flag cannot be used with -s");
 
 	/* Open the device in ro mode */
-	if ((fd = open(_PATH_SYSMON, O_RDONLY)) == -1)
+	if ((sysmonfd = open(_PATH_SYSMON, O_RDONLY)) == -1)
 		err(EXIT_FAILURE, "%s", _PATH_SYSMON);
 
 	/* Print dictionary in raw mode */
 	if (flags & ENVSYS_XFLAG) {
-		rval = prop_dictionary_recv_ioctl(fd,
+		rval = prop_dictionary_recv_ioctl(sysmonfd,
 						  ENVSYS_GETDICTIONARY,
 						  &dict);
 		if (rval)
@@ -223,10 +258,10 @@ int main(int argc, char **argv)
 	/* Remove all properties set in dictionary */
 	} else if (flags & ENVSYS_SFLAG) {
 		/* Close the ro descriptor */
-		(void)close(fd);
+		(void)close(sysmonfd);
 
 		/* open the fd in rw mode */
-		if ((fd = open(_PATH_SYSMON, O_RDWR)) == -1)
+		if ((sysmonfd = open(_PATH_SYSMON, O_RDWR)) == -1)
 			err(EXIT_FAILURE, "%s", _PATH_SYSMON);
 
 		dict = prop_dictionary_create();
@@ -240,7 +275,8 @@ int main(int argc, char **argv)
 			err(EXIT_FAILURE, "prop_dict_set_bool");
 
 		/* send the dictionary to the kernel now */
-		rval = prop_dictionary_send_ioctl(dict, fd, ENVSYS_REMOVEPROPS);
+		rval = prop_dictionary_send_ioctl(dict, sysmonfd,
+		    ENVSYS_REMOVEPROPS);
 		if (rval)
 			warnx("%s", strerror(rval));
 
@@ -254,13 +290,13 @@ int main(int argc, char **argv)
 			errx(EXIT_FAILURE, "%s", strerror(errno));
 		}
 
-		rval = send_dictionary(cf, fd);
+		rval = send_dictionary(cf);
 		(void)fclose(cf);
 
 	/* Show sensors with interval */
 	} else if (interval) {
 		for (;;) {
-			rval = parse_dictionary(fd);
+			rval = parse_dictionary(sysmonfd);
 			if (rval)
 				break;
 
@@ -269,26 +305,27 @@ int main(int argc, char **argv)
 		}
 	/* Show sensors without interval */
 	} else {
-		rval = parse_dictionary(fd);
+		rval = parse_dictionary(sysmonfd);
 	}
 
 	if (sensors)
 		free(sensors);
 	if (mydevname)
 		free(mydevname);
-	(void)close(fd);
+	(void)close(sysmonfd);
 
 	return rval ? EXIT_FAILURE : EXIT_SUCCESS;
 }
 
 static int
-send_dictionary(FILE *cf, int fd)
+send_dictionary(FILE *cf)
 {
 	prop_dictionary_t kdict, udict;
 	int error = 0;
 
 	/* Retrieve dictionary from kernel */
-	error = prop_dictionary_recv_ioctl(fd, ENVSYS_GETDICTIONARY, &kdict);
+	error = prop_dictionary_recv_ioctl(sysmonfd,
+	    ENVSYS_GETDICTIONARY, &kdict);
       	if (error)
 		return error;
 
@@ -302,8 +339,8 @@ send_dictionary(FILE *cf, int fd)
 	/*
 	 * Close the read only descriptor and open a new one read write.
 	 */
-	(void)close(fd);
-	if ((fd = open(_PATH_SYSMON, O_RDWR)) == -1) {
+	(void)close(sysmonfd);
+	if ((sysmonfd = open(_PATH_SYSMON, O_RDWR)) == -1) {
 		error = errno;
 		warn("%s", _PATH_SYSMON);
 		return error;
@@ -312,7 +349,8 @@ send_dictionary(FILE *cf, int fd)
 	/*
 	 * Send our sensor properties dictionary to the kernel then.
 	 */
-	error = prop_dictionary_send_ioctl(udict, fd, ENVSYS_SETDICTIONARY);
+	error = prop_dictionary_send_ioctl(udict,
+	    sysmonfd, ENVSYS_SETDICTIONARY);
 	if (error)
 		warnx("%s", strerror(error));
 
