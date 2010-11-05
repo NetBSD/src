@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.425.2.10 2010/11/04 20:02:45 sborrill Exp $
+.\"	$NetBSD: main,v 1.425.2.11 2010/11/05 07:30:24 snj Exp $
 .\"
 .\" Copyright (c) 1999-2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -236,9 +236,9 @@ the
 .Ic rawrite.exe
 MS-DOS program
 or the
-.Ic Rawrite32.exe
-Windows32 program (inside
-.Pa rawrite32.zip )
+.Ic Rawrite32
+Windows32 program (installed by
+.Pa rawr32.exe )
 in the
 .Pa i386/installation/misc/
 directory may be of help.
