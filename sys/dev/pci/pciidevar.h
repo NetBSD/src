@@ -1,4 +1,4 @@
-/*	$NetBSD: pciidevar.h,v 1.41 2010/11/05 18:07:24 jakllsch Exp $	*/
+/*	$NetBSD: pciidevar.h,v 1.42 2010/11/06 00:29:09 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -222,12 +222,17 @@ void pciide_irqack(struct ata_channel *);
 void	*pciide_machdep_compat_intr_establish(device_t,
 	    struct pci_attach_args *, int, int (*)(void *), void *);
 #endif
+#ifdef __HAVE_PCIIDE_MACHDEP_COMPAT_INTR_DISESTABLISH
+void	pciide_machdep_compat_intr_disestablish(device_t,
+	    pci_chipset_tag_t, int,  void *);
+#endif
 
 const struct pciide_product_desc* pciide_lookup_product
 	(u_int32_t, const struct pciide_product_desc *);
 void	pciide_common_attach(struct pciide_softc *, struct pci_attach_args *,
 		const struct pciide_product_desc *);
 int	pciide_common_detach(struct pciide_softc *, int);
+int	pciide_detach(device_t, int);
 
 int	pciide_chipen(struct pciide_softc *, struct pci_attach_args *);
 void	pciide_mapregs_compat(struct pci_attach_args *,
@@ -240,6 +245,8 @@ int	pciide_chansetup(struct pciide_softc *, int, pcireg_t);
 void	pciide_mapchan(struct pci_attach_args *,
 	    struct pciide_channel *, pcireg_t, int (*pci_intr)(void *));
 void	pciide_map_compat_intr(struct pci_attach_args *,
+	    struct pciide_channel *, int);
+void	pciide_unmap_compat_intr(pci_chipset_tag_t,
 	    struct pciide_channel *, int);
 int	pciide_compat_intr(void *);
 int	pciide_pci_intr(void *);
