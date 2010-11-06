@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_subr.c,v 1.23 2010/10/30 18:08:48 uebayasi Exp $	*/
+/*	$NetBSD: pmap_subr.c,v 1.24 2010/11/06 11:46:02 uebayasi Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_subr.c,v 1.23 2010/10/30 18:08:48 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_subr.c,v 1.24 2010/11/06 11:46:02 uebayasi Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_altivec.h"
@@ -41,7 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: pmap_subr.c,v 1.23 2010/10/30 18:08:48 uebayasi Exp 
 #include <sys/device.h>
 #include <sys/systm.h>
 
-#include <uvm/uvm_extern.h>
+#include <uvm/uvm.h>
 
 #if defined (PPC_OEA) || defined (PPC_OEA64) || defined (PPC_OEA64_BRIDGE)
 #include <powerpc/oea/vmparam.h>
