@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.35 2009/11/07 07:27:46 cegger Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.36 2010/11/06 11:46:01 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.35 2009/11/07 07:27:46 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.36 2010/11/06 11:46:01 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,7 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.35 2009/11/07 07:27:46 cegger Exp $");
 #include <sys/proc.h>
 #include <sys/mbuf.h>
 
-#include <uvm/uvm_extern.h>
+#include <uvm/uvm.h>
 
 #define _POWERPC_BUS_DMA_PRIVATE
 #include <machine/bus.h>

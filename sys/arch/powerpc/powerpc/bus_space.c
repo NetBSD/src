@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.22 2010/03/18 13:58:38 kiyohara Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.23 2010/11/06 11:46:02 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.22 2010/03/18 13:58:38 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.23 2010/11/06 11:46:02 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,7 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.22 2010/03/18 13:58:38 kiyohara Exp 
 #include <sys/extent.h>
 #include <sys/malloc.h>
 
-#include <uvm/uvm_extern.h>
+#include <uvm/uvm.h>
 
 #define _POWERPC_BUS_SPACE_PRIVATE
 #include <machine/bus.h>
