@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.330 2010/11/03 00:49:02 macallan Exp $
+#	$NetBSD: files.pci,v 1.331 2010/11/06 14:56:12 jakllsch Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -308,6 +308,11 @@ file	dev/pci/svwsata.c		svwsata
 device	satalink: ata, ata_dma, ata_udma, pciide_common, wdc_common, sata
 attach	satalink at pci
 file	dev/pci/satalink.c		satalink
+
+# Intel SCH IDE controllers
+device	schide: ata, ata_dma, ata_udma, pciide_common, wdc_common
+attach	schide at pci
+file	dev/pci/schide.c		schide
 
 # SiS IDE controllers
 device	siside: ata, ata_dma, ata_udma, pciide_common, wdc_common
