@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1050 2010/10/14 03:35:23 taca Exp $
+$NetBSD: pcidevs,v 1.1051 2010/11/06 14:20:34 jakllsch Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -2925,6 +2925,7 @@ product INTEL 82443GX		0x71a0	82443GX Host Bridge/Controller
 product INTEL 82443GX_AGP	0x71a1	82443GX AGP Interface
 product INTEL 82443GX_NOAGP	0x71a2	82443GX Host Bridge/Controller (AGP disabled)
 product INTEL I740		0x7800	i740 Graphics Accelerator
+product INTEL SCH_IDE		0x811a  SCH IDE Controller
 product INTEL PCI450_PB		0x84c4	82454KX/GX PCI Bridge (PB)
 product INTEL PCI450_MC		0x84c5	82451KX/GX Memory Controller (MC)
 product INTEL 82451NX_MIOC	0x84ca	82451NX Memory & I/O Controller (MIOC)
