@@ -1983,6 +1983,8 @@ int radeon_driver_load(struct drm_device *dev, unsigned long flags)
 	dev->dev_private = (void *)dev_priv;
 	dev_priv->flags = flags;
 
+	DRM_SPININIT(&dev_priv->cs.cs_mutex, "cs_mtx");
+
 	switch (flags & RADEON_FAMILY_MASK) {
 	case CHIP_R100:
 	case CHIP_RV200:
@@ -2031,8 +2033,6 @@ int radeon_driver_firstopen(struct drm_device *dev)
 	drm_radeon_private_t *dev_priv = dev->dev_private;
 
 	dev_priv->gart_info.table_size = RADEON_PCIGART_TABLE_SIZE;
-
-	DRM_SPININIT(&dev_priv->cs.cs_mutex, "cs_mtx");
 
 	ret = drm_addmap(dev, drm_get_resource_start(dev, 2),
 			 drm_get_resource_len(dev, 2), _DRM_REGISTERS,

@@ -3226,7 +3226,6 @@ void radeon_driver_lastclose(struct drm_device *dev)
 		if (dev_priv->sarea_priv &&
 		    dev_priv->sarea_priv->pfCurrentPage != 0)
 			radeon_cp_dispatch_flip(dev);
-		DRM_SPINUNINIT(&dev_priv->cs.cs_mutex);
 	}
 
 	radeon_do_release(dev);
