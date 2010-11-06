@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_motorola.c,v 1.55.2.6 2010/11/04 08:47:36 uebayasi Exp $        */
+/*	$NetBSD: pmap_motorola.c,v 1.55.2.7 2010/11/06 06:10:55 uebayasi Exp $        */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -119,7 +119,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.55.2.6 2010/11/04 08:47:36 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.55.2.7 2010/11/06 06:10:55 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -286,7 +286,7 @@ struct pv_entry *pmap_alloc_pv(void);
 void	pmap_free_pv(struct pv_entry *);
 
 #define	PAGE_IS_MANAGED(pa)	(pmap_initialized && \
-	(uvm_pageismanaged(pa) || uvm_pageismanaged_device(pa))
+	(uvm_pageismanaged(pa) || uvm_pageismanaged_device(pa)))
 
 static inline struct pv_header *
 pa_to_pvh(paddr_t pa)
