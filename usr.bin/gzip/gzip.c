@@ -1,4 +1,4 @@
-/*	$NetBSD: gzip.c,v 1.97 2009/10/11 09:17:21 mrg Exp $	*/
+/*	$NetBSD: gzip.c,v 1.98 2010/11/06 21:42:32 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 2003, 2004, 2006 Matthew R. Green
@@ -30,7 +30,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1997, 1998, 2003, 2004, 2006\
  Matthew R. Green.  All rights reserved.");
-__RCSID("$NetBSD: gzip.c,v 1.97 2009/10/11 09:17:21 mrg Exp $");
+__RCSID("$NetBSD: gzip.c,v 1.98 2010/11/06 21:42:32 mrg Exp $");
 #endif /* not lint */
 
 /*
@@ -148,7 +148,7 @@ static suffixes_t suffixes[] = {
 #define NUM_SUFFIXES (sizeof suffixes / sizeof suffixes[0])
 #define SUFFIX_MAXLEN	30
 
-static	const char	gzip_version[] = "NetBSD gzip 20091011";
+static	const char	gzip_version[] = "NetBSD gzip 20101018";
 
 static	int	cflag;			/* stdout mode */
 static	int	dflag;			/* decompress mode */
@@ -157,6 +157,7 @@ static	int	numflag = 6;		/* gzip -1..-9 value */
 
 #ifndef SMALL
 static	int	fflag;			/* force mode */
+static	int	kflag;			/* don't delete input files */
 static	int	nflag;			/* don't save name/timestamp */
 static	int	Nflag;			/* don't restore name/timestamp */
 static	int	qflag;			/* quiet mode */
@@ -238,6 +239,7 @@ static const struct option longopts[] = {
 	{ "uncompress",		no_argument,		0,	'd' },
 	{ "force",		no_argument,		0,	'f' },
 	{ "help",		no_argument,		0,	'h' },
+	{ "keep",		no_argument,		0,	'k' },
 	{ "list",		no_argument,		0,	'l' },
 	{ "no-name",		no_argument,		0,	'n' },
 	{ "name",		no_argument,		0,	'N' },
@@ -291,7 +293,7 @@ main(int argc, char **argv)
 #ifdef SMALL
 #define OPT_LIST "123456789cdhltV"
 #else
-#define OPT_LIST "123456789cdfhlNnqrS:tVv"
+#define OPT_LIST "123456789cdfhklNnqrS:tVv"
 #endif
 
 	while ((ch = getopt_long(argc, argv, OPT_LIST, longopts, NULL)) != -1) {
@@ -317,6 +319,9 @@ main(int argc, char **argv)
 #ifndef SMALL
 		case 'f':
 			fflag = 1;
+			break;
+		case 'k':
+			kflag = 1;
 			break;
 		case 'N':
 			nflag = 0;
@@ -886,6 +891,9 @@ gz_uncompress(int in, int out, char *pre, size_t prelen, off_t *gsizep,
 			switch (error) {
 			/* Z_BUF_ERROR goes with Z_FINISH... */
 			case Z_BUF_ERROR:
+				if (z.avail_out > 0 && !done_reading)
+					continue;
+
 			case Z_STREAM_END:
 			case Z_OK:
 				break;
@@ -1127,8 +1135,10 @@ unlink_input(const char *file, const struct stat *sb)
 {
 	struct stat nsb;
 
+	if (kflag)
+		return;
 	if (stat(file, &nsb) != 0)
-		/* Must be gone alrady */
+		/* Must be gone already */
 		return;
 	if (nsb.st_dev != sb->st_dev || nsb.st_ino != sb->st_ino)
 		/* Definitely a different file */
@@ -1991,6 +2001,7 @@ usage(void)
     "    --uncompress\n"
     " -f --force           force overwriting & compress links\n"
     " -h --help            display this help\n"
+    " -k --keep            don't delete input files during operation\n"
     " -l --list            list compressed file contents\n"
     " -N --name            save or restore original file name and time stamp\n"
     " -n --no-name         don't save original file name or time stamp\n"
