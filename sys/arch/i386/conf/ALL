@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.275 2010/11/06 15:06:29 jakllsch Exp $
+# $NetBSD: ALL,v 1.276 2010/11/06 15:11:50 jakllsch Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.275 $"
+#ident 		"ALL-$Revision: 1.276 $"
 
 maxusers	64		# estimated number of users
 
@@ -486,6 +486,7 @@ hpet* 	at amdpcib?
 ichlpcib* at pci? dev ? function ?	# Intel ICH PCI-ISA w/ timecounter,
 					# watchdog, SpeedStep and HPET
 hpet0 		at ichlpcib?		# High Precision Event Timer
+fwhrng* at ichlpcib?			# Intel 82802 FWH Random Number Generator
 gcscpcib* at pci? dev ? function ?	# AMD CS5535/CS5536 PCI-ISA w/
 gpio* 	at gcscpcib?			# timecounter, watchdog and GPIO
 piixpcib* at pci? dev ? function ?	# Intel PIIX4 PCI-ISA w/ SpeedStep
