@@ -1,4 +1,4 @@
-/*	$NetBSD: isv.c,v 1.3 2009/02/27 23:13:32 dyoung Exp $ */
+/*	$NetBSD: isv.c,v 1.4 2010/11/06 10:59:45 uebayasi Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -30,14 +30,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isv.c,v 1.3 2009/02/27 23:13:32 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isv.c,v 1.4 2010/11/06 10:59:45 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/conf.h>
-#include <uvm/uvm.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <sys/bus.h>
 
