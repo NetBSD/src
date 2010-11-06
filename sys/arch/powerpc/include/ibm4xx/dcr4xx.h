@@ -1,4 +1,4 @@
-/*	$NetBSD: dcr4xx.h,v 1.1 2010/03/18 13:47:04 kiyohara Exp $	*/
+/*	$NetBSD: dcr4xx.h,v 1.2 2010/11/06 16:32:08 uebayasi Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -271,5 +271,44 @@
 #define SDRAM0_ECCESR_BLCEN(n)	  (0x80000000 >> (n))
 #define SDRAM0_ECCESR_BKEN(n)	  (0x00008000 >> (n))
 #define SDRAM0_ECCESR_CBEN(n)	  (0x00800000 >> (n))
+
+/* Indirectly accessed External Bus Controller (EBC) DCRs */
+
+#define DCR_EBC0_B0CR		0x00
+#define DCR_EBC0_B1CR		0x01
+#define DCR_EBC0_B2CR		0x02
+#define DCR_EBC0_B3CR		0x03
+#define DCR_EBC0_B4CR		0x04
+#define DCR_EBC0_B5CR		0x05
+#define DCR_EBC0_B6CR		0x06
+#define DCR_EBC0_B7CR		0x07
+#define DCR_EBC0_B0AP		0x10
+#define DCR_EBC0_B1AP		0x11
+#define DCR_EBC0_B2AP		0x12
+#define DCR_EBC0_B3AP		0x13
+#define DCR_EBC0_B4AP		0x14
+#define DCR_EBC0_B5AP		0x15
+#define DCR_EBC0_B6AP		0x16
+#define DCR_EBC0_B7AP		0x17
+#define DCR_EBC0_BEAR		0x20
+#define DCR_EBC0_BESR0		0x21
+#define DCR_EBC0_BESR1		0x22
+#define DCR_EBC0_CFG		0x23
+
+/* Indirectly accessed Decompression Controller DCRs */
+
+#define DCR_DCP0_ITOR0		0x00
+#define DCR_DCP0_ITOR1		0x01
+#define DCR_DCP0_ITOR2		0x02
+#define DCR_DCP0_ITOR3		0x03
+#define DCR_DCP0_ADDR0		0x04
+#define DCR_DCP0_ADDR1		0x05
+#define DCR_DCP0_CFG		0x40
+#define DCR_DCP0_ID		0x41
+#define DCR_DCP0_VER		0x42
+#define DCR_DCP0_PLBBEAR	0x50
+#define DCR_DCP0_MEMBEAR	0x51
+#define DCR_DCP0_ESR		0x52
+#define DCR_DCP0_RAM0		0x400
 
 #endif /* _DCR405GP_H_ */
