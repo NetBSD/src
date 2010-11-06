@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pglist.h,v 1.7 2008/06/04 12:45:28 ad Exp $	*/
+/*	$NetBSD: uvm_pglist.h,v 1.8 2010/11/06 15:48:00 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -36,6 +36,7 @@
  * This defines the type of a page queue, e.g. active list, inactive
  * list, etc.
  */
+struct vm_page;
 TAILQ_HEAD(pglist, vm_page);
 LIST_HEAD(pgflist, vm_page);
 
