@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.31 2009/12/08 13:47:27 tsutsui Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.32 2010/11/06 15:42:47 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -162,7 +162,6 @@
  */
 #define	VM_PHYSSEG_MAX		2
 #define	VM_PHYSSEG_STRAT	VM_PSTRAT_RANDOM
-#define	VM_PHYSSEG_NOADD
 
 #define	VM_NFREELIST		2
 #define	VM_FREELIST_DEFAULT	0

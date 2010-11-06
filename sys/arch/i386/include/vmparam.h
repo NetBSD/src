@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.70 2009/03/06 20:31:49 joerg Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.71 2010/11/06 15:42:45 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -122,7 +122,6 @@
 #define VM_PHYS_SIZE		(USRIOSIZE*PAGE_SIZE)
 
 #define VM_PHYSSEG_STRAT	VM_PSTRAT_BIGFIRST
-#define VM_PHYSSEG_NOADD		/* can't add RAM after vm_mem_init */
 
 #ifdef XEN
 #define	VM_PHYSSEG_MAX		1

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.156 2010/09/24 22:51:51 rmind Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.157 2010/11/06 15:42:43 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.156 2010/09/24 22:51:51 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.157 2010/11/06 15:42:43 uebayasi Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -803,33 +803,7 @@ uvm_page_physload(paddr_t start, paddr_t end, paddr_t avail_start,
 	 */
 
 	if (!preload) {
-#if defined(VM_PHYSSEG_NOADD)
 		panic("uvm_page_physload: tried to add RAM after vm_mem_init");
-#else
-		/* XXXCDC: need some sort of lockout for this case */
-		paddr_t paddr;
-		npages = end - start;  /* # of pages */
-		pgs = malloc(sizeof(struct vm_page) * npages,
-		    M_VMPAGE, M_NOWAIT);
-		if (pgs == NULL) {
-			printf("uvm_page_physload: can not malloc vm_page "
-			    "structs for segment\n");
-			printf("\tignoring 0x%lx -> 0x%lx\n", start, end);
-			return;
-		}
-		/* zero data, init phys_addr and free_list, and free pages */
-		memset(pgs, 0, sizeof(struct vm_page) * npages);
-		for (lcv = 0, paddr = ctob(start) ;
-				 lcv < npages ; lcv++, paddr += PAGE_SIZE) {
-			pgs[lcv].phys_addr = paddr;
-			pgs[lcv].free_list = free_list;
-			if (atop(paddr) >= avail_start &&
-			    atop(paddr) <= avail_end)
-				uvm_pagefree(&pgs[lcv]);
-		}
-		/* XXXCDC: incomplete: need to update uvmexp.free, what else? */
-		/* XXXCDC: need hook to tell pmap to rebuild pv_list, etc... */
-#endif
 	} else {
 		pgs = NULL;
 		npages = 0;
