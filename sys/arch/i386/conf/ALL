@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.274 2010/11/05 10:28:21 gsutre Exp $
+# $NetBSD: ALL,v 1.275 2010/11/06 15:06:29 jakllsch Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.274 $"
+#ident 		"ALL-$Revision: 1.275 $"
 
 maxusers	64		# estimated number of users
 
@@ -904,6 +904,7 @@ pdcide* 	at pci? dev ? function ?	# Promise IDE controllers
 pdcsata*	at pci? dev ? function ?	# Promise SATA150 controllers
 rccide* 	at pci? dev ? function ?	# ServerWorks IDE controllers
 satalink*	at pci? dev ? function ?	# SiI SATALink controllers
+schide* 	at pci? dev ? function ? 	# Intel SCH IDE controllers
 siisata*	at pci? dev ? function ?	# SiI SteelVine controllers
 siside* 	at pci? dev ? function ?	# SiS IDE controllers
 slide*  	at pci? dev ? function ?	# Symphony Labs IDE controllers
