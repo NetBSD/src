@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.52 2008/06/04 12:41:40 ad Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.53 2010/11/06 11:46:00 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #define _ARM32_BUS_DMA_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.52 2008/06/04 12:41:40 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.53 2010/11/06 11:46:00 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,7 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.52 2008/06/04 12:41:40 ad Exp $");
 #include <sys/vnode.h>
 #include <sys/device.h>
 
-#include <uvm/uvm_extern.h>
+#include <uvm/uvm.h>
 
 #include <machine/bus.h>
 #include <machine/cpu.h>
