@@ -1,4 +1,4 @@
-/*	$NetBSD: boot2.c,v 1.48 2010/02/08 21:25:32 hubertf Exp $	*/
+/*	$NetBSD: boot2.c,v 1.49 2010/11/06 23:07:46 jym Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -386,8 +386,8 @@ command_help(char *arg)
 	       "ls [path]\n"
 	       "dev xd[N[x]]:\n"
 	       "consdev {pc|com[0123]|com[0123]kbd|auto}\n"
-	       "vesa {enabled|disabled|list|modenum}\n"
-	       "modules {enabled|disabled}\n"
+	       "vesa {modenum|on|off|enabled|disabled|list}\n"
+	       "modules {on|off|enabled|disabled}\n"
 	       "load {path_to_module}\n"
 	       "multiboot [xdNx:][filename] [<args>]\n"
 	       "help|?\n"
