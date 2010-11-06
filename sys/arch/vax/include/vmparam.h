@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.45 2009/03/06 20:31:53 joerg Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.46 2010/11/06 15:42:50 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -78,7 +78,6 @@
 #endif
 
 #define VM_PHYSSEG_MAX		1
-#define VM_PHYSSEG_NOADD
 #define VM_PHYSSEG_STRAT	VM_PSTRAT_BSEARCH /* XXX */
 
 #define	VM_NFREELIST		1
