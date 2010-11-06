@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.425.2.13 2010/11/05 09:28:46 sborrill Exp $
+.\"	$NetBSD: main,v 1.425.2.14 2010/11/06 03:42:21 snj Exp $
 .\"
 .\" Copyright (c) 1999-2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -603,11 +603,6 @@ openldap: Fix CVE-2009-3767.
 Fix an NX regression observed on amd64 kernels, where per-page execution right
 was disabled (therefore leading to the inability of the kernel to detect
 fraudulent use of memory mappings marked as not being executable).
-.It
-.Xr ftpd 8
-and
-.Xr sftp 1 :
-Prevent remote DoS attack with glob patterns.
 .bullet)
 .
 .Ss2 Kernel
