@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.7 2010/11/06 15:42:48 uebayasi Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.8 2010/11/06 16:36:27 uebayasi Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -78,7 +78,7 @@
 #define	VM_MAXUSER_ADDRESS	((vaddr_t)0xffff0000-PAGE_SIZE)
 #define	VM_MAX_ADDRESS		VM_MAXUSER_ADDRESS
 #define	VM_MIN_KERNEL_ADDRESS	((vaddr_t)0x80000000)
-#define	VM_MAX_KERNEL_ADDRESS	((vaddr_t)0xff000000)
+#define	VM_MAX_KERNEL_ADDRESS	((vaddr_t)0xef000000)	/* before I/O periphs */
 #else
 /*
  * Would like to have MAX addresses = 0, but this doesn't (currently) work
