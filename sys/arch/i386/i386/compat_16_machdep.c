@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_16_machdep.c,v 1.20 2009/11/21 03:11:00 rmind Exp $	*/
+/*	$NetBSD: compat_16_machdep.c,v 1.21 2010/11/06 11:40:24 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.20 2009/11/21 03:11:00 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.21 2010/11/06 11:40:24 uebayasi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_vm86.h"
@@ -52,7 +52,6 @@ __KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.20 2009/11/21 03:11:00 rmind
 #include <machine/vm86.h>
 #endif
 #include <uvm/uvm_extern.h>
-#include <uvm/uvm_page.h>
 
 #include <machine/pmap.h>
 #include <machine/vmparam.h>
