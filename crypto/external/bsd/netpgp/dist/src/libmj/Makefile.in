@@ -71,7 +71,7 @@ SOURCES = $(libmj_la_SOURCES)
 DIST_SOURCES = $(libmj_la_SOURCES)
 man3dir = $(mandir)/man3
 NROFF = nroff
-MANS = $(dist_man_MANS) $(man3_MANS)
+MANS = $(dist_man_MANS)
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -197,7 +197,6 @@ AM_CFLAGS = $(WARNCFLAGS)
 lib_LTLIBRARIES = libmj.la
 libmj_la_CPPFLAGS = -I$(top_srcdir)/include
 libmj_la_SOURCES = mj.c
-man3_MANS = libmj.3
 dist_man_MANS = libmj.3
 all: all-am
 
