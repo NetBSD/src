@@ -80,7 +80,7 @@ SOURCES = $(libnetpgp_la_SOURCES)
 DIST_SOURCES = $(libnetpgp_la_SOURCES)
 man3dir = $(mandir)/man3
 NROFF = nroff
-MANS = $(dist_man_MANS) $(man3_MANS)
+MANS = $(dist_man_MANS)
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -226,7 +226,6 @@ libnetpgp_la_SOURCES = \
 	writer.c
 
 LDADD = ../libmj/libmj.a
-man3_MANS = libnetpgp.3
 dist_man_MANS = libnetpgp.3
 all: config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-am
