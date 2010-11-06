@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.30 2009/03/06 20:31:52 joerg Exp $ */
+/*	$NetBSD: vmparam.h,v 1.31 2010/11/06 15:42:49 uebayasi Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -165,7 +165,6 @@
 
 #define VM_PHYSSEG_MAX          32       /* up to 32 segments */
 #define VM_PHYSSEG_STRAT        VM_PSTRAT_BSEARCH
-#define VM_PHYSSEG_NOADD                /* can't add RAM after vm_mem_init */
 
 #define	VM_NFREELIST		1
 #define	VM_FREELIST_DEFAULT	0
