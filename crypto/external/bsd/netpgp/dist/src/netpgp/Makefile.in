@@ -49,7 +49,7 @@ binPROGRAMS_INSTALL = $(INSTALL_PROGRAM)
 PROGRAMS = $(bin_PROGRAMS)
 am_netpgp_OBJECTS = netpgp-netpgp.$(OBJEXT)
 netpgp_OBJECTS = $(am_netpgp_OBJECTS)
-netpgp_DEPENDENCIES = ../lib/libnetpgp.la
+netpgp_DEPENDENCIES = ../lib/libnetpgp.la ../libmj/libmj.la
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)/src/lib
 depcomp = $(SHELL) $(top_srcdir)/buildaux/depcomp
 am__depfiles_maybe = depfiles
@@ -66,7 +66,7 @@ SOURCES = $(netpgp_SOURCES)
 DIST_SOURCES = $(netpgp_SOURCES)
 man1dir = $(mandir)/man1
 NROFF = nroff
-MANS = $(dist_man_MANS) $(man1_MANS)
+MANS = $(dist_man_MANS)
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -191,8 +191,7 @@ top_srcdir = @top_srcdir@
 AM_CFLAGS = $(WARNCFLAGS)
 netpgp_SOURCES = netpgp.c
 netpgp_CPPFLAGS = -I$(top_srcdir)/include
-netpgp_LDADD = ../lib/libnetpgp.la
-man1_MANS = netpgp.1
+netpgp_LDADD = ../lib/libnetpgp.la ../libmj/libmj.la
 dist_man_MANS = netpgp.1
 all: all-am
 
