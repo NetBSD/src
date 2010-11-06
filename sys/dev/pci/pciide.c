@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.217 2009/10/19 18:41:15 bouyer Exp $	*/
+/*	$NetBSD: pciide.c,v 1.217.2.1 2010/11/06 08:08:31 uebayasi Exp $	*/
 
 
 /*
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide.c,v 1.217 2009/10/19 18:41:15 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide.c,v 1.217.2.1 2010/11/06 08:08:31 uebayasi Exp $");
 
 #include <sys/param.h>
 
@@ -78,13 +78,14 @@ __KERNEL_RCSID(0, "$NetBSD: pciide.c,v 1.217 2009/10/19 18:41:15 bouyer Exp $");
 #include <dev/pci/pciidereg.h>
 #include <dev/pci/pciidevar.h>
 
-int	pciide_match(device_t, cfdata_t, void *);
-void	pciide_attach(device_t, device_t, void *);
+static int	pciide_match(device_t, cfdata_t, void *);
+static void	pciide_attach(device_t, device_t, void *);
+static int	pciide_detach(device_t, int);
 
 CFATTACH_DECL_NEW(pciide, sizeof(struct pciide_softc),
-    pciide_match, pciide_attach, NULL, NULL);
+    pciide_match, pciide_attach, pciide_detach, NULL);
 
-int
+static int
 pciide_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
@@ -102,7 +103,7 @@ pciide_match(device_t parent, cfdata_t match, void *aux)
 	return (0);
 }
 
-void
+static void
 pciide_attach(device_t parent, device_t self, void *aux)
 {
 	struct pci_attach_args *pa = aux;
@@ -111,4 +112,20 @@ pciide_attach(device_t parent, device_t self, void *aux)
 	sc->sc_wdcdev.sc_atac.atac_dev = self;
 
 	pciide_common_attach(sc, pa, NULL);
+}
+
+static int
+pciide_detach(device_t self, int flags)
+{
+	struct pciide_softc *sc = device_private(self);
+	int ret;
+
+	ret = pciide_common_detach(sc, flags);
+
+	if (ret != 0)
+		return ret;
+
+	pci_intr_disestablish(sc->sc_pc, sc->sc_pci_ih);
+
+	return ret;
 }

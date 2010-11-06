@@ -1,4 +1,4 @@
-/*	$NetBSD: udsbr.c,v 1.17 2009/11/12 19:51:44 dyoung Exp $	*/
+/*	$NetBSD: udsbr.c,v 1.17.2.1 2010/11/06 08:08:37 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udsbr.c,v 1.17 2009/11/12 19:51:44 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udsbr.c,v 1.17.2.1 2010/11/06 08:08:37 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,8 +55,8 @@ __KERNEL_RCSID(0, "$NetBSD: udsbr.c,v 1.17 2009/11/12 19:51:44 dyoung Exp $");
 #include <dev/usb/usbdevs.h>
 
 #ifdef UDSBR_DEBUG
-#define DPRINTF(x)	if (udsbrdebug) logprintf x
-#define DPRINTFN(n,x)	if (udsbrdebug>(n)) logprintf x
+#define DPRINTF(x)	if (udsbrdebug) printf x
+#define DPRINTFN(n,x)	if (udsbrdebug>(n)) printf x
 int	udsbrdebug = 0;
 #else
 #define DPRINTF(x)
@@ -77,7 +77,7 @@ const struct radio_hw_if udsbr_hw_if = {
 };
 
 struct udsbr_softc {
- 	USBBASEDEVICE		sc_dev;
+ 	device_t		sc_dev;
 	usbd_device_handle	sc_udev;
 
 	char			sc_mute;
@@ -105,9 +105,10 @@ extern struct cfdriver udsbr_cd;
 CFATTACH_DECL2_NEW(udsbr, sizeof(struct udsbr_softc), udsbr_match,
     udsbr_attach, udsbr_detach, udsbr_activate, NULL, udsbr_childdet);
 
-USB_MATCH(udsbr)
+int 
+udsbr_match(device_t parent, cfdata_t match, void *aux)
 {
-	USB_MATCH_START(udsbr, uaa);
+	struct usb_attach_arg *uaa = aux;
 
 	DPRINTFN(50,("udsbr_match\n"));
 
@@ -117,9 +118,11 @@ USB_MATCH(udsbr)
 	return (UMATCH_VENDOR_PRODUCT);
 }
 
-USB_ATTACH(udsbr)
+void 
+udsbr_attach(device_t parent, device_t self, void *aux)
 {
-	USB_ATTACH_START(udsbr, sc, uaa);
+	struct udsbr_softc *sc = device_private(self);
+	struct usb_attach_arg *uaa = aux;
 	usbd_device_handle	dev = uaa->device;
 	char			*devinfop;
 	usbd_status		err;
@@ -138,7 +141,7 @@ USB_ATTACH(udsbr)
 	err = usbd_set_config_no(dev, UDSBR_CONFIG_NO, 1);
 	if (err) {
 		aprint_error_dev(self, "setting config no failed\n");
-		USB_ATTACH_ERROR_RETURN;
+		return;
 	}
 
 	sc->sc_udev = dev;
@@ -146,11 +149,11 @@ USB_ATTACH(udsbr)
 	DPRINTFN(10, ("udsbr_attach: %p\n", sc->sc_udev));
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
-			   USBDEV(sc->sc_dev));
+			   sc->sc_dev);
 
-	sc->sc_child = radio_attach_mi(&udsbr_hw_if, sc, USBDEV(sc->sc_dev));
+	sc->sc_child = radio_attach_mi(&udsbr_hw_if, sc, sc->sc_dev);
 
-	USB_ATTACH_SUCCESS_RETURN;
+	return;
 }
 
 void
@@ -158,22 +161,23 @@ udsbr_childdet(device_t self, device_t child)
 {
 }
 
-USB_DETACH(udsbr)
+int 
+udsbr_detach(device_t self, int flags)
 {
-	USB_DETACH_START(udsbr, sc);
+	struct udsbr_softc *sc = device_private(self);
 	int rv = 0;
 
 	if (sc->sc_child != NULL)
 		rv = config_detach(sc->sc_child, flags);
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
-			   USBDEV(sc->sc_dev));
+			   sc->sc_dev);
 
 	return (rv);
 }
 
 int
-udsbr_activate(device_ptr_t self, enum devact act)
+udsbr_activate(device_t self, enum devact act)
 {
 	struct udsbr_softc *sc = device_private(self);
 

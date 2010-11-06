@@ -1,4 +1,4 @@
-/*	$NetBSD: atk0110.c,v 1.11.4.3 2010/08/17 06:46:01 uebayasi Exp $	*/
+/*	$NetBSD: atk0110.c,v 1.11.4.4 2010/11/06 08:08:27 uebayasi Exp $	*/
 /*	$OpenBSD: atk0110.c,v 1.1 2009/07/23 01:38:16 cnst Exp $	*/
 
 /*
@@ -18,10 +18,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atk0110.c,v 1.11.4.3 2010/08/17 06:46:01 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atk0110.c,v 1.11.4.4 2010/11/06 08:08:27 uebayasi Exp $");
 
 #include <sys/param.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
+#include <sys/module.h>
 #include <sys/systm.h>
 
 #include <dev/acpi/acpireg.h>
@@ -42,8 +43,6 @@ __KERNEL_RCSID(0, "$NetBSD: atk0110.c,v 1.11.4.3 2010/08/17 06:46:01 uebayasi Ex
 #define _COMPONENT		 ACPI_RESOURCE_COMPONENT
 ACPI_MODULE_NAME		 ("acpi_aibs")
 
-#define AIBS_MORE_SENSORS
-
 struct aibs_sensor {
 	envsys_data_t	s;
 	ACPI_INTEGER	i;
@@ -53,12 +52,13 @@ struct aibs_sensor {
 
 struct aibs_softc {
 	struct acpi_devnode	*sc_node;
-
+	struct sysmon_envsys	*sc_sme;
 	struct aibs_sensor	*sc_asens_volt;
 	struct aibs_sensor	*sc_asens_temp;
 	struct aibs_sensor	*sc_asens_fan;
-
-	struct sysmon_envsys	*sc_sme;
+	uint32_t		 sc_asens_volt_count;
+	uint32_t		 sc_asens_temp_count;
+	uint32_t		 sc_asens_fan_count;
 };
 
 static int aibs_match(device_t, cfdata_t, void *);
@@ -94,7 +94,6 @@ aibs_attach(device_t parent, device_t self, void *aux)
 {
 	struct aibs_softc *sc = device_private(self);
 	struct acpi_attach_args *aa = aux;
-	int err;
 
 	sc->sc_node = aa->aa_node;
 
@@ -111,46 +110,39 @@ aibs_attach(device_t parent, device_t self, void *aux)
 	aibs_attach_sif(self, ENVSYS_STEMP);
 	aibs_attach_sif(self, ENVSYS_SFANRPM);
 
+	(void)pmf_device_register(self, NULL, NULL);
+
 	if (sc->sc_sme->sme_nsensors == 0) {
 		aprint_error_dev(self, "no sensors found\n");
 		sysmon_envsys_destroy(sc->sc_sme);
 		return;
 	}
 
-	if ((err = sysmon_envsys_register(sc->sc_sme))) {
-		aprint_error_dev(self, "unable to register with sysmon: %d\n",
-		    err);
-		if (sc->sc_asens_volt != NULL)
-			free(sc->sc_asens_volt, M_DEVBUF);
-		if (sc->sc_asens_temp != NULL)
-			free(sc->sc_asens_temp, M_DEVBUF);
-		if (sc->sc_asens_fan != NULL)
-			free(sc->sc_asens_fan, M_DEVBUF);
-		return;
-	}
-
-	if (!pmf_device_register(self, NULL, NULL))
-		aprint_error_dev(self, "could not establish power handler\n");
+	if (sysmon_envsys_register(sc->sc_sme) != 0)
+		aprint_error_dev(self, "failed to register with sysmon\n");
 }
 
 static void
 aibs_attach_sif(device_t self, enum envsys_units st)
 {
 	struct aibs_softc	*sc = device_private(self);
-	ACPI_STATUS		s;
+	ACPI_OBJECT		*bp, *o, *oi;
 	ACPI_BUFFER		b;
-	ACPI_OBJECT		*bp, *o;
-	int			i, n;
+	ACPI_STATUS		rv;
+	uint32_t		i, n;
 	char			name[] = "?SIF";
 	struct aibs_sensor	*as;
 
 	switch (st) {
+
 	case ENVSYS_STEMP:
 		name[0] = 'T';
 		break;
+
 	case ENVSYS_SFANRPM:
 		name[0] = 'F';
 		break;
+
 	case ENVSYS_SVOLTS_DC:
 		name[0] = 'V';
 		break;
@@ -158,68 +150,72 @@ aibs_attach_sif(device_t self, enum envsys_units st)
 		return;
 	}
 
-	b.Length = ACPI_ALLOCATE_BUFFER;
-	s = AcpiEvaluateObjectTyped(sc->sc_node->ad_handle, name, NULL, &b,
-	    ACPI_TYPE_PACKAGE);
-	if (ACPI_FAILURE(s)) {
-		aprint_error_dev(self, "%s not found\n", name);
-		return;
-	}
+	rv = acpi_eval_struct(sc->sc_node->ad_handle, name, &b);
+
+	if (ACPI_FAILURE(rv))
+		goto out;
 
 	bp = b.Pointer;
+
+	if (bp->Type != ACPI_TYPE_PACKAGE) {
+		rv = AE_TYPE;
+		goto out;
+	}
+
 	o = bp->Package.Elements;
+
 	if (o[0].Type != ACPI_TYPE_INTEGER) {
-		aprint_error_dev(self, "%s[0]: invalid type\n", name);
-		ACPI_FREE(b.Pointer);
-		return;
+		rv = AE_TYPE;
+		goto out;
+	}
+
+	if (o[0].Integer.Value > UINT32_MAX) {
+		rv = AE_AML_NUMERIC_OVERFLOW;
+		goto out;
 	}
 
 	n = o[0].Integer.Value;
-	if (bp->Package.Count - 1 < n) {
-		aprint_error_dev(self, "%s: invalid package\n", name);
-		ACPI_FREE(b.Pointer);
-		return;
-	} else if (bp->Package.Count - 1 > n) {
-		int on = n;
 
-#ifdef AIBS_MORE_SENSORS
-		n = bp->Package.Count - 1;
-#endif
-		aprint_error_dev(self, "%s: malformed package: %i/%i"
-		    ", assume %i\n", name, on, bp->Package.Count - 1, n);
-	}
-	if (n < 1) {
-		aprint_error_dev(self, "%s: no members in the package\n",
-		    name);
-		ACPI_FREE(b.Pointer);
-		return;
+	if (n == 0) {
+		rv = AE_LIMIT;
+		goto out;
 	}
 
-	as = malloc(sizeof(*as) * n, M_DEVBUF, M_NOWAIT | M_ZERO);
+	if (bp->Package.Count - 1 != n) {
+		rv = AE_BAD_VALUE;
+		goto out;
+	}
+
+	as = kmem_zalloc(sizeof(*as) * n, KM_SLEEP);
+
 	if (as == NULL) {
-		aprint_error_dev(self, "%s: malloc fail\n", name);
-		ACPI_FREE(b.Pointer);
-		return;
+		rv = AE_NO_MEMORY;
+		goto out;
 	}
+
 	switch (st) {
+
 	case ENVSYS_STEMP:
 		sc->sc_asens_temp = as;
+		sc->sc_asens_temp_count = n;
 		break;
+
 	case ENVSYS_SFANRPM:
 		sc->sc_asens_fan = as;
+		sc->sc_asens_fan_count = n;
 		break;
+
 	case ENVSYS_SVOLTS_DC:
 		sc->sc_asens_volt = as;
+		sc->sc_asens_volt_count = n;
 		break;
+
 	default:
-		/* NOTREACHED */
 		return;
 	}
 
 	for (i = 0, o++; i < n; i++, o++) {
-		ACPI_OBJECT	*oi;
 
-		/* acpica5 automatically evaluates the referenced package */
 		if(o[0].Type != ACPI_TYPE_PACKAGE) {
 			aprint_error_dev(self,
 			    "%s: %i: not a package: %u type\n",
@@ -256,23 +252,33 @@ aibs_attach_sif(device_t self, enum envsys_units st)
 			    name[0], i);
 	}
 
-	ACPI_FREE(b.Pointer);
-	return;
+out:
+	if (b.Pointer != NULL)
+		ACPI_FREE(b.Pointer);
+
+	if (ACPI_FAILURE(rv))
+		aprint_error_dev(self, "failed to evaluate %s: %s\n",
+		    name, AcpiFormatException(rv));
 }
 
 static int
 aibs_detach(device_t self, int flags)
 {
+	static const size_t	size = sizeof(struct aibs_sensor);
 	struct aibs_softc	*sc = device_private(self);
 
 	pmf_device_deregister(self);
 	sysmon_envsys_unregister(sc->sc_sme);
+
 	if (sc->sc_asens_volt != NULL)
-		free(sc->sc_asens_volt, M_DEVBUF);
+		kmem_free(sc->sc_asens_volt, sc->sc_asens_volt_count * size);
+
 	if (sc->sc_asens_temp != NULL)
-		free(sc->sc_asens_temp, M_DEVBUF);
+		kmem_free(sc->sc_asens_temp, sc->sc_asens_temp_count * size);
+
 	if (sc->sc_asens_fan != NULL)
-		free(sc->sc_asens_fan, M_DEVBUF);
+		kmem_free(sc->sc_asens_fan, sc->sc_asens_fan_count * size);
+
 	return 0;
 }
 
@@ -414,3 +420,30 @@ aibs_get_limits(struct sysmon_envsys *sme, envsys_data_t *edata,
 		break;
 	}
 }
+
+#ifdef _MODULE
+
+MODULE(MODULE_CLASS_DRIVER, aibs, NULL);
+
+#include "ioconf.c"
+
+static int
+aibs_modcmd(modcmd_t cmd, void *context)
+{
+
+	switch (cmd) {
+
+	case MODULE_CMD_INIT:
+		return config_init_component(cfdriver_ioconf_aibs,
+		    cfattach_ioconf_aibs, cfdata_ioconf_aibs);
+
+	case MODULE_CMD_FINI:
+		return config_fini_component(cfdriver_ioconf_aibs,
+		    cfattach_ioconf_aibs, cfdata_ioconf_aibs);
+
+	default:
+		return ENOTTY;
+	}
+}
+
+#endif	/* _MODULE */

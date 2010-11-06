@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_copyback.c,v 1.42 2009/11/17 18:54:26 jld Exp $	*/
+/*	$NetBSD: rf_copyback.c,v 1.42.2.1 2010/11/06 08:08:32 uebayasi Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -38,7 +38,7 @@
  ****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_copyback.c,v 1.42 2009/11/17 18:54:26 jld Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_copyback.c,v 1.42.2.1 2010/11/06 08:08:32 uebayasi Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -213,6 +213,7 @@ rf_CopybackReconstructedData(RF_Raid_t *raidPtr)
 	c_label->row = 0;
 	c_label->column = fcol;
 	c_label->partitionSize = raidPtr->Disks[fcol].partitionSize;
+	c_label->partitionSizeHi = raidPtr->Disks[fcol].partitionSize >> 32;
 
 	raidflush_component_label(raidPtr, fcol);
 

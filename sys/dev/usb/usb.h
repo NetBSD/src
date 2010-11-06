@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.h,v 1.83.2.2 2010/08/17 06:46:46 uebayasi Exp $	*/
+/*	$NetBSD: usb.h,v 1.83.2.3 2010/11/06 08:08:40 uebayasi Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb.h,v 1.14 1999/11/17 22:33:46 n_hibma Exp $	*/
 
 /*
@@ -93,10 +93,6 @@ MALLOC_DECLARE(M_USBHC);
 #else
 #define Static static
 #endif
-
-#if defined(_KERNEL)
-#include <dev/usb/usb_port.h>
-#endif /* _KERNEL */
 
 #define USB_STACK_VERSION 2
 

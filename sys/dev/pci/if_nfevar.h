@@ -1,4 +1,4 @@
-/*	$NetBSD: if_nfevar.h,v 1.9 2008/04/20 08:57:37 cube Exp $	*/
+/*	$NetBSD: if_nfevar.h,v 1.9.22.1 2010/11/06 08:08:30 uebayasi Exp $	*/
 /*	$OpenBSD: if_nfevar.h,v 1.13 2007/12/05 08:30:33 jsg Exp $	*/
 
 /*-
@@ -71,8 +71,10 @@ struct nfe_softc {
 	device_t		sc_dev;
 	struct ethercom		sc_ethercom;
 	uint8_t			sc_enaddr[ETHER_ADDR_LEN];
+	pci_chipset_tag_t	sc_pc;
 	bus_space_handle_t	sc_memh;
 	bus_space_tag_t		sc_memt;
+	bus_size_t		sc_mems;
 	void			*sc_ih;
 	bus_dma_tag_t		sc_dmat;
 	struct mii_data		sc_mii;

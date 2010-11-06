@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_lid.c,v 1.32.2.2 2010/10/22 07:21:52 uebayasi Exp $	*/
+/*	$NetBSD: acpi_lid.c,v 1.32.2.3 2010/11/06 08:08:27 uebayasi Exp $	*/
 
 /*
  * Copyright 2001, 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_lid.c,v 1.32.2.2 2010/10/22 07:21:52 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_lid.c,v 1.32.2.3 2010/11/06 08:08:27 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -196,7 +196,7 @@ static struct cfdata acpilid_cfdata[] = {
 		.cf_pspec = &acpiparent,
 	},
 
-	{ NULL }
+	{ NULL, NULL, 0, 0, NULL, 0, NULL }
 };
 
 static int

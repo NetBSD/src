@@ -1,4 +1,4 @@
-/*	$NetBSD: uhidev.c,v 1.47 2010/01/12 16:50:58 jakllsch Exp $	*/
+/*	$NetBSD: uhidev.c,v 1.47.2.1 2010/11/06 08:08:38 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.47 2010/01/12 16:50:58 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.47.2.1 2010/11/06 08:08:38 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,8 +63,8 @@ __KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.47 2010/01/12 16:50:58 jakllsch Exp $")
 #include "locators.h"
 
 #ifdef UHIDEV_DEBUG
-#define DPRINTF(x)	if (uhidevdebug) logprintf x
-#define DPRINTFN(n,x)	if (uhidevdebug>(n)) logprintf x
+#define DPRINTF(x)	if (uhidevdebug) printf x
+#define DPRINTFN(n,x)	if (uhidevdebug>(n)) printf x
 int	uhidevdebug = 0;
 #else
 #define DPRINTF(x)
@@ -85,9 +85,10 @@ extern struct cfdriver uhidev_cd;
 CFATTACH_DECL2_NEW(uhidev, sizeof(struct uhidev_softc), uhidev_match,
     uhidev_attach, uhidev_detach, uhidev_activate, NULL, uhidev_childdet);
 
-USB_MATCH(uhidev)
+int 
+uhidev_match(device_t parent, cfdata_t match, void *aux)
 {
-	USB_IFMATCH_START(uhidev, uaa);
+	struct usbif_attach_arg *uaa = aux;
 
 	if (uaa->class != UICLASS_HID)
 		return (UMATCH_NONE);
@@ -96,9 +97,11 @@ USB_MATCH(uhidev)
 	return (UMATCH_IFACECLASS_GENERIC);
 }
 
-USB_ATTACH(uhidev)
+void 
+uhidev_attach(device_t parent, device_t self, void *aux)
 {
-	USB_IFATTACH_START(uhidev, sc, uaa);
+	struct uhidev_softc *sc = device_private(self);
+	struct usbif_attach_arg *uaa = aux;
 	usbd_interface_handle iface = uaa->iface;
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;
@@ -148,7 +151,7 @@ USB_ATTACH(uhidev)
 			aprint_error_dev(self,
 			    "could not read endpoint descriptor\n");
 			sc->sc_dying = 1;
-			USB_ATTACH_ERROR_RETURN;
+			return;
 		}
 
 		DPRINTFN(10,("uhidev_attach: bLength=%d bDescriptorType=%d "
@@ -179,7 +182,7 @@ USB_ATTACH(uhidev)
 	if (sc->sc_iep_addr == -1) {
 		aprint_error_dev(self, "no input interrupt endpoint\n");
 		sc->sc_dying = 1;
-		USB_ATTACH_ERROR_RETURN;
+		return;
 	}
 
 	/* XXX need to extend this */
@@ -230,7 +233,7 @@ USB_ATTACH(uhidev)
 	if (err) {
 		aprint_error_dev(self, "no report descriptor\n");
 		sc->sc_dying = 1;
-		USB_ATTACH_ERROR_RETURN;
+		return;
 	}
 
 	if (uaa->vendor == USB_VENDOR_HOSIDEN && 
@@ -266,7 +269,7 @@ USB_ATTACH(uhidev)
 	uha.uaa = uaa;
 	nrepid = uhidev_maxrepid(desc, size);
 	if (nrepid < 0)
-		USB_ATTACH_SUCCESS_RETURN;
+		return;
 	if (nrepid > 0)
 		aprint_normal_dev(self, "%d report ids\n", nrepid);
 	nrepid++;
@@ -279,7 +282,7 @@ USB_ATTACH(uhidev)
 		free(repsizes, M_TEMP);
 nomem:
 		aprint_error_dev(self, "no memory\n");
-		USB_ATTACH_ERROR_RETURN;
+		return;
 	}
 
 	/* Just request max packet size for the interrupt pipe */
@@ -287,7 +290,7 @@ nomem:
 	sc->sc_nrepid = nrepid;
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
-			   USBDEV(sc->sc_dev));
+			   sc->sc_dev);
 
 	for (repid = 0; repid < nrepid; repid++) {
 		repsz = hid_report_size(desc, size, hid_input, repid);
@@ -322,12 +325,12 @@ nomem:
 					free(repsizes, M_TEMP);
 					aprint_error_dev(self,
 					    "sc_intr == NULL\n");
-					USB_ATTACH_ERROR_RETURN;
+					return;
 				}
 #endif
 #if NRND > 0
 				rnd_attach_source(&csc->rnd_source,
-						  USBDEVNAME(dev),
+						  device_xname(dev),
 						  RND_TYPE_TTY, 0);
 #endif
 			}
@@ -335,7 +338,7 @@ nomem:
 	}
 	free(repsizes, M_TEMP);
 
-	USB_ATTACH_SUCCESS_RETURN;
+	return;
 }
 
 int
@@ -394,9 +397,10 @@ uhidev_childdet(device_t self, device_t child)
 	sc->sc_subdevs[i] = NULL;
 }
 
-USB_DETACH(uhidev)
+int 
+uhidev_detach(device_t self, int flags)
 {
-	USB_DETACH_START(uhidev, sc);
+	struct uhidev_softc *sc = device_private(self);
 	int i, rv;
 #if NRND > 0
 	struct uhidev *csc;
@@ -423,7 +427,7 @@ USB_DETACH(uhidev)
 	}
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
-			   USBDEV(sc->sc_dev));
+			   sc->sc_dev);
 
 	pmf_device_deregister(self);
 
@@ -458,7 +462,7 @@ uhidev_intr(usbd_xfer_handle xfer, usbd_private_handle addr, usbd_status status)
 		return;
 
 	if (status != USBD_NORMAL_COMPLETION) {
-		DPRINTF(("%s: interrupt status=%d\n", USBDEVNAME(sc->sc_dev),
+		DPRINTF(("%s: interrupt status=%d\n", device_xname(sc->sc_dev),
 			 status));
 		usbd_clear_endpoint_stall_async(sc->sc_ipipe);
 		return;
@@ -484,12 +488,12 @@ uhidev_intr(usbd_xfer_handle xfer, usbd_private_handle addr, usbd_status status)
 #ifdef UHIDEV_DEBUG
 	if (scd->sc_in_rep_size != cc) {
 		DPRINTF(("%s: expected %d bytes, got %d\n",
-		       USBDEVNAME(sc->sc_dev), scd->sc_in_rep_size, cc));
+		       device_xname(sc->sc_dev), scd->sc_in_rep_size, cc));
 	}
 #endif
 	if (cc == 0) {
 		DPRINTF(("%s: 0-length input ignored\n",
-			USBDEVNAME(sc->sc_dev)));
+			device_xname(sc->sc_dev)));
 		return;
 	}
 #if NRND > 0

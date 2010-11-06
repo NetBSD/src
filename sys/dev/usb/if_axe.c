@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axe.c,v 1.31.2.2 2010/08/17 06:46:43 uebayasi Exp $	*/
+/*	$NetBSD: if_axe.c,v 1.31.2.3 2010/11/06 08:08:35 uebayasi Exp $	*/
 /*	$OpenBSD: if_axe.c,v 1.96 2010/01/09 05:33:08 jsg Exp $ */
 
 /*
@@ -89,7 +89,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.31.2.2 2010/08/17 06:46:43 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.31.2.3 2010/11/06 08:08:35 uebayasi Exp $");
 
 #if defined(__NetBSD__)
 #include "opt_inet.h"
@@ -130,8 +130,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.31.2.2 2010/08/17 06:46:43 uebayasi Exp
 #include <dev/usb/if_axereg.h>
 
 #ifdef	AXE_DEBUG
-#define DPRINTF(x)	do { if (axedebug) logprintf x; } while (0)
-#define DPRINTFN(n,x)	do { if (axedebug >= (n)) logprintf x; } while (0)
+#define DPRINTF(x)	do { if (axedebug) printf x; } while (0)
+#define DPRINTFN(n,x)	do { if (axedebug >= (n)) printf x; } while (0)
 int	axedebug = 0;
 #else
 #define DPRINTF(x)
@@ -745,7 +745,7 @@ axe_detach(device_t self, int flags)
 	int s;
 	struct ifnet *ifp = &sc->sc_if;
 
-	DPRINTFN(2,("%s: %s: enter\n", USBDEVNAME(sc->axe_dev), __func__));
+	DPRINTFN(2,("%s: %s: enter\n", device_xname(sc->axe_dev), __func__));
 
 	/* Detached before attached finished, so just bail out. */
 	if (!sc->axe_attached)
@@ -799,7 +799,7 @@ axe_activate(device_t self, devact_t act)
 {
 	struct axe_softc *sc = device_private(self);
 
-	DPRINTFN(2,("%s: %s: enter\n", USBDEVNAME(sc->axe_dev), __func__));
+	DPRINTFN(2,("%s: %s: enter\n", device_xname(sc->axe_dev), __func__));
 
 	switch (act) {
 	case DVACT_DEACTIVATE:
@@ -818,7 +818,7 @@ axe_rx_list_init(struct axe_softc *sc)
 	struct axe_chain *c;
 	int i;
 
-	DPRINTF(("%s: %s: enter\n", USBDEVNAME(sc->axe_dev), __func__));
+	DPRINTF(("%s: %s: enter\n", device_xname(sc->axe_dev), __func__));
 
 	cd = &sc->axe_cdata;
 	for (i = 0; i < AXE_RX_LIST_CNT; i++) {
@@ -848,7 +848,7 @@ axe_tx_list_init(struct axe_softc *sc)
 	struct axe_chain *c;
 	int i;
 
-	DPRINTF(("%s: %s: enter\n", USBDEVNAME(sc->axe_dev), __func__));
+	DPRINTF(("%s: %s: enter\n", device_xname(sc->axe_dev), __func__));
 
 	cd = &sc->axe_cdata;
 	for (i = 0; i < AXE_TX_LIST_CNT; i++) {
@@ -893,7 +893,7 @@ axe_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 	buf = c->axe_buf;
 	ifp = &sc->sc_if;
 
-	DPRINTFN(10,("%s: %s: enter\n", USBDEVNAME(sc->axe_dev),__func__));
+	DPRINTFN(10,("%s: %s: enter\n", device_xname(sc->axe_dev),__func__));
 
 	if (sc->axe_dying)
 		return;
@@ -972,7 +972,7 @@ axe_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 
 		bpf_mtap(ifp, m);
 
-		DPRINTFN(10,("%s: %s: deliver %d\n", USBDEVNAME(sc->axe_dev),
+		DPRINTFN(10,("%s: %s: deliver %d\n", device_xname(sc->axe_dev),
 		    __func__, m->m_len));
 		(*(ifp)->if_input)((ifp), (m));
 
@@ -989,7 +989,7 @@ axe_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 	    USBD_NO_TIMEOUT, axe_rxeof);
 	usbd_transfer(xfer);
 
-	DPRINTFN(10,("%s: %s: start rx\n", USBDEVNAME(sc->axe_dev), __func__));
+	DPRINTFN(10,("%s: %s: start rx\n", device_xname(sc->axe_dev), __func__));
 }
 
 /*
@@ -1046,7 +1046,7 @@ axe_tick(void *xsc)
 	if (sc == NULL)
 		return;
 
-	DPRINTFN(0xff, ("%s: %s: enter\n", USBDEVNAME(sc->axe_dev), __func__));
+	DPRINTFN(0xff, ("%s: %s: enter\n", device_xname(sc->axe_dev), __func__));
 
 	if (sc->axe_dying)
 		return;
@@ -1392,7 +1392,7 @@ axe_stop(struct ifnet *ifp, int disable)
 	ifp->if_timer = 0;
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 
-	callout_stop(&(sc->axe_stat_ch));
+	callout_stop(&sc->axe_stat_ch);
 
 	/* Stop transfers. */
 	if (sc->axe_ep[AXE_ENDPT_RX] != NULL) {

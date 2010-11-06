@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.24.2.4 2010/07/07 16:35:25 uebayasi Exp $ */
+/* $NetBSD: pmap.c,v 1.24.2.5 2010/11/06 08:08:20 uebayasi Exp $ */
 
 
 /*-
@@ -85,7 +85,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.24.2.4 2010/07/07 16:35:25 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.24.2.5 2010/11/06 08:08:20 uebayasi Exp $");
 
 #include "opt_xip.h"
 
@@ -103,6 +103,8 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.24.2.4 2010/07/07 16:35:25 uebayasi Exp $
 #include <sys/sched.h>
 #include <machine/cpufunc.h>
 #include <machine/md_var.h>
+
+#define	VM_PAGE_TO_MD(pg)	(&(pg)->mdpage)
 
 
 /*

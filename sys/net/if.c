@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.242.2.2 2010/10/22 07:22:38 uebayasi Exp $	*/
+/*	$NetBSD: if.c,v 1.242.2.3 2010/11/06 08:08:49 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.242.2.2 2010/10/22 07:22:38 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.242.2.3 2010/11/06 08:08:49 uebayasi Exp $");
 
 #include "opt_inet.h"
 
@@ -1817,7 +1817,7 @@ ifioctl(struct socket *so, u_long cmd, void *data, struct lwp *l)
 	}
 #ifdef COMPAT_OIFREQ
 	if (cmd != ocmd)
-		ifreqn2o(ifr, oifr);
+		ifreqn2o(oifr, ifr);
 #endif
 
 	return error;

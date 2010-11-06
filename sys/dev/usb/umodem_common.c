@@ -1,4 +1,4 @@
-/*	$NetBSD: umodem_common.c,v 1.17.2.2 2010/10/22 07:22:19 uebayasi Exp $	*/
+/*	$NetBSD: umodem_common.c,v 1.17.2.3 2010/11/06 08:08:39 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umodem_common.c,v 1.17.2.2 2010/10/22 07:22:19 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umodem_common.c,v 1.17.2.3 2010/11/06 08:08:39 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,7 +71,7 @@ __KERNEL_RCSID(0, "$NetBSD: umodem_common.c,v 1.17.2.2 2010/10/22 07:22:19 uebay
 #include <dev/usb/umodemvar.h>
 
 #ifdef UMODEM_DEBUG
-#define DPRINTFN(n, x)	if (umodemdebug > (n)) logprintf x
+#define DPRINTFN(n, x)	if (umodemdebug > (n)) printf x
 int	umodemdebug = 0;
 #else
 #define DPRINTFN(n, x)
@@ -102,7 +102,7 @@ Static void	umodem_set_line_state(struct umodem_softc *);
 Static void	umodem_intr(usbd_xfer_handle, usbd_private_handle, usbd_status);
 
 int
-umodem_common_attach(device_ptr_t self, struct umodem_softc *sc,
+umodem_common_attach(device_t self, struct umodem_softc *sc,
 		     struct usbif_attach_arg *uaa, struct ucom_attach_args *uca)
 {
 	usbd_device_handle dev = uaa->device;
@@ -244,7 +244,7 @@ umodem_common_attach(device_ptr_t self, struct umodem_softc *sc,
 	uca->arg = sc;
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
-			   USBDEV(sc->sc_dev));
+			   sc->sc_dev);
 
 	DPRINTF(("umodem_common_attach: sc=%p\n", sc));
 	sc->sc_subdev = config_found_sm_loc(self, "ucombus", NULL, uca,
@@ -293,11 +293,11 @@ umodem_close(void *addr, int portno)
 		err = usbd_abort_pipe(sc->sc_notify_pipe);
 		if (err)
 			printf("%s: abort notify pipe failed: %s\n",
-			    USBDEVNAME(sc->sc_dev), usbd_errstr(err));
+			    device_xname(sc->sc_dev), usbd_errstr(err));
 		err = usbd_close_pipe(sc->sc_notify_pipe);
 		if (err)
 			printf("%s: close notify pipe failed: %s\n",
-			    USBDEVNAME(sc->sc_dev), usbd_errstr(err));
+			    device_xname(sc->sc_dev), usbd_errstr(err));
 		sc->sc_notify_pipe = NULL;
 	}
 }
@@ -315,7 +315,7 @@ umodem_intr(usbd_xfer_handle xfer, usbd_private_handle priv,
 	if (status != USBD_NORMAL_COMPLETION) {
 		if (status == USBD_NOT_STARTED || status == USBD_CANCELLED)
 			return;
-		printf("%s: abnormal status: %s\n", USBDEVNAME(sc->sc_dev),
+		printf("%s: abnormal status: %s\n", device_xname(sc->sc_dev),
 		       usbd_errstr(status));
 		if (status == USBD_STALLED)
 			usbd_clear_endpoint_stall_async(sc->sc_notify_pipe);
@@ -324,7 +324,7 @@ umodem_intr(usbd_xfer_handle xfer, usbd_private_handle priv,
 
 	if (sc->sc_notify_buf.bmRequestType != UCDC_NOTIFICATION) {
 		DPRINTF(("%s: unknown message type (%02x) on notify pipe\n",
-			 USBDEVNAME(sc->sc_dev),
+			 device_xname(sc->sc_dev),
 			 sc->sc_notify_buf.bmRequestType));
 		return;
 	}
@@ -337,12 +337,12 @@ umodem_intr(usbd_xfer_handle xfer, usbd_private_handle priv,
 		 */
 		if (UGETW(sc->sc_notify_buf.wLength) != 2) {
 			printf("%s: Invalid notification length! (%d)\n",
-			       USBDEVNAME(sc->sc_dev),
+			       device_xname(sc->sc_dev),
 			       UGETW(sc->sc_notify_buf.wLength));
 			break;
 		}
 		DPRINTF(("%s: notify bytes = %02x%02x\n",
-			 USBDEVNAME(sc->sc_dev),
+			 device_xname(sc->sc_dev),
 			 sc->sc_notify_buf.data[0],
 			 sc->sc_notify_buf.data[1]));
 		/* Currently, lsr is always zero. */
@@ -359,7 +359,7 @@ umodem_intr(usbd_xfer_handle xfer, usbd_private_handle priv,
 		break;
 	default:
 		DPRINTF(("%s: unknown notify message: %02x\n",
-			 USBDEVNAME(sc->sc_dev),
+			 device_xname(sc->sc_dev),
 			 sc->sc_notify_buf.bNotification));
 		break;
 	}
@@ -474,7 +474,7 @@ umodem_param(void *addr, int portno, struct termios *t)
 
 int
 umodem_ioctl(void *addr, int portno, u_long cmd, void *data,
-    int flag, usb_proc_ptr p)
+    int flag, proc_t *p)
 {
 	struct umodem_softc *sc = addr;
 	int error = 0;
@@ -677,7 +677,7 @@ umodem_common_detach(struct umodem_softc *sc, int flags)
 		rv = config_detach(sc->sc_subdev, flags);
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
-			   USBDEV(sc->sc_dev));
+			   sc->sc_dev);
 
 	return (rv);
 }

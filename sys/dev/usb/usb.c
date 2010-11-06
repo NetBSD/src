@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.120.2.1 2010/08/17 06:46:46 uebayasi Exp $	*/
+/*	$NetBSD: usb.c,v 1.120.2.2 2010/11/06 08:08:40 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002, 2008 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.120.2.1 2010/08/17 06:46:46 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.120.2.2 2010/11/06 08:08:40 uebayasi Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -70,8 +70,8 @@ __KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.120.2.1 2010/08/17 06:46:46 uebayasi Exp $
 #include <dev/usb/usb_quirks.h>
 
 #ifdef USB_DEBUG
-#define DPRINTF(x)	if (usbdebug) logprintf x
-#define DPRINTFN(n,x)	if (usbdebug>(n)) logprintf x
+#define DPRINTF(x)	if (usbdebug) printf x
+#define DPRINTFN(n,x)	if (usbdebug>(n)) printf x
 int	usbdebug = 0;
 /*
  * 0  - do usual exploration
@@ -86,7 +86,7 @@ int	usb_noexplore = 0;
 
 struct usb_softc {
 #if 0
-	USBBASEDEVICE	sc_dev;		/* base device */
+	device_t	sc_dev;		/* base device */
 #endif
 	usbd_bus_handle sc_bus;		/* USB controller */
 	struct usbd_port sc_port;	/* dummy port for root hub */
@@ -131,7 +131,7 @@ Static SIMPLEQ_HEAD(, usb_event_q) usb_events =
 	SIMPLEQ_HEAD_INITIALIZER(usb_events);
 Static int usb_nevents = 0;
 Static struct selinfo usb_selevent;
-Static usb_proc_ptr usb_async_proc;  /* process that wants USB SIGIO */
+Static proc_t *usb_async_proc;  /* process that wants USB SIGIO */
 Static void *usb_async_sih;
 Static int usb_dev_open = 0;
 Static struct usb_event *usb_alloc_event(void);
@@ -185,7 +185,7 @@ usb_attach(device_t parent, device_t self, void *aux)
 	default:
 		aprint_error(", not supported\n");
 		sc->sc_dying = 1;
-		USB_ATTACH_ERROR_RETURN;
+		return;
 	}
 	aprint_normal("\n");
 
@@ -235,7 +235,7 @@ usb_doattach(device_t self)
 		aprint_error("%s: can't register softintr\n",
 			     device_xname(self));
 		sc->sc_dying = 1;
-		USB_ATTACH_ERROR_RETURN;
+		return;
 	}
 #endif
 
@@ -247,7 +247,7 @@ usb_doattach(device_t self)
 			sc->sc_dying = 1;
 			aprint_error("%s: root device is not a hub\n",
 				     device_xname(self));
-			USB_ATTACH_ERROR_RETURN;
+			return;
 		}
 		sc->sc_bus->root_hub = dev;
 #if 1
@@ -274,7 +274,7 @@ usb_doattach(device_t self)
 	usb_async_sih = softint_establish(SOFTINT_CLOCK | SOFTINT_MPSAFE,
 	   usb_async_intr, NULL);
 
-	USB_ATTACH_SUCCESS_RETURN;
+	return;
 }
 
 static const char *taskq_names[] = USB_TASKQ_NAMES;
@@ -286,7 +286,7 @@ usb_create_event_thread(device_t self)
 	struct usb_taskq *taskq;
 	int i;
 
-	if (usb_kthread_create1(PRI_NONE, 0, NULL, usb_event_thread, sc,
+	if (kthread_create(PRI_NONE, 0, NULL, usb_event_thread, sc,
 			&sc->sc_event_thread, "%s", device_xname(self))) {
 		printf("%s: unable to create event thread for\n",
 		       device_xname(self));
@@ -301,7 +301,7 @@ usb_create_event_thread(device_t self)
 		TAILQ_INIT(&taskq->tasks);
 		taskq->taskcreated = 1;
 		taskq->name = taskq_names[i];
-		if (usb_kthread_create1(PRI_NONE, 0, NULL, usb_task_thread,
+		if (kthread_create(PRI_NONE, 0, NULL, usb_task_thread,
 		    taskq, &taskq->task_thread_lwp, taskq->name)) {
 			printf("unable to create task thread: %s\n", taskq->name);
 			panic("usb_create_event_thread task");
@@ -847,7 +847,7 @@ usbd_add_drv_event(int type, usbd_device_handle udev, device_t dev)
 	struct usb_event *ue = usb_alloc_event();
 
 	ue->u.ue_driver.ue_cookie = udev->cookie;
-	strncpy(ue->u.ue_driver.ue_devname, USBDEVPTRNAME(dev),
+	strncpy(ue->u.ue_driver.ue_devname, device_xname(dev),
 	    sizeof ue->u.ue_driver.ue_devname);
 	usb_add_event(type, ue);
 }

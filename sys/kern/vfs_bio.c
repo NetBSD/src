@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.222.2.1 2010/04/30 14:44:13 uebayasi Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.222.2.2 2010/11/06 08:08:44 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -123,7 +123,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.222.2.1 2010/04/30 14:44:13 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.222.2.2 2010/11/06 08:08:44 uebayasi Exp $");
 
 #include "opt_bufcache.h"
 
@@ -1611,7 +1611,7 @@ buf_syncwait(void)
 		if (nbusy_prev == 0)
 			nbusy_prev = nbusy;
 		printf("%d ", nbusy);
-		kpause("bflush", false, (iter == 0) ? 1 : hz / 25 * iter, NULL);
+		kpause("bflush", false, MAX(1, hz / 25 * iter), NULL);
 		if (nbusy >= nbusy_prev) /* we didn't flush anything */
 			iter++;
 		else

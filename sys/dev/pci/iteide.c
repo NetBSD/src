@@ -1,4 +1,4 @@
-/*	$NetBSD: iteide.c,v 1.10 2008/04/10 19:13:37 cegger Exp $	*/
+/*	$NetBSD: iteide.c,v 1.10.24.1 2010/11/06 08:08:30 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iteide.c,v 1.10 2008/04/10 19:13:37 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iteide.c,v 1.10.24.1 2010/11/06 08:08:30 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -99,7 +99,6 @@ ite_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	struct pciide_channel *cp;
 	int channel;
 	pcireg_t interface;
-	bus_size_t cmdsize, ctlsize;
 	pcireg_t cfg, modectl;
 
 	/* fake interface since IT8212 claims to be a RAID device */
@@ -149,8 +148,7 @@ ite_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 		if (pciide_chansetup(sc, channel, interface) == 0)
 			continue;
 
-		pciide_mapchan(pa, cp, interface, &cmdsize, &ctlsize,
-		    pciide_pci_intr);
+		pciide_mapchan(pa, cp, interface, pciide_pci_intr);
 	}
 	/* Re-read configuration registers after channels setup */
 	cfg = pci_conf_read(sc->sc_pc, sc->sc_tag, IT_CFG);

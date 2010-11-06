@@ -1,4 +1,4 @@
-/* $NetBSD: wskbd.c,v 1.126.2.2 2010/08/17 06:46:48 uebayasi Exp $ */
+/* $NetBSD: wskbd.c,v 1.126.2.3 2010/11/06 08:08:42 uebayasi Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.126.2.2 2010/08/17 06:46:48 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.126.2.3 2010/11/06 08:08:42 uebayasi Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -1653,9 +1653,24 @@ wskbd_hotkey_register(device_t self, void *cookie, wskbd_hotkey_plugin *hotkey)
 {
 	struct wskbd_softc *sc = device_private(self);
 
+	KASSERT(sc != NULL);
+	KASSERT(hotkey != NULL);
+
 	sc->sc_hotkey = hotkey;
 	sc->sc_hotkeycookie = cookie;
+
 	return sc->sc_base.me_dv;
+}
+
+void
+wskbd_hotkey_deregister(device_t self)
+{
+	struct wskbd_softc *sc = device_private(self);
+
+	KASSERT(sc != NULL);
+
+	sc->sc_hotkey = NULL;
+	sc->sc_hotkeycookie = NULL;
 }
 
 static int

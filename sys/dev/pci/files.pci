@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.324.2.2 2010/08/17 06:46:23 uebayasi Exp $
+#	$NetBSD: files.pci,v 1.324.2.3 2010/11/06 08:08:30 uebayasi Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -800,12 +800,15 @@ file	dev/pci/unichromefb.c		unichromefb needs-flag
 
 # ATI Radeon framebuffer console driver
 # (Note: to enable the BIOS parser, add options RADEON_BIOS_INIT to the config)
-device	radeonfb: wsemuldisplaydev, videomode, rasops32, vcons, splash, iic, i2c_bitbang, ddc_read_edid, edid, drm
+device	radeonfb: wsemuldisplaydev, videomode, rasops8, rasops32, vcons, splash, iic, i2c_bitbang, ddc_read_edid, edid, drm
 attach	radeonfb at pci
 file	dev/pci/radeonfb.c	radeonfb
 file	dev/pci/radeonfb_i2c.c	radeonfb
 file	dev/pci/radeonfb_bios.c	radeonfb
 defflag opt_radeonfb.h	RADEONFB_DEBUG
+defflag opt_radeonfb.h	RADEONFB_BIOS_INIT
+defflag opt_radeonfb.h	RADEONFB_BIOS_DEBUG
+defflag opt_radeonfb.h	RADEONFB_MMAP_BARS
 
 # Chelsio Terminator 3 (T3) 10 gigabit ethernet
 device	cxgbc { }

@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.17 2008/05/30 15:56:32 kiyohara Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.17.18.1 2010/11/06 08:08:15 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.17 2008/05/30 15:56:32 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.17.18.1 2010/11/06 08:08:15 uebayasi Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -114,6 +114,6 @@ bebox_pci_conf_interrupt(pci_chipset_tag_t pc, int bus, int dev, int pin,
 			*iline = BEBOX_PCIBUS0_DEV2LINE(dev);
 		}
 	} else
-#define  BEBOX_PCIBUS_DEV2LINE(d, s)	((((d) + (s) + 1) & 0x3) + 26)
-		*iline = BEBOX_PCIBUS_DEV2LINE(dev, swiz);
+#define  BEBOX_PCIBUS_SWIZ2LINE(s)	((s) + 14)
+		*iline = BEBOX_PCIBUS_SWIZ2LINE(swiz);
 }

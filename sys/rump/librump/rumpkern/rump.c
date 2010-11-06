@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.151.2.3 2010/10/22 07:22:49 uebayasi Exp $	*/
+/*	$NetBSD: rump.c,v 1.151.2.4 2010/11/06 08:08:51 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.151.2.3 2010/10/22 07:22:49 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.151.2.4 2010/11/06 08:08:51 uebayasi Exp $");
 
 #include <sys/systm.h>
 #define ELFSIZE ARCH_ELFSIZE
@@ -84,25 +84,9 @@ __KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.151.2.3 2010/10/22 07:22:49 uebayasi Exp 
 #include "rump_vfs_private.h"
 #include "rump_dev_private.h"
 
-/* is this still necessary or use kern_proc stuff? */
-struct session rump_session = {
-	.s_count = 1,
-	.s_flags = 0,
-	.s_leader = &proc0,
-	.s_login = "rumphobo",
-	.s_sid = 0,
-};
-struct pgrp rump_pgrp = {
-	.pg_members = LIST_HEAD_INITIALIZER(pg_members),
-	.pg_session = &rump_session,
-	.pg_jobc = 1,
-};
-
 char machine[] = MACHINE;
-static kauth_cred_t rump_susercred;
 
-/* pretend the master rump proc is init */
-struct proc *initproc = &proc0;
+struct proc *initproc;
 
 struct rumpuser_mtx *rump_giantlock;
 
@@ -115,6 +99,13 @@ int rump_threads = 0;
 #else
 int rump_threads = 1;
 #endif
+
+/*
+ * System call proxying support.  These deserve another look later,
+ * but good enough for now.
+ */
+static struct vmspace sp_vmspace;
+static bool iamtheserver = false;
 
 static char rump_msgbuf[16*1024]; /* 16k should be enough for std rump needs */
 
@@ -200,6 +191,7 @@ mksysctls(void)
 int
 rump__init(int rump_version)
 {
+	struct rumpuser_sp_ops spops;
 	char buf[256];
 	struct timespec ts;
 	uint64_t sec, nsec;
@@ -214,6 +206,22 @@ rump__init(int rump_version)
 		panic("rump_init: host process restart required");
 	else
 		rump_inited = 1;
+
+	/* Check our role as a rump proxy */
+	spops.spop_schedule		= rump_schedule;
+	spops.spop_unschedule		= rump_unschedule;
+	spops.spop_lwproc_switch	= rump_lwproc_switch;
+	spops.spop_lwproc_release	= rump_lwproc_releaselwp;
+	spops.spop_lwproc_newproc	= rump_lwproc_newproc;
+	spops.spop_lwproc_curlwp	= rump_lwproc_curlwp;
+	spops.spop_syscall		= rump_syscall;
+
+	if (rumpuser_getenv("RUMP_SP_SERVER", buf, sizeof(buf), &error) == 0) {
+		error = rumpuser_sp_init(&spops, buf);
+		if (error)
+			return error;
+		iamtheserver = true;
+	}
 
 	if (rumpuser_getversion() != RUMPUSER_VERSION) {
 		/* let's hope the ABI of rumpuser_dprintf is the same ;) */
@@ -240,7 +248,7 @@ rump__init(int rump_version)
 	}
 #else
 	if (error == 0)
-		printf("NCPU limited to 1 on this host\n");
+		printf("NCPU limited to 1 on this machine architecture\n");
 	numcpu = 1;
 #endif
 	rump_cpus_bootstrap(numcpu);
@@ -304,10 +312,11 @@ rump__init(int rump_version)
 	loginit();
 
 	kauth_init();
-	rump_susercred = rump_cred_create(0, 0, 0, NULL);
 
 	procinit();
 	proc0_init();
+	uid_init();
+	chgproccnt(0, 1);
 
 	l->l_proc = &proc0;
 	lwp_update_creds(l);
@@ -316,9 +325,10 @@ rump__init(int rump_version)
 	lwp_initspecific(&lwp0);
 
 	rump_scheduler_init(numcpu);
-	/* revert temporary context and schedule a real context */
+	/* revert temporary context and schedule a semireal context */
 	l->l_cpu = NULL;
 	rumpuser_set_curlwp(NULL);
+	initproc = &proc0; /* borrow proc0 before we get initproc started */
 	rump_schedule();
 
 	percpu_init();
@@ -351,9 +361,9 @@ rump__init(int rump_version)
 	}
 
 	sysctl_init();
+	mksysctls();
 	kqueue_init();
 	iostat_init();
-	uid_init();
 	fd_sys_init();
 	module_init();
 	devsw_init();
@@ -389,7 +399,6 @@ rump__init(int rump_version)
 			panic("aiodoned");
 	}
 
-	mksysctls();
 	sysctl_finalize();
 
 	module_init_class(MODULE_CLASS_ANY);
@@ -402,6 +411,18 @@ rump__init(int rump_version)
 	if (rump_threads)
 		vmem_rehash_start();
 
+	/*
+	 * Create init, used to attach implicit threads in rump.
+	 * (note: must be done after vfsinit to get cwdi)
+	 */
+	(void)rump__lwproc_alloclwp(NULL); /* dummy thread for initproc */
+	mutex_enter(proc_lock);
+	initproc = proc_find_raw(1);
+	mutex_exit(proc_lock);
+	if (initproc == NULL)
+		panic("where in the world is initproc?");
+
+	/* release cpu */
 	rump_unschedule();
 
 	return 0;
@@ -612,9 +633,8 @@ rump_kernelfsym_load(void *symtab, uint64_t symsize,
 	return 0;
 }
 
-static int
-rump_sysproxy_local(int num, void *arg, uint8_t *data, size_t dlen,
-	register_t *retval)
+int
+rump_syscall(int num, void *arg, register_t *retval)
 {
 	struct lwp *l;
 	struct sysent *callp;
@@ -624,10 +644,12 @@ rump_sysproxy_local(int num, void *arg, uint8_t *data, size_t dlen,
 		return ENOSYS;
 
 	callp = rump_sysent + num;
-	rump_schedule();
 	l = curlwp;
-	rv = sy_call(callp, l, (void *)data, retval);
-	rump_unschedule();
+	if (iamtheserver)
+		curproc->p_vmspace = &sp_vmspace;
+	rv = sy_call(callp, l, (void *)arg, retval);
+	if (iamtheserver)
+		curproc->p_vmspace = &vmspace0;
 
 	return rv;
 }
@@ -644,28 +666,6 @@ rump_boot_sethowto(int howto)
 {
 
 	boothowto = howto;
-}
-
-rump_sysproxy_t rump_sysproxy = rump_sysproxy_local;
-void *rump_sysproxy_arg;
-
-/*
- * This whole syscall-via-rpc is still taking form.  For example, it
- * may be necessary to set syscalls individually instead of lobbing
- * them all to the same place.  So don't think this interface is
- * set in stone.
- */
-int
-rump_sysproxy_set(rump_sysproxy_t proxy, void *arg)
-{
-
-	if (rump_sysproxy_arg)
-		return EBUSY;
-
-	rump_sysproxy_arg = arg;
-	rump_sysproxy = proxy;
-
-	return 0;
 }
 
 int
