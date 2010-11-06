@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.h,v 1.19 2009/01/19 13:31:40 njoly Exp $	*/
+/*	$NetBSD: linux_misc.h,v 1.19.4.1 2010/11/06 08:08:25 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -123,9 +123,13 @@ extern const struct linux_mnttypes linux_fstypes[];
 extern const int linux_fstypes_cnt;
 
 /* Personality types. */
-#define LINUX_PER_LINUX		0x00000000
-#define LINUX_PER_LINUX32	0x00000008
 #define LINUX_PER_QUERY		0xffffffff
+#define LINUX_PER_LINUX		0x00
+#define LINUX_PER_LINUX32	0x08
+#define LINUX_PER_MASK		0xff
+
+/* Personality flags. */
+#define LINUX_PER_ADDR_NO_RANDOMIZE	0x00040000
 
 #ifdef _KERNEL
 __BEGIN_DECLS

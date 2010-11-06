@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.54.2.3 2010/10/22 07:21:29 uebayasi Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.54.2.4 2010/11/06 08:08:21 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2001 Matt Thomas.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.54.2.3 2010/10/22 07:21:29 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.54.2.4 2010/11/06 08:08:21 uebayasi Exp $");
 
 #include "opt_ppcparam.h"
 #include "opt_multiprocessor.h"
@@ -475,8 +475,6 @@ cpu_setup(struct device *self, struct cpu_info *ci)
 	case MPC603:
 	case MPC603e:
 	case MPC603ev:
-	case MPC750:
-	case IBM750FX:
 	case MPC7400:
 	case MPC7410:
 	case MPC8240:
@@ -485,6 +483,14 @@ cpu_setup(struct device *self, struct cpu_info *ci)
 		/* Select DOZE mode. */
 		hid0 &= ~(HID0_DOZE | HID0_NAP | HID0_SLEEP);
 		hid0 |= HID0_DOZE | HID0_DPM;
+		powersave = 1;
+		break;
+
+	case MPC750:
+	case IBM750FX:
+		/* Select NAP mode. */
+		hid0 &= ~(HID0_DOZE | HID0_NAP | HID0_SLEEP);
+		hid0 |= HID0_NAP | HID0_DPM;
 		powersave = 1;
 		break;
 
@@ -996,18 +1002,17 @@ cpu_probe_speed(struct cpu_info *ci)
 int
 cpu_get_dfs(void)
 {
-	u_int hid1, pvr, vers;
+	u_int pvr, vers;
 
 	pvr = mfpvr();
 	vers = pvr >> 16;
-	hid1 = mfspr(SPR_HID1);
 
 	switch (vers) {
 	case MPC7448:
-		if (hid1 & HID1_DFS4)
+		if (mfspr(SPR_HID1) & HID1_DFS4)
 			return 4;
 	case MPC7447A:
-		if (hid1 & HID1_DFS2)
+		if (mfspr(SPR_HID1) & HID1_DFS2)
 			return 2;
 	}
 	return 1;

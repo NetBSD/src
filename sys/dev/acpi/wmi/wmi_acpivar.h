@@ -1,4 +1,4 @@
-/*	$NetBSD: wmi_acpivar.h,v 1.2.2.3 2010/08/17 06:46:03 uebayasi Exp $	*/
+/*	$NetBSD: wmi_acpivar.h,v 1.2.2.4 2010/11/06 08:08:28 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2009, 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -31,7 +31,7 @@
 #define _SYS_DEV_ACPI_WMI_WMI_ACPIVAR_H
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wmi_acpivar.h,v 1.2.2.3 2010/08/17 06:46:03 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wmi_acpivar.h,v 1.2.2.4 2010/11/06 08:08:28 uebayasi Exp $");
 
 ACPI_STATUS	acpi_wmi_event_register(device_t, ACPI_NOTIFY_HANDLER);
 ACPI_STATUS	acpi_wmi_event_deregister(device_t);
@@ -91,10 +91,11 @@ struct wmi_t {
 };
 
 struct acpi_wmi_softc {
-	device_t		sc_dev;
-	device_t		sc_child;
-	ACPI_NOTIFY_HANDLER	sc_handler;
+	device_t		 sc_dev;
+	device_t		 sc_child;
+	device_t		 sc_ecdev;
 	struct acpi_devnode	*sc_node;
+	ACPI_NOTIFY_HANDLER	 sc_handler;
 
 	SIMPLEQ_HEAD(, wmi_t)	wmi_head;
 };

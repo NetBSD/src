@@ -1,4 +1,4 @@
-/*      $NetBSD: scheduler.c,v 1.9.2.3 2010/10/22 07:22:50 uebayasi Exp $	*/
+/*      $NetBSD: scheduler.c,v 1.9.2.4 2010/11/06 08:08:51 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scheduler.c,v 1.9.2.3 2010/10/22 07:22:50 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scheduler.c,v 1.9.2.4 2010/11/06 08:08:51 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -236,7 +236,7 @@ rump_schedule()
 		rumpuser_set_curlwp(&lwp0);
 
 		/* allocate thread, switch to it, and release lwp0 */
-		l = rump__lwproc_allockernlwp();
+		l = rump__lwproc_alloclwp(initproc);
 		rump_lwproc_switch(l);
 		lwp0rele();
 

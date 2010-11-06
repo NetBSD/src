@@ -1,4 +1,4 @@
-#	$NetBSD: files.usb,v 1.95.2.2 2010/08/17 06:46:42 uebayasi Exp $
+#	$NetBSD: files.usb,v 1.95.2.3 2010/11/06 08:08:35 uebayasi Exp $
 #
 # Config file and device description for machine-independent USB code.
 # Included by ports that need it.  Ports that use it must provide
@@ -233,6 +233,10 @@ device	udav: arp, ether, ifnet, mii, mii_phy
 attach	udav at usbdevif
 file	dev/usb/if_udav.c		udav
 
+# Atheros AR9170
+device	otus: arp, ether, firmload, ifnet, wlan
+attach	otus at usbdevif
+file	dev/usb/if_otus.c		otus
 
 # Serial drivers
 # Modems

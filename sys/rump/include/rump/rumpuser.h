@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.h,v 1.35.2.2 2010/08/17 06:47:58 uebayasi Exp $	*/
+/*	$NetBSD: rumpuser.h,v 1.35.2.3 2010/11/06 08:08:50 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -36,7 +36,7 @@
 #include <stdint.h>
 #endif
 
-#define RUMPUSER_VERSION 1
+#define RUMPUSER_VERSION 3
 int rumpuser_getversion(void);
 
 struct msghdr;
@@ -201,5 +201,23 @@ typedef int (*rump_symload_fn)(void *, uint64_t, char *, uint64_t);
 typedef void (*rump_component_init_fn)(struct rump_component *, int);
 void rumpuser_dl_bootstrap(rump_modinit_fn, rump_symload_fn);
 void rumpuser_dl_component_init(int, rump_component_init_fn);
+
+/* syscall proxy routines */
+
+struct rumpuser_sp_ops {
+	void (*spop_schedule)(void);
+	void (*spop_unschedule)(void);
+
+	void (*spop_lwproc_switch)(struct lwp *);
+	void (*spop_lwproc_release)(void);
+	int (*spop_lwproc_newproc)(void);
+	struct lwp * (*spop_lwproc_curlwp)(void);
+	int (*spop_syscall)(int, void *, register_t *);
+};
+
+int	rumpuser_sp_init(const struct rumpuser_sp_ops *, const char *);
+int	rumpuser_sp_copyin(const void *, void *, size_t);
+int	rumpuser_sp_copyout(const void *, void *, size_t);
+int	rumpuser_sp_anonmmap(size_t, void **);
 
 #endif /* _RUMP_RUMPUSER_H_ */

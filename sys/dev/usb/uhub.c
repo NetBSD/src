@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.109.2.1 2010/10/22 07:22:18 uebayasi Exp $	*/
+/*	$NetBSD: uhub.c,v 1.109.2.2 2010/11/06 08:08:38 uebayasi Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 
 /*
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.109.2.1 2010/10/22 07:22:18 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.109.2.2 2010/11/06 08:08:38 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,8 +53,8 @@ __KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.109.2.1 2010/10/22 07:22:18 uebayasi Exp 
 #include <dev/usb/usbdivar.h>
 
 #ifdef UHUB_DEBUG
-#define DPRINTF(x)	if (uhubdebug) logprintf x
-#define DPRINTFN(n,x)	if (uhubdebug>(n)) logprintf x
+#define DPRINTF(x)	if (uhubdebug) printf x
+#define DPRINTFN(n,x)	if (uhubdebug>(n)) printf x
 int	uhubdebug = 0;
 #else
 #define DPRINTF(x)
@@ -62,7 +62,7 @@ int	uhubdebug = 0;
 #endif
 
 struct uhub_softc {
-	USBBASEDEVICE		sc_dev;		/* base device */
+	device_t		sc_dev;		/* base device */
 	usbd_device_handle	sc_hub;		/* USB device */
 	int			sc_proto;	/* device protocol */
 	usbd_pipe_handle	sc_ipipe;	/* interrupt pipe */
@@ -529,7 +529,7 @@ uhub_explore(usbd_device_handle dev)
 			/* Not allowed send/receive packet. */
 #ifdef DIAGNOSTIC
 			printf("%s: port %d, device not enable\n",
-			       USBDEVNAME(sc->sc_dev), port);
+			       device_xname(sc->sc_dev), port);
 #endif
 			continue;
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.202.2.2 2010/10/22 07:22:25 uebayasi Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.202.2.3 2010/11/06 08:08:43 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.202.2.2 2010/10/22 07:22:25 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.202.2.3 2010/11/06 08:08:43 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1339,7 +1339,6 @@ fd_hold(lwp_t *l)
 {
 	filedesc_t *fdp = l->l_fd;
 
-	KASSERT(fdp == curlwp->l_fd || fdp == lwp0.l_fd);
 	atomic_inc_uint(&fdp->fd_refcnt);
 }
 

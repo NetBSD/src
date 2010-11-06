@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.681.2.4 2010/10/22 07:21:20 uebayasi Exp $	*/
+/*	$NetBSD: machdep.c,v 1.681.2.5 2010/11/06 08:08:18 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.681.2.4 2010/10/22 07:21:20 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.681.2.5 2010/11/06 08:08:18 uebayasi Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -923,10 +923,7 @@ haltsys:
 		}
 #endif
 #if NACPICA > 0
-		if (acpi_softc != NULL) {
-			acpi_enter_sleep_state(acpi_softc, ACPI_STATE_S5);
-			printf("WARNING: ACPI powerdown failed!\n");
-		}
+		acpi_enter_sleep_state(ACPI_STATE_S5);
 #endif
 #if NAPMBIOS > 0 && !defined(APM_NO_POWEROFF)
 		/* turn off, if we can.  But try to turn disk off and

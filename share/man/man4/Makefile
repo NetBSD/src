@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.516.2.3 2010/10/22 07:11:53 uebayasi Exp $
+#	$NetBSD: Makefile,v 1.516.2.4 2010/11/06 08:05:44 uebayasi Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/18/93
 
 MAN=	aac.4 ac97.4 acardide.4 aceride.4 acphy.4 \
@@ -24,7 +24,7 @@ MAN=	aac.4 ac97.4 acardide.4 aceride.4 acphy.4 \
 	dmphy.4 dpt.4 dpti.4 drm.4 drum.4 \
 	eap.4 ebus.4 edc.4 elmc.4 emuxki.4 en.4 envsys.4 ep.4 esh.4 esis.4 \
 	esa.4 esiop.4 esm.4 eso.4 etherip.4 exphy.4 \
-	fast_ipsec.4 fd.4 finsio.4 fpa.4 fms.4 fss.4 fxp.4 \
+	fast_ipsec.4 fd.4 finsio.4 fpa.4 fms.4 fss.4 fujitsu.4 fxp.4 \
 	gcscaudio.4 gem.4 genfb.4 gentbi.4 geodeide.4 \
 	glxtphy.4 gpib.4 gpio.4 gpiolock.4 gpiosim.4 gre.4 gphyter.4 gsip.4 \
 	hdaudio.4 hifn.4 hme.4 hpqlb.4 hptide.4 \
@@ -41,7 +41,7 @@ MAN=	aac.4 ac97.4 acardide.4 aceride.4 acphy.4 \
 	mtio.4 multicast.4 mvsata.4 \
 	nadb.4 ne.4 neo.4 netintro.4 nfe.4 nfsmb.4 njata.4 njs.4 \
 	nsclpcsio.4 nsp.4 nsphy.4 nsphyter.4 ntwoc.4 null.4 nsmb.4 \
-	oak.4 oosiop.4 opl.4 options.4 optiide.4 osiop.4 \
+	oak.4 oosiop.4 opl.4 options.4 optiide.4 osiop.4 otus.4 \
 	pad.4 pas.4 pcdisplay.4 pciide.4 pckbc.4 pckbd.4 pcn.4 pcppi.4 \
 	pcscp.4 pcweasel.4 pdcide.4 pdcsata.4 piixide.4 piixpcib.4 piixpm.4 \
 	pim.4 plip.4 pms.4 pmu.4 pnaphy.4 ppbus.4 ppp.4 pppoe.4 pseye.4 \
@@ -148,7 +148,9 @@ MLINKS+=drm.4 viadrm.4
 
 MLINKS+=acpiec.4 acpiecdt.4
 MLINKS+=acpivga.4 acpiout.4
-MLINKS+=acpiwmi.4 wmidell.4 acpiwmi.4 wmihp.4
+MLINKS+=acpiwmi.4 wmidell.4 \
+	acpiwmi.4 wmihp.4 \
+	acpiwmi.4 wmimsi.4
 MLINKS+=aibs.4 aiboost.4
 MLINKS+=ata.4 atabus.4
 MLINKS+=audio.4 audioctl.4
@@ -172,6 +174,7 @@ MLINKS+=dbcool.4 adt7475.4
 MLINKS+=dbcool.4 adt7476.4
 MLINKS+=fd.4 stderr.4 fd.4 stdin.4 fd.4 stdout.4
 MLINKS+=fpa.4 fea.4 fpa.4 fta.4
+MLINKS+=fujitsu.4 fujbp.4 fujitsu.4 fujhk.4
 MLINKS+=hdaudio.4 hdafg.4
 MLINKS+=hdaudio.4 hdaudiobus.4
 MLINKS+=icp.4 icpsp.4

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.963.2.3 2010/10/22 07:21:19 uebayasi Exp $
+# $NetBSD: GENERIC,v 1.963.2.4 2010/11/06 08:08:18 uebayasi Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.963.2.3 $"
+#ident 		"GENERIC-$Revision: 1.963.2.4 $"
 
 maxusers	64		# estimated number of users
 
@@ -374,6 +374,8 @@ asus*		at acpi?		# ASUS hotkeys
 attimer*	at acpi?		# AT Timer
 #com*		at acpi?		# Serial communications interface
 #fdc*		at acpi?		# Floppy disk controller
+fujbp*		at acpi?		# Fujitsu Brightness & Pointer
+fujhk*		at acpi?		# Fujitsu Hotkeys
 hpqlb*		at acpi?		# HP Quick Launch Buttons
 hpet*		at acpi?		# High Precision Event Timer
 joy*		at acpi?		# Joystick/Game port
@@ -390,6 +392,7 @@ wb*		at acpi?		# Winbond W83L518D SD/MMC reader
 sdmmc*		at wb?			# SD/MMC bus
 wmidell*	at acpiwmibus?		# Dell WMI mappings
 #wmihp*		at acpiwmibus?		# HP WMI mappings
+wmimsi*		at acpiwmibus?		# MSI WMI mappings
 wss*		at acpi?		# NeoMagic 256AV in wss mode
 ym*		at acpi?		# Yamaha OPL3-SA[23] audio
 
@@ -1206,6 +1209,7 @@ url*	at uhub? port ?		# Realtek RTL8150L based adapters
 
 # USB 802.11 adapters
 atu*	at uhub? port ?		# Atmel AT76C50XX based adapters
+otus*	at uhub? port ?		# Atheros AR9001U
 ral*	at uhub? port ?		# Ralink Technology RT25x0 802.11a/b/g
 rum*	at uhub? port ?		# Ralink Technology RT2501/RT2601 802.11a/b/g
 upgt*	at uhub? port ?		# Intersil PrismGT

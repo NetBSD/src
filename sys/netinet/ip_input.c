@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.284.2.2 2010/08/17 06:47:46 uebayasi Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.284.2.3 2010/11/06 08:08:49 uebayasi Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.284.2.2 2010/08/17 06:47:46 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.284.2.3 2010/11/06 08:08:49 uebayasi Exp $");
 
 #include "opt_inet.h"
 #include "opt_compat_netbsd.h"
@@ -231,6 +231,7 @@ int	in_multientries;			/* total number of addrs */
 struct	in_multihashhead *in_multihashtbl;
 struct	ifqueue ipintrq;
 
+ipid_state_t *		ip_ids;
 uint16_t ip_id;
 
 percpu_t *ipstat_percpu;
@@ -315,7 +316,7 @@ ip_init(void)
 
 	ip_reass_init();
 
-	ip_initid();
+	ip_ids = ip_id_init();
 	ip_id = time_second & 0xfffff;
 
 	ipintrq.ifq_maxlen = ipqmaxlen;
@@ -806,58 +807,21 @@ ours:
 	 * If offset or IP_MF are set, must reassemble.
 	 */
 	if (ip->ip_off & ~htons(IP_DF|IP_RF)) {
-		struct mbuf *m_final;
-		u_int off, flen;
-		bool mff;
-
-		/*
-		 * Prevent TCP blind data attacks by not allowing non-initial
-		 * fragments to start at less than 68 bytes (minimal fragment
-		 * size) and making sure the first fragment is at least 68
-		 * bytes.
-		 */
-		off = (ntohs(ip->ip_off) & IP_OFFMASK) << 3;
-		if ((off > 0 ? off + hlen : len) < IP_MINFRAGSIZE - 1) {
-			IP_STATINC(IP_STAT_BADFRAGS);
-			goto bad;
-		}
-
-		/* Fragment length and MF flag. */
-		flen = ntohs(ip->ip_len) - hlen;
-		mff = (ip->ip_off & htons(IP_MF)) != 0;
-		if (mff) {
-			/*
-			 * Make sure that fragments have a data length
-			 * which is non-zero and multiple of 8 bytes.
-			 */
-			if (flen == 0 || (flen & 0x7) != 0) {
-				IP_STATINC(IP_STAT_BADFRAGS);
-				goto bad;
-			}
-		}
-
-		/*
-		 * Adjust total IP length to not reflect header and convert
-		 * offset of this to bytes.  XXX: clobbers struct ip.
-		 */
-		ip->ip_len = htons(flen);
-		ip->ip_off = htons(off);
-
 		/*
 		 * Pass to IP reassembly mechanism.
 		 */
-		if (ip_reass_packet(m, ip, mff, &m_final) != 0) {
+		if (ip_reass_packet(&m, ip) != 0) {
 			/* Failed; invalid fragment(s) or packet. */
 			goto bad;
 		}
-		if (m_final == NULL) {
+		if (m == NULL) {
 			/* More fragments should come; silently return. */
 			return;
 		}
-		/* Reassembly is done, we have the final packet. */
-		m = m_final;
-
-		/* Updated local variable(s). */
+		/*
+		 * Reassembly is done, we have the final packet.
+		 * Updated cached data in local variable(s).
+		 */
 		ip = mtod(m, struct ip *);
 		hlen = ip->ip_hl << 2;
 	}

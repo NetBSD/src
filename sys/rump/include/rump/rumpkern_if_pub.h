@@ -1,8 +1,8 @@
-/*	$NetBSD: rumpkern_if_pub.h,v 1.5.2.3 2010/10/22 07:22:47 uebayasi Exp $	*/
+/*	$NetBSD: rumpkern_if_pub.h,v 1.5.2.4 2010/11/06 08:08:50 uebayasi Exp $	*/
 
 /*
  * Automatically generated.  DO NOT EDIT.
- * from: NetBSD: rumpkern.ifspec,v 1.6 2010/09/01 19:13:38 pooka Exp 
+ * from: NetBSD: rumpkern.ifspec,v 1.7 2010/10/27 20:34:50 pooka Exp 
  * by:   NetBSD: makerumpif.sh,v 1.5 2010/09/01 19:32:11 pooka Exp 
  */
 
@@ -23,6 +23,4 @@ void rump_pub_lwproc_switch(struct lwp *);
 void rump_pub_lwproc_releaselwp(void);
 struct lwp * rump_pub_lwproc_curlwp(void);
 void rump_pub_allbetsareoff_setid(pid_t, int);
-int rump_pub_sysproxy_set(rump_sysproxy_t, void *);
-int rump_pub_sysproxy_socket_setup_client(int);
-int rump_pub_sysproxy_socket_setup_server(int);
+int rump_pub_syscall(int, void *, register_t *);

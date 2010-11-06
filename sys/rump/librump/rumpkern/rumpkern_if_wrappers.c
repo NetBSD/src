@@ -1,8 +1,8 @@
-/*	$NetBSD: rumpkern_if_wrappers.c,v 1.5.2.2 2010/10/22 07:22:50 uebayasi Exp $	*/
+/*	$NetBSD: rumpkern_if_wrappers.c,v 1.5.2.3 2010/11/06 08:08:51 uebayasi Exp $	*/
 
 /*
  * Automatically generated.  DO NOT EDIT.
- * from: NetBSD: rumpkern.ifspec,v 1.6 2010/09/01 19:13:38 pooka Exp 
+ * from: NetBSD: rumpkern.ifspec,v 1.7 2010/10/27 20:34:50 pooka Exp 
  * by:   NetBSD: makerumpif.sh,v 1.5 2010/09/01 19:32:11 pooka Exp 
  */
 
@@ -213,36 +213,12 @@ rump_pub_allbetsareoff_setid(pid_t arg1, int arg2)
 }
 
 int
-rump_pub_sysproxy_set(rump_sysproxy_t arg1, void *arg2)
+rump_pub_syscall(int arg1, void *arg2, register_t *arg3)
 {
 	int rv;
 
 	rump_schedule();
-	rv = rump_sysproxy_set(arg1, arg2);
-	rump_unschedule();
-
-	return rv;
-}
-
-int
-rump_pub_sysproxy_socket_setup_client(int arg1)
-{
-	int rv;
-
-	rump_schedule();
-	rv = rump_sysproxy_socket_setup_client(arg1);
-	rump_unschedule();
-
-	return rv;
-}
-
-int
-rump_pub_sysproxy_socket_setup_server(int arg1)
-{
-	int rv;
-
-	rump_schedule();
-	rv = rump_sysproxy_socket_setup_server(arg1);
+	rv = rump_syscall(arg1, arg2, arg3);
 	rump_unschedule();
 
 	return rv;

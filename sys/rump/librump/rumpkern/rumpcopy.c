@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpcopy.c,v 1.2.2.1 2010/08/17 06:48:02 uebayasi Exp $	*/
+/*	$NetBSD: rumpcopy.c,v 1.2.2.2 2010/11/06 08:08:51 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpcopy.c,v 1.2.2.1 2010/08/17 06:48:02 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpcopy.c,v 1.2.2.2 2010/11/06 08:08:51 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/lwp.h>
@@ -40,13 +40,14 @@ int
 copyin(const void *uaddr, void *kaddr, size_t len)
 {
 
+	if (__predict_false(uaddr == NULL && len)) {
+		return EFAULT;
+	}
+
 	if (curproc->p_vmspace == &vmspace0) {
-		if (__predict_false(uaddr == NULL && len)) {
-			return EFAULT;
-		}
 		memcpy(kaddr, uaddr, len);
 	} else {
-		rump_sysproxy_copyin(uaddr, kaddr, len);
+		rumpuser_sp_copyin(uaddr, kaddr, len);
 	}
 	return 0;
 }
@@ -55,13 +56,14 @@ int
 copyout(const void *kaddr, void *uaddr, size_t len)
 {
 
+	if (__predict_false(uaddr == NULL && len)) {
+		return EFAULT;
+	}
+
 	if (curproc->p_vmspace == &vmspace0) {
-		if (__predict_false(uaddr == NULL && len)) {
-			return EFAULT;
-		}
 		memcpy(uaddr, kaddr, len);
 	} else {
-		rump_sysproxy_copyout(kaddr, uaddr, len);
+		rumpuser_sp_copyout(kaddr, uaddr, len);
 	}
 	return 0;
 }
@@ -73,7 +75,7 @@ subyte(void *uaddr, int byte)
 	if (curproc->p_vmspace == &vmspace0)
 		*(char *)uaddr = byte;
 	else
-		rump_sysproxy_copyout(&byte, uaddr, 1);
+		rumpuser_sp_copyout(&byte, uaddr, 1);
 	return 0;
 }
 
@@ -81,7 +83,10 @@ int
 copystr(const void *kfaddr, void *kdaddr, size_t len, size_t *done)
 {
 
-	return copyinstr(kfaddr, kdaddr, len, done);
+	strlcpy(kdaddr, kfaddr, len);
+	if (done)
+		*done = strlen(kdaddr)+1; /* includes termination */
+	return 0;
 }
 
 int
@@ -91,7 +96,7 @@ copyinstr(const void *uaddr, void *kaddr, size_t len, size_t *done)
 	if (curproc->p_vmspace == &vmspace0)
 		strlcpy(kaddr, uaddr, len);
 	else
-		rump_sysproxy_copyin(uaddr, kaddr, len);
+		rumpuser_sp_copyin(uaddr, kaddr, len);
 	if (done)
 		*done = strlen(kaddr)+1; /* includes termination */
 	return 0;
@@ -104,7 +109,7 @@ copyoutstr(const void *kaddr, void *uaddr, size_t len, size_t *done)
 	if (curproc->p_vmspace == &vmspace0)
 		strlcpy(uaddr, kaddr, len);
 	else
-		rump_sysproxy_copyout(kaddr, uaddr, len);
+		rumpuser_sp_copyout(kaddr, uaddr, len);
 	if (done)
 		*done = strlen(uaddr)+1; /* includes termination */
 	return 0;

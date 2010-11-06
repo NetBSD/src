@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.132.2.2 2010/08/17 06:47:33 uebayasi Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.132.2.3 2010/11/06 08:08:44 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.132.2.2 2010/08/17 06:47:33 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.132.2.3 2010/11/06 08:08:44 uebayasi Exp $");
 
 #include "opt_mbuftrace.h"
 #include "opt_nmbclusters.h"
@@ -1346,7 +1346,7 @@ extend:
 			 * if we're going to write into the middle of
 			 * a mbuf, split it first.
 			 */
-			if (off > 0 && len < mlen) {
+			if (off > 0) {
 				n = m_split0(m, off, how, 0);
 				if (n == NULL)
 					goto enobufs;
@@ -1390,19 +1390,6 @@ extend:
 			else
 				datap = NULL;
 			eatlen = n->m_len;
-			KDASSERT(off == 0 || eatlen >= mlen);
-			if (off > 0) {
-				KDASSERT(len >= mlen);
-				m->m_len = off;
-				m->m_next = n;
-				if (datap) {
-					m_copydata(m, off, mlen, datap);
-					datap += mlen;
-				}
-				eatlen -= mlen;
-				mp = &m->m_next;
-				m = m->m_next;
-			}
 			while (m != NULL && M_READONLY(m) &&
 			    n->m_type == m->m_type && eatlen > 0) {
 				mlen = min(eatlen, m->m_len);

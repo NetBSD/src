@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.116.2.3 2010/10/22 07:21:06 uebayasi Exp $
+# $NetBSD: GENERIC,v 1.116.2.4 2010/11/06 08:08:15 uebayasi Exp $
 #
 # GENERIC machine description file
 #
@@ -20,9 +20,9 @@
 
 include 	"arch/bebox/conf/std.bebox"
 
-#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
+options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.116.2.3 $"
+#ident 		"GENERIC-$Revision: 1.116.2.4 $"
 
 maxusers	32
 
@@ -80,7 +80,6 @@ file-system	FFS		# UFS
 #file-system	LFS		# log-structured file system
 file-system	MFS		# memory file system
 file-system	NFS		# Network File System client
-#file-system 	NTFS		# Windows/NT file system (experimental)
 file-system	CD9660		# ISO 9660 + Rock Ridge file system
 file-system	MSDOSFS		# MS-DOS file system
 #file-system	FDESC		# /dev/fd
@@ -208,10 +207,10 @@ attimer0 at isa?
 pcppi0	at isa?
 spkr0	at pcppi?
 
-#wss0	at isa? port ? irq 30 drq 6 drq2 7	# Windows Sound System
+wss0	at isa? port 0x82c irq 30 drq 6 drq2 7	# Windows Sound System
 
 # Audio support
-#audio*  at audiobus?
+audio*	at audiobus?
 
 # MIDI support
 midi*	at pcppi?			# MIDI interface to the PC speaker

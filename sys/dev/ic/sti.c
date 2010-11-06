@@ -1,4 +1,4 @@
-/* $NetBSD: sti.c,v 1.10 2009/05/07 15:34:50 skrll Exp $ */
+/*	$NetBSD: sti.c,v 1.10.2.1 2010/11/06 08:08:29 uebayasi Exp $	*/
 
 /*	$OpenBSD: sti.c,v 1.35 2003/12/16 06:07:13 mickey Exp $	*/
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sti.c,v 1.10 2009/05/07 15:34:50 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sti.c,v 1.10.2.1 2010/11/06 08:08:29 uebayasi Exp $");
 
 #include "wsdisplay.h"
 
@@ -116,7 +116,7 @@ int sti_inqcfg(struct sti_softc *, struct sti_inqconfout *);
 void sti_bmove(struct sti_softc *, int, int, int, int, int, int,
     enum sti_bmove_funcs);
 int sti_setcment(struct sti_softc *, u_int, u_char, u_char, u_char);
-int sti_fetchfonts(struct sti_softc *, struct sti_inqconfout *, u_int32_t);
+int sti_fetchfonts(struct sti_softc *, struct sti_inqconfout *, uint32_t);
 void sti_attach_deferred(device_t);
 
 void
@@ -128,10 +128,10 @@ sti_attach_common(struct sti_softc *sc)
 	struct sti_dd *dd;
 	struct sti_cfg *cc;
 	int error, size, i;
-	u_int8_t *p = (u_int8_t *)sc->sc_code;
-	u_int32_t addr, eaddr;
+	uint8_t *p = (uint8_t *)sc->sc_code;
+	uint32_t addr, eaddr;
 	struct sti_region r;
-	u_int32_t *q;
+	uint32_t *q;
 	uint32_t tmp;
 
 	dd = &sc->sc_dd;
@@ -187,7 +187,7 @@ sti_attach_common(struct sti_softc *sc)
 		dd->dd_pacode[0xe] = parseword(0x1e0) & ~3;
 		dd->dd_pacode[0xf] = parseword(0x1f0) & ~3;
 	} else	/* STI_DEVTYPE4 */
-		bus_space_read_region_4(sc->memt, sc->romh, 0, (u_int32_t *)dd,
+		bus_space_read_region_4(sc->memt, sc->romh, 0, (uint32_t *)dd,
 		    sizeof(*dd) / 4);
 
 #ifdef STIDEBUG
@@ -197,7 +197,7 @@ sti_attach_common(struct sti_softc *sc)
 	    "memrq=%x, pwr=%d, bus=%x, ebus=%x, cfb=%x\n"
 	    "code=",
 	    dd->dd_type & 0xff, dd->dd_grrev, dd->dd_lrrev, dd->dd_altcodet,
-	    *(u_int64_t *)dd->dd_grid, dd->dd_fntaddr, dd->dd_maxst,
+	    *(uint64_t *)dd->dd_grid, dd->dd_fntaddr, dd->dd_maxst,
 	    dd->dd_romend, dd->dd_reglst, dd->dd_maxreent, dd->dd_maxtimo,
 	    dd->dd_montbl, dd->dd_udaddr, dd->dd_udsize, dd->dd_stimemreq,
 	    dd->dd_pwruse, dd->dd_bussup, dd->dd_ebussup, dd->dd_cfbaddr);
@@ -225,7 +225,7 @@ sti_attach_common(struct sti_softc *sc)
 
 	/* copy code into memory */
 	if (sc->sc_devtype == STI_DEVTYPE1) {
-		p = (u_int8_t *)sc->sc_code;
+		p = (uint8_t *)sc->sc_code;
 		for (addr = dd->dd_pacode[STI_BEGIN], eaddr = addr + size * 4;
 		    addr < eaddr; addr += 4 )
 			*p++ = bus_space_read_4(sc->memt, sc->romh, addr)
@@ -233,7 +233,7 @@ sti_attach_common(struct sti_softc *sc)
 
 	} else	/* STI_DEVTYPE4 */
 		bus_space_read_region_4(sc->memt, sc->romh,
-		    dd->dd_pacode[STI_BEGIN], (u_int32_t *)sc->sc_code,
+		    dd->dd_pacode[STI_BEGIN], (uint32_t *)sc->sc_code,
 		    size / 4);
 
 #define	O(i)	(dd->dd_pacode[(i)] ? (sc->sc_code +	\
@@ -333,7 +333,7 @@ sti_attach_common(struct sti_softc *sc)
 	printf(": %s rev %d.%02d;%d, ID 0x%016llX\n"
 	    "%s: %dx%d frame buffer, %dx%dx%d display, offset %dx%d\n",
 	    cfg.name, dd->dd_grrev >> 4, dd->dd_grrev & 0xf, dd->dd_lrrev,
-	    *(u_int64_t *)dd->dd_grid, device_xname(sc->sc_dev), cfg.fbwidth,
+	    *(uint64_t *)dd->dd_grid, device_xname(sc->sc_dev), cfg.fbwidth,
 	    cfg.fbheight, cfg.width, cfg.height, cfg.bppu, cfg.owidth,
 	    cfg.oheight);
 
@@ -384,7 +384,7 @@ sti_attach_deferred(device_t dev)
 }
 
 int
-sti_fetchfonts(struct sti_softc *sc, struct sti_inqconfout *cfg, u_int32_t addr)
+sti_fetchfonts(struct sti_softc *sc, struct sti_inqconfout *cfg, uint32_t addr)
 {
 	struct sti_font *fp = &sc->sc_curfont;
 	int size;
@@ -419,7 +419,7 @@ sti_fetchfonts(struct sti_softc *sc, struct sti_inqconfout *cfg, u_int32_t addr)
 			    addr + 0x37);
 		} else	/* STI_DEVTYPE4 */
 			bus_space_read_region_4(sc->memt, sc->romh, addr,
-			    (u_int32_t *)fp, sizeof(struct sti_font) / 4);
+			    (uint32_t *)fp, sizeof(struct sti_font) / 4);
 
 		printf("%s: %dx%d font type %d, %d bpc, charset %d-%d\n",
 		    device_xname(sc->sc_dev), fp->width, fp->height, fp->type,
@@ -434,7 +434,7 @@ sti_fetchfonts(struct sti_softc *sc, struct sti_inqconfout *cfg, u_int32_t addr)
 			return (ENOMEM);
 
 		bus_space_read_region_4(sc->memt, sc->romh, addr,
-		    (u_int32_t *)sc->sc_romfont, size / 4);
+		    (uint32_t *)sc->sc_romfont, size / 4);
 
 		addr = 0; /* fp->next */
 	} while (addr);

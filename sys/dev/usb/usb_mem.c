@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_mem.c,v 1.38 2009/02/10 17:00:06 drochner Exp $	*/
+/*	$NetBSD: usb_mem.c,v 1.38.2.1 2010/11/06 08:08:40 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_mem.c,v 1.38 2009/02/10 17:00:06 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_mem.c,v 1.38.2.1 2010/11/06 08:08:40 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,8 +63,8 @@ __KERNEL_RCSID(0, "$NetBSD: usb_mem.c,v 1.38 2009/02/10 17:00:06 drochner Exp $"
 #include <dev/usb/usb_mem.h>
 
 #ifdef USB_DEBUG
-#define DPRINTF(x)	if (usbdebug) logprintf x
-#define DPRINTFN(n,x)	if (usbdebug>(n)) logprintf x
+#define DPRINTF(x)	if (usbdebug) printf x
+#define DPRINTFN(n,x)	if (usbdebug>(n)) printf x
 extern int usbdebug;
 #else
 #define DPRINTF(x)

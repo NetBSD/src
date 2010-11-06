@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_subr.c,v 1.22.2.2 2010/05/27 14:47:29 uebayasi Exp $	*/
+/*	$NetBSD: pmap_subr.c,v 1.22.2.3 2010/11/06 08:08:21 uebayasi Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_subr.c,v 1.22.2.2 2010/05/27 14:47:29 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_subr.c,v 1.22.2.3 2010/11/06 08:08:21 uebayasi Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_altivec.h"
@@ -50,6 +50,8 @@ __KERNEL_RCSID(0, "$NetBSD: pmap_subr.c,v 1.22.2.2 2010/05/27 14:47:29 uebayasi 
 #endif
 #endif
 #include <powerpc/psl.h>
+
+#define	VM_PAGE_TO_MD(pg)	(&(pg)->mdpage)
 
 #define	MFMSR()		mfmsr()
 #define	MTMSR(psl)	__asm volatile("sync; mtmsr %0; isync" :: "r"(psl))
@@ -292,8 +294,8 @@ pmap_zero_page(paddr_t pa)
 		 * of this page since the page contents will have changed.
 		 */
 		struct vm_page *pg = PHYS_TO_VM_PAGE(pa);
-		KDASSERT(pg != NULL);
 		struct vm_page_md * const md = VM_PAGE_TO_MD(pg);
+		KDASSERT(pg != NULL);
 		KDASSERT(LIST_EMPTY(&md->mdpg_pvoh));
 #ifdef PMAPCOUNTERS
 		if (md->mdpg_attrs & PTE_EXEC) {
@@ -373,8 +375,8 @@ pmap_copy_page(paddr_t src, paddr_t dst)
 		 * changed.
 		 */
 		struct vm_page *pg = PHYS_TO_VM_PAGE(dst);
-		KDASSERT(pg != NULL);
 		struct vm_page_md * const md = VM_PAGE_TO_MD(pg);
+		KDASSERT(pg != NULL);
 		KDASSERT(LIST_EMPTY(&md->mdpg_pvoh));
 #ifdef PMAPCOUNTERS
 		if (md->mdpg_attrs & PTE_EXEC) {

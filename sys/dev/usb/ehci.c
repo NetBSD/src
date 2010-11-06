@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.165.2.3 2010/10/22 07:22:17 uebayasi Exp $ */
+/*	$NetBSD: ehci.c,v 1.165.2.4 2010/11/06 08:08:34 uebayasi Exp $ */
 
 /*
  * Copyright (c) 2004-2008 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.165.2.3 2010/10/22 07:22:17 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.165.2.4 2010/11/06 08:08:34 uebayasi Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -780,7 +780,7 @@ ehci_check_qh_intr(ehci_softc_t *sc, struct ehci_xfer *ex)
 	}
  done:
 	DPRINTFN(12, ("ehci_check_intr: ex=%p done\n", ex));
-	callout_stop(&(ex->xfer.timeout_handle));
+	callout_stop(&ex->xfer.timeout_handle);
 	ehci_idone(ex);
 }
 
@@ -827,7 +827,7 @@ ehci_check_itd_intr(ehci_softc_t *sc, struct ehci_xfer *ex) {
 	return;
 done:
 	DPRINTFN(12, ("ehci_check_itd_intr: ex=%p done\n", ex));
-	callout_stop(&(ex->xfer.timeout_handle));
+	callout_stop(&ex->xfer.timeout_handle);
 	ehci_idone(ex);
 }
 
@@ -1080,7 +1080,7 @@ ehci_detach(struct ehci_softc *sc, int flags)
 	if (rv != 0)
 		return (rv);
 
-	callout_stop(&(sc->sc_tmo_intrlist));
+	callout_stop(&sc->sc_tmo_intrlist);
 
 	usb_delay_ms(&sc->sc_bus, 300); /* XXX let stray task complete */
 
@@ -2864,7 +2864,7 @@ ehci_abort_xfer(usbd_xfer_handle xfer, usbd_status status)
 		/* If we're dying, just do the software part. */
 		s = splusb();
 		xfer->status = status;	/* make software ignore it */
-		callout_stop(&(xfer->timeout_handle));
+		callout_stop(&xfer->timeout_handle);
 		usb_transfer_complete(xfer);
 		splx(s);
 		return;
@@ -2898,7 +2898,7 @@ ehci_abort_xfer(usbd_xfer_handle xfer, usbd_status status)
 	 */
 	s = splusb();
 	xfer->status = status;	/* make software ignore it */
-	callout_stop(&(xfer->timeout_handle));
+	callout_stop(&xfer->timeout_handle);
 
 	usb_syncmem(&sqh->dma,
 	    sqh->offs + offsetof(ehci_qh_t, qh_qtd.qtd_status),
@@ -3014,7 +3014,7 @@ ehci_abort_isoc_xfer(usbd_xfer_handle xfer, usbd_status status)
 	if (sc->sc_dying) {
 		s = splusb();
 		xfer->status = status;
-		callout_stop(&(xfer->timeout_handle));
+		callout_stop(&xfer->timeout_handle);
 		usb_transfer_complete(xfer);
 		splx(s);
 		return;
@@ -3038,7 +3038,7 @@ ehci_abort_isoc_xfer(usbd_xfer_handle xfer, usbd_status status)
 	xfer->hcflags |= UXFER_ABORTING;
 
 	xfer->status = status;
-	callout_stop(&(xfer->timeout_handle));
+	callout_stop(&xfer->timeout_handle);
 
 	s = splusb();
 	for (itd = exfer->itdstart; itd != NULL; itd = itd->xfer_next) {

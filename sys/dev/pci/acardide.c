@@ -1,4 +1,4 @@
-/*	$NetBSD: acardide.c,v 1.23 2008/05/14 13:29:29 tsutsui Exp $	*/
+/*	$NetBSD: acardide.c,v 1.23.18.1 2010/11/06 08:08:30 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2001 Izumi Tsutsui.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acardide.c,v 1.23 2008/05/14 13:29:29 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acardide.c,v 1.23.18.1 2010/11/06 08:08:30 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -115,7 +115,6 @@ acard_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	struct pciide_channel *cp;
 	int i;
 	pcireg_t interface;
-	bus_size_t cmdsize, ctlsize;
 
 	if (pciide_chipen(sc, pa) == 0)
 		return;
@@ -167,8 +166,7 @@ acard_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 		cp = &sc->pciide_channels[i];
 		if (pciide_chansetup(sc, i, interface) == 0)
 			continue;
-		pciide_mapchan(pa, cp, interface, &cmdsize, &ctlsize,
-		    pciide_pci_intr);
+		pciide_mapchan(pa, cp, interface, pciide_pci_intr);
 	}
 	if (!ACARD_IS_850(sc)) {
 		u_int32_t reg;

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_statfs.h,v 1.4 2009/03/15 15:55:51 cegger Exp $	*/
+/*	$NetBSD: linux_statfs.h,v 1.4.2.1 2010/11/06 08:08:25 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -33,15 +33,17 @@
 #ifndef _LINUX_STATFS_H
 #define _LINUX_STATFS_H
 
-static void bsd_to_linux_statfs(const struct statvfs *,
+static void __unused bsd_to_linux_statfs(const struct statvfs *,
     struct linux_statfs *);
+static void __unused bsd_to_linux_statfs64(const struct statvfs *,
+    struct linux_statfs64 *);
 
 /*
  * Convert NetBSD statvfs structure to Linux statfs structure.
  * Linux doesn't have f_flag, and we can't set f_frsize due
  * to glibc statvfs() bug (see below).
  */
-static void
+static void __unused
 bsd_to_linux_statfs(const struct statvfs *bsp, struct linux_statfs *lsp)
 {
 	int i;
@@ -76,6 +78,45 @@ bsd_to_linux_statfs(const struct statvfs *bsp, struct linux_statfs *lsp)
 	lsp->l_fbavail = bsp->f_bavail;
 	lsp->l_ffiles = bsp->f_files;
 	lsp->l_fffree = bsp->f_ffree;
+	/* Linux sets the fsid to 0..., we don't */
+	lsp->l_ffsid.val[0] = bsp->f_fsidx.__fsid_val[0];
+	lsp->l_ffsid.val[1] = bsp->f_fsidx.__fsid_val[1];
+	lsp->l_fnamelen = bsp->f_namemax;
+	(void)memset(lsp->l_fspare, 0, sizeof(lsp->l_fspare));
+}
+
+/*
+ * Convert NetBSD statvfs structure to Linux statfs64 structure.
+ * See comments in bsd_to_linux_statfs() for further background.
+ * We can safely pass correct bsize and frsize here, since Linux glibc
+ * statvfs() doesn't use statfs64().
+ */
+static void __unused
+bsd_to_linux_statfs64(const struct statvfs *bsp, struct linux_statfs64 *lsp)
+{
+	int i, div;
+
+	for (i = 0; i < linux_fstypes_cnt; i++) {
+		if (strcmp(bsp->f_fstypename, linux_fstypes[i].bsd) == 0) {
+			lsp->l_ftype = linux_fstypes[i].linux;
+			break;
+		}
+	}
+
+	if (i == linux_fstypes_cnt) {
+		lsp->l_ftype = LINUX_DEFAULT_SUPER_MAGIC;
+	}
+
+	div = bsp->f_frsize ? (bsp->f_bsize / bsp->f_frsize) : 1;
+	if (div == 0)
+		div = 1;
+	lsp->l_fbsize = bsp->f_bsize;
+	lsp->l_ffrsize = bsp->f_frsize;
+	lsp->l_fblocks = bsp->f_blocks / div;
+	lsp->l_fbfree = bsp->f_bfree / div;
+	lsp->l_fbavail = bsp->f_bavail / div;
+	lsp->l_ffiles = bsp->f_files;
+	lsp->l_fffree = bsp->f_ffree / div;
 	/* Linux sets the fsid to 0..., we don't */
 	lsp->l_ffsid.val[0] = bsp->f_fsidx.__fsid_val[0];
 	lsp->l_ffsid.val[1] = bsp->f_fsidx.__fsid_val[1];

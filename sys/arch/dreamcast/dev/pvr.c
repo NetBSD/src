@@ -1,4 +1,4 @@
-/*	$NetBSD: pvr.c,v 1.25.18.2 2010/10/22 07:21:11 uebayasi Exp $	*/
+/*	$NetBSD: pvr.c,v 1.25.18.3 2010/11/06 08:08:16 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pvr.c,v 1.25.18.2 2010/10/22 07:21:11 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pvr.c,v 1.25.18.3 2010/11/06 08:08:16 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -155,43 +155,43 @@ struct pvr_softc {
 	int nscreens;
 };
 
-int	pvr_match(device_t, cfdata_t, void *);
-void	pvr_attach(device_t, device_t, void *);
+static int	pvr_match(device_t, cfdata_t, void *);
+static void	pvr_attach(device_t, device_t, void *);
 
 CFATTACH_DECL_NEW(pvr, sizeof(struct pvr_softc),
     pvr_match, pvr_attach, NULL, NULL);
 
-void	pvr_getdevconfig(struct fb_devconfig *);
+static void	pvr_getdevconfig(struct fb_devconfig *);
 
-struct fb_devconfig pvr_console_dc;
+static struct fb_devconfig pvr_console_dc;
 
-char pvr_stdscreen_textgeom[32] = { "std" };	/* XXX yuck */
+static char pvr_stdscreen_textgeom[32] = { "std" };	/* XXX yuck */
 
-struct wsscreen_descr pvr_stdscreen = {
+static struct wsscreen_descr pvr_stdscreen = {
 	pvr_stdscreen_textgeom, 0, 0,
 	0, /* textops */
 	0, 0,
 	WSSCREEN_WSCOLORS,
 };
 
-const struct wsscreen_descr *_pvr_scrlist[] = {
+static const struct wsscreen_descr *_pvr_scrlist[] = {
 	&pvr_stdscreen,
 };
 
-const struct wsscreen_list pvr_screenlist = {
+static const struct wsscreen_list pvr_screenlist = {
 	sizeof(_pvr_scrlist) / sizeof(struct wsscreen_descr *), _pvr_scrlist
 };
 
-int	pvrioctl(void *, void *, u_long, void *, int, struct lwp *);
-paddr_t	pvrmmap(void *, void *, off_t, int);
+static int	pvrioctl(void *, void *, u_long, void *, int, struct lwp *);
+static paddr_t	pvrmmap(void *, void *, off_t, int);
 
-int	pvr_alloc_screen(void *, const struct wsscreen_descr *,
-	    void **, int *, int *, long *);
-void	pvr_free_screen(void *, void *);
-int	pvr_show_screen(void *, void *, int,
-	    void (*)(void *, int, int), void *);
+static int	pvr_alloc_screen(void *, const struct wsscreen_descr *,
+		    void **, int *, int *, long *);
+static void	pvr_free_screen(void *, void *);
+static int	pvr_show_screen(void *, void *, int,
+		    void (*)(void *, int, int), void *);
 
-const struct wsdisplay_accessops pvr_accessops = {
+static const struct wsdisplay_accessops pvr_accessops = {
 	pvrioctl,
 	pvrmmap,
 	pvr_alloc_screen,
@@ -200,7 +200,7 @@ const struct wsdisplay_accessops pvr_accessops = {
 	NULL, /* load_font */
 };
 
-void	pvrinit(struct fb_devconfig *);
+static void	pvrinit(struct fb_devconfig *);
 
 int	pvr_is_console;
 
@@ -579,9 +579,6 @@ pvrinit(struct fb_devconfig *dc)
 }
 
 /* Console support. */
-
-void	pvrcnprobe(struct consdev *);
-void	pvrcninit(struct consdev *);
 
 void
 pvrcninit(struct consdev *cndev)

@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_common.c,v 1.43 2009/10/19 18:41:15 bouyer Exp $	*/
+/*	$NetBSD: pciide_common.c,v 1.43.2.1 2010/11/06 08:08:31 uebayasi Exp $	*/
 
 
 /*
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide_common.c,v 1.43 2009/10/19 18:41:15 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide_common.c,v 1.43.2.1 2010/11/06 08:08:31 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -171,6 +171,57 @@ pciide_common_attach(struct pciide_softc *sc, struct pci_attach_args *pa, const 
 	    pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG)), DEBUG_PROBE);
 }
 
+int
+pciide_common_detach(struct pciide_softc *sc, int flags)
+{
+	struct pciide_channel *cp;
+	struct ata_channel *wdc_cp;
+	struct wdc_regs *wdr;
+	int channel, drive;
+	int rv;
+
+	rv = wdcdetach(sc->sc_wdcdev.sc_atac.atac_dev, flags);
+	if (rv)
+		return rv;
+
+	for (channel = 0; channel < sc->sc_wdcdev.sc_atac.atac_nchannels;
+	     channel++) {
+		cp = &sc->pciide_channels[channel];
+		wdc_cp = &cp->ata_channel;
+		wdr = CHAN_TO_WDC_REGS(wdc_cp);
+
+		if (wdc_cp->ch_flags & ATACH_DISABLED)
+			continue;
+
+		if (wdr->cmd_ios != 0)
+			bus_space_unmap(wdr->cmd_iot,
+			    wdr->cmd_baseioh, wdr->cmd_ios);
+		if (cp->compat != 0) {
+			if (wdr->ctl_ios != 0)
+				bus_space_unmap(wdr->ctl_iot,
+				    wdr->ctl_ioh, wdr->ctl_ios);
+		} else {
+			if (cp->ctl_ios != 0)
+				bus_space_unmap(wdr->ctl_iot,
+				    cp->ctl_baseioh, cp->ctl_ios);
+		}
+
+		for (drive = 0; drive < cp->ata_channel.ch_ndrive; drive++) {
+			pciide_dma_table_teardown(sc, channel, drive);
+		}
+
+		free(cp->ata_channel.ch_queue, M_DEVBUF);
+		cp->ata_channel.atabus = NULL;
+	}
+
+	if (sc->sc_dma_ios != 0)
+		bus_space_unmap(sc->sc_dma_iot, sc->sc_dma_ioh, sc->sc_dma_ios);
+	if (sc->sc_ba5_ss != 0)
+		bus_space_unmap(sc->sc_ba5_st, sc->sc_ba5_sh, sc->sc_ba5_ss);
+
+	return 0;
+}
+
 /* tell whether the chip is enabled or not */
 int
 pciide_chipen(struct pciide_softc *sc, struct pci_attach_args *pa)
@@ -190,7 +241,7 @@ pciide_chipen(struct pciide_softc *sc, struct pci_attach_args *pa)
 }
 
 void
-pciide_mapregs_compat(struct pci_attach_args *pa, struct pciide_channel *cp, int compatchan, bus_size_t *cmdsizep, bus_size_t *ctlsizep)
+pciide_mapregs_compat(struct pci_attach_args *pa, struct pciide_channel *cp, int compatchan)
 {
 	struct pciide_softc *sc = CHAN_TO_PCIIDE(&cp->ata_channel);
 	struct ata_channel *wdc_cp = &cp->ata_channel;
@@ -198,8 +249,6 @@ pciide_mapregs_compat(struct pci_attach_args *pa, struct pciide_channel *cp, int
 	int i;
 
 	cp->compat = 1;
-	*cmdsizep = PCIIDE_COMPAT_CMD_SIZE;
-	*ctlsizep = PCIIDE_COMPAT_CTL_SIZE;
 
 	wdr->cmd_iot = pa->pa_iot;
 	if (bus_space_map(wdr->cmd_iot, PCIIDE_COMPAT_CMD_BASE(compatchan),
@@ -208,16 +257,17 @@ pciide_mapregs_compat(struct pci_attach_args *pa, struct pciide_channel *cp, int
 		    "couldn't map %s channel cmd regs\n", cp->name);
 		goto bad;
 	}
+	wdr->cmd_ios = PCIIDE_COMPAT_CMD_SIZE;
 
 	wdr->ctl_iot = pa->pa_iot;
 	if (bus_space_map(wdr->ctl_iot, PCIIDE_COMPAT_CTL_BASE(compatchan),
 	    PCIIDE_COMPAT_CTL_SIZE, 0, &wdr->ctl_ioh) != 0) {
 		aprint_error_dev(sc->sc_wdcdev.sc_atac.atac_dev,
 		    "couldn't map %s channel ctl regs\n", cp->name);
-		bus_space_unmap(wdr->cmd_iot, wdr->cmd_baseioh,
-		    PCIIDE_COMPAT_CMD_SIZE);
+		bus_space_unmap(wdr->cmd_iot, wdr->cmd_baseioh, wdr->cmd_ios);
 		goto bad;
 	}
+	wdr->ctl_ios = PCIIDE_COMPAT_CTL_SIZE;
 
 	for (i = 0; i < WDC_NREG; i++) {
 		if (bus_space_subregion(wdr->cmd_iot, wdr->cmd_baseioh, i,
@@ -240,8 +290,7 @@ bad:
 
 void
 pciide_mapregs_native(struct pci_attach_args *pa,
-	struct pciide_channel *cp, bus_size_t *cmdsizep,
-	bus_size_t *ctlsizep, int (*pci_intr)(void *))
+	struct pciide_channel *cp, int (*pci_intr)(void *))
 {
 	struct pciide_softc *sc = CHAN_TO_PCIIDE(&cp->ata_channel);
 	struct ata_channel *wdc_cp = &cp->ata_channel;
@@ -277,7 +326,7 @@ pciide_mapregs_native(struct pci_attach_args *pa,
 	cp->ih = sc->sc_pci_ih;
 	if (pci_mapreg_map(pa, PCIIDE_REG_CMD_BASE(wdc_cp->ch_channel),
 	    PCI_MAPREG_TYPE_IO, 0,
-	    &wdr->cmd_iot, &wdr->cmd_baseioh, NULL, cmdsizep) != 0) {
+	    &wdr->cmd_iot, &wdr->cmd_baseioh, NULL, &wdr->cmd_ios) != 0) {
 		aprint_error_dev(sc->sc_wdcdev.sc_atac.atac_dev,
 		    "couldn't map %s channel cmd regs\n", cp->name);
 		goto bad;
@@ -285,11 +334,10 @@ pciide_mapregs_native(struct pci_attach_args *pa,
 
 	if (pci_mapreg_map(pa, PCIIDE_REG_CTL_BASE(wdc_cp->ch_channel),
 	    PCI_MAPREG_TYPE_IO, 0,
-	    &wdr->ctl_iot, &cp->ctl_baseioh, NULL, ctlsizep) != 0) {
+	    &wdr->ctl_iot, &cp->ctl_baseioh, NULL, &cp->ctl_ios) != 0) {
 		aprint_error_dev(sc->sc_wdcdev.sc_atac.atac_dev,
 		    "couldn't map %s channel ctl regs\n", cp->name);
-		bus_space_unmap(wdr->cmd_iot, wdr->cmd_baseioh,
-		    *cmdsizep);
+		bus_space_unmap(wdr->cmd_iot, wdr->cmd_baseioh, wdr->cmd_ios);
 		goto bad;
 	}
 	/*
@@ -301,9 +349,8 @@ pciide_mapregs_native(struct pci_attach_args *pa,
 	    &wdr->ctl_ioh) != 0) {
 		aprint_error_dev(sc->sc_wdcdev.sc_atac.atac_dev,
 		    "unable to subregion %s channel ctl regs\n", cp->name);
-		bus_space_unmap(wdr->cmd_iot, wdr->cmd_baseioh,
-		     *cmdsizep);
-		bus_space_unmap(wdr->cmd_iot, cp->ctl_baseioh, *ctlsizep);
+		bus_space_unmap(wdr->cmd_iot, wdr->cmd_baseioh, wdr->cmd_ios);
+		bus_space_unmap(wdr->cmd_iot, cp->ctl_baseioh, cp->ctl_ios);
 		goto bad;
 	}
 
@@ -377,7 +424,8 @@ pciide_mapreg_dma(struct pciide_softc *sc, struct pci_attach_args *pa)
 	case PCI_MAPREG_MEM_TYPE_32BIT:
 		sc->sc_dma_ok = (pci_mapreg_map(pa,
 		    PCIIDE_REG_BUS_MASTER_DMA, maptype, 0,
-		    &sc->sc_dma_iot, &sc->sc_dma_ioh, NULL, NULL) == 0);
+		    &sc->sc_dma_iot, &sc->sc_dma_ioh, NULL, &sc->sc_dma_ios)
+		    == 0);
 		sc->sc_dmat = pa->pa_dmat;
 		if (sc->sc_dma_ok == 0) {
 			aprint_verbose(", but unused (couldn't map registers)");
@@ -514,8 +562,7 @@ pciide_channel_dma_setup(struct pciide_channel *cp)
 int
 pciide_dma_table_setup(struct pciide_softc *sc, int channel, int drive)
 {
-	bus_dma_segment_t seg;
-	int error, rseg;
+	int error;
 	const bus_size_t dma_table_size =
 	    sizeof(struct idedma_table) * NIDEDMA_TABLES(sc);
 	struct pciide_dma_maps *dma_maps =
@@ -527,15 +574,15 @@ pciide_dma_table_setup(struct pciide_softc *sc, int channel, int drive)
 
 	/* Allocate memory for the DMA tables and map it */
 	if ((error = bus_dmamem_alloc(sc->sc_dmat, dma_table_size,
-	    IDEDMA_TBL_ALIGN, IDEDMA_TBL_ALIGN, &seg, 1, &rseg,
-	    BUS_DMA_NOWAIT)) != 0) {
+	    IDEDMA_TBL_ALIGN, IDEDMA_TBL_ALIGN, &dma_maps->dmamap_table_seg,
+	    1, &dma_maps->dmamap_table_nseg, BUS_DMA_NOWAIT)) != 0) {
 		aprint_error(dmaerrfmt,
 		    device_xname(sc->sc_wdcdev.sc_atac.atac_dev), channel,
 		    "allocate", drive, error);
 		return error;
 	}
-	if ((error = bus_dmamem_map(sc->sc_dmat, &seg, rseg,
-	    dma_table_size,
+	if ((error = bus_dmamem_map(sc->sc_dmat, &dma_maps->dmamap_table_seg,
+	    dma_maps->dmamap_table_nseg, dma_table_size,
 	    (void **)&dma_maps->dma_table,
 	    BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) != 0) {
 		aprint_error(dmaerrfmt,
@@ -545,7 +592,7 @@ pciide_dma_table_setup(struct pciide_softc *sc, int channel, int drive)
 	}
 	ATADEBUG_PRINT(("pciide_dma_table_setup: table at %p len %lu, "
 	    "phy 0x%lx\n", dma_maps->dma_table, (u_long)dma_table_size,
-	    (unsigned long)seg.ds_addr), DEBUG_PROBE);
+	    (unsigned long)dma_maps->dmamap_table_seg.ds_addr), DEBUG_PROBE);
 	/* Create and load table DMA map for this disk */
 	if ((error = bus_dmamap_create(sc->sc_dmat, dma_table_size,
 	    1, dma_table_size, IDEDMA_TBL_ALIGN, BUS_DMA_NOWAIT,
@@ -578,6 +625,31 @@ pciide_dma_table_setup(struct pciide_softc *sc, int channel, int drive)
 		return error;
 	}
 	return 0;
+}
+
+void
+pciide_dma_table_teardown(struct pciide_softc *sc, int channel, int drive)
+{
+	struct pciide_channel *cp;
+	struct pciide_dma_maps *dma_maps;
+
+	cp = &sc->pciide_channels[channel];
+	dma_maps = &cp->dma_maps[drive];
+
+	if (dma_maps->dma_table == NULL)
+		return;
+
+	bus_dmamap_destroy(sc->sc_dmat, dma_maps->dmamap_xfer);
+	bus_dmamap_unload(sc->sc_dmat, dma_maps->dmamap_table);
+	bus_dmamap_destroy(sc->sc_dmat, dma_maps->dmamap_table);
+	bus_dmamem_unmap(sc->sc_dmat, dma_maps->dma_table,
+	    sizeof(struct idedma_table) * NIDEDMA_TABLES(sc));
+	bus_dmamem_free(sc->sc_dmat, &dma_maps->dmamap_table_seg,
+	    dma_maps->dmamap_table_nseg);
+
+	dma_maps->dma_table = NULL;
+
+	return;
 }
 
 int
@@ -778,16 +850,14 @@ pciide_chansetup(struct pciide_softc *sc, int channel, pcireg_t interface)
 void
 pciide_mapchan(struct pci_attach_args *pa,
 	struct pciide_channel *cp,
-	pcireg_t interface, bus_size_t *cmdsizep,
-	bus_size_t *ctlsizep, int (*pci_intr)(void *))
+	pcireg_t interface, int (*pci_intr)(void *))
 {
 	struct ata_channel *wdc_cp = &cp->ata_channel;
 
 	if (interface & PCIIDE_INTERFACE_PCI(wdc_cp->ch_channel))
-		pciide_mapregs_native(pa, cp, cmdsizep, ctlsizep, pci_intr);
+		pciide_mapregs_native(pa, cp, pci_intr);
 	else {
-		pciide_mapregs_compat(pa, cp, wdc_cp->ch_channel, cmdsizep,
-		    ctlsizep);
+		pciide_mapregs_compat(pa, cp, wdc_cp->ch_channel);
 		if ((cp->ata_channel.ch_flags & ATACH_DISABLED) == 0)
 			pciide_map_compat_intr(pa, cp, wdc_cp->ch_channel);
 	}
@@ -828,7 +898,6 @@ default_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	int drive;
 	u_int8_t idedma_ctl;
 #endif
-	bus_size_t cmdsize, ctlsize;
 	const char *failreason;
 	struct wdc_regs *wdr;
 
@@ -887,11 +956,10 @@ default_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 			continue;
 		wdr = CHAN_TO_WDC_REGS(&cp->ata_channel);
 		if (interface & PCIIDE_INTERFACE_PCI(channel))
-			pciide_mapregs_native(pa, cp, &cmdsize, &ctlsize,
-			    pciide_pci_intr);
+			pciide_mapregs_native(pa, cp, pciide_pci_intr);
 		else
 			pciide_mapregs_compat(pa, cp,
-			    cp->ata_channel.ch_channel, &cmdsize, &ctlsize);
+			    cp->ata_channel.ch_channel);
 		if (cp->ata_channel.ch_flags & ATACH_DISABLED)
 			continue;
 		/*
@@ -932,8 +1000,9 @@ next:
 			    "%s channel ignored (%s)\n", cp->name, failreason);
 			cp->ata_channel.ch_flags |= ATACH_DISABLED;
 			bus_space_unmap(wdr->cmd_iot, wdr->cmd_baseioh,
-			    cmdsize);
-			bus_space_unmap(wdr->ctl_iot, wdr->ctl_ioh, ctlsize);
+			    wdr->cmd_ios);
+			bus_space_unmap(wdr->ctl_iot, wdr->ctl_ioh,
+			    wdr->ctl_ios);
 		} else {
 			pciide_map_compat_intr(pa, cp,
 			    cp->ata_channel.ch_channel);

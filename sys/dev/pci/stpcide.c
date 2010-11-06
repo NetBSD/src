@@ -1,4 +1,4 @@
-/*	$NetBSD: stpcide.c,v 1.19 2008/05/26 10:31:22 nisimura Exp $	*/
+/*	$NetBSD: stpcide.c,v 1.19.18.1 2010/11/06 08:08:32 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stpcide.c,v 1.19 2008/05/26 10:31:22 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stpcide.c,v 1.19.18.1 2010/11/06 08:08:32 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,7 +89,6 @@ stpc_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	struct pciide_channel *cp;
 	int channel;
 	pcireg_t interface = PCI_INTERFACE(pa->pa_class);
-	bus_size_t cmdsize, ctlsize;
 
 	if (pciide_chipen(sc, pa) == 0)
 		return;
@@ -117,8 +116,7 @@ stpc_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 		cp = &sc->pciide_channels[channel];
 		if (pciide_chansetup(sc, channel, interface) == 0)
 			continue;
-		pciide_mapchan(pa, cp, interface, &cmdsize, &ctlsize,
-		    pciide_pci_intr);
+		pciide_mapchan(pa, cp, interface, pciide_pci_intr);
 	}
 }
 

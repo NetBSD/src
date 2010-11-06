@@ -1,4 +1,4 @@
-/*	$NetBSD: uyurex.c,v 1.2.4.2 2010/04/30 14:43:54 uebayasi Exp $ */
+/*	$NetBSD: uyurex.c,v 1.2.4.3 2010/11/06 08:08:42 uebayasi Exp $ */
 /*	$OpenBSD: uyurex.c,v 1.3 2010/03/04 03:47:22 deraadt Exp $ */
 
 /*
@@ -112,9 +112,10 @@ extern struct cfdriver uyurex_cd;
 CFATTACH_DECL_NEW(uyurex, sizeof(struct uyurex_softc),
     uyurex_match, uyurex_attach, uyurex_detach, uyurex_activate);
 
-USB_MATCH(uyurex)
+int 
+uyurex_match(device_t parent, cfdata_t match, void *aux)
 {
-	USB_MATCH_START(uyurex, uaa);
+	struct usb_attach_arg *uaa = aux;
 	struct uhidev_attach_arg *uha = (struct uhidev_attach_arg *)uaa;
 
 	if (uyurex_lookup(uha->uaa->vendor, uha->uaa->product) == NULL)
@@ -123,9 +124,11 @@ USB_MATCH(uyurex)
 	return (UMATCH_VENDOR_PRODUCT);
 }
 
-USB_ATTACH(uyurex)
+void 
+uyurex_attach(device_t parent, device_t self, void *aux)
 {
-	USB_ATTACH_START(uyurex, sc, uaa);
+	struct uyurex_softc *sc = device_private(self);
+	struct usb_attach_arg *uaa = aux;
 	struct uhidev_attach_arg *uha = (struct uhidev_attach_arg *)uaa;
 	usbd_device_handle dev = uha->parent->sc_udev;
 	int size, repid, err;
@@ -194,9 +197,10 @@ USB_ATTACH(uyurex)
 	uyurex_set_mode(sc, 0);
 }
 
-USB_DETACH(uyurex)
+int 
+uyurex_detach(device_t self, int flags)
 {
-	USB_DETACH_START(uyurex, sc);
+	struct uyurex_softc *sc = device_private(self);
 	int rv = 0;
 
 	sc->sc_dying = 1;

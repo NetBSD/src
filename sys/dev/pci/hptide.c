@@ -1,4 +1,4 @@
-/*	$NetBSD: hptide.c,v 1.26 2009/10/19 18:41:15 bouyer Exp $	*/
+/*	$NetBSD: hptide.c,v 1.26.2.1 2010/11/06 08:08:30 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hptide.c,v 1.26 2009/10/19 18:41:15 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hptide.c,v 1.26.2.1 2010/11/06 08:08:30 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -110,7 +110,6 @@ hpt_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	struct pciide_channel *cp;
 	int i, compatchan, revision;
 	pcireg_t interface;
-	bus_size_t cmdsize, ctlsize;
 
 	if (pciide_chipen(sc, pa) == 0)
 		return;
@@ -238,11 +237,9 @@ hpt_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 		if (pciide_chansetup(sc, i, interface) == 0)
 			continue;
 		if (interface & PCIIDE_INTERFACE_PCI(i)) {
-			pciide_mapregs_native(pa, cp, &cmdsize,
-			    &ctlsize, hpt_pci_intr);
+			pciide_mapregs_native(pa, cp, hpt_pci_intr);
 		} else {
-			pciide_mapregs_compat(pa, cp, compatchan,
-			    &cmdsize, &ctlsize);
+			pciide_mapregs_compat(pa, cp, compatchan);
 			if ((cp->ata_channel.ch_flags & ATACH_DISABLED) == 0)
 				pciide_map_compat_intr(pa, cp,
 				    sc->sc_cy_compatchan);

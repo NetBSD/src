@@ -1,4 +1,4 @@
-/*	$NetBSD: toshide.c,v 1.2 2009/09/20 01:12:30 christos Exp $	*/
+/*	$NetBSD: toshide.c,v 1.2.2.1 2010/11/06 08:08:32 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: toshide.c,v 1.2 2009/09/20 01:12:30 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: toshide.c,v 1.2.2.1 2010/11/06 08:08:32 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -114,7 +114,6 @@ static void
 piccolo_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 {
 	struct pciide_channel *cp;
-	bus_size_t cmdsize, ctlsize;
 	pcireg_t interface;
 	int channel;
 
@@ -157,8 +156,7 @@ piccolo_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 		if (pciide_chansetup(sc, channel, interface) == 0)
 			continue;
 
-		pciide_mapchan(pa, cp, interface, &cmdsize, &ctlsize,
-		    pciide_pci_intr);
+		pciide_mapchan(pa, cp, interface, pciide_pci_intr);
 	}
 }
 

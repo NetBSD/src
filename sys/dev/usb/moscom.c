@@ -1,4 +1,4 @@
-/*	$NetBSD: moscom.c,v 1.3 2009/11/12 19:53:14 dyoung Exp $	*/
+/*	$NetBSD: moscom.c,v 1.3.2.1 2010/11/06 08:08:36 uebayasi Exp $	*/
 /*	$OpenBSD: moscom.c,v 1.11 2007/10/11 18:33:14 deraadt Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: moscom.c,v 1.3 2009/11/12 19:53:14 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: moscom.c,v 1.3.2.1 2010/11/06 08:08:36 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -137,10 +137,10 @@ __KERNEL_RCSID(0, "$NetBSD: moscom.c,v 1.3 2009/11/12 19:53:14 dyoung Exp $");
 #define MOSCOM_BAUD_REF		115200
 
 struct moscom_softc {
-	USBBASEDEVICE		 sc_dev;
+	device_t		 sc_dev;
 	usbd_device_handle	 sc_udev;
 	usbd_interface_handle	 sc_iface;
-	device_ptr_t		 sc_subdev;
+	device_t		 sc_subdev;
 
 	u_char			 sc_msr;
 	u_char			 sc_lsr;
@@ -181,17 +181,20 @@ int moscom_activate(device_t, enum devact);
 CFATTACH_DECL2_NEW(moscom, sizeof(struct moscom_softc), moscom_match,
     moscom_attach, moscom_detach, moscom_activate, NULL, moscom_childdet);
 
-USB_MATCH(moscom)
+int 
+moscom_match(device_t parent, cfdata_t match, void *aux)
 {
-	USB_MATCH_START(moscom, uaa);
+	struct usb_attach_arg *uaa = aux;
 
 	return (moscom_lookup(uaa->vendor, uaa->product) != NULL ?
 		UMATCH_VENDOR_PRODUCT : UMATCH_NONE);
 }
 
-USB_ATTACH(moscom)
+void 
+moscom_attach(device_t parent, device_t self, void *aux)
 {
-	USB_ATTACH_START(moscom, sc, uaa);
+	struct moscom_softc *sc = device_private(self);
+	struct usb_attach_arg *uaa = aux;
 	usbd_device_handle dev = uaa->device;
 	struct ucom_attach_args uca;
 	usb_interface_descriptor_t *id;
@@ -264,12 +267,12 @@ USB_ATTACH(moscom)
 	uca.info = NULL;
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
-	    USBDEV(sc->sc_dev));
+	    sc->sc_dev);
 	
 	sc->sc_subdev = config_found_sm_loc(self, "ucombus", NULL, &uca,
 					    ucomprint, ucomsubmatch);
 
-	USB_ATTACH_SUCCESS_RETURN;
+	return;
 }
 
 void
@@ -281,9 +284,10 @@ moscom_childdet(device_t self, device_t child)
 	sc->sc_subdev = NULL;
 }
 
-USB_DETACH(moscom)
+int 
+moscom_detach(device_t self, int flags)
 {
-	USB_DETACH_START(moscom, sc);
+	struct moscom_softc *sc = device_private(self);
 	int rv = 0;
 
 	sc->sc_dying = 1;
@@ -291,7 +295,7 @@ USB_DETACH(moscom)
 		rv = config_detach(sc->sc_subdev, flags);
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
-			   USBDEV(sc->sc_dev));
+			   sc->sc_dev);
 
 	return (rv);
 }

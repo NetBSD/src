@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_misc.c,v 1.18.2.1 2010/08/17 06:45:52 uebayasi Exp $	*/
+/*	$NetBSD: linux32_misc.c,v 1.18.2.2 2010/11/06 08:08:26 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_misc.c,v 1.18.2.1 2010/08/17 06:45:52 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_misc.c,v 1.18.2.2 2010/11/06 08:08:26 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -114,6 +114,50 @@ linux32_sys_fstatfs(struct lwp *l, const struct linux32_sys_fstatfs_args *uap, r
 	return error;
 }
 
+int
+linux32_sys_statfs64(struct lwp *l, const struct linux32_sys_statfs64_args *uap, register_t *retval)
+{
+	/* {
+		syscallarg(const netbsd32_charp char) path;
+		syscallarg(linux32_statfs64p) sp;
+	} */
+	struct statvfs *sb;
+	struct linux_statfs64 ltmp;
+	int error;
+
+	sb = STATVFSBUF_GET();
+	error = do_sys_pstatvfs(l, SCARG_P32(uap, path), ST_WAIT, sb);
+	if (error == 0) {
+		bsd_to_linux_statfs64(sb, &ltmp);
+		error = copyout(&ltmp, SCARG_P32(uap, sp), sizeof ltmp);
+	}
+
+	STATVFSBUF_PUT(sb);
+	return error;
+}
+
+int
+linux32_sys_fstatfs64(struct lwp *l, const struct linux32_sys_fstatfs64_args *uap, register_t *retval)
+{
+	/* {
+		syscallarg(int) fd;
+		syscallarg(linux32_statfs64p) sp;
+	} */
+	struct statvfs *sb;
+	struct linux_statfs64 ltmp;
+	int error;
+
+	sb = STATVFSBUF_GET();
+	error = do_sys_fstatvfs(l, SCARG(uap, fd), ST_WAIT, sb);
+	if (error == 0) {
+		bsd_to_linux_statfs64(sb, &ltmp);
+		error = copyout(&ltmp, SCARG_P32(uap, sp), sizeof ltmp);
+	}
+	STATVFSBUF_PUT(sb);
+
+	return error;
+}
+
 extern const int linux_ptrace_request_map[];
 
 int
@@ -179,18 +223,10 @@ linux32_sys_personality(struct lwp *l, const struct linux32_sys_personality_args
 	/* {
 		syscallarg(netbsd32_u_long) per;
 	} */
+	struct linux_sys_personality_args ua;
 
-	switch (SCARG(uap, per)) {
-	case LINUX_PER_LINUX:
-	case LINUX_PER_LINUX32:
-	case LINUX_PER_QUERY:
-		break;
-	default:
-		return EINVAL;
-	}
-
-	retval[0] = LINUX_PER_LINUX;
-	return 0;
+	NETBSD32TOX_UAP(per, long);
+	return linux_sys_personality(l, &ua, retval);
 }
 
 int
@@ -261,6 +297,52 @@ linux32_sys_get_robust_list(struct lwp *l,
 	struct linux_sys_get_robust_list_args ua;
 
 	NETBSD32TOP_UAP(head, struct robust_list_head *);
-	NETBSD32TOP_UAP(head, size_t *);
+	NETBSD32TOP_UAP(len, size_t *);
 	return linux_sys_get_robust_list(l, &ua, retval);
+}
+
+int
+linux32_sys_truncate64(struct lwp *l, const struct linux32_sys_truncate64_args *uap, register_t *retval)
+{
+	/* {
+		syscallarg(netbsd32_charp) path;
+		syscallarg(off_t) length;
+	} */
+	struct sys_truncate_args ua;
+
+	/* Linux doesn't have the 'pad' pseudo-parameter */
+	NETBSD32TOP_UAP(path, const char *);
+	SCARG(&ua, PAD) = 0;
+	SCARG(&ua, length) = ((off_t)SCARG(uap, lenhi) << 32) + SCARG(uap, lenlo);
+	return sys_truncate(l, &ua, retval);
+}
+
+int
+linux32_sys_ftruncate64(struct lwp *l, const struct linux32_sys_ftruncate64_args *uap, register_t *retval)
+{
+	/* {
+		syscallarg(unsigned int) fd;
+		syscallarg(off_t) length;
+	} */
+	struct sys_ftruncate_args ua;
+
+	/* Linux doesn't have the 'pad' pseudo-parameter */
+	NETBSD32TO64_UAP(fd);
+	SCARG(&ua, PAD) = 0;
+	SCARG(&ua, length) = ((off_t)SCARG(uap, lenhi) << 32) + SCARG(uap, lenlo);
+	return sys_ftruncate(l, &ua, retval);
+}
+
+int
+linux32_sys_setdomainname(struct lwp *l, const struct linux32_sys_setdomainname_args *uap, register_t *retval)
+{
+	/* {
+		syscallarg(netbsd32_charp) domainname;
+		syscallarg(int) len;
+	} */
+	struct linux_sys_setdomainname_args ua;
+
+	NETBSD32TOP_UAP(domainname, char);
+	NETBSD32TO64_UAP(len);
+	return linux_sys_setdomainname(l, &ua, retval);
 }

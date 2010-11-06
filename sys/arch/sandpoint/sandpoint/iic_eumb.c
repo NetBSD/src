@@ -1,11 +1,10 @@
-/* $NetBSD: iic_eumb.c,v 1.7.2.1 2010/08/17 06:45:07 uebayasi Exp $ */
+/* $NetBSD: iic_eumb.c,v 1.7.2.2 2010/11/06 08:08:22 uebayasi Exp $ */
 
 /*-
- * Copyright (c) 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 2010 Frank Wille.
  * All rights reserved.
  *
- * This code is derived from software contributed to The NetBSD Foundation
- * by Tohru Nishimura.
+ * Written by Frank Wille for The NetBSD Project.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iic_eumb.c,v 1.7.2.1 2010/08/17 06:45:07 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iic_eumb.c,v 1.7.2.2 2010/11/06 08:08:22 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>

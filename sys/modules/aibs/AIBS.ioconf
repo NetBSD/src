@@ -1,0 +1,10 @@
+#	$NetBSD: AIBS.ioconf,v 1.1.2.2 2010/11/06 08:08:47 uebayasi Exp $
+
+ioconf aibs
+
+include "conf/files"
+include "dev/acpi/files.acpi"
+
+pseudo-root acpi*
+
+aibs* at acpi?

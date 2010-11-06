@@ -1,4 +1,4 @@
-/*	$NetBSD: ubsavar.h,v 1.6 2008/07/31 22:01:15 drochner Exp $	*/
+/*	$NetBSD: ubsavar.h,v 1.6.14.1 2010/11/06 08:08:37 uebayasi Exp $	*/
 /*-
  * Copyright (c) 2002, Alexander Kabaev <kan.FreeBSD.org>.
  * All rights reserved.
@@ -112,7 +112,7 @@
 #define UBSA_MAXCONN		3
 
 struct	ubsa_softc {
-	USBBASEDEVICE		sc_dev;		/* base device */
+	device_t		sc_dev;		/* base device */
 	usbd_device_handle	sc_udev;	/* USB device */
 	usbd_interface_handle	sc_iface[UBSA_MAXCONN]; /* interface */
 

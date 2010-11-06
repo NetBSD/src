@@ -1,4 +1,4 @@
-/* $NetBSD: thinkpad_acpi.c,v 1.25.2.1 2010/04/30 14:43:07 uebayasi Exp $ */
+/* $NetBSD: thinkpad_acpi.c,v 1.25.2.2 2010/11/06 08:08:28 uebayasi Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: thinkpad_acpi.c,v 1.25.2.1 2010/04/30 14:43:07 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: thinkpad_acpi.c,v 1.25.2.2 2010/11/06 08:08:28 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -679,7 +679,7 @@ static struct cfdata thinkpad_cfdata[] = {
 		.cf_pspec = &acpiparent,
 	},
 
-	{ NULL }
+	{ NULL, NULL, 0, 0, NULL, 0, NULL }
 };
 
 static int

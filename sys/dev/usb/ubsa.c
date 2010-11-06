@@ -1,4 +1,4 @@
-/*	$NetBSD: ubsa.c,v 1.25 2009/11/12 19:51:44 dyoung Exp $	*/
+/*	$NetBSD: ubsa.c,v 1.25.2.1 2010/11/06 08:08:37 uebayasi Exp $	*/
 /*-
  * Copyright (c) 2002, Alexander Kabaev <kan.FreeBSD.org>.
  * All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubsa.c,v 1.25 2009/11/12 19:51:44 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubsa.c,v 1.25.2.1 2010/11/06 08:08:37 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -99,7 +99,7 @@ SYSCTL_INT(_hw_usb_ubsa, OID_AUTO, debug, CTLFLAG_RW,
 
 #define	DPRINTFN(n, x)	do { \
 				if (ubsadebug > (n)) \
-					logprintf x; \
+					printf x; \
 			} while (0)
 #else
 #define	DPRINTFN(n, x)
@@ -148,17 +148,20 @@ extern struct cfdriver ubsa_cd;
 CFATTACH_DECL2_NEW(ubsa, sizeof(struct ubsa_softc),
     ubsa_match, ubsa_attach, ubsa_detach, ubsa_activate, NULL, ubsa_childdet);
 
-USB_MATCH(ubsa)
+int 
+ubsa_match(device_t parent, cfdata_t match, void *aux)
 {
-	USB_MATCH_START(ubsa, uaa);
+	struct usb_attach_arg *uaa = aux;
 
 	return (ubsa_lookup(uaa->vendor, uaa->product) != NULL ?
 		UMATCH_VENDOR_PRODUCT : UMATCH_NONE);
 }
 
-USB_ATTACH(ubsa)
+void 
+ubsa_attach(device_t parent, device_t self, void *aux)
 {
-	USB_ATTACH_START(ubsa, sc, uaa);
+	struct ubsa_softc *sc = device_private(self);
+	struct usb_attach_arg *uaa = aux;
 	usbd_device_handle dev = uaa->device;
 	usb_config_descriptor_t *cdesc;
 	usb_interface_descriptor_t *id;
@@ -299,12 +302,12 @@ USB_ATTACH(ubsa)
 				    ucomprint, ucomsubmatch);
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
-			   USBDEV(sc->sc_dev));
+			   sc->sc_dev);
 
-	USB_ATTACH_SUCCESS_RETURN;
+	return;
 
 error:
-	USB_ATTACH_ERROR_RETURN;
+	return;
 }
 
 
@@ -322,9 +325,10 @@ ubsa_childdet(device_t self, device_t child)
 		sc->sc_subdevs[i] = NULL;
 }
 
-USB_DETACH(ubsa)
+int 
+ubsa_detach(device_t self, int flags)
 {
-	USB_DETACH_START(ubsa, sc);
+	struct ubsa_softc *sc = device_private(self);
 	int i;
 	int rv = 0;
 
@@ -345,13 +349,13 @@ USB_DETACH(ubsa)
 	}
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
-			   USBDEV(sc->sc_dev));
+			   sc->sc_dev);
 
 	return (rv);
 }
 
 int
-ubsa_activate(device_ptr_t self, enum devact act)
+ubsa_activate(device_t self, enum devact act)
 {
 	struct ubsa_softc *sc = device_private(self);
 

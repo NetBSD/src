@@ -1,4 +1,4 @@
-/*	$NetBSD: int_bus_dma.c,v 1.16 2007/03/05 08:37:38 matt Exp $	*/
+/*	$NetBSD: int_bus_dma.c,v 1.16.64.1 2010/11/06 08:08:17 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
 #define	_ARM32_BUS_DMA_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: int_bus_dma.c,v 1.16 2007/03/05 08:37:38 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: int_bus_dma.c,v 1.16.64.1 2010/11/06 08:08:17 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,6 +87,7 @@ struct integrator_dma_cookie {
 #define ID_BUFTYPE_UIO		3
 #define ID_BUFTYPE_RAW		4
 
+#undef	DEBUG
 #define DEBUG(x)
 
 static struct arm32_dma_range integrator_dma_ranges[DRAM_BLOCKS];

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.74.2.5 2010/10/31 03:46:18 uebayasi Exp $	*/
+/*	$NetBSD: pmap.c,v 1.74.2.6 2010/11/06 08:08:22 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.74.2.5 2010/10/31 03:46:18 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.74.2.6 2010/11/06 08:08:22 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -42,6 +42,8 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.74.2.5 2010/10/31 03:46:18 uebayasi Exp $
 
 #include <sh3/mmu.h>
 #include <sh3/cache.h>
+
+#define	VM_PAGE_TO_MD(pg)	(&(pg)->mdpage)
 
 #ifdef DEBUG
 #define	STATIC

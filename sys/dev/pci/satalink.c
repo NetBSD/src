@@ -1,4 +1,4 @@
-/*	$NetBSD: satalink.c,v 1.39.2.2 2010/08/17 06:46:34 uebayasi Exp $	*/
+/*	$NetBSD: satalink.c,v 1.39.2.3 2010/11/06 08:08:32 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: satalink.c,v 1.39.2.2 2010/08/17 06:46:34 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: satalink.c,v 1.39.2.3 2010/11/06 08:08:32 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -423,7 +423,6 @@ static void
 sii3112_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 {
 	struct pciide_channel *cp;
-	bus_size_t cmdsize, ctlsize;
 	pcireg_t interface, scs_cmd, cfgctl;
 	int channel;
 
@@ -453,7 +452,7 @@ sii3112_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 				   PCI_MAPREG_TYPE_MEM|
 				   PCI_MAPREG_MEM_TYPE_32BIT, 0,
 				   &sc->sc_ba5_st, &sc->sc_ba5_sh,
-				   NULL, NULL) != 0)
+				   NULL, &sc->sc_ba5_ss) != 0)
 			aprint_error_dev(sc->sc_wdcdev.sc_atac.atac_dev,
 			    "unable to map SATALink BA5 register space\n");
 		else
@@ -523,8 +522,7 @@ sii3112_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 		cp = &sc->pciide_channels[channel];
 		if (pciide_chansetup(sc, channel, interface) == 0)
 			continue;
-		pciide_mapchan(pa, cp, interface, &cmdsize, &ctlsize,
-		    pciide_pci_intr);
+		pciide_mapchan(pa, cp, interface, pciide_pci_intr);
 	}
 }
 
@@ -709,7 +707,7 @@ sii3114_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 			   PCI_MAPREG_TYPE_MEM|
 			   PCI_MAPREG_MEM_TYPE_32BIT, 0,
 			   &sc->sc_ba5_st, &sc->sc_ba5_sh,
-			   NULL, NULL) != 0) {
+			   NULL, &sc->sc_ba5_ss) != 0) {
 		aprint_error_dev(sc->sc_wdcdev.sc_atac.atac_dev,
 		    "unable to map SATALink BA5 register space\n");
 		return;

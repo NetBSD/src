@@ -1,4 +1,4 @@
-#	$NetBSD: files.arc,v 1.62 2008/02/20 21:43:33 drochner Exp $
+#	$NetBSD: files.arc,v 1.62.30.1 2010/11/06 08:08:13 uebayasi Exp $
 #	$OpenBSD: files.arc,v 1.21 1999/09/11 10:20:20 niklas Exp $
 #
 # maxpartitions must be first item in files.${ARCH}
@@ -266,6 +266,9 @@ file dev/md_root.c			memory_disk_hooks
 
 # USB
 include "dev/usb/files.usb"
+
+# IEEE1394
+include "dev/ieee1394/files.ieee1394"
 
 #
 #	Common files

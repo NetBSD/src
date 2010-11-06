@@ -1,4 +1,4 @@
-/* $NetBSD: radeonfb_bios.c,v 1.3 2009/01/03 03:43:22 yamt Exp $ */
+/* $NetBSD: radeonfb_bios.c,v 1.3.4.1 2010/11/06 08:08:31 uebayasi Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeonfb_bios.c,v 1.3 2009/01/03 03:43:22 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeonfb_bios.c,v 1.3.4.1 2010/11/06 08:08:31 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,7 +53,9 @@ __KERNEL_RCSID(0, "$NetBSD: radeonfb_bios.c,v 1.3 2009/01/03 03:43:22 yamt Exp $
 #include <dev/pci/radeonfbreg.h>
 #include <dev/pci/radeonfbvar.h>
 
-#ifdef RADEON_BIOS_INIT
+#include "opt_radeonfb.h"
+
+#ifdef RADEONFB_BIOS_INIT
 
 /*
  * Globals for the entire BIOS.
@@ -106,7 +108,7 @@ __KERNEL_RCSID(0, "$NetBSD: radeonfb_bios.c,v 1.3 2009/01/03 03:43:22 yamt Exp $
 #define	PLL_WAIT_CHK_SET_CLK_PWRMGT_CNTL24	5
 
 
-#ifdef	RADEON_BIOS_DEBUG
+#ifdef	RADEONFB_BIOS_DEBUG
 #define	DPRINTF(x)	printf x
 #else
 #define	DPRINTF(x)

@@ -1,4 +1,4 @@
-/*	$NetBSD: radeonfb.c,v 1.34.2.2 2010/10/22 07:22:12 uebayasi Exp $ */
+/*	$NetBSD: radeonfb.c,v 1.34.2.3 2010/11/06 08:08:31 uebayasi Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.34.2.2 2010/10/22 07:22:12 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.34.2.3 2010/11/06 08:08:31 uebayasi Exp $");
 
 #define RADEONFB_DEFAULT_DEPTH 8
 
@@ -163,6 +163,7 @@ static void radeonfb_copyrows(void *, int, int, int);
 static void radeonfb_copycols(void *, int, int, int, int);
 static void radeonfb_cursor(void *, int, int, int);
 static void radeonfb_putchar(void *, int, int, unsigned, long);
+static void radeonfb_putchar_wrapper(void *, int, int, unsigned, long);
 static int radeonfb_allocattr(void *, int, int, int, long *);
 
 static int radeonfb_get_backlight(struct radeonfb_display *);
@@ -571,10 +572,9 @@ radeonfb_attach(device_t parent, device_t dev, void *aux)
 
 	radeonfb_loadbios(sc, pa);
 
-#ifdef	RADEON_BIOS_INIT
+#ifdef	RADEONFB_BIOS_INIT
 	if (radeonfb_bios_init(sc)) {
 		aprint_error("%s: BIOS inititialization failed\n", XNAME(sc));
-		goto error;
 	}
 #endif
 
@@ -2206,6 +2206,7 @@ radeonfb_init_screen(void *cookie, struct vcons_screen *scr, int existing,
 		    dp->rd_virtx / ri->ri_font->fontwidth);
 
 	/* enable acceleration */
+	dp->rd_putchar = ri->ri_ops.putchar;
 	ri->ri_ops.copyrows = radeonfb_copyrows;
 	ri->ri_ops.copycols = radeonfb_copycols;
 	ri->ri_ops.eraserows = radeonfb_eraserows;
@@ -2213,6 +2214,8 @@ radeonfb_init_screen(void *cookie, struct vcons_screen *scr, int existing,
 	ri->ri_ops.allocattr = radeonfb_allocattr;
 	if (!IS_R300(dp->rd_softc)) {
 		ri->ri_ops.putchar = radeonfb_putchar;
+	} else {
+		ri->ri_ops.putchar = radeonfb_putchar_wrapper;
 	}
 	ri->ri_ops.cursor = radeonfb_cursor;
 }
@@ -2430,6 +2433,22 @@ radeonfb_putchar(void *cookie, int row, int col, u_int c, long attr)
 	}
 }
 
+/*
+ * wrapper for software character drawing
+ * just sync the engine and call rasops*_putchar()
+ */
+
+static void
+radeonfb_putchar_wrapper(void *cookie, int row, int col, u_int c, long attr)
+{
+	struct rasops_info	*ri = cookie;
+	struct vcons_screen	*scr = ri->ri_hw;
+	struct radeonfb_display	*dp = scr->scr_cookie;
+
+	radeonfb_engine_idle(dp->rd_softc);
+	dp->rd_putchar(ri, row, col, c, attr);
+}
+	
 static void
 radeonfb_eraserows(void *cookie, int row, int nrows, long fillattr)
 {

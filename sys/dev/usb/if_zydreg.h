@@ -1,5 +1,5 @@
 /*	$OpenBSD: if_zydreg.h,v 1.19 2006/11/30 19:28:07 damien Exp $	*/
-/*	$NetBSD: if_zydreg.h,v 1.4 2010/01/19 22:07:44 pooka Exp $	*/
+/*	$NetBSD: if_zydreg.h,v 1.4.2.1 2010/11/06 08:08:36 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2006 by Damien Bergamini <damien.bergamini@free.fr>
@@ -1166,7 +1166,7 @@ struct rq {
 };
 
 struct zyd_softc {
-	USBBASEDEVICE			sc_dev;
+	device_t			sc_dev;
 	struct ethercom			sc_ec;
 #define sc_if	sc_ec.ec_if
 	struct ieee80211com		sc_ic;
@@ -1185,8 +1185,8 @@ struct zyd_softc {
 	int				sc_arg;
 	int				attached;
 
-	usb_callout_t			sc_scan_ch;
-	usb_callout_t			sc_amrr_ch;
+	struct callout			sc_scan_ch;
+	struct callout			sc_amrr_ch;
 
 	struct ieee80211_amrr		amrr;
 

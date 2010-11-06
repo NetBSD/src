@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.98 2009/11/27 03:23:05 rmind Exp $	*/
+/*	$NetBSD: machdep.c,v 1.98.2.1 2010/11/06 08:08:15 uebayasi Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.98 2009/11/27 03:23:05 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.98.2.1 2010/11/06 08:08:15 uebayasi Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -157,11 +157,6 @@ initppc(u_long startkernel, u_long endkernel, u_int args, void *btinfo)
 		ns_per_tick = 1000000000 / ticks_per_sec;
 	}
 
-
-	/*
-	 * boothowto
-	 */
-	/*	boothowto = args; */
 	prep_initppc(startkernel, endkernel, args);
 }
 

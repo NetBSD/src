@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_private.h,v 1.42.2.3 2010/10/22 07:22:49 uebayasi Exp $	*/
+/*	$NetBSD: rump_private.h,v 1.42.2.4 2010/11/06 08:08:51 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -105,13 +105,7 @@ extern rump_proc_vfs_release_fn rump_proc_vfs_release;
 
 extern struct cpu_info *rump_cpu;
 
-extern rump_sysproxy_t rump_sysproxy;
-extern void *rump_sysproxy_arg;
-
-int		rump_sysproxy_copyout(const void *, void *, size_t);
-int		rump_sysproxy_copyin(const void *, void *, size_t);
-
-struct lwp *	rump__lwproc_allockernlwp(void);
+struct lwp *	rump__lwproc_alloclwp(struct proc *);
 
 void	rump_cpus_bootstrap(int);
 void	rump_scheduler_init(int);

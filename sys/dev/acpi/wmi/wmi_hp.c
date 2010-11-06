@@ -1,4 +1,4 @@
-/*	$NetBSD: wmi_hp.c,v 1.1.2.3 2010/08/17 06:46:03 uebayasi Exp $ */
+/*	$NetBSD: wmi_hp.c,v 1.1.2.4 2010/11/06 08:08:28 uebayasi Exp $ */
 
 /*-
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -57,11 +57,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wmi_hp.c,v 1.1.2.3 2010/08/17 06:46:03 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wmi_hp.c,v 1.1.2.4 2010/11/06 08:08:28 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/kmem.h>
+#include <sys/module.h>
 
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
@@ -529,3 +530,79 @@ wmi_hp_sensor_update(void *aux)
 		sc->sc_sensor[WMI_HP_SENSOR_WWAN].state = ENVSYS_SVALID;
 	}
 }
+
+#ifdef _MODULE
+
+MODULE(MODULE_CLASS_DRIVER, wmihp, NULL);
+CFDRIVER_DECL(wmihp, DV_DULL, NULL);
+
+static int wmihploc[] = { -1 };
+extern struct cfattach wmihp_ca;
+
+static struct cfparent wmiparent = {
+	"acpiwmibus", NULL, DVUNIT_ANY
+};
+
+static struct cfdata wmihp_cfdata[] = {
+	{
+		.cf_name = "wmihp",
+		.cf_atname = "wmihp",
+		.cf_unit = 0,
+		.cf_fstate = FSTATE_STAR,
+		.cf_loc = wmihploc,
+		.cf_flags = 0,
+		.cf_pspec = &wmiparent,
+	},
+
+	{ NULL, NULL, 0, 0, NULL, 0, NULL }
+};
+
+static int
+wmihp_modcmd(modcmd_t cmd, void *opaque)
+{
+	int err;
+
+	switch (cmd) {
+
+	case MODULE_CMD_INIT:
+
+		err = config_cfdriver_attach(&wmihp_cd);
+
+		if (err != 0)
+			return err;
+
+		err = config_cfattach_attach("wmihp", &wmihp_ca);
+
+		if (err != 0) {
+			config_cfdriver_detach(&wmihp_cd);
+			return err;
+		}
+
+		err = config_cfdata_attach(wmihp_cfdata, 1);
+
+		if (err != 0) {
+			config_cfattach_detach("wmihp", &wmihp_ca);
+			config_cfdriver_detach(&wmihp_cd);
+			return err;
+		}
+
+		return 0;
+
+	case MODULE_CMD_FINI:
+
+		err = config_cfdata_detach(wmihp_cfdata);
+
+		if (err != 0)
+			return err;
+
+		config_cfattach_detach("wmihp", &wmihp_ca);
+		config_cfdriver_detach(&wmihp_cd);
+
+		return 0;
+
+	default:
+		return ENOTTY;
+	}
+}
+
+#endif	/* _MODULE */

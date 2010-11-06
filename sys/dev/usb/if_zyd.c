@@ -1,5 +1,5 @@
 /*	$OpenBSD: if_zyd.c,v 1.52 2007/02/11 00:08:04 jsg Exp $	*/
-/*	$NetBSD: if_zyd.c,v 1.24.2.2 2010/08/17 06:46:44 uebayasi Exp $	*/
+/*	$NetBSD: if_zyd.c,v 1.24.2.3 2010/11/06 08:08:36 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2006 by Damien Bergamini <damien.bergamini@free.fr>
@@ -22,7 +22,7 @@
  * ZyDAS ZD1211/ZD1211B USB WLAN driver.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_zyd.c,v 1.24.2.2 2010/08/17 06:46:44 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_zyd.c,v 1.24.2.3 2010/11/06 08:08:36 uebayasi Exp $");
 
 
 #include <sys/param.h>
@@ -479,7 +479,7 @@ zyd_detach(device_t self, int flags)
 	splx(s);
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
-	    USBDEV(sc->sc_dev));
+	    sc->sc_dev);
 
 	return 0;
 }
@@ -2656,7 +2656,7 @@ zyd_newassoc(struct ieee80211_node *ni, int isnew)
 }
 
 int
-zyd_activate(device_ptr_t self, enum devact act)
+zyd_activate(device_t self, enum devact act)
 {
 	struct zyd_softc *sc = device_private(self);
 

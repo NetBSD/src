@@ -1,4 +1,4 @@
-.\" $NetBSD: acpi.4,v 1.50.2.3 2010/10/22 07:11:53 uebayasi Exp $
+.\" $NetBSD: acpi.4,v 1.50.2.4 2010/11/06 08:05:44 uebayasi Exp $
 .\"
 .\" Copyright (c) 2002, 2004, 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd September 6, 2010
+.Dd October 24, 2010
 .Dt ACPI 4
 .Os
 .Sh NAME
@@ -225,6 +225,9 @@ SMBus via Control Method Interface
 .It Xr acpitz 4
 .Tn ACPI
 thermal zones.
+.It Xr acpivga 4
+.Tn ACPI
+display adapter and output devices.
 .It Xr acpiwmi 4
 .Tn ACPI
 support for Windows Management Instrumentation.
@@ -442,6 +445,7 @@ For the first two variables, the possible values are:
 .It Li ACPI_LID_COMPONENT Ta ACPI_LV_OPTIMIZATIONS
 .It Li ACPI_RESOURCE_COMPONENT Ta ACPI_LV_VERBOSITY2 *
 .It Li ACPI_TZ_COMPONENT Ta
+.It Li ACPI_DISPLAY_COMPONENT Ta
 .It Li ACPI_ALL_DRIVERS * Ta ACPI_LV_MUTEX
 .It Ta ACPI_LV_THREADS
 .It Ta ACPI_LV_IO
@@ -569,6 +573,8 @@ is printed every time the method is called by the interpreter.
 .%A Len Brown
 .%T ACPI in Linux - Myths vs. Reality
 .%D June 27-30, 2007
+.%O Proceedings of the Linux Symposium
+.%P 65-74
 .%U http://www.linuxsymposium.org/archives/OLS/Reprints-2007/brown_1-Reprint.pdf
 .Re
 .Rs
@@ -577,7 +583,8 @@ is printed every time the method is called by the interpreter.
 .%T Sleeping Beauty - NetBSD on Modern Laptops
 .%D February 3, 2008
 .%O Proceedings of AsiaBSDCon 2008
-.%P pp. 127-134
+.%P 127-134
+.%U http://2008.asiabsdcon.org/papers/P9A-paper.pdf
 .Re
 .Sh HISTORY
 The

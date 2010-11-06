@@ -1,4 +1,4 @@
-/*	$NetBSD: viaide.c,v 1.67.2.1 2010/04/30 14:43:44 uebayasi Exp $	*/
+/*	$NetBSD: viaide.c,v 1.67.2.2 2010/11/06 08:08:32 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: viaide.c,v 1.67.2.1 2010/04/30 14:43:44 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: viaide.c,v 1.67.2.2 2010/11/06 08:08:32 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -40,9 +40,9 @@ __KERNEL_RCSID(0, "$NetBSD: viaide.c,v 1.67.2.1 2010/04/30 14:43:44 uebayasi Exp
 static int	via_pcib_match(struct pci_attach_args *);
 static void	via_chip_map(struct pciide_softc *, struct pci_attach_args *);
 static void	via_mapchan(struct pci_attach_args *, struct pciide_channel *,
-		    pcireg_t, bus_size_t *, bus_size_t *, int (*)(void *));
+		    pcireg_t, int (*)(void *));
 static void	via_mapregs_compat_native(struct pci_attach_args *,
-		    struct pciide_channel *, bus_size_t *, bus_size_t *);
+		    struct pciide_channel *);
 static int	via_sata_chip_map_common(struct pciide_softc *,
 		    struct pci_attach_args *);
 static void	via_sata_chip_map(struct pciide_softc *,
@@ -440,7 +440,6 @@ via_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	pcireg_t vendor = PCI_VENDOR(pa->pa_id);
 	int channel;
 	u_int32_t ideconf;
-	bus_size_t cmdsize, ctlsize;
 	pcireg_t pcib_id, pcib_class;
 	struct pci_attach_args pcib_pa;
 
@@ -614,15 +613,13 @@ unknown:
 			cp->ata_channel.ch_flags |= ATACH_DISABLED;
 			continue;
 		}
-		via_mapchan(pa, cp, interface, &cmdsize, &ctlsize,
-		    pciide_pci_intr);
+		via_mapchan(pa, cp, interface, pciide_pci_intr);
 	}
 }
 
 static void
 via_mapchan(struct pci_attach_args *pa,	struct pciide_channel *cp,
-    pcireg_t interface, bus_size_t *cmdsizep, bus_size_t *ctlsizep,
-    int (*pci_intr)(void *))
+    pcireg_t interface, int (*pci_intr)(void *))
 {
 	struct ata_channel *wdc_cp;
 	struct pciide_softc *sc;
@@ -638,13 +635,11 @@ via_mapchan(struct pci_attach_args *pa,	struct pciide_channel *cp,
 		/* native mode with irq 14/15 requested? */
 		if (compat_nat_enable != NULL &&
 		    prop_bool_true(compat_nat_enable))
-			via_mapregs_compat_native(pa, cp, cmdsizep, ctlsizep);
+			via_mapregs_compat_native(pa, cp);
 		else
-			pciide_mapregs_native(pa, cp, cmdsizep, ctlsizep,
-			    pci_intr);
+			pciide_mapregs_native(pa, cp, pci_intr);
 	} else {
-		pciide_mapregs_compat(pa, cp, wdc_cp->ch_channel, cmdsizep,
-		    ctlsizep);
+		pciide_mapregs_compat(pa, cp, wdc_cp->ch_channel);
 		if ((cp->ata_channel.ch_flags & ATACH_DISABLED) == 0)
 			pciide_map_compat_intr(pa, cp, wdc_cp->ch_channel);
 	}
@@ -659,7 +654,7 @@ via_mapchan(struct pci_attach_args *pa,	struct pciide_channel *cp,
  */
 static void
 via_mapregs_compat_native(struct pci_attach_args *pa,
-    struct pciide_channel *cp, bus_size_t *cmdsizep, bus_size_t *ctlsizep)
+    struct pciide_channel *cp)
 {
 	struct ata_channel *wdc_cp;
 	struct pciide_softc *sc;
@@ -670,7 +665,7 @@ via_mapregs_compat_native(struct pci_attach_args *pa,
 	/* XXX prevent pciide_mapregs_native from installing a handler */
 	if (sc->sc_pci_ih == NULL)
 		sc->sc_pci_ih = (void *)~0;
-	pciide_mapregs_native(pa, cp, cmdsizep, ctlsizep, NULL);
+	pciide_mapregs_native(pa, cp, NULL);
 
 	/* interrupts are fixed to 14/15, as in compatibility mode */
 	cp->compat = 1;
@@ -840,7 +835,6 @@ pio:		/* setup PIO mode */
 static int
 via_sata_chip_map_common(struct pciide_softc *sc, struct pci_attach_args *pa)
 {
-	bus_size_t satasize;
 	int maptype, ret;
 
 	if (pciide_chipen(sc, pa) == 0)
@@ -875,7 +869,7 @@ via_sata_chip_map_common(struct pciide_softc *sc, struct pci_attach_args *pa)
 	case PCI_MAPREG_TYPE_IO:
 		ret = pci_mapreg_map(pa, PCI_MAPREG_START + 0x14,
 		    PCI_MAPREG_TYPE_IO, 0, &sc->sc_ba5_st, &sc->sc_ba5_sh,
-		    NULL, &satasize);
+		    NULL, &sc->sc_ba5_ss);
 		break;
 	case PCI_MAPREG_MEM_TYPE_32BIT:
 		/*
@@ -895,7 +889,7 @@ via_sata_chip_map_common(struct pciide_softc *sc, struct pci_attach_args *pa)
 		ret = pci_mapreg_map(pa, PCI_MAPREG_START + 0x14,
 		    PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT,
 		    0, &sc->sc_ba5_st, &sc->sc_ba5_sh,
-		    NULL, &satasize);
+		    NULL, &sc->sc_ba5_ss);
 		break;
 	default:
 		aprint_error_dev(sc->sc_wdcdev.sc_atac.atac_dev,
@@ -920,7 +914,6 @@ via_sata_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa,
 	struct wdc_regs *wdr;
 	pcireg_t interface = PCI_INTERFACE(pa->pa_class);
 	int channel;
-	bus_size_t cmdsize, ctlsize;
 
 	if (via_sata_chip_map_common(sc, pa) == 0)
 		return;
@@ -966,8 +959,7 @@ via_sata_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa,
 			continue;
 		}
 		sc->sc_wdcdev.sc_atac.atac_probe = wdc_sataprobe;
-		pciide_mapchan(pa, cp, interface, &cmdsize, &ctlsize,
-		    pciide_pci_intr);
+		pciide_mapchan(pa, cp, interface, pciide_pci_intr);
 	}
 }
 
@@ -991,7 +983,6 @@ via_sata_chip_map_new(struct pciide_softc *sc, struct pci_attach_args *pa)
 	struct wdc_regs *wdr;
 	pcireg_t interface = PCI_INTERFACE(pa->pa_class);
 	int channel;
-	bus_size_t cmdsize;
 	pci_intr_handle_t intrhandle;
 	const char *intrstr;
 	int i;
@@ -1065,7 +1056,7 @@ via_sata_chip_map_new(struct pciide_softc *sc, struct pci_attach_args *pa)
 
 		if (pci_mapreg_map(pa, (PCI_MAPREG_START + (4 * (channel))),
 		    PCI_MAPREG_TYPE_IO, 0, &wdr->cmd_iot, &wdr->cmd_baseioh,
-		    NULL, &cmdsize) != 0) {
+		    NULL, &wdr->cmd_ios) != 0) {
 			aprint_error_dev(sc->sc_wdcdev.sc_atac.atac_dev,
 			    "couldn't map %s channel regs\n", cp->name);
 		}

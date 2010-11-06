@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.41.2.2 2010/08/17 06:43:59 uebayasi Exp $ */
+/* $NetBSD: machdep.c,v 1.41.2.3 2010/11/06 08:08:13 uebayasi Exp $ */
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.41.2.2 2010/08/17 06:43:59 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.41.2.3 2010/11/06 08:08:13 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -259,16 +259,17 @@ static void
 amigappc_identify(void)
 {
 	extern u_long ns_per_tick, ticks_per_sec;
-	static const char pll603[] = {
+	static const unsigned char pll603[] = {
 		10, 10, 10, 10, 20, 20, 25, 00,
 		30, 00, 40, 00, 15, 00, 35, 00
 	};
-	static const char pll604[] = {
+	static const unsigned char pll604[] = {
 		10, 10, 70, 10, 20, 65, 25, 45,
 		30, 55, 40, 50, 15, 60, 35, 00
 	};
 	const char *cpuname, *mach, *p5type_p, *pup;
-	int busclock, cpu, cpuclock;
+	u_long busclock, cpuclock;
+	int cpu;
 	register int pvr, hid1;
 
 	/* PowerUp ROM id location */
@@ -353,8 +354,9 @@ amigappc_identify(void)
 		cpuclock = busclock * pll604[hid1>>28 & 0xf] / 10;
 
 	snprintf(model, sizeof(model),
-	    "%s %s (%s v%d.%d %d MHz, busclk %d MHz)", mach, pup, cpuname,
-	    pvr>>8 & 0xff, pvr & 0xff, cpuclock/1000000, busclock/1000000);
+	    "%s %s (%s v%d.%d %lu MHz, busclk %lu MHz)",
+	    mach, pup, cpuname, (pvr>>8) & 0xf, (pvr >> 0) & 0xf,
+	    cpuclock / 1000000, busclock / 1000000);
 
 	/* set timebase */
 	ticks_per_sec = busclock / 4;

@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.252.2.5 2010/10/30 08:41:06 uebayasi Exp $ */
+/* $NetBSD: pmap.c,v 1.252.2.6 2010/11/06 08:08:12 uebayasi Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001, 2007, 2008 The NetBSD Foundation, Inc.
@@ -141,7 +141,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.252.2.5 2010/10/30 08:41:06 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.252.2.6 2010/11/06 08:08:12 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -159,6 +159,8 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.252.2.5 2010/10/30 08:41:06 uebayasi Exp 
 #if defined(_PMAP_MAY_USE_PROM_CONSOLE) || defined(MULTIPROCESSOR)
 #include <machine/rpb.h>
 #endif
+
+#define	VM_PAGE_TO_MD(pg)	(&(pg)->mdpage)
 
 #ifdef DEBUG
 #define	PDB_FOLLOW	0x0001

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_emuldata.h,v 1.16.14.1 2010/08/17 06:45:48 uebayasi Exp $	*/
+/*	$NetBSD: linux_emuldata.h,v 1.16.14.2 2010/11/06 08:08:25 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1998,2002 The NetBSD Foundation, Inc.
@@ -48,6 +48,7 @@ struct linux_emuldata {
 	void	*led_child_tidptr;	/* Used during clone() */
 	void	*led_clear_tid;		/* Own TID to clear on exit */
 	struct linux_robust_list_head *led_robust_head;
+	long	led_personality;
 };
 
 #endif /* !_COMMON_LINUX_EMULDATA_H */
