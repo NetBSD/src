@@ -1,4 +1,4 @@
-.\"	$NetBSD: boot.8,v 1.52 2009/09/04 23:29:03 apb Exp $
+.\"	$NetBSD: boot.8,v 1.53 2010/11/06 23:28:42 jym Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"     @(#)boot_i386.8	8.2 (Berkeley) 4/19/94
 .\"
-.Dd September 4, 2009
+.Dd November 7, 2010
 .Dt BOOT 8 i386
 .Os
 .Sh NAME
@@ -346,7 +346,7 @@ See
 .Sx Console Selection Policy
 in
 .Xr boot_console 8 .
-.It Ic vesa Va modenum | on | off | enabled | disabled | list
+.It Ic vesa Bro Va modenum | Ar on | off | enabled | disabled | list Brc
 Initialise the video card to the specified resolution and bit depth.
 The
 .Va modenum
@@ -369,11 +369,11 @@ is of the form specified in
 .Cm boot .
 .It Ic help
 Print an overview about commands and arguments.
-.It Ic load Va module Op Va arguments
+.It Ic load Va module Op Ar arguments
 Load the specified kernel
 .Va module ,
 and pass it the specified
-.Va arguments .
+.Ar arguments .
 If the module name is not an absolute path,
 .Pa /stand/ Xo Ns
 .Aq Sy arch Ns
@@ -389,14 +389,104 @@ is used.
 Possible used of the
 .Ic load
 command include loading a memory disk image before booting a kernel,
-or loading a Xen DOM0 kernel before booting the Xen hypervisor.
+or loading a
+.Tn Xen
+DOM0 kernel before booting the
+.Tn Xen
+hypervisor. See
+.Xr boot.cfg 5
+for examples.
+.Pp
+In addition to the
+.Cm boot
+options specified above, the DOM0 kernel accepts
+.Po Ar arguments
+being separated with spaces
+.Pc Ns :
+.Bl -tag -width xxx
+.It Ic bootdev Ns = Ns Ar dev Po or Ic root Ns = Ns Ar dev Pc
+Override the default boot device.
+.Ar dev
+can be a unit name
+.Po Dq wd0
+.Pc Ns ,
+or an interface name
+.Po Dq bge0 ,
+.Dq wm0 ,
+.Ns ...
+.Pc Ns ,
+for cases where the root file system has to be loaded
+from network (see the
+.Sx BUGS
+section in
+.Xr pxeboot 8 Ns ).
+.It Ic console Ns = Ns Ar dev
+Console used by DOM0 kernel during boot.
+.Ar dev 
+accepts the same values as the ones given for the
+.Cm consdev
+command.
+See
+.Sx Console Selection Policy
+in
+.Xr boot_console 8 .
+.It Xo Ic ip Ns = Ns
+.Ar my_ip Ns : Ns Ar serv_ip Ns : Ns Ar gw_ip Ns : Ns
+.Ar mask Ns : Ns Ar host Ns : Ns Ar iface
+.Xc
+Specify various parameters for a network boot (IPs are in
+dot notation),
+each one separated by a colon:
+.Bl -tag -width xxxxxxx
+.It Va my_ip
+address of the host
+.It Va serv_ip
+address of the NFS server
+.It Va gw_ip
+address of the gateway
+.It Va mask
+network mask
+.It Va host
+address of the host
+.It Va iface
+interface
+.Po eg. Dq xennet0
+or
+.Dq eth0
+.Pc
+.El
+.It Ic nfsroot Ns = Ns Ar address Ns : Ns Ar rootpath
+Boot the system with root on NFS.
+.Ar address
+is the address of the NFS server, and
+.Ar rootpath
+is the remote mount point for the root file system.
+.It Ic pciback.hide Ns = Ns Ar pcidevs
+Pass a list of PCI IDs for use with the PCI backend driver.
+.Ar pcidevs
+is formed of multiple IDs (in bus:device:function notation),
+each ID being surrounded with brackets. PCI domain IDs
+are currently ignored.
+You can obtains PCI IDs through
+.Xr pcictl 8 .
+.El
 .It Ic ls Op Pa path
 Print a directory listing of
 .Pa path ,
 containing inode number, filename, and file type.
 .Pa path
 can contain a device specification.
-.It Ic multiboot Va kernel Op Va arguments
+.It Ic modules Bro Ar on | off | enabled | disabled Brc
+The values
+.Ar enabled , on
+will enable module loading for
+.Cm boot
+and
+.Cm multiboot ,
+whereas
+.Ar disabled , off
+will turn off the feature.
+.It Ic multiboot Va kernel Op Ar arguments
 Boot the specified
 .Va kernel ,
 using the
@@ -413,9 +503,13 @@ command.
 The multiboot protocol may be used in the following cases:
 .Bl -tag -width indent
 .It Nx Ns / Ns  Xen No kernels
-The Xen DOM0 kernel must be loaded as a module using the
+The
+.Tn Xen
+DOM0 kernel must be loaded as a module using the
 .Ic load
-command, and the Xen hypervisor must be booted using the
+command, and the
+.Tn Xen
+hypervisor must be booted using the
 .Ic multiboot
 command.
 Options for the DOM0 kernel (such as
@@ -431,7 +525,7 @@ must be passed as options to the
 command.
 See
 .Xr boot.cfg 5
-for examples of how to boot
+for examples on how to boot
 .Nx Ns / Ns  Xen.
 .It Nx No multiboot kernels
 A
@@ -444,7 +538,9 @@ may be booted with either the
 .Ic boot
 or
 .Ic multiboot
-command, passing the same arguments in either case.
+command, passing the same
+.Ar arguments
+in either case.
 .It Non- Ns Nx No kernels
 A kernel for a
 .No non- Ns Nx
@@ -455,7 +551,8 @@ boot loader)
 may be booted using the
 .Ic multiboot
 command.
-See the foreign operating system's documentation for the available arguments.
+See the foreign operating system's documentation for the available
+.Ar arguments .
 .El
 .It Ic quit
 Reboot the system.
@@ -495,6 +592,7 @@ partition by
 .Xr installboot 8 ,
 .Xr mbr 8 ,
 .Xr multiboot 8 ,
+.Xr pcictl 8 ,
 .Xr pxeboot 8 ,
 .Xr reboot 8 ,
 .Xr shutdown 8 ,
