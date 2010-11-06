@@ -1,4 +1,4 @@
-/*	$NetBSD: example.c,v 1.5.2.1 2010/08/17 06:47:41 uebayasi Exp $	*/
+/*	$NetBSD: example.c,v 1.5.2.2 2010/11/06 08:08:47 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: example.c,v 1.5.2.1 2010/08/17 06:47:41 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: example.c,v 1.5.2.2 2010/11/06 08:08:47 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -41,59 +41,53 @@ __KERNEL_RCSID(0, "$NetBSD: example.c,v 1.5.2.1 2010/08/17 06:47:41 uebayasi Exp
 
 MODULE(MODULE_CLASS_MISC, example, NULL);
 
-static int
+static
+void
 handle_props(prop_dictionary_t props)
 {
 	const char *msg;
 	prop_string_t str;
 
-	if (props == NULL)
-		return EINVAL;
-
-	str = prop_dictionary_get(props, "msg");
-	if (str == NULL) {
-		printf("The 'msg' property was not given.\n");
-		return EINVAL;
-	}
-
-	if (prop_object_type(str) != PROP_TYPE_STRING) {
-		printf("The 'msg' property is not a string.\n");
-		return EINVAL;
-	}
-
-	msg = prop_string_cstring_nocopy(str);
-	if (msg == NULL) {
-		printf("Failed to process the 'msg' property.\n");
+	if (props != NULL) {
+		str = prop_dictionary_get(props, "msg");
 	} else {
-		printf("The 'msg' property is: %s\n", msg);
+		printf("No property dictionary was provided.\n");
+		str = NULL;
 	}
-	return 0;
+	if (str == NULL)
+		printf("The 'msg' property was not given.\n");
+	else if (prop_object_type(str) != PROP_TYPE_STRING)
+		printf("The 'msg' property is not a string.\n");
+	else {
+		msg = prop_string_cstring_nocopy(str);
+		if (msg == NULL)
+			printf("Failed to process the 'msg' property.\n");
+		else
+			printf("The 'msg' property is: %s\n", msg);
+	}
 }
 
 static int
 example_modcmd(modcmd_t cmd, void *arg)
 {
-	int error;
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:
 		printf("Example module loaded.\n");
-		error = handle_props(arg);
+		handle_props(arg);
 		break;
 
 	case MODULE_CMD_FINI:
 		printf("Example module unloaded.\n");
-		error = 0;
 		break;
 
 	case MODULE_CMD_STAT:
 		printf("Example module status queried.\n");
-		error = ENOTTY;
-		break;
+		return ENOTTY;
 
 	default:
-		error = ENOTTY;
+		return ENOTTY;
 	}
 
-	return error;
+	return 0;
 }

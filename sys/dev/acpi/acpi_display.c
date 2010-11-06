@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_display.c,v 1.1.2.2 2010/10/22 07:21:52 uebayasi Exp $	*/
+/*	$NetBSD: acpi_display.c,v 1.1.2.3 2010/11/06 08:08:27 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -66,11 +66,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_display.c,v 1.1.2.2 2010/10/22 07:21:52 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_display.c,v 1.1.2.3 2010/11/06 08:08:27 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/kmem.h>
+#include <sys/module.h>
 #include <sys/mutex.h>
 #include <sys/sysctl.h>
 #include <sys/systm.h>
@@ -346,7 +347,10 @@ static void	acpidisp_out_zero_brightness_callback(void *);
 
 static void	acpidisp_vga_sysctl_setup(struct acpidisp_vga_softc *);
 static void	acpidisp_out_sysctl_setup(struct acpidisp_out_softc *);
+#ifdef ACPI_DEBUG
 static int	acpidisp_vga_sysctl_policy(SYSCTLFN_PROTO);
+#endif
+static int	acpidisp_vga_sysctl_policy_output(SYSCTLFN_PROTO);
 #ifdef ACPI_DISP_SWITCH_SYSCTLS
 static int	acpidisp_out_sysctl_status(SYSCTLFN_PROTO);
 static int	acpidisp_out_sysctl_state(SYSCTLFN_PROTO);
@@ -405,7 +409,9 @@ acpidisp_vga_match(device_t parent, cfdata_t match, void *aux)
 		return 0;
 
 	ap = ad->ad_pciinfo;
-	if ((ap == NULL) || (ap->ap_function == 0xffff))
+	if ((ap == NULL) ||
+	    !(ap->ap_flags & ACPI_PCI_INFO_DEVICE) ||
+	    (ap->ap_function == 0xffff))
 		return 0;
 
 	KASSERT(ap->ap_bus < 256 && ap->ap_device < 32 && ap->ap_function < 8);
@@ -905,6 +911,7 @@ acpidisp_vga_cycle_output_device_callback(void *arg)
 	struct acpidisp_out_softc *osc, *last_osc;
 	acpidisp_od_state_t state, last_state;
 	acpidisp_od_status_t status;
+	acpidisp_bios_policy_t lock_policy;
 	uint32_t i;
 
 	if (oi == NULL)
@@ -912,6 +919,11 @@ acpidisp_vga_cycle_output_device_callback(void *arg)
 
 	/* Mutual exclusion with callbacks of connected output devices. */
 	mutex_enter(&asc->sc_mtx);
+
+	/* Lock the _DGS values. */
+	lock_policy = asc->sc_policy;
+	lock_policy.fmt.output = ACPI_DISP_POLICY_OUTPUT_LOCKED;
+	(void)acpidisp_set_policy(asc, lock_policy.raw);
 
 	last_osc = NULL;
 	for (i = 0, od = oi->oi_dev; i < oi->oi_dev_count; i++, od++) {
@@ -948,6 +960,9 @@ acpidisp_vga_cycle_output_device_callback(void *arg)
 		last_state.fmt.commit = 1;
 		(void)acpidisp_set_state(last_osc, last_state.raw);
 	}
+
+	/* Restore the original BIOS policy. */
+	(void)acpidisp_set_policy(asc, asc->sc_policy.raw);
 
 	mutex_exit(&asc->sc_mtx);
 }
@@ -1111,10 +1126,18 @@ acpidisp_vga_sysctl_setup(struct acpidisp_vga_softc *asc)
 		    CTL_CREATE, CTL_EOL)) != 0)
 			goto fail;
 
+#ifdef ACPI_DEBUG
 		(void)sysctl_createv(&asc->sc_log, 0, &rnode, NULL,
-		    CTLFLAG_READWRITE | CTLFLAG_HEX, CTLTYPE_INT, "policy",
-		    SYSCTL_DESCR("Current BIOS switch policy"),
+		    CTLFLAG_READWRITE | CTLFLAG_HEX, CTLTYPE_INT, "bios_policy",
+		    SYSCTL_DESCR("Current BIOS switch policies (debug)"),
 		    acpidisp_vga_sysctl_policy, 0, asc, 0,
+		    CTL_CREATE, CTL_EOL);
+#endif
+
+		(void)sysctl_createv(&asc->sc_log, 0, &rnode, NULL,
+		    CTLFLAG_READWRITE, CTLTYPE_BOOL, "bios_switch",
+		    SYSCTL_DESCR("Current BIOS output switching policy"),
+		    acpidisp_vga_sysctl_policy_output, 0, asc, 0,
 		    CTL_CREATE, CTL_EOL);
 	}
 
@@ -1199,6 +1222,7 @@ acpidisp_out_sysctl_setup(struct acpidisp_out_softc *osc)
  * Sysctl callbacks.
  */
 
+#ifdef ACPI_DEBUG
 static int
 acpidisp_vga_sysctl_policy(SYSCTLFN_ARGS)
 {
@@ -1224,6 +1248,38 @@ acpidisp_vga_sysctl_policy(SYSCTLFN_ARGS)
 
 	mutex_enter(&asc->sc_mtx);
 	asc->sc_policy.raw = (uint8_t)val;
+	error = acpidisp_set_policy(asc, asc->sc_policy.raw);
+	mutex_exit(&asc->sc_mtx);
+
+	return error;
+}
+#endif
+
+static int
+acpidisp_vga_sysctl_policy_output(SYSCTLFN_ARGS)
+{
+	struct sysctlnode node;
+	struct acpidisp_vga_softc *asc;
+	bool val;
+	int error;
+
+	node = *rnode;
+	asc = (struct acpidisp_vga_softc *)node.sysctl_data;
+
+	mutex_enter(&asc->sc_mtx);
+	val = (asc->sc_policy.fmt.output == ACPI_DISP_POLICY_OUTPUT_AUTO);
+	mutex_exit(&asc->sc_mtx);
+
+	node.sysctl_data = &val;
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (error || newp == NULL)
+		return error;
+
+	mutex_enter(&asc->sc_mtx);
+	if (val)
+		asc->sc_policy.fmt.output = ACPI_DISP_POLICY_OUTPUT_AUTO;
+	else
+		asc->sc_policy.fmt.output = ACPI_DISP_POLICY_OUTPUT_NORMAL;
 	error = acpidisp_set_policy(asc, asc->sc_policy.raw);
 	mutex_exit(&asc->sc_mtx);
 
@@ -1360,6 +1416,7 @@ acpidisp_init_odinfo(const struct acpidisp_vga_softc *asc)
 		return NULL;
 
 	oi = NULL;
+	pkg = NULL;
 
 	rv = acpidisp_eval_package(hdl, "_DOD", &pkg, 1);
 	if (ACPI_FAILURE(rv))
@@ -1544,6 +1601,7 @@ acpidisp_init_brctl(const struct acpidisp_out_softc *osc)
 		return NULL;
 
 	bc = NULL;
+	pkg = NULL;
 
 	rv = acpidisp_eval_package(hdl, "_BCL", &pkg, 2);
 	if (ACPI_FAILURE(rv))
@@ -2004,3 +2062,30 @@ acpidisp_array_search(const uint8_t *a, uint16_t n, int v, uint8_t *l, uint8_t *
 	*u = a[j];
 	return;
 }
+
+#ifdef _MODULE
+
+MODULE(MODULE_CLASS_DRIVER, acpivga, NULL);
+
+#include "ioconf.c"
+
+static int
+acpivga_modcmd(modcmd_t cmd, void *context)
+{
+
+	switch (cmd) {
+
+	case MODULE_CMD_INIT:
+		return config_init_component(cfdriver_ioconf_acpivga,
+		    cfattach_ioconf_acpivga, cfdata_ioconf_acpivga);
+
+	case MODULE_CMD_FINI:
+		return config_fini_component(cfdriver_ioconf_acpivga,
+		    cfattach_ioconf_acpivga, cfdata_ioconf_acpivga);
+
+	default:
+		return ENOTTY;
+	}
+}
+
+#endif	/* _MODULE */

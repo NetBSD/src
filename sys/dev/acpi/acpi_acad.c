@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_acad.c,v 1.39.2.2 2010/08/17 06:45:58 uebayasi Exp $	*/
+/*	$NetBSD: acpi_acad.c,v 1.39.2.3 2010/11/06 08:08:27 uebayasi Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_acad.c,v 1.39.2.2 2010/08/17 06:45:58 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_acad.c,v 1.39.2.3 2010/11/06 08:08:27 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -189,7 +189,7 @@ acpiacad_get_status(void *arg)
 		goto fail;
 	}
 
-	if (sc->sc_status != status) {
+	if (sc->sc_status != (int)status) {
 
 		/*
 		 * If status has changed, send the event:
@@ -255,8 +255,11 @@ acpiacad_notify_handler(ACPI_HANDLE handle, uint32_t notify, void *context)
 		(void)AcpiOsExecute(handler, acpiacad_get_status, dv);
 		break;
 
+	case ACPI_NOTIFY_DEVICE_WAKE:
+		break;
+
 	default:
-		aprint_error_dev(dv, "unknown notify 0x%02X\n", notify);
+		aprint_debug_dev(dv, "unknown notify 0x%02X\n", notify);
 	}
 }
 
@@ -315,7 +318,7 @@ static struct cfdata acpiacad_cfdata[] = {
 		.cf_pspec = &acpiparent,
 	},
 
-	{ NULL }
+	{ NULL, NULL, 0, 0, NULL, 0, NULL }
 };
 
 static int

@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.26.6.6 2010/10/30 08:41:06 uebayasi Exp $	*/
+/*	$NetBSD: mem.c,v 1.26.6.7 2010/11/06 08:08:14 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
 #include "opt_xip.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.26.6.6 2010/10/30 08:41:06 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.26.6.7 2010/11/06 08:08:14 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -92,6 +92,8 @@ __KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.26.6.6 2010/10/30 08:41:06 uebayasi Exp $"
 #include <machine/cpu.h>
 
 #include <uvm/uvm.h>
+
+#define	VM_PAGE_TO_MD(pg)	(&(pg)->mdpage)
 
 extern vaddr_t memhook;			/* in pmap.c (poor name!) */
 extern kmutex_t memlock;		/* in pmap.c */

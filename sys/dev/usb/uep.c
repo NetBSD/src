@@ -1,4 +1,4 @@
-/*	$NetBSD: uep.c,v 1.14 2009/11/12 19:51:44 dyoung Exp $	*/
+/*	$NetBSD: uep.c,v 1.14.2.1 2010/11/06 08:08:37 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uep.c,v 1.14 2009/11/12 19:51:44 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uep.c,v 1.14.2.1 2010/11/06 08:08:37 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,7 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: uep.c,v 1.14 2009/11/12 19:51:44 dyoung Exp $");
 #define UIDSTR	"eGalax USB SN000000"
 
 struct uep_softc {
-	USBBASEDEVICE sc_dev;
+	device_t sc_dev;
 	usbd_device_handle sc_udev;	/* device */
 	usbd_interface_handle sc_iface;	/* interface */
 	int sc_iface_number;
@@ -71,7 +71,7 @@ struct uep_softc {
 	u_char			*sc_ibuf;
 	int			sc_isize;
 
-	device_ptr_t		sc_wsmousedev;	/* wsmouse device */
+	device_t		sc_wsmousedev;	/* wsmouse device */
 	struct tpcalib_softc	sc_tpcalib;	/* calibration */
 
 	u_char sc_enabled;
@@ -107,9 +107,10 @@ extern struct cfdriver uep_cd;
 CFATTACH_DECL2_NEW(uep, sizeof(struct uep_softc), uep_match, uep_attach,
     uep_detach, uep_activate, NULL, uep_childdet);
 
-USB_MATCH(uep)
+int 
+uep_match(device_t parent, cfdata_t match, void *aux)
 {
-	USB_MATCH_START(uep, uaa);
+	struct usb_attach_arg *uaa = aux;
 
 	if ((uaa->vendor == USB_VENDOR_EGALAX) && (
 		(uaa->product == USB_PRODUCT_EGALAX_TPANEL)
@@ -125,9 +126,11 @@ USB_MATCH(uep)
 	return UMATCH_NONE;
 }
 
-USB_ATTACH(uep)
+void 
+uep_attach(device_t parent, device_t self, void *aux)
 {
-	USB_ATTACH_START(uep, sc, uaa);
+	struct uep_softc *sc = device_private(self);
+	struct usb_attach_arg *uaa = aux;
 	usbd_device_handle dev = uaa->device;
 	usb_config_descriptor_t *cdesc;
 	usb_interface_descriptor_t *id;
@@ -155,9 +158,9 @@ USB_ATTACH(uep)
 	err = usbd_set_config_index(dev, 0, 1);
 	if (err) {
 		aprint_error("\n%s: failed to set configuration, err=%s\n",
-			USBDEVNAME(sc->sc_dev),  usbd_errstr(err));
+			device_xname(sc->sc_dev),  usbd_errstr(err));
 		sc->sc_dying = 1;
-		USB_ATTACH_ERROR_RETURN;
+		return;
 	}
 
 	/* get the config descriptor */
@@ -166,16 +169,16 @@ USB_ATTACH(uep)
 		aprint_error_dev(self,
 		    "failed to get configuration descriptor\n");
 		sc->sc_dying = 1;
-		USB_ATTACH_ERROR_RETURN;
+		return;
 	}
 
 	/* get the interface */
 	err = usbd_device2interface_handle(dev, 0, &sc->sc_iface);
 	if (err) {
 		aprint_error("\n%s: failed to get interface, err=%s\n",
-			USBDEVNAME(sc->sc_dev), usbd_errstr(err));
+			device_xname(sc->sc_dev), usbd_errstr(err));
 		sc->sc_dying = 1;
-		USB_ATTACH_ERROR_RETURN;
+		return;
 	}
 
 	/* Find the interrupt endpoint */
@@ -189,7 +192,7 @@ USB_ATTACH(uep)
 			aprint_error_dev(self,
 			    "no endpoint descriptor for %d\n", i);
 			sc->sc_dying = 1;
-			USB_ATTACH_ERROR_RETURN;
+			return;
 		}
 
 		if (UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_IN &&
@@ -202,11 +205,11 @@ USB_ATTACH(uep)
 	if (sc->sc_intr_number== -1) {
 		aprint_error_dev(self, "Could not find interrupt in\n");
 		sc->sc_dying = 1;
-		USB_ATTACH_ERROR_RETURN;
+		return;
 	}
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
-			   USBDEV(sc->sc_dev));
+			   sc->sc_dev);
 
 	a.accessops = &uep_accessops;
 	a.accesscookie = sc;
@@ -217,12 +220,13 @@ USB_ATTACH(uep)
 	tpcalib_ioctl(&sc->sc_tpcalib, WSMOUSEIO_SCALIBCOORDS,
 		(void *)&default_calib, 0, 0);
 
-	USB_ATTACH_SUCCESS_RETURN;
+	return;
 }
 
-USB_DETACH(uep)
+int 
+uep_detach(device_t self, int flags)
 {
-	USB_DETACH_START(uep, sc);
+	struct uep_softc *sc = device_private(self);
 	int rv = 0;
 
 	if (sc->sc_intr_pipe != NULL) {
@@ -240,7 +244,7 @@ USB_DETACH(uep)
 		rv = config_detach(sc->sc_wsmousedev, flags);
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
-			   USBDEV(sc->sc_dev));
+			   sc->sc_dev);
 
 	return rv;
 }
@@ -377,7 +381,7 @@ uep_intr(usbd_xfer_handle xfer, usbd_private_handle addr, usbd_status status)
 	if (len != 5) {
 #if 0
 		printf("%s: bad input length %d != %d\n",
-			USBDEVNAME(sc->sc_dev), len, sc->sc_isize);
+			device_xname(sc->sc_dev), len, sc->sc_isize);
 #endif
 		return;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: ucomvar.h,v 1.17.18.1 2010/04/30 14:43:52 uebayasi Exp $	*/
+/*	$NetBSD: ucomvar.h,v 1.17.18.2 2010/11/06 08:08:37 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@ struct ucom_methods {
 #define UCOM_SET_BREAK 3
 	int (*ucom_param)(void *sc, int portno, struct termios *);
 	int (*ucom_ioctl)(void *sc, int portno, u_long cmd,
-			  void *data, int flag, usb_proc_ptr p);
+			  void *data, int flag, proc_t *p);
 	int (*ucom_open)(void *sc, int portno);
 	void (*ucom_close)(void *sc, int portno);
 	/*

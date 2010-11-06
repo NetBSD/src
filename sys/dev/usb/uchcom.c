@@ -1,4 +1,4 @@
-/*	$NetBSD: uchcom.c,v 1.9 2009/11/12 19:51:44 dyoung Exp $	*/
+/*	$NetBSD: uchcom.c,v 1.9.2.1 2010/11/06 08:08:37 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uchcom.c,v 1.9 2009/11/12 19:51:44 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uchcom.c,v 1.9.2.1 2010/11/06 08:08:37 uebayasi Exp $");
 
 /*
  * driver for WinChipHead CH341/340, the worst USB-serial chip in the world.
@@ -61,7 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: uchcom.c,v 1.9 2009/11/12 19:51:44 dyoung Exp $");
 #include <dev/usb/ucomvar.h>
 
 #ifdef UCHCOM_DEBUG
-#define DPRINTFN(n, x)  if (uchcomdebug > (n)) logprintf x
+#define DPRINTFN(n, x)  if (uchcomdebug > (n)) printf x
 int	uchcomdebug = 0;
 #else
 #define DPRINTFN(n, x)
@@ -120,9 +120,9 @@ int	uchcomdebug = 0;
 
 struct uchcom_softc
 {
-	USBBASEDEVICE		sc_dev;
+	device_t		sc_dev;
 	usbd_device_handle	sc_udev;
-	device_ptr_t		sc_subdev;
+	device_t		sc_subdev;
 	usbd_interface_handle	sc_iface;
 	int			sc_dying;
 	/* */
@@ -227,17 +227,20 @@ CFATTACH_DECL2_NEW(uchcom,
  * driver entry points
  */
 
-USB_MATCH(uchcom)
+int 
+uchcom_match(device_t parent, cfdata_t match, void *aux)
 {
-	USB_MATCH_START(uchcom, uaa);
+	struct usb_attach_arg *uaa = aux;
 
 	return (uchcom_lookup(uaa->vendor, uaa->product) != NULL ?
 		UMATCH_VENDOR_PRODUCT : UMATCH_NONE);
 }
 
-USB_ATTACH(uchcom)
+void 
+uchcom_attach(device_t parent, device_t self, void *aux)
 {
-	USB_ATTACH_START(uchcom, sc, uaa);
+	struct uchcom_softc *sc = device_private(self);
+	struct usb_attach_arg *uaa = aux;
 	usbd_device_handle dev = uaa->device;
 	char *devinfop;
 	struct uchcom_endpoints endpoints;
@@ -294,16 +297,16 @@ USB_ATTACH(uchcom)
 	uca.info = NULL;
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
-			   USBDEV(sc->sc_dev));
+			   sc->sc_dev);
 
 	sc->sc_subdev = config_found_sm_loc(self, "ucombus", NULL, &uca,
 					    ucomprint, ucomsubmatch);
 
-	USB_ATTACH_SUCCESS_RETURN;
+	return;
 
 failed:
 	sc->sc_dying = 1;
-	USB_ATTACH_ERROR_RETURN;
+	return;
 }
 
 void
@@ -315,9 +318,10 @@ uchcom_childdet(device_t self, device_t child)
 	sc->sc_subdev = NULL;
 }
 
-USB_DETACH(uchcom)
+int 
+uchcom_detach(device_t self, int flags)
 {
-	USB_DETACH_START(uchcom, sc);
+	struct uchcom_softc *sc = device_private(self);
 	int rv = 0;
 
 	DPRINTF(("uchcom_detach: sc=%p flags=%d\n", sc, flags));
@@ -330,7 +334,7 @@ USB_DETACH(uchcom)
 		rv = config_detach(sc->sc_subdev, flags);
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
-			   USBDEV(sc->sc_dev));
+			   sc->sc_dev);
 
 	return rv;
 }
@@ -374,7 +378,7 @@ find_ifaces(struct uchcom_softc *sc, usbd_interface_handle *riface)
 					   riface);
 	if (err) {
 		aprint_error("\n%s: failed to get interface: %s\n",
-			USBDEVNAME(sc->sc_dev), usbd_errstr(err));
+			device_xname(sc->sc_dev), usbd_errstr(err));
 		return -1;
 	}
 
@@ -432,7 +436,7 @@ find_endpoints(struct uchcom_softc *sc, struct uchcom_endpoints *endpoints)
 	}
 
 	DPRINTF(("%s: bulkin=%d, bulkout=%d, intr=%d, isize=%d\n",
-		 USBDEVNAME(sc->sc_dev), bin, bout, intr, isize));
+		 device_xname(sc->sc_dev), bin, bout, intr, isize));
 
 	endpoints->ep_intr = intr;
 	endpoints->ep_intr_size = isize;
@@ -766,7 +770,7 @@ clear_chip(struct uchcom_softc *sc)
 {
 	usbd_status err;
 
-	DPRINTF(("%s: clear\n", USBDEVNAME(sc->sc_dev)));
+	DPRINTF(("%s: clear\n", device_xname(sc->sc_dev)));
 	err = generic_control_out(sc, UCHCOM_REQ_RESET, 0, 0);
 	if (err) {
 		aprint_error_dev(sc->sc_dev, "cannot clear: %s\n",
@@ -808,7 +812,7 @@ reset_chip(struct uchcom_softc *sc)
 	val |= 0x10;
 
 	DPRINTF(("%s: reset v=0x%04X, i=0x%04X\n",
-		 USBDEVNAME(sc->sc_dev), val, idx));
+		 device_xname(sc->sc_dev), val, idx));
 
 	err = generic_control_out(sc, UCHCOM_REQ_RESET, val, idx);
 	if (err)
@@ -818,7 +822,7 @@ reset_chip(struct uchcom_softc *sc)
 
 failed:
 	printf("%s: cannot reset: %s\n",
-	       USBDEVNAME(sc->sc_dev), usbd_errstr(err));
+	       device_xname(sc->sc_dev), usbd_errstr(err));
 	return EIO;
 }
 
@@ -1020,13 +1024,13 @@ uchcom_intr(usbd_xfer_handle xfer, usbd_private_handle priv,
 			return;
 
 		DPRINTF(("%s: abnormal status: %s\n",
-			 USBDEVNAME(sc->sc_dev), usbd_errstr(status)));
+			 device_xname(sc->sc_dev), usbd_errstr(status)));
 		usbd_clear_endpoint_stall_async(sc->sc_intr_pipe);
 		return;
 	}
 	DPRINTF(("%s: intr: 0x%02X 0x%02X 0x%02X 0x%02X "
 		 "0x%02X 0x%02X 0x%02X 0x%02X\n",
-		 USBDEVNAME(sc->sc_dev),
+		 device_xname(sc->sc_dev),
 		 (unsigned)buf[0], (unsigned)buf[1],
 		 (unsigned)buf[2], (unsigned)buf[3],
 		 (unsigned)buf[4], (unsigned)buf[5],

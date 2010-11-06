@@ -1,4 +1,4 @@
-/*	$NetBSD: uhidev.h,v 1.9 2008/05/26 19:01:51 drochner Exp $	*/
+/*	$NetBSD: uhidev.h,v 1.9.18.1 2010/11/06 08:08:38 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #endif
 
 struct uhidev_softc {
-	USBBASEDEVICE sc_dev;		/* base device */
+	device_t sc_dev;		/* base device */
 	usbd_device_handle sc_udev;
 	usbd_interface_handle sc_iface;	/* interface */
 	usbd_pipe_handle sc_ipipe;	/* input interrupt pipe */
@@ -60,7 +60,7 @@ struct uhidev_softc {
 };
 
 struct uhidev {
-	USBBASEDEVICE sc_dev;		/* base device */
+	device_t sc_dev;		/* base device */
 	struct uhidev_softc *sc_parent;
 	uByte sc_report_id;
 	u_int8_t sc_state;

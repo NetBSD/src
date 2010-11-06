@@ -1,4 +1,4 @@
-/*	$NetBSD: uark.c,v 1.1.6.2 2010/08/17 06:46:45 uebayasi Exp $	*/
+/*	$NetBSD: uark.c,v 1.1.6.3 2010/11/06 08:08:37 uebayasi Exp $	*/
 /*	$OpenBSD: uark.c,v 1.13 2009/10/13 19:33:17 pirofti Exp $	*/
 
 /*
@@ -29,7 +29,6 @@
 #include <dev/usb/usbdi_util.h>
 #include <dev/usb/usbdevs.h>
 
-#include <dev/usb/usbdevs.h>
 #include <dev/usb/ucomvar.h>
 
 #ifdef UARK_DEBUG
@@ -93,19 +92,27 @@ static const struct usb_devno uark_devs[] = {
 	{ USB_VENDOR_ARKMICROCHIPS, USB_PRODUCT_ARKMICROCHIPS_USBSERIAL },
 };
 
-USB_DECLARE_DRIVER(uark);
+int             uark_match(device_t, cfdata_t, void *);
+void            uark_attach(device_t, device_t, void *);
+int             uark_detach(device_t, int);
+int             uark_activate(device_t, enum devact);
+extern struct cfdriver uark_cd;
+CFATTACH_DECL_NEW(uark, sizeof(struct uark_softc), uark_match, uark_attach, uark_detach, uark_activate);
 
-USB_MATCH(uark)
+int 
+uark_match(device_t parent, cfdata_t match, void *aux)
 {
-	USB_MATCH_START(uarkcom, uaa);
+	struct usb_attach_arg *uaa = aux;
 
 	return (usb_lookup(uark_devs, uaa->vendor, uaa->product) != NULL) ?
 	    UMATCH_VENDOR_PRODUCT : UMATCH_NONE;
 }
 
-USB_ATTACH(uark)
+void 
+uark_attach(device_t parent, device_t self, void *aux)
 {
-	USB_ATTACH_START(uark, sc, uaa);
+	struct uark_softc *sc = device_private(self);
+	struct usb_attach_arg *uaa = aux;
 	usbd_device_handle dev = uaa->device;
 	char *devinfop;
 	struct ucom_attach_args uca;
@@ -118,7 +125,8 @@ USB_ATTACH(uark)
 	sc->sc_dev = self;
 
 	devinfop = usbd_devinfo_alloc(dev, 0);
-	USB_ATTACH_SETUP;
+	aprint_naive("\n");
+	aprint_normal("\n");
 	aprint_normal_dev(self, "%s\n", devinfop);
 	usbd_devinfo_free(devinfop);
 
@@ -181,7 +189,7 @@ USB_ATTACH(uark)
 	sc->sc_subdev = config_found_sm_loc(self, "ucombus", NULL, &uca,
 					    ucomprint, ucomsubmatch);
 
-	USB_ATTACH_SUCCESS_RETURN;
+	return;
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: uftdi.c,v 1.45.2.1 2010/04/30 14:43:52 uebayasi Exp $	*/
+/*	$NetBSD: uftdi.c,v 1.45.2.2 2010/11/06 08:08:37 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uftdi.c,v 1.45.2.1 2010/04/30 14:43:52 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uftdi.c,v 1.45.2.2 2010/11/06 08:08:37 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,7 +70,7 @@ int uftdidebug = 0;
 #define UFTDIOBUFSIZE 64
 
 struct uftdi_softc {
-	USBBASEDEVICE		sc_dev;		/* base device */
+	device_t		sc_dev;		/* base device */
 	usbd_device_handle	sc_udev;	/* device */
 	usbd_interface_handle	sc_iface[UFTDI_MAX_PORTS];	/* interface */
 
@@ -82,7 +82,7 @@ struct uftdi_softc {
 	u_char			sc_msr;
 	u_char			sc_lsr;
 
-	device_ptr_t		sc_subdev[UFTDI_MAX_PORTS];
+	device_t		sc_subdev[UFTDI_MAX_PORTS];
 
 	u_char			sc_dying;
 
@@ -112,7 +112,7 @@ struct ucom_methods uftdi_methods = {
 
 /* 
  * The devices default to UFTDI_TYPE_8U232AM.
- * Remember to update USB_ATTACH if it should be UFTDI_TYPE_SIO instead
+ * Remember to update uftdi_attach() if it should be UFTDI_TYPE_SIO instead
  */
 static const struct usb_devno uftdi_devs[] = {
 	{ USB_VENDOR_BBELECTRONICS, USB_PRODUCT_BBELECTRONICS_USOTL4 },
@@ -164,9 +164,10 @@ extern struct cfdriver uftdi_cd;
 CFATTACH_DECL2_NEW(uftdi, sizeof(struct uftdi_softc), uftdi_match,
     uftdi_attach, uftdi_detach, uftdi_activate, NULL, uftdi_childdet);
 
-USB_MATCH(uftdi)
+int 
+uftdi_match(device_t parent, cfdata_t match, void *aux)
 {
-	USB_MATCH_START(uftdi, uaa);
+	struct usb_attach_arg *uaa = aux;
 
 	DPRINTFN(20,("uftdi: vendor=0x%x, product=0x%x\n",
 		     uaa->vendor, uaa->product));
@@ -175,9 +176,11 @@ USB_MATCH(uftdi)
                 UMATCH_VENDOR_PRODUCT : UMATCH_NONE);
 }
 
-USB_ATTACH(uftdi)
+void 
+uftdi_attach(device_t parent, device_t self, void *aux)
 {
-	USB_ATTACH_START(uftdi, sc, uaa);
+	struct uftdi_softc *sc = device_private(self);
+	struct usb_attach_arg *uaa = aux;
 	usbd_device_handle dev = uaa->device;
 	usbd_interface_handle iface;
 	usb_device_descriptor_t *ddesc;
@@ -300,14 +303,14 @@ USB_ATTACH(uftdi)
 	}
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
-			   USBDEV(sc->sc_dev));
+			   sc->sc_dev);
 
-	USB_ATTACH_SUCCESS_RETURN;
+	return;
 
 bad:
 	DPRINTF(("uftdi_attach: ATTACH ERROR\n"));
 	sc->sc_dying = 1;
-	USB_ATTACH_ERROR_RETURN;
+	return;
 }
 
 int
@@ -352,7 +355,7 @@ uftdi_detach(device_t self, int flags)
 	}
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
-			   USBDEV(sc->sc_dev));
+			   sc->sc_dev);
 
 	return (0);
 }

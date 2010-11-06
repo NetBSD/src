@@ -1,4 +1,4 @@
-/*	$NetBSD: dalb_acpi.c,v 1.6.2.1 2010/04/30 14:43:06 uebayasi Exp $	*/
+/*	$NetBSD: dalb_acpi.c,v 1.6.2.2 2010/11/06 08:08:27 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2008 Christoph Egger <cegger@netbsd.org>
@@ -27,7 +27,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dalb_acpi.c,v 1.6.2.1 2010/04/30 14:43:06 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dalb_acpi.c,v 1.6.2.2 2010/11/06 08:08:27 uebayasi Exp $");
 
 /*
  * Direct Application Launch Button:
@@ -36,6 +36,7 @@ __KERNEL_RCSID(0, "$NetBSD: dalb_acpi.c,v 1.6.2.1 2010/04/30 14:43:06 uebayasi E
 
 #include <sys/param.h>
 #include <sys/device.h>
+#include <sys/module.h>
 #include <sys/systm.h>
 
 #include <dev/acpi/acpireg.h>
@@ -197,7 +198,7 @@ acpi_dalb_notify_handler(ACPI_HANDLE hdl, uint32_t notify, void *opaque)
 	case DALB_SYSTEM_RUNTIME:
 		rv = AcpiOsExecute(OSL_NOTIFY_HANDLER,
 			acpi_dalb_get_runtime_hotkeys, dev);
-		break;	
+		break;
 
 	default:
 		aprint_error_dev(dev,
@@ -259,3 +260,30 @@ acpi_dalb_resume(device_t dev, const pmf_qual_t *qual)
 
 	return true;
 }
+
+#ifdef _MODULE
+
+MODULE(MODULE_CLASS_DRIVER, acpidalb, NULL);
+
+#include "ioconf.c"
+
+static int
+acpidalb_modcmd(modcmd_t cmd, void *context)
+{
+
+	switch (cmd) {
+
+	case MODULE_CMD_INIT:
+		return config_init_component(cfdriver_ioconf_acpidalb,
+		    cfattach_ioconf_acpidalb, cfdata_ioconf_acpidalb);
+
+	case MODULE_CMD_FINI:
+		return config_fini_component(cfdriver_ioconf_acpidalb,
+		    cfattach_ioconf_acpidalb, cfdata_ioconf_acpidalb);
+
+	default:
+		return ENOTTY;
+	}
+}
+
+#endif	/* _MODULE */

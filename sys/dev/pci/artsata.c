@@ -1,4 +1,4 @@
-/*	$NetBSD: artsata.c,v 1.19 2009/11/26 15:17:08 njoly Exp $	*/
+/*	$NetBSD: artsata.c,v 1.19.2.1 2010/11/06 08:08:30 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: artsata.c,v 1.19 2009/11/26 15:17:08 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: artsata.c,v 1.19.2.1 2010/11/06 08:08:30 uebayasi Exp $");
 
 #include "opt_pciide.h"
 
@@ -119,7 +119,6 @@ artsata_attach(device_t parent, device_t self, void *aux)
 
 static void
 artisea_mapregs(struct pci_attach_args *pa, struct pciide_channel *cp,
-    bus_size_t *cmdsizep, bus_size_t *ctlsizep,
     int (*pci_intr)(void *))
 {
 	struct pciide_softc *sc = CHAN_TO_PCIIDE(&cp->ata_channel);
@@ -320,7 +319,6 @@ static void
 artisea_chip_map_dpa(struct pciide_softc *sc, struct pci_attach_args *pa)
 {
 	struct pciide_channel *cp;
-	bus_size_t cmdsize, ctlsize;
 	pcireg_t interface;
 	int channel;
 
@@ -330,7 +328,7 @@ artisea_chip_map_dpa(struct pciide_softc *sc, struct pci_attach_args *pa)
 	    "interface wired in DPA mode\n");
 
 	if (pci_mapreg_map(pa, ARTISEA_PCI_DPA_BASE, PCI_MAPREG_MEM_TYPE_64BIT,
-	    0, &sc->sc_ba5_st, &sc->sc_ba5_sh, NULL, NULL) != 0)
+	    0, &sc->sc_ba5_st, &sc->sc_ba5_sh, NULL, &sc->sc_ba5_ss) != 0)
 		return;
 
 	artisea_mapreg_dma(sc, pa);
@@ -380,7 +378,7 @@ artisea_chip_map_dpa(struct pciide_softc *sc, struct pci_attach_args *pa)
 		if (artisea_chansetup(sc, channel, interface) == 0)
 			continue;
 		/* XXX We can probably do interrupts more efficiently.  */
-		artisea_mapregs(pa, cp, &cmdsize, &ctlsize, pciide_pci_intr);
+		artisea_mapregs(pa, cp, pciide_pci_intr);
 	}
 }
 
@@ -388,7 +386,6 @@ static void
 artisea_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 {
 	struct pciide_channel *cp;
-	bus_size_t cmdsize, ctlsize;
 	pcireg_t interface;
 	int channel;
 
@@ -438,7 +435,6 @@ artisea_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 		cp = &sc->pciide_channels[channel];
 		if (pciide_chansetup(sc, channel, interface) == 0)
 			continue;
-		pciide_mapchan(pa, cp, interface, &cmdsize, &ctlsize,
-		    pciide_pci_intr);
+		pciide_mapchan(pa, cp, interface, pciide_pci_intr);
 	}
 }

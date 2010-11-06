@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.40.2.4 2010/10/22 07:21:44 uebayasi Exp $	*/
+/*	$NetBSD: cpu.c,v 1.40.2.5 2010/11/06 08:08:23 uebayasi Exp $	*/
 /* NetBSD: cpu.c,v 1.18 2004/02/20 17:35:01 yamt Exp  */
 
 /*-
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.40.2.4 2010/10/22 07:21:44 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.40.2.5 2010/11/06 08:08:23 uebayasi Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -257,6 +257,7 @@ cpu_attach(device_t parent, device_t self, void *aux)
 	sc->sc_info = ci;
 
 	ci->ci_dev = self;
+	ci->ci_acpiid = caa->cpu_id;
 	ci->ci_cpuid = caa->cpu_number;
 	ci->ci_vcpu = NULL;
 

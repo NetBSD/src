@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.127 2010/01/16 17:03:03 bouyer Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.127.2.1 2010/11/06 08:08:41 uebayasi Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.28 1999/11/17 22:33:49 n_hibma Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.127 2010/01/16 17:03:03 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.127.2.1 2010/11/06 08:08:41 uebayasi Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -56,8 +56,8 @@ __KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.127 2010/01/16 17:03:03 bouyer Exp $");
 #include <fs/unicode.h>
 
 #ifdef USB_DEBUG
-#define DPRINTF(x)	if (usbdebug) logprintf x
-#define DPRINTFN(n,x)	if (usbdebug>(n)) logprintf x
+#define DPRINTF(x)	if (usbdebug) printf x
+#define DPRINTFN(n,x)	if (usbdebug>(n)) printf x
 extern int usbdebug;
 #else
 #define DPRINTF(x)
@@ -373,7 +373,7 @@ usbd_alloc_xfer(usbd_device_handle dev)
 	if (xfer == NULL)
 		return (NULL);
 	xfer->device = dev;
-	usb_callout_init(xfer->timeout_handle);
+	callout_init(&xfer->timeout_handle, 0);
 	DPRINTFN(5,("usbd_alloc_xfer() = %p\n", xfer));
 	return (xfer);
 }

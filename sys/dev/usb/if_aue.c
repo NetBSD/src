@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aue.c,v 1.118.2.2 2010/10/22 07:22:18 uebayasi Exp $	*/
+/*	$NetBSD: if_aue.c,v 1.118.2.3 2010/11/06 08:08:35 uebayasi Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.118.2.2 2010/10/22 07:22:18 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.118.2.3 2010/11/06 08:08:35 uebayasi Exp $");
 
 #include "opt_inet.h"
 #include "rnd.h"
@@ -124,8 +124,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.118.2.2 2010/10/22 07:22:18 uebayasi Ex
 #include <dev/usb/if_auereg.h>
 
 #ifdef AUE_DEBUG
-#define DPRINTF(x)	if (auedebug) logprintf x
-#define DPRINTFN(n,x)	if (auedebug >= (n)) logprintf x
+#define DPRINTF(x)	if (auedebug) printf x
+#define DPRINTFN(n,x)	if (auedebug >= (n)) printf x
 int	auedebug = 0;
 #else
 #define DPRINTF(x)
@@ -886,7 +886,7 @@ aue_detach(device_t self, int flags)
 		return (0);
 	}
 
-	callout_stop(&(sc->aue_stat_ch));
+	callout_stop(&sc->aue_stat_ch);
 	/*
 	 * Remove any pending tasks.  They cannot be executing because they run
 	 * in the same thread as detach.
@@ -1651,7 +1651,7 @@ aue_stop(struct aue_softc *sc)
 	aue_csr_write_1(sc, AUE_CTL0, 0);
 	aue_csr_write_1(sc, AUE_CTL1, 0);
 	aue_reset(sc);
-	callout_stop(&(sc->aue_stat_ch));
+	callout_stop(&sc->aue_stat_ch);
 
 	/* Stop transfers. */
 	if (sc->aue_ep[AUE_ENDPT_RX] != NULL) {

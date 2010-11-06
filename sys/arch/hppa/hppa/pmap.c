@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.63.2.9 2010/10/31 03:46:17 uebayasi Exp $	*/
+/*	$NetBSD: pmap.c,v 1.63.2.10 2010/11/06 08:08:17 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.63.2.9 2010/10/31 03:46:17 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.63.2.10 2010/11/06 08:08:17 uebayasi Exp $");
 
 #include "opt_xip.h"
 
@@ -92,6 +92,8 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.63.2.9 2010/10/31 03:46:17 uebayasi Exp $
 #if defined(DDB)
 #include <ddb/db_output.h>
 #endif
+
+#define	VM_PAGE_TO_MD(pg)	(&(pg)->mdpage)
 
 #ifdef PMAPDEBUG
 

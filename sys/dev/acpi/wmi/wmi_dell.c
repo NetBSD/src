@@ -1,4 +1,4 @@
-/*	$NetBSD: wmi_dell.c,v 1.3.2.3 2010/08/17 06:46:03 uebayasi Exp $ */
+/*	$NetBSD: wmi_dell.c,v 1.3.2.4 2010/11/06 08:08:28 uebayasi Exp $ */
 
 /*-
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -31,10 +31,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wmi_dell.c,v 1.3.2.3 2010/08/17 06:46:03 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wmi_dell.c,v 1.3.2.4 2010/11/06 08:08:28 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
+#include <sys/module.h>
 
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
@@ -121,7 +122,7 @@ wmi_dell_detach(device_t self, int flags)
 {
 	struct wmi_dell_softc *sc = device_private(self);
 	device_t parent = sc->sc_parent;
-	int i;
+	size_t i;
 
 	(void)pmf_device_deregister(self);
 	(void)acpi_wmi_event_deregister(parent);
@@ -231,3 +232,79 @@ out:
 		aprint_error_dev(sc->sc_dev, "failed to get data for "
 		    "event 0x%02X: %s\n", evt, AcpiFormatException(rv));
 }
+
+#ifdef _MODULE
+
+MODULE(MODULE_CLASS_DRIVER, wmidell, NULL);
+CFDRIVER_DECL(wmidell, DV_DULL, NULL);
+
+static int wmidellloc[] = { -1 };
+extern struct cfattach wmidell_ca;
+
+static struct cfparent wmiparent = {
+	"acpiwmibus", NULL, DVUNIT_ANY
+};
+
+static struct cfdata wmidell_cfdata[] = {
+	{
+		.cf_name = "wmidell",
+		.cf_atname = "wmidell",
+		.cf_unit = 0,
+		.cf_fstate = FSTATE_STAR,
+		.cf_loc = wmidellloc,
+		.cf_flags = 0,
+		.cf_pspec = &wmiparent,
+	},
+
+	{ NULL, NULL, 0, 0, NULL, 0, NULL }
+};
+
+static int
+wmidell_modcmd(modcmd_t cmd, void *opaque)
+{
+	int err;
+
+	switch (cmd) {
+
+	case MODULE_CMD_INIT:
+
+		err = config_cfdriver_attach(&wmidell_cd);
+
+		if (err != 0)
+			return err;
+
+		err = config_cfattach_attach("wmidell", &wmidell_ca);
+
+		if (err != 0) {
+			config_cfdriver_detach(&wmidell_cd);
+			return err;
+		}
+
+		err = config_cfdata_attach(wmidell_cfdata, 1);
+
+		if (err != 0) {
+			config_cfattach_detach("wmidell", &wmidell_ca);
+			config_cfdriver_detach(&wmidell_cd);
+			return err;
+		}
+
+		return 0;
+
+	case MODULE_CMD_FINI:
+
+		err = config_cfdata_detach(wmidell_cfdata);
+
+		if (err != 0)
+			return err;
+
+		config_cfattach_detach("wmidell", &wmidell_ca);
+		config_cfdriver_detach(&wmidell_cd);
+
+		return 0;
+
+	default:
+		return ENOTTY;
+	}
+}
+
+#endif	/* _MODULE */

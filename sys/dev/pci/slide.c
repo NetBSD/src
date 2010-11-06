@@ -1,4 +1,4 @@
-/*	$NetBSD: slide.c,v 1.20 2008/04/28 20:23:55 martin Exp $	*/
+/*	$NetBSD: slide.c,v 1.20.20.1 2010/11/06 08:08:32 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: slide.c,v 1.20 2008/04/28 20:23:55 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: slide.c,v 1.20.20.1 2010/11/06 08:08:32 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -128,7 +128,6 @@ static void
 sl82c105_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 {
 	struct pciide_channel *cp;
-	bus_size_t cmdsize, ctlsize;
 	pcireg_t interface, idecr;
 	int channel;
 
@@ -179,8 +178,7 @@ sl82c105_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 			cp->ata_channel.ch_flags |= ATACH_DISABLED;
 			continue;
 		}
-		pciide_mapchan(pa, cp, interface, &cmdsize, &ctlsize,
-		    pciide_pci_intr);
+		pciide_mapchan(pa, cp, interface, pciide_pci_intr);
 	}
 }
 

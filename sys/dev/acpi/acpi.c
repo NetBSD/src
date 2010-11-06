@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.148.2.3 2010/10/22 07:21:51 uebayasi Exp $	*/
+/*	$NetBSD: acpi.c,v 1.148.2.4 2010/11/06 08:08:27 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.148.2.3 2010/10/22 07:21:51 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.148.2.4 2010/11/06 08:08:27 uebayasi Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -262,6 +262,7 @@ acpi_probe(void)
 
 	once = 1;
 	func = NULL;
+	acpi_softc = NULL;
 	initialized = false;
 
 	mutex_init(&acpi_interrupt_list_mtx, MUTEX_DEFAULT, IPL_NONE);
@@ -371,6 +372,11 @@ fail:
 void
 acpi_disable(void)
 {
+
+	if (acpi_softc == NULL)
+		return;
+
+	KASSERT(acpi_active != 0);
 
 	if (AcpiGbl_FADT.SmiCommand != 0)
 		AcpiDisable();
@@ -1354,12 +1360,19 @@ acpi_sleep_init(struct acpi_softc *sc)
 }
 
 void
-acpi_enter_sleep_state(struct acpi_softc *sc, int state)
+acpi_enter_sleep_state(int state)
 {
+	struct acpi_softc *sc = acpi_softc;
 	ACPI_STATUS rv;
 	int err;
 
+	if (acpi_softc == NULL)
+		return;
+
 	if (state == sc->sc_sleepstate)
+		return;
+
+	if (state < ACPI_STATE_S0 || state > ACPI_STATE_S5)
 		return;
 
 	aprint_normal_dev(sc->sc_dev, "entering state S%d\n", state);
@@ -1608,7 +1621,7 @@ sysctl_hw_acpi_sleepstate(SYSCTLFN_ARGS)
 	if (t < ACPI_STATE_S0 || t > ACPI_STATE_S5)
 		return EINVAL;
 
-	acpi_enter_sleep_state(sc, t);
+	acpi_enter_sleep_state(t);
 
 	return 0;
 }

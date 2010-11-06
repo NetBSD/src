@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_descrip.c,v 1.17 2009/10/28 18:24:44 njoly Exp $	*/
+/*	$NetBSD: sys_descrip.c,v 1.17.2.1 2010/11/06 08:08:43 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_descrip.c,v 1.17 2009/10/28 18:24:44 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_descrip.c,v 1.17.2.1 2010/11/06 08:08:43 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -622,13 +622,14 @@ do_posix_fadvise(int fd, off_t offset, off_t len, int advice)
 	vnode_t *vp;
 	off_t endoffset;
 	int error;
+
 	CTASSERT(POSIX_FADV_NORMAL == UVM_ADV_NORMAL);
 	CTASSERT(POSIX_FADV_RANDOM == UVM_ADV_RANDOM);
 	CTASSERT(POSIX_FADV_SEQUENTIAL == UVM_ADV_SEQUENTIAL);
 
 	if (len == 0) {
 		endoffset = INT64_MAX;
-	} else if (INT64_MAX - offset >= len) {
+	} else if (len > 0 && (INT64_MAX - offset) >= len) {
 		endoffset = offset + len;
 	} else {
 		return EINVAL;
@@ -680,8 +681,8 @@ do_posix_fadvise(int fd, off_t offset, off_t len, int advice)
 	case POSIX_FADV_DONTNEED:
 		vp = fp->f_data;
 		mutex_enter(&vp->v_interlock);
-		error = VOP_PUTPAGES(vp, round_page(offset),
-		    trunc_page(endoffset), PGO_DEACTIVATE | PGO_CLEANIT);
+		error = VOP_PUTPAGES(vp, trunc_page(offset),
+		    round_page(endoffset), PGO_DEACTIVATE | PGO_CLEANIT);
 		break;
 
 	case POSIX_FADV_NOREUSE:

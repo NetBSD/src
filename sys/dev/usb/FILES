@@ -65,7 +65,6 @@ usb.c			usb (bus) device driver
 usb.h			general USB defines
 usb_mem.c		memory allocation for DMAable memory
 usb_mem.h		API for usb_mem.c
-usb_port.h		compatibility defines for different OSs
 usb_quirks.c		table of non-conforming USB devices and their problems
 usb_quirks.h		API for usb_quirks.c
 usb_subr.c		various subroutines used by USB code

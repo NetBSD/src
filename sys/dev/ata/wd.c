@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.383.2.1 2010/04/30 14:43:08 uebayasi Exp $ */
+/*	$NetBSD: wd.c,v 1.383.2.2 2010/11/06 08:08:28 uebayasi Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.383.2.1 2010/04/30 14:43:08 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.383.2.2 2010/11/06 08:08:28 uebayasi Exp $");
 
 #include "opt_ata.h"
 
@@ -489,9 +489,10 @@ wdstrategy(struct buf *bp)
 	}
 
 	/* If device invalidated (e.g. media change, door open,
-	 * device suspension), then error.
+	 * device detachment), then error.
 	 */
-	if ((wd->sc_flags & WDF_LOADED) == 0 || !device_is_active(wd->sc_dev)) {
+	if ((wd->sc_flags & WDF_LOADED) == 0 ||
+	    !device_is_enabled(wd->sc_dev)) {
 		bp->b_error = EIO;
 		goto done;
 	}
@@ -573,6 +574,10 @@ wdstart(void *arg)
 
 	ATADEBUG_PRINT(("wdstart %s\n", device_xname(wd->sc_dev)),
 	    DEBUG_XFERS);
+
+	if (!device_is_active(wd->sc_dev))
+		return;
+
 	while (wd->openings > 0) {
 
 		/* Is there a buf for us ? */

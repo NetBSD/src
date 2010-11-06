@@ -1,4 +1,4 @@
-/*	$NetBSD: uhid.c,v 1.83 2009/12/06 21:40:31 dyoung Exp $	*/
+/*	$NetBSD: uhid.c,v 1.83.2.1 2010/11/06 08:08:38 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.83 2009/12/06 21:40:31 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.83.2.1 2010/11/06 08:08:38 uebayasi Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -67,8 +67,8 @@ __KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.83 2009/12/06 21:40:31 dyoung Exp $");
 #include <dev/usb/uhidev.h>
 
 #ifdef UHID_DEBUG
-#define DPRINTF(x)	if (uhiddebug) logprintf x
-#define DPRINTFN(n,x)	if (uhiddebug>(n)) logprintf x
+#define DPRINTF(x)	if (uhiddebug) printf x
+#define DPRINTFN(n,x)	if (uhiddebug>(n)) printf x
 int	uhiddebug = 0;
 #else
 #define DPRINTF(x)
@@ -86,7 +86,7 @@ struct uhid_softc {
 
 	struct clist sc_q;
 	struct selinfo sc_rsel;
-	usb_proc_ptr sc_async;	/* process that wants SIGIO */
+	proc_t *sc_async;	/* process that wants SIGIO */
 	void *sc_sih;
 	u_char sc_state;	/* driver state */
 #define	UHID_ASLP	0x01	/* waiting for device data */
@@ -120,7 +120,12 @@ Static int uhid_do_read(struct uhid_softc *, struct uio *uio, int);
 Static int uhid_do_write(struct uhid_softc *, struct uio *uio, int);
 Static int uhid_do_ioctl(struct uhid_softc*, u_long, void *, int, struct lwp *);
 
-USB_DECLARE_DRIVER(uhid);
+int             uhid_match(device_t, cfdata_t, void *);
+void            uhid_attach(device_t, device_t, void *);
+int             uhid_detach(device_t, int);
+int             uhid_activate(device_t, enum devact);
+extern struct cfdriver uhid_cd;
+CFATTACH_DECL_NEW(uhid, sizeof(struct uhid_softc), uhid_match, uhid_attach, uhid_detach, uhid_activate);
 
 int
 uhid_match(device_t parent, cfdata_t match, void *aux)
@@ -166,11 +171,11 @@ uhid_attach(device_t parent, device_t self, void *aux)
 	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 
-	USB_ATTACH_SUCCESS_RETURN;
+	return;
 }
 
 int
-uhid_activate(device_ptr_t self, enum devact act)
+uhid_activate(device_t self, enum devact act)
 {
 	struct uhid_softc *sc = device_private(self);
 
@@ -200,7 +205,7 @@ uhid_detach(device_t self, int flags)
 			/* Wake everyone */
 			wakeup(&sc->sc_q);
 			/* Wait for processes to go away. */
-			usb_detach_wait(USBDEV(sc->sc_hdev.sc_dev));
+			usb_detach_wait(sc->sc_hdev.sc_dev);
 		}
 		splx(s);
 	}
@@ -221,7 +226,7 @@ uhid_detach(device_t self, int flags)
 #if 0
 	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH,
 			   sc->sc_hdev.sc_parent->sc_udev,
-			   USBDEV(sc->sc_hdev.sc_dev));
+			   sc->sc_hdev.sc_dev);
 #endif
 	seldestroy(&sc->sc_rsel);
 	softint_disestablish(sc->sc_sih);
@@ -279,7 +284,9 @@ uhidopen(dev_t dev, int flag, int mode,
 	struct uhid_softc *sc;
 	int error;
 
-	USB_GET_SC_OPEN(uhid, UHIDUNIT(dev), sc);
+	sc = device_lookup_private(&uhid_cd, UHIDUNIT(dev));
+	if (sc == NULL)
+		return ENXIO;
 
 	DPRINTF(("uhidopen: sc=%p\n", sc));
 
@@ -309,7 +316,7 @@ uhidclose(dev_t dev, int flag, int mode,
 {
 	struct uhid_softc *sc;
 
-	USB_GET_SC(uhid, UHIDUNIT(dev), sc);
+	sc = device_lookup_private(&uhid_cd, UHIDUNIT(dev));
 
 	DPRINTF(("uhidclose: sc=%p\n", sc));
 
@@ -387,12 +394,12 @@ uhidread(dev_t dev, struct uio *uio, int flag)
 	struct uhid_softc *sc;
 	int error;
 
-	USB_GET_SC(uhid, UHIDUNIT(dev), sc);
+	sc = device_lookup_private(&uhid_cd, UHIDUNIT(dev));
 
 	sc->sc_refcnt++;
 	error = uhid_do_read(sc, uio, flag);
 	if (--sc->sc_refcnt < 0)
-		usb_detach_wakeup(USBDEV(sc->sc_hdev.sc_dev));
+		usb_detach_wakeup(sc->sc_hdev.sc_dev);
 	return (error);
 }
 
@@ -429,12 +436,12 @@ uhidwrite(dev_t dev, struct uio *uio, int flag)
 	struct uhid_softc *sc;
 	int error;
 
-	USB_GET_SC(uhid, UHIDUNIT(dev), sc);
+	sc = device_lookup_private(&uhid_cd, UHIDUNIT(dev));
 
 	sc->sc_refcnt++;
 	error = uhid_do_write(sc, uio, flag);
 	if (--sc->sc_refcnt < 0)
-		usb_detach_wakeup(USBDEV(sc->sc_hdev.sc_dev));
+		usb_detach_wakeup(sc->sc_hdev.sc_dev);
 	return (error);
 }
 
@@ -603,12 +610,12 @@ uhidioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 	struct uhid_softc *sc;
 	int error;
 
-	USB_GET_SC(uhid, UHIDUNIT(dev), sc);
+	sc = device_lookup_private(&uhid_cd, UHIDUNIT(dev));
 
 	sc->sc_refcnt++;
 	error = uhid_do_ioctl(sc, cmd, addr, flag, l);
 	if (--sc->sc_refcnt < 0)
-		usb_detach_wakeup(USBDEV(sc->sc_hdev.sc_dev));
+		usb_detach_wakeup(sc->sc_hdev.sc_dev);
 	return (error);
 }
 
@@ -619,7 +626,7 @@ uhidpoll(dev_t dev, int events, struct lwp *l)
 	int revents = 0;
 	int s;
 
-	USB_GET_SC(uhid, UHIDUNIT(dev), sc);
+	sc = device_lookup_private(&uhid_cd, UHIDUNIT(dev));
 
 	if (sc->sc_dying)
 		return (POLLHUP);
@@ -671,7 +678,7 @@ uhidkqfilter(dev_t dev, struct knote *kn)
 	struct klist *klist;
 	int s;
 
-	USB_GET_SC(uhid, UHIDUNIT(dev), sc);
+	sc = device_lookup_private(&uhid_cd, UHIDUNIT(dev));
 
 	if (sc->sc_dying)
 		return (ENXIO);

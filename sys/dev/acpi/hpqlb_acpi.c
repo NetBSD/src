@@ -1,4 +1,4 @@
-/* $NetBSD: hpqlb_acpi.c,v 1.5.2.1 2010/04/30 14:43:06 uebayasi Exp $ */
+/* $NetBSD: hpqlb_acpi.c,v 1.5.2.2 2010/11/06 08:08:28 uebayasi Exp $ */
 
 /*-
  * Copyright (c) 2008  Christoph Egger <cegger@netbsd.org>
@@ -27,10 +27,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpqlb_acpi.c,v 1.5.2.1 2010/04/30 14:43:06 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpqlb_acpi.c,v 1.5.2.2 2010/11/06 08:08:28 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
+#include <sys/module.h>
 #include <sys/systm.h>
 
 #include <machine/pio.h>
@@ -45,12 +46,6 @@ __KERNEL_RCSID(0, "$NetBSD: hpqlb_acpi.c,v 1.5.2.1 2010/04/30 14:43:06 uebayasi 
 
 #define _COMPONENT		ACPI_RESOURCE_COMPONENT
 ACPI_MODULE_NAME		("hpqlb_acpi")
-
-#ifdef HPQLB_DEBUG
-#define DPRINTF(x)		do { printf x; } while (/* CONSTCOND */0)
-#else
-#define DPRINTF(x)
-#endif
 
 struct hpqlb_softc {
 	device_t sc_dev;
@@ -89,6 +84,7 @@ struct hpqlb_softc {
 
 static int hpqlb_match(device_t, cfdata_t, void *);
 static void hpqlb_attach(device_t, device_t, void *);
+static int hpqlb_detach(device_t, int);
 
 static int hpqlb_finalize(device_t);
 static int hpqlb_hotkey_handler(struct wskbd_softc *, void *, u_int, int);
@@ -97,7 +93,7 @@ static void hpqlb_init(device_t);
 static bool hpqlb_resume(device_t, const pmf_qual_t *);
 
 CFATTACH_DECL_NEW(hpqlb, sizeof(struct hpqlb_softc),
-    hpqlb_match, hpqlb_attach, NULL, NULL);
+    hpqlb_match, hpqlb_attach, hpqlb_detach, NULL);
 
 static const char * const hpqlb_ids[] = {
 	"HPQ0006",
@@ -131,29 +127,44 @@ hpqlb_attach(device_t parent, device_t self, void *opaque)
 	hpqlb_init(self);
 
 	if (config_finalize_register(self, hpqlb_finalize) != 0)
-		aprint_error_dev(self,
-			"WARNING: unable to register hpqlb finalizer\n");
+		aprint_error_dev(self, "unable to register hpqlb finalizer\n");
 
 	sc->sc_smpsw_displaycycle_valid = true;
+
 	sc->sc_smpsw[HP_PSW_DISPLAY_CYCLE].smpsw_name =
 	    PSWITCH_HK_DISPLAY_CYCLE;
+
 	sc->sc_smpsw[HP_PSW_DISPLAY_CYCLE].smpsw_type =
 	    PSWITCH_TYPE_HOTKEY;
-	if (sysmon_pswitch_register(&sc->sc_smpsw[HP_PSW_DISPLAY_CYCLE])) {
-		aprint_error_dev(self, "couldn't register with sysmon\n");
+
+	if (sysmon_pswitch_register(&sc->sc_smpsw[HP_PSW_DISPLAY_CYCLE]) != 0)
 		sc->sc_smpsw_displaycycle_valid = false;
-	}
 
 	sc->sc_smpsw_sleep_valid = true;
 	sc->sc_smpsw[HP_PSW_SLEEP].smpsw_name = device_xname(self);
 	sc->sc_smpsw[HP_PSW_SLEEP].smpsw_type = PSWITCH_TYPE_SLEEP;
-	if (sysmon_pswitch_register(&sc->sc_smpsw[HP_PSW_SLEEP])) {
-		aprint_error_dev(self, "couldn't register sleep with sysmon\n");
-		sc->sc_smpsw_sleep_valid = false;
-	}
 
-	if (!pmf_device_register(self, NULL, hpqlb_resume))
-		aprint_error_dev(self, "couldn't establish power handler\n");
+	if (sysmon_pswitch_register(&sc->sc_smpsw[HP_PSW_SLEEP]) != 0)
+		sc->sc_smpsw_sleep_valid = false;
+
+	(void)pmf_device_register(self, NULL, hpqlb_resume);
+}
+
+static int
+hpqlb_detach(device_t self, int flags)
+{
+	struct hpqlb_softc *sc = device_private(self);
+
+	pmf_device_deregister(self);
+	wskbd_hotkey_deregister(sc->sc_wskbddev);
+
+	if (sc->sc_smpsw_sleep_valid != false)
+		sysmon_pswitch_unregister(&sc->sc_smpsw[HP_PSW_SLEEP]);
+
+	if (sc->sc_smpsw_displaycycle_valid != false)
+		sysmon_pswitch_unregister(&sc->sc_smpsw[HP_PSW_DISPLAY_CYCLE]);
+
+	return 0;
 }
 
 static int
@@ -193,11 +204,8 @@ hpqlb_hotkey_handler(struct wskbd_softc *wskbd_sc, void *cookie,
 	case HP_QLB_Sleep:
 		if (type != WSCONS_EVENT_KEY_DOWN)
 			break;
-		if (sc->sc_smpsw_sleep_valid == false) {
-			DPRINTF(("%s: Sleep hotkey\n",
-			    device_xname(sc->sc_dev)));
+		if (sc->sc_smpsw_sleep_valid == false)
 			break;
-		}
 		sysmon_pswitch_event(&sc->sc_smpsw[HP_PSW_SLEEP],
 			PSWITCH_EVENT_PRESSED);
 		break;
@@ -219,8 +227,9 @@ hpqlb_hotkey_handler(struct wskbd_softc *wskbd_sc, void *cookie,
 		pmf_event_inject(NULL, PMFE_CHASSIS_LID_OPEN);
 		break;
 	default:
-		DPRINTF(("%s: unknown hotkey 0x%02x\n",
-			device_xname(sc->sc_dev), value));
+
+		ACPI_DEBUG_PRINT((ACPI_DB_INFO, "unknown hotkey "
+			"0x%02x\n", value));
 		ret = 0; /* Assume, this is no hotkey */
 		break;
 	}
@@ -293,3 +302,30 @@ hpqlb_resume(device_t self, const pmf_qual_t *qual)
 
 	return true;
 }
+
+#ifdef _MODULE
+
+MODULE(MODULE_CLASS_DRIVER, hpqlb, NULL);
+
+#include "ioconf.c"
+
+static int
+hpqlb_modcmd(modcmd_t cmd, void *context)
+{
+
+	switch (cmd) {
+
+	case MODULE_CMD_INIT:
+		return config_init_component(cfdriver_ioconf_hpqlb,
+		    cfattach_ioconf_hpqlb, cfdata_ioconf_hpqlb);
+
+	case MODULE_CMD_FINI:
+		return config_fini_component(cfdriver_ioconf_hpqlb,
+		    cfattach_ioconf_hpqlb, cfdata_ioconf_hpqlb);
+
+	default:
+		return ENOTTY;
+	}
+}
+
+#endif	/* _MODULE */

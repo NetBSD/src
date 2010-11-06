@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.c,v 1.107 2009/11/28 22:11:42 dsl Exp $	*/
+/*	$NetBSD: linux_socket.c,v 1.107.2.1 2010/11/06 08:08:25 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.107 2009/11/28 22:11:42 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.107.2.1 2010/11/06 08:08:25 uebayasi Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -70,6 +70,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.107 2009/11/28 22:11:42 dsl Exp $
 #include <sys/kauth.h>
 #include <sys/syscallargs.h>
 #include <sys/ktrace.h>
+#include <sys/fcntl.h>
 
 #include <lib/libkern/libkern.h>
 
@@ -84,6 +85,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.107 2009/11/28 22:11:42 dsl Exp $
 #include <compat/linux/common/linux_signal.h>
 #include <compat/linux/common/linux_ioctl.h>
 #include <compat/linux/common/linux_socket.h>
+#include <compat/linux/common/linux_fcntl.h>
 #if !defined(__alpha__) && !defined(__amd64__)
 #include <compat/linux/common/linux_socketcall.h>
 #endif
@@ -200,13 +202,13 @@ static const struct {
 	{MSG_DONTWAIT,		LINUX_MSG_DONTWAIT},
 	{MSG_BCAST,		0},		/* not supported, clear */
 	{MSG_MCAST,		0},		/* not supported, clear */
+	{MSG_NOSIGNAL,		LINUX_MSG_NOSIGNAL},
 	{-1, /* not supp */	LINUX_MSG_PROBE},
 	{-1, /* not supp */	LINUX_MSG_FIN},
 	{-1, /* not supp */	LINUX_MSG_SYN},
 	{-1, /* not supp */	LINUX_MSG_CONFIRM},
 	{-1, /* not supp */	LINUX_MSG_RST},
 	{-1, /* not supp */	LINUX_MSG_ERRQUEUE},
-	{-1, /* not supp */	LINUX_MSG_NOSIGNAL},
 	{-1, /* not supp */	LINUX_MSG_MORE},
 };
 
@@ -297,14 +299,45 @@ linux_sys_socket(struct lwp *l, const struct linux_sys_socket_args *uap, registe
 		syscallarg(int) protocol;
 	} */
 	struct sys___socket30_args bsa;
-	int error;
+	struct sys_fcntl_args fsa;
+	register_t fretval[2];
+	int error, flags;
+
 
 	SCARG(&bsa, protocol) = SCARG(uap, protocol);
-	SCARG(&bsa, type) = SCARG(uap, type);
+	SCARG(&bsa, type) = SCARG(uap, type) & LINUX_SOCK_TYPE_MASK;
 	SCARG(&bsa, domain) = linux_to_bsd_domain(SCARG(uap, domain));
 	if (SCARG(&bsa, domain) == -1)
 		return EINVAL;
+	flags = SCARG(uap, type) & ~LINUX_SOCK_TYPE_MASK;
+	if (flags & ~(LINUX_SOCK_CLOEXEC | LINUX_SOCK_NONBLOCK))
+		return EINVAL;
 	error = sys___socket30(l, &bsa, retval);
+
+	/*
+	 * Linux overloads the "type" parameter to include some
+	 * fcntl flags to be set on the file descriptor.
+	 * Process those if creating the socket succeeded.
+	 */
+
+	if (!error && flags & LINUX_SOCK_CLOEXEC) {
+		SCARG(&fsa, fd) = *retval;
+		SCARG(&fsa, cmd) = F_SETFD;
+		SCARG(&fsa, arg) = (void *)(uintptr_t)FD_CLOEXEC;
+		(void) sys_fcntl(l, &fsa, fretval);
+	}
+	if (!error && flags & LINUX_SOCK_NONBLOCK) {
+		SCARG(&fsa, fd) = *retval;
+		SCARG(&fsa, cmd) = F_SETFL;
+		SCARG(&fsa, arg) = (void *)(uintptr_t)O_NONBLOCK;
+		error = sys_fcntl(l, &fsa, fretval);
+		if (error) {
+			struct sys_close_args csa;
+
+			SCARG(&csa, fd) = *retval;
+			(void) sys_close(l, &csa, fretval);
+		}
+	}
 
 #ifdef INET6
 	/*
@@ -505,6 +538,14 @@ linux_sys_sendmsg(struct lwp *l, const struct linux_sys_sendmsg_args *uap, regis
 					/* Linux SCM_RIGHTS is same as NetBSD */
 					break;
 
+				case LINUX_SCM_CREDENTIALS:
+					/* no native equivalent, just drop it */
+					m_free(ctl_mbuf);
+					ctl_mbuf = NULL;
+					msg.msg_control = NULL;
+					msg.msg_controllen = 0;
+					goto skipcmsg;
+
 				default:
 					/* other types not supported */
 					error = EINVAL;
@@ -545,7 +586,7 @@ linux_sys_sendmsg(struct lwp *l, const struct linux_sys_sendmsg_args *uap, regis
 			cmsg->cmsg_level = l_cmsg.cmsg_level;
 			cmsg->cmsg_type = l_cmsg.cmsg_type;
 
-			/* Zero are between header and data */
+			/* Zero area between header and data */
 			memset(cmsg + 1, 0, 
 				CMSG_ALIGN(sizeof(cmsg)) - sizeof(cmsg));
 
@@ -575,6 +616,7 @@ linux_sys_sendmsg(struct lwp *l, const struct linux_sys_sendmsg_args *uap, regis
 		    msg.msg_controllen);
 	}
 
+skipcmsg:
 	error = do_sys_sendmsg(l, SCARG(uap, s), &msg, bflags, retval);
 	/* Freed internally */
 	ctl_mbuf = NULL;
