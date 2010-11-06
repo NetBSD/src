@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips64eb,v 1.25 2010/11/04 21:15:54 pooka Exp $
+# $NetBSD: ad.mips64eb,v 1.26 2010/11/06 09:40:31 plunky Exp $
 ./libexec/ld.elf_so-64				base-compat-shlib	compat,pic
 ./libexec/ld.elf_so-o32				base-sysutil-bin	compat,pic
 ./usr/lib/64					base-compat-lib
@@ -121,6 +121,8 @@
 ./usr/lib/64/libldap.so.4.1			base-compat-shlib	compat,pic,ldap
 ./usr/lib/64/libldap_r.so.4			base-compat-shlib	compat,pic,ldap
 ./usr/lib/64/libldap_r.so.4.1			base-compat-shlib	compat,pic,ldap
+./usr/lib/64/liblua.so.1			base-compat-shlib	compat,pic
+./usr/lib/64/liblua.so.1.0			base-compat-shlib	compat,pic
 ./usr/lib/64/liblwres.so.5			base-compat-shlib	compat,pic
 ./usr/lib/64/liblwres.so.5.1			base-compat-shlib	compat,pic
 ./usr/lib/64/liblzma.so.1			base-compat-shlib	compat,pic
@@ -360,6 +362,8 @@
 ./usr/lib/o32/libldap.so.4.1			base-compat-shlib	compat,pic,ldap
 ./usr/lib/o32/libldap_r.so.4			base-compat-shlib	compat,pic,ldap
 ./usr/lib/o32/libldap_r.so.4.1			base-compat-shlib	compat,pic,ldap
+./usr/lib/o32/liblua.so.1			base-compat-shlib	compat,pic
+./usr/lib/o32/liblua.so.1.0			base-compat-shlib	compat,pic
 ./usr/lib/o32/liblwres.so.5			base-compat-shlib	compat,pic
 ./usr/lib/o32/liblwres.so.5.1			base-compat-shlib	compat,pic
 ./usr/lib/o32/liblzma.so.1			base-compat-shlib	compat,pic
@@ -370,8 +374,8 @@
 ./usr/lib/o32/libmagic.so.3.0			base-compat-shlib	compat,pic
 ./usr/lib/o32/libmenu.so.6			base-compat-shlib	compat,pic
 ./usr/lib/o32/libmenu.so.6.0			base-compat-shlib	compat,pic
-./usr/lib/o32/libmj.so.3			base-compat-shlib	compat,pic,crypto
-./usr/lib/o32/libmj.so.3.0			base-compat-shlib	compat,pic,crypto
+./usr/lib/o32/libmj.so.0			base-compat-shlib	compat,pic,crypto
+./usr/lib/o32/libmj.so.0.0			base-compat-shlib	compat,pic,crypto
 ./usr/lib/o32/libnetpgp.so.3			base-compat-shlib	compat,pic,crypto
 ./usr/lib/o32/libnetpgp.so.3.0			base-compat-shlib	compat,pic,crypto
 ./usr/lib/o32/libobjc.so.3			base-compat-shlib	compat,pic
