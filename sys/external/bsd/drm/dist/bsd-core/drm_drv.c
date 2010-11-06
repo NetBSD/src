@@ -659,9 +659,7 @@ static int drm_load(struct drm_device *dev)
 	return 0;
 
 error:
-#if defined(__FreeBSD__)
 	drm_sysctl_cleanup(dev);
-#endif
 	DRM_LOCK();
 	drm_lastclose(dev);
 	DRM_UNLOCK();
@@ -685,8 +683,8 @@ static void drm_unload(struct drm_device *dev)
 
 	DRM_DEBUG("\n");
 
-#if defined(__FreeBSD__)
 	drm_sysctl_cleanup(dev);
+#if defined(__FreeBSD__)
 	destroy_dev(dev->devnode);
 #endif
 
