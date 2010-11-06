@@ -1,4 +1,4 @@
-.\" $NetBSD: mdsetimage.8,v 1.9 2002/01/19 03:35:05 wiz Exp $
+.\" $NetBSD: mdsetimage.8,v 1.10 2010/11/06 16:03:23 uebayasi Exp $
 .\"
 .\" Copyright (c) 1996 Christopher G. Demetriou
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\"
 .\" <<Id: LICENSE_GC,v 1.1 2001/10/01 23:24:05 cgd Exp>>
 .\"
-.Dd October 3, 1996
+.Dd November 4, 2010
 .Dt MDSETIMAGE 8
 .Os
 .Sh NAME
@@ -35,6 +35,8 @@
 .Nd set kernel RAM disk image
 .Sh SYNOPSIS
 .Nm
+.Op Fl I Ar image_symbol
+.Op Fl S Ar size_symbol
 .Op Fl T Ar address
 .Op Fl v
 .Ar kernel
@@ -50,6 +52,13 @@ The file system present in
 .Ar image
 will typically be used by the kernel
 as the root file system.
+.Pp
+The
+.Fl I
+and
+.Fl S
+flags specify the symbol names of image and size of memory disk
+drivers respectively.
 .Pp
 For a.out kernels only, the
 .Fl T
