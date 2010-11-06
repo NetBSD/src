@@ -1,4 +1,4 @@
-/* 	$NetBSD: px.c,v 1.37 2009/08/22 17:38:06 tsutsui Exp $	*/
+/* 	$NetBSD: px.c,v 1.38 2010/11/06 10:58:12 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: px.c,v 1.37 2009/08/22 17:38:06 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: px.c,v 1.38 2010/11/06 10:58:12 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -42,7 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: px.c,v 1.37 2009/08/22 17:38:06 tsutsui Exp $");
 #include <sys/malloc.h>
 #include <sys/callout.h>
 
-#include <uvm/uvm_extern.h>
+#include <uvm/uvm.h>	/* XXX uvm_pageboot_alloc */
 
 #if defined(pmax)
 #include <mips/cpuregs.h>
