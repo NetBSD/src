@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.12 2010/03/28 07:31:59 nonaka Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.13 2010/11/06 11:46:01 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2005 NONAKA Kimihiro
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.12 2010/03/28 07:31:59 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.13 2010/11/06 11:46:01 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -35,7 +35,7 @@ __KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.12 2010/03/28 07:31:59 nonaka Exp $");
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
 
-#include <uvm/uvm_extern.h>
+#include <uvm/uvm.h>
 
 #include <sh3/cache.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.124 2010/03/10 06:57:22 mrg Exp $ */
+/*	$NetBSD: db_interface.c,v 1.125 2010/11/06 11:46:03 uebayasi Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.124 2010/03/10 06:57:22 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.125 2010/11/06 11:46:03 uebayasi Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -45,7 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.124 2010/03/10 06:57:22 mrg Exp $
 #include <sys/systm.h>
 #include <sys/atomic.h>
 
-#include <uvm/uvm_extern.h>
+#include <uvm/uvm.h>
 
 #include <dev/cons.h>
 

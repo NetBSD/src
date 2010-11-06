@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.176 2010/07/01 19:50:12 ragge Exp $	   */
+/*	$NetBSD: pmap.c,v 1.177 2010/11/06 11:46:03 uebayasi Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999, 2003 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.176 2010/07/01 19:50:12 ragge Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.177 2010/11/06 11:46:03 uebayasi Exp $");
 
 #include "opt_ddb.h"
 #include "opt_cputype.h"
@@ -49,7 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.176 2010/07/01 19:50:12 ragge Exp $");
 #include <sys/device.h>
 #include <sys/buf.h>
 
-#include <uvm/uvm_extern.h>
+#include <uvm/uvm.h>
 
 #ifdef PMAPDEBUG
 #include <dev/cons.h>
