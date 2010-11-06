@@ -1,4 +1,4 @@
-## $NetBSD: Makefile.am,v 1.7 2010/11/05 03:01:57 agc Exp $
+## $NetBSD: Makefile.am,v 1.8 2010/11/06 00:03:32 agc Exp $
 
 AM_CFLAGS		= $(WARNCFLAGS)
 
@@ -27,7 +27,5 @@ libnetpgp_la_SOURCES	= \
 	writer.c
 
 LDADD			= ../libmj/libmj.a
-
-man3_MANS		= libnetpgp.3
 
 dist_man_MANS		= libnetpgp.3
