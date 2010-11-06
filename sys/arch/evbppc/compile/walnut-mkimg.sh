@@ -1,36 +1,76 @@
 #!/bin/sh
-# $NetBSD: walnut-mkimg.sh,v 1.3 2005/12/11 12:17:11 christos Exp $
+# $NetBSD: walnut-mkimg.sh,v 1.4 2010/11/06 16:23:35 uebayasi Exp $
 
-# Convert a kernel to an tftp image loadable by the IBM PowerPC OpenBIOS.
+# Convert an input to a TFTP image loadable by the IBM PowerPC OpenBIOS.
 
 magic=5394511	# IBM OpenBIOS magic number 0x0052504f
+start=0
+size=0
+overwrite=0
 
 if [ $# -ne 2 ] ; then
-	echo usage: $0 kernel image 1>&2
+	echo usage: $0 input image 1>&2
 	exit 1
 fi
 
-kernel=$1; shift
+input=$1; shift
 output=$1; shift
 
 : ${OBJDUMP=objdump}
 : ${OBJCOPY=objcopy}
 
-start=`${OBJDUMP} -f ${kernel} | awk '/start address/ { print $NF }'`
-start=`printf "%d" $start`
-${OBJCOPY} -O binary ${kernel} ${kernel}.bin.$$
-size=`/bin/ls -l ${kernel}.bin.$$ | awk '{ printf "%d", ( $5 + 511 ) / 512 }'`
+file=$( file $input )
+case $file in
+*:\ ELF\ *)
+	start=`${OBJDUMP} -f ${input} | awk '/start address/ { print $NF }'`
+	start=`printf "%d" $start`
+	${OBJCOPY} -O binary ${input} ${input}.bin.$$
+	;;
+*)
+	case $file in
+	*\ [Ff]ile\ [Ss]ystem*|*\ [Ff]ilesystem*)
+		overwrite=1
+		;;
+	esac
+	cp ${input} ${input}.bin.$$
+	;;
+esac
 
-printf "%d\n%d\n%d\n0\n%d\n0\n0\n0\n" $magic $start $size $start |
-    awk '{
-		printf "%c", int($0 / 256 / 256 / 256) % 256;
-		printf "%c", int($0 / 256 / 256      ) % 256;
-		printf "%c", int($0 / 256            ) % 256;
-		printf "%c", int($0                  ) % 256;
-	}
-    ' > ${output}
+size=`stat -f '%z' ${input}.bin.$$`
+size=$(( ( $size + 511 ) / 512 ))
 
-cat ${kernel}.bin.$$ >> ${output}
+enc()
+{
+	local _x=$1; shift
+	printf $( printf '\\x%x' $_x )
+}
 
-rm -f ${kernel}.bin.$$
+be32enc()
+{
+	local _x=$1; shift
+	enc $(( ( $_x >> 24 ) & 0xff ))
+	enc $(( ( $_x >> 16 ) & 0xff ))
+	enc $(( ( $_x >>  8 ) & 0xff ))
+	enc $(( ( $_x >>  0 ) & 0xff ))
+}
+
+{
+	be32enc $magic
+	be32enc $start
+	be32enc $size
+	be32enc 0
+	be32enc $start
+	be32enc 0
+	be32enc 0
+	be32enc 0
+} > ${input}.hdr.$$
+
+if [ $overwrite = 0 ]; then
+	cat ${input}.hdr.$$ ${input}.bin.$$ > ${output}
+else
+	cp ${input}.bin.$$ ${output}
+	dd if=${input}.hdr.$$ of=${output} conv=notrunc
+fi
+
+rm -f ${input}.hdr.$$ ${input}.bin.$$
 exit
