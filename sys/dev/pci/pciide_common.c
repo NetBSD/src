@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_common.c,v 1.45 2010/11/05 19:48:43 jakllsch Exp $	*/
+/*	$NetBSD: pciide_common.c,v 1.46 2010/11/06 00:29:09 jakllsch Exp $	*/
 
 
 /*
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide_common.c,v 1.45 2010/11/05 19:48:43 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide_common.c,v 1.46 2010/11/06 00:29:09 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -220,6 +220,42 @@ pciide_common_detach(struct pciide_softc *sc, int flags)
 		bus_space_unmap(sc->sc_ba5_st, sc->sc_ba5_sh, sc->sc_ba5_ss);
 
 	return 0;
+}
+
+int
+pciide_detach(device_t self, int flags)
+{
+	struct pciide_softc *sc = device_private(self);
+	struct pciide_channel *cp;
+	int channel;
+#ifndef __HAVE_PCIIDE_MACHDEP_COMPAT_INTR_DISESTABLISH
+	bool has_compat_chan;
+
+	has_compat_chan = false;
+	for (channel = 0; channel < sc->sc_wdcdev.sc_atac.atac_nchannels;
+	     channel++) {
+		cp = &sc->pciide_channels[channel];
+		if (cp->compat != 0) {
+			has_compat_chan = true;
+		}
+	}
+
+	if (has_compat_chan != false)
+		return EBUSY;
+#endif
+
+	for (channel = 0; channel < sc->sc_wdcdev.sc_atac.atac_nchannels;
+	     channel++) {
+		cp = &sc->pciide_channels[channel];
+		if (cp->compat != 0)
+			if (cp->ih != NULL)
+			       pciide_unmap_compat_intr(sc->sc_pc, cp, channel);
+	}
+
+	if (sc->sc_pci_ih != NULL)
+		pci_intr_disestablish(sc->sc_pc, sc->sc_pci_ih);
+
+	return pciide_common_detach(sc, flags);
 }
 
 /* tell whether the chip is enabled or not */
@@ -884,6 +920,17 @@ pciide_map_compat_intr(struct pci_attach_args *pa, struct pciide_channel *cp, in
 		cp->ata_channel.ch_flags |= ATACH_DISABLED;
 #ifdef __HAVE_PCIIDE_MACHDEP_COMPAT_INTR_ESTABLISH
 	}
+#endif
+}
+
+void
+pciide_unmap_compat_intr(pci_chipset_tag_t pc, struct pciide_channel *cp, int compatchan)
+{
+#ifdef __HAVE_PCIIDE_MACHDEP_COMPAT_INTR_DISESTABLISH
+	struct pciide_softc *sc = CHAN_TO_PCIIDE(&cp->ata_channel);
+
+	pciide_machdep_compat_intr_disestablish(sc->sc_wdcdev.sc_atac.atac_dev,
+	    sc->sc_pc, compatchan, cp->ih);
 #endif
 }
 
