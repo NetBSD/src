@@ -1,7 +1,7 @@
 #!/bin/sh
-# $NetBSD: walnut-mkimg.sh,v 1.3.98.1 2010/08/11 13:30:50 uebayasi Exp $
+# $NetBSD: walnut-mkimg.sh,v 1.3.98.2 2010/11/06 16:21:15 uebayasi Exp $
 
-# Convert a input to an tftp image loadable by the IBM PowerPC OpenBIOS.
+# Convert an input to a TFTP image loadable by the IBM PowerPC OpenBIOS.
 
 magic=5394511	# IBM OpenBIOS magic number 0x0052504f
 start=0
