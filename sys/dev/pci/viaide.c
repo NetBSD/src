@@ -1,4 +1,4 @@
-/*	$NetBSD: viaide.c,v 1.70 2010/11/05 18:07:24 jakllsch Exp $	*/
+/*	$NetBSD: viaide.c,v 1.71 2010/11/06 01:24:55 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: viaide.c,v 1.70 2010/11/05 18:07:24 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: viaide.c,v 1.71 2010/11/06 01:24:55 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,7 +63,7 @@ static bool	viaide_suspend(device_t, const pmf_qual_t *);
 static bool	viaide_resume(device_t, const pmf_qual_t *);
 
 CFATTACH_DECL_NEW(viaide, sizeof(struct pciide_softc),
-    viaide_match, viaide_attach, NULL, NULL);
+    viaide_match, viaide_attach, pciide_detach, NULL);
 
 static const struct pciide_product_desc pciide_amd_products[] =  {
 	{ PCI_PRODUCT_AMD_PBC756_IDE,
