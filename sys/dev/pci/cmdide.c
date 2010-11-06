@@ -1,4 +1,4 @@
-/*	$NetBSD: cmdide.c,v 1.30 2010/11/05 18:07:24 jakllsch Exp $	*/
+/*	$NetBSD: cmdide.c,v 1.31 2010/11/06 01:25:32 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cmdide.c,v 1.30 2010/11/05 18:07:24 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cmdide.c,v 1.31 2010/11/06 01:25:32 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -42,7 +42,7 @@ static int  cmdide_match(device_t, cfdata_t, void *);
 static void cmdide_attach(device_t, device_t, void *);
 
 CFATTACH_DECL_NEW(cmdide, sizeof(struct pciide_softc),
-    cmdide_match, cmdide_attach, NULL, NULL);
+    cmdide_match, cmdide_attach, pciide_detach, NULL);
 
 static void cmd_chip_map(struct pciide_softc*, struct pci_attach_args*);
 static void cmd0643_9_chip_map(struct pciide_softc*, struct pci_attach_args*);
