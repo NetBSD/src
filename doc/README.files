@@ -1,10 +1,12 @@
-#	$NetBSD: README.files,v 1.4.10.2 2009/04/24 06:33:06 snj Exp $
+#	$NetBSD: README.files,v 1.4.10.3 2010/11/06 18:10:17 snj Exp $
 
 What's in this directory:
 
 CHANGES		Changes between the 4.0 and 5.0 releases.
 
 CHANGES-5.0	Changes between the initial 5.0 branch and final release of 5.0.
+
+CHANGES-5.1	Changes between the 5.0 and 5.1 releases.
 
 CHANGES.prev	Changes in previous NetBSD releases.
 
@@ -20,7 +22,7 @@ source/sets/	Source distribution sets; see below.
 
 In addition to the files and directories listed above, there is one
 directory per architecture, for each of the architectures for which
-NetBSD 5.0 has a binary distribution.  The contents of each
+NetBSD 5.1 has a binary distribution.  The contents of each
 architecture's directory are described in an "INSTALL" file found in
 that directory.
 
