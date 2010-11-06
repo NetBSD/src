@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.6 2009/03/06 20:31:51 joerg Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.7 2010/11/06 15:42:48 uebayasi Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -111,7 +111,6 @@ struct pmap_physseg {
 
 #define VM_PHYSSEG_MAX		16	/* 1? */
 #define VM_PHYSSEG_STRAT	VM_PSTRAT_BSEARCH
-#define VM_PHYSSEG_NOADD		/* can't add RAM after vm_mem_init */
 
 #define	VM_NFREELIST		1
 #define	VM_FREELIST_DEFAULT	0

@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.21 2009/12/08 13:47:27 tsutsui Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.22 2010/11/06 15:42:47 uebayasi Exp $	*/
 
 /*
  * This file was taken from from mvme68k/include/vmparam.h and
@@ -167,7 +167,6 @@
  */
 #define	VM_PHYSSEG_MAX		5			/* @@@ should really come from N_SIMM */
 #define	VM_PHYSSEG_STRAT	VM_PSTRAT_RANDOM
-#define	VM_PHYSSEG_NOADD				/* @@@ does the NeXT really need this? */
 #define	VM_NFREELIST		1
 #define	VM_FREELIST_DEFAULT	0
 
