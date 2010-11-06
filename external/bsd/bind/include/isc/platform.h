@@ -207,7 +207,8 @@
 /*
  * Defined if we are using threads.
  */
-#define ISC_PLATFORM_USETHREADS 1
+/* Put in the Makefile */
+/* #define ISC_PLATFORM_USETHREADS 1 */
 
 /*
  * Defined if unistd.h does not cause fd_set to be delared.
