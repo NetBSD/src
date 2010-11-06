@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_io.c,v 1.2 2009/12/14 00:43:58 christos Exp $	*/
+/*	$NetBSD: ntp_io.c,v 1.3 2010/11/06 20:40:12 christos Exp $	*/
 
 /*
  * ntp_io.c - input/output routines for ntpd.	The socket-opening code
@@ -3355,11 +3355,14 @@ input_handler(
 	asyncio_reader = asyncio_reader_list;
 
 	while (asyncio_reader != NULL) {
+		struct asyncio_reader *next = asyncio_reader->link;
+
 		if (FD_ISSET(asyncio_reader->fd, &fds)) {
 			++select_count;
 			(asyncio_reader->receiver)(asyncio_reader);
 		}
-		asyncio_reader = asyncio_reader->link;
+
+		asyncio_reader = next;
 	}
 #endif /* HAS_ROUTING_SOCKET */
 	
