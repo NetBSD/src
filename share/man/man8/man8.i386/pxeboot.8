@@ -1,4 +1,4 @@
-.\"	$NetBSD: pxeboot.8,v 1.17 2010/04/06 22:41:41 wiz Exp $
+.\"	$NetBSD: pxeboot.8,v 1.18 2010/11/06 23:33:29 jym Exp $
 .\"
 .\" Copyright (c) 2003
 .\" 	Matthias Drochner.  All rights reserved.
@@ -24,7 +24,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd April 6, 2010
+.Dd November 7, 2010
 .Dt PXEBOOT 8 i386
 .Os
 .Sh NAME
@@ -45,20 +45,17 @@ Preboot eXecution Environement
 .Pq Tn PXE
 specification.
 .Pp
-This manual page assumes the
+By default, the
 .Nm
-program has been configured
-via
-.Xr installboot 8
-to use a
+program is configured with modules loading and
 .Xr boot.cfg 5
-file.
-For historical reasons
-.Xr boot.cfg 5
-is NOT loaded by default.
+support disabled.
 See
 .Sx EXAMPLES
-for how to enable it.
+for how to enable these options individually.
+This manual page assumes that
+.Xr boot.cfg 5
+support is enabled.
 .Pp
 Network booting a system through
 .Tn PXE
@@ -92,9 +89,6 @@ If the boot config file is not found, or if the supplied file appears
 not to be a boot configuration file, the file is skipped.
 Otherwise it is loaded and obeyed as described in
 .Xr boot.cfg 5 .
-.\" XXX Now, if the boot.cfg is loaded, is DHCP still used to get the
-.\" XXX file name for the kernel? If only the person who had made the
-.\" XXX changes had documented them.
 If a boot configuration is not loaded, the user has the option to
 enter a limited version of the standard interactive boot mode by
 pressing a key within five seconds.
@@ -269,6 +263,13 @@ program:
 installboot -e -o bootconf pxeboot_ia32.bin
 .Ed
 .Pp
+To enable modules loading support in the
+.Nm
+program:
+.Bd -literal -offset indent
+installboot -e -o modules pxeboot_ia32.bin
+.Ed
+.Pp
 The first
 .Pa /etc/dhcpd.conf
 example shows a simple configuration which just loads
@@ -396,3 +397,22 @@ You need the
 .Nm
 from an i386 build to boot an i386 kernel,
 and that from an amd64 build to boot an amd64 kernel.
+.Pp
+In a
+.Tn Xen
+setup, the
+.Nx
+DOM0 kernel is loaded as a module, and cannot know the device
+from which the
+.Tn Xen
+hypervisor was booted.
+In this case, the DOM0 kernel will fall back to the default boot
+device (typically the first disk on the host).
+If the boot device is different from the default one, consider
+passing additional arguments, like
+.Ar bootdev ,
+to the DOM0 kernel as explained
+in the
+.Cm load
+command subsection in
+.Xr boot 8 .
