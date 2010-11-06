@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOM0,v 1.57 2010/08/12 20:16:27 haad Exp $
+# $NetBSD: XEN3_DOM0,v 1.58 2010/11/06 15:08:59 jakllsch Exp $
 
 include 	"arch/amd64/conf/std.xen"
 
@@ -432,6 +432,7 @@ pdcide* 	at pci? dev ? function ?	# Promise IDE controllers
 pdcsata*	at pci? dev ? function ?	# Promise SATA150 controllers
 rccide* 	at pci? dev ? function ?	# ServerWorks IDE controllers
 satalink*	at pci? dev ? function ?	# SiI SATALink controllers
+siisata*	at pci? dev ? function ?	# SiI SteelVine controllers
 siside* 	at pci? dev ? function ?	# SiS IDE controllers
 slide*  	at pci? dev ? function ?	# Symphony Labs IDE controllers
 svwsata* 	at pci? dev ? function ?	# ServerWorks SATA controllers
