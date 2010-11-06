@@ -52,7 +52,7 @@ am__strip_dir = `echo $$p | sed -e 's|^.*/||'`;
 am__installdirs = "$(DESTDIR)$(libdir)" "$(DESTDIR)$(man3dir)"
 libLTLIBRARIES_INSTALL = $(INSTALL)
 LTLIBRARIES = $(lib_LTLIBRARIES)
-libnetpgp_la_LIBADD =
+libnetpgp_la_DEPENDENCIES = ../libmj/libmj.la
 am_libnetpgp_la_OBJECTS = libnetpgp_la-bufgap.lo \
 	libnetpgp_la-compress.lo libnetpgp_la-create.lo \
 	libnetpgp_la-crypto.lo libnetpgp_la-fastctype.lo \
@@ -225,7 +225,7 @@ libnetpgp_la_SOURCES = \
 	validate.c \
 	writer.c
 
-LDADD = ../libmj/libmj.a
+libnetpgp_la_LIBADD = ../libmj/libmj.la
 dist_man_MANS = libnetpgp.3
 all: config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-am
