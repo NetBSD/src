@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.216 2010/02/05 09:44:23 roy Exp $
+# $NetBSD: mi,v 1.217 2010/11/07 17:48:41 jmmv Exp $
 #
 # Note: end-user configuration files that are moved to another location
 #	should not be marked "obsolete"; they should just be removed from
@@ -15,6 +15,7 @@
 ./dev/MAKEDEV.subr				etc-obsolete		obsolete
 ./etc/atf/NetBSD.conf				etc-atf-etc		atf
 ./etc/atf/atf-run.hooks				etc-atf-etc		atf
+./etc/atf/common.conf				etc-atf-etc		atf
 ./etc/audit-packages.conf			etc-obsolete		obsolete
 ./etc/bootptab					etc-bootserver-etc
 ./etc/changelist				etc-sys-etc
