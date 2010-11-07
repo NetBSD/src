@@ -57,36 +57,36 @@
 #include "types.h"
 #include "packet.h"
 
-/** __ops_region_t */
-typedef struct __ops_region_t {
-	struct __ops_region_t	*parent;
+/** pgp_region_t */
+typedef struct pgp_region_t {
+	struct pgp_region_t	*parent;
 	unsigned		 length;
 	unsigned		 readc;		/* length read */
 	unsigned		 last_read;
 		/* length of last read, only valid in deepest child */
 	unsigned		 indeterminate:1;
-} __ops_region_t;
+} pgp_region_t;
 
-void __ops_init_subregion(__ops_region_t *, __ops_region_t *);
+void pgp_init_subregion(pgp_region_t *, pgp_region_t *);
 
-/** __ops_cb_ret_t */
+/** pgp_cb_ret_t */
 typedef enum {
-	OPS_RELEASE_MEMORY,
-	OPS_KEEP_MEMORY,
-	OPS_FINISHED
-} __ops_cb_ret_t;
+	PGP_RELEASE_MEMORY,
+	PGP_KEEP_MEMORY,
+	PGP_FINISHED
+} pgp_cb_ret_t;
 
-typedef struct __ops_cbdata_t	 __ops_cbdata_t;
+typedef struct pgp_cbdata_t	 pgp_cbdata_t;
 
-typedef __ops_cb_ret_t __ops_cbfunc_t(const __ops_packet_t *,
-					__ops_cbdata_t *);
+typedef pgp_cb_ret_t pgp_cbfunc_t(const pgp_packet_t *,
+					pgp_cbdata_t *);
 
-__ops_cb_ret_t
-get_passphrase_cb(const __ops_packet_t *, __ops_cbdata_t *);
+pgp_cb_ret_t
+get_passphrase_cb(const pgp_packet_t *, pgp_cbdata_t *);
 
-typedef struct __ops_stream_t	__ops_stream_t;
-typedef struct __ops_reader_t		__ops_reader_t;
-typedef struct __ops_cryptinfo_t	__ops_cryptinfo_t;
+typedef struct pgp_stream_t	pgp_stream_t;
+typedef struct pgp_reader_t		pgp_reader_t;
+typedef struct pgp_cryptinfo_t	pgp_cryptinfo_t;
 
 /*
    A reader MUST read at least one byte if it can, and should read up
@@ -107,63 +107,63 @@ typedef struct __ops_cryptinfo_t	__ops_cryptinfo_t;
    to read more than INT_MAX in one go.
 
  */
-typedef int __ops_reader_func_t(void *, size_t, __ops_error_t **,
-				__ops_reader_t *, __ops_cbdata_t *);
+typedef int pgp_reader_func_t(void *, size_t, pgp_error_t **,
+				pgp_reader_t *, pgp_cbdata_t *);
 
-typedef void __ops_reader_destroyer_t(__ops_reader_t *);
+typedef void pgp_reader_destroyer_t(pgp_reader_t *);
 
-void __ops_stream_delete(__ops_stream_t *);
-__ops_error_t *__ops_stream_get_errors(__ops_stream_t *);
-__ops_crypt_t *__ops_get_decrypt(__ops_stream_t *);
+void pgp_stream_delete(pgp_stream_t *);
+pgp_error_t *pgp_stream_get_errors(pgp_stream_t *);
+pgp_crypt_t *pgp_get_decrypt(pgp_stream_t *);
 
-void __ops_set_callback(__ops_stream_t *, __ops_cbfunc_t *, void *);
-void __ops_callback_push(__ops_stream_t *, __ops_cbfunc_t *, void *);
-void *__ops_callback_arg(__ops_cbdata_t *);
-void *__ops_callback_errors(__ops_cbdata_t *);
-void __ops_reader_set(__ops_stream_t *, __ops_reader_func_t *,
-			__ops_reader_destroyer_t *, void *);
-void __ops_reader_push(__ops_stream_t *, __ops_reader_func_t *,
-			__ops_reader_destroyer_t *, void *);
-void __ops_reader_pop(__ops_stream_t *);
+void pgp_set_callback(pgp_stream_t *, pgp_cbfunc_t *, void *);
+void pgp_callback_push(pgp_stream_t *, pgp_cbfunc_t *, void *);
+void *pgp_callback_arg(pgp_cbdata_t *);
+void *pgp_callback_errors(pgp_cbdata_t *);
+void pgp_reader_set(pgp_stream_t *, pgp_reader_func_t *,
+			pgp_reader_destroyer_t *, void *);
+void pgp_reader_push(pgp_stream_t *, pgp_reader_func_t *,
+			pgp_reader_destroyer_t *, void *);
+void pgp_reader_pop(pgp_stream_t *);
 
-void *__ops_reader_get_arg(__ops_reader_t *);
+void *pgp_reader_get_arg(pgp_reader_t *);
 
-__ops_cb_ret_t __ops_callback(const __ops_packet_t *,
-					__ops_cbdata_t *);
-__ops_cb_ret_t __ops_stacked_callback(const __ops_packet_t *,
-					__ops_cbdata_t *);
-__ops_reader_t *__ops_readinfo(__ops_stream_t *);
+pgp_cb_ret_t pgp_callback(const pgp_packet_t *,
+					pgp_cbdata_t *);
+pgp_cb_ret_t pgp_stacked_callback(const pgp_packet_t *,
+					pgp_cbdata_t *);
+pgp_reader_t *pgp_readinfo(pgp_stream_t *);
 
-int __ops_parse(__ops_stream_t *, const int);
+int pgp_parse(pgp_stream_t *, const int);
 
 /** Used to specify whether subpackets should be returned raw, parsed
 * or ignored.  */
 typedef enum {
-	OPS_PARSE_RAW,		/* Callback Raw */
-	OPS_PARSE_PARSED,	/* Callback Parsed */
-	OPS_PARSE_IGNORE	/* Don't callback */
-} __ops_parse_type_t;
+	PGP_PARSE_RAW,		/* Callback Raw */
+	PGP_PARSE_PARSED,	/* Callback Parsed */
+	PGP_PARSE_IGNORE	/* Don't callback */
+} pgp_parse_type_t;
 
-void __ops_parse_options(__ops_stream_t *, __ops_content_enum,
-			__ops_parse_type_t);
+void pgp_parse_options(pgp_stream_t *, pgp_content_enum,
+			pgp_parse_type_t);
 
-unsigned __ops_limited_read(uint8_t *, size_t, __ops_region_t *,
-			__ops_error_t **, __ops_reader_t *,
-			__ops_cbdata_t *);
-unsigned __ops_stacked_limited_read(uint8_t *, unsigned,
-			__ops_region_t *, __ops_error_t **,
-			__ops_reader_t *, __ops_cbdata_t *);
-void __ops_parse_hash_init(__ops_stream_t *, __ops_hash_alg_t,
+unsigned pgp_limited_read(uint8_t *, size_t, pgp_region_t *,
+			pgp_error_t **, pgp_reader_t *,
+			pgp_cbdata_t *);
+unsigned pgp_stacked_limited_read(uint8_t *, unsigned,
+			pgp_region_t *, pgp_error_t **,
+			pgp_reader_t *, pgp_cbdata_t *);
+void pgp_parse_hash_init(pgp_stream_t *, pgp_hash_alg_t,
 			const uint8_t *);
-void __ops_parse_hash_data(__ops_stream_t *, const void *, size_t);
-void __ops_parse_hash_finish(__ops_stream_t *);
-__ops_hash_t *__ops_parse_hash_find(__ops_stream_t *, const uint8_t *);
+void pgp_parse_hash_data(pgp_stream_t *, const void *, size_t);
+void pgp_parse_hash_finish(pgp_stream_t *);
+pgp_hash_t *pgp_parse_hash_find(pgp_stream_t *, const uint8_t *);
 
-__ops_reader_func_t    __ops_stacked_read;
+pgp_reader_func_t    pgp_stacked_read;
 
-int __ops_decompress(__ops_region_t *, __ops_stream_t *,
-			__ops_compression_type_t);
-unsigned __ops_writez(__ops_output_t *, const uint8_t *,
+int pgp_decompress(pgp_region_t *, pgp_stream_t *,
+			pgp_compression_type_t);
+unsigned pgp_writez(pgp_output_t *, const uint8_t *,
 			const unsigned);
 
 #endif /* PACKET_PARSE_H_ */

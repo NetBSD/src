@@ -57,7 +57,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: signature.c,v 1.32 2010/08/15 16:36:24 agc Exp $");
+__RCSID("$NetBSD: signature.c,v 1.33 2010/11/07 08:39:59 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -90,11 +90,11 @@ __RCSID("$NetBSD: signature.c,v 1.32 2010/08/15 16:36:24 agc Exp $");
 /** \ingroup Core_Create
  * needed for signature creation
  */
-struct __ops_create_sig_t {
-	__ops_hash_t		 hash;
-	__ops_sig_t		 sig;
-	__ops_memory_t		*mem;
-	__ops_output_t		*output;	/* how to do the writing */
+struct pgp_create_sig_t {
+	pgp_hash_t		 hash;
+	pgp_sig_t		 sig;
+	pgp_memory_t		*mem;
+	pgp_output_t		*output;	/* how to do the writing */
 	unsigned		 hashoff;	/* hashed count offset */
 	unsigned		 hashlen;
 	unsigned 		 unhashoff;
@@ -102,34 +102,34 @@ struct __ops_create_sig_t {
 
 /**
    \ingroup Core_Signature
-   Creates new __ops_create_sig_t
-   \return new __ops_create_sig_t
-   \note It is the caller's responsibility to call __ops_create_sig_delete()
-   \sa __ops_create_sig_delete()
+   Creates new pgp_create_sig_t
+   \return new pgp_create_sig_t
+   \note It is the caller's responsibility to call pgp_create_sig_delete()
+   \sa pgp_create_sig_delete()
 */
-__ops_create_sig_t *
-__ops_create_sig_new(void)
+pgp_create_sig_t *
+pgp_create_sig_new(void)
 {
-	return calloc(1, sizeof(__ops_create_sig_t));
+	return calloc(1, sizeof(pgp_create_sig_t));
 }
 
 /**
    \ingroup Core_Signature
    Free signature and memory associated with it
    \param sig struct to free
-   \sa __ops_create_sig_new()
+   \sa pgp_create_sig_new()
 */
 void 
-__ops_create_sig_delete(__ops_create_sig_t *sig)
+pgp_create_sig_delete(pgp_create_sig_t *sig)
 {
-	__ops_output_delete(sig->output);
+	pgp_output_delete(sig->output);
 	sig->output = NULL;
 	free(sig);
 }
 
 #if 0
 void
-__ops_dump_sig(__ops_sig_t *sig)
+pgp_dump_sig(pgp_sig_t *sig)
 {
 }
 #endif
@@ -153,10 +153,10 @@ static uint8_t prefix_sha256[] = {
 /* XXX: both this and verify would be clearer if the signature were */
 /* treated as an MPI. */
 static int 
-rsa_sign(__ops_hash_t *hash,
-	const __ops_rsa_pubkey_t *pubrsa,
-	const __ops_rsa_seckey_t *secrsa,
-	__ops_output_t *out)
+rsa_sign(pgp_hash_t *hash,
+	const pgp_rsa_pubkey_t *pubrsa,
+	const pgp_rsa_seckey_t *secrsa,
+	pgp_output_t *out)
 {
 	unsigned        prefixsize;
 	unsigned        expected;
@@ -170,15 +170,15 @@ rsa_sign(__ops_hash_t *hash,
 	BIGNUM         *bn;
 
 	if (strcmp(hash->name, "SHA1") == 0) {
-		hashsize = OPS_SHA1_HASH_SIZE + sizeof(prefix_sha1);
+		hashsize = PGP_SHA1_HASH_SIZE + sizeof(prefix_sha1);
 		prefix = prefix_sha1;
 		prefixsize = sizeof(prefix_sha1);
-		expected = OPS_SHA1_HASH_SIZE;
+		expected = PGP_SHA1_HASH_SIZE;
 	} else {
-		hashsize = OPS_SHA256_HASH_SIZE + sizeof(prefix_sha256);
+		hashsize = PGP_SHA256_HASH_SIZE + sizeof(prefix_sha256);
 		prefix = prefix_sha256;
 		prefixsize = sizeof(prefix_sha256);
-		expected = OPS_SHA256_HASH_SIZE;
+		expected = PGP_SHA256_HASH_SIZE;
 	}
 	keysize = (BN_num_bits(pubrsa->n) + 7) / 8;
 	if (keysize > sizeof(hashbuf)) {
@@ -192,7 +192,7 @@ rsa_sign(__ops_hash_t *hash,
 
 	hashbuf[0] = 0;
 	hashbuf[1] = 1;
-	if (__ops_get_debug_level(__FILE__)) {
+	if (pgp_get_debug_level(__FILE__)) {
 		printf("rsa_sign: PS is %d\n", keysize - hashsize - 1 - 2);
 	}
 	for (n = 2; n < keysize - hashsize - 1; ++n) {
@@ -207,7 +207,7 @@ rsa_sign(__ops_hash_t *hash,
 		return 0;
 	}
 
-	__ops_write(out, &hashbuf[n], 2);
+	pgp_write(out, &hashbuf[n], 2);
 
 	n += t;
 	if (n != keysize) {
@@ -215,18 +215,18 @@ rsa_sign(__ops_hash_t *hash,
 		return 0;
 	}
 
-	t = __ops_rsa_private_encrypt(sigbuf, hashbuf, keysize, secrsa, pubrsa);
+	t = pgp_rsa_private_encrypt(sigbuf, hashbuf, keysize, secrsa, pubrsa);
 	bn = BN_bin2bn(sigbuf, (int)t, NULL);
-	__ops_write_mpi(out, bn);
+	pgp_write_mpi(out, bn);
 	BN_free(bn);
 	return 1;
 }
 
 static int 
-dsa_sign(__ops_hash_t *hash,
-	 const __ops_dsa_pubkey_t *dsa,
-	 const __ops_dsa_seckey_t *sdsa,
-	 __ops_output_t *output)
+dsa_sign(pgp_hash_t *hash,
+	 const pgp_dsa_pubkey_t *dsa,
+	 const pgp_dsa_seckey_t *sdsa,
+	 pgp_output_t *output)
 {
 	unsigned        hashsize;
 	unsigned        t;
@@ -246,24 +246,24 @@ dsa_sign(__ops_hash_t *hash,
 		return 0;
 	}
 
-	__ops_write(output, &hashbuf[0], 2);
+	pgp_write(output, &hashbuf[0], 2);
 
 	/* write signature to buf */
-	dsasig = __ops_dsa_sign(hashbuf, hashsize, sdsa, dsa);
+	dsasig = pgp_dsa_sign(hashbuf, hashsize, sdsa, dsa);
 
 	/* convert and write the sig out to memory */
-	__ops_write_mpi(output, dsasig->r);
-	__ops_write_mpi(output, dsasig->s);
+	pgp_write_mpi(output, dsasig->r);
+	pgp_write_mpi(output, dsasig->s);
 	DSA_SIG_free(dsasig);
 	return 1;
 }
 
 static unsigned 
-rsa_verify(__ops_hash_alg_t type,
+rsa_verify(pgp_hash_alg_t type,
 	   const uint8_t *hash,
 	   size_t hash_length,
-	   const __ops_rsa_sig_t *sig,
-	   const __ops_rsa_pubkey_t *pubrsa)
+	   const pgp_rsa_sig_t *sig,
+	   const pgp_rsa_pubkey_t *pubrsa)
 {
 	const uint8_t	*prefix;
 	unsigned       	 n;
@@ -287,7 +287,7 @@ rsa_verify(__ops_hash_alg_t type,
 	}
 	BN_bn2bin(sig->sig, sigbuf);
 
-	n = __ops_rsa_public_decrypt(hashbuf_from_sig, sigbuf,
+	n = pgp_rsa_public_decrypt(hashbuf_from_sig, sigbuf,
 		(unsigned)(BN_num_bits(sig->sig) + 7) / 8, pubrsa);
 	debug_len_decrypted = n;
 
@@ -303,15 +303,15 @@ rsa_verify(__ops_hash_alg_t type,
 	}
 
 	switch (type) {
-	case OPS_HASH_MD5:
+	case PGP_HASH_MD5:
 		prefix = prefix_md5;
 		plen = sizeof(prefix_md5);
 		break;
-	case OPS_HASH_SHA1:
+	case PGP_HASH_SHA1:
 		prefix = prefix_sha1;
 		plen = sizeof(prefix_sha1);
 		break;
-	case OPS_HASH_SHA256:
+	case PGP_HASH_SHA256:
 		prefix = prefix_sha256;
 		plen = sizeof(prefix_sha256);
 		break;
@@ -334,7 +334,7 @@ rsa_verify(__ops_hash_alg_t type,
 		return 0;
 	}
 
-	if (__ops_get_debug_level(__FILE__)) {
+	if (pgp_get_debug_level(__FILE__)) {
 		hexdump(stderr, "sig hashbuf", hashbuf_from_sig, debug_len_decrypted);
 		hexdump(stderr, "prefix", prefix, plen);
 		hexdump(stderr, "sig hash", &hashbuf_from_sig[n + plen], hash_length);
@@ -345,24 +345,24 @@ rsa_verify(__ops_hash_alg_t type,
 }
 
 static void 
-hash_add_key(__ops_hash_t *hash, const __ops_pubkey_t *key)
+hash_add_key(pgp_hash_t *hash, const pgp_pubkey_t *key)
 {
-	__ops_memory_t	*mem = __ops_memory_new();
+	pgp_memory_t	*mem = pgp_memory_new();
 	const unsigned 	 dontmakepacket = 0;
 	size_t		 len;
 
-	__ops_build_pubkey(mem, key, dontmakepacket);
-	len = __ops_mem_len(mem);
-	__ops_hash_add_int(hash, 0x99, 1);
-	__ops_hash_add_int(hash, (unsigned)len, 2);
-	hash->add(hash, __ops_mem_data(mem), (unsigned)len);
-	__ops_memory_free(mem);
+	pgp_build_pubkey(mem, key, dontmakepacket);
+	len = pgp_mem_len(mem);
+	pgp_hash_add_int(hash, 0x99, 1);
+	pgp_hash_add_int(hash, (unsigned)len, 2);
+	hash->add(hash, pgp_mem_data(mem), (unsigned)len);
+	pgp_memory_free(mem);
 }
 
 static void 
-initialise_hash(__ops_hash_t *hash, const __ops_sig_t *sig)
+initialise_hash(pgp_hash_t *hash, const pgp_sig_t *sig)
 {
-	__ops_hash_any(hash, sig->info.hash_alg);
+	pgp_hash_any(hash, sig->info.hash_alg);
 	if (!hash->init(hash)) {
 		(void) fprintf(stderr,
 			"initialise_hash: bad hash init\n");
@@ -372,28 +372,28 @@ initialise_hash(__ops_hash_t *hash, const __ops_sig_t *sig)
 }
 
 static void 
-init_key_sig(__ops_hash_t *hash, const __ops_sig_t *sig,
-		   const __ops_pubkey_t *key)
+init_key_sig(pgp_hash_t *hash, const pgp_sig_t *sig,
+		   const pgp_pubkey_t *key)
 {
 	initialise_hash(hash, sig);
 	hash_add_key(hash, key);
 }
 
 static void 
-hash_add_trailer(__ops_hash_t *hash, const __ops_sig_t *sig,
+hash_add_trailer(pgp_hash_t *hash, const pgp_sig_t *sig,
 		 const uint8_t *raw_packet)
 {
-	if (sig->info.version == OPS_V4) {
+	if (sig->info.version == PGP_V4) {
 		if (raw_packet) {
 			hash->add(hash, raw_packet + sig->v4_hashstart,
 				  (unsigned)sig->info.v4_hashlen);
 		}
-		__ops_hash_add_int(hash, (unsigned)sig->info.version, 1);
-		__ops_hash_add_int(hash, 0xff, 1);
-		__ops_hash_add_int(hash, (unsigned)sig->info.v4_hashlen, 4);
+		pgp_hash_add_int(hash, (unsigned)sig->info.version, 1);
+		pgp_hash_add_int(hash, 0xff, 1);
+		pgp_hash_add_int(hash, (unsigned)sig->info.v4_hashlen, 4);
 	} else {
-		__ops_hash_add_int(hash, (unsigned)sig->info.type, 1);
-		__ops_hash_add_int(hash, (unsigned)sig->info.birthtime, 4);
+		pgp_hash_add_int(hash, (unsigned)sig->info.type, 1);
+		pgp_hash_add_int(hash, (unsigned)sig->info.birthtime, 4);
 	}
 }
 
@@ -407,30 +407,30 @@ hash_add_trailer(__ops_hash_t *hash, const __ops_sig_t *sig,
    \return 1 if good; else 0
 */
 unsigned 
-__ops_check_sig(const uint8_t *hash, unsigned length,
-		    const __ops_sig_t * sig,
-		    const __ops_pubkey_t * signer)
+pgp_check_sig(const uint8_t *hash, unsigned length,
+		    const pgp_sig_t * sig,
+		    const pgp_pubkey_t * signer)
 {
 	unsigned   ret;
 
-	if (__ops_get_debug_level(__FILE__)) {
+	if (pgp_get_debug_level(__FILE__)) {
 		hexdump(stdout, "hash", hash, length);
 	}
 	ret = 0;
 	switch (sig->info.key_alg) {
-	case OPS_PKA_DSA:
-		ret = __ops_dsa_verify(hash, length, &sig->info.sig.dsa,
+	case PGP_PKA_DSA:
+		ret = pgp_dsa_verify(hash, length, &sig->info.sig.dsa,
 				&signer->key.dsa);
 		break;
 
-	case OPS_PKA_RSA:
+	case PGP_PKA_RSA:
 		ret = rsa_verify(sig->info.hash_alg, hash, length,
 				&sig->info.sig.rsa,
 				&signer->key.rsa);
 		break;
 
 	default:
-		(void) fprintf(stderr, "__ops_check_sig: unusual alg\n");
+		(void) fprintf(stderr, "pgp_check_sig: unusual alg\n");
 		ret = 0;
 	}
 
@@ -438,21 +438,21 @@ __ops_check_sig(const uint8_t *hash, unsigned length,
 }
 
 static unsigned 
-hash_and_check_sig(__ops_hash_t *hash,
-			 const __ops_sig_t *sig,
-			 const __ops_pubkey_t *signer)
+hash_and_check_sig(pgp_hash_t *hash,
+			 const pgp_sig_t *sig,
+			 const pgp_pubkey_t *signer)
 {
-	uint8_t   hashout[OPS_MAX_HASH_SIZE];
+	uint8_t   hashout[PGP_MAX_HASH_SIZE];
 	unsigned	n;
 
 	n = hash->finish(hash, hashout);
-	return __ops_check_sig(hashout, n, sig, signer);
+	return pgp_check_sig(hashout, n, sig, signer);
 }
 
 static unsigned 
-finalise_sig(__ops_hash_t *hash,
-		   const __ops_sig_t *sig,
-		   const __ops_pubkey_t *signer,
+finalise_sig(pgp_hash_t *hash,
+		   const pgp_sig_t *sig,
+		   const pgp_pubkey_t *signer,
 		   const uint8_t *raw_packet)
 {
 	hash_add_trailer(hash, sig, raw_packet);
@@ -472,20 +472,20 @@ finalise_sig(__ops_hash_t *hash,
  * \return 1 if OK; else 0
  */
 unsigned
-__ops_check_useridcert_sig(const __ops_pubkey_t *key,
+pgp_check_useridcert_sig(const pgp_pubkey_t *key,
 			  const uint8_t *id,
-			  const __ops_sig_t *sig,
-			  const __ops_pubkey_t *signer,
+			  const pgp_sig_t *sig,
+			  const pgp_pubkey_t *signer,
 			  const uint8_t *raw_packet)
 {
-	__ops_hash_t	hash;
+	pgp_hash_t	hash;
 	size_t          userid_len;
 
 	userid_len = strlen((const char *) id);
 	init_key_sig(&hash, sig, key);
-	if (sig->info.version == OPS_V4) {
-		__ops_hash_add_int(&hash, 0xb4, 1);
-		__ops_hash_add_int(&hash, (unsigned)userid_len, 4);
+	if (sig->info.version == PGP_V4) {
+		pgp_hash_add_int(&hash, 0xb4, 1);
+		pgp_hash_add_int(&hash, (unsigned)userid_len, 4);
 	}
 	hash.add(&hash, id, (unsigned)userid_len);
 	return finalise_sig(&hash, sig, signer, raw_packet);
@@ -504,18 +504,18 @@ __ops_check_useridcert_sig(const __ops_pubkey_t *key,
  * \return 1 if OK; else 0
  */
 unsigned
-__ops_check_userattrcert_sig(const __ops_pubkey_t *key,
-				const __ops_data_t *attribute,
-				const __ops_sig_t *sig,
-				const __ops_pubkey_t *signer,
+pgp_check_userattrcert_sig(const pgp_pubkey_t *key,
+				const pgp_data_t *attribute,
+				const pgp_sig_t *sig,
+				const pgp_pubkey_t *signer,
 				const uint8_t *raw_packet)
 {
-	__ops_hash_t      hash;
+	pgp_hash_t      hash;
 
 	init_key_sig(&hash, sig, key);
-	if (sig->info.version == OPS_V4) {
-		__ops_hash_add_int(&hash, 0xd1, 1);
-		__ops_hash_add_int(&hash, (unsigned)attribute->len, 4);
+	if (sig->info.version == PGP_V4) {
+		pgp_hash_add_int(&hash, 0xd1, 1);
+		pgp_hash_add_int(&hash, (unsigned)attribute->len, 4);
 	}
 	hash.add(&hash, attribute->contents, (unsigned)attribute->len);
 	return finalise_sig(&hash, sig, signer, raw_packet);
@@ -534,13 +534,13 @@ __ops_check_userattrcert_sig(const __ops_pubkey_t *key,
  * \return 1 if OK; else 0
  */
 unsigned
-__ops_check_subkey_sig(const __ops_pubkey_t *key,
-			   const __ops_pubkey_t *subkey,
-			   const __ops_sig_t *sig,
-			   const __ops_pubkey_t *signer,
+pgp_check_subkey_sig(const pgp_pubkey_t *key,
+			   const pgp_pubkey_t *subkey,
+			   const pgp_sig_t *sig,
+			   const pgp_pubkey_t *signer,
 			   const uint8_t *raw_packet)
 {
-	__ops_hash_t	hash;
+	pgp_hash_t	hash;
 	unsigned	ret;
 
 	init_key_sig(&hash, sig, key);
@@ -561,12 +561,12 @@ __ops_check_subkey_sig(const __ops_pubkey_t *key,
  * \return 1 if OK; else 0
  */
 unsigned
-__ops_check_direct_sig(const __ops_pubkey_t *key,
-			   const __ops_sig_t *sig,
-			   const __ops_pubkey_t *signer,
+pgp_check_direct_sig(const pgp_pubkey_t *key,
+			   const pgp_sig_t *sig,
+			   const pgp_pubkey_t *signer,
 			   const uint8_t *raw_packet)
 {
-	__ops_hash_t	hash;
+	pgp_hash_t	hash;
 	unsigned	ret;
 
 	init_key_sig(&hash, sig, key);
@@ -587,9 +587,9 @@ __ops_check_direct_sig(const __ops_pubkey_t *key,
  * \return 1 if OK; else 0
  */
 unsigned
-__ops_check_hash_sig(__ops_hash_t *hash,
-			 const __ops_sig_t *sig,
-			 const __ops_pubkey_t *signer)
+pgp_check_hash_sig(pgp_hash_t *hash,
+			 const pgp_sig_t *sig,
+			 const pgp_pubkey_t *signer)
 {
 	return (sig->info.hash_alg == hash->alg) ?
 		finalise_sig(hash, sig, signer, NULL) :
@@ -597,29 +597,29 @@ __ops_check_hash_sig(__ops_hash_t *hash,
 }
 
 static void 
-start_sig_in_mem(__ops_create_sig_t *sig)
+start_sig_in_mem(pgp_create_sig_t *sig)
 {
 	/* since this has subpackets and stuff, we have to buffer the whole */
 	/* thing to get counts before writing. */
-	sig->mem = __ops_memory_new();
-	__ops_memory_init(sig->mem, 100);
-	__ops_writer_set_memory(sig->output, sig->mem);
+	sig->mem = pgp_memory_new();
+	pgp_memory_init(sig->mem, 100);
+	pgp_writer_set_memory(sig->output, sig->mem);
 
 	/* write nearly up to the first subpacket */
-	__ops_write_scalar(sig->output, (unsigned)sig->sig.info.version, 1);
-	__ops_write_scalar(sig->output, (unsigned)sig->sig.info.type, 1);
-	__ops_write_scalar(sig->output, (unsigned)sig->sig.info.key_alg, 1);
-	__ops_write_scalar(sig->output, (unsigned)sig->sig.info.hash_alg, 1);
+	pgp_write_scalar(sig->output, (unsigned)sig->sig.info.version, 1);
+	pgp_write_scalar(sig->output, (unsigned)sig->sig.info.type, 1);
+	pgp_write_scalar(sig->output, (unsigned)sig->sig.info.key_alg, 1);
+	pgp_write_scalar(sig->output, (unsigned)sig->sig.info.hash_alg, 1);
 
 	/* dummy hashed subpacket count */
-	sig->hashoff = (unsigned)__ops_mem_len(sig->mem);
-	__ops_write_scalar(sig->output, 0, 2);
+	sig->hashoff = (unsigned)pgp_mem_len(sig->mem);
+	pgp_write_scalar(sig->output, 0, 2);
 }
 
 /**
  * \ingroup Core_Signature
  *
- * __ops_sig_start() creates a V4 public key signature with a SHA1 hash.
+ * pgp_sig_start() creates a V4 public key signature with a SHA1 hash.
  *
  * \param sig The signature structure to initialise
  * \param key The public key to be signed
@@ -627,24 +627,24 @@ start_sig_in_mem(__ops_create_sig_t *sig)
  * \param type Signature type
  */
 void 
-__ops_sig_start_key_sig(__ops_create_sig_t *sig,
-				  const __ops_pubkey_t *key,
+pgp_sig_start_key_sig(pgp_create_sig_t *sig,
+				  const pgp_pubkey_t *key,
 				  const uint8_t *id,
-				  __ops_sig_type_t type)
+				  pgp_sig_type_t type)
 {
-	sig->output = __ops_output_new();
+	sig->output = pgp_output_new();
 
 	/* XXX:  refactor with check (in several ways - check should
 	 * probably use the buffered writer to construct packets
 	 * (done), and also should share code for hash calculation) */
-	sig->sig.info.version = OPS_V4;
-	sig->sig.info.hash_alg = OPS_HASH_SHA1;
+	sig->sig.info.version = PGP_V4;
+	sig->sig.info.hash_alg = PGP_HASH_SHA1;
 	sig->sig.info.key_alg = key->alg;
 	sig->sig.info.type = type;
 	sig->hashlen = (unsigned)-1;
 	init_key_sig(&sig->hash, &sig->sig, key);
-	__ops_hash_add_int(&sig->hash, 0xb4, 1);
-	__ops_hash_add_int(&sig->hash, (unsigned)strlen((const char *) id), 4);
+	pgp_hash_add_int(&sig->hash, 0xb4, 1);
+	pgp_hash_add_int(&sig->hash, (unsigned)strlen((const char *) id), 4);
 	sig->hash.add(&sig->hash, id, (unsigned)strlen((const char *) id));
 	start_sig_in_mem(sig);
 }
@@ -661,24 +661,24 @@ __ops_sig_start_key_sig(__ops_create_sig_t *sig,
  */
 
 void 
-__ops_start_sig(__ops_create_sig_t *sig,
-	      const __ops_seckey_t *key,
-	      const __ops_hash_alg_t hash,
-	      const __ops_sig_type_t type)
+pgp_start_sig(pgp_create_sig_t *sig,
+	      const pgp_seckey_t *key,
+	      const pgp_hash_alg_t hash,
+	      const pgp_sig_type_t type)
 {
-	sig->output = __ops_output_new();
+	sig->output = pgp_output_new();
 
 	/* XXX:  refactor with check (in several ways - check should
 	 * probably use the buffered writer to construct packets
 	 * (done), and also should share code for hash calculation) */
-	sig->sig.info.version = OPS_V4;
+	sig->sig.info.version = PGP_V4;
 	sig->sig.info.key_alg = key->pubkey.alg;
 	sig->sig.info.hash_alg = hash;
 	sig->sig.info.type = type;
 
 	sig->hashlen = (unsigned)-1;
 
-	if (__ops_get_debug_level(__FILE__)) {
+	if (pgp_get_debug_level(__FILE__)) {
 		fprintf(stderr, "initialising hash for sig in mem\n");
 	}
 	initialise_hash(&sig->hash, &sig->sig);
@@ -695,7 +695,7 @@ __ops_start_sig(__ops_create_sig_t *sig,
  * \param length The amount of plaintext data.
  */
 void 
-__ops_sig_add_data(__ops_create_sig_t *sig, const void *buf, size_t length)
+pgp_sig_add_data(pgp_create_sig_t *sig, const void *buf, size_t length)
 {
 	sig->hash.add(&sig->hash, buf, (unsigned)length);
 }
@@ -709,13 +709,13 @@ __ops_sig_add_data(__ops_create_sig_t *sig, const void *buf, size_t length)
  */
 
 unsigned 
-__ops_end_hashed_subpkts(__ops_create_sig_t *sig)
+pgp_end_hashed_subpkts(pgp_create_sig_t *sig)
 {
-	sig->hashlen = (unsigned)(__ops_mem_len(sig->mem) - sig->hashoff - 2);
-	__ops_memory_place_int(sig->mem, sig->hashoff, sig->hashlen, 2);
+	sig->hashlen = (unsigned)(pgp_mem_len(sig->mem) - sig->hashoff - 2);
+	pgp_memory_place_int(sig->mem, sig->hashoff, sig->hashlen, 2);
 	/* dummy unhashed subpacket count */
-	sig->unhashoff = (unsigned)__ops_mem_len(sig->mem);
-	return __ops_write_scalar(sig->output, 0, 2);
+	sig->unhashoff = (unsigned)pgp_mem_len(sig->mem);
+	return pgp_write_scalar(sig->output, 0, 2);
 }
 
 /**
@@ -731,28 +731,28 @@ __ops_end_hashed_subpkts(__ops_create_sig_t *sig)
  */
 
 unsigned 
-__ops_write_sig(__ops_output_t *output, 
-			__ops_create_sig_t *sig,
-			const __ops_pubkey_t *key,
-			const __ops_seckey_t *seckey)
+pgp_write_sig(pgp_output_t *output, 
+			pgp_create_sig_t *sig,
+			const pgp_pubkey_t *key,
+			const pgp_seckey_t *seckey)
 {
 	unsigned	ret = 0;
-	size_t		len = __ops_mem_len(sig->mem);
+	size_t		len = pgp_mem_len(sig->mem);
 
 	/* check key not decrypted */
 	switch (seckey->pubkey.alg) {
-	case OPS_PKA_RSA:
-	case OPS_PKA_RSA_ENCRYPT_ONLY:
-	case OPS_PKA_RSA_SIGN_ONLY:
+	case PGP_PKA_RSA:
+	case PGP_PKA_RSA_ENCRYPT_ONLY:
+	case PGP_PKA_RSA_SIGN_ONLY:
 		if (seckey->key.rsa.d == NULL) {
-			(void) fprintf(stderr, "__ops_write_sig: null rsa.d\n");
+			(void) fprintf(stderr, "pgp_write_sig: null rsa.d\n");
 			return 0;
 		}
 		break;
 
-	case OPS_PKA_DSA:
+	case PGP_PKA_DSA:
 		if (seckey->key.dsa.x == NULL) {
-			(void) fprintf(stderr, "__ops_write_sig: null dsa.x\n");
+			(void) fprintf(stderr, "pgp_write_sig: null dsa.x\n");
 			return 0;
 		}
 		break;
@@ -769,43 +769,43 @@ __ops_write_sig(__ops_output_t *output,
 		return 0;
 	}
 
-	__ops_memory_place_int(sig->mem, sig->unhashoff,
+	pgp_memory_place_int(sig->mem, sig->unhashoff,
 			     (unsigned)(len - sig->unhashoff - 2), 2);
 
 	/* add the packet from version number to end of hashed subpackets */
-	if (__ops_get_debug_level(__FILE__)) {
+	if (pgp_get_debug_level(__FILE__)) {
 		(void) fprintf(stderr, "ops_write_sig: hashed packet info\n");
 	}
-	sig->hash.add(&sig->hash, __ops_mem_data(sig->mem), sig->unhashoff);
+	sig->hash.add(&sig->hash, pgp_mem_data(sig->mem), sig->unhashoff);
 
 	/* add final trailer */
-	__ops_hash_add_int(&sig->hash, (unsigned)sig->sig.info.version, 1);
-	__ops_hash_add_int(&sig->hash, 0xff, 1);
+	pgp_hash_add_int(&sig->hash, (unsigned)sig->sig.info.version, 1);
+	pgp_hash_add_int(&sig->hash, 0xff, 1);
 	/* +6 for version, type, pk alg, hash alg, hashed subpacket length */
-	__ops_hash_add_int(&sig->hash, sig->hashlen + 6, 4);
+	pgp_hash_add_int(&sig->hash, sig->hashlen + 6, 4);
 
-	if (__ops_get_debug_level(__FILE__)) {
+	if (pgp_get_debug_level(__FILE__)) {
 		(void) fprintf(stderr, "ops_write_sig: done writing hashed\n");
 	}
 	/* XXX: technically, we could figure out how big the signature is */
 	/* and write it directly to the output instead of via memory. */
 	switch (seckey->pubkey.alg) {
-	case OPS_PKA_RSA:
-	case OPS_PKA_RSA_ENCRYPT_ONLY:
-	case OPS_PKA_RSA_SIGN_ONLY:
+	case PGP_PKA_RSA:
+	case PGP_PKA_RSA_ENCRYPT_ONLY:
+	case PGP_PKA_RSA_SIGN_ONLY:
 		if (!rsa_sign(&sig->hash, &key->key.rsa, &seckey->key.rsa,
 				sig->output)) {
 			(void) fprintf(stderr,
-				"__ops_write_sig: rsa_sign failure\n");
+				"pgp_write_sig: rsa_sign failure\n");
 			return 0;
 		}
 		break;
 
-	case OPS_PKA_DSA:
+	case PGP_PKA_DSA:
 		if (!dsa_sign(&sig->hash, &key->key.dsa, &seckey->key.dsa,
 				sig->output)) {
 			(void) fprintf(stderr,
-				"__ops_write_sig: dsa_sign failure\n");
+				"pgp_write_sig: dsa_sign failure\n");
 			return 0;
 		}
 		break;
@@ -816,31 +816,31 @@ __ops_write_sig(__ops_output_t *output,
 		return 0;
 	}
 
-	ret = __ops_write_ptag(output, OPS_PTAG_CT_SIGNATURE);
+	ret = pgp_write_ptag(output, PGP_PTAG_CT_SIGNATURE);
 	if (ret) {
-		len = __ops_mem_len(sig->mem);
-		ret = __ops_write_length(output, (unsigned)len) &&
-			__ops_write(output, __ops_mem_data(sig->mem), (unsigned)len);
+		len = pgp_mem_len(sig->mem);
+		ret = pgp_write_length(output, (unsigned)len) &&
+			pgp_write(output, pgp_mem_data(sig->mem), (unsigned)len);
 	}
-	__ops_memory_free(sig->mem);
+	pgp_memory_free(sig->mem);
 
 	if (ret == 0) {
-		OPS_ERROR(&output->errors, OPS_E_W, "Cannot write signature");
+		PGP_ERROR(&output->errors, PGP_E_W, "Cannot write signature");
 	}
 	return ret;
 }
 
 /* add a time stamp to the output */
 unsigned 
-__ops_add_time(__ops_create_sig_t *sig, int64_t when, const char *type)
+pgp_add_time(pgp_create_sig_t *sig, int64_t when, const char *type)
 {
-	__ops_content_enum	tag;
+	pgp_content_enum	tag;
 
 	tag = (strcmp(type, "birth") == 0) ?
-		OPS_PTAG_SS_CREATION_TIME : OPS_PTAG_SS_EXPIRATION_TIME;
+		PGP_PTAG_SS_CREATION_TIME : PGP_PTAG_SS_EXPIRATION_TIME;
 	/* just do 32-bit timestamps for just now - it's in the protocol */
-	return __ops_write_ss_header(sig->output, 5, tag) &&
-		__ops_write_scalar(sig->output, (uint32_t)when, (unsigned)sizeof(uint32_t));
+	return pgp_write_ss_header(sig->output, 5, tag) &&
+		pgp_write_scalar(sig->output, (uint32_t)when, (unsigned)sizeof(uint32_t));
 }
 
 /**
@@ -853,12 +853,12 @@ __ops_add_time(__ops_create_sig_t *sig, int64_t when, const char *type)
  */
 
 unsigned 
-__ops_add_issuer_keyid(__ops_create_sig_t *sig,
-				const uint8_t keyid[OPS_KEY_ID_SIZE])
+pgp_add_issuer_keyid(pgp_create_sig_t *sig,
+				const uint8_t keyid[PGP_KEY_ID_SIZE])
 {
-	return __ops_write_ss_header(sig->output, OPS_KEY_ID_SIZE + 1,
-				OPS_PTAG_SS_ISSUER_KEY_ID) &&
-		__ops_write(sig->output, keyid, OPS_KEY_ID_SIZE);
+	return pgp_write_ss_header(sig->output, PGP_KEY_ID_SIZE + 1,
+				PGP_PTAG_SS_ISSUER_KEY_ID) &&
+		pgp_write(sig->output, keyid, PGP_KEY_ID_SIZE);
 }
 
 /**
@@ -870,10 +870,10 @@ __ops_add_issuer_keyid(__ops_create_sig_t *sig,
  * \param primary
  */
 void 
-__ops_add_primary_userid(__ops_create_sig_t *sig, unsigned primary)
+pgp_add_primary_userid(pgp_create_sig_t *sig, unsigned primary)
 {
-	__ops_write_ss_header(sig->output, 2, OPS_PTAG_SS_PRIMARY_USER_ID);
-	__ops_write_scalar(sig->output, primary, 1);
+	pgp_write_ss_header(sig->output, 2, PGP_PTAG_SS_PRIMARY_USER_ID);
+	pgp_write_scalar(sig->output, primary, 1);
 }
 
 /**
@@ -884,15 +884,15 @@ __ops_add_primary_userid(__ops_create_sig_t *sig, unsigned primary)
  * \param sig The signature structure.
  * \return The hash structure.
  */
-__ops_hash_t     *
-__ops_sig_get_hash(__ops_create_sig_t *sig)
+pgp_hash_t     *
+pgp_sig_get_hash(pgp_create_sig_t *sig)
 {
 	return &sig->hash;
 }
 
 /* open up an output file */
 static int 
-open_output_file(__ops_output_t **output,
+open_output_file(pgp_output_t **output,
 			const char *inname,
 			const char *outname,
 			const char *suffix,
@@ -902,7 +902,7 @@ open_output_file(__ops_output_t **output,
 
 	/* setup output file */
 	if (outname) {
-		fd = __ops_setup_file_write(output, outname, overwrite);
+		fd = pgp_setup_file_write(output, outname, overwrite);
 	} else {
 		unsigned        flen = (unsigned)(strlen(inname) + 4 + 1);
 		char           *f = NULL;
@@ -912,7 +912,7 @@ open_output_file(__ops_output_t **output,
 			fd = -1;
 		} else {
 			(void) snprintf(f, flen, "%s.%s", inname, suffix);
-			fd = __ops_setup_file_write(output, f, overwrite);
+			fd = pgp_setup_file_write(output, f, overwrite);
 			free(f);
 		}
 	}
@@ -931,10 +931,10 @@ open_output_file(__ops_output_t **output,
 
 */
 unsigned 
-__ops_sign_file(__ops_io_t *io,
+pgp_sign_file(pgp_io_t *io,
 		const char *inname,
 		const char *outname,
-		const __ops_seckey_t *seckey,
+		const pgp_seckey_t *seckey,
 		const char *hashname,
 		const int64_t from,
 		const uint64_t duration,
@@ -942,35 +942,35 @@ __ops_sign_file(__ops_io_t *io,
 		const unsigned cleartext,
 		const unsigned overwrite)
 {
-	__ops_create_sig_t	*sig;
-	__ops_sig_type_t	 sig_type;
-	__ops_hash_alg_t	 hash_alg;
-	__ops_memory_t		*infile;
-	__ops_output_t		*output;
-	__ops_hash_t		*hash;
+	pgp_create_sig_t	*sig;
+	pgp_sig_type_t	 sig_type;
+	pgp_hash_alg_t	 hash_alg;
+	pgp_memory_t		*infile;
+	pgp_output_t		*output;
+	pgp_hash_t		*hash;
 	unsigned		 ret;
-	uint8_t			 keyid[OPS_KEY_ID_SIZE];
+	uint8_t			 keyid[PGP_KEY_ID_SIZE];
 	int			 fd_out;
 
 	sig = NULL;
-	sig_type = OPS_SIG_BINARY;
+	sig_type = PGP_SIG_BINARY;
 	infile = NULL;
 	output = NULL;
 	hash = NULL;
 	fd_out = 0;
 
 	/* find the hash algorithm */
-	hash_alg = __ops_str_to_hash_alg(hashname);
-	if (hash_alg == OPS_HASH_UNKNOWN) {
+	hash_alg = pgp_str_to_hash_alg(hashname);
+	if (hash_alg == PGP_HASH_UNKNOWN) {
 		(void) fprintf(io->errs,
-			"__ops_sign_file: unknown hash algorithm: \"%s\"\n",
+			"pgp_sign_file: unknown hash algorithm: \"%s\"\n",
 			hashname);
 		return 0;
 	}
 
 	/* read input file into buf */
-	infile = __ops_memory_new();
-	if (!__ops_mem_readfile(infile, inname)) {
+	infile = pgp_memory_new();
+	if (!pgp_mem_readfile(infile, inname)) {
 		return 0;
 	}
 
@@ -978,93 +978,93 @@ __ops_sign_file(__ops_io_t *io,
 	fd_out = open_output_file(&output, inname, outname,
 				(armored) ? "asc" : "gpg", overwrite);
 	if (fd_out < 0) {
-		__ops_memory_free(infile);
+		pgp_memory_free(infile);
 		return 0;
 	}
 
 	/* set up signature */
-	sig = __ops_create_sig_new();
+	sig = pgp_create_sig_new();
 	if (!sig) {
-		__ops_memory_free(infile);
-		__ops_teardown_file_write(output, fd_out);
+		pgp_memory_free(infile);
+		pgp_teardown_file_write(output, fd_out);
 		return 0;
 	}
 
-	__ops_start_sig(sig, seckey, hash_alg, sig_type);
+	pgp_start_sig(sig, seckey, hash_alg, sig_type);
 
 	if (cleartext) {
-		if (__ops_writer_push_clearsigned(output, sig) != 1) {
+		if (pgp_writer_push_clearsigned(output, sig) != 1) {
 			return 0;
 		}
 
 		/* Do the signing */
-		__ops_write(output, __ops_mem_data(infile), (unsigned)__ops_mem_len(infile));
-		__ops_memory_free(infile);
+		pgp_write(output, pgp_mem_data(infile), (unsigned)pgp_mem_len(infile));
+		pgp_memory_free(infile);
 
 		/* add signature with subpackets: */
 		/* - creation time */
 		/* - key id */
-		ret = __ops_writer_use_armored_sig(output) &&
-				__ops_add_time(sig, (int64_t)from, "birth") &&
-				__ops_add_time(sig, (int64_t)duration, "expiration");
+		ret = pgp_writer_use_armored_sig(output) &&
+				pgp_add_time(sig, (int64_t)from, "birth") &&
+				pgp_add_time(sig, (int64_t)duration, "expiration");
 		if (ret == 0) {
-			__ops_teardown_file_write(output, fd_out);
+			pgp_teardown_file_write(output, fd_out);
 			return 0;
 		}
 
-		__ops_keyid(keyid, OPS_KEY_ID_SIZE, &seckey->pubkey, hash_alg);
-		ret = __ops_add_issuer_keyid(sig, keyid) &&
-			__ops_end_hashed_subpkts(sig) &&
-			__ops_write_sig(output, sig, &seckey->pubkey, seckey);
+		pgp_keyid(keyid, PGP_KEY_ID_SIZE, &seckey->pubkey, hash_alg);
+		ret = pgp_add_issuer_keyid(sig, keyid) &&
+			pgp_end_hashed_subpkts(sig) &&
+			pgp_write_sig(output, sig, &seckey->pubkey, seckey);
 
-		__ops_teardown_file_write(output, fd_out);
+		pgp_teardown_file_write(output, fd_out);
 
 		if (ret == 0) {
-			OPS_ERROR(&output->errors, OPS_E_W,
+			PGP_ERROR(&output->errors, PGP_E_W,
 					"Cannot sign file as cleartext");
 		}
 	} else {
 		/* set armoured/not armoured here */
 		if (armored) {
-			__ops_writer_push_armor_msg(output);
+			pgp_writer_push_armor_msg(output);
 		}
 
 		/* write one_pass_sig */
-		__ops_write_one_pass_sig(output, seckey, hash_alg, sig_type);
+		pgp_write_one_pass_sig(output, seckey, hash_alg, sig_type);
 
 		/* hash file contents */
-		hash = __ops_sig_get_hash(sig);
-		hash->add(hash, __ops_mem_data(infile), (unsigned)__ops_mem_len(infile));
+		hash = pgp_sig_get_hash(sig);
+		hash->add(hash, pgp_mem_data(infile), (unsigned)pgp_mem_len(infile));
 
 #if 1
 		/* output file contents as Literal Data packet */
-		__ops_write_litdata(output, __ops_mem_data(infile),
-			(const int)__ops_mem_len(infile),
-			OPS_LDT_BINARY);
+		pgp_write_litdata(output, pgp_mem_data(infile),
+			(const int)pgp_mem_len(infile),
+			PGP_LDT_BINARY);
 #else
 		/* XXX - agc - sync with writer.c 1094 for ops_writez */
-		__ops_setup_memory_write(&litoutput, &litmem, bufsz);
-		__ops_setup_memory_write(&zoutput, &zmem, bufsz);
-		__ops_write_litdata(litoutput,
-			__ops_mem_data(__ops_mem_data(infile),
-			(const int)__ops_mem_len(infile), OPS_LDT_BINARY);
-		__ops_writez(zoutput, __ops_mem_data(litmem), __ops_mem_len(litmem));
+		pgp_setup_memory_write(&litoutput, &litmem, bufsz);
+		pgp_setup_memory_write(&zoutput, &zmem, bufsz);
+		pgp_write_litdata(litoutput,
+			pgp_mem_data(pgp_mem_data(infile),
+			(const int)pgp_mem_len(infile), PGP_LDT_BINARY);
+		pgp_writez(zoutput, pgp_mem_data(litmem), pgp_mem_len(litmem));
 #endif
 
 		/* add creation time to signature */
-		__ops_add_time(sig, (int64_t)from, "birth");
-		__ops_add_time(sig, (int64_t)duration, "expiration");
+		pgp_add_time(sig, (int64_t)from, "birth");
+		pgp_add_time(sig, (int64_t)duration, "expiration");
 		/* add key id to signature */
-		__ops_keyid(keyid, OPS_KEY_ID_SIZE, &seckey->pubkey, hash_alg);
-		__ops_add_issuer_keyid(sig, keyid);
-		__ops_end_hashed_subpkts(sig);
-		__ops_write_sig(output, sig, &seckey->pubkey, seckey);
+		pgp_keyid(keyid, PGP_KEY_ID_SIZE, &seckey->pubkey, hash_alg);
+		pgp_add_issuer_keyid(sig, keyid);
+		pgp_end_hashed_subpkts(sig);
+		pgp_write_sig(output, sig, &seckey->pubkey, seckey);
 
 		/* tidy up */
-		__ops_teardown_file_write(output, fd_out);
+		pgp_teardown_file_write(output, fd_out);
 
-		__ops_create_sig_delete(sig);
-		__ops_memory_free(infile);
+		pgp_create_sig_delete(sig);
+		pgp_memory_free(infile);
 
 		ret = 1;
 	}
@@ -1080,141 +1080,141 @@ __ops_sign_file(__ops_io_t *io,
 \param sig_type Signature type
 \param seckey Secret Key
 \param armored Write armoured text, if set
-\return New __ops_memory_t struct containing signed text
-\note It is the caller's responsibility to call __ops_memory_free(me)
+\return New pgp_memory_t struct containing signed text
+\note It is the caller's responsibility to call pgp_memory_free(me)
 
 */
-__ops_memory_t *
-__ops_sign_buf(__ops_io_t *io,
+pgp_memory_t *
+pgp_sign_buf(pgp_io_t *io,
 		const void *input,
 		const size_t insize,
-		const __ops_seckey_t *seckey,
+		const pgp_seckey_t *seckey,
 		const int64_t from,
 		const uint64_t duration,
 		const char *hashname,
 		const unsigned armored,
 		const unsigned cleartext)
 {
-	__ops_litdata_enum	 ld_type;
-	__ops_create_sig_t	*sig;
-	__ops_sig_type_t	 sig_type;
-	__ops_hash_alg_t	 hash_alg;
-	__ops_output_t		*output;
-	__ops_memory_t		*mem;
-	uint8_t			 keyid[OPS_KEY_ID_SIZE];
-	__ops_hash_t		*hash;
+	pgp_litdata_enum	 ld_type;
+	pgp_create_sig_t	*sig;
+	pgp_sig_type_t	 sig_type;
+	pgp_hash_alg_t	 hash_alg;
+	pgp_output_t		*output;
+	pgp_memory_t		*mem;
+	uint8_t			 keyid[PGP_KEY_ID_SIZE];
+	pgp_hash_t		*hash;
 	unsigned		 ret;
 
 	sig = NULL;
-	sig_type = OPS_SIG_BINARY;
+	sig_type = PGP_SIG_BINARY;
 	output = NULL;
-	mem = __ops_memory_new();
+	mem = pgp_memory_new();
 	hash = NULL;
 	ret = 0;
 
-	hash_alg = __ops_str_to_hash_alg(hashname);
-	if (hash_alg == OPS_HASH_UNKNOWN) {
+	hash_alg = pgp_str_to_hash_alg(hashname);
+	if (hash_alg == PGP_HASH_UNKNOWN) {
 		(void) fprintf(io->errs,
-			"__ops_sign_buf: unknown hash algorithm: \"%s\"\n",
+			"pgp_sign_buf: unknown hash algorithm: \"%s\"\n",
 			hashname);
 		return NULL;
 	}
 
 	/* setup literal data packet type */
-	ld_type = (cleartext) ? OPS_LDT_TEXT : OPS_LDT_BINARY;
+	ld_type = (cleartext) ? PGP_LDT_TEXT : PGP_LDT_BINARY;
 
 	if (input == NULL) {
 		(void) fprintf(io->errs,
-			"__ops_sign_buf: null input\n");
+			"pgp_sign_buf: null input\n");
 		return NULL;
 	}
 
 	/* set up signature */
-	if ((sig = __ops_create_sig_new()) == NULL) {
+	if ((sig = pgp_create_sig_new()) == NULL) {
 		return NULL;
 	}
-	__ops_start_sig(sig, seckey, hash_alg, sig_type);
+	pgp_start_sig(sig, seckey, hash_alg, sig_type);
 
 	/* setup writer */
-	__ops_setup_memory_write(&output, &mem, insize);
+	pgp_setup_memory_write(&output, &mem, insize);
 
 	if (cleartext) {
 		/* Do the signing */
 		/* add signature with subpackets: */
 		/* - creation time */
 		/* - key id */
-		ret = __ops_writer_push_clearsigned(output, sig) &&
-			__ops_write(output, input, (unsigned)insize) &&
-			__ops_writer_use_armored_sig(output) &&
-			__ops_add_time(sig, from, "birth") &&
-			__ops_add_time(sig, (int64_t)duration, "expiration");
+		ret = pgp_writer_push_clearsigned(output, sig) &&
+			pgp_write(output, input, (unsigned)insize) &&
+			pgp_writer_use_armored_sig(output) &&
+			pgp_add_time(sig, from, "birth") &&
+			pgp_add_time(sig, (int64_t)duration, "expiration");
 		if (ret == 0) {
 			return NULL;
 		}
-		__ops_output_delete(output);
+		pgp_output_delete(output);
 	} else {
 		/* set armoured/not armoured here */
 		if (armored) {
-			__ops_writer_push_armor_msg(output);
+			pgp_writer_push_armor_msg(output);
 		}
-		if (__ops_get_debug_level(__FILE__)) {
+		if (pgp_get_debug_level(__FILE__)) {
 			fprintf(io->errs, "** Writing out one pass sig\n");
 		}
 		/* write one_pass_sig */
-		__ops_write_one_pass_sig(output, seckey, hash_alg, sig_type);
+		pgp_write_one_pass_sig(output, seckey, hash_alg, sig_type);
 
 		/* hash memory */
-		hash = __ops_sig_get_hash(sig);
+		hash = pgp_sig_get_hash(sig);
 		hash->add(hash, input, (unsigned)insize);
 
 		/* output file contents as Literal Data packet */
-		if (__ops_get_debug_level(__FILE__)) {
+		if (pgp_get_debug_level(__FILE__)) {
 			(void) fprintf(stderr, "** Writing out data now\n");
 		}
-		__ops_write_litdata(output, input, (const int)insize, ld_type);
-		if (__ops_get_debug_level(__FILE__)) {
+		pgp_write_litdata(output, input, (const int)insize, ld_type);
+		if (pgp_get_debug_level(__FILE__)) {
 			fprintf(stderr, "** After Writing out data now\n");
 		}
 
 		/* add creation time to signature */
-		__ops_add_time(sig, from, "birth");
-		__ops_add_time(sig, (int64_t)duration, "expiration");
+		pgp_add_time(sig, from, "birth");
+		pgp_add_time(sig, (int64_t)duration, "expiration");
 		/* add key id to signature */
-		__ops_keyid(keyid, OPS_KEY_ID_SIZE, &seckey->pubkey, hash_alg);
-		__ops_add_issuer_keyid(sig, keyid);
-		__ops_end_hashed_subpkts(sig);
+		pgp_keyid(keyid, PGP_KEY_ID_SIZE, &seckey->pubkey, hash_alg);
+		pgp_add_issuer_keyid(sig, keyid);
+		pgp_end_hashed_subpkts(sig);
 
 		/* write out sig */
-		__ops_write_sig(output, sig, &seckey->pubkey, seckey);
+		pgp_write_sig(output, sig, &seckey->pubkey, seckey);
 
 		/* tidy up */
-		__ops_writer_close(output);
-		__ops_create_sig_delete(sig);
+		pgp_writer_close(output);
+		pgp_create_sig_delete(sig);
 	}
 	return mem;
 }
 
 /* sign a file, and put the signature in a separate file */
 int
-__ops_sign_detached(__ops_io_t *io,
+pgp_sign_detached(pgp_io_t *io,
 			const char *f,
 			char *sigfile,
-			__ops_seckey_t *seckey,
+			pgp_seckey_t *seckey,
 			const char *hash,
 			const int64_t from,
 			const uint64_t duration,
 			const unsigned armored, const unsigned overwrite)
 {
-	__ops_create_sig_t	*sig;
-	__ops_hash_alg_t	 hash_alg;
-	__ops_output_t		*output;
-	__ops_memory_t		*mem;
-	uint8_t	 	 	 keyid[OPS_KEY_ID_SIZE];
+	pgp_create_sig_t	*sig;
+	pgp_hash_alg_t	 hash_alg;
+	pgp_output_t		*output;
+	pgp_memory_t		*mem;
+	uint8_t	 	 	 keyid[PGP_KEY_ID_SIZE];
 	int			 fd;
 
 	/* find out which hash algorithm to use */
-	hash_alg = __ops_str_to_hash_alg(hash);
-	if (hash_alg == OPS_HASH_UNKNOWN) {
+	hash_alg = pgp_str_to_hash_alg(hash);
+	if (hash_alg == PGP_HASH_UNKNOWN) {
 		(void) fprintf(io->errs,"Unknown hash algorithm: %s\n", hash);
 		return 0;
 	}
@@ -1228,31 +1228,31 @@ __ops_sign_detached(__ops_io_t *io,
 	}
 
 	/* create a new signature */
-	sig = __ops_create_sig_new();
-	__ops_start_sig(sig, seckey, hash_alg, OPS_SIG_BINARY);
+	sig = pgp_create_sig_new();
+	pgp_start_sig(sig, seckey, hash_alg, PGP_SIG_BINARY);
 
 	/* read the contents of 'f', and add that to the signature */
-	mem = __ops_memory_new();
-	if (!__ops_mem_readfile(mem, f)) {
-		__ops_teardown_file_write(output, fd);
+	mem = pgp_memory_new();
+	if (!pgp_mem_readfile(mem, f)) {
+		pgp_teardown_file_write(output, fd);
 		return 0;
 	}
 	/* set armoured/not armoured here */
 	if (armored) {
-		__ops_writer_push_armor_msg(output);
+		pgp_writer_push_armor_msg(output);
 	}
-	__ops_sig_add_data(sig, __ops_mem_data(mem), __ops_mem_len(mem));
-	__ops_memory_free(mem);
+	pgp_sig_add_data(sig, pgp_mem_data(mem), pgp_mem_len(mem));
+	pgp_memory_free(mem);
 
 	/* calculate the signature */
-	__ops_add_time(sig, from, "birth");
-	__ops_add_time(sig, (int64_t)duration, "expiration");
-	__ops_keyid(keyid, sizeof(keyid), &seckey->pubkey, hash_alg);
-	__ops_add_issuer_keyid(sig, keyid);
-	__ops_end_hashed_subpkts(sig);
-	__ops_write_sig(output, sig, &seckey->pubkey, seckey);
-	__ops_teardown_file_write(output, fd);
-	__ops_seckey_free(seckey);
+	pgp_add_time(sig, from, "birth");
+	pgp_add_time(sig, (int64_t)duration, "expiration");
+	pgp_keyid(keyid, sizeof(keyid), &seckey->pubkey, hash_alg);
+	pgp_add_issuer_keyid(sig, keyid);
+	pgp_end_hashed_subpkts(sig);
+	pgp_write_sig(output, sig, &seckey->pubkey, seckey);
+	pgp_teardown_file_write(output, fd);
+	pgp_seckey_free(seckey);
 
 	return 1;
 }
