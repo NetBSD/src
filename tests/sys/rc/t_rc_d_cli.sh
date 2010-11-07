@@ -1,4 +1,4 @@
-# $NetBSD: t_rc_d_cli.sh,v 1.3 2010/06/04 08:39:41 jmmv Exp $
+# $NetBSD: t_rc_d_cli.sh,v 1.4 2010/11/07 17:51:21 jmmv Exp $
 #
 # Copyright (c) 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -160,7 +160,6 @@ atf_test_case overriden_start_no_args
 overriden_start_no_args_head() {
 	atf_set "descr" "Tests that running a custom 'start' without" \
 	    "arguments does not pass any parameters to the command"
-	atf_set "use.fs" "true"
 }
 overriden_start_no_args_body() {
 	do_overriden_no_args start
@@ -170,7 +169,6 @@ atf_test_case overriden_start_with_args
 overriden_start_with_args_head() {
 	atf_set "descr" "Tests that running a custom 'start' with" \
 	    "arguments passes those arguments as parameters to the command"
-	atf_set "use.fs" "true"
 }
 overriden_start_with_args_body() {
 	do_overriden_with_args start
@@ -180,7 +178,6 @@ atf_test_case overriden_stop_no_args
 overriden_stop_no_args_head() {
 	atf_set "descr" "Tests that running a custom 'stop' without" \
 	    "arguments does not pass any parameters to the command"
-	atf_set "use.fs" "true"
 }
 overriden_stop_no_args_body() {
 	do_overriden_no_args stop
@@ -190,7 +187,6 @@ atf_test_case overriden_stop_with_args
 overriden_stop_with_args_head() {
 	atf_set "descr" "Tests that running a custom 'stop' with" \
 	    "arguments passes those arguments as parameters to the command"
-	atf_set "use.fs" "true"
 }
 overriden_stop_with_args_body() {
 	do_overriden_with_args stop
@@ -200,7 +196,6 @@ atf_test_case overriden_restart_no_args
 overriden_restart_no_args_head() {
 	atf_set "descr" "Tests that running a custom 'restart' without" \
 	    "arguments does not pass any parameters to the command"
-	atf_set "use.fs" "true"
 }
 overriden_restart_no_args_body() {
 	do_overriden_no_args restart
@@ -210,7 +205,6 @@ atf_test_case overriden_restart_with_args
 overriden_restart_with_args_head() {
 	atf_set "descr" "Tests that running a custom 'restart' with" \
 	    "arguments passes those arguments as parameters to the command"
-	atf_set "use.fs" "true"
 }
 overriden_restart_with_args_body() {
 	do_overriden_with_args restart
@@ -220,7 +214,6 @@ atf_test_case overriden_custom_no_args
 overriden_custom_no_args_head() {
 	atf_set "descr" "Tests that running a custom command without" \
 	    "arguments does not pass any parameters to the command"
-	atf_set "use.fs" "true"
 }
 overriden_custom_no_args_body() {
 	do_overriden_no_args custom
@@ -230,7 +223,6 @@ atf_test_case overriden_custom_with_args
 overriden_custom_with_args_head() {
 	atf_set "descr" "Tests that running a custom command with" \
 	    "arguments passes those arguments as parameters to the command"
-	atf_set "use.fs" "true"
 }
 overriden_custom_with_args_body() {
 	do_overriden_with_args custom

@@ -1,4 +1,4 @@
-/*	$NetBSD: t_basic.c,v 1.4 2010/06/04 08:39:40 jmmv Exp $	*/
+/*	$NetBSD: t_basic.c,v 1.5 2010/11/07 17:51:18 jmmv Exp $	*/
 
 #include <sys/types.h>
 #include <sys/mount.h>
@@ -24,7 +24,6 @@ ATF_TC(basic);
 ATF_TC_HEAD(basic, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "basic union functionality: two views");
-	atf_tc_set_md_var(tc, "use.fs", "true");
 }
 
 #define MSTR "magic bus"

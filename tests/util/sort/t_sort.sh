@@ -1,4 +1,4 @@
-# $NetBSD: t_sort.sh,v 1.1 2010/08/01 16:42:58 jmmv Exp $
+# $NetBSD: t_sort.sh,v 1.2 2010/11/07 17:51:24 jmmv Exp $
 #
 # Copyright (c) 2008, 2009, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -29,7 +29,6 @@ atf_test_case basic
 basic_head()
 {
 	atf_set "descr" "Basic functionality test"
-	atf_set "use.fs" "true"
 }
 basic_body()
 {
@@ -54,7 +53,6 @@ atf_test_case empty_file
 empty_file_head()
 {
 	atf_set "descr" "Tests sorting an empty file"
-	atf_set "use.fs" "true"
 }
 empty_file_body()
 {
@@ -68,7 +66,6 @@ atf_test_case end_of_options
 end_of_options_head()
 {
 	atf_set "descr" "Determination of end of option list"
-	atf_set "use.fs" "true"
 }
 end_of_options_body()
 {
@@ -81,7 +78,6 @@ atf_test_case missing_newline
 missing_newline_head()
 {
 	atf_set "descr" "Tests with missing new line in input file"
-	atf_set "use.fs" "true"
 }
 missing_newline_body()
 {
@@ -93,7 +89,6 @@ atf_test_case null_bytes
 null_bytes_head()
 {
 	atf_set "descr" "Tests the behavior of null bytes"
-	atf_set "use.fs" "true"
 }
 null_bytes_body()
 {
@@ -105,7 +100,6 @@ atf_test_case long_records
 long_records_head()
 {
 	atf_set "descr" "Tests long lines and keys"
-	atf_set "use.fs" "true"
 }
 long_records_body()
 {
@@ -128,7 +122,6 @@ long_file_head()
 {
 	atf_set "descr" "Tests with a long file to try to force intermediate" \
 	    "files"
-	atf_set "use.fs" "true"
 }
 long_file_body()
 {
@@ -159,7 +152,6 @@ atf_test_case bflag
 bflag_head()
 {
 	atf_set "descr" "Tests the -b flag"
-	atf_set "use.fs" "true"
 }
 bflag_body()
 {
@@ -177,7 +169,6 @@ atf_test_case cflag
 cflag_head()
 {
 	atf_set "descr" "Tests the -c flag"
-	atf_set "use.fs" "true"
 }
 cflag_body()
 {
@@ -193,7 +184,6 @@ atf_test_case kflag_one_field
 kflag_one_field_head()
 {
 	atf_set "descr" "Tests the -k flag with one field"
-	atf_set "use.fs" "true"
 }
 kflag_one_field_body()
 {
@@ -218,7 +208,6 @@ atf_test_case kflag_two_fields
 kflag_two_fields_head()
 {
 	atf_set "descr" "Tests the -k flag with two fields"
-	atf_set "use.fs" "true"
 }
 kflag_two_fields_body()
 {
@@ -242,7 +231,6 @@ atf_test_case kflag_many_fields
 kflag_many_fields_head()
 {
 	atf_set "descr" "Tests the -k flag with many fields"
-	atf_set "use.fs" "true"
 }
 kflag_many_fields_body()
 {
@@ -278,7 +266,6 @@ atf_test_case kflag_outofbounds
 kflag_outofbounds_head()
 {
 	atf_set "descr" "Tests the -k flag with out of bounds fields"
-	atf_set "use.fs" "true"
 }
 kflag_outofbounds_body()
 {
@@ -299,7 +286,6 @@ kflag_nonmonotone_head()
 {
 	atf_set "descr" "Tests the -k flag with apparently nonmonotone" \
 	    "field specs"
-	atf_set "use.fs" "true"
 }
 kflag_nonmonotone_body()
 {
@@ -316,7 +302,6 @@ atf_test_case kflag_limits
 kflag_limits_head()
 {
 	atf_set "descr" "Tests the -k flag field limits"
-	atf_set "use.fs" "true"
 }
 kflag_limits_body()
 {
@@ -343,7 +328,6 @@ atf_test_case kflag_alpha
 kflag_alpha_head()
 {
 	atf_set "descr" "Tests the -k flag with various alpha fields"
-	atf_set "use.fs" "true"
 }
 kflag_alpha_body()
 {
@@ -404,7 +388,6 @@ atf_test_case kflag_no_end
 kflag_no_end_head()
 {
 	atf_set "descr" "Tests the -k flag with a field without end"
-	atf_set "use.fs" "true"
 }
 kflag_no_end_body()
 {
@@ -431,7 +414,6 @@ atf_test_case mflag
 mflag_head()
 {
 	atf_set "descr" "Tests the -m flag"
-	atf_set "use.fs" "true"
 }
 mflag_body()
 {
@@ -469,7 +451,6 @@ atf_test_case mflag_uflag
 mflag_uflag_head()
 {
 	atf_set "descr" "Tests the -m flag together with -u"
-	atf_set "use.fs" "true"
 }
 mflag_uflag_body()
 {
@@ -488,7 +469,6 @@ mflag_uflag_first_head()
 {
 	atf_set "descr" "Tests that the -m flag together with -u picks the" \
 	    "first among equal"
-	atf_set "use.fs" "true"
 }
 mflag_uflag_first_body()
 {
@@ -518,7 +498,6 @@ atf_test_case nflag
 nflag_head()
 {
 	atf_set "descr" "Tests the -n flag"
-	atf_set "use.fs" "true"
 }
 nflag_body()
 {
@@ -553,7 +532,6 @@ atf_test_case nflag_rflag
 nflag_rflag_head()
 {
 	atf_set "descr" "Tests the -n and -r flag combination"
-	atf_set "use.fs" "true"
 }
 nflag_rflag_body()
 {
@@ -576,7 +554,6 @@ atf_test_case oflag
 oflag_head()
 {
 	atf_set "descr" "Tests the -o flag"
-	atf_set "use.fs" "true"
 }
 oflag_body()
 {
@@ -607,7 +584,6 @@ atf_test_case oflag_displaced
 oflag_displaced_head()
 {
 	atf_set "descr" "Tests the -o flag after the file names"
-	atf_set "use.fs" "true"
 }
 oflag_displaced_body()
 {
@@ -619,7 +595,6 @@ atf_test_case rflag
 rflag_head()
 {
 	atf_set "descr" "Tests the -r flag"
-	atf_set "use.fs" "true"
 }
 rflag_body()
 {
@@ -644,7 +619,6 @@ atf_test_case sflag
 sflag_head()
 {
 	atf_set "descr" "Tests the -s flag"
-	atf_set "use.fs" "true"
 }
 sflag_body()
 {
@@ -673,7 +647,6 @@ atf_test_case sflag_many_files
 sflag_many_files_head()
 {
 	atf_set "descr" "Tests the -s flag with multiple files"
-	atf_set "use.fs" "true"
 }
 sflag_many_files_body()
 {
@@ -701,7 +674,6 @@ atf_test_case tflag
 tflag_head()
 {
 	atf_set "descr" "Tests the -t flag"
-	atf_set "use.fs" "true"
 }
 tflag_body()
 {
@@ -720,7 +692,6 @@ atf_test_case tflag_alphabetic
 tflag_alphabetic_head()
 {
 	atf_set "descr" "Tests the -t flag with a character as the delimiter"
-	atf_set "use.fs" "true"
 }
 tflag_alphabetic_body()
 {
@@ -737,7 +708,6 @@ atf_test_case tflag_char_pos
 tflag_char_pos_head()
 {
 	atf_set "descr" "Tests the -t flag with character positions in fields"
-	atf_set "use.fs" "true"
 }
 tflag_char_pos_body()
 {
@@ -762,7 +732,6 @@ tflag_whitespace_head()
 {
 	atf_set "descr" "Tests the -t flag with spaces and tabs as the" \
 	    "delimiter"
-	atf_set "use.fs" "true"
 }
 tflag_whitespace_body()
 {
@@ -805,7 +774,6 @@ atf_test_case uflag
 uflag_head()
 {
 	atf_set "descr" "Tests the -u flag"
-	atf_set "use.fs" "true"
 }
 uflag_body()
 {
@@ -829,7 +797,6 @@ atf_test_case uflag_rflag
 uflag_rflag_head()
 {
 	atf_set "descr" "Tests the -u and -r flag combination"
-	atf_set "use.fs" "true"
 }
 uflag_rflag_body()
 {
@@ -853,7 +820,6 @@ atf_test_case plus_one
 plus_one_head()
 {
 	atf_set "descr" "Tests +- addressing: +1 should become -k2.1"
-	atf_set "use.fs" "true"
 }
 plus_one_body()
 {
@@ -878,7 +844,6 @@ atf_test_case plus_one_minus_two
 plus_one_minus_two_head()
 {
 	atf_set "descr" "Tests +- addressing: +1 -2 should become -k2.1,2.0"
-	atf_set "use.fs" "true"
 }
 plus_one_minus_two_body()
 {
@@ -904,7 +869,6 @@ plus_zero_head()
 {
 	atf_set "descr" "Tests +- addressing: '-- +0' raised a '-k1.1: No" \
 	    "such file or directory' error"
-	atf_set "use.fs" "true"
 }
 plus_zero_body()
 {
@@ -918,7 +882,6 @@ plus_nonmonotone_head()
 {
 	atf_set "descr" "Tests += addressing: apparently nonmonotone field" \
 	    "specs"
-	atf_set "use.fs" "true"
 }
 plus_nonmonotone_body()
 {
@@ -936,7 +899,6 @@ plus_as_path_head()
 {
 	atf_set "descr" "Tests +- addressing: 'file +0' raised a '-k1.1: No" \
 	    "such file or directory' error"
-	atf_set "use.fs" "true"
 }
 plus_as_path_body()
 {
@@ -952,7 +914,6 @@ plus_bad_tempfile_head()
 {
 	atf_set "descr" "Tests +- addressing: intermediate wrong behavior" \
 	    "that raised a '+0: No such file or directory' error"
-	atf_set "use.fs" "true"
 }
 plus_bad_tempfile_body()
 {
@@ -964,7 +925,6 @@ atf_test_case plus_rflag_invalid
 plus_rflag_invalid_head()
 {
 	atf_set "descr" "Tests +- addressing: invalid record delimiter"
-	atf_set "use.fs" "true"
 }
 plus_rflag_invalid_body()
 {
@@ -984,7 +944,6 @@ plus_tflag()
 {
 	atf_set "descr" "Tests +- addressing: using -T caused a 'No such file" \
 	    "or directory' error"
-	atf_set "use.fs" "true"
 }
 plus_tflag()
 {
@@ -996,7 +955,6 @@ atf_test_case plus_no_end
 plus_no_end_head()
 {
 	atf_set "descr" "Tests +- addressing: field without end"
-	atf_set "use.fs" "true"
 }
 plus_no_end_body()
 {

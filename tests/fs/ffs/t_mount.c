@@ -1,4 +1,4 @@
-/*	$NetBSD: t_mount.c,v 1.10 2010/08/09 19:36:30 pooka Exp $	*/
+/*	$NetBSD: t_mount.c,v 1.11 2010/11/07 17:51:17 jmmv Exp $	*/
 
 /*
  * Basic tests for mounting
@@ -31,7 +31,6 @@ ATF_TC(48Kimage);
 ATF_TC_HEAD(48Kimage, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "mount small 48K ffs image");
-	atf_tc_set_md_var(tc, "use.fs", "true");
 }
 
 ATF_TC_BODY(48Kimage, tc)
@@ -51,7 +50,6 @@ ATF_TC_HEAD(fsbsize2big, tc)
 
 	atf_tc_set_md_var(tc, "descr", "mounts file system with "
 	    "blocksize > MAXPHYS");
-	atf_tc_set_md_var(tc, "use.fs", "true");
 	/* PR kern/43727 */
 }
 

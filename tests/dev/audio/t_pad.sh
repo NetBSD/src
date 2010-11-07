@@ -1,4 +1,4 @@
-#	$NetBSD: t_pad.sh,v 1.2 2010/08/04 13:49:48 pooka Exp $
+#	$NetBSD: t_pad.sh,v 1.3 2010/11/07 17:51:17 jmmv Exp $
 #
 # Copyright (c) 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -30,7 +30,6 @@ pad_output_head()
 {
 
 	atf_set "descr" "Check pad driver output against known-good output"
-	atf_set "use.fs" "true"
 }
 
 pad_output_body()

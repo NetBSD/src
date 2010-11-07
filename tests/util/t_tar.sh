@@ -1,4 +1,4 @@
-# $NetBSD: t_tar.sh,v 1.4 2010/06/04 08:39:41 jmmv Exp $
+# $NetBSD: t_tar.sh,v 1.5 2010/11/07 17:51:22 jmmv Exp $
 #
 # Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -30,7 +30,6 @@ append_head() {
 	atf_set "descr" "Ensure that appending a file to an archive" \
 	                "produces the same results as if the file" \
 	                "had been there during the archive's creation"
-	atf_set "use.fs" "true"
 }
 append_body() {
 	touch foo bar

@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ping.c,v 1.10 2010/11/03 21:44:46 christos Exp $	*/
+/*	$NetBSD: t_ping.c,v 1.11 2010/11/07 17:51:21 jmmv Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: t_ping.c,v 1.10 2010/11/03 21:44:46 christos Exp $");
+__RCSID("$NetBSD: t_ping.c,v 1.11 2010/11/07 17:51:21 jmmv Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -59,7 +59,6 @@ ATF_TC_HEAD(simpleping, tc)
 {
 
 	atf_tc_set_md_var(tc, "descr", "check that kernel responds to ping");
-	atf_tc_set_md_var(tc, "use.fs", "true");
 	atf_tc_set_md_var(tc, "timeout", "2");
 }
 
@@ -107,7 +106,6 @@ ATF_TC_HEAD(floodping, tc)
 {
 
 	atf_tc_set_md_var(tc, "descr", "see how kernel responds to floodping");
-	atf_tc_set_md_var(tc, "use.fs", "true");
 }
 
 /* why the hell isn't this available in userspace??? */
@@ -224,7 +222,6 @@ ATF_TC_HEAD(floodping2, tc)
 {
 
 	atf_tc_set_md_var(tc, "descr", "two hosts floodpinging each other");
-	atf_tc_set_md_var(tc, "use.fs", "true");
 }
 
 ATF_TC_BODY(floodping2, tc)
@@ -258,7 +255,6 @@ ATF_TC_HEAD(pingsize, tc)
 {
 
 	atf_tc_set_md_var(tc, "descr", "ping with packets min <= size <= max");
-	atf_tc_set_md_var(tc, "use.fs", "true");
 }
 
 ATF_TC_BODY(pingsize, tc)
@@ -307,7 +303,6 @@ ATF_TC_HEAD(ping_of_death, tc)
 {
 
 	atf_tc_set_md_var(tc, "descr", "send a \"ping of death\"");
-	atf_tc_set_md_var(tc, "use.fs", "true");
 	atf_tc_set_md_var(tc, "timeout", "2");
 }
 

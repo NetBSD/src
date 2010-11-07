@@ -1,4 +1,4 @@
-/* $NetBSD: t_bitstring.c,v 1.2 2010/11/03 16:10:20 christos Exp $ */
+/* $NetBSD: t_bitstring.c,v 1.3 2010/11/07 17:51:19 jmmv Exp $ */
 
 /*-
  * Copyright (c) 1993, 2008, 2010 The NetBSD Foundation, Inc.
@@ -228,7 +228,6 @@ ATF_TC(bits_8);
 ATF_TC_HEAD(bits_8, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "Checks 8-bit long bitstrings");
-	atf_tc_set_md_var(tc, "use.fs", "true");
 }
 ATF_TC_BODY(bits_8, tc)
 {
@@ -239,7 +238,6 @@ ATF_TC(bits_27);
 ATF_TC_HEAD(bits_27, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "Checks 27-bit long bitstrings");
-	atf_tc_set_md_var(tc, "use.fs", "true");
 }
 ATF_TC_BODY(bits_27, tc)
 {
@@ -250,7 +248,6 @@ ATF_TC(bits_32);
 ATF_TC_HEAD(bits_32, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "Checks 32-bit long bitstrings");
-	atf_tc_set_md_var(tc, "use.fs", "true");
 }
 ATF_TC_BODY(bits_32, tc)
 {
@@ -261,7 +258,6 @@ ATF_TC(bits_49);
 ATF_TC_HEAD(bits_49, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "Checks 49-bit long bitstrings");
-	atf_tc_set_md_var(tc, "use.fs", "true");
 }
 ATF_TC_BODY(bits_49, tc)
 {
@@ -272,7 +268,6 @@ ATF_TC(bits_64);
 ATF_TC_HEAD(bits_64, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "Checks 64-bit long bitstrings");
-	atf_tc_set_md_var(tc, "use.fs", "true");
 }
 ATF_TC_BODY(bits_64, tc)
 {
@@ -283,7 +278,6 @@ ATF_TC(bits_67);
 ATF_TC_HEAD(bits_67, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "Checks 67-bit long bitstrings");
-	atf_tc_set_md_var(tc, "use.fs", "true");
 }
 ATF_TC_BODY(bits_67, tc)
 {

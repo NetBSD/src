@@ -1,4 +1,4 @@
-# $NetBSD: t_wait.sh,v 1.2 2010/06/04 08:39:42 jmmv Exp $
+# $NetBSD: t_wait.sh,v 1.3 2010/11/07 17:51:24 jmmv Exp $
 #
 # Copyright (c) 2008, 2009, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -28,7 +28,6 @@
 atf_test_case individual
 individual_head() {
 	atf_set "descr" "Tests that waiting for individual jobs works"
-	atf_set "use.fs" "true"
 }
 individual_body() {
 	# atf-sh confuses wait for some reason; work it around by creating

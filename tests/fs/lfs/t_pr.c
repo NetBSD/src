@@ -1,4 +1,4 @@
-/*	$NetBSD: t_pr.c,v 1.3 2010/07/03 08:31:37 jmmv Exp $	*/
+/*	$NetBSD: t_pr.c,v 1.4 2010/11/07 17:51:17 jmmv Exp $	*/
 
 #include <sys/types.h>
 #include <sys/mount.h>
@@ -25,7 +25,6 @@ ATF_TC_HEAD(mknod, tc)
 
 	atf_tc_set_md_var(tc, "descr", "mknod(2) hangs on LFS (PR kern/43503)");
 	atf_tc_set_md_var(tc, "timeout", "1");
-	atf_tc_set_md_var(tc, "use.fs", "true");
 }
 
 #define IMGNAME "disk.img"

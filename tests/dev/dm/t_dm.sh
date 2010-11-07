@@ -1,4 +1,4 @@
-#	$NetBSD: t_dm.sh,v 1.1 2010/10/06 11:24:55 haad Exp $
+#	$NetBSD: t_dm.sh,v 1.2 2010/11/07 17:51:17 jmmv Exp $
 #
 # Copyright (c) 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -29,7 +29,6 @@ atf_test_case dm_test
 dm_test_head()
 {
     	atf_set "descr" "Check dm driver routines and create lineary, stripe mapped disks"
-	atf_set "use.fs" "true"
 }
 
 dm_test_body()

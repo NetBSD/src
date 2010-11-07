@@ -1,4 +1,4 @@
-/*	$NetBSD: t_fifos.c,v 1.4 2010/06/04 08:39:40 jmmv Exp $	*/
+/*	$NetBSD: t_fifos.c,v 1.5 2010/11/07 17:51:17 jmmv Exp $	*/
 
 #include <sys/types.h>
 #include <sys/mount.h>
@@ -24,7 +24,6 @@ ATF_TC_HEAD(fifos, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "test fifo support in ffs");
 	atf_tc_set_md_var(tc, "timeout", "5");
-	atf_tc_set_md_var(tc, "use.fs", "true");
 }
 
 #define teststr1 "raving & drooling"
