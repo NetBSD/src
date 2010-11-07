@@ -57,7 +57,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: create.c,v 1.35 2010/11/04 15:38:45 agc Exp $");
+__RCSID("$NetBSD: create.c,v 1.36 2010/11/07 02:29:28 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -881,41 +881,39 @@ encode_m_buf(const uint8_t *M, size_t mLen, const __ops_pubkey_t * pubkey,
 	/* implementation of EME-PKCS1-v1_5-ENCODE, as defined in OpenPGP RFC */
 	switch (pubkey->alg) {
 	case OPS_PKA_RSA:
+		k = (unsigned)BN_num_bytes(pubkey->key.rsa.n);
+		if (mLen > k - 11) {
+			(void) fprintf(stderr, "encode_m_buf: message too long\n");
+			return 0;
+		}
 		break;
 	case OPS_PKA_DSA:
 	case OPS_PKA_ELGAMAL:
-		(void) fprintf(stderr, "encode_m_buf: DSA/Elgamal encryption not implemented yet\n");
+		k = (unsigned)BN_num_bytes(pubkey->key.elgamal.p);
+		if (mLen > k - 11) {
+			(void) fprintf(stderr, "encode_m_buf: message too long\n");
+			return 0;
+		}
 		break;
 	default:
 		(void) fprintf(stderr, "encode_m_buf: pubkey algorithm\n");
 		return 0;
 	}
-
-	k = (unsigned)BN_num_bytes(pubkey->key.rsa.n);
-	if (mLen > k - 11) {
-		(void) fprintf(stderr, "encode_m_buf: message too long\n");
-		return 0;
-	}
 	/* these two bytes defined by RFC */
 	EM[0] = 0x00;
 	EM[1] = 0x02;
-
 	/* add non-zero random bytes of length k - mLen -3 */
 	for (i = 2; i < (k - mLen) - 1; ++i) {
 		do {
 			__ops_random(EM + i, 1);
 		} while (EM[i] == 0);
 	}
-
 	if (i < 8 + 2) {
 		(void) fprintf(stderr, "encode_m_buf: bad i len\n");
 		return 0;
 	}
-
 	EM[i++] = 0;
-
 	(void) memcpy(EM + i, M, mLen);
-
 	if (__ops_get_debug_level(__FILE__)) {
 		hexdump(stderr, "Encoded Message:", EM, mLen);
 	}
@@ -967,7 +965,18 @@ __ops_create_pk_sesskey(const __ops_key_t *key, const char *ciphername)
 			"__ops_create_pk_sesskey: can't allocate\n");
 		return NULL;
 	}
-	sz_encoded_m_buf = BN_num_bytes(pubkey->key.rsa.n);
+	switch(pubkey->alg) {
+	case OPS_PKA_RSA:
+		sz_encoded_m_buf = BN_num_bytes(pubkey->key.rsa.n);
+		break;
+	case OPS_PKA_DSA:
+	case OPS_PKA_ELGAMAL:
+		sz_encoded_m_buf = BN_num_bytes(pubkey->key.elgamal.p);
+		break;
+	default:
+		sz_encoded_m_buf = 0;
+		break;
+	}
 	if ((encoded_m_buf = calloc(1, sz_encoded_m_buf)) == NULL) {
 		(void) fprintf(stderr,
 			"__ops_create_pk_sesskey: can't allocate\n");
@@ -993,7 +1002,7 @@ __ops_create_pk_sesskey(const __ops_key_t *key, const char *ciphername)
 	(void) memcpy(sesskey->key_id, id, sizeof(sesskey->key_id));
 
 	if (__ops_get_debug_level(__FILE__)) {
-		hexdump(stderr, "Encrypting for RSA keyid", id, sizeof(sesskey->key_id));
+		hexdump(stderr, "Encrypting for keyid", id, sizeof(sesskey->key_id));
 	}
 	switch (pubkey->alg) {
 	case OPS_PKA_RSA:
@@ -1041,11 +1050,14 @@ __ops_create_pk_sesskey(const __ops_key_t *key, const char *ciphername)
 		break;
 	case OPS_PKA_DSA:
 	case OPS_PKA_ELGAMAL:
-		(void) fprintf(stderr, "DSA/Elgamal encryption not supported yet\n");
-		free(unencoded_m_buf);
-		free(encoded_m_buf);
-		free(sesskey);
-		return NULL;
+		if (!__ops_elgamal_encrypt_mpi(encoded_m_buf, sz_encoded_m_buf, pubkey,
+				&sesskey->params)) {
+			free(unencoded_m_buf);
+			free(encoded_m_buf);
+			free(sesskey);
+			return NULL;
+		}
+		break;
 	default:
 		/* will not get here - for lint only */
 		break;
@@ -1084,8 +1096,17 @@ __ops_write_pk_sesskey(__ops_output_t *output, __ops_pk_sesskey_t *pksk)
 			;
 	case OPS_PKA_DSA:
 	case OPS_PKA_ELGAMAL:
-		(void) fprintf(stderr, "__ops_write_pk_sesskey: DSA/Elgamal encryption not implemented yet\n");
-		return 0;
+		return __ops_write_ptag(output, OPS_PTAG_CT_PK_SESSION_KEY) &&
+			__ops_write_length(output, (unsigned)(1 + 8 + 1 +
+				BN_num_bytes(pksk->params.elgamal.g_to_k) + 2 +
+				BN_num_bytes(pksk->params.elgamal.encrypted_m) + 2)) &&
+			__ops_write_scalar(output, (unsigned)pksk->version, 1) &&
+			__ops_write(output, pksk->key_id, 8) &&
+			__ops_write_scalar(output, (unsigned)pksk->alg, 1) &&
+			__ops_write_mpi(output, pksk->params.elgamal.g_to_k) &&
+			__ops_write_mpi(output, pksk->params.elgamal.encrypted_m)
+			/* ??	&& __ops_write_scalar(output, 0, 2); */
+			;
 	default:
 		(void) fprintf(stderr,
 			"__ops_write_pk_sesskey: bad algorithm\n");
