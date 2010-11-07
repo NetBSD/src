@@ -212,7 +212,6 @@ ATF_TEST_CASE_HEAD(path_to_absolute)
 {
     set_md_var("descr", "Tests the conversion of a relative path to an "
                "absolute one");
-    set_md_var("use.fs", "true");
 }
 ATF_TEST_CASE_BODY(path_to_absolute)
 {
@@ -270,7 +269,6 @@ ATF_TEST_CASE_HEAD(directory_read)
 {
     set_md_var("descr", "Tests the directory class creation, which reads "
                "the contents of a directory");
-    set_md_var("use.fs", "true");
 }
 ATF_TEST_CASE_BODY(directory_read)
 {
@@ -292,7 +290,6 @@ ATF_TEST_CASE_HEAD(directory_file_info)
 {
     set_md_var("descr", "Tests that the file_info objects attached to the "
                "directory are valid");
-    set_md_var("use.fs", "true");
 }
 ATF_TEST_CASE_BODY(directory_file_info)
 {
@@ -323,7 +320,6 @@ ATF_TEST_CASE(directory_names);
 ATF_TEST_CASE_HEAD(directory_names)
 {
     set_md_var("descr", "Tests the directory's names method");
-    set_md_var("use.fs", "true");
 }
 ATF_TEST_CASE_BODY(directory_names)
 {
@@ -349,7 +345,6 @@ ATF_TEST_CASE(file_info_stat);
 ATF_TEST_CASE_HEAD(file_info_stat)
 {
     set_md_var("descr", "Tests the file_info creation and its basic contents");
-    set_md_var("use.fs", "true");
 }
 ATF_TEST_CASE_BODY(file_info_stat)
 {
@@ -376,7 +371,6 @@ ATF_TEST_CASE_HEAD(file_info_perms)
 {
     set_md_var("descr", "Tests the file_info methods to get the file's "
                "permissions");
-    set_md_var("use.fs", "true");
 }
 ATF_TEST_CASE_BODY(file_info_perms)
 {
@@ -452,7 +446,6 @@ ATF_TEST_CASE(exists);
 ATF_TEST_CASE_HEAD(exists)
 {
     set_md_var("descr", "Tests the exists function");
-    set_md_var("use.fs", "true");
 }
 ATF_TEST_CASE_BODY(exists)
 {
@@ -476,7 +469,6 @@ ATF_TEST_CASE(is_executable);
 ATF_TEST_CASE_HEAD(is_executable)
 {
     set_md_var("descr", "Tests the is_executable function");
-    set_md_var("use.fs", "true");
 }
 ATF_TEST_CASE_BODY(is_executable)
 {
@@ -501,7 +493,6 @@ ATF_TEST_CASE(remove);
 ATF_TEST_CASE_HEAD(remove)
 {
     set_md_var("descr", "Tests the remove function");
-    set_md_var("use.fs", "true");
 }
 ATF_TEST_CASE_BODY(remove)
 {

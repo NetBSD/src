@@ -32,7 +32,6 @@ srcdir_head()
 {
     atf_set "descr" "Verifies that the source directory can be queried" \
                     "from the initialization function"
-    atf_set "use.fs" "true"
 }
 srcdir_body()
 {

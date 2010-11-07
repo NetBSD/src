@@ -70,7 +70,6 @@ ATF_TC(grep_file);
 ATF_TC_HEAD(grep_file, tc)
 {
     atf_tc_set_md_var(tc, "descr", "Tests the grep_file helper function");
-    atf_tc_set_md_var(tc, "use.fs", "true");
 }
 ATF_TC_BODY(grep_file, tc)
 {
@@ -96,7 +95,6 @@ ATF_TC(read_line);
 ATF_TC_HEAD(read_line, tc)
 {
     atf_tc_set_md_var(tc, "descr", "Tests the read_line function");
-    atf_tc_set_md_var(tc, "use.fs", "true");
 }
 ATF_TC_BODY(read_line, tc)
 {

@@ -212,7 +212,6 @@ ATF_TC(check_errno);
 ATF_TC_HEAD(check_errno, tc)
 {
     atf_tc_set_md_var(tc, "descr", "Tests the ATF_CHECK_ERRNO macro");
-    atf_tc_set_md_var(tc, "use.fs", "true");
 }
 ATF_TC_BODY(check_errno, tc)
 {
@@ -257,7 +256,6 @@ ATF_TC(require_errno);
 ATF_TC_HEAD(require_errno, tc)
 {
     atf_tc_set_md_var(tc, "descr", "Tests the ATF_REQUIRE_ERRNO macro");
-    atf_tc_set_md_var(tc, "use.fs", "true");
 }
 ATF_TC_BODY(require_errno, tc)
 {
@@ -312,7 +310,6 @@ ATF_TC_HEAD(check, tc)
 {
     atf_tc_set_md_var(tc, "descr", "Tests the ATF_CHECK and "
                       "ATF_CHECK_MSG macros");
-    atf_tc_set_md_var(tc, "use.fs", "true");
 }
 ATF_TC_BODY(check, tc)
 {
@@ -410,7 +407,6 @@ ATF_TC_HEAD(check_eq, tc)
 {
     atf_tc_set_md_var(tc, "descr", "Tests the ATF_CHECK_EQ and "
                       "ATF_CHECK_EQ_MSG macros");
-    atf_tc_set_md_var(tc, "use.fs", "true");
 }
 ATF_TC_BODY(check_eq, tc)
 {
@@ -455,7 +451,6 @@ ATF_TC_HEAD(check_streq, tc)
 {
     atf_tc_set_md_var(tc, "descr", "Tests the ATF_CHECK_STREQ and "
                       "ATF_CHECK_STREQ_MSG macros");
-    atf_tc_set_md_var(tc, "use.fs", "true");
 }
 ATF_TC_BODY(check_streq, tc)
 {
@@ -503,7 +498,6 @@ ATF_TC_HEAD(require, tc)
 {
     atf_tc_set_md_var(tc, "descr", "Tests the ATF_REQUIRE and "
                       "ATF_REQUIRE_MSG macros");
-    atf_tc_set_md_var(tc, "use.fs", "true");
 }
 ATF_TC_BODY(require, tc)
 {
@@ -601,7 +595,6 @@ ATF_TC_HEAD(require_eq, tc)
 {
     atf_tc_set_md_var(tc, "descr", "Tests the ATF_REQUIRE_EQ and "
                       "ATF_REQUIRE_EQ_MSG macros");
-    atf_tc_set_md_var(tc, "use.fs", "true");
 }
 ATF_TC_BODY(require_eq, tc)
 {
@@ -646,7 +639,6 @@ ATF_TC_HEAD(require_streq, tc)
 {
     atf_tc_set_md_var(tc, "descr", "Tests the ATF_REQUIRE_STREQ and "
                       "ATF_REQUIRE_STREQ_MSG macros");
-    atf_tc_set_md_var(tc, "use.fs", "true");
 }
 ATF_TC_BODY(require_streq, tc)
 {
@@ -709,7 +701,6 @@ ATF_TC_HEAD(msg_embedded_fmt, tc)
     atf_tc_set_md_var(tc, "descr", "Tests that format strings passed "
                       "as part of the automatically-generated messages "
                       "do not get expanded");
-    atf_tc_set_md_var(tc, "use.fs", "true");
 }
 ATF_TC_BODY(msg_embedded_fmt, tc)
 {

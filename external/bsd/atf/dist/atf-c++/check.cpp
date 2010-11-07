@@ -145,7 +145,7 @@ impl::build_cxx_o(const std::string& sfile, const std::string& ofile,
     return success;
 }
 
-impl::check_result
+std::auto_ptr< impl::check_result >
 impl::exec(const atf::process::argv_array& argva)
 {
     atf_check_result_t result;
@@ -154,5 +154,5 @@ impl::exec(const atf::process::argv_array& argva)
     if (atf_is_error(err))
         throw_atf_error(err);
 
-    return impl::check_result(&result);
+    return std::auto_ptr< impl::check_result >(new impl::check_result(&result));
 }
