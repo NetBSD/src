@@ -1,15 +1,6 @@
 /* bconfig.h.  Generated from bconfig.h.in by configure.  */
 /* bconfig.h.in.  Generated from configure.ac by autoheader.  */
 
-/* Define to the path of chattr(1) if you have it */
-/* #undef CHATTR */
-
-/* Define to 1 if you have chattr(1) */
-/* #undef HAVE_CHATTR */
-
-/* Define to 1 if you have the `chflags' function. */
-#define HAVE_CHFLAGS 1
-
 /* Define to 1 if basename takes a constant pointer */
 /* #undef HAVE_CONST_BASENAME */
 
@@ -105,7 +96,7 @@
 #define PACKAGE_NAME "Automated Testing Framework"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "Automated Testing Framework 0.11"
+#define PACKAGE_STRING "Automated Testing Framework 0.12"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "atf"
@@ -114,10 +105,10 @@
 #define PACKAGE_URL "http://www.NetBSD.org/~jmmv/atf/"
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "0.11"
+#define PACKAGE_VERSION "0.12"
 
 /* Define to 1 if you have the ANSI C header files. */
 #define STDC_HEADERS 1
 
 /* Version number of package */
-#define VERSION "0.11"
+#define VERSION "0.12"
