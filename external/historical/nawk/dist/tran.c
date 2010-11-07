@@ -298,6 +298,10 @@ Awkfloat setfval(Cell *vp, Awkfloat f)	/* set float val of a Cell */
 		if (fldno > *NF)
 			newfld(fldno);
 		   dprintf( ("setting field %d to %g\n", fldno, f) );
+	} else if (&vp->fval == NF) {
+		donerec = 0;	/* mark $0 invalid */
+		setlastfld(f);
+		dprintf( ("setting NF to %g\n", f) );
 	} else if (isrec(vp)) {
 		donefld = 0;	/* mark $1... invalid */
 		donerec = 1;
@@ -324,6 +328,7 @@ char *setsval(Cell *vp, const char *s)	/* set string val of a Cell */
 {
 	char *t;
 	int fldno;
+	Awkfloat f;
 
 	   dprintf( ("starting setsval %p: %s = \"%s\", t=%o, r,f=%d,%d\n", 
 		vp, NN(vp->nval), s, vp->tval, donerec, donefld) );
@@ -347,6 +352,14 @@ char *setsval(Cell *vp, const char *s)	/* set string val of a Cell */
 	vp->tval &= ~DONTFREE;
 	   dprintf( ("setsval %p: %s = \"%s (%p) \", t=%o r,f=%d,%d\n", 
 		vp, NN(vp->nval), t,t, vp->tval, donerec, donefld) );
+
+	if (&vp->fval == NF) {
+		donerec = 0;	/* mark $0 invalid */
+		f = getfval(vp);
+		setlastfld(f);
+		dprintf( ("setting NF to %g\n", f) );
+	}
+
 	return(vp->sval = t);
 }
 
