@@ -1,4 +1,4 @@
-.\"	$NetBSD: boot.8,v 1.53 2010/11/06 23:28:42 jym Exp $
+.\"	$NetBSD: boot.8,v 1.54 2010/11/07 12:01:07 wiz Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -393,7 +393,8 @@ or loading a
 .Tn Xen
 DOM0 kernel before booting the
 .Tn Xen
-hypervisor. See
+hypervisor.
+See
 .Xr boot.cfg 5
 for examples.
 .Pp
@@ -402,24 +403,24 @@ In addition to the
 options specified above, the DOM0 kernel accepts
 .Po Ar arguments
 being separated with spaces
-.Pc Ns :
+.Pc :
 .Bl -tag -width xxx
 .It Ic bootdev Ns = Ns Ar dev Po or Ic root Ns = Ns Ar dev Pc
 Override the default boot device.
 .Ar dev
 can be a unit name
 .Po Dq wd0
-.Pc Ns ,
+.Pc ,
 or an interface name
 .Po Dq bge0 ,
 .Dq wm0 ,
 .Ns ...
-.Pc Ns ,
+.Pc ,
 for cases where the root file system has to be loaded
 from network (see the
 .Sx BUGS
 section in
-.Xr pxeboot 8 Ns ).
+.Xr pxeboot 8 ) .
 .It Ic console Ns = Ns Ar dev
 Console used by DOM0 kernel during boot.
 .Ar dev 
@@ -450,7 +451,7 @@ network mask
 address of the host
 .It Va iface
 interface
-.Po eg. Dq xennet0
+.Po e.g. Dq xennet0
 or
 .Dq eth0
 .Pc
@@ -465,8 +466,8 @@ is the remote mount point for the root file system.
 Pass a list of PCI IDs for use with the PCI backend driver.
 .Ar pcidevs
 is formed of multiple IDs (in bus:device:function notation),
-each ID being surrounded with brackets. PCI domain IDs
-are currently ignored.
+each ID being surrounded with brackets.
+PCI domain IDs are currently ignored.
 You can obtains PCI IDs through
 .Xr pcictl 8 .
 .El
