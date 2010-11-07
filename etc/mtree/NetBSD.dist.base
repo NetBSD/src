@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.base,v 1.59 2010/11/04 13:24:27 pooka Exp $
+#	$NetBSD: NetBSD.dist.base,v 1.60 2010/11/07 19:55:58 pooka Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -262,6 +262,7 @@
 ./usr/libdata/debug/usr/tests/net/bpf
 ./usr/libdata/debug/usr/tests/net/carp
 ./usr/libdata/debug/usr/tests/net/icmp
+./usr/libdata/debug/usr/tests/net/if
 ./usr/libdata/debug/usr/tests/net/if_loop
 ./usr/libdata/debug/usr/tests/net/sys
 ./usr/libdata/debug/usr/tests/rump
@@ -1202,6 +1203,7 @@
 ./usr/tests/net/bpf
 ./usr/tests/net/carp
 ./usr/tests/net/icmp
+./usr/tests/net/if
 ./usr/tests/net/if_loop
 ./usr/tests/net/sys
 ./usr/tests/rump
