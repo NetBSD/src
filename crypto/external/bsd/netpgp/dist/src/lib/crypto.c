@@ -54,7 +54,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: crypto.c,v 1.30 2010/11/07 02:29:28 agc Exp $");
+__RCSID("$NetBSD: crypto.c,v 1.31 2010/11/07 06:56:52 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -86,12 +86,14 @@ __RCSID("$NetBSD: crypto.c,v 1.30 2010/11/07 02:29:28 agc Exp $");
 int 
 __ops_decrypt_decode_mpi(uint8_t *buf,
 				unsigned buflen,
+				const BIGNUM *g_to_k,
 				const BIGNUM *encmpi,
 				const __ops_seckey_t *seckey)
 {
 	unsigned        mpisize;
 	uint8_t		encmpibuf[NETPGP_BUFSIZ];
 	uint8_t		mpibuf[NETPGP_BUFSIZ];
+	uint8_t		gkbuf[NETPGP_BUFSIZ];
 	int             i;
 	int             n;
 
@@ -101,10 +103,9 @@ __ops_decrypt_decode_mpi(uint8_t *buf,
 		(void) fprintf(stderr, "mpisize too big %u\n", mpisize);
 		return -1;
 	}
-	BN_bn2bin(encmpi, encmpibuf);
-
 	switch (seckey->pubkey.alg) {
 	case OPS_PKA_RSA:
+		BN_bn2bin(encmpi, encmpibuf);
 		if (__ops_get_debug_level(__FILE__)) {
 			hexdump(stderr, "encrypted", encmpibuf, 16);
 		}
@@ -143,12 +144,13 @@ __ops_decrypt_decode_mpi(uint8_t *buf,
 		return n - i;
 	case OPS_PKA_DSA:
 	case OPS_PKA_ELGAMAL:
-		(void) fprintf(stderr, "XXX - preliminary support for DSA/Elgamal\n");
+		(void) BN_bn2bin(g_to_k, gkbuf);
+		(void) BN_bn2bin(encmpi, encmpibuf);
 		if (__ops_get_debug_level(__FILE__)) {
 			hexdump(stderr, "encrypted", encmpibuf, 16);
 		}
-		n = __ops_elgamal_private_decrypt(mpibuf, encmpibuf,
-					(unsigned)(BN_num_bits(encmpi) + 7) / 8,
+		n = __ops_elgamal_private_decrypt(mpibuf, gkbuf, encmpibuf,
+					(unsigned)BN_num_bytes(encmpi),
 					&seckey->key.elgamal, &seckey->pubkey.key.elgamal);
 		if (n == -1) {
 			(void) fprintf(stderr, "ops_elgamal_private_decrypt failure\n");
@@ -161,13 +163,15 @@ __ops_decrypt_decode_mpi(uint8_t *buf,
 			return -1;
 		}
 		/* Decode EME-PKCS1_V1_5 (RFC 2437). */
-		if (mpibuf[0] != 0 || mpibuf[1] != 2) {
+		if (mpibuf[0] != 2) {
+			fprintf(stderr, "mpibuf mismatch\n");
 			return -1;
 		}
 		/* Skip the random bytes. */
-		for (i = 2; i < n && mpibuf[i]; ++i) {
+		for (i = 1; i < n && mpibuf[i]; ++i) {
 		}
 		if (i == n || i < 10) {
+			fprintf(stderr, "175 n %d\n", n);
 			return -1;
 		}
 		/* Skip the zero */
