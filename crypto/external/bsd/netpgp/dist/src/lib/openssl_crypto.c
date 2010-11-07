@@ -57,7 +57,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: openssl_crypto.c,v 1.30 2010/11/04 06:45:28 agc Exp $");
+__RCSID("$NetBSD: openssl_crypto.c,v 1.31 2010/11/07 02:29:28 agc Exp $");
 #endif
 
 #ifdef HAVE_OPENSSL_DSA_H
@@ -876,6 +876,103 @@ openssl_read_pem_seckey(const char *f, __ops_key_t *key, const char *type, int v
 	}
 	(void) fclose(fp);
 	return ok;
+}
+
+/*
+ * Decide the number of bits in the random componont k
+ *
+ * It should be in the same range as p for signing (which
+ * is deprecated), but can be much smaller for encrypting.
+ *
+ * Until I research it further, I just mimic gpg behaviour.
+ * It has a special mapping table, for values <= 5120,
+ * above that it uses 'arbitrary high number'.	Following
+ * algorihm hovers 10-70 bits above gpg values.  And for
+ * larger p, it uses gpg's algorihm.
+ *
+ * The point is - if k gets large, encryption will be
+ * really slow.  It does not matter for decryption.
+ */
+static int
+decide_k_bits(int p_bits)
+{
+	return (p_bits <= 5120) ? p_bits / 10 + 160 : (p_bits / 8 + 200) * 3 / 2;
+}
+
+int
+__ops_elgamal_public_encrypt(uint8_t *g_to_k, uint8_t *encm,
+			const uint8_t *in,
+			size_t size,
+			const __ops_elgamal_pubkey_t *pubkey)
+{
+	int	ret = 0;
+	int	k_bits;
+	BIGNUM	   *m;
+	BIGNUM	   *p;
+	BIGNUM	   *g;
+	BIGNUM	   *y;
+	BIGNUM	   *k;
+	BIGNUM	   *yk;
+	BIGNUM	   *c1;
+	BIGNUM	   *c2;
+	BN_CTX	   *tmp;
+
+	m = BN_bin2bn(in, size, NULL);
+	p = pubkey->p;
+	g = pubkey->g;
+	y = pubkey->y;
+	k = BN_new();
+	yk = BN_new();
+	c1 = BN_new();
+	c2 = BN_new();
+	tmp = BN_CTX_new();
+	if (!m || !p || !g || !y || !k || !yk || !c1 || !c2 || !tmp) {
+		goto done;
+	}
+	/*
+	 * generate k
+	 */
+	k_bits = decide_k_bits(BN_num_bits(p));
+	if (!BN_rand(k, k_bits, 0, 0)) {
+		goto done;
+	}
+	/*
+	 * c1 = g^k c2 = m * y^k
+	 */
+	if (!BN_mod_exp(c1, g, k, p, tmp)) {
+		goto done;
+	}
+	if (!BN_mod_exp(yk, y, k, p, tmp)) {
+		goto done;
+	}
+	if (!BN_mod_mul(c2, m, yk, p, tmp)) {
+		goto done;
+	}
+	/* result */
+	BN_bn2bin(c1, g_to_k);
+	ret = BN_num_bytes(c1);	/* c1 = g^k */
+	BN_bn2bin(c2, encm);
+	ret += BN_num_bytes(c2); /* c2 = m * y^k */
+done:
+	if (tmp) {
+		BN_CTX_free(tmp);
+	}
+	if (c2) {
+		BN_clear_free(c2);
+	}
+	if (c1) {
+		BN_clear_free(c1);
+	}
+	if (yk) {
+		BN_clear_free(yk);
+	}
+	if (k) {
+		BN_clear_free(k);
+	}
+	if (g) {
+		BN_clear_free(g);
+	}
+	return ret;
 }
 
 int
