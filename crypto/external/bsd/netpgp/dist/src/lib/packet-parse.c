@@ -58,7 +58,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: packet-parse.c,v 1.43 2010/11/04 15:38:45 agc Exp $");
+__RCSID("$NetBSD: packet-parse.c,v 1.44 2010/11/07 06:56:52 agc Exp $");
 #endif
 
 #ifdef HAVE_OPENSSL_CAST_H
@@ -2649,6 +2649,7 @@ parse_pk_sesskey(__ops_region_t *region,
 	uint8_t		   	 c = 0x0;
 	uint8_t			 cs[2];
 	unsigned		 k;
+	BIGNUM			*g_to_k;
 	BIGNUM			*enc_m;
 	int			 n;
 	uint8_t		 	 unencoded_m_buf[1024];
@@ -2681,8 +2682,10 @@ parse_pk_sesskey(__ops_region_t *region,
 			return 0;
 		}
 		enc_m = pkt.u.pk_sesskey.params.rsa.encrypted_m;
+		g_to_k = NULL;
 		break;
 
+	case OPS_PKA_DSA:
 	case OPS_PKA_ELGAMAL:
 		if (!limread_mpi(&pkt.u.pk_sesskey.params.elgamal.g_to_k,
 				      region, stream) ||
@@ -2691,6 +2694,7 @@ parse_pk_sesskey(__ops_region_t *region,
 					 region, stream)) {
 			return 0;
 		}
+		g_to_k = pkt.u.pk_sesskey.params.elgamal.g_to_k;
 		enc_m = pkt.u.pk_sesskey.params.elgamal.encrypted_m;
 		break;
 
@@ -2715,7 +2719,8 @@ parse_pk_sesskey(__ops_region_t *region,
 		return 1;
 	}
 	n = __ops_decrypt_decode_mpi(unencoded_m_buf,
-			(unsigned)sizeof(unencoded_m_buf), enc_m, secret);
+		(unsigned)sizeof(unencoded_m_buf), g_to_k, enc_m, secret);
+
 	if (n < 1) {
 		ERRP(&stream->cbinfo, pkt, "decrypted message too short");
 		return 0;

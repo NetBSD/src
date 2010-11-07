@@ -57,7 +57,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: openssl_crypto.c,v 1.31 2010/11/07 02:29:28 agc Exp $");
+__RCSID("$NetBSD: openssl_crypto.c,v 1.32 2010/11/07 06:56:52 agc Exp $");
 #endif
 
 #ifdef HAVE_OPENSSL_DSA_H
@@ -917,7 +917,7 @@ __ops_elgamal_public_encrypt(uint8_t *g_to_k, uint8_t *encm,
 	BIGNUM	   *c2;
 	BN_CTX	   *tmp;
 
-	m = BN_bin2bn(in, size, NULL);
+	m = BN_bin2bn(in, (int)size, NULL);
 	p = pubkey->p;
 	g = pubkey->g;
 	y = pubkey->y;
@@ -977,6 +977,7 @@ done:
 
 int
 __ops_elgamal_private_decrypt(uint8_t *out,
+				const uint8_t *g_to_k,
 				const uint8_t *in,
 				size_t length,
 				const __ops_elgamal_seckey_t *seckey,
@@ -990,11 +991,12 @@ __ops_elgamal_private_decrypt(uint8_t *out,
 	BIGNUM	*p;
 	BIGNUM	*x;
 	BIGNUM	*m;
-	int	 ret = 0;
+	int	 ret;
 
-	/* split in byutes into c1 and c2 */
-	c1 = BN_bin2bn(in, (int)(length / 2), NULL);
-	c2 = BN_bin2bn(&in[length / 2], (int)(length / 2), NULL);
+	ret = 0;
+	/* c1 and c2 are in g_to_k and in, respectively*/
+	c1 = BN_bin2bn(g_to_k, (int)length, NULL);
+	c2 = BN_bin2bn(in, (int)length, NULL);
 	/* other bits */
 	p = pubkey->p;
 	x = seckey->x;
@@ -1018,9 +1020,7 @@ __ops_elgamal_private_decrypt(uint8_t *out,
 		goto done;
 	}
 	/* result */
-	if (BN_bn2bin(m, out) > 0) {
-		ret = 1;
-	}
+	ret = BN_bn2bin(m, out);
 done:
 	if (tmp) {
 		BN_CTX_free(tmp);
