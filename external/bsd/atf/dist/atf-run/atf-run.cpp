@@ -84,16 +84,11 @@ class atf_run : public atf::application::app {
 
     size_t count_tps(std::vector< std::string >) const;
 
-    int run_test(const atf::fs::path&,
-                 impl::atf_tps_writer&,
-                 const atf::tests::vars_map&,
-                 const atf::fs::path&);
-    int run_test_directory(const atf::fs::path&,
-                           impl::atf_tps_writer&,
-                           const atf::fs::path&);
+    int run_test(const atf::fs::path&, impl::atf_tps_writer&,
+                 const atf::tests::vars_map&);
+    int run_test_directory(const atf::fs::path&, impl::atf_tps_writer&);
     int run_test_program(const atf::fs::path&, impl::atf_tps_writer&,
-                         const atf::tests::vars_map&,
-                         const atf::fs::path&);
+                         const atf::tests::vars_map&);
 
     impl::test_case_result get_test_case_result(const std::string&,
         const atf::process::status&, const atf::fs::path&) const;
@@ -166,27 +161,25 @@ atf_run::parse_vflag(const std::string& str)
 int
 atf_run::run_test(const atf::fs::path& tp,
                   impl::atf_tps_writer& w,
-                  const atf::tests::vars_map& config,
-                  const atf::fs::path& ro_workdir)
+                  const atf::tests::vars_map& config)
 {
     atf::fs::file_info fi(tp);
 
     int errcode;
     if (fi.get_type() == atf::fs::file_info::dir_type)
-        errcode = run_test_directory(tp, w, ro_workdir);
+        errcode = run_test_directory(tp, w);
     else {
         const atf::tests::vars_map effective_config =
             impl::merge_configs(config, m_cmdline_vars);
 
-        errcode = run_test_program(tp, w, effective_config, ro_workdir);
+        errcode = run_test_program(tp, w, effective_config);
     }
     return errcode;
 }
 
 int
 atf_run::run_test_directory(const atf::fs::path& tp,
-                            impl::atf_tps_writer& w,
-                            const atf::fs::path& ro_workdir)
+                            impl::atf_tps_writer& w)
 {
     impl::atffile af = impl::read_atffile(tp / "Atffile");
 
@@ -202,7 +195,7 @@ atf_run::run_test_directory(const atf::fs::path& tp,
     for (std::vector< std::string >::const_iterator iter = af.tps().begin();
          iter != af.tps().end(); iter++) {
         const bool result = run_test(tp / *iter, w,
-            impl::merge_configs(af.conf(), test_suite_vars), ro_workdir);
+            impl::merge_configs(af.conf(), test_suite_vars));
         ok &= (result == EXIT_SUCCESS);
     }
 
@@ -317,8 +310,7 @@ atf_run::get_test_case_result(const std::string& broken_reason,
 int
 atf_run::run_test_program(const atf::fs::path& tp,
                           impl::atf_tps_writer& w,
-                          const atf::tests::vars_map& config,
-                          const atf::fs::path& ro_workdir)
+                          const atf::tests::vars_map& config)
 {
     int errcode = EXIT_SUCCESS;
 
@@ -364,40 +356,39 @@ atf_run::run_test_program(const atf::fs::path& tp,
                 continue;
             }
 
-            const atf::fs::path resfile = resdir.get_path() / "tcr";
+            const std::pair< int, int > user = impl::get_required_user(
+                tcmd, config);
+
+            atf::fs::path resfile = resdir.get_path() / "tcr";
             INV(!atf::fs::exists(resfile));
             try {
                 const bool has_cleanup = atf::text::to_bool(
                     (*tcmd.find("has.cleanup")).second);
-                const bool use_fs = atf::text::to_bool(
-                    (*tcmd.find("use.fs")).second);
 
-                impl::test_case_result tcr;
-
-                if (use_fs) {
-                    impl::temp_dir workdir(atf::fs::path(atf::config::get(
-                        "atf_workdir")) / "atf-run.XXXXXX");
-
-                    std::pair< std::string, const atf::process::status > s =
-                        impl::run_test_case(tp, tcname, "body", tcmd, config,
-                                            resfile, workdir.get_path(), w);
-                    if (has_cleanup)
-                        (void)impl::run_test_case(tp, tcname, "cleanup", tcmd,
-                                config, resfile, workdir.get_path(), w);
-
-                    // TODO: Force deletion of workdir.
-
-                    tcr = get_test_case_result(s.first, s.second, resfile);
-                } else {
-                    std::pair< std::string, const atf::process::status > s =
-                        impl::run_test_case(tp, tcname, "body", tcmd, config,
-                                            resfile, ro_workdir, w);
-                    if (has_cleanup)
-                        (void)impl::run_test_case(tp, tcname, "cleanup", tcmd,
-                            config, resfile, ro_workdir, w);
-
-                    tcr = get_test_case_result(s.first, s.second, resfile);
+                impl::temp_dir workdir(atf::fs::path(atf::config::get(
+                    "atf_workdir")) / "atf-run.XXXXXX");
+                if (user.first != -1 && user.second != -1) {
+                    if (::chown(workdir.get_path().c_str(), user.first,
+                                user.second) == -1) {
+                        throw atf::system_error("chmod(" +
+                            workdir.get_path().str() + ")", "chmod(2) failed",
+                            errno);
+                    }
+                    resfile = workdir.get_path() / "tcr";
                 }
+
+                std::pair< std::string, const atf::process::status > s =
+                    impl::run_test_case(tp, tcname, "body", tcmd, config,
+                                            resfile, workdir.get_path(), w);
+                if (has_cleanup)
+                    (void)impl::run_test_case(tp, tcname, "cleanup", tcmd,
+                            config, resfile, workdir.get_path(), w);
+
+                // TODO: Force deletion of workdir.
+
+                impl::test_case_result tcr = get_test_case_result(s.first,
+                    s.second, resfile);
+
                 w.end_tc(tcr.state(), tcr.reason());
                 if (tcr.state() == "failed")
                     errcode = EXIT_FAILURE;
@@ -490,20 +481,11 @@ atf_run::main(void)
     call_hook("atf-run", "info_start_hook");
     w.ntps(count_tps(tps));
 
-    impl::temp_dir ro_workdir(atf::fs::path(atf::config::get(
-        "atf_workdir")) / "atf-run.XXXXXX");
-    if (::chmod(ro_workdir.get_path().c_str(), S_IXUSR) == -1)
-        throw std::runtime_error("Failed to create read-only work directory");
-    if (!impl::set_immutable(ro_workdir.get_path(), true)) {
-        // TODO: Report that use.fs may not work.  Non-fatal though.
-    }
-
     bool ok = true;
     for (std::vector< std::string >::const_iterator iter = tps.begin();
          iter != tps.end(); iter++) {
         const bool result = run_test(atf::fs::path(*iter), w,
-            impl::merge_configs(af.conf(), test_suite_vars),
-                                ro_workdir.get_path());
+            impl::merge_configs(af.conf(), test_suite_vars));
         ok &= (result == EXIT_SUCCESS);
     }
 
