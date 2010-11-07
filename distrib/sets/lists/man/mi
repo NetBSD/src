@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1247 2010/11/05 10:28:22 gsutre Exp $
+# $NetBSD: mi,v 1.1248 2010/11/07 01:12:22 jakllsch Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1408,6 +1408,7 @@
 ./usr/share/man/cat4/sbus.0			man-sys-catman		.cat
 ./usr/share/man/cat4/sc.0			man-sys-catman		.cat
 ./usr/share/man/cat4/scc.0			man-sys-catman		.cat
+./usr/share/man/cat4/schide.0			man-sys-catman		.cat
 ./usr/share/man/cat4/scsi.0			man-sys-catman		.cat
 ./usr/share/man/cat4/scsibus.0			man-sys-catman		.cat
 ./usr/share/man/cat4/sd.0			man-sys-catman		.cat
@@ -4036,6 +4037,7 @@
 ./usr/share/man/html4/sbus.html			man-sys-htmlman		html
 ./usr/share/man/html4/sc.html			man-sys-htmlman		html
 ./usr/share/man/html4/scc.html			man-sys-htmlman		html
+./usr/share/man/html4/schide.html		man-sys-htmlman		html
 ./usr/share/man/html4/scsi.html			man-sys-htmlman		html
 ./usr/share/man/html4/scsibus.html		man-sys-htmlman		html
 ./usr/share/man/html4/sd.html			man-sys-htmlman		html
@@ -6576,6 +6578,7 @@
 ./usr/share/man/man4/sbus.4			man-sys-man		.man
 ./usr/share/man/man4/sc.4			man-sys-man		.man
 ./usr/share/man/man4/scc.4			man-sys-man		.man
+./usr/share/man/man4/schide.4			man-sys-man		.man
 ./usr/share/man/man4/scsi.4			man-sys-man		.man
 ./usr/share/man/man4/scsibus.4			man-sys-man		.man
 ./usr/share/man/man4/sd.4			man-sys-man		.man
