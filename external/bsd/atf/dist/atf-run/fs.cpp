@@ -92,8 +92,6 @@ cleanup_aux_dir(const atf::fs::path& p, const atf::fs::file_info& fi,
                 bool erase)
 {
     if (erase && ((fi.get_mode() & S_IRWXU) != S_IRWXU)) {
-        (void)impl::set_immutable(p, false);
-
         if (chmod(p.c_str(), fi.get_mode() | S_IRWXU) == -1)
             throw atf::system_error(IMPL_NAME "::cleanup(" +
                                     p.str() + ")", "chmod(2) failed", errno);
@@ -211,45 +209,4 @@ impl::get_current_dir(void)
                                 "getcwd() failed", errno);
 
     return atf::fs::path(cwd.get());
-}
-
-bool
-impl::set_immutable(const atf::fs::path& p, bool value)
-{
-#if HAVE_CHFLAGS
-    struct stat sb;
-    if (::lstat(p.c_str(), &sb) == -1)
-        throw atf::system_error(IMPL_NAME "::set_immutable(" + p.str() + ")",
-                                "lstat(" + p.str() + ") failed", errno);
-
-    unsigned long new_flags = sb.st_flags;
-    if (value)
-        new_flags |= UF_IMMUTABLE;
-    else
-        new_flags &= ~UF_IMMUTABLE;
-
-    if (::chflags(p.c_str(), new_flags) == -1)
-        throw atf::system_error(IMPL_NAME "::set_immutable(" + p.str() + ")",
-                                "chflags(" + p.str() + ") failed", errno);
-    return true;
-#elif HAVE_CHATTR
-    if (p.is_root()) {
-        const atf::fs::path prog(CHATTR);
-        const atf::process::argv_array argv("chattr", value ? "+i" : "-i",
-            p.c_str(), NULL);
-
-        const atf::process::status s =
-            atf::process::exec(prog, argv, atf::process::stream_inherit(),
-                               atf::process::stream_inherit());
-
-        if (!s.exited() || s.exitstatus() != EXIT_SUCCESS)
-            throw std::runtime_error("Failed to exec chattr");
-
-        return true;
-    } else {
-        return false;
-    }
-#else
-    return false;
-#endif
 }

@@ -63,7 +63,6 @@ ATF_TEST_CASE(temp_dir_raii);
 ATF_TEST_CASE_HEAD(temp_dir_raii)
 {
     set_md_var("descr", "Tests the RAII behavior of the temp_dir class");
-    set_md_var("use.fs", "true");
 }
 ATF_TEST_CASE_BODY(temp_dir_raii)
 {
@@ -123,7 +122,6 @@ ATF_TEST_CASE(cleanup);
 ATF_TEST_CASE_HEAD(cleanup)
 {
     set_md_var("descr", "Tests the cleanup function");
-    set_md_var("use.fs", "true");
 }
 ATF_TEST_CASE_BODY(cleanup)
 {
@@ -149,7 +147,6 @@ ATF_TEST_CASE(cleanup_eacces_on_root);
 ATF_TEST_CASE_HEAD(cleanup_eacces_on_root)
 {
     set_md_var("descr", "Tests the cleanup function");
-    set_md_var("use.fs", "true");
 }
 ATF_TEST_CASE_BODY(cleanup_eacces_on_root)
 {
@@ -172,7 +169,6 @@ ATF_TEST_CASE(cleanup_eacces_on_subdir);
 ATF_TEST_CASE_HEAD(cleanup_eacces_on_subdir)
 {
     set_md_var("descr", "Tests the cleanup function");
-    set_md_var("use.fs", "true");
 }
 ATF_TEST_CASE_BODY(cleanup_eacces_on_subdir)
 {
@@ -194,7 +190,6 @@ ATF_TEST_CASE(change_directory);
 ATF_TEST_CASE_HEAD(change_directory)
 {
     set_md_var("descr", "Tests the change_directory function");
-    set_md_var("use.fs", "true");
 }
 ATF_TEST_CASE_BODY(change_directory)
 {
@@ -224,7 +219,6 @@ ATF_TEST_CASE(get_current_dir);
 ATF_TEST_CASE_HEAD(get_current_dir)
 {
     set_md_var("descr", "Tests the get_current_dir function");
-    set_md_var("use.fs", "true");
 }
 ATF_TEST_CASE_BODY(get_current_dir)
 {
@@ -248,32 +242,6 @@ ATF_TEST_CASE_BODY(get_current_dir)
     ATF_REQUIRE(get_current_dir() == curdir);
 }
 
-ATF_TEST_CASE(set_immutable);
-ATF_TEST_CASE_HEAD(set_immutable)
-{
-    set_md_var("descr", "Tests the set_immutable function");
-    set_md_var("use.fs", "true");
-}
-ATF_TEST_CASE_BODY(set_immutable)
-{
-    using atf::atf_run::set_immutable;
-
-    if (::mkdir("dir", 0755) == -1)
-        ATF_FAIL("Failed to create test directory");
-
-    if (!set_immutable(atf::fs::path("dir"), true))
-        ATF_SKIP("Don't know how to set the immutable flag");
-
-    if (::mkdir("dir/other", 0755) != -1)
-        ATF_FAIL("Immutable flag was not correctly set");
-
-    if (!set_immutable(atf::fs::path("dir"), false))
-        ATF_SKIP("Don't know how to unset the immutable flag");
-
-    if (::mkdir("dir/other", 0755) == -1)
-        ATF_FAIL("Immutable flag was not correctly unset");
-}
-
 // ------------------------------------------------------------------------
 // Main.
 // ------------------------------------------------------------------------
@@ -289,5 +257,4 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, cleanup_eacces_on_subdir);
     ATF_ADD_TEST_CASE(tcs, change_directory);
     ATF_ADD_TEST_CASE(tcs, get_current_dir);
-    ATF_ADD_TEST_CASE(tcs, set_immutable);
 }
