@@ -2,7 +2,6 @@ To Do
 =====
 check pkt size during read
 list sigs on a per-user basis
-elgamal enc/decryption?
 2^n sized packets - regions?
 json for verification in netpgp
 show attributes on key listings
@@ -107,3 +106,4 @@ camellia addition
 fix calloc return values in symmetric.c/ops_crypt_t
 prog to convert from pgp sec to ssh sec
 add user-specifiable ciphers for encryption
+elgamal enc/decryption?
