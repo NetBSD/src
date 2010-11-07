@@ -1,4 +1,4 @@
-.\"	$NetBSD: pciide.4,v 1.63 2009/10/19 18:41:09 bouyer Exp $
+.\"	$NetBSD: pciide.4,v 1.64 2010/11/07 01:12:22 jakllsch Exp $
 .\"
 .\" Copyright (c) 1998,2003 Manuel Bouyer.
 .\"
@@ -74,6 +74,9 @@ Intel i31244 Serial ATA controller:
 Intel 82801 (ICH/ICH0/ICH2/ICH3/ICH4/ICH5/ICH6) IDE Controllers:
 .Xr piixide 4
 .It
+Intel SCH IDE Controllers:
+.Xr schide 4
+.It
 NVIDIA nForce/nForce2 IDE Controllers:
 .Xr viaide 4
 .It
@@ -138,6 +141,7 @@ problems where the IDE controller is wired up to the system incorrectly.
 .Xr piixide 4 ,
 .Xr pnpbios 4 ,
 .Xr satalink 4 ,
+.Xr schide 4 ,
 .Xr siisata 4 ,
 .Xr siside 4 ,
 .Xr slide 4 ,
