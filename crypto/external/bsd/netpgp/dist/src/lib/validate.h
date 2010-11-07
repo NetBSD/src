@@ -50,28 +50,28 @@
 #define VALIDATE_H_	1
 
 typedef struct {
-	const __ops_key_t	*key;
+	const pgp_key_t	*key;
 	unsigned	         packet;
 	unsigned	         offset;
 } validate_reader_t;
 
 /** Struct used with the validate_key_cb callback */
 typedef struct {
-	__ops_pubkey_t		 pubkey;
-	__ops_pubkey_t		 subkey;
-	__ops_seckey_t		 seckey;
+	pgp_pubkey_t		 pubkey;
+	pgp_pubkey_t		 subkey;
+	pgp_seckey_t		 seckey;
 	enum {
 		ATTRIBUTE = 1,
 		ID
 	}               	 last_seen;
 	uint8_t			*userid;
-	__ops_data_t		 userattr;
-	uint8_t			 hash[OPS_MAX_HASH_SIZE];
-	const __ops_keyring_t	*keyring;
+	pgp_data_t		 userattr;
+	uint8_t			 hash[PGP_MAX_HASH_SIZE];
+	const pgp_keyring_t	*keyring;
 	validate_reader_t	*reader;
-	__ops_validation_t	*result;
-	__ops_cb_ret_t(*getpassphrase) (const __ops_packet_t *,
-						__ops_cbdata_t *);
+	pgp_validation_t	*result;
+	pgp_cb_ret_t(*getpassphrase) (const pgp_packet_t *,
+						pgp_cbdata_t *);
 } validate_key_cb_t;
 
 /** Struct use with the validate_data_cb callback */
@@ -81,40 +81,40 @@ typedef struct {
 		SIGNED_CLEARTEXT
 	} type;
 	union {
-		__ops_litdata_body_t	 litdata_body;
-		__ops_fixed_body_t	 cleartext_body;
+		pgp_litdata_body_t	 litdata_body;
+		pgp_fixed_body_t	 cleartext_body;
 	} data;
-	uint8_t			 	 hash[OPS_MAX_HASH_SIZE];
-	__ops_memory_t			*mem;
-	const __ops_keyring_t		*keyring;
+	uint8_t			 	 hash[PGP_MAX_HASH_SIZE];
+	pgp_memory_t			*mem;
+	const pgp_keyring_t		*keyring;
 	validate_reader_t		*reader;/* reader-specific arg */
-	__ops_validation_t		*result;
+	pgp_validation_t		*result;
 	char				*detachname;
 } validate_data_cb_t;
 
-void __ops_keydata_reader_set(__ops_stream_t *, const __ops_key_t *);
+void pgp_keydata_reader_set(pgp_stream_t *, const pgp_key_t *);
 
-__ops_cb_ret_t __ops_validate_key_cb(const __ops_packet_t *, __ops_cbdata_t *);
+pgp_cb_ret_t pgp_validate_key_cb(const pgp_packet_t *, pgp_cbdata_t *);
 
 unsigned check_binary_sig(const uint8_t *,
 		const unsigned,
-		const __ops_sig_t *,
-		const __ops_pubkey_t *);
+		const pgp_sig_t *,
+		const pgp_pubkey_t *);
 
-unsigned   __ops_validate_file(__ops_io_t *,
-			__ops_validation_t *,
+unsigned   pgp_validate_file(pgp_io_t *,
+			pgp_validation_t *,
 			const char *,
 			const char *,
 			const int,
-			const __ops_keyring_t *);
+			const pgp_keyring_t *);
 
-unsigned   __ops_validate_mem(__ops_io_t *,
-			__ops_validation_t *,
-			__ops_memory_t *,
-			__ops_memory_t **,
+unsigned   pgp_validate_mem(pgp_io_t *,
+			pgp_validation_t *,
+			pgp_memory_t *,
+			pgp_memory_t **,
 			const int,
-			const __ops_keyring_t *);
+			const pgp_keyring_t *);
 
-__ops_cb_ret_t validate_data_cb(const __ops_packet_t *, __ops_cbdata_t *);
+pgp_cb_ret_t validate_data_cb(const pgp_packet_t *, pgp_cbdata_t *);
 
 #endif /* !VALIDATE_H_ */

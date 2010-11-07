@@ -26,16 +26,16 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef OPS_SSH_H_
-#define OPS_SSH_H_
+#ifndef PGP_SSH_H_
+#define PGP_SSH_H_
 
 #include "keyring.h"
 #include "types.h"
 
-int __ops_ssh2pubkey(__ops_io_t *, const char *, __ops_key_t *, __ops_hash_alg_t);
-int __ops_ssh2seckey(__ops_io_t *, const char *, __ops_key_t *, __ops_pubkey_t *, __ops_hash_alg_t);
+int pgp_ssh2pubkey(pgp_io_t *, const char *, pgp_key_t *, pgp_hash_alg_t);
+int pgp_ssh2seckey(pgp_io_t *, const char *, pgp_key_t *, pgp_pubkey_t *, pgp_hash_alg_t);
 
-int __ops_ssh2_readkeys(__ops_io_t *, __ops_keyring_t *, __ops_keyring_t *,
+int pgp_ssh2_readkeys(pgp_io_t *, pgp_keyring_t *, pgp_keyring_t *,
 		const char *, const char *, unsigned);
 
 #endif
