@@ -34,7 +34,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: netpgp.c,v 1.81 2010/11/07 08:39:59 agc Exp $");
+__RCSID("$NetBSD: netpgp.c,v 1.82 2010/11/07 21:41:38 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -81,7 +81,7 @@ __RCSID("$NetBSD: netpgp.c,v 1.81 2010/11/07 08:39:59 agc Exp $");
 #include "readerwriter.h"
 #include "netpgpdefs.h"
 #include "crypto.h"
-#include "ops-ssh.h"
+#include "ssh2pgp.h"
 #include "defs.h"
 
 /* read any gpg config file */

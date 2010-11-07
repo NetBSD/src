@@ -26,8 +26,8 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef PGP_SSH_H_
-#define PGP_SSH_H_
+#ifndef SSH2PGP_H_
+#define SSH2PGP_H_
 
 #include "keyring.h"
 #include "types.h"
