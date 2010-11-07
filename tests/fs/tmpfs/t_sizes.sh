@@ -1,4 +1,4 @@
-# $NetBSD: t_sizes.sh,v 1.4 2010/06/04 08:39:40 jmmv Exp $
+# $NetBSD: t_sizes.sh,v 1.5 2010/11/07 17:51:18 jmmv Exp $
 #
 # Copyright (c) 2005, 2006, 2007, 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -33,7 +33,6 @@ atf_test_case small
 small_head() {
 	atf_set "descr" "Checks the status after creating a small file"
 	atf_set "require.user" "root"
-	atf_set "use.fs" "true"
 }
 small_body() {
 	test_mount -o -s10M
@@ -51,7 +50,6 @@ atf_test_case big
 big_head() {
 	atf_set "descr" "Checks the status after creating a big file"
 	atf_set "require.user" "root"
-	atf_set "use.fs" "true"
 }
 big_body() {
 	test_mount -o -s10M
@@ -82,7 +80,6 @@ overflow_head() {
 	atf_set "descr" "Checks the status after creating a big file that" \
 	                "overflows the file system limits"
 	atf_set "require.user" "root"
-	atf_set "use.fs" "true"
 }
 overflow_body() {
 	test_mount -o -s10M
@@ -107,7 +104,6 @@ overwrite_head() {
 	atf_set "descr" "Checks that writing to the middle of a file" \
 	                "does not change its size"
 	atf_set "require.user" "root"
-	atf_set "use.fs" "true"
 }
 overwrite_body() {
 	test_mount -o -s10M

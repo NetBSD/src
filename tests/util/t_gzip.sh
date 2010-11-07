@@ -1,4 +1,4 @@
-# $NetBSD: t_gzip.sh,v 1.2 2010/06/04 08:39:41 jmmv Exp $
+# $NetBSD: t_gzip.sh,v 1.3 2010/11/07 17:51:22 jmmv Exp $
 #
 # Copyright (c) 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -29,7 +29,6 @@ atf_test_case concatenated
 concatenated_head()
 {
 	atf_set "descr" "Checks concatenated gzipped data"
-	atf_set "use.fs" "true"
 }
 concatenated_body()
 {
@@ -54,7 +53,6 @@ atf_test_case truncated
 truncated_head()
 {
 	atf_set "descr" "Checks that gzip fails on truncated data"
-	atf_set "use.fs" "true"
 }
 truncated_body()
 {
@@ -72,7 +70,6 @@ atf_test_case crcerror
 crcerror_head()
 {
 	atf_set "descr" "Checks that gzip fails on crc error"
-	atf_set "use.fs" "true"
 }
 crcerror_body()
 {
@@ -90,7 +87,6 @@ atf_test_case good
 good_head()
 {
 	atf_set "descr" "Checks decompressing correct file"
-	atf_set "use.fs" "true"
 }
 good_body()
 {

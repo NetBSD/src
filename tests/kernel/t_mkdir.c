@@ -1,4 +1,4 @@
-/* $NetBSD: t_mkdir.c,v 1.2 2010/06/04 08:39:40 jmmv Exp $ */
+/* $NetBSD: t_mkdir.c,v 1.3 2010/11/07 17:51:19 jmmv Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_mkdir.c,v 1.2 2010/06/04 08:39:40 jmmv Exp $");
+__RCSID("$NetBSD: t_mkdir.c,v 1.3 2010/11/07 17:51:19 jmmv Exp $");
 
 #include <sys/stat.h>
 
@@ -47,7 +47,6 @@ ATF_TC(mkdir);
 ATF_TC_HEAD(mkdir, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "Checks mkdir(2)");
-	atf_tc_set_md_var(tc, "use.fs", "true");
 }
 ATF_TC_BODY(mkdir, tc)
 {

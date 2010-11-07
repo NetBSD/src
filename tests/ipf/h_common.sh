@@ -1,4 +1,4 @@
-# $NetBSD: h_common.sh,v 1.2 2010/10/19 16:36:36 jmmv Exp $
+# $NetBSD: h_common.sh,v 1.3 2010/11/07 17:51:19 jmmv Exp $
 #
 # Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -46,9 +46,6 @@ test_case()
 	local check_function="${1}"; shift
 
 	atf_test_case "${name}"
-	eval "${name}_head() { \
-		atf_set use.fs true; \
-	}"
 	eval "${name}_body() { \
 		${check_function} '${name}' " "${@}" "; \
 	}"
@@ -60,9 +57,6 @@ broken_test_case()
 	local check_function="${1}"; shift
 
 	atf_test_case "${name}"
-	eval "${name}_head() { \
-		atf_set use.fs true; \
-	}"
 	eval "${name}_body() { \
 		atf_skip 'This test case is probably broken'; \
 		${check_function} '${name}' " "${@}" "; \
