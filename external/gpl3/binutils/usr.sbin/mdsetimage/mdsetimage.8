@@ -1,4 +1,4 @@
-.\"	$NetBSD: mdsetimage.8,v 1.1.2.1 2010/11/04 07:29:59 uebayasi Exp $
+.\"	$NetBSD: mdsetimage.8,v 1.1.2.2 2010/11/07 16:34:10 uebayasi Exp $
 .\"
 .\" Copyright (c) 1996 Christopher G. Demetriou
 .\" All rights reserved.
@@ -36,9 +36,9 @@
 .Sh SYNOPSIS
 .Nm
 .Op Fl svx
+.Op Fl b Ar bfdname
 .Op Fl I Ar image_symbol
 .Op Fl S Ar size_symbol
-.Op Fl b Ar bfdname
 .Ar kernel
 .Ar image
 .Sh DESCRIPTION
@@ -53,16 +53,16 @@ The file system present in
 will typically be used by the kernel
 as the root file system.
 .Pp
+To recognize kernel executable format, the
+.Fl b
+flag specifies BFD name of kernel.
+.Pp
 The
 .Fl I
 and
 .Fl S
 flags specify the symbol names of image and size of memory disk
 drivers respectively.
-.Pp
-To recognize kernel executable format, the
-.Fl b
-flag specifies BFD name of kernel.
 .Pp
 If the
 .Fl s
