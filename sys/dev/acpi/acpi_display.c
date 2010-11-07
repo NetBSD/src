@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_display.c,v 1.6 2010/11/04 20:08:12 jruoho Exp $	*/
+/*	$NetBSD: acpi_display.c,v 1.7 2010/11/07 16:36:26 gsutre Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_display.c,v 1.6 2010/11/04 20:08:12 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_display.c,v 1.7 2010/11/07 16:36:26 gsutre Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -84,9 +84,6 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_display.c,v 1.6 2010/11/04 20:08:12 jruoho Exp 
 
 #define _COMPONENT		ACPI_DISPLAY_COMPONENT
 ACPI_MODULE_NAME		("acpi_display")
-
-/* Type for integer values that are passed to/from ACPICA. */
-#define ACPI_UINT64	uint64_t
 
 /* Notifications specific to display adapter devices (ACPI 4.0a, Sec. B.5). */
 #define ACPI_NOTIFY_CycleOutputDevice			0x80
@@ -1232,7 +1229,7 @@ acpidisp_vga_sysctl_policy(SYSCTLFN_ARGS)
 	int error;
 
 	node = *rnode;
-	asc = (struct acpidisp_vga_softc *)node.sysctl_data;
+	asc = node.sysctl_data;
 
 	mutex_enter(&asc->sc_mtx);
 	val = (uint32_t)asc->sc_policy.raw;
@@ -1264,7 +1261,7 @@ acpidisp_vga_sysctl_policy_output(SYSCTLFN_ARGS)
 	int error;
 
 	node = *rnode;
-	asc = (struct acpidisp_vga_softc *)node.sysctl_data;
+	asc = node.sysctl_data;
 
 	mutex_enter(&asc->sc_mtx);
 	val = (asc->sc_policy.fmt.output == ACPI_DISP_POLICY_OUTPUT_AUTO);
@@ -1296,7 +1293,7 @@ acpidisp_out_sysctl_status(SYSCTLFN_ARGS)
 	int error;
 
 	node = *rnode;
-	osc = (struct acpidisp_out_softc *)node.sysctl_data;
+	osc = node.sysctl_data;
 
 	mutex_enter(osc->sc_mtx);
 	error = acpidisp_get_status(osc, &val);
@@ -1322,7 +1319,7 @@ acpidisp_out_sysctl_state(SYSCTLFN_ARGS)
 	int error;
 
 	node = *rnode;
-	osc = (struct acpidisp_out_softc *)node.sysctl_data;
+	osc = node.sysctl_data;
 
 	mutex_enter(osc->sc_mtx);
 	error = acpidisp_get_state(osc, &val);
@@ -1354,7 +1351,7 @@ acpidisp_out_sysctl_brightness(SYSCTLFN_ARGS)
 	uint8_t lo, up, level;
 
 	node = *rnode;
-	osc = (struct acpidisp_out_softc *)node.sysctl_data;
+	osc = node.sysctl_data;
 	bc = osc->sc_brctl;
 
 	KASSERT(bc != NULL);
@@ -1509,7 +1506,7 @@ acpidisp_vga_bind_outdevs(struct acpidisp_vga_softc *asc)
 	struct acpidisp_outdev *od;
 	struct acpi_devnode *ad;
 	ACPI_HANDLE hdl;
-	ACPI_UINT64 val;
+	ACPI_INTEGER val;
 	ACPI_STATUS rv;
 	uint16_t devid;
 	uint32_t i;
@@ -1705,7 +1702,7 @@ static int
 acpidisp_set_policy(const struct acpidisp_vga_softc *asc, uint8_t value)
 {
 	ACPI_HANDLE hdl = asc->sc_node->ad_handle;
-	ACPI_UINT64 val;
+	ACPI_INTEGER val;
 	ACPI_STATUS rv;
 
 	ACPI_DEBUG_PRINT((ACPI_DB_INFO, "%s: set %s: 0x%"PRIx8"\n",
@@ -1714,7 +1711,7 @@ acpidisp_set_policy(const struct acpidisp_vga_softc *asc, uint8_t value)
 	if (!(asc->sc_caps & ACPI_DISP_VGA_CAP__DOS))
 		return ENODEV;
 
-	val = (ACPI_UINT64)value;
+	val = (ACPI_INTEGER)value;
 	rv = acpi_eval_set_integer(hdl, "_DOS", val);
 	if (ACPI_FAILURE(rv)) {
 		aprint_error_dev(asc->sc_dev, "failed to evaluate %s.%s: %s\n",
@@ -1729,7 +1726,7 @@ static int
 acpidisp_get_status(const struct acpidisp_out_softc *osc, uint32_t *valuep)
 {
 	ACPI_HANDLE hdl = osc->sc_node->ad_handle;
-	ACPI_UINT64 val;
+	ACPI_INTEGER val;
 	ACPI_STATUS rv;
 
 	if (!(osc->sc_caps & ACPI_DISP_OUT_CAP__DCS))
@@ -1757,7 +1754,7 @@ static int
 acpidisp_get_state(const struct acpidisp_out_softc *osc, uint32_t *valuep)
 {
 	ACPI_HANDLE hdl = osc->sc_node->ad_handle;
-	ACPI_UINT64 val;
+	ACPI_INTEGER val;
 	ACPI_STATUS rv;
 
 	if (!(osc->sc_caps & ACPI_DISP_OUT_CAP__DGS))
@@ -1785,7 +1782,7 @@ static int
 acpidisp_set_state(const struct acpidisp_out_softc *osc, uint32_t value)
 {
 	ACPI_HANDLE hdl = osc->sc_node->ad_handle;
-	ACPI_UINT64 val;
+	ACPI_INTEGER val;
 	ACPI_STATUS rv;
 
 	ACPI_DEBUG_PRINT((ACPI_DB_INFO, "%s: set %s: 0x%"PRIx32"\n",
@@ -1794,7 +1791,7 @@ acpidisp_set_state(const struct acpidisp_out_softc *osc, uint32_t value)
 	if (!(osc->sc_caps & ACPI_DISP_OUT_CAP__DSS))
 		return ENODEV;
 
-	val = (ACPI_UINT64)value;
+	val = (ACPI_INTEGER)value;
 	rv = acpi_eval_set_integer(hdl, "_DSS", val);
 	if (ACPI_FAILURE(rv)) {
 		aprint_error_dev(osc->sc_dev, "failed to evaluate %s.%s: %s\n",
@@ -1809,7 +1806,7 @@ static int
 acpidisp_get_brightness(const struct acpidisp_out_softc *osc, uint8_t *valuep)
 {
 	ACPI_HANDLE hdl = osc->sc_node->ad_handle;
-	ACPI_UINT64 val;
+	ACPI_INTEGER val;
 	ACPI_STATUS rv;
 
 	if (!(osc->sc_caps & ACPI_DISP_OUT_CAP__BQC))
@@ -1837,7 +1834,7 @@ static int
 acpidisp_set_brightness(const struct acpidisp_out_softc *osc, uint8_t value)
 {
 	ACPI_HANDLE hdl = osc->sc_node->ad_handle;
-	ACPI_UINT64 val;
+	ACPI_INTEGER val;
 	ACPI_STATUS rv;
 
 	ACPI_DEBUG_PRINT((ACPI_DB_INFO, "%s: set %s: %"PRIu8"\n",
@@ -1846,7 +1843,7 @@ acpidisp_set_brightness(const struct acpidisp_out_softc *osc, uint8_t value)
 	if (!(osc->sc_caps & ACPI_DISP_OUT_CAP__BCM))
 		return ENODEV;
 
-	val = (ACPI_UINT64)value;
+	val = (ACPI_INTEGER)value;
 	rv = acpi_eval_set_integer(hdl, "_BCM", val);
 	if (ACPI_FAILURE(rv)) {
 		aprint_error_dev(osc->sc_dev, "failed to evaluate %s.%s: %s\n",
