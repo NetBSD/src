@@ -26,7 +26,7 @@
 .\" OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 .\" IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd July 4, 2010
+.Dd October 21, 2010
 .Dt ATF-C++-API 3
 .Os
 .Sh NAME
@@ -38,7 +38,9 @@
 .Nm ATF_REQUIRE ,
 .Nm ATF_REQUIRE_EQ ,
 .Nm ATF_REQUIRE_ERRNO ,
+.Nm ATF_REQUIRE_MATCH ,
 .Nm ATF_REQUIRE_THROW ,
+.Nm ATF_REQUIRE_THROW_RE ,
 .Nm ATF_SKIP ,
 .Nm ATF_TEST_CASE ,
 .Nm ATF_TEST_CASE_BODY ,
@@ -57,7 +59,9 @@
 .Fn ATF_REQUIRE "expression"
 .Fn ATF_REQUIRE_EQ "expression_1" "expression_2"
 .Fn ATF_REQUIRE_ERRNO "exp_errno" "bool_expression"
+.Fn ATF_REQUIRE_MATCH "regexp" "string_expression"
 .Fn ATF_REQUIRE_THROW "expected_exception" "statement"
+.Fn ATF_REQUIRE_THROW_RE "expected_exception" "regexp" "statement"
 .Fn ATF_SKIP "reason"
 .Fn ATF_TEST_CASE "name"
 .Fn ATF_TEST_CASE_BODY "name"
@@ -276,6 +280,10 @@ This is the normal mode of execution.
 In this mode, any failure is reported as such to the user and the test case
 is marked as
 .Sq failed .
+.It Fn expect_race "reason"
+Any failure or timeout during the execution of the test case will be
+considered as if a race condition has been triggered and reported as such.
+If no problems arise, the test will continue execution as usual.
 .It Fn expect_signal "signo" "reason"
 Expects the test case to terminate due to the reception of a signal.
 If
@@ -305,9 +313,17 @@ takes an expression and raises a failure if it evaluates to false.
 takes two expressions and raises a failure if the two do not evaluate to
 the same exact value.
 .Pp
+.Fn ATF_REQUIRE_MATCH
+takes a regular expression and a string and raises a failure if the regular
+expression does not match the string.
+.Pp
 .Fn ATF_REQUIRE_THROW
 takes the name of an exception and a statement and raises a failure if
 the statement does not throw the specified exception.
+.Fn ATF_REQUIRE_THROW_EQ
+takes the name of an exception, a regular expresion and a statement and raises a
+failure if the statement does not throw the specified exception and if the
+message of the exception does not match the regular expression.
 .Pp
 .Fn ATF_CHECK_ERRNO
 and

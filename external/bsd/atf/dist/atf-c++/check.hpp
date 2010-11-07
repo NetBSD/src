@@ -39,6 +39,8 @@ extern "C" {
 #include <string>
 #include <vector>
 
+#include <atf-c++/utils.hpp>
+
 namespace atf {
 
 namespace process {
@@ -58,11 +60,10 @@ namespace check {
 //! of executing arbitrary command and manages files containing
 //! its output.
 //!
-class check_result {
+class check_result : utils::noncopyable {
     //!
     //! \brief Internal representation of a result.
     //!
-    // XXX: This is non-copyable!  The class must define it as such.
     atf_check_result_t m_result;
 
     //!
@@ -72,7 +73,7 @@ class check_result {
     check_result(const atf_check_result_t* result);
 
     friend check_result test_constructor(const char* const*);
-    friend check_result exec(const atf::process::argv_array&);
+    friend std::auto_ptr< check_result > exec(const atf::process::argv_array&);
 
 public:
     //!
@@ -121,7 +122,7 @@ bool build_cpp(const std::string&, const std::string&,
                const atf::process::argv_array&);
 bool build_cxx_o(const std::string&, const std::string&,
                  const atf::process::argv_array&);
-check_result exec(const atf::process::argv_array&);
+std::auto_ptr< check_result > exec(const atf::process::argv_array&);
 
 // Useful for testing only.
 check_result test_constructor(void);
