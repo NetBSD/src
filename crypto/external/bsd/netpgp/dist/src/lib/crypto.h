@@ -129,6 +129,8 @@ int __ops_rsa_private_encrypt(uint8_t *, const uint8_t *, size_t,
 int __ops_rsa_private_decrypt(uint8_t *, const uint8_t *, size_t,
 			const __ops_rsa_seckey_t *, const __ops_rsa_pubkey_t *);
 
+int __ops_elgamal_public_encrypt(uint8_t *, uint8_t *, const uint8_t *, size_t,
+			const __ops_elgamal_pubkey_t *);
 int __ops_elgamal_private_decrypt(uint8_t *, const uint8_t *, size_t,
 			const __ops_elgamal_seckey_t *, const __ops_elgamal_pubkey_t *);
 
@@ -159,6 +161,9 @@ void __ops_reader_pop_hash(__ops_stream_t *);
 int __ops_decrypt_decode_mpi(uint8_t *, unsigned, const BIGNUM *,
 			const __ops_seckey_t *);
 unsigned __ops_rsa_encrypt_mpi(const uint8_t *, const size_t,
+			const __ops_pubkey_t *,
+			__ops_pk_sesskey_params_t *);
+unsigned __ops_elgamal_encrypt_mpi(const uint8_t *, const size_t,
 			const __ops_pubkey_t *,
 			__ops_pk_sesskey_params_t *);
 
