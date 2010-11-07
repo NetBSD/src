@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.5 2010/10/20 09:20:12 jmmv Exp $
+# $NetBSD: Makefile,v 1.6 2010/11/07 17:46:46 jmmv Exp $
 
 .include <bsd.own.mk>
 
@@ -38,8 +38,9 @@ SRCS.fs_test=		fs_test.cpp fs.cpp test_helpers.cpp user.cpp
 SRCS.io_test=		io_test.cpp io.cpp signals.cpp test_helpers.cpp
 SRCS.requirements_test=	requirements_test.cpp requirements.cpp user.cpp
 SRCS.signals_test=	signals_test.cpp signals.cpp
-SRCS.test_program_test=	fs.cpp io.cpp signals.cpp test_helpers.cpp \
-			test_program_test.cpp test-program.cpp timer.cpp
+SRCS.test_program_test=	fs.cpp io.cpp requirements.cpp signals.cpp \
+			test_helpers.cpp test_program_test.cpp \
+			test-program.cpp timer.cpp user.cpp
 SRCS.user_test=		user_test.cpp user.cpp
 
 .include <bsd.test.mk>
