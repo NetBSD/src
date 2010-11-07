@@ -88,7 +88,6 @@ default_head()
 {
     atf_set "descr" "Checks that the default output uses the ticker" \
                     "format"
-    atf_set "use.fs" "true"
 }
 default_body()
 {
@@ -104,10 +103,6 @@ default_body()
 # tests.  However, to do that, we need to migrate to using C helpers for
 # simplicity in raising signals...
 atf_test_case expect
-expect_head()
-{
-    atf_set "use.fs" "true"
-}
 expect_body()
 {
     ln -s "$(atf_get_srcdir)/../atf-run/expect_helpers" .
@@ -197,7 +192,6 @@ atf_test_case oflag
 oflag_head()
 {
     atf_set "descr" "Checks that the -o flag works"
-    atf_set "use.fs" "true"
 }
 oflag_body()
 {
@@ -251,7 +245,6 @@ atf_test_case output_csv
 output_csv_head()
 {
     atf_set "descr" "Checks the CSV output format"
-    atf_set "use.fs" "true"
 }
 output_csv_body()
 {
@@ -279,7 +272,6 @@ atf_test_case output_ticker
 output_ticker_head()
 {
     atf_set "descr" "Checks the ticker output format"
-    atf_set "use.fs" "true"
 }
 output_ticker_body()
 {
@@ -324,7 +316,6 @@ atf_test_case output_xml
 output_xml_head()
 {
     atf_set "descr" "Checks the XML output format"
-    atf_set "use.fs" "true"
 }
 output_xml_body()
 {
@@ -375,7 +366,6 @@ output_xml_space_head()
     atf_set "descr" "Checks that the XML output format properly preserves" \
                     "leading and trailing whitespace in stdout and stderr" \
                     "lines"
-    atf_set "use.fs" "true"
 }
 output_xml_space_body()
 {

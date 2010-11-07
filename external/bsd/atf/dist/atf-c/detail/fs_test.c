@@ -368,7 +368,6 @@ ATF_TC_HEAD(path_to_absolute, tc)
 {
     atf_tc_set_md_var(tc, "descr", "Tests the atf_fs_path_to_absolute "
                       "function");
-    atf_tc_set_md_var(tc, "use.fs", "true");
 }
 ATF_TC_BODY(path_to_absolute, tc)
 {
@@ -436,7 +435,6 @@ ATF_TC_HEAD(stat_mode, tc)
 {
     atf_tc_set_md_var(tc, "descr", "Tests the atf_fs_stat_get_mode function "
                       "and, indirectly, the constructor");
-    atf_tc_set_md_var(tc, "use.fs", "true");
 }
 ATF_TC_BODY(stat_mode, tc)
 {
@@ -464,7 +462,6 @@ ATF_TC_HEAD(stat_type, tc)
 {
     atf_tc_set_md_var(tc, "descr", "Tests the atf_fs_stat_get_type function "
                       "and, indirectly, the constructor");
-    atf_tc_set_md_var(tc, "use.fs", "true");
 }
 ATF_TC_BODY(stat_type, tc)
 {
@@ -491,7 +488,6 @@ ATF_TC(stat_perms);
 ATF_TC_HEAD(stat_perms, tc)
 {
     atf_tc_set_md_var(tc, "descr", "Tests the atf_fs_stat_is_* functions");
-    atf_tc_set_md_var(tc, "use.fs", "true");
 }
 ATF_TC_BODY(stat_perms, tc)
 {
@@ -569,7 +565,6 @@ ATF_TC(exists);
 ATF_TC_HEAD(exists, tc)
 {
     atf_tc_set_md_var(tc, "descr", "Tests the atf_fs_exists function");
-    atf_tc_set_md_var(tc, "use.fs", "true");
 }
 ATF_TC_BODY(exists, tc)
 {
@@ -618,7 +613,6 @@ ATF_TC(eaccess);
 ATF_TC_HEAD(eaccess, tc)
 {
     atf_tc_set_md_var(tc, "descr", "Tests the atf_fs_eaccess function");
-    atf_tc_set_md_var(tc, "use.fs", "true");
 }
 ATF_TC_BODY(eaccess, tc)
 {
@@ -725,7 +719,6 @@ ATF_TC(getcwd);
 ATF_TC_HEAD(getcwd, tc)
 {
     atf_tc_set_md_var(tc, "descr", "Tests the atf_fs_getcwd function");
-    atf_tc_set_md_var(tc, "use.fs", "true");
 }
 ATF_TC_BODY(getcwd, tc)
 {
@@ -749,7 +742,6 @@ ATF_TC(rmdir_empty);
 ATF_TC_HEAD(rmdir_empty, tc)
 {
     atf_tc_set_md_var(tc, "descr", "Tests the atf_fs_rmdir function");
-    atf_tc_set_md_var(tc, "use.fs", "true");
 }
 ATF_TC_BODY(rmdir_empty, tc)
 {
@@ -769,7 +761,6 @@ ATF_TC(rmdir_enotempty);
 ATF_TC_HEAD(rmdir_enotempty, tc)
 {
     atf_tc_set_md_var(tc, "descr", "Tests the atf_fs_rmdir function");
-    atf_tc_set_md_var(tc, "use.fs", "true");
 }
 ATF_TC_BODY(rmdir_enotempty, tc)
 {
@@ -795,7 +786,6 @@ ATF_TC(rmdir_eperm);
 ATF_TC_HEAD(rmdir_eperm, tc)
 {
     atf_tc_set_md_var(tc, "descr", "Tests the atf_fs_rmdir function");
-    atf_tc_set_md_var(tc, "use.fs", "true");
 }
 ATF_TC_BODY(rmdir_eperm, tc)
 {
@@ -827,7 +817,6 @@ ATF_TC_HEAD(mkdtemp_ok, tc)
 {
     atf_tc_set_md_var(tc, "descr", "Tests the atf_fs_mkdtemp function, "
                       "successful execution");
-    atf_tc_set_md_var(tc, "use.fs", "true");
 }
 ATF_TC_BODY(mkdtemp_ok, tc)
 {
@@ -878,7 +867,6 @@ ATF_TC_HEAD(mkdtemp_err, tc)
     atf_tc_set_md_var(tc, "descr", "Tests the atf_fs_mkdtemp function, "
                       "error conditions");
     atf_tc_set_md_var(tc, "require.user", "unprivileged");
-    atf_tc_set_md_var(tc, "use.fs", "true");
 }
 ATF_TC_BODY(mkdtemp_err, tc)
 {
@@ -951,7 +939,6 @@ ATF_TC_HEAD(mkstemp_ok, tc)
 {
     atf_tc_set_md_var(tc, "descr", "Tests the atf_fs_mkstemp function, "
                       "successful execution");
-    atf_tc_set_md_var(tc, "use.fs", "true");
 }
 ATF_TC_BODY(mkstemp_ok, tc)
 {
@@ -1011,7 +998,6 @@ ATF_TC_HEAD(mkstemp_err, tc)
     atf_tc_set_md_var(tc, "descr", "Tests the atf_fs_mkstemp function, "
                       "error conditions");
     atf_tc_set_md_var(tc, "require.user", "unprivileged");
-    atf_tc_set_md_var(tc, "use.fs", "true");
 }
 ATF_TC_BODY(mkstemp_err, tc)
 {

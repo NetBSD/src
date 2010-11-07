@@ -35,7 +35,6 @@ stop_head()
 {
     atf_set "descr" "Tests that sending a stop signal to a test case does" \
                     "not report it as failed"
-    atf_set "use.fs" "true"
 }
 stop_body()
 {

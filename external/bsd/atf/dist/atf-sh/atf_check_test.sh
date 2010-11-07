@@ -34,7 +34,6 @@ info_ok_head()
 {
     atf_set "descr" "Verifies that atf_check prints an informative" \
                     "message even when the command is successful"
-    atf_set "use.fs" "true"
 }
 info_ok_body()
 {
@@ -57,7 +56,6 @@ expout_mismatch_head()
     atf_set "descr" "Verifies that atf_check prints a diff of the" \
                     "stdout and the expected stdout if the two do no" \
                     "match"
-    atf_set "use.fs" "true"
 }
 expout_mismatch_body()
 {
@@ -83,7 +81,6 @@ experr_mismatch_head()
     atf_set "descr" "Verifies that atf_check prints a diff of the" \
                     "stderr and the expected stderr if the two do no" \
                     "match"
-    atf_set "use.fs" "true"
 }
 experr_mismatch_body()
 {
@@ -108,7 +105,6 @@ null_stdout_head()
 {
     atf_set "descr" "Verifies that atf_check prints a the stdout it got" \
                     "when it was supposed to be null"
-    atf_set "use.fs" "true"
 }
 null_stdout_body()
 {
@@ -131,7 +127,6 @@ null_stderr_head()
 {
     atf_set "descr" "Verifies that atf_check prints a the stderr it got" \
                     "when it was supposed to be null"
-    atf_set "use.fs" "true"
 }
 null_stderr_body()
 {
@@ -153,7 +148,6 @@ atf_test_case equal
 equal_head()
 {
     atf_set "descr" "Verifies that atf_check_equal works"
-    atf_set "use.fs" "true"
 }
 equal_body()
 {

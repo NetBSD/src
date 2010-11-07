@@ -101,6 +101,16 @@
         } \
     } while (false)
 
+#define ATF_REQUIRE_MATCH(regexp, string) \
+    do { \
+        if (!atf::tests::detail::match(regexp, string)) { \
+            std::ostringstream atfu_ss; \
+            atfu_ss << "Line " << __LINE__ << ": '" << string << "' does not " \
+                    << "match regexp '" << regexp << "'"; \
+            atf::tests::tc::fail(atfu_ss.str()); \
+        } \
+    } while (false)
+
 #define ATF_REQUIRE_THROW(e, x) \
     do { \
         try { \
@@ -119,6 +129,35 @@
             std::ostringstream atfu_ss; \
             atfu_ss << "Line " << __LINE__ << ": " #x " threw an " \
                         "unexpected error (not " #e ")"; \
+            atf::tests::tc::fail(atfu_ss.str()); \
+        } \
+    } while (false)
+
+#define ATF_REQUIRE_THROW_RE(type, regexp, x) \
+    do { \
+        try { \
+            x; \
+            std::ostringstream atfu_ss; \
+            atfu_ss << "Line " << __LINE__ << ": " #x " did not throw " \
+                        #type " as expected"; \
+            atf::tests::tc::fail(atfu_ss.str()); \
+        } catch (const type& e) { \
+            if (!atf::tests::detail::match(regexp, e.what())) { \
+                std::ostringstream atfu_ss; \
+                atfu_ss << "Line " << __LINE__ << ": " #x " threw " #type "(" \
+                        << e.what() << "), but does not match '" << regexp \
+                        << "'"; \
+                atf::tests::tc::fail(atfu_ss.str()); \
+            } \
+        } catch (const std::exception& atfu_e) { \
+            std::ostringstream atfu_ss; \
+            atfu_ss << "Line " << __LINE__ << ": " #x " threw an " \
+                        "unexpected error (not " #type "): " << atfu_e.what(); \
+            atf::tests::tc::fail(atfu_ss.str()); \
+        } catch (...) { \
+            std::ostringstream atfu_ss; \
+            atfu_ss << "Line " << __LINE__ << ": " #x " threw an " \
+                        "unexpected error (not " #type ")"; \
             atf::tests::tc::fail(atfu_ss.str()); \
         } \
     } while (false)
