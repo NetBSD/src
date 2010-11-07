@@ -1,4 +1,4 @@
-/*	$NetBSD: t_etfs.c,v 1.6 2010/06/21 14:39:35 pooka Exp $	*/
+/*	$NetBSD: t_etfs.c,v 1.7 2010/11/07 17:51:21 jmmv Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -48,7 +48,6 @@ ATF_TC_HEAD(reregister_reg, tc)
 
 	atf_tc_set_md_var(tc, "descr", "Tests register/unregister/register "
 	    "for a regular file");
-	atf_tc_set_md_var(tc, "use.fs", "true");
 }
 
 #define TESTSTR1 "hi, it's me again!"
@@ -112,7 +111,6 @@ ATF_TC_HEAD(reregister_blk, tc)
 
 	atf_tc_set_md_var(tc, "descr", "Tests register/unregister/register "
 	    "for a block device");
-	atf_tc_set_md_var(tc, "use.fs", "true");
 }
 
 ATF_TC_BODY(reregister_blk, tc)
@@ -159,7 +157,6 @@ ATF_TC_HEAD(large_blk, tc)
 
 	atf_tc_set_md_var(tc, "descr", "Check etfs block devices work for "
 	    ">2TB images");
-	atf_tc_set_md_var(tc, "use.fs", "true");
 }
 
 #define IMG_ON_MFS "mfsdir/disk.img"
@@ -223,7 +220,6 @@ ATF_TC_HEAD(range_blk, tc)
 {
 
 	atf_tc_set_md_var(tc, "descr", "Checks ranged (offset,size) mappings");
-	atf_tc_set_md_var(tc, "use.fs", "true");
 }
 
 ATF_TC_BODY(range_blk, tc)

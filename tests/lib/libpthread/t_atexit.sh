@@ -1,4 +1,4 @@
-# $NetBSD: t_atexit.sh,v 1.1 2010/07/16 15:42:53 jmmv Exp $
+# $NetBSD: t_atexit.sh,v 1.2 2010/11/07 17:51:20 jmmv Exp $
 #
 # Copyright (c) 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -29,7 +29,6 @@ atf_test_case atexit
 atexit_head()
 {
 	atf_set "descr" "Checks atexit functionality"
-	atf_set "use.fs" "true"
 }
 atexit_body()
 {

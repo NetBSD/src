@@ -1,4 +1,4 @@
-# $NetBSD: t_symlink.sh,v 1.4 2010/06/04 08:39:40 jmmv Exp $
+# $NetBSD: t_symlink.sh,v 1.5 2010/11/07 17:51:18 jmmv Exp $
 #
 # Copyright (c) 2005, 2006, 2007, 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -33,7 +33,6 @@ atf_test_case file
 file_head() {
 	atf_set "descr" "Tests that symlinks to files work"
 	atf_set "require.user" "root"
-	atf_set "use.fs" "true"
 }
 file_body() {
 	test_mount
@@ -55,7 +54,6 @@ exec_head() {
 	atf_set "descr" "Tests symlinking to a known system binary and" \
 	                "executing it through the symlink"
 	atf_set "require.user" "root"
-	atf_set "use.fs" "true"
 }
 exec_body() {
 	test_mount
@@ -72,7 +70,6 @@ atf_test_case dir
 dir_head() {
 	atf_set "descr" "Tests that symlinks to directories work"
 	atf_set "require.user" "root"
-	atf_set "use.fs" "true"
 }
 dir_body() {
 	test_mount
@@ -93,7 +90,6 @@ kqueue_head() {
 	atf_set "descr" "Tests that creating a symlink raises the" \
 	                "appropriate kqueue events"
 	atf_set "require.user" "root"
-	atf_set "use.fs" "true"
 }
 kqueue_body() {
 	test_mount

@@ -1,4 +1,4 @@
-# $NetBSD: t_make.sh,v 1.1 2010/07/10 16:16:12 jmmv Exp $
+# $NetBSD: t_make.sh,v 1.2 2010/11/07 17:51:23 jmmv Exp $
 #
 # Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -45,7 +45,6 @@ test_case()
 	atf_test_case "${name}"
 	eval "${name}_head() { \
 		atf_set descr '${descr}'; \
-		atf_set use.fs true; \
 	}"
 	eval "${name}_body() { \
 		run_and_check '${name}'; \

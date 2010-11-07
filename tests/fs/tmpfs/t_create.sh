@@ -1,4 +1,4 @@
-# $NetBSD: t_create.sh,v 1.5 2010/06/07 03:39:41 riz Exp $
+# $NetBSD: t_create.sh,v 1.6 2010/11/07 17:51:18 jmmv Exp $
 #
 # Copyright (c) 2005, 2006, 2007, 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -33,7 +33,6 @@ atf_test_case create
 create_head() {
 	atf_set "descr" "Verifies that files can be created"
 	atf_set "require.user" "root"
-	atf_set "use.fs" "true"
 }
 create_body() {
 	test_mount
@@ -51,7 +50,6 @@ attrs_head() {
 	                "attributes"
 	atf_set "require.config" "unprivileged-user"
 	atf_set "require.user" "root"
-	atf_set "use.fs" "true"
 }
 attrs_body() {
 	# Allow the unprivileged user to access the work directory.
@@ -86,6 +84,11 @@ attrs_body() {
 	[ ${st_uid} -eq $(id -u ${user}) ] || atf_fail "Incorrect owner"
 	[ ${st_gid} -eq 100 ] || atf_fail "Incorrect group"
 
+	if [ ${user} = _atf ]; then
+		atf_expect_fail "We can't 'su ${user}' to run a test command" \
+		    "because it doesn't have a login shell"
+	fi
+
 	atf_check -s eq:0 -o empty -e empty su ${user} -c 'touch b/a'
 	eval $(stat -s b/a)
 	[ ${st_uid} -eq $(id -u ${user}) ] || atf_fail "Incorrect owner"
@@ -104,7 +107,6 @@ kqueue_head() {
 	atf_set "descr" "Verifies that creating a file raises the correct" \
 	                "kqueue events"
 	atf_set "require.user" "root"
-	atf_set "use.fs" "true"
 }
 kqueue_body() {
 	test_mount

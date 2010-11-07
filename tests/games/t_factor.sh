@@ -1,4 +1,4 @@
-# $NetBSD: t_factor.sh,v 1.5 2010/06/04 08:39:40 jmmv Exp $
+# $NetBSD: t_factor.sh,v 1.6 2010/11/07 17:51:19 jmmv Exp $
 #
 # Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -34,7 +34,6 @@ atf_test_case overflow
 overflow_head() {
 	atf_set "descr" "Tests for overflow conditions"
 	atf_set "require.progs" "factor"
-	atf_set "use.fs" "true"
 }
 overflow_body() {
 	expect '8675309' '8675309: 8675309'
@@ -46,7 +45,6 @@ loop_head() {
 	atf_set "descr" "Tests some cases that once locked the program" \
 	                "in an infinite loop"
 	atf_set "require.progs" "factor"
-	atf_set "use.fs" "true"
 }
 loop_body() {
 	expect '99999999999991' '99999999999991: 7 13 769231 1428571'

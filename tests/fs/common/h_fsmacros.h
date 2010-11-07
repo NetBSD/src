@@ -1,4 +1,4 @@
-/*	$NetBSD: h_fsmacros.h,v 1.20 2010/08/26 08:19:18 pooka Exp $	*/
+/*	$NetBSD: h_fsmacros.h,v 1.21 2010/11/07 17:51:17 jmmv Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -101,7 +101,6 @@ do {									\
   ATF_TC_HEAD(fs##_##func,tc) \
   { \
     atf_tc_set_md_var(tc, "descr", type " test for " desc); \
-    atf_tc_set_md_var(tc, "use.fs", "true"); \
     atf_tc_set_md_var(tc, "X-fs.type", type); \
   } \
   void *fs##func##tmp; \

@@ -1,4 +1,4 @@
-# $NetBSD: t_crt0.sh,v 1.2 2010/07/28 13:51:38 joerg Exp $
+# $NetBSD: t_crt0.sh,v 1.3 2010/11/07 17:51:20 jmmv Exp $
 #
 # Copyright (c) 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -29,7 +29,6 @@ atf_test_case initfini1
 initfini1_head()
 {
 	atf_set "descr" "Checks support for init/fini sections"
-	atf_set "use.fs" "true"
 }
 initfini1_body()
 {
@@ -46,7 +45,6 @@ atf_test_case initfini2
 initfini2_head()
 {
 	atf_set "descr" "Checks support for init/fini sections in static binaries"
-	atf_set "use.fs" "true"
 }
 initfini2_body()
 {
@@ -63,7 +61,6 @@ atf_test_case initfini3
 initfini3_head()
 {
 	atf_set "descr" "Checks support for init/fini sections in dlopen"
-	atf_set "use.fs" "true"
 }
 initfini3_body()
 {

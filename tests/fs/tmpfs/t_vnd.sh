@@ -1,4 +1,4 @@
-# $NetBSD: t_vnd.sh,v 1.5 2010/07/05 16:27:08 jmmv Exp $
+# $NetBSD: t_vnd.sh,v 1.6 2010/11/07 17:51:18 jmmv Exp $
 #
 # Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -32,7 +32,6 @@ atf_test_case basic cleanup
 basic_head() {
 	atf_set "descr" "Verifies that vnd works with files stored in tmpfs"
 	atf_set "require.user" "root"
-	atf_set "use.fs" "true"
 }
 basic_body() {
 	test_mount

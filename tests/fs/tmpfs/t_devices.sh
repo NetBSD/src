@@ -1,4 +1,4 @@
-# $NetBSD: t_devices.sh,v 1.4 2010/06/04 08:39:40 jmmv Exp $
+# $NetBSD: t_devices.sh,v 1.5 2010/11/07 17:51:18 jmmv Exp $
 #
 # Copyright (c) 2005, 2006, 2007, 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -29,7 +29,6 @@ atf_test_case basic
 basic_head() {
 	atf_set "descr" "Tests that special devices work"
 	atf_set "require.user" "root"
-	atf_set "use.fs" "true"
 }
 basic_body() {
 	test_mount

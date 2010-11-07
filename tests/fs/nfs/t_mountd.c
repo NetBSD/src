@@ -1,4 +1,4 @@
-/*	$NetBSD: t_mountd.c,v 1.2 2010/08/01 15:38:27 pooka Exp $	*/
+/*	$NetBSD: t_mountd.c,v 1.3 2010/11/07 17:51:18 jmmv Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -49,7 +49,6 @@ ATF_TC_HEAD(mountdhup, tc)
 
 	atf_tc_set_md_var(tc, "descr", "test for service interrupt while "
 	    "mountd handles SIGHUP");
-	atf_tc_set_md_var(tc, "use.fs", "true");
 }
 
 static volatile int quit;
