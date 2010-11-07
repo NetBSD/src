@@ -1,4 +1,4 @@
-# $NetBSD: t_setattr.sh,v 1.4 2010/06/04 08:39:40 jmmv Exp $
+# $NetBSD: t_setattr.sh,v 1.5 2010/11/07 17:51:18 jmmv Exp $
 #
 # Copyright (c) 2005, 2006, 2007, 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -34,7 +34,6 @@ atf_test_case chown
 chown_head() {
 	atf_set "descr" "Tests that the file owner can be changed"
 	atf_set "require.user" "root"
-	atf_set "use.fs" "true"
 }
 chown_body() {
 	test_mount
@@ -54,7 +53,6 @@ chown_kqueue_head() {
 	atf_set "descr" "Tests that changing the file owner raises" \
 	                "NOTE_ATTRIB on it"
 	atf_set "require.user" "root"
-	atf_set "use.fs" "true"
 }
 chown_kqueue_body() {
 	test_mount
@@ -70,7 +68,6 @@ atf_test_case chgrp
 chgrp_head() {
 	atf_set "descr" "Tests that the file group can be changed"
 	atf_set "require.user" "root"
-	atf_set "use.fs" "true"
 }
 chgrp_body() {
 	test_mount
@@ -90,7 +87,6 @@ chgrp_kqueue_head() {
 	atf_set "descr" "Tests that changing the file group raises" \
 	                "NOTE_ATTRIB on it"
 	atf_set "require.user" "root"
-	atf_set "use.fs" "true"
 }
 chgrp_kqueue_body() {
 	test_mount
@@ -107,7 +103,6 @@ chowngrp_head() {
 	atf_set "descr" "Tests that the file owner and group can be" \
 	                "changed at once"
 	atf_set "require.user" "root"
-	atf_set "use.fs" "true"
 }
 chowngrp_body() {
 	test_mount
@@ -126,7 +121,6 @@ chowngrp_kqueue_head() {
 	atf_set "descr" "Tests that changing the file owner and group" \
 	                "raises NOTE_ATTRIB on it"
 	atf_set "require.user" "root"
-	atf_set "use.fs" "true"
 }
 chowngrp_kqueue_body() {
 	test_mount
@@ -142,7 +136,6 @@ atf_test_case chmod
 chmod_head() {
 	atf_set "descr" "Tests that the file mode can be changed"
 	atf_set "require.user" "root"
-	atf_set "use.fs" "true"
 }
 chmod_body() {
 	test_mount
@@ -160,7 +153,6 @@ chmod_kqueue_head() {
 	atf_set "descr" "Tests that changing the file mode raises" \
 	                "NOTE_ATTRIB on it"
 	atf_set "require.user" "root"
-	atf_set "use.fs" "true"
 }
 chmod_kqueue_body() {
 	test_mount
@@ -176,7 +168,6 @@ atf_test_case chtimes
 chtimes_head() {
 	atf_set "descr" "Tests that file times can be changed"
 	atf_set "require.user" "root"
-	atf_set "use.fs" "true"
 }
 chtimes_body() {
 	test_mount
@@ -197,7 +188,6 @@ chtimes_kqueue_head() {
 	atf_set "descr" "Tests that changing the file times raises" \
 	                "NOTE_ATTRIB on it"
 	atf_set "require.user" "root"
-	atf_set "use.fs" "true"
 }
 chtimes_kqueue_body() {
 	test_mount

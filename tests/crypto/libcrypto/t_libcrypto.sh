@@ -1,4 +1,4 @@
-# $NetBSD: t_libcrypto.sh,v 1.1 2010/07/10 16:43:25 jmmv Exp $
+# $NetBSD: t_libcrypto.sh,v 1.2 2010/11/07 17:51:16 jmmv Exp $
 #
 # Copyright (c) 2008, 2009, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -61,7 +61,6 @@ atf_test_case conf
 conf_head()
 {
 	atf_set "descr" "Checks configuration modules"
-	atf_set "use.fs" "true"
 }
 conf_body()
 {
@@ -86,7 +85,6 @@ atf_test_case threads
 threads_head()
 {
 	atf_set "descr" "Checks threading"
-	atf_set "use.fs" "true"
 }
 threads_body()
 {

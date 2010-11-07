@@ -1,4 +1,4 @@
-/* $NetBSD: t_file2.c,v 1.2 2010/06/04 08:39:41 jmmv Exp $ */
+/* $NetBSD: t_file2.c,v 1.3 2010/11/07 17:51:20 jmmv Exp $ */
 
 /*-
  * Copyright (c) 2002, 2008 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_file2.c,v 1.2 2010/06/04 08:39:41 jmmv Exp $");
+__RCSID("$NetBSD: t_file2.c,v 1.3 2010/11/07 17:51:20 jmmv Exp $");
 
 #include <sys/event.h>
 
@@ -50,7 +50,6 @@ ATF_TC_HEAD(file2, tc)
 	    "Checks EVFILT_READ for regular files. This test used to "
 	    "trigger deadlock caused by problem fixed in revision 1.79.2.10 "
 	    "of sys/kern/kern_descrip.c");
-	atf_tc_set_md_var(tc, "use.fs", "true");
 }
 ATF_TC_BODY(file2, tc)
 {

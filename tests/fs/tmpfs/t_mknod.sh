@@ -1,4 +1,4 @@
-# $NetBSD: t_mknod.sh,v 1.4 2010/06/04 08:39:40 jmmv Exp $
+# $NetBSD: t_mknod.sh,v 1.5 2010/11/07 17:51:18 jmmv Exp $
 #
 # Copyright (c) 2005, 2006, 2007, 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -33,7 +33,6 @@ atf_test_case block
 block_head() {
 	atf_set "descr" "Tests that block devices can be created"
 	atf_set "require.user" "root"
-	atf_set "use.fs" "true"
 }
 block_body() {
 	test_mount
@@ -52,7 +51,6 @@ block_kqueue_head() {
 	atf_set "descr" "Tests that creating a block device raises the" \
 	                "appropriate kqueue events"
 	atf_set "require.user" "root"
-	atf_set "use.fs" "true"
 }
 block_kqueue_body() {
 	test_mount
@@ -69,7 +67,6 @@ atf_test_case char
 char_head() {
 	atf_set "descr" "Tests that character devices can be created"
 	atf_set "require.user" "root"
-	atf_set "use.fs" "true"
 }
 char_body() {
 	test_mount
@@ -88,7 +85,6 @@ char_kqueue_head() {
 	atf_set "descr" "Tests that creating a character device raises the" \
 	                "appropriate kqueue events"
 	atf_set "require.user" "root"
-	atf_set "use.fs" "true"
 }
 char_kqueue_body() {
 	test_mount
@@ -105,7 +101,6 @@ atf_test_case pipe
 pipe_head() {
 	atf_set "descr" "Tests that named pipes can be created"
 	atf_set "require.user" "root"
-	atf_set "use.fs" "true"
 }
 pipe_body() {
 	test_mount
@@ -123,7 +118,6 @@ pipe_kqueue_head() {
 	atf_set "descr" "Tests that creating a named pipe raises the" \
 	                "appropriate kqueue events"
 	atf_set "require.user" "root"
-	atf_set "use.fs" "true"
 }
 pipe_kqueue_body() {
 	test_mount

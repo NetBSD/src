@@ -1,4 +1,4 @@
-# $NetBSD: t_mkdir.sh,v 1.5 2010/06/07 03:39:41 riz Exp $
+# $NetBSD: t_mkdir.sh,v 1.6 2010/11/07 17:51:18 jmmv Exp $
 #
 # Copyright (c) 2005, 2006, 2007, 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -35,7 +35,6 @@ single_head() {
 	atf_set "descr" "Creates a single directory and checks the" \
 	                "mount point's hard link count"
 	atf_set "require.user" "root"
-	atf_set "use.fs" "true"
 }
 single_body() {
 	test_mount
@@ -55,7 +54,6 @@ many_head() {
 	atf_set "descr" "Creates multiple directories and checks the" \
 	                "mount point's hard link count"
 	atf_set "require.user" "root"
-	atf_set "use.fs" "true"
 }
 many_body() {
 	test_mount
@@ -75,7 +73,6 @@ atf_test_case nested
 nested_head() {
 	atf_set "descr" "Checks if nested directories can be created"
 	atf_set "require.user" "root"
-	atf_set "use.fs" "true"
 }
 nested_body() {
 	test_mount
@@ -93,7 +90,6 @@ attrs_head() {
 	                "attributes (owner and group)"
 	atf_set "require.config" "unprivileged-user"
 	atf_set "require.user" "root"
-	atf_set "use.fs" "true"
 }
 attrs_body() {
 	# Allow the unprivileged user to access the work directory.
@@ -133,7 +129,6 @@ kqueue_head() {
 	atf_set "descr" "Creates a directory and checks the kqueue events" \
 	                "raised"
 	atf_set "require.user" "root"
-	atf_set "use.fs" "true"
 }
 kqueue_body() {
 	test_mount

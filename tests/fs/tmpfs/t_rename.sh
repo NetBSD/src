@@ -1,4 +1,4 @@
-# $NetBSD: t_rename.sh,v 1.4 2010/06/04 08:39:40 jmmv Exp $
+# $NetBSD: t_rename.sh,v 1.5 2010/11/07 17:51:18 jmmv Exp $
 #
 # Copyright (c) 2005, 2006, 2007, 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -34,7 +34,6 @@ atf_test_case dots
 dots_head() {
 	atf_set "descr" "Tests that '.' and '..' cannot be renamed"
 	atf_set "require.user" "root"
-	atf_set "use.fs" "true"
 }
 dots_body() {
 	test_mount
@@ -51,7 +50,6 @@ atf_test_case crossdev
 crossdev_head() {
 	atf_set "descr" "Tests that cross-device renames do not work"
 	atf_set "require.user" "root"
-	atf_set "use.fs" "true"
 }
 crossdev_body() {
 	test_mount
@@ -70,7 +68,6 @@ atf_test_case basic
 basic_head() {
 	atf_set "descr" "Tests that basic renames work"
 	atf_set "require.user" "root"
-	atf_set "use.fs" "true"
 }
 basic_body() {
 	test_mount
@@ -89,7 +86,6 @@ dotdot_head() {
 	atf_set "descr" "Tests that the '..' entry is properly updated" \
 	                "during moves"
 	atf_set "require.user" "root"
-	atf_set "use.fs" "true"
 }
 dotdot_body() {
 	test_mount
@@ -135,7 +131,6 @@ dir_to_emptydir_head() {
 	atf_set "descr" "Tests that renaming a directory to override an" \
 	                "empty directory works"
 	atf_set "require.user" "root"
-	atf_set "use.fs" "true"
 }
 dir_to_emptydir_body() {
 	test_mount
@@ -159,7 +154,6 @@ dir_to_fulldir_head() {
 	atf_set "descr" "Tests that renaming a directory to override a" \
 	                "non-empty directory fails"
 	atf_set "require.user" "root"
-	atf_set "use.fs" "true"
 }
 dir_to_fulldir_body() {
 	test_mount
@@ -188,7 +182,6 @@ dir_to_file_head() {
 	atf_set "descr" "Tests that renaming a directory to override a" \
 	                "file fails"
 	atf_set "require.user" "root"
-	atf_set "use.fs" "true"
 }
 dir_to_file_body() {
 	test_mount
@@ -211,7 +204,6 @@ file_to_dir_head() {
 	atf_set "descr" "Tests that renaming a file to override a" \
 	                "directory fails"
 	atf_set "require.user" "root"
-	atf_set "use.fs" "true"
 }
 file_to_dir_body() {
 	test_mount
@@ -234,7 +226,6 @@ kqueue_head() {
 	atf_set "descr" "Tests that moving and renaming files raise the" \
 	                "correct kqueue events"
 	atf_set "require.user" "root"
-	atf_set "use.fs" "true"
 }
 kqueue_body() {
 	test_mount

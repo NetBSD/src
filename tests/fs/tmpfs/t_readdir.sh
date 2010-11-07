@@ -1,4 +1,4 @@
-# $NetBSD: t_readdir.sh,v 1.4 2010/06/04 08:39:40 jmmv Exp $
+# $NetBSD: t_readdir.sh,v 1.5 2010/11/07 17:51:18 jmmv Exp $
 #
 # Copyright (c) 2005, 2006, 2007, 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -34,7 +34,6 @@ dots_head() {
 	atf_set "descr" "Verifies that readdir returns the '.' and '..'" \
 	                "entries"
 	atf_set "require.user" "root"
-	atf_set "use.fs" "true"
 }
 dots_body() {
 	test_mount
@@ -51,7 +50,6 @@ types_head() {
 	atf_set "descr" "Verifies that readdir works for all different" \
 	                "file types"
 	atf_set "require.user" "root"
-	atf_set "use.fs" "true"
 }
 types_body() {
 	test_mount
@@ -76,7 +74,6 @@ caching_head() {
 	atf_set "descr" "Catch a bug caused by incorrect invalidation of" \
 	                "readdir caching variables"
 	atf_set "require.user" "root"
-	atf_set "use.fs" "true"
 }
 caching_body() {
 	test_mount
@@ -93,7 +90,6 @@ atf_test_case many
 many_head() {
 	atf_set "descr" "Verifies that readdir works with many files"
 	atf_set "require.user" "root"
-	atf_set "use.fs" "true"
 }
 many_body() {
 	test_mount

@@ -1,4 +1,4 @@
-/*	$NetBSD: t_basic.c,v 1.3 2010/11/03 16:10:24 christos Exp $	*/
+/*	$NetBSD: t_basic.c,v 1.4 2010/11/07 17:51:21 jmmv Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: t_basic.c,v 1.3 2010/11/03 16:10:24 christos Exp $");
+__RCSID("$NetBSD: t_basic.c,v 1.4 2010/11/07 17:51:21 jmmv Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -72,7 +72,6 @@ ATF_TC_HEAD(handover, tc)
 
 	atf_tc_set_md_var(tc, "descr", "check that carp handover works if "
 	    "the master dies");
-	atf_tc_set_md_var(tc, "use.fs", "true");
 }
 
 #define THEBUS "buuuuuuus,etherbus"

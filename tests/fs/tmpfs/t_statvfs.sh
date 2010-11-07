@@ -1,4 +1,4 @@
-# $NetBSD: t_statvfs.sh,v 1.3 2010/06/04 08:39:40 jmmv Exp $
+# $NetBSD: t_statvfs.sh,v 1.4 2010/11/07 17:51:18 jmmv Exp $
 #
 # Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -34,7 +34,6 @@ atf_test_case values
 values_head() {
 	atf_set "descr" "Tests that statvfs(2) returns correct values"
 	atf_set "require.user" "root"
-	atf_set "use.fs" "true"
 }
 values_body() {
 	test_mount -o -s10M
