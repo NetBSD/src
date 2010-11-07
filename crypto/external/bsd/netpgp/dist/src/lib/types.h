@@ -53,42 +53,42 @@
 #include <inttypes.h>
 #endif
 
-typedef struct __ops_io_t {
+typedef struct pgp_io_t {
 	void	*outs;	/* output file stream */
 	void	*errs;	/* file stream to put error messages */
 	void	*res;	/* file stream to put results */
-} __ops_io_t;
+} pgp_io_t;
 
-/** __ops_map_t
+/** pgp_map_t
  */
 typedef struct {
 	int             type;
 	const char     *string;
-} __ops_map_t;
+} pgp_map_t;
 
-/** __ops_errcode_name_map_t */
-typedef __ops_map_t		__ops_errcode_name_map_t;
+/** pgp_errcode_name_map_t */
+typedef pgp_map_t		pgp_errcode_name_map_t;
 
-typedef struct _ops_crypt_t	__ops_crypt_t;
+typedef struct _ops_crypt_t	pgp_crypt_t;
 
-/** __ops_hash_t */
-typedef struct _ops_hash_t	__ops_hash_t;
+/** pgp_hash_t */
+typedef struct _ops_hash_t	pgp_hash_t;
 
 /** Revocation Reason type */
-typedef uint8_t		__ops_ss_rr_code_t;
+typedef uint8_t		pgp_ss_rr_code_t;
 
-/** __ops_packet_t */
-typedef struct __ops_packet_t	__ops_packet_t;
+/** pgp_packet_t */
+typedef struct pgp_packet_t	pgp_packet_t;
 
 /** Writer flags */
 typedef enum {
-	OPS_WF_DUMMY
-} __ops_writer_flags_t;
+	PGP_WF_DUMMY
+} pgp_writer_flags_t;
 
 /**
  * \ingroup Create
  * Contains the required information about how to write
  */
-typedef struct __ops_output_t	__ops_output_t;
+typedef struct pgp_output_t	pgp_output_t;
 
 #endif /* TYPES_H_ */

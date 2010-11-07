@@ -34,7 +34,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: netpgp.c,v 1.80 2010/11/04 15:38:45 agc Exp $");
+__RCSID("$NetBSD: netpgp.c,v 1.81 2010/11/07 08:39:59 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -93,7 +93,7 @@ conffile(netpgp_t *netpgp, char *homedir, char *userid, size_t length)
 	char		 buf[BUFSIZ];
 	FILE		*fp;
 
-	__OPS_USED(netpgp);
+	__PGP_USED(netpgp);
 	(void) snprintf(buf, sizeof(buf), "%s/gpg.conf", homedir);
 	if ((fp = fopen(buf, "r")) == NULL) {
 		return 0;
@@ -136,13 +136,13 @@ userid_to_id(const uint8_t *userid, char *id)
 
 /* print out the successful signature information */
 static void
-resultp(__ops_io_t *io,
+resultp(pgp_io_t *io,
 	const char *f,
-	__ops_validation_t *res,
-	__ops_keyring_t *ring)
+	pgp_validation_t *res,
+	pgp_keyring_t *ring)
 {
-	const __ops_key_t	*key;
-	__ops_pubkey_t		*sigkey;
+	const pgp_key_t	*key;
+	pgp_pubkey_t		*sigkey;
 	unsigned		 from;
 	unsigned		 i;
 	time_t			 t;
@@ -159,10 +159,10 @@ resultp(__ops_io_t *io,
 		}
 		(void) fprintf(io->res,
 			"using %s key %s\n",
-			__ops_show_pka(res->valid_sigs[i].key_alg),
+			pgp_show_pka(res->valid_sigs[i].key_alg),
 			userid_to_id(res->valid_sigs[i].signer_id, id));
 		from = 0;
-		key = __ops_getkeybyid(io, ring,
+		key = pgp_getkeybyid(io, ring,
 			(const uint8_t *) res->valid_sigs[i].signer_id,
 			&from, &sigkey);
 		if (sigkey == &key->enckey) {
@@ -170,7 +170,7 @@ resultp(__ops_io_t *io,
 				"WARNING: signature for %s made with encryption key\n",
 				(f) ? f : "<stdin>");
 		}
-		__ops_print_keydata(io, ring, key, "signature ", &key->key.pubkey, 0);
+		pgp_print_keydata(io, ring, key, "signature ", &key->key.pubkey, 0);
 	}
 }
 
@@ -226,7 +226,7 @@ findvar(netpgp_t *netpgp, const char *name)
 static void *
 readkeyring(netpgp_t *netpgp, const char *name)
 {
-	__ops_keyring_t	*keyring;
+	pgp_keyring_t	*keyring;
 	const unsigned	 noarmor = 0;
 	char		 f[MAXPATHLEN];
 	char		*filename;
@@ -241,7 +241,7 @@ readkeyring(netpgp_t *netpgp, const char *name)
 		(void) fprintf(stderr, "readkeyring: bad alloc\n");
 		return NULL;
 	}
-	if (!__ops_keyring_fileread(keyring, noarmor, filename)) {
+	if (!pgp_keyring_fileread(keyring, noarmor, filename)) {
 		free(keyring);
 		(void) fprintf(stderr, "Can't read %s %s\n", name, filename);
 		return NULL;
@@ -254,8 +254,8 @@ readkeyring(netpgp_t *netpgp, const char *name)
 static int
 readsshkeys(netpgp_t *netpgp, char *homedir, const char *needseckey)
 {
-	__ops_keyring_t	*pubring;
-	__ops_keyring_t	*secring;
+	pgp_keyring_t	*pubring;
+	pgp_keyring_t	*secring;
 	struct stat	 st;
 	unsigned	 hashtype;
 	char		*hash;
@@ -281,18 +281,18 @@ readsshkeys(netpgp_t *netpgp, char *homedir, const char *needseckey)
 		return 0;
 	}
 	/* openssh2 keys use md5 by default */
-	hashtype = OPS_HASH_MD5;
+	hashtype = PGP_HASH_MD5;
 	if ((hash = netpgp_getvar(netpgp, "hash")) != NULL) {
 		/* openssh 2 hasn't really caught up to anything else yet */
 		if (netpgp_strcasecmp(hash, "md5") == 0) {
-			hashtype = OPS_HASH_MD5;
+			hashtype = PGP_HASH_MD5;
 		} else if (netpgp_strcasecmp(hash, "sha1") == 0) {
-			hashtype = OPS_HASH_SHA1;
+			hashtype = PGP_HASH_SHA1;
 		} else if (netpgp_strcasecmp(hash, "sha256") == 0) {
-			hashtype = OPS_HASH_SHA256;
+			hashtype = PGP_HASH_SHA256;
 		}
 	}
-	if (!__ops_ssh2_readkeys(netpgp->io, pubring, NULL, filename, NULL, hashtype)) {
+	if (!pgp_ssh2_readkeys(netpgp->io, pubring, NULL, filename, NULL, hashtype)) {
 		free(pubring);
 		(void) fprintf(stderr, "readsshkeys: can't read %s\n",
 				filename);
@@ -301,7 +301,7 @@ readsshkeys(netpgp_t *netpgp, char *homedir, const char *needseckey)
 	if (netpgp->pubring == NULL) {
 		netpgp->pubring = pubring;
 	} else {
-		__ops_append_keyring(netpgp->pubring, pubring);
+		pgp_append_keyring(netpgp->pubring, pubring);
 	}
 	if (needseckey) {
 		netpgp_setvar(netpgp, "sshpubfile", filename);
@@ -317,7 +317,7 @@ readsshkeys(netpgp_t *netpgp, char *homedir, const char *needseckey)
 			(void) fprintf(stderr, "readsshkeys: bad alloc\n");
 			return 0;
 		}
-		if (!__ops_ssh2_readkeys(netpgp->io, pubring, secring, NULL, filename, hashtype)) {
+		if (!pgp_ssh2_readkeys(netpgp->io, pubring, secring, NULL, filename, hashtype)) {
 			(void) fprintf(stderr, "readsshkeys: can't read sec %s\n", filename);
 			return 0;
 		}
@@ -329,7 +329,7 @@ readsshkeys(netpgp_t *netpgp, char *homedir, const char *needseckey)
 
 /* set ssh uid to first one in pubring */
 static void
-set_first_pubring(__ops_keyring_t *pubring, char *id, size_t len, int last)
+set_first_pubring(pgp_keyring_t *pubring, char *id, size_t len, int last)
 {
 	uint8_t	*src;
 	int	 i;
@@ -337,7 +337,7 @@ set_first_pubring(__ops_keyring_t *pubring, char *id, size_t len, int last)
 
 	(void) memset(id, 0x0, len);
 	src = pubring->keys[(last) ? pubring->keyc - 1 : 0].sigid;
-	for (i = 0, n = 0 ; i < OPS_KEY_ID_SIZE ; i += 2) {
+	for (i = 0, n = 0 ; i < PGP_KEY_ID_SIZE ; i += 2) {
 		n += snprintf(&id[n], len - n, "%02x%02x", src[i], src[i + 1]);
 	}
 	id[n] = 0x0;
@@ -415,11 +415,11 @@ get_birthtime(char *s)
 }
 
 /* resolve the userid */
-static const __ops_key_t *
-resolve_userid(netpgp_t *netpgp, const __ops_keyring_t *keyring, const char *userid)
+static const pgp_key_t *
+resolve_userid(netpgp_t *netpgp, const pgp_keyring_t *keyring, const char *userid)
 {
-	const __ops_key_t	*key;
-	__ops_io_t		*io;
+	const pgp_key_t	*key;
+	pgp_io_t		*io;
 
 	if (userid == NULL) {
 		userid = netpgp_getvar(netpgp, "userid");
@@ -429,7 +429,7 @@ resolve_userid(netpgp_t *netpgp, const __ops_keyring_t *keyring, const char *use
 		userid += 2;
 	}
 	io = netpgp->io;
-	if ((key = __ops_getkeybyname(io, keyring, userid)) == NULL) {
+	if ((key = pgp_getkeybyname(io, keyring, userid)) == NULL) {
 		(void) fprintf(io->errs, "Can't find key '%s'\n", userid);
 	}
 	return key;
@@ -437,30 +437,30 @@ resolve_userid(netpgp_t *netpgp, const __ops_keyring_t *keyring, const char *use
 
 /* append a key to a keyring */
 static int
-appendkey(__ops_io_t *io, __ops_key_t *key, char *ringfile)
+appendkey(pgp_io_t *io, pgp_key_t *key, char *ringfile)
 {
-	__ops_output_t	*create;
+	pgp_output_t	*create;
 	const unsigned	 noarmor = 0;
 	int		 fd;
 
-	if ((fd = __ops_setup_file_append(&create, ringfile)) < 0) {
-		fd = __ops_setup_file_write(&create, ringfile, 0);
+	if ((fd = pgp_setup_file_append(&create, ringfile)) < 0) {
+		fd = pgp_setup_file_write(&create, ringfile, 0);
 	}
 	if (fd < 0) {
 		(void) fprintf(io->errs, "can't open pubring '%s'\n", ringfile);
 		return 0;
 	}
-	if (!__ops_write_xfer_pubkey(create, key, noarmor)) {
+	if (!pgp_write_xfer_pubkey(create, key, noarmor)) {
 		(void) fprintf(io->errs, "Cannot write pubkey\n");
 		return 0;
 	}
-	__ops_teardown_file_write(create, fd);
+	pgp_teardown_file_write(create, fd);
 	return 1;
 }
 
 /* return 1 if the file contains ascii-armoured text */
 static unsigned
-isarmoured(__ops_io_t *io, const char *f, const void *memory, const char *text)
+isarmoured(pgp_io_t *io, const char *f, const void *memory, const char *text)
 {
 	unsigned	 armoured;
 	FILE		*fp;
@@ -572,7 +572,7 @@ format_json_key(FILE *fp, mj_t *obj, const int psigs)
 	mj_t	*sub;
 	int	 i;
 
-	if (__ops_get_debug_level(__FILE__)) {
+	if (pgp_get_debug_level(__FILE__)) {
 		mj_asprint(&s, obj);
 		(void) fprintf(stderr, "formatobj: json is '%s'\n", s);
 		free(s);
@@ -705,7 +705,7 @@ formatbignum(char *buffer, BIGNUM *bn)
 int
 netpgp_init(netpgp_t *netpgp)
 {
-	__ops_io_t	*io;
+	pgp_io_t	*io;
 	char		 id[MAX_ID_LENGTH];
 	char		*homedir;
 	char		*userid;
@@ -845,10 +845,10 @@ netpgp_end(netpgp_t *netpgp)
 		free(netpgp->value);
 	}
 	if (netpgp->pubring != NULL) {
-		__ops_keyring_free(netpgp->pubring);
+		pgp_keyring_free(netpgp->pubring);
 	}
 	if (netpgp->secring != NULL) {
-		__ops_keyring_free(netpgp->secring);
+		pgp_keyring_free(netpgp->secring);
 	}
 	free(netpgp->io);
 	return 1;
@@ -862,7 +862,7 @@ netpgp_list_keys(netpgp_t *netpgp, const int psigs)
 		(void) fprintf(stderr, "No keyring\n");
 		return 0;
 	}
-	return __ops_keyring_list(netpgp->io, netpgp->pubring, psigs);
+	return pgp_keyring_list(netpgp->io, netpgp->pubring, psigs);
 }
 
 /* list the keys in a keyring, returning a JSON string */
@@ -877,7 +877,7 @@ netpgp_list_keys_json(netpgp_t *netpgp, char **json, const int psigs)
 		return 0;
 	}
 	(void) memset(&obj, 0x0, sizeof(obj));
-	if (!__ops_keyring_json(netpgp->io, netpgp->pubring, &obj, psigs)) {
+	if (!pgp_keyring_json(netpgp->io, netpgp->pubring, &obj, psigs)) {
 		(void) fprintf(stderr, "No keys in keyring\n");
 		return 0;
 	}
@@ -896,7 +896,7 @@ DEFINE_ARRAY(strings_t, char *);
 int
 netpgp_match_keys(netpgp_t *netpgp, char *name, const char *fmt, void *vp, const int psigs)
 {
-	const __ops_key_t	*key;
+	const pgp_key_t	*key;
 	unsigned		 k;
 	strings_t		 pubs;
 	FILE			*fp = (FILE *)vp;
@@ -907,17 +907,17 @@ netpgp_match_keys(netpgp_t *netpgp, char *name, const char *fmt, void *vp, const
 	(void) memset(&pubs, 0x0, sizeof(pubs));
 	k = 0;
 	do {
-		key = __ops_getnextkeybyname(netpgp->io, netpgp->pubring,
+		key = pgp_getnextkeybyname(netpgp->io, netpgp->pubring,
 						name, &k);
 		if (key != NULL) {
 			ALLOC(char *, pubs.v, pubs.size, pubs.c, 10, 10,
 					"netpgp_match_keys", return 0);
 			if (strcmp(fmt, "mr") == 0) {
-				__ops_hkp_sprint_keydata(netpgp->io, netpgp->pubring,
+				pgp_hkp_sprint_keydata(netpgp->io, netpgp->pubring,
 						key, &pubs.v[pubs.c],
 						&key->key.pubkey, psigs);
 			} else {
-				__ops_sprint_keydata(netpgp->io, netpgp->pubring,
+				pgp_sprint_keydata(netpgp->io, netpgp->pubring,
 						key, &pubs.v[pubs.c],
 						"signature ",
 						&key->key.pubkey, psigs);
@@ -946,7 +946,7 @@ netpgp_match_keys(netpgp_t *netpgp, char *name, const char *fmt, void *vp, const
 int
 netpgp_match_keys_json(netpgp_t *netpgp, char **json, char *name, const char *fmt, const int psigs)
 {
-	const __ops_key_t	*key;
+	const pgp_key_t	*key;
 	unsigned		 k;
 	mj_t			 id_array;
 	int			 ret;
@@ -959,19 +959,19 @@ netpgp_match_keys_json(netpgp_t *netpgp, char **json, char *name, const char *fm
 	*json = NULL;
 	mj_create(&id_array, "array");
 	do {
-		key = __ops_getnextkeybyname(netpgp->io, netpgp->pubring,
+		key = pgp_getnextkeybyname(netpgp->io, netpgp->pubring,
 						name, &k);
 		if (key != NULL) {
 			if (strcmp(fmt, "mr") == 0) {
 #if 0
-				__ops_hkp_sprint_keydata(netpgp->io, netpgp->pubring,
+				pgp_hkp_sprint_keydata(netpgp->io, netpgp->pubring,
 						key, &pubs.v[pubs.c],
 						&key->key.pubkey, psigs);
 #endif
 			} else {
 				ALLOC(mj_t, id_array.value.v, id_array.size,
 					id_array.c, 10, 10, "netpgp_match_keys_json", return 0);
-				__ops_sprint_mj(netpgp->io, netpgp->pubring,
+				pgp_sprint_mj(netpgp->io, netpgp->pubring,
 						key, &id_array.value.v[id_array.c++],
 						"signature ",
 						&key->key.pubkey, psigs);
@@ -988,21 +988,21 @@ netpgp_match_keys_json(netpgp_t *netpgp, char **json, char *name, const char *fm
 int
 netpgp_match_pubkeys(netpgp_t *netpgp, char *name, void *vp)
 {
-	const __ops_key_t	*key;
+	const pgp_key_t	*key;
 	unsigned		 k;
 	strings_t		 pubs;
 	FILE			*fp = (FILE *)vp;
 
 	(void) memset(&pubs, 0x0, sizeof(pubs));
 	do {
-		key = __ops_getnextkeybyname(netpgp->io, netpgp->pubring,
+		key = pgp_getnextkeybyname(netpgp->io, netpgp->pubring,
 						name, &k);
 		if (key != NULL) {
 			char	out[1024 * 64];
 
 			ALLOC(char *, pubs.v, pubs.size, pubs.c, 10, 10,
 					"netpgp_match_pubkeys", return 0);
-			(void) __ops_sprint_pubkey(key, out, sizeof(out));
+			(void) pgp_sprint_pubkey(key, out, sizeof(out));
 			pubs.v[pubs.c++] = netpgp_strdup(out);
 			k += 1;
 		}
@@ -1020,33 +1020,33 @@ netpgp_match_pubkeys(netpgp_t *netpgp, char *name, void *vp)
 int
 netpgp_find_key(netpgp_t *netpgp, char *id)
 {
-	__ops_io_t	*io;
+	pgp_io_t	*io;
 
 	io = netpgp->io;
 	if (id == NULL) {
 		(void) fprintf(io->errs, "NULL id to search for\n");
 		return 0;
 	}
-	return __ops_getkeybyname(netpgp->io, netpgp->pubring, id) != NULL;
+	return pgp_getkeybyname(netpgp->io, netpgp->pubring, id) != NULL;
 }
 
 /* get a key in a keyring */
 char *
 netpgp_get_key(netpgp_t *netpgp, const char *name, const char *fmt)
 {
-	const __ops_key_t	*key;
+	const pgp_key_t	*key;
 	char			*newkey;
 
 	if ((key = resolve_userid(netpgp, netpgp->pubring, name)) == NULL) {
 		return NULL;
 	}
 	if (strcmp(fmt, "mr") == 0) {
-		return (__ops_hkp_sprint_keydata(netpgp->io, netpgp->pubring,
+		return (pgp_hkp_sprint_keydata(netpgp->io, netpgp->pubring,
 				key, &newkey,
 				&key->key.pubkey,
 				netpgp_getvar(netpgp, "subkey sigs") != NULL) > 0) ? newkey : NULL;
 	}
-	return (__ops_sprint_keydata(netpgp->io, netpgp->pubring,
+	return (pgp_sprint_keydata(netpgp->io, netpgp->pubring,
 				key, &newkey, "signature",
 				&key->key.pubkey,
 				netpgp_getvar(netpgp, "subkey sigs") != NULL) > 0) ? newkey : NULL;
@@ -1056,14 +1056,14 @@ netpgp_get_key(netpgp_t *netpgp, const char *name, const char *fmt)
 char *
 netpgp_export_key(netpgp_t *netpgp, char *name)
 {
-	const __ops_key_t	*key;
-	__ops_io_t		*io;
+	const pgp_key_t	*key;
+	pgp_io_t		*io;
 
 	io = netpgp->io;
 	if ((key = resolve_userid(netpgp, netpgp->pubring, name)) == NULL) {
 		return NULL;
 	}
-	return __ops_export_key(io, key, NULL);
+	return pgp_export_key(io, key, NULL);
 }
 
 #define IMPORT_ARMOR_HEAD	"-----BEGIN PGP PUBLIC KEY BLOCK-----"
@@ -1072,28 +1072,28 @@ netpgp_export_key(netpgp_t *netpgp, char *name)
 int
 netpgp_import_key(netpgp_t *netpgp, char *f)
 {
-	__ops_io_t	*io;
+	pgp_io_t	*io;
 	unsigned	 realarmor;
 	int		 done;
 
 	io = netpgp->io;
 	realarmor = isarmoured(io, f, NULL, IMPORT_ARMOR_HEAD);
-	done = __ops_keyring_fileread(netpgp->pubring, realarmor, f);
+	done = pgp_keyring_fileread(netpgp->pubring, realarmor, f);
 	if (!done) {
 		(void) fprintf(io->errs, "Cannot import key from file %s\n", f);
 		return 0;
 	}
-	return __ops_keyring_list(io, netpgp->pubring, 0);
+	return pgp_keyring_list(io, netpgp->pubring, 0);
 }
 
 /* generate a new key */
 int
 netpgp_generate_key(netpgp_t *netpgp, char *id, int numbits)
 {
-	__ops_output_t		*create;
+	pgp_output_t		*create;
 	const unsigned		 noarmor = 0;
-	__ops_key_t		*key;
-	__ops_io_t		*io;
+	pgp_key_t		*key;
+	pgp_io_t		*io;
 	uint8_t			*uid;
 	char			 newid[1024];
 	char			 filename[MAXPATHLEN];
@@ -1112,7 +1112,7 @@ netpgp_generate_key(netpgp_t *netpgp, char *id, int numbits)
 			"RSA %d-bit key <%s@localhost>", numbits, getenv("LOGNAME"));
 	}
 	uid = (uint8_t *)newid;
-	key = __ops_rsa_new_selfsign_key(numbits, 65537UL, uid,
+	key = pgp_rsa_new_selfsign_key(numbits, 65537UL, uid,
 			netpgp_getvar(netpgp, "hash"),
 			netpgp_getvar(netpgp, "cipher"));
 	if (key == NULL) {
@@ -1120,7 +1120,7 @@ netpgp_generate_key(netpgp_t *netpgp, char *id, int numbits)
 		return 0;
 	}
 	cp = NULL;
-	__ops_sprint_keydata(netpgp->io, NULL, key, &cp, "signature ", &key->key.seckey.pubkey, 0);
+	pgp_sprint_keydata(netpgp->io, NULL, key, &cp, "signature ", &key->key.seckey.pubkey, 0);
 	(void) fprintf(stdout, "%s", cp);
 	/* write public key */
 	(void) snprintf(dir, sizeof(dir), "%s/%.16s", netpgp_getvar(netpgp, "homedir"), &cp[38]);
@@ -1135,26 +1135,26 @@ netpgp_generate_key(netpgp_t *netpgp, char *id, int numbits)
 		return 0;
 	}
 	if (netpgp->pubring != NULL) {
-		__ops_keyring_free(netpgp->pubring);
+		pgp_keyring_free(netpgp->pubring);
 	}
 	/* write secret key */
 	(void) snprintf(ringfile = filename, sizeof(filename), "%s/secring.gpg", dir);
-	if ((fd = __ops_setup_file_append(&create, ringfile)) < 0) {
-		fd = __ops_setup_file_write(&create, ringfile, 0);
+	if ((fd = pgp_setup_file_append(&create, ringfile)) < 0) {
+		fd = pgp_setup_file_write(&create, ringfile, 0);
 	}
 	if (fd < 0) {
 		(void) fprintf(io->errs, "can't append secring '%s'\n", ringfile);
 		return 0;
 	}
-	if (!__ops_write_xfer_seckey(create, key, NULL, 0, noarmor)) {
+	if (!pgp_write_xfer_seckey(create, key, NULL, 0, noarmor)) {
 		(void) fprintf(io->errs, "Cannot write seckey\n");
 		return 0;
 	}
-	__ops_teardown_file_write(create, fd);
+	pgp_teardown_file_write(create, fd);
 	if (netpgp->secring != NULL) {
-		__ops_keyring_free(netpgp->secring);
+		pgp_keyring_free(netpgp->secring);
 	}
-	__ops_keydata_free(key);
+	pgp_keydata_free(key);
 	free(cp);
 	return 1;
 }
@@ -1167,10 +1167,10 @@ netpgp_encrypt_file(netpgp_t *netpgp,
 			char *out,
 			int armored)
 {
-	const __ops_key_t	*key;
+	const pgp_key_t	*key;
 	const unsigned		 overwrite = 1;
 	const char		*suffix;
-	__ops_io_t		*io;
+	pgp_io_t		*io;
 	char			 outname[MAXPATHLEN];
 
 	io = netpgp->io;
@@ -1188,7 +1188,7 @@ netpgp_encrypt_file(netpgp_t *netpgp,
 		(void) snprintf(outname, sizeof(outname), "%s%s", f, suffix);
 		out = outname;
 	}
-	return (int)__ops_encrypt_file(io, f, out, key, (unsigned)armored,
+	return (int)pgp_encrypt_file(io, f, out, key, (unsigned)armored,
 				overwrite, netpgp_getvar(netpgp, "cipher"));
 }
 
@@ -1199,11 +1199,11 @@ int
 netpgp_decrypt_file(netpgp_t *netpgp, const char *f, char *out, int armored)
 {
 	const unsigned	 overwrite = 1;
-	__ops_io_t	*io;
+	pgp_io_t	*io;
 	unsigned	 realarmor;
 	unsigned	 sshkeys;
 
-	__OPS_USED(armored);
+	__PGP_USED(armored);
 	io = netpgp->io;
 	if (f == NULL) {
 		(void) fprintf(io->errs,
@@ -1212,7 +1212,7 @@ netpgp_decrypt_file(netpgp_t *netpgp, const char *f, char *out, int armored)
 	}
 	realarmor = isarmoured(io, f, NULL, ARMOR_HEAD);
 	sshkeys = (unsigned)(netpgp_getvar(netpgp, "ssh keys") != NULL);
-	return __ops_decrypt_file(netpgp->io, f, out, netpgp->secring,
+	return pgp_decrypt_file(netpgp->io, f, out, netpgp->secring,
 				netpgp->pubring,
 				realarmor, overwrite, sshkeys,
 				netpgp->passfp, get_passphrase_cb);
@@ -1228,11 +1228,11 @@ netpgp_sign_file(netpgp_t *netpgp,
 		int cleartext,
 		int detached)
 {
-	const __ops_key_t	*keypair;
-	const __ops_key_t	*pubkey;
-	__ops_seckey_t		*seckey;
+	const pgp_key_t	*keypair;
+	const pgp_key_t	*pubkey;
+	pgp_seckey_t		*seckey;
 	const unsigned		 overwrite = 1;
-	__ops_io_t		*io;
+	pgp_io_t		*io;
 	const char		*hashalg;
 	int			 ret;
 
@@ -1250,25 +1250,25 @@ netpgp_sign_file(netpgp_t *netpgp,
 	do {
 		if (netpgp->passfp == NULL) {
 			/* print out the user id */
-			pubkey = __ops_getkeybyname(io, netpgp->pubring, userid);
+			pubkey = pgp_getkeybyname(io, netpgp->pubring, userid);
 			if (pubkey == NULL) {
 				(void) fprintf(io->errs,
 					"netpgp: warning - using pubkey from secring\n");
-				__ops_print_keydata(io, netpgp->pubring, keypair, "signature ",
+				pgp_print_keydata(io, netpgp->pubring, keypair, "signature ",
 					&keypair->key.seckey.pubkey, 0);
 			} else {
-				__ops_print_keydata(io, netpgp->pubring, pubkey, "signature ",
+				pgp_print_keydata(io, netpgp->pubring, pubkey, "signature ",
 					&pubkey->key.pubkey, 0);
 			}
 		}
 		if (netpgp_getvar(netpgp, "ssh keys") == NULL) {
 			/* now decrypt key */
-			seckey = __ops_decrypt_seckey(keypair, netpgp->passfp);
+			seckey = pgp_decrypt_seckey(keypair, netpgp->passfp);
 			if (seckey == NULL) {
 				(void) fprintf(io->errs, "Bad passphrase\n");
 			}
 		} else {
-			__ops_keyring_t	*secring;
+			pgp_keyring_t	*secring;
 
 			secring = netpgp->secring;
 			seckey = &secring->keys[0].key.seckey;
@@ -1276,23 +1276,23 @@ netpgp_sign_file(netpgp_t *netpgp,
 	} while (seckey == NULL);
 	/* sign file */
 	hashalg = netpgp_getvar(netpgp, "hash");
-	if (seckey->pubkey.alg == OPS_PKA_DSA) {
+	if (seckey->pubkey.alg == PGP_PKA_DSA) {
 		hashalg = "sha1";
 	}
 	if (detached) {
-		ret = __ops_sign_detached(io, f, out, seckey, hashalg,
+		ret = pgp_sign_detached(io, f, out, seckey, hashalg,
 				get_birthtime(netpgp_getvar(netpgp, "birthtime")),
 				get_duration(netpgp_getvar(netpgp, "duration")),
 				(unsigned)armored,
 				overwrite);
 	} else {
-		ret = __ops_sign_file(io, f, out, seckey, hashalg,
+		ret = pgp_sign_file(io, f, out, seckey, hashalg,
 				get_birthtime(netpgp_getvar(netpgp, "birthtime")),
 				get_duration(netpgp_getvar(netpgp, "duration")),
 				(unsigned)armored, (unsigned)cleartext,
 				overwrite);
 	}
-	__ops_forget(seckey, (unsigned)sizeof(*seckey));
+	pgp_forget(seckey, (unsigned)sizeof(*seckey));
 	return ret;
 }
 
@@ -1302,11 +1302,11 @@ netpgp_sign_file(netpgp_t *netpgp,
 int
 netpgp_verify_file(netpgp_t *netpgp, const char *in, const char *out, int armored)
 {
-	__ops_validation_t	 result;
-	__ops_io_t		*io;
+	pgp_validation_t	 result;
+	pgp_io_t		*io;
 	unsigned		 realarmor;
 
-	__OPS_USED(armored);
+	__PGP_USED(armored);
 	(void) memset(&result, 0x0, sizeof(result));
 	io = netpgp->io;
 	if (in == NULL) {
@@ -1315,7 +1315,7 @@ netpgp_verify_file(netpgp_t *netpgp, const char *in, const char *out, int armore
 		return 0;
 	}
 	realarmor = isarmoured(io, in, NULL, ARMOR_SIG_HEAD);
-	if (__ops_validate_file(io, &result, in, out, (const int)realarmor, netpgp->pubring)) {
+	if (pgp_validate_file(io, &result, in, out, (const int)realarmor, netpgp->pubring)) {
 		resultp(io, in, &result, netpgp->pubring);
 		return 1;
 	}
@@ -1345,11 +1345,11 @@ netpgp_sign_memory(netpgp_t *netpgp,
 		const unsigned armored,
 		const unsigned cleartext)
 {
-	const __ops_key_t	*keypair;
-	const __ops_key_t	*pubkey;
-	__ops_seckey_t		*seckey;
-	__ops_memory_t		*signedmem;
-	__ops_io_t		*io;
+	const pgp_key_t	*keypair;
+	const pgp_key_t	*pubkey;
+	pgp_seckey_t		*seckey;
+	pgp_memory_t		*signedmem;
+	pgp_io_t		*io;
 	const char		*hashalg;
 	int			 ret;
 
@@ -1366,19 +1366,19 @@ netpgp_sign_memory(netpgp_t *netpgp,
 	do {
 		if (netpgp->passfp == NULL) {
 			/* print out the user id */
-			pubkey = __ops_getkeybyname(io, netpgp->pubring, userid);
+			pubkey = pgp_getkeybyname(io, netpgp->pubring, userid);
 			if (pubkey == NULL) {
 				(void) fprintf(io->errs,
 					"netpgp: warning - using pubkey from secring\n");
-				__ops_print_keydata(io, netpgp->pubring, keypair, "signature ",
+				pgp_print_keydata(io, netpgp->pubring, keypair, "signature ",
 					&keypair->key.seckey.pubkey, 0);
 			} else {
-				__ops_print_keydata(io, netpgp->pubring, pubkey, "signature ",
+				pgp_print_keydata(io, netpgp->pubring, pubkey, "signature ",
 					&pubkey->key.pubkey, 0);
 			}
 		}
 		/* now decrypt key */
-		seckey = __ops_decrypt_seckey(keypair, netpgp->passfp);
+		seckey = pgp_decrypt_seckey(keypair, netpgp->passfp);
 		if (seckey == NULL) {
 			(void) fprintf(io->errs, "Bad passphrase\n");
 		}
@@ -1386,24 +1386,24 @@ netpgp_sign_memory(netpgp_t *netpgp,
 	/* sign file */
 	(void) memset(out, 0x0, outsize);
 	hashalg = netpgp_getvar(netpgp, "hash");
-	if (seckey->pubkey.alg == OPS_PKA_DSA) {
+	if (seckey->pubkey.alg == PGP_PKA_DSA) {
 		hashalg = "sha1";
 	}
-	signedmem = __ops_sign_buf(io, mem, size, seckey,
+	signedmem = pgp_sign_buf(io, mem, size, seckey,
 				get_birthtime(netpgp_getvar(netpgp, "birthtime")),
 				get_duration(netpgp_getvar(netpgp, "duration")),
 				hashalg, armored, cleartext);
 	if (signedmem) {
 		size_t	m;
 
-		m = MIN(__ops_mem_len(signedmem), outsize);
-		(void) memcpy(out, __ops_mem_data(signedmem), m);
-		__ops_memory_free(signedmem);
+		m = MIN(pgp_mem_len(signedmem), outsize);
+		(void) memcpy(out, pgp_mem_data(signedmem), m);
+		pgp_memory_free(signedmem);
 		ret = (int)m;
 	} else {
 		ret = 0;
 	}
-	__ops_forget(seckey, (unsigned)sizeof(*seckey));
+	pgp_forget(seckey, (unsigned)sizeof(*seckey));
 	return ret;
 }
 
@@ -1412,10 +1412,10 @@ int
 netpgp_verify_memory(netpgp_t *netpgp, const void *in, const size_t size,
 			void *out, size_t outsize, const int armored)
 {
-	__ops_validation_t	 result;
-	__ops_memory_t		*signedmem;
-	__ops_memory_t		*cat;
-	__ops_io_t		*io;
+	pgp_validation_t	 result;
+	pgp_memory_t		*signedmem;
+	pgp_memory_t		*cat;
+	pgp_io_t		*io;
 	size_t			 m;
 	int			 ret;
 
@@ -1426,21 +1426,21 @@ netpgp_verify_memory(netpgp_t *netpgp, const void *in, const size_t size,
 			"netpgp_verify_memory: no memory to verify\n");
 		return 0;
 	}
-	signedmem = __ops_memory_new();
-	__ops_memory_add(signedmem, in, size);
+	signedmem = pgp_memory_new();
+	pgp_memory_add(signedmem, in, size);
 	if (out) {
-		cat = __ops_memory_new();
+		cat = pgp_memory_new();
 	}
-	ret = __ops_validate_mem(io, &result, signedmem,
+	ret = pgp_validate_mem(io, &result, signedmem,
 				(out) ? &cat : NULL,
 				armored, netpgp->pubring);
-	__ops_memory_free(signedmem);
+	pgp_memory_free(signedmem);
 	if (ret) {
 		resultp(io, "<stdin>", &result, netpgp->pubring);
 		if (out) {
-			m = MIN(__ops_mem_len(cat), outsize);
-			(void) memcpy(out, __ops_mem_data(cat), m);
-			__ops_memory_free(cat);
+			m = MIN(pgp_mem_len(cat), outsize);
+			(void) memcpy(out, pgp_mem_data(cat), m);
+			pgp_memory_free(cat);
 		} else {
 			m = 1;
 		}
@@ -1470,9 +1470,9 @@ netpgp_encrypt_memory(netpgp_t *netpgp,
 			size_t outsize,
 			int armored)
 {
-	const __ops_key_t	*keypair;
-	__ops_memory_t		*enc;
-	__ops_io_t		*io;
+	const pgp_key_t	*keypair;
+	pgp_memory_t		*enc;
+	pgp_io_t		*io;
 	size_t			 m;
 
 	io = netpgp->io;
@@ -1494,11 +1494,11 @@ netpgp_encrypt_memory(netpgp_t *netpgp,
 			"netpgp_encrypt_buf: input size is larger than output size\n");
 		return 0;
 	}
-	enc = __ops_encrypt_buf(io, in, insize, keypair, (unsigned)armored,
+	enc = pgp_encrypt_buf(io, in, insize, keypair, (unsigned)armored,
 				netpgp_getvar(netpgp, "cipher"));
-	m = MIN(__ops_mem_len(enc), outsize);
-	(void) memcpy(out, __ops_mem_data(enc), m);
-	__ops_memory_free(enc);
+	m = MIN(pgp_mem_len(enc), outsize);
+	(void) memcpy(out, pgp_mem_data(enc), m);
+	pgp_memory_free(enc);
 	return (int)m;
 }
 
@@ -1507,13 +1507,13 @@ int
 netpgp_decrypt_memory(netpgp_t *netpgp, const void *input, const size_t insize,
 			char *out, size_t outsize, const int armored)
 {
-	__ops_memory_t	*mem;
-	__ops_io_t	*io;
+	pgp_memory_t	*mem;
+	pgp_io_t	*io;
 	unsigned	 realarmour;
 	unsigned	 sshkeys;
 	size_t		 m;
 
-	__OPS_USED(armored);
+	__PGP_USED(armored);
 	io = netpgp->io;
 	if (input == NULL) {
 		(void) fprintf(io->errs,
@@ -1522,14 +1522,14 @@ netpgp_decrypt_memory(netpgp_t *netpgp, const void *input, const size_t insize,
 	}
 	realarmour = isarmoured(io, NULL, input, ARMOR_HEAD);
 	sshkeys = (unsigned)(netpgp_getvar(netpgp, "ssh keys") != NULL);
-	mem = __ops_decrypt_buf(netpgp->io, input, insize, netpgp->secring,
+	mem = pgp_decrypt_buf(netpgp->io, input, insize, netpgp->secring,
 				netpgp->pubring,
 				realarmour, sshkeys,
 				netpgp->passfp,
 				get_passphrase_cb);
-	m = MIN(__ops_mem_len(mem), outsize);
-	(void) memcpy(out, __ops_mem_data(mem), m);
-	__ops_memory_free(mem);
+	m = MIN(pgp_mem_len(mem), outsize);
+	(void) memcpy(out, pgp_mem_data(mem), m);
+	pgp_memory_free(mem);
 	return (int)m;
 }
 
@@ -1539,31 +1539,31 @@ netpgp_decrypt_memory(netpgp_t *netpgp, const void *input, const size_t insize,
 int
 netpgp_set_debug(const char *f)
 {
-	return __ops_set_debug_level(f);
+	return pgp_set_debug_level(f);
 }
 
 /* get the debugging level per filename */
 int
 netpgp_get_debug(const char *f)
 {
-	return __ops_get_debug_level(f);
+	return pgp_get_debug_level(f);
 }
 
 /* return the version for the library */
 const char *
 netpgp_get_info(const char *type)
 {
-	return __ops_get_info(type);
+	return pgp_get_info(type);
 }
 
 /* list all the packets in a file */
 int
 netpgp_list_packets(netpgp_t *netpgp, char *f, int armor, char *pubringname)
 {
-	__ops_keyring_t	*keyring;
+	pgp_keyring_t	*keyring;
 	const unsigned	 noarmor = 0;
 	struct stat	 st;
-	__ops_io_t	*io;
+	pgp_io_t	*io;
 	char		 ringname[MAXPATHLEN];
 	char		*homedir;
 	int		 ret;
@@ -1587,7 +1587,7 @@ netpgp_list_packets(netpgp_t *netpgp, char *f, int armor, char *pubringname)
 		(void) fprintf(io->errs, "netpgp_list_packets: bad alloc\n");
 		return 0;
 	}
-	if (!__ops_keyring_fileread(keyring, noarmor, pubringname)) {
+	if (!pgp_keyring_fileread(keyring, noarmor, pubringname)) {
 		free(keyring);
 		(void) fprintf(io->errs, "Cannot read pub keyring %s\n",
 			pubringname);
@@ -1595,7 +1595,7 @@ netpgp_list_packets(netpgp_t *netpgp, char *f, int armor, char *pubringname)
 	}
 	netpgp->pubring = keyring;
 	netpgp_setvar(netpgp, "pubring", pubringname);
-	ret = __ops_list_packets(io, f, (unsigned)armor,
+	ret = pgp_list_packets(io, f, (unsigned)armor,
 					netpgp->secring,
 					netpgp->pubring,
 					netpgp->passfp,
@@ -1627,7 +1627,7 @@ netpgp_setvar(netpgp_t *netpgp, const char *name, const char *value)
 	}
 	/* sanity checks for range of values */
 	if (strcmp(name, "hash") == 0 || strcmp(name, "algorithm") == 0) {
-		if (__ops_str_to_hash_alg(newval) == OPS_HASH_UNKNOWN) {
+		if (pgp_str_to_hash_alg(newval) == PGP_HASH_UNKNOWN) {
 			free(newval);
 			return 0;
 		}
@@ -1714,9 +1714,9 @@ netpgp_set_homedir(netpgp_t *netpgp, char *home, const char *subdir, const int q
 int
 netpgp_validate_sigs(netpgp_t *netpgp)
 {
-	__ops_validation_t	result;
+	pgp_validation_t	result;
 
-	return (int)__ops_validate_all_sigs(&result, netpgp->pubring, NULL);
+	return (int)pgp_validate_all_sigs(&result, netpgp->pubring, NULL);
 }
 
 /* print the json out on 'fp' */
@@ -1755,14 +1755,14 @@ netpgp_format_json(void *vp, const char *json, const int psigs)
 int
 netpgp_write_sshkey(netpgp_t *netpgp, char *s, const char *userid, char *out, size_t size)
 {
-	const __ops_key_t	*key;
-	__ops_keyring_t		*keyring;
-	__ops_io_t		*io;
+	const pgp_key_t	*key;
+	pgp_keyring_t		*keyring;
+	pgp_io_t		*io;
 	unsigned		 k;
 	size_t			 cc;
 	char			 f[MAXPATHLEN];
 
-	if ((io = calloc(1, sizeof(__ops_io_t))) == NULL) {
+	if ((io = calloc(1, sizeof(pgp_io_t))) == NULL) {
 		(void) fprintf(stderr, "netpgp_save_sshpub: bad alloc 1\n");
 		return 0;
 	}
@@ -1776,18 +1776,18 @@ netpgp_write_sshkey(netpgp_t *netpgp, char *s, const char *userid, char *out, si
 		(void) fprintf(stderr, "netpgp_save_sshpub: bad alloc 2\n");
 		return 0;
 	}
-	if (!__ops_keyring_fileread(netpgp->pubring = keyring, 1, f)) {
+	if (!pgp_keyring_fileread(netpgp->pubring = keyring, 1, f)) {
 		(void) fprintf(stderr, "can't import key\n");
 		return 0;
 	}
 	/* get rsa key */
 	k = 0;
-	key = __ops_getnextkeybyname(netpgp->io, netpgp->pubring, userid, &k);
+	key = pgp_getnextkeybyname(netpgp->io, netpgp->pubring, userid, &k);
 	if (key == NULL) {
 		(void) fprintf(stderr, "no key found for '%s'\n", userid);
 		return 0;
 	}
-	if (key->key.pubkey.alg != OPS_PKA_RSA) {
+	if (key->key.pubkey.alg != PGP_PKA_RSA) {
 		/* we're not interested in supporting DSA either :-) */
 		(void) fprintf(stderr, "key not RSA '%s'\n", userid);
 		return 0;

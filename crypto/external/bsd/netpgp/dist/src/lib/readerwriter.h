@@ -57,70 +57,70 @@
 /* if this is defined, we'll use mmap in preference to file ops */
 #define USE_MMAP_FOR_FILES      1
 
-void __ops_reader_set_fd(__ops_stream_t *, int);
-void __ops_reader_set_mmap(__ops_stream_t *, int);
-void __ops_reader_set_memory(__ops_stream_t *, const void *, size_t);
+void pgp_reader_set_fd(pgp_stream_t *, int);
+void pgp_reader_set_mmap(pgp_stream_t *, int);
+void pgp_reader_set_memory(pgp_stream_t *, const void *, size_t);
 
 /* Do a sum mod 65536 of all bytes read (as needed for secret keys) */
-void __ops_reader_push_sum16(__ops_stream_t *);
-uint16_t __ops_reader_pop_sum16(__ops_stream_t *);
+void pgp_reader_push_sum16(pgp_stream_t *);
+uint16_t pgp_reader_pop_sum16(pgp_stream_t *);
 
-void __ops_reader_push_se_ip_data(__ops_stream_t *, __ops_crypt_t *,
-				__ops_region_t *);
-void __ops_reader_pop_se_ip_data(__ops_stream_t *);
+void pgp_reader_push_se_ip_data(pgp_stream_t *, pgp_crypt_t *,
+				pgp_region_t *);
+void pgp_reader_pop_se_ip_data(pgp_stream_t *);
 
 /* */
-unsigned __ops_write_mdc(__ops_output_t *, const uint8_t *);
-unsigned __ops_write_se_ip_pktset(__ops_output_t *, const uint8_t *,
+unsigned pgp_write_mdc(pgp_output_t *, const uint8_t *);
+unsigned pgp_write_se_ip_pktset(pgp_output_t *, const uint8_t *,
 		       const unsigned,
-		       __ops_crypt_t *);
-void __ops_push_enc_crypt(__ops_output_t *, __ops_crypt_t *);
-int __ops_push_enc_se_ip(__ops_output_t *, const __ops_key_t *, const char *);
+		       pgp_crypt_t *);
+void pgp_push_enc_crypt(pgp_output_t *, pgp_crypt_t *);
+int pgp_push_enc_se_ip(pgp_output_t *, const pgp_key_t *, const char *);
 
 /* Secret Key checksum */
-void __ops_push_checksum_writer(__ops_output_t *, __ops_seckey_t *);
-unsigned __ops_pop_skey_checksum_writer(__ops_output_t *);
+void pgp_push_checksum_writer(pgp_output_t *, pgp_seckey_t *);
+unsigned pgp_pop_skey_checksum_writer(pgp_output_t *);
 
 
 /* memory writing */
-void __ops_setup_memory_write(__ops_output_t **, __ops_memory_t **, size_t);
-void __ops_teardown_memory_write(__ops_output_t *, __ops_memory_t *);
+void pgp_setup_memory_write(pgp_output_t **, pgp_memory_t **, size_t);
+void pgp_teardown_memory_write(pgp_output_t *, pgp_memory_t *);
 
 /* memory reading */
-void __ops_setup_memory_read(__ops_io_t *,
-				__ops_stream_t **,
-				__ops_memory_t *,
+void pgp_setup_memory_read(pgp_io_t *,
+				pgp_stream_t **,
+				pgp_memory_t *,
 				void *,
-				__ops_cb_ret_t callback(const __ops_packet_t *,
-					__ops_cbdata_t *),
+				pgp_cb_ret_t callback(const pgp_packet_t *,
+					pgp_cbdata_t *),
 				unsigned);
-void __ops_teardown_memory_read(__ops_stream_t *, __ops_memory_t *);
+void pgp_teardown_memory_read(pgp_stream_t *, pgp_memory_t *);
 
 /* file writing */
-int __ops_setup_file_write(__ops_output_t **, const char *, unsigned);
-void __ops_teardown_file_write(__ops_output_t *, int);
+int pgp_setup_file_write(pgp_output_t **, const char *, unsigned);
+void pgp_teardown_file_write(pgp_output_t *, int);
 
 /* file appending */
-int __ops_setup_file_append(__ops_output_t **, const char *);
-void __ops_teardown_file_append(__ops_output_t *, int);
+int pgp_setup_file_append(pgp_output_t **, const char *);
+void pgp_teardown_file_append(pgp_output_t *, int);
 
 /* file reading */
-int __ops_setup_file_read(__ops_io_t *,
-			__ops_stream_t **,
+int pgp_setup_file_read(pgp_io_t *,
+			pgp_stream_t **,
 			const char *,
 			void *,
-			__ops_cb_ret_t callback(const __ops_packet_t *,
-		    			__ops_cbdata_t *),
+			pgp_cb_ret_t callback(const pgp_packet_t *,
+		    			pgp_cbdata_t *),
 			unsigned);
-void __ops_teardown_file_read(__ops_stream_t *, int);
+void pgp_teardown_file_read(pgp_stream_t *, int);
 
-unsigned __ops_reader_set_accumulate(__ops_stream_t *, unsigned);
+unsigned pgp_reader_set_accumulate(pgp_stream_t *, unsigned);
 
 /* useful callbacks */
-__ops_cb_ret_t __ops_litdata_cb(const __ops_packet_t *, __ops_cbdata_t *);
-__ops_cb_ret_t __ops_pk_sesskey_cb(const __ops_packet_t *, __ops_cbdata_t *);
-__ops_cb_ret_t __ops_get_seckey_cb(const __ops_packet_t *, __ops_cbdata_t *);
+pgp_cb_ret_t pgp_litdata_cb(const pgp_packet_t *, pgp_cbdata_t *);
+pgp_cb_ret_t pgp_pk_sesskey_cb(const pgp_packet_t *, pgp_cbdata_t *);
+pgp_cb_ret_t pgp_get_seckey_cb(const pgp_packet_t *, pgp_cbdata_t *);
 
-int __ops_getpassphrase(void *, char *, size_t);
+int pgp_getpassphrase(void *, char *, size_t);
 
 #endif /* READERWRITER_H_ */

@@ -60,7 +60,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: packet-show.c,v 1.18 2010/11/04 06:45:28 agc Exp $");
+__RCSID("$NetBSD: packet-show.c,v 1.19 2010/11/07 08:39:59 agc Exp $");
 #endif
 
 #include <stdlib.h>
@@ -76,109 +76,109 @@ __RCSID("$NetBSD: packet-show.c,v 1.18 2010/11/04 06:45:28 agc Exp $");
  * Arrays of value->text maps
  */
 
-static __ops_map_t packet_tag_map[] =
+static pgp_map_t packet_tag_map[] =
 {
-	{OPS_PTAG_CT_RESERVED, "Reserved"},
-	{OPS_PTAG_CT_PK_SESSION_KEY, "Public-Key Encrypted Session Key"},
-	{OPS_PTAG_CT_SIGNATURE, "Signature"},
-	{OPS_PTAG_CT_SK_SESSION_KEY, "Symmetric-Key Encrypted Session Key"},
-	{OPS_PTAG_CT_1_PASS_SIG, "One-Pass Signature"},
-	{OPS_PTAG_CT_SECRET_KEY, "Secret Key"},
-	{OPS_PTAG_CT_PUBLIC_KEY, "Public Key"},
-	{OPS_PTAG_CT_SECRET_SUBKEY, "Secret Subkey"},
-	{OPS_PTAG_CT_COMPRESSED, "Compressed Data"},
-	{OPS_PTAG_CT_SE_DATA, "Symmetrically Encrypted Data"},
-	{OPS_PTAG_CT_MARKER, "Marker"},
-	{OPS_PTAG_CT_LITDATA, "Literal Data"},
-	{OPS_PTAG_CT_TRUST, "Trust"},
-	{OPS_PTAG_CT_USER_ID, "User ID"},
-	{OPS_PTAG_CT_PUBLIC_SUBKEY, "Public Subkey"},
-	{OPS_PTAG_CT_RESERVED2, "reserved2"},
-	{OPS_PTAG_CT_RESERVED3, "reserved3"},
-	{OPS_PTAG_CT_USER_ATTR, "User Attribute"},
-	{OPS_PTAG_CT_SE_IP_DATA,
+	{PGP_PTAG_CT_RESERVED, "Reserved"},
+	{PGP_PTAG_CT_PK_SESSION_KEY, "Public-Key Encrypted Session Key"},
+	{PGP_PTAG_CT_SIGNATURE, "Signature"},
+	{PGP_PTAG_CT_SK_SESSION_KEY, "Symmetric-Key Encrypted Session Key"},
+	{PGP_PTAG_CT_1_PASS_SIG, "One-Pass Signature"},
+	{PGP_PTAG_CT_SECRET_KEY, "Secret Key"},
+	{PGP_PTAG_CT_PUBLIC_KEY, "Public Key"},
+	{PGP_PTAG_CT_SECRET_SUBKEY, "Secret Subkey"},
+	{PGP_PTAG_CT_COMPRESSED, "Compressed Data"},
+	{PGP_PTAG_CT_SE_DATA, "Symmetrically Encrypted Data"},
+	{PGP_PTAG_CT_MARKER, "Marker"},
+	{PGP_PTAG_CT_LITDATA, "Literal Data"},
+	{PGP_PTAG_CT_TRUST, "Trust"},
+	{PGP_PTAG_CT_USER_ID, "User ID"},
+	{PGP_PTAG_CT_PUBLIC_SUBKEY, "Public Subkey"},
+	{PGP_PTAG_CT_RESERVED2, "reserved2"},
+	{PGP_PTAG_CT_RESERVED3, "reserved3"},
+	{PGP_PTAG_CT_USER_ATTR, "User Attribute"},
+	{PGP_PTAG_CT_SE_IP_DATA,
 		"Symmetric Encrypted and Integrity Protected Data"},
-	{OPS_PTAG_CT_MDC, "Modification Detection Code"},
-	{OPS_PARSER_PTAG, "OPS_PARSER_PTAG"},
-	{OPS_PTAG_RAW_SS, "OPS_PTAG_RAW_SS"},
-	{OPS_PTAG_SS_ALL, "OPS_PTAG_SS_ALL"},
-	{OPS_PARSER_PACKET_END, "OPS_PARSER_PACKET_END"},
-	{OPS_PTAG_SIG_SUBPKT_BASE, "OPS_PTAG_SIG_SUBPKT_BASE"},
-	{OPS_PTAG_SS_CREATION_TIME, "SS: Signature Creation Time"},
-	{OPS_PTAG_SS_EXPIRATION_TIME, "SS: Signature Expiration Time"},
-	{OPS_PTAG_SS_EXPORT_CERT, "SS: Exportable Certification"},
-	{OPS_PTAG_SS_TRUST, "SS: Trust Signature"},
-	{OPS_PTAG_SS_REGEXP, "SS: Regular Expression"},
-	{OPS_PTAG_SS_REVOCABLE, "SS: Revocable"},
-	{OPS_PTAG_SS_KEY_EXPIRY, "SS: Key Expiration Time"},
-	{OPS_PTAG_SS_RESERVED, "SS: Reserved"},
-	{OPS_PTAG_SS_PREFERRED_SKA, "SS: Preferred Secret Key Algorithm"},
-	{OPS_PTAG_SS_REVOCATION_KEY, "SS: Revocation Key"},
-	{OPS_PTAG_SS_ISSUER_KEY_ID, "SS: Issuer Key Id"},
-	{OPS_PTAG_SS_NOTATION_DATA, "SS: Notation Data"},
-	{OPS_PTAG_SS_PREFERRED_HASH, "SS: Preferred Hash Algorithm"},
-	{OPS_PTAG_SS_PREF_COMPRESS, "SS: Preferred Compression Algorithm"},
-	{OPS_PTAG_SS_KEYSERV_PREFS, "SS: Key Server Preferences"},
-	{OPS_PTAG_SS_PREF_KEYSERV, "SS: Preferred Key Server"},
-	{OPS_PTAG_SS_PRIMARY_USER_ID, "SS: Primary User ID"},
-	{OPS_PTAG_SS_POLICY_URI, "SS: Policy URI"},
-	{OPS_PTAG_SS_KEY_FLAGS, "SS: Key Flags"},
-	{OPS_PTAG_SS_SIGNERS_USER_ID, "SS: Signer's User ID"},
-	{OPS_PTAG_SS_REVOCATION_REASON, "SS: Reason for Revocation"},
-	{OPS_PTAG_SS_FEATURES, "SS: Features"},
-	{OPS_PTAG_SS_SIGNATURE_TARGET, "SS: Signature Target"},
-	{OPS_PTAG_SS_EMBEDDED_SIGNATURE, "SS: Embedded Signature"},
+	{PGP_PTAG_CT_MDC, "Modification Detection Code"},
+	{PGP_PARSER_PTAG, "PGP_PARSER_PTAG"},
+	{PGP_PTAG_RAW_SS, "PGP_PTAG_RAW_SS"},
+	{PGP_PTAG_SS_ALL, "PGP_PTAG_SS_ALL"},
+	{PGP_PARSER_PACKET_END, "PGP_PARSER_PACKET_END"},
+	{PGP_PTAG_SIG_SUBPKT_BASE, "PGP_PTAG_SIG_SUBPKT_BASE"},
+	{PGP_PTAG_SS_CREATION_TIME, "SS: Signature Creation Time"},
+	{PGP_PTAG_SS_EXPIRATION_TIME, "SS: Signature Expiration Time"},
+	{PGP_PTAG_SS_EXPORT_CERT, "SS: Exportable Certification"},
+	{PGP_PTAG_SS_TRUST, "SS: Trust Signature"},
+	{PGP_PTAG_SS_REGEXP, "SS: Regular Expression"},
+	{PGP_PTAG_SS_REVOCABLE, "SS: Revocable"},
+	{PGP_PTAG_SS_KEY_EXPIRY, "SS: Key Expiration Time"},
+	{PGP_PTAG_SS_RESERVED, "SS: Reserved"},
+	{PGP_PTAG_SS_PREFERRED_SKA, "SS: Preferred Secret Key Algorithm"},
+	{PGP_PTAG_SS_REVOCATION_KEY, "SS: Revocation Key"},
+	{PGP_PTAG_SS_ISSUER_KEY_ID, "SS: Issuer Key Id"},
+	{PGP_PTAG_SS_NOTATION_DATA, "SS: Notation Data"},
+	{PGP_PTAG_SS_PREFERRED_HASH, "SS: Preferred Hash Algorithm"},
+	{PGP_PTAG_SS_PREF_COMPRESS, "SS: Preferred Compression Algorithm"},
+	{PGP_PTAG_SS_KEYSERV_PREFS, "SS: Key Server Preferences"},
+	{PGP_PTAG_SS_PREF_KEYSERV, "SS: Preferred Key Server"},
+	{PGP_PTAG_SS_PRIMARY_USER_ID, "SS: Primary User ID"},
+	{PGP_PTAG_SS_POLICY_URI, "SS: Policy URI"},
+	{PGP_PTAG_SS_KEY_FLAGS, "SS: Key Flags"},
+	{PGP_PTAG_SS_SIGNERS_USER_ID, "SS: Signer's User ID"},
+	{PGP_PTAG_SS_REVOCATION_REASON, "SS: Reason for Revocation"},
+	{PGP_PTAG_SS_FEATURES, "SS: Features"},
+	{PGP_PTAG_SS_SIGNATURE_TARGET, "SS: Signature Target"},
+	{PGP_PTAG_SS_EMBEDDED_SIGNATURE, "SS: Embedded Signature"},
 
-	{OPS_PTAG_CT_LITDATA_HEADER, "CT: Literal Data Header"},
-	{OPS_PTAG_CT_LITDATA_BODY, "CT: Literal Data Body"},
-	{OPS_PTAG_CT_SIGNATURE_HEADER, "CT: Signature Header"},
-	{OPS_PTAG_CT_SIGNATURE_FOOTER, "CT: Signature Footer"},
-	{OPS_PTAG_CT_ARMOUR_HEADER, "CT: Armour Header"},
-	{OPS_PTAG_CT_ARMOUR_TRAILER, "CT: Armour Trailer"},
-	{OPS_PTAG_CT_SIGNED_CLEARTEXT_HEADER, "CT: Signed Cleartext Header"},
-	{OPS_PTAG_CT_SIGNED_CLEARTEXT_BODY, "CT: Signed Cleartext Body"},
-	{OPS_PTAG_CT_SIGNED_CLEARTEXT_TRAILER, "CT: Signed Cleartext Trailer"},
-	{OPS_PTAG_CT_UNARMOURED_TEXT, "CT: Unarmoured Text"},
-	{OPS_PTAG_CT_ENCRYPTED_SECRET_KEY, "CT: Encrypted Secret Key"},
-	{OPS_PTAG_CT_SE_DATA_HEADER, "CT: Sym Encrypted Data Header"},
-	{OPS_PTAG_CT_SE_DATA_BODY, "CT: Sym Encrypted Data Body"},
-	{OPS_PTAG_CT_SE_IP_DATA_HEADER, "CT: Sym Encrypted IP Data Header"},
-	{OPS_PTAG_CT_SE_IP_DATA_BODY, "CT: Sym Encrypted IP Data Body"},
-	{OPS_PTAG_CT_ENCRYPTED_PK_SESSION_KEY, "CT: Encrypted PK Session Key"},
-	{OPS_GET_PASSPHRASE, "CMD: Get Secret Key Passphrase"},
-	{OPS_GET_SECKEY, "CMD: Get Secret Key"},
-	{OPS_PARSER_ERROR, "OPS_PARSER_ERROR"},
-	{OPS_PARSER_ERRCODE, "OPS_PARSER_ERRCODE"},
+	{PGP_PTAG_CT_LITDATA_HEADER, "CT: Literal Data Header"},
+	{PGP_PTAG_CT_LITDATA_BODY, "CT: Literal Data Body"},
+	{PGP_PTAG_CT_SIGNATURE_HEADER, "CT: Signature Header"},
+	{PGP_PTAG_CT_SIGNATURE_FOOTER, "CT: Signature Footer"},
+	{PGP_PTAG_CT_ARMOUR_HEADER, "CT: Armour Header"},
+	{PGP_PTAG_CT_ARMOUR_TRAILER, "CT: Armour Trailer"},
+	{PGP_PTAG_CT_SIGNED_CLEARTEXT_HEADER, "CT: Signed Cleartext Header"},
+	{PGP_PTAG_CT_SIGNED_CLEARTEXT_BODY, "CT: Signed Cleartext Body"},
+	{PGP_PTAG_CT_SIGNED_CLEARTEXT_TRAILER, "CT: Signed Cleartext Trailer"},
+	{PGP_PTAG_CT_UNARMOURED_TEXT, "CT: Unarmoured Text"},
+	{PGP_PTAG_CT_ENCRYPTED_SECRET_KEY, "CT: Encrypted Secret Key"},
+	{PGP_PTAG_CT_SE_DATA_HEADER, "CT: Sym Encrypted Data Header"},
+	{PGP_PTAG_CT_SE_DATA_BODY, "CT: Sym Encrypted Data Body"},
+	{PGP_PTAG_CT_SE_IP_DATA_HEADER, "CT: Sym Encrypted IP Data Header"},
+	{PGP_PTAG_CT_SE_IP_DATA_BODY, "CT: Sym Encrypted IP Data Body"},
+	{PGP_PTAG_CT_ENCRYPTED_PK_SESSION_KEY, "CT: Encrypted PK Session Key"},
+	{PGP_GET_PASSPHRASE, "CMD: Get Secret Key Passphrase"},
+	{PGP_GET_SECKEY, "CMD: Get Secret Key"},
+	{PGP_PARSER_ERROR, "PGP_PARSER_ERROR"},
+	{PGP_PARSER_ERRCODE, "PGP_PARSER_ERRCODE"},
 
 	{0x00, NULL},		/* this is the end-of-array marker */
 };
 
-static __ops_map_t ss_type_map[] =
+static pgp_map_t ss_type_map[] =
 {
-	{OPS_PTAG_SS_CREATION_TIME, "Signature Creation Time"},
-	{OPS_PTAG_SS_EXPIRATION_TIME, "Signature Expiration Time"},
-	{OPS_PTAG_SS_TRUST, "Trust Signature"},
-	{OPS_PTAG_SS_REGEXP, "Regular Expression"},
-	{OPS_PTAG_SS_REVOCABLE, "Revocable"},
-	{OPS_PTAG_SS_KEY_EXPIRY, "Key Expiration Time"},
-	{OPS_PTAG_SS_PREFERRED_SKA, "Preferred Symmetric Algorithms"},
-	{OPS_PTAG_SS_REVOCATION_KEY, "Revocation Key"},
-	{OPS_PTAG_SS_ISSUER_KEY_ID, "Issuer key ID"},
-	{OPS_PTAG_SS_NOTATION_DATA, "Notation Data"},
-	{OPS_PTAG_SS_PREFERRED_HASH, "Preferred Hash Algorithms"},
-	{OPS_PTAG_SS_PREF_COMPRESS, "Preferred Compression Algorithms"},
-	{OPS_PTAG_SS_KEYSERV_PREFS, "Key Server Preferences"},
-	{OPS_PTAG_SS_PREF_KEYSERV, "Preferred Key Server"},
-	{OPS_PTAG_SS_PRIMARY_USER_ID, "Primary User ID"},
-	{OPS_PTAG_SS_POLICY_URI, "Policy URI"},
-	{OPS_PTAG_SS_KEY_FLAGS, "Key Flags"},
-	{OPS_PTAG_SS_REVOCATION_REASON, "Reason for Revocation"},
-	{OPS_PTAG_SS_FEATURES, "Features"},
+	{PGP_PTAG_SS_CREATION_TIME, "Signature Creation Time"},
+	{PGP_PTAG_SS_EXPIRATION_TIME, "Signature Expiration Time"},
+	{PGP_PTAG_SS_TRUST, "Trust Signature"},
+	{PGP_PTAG_SS_REGEXP, "Regular Expression"},
+	{PGP_PTAG_SS_REVOCABLE, "Revocable"},
+	{PGP_PTAG_SS_KEY_EXPIRY, "Key Expiration Time"},
+	{PGP_PTAG_SS_PREFERRED_SKA, "Preferred Symmetric Algorithms"},
+	{PGP_PTAG_SS_REVOCATION_KEY, "Revocation Key"},
+	{PGP_PTAG_SS_ISSUER_KEY_ID, "Issuer key ID"},
+	{PGP_PTAG_SS_NOTATION_DATA, "Notation Data"},
+	{PGP_PTAG_SS_PREFERRED_HASH, "Preferred Hash Algorithms"},
+	{PGP_PTAG_SS_PREF_COMPRESS, "Preferred Compression Algorithms"},
+	{PGP_PTAG_SS_KEYSERV_PREFS, "Key Server Preferences"},
+	{PGP_PTAG_SS_PREF_KEYSERV, "Preferred Key Server"},
+	{PGP_PTAG_SS_PRIMARY_USER_ID, "Primary User ID"},
+	{PGP_PTAG_SS_POLICY_URI, "Policy URI"},
+	{PGP_PTAG_SS_KEY_FLAGS, "Key Flags"},
+	{PGP_PTAG_SS_REVOCATION_REASON, "Reason for Revocation"},
+	{PGP_PTAG_SS_FEATURES, "Features"},
 	{0x00, NULL},		/* this is the end-of-array marker */
 };
 
 
-static __ops_map_t ss_rr_code_map[] =
+static pgp_map_t ss_rr_code_map[] =
 {
 	{0x00, "No reason specified"},
 	{0x01, "Key is superseded"},
@@ -188,112 +188,112 @@ static __ops_map_t ss_rr_code_map[] =
 	{0x00, NULL},		/* this is the end-of-array marker */
 };
 
-static __ops_map_t sig_type_map[] =
+static pgp_map_t sig_type_map[] =
 {
-	{OPS_SIG_BINARY, "Signature of a binary document"},
-	{OPS_SIG_TEXT, "Signature of a canonical text document"},
-	{OPS_SIG_STANDALONE, "Standalone signature"},
-	{OPS_CERT_GENERIC, "Generic certification of a User ID and Public Key packet"},
-	{OPS_CERT_PERSONA, "Personal certification of a User ID and Public Key packet"},
-	{OPS_CERT_CASUAL, "Casual certification of a User ID and Public Key packet"},
-	{OPS_CERT_POSITIVE, "Positive certification of a User ID and Public Key packet"},
-	{OPS_SIG_SUBKEY, "Subkey Binding Signature"},
-	{OPS_SIG_PRIMARY, "Primary Key Binding Signature"},
-	{OPS_SIG_DIRECT, "Signature directly on a key"},
-	{OPS_SIG_REV_KEY, "Key revocation signature"},
-	{OPS_SIG_REV_SUBKEY, "Subkey revocation signature"},
-	{OPS_SIG_REV_CERT, "Certification revocation signature"},
-	{OPS_SIG_TIMESTAMP, "Timestamp signature"},
-	{OPS_SIG_3RD_PARTY, "Third-Party Confirmation signature"},
+	{PGP_SIG_BINARY, "Signature of a binary document"},
+	{PGP_SIG_TEXT, "Signature of a canonical text document"},
+	{PGP_SIG_STANDALONE, "Standalone signature"},
+	{PGP_CERT_GENERIC, "Generic certification of a User ID and Public Key packet"},
+	{PGP_CERT_PERSONA, "Personal certification of a User ID and Public Key packet"},
+	{PGP_CERT_CASUAL, "Casual certification of a User ID and Public Key packet"},
+	{PGP_CERT_POSITIVE, "Positive certification of a User ID and Public Key packet"},
+	{PGP_SIG_SUBKEY, "Subkey Binding Signature"},
+	{PGP_SIG_PRIMARY, "Primary Key Binding Signature"},
+	{PGP_SIG_DIRECT, "Signature directly on a key"},
+	{PGP_SIG_REV_KEY, "Key revocation signature"},
+	{PGP_SIG_REV_SUBKEY, "Subkey revocation signature"},
+	{PGP_SIG_REV_CERT, "Certification revocation signature"},
+	{PGP_SIG_TIMESTAMP, "Timestamp signature"},
+	{PGP_SIG_3RD_PARTY, "Third-Party Confirmation signature"},
 	{0x00, NULL},		/* this is the end-of-array marker */
 };
 
-static __ops_map_t pubkey_alg_map[] =
+static pgp_map_t pubkey_alg_map[] =
 {
-	{OPS_PKA_RSA, "RSA (Encrypt or Sign)"},
-	{OPS_PKA_RSA_ENCRYPT_ONLY, "RSA Encrypt-Only"},
-	{OPS_PKA_RSA_SIGN_ONLY, "RSA Sign-Only"},
-	{OPS_PKA_ELGAMAL, "Elgamal (Encrypt-Only)"},
-	{OPS_PKA_DSA, "DSA"},
-	{OPS_PKA_RESERVED_ELLIPTIC_CURVE, "Reserved for Elliptic Curve"},
-	{OPS_PKA_RESERVED_ECDSA, "Reserved for ECDSA"},
-	{OPS_PKA_ELGAMAL_ENCRYPT_OR_SIGN, "Reserved (formerly Elgamal Encrypt or Sign"},
-	{OPS_PKA_RESERVED_DH, "Reserved for Diffie-Hellman (X9.42)"},
-	{OPS_PKA_PRIVATE00, "Private/Experimental"},
-	{OPS_PKA_PRIVATE01, "Private/Experimental"},
-	{OPS_PKA_PRIVATE02, "Private/Experimental"},
-	{OPS_PKA_PRIVATE03, "Private/Experimental"},
-	{OPS_PKA_PRIVATE04, "Private/Experimental"},
-	{OPS_PKA_PRIVATE05, "Private/Experimental"},
-	{OPS_PKA_PRIVATE06, "Private/Experimental"},
-	{OPS_PKA_PRIVATE07, "Private/Experimental"},
-	{OPS_PKA_PRIVATE08, "Private/Experimental"},
-	{OPS_PKA_PRIVATE09, "Private/Experimental"},
-	{OPS_PKA_PRIVATE10, "Private/Experimental"},
+	{PGP_PKA_RSA, "RSA (Encrypt or Sign)"},
+	{PGP_PKA_RSA_ENCRYPT_ONLY, "RSA Encrypt-Only"},
+	{PGP_PKA_RSA_SIGN_ONLY, "RSA Sign-Only"},
+	{PGP_PKA_ELGAMAL, "Elgamal (Encrypt-Only)"},
+	{PGP_PKA_DSA, "DSA"},
+	{PGP_PKA_RESERVED_ELLIPTIC_CURVE, "Reserved for Elliptic Curve"},
+	{PGP_PKA_RESERVED_ECDSA, "Reserved for ECDSA"},
+	{PGP_PKA_ELGAMAL_ENCRYPT_OR_SIGN, "Reserved (formerly Elgamal Encrypt or Sign"},
+	{PGP_PKA_RESERVED_DH, "Reserved for Diffie-Hellman (X9.42)"},
+	{PGP_PKA_PRIVATE00, "Private/Experimental"},
+	{PGP_PKA_PRIVATE01, "Private/Experimental"},
+	{PGP_PKA_PRIVATE02, "Private/Experimental"},
+	{PGP_PKA_PRIVATE03, "Private/Experimental"},
+	{PGP_PKA_PRIVATE04, "Private/Experimental"},
+	{PGP_PKA_PRIVATE05, "Private/Experimental"},
+	{PGP_PKA_PRIVATE06, "Private/Experimental"},
+	{PGP_PKA_PRIVATE07, "Private/Experimental"},
+	{PGP_PKA_PRIVATE08, "Private/Experimental"},
+	{PGP_PKA_PRIVATE09, "Private/Experimental"},
+	{PGP_PKA_PRIVATE10, "Private/Experimental"},
 	{0x00, NULL},		/* this is the end-of-array marker */
 };
 
-static __ops_map_t symm_alg_map[] =
+static pgp_map_t symm_alg_map[] =
 {
-	{OPS_SA_PLAINTEXT, "Plaintext or unencrypted data"},
-	{OPS_SA_IDEA, "IDEA"},
-	{OPS_SA_TRIPLEDES, "TripleDES"},
-	{OPS_SA_CAST5, "CAST5"},
-	{OPS_SA_BLOWFISH, "Blowfish"},
-	{OPS_SA_AES_128, "AES (128-bit key)"},
-	{OPS_SA_AES_192, "AES (192-bit key)"},
-	{OPS_SA_AES_256, "AES (256-bit key)"},
-	{OPS_SA_TWOFISH, "Twofish(256-bit key)"},
-	{OPS_SA_CAMELLIA_128, "Camellia (128-bit key)"},
-	{OPS_SA_CAMELLIA_192, "Camellia (192-bit key)"},
-	{OPS_SA_CAMELLIA_256, "Camellia (256-bit key)"},
+	{PGP_SA_PLAINTEXT, "Plaintext or unencrypted data"},
+	{PGP_SA_IDEA, "IDEA"},
+	{PGP_SA_TRIPLEDES, "TripleDES"},
+	{PGP_SA_CAST5, "CAST5"},
+	{PGP_SA_BLOWFISH, "Blowfish"},
+	{PGP_SA_AES_128, "AES (128-bit key)"},
+	{PGP_SA_AES_192, "AES (192-bit key)"},
+	{PGP_SA_AES_256, "AES (256-bit key)"},
+	{PGP_SA_TWOFISH, "Twofish(256-bit key)"},
+	{PGP_SA_CAMELLIA_128, "Camellia (128-bit key)"},
+	{PGP_SA_CAMELLIA_192, "Camellia (192-bit key)"},
+	{PGP_SA_CAMELLIA_256, "Camellia (256-bit key)"},
 	{0x00, NULL},		/* this is the end-of-array marker */
 };
 
-static __ops_map_t hash_alg_map[] =
+static pgp_map_t hash_alg_map[] =
 {
-	{OPS_HASH_MD5, "MD5"},
-	{OPS_HASH_SHA1, "SHA1"},
-	{OPS_HASH_RIPEMD, "RIPEMD160"},
-	{OPS_HASH_SHA256, "SHA256"},
-	{OPS_HASH_SHA384, "SHA384"},
-	{OPS_HASH_SHA512, "SHA512"},
-	{OPS_HASH_SHA224, "SHA224"},
+	{PGP_HASH_MD5, "MD5"},
+	{PGP_HASH_SHA1, "SHA1"},
+	{PGP_HASH_RIPEMD, "RIPEMD160"},
+	{PGP_HASH_SHA256, "SHA256"},
+	{PGP_HASH_SHA384, "SHA384"},
+	{PGP_HASH_SHA512, "SHA512"},
+	{PGP_HASH_SHA224, "SHA224"},
 	{0x00, NULL},		/* this is the end-of-array marker */
 };
 
-static __ops_map_t compression_alg_map[] =
+static pgp_map_t compression_alg_map[] =
 {
-	{OPS_C_NONE, "Uncompressed"},
-	{OPS_C_ZIP, "ZIP(RFC1951)"},
-	{OPS_C_ZLIB, "ZLIB(RFC1950)"},
-	{OPS_C_BZIP2, "Bzip2(BZ2)"},
+	{PGP_C_NONE, "Uncompressed"},
+	{PGP_C_ZIP, "ZIP(RFC1951)"},
+	{PGP_C_ZLIB, "ZLIB(RFC1950)"},
+	{PGP_C_BZIP2, "Bzip2(BZ2)"},
 	{0x00, NULL},		/* this is the end-of-array marker */
 };
 
-static __ops_bit_map_t ss_notation_map_byte0[] =
+static pgp_bit_map_t ss_notation_map_byte0[] =
 {
 	{0x80, "Human-readable"},
 	{0x00, NULL},
 };
 
-static __ops_bit_map_t *ss_notation_map[] =
+static pgp_bit_map_t *ss_notation_map[] =
 {
 	ss_notation_map_byte0,
 };
 
-static __ops_bit_map_t ss_feature_map_byte0[] =
+static pgp_bit_map_t ss_feature_map_byte0[] =
 {
 	{0x01, "Modification Detection"},
 	{0x00, NULL},
 };
 
-static __ops_bit_map_t *ss_feature_map[] =
+static pgp_bit_map_t *ss_feature_map[] =
 {
 	ss_feature_map_byte0,
 };
 
-static __ops_bit_map_t ss_key_flags_map[] =
+static pgp_bit_map_t ss_key_flags_map[] =
 {
 	{0x01, "May be used to certify other keys"},
 	{0x02, "May be used to sign data"},
@@ -304,7 +304,7 @@ static __ops_bit_map_t ss_key_flags_map[] =
 	{0x00, NULL},
 };
 
-static __ops_bit_map_t ss_key_server_prefs_map[] =
+static pgp_bit_map_t ss_key_server_prefs_map[] =
 {
 	{0x80, "Key holder requests that this key only be modified or updated by the key holder or an administrator of the key server"},
 	{0x00, NULL},
@@ -315,7 +315,7 @@ static __ops_bit_map_t ss_key_server_prefs_map[] =
  */
 
 static void 
-list_init(__ops_list_t *list)
+list_init(pgp_list_t *list)
 {
 	list->size = 0;
 	list->used = 0;
@@ -323,7 +323,7 @@ list_init(__ops_list_t *list)
 }
 
 static void 
-list_free_strings(__ops_list_t *list)
+list_free_strings(pgp_list_t *list)
 {
 	unsigned        i;
 
@@ -334,7 +334,7 @@ list_free_strings(__ops_list_t *list)
 }
 
 static void 
-list_free(__ops_list_t *list)
+list_free(pgp_list_t *list)
 {
 	if (list->strings)
 		free(list->strings);
@@ -342,7 +342,7 @@ list_free(__ops_list_t *list)
 }
 
 static unsigned 
-list_resize(__ops_list_t *list)
+list_resize(pgp_list_t *list)
 {
 	/*
 	 * We only resize in one direction - upwards. Algorithm used : double
@@ -363,7 +363,7 @@ list_resize(__ops_list_t *list)
 }
 
 static unsigned 
-add_str(__ops_list_t *list, const char *str)
+add_str(pgp_list_t *list, const char *str)
 {
 	if (list->size == list->used && !list_resize(list)) {
 		return 0;
@@ -374,18 +374,18 @@ add_str(__ops_list_t *list, const char *str)
 
 /* find a bitfield in a map - serial search */
 static const char *
-find_bitfield(__ops_bit_map_t *map, uint8_t octet)
+find_bitfield(pgp_bit_map_t *map, uint8_t octet)
 {
-	__ops_bit_map_t  *row;
+	pgp_bit_map_t  *row;
 
 	for (row = map; row->string != NULL && row->mask != octet ; row++) {
 	}
 	return (row->string) ? row->string : "Unknown";
 }
 
-/* ! generic function to initialise __ops_text_t structure */
+/* ! generic function to initialise pgp_text_t structure */
 void 
-__ops_text_init(__ops_text_t *text)
+pgp_text_init(pgp_text_t *text)
 {
 	list_init(&text->known);
 	list_init(&text->unknown);
@@ -394,12 +394,12 @@ __ops_text_init(__ops_text_t *text)
 /**
  * \ingroup Core_Print
  *
- * __ops_text_free() frees the memory used by an __ops_text_t structure
+ * pgp_text_free() frees the memory used by an pgp_text_t structure
  *
  * \param text Pointer to a previously allocated structure. This structure and its contents will be freed.
  */
 void 
-__ops_text_free(__ops_text_t *text)
+pgp_text_free(pgp_text_t *text)
 {
 	/* Strings in "known" array will be constants, so don't free them */
 	list_free(&text->known);
@@ -417,7 +417,7 @@ __ops_text_free(__ops_text_t *text)
 /* XXX: should this (and many others) be unsigned? */
 /* ! generic function which adds text derived from single octet map to text */
 static unsigned
-add_str_from_octet_map(__ops_text_t *map, char *str, uint8_t octet)
+add_str_from_octet_map(pgp_text_t *map, char *str, uint8_t octet)
 {
 	if (str && !add_str(&map->known, str)) {
 		/*
@@ -449,7 +449,7 @@ add_str_from_octet_map(__ops_text_t *map, char *str, uint8_t octet)
 
 /* ! generic function which adds text derived from single bit map to text */
 static unsigned 
-add_bitmap_entry(__ops_text_t *map, const char *str, uint8_t bit)
+add_bitmap_entry(pgp_text_t *map, const char *str, uint8_t bit)
 {
 	const char     *fmt_unknown = "Unknown bit(0x%x)";
 
@@ -492,23 +492,23 @@ add_bitmap_entry(__ops_text_t *map, const char *str, uint8_t bit)
  *
  */
 
-static __ops_text_t *
-text_from_bytemapped_octets(const __ops_data_t *data,
+static pgp_text_t *
+text_from_bytemapped_octets(const pgp_data_t *data,
 			    const char *(*text_fn)(uint8_t octet))
 {
-	__ops_text_t	*text;
+	pgp_text_t	*text;
 	const char	*str;
 	unsigned	 i;
 
 	/*
-	 * ! allocate and initialise __ops_text_t structure to store derived
+	 * ! allocate and initialise pgp_text_t structure to store derived
 	 * strings
 	 */
 	if ((text = calloc(1, sizeof(*text))) == NULL) {
 		return NULL;
 	}
 
-	__ops_text_init(text);
+	pgp_text_init(text);
 
 	/* ! for each octet in field ... */
 	for (i = 0; i < data->len; i++) {
@@ -518,7 +518,7 @@ text_from_bytemapped_octets(const __ops_data_t *data,
 		/* ! and add to text */
 		if (!add_str_from_octet_map(text, netpgp_strdup(str),
 						data->contents[i])) {
-			__ops_text_free(text);
+			pgp_text_free(text);
 			return NULL;
 		}
 	}
@@ -535,24 +535,24 @@ text_from_bytemapped_octets(const __ops_data_t *data,
  * of this byte array, derived from each bit of each octet.
  *
  */
-static __ops_text_t *
-showall_octets_bits(__ops_data_t *data, __ops_bit_map_t **map, size_t nmap)
+static pgp_text_t *
+showall_octets_bits(pgp_data_t *data, pgp_bit_map_t **map, size_t nmap)
 {
-	__ops_text_t	*text;
+	pgp_text_t	*text;
 	const char	*str;
 	unsigned         i;
 	uint8_t		 mask, bit;
 	int              j = 0;
 
 	/*
-	 * ! allocate and initialise __ops_text_t structure to store derived
+	 * ! allocate and initialise pgp_text_t structure to store derived
 	 * strings
 	 */
-	if ((text = calloc(1, sizeof(__ops_text_t))) == NULL) {
+	if ((text = calloc(1, sizeof(pgp_text_t))) == NULL) {
 		return NULL;
 	}
 
-	__ops_text_init(text);
+	pgp_text_init(text);
 
 	/* ! for each octet in field ... */
 	for (i = 0; i < data->len; i++) {
@@ -564,7 +564,7 @@ showall_octets_bits(__ops_data_t *data, __ops_bit_map_t **map, size_t nmap)
 				str = (i >= nmap) ? "Unknown" :
 					find_bitfield(map[i], bit);
 				if (!add_bitmap_entry(text, str, bit)) {
-					__ops_text_free(text);
+					pgp_text_free(text);
 					return NULL;
 				}
 			}
@@ -584,11 +584,11 @@ showall_octets_bits(__ops_data_t *data, __ops_bit_map_t **map, size_t nmap)
  * \return string or "Unknown"
 */
 const char     *
-__ops_show_packet_tag(__ops_content_enum packet_tag)
+pgp_show_packet_tag(pgp_content_enum packet_tag)
 {
 	const char     *ret;
 
-	ret = __ops_str_from_map(packet_tag, packet_tag_map);
+	ret = pgp_str_from_map(packet_tag, packet_tag_map);
 	if (!ret) {
 		ret = "Unknown Tag";
 	}
@@ -603,9 +603,9 @@ __ops_show_packet_tag(__ops_content_enum packet_tag)
  * \return string or "Unknown"
  */
 const char     *
-__ops_show_ss_type(__ops_content_enum ss_type)
+pgp_show_ss_type(pgp_content_enum ss_type)
 {
-	return __ops_str_from_map(ss_type, ss_type_map);
+	return pgp_str_from_map(ss_type, ss_type_map);
 }
 
 /**
@@ -616,9 +616,9 @@ __ops_show_ss_type(__ops_content_enum ss_type)
  * \return string or "Unknown"
  */
 const char     *
-__ops_show_ss_rr_code(__ops_ss_rr_code_t ss_rr_code)
+pgp_show_ss_rr_code(pgp_ss_rr_code_t ss_rr_code)
 {
-	return __ops_str_from_map(ss_rr_code, ss_rr_code_map);
+	return pgp_str_from_map(ss_rr_code, ss_rr_code_map);
 }
 
 /**
@@ -629,9 +629,9 @@ __ops_show_ss_rr_code(__ops_ss_rr_code_t ss_rr_code)
  * \return string or "Unknown"
  */
 const char     *
-__ops_show_sig_type(__ops_sig_type_t sig_type)
+pgp_show_sig_type(pgp_sig_type_t sig_type)
 {
-	return __ops_str_from_map(sig_type, sig_type_map);
+	return pgp_str_from_map(sig_type, sig_type_map);
 }
 
 /**
@@ -642,9 +642,9 @@ __ops_show_sig_type(__ops_sig_type_t sig_type)
  * \return string or "Unknown"
  */
 const char     *
-__ops_show_pka(__ops_pubkey_alg_t pka)
+pgp_show_pka(pgp_pubkey_alg_t pka)
 {
-	return __ops_str_from_map(pka, pubkey_alg_map);
+	return pgp_str_from_map(pka, pubkey_alg_map);
 }
 
 /**
@@ -654,9 +654,9 @@ __ops_show_pka(__ops_pubkey_alg_t pka)
  * \return string or "Unknown"
 */
 const char     *
-__ops_show_ss_zpref(uint8_t octet)
+pgp_show_ss_zpref(uint8_t octet)
 {
-	return __ops_str_from_map(octet, compression_alg_map);
+	return pgp_str_from_map(octet, compression_alg_map);
 }
 
 /**
@@ -667,11 +667,11 @@ __ops_show_ss_zpref(uint8_t octet)
  * \return NULL if cannot allocate memory or other error
  * \return pointer to structure, if no error
  */
-__ops_text_t     *
-__ops_showall_ss_zpref(const __ops_data_t *ss_zpref)
+pgp_text_t     *
+pgp_showall_ss_zpref(const pgp_data_t *ss_zpref)
 {
 	return text_from_bytemapped_octets(ss_zpref,
-					&__ops_show_ss_zpref);
+					&pgp_show_ss_zpref);
 }
 
 
@@ -683,9 +683,9 @@ __ops_showall_ss_zpref(const __ops_data_t *ss_zpref)
  * \return string or "Unknown"
  */
 const char     *
-__ops_show_hash_alg(uint8_t hash)
+pgp_show_hash_alg(uint8_t hash)
 {
-	return __ops_str_from_map(hash, hash_alg_map);
+	return pgp_str_from_map(hash, hash_alg_map);
 }
 
 /**
@@ -696,17 +696,17 @@ __ops_show_hash_alg(uint8_t hash)
  * \return NULL if cannot allocate memory or other error
  * \return pointer to structure, if no error
  */
-__ops_text_t     *
-__ops_showall_ss_hashpref(const __ops_data_t *ss_hashpref)
+pgp_text_t     *
+pgp_showall_ss_hashpref(const pgp_data_t *ss_hashpref)
 {
 	return text_from_bytemapped_octets(ss_hashpref,
-					   &__ops_show_hash_alg);
+					   &pgp_show_hash_alg);
 }
 
 const char     *
-__ops_show_symm_alg(uint8_t hash)
+pgp_show_symm_alg(uint8_t hash)
 {
-	return __ops_str_from_map(hash, symm_alg_map);
+	return pgp_str_from_map(hash, symm_alg_map);
 }
 
 /**
@@ -716,9 +716,9 @@ __ops_show_symm_alg(uint8_t hash)
  * \return string or "Unknown"
 */
 const char     *
-__ops_show_ss_skapref(uint8_t octet)
+pgp_show_ss_skapref(uint8_t octet)
 {
-	return __ops_str_from_map(octet, symm_alg_map);
+	return pgp_str_from_map(octet, symm_alg_map);
 }
 
 /**
@@ -729,11 +729,11 @@ __ops_show_ss_skapref(uint8_t octet)
  * \return NULL if cannot allocate memory or other error
  * \return pointer to structure, if no error
  */
-__ops_text_t     *
-__ops_showall_ss_skapref(const __ops_data_t *ss_skapref)
+pgp_text_t     *
+pgp_showall_ss_skapref(const pgp_data_t *ss_skapref)
 {
 	return text_from_bytemapped_octets(ss_skapref,
-					   &__ops_show_ss_skapref);
+					   &pgp_show_ss_skapref);
 }
 
 /**
@@ -743,9 +743,9 @@ __ops_showall_ss_skapref(const __ops_data_t *ss_skapref)
  * \return string or "Unknown"
 */
 static const char *
-__ops_show_ss_feature(uint8_t octet, unsigned offset)
+pgp_show_ss_feature(uint8_t octet, unsigned offset)
 {
-	if (offset >= OPS_ARRAY_SIZE(ss_feature_map)) {
+	if (offset >= PGP_ARRAY_SIZE(ss_feature_map)) {
 		return "Unknown";
 	}
 	return find_bitfield(ss_feature_map[offset], octet);
@@ -760,10 +760,10 @@ __ops_show_ss_feature(uint8_t octet, unsigned offset)
  * \return pointer to structure, if no error
  */
 /* XXX: shouldn't this use show_all_octets_bits? */
-__ops_text_t     *
-__ops_showall_ss_features(__ops_data_t ss_features)
+pgp_text_t     *
+pgp_showall_ss_features(pgp_data_t ss_features)
 {
-	__ops_text_t	*text;
+	pgp_text_t	*text;
 	const char	*str;
 	unsigned	 i;
 	uint8_t		 mask, bit;
@@ -773,16 +773,16 @@ __ops_showall_ss_features(__ops_data_t ss_features)
 		return NULL;
 	}
 
-	__ops_text_init(text);
+	pgp_text_init(text);
 
 	for (i = 0; i < ss_features.len; i++) {
 		mask = 0x80;
 		for (j = 0; j < 8; j++, mask = (unsigned)mask >> 1) {
 			bit = ss_features.contents[i] & mask;
 			if (bit) {
-				str = __ops_show_ss_feature(bit, i);
+				str = pgp_show_ss_feature(bit, i);
 				if (!add_bitmap_entry(text, str, bit)) {
-					__ops_text_free(text);
+					pgp_text_free(text);
 					return NULL;
 				}
 			}
@@ -799,7 +799,7 @@ __ops_showall_ss_features(__ops_data_t ss_features)
  * \return
 */
 const char     *
-__ops_show_ss_key_flag(uint8_t octet, __ops_bit_map_t *map)
+pgp_show_ss_key_flag(uint8_t octet, pgp_bit_map_t *map)
 {
 	return find_bitfield(map, octet);
 }
@@ -812,10 +812,10 @@ __ops_show_ss_key_flag(uint8_t octet, __ops_bit_map_t *map)
  * \return NULL if cannot allocate memory or other error
  * \return pointer to structure, if no error
  */
-__ops_text_t     *
-__ops_showall_ss_key_flags(const __ops_data_t *ss_key_flags)
+pgp_text_t     *
+pgp_showall_ss_key_flags(const pgp_data_t *ss_key_flags)
 {
-	__ops_text_t	*text;
+	pgp_text_t	*text;
 	const char	*str;
 	uint8_t		 mask, bit;
 	int              i;
@@ -824,15 +824,15 @@ __ops_showall_ss_key_flags(const __ops_data_t *ss_key_flags)
 		return NULL;
 	}
 
-	__ops_text_init(text);
+	pgp_text_init(text);
 
 	/* xxx - TBD: extend to handle multiple octets of bits - rachel */
 	for (i = 0, mask = 0x80; i < 8; i++, mask = (unsigned)mask >> 1) {
 		bit = ss_key_flags->contents[0] & mask;
 		if (bit) {
-			str = __ops_show_ss_key_flag(bit, ss_key_flags_map);
+			str = pgp_show_ss_key_flag(bit, ss_key_flags_map);
 			if (!add_bitmap_entry(text, netpgp_strdup(str), bit)) {
-				__ops_text_free(text);
+				pgp_text_free(text);
 				return NULL;
 			}
 		}
@@ -854,7 +854,7 @@ __ops_showall_ss_key_flags(const __ops_data_t *ss_key_flags)
  * \return string or "Unknown"
  */
 const char     *
-__ops_show_keyserv_pref(uint8_t prefs, __ops_bit_map_t *map)
+pgp_show_keyserv_pref(uint8_t prefs, pgp_bit_map_t *map)
 {
 	return find_bitfield(map, prefs);
 }
@@ -867,10 +867,10 @@ __ops_show_keyserv_pref(uint8_t prefs, __ops_bit_map_t *map)
  * \return pointer to structure, if no error
  *
 */
-__ops_text_t     *
-__ops_show_keyserv_prefs(const __ops_data_t *prefs)
+pgp_text_t     *
+pgp_show_keyserv_prefs(const pgp_data_t *prefs)
 {
-	__ops_text_t	*text;
+	pgp_text_t	*text;
 	const char	*str;
 	uint8_t		 mask, bit;
 	int              i = 0;
@@ -879,17 +879,17 @@ __ops_show_keyserv_prefs(const __ops_data_t *prefs)
 		return NULL;
 	}
 
-	__ops_text_init(text);
+	pgp_text_init(text);
 
 	/* xxx - TBD: extend to handle multiple octets of bits - rachel */
 
 	for (i = 0, mask = 0x80; i < 8; i++, mask = (unsigned)mask >> 1) {
 		bit = prefs->contents[0] & mask;
 		if (bit) {
-			str = __ops_show_keyserv_pref(bit,
+			str = pgp_show_keyserv_pref(bit,
 						ss_key_server_prefs_map);
 			if (!add_bitmap_entry(text, netpgp_strdup(str), bit)) {
-				__ops_text_free(text);
+				pgp_text_free(text);
 				return NULL;
 			}
 		}
@@ -909,10 +909,10 @@ __ops_show_keyserv_prefs(const __ops_data_t *prefs)
  * \return NULL if cannot allocate memory or other error
  * \return pointer to structure, if no error
  */
-__ops_text_t     *
-__ops_showall_notation(__ops_ss_notation_t ss_notation)
+pgp_text_t     *
+pgp_showall_notation(pgp_ss_notation_t ss_notation)
 {
 	return showall_octets_bits(&ss_notation.flags,
 				ss_notation_map,
-				OPS_ARRAY_SIZE(ss_notation_map));
+				PGP_ARRAY_SIZE(ss_notation_map));
 }

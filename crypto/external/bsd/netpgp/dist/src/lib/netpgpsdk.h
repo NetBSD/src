@@ -34,36 +34,36 @@
 #include "signature.h"
 #include "packet-show.h"
 
-typedef struct __ops_validation_t {
+typedef struct pgp_validation_t {
 	unsigned		 validc;
-	__ops_sig_info_t	*valid_sigs;
+	pgp_sig_info_t	*valid_sigs;
 	unsigned		 invalidc;
-	__ops_sig_info_t	*invalid_sigs;
+	pgp_sig_info_t	*invalid_sigs;
 	unsigned		 unknownc;
-	__ops_sig_info_t	*unknown_sigs;
+	pgp_sig_info_t	*unknown_sigs;
 	time_t			 birthtime;
 	time_t			 duration;
-} __ops_validation_t;
+} pgp_validation_t;
 
-void            __ops_validate_result_free(__ops_validation_t *);
+void            pgp_validate_result_free(pgp_validation_t *);
 
 unsigned 
-__ops_validate_key_sigs(__ops_validation_t *,
-		const __ops_key_t *,
-		const __ops_keyring_t *,
-		__ops_cb_ret_t cb(const __ops_packet_t *, __ops_cbdata_t *));
+pgp_validate_key_sigs(pgp_validation_t *,
+		const pgp_key_t *,
+		const pgp_keyring_t *,
+		pgp_cb_ret_t cb(const pgp_packet_t *, pgp_cbdata_t *));
 
 unsigned
-__ops_validate_all_sigs(__ops_validation_t *,
-		const __ops_keyring_t *,
-		__ops_cb_ret_t cb(const __ops_packet_t *, __ops_cbdata_t *));
+pgp_validate_all_sigs(pgp_validation_t *,
+		const pgp_keyring_t *,
+		pgp_cb_ret_t cb(const pgp_packet_t *, pgp_cbdata_t *));
 
-unsigned   __ops_check_sig(const uint8_t *,
-		unsigned, const __ops_sig_t *, const __ops_pubkey_t *);
+unsigned   pgp_check_sig(const uint8_t *,
+		unsigned, const pgp_sig_t *, const pgp_pubkey_t *);
 
-const char     *__ops_get_info(const char *type);
+const char     *pgp_get_info(const char *type);
 
-int __ops_asprintf(char **, const char *, ...);
+int pgp_asprintf(char **, const char *, ...);
 
 void netpgp_log(const char *, ...);
 

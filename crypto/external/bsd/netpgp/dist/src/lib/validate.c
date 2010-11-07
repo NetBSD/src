@@ -54,7 +54,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: validate.c,v 1.41 2010/11/04 16:24:22 agc Exp $");
+__RCSID("$NetBSD: validate.c,v 1.42 2010/11/07 08:39:59 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -90,14 +90,14 @@ __RCSID("$NetBSD: validate.c,v 1.41 2010/11/04 16:24:22 agc Exp $");
 
 
 static int 
-keydata_reader(void *dest, size_t length, __ops_error_t **errors,
-	       __ops_reader_t *readinfo,
-	       __ops_cbdata_t *cbinfo)
+keydata_reader(void *dest, size_t length, pgp_error_t **errors,
+	       pgp_reader_t *readinfo,
+	       pgp_cbdata_t *cbinfo)
 {
-	validate_reader_t *reader = __ops_reader_get_arg(readinfo);
+	validate_reader_t *reader = pgp_reader_get_arg(readinfo);
 
-	__OPS_USED(errors);
-	__OPS_USED(cbinfo);
+	__PGP_USED(errors);
+	__PGP_USED(cbinfo);
 	if (reader->offset == reader->key->packets[reader->packet].length) {
 		reader->packet += 1;
 		reader->offset = 0;
@@ -125,14 +125,14 @@ keydata_reader(void *dest, size_t length, __ops_error_t **errors,
 }
 
 static void 
-free_sig_info(__ops_sig_info_t *sig)
+free_sig_info(pgp_sig_info_t *sig)
 {
 	free(sig->v4_hashed);
 	free(sig);
 }
 
 static void 
-copy_sig_info(__ops_sig_info_t *dst, const __ops_sig_info_t *src)
+copy_sig_info(pgp_sig_info_t *dst, const pgp_sig_info_t *src)
 {
 	(void) memcpy(dst, src, sizeof(*src));
 	if ((dst->v4_hashed = calloc(1, src->v4_hashlen)) == NULL) {
@@ -143,16 +143,16 @@ copy_sig_info(__ops_sig_info_t *dst, const __ops_sig_info_t *src)
 }
 
 static int 
-add_sig_to_list(const __ops_sig_info_t *sig, __ops_sig_info_t **sigs,
+add_sig_to_list(const pgp_sig_info_t *sig, pgp_sig_info_t **sigs,
 			unsigned *count)
 {
-	__ops_sig_info_t	*newsigs;
+	pgp_sig_info_t	*newsigs;
 
 	if (*count == 0) {
-		newsigs = calloc(*count + 1, sizeof(__ops_sig_info_t));
+		newsigs = calloc(*count + 1, sizeof(pgp_sig_info_t));
 	} else {
 		newsigs = realloc(*sigs,
-				(*count + 1) * sizeof(__ops_sig_info_t));
+				(*count + 1) * sizeof(pgp_sig_info_t));
 	}
 	if (newsigs == NULL) {
 		(void) fprintf(stderr, "add_sig_to_list: alloc failure\n");
@@ -169,7 +169,7 @@ The hash value is calculated by the following method:
 + hash the data using the given digest algorithm
 + hash the hash value onto the end
 + hash the trailer - 6 bytes
-  [OPS_V4][0xff][len >> 24][len >> 16][len >> 8][len & 0xff]
+  [PGP_V4][0xff][len >> 24][len >> 16][len >> 8][len & 0xff]
 to give the final hash value that is checked against the one in the signature
 */
 
@@ -177,23 +177,23 @@ to give the final hash value that is checked against the one in the signature
 unsigned
 check_binary_sig(const uint8_t *data,
 		const unsigned len,
-		const __ops_sig_t *sig,
-		const __ops_pubkey_t *signer)
+		const pgp_sig_t *sig,
+		const pgp_pubkey_t *signer)
 {
 	unsigned    hashedlen;
-	__ops_hash_t	hash;
+	pgp_hash_t	hash;
 	unsigned	n;
-	uint8_t		hashout[OPS_MAX_HASH_SIZE];
+	uint8_t		hashout[PGP_MAX_HASH_SIZE];
 	uint8_t		trailer[6];
 
-	__ops_hash_any(&hash, sig->info.hash_alg);
+	pgp_hash_any(&hash, sig->info.hash_alg);
 	if (!hash.init(&hash)) {
 		(void) fprintf(stderr, "check_binary_sig: bad hash init\n");
 		return 0;
 	}
 	hash.add(&hash, data, len);
 	switch (sig->info.version) {
-	case OPS_V3:
+	case PGP_V3:
 		trailer[0] = sig->info.type;
 		trailer[1] = (unsigned)(sig->info.birthtime) >> 24;
 		trailer[2] = (unsigned)(sig->info.birthtime) >> 16;
@@ -202,8 +202,8 @@ check_binary_sig(const uint8_t *data,
 		hash.add(&hash, trailer, 5);
 		break;
 
-	case OPS_V4:
-		if (__ops_get_debug_level(__FILE__)) {
+	case PGP_V4:
+		if (pgp_get_debug_level(__FILE__)) {
 			hexdump(stderr, "v4 hash", sig->info.v4_hashed,
 					sig->info.v4_hashlen);
 		}
@@ -225,80 +225,80 @@ check_binary_sig(const uint8_t *data,
 	}
 
 	n = hash.finish(&hash, hashout);
-	if (__ops_get_debug_level(__FILE__)) {
+	if (pgp_get_debug_level(__FILE__)) {
 		hexdump(stdout, "hash out", hashout, n);
 	}
-	return __ops_check_sig(hashout, n, sig, signer);
+	return pgp_check_sig(hashout, n, sig, signer);
 }
 
-__ops_cb_ret_t
-__ops_validate_key_cb(const __ops_packet_t *pkt, __ops_cbdata_t *cbinfo)
+pgp_cb_ret_t
+pgp_validate_key_cb(const pgp_packet_t *pkt, pgp_cbdata_t *cbinfo)
 {
-	const __ops_contents_t	 *content = &pkt->u;
-	const __ops_key_t	 *signer;
+	const pgp_contents_t	 *content = &pkt->u;
+	const pgp_key_t	 *signer;
 	validate_key_cb_t	 *key;
-	__ops_pubkey_t		 *sigkey;
-	__ops_error_t		**errors;
-	__ops_io_t		 *io;
+	pgp_pubkey_t		 *sigkey;
+	pgp_error_t		**errors;
+	pgp_io_t		 *io;
 	unsigned		  from;
 	unsigned		  valid = 0;
 
 	io = cbinfo->io;
-	if (__ops_get_debug_level(__FILE__)) {
+	if (pgp_get_debug_level(__FILE__)) {
 		(void) fprintf(io->errs, "%s\n",
-				__ops_show_packet_tag(pkt->tag));
+				pgp_show_packet_tag(pkt->tag));
 	}
-	key = __ops_callback_arg(cbinfo);
-	errors = __ops_callback_errors(cbinfo);
+	key = pgp_callback_arg(cbinfo);
+	errors = pgp_callback_errors(cbinfo);
 	switch (pkt->tag) {
-	case OPS_PTAG_CT_PUBLIC_KEY:
+	case PGP_PTAG_CT_PUBLIC_KEY:
 		if (key->pubkey.version != 0) {
 			(void) fprintf(io->errs,
-				"__ops_validate_key_cb: version bad\n");
-			return OPS_FINISHED;
+				"pgp_validate_key_cb: version bad\n");
+			return PGP_FINISHED;
 		}
 		key->pubkey = content->pubkey;
-		return OPS_KEEP_MEMORY;
+		return PGP_KEEP_MEMORY;
 
-	case OPS_PTAG_CT_PUBLIC_SUBKEY:
+	case PGP_PTAG_CT_PUBLIC_SUBKEY:
 		if (key->subkey.version) {
-			__ops_pubkey_free(&key->subkey);
+			pgp_pubkey_free(&key->subkey);
 		}
 		key->subkey = content->pubkey;
-		return OPS_KEEP_MEMORY;
+		return PGP_KEEP_MEMORY;
 
-	case OPS_PTAG_CT_SECRET_KEY:
+	case PGP_PTAG_CT_SECRET_KEY:
 		key->seckey = content->seckey;
 		key->pubkey = key->seckey.pubkey;
-		return OPS_KEEP_MEMORY;
+		return PGP_KEEP_MEMORY;
 
-	case OPS_PTAG_CT_USER_ID:
+	case PGP_PTAG_CT_USER_ID:
 		if (key->userid) {
-			__ops_userid_free(&key->userid);
+			pgp_userid_free(&key->userid);
 		}
 		key->userid = content->userid;
 		key->last_seen = ID;
-		return OPS_KEEP_MEMORY;
+		return PGP_KEEP_MEMORY;
 
-	case OPS_PTAG_CT_USER_ATTR:
+	case PGP_PTAG_CT_USER_ATTR:
 		if (content->userattr.len == 0) {
 			(void) fprintf(io->errs,
-			"__ops_validate_key_cb: user attribute length 0");
-			return OPS_FINISHED;
+			"pgp_validate_key_cb: user attribute length 0");
+			return PGP_FINISHED;
 		}
 		(void) fprintf(io->outs, "user attribute, length=%d\n",
 			(int) content->userattr.len);
 		if (key->userattr.len) {
-			__ops_data_free(&key->userattr);
+			pgp_data_free(&key->userattr);
 		}
 		key->userattr = content->userattr;
 		key->last_seen = ATTRIBUTE;
-		return OPS_KEEP_MEMORY;
+		return PGP_KEEP_MEMORY;
 
-	case OPS_PTAG_CT_SIGNATURE:	/* V3 sigs */
-	case OPS_PTAG_CT_SIGNATURE_FOOTER:	/* V4 sigs */
+	case PGP_PTAG_CT_SIGNATURE:	/* V3 sigs */
+	case PGP_PTAG_CT_SIGNATURE_FOOTER:	/* V4 sigs */
 		from = 0;
-		signer = __ops_getkeybyid(io, key->keyring,
+		signer = pgp_getkeybyid(io, key->keyring,
 					 content->sig.info.signer_id,
 					 &from, &sigkey);
 		if (!signer) {
@@ -306,8 +306,8 @@ __ops_validate_key_cb(const __ops_packet_t *pkt, __ops_cbdata_t *cbinfo)
 				&key->result->unknown_sigs,
 				&key->result->unknownc)) {
 					(void) fprintf(io->errs,
-					"__ops_validate_key_cb: user attribute length 0");
-					return OPS_FINISHED;
+					"pgp_validate_key_cb: user attribute length 0");
+					return PGP_FINISHED;
 			}
 			break;
 		}
@@ -316,60 +316,60 @@ __ops_validate_key_cb(const __ops_packet_t *pkt, __ops_cbdata_t *cbinfo)
 				"WARNING: signature made with encryption key\n");
 		}
 		switch (content->sig.info.type) {
-		case OPS_CERT_GENERIC:
-		case OPS_CERT_PERSONA:
-		case OPS_CERT_CASUAL:
-		case OPS_CERT_POSITIVE:
-		case OPS_SIG_REV_CERT:
+		case PGP_CERT_GENERIC:
+		case PGP_CERT_PERSONA:
+		case PGP_CERT_CASUAL:
+		case PGP_CERT_POSITIVE:
+		case PGP_SIG_REV_CERT:
 			valid = (key->last_seen == ID) ?
-			    __ops_check_useridcert_sig(&key->pubkey,
+			    pgp_check_useridcert_sig(&key->pubkey,
 					key->userid,
 					&content->sig,
-					__ops_get_pubkey(signer),
+					pgp_get_pubkey(signer),
 					key->reader->key->packets[
 						key->reader->packet].raw) :
-			    __ops_check_userattrcert_sig(&key->pubkey,
+			    pgp_check_userattrcert_sig(&key->pubkey,
 					&key->userattr,
 					&content->sig,
-				       __ops_get_pubkey(signer),
+				       pgp_get_pubkey(signer),
 					key->reader->key->packets[
 						key->reader->packet].raw);
 			break;
 
-		case OPS_SIG_SUBKEY:
+		case PGP_SIG_SUBKEY:
 			/*
 			 * XXX: we should also check that the signer is the
 			 * key we are validating, I think.
 			 */
-			valid = __ops_check_subkey_sig(&key->pubkey,
+			valid = pgp_check_subkey_sig(&key->pubkey,
 				&key->subkey,
 				&content->sig,
-				__ops_get_pubkey(signer),
+				pgp_get_pubkey(signer),
 				key->reader->key->packets[
 					key->reader->packet].raw);
 			break;
 
-		case OPS_SIG_DIRECT:
-			valid = __ops_check_direct_sig(&key->pubkey,
+		case PGP_SIG_DIRECT:
+			valid = pgp_check_direct_sig(&key->pubkey,
 				&content->sig,
-				__ops_get_pubkey(signer),
+				pgp_get_pubkey(signer),
 				key->reader->key->packets[
 					key->reader->packet].raw);
 			break;
 
-		case OPS_SIG_STANDALONE:
-		case OPS_SIG_PRIMARY:
-		case OPS_SIG_REV_KEY:
-		case OPS_SIG_REV_SUBKEY:
-		case OPS_SIG_TIMESTAMP:
-		case OPS_SIG_3RD_PARTY:
-			OPS_ERROR_1(errors, OPS_E_UNIMPLEMENTED,
+		case PGP_SIG_STANDALONE:
+		case PGP_SIG_PRIMARY:
+		case PGP_SIG_REV_KEY:
+		case PGP_SIG_REV_SUBKEY:
+		case PGP_SIG_TIMESTAMP:
+		case PGP_SIG_3RD_PARTY:
+			PGP_ERROR_1(errors, PGP_E_UNIMPLEMENTED,
 				"Sig Verification type 0x%02x not done yet\n",
 				content->sig.info.type);
 			break;
 
 		default:
-			OPS_ERROR_1(errors, OPS_E_UNIMPLEMENTED,
+			PGP_ERROR_1(errors, PGP_E_UNIMPLEMENTED,
 				    "Unexpected signature type 0x%02x\n",
 				    	content->sig.info.type);
 		}
@@ -378,33 +378,33 @@ __ops_validate_key_cb(const __ops_packet_t *pkt, __ops_cbdata_t *cbinfo)
 			if (!add_sig_to_list(&content->sig.info,
 				&key->result->valid_sigs,
 				&key->result->validc)) {
-				OPS_ERROR(errors, OPS_E_UNIMPLEMENTED,
+				PGP_ERROR(errors, PGP_E_UNIMPLEMENTED,
 				    "Can't add good sig to list\n");
 			}
 		} else {
-			OPS_ERROR(errors, OPS_E_V_BAD_SIGNATURE, "Bad Sig");
+			PGP_ERROR(errors, PGP_E_V_BAD_SIGNATURE, "Bad Sig");
 			if (!add_sig_to_list(&content->sig.info,
 				&key->result->invalid_sigs,
 				&key->result->invalidc)) {
-				OPS_ERROR(errors, OPS_E_UNIMPLEMENTED,
+				PGP_ERROR(errors, PGP_E_UNIMPLEMENTED,
 				    "Can't add good sig to list\n");
 			}
 		}
 		break;
 
 		/* ignore these */
-	case OPS_PARSER_PTAG:
-	case OPS_PTAG_CT_SIGNATURE_HEADER:
-	case OPS_PARSER_PACKET_END:
+	case PGP_PARSER_PTAG:
+	case PGP_PTAG_CT_SIGNATURE_HEADER:
+	case PGP_PARSER_PACKET_END:
 		break;
 
-	case OPS_GET_PASSPHRASE:
+	case PGP_GET_PASSPHRASE:
 		if (key->getpassphrase) {
 			return key->getpassphrase(pkt, cbinfo);
 		}
 		break;
 
-	case OPS_PTAG_CT_TRUST:
+	case PGP_PTAG_CT_TRUST:
 		/* 1 byte for level (depth), 1 byte for trust amount */
 		printf("trust dump\n");
 		printf("Got trust\n");
@@ -415,78 +415,78 @@ __ops_validate_key_cb(const __ops_packet_t *pkt, __ops_cbdata_t *cbinfo)
 
 	default:
 		(void) fprintf(stderr, "unexpected tag=0x%x\n", pkt->tag);
-		return OPS_FINISHED;
+		return PGP_FINISHED;
 	}
-	return OPS_RELEASE_MEMORY;
+	return PGP_RELEASE_MEMORY;
 }
 
-__ops_cb_ret_t
-validate_data_cb(const __ops_packet_t *pkt, __ops_cbdata_t *cbinfo)
+pgp_cb_ret_t
+validate_data_cb(const pgp_packet_t *pkt, pgp_cbdata_t *cbinfo)
 {
-	const __ops_contents_t	 *content = &pkt->u;
-	const __ops_key_t	 *signer;
+	const pgp_contents_t	 *content = &pkt->u;
+	const pgp_key_t	 *signer;
 	validate_data_cb_t	 *data;
-	__ops_pubkey_t		 *sigkey;
-	__ops_error_t		**errors;
-	__ops_io_t		 *io;
+	pgp_pubkey_t		 *sigkey;
+	pgp_error_t		**errors;
+	pgp_io_t		 *io;
 	unsigned		  from;
 	unsigned		  valid = 0;
 
 	io = cbinfo->io;
-	if (__ops_get_debug_level(__FILE__)) {
+	if (pgp_get_debug_level(__FILE__)) {
 		(void) fprintf(io->errs, "validate_data_cb: %s\n",
-				__ops_show_packet_tag(pkt->tag));
+				pgp_show_packet_tag(pkt->tag));
 	}
-	data = __ops_callback_arg(cbinfo);
-	errors = __ops_callback_errors(cbinfo);
+	data = pgp_callback_arg(cbinfo);
+	errors = pgp_callback_errors(cbinfo);
 	switch (pkt->tag) {
-	case OPS_PTAG_CT_SIGNED_CLEARTEXT_HEADER:
+	case PGP_PTAG_CT_SIGNED_CLEARTEXT_HEADER:
 		/*
 		 * ignore - this gives us the "Armor Header" line "Hash:
 		 * SHA1" or similar
 		 */
 		break;
 
-	case OPS_PTAG_CT_LITDATA_HEADER:
+	case PGP_PTAG_CT_LITDATA_HEADER:
 		/* ignore */
 		break;
 
-	case OPS_PTAG_CT_LITDATA_BODY:
+	case PGP_PTAG_CT_LITDATA_BODY:
 		data->data.litdata_body = content->litdata_body;
 		data->type = LITDATA;
-		__ops_memory_add(data->mem, data->data.litdata_body.data,
+		pgp_memory_add(data->mem, data->data.litdata_body.data,
 				       data->data.litdata_body.length);
-		return OPS_KEEP_MEMORY;
+		return PGP_KEEP_MEMORY;
 
-	case OPS_PTAG_CT_SIGNED_CLEARTEXT_BODY:
+	case PGP_PTAG_CT_SIGNED_CLEARTEXT_BODY:
 		data->data.cleartext_body = content->cleartext_body;
 		data->type = SIGNED_CLEARTEXT;
-		__ops_memory_add(data->mem, data->data.cleartext_body.data,
+		pgp_memory_add(data->mem, data->data.cleartext_body.data,
 			       data->data.cleartext_body.length);
-		return OPS_KEEP_MEMORY;
+		return PGP_KEEP_MEMORY;
 
-	case OPS_PTAG_CT_SIGNED_CLEARTEXT_TRAILER:
-		/* this gives us an __ops_hash_t struct */
+	case PGP_PTAG_CT_SIGNED_CLEARTEXT_TRAILER:
+		/* this gives us an pgp_hash_t struct */
 		break;
 
-	case OPS_PTAG_CT_SIGNATURE:	/* V3 sigs */
-	case OPS_PTAG_CT_SIGNATURE_FOOTER:	/* V4 sigs */
-		if (__ops_get_debug_level(__FILE__)) {
+	case PGP_PTAG_CT_SIGNATURE:	/* V3 sigs */
+	case PGP_PTAG_CT_SIGNATURE_FOOTER:	/* V4 sigs */
+		if (pgp_get_debug_level(__FILE__)) {
 			hexdump(io->outs, "hashed data", content->sig.info.v4_hashed,
 					content->sig.info.v4_hashlen);
 			hexdump(io->outs, "signer id", content->sig.info.signer_id,
 				sizeof(content->sig.info.signer_id));
 		}
 		from = 0;
-		signer = __ops_getkeybyid(io, data->keyring,
+		signer = pgp_getkeybyid(io, data->keyring,
 					 content->sig.info.signer_id, &from, &sigkey);
 		if (!signer) {
-			OPS_ERROR(errors, OPS_E_V_UNKNOWN_SIGNER,
+			PGP_ERROR(errors, PGP_E_V_UNKNOWN_SIGNER,
 					"Unknown Signer");
 			if (!add_sig_to_list(&content->sig.info,
 					&data->result->unknown_sigs,
 					&data->result->unknownc)) {
-				OPS_ERROR(errors, OPS_E_V_UNKNOWN_SIGNER,
+				PGP_ERROR(errors, PGP_E_V_UNKNOWN_SIGNER,
 					"Can't add unknown sig to list");
 			}
 			break;
@@ -502,30 +502,30 @@ validate_data_cb(const __ops_packet_t *pkt, __ops_cbdata_t *cbinfo)
 			data->result->duration = content->sig.info.duration;
 		}
 		switch (content->sig.info.type) {
-		case OPS_SIG_BINARY:
-		case OPS_SIG_TEXT:
-			if (__ops_mem_len(data->mem) == 0 &&
+		case PGP_SIG_BINARY:
+		case PGP_SIG_TEXT:
+			if (pgp_mem_len(data->mem) == 0 &&
 			    data->detachname) {
 				/* check we have seen some data */
 				/* if not, need to read from detached name */
 				(void) fprintf(io->errs,
 				"netpgp: assuming signed data in \"%s\"\n",
 					data->detachname);
-				data->mem = __ops_memory_new();
-				__ops_mem_readfile(data->mem, data->detachname);
+				data->mem = pgp_memory_new();
+				pgp_mem_readfile(data->mem, data->detachname);
 			}
-			if (__ops_get_debug_level(__FILE__)) {
+			if (pgp_get_debug_level(__FILE__)) {
 				hexdump(stderr, "sig dump", (const uint8_t *)(const void *)&content->sig,
 					sizeof(content->sig));
 			}
-			valid = check_binary_sig(__ops_mem_data(data->mem),
-					(const unsigned)__ops_mem_len(data->mem),
+			valid = check_binary_sig(pgp_mem_data(data->mem),
+					(const unsigned)pgp_mem_len(data->mem),
 					&content->sig,
-					__ops_get_pubkey(signer));
+					pgp_get_pubkey(signer));
 			break;
 
 		default:
-			OPS_ERROR_1(errors, OPS_E_UNIMPLEMENTED,
+			PGP_ERROR_1(errors, PGP_E_UNIMPLEMENTED,
 				    "No Sig Verification type 0x%02x yet\n",
 				    content->sig.info.type);
 			break;
@@ -536,57 +536,57 @@ validate_data_cb(const __ops_packet_t *pkt, __ops_cbdata_t *cbinfo)
 			if (!add_sig_to_list(&content->sig.info,
 					&data->result->valid_sigs,
 					&data->result->validc)) {
-				OPS_ERROR(errors, OPS_E_V_BAD_SIGNATURE,
+				PGP_ERROR(errors, PGP_E_V_BAD_SIGNATURE,
 					"Can't add good sig to list");
 			}
 		} else {
-			OPS_ERROR(errors, OPS_E_V_BAD_SIGNATURE,
+			PGP_ERROR(errors, PGP_E_V_BAD_SIGNATURE,
 					"Bad Signature");
 			if (!add_sig_to_list(&content->sig.info,
 					&data->result->invalid_sigs,
 					&data->result->invalidc)) {
-				OPS_ERROR(errors, OPS_E_V_BAD_SIGNATURE,
+				PGP_ERROR(errors, PGP_E_V_BAD_SIGNATURE,
 					"Can't add good sig to list");
 			}
 		}
 		break;
 
 		/* ignore these */
-	case OPS_PARSER_PTAG:
-	case OPS_PTAG_CT_SIGNATURE_HEADER:
-	case OPS_PTAG_CT_ARMOUR_HEADER:
-	case OPS_PTAG_CT_ARMOUR_TRAILER:
-	case OPS_PTAG_CT_1_PASS_SIG:
+	case PGP_PARSER_PTAG:
+	case PGP_PTAG_CT_SIGNATURE_HEADER:
+	case PGP_PTAG_CT_ARMOUR_HEADER:
+	case PGP_PTAG_CT_ARMOUR_TRAILER:
+	case PGP_PTAG_CT_1_PASS_SIG:
 		break;
 
-	case OPS_PARSER_PACKET_END:
+	case PGP_PARSER_PACKET_END:
 		break;
 
 	default:
-		OPS_ERROR(errors, OPS_E_V_NO_SIGNATURE, "No signature");
+		PGP_ERROR(errors, PGP_E_V_NO_SIGNATURE, "No signature");
 		break;
 	}
-	return OPS_RELEASE_MEMORY;
+	return PGP_RELEASE_MEMORY;
 }
 
 static void 
-keydata_destroyer(__ops_reader_t *readinfo)
+keydata_destroyer(pgp_reader_t *readinfo)
 {
-	free(__ops_reader_get_arg(readinfo));
+	free(pgp_reader_get_arg(readinfo));
 }
 
 void 
-__ops_keydata_reader_set(__ops_stream_t *stream, const __ops_key_t *key)
+pgp_keydata_reader_set(pgp_stream_t *stream, const pgp_key_t *key)
 {
 	validate_reader_t *data;
 
 	if ((data = calloc(1, sizeof(*data))) == NULL) {
-		(void) fprintf(stderr, "__ops_keydata_reader_set: bad alloc\n");
+		(void) fprintf(stderr, "pgp_keydata_reader_set: bad alloc\n");
 	} else {
 		data->key = key;
 		data->packet = 0;
 		data->offset = 0;
-		__ops_reader_set(stream, keydata_reader, keydata_destroyer, data);
+		pgp_reader_set(stream, keydata_reader, keydata_destroyer, data);
 	}
 }
 
@@ -630,7 +630,7 @@ fmtsecs(int64_t n, char *buf, size_t size)
  	or no valid signatures; else 1
  */
 static unsigned 
-validate_result_status(FILE *errs, const char *f, __ops_validation_t *val)
+validate_result_status(FILE *errs, const char *f, pgp_validation_t *val)
 {
 	time_t	now;
 	time_t	t;
@@ -676,16 +676,16 @@ validate_result_status(FILE *errs, const char *f, __ops_validation_t *val)
  * \param cb_get_passphrase Callback to use to get passphrase
  * \return 1 if all signatures OK; else 0
  * \note It is the caller's responsiblity to free result after use.
- * \sa __ops_validate_result_free()
+ * \sa pgp_validate_result_free()
  */
 unsigned 
-__ops_validate_key_sigs(__ops_validation_t *result,
-	const __ops_key_t *key,
-	const __ops_keyring_t *keyring,
-	__ops_cb_ret_t cb_get_passphrase(const __ops_packet_t *,
-						__ops_cbdata_t *))
+pgp_validate_key_sigs(pgp_validation_t *result,
+	const pgp_key_t *key,
+	const pgp_keyring_t *keyring,
+	pgp_cb_ret_t cb_get_passphrase(const pgp_packet_t *,
+						pgp_cbdata_t *))
 {
-	__ops_stream_t	*stream;
+	pgp_stream_t	*stream;
 	validate_key_cb_t	 keysigs;
 	const int		 printerrors = 1;
 
@@ -693,29 +693,29 @@ __ops_validate_key_sigs(__ops_validation_t *result,
 	keysigs.result = result;
 	keysigs.getpassphrase = cb_get_passphrase;
 
-	stream = __ops_new(sizeof(*stream));
-	/* __ops_parse_options(&opt,OPS_PTAG_CT_SIGNATURE,OPS_PARSE_PARSED); */
+	stream = pgp_new(sizeof(*stream));
+	/* pgp_parse_options(&opt,PGP_PTAG_CT_SIGNATURE,PGP_PARSE_PARSED); */
 
 	keysigs.keyring = keyring;
 
-	__ops_set_callback(stream, __ops_validate_key_cb, &keysigs);
+	pgp_set_callback(stream, pgp_validate_key_cb, &keysigs);
 	stream->readinfo.accumulate = 1;
-	__ops_keydata_reader_set(stream, key);
+	pgp_keydata_reader_set(stream, key);
 
 	/* Note: Coverity incorrectly reports an error that keysigs.reader */
 	/* is never used. */
 	keysigs.reader = stream->readinfo.arg;
 
-	__ops_parse(stream, !printerrors);
+	pgp_parse(stream, !printerrors);
 
-	__ops_pubkey_free(&keysigs.pubkey);
+	pgp_pubkey_free(&keysigs.pubkey);
 	if (keysigs.subkey.version) {
-		__ops_pubkey_free(&keysigs.subkey);
+		pgp_pubkey_free(&keysigs.subkey);
 	}
-	__ops_userid_free(&keysigs.userid);
-	__ops_data_free(&keysigs.userattr);
+	pgp_userid_free(&keysigs.userid);
+	pgp_data_free(&keysigs.userattr);
 
-	__ops_stream_delete(stream);
+	pgp_stream_delete(stream);
 
 	return (!result->invalidc && !result->unknownc && result->validc);
 }
@@ -726,19 +726,19 @@ __ops_validate_key_sigs(__ops_validation_t *result,
    \param ring Keyring to use
    \param cb_get_passphrase Callback to use to get passphrase
    \note It is the caller's responsibility to free result after use.
-   \sa __ops_validate_result_free()
+   \sa pgp_validate_result_free()
 */
 unsigned 
-__ops_validate_all_sigs(__ops_validation_t *result,
-	    const __ops_keyring_t *ring,
-	    __ops_cb_ret_t cb_get_passphrase(const __ops_packet_t *,
-	    					__ops_cbdata_t *))
+pgp_validate_all_sigs(pgp_validation_t *result,
+	    const pgp_keyring_t *ring,
+	    pgp_cb_ret_t cb_get_passphrase(const pgp_packet_t *,
+	    					pgp_cbdata_t *))
 {
 	unsigned	n;
 
 	(void) memset(result, 0x0, sizeof(*result));
 	for (n = 0; n < ring->keyc; ++n) {
-		__ops_validate_key_sigs(result, &ring->keys[n], ring,
+		pgp_validate_key_sigs(result, &ring->keys[n], ring,
 				cb_get_passphrase);
 	}
 	return validate_result_status(stderr, "keyring", result);
@@ -751,7 +751,7 @@ __ops_validate_all_sigs(__ops_validation_t *result,
    \note Must be called after validation functions
 */
 void 
-__ops_validate_result_free(__ops_validation_t *result)
+pgp_validate_result_free(pgp_validation_t *result)
 {
 	if (result != NULL) {
 		if (result->valid_sigs) {
@@ -780,18 +780,18 @@ __ops_validate_result_free(__ops_validation_t *result)
    \note After verification, result holds the details of all keys which
    have passed, failed and not been recognised.
    \note It is the caller's responsiblity to call
-   	__ops_validate_result_free(result) after use.
+   	pgp_validate_result_free(result) after use.
 */
 unsigned 
-__ops_validate_file(__ops_io_t *io,
-			__ops_validation_t *result,
+pgp_validate_file(pgp_io_t *io,
+			pgp_validation_t *result,
 			const char *infile,
 			const char *outfile,
 			const int user_says_armoured,
-			const __ops_keyring_t *keyring)
+			const pgp_keyring_t *keyring)
 {
 	validate_data_cb_t	 validation;
-	__ops_stream_t		*parse = NULL;
+	pgp_stream_t		*parse = NULL;
 	struct stat		 st;
 	const char		*signame;
 	const int		 printerrors = 1;
@@ -805,7 +805,7 @@ __ops_validate_file(__ops_io_t *io,
 
 	if (stat(infile, &st) < 0) {
 		(void) fprintf(io->errs,
-			"__ops_validate_file: can't open '%s'\n", infile);
+			"pgp_validate_file: can't open '%s'\n", infile);
 		return 0;
 	}
 	realarmour = user_says_armoured;
@@ -829,7 +829,7 @@ __ops_validate_file(__ops_io_t *io,
 		signame = infile;
 	}
 	(void) memset(&validation, 0x0, sizeof(validation));
-	infd = __ops_setup_file_read(io, &parse, signame, &validation,
+	infd = pgp_setup_file_read(io, &parse, signame, &validation,
 				validate_data_cb, 1);
 	if (infd < 0) {
 		return 0;
@@ -842,24 +842,24 @@ __ops_validate_file(__ops_io_t *io,
 	/* Set verification reader and handling options */
 	validation.result = result;
 	validation.keyring = keyring;
-	validation.mem = __ops_memory_new();
-	__ops_memory_init(validation.mem, 128);
+	validation.mem = pgp_memory_new();
+	pgp_memory_init(validation.mem, 128);
 	/* Note: Coverity incorrectly reports an error that validation.reader */
 	/* is never used. */
 	validation.reader = parse->readinfo.arg;
 
 	if (realarmour) {
-		__ops_reader_push_dearmour(parse);
+		pgp_reader_push_dearmour(parse);
 	}
 
 	/* Do the verification */
-	__ops_parse(parse, !printerrors);
+	pgp_parse(parse, !printerrors);
 
 	/* Tidy up */
 	if (realarmour) {
-		__ops_reader_pop_dearmour(parse);
+		pgp_reader_pop_dearmour(parse);
 	}
-	__ops_teardown_file_read(parse, infd);
+	pgp_teardown_file_read(parse, infd);
 
 	ret = validate_result_status(io->errs, infile, result);
 
@@ -881,8 +881,8 @@ __ops_validate_file(__ops_io_t *io,
 			char		*cp;
 			int		 i;
 
-			len = (unsigned)__ops_mem_len(validation.mem);
-			cp = __ops_mem_data(validation.mem);
+			len = (unsigned)pgp_mem_len(validation.mem);
+			cp = pgp_mem_data(validation.mem);
 			for (i = 0 ; i < (int)len ; i += cc) {
 				cc = (int)write(outfd, &cp[i], (unsigned)(len - i));
 				if (cc < 0) {
@@ -897,13 +897,13 @@ __ops_validate_file(__ops_io_t *io,
 			}
 		}
 	}
-	__ops_memory_free(validation.mem);
+	pgp_memory_free(validation.mem);
 	return ret;
 }
 
 /**
    \ingroup HighLevel_Verify
-   \brief Verifies the signatures in a __ops_memory_t struct
+   \brief Verifies the signatures in a pgp_memory_t struct
    \param result Where to put the result
    \param mem Memory to be validated
    \param user_says_armoured Treat data as armoured, if set
@@ -912,57 +912,57 @@ __ops_validate_file(__ops_io_t *io,
    \note After verification, result holds the details of all keys which
    have passed, failed and not been recognised.
    \note It is the caller's responsiblity to call
-   	__ops_validate_result_free(result) after use.
+   	pgp_validate_result_free(result) after use.
 */
 
 unsigned 
-__ops_validate_mem(__ops_io_t *io,
-			__ops_validation_t *result,
-			__ops_memory_t *mem,
-			__ops_memory_t **cat,
+pgp_validate_mem(pgp_io_t *io,
+			pgp_validation_t *result,
+			pgp_memory_t *mem,
+			pgp_memory_t **cat,
 			const int user_says_armoured,
-			const __ops_keyring_t *keyring)
+			const pgp_keyring_t *keyring)
 {
 	validate_data_cb_t	 validation;
-	__ops_stream_t		*stream = NULL;
+	pgp_stream_t		*stream = NULL;
 	const int		 printerrors = 1;
 	int			 realarmour;
 
-	__ops_setup_memory_read(io, &stream, mem, &validation, validate_data_cb, 1);
+	pgp_setup_memory_read(io, &stream, mem, &validation, validate_data_cb, 1);
 	/* Set verification reader and handling options */
 	(void) memset(&validation, 0x0, sizeof(validation));
 	validation.result = result;
 	validation.keyring = keyring;
-	validation.mem = __ops_memory_new();
-	__ops_memory_init(validation.mem, 128);
+	validation.mem = pgp_memory_new();
+	pgp_memory_init(validation.mem, 128);
 	/* Note: Coverity incorrectly reports an error that validation.reader */
 	/* is never used. */
 	validation.reader = stream->readinfo.arg;
 
 	if ((realarmour = user_says_armoured) != 0 ||
-	    strncmp(__ops_mem_data(mem),
+	    strncmp(pgp_mem_data(mem),
 	    		"-----BEGIN PGP MESSAGE-----", 27) == 0) {
 		realarmour = 1;
 	}
 	if (realarmour) {
-		__ops_reader_push_dearmour(stream);
+		pgp_reader_push_dearmour(stream);
 	}
 
 	/* Do the verification */
-	__ops_parse(stream, !printerrors);
+	pgp_parse(stream, !printerrors);
 
 	/* Tidy up */
 	if (realarmour) {
-		__ops_reader_pop_dearmour(stream);
+		pgp_reader_pop_dearmour(stream);
 	}
-	__ops_teardown_memory_read(stream, mem);
+	pgp_teardown_memory_read(stream, mem);
 
 	/* this is triggered only for --cat output */
 	if (cat) {
 		/* need to send validated output somewhere */
 		*cat = validation.mem;
 	} else {
-		__ops_memory_free(validation.mem);
+		pgp_memory_free(validation.mem);
 	}
 
 	return validate_result_status(io->errs, NULL, result);

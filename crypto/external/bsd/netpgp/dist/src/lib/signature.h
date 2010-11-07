@@ -61,57 +61,57 @@
 #include "create.h"
 #include "memory.h"
 
-typedef struct __ops_create_sig_t	 __ops_create_sig_t;
+typedef struct pgp_create_sig_t	 pgp_create_sig_t;
 
-__ops_create_sig_t *__ops_create_sig_new(void);
-void __ops_create_sig_delete(__ops_create_sig_t *);
+pgp_create_sig_t *pgp_create_sig_new(void);
+void pgp_create_sig_delete(pgp_create_sig_t *);
 
-unsigned __ops_check_useridcert_sig(const __ops_pubkey_t *,
+unsigned pgp_check_useridcert_sig(const pgp_pubkey_t *,
 			  const uint8_t *,
-			  const __ops_sig_t *,
-			  const __ops_pubkey_t *,
+			  const pgp_sig_t *,
+			  const pgp_pubkey_t *,
 			  const uint8_t *);
-unsigned __ops_check_userattrcert_sig(const __ops_pubkey_t *,
-			  const __ops_data_t *,
-			  const __ops_sig_t *,
-			  const __ops_pubkey_t *,
+unsigned pgp_check_userattrcert_sig(const pgp_pubkey_t *,
+			  const pgp_data_t *,
+			  const pgp_sig_t *,
+			  const pgp_pubkey_t *,
 			  const uint8_t *);
-unsigned __ops_check_subkey_sig(const __ops_pubkey_t *,
-			   const __ops_pubkey_t *,
-			   const __ops_sig_t *,
-			   const __ops_pubkey_t *,
+unsigned pgp_check_subkey_sig(const pgp_pubkey_t *,
+			   const pgp_pubkey_t *,
+			   const pgp_sig_t *,
+			   const pgp_pubkey_t *,
 			   const uint8_t *);
-unsigned __ops_check_direct_sig(const __ops_pubkey_t *,
-			   const __ops_sig_t *,
-			   const __ops_pubkey_t *,
+unsigned pgp_check_direct_sig(const pgp_pubkey_t *,
+			   const pgp_sig_t *,
+			   const pgp_pubkey_t *,
 			   const uint8_t *);
-unsigned __ops_check_hash_sig(__ops_hash_t *,
-			 const __ops_sig_t *,
-			 const __ops_pubkey_t *);
-void __ops_sig_start_key_sig(__ops_create_sig_t *,
-				  const __ops_pubkey_t *,
+unsigned pgp_check_hash_sig(pgp_hash_t *,
+			 const pgp_sig_t *,
+			 const pgp_pubkey_t *);
+void pgp_sig_start_key_sig(pgp_create_sig_t *,
+				  const pgp_pubkey_t *,
 				  const uint8_t *,
-				  __ops_sig_type_t);
-void __ops_start_sig(__ops_create_sig_t *,
-			const __ops_seckey_t *,
-			const __ops_hash_alg_t,
-			const __ops_sig_type_t);
+				  pgp_sig_type_t);
+void pgp_start_sig(pgp_create_sig_t *,
+			const pgp_seckey_t *,
+			const pgp_hash_alg_t,
+			const pgp_sig_type_t);
 
-void __ops_sig_add_data(__ops_create_sig_t *, const void *, size_t);
-__ops_hash_t *__ops_sig_get_hash(__ops_create_sig_t *);
-unsigned   __ops_end_hashed_subpkts(__ops_create_sig_t *);
-unsigned __ops_write_sig(__ops_output_t *, __ops_create_sig_t *,
-			const __ops_pubkey_t *, const __ops_seckey_t *);
-unsigned   __ops_add_time(__ops_create_sig_t *, int64_t, const char *);
-unsigned __ops_add_issuer_keyid(__ops_create_sig_t *,
+void pgp_sig_add_data(pgp_create_sig_t *, const void *, size_t);
+pgp_hash_t *pgp_sig_get_hash(pgp_create_sig_t *);
+unsigned   pgp_end_hashed_subpkts(pgp_create_sig_t *);
+unsigned pgp_write_sig(pgp_output_t *, pgp_create_sig_t *,
+			const pgp_pubkey_t *, const pgp_seckey_t *);
+unsigned   pgp_add_time(pgp_create_sig_t *, int64_t, const char *);
+unsigned pgp_add_issuer_keyid(pgp_create_sig_t *,
 			const uint8_t *);
-void __ops_add_primary_userid(__ops_create_sig_t *, unsigned);
+void pgp_add_primary_userid(pgp_create_sig_t *, unsigned);
 
 /* Standard Interface */
-unsigned   __ops_sign_file(__ops_io_t *,
+unsigned   pgp_sign_file(pgp_io_t *,
 			const char *,
 			const char *,
-			const __ops_seckey_t *,
+			const pgp_seckey_t *,
 			const char *,
 			const int64_t,
 			const uint64_t,
@@ -119,10 +119,10 @@ unsigned   __ops_sign_file(__ops_io_t *,
 			const unsigned,
 			const unsigned);
 
-int __ops_sign_detached(__ops_io_t *,
+int pgp_sign_detached(pgp_io_t *,
 			const char *,
 			char *,
-			__ops_seckey_t *,
+			pgp_seckey_t *,
 			const char *,
 			const int64_t,
 			const uint64_t,
@@ -130,42 +130,42 @@ int __ops_sign_detached(__ops_io_t *,
 			const unsigned);
 
 /* armoured stuff */
-unsigned __ops_crc24(unsigned, uint8_t);
+unsigned pgp_crc24(unsigned, uint8_t);
 
-void __ops_reader_push_dearmour(__ops_stream_t *);
+void pgp_reader_push_dearmour(pgp_stream_t *);
 
-void __ops_reader_pop_dearmour(__ops_stream_t *);
-unsigned __ops_writer_push_clearsigned(__ops_output_t *, __ops_create_sig_t *);
-void __ops_writer_push_armor_msg(__ops_output_t *);
+void pgp_reader_pop_dearmour(pgp_stream_t *);
+unsigned pgp_writer_push_clearsigned(pgp_output_t *, pgp_create_sig_t *);
+void pgp_writer_push_armor_msg(pgp_output_t *);
 
 typedef enum {
-	OPS_PGP_MESSAGE = 1,
-	OPS_PGP_PUBLIC_KEY_BLOCK,
-	OPS_PGP_PRIVATE_KEY_BLOCK,
-	OPS_PGP_MULTIPART_MESSAGE_PART_X_OF_Y,
-	OPS_PGP_MULTIPART_MESSAGE_PART_X,
-	OPS_PGP_SIGNATURE
-} __ops_armor_type_t;
+	PGP_PGP_MESSAGE = 1,
+	PGP_PGP_PUBLIC_KEY_BLOCK,
+	PGP_PGP_PRIVATE_KEY_BLOCK,
+	PGP_PGP_MULTIPART_MESSAGE_PART_X_OF_Y,
+	PGP_PGP_MULTIPART_MESSAGE_PART_X,
+	PGP_PGP_SIGNATURE
+} pgp_armor_type_t;
 
 #define CRC24_INIT 0xb704ceL
 
-unsigned __ops_writer_use_armored_sig(__ops_output_t *);
+unsigned pgp_writer_use_armored_sig(pgp_output_t *);
 
-void __ops_writer_push_armoured(__ops_output_t *, __ops_armor_type_t);
+void pgp_writer_push_armoured(pgp_output_t *, pgp_armor_type_t);
 
-__ops_memory_t   *__ops_sign_buf(__ops_io_t *,
+pgp_memory_t   *pgp_sign_buf(pgp_io_t *,
 				const void *,
 				const size_t,
-				const __ops_seckey_t *,
+				const pgp_seckey_t *,
 				const int64_t,
 				const uint64_t,
 				const char *,
 				const unsigned,
 				const unsigned);
 
-unsigned __ops_keyring_read_from_mem(__ops_io_t *,
-				__ops_keyring_t *,
+unsigned pgp_keyring_read_from_mem(pgp_io_t *,
+				pgp_keyring_t *,
 				const unsigned,
-				__ops_memory_t *);
+				pgp_memory_t *);
 
 #endif /* SIGNATURE_H_ */

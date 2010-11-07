@@ -38,30 +38,30 @@
 #endif
 
 /* for silencing unused parameter warnings */
-#define __OPS_USED(x)	/*LINTED*/(void)&(x)
+#define __PGP_USED(x)	/*LINTED*/(void)&(x)
 
 #ifndef __UNCONST
 #define __UNCONST(a)	((void *)(unsigned long)(const void *)(a))
 #endif
 
 /* number of elements in an array */
-#define OPS_ARRAY_SIZE(a)       (sizeof(a)/sizeof(*(a)))
+#define PGP_ARRAY_SIZE(a)       (sizeof(a)/sizeof(*(a)))
 
 void            hexdump(FILE *, const char *, const uint8_t *, size_t);
 
-const char     *__ops_str_from_map(int, __ops_map_t *);
+const char     *pgp_str_from_map(int, pgp_map_t *);
 
-int             __ops_set_debug_level(const char *);
-int             __ops_get_debug_level(const char *);
+int             pgp_set_debug_level(const char *);
+int             pgp_get_debug_level(const char *);
 
-void		*__ops_new(size_t);
+void		*pgp_new(size_t);
 
 #define NETPGP_BUFSIZ	8192
 
 #define CALLBACK(t, cbinfo, pkt)	do {				\
 	(pkt)->tag = (t);						\
-	if (__ops_callback(pkt, cbinfo) == OPS_RELEASE_MEMORY) {	\
-		__ops_parser_content_free(pkt);				\
+	if (pgp_callback(pkt, cbinfo) == PGP_RELEASE_MEMORY) {	\
+		pgp_parser_content_free(pkt);				\
 	}								\
 } while(/* CONSTCOND */0)
 
