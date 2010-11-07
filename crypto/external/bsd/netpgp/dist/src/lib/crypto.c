@@ -54,7 +54,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: crypto.c,v 1.29 2010/11/04 15:38:45 agc Exp $");
+__RCSID("$NetBSD: crypto.c,v 1.30 2010/11/07 02:29:28 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -216,6 +216,45 @@ __ops_rsa_encrypt_mpi(const uint8_t *encoded_m_buf,
 		return 0;
 
 	skp->rsa.encrypted_m = BN_bin2bn(encmpibuf, n, NULL);
+
+	if (__ops_get_debug_level(__FILE__)) {
+		hexdump(stderr, "encrypted mpi", encmpibuf, 16);
+	}
+	return 1;
+}
+
+/**
+\ingroup Core_MPI
+\brief Elgamal-encrypt an MPI
+*/
+unsigned 
+__ops_elgamal_encrypt_mpi(const uint8_t *encoded_m_buf,
+		    const size_t sz_encoded_m_buf,
+		    const __ops_pubkey_t * pubkey,
+		    __ops_pk_sesskey_params_t * skp)
+{
+
+	uint8_t   encmpibuf[NETPGP_BUFSIZ];
+	uint8_t   g_to_k[NETPGP_BUFSIZ];
+	int             n;
+
+	if (sz_encoded_m_buf != (size_t)BN_num_bytes(pubkey->key.elgamal.p)) {
+		(void) fprintf(stderr, "sz_encoded_m_buf wrong\n");
+		return 0;
+	}
+
+	n = __ops_elgamal_public_encrypt(g_to_k, encmpibuf, encoded_m_buf,
+				sz_encoded_m_buf, &pubkey->key.elgamal);
+	if (n == -1) {
+		(void) fprintf(stderr, "__ops_elgamal_public_encrypt failure\n");
+		return 0;
+	}
+
+	if (n <= 0)
+		return 0;
+
+	skp->elgamal.g_to_k = BN_bin2bn(g_to_k, n / 2, NULL);
+	skp->elgamal.encrypted_m = BN_bin2bn(encmpibuf, n / 2, NULL);
 
 	if (__ops_get_debug_level(__FILE__)) {
 		hexdump(stderr, "encrypted mpi", encmpibuf, 16);
