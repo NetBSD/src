@@ -51,7 +51,6 @@ result_to_file_head()
 {
     atf_set "descr" "Tests that the test case result is sent to a file if -r" \
                     "is used"
-    atf_set "use.fs" "true"
 }
 result_to_file_body()
 {
@@ -77,7 +76,6 @@ result_to_file_fail_head()
     atf_set "descr" "Tests controlled failure if the test program fails to" \
         "create the results file"
     atf_set "require.user" "unprivileged"
-    atf_set "use.fs" "true"
 }
 result_to_file_fail_body()
 {
@@ -103,7 +101,6 @@ atf_test_case result_exception
 result_exception_head()
 {
     atf_set "descr" "Tests that an unhandled exception is correctly captured"
-    atf_set "use.fs" "true"
 }
 result_exception_body()
 {

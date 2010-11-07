@@ -85,11 +85,7 @@ ATF_TC_BODY(cleanup_pass, tc)
 }
 ATF_TC_CLEANUP(cleanup_pass, tc)
 {
-    bool cleanup;
-
-    RE(atf_text_to_bool(atf_tc_get_config_var(tc, "cleanup"), &cleanup));
-
-    if (cleanup)
+    if (atf_tc_get_config_var_as_bool(tc, "cleanup"))
         safe_remove(atf_tc_get_config_var(tc, "tmpfile"));
 }
 
@@ -106,11 +102,7 @@ ATF_TC_BODY(cleanup_fail, tc)
 }
 ATF_TC_CLEANUP(cleanup_fail, tc)
 {
-    bool cleanup;
-
-    RE(atf_text_to_bool(atf_tc_get_config_var(tc, "cleanup"), &cleanup));
-
-    if (cleanup)
+    if (atf_tc_get_config_var_as_bool(tc, "cleanup"))
         safe_remove(atf_tc_get_config_var(tc, "tmpfile"));
 }
 
@@ -127,11 +119,7 @@ ATF_TC_BODY(cleanup_skip, tc)
 }
 ATF_TC_CLEANUP(cleanup_skip, tc)
 {
-    bool cleanup;
-
-    RE(atf_text_to_bool(atf_tc_get_config_var(tc, "cleanup"), &cleanup));
-
-    if (cleanup)
+    if (atf_tc_get_config_var_as_bool(tc, "cleanup"))
         safe_remove(atf_tc_get_config_var(tc, "tmpfile"));
 }
 

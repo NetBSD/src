@@ -325,7 +325,7 @@ flatten_argv(char* const* argv)
 }
 
 static
-atf::check::check_result
+std::auto_ptr< atf::check::check_result >
 execute(const char* const* argv)
 {
     std::cout << "Executing command [ ";
@@ -338,7 +338,7 @@ execute(const char* const* argv)
 }
 
 static
-atf::check::check_result
+std::auto_ptr< atf::check::check_result >
 execute_with_shell(char* const* argv)
 {
     const std::string cmd = flatten_argv(argv);
@@ -802,7 +802,7 @@ atf_check::main(void)
 
     int status = EXIT_FAILURE;
 
-    atf::check::check_result r =
+    std::auto_ptr< atf::check::check_result > r =
         m_xflag ? execute_with_shell(m_argv) : execute(m_argv);
 
     if (m_status_checks.empty())
@@ -817,9 +817,9 @@ atf_check::main(void)
     if (m_stderr_checks.empty())
         m_stderr_checks.push_back(output_check(oc_empty, false, ""));
 
-    if ((run_status_checks(m_status_checks, r) == false) ||
-        (run_output_checks(r, "stderr") == false) ||
-        (run_output_checks(r, "stdout") == false))
+    if ((run_status_checks(m_status_checks, *r) == false) ||
+        (run_output_checks(*r, "stderr") == false) ||
+        (run_output_checks(*r, "stdout") == false))
         status = EXIT_FAILURE;
     else
         status = EXIT_SUCCESS;

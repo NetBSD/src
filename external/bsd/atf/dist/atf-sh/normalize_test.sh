@@ -32,7 +32,6 @@ main_head()
 {
     atf_set "descr" "Verifies that variable names with symbols not" \
                     "allowed as part of shell variable names work"
-    atf_set "use.fs" "true"
 }
 main_body()
 {

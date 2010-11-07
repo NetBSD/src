@@ -31,7 +31,6 @@ atf_test_case has
 has_head()
 {
     atf_set "descr" "Verifies that atf_config_has works"
-    atf_set "use.fs" "true"
 }
 has_body()
 {
@@ -52,7 +51,6 @@ atf_test_case get
 get_head()
 {
     atf_set "descr" "Verifies that atf_config_get works"
-    atf_set "use.fs" "true"
 }
 get_body()
 {

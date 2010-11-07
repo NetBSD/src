@@ -49,7 +49,6 @@ struct atf_fs_path;
     { \
         atf_tc_set_md_var(tc, "descr", "Tests that the " hdrname " file can " \
             "be included on its own, without any prerequisites"); \
-        atf_tc_set_md_var(tc, "use.fs", "true"); \
     } \
     ATF_TC_BODY(name, tc) \
     { \
@@ -61,7 +60,6 @@ struct atf_fs_path;
     ATF_TC_HEAD(name, tc) \
     { \
         atf_tc_set_md_var(tc, "descr", descr); \
-        atf_tc_set_md_var(tc, "use.fs", "true"); \
     } \
     ATF_TC_BODY(name, tc) \
     { \

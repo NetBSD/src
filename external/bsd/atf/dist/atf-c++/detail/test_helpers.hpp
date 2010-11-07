@@ -50,7 +50,6 @@
     { \
         set_md_var("descr", "Tests that the " hdrname " file can be " \
             "included on its own, without any prerequisites"); \
-        set_md_var("use.fs", "true"); \
     } \
     ATF_TEST_CASE_BODY(name) \
     { \
@@ -62,7 +61,6 @@
     ATF_TEST_CASE_HEAD(name) \
     { \
         set_md_var("descr", descr); \
-        set_md_var("use.fs", "true"); \
     } \
     ATF_TEST_CASE_BODY(name) \
     { \

@@ -60,7 +60,6 @@ version_head()
 {
     atf_set "descr" "Checks that the version in atf-c is correct"
     atf_set "require.progs" "pkg-config"
-    atf_set "use.fs" "true"
 }
 version_body()
 {
@@ -75,7 +74,6 @@ build_head()
     atf_set "descr" "Checks that a test program can be built against" \
                     "the C library based on the pkg-config information"
     atf_set "require.progs" "pkg-config"
-    atf_set "use.fs" "true"
 }
 build_body()
 {

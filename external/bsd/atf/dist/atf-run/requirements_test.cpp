@@ -251,7 +251,8 @@ ATF_TEST_CASE_BODY(require_user_unprivileged) {
     atf::tests::vars_map metadata;
     metadata["require.user"] = "unprivileged";
     if (atf::atf_run::is_root())
-        do_check("Requires an unprivileged user", metadata);
+        do_check("Requires an unprivileged user and the 'unprivileged-user' "
+                 "configuration variable is not set", metadata);
     else
         do_check("", metadata);
 }

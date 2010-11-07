@@ -137,7 +137,7 @@ check_progs(const std::string& progs)
 
 static
 std::string
-check_user(const std::string& user)
+check_user(const std::string& user, const atf::tests::vars_map& config)
 {
     if (user == "root") {
         if (!impl::is_root())
@@ -145,9 +145,23 @@ check_user(const std::string& user)
         else
             return "";
     } else if (user == "unprivileged") {
-        if (impl::is_root())
-            return "Requires an unprivileged user";
-        else
+        if (impl::is_root()) {
+            const atf::tests::vars_map::const_iterator iter = config.find(
+                "unprivileged-user");
+            if (iter == config.end())
+                return "Requires an unprivileged user and the "
+                    "'unprivileged-user' configuration variable is not set";
+            else {
+                const std::string& unprivileged_user = (*iter).second;
+                try {
+                    (void)impl::get_user_ids(unprivileged_user);
+                    return "";
+                } catch (const std::runtime_error& e) {
+                    return "Failed to get information for user " +
+                        unprivileged_user;
+                }
+            }
+        } else
             return "";
     } else
         throw std::runtime_error("Invalid value '" + user + "' for property "
@@ -177,7 +191,7 @@ impl::check_requirements(const atf::tests::vars_map& metadata,
         else if (name == "require.progs")
             failure_reason = check_progs(value);
         else if (name == "require.user")
-            failure_reason = check_user(value);
+            failure_reason = check_user(value, config);
         else {
             // Unknown require.* properties are forbidden by the
             // application/X-atf-tp parser.
@@ -186,4 +200,30 @@ impl::check_requirements(const atf::tests::vars_map& metadata,
     }
 
     return failure_reason;
+}
+
+std::pair< int, int >
+impl::get_required_user(const atf::tests::vars_map& metadata,
+                        const atf::tests::vars_map& config)
+{
+    const atf::tests::vars_map::const_iterator user = metadata.find(
+        "require.user");
+    if (user == metadata.end())
+        return std::make_pair(-1, -1);
+
+    if ((*user).second == "unprivileged") {
+        if (impl::is_root()) {
+            const atf::tests::vars_map::const_iterator iter = config.find(
+                "unprivileged-user");
+            try {
+                return impl::get_user_ids((*iter).second);
+            } catch (const std::exception& e) {
+                UNREACHABLE;  // This has been validated by check_user.
+                throw e;
+            }
+        } else {
+            return std::make_pair(-1, -1);
+        }
+    } else
+        return std::make_pair(-1, -1);
 }

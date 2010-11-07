@@ -470,25 +470,21 @@ atf_check_exec_array(const char *const *argv, atf_check_result_t *r)
         goto out;
 
     err = atf_check_result_init(r, argv, &dir);
-    if (atf_is_error(err))
-        goto err_dir;
+    if (atf_is_error(err)) {
+        atf_error_t err2 = atf_fs_rmdir(&dir);
+        INV(!atf_is_error(err2));
+        goto out;
+    }
 
     err = fork_and_wait(argv, &r->pimpl->m_stdout, &r->pimpl->m_stderr,
                         &r->pimpl->m_status);
-    if (atf_is_error(err))
-        goto err_r;
+    if (atf_is_error(err)) {
+        atf_check_result_fini(r);
+        goto out;
+    }
 
     INV(!atf_is_error(err));
-    goto out_dir;
 
-err_r:
-    atf_check_result_fini(r);
-err_dir:
-    {
-        atf_error_t err2 = atf_fs_rmdir(&dir);
-        INV(!atf_is_error(err2));
-    }
-out_dir:
     atf_fs_path_fini(&dir);
 out:
     return err;

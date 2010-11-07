@@ -2,6 +2,42 @@ Major changes between releases                  Automated Testing Framework
 ===========================================================================
 
 
+Changes in version 0.12
+***********************
+
+Experimental version released on November 7th, 2010.
+
+* Added the ATF_REQUIRE_THROW_RE to atf-c++, which is the same as
+  ATF_REQUIRE_THROW but allows checking for the validity of the exception's
+  error message by means of a regular expression.
+
+* Added the ATF_REQUIRE_MATCH to atf-c++, which allows checking for a
+  regular expression match in a string.
+
+* Changed the default timeout for test cases from 5 minutes to 30 seconds.
+  30 seconds is long enough for virtually all tests to complete, and 5
+  minutes is a way too long pause in a test suite where a single test case
+  stalls.
+
+* Deprecated the use.fs property.  While this seemed like a good idea in
+  the first place to impose more control on what test cases can do, it
+  turns out to be bad.  First, use.fs=false prevents bogus test cases
+  from dumping core so after-the-fact debugging is harder.  Second,
+  supporting use.fs adds a lot of unnecessary complexity.  atf-run will
+  now ignore any value provided to use.fs and will allow test cases to
+  freely access the file system if they wish to.
+
+* Added the atf_tc_get_config_var_as_{bool,long}{,_wd} functions to the atf-c
+  library.  The 'text' module became private in 0.11 but was being used
+  externally to simplify the parsing of configuration variables.
+
+* Made atf-run recognize the 'unprivileged-user' configuration variable
+  and automatically drop root privileges when a test case sets
+  require.user=unprivileged.  Note that this is, by no means, done for
+  security purposes; this is just for user convenience; tests should, in
+  general, not be blindly run as root in the first place.
+
+
 Changes in version 0.11
 ***********************
 

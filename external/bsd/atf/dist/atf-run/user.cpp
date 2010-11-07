@@ -28,8 +28,14 @@
 //
 
 extern "C" {
+#include <sys/types.h>
+
+#include <pwd.h>
+
 #include "../atf-c/detail/user.h"
 }
+
+#include <stdexcept>
 
 #include "../atf-c++/detail/sanity.hpp"
 
@@ -42,6 +48,24 @@ uid_t
 impl::euid(void)
 {
     return atf_user_euid();
+}
+
+void
+impl::drop_privileges(const std::pair< int, int > ids)
+{
+    if (::setgid(ids.second) == -1)
+        throw std::runtime_error("Failed to drop group privileges");
+    if (::setuid(ids.first) == -1)
+        throw std::runtime_error("Failed to drop user privileges");
+}
+
+std::pair< int, int >
+impl::get_user_ids(const std::string& user)
+{
+    const struct passwd* pw = ::getpwnam(user.c_str());
+    if (pw == NULL)
+        throw std::runtime_error("Failed to get information for user " + user);
+    return std::make_pair(pw->pw_uid, pw->pw_gid);
 }
 
 bool

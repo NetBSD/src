@@ -35,9 +35,6 @@ check_result() {
 }
 
 atf_test_case expect_pass
-expect_pass_head() {
-    atf_set "use.fs" "true"
-}
 expect_pass_body() {
     for h in $(get_helpers); do
         atf_check -s eq:0 "${h}" -r result expect_pass_and_pass
@@ -57,9 +54,6 @@ expect_pass_body() {
 }
 
 atf_test_case expect_fail
-expect_fail_head() {
-    atf_set "use.fs" "true"
-}
 expect_fail_body() {
     for h in $(get_helpers c_helpers cpp_helpers); do
         atf_check -s eq:0 "${h}" -r result expect_fail_and_fail_requirement
@@ -92,9 +86,6 @@ expect_fail_body() {
 }
 
 atf_test_case expect_exit
-expect_exit_head() {
-    atf_set "use.fs" "true"
-}
 expect_exit_body() {
     for h in $(get_helpers); do
         atf_check -s eq:0 "${h}" -r result expect_exit_any_and_exit
@@ -109,9 +100,6 @@ expect_exit_body() {
 }
 
 atf_test_case expect_signal
-expect_signal_head() {
-    atf_set "use.fs" "true"
-}
 expect_signal_body() {
     for h in $(get_helpers); do
         atf_check -s signal:9 "${h}" -r result expect_signal_any_and_signal
@@ -126,9 +114,6 @@ expect_signal_body() {
 }
 
 atf_test_case expect_death
-expect_death_head() {
-    atf_set "use.fs" "true"
-}
 expect_death_body() {
     for h in $(get_helpers); do
         atf_check -s eq:123 "${h}" -r result expect_death_and_exit
@@ -143,9 +128,6 @@ expect_death_body() {
 }
 
 atf_test_case expect_timeout
-expect_timeout_head() {
-    atf_set "use.fs" "true"
-}
 expect_timeout_body() {
     for h in $(get_helpers); do
         atf_check -s eq:1 "${h}" -r result expect_timeout_but_pass

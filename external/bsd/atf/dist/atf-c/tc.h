@@ -81,6 +81,12 @@ const char *atf_tc_get_ident(const atf_tc_t *);
 const char *atf_tc_get_config_var(const atf_tc_t *, const char *);
 const char *atf_tc_get_config_var_wd(const atf_tc_t *, const char *,
                                      const char *);
+bool atf_tc_get_config_var_as_bool(const atf_tc_t *, const char *);
+bool atf_tc_get_config_var_as_bool_wd(const atf_tc_t *, const char *,
+                                      const bool);
+long atf_tc_get_config_var_as_long(const atf_tc_t *, const char *);
+long atf_tc_get_config_var_as_long_wd(const atf_tc_t *, const char *,
+                                      const long);
 const char *atf_tc_get_md_var(const atf_tc_t *, const char *);
 char **atf_tc_get_md_vars(const atf_tc_t *);
 bool atf_tc_has_config_var(const atf_tc_t *, const char *);
