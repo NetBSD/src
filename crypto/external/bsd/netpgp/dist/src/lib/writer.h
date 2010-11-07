@@ -64,56 +64,56 @@
  * the writer function prototype
  */
 
-typedef struct __ops_writer_t	__ops_writer_t;
-typedef unsigned __ops_writer_func_t(const uint8_t *,
+typedef struct pgp_writer_t	pgp_writer_t;
+typedef unsigned pgp_writer_func_t(const uint8_t *,
 	     unsigned,
-	     __ops_error_t **,
-	     __ops_writer_t *);
+	     pgp_error_t **,
+	     pgp_writer_t *);
 typedef unsigned 
-__ops_writer_finaliser_t(__ops_error_t **, __ops_writer_t *);
-typedef void    __ops_writer_destroyer_t(__ops_writer_t *);
+pgp_writer_finaliser_t(pgp_error_t **, pgp_writer_t *);
+typedef void    pgp_writer_destroyer_t(pgp_writer_t *);
 
 /** Writer settings */
-struct __ops_writer_t {
-	__ops_writer_func_t	 *writer;	/* the writer itself */
-	__ops_writer_finaliser_t *finaliser;	/* the writer's finaliser */
-	__ops_writer_destroyer_t *destroyer;	/* the writer's destroyer */
+struct pgp_writer_t {
+	pgp_writer_func_t	 *writer;	/* the writer itself */
+	pgp_writer_finaliser_t *finaliser;	/* the writer's finaliser */
+	pgp_writer_destroyer_t *destroyer;	/* the writer's destroyer */
 	void			 *arg;	/* writer-specific argument */
-	__ops_writer_t	 	 *next;	/* next writer in the stack */
-	__ops_io_t		 *io;	/* IO for errors and output */
+	pgp_writer_t	 	 *next;	/* next writer in the stack */
+	pgp_io_t		 *io;	/* IO for errors and output */
 };
 
 
-void *__ops_writer_get_arg(__ops_writer_t *);
+void *pgp_writer_get_arg(pgp_writer_t *);
 
-void __ops_writer_set(__ops_output_t *,
-	       __ops_writer_func_t *,
-	       __ops_writer_finaliser_t *,
-	       __ops_writer_destroyer_t *,
+void pgp_writer_set(pgp_output_t *,
+	       pgp_writer_func_t *,
+	       pgp_writer_finaliser_t *,
+	       pgp_writer_destroyer_t *,
 	       void *);
-void __ops_writer_push(__ops_output_t *,
-		__ops_writer_func_t *,
-		__ops_writer_finaliser_t *,
-		__ops_writer_destroyer_t *,
+void pgp_writer_push(pgp_output_t *,
+		pgp_writer_func_t *,
+		pgp_writer_finaliser_t *,
+		pgp_writer_destroyer_t *,
 		void *);
-void __ops_writer_pop(__ops_output_t *);
-unsigned __ops_writer_passthrough(const uint8_t *,
+void pgp_writer_pop(pgp_output_t *);
+unsigned pgp_writer_passthrough(const uint8_t *,
 		       unsigned,
-		       __ops_error_t **,
-		       __ops_writer_t *);
+		       pgp_error_t **,
+		       pgp_writer_t *);
 
-void __ops_writer_set_fd(__ops_output_t *, int);
-unsigned __ops_writer_close(__ops_output_t *);
+void pgp_writer_set_fd(pgp_output_t *, int);
+unsigned pgp_writer_close(pgp_output_t *);
 
-unsigned __ops_write(__ops_output_t *, const void *, unsigned);
-unsigned __ops_write_length(__ops_output_t *, unsigned);
-unsigned __ops_write_ptag(__ops_output_t *, __ops_content_enum);
-unsigned __ops_write_scalar(__ops_output_t *, unsigned, unsigned);
-unsigned __ops_write_mpi(__ops_output_t *, const BIGNUM *);
+unsigned pgp_write(pgp_output_t *, const void *, unsigned);
+unsigned pgp_write_length(pgp_output_t *, unsigned);
+unsigned pgp_write_ptag(pgp_output_t *, pgp_content_enum);
+unsigned pgp_write_scalar(pgp_output_t *, unsigned, unsigned);
+unsigned pgp_write_mpi(pgp_output_t *, const BIGNUM *);
 
-void __ops_writer_info_delete(__ops_writer_t *);
-unsigned __ops_writer_info_finalise(__ops_error_t **, __ops_writer_t *);
+void pgp_writer_info_delete(pgp_writer_t *);
+unsigned pgp_writer_info_finalise(pgp_error_t **, pgp_writer_t *);
 
-void __ops_push_stream_enc_se_ip(__ops_output_t *, const __ops_key_t *, const char *);
+void pgp_push_stream_enc_se_ip(pgp_output_t *, const pgp_key_t *, const char *);
 
 #endif /* WRITER_H_ */

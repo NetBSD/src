@@ -57,7 +57,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: misc.c,v 1.37 2010/11/04 06:45:28 agc Exp $");
+__RCSID("$NetBSD: misc.c,v 1.38 2010/11/07 08:39:59 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -98,65 +98,65 @@ __RCSID("$NetBSD: misc.c,v 1.37 2010/11/04 06:45:28 agc Exp $");
 
 
 typedef struct {
-	__ops_keyring_t		*keyring;
+	pgp_keyring_t		*keyring;
 } accumulate_t;
 
 /**
  * \ingroup Core_Callbacks
  */
-static __ops_cb_ret_t
-accumulate_cb(const __ops_packet_t *pkt, __ops_cbdata_t *cbinfo)
+static pgp_cb_ret_t
+accumulate_cb(const pgp_packet_t *pkt, pgp_cbdata_t *cbinfo)
 {
-	const __ops_contents_t	*content = &pkt->u;
-	__ops_keyring_t		*keyring;
+	const pgp_contents_t	*content = &pkt->u;
+	pgp_keyring_t		*keyring;
 	accumulate_t		*accumulate;
 
-	if (__ops_get_debug_level(__FILE__)) {
+	if (pgp_get_debug_level(__FILE__)) {
 		(void) fprintf(stderr, "accumulate callback: packet tag %u\n", pkt->tag);
 	}
-	accumulate = __ops_callback_arg(cbinfo);
+	accumulate = pgp_callback_arg(cbinfo);
 	keyring = accumulate->keyring;
 	switch (pkt->tag) {
-	case OPS_PTAG_CT_PUBLIC_KEY:
-	case OPS_PTAG_CT_PUBLIC_SUBKEY:
-		__ops_add_to_pubring(keyring, &content->pubkey, pkt->tag);
-		return OPS_KEEP_MEMORY;
-	case OPS_PTAG_CT_SECRET_KEY:
-	case OPS_PTAG_CT_ENCRYPTED_SECRET_KEY:
-		__ops_add_to_secring(keyring, &content->seckey);
-		return OPS_KEEP_MEMORY;
-	case OPS_PTAG_CT_USER_ID:
-		if (__ops_get_debug_level(__FILE__)) {
+	case PGP_PTAG_CT_PUBLIC_KEY:
+	case PGP_PTAG_CT_PUBLIC_SUBKEY:
+		pgp_add_to_pubring(keyring, &content->pubkey, pkt->tag);
+		return PGP_KEEP_MEMORY;
+	case PGP_PTAG_CT_SECRET_KEY:
+	case PGP_PTAG_CT_ENCRYPTED_SECRET_KEY:
+		pgp_add_to_secring(keyring, &content->seckey);
+		return PGP_KEEP_MEMORY;
+	case PGP_PTAG_CT_USER_ID:
+		if (pgp_get_debug_level(__FILE__)) {
 			(void) fprintf(stderr, "User ID: %s for key %d\n",
 					content->userid,
 					keyring->keyc - 1);
 		}
 		if (keyring->keyc == 0) {
-			OPS_ERROR(cbinfo->errors, OPS_E_P_NO_USERID, "No userid found");
+			PGP_ERROR(cbinfo->errors, PGP_E_P_NO_USERID, "No userid found");
 		} else {
-			__ops_add_userid(&keyring->keys[keyring->keyc - 1], content->userid);
+			pgp_add_userid(&keyring->keys[keyring->keyc - 1], content->userid);
 		}
-		return OPS_KEEP_MEMORY;
-	case OPS_PARSER_PACKET_END:
+		return PGP_KEEP_MEMORY;
+	case PGP_PARSER_PACKET_END:
 		if (keyring->keyc > 0) {
-			__ops_add_subpacket(&keyring->keys[keyring->keyc - 1],
+			pgp_add_subpacket(&keyring->keys[keyring->keyc - 1],
 						&content->packet);
-			return OPS_KEEP_MEMORY;
+			return PGP_KEEP_MEMORY;
 		}
-		return OPS_RELEASE_MEMORY;
-	case OPS_PARSER_ERROR:
+		return PGP_RELEASE_MEMORY;
+	case PGP_PARSER_ERROR:
 		(void) fprintf(stderr, "Error: %s\n", content->error);
-		return OPS_FINISHED;
-	case OPS_PARSER_ERRCODE:
+		return PGP_FINISHED;
+	case PGP_PARSER_ERRCODE:
 		(void) fprintf(stderr, "parse error: %s\n",
-				__ops_errcode(content->errcode.errcode));
+				pgp_errcode(content->errcode.errcode));
 		break;
 	default:
 		break;
 	}
 	/* XXX: we now exclude so many things, we should either drop this or */
 	/* do something to pass on copies of the stuff we keep */
-	return __ops_stacked_callback(pkt, cbinfo);
+	return pgp_stacked_callback(pkt, cbinfo);
 }
 
 /**
@@ -170,7 +170,7 @@ accumulate_cb(const __ops_packet_t *pkt, __ops_cbdata_t *cbinfo)
  * \param parse Options to use when parsing
 */
 int 
-__ops_parse_and_accumulate(__ops_keyring_t *keyring, __ops_stream_t *parse)
+pgp_parse_and_accumulate(pgp_keyring_t *keyring, pgp_stream_t *parse)
 {
 	accumulate_t	accumulate;
 	const int	printerrors = 1;
@@ -178,7 +178,7 @@ __ops_parse_and_accumulate(__ops_keyring_t *keyring, __ops_stream_t *parse)
 
 	if (parse->readinfo.accumulate) {
 		(void) fprintf(stderr,
-			"__ops_parse_and_accumulate: already init\n");
+			"pgp_parse_and_accumulate: already init\n");
 		return 0;
 	}
 
@@ -186,9 +186,9 @@ __ops_parse_and_accumulate(__ops_keyring_t *keyring, __ops_stream_t *parse)
 
 	accumulate.keyring = keyring;
 
-	__ops_callback_push(parse, accumulate_cb, &accumulate);
+	pgp_callback_push(parse, accumulate_cb, &accumulate);
 	parse->readinfo.accumulate = 1;
-	ret = __ops_parse(parse, !printerrors);
+	ret = pgp_parse(parse, !printerrors);
 
 	return ret;
 }
@@ -199,51 +199,51 @@ __ops_parse_and_accumulate(__ops_keyring_t *keyring, __ops_stream_t *parse)
  */
 #define ERRNAME(code)	{ code, #code }
 
-static __ops_errcode_name_map_t errcode_name_map[] = {
-	ERRNAME(OPS_E_OK),
-	ERRNAME(OPS_E_FAIL),
-	ERRNAME(OPS_E_SYSTEM_ERROR),
-	ERRNAME(OPS_E_UNIMPLEMENTED),
+static pgp_errcode_name_map_t errcode_name_map[] = {
+	ERRNAME(PGP_E_OK),
+	ERRNAME(PGP_E_FAIL),
+	ERRNAME(PGP_E_SYSTEM_ERROR),
+	ERRNAME(PGP_E_UNIMPLEMENTED),
 
-	ERRNAME(OPS_E_R),
-	ERRNAME(OPS_E_R_READ_FAILED),
-	ERRNAME(OPS_E_R_EARLY_EOF),
-	ERRNAME(OPS_E_R_BAD_FORMAT),
-	ERRNAME(OPS_E_R_UNCONSUMED_DATA),
+	ERRNAME(PGP_E_R),
+	ERRNAME(PGP_E_R_READ_FAILED),
+	ERRNAME(PGP_E_R_EARLY_EOF),
+	ERRNAME(PGP_E_R_BAD_FORMAT),
+	ERRNAME(PGP_E_R_UNCONSUMED_DATA),
 
-	ERRNAME(OPS_E_W),
-	ERRNAME(OPS_E_W_WRITE_FAILED),
-	ERRNAME(OPS_E_W_WRITE_TOO_SHORT),
+	ERRNAME(PGP_E_W),
+	ERRNAME(PGP_E_W_WRITE_FAILED),
+	ERRNAME(PGP_E_W_WRITE_TOO_SHORT),
 
-	ERRNAME(OPS_E_P),
-	ERRNAME(OPS_E_P_NOT_ENOUGH_DATA),
-	ERRNAME(OPS_E_P_UNKNOWN_TAG),
-	ERRNAME(OPS_E_P_PACKET_CONSUMED),
-	ERRNAME(OPS_E_P_MPI_FORMAT_ERROR),
+	ERRNAME(PGP_E_P),
+	ERRNAME(PGP_E_P_NOT_ENOUGH_DATA),
+	ERRNAME(PGP_E_P_UNKNOWN_TAG),
+	ERRNAME(PGP_E_P_PACKET_CONSUMED),
+	ERRNAME(PGP_E_P_MPI_FORMAT_ERROR),
 
-	ERRNAME(OPS_E_C),
+	ERRNAME(PGP_E_C),
 
-	ERRNAME(OPS_E_V),
-	ERRNAME(OPS_E_V_BAD_SIGNATURE),
-	ERRNAME(OPS_E_V_NO_SIGNATURE),
-	ERRNAME(OPS_E_V_UNKNOWN_SIGNER),
+	ERRNAME(PGP_E_V),
+	ERRNAME(PGP_E_V_BAD_SIGNATURE),
+	ERRNAME(PGP_E_V_NO_SIGNATURE),
+	ERRNAME(PGP_E_V_UNKNOWN_SIGNER),
 
-	ERRNAME(OPS_E_ALG),
-	ERRNAME(OPS_E_ALG_UNSUPPORTED_SYMMETRIC_ALG),
-	ERRNAME(OPS_E_ALG_UNSUPPORTED_PUBLIC_KEY_ALG),
-	ERRNAME(OPS_E_ALG_UNSUPPORTED_SIGNATURE_ALG),
-	ERRNAME(OPS_E_ALG_UNSUPPORTED_HASH_ALG),
+	ERRNAME(PGP_E_ALG),
+	ERRNAME(PGP_E_ALG_UNSUPPORTED_SYMMETRIC_ALG),
+	ERRNAME(PGP_E_ALG_UNSUPPORTED_PUBLIC_KEY_ALG),
+	ERRNAME(PGP_E_ALG_UNSUPPORTED_SIGNATURE_ALG),
+	ERRNAME(PGP_E_ALG_UNSUPPORTED_HASH_ALG),
 
-	ERRNAME(OPS_E_PROTO),
-	ERRNAME(OPS_E_PROTO_BAD_SYMMETRIC_DECRYPT),
-	ERRNAME(OPS_E_PROTO_UNKNOWN_SS),
-	ERRNAME(OPS_E_PROTO_CRITICAL_SS_IGNORED),
-	ERRNAME(OPS_E_PROTO_BAD_PUBLIC_KEY_VRSN),
-	ERRNAME(OPS_E_PROTO_BAD_SIGNATURE_VRSN),
-	ERRNAME(OPS_E_PROTO_BAD_ONE_PASS_SIG_VRSN),
-	ERRNAME(OPS_E_PROTO_BAD_PKSK_VRSN),
-	ERRNAME(OPS_E_PROTO_DECRYPTED_MSG_WRONG_LEN),
-	ERRNAME(OPS_E_PROTO_BAD_SK_CHECKSUM),
+	ERRNAME(PGP_E_PROTO),
+	ERRNAME(PGP_E_PROTO_BAD_SYMMETRIC_DECRYPT),
+	ERRNAME(PGP_E_PROTO_UNKNOWN_SS),
+	ERRNAME(PGP_E_PROTO_CRITICAL_SS_IGNORED),
+	ERRNAME(PGP_E_PROTO_BAD_PUBLIC_KEY_VRSN),
+	ERRNAME(PGP_E_PROTO_BAD_SIGNATURE_VRSN),
+	ERRNAME(PGP_E_PROTO_BAD_ONE_PASS_SIG_VRSN),
+	ERRNAME(PGP_E_PROTO_BAD_PKSK_VRSN),
+	ERRNAME(PGP_E_PROTO_DECRYPTED_MSG_WRONG_LEN),
+	ERRNAME(PGP_E_PROTO_BAD_SK_CHECKSUM),
 
 	{0x00, NULL},		/* this is the end-of-array marker */
 };
@@ -255,15 +255,15 @@ static __ops_errcode_name_map_t errcode_name_map[] = {
  * \return error code name or "Unknown"
  */
 const char     *
-__ops_errcode(const __ops_errcode_t errcode)
+pgp_errcode(const pgp_errcode_t errcode)
 {
-	return (__ops_str_from_map((int) errcode,
-			(__ops_map_t *) errcode_name_map));
+	return (pgp_str_from_map((int) errcode,
+			(pgp_map_t *) errcode_name_map));
 }
 
 /* generic grab new storage function */
 void *
-__ops_new(size_t size)
+pgp_new(size_t size)
 {
 	void	*vp;
 
@@ -279,7 +279,7 @@ __ops_new(size_t size)
  * \brief Pushes the given error on the given errorstack
  * \param errstack Error stack to use
  * \param errcode Code of error to push
- * \param sys_errno System errno (used if errcode=OPS_E_SYSTEM_ERROR)
+ * \param sys_errno System errno (used if errcode=PGP_E_SYSTEM_ERROR)
  * \param file Source filename where error occurred
  * \param line Line in source file where error occurred
  * \param fmt Comment
@@ -287,11 +287,11 @@ __ops_new(size_t size)
  */
 
 void 
-__ops_push_error(__ops_error_t **errstack, __ops_errcode_t errcode,
+pgp_push_error(pgp_error_t **errstack, pgp_errcode_t errcode,
 		int sys_errno, const char *file, int line, const char *fmt,...)
 {
 	/* first get the varargs and generate the comment */
-	__ops_error_t  *err;
+	pgp_error_t  *err;
 	unsigned	maxbuf = 128;
 	va_list		args;
 	char           *comment;
@@ -330,14 +330,14 @@ __ops_push_error(__ops_error_t **errstack, __ops_errcode_t errcode,
 \param err Error to print
 */
 void 
-__ops_print_error(__ops_error_t *err)
+pgp_print_error(pgp_error_t *err)
 {
 	printf("%s:%d: ", err->file, err->line);
-	if (err->errcode == OPS_E_SYSTEM_ERROR) {
+	if (err->errcode == PGP_E_SYSTEM_ERROR) {
 		printf("system error %d returned from %s()\n", err->sys_errno,
 		       err->comment);
 	} else {
-		printf("%s, %s\n", __ops_errcode(err->errcode), err->comment);
+		printf("%s, %s\n", pgp_errcode(err->errcode), err->comment);
 	}
 }
 
@@ -347,12 +347,12 @@ __ops_print_error(__ops_error_t *err)
 \param errstack Error stack to print
 */
 void 
-__ops_print_errors(__ops_error_t *errstack)
+pgp_print_errors(pgp_error_t *errstack)
 {
-	__ops_error_t    *err;
+	pgp_error_t    *err;
 
 	for (err = errstack; err != NULL; err = err->next) {
-		__ops_print_error(err);
+		pgp_print_error(err);
 	}
 }
 
@@ -364,9 +364,9 @@ __ops_print_errors(__ops_error_t *errstack)
 \return 1 if found; else 0
 */
 int 
-__ops_has_error(__ops_error_t *errstack, __ops_errcode_t errcode)
+pgp_has_error(pgp_error_t *errstack, pgp_errcode_t errcode)
 {
-	__ops_error_t    *err;
+	pgp_error_t    *err;
 
 	for (err = errstack; err != NULL; err = err->next) {
 		if (err->errcode == errcode) {
@@ -382,9 +382,9 @@ __ops_has_error(__ops_error_t *errstack, __ops_errcode_t errcode)
 \param errstack Error stack to free
 */
 void 
-__ops_free_errors(__ops_error_t *errstack)
+pgp_free_errors(pgp_error_t *errstack)
 {
-	__ops_error_t    *next;
+	pgp_error_t    *next;
 
 	while (errstack != NULL) {
 		next = errstack->next;
@@ -396,7 +396,7 @@ __ops_free_errors(__ops_error_t *errstack)
 
 /* hash a 32-bit integer */
 static int
-hash_uint32(__ops_hash_t *hash, uint32_t n)
+hash_uint32(pgp_hash_t *hash, uint32_t n)
 {
 	uint8_t	ibuf[4];
 
@@ -410,9 +410,9 @@ hash_uint32(__ops_hash_t *hash, uint32_t n)
 
 /* hash a string - first length, then string itself */
 static int
-hash_string(__ops_hash_t *hash, const uint8_t *buf, uint32_t len)
+hash_string(pgp_hash_t *hash, const uint8_t *buf, uint32_t len)
 {
-	if (__ops_get_debug_level(__FILE__)) {
+	if (pgp_get_debug_level(__FILE__)) {
 		hexdump(stderr, "hash_string", buf, len);
 	}
 	hash_uint32(hash, len);
@@ -422,7 +422,7 @@ hash_string(__ops_hash_t *hash, const uint8_t *buf, uint32_t len)
 
 /* hash a bignum, possibly padded - first length, then string itself */
 static int
-hash_bignum(__ops_hash_t *hash, BIGNUM *bignum)
+hash_bignum(pgp_hash_t *hash, BIGNUM *bignum)
 {
 	uint8_t	*bn;
 	size_t	 len;
@@ -458,49 +458,49 @@ hash_bignum(__ops_hash_t *hash, BIGNUM *bignum)
  * \param key The key for which the fingerprint is calculated
  */
 int 
-__ops_fingerprint(__ops_fingerprint_t *fp, const __ops_pubkey_t *key, __ops_hash_alg_t hashtype)
+pgp_fingerprint(pgp_fingerprint_t *fp, const pgp_pubkey_t *key, pgp_hash_alg_t hashtype)
 {
-	__ops_memory_t	*mem;
-	__ops_hash_t	 hash;
+	pgp_memory_t	*mem;
+	pgp_hash_t	 hash;
 	const char	*type;
 	uint32_t	 len;
 
-	mem = __ops_memory_new();
+	mem = pgp_memory_new();
 	if (key->version == 2 || key->version == 3) {
-		if (key->alg != OPS_PKA_RSA &&
-		    key->alg != OPS_PKA_RSA_ENCRYPT_ONLY &&
-		    key->alg != OPS_PKA_RSA_SIGN_ONLY) {
+		if (key->alg != PGP_PKA_RSA &&
+		    key->alg != PGP_PKA_RSA_ENCRYPT_ONLY &&
+		    key->alg != PGP_PKA_RSA_SIGN_ONLY) {
 			(void) fprintf(stderr,
-				"__ops_fingerprint: bad algorithm\n");
+				"pgp_fingerprint: bad algorithm\n");
 			return 0;
 		}
-		__ops_hash_md5(&hash);
+		pgp_hash_md5(&hash);
 		if (!hash.init(&hash)) {
 			(void) fprintf(stderr,
-				"__ops_fingerprint: bad md5 alloc\n");
+				"pgp_fingerprint: bad md5 alloc\n");
 			return 0;
 		}
 		hash_bignum(&hash, key->key.rsa.n);
 		hash_bignum(&hash, key->key.rsa.e);
 		fp->length = hash.finish(&hash, fp->fingerprint);
-		if (__ops_get_debug_level(__FILE__)) {
+		if (pgp_get_debug_level(__FILE__)) {
 			hexdump(stderr, "v2/v3 fingerprint", fp->fingerprint, fp->length);
 		}
-	} else if (hashtype == OPS_HASH_MD5) {
-		__ops_hash_md5(&hash);
+	} else if (hashtype == PGP_HASH_MD5) {
+		pgp_hash_md5(&hash);
 		if (!hash.init(&hash)) {
 			(void) fprintf(stderr,
-				"__ops_fingerprint: bad md5 alloc\n");
+				"pgp_fingerprint: bad md5 alloc\n");
 			return 0;
 		}
-		type = (key->alg == OPS_PKA_RSA) ? "ssh-rsa" : "ssh-dss";
+		type = (key->alg == PGP_PKA_RSA) ? "ssh-rsa" : "ssh-dss";
 		hash_string(&hash, (const uint8_t *)(const void *)type, (unsigned)strlen(type));
 		switch(key->alg) {
-		case OPS_PKA_RSA:
+		case PGP_PKA_RSA:
 			hash_bignum(&hash, key->key.rsa.e);
 			hash_bignum(&hash, key->key.rsa.n);
 			break;
-		case OPS_PKA_DSA:
+		case PGP_PKA_DSA:
 			hash_bignum(&hash, key->key.dsa.p);
 			hash_bignum(&hash, key->key.dsa.q);
 			hash_bignum(&hash, key->key.dsa.g);
@@ -510,24 +510,24 @@ __ops_fingerprint(__ops_fingerprint_t *fp, const __ops_pubkey_t *key, __ops_hash
 			break;
 		}
 		fp->length = hash.finish(&hash, fp->fingerprint);
-		if (__ops_get_debug_level(__FILE__)) {
+		if (pgp_get_debug_level(__FILE__)) {
 			hexdump(stderr, "md5 fingerprint", fp->fingerprint, fp->length);
 		}
 	} else {
-		__ops_build_pubkey(mem, key, 0);
-		__ops_hash_sha1(&hash);
+		pgp_build_pubkey(mem, key, 0);
+		pgp_hash_sha1(&hash);
 		if (!hash.init(&hash)) {
 			(void) fprintf(stderr,
-				"__ops_fingerprint: bad sha1 alloc\n");
+				"pgp_fingerprint: bad sha1 alloc\n");
 			return 0;
 		}
-		len = (unsigned)__ops_mem_len(mem);
-		__ops_hash_add_int(&hash, 0x99, 1);
-		__ops_hash_add_int(&hash, len, 2);
-		hash.add(&hash, __ops_mem_data(mem), len);
+		len = (unsigned)pgp_mem_len(mem);
+		pgp_hash_add_int(&hash, 0x99, 1);
+		pgp_hash_add_int(&hash, len, 2);
+		hash.add(&hash, pgp_mem_data(mem), len);
 		fp->length = hash.finish(&hash, fp->fingerprint);
-		__ops_memory_free(mem);
-		if (__ops_get_debug_level(__FILE__)) {
+		pgp_memory_free(mem);
+		if (pgp_get_debug_level(__FILE__)) {
 			hexdump(stderr, "sha1 fingerprint", fp->fingerprint, fp->length);
 		}
 	}
@@ -542,9 +542,9 @@ __ops_fingerprint(__ops_fingerprint_t *fp, const __ops_pubkey_t *key, __ops_hash
  */
 
 int 
-__ops_keyid(uint8_t *keyid, const size_t idlen, const __ops_pubkey_t *key, __ops_hash_alg_t hashtype)
+pgp_keyid(uint8_t *keyid, const size_t idlen, const pgp_pubkey_t *key, pgp_hash_alg_t hashtype)
 {
-	__ops_fingerprint_t finger;
+	pgp_fingerprint_t finger;
 
 	if (key->version == 2 || key->version == 3) {
 		unsigned	n;
@@ -552,19 +552,19 @@ __ops_keyid(uint8_t *keyid, const size_t idlen, const __ops_pubkey_t *key, __ops
 
 		n = (unsigned) BN_num_bytes(key->key.rsa.n);
 		if (n > sizeof(bn)) {
-			(void) fprintf(stderr, "__ops_keyid: bad num bytes\n");
+			(void) fprintf(stderr, "pgp_keyid: bad num bytes\n");
 			return 0;
 		}
-		if (key->alg != OPS_PKA_RSA &&
-		    key->alg != OPS_PKA_RSA_ENCRYPT_ONLY &&
-		    key->alg != OPS_PKA_RSA_SIGN_ONLY) {
-			(void) fprintf(stderr, "__ops_keyid: bad algorithm\n");
+		if (key->alg != PGP_PKA_RSA &&
+		    key->alg != PGP_PKA_RSA_ENCRYPT_ONLY &&
+		    key->alg != PGP_PKA_RSA_SIGN_ONLY) {
+			(void) fprintf(stderr, "pgp_keyid: bad algorithm\n");
 			return 0;
 		}
 		BN_bn2bin(key->key.rsa.n, bn);
 		(void) memcpy(keyid, bn + n - idlen, idlen);
 	} else {
-		__ops_fingerprint(&finger, key, hashtype);
+		pgp_fingerprint(&finger, key, hashtype);
 		(void) memcpy(keyid,
 				finger.fingerprint + finger.length - idlen,
 				idlen);
@@ -580,7 +580,7 @@ __ops_keyid(uint8_t *keyid, const size_t idlen, const __ops_pubkey_t *key, __ops
 \param length Length of int in bytes
 */
 void 
-__ops_hash_add_int(__ops_hash_t *hash, unsigned n, unsigned length)
+pgp_hash_add_int(pgp_hash_t *hash, unsigned n, unsigned length)
 {
 	uint8_t   c;
 
@@ -597,35 +597,35 @@ __ops_hash_add_int(__ops_hash_t *hash, unsigned n, unsigned length)
 \param alg Hash algorithm to use
 */
 void 
-__ops_hash_any(__ops_hash_t *hash, __ops_hash_alg_t alg)
+pgp_hash_any(pgp_hash_t *hash, pgp_hash_alg_t alg)
 {
 	switch (alg) {
-	case OPS_HASH_MD5:
-		__ops_hash_md5(hash);
+	case PGP_HASH_MD5:
+		pgp_hash_md5(hash);
 		break;
 
-	case OPS_HASH_SHA1:
-		__ops_hash_sha1(hash);
+	case PGP_HASH_SHA1:
+		pgp_hash_sha1(hash);
 		break;
 
-	case OPS_HASH_SHA256:
-		__ops_hash_sha256(hash);
+	case PGP_HASH_SHA256:
+		pgp_hash_sha256(hash);
 		break;
 
-	case OPS_HASH_SHA384:
-		__ops_hash_sha384(hash);
+	case PGP_HASH_SHA384:
+		pgp_hash_sha384(hash);
 		break;
 
-	case OPS_HASH_SHA512:
-		__ops_hash_sha512(hash);
+	case PGP_HASH_SHA512:
+		pgp_hash_sha512(hash);
 		break;
 
-	case OPS_HASH_SHA224:
-		__ops_hash_sha224(hash);
+	case PGP_HASH_SHA224:
+		pgp_hash_sha224(hash);
 		break;
 
 	default:
-		(void) fprintf(stderr, "__ops_hash_any: bad algorithm\n");
+		(void) fprintf(stderr, "pgp_hash_any: bad algorithm\n");
 	}
 }
 
@@ -636,29 +636,29 @@ __ops_hash_any(__ops_hash_t *hash, __ops_hash_alg_t alg)
 \return Size of hash algorithm in bytes
 */
 unsigned 
-__ops_hash_size(__ops_hash_alg_t alg)
+pgp_hash_size(pgp_hash_alg_t alg)
 {
 	switch (alg) {
-	case OPS_HASH_MD5:
+	case PGP_HASH_MD5:
 		return 16;
 
-	case OPS_HASH_SHA1:
+	case PGP_HASH_SHA1:
 		return 20;
 
-	case OPS_HASH_SHA256:
+	case PGP_HASH_SHA256:
 		return 32;
 
-	case OPS_HASH_SHA224:
+	case PGP_HASH_SHA224:
 		return 28;
 
-	case OPS_HASH_SHA512:
+	case PGP_HASH_SHA512:
 		return 64;
 
-	case OPS_HASH_SHA384:
+	case PGP_HASH_SHA384:
 		return 48;
 
 	default:
-		(void) fprintf(stderr, "__ops_hash_size: bad algorithm\n");
+		(void) fprintf(stderr, "pgp_hash_size: bad algorithm\n");
 	}
 
 	return 0;
@@ -668,35 +668,35 @@ __ops_hash_size(__ops_hash_alg_t alg)
 \ingroup Core_Hashes
 \brief Returns hash enum corresponding to given string
 \param hash Text name of hash algorithm i.e. "SHA1"
-\returns Corresponding enum i.e. OPS_HASH_SHA1
+\returns Corresponding enum i.e. PGP_HASH_SHA1
 */
-__ops_hash_alg_t 
-__ops_str_to_hash_alg(const char *hash)
+pgp_hash_alg_t 
+pgp_str_to_hash_alg(const char *hash)
 {
 	if (hash == NULL) {
-		return OPS_DEFAULT_HASH_ALGORITHM;
+		return PGP_DEFAULT_HASH_ALGORITHM;
 	}
 	if (netpgp_strcasecmp(hash, "SHA1") == 0) {
-		return OPS_HASH_SHA1;
+		return PGP_HASH_SHA1;
 	}
 	if (netpgp_strcasecmp(hash, "MD5") == 0) {
-		return OPS_HASH_MD5;
+		return PGP_HASH_MD5;
 	}
 	if (netpgp_strcasecmp(hash, "SHA256") == 0) {
-		return OPS_HASH_SHA256;
+		return PGP_HASH_SHA256;
 	}
 	/*
         if (netpgp_strcasecmp(hash,"SHA224") == 0) {
-		return OPS_HASH_SHA224;
+		return PGP_HASH_SHA224;
 	}
         */
 	if (netpgp_strcasecmp(hash, "SHA512") == 0) {
-		return OPS_HASH_SHA512;
+		return PGP_HASH_SHA512;
 	}
 	if (netpgp_strcasecmp(hash, "SHA384") == 0) {
-		return OPS_HASH_SHA384;
+		return PGP_HASH_SHA384;
 	}
-	return OPS_HASH_UNKNOWN;
+	return PGP_HASH_UNKNOWN;
 }
 
 /**
@@ -709,13 +709,13 @@ __ops_str_to_hash_alg(const char *hash)
 \return Size of hash created
 */
 unsigned 
-__ops_hash(uint8_t *out, __ops_hash_alg_t alg, const void *in, size_t length)
+pgp_hash(uint8_t *out, pgp_hash_alg_t alg, const void *in, size_t length)
 {
-	__ops_hash_t      hash;
+	pgp_hash_t      hash;
 
-	__ops_hash_any(&hash, alg);
+	pgp_hash_any(&hash, alg);
 	if (!hash.init(&hash)) {
-		(void) fprintf(stderr, "__ops_hash: bad alloc\n");
+		(void) fprintf(stderr, "pgp_hash: bad alloc\n");
 		/* we'll just continue here - don't want to return a 0 hash */
 		/* XXX - agc - no way to return failure */
 	}
@@ -733,23 +733,23 @@ __ops_hash(uint8_t *out, __ops_hash_alg_t alg, const void *in, size_t length)
 \param hashed Resulting hash
 */
 void 
-__ops_calc_mdc_hash(const uint8_t *preamble,
+pgp_calc_mdc_hash(const uint8_t *preamble,
 			const size_t sz_preamble,
 			const uint8_t *plaintext,
 			const unsigned sz_plaintext,
 			uint8_t *hashed)
 {
-	__ops_hash_t	hash;
+	pgp_hash_t	hash;
 	uint8_t		c;
 
-	if (__ops_get_debug_level(__FILE__)) {
+	if (pgp_get_debug_level(__FILE__)) {
 		hexdump(stderr, "preamble", preamble, sz_preamble);
 		hexdump(stderr, "plaintext", plaintext, sz_plaintext);
 	}
 	/* init */
-	__ops_hash_any(&hash, OPS_HASH_SHA1);
+	pgp_hash_any(&hash, PGP_HASH_SHA1);
 	if (!hash.init(&hash)) {
-		(void) fprintf(stderr, "__ops_calc_mdc_hash: bad alloc\n");
+		(void) fprintf(stderr, "pgp_calc_mdc_hash: bad alloc\n");
 		/* we'll just continue here - it will die anyway */
 		/* agc - XXX - no way to return failure */
 	}
@@ -762,14 +762,14 @@ __ops_calc_mdc_hash(const uint8_t *preamble,
 	c = MDC_PKT_TAG;
 	hash.add(&hash, &c, 1);
 	/* MDC packet len */
-	c = OPS_SHA1_HASH_SIZE;
+	c = PGP_SHA1_HASH_SIZE;
 	hash.add(&hash, &c, 1);
 
 	/* finish */
 	hash.finish(&hash, hashed);
 
-	if (__ops_get_debug_level(__FILE__)) {
-		hexdump(stderr, "hashed", hashed, OPS_SHA1_HASH_SIZE);
+	if (pgp_get_debug_level(__FILE__)) {
+		hexdump(stderr, "hashed", hashed, PGP_SHA1_HASH_SIZE);
 	}
 }
 
@@ -780,12 +780,12 @@ __ops_calc_mdc_hash(const uint8_t *preamble,
 \return 1 if supported; else 0
 */
 unsigned 
-__ops_is_hash_alg_supported(const __ops_hash_alg_t *hash_alg)
+pgp_is_hash_alg_supported(const pgp_hash_alg_t *hash_alg)
 {
 	switch (*hash_alg) {
-	case OPS_HASH_MD5:
-	case OPS_HASH_SHA1:
-	case OPS_HASH_SHA256:
+	case PGP_HASH_MD5:
+	case PGP_HASH_SHA1:
+	case PGP_HASH_SHA256:
 		return 1;
 
 	default:
@@ -796,23 +796,23 @@ __ops_is_hash_alg_supported(const __ops_hash_alg_t *hash_alg)
 /* structure to map string to cipher def */
 typedef struct str2cipher_t {
 	const char	*s;	/* cipher name */
-	__ops_symm_alg_t i;	/* cipher def */
+	pgp_symm_alg_t i;	/* cipher def */
 } str2cipher_t;
 
 static str2cipher_t	str2cipher[] = {
-	{	"cast5",		OPS_SA_CAST5		},
-	{	"idea",			OPS_SA_IDEA		},
-	{	"aes128",		OPS_SA_AES_128		},
-	{	"aes256",		OPS_SA_AES_256		},
-	{	"camellia128",		OPS_SA_CAMELLIA_128	},
-	{	"camellia256",		OPS_SA_CAMELLIA_256	},
-	{	"tripledes",		OPS_SA_TRIPLEDES	},
+	{	"cast5",		PGP_SA_CAST5		},
+	{	"idea",			PGP_SA_IDEA		},
+	{	"aes128",		PGP_SA_AES_128		},
+	{	"aes256",		PGP_SA_AES_256		},
+	{	"camellia128",		PGP_SA_CAMELLIA_128	},
+	{	"camellia256",		PGP_SA_CAMELLIA_256	},
+	{	"tripledes",		PGP_SA_TRIPLEDES	},
 	{	NULL,			0			}
 };
 
 /* convert from a string to a cipher definition */
-__ops_symm_alg_t 
-__ops_str_to_cipher(const char *cipher)
+pgp_symm_alg_t 
+pgp_str_to_cipher(const char *cipher)
 {
 	str2cipher_t	*sp;
 
@@ -821,11 +821,11 @@ __ops_str_to_cipher(const char *cipher)
 			return sp->i;
 		}
 	}
-	return OPS_SA_DEFAULT_CIPHER;
+	return PGP_SA_DEFAULT_CIPHER;
 }
 
 void 
-__ops_random(void *dest, size_t length)
+pgp_random(void *dest, size_t length)
 {
 	RAND_bytes(dest, (int)length);
 }
@@ -837,7 +837,7 @@ __ops_random(void *dest, size_t length)
 \param needed Size to initialise to
 */
 void 
-__ops_memory_init(__ops_memory_t *mem, size_t needed)
+pgp_memory_init(pgp_memory_t *mem, size_t needed)
 {
 	uint8_t	*temp;
 
@@ -845,7 +845,7 @@ __ops_memory_init(__ops_memory_t *mem, size_t needed)
 	if (mem->buf) {
 		if (mem->allocated < needed) {
 			if ((temp = realloc(mem->buf, needed)) == NULL) {
-				(void) fprintf(stderr, "__ops_memory_init: bad alloc\n");
+				(void) fprintf(stderr, "pgp_memory_init: bad alloc\n");
 			} else {
 				mem->buf = temp;
 				mem->allocated = needed;
@@ -853,7 +853,7 @@ __ops_memory_init(__ops_memory_t *mem, size_t needed)
 		}
 	} else {
 		if ((mem->buf = calloc(1, needed)) == NULL) {
-			(void) fprintf(stderr, "__ops_memory_init: bad alloc\n");
+			(void) fprintf(stderr, "pgp_memory_init: bad alloc\n");
 		} else {
 			mem->allocated = needed;
 		}
@@ -867,25 +867,25 @@ __ops_memory_init(__ops_memory_t *mem, size_t needed)
 \param length New size
 */
 void 
-__ops_memory_pad(__ops_memory_t *mem, size_t length)
+pgp_memory_pad(pgp_memory_t *mem, size_t length)
 {
 	uint8_t	*temp;
 
 	if (mem->allocated < mem->length) {
-		(void) fprintf(stderr, "__ops_memory_pad: bad alloc in\n");
+		(void) fprintf(stderr, "pgp_memory_pad: bad alloc in\n");
 		return;
 	}
 	if (mem->allocated < mem->length + length) {
 		mem->allocated = mem->allocated * 2 + length;
 		temp = realloc(mem->buf, mem->allocated);
 		if (temp == NULL) {
-			(void) fprintf(stderr, "__ops_memory_pad: bad alloc\n");
+			(void) fprintf(stderr, "pgp_memory_pad: bad alloc\n");
 		} else {
 			mem->buf = temp;
 		}
 	}
 	if (mem->allocated < mem->length + length) {
-		(void) fprintf(stderr, "__ops_memory_pad: bad alloc out\n");
+		(void) fprintf(stderr, "pgp_memory_pad: bad alloc out\n");
 	}
 }
 
@@ -897,9 +897,9 @@ __ops_memory_pad(__ops_memory_t *mem, size_t length)
 \param length Length of data to add
 */
 void 
-__ops_memory_add(__ops_memory_t *mem, const uint8_t *src, size_t length)
+pgp_memory_add(pgp_memory_t *mem, const uint8_t *src, size_t length)
 {
-	__ops_memory_pad(mem, length);
+	pgp_memory_pad(mem, length);
 	(void) memcpy(mem->buf + mem->length, src, length);
 	mem->length += length;
 }
@@ -907,12 +907,12 @@ __ops_memory_add(__ops_memory_t *mem, const uint8_t *src, size_t length)
 /* XXX: this could be refactored via the writer, but an awful lot of */
 /* hoops to jump through for 2 lines of code! */
 void 
-__ops_memory_place_int(__ops_memory_t *mem, unsigned offset, unsigned n,
+pgp_memory_place_int(pgp_memory_t *mem, unsigned offset, unsigned n,
 		     size_t length)
 {
 	if (mem->allocated < offset + length) {
 		(void) fprintf(stderr,
-			"__ops_memory_place_int: bad alloc\n");
+			"pgp_memory_place_int: bad alloc\n");
 	} else {
 		while (length-- > 0) {
 			mem->buf[offset++] = n >> (length * 8);
@@ -924,11 +924,11 @@ __ops_memory_place_int(__ops_memory_t *mem, unsigned offset, unsigned n,
  * \ingroup HighLevel_Memory
  * \brief Retains allocated memory and set length of stored data to zero.
  * \param mem Memory to clear
- * \sa __ops_memory_release()
- * \sa __ops_memory_free()
+ * \sa pgp_memory_release()
+ * \sa pgp_memory_free()
  */
 void 
-__ops_memory_clear(__ops_memory_t *mem)
+pgp_memory_clear(pgp_memory_t *mem)
 {
 	mem->length = 0;
 }
@@ -938,11 +938,11 @@ __ops_memory_clear(__ops_memory_t *mem)
 \brief Free memory and associated data
 \param mem Memory to free
 \note This does not free mem itself
-\sa __ops_memory_clear()
-\sa __ops_memory_free()
+\sa pgp_memory_clear()
+\sa pgp_memory_free()
 */
 void 
-__ops_memory_release(__ops_memory_t *mem)
+pgp_memory_release(pgp_memory_t *mem)
 {
 	if (mem->mmapped) {
 		(void) munmap(mem->buf, mem->length);
@@ -954,15 +954,15 @@ __ops_memory_release(__ops_memory_t *mem)
 }
 
 void 
-__ops_memory_make_packet(__ops_memory_t *out, __ops_content_enum tag)
+pgp_memory_make_packet(pgp_memory_t *out, pgp_content_enum tag)
 {
 	size_t          extra;
 
 	extra = (out->length < 192) ? 1 : (out->length < 8192 + 192) ? 2 : 5;
-	__ops_memory_pad(out, extra + 1);
+	pgp_memory_pad(out, extra + 1);
 	memmove(out->buf + extra + 1, out->buf, out->length);
 
-	out->buf[0] = OPS_PTAG_ALWAYS_SET | OPS_PTAG_NEW_FORMAT | tag;
+	out->buf[0] = PGP_PTAG_ALWAYS_SET | PGP_PTAG_NEW_FORMAT | tag;
 
 	if (out->length < 192) {
 		out->buf[1] = (uint8_t)out->length;
@@ -982,58 +982,58 @@ __ops_memory_make_packet(__ops_memory_t *out, __ops_content_enum tag)
 
 /**
    \ingroup HighLevel_Memory
-   \brief Create a new zeroed __ops_memory_t
-   \return Pointer to new __ops_memory_t
-   \note Free using __ops_memory_free() after use.
-   \sa __ops_memory_free()
+   \brief Create a new zeroed pgp_memory_t
+   \return Pointer to new pgp_memory_t
+   \note Free using pgp_memory_free() after use.
+   \sa pgp_memory_free()
 */
 
-__ops_memory_t   *
-__ops_memory_new(void)
+pgp_memory_t   *
+pgp_memory_new(void)
 {
-	return calloc(1, sizeof(__ops_memory_t));
+	return calloc(1, sizeof(pgp_memory_t));
 }
 
 /**
    \ingroup HighLevel_Memory
    \brief Free memory ptr and associated memory
    \param mem Memory to be freed
-   \sa __ops_memory_release()
-   \sa __ops_memory_clear()
+   \sa pgp_memory_release()
+   \sa pgp_memory_clear()
 */
 
 void 
-__ops_memory_free(__ops_memory_t *mem)
+pgp_memory_free(pgp_memory_t *mem)
 {
-	__ops_memory_release(mem);
+	pgp_memory_release(mem);
 	free(mem);
 }
 
 /**
    \ingroup HighLevel_Memory
-   \brief Get length of data stored in __ops_memory_t struct
+   \brief Get length of data stored in pgp_memory_t struct
    \return Number of bytes in data
 */
 size_t 
-__ops_mem_len(const __ops_memory_t *mem)
+pgp_mem_len(const pgp_memory_t *mem)
 {
 	return mem->length;
 }
 
 /**
    \ingroup HighLevel_Memory
-   \brief Get data stored in __ops_memory_t struct
+   \brief Get data stored in pgp_memory_t struct
    \return Pointer to data
 */
 void *
-__ops_mem_data(__ops_memory_t *mem)
+pgp_mem_data(pgp_memory_t *mem)
 {
 	return mem->buf;
 }
 
-/* read a gile into an __ops_memory_t */
+/* read a gile into an pgp_memory_t */
 int
-__ops_mem_readfile(__ops_memory_t *mem, const char *f)
+pgp_mem_readfile(pgp_memory_t *mem, const char *f)
 {
 	struct stat	 st;
 	FILE		*fp;
@@ -1041,7 +1041,7 @@ __ops_mem_readfile(__ops_memory_t *mem, const char *f)
 
 	if ((fp = fopen(f, "rb")) == NULL) {
 		(void) fprintf(stderr,
-				"__ops_mem_readfile: can't open \"%s\"\n", f);
+				"pgp_mem_readfile: can't open \"%s\"\n", f);
 		return 0;
 	}
 	(void) fstat(fileno(fp), &st);
@@ -1051,7 +1051,7 @@ __ops_mem_readfile(__ops_memory_t *mem, const char *f)
 	if (mem->buf == MAP_FAILED) {
 		/* mmap failed for some reason - try to allocate memory */
 		if ((mem->buf = calloc(1, mem->allocated)) == NULL) {
-			(void) fprintf(stderr, "__ops_mem_readfile: calloc\n");
+			(void) fprintf(stderr, "pgp_mem_readfile: calloc\n");
 			(void) fclose(fp);
 			return 0;
 		}
@@ -1084,9 +1084,9 @@ typedef struct {
  *
  */
 static const char *
-str_from_map_or_null(int type, __ops_map_t *map)
+str_from_map_or_null(int type, pgp_map_t *map)
 {
-	__ops_map_t      *row;
+	pgp_map_t      *row;
 
 	for (row = map; row->string != NULL; row++) {
 		if (row->type == type) {
@@ -1104,7 +1104,7 @@ str_from_map_or_null(int type, __ops_map_t *map)
  */
 
 const char     *
-__ops_str_from_map(int type, __ops_map_t *map)
+pgp_str_from_map(int type, pgp_map_t *map)
 {
 	const char     *str;
 
@@ -1153,21 +1153,21 @@ hexdump(FILE *fp, const char *header, const uint8_t *src, size_t length)
  */
 
 void 
-__ops_finish(void)
+pgp_finish(void)
 {
-	__ops_crypto_finish();
+	pgp_crypto_finish();
 }
 
 static int 
-sum16_reader(void *dest_, size_t length, __ops_error_t **errors,
-	     __ops_reader_t *readinfo, __ops_cbdata_t *cbinfo)
+sum16_reader(void *dest_, size_t length, pgp_error_t **errors,
+	     pgp_reader_t *readinfo, pgp_cbdata_t *cbinfo)
 {
 	const uint8_t	*dest = dest_;
-	sum16_t		*arg = __ops_reader_get_arg(readinfo);
+	sum16_t		*arg = pgp_reader_get_arg(readinfo);
 	int		 r;
 	int		 n;
 
-	r = __ops_stacked_read(dest_, length, errors, readinfo, cbinfo);
+	r = pgp_stacked_read(dest_, length, errors, readinfo, cbinfo);
 	if (r < 0) {
 		return r;
 	}
@@ -1178,9 +1178,9 @@ sum16_reader(void *dest_, size_t length, __ops_error_t **errors,
 }
 
 static void 
-sum16_destroyer(__ops_reader_t *readinfo)
+sum16_destroyer(pgp_reader_t *readinfo)
 {
-	free(__ops_reader_get_arg(readinfo));
+	free(pgp_reader_get_arg(readinfo));
 }
 
 /**
@@ -1189,14 +1189,14 @@ sum16_destroyer(__ops_reader_t *readinfo)
 */
 
 void 
-__ops_reader_push_sum16(__ops_stream_t *stream)
+pgp_reader_push_sum16(pgp_stream_t *stream)
 {
 	sum16_t    *arg;
 
 	if ((arg = calloc(1, sizeof(*arg))) == NULL) {
-		(void) fprintf(stderr, "__ops_reader_push_sum16: bad alloc\n");
+		(void) fprintf(stderr, "pgp_reader_push_sum16: bad alloc\n");
 	} else {
-		__ops_reader_push(stream, sum16_reader, sum16_destroyer, arg);
+		pgp_reader_push(stream, sum16_reader, sum16_destroyer, arg);
 	}
 }
 
@@ -1206,14 +1206,14 @@ __ops_reader_push_sum16(__ops_stream_t *stream)
    \return sum
 */
 uint16_t 
-__ops_reader_pop_sum16(__ops_stream_t *stream)
+pgp_reader_pop_sum16(pgp_stream_t *stream)
 {
 	uint16_t	 sum;
 	sum16_t		*arg;
 
-	arg = __ops_reader_get_arg(__ops_readinfo(stream));
+	arg = pgp_reader_get_arg(pgp_readinfo(stream));
 	sum = arg->sum;
-	__ops_reader_pop(stream);
+	pgp_reader_pop(stream);
 	free(arg);
 	return sum;
 }
@@ -1230,7 +1230,7 @@ static char    *debugv[MAX_DEBUG_NAMES];
 
 /* set the debugging level per filename */
 int
-__ops_set_debug_level(const char *f)
+pgp_set_debug_level(const char *f)
 {
 	const char     *name;
 	int             i;
@@ -1257,7 +1257,7 @@ __ops_set_debug_level(const char *f)
 
 /* get the debugging level per filename */
 int
-__ops_get_debug_level(const char *f)
+pgp_get_debug_level(const char *f)
 {
 	const char     *name;
 	int             i;
@@ -1278,7 +1278,7 @@ __ops_get_debug_level(const char *f)
 
 /* return the version for the library */
 const char *
-__ops_get_info(const char *type)
+pgp_get_info(const char *type)
 {
 	if (strcmp(type, "version") == 0) {
 		return NETPGP_VERSION_STRING;
@@ -1291,7 +1291,7 @@ __ops_get_info(const char *type)
 
 /* local version of asprintf so we don't have to play autoconf games */
 int
-__ops_asprintf(char **ret, const char *fmt, ...)
+pgp_asprintf(char **ret, const char *fmt, ...)
 {
 	va_list args;
 	char    buf[120 * 1024];	/* XXX - "huge" buffer on stack */

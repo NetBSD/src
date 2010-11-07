@@ -64,56 +64,56 @@
  * \ingroup Create
  * This struct contains the required information about how to write this stream
  */
-struct __ops_output_t {
-	__ops_writer_t	 writer;
-	__ops_error_t	*errors;	/* error stack */
+struct pgp_output_t {
+	pgp_writer_t	 writer;
+	pgp_error_t	*errors;	/* error stack */
 };
 
-__ops_output_t *__ops_output_new(void);
-void __ops_output_delete(__ops_output_t *);
+pgp_output_t *pgp_output_new(void);
+void pgp_output_delete(pgp_output_t *);
 
-int __ops_filewrite(const char *, const char *, const size_t, const unsigned);
+int pgp_filewrite(const char *, const char *, const size_t, const unsigned);
 
-void __ops_build_pubkey(__ops_memory_t *, const __ops_pubkey_t *, unsigned);
+void pgp_build_pubkey(pgp_memory_t *, const pgp_pubkey_t *, unsigned);
 
-unsigned __ops_calc_sesskey_checksum(__ops_pk_sesskey_t *, uint8_t *);
-unsigned __ops_write_struct_userid(__ops_output_t *, const uint8_t *);
-unsigned __ops_write_ss_header(__ops_output_t *, unsigned, __ops_content_enum);
-unsigned __ops_write_struct_seckey(const __ops_seckey_t *,
+unsigned pgp_calc_sesskey_checksum(pgp_pk_sesskey_t *, uint8_t *);
+unsigned pgp_write_struct_userid(pgp_output_t *, const uint8_t *);
+unsigned pgp_write_ss_header(pgp_output_t *, unsigned, pgp_content_enum);
+unsigned pgp_write_struct_seckey(const pgp_seckey_t *,
 			    const uint8_t *,
 			    const size_t,
-			    __ops_output_t *);
-unsigned __ops_write_one_pass_sig(__ops_output_t *,
-				const __ops_seckey_t *,
-				const __ops_hash_alg_t,
-				const __ops_sig_type_t);
-unsigned __ops_write_litdata(__ops_output_t *, 
+			    pgp_output_t *);
+unsigned pgp_write_one_pass_sig(pgp_output_t *,
+				const pgp_seckey_t *,
+				const pgp_hash_alg_t,
+				const pgp_sig_type_t);
+unsigned pgp_write_litdata(pgp_output_t *, 
 				const uint8_t *,
 				const int,
-				const __ops_litdata_enum);
-__ops_pk_sesskey_t *__ops_create_pk_sesskey(const __ops_key_t *, const char *);
-unsigned __ops_write_pk_sesskey(__ops_output_t *, __ops_pk_sesskey_t *);
-unsigned __ops_write_xfer_pubkey(__ops_output_t *,
-				const __ops_key_t *, const unsigned);
-unsigned   __ops_write_xfer_seckey(__ops_output_t *,
-				const __ops_key_t *,
+				const pgp_litdata_enum);
+pgp_pk_sesskey_t *pgp_create_pk_sesskey(const pgp_key_t *, const char *);
+unsigned pgp_write_pk_sesskey(pgp_output_t *, pgp_pk_sesskey_t *);
+unsigned pgp_write_xfer_pubkey(pgp_output_t *,
+				const pgp_key_t *, const unsigned);
+unsigned   pgp_write_xfer_seckey(pgp_output_t *,
+				const pgp_key_t *,
 				const uint8_t *,
 				const size_t,
 				const unsigned);
 
-void __ops_fast_create_userid(uint8_t **, uint8_t *);
-unsigned __ops_write_userid(const uint8_t *, __ops_output_t *);
-void __ops_fast_create_rsa_pubkey(__ops_pubkey_t *, time_t, BIGNUM *, BIGNUM *);
-unsigned __ops_write_rsa_pubkey(time_t, const BIGNUM *, const BIGNUM *,
-				__ops_output_t *);
-void __ops_fast_create_rsa_seckey(__ops_seckey_t *, time_t, BIGNUM *,
+void pgp_fast_create_userid(uint8_t **, uint8_t *);
+unsigned pgp_write_userid(const uint8_t *, pgp_output_t *);
+void pgp_fast_create_rsa_pubkey(pgp_pubkey_t *, time_t, BIGNUM *, BIGNUM *);
+unsigned pgp_write_rsa_pubkey(time_t, const BIGNUM *, const BIGNUM *,
+				pgp_output_t *);
+void pgp_fast_create_rsa_seckey(pgp_seckey_t *, time_t, BIGNUM *,
 				BIGNUM *, BIGNUM *, BIGNUM *,
 				BIGNUM *, BIGNUM *);
-unsigned encode_m_buf(const uint8_t *, size_t, const __ops_pubkey_t *,
+unsigned encode_m_buf(const uint8_t *, size_t, const pgp_pubkey_t *,
 				uint8_t *);
-unsigned __ops_fileread_litdata(const char *, const __ops_litdata_enum,
-				__ops_output_t *);
-unsigned __ops_write_symm_enc_data(const uint8_t *, const int,
-				__ops_output_t *);
+unsigned pgp_fileread_litdata(const char *, const pgp_litdata_enum,
+				pgp_output_t *);
+unsigned pgp_write_symm_enc_data(const uint8_t *, const int,
+				pgp_output_t *);
 
 #endif /* CREATE_H_ */

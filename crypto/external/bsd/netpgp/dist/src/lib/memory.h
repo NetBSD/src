@@ -56,32 +56,32 @@
 
 #include "packet.h"
 
-/** __ops_memory_t
+/** pgp_memory_t
  */
-typedef struct __ops_memory_t {
+typedef struct pgp_memory_t {
 	uint8_t		*buf;
 	size_t          length;
 	size_t          allocated;
 	unsigned	mmapped;
-} __ops_memory_t;
+} pgp_memory_t;
 
 
-__ops_memory_t   *__ops_memory_new(void);
-void __ops_memory_free(__ops_memory_t *);
-void __ops_memory_init(__ops_memory_t *, size_t);
-void __ops_memory_pad(__ops_memory_t *, size_t);
-void __ops_memory_add(__ops_memory_t *, const uint8_t *, size_t);
-void __ops_memory_place_int(__ops_memory_t *, unsigned, unsigned, size_t);
-void __ops_memory_make_packet(__ops_memory_t *, __ops_content_enum);
-void __ops_memory_clear(__ops_memory_t *);
-void __ops_memory_release(__ops_memory_t *);
+pgp_memory_t   *pgp_memory_new(void);
+void pgp_memory_free(pgp_memory_t *);
+void pgp_memory_init(pgp_memory_t *, size_t);
+void pgp_memory_pad(pgp_memory_t *, size_t);
+void pgp_memory_add(pgp_memory_t *, const uint8_t *, size_t);
+void pgp_memory_place_int(pgp_memory_t *, unsigned, unsigned, size_t);
+void pgp_memory_make_packet(pgp_memory_t *, pgp_content_enum);
+void pgp_memory_clear(pgp_memory_t *);
+void pgp_memory_release(pgp_memory_t *);
 
-void __ops_writer_set_memory(__ops_output_t *, __ops_memory_t *);
+void pgp_writer_set_memory(pgp_output_t *, pgp_memory_t *);
 
-size_t __ops_mem_len(const __ops_memory_t *);
-void *__ops_mem_data(__ops_memory_t *);
-int __ops_mem_readfile(__ops_memory_t *, const char *);
+size_t pgp_mem_len(const pgp_memory_t *);
+void *pgp_mem_data(pgp_memory_t *);
+int pgp_mem_readfile(pgp_memory_t *, const char *);
 
-void __ops_random(void *, size_t);
+void pgp_random(void *, size_t);
 
 #endif /* MEMORY_H_ */
