@@ -29,6 +29,8 @@
 
 create_atffile()
 {
+    ATF_CONFDIR="$(pwd)"; export ATF_CONFDIR
+
     cat >Atffile <<EOF
 Content-Type: application/X-atf-atffile; version="1"
 
