@@ -68,7 +68,7 @@
 #include "netpgpsdk.h"
 #include "crypto.h"
 #include "netpgpdigest.h"
-#include "ops-ssh.h"
+#include "ssh2pgp.h"
 
 /* structure for earching for constant strings */
 typedef struct str_t {
