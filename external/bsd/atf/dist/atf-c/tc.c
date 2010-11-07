@@ -642,6 +642,70 @@ atf_tc_get_config_var_wd(const atf_tc_t *tc, const char *name,
     return val;
 }
 
+bool
+atf_tc_get_config_var_as_bool(const atf_tc_t *tc, const char *name)
+{
+    bool val;
+    const char *strval;
+    atf_error_t err;
+
+    strval = atf_tc_get_config_var(tc, name);
+    err = atf_text_to_bool(strval, &val);
+    if (atf_is_error(err)) {
+        atf_error_free(err);
+        atf_tc_fail("Configuration variable %s does not have a valid "
+                    "boolean value; found %s", name, strval);
+    }
+
+    return val;
+}
+
+bool
+atf_tc_get_config_var_as_bool_wd(const atf_tc_t *tc, const char *name,
+                                 const bool defval)
+{
+    bool val;
+
+    if (!atf_tc_has_config_var(tc, name))
+        val = defval;
+    else
+        val = atf_tc_get_config_var_as_bool(tc, name);
+
+    return val;
+}
+
+long
+atf_tc_get_config_var_as_long(const atf_tc_t *tc, const char *name)
+{
+    long val;
+    const char *strval;
+    atf_error_t err;
+
+    strval = atf_tc_get_config_var(tc, name);
+    err = atf_text_to_long(strval, &val);
+    if (atf_is_error(err)) {
+        atf_error_free(err);
+        atf_tc_fail("Configuration variable %s does not have a valid "
+                    "long value; found %s", name, strval);
+    }
+
+    return val;
+}
+
+long
+atf_tc_get_config_var_as_long_wd(const atf_tc_t *tc, const char *name,
+                                 const long defval)
+{
+    long val;
+
+    if (!atf_tc_has_config_var(tc, name))
+        val = defval;
+    else
+        val = atf_tc_get_config_var_as_long(tc, name);
+
+    return val;
+}
+
 const char *
 atf_tc_get_md_var(const atf_tc_t *tc, const char *name)
 {
