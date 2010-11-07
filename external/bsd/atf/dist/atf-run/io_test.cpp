@@ -232,7 +232,6 @@ ATF_TEST_CASE_HEAD(systembuf_short_read)
 {
     set_md_var("descr", "Tests that a short read (one that fits in the "
                "internal buffer) works when using systembuf");
-    set_md_var("use.fs", "true");
 }
 ATF_TEST_CASE_BODY(systembuf_short_read)
 {
@@ -244,7 +243,6 @@ ATF_TEST_CASE_HEAD(systembuf_long_read)
 {
     set_md_var("descr", "Tests that a long read (one that does not fit in "
                "the internal buffer) works when using systembuf");
-    set_md_var("use.fs", "true");
 }
 ATF_TEST_CASE_BODY(systembuf_long_read)
 {
@@ -256,7 +254,6 @@ ATF_TEST_CASE_HEAD(systembuf_short_write)
 {
     set_md_var("descr", "Tests that a short write (one that fits in the "
                "internal buffer) works when using systembuf");
-    set_md_var("use.fs", "true");
 }
 ATF_TEST_CASE_BODY(systembuf_short_write)
 {
@@ -268,7 +265,6 @@ ATF_TEST_CASE_HEAD(systembuf_long_write)
 {
     set_md_var("descr", "Tests that a long write (one that does not fit "
                "in the internal buffer) works when using systembuf");
-    set_md_var("use.fs", "true");
 }
 ATF_TEST_CASE_BODY(systembuf_long_write)
 {
@@ -328,7 +324,12 @@ check_stream(std::ostream& os)
 class mock_muxer : public atf::atf_run::muxer {
     void line_callback(const size_t index, const std::string& line)
     {
-        std::cout << "line_callback(" << index << ", " << line << ")\n";
+        // The following should be enabled but causes the output to be so big
+        // that it is annoying.  Reenable at some point if we make atf store
+        // the output of the test cases in some other way (e.g. only if a test
+        // failes), because this message is the only help in seeing how the
+        // test fails.
+        //std::cout << "line_callback(" << index << ", " << line << ")\n";
         check_stream(std::cout);
         switch (index) {
         case 0: lines0.push_back(line); break;

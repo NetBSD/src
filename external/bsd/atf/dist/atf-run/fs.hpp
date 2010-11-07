@@ -50,7 +50,6 @@ public:
 atf::fs::path change_directory(const atf::fs::path&);
 void cleanup(const atf::fs::path&);
 atf::fs::path get_current_dir(void);
-bool set_immutable(const atf::fs::path&, bool);
 
 } // namespace atf_run
 } // namespace atf

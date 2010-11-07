@@ -43,7 +43,6 @@ ATF_TC_HEAD(second, tc)
 {
     atf_tc_set_md_var(tc, "descr", "Description 2");
     atf_tc_set_md_var(tc, "timeout", "500");
-    atf_tc_set_md_var(tc, "use.fs", "true");
     atf_tc_set_md_var(tc, "X-property", "Custom property");
 }
 ATF_TC_BODY(second, tc)

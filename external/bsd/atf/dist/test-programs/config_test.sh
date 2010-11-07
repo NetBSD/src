@@ -32,7 +32,6 @@ vflag_head()
 {
     atf_set "descr" "Tests that the -v flag works correctly to set" \
                     "configuration variables"
-    atf_set "use.fs" "true"
 }
 vflag_body()
 {

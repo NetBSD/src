@@ -69,7 +69,6 @@ atf_test_case sflag_eq_ne
 sflag_eq_ne_head()
 {
     atf_set "descr" "Tests for the -s option using the 'eq' and 'ne' qualifiers"
-    atf_set "use.fs" "true"
 }
 sflag_eq_ne_body()
 {
@@ -88,7 +87,6 @@ atf_test_case sflag_exit
 sflag_exit_head()
 {
     atf_set "descr" "Tests for the -s option using the 'exit' qualifier"
-    atf_set "use.fs" "true"
 }
 sflag_exit_body()
 {
@@ -113,7 +111,6 @@ atf_test_case sflag_ignore
 sflag_ignore_head()
 {
     atf_set "descr" "Tests for the -s option using the 'ignore' qualifier"
-    atf_set "use.fs" "true"
 }
 sflag_ignore_body()
 {
@@ -128,7 +125,6 @@ atf_test_case sflag_signal
 sflag_signal_head()
 {
     atf_set "descr" "Tests for the -s option using the 'signal' qualifier"
-    atf_set "use.fs" "true"
 }
 sflag_signal_body()
 {
@@ -168,7 +164,6 @@ atf_test_case oflag_empty
 oflag_empty_head()
 {
     atf_set "descr" "Tests for the -o option using the 'empty' argument"
-    atf_set "use.fs" "true"
 }
 oflag_empty_body()
 {
@@ -180,7 +175,6 @@ atf_test_case oflag_ignore
 oflag_ignore_head()
 {
     atf_set "descr" "Tests for the -o option using the 'ignore' argument"
-    atf_set "use.fs" "true"
 }
 oflag_ignore_body()
 {
@@ -192,7 +186,6 @@ atf_test_case oflag_file
 oflag_file_head()
 {
     atf_set "descr" "Tests for the -o option using the 'file:' argument"
-    atf_set "use.fs" "true"
 }
 oflag_file_body()
 {
@@ -211,7 +204,6 @@ atf_test_case oflag_inline
 oflag_inline_head()
 {
     atf_set "descr" "Tests for the -o option using the 'inline:' argument"
-    atf_set "use.fs" "true"
 }
 oflag_inline_body()
 {
@@ -239,7 +231,6 @@ atf_test_case oflag_match
 oflag_match_head()
 {
     atf_set "descr" "Tests for the -o option using the 'match:' argument"
-    atf_set "use.fs" "true"
 }
 oflag_match_body()
 {
@@ -253,7 +244,6 @@ atf_test_case oflag_save
 oflag_save_head()
 {
     atf_set "descr" "Tests for the -o option using the 'save:' argument"
-    atf_set "use.fs" "true"
 }
 oflag_save_body()
 {
@@ -266,7 +256,6 @@ atf_test_case oflag_multiple
 oflag_multiple_head()
 {
     atf_set "descr" "Tests for multiple occurrences of the -o option"
-    atf_set "use.fs" "true"
 }
 oflag_multiple_body()
 {
@@ -280,7 +269,6 @@ atf_test_case oflag_negated
 oflag_negated_head()
 {
     atf_set "descr" "Tests for negated occurrences of the -o option"
-    atf_set "use.fs" "true"
 }
 oflag_negated_body()
 {
@@ -295,7 +283,6 @@ atf_test_case eflag_empty
 eflag_empty_head()
 {
     atf_set "descr" "Tests for the -e option using the 'empty' argument"
-    atf_set "use.fs" "true"
 }
 eflag_empty_body()
 {
@@ -307,7 +294,6 @@ atf_test_case eflag_ignore
 eflag_ignore_head()
 {
     atf_set "descr" "Tests for the -e option using the 'ignore' argument"
-    atf_set "use.fs" "true"
 }
 eflag_ignore_body()
 {
@@ -319,7 +305,6 @@ atf_test_case eflag_file
 eflag_file_head()
 {
     atf_set "descr" "Tests for the -e option using the 'file:' argument"
-    atf_set "use.fs" "true"
 }
 eflag_file_body()
 {
@@ -338,7 +323,6 @@ atf_test_case eflag_inline
 eflag_inline_head()
 {
     atf_set "descr" "Tests for the -e option using the 'inline:' argument"
-    atf_set "use.fs" "true"
 }
 eflag_inline_body()
 {
@@ -366,7 +350,6 @@ atf_test_case eflag_save
 eflag_save_head()
 {
     atf_set "descr" "Tests for the -e option using the 'save:' argument"
-    atf_set "use.fs" "true"
 }
 eflag_save_body()
 {
@@ -379,7 +362,6 @@ atf_test_case eflag_match
 eflag_match_head()
 {
     atf_set "descr" "Tests for the -e option using the 'match:' argument"
-    atf_set "use.fs" "true"
 }
 eflag_match_body()
 {
@@ -393,7 +375,6 @@ atf_test_case eflag_multiple
 eflag_multiple_head()
 {
     atf_set "descr" "Tests for multiple occurrences of the -e option"
-    atf_set "use.fs" "true"
 }
 eflag_multiple_body()
 {
@@ -407,7 +388,6 @@ atf_test_case eflag_negated
 eflag_negated_head()
 {
     atf_set "descr" "Tests for negated occurrences of the -e option"
-    atf_set "use.fs" "true"
 }
 eflag_negated_body()
 {
@@ -423,7 +403,6 @@ invalid_umask_head()
 {
     atf_set "descr" "Tests for a correct error condition if the umask is" \
             "too restrictive"
-    atf_set "use.fs" "true"
 }
 invalid_umask_body()
 {

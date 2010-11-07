@@ -34,10 +34,14 @@ extern "C" {
 #include <sys/types.h>
 }
 
+#include <utility>
+
 namespace atf {
 namespace atf_run {
 
 uid_t euid(void);
+void drop_privileges(const std::pair< int, int >);
+std::pair< int, int > get_user_ids(const std::string&);
 bool is_member_of_group(gid_t);
 bool is_root(void);
 bool is_unprivileged(void);

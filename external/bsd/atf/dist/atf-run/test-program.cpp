@@ -50,9 +50,11 @@ extern "C" {
 #include "config.hpp"
 #include "fs.hpp"
 #include "io.hpp"
+#include "requirements.hpp"
 #include "signals.hpp"
 #include "test-program.hpp"
 #include "timer.hpp"
+#include "user.hpp"
 
 namespace impl = atf::atf_run;
 namespace detail = atf::atf_run::detail;
@@ -108,10 +110,7 @@ class metadata_reader : public detail::atf_tp_reader {
             m_tcs[ident].insert(std::make_pair("has.cleanup", "false"));
 
         if (m_tcs[ident].find("timeout") == m_tcs[ident].end())
-            m_tcs[ident].insert(std::make_pair("timeout", "300"));
-
-        if (m_tcs[ident].find("use.fs") == m_tcs[ident].end())
-            m_tcs[ident].insert(std::make_pair("use.fs", "false"));
+            m_tcs[ident].insert(std::make_pair("timeout", "30"));
     }
 
 public:
@@ -266,6 +265,11 @@ run_test_case_child(void* raw_params)
 {
     const test_case_params* params =
         static_cast< const test_case_params* >(raw_params);
+
+    const std::pair< int, int > user = impl::get_required_user(
+        params->metadata, params->config);
+    if (user.first != -1 && user.second != -1)
+        impl::drop_privileges(user);
 
     // The input 'tp' parameter may be relative and become invalid once
     // we change the current working directory.
@@ -422,12 +426,7 @@ detail::atf_tp_reader::validate_and_insert(const std::string& name,
             throw parse_error(lineno, "The timeout property requires an integer"
                               " value");
     } else if (name == "use.fs") {
-        try {
-            (void)atf::text::to_bool(value);
-        } catch (const std::runtime_error&) {
-            throw parse_error(lineno, "The use.fs property requires a boolean"
-                              " value");
-        }
+        // Deprecated; ignore it.
     } else if (name.size() > 2 && name[0] == 'X' && name[1] == '-') {
         // Any non-empty value is valid.
     } else {
