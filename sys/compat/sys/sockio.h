@@ -1,4 +1,4 @@
-/*	$NetBSD: sockio.h,v 1.8 2009/11/28 22:11:42 dsl Exp $	*/
+/*	$NetBSD: sockio.h,v 1.9 2010/11/07 19:45:06 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993, 1994
@@ -51,11 +51,6 @@
     defined(MODULAR)
 #define COMPAT_OIFDATA
 #endif
-
-#else /* !_KERNEL_OPT */
-
-#undef COMPAT_OIFREQ
-#undef COMPAT_OIFDATA
 
 #endif /* _KERNEL_OPT */
 
