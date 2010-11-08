@@ -1,4 +1,4 @@
-/* $NetBSD: t_sem.c,v 1.1 2010/07/16 13:56:32 jmmv Exp $ */
+/* $NetBSD: t_sem.c,v 1.2 2010/11/08 13:05:49 njoly Exp $ */
 
 /*
  * Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008, 2010\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_sem.c,v 1.1 2010/07/16 13:56:32 jmmv Exp $");
+__RCSID("$NetBSD: t_sem.c,v 1.2 2010/11/08 13:05:49 njoly Exp $");
 
 #include <sys/wait.h>
 
@@ -83,7 +83,8 @@ ATF_TC_BODY(basic, tc)
 	int val;
 	sem_t *sem_b;
 
-	ATF_REQUIRE(sysconf(_SC_SEMAPHORES) != -1);
+	if (sysconf(_SC_SEMAPHORES) == -1)
+		atf_tc_skip("POSIX semaphores not supported");
 
 	sem_b = sem_open("/sem_b", O_CREAT | O_EXCL, 0644, 0);
 	ATF_REQUIRE(sem_b != SEM_FAILED);
@@ -122,6 +123,9 @@ ATF_TC_BODY(child, tc)
 	int status;
 
 	pid_t pid;
+
+	if (sysconf(_SC_SEMAPHORES) == -1)         
+		atf_tc_skip("POSIX semaphores not supported");
 
 	sem_a = sem_open("/sem_a", O_CREAT | O_EXCL, 0644, 0);
 	ATF_REQUIRE(sem_a != SEM_FAILED);
