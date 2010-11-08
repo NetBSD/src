@@ -1,4 +1,4 @@
-.\"	$NetBSD: uvm.9,v 1.102 2010/04/17 06:38:13 jruoho Exp $
+.\"	$NetBSD: uvm.9,v 1.103 2010/11/08 02:56:12 dholland Exp $
 .\"
 .\" Copyright (c) 1998 Matthew R. Green
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd April 17, 2010
+.Dd November 7, 2010
 .Dt UVM 9
 .Os
 .Sh NAME
@@ -945,8 +945,6 @@ int pageshift;  /* page shift */
 /* vm_page counters */
 int npages;     /* number of pages we manage */
 int free;       /* number of free pages */
-int active;     /* number of active pages */
-int inactive;   /* number of pages that we free'd but may want back */
 int paging;     /* number of pages in the process of being paged out */
 int wired;      /* number of wired pages */
 int reserve_pagedaemon; /* number of pages reserved for pagedaemon */
