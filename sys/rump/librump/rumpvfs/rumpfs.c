@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpfs.c,v 1.65 2010/09/06 15:07:33 pooka Exp $	*/
+/*	$NetBSD: rumpfs.c,v 1.66 2010/11/08 11:01:45 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009  Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.65 2010/09/06 15:07:33 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.66 2010/11/08 11:01:45 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -283,6 +283,7 @@ static int
 doregister(const char *key, const char *hostpath, 
 	enum rump_etfs_type ftype, uint64_t begin, uint64_t size)
 {
+	char buf[9];
 	struct etfs *et;
 	struct rumpfs_node *rn;
 	uint64_t fsize;
@@ -357,6 +358,11 @@ doregister(const char *key, const char *hostpath,
 	}
 	LIST_INSERT_HEAD(&etfs_list, et, et_entries);
 	mutex_exit(&etfs_lock);
+
+	if (ftype == RUMP_ETFS_BLK) {
+		format_bytes(buf, sizeof(buf), size);
+		aprint_verbose("%s: hostpath %s (%s)\n", key, hostpath, buf);
+	}
 
 	return 0;
 }
