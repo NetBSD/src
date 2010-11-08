@@ -1,4 +1,4 @@
-/*	$NetBSD: dino.c,v 1.25 2010/03/06 16:57:00 skrll Exp $ */
+/*	$NetBSD: dino.c,v 1.26 2010/11/08 23:10:24 skrll Exp $ */
 
 /*	$OpenBSD: dino.c,v 1.5 2004/02/13 20:39:31 mickey Exp $	*/
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dino.c,v 1.25 2010/03/06 16:57:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dino.c,v 1.26 2010/11/08 23:10:24 skrll Exp $");
 
 /* #include "cardbus.h" */
 
@@ -955,7 +955,6 @@ dino_rrm_2(void *v, bus_space_handle_t h, bus_size_t o,
 			p++;
 	}
 
-	c /= 2;
 	while (c--)
 		*a++ = *p;
 }
@@ -977,7 +976,6 @@ dino_rrm_4(void *v, bus_space_handle_t h, bus_size_t o,
 		p = (volatile uint32_t *)&r->pci_io_data;
 	}
 
-	c /= 4;
 	while (c--)
 		*a++ = *p;
 }
@@ -1008,7 +1006,6 @@ dino_wrm_2(void *v, bus_space_handle_t h, bus_size_t o,
 			p++;
 	}
 
-	c /= 2;
 	while (c--)
 		*p = *a++;
 }
@@ -1030,7 +1027,6 @@ dino_wrm_4(void *v, bus_space_handle_t h, bus_size_t o,
 		p = (volatile uint32_t *)&r->pci_io_data;
 	}
 
-	c /= 4;
 	while (c--)
 		*p = *a++;
 }
@@ -1206,7 +1202,6 @@ dino_rrr_2(void *v, bus_space_handle_t h, bus_size_t o,
 {
 	volatile uint16_t *p;
 
-	c /= 2;
 	h += o;
 	if (h & HPPA_IOSPACE) {
 		p = (volatile uint16_t *)h;
@@ -1232,7 +1227,6 @@ dino_rrr_4(void *v, bus_space_handle_t h, bus_size_t o,
 {
 	volatile uint32_t *p;
 
-	c /= 4;
 	h += o;
 	if (h & HPPA_IOSPACE) {
 		p = (volatile uint32_t *)h;
@@ -1262,7 +1256,6 @@ dino_wrr_2(void *v, bus_space_handle_t h, bus_size_t o,
 {
 	volatile uint16_t *p;
 
-	c /= 2;
 	h += o;
 	if (h & HPPA_IOSPACE) {
 		p = (volatile uint16_t *)h;
