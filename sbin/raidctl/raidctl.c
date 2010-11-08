@@ -1,4 +1,4 @@
-/*      $NetBSD: raidctl.c,v 1.48 2010/03/16 03:23:47 jld Exp $   */
+/*      $NetBSD: raidctl.c,v 1.49 2010/11/08 12:42:35 pooka Exp $   */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: raidctl.c,v 1.48 2010/03/16 03:23:47 jld Exp $");
+__RCSID("$NetBSD: raidctl.c,v 1.49 2010/11/08 12:42:35 pooka Exp $");
 #endif
 
 
@@ -58,8 +58,11 @@ __RCSID("$NetBSD: raidctl.c,v 1.48 2010/03/16 03:23:47 jld Exp $");
 #include <unistd.h>
 #include <util.h>
 
+#ifdef RUMP_ACTION
 #include <rump/rump.h>
+#include <rump/rumpclient.h>
 #include <rump/rump_syscalls.h>
+#endif
 
 #include <dev/raidframe/raidframevar.h>
 #include <dev/raidframe/raidframeio.h>
@@ -125,7 +128,8 @@ main(int argc,char *argv[])
 	openmode = O_RDWR;	/* default to read/write */
 
 #ifdef RUMP_ACTION
-	rump_init();
+	if (rumpclient_init() == -1)
+		err(1, "rump client init failed");
 #endif
 
 	while ((ch = getopt(argc, argv, "a:A:Bc:C:f:F:g:GiI:l:mM:r:R:sSpPuv")) 
