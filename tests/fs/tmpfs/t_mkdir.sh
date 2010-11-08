@@ -1,4 +1,4 @@
-# $NetBSD: t_mkdir.sh,v 1.6 2010/11/07 17:51:18 jmmv Exp $
+# $NetBSD: t_mkdir.sh,v 1.7 2010/11/08 15:25:50 pooka Exp $
 #
 # Copyright (c) 2005, 2006, 2007, 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -111,12 +111,12 @@ attrs_body() {
 	[ ${st_uid} -eq $(id -u ${user}) ] || atf_fail "Incorrect owner"
 	[ ${st_gid} -eq 100 ] || atf_fail "Incorrect group"
 
-	atf_check -s eq:0 -o empty -e empty su ${user} -c 'mkdir b/a'
+	atf_check -s eq:0 -o empty -e empty su -m ${user} -c 'mkdir b/a'
 	eval $(stat -s b/a)
 	[ ${st_uid} -eq $(id -u ${user}) ] || atf_fail "Incorrect owner"
 	[ ${st_gid} -eq 0 ] || atf_fail "Incorrect group"
 
-	atf_check -s eq:0 -o empty -e empty su ${user} -c 'mkdir c/a'
+	atf_check -s eq:0 -o empty -e empty su -m ${user} -c 'mkdir c/a'
 	eval $(stat -s c/a)
 	[ ${st_uid} -eq $(id -u ${user}) ] || atf_fail "Incorrect owner"
 	[ ${st_gid} -eq 100 ] || atf_fail "Incorrect group"
