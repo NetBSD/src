@@ -1,4 +1,4 @@
-/* $NetBSD: t_time.c,v 1.1 2009/02/20 21:39:57 jmmv Exp $ */
+/* $NetBSD: t_time.c,v 1.2 2010/11/08 21:38:13 pooka Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_time.c,v 1.1 2009/02/20 21:39:57 jmmv Exp $");
+__RCSID("$NetBSD: t_time.c,v 1.2 2010/11/08 21:38:13 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -154,6 +154,7 @@ ATF_TC_HEAD(time, tc)
 	atf_tc_set_md_var(tc, "require.user", "root");
 	atf_tc_set_md_var(tc, "descr",
 	    "Checks the monotonicity of the CLOCK_REALTIME implementation");
+	atf_tc_set_md_var(tc, "timeout", "300");
 }
 ATF_TC_BODY(time, tc)
 {
