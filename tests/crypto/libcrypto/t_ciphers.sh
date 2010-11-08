@@ -1,4 +1,4 @@
-# $NetBSD: t_ciphers.sh,v 1.1 2010/07/10 16:43:25 jmmv Exp $
+# $NetBSD: t_ciphers.sh,v 1.2 2010/11/08 19:06:12 pooka Exp $
 #
 # Copyright (c) 2008, 2009, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -39,6 +39,7 @@ atf_test_case cast
 cast_head()
 {
 	atf_set "descr" "Checks CAST cipher"
+	atf_set "timeout" "300"
 }
 cast_body()
 {
