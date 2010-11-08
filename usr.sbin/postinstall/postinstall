@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.108 2010/04/23 19:21:08 dyoung Exp $
+# $NetBSD: postinstall,v 1.109 2010/11/08 09:01:44 njoly Exp $
 #
 # Copyright (c) 2002-2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -807,7 +807,7 @@ do_gid()
 
 	check_ids "$1" groups "${DEST_DIR}/etc/group" \
 	    named ntpd sshd authpf _pflogd _rwhod _proxy _timedc \
-	    _sdpd _httpd _mdnsd
+	    _sdpd _httpd _mdnsd _atf
 }
 
 #
@@ -1419,7 +1419,7 @@ do_uid()
 
 	check_ids "$1" users "${DEST_DIR}/etc/master.passwd" \
 	    named ntpd postfix sshd _pflogd _rwhod _proxy _timedc \
-	    _sdpd _httpd _mdnsd
+	    _sdpd _httpd _mdnsd _atf
 }
 
 
