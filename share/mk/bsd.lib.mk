@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.308 2010/07/06 05:59:56 mrg Exp $
+#	$NetBSD: bsd.lib.mk,v 1.309 2010/11/08 06:54:52 lukem Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -589,10 +589,10 @@ lib${LIB}.so.${SHLIB_FULLVERSION}: ${SOLIB} ${DPADD} ${DPLIBC} \
 .if defined(_LIB.debug)
 ${_LIB.debug}: ${_LIB.so}
 	${_MKTARGET_CREATE}
-	${OBJCOPY} --only-keep-debug ${_LIB.so} ${_LIB.debug}
-	${OBJCOPY} --strip-debug \
-	    -R .gnu_debuglink --add-gnu-debuglink=${_LIB.debug} ${_LIB.so} \
-	    || rm -f ${_LIB.debug}
+	(  ${OBJCOPY} --only-keep-debug ${_LIB.so} ${_LIB.debug} \
+	&& ${OBJCOPY} --strip-debug -p -R .gnu_debuglink \
+		--add-gnu-debuglink=${_LIB.debug} ${_LIB.so} \
+	) || (rm -f ${_LIB.debug}; false)
 .endif
 
 .if !empty(LOBJS)							# {
