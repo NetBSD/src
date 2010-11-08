@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.250 2010/10/31 11:52:53 mbalmer Exp $
+#	$NetBSD: bsd.prog.mk,v 1.251 2010/11/08 06:54:52 lukem Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .ifndef HOSTPROG
@@ -315,9 +315,10 @@ ${_P}.ro: ${OBJS.${_P}} ${DPADD}
 .if defined(_PROGDEBUG.${_P})
 ${_PROGDEBUG.${_P}}: ${_P}
 	${_MKTARGET_CREATE}
-	${OBJCOPY} --only-keep-debug ${_P} ${_PROGDEBUG.${_P}}
-	${OBJCOPY} --strip-debug -R .gnu_debuglink --add-gnu-debuglink=${_PROGDEBUG.${_P}} ${_P} \
-	    || rm -f ${_PROGDEBUG.${_P}}
+	(  ${OBJCOPY} --only-keep-debug ${_P} ${_PROGDEBUG.${_P}} \
+	&& ${OBJCOPY} --strip-debug -p -R .gnu_debuglink \
+		--add-gnu-debuglink=${_PROGDEBUG.${_P}} ${_P} \
+	) || (rm -f ${_PROGDEBUG.${_P}}; false)
 .endif
 
 .endif	# defined(OBJS.${_P}) && !empty(OBJS.${_P})			# }
