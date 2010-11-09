@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2010/06/19 07:33:58 mrg Exp $
+#	$NetBSD: Makefile,v 1.6 2010/11/09 00:11:37 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -10,7 +10,9 @@ PROG=		pigz
 SRCS=		pigz.c yarn.c
 MAN=		pigz.1
 
+.if !defined(HOSTPROG)
 DPADD=		${LIBM} ${LIBPTHREAD}
+.endif
 LDADD=		-lz -lpthread
 
 .if ${MKPIGZGZIP} != "no"
