@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_wapbl.c,v 1.37 2010/09/10 10:14:55 drochner Exp $	*/
+/*	$NetBSD: vfs_wapbl.c,v 1.38 2010/11/09 16:30:26 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2008, 2009 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #define WAPBL_INTERNAL
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.37 2010/09/10 10:14:55 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.38 2010/11/09 16:30:26 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/bitops.h>
@@ -104,6 +104,7 @@ MALLOC_JUSTDEFINE(M_WAPBL, "wapbl", "write-ahead physical block logging");
  *		r = read-only after init
  *		l = rwlock held
  *		m = mutex held
+ *		lm = rwlock held writing or mutex held
  *		u = unlocked access ok
  *		b = bufcache_lock held
  */
@@ -173,9 +174,9 @@ struct wapbl {
 	size_t wl_unsynced_bufbytes; /* Byte count of unsynced buffers */
 #endif
 
-	daddr_t *wl_deallocblks;/* l:	address of block */
-	int *wl_dealloclens;	/* l:	size of block */
-	int wl_dealloccnt;	/* l:	total count */
+	daddr_t *wl_deallocblks;/* lm:	address of block */
+	int *wl_dealloclens;	/* lm:	size of block */
+	int wl_dealloccnt;	/* lm:	total count */
 	int wl_dealloclim;	/* l:	max count */
 
 	/* hashtable of inode numbers for allocated but unlinked inodes */
@@ -1672,6 +1673,7 @@ wapbl_register_deallocation(struct wapbl *wl, daddr_t blk, int len)
 
 	wapbl_jlock_assert(wl);
 
+	mutex_enter(&wl->wl_mtx);
 	/* XXX should eventually instead tie this into resource estimation */
 	/*
 	 * XXX this panic needs locking/mutex analysis and the
@@ -1686,6 +1688,7 @@ wapbl_register_deallocation(struct wapbl *wl, daddr_t blk, int len)
 	wl->wl_dealloccnt++;
 	WAPBL_PRINTF(WAPBL_PRINT_ALLOC,
 	    ("wapbl_register_deallocation: blk=%"PRId64" len=%d\n", blk, len));
+	mutex_exit(&wl->wl_mtx);
 }
 
 /****************************************************************/
