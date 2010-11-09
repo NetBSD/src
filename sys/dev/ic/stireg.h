@@ -1,6 +1,6 @@
-/*	$NetBSD: stireg.h,v 1.4 2010/11/01 06:41:50 skrll Exp $	*/
+/*	$NetBSD: stireg.h,v 1.5 2010/11/09 12:24:48 skrll Exp $	*/
 
-/*	$OpenBSD: stireg.h,v 1.8 2003/08/19 02:52:38 mickey Exp $	*/
+/*	$OpenBSD: stireg.h,v 1.13 2009/01/28 17:37:40 miod Exp $	*/
 
 /*
  * Copyright (c) 2000 Michael Shalayeff
@@ -56,6 +56,13 @@
 #define	STI_END		13
 #define	STI_CODECNT	16
 
+#define	STI_CODEBASE_MAIN	0x40
+#define	STI_CODEBASE_ALT	0x80
+
+#define	STI_CODEBASE_PA		STI_CODEBASE_MAIN
+#define	STI_CODEBASE_M68K	STI_CODEBASE_ALT
+#define	STI_CODEBASE_PA64	STI_CODEBASE_ALT
+
 /* sti returns */
 #define	STI_OK		0
 #define	STI_FAIL	-1
@@ -66,12 +73,12 @@
 #define	STI_BADREENTLVL		1	/* bad reentry level */
 #define	STI_NOREGIONSDEF	2	/* region table is not setup */
 #define	STI_ILLNPLANES		3	/* invalid num of text planes */
-#define	STI_ILLINDEX		4	/* invalid fond index */
+#define	STI_ILLINDEX		4	/* invalid font index */
 #define	STI_ILLLOC		5	/* invalid font location */
 #define	STI_ILLCOLOUR		6	/* invalid colour */
 #define	STI_ILLBLKMVFROM	7	/* invalid from in blkmv */
 #define	STI_ILLBLKMVTO		8	/* invalid to in blkmv */
-#define	STI_ILLBLKMVSIZE	9	/* invalid siz in blkmv */
+#define	STI_ILLBLKMVSIZE	9	/* invalid size in blkmv */
 #define	STI_BEIUNSUPP		10	/* bus error ints unsupported */
 #define	STI_UNXPBE		11	/* unexpected bus error */
 #define	STI_UNXHWF		12	/* unexpected hardware failure */
@@ -106,8 +113,6 @@
 #define	STI_COLOUR_BLUE		6
 #define	STI_COLOUR_MAGENTA	7
 
-#pragma pack(1)
-
 	/* LSB high */
 struct	sti_dd {
 	uint32_t	dd_type;	/* 0x00 device type */
@@ -117,7 +122,7 @@ struct	sti_dd {
 	uint8_t		dd_nmon;	/* 0x05 number monitor rates */
 	uint8_t		dd_grrev;	/* 0x06 global rom revision */
 	uint8_t		dd_lrrev;	/* 0x07 local rom revision */
-	uint8_t		dd_grid[8];	/* 0x08 graphics id */
+	uint32_t	dd_grid[2];	/* 0x08 graphics id */
 #define STI_DEV4_DD_GRID	0x08	/* offset for STI_DEVTYPE4 */
 #define STI_DEV1_DD_GRID	0x10	/* offset for STI_DEVTYPE1 */
 	uint32_t	dd_fntaddr;	/* 0x10 font start address */
@@ -155,7 +160,9 @@ struct	sti_dd {
 						servers w/o accel */
 	uint32_t	dd_pacode[16];	/* 0x40 routines for pa-risc */
 	uint32_t	dd_altcode[16];	/* 0x80 routines for m68k/i386 */
-};
+} __packed;
+
+#define	STI_REVISION(maj, min)	(((maj) << 4) | ((min) & 0x0f))
 
 /* after the last region there is one indirect list ptr */
 struct sti_region {
@@ -165,7 +172,7 @@ struct sti_region {
 	u_int	btlb    : 1;	/* should use BTLB if available */
 	u_int	last    : 1;	/* last region in the list */
 	u_int	length  :14;	/* size in pages */
-};
+}  __packed;
 
 struct sti_font {
 	uint16_t	first;
@@ -180,7 +187,7 @@ struct sti_font {
 	uint8_t		uheight;
 	uint8_t		uoffset;
 	uint8_t		unused[2];
-};
+}  __packed;
 
 struct sti_fontcfg {
 	uint16_t	first;
@@ -191,7 +198,23 @@ struct sti_fontcfg {
 	uint8_t		bpc;
 	uint8_t		uheight;
 	uint8_t		uoffset;
-};
+}  __packed;
+
+typedef struct sti_mon {
+	uint32_t	width: 12;
+	uint32_t	height: 12;
+	uint32_t	hz: 7;		/* low 7 bits of refresh rate */
+	uint32_t	flat: 1;	/* flatpanel */
+	uint32_t	vesa: 1;	/* vesa mode */
+	uint32_t	grey: 1;	/* greyscale */
+	uint32_t	dblbuf: 1;	/* double buffered */
+	uint32_t	user: 1;	/* user-defined mode */
+	uint32_t	stereo: 1;	/* stereo display */
+	uint32_t	sam: 1;		/* ? */
+	uint32_t	: 15;
+	uint32_t	hz_upper: 3;	/* upper 3 bits of refresh rate */
+	uint32_t	font: 8;	/* rom font index */
+} __packed *sti_mon_t;
 
 typedef struct sti_ecfg {
 	uint8_t		current_monitor;
@@ -200,7 +223,7 @@ typedef struct sti_ecfg {
 	uint32_t	freq_ref;
 	uint32_t	*addr;		/* memory block of size dd_stimemreq */
 	void		*future;
-} *sti_ecfg_t;
+} __packed *sti_ecfg_t;
 
 typedef struct sti_cfg {
 	uint32_t	text_planes;
@@ -214,7 +237,7 @@ typedef struct sti_cfg {
 	uint32_t	reent_level;
 	uint32_t	*save_addr;
 	sti_ecfg_t	ext_cfg;
-} *sti_cfg_t;
+}  __packed *sti_cfg_t;
 
 
 /* routine types */
@@ -240,25 +263,25 @@ typedef struct sti_initflags {
 #define	STI_INITF_SCMT	0x00040000	/* change current monitor type */
 #define	STI_INITF_RIE	0x00020000	/* retain int enables */
 	void *future;
-} *sti_initflags_t;
+} __packed *sti_initflags_t;
 
 typedef struct sti_einitin {
 	uint8_t		mon_type;
 	uint8_t		pad;
 	uint16_t	inflight;	/* possible on pci */
 	void		*future;
-} *sti_einitin_t;
+} __packed *sti_einitin_t;
 
 typedef struct sti_initin {
 	uint32_t	text_planes;	/* number of planes for text */
 	sti_einitin_t	ext_in;
-} *sti_initin_t;
+} __packed *sti_initin_t;
 
 typedef struct sti_initout {
 	int32_t		errno;
 	uint32_t	text_planes;	/* number of planes used for text */
 	void		*future;
-} *sti_initout_t;
+} __packed *sti_initout_t;
 
 STI_DEP(init);
 
@@ -268,17 +291,17 @@ typedef struct sti_mgmtflags {
 #define	STI_MGMTF_SAVE	0x40000000
 #define	STI_MGMTF_RALL	0x20000000	/* restore all display planes */
 	void *future;
-} *sti_mgmtflags_t;
+} __packed *sti_mgmtflags_t;
 
 typedef struct sti_mgmtin {
 	void	*addr;
 	void	*future;
-} *sti_mgmtin_t;
+} __packed *sti_mgmtin_t;
 
 typedef struct sti_mgmtout {
 	int32_t		errno;
 	void		*future;
-} *sti_mgmtout_t;
+} __packed *sti_mgmtout_t;
 
 STI_DEP(mgmt);
 
@@ -287,7 +310,7 @@ typedef struct sti_unpmvflags {
 #define	STI_UNPMVF_WAIT	0x80000000
 #define	STI_UNPMVF_NTXT	0x40000000	/* intp non-text planes */
 	void		*future;
-} *sti_unpmvflags_t;
+} __packed *sti_unpmvflags_t;
 
 typedef struct sti_unpmvin {
 	uint32_t	*font_addr;	/* font */
@@ -296,12 +319,12 @@ typedef struct sti_unpmvin {
 	uint8_t		bg_colour;
 	uint16_t	x, y;
 	void		*future;
-} *sti_unpmvin_t;
+} __packed *sti_unpmvin_t;
 
 typedef struct sti_unpmvout {
 	uint32_t	errno;
 	void		*future;
-} *sti_unpmvout_t;
+} __packed *sti_unpmvout_t;
 
 STI_DEP(unpmv);
 
@@ -312,7 +335,7 @@ typedef struct sti_blkmvflags {
 #define	STI_BLKMVF_CLR	0x20000000	/* clear on move */
 #define	STI_BLKMVF_NTXT	0x10000000	/* move in non-text planes */
 	void		*future;
-} *sti_blkmvflags_t;
+} __packed *sti_blkmvflags_t;
 
 typedef struct sti_blkmvin {
 	uint8_t		fg_colour;
@@ -321,12 +344,12 @@ typedef struct sti_blkmvin {
 	uint16_t	width, height;
 	uint16_t	pad;
 	void		*future;
-} *sti_blkmvin_t;
+} __packed *sti_blkmvin_t;
 
 typedef struct sti_blkmvout {
 	uint32_t	errno;
 	void		*future;
-} *sti_blkmvout_t;
+} __packed *sti_blkmvout_t;
 
 STI_DEP(blkmv);
 
@@ -335,17 +358,17 @@ typedef struct sti_testflags {
 #define	STI_TESTF_WAIT	0x80000000
 #define	STI_TESTF_ETST	0x40000000
 	void		*future;
-} *sti_testflags_t;
+} __packed *sti_testflags_t;
 
 typedef struct sti_testin {
 	void		*future;
-} *sti_testin_t;
+} __packed *sti_testin_t;
 
 typedef struct sti_testout {
 	uint32_t	errno;
 	uint32_t	result;
 	void		*future;
-} *sti_testout_t;
+} __packed *sti_testout_t;
 
 STI_DEP(test);
 
@@ -366,7 +389,7 @@ typedef struct sti_exhdlflags {
 #define	STI_EXHDLF_EIC	0x00080000	/* end int cycle */
 #define	STI_EXHDLF_RIE	0x00040000	/* reset do not clear int enables */
 	void		*future;
-} *sti_exhdlflags_t;
+} __packed *sti_exhdlflags_t;
 
 typedef struct sti_eexhdlin {
 	uint32_t	eim_addr;
@@ -374,7 +397,7 @@ typedef struct sti_eexhdlin {
 	uint32_t	iem;		/* enable mask */
 	uint32_t	icm;		/* clear mask */
 	void		*future;
-} *sti_eexhdlin_t;
+} __packed *sti_eexhdlin_t;
 
 typedef struct sti_exhdlint {
 	uint32_t	flags;
@@ -387,12 +410,12 @@ typedef struct sti_exhdlint {
 #define	STI_EXHDLINT_BDC	0x02000000	/* buffered dma complete */
 #define	STI_EXHDLINT_UDPC	0x01000000	/* unbuf priv dma complete */
 #define	STI_EXHDLINT_BDPC	0x00800000	/* buffered priv dma complete */
-} *sti_exhdlint_t;
+} __packed *sti_exhdlint_t;
 
 typedef struct sti_exhdlin {
 	sti_exhdlint_t	addr;
 	sti_eexhdlin_t	ext;
-} *sti_exhdlin_t;
+} __packed *sti_exhdlin_t;
 
 typedef struct sti_eexhdlout {
 	uint32_t	eim_addr;
@@ -400,7 +423,7 @@ typedef struct sti_eexhdlout {
 	uint32_t	iem;		/* enable mask */
 	uint32_t	icm;		/* clear mask */
 	void		*future;
-} *sti_eexhdlout_t;
+} __packed *sti_eexhdlout_t;
 
 typedef struct sti_exhdlout {
 	uint32_t	errno;
@@ -409,7 +432,7 @@ typedef struct sti_exhdlout {
 #define	STI_EXHDLO_IP	0x40000000	/* there is int pending */
 #define	STI_EXHDLO_IE	0x20000000	/* global enable set */
 	sti_eexhdlout_t	ext;
-} *sti_exhdlout_t;
+} __packed *sti_exhdlout_t;
 
 STI_DEP(exhdl);
 
@@ -417,17 +440,17 @@ typedef struct sti_inqconfflags {
 	uint32_t	flags;
 #define	STI_INQCONFF_WAIT	0x80000000
 	void		*future;
-} *sti_inqconfflags_t;
+} __packed *sti_inqconfflags_t;
 
 typedef struct sti_inqconfin {
 	void	*future;
-} *sti_inqconfin_t;
+} __packed *sti_inqconfin_t;
 
 typedef struct sti_einqconfout {
 	uint32_t	crt_config[3];
 	uint32_t	crt_hw[3];
 	void		*future;
-} *sti_einqconfout_t;
+} __packed *sti_einqconfout_t;
 
 typedef struct sti_inqconfout {
 	uint32_t	errno;
@@ -437,7 +460,7 @@ typedef struct sti_inqconfout {
 	uint32_t	planes;
 	uint8_t		name[STI_DEVNAME_LEN];
 	uint32_t	attributes;
-#define	STI_INQCONF_Y2X		0x0001	/* pixel is higher tan wider */
+#define	STI_INQCONF_Y2X		0x0001	/* pixel is higher than wider */
 #define	STI_INQCONF_HWBLKMV	0x0002	/* hw blkmv is present */
 #define	STI_INQCONF_AHW		0x0004	/* adv hw accel */
 #define	STI_INQCONF_INT		0x0008	/* can interrupt */
@@ -454,7 +477,7 @@ typedef struct sti_inqconfout {
     "\020\001y2x\002hwblkmv\003ahw\004int\005gonoff\006aonoff\007vary"\
     "\010oddb\011flush\012dma\013vdma\016yuv1\017yuv2"
 	sti_einqconfout_t ext;
-} *sti_inqconfout_t;
+} __packed *sti_inqconfout_t;
 
 STI_DEP(inqconf);
 
@@ -462,18 +485,18 @@ typedef struct sti_scmentflags {
 	uint32_t	flags;
 #define	STI_SCMENTF_WAIT	0x80000000
 	void		*future;
-} *sti_scmentflags_t;
+} __packed *sti_scmentflags_t;
 
 typedef struct sti_scmentin {
 	uint32_t	entry;
 	uint32_t	value;
 	void		*future;
-} *sti_scmentin_t;
+} __packed *sti_scmentin_t;
 
 typedef struct sti_scmentout {
 	uint32_t	errno;
 	void		*future;
-} *sti_scmentout_t;
+} __packed *sti_scmentout_t;
 
 STI_DEP(scment);
 
@@ -486,7 +509,7 @@ typedef struct sti_dmacflags {
 #define	STI_DMACF_MRK	0x08000000	/* write a marker */
 #define	STI_DMACF_ABRT	0x04000000	/* abort dma xfer */
 	void		*future;
-} *sti_dmacflags_t;
+} __packed *sti_dmacflags_t;
 
 typedef struct sti_dmacin {
 	uint32_t	pa_upper;
@@ -495,12 +518,12 @@ typedef struct sti_dmacin {
 	uint32_t	mrk_data;
 	uint32_t	mrk_off;
 	void		*future;
-} *sti_dmacin_t;
+} __packed *sti_dmacin_t;
 
 typedef struct sti_dmacout {
 	uint32_t	errno;
 	void		*future;
-} *sti_dmacout_t;
+} __packed *sti_dmacout_t;
 
 STI_DEP(dmac);
 
@@ -516,7 +539,7 @@ typedef struct sti_flowcflags {
 #define	STI_FLOWCF_CSWC	0x01000000	/* cs write coarse */
 #define	STI_FLOWCF_CSWQ	0x00800000	/* cs write fifo */
 	void		*future;
-} *sti_flowcflags_t;
+} __packed *sti_flowcflags_t;
 
 typedef struct sti_flowcin {
 	uint32_t	retry;
@@ -527,14 +550,14 @@ typedef struct sti_flowcin {
 	uint32_t	cscv;	/* cs coarse value */
 	uint32_t	csqc;	/* cs fifo count */
 	void		*future;
-} *sti_flowcin_t;
+} __packed *sti_flowcin_t;
 
 typedef struct sti_flowcout {
 	uint32_t	errno;
 	uint32_t	retry_result;
 	uint32_t	fifo_size;
 	void		*future;
-} *sti_flowcout_t;
+} __packed *sti_flowcout_t;
 
 STI_DEP(flowc);
 
@@ -543,19 +566,19 @@ typedef struct sti_utimingflags {
 #define	STI_UTIMF_WAIT	0x80000000
 #define	STI_UTIMF_HKS	0x40000000	/* has kbuf_size */
 	void		*future;
-} *sti_utimingflags_t;
+} __packed *sti_utimingflags_t;
 
 typedef struct sti_utimingin {
 	void		*data;
 	void		*kbuf;
 	void		*future;
-} *sti_utimingin_t;
+} __packed *sti_utimingin_t;
 
 typedef struct sti_utimingout {
 	uint32_t	errno;
 	uint32_t	kbuf_size;	/* buffer required size */
 	void		*future;
-} *sti_utimingout_t;
+} __packed *sti_utimingout_t;
 
 STI_DEP(utiming);
 
@@ -568,17 +591,17 @@ typedef struct sti_pmgrflags {
 #define	STI_UTIMF_BUFF	0x02000000
 #define	STI_UTIMF_IBUFF	0x01000000
 	void		*future;
-} *sti_pmgrflags_t;
+} __packed *sti_pmgrflags_t;
 
 typedef struct sti_pmgrin {
 	uint32_t	reserved[4];
 	void		*future;
-} *sti_pmgrin_t;
+} __packed *sti_pmgrin_t;
 
 typedef struct sti_pmgrout {
 	int32_t		errno;
 	void		*future;
-} *sti_pmgrout_t;
+} __packed *sti_pmgrout_t;
 
 STI_DEP(pmgr);
 
@@ -586,21 +609,19 @@ typedef struct sti_utilflags {
 	uint32_t	flags;
 #define	STI_UTILF_ROOT	0x80000000	/* was called as root */
 	void		*future;
-} *sti_utilflags_t;
+} __packed *sti_utilflags_t;
 
 typedef struct sti_utilin {
 	uint32_t	in_size;
 	uint32_t	out_size;
 	uint8_t		*buf;
-} *sti_utilin_t;
+} __packed *sti_utilin_t;
 
 typedef struct sti_utilout {
 	int32_t		errno;
 	void		*future;
-} *sti_utilout_t;
+} __packed *sti_utilout_t;
 
 STI_DEP(util);
-
-#pragma pack()
 
 #endif /* _IC_STIREG_H_ */
