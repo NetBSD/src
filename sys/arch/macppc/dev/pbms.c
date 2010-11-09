@@ -1,4 +1,4 @@
-/* $Id: pbms.c,v 1.9 2009/11/05 05:37:30 dyoung Exp $ */
+/* $Id: pbms.c,v 1.9.2.1 2010/11/09 06:03:38 uebayasi Exp $ */
 
 /*
  * Copyright (c) 2005, Johan Wallén
@@ -367,7 +367,7 @@ pbms_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_wsmousedev = config_found(self, &a, wsmousedevprint);
 
-	USB_ATTACH_SUCCESS_RETURN;
+	return;
 }
 
 

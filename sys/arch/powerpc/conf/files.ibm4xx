@@ -1,4 +1,4 @@
-#	$NetBSD: files.ibm4xx,v 1.10.88.4 2010/08/19 01:02:21 uebayasi Exp $
+#	$NetBSD: files.ibm4xx,v 1.10.88.5 2010/11/09 06:03:39 uebayasi Exp $
 #
 # IBM 4xx specific configuration info
 
@@ -69,6 +69,7 @@ file	arch/powerpc/ibm4xx/dev/ibm405gp.c	pchb | pci
 device	gpiic: i2cbus, i2c_bitbang
 attach	gpiic at opb
 file	arch/powerpc/ibm4xx/dev/gpiic_opb.c	gpiic
+<<<<<<< files.ibm4xx
 
 # External bus
 device	exb {[addr = -1]}
@@ -78,3 +79,10 @@ file	arch/powerpc/ibm4xx/dev/exb.c		exb
 # FlashROM on external bus
 attach	flash at exb with flash_exb
 file	arch/powerpc/ibm4xx/dev/flash_exb.c	flash_exb	needs-flag
+=======
+
+# External bus
+#device exb {[addr = -1]}
+#attach exb at plb
+#file	arch/powerpc/ibm4xx/dev/exb.c		exb
+>>>>>>> 1.12
