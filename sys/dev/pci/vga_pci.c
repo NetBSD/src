@@ -1,4 +1,4 @@
-/*	$NetBSD: vga_pci.c,v 1.49 2010/02/24 22:38:01 dyoung Exp $	*/
+/*	$NetBSD: vga_pci.c,v 1.50 2010/11/09 21:12:19 shattered Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga_pci.c,v 1.49 2010/02/24 22:38:01 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga_pci.c,v 1.50 2010/11/09 21:12:19 shattered Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -108,6 +108,8 @@ static const struct {
 	int quirks;
 } vga_pci_quirks[] = {
 	{PCI_ID_CODE(PCI_VENDOR_SILMOTION, PCI_PRODUCT_SILMOTION_SM712),
+	 VGA_QUIRK_NOFASTSCROLL},
+	{PCI_ID_CODE(PCI_VENDOR_CYRIX, PCI_PRODUCT_CYRIX_CX5530_VIDEO),
 	 VGA_QUIRK_NOFASTSCROLL},
 };
 
