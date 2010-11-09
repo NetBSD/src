@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.24.2.1 2010/04/30 14:39:31 uebayasi Exp $	*/
+/*	$NetBSD: main.c,v 1.24.2.2 2010/11/09 06:03:38 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -194,9 +194,9 @@ command_help(char *arg)
 	       "boot [filename] [-adsqv]\n"
 	       "     (ex. \"netbsd.old -s\"\n"
 	       "consdev {pc|com[0123]|com[0123]kbd|auto}\n"
-	       "vesa {enabled|disabled|list|modenum}\n"
+	       "vesa {modenum|on|off|enabled|disabled|list}\n"
 	       "multiboot [filename] [<args>]\n"
-	       "modules {enabled|disabled}\n"
+	       "modules {on|off|enabled|disabled}\n"
 	       "load {path_to_module}\n"
 	       "help|?\n"
 	       "quit\n");

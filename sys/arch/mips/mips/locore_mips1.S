@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips1.S,v 1.67 2009/12/14 00:46:06 matt Exp $	*/
+/*	$NetBSD: locore_mips1.S,v 1.67.2.1 2010/11/09 06:03:38 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -925,12 +925,12 @@ LEAF(mips1_TLBRead)
 	tlbr					# Read from the TLB
 	mfc0	t2, MIPS_COP_0_TLB_HI		# fetch the hi entry
 	mfc0	t3, MIPS_COP_0_TLB_LOW		# fetch the low entry
-	sw	t2, 0(a1)
-	sw	t3, 4(a1)
 
 	mtc0	t0, MIPS_COP_0_TLB_HI		# restore PID
-	j	ra
 	mtc0	v1, MIPS_COP_0_STATUS		# Restore the status register
+	sw	t2, 0(a1)
+	j	ra
+	sw	t3, 4(a1)
 END(mips1_TLBRead)
 
 /*----------------------------------------------------------------------------

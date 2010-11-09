@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.21.2.2 2010/10/22 07:21:33 uebayasi Exp $	*/
+/*	$NetBSD: boot.c,v 1.21.2.3 2010/11/09 06:03:39 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999 Eduardo E. Horvath.  All rights reserved.
@@ -95,6 +95,7 @@ static bool bootinfo_pass_bootdev = false;
 
 int debug  = 0;
 int compatmode = 0;
+extern char twiddle_toggle;
 
 #if 0
 static void
@@ -190,6 +191,7 @@ bootoptions(const char *ap, char *loaddev, char *kernel, char *options)
 		kernel[end2 - start2] = '\0';
 	}
 
+	twiddle_toggle = 1;
 	strcpy(options, ap);
 	while (*ap != '\0' && *ap != ' ' && *ap != '\t' && *ap != '\n') {
 		BOOT_FLAG(*ap, v);
@@ -199,6 +201,9 @@ bootoptions(const char *ap, char *loaddev, char *kernel, char *options)
 			break;
 		case 'C':
 			compatmode = 1;
+			break;
+		case 'T':
+			twiddle_toggle = 1 - twiddle_toggle;
 			break;
 		default:
 			break;

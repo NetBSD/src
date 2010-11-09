@@ -1,4 +1,4 @@
-#	$NetBSD: XEN3_DOM0,v 1.27.2.2 2010/08/17 06:44:35 uebayasi Exp $
+#	$NetBSD: XEN3_DOM0,v 1.27.2.3 2010/11/09 06:03:37 uebayasi Exp $
 #
 #	XEN3_0: Xen 3.0 domain0 kernel
 
@@ -415,6 +415,8 @@ pdcide* 	at pci? dev ? function ?	# Promise IDE controllers
 pdcsata*	at pci? dev ? function ?	# Promise SATA150 controllers
 rccide* 	at pci? dev ? function ?	# ServerWorks IDE controllers
 satalink*	at pci? dev ? function ?	# SiI SATALink controllers
+schide* 	at pci? dev ? function ?	# Intel SCH IDE controllers
+siisata*	at pci? dev ? function ?	# SiI SteelVine controllers
 siside* 	at pci? dev ? function ?	# SiS IDE controllers
 slide*  	at pci? dev ? function ?	# Symphony Labs IDE controllers
 svwsata* 	at pci? dev ? function ?	# ServerWorks SATA controllers

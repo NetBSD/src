@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_meter.c,v 1.50.2.2 2010/04/30 14:44:38 uebayasi Exp $	*/
+/*	$NetBSD: uvm_meter.c,v 1.50.2.3 2010/11/09 06:03:44 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_meter.c,v 1.50.2.2 2010/04/30 14:44:38 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_meter.c,v 1.50.2.3 2010/11/09 06:03:44 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -49,8 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_meter.c,v 1.50.2.2 2010/04/30 14:44:38 uebayasi 
 #include <sys/kernel.h>
 #include <sys/sysctl.h>
 
-#include <uvm/uvm_extern.h>
-#include <uvm/uvm_page.h>
+#include <uvm/uvm.h>
 #include <uvm/uvm_pdpolicy.h>
 
 /*

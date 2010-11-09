@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.91 2009/11/21 04:16:52 rmind Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.91.2.1 2010/11/09 06:03:40 uebayasi Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.91 2009/11/21 04:16:52 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.91.2.1 2010/11/09 06:03:40 uebayasi Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -223,7 +223,7 @@ cpu_lwp_fork(register struct lwp *l1, register struct lwp *l2, void *stack, size
 		opcb->pcb_cwp = getcwp();
 	}
 #ifdef DIAGNOSTIC
-	else if (l1 != &lwp0)	/* XXX is this valid? */
+	else if (l1 != &lwp0)
 		panic("cpu_lwp_fork: curlwp");
 #endif
 #ifdef DEBUG
