@@ -1,4 +1,4 @@
-# $NetBSD: t_create.sh,v 1.6 2010/11/07 17:51:18 jmmv Exp $
+# $NetBSD: t_create.sh,v 1.7 2010/11/09 13:01:33 jmmv Exp $
 #
 # Copyright (c) 2005, 2006, 2007, 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -84,17 +84,12 @@ attrs_body() {
 	[ ${st_uid} -eq $(id -u ${user}) ] || atf_fail "Incorrect owner"
 	[ ${st_gid} -eq 100 ] || atf_fail "Incorrect group"
 
-	if [ ${user} = _atf ]; then
-		atf_expect_fail "We can't 'su ${user}' to run a test command" \
-		    "because it doesn't have a login shell"
-	fi
-
-	atf_check -s eq:0 -o empty -e empty su ${user} -c 'touch b/a'
+	atf_check -s eq:0 -o empty -e empty su -m ${user} -c 'touch b/a'
 	eval $(stat -s b/a)
 	[ ${st_uid} -eq $(id -u ${user}) ] || atf_fail "Incorrect owner"
 	[ ${st_gid} -eq 0 ] || atf_fail "Incorrect group"
 
-	atf_check -s eq:0 -o empty -e empty su ${user} -c 'touch c/a'
+	atf_check -s eq:0 -o empty -e empty su -m ${user} -c 'touch c/a'
 	eval $(stat -s c/a)
 	[ ${st_uid} -eq $(id -u ${user}) ] || atf_fail "Incorrect owner"
 	[ ${st_gid} -eq 100 ] || atf_fail "Incorrect group"
