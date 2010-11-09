@@ -1,4 +1,4 @@
-/*	$NetBSD: elroy.c,v 1.8.2.1 2010/04/30 14:39:23 uebayasi Exp $	*/
+/*	$NetBSD: elroy.c,v 1.8.2.2 2010/11/09 06:03:37 uebayasi Exp $	*/
 
 /*	$OpenBSD: elroy.c,v 1.5 2009/03/30 21:24:57 kettenis Exp $	*/
 
@@ -706,7 +706,6 @@ elroy_rrm_2(void *v, bus_space_handle_t h, bus_size_t o,
 
 	h += o;
 	p = (volatile uint16_t *)h;
-	c /= 2;
 	while (c--)
 		*q++ = *p;
 }
@@ -719,7 +718,6 @@ elroy_rrm_4(void *v, bus_space_handle_t h, bus_size_t o,
 
 	h += o;
 	p = (volatile uint32_t *)h;
-	c /= 4;
 	while (c--)
 		*q++ = *p;
 }
@@ -732,7 +730,6 @@ elroy_rrm_8(void *v, bus_space_handle_t h, bus_size_t o,
 
 	h += o;
 	p = (volatile uint64_t *)h;
-	c /= 8;
 	while (c--)
 		*q++ = *p;
 }
@@ -746,7 +743,6 @@ elroy_wrm_2(void *v, bus_space_handle_t h, bus_size_t o,
 
 	h += o;
 	p = (volatile uint16_t *)h;
-	c /= 2;
 	while (c--)
 		*p = *q++;
 }
@@ -760,7 +756,6 @@ elroy_wrm_4(void *v, bus_space_handle_t h, bus_size_t o,
 
 	h += o;
 	p = (volatile uint32_t *)h;
-	c /= 4;
 	while (c--)
 		*p = *q++;
 }
@@ -774,7 +769,6 @@ elroy_wrm_8(void *v, bus_space_handle_t h, bus_size_t o,
 
 	h += o;
 	p = (volatile uint64_t *)h;
-	c /= 8;
 	while (c--)
 		*p = *q++;
 }
@@ -885,7 +879,6 @@ elroy_rrr_2(void *v, bus_space_handle_t h, bus_size_t o,
 {
 	volatile uint16_t *p, *q = a;
 
-	c /= 2;
 	h += o;
 	p = (volatile uint16_t *)h;
 	while (c--)
@@ -898,7 +891,6 @@ elroy_rrr_4(void *v, bus_space_handle_t h, bus_size_t o,
 {
 	volatile uint32_t *p, *q = a;
 
-	c /= 4;
 	h += o;
 	p = (volatile uint32_t *)h;
 	while (c--)
@@ -911,7 +903,6 @@ elroy_rrr_8(void *v, bus_space_handle_t h, bus_size_t o,
 {
 	volatile uint64_t *p, *q = a;
 
-	c /= 8;
 	h += o;
 	p = (volatile uint64_t *)h;
 	while (c--)
@@ -925,7 +916,6 @@ elroy_wrr_2(void *v, bus_space_handle_t h, bus_size_t o,
 	volatile uint16_t *p;
 	const uint16_t *q = a;
 
-	c /= 2;
 	h += o;
 	p = (volatile uint16_t *)h;
 	while (c--)
@@ -939,7 +929,6 @@ elroy_wrr_4(void *v, bus_space_handle_t h, bus_size_t o,
 	volatile uint32_t *p;
 	const uint32_t *q = a;
 
-	c /= 4;
 	h += o;
 	p = (volatile uint32_t *)h;
 	while (c--)
@@ -953,7 +942,6 @@ elroy_wrr_8(void *v, bus_space_handle_t h, bus_size_t o,
 	volatile uint64_t *p;
 	const uint64_t *q = a;
 
-	c /= 8;
 	h += o;
 	p = (volatile uint64_t *)h;
 	while (c--)
