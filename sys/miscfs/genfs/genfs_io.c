@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.41 2010/11/03 04:32:50 uebayasi Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.42 2010/11/09 16:31:48 hannken Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.41 2010/11/03 04:32:50 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.42 2010/11/09 16:31:48 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -129,10 +129,11 @@ genfs_getpages(void *v)
 	kauth_cred_t const cred = curlwp->l_cred;		/* XXXUBC curlwp */
 	const bool async = (flags & PGO_SYNCIO) == 0;
 	const bool memwrite = (ap->a_access_type & VM_PROT_WRITE) != 0;
-	bool has_trans = false;
 	const bool overwrite = (flags & PGO_OVERWRITE) != 0;
 	const bool blockalloc = memwrite && (flags & PGO_NOBLOCKALLOC) == 0;
 	const bool glocked = (flags & PGO_GLOCKHELD) != 0;
+	const bool need_wapbl = blockalloc && vp->v_mount->mnt_wapbl;
+	bool has_trans_wapbl = false;
 	UVMHIST_FUNC("genfs_getpages"); UVMHIST_CALLED(ubchist);
 
 	UVMHIST_LOG(ubchist, "vp %p off 0x%x/%x count %d",
@@ -294,9 +295,20 @@ startover:
 	UVMHIST_LOG(ubchist, "ridx %d npages %d startoff %ld endoff %ld",
 	    ridx, npages, startoffset, endoffset);
 
-	if (!has_trans) {
+	if (!has_trans_wapbl) {
 		fstrans_start(vp->v_mount, FSTRANS_SHARED);
-		has_trans = true;
+		/*
+		 * XXX: This assumes that we come here only via
+		 * the mmio path
+		 */
+		if (need_wapbl) {
+			error = WAPBL_BEGIN(vp->v_mount);
+			if (error) {
+				fstrans_done(vp->v_mount);
+				goto out_err_free;
+			}
+		}
+		has_trans_wapbl = true;
 	}
 
 	/*
@@ -621,22 +633,8 @@ loopdone:
 	 */
 
 	if (!error && sawhole && blockalloc) {
-		/*
-		 * XXX: This assumes that we come here only via
-		 * the mmio path
-		 */
-		if (vp->v_mount->mnt_wapbl) {
-			error = WAPBL_BEGIN(vp->v_mount);
-		}
-
-		if (!error) {
-			error = GOP_ALLOC(vp, startoffset,
-			    npages << PAGE_SHIFT, 0, cred);
-			if (vp->v_mount->mnt_wapbl) {
-				WAPBL_END(vp->v_mount);
-			}
-		}
-
+		error = GOP_ALLOC(vp, startoffset,
+		    npages << PAGE_SHIFT, 0, cred);
 		UVMHIST_LOG(ubchist, "gop_alloc off 0x%x/0x%x -> %d",
 		    startoffset, npages << PAGE_SHIFT, error,0);
 		if (!error) {
@@ -738,8 +736,11 @@ out_err_free:
 	if (pgs != NULL && pgs != pgs_onstack)
 		kmem_free(pgs, pgs_size);
 out_err:
-	if (has_trans)
+	if (has_trans_wapbl) {
+		if (need_wapbl)
+			WAPBL_END(vp->v_mount);
 		fstrans_done(vp->v_mount);
+	}
 	return error;
 }
 
