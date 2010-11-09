@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpcopy.c,v 1.8 2010/11/09 15:22:47 pooka Exp $	*/
+/*	$NetBSD: rumpcopy.c,v 1.9 2010/11/09 20:55:14 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpcopy.c,v 1.8 2010/11/09 15:22:47 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpcopy.c,v 1.9 2010/11/09 20:55:14 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/lwp.h>
@@ -103,14 +103,17 @@ copyinstr(const void *uaddr, void *kaddr, size_t len, size_t *done)
 	uint8_t *to;
 	int rv;
 
+	if (len == 0)
+		return 0;
+
 	if (curproc->p_vmspace == &vmspace0)
 		return copystr(uaddr, kaddr, len, done);
 
 	if ((rv = rumpuser_sp_copyin(uaddr, kaddr, len)) != 0)
 		return rv;
 
-	/* figure out if we got a terminate string or not */
-	to = (uint8_t *)kaddr + len;
+	/* figure out if we got a terminated string or not */
+	to = (uint8_t *)kaddr + (len-1);
 	while (to != kaddr) {
 		if (*to == 0)
 			goto found;
