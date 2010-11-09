@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2010/11/02 19:12:48 joerg Exp $
+# $NetBSD: Makefile,v 1.3 2010/11/09 23:07:09 joerg Exp $
 
 LIB=		lzma
 USE_SHLIBDIR=	yes
@@ -48,7 +48,7 @@ SRCS+=	common.c block_util.c easy_preset.c filter_common.c \
 	hardware_physmem.c index.c \
 	stream_flags_common.c vli_size.c \
 	alone_encoder.c block_buffer_encoder.c block_encoder.c \
-	block_header_encoder.c easy_buffer_encoder.c \
+	block_header_encoder.c easy_buffer_encoder.c easy_encoder.c \
 	easy_encoder_memusage.c filter_buffer_encoder.c \
 	filter_encoder.c filter_flags_encoder.c index_encoder.c \
 	stream_buffer_encoder.c stream_encoder.c stream_flags_encoder.c \
