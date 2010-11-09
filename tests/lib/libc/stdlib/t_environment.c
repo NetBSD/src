@@ -1,4 +1,4 @@
-/*	$NetBSD: t_environment.c,v 1.6 2010/11/08 23:28:41 pooka Exp $	*/
+/*	$NetBSD: t_environment.c,v 1.7 2010/11/09 11:48:35 pooka Exp $	*/
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_environment.c,v 1.6 2010/11/08 23:28:41 pooka Exp $");
+__RCSID("$NetBSD: t_environment.c,v 1.7 2010/11/09 11:48:35 pooka Exp $");
 
 #include <atf-c.h>
 #include <errno.h>
@@ -48,13 +48,13 @@ ATF_TC_HEAD(t_setenv, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Test setenv(3), getenv(3), unsetenv(3)");
+	atf_tc_set_md_var(tc, "timeout", "300");
 }
 
 ATF_TC_HEAD(t_putenv, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Test putenv(3), getenv(3), unsetenv(3)");
-	atf_tc_set_md_var(tc, "timeout", "300");
 }
 
 ATF_TC_HEAD(t_clearenv, tc)
