@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.93 2010/07/07 01:18:39 chs Exp $	*/
+/*	$NetBSD: trap.c,v 1.94 2010/11/09 06:41:03 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.93 2010/07/07 01:18:39 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.94 2010/11/09 06:41:03 skrll Exp $");
 
 /* #define INTRDEBUG */
 /* #define TRAPDEBUG */
@@ -407,8 +407,10 @@ void
 frame_sanity_check(const char *func, int line, int type, struct trapframe *tf,
     struct lwp *l)
 {
+#if 0
 	extern int kernel_text;
 	extern int etext;
+#endif
 	extern register_t kpsw;
 
 #define SANITY(e)					\
@@ -445,11 +447,12 @@ do {							\
 		 */
 		if ((type & ~T_USER) == T_INTERRUPT)
 			goto out;
-
+#if 0
 		SANITY(tf->tf_iioq_head >= (u_int) &kernel_text);
 		SANITY(tf->tf_iioq_head < (u_int) &etext);
 		SANITY(tf->tf_iioq_tail >= (u_int) &kernel_text);
 		SANITY(tf->tf_iioq_tail < (u_int) &etext);
+#endif
 
 		maxsp = uv + USPACE + PAGE_SIZE;
 		minsp = uv + PAGE_SIZE;
