@@ -1,4 +1,4 @@
-/*	$NetBSD: pmu.c,v 1.18 2010/09/14 04:40:35 macallan Exp $ */
+/*	$NetBSD: pmu.c,v 1.19 2010/11/09 20:44:49 macallan Exp $ */
 
 /*-
  * Copyright (c) 2006 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmu.c,v 1.18 2010/09/14 04:40:35 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmu.c,v 1.19 2010/11/09 20:44:49 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -756,6 +756,20 @@ pmu_restart(void)
 	sc = pmu0;
 	if (pmu_send(sc, PMU_RESET_CPU, 0, NULL, 16, resp) >= 0)
 		while (1);
+}
+
+void
+pmu_modem(int on)
+{
+	struct pmu_softc *sc;
+	uint8_t resp[16], cmd[2] = {0, 0};
+
+	if (pmu0 == NULL)
+		return;
+
+	sc = pmu0;
+	cmd[0] = PMU_POW0_MODEM | (on ? PMU_POW0_ON : 0);
+	pmu_send(sc, PMU_POWER_CTRL0, 1, cmd, 16, resp);
 }
 
 static void

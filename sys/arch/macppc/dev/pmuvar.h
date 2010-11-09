@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmuvar.h,v 1.7 2008/04/29 06:53:02 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmuvar.h,v 1.8 2010/11/09 20:44:49 macallan Exp $");
 
 #ifndef PMUVAR_H
 #define PMUVAR_H
@@ -72,6 +72,7 @@ __KERNEL_RCSID(0, "$NetBSD: pmuvar.h,v 1.7 2008/04/29 06:53:02 martin Exp $");
 #define PMU_I2C_CMD		0x9a	/* i2c commands */
 #define PMU_GET_LID_STATE	0xdc	/* Report lid state */
 #define PMU_GET_VERSION		0xea	/* Identify thyself */
+#define PMU_SET_LED		0xee	/* control system LED */
 
 /* Bits in PMU interrupt and interrupt mask bytes */
 #define PMU_INT_ADB_AUTO	0x04	/* ADB autopoll, when PMU_INT_ADB */
@@ -86,6 +87,7 @@ __KERNEL_RCSID(0, "$NetBSD: pmuvar.h,v 1.7 2008/04/29 06:53:02 martin Exp $");
 #define PMU_POW0_ON		0x80	/* OR this to power ON the device */
 #define PMU_POW0_OFF		0x00	/* leave bit 7 to 0 to power it OFF */
 #define PMU_POW0_HARD_DRIVE	0x04	/* wallstreet/lombard? */
+#define PMU_POW0_MODEM		0x08	/* pismo, maybe others */
 
 /* Bits to use with the PMU_POWER_CTRL command */
 #define PMU_POW_ON		0x80	/* OR this to power ON the device */
@@ -148,5 +150,6 @@ struct pmu_ops {
 
 void pmu_poweroff(void);
 void pmu_restart(void);
+void pmu_modem(int);
 
 #endif /* PMUVAR_H */
