@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.102 2010/08/17 00:02:28 dyoung Exp $
+# $NetBSD: GENERIC,v 1.103 2010/11/09 12:24:47 skrll Exp $
 #
 # GENERIC machine description file
 #
@@ -23,7 +23,7 @@ include 	"arch/hp700/conf/std.hp700"
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
-#ident 		"GENERIC-$Revision: 1.102 $"
+#ident 		"GENERIC-$Revision: 1.103 $"
 
 maxusers	32		# estimated number of users
 
@@ -231,6 +231,8 @@ lcd0	at mainbus0		# LCD
 # STI graphics
 sti*	at mainbus0		# [H]CRX-{8,24,48}[Z] and Visualize graphics
 sti*	at phantomas?		# [H]CRX-{8,24,48}[Z] and Visualize graphics
+#sti*	at uturn?
+sti*	at pci?			# EG-PCI, FX*
 
 # Basic Bus Support
 lasi*	at mainbus0		# LASI host adapter ( LSI PN??? )

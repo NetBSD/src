@@ -1,6 +1,6 @@
-/*	$NetBSD: sti_sgc.c,v 1.19 2010/03/06 19:36:33 skrll Exp $	*/
+/*	$NetBSD: sti_sgc.c,v 1.20 2010/11/09 12:24:47 skrll Exp $	*/
 
-/*	$OpenBSD: sti_sgc.c,v 1.21 2003/12/22 23:39:06 mickey Exp $	*/
+/*	$OpenBSD: sti_sgc.c,v 1.38 2009/02/06 22:51:04 miod Exp $	*/
 
 /*
  * Copyright (c) 2000-2003 Michael Shalayeff
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sti_sgc.c,v 1.19 2010/03/06 19:36:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sti_sgc.c,v 1.20 2010/11/09 12:24:47 skrll Exp $");
 
 #include "opt_cputype.h"
 
@@ -59,6 +59,17 @@ __KERNEL_RCSID(0, "$NetBSD: sti_sgc.c,v 1.19 2010/03/06 19:36:33 skrll Exp $");
 #include <hp700/dev/cpudevs.h>
 #include <hp700/hp700/machdep.h>
 
+#ifdef STIDEBUG
+#define	DPRINTF(s)	do {	\
+	if (stidebug)		\
+		printf s;	\
+} while(0)
+
+extern int stidebug;
+#else
+#define	DPRINTF(s)	/* */
+#endif
+
 #define	STI_ROMSIZE	(sizeof(struct sti_dd) * 4)
 #define	STI_ID_FDDI	0x280b31af	/* Medusa FDDI ROM id */
 
@@ -71,15 +82,25 @@ __KERNEL_RCSID(0, "$NetBSD: sti_sgc.c,v 1.19 2010/03/06 19:36:33 skrll Exp $");
 #define	STI_GOPT6_REV	0x40
 #define	STI_GOPT7_REV	0x30
 
-/* internal EG */
-#define	STI_INEG_REV	0x60
-#define	STI_INEG_PROM	0xf0011000
+const char sti_sgc_opt[] = {
+	STI_GOPT1_REV,
+	STI_GOPT2_REV,
+	STI_GOPT3_REV,
+	STI_GOPT4_REV,
+	STI_GOPT5_REV,
+	STI_GOPT6_REV,
+	STI_GOPT7_REV
+};
 
 int sti_sgc_probe(device_t, cfdata_t, void *);
 void sti_sgc_attach(device_t, device_t, void *);
 
-CFATTACH_DECL_NEW(sti_gedoens, sizeof(struct sti_softc), sti_sgc_probe, sti_sgc_attach,
-    NULL, NULL);
+void sti_sgc_end_attach(device_t);
+
+extern struct cfdriver sti_cd;
+
+CFATTACH_DECL_NEW(sti_gedoens, sizeof(struct sti_softc), sti_sgc_probe,
+    sti_sgc_attach, NULL, NULL);
 
 paddr_t sti_sgc_getrom(struct confargs *);
 
@@ -93,30 +114,26 @@ sti_sgc_getrom(struct confargs *ca)
 	paddr_t rom;
 	int pagezero_cookie;
 
-	rom = ca->ca_hpa;
+	pagezero_cookie = hp700_pagezero_map();
+	rom = PAGE0->pd_resv2[1];
+	hp700_pagezero_unmap(pagezero_cookie);
 
-	if (ca->ca_type.iodc_sv_model != HPPA_FIO_GSGC) {
-		return rom;
+	if (ca->ca_type.iodc_sv_model == HPPA_FIO_GSGC) {
+		int i;
+		for (i = sizeof(sti_sgc_opt); i--; )
+			if (sti_sgc_opt[i] == ca->ca_type.iodc_revision)
+				break;
+		if (i < 0)
+			rom = 0;
+	}
+	
+	if (rom < HPPA_IOBEGIN) {
+		if (ca->ca_naddrs > 0)
+			rom = ca->ca_addrs[0].addr;
+		else
+			rom = ca->ca_hpa;
 	}
 
-	switch (ca->ca_type.iodc_revision) {
-	case STI_GOPT1_REV:
-	case STI_GOPT2_REV:
-	case STI_GOPT3_REV:
-	case STI_GOPT4_REV:
-	case STI_GOPT5_REV:
-	case STI_GOPT6_REV:
-	case STI_GOPT7_REV:
-		/* these share the onboard's prom */
-		pagezero_cookie = hp700_pagezero_map();
-		rom = PAGE0->pd_resv2[1];
-		hp700_pagezero_unmap(pagezero_cookie);
-		break;
-
-	case STI_INEG_REV:
-		rom = STI_INEG_PROM;
-		break;
-	}
 	return rom;
 }
 
@@ -130,24 +147,26 @@ sti_sgc_probe(device_t parent, cfdata_t cf, void *aux)
 	u_char devtype;
 	int rv = 0, romunmapped = 0;
 
-	if (ca->ca_type.iodc_type != HPPA_TYPE_FIO)
-		return (0);
+	/* due to the graphic nature of this program do probe only one */
+	if (cf->cf_unit > sti_cd.cd_ndevs)
+		return 0;
 
-	/* these need futher checking for the graphics id */
+	if (ca->ca_type.iodc_type != HPPA_TYPE_FIO)
+		return 0;
+
+	/* these need further checking for the graphics id */
 	if (ca->ca_type.iodc_sv_model != HPPA_FIO_GSGC &&
 	    ca->ca_type.iodc_sv_model != HPPA_FIO_SGC)
 		return 0;
 
 	rom = sti_sgc_getrom(ca);
-#ifdef STIDEBUG
-	printf ("sti: hpa=%x, rom=%x\n", (uint)ca->ca_hpa, (uint)rom);
-#endif
+	DPRINTF(("%s: hpa=%x, rom=%x\n", __func__, (uint)ca->ca_hpa,
+	    (uint)rom));
 
 	/* if it does not map, probably part of the lasi space */
 	if ((rv = bus_space_map(ca->ca_iot, rom, STI_ROMSIZE, 0, &romh))) {
-#ifdef STIDEBUG
-		printf ("sti: can't map rom space (%d)\n", rv);
-#endif
+		DPRINTF(("%s: can't map rom space (%d)\n", __func__, rv));
+
 		if ((rom & HPPA_IOBEGIN) == HPPA_IOBEGIN) {
 			romh = rom;
 			romunmapped++;
@@ -159,14 +178,11 @@ sti_sgc_probe(device_t parent, cfdata_t cf, void *aux)
 
 	devtype = bus_space_read_1(ca->ca_iot, romh, 3);
 
-#ifdef STIDEBUG
-	printf("sti: devtype=%d\n", devtype);
-#endif
+	DPRINTF(("%s: devtype=%d\n", __func__, devtype));
 	rv = 1;
 	switch (devtype) {
 	case STI_DEVTYPE4:
 		id = bus_space_read_4(ca->ca_iot, romh, STI_DEV4_DD_GRID);
-		romend = bus_space_read_4(ca->ca_iot, romh, STI_DEV4_DD_ROMEND);
 		break;
 	case STI_DEVTYPE1:
 		id = (bus_space_read_1(ca->ca_iot, romh, STI_DEV1_DD_GRID
@@ -177,43 +193,31 @@ sti_sgc_probe(device_t parent, cfdata_t cf, void *aux)
 		    + 11) <<  8) |
 		    (bus_space_read_1(ca->ca_iot, romh, STI_DEV1_DD_GRID
 		    + 15));
-		romend = (bus_space_read_1(ca->ca_iot, romh, STI_DEV1_DD_ROMEND
-		    +  3) << 24) |
-		    (bus_space_read_1(ca->ca_iot, romh, STI_DEV1_DD_ROMEND
-		    +  7) << 16) |
-		    (bus_space_read_1(ca->ca_iot, romh, STI_DEV1_DD_ROMEND
-		    + 11) <<  8) |
-		    (bus_space_read_1(ca->ca_iot, romh, STI_DEV1_DD_ROMEND
-		    + 15));
 		break;
 	default:
-#ifdef STIDEBUG
-		printf("sti: unknown type (%x)\n", devtype);
-#endif
+		DPRINTF(("%s: unknown type (%x)\n", __func__, devtype));
 		rv = 0;
 		romend = 0;
 	}
 
 	if (rv &&
 	    ca->ca_type.iodc_sv_model == HPPA_FIO_SGC && id == STI_ID_FDDI) {
-#ifdef STIDEBUG
-		printf("sti: not a graphics device\n");
-#endif
+		DPRINTF(("%s: not a graphics device\n", __func__));
 		rv = 0;
 	}
 
 	if (ca->ca_naddrs >= sizeof(ca->ca_addrs) / sizeof(ca->ca_addrs[0])) {
 		printf("sti: address list overflow\n");
-		return (0);
+		return 0;
 	}
 
 	ca->ca_addrs[ca->ca_naddrs].addr = rom;
-	ca->ca_addrs[ca->ca_naddrs].size = round_page(romend);
+	ca->ca_addrs[ca->ca_naddrs].size = sti_rom_size(ca->ca_iot, romh);
 	ca->ca_naddrs++;
 
 	if (!romunmapped)
 		bus_space_unmap(ca->ca_iot, romh, STI_ROMSIZE);
-	return (rv);
+	return rv;
 }
 
 void
@@ -221,27 +225,38 @@ sti_sgc_attach(device_t parent, device_t self, void *aux)
 {
 	struct sti_softc *sc = device_private(self);
 	struct confargs *ca = aux;
+	bus_space_handle_t romh;
+	hppa_hpa_t consaddr;
+	int pagezero_cookie;
 	paddr_t rom;
 	uint32_t romlen;
 	int rv;
-	int pagezero_cookie;
+	int i;
 
 	pagezero_cookie = hp700_pagezero_map();
+	consaddr = (hppa_hpa_t)PAGE0->mem_cons.pz_hpa;
+	hp700_pagezero_unmap(pagezero_cookie);
+	
 	sc->sc_dev = self;
-	sc->memt = sc->iot = ca->ca_iot;
-	sc->base = ca->ca_hpa;
+	sc->sc_enable_rom = NULL;
+	sc->sc_disable_rom = NULL;
 
 	/* we stashed rom addr/len into the last slot during probe */
 	rom = ca->ca_addrs[ca->ca_naddrs - 1].addr;
 	romlen = ca->ca_addrs[ca->ca_naddrs - 1].size;
-	if ((rv = bus_space_map(ca->ca_iot, rom, romlen, 0, &sc->romh))) {
+
+	if ((rv = bus_space_map(ca->ca_iot, rom, romlen, 0, &romh))) {
 		if ((rom & HPPA_IOBEGIN) == HPPA_IOBEGIN)
-			sc->romh = rom;
+			romh = rom;
 		else {
 			aprint_error(": can't map rom space (%d)\n", rv);
 			return;
 		}
 	}
+
+	sc->bases[0] = romh;
+	for (i = 1; i < STI_REGION_MAX; i++)
+		sc->bases[i] = ca->ca_hpa;
 
 #ifdef HP7300LC_CPU
 	/*
@@ -255,9 +270,17 @@ sti_sgc_attach(device_t parent, device_t self, void *aux)
 		eaio_l2(PCXL2_ACCEL_IO_ADDR2MASK(ca->ca_hpa));
 #endif /* HP7300LC_CPU */
 
-	sc->sc_devtype = bus_space_read_1(sc->iot, sc->romh, 3);
-	if (ca->ca_hpa == (hppa_hpa_t)PAGE0->mem_cons.pz_hpa)
+	if (ca->ca_hpa == consaddr)
 		sc->sc_flags |= STI_CONSOLE;
-	hp700_pagezero_unmap(pagezero_cookie);
-	sti_attach_common(sc);
+	if (sti_attach_common(sc, ca->ca_iot, ca->ca_iot, romh,
+	   STI_CODEBASE_PA) == 0)
+		config_interrupts(self, sti_sgc_end_attach);
+}
+
+void
+sti_sgc_end_attach(device_t dev)
+{
+	struct sti_softc *sc = device_private(dev);
+	
+	sti_end_attach(sc);
 }

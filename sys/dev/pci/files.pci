@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.331 2010/11/06 14:56:12 jakllsch Exp $
+#	$NetBSD: files.pci,v 1.332 2010/11/09 12:24:48 skrll Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -425,6 +425,10 @@ file	dev/pci/tga_conf.c		tga
 file	dev/ic/bt485.c			tga
 file	dev/ic/bt463.c			tga
 file	dev/ic/ibm561.c			tga
+
+# HP Visualize
+attach	sti at pci with sti_pci
+file	dev/pci/sti_pci.c		sti_pci			needs-flag
 
 # Integraphics Systems IGA168x and CyberPro framebuffers (linear non-VGA mode)
 # device declaration in sys/conf/files

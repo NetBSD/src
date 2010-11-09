@@ -1,4 +1,4 @@
-#	$NetBSD: files.hp700,v 1.23 2010/06/01 10:20:28 skrll Exp $
+#	$NetBSD: files.hp700,v 1.24 2010/11/09 12:24:47 skrll Exp $
 #
 #	$OpenBSD: files.hp700,v 1.31 2001/06/26 02:41:25 mickey Exp $
 #
@@ -150,7 +150,8 @@ file	arch/hp700/dev/elroy.c		elroy
 file	arch/hp700/dev/apic.c		elroy
 
 attach	sti at gedoens with sti_gedoens
-file	arch/hp700/dev/sti_sgc.c	sti_gedoens
+file	arch/hp700/dev/sti_sgc.c		sti_gedoens
+file	arch/hp700/dev/sti_pci_machdep.c	sti_pci
 
 attach	siop at gedoens with siop_gedoens
 file	arch/hp700/dev/siop_sgc.c	siop_gedoens
