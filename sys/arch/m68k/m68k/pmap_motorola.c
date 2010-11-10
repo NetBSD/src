@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_motorola.c,v 1.56 2010/06/06 04:50:07 mrg Exp $        */
+/*	$NetBSD: pmap_motorola.c,v 1.57 2010/11/10 09:27:22 uebayasi Exp $        */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -119,7 +119,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.56 2010/06/06 04:50:07 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.57 2010/11/10 09:27:22 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -293,7 +293,7 @@ pa_to_pvh(paddr_t pa)
 	int bank, pg = 0;	/* XXX gcc4 -Wuninitialized */
 
 	bank = vm_physseg_find(atop((pa)), &pg);
-	return &vm_physmem[bank].pmseg.pvheader[pg];
+	return &VM_PHYSMEM_PTR(bank)->pmseg.pvheader[pg];
 }
 
 /*
@@ -431,7 +431,7 @@ pmap_init(void)
 	 * initial segment table, pv_head_table and pmap_attributes.
 	 */
 	for (page_cnt = 0, bank = 0; bank < vm_nphysseg; bank++)
-		page_cnt += vm_physmem[bank].end - vm_physmem[bank].start;
+		page_cnt += VM_PHYSMEM_PTR(bank)->end - VM_PHYSMEM_PTR(bank)->start;
 	s = M68K_STSIZE;					/* Segtabzero */
 	s += page_cnt * sizeof(struct pv_header);	/* pv table */
 	s = round_page(s);
@@ -458,8 +458,8 @@ pmap_init(void)
 	 */
 	pvh = pv_table;
 	for (bank = 0; bank < vm_nphysseg; bank++) {
-		npages = vm_physmem[bank].end - vm_physmem[bank].start;
-		vm_physmem[bank].pmseg.pvheader = pvh;
+		npages = VM_PHYSMEM_PTR(bank)->end - VM_PHYSMEM_PTR(bank)->start;
+		VM_PHYSMEM_PTR(bank)->pmseg.pvheader = pvh;
 		pvh += npages;
 	}
 
@@ -1844,8 +1844,8 @@ pmap_collect(void)
 
 	s = splvm();
 	for (bank = 0; bank < vm_nphysseg; bank++) {
-		pmap_collect1(pmap_kernel(), ptoa(vm_physmem[bank].start),
-		    ptoa(vm_physmem[bank].end));
+		pmap_collect1(pmap_kernel(), ptoa(VM_PHYSMEM_PTR(bank)->start),
+		    ptoa(VM_PHYSMEM_PTR(bank)->end));
 	}
 	splx(s);
 

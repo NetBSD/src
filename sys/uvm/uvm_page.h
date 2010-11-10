@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.h,v 1.62 2010/11/10 01:24:46 uebayasi Exp $	*/
+/*	$NetBSD: uvm_page.h,v 1.63 2010/11/10 09:27:21 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -256,7 +256,8 @@ extern bool vm_page_zero_enable;
  */
 
 #define	VM_PHYSMEM_PTR(i)	(&vm_physmem[i])
-#define	VM_PHYSDEV_PTR(i)	(&vm_physdev[i])	/* XXX not yet */
+#define VM_PHYSMEM_PTR_SWAP(i, j) \
+	do { vm_physmem[(i)] = vm_physmem[(j)]; } while (0)
 
 extern struct vm_physseg vm_physmem[VM_PHYSSEG_MAX];
 extern int vm_nphysseg;
