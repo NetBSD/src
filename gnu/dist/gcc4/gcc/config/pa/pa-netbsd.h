@@ -19,43 +19,6 @@ the Free Software Foundation, 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.  */
 
 
-/* A C expression whose value is RTL representing the location of the
-   incoming return address at the beginning of any function, before the
-   prologue.  You only need to define this macro if you want to support
-   call frame debugging information like that provided by DWARF 2.  */
-#define INCOMING_RETURN_ADDR_RTX (gen_rtx_REG (word_mode, 2))
-#define DWARF_FRAME_RETURN_COLUMN (DWARF_FRAME_REGNUM (2))
-
-/* This macro chooses the encoding of pointers embedded in the exception
-   handling sections.  If at all possible, this should be defined such
-   that the exception handling section will not require dynamic relocations,
-   and so may be read-only.
-
-   FIXME: We use DW_EH_PE_aligned to output a PLABEL constructor for
-   global function pointers.  */
-/* XXXMRG: should we use the version in <pa/pa.h>?  */
-#undef ASM_PREFERRED_EH_DATA_FORMAT
-#define ASM_PREFERRED_EH_DATA_FORMAT(CODE,GLOBAL)			\
-  (CODE == 2 && GLOBAL ? DW_EH_PE_aligned : DW_EH_PE_absptr)
-
-/* Handle special EH pointer encodings.  Absolute, pc-relative, and
-   indirect are handled automatically.  Since pc-relative encoding is
-   not possible on the PA and we don't have the infrastructure for
-   data relative encoding, we use aligned plabels for global function
-   pointers.  */
-/* XXXMRG: should we use the version in <pa/pa.h>?  */
-#undef ASM_MAYBE_OUTPUT_ENCODED_ADDR_RTX
-#define ASM_MAYBE_OUTPUT_ENCODED_ADDR_RTX(FILE, ENCODING, SIZE, ADDR, DONE) \
-  do {									\
-    if (((ENCODING) & 0x0F) == DW_EH_PE_aligned)			\
-      {									\
-	fputs (integer_asm_op (SIZE, FALSE), FILE);			\
-	fputs ("P%", FILE);						\
-	assemble_name (FILE, XSTR (ADDR, 0));				\
-	goto DONE;							\
-      }									\
-    } while (0)
-
 #undef TARGET_OS_CPP_BUILTINS
 #define TARGET_OS_CPP_BUILTINS()		\
   do						\
@@ -129,6 +92,9 @@ Boston, MA 02111-1307, USA.  */
    does what we want (i.e. uses colons).  It must be compatible with
    ASM_GENERATE_INTERNAL_LABEL(), so do not define it here.  */
 
+/* Use the default.  */
+#undef ASM_OUTPUT_INTERNAL_LABEL
+                    
 /* Use the default.  */
 #undef TARGET_ASM_GLOBALIZE_LABEL
 /* Globalizing directive for a label.  */
