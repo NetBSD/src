@@ -1,4 +1,4 @@
-.\"	$NetBSD: pathchk.1,v 1.4 2010/11/09 20:34:55 apb Exp $
+.\"	$NetBSD: pathchk.1,v 1.5 2010/11/10 01:44:04 christos Exp $
 .\"
 .\" Copyright (c) 2001, 2002 Chuck Rouillard
 .\" All rights reserved.
@@ -105,6 +105,8 @@ other
 systems:
 .Pp
 .Dl "find . -exec pathchk -p \e{\e} +"
+or the more efficient:
+.Dl "find . -print0 | xargs -0 pathchk -p"
 .Sh SEE ALSO
 .Xr getconf 1 ,
 .Xr pathconf 2 ,
