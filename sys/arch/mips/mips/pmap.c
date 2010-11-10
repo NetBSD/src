@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.190 2010/10/30 17:44:04 uebayasi Exp $	*/
+/*	$NetBSD: pmap.c,v 1.191 2010/11/10 09:27:23 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.190 2010/10/30 17:44:04 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.191 2010/11/10 09:27:23 uebayasi Exp $");
 
 /*
  *	Manages physical address maps.
@@ -342,8 +342,8 @@ pmap_bootstrap(void)
 	 * for us.  Must do this before uvm_pageboot_alloc()
 	 * can be called.
 	 */
-	avail_start = ptoa(vm_physmem[0].start);
-	avail_end = ptoa(vm_physmem[vm_nphysseg - 1].end);
+	avail_start = ptoa(VM_PHYSMEM_PTR(0)->start);
+	avail_end = ptoa(VM_PHYSMEM_PTR(vm_nphysseg - 1)->end);
 	virtual_end = VM_MIN_KERNEL_ADDRESS + Sysmapsize * NBPG;
 
 	/*
@@ -451,25 +451,25 @@ pmap_steal_memory(vsize_t size, vaddr_t *vstartp, vaddr_t *vendp)
 		if (uvm.page_init_done == true)
 			panic("pmap_steal_memory: called _after_ bootstrap");
 
-		if (vm_physmem[bank].avail_start != vm_physmem[bank].start ||
-		    vm_physmem[bank].avail_start >= vm_physmem[bank].avail_end)
+		if (VM_PHYSMEM_PTR(bank)->avail_start != VM_PHYSMEM_PTR(bank)->start ||
+		    VM_PHYSMEM_PTR(bank)->avail_start >= VM_PHYSMEM_PTR(bank)->avail_end)
 			continue;
 
-		if ((vm_physmem[bank].avail_end - vm_physmem[bank].avail_start)
+		if ((VM_PHYSMEM_PTR(bank)->avail_end - VM_PHYSMEM_PTR(bank)->avail_start)
 		    < npgs)
 			continue;
 
 		/*
 		 * There are enough pages here; steal them!
 		 */
-		pa = ptoa(vm_physmem[bank].avail_start);
-		vm_physmem[bank].avail_start += npgs;
-		vm_physmem[bank].start += npgs;
+		pa = ptoa(VM_PHYSMEM_PTR(bank)->avail_start);
+		VM_PHYSMEM_PTR(bank)->avail_start += npgs;
+		VM_PHYSMEM_PTR(bank)->start += npgs;
 
 		/*
 		 * Have we used up this segment?
 		 */
-		if (vm_physmem[bank].avail_start == vm_physmem[bank].end) {
+		if (VM_PHYSMEM_PTR(bank)->avail_start == VM_PHYSMEM_PTR(bank)->end) {
 			if (vm_nphysseg == 1)
 				panic("pmap_steal_memory: out of memory!");
 
@@ -477,7 +477,7 @@ pmap_steal_memory(vsize_t size, vaddr_t *vstartp, vaddr_t *vendp)
 			vm_nphysseg--;
 			for (x = bank; x < vm_nphysseg; x++) {
 				/* structure copy */
-				vm_physmem[x] = vm_physmem[x + 1];
+				VM_PHYSMEM_PTR_SWAP(x, x + 1);
 			}
 		}
 
@@ -524,9 +524,9 @@ pmap_init(void)
 	 */
 	pv = pv_table;
 	for (bank = 0; bank < vm_nphysseg; bank++) {
-		s = vm_physmem[bank].end - vm_physmem[bank].start;
+		s = VM_PHYSMEM_PTR(bank)->end - VM_PHYSMEM_PTR(bank)->start;
 		for (i = 0; i < s; i++)
-			VM_PAGE_TO_MD(&vm_physmem[bank].pgs[i])->pvh_list = pv++;
+			VM_PAGE_TO_MD(&VM_PHYSMEM_PTR(bank)->pgs[i])->pvh_list = pv++;
 	}
 
 	/*
