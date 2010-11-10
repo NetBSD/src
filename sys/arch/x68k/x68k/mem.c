@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.36 2007/03/05 12:30:38 tsutsui Exp $	*/
+/*	$NetBSD: mem.c,v 1.37 2010/11/10 09:27:24 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.36 2007/03/05 12:30:38 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.37 2010/11/10 09:27:24 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -244,8 +244,8 @@ isinram(paddr_t addr)
 	int i;
 
 	for (i = 0; i < vm_nphysseg; i++) {
-		if (ctob(vm_physmem[i].start) <= addr &&
-		    addr < ctob(vm_physmem[i].end))
+		if (ctob(VM_PHYSMEM_PTR(i)->start) <= addr &&
+		    addr < ctob(VM_PHYSMEM_PTR(i)->end))
 			return 1;
 	}
 	return 0;

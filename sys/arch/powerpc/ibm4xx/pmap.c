@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.63 2010/11/06 16:36:26 uebayasi Exp $	*/
+/*	$NetBSD: pmap.c,v 1.64 2010/11/10 09:27:23 uebayasi Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.63 2010/11/06 16:36:26 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.64 2010/11/10 09:27:23 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -195,7 +195,7 @@ pa_to_pv(paddr_t pa)
 	bank = vm_physseg_find(atop(pa), &pg);
 	if (bank == -1)
 		return NULL;
-	return &vm_physmem[bank].pmseg.pvent[pg];
+	return &VM_PHYSMEM_PTR(bank)->pmseg.pvent[pg];
 }
 
 static inline char *
@@ -206,7 +206,7 @@ pa_to_attr(paddr_t pa)
 	bank = vm_physseg_find(atop(pa), &pg);
 	if (bank == -1)
 		return NULL;
-	return &vm_physmem[bank].pmseg.attrs[pg];
+	return &VM_PHYSMEM_PTR(bank)->pmseg.attrs[pg];
 }
 
 /*
@@ -472,9 +472,9 @@ pmap_init(void)
 	pv = pv_table;
 	attr = pmap_attrib;
 	for (bank = 0; bank < vm_nphysseg; bank++) {
-		sz = vm_physmem[bank].end - vm_physmem[bank].start;
-		vm_physmem[bank].pmseg.pvent = pv;
-		vm_physmem[bank].pmseg.attrs = attr;
+		sz = VM_PHYSMEM_PTR(bank)->end - VM_PHYSMEM_PTR(bank)->start;
+		VM_PHYSMEM_PTR(bank)->pmseg.pvent = pv;
+		VM_PHYSMEM_PTR(bank)->pmseg.attrs = attr;
 		pv += sz;
 		attr += sz;
 	}

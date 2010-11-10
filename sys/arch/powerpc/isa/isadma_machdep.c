@@ -1,4 +1,4 @@
-/*	$NetBSD: isadma_machdep.c,v 1.5 2008/04/28 20:23:32 martin Exp $	*/
+/*	$NetBSD: isadma_machdep.c,v 1.6 2010/11/10 09:27:23 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isadma_machdep.c,v 1.5 2008/04/28 20:23:32 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isadma_machdep.c,v 1.6 2010/11/10 09:27:23 uebayasi Exp $");
 
 #define ISA_DMA_STATS
 
@@ -169,8 +169,8 @@ _isa_bus_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
 	paddr_t avail_end = 0;
 
 	for (bank = 0; bank < vm_nphysseg; bank++) {
-		if (avail_end < vm_physmem[bank].avail_end << PGSHIFT)
-			avail_end = vm_physmem[bank].avail_end << PGSHIFT;
+		if (avail_end < VM_PHYSMEM_PTR(bank)->avail_end << PGSHIFT)
+			avail_end = VM_PHYSMEM_PTR(bank)->avail_end << PGSHIFT;
 	}
 
 	/* Call common function to create the basic map. */
@@ -597,8 +597,8 @@ _isa_bus_dmamem_alloc(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
 	int bank;
 
 	for (bank = 0; bank < vm_nphysseg; bank++) {
-		if (avail_end < vm_physmem[bank].avail_end << PGSHIFT)
-			avail_end = vm_physmem[bank].avail_end << PGSHIFT;
+		if (avail_end < VM_PHYSMEM_PTR(bank)->avail_end << PGSHIFT)
+			avail_end = VM_PHYSMEM_PTR(bank)->avail_end << PGSHIFT;
 	}
 
 	if (avail_end > ISA_DMA_BOUNCE_THRESHOLD)

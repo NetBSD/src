@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.217 2010/11/03 16:59:19 uebayasi Exp $	*/
+/*	$NetBSD: pmap.c,v 1.218 2010/11/10 09:27:22 uebayasi Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -211,7 +211,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.217 2010/11/03 16:59:19 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.218 2010/11/10 09:27:22 uebayasi Exp $");
 
 #define	VM_PAGE_TO_MD(pg)	(&(pg)->mdpage)
 
@@ -5388,8 +5388,8 @@ pmap_init(void)
 	 * One could argue whether this should be the entire memory or just
 	 * the memory that is useable in a user process.
 	 */
-	avail_start = ptoa(vm_physmem[0].start);
-	avail_end = ptoa(vm_physmem[vm_nphysseg - 1].end);
+	avail_start = ptoa(VM_PHYSMEM_PTR(0)->start);
+	avail_end = ptoa(VM_PHYSMEM_PTR(vm_nphysseg - 1)->end);
 
 	/*
 	 * Now we need to free enough pv_entry structures to allow us to get
@@ -6639,7 +6639,8 @@ pmap_boot_pagealloc(psize_t amount, psize_t mask, psize_t match,
 			break;
 	}
 	KASSERT(mask == 0);
-	for (ps = vm_physmem, i = 0; i < vm_nphysseg; ps++, i++) {
+	for (i = 0; i < vm_nphysseg; i++) {
+		ps = VM_PHYSMEM_PTR(i);
 		if (ps->avail_start == atop(pv->pv_pa + pv->pv_size)
 		    && pv->pv_va + pv->pv_size <= ptoa(ps->avail_end)) {
 			rpv->pv_va = pv->pv_va;
@@ -6657,8 +6658,8 @@ pmap_boot_pagealloc(psize_t amount, psize_t mask, psize_t match,
 			 * If we consumed the entire physseg, remove it.
 			 */
 			if (ps->avail_start == ps->avail_end) {
-				for (--vm_nphysseg; i < vm_nphysseg; i++, ps++)
-					ps[0] = ps[1];
+				for (--vm_nphysseg; i < vm_nphysseg; i++)
+					VM_PHYSMEM_PTR_SWAP(i, i + 1);
 			}
 			memset((void *)rpv->pv_va, 0, rpv->pv_size);
 			return;

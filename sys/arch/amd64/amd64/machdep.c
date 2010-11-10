@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.154 2010/10/24 07:53:05 jruoho Exp $	*/
+/*	$NetBSD: machdep.c,v 1.155 2010/11/10 09:27:21 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.154 2010/10/24 07:53:05 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.155 2010/11/10 09:27:21 uebayasi Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -1163,7 +1163,7 @@ init_x86_64_msgbuf(void)
 	vps = NULL;
 
 	for (x = 0; x < vm_nphysseg; x++) {
-		vps = &vm_physmem[x];
+		vps = VM_PHYSMEM_PTR(x);
 		if (ctob(vps->avail_end) == avail_end)
 			break;
 	}
@@ -1182,13 +1182,13 @@ init_x86_64_msgbuf(void)
 	/* Remove the last segment if it now has no pages. */
 	if (vps->start == vps->end) {
 		for (vm_nphysseg--; x < vm_nphysseg; x++)
-			vm_physmem[x] = vm_physmem[x + 1];
+			VM_PHYSMEM_PTR_SWAP(x, x + 1);
 	}
 
 	/* Now find where the new avail_end is. */
 	for (avail_end = 0, x = 0; x < vm_nphysseg; x++)
-		if (vm_physmem[x].avail_end > avail_end)
-			avail_end = vm_physmem[x].avail_end;
+		if (VM_PHYSMEM_PTR(x)->avail_end > avail_end)
+			avail_end = VM_PHYSMEM_PTR(x)->avail_end;
 	avail_end = ctob(avail_end);
 
 	if (sz == reqsz)

@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.253 2010/10/30 17:00:54 uebayasi Exp $ */
+/* $NetBSD: pmap.c,v 1.254 2010/11/10 09:27:21 uebayasi Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001, 2007, 2008 The NetBSD Foundation, Inc.
@@ -140,7 +140,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.253 2010/10/30 17:00:54 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.254 2010/11/10 09:27:21 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -788,8 +788,8 @@ pmap_bootstrap(paddr_t ptaddr, u_int maxasn, u_long ncpuids)
 	 * the fact that BSEARCH sorts the vm_physmem[] array
 	 * for us.
 	 */
-	avail_start = ptoa(vm_physmem[0].start);
-	avail_end = ptoa(vm_physmem[vm_nphysseg - 1].end);
+	avail_start = ptoa(VM_PHYSMEM_PTR(0)->start);
+	avail_end = ptoa(VM_PHYSMEM_PTR(vm_nphysseg - 1)->end);
 	virtual_end = VM_MIN_KERNEL_ADDRESS + lev3mapsize * PAGE_SIZE;
 
 #if 0
@@ -1028,34 +1028,34 @@ pmap_steal_memory(vsize_t size, vaddr_t *vstartp, vaddr_t *vendp)
 
 #if 0
 		printf("     bank %d: avail_start 0x%lx, start 0x%lx, "
-		    "avail_end 0x%lx\n", bank, vm_physmem[bank].avail_start,
-		    vm_physmem[bank].start, vm_physmem[bank].avail_end);
+		    "avail_end 0x%lx\n", bank, VM_PHYSMEM_PTR(bank)->avail_start,
+		    VM_PHYSMEM_PTR(bank)->start, VM_PHYSMEM_PTR(bank)->avail_end);
 #endif
 
-		if (vm_physmem[bank].avail_start != vm_physmem[bank].start ||
-		    vm_physmem[bank].avail_start >= vm_physmem[bank].avail_end)
+		if (VM_PHYSMEM_PTR(bank)->avail_start != VM_PHYSMEM_PTR(bank)->start ||
+		    VM_PHYSMEM_PTR(bank)->avail_start >= VM_PHYSMEM_PTR(bank)->avail_end)
 			continue;
 
 #if 0
 		printf("             avail_end - avail_start = 0x%lx\n",
-		    vm_physmem[bank].avail_end - vm_physmem[bank].avail_start);
+		    VM_PHYSMEM_PTR(bank)->avail_end - VM_PHYSMEM_PTR(bank)->avail_start);
 #endif
 
-		if ((vm_physmem[bank].avail_end - vm_physmem[bank].avail_start)
+		if ((VM_PHYSMEM_PTR(bank)->avail_end - VM_PHYSMEM_PTR(bank)->avail_start)
 		    < npgs)
 			continue;
 
 		/*
 		 * There are enough pages here; steal them!
 		 */
-		pa = ptoa(vm_physmem[bank].avail_start);
-		vm_physmem[bank].avail_start += npgs;
-		vm_physmem[bank].start += npgs;
+		pa = ptoa(VM_PHYSMEM_PTR(bank)->avail_start);
+		VM_PHYSMEM_PTR(bank)->avail_start += npgs;
+		VM_PHYSMEM_PTR(bank)->start += npgs;
 
 		/*
 		 * Have we used up this segment?
 		 */
-		if (vm_physmem[bank].avail_start == vm_physmem[bank].end) {
+		if (VM_PHYSMEM_PTR(bank)->avail_start == VM_PHYSMEM_PTR(bank)->end) {
 			if (vm_nphysseg == 1)
 				panic("pmap_steal_memory: out of memory!");
 
@@ -1063,7 +1063,7 @@ pmap_steal_memory(vsize_t size, vaddr_t *vstartp, vaddr_t *vendp)
 			vm_nphysseg--;
 			for (x = bank; x < vm_nphysseg; x++) {
 				/* structure copy */
-				vm_physmem[x] = vm_physmem[x + 1];
+				VM_PHYSMEM_PTR_SWAP(x, x + 1);
 			}
 		}
 
@@ -1114,12 +1114,12 @@ pmap_init(void)
 #if 0
 	for (bank = 0; bank < vm_nphysseg; bank++) {
 		printf("bank %d\n", bank);
-		printf("\tstart = 0x%x\n", ptoa(vm_physmem[bank].start));
-		printf("\tend = 0x%x\n", ptoa(vm_physmem[bank].end));
+		printf("\tstart = 0x%x\n", ptoa(VM_PHYSMEM_PTR(bank)->start));
+		printf("\tend = 0x%x\n", ptoa(VM_PHYSMEM_PTR(bank)->end));
 		printf("\tavail_start = 0x%x\n",
-		    ptoa(vm_physmem[bank].avail_start));
+		    ptoa(VM_PHYSMEM_PTR(bank)->avail_start));
 		printf("\tavail_end = 0x%x\n",
-		    ptoa(vm_physmem[bank].avail_end));
+		    ptoa(VM_PHYSMEM_PTR(bank)->avail_end));
 	}
 #endif
 }

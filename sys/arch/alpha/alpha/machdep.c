@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.327 2010/11/06 11:46:00 uebayasi Exp $ */
+/* $NetBSD: machdep.c,v 1.328 2010/11/10 09:27:21 uebayasi Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.327 2010/11/06 11:46:00 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.328 2010/11/10 09:27:21 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -604,7 +604,7 @@ nobootinfo:
 		vsize_t sz = (vsize_t)round_page(MSGBUFSIZE);
 		vsize_t reqsz = sz;
 
-		vps = &vm_physmem[vm_nphysseg - 1];
+		vps = VM_PHYSMEM_PTR(vm_nphysseg - 1);
 
 		/* shrink so that it'll fit in the last segment */
 		if ((vps->avail_end - vps->avail_start) < atop(sz))

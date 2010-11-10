@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.75 2010/10/30 18:15:04 uebayasi Exp $	*/
+/*	$NetBSD: pmap.c,v 1.76 2010/11/10 09:27:24 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.75 2010/10/30 18:15:04 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.76 2010/11/10 09:27:24 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -109,8 +109,8 @@ pmap_bootstrap(void)
 	/* Steal msgbuf area */
 	initmsgbuf((void *)uvm_pageboot_alloc(MSGBUFSIZE), MSGBUFSIZE);
 
-	avail_start = ptoa(vm_physmem[0].start);
-	avail_end = ptoa(vm_physmem[vm_nphysseg - 1].end);
+	avail_start = ptoa(VM_PHYSMEM_PTR(0)->start);
+	avail_end = ptoa(VM_PHYSMEM_PTR(vm_nphysseg - 1)->end);
 	__pmap_kve = VM_MIN_KERNEL_ADDRESS;
 
 	pmap_kernel()->pm_refcnt = 1;
@@ -138,10 +138,14 @@ pmap_steal_memory(vsize_t size, vaddr_t *vstart, vaddr_t *vend)
 	size = round_page(size);
 	npage = atop(size);
 
-	for (i = 0, bank = &vm_physmem[i]; i < vm_nphysseg; i++, bank++)
+	bank = NULL;
+	for (i = 0; i < vm_nphysseg; i++) {
+		bank = VM_PHYSMEM_PTR(i);
 		if (npage <= bank->avail_end - bank->avail_start)
 			break;
+	}
 	KDASSERT(i != vm_nphysseg);
+	KDASSERT(bank != NULL);
 
 	/* Steal pages */
 	pa = ptoa(bank->avail_start);
@@ -154,7 +158,7 @@ pmap_steal_memory(vsize_t size, vaddr_t *vstart, vaddr_t *vend)
 		vm_nphysseg--;
 		KDASSERT(vm_nphysseg > 0);
 		for (j = i; i < vm_nphysseg; j++)
-			vm_physmem[j] = vm_physmem[j + 1];
+			VM_PHYSMEM_PTR_SWAP(j, j + 1);
 	}
 
 	va = SH3_PHYS_TO_P1SEG(pa);

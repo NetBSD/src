@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.27 2010/11/06 11:46:02 uebayasi Exp $	*/
+/*	$NetBSD: mem.c,v 1.28 2010/11/10 09:27:24 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.27 2010/11/06 11:46:02 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.28 2010/11/10 09:27:24 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -207,6 +207,6 @@ bool
 __mm_mem_addr(paddr_t pa)
 {
 
-	return ((atop(pa) < vm_physmem[0].start || PHYS_TO_VM_PAGE(pa) != NULL)
+	return ((atop(pa) < VM_PHYSMEM_PTR(0)->start || PHYS_TO_VM_PAGE(pa) != NULL)
 	    ? true : false);
 }

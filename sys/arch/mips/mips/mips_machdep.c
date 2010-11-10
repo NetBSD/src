@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.227 2010/11/06 11:46:01 uebayasi Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.228 2010/11/10 09:27:23 uebayasi Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -112,7 +112,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.227 2010/11/06 11:46:01 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.228 2010/11/10 09:27:23 uebayasi Exp $");
 
 #include "opt_cputype.h"
 #include "opt_compat_netbsd32.h"
@@ -1615,7 +1615,7 @@ mips_init_msgbuf(void)
 	vsize_t reqsz = sz;
 	struct vm_physseg *vps;
 
-	vps = &vm_physmem[vm_nphysseg - 1];
+	vps = VM_PHYSMEM_PTR(vm_nphysseg - 1);
 
 	/* shrink so that it'll fit in the last segment */
 	if ((vps->avail_end - vps->avail_start) < atop(sz))
