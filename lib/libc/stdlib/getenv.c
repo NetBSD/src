@@ -1,4 +1,4 @@
-/*	$NetBSD: getenv.c,v 1.31 2010/11/10 02:33:49 enami Exp $	*/
+/*	$NetBSD: getenv.c,v 1.32 2010/11/10 02:40:08 enami Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)getenv.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: getenv.c,v 1.31 2010/11/10 02:33:49 enami Exp $");
+__RCSID("$NetBSD: getenv.c,v 1.32 2010/11/10 02:40:08 enami Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -165,13 +165,11 @@ __scrubenv(int offset)
 	if (environ[++offset] == NULL)
 		return;
 
-	for (; environ[offset]; offset++)
-		if (environ[offset] == __environ_malloced[offset]) {
+	for (; environ[offset]; offset++) {
+		if (environ[offset] == __environ_malloced[offset])
 			free(__environ_malloced[offset]);
-			environ[offset] = __environ_malloced[offset] = NULL;
-		}
-
-	environ[offset] = __environ_malloced[offset] = NULL;
+		environ[offset] = __environ_malloced[offset] = NULL;
+	}
 }
 
 /*
