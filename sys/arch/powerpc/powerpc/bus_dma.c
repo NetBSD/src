@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.36 2010/11/06 11:46:01 uebayasi Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.37 2010/11/10 09:27:24 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.36 2010/11/06 11:46:01 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.37 2010/11/10 09:27:24 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -532,10 +532,10 @@ _bus_dmamem_alloc(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment, bus_si
 	int bank;
 
 	for (bank = 0; bank < vm_nphysseg; bank++) {
-		if (avail_start > vm_physmem[bank].avail_start << PGSHIFT)
-			avail_start = vm_physmem[bank].avail_start << PGSHIFT;
-		if (avail_end < vm_physmem[bank].avail_end << PGSHIFT)
-			avail_end = vm_physmem[bank].avail_end << PGSHIFT;
+		if (avail_start > VM_PHYSMEM_PTR(bank)->avail_start << PGSHIFT)
+			avail_start = VM_PHYSMEM_PTR(bank)->avail_start << PGSHIFT;
+		if (avail_end < VM_PHYSMEM_PTR(bank)->avail_end << PGSHIFT)
+			avail_end = VM_PHYSMEM_PTR(bank)->avail_end << PGSHIFT;
 	}
 
 	return _bus_dmamem_alloc_range(t, size, alignment, boundary, segs,

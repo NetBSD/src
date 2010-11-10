@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.25 2010/10/30 17:27:17 uebayasi Exp $ */
+/* $NetBSD: pmap.c,v 1.26 2010/11/10 09:27:22 uebayasi Exp $ */
 
 
 /*-
@@ -85,7 +85,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.25 2010/10/30 17:27:17 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.26 2010/11/10 09:27:22 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -338,35 +338,35 @@ pmap_steal_memory(vsize_t size, vaddr_t *vstartp, vaddr_t *vendp)
 
 #if 0
 		printf("     bank %d: avail_start 0x%lx, start 0x%lx, "
-		    "avail_end 0x%lx\n", lcv, vm_physmem[lcv].avail_start,
-		    vm_physmem[lcv].start, vm_physmem[lcv].avail_end);
+		    "avail_end 0x%lx\n", lcv, VM_PHYSMEM_PTR(lcv)->avail_start,
+		    VM_PHYSMEM_PTR(lcv)->start, VM_PHYSMEM_PTR(lcv)->avail_end);
 #endif
 
-		if (vm_physmem[lcv].avail_start != vm_physmem[lcv].start ||
-		    vm_physmem[lcv].avail_start >= vm_physmem[lcv].avail_end)
+		if (VM_PHYSMEM_PTR(lcv)->avail_start != VM_PHYSMEM_PTR(lcv)->start ||
+		    VM_PHYSMEM_PTR(lcv)->avail_start >= VM_PHYSMEM_PTR(lcv)->avail_end)
 			continue;
 
 #if 0
 		printf("             avail_end - avail_start = 0x%lx\n",
-		    vm_physmem[lcv].avail_end - vm_physmem[lcv].avail_start);
+		    VM_PHYSMEM_PTR(lcv)->avail_end - VM_PHYSMEM_PTR(lcv)->avail_start);
 #endif
 
-		if ((vm_physmem[lcv].avail_end - vm_physmem[lcv].avail_start)
+		if ((VM_PHYSMEM_PTR(lcv)->avail_end - VM_PHYSMEM_PTR(lcv)->avail_start)
 		    < npgs)
 			continue;
 
 		/*
 		 * There are enough pages here; steal them!
 		 */
-		pa = ptoa(vm_physmem[lcv].avail_start);
-		vm_physmem[lcv].avail_start += npgs;
-		vm_physmem[lcv].start += npgs;
+		pa = ptoa(VM_PHYSMEM_PTR(lcv)->avail_start);
+		VM_PHYSMEM_PTR(lcv)->avail_start += npgs;
+		VM_PHYSMEM_PTR(lcv)->start += npgs;
 
 
 		/*
 		 * Have we used up this segment?
 		 */
-		if (vm_physmem[lcv].avail_start == vm_physmem[lcv].end) {
+		if (VM_PHYSMEM_PTR(lcv)->avail_start == VM_PHYSMEM_PTR(lcv)->end) {
 			if (vm_nphysseg == 1)
 				panic("pmap_steal_memory: out of memory!");
 
@@ -374,7 +374,7 @@ pmap_steal_memory(vsize_t size, vaddr_t *vstartp, vaddr_t *vendp)
 			vm_nphysseg--;
 			for (x = lcv; x < vm_nphysseg; x++) {
 				/* structure copy */
-				vm_physmem[x] = vm_physmem[x + 1];
+				VM_PHYSMEM_PTR_SWAP(x, x + 1);
 			}
 		}
 
@@ -421,25 +421,25 @@ pmap_steal_vhpt_memory(vsize_t size)
 
 #if 1
 		printf("     lcv %d: avail_start 0x%lx, start 0x%lx, "
-		    "avail_end 0x%lx\n", lcv, vm_physmem[lcv].avail_start,
-		    vm_physmem[lcv].start, vm_physmem[lcv].avail_end);
+		    "avail_end 0x%lx\n", lcv, VM_PHYSMEM_PTR(lcv)->avail_start,
+		    VM_PHYSMEM_PTR(lcv)->start, VM_PHYSMEM_PTR(lcv)->avail_end);
 		printf("             avail_end - avail_start = 0x%lx\n",
-		    vm_physmem[lcv].avail_end - vm_physmem[lcv].avail_start);
+		    VM_PHYSMEM_PTR(lcv)->avail_end - VM_PHYSMEM_PTR(lcv)->avail_start);
 #endif
 
-		if (vm_physmem[lcv].avail_start != vm_physmem[lcv].start || /* XXX: ??? */
-		    vm_physmem[lcv].avail_start >= vm_physmem[lcv].avail_end)
+		if (VM_PHYSMEM_PTR(lcv)->avail_start != VM_PHYSMEM_PTR(lcv)->start || /* XXX: ??? */
+		    VM_PHYSMEM_PTR(lcv)->avail_start >= VM_PHYSMEM_PTR(lcv)->avail_end)
 			continue;
 
 		/* Break off a VHPT sized, aligned chunk off this segment. */
 
-		start1 = vm_physmem[lcv].avail_start;
+		start1 = VM_PHYSMEM_PTR(lcv)->avail_start;
 
 		/* Align requested start address on requested size boundary */
 		end1 = vhpt_start = roundup(start1, npgs);
 
 		start2 = vhpt_start + npgs;
-		end2 = vm_physmem[lcv].avail_end;
+		end2 = VM_PHYSMEM_PTR(lcv)->avail_end;
 
 
 		/* Case 1: Doesn't fit. skip this segment */
@@ -471,7 +471,7 @@ pmap_steal_vhpt_memory(vsize_t size)
 		//		physmem -= end2 - start1;
 		for (x = lcv; x < vm_nphysseg; x++) {
 			/* structure copy */
-			vm_physmem[x] = vm_physmem[x + 1];
+			VM_PHYSMEM_PTR_SWAP(x, x + 1);
 		}
 
 		/* Case 2: Perfect fit - skip segment reload. */
