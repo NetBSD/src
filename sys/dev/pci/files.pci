@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.332 2010/11/09 12:24:48 skrll Exp $
+#	$NetBSD: files.pci,v 1.333 2010/11/10 22:34:24 skrll Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -273,6 +273,11 @@ device	jmide: ata, ata_dma, ata_udma, pciide_common, wdc_common, jmide_hl
 attach	jmide at pci
 attach	ahcisata at jmide_hl with jmahci
 file	dev/pci/jmide.c			jmide | jmahci needs-flag
+
+# National Semiconductor IDE controllers
+device	nside: ata, ata_dma, ata_udma, pciide_common, wdc_common
+attach	nside at pci
+file	dev/pci/nside.c			nside
 
 # Opti IDE controllers
 device	optiide: ata, ata_dma, pciide_common, wdc_common
