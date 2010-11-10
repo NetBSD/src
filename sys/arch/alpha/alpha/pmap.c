@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.252.2.7 2010/11/10 03:36:25 uebayasi Exp $ */
+/* $NetBSD: pmap.c,v 1.252.2.8 2010/11/10 08:04:59 uebayasi Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001, 2007, 2008 The NetBSD Foundation, Inc.
@@ -137,11 +137,10 @@
 #include "opt_lockdebug.h"
 #include "opt_sysv.h"
 #include "opt_multiprocessor.h"
-#include "opt_xip.h"
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.252.2.7 2010/11/10 03:36:25 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.252.2.8 2010/11/10 08:04:59 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
