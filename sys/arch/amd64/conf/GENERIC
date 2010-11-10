@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.289 2010/11/05 10:28:21 gsutre Exp $
+# $NetBSD: GENERIC,v 1.290 2010/11/10 10:07:44 dholland Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.289 $"
+#ident 		"GENERIC-$Revision: 1.290 $"
 
 maxusers	64		# estimated number of users
 
@@ -66,7 +66,7 @@ options 	SYSVSEM		# System V-like semaphores
 options 	SYSVSHM		# System V-like memory sharing
 #options 	P1003_1B_SEMAPHORE	# p1003.1b semaphore support
 
-options		MODULAR		# new style module framework
+options 	MODULAR		# new style module framework
 options 	USERCONF	# userconf(4) support
 #options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
@@ -265,8 +265,8 @@ options 	ACPI_SCANPCI		# find PCI roots using ACPI
 options 	MPBIOS			# configure CPUs and APICs using MPBIOS
 options 	MPBIOS_SCANPCI		# MPBIOS configures PCI roots
 #options 	PCI_INTR_FIXUP		# PCI interrupt routing via ACPI
-#options	PCI_BUS_FIXUP		# fixup PCI bus numbering
-#options	PCI_ADDR_FIXUP		# fixup PCI I/O addresses
+#options 	PCI_BUS_FIXUP		# fixup PCI bus numbering
+#options 	PCI_ADDR_FIXUP		# fixup PCI I/O addresses
 #options 	ACPI_ACTIVATE_DEV	# If set, activate inactive devices
 options 	VGA_POST		# in-kernel support for VGA POST
 
@@ -611,7 +611,7 @@ wdc1	at isa? port 0x170 irq 15 flags 0x00
 
 # ATA (IDE) bus support
 atabus* at ata?
-options	ATADEBUG
+options 	ATADEBUG
 
 # IDE drives
 # Flags are used only with controllers that support DMA operations
@@ -673,7 +673,7 @@ fxp*	at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B
 gsip*	at pci? dev ? function ?	# NS83820 Gigabit Ethernet
 ipw*	at pci? dev ? function ?	# Intel PRO/Wireless 2100
 iwi*	at pci? dev ? function ?	# Intel PRO/Wireless 2200BG
-iwn*    at pci? dev ? function ?        # Intel PRO/Wireless 4965AGN
+iwn*	at pci? dev ? function ?	# Intel PRO/Wireless 4965AGN
 jme*	at pci? dev ? function ?	# JMicron JMC2[56]0 ethernet
 hme*	at pci? dev ? function ?	# Sun Microelectronics STP2002-STQ
 le*	at pci? dev ? function ?	# PCnet-PCI Ethernet
@@ -1108,8 +1108,8 @@ pseudo-device	fss			# file system snapshot device
 pseudo-device	putter			# for puffs and pud
 
 pseudo-device	md		1	# memory disk device (ramdisk)
-options		MEMORY_DISK_HOOKS	# enable root ramdisk
-options		MEMORY_DISK_DYNAMIC	# loaded via kernel module
+options 	MEMORY_DISK_HOOKS	# enable root ramdisk
+options 	MEMORY_DISK_DYNAMIC	# loaded via kernel module
 
 pseudo-device	vnd			# disk-like interface to files
 #options 	VND_COMPRESSION		# compressed vnd(4)
