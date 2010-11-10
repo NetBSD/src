@@ -1,4 +1,4 @@
-/*      $NetBSD: sp_common.c,v 1.2 2010/11/05 14:23:45 pooka Exp $	*/
+/*      $NetBSD: sp_common.c,v 1.3 2010/11/10 16:12:15 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -150,7 +150,7 @@ dosend(struct spclient *spc, const void *data, size_t dlen)
 			}
 		}
 
-		n = write(fd, sdata + sent, dlen - sent);
+		n = send(fd, sdata + sent, dlen - sent, MSG_NOSIGNAL);
 		if (n == 0) {
 			return EFAULT;
 		}
