@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.211.2.21 2010/11/10 08:04:59 uebayasi Exp $	*/
+/*	$NetBSD: pmap.c,v 1.211.2.22 2010/11/10 08:59:13 uebayasi Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -211,7 +211,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.211.2.21 2010/11/10 08:04:59 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.211.2.22 2010/11/10 08:59:13 uebayasi Exp $");
 
 #define	VM_PAGE_TO_MD(pg)	(&(pg)->mdpage)
 
@@ -6666,8 +6666,8 @@ pmap_boot_pagealloc(psize_t amount, psize_t mask, psize_t match,
 			 * If we consumed the entire physseg, remove it.
 			 */
 			if (ps->avail_start == ps->avail_end) {
-				for (--vm_nphysseg; i < vm_nphysseg; i++, ps++)
-					*(ps[0]) = *(ps[1]);
+				for (--vm_nphysseg; i < vm_nphysseg; i++)
+					VM_PHYSMEM_PTR_SWAP(i, i + 1);
 			}
 			memset((void *)rpv->pv_va, 0, rpv->pv_size);
 			return;
