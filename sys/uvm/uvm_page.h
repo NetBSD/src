@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.h,v 1.61 2010/09/25 01:42:40 matt Exp $	*/
+/*	$NetBSD: uvm_page.h,v 1.62 2010/11/10 01:24:46 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -254,6 +254,9 @@ extern bool vm_page_zero_enable;
 /*
  * physical memory config is stored in vm_physmem.
  */
+
+#define	VM_PHYSMEM_PTR(i)	(&vm_physmem[i])
+#define	VM_PHYSDEV_PTR(i)	(&vm_physdev[i])	/* XXX not yet */
 
 extern struct vm_physseg vm_physmem[VM_PHYSSEG_MAX];
 extern int vm_nphysseg;
