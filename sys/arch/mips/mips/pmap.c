@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.188.2.10 2010/11/10 03:36:28 uebayasi Exp $	*/
+/*	$NetBSD: pmap.c,v 1.188.2.11 2010/11/10 08:59:13 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.188.2.10 2010/11/10 03:36:28 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.188.2.11 2010/11/10 08:59:13 uebayasi Exp $");
 
 /*
  *	Manages physical address maps.
@@ -478,7 +478,7 @@ pmap_steal_memory(vsize_t size, vaddr_t *vstartp, vaddr_t *vendp)
 			vm_nphysseg--;
 			for (x = bank; x < vm_nphysseg; x++) {
 				/* structure copy */
-				*VM_PHYSMEM_PTR(x) = VM_PHYSMEM_PTR(x + 1);
+				VM_PHYSMEM_PTR_SWAP(x, x + 1);
 			}
 		}
 
