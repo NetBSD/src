@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.681.2.5 2010/11/06 08:08:18 uebayasi Exp $	*/
+/*	$NetBSD: machdep.c,v 1.681.2.6 2010/11/10 03:36:27 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.681.2.5 2010/11/06 08:08:18 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.681.2.6 2010/11/10 03:36:27 uebayasi Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -1209,7 +1209,7 @@ init386_msgbuf(void)
 	/* Remove the last segment if it now has no pages. */
 	if (vps->start == vps->end) {
 		for (--vm_nphysseg; x < vm_nphysseg; x++)
-			vm_physmem_ptrs[x] = vm_physmem_ptrs[x + 1];
+			*VM_PHYSMEM_PTR(x) = *VM_PHYSMEM_PTR(x + 1);
 	}
 
 	/* Now find where the new avail_end is. */

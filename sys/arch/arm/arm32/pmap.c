@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.211.2.19 2010/11/06 08:08:14 uebayasi Exp $	*/
+/*	$NetBSD: pmap.c,v 1.211.2.20 2010/11/10 03:36:26 uebayasi Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -212,7 +212,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.211.2.19 2010/11/06 08:08:14 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.211.2.20 2010/11/10 03:36:26 uebayasi Exp $");
 
 #define	VM_PAGE_TO_MD(pg)	(&(pg)->mdpage)
 
@@ -6649,7 +6649,7 @@ pmap_boot_pagealloc(psize_t amount, psize_t mask, psize_t match,
 	}
 	KASSERT(mask == 0);
 	for (i = 0; i < vm_nphysseg; i++) {
-		ps = vm_physmem_ptrs[i];
+		ps = VM_PHYSMEM_PTR(i);
 		if (ps->avail_start == atop(pv->pv_pa + pv->pv_size)
 		    && pv->pv_va + pv->pv_size <= ptoa(ps->avail_end)) {
 			rpv->pv_va = pv->pv_va;
@@ -6668,7 +6668,7 @@ pmap_boot_pagealloc(psize_t amount, psize_t mask, psize_t match,
 			 */
 			if (ps->avail_start == ps->avail_end) {
 				for (--vm_nphysseg; i < vm_nphysseg; i++, ps++)
-					ps[0] = ps[1];
+					*(ps[0]) = *(ps[1]);
 			}
 			memset((void *)rpv->pv_va, 0, rpv->pv_size);
 			return;

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.74.2.6 2010/11/06 08:08:22 uebayasi Exp $	*/
+/*	$NetBSD: pmap.c,v 1.74.2.7 2010/11/10 03:36:28 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.74.2.6 2010/11/06 08:08:22 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.74.2.7 2010/11/10 03:36:28 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -154,7 +154,7 @@ pmap_steal_memory(vsize_t size, vaddr_t *vstart, vaddr_t *vend)
 		vm_nphysseg--;
 		KDASSERT(vm_nphysseg > 0);
 		for (j = i; i < vm_nphysseg; j++)
-			vm_physmem_ptrs[j] = vm_physmem_ptrs[j + 1];
+			*VM_PHYSMEM_PTR(j) = *VM_PHYSMEM_PTR(j + 1);
 	}
 
 	va = SH3_PHYS_TO_P1SEG(pa);
