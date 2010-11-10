@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.24.2.7 2010/11/10 08:37:45 uebayasi Exp $ */
+/* $NetBSD: pmap.c,v 1.24.2.8 2010/11/10 08:59:13 uebayasi Exp $ */
 
 
 /*-
@@ -85,7 +85,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.24.2.7 2010/11/10 08:37:45 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.24.2.8 2010/11/10 08:59:13 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -374,7 +374,7 @@ pmap_steal_memory(vsize_t size, vaddr_t *vstartp, vaddr_t *vendp)
 			vm_nphysseg--;
 			for (x = lcv; x < vm_nphysseg; x++) {
 				/* structure copy */
-				*VM_PHYSMEM_PTR(x) = *VM_PHYSMEM_PTR(x + 1);
+				VM_PHYSMEM_PTR_SWAP(x, x + 1);
 			}
 		}
 
@@ -471,7 +471,7 @@ pmap_steal_vhpt_memory(vsize_t size)
 		//		physmem -= end2 - start1;
 		for (x = lcv; x < vm_nphysseg; x++) {
 			/* structure copy */
-			vm_physmem_ptrs[x] = vm_physmem_ptrs[x + 1];
+			VM_PHYSMEM_PTR_SWAP(x, x + 1);
 		}
 
 		/* Case 2: Perfect fit - skip segment reload. */
