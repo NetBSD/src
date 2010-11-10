@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.211.2.20 2010/11/10 03:36:26 uebayasi Exp $	*/
+/*	$NetBSD: pmap.c,v 1.211.2.21 2010/11/10 08:04:59 uebayasi Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -191,7 +191,6 @@
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
 #include "opt_multiprocessor.h"
-#include "opt_xip.h"
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -212,7 +211,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.211.2.20 2010/11/10 03:36:26 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.211.2.21 2010/11/10 08:04:59 uebayasi Exp $");
 
 #define	VM_PAGE_TO_MD(pg)	(&(pg)->mdpage)
 
