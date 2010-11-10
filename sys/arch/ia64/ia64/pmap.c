@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.24.2.5 2010/11/06 08:08:20 uebayasi Exp $ */
+/* $NetBSD: pmap.c,v 1.24.2.6 2010/11/10 03:36:27 uebayasi Exp $ */
 
 
 /*-
@@ -85,7 +85,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.24.2.5 2010/11/06 08:08:20 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.24.2.6 2010/11/10 03:36:27 uebayasi Exp $");
 
 #include "opt_xip.h"
 
@@ -376,7 +376,7 @@ pmap_steal_memory(vsize_t size, vaddr_t *vstartp, vaddr_t *vendp)
 			vm_nphysseg--;
 			for (x = lcv; x < vm_nphysseg; x++) {
 				/* structure copy */
-				vm_physmem_ptrs[x] = vm_physmem_ptrs[x + 1];
+				*VM_PHYSMEM_PTR(x) = *VM_PHYSMEM_PTR(x + 1);
 			}
 		}
 

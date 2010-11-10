@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.252.2.6 2010/11/06 08:08:12 uebayasi Exp $ */
+/* $NetBSD: pmap.c,v 1.252.2.7 2010/11/10 03:36:25 uebayasi Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001, 2007, 2008 The NetBSD Foundation, Inc.
@@ -141,7 +141,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.252.2.6 2010/11/06 08:08:12 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.252.2.7 2010/11/10 03:36:25 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1064,7 +1064,7 @@ pmap_steal_memory(vsize_t size, vaddr_t *vstartp, vaddr_t *vendp)
 			vm_nphysseg--;
 			for (x = bank; x < vm_nphysseg; x++) {
 				/* structure copy */
-				vm_physmem_ptrs[x] = vm_physmem_ptrs[x + 1];
+				*VM_PHYSMEM_PTR(x) = *VM_PHYSMEM_PTR(x + 1);
 			}
 		}
 
