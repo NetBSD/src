@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.6 2010/07/03 08:18:30 jmmv Exp $	*/
+/*	$NetBSD: sem.c,v 1.7 2010/11/10 11:14:12 pooka Exp $	*/
 
 /*
  * Common code for semaphore tests.  This can be included both into
@@ -207,7 +207,7 @@ ATF_TC_HEAD(named, tc)
  * Wow, easy naming rules.  it's these times i'm really happy i can
  * single-step into the kernel.
  */
-#define SEM1 "/my_precious_sem"
+#define SEM1 "/precious_sem"
 #define SEM2 "/justsem"
 ATF_TC_BODY(named, tc)
 {
