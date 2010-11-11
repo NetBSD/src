@@ -1,4 +1,4 @@
-/*	$NetBSD: regress_http.c,v 1.1.1.1 2009/11/02 10:01:04 plunky Exp $	*/
+/*	$NetBSD: regress_http.c,v 1.2 2010/11/11 14:08:45 pgoyette Exp $	*/
 /*
  * Copyright (c) 2003-2006 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -857,7 +857,7 @@ close_detect_done(struct evhttp_request *req, void *arg)
 	test_ok = 1;
 
 	timerclear(&tv);
-	tv.tv_sec = 3;   /* longer than the http time out */
+	tv.tv_sec = 5;   /* longer than the http time out */
 
 	event_loopexit(&tv);
 }
@@ -893,7 +893,7 @@ close_detect_cb(struct evhttp_request *req, void *arg)
 	}
 
 	timerclear(&tv);
-	tv.tv_sec = 3;   /* longer than the http time out */
+	tv.tv_sec = 5;   /* longer than the http time out */
 
 	/* launch a new request on the persistent connection in 6 seconds */
 	event_once(-1, EV_TIMEOUT, close_detect_launch, evcon, &tv);
