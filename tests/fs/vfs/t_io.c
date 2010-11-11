@@ -1,4 +1,4 @@
-/*	$NetBSD: t_io.c,v 1.1 2010/08/19 02:36:02 pooka Exp $	*/
+/*	$NetBSD: t_io.c,v 1.2 2010/11/11 16:03:55 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -67,8 +67,7 @@ holywrite(const atf_tc_t *tc, const char *mp)
 	memset(b3, 0, therange);
 	memset(b3 + getpagesize() - 1, 'B', 2);
 
-	if (memcmp(b2, b3, therange) != 0)
-		abort();
+	ATF_REQUIRE_EQ(memcmp(b2, b3, therange), 0);
 
 	rump_sys_close(fd);
 	rump_sys_chdir("/");
