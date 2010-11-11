@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpfs.c,v 1.68 2010/11/11 15:05:54 pooka Exp $	*/
+/*	$NetBSD: rumpfs.c,v 1.69 2010/11/11 16:01:59 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009  Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.68 2010/11/11 15:05:54 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.69 2010/11/11 16:01:59 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -98,6 +98,7 @@ const struct vnodeopv_entry_desc rump_vnodeop_entries[] = {
 	{ &vop_read_desc, rump_vop_read },
 	{ &vop_write_desc, rump_vop_write },
 	{ &vop_open_desc, rump_vop_open },
+	{ &vop_close_desc, genfs_nullop },
 	{ &vop_seek_desc, genfs_seek },
 	{ &vop_getpages_desc, genfs_getpages },
 	{ &vop_putpages_desc, genfs_putpages },
@@ -183,6 +184,7 @@ struct rumpfs_node {
 #define RUMPNODE_CANRECLAIM	0x01
 #define RUMPNODE_DIR_ET		0x02
 #define RUMPNODE_DIR_ETSUBS	0x04
+#define RUMPNODE_ET_PHONE_HOST	0x10
 
 struct rumpfs_mount {
 	struct vnode *rfsmp_rvp;
@@ -338,6 +340,8 @@ doregister(const char *key, const char *hostpath,
 	et->et_rn = rn = makeprivate(ettype_to_vtype(ftype), rdev, size);
 	et->et_removing = false;
 	et->et_blkmin = dmin;
+
+	rn->rn_flags |= RUMPNODE_ET_PHONE_HOST;
 
 	if (ftype == RUMP_ETFS_REG || REGDIR(ftype) || et->et_blkmin != -1) {
 		size_t len = strlen(hostpath)+1;
@@ -947,7 +951,7 @@ rump_vop_open(void *v)
 	int mode = ap->a_mode;
 	int error = EINVAL;
 
-	if (vp->v_type != VREG || rn->rn_hostpath == NULL)
+	if (vp->v_type != VREG || (rn->rn_flags & RUMPNODE_ET_PHONE_HOST) == 0)
 		return 0;
 
 	if (mode & FREAD) {
@@ -1126,7 +1130,7 @@ rump_vop_inactive(void *v)
 	struct rumpfs_node *rn = vp->v_data;
 	int error;
 
-	if (vp->v_type == VREG) {
+	if (rn->rn_flags & RUMPNODE_ET_PHONE_HOST && vp->v_type == VREG) {
 		if (rn->rn_readfd != -1) {
 			rumpuser_close(rn->rn_readfd, &error);
 			rn->rn_readfd = -1;
@@ -1137,7 +1141,7 @@ rump_vop_inactive(void *v)
 		}
 	}
 	*ap->a_recycle = (rn->rn_flags & RUMPNODE_CANRECLAIM) ? true : false;
-		
+
 	VOP_UNLOCK(vp);
 	return 0;
 }
@@ -1222,22 +1226,62 @@ struct vfsops rumpfs_vfsops = {
 	/* vfs_list */
 };
 
-int
-rumpfs_mount(struct mount *mp, const char *mntpath, void *arg, size_t *alen)
+static int
+rumpfs_mountfs(struct mount *mp)
 {
+	struct rumpfs_mount *rfsmp;
+	struct rumpfs_node *rn;
+	int error;
 
-	return EOPNOTSUPP;
+	rfsmp = kmem_alloc(sizeof(*rfsmp), KM_SLEEP);
+
+	rn = makeprivate(VDIR, NODEV, DEV_BSIZE);
+	rn->rn_parent = rn;
+	if ((error = makevnode(mp, rn, &rfsmp->rfsmp_rvp)) != 0)
+		return error;
+
+	rfsmp->rfsmp_rvp->v_vflag |= VV_ROOT;
+	VOP_UNLOCK(rfsmp->rfsmp_rvp);
+
+	mp->mnt_data = rfsmp;
+	mp->mnt_stat.f_namemax = MAXNAMLEN;
+	mp->mnt_stat.f_iosize = 512;
+	mp->mnt_flag |= MNT_LOCAL;
+	mp->mnt_iflag |= IMNT_MPSAFE;
+	vfs_getnewfsid(mp);
+
+	return 0;
 }
 
 int
-rumpfs_unmount(struct mount *mp, int flags)
+rumpfs_mount(struct mount *mp, const char *mntpath, void *arg, size_t *alen)
 {
+	int error;
 
-	/* if going for it, just lie about it */
-	if (panicstr)
-		return 0;
+	error = set_statvfs_info(mntpath, UIO_USERSPACE, "rumpfs", UIO_SYSSPACE,
+	    mp->mnt_op->vfs_name, mp, curlwp);
+	if (error)
+		return error;
 
-	return EOPNOTSUPP; /* ;) */
+	return rumpfs_mountfs(mp);
+}
+
+int
+rumpfs_unmount(struct mount *mp, int mntflags)
+{
+	struct rumpfs_mount *rfsmp = mp->mnt_data;
+	int flags = 0, error;
+
+	if (panicstr || mntflags & MNT_FORCE)
+		flags |= FORCECLOSE;
+
+	if ((error = vflush(mp, rfsmp->rfsmp_rvp, flags)) != 0)
+		return error;
+	vgone(rfsmp->rfsmp_rvp); /* XXX */
+
+	kmem_free(rfsmp, sizeof(*rfsmp));
+
+	return 0;
 }
 
 int
@@ -1280,8 +1324,6 @@ int
 rumpfs_mountroot()
 {
 	struct mount *mp;
-	struct rumpfs_mount *rfsmp;
-	struct rumpfs_node *rn;
 	int error;
 
 	if ((error = vfs_rootmountalloc(MOUNT_RUMPFS, "rootdev", &mp)) != 0) {
@@ -1289,31 +1331,17 @@ rumpfs_mountroot()
 		return error;
 	}
 
-	rfsmp = kmem_alloc(sizeof(*rfsmp), KM_SLEEP);
-
-	rn = makeprivate(VDIR, NODEV, DEV_BSIZE);
-	rn->rn_parent = rn;
-	error = makevnode(mp, rn, &rfsmp->rfsmp_rvp);
-	if (error)
-		panic("could not create root vnode: %d", error);
-	rfsmp->rfsmp_rvp->v_vflag |= VV_ROOT;
-	VOP_UNLOCK(rfsmp->rfsmp_rvp);
+	if ((error = rumpfs_mountfs(mp)) != 0)
+		panic("mounting rootfs failed: %d", error);
 
 	mutex_enter(&mountlist_lock);
 	CIRCLEQ_INSERT_TAIL(&mountlist, mp, mnt_list);
 	mutex_exit(&mountlist_lock);
 
-	mp->mnt_data = rfsmp;
-	mp->mnt_stat.f_namemax = MAXNAMLEN;
-	mp->mnt_stat.f_iosize = 512;
-	mp->mnt_flag |= MNT_LOCAL;
-	mp->mnt_iflag |= IMNT_MPSAFE;
-	vfs_getnewfsid(mp);
-
 	error = set_statvfs_info("/", UIO_SYSSPACE, "rumpfs", UIO_SYSSPACE,
 	    mp->mnt_op->vfs_name, mp, curlwp);
 	if (error)
-		panic("set statvfsinfo for rootfs failed");
+		panic("set_statvfs_info failed for rootfs: %d", error);
 
 	vfs_unbusy(mp, false, NULL);
 
