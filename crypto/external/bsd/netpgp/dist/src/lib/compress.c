@@ -57,7 +57,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: compress.c,v 1.19 2010/11/07 08:39:59 agc Exp $");
+__RCSID("$NetBSD: compress.c,v 1.20 2010/11/11 00:58:04 agc Exp $");
 #endif
 
 #ifdef HAVE_ZLIB_H
@@ -112,7 +112,7 @@ typedef struct {
  * bzip2_compressed_data_reader
  */
 static int 
-zlib_compressed_data_reader(void *dest, size_t length,
+zlib_compressed_data_reader(pgp_stream_t *stream, void *dest, size_t length,
 			    pgp_error_t **errors,
 			    pgp_reader_t *readinfo,
 			    pgp_cbdata_t *cbinfo)
@@ -164,7 +164,7 @@ zlib_compressed_data_reader(void *dest, size_t length,
 				} else {
 					n = sizeof(z->in);
 				}
-				if (!pgp_stacked_limited_read(z->in, n,
+				if (!pgp_stacked_limited_read(stream, z->in, n,
 						z->region,
 						errors, readinfo, cbinfo)) {
 					return -1;
@@ -207,7 +207,7 @@ zlib_compressed_data_reader(void *dest, size_t length,
 #ifdef HAVE_BZLIB_H
 /* \todo remove code duplication between this and zlib_compressed_data_reader */
 static int 
-bzip2_compressed_data_reader(void *dest, size_t length,
+bzip2_compressed_data_reader(pgp_stream_t *stream, void *dest, size_t length,
 			     pgp_error_t **errors,
 			     pgp_reader_t *readinfo,
 			     pgp_cbdata_t *cbinfo)
@@ -249,7 +249,7 @@ bzip2_compressed_data_reader(void *dest, size_t length,
 				} else
 					n = sizeof(bz->in);
 
-				if (!pgp_stacked_limited_read(
+				if (!pgp_stacked_limited_read(stream,
 						(uint8_t *) bz->in,
 						n, bz->region,
 						errors, readinfo, cbinfo))
