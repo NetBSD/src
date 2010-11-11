@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_sendpkt.c,v 1.2 2010/09/25 00:25:31 rmind Exp $	*/
+/*	$NetBSD: npf_sendpkt.c,v 1.3 2010/11/11 06:30:39 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_sendpkt.c,v 1.2 2010/09/25 00:25:31 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_sendpkt.c,v 1.3 2010/11/11 06:30:39 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -54,60 +54,25 @@ __KERNEL_RCSID(0, "$NetBSD: npf_sendpkt.c,v 1.2 2010/09/25 00:25:31 rmind Exp $"
 #define	DEFAULT_IP_TTL		(ip_defttl)
 
 /*
- * npf_fetch_seqack: fetch TCP data length, SEQ and ACK numbers.
- *
- * NOTE: Returns in host byte-order.
- */
-static inline bool
-npf_fetch_seqack(nbuf_t *nbuf, npf_cache_t *npc,
-    tcp_seq *seq, tcp_seq *ack, size_t *tcpdlen)
-{
-	void *n_ptr = nbuf_dataptr(nbuf);
-	u_int offby;
-	tcp_seq seqack[2];
-	uint16_t iplen;
-	uint8_t toff;
-
-	/* Fetch total length of IP. */
-	offby = offsetof(struct ip, ip_len);
-	if (nbuf_advfetch(&nbuf, &n_ptr, offby, sizeof(uint16_t), &iplen))
-		return false;
-
-	/* Fetch SEQ and ACK numbers. */
-	offby = (npc->npc_hlen - offby) + offsetof(struct tcphdr, th_seq);
-	if (nbuf_advfetch(&nbuf, &n_ptr, offby, sizeof(seqack), seqack))
-		return false;
-
-	/* Fetch TCP data offset (header length) value. */
-	offby = sizeof(seqack);
-	if (nbuf_advfetch(&nbuf, &n_ptr, offby, sizeof(uint8_t), &toff))
-		return false;
-	toff >>= 4;
-
-	*seq = ntohl(seqack[0]);
-	*ack = ntohl(seqack[1]);
-	*tcpdlen = ntohs(iplen) - npc->npc_hlen - (toff << 2);
-	return true;
-}
-
-/*
  * npf_return_tcp: return a TCP reset (RST) packet.
  */
 static int
 npf_return_tcp(npf_cache_t *npc, nbuf_t *nbuf)
 {
 	struct mbuf *m;
-	struct ip *ip;
-	struct tcphdr *th;
+	struct ip *oip, *ip;
+	struct tcphdr *oth, *th;
 	tcp_seq seq, ack;
-	size_t tcpdlen, len;
+	int tcpdlen, len;
+	uint32_t win;
 
 	/* Fetch relevant data. */
-	if (!npf_iscached(npc, NPC_IP46 | NPC_ADDRS | NPC_PORTS) ||
-	    !npf_fetch_seqack(nbuf, npc, &seq, &ack, &tcpdlen)) {
-		return EBADMSG;
-	}
-	if (npc->npc_tcp_flags & TH_RST) {
+	KASSERT(npf_iscached(npc, NPC_IP46 | NPC_LAYER4));
+	tcpdlen = npf_tcpsaw(npc, &seq, &ack, &win);
+	oip = &npc->npc_ip.v4;
+	oth = &npc->npc_l4.tcp;
+
+	if (oth->th_flags & TH_RST) {
 		return 0;
 	}
 
@@ -129,16 +94,16 @@ npf_return_tcp(npf_cache_t *npc, nbuf_t *nbuf)
 	 * Note: IP length contains TCP header length.
 	 */
 	ip->ip_p = IPPROTO_TCP;
-	ip->ip_src.s_addr = npc->npc_dstip;
-	ip->ip_dst.s_addr = npc->npc_srcip;
+	ip->ip_src.s_addr = oip->ip_dst.s_addr;
+	ip->ip_dst.s_addr = oip->ip_src.s_addr;
 	ip->ip_len = htons(sizeof(struct tcphdr));
 
 	/* Construct TCP header and compute the checksum. */
 	th = (struct tcphdr *)(ip + 1);
-	th->th_sport = npc->npc_dport;
-	th->th_dport = npc->npc_sport;
+	th->th_sport = oth->th_dport;
+	th->th_dport = oth->th_sport;
 	th->th_seq = htonl(ack);
-	if (npc->npc_tcp_flags & TH_SYN) {
+	if (oth->th_flags & TH_SYN) {
 		tcpdlen++;
 	}
 	th->th_ack = htonl(seq + tcpdlen);
@@ -151,7 +116,6 @@ npf_return_tcp(npf_cache_t *npc, nbuf_t *nbuf)
 	ip->ip_hl = sizeof(struct ip) >> 2;
 	ip->ip_tos = IPTOS_LOWDELAY;
 	ip->ip_len = htons(len);
-	ip->ip_off = htons(IP_DF);
 	ip->ip_ttl = DEFAULT_IP_TTL;
 
 	/* Pass to IP layer. */
@@ -177,20 +141,23 @@ void
 npf_return_block(npf_cache_t *npc, nbuf_t *nbuf, const int retfl)
 {
 	void *n_ptr = nbuf_dataptr(nbuf);
-	const int proto = npc->npc_proto;
 
-	if (!npf_iscached(npc, NPC_IP46) && !npf_ip4_proto(npc, nbuf, n_ptr))
-		return;
-	if ((proto == IPPROTO_TCP && (retfl & NPF_RULE_RETRST) == 0) ||
-	    (proto == IPPROTO_UDP && (retfl & NPF_RULE_RETICMP) == 0)) {
+	if (!npf_iscached(npc, NPC_IP46) && !npf_fetch_ip(npc, nbuf, n_ptr)) {
 		return;
 	}
-	switch (proto) {
+	switch (npf_cache_ipproto(npc)) {
 	case IPPROTO_TCP:
-		(void)npf_return_tcp(npc, nbuf);
+		if (retfl & NPF_RULE_RETRST) {
+			if (!npf_fetch_tcp(npc, nbuf, n_ptr)) {
+				return;
+			}
+			(void)npf_return_tcp(npc, nbuf);
+		}
 		break;
 	case IPPROTO_UDP:
-		(void)npf_return_icmp(nbuf);
+		if (retfl & NPF_RULE_RETICMP) {
+			(void)npf_return_icmp(nbuf);
+		}
 		break;
 	}
 }

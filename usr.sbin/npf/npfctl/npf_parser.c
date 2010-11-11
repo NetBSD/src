@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_parser.c,v 1.2 2010/09/16 04:53:27 rmind Exp $	*/
+/*	$NetBSD: npf_parser.c,v 1.3 2010/11/11 06:30:39 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2010 The NetBSD Foundation, Inc.
@@ -29,6 +29,9 @@
 /*
  * XXX: This needs clean-up!
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: npf_parser.c,v 1.3 2010/11/11 06:30:39 rmind Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -140,6 +143,34 @@ npfctl_parsevalue(char *buf)
 	return vr;
 }
 
+static inline int
+npfctl_parsenorm(char *buf, bool *rnd, int *minttl, int *maxmss)
+{
+	char *p = buf, *sptr;
+
+	DPRINTF(("norm\t|%s|\n", p));
+
+	p = strtok_r(buf, ", \t", &sptr);
+	if (p == NULL) {
+		return -1;
+	}
+	do {
+		if (strcmp(p, "random-id") == 0) {
+			*rnd = true;
+		} else if (strcmp(p, "min-ttl") == 0) {
+			p = strtok_r(NULL, ", \t", &sptr);
+			*minttl = atoi(p);
+		} else if (strcmp(p, "max-mss") == 0) {
+			p = strtok_r(NULL, ", \t", &sptr);
+			*maxmss = atoi(p);
+		} else {
+			return -1;
+		}
+	} while ((p = strtok_r(NULL, ", \t", &sptr)) != 0);
+
+	return 0;
+}
+
 /*
  * npfctl_parserule: main routine to parse a rule.  Syntax:
  *
@@ -154,10 +185,9 @@ npfctl_parserule(char *buf, prop_dictionary_t rl)
 {
 	var_t *from_cidr = NULL, *fports = NULL;
 	var_t *to_cidr = NULL, *tports = NULL;
-	char *proto = NULL, *tcp_flags = NULL;
-	char *p, *sptr, *iface;
-	bool icmp = false, tcp = false;
-	int icmp_type = -1, icmp_code = -1;
+	char *p, *sptr, *iface, *proto = NULL, *tcp_flags = NULL;
+	int icmp_type = -1, icmp_code = -1, minttl = 0, maxmss = 0;
+	bool icmp = false, tcp = false, rnd = false;
 	int ret, attr = 0;
 
 	DPRINTF(("rule\t|%s|\n", buf));
@@ -337,10 +367,32 @@ last:
 	if (p && strcmp(p, "keep") == 0) {
 		attr |= NPF_RULE_KEEPSTATE;
 		PARSE_NEXT_TOKEN();
+		if (p == NULL || strcmp(p, "state") != 0) {
+			return PARSE_ERR();
+		}
+		PARSE_NEXT_TOKEN_NOCHECK();
+	}
+
+	/* normalize ( .. ) */
+	if (p && strcmp(p, "normalize") == 0) {
+		p = strtok_r(NULL, "()", &sptr);
+		if (p == NULL) {
+			return PARSE_ERR();
+		}
+		if (npfctl_parsenorm(p, &rnd, &minttl, &maxmss)) {
+			return PARSE_ERR();
+		}
+		attr |= NPF_RULE_NORMALIZE;
+		PARSE_NEXT_TOKEN_NOCHECK();
+	}
+
+	/* Should have nothing more. */
+	if (p != NULL) {
+		return PARSE_ERR();
 	}
 
 	/* Set the rule attributes and interface, if any. */
-	npfctl_rule_setattr(rl, attr, iface);
+	npfctl_rule_setattr(rl, attr, iface, rnd, minttl, maxmss);
 
 	/*
 	 * Generate all protocol data.
@@ -386,7 +438,8 @@ npfctl_parsegroup(char *buf, prop_dictionary_t rl)
 	if (strcmp(p, "default") == 0) {
 		attr_dir = NPF_RULE_IN | NPF_RULE_OUT;
 		npfctl_rule_setattr(rl,
-		    GROUP_ATTRS | NPF_RULE_DEFAULT | attr_dir, NULL);
+		    GROUP_ATTRS | NPF_RULE_DEFAULT | attr_dir, NULL,
+		    false, 0, 0);
 		return 0;
 	}
 
@@ -433,7 +486,7 @@ npfctl_parsegroup(char *buf, prop_dictionary_t rl)
 		else
 			return -1;
 	}
-	npfctl_rule_setattr(rl, GROUP_ATTRS | attr_dir, iface);
+	npfctl_rule_setattr(rl, GROUP_ATTRS | attr_dir, iface, false, 0, 0);
 	return 0;
 }
 
