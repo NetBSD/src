@@ -1,4 +1,4 @@
-/*	$NetBSD: h_fsmacros.h,v 1.21 2010/11/07 17:51:17 jmmv Exp $	*/
+/*	$NetBSD: h_fsmacros.h,v 1.22 2010/11/11 17:39:29 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -55,6 +55,7 @@ FSPROTOS(lfs);
 FSPROTOS(msdosfs);
 FSPROTOS(nfs);
 FSPROTOS(puffs);
+FSPROTOS(rumpfs);
 FSPROTOS(sysvbfs);
 FSPROTOS(tmpfs);
 
@@ -133,6 +134,7 @@ do {									\
   ATF_TC_FSADD(msdosfs,MOUNT_MSDOS,func,desc) \
   ATF_TC_FSADD(nfs,MOUNT_NFS,func,desc) \
   ATF_TC_FSADD(puffs,MOUNT_PUFFS,func,desc) \
+  ATF_TC_FSADD(rumpfs,MOUNT_RUMPFS,func,desc) \
   ATF_TC_FSADD(sysvbfs,MOUNT_SYSVBFS,func,desc) \
   ATF_TC_FSADD(tmpfs,MOUNT_TMPFS,func,desc)
 
@@ -143,6 +145,7 @@ do {									\
   ATF_TP_FSADD(msdosfs,func); \
   ATF_TP_FSADD(nfs,func); \
   ATF_TP_FSADD(puffs,func); \
+  ATF_TP_FSADD(rumpfs,func); \
   ATF_TP_FSADD(sysvbfs,func); \
   ATF_TP_FSADD(tmpfs,func);
 
@@ -179,6 +182,8 @@ atf_check_fstype(const atf_tc_t *tc, const char *fs)
     (strcmp(atf_tc_get_md_var(tc, "X-fs.type"), MOUNT_NFS) == 0)
 #define FSTYPE_PUFFS(tc)\
     (strcmp(atf_tc_get_md_var(tc, "X-fs.type"), MOUNT_PUFFS) == 0)
+#define FSTYPE_RUMPFS(tc)\
+    (strcmp(atf_tc_get_md_var(tc, "X-fs.type"), MOUNT_RUMPFS) == 0)
 #define FSTYPE_SYSVBFS(tc)\
     (strcmp(atf_tc_get_md_var(tc, "X-fs.type"), MOUNT_SYSVBFS) == 0)
 #define FSTYPE_TMPFS(tc)\

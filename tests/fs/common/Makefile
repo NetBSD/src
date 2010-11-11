@@ -1,11 +1,12 @@
-#	$NetBSD: Makefile,v 1.5 2010/08/03 17:24:45 drochner Exp $
+#	$NetBSD: Makefile,v 1.6 2010/11/11 17:39:29 pooka Exp $
 #
 
 .include <bsd.own.mk>
 
 LIB=	vfstest
 SRCS=	fstest_ext2fs.c fstest_ffs.c fstest_lfs.c fstest_msdosfs.c	\
-	fstest_nfs.c fstest_puffs.c fstest_sysvbfs.c fstest_tmpfs.c
+	fstest_nfs.c fstest_puffs.c fstest_rumpfs.c fstest_sysvbfs.c	\
+	fstest_tmpfs.c
 
 WARNS=	3
 
