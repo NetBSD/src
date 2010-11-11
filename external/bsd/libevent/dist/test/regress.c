@@ -1,4 +1,4 @@
-/*	$NetBSD: regress.c,v 1.1.1.1 2009/11/02 10:01:03 plunky Exp $	*/
+/*	$NetBSD: regress.c,v 1.2 2010/11/11 14:11:26 pgoyette Exp $	*/
 /*
  * Copyright (c) 2003, 2004 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -77,6 +77,8 @@ static int usepersist;
 static struct timeval tset;
 static struct timeval tcalled;
 static struct event_base *global_base;
+
+static int interval;
 
 #define TEST1	"this is a test"
 #define SECONDS	1
@@ -183,6 +185,27 @@ multiple_read_cb(int fd, short event, void *arg)
 }
 
 static void
+calibrate(void)
+{
+	struct timeval start, end, diff;
+	int delta;
+
+	gettimeofday(&start, NULL);
+	sleep(SECONDS);
+	gettimeofday(&end, NULL);
+
+	timersub(&end, &start, &diff);
+
+	delta = diff.tv_sec * 1000 + diff.tv_usec / 1000;
+	if (delta < 0)
+		delta = -delta;
+
+	interval = delta;
+	fprintf(stdout, "Calibrated interval: %d sec = %d msec\n", SECONDS,
+		interval);
+}
+
+static void
 timeout_cb(int fd, short event, void *arg)
 {
 	struct timeval tv;
@@ -194,7 +217,7 @@ timeout_cb(int fd, short event, void *arg)
 	else
 		evutil_timersub(&tset, &tcalled, &tv);
 
-	diff = tv.tv_sec*1000 + tv.tv_usec/1000 - SECONDS * 1000;
+	diff = tv.tv_sec*1000 + tv.tv_usec/1000 - interval;
 	if (diff < 0)
 		diff = -diff;
 
@@ -924,7 +947,7 @@ test_loopexit(void)
 	evtimer_add(&ev, &tv);
 
 	tv.tv_usec = 0;
-	tv.tv_sec = 1;
+	tv.tv_sec = SECONDS;
 	event_loopexit(&tv);
 
 	evutil_gettimeofday(&tv_start, NULL);
@@ -1625,6 +1648,11 @@ main (int argc, char **argv)
 	if (signal(SIGPIPE, SIG_IGN) == SIG_ERR)
 		return (1);
 #endif
+	/*
+	 * Calibrate sleep() vs elapsed real-time
+	 */
+	calibrate();
+
 	setvbuf(stdout, NULL, _IONBF, 0);
 
 	/* Initalize the event library */
