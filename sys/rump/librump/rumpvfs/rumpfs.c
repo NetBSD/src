@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpfs.c,v 1.66 2010/11/08 11:01:45 pooka Exp $	*/
+/*	$NetBSD: rumpfs.c,v 1.67 2010/11/11 14:46:55 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009  Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.66 2010/11/08 11:01:45 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.67 2010/11/11 14:46:55 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -98,7 +98,8 @@ const struct vnodeopv_entry_desc rump_vnodeop_entries[] = {
 	{ &vop_write_desc, rump_vop_write },
 	{ &vop_open_desc, rump_vop_open },
 	{ &vop_seek_desc, genfs_seek },
-	{ &vop_putpages_desc, genfs_null_putpages },
+	{ &vop_getpages_desc, genfs_getpages },
+	{ &vop_putpages_desc, genfs_putpages },
 	{ &vop_whiteout_desc, rump_vop_whiteout },
 	{ &vop_fsync_desc, rump_vop_success },
 	{ &vop_lock_desc, genfs_lock },
@@ -507,10 +508,6 @@ makevnode(struct mount *mp, struct rumpfs_node *rn, struct vnode **vpp)
 	} else {
 		vpops = rump_vnodeop_p;
 	}
-	if (vpops != rump_specop_p && va->va_type != VDIR
-	    && !(va->va_type == VREG && rn->rn_hostpath != NULL)
-	    && va->va_type != VSOCK && va->va_type != VLNK)
-		return EOPNOTSUPP;
 
 	rv = getnewvnode(VT_RUMP, mp, vpops, &vp);
 	if (rv)
@@ -826,13 +823,11 @@ rump_vop_create(void *v)
 	struct componentname *cnp = ap->a_cnp;
 	struct vattr *va = ap->a_vap;
 	struct rumpfs_node *rnd = dvp->v_data, *rn;
+	off_t newsize;
 	int rv;
 
-	if (va->va_type != VSOCK) {
-		rv = EOPNOTSUPP;
-		goto out;
-	}
-	rn = makeprivate(VSOCK, NODEV, DEV_BSIZE);
+	newsize = va->va_type == VSOCK ? DEV_BSIZE : 0;
+	rn = makeprivate(va->va_type, NODEV, newsize);
 	rv = makevnode(dvp->v_mount, rn, vpp);
 	if (rv)
 		goto out;
@@ -940,7 +935,7 @@ rump_vop_open(void *v)
 	int mode = ap->a_mode;
 	int error = EINVAL;
 
-	if (vp->v_type != VREG)
+	if (vp->v_type != VREG || rn->rn_hostpath == NULL)
 		return 0;
 
 	if (mode & FREAD) {
@@ -1047,6 +1042,9 @@ rump_vop_read(void *v)
 	ssize_t n;
 	int error = 0;
 
+	if (rn->rn_readfd == -1)
+		return EOPNOTSUPP;
+
 	bufsize = uio->uio_resid;
 	buf = kmem_alloc(bufsize, KM_SLEEP);
 	if ((n = rumpuser_pread(rn->rn_readfd, buf, bufsize,
@@ -1076,6 +1074,9 @@ rump_vop_write(void *v)
 	size_t bufsize;
 	ssize_t n;
 	int error = 0;
+
+	if (rn->rn_writefd == -1)
+		return EOPNOTSUPP;
 
 	bufsize = uio->uio_resid;
 	buf = kmem_alloc(bufsize, KM_SLEEP);
