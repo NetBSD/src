@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1051 2010/11/06 14:20:34 jakllsch Exp $
+$NetBSD: pcidevs,v 1.1052 2010/11/11 14:37:41 cegger Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -984,6 +984,12 @@ product AMD PBC8111_MC97	0x746e	AMD8111 MC97 Modem
 product AMD PBC8111_AC_756b	0x756b	AMD8111 756b ACPI Controller
 product AMD HUDSON2_IDE		0x780c	HUDSON-2 IDE Controller
 product AMD HUDSON2_SATA	0x7800	HUDSON-2 SATA Controller
+product AMD RS880_HB		0x9601	RS880 Host Bridge
+product AMD RS780_PPB_GFX	0x9602	RS780 PCI-PCI Bridge (int gfx)
+product AMD RS780_PPB_GFX0	0x9603	RS780 PCI-PCI Bridge (ext gfx port 0)
+product AMD RS780_PPB0		0x9604	RS780 PCI-PCIE Bridge (port 0)
+product AMD RS780_PPB1		0x9605	RS780 PCI-PCIE Brdige (port 1)
+product AMD RS780_PPB2		0x9606	RS780 PCI-PCIE Bridge (port 2)
 
 /* American Megatrends products */
 product AMI MEGARAID		0x9010	MegaRAID
@@ -1377,6 +1383,7 @@ product ATI RADEON_R423_5D57	0x5d57	Radeon X800XT (R423) 5D57
 product ATI RADEON_X850XT_S	0x5d72	Radeon X850 XT Secondary
 product ATI RADEON_X700		0x5e4b	Radeon X700 Pro
 product ATI RADEON_X700_S	0x5e6b	Radeon X700 Pro Secondary
+product ATI RADEON_HD5600_RD	0x68c1	Redwood
 product ATI RADEON_X1300	0x7146	Radeon X1300 Series (RV515)
 product ATI RADEON_X1300_S	0x7166	Radeon X1300 Series (RV515) Secondary
 product ATI RADEON_X1600	0x71c5	Radeon Mobility X1600
@@ -1389,9 +1396,11 @@ product ATI RS690_PPB_7915	0x7915	RS690 PCI to PCI-Express Port 1 Bridge
 product ATI RS690_PPB_7916	0x7916	RS690 PCI to PCI-Express Port 2 Bridge
 product ATI RS690_PPB_7917	0x7917	RS690 PCI to PCI-Express Port 3 Bridge
 product ATI RADEON_HD4250_S	0x95C5	Radeon HD4250 GPU (RV610) Secondary
+product ATI RADEON_HD4200	0x9712	Radeon HD4200 Mobility
 product ATI RADEON_HD4250	0x9715	Radeon HD4250 GPU (RS880)
 product ATI RADEON_HD2600_XT	0x9588 	Radeon HD2600 XT GDDR3
 product ATI RADEON_HD2600_HD	0xaa08	Radeon HD2600 HD Audio Controller
+product ATI RADEON_HD5600_HDMI	0xaa60	Redwood HDMI Audio
 
 /* Auravision products */
 product AURAVISION VXP524	0x01f7	VxP524 PCI Video Processor
@@ -1413,6 +1422,7 @@ product ATHEROS AR5201		0x0007 AR5201 Wireless LAN
 product ATHEROS AR5311		0x0011 AR5211 Wireless LAN
 product ATHEROS AR5211		0x0012 AR5211 Wireless LAN
 product ATHEROS AR5212		0x0013 AR5212 Wireless LAN
+product ATHEROS AR9285		0x002b AR9285 Wireless LAN
 product ATHEROS AR5201_AP	0x0207 AR5201 Wireless LAN Reference Card (Early AP11)
 product ATHEROS AR5201_DEFAULT	0x1107 AR5201 Wireless LAN (no eeprom)
 product ATHEROS AR5212_DEFAULT	0x1113 AR5212 Wireless LAN (no eeprom)
