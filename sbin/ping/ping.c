@@ -1,4 +1,4 @@
-/*	$NetBSD: ping.c,v 1.90 2009/11/02 00:47:09 christos Exp $	*/
+/*	$NetBSD: ping.c,v 1.91 2010/11/11 22:56:38 pooka Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -58,7 +58,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ping.c,v 1.90 2009/11/02 00:47:09 christos Exp $");
+__RCSID("$NetBSD: ping.c,v 1.91 2010/11/11 22:56:38 pooka Exp $");
 #endif
 
 #include <stdio.h>
@@ -91,6 +91,13 @@ __RCSID("$NetBSD: ping.c,v 1.90 2009/11/02 00:47:09 christos Exp $");
 #ifdef IPSEC
 #include <netinet6/ipsec.h>
 #endif /*IPSEC*/
+
+#ifdef RUMP_ACTION
+#include <rump/rump.h>
+#include <rump/rump_syscalls.h>
+#include <rump/rumpclient.h>
+#define poll(a,b,c) rump_sys_poll(a,b,c)
+#endif
 
 #define FLOOD_INTVL	0.01		/* default flood output interval */
 #define	MAXPACKET	(IP_MAXPACKET-60-8)	/* max packet size */
@@ -242,6 +249,11 @@ main(int argc, char *argv[])
 #endif
 #ifdef SIGINFO
 	struct sigaction sa;
+#endif
+
+#ifdef RUMP_ACTION
+	if (rumpclient_init() == -1)
+		err(1, "rumpclient init failed");
 #endif
 
 	if ((s = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP)) < 0)
