@@ -669,7 +669,7 @@ typedef struct pgp_ss_notation_t {
 /** Signature Subpacket : Signature Target */
 typedef struct pgp_ss_sig_target_t {
 	pgp_pubkey_alg_t	pka_alg;
-	pgp_hash_alg_t	hash_alg;
+	pgp_hash_alg_t		hash_alg;
 	pgp_data_t		hash;
 } pgp_ss_sig_target_t;
 
@@ -690,8 +690,8 @@ typedef enum {
 /** pgp_one_pass_sig_t */
 typedef struct {
 	uint8_t			version;
-	pgp_sig_type_t	sig_type;
-	pgp_hash_alg_t	hash_alg;
+	pgp_sig_type_t		sig_type;
+	pgp_hash_alg_t		hash_alg;
 	pgp_pubkey_alg_t	key_alg;
 	uint8_t			keyid[PGP_KEY_ID_SIZE];
 	unsigned		nested;

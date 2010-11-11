@@ -107,7 +107,7 @@ typedef struct pgp_cryptinfo_t	pgp_cryptinfo_t;
    to read more than INT_MAX in one go.
 
  */
-typedef int pgp_reader_func_t(void *, size_t, pgp_error_t **,
+typedef int pgp_reader_func_t(pgp_stream_t *, void *, size_t, pgp_error_t **,
 				pgp_reader_t *, pgp_cbdata_t *);
 
 typedef void pgp_reader_destroyer_t(pgp_reader_t *);
@@ -147,10 +147,10 @@ typedef enum {
 void pgp_parse_options(pgp_stream_t *, pgp_content_enum,
 			pgp_parse_type_t);
 
-unsigned pgp_limited_read(uint8_t *, size_t, pgp_region_t *,
+unsigned pgp_limited_read(pgp_stream_t *, uint8_t *, size_t, pgp_region_t *,
 			pgp_error_t **, pgp_reader_t *,
 			pgp_cbdata_t *);
-unsigned pgp_stacked_limited_read(uint8_t *, unsigned,
+unsigned pgp_stacked_limited_read(pgp_stream_t *, uint8_t *, unsigned,
 			pgp_region_t *, pgp_error_t **,
 			pgp_reader_t *, pgp_cbdata_t *);
 void pgp_parse_hash_init(pgp_stream_t *, pgp_hash_alg_t,
