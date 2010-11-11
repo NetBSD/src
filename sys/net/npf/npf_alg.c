@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_alg.c,v 1.1 2010/08/22 18:56:22 rmind Exp $	*/
+/*	$NetBSD: npf_alg.c,v 1.2 2010/11/11 06:30:39 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,16 +31,15 @@
 
 /*
  * NPF interface for application level gateways (ALGs).
+ *
+ * XXX: locking
  */
 
-#ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_alg.c,v 1.1 2010/08/22 18:56:22 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_alg.c,v 1.2 2010/11/11 06:30:39 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
-#endif
-
 #include <sys/kmem.h>
 #include <sys/pool.h>
 #include <net/pfil.h>
@@ -50,14 +49,14 @@ __KERNEL_RCSID(0, "$NetBSD: npf_alg.c,v 1.1 2010/08/22 18:56:22 rmind Exp $");
 /* NAT ALG structure for registration. */
 struct npf_alg {
 	LIST_ENTRY(npf_alg)		na_entry;
-	void *				na_ptr;
+	npf_alg_t *			na_bptr;
 	npf_algfunc_t			na_match_func;
 	npf_algfunc_t			na_out_func;
 	npf_algfunc_t			na_in_func;
 	npf_algfunc_t			na_seid_func;
 };
 
-static LIST_HEAD(, npf_alg)		nat_alg_list;
+static LIST_HEAD(, npf_alg)		nat_alg_list	__read_mostly;
 
 void
 npf_alg_sysinit(void)
@@ -85,7 +84,7 @@ npf_alg_register(npf_algfunc_t match, npf_algfunc_t out, npf_algfunc_t in,
 	npf_alg_t *alg;
 
 	alg = kmem_alloc(sizeof(npf_alg_t), KM_SLEEP);
-	alg->na_ptr = alg;
+	alg->na_bptr = alg;
 	alg->na_match_func = match;
 	alg->na_out_func = out;
 	alg->na_in_func = in;
@@ -114,7 +113,10 @@ npf_alg_unregister(npf_alg_t *alg)
 	return 0;
 }
 
-void
+/*
+ * npf_alg_match: call ALG matching inspectors, determine if any ALG matches.
+ */
+bool
 npf_alg_match(npf_cache_t *npc, nbuf_t *nbuf, npf_nat_t *nt)
 {
 	npf_alg_t *alg;
@@ -122,15 +124,15 @@ npf_alg_match(npf_cache_t *npc, nbuf_t *nbuf, npf_nat_t *nt)
 
 	LIST_FOREACH(alg, &nat_alg_list, na_entry) {
 		func = alg->na_match_func;
-		if (__predict_true(func != NULL)) {
-			func(npc, nbuf, nt);
-			return;
+		if (func && func(npc, nbuf, nt)) {
+			return true;
 		}
 	}
+	return false;
 }
 
 /*
- * npf_alg_exec: execute in/out inspection hooks of each ALG.
+ * npf_alg_exec: execute ALG hooks for translation.
  */
 void
 npf_alg_exec(npf_cache_t *npc, nbuf_t *nbuf, npf_nat_t *nt, const int di)
@@ -157,10 +159,7 @@ npf_alg_sessionid(npf_cache_t *npc, nbuf_t *nbuf, npf_cache_t *key)
 
 	LIST_FOREACH(alg, &nat_alg_list, na_entry) {
 		func = alg->na_seid_func;
-		if (__predict_true(func == NULL)) {
-			continue;
-		}
-		if (func(npc, nbuf, key)) {
+		if (func && func(npc, nbuf, (npf_nat_t *)key)) {
 			return true;
 		}
 	}

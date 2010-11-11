@@ -1,4 +1,4 @@
-/*	$NetBSD: npfctl.h,v 1.2 2010/09/16 04:53:27 rmind Exp $	*/
+/*	$NetBSD: npfctl.h,v 1.3 2010/11/11 06:30:39 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2010 The NetBSD Foundation, Inc.
@@ -77,7 +77,8 @@ bool		npfctl_parse_v4mask(char *, in_addr_t *, in_addr_t *);
 
 prop_dictionary_t npfctl_mk_rule(bool);
 void		npfctl_add_rule(prop_dictionary_t, prop_dictionary_t);
-void		npfctl_rule_setattr(prop_dictionary_t, int, char *);
+void		npfctl_rule_setattr(prop_dictionary_t, int, char *,
+		    bool, int, int);
 void		npfctl_rule_protodata(prop_dictionary_t, char *, char *,
 		    int, int, var_t *, var_t *, var_t *, var_t *);
 void		npfctl_rule_icmpdata(prop_dictionary_t, var_t *, var_t *);

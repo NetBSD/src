@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_processor.c,v 1.2 2010/09/16 04:53:27 rmind Exp $	*/
+/*	$NetBSD: npf_processor.c,v 1.3 2010/11/11 06:30:39 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2010 The NetBSD Foundation, Inc.
@@ -53,10 +53,8 @@
  *   maintenance in npf_ncode_process() and nc_insn_check() might be avoided.
  */
 
-#ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_processor.c,v 1.2 2010/09/16 04:53:27 rmind Exp $");
-#endif
+__KERNEL_RCSID(0, "$NetBSD: npf_processor.c,v 1.3 2010/11/11 06:30:39 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
