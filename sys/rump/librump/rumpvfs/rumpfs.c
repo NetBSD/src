@@ -1,7 +1,7 @@
-/*	$NetBSD: rumpfs.c,v 1.70 2010/11/11 16:08:31 pooka Exp $	*/
+/*	$NetBSD: rumpfs.c,v 1.71 2010/11/11 17:26:01 pooka Exp $	*/
 
 /*
- * Copyright (c) 2009  Antti Kantee.  All Rights Reserved.
+ * Copyright (c) 2009, 2010 Antti Kantee.  All Rights Reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -26,10 +26,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.70 2010/11/11 16:08:31 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.71 2010/11/11 17:26:01 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
+#include <sys/buf.h>
 #include <sys/dirent.h>
 #include <sys/errno.h>
 #include <sys/filedesc.h>
@@ -51,6 +52,8 @@ __KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.70 2010/11/11 16:08:31 pooka Exp $");
 #include <miscfs/specfs/specdev.h>
 #include <miscfs/genfs/genfs.h>
 #include <miscfs/genfs/genfs_node.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <rump/rumpuser.h>
 
@@ -75,6 +78,8 @@ static int rump_vop_symlink(void *);
 static int rump_vop_readlink(void *);
 static int rump_vop_whiteout(void *);
 static int rump_vop_pathconf(void *);
+static int rump_vop_bmap(void *);
+static int rump_vop_strategy(void *);
 
 int (**fifo_vnodeop_p)(void *);
 const struct vnodeopv_entry_desc fifo_vnodeop_entries[] = {
@@ -114,6 +119,8 @@ const struct vnodeopv_entry_desc rump_vnodeop_entries[] = {
 	{ &vop_remove_desc, genfs_eopnotsupp },
 	{ &vop_link_desc, genfs_eopnotsupp },
 	{ &vop_pathconf_desc, rump_vop_pathconf },
+	{ &vop_bmap_desc, rump_vop_bmap },
+	{ &vop_strategy_desc, rump_vop_strategy },
 	{ NULL, NULL }
 };
 const struct vnodeopv_desc rump_vnodeop_opv_desc =
@@ -165,6 +172,10 @@ struct rumpfs_node {
 			int writefd;
 			uint64_t offset;
 		} reg;
+		struct {
+			void *data;
+			size_t dlen;
+		} reg_noet;
 		struct {		/* VDIR */
 			LIST_HEAD(, rumpfs_dent) dents;
 			struct rumpfs_node *parent;
@@ -179,6 +190,8 @@ struct rumpfs_node {
 #define rn_readfd	rn_u.reg.readfd
 #define rn_writefd	rn_u.reg.writefd
 #define rn_offset	rn_u.reg.offset
+#define rn_data		rn_u.reg_noet.data
+#define rn_dlen		rn_u.reg_noet.dlen
 #define rn_dir		rn_u.dir.dents
 #define rn_parent	rn_u.dir.parent
 #define rn_linktarg	rn_u.link.target
@@ -193,7 +206,7 @@ struct rumpfs_mount {
 	struct vnode *rfsmp_rvp;
 };
 
-static struct rumpfs_node *makeprivate(enum vtype, dev_t, off_t);
+static struct rumpfs_node *makeprivate(enum vtype, dev_t, off_t, bool);
 
 /*
  * Extra Terrestrial stuff.  We map a given key (pathname) to a file on
@@ -340,7 +353,7 @@ doregister(const char *key, const char *hostpath,
 	et = kmem_alloc(sizeof(*et), KM_SLEEP);
 	strcpy(et->et_key, key);
 	et->et_keylen = strlen(et->et_key);
-	et->et_rn = rn = makeprivate(ettype_to_vtype(ftype), rdev, size);
+	et->et_rn = rn = makeprivate(ettype_to_vtype(ftype), rdev, size, true);
 	et->et_removing = false;
 	et->et_blkmin = dmin;
 
@@ -462,7 +475,7 @@ static int lastino = 2;
 static kmutex_t reclock;
 
 static struct rumpfs_node *
-makeprivate(enum vtype vt, dev_t rdev, off_t size)
+makeprivate(enum vtype vt, dev_t rdev, off_t size, bool et)
 {
 	struct rumpfs_node *rn;
 	struct vattr *va;
@@ -475,8 +488,10 @@ makeprivate(enum vtype vt, dev_t rdev, off_t size)
 		LIST_INIT(&rn->rn_dir);
 		break;
 	case VREG:
-		rn->rn_readfd = -1;
-		rn->rn_writefd = -1;
+		if (et) {
+			rn->rn_readfd = -1;
+			rn->rn_writefd = -1;
+		}
 		break;
 	default:
 		break;
@@ -668,10 +683,11 @@ rump_vop_lookup(void *v)
 			return ENOENT;
 		}
 
-		rn = makeprivate(hft_to_vtype(hft), NODEV, fsize);
+		rn = makeprivate(hft_to_vtype(hft), NODEV, fsize, true);
 		rn->rn_flags |= RUMPNODE_CANRECLAIM;
 		if (rnd->rn_flags & RUMPNODE_DIR_ETSUBS) {
 			rn->rn_flags |= RUMPNODE_DIR_ET | RUMPNODE_DIR_ETSUBS;
+			rn->rn_flags |= RUMPNODE_ET_PHONE_HOST;
 		}
 		rn->rn_hostpath = newpath;
 
@@ -754,7 +770,7 @@ rump_vop_mkdir(void *v)
 	struct rumpfs_node *rnd = dvp->v_data, *rn;
 	int rv = 0;
 
-	rn = makeprivate(VDIR, NODEV, DEV_BSIZE);
+	rn = makeprivate(VDIR, NODEV, DEV_BSIZE, false);
 	rn->rn_parent = rnd;
 	rv = makevnode(dvp->v_mount, rn, vpp);
 	if (rv)
@@ -815,7 +831,7 @@ rump_vop_mknod(void *v)
 	struct rumpfs_node *rnd = dvp->v_data, *rn;
 	int rv;
 
-	rn = makeprivate(va->va_type, va->va_rdev, DEV_BSIZE);
+	rn = makeprivate(va->va_type, va->va_rdev, DEV_BSIZE, false);
 	rv = makevnode(dvp->v_mount, rn, vpp);
 	if (rv)
 		goto out;
@@ -846,7 +862,7 @@ rump_vop_create(void *v)
 	int rv;
 
 	newsize = va->va_type == VSOCK ? DEV_BSIZE : 0;
-	rn = makeprivate(va->va_type, NODEV, newsize);
+	rn = makeprivate(va->va_type, NODEV, newsize, false);
 	rv = makevnode(dvp->v_mount, rn, vpp);
 	if (rv)
 		goto out;
@@ -879,7 +895,7 @@ rump_vop_symlink(void *v)
 
 	linklen = strlen(target);
 	KASSERT(linklen < MAXPATHLEN);
-	rn = makeprivate(VLNK, NODEV, linklen);
+	rn = makeprivate(VLNK, NODEV, linklen, false);
 	rv = makevnode(dvp->v_mount, rn, vpp);
 	if (rv)
 		goto out;
@@ -1045,6 +1061,28 @@ rump_vop_readdir(void *v)
 }
 
 static int
+etread(struct rumpfs_node *rn, struct uio *uio)
+{
+	uint8_t *buf;
+	size_t bufsize;
+	ssize_t n;
+	int error = 0;
+
+	bufsize = uio->uio_resid;
+	buf = kmem_alloc(bufsize, KM_SLEEP);
+	if ((n = rumpuser_pread(rn->rn_readfd, buf, bufsize,
+	    uio->uio_offset + rn->rn_offset, &error)) == -1)
+		goto out;
+	KASSERT(n <= bufsize);
+	error = uiomove(buf, n, uio);
+
+ out:
+	kmem_free(buf, bufsize);
+	return error;
+
+}
+
+static int
 rump_vop_read(void *v)
 {
 	struct vop_read_args /* {
@@ -1056,21 +1094,48 @@ rump_vop_read(void *v)
 	struct vnode *vp = ap->a_vp;
 	struct rumpfs_node *rn = vp->v_data;
 	struct uio *uio = ap->a_uio;
+	const int advice = IO_ADV_DECODE(ap->a_ioflag);
+	off_t chunk;
+	int error;
+
+	/* et op? */
+	if (rn->rn_flags & RUMPNODE_ET_PHONE_HOST)
+		return etread(rn, uio);
+
+	/* otherwise, it's off to ubc with us */
+	while (uio->uio_resid > 0) {
+		chunk = MIN(uio->uio_resid, (off_t)rn->rn_dlen-uio->uio_offset);
+		if (chunk == 0)
+			break;
+		error = ubc_uiomove(&vp->v_uobj, uio, chunk, advice,
+		    UBC_READ | UBC_PARTIALOK | UBC_WANT_UNMAP(vp)?UBC_UNMAP:0);
+		if (error)
+			break;
+	}
+
+	return error;
+}
+
+static int
+etwrite(struct rumpfs_node *rn, struct uio *uio)
+{
 	uint8_t *buf;
 	size_t bufsize;
 	ssize_t n;
 	int error = 0;
 
-	if (rn->rn_readfd == -1)
-		return EOPNOTSUPP;
-
 	bufsize = uio->uio_resid;
 	buf = kmem_alloc(bufsize, KM_SLEEP);
-	if ((n = rumpuser_pread(rn->rn_readfd, buf, bufsize,
-	    uio->uio_offset + rn->rn_offset, &error)) == -1)
+	error = uiomove(buf, bufsize, uio);
+	if (error)
 		goto out;
-	KASSERT(n <= bufsize);
-	error = uiomove(buf, n, uio);
+	KASSERT(uio->uio_resid == 0);
+	n = rumpuser_pwrite(rn->rn_writefd, buf, bufsize,
+	    (uio->uio_offset-bufsize) + rn->rn_offset, &error);
+	if (n >= 0) {
+		KASSERT(n <= bufsize);
+		uio->uio_resid = bufsize - n;
+	}
 
  out:
 	kmem_free(buf, bufsize);
@@ -1089,30 +1154,120 @@ rump_vop_write(void *v)
 	struct vnode *vp = ap->a_vp;
 	struct rumpfs_node *rn = vp->v_data;
 	struct uio *uio = ap->a_uio;
-	uint8_t *buf;
-	size_t bufsize;
-	ssize_t n;
-	int error = 0;
+	const int advice = IO_ADV_DECODE(ap->a_ioflag);
+	void *olddata;
+	size_t oldlen, newlen;
+	off_t chunk;
+	int error;
+	bool allocd = false;
 
-	if (rn->rn_writefd == -1)
-		return EOPNOTSUPP;
+	/* consult et? */
+	if (rn->rn_flags & RUMPNODE_ET_PHONE_HOST)
+		return etwrite(rn, uio);
 
-	bufsize = uio->uio_resid;
-	buf = kmem_alloc(bufsize, KM_SLEEP);
-	error = uiomove(buf, bufsize, uio);
-	if (error)
-		goto out;
-	KASSERT(uio->uio_resid == 0);
-	n = rumpuser_pwrite(rn->rn_writefd, buf, bufsize,
-	    (uio->uio_offset-bufsize) + rn->rn_offset, &error);
-	if (n >= 0) {
-		KASSERT(n <= bufsize);
-		uio->uio_resid = bufsize - n;
+	/*
+	 * Otherwise, it's a case of ubcmove.
+	 */
+
+	/*
+	 * First, make sure we have enough storage.
+	 *
+	 * No, you don't need to tell me it's not very efficient.
+	 * No, it doesn't really support sparse files, just fakes it.
+	 */
+	newlen = uio->uio_offset + uio->uio_resid;
+	if (rn->rn_dlen < newlen) {
+		oldlen = rn->rn_dlen;
+		olddata = rn->rn_data;
+
+		rn->rn_data = rump_hypermalloc(newlen, 0, true, "rumpfs");
+		rn->rn_dlen = newlen;
+		memset(rn->rn_data, 0, newlen);
+		memcpy(rn->rn_data, olddata, oldlen);
+		allocd = true;
+		uvm_vnp_setsize(vp, newlen);
 	}
 
- out:
-	kmem_free(buf, bufsize);
+	/* ok, we have enough stooorage.  write */
+	while (uio->uio_resid > 0) {
+		chunk = MIN(uio->uio_resid, (off_t)rn->rn_dlen-uio->uio_offset);
+		if (chunk == 0)
+			break;
+		error = ubc_uiomove(&vp->v_uobj, uio, chunk, advice,
+		    UBC_WRITE | UBC_PARTIALOK | UBC_WANT_UNMAP(vp)?UBC_UNMAP:0);
+		if (error)
+			break;
+	}
+
+	if (allocd) {
+		if (error) {
+			rump_hyperfree(rn->rn_data, newlen);
+			rn->rn_data = olddata;
+			rn->rn_dlen = oldlen;
+			uvm_vnp_setsize(vp, oldlen);
+		} else {
+			rump_hyperfree(olddata, oldlen);
+		}
+	}
+
 	return error;
+}
+
+static int
+rump_vop_bmap(void *v)
+{
+	struct vop_bmap_args /* {
+		struct vnode *a_vp;
+		daddr_t a_bn;
+		struct vnode **a_vpp;
+		daddr_t *a_bnp;
+		int *a_runp;
+	} */ *ap = v;
+
+	/* 1:1 mapping */
+	if (ap->a_vpp)
+		*ap->a_vpp = ap->a_vp;
+	if (ap->a_bnp)
+		*ap->a_bnp = ap->a_bn;
+	if (ap->a_runp)
+		*ap->a_runp = 16;
+
+	return 0;
+}
+
+static int
+rump_vop_strategy(void *v)
+{
+	struct vop_strategy_args /* {
+		struct vnode *a_vp;
+		struct buf *a_bp;
+	} */ *ap = v;
+	struct vnode *vp = ap->a_vp;
+	struct rumpfs_node *rn = vp->v_data;
+	struct buf *bp = ap->a_bp;
+	off_t copylen, copyoff;
+	int error;
+
+	if (vp->v_type != VREG || rn->rn_flags & RUMPNODE_ET_PHONE_HOST) {
+		error = EINVAL;
+		goto out;
+	}
+
+	copyoff = bp->b_blkno << DEV_BSHIFT;
+	copylen = MIN(rn->rn_dlen - copyoff, bp->b_bcount);
+	if (BUF_ISWRITE(bp)) {
+		memcpy((uint8_t *)rn->rn_data + copyoff, bp->b_data, copylen);
+	} else {
+		memset((uint8_t*)bp->b_data + copylen, 0, bp->b_bcount-copylen);
+		memcpy(bp->b_data, (uint8_t *)rn->rn_data + copyoff, copylen);
+	}
+	bp->b_resid = 0;
+	error = 0;
+
+ out:
+	bp->b_error = error;
+	biodone(bp);
+	return 0;
 }
 
 static int
@@ -1285,7 +1440,7 @@ rumpfs_mountfs(struct mount *mp)
 
 	rfsmp = kmem_alloc(sizeof(*rfsmp), KM_SLEEP);
 
-	rn = makeprivate(VDIR, NODEV, DEV_BSIZE);
+	rn = makeprivate(VDIR, NODEV, DEV_BSIZE, false);
 	rn->rn_parent = rn;
 	if ((error = makevnode(mp, rn, &rfsmp->rfsmp_rvp)) != 0)
 		return error;
@@ -1298,6 +1453,7 @@ rumpfs_mountfs(struct mount *mp)
 	mp->mnt_stat.f_iosize = 512;
 	mp->mnt_flag |= MNT_LOCAL;
 	mp->mnt_iflag |= IMNT_MPSAFE;
+	mp->mnt_fs_bshift = DEV_BSHIFT;
 	vfs_getnewfsid(mp);
 
 	return 0;
