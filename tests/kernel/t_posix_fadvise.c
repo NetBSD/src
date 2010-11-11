@@ -1,4 +1,4 @@
-/* $NetBSD: t_posix_fadvise.c,v 1.2 2010/11/11 14:50:58 pooka Exp $ */
+/* $NetBSD: t_posix_fadvise.c,v 1.3 2010/11/11 15:08:07 pooka Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_posix_fadvise.c,v 1.2 2010/11/11 14:50:58 pooka Exp $");
+__RCSID("$NetBSD: t_posix_fadvise.c,v 1.3 2010/11/11 15:08:07 pooka Exp $");
 
 #include <sys/fcntl.h>
 
@@ -78,19 +78,23 @@ ATF_TC_HEAD(posix_fadvise, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "Checks posix_fadvise(2)");
 }
+
+ATF_TC(posix_fadvise_reg);
+ATF_TC_HEAD(posix_fadvise_reg, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Checks posix_fadvise(2) "
+	    "for regular files");
+}
+
 ATF_TC_BODY(posix_fadvise, tc)
 {
 	int fd = STDIN_FILENO;
 	int pipe_fds[2];
 	int badfd = 10;
-	int rfd;
 	int ret;
 
 	(void)close(badfd);
 	RL(pipe(pipe_fds));
-
-	rump_init();
-	RL(rfd = rump_sys_open("/a_file", O_CREAT, 0666));
 
 	/*
 	 * it's hard to check if posix_fadvise is working properly.
@@ -117,6 +121,21 @@ ATF_TC_BODY(posix_fadvise, tc)
 	CE(posix_fadvise(fd, 0, 0, POSIX_FADV_WILLNEED), 0);
 	CE(posix_fadvise(fd, 0, 0, POSIX_FADV_DONTNEED), 0);
 	CE(posix_fadvise(fd, 0, 0, POSIX_FADV_NOREUSE), 0);
+}
+
+ATF_TC_BODY(posix_fadvise_reg, tc)
+{
+	int rfd, ret;
+
+	rump_init();
+	RL(rfd = rump_sys_open("/a_file", O_CREAT, 0666));
+
+	CE(rump_sys_posix_fadvise(rfd, 0, 0, POSIX_FADV_NORMAL), 0);
+	CE(rump_sys_posix_fadvise(rfd, 0, 0, POSIX_FADV_SEQUENTIAL), 0);
+	CE(rump_sys_posix_fadvise(rfd, 0, 0, POSIX_FADV_RANDOM), 0);
+	CE(rump_sys_posix_fadvise(rfd, 0, 0, POSIX_FADV_WILLNEED), 0);
+	CE(rump_sys_posix_fadvise(rfd, 0, 0, POSIX_FADV_NOREUSE), 0);
+
 	atf_tc_expect_signal(-1, "http://mail-index.netbsd.org/source-changes-d/2010/11/11/msg002508.html");
 	CE(rump_sys_posix_fadvise(rfd, 0, 0, POSIX_FADV_DONTNEED), 0);
 #undef CE
@@ -125,6 +144,7 @@ ATF_TC_BODY(posix_fadvise, tc)
 ATF_TP_ADD_TCS(tp)
 {
 	ATF_TP_ADD_TC(tp, posix_fadvise);
+	ATF_TP_ADD_TC(tp, posix_fadvise_reg);
 
 	return atf_no_error();
 }
