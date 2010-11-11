@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpfs.c,v 1.67 2010/11/11 14:46:55 pooka Exp $	*/
+/*	$NetBSD: rumpfs.c,v 1.68 2010/11/11 15:05:54 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009  Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.67 2010/11/11 14:46:55 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.68 2010/11/11 15:05:54 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -49,6 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.67 2010/11/11 14:46:55 pooka Exp $");
 #include <miscfs/fifofs/fifo.h>
 #include <miscfs/specfs/specdev.h>
 #include <miscfs/genfs/genfs.h>
+#include <miscfs/genfs/genfs_node.h>
 
 #include <rump/rumpuser.h>
 
@@ -138,7 +139,17 @@ struct rumpfs_dent {
 	LIST_ENTRY(rumpfs_dent) rd_entries;
 };
 
+struct genfs_ops rumpfs_genfsops = {
+	.gop_size = genfs_size,
+	.gop_write = genfs_gop_write,
+
+	/* optional */
+	.gop_alloc = NULL,
+	.gop_markupdate = NULL,
+};
+
 struct rumpfs_node {
+	struct genfs_node rn_gn;
 	struct vattr rn_va;
 	struct vnode *rn_vp;
 	char *rn_hostpath;
@@ -521,6 +532,7 @@ makevnode(struct mount *mp, struct rumpfs_node *rn, struct vnode **vpp)
 	}
 	vp->v_data = rn;
 
+	genfs_node_init(vp, &rumpfs_genfsops);
 	vn_lock(vp, LK_RETRY | LK_EXCLUSIVE);
 	mutex_enter(&reclock);
 	rn->rn_vp = vp;
@@ -1142,6 +1154,7 @@ rump_vop_reclaim(void *v)
 	mutex_enter(&reclock);
 	rn->rn_vp = NULL;
 	mutex_exit(&reclock);
+	genfs_node_destroy(vp);
 	vp->v_data = NULL;
 
 	if (rn->rn_flags & RUMPNODE_CANRECLAIM) {
