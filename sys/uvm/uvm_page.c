@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.153.2.60 2010/11/04 11:57:49 uebayasi Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.153.2.61 2010/11/11 16:20:28 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.153.2.60 2010/11/04 11:57:49 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.153.2.61 2010/11/11 16:20:28 uebayasi Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -433,7 +433,7 @@ uvm_page_init(vaddr_t *kvm_startp, vaddr_t *kvm_endp)
 
 	freepages = 0;
 	for (lcv = 0 ; lcv < vm_nphysmem ; lcv++) {
-		seg = vm_physmem_ptrs[lcv];
+		seg = VM_PHYSMEM_PTR(lcv);
 		freepages += (seg->end - seg->start);
 	}
 
@@ -480,7 +480,7 @@ uvm_page_init(vaddr_t *kvm_startp, vaddr_t *kvm_endp)
 	 */
 
 	for (lcv = 0 ; lcv < vm_nphysmem ; lcv++) {
-		seg = vm_physmem_ptrs[lcv];
+		seg = VM_PHYSMEM_PTR(lcv);
 		n = seg->end - seg->start;
 
 		/* set up page array pointers */
@@ -490,7 +490,7 @@ uvm_page_init(vaddr_t *kvm_startp, vaddr_t *kvm_endp)
 		seg->endpg = seg->pgs + n;
 
 		/* init and free vm_pages (we've already zeroed them) */
-		paddr = ctob(vm_physmem_ptrs[lcv]->start);
+		paddr = ctob(seg->start);
 		for (i = 0 ; i < n ; i++, paddr += PAGE_SIZE) {
 			seg->pgs[i].phys_addr = paddr;
 #ifdef __HAVE_VM_PAGE_MD
@@ -684,7 +684,7 @@ uvm_page_physget_freelist(paddr_t *paddrp, int freelist)
 	for (lcv = 0 ; lcv < vm_nphysmem ; lcv++)
 #endif
 	{
-		seg = vm_physmem_ptrs[lcv];
+		seg = VM_PHYSMEM_PTR(lcv);
 
 		if (uvm.page_init_done == true)
 			panic("uvm_page_physget: called _after_ bootstrap");
@@ -704,7 +704,7 @@ uvm_page_physget_freelist(paddr_t *paddrp, int freelist)
 				    panic("uvm_page_physget: out of memory!");
 				vm_nphysmem--;
 				for (x = lcv ; x < vm_nphysmem ; x++)
-					vm_physmem_ptrs[x] = vm_physmem_ptrs[x+1];
+					VM_PHYSMEM_PTR_SWAP(x, x + 1);
 			}
 			return (true);
 		}
@@ -721,7 +721,7 @@ uvm_page_physget_freelist(paddr_t *paddrp, int freelist)
 				    panic("uvm_page_physget: out of memory!");
 				vm_nphysmem--;
 				for (x = lcv ; x < vm_nphysmem ; x++)
-					vm_physmem_ptrs[x] = vm_physmem_ptrs[x+1];
+					VM_PHYSMEM_PTR_SWAP(x, x + 1);
 			}
 			return (true);
 		}
@@ -734,7 +734,7 @@ uvm_page_physget_freelist(paddr_t *paddrp, int freelist)
 	for (lcv = 0 ; lcv < vm_nphysmem ; lcv++)
 #endif
 	{
-		seg = vm_physmem_ptrs[lcv];
+		seg = VM_PHYSMEM_PTR(lcv);
 
 		/* any room in this bank? */
 		if (seg->avail_start >= seg->avail_end)
@@ -751,7 +751,7 @@ uvm_page_physget_freelist(paddr_t *paddrp, int freelist)
 				panic("uvm_page_physget: out of memory!");
 			vm_nphysmem--;
 			for (x = lcv ; x < vm_nphysmem ; x++)
-				vm_physmem_ptrs[x] = vm_physmem_ptrs[x+1];
+				VM_PHYSMEM_PTR_SWAP(x, x + 1);
 		}
 		return (true);
 	}
@@ -801,14 +801,15 @@ uvm_page_physload(paddr_t start, paddr_t end, paddr_t avail_start,
 	 * check to see if this is a "preload" (i.e. uvm_page_init hasn't been
 	 * called yet, so malloc is not available).
 	 */
-	for (lcv = 0; lcv < vm_nphysmem; lcv++) {
-		if (vm_physmem_ptrs[lcv]->pgs)
+
+	for (lcv = 0 ; lcv < vm_nphysmem ; lcv++) {
+		if (VM_PHYSMEM_PTR(lcv)->pgs)
 			break;
 	}
 	if (lcv == vm_nphysmem) {
 		seg->pgs = NULL;
 		seg->endpg = NULL;
-		seg->free_list = free_list;	/* XXX */
+		seg->free_list = free_list;
 	} else {
 		panic("uvm_page_physload: "
 		    "tried to add RAM after uvm_page_init");
@@ -823,8 +824,6 @@ uvm_page_physunload(void *cookie)
 	struct vm_physseg *seg = cookie;
 
 	panic("memory unload is not supported yet");
-
-	/* XXX */
 
 	uvm_physseg_free(&vm_physmem_freelist, vm_physmem_ptrs, seg);
 	vm_nphysmem--;
@@ -841,7 +840,7 @@ uvm_page_physload_device(paddr_t start, paddr_t end, int prot, int flags)
 	KASSERT(seg != NULL);
 
 	seg->prot = prot;
-	seg->flags = flags;	/* XXXUEBS BUS_SPACE_MAP_* */
+	seg->flags = flags;
 
 	/*
 	 * Managed device page metadata initialization
@@ -921,7 +920,6 @@ uvm_physseg_alloc(struct vm_physseg_freelist *freelist,
 		    "\tincrease VM_PHYSSEG_MAX\n",
 		    VM_PHYSSEG_MAX, (long long)start, (long long)end);
 
-	/* XXXUEBS too early to use RUN_ONCE(9)? */
 	if (uvm_physseg_inited == 0) {
 		uvm_physseg_inited = 1;
 		uvm_physseg_init();
@@ -1193,10 +1191,10 @@ uvm_phys_to_vm_page(paddr_t pa)
 
 	psi = vm_physseg_find_device(pf, &off);
 	if (psi != -1)
-		return(&vm_physdev_ptrs[psi]->pgs[off]);
+		return(&VM_PHYSDEV_PTR(psi)->pgs[off]);
 	psi = vm_physseg_find(pf, &off);
 	if (psi != -1)
-		return(&vm_physmem_ptrs[psi]->pgs[off]);
+		return(&VM_PHYSMEM_PTR(psi)->pgs[off]);
 	return(NULL);
 }
 
@@ -2234,7 +2232,7 @@ uvm_page_lookup_freelist(struct vm_page *pg)
 
 	lcv = vm_physseg_find(atop(VM_PAGE_TO_PHYS(pg)), NULL);
 	KASSERT(lcv != -1);
-	return (vm_physmem_ptrs[lcv]->free_list);
+	return (VM_PHYSMEM_PTR(lcv)->free_list);
 }
 
 #if defined(DDB) || defined(DEBUGPRINT)
@@ -2341,7 +2339,7 @@ uvm_page_printall(void (*pr)(const char *, ...))
 #endif
 	    "\n", "PAGE", "FLAG", "PQ", "UOBJECT", "UANON");
 	for (i = 0; i < vm_nphysmem; i++) {
-		for (pg = vm_physmem_ptrs[i]->pgs; pg < vm_physmem_ptrs[i]->endpg; pg++) {
+		for (pg = VM_PHYSMEM_PTR(i)->pgs; pg < VM_PHYSMEM_PTR(i)->endpg; pg++) {
 			(*pr)("%18p %04x %04x %18p %18p",
 			    pg, pg->flags, pg->pqflags, pg->uobject,
 			    pg->uanon);
