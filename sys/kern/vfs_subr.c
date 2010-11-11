@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.415 2010/08/17 13:17:47 hannken Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.416 2010/11/11 13:58:58 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.415 2010/08/17 13:17:47 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.416 2010/11/11 13:58:58 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -1847,7 +1847,7 @@ vclean(vnode_t *vp, int flags)
 		atomic_add_int(&uvmexp.filepages, vp->v_uobj.uo_npages);
 	}
 	vp->v_iflag &= ~(VI_TEXT|VI_EXECMAP);
-	active = (vp->v_usecount > 1);
+	active = (vp->v_usecount & VC_MASK) > 1;
 
 	/* XXXAD should not lock vnode under layer */
 	mutex_exit(&vp->v_interlock);
