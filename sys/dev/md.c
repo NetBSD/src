@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.62 2010/01/21 02:14:42 dyoung Exp $	*/
+/*	$NetBSD: md.c,v 1.63 2010/11/11 11:07:06 hannken Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross, Leo Weppelman.
@@ -40,10 +40,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: md.c,v 1.62 2010/01/21 02:14:42 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: md.c,v 1.63 2010/11/11 11:07:06 hannken Exp $");
 
 #include "opt_md.h"
-#include "opt_tftproot.h"
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -78,6 +77,7 @@ __KERNEL_RCSID(0, "$NetBSD: md.c,v 1.62 2010/01/21 02:14:42 dyoung Exp $");
 /* autoconfig stuff... */
 
 struct md_softc {
+	device_t sc_dev;	/* Self. */
 	struct disk sc_dkdev;	/* hook for generic disk handling */
 	struct md_conf sc_md;
 	struct bufq_state *sc_buflist;
@@ -115,7 +115,10 @@ extern struct cfdriver md_cd;
 CFATTACH_DECL3_NEW(md, sizeof(struct md_softc),
 	0, md_attach, md_detach, NULL, NULL, NULL, DVF_DETACH_SHUTDOWN);
 
+static kmutex_t md_device_lock;		/* Protect unit creation / deletion. */
 extern size_t md_root_size;
+
+static void md_set_disklabel(struct md_softc *);
 
 /*
  * This is called if we are configured as a pseudo-device
@@ -123,34 +126,11 @@ extern size_t md_root_size;
 void
 mdattach(int n)
 {
-	int i;
-	cfdata_t cf;
 
-#ifdef TFTPROOT
-	/* 
-	 * Attachement of md0 must be done after md_root_setconf(), 
-	 * because the RAMdisk is not loaded yet.
-	 */
-	if (md_root_size == 0)
+	mutex_init(&md_device_lock, MUTEX_DEFAULT, IPL_NONE);
+	if (config_cfattach_attach(md_cd.cd_name, &md_ca)) {
+		aprint_error("%s: cfattach_attach failed\n", md_cd.cd_name);
 		return;
-#endif
-	if (config_cfattach_attach("md", &md_ca)) {
-		printf("md: cfattach_attach failed\n");
-		return;
-	}
-
-	/* XXX:  Are we supposed to provide a default? */
-	if (n <= 1)
-		n = 1;
-
-	/* Attach as if by autoconfig. */
-	for (i = 0; i < n; i++) {
-		cf = malloc(sizeof(*cf), M_DEVBUF, M_WAITOK);
-		cf->cf_name = "md";
-		cf->cf_atname = "md";
-		cf->cf_unit = i;
-		cf->cf_fstate = FSTATE_NOTFOUND;
-		(void)config_attach_pseudo(cf);
 	}
 }
 
@@ -159,6 +139,7 @@ md_attach(device_t parent, device_t self, void *aux)
 {
 	struct md_softc *sc = device_private(self);
 
+	sc->sc_dev = self;
 	bufq_alloc(&sc->sc_buflist, "fcfs", 0);
 
 	/* XXX - Could accept aux info here to set the config. */
@@ -176,6 +157,9 @@ md_attach(device_t parent, device_t self, void *aux)
 	 */
 	disk_init(&sc->sc_dkdev, device_xname(self), &mddkdriver);
 	disk_attach(&sc->sc_dkdev);
+
+	if (sc->sc_type != MD_UNCONFIGURED)
+		md_set_disklabel(sc);
 
 	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
@@ -240,13 +224,29 @@ mdopen(dev_t dev, int flag, int fmt, struct lwp *l)
 	int unit;
 	int part = DISKPART(dev);
 	int pmask = 1 << part;
+	cfdata_t cf;
 	struct md_softc *sc;
 	struct disk *dk;
 
+	mutex_enter(&md_device_lock);
 	unit = MD_UNIT(dev);
 	sc = device_lookup_private(&md_cd, unit);
-	if (sc == NULL)
-		return ENXIO;
+	if (sc == NULL) {
+		if (part != RAW_PART) {
+			mutex_exit(&md_device_lock);
+			return ENXIO;
+		}
+		cf = malloc(sizeof(*cf), M_DEVBUF, M_WAITOK);
+		cf->cf_name = md_cd.cd_name;
+		cf->cf_atname = md_cd.cd_name;
+		cf->cf_unit = unit;
+		cf->cf_fstate = FSTATE_STAR;
+		sc = device_private(config_attach_pseudo(cf));
+		if (sc == NULL) {
+			mutex_exit(&md_device_lock);
+			return ENOMEM;
+		}
+	}
 
 	dk = &sc->sc_dkdev;
 
@@ -265,8 +265,10 @@ mdopen(dev_t dev, int flag, int fmt, struct lwp *l)
 	 * This is a normal, "slave" device, so
 	 * enforce initialized.
 	 */
-	if (sc->sc_type == MD_UNCONFIGURED)
+	if (sc->sc_type == MD_UNCONFIGURED) {
+		mutex_exit(&md_device_lock);
 		return ENXIO;
+	}
 
 ok:
 	/* XXX duplicates code in dk_open().  Call dk_open(), instead? */
@@ -284,6 +286,7 @@ ok:
 	dk->dk_openmask = dk->dk_copenmask | dk->dk_bopenmask;
 
 	mutex_exit(&dk->dk_openlock);
+	mutex_exit(&md_device_lock);
 	return 0;
 }
 
@@ -292,6 +295,8 @@ mdclose(dev_t dev, int flag, int fmt, struct lwp *l)
 {
 	int part = DISKPART(dev);
 	int pmask = 1 << part;
+	int error;
+	cfdata_t cf;
 	struct md_softc *sc;
 	struct disk *dk;
 
@@ -314,7 +319,14 @@ mdclose(dev_t dev, int flag, int fmt, struct lwp *l)
 	dk->dk_openmask = dk->dk_copenmask | dk->dk_bopenmask;
 
 	mutex_exit(&dk->dk_openlock);
-	return 0;
+
+	mutex_enter(&md_device_lock);
+	cf = device_cfdata(sc->sc_dev);
+	error = config_detach(sc->sc_dev, DETACH_QUIET);
+	if (! error)
+		free(cf, M_DEVBUF);
+	mutex_exit(&md_device_lock);
+	return error;
 }
 
 static int
@@ -353,6 +365,7 @@ mdstrategy(struct buf *bp)
 	struct md_softc	*sc;
 	void *	addr;
 	size_t off, xfer;
+	bool is_read;
 
 	sc = device_lookup_private(&md_cd, MD_UNIT(bp->b_dev));
 
@@ -375,10 +388,11 @@ mdstrategy(struct buf *bp)
 	case MD_KMEM_FIXED:
 	case MD_KMEM_ALLOCATED:
 		/* These are in kernel space.  Access directly. */
+		is_read = ((bp->b_flags & B_READ) == B_READ);
 		bp->b_resid = bp->b_bcount;
 		off = (bp->b_blkno << DEV_BSHIFT);
 		if (off >= sc->sc_size) {
-			if (bp->b_flags & B_READ)
+			if (is_read)
 				break;	/* EOF */
 			goto set_eio;
 		}
@@ -386,10 +400,12 @@ mdstrategy(struct buf *bp)
 		if (xfer > (sc->sc_size - off))
 			xfer = (sc->sc_size - off);
 		addr = (char *)sc->sc_addr + off;
-		if (bp->b_flags & B_READ)
+		disk_busy(&sc->sc_dkdev);
+		if (is_read)
 			memcpy(bp->b_data, addr, xfer);
 		else
 			memcpy(addr, bp->b_data, xfer);
+		disk_unbusy(&sc->sc_dkdev, xfer, is_read);
 		bp->b_resid -= xfer;
 		break;
 
@@ -408,9 +424,27 @@ mdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	struct md_softc *sc;
 	struct md_conf *umd;
+	struct disklabel *lp;
+	struct partinfo *pp;
 
 	if ((sc = device_lookup_private(&md_cd, MD_UNIT(dev))) == NULL)
 		return ENXIO;
+
+	if (sc->sc_type != MD_UNCONFIGURED) {
+		switch (cmd) {
+		case DIOCGDINFO:
+			lp = (struct disklabel *)data;
+			*lp = *sc->sc_dkdev.dk_label;
+			return 0;
+
+		case DIOCGPART:
+			pp = (struct partinfo *)data;
+			pp->disklab = sc->sc_dkdev.dk_label;
+			pp->part =
+			    &sc->sc_dkdev.dk_label->d_partitions[DISKPART(dev)];
+			return 0;
+		}
+	}
 
 	/* If this is not the raw partition, punt! */
 	if (DISKPART(dev) != RAW_PART)
@@ -441,6 +475,50 @@ mdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	return EINVAL;
 }
 
+static void
+md_set_disklabel(struct md_softc *sc)
+{
+	struct disklabel *lp = sc->sc_dkdev.dk_label;
+	struct partition *pp;
+
+	memset(lp, 0, sizeof(*lp));
+
+	lp->d_secsize = DEV_BSIZE;
+	lp->d_secperunit = sc->sc_size / DEV_BSIZE;
+	if (lp->d_secperunit >= (32*64)) {
+		lp->d_nsectors = 32;
+		lp->d_ntracks = 64;
+		lp->d_ncylinders = lp->d_secperunit / (32*64);
+	} else {
+		lp->d_nsectors = 1;
+		lp->d_ntracks = 1;
+		lp->d_ncylinders = lp->d_secperunit;
+	}
+	lp->d_secpercyl = lp->d_ntracks*lp->d_nsectors;
+
+	strncpy(lp->d_typename, md_cd.cd_name, sizeof(lp->d_typename));
+	lp->d_type = DTYPE_UNKNOWN;
+	strncpy(lp->d_packname, "fictitious", sizeof(lp->d_packname));
+	lp->d_rpm = 3600;
+	lp->d_interleave = 1;
+	lp->d_flags = 0;
+
+	pp = &lp->d_partitions[0];
+	pp->p_offset = 0;
+	pp->p_size = lp->d_secperunit;
+	pp->p_fstype = FS_BSDFFS;
+
+	pp = &lp->d_partitions[RAW_PART];
+	pp->p_offset = 0;
+	pp->p_size = lp->d_secperunit;
+	pp->p_fstype = FS_UNUSED;
+
+	lp->d_npartitions = RAW_PART+1;
+	lp->d_magic = DISKMAGIC;
+	lp->d_magic2 = DISKMAGIC;
+	lp->d_checksum = dkcksum(lp);
+}
+
 /*
  * Handle ioctl MD_SETCONF for (sc_type == MD_KMEM_ALLOCATED)
  * Just allocate some kernel memory and return.
@@ -462,6 +540,7 @@ md_ioctl_kalloc(struct md_softc *sc, struct md_conf *umd,
 	sc->sc_addr = (void *)addr; 	/* kernel space */
 	sc->sc_size = (size_t)size;
 	sc->sc_type = MD_KMEM_ALLOCATED;
+	md_set_disklabel(sc);
 	return 0;
 }
 
@@ -489,6 +568,7 @@ md_ioctl_server(struct md_softc *sc, struct md_conf *umd,
 	sc->sc_addr = umd->md_addr; 	/* user space */
 	sc->sc_size = umd->md_size;
 	sc->sc_type = MD_UMEM_SERVER;
+	md_set_disklabel(sc);
 
 	/* Become the server daemon */
 	error = md_server_loop(sc);
@@ -511,6 +591,7 @@ md_server_loop(struct md_softc *sc)
 	size_t off;	/* offset into "device" */
 	size_t xfer;	/* amount to transfer */
 	int error;
+	bool is_read;
 
 	for (;;) {
 		/* Wait for some work to arrive. */
@@ -522,10 +603,11 @@ md_server_loop(struct md_softc *sc)
 
 		/* Do the transfer to/from user space. */
 		error = 0;
+		is_read = ((bp->b_flags & B_READ) == B_READ);
 		bp->b_resid = bp->b_bcount;
 		off = (bp->b_blkno << DEV_BSHIFT);
 		if (off >= sc->sc_size) {
-			if (bp->b_flags & B_READ)
+			if (is_read)
 				goto done;	/* EOF (not an error) */
 			error = EIO;
 			goto done;
@@ -534,10 +616,12 @@ md_server_loop(struct md_softc *sc)
 		if (xfer > (sc->sc_size - off))
 			xfer = (sc->sc_size - off);
 		addr = (char *)sc->sc_addr + off;
-		if (bp->b_flags & B_READ)
+		disk_busy(&sc->sc_dkdev);
+		if (is_read)
 			error = copyin(addr, bp->b_data, xfer);
 		else
 			error = copyout(bp->b_data, addr, xfer);
+		disk_unbusy(&sc->sc_dkdev, (error ? 0 : xfer), is_read);
 		if (!error)
 			bp->b_resid -= xfer;
 
