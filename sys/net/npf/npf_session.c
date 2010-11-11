@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_session.c,v 1.4 2010/10/03 19:36:38 rmind Exp $	*/
+/*	$NetBSD: npf_session.c,v 1.5 2010/11/11 06:30:39 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -65,8 +65,10 @@
  *
  *	Often NAT policies have overlapping stateful filtering rules.  In
  *	order to avoid unnecessary lookups, "pass" session can be linked
- *	with a "NAT" session (npf_session_t::s_nat_se pointer).  Such link
- *	is used to detect translation on "forwards" stream.
+ *	with a "NAT" session (npf_session_t::s_linked pointer).  Such link
+ *	is used to detect translation on "forwards" stream.  "NAT" session
+ *	also contains the link back to the "pass" session, therefore, both
+ *	sessions point to each other.
  *
  *	Additional reference is held on linked "NAT" sessions to prevent
  *	them from destruction while linked.  Link is broken and reference
@@ -83,16 +85,15 @@
  * - Session monitoring via descriptor.
  */
 
-#ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_session.c,v 1.4 2010/10/03 19:36:38 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_session.c,v 1.5 2010/11/11 06:30:39 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
 
 #include <netinet/in.h>
 #include <netinet/tcp.h>
-#endif
+
 #include <sys/atomic.h>
 #include <sys/condvar.h>
 #include <sys/hash.h>
@@ -118,14 +119,15 @@ struct npf_session {
 	/* Session type.  Supported: TCP, UDP, ICMP. */
 	int				s_type;
 	int				s_direction;
-	uint16_t			s_state;
-	uint16_t			s_flags;
-	/* NAT data associated with this session (if any). */
+	int				s_flags;
+	npf_state_t			s_state;
+	/* NAT associated with this session (if any) and link. */
 	npf_nat_t *			s_nat;
-	npf_session_t *			s_nat_se;
+	npf_session_t *			s_linked;
 	/* Source and destination addresses. */
-	in_addr_t			s_src_addr;
-	in_addr_t			s_dst_addr;
+	npf_addr_t			s_src_addr;
+	npf_addr_t			s_dst_addr;
+	int				s_addr_sz;
 	/* Source and destination ports (TCP / UDP) or generic IDs. */
 	union {
 		in_port_t		port;
@@ -138,6 +140,8 @@ struct npf_session {
 	/* Last activity time (used to calculate expiration time). */
 	struct timespec 		s_atime;
 };
+
+#define	SE_PASSSING			0x01
 
 LIST_HEAD(npf_sesslist, npf_session);
 
@@ -162,28 +166,13 @@ static lwp_t *				sess_gc_lwp;
 
 #define	SESS_GC_INTERVAL		5		/* 5 sec */
 
-/* Session expiration table.  XXX: TCP close: 2 * tcp_msl (e.g. 120)?  Maybe. */
-static const u_int sess_expire_table[ ] = {
-	[IPPROTO_TCP]		= 600,		/* 10 min */
-	[IPPROTO_UDP]		= 300,		/*  5 min */
-	[IPPROTO_ICMP]		= 30		/*  1 min */
-};
-
-/* Session states and flags. */
-#define	SE_OPENING		1
-#define	SE_ACKNOWLEDGE		2
-#define	SE_ESTABLISHED		3
-#define	SE_CLOSING		4
-
-#define	SE_PASSSING		0x01
-
 static void	sess_tracking_stop(void);
 static void	npf_session_worker(void *);
 
 #ifdef SE_DEBUG
-#define	DPRINTF(x)	printf x
+#define	SEPRINTF(x)	printf x
 #else
-#define	DPRINTF(x)
+#define	SEPRINTF(x)
 #endif
 
 /*
@@ -229,39 +218,32 @@ sess_rbtree_cmp_nodes(void *ctx, const void *n1, const void *n2)
 {
 	const npf_session_t * const se1 = n1;
 	const npf_session_t * const se2 = n2;
+	const npf_addr_t *se2_addr1, *se2_addr2;
+	uint32_t se2_id1, se2_id2;
+	int ret;
 
 	/*
 	 * Note: must compare equivalent streams.
 	 * See sess_rbtree_cmp_key() below.
 	 */
 	if (se1->s_direction == se2->s_direction) {
-		/*
-		 * Direction "forwards".
-		 */
-		if (se1->s_src.id != se2->s_src.id)
-			return (se1->s_src.id < se2->s_src.id) ? -1 : 1;
-		if (se1->s_dst.id != se2->s_dst.id)
-			return (se1->s_dst.id < se2->s_dst.id) ? -1 : 1;
-
-		if (__predict_false(se1->s_src_addr != se2->s_src_addr))
-			return (se1->s_src_addr < se2->s_src_addr) ? -1 : 1;
-		if (__predict_false(se1->s_dst_addr != se2->s_dst_addr))
-			return (se1->s_dst_addr < se2->s_dst_addr) ? -1 : 1;
+		/* Direction "forwards". */
+		se2_id1 = se2->s_src.id; se2_addr1 = &se2->s_src_addr;
+		se2_id2 = se2->s_dst.id; se2_addr2 = &se2->s_dst_addr;
 	} else {
-		/*
-		 * Direction "backwards".
-		 */
-		if (se1->s_src.id != se2->s_dst.id)
-			return (se1->s_src.id < se2->s_dst.id) ? -1 : 1;
-		if (se1->s_dst.id != se2->s_src.id)
-			return (se1->s_dst.id < se2->s_src.id) ? -1 : 1;
-
-		if (__predict_false(se1->s_src_addr != se2->s_dst_addr))
-			return (se1->s_src_addr < se2->s_dst_addr) ? -1 : 1;
-		if (__predict_false(se1->s_dst_addr != se2->s_src_addr))
-			return (se1->s_dst_addr < se2->s_src_addr) ? -1 : 1;
+		/* Direction "backwards". */
+		se2_id1 = se2->s_dst.id; se2_addr1 = &se2->s_dst_addr;
+		se2_id2 = se2->s_src.id; se2_addr2 = &se2->s_src_addr;
 	}
-	return 0;
+	if (se1->s_src.id != se2_id1)
+		return (se1->s_src.id < se2_id1) ? -1 : 1;
+	if (se1->s_dst.id != se2_id2)
+		return (se1->s_dst.id < se2_id2) ? -1 : 1;
+	if (se1->s_addr_sz != se2->s_addr_sz)
+		return (se1->s_addr_sz < se2->s_addr_sz) ? -1 : 1;
+	if ((ret = memcmp(&se1->s_src_addr, se2_addr1, se1->s_addr_sz)) != 0)
+		return ret;
+	return memcmp(&se1->s_dst_addr, se2_addr2, se1->s_addr_sz);
 }
 
 static signed int
@@ -269,33 +251,42 @@ sess_rbtree_cmp_key(void *ctx, const void *n1, const void *key)
 {
 	const npf_session_t * const se = n1;
 	const npf_cache_t * const npc = key;
+	const npf_addr_t *addr1, *addr2;
 	in_port_t sport, dport;
-	in_addr_t src, dst;
+	uint32_t id1, id2;
+	int ret;
 
-	if (se->s_direction == npc->npc_dir) {
+	if (npf_cache_ipproto(npc) == IPPROTO_TCP) {
+		const struct tcphdr *th = &npc->npc_l4.tcp;
+		sport = th->th_sport;
+		dport = th->th_dport;
+	} else {
+		const struct udphdr *uh = &npc->npc_l4.udp;
+		sport = uh->uh_sport;
+		dport = uh->uh_dport;
+	}
+	if (se->s_direction == npc->npc_di) {
 		/* Direction "forwards". */
-		src = npc->npc_srcip; sport = npc->npc_sport;
-		dst = npc->npc_dstip; dport = npc->npc_dport;
+		addr1 = npc->npc_srcip; id1 = sport;
+		addr2 = npc->npc_dstip; id2 = dport;
 	} else {
 		/* Direction "backwards". */
-		src = npc->npc_dstip; sport = npc->npc_dport;
-		dst = npc->npc_srcip; dport = npc->npc_sport;
+		addr1 = npc->npc_dstip; id1 = dport;
+		addr2 = npc->npc_srcip; id2 = sport;
 	}
 
 	/* Ports are the main criteria and are first. */
-	if (se->s_src.id != sport)
-		return (se->s_src.id < sport) ? -1 : 1;
-
-	if (se->s_dst.id != dport)
-		return (se->s_dst.id < dport) ? -1 : 1;
+	if (se->s_src.id != id1)
+		return (se->s_src.id < id1) ? -1 : 1;
+	if (se->s_dst.id != id2)
+		return (se->s_dst.id < id2) ? -1 : 1;
 
 	/* Note that hash should minimise differentiation on these. */
-	if (__predict_false(se->s_src_addr != src))
-		return (se->s_src_addr < src) ? -1 : 1;
-	if (__predict_false(se->s_dst_addr < dst))
-		return (se->s_dst_addr < dst) ? -1 : 1;
-
-	return 0;
+	if (se->s_addr_sz != npc->npc_ipsz)
+		return (se->s_addr_sz < npc->npc_ipsz) ? -1 : 1;
+	if ((ret = memcmp(&se->s_src_addr, addr1, se->s_addr_sz)) != 0)
+		return ret;
+	return memcmp(&se->s_dst_addr, addr2, se->s_addr_sz);
 }
 
 static const rb_tree_ops_t sess_rbtree_ops = {
@@ -308,12 +299,12 @@ static const rb_tree_ops_t sess_rbtree_ops = {
 static inline npf_sess_hash_t *
 sess_hash_bucket(const npf_cache_t *key)
 {
-	uint32_t hash, mix;
+	uint32_t hash, mix = npf_cache_ipproto(key);
 
-	KASSERT(npf_iscached(key, NPC_IP46 | NPC_ADDRS));
+	KASSERT(npf_iscached(key, NPC_IP46));
 
-	/* Sum addresses for both directions and mix in protocol. */
-	mix = key->npc_srcip + key->npc_dstip + key->npc_proto;
+	/* Sum protocol and both addresses (for both directions). */
+	mix += npf_addr_sum(key->npc_ipsz, key->npc_srcip, key->npc_dstip);
 	hash = hash32_buf(&mix, sizeof(uint32_t), HASH32_BUF_INIT);
 	return &sess_hashtbl[hash & SESS_HASH_MASK];
 }
@@ -428,58 +419,12 @@ npf_session_tracking(bool track)
 }
 
 /*
- * npf_session_pstate: handle session state according to protocol data.
- */
-static inline bool
-npf_session_pstate(const npf_cache_t *npc, npf_session_t *se, const int dir)
-{
-	const bool backwards = (se->s_direction != dir);
-	const int proto = npc->npc_proto;
-
-	if (proto != IPPROTO_TCP) {
-		/* Handle UDP or ICMP response for opening session. */
-		if (se->s_state == SE_OPENING && backwards) {
-			se->s_state = SE_ESTABLISHED;
-		}
-		return true;
-	}
-
-	const int tcpfl = npc->npc_tcp_flags & (TH_SYN|TH_ACK|TH_RST|TH_FIN);
-
-	switch (tcpfl) {
-	case TH_ACK:
-		/* Common case. */
-		if (__predict_true(se->s_state == SE_ESTABLISHED)) {
-			return true;
-		}
-		/* ACK seen after SYN-ACK: session fully established. */
-		if (se->s_state == SE_ACKNOWLEDGE && !backwards) {
-			se->s_state = SE_ESTABLISHED;
-		}
-		break;
-	case TH_SYN | TH_ACK:
-		/* SYN-ACK seen, wait for ACK. */
-		if (se->s_state == SE_OPENING && backwards) {
-			se->s_state = SE_ACKNOWLEDGE;
-		}
-		break;
-	case TH_RST:
-	case TH_FIN:
-		/* XXX/TODO: Handle TCP reset attacks; later. */
-		se->s_state = SE_CLOSING;
-		break;
-	}
-	return true;
-}
-
-/*
  * npf_session_inspect: look if there is an established session (connection).
  *
  * => If found, we will hold a reference for caller.
  */
 npf_session_t *
-npf_session_inspect(npf_cache_t *npc, nbuf_t *nbuf,
-    struct ifnet *ifp, const int di)
+npf_session_inspect(npf_cache_t *npc, nbuf_t *nbuf, const int di)
 {
 	npf_sess_hash_t *sh;
 	npf_session_t *se;
@@ -488,8 +433,8 @@ npf_session_inspect(npf_cache_t *npc, nbuf_t *nbuf,
 	if (!sess_tracking || !npf_cache_all(npc, nbuf)) {
 		return NULL;
 	}
-	KASSERT(npf_iscached(npc, NPC_IP46 | NPC_ADDRS));
-	KASSERT(npf_iscached(npc, NPC_PORTS) || npf_iscached(npc, NPC_ICMP));
+	KASSERT(npf_iscached(npc, NPC_IP46));
+	KASSERT(npf_iscached(npc, NPC_LAYER4));
 
 	/*
 	 * Execute ALG session helpers.
@@ -503,7 +448,7 @@ npf_session_inspect(npf_cache_t *npc, nbuf_t *nbuf,
 		/* Default: original packet, pass its cache. */
 		key = npc;
 	}
-	key->npc_dir = di;
+	key->npc_di = di;
 
 	/*
 	 * Get a hash bucket from the cached key data.
@@ -523,7 +468,17 @@ npf_session_inspect(npf_cache_t *npc, nbuf_t *nbuf,
 	}
 
 	/* Inspect the protocol data and handle state changes. */
-	if (npf_session_pstate(npc, se, di)) {
+	const bool forw = (se->s_direction == di);
+	npf_state_t *nst;
+
+	if (se->s_nat) {
+		npf_session_t *lse = se->s_linked;
+		nst = &lse->s_state;
+	} else {
+		nst = &se->s_state;
+	}
+
+	if (npf_state_inspect(npc, nbuf, nst, forw)) {
 		/* Must update the last activity time. */
 		getnanouptime(&se->s_atime);
 		/* Hold a reference. */
@@ -542,14 +497,20 @@ npf_session_inspect(npf_cache_t *npc, nbuf_t *nbuf,
  * => Sessions is created with the held reference (for caller).
  */
 npf_session_t *
-npf_session_establish(const npf_cache_t *npc, npf_nat_t *nt, const int di)
+npf_session_establish(const npf_cache_t *npc, nbuf_t *nbuf,
+    npf_nat_t *nt, const int di)
 {
+	const struct tcphdr *th;
+	const struct udphdr *uh;
 	npf_sess_hash_t *sh;
 	npf_session_t *se;
+	int proto, sz;
 	bool ok;
 
-	if (!sess_tracking)	/* XXX */
+	KASSERT(npf_iscached(npc, NPC_IP46 | NPC_LAYER4));
+	if (!sess_tracking) {	/* XXX */
 		return NULL;
+	}
 
 	/* Allocate and initialise new state. */
 	se = pool_cache_get(sess_cache, PR_NOWAIT);
@@ -563,53 +524,68 @@ npf_session_establish(const npf_cache_t *npc, npf_nat_t *nt, const int di)
 
 	/* NAT and backwards session. */
 	se->s_nat = nt;
-	se->s_nat_se = NULL;
+	se->s_linked = NULL;
 
 	/* Unique IDs: IP addresses. */
-	KASSERT(npf_iscached(npc, NPC_IP46 | NPC_ADDRS));
-	se->s_src_addr = npc->npc_srcip;
-	se->s_dst_addr = npc->npc_dstip;
+	KASSERT(npf_iscached(npc, NPC_IP46));
+	sz = npc->npc_ipsz;
+	memcpy(&se->s_src_addr, npc->npc_srcip, sz);
+	memcpy(&se->s_dst_addr, npc->npc_dstip, sz);
+	se->s_addr_sz = sz;
 
 	/* Procotol. */
-	se->s_type = npc->npc_proto;
+	proto = npf_cache_ipproto(npc);
+	se->s_type = proto;
 
-	switch (npc->npc_proto) {
+	switch (proto) {
 	case IPPROTO_TCP:
-	case IPPROTO_UDP:
-		KASSERT(npf_iscached(npc, NPC_PORTS));
+		KASSERT(npf_iscached(npc, NPC_TCP));
+		th = &npc->npc_l4.tcp;
 		/* Additional IDs: ports. */
-		se->s_src.id = npc->npc_sport;
-		se->s_dst.id = npc->npc_dport;
+		se->s_src.id = th->th_sport;
+		se->s_dst.id = th->th_dport;
+		break;
+	case IPPROTO_UDP:
+		KASSERT(npf_iscached(npc, NPC_UDP));
+		/* Additional IDs: ports. */
+		uh = &npc->npc_l4.udp;
+		se->s_src.id = uh->uh_sport;
+		se->s_dst.id = uh->uh_dport;
 		break;
 	case IPPROTO_ICMP:
 		if (npf_iscached(npc, NPC_ICMP_ID)) {
 			/* ICMP query ID. (XXX) */
-			se->s_src.id = npc->npc_icmp_id;
-			se->s_dst.id = npc->npc_icmp_id;
+			const struct icmp *ic = &npc->npc_l4.icmp;
+			se->s_src.id = ic->icmp_id;
+			se->s_dst.id = ic->icmp_id;
 			break;
 		}
 		/* FALLTHROUGH */
 	default:
 		/* Unsupported. */
-		pool_cache_put(sess_cache, se);
-		return NULL;
+		ok = false;
+		goto out;
 	}
 
+	/* Initialize protocol state, but not for NAT sessions. */
+	if (nt == NULL && !npf_state_init(npc, nbuf, &se->s_state)) {
+		ok = false;
+		goto out;
+	}
 	/* Set last activity time for a new session. */
-	se->s_state = SE_OPENING;
 	getnanouptime(&se->s_atime);
 
 	/* Find the hash bucket and insert the state into the tree. */
 	sh = sess_hash_bucket(npc);
 	rw_enter(&sh->sh_lock, RW_WRITER);
-	ok = rb_tree_insert_node(&sh->sh_tree, se) == se;
+	ok = (rb_tree_insert_node(&sh->sh_tree, se) == se);
 	if (__predict_true(ok)) {
 		sh->sh_count++;
-		DPRINTF(("NPF: new se %p (link %p, nat %p)\n",
-		    se, se->s_nat_se, se->s_nat));
+		SEPRINTF(("NPF: new se %p (link %p, nat %p)\n",
+		    se, se->s_linked, se->s_nat));
 	}
 	rw_exit(&sh->sh_lock);
-
+out:
 	if (__predict_false(!ok)) {
 		/* Race with duplicate packet. */
 		pool_cache_put(sess_cache, se);
@@ -630,19 +606,15 @@ npf_session_pass(const npf_session_t *se)
 }
 
 /*
- * npf_session_setpass: mark session as a "pass" one, also mark the
- * linked session if there is one.
+ * npf_session_setpass: mark session as a "pass" one.
  */
 void
 npf_session_setpass(npf_session_t *se)
 {
 
 	KASSERT(se->s_refcnt > 0);
+	KASSERT(se->s_linked == NULL);
 	se->s_flags |= SE_PASSSING;		/* XXXSMP */
-	if (se->s_nat_se) {
-		se = se->s_nat_se;
-		se->s_flags |= SE_PASSSING;	/* XXXSMP */
-	}
 }
 
 /*
@@ -665,13 +637,17 @@ void
 npf_session_link(npf_session_t *se, npf_session_t *natse)
 {
 
-	/* Hold a reference on the session we link.  Inherit the flags. */
+	/* Hold a reference on the "NAT" session.  Inherit the flags. */
+	KASSERT(se->s_nat == NULL && natse->s_nat != NULL);
 	KASSERT(se->s_refcnt > 0 && natse->s_refcnt > 0);
 	atomic_inc_uint(&natse->s_refcnt);
 	natse->s_flags = se->s_flags;
 
-	KASSERT(se->s_nat_se == NULL);
-	se->s_nat_se = natse;
+	/* Link both sessions (point to each other). */
+	KASSERT(se->s_linked == NULL && natse->s_linked == NULL);
+	se->s_linked = natse;
+	natse->s_linked = se;
+	SEPRINTF(("NPF: linked se %p -> %p\n", se, se->s_linked));
 }
 
 /*
@@ -683,9 +659,12 @@ npf_session_retnat(npf_session_t *se, const int di, bool *forw)
 {
 
 	KASSERT(se->s_refcnt > 0);
+	if (se->s_linked == NULL) {
+		return NULL;
+	}
 	*forw = (se->s_direction == di);
-	if (se->s_nat_se) {
-		se = se->s_nat_se;
+	if (se->s_nat == NULL) {
+		se = se->s_linked;
 		KASSERT(se->s_refcnt > 0);
 	}
 	return se->s_nat;
@@ -697,21 +676,9 @@ npf_session_retnat(npf_session_t *se, const int di, bool *forw)
 static inline bool
 npf_session_expired(const npf_session_t *se, const struct timespec *tsnow)
 {
+	const int etime = npf_state_etime(&se->s_state, se->s_type);
 	struct timespec tsdiff;
-	int etime = 0;
 
-	switch (se->s_state) {
-	case SE_ESTABLISHED:
-		etime = sess_expire_table[se->s_type];
-		break;
-	case SE_OPENING:
-	case SE_ACKNOWLEDGE:
-	case SE_CLOSING:
-		etime = 10;	/* XXX: figure out reasonable time */
-		break;
-	default:
-		KASSERT(false);
-	}
 	timespecsub(tsnow, &se->s_atime, &tsdiff);
 	return (tsdiff.tv_sec > etime);
 }
@@ -752,13 +719,19 @@ npf_session_gc(struct npf_sesslist *gc_list, bool flushall)
 			LIST_INSERT_HEAD(gc_list, se, se_entry.gclist);
 			sh->sh_count--;
 
-			/* If linked, drop the reference. */
-			DPRINTF(("NPF: se %p expired\n", se));
-			if (se->s_nat_se) {
-				npf_session_release(se->s_nat_se);
-				DPRINTF(("NPF: se %p unlinked %p\n",
-				    se, se->s_nat_se));
-				se->s_nat_se = NULL;
+			/*
+			 * If there is a link and it is a "pass" session,
+			 * then drop the reference and unlink.
+			 */
+			SEPRINTF(("NPF: se %p expired\n", se));
+			if (se->s_linked && se->s_nat == NULL) {
+				npf_session_t *natse = se->s_linked;
+
+				SEPRINTF(("NPF: se %p unlinked %p\n",
+				    se, se->s_linked));
+				natse->s_linked = NULL;
+				npf_session_release(natse);
+				se->s_linked = NULL;
 			}
 			se = nse;
 		}
@@ -785,8 +758,11 @@ npf_session_free(struct npf_sesslist *gc_list)
 			if (se->s_nat) {
 				/* Release any NAT related structures. */
 				npf_nat_expire(se->s_nat);
+			} else {
+				/* Destroy the state. */
+				npf_state_destroy(&se->s_state);
 			}
-			DPRINTF(("NPF: se %p destroyed\n", se));
+			SEPRINTF(("NPF: se %p destroyed\n", se));
 			pool_cache_put(sess_cache, se);
 		}
 		se = nse;
@@ -853,7 +829,7 @@ npf_sessions_dump(void)
 		sh = &sess_hashtbl[i];
 		if (sh->sh_count == 0) {
 			KASSERT(rb_tree_iterate(&sh->sh_tree,
-			    NULL, RB_DIR_RIGHT) == NULL);
+			    NULL, RB_DIR_LEFT) == NULL);
 			continue;
 		}
 		printf("s_bucket %d (count = %d)\n", i, sh->sh_count);
@@ -863,20 +839,20 @@ npf_sessions_dump(void)
 			int etime;
 
 			timespecsub(&tsnow, &se->s_atime, &tsdiff);
-			etime = (se->s_state == SE_ESTABLISHED) ?
-			    sess_expire_table[se->s_type] : 10;
+			etime = npf_state_etime(&se->s_state, se->s_type);
 
 			printf("\t%p: type(%d) di %d, pass %d, tsdiff %d, "
 			    "etime %d\n", se, se->s_type, se->s_direction,
 			    se->s_flags, (int)tsdiff.tv_sec, etime);
-			ip.s_addr = se->s_src_addr;
+			memcpy(&ip, &se->s_src_addr, sizeof(ip));
 			printf("\tsrc (%s, %d) ",
 			    inet_ntoa(ip), ntohs(se->s_src.port));
-			ip.s_addr = se->s_dst_addr;
-			printf("dst (%s, %d)\n", 
+			memcpy(&ip, &se->s_dst_addr, sizeof(ip));
+			printf("dst (%s, %d)\n",
 			    inet_ntoa(ip), ntohs(se->s_dst.port));
-			if (se->s_nat_se != NULL) {
-				printf("\tlinked with %p\n", se->s_nat_se);
+			npf_state_dump(&se->s_state);
+			if (se->s_linked != NULL) {
+				printf("\tlinked with %p\n", se->s_linked);
 			}
 			if (se->s_nat != NULL) {
 				npf_nat_dump(se->s_nat);
