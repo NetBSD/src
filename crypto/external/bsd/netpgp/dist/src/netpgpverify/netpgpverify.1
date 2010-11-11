@@ -1,4 +1,4 @@
-.\" $NetBSD: netpgpverify.1,v 1.3 2010/11/03 02:36:13 agc Exp $
+.\" $NetBSD: netpgpverify.1,v 1.4 2010/11/11 04:51:18 agc Exp $
 .\"
 .\" Copyright (c) 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd June 6, 2009
+.Dd November 10, 2010
 .Dt NETPGPVERIFY 1
 .Os
 .Sh NAME
@@ -63,7 +63,7 @@ of digital signatures
 is such a common operation that a single, much smaller,
 standalone program can be used.
 .Pp
-The following commands are used to sign and verify signatures:
+The following commands are used to verify signatures:
 .Bl -tag -width Ar
 .It Fl Fl coredumps
 In normal processing,
@@ -101,25 +101,29 @@ the process of the
 requests.
 .El
 .Sh SIGNING AND VERIFICATION
-Signing and verification of a file is best viewed using the following example:
+Verification of a file's signature is best viewed using the following example:
 .Bd -literal
 % netpgp --sign --userid=agc@netbsd.org a
-pub 2048/RSA (Encrypt or Sign) 1b68dcfcc0596823 2004-01-12
-Key fingerprint: d415 9deb 336d e4cc cdfa 00cd 1b68 dcfc c059 6823
-uid              Alistair Crooks \*[Lt]agc@netbsd.org\*[Gt]
-uid              Alistair Crooks \*[Lt]agc@pkgsrc.org\*[Gt]
-uid              Alistair Crooks \*[Lt]agc@alistaircrooks.com\*[Gt]
-uid              Alistair Crooks \*[Lt]alistair@hockley-crooks.com\*[Gt]
+signature  2048/RSA (Encrypt or Sign) 1b68dcfcc0596823 2004-01-12
+Key fingerprint: d415 9deb 336d e4cc cdfa 00cd 1b68 dcfc c059 6823 
+uid              Alistair Crooks \*[Lt]alistair@hockley-crooks.com\*[Gt] 
+uid              Alistair Crooks \*[Lt]agc@pkgsrc.org\*[Gt] 
+uid              Alistair Crooks \*[Lt]agc@netbsd.org\*[Gt] 
+uid              Alistair Crooks \*[Lt]agc@alistaircrooks.com\*[Gt] 
+uid              Alistair Crooks (Yahoo!) \*[Lt]agcrooks@yahoo-inc.com\*[Gt] 
+encryption 2048/RSA (Encrypt or Sign) 79deb61e488eee74 2004-01-12
 netpgp passphrase:
 % netpgpverify a.gpg
 Good signature for a.gpg made Thu Jan 29 03:06:00 2009
 using RSA (Encrypt or Sign) key 1B68DCFCC0596823
-pub 2048/RSA (Encrypt or Sign) 1b68dcfcc0596823 2004-01-12
-Key fingerprint: d415 9deb 336d e4cc cdfa 00cd 1b68 dcfc c059 6823
-uid              Alistair Crooks \*[Lt]alistair@hockley-crooks.com\*[Gt]
-uid              Alistair Crooks \*[Lt]agc@pkgsrc.org\*[Gt]
-uid              Alistair Crooks \*[Lt]agc@netbsd.org\*[Gt]
-uid              Alistair Crooks \*[Lt]agc@alistaircrooks.com\*[Gt]
+signature  2048/RSA (Encrypt or Sign) 1b68dcfcc0596823 2004-01-12
+Key fingerprint: d415 9deb 336d e4cc cdfa 00cd 1b68 dcfc c059 6823 
+uid              Alistair Crooks \*[Lt]alistair@hockley-crooks.com\*[Gt] 
+uid              Alistair Crooks \*[Lt]agc@pkgsrc.org\*[Gt] 
+uid              Alistair Crooks \*[Lt]agc@netbsd.org\*[Gt] 
+uid              Alistair Crooks \*[Lt]agc@alistaircrooks.com\*[Gt] 
+uid              Alistair Crooks (Yahoo!) \*[Lt]agcrooks@yahoo-inc.com\*[Gt] 
+encryption 2048/RSA (Encrypt or Sign) 79deb61e488eee74 2004-01-12
 %
 .Ed
 .Pp
