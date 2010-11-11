@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci_s3c24x0.c,v 1.6 2008/04/28 20:23:14 martin Exp $ */
+/*	$NetBSD: ohci_s3c24x0.c,v 1.7 2010/11/11 15:58:41 dyoung Exp $ */
 
 /* derived from ohci_pci.c */
 
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci_s3c24x0.c,v 1.6 2008/04/28 20:23:14 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci_s3c24x0.c,v 1.7 2010/11/11 15:58:41 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,9 +54,9 @@ __KERNEL_RCSID(0, "$NetBSD: ohci_s3c24x0.c,v 1.6 2008/04/28 20:23:14 martin Exp 
 #include <dev/usb/ohcireg.h>
 #include <dev/usb/ohcivar.h>
 
-int	ohci_ssio_match(struct device *, struct cfdata *, void *);
-void	ohci_ssio_attach(struct device *, struct device *, void *);
-int	ohci_ssio_detach(device_ptr_t, int);
+int	ohci_ssio_match(device_t, cfdata_t, void *);
+void	ohci_ssio_attach(device_t, device_t, void *);
+int	ohci_ssio_detach(device_t, int);
 
 extern	int ohcidebug;
 
@@ -70,7 +70,7 @@ CFATTACH_DECL_NEW(ohci_ssio, sizeof(struct ohci_ssio_softc),
     ohci_ssio_match, ohci_ssio_attach, ohci_ssio_detach, ohci_activate);
 
 int
-ohci_ssio_match(struct device *parent, struct cfdata *match, void *aux)
+ohci_ssio_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct s3c2xx0_attach_args *sa = (struct s3c2xx0_attach_args *)aux;
 	/* XXX: check some registers */
@@ -84,7 +84,7 @@ ohci_ssio_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 void
-ohci_ssio_attach(struct device *parent, struct device *self, void *aux)
+ohci_ssio_attach(device_t parent, device_t self, void *aux)
 {
 	struct ohci_ssio_softc *sc = device_private(self);
 	struct s3c2xx0_attach_args *sa = (struct s3c2xx0_attach_args *)aux;
@@ -92,6 +92,7 @@ ohci_ssio_attach(struct device *parent, struct device *self, void *aux)
 	usbd_status r;
 
 	aprint_normal("\n");
+	aprint_naive("\n");
 
 	sc->sc.sc_dev = self;
 	sc->sc.sc_bus.hci_private = sc;
@@ -134,7 +135,7 @@ ohci_ssio_attach(struct device *parent, struct device *self, void *aux)
 }
 
 int
-ohci_ssio_detach(device_ptr_t self, int flags)
+ohci_ssio_detach(device_t self, int flags)
 {
 	return (0);
 }
