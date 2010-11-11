@@ -54,7 +54,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: reader.c,v 1.44 2010/11/07 08:39:59 agc Exp $");
+__RCSID("$NetBSD: reader.c,v 1.45 2010/11/11 00:58:04 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -134,6 +134,26 @@ __RCSID("$NetBSD: reader.c,v 1.44 2010/11/07 08:39:59 agc Exp $");
 #include "netpgpdefs.h"
 #include "netpgpdigest.h"
 
+/* data from partial blocks is queued up in virtual block in stream */
+static int
+read_partial_data(pgp_stream_t *stream, void *dest, size_t length)
+{
+	unsigned	n;
+
+	if (pgp_get_debug_level(__FILE__)) {
+		(void) fprintf(stderr, "fd_reader: coalesced data, off %d\n",
+				stream->virtualoff);
+	}
+	n = MIN(stream->virtualc - stream->virtualoff, length);
+	(void) memcpy(dest, &stream->virtualpkt[stream->virtualoff], n);
+	stream->virtualoff += n;
+	if (stream->virtualoff == stream->virtualc) {
+		free(stream->virtualpkt);
+		stream->virtualpkt = NULL;
+		stream->virtualc = stream->virtualoff = 0;
+	}
+	return (int)n;
+}
 
 /* get a pass phrase from the user */
 int
@@ -419,7 +439,7 @@ set_lastseen_headerline(dearmour_t *dearmour, char *hdr, pgp_error_t **errors)
 }
 
 static int 
-read_char(dearmour_t *dearmour,
+read_char(pgp_stream_t *stream, dearmour_t *dearmour,
 		pgp_error_t **errors,
 		pgp_reader_t *readinfo,
 		pgp_cbdata_t *cbinfo,
@@ -434,7 +454,7 @@ read_char(dearmour_t *dearmour,
 				free(dearmour->pushback);
 				dearmour->pushback = NULL;
 			}
-		} else if (pgp_stacked_read(&c, 1, errors, readinfo,
+		} else if (pgp_stacked_read(stream, &c, 1, errors, readinfo,
 					cbinfo) != 1) {
 			return -1;
 		}
@@ -445,7 +465,7 @@ read_char(dearmour_t *dearmour,
 }
 
 static int 
-eat_whitespace(int first,
+eat_whitespace(pgp_stream_t *stream, int first,
 	       dearmour_t *dearmour,
 	       pgp_error_t **errors,
 	       pgp_reader_t *readinfo,
@@ -455,13 +475,13 @@ eat_whitespace(int first,
 	int             c = first;
 
 	while (c == ' ' || c == '\t') {
-		c = read_char(dearmour, errors, readinfo, cbinfo, skip);
+		c = read_char(stream, dearmour, errors, readinfo, cbinfo, skip);
 	}
 	return c;
 }
 
 static int 
-read_and_eat_whitespace(dearmour_t *dearmour,
+read_and_eat_whitespace(pgp_stream_t *stream, dearmour_t *dearmour,
 			pgp_error_t **errors,
 			pgp_reader_t *readinfo,
 			pgp_cbdata_t *cbinfo,
@@ -470,7 +490,7 @@ read_and_eat_whitespace(dearmour_t *dearmour,
 	int             c;
 
 	do {
-		c = read_char(dearmour, errors, readinfo, cbinfo, skip);
+		c = read_char(stream, dearmour, errors, readinfo, cbinfo, skip);
 	} while (c == ' ' || c == '\t');
 	return c;
 }
@@ -489,7 +509,7 @@ flush(dearmour_t *dearmour, pgp_cbdata_t *cbinfo)
 }
 
 static int 
-unarmoured_read_char(dearmour_t *dearmour,
+unarmoured_read_char(pgp_stream_t *stream, dearmour_t *dearmour,
 			pgp_error_t **errors,
 			pgp_reader_t *readinfo,
 			pgp_cbdata_t *cbinfo,
@@ -498,7 +518,7 @@ unarmoured_read_char(dearmour_t *dearmour,
 	int             c;
 
 	do {
-		c = read_char(dearmour, errors, readinfo, cbinfo, 0);
+		c = read_char(stream, dearmour, errors, readinfo, cbinfo, 0);
 		if (c < 0) {
 			return c;
 		}
@@ -554,7 +574,7 @@ pgp_dup_headers(pgp_headers_t *dest, const pgp_headers_t *src)
  * as line terminators
  */
 static int 
-process_dash_escaped(dearmour_t *dearmour,
+process_dash_escaped(pgp_stream_t *stream, dearmour_t *dearmour,
 			pgp_error_t **errors,
 			pgp_reader_t *readinfo,
 			pgp_cbdata_t *cbinfo)
@@ -606,12 +626,12 @@ process_dash_escaped(dearmour_t *dearmour,
 		int             c;
 		unsigned        count;
 
-		c = read_char(dearmour, errors, readinfo, cbinfo, 1);
+		c = read_char(stream, dearmour, errors, readinfo, cbinfo, 1);
 		if (c < 0) {
 			return -1;
 		}
 		if (dearmour->prev_nl && c == '-') {
-			if ((c = read_char(dearmour, errors, readinfo, cbinfo,
+			if ((c = read_char(stream, dearmour, errors, readinfo, cbinfo,
 						0)) < 0) {
 				return -1;
 			}
@@ -622,7 +642,7 @@ process_dash_escaped(dearmour_t *dearmour,
 						"Bad dash-escaping");
 				}
 				for (count = 2; count < 5; ++count) {
-					if ((c = read_char(dearmour, errors,
+					if ((c = read_char(stream, dearmour, errors,
 						readinfo, cbinfo, 0)) < 0) {
 						return -1;
 					}
@@ -636,7 +656,7 @@ process_dash_escaped(dearmour_t *dearmour,
 				break;
 			}
 			/* otherwise we read the next character */
-			if ((c = read_char(dearmour, errors, readinfo, cbinfo,
+			if ((c = read_char(stream, dearmour, errors, readinfo, cbinfo,
 						0)) < 0) {
 				return -1;
 			}
@@ -717,7 +737,7 @@ add_header(dearmour_t *dearmour, const char *key, const char *value)
 
 /* \todo what does a return value of 0 indicate? 1 is good, -1 is bad */
 static int 
-parse_headers(dearmour_t *dearmour, pgp_error_t **errors,
+parse_headers(pgp_stream_t *stream, dearmour_t *dearmour, pgp_error_t **errors,
 	      pgp_reader_t * readinfo, pgp_cbdata_t * cbinfo)
 {
 	unsigned        nbuf;
@@ -735,7 +755,7 @@ parse_headers(dearmour_t *dearmour, pgp_error_t **errors,
 	for (;;) {
 		int             c;
 
-		if ((c = read_char(dearmour, errors, readinfo, cbinfo, 1)) < 0) {
+		if ((c = read_char(stream, dearmour, errors, readinfo, cbinfo, 1)) < 0) {
 			PGP_ERROR(errors, PGP_E_R_BAD_FORMAT, "Unexpected EOF");
 			ret = -1;
 			break;
@@ -815,7 +835,7 @@ end:
 }
 
 static int 
-read4(dearmour_t *dearmour, pgp_error_t **errors,
+read4(pgp_stream_t *stream, dearmour_t *dearmour, pgp_error_t **errors,
       pgp_reader_t *readinfo, pgp_cbdata_t *cbinfo,
       int *pc, unsigned *pn, uint32_t *pl)
 {
@@ -823,7 +843,7 @@ read4(dearmour_t *dearmour, pgp_error_t **errors,
 	uint32_t   l = 0;
 
 	for (n = 0; n < 4; ++n) {
-		c = read_char(dearmour, errors, readinfo, cbinfo, 1);
+		c = read_char(stream, dearmour, errors, readinfo, cbinfo, 1);
 		if (c < 0) {
 			dearmour->eof64 = 1;
 			return -1;
@@ -870,12 +890,12 @@ pgp_crc24(unsigned checksum, uint8_t c)
 }
 
 static int 
-decode64(dearmour_t *dearmour, pgp_error_t **errors,
+decode64(pgp_stream_t *stream, dearmour_t *dearmour, pgp_error_t **errors,
 	 pgp_reader_t *readinfo, pgp_cbdata_t *cbinfo)
 {
 	unsigned        n;
 	int             n2;
-	uint32_t   l;
+	uint32_t	l;
 	int             c;
 	int             ret;
 
@@ -884,7 +904,7 @@ decode64(dearmour_t *dearmour, pgp_error_t **errors,
 		return 0;
 	}
 
-	ret = read4(dearmour, errors, readinfo, cbinfo, &c, &n, &l);
+	ret = read4(stream, dearmour, errors, readinfo, cbinfo, &c, &n, &l);
 	if (ret < 0) {
 		PGP_ERROR(errors, PGP_E_R_BAD_FORMAT, "Badly formed base64");
 		return 0;
@@ -907,7 +927,7 @@ decode64(dearmour_t *dearmour, pgp_error_t **errors,
 		dearmour->buffered = 1;
 		dearmour->eof64 = 1;
 		l >>= 4;
-		c = read_char(dearmour, errors, readinfo, cbinfo, 0);
+		c = read_char(stream, dearmour, errors, readinfo, cbinfo, 0);
 		if (c != '=') {
 			PGP_ERROR(errors, PGP_E_R_BAD_FORMAT,
 					"Badly terminated base64");
@@ -939,14 +959,14 @@ decode64(dearmour_t *dearmour, pgp_error_t **errors,
 			(void) fprintf(stderr, "decode64: bad c (=)\n");
 			return 0;
 		}
-		c = read_and_eat_whitespace(dearmour, errors, readinfo, cbinfo,
+		c = read_and_eat_whitespace(stream, dearmour, errors, readinfo, cbinfo,
 				1);
 		if (c != '\n') {
 			PGP_ERROR(errors, PGP_E_R_BAD_FORMAT,
 				"No newline at base64 end");
 			return 0;
 		}
-		c = read_char(dearmour, errors, readinfo, cbinfo, 0);
+		c = read_char(stream, dearmour, errors, readinfo, cbinfo, 0);
 		if (c != '=') {
 			PGP_ERROR(errors, PGP_E_R_BAD_FORMAT,
 				"No checksum at base64 end");
@@ -955,23 +975,23 @@ decode64(dearmour_t *dearmour, pgp_error_t **errors,
 	}
 	if (c == '=') {
 		/* now we are at the checksum */
-		ret = read4(dearmour, errors, readinfo, cbinfo, &c, &n,
+		ret = read4(stream, dearmour, errors, readinfo, cbinfo, &c, &n,
 				&dearmour->read_checksum);
 		if (ret < 0 || n != 4) {
 			PGP_ERROR(errors, PGP_E_R_BAD_FORMAT,
 					"Error in checksum");
 			return 0;
 		}
-		c = read_char(dearmour, errors, readinfo, cbinfo, 1);
+		c = read_char(stream, dearmour, errors, readinfo, cbinfo, 1);
 		if (dearmour->allow_trailing_whitespace)
-			c = eat_whitespace(c, dearmour, errors, readinfo, cbinfo,
+			c = eat_whitespace(stream, c, dearmour, errors, readinfo, cbinfo,
 					1);
 		if (c != '\n') {
 			PGP_ERROR(errors, PGP_E_R_BAD_FORMAT,
 					"Badly terminated checksum");
 			return 0;
 		}
-		c = read_char(dearmour, errors, readinfo, cbinfo, 0);
+		c = read_char(stream, dearmour, errors, readinfo, cbinfo, 0);
 		if (c != '-') {
 			PGP_ERROR(errors, PGP_E_R_BAD_FORMAT,
 					"Bad base64 trailer (2)");
@@ -980,7 +1000,7 @@ decode64(dearmour_t *dearmour, pgp_error_t **errors,
 	}
 	if (c == '-') {
 		for (n = 0; n < 4; ++n)
-			if (read_char(dearmour, errors, readinfo, cbinfo,
+			if (read_char(stream, dearmour, errors, readinfo, cbinfo,
 						0) != '-') {
 				PGP_ERROR(errors, PGP_E_R_BAD_FORMAT,
 						"Bad base64 trailer");
@@ -1024,7 +1044,7 @@ base64(dearmour_t *dearmour)
 /* packets... it also calls back for the text between the blocks. */
 
 static int 
-armoured_data_reader(void *dest_, size_t length, pgp_error_t **errors,
+armoured_data_reader(pgp_stream_t *stream, void *dest_, size_t length, pgp_error_t **errors,
 		     pgp_reader_t *readinfo,
 		     pgp_cbdata_t *cbinfo)
 {
@@ -1061,7 +1081,7 @@ armoured_data_reader(void *dest_, size_t length, pgp_error_t **errors,
 			 * it is just an EOF (and not a BLOCK_END)
 			 */
 			while (!dearmour->seen_nl) {
-				if ((c = unarmoured_read_char(dearmour, errors,
+				if ((c = unarmoured_read_char(stream, dearmour, errors,
 						readinfo, cbinfo, 1)) < 0) {
 					return 0;
 				}
@@ -1075,7 +1095,7 @@ armoured_data_reader(void *dest_, size_t length, pgp_error_t **errors,
 			flush(dearmour, cbinfo);
 			/* Find and consume the 5 leading '-' */
 			for (count = 0; count < 5; ++count) {
-				if ((c = unarmoured_read_char(dearmour, errors,
+				if ((c = unarmoured_read_char(stream, dearmour, errors,
 						readinfo, cbinfo, 0)) < 0) {
 					return 0;
 				}
@@ -1086,7 +1106,7 @@ armoured_data_reader(void *dest_, size_t length, pgp_error_t **errors,
 
 			/* Now find the block type */
 			for (n = 0; n < sizeof(buf) - 1;) {
-				if ((c = unarmoured_read_char(dearmour, errors,
+				if ((c = unarmoured_read_char(stream, dearmour, errors,
 						readinfo, cbinfo, 0)) < 0) {
 					return 0;
 				}
@@ -1103,7 +1123,7 @@ got_minus:
 
 			/* Consume trailing '-' */
 			for (count = 1; count < 5; ++count) {
-				if ((c = unarmoured_read_char(dearmour, errors,
+				if ((c = unarmoured_read_char(stream, dearmour, errors,
 						readinfo, cbinfo, 0)) < 0) {
 					return 0;
 				}
@@ -1114,12 +1134,12 @@ got_minus:
 			}
 
 			/* Consume final NL */
-			if ((c = unarmoured_read_char(dearmour, errors, readinfo,
+			if ((c = unarmoured_read_char(stream, dearmour, errors, readinfo,
 						cbinfo, 1)) < 0) {
 				return 0;
 			}
 			if (dearmour->allow_trailing_whitespace) {
-				if ((c = eat_whitespace(c, dearmour, errors,
+				if ((c = eat_whitespace(stream, c, dearmour, errors,
 						readinfo, cbinfo, 1)) < 0) {
 					return 0;
 				}
@@ -1139,7 +1159,7 @@ got_minus:
 			 * But now we've seen a header line, then errors are
 			 * EARLY_EOF
 			 */
-			if ((ret = parse_headers(dearmour, errors, readinfo,
+			if ((ret = parse_headers(stream, dearmour, errors, readinfo,
 					cbinfo)) <= 0) {
 				return -1;
 			}
@@ -1155,7 +1175,7 @@ got_minus:
 				CALLBACK(PGP_PTAG_CT_SIGNED_CLEARTEXT_HEADER,
 					cbinfo,
 					&content);
-				ret = process_dash_escaped(dearmour, errors,
+				ret = process_dash_escaped(stream, dearmour, errors,
 						readinfo, cbinfo);
 				if (ret <= 0) {
 					return ret;
@@ -1177,7 +1197,7 @@ got_minus:
 			while (length > 0) {
 				if (!dearmour->buffered) {
 					if (!dearmour->eof64) {
-						ret = decode64(dearmour,
+						ret = decode64(stream, dearmour,
 							errors, readinfo, cbinfo);
 						if (ret <= 0) {
 							return ret;
@@ -1214,7 +1234,7 @@ got_minus:
 
 		case AT_TRAILER_NAME:
 			for (n = 0; n < sizeof(buf) - 1;) {
-				if ((c = read_char(dearmour, errors, readinfo,
+				if ((c = read_char(stream, dearmour, errors, readinfo,
 						cbinfo, 0)) < 0) {
 					return -1;
 				}
@@ -1237,7 +1257,7 @@ got_minus2:
 
 			/* Consume trailing '-' */
 			for (count = 1; count < 5; ++count) {
-				if ((c = read_char(dearmour, errors, readinfo,
+				if ((c = read_char(stream, dearmour, errors, readinfo,
 						cbinfo, 0)) < 0) {
 					return -1;
 				}
@@ -1249,12 +1269,12 @@ got_minus2:
 			}
 
 			/* Consume final NL */
-			if ((c = read_char(dearmour, errors, readinfo, cbinfo,
+			if ((c = read_char(stream, dearmour, errors, readinfo, cbinfo,
 						1)) < 0) {
 				return -1;
 			}
 			if (dearmour->allow_trailing_whitespace) {
-				if ((c = eat_whitespace(c, dearmour, errors,
+				if ((c = eat_whitespace(stream, c, dearmour, errors,
 						readinfo, cbinfo, 1)) < 0) {
 					return 0;
 				}
@@ -1270,7 +1290,7 @@ got_minus2:
 						errors)) {
 					return -1;
 				}
-				if ((ret = parse_headers(dearmour, errors,
+				if ((ret = parse_headers(stream, dearmour, errors,
 						readinfo, cbinfo)) <= 0) {
 					return ret;
 				}
@@ -1375,7 +1395,7 @@ typedef struct {
 } encrypted_t;
 
 static int 
-encrypted_data_reader(void *dest,
+encrypted_data_reader(pgp_stream_t *stream, void *dest,
 			size_t length,
 			pgp_error_t **errors,
 			pgp_reader_t *readinfo,
@@ -1454,7 +1474,7 @@ encrypted_data_reader(void *dest,
 				n = (unsigned)length;
 			}
 
-			if (!pgp_stacked_limited_read(buffer, n,
+			if (!pgp_stacked_limited_read(stream, buffer, n,
 				encrypted->region, errors, readinfo, cbinfo)) {
 				return -1;
 			}
@@ -1551,7 +1571,7 @@ typedef struct {
   Then passes up plaintext as requested
 */
 static int 
-se_ip_data_reader(void *dest_,
+se_ip_data_reader(pgp_stream_t *stream, void *dest_,
 			size_t len,
 			pgp_error_t **errors,
 			pgp_reader_t *readinfo,
@@ -1592,7 +1612,7 @@ se_ip_data_reader(void *dest_,
 		}
 
 		/* read entire SE IP packet */
-		if (!pgp_stacked_limited_read(buf, decrypted_region.length,
+		if (!pgp_stacked_limited_read(stream, buf, decrypted_region.length,
 				&decrypted_region, errors, readinfo, cbinfo)) {
 			free(buf);
 			return -1;
@@ -1744,7 +1764,7 @@ typedef struct mmap_reader_t {
  * PGP_R_EARLY_EOF and PGP_R_ERROR push errors on the stack
  */
 static int 
-fd_reader(void *dest, size_t length, pgp_error_t **errors,
+fd_reader(pgp_stream_t *stream, void *dest, size_t length, pgp_error_t **errors,
 	  pgp_reader_t *readinfo, pgp_cbdata_t *cbinfo)
 {
 	mmap_reader_t	*reader;
@@ -1752,9 +1772,14 @@ fd_reader(void *dest, size_t length, pgp_error_t **errors,
 
 	__PGP_USED(cbinfo);
 	reader = pgp_reader_get_arg(readinfo);
-	n = (int)read(reader->fd, dest, length);
-	if (n == 0)
+	if (!stream->coalescing && stream->virtualc && stream->virtualoff < stream->virtualc) {
+		n = read_partial_data(stream, dest, length);
+	} else {
+		n = (int)read(reader->fd, dest, length);
+	}
+	if (n == 0) {
 		return 0;
+	}
 	if (n < 0) {
 		PGP_SYSTEM_ERROR_1(errors, PGP_E_R_READ_FAILED, "read",
 				   "file descriptor %d", reader->fd);
@@ -1796,7 +1821,7 @@ typedef struct {
 } reader_mem_t;
 
 static int 
-mem_reader(void *dest, size_t length, pgp_error_t **errors,
+mem_reader(pgp_stream_t *stream, void *dest, size_t length, pgp_error_t **errors,
 	   pgp_reader_t *readinfo, pgp_cbdata_t *cbinfo)
 {
 	reader_mem_t *reader = pgp_reader_get_arg(readinfo);
@@ -1804,18 +1829,20 @@ mem_reader(void *dest, size_t length, pgp_error_t **errors,
 
 	__PGP_USED(cbinfo);
 	__PGP_USED(errors);
-
-	if (reader->offset + length > reader->length)
-		n = (unsigned)(reader->length - reader->offset);
-	else
-		n = (unsigned)length;
-
-	if (n == (unsigned)0)
-		return 0;
-
-	memcpy(dest, reader->buffer + reader->offset, n);
-	reader->offset += n;
-
+	if (!stream->coalescing && stream->virtualc && stream->virtualoff < stream->virtualc) {
+		n = read_partial_data(stream, dest, length);
+	} else {
+		if (reader->offset + length > reader->length) {
+			n = (unsigned)(reader->length - reader->offset);
+		} else {
+			n = (unsigned)length;
+		}
+		if (n == (unsigned)0) {
+			return 0;
+		}
+		memcpy(dest, reader->buffer + reader->offset, n);
+		reader->offset += n;
+	}
 	return n;
 }
 
@@ -2266,7 +2293,7 @@ pgp_reader_set_accumulate(pgp_stream_t *stream, unsigned state)
 /**************************************************************************/
 
 static int 
-hash_reader(void *dest,
+hash_reader(pgp_stream_t *stream, void *dest,
 		size_t length,
 		pgp_error_t **errors,
 		pgp_reader_t *readinfo,
@@ -2275,7 +2302,7 @@ hash_reader(void *dest,
 	pgp_hash_t	*hash = pgp_reader_get_arg(readinfo);
 	int		 r;
 	
-	r = pgp_stacked_read(dest, length, errors, readinfo, cbinfo);
+	r = pgp_stacked_read(stream, dest, length, errors, readinfo, cbinfo);
 	if (r <= 0) {
 		return r;
 	}
@@ -2310,7 +2337,7 @@ pgp_reader_pop_hash(pgp_stream_t *stream)
 
 /* read memory from the previously mmap-ed file */
 static int 
-mmap_reader(void *dest, size_t length, pgp_error_t **errors,
+mmap_reader(pgp_stream_t *stream, void *dest, size_t length, pgp_error_t **errors,
 	  pgp_reader_t *readinfo, pgp_cbdata_t *cbinfo)
 {
 	mmap_reader_t	*mem = pgp_reader_get_arg(readinfo);
@@ -2319,10 +2346,14 @@ mmap_reader(void *dest, size_t length, pgp_error_t **errors,
 
 	__PGP_USED(errors);
 	__PGP_USED(cbinfo);
-	n = (unsigned)MIN(length, (unsigned)(mem->size - mem->offset));
-	if (n > 0) {
-		(void) memcpy(dest, &cmem[(int)mem->offset], (unsigned)n);
-		mem->offset += n;
+	if (!stream->coalescing && stream->virtualc && stream->virtualoff < stream->virtualc) {
+		n = read_partial_data(stream, dest, length);
+	} else {
+		n = (unsigned)MIN(length, (unsigned)(mem->size - mem->offset));
+		if (n > 0) {
+			(void) memcpy(dest, &cmem[(int)mem->offset], (unsigned)n);
+			mem->offset += n;
+		}
 	}
 	return (int)n;
 }

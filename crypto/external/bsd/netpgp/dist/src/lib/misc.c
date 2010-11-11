@@ -57,7 +57,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: misc.c,v 1.38 2010/11/07 08:39:59 agc Exp $");
+__RCSID("$NetBSD: misc.c,v 1.39 2010/11/11 00:58:04 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -1159,7 +1159,7 @@ pgp_finish(void)
 }
 
 static int 
-sum16_reader(void *dest_, size_t length, pgp_error_t **errors,
+sum16_reader(pgp_stream_t *stream, void *dest_, size_t length, pgp_error_t **errors,
 	     pgp_reader_t *readinfo, pgp_cbdata_t *cbinfo)
 {
 	const uint8_t	*dest = dest_;
@@ -1167,7 +1167,7 @@ sum16_reader(void *dest_, size_t length, pgp_error_t **errors,
 	int		 r;
 	int		 n;
 
-	r = pgp_stacked_read(dest_, length, errors, readinfo, cbinfo);
+	r = pgp_stacked_read(stream, dest_, length, errors, readinfo, cbinfo);
 	if (r < 0) {
 		return r;
 	}
