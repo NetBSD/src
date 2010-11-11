@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.5 2010/05/01 23:31:01 pooka Exp $
+#	$NetBSD: Makefile,v 1.6 2010/11/11 23:01:00 pooka Exp $
 #
 
-SUBDIR=	btplay img2cgd pad_nothai sdread swwdog_arm tipsy ttyserv	\
+SUBDIR=	btplay sdread tipsy ttyserv	\
 	ulptprint umserv ukbd_read ums_draw wirelessconf
 
 .include <bsd.subdir.mk>
