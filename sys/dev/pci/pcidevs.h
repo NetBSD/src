@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1048 2010/11/06 14:21:41 jakllsch Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1049 2010/11/11 14:38:36 cegger Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1051 2010/11/06 14:20:34 jakllsch Exp
+ *	NetBSD: pcidevs,v 1.1052 2010/11/11 14:37:41 cegger Exp
  */
 
 /*
@@ -991,6 +991,12 @@
 #define	PCI_PRODUCT_AMD_PBC8111_AC_756b	0x756b		/* AMD8111 756b ACPI Controller */
 #define	PCI_PRODUCT_AMD_HUDSON2_IDE	0x780c		/* HUDSON-2 IDE Controller */
 #define	PCI_PRODUCT_AMD_HUDSON2_SATA	0x7800		/* HUDSON-2 SATA Controller */
+#define	PCI_PRODUCT_AMD_RS880_HB	0x9601		/* RS880 Host Bridge */
+#define	PCI_PRODUCT_AMD_RS780_PPB_GFX	0x9602		/* RS780 PCI-PCI Bridge (int gfx) */
+#define	PCI_PRODUCT_AMD_RS780_PPB_GFX0	0x9603		/* RS780 PCI-PCI Bridge (ext gfx port 0) */
+#define	PCI_PRODUCT_AMD_RS780_PPB0	0x9604		/* RS780 PCI-PCIE Bridge (port 0) */
+#define	PCI_PRODUCT_AMD_RS780_PPB1	0x9605		/* RS780 PCI-PCIE Brdige (port 1) */
+#define	PCI_PRODUCT_AMD_RS780_PPB2	0x9606		/* RS780 PCI-PCIE Bridge (port 2) */
 
 /* American Megatrends products */
 #define	PCI_PRODUCT_AMI_MEGARAID	0x9010		/* MegaRAID */
@@ -1384,6 +1390,7 @@
 #define	PCI_PRODUCT_ATI_RADEON_X850XT_S	0x5d72		/* Radeon X850 XT Secondary */
 #define	PCI_PRODUCT_ATI_RADEON_X700	0x5e4b		/* Radeon X700 Pro */
 #define	PCI_PRODUCT_ATI_RADEON_X700_S	0x5e6b		/* Radeon X700 Pro Secondary */
+#define	PCI_PRODUCT_ATI_RADEON_HD5600_RD	0x68c1		/* Redwood */
 #define	PCI_PRODUCT_ATI_RADEON_X1300	0x7146		/* Radeon X1300 Series (RV515) */
 #define	PCI_PRODUCT_ATI_RADEON_X1300_S	0x7166		/* Radeon X1300 Series (RV515) Secondary */
 #define	PCI_PRODUCT_ATI_RADEON_X1600	0x71c5		/* Radeon Mobility X1600 */
@@ -1396,9 +1403,11 @@
 #define	PCI_PRODUCT_ATI_RS690_PPB_7916	0x7916		/* RS690 PCI to PCI-Express Port 2 Bridge */
 #define	PCI_PRODUCT_ATI_RS690_PPB_7917	0x7917		/* RS690 PCI to PCI-Express Port 3 Bridge */
 #define	PCI_PRODUCT_ATI_RADEON_HD4250_S	0x95C5		/* Radeon HD4250 GPU (RV610) Secondary */
+#define	PCI_PRODUCT_ATI_RADEON_HD4200	0x9712		/* Radeon HD4200 Mobility */
 #define	PCI_PRODUCT_ATI_RADEON_HD4250	0x9715		/* Radeon HD4250 GPU (RS880) */
 #define	PCI_PRODUCT_ATI_RADEON_HD2600_XT	0x9588		/* Radeon HD2600 XT GDDR3 */
 #define	PCI_PRODUCT_ATI_RADEON_HD2600_HD	0xaa08		/* Radeon HD2600 HD Audio Controller */
+#define	PCI_PRODUCT_ATI_RADEON_HD5600_HDMI	0xaa60		/* Redwood HDMI Audio */
 
 /* Auravision products */
 #define	PCI_PRODUCT_AURAVISION_VXP524	0x01f7		/* VxP524 PCI Video Processor */
@@ -1420,6 +1429,7 @@
 #define	PCI_PRODUCT_ATHEROS_AR5311	0x0011		/* AR5211 Wireless LAN */
 #define	PCI_PRODUCT_ATHEROS_AR5211	0x0012		/* AR5211 Wireless LAN */
 #define	PCI_PRODUCT_ATHEROS_AR5212	0x0013		/* AR5212 Wireless LAN */
+#define	PCI_PRODUCT_ATHEROS_AR9285	0x002b		/* AR9285 Wireless LAN */
 #define	PCI_PRODUCT_ATHEROS_AR5201_AP	0x0207		/* AR5201 Wireless LAN Reference Card (Early AP11) */
 #define	PCI_PRODUCT_ATHEROS_AR5201_DEFAULT	0x1107		/* AR5201 Wireless LAN (no eeprom) */
 #define	PCI_PRODUCT_ATHEROS_AR5212_DEFAULT	0x1113		/* AR5212 Wireless LAN (no eeprom) */
