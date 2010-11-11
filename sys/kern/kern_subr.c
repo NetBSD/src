@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.207 2010/04/14 14:46:59 pooka Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.208 2010/11/11 11:07:07 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.207 2010/04/14 14:46:59 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.208 2010/11/11 11:07:07 hannken Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -102,6 +102,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.207 2010/04/14 14:46:59 pooka Exp $"
 #include <sys/ptrace.h>
 #include <sys/fcntl.h>
 #include <sys/kauth.h>
+#include <sys/stat.h>
 #include <sys/vnode.h>
 #include <sys/module.h>
 
@@ -152,15 +153,10 @@ isswap(device_t dv)
  * Determine the root device and, if instructed to, the root file system.
  */
 
-#include "md.h"
-
-#if NMD > 0
-extern struct cfdriver md_cd;
 #ifdef MEMORY_DISK_IS_ROOT
 int md_is_root = 1;
 #else
 int md_is_root = 0;
-#endif
 #endif
 
 /*
@@ -201,16 +197,23 @@ setroot(device_t bootdv, int bootpartition)
 		boothowto |= RB_ASKNAME;
 #endif
 
-#if NMD > 0
+	/*
+	 * For root on md0 we have to force the attachment of md0.
+	 */
 	if (md_is_root) {
-		/*
-		 * XXX there should be "root on md0" in the config file,
-		 * but it isn't always
-		 */
-		bootdv = md_cd.cd_devs[0];
-		bootpartition = 0;
+		int md_major;
+		dev_t md_dev;
+
+		bootdv = NULL;
+		md_major = devsw_name2blk("md", NULL, 0);
+		if (md_major >= 0) {
+			md_dev = MAKEDISKDEV(md_major, 0, RAW_PART);
+			if (bdev_open(md_dev, FREAD, S_IFBLK, curlwp) == 0)
+				bootdv = device_find_by_xname("md0");
+		}
+		if (bootdv == NULL)
+			panic("Cannot open \"md0\" (root)");
 	}
-#endif
 
 	/*
 	 * If NFS is specified as the file system, and we found
