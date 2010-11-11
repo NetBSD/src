@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.160 2010/11/11 15:51:05 uebayasi Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.161 2010/11/11 15:59:27 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.160 2010/11/11 15:51:05 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.161 2010/11/11 15:59:27 uebayasi Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -467,7 +467,7 @@ uvm_page_init(vaddr_t *kvm_startp, vaddr_t *kvm_endp)
 		seg->pgs = pagearray;
 		pagearray += n;
 		pagecount -= n;
-		seg->lastpg = seg->pgs + (n - 1);
+		seg->lastpg = seg->pgs + n;
 
 		/* init and free vm_pages (we've already zeroed them) */
 		paddr = ctob(seg->start);
@@ -861,7 +861,7 @@ uvm_page_physload(paddr_t start, paddr_t end, paddr_t avail_start,
 		ps->pgs = NULL;
 	} else {
 		ps->pgs = pgs;
-		ps->lastpg = pgs + npages - 1;
+		ps->lastpg = pgs + npages;
 	}
 	ps->free_list = free_list;
 	vm_nphysmem++;
@@ -1987,7 +1987,7 @@ uvm_page_printall(void (*pr)(const char *, ...))
 #endif
 	    "\n", "PAGE", "FLAG", "PQ", "UOBJECT", "UANON");
 	for (i = 0; i < vm_nphysmem; i++) {
-		for (pg = VM_PHYSMEM_PTR(i)->pgs; pg <= VM_PHYSMEM_PTR(i)->lastpg; pg++) {
+		for (pg = VM_PHYSMEM_PTR(i)->pgs; pg < VM_PHYSMEM_PTR(i)->lastpg; pg++) {
 			(*pr)("%18p %04x %04x %18p %18p",
 			    pg, pg->flags, pg->pqflags, pg->uobject,
 			    pg->uanon);
