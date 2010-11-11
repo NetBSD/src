@@ -1,4 +1,4 @@
-/*	$NetBSD: swwdog.c,v 1.11 2010/08/06 16:02:56 pooka Exp $	*/
+/*	$NetBSD: swwdog.c,v 1.12 2010/11/11 21:55:04 pooka Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Steven M. Bellovin
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: swwdog.c,v 1.11 2010/08/06 16:02:56 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: swwdog.c,v 1.12 2010/11/11 21:55:04 pooka Exp $");
 
 /*
  *
@@ -49,6 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: swwdog.c,v 1.11 2010/08/06 16:02:56 pooka Exp $");
 #include <sys/systm.h>
 #include <sys/sysctl.h>
 #include <sys/wdog.h>
+#include <sys/workqueue.h>
 #include <dev/sysmon/sysmonvar.h>
 
 #include "ioconf.h"
@@ -85,17 +86,32 @@ CFATTACH_DECL_NEW(swwdog, sizeof(struct swwdog_softc),
 static void swwdog_sysctl_setup(void);
 static struct sysctllog *swwdog_sysctllog;
 
+static void
+doreboot(struct work *wrkwrkwrk, void *p)
+{
+
+	cpu_reboot(0, NULL);
+}
+
+static struct workqueue *wq;
+
 void
 swwdogattach(int n __unused)
 {
 	int err;
 	static struct cfdata cf;
 
+	if (workqueue_create(&wq, "swwreboot", doreboot, NULL,
+	    PRI_NONE, IPL_NONE, 0) != 0) {
+		aprint_error("failed to create swwdog reboot wq");
+	}
+
 	err = config_cfattach_attach(swwdog_cd.cd_name, &swwdog_ca);
 	if (err) {
 		aprint_error("%s: couldn't register cfattach: %d\n",
 		    swwdog_cd.cd_name, err);
 		config_cfdriver_detach(&swwdog_cd);
+		workqueue_destroy(wq);
 		return;
 	}
 
@@ -149,6 +165,7 @@ swwdog_detach(device_t self, int flags)
 	swwdog_disarm(sc);
 	callout_destroy(&sc->sc_c);
 	sysctl_teardown(&swwdog_sysctllog);
+	workqueue_destroy(wq);
 
 	return 1;
 }
@@ -211,6 +228,7 @@ static void
 swwdog_panic(void *vsc)
 {
 	struct swwdog_softc *sc = vsc;
+	static struct work wk; /* we'll need it max once */
 	bool do_panic;
 
 	do_panic = !swwdog_reboot;
@@ -223,7 +241,7 @@ swwdog_panic(void *vsc)
 	if (do_panic)
 		panic("watchdog timer expired");
 	else
-		cpu_reboot(0, NULL);
+		workqueue_enqueue(wq, &wk, NULL);
 }
 
 static void
