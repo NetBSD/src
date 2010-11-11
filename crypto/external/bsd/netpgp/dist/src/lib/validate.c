@@ -54,7 +54,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: validate.c,v 1.42 2010/11/07 08:39:59 agc Exp $");
+__RCSID("$NetBSD: validate.c,v 1.43 2010/11/11 00:58:04 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -90,12 +90,13 @@ __RCSID("$NetBSD: validate.c,v 1.42 2010/11/07 08:39:59 agc Exp $");
 
 
 static int 
-keydata_reader(void *dest, size_t length, pgp_error_t **errors,
+keydata_reader(pgp_stream_t *stream, void *dest, size_t length, pgp_error_t **errors,
 	       pgp_reader_t *readinfo,
 	       pgp_cbdata_t *cbinfo)
 {
 	validate_reader_t *reader = pgp_reader_get_arg(readinfo);
 
+	__PGP_USED(stream);
 	__PGP_USED(errors);
 	__PGP_USED(cbinfo);
 	if (reader->offset == reader->key->packets[reader->packet].length) {

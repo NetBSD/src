@@ -58,8 +58,11 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: packet-parse.c,v 1.45 2010/11/07 08:39:59 agc Exp $");
+__RCSID("$NetBSD: packet-parse.c,v 1.46 2010/11/11 00:58:04 agc Exp $");
 #endif
+
+#include <sys/types.h>
+#include <sys/param.h>
 
 #ifdef HAVE_OPENSSL_CAST_H
 #include <openssl/cast.h>
@@ -122,7 +125,7 @@ limread_data(pgp_data_t *data, unsigned len,
 		return 0;
 	}
 
-	return pgp_limited_read(data->contents, data->len, subregion,
+	return pgp_limited_read(stream, data->contents, data->len, subregion,
 			&stream->errors, &stream->readinfo, &stream->cbinfo);
 }
 
@@ -161,7 +164,7 @@ read_unsig_str(uint8_t **str, pgp_region_t *subregion,
 		return 0;
 	}
 	if (len &&
-	    !pgp_limited_read(*str, len, subregion, &stream->errors,
+	    !pgp_limited_read(stream, *str, len, subregion, &stream->errors,
 				     &stream->readinfo, &stream->cbinfo)) {
 		return 0;
 	}
@@ -216,7 +219,7 @@ pgp_init_subregion(pgp_region_t *subregion, pgp_region_t *region)
  */
 
 static int 
-sub_base_read(void *dest, size_t length, pgp_error_t **errors,
+sub_base_read(pgp_stream_t *stream, void *dest, size_t length, pgp_error_t **errors,
 	      pgp_reader_t *readinfo, pgp_cbdata_t *cbinfo)
 {
 	size_t          n;
@@ -228,8 +231,8 @@ sub_base_read(void *dest, size_t length, pgp_error_t **errors,
 	for (n = 0; n < length;) {
 		int	r;
 
-		r = readinfo->reader((char *) dest + n, length - n, errors,
-				readinfo, cbinfo);
+		r = readinfo->reader(stream, (char *) dest + n, length - n, errors,
+			readinfo, cbinfo);
 		if (r > (int)(length - n)) {
 			(void) fprintf(stderr, "sub_base_read: bad read\n");
 			return 0;
@@ -279,17 +282,17 @@ sub_base_read(void *dest, size_t length, pgp_error_t **errors,
 }
 
 int 
-pgp_stacked_read(void *dest, size_t length, pgp_error_t **errors,
+pgp_stacked_read(pgp_stream_t *stream, void *dest, size_t length, pgp_error_t **errors,
 		 pgp_reader_t *readinfo, pgp_cbdata_t *cbinfo)
 {
-	return sub_base_read(dest, length, errors, readinfo->next, cbinfo);
+	return sub_base_read(stream, dest, length, errors, readinfo->next, cbinfo);
 }
 
 /* This will do a full read so long as length < MAX_INT */
 static int 
 base_read(uint8_t *dest, size_t length, pgp_stream_t *stream)
 {
-	return sub_base_read(dest, length, &stream->errors, &stream->readinfo,
+	return sub_base_read(stream, dest, length, &stream->errors, &stream->readinfo,
 			     &stream->cbinfo);
 }
 
@@ -299,7 +302,7 @@ base_read(uint8_t *dest, size_t length, pgp_stream_t *stream)
  */
 
 static size_t 
-full_read(uint8_t *dest,
+full_read(pgp_stream_t *stream, uint8_t *dest,
 		size_t length,
 		int *last_read,
 		pgp_error_t **errors,
@@ -311,7 +314,7 @@ full_read(uint8_t *dest,
 				 * == 0 */
 
 	for (t = 0; t < length;) {
-		r = sub_base_read(dest + t, length - t, errors, readinfo,
+		r = sub_base_read(stream, dest + t, length - t, errors, readinfo,
 				cbinfo);
 		if (r <= 0) {
 			*last_read = r;
@@ -391,7 +394,7 @@ _read_scalar(unsigned *result, unsigned length,
  * \return		1 on success, 0 on error
  */
 unsigned 
-pgp_limited_read(uint8_t *dest,
+pgp_limited_read(pgp_stream_t *stream, uint8_t *dest,
 			size_t length,
 			pgp_region_t *region,
 			pgp_error_t **errors,
@@ -406,7 +409,7 @@ pgp_limited_read(uint8_t *dest,
 		PGP_ERROR(errors, PGP_E_P_NOT_ENOUGH_DATA, "Not enough data");
 		return 0;
 	}
-	r = full_read(dest, length, &lr, errors, readinfo, cbinfo);
+	r = full_read(stream, dest, length, &lr, errors, readinfo, cbinfo);
 	if (lr < 0) {
 		PGP_ERROR(errors, PGP_E_R_READ_FAILED, "Read failed");
 		return 0;
@@ -432,13 +435,13 @@ pgp_limited_read(uint8_t *dest,
    \brief Call pgp_limited_read on next in stack
 */
 unsigned 
-pgp_stacked_limited_read(uint8_t *dest, unsigned length,
+pgp_stacked_limited_read(pgp_stream_t *stream, uint8_t *dest, unsigned length,
 			 pgp_region_t *region,
 			 pgp_error_t **errors,
 			 pgp_reader_t *readinfo,
 			 pgp_cbdata_t *cbinfo)
 {
-	return pgp_limited_read(dest, length, region, errors,
+	return pgp_limited_read(stream, dest, length, region, errors,
 				readinfo->next, cbinfo);
 }
 
@@ -446,7 +449,7 @@ static unsigned
 limread(uint8_t *dest, unsigned length,
 	     pgp_region_t *region, pgp_stream_t *info)
 {
-	return pgp_limited_read(dest, length, region, &info->errors,
+	return pgp_limited_read(info, dest, length, region, &info->errors,
 				&info->readinfo, &info->cbinfo);
 }
 
@@ -692,6 +695,39 @@ limread_mpi(BIGNUM **pbn, pgp_region_t *region, pgp_stream_t *stream)
 	return 1;
 }
 
+static unsigned read_new_length(unsigned *, pgp_stream_t *);
+
+/* allocate space, read, and stash data away in a virtual pkt */
+static void
+streamread(pgp_stream_t *stream, unsigned c)
+{
+	int	cc;
+
+	stream->virtualpkt = realloc(stream->virtualpkt, stream->virtualc + c);
+	cc = stream->readinfo.reader(stream, &stream->virtualpkt[stream->virtualc],
+		c, &stream->errors, &stream->readinfo, &stream->cbinfo);
+	stream->virtualc += cc;
+}
+
+/* coalesce all the partial blocks together */
+static int
+coalesce_blocks(pgp_stream_t *stream, unsigned length)
+{
+	unsigned	c;
+
+	stream->coalescing = 1;
+	/* already read a partial block length - prime the array */
+	streamread(stream, length);
+	while (read_new_length(&c, stream) && stream->partial_read) {
+		/* length we read is partial - add to end of array */
+		streamread(stream, c);
+	}
+	/* not partial - add the last extent to the end of the array */
+	streamread(stream, c);
+	stream->coalescing = 0;
+	return 1;
+}
+
 /** Read some data with a New-Format length from reader.
  *
  * \sa Internet-Draft RFC4880.txt Section 4.2.2
@@ -707,31 +743,39 @@ read_new_length(unsigned *length, pgp_stream_t *stream)
 {
 	uint8_t   c;
 
-	if (base_read(&c, 1, stream) != 1)
+	stream->partial_read = 0;
+	if (base_read(&c, 1, stream) != 1) {
 		return 0;
+	}
 	if (c < 192) {
 		/* 1. One-octet packet */
 		*length = c;
 		return 1;
-	} else if (c >= 192 && c <= 223) {
+	}
+	if (c < 224) {
 		/* 2. Two-octet packet */
 		unsigned        t = (c - 192) << 8;
 
-		if (base_read(&c, 1, stream) != 1)
+		if (base_read(&c, 1, stream) != 1) {
 			return 0;
+		}
 		*length = t + c + 192;
 		return 1;
-	} else if (c == 255) {
-		/* 3. Five-Octet packet */
-		return _read_scalar(length, 4, stream);
-	} else if (c >= 224 && c < 255) {
-		/* 4. Partial Body Length */
-		/* XXX - agc - gpg multi-recipient encryption uses this */
-		PGP_ERROR(&stream->errors, PGP_E_UNIMPLEMENTED,
-		"New format Partial Body Length fields not yet implemented");
-		return 0;
 	}
-	return 0;
+	if (c < 255) {
+		/* 3. Partial Body Length */
+		stream->partial_read = 1;
+		*length = 1 << (c & 0x1f);
+		if (!stream->coalescing) {
+			/* we have been called from coalesce_blocks -
+			 * just return with the partial length */
+			coalesce_blocks(stream, *length);
+			*length = stream->virtualc;
+		}
+		return 1;
+	}
+	/* 4. Five-Octet packet */
+	return _read_scalar(length, 4, stream);
 }
 
 /** Read the length information for a new format Packet Tag.
@@ -764,13 +808,24 @@ limited_read_new_length(unsigned *length, pgp_region_t *region,
 		*length = c;
 		return 1;
 	}
-	if (c < 255) {
+	if (c < 224) {
 		unsigned        t = (c - 192) << 8;
 
 		if (!limread(&c, 1, region, stream)) {
 			return 0;
 		}
 		*length = t + c + 192;
+		return 1;
+	}
+	if (c < 255) {
+		stream->partial_read = 1;
+		*length = 1 << (c & 0x1f);
+		if (!stream->coalescing) {
+			/* we have been called from coalesce_blocks -
+			 * just return with the partial length */
+			coalesce_blocks(stream, *length);
+			*length = stream->virtualc;
+		}
 		return 1;
 	}
 	return limread_scalar(length, 4, region, stream);
@@ -2655,6 +2710,7 @@ parse_pk_sesskey(pgp_region_t *region,
 	uint8_t		 	 unencoded_m_buf[1024];
 
 	if (!limread(&c, 1, region, stream)) {
+		(void) fprintf(stderr, "parse_pk_sesskey - can't read char in region\n");
 		return 0;
 	}
 	pkt.u.pk_sesskey.version = c;
@@ -2711,8 +2767,15 @@ parse_pk_sesskey(pgp_region_t *region,
 	sesskey.u.get_seckey.seckey = &secret;
 	sesskey.u.get_seckey.pk_sesskey = &pkt.u.pk_sesskey;
 
+	if (pgp_get_debug_level(__FILE__)) {
+		(void) fprintf(stderr, "getting secret key via callback\n");
+	}
+
 	CALLBACK(PGP_GET_SECKEY, &stream->cbinfo, &sesskey);
 
+	if (pgp_get_debug_level(__FILE__)) {
+		(void) fprintf(stderr, "got secret key via callback\n");
+	}
 	if (!secret) {
 		CALLBACK(PGP_PTAG_CT_ENCRYPTED_PK_SESSION_KEY, &stream->cbinfo,
 			&pkt);
@@ -2728,6 +2791,9 @@ parse_pk_sesskey(pgp_region_t *region,
 
 	/* PKA */
 	pkt.u.pk_sesskey.symm_alg = (pgp_symm_alg_t)unencoded_m_buf[0];
+	if (pgp_get_debug_level(__FILE__)) {
+		(void) fprintf(stderr, "symm alg %d\n", pkt.u.pk_sesskey.symm_alg);
+	}
 
 	if (!pgp_is_sa_supported(pkt.u.pk_sesskey.symm_alg)) {
 		/* ERR1P */
@@ -2738,6 +2804,9 @@ parse_pk_sesskey(pgp_region_t *region,
 		return 0;
 	}
 	k = pgp_key_size(pkt.u.pk_sesskey.symm_alg);
+	if (pgp_get_debug_level(__FILE__)) {
+		(void) fprintf(stderr, "key size %d\n", k);
+	}
 
 	if ((unsigned) n != k + 3) {
 		PGP_ERROR_2(&stream->errors, PGP_E_PROTO_DECRYPTED_MSG_WRONG_LEN,
@@ -2758,7 +2827,7 @@ parse_pk_sesskey(pgp_region_t *region,
 	pkt.u.pk_sesskey.checksum = unencoded_m_buf[k + 1] +
 			(unencoded_m_buf[k + 2] << 8);
 	if (pgp_get_debug_level(__FILE__)) {
-		printf("session key checksum: %2x %2x\n",
+		(void) fprintf(stderr, "session key checksum: %2x %2x\n",
 			unencoded_m_buf[k + 1], unencoded_m_buf[k + 2]);
 	}
 
@@ -2772,8 +2841,15 @@ parse_pk_sesskey(pgp_region_t *region,
 		unencoded_m_buf[k + 2]);
 		return 0;
 	}
+
+	if (pgp_get_debug_level(__FILE__)) {
+		(void) fprintf(stderr, "getting pk session key via callback\n");
+	}
 	/* all is well */
 	CALLBACK(PGP_PTAG_CT_PK_SESSION_KEY, &stream->cbinfo, &pkt);
+	if (pgp_get_debug_level(__FILE__)) {
+		(void) fprintf(stderr, "got pk session key via callback\n");
+	}
 
 	pgp_crypt_any(&stream->decrypt, pkt.u.pk_sesskey.symm_alg);
 	iv = calloc(1, stream->decrypt.blocksize);
@@ -2858,6 +2934,9 @@ pgp_decrypt_se_ip_data(pgp_content_enum tag, pgp_region_t *region,
 
 	decrypt = pgp_get_decrypt(stream);
 	if (decrypt) {
+		if (pgp_get_debug_level(__FILE__)) {
+			(void) fprintf(stderr, "pgp_decrypt_se_ip_data: decrypt: num %d, alg %d, blocksize %d, keysize %d\n", decrypt->num, decrypt->alg, decrypt->blocksize, decrypt->keysize);
+		}
 		pgp_reader_push_decrypt(stream, decrypt, region);
 		pgp_reader_push_se_ip_data(stream, decrypt, region);
 
@@ -2868,6 +2947,9 @@ pgp_decrypt_se_ip_data(pgp_content_enum tag, pgp_region_t *region,
 	} else {
 		pgp_packet_t pkt;
 
+		if (pgp_get_debug_level(__FILE__)) {
+			(void) fprintf(stderr, "pgp_decrypt_se_ip_data: no decrypt\n");
+		}
 		while (region->readc < region->length) {
 			unsigned        len;
 
@@ -2923,12 +3005,19 @@ parse_se_ip_data(pgp_region_t *region, pgp_stream_t *stream)
 		return 0;
 	}
 	pkt.u.se_ip_data_header = c;
-
+	if (pgp_get_debug_level(__FILE__)) {
+		(void) fprintf(stderr, "parse_se_ip_data: data header %d\n", c);
+	}
 	if (pkt.u.se_ip_data_header != PGP_SE_IP_DATA_VERSION) {
 		(void) fprintf(stderr, "parse_se_ip_data: bad version\n");
 		return 0;
 	}
 
+	if (pgp_get_debug_level(__FILE__)) {
+		(void) fprintf(stderr, "parse_se_ip_data: region %d,%d\n",
+			region->readc, region->length);
+		hexdump(stderr, "compressed region", stream->virtualpkt, stream->virtualc);
+	}
 	/*
 	 * The content of an encrypted data packet is more OpenPGP packets
 	 * once decrypted, so recursively handle them
@@ -2985,8 +3074,8 @@ pgp_parse_packet(pgp_stream_t *stream, uint32_t *pktlen)
 
 	if (pgp_get_debug_level(__FILE__)) {
 		(void) fprintf(stderr,
-			"pgp_parse_packet: base_read returned %d\n",
-			ret);
+			"pgp_parse_packet: base_read returned %d, ptag %d\n",
+			ret, ptag);
 	}
 
 	/* errors in the base read are effectively EOF. */
