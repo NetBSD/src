@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.238 2010/09/07 17:10:08 pooka Exp $
+	$NetBSD: syscalls.master,v 1.239 2010/11/11 14:47:41 pooka Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -788,7 +788,7 @@
 			    psetid_t *opsid); }
 415	STD 		{ int|sys||_pset_bind(idtype_t idtype, id_t first_id, \
 			    id_t second_id, psetid_t psid, psetid_t *opsid); }
-416	STD 		{ int|sys|50|posix_fadvise(int fd, int PAD, \
+416	STD  RUMP	{ int|sys|50|posix_fadvise(int fd, int PAD, \
 			    off_t offset, off_t len, int advice); }
 417	STD  RUMP	{ int|sys|50|select(int nd, fd_set *in, fd_set *ou, \
 			    fd_set *ex, struct timeval *tv); }
