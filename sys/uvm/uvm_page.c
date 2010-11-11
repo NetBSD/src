@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.153.2.61 2010/11/11 16:20:28 uebayasi Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.153.2.62 2010/11/11 16:22:25 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.153.2.61 2010/11/11 16:20:28 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.153.2.62 2010/11/11 16:22:25 uebayasi Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -843,7 +843,7 @@ uvm_page_physload_device(paddr_t start, paddr_t end, int prot, int flags)
 	seg->flags = flags;
 
 	/*
-	 * Managed device page metadata initialization
+	 * Device page metadata initialization
 	 * - Pages are not used for general purpose memory.
 	 *   - Pages are not put in free lists.
 	 * - Pages are not paged out ("fixed").
