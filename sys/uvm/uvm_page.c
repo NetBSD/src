@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.158 2010/11/11 14:50:54 uebayasi Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.159 2010/11/11 15:47:43 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.158 2010/11/11 14:50:54 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.159 2010/11/11 15:47:43 uebayasi Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -367,8 +367,8 @@ uvm_page_init(vaddr_t *kvm_startp, vaddr_t *kvm_endp)
 	static struct uvm_cpu boot_cpu;
 	psize_t freepages, pagecount, bucketcount, n;
 	struct pgflbucket *bucketarray, *cpuarray;
-	struct vm_page *pagearray;
 	struct vm_physseg *seg;
+	struct vm_page *pagearray;
 	int lcv;
 	u_int i;
 	paddr_t paddr;
@@ -654,6 +654,7 @@ static bool uvm_page_physget_freelist(paddr_t *, int);
 static bool
 uvm_page_physget_freelist(paddr_t *paddrp, int freelist)
 {
+	struct vm_physseg *seg;
 	int lcv, x;
 
 	/* pass 1: try allocating from a matching end */
@@ -663,22 +664,22 @@ uvm_page_physget_freelist(paddr_t *paddrp, int freelist)
 	for (lcv = 0 ; lcv < vm_nphysmem ; lcv++)
 #endif
 	{
+		seg = VM_PHYSMEM_PTR(lcv);
 
 		if (uvm.page_init_done == true)
 			panic("uvm_page_physget: called _after_ bootstrap");
 
-		if (vm_physmem[lcv].free_list != freelist)
+		if (seg->free_list != freelist)
 			continue;
 
 		/* try from front */
-		if (vm_physmem[lcv].avail_start == vm_physmem[lcv].start &&
-		    vm_physmem[lcv].avail_start < vm_physmem[lcv].avail_end) {
-			*paddrp = ctob(vm_physmem[lcv].avail_start);
-			vm_physmem[lcv].avail_start++;
-			vm_physmem[lcv].start++;
+		if (seg->avail_start == seg->start &&
+		    seg->avail_start < seg->avail_end) {
+			*paddrp = ctob(seg->avail_start);
+			seg->avail_start++;
+			seg->start++;
 			/* nothing left?   nuke it */
-			if (vm_physmem[lcv].avail_start ==
-			    vm_physmem[lcv].end) {
+			if (seg->avail_start == seg->end) {
 				if (vm_nphysmem == 1)
 				    panic("uvm_page_physget: out of memory!");
 				vm_nphysmem--;
@@ -690,14 +691,13 @@ uvm_page_physget_freelist(paddr_t *paddrp, int freelist)
 		}
 
 		/* try from rear */
-		if (vm_physmem[lcv].avail_end == vm_physmem[lcv].end &&
-		    vm_physmem[lcv].avail_start < vm_physmem[lcv].avail_end) {
-			*paddrp = ctob(vm_physmem[lcv].avail_end - 1);
-			vm_physmem[lcv].avail_end--;
-			vm_physmem[lcv].end--;
+		if (seg->avail_end == seg->end &&
+		    seg->avail_start < seg->avail_end) {
+			*paddrp = ctob(seg->avail_end - 1);
+			seg->avail_end--;
+			seg->end--;
 			/* nothing left?   nuke it */
-			if (vm_physmem[lcv].avail_end ==
-			    vm_physmem[lcv].start) {
+			if (seg->avail_end == seg->start) {
 				if (vm_nphysmem == 1)
 				    panic("uvm_page_physget: out of memory!");
 				vm_nphysmem--;
@@ -716,18 +716,19 @@ uvm_page_physget_freelist(paddr_t *paddrp, int freelist)
 	for (lcv = 0 ; lcv < vm_nphysmem ; lcv++)
 #endif
 	{
+		seg = VM_PHYSMEM_PTR(lcv);
 
 		/* any room in this bank? */
-		if (vm_physmem[lcv].avail_start >= vm_physmem[lcv].avail_end)
+		if (seg->avail_start >= seg->avail_end)
 			continue;  /* nope */
 
-		*paddrp = ctob(vm_physmem[lcv].avail_start);
-		vm_physmem[lcv].avail_start++;
+		*paddrp = ctob(seg->avail_start);
+		seg->avail_start++;
 		/* truncate! */
-		vm_physmem[lcv].start = vm_physmem[lcv].avail_start;
+		seg->start = seg->avail_start;
 
 		/* nothing left?   nuke it */
-		if (vm_physmem[lcv].avail_start == vm_physmem[lcv].end) {
+		if (seg->avail_start == seg->end) {
 			if (vm_nphysmem == 1)
 				panic("uvm_page_physget: out of memory!");
 			vm_nphysmem--;
@@ -798,7 +799,7 @@ uvm_page_physload(paddr_t start, paddr_t end, paddr_t avail_start,
 	 */
 
 	for (lcv = 0 ; lcv < vm_nphysmem ; lcv++) {
-		if (vm_physmem[lcv].pgs)
+		if (VM_PHYSMEM_PTR(lcv)->pgs)
 			break;
 	}
 	preload = (lcv == vm_nphysmem);
@@ -820,15 +821,15 @@ uvm_page_physload(paddr_t start, paddr_t end, paddr_t avail_start,
 
 #if (VM_PHYSSEG_STRAT == VM_PSTRAT_RANDOM)
 	/* random: put it at the end (easy!) */
-	ps = &vm_physmem[vm_nphysmem];
+	ps = VM_PHYSMEM_PTR(vm_nphysmem);
 #elif (VM_PHYSSEG_STRAT == VM_PSTRAT_BSEARCH)
 	{
 		int x;
 		/* sort by address for binary search */
 		for (lcv = 0 ; lcv < vm_nphysmem ; lcv++)
-			if (start < vm_physmem[lcv].start)
+			if (start < VM_PHYSMEM_PTR(lcv)->start)
 				break;
-		ps = &vm_physmem[lcv];
+		ps = VM_PHYSMEM_PTR(lcv);
 		/* move back other entries, if necessary ... */
 		for (x = vm_nphysmem ; x > lcv ; x--)
 			/* structure copy */
@@ -840,9 +841,9 @@ uvm_page_physload(paddr_t start, paddr_t end, paddr_t avail_start,
 		/* sort by largest segment first */
 		for (lcv = 0 ; lcv < vm_nphysmem ; lcv++)
 			if ((end - start) >
-			    (vm_physmem[lcv].end - vm_physmem[lcv].start))
+			    (VM_PHYSMEM_PTR(lcv)->end - VM_PHYSMEM_PTR(lcv)->start))
 				break;
-		ps = &vm_physmem[lcv];
+		ps = VM_PHYSMEM_PTR(lcv);
 		/* move back other entries, if necessary ... */
 		for (x = vm_nphysmem ; x > lcv ; x--)
 			/* structure copy */
@@ -1879,7 +1880,7 @@ uvm_page_lookup_freelist(struct vm_page *pg)
 
 	lcv = vm_physseg_find(atop(VM_PAGE_TO_PHYS(pg)), NULL);
 	KASSERT(lcv != -1);
-	return (vm_physmem[lcv].free_list);
+	return (VM_PHYSMEM_PTR(lcv)->free_list);
 }
 
 #if defined(DDB) || defined(DEBUGPRINT)
@@ -1986,7 +1987,7 @@ uvm_page_printall(void (*pr)(const char *, ...))
 #endif
 	    "\n", "PAGE", "FLAG", "PQ", "UOBJECT", "UANON");
 	for (i = 0; i < vm_nphysmem; i++) {
-		for (pg = vm_physmem[i].pgs; pg <= vm_physmem[i].lastpg; pg++) {
+		for (pg = VM_PHYSMEM_PTR(i)->pgs; pg <= VM_PHYSMEM_PTR(i)->lastpg; pg++) {
 			(*pr)("%18p %04x %04x %18p %18p",
 			    pg, pg->flags, pg->pqflags, pg->uobject,
 			    pg->uanon);
