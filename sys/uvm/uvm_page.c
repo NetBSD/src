@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.159 2010/11/11 15:47:43 uebayasi Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.160 2010/11/11 15:51:05 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.159 2010/11/11 15:47:43 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.160 2010/11/11 15:51:05 uebayasi Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -794,7 +794,7 @@ uvm_page_physload(paddr_t start, paddr_t end, paddr_t avail_start,
 	}
 
 	/*
-	 * check to see if this is a "preload" (i.e. uvm_mem_init hasn't been
+	 * check to see if this is a "preload" (i.e. uvm_page_init hasn't been
 	 * called yet, so malloc is not available).
 	 */
 
