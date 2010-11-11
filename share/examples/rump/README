@@ -1,0 +1,8 @@
+	$NetBSD: README,v 1.1 2010/11/11 23:04:24 pooka Exp $
+
+
+This directory contains various examples on how to interface with
+a rump kernel.  Another place which contains even more examples
+is src/tests and its subdirectories.  Some programs which were
+located here have in fact been moved to src/tests to serve as
+automated tests.
