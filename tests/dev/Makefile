@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.3 2010/08/24 11:29:45 pooka Exp $
+#	$NetBSD: Makefile,v 1.4 2010/11/11 22:38:46 pooka Exp $
 #
 
 .include <bsd.own.mk>
 
 TESTSDIR=	${TESTSBASE}/dev
 
-TESTS_SUBDIRS+=	audio scsipi sysmon
+TESTS_SUBDIRS+=	audio cgd scsipi sysmon
 
 .include <bsd.test.mk>
