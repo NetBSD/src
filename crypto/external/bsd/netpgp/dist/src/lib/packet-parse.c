@@ -58,7 +58,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: packet-parse.c,v 1.46 2010/11/11 00:58:04 agc Exp $");
+__RCSID("$NetBSD: packet-parse.c,v 1.47 2010/11/11 01:08:26 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -2935,7 +2935,7 @@ pgp_decrypt_se_ip_data(pgp_content_enum tag, pgp_region_t *region,
 	decrypt = pgp_get_decrypt(stream);
 	if (decrypt) {
 		if (pgp_get_debug_level(__FILE__)) {
-			(void) fprintf(stderr, "pgp_decrypt_se_ip_data: decrypt: num %d, alg %d, blocksize %d, keysize %d\n", decrypt->num, decrypt->alg, decrypt->blocksize, decrypt->keysize);
+			(void) fprintf(stderr, "pgp_decrypt_se_ip_data: decrypt\n");
 		}
 		pgp_reader_push_decrypt(stream, decrypt, region);
 		pgp_reader_push_se_ip_data(stream, decrypt, region);
