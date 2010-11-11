@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpfs.c,v 1.69 2010/11/11 16:01:59 pooka Exp $	*/
+/*	$NetBSD: rumpfs.c,v 1.70 2010/11/11 16:08:31 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009  Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.69 2010/11/11 16:01:59 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.70 2010/11/11 16:08:31 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -45,6 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.69 2010/11/11 16:01:59 pooka Exp $");
 #include <sys/stat.h>
 #include <sys/syscallargs.h>
 #include <sys/vnode.h>
+#include <sys/unistd.h>
 
 #include <miscfs/fifofs/fifo.h>
 #include <miscfs/specfs/specdev.h>
@@ -73,6 +74,7 @@ static int rump_vop_open(void *);
 static int rump_vop_symlink(void *);
 static int rump_vop_readlink(void *);
 static int rump_vop_whiteout(void *);
+static int rump_vop_pathconf(void *);
 
 int (**fifo_vnodeop_p)(void *);
 const struct vnodeopv_entry_desc fifo_vnodeop_entries[] = {
@@ -111,6 +113,7 @@ const struct vnodeopv_entry_desc rump_vnodeop_entries[] = {
 	{ &vop_reclaim_desc, rump_vop_reclaim },
 	{ &vop_remove_desc, genfs_eopnotsupp },
 	{ &vop_link_desc, genfs_eopnotsupp },
+	{ &vop_pathconf_desc, rump_vop_pathconf },
 	{ NULL, NULL }
 };
 const struct vnodeopv_desc rump_vnodeop_opv_desc =
@@ -1110,6 +1113,53 @@ rump_vop_write(void *v)
  out:
 	kmem_free(buf, bufsize);
 	return error;
+}
+
+static int
+rump_vop_pathconf(void *v)
+{
+	struct vop_pathconf_args /* {
+		struct vnode *a_vp;
+		int a_name;
+		register_t *a_retval;
+	}; */ *ap = v;
+	int name = ap->a_name;
+	register_t *retval = ap->a_retval;
+
+	switch (name) {
+	case _PC_LINK_MAX:
+		*retval = LINK_MAX;
+		return 0;
+	case _PC_NAME_MAX:
+		*retval = NAME_MAX;
+		return 0;
+	case _PC_PATH_MAX:
+		*retval = PATH_MAX;
+		return 0;
+	case _PC_PIPE_BUF:
+		*retval = PIPE_BUF;
+		return 0;
+	case _PC_CHOWN_RESTRICTED:
+		*retval = 1;
+		return 0;
+	case _PC_NO_TRUNC:
+		*retval = 1;
+		return 0;
+	case _PC_SYNC_IO:
+		*retval = 1;
+		return 0;
+	case _PC_FILESIZEBITS:
+		*retval = 43; /* this one goes to 11 */
+		return 0;
+	case _PC_SYMLINK_MAX:
+		*retval = MAXPATHLEN;
+		return 0;
+	case _PC_2_SYMLINKS:
+		*retval = 1;
+		return 0;
+	default:
+		return EINVAL;
+	}
 }
 
 static int
