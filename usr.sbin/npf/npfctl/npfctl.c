@@ -1,4 +1,4 @@
-/*	$NetBSD: npfctl.c,v 1.1 2010/08/22 18:56:24 rmind Exp $	*/
+/*	$NetBSD: npfctl.c,v 1.2 2010/11/11 06:30:39 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2010 The NetBSD Foundation, Inc.
@@ -28,6 +28,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: npfctl.c,v 1.2 2010/11/11 06:30:39 rmind Exp $");
 
 #include <sys/ioctl.h>
 #include <sys/stat.h>
@@ -145,12 +148,6 @@ npfctl(int action, int argc, char **argv)
 	npf_ioctl_table_t tbl;
 	char *arg;
 
-#ifdef DEBUG
-	npfctl_init_data();
-	npfctl_parsecfg("npf.conf");
-	ret = npfctl_ioctl_send(fd);
-	return;
-#endif
 	fd = open(NPF_DEV_PATH, O_RDONLY);
 	if (fd == -1) {
 		err(EXIT_FAILURE, "cannot open " NPF_DEV_PATH);
@@ -217,6 +214,12 @@ main(int argc, char **argv)
 		usage();
 	}
 	cmd = argv[1];
+
+#ifdef DEBUG
+	npfctl_init_data();
+	npfctl_parsecfg("npf.conf");
+	return npfctl_ioctl_send(0);
+#endif
 
 	/* Find and call the subroutine */
 	for (n = 0; operations[n].cmd != NULL; n++) {

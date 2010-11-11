@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_handler.c,v 1.3 2010/10/10 15:29:01 rmind Exp $	*/
+/*	$NetBSD: npf_handler.c,v 1.4 2010/11/11 06:30:39 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2010 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_handler.c,v 1.3 2010/10/10 15:29:01 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_handler.c,v 1.4 2010/11/11 06:30:39 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,6 +44,10 @@ __KERNEL_RCSID(0, "$NetBSD: npf_handler.c,v 1.3 2010/10/10 15:29:01 rmind Exp $"
 #include <net/if.h>
 #include <net/pfil.h>
 #include <sys/socketvar.h>
+
+#include <netinet/in_systm.h>
+#include <netinet/in.h>
+#include <netinet/ip_var.h>
 
 #include "npf_impl.h"
 
@@ -91,8 +95,28 @@ npf_packet_handler(void *arg, struct mbuf **mp, struct ifnet *ifp, int di)
 	error = 0;
 	retfl = 0;
 
+	/* Cache everything.  Determine whether it is an IPv4 fragment. */
+	if (npf_cache_all(&npc, nbuf) && npf_iscached(&npc, NPC_IPFRAG)) {
+		struct ip *ip = nbuf_dataptr(*mp);
+		/*
+		 * Pass to IPv4 reassembly mechanism.
+		 */
+		if (ip_reass_packet(mp, ip) != 0) {
+			/* Failed; invalid fragment(s) or packet. */
+			error = EINVAL;
+			se = NULL;
+			goto out;
+		}
+		if (*mp == NULL) {
+			/* More fragments should come; return. */
+			return 0;
+		}
+		/* Reassembly is complete, we have the final packet. */
+		nbuf = (nbuf_t *)*mp;
+	}
+
 	/* Inspect the list of sessions. */
-	se = npf_session_inspect(&npc, nbuf, ifp, di);
+	se = npf_session_inspect(&npc, nbuf, di);
 
 	/* If "passing" session found - skip the ruleset inspection. */
 	if (se && npf_session_pass(se)) {
@@ -110,14 +134,14 @@ npf_packet_handler(void *arg, struct mbuf **mp, struct ifnet *ifp, int di)
 	}
 
 	/* Apply the rule. */
-	error = npf_rule_apply(&npc, rl, &keepstate, &retfl);
+	error = npf_rule_apply(&npc, nbuf, rl, &keepstate, &retfl);
 	if (error) {
 		goto out;
 	}
 
 	/* Establish a "pass" session, if required. */
 	if (keepstate && !se) {
-		se = npf_session_establish(&npc, NULL, di);
+		se = npf_session_establish(&npc, nbuf, NULL, di);
 		if (se == NULL) {
 			error = ENOMEM;
 			goto out;

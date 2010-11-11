@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_ruleset.c,v 1.2 2010/09/16 04:53:27 rmind Exp $	*/
+/*	$NetBSD: npf_ruleset.c,v 1.3 2010/11/11 06:30:39 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2010 The NetBSD Foundation, Inc.
@@ -39,11 +39,10 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_ruleset.c,v 1.2 2010/09/16 04:53:27 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_ruleset.c,v 1.3 2010/11/11 06:30:39 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
-#endif
 
 #include <sys/atomic.h>
 #include <sys/kmem.h>
@@ -52,22 +51,23 @@ __KERNEL_RCSID(0, "$NetBSD: npf_ruleset.c,v 1.2 2010/09/16 04:53:27 rmind Exp $"
 #include <sys/rwlock.h>
 #include <sys/types.h>
 
-#include <net/if.h>
 #include <net/pfil.h>
+#include <net/if.h>
+#endif
 
 #include "npf_ncode.h"
 #include "npf_impl.h"
 
 struct npf_hook {
-	void				(*hk_fn)(const npf_cache_t *, void *);
-	void *				hk_arg;
-	LIST_ENTRY(npf_hook)		hk_entry;
+	void			(*hk_fn)(npf_cache_t *, nbuf_t *, void *);
+	void *			hk_arg;
+	LIST_ENTRY(npf_hook)	hk_entry;
 };
 
 struct npf_ruleset {
-	TAILQ_HEAD(, npf_rule)		rs_queue;
-	npf_rule_t *			rs_default;
-	int				_reserved;
+	TAILQ_HEAD(, npf_rule)	rs_queue;
+	npf_rule_t *		rs_default;
+	int			_reserved;
 };
 
 /* Rule structure. */
@@ -83,11 +83,15 @@ struct npf_rule {
 	void *				r_ncode;
 	size_t				r_nc_size;
 	/* Attributes of this rule. */
-	int				r_attr;
+	uint32_t			r_attr;
 	/* Interface. */
 	u_int				r_ifid;
 	/* Hit counter. */
 	u_long				r_hitcount;
+	/* Normalization options (XXX - abstract). */
+	bool				rl_rnd_ipid;
+	u_int				rl_minttl;
+	u_int				rl_maxmss;
 	/* List of hooks to process on match. */
 	LIST_HEAD(, npf_hook)		r_hooks;
 };
@@ -187,6 +191,7 @@ npf_ruleset_reload(npf_ruleset_t *nrlset, npf_tableset_t *ntblset)
 	 */
 	rw_enter(&ruleset_lock, RW_WRITER);
 	oldrlset = atomic_swap_ptr(&ruleset, nrlset);
+	KASSERT(oldrlset != NULL);
 
 	/*
 	 * Setup a new tableset.  It will lock the global tableset lock,
@@ -205,7 +210,8 @@ npf_ruleset_reload(npf_ruleset_t *nrlset, npf_tableset_t *ntblset)
  * npf_rule_alloc: allocate a rule and copy ncode from user-space.
  */
 npf_rule_t *
-npf_rule_alloc(int attr, pri_t pri, int ifidx, void *nc, size_t sz)
+npf_rule_alloc(int attr, pri_t pri, int ifidx, void *nc, size_t sz,
+    bool rnd_ipid, int minttl, int maxmss)
 {
 	npf_rule_t *rl;
 	int errat;
@@ -228,6 +234,11 @@ npf_rule_alloc(int attr, pri_t pri, int ifidx, void *nc, size_t sz)
 	rl->r_nc_size = sz;
 	rl->r_hitcount = 0;
 	rl->r_nat = NULL;
+
+	rl->rl_rnd_ipid = rnd_ipid;
+	rl->rl_minttl = minttl;
+	rl->rl_maxmss = maxmss;
+
 	return rl;
 }
 
@@ -296,6 +307,8 @@ npf_rule_getnat(const npf_rule_t *rl)
 void
 npf_rule_setnat(npf_rule_t *rl, npf_natpolicy_t *np)
 {
+
+	KASSERT(rl->r_nat == NULL);
 	rl->r_nat = np;
 }
 
@@ -304,7 +317,7 @@ npf_rule_setnat(npf_rule_t *rl, npf_natpolicy_t *np)
  */
 npf_hook_t *
 npf_hook_register(npf_rule_t *rl,
-    void (*fn)(const npf_cache_t *, void *), void *arg)
+    void (*fn)(npf_cache_t *, nbuf_t *, void *), void *arg)
 {
 	npf_hook_t *hk;
 
@@ -420,7 +433,7 @@ reinspect:
  * => Releases the ruleset lock.
  */
 int
-npf_rule_apply(const npf_cache_t *npc, npf_rule_t *rl,
+npf_rule_apply(npf_cache_t *npc, nbuf_t *nbuf, npf_rule_t *rl,
     bool *keepstate, int *retfl)
 {
 	npf_hook_t *hk;
@@ -443,11 +456,17 @@ npf_rule_apply(const npf_cache_t *npc, npf_rule_t *rl,
 	/* Passing.  Run the hooks. */
 	LIST_FOREACH(hk, &rl->r_hooks, hk_entry) {
 		KASSERT(hk->hk_fn != NULL);
-		(*hk->hk_fn)(npc, hk->hk_arg);
+		(*hk->hk_fn)(npc, nbuf, hk->hk_arg);
 	}
+
+	/* Normalize the packet, if required. */
+	if (rl->r_attr & NPF_RULE_NORMALIZE) {
+		(void)npf_normalize(npc, nbuf,
+		    rl->rl_rnd_ipid, rl->rl_minttl, rl->rl_maxmss);
+	}
+
 	*keepstate = (rl->r_attr & NPF_RULE_KEEPSTATE) != 0;
 	rw_exit(&ruleset_lock);
-
 	return 0;
 }
 

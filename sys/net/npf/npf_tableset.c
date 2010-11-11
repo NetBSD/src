@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_tableset.c,v 1.2 2010/09/24 22:51:50 rmind Exp $	*/
+/*	$NetBSD: npf_tableset.c,v 1.3 2010/11/11 06:30:39 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2010 The NetBSD Foundation, Inc.
@@ -41,10 +41,8 @@
  * - Dynamic array resize.
  */
 
-#ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_tableset.c,v 1.2 2010/09/24 22:51:50 rmind Exp $");
-#endif
+__KERNEL_RCSID(0, "$NetBSD: npf_tableset.c,v 1.3 2010/11/11 06:30:39 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_ncode.h,v 1.2 2010/09/16 04:53:27 rmind Exp $	*/
+/*	$NetBSD: npf_ncode.h,v 1.3 2010/11/11 06:30:39 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2010 The NetBSD Foundation, Inc.
@@ -41,12 +41,17 @@
 
 #include "npf.h"
 
-/* N-code processing, validation & building. */
+#if defined(_KERNEL) || defined(_NPF_TESTING)
+/*
+ * N-code processing, validation & building.
+ */
+void *	npf_ncode_alloc(size_t);
+void	npf_ncode_free(void *, size_t);
+
 int	npf_ncode_process(npf_cache_t *, const void *, nbuf_t *, const int);
 int	npf_ncode_validate(const void *, size_t, int *);
 
-void *	npf_ncode_alloc(size_t);
-void	npf_ncode_free(void *, size_t);
+#endif
 
 /* Error codes. */
 #define	NPF_ERR_OPCODE		-1	/* Invalid instruction. */

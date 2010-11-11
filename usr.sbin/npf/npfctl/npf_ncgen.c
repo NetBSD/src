@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_ncgen.c,v 1.2 2010/09/16 04:53:27 rmind Exp $	*/
+/*	$NetBSD: npf_ncgen.c,v 1.3 2010/11/11 06:30:39 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2010 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * WARNING: Update npfctl_calc_ncsize() and npfctl_failure_offset()
  * calculations, when changing generation routines.
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: npf_ncgen.c,v 1.3 2010/11/11 06:30:39 rmind Exp $");
 
 #include <sys/types.h>
 
@@ -77,7 +80,6 @@ npfctl_failure_offset(int nblocks[])
 }
 
 #if 0
-
 /*
  * npfctl_gennc_ether: initial n-code fragment to check Ethernet frame.
  */
@@ -111,7 +113,6 @@ npfctl_gennc_ether(void **ncptr, int foff, uint16_t ethertype)
 	/* + 13 words. */
 	*ncptr = (void *)nc;
 }
-
 #endif
 
 /*

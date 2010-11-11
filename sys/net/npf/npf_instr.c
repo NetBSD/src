@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_instr.c,v 1.3 2010/09/25 00:25:31 rmind Exp $	*/
+/*	$NetBSD: npf_instr.c,v 1.4 2010/11/11 06:30:39 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2010 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_instr.c,v 1.3 2010/09/25 00:25:31 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_instr.c,v 1.4 2010/11/11 06:30:39 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -98,15 +98,16 @@ int
 npf_match_ip4table(npf_cache_t *npc, nbuf_t *nbuf, void *n_ptr,
     const int sd, const u_int tid)
 {
+	struct ip *ip = &npc->npc_ip.v4;
 	in_addr_t ip4addr;
 
-	if (!npf_iscached(npc, NPC_ADDRS)) {
-		if (!npf_fetch_ip4addrs(npc, nbuf, n_ptr)) {
+	if (!npf_iscached(npc, NPC_IP46)) {
+		if (!npf_fetch_ip(npc, nbuf, n_ptr)) {
 			return -1;
 		}
-		KASSERT(npf_iscached(npc, NPC_ADDRS));
+		KASSERT(npf_iscached(npc, NPC_IP46));
 	}
-	ip4addr = sd ? npc->npc_srcip : npc->npc_dstip;
+	ip4addr = sd ? ip->ip_src.s_addr : ip->ip_dst.s_addr;
 
 	/* Match address against NPF table. */
 	return npf_table_match_v4addr(tid, ip4addr);
@@ -119,15 +120,16 @@ int
 npf_match_ip4mask(npf_cache_t *npc, nbuf_t *nbuf, void *n_ptr,
     const int sd, in_addr_t netaddr, in_addr_t subnet)
 {
+	struct ip *ip = &npc->npc_ip.v4;
 	in_addr_t ip4addr;
 
-	if (!npf_iscached(npc, NPC_ADDRS)) {
-		if (!npf_fetch_ip4addrs(npc, nbuf, n_ptr)) {
+	if (!npf_iscached(npc, NPC_IP46)) {
+		if (!npf_fetch_ip(npc, nbuf, n_ptr)) {
 			return -1;
 		}
-		KASSERT(npf_iscached(npc, NPC_ADDRS));
+		KASSERT(npf_iscached(npc, NPC_IP46));
 	}
-	ip4addr = sd ? npc->npc_srcip : npc->npc_dstip;
+	ip4addr = sd ? ip->ip_src.s_addr : ip->ip_dst.s_addr;
 
 	return (ip4addr & subnet) == netaddr ? 0 : -1;
 }
@@ -139,15 +141,16 @@ int
 npf_match_tcp_ports(npf_cache_t *npc, nbuf_t *nbuf, void *n_ptr,
     const int sd, const uint32_t prange)
 {
+	struct tcphdr *th = &npc->npc_l4.tcp;
 	in_port_t p;
 
-	if (!npf_iscached(npc, NPC_PORTS)) {
-		if (!npf_fetch_ports(npc, nbuf, n_ptr, IPPROTO_TCP)) {
+	if (!npf_iscached(npc, NPC_TCP)) {
+		if (!npf_fetch_tcp(npc, nbuf, n_ptr)) {
 			return -1;
 		}
-		KASSERT(npf_iscached(npc, NPC_PORTS));
+		KASSERT(npf_iscached(npc, NPC_TCP));
 	}
-	p = sd ? npc->npc_sport : npc->npc_dport;
+	p = sd ? th->th_sport : th->th_dport;
 
 	/* Match against the port range. */
 	return NPF_PORTRANGE_MATCH(prange, p) ? 0 : -1;
@@ -160,15 +163,16 @@ int
 npf_match_udp_ports(npf_cache_t *npc, nbuf_t *nbuf, void *n_ptr,
     const int sd, const uint32_t prange)
 {
+	struct udphdr *uh = &npc->npc_l4.udp;
 	in_port_t p;
 
-	if (!npf_iscached(npc, NPC_PORTS)) {
-		if (!npf_fetch_ports(npc, nbuf, n_ptr, IPPROTO_UDP)) {
+	if (!npf_iscached(npc, NPC_UDP)) {
+		if (!npf_fetch_udp(npc, nbuf, n_ptr)) {
 			return -1;
 		}
-		KASSERT(npf_iscached(npc, NPC_PORTS));
+		KASSERT(npf_iscached(npc, NPC_UDP));
 	}
-	p = sd ? npc->npc_sport : npc->npc_dport;
+	p = sd ? uh->uh_sport : uh->uh_dport;
 
 	/* Match against the port range. */
 	return NPF_PORTRANGE_MATCH(prange, p) ? 0 : -1;
@@ -178,34 +182,27 @@ npf_match_udp_ports(npf_cache_t *npc, nbuf_t *nbuf, void *n_ptr,
  * npf_match_icmp4: match ICMPv4 packet.
  */
 int
-npf_match_icmp4(npf_cache_t *npc, nbuf_t *nbuf, void *n_ptr, const uint32_t tc)
+npf_match_icmp4(npf_cache_t *npc, nbuf_t *nbuf, void *n_ptr, uint32_t tc)
 {
+	struct icmp *ic = &npc->npc_l4.icmp;
 
 	if (!npf_iscached(npc, NPC_ICMP)) {
-		/* Perform checks, advance to ICMP header. */
-		if (!npf_iscached(npc, NPC_IP46) &&
-		    !npf_ip4_proto(npc, nbuf, n_ptr)) {
-			return -1;
-		}
-		n_ptr = nbuf_advance(&nbuf, n_ptr, npc->npc_hlen);
-		if (n_ptr == NULL || npc->npc_proto != IPPROTO_ICMP) {
-			return -1;
-		}
 		if (!npf_fetch_icmp(npc, nbuf, n_ptr)) {
 			return -1;
 		}
 		KASSERT(npf_iscached(npc, NPC_ICMP));
 	}
+
 	/* Match code/type, if required. */
 	if ((1 << 31) & tc) {
 		const uint8_t type = (tc >> 8) & 0xff;
-		if (type != npc->npc_icmp_type) {
+		if (type != ic->icmp_type) {
 			return -1;
 		}
 	}
 	if ((1 << 30) & tc) {
 		const uint8_t code = tc & 0xff;
-		if (code != npc->npc_icmp_code) {
+		if (code != ic->icmp_code) {
 			return -1;
 		}
 	}
@@ -216,15 +213,16 @@ npf_match_icmp4(npf_cache_t *npc, nbuf_t *nbuf, void *n_ptr, const uint32_t tc)
  * npf_match_tcpfl: match TCP flags.
  */
 int
-npf_match_tcpfl(npf_cache_t *npc, nbuf_t *nbuf, void *n_ptr, const uint32_t fl)
+npf_match_tcpfl(npf_cache_t *npc, nbuf_t *nbuf, void *n_ptr, uint32_t fl)
 {
 	const uint8_t tcpfl = (fl >> 8) & 0xff, mask = fl & 0xff;
+	struct tcphdr *th = &npc->npc_l4.tcp;
 
-	if (!npf_iscached(npc, NPC_IP46) && !npf_ip4_proto(npc, nbuf, n_ptr)) {
-		return -1;
+	if (!npf_iscached(npc, NPC_TCP)) {
+		if (!npf_fetch_tcp(npc, nbuf, n_ptr)) {
+			return -1;
+		}
+		KASSERT(npf_iscached(npc, NPC_TCP));
 	}
-	if (!npf_fetch_tcpfl(npc, nbuf, n_ptr)) {
-		return -1;
-	}
-	return ((npc->npc_tcp_flags & mask) == tcpfl) ? 0 : -1;
+	return ((th->th_flags & mask) == tcpfl) ? 0 : -1;
 }

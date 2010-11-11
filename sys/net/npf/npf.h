@@ -1,4 +1,4 @@
-/*	$NetBSD: npf.h,v 1.3 2010/09/25 00:25:31 rmind Exp $	*/
+/*	$NetBSD: npf.h,v 1.4 2010/11/11 06:30:39 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2010 The NetBSD Foundation, Inc.
@@ -66,36 +66,57 @@ typedef struct npf_hook		npf_hook_t;
 
 typedef void			nbuf_t;
 
+#if defined(_KERNEL) || defined(_NPF_TESTING)
+
+#include <netinet/in_systm.h>
+#include <netinet/in.h>
+#include <netinet/ip.h>
+#include <netinet/ip6.h>
+#include <netinet/tcp.h>
+#include <netinet/udp.h>
+#include <netinet/ip_icmp.h>
+
+/*
+ * Storage of address, both IPv4 and IPv6.
+ */
+typedef struct in6_addr		npf_addr_t;
+
 /*
  * Packet information cache.
  */
 
-#define	NPC_IP46	0x01	/* IPv4,6 packet with known protocol. */
-#define	NPC_IP6VER	0x02	/* If NPI_IP46, then: 0 - IPv4, 1 - IPv6. */
-#define	NPC_ADDRS	0x04	/* Known source and destination addresses. */
-#define	NPC_PORTS	0x08	/* Known ports (for TCP/UDP cases). */
-#define	NPC_ICMP	0x10	/* ICMP with known type and code. */
-#define	NPC_ICMP_ID	0x20	/* ICMP with query ID. */
+#define	NPC_IP4		0x01	/* Indicates fetched IPv4 header. */
+#define	NPC_IP6		0x02	/* Indicates IPv6 header. */
+#define	NPC_IPFRAG	0x04	/* IPv4 fragment. */
+#define	NPC_LAYER4	0x08	/* Layer 4 has been fetched. */
 
-/* XXX: Optimise later, pack in unions, perhaps bitfields, etc. */
+#define	NPC_TCP		0x10	/* TCP header. */
+#define	NPC_UDP		0x20	/* UDP header. */
+#define	NPC_ICMP	0x40	/* ICMP header. */
+#define	NPC_ICMP_ID	0x80	/* ICMP with query ID. */
+
+#define	NPC_IP46	(NPC_IP4|NPC_IP6)
+
 typedef struct {
+	/* Information flags and packet direction. */
 	uint32_t		npc_info;
-	int			npc_dir;
-	/* NPC_IP46 */
-	uint8_t			npc_proto;
-	uint16_t		npc_hlen;
-	uint16_t		npc_ipsum;
-	/* NPC_ADDRS */
-	in_addr_t		npc_srcip;
-	in_addr_t		npc_dstip;
-	/* NPC_PORTS */
-	in_port_t		npc_sport;
-	in_port_t		npc_dport;
-	uint8_t			npc_tcp_flags;
-	/* NPC_ICMP */
-	uint8_t			npc_icmp_type;
-	uint8_t			npc_icmp_code;
-	uint16_t		npc_icmp_id;
+	int			npc_di;
+	/* Pointers to the IP v4/v6 addresses. */
+	npf_addr_t *		npc_srcip;
+	npf_addr_t *		npc_dstip;
+	/* Size (v4 or v6) of IP addresses. */
+	int			npc_ipsz;
+	/* IPv4, IPv6. */
+	union {
+		struct ip	v4;
+		struct ip6_hdr	v6;
+	} npc_ip;
+	/* TCP, UDP, ICMP. */
+	union {
+		struct tcphdr	tcp;
+		struct udphdr	udp;
+		struct icmp	icmp;
+	} npc_l4;
 } npf_cache_t;
 
 static inline bool
@@ -105,12 +126,20 @@ npf_iscached(const npf_cache_t *npc, const int inf)
 	return __predict_true((npc->npc_info & inf) != 0);
 }
 
-#if defined(_KERNEL) || defined(_NPF_TESTING)
+static inline int
+npf_cache_ipproto(const npf_cache_t *npc)
+{
+	const struct ip *ip = &npc->npc_ip.v4;
+
+	KASSERT(npf_iscached(npc, NPC_IP46));
+	return ip->ip_p;
+}
 
 /* Network buffer interface. */
 void *		nbuf_dataptr(void *);
 void *		nbuf_advance(nbuf_t **, void *, u_int);
 int		nbuf_advfetch(nbuf_t **, void **, u_int, size_t, void *);
+int		nbuf_advstore(nbuf_t **, void **, u_int, size_t, void *);
 int		nbuf_fetch_datum(nbuf_t *, void *, size_t, void *);
 int		nbuf_store_datum(nbuf_t *, void *, size_t, void *);
 
@@ -118,30 +147,31 @@ int		nbuf_add_tag(nbuf_t *, uint32_t, uint32_t);
 int		nbuf_find_tag(nbuf_t *, uint32_t, void **);
 
 /* Ruleset interface. */
-npf_rule_t *	npf_rule_alloc(int, pri_t, int, void *, size_t);
+npf_rule_t *	npf_rule_alloc(int, pri_t, int, void *, size_t, bool, int, int);
 void		npf_rule_free(npf_rule_t *);
 void		npf_activate_rule(npf_rule_t *);
 void		npf_deactivate_rule(npf_rule_t *);
 
 npf_hook_t *	npf_hook_register(npf_rule_t *,
-		    void (*)(const npf_cache_t *, void *), void *);
+		    void (*)(npf_cache_t *, nbuf_t *, void *), void *);
 void		npf_hook_unregister(npf_rule_t *, npf_hook_t *);
 
 #endif	/* _KERNEL */
 
 /* Rule attributes. */
 #define	NPF_RULE_PASS			0x0001
-#define	NPF_RULE_COUNT			0x0002
+#define	NPF_RULE_DEFAULT		0x0002
 #define	NPF_RULE_FINAL			0x0004
-#define	NPF_RULE_LOG			0x0008
-#define	NPF_RULE_DEFAULT		0x0010
-#define	NPF_RULE_KEEPSTATE		0x0020
+#define	NPF_RULE_KEEPSTATE		0x0008
+#define	NPF_RULE_COUNT			0x0010
+#define	NPF_RULE_LOG			0x0020
 #define	NPF_RULE_RETRST			0x0040
 #define	NPF_RULE_RETICMP		0x0080
+#define	NPF_RULE_NORMALIZE		0x0100
 
-#define	NPF_RULE_IN			0x1000
-#define	NPF_RULE_OUT			0x2000
-#define	NPF_RULE_DIMASK			0x3000
+#define	NPF_RULE_IN			0x10000000
+#define	NPF_RULE_OUT			0x20000000
+#define	NPF_RULE_DIMASK			(NPF_RULE_IN | NPF_RULE_OUT)
 
 /* Address translation types and flags. */
 #define	NPF_NATIN			1

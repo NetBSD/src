@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_ctl.c,v 1.2 2010/09/16 04:53:27 rmind Exp $	*/
+/*	$NetBSD: npf_ctl.c,v 1.3 2010/11/11 06:30:39 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2010 The NetBSD Foundation, Inc.
@@ -39,14 +39,12 @@
  * - Consider implementing 'sync' functionality.
  */
 
-#ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_ctl.c,v 1.2 2010/09/16 04:53:27 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_ctl.c,v 1.3 2010/11/11 06:30:39 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
 #include <sys/kernel.h>
-#endif
 
 #include <prop/proplib.h>
 
@@ -190,8 +188,9 @@ npf_mk_singlerule(prop_dictionary_t rldict,
 {
 	npf_rule_t *rl;
 	prop_object_t obj;
-	int attr, ifidx;
+	int attr, ifidx, minttl, maxmss;
 	pri_t pri;
+	bool rnd_ipid;
 	size_t nc_size;
 	void *nc;
 
@@ -210,6 +209,18 @@ npf_mk_singlerule(prop_dictionary_t rldict,
 	/* Interface ID (integer). */
 	obj = prop_dictionary_get(rldict, "interface");
 	ifidx = prop_number_integer_value(obj);
+
+	/* Randomize IP ID (bool). */
+	obj = prop_dictionary_get(rldict, "randomize-id");
+	rnd_ipid = prop_bool_true(obj);
+
+	/* Minimum IP TTL (integer). */
+	obj = prop_dictionary_get(rldict, "min-ttl");
+	minttl = prop_number_integer_value(obj);
+
+	/* Maximum TCP MSS (integer). */
+	obj = prop_dictionary_get(rldict, "max-mss");
+	maxmss = prop_number_integer_value(obj);
 
 	/* N-code (binary data). */
 	obj = prop_dictionary_get(rldict, "ncode");
@@ -233,7 +244,8 @@ npf_mk_singlerule(prop_dictionary_t rldict,
 	}
 
 	/* Allocate and setup NPF rule. */
-	rl = npf_rule_alloc(attr, pri, ifidx, nc, nc_size);
+	rl = npf_rule_alloc(attr, pri, ifidx, nc, nc_size,
+	    rnd_ipid, minttl, maxmss);
 	if (rl == NULL) {
 		if (nc) {
 			npf_ncode_free(nc, nc_size);	/* XXX */
@@ -328,7 +340,8 @@ npf_mk_natlist(npf_ruleset_t *nset, prop_array_t natlist)
 		prop_object_t obj;
 		npf_natpolicy_t *np;
 		npf_rule_t *rl;
-		in_addr_t taddr;
+		const npf_addr_t *taddr;
+		size_t taddr_sz;
 		in_port_t tport;
 		int type, flags;
 
@@ -347,12 +360,13 @@ npf_mk_natlist(npf_ruleset_t *nset, prop_array_t natlist)
 		flags = prop_number_integer_value(obj);
 
 		/* Translation IP. */
-		obj = prop_dictionary_get(natdict, "translation_ip");
-		taddr = (in_addr_t)prop_number_integer_value(obj);
+		obj = prop_dictionary_get(natdict, "translation-ip");
+		taddr_sz = prop_data_size(obj);
+		taddr = (const npf_addr_t *)prop_data_data_nocopy(obj);
 
 		/* Translation port (for redirect case). */
-		obj = prop_dictionary_get(natdict, "translation_port");
-		tport = (in_addr_t)prop_number_integer_value(obj);
+		obj = prop_dictionary_get(natdict, "translation-port");
+		tport = (in_port_t)prop_number_integer_value(obj);
 
 		/*
 		 * NAT policies are standard rules, plus additional
@@ -363,7 +377,7 @@ npf_mk_natlist(npf_ruleset_t *nset, prop_array_t natlist)
 			break;
 
 		/* Allocate a new NAT policy and assign to the rule. */
-		np = npf_nat_newpolicy(type, flags, taddr, tport);
+		np = npf_nat_newpolicy(type, flags, taddr, taddr_sz, tport);
 		if (np == NULL) {
 			error = ENOMEM;
 			break;

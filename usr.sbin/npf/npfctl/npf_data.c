@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_data.c,v 1.3 2010/09/16 04:53:27 rmind Exp $	*/
+/*	$NetBSD: npf_data.c,v 1.4 2010/11/11 06:30:39 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009-2010 The NetBSD Foundation, Inc.
@@ -31,6 +31,9 @@
  *
  * XXX: Needs some clean-up.
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: npf_data.c,v 1.4 2010/11/11 06:30:39 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -389,7 +392,8 @@ npfctl_add_rule(prop_dictionary_t rl, prop_dictionary_t parent)
 }
 
 void
-npfctl_rule_setattr(prop_dictionary_t rl, int attr, char *iface)
+npfctl_rule_setattr(prop_dictionary_t rl, int attr, char *iface,
+    bool ipid_rnd, int minttl, int maxmss)
 {
 	prop_number_t attrnum;
 
@@ -404,6 +408,14 @@ npfctl_rule_setattr(prop_dictionary_t rl, int attr, char *iface)
 		}
 		ifnum = prop_number_create_integer(if_idx);
 		prop_dictionary_set(rl, "interface", ifnum);
+	}
+	if (attr & NPF_RULE_NORMALIZE) {
+		prop_dictionary_set(rl, "randomize-id",
+		    prop_bool_create(ipid_rnd));
+		prop_dictionary_set(rl, "min-ttl",
+		    prop_number_create_integer(minttl));
+		prop_dictionary_set(rl, "max-mss",
+		    prop_number_create_integer(maxmss));
 	}
 }
 
@@ -649,6 +661,7 @@ npfctl_nat_setup(prop_dictionary_t rl, int type, int flags,
 {
 	int attr = NPF_RULE_PASS | NPF_RULE_FINAL;
 	in_addr_t addr, mask;
+	void *addrptr;
 
 	/* Translation type and flags. */
 	prop_dictionary_set(rl, "type",
@@ -658,12 +671,15 @@ npfctl_nat_setup(prop_dictionary_t rl, int type, int flags,
 
 	/* Interface and attributes. */
 	attr |= (type == NPF_NATOUT) ? NPF_RULE_OUT : NPF_RULE_IN;
-	npfctl_rule_setattr(rl, attr, iface);
+	npfctl_rule_setattr(rl, attr, iface, false, 0, 0);
 
 	/* Translation IP, XXX should be no mask. */
 	npfctl_parse_cidr(taddr, &addr, &mask);
-	prop_dictionary_set(rl, "translation_ip",
-	    prop_number_create_integer(addr));
+	addrptr = prop_data_create_data(&addr, sizeof(in_addr_t));
+	if (addrptr == NULL) {
+		err(EXIT_FAILURE, "prop_data_create_data");
+	}
+	prop_dictionary_set(rl, "translation-ip", addrptr);
 
 	/* Translation port (for redirect case). */
 	if (rport) {
@@ -676,7 +692,7 @@ npfctl_nat_setup(prop_dictionary_t rl, int type, int flags,
 		if (range) {
 			errx(EXIT_FAILURE, "range is not supported for 'rdr'");
 		}
-		prop_dictionary_set(rl, "translation_port",
+		prop_dictionary_set(rl, "translation-port",
 		    prop_number_create_integer(port));
 	}
 }
