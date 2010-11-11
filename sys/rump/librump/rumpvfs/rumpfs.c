@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpfs.c,v 1.72 2010/11/11 17:33:22 pooka Exp $	*/
+/*	$NetBSD: rumpfs.c,v 1.73 2010/11/11 18:45:09 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.72 2010/11/11 17:33:22 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.73 2010/11/11 18:45:09 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -1129,7 +1129,7 @@ rump_vop_read(void *v)
 	struct uio *uio = ap->a_uio;
 	const int advice = IO_ADV_DECODE(ap->a_ioflag);
 	off_t chunk;
-	int error;
+	int error = 0;
 
 	/* et op? */
 	if (rn->rn_flags & RUMPNODE_ET_PHONE_HOST)
@@ -1191,7 +1191,7 @@ rump_vop_write(void *v)
 	void *olddata;
 	size_t oldlen, newlen;
 	off_t chunk;
-	int error;
+	int error = 0;
 	bool allocd = false;
 
 	/* consult et? */
@@ -1209,6 +1209,8 @@ rump_vop_write(void *v)
 	 * No, it doesn't really support sparse files, just fakes it.
 	 */
 	newlen = uio->uio_offset + uio->uio_resid;
+	oldlen = 0; /* XXXgcc */
+	olddata = NULL;
 	if (rn->rn_dlen < newlen) {
 		oldlen = rn->rn_dlen;
 		olddata = rn->rn_data;
