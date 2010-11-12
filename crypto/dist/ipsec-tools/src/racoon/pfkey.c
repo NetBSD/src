@@ -1,6 +1,6 @@
-/*	$NetBSD: pfkey.c,v 1.53 2010/10/21 06:15:28 tteras Exp $	*/
+/*	$NetBSD: pfkey.c,v 1.54 2010/11/12 10:36:37 tteras Exp $	*/
 
-/* $Id: pfkey.c,v 1.53 2010/10/21 06:15:28 tteras Exp $ */
+/* $Id: pfkey.c,v 1.54 2010/11/12 10:36:37 tteras Exp $ */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -1686,7 +1686,7 @@ pk_recvexpire(mhp)
 		iph2->status = PHASE2ST_STATUS2;
 
 		/* start quick exchange */
-		if (isakmp_post_acquire(iph2, iph1hint) < 0) {
+		if (isakmp_post_acquire(iph2, iph1hint, FALSE) < 0) {
 			plog(LLV_ERROR, LOCATION, iph2->dst,
 				"failed to begin ipsec sa "
 				"re-negotication.\n");
@@ -1962,7 +1962,7 @@ pk_recvacquire(mhp)
 
 	/* start isakmp initiation by using ident exchange */
 	/* XXX should be looped if there are multiple phase 2 handler. */
-	if (isakmp_post_acquire(iph2, NULL) < 0) {
+	if (isakmp_post_acquire(iph2, NULL, TRUE) < 0) {
 		plog(LLV_ERROR, LOCATION, NULL,
 			"failed to begin ipsec sa negotication.\n");
 		remph2(iph2);
@@ -3088,7 +3088,7 @@ migrate_ph2_sa_addresses(iph2, args)
 			iph2->status = PHASE2ST_STATUS2;
 
 			/* and start a new negotiation */
-			if (isakmp_post_acquire(iph2, iph1hint) < 0) {
+			if (isakmp_post_acquire(iph2, iph1hint, FALSE) < 0) {
 				plog(LLV_ERROR, LOCATION, iph2->dst, "failed "
 				     "to begin IPsec SA renegotiation after "
 				     "MIGRATE reception.\n");
