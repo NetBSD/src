@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.7 2009/09/07 21:07:03 mrg Exp $
+#	$NetBSD: Makefile,v 1.8 2010/11/12 17:05:48 tsutsui Exp $
 
 # Top level Makefile to cross build xorg inside the NetBSD tree.
 
 .include <bsd.own.mk>
 
-SUBDIR=		tools .WAIT include .WAIT lib .WAIT bin share server
+SUBDIR=		tools .WAIT include .WAIT lib .WAIT bin share server etc
 
 .if ${MKUPDATE} == "no" && !defined(NOCLEANDIR)
 BUILDTARGETS+=  cleandir
@@ -57,6 +57,7 @@ DISTRIBTARGETS=	\
 	bin/xfs \
 	bin/xinit \
 	bin/xsm \
+	etc \
 	lib/fontconfig/etc \
 	lib/fontconfig/etc/conf.avail \
 	lib/fontconfig/etc/conf.d
