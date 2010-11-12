@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.155 2010/11/10 09:27:21 uebayasi Exp $	*/
+/*	$NetBSD: machdep.c,v 1.156 2010/11/12 13:18:56 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.155 2010/11/10 09:27:21 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.156 2010/11/12 13:18:56 uebayasi Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -155,7 +155,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.155 2010/11/10 09:27:21 uebayasi Exp $
 
 #include <dev/cons.h>
 
-#include <uvm/uvm_extern.h>
+#include <uvm/uvm.h>
 #include <uvm/uvm_page.h>
 
 #include <sys/sysctl.h>

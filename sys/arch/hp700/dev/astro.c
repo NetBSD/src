@@ -1,4 +1,4 @@
-/*	$NetBSD: astro.c,v 1.9 2010/03/07 08:56:07 skrll Exp $	*/
+/*	$NetBSD: astro.c,v 1.10 2010/11/12 13:18:57 uebayasi Exp $	*/
 
 /*	$OpenBSD: astro.c,v 1.8 2007/10/06 23:50:54 krw Exp $	*/
 
@@ -26,7 +26,7 @@
 #include <sys/reboot.h>
 #include <sys/tree.h>
 
-#include <uvm/uvm_extern.h>
+#include <uvm/uvm.h>
 
 #include <machine/iomod.h>
 #include <machine/autoconf.h>

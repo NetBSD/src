@@ -1,4 +1,4 @@
-/*	$NetBSD: maple.c,v 1.42 2010/10/17 14:17:49 tsutsui Exp $	*/
+/*	$NetBSD: maple.c,v 1.43 2010/11/12 13:18:57 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: maple.c,v 1.42 2010/10/17 14:17:49 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: maple.c,v 1.43 2010/11/12 13:18:57 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -76,7 +76,7 @@ __KERNEL_RCSID(0, "$NetBSD: maple.c,v 1.42 2010/10/17 14:17:49 tsutsui Exp $");
 #include <sys/systm.h>
 #include <sys/conf.h>
 
-#include <uvm/uvm_extern.h>
+#include <uvm/uvm.h>
 
 #include <machine/cpu.h>
 #include <machine/bus.h>
