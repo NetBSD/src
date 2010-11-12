@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.218 2010/11/10 09:27:22 uebayasi Exp $	*/
+/*	$NetBSD: pmap.c,v 1.219 2010/11/12 07:59:25 uebayasi Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -211,9 +211,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.218 2010/11/10 09:27:22 uebayasi Exp $");
-
-#define	VM_PAGE_TO_MD(pg)	(&(pg)->mdpage)
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.219 2010/11/12 07:59:25 uebayasi Exp $");
 
 #ifdef PMAP_DEBUG
 

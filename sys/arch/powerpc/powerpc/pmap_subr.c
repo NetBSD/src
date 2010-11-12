@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_subr.c,v 1.24 2010/11/06 11:46:02 uebayasi Exp $	*/
+/*	$NetBSD: pmap_subr.c,v 1.25 2010/11/12 07:59:27 uebayasi Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_subr.c,v 1.24 2010/11/06 11:46:02 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_subr.c,v 1.25 2010/11/12 07:59:27 uebayasi Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_altivec.h"
@@ -50,8 +50,6 @@ __KERNEL_RCSID(0, "$NetBSD: pmap_subr.c,v 1.24 2010/11/06 11:46:02 uebayasi Exp 
 #endif
 #endif
 #include <powerpc/psl.h>
-
-#define	VM_PAGE_TO_MD(pg)	(&(pg)->mdpage)
 
 #define	MFMSR()		mfmsr()
 #define	MTMSR(psl)	__asm volatile("sync; mtmsr %0; isync" :: "r"(psl))
