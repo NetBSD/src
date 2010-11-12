@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp.c,v 1.64 2010/11/12 09:11:37 tteras Exp $	*/
+/*	$NetBSD: isakmp.c,v 1.65 2010/11/12 10:36:37 tteras Exp $	*/
 
 /* Id: isakmp.c,v 1.74 2006/05/07 21:32:59 manubsd Exp */
 
@@ -2166,9 +2166,10 @@ isakmp_ph2delete(iph2)
  * if phase1 has been finished, begin phase2.
  */
 int
-isakmp_post_acquire(iph2, iph1hint)
+isakmp_post_acquire(iph2, iph1hint, nopassive)
 	struct ph2handle *iph2;
 	struct ph1handle *iph1hint;
+	int nopassive;
 {
 	struct remoteconf *rmconf;
 	struct ph1handle *iph1 = NULL;
@@ -2185,7 +2186,7 @@ isakmp_post_acquire(iph2, iph1hint)
 	 * so no need to bother yet. --arno */
 
 	if (iph1hint == NULL || iph1hint->rmconf == NULL) {
-		rmconf = getrmconf(iph2->dst, GETRMCONF_F_NO_PASSIVE);
+		rmconf = getrmconf(iph2->dst, nopassive ? GETRMCONF_F_NO_PASSIVE : 0);
 		if (rmconf == NULL) {
 			plog(LLV_ERROR, LOCATION, NULL,
 				"no configuration found for %s.\n",
@@ -2197,7 +2198,7 @@ isakmp_post_acquire(iph2, iph1hint)
 	}
 
 	/* if passive mode, ignore the acquire message */
-	if (rmconf->passive) {
+	if (nopassive && rmconf->passive) {
 		plog(LLV_DEBUG, LOCATION, NULL,
 			"because of passive mode, "
 			"ignore the acquire message for %s.\n",
