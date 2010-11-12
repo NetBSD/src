@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.153.2.63 2010/11/12 19:00:00 uebayasi Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.153.2.64 2010/11/12 19:02:44 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.153.2.63 2010/11/12 19:00:00 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.153.2.64 2010/11/12 19:02:44 uebayasi Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -130,7 +130,7 @@ SIMPLEQ_HEAD(vm_physseg_freelist, vm_physseg);
 
 struct vm_physseg *vm_physmem_ptrs[VM_PHYSSEG_MAX];
 int vm_nphysmem = 0;
-struct vm_physseg vm_physmem_store[VM_PHYSSEG_MAX];
+static struct vm_physseg vm_physmem_store[VM_PHYSSEG_MAX];
 static struct vm_physseg_freelist vm_physmem_freelist =
     SIMPLEQ_HEAD_INITIALIZER(vm_physmem_freelist);
 
