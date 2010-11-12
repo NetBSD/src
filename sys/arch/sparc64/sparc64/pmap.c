@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.268 2010/11/02 13:09:29 uebayasi Exp $	*/
+/*	$NetBSD: pmap.c,v 1.269 2010/11/12 07:59:27 uebayasi Exp $	*/
 /*
  *
  * Copyright (C) 1996-1999 Eduardo Horvath.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.268 2010/11/02 13:09:29 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.269 2010/11/12 07:59:27 uebayasi Exp $");
 
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
@@ -72,8 +72,6 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.268 2010/11/02 13:09:29 uebayasi Exp $");
 #define Debugger()
 #define db_printf	printf
 #endif
-
-#define	VM_PAGE_TO_MD(pg)	(&(pg)->mdpage)
 
 #define	MEG		(1<<20) /* 1MB */
 #define	KB		(1<<10)	/* 1KB */

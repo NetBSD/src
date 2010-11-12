@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.73 2010/11/10 09:27:23 uebayasi Exp $	*/
+/*	$NetBSD: pmap.c,v 1.74 2010/11/12 07:59:26 uebayasi Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.73 2010/11/10 09:27:23 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.74 2010/11/12 07:59:26 uebayasi Exp $");
 
 #define	PMAP_NOOPNAMES
 
@@ -90,8 +90,6 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.73 2010/11/10 09:27:23 uebayasi Exp $");
 #include <powerpc/stdarg.h>
 #include <powerpc/oea/spr.h>
 #include <powerpc/oea/sr_601.h>
-
-#define	VM_PAGE_TO_MD(pg)	(&(pg)->mdpage)
 
 #ifdef ALTIVEC
 int pmap_use_altivec;
