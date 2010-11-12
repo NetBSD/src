@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.697 2010/11/10 09:27:22 uebayasi Exp $	*/
+/*	$NetBSD: machdep.c,v 1.698 2010/11/12 13:18:57 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.697 2010/11/10 09:27:22 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.698 2010/11/12 13:18:57 uebayasi Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -125,7 +125,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.697 2010/11/10 09:27:22 uebayasi Exp $
 
 #include <dev/cons.h>
 
-#include <uvm/uvm_extern.h>
+#include <uvm/uvm.h>
 #include <uvm/uvm_page.h>
 
 #include <sys/sysctl.h>
