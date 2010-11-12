@@ -1,4 +1,4 @@
-/*	$NetBSD: admin.c,v 1.35 2010/10/21 06:15:28 tteras Exp $	*/
+/*	$NetBSD: admin.c,v 1.36 2010/11/12 09:08:26 tteras Exp $	*/
 
 /* Id: admin.c,v 1.25 2006/04/06 14:31:04 manubsd Exp */
 
@@ -638,9 +638,15 @@ admin_reply(so, req, l_ac_errno, buf)
 	}
 
 	combuf = (struct admin_com *) retbuf;
-	combuf->ac_len = tlen;
+	combuf->ac_len = (u_int16_t) tlen;
 	combuf->ac_cmd = req->ac_cmd & ~ADMIN_FLAG_VERSION;
-	combuf->ac_errno = l_ac_errno;
+	if (tlen != (u_int32_t) combuf->ac_len &&
+	    l_ac_errno == 0) {
+		combuf->ac_len_high = tlen >> 16;
+		combuf->ac_cmd |= ADMIN_FLAG_LONG_REPLY;
+	} else {
+		combuf->ac_errno = l_ac_errno;
+	}
 	combuf->ac_proto = req->ac_proto;
 
 	if (buf != NULL)

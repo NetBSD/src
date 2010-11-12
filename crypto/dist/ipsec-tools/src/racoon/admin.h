@@ -1,4 +1,4 @@
-/*	$NetBSD: admin.h,v 1.7 2008/08/29 00:30:15 gmcgarry Exp $	*/
+/*	$NetBSD: admin.h,v 1.8 2010/11/12 09:08:26 tteras Exp $	*/
 
 /* Id: admin.h,v 1.11 2005/06/19 22:37:47 manubsd Exp */
 
@@ -49,16 +49,19 @@ struct admin_com {
 	union {
 		int16_t ac_un_errno;
 		uint16_t ac_un_version;
+		uint16_t ac_un_len_high;
 	} u;
 	u_int16_t ac_proto;
 };
 #define ac_errno u.ac_un_errno
 #define ac_version u.ac_un_version
+#define ac_len_high u.ac_un_len_high
 
 /*
  * Version field in request is valid.
  */
 #define ADMIN_FLAG_VERSION	0x8000
+#define ADMIN_FLAG_LONG_REPLY	0x8000
 
 /*
  * No data follows as the data.

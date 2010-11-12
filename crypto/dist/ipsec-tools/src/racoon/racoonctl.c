@@ -1,4 +1,4 @@
-/*	$NetBSD: racoonctl.c,v 1.17 2009/04/20 13:22:00 tteras Exp $	*/
+/*	$NetBSD: racoonctl.c,v 1.18 2010/11/12 09:08:26 tteras Exp $	*/
 
 /*	Id: racoonctl.c,v 1.11 2006/04/06 17:06:25 manubsd Exp */
 
@@ -1426,10 +1426,14 @@ handle_recv(combuf)
         int len;
 
 	com = (struct admin_com *)combuf->v;
-	len = com->ac_len - sizeof(*com);
+	if (com->ac_cmd & ADMIN_FLAG_LONG_REPLY)
+		len = ((u_int32_t)com->ac_len) + (((u_int32_t)com->ac_len_high) << 16);
+	else
+		len = com->ac_len;
+	len -= sizeof(*com);
 	buf = combuf->v + sizeof(*com);
 
-	switch (com->ac_cmd) {
+	switch (com->ac_cmd & ~ADMIN_FLAG_LONG_REPLY) {
 	case ADMIN_SHOW_SCHED:
 		print_schedule(buf, len);
 		break;
