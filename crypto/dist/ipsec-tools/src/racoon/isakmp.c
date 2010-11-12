@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp.c,v 1.63 2010/10/21 06:15:28 tteras Exp $	*/
+/*	$NetBSD: isakmp.c,v 1.64 2010/11/12 09:11:37 tteras Exp $	*/
 
 /* Id: isakmp.c,v 1.74 2006/05/07 21:32:59 manubsd Exp */
 
@@ -766,6 +766,20 @@ isakmp_main(msg, remote, local)
 	return 0;
 }
 
+static int
+ph1_rekey_enabled(iph1)
+	struct ph1handle *iph1;
+{
+	if (iph1->rmconf->rekey == REKEY_FORCE)
+		return 1;
+#ifdef ENABLE_DPD
+	if (iph1->rmconf->rekey == REKEY_ON && iph1->dpd_support &&
+	    iph1->rmconf->dpd_interval)
+		return 1;
+#endif
+	return 0;
+}
+
 /*
  * main function of phase 1.
  */
@@ -866,13 +880,7 @@ ph1_main(iph1, msg)
 		migrate_dying_ph12(iph1);
 
 		/* add to the schedule to expire, and seve back pointer. */
-		if ((iph1->rmconf->rekey == REKEY_FORCE)
-#ifdef ENABLE_DPD
-			||
-		    (iph1->rmconf->rekey == REKEY_ON && iph1->dpd_support &&
-		     iph1->rmconf->dpd_interval)
-#endif
-			) {
+		if (ph1_rekey_enabled(iph1)) {
 			sched_schedule(&iph1->sce,
 				       iph1->approval->lifetime *
 				       PFKEY_SOFT_LIFETIME_RATE / 100,
@@ -2071,7 +2079,13 @@ isakmp_ph1delete(iph1)
 	plog(LLV_INFO, LOCATION, NULL,
 		"ISAKMP-SA deleted %s-%s spi:%s\n",
 		src, dst, isakmp_pindex(&iph1->index, 0));
+
 	evt_phase1(iph1, EVT_PHASE1_DOWN, NULL);
+
+	if (new_iph1 == NULL && ph1_rekey_enabled(iph1)) {
+		purge_remote(iph1);
+		script_hook(iph1, SCRIPT_PHASE1_DEAD);
+	}
 	racoon_free(src);
 	racoon_free(dst);
 
