@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.641 2010/09/04 12:17:58 ahoka Exp $
+#	$NetBSD: bsd.own.mk,v 1.642 2010/11/12 16:05:49 tsutsui Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -742,7 +742,6 @@ ${var}?=no
     ${MACHINE} == "acorn32"	|| \
     ${MACHINE} == "alpha"	|| \
     ${MACHINE} == "amiga"	|| \
-    ${MACHINE} == "dreamcast"	|| \
     ${MACHINE} == "ews4800mips"	|| \
     ${MACHINE} == "mac68k"	|| \
     ${MACHINE} == "newsmips"	|| \
