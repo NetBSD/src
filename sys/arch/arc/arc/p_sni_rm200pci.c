@@ -1,4 +1,4 @@
-/*	$NetBSD: p_sni_rm200pci.c,v 1.12 2007/12/03 15:33:14 ad Exp $	*/
+/*	$NetBSD: p_sni_rm200pci.c,v 1.13 2010/11/12 16:09:57 uebayasi Exp $	*/
 /*	$OpenBSD: machdep.c,v 1.36 1999/05/22 21:22:19 weingart Exp $	*/
 
 /*
@@ -76,12 +76,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: p_sni_rm200pci.c,v 1.12 2007/12/03 15:33:14 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: p_sni_rm200pci.c,v 1.13 2010/11/12 16:09:57 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <uvm/uvm_extern.h>
+#include <uvm/uvm.h>
 
 #include <machine/autoconf.h>
 #include <machine/bus.h>
