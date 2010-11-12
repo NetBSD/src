@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.153.2.62 2010/11/11 16:22:25 uebayasi Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.153.2.63 2010/11/12 19:00:00 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.153.2.62 2010/11/11 16:22:25 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.153.2.63 2010/11/12 19:00:00 uebayasi Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -130,7 +130,7 @@ SIMPLEQ_HEAD(vm_physseg_freelist, vm_physseg);
 
 struct vm_physseg *vm_physmem_ptrs[VM_PHYSSEG_MAX];
 int vm_nphysmem = 0;
-static struct vm_physseg vm_physmem_store[VM_PHYSSEG_MAX];
+struct vm_physseg vm_physmem_store[VM_PHYSSEG_MAX];
 static struct vm_physseg_freelist vm_physmem_freelist =
     SIMPLEQ_HEAD_INITIALIZER(vm_physmem_freelist);
 
@@ -1181,7 +1181,6 @@ vm_physseg_lt_p(struct vm_physseg *seg, int op, paddr_t pframe,
  * PHYS_TO_VM_PAGE: find vm_page for a PA.   used by MI code to get vm_pages
  * back from an I/O mapping (ugh!).   used in some MD code as well.
  */
-
 struct vm_page *
 uvm_phys_to_vm_page(paddr_t pa)
 {
