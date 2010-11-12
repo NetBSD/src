@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.98 2010/10/27 20:44:49 pooka Exp $	*/
+/*	$NetBSD: vm.c,v 1.99 2010/11/12 05:23:41 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2007-2010 Antti Kantee.  All Rights Reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.98 2010/10/27 20:44:49 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.99 2010/11/12 05:23:41 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -796,6 +796,24 @@ uvmpdpol_anfree(struct vm_anon *an)
 {
 
 	/* nada */
+}
+
+/*
+ * Physical address accessors.
+ */
+
+struct vm_page *
+uvm_phys_to_vm_page(paddr_t pa)
+{
+
+	return NULL;
+}
+
+paddr_t
+uvm_vm_page_to_phys(const struct vm_page *pg)
+{
+
+	return 0;
 }
 
 /*

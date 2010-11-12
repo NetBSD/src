@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.162 2010/11/12 03:21:04 uebayasi Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.163 2010/11/12 05:23:41 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.162 2010/11/12 03:21:04 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.163 2010/11/12 05:23:41 uebayasi Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -976,6 +976,30 @@ vm_physseg_find_linear(struct vm_physseg *segs, int nsegs, paddr_t pframe, int *
 	return(-1);
 }
 #endif
+
+/*
+ * PHYS_TO_VM_PAGE: find vm_page for a PA.   used by MI code to get vm_pages
+ * back from an I/O mapping (ugh!).   used in some MD code as well.
+ */
+struct vm_page *
+uvm_phys_to_vm_page(paddr_t pa)
+{
+	paddr_t pf = atop(pa);
+	int	off;
+	int	psi;
+
+	psi = vm_physseg_find(pf, &off);
+	if (psi != -1)
+		return(&VM_PHYSMEM_PTR(psi)->pgs[off]);
+	return(NULL);
+}
+
+paddr_t
+uvm_vm_page_to_phys(const struct vm_page *pg)
+{
+
+	return pg->phys_addr;
+}
 
 /*
  * uvm_page_recolor: Recolor the pages if the new bucket count is
