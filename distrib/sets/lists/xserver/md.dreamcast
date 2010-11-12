@@ -1,4 +1,6 @@
-#	$NetBSD: md.dreamcast,v 1.10 2010/06/19 18:17:55 tsutsui Exp $
+#	$NetBSD: md.dreamcast,v 1.11 2010/11/12 17:05:48 tsutsui Exp $
+./etc/X11/xorg.conf.jpkbd				-unknown-	xorg
+./etc/X11/xorg.conf.uskbd				-unknown-	xorg
 ./usr/X11R6/bin/X					-unknown-	x11
 ./usr/X11R6/bin/Xdreamcast				-unknown-	x11
 ./usr/X11R6/man/cat1/Xdreamcast.0			-unknown-	x11,.cat
