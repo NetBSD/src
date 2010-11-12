@@ -1,4 +1,4 @@
-/*	$NetBSD: snapper.c,v 1.35 2010/10/16 18:22:37 phx Exp $	*/
+/*	$NetBSD: snapper.c,v 1.36 2010/11/12 12:26:29 phx Exp $	*/
 /*	Id: snapper.c,v 1.11 2002/10/31 17:42:13 tsubai Exp	*/
 /*	Id: i2s.c,v 1.12 2005/01/15 14:32:35 tsubai Exp		*/
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: snapper.c,v 1.35 2010/10/16 18:22:37 phx Exp $");
+__KERNEL_RCSID(0, "$NetBSD: snapper.c,v 1.36 2010/11/12 12:26:29 phx Exp $");
 
 #include <sys/param.h>
 #include <sys/audioio.h>
@@ -721,8 +721,8 @@ snapper_attach(device_t parent, device_t self, void *aux)
 {
 	struct snapper_softc *sc;
 	struct confargs *ca;
-	int cirq, oirq, iirq, cirq_type, oirq_type, iirq_type;
-	int soundbus, intr[6];
+	int cirq, oirq, iirq, cirq_type, oirq_type, iirq_type, soundbus;
+	uint32_t intr[6], reg[6];
 	char compat[32];
 
 	sc = device_private(self);
@@ -757,17 +757,20 @@ snapper_attach(device_t parent, device_t self, void *aux)
 				     sizeof(struct dbdma_command));
 
 	sc->sc_baseaddr = ca->ca_baseaddr;
-	ca->ca_reg[0] += ca->ca_baseaddr;
-	ca->ca_reg[2] += ca->ca_baseaddr;
-	ca->ca_reg[4] += ca->ca_baseaddr;
+	OF_getprop(soundbus, "reg", reg, sizeof reg);
+	reg[0] += ca->ca_baseaddr;
+	reg[2] += ca->ca_baseaddr;
+	reg[4] += ca->ca_baseaddr;
 
 	sc->sc_node = ca->ca_node;
 	sc->sc_tag = ca->ca_tag;
-	bus_space_map(sc->sc_tag, ca->ca_reg[0], ca->ca_reg[1], 0, &sc->sc_bsh);
-	bus_space_map(sc->sc_tag, ca->ca_reg[2], ca->ca_reg[3],
+
+	bus_space_map(sc->sc_tag, reg[0], reg[1], 0, &sc->sc_bsh);
+	bus_space_map(sc->sc_tag, reg[2], reg[3],
 	    BUS_SPACE_MAP_LINEAR, &sc->sc_odmah);
-	bus_space_map(sc->sc_tag, ca->ca_reg[4], ca->ca_reg[5],
+	bus_space_map(sc->sc_tag, reg[4], reg[5],
 	    BUS_SPACE_MAP_LINEAR, &sc->sc_idmah);
+
 	sc->sc_odma = bus_space_vaddr(sc->sc_tag, sc->sc_odmah);
 	sc->sc_idma = bus_space_vaddr(sc->sc_tag, sc->sc_idmah);
 
