@@ -1,4 +1,4 @@
-/*	$NetBSD: admin.c,v 1.36 2010/11/12 09:08:26 tteras Exp $	*/
+/*	$NetBSD: admin.c,v 1.37 2010/11/12 10:36:37 tteras Exp $	*/
 
 /* Id: admin.c,v 1.25 2006/04/06 14:31:04 manubsd Exp */
 
@@ -577,7 +577,7 @@ admin_process(so2, combuf)
 			}
 
 			insph2(iph2);
-			if (isakmp_post_acquire(iph2, NULL) < 0) {
+			if (isakmp_post_acquire(iph2, NULL, FALSE) < 0) {
 				remph2(iph2);
 				delph2(iph2);
 				break;
