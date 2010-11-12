@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.130 2010/06/28 17:26:11 kefren Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.131 2010/11/12 16:30:26 roy Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.130 2010/06/28 17:26:11 kefren Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.131 2010/11/12 16:30:26 roy Exp $");
 
 #include "opt_inet.h"
 #include "opt_mpls.h"
@@ -589,6 +589,7 @@ rt_msg1(int type, struct rt_addrinfo *rtinfo, void *data, int datalen)
 
 	case RTM_DELADDR:
 	case RTM_NEWADDR:
+	case RTM_CHGADDR:
 		len = sizeof(struct ifa_msghdr);
 		break;
 
@@ -680,6 +681,7 @@ again:
 
 	case RTM_DELADDR:
 	case RTM_NEWADDR:
+	case RTM_CHGADDR:
 		len = sizeof(struct ifa_msghdr);
 		break;
 #ifdef COMPAT_14
@@ -837,11 +839,16 @@ rt_newaddrmsg(int cmd, struct ifaddr *ifa, int error, struct rtentry *rt)
 		case cmdpass(RTM_ADD, 1):
 		case cmdpass(RTM_CHANGE, 1):
 		case cmdpass(RTM_DELETE, 2):
-			if (cmd == RTM_ADD)
-				ncmd = RTM_NEWADDR;
-			else
+			switch (cmd) {
+			case RTM_DELETE:
 				ncmd = RTM_DELADDR;
-
+				break;
+			case RTM_CHANGE:
+				ncmd = RTM_CHGADDR;
+				break;
+			default:
+				ncmd = RTM_NEWADDR;
+			}
 			info.rti_info[RTAX_IFA] = sa = ifa->ifa_addr;
 			info.rti_info[RTAX_IFP] = ifp->if_dl->ifa_addr;
 			info.rti_info[RTAX_NETMASK] = ifa->ifa_netmask;
