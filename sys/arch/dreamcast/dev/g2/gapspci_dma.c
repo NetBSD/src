@@ -1,4 +1,4 @@
-/*	$NetBSD: gapspci_dma.c,v 1.17 2009/11/07 07:27:42 cegger Exp $	*/
+/*	$NetBSD: gapspci_dma.c,v 1.18 2010/11/12 13:18:56 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: gapspci_dma.c,v 1.17 2009/11/07 07:27:42 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gapspci_dma.c,v 1.18 2010/11/12 13:18:56 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,7 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: gapspci_dma.c,v 1.17 2009/11/07 07:27:42 cegger Exp 
 
 #include <dreamcast/dev/g2/gapspcivar.h>
 
-#include <uvm/uvm_extern.h>
+#include <uvm/uvm.h>
 
 int	gaps_dmamap_create(bus_dma_tag_t, bus_size_t, int, bus_size_t,
 	    bus_size_t, int, bus_dmamap_t *);

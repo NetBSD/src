@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.30 2008/06/04 12:41:40 ad Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.31 2010/11/12 13:18:56 uebayasi Exp $	*/
 /*	NetBSD: bus_dma.c,v 1.20 2000/01/10 03:24:36 simonb Exp 	*/
 
 /*-
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.30 2008/06/04 12:41:40 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.31 2010/11/12 13:18:56 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -40,7 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.30 2008/06/04 12:41:40 ad Exp $");
 #include <sys/device.h>
 #include <sys/proc.h>
 
-#include <uvm/uvm_extern.h>
+#include <uvm/uvm.h>
 
 #include <mips/cache.h>
 
