@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.h,v 1.64 2010/11/12 03:21:04 uebayasi Exp $	*/
+/*	$NetBSD: uvm_page.h,v 1.65 2010/11/12 05:23:41 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -294,8 +294,9 @@ bool uvm_pageismanaged(paddr_t);
 
 int uvm_page_lookup_freelist(struct vm_page *);
 
-static struct vm_page *PHYS_TO_VM_PAGE(paddr_t);
 int vm_physseg_find(paddr_t, int *);
+struct vm_page *uvm_phys_to_vm_page(paddr_t);
+paddr_t uvm_vm_page_to_phys(const struct vm_page *);
 
 /*
  * macros
@@ -303,7 +304,7 @@ int vm_physseg_find(paddr_t, int *);
 
 #define UVM_PAGE_TREE_PENALTY	4	/* XXX: a guess */
 
-#define VM_PAGE_TO_PHYS(entry)	((entry)->phys_addr)
+#define VM_PAGE_TO_PHYS(entry)	uvm_vm_page_to_phys(entry)
 
 /*
  * Compute the page color bucket for a given page.
@@ -311,23 +312,7 @@ int vm_physseg_find(paddr_t, int *);
 #define	VM_PGCOLOR_BUCKET(pg) \
 	(atop(VM_PAGE_TO_PHYS((pg))) & uvmexp.colormask)
 
-
-/*
- * PHYS_TO_VM_PAGE: find vm_page for a PA.   used by MI code to get vm_pages
- * back from an I/O mapping (ugh!).   used in some MD code as well.
- */
-static inline struct vm_page *
-PHYS_TO_VM_PAGE(paddr_t pa)
-{
-	paddr_t pf = atop(pa);
-	int	off;
-	int	psi;
-
-	psi = vm_physseg_find(pf, &off);
-	if (psi != -1)
-		return(&vm_physmem[psi].pgs[off]);
-	return(NULL);
-}
+#define	PHYS_TO_VM_PAGE(pa)	uvm_phys_to_vm_page(pa)
 
 #define VM_PAGE_IS_FREE(entry)  ((entry)->pqflags & PQ_FREE)
 #define	VM_FREE_PAGE_TO_CPU(pg)	((struct uvm_cpu *)((uintptr_t)pg->offset))
