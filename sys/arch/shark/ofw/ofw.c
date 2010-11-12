@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw.c,v 1.53 2009/12/28 03:22:20 uebayasi Exp $	*/
+/*	$NetBSD: ofw.c,v 1.54 2010/11/12 13:40:10 uebayasi Exp $	*/
 
 /*
  * Copyright 1997
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw.c,v 1.53 2009/12/28 03:22:20 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw.c,v 1.54 2010/11/12 13:40:10 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,7 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: ofw.c,v 1.53 2009/12/28 03:22:20 uebayasi Exp $");
 #include <sys/reboot.h>
 #include <sys/mbuf.h>
 
-#include <uvm/uvm_extern.h>
+#include <uvm/uvm.h>
 
 #include <dev/cons.h>
 
