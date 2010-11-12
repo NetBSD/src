@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1455 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1456 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -777,4 +777,6 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	hp700: Update sti(4) from OpenBSD and add pci(4) attachment.
 		[skrll 20101109]
 	nside(4): Add a driver for the National Semiconductor PC87415 IDE
+	dreamcast: Switch to using Xorg servers and binaries.
+		[tsutsui 20101112]
 		controler. [skrll 20101110]
