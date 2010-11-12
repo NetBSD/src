@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.12 2010/08/07 21:59:11 cegger Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.13 2010/11/12 02:07:27 dholland Exp $	*/
 /*	NetBSD: mainbus.c,v 1.53 2003/10/27 14:11:47 junyoung Exp 	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.12 2010/08/07 21:59:11 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.13 2010/11/12 02:07:27 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -133,7 +133,7 @@ mainbus_match(device_t parent, cfdata_t match, void *aux)
 void
 mainbus_attach(device_t parent, device_t self, void *aux)
 {
-#if NPCI > 0
+#if defined(DOM0OPS) && NPCI > 0
 	int mode;
 #endif
 	union mainbus_attach_args mba;
