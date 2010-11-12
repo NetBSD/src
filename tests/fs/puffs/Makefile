@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2010/07/31 17:11:45 pooka Exp $
+#	$NetBSD: Makefile,v 1.12 2010/11/12 17:33:28 pooka Exp $
 #
 
 .include <bsd.own.mk>
@@ -9,6 +9,7 @@ TESTSDIR=	${TESTSBASE}/fs/puffs
 
 TESTS_C=	t_basic
 TESTS_C+=	t_fuzz
+TESTS_C+=	t_io
 
 VFSTESTDIR != cd ${.CURDIR}/../common && ${PRINTOBJDIR}
 LDADD+=-L${VFSTESTDIR} -lvfstest
@@ -20,7 +21,8 @@ LDADD+=		-lrumpvfs
 LDADD+=		-lrump -lrumpuser -lpthread
 
 # required by -DPUFFSDUMP
-#LDADD+= 	-lpuffs -lutil
+LDADD+= 	-lpuffs -lutil
+CPPFLAGS+=	-I/home/pooka/src/curpuffs/libpuffs
 
 WARNS=2
 
