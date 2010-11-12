@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.c,v 1.82 2010/07/06 17:00:06 pooka Exp $	*/
+/*	$NetBSD: puffs_msgif.c,v 1.83 2010/11/12 17:46:09 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.82 2010/07/06 17:00:06 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.83 2010/11/12 17:46:09 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -331,6 +331,14 @@ puffs_msg_enqueue(struct puffs_mount *pmp, struct puffs_msgpark *park)
 	struct mount *mp;
 	struct puffs_req *preq, *creq;
 	ssize_t delta;
+
+	/*
+	 * Some clients reuse a park, so reset some flags.  We might
+	 * want to provide a caller-side interface for this and add
+	 * a few more invariant checks here, but this will do for now.
+	 */
+	park->park_flags &= ~(PARKFLAG_DONE | PARKFLAG_HASERROR);
+	KASSERT((park->park_flags & PARKFLAG_WAITERGONE) == 0);
 
 	mp = PMPTOMP(pmp);
 	preq = park->park_preq;
