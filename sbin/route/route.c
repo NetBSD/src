@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.125 2010/11/05 13:52:41 pooka Exp $	*/
+/*	$NetBSD: route.c,v 1.126 2010/11/12 16:32:18 roy Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1991, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)route.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: route.c,v 1.125 2010/11/05 13:52:41 pooka Exp $");
+__RCSID("$NetBSD: route.c,v 1.126 2010/11/12 16:32:18 roy Exp $");
 #endif
 #endif /* not lint */
 
@@ -1613,10 +1613,14 @@ const char *msgtypes[] = {
 	"RTM_RESOLVE: Route created by cloning",
 	"RTM_NEWADDR: address being added to iface",
 	"RTM_DELADDR: address being removed from iface",
-	"RTM_OIFINFO: iface status change (pre-1.5)",
-	"RTM_IFINFO: iface status change",
+	"RTM_OOIFINFO: iface status change (pre-1.5)",
+	"RTM_OIFINFO: iface status change (pre-6.0)",
 	"RTM_IFANNOUNCE: iface arrival/departure",
 	"RTM_IEEE80211: IEEE80211 wireless event",
+	"",
+	"",
+	"RTM_IFINFO: iface status change",
+	"RTM_CHGADDR: address being changed on iface",
 	0,
 };
 
@@ -1692,6 +1696,7 @@ print_rtmsg(struct rt_msghdr *rtm, int msglen)
 		break;
 	case RTM_NEWADDR:
 	case RTM_DELADDR:
+	case RTM_CHGADDR:
 		ifam = (struct ifa_msghdr *)rtm;
 		(void)printf("metric %d, flags: ", ifam->ifam_metric);
 		bprintf(stdout, ifam->ifam_flags, routeflags);
