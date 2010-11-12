@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.h,v 1.65 2010/11/12 05:23:41 uebayasi Exp $	*/
+/*	$NetBSD: uvm_page.h,v 1.66 2010/11/12 07:59:24 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -305,6 +305,10 @@ paddr_t uvm_vm_page_to_phys(const struct vm_page *);
 #define UVM_PAGE_TREE_PENALTY	4	/* XXX: a guess */
 
 #define VM_PAGE_TO_PHYS(entry)	uvm_vm_page_to_phys(entry)
+
+#ifdef __HAVE_VM_PAGE_MD
+#define	VM_PAGE_TO_MD(pg)	(&(pg)->mdpage)
+#endif
 
 /*
  * Compute the page color bucket for a given page.
