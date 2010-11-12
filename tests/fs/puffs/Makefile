@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2010/11/12 17:33:28 pooka Exp $
+#	$NetBSD: Makefile,v 1.13 2010/11/12 17:35:34 pooka Exp $
 #
 
 .include <bsd.own.mk>
@@ -21,8 +21,7 @@ LDADD+=		-lrumpvfs
 LDADD+=		-lrump -lrumpuser -lpthread
 
 # required by -DPUFFSDUMP
-LDADD+= 	-lpuffs -lutil
-CPPFLAGS+=	-I/home/pooka/src/curpuffs/libpuffs
+#LDADD+= 	-lpuffs -lutil
 
 WARNS=2
 
