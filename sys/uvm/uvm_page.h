@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.h,v 1.63 2010/11/10 09:27:21 uebayasi Exp $	*/
+/*	$NetBSD: uvm_page.h,v 1.64 2010/11/12 03:21:04 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -295,7 +295,7 @@ bool uvm_pageismanaged(paddr_t);
 int uvm_page_lookup_freelist(struct vm_page *);
 
 static struct vm_page *PHYS_TO_VM_PAGE(paddr_t);
-static int vm_physseg_find(paddr_t, int *);
+int vm_physseg_find(paddr_t, int *);
 
 /*
  * macros
@@ -310,112 +310,6 @@ static int vm_physseg_find(paddr_t, int *);
  */
 #define	VM_PGCOLOR_BUCKET(pg) \
 	(atop(VM_PAGE_TO_PHYS((pg))) & uvmexp.colormask)
-
-/*
- * when VM_PHYSSEG_MAX is 1, we can simplify these functions
- */
-
-#if VM_PHYSSEG_MAX == 1
-static inline int vm_physseg_find_contig(struct vm_physseg *, int, paddr_t, int *);
-#elif (VM_PHYSSEG_STRAT == VM_PSTRAT_BSEARCH)
-static inline int vm_physseg_find_bsearch(struct vm_physseg *, int, paddr_t, int *);
-#else
-static inline int vm_physseg_find_linear(struct vm_physseg *, int, paddr_t, int *);
-#endif
-
-/*
- * vm_physseg_find: find vm_physseg structure that belongs to a PA
- */
-static inline int
-vm_physseg_find(paddr_t pframe, int *offp)
-{
-
-#if VM_PHYSSEG_MAX == 1
-	return vm_physseg_find_contig(vm_physmem, vm_nphysseg, pframe, offp);
-#elif (VM_PHYSSEG_STRAT == VM_PSTRAT_BSEARCH)
-	return vm_physseg_find_bsearch(vm_physmem, vm_nphysseg, pframe, offp);
-#else
-	return vm_physseg_find_linear(vm_physmem, vm_nphysseg, pframe, offp);
-#endif
-}
-
-#if VM_PHYSSEG_MAX == 1
-static inline int
-vm_physseg_find_contig(struct vm_physseg *segs, int nsegs, paddr_t pframe, int *offp)
-{
-
-	/* 'contig' case */
-	if (pframe >= segs[0].start && pframe < segs[0].end) {
-		if (offp)
-			*offp = pframe - segs[0].start;
-		return(0);
-	}
-	return(-1);
-}
-
-#elif (VM_PHYSSEG_STRAT == VM_PSTRAT_BSEARCH)
-
-static inline int
-vm_physseg_find_bsearch(struct vm_physseg *segs, int nsegs, paddr_t pframe, int *offp)
-{
-	/* binary search for it */
-	u_int	start, len, try;
-
-	/*
-	 * if try is too large (thus target is less than try) we reduce
-	 * the length to trunc(len/2) [i.e. everything smaller than "try"]
-	 *
-	 * if the try is too small (thus target is greater than try) then
-	 * we set the new start to be (try + 1).   this means we need to
-	 * reduce the length to (round(len/2) - 1).
-	 *
-	 * note "adjust" below which takes advantage of the fact that
-	 *  (round(len/2) - 1) == trunc((len - 1) / 2)
-	 * for any value of len we may have
-	 */
-
-	for (start = 0, len = nsegs ; len != 0 ; len = len / 2) {
-		try = start + (len / 2);	/* try in the middle */
-
-		/* start past our try? */
-		if (pframe >= segs[try].start) {
-			/* was try correct? */
-			if (pframe < segs[try].end) {
-				if (offp)
-					*offp = pframe - segs[try].start;
-				return(try);            /* got it */
-			}
-			start = try + 1;	/* next time, start here */
-			len--;			/* "adjust" */
-		} else {
-			/*
-			 * pframe before try, just reduce length of
-			 * region, done in "for" loop
-			 */
-		}
-	}
-	return(-1);
-}
-
-#else
-
-static inline int
-vm_physseg_find_linear(struct vm_physseg *segs, int nsegs, paddr_t pframe, int *offp)
-{
-	/* linear search for it */
-	int	lcv;
-
-	for (lcv = 0; lcv < nsegs; lcv++) {
-		if (pframe >= segs[lcv].start &&
-		    pframe < segs[lcv].end) {
-			if (offp)
-				*offp = pframe - segs[lcv].start;
-			return(lcv);		   /* got it */
-		}
-	}
-	return(-1);
-}
-#endif
 
 
 /*
