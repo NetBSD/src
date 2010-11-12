@@ -1,4 +1,4 @@
-/*	$NetBSD: uturn.c,v 1.11 2010/06/21 11:04:27 skrll Exp $	*/
+/*	$NetBSD: uturn.c,v 1.12 2010/11/12 13:18:57 uebayasi Exp $	*/
 
 /*	$OpenBSD: uturn.c,v 1.6 2007/12/29 01:26:14 kettenis Exp $	*/
 
@@ -38,7 +38,7 @@
 #include <sys/extent.h>
 #include <sys/mbuf.h>
 
-#include <uvm/uvm_extern.h>
+#include <uvm/uvm.h>
 
 #include <machine/bus.h>
 #include <machine/iomod.h>

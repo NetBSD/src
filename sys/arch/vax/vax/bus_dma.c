@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.33 2009/03/18 16:00:16 cegger Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.34 2010/11/12 13:18:59 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.33 2009/03/18 16:00:16 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.34 2010/11/12 13:18:59 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,7 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.33 2009/03/18 16:00:16 cegger Exp $");
 #include <sys/vnode.h>
 #include <sys/device.h>
 
-#include <uvm/uvm_extern.h>
+#include <uvm/uvm.h>
 
 #define _VAX_BUS_DMA_PRIVATE
 #include <machine/bus.h>
