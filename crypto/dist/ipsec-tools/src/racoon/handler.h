@@ -1,4 +1,4 @@
-/*	$NetBSD: handler.h,v 1.23 2010/10/21 06:04:33 tteras Exp $	*/
+/*	$NetBSD: handler.h,v 1.24 2010/11/12 09:09:47 tteras Exp $	*/
 
 /* Id: handler.h,v 1.19 2006/02/25 08:25:12 manubsd Exp */
 
@@ -202,7 +202,8 @@ struct ph1handle {
 
 #ifdef ENABLE_DPD
 	int		dpd_support;	/* Does remote supports DPD ? */
-	u_int16_t	dpd_seq;		/* DPD seq number to receive */
+	u_int32_t	dpd_last_ack;
+	u_int32_t	dpd_seq;		/* DPD seq number to receive */
 	u_int8_t	dpd_fails;		/* number of failures */
 	struct sched	dpd_r_u;
 #endif

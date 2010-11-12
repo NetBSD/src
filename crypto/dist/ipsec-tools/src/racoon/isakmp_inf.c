@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_inf.c,v 1.42 2010/06/22 09:41:33 vanhu Exp $	*/
+/*	$NetBSD: isakmp_inf.c,v 1.43 2010/11/12 09:09:47 tteras Exp $	*/
 
 /* Id: isakmp_inf.c,v 1.44 2006/05/06 20:45:52 manubsd Exp */
 
@@ -1450,17 +1450,16 @@ isakmp_info_recv_r_u_ack (iph1, ru, msgid)
 	struct isakmp_pl_ru *ru;
 	u_int32_t msgid;
 {
+	u_int32_t seq;
 
 	plog(LLV_DEBUG, LOCATION, iph1->remote,
 		 "DPD R-U-There-Ack received\n");
 
-	/* XXX Maintain window of acceptable sequence numbers ?
-	 * => ru->data <= iph2->dpd_seq &&
-	 *    ru->data >= iph2->dpd_seq - iph2->dpd_fails ? */
-	if (ntohl(ru->data) != iph1->dpd_seq-1) {
+	seq = ntohl(ru->data);
+	if (seq <= iph1->dpd_last_ack || seq > iph1->dpd_seq) {
 		plog(LLV_ERROR, LOCATION, iph1->remote,
-			 "Wrong DPD sequence number (%d, %d expected).\n", 
-			 ntohl(ru->data), iph1->dpd_seq-1);
+			 "Wrong DPD sequence number (%d; last_ack=%d, seq=%d).\n", 
+			 seq, iph1->dpd_last_ack, iph1->dpd_seq);
 		return 0;
 	}
 
@@ -1472,6 +1471,7 @@ isakmp_info_recv_r_u_ack (iph1, ru, msgid)
 	}
 
 	iph1->dpd_fails = 0;
+	iph1->dpd_last_ack = seq;
 	sched_cancel(&iph1->dpd_r_u);
 	isakmp_sched_r_u(iph1, 0);
 
@@ -1536,12 +1536,13 @@ isakmp_info_send_r_u(sc)
 	memcpy(ru->i_ck, iph1->index.i_ck, sizeof(cookie_t));
 	memcpy(ru->r_ck, iph1->index.r_ck, sizeof(cookie_t));
 
-	if (iph1->dpd_seq == 0){
+	if (iph1->dpd_seq == 0) {
 		/* generate a random seq which is not too big */
-		srand(time(NULL));
-		iph1->dpd_seq = rand() & 0x0fff;
+		iph1->dpd_seq = iph1->dpd_last_ack = rand() & 0x0fff;
 	}
 
+	iph1->dpd_seq++;
+	iph1->dpd_fails++;
 	ru->data = htonl(iph1->dpd_seq);
 
 	error = isakmp_info_send_common(iph1, payload, ISAKMP_NPTYPE_N, 0);
@@ -1549,12 +1550,6 @@ isakmp_info_send_r_u(sc)
 
 	plog(LLV_DEBUG, LOCATION, iph1->remote,
 		 "DPD R-U-There sent (%d)\n", error);
-
-	/* will be decreased if ACK received... */
-	iph1->dpd_fails++;
-
-	/* XXX should be increased only when ACKed ? */
-	iph1->dpd_seq++;
 
 	/* Reschedule the r_u_there with a short delay,
 	 * will be deleted/rescheduled if ACK received before */
