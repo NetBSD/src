@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.191 2010/11/10 09:27:23 uebayasi Exp $	*/
+/*	$NetBSD: pmap.c,v 1.192 2010/11/12 07:59:26 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.191 2010/11/10 09:27:23 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.192 2010/11/12 07:59:26 uebayasi Exp $");
 
 /*
  *	Manages physical address maps.
@@ -133,8 +133,6 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.191 2010/11/10 09:27:23 uebayasi Exp $");
 #include <mips/cpuregs.h>
 #include <mips/locore.h>
 #include <mips/pte.h>
-
-#define	VM_PAGE_TO_MD(pg)	(&(pg)->mdpage)
 
 CTASSERT(MIPS_KSEG0_START < 0);
 CTASSERT((intptr_t)MIPS_PHYS_TO_KSEG0(0x1000) < 0);
