@@ -1,4 +1,4 @@
-/*      $NetBSD: trap.h,v 1.22 2009/02/16 23:55:31 christos Exp $     */
+/*      $NetBSD: trap.h,v 1.23 2010/11/13 02:23:27 matt Exp $     */
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -72,6 +72,9 @@
 #define	AFLT_FLTOVF	0x8	/* floating overflow */
 #define	AFLT_FLTDIV	0x9	/* floating divide-by-zero */
 #define	AFLT_FLTUND	0xa	/* floating underflow */
+
+/* Used by RAS to detect an interrupted CAS */
+#define	CASMAGIC	0xBEDABABE /* high end of S0 space */
 
 /* Trap's coming from user mode */
 #define	T_USER	0x100
