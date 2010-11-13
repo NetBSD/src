@@ -1,0 +1,105 @@
+#	$NetBSD: files.imx51,v 1.1 2010/11/13 07:11:02 bsh Exp $
+#
+# Configuration info for the Freescale i.MX51
+#
+
+defparam opt_imx.h				MEMSIZE
+defflag opt_imx.h				IMX51
+
+define	bus_dma_generic
+
+file	arch/arm/imx/imx_space.c
+file	arch/arm/imx/imx_dma.c		bus_dma_generic needs-flag
+
+# iMX51 AXI/AHB bus interface and SoC domains
+device	axi { [addr=-1], [size=0], [irq=-1], [irqbase=-1]} : bus_space_generic
+attach	axi at mainbus
+file	arch/arm/imx/imx51_axi.c		axi
+
+# iMX51 TrustZone Interrupt Controller
+include "arch/arm/pic/files.pic"
+device	tzic: pic
+attach	tzic at axi
+file	arch/arm/imx/imx51_tzic.c		tzic	needs-flag
+file	arch/arm/arm32/irq_dispatch.S
+
+# iMX51 Enhanced Periodic Interrupt Timer
+device	imxclock
+attach	imxclock at axi
+file	arch/arm/imx/imxclock.c
+file	arch/arm/imx/imx51_clock.c
+
+# Clock Control Module
+device	imxccm
+attach	imxccm	at axi
+file	arch/arm/imx/imx51_ccm.c	imxccm		needs-flag
+
+# frequency of external low frequency clock
+# typically 32000, 32768, or 38400.
+defparam opt_imx51clk.h	IMX51_CKIL_FREQ
+
+# frequency of on-chip oscillator. typeilcally 24000000.
+defparam opt_imx51clk.h	IMX51_OSC_FREQ
+
+# following parameters are used when imxccm is not configured in the kernel.
+defparam opt_imx51clk.h IMX51_AHBCLK_FREQ
+defparam opt_imx51clk.h IMX51_IPGCLK_FREQ
+
+# iMX GPIO
+# device	imxgpio: gpiobus
+# attach	imxgpio at ahb
+# file	arch/arm/imx/imx31_gpio.c		imxgpio		needs-flag
+
+# iMX IOMUX
+device	imxiomux : bus_space_generic
+attach	imxiomux at axi
+file	arch/arm/imx/imx31_iomux.c		imxiomux
+
+# LCD controller
+# device	lcd : bus_dma_generic, wsemuldisplaydev, rasops16, rasops8, rasops4, rasops_rotation
+# file	arch/arm/imx/imx31_lcd.c		lcd		needs-flag
+# defflag	opt_imx31_lcd.h				IMXLCDCONSOLE
+
+# iMX M3IF - Multi Master Memory Interface
+# iMX ESDCTL/MDDRC - Enhanced SDRAM/LPDDR memory controller
+# iMX PCMCIA - PCMCIA memory controller
+# iMX NANDFC - NAND Flash memory controller
+# iMX WEIM - Wireless External Interface Module
+
+# iMX UART
+device	imxuart
+attach	imxuart at axi
+file	arch/arm/imx/imxuart.c			imxuart	needs-flag
+file	arch/arm/imx/imx51_uart.c		imxuart
+defflag	opt_imxuart.h				IMXUARTCONSOLE
+
+# attach	ohci at ahb with ohci_ahb : bus_dma_generic
+# file	arch/arm/imx/ochi_axi.c			ohci_axi
+
+# attach	wdc at ahb with wdc_ahb : bus_dma_generic
+# file	arch/arm/imx/wdc_axi.c			wdc_axi
+
+# SD host controller for SD/MMC
+# device	imxmci: sdmmcbus
+# file	arch/arm/imx/imx51_mci.c		imxmci
+
+# iic Controler
+# device	imxi2c: i2cbus
+# file	arch/arm/imx/imx51_i2c.c		imxi2c
+
+# attach	imxi2c at aips with imxi2c_aips
+# file	arch/arm/imx/imxi2c_aips.c		imxi2c_aips
+
+# spi bus controlloer
+# device	imxspi: spibus
+# file	arch/arm/imx/imx51_spi.c		imxspi
+
+# Smart Direct Memory Access Controller
+# device	imxsdma: dmover_service, bus_dma_generic
+# attach	imxsdma at ahb
+# file	arch/arm/imx/imxsdma.c		imxsdma
+# file	arch/arm/imx/imxsdmaprog.c		imxsdma
+
+# iis sound Controller (SSI module)
+# device	imxi2s {} : bus_dma_generic
+# file	arch/arm/imx/imx51_i2s.c		imxi2s needs-flag
