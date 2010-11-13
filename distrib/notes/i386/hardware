@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.126 2009/01/26 00:14:42 snj Exp $
+.\"	$NetBSD: hardware,v 1.127 2010/11/13 10:11:43 jnemeth Exp $
 .
 .Nx
 \*V
@@ -197,6 +197,9 @@ PCI universal communication cards
 [*] [+]
 .It
 .Te 2 "Ethernet adapters"
+.(bullet -compact
+Agere/LSI ET1310/ET1301 10/100/Gigabit Ethernet device
+.bullet)
 .(bullet -compact
 AMD LANCE and PCnet-based ISA Ethernet adapters [*]
 .(bullet -compact
