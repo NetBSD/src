@@ -1,4 +1,4 @@
-/*	$NetBSD: dmover_io.c,v 1.38 2010/11/13 13:51:58 uebayasi Exp $	*/
+/*	$NetBSD: dmover_io.c,v 1.39 2010/11/13 14:08:20 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dmover_io.c,v 1.38 2010/11/13 13:51:58 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dmover_io.c,v 1.39 2010/11/13 14:08:20 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/queue.h>
@@ -74,6 +74,8 @@ __KERNEL_RCSID(0, "$NetBSD: dmover_io.c,v 1.38 2010/11/13 13:51:58 uebayasi Exp 
 #include <sys/once.h>
 #include <sys/stat.h>
 #include <sys/kauth.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <dev/dmover/dmovervar.h>
 #include <dev/dmover/dmover_io.h>
