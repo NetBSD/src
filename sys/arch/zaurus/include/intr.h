@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.6 2008/04/27 18:58:47 matt Exp $	*/
+/*	$NetBSD: intr.h,v 1.7 2010/11/13 14:07:08 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2001, 2003 Wasabi Systems, Inc.
@@ -82,7 +82,6 @@
 
 #ifndef _LOCORE
 
-#include <sys/device.h>
 #include <sys/queue.h>
 
 #if defined(_LKM)

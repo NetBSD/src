@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.32 2010/04/24 09:39:57 kiyohara Exp $	*/
+/*	$NetBSD: intr.h,v 1.33 2010/11/13 14:07:07 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -36,7 +36,6 @@
 
 #ifndef _LOCORE
 #include <machine/cpu.h>
-#include <sys/device.h>
 
 void init_intr_ivr(void);
 void init_intr_openpic(void);

@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.13 2010/04/24 09:39:57 kiyohara Exp $	*/
+/*	$NetBSD: intr.h,v 1.14 2010/11/13 14:07:07 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -36,7 +36,6 @@
 
 #ifndef _LOCORE
 #include <machine/cpu.h>
-#include <sys/device.h>
 
 #define ICU_LEN		32
 #define IRQ_SLAVE	2
