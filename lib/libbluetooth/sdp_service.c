@@ -1,4 +1,4 @@
-/*	$NetBSD: sdp_service.c,v 1.2 2009/05/14 19:12:45 plunky Exp $	*/
+/*	$NetBSD: sdp_service.c,v 1.3 2010/11/13 19:43:56 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: sdp_service.c,v 1.2 2009/05/14 19:12:45 plunky Exp $");
+__RCSID("$NetBSD: sdp_service.c,v 1.3 2010/11/13 19:43:56 plunky Exp $");
 
 #include <errno.h>
 #include <limits.h>
@@ -193,7 +193,7 @@ sdp_service_search(struct sdp_session *ss, const sdp_data_t *ssp,
 		    || ptr + ptr[0] + 1 != end)
 			break;
 
-		memcpy(ss->cs, ptr, ptr[0] + 1);
+		memcpy(ss->cs, ptr, (size_t)(ptr[0] + 1));
 
 		/*
 		 * Complete?
@@ -312,7 +312,7 @@ sdp_service_attribute(struct sdp_session *ss, uint32_t id,
 		    || ptr + ptr[0] + 1 != end)
 			break;
 
-		memcpy(ss->cs, ptr, ptr[0] + 1);
+		memcpy(ss->cs, ptr, (size_t)(ptr[0] + 1));
 
 		/*
 		 * Complete?
@@ -448,7 +448,7 @@ sdp_service_search_attribute(struct sdp_session *ss, const sdp_data_t *ssp,
 		    || ptr + ptr[0] + 1 != end)
 			break;
 
-		memcpy(ss->cs, ptr, ptr[0] + 1);
+		memcpy(ss->cs, ptr, (size_t)(ptr[0] + 1));
 
 		/*
 		 * Complete?
