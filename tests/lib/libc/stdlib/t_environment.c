@@ -1,4 +1,4 @@
-/*	$NetBSD: t_environment.c,v 1.7 2010/11/09 11:48:35 pooka Exp $	*/
+/*	$NetBSD: t_environment.c,v 1.8 2010/11/13 18:52:55 tron Exp $	*/
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_environment.c,v 1.7 2010/11/09 11:48:35 pooka Exp $");
+__RCSID("$NetBSD: t_environment.c,v 1.8 2010/11/13 18:52:55 tron Exp $");
 
 #include <atf-c.h>
 #include <errno.h>
@@ -43,6 +43,7 @@ __RCSID("$NetBSD: t_environment.c,v 1.7 2010/11/09 11:48:35 pooka Exp $");
 ATF_TC(t_setenv);
 ATF_TC(t_putenv);
 ATF_TC(t_clearenv);
+ATF_TC(t_mixed);
 
 ATF_TC_HEAD(t_setenv, tc)
 {
@@ -63,6 +64,12 @@ ATF_TC_HEAD(t_clearenv, tc)
 	    "Test user clearing environment directly");
 }
 
+ATF_TC_HEAD(t_mixed, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Test mixing setenv(3), unsetenv(3) and putenv(3)");
+}
+
 ATF_TC_BODY(t_setenv, tc)
 {
 	size_t i;
@@ -71,13 +78,14 @@ ATF_TC_BODY(t_setenv, tc)
 	for (i = 0; i < 10240; i++) {
 		snprintf(name, sizeof(name), "var%zu", i);
 		snprintf(value, sizeof(value), "value%ld", lrand48());
-		setenv(name, value, 1);
+		ATF_CHECK(setenv(name, value, 1) != -1);
+		ATF_CHECK(setenv(name, "foo", 0) != -1);
 		ATF_CHECK_STREQ(getenv(name), value);
 	}
 
 	for (i = 0; i < 10240; i++) {
 		snprintf(name, sizeof(name), "var%zu", i);
-		unsetenv(name);
+		ATF_CHECK(unsetenv(name) != -1);
 		ATF_CHECK(getenv(name) == NULL);
 	}
 
@@ -101,7 +109,7 @@ ATF_TC_BODY(t_putenv, tc)
 	ATF_CHECK_STREQ(getenv("clap"), "true");
 	ATF_CHECK(getenv("crap") == NULL);
 	string[1] = 'r';
-	unsetenv("crap");
+	ATF_CHECK(unsetenv("crap") != -1);
 	ATF_CHECK(getenv("crap") == NULL);
 
 	ATF_CHECK_ERRNO(EINVAL, putenv(NULL) == -1);
@@ -134,11 +142,33 @@ ATF_TC_BODY(t_clearenv, tc)
 	ATF_CHECK(getenv("crap2") == NULL);
 }
 
+ATF_TC_BODY(t_mixed, tc)
+{
+	char string[32];
+
+	(void)strcpy(string, "mixedcrap=putenv");
+
+	ATF_CHECK(setenv("mixedcrap", "setenv", 1) != -1);
+	ATF_CHECK_STREQ(getenv("mixedcrap"), "setenv");
+	ATF_CHECK(putenv(string) != -1);
+	ATF_CHECK_STREQ(getenv("mixedcrap"), "putenv");
+	ATF_CHECK(unsetenv("mixedcrap") != -1);
+	ATF_CHECK(getenv("mixedcrap") == NULL);
+
+	ATF_CHECK(putenv(string) != -1);
+	ATF_CHECK_STREQ(getenv("mixedcrap"), "putenv");
+	ATF_CHECK(setenv("mixedcrap", "setenv", 1) != -1);
+	ATF_CHECK_STREQ(getenv("mixedcrap"), "setenv");
+	ATF_CHECK(unsetenv("mixedcrap") != -1);
+	ATF_CHECK(getenv("mixedcrap") == NULL);
+}
+
 ATF_TP_ADD_TCS(tp)
 {
 	ATF_TP_ADD_TC(tp, t_setenv);
 	ATF_TP_ADD_TC(tp, t_putenv);
 	ATF_TP_ADD_TC(tp, t_clearenv);
+	ATF_TP_ADD_TC(tp, t_mixed);
 
 	return atf_no_error();
 }
