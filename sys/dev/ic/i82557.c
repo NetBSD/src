@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557.c,v 1.135 2010/04/05 07:19:34 joerg Exp $	*/
+/*	$NetBSD: i82557.c,v 1.136 2010/11/13 08:55:13 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.135 2010/04/05 07:19:34 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.136 2010/11/13 08:55:13 uebayasi Exp $");
 
 #include "rnd.h"
 
@@ -81,10 +81,9 @@ __KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.135 2010/04/05 07:19:34 joerg Exp $");
 #include <sys/errno.h>
 #include <sys/device.h>
 #include <sys/syslog.h>
+#include <sys/proc.h>
 
 #include <machine/endian.h>
-
-#include <uvm/uvm_extern.h>
 
 #if NRND > 0
 #include <sys/rnd.h>
