@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.168 2010/11/10 09:27:24 uebayasi Exp $	*/
+/*	$NetBSD: machdep.c,v 1.169 2010/11/13 04:00:19 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.168 2010/11/10 09:27:24 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.169 2010/11/13 04:00:19 uebayasi Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -136,7 +136,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.168 2010/11/10 09:27:24 uebayasi Exp $
 #include <dev/cons.h>
 
 #define	MAXMEM	64*1024	/* XXX - from cmap.h */
-#include <uvm/uvm_extern.h>
+#include <uvm/uvmn.h>
 
 #include <machine/bus.h>
 #include <machine/autoconf.h>
