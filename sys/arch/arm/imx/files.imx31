@@ -1,12 +1,12 @@
-#	$NetBSD: files.imx31,v 1.3 2010/11/13 04:58:46 bsh Exp $
+#	$NetBSD: files.imx31,v 1.4 2010/11/13 06:09:34 bsh Exp $
 #
 # Configuration info for the Freescale i.MX31
 #
 
 define	bus_dma_generic
 
-file	arch/arm/imx/imx31_space.c
-file	arch/arm/imx/imx31_dma.c		bus_dma_generic
+file	arch/arm/imx/imx_space.c
+file	arch/arm/imx/imx_dma.c		bus_dma_generic
 
 # iMX L2 Cache Controller
 device	l2cc
