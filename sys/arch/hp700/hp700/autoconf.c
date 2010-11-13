@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.33 2010/02/12 16:57:52 skrll Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.34 2010/11/13 07:58:55 skrll Exp $	*/
 
 /*	$OpenBSD: autoconf.c,v 1.15 2001/06/25 00:43:10 mickey Exp $	*/
 
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.33 2010/02/12 16:57:52 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.34 2010/11/13 07:58:55 skrll Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_useleds.h"
@@ -470,6 +470,7 @@ pdc_scanbus(device_t self, struct confargs *ca,
 
 	for (i = 0; i < ca->ca_nmodules; i++) {
 		struct confargs nca;
+		char buf[128];
 		int error;
 
 		memset(&nca, 0, sizeof(nca));
@@ -511,10 +512,12 @@ pdc_scanbus(device_t self, struct confargs *ca,
 				nca.ca_naddrs = pdc_find_mod.naddrs;
 				if (nca.ca_naddrs > 16) {
 					nca.ca_naddrs = 16;
-					printf("WARNING: too many (%d) addrs\n",
+					aprint_error("WARNING: "
+					    "too many (%d) addrs\n",
 					    pdc_find_mod.naddrs);
 				}
 
+				aprint_verbose(">> ADDRS: ");
 				for (ia = 0; !(error = pdc_call((iodcio_t)pdc,
 				    0, PDC_SYSTEM_MAP, PDC_SYSTEM_MAP_FIND_ADDR,
 				    &pdc_find_addr, im, ia + 1)) && ia < nca.ca_naddrs; ia++) {
@@ -522,17 +525,36 @@ pdc_scanbus(device_t self, struct confargs *ca,
 					nca.ca_addrs[ia].size =
 					    pdc_find_addr.size << PGSHIFT;
 
+					aprint_verbose(" 0x%lx[0x%x]",
+					    nca.ca_addrs[ia].addr,
+					    nca.ca_addrs[ia].size);
 				}
+				aprint_verbose("\n");
 			}
 		}
 
 		if (!nca.ca_hpa)
 			continue;
 
+		aprint_verbose(">> HPA 0x%lx[0x%x]\n", nca.ca_hpa,
+		    nca.ca_hpasz);
+
 		if ((error = pdc_call((iodcio_t)pdc, 0, PDC_IODC,
 		    PDC_IODC_READ, &pdc_iodc_read, nca.ca_hpa, IODC_DATA,
-		    &nca.ca_type, sizeof(nca.ca_type))) < 0)
+		    &nca.ca_type, sizeof(nca.ca_type))) < 0) {
+			aprint_verbose(">> iodc_data error %d\n", error);
 			continue;
+		}
+
+		snprintb(buf, sizeof(buf), PZF_BITS, nca.ca_dp.dp_flags);
+		aprint_verbose(">> probing: flags %s bc %d/%d/%d/%d/%d/%d ",
+		    buf,
+		    nca.ca_dp.dp_bc[0], nca.ca_dp.dp_bc[1],
+		    nca.ca_dp.dp_bc[2], nca.ca_dp.dp_bc[3],
+		    nca.ca_dp.dp_bc[4], nca.ca_dp.dp_bc[5]);
+		aprint_verbose("mod %x hpa %lx type %x sv %x\n",
+		    nca.ca_dp.dp_mod, nca.ca_hpa,
+		    nca.ca_type.iodc_type, nca.ca_type.iodc_sv_model);
 
 		nca.ca_irq = HP700CF_IRQ_UNDEF;
 		nca.ca_pdc_iodc_read = &pdc_iodc_read;
