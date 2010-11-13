@@ -1,0 +1,15 @@
+#       $NetBSD: NETWALKER_MD,v 1.1 2010/11/13 07:31:32 bsh Exp $
+#
+#	M2ID -- i.MX51 evaluation board
+#
+
+include "arch/evbarm/conf/NETWALKER"
+
+options 	MEMORY_DISK_HOOKS	# boottime setup of ramdisk
+options 	MEMORY_DISK_IS_ROOT	# use memory disk as root
+options 	MEMORY_DISK_ROOT_SIZE=8192	# Size in blocks
+options 	MEMORY_DISK_RBFLAGS=RB_SINGLE	# boot in single-user mode
+
+# disk/mass storage pseudo-devices
+pseudo-device	md	1
+
