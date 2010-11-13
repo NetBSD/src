@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.374 2010/08/21 13:17:32 pgoyette Exp $	*/
+/*	$NetBSD: param.h,v 1.375 2010/11/13 08:41:40 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -138,6 +138,7 @@
 #include <sys/resource.h>
 #include <sys/ucred.h>
 #include <sys/uio.h>
+#include <uvm/uvm_param.h>
 #ifndef NPROC
 #define	NPROC	(20 + 16 * MAXUSERS)
 #endif
