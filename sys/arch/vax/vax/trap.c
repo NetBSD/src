@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.124 2010/04/23 19:18:10 rmind Exp $     */
+/*	$NetBSD: trap.c,v 1.125 2010/11/13 02:23:27 matt Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -33,7 +33,7 @@
  /* All bugs are subject to removal without further notice */
 		
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.124 2010/04/23 19:18:10 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.125 2010/11/13 02:23:27 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -179,6 +179,25 @@ fram:
 		}
 
 	case T_PTELEN:
+#ifndef MULTIPROCESSOR
+		/*
+		 * If we referred to an address beyond the end of the system
+		 * page table, it may be due to a failed CAS
+		 * restartable-atomic-sequence.  If it is, restart it at the
+		 * beginning and restart.
+		 */
+		{
+			extern const uint8_t cas32_ras_start[], cas32_ras_end[];
+			if (frame->code == CASMAGIC
+			    && frame->pc >= (uintptr_t) cas32_ras_start
+			    && frame->pc < (uintptr_t) cas32_ras_end) {
+				frame->pc = (uintptr_t) cas32_ras_start;
+				trapsig = false;
+				break;
+			}
+		}
+		/* FALLTHROUGH */
+#endif
 	case T_ACCFLT:
 #ifdef TRAPDEBUG
 if(faultdebug)printf("trap accflt type %lx, code %lx, pc %lx, psl %lx\n",

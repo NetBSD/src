@@ -1,4 +1,4 @@
-/*      $NetBSD: cpu.h,v 1.89 2010/07/01 19:50:12 ragge Exp $      */
+/*      $NetBSD: cpu.h,v 1.90 2010/11/13 02:23:27 matt Exp $      */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden
@@ -145,6 +145,7 @@ struct cpu_info {
 	struct trapframe *ci_ddb_regs;	/* Used by DDB */
 	SIMPLEQ_ENTRY(cpu_info) ci_next; /* next cpu_info */
 #endif
+	uintptr_t ci_cas_addr;		/* current address doing CAS in a RAS */
 };
 #define	CI_MASTERCPU	1		/* Set if master CPU */
 #define	CI_RUNNING	2		/* Set when a slave CPU is running */

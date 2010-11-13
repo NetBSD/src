@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.16 2010/07/01 19:50:12 ragge Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.17 2010/11/13 02:23:27 matt Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 The NetBSD Foundation, Inc.
@@ -61,6 +61,9 @@ ENTRY(mutex_enter, 0)
 #endif
 	clrl	%r2			/* set old value (zero) */
 	mfpr	$PR_SSP, %r3		/* set new value (curlwp) */
+#ifndef MULTIPROCESSOR
+	addl3	$CI_CAS_ADDR, L_CPU(%r3), %r4 /* r4 == &curcpu()->ci_cas_addr */
+#endif
 	bsbw	_do_cas+2		/* do the compare-and-swap */
 	tstl	%r0			/* is the old value what we wanted? */
 	beql	2f			/*  yep, just branch to the return */
@@ -78,6 +81,9 @@ ENTRY(mutex_exit, 0)
 #endif
 	mfpr	$PR_SSP, %r2		/* get curlwp (old) */
 	clrl	%r3			/* get zero (new) */
+#ifndef MULTIPROCESSOR
+	addl3	$CI_CAS_ADDR, L_CPU(%r2), %r4 /* r4 == &curcpu()->ci_cas_addr */
+#endif
 	bsbw	_do_cas+2		/* do the compare-and-swap */
 	cmpl	%r0,%r2			/* return == old? */
 	beql	2f			/*   yes, branch to return */
@@ -160,6 +166,10 @@ ENTRY(rw_enter, 0)
 						/* write active or pending? */
 	bneq	3f				/*   yep, go slow */
 	addl3	$RW_READ_INCR, %r2, %r3		/* incr. reader count (new) */
+#ifndef MULTIPROCESSOR
+	mfpr	$PR_SSP, %r4
+	addl3	$CI_CAS_ADDR, L_CPU(%r4), %r4 /* r4 == &curcpu()->ci_cas_addr */
+#endif
 1:	bsbw	_do_cas+2			/* do the compare-and-swap */
 	cmpl	%r0, %r2			/* did it succeed? */
 	bneq	3f				/*   nope, go slow */
@@ -167,6 +177,9 @@ ENTRY(rw_enter, 0)
 
 2:	clrl	%r2				/* get old value (zero) */
 	mfpr	$PR_SSP, %r3			/* get new value (curlwp) */
+#ifndef MULTIPROCESSOR
+	addl3	$CI_CAS_ADDR, L_CPU(%r3), %r4 /* r4 == &curcpu()->ci_cas_addr */
+#endif
 	bisl2	$RW_WRITE_LOCKED, %r3		/* show that it's a write */
 	brb	1b				/* do the compare-and-swap */
 
@@ -185,12 +198,19 @@ ENTRY(rw_exit, 0)
 	blbs	%r2, 3f				/* RW_HAS_WAITERS mbz */
 	subl3	$RW_READ_INCR, %r2, %r3		/* decr. reader count (new) */
 	blss	3f				/* if less then 0, go slow */
+#ifndef MULTIPROCESSOR
+	mfpr	$PR_SSP, %r4			/* get curlwp */
+	addl3	$CI_CAS_ADDR, L_CPU(%r4), %r4 /* r4 == &curcpu()->ci_cas_addr */
+#endif
 1:	bsbw	_do_cas+2			/* do the compare-and-swap */
 	cmpl	%r0, %r2			/* did it succeed? */
 	bneq	3f				/*   nope, go slow */
 	ret					/*   yes, return */
 
 2:	mfpr	$PR_SSP, %r2			/* get old (curlwp) */
+#ifndef MULTIPROCESSOR
+	addl3	$CI_CAS_ADDR, L_CPU(%r2), %r4 /* r4 == &curcpu()->ci_cas_addr */
+#endif
 	bisl2	$RW_WRITE_LOCKED, %r2		/* show that it's a write */
 	clrl	%r3				/* get new (zero) */
 	brb	1b				/* do the compare-and-swap */
@@ -211,6 +231,10 @@ ENTRY(rw_tryenter, 0)
 						/* write active or pending? */
 	bneq	2f				/*   yes, return failure */
 	addl3	$RW_READ_INCR, %r2, %r3		/* incr reader count (new) */
+#ifndef MULTIPROCESSOR
+	mfpr	$PR_SSP, %r4
+	addl3	$CI_CAS_ADDR, L_CPU(%r4), %r4 /* r4 == &curcpu()->ci_cas_addr */
+#endif
 1:	bsbw	_do_cas+2			/* do the compare-and-swap */
 	cmpl	%r0, %r2			/* did it succeed? */
 	bneq	2f				/*   no, we failed. */
@@ -221,6 +245,9 @@ ENTRY(rw_tryenter, 0)
 
 3:	clrl	%r2				/* set old value (0) */
 	mfpr	$PR_SSP, %r3			/* set new value (curlwp) */
+#ifndef MULTIPROCESSOR
+	addl3	$CI_CAS_ADDR, L_CPU(%r3), %r4 /* r4 == &curcpu()->ci_cas_addr */
+#endif
 	bisl2	$RW_WRITE_LOCKED, %r3		/* show that it's a write */
 	brb	1b				/* do the compare-and-swap */
 #endif /* LOCKDEBUG */
@@ -231,6 +258,10 @@ ENTRY(rw_tryenter, 0)
 ENTRY(_atomic_cas_32, 0)
 	movq	4(%ap), %r1		/* cache ptr, old */
 	movl	12(%ap), %r3		/* cache new */
+#ifndef MULTIPROCESSOR
+	mfpr	$PR_SSP, %r4
+	addl3	$CI_CAS_ADDR, L_CPU(%r4), %r4 /* r4 == &curcpu()->ci_cas_addr */
+#endif
 	bsbw	_do_cas+2		/* do it */
 	ret
 
@@ -257,15 +288,28 @@ ENTRY(_do_cas, 0)
 4:
 	rsb				/* return */
 #else
-	mfpr	$PR_IPL, %r5		/* save IPL */
-	mtpr	$IPL_SCHED, $PR_IPL	/* block interrupts */
-	movl	(%r1), %r0		/* get current value */
-	cmpl	%r2, %r0		/* does it equal old value? */
-	bneq	1f			/*   no, don't update */
-	movl	%r3, (%r1)		/* yes, update */
-1:	mtpr	%r5, $PR_IPL		/* drop/restore IPL */
-	rsb				/* return */
-#endif
+/*
+ * entry:
+ *	r1 = address to be CAS'ed
+ *	r2 = old value
+ *	r3 = new value
+ *	r4 = global cell to hold CAS address (common to all callers)
+ *	     e.g. address of curcpu()->ci_cas_addr
+ * exit:
+ *	r0 = old value
+ */
+	.globl	cas32_ras_start, cas32_ras_end
+cas32_ras_start:
+	movl	%r1, (%r4)
+	movl	*(%r4), %r0
+	cmpl	%r2, %r0
+	bneq	1f
+	movl	%r3, *(%r4)
+cas32_ras_end:
+1:
+	movl	$CASMAGIC, (%r4)
+	rsb
+#endif /* !MULTIPROCESSOR */
 STRONG_ALIAS(atomic_cas_ptr,_atomic_cas_32)
 STRONG_ALIAS(_atomic_cas_ptr,_atomic_cas_32)
 STRONG_ALIAS(atomic_cas_uint,_atomic_cas_32)
