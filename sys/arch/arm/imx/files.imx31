@@ -1,4 +1,4 @@
-#	$NetBSD: files.imx,v 1.2 2008/04/27 18:58:44 matt Exp $
+#	$NetBSD: files.imx31,v 1.1 2010/11/13 04:49:38 bsh Exp $
 #
 # Configuration info for the Freescale i.MX31
 #
