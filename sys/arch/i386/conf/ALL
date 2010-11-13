@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.277 2010/11/13 09:48:55 jnemeth Exp $
+# $NetBSD: ALL,v 1.278 2010/11/13 14:38:44 pgoyette Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.277 $"
+#ident 		"ALL-$Revision: 1.278 $"
 
 maxusers	64		# estimated number of users
 
@@ -1700,6 +1700,9 @@ pseudo-device	putter
 
 # Userspace block/char drivers
 pseudo-device	pud
+
+# Hardware-assisted data mover interface
+pseudo-device	dmoverio
 
 options 	FILEASSOC		# fileassoc(9) - required for Veriexec
 
