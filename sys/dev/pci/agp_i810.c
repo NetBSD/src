@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_i810.c,v 1.68 2010/06/16 03:35:01 riz Exp $	*/
+/*	$NetBSD: agp_i810.c,v 1.69 2010/11/13 13:52:04 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.68 2010/06/16 03:35:01 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.69 2010/11/13 13:52:04 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -39,8 +39,6 @@ __KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.68 2010/06/16 03:35:01 riz Exp $");
 #include <sys/proc.h>
 #include <sys/device.h>
 #include <sys/conf.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>

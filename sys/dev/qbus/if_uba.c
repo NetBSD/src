@@ -1,4 +1,4 @@
-/*	$NetBSD: if_uba.c,v 1.30 2008/03/11 05:34:01 matt Exp $	*/
+/*	$NetBSD: if_uba.c,v 1.31 2010/11/13 13:52:10 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_uba.c,v 1.30 2008/03/11 05:34:01 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_uba.c,v 1.31 2010/11/13 13:52:10 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -40,8 +40,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_uba.c,v 1.30 2008/03/11 05:34:01 matt Exp $");
 #include <sys/mbuf.h>
 #include <sys/socket.h>
 #include <sys/device.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <net/if.h>
 

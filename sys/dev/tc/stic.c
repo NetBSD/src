@@ -1,4 +1,4 @@
-/*	$NetBSD: stic.c,v 1.47 2010/11/02 20:49:47 skrll Exp $	*/
+/*	$NetBSD: stic.c,v 1.48 2010/11/13 13:52:12 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stic.c,v 1.47 2010/11/02 20:49:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stic.c,v 1.48 2010/11/13 13:52:12 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,8 +50,6 @@ __KERNEL_RCSID(0, "$NetBSD: stic.c,v 1.47 2010/11/02 20:49:47 skrll Exp $");
 #include <sys/kauth.h>
 #include <sys/lwp.h>
 #include <sys/event.h>
-
-#include <uvm/uvm_extern.h>
 
 #if defined(pmax)
 #include <mips/cpuregs.h>

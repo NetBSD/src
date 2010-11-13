@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxl.c,v 1.112 2010/04/05 07:19:34 joerg Exp $	*/
+/*	$NetBSD: elinkxl.c,v 1.113 2010/11/13 13:52:01 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.112 2010/04/05 07:19:34 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.113 2010/11/13 13:52:01 uebayasi Exp $");
 
 #include "rnd.h"
 
@@ -48,8 +48,6 @@ __KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.112 2010/04/05 07:19:34 joerg Exp $");
 #if NRND > 0
 #include <sys/rnd.h>
 #endif
-
-#include <uvm/uvm_extern.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>

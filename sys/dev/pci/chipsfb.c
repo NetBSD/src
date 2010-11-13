@@ -1,4 +1,4 @@
-/*	$NetBSD: chipsfb.c,v 1.21 2010/05/04 05:00:33 macallan Exp $	*/
+/*	$NetBSD: chipsfb.c,v 1.22 2010/11/13 13:52:05 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2006 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: chipsfb.c,v 1.21 2010/05/04 05:00:33 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: chipsfb.c,v 1.22 2010/11/13 13:52:05 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,8 +41,6 @@ __KERNEL_RCSID(0, "$NetBSD: chipsfb.c,v 1.21 2010/05/04 05:00:33 macallan Exp $"
 #include <sys/callout.h>
 #include <sys/lwp.h>
 #include <sys/kauth.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <dev/videomode/videomode.h>
 

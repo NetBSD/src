@@ -1,4 +1,4 @@
-/*	$NetBSD: aic79xx_osm.h,v 1.20 2009/09/26 14:44:10 tsutsui Exp $	*/
+/*	$NetBSD: aic79xx_osm.h,v 1.21 2010/11/13 13:52:00 uebayasi Exp $	*/
 
 /*
  * NetBSD platform specific driver option settings, data structures,
@@ -32,9 +32,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $NetBSD: aic79xx_osm.h,v 1.20 2009/09/26 14:44:10 tsutsui Exp $
+ * $NetBSD: aic79xx_osm.h,v 1.21 2010/11/13 13:52:00 uebayasi Exp $
  *
- * //depot/aic7xxx/freebsd/dev/aic7xxx/aic79xx_osm.h#19 $$NetBSD: aic79xx_osm.h,v 1.20 2009/09/26 14:44:10 tsutsui Exp $
+ * //depot/aic7xxx/freebsd/dev/aic7xxx/aic79xx_osm.h#19 $$NetBSD: aic79xx_osm.h,v 1.21 2010/11/13 13:52:00 uebayasi Exp $
  *
  * $FreeBSD: src/sys/dev/aic7xxx/aic79xx_osm.h,v 1.9 2003/05/26 21:43:29 gibbs Exp $
  */
@@ -71,8 +71,6 @@
 #include <dev/scsipi/scsipi_debug.h>
 #include <dev/scsipi/scsiconf.h>
 #include <dev/scsipi/scsi_iu.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <dev/ic/aic7xxx_cam.h>
 

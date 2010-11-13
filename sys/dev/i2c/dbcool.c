@@ -1,4 +1,4 @@
-/*	$NetBSD: dbcool.c,v 1.25 2010/08/17 23:36:51 pgoyette Exp $ */
+/*	$NetBSD: dbcool.c,v 1.26 2010/11/13 13:51:59 uebayasi Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbcool.c,v 1.25 2010/08/17 23:36:51 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbcool.c,v 1.26 2010/11/13 13:51:59 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,8 +57,6 @@ __KERNEL_RCSID(0, "$NetBSD: dbcool.c,v 1.25 2010/08/17 23:36:51 pgoyette Exp $")
 #include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/sysctl.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <dev/i2c/dbcool_var.h>
 #include <dev/i2c/dbcool_reg.h>

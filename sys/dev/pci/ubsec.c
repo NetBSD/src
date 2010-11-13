@@ -1,4 +1,4 @@
-/*	$NetBSD: ubsec.c,v 1.24 2009/11/26 15:17:10 njoly Exp $	*/
+/*	$NetBSD: ubsec.c,v 1.25 2010/11/13 13:52:09 uebayasi Exp $	*/
 /* $FreeBSD: src/sys/dev/ubsec/ubsec.c,v 1.6.2.6 2003/01/23 21:06:43 sam Exp $ */
 /*	$OpenBSD: ubsec.c,v 1.127 2003/06/04 14:04:58 jason Exp $	*/
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubsec.c,v 1.24 2009/11/26 15:17:10 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubsec.c,v 1.25 2010/11/13 13:52:09 uebayasi Exp $");
 
 #undef UBSEC_DEBUG
 
@@ -58,8 +58,6 @@ __KERNEL_RCSID(0, "$NetBSD: ubsec.c,v 1.24 2009/11/26 15:17:10 njoly Exp $");
 #include <sys/mbuf.h>
 #include <sys/device.h>
 #include <sys/queue.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <opencrypto/cryptodev.h>
 #include <opencrypto/xform.h>

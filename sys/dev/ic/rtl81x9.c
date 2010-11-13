@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9.c,v 1.91 2010/07/27 21:02:00 jakllsch Exp $	*/
+/*	$NetBSD: rtl81x9.c,v 1.92 2010/11/13 13:52:02 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtl81x9.c,v 1.91 2010/07/27 21:02:00 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtl81x9.c,v 1.92 2010/11/13 13:52:02 uebayasi Exp $");
 
 #include "rnd.h"
 
@@ -99,8 +99,6 @@ __KERNEL_RCSID(0, "$NetBSD: rtl81x9.c,v 1.91 2010/07/27 21:02:00 jakllsch Exp $"
 #include <sys/malloc.h>
 #include <sys/kernel.h>
 #include <sys/socket.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <net/if.h>
 #include <net/if_arp.h>

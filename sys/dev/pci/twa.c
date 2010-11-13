@@ -1,4 +1,4 @@
-/*	$NetBSD: twa.c,v 1.33 2009/08/18 11:15:43 drochner Exp $ */
+/*	$NetBSD: twa.c,v 1.34 2010/11/13 13:52:08 uebayasi Exp $ */
 /*	$wasabi: twa.c,v 1.27 2006/07/28 18:17:21 wrstuden Exp $	*/
 
 /*-
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: twa.c,v 1.33 2009/08/18 11:15:43 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: twa.c,v 1.34 2010/11/13 13:52:08 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,8 +87,6 @@ __KERNEL_RCSID(0, "$NetBSD: twa.c,v 1.33 2009/08/18 11:15:43 drochner Exp $");
 #if 1
 #include <sys/ktrace.h>
 #endif
-
-#include <uvm/uvm_extern.h>
 
 #include <sys/bus.h>
 

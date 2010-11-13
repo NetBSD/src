@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_apple.c,v 1.5 2008/06/09 06:49:54 freza Exp $ */
+/*	$NetBSD: agp_apple.c,v 1.6 2010/11/13 13:52:04 uebayasi Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_apple.c,v 1.5 2008/06/09 06:49:54 freza Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_apple.c,v 1.6 2010/11/13 13:52:04 uebayasi Exp $");
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
@@ -36,8 +36,6 @@ __KERNEL_RCSID(0, "$NetBSD: agp_apple.c,v 1.5 2008/06/09 06:49:54 freza Exp $");
 #include <sys/conf.h>
 #include <sys/device.h>
 #include <sys/agpio.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: siop_common.c,v 1.52 2009/10/19 18:41:13 bouyer Exp $	*/
+/*	$NetBSD: siop_common.c,v 1.53 2010/11/13 13:52:02 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2000, 2002 Manuel Bouyer.
@@ -28,7 +28,7 @@
 /* SYM53c7/8xx PCI-SCSI I/O Processors driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siop_common.c,v 1.52 2009/10/19 18:41:13 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siop_common.c,v 1.53 2010/11/13 13:52:02 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -37,8 +37,6 @@ __KERNEL_RCSID(0, "$NetBSD: siop_common.c,v 1.52 2009/10/19 18:41:13 bouyer Exp 
 #include <sys/buf.h>
 #include <sys/kernel.h>
 #include <sys/scsiio.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <machine/endian.h>
 #include <sys/bus.h>

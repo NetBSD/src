@@ -1,4 +1,4 @@
-/*	$NetBSD: geodeide.c,v 1.17 2010/11/05 18:07:24 jakllsch Exp $	*/
+/*	$NetBSD: geodeide.c,v 1.18 2010/11/13 13:52:05 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2004 Manuel Bouyer.
@@ -32,12 +32,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: geodeide.c,v 1.17 2010/11/05 18:07:24 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: geodeide.c,v 1.18 2010/11/13 13:52:05 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>

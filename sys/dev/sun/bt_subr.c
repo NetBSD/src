@@ -1,4 +1,4 @@
-/*	$NetBSD: bt_subr.c,v 1.14 2009/09/12 19:39:12 tsutsui Exp $ */
+/*	$NetBSD: bt_subr.c,v 1.15 2010/11/13 13:52:11 uebayasi Exp $ */
 
 /*
  * Copyright (c) 1993
@@ -41,15 +41,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bt_subr.c,v 1.14 2009/09/12 19:39:12 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bt_subr.c,v 1.15 2010/11/13 13:52:11 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/buf.h>
 #include <sys/errno.h>
 #include <sys/malloc.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <dev/sun/fbio.h>
 

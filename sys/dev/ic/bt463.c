@@ -1,4 +1,4 @@
-/* $NetBSD: bt463.c,v 1.14 2009/03/14 15:36:17 dsl Exp $ */
+/* $NetBSD: bt463.c,v 1.15 2010/11/13 13:52:00 uebayasi Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
   */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bt463.c,v 1.14 2009/03/14 15:36:17 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bt463.c,v 1.15 2010/11/13 13:52:00 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,8 +70,6 @@ __KERNEL_RCSID(0, "$NetBSD: bt463.c,v 1.14 2009/03/14 15:36:17 dsl Exp $");
 #include <sys/buf.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/tgareg.h>

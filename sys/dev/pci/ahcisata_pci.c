@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_pci.c,v 1.22 2010/08/07 02:39:01 jmcneill Exp $	*/
+/*	$NetBSD: ahcisata_pci.c,v 1.23 2010/11/13 13:52:05 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_pci.c,v 1.22 2010/08/07 02:39:01 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_pci.c,v 1.23 2010/11/13 13:52:05 uebayasi Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -35,8 +35,6 @@ __KERNEL_RCSID(0, "$NetBSD: ahcisata_pci.c,v 1.22 2010/08/07 02:39:01 jmcneill E
 #include <sys/systm.h>
 #include <sys/disklabel.h>
 #include <sys/pmf.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>

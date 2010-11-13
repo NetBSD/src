@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_mem.c,v 1.39 2010/11/03 22:34:24 dyoung Exp $	*/
+/*	$NetBSD: usb_mem.c,v 1.40 2010/11/13 13:52:12 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_mem.c,v 1.39 2010/11/03 22:34:24 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_mem.c,v 1.40 2010/11/13 13:52:12 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,7 +50,6 @@ __KERNEL_RCSID(0, "$NetBSD: usb_mem.c,v 1.39 2010/11/03 22:34:24 dyoung Exp $");
 
 #ifdef __NetBSD__
 #include <sys/extent.h>
-#include <uvm/uvm_extern.h>
 #endif
 
 #ifdef DIAGNOSTIC

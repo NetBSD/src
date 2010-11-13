@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_general.h,v 1.17 2006/04/14 22:40:09 christos Exp $	*/
+/*	$NetBSD: rf_general.h,v 1.18 2010/11/13 13:52:10 uebayasi Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -42,7 +42,6 @@
 /* error reporting and handling */
 
 #include <sys/systm.h>		/* printf, sprintf, and friends */
-#include <uvm/uvm_extern.h>	/* PAGE_SIZE, PAGE_MASK */
 
 #define RF_ERRORMSG(s)            printf((s))
 #define RF_ERRORMSG1(s,a)         printf((s),(a))

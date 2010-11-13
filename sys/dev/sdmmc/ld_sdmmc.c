@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_sdmmc.c,v 1.6 2010/09/23 12:03:27 kiyohara Exp $	*/
+/*	$NetBSD: ld_sdmmc.c,v 1.7 2010/11/13 13:52:11 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_sdmmc.c,v 1.6 2010/09/23 12:03:27 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_sdmmc.c,v 1.7 2010/11/13 13:52:11 uebayasi Exp $");
 
 #include "rnd.h"
 
@@ -47,8 +47,6 @@ __KERNEL_RCSID(0, "$NetBSD: ld_sdmmc.c,v 1.6 2010/09/23 12:03:27 kiyohara Exp $"
 #if NRND > 0
 #include <sys/rnd.h>
 #endif
-
-#include <uvm/uvm_extern.h>
 
 #include <dev/ldvar.h>
 

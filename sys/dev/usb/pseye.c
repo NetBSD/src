@@ -1,4 +1,4 @@
-/* $NetBSD: pseye.c,v 1.17 2010/11/03 22:34:23 dyoung Exp $ */
+/* $NetBSD: pseye.c,v 1.18 2010/11/13 13:52:12 uebayasi Exp $ */
 
 /*-
  * Copyright (c) 2008 Jared D. McNeill <jmcneill@invisible.ca>
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pseye.c,v 1.17 2010/11/03 22:34:23 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pseye.c,v 1.18 2010/11/13 13:52:12 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,8 +51,6 @@ __KERNEL_RCSID(0, "$NetBSD: pseye.c,v 1.17 2010/11/03 22:34:23 dyoung Exp $");
 #include <sys/kthread.h>
 #include <sys/condvar.h>
 #include <sys/module.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: auich.c,v 1.137 2010/02/24 22:37:59 dyoung Exp $	*/
+/*	$NetBSD: auich.c,v 1.138 2010/11/13 13:52:05 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005 The NetBSD Foundation, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.137 2010/02/24 22:37:59 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.138 2010/11/13 13:52:05 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -121,8 +121,6 @@ __KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.137 2010/02/24 22:37:59 dyoung Exp $");
 #include <sys/fcntl.h>
 #include <sys/proc.h>
 #include <sys/sysctl.h>
-
-#include <uvm/uvm_extern.h>	/* for PAGE_SIZE */
 
 #include <dev/pci/pcidevs.h>
 #include <dev/pci/pcivar.h>

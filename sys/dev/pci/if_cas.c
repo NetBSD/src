@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cas.c,v 1.11 2010/07/14 09:52:39 jnemeth Exp $	*/
+/*	$NetBSD: if_cas.c,v 1.12 2010/11/13 13:52:06 uebayasi Exp $	*/
 /*	$OpenBSD: if_cas.c,v 1.29 2009/11/29 16:19:38 kettenis Exp $	*/
 
 /*
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cas.c,v 1.11 2010/07/14 09:52:39 jnemeth Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cas.c,v 1.12 2010/11/13 13:52:06 uebayasi Exp $");
 
 #include "opt_inet.h"
 
@@ -61,8 +61,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_cas.c,v 1.11 2010/07/14 09:52:39 jnemeth Exp $");
 #include <sys/device.h>
 
 #include <machine/endian.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: dp83932.c,v 1.34 2010/04/05 07:19:34 joerg Exp $	*/
+/*	$NetBSD: dp83932.c,v 1.35 2010/11/13 13:52:00 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dp83932.c,v 1.34 2010/04/05 07:19:34 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dp83932.c,v 1.35 2010/11/13 13:52:00 uebayasi Exp $");
 
 
 #include <sys/param.h>
@@ -47,8 +47,6 @@ __KERNEL_RCSID(0, "$NetBSD: dp83932.c,v 1.34 2010/04/05 07:19:34 joerg Exp $");
 #include <sys/ioctl.h>
 #include <sys/errno.h>
 #include <sys/device.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>

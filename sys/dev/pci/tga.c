@@ -1,4 +1,4 @@
-/* $NetBSD: tga.c,v 1.79 2010/05/15 08:53:27 tsutsui Exp $ */
+/* $NetBSD: tga.c,v 1.80 2010/11/13 13:52:08 uebayasi Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tga.c,v 1.79 2010/05/15 08:53:27 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tga.c,v 1.80 2010/11/13 13:52:08 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,8 +58,6 @@ __KERNEL_RCSID(0, "$NetBSD: tga.c,v 1.79 2010/05/15 08:53:27 tsutsui Exp $");
 #include <dev/wscons/wscons_raster.h>
 #include <dev/rasops/rasops.h>
 #include <dev/wsfont/wsfont.h>
-#include <uvm/uvm_extern.h>
-
 int	tgamatch(device_t, cfdata_t, void *);
 void	tgaattach(device_t, device_t, void *);
 int	tgaprint(void *, const char *);

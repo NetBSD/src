@@ -1,4 +1,4 @@
-/*	$NetBSD: xmi.c,v 1.10 2008/03/11 05:34:02 matt Exp $	*/
+/*	$NetBSD: xmi.c,v 1.11 2010/11/13 13:52:13 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -35,13 +35,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xmi.c,v 1.10 2008/03/11 05:34:02 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xmi.c,v 1.11 2010/11/13 13:52:13 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <sys/bus.h>
 #include <sys/cpu.h>

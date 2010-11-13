@@ -1,4 +1,4 @@
-/*	$NetBSD: voodoofb.c,v 1.23 2010/10/12 16:00:21 macallan Exp $	*/
+/*	$NetBSD: voodoofb.c,v 1.24 2010/11/13 13:52:09 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Michael Lorenz
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: voodoofb.c,v 1.23 2010/10/12 16:00:21 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: voodoofb.c,v 1.24 2010/11/13 13:52:09 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,8 +41,6 @@ __KERNEL_RCSID(0, "$NetBSD: voodoofb.c,v 1.23 2010/10/12 16:00:21 macallan Exp $
 #include <sys/malloc.h>
 #include <sys/callout.h>
 #include <sys/kauth.h>
-
-#include <uvm/uvm_extern.h>
 
 #if defined(macppc) || defined (sparc64) || defined(ofppc)
 #define HAVE_OPENFIRMWARE

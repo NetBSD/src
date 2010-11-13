@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_isapnp.c,v 1.34 2008/04/28 20:23:53 martin Exp $	*/
+/*	$NetBSD: if_le_isapnp.c,v 1.35 2010/11/13 13:52:03 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le_isapnp.c,v 1.34 2008/04/28 20:23:53 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_isapnp.c,v 1.35 2010/11/13 13:52:03 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,8 +72,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_le_isapnp.c,v 1.34 2008/04/28 20:23:53 martin Exp
 #include <sys/syslog.h>
 #include <sys/select.h>
 #include <sys/device.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>

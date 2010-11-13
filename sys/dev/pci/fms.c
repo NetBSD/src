@@ -1,4 +1,4 @@
-/*	$NetBSD: fms.c,v 1.37 2009/11/26 15:17:09 njoly Exp $	*/
+/*	$NetBSD: fms.c,v 1.38 2010/11/13 13:52:05 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fms.c,v 1.37 2009/11/26 15:17:09 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fms.c,v 1.38 2010/11/13 13:52:05 uebayasi Exp $");
 
 #include "mpu.h"
 
@@ -44,8 +44,6 @@ __KERNEL_RCSID(0, "$NetBSD: fms.c,v 1.37 2009/11/26 15:17:09 njoly Exp $");
 #include <sys/malloc.h>
 #include <sys/device.h>
 #include <sys/audioio.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <sys/bus.h>
 #include <sys/cpu.h>

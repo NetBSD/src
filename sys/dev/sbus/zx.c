@@ -1,4 +1,4 @@
-/*	$NetBSD: zx.c,v 1.36 2010/05/04 05:10:25 macallan Exp $	*/
+/*	$NetBSD: zx.c,v 1.37 2010/11/13 13:52:10 uebayasi Exp $	*/
 
 /*
  *  Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zx.c,v 1.36 2010/05/04 05:10:25 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zx.c,v 1.37 2010/11/13 13:52:10 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,8 +60,6 @@ __KERNEL_RCSID(0, "$NetBSD: zx.c,v 1.36 2010/05/04 05:10:25 macallan Exp $");
 
 #include <sys/bus.h>
 #include <machine/autoconf.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <dev/sun/fbio.h>
 #include <dev/sun/fbvar.h>

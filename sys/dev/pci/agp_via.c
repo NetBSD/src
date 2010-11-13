@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_via.c,v 1.18 2010/01/31 00:43:37 hubertf Exp $	*/
+/*	$NetBSD: agp_via.c,v 1.19 2010/11/13 13:52:05 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_via.c,v 1.18 2010/01/31 00:43:37 hubertf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_via.c,v 1.19 2010/11/13 13:52:05 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -39,8 +39,6 @@ __KERNEL_RCSID(0, "$NetBSD: agp_via.c,v 1.18 2010/01/31 00:43:37 hubertf Exp $")
 #include <sys/conf.h>
 #include <sys/device.h>
 #include <sys/agpio.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>

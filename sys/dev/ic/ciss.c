@@ -1,4 +1,4 @@
-/*	$NetBSD: ciss.c,v 1.23 2010/09/07 18:19:16 mhitch Exp $	*/
+/*	$NetBSD: ciss.c,v 1.24 2010/11/13 13:52:00 uebayasi Exp $	*/
 /*	$OpenBSD: ciss.c,v 1.14 2006/03/13 16:02:23 mickey Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ciss.c,v 1.23 2010/09/07 18:19:16 mhitch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ciss.c,v 1.24 2010/11/13 13:52:00 uebayasi Exp $");
 
 #include "bio.h"
 
@@ -33,8 +33,6 @@ __KERNEL_RCSID(0, "$NetBSD: ciss.c,v 1.23 2010/09/07 18:19:16 mhitch Exp $");
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/proc.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <sys/bus.h>
 

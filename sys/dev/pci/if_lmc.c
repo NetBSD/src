@@ -1,4 +1,4 @@
-/* $NetBSD: if_lmc.c,v 1.49 2010/01/19 22:07:01 pooka Exp $ */
+/* $NetBSD: if_lmc.c,v 1.50 2010/11/13 13:52:06 uebayasi Exp $ */
 
 /*-
  * Copyright (c) 2002-2006 David Boggs. <boggs@boggs.palo-alto.ca.us>
@@ -74,7 +74,7 @@
  */
 
 # include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lmc.c,v 1.49 2010/01/19 22:07:01 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lmc.c,v 1.50 2010/11/13 13:52:06 uebayasi Exp $");
 # include <sys/param.h>	/* OS version */
 # include "opt_inet.h"	/* INET6, INET */
 # include "opt_altq_enabled.h" /* ALTQ */
@@ -108,7 +108,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_lmc.c,v 1.49 2010/01/19 22:07:01 pooka Exp $");
 # include <machine/lock.h>
 # include <machine/types.h>
 # include <dev/pci/pcivar.h>
-# include <uvm/uvm_extern.h>
 # if INET || INET6
 #  include <netinet/in.h>
 #  include <netinet/in_var.h>

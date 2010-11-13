@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ni.c,v 1.39 2010/04/05 07:19:32 joerg Exp $ */
+/*	$NetBSD: if_ni.c,v 1.40 2010/11/13 13:51:57 uebayasi Exp $ */
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ni.c,v 1.39 2010/04/05 07:19:32 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ni.c,v 1.40 2010/11/13 13:51:57 uebayasi Exp $");
 
 #include "opt_inet.h"
 
@@ -47,8 +47,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_ni.c,v 1.39 2010/04/05 07:19:32 joerg Exp $");
 #include <sys/systm.h>
 #include <sys/sockio.h>
 #include <sys/sched.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <net/if.h>
 #include <net/if_ether.h>

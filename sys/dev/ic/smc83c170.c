@@ -1,4 +1,4 @@
-/*	$NetBSD: smc83c170.c,v 1.79 2010/04/05 07:19:36 joerg Exp $	*/
+/*	$NetBSD: smc83c170.c,v 1.80 2010/11/13 13:52:02 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smc83c170.c,v 1.79 2010/04/05 07:19:36 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smc83c170.c,v 1.80 2010/11/13 13:52:02 uebayasi Exp $");
 
 
 #include <sys/param.h>
@@ -49,8 +49,6 @@ __KERNEL_RCSID(0, "$NetBSD: smc83c170.c,v 1.79 2010/04/05 07:19:36 joerg Exp $")
 #include <sys/ioctl.h>
 #include <sys/errno.h>
 #include <sys/device.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>

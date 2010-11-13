@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vr.c,v 1.105 2010/04/28 22:08:58 hubertf Exp $	*/
+/*	$NetBSD: if_vr.c,v 1.106 2010/11/13 13:52:07 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.105 2010/04/28 22:08:58 hubertf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.106 2010/11/13 13:52:07 uebayasi Exp $");
 
 #include "rnd.h"
 
@@ -114,8 +114,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.105 2010/04/28 22:08:58 hubertf Exp $");
 #if NRND > 0
 #include <sys/rnd.h>
 #endif
-
-#include <uvm/uvm_extern.h>		/* for PAGE_SIZE */
 
 #include <net/if.h>
 #include <net/if_arp.h>

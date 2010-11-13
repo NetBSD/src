@@ -1,4 +1,4 @@
-/*	$NetBSD: osiop.c,v 1.38 2010/05/04 15:38:04 tsutsui Exp $	*/
+/*	$NetBSD: osiop.c,v 1.39 2010/11/13 13:52:02 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2001 Izumi Tsutsui.  All rights reserved.
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osiop.c,v 1.38 2010/05/04 15:38:04 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osiop.c,v 1.39 2010/11/13 13:52:02 uebayasi Exp $");
 
 /* #define OSIOP_DEBUG */
 
@@ -107,8 +107,6 @@ __KERNEL_RCSID(0, "$NetBSD: osiop.c,v 1.38 2010/05/04 15:38:04 tsutsui Exp $");
 #include <sys/malloc.h>
 #include <sys/buf.h>
 #include <sys/kernel.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>

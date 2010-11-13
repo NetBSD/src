@@ -1,4 +1,4 @@
-/*	$NetBSD: siop_pci.c,v 1.26 2009/10/19 18:41:16 bouyer Exp $	*/
+/*	$NetBSD: siop_pci.c,v 1.27 2010/11/13 13:52:08 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -27,14 +27,12 @@
 /* SYM53c8xx PCI-SCSI I/O Processors driver: PCI front-end */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siop_pci.c,v 1.26 2009/10/19 18:41:16 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siop_pci.c,v 1.27 2010/11/13 13:52:08 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>

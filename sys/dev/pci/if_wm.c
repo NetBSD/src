@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.215 2010/10/16 06:31:49 taca Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.216 2010/11/13 13:52:07 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.215 2010/10/16 06:31:49 taca Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.216 2010/11/13 13:52:07 uebayasi Exp $");
 
 #include "rnd.h"
 
@@ -92,8 +92,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.215 2010/10/16 06:31:49 taca Exp $");
 #include <sys/device.h>
 #include <sys/queue.h>
 #include <sys/syslog.h>
-
-#include <uvm/uvm_extern.h>		/* for PAGE_SIZE */
 
 #if NRND > 0
 #include <sys/rnd.h>

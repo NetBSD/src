@@ -1,4 +1,4 @@
-/*	$NetBSD: dpt.c,v 1.63 2009/10/21 21:12:05 rmind Exp $	*/
+/*	$NetBSD: dpt.c,v 1.64 2010/11/13 13:52:01 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.63 2009/10/21 21:12:05 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.64 2010/11/13 13:52:01 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,8 +82,6 @@ __KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.63 2009/10/21 21:12:05 rmind Exp $");
 #include <sys/conf.h>
 #include <sys/kauth.h>
 #include <sys/proc.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <sys/bus.h>
 #ifdef i386
