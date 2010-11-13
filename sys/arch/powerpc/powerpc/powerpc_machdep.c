@@ -1,4 +1,4 @@
-/*	$NetBSD: powerpc_machdep.c,v 1.42 2010/01/18 23:35:51 jmmv Exp $	*/
+/*	$NetBSD: powerpc_machdep.c,v 1.43 2010/11/13 15:35:49 uebayasi Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.42 2010/01/18 23:35:51 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.43 2010/11/13 15:35:49 uebayasi Exp $");
 
 #include "opt_altivec.h"
 #include "opt_modular.h"
@@ -50,6 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.42 2010/01/18 23:35:51 jmmv Ex
 #include <sys/ucontext.h>
 #include <sys/cpu.h>
 #include <sys/module.h>
+#include <sys/device.h>
 
 int cpu_timebase;
 int cpu_printfataltraps;
