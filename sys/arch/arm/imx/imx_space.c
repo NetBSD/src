@@ -1,7 +1,7 @@
-/* $Id: imx_space.c,v 1.1 2010/11/13 04:51:01 bsh Exp $ */
+/* $Id: imx_space.c,v 1.2 2010/11/13 05:00:31 bsh Exp $ */
 
 /* derived from: */
-/*	$NetBSD: imx_space.c,v 1.1 2010/11/13 04:51:01 bsh Exp $ */
+/*	$NetBSD: imx_space.c,v 1.2 2010/11/13 05:00:31 bsh Exp $ */
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -82,32 +82,32 @@
 #include <uvm/uvm_extern.h>
 #include <machine/bus.h>
 
-bs_protos(imx31);
+bs_protos(imx);
 bs_protos(generic);
 bs_protos(generic_armv4);
 bs_protos(bs_notimpl);
 
-struct bus_space imx31_bs_tag = {
+struct bus_space imx_bs_tag = {
 	/* cookie */
 	(void *) 0,
 
 	/* mapping/unmapping */
-	imx31_bs_map,
-	imx31_bs_unmap,
-	imx31_bs_subregion,
+	imx_bs_map,
+	imx_bs_unmap,
+	imx_bs_subregion,
 
 	/* allocation/deallocation */
-	imx31_bs_alloc,	/* not implemented */
-	imx31_bs_free,		/* not implemented */
+	imx_bs_alloc,	/* not implemented */
+	imx_bs_free,		/* not implemented */
 
 	/* get kernel virtual address */
-	imx31_bs_vaddr,
+	imx_bs_vaddr,
 
 	/* mmap */
 	bs_notimpl_bs_mmap,
 
 	/* barrier */
-	imx31_bs_barrier,
+	imx_bs_barrier,
 
 	/* read (single) */
 	generic_bs_r_1,
@@ -165,7 +165,7 @@ struct bus_space imx31_bs_tag = {
 };
 
 int
-imx31_bs_map(void *t, bus_addr_t bpa, bus_size_t size,
+imx_bs_map(void *t, bus_addr_t bpa, bus_size_t size,
 	      int flag, bus_space_handle_t *bshp)
 {
 	u_long startpa, endpa, pa;
@@ -208,7 +208,7 @@ imx31_bs_map(void *t, bus_addr_t bpa, bus_size_t size,
 }
 
 void
-imx31_bs_unmap(void *t, bus_space_handle_t bsh, bus_size_t size)
+imx_bs_unmap(void *t, bus_space_handle_t bsh, bus_size_t size)
 {
 	vaddr_t	va;
 	vsize_t	sz;
@@ -228,7 +228,7 @@ imx31_bs_unmap(void *t, bus_space_handle_t bsh, bus_size_t size)
 
 
 int
-imx31_bs_subregion(void *t, bus_space_handle_t bsh, bus_size_t offset,
+imx_bs_subregion(void *t, bus_space_handle_t bsh, bus_size_t offset,
     bus_size_t size, bus_space_handle_t *nbshp)
 {
 
@@ -237,7 +237,7 @@ imx31_bs_subregion(void *t, bus_space_handle_t bsh, bus_size_t offset,
 }
 
 void
-imx31_bs_barrier(void *t, bus_space_handle_t bsh, bus_size_t offset,
+imx_bs_barrier(void *t, bus_space_handle_t bsh, bus_size_t offset,
     bus_size_t len, int flags)
 {
 
@@ -245,7 +245,7 @@ imx31_bs_barrier(void *t, bus_space_handle_t bsh, bus_size_t offset,
 }
 
 void *
-imx31_bs_vaddr(void *t, bus_space_handle_t bsh)
+imx_bs_vaddr(void *t, bus_space_handle_t bsh)
 {
 
 	return ((void *)bsh);
@@ -253,19 +253,19 @@ imx31_bs_vaddr(void *t, bus_space_handle_t bsh)
 
 
 int
-imx31_bs_alloc(void *t, bus_addr_t rstart, bus_addr_t rend,
+imx_bs_alloc(void *t, bus_addr_t rstart, bus_addr_t rend,
     bus_size_t size, bus_size_t alignment, bus_size_t boundary, int flags,
     bus_addr_t *bpap, bus_space_handle_t *bshp)
 {
 
-	panic("imx31_io_bs_alloc(): not implemented\n");
+	panic("imx_io_bs_alloc(): not implemented\n");
 }
 
 void    
-imx31_bs_free(void *t, bus_space_handle_t bsh, bus_size_t size)
+imx_bs_free(void *t, bus_space_handle_t bsh, bus_size_t size)
 {
 
-	panic("imx31_io_bs_free(): not implemented\n");
+	panic("imx_io_bs_free(): not implemented\n");
 }
 
 

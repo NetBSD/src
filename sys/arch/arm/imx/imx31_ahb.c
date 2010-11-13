@@ -1,4 +1,4 @@
-/*	$NetBSD: imx31_ahb.c,v 1.3 2008/05/02 22:00:29 martin Exp $	*/
+/*	$NetBSD: imx31_ahb.c,v 1.4 2010/11/13 05:00:31 bsh Exp $	*/
 
 /*
  * Copyright (c) 2002, 2005  Genetec Corporation.  All rights reserved.
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$Id: imx31_ahb.c,v 1.3 2008/05/02 22:00:29 martin Exp $");
+__KERNEL_RCSID(0, "$Id: imx31_ahb.c,v 1.4 2010/11/13 05:00:31 bsh Exp $");
 
 #include "locators.h"
 #include "avic.h"
@@ -152,13 +152,12 @@ static void
 ahb_attach(device_t parent, device_t self, void *aux)
 {
 	struct ahb_softc *sc = (struct ahb_softc *)self;
-	extern struct bus_space imx31_bs_tag;
 	struct ahb_attach_args ahba;
 
 	ahb_sc = sc;
-	sc->sc_memt = &imx31_bs_tag;
+	sc->sc_memt = &imx_bs_tag;
 #if NBUS_DMA_GENERIC > 0
-	sc->sc_dmat = &imx31_bus_dma_tag;
+	sc->sc_dmat = &imx_bus_dma_tag;
 #else
 	sc->sc_dmat = 0;
 #endif
