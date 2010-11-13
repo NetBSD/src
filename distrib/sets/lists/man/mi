@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1248 2010/11/07 01:12:22 jakllsch Exp $
+# $NetBSD: mi,v 1.1249 2010/11/13 00:47:23 jnemeth Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -926,7 +926,9 @@
 ./usr/share/man/cat4/eso.0			man-sys-catman		.cat
 ./usr/share/man/cat4/esp.0			man-sys-catman		.cat
 ./usr/share/man/cat4/ess.0			man-sys-catman		.cat
+./usr/share/man/cat4/et.0			man-sys-catman		.cat
 ./usr/share/man/cat4/etherip.0			man-sys-catman		.cat
+./usr/share/man/cat4/etphy.0			man-sys-catman		.cat
 ./usr/share/man/cat4/evbarm/epgpio.0		man-sys-catman		.cat
 ./usr/share/man/cat4/evbarm/intro.0		man-sys-catman		.cat
 ./usr/share/man/cat4/evbarm/iopaau.0		man-sys-catman		.cat
@@ -3622,7 +3624,9 @@
 ./usr/share/man/html4/eso.html			man-sys-htmlman		html
 ./usr/share/man/html4/esp.html			man-sys-htmlman		html
 ./usr/share/man/html4/ess.html			man-sys-htmlman		html
+./usr/share/man/html4/et.html			man-sys-htmlman		html
 ./usr/share/man/html4/etherip.html		man-sys-htmlman		html
+./usr/share/man/html4/etphy.html		man-sys-htmlman		html
 ./usr/share/man/html4/evbarm/epgpio.html	man-sys-htmlman		html
 ./usr/share/man/html4/evbarm/intro.html		man-sys-htmlman		html
 ./usr/share/man/html4/evbarm/iopaau.html	man-sys-htmlman		html
@@ -6096,7 +6100,9 @@
 ./usr/share/man/man4/eso.4			man-sys-man		.man
 ./usr/share/man/man4/esp.4			man-sys-man		.man
 ./usr/share/man/man4/ess.4			man-sys-man		.man
+./usr/share/man/man4/et.4			man-sys-man		.man
 ./usr/share/man/man4/etherip.4			man-sys-man		.man
+./usr/share/man/man4/etphy.4			man-sys-man		.man
 ./usr/share/man/man4/evbarm/epgpio.4		man-sys-man		.man
 ./usr/share/man/man4/evbarm/intro.4		man-sys-man		.man
 ./usr/share/man/man4/evbarm/iopaau.4		man-sys-man		.man
