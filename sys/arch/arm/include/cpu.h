@@ -229,7 +229,7 @@ static inline void set_curcpl(int);
 static inline void cpu_dosoftints(void);
 #endif
 
-#include <sys/device.h>
+#include <sys/evcnt.h>
 #include <sys/cpu_data.h>
 struct cpu_info {
 	struct cpu_data ci_data;	/* MI per-cpu data */
