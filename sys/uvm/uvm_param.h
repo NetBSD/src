@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_param.h,v 1.22 2009/07/20 03:51:42 kiyohara Exp $	*/
+/*	$NetBSD: uvm_param.h,v 1.23 2010/11/13 12:50:09 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -72,7 +72,6 @@
 #endif
 #ifdef _KERNEL
 #include <sys/types.h>
-#include <sys/lock.h>
 #include <machine/vmparam.h>
 #include <sys/resourcevar.h>
 #endif
