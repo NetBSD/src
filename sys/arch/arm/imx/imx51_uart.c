@@ -1,7 +1,3 @@
-/* $NetBSD: imxuartvar.h,v 1.3 2010/11/13 06:12:17 bsh Exp $ */
-/*
- * driver include for Freescale i.MX31 and i.MX31L UARTs
- */
 /*
  * Copyright (c) 2009, 2010  Genetec Corporation.  All rights reserved.
  * Written by Hiroyuki Bessho for Genetec Corporation.
@@ -28,31 +24,38 @@
  * POSSIBILITY OF SUCH DAMAGE.
  *
  */
-#ifndef	_IMXUARTVAR_H
-#define	_IMXUARTVAR_H
+
+#include "opt_imxuart.h"
+#include <sys/param.h>
+#include <sys/bus.h>
+#include <sys/device.h>
+#include <arm/imx/imx51reg.h>
+#include <arm/imx/imx51var.h>
+#include <arm/imx/imxuartreg.h>
+#include <arm/imx/imxuartvar.h>
 
 
-#include  <sys/cdefs.h>
-#include  <sys/termios.h>	/* for tcflag_t */
+int
+imxuart_match(struct device *parent, struct cfdata *cf, void *aux)
+{
+	struct axi_attach_args * const aa = aux;
 
+	switch (aa->aa_addr) {
+	case UART1_BASE:
+	case UART2_BASE:
+	case UART3_BASE:
+		return 1;
+	}
 
-void imxuart_attach_common(struct device *parent, struct device *self,
-    bus_space_tag_t, paddr_t, size_t, int, int);
+	return 0;
+}
 
-int imxuart_kgdb_attach(bus_space_tag_t, paddr_t, u_int, tcflag_t);
-int imxuart_cons_attach(bus_space_tag_t, paddr_t, u_int, tcflag_t);
+void
+imxuart_attach(struct device *parent, struct device *self, void *aux)
+{
+	struct axi_attach_args * aa = aux;
 
-int imxuart_is_console(bus_space_tag_t, bus_addr_t, bus_space_handle_t *);
+	imxuart_attach_common(parent, self, 
+	    aa->aa_iot, aa->aa_addr, aa->aa_size, aa->aa_irq, 0);
+}
 
-/*
- * Set platform dependent values
- */
-void imxuart_set_frequency(u_int, u_int);
-
-/*
- * defined in imx51uart.c and imx31uart.c
- */
-int imxuart_match(struct device *, struct cfdata *, void *);
-void imxuart_attach(struct device *, struct device *, void *);
-
-#endif	/* _IMXUARTVAR_H */
