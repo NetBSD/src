@@ -1,4 +1,4 @@
-/*	$NetBSD: comvar.h,v 1.70 2010/02/24 22:37:58 dyoung Exp $	*/
+/*	$NetBSD: comvar.h,v 1.71 2010/11/13 15:35:50 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -43,6 +43,7 @@
 #include <sys/callout.h>
 #include <sys/timepps.h>
 #include <sys/mutex.h>
+#include <sys/device.h>
 
 #include <dev/ic/comreg.h>	/* for COM_NPORTS */
 
