@@ -1,4 +1,4 @@
-/*	$NetBSD: t_environment.c,v 1.8 2010/11/13 18:52:55 tron Exp $	*/
+/*	$NetBSD: t_environment.c,v 1.9 2010/11/13 21:08:36 tron Exp $	*/
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_environment.c,v 1.8 2010/11/13 18:52:55 tron Exp $");
+__RCSID("$NetBSD: t_environment.c,v 1.9 2010/11/13 21:08:36 tron Exp $");
 
 #include <atf-c.h>
 #include <errno.h>
@@ -44,6 +44,7 @@ ATF_TC(t_setenv);
 ATF_TC(t_putenv);
 ATF_TC(t_clearenv);
 ATF_TC(t_mixed);
+ATF_TC(t_getenv);
 
 ATF_TC_HEAD(t_setenv, tc)
 {
@@ -68,6 +69,12 @@ ATF_TC_HEAD(t_mixed, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Test mixing setenv(3), unsetenv(3) and putenv(3)");
+}
+
+ATF_TC_HEAD(t_getenv, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Test setenv(3), getenv(3)");
 }
 
 ATF_TC_BODY(t_setenv, tc)
@@ -163,12 +170,25 @@ ATF_TC_BODY(t_mixed, tc)
 	ATF_CHECK(getenv("mixedcrap") == NULL);
 }
 
+ATF_TC_BODY(t_getenv, tc)
+{
+	ATF_CHECK(setenv("EVIL", "very=bad", 1) != -1);
+	ATF_CHECK_STREQ(getenv("EVIL"), "very=bad");
+
+	atf_tc_expect_fail("getenv(3) doesn't check variable names properly");
+	ATF_CHECK(getenv("EVIL=very") == NULL);
+
+	atf_tc_expect_pass();
+	ATF_CHECK(unsetenv("EVIL") != -1);
+}
+
 ATF_TP_ADD_TCS(tp)
 {
 	ATF_TP_ADD_TC(tp, t_setenv);
 	ATF_TP_ADD_TC(tp, t_putenv);
 	ATF_TP_ADD_TC(tp, t_clearenv);
 	ATF_TP_ADD_TC(tp, t_mixed);
+	ATF_TP_ADD_TC(tp, t_getenv);
 
 	return atf_no_error();
 }
