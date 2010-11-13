@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.46 2010/05/12 14:43:48 matt Exp $
+#	$NetBSD: genassym.cf,v 1.47 2010/11/13 02:23:27 matt Exp $
 #
 # Copyright (c) 1997 Ludd, University of Lule}, Sweden.
 # All rights reserved.
@@ -99,6 +99,7 @@ endif
 define	CI_MTX_COUNT	offsetof(struct cpu_info, ci_mtx_count)
 define	CI_MTX_OLDSPL	offsetof(struct cpu_info, ci_mtx_oldspl)
 define	CI_SOFTLWPS	offsetof(struct cpu_info, ci_softlwps)
+define	CI_CAS_ADDR	offsetof(struct cpu_info, ci_cas_addr)
 
 # mtpr register numbers
 define	PR_KSP		PR_KSP
@@ -134,6 +135,8 @@ define	T_ARITHFLT	T_ARITHFLT
 define	T_SYSCALL	T_SYSCALL
 define	T_ASTFLT	T_ASTFLT
 define	T_KDBTRAP	T_KDBTRAP
+
+define	CASMAGIC	CASMAGIC
 
 define	USPACE		USPACE
 define	TRAPFRAMELEN	sizeof(struct trapframe)
