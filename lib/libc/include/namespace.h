@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.143 2010/09/06 17:49:56 jakllsch Exp $	*/
+/*	$NetBSD: namespace.h,v 1.144 2010/11/13 19:41:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
@@ -671,6 +671,7 @@
 #define valloc			_valloc
 #define vdprintf		_vdprintf
 #define vis			_vis
+#define	vdprintf		_vdprintf
 #ifndef vsnprintf
 #define vsnprintf		_vsnprintf
 #endif
