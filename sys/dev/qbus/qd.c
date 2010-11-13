@@ -1,4 +1,4 @@
-/*	$NetBSD: qd.c,v 1.50 2009/05/18 20:41:57 ad Exp $	*/
+/*	$NetBSD: qd.c,v 1.51 2010/11/13 13:52:10 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1988 Regents of the University of California.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qd.c,v 1.50 2009/05/18 20:41:57 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qd.c,v 1.51 2010/11/13 13:52:10 uebayasi Exp $");
 
 #include "opt_ddb.h"
 
@@ -72,8 +72,6 @@ __KERNEL_RCSID(0, "$NetBSD: qd.c,v 1.50 2009/05/18 20:41:57 ad Exp $");
 #include <sys/device.h>
 #include <sys/poll.h>
 #include <sys/buf.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <dev/cons.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.137 2010/04/05 07:20:25 joerg Exp $	*/
+/*	$NetBSD: if_de.c,v 1.138 2010/11/13 13:52:06 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1994-1997 Matt Thomas (matt@3am-software.com)
@@ -37,7 +37,7 @@
  *   board which support 21040, 21041, or 21140 (mostly).
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.137 2010/04/05 07:20:25 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.138 2010/11/13 13:52:06 uebayasi Exp $");
 
 #define	TULIP_HDR_DATA
 
@@ -91,11 +91,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.137 2010/04/05 07:20:25 joerg Exp $");
 #include <netinet/in_systm.h>
 #include <netinet/in_var.h>
 #include <netinet/ip.h>
-#endif
-
-
-#if defined(__NetBSD__)
-#include <uvm/uvm_extern.h>
 #endif
 
 #if defined(__FreeBSD__)

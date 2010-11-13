@@ -1,4 +1,4 @@
-/*	$NetBSD: gcscaudio.c,v 1.5 2010/02/24 22:38:00 dyoung Exp $	*/
+/*	$NetBSD: gcscaudio.c,v 1.6 2010/11/13 13:52:05 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2008 SHIMIZU Ryo <ryo@nerv.org>
@@ -27,15 +27,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gcscaudio.c,v 1.5 2010/02/24 22:38:00 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gcscaudio.c,v 1.6 2010/11/13 13:52:05 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
 #include <sys/queue.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <dev/pci/pcidevs.h>
 #include <dev/pci/pcivar.h>

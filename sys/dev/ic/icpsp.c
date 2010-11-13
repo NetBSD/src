@@ -1,4 +1,4 @@
-/*	$NetBSD: icpsp.c,v 1.23 2009/05/12 14:25:17 cegger Exp $	*/
+/*	$NetBSD: icpsp.c,v 1.24 2010/11/13 13:52:01 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icpsp.c,v 1.23 2009/05/12 14:25:17 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icpsp.c,v 1.24 2010/11/13 13:52:01 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,8 +45,6 @@ __KERNEL_RCSID(0, "$NetBSD: icpsp.c,v 1.23 2009/05/12 14:25:17 cegger Exp $");
 
 #include <sys/bswap.h>
 #include <sys/bus.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsi_disk.h>

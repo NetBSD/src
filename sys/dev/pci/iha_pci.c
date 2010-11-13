@@ -1,4 +1,4 @@
-/*	$NetBSD: iha_pci.c,v 1.16 2008/05/14 13:29:29 tsutsui Exp $ */
+/*	$NetBSD: iha_pci.c,v 1.17 2010/11/13 13:52:07 uebayasi Exp $ */
 
 /*-
  * Copyright (c) 2001 Izumi Tsutsui.  All rights reserved.
@@ -62,13 +62,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iha_pci.c,v 1.16 2008/05/14 13:29:29 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iha_pci.c,v 1.17 2010/11/13 13:52:07 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <dev/pci/pcidevs.h>
 #include <dev/pci/pcivar.h>

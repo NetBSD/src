@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_common.c,v 1.46 2010/11/06 00:29:09 jakllsch Exp $	*/
+/*	$NetBSD: pciide_common.c,v 1.47 2010/11/13 13:52:08 uebayasi Exp $	*/
 
 
 /*
@@ -70,12 +70,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide_common.c,v 1.46 2010/11/06 00:29:09 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide_common.c,v 1.47 2010/11/13 13:52:08 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>

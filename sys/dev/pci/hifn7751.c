@@ -1,4 +1,4 @@
-/*	$NetBSD: hifn7751.c,v 1.45 2010/06/16 20:15:53 hubertf Exp $	*/
+/*	$NetBSD: hifn7751.c,v 1.46 2010/11/13 13:52:05 uebayasi Exp $	*/
 /*	$FreeBSD: hifn7751.c,v 1.5.2.7 2003/10/08 23:52:00 sam Exp $ */
 /*	$OpenBSD: hifn7751.c,v 1.140 2003/08/01 17:55:54 deraadt Exp $	*/
 
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hifn7751.c,v 1.45 2010/06/16 20:15:53 hubertf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hifn7751.c,v 1.46 2010/11/13 13:52:05 uebayasi Exp $");
 
 #include "rnd.h"
 
@@ -65,9 +65,6 @@ __KERNEL_RCSID(0, "$NetBSD: hifn7751.c,v 1.45 2010/06/16 20:15:53 hubertf Exp $"
 #include <sys/kernel.h>
 #include <sys/mbuf.h>
 #include <sys/device.h>
-
-#include <uvm/uvm_extern.h>
-
 
 #ifdef __OpenBSD__
 #include <crypto/crypto.h>

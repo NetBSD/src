@@ -1,4 +1,4 @@
-/* $NetBSD: mfb.c,v 1.56 2010/05/15 08:53:27 tsutsui Exp $ */
+/* $NetBSD: mfb.c,v 1.57 2010/11/13 13:52:12 uebayasi Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfb.c,v 1.56 2010/05/15 08:53:27 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfb.c,v 1.57 2010/11/13 13:52:12 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,8 +51,6 @@ __KERNEL_RCSID(0, "$NetBSD: mfb.c,v 1.56 2010/05/15 08:53:27 tsutsui Exp $");
 
 #include <dev/tc/tcvar.h>
 #include <dev/ic/bt431reg.h>
-
-#include <uvm/uvm_extern.h>
 
 #if defined(pmax)
 #define	machine_btop(x) mips_btop(MIPS_KSEG1_TO_PHYS(x))

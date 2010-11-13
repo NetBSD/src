@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.129 2010/06/06 18:58:23 pgoyette Exp $	*/
+/*	$NetBSD: pci.c,v 1.130 2010/11/13 13:52:08 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.129 2010/06/06 18:58:23 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.130 2010/11/13 13:52:08 uebayasi Exp $");
 
 #include "opt_pci.h"
 
@@ -48,8 +48,6 @@ __KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.129 2010/06/06 18:58:23 pgoyette Exp $");
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <net/if.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: gem.c,v 1.95 2010/05/12 10:25:23 martin Exp $ */
+/*	$NetBSD: gem.c,v 1.96 2010/11/13 13:52:01 uebayasi Exp $ */
 
 /*
  *
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.95 2010/05/12 10:25:23 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.96 2010/11/13 13:52:01 uebayasi Exp $");
 
 #include "opt_inet.h"
 
@@ -54,8 +54,6 @@ __KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.95 2010/05/12 10:25:23 martin Exp $");
 #include <sys/device.h>
 
 #include <machine/endian.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>

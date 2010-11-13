@@ -1,4 +1,4 @@
-/* $NetBSD: isp_pci.c,v 1.112 2010/04/12 14:26:21 mjacob Exp $ */
+/* $NetBSD: isp_pci.c,v 1.113 2010/11/13 13:52:07 uebayasi Exp $ */
 /*
  * Copyright (C) 1997, 1998, 1999 National Aeronautics & Space Administration
  * All rights reserved.
@@ -38,13 +38,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp_pci.c,v 1.112 2010/04/12 14:26:21 mjacob Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp_pci.c,v 1.113 2010/11/13 13:52:07 uebayasi Exp $");
 
 #include <dev/ic/isp_netbsd.h>
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
-#include <uvm/uvm_extern.h>
 #include <sys/reboot.h>
 
 static uint32_t isp_pci_rd_reg(struct ispsoftc *, int);

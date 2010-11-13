@@ -1,4 +1,4 @@
-/*	$NetBSD: isadma.c,v 1.65 2010/07/26 22:33:24 jym Exp $	*/
+/*	$NetBSD: isadma.c,v 1.66 2010/11/13 13:52:03 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isadma.c,v 1.65 2010/07/26 22:33:24 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isadma.c,v 1.66 2010/11/13 13:52:03 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,8 +44,6 @@ __KERNEL_RCSID(0, "$NetBSD: isadma.c,v 1.65 2010/07/26 22:33:24 jym Exp $");
 #include <sys/malloc.h>
 
 #include <sys/bus.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>

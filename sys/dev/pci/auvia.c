@@ -1,4 +1,4 @@
-/*	$NetBSD: auvia.c,v 1.72 2010/02/24 22:37:59 dyoung Exp $	*/
+/*	$NetBSD: auvia.c,v 1.73 2010/11/13 13:52:05 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -40,15 +40,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auvia.c,v 1.72 2010/02/24 22:37:59 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auvia.c,v 1.73 2010/11/13 13:52:05 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
 #include <sys/audioio.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <dev/pci/pcidevs.h>
 #include <dev/pci/pcivar.h>

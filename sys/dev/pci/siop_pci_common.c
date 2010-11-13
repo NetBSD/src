@@ -1,4 +1,4 @@
-/*	$NetBSD: siop_pci_common.c,v 1.33 2009/11/26 15:17:10 njoly Exp $	*/
+/*	$NetBSD: siop_pci_common.c,v 1.34 2010/11/13 13:52:08 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -27,7 +27,7 @@
 /* SYM53c8xx PCI-SCSI I/O Processors driver: PCI front-end */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siop_pci_common.c,v 1.33 2009/11/26 15:17:10 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siop_pci_common.c,v 1.34 2010/11/13 13:52:08 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -35,8 +35,6 @@ __KERNEL_RCSID(0, "$NetBSD: siop_pci_common.c,v 1.33 2009/11/26 15:17:10 njoly E
 #include <sys/malloc.h>
 #include <sys/buf.h>
 #include <sys/kernel.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <machine/endian.h>
 

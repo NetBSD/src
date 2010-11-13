@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_amd64.c,v 1.5 2008/03/28 08:35:44 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_amd64.c,v 1.6 2010/11/13 13:52:04 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -35,8 +35,6 @@ __KERNEL_RCSID(0, "$NetBSD: agp_amd64.c,v 1.5 2008/03/28 08:35:44 kiyohara Exp $
 #include <sys/conf.h>
 #include <sys/device.h>
 #include <sys/agpio.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>

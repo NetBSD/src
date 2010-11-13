@@ -1,6 +1,6 @@
 /* $SourceForge: bktr_core.c,v 1.6 2003/03/11 23:11:22 thomasklausner Exp $ */
 
-/*	$NetBSD: bktr_core.c,v 1.50 2009/03/18 16:00:19 cegger Exp $	*/
+/*	$NetBSD: bktr_core.c,v 1.51 2010/11/13 13:52:09 uebayasi Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_core.c,v 1.114 2000/10/31 13:09:56 roger Exp$ */
 
 /*
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bktr_core.c,v 1.50 2009/03/18 16:00:19 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bktr_core.c,v 1.51 2010/11/13 13:52:09 uebayasi Exp $");
 
 #include "opt_bktr.h"		/* Include any kernel config options */
 
@@ -194,7 +194,6 @@ bktr_name(bktr_ptr_t bktr)
 #include <sys/proc.h>
 
 #ifdef __NetBSD__
-#include <uvm/uvm_extern.h>
 #include <dev/pci/pcidevs.h>
 #include <dev/pci/pcireg.h>
 #else
