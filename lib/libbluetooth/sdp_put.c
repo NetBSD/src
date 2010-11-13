@@ -1,4 +1,4 @@
-/*	$NetBSD: sdp_put.c,v 1.2 2009/05/14 19:12:45 plunky Exp $	*/
+/*	$NetBSD: sdp_put.c,v 1.3 2010/11/13 19:43:56 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: sdp_put.c,v 1.2 2009/05/14 19:12:45 plunky Exp $");
+__RCSID("$NetBSD: sdp_put.c,v 1.3 2010/11/13 19:43:56 plunky Exp $");
 
 #include <bluetooth.h>
 #include <limits.h>
@@ -354,7 +354,7 @@ sdp_put_str(sdp_data_t *data, const char *str, ssize_t len)
 	if (!_sdp_put_ext(SDP_DATA_STR, data, len))
 		return false;
 
-	memcpy(data->next, str, len);
+	memcpy(data->next, str, (size_t)len);
 	data->next += len;
 	return true;
 }
@@ -369,7 +369,7 @@ sdp_put_url(sdp_data_t *data, const char *url, ssize_t len)
 	if (!_sdp_put_ext(SDP_DATA_URL, data, len))
 		return false;
 
-	memcpy(data->next, url, len);
+	memcpy(data->next, url, (size_t)len);
 	data->next += len;
 	return true;
 }

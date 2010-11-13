@@ -1,4 +1,4 @@
-/*	$NetBSD: bt_dev.c,v 1.1 2009/08/03 15:59:42 plunky Exp $	*/
+/*	$NetBSD: bt_dev.c,v 1.2 2010/11/13 19:43:56 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2009 Iain Hibbert
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: bt_dev.c,v 1.1 2009/08/03 15:59:42 plunky Exp $");
+__RCSID("$NetBSD: bt_dev.c,v 1.2 2010/11/13 19:43:56 plunky Exp $");
 
 #include <sys/event.h>
 #include <sys/ioctl.h>
@@ -515,6 +515,7 @@ bt_devfilter_evt_tst(const struct bt_devfilter *filter, uint8_t event)
  * Internal function used by bt_devinquiry to find the first
  * active device.
  */
+/* ARGSUSED */
 static int
 bt__devany_cb(int s, const struct bt_devinfo *info, void *arg)
 {

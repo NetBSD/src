@@ -1,4 +1,4 @@
-/*	$NetBSD: sdp_session.c,v 1.2 2009/05/14 19:12:45 plunky Exp $	*/
+/*	$NetBSD: sdp_session.c,v 1.3 2010/11/13 19:43:56 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: sdp_session.c,v 1.2 2009/05/14 19:12:45 plunky Exp $");
+__RCSID("$NetBSD: sdp_session.c,v 1.3 2010/11/13 19:43:56 plunky Exp $");
 
 #include <sys/socket.h>
 #include <sys/un.h>
@@ -87,7 +87,7 @@ _sdp_open(const bdaddr_t *laddr, const bdaddr_t *raddr)
 	if (getsockopt(ss->s, BTPROTO_L2CAP, SO_L2CAP_IMTU, &ss->imtu, &len) == -1)
 		goto fail;
 
-	ss->ibuf = malloc(ss->imtu);
+	ss->ibuf = malloc((size_t)(ss->imtu));
 	if (ss->ibuf == NULL)
 		goto fail;
 
@@ -127,7 +127,7 @@ _sdp_open_local(const char *control)
 
 	ss->imtu = L2CAP_MTU_DEFAULT;
 
-	ss->ibuf = malloc(ss->imtu);
+	ss->ibuf = malloc((size_t)(ss->imtu));
 	if (ss->ibuf == NULL)
 		goto fail;
 
