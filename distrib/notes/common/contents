@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.161 2010/10/04 13:58:43 tsutsui Exp $
+.\"	$NetBSD: contents,v 1.162 2010/11/13 05:20:21 kiyohara Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -305,6 +305,14 @@ no need to
 this image.
 .\}
 .
+.if \n[bebox] \{\
+.		It Pa floppy/boot.fs
+.		It Pa floppy/kernel1.fs
+.		It Pa floppy/kernel2.fs
+\*M boot and installation floppy images.  The first is the bootloader on
+old BeFS.  The other images is kernel and embedded ramdisk.
+.\}
+.
 .if \n[cats] \{\
 .		It Pa kernel/
 \*M installation kernels.
@@ -321,8 +329,8 @@ Method), below.
 \*M miniroot file system image; see below.
 .\}
 .
-.if !\n[alpha]:\n[cats]:\n[evbppc]:\n[mvme68k]:\n[macppc]:\n[sgimips]:\
-\n[sandpoint]:\n[sparc]:\n[xen] \{\
+.if !\n[alpha]:\n[bebox]:\n[cats]:\n[evbppc]:\n[mvme68k]:\n[macppc]:\
+\n[sgimips]:\n[sandpoint]:\n[sparc]:\n[xen] \{\
 .		It Pa misc/
 .
 Miscellaneous \*M installation utilities; see
@@ -536,6 +544,7 @@ system to run and be minimally functional.
 .if \n[amiga] .setsize 25 75
 .if \n[arc] .setsize 30 95
 .if \n[atari] .setsize 26 75
+.if \n[bebox] .setsize 31 90
 .if \n[cats] .setsize 28 80
 .if \n[cesfic] .setsize 25 75
 .if \n[cobalt] .setsize 30 95
@@ -598,6 +607,7 @@ system call and library manual pages.
 .if \n[amiga] .setsize 36 130
 .if \n[arc] .setsize 37 139
 .if \n[atari] .setsize 35 130
+.if \n[bebox] .setsize 51 180
 .if \n[cats] .setsize 41 140
 .if \n[cesfic] .setsize 35 130
 .if \n[cobalt] .setsize 37 139
@@ -666,6 +676,7 @@ This set includes the games and their manual pages.
 .if \n[amiga] .setsize 4 8
 .if \n[arc] .setsize 4 9
 .if \n[atari] .setsize 4 8
+.if \n[bebox] .setsize 4 8
 .if \n[cats] .setsize 4 8
 .if \n[cesfic] .setsize 4 8
 .if \n[cobalt] .setsize 4 9
@@ -1019,6 +1030,7 @@ that your system may need to boot.
 .if \n[amd64] .setsize 5 13
 .if \n[amiga] .setsize 2 4
 .if \n[arc] .setsize 3 6
+.if \n[bebox] .setsize 2 4
 .if \n[cats] .setsize 5 10
 .if \n[cobalt] .setsize 2 5
 .if \n[dreamcast] .setsize 2 3
@@ -1097,6 +1109,7 @@ all related programs, and their manual pages.
 .if \n[amiga] .setsize 3 10
 .if \n[arc] .setsize 4 12
 .if \n[atari] .setsize 3 10
+.if \n[bebox] .setsize 4 13
 .if \n[cats] .setsize 3 10
 .if \n[cesfic] .setsize 3 10
 .if \n[cobalt] .setsize 4 12
@@ -1178,6 +1191,7 @@ This does not include the X servers.
 .if \n[amiga] .setsize 6 19
 .if \n[arc] .setsize 7 23
 .if \n[atari] .setsize 6 19
+.if \n[bebox] .setsize 9 27
 .if \n[cats] .setsize 7 20
 .if \n[cesfic] .setsize 6 19
 .if \n[cobalt] .setsize 7 23
@@ -1232,6 +1246,7 @@ The extra libraries and include files needed to compile X source code.
 .if \n[amiga] .setsize 11 43
 .if \n[arc] .setsize 11 42
 .if \n[atari] .setsize 11 43
+.if \n[bebox] .setsize 19 67
 .if \n[cats] .setsize 14 49
 .if \n[cesfic] .setsize 11 43
 .if \n[cobalt] .setsize 11 42
@@ -1285,6 +1300,7 @@ Fonts needed by the X server and by X clients.
 .if \n[amiga] .setsize 31 39
 .if \n[arc] .setsize 31 39
 .if \n[atari] .setsize 31 39
+.if \n[bebox] .setsize 32 74
 .if \n[cats] .setsize 31 39
 .if \n[cesfic] .setsize 31 39
 .if \n[cobalt] .setsize 31 39
@@ -1342,6 +1358,9 @@ This includes Xarm32VIDC and Xprt servers.
 Please consult the X specific section in the atari FAQ as to which server
 you should use.
 .\}
+.if \n[bebox] \{\
+This includes the modular Xorg server.
+.\}
 .if \n[hpcmips] \{\
 This includes the Xhpc server which supports 256 and 65536 colors, with man pages.
 .\}
@@ -1381,6 +1400,7 @@ servers with man pages and the runtime configuration file.
 .if \n[amiga] .setsize 5 11
 .if \n[arc] .setsize 5 15
 .if \n[atari] .setsize 4 10
+.if \n[bebox] .setsize 6 16
 .if \n[cats] .setsize 11 28
 .if \n[cesfic] .setsize 4 10
 .if \n[cobalt] .setsize 5 15

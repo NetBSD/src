@@ -36,7 +36,7 @@
 #    src/distrib/common/notes/contents
 #
 
-ports="acorn26 acorn32 algor alpha amd64 amiga arc atari cats cesfic
+ports="acorn26 acorn32 algor alpha amd64 amiga arc atari bebox cats cesfic
 	cobalt dreamcast evbarm evbmips evbppc evbsh3
 	hp300 hp700 hpcarm hpcmips hpcsh i386 ibmnws iyonix landisk luna68k
 	mac68k macppc mipsco mmeye mvme68k mvmeppc netwinder news68k newsmips

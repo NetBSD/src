@@ -1,0 +1,86 @@
+.\"	$NetBSD: prep,v 1.1 2010/11/13 05:20:21 kiyohara Exp $
+.
+.Pp
+. 
+.Ss2 Available Boot Media
+.
+The BeBox firmware (BootROM) allows for system booting using:
+.(bullet -compact
+Local floppy disk, hard disk or CD-ROM with the following file systems:
+.(bullet -compact
+Be file system
+.It
+Old Be file system
+.bullet)
+.bullet)
+.Pp
+The
+.Nx*M
+doesn't support to create/read/write both file systems.
+.Pp
+However nbpowerpc-mkbootimage can create the image of Old Be file system for
+floppy.
+.
+.Ss2 Preparing the Bootable Media
+.
+This section describes how to create a
+.Nx*M
+boot loader onto a floppy.
+.Pp
+Go to one of the
+.Nx
+mirror sites and download floppy image from the
+.Pa bebox/installation/floppy/
+directory named boot.fs or boot_vga.fs or boot_com.fs.
+.Pp
+boot.fs can boot with frame buffer.  If you look the 'Be' logo on your screen
+then use this.  Use boot_vga.fs, if not.
+.Pp
+.(disp
+.No # Ic "dd if=boot.fs of=/dev/rfd0a bs=18k"
+.disp)
+.Pp
+If you have a x86 PC which runs
+.Tn Windows
+and use it to write the floppy image(s) to floppy disk,
+you can use the
+.Ic Rawrite32
+Windows32 program
+.Pq installed by Pa rawr32.exe
+available in the
+.Pa i386/installation/misc/
+directory of the
+.Nx
+distribution.
+.Pp
+Also you can create boot.fs.
+.Pp
+.(disp
+.No # Ic "nbpowerpc-mkbootimage -I -m bebox -b mdec/boot/boot boot.fs"
+.disp)
+.
+.Ss2 Loading kernel from Hard disk and Floppy disk.
+.
+boot supports load kernel from Hard disk and Floppy disk connect to onboard.
+.
+.(bullet -compact
+Loading a kernel from the 'a' partition on master IDE disk:
+.(disp
+.Ic /dev/disk/ide/0/master/0_0:/netbsd
+.disp)
+.Pp
+.It
+Loading a kernel from the Floppy disk:
+.(disp
+.Ic /dev/disk/floppy:/netbsd
+.disp)
+.Pp
+.It
+Loading a kernel from the 'd' partition on target 1 lun 2 SCSI disk:
+.(disp
+.Ic /dev/disk/scsi/0/1/2_3:/netbsd
+.disp)
+.(Note
+This support is very experimental.
+.Note)
+.bullet)

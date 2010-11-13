@@ -1,0 +1,42 @@
+.\"	$NetBSD: hardware,v 1.1 2010/11/13 05:20:21 kiyohara Exp $
+.
+.Pp
+The minimum configuration requires 16 MB of RAM and 60 MB of disk space.
+To install the entire system requires about 250 MB (not including swap).
+.Nx
+works with about 32 MB or RAM, but at least 64 MB is advised, especially
+on the slower processors.
+.
+.Ss2 Supported machines
+.Pp
+In general NetBSD/\*M should run on all BeBox models/revisions.
+More information can also be found at the
+.Nx*M
+homepage:
+.Lk http://www.NetBSD.org/ports/\*M/
+.Pp
+.
+.(bullet -offset indent
+Be Inc.
+.(bullet -compact
+BeBox Dual603-66
+.It
+BeBox Dual603-133
+.bullet)
+.bullet)
+.
+.Ss2 Supported devices
+.Pp
+.Nx
+supports most of the hardware that shipped on these systems through the
+machine-independent device drivers.  There are a few notable exceptions, listed
+below:
+.
+.Ss2 Unsupported devices
+.(bullet -offset indent
+2nd CPU
+.It
+Floppy disk controller
+.It
+SERIAL3, SERIAL4
+.bullet)
