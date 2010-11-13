@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.26 2010/11/13 04:00:18 uebayasi Exp $	*/
+/*	$NetBSD: machdep.c,v 1.27 2010/11/13 04:16:38 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2003,2004 Marcel Moolenaar
@@ -115,7 +115,7 @@
 #include <machine/atomic.h>
 #include <machine/pte.h>
 
-#include <uvm/uvmn.h>
+#include <uvm/uvm.h>
 
 #include <dev/cons.h>
 

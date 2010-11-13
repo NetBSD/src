@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.38 2010/11/13 04:00:19 uebayasi Exp $	*/
+/*	$NetBSD: mem.c,v 1.39 2010/11/13 04:16:38 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.38 2010/11/13 04:00:19 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.39 2010/11/13 04:16:38 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -89,7 +89,7 @@ __KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.38 2010/11/13 04:00:19 uebayasi Exp $");
 
 #include <machine/cpu.h>
 
-#include <uvm/uvmn.h>
+#include <uvm/uvm.h>
 
 extern void *Segtabzero;
 static void *devzeropage;
