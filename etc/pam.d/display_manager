@@ -1,4 +1,4 @@
-# $NetBSD: display_manager,v 1.4 2008/03/26 11:31:17 lukem Exp $
+# $NetBSD: display_manager,v 1.5 2010/11/13 19:19:40 christos Exp $
 #
 # PAM configuration for the display manager services.  Specific display
 # manager service configurations can include this one.
@@ -20,5 +20,5 @@ account		required	pam_unix.so
 # session
 # XXX pam_lastlog.so?
 # pam_ssh has potential security risks.  See pam_ssh(8).
-#session 	optional	pam_ssh.so
+#session 	optional	pam_ssh.so		want_agent
 session		required	pam_permit.so
