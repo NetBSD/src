@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ste.c,v 1.41 2010/04/05 07:20:27 joerg Exp $	*/
+/*	$NetBSD: if_ste.c,v 1.42 2010/11/13 13:52:07 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ste.c,v 1.41 2010/04/05 07:20:27 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ste.c,v 1.42 2010/11/13 13:52:07 uebayasi Exp $");
 
 
 #include <sys/param.h>
@@ -49,8 +49,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_ste.c,v 1.41 2010/04/05 07:20:27 joerg Exp $");
 #include <sys/errno.h>
 #include <sys/device.h>
 #include <sys/queue.h>
-
-#include <uvm/uvm_extern.h>		/* for PAGE_SIZE */
 
 #include <net/if.h>
 #include <net/if_dl.h>

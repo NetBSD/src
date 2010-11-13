@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.187 2010/10/16 06:29:33 taca Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.188 2010/11/13 13:52:06 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.187 2010/10/16 06:29:33 taca Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.188 2010/11/13 13:52:06 uebayasi Exp $");
 
 #include "vlan.h"
 #include "rnd.h"
@@ -132,7 +132,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.187 2010/10/16 06:29:33 taca Exp $");
 #include <dev/pci/if_bgereg.h>
 #include <dev/pci/if_bgevar.h>
 
-#include <uvm/uvm_extern.h>
 #include <prop/proplib.h>
 
 #define ETHER_MIN_NOPAD (ETHER_MIN_LEN - ETHER_CRC_LEN) /* i.e., 60 */

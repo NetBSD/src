@@ -1,4 +1,4 @@
-/* $NetBSD: adwlib.c,v 1.39 2009/03/14 15:36:17 dsl Exp $        */
+/* $NetBSD: adwlib.c,v 1.40 2010/11/13 13:52:00 uebayasi Exp $        */
 
 /*
  * Low level routines for the Advanced Systems Inc. SCSI controllers chips
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adwlib.c,v 1.39 2009/03/14 15:36:17 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adwlib.c,v 1.40 2010/11/13 13:52:00 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,8 +69,6 @@ __KERNEL_RCSID(0, "$NetBSD: adwlib.c,v 1.39 2009/03/14 15:36:17 dsl Exp $");
 #include <dev/scsipi/scsiconf.h>
 
 #include <dev/pci/pcidevs.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <dev/ic/adwlib.h>
 #include <dev/ic/adwmcode.h>

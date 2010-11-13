@@ -1,4 +1,4 @@
-/*	$NetBSD: cac.c,v 1.50 2010/03/14 18:06:28 pgoyette Exp $	*/
+/*	$NetBSD: cac.c,v 1.51 2010/11/13 13:52:00 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2006, 2007 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cac.c,v 1.50 2010/03/14 18:06:28 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cac.c,v 1.51 2010/11/13 13:52:00 uebayasi Exp $");
 
 #include "bio.h"
 
@@ -48,8 +48,6 @@ __KERNEL_RCSID(0, "$NetBSD: cac.c,v 1.50 2010/03/14 18:06:28 pgoyette Exp $");
 #include <sys/endian.h>
 #include <sys/malloc.h>
 #include <sys/pool.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <sys/bswap.h>
 #include <sys/bus.h>

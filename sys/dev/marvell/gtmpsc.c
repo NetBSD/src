@@ -1,4 +1,4 @@
-/*	$NetBSD: gtmpsc.c,v 1.40 2010/08/01 06:57:06 kiyohara Exp $	*/
+/*	$NetBSD: gtmpsc.c,v 1.41 2010/11/13 13:52:03 uebayasi Exp $	*/
 /*
  * Copyright (c) 2009 KIYOHARA Takashi
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtmpsc.c,v 1.40 2010/08/01 06:57:06 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtmpsc.c,v 1.41 2010/11/13 13:52:03 uebayasi Exp $");
 
 #include "opt_kgdb.h"
 
@@ -51,8 +51,6 @@ __KERNEL_RCSID(0, "$NetBSD: gtmpsc.c,v 1.40 2010/08/01 06:57:06 kiyohara Exp $")
 #endif
 
 #include <uvm/uvm.h>
-#include <uvm/uvm_extern.h>
-
 #include <dev/cons.h>
 
 #include <dev/marvell/gtreg.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gfe.c,v 1.38 2010/08/01 06:57:06 kiyohara Exp $	*/
+/*	$NetBSD: if_gfe.c,v 1.39 2010/11/13 13:52:04 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gfe.c,v 1.38 2010/08/01 06:57:06 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gfe.c,v 1.39 2010/11/13 13:52:04 uebayasi Exp $");
 
 #include "opt_inet.h"
 #include "rnd.h"
@@ -58,8 +58,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_gfe.c,v 1.38 2010/08/01 06:57:06 kiyohara Exp $")
 #include <sys/socket.h>
 
 #include <uvm/uvm.h>
-#include <uvm/uvm_extern.h>
-
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/if_ether.h>

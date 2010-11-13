@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.209 2010/11/03 22:34:23 dyoung Exp $	*/
+/*	$NetBSD: ohci.c,v 1.210 2010/11/13 13:52:12 uebayasi Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.209 2010/11/03 22:34:23 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.210 2010/11/13 13:52:12 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,7 +49,6 @@ __KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.209 2010/11/03 22:34:23 dyoung Exp $");
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/select.h>
-#include <uvm/uvm_extern.h>
 #include <sys/proc.h>
 #include <sys/queue.h>
 

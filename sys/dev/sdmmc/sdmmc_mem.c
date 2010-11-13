@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmc_mem.c,v 1.13 2010/10/07 12:24:23 kiyohara Exp $	*/
+/*	$NetBSD: sdmmc_mem.c,v 1.14 2010/11/13 13:52:11 uebayasi Exp $	*/
 /*	$OpenBSD: sdmmc_mem.c,v 1.10 2009/01/09 10:55:22 jsg Exp $	*/
 
 /*
@@ -46,15 +46,13 @@
 /* Routines for SD/MMC memory cards. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdmmc_mem.c,v 1.13 2010/10/07 12:24:23 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdmmc_mem.c,v 1.14 2010/11/13 13:52:11 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <dev/sdmmc/sdmmcchip.h>
 #include <dev/sdmmc/sdmmcreg.h>

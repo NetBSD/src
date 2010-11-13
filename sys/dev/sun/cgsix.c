@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix.c,v 1.48 2010/09/14 18:42:12 macallan Exp $ */
+/*	$NetBSD: cgsix.c,v 1.49 2010/11/13 13:52:11 uebayasi Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgsix.c,v 1.48 2010/09/14 18:42:12 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgsix.c,v 1.49 2010/11/13 13:52:11 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,8 +94,6 @@ __KERNEL_RCSID(0, "$NetBSD: cgsix.c,v 1.48 2010/09/14 18:42:12 macallan Exp $");
 #include <sys/proc.h>
 #include <sys/syslog.h>
 #endif
-
-#include <uvm/uvm_extern.h>
 
 #include <sys/bus.h>
 

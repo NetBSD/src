@@ -1,4 +1,4 @@
-/*	$NetBSD: pm2fb.c,v 1.4 2010/05/04 05:00:33 macallan Exp $	*/
+/*	$NetBSD: pm2fb.c,v 1.5 2010/11/13 13:52:08 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2009 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pm2fb.c,v 1.4 2010/05/04 05:00:33 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pm2fb.c,v 1.5 2010/11/13 13:52:08 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -40,8 +40,6 @@ __KERNEL_RCSID(0, "$NetBSD: pm2fb.c,v 1.4 2010/05/04 05:00:33 macallan Exp $");
 #include <sys/malloc.h>
 #include <sys/lwp.h>
 #include <sys/kauth.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <dev/videomode/videomode.h>
 

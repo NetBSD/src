@@ -1,4 +1,4 @@
-/* $NetBSD: asc_tcds.c,v 1.24 2008/04/28 20:23:58 martin Exp $ */
+/* $NetBSD: asc_tcds.c,v 1.25 2010/11/13 13:52:11 uebayasi Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -60,14 +60,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: asc_tcds.c,v 1.24 2008/04/28 20:23:58 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc_tcds.c,v 1.25 2010/11/13 13:52:11 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/buf.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>
