@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.71 2010/10/20 18:52:33 phx Exp $	*/
+/*	$NetBSD: cpu.h,v 1.72 2010/11/13 13:13:34 uebayasi Exp $	*/
 
 /*
  * Copyright (C) 1999 Wolfgang Solfrank.
@@ -52,7 +52,8 @@ struct cache_info {
 #include <machine/frame.h>
 #include <machine/psl.h>
 #include <machine/intr.h>
-#include <sys/device.h>
+#include <sys/device_if.h>
+#include <sys/evcnt.h>
 
 #include <sys/cpu_data.h>
 
