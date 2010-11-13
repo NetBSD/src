@@ -1,4 +1,4 @@
-/* $NetBSD: siisata.c,v 1.12 2010/07/26 15:41:33 jakllsch Exp $ */
+/* $NetBSD: siisata.c,v 1.13 2010/11/13 09:00:00 uebayasi Exp $ */
 
 /* from ahcisata_core.c */
 
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siisata.c,v 1.12 2010/07/26 15:41:33 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siisata.c,v 1.13 2010/11/13 09:00:00 uebayasi Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -89,8 +89,7 @@ __KERNEL_RCSID(0, "$NetBSD: siisata.c,v 1.12 2010/07/26 15:41:33 jakllsch Exp $"
 #include <sys/syslog.h>
 #include <sys/disklabel.h>
 #include <sys/buf.h>
-
-#include <uvm/uvm_extern.h>
+#include <sys/proc.h>
 
 #include <dev/ata/atareg.h>
 #include <dev/ata/satavar.h>
