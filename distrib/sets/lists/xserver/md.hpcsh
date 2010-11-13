@@ -1,4 +1,10 @@
-# $NetBSD: md.hpcsh,v 1.8 2010/06/18 15:55:33 tsutsui Exp $
+# $NetBSD: md.hpcsh,v 1.9 2010/11/13 02:07:29 tsutsui Exp $
+./etc/X11/xorg.conf.640x240-jp				-unknown	xorg
+./etc/X11/xorg.conf.640x240-us				-unknown	xorg
+./etc/X11/xorg.conf.640x480-jp				-unknown	xorg
+./etc/X11/xorg.conf.640x480-us				-unknown	xorg
+./etc/X11/xorg.conf.800x600-jp				-unknown	xorg
+./etc/X11/xorg.conf.800x600-us				-unknown	xorg
 ./usr/X11R6/bin/X					-unknown-	x11
 ./usr/X11R6/bin/Xhpc					-unknown-	x11
 ./usr/X11R6/man/cat1/Xhpc.0				-unknown-	.cat,x11
