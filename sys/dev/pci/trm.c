@@ -1,4 +1,4 @@
-/*	$NetBSD: trm.c,v 1.31 2010/07/27 14:34:34 jakllsch Exp $	*/
+/*	$NetBSD: trm.c,v 1.32 2010/11/13 13:52:08 uebayasi Exp $	*/
 /*-
  * Copyright (c) 2002 Izumi Tsutsui.  All rights reserved.
  *
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trm.c,v 1.31 2010/07/27 14:34:34 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trm.c,v 1.32 2010/11/13 13:52:08 uebayasi Exp $");
 
 /* #define TRM_DEBUG */
 #ifdef TRM_DEBUG
@@ -85,8 +85,6 @@ int trm_debug = 1;
 
 #include <sys/bus.h>
 #include <sys/intr.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <dev/scsipi/scsi_spc.h>
 #include <dev/scsipi/scsi_all.h>

@@ -80,8 +80,6 @@
 #include <sys/module.h>
 #include <sys/bus.h>
 
-#include <uvm/uvm_extern.h>
-
 #include <opencrypto/cryptodev.h>
 #include <opencrypto/xform.h>
 #include <sys/rnd.h>

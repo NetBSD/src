@@ -1,4 +1,4 @@
-/*	$NetBSD: uha.c,v 1.44 2009/11/23 02:13:46 rmind Exp $	*/
+/*	$NetBSD: uha.c,v 1.45 2010/11/13 13:52:02 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uha.c,v 1.44 2009/11/23 02:13:46 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uha.c,v 1.45 2010/11/13 13:52:02 uebayasi Exp $");
 
 #undef UHADEBUG
 #ifdef DDB
@@ -71,8 +71,6 @@ __KERNEL_RCSID(0, "$NetBSD: uha.c,v 1.44 2009/11/23 02:13:46 rmind Exp $");
 #include <sys/malloc.h>
 #include <sys/buf.h>
 #include <sys/proc.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <sys/bus.h>
 #include <sys/intr.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_mca.c,v 1.18 2008/04/28 20:23:53 martin Exp $	*/
+/*	$NetBSD: if_le_mca.c,v 1.19 2010/11/13 13:52:04 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le_mca.c,v 1.18 2008/04/28 20:23:53 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_mca.c,v 1.19 2010/11/13 13:52:04 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,8 +53,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_le_mca.c,v 1.18 2008/04/28 20:23:53 martin Exp $"
 #include <sys/syslog.h>
 #include <sys/socket.h>
 #include <sys/device.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <net/if.h>
 #include <net/if_ether.h>

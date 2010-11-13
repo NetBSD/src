@@ -1,4 +1,4 @@
-/* $NetBSD: ibm561.c,v 1.9 2009/03/14 15:36:17 dsl Exp $ */
+/* $NetBSD: ibm561.c,v 1.10 2010/11/13 13:52:01 uebayasi Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibm561.c,v 1.9 2009/03/14 15:36:17 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibm561.c,v 1.10 2010/11/13 13:52:01 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -38,8 +38,6 @@ __KERNEL_RCSID(0, "$NetBSD: ibm561.c,v 1.9 2009/03/14 15:36:17 dsl Exp $");
 #include <sys/buf.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <dev/pci/pcivar.h>
 #include <dev/ic/ibm561reg.h>

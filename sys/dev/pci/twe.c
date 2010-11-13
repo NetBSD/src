@@ -1,4 +1,4 @@
-/*	$NetBSD: twe.c,v 1.91 2010/07/27 14:34:34 jakllsch Exp $	*/
+/*	$NetBSD: twe.c,v 1.92 2010/11/13 13:52:08 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.91 2010/07/27 14:34:34 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.92 2010/11/13 13:52:08 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,8 +79,6 @@ __KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.91 2010/07/27 14:34:34 jakllsch Exp $");
 #include <sys/sysctl.h>
 #include <sys/syslog.h>
 #include <sys/kauth.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <sys/bswap.h>
 #include <sys/bus.h>

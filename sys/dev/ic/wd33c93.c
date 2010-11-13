@@ -1,4 +1,4 @@
-/*	$NetBSD: wd33c93.c,v 1.23 2009/02/12 06:20:58 rumble Exp $	*/
+/*	$NetBSD: wd33c93.c,v 1.24 2010/11/13 13:52:02 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd33c93.c,v 1.23 2009/02/12 06:20:58 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd33c93.c,v 1.24 2010/11/13 13:52:02 uebayasi Exp $");
 
 #include "opt_ddb.h"
 
@@ -94,8 +94,6 @@ __KERNEL_RCSID(0, "$NetBSD: wd33c93.c,v 1.23 2009/02/12 06:20:58 rumble Exp $");
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsiconf.h>
 #include <dev/scsipi/scsi_message.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <sys/bus.h>
 

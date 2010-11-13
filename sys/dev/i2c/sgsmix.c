@@ -1,4 +1,4 @@
-/*	$NetBSD: sgsmix.c,v 1.6 2008/08/01 19:33:07 macallan Exp $	*/
+/*	$NetBSD: sgsmix.c,v 1.7 2010/11/13 13:51:59 uebayasi Exp $	*/
 
 /*-
  * Copyright (C) 2005 Michael Lorenz.
@@ -31,7 +31,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sgsmix.c,v 1.6 2008/08/01 19:33:07 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sgsmix.c,v 1.7 2010/11/13 13:51:59 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -39,8 +39,6 @@ __KERNEL_RCSID(0, "$NetBSD: sgsmix.c,v 1.6 2008/08/01 19:33:07 macallan Exp $");
 #include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/sysctl.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <dev/i2c/i2cvar.h>
 

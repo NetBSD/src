@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.98 2010/08/11 11:35:08 pgoyette Exp $	*/
+/*	$NetBSD: fd.c,v 1.99 2010/11/13 13:52:03 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2008 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.98 2010/08/11 11:35:08 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.99 2010/11/13 13:52:03 uebayasi Exp $");
 
 #include "rnd.h"
 #include "opt_ddb.h"
@@ -121,8 +121,6 @@ __KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.98 2010/08/11 11:35:08 pgoyette Exp $");
 #endif
 
 #include <prop/proplib.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <dev/cons.h>
 

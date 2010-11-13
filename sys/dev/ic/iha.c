@@ -1,4 +1,4 @@
-/*	$NetBSD: iha.c,v 1.40 2008/05/14 13:29:28 tsutsui Exp $ */
+/*	$NetBSD: iha.c,v 1.41 2010/11/13 13:52:01 uebayasi Exp $ */
 
 /*-
  * Copyright (c) 2001, 2002 Izumi Tsutsui
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iha.c,v 1.40 2008/05/14 13:29:28 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iha.c,v 1.41 2010/11/13 13:52:01 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,8 +70,6 @@ __KERNEL_RCSID(0, "$NetBSD: iha.c,v 1.40 2008/05/14 13:29:28 tsutsui Exp $");
 #include <sys/buf.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <sys/bus.h>
 #include <sys/intr.h>
