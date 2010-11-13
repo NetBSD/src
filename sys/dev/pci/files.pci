@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.333 2010/11/10 22:34:24 skrll Exp $
+#	$NetBSD: files.pci,v 1.334 2010/11/13 00:47:24 jnemeth Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -1028,3 +1028,8 @@ defflag		opt_wcfb.h	WCFB_DEBUG
 # Domex 536, 5380-compatible SCSI HBA
 attach	nca at pci with nca_pci
 file	dev/pci/nca_pci.c	nca_pci
+
+# Agere ET1310/1301 Ethernet
+device  et: ether, ifnet, arp, mii, mii_phy
+attach  et at pci
+file    dev/pci/if_et.c                 et
