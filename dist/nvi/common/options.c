@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.8 2010/05/13 17:52:11 tnozaki Exp $ */
+/*	$NetBSD: options.c,v 1.9 2010/11/14 20:53:54 schnoebe Exp $ */
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -98,7 +98,7 @@ OPTLIST const optlist[] = {
 	{L("flash"),	NULL,		OPT_1BOOL,	0},
 #ifdef GTAGS
 /* O_GTAGSMODE	    FreeBSD/NetBSD */
-	{L("gtagsmode"),NULL,		OPT_1BOOL,	0},
+	{L("gtagsmode"),NULL,		OPT_0BOOL,	0},
 #endif
 /* O_HARDTABS	    4BSD */
 	{L("hardtabs"),	NULL,		OPT_NUM,	0},
