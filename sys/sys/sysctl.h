@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.188 2009/12/12 00:24:57 rmind Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.189 2010/11/14 05:34:56 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -166,23 +166,6 @@ struct ctlname {
 #define	CTL_EMUL	12		/* emulation-specific data */
 #define	CTL_SECURITY	13		/* security */
 #define	CTL_MAXID	14		/* number of valid top-level ids */
-
-#define	CTL_NAMES { \
-	{ 0, 0 }, \
-	{ "kern", CTLTYPE_NODE }, \
-	{ "vm", CTLTYPE_NODE }, \
-	{ "vfs", CTLTYPE_NODE }, \
-	{ "net", CTLTYPE_NODE }, \
-	{ "debug", CTLTYPE_NODE }, \
-	{ "hw", CTLTYPE_NODE }, \
-	{ "machdep", CTLTYPE_NODE }, \
-	{ "user", CTLTYPE_NODE }, \
-	{ "ddb", CTLTYPE_NODE }, \
-	{ "proc", CTLTYPE_NODE }, \
-	{ "vendor", CTLTYPE_NODE }, \
-	{ "emul", CTLTYPE_NODE }, \
-	{ "security", CTLTYPE_NODE }, \
-}
 
 /*
  * The "vendor" toplevel name is to be used by vendors who wish to
