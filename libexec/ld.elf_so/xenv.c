@@ -1,4 +1,4 @@
-/*	$NetBSD: xenv.c,v 1.1 2010/10/29 15:08:17 christos Exp $	*/
+/*	$NetBSD: xenv.c,v 1.2 2010/11/14 22:09:16 tron Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)setenv.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: xenv.c,v 1.1 2010/10/29 15:08:17 christos Exp $");
+__RCSID("$NetBSD: xenv.c,v 1.2 2010/11/14 22:09:16 tron Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -42,8 +42,9 @@ __RCSID("$NetBSD: xenv.c,v 1.1 2010/10/29 15:08:17 christos Exp $");
 #include <string.h>
 #include "rtldenv.h"
 
-extern char * __findenv(const char *, int *);
 extern char **environ;
+
+#include <unistd.h>
 
 /*
  * xunsetenv(name) --
@@ -52,19 +53,29 @@ extern char **environ;
 int
 xunsetenv(const char *name)
 {
-	int offset;
+	size_t l_name, r_offset, w_offset;
 
-	if (name == NULL || *name == '\0' || strchr(name, '=') != NULL) {
+	if (name == NULL) {
 		errno = EINVAL;
 		return -1;
 	}
 
-	while (__findenv(name, &offset) != NULL) {
-		while (environ[offset] != NULL) {
-			environ[offset] = environ[offset + 1];
-			offset++;
+	l_name = strcspn(name, "=");
+	if (l_name == 0 || name[l_name] == '=') {
+		errno = EINVAL;
+		return -1;
+	}
+
+	for (r_offset = 0, w_offset = 0; environ[r_offset] != NULL;
+	    r_offset++) {
+		if (strncmp(name, environ[r_offset], l_name) != 0 ||
+		    environ[r_offset][l_name] != '=') {
+			environ[w_offset++] = environ[r_offset];
 		}
 	}
+
+	while (w_offset < r_offset)
+		environ[w_offset++] = NULL;
 
 	return 0;
 }
