@@ -1,4 +1,4 @@
-/*	$NetBSD: t_environment.c,v 1.9 2010/11/13 21:08:36 tron Exp $	*/
+/*	$NetBSD: t_environment.c,v 1.10 2010/11/14 18:15:08 tron Exp $	*/
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_environment.c,v 1.9 2010/11/13 21:08:36 tron Exp $");
+__RCSID("$NetBSD: t_environment.c,v 1.10 2010/11/14 18:15:08 tron Exp $");
 
 #include <atf-c.h>
 #include <errno.h>
@@ -79,21 +79,28 @@ ATF_TC_HEAD(t_getenv, tc)
 
 ATF_TC_BODY(t_setenv, tc)
 {
-	size_t i;
+	const size_t numvars = 8192;
+	size_t i, offset;
 	char name[1024];
 	char value[1024];
-	for (i = 0; i < 10240; i++) {
-		snprintf(name, sizeof(name), "var%zu", i);
-		snprintf(value, sizeof(value), "value%ld", lrand48());
+
+	offset = lrand48();
+	for (i = 0; i < numvars; i++) {
+		(void)snprintf(name, sizeof(name), "var%zu",
+		    (i * 7 + offset) % numvars);
+		(void)snprintf(value, sizeof(value), "value%ld", lrand48());
 		ATF_CHECK(setenv(name, value, 1) != -1);
 		ATF_CHECK(setenv(name, "foo", 0) != -1);
 		ATF_CHECK_STREQ(getenv(name), value);
 	}
 
-	for (i = 0; i < 10240; i++) {
-		snprintf(name, sizeof(name), "var%zu", i);
+	offset = lrand48();
+	for (i = 0; i < numvars; i++) {
+		(void)snprintf(name, sizeof(name), "var%zu",
+		    (i * 11 + offset) % numvars);
 		ATF_CHECK(unsetenv(name) != -1);
 		ATF_CHECK(getenv(name) == NULL);
+		ATF_CHECK(unsetenv(name) != -1);
 	}
 
 	ATF_CHECK_ERRNO(EINVAL, setenv(NULL, "val", 1) == -1);
@@ -174,11 +181,7 @@ ATF_TC_BODY(t_getenv, tc)
 {
 	ATF_CHECK(setenv("EVIL", "very=bad", 1) != -1);
 	ATF_CHECK_STREQ(getenv("EVIL"), "very=bad");
-
-	atf_tc_expect_fail("getenv(3) doesn't check variable names properly");
 	ATF_CHECK(getenv("EVIL=very") == NULL);
-
-	atf_tc_expect_pass();
 	ATF_CHECK(unsetenv("EVIL") != -1);
 }
 
