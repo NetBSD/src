@@ -1,4 +1,4 @@
-/*	$NetBSD: rlphy.c,v 1.25 2009/02/16 08:00:42 cegger Exp $	*/
+/*	$NetBSD: rlphy.c,v 1.26 2010/11/14 13:40:36 mlelstv Exp $	*/
 /*	$OpenBSD: rlphy.c,v 1.20 2005/07/31 05:27:30 pvalchev Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rlphy.c,v 1.25 2009/02/16 08:00:42 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rlphy.c,v 1.26 2010/11/14 13:40:36 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -165,27 +165,7 @@ rlphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 		if ((mii->mii_ifp->if_flags & IFF_UP) == 0)
 			break;
 
-		switch (IFM_SUBTYPE(ife->ifm_media)) {
-		case IFM_AUTO:
-			/*
-			 * If we're already in auto mode, just return.
-			 */
-			if (PHY_READ(sc, MII_BMCR) & BMCR_AUTOEN)
-				return (0);
-			(void) mii_phy_auto(sc, 0);
-			break;
-		case IFM_100_T4:
-			/*
-			 * XXX Not supported as a manual setting right now.
-			 */
-			return (EINVAL);
-		default:
-			/*
-			 * BMCR data is stored in the ifmedia entry.
-			 */
-			PHY_WRITE(sc, MII_ANAR, mii_anar(ife->ifm_media));
-			PHY_WRITE(sc, MII_BMCR, ife->ifm_data);
-		}
+		mii_phy_setmedia(sc);
 		break;
 
 	case MII_TICK:
