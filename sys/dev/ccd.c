@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.134 2009/06/05 19:21:02 haad Exp $	*/
+/*	$NetBSD: ccd.c,v 1.135 2010/11/14 03:49:52 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2007, 2009 The NetBSD Foundation, Inc.
@@ -127,7 +127,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.134 2009/06/05 19:21:02 haad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.135 2010/11/14 03:49:52 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -152,6 +152,8 @@ __KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.134 2009/06/05 19:21:02 haad Exp $");
 #include <sys/kauth.h>
 #include <sys/kthread.h>
 #include <sys/bufq.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <dev/ccdvar.h>
 #include <dev/dkvar.h>
