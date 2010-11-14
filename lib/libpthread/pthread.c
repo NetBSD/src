@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.116 2010/07/08 15:13:35 rmind Exp $	*/
+/*	$NetBSD: pthread.c,v 1.117 2010/11/14 22:25:23 tron Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.116 2010/07/08 15:13:35 rmind Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.117 2010/11/14 22:25:23 tron Exp $");
 
 #define	__EXPOSE_STACK	1
 
@@ -1287,10 +1287,18 @@ RB_GENERATE_STATIC(__pthread__alltree, __pthread_st, pt_alltree, pthread__cmp)
 char *
 pthread__getenv(const char *name)
 {
-	extern char *__findenv(const char *, int *);
-	int off;
+	extern char **environ;
+	size_t l_name, offset;
 
-	return __findenv(name, &off);
+	l_name = strlen(name);
+	for (offset = 0; environ[offset] != NULL; offset++) {
+		if (strncmp(name, environ[offset], l_name) == 0 &&
+		    environ[offset][l_name] == '=') {
+			return environ[offset] + l_name + 1;
+		}
+	}
+
+	return NULL;
 }
 
 pthread_mutex_t *
