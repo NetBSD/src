@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.467 2010/10/27 18:17:42 martin Exp $
+.\"	$NetBSD: main,v 1.468 2010/11/14 11:19:49 kiyohara Exp $
 .\"
 .\" Copyright (c) 1999-2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1215,6 +1215,7 @@ If you're one of them, and would like to be mentioned, tell us!)
 .It Ta Frank Kardel Ta Mt kardel@NetBSD.org
 .It Ta KAWAMOTO Yosihisa Ta Mt kawamoto@NetBSD.org
 .It Ta Min Sik Kim Ta Mt minskim@NetBSD.org
+.It Ta KIYOHARA Takashi Ta Mt kiyohara@NetBSD.org
 .It Ta Thomas Klausner Ta Mt wiz@NetBSD.org
 .It Ta Klaus Klein Ta Mt kleink@NetBSD.org
 .It Ta John Klos Ta Mt jklos@NetBSD.org
