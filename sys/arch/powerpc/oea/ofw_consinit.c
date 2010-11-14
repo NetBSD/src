@@ -1,4 +1,4 @@
-/* $NetBSD: ofw_consinit.c,v 1.10 2010/03/14 10:03:49 kiyohara Exp $ */
+/* $NetBSD: ofw_consinit.c,v 1.11 2010/11/14 03:32:44 uebayasi Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,11 +30,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_consinit.c,v 1.10 2010/03/14 10:03:49 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_consinit.c,v 1.11 2010/11/14 03:32:44 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
 #include <sys/tty.h>
+
+#include <prop/proplib.h>
 
 #include <machine/autoconf.h>
 #include <machine/trap.h>
