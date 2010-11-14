@@ -1,11 +1,11 @@
-/* 	$NetBSD: initfini.c,v 1.7 2010/11/14 18:11:42 tron Exp $	 */
+/*	$NetBSD: env.h,v 1.1 2010/11/14 18:11:42 tron Exp $	*/
 
 /*-
- * Copyright (c) 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Andrew Doran.
+ * by Matthias Scheler.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -29,38 +29,37 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
-__RCSID("$NetBSD: initfini.c,v 1.7 2010/11/14 18:11:42 tron Exp $");
+#include <sys/types.h>
 
-#ifdef _LIBC
-#include "namespace.h"
+#include <stdbool.h>
+
+#include "reentrant.h"
+
+extern ssize_t __getenvslot(const char *name, size_t l_name, bool allocate);
+extern char *__findenv(const char *name, size_t l_name);
+
+#ifdef _REENTRANT
+extern bool __readlockenv(void);
+extern bool __writelockenv(void);
+extern bool __unlockenv(void);
+#else
+static __inline bool
+__readlockenv(void)
+{
+	return true;
+}
+
+static __inline bool
+__writelockenv(void)
+{
+	return true;
+}
+
+static __inline bool
+__unlocklockenv(void)
+{
+	return true;
+}
 #endif
 
-void	__libc_init(void) __attribute__((__constructor__, __used__));
-
-void	__guard_setup(void);
-void	__libc_thr_init(void);
-void	__libc_atomic_init(void);
-void	__libc_atexit_init(void);
-void	__libc_env_init(void);
-
-/* LINTED used */
-void
-__libc_init(void)
-{
-
-	/* For -fstack-protector */
-	__guard_setup();
-
-	/* Atomic operations */
-	__libc_atomic_init();
-
-	/* Threads */
-	__libc_thr_init();
-
-	/* Initialize the atexit mutexes */
-	__libc_atexit_init();
-
-	/* Initialize environment memory RB tree. */
-	__libc_env_init();
-}
+extern char **environ;

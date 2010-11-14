@@ -1,4 +1,4 @@
-/*	$NetBSD: getenv.c,v 1.32 2010/11/10 02:40:08 enami Exp $	*/
+/*	$NetBSD: getenv.c,v 1.33 2010/11/14 18:11:43 tron Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)getenv.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: getenv.c,v 1.32 2010/11/10 02:40:08 enami Exp $");
+__RCSID("$NetBSD: getenv.c,v 1.33 2010/11/14 18:11:43 tron Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -43,15 +43,10 @@ __RCSID("$NetBSD: getenv.c,v 1.32 2010/11/10 02:40:08 enami Exp $");
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
+
+#include "env.h"
 #include "reentrant.h"
 #include "local.h"
-
-#ifdef _REENTRANT
-rwlock_t __environ_lock = RWLOCK_INITIALIZER;
-#endif
-char **__environ_malloced;
-static char **saveenv;
-static size_t environ_malloced_len;
 
 __weak_alias(getenv_r, _getenv_r)
 
@@ -65,139 +60,52 @@ __weak_alias(getenv_r, _getenv_r)
 char *
 getenv(const char *name)
 {
-	int offset;
+	size_t l_name;
 	char *result;
 
 	_DIAGASSERT(name != NULL);
 
-	rwlock_rdlock(&__environ_lock);
-	result = __findenv(name, &offset);
-	rwlock_unlock(&__environ_lock);
+	l_name = __envvarnamelen(name, false);
+	if (l_name == 0)
+		return NULL;
+
+	result = NULL;
+	if (__readlockenv()) {
+		result = __findenv(name, l_name);
+		(void)__unlockenv();
+	}
+	
 	return result;
 }
 
 int
 getenv_r(const char *name, char *buf, size_t len)
 {
-	int offset;
-	char *result;
-	int rv = -1;
+	size_t l_name;
+	int rv;
 
 	_DIAGASSERT(name != NULL);
 
-	rwlock_rdlock(&__environ_lock);
-	result = __findenv(name, &offset);
-	if (result == NULL) {
-		errno = ENOENT;
-		goto out;
-	}
-	if (strlcpy(buf, result, len) >= len) {
-		errno = ERANGE;
-		goto out;
-	}
-	rv = 0;
-out:
-	rwlock_unlock(&__environ_lock);
-	return rv;
-}
-
-int
-__allocenv(int offset)
-{
-	char **p;
-	size_t required_len, new_len;
-
-	if (offset == -1 || saveenv != environ) {
-		char **ptr;
-		for (ptr = environ, offset = 0; *ptr != NULL; ptr++)
-			offset++;
-	}
-
-	/* one for potentially new entry one for NULL */
-	required_len = offset + 2;
-
-	if (required_len <= environ_malloced_len && saveenv == environ)
-		return 0;
-
-	/* Double the size of the arrays until we meet the requirement. */
-	new_len = environ_malloced_len ? environ_malloced_len : 16;
-	while (new_len < required_len)
-		new_len <<= 1;
-
-	if (saveenv == environ) {		/* just increase size */
-		if ((p = realloc(saveenv, new_len * sizeof(*p))) == NULL)
-			return -1;
-		(void)memset(&p[environ_malloced_len], 0,
-		    (new_len - environ_malloced_len) * sizeof(*p));
-		saveenv = p;
-	} else {				/* get new space */
-		free(saveenv);
-		if ((saveenv = malloc(new_len * sizeof(*saveenv))) == NULL)
-			return -1;
-		(void)memcpy(saveenv, environ,
-		    (required_len - 2) * sizeof(*saveenv));
-		(void)memset(&saveenv[required_len - 2], 0,
-		    (new_len - (required_len - 2)) * sizeof(*saveenv));
-	}
-	environ = saveenv;
-
-	p = realloc(__environ_malloced, new_len * sizeof(*p));
-	if (p == NULL)
+	l_name = __envvarnamelen(name, false);
+	if (l_name == 0)
 		return -1;
 
-	(void)memset(&p[environ_malloced_len], 0,
-	    (new_len - environ_malloced_len) * sizeof(*p));
-	environ_malloced_len = new_len;
-	__environ_malloced = p;
+	rv = -1;
+	if (__readlockenv()) {
+		const char *value;
 
-	return 0;
-}
-
-/*
- * Handle the case where a program tried to cleanup the environment
- * by setting *environ = NULL; we attempt to cleanup all the malloced
- * environ entries and we make sure that the entry following the new
- * entry is NULL.
- */
-void
-__scrubenv(int offset)
-{
-	if (environ[++offset] == NULL)
-		return;
-
-	for (; environ[offset]; offset++) {
-		if (environ[offset] == __environ_malloced[offset])
-			free(__environ_malloced[offset]);
-		environ[offset] = __environ_malloced[offset] = NULL;
-	}
-}
-
-/*
- * __findenv --
- *	Returns pointer to value associated with name, if any, else NULL.
- *	Sets offset to be the offset of the name/value combination in the
- *	environmental array, for use by setenv(3) and unsetenv(3).
- *	Explicitly removes '=' in argument name.
- *
- *	This routine *should* be a static; don't use it.
- */
-char *
-__findenv(const char *name, int *offset)
-{
-	size_t len;
-	const char *np;
-	char **p, *c;
-
-	if (name == NULL || environ == NULL)
-		return NULL;
-	for (np = name; *np && *np != '='; ++np)
-		continue;
-	len = np - name;
-	for (p = environ; (c = *p) != NULL; ++p)
-		if (strncmp(c, name, len) == 0 && c[len] == '=') {
-			*offset = (int)(p - environ);
-			return c + len + 1;
+		value = __findenv(name, l_name);
+		if (value != NULL) {
+			if (strlcpy(buf, value, len) < len) {
+				rv = 0;
+			} else {
+				errno = ERANGE;
+			}
+		} else {
+			errno = ENOENT;
 		}
-	*offset = (int)(p - environ);
-	return NULL;
+		(void)__unlockenv();
+	}
+	
+	return rv;
 }

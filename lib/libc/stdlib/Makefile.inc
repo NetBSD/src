@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile.inc,v 1.74 2010/05/03 05:01:53 jruoho Exp $
+#	$NetBSD: Makefile.inc,v 1.75 2010/11/14 18:11:43 tron Exp $
 #	from: @(#)Makefile.inc	8.3 (Berkeley) 2/4/95
 
 # stdlib sources
 .PATH: ${ARCHDIR}/stdlib ${.CURDIR}/stdlib
 
-SRCS+=	_rand48.c \
+SRCS+=	_env.c _rand48.c \
 	a64l.c abort.c atexit.c atof.c atoi.c atol.c atoll.c \
 	bsearch.c drand48.c exit.c \
 	getenv.c getopt.c getopt_long.c getsubopt.c \

@@ -1,4 +1,4 @@
-/*	$NetBSD: local.h,v 1.5 2010/11/03 15:01:07 christos Exp $	*/
+/*	$NetBSD: local.h,v 1.6 2010/11/14 18:11:43 tron Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -24,13 +24,13 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-char *__findenv(const char *, int *);
-int __allocenv(int);
-void __scrubenv(int);
+/* Environment handling. */
 
-#ifdef _REENTRANT
-extern rwlock_t __environ_lock;
-#endif
+#include <sys/types.h>
+#include <stdbool.h>
 
-extern char **environ;
-extern char **__environ_malloced;
+extern size_t __envvarnamelen(const char *str, bool withequal);
+
+extern void __freeenvvar(char *envvar);
+extern char *__allocenvvar(size_t length);
+extern bool __canoverwriteenvvar(char *envvar, size_t length);
