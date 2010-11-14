@@ -1,4 +1,4 @@
-/*	$NetBSD: dbdma.c,v 1.9 2009/03/14 15:36:09 dsl Exp $	*/
+/*	$NetBSD: dbdma.c,v 1.10 2010/11/14 03:57:17 uebayasi Exp $	*/
 
 /*
  * Copyright 1991-1998 by Open Software Foundation, Inc. 
@@ -23,11 +23,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbdma.c,v 1.9 2009/03/14 15:36:09 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbdma.c,v 1.10 2010/11/14 03:57:17 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
 #include <sys/systm.h>
+
+#include <prop/proplib.h>
 
 #include <uvm/uvm_extern.h>
 
