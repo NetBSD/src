@@ -1,4 +1,4 @@
-/*	$NetBSD: firewirereg.h,v 1.14 2010/09/07 07:26:54 cegger Exp $	*/
+/*	$NetBSD: firewirereg.h,v 1.15 2010/11/14 15:47:20 uebayasi Exp $	*/
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
  * Copyright (c) 1998-2002 Katsushi Kobayashi and Hidetoshi Shimokawa
@@ -38,6 +38,7 @@
 #ifndef _FIREWIREREG_H_
 #define _FIREWIREREG_H_
 
+#include <sys/selinfo.h>
 #include <sys/uio.h>
 
 #define PROJECT_STR		"The NetBSD Project"
