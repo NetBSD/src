@@ -1,4 +1,4 @@
-/*	$NetBSD: twa.c,v 1.34 2010/11/13 13:52:08 uebayasi Exp $ */
+/*	$NetBSD: twa.c,v 1.35 2010/11/14 05:33:44 uebayasi Exp $ */
 /*	$wasabi: twa.c,v 1.27 2006/07/28 18:17:21 wrstuden Exp $	*/
 
 /*-
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: twa.c,v 1.34 2010/11/13 13:52:08 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: twa.c,v 1.35 2010/11/14 05:33:44 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -984,7 +984,7 @@ twa_request_bus_scan(struct twa_softc *sc)
 
 		if (twa_inquiry(tr, unit) == 0) {
 			if (td->td_dev == NULL) {
-            			twa_print_inquiry_data(sc,
+	    			twa_print_inquiry_data(sc,
 				   ((struct scsipi_inquiry_data *)tr->tr_data));
 
 				sc->sc_units[unit].td_size =
@@ -1142,24 +1142,24 @@ twa_drain_response_queue(struct twa_softc *sc)
 static int
 twa_drain_response_queue_large(struct twa_softc *sc, uint32_t timeout)
 {
-        uint32_t        start_time = 0, end_time;
-        uint32_t        response = 0;
+	uint32_t	start_time = 0, end_time;
+	uint32_t	response = 0;
 
-        if (sc->sc_product_id == PCI_PRODUCT_3WARE_9550 ||
-            sc->sc_product_id == PCI_PRODUCT_3WARE_9650 ) {
-               start_time = 0;
-               end_time = (timeout * TWA_MICROSECOND);
+	if (sc->sc_product_id == PCI_PRODUCT_3WARE_9550 ||
+	    sc->sc_product_id == PCI_PRODUCT_3WARE_9650 ) {
+	       start_time = 0;
+	       end_time = (timeout * TWA_MICROSECOND);
 
-               while ((response &
-                   TWA_9550SX_DRAIN_COMPLETE) != TWA_9550SX_DRAIN_COMPLETE) {
+	       while ((response &
+		   TWA_9550SX_DRAIN_COMPLETE) != TWA_9550SX_DRAIN_COMPLETE) {
 			response = twa_inl(sc, TWA_RESPONSE_QUEUE_LARGE_OFFSET);
 			if (start_time >= end_time)
-                               return (1);
-                        DELAY(1);
-                        start_time++;
-               }
-               /* P-chip delay */
-               DELAY(500000);
+			       return (1);
+			DELAY(1);
+			start_time++;
+	       }
+	       /* P-chip delay */
+	       DELAY(500000);
        }
        return (0);
 }
@@ -1492,7 +1492,6 @@ twa_attach(device_t parent, device_t self, void *aux)
 	pcireg_t csr;
 	pci_intr_handle_t ih;
 	const char *intrstr;
-	struct ctlname ctlnames[] = CTL_NAMES;
 	const struct sysctlnode *node; 
 	int i;
 	bool use_64bit;
@@ -1594,27 +1593,27 @@ twa_attach(device_t parent, device_t self, void *aux)
 				NULL, NULL, 0, NULL, 0,
 				CTL_HW, CTL_EOL) != 0) {
 		aprint_error_dev(&sc->twa_dv, "could not create %s sysctl node\n",
-			ctlnames[CTL_HW].ctl_name);
+			"hw");
 		return;
 	}
 	if (sysctl_createv(NULL, 0, NULL, &node,
-        			0, CTLTYPE_NODE, device_xname(&sc->twa_dv),
-        			SYSCTL_DESCR("twa driver information"),
-        			NULL, 0, NULL, 0,
+				0, CTLTYPE_NODE, device_xname(&sc->twa_dv),
+				SYSCTL_DESCR("twa driver information"),
+				NULL, 0, NULL, 0,
 				CTL_HW, CTL_CREATE, CTL_EOL) != 0) {
-                aprint_error_dev(&sc->twa_dv, "could not create %s.%s sysctl node\n",
-			ctlnames[CTL_HW].ctl_name,
+		aprint_error_dev(&sc->twa_dv, "could not create %s.%s sysctl node\n",
+			"hw",
 			device_xname(&sc->twa_dv));
 		return;
 	}
 	if ((i = sysctl_createv(NULL, 0, NULL, NULL,
-        			0, CTLTYPE_STRING, "driver_version",
-        			SYSCTL_DESCR("twa driver version"),
-        			NULL, 0, &twaver, 0,
+				0, CTLTYPE_STRING, "driver_version",
+				SYSCTL_DESCR("twa driver version"),
+				NULL, 0, &twaver, 0,
 				CTL_HW, node->sysctl_num, CTL_CREATE, CTL_EOL))
 				!= 0) {
-                aprint_error_dev(&sc->twa_dv, "could not create %s.%s.driver_version sysctl\n",
-			ctlnames[CTL_HW].ctl_name,
+		aprint_error_dev(&sc->twa_dv, "could not create %s.%s.driver_version sysctl\n",
+			"hw",
 			device_xname(&sc->twa_dv));
 		return;
 	}
