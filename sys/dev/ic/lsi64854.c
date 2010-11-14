@@ -1,4 +1,4 @@
-/*	$NetBSD: lsi64854.c,v 1.35 2010/11/13 13:52:01 uebayasi Exp $ */
+/*	$NetBSD: lsi64854.c,v 1.36 2010/11/14 04:01:50 uebayasi Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lsi64854.c,v 1.35 2010/11/13 13:52:01 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lsi64854.c,v 1.36 2010/11/14 04:01:50 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -42,6 +42,8 @@ __KERNEL_RCSID(0, "$NetBSD: lsi64854.c,v 1.35 2010/11/13 13:52:01 uebayasi Exp $
 #include <sys/bus.h>
 #include <machine/autoconf.h>
 #include <sys/cpu.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>
