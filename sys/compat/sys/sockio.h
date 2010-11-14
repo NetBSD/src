@@ -1,4 +1,4 @@
-/*	$NetBSD: sockio.h,v 1.9 2010/11/07 19:45:06 pooka Exp $	*/
+/*	$NetBSD: sockio.h,v 1.10 2010/11/14 15:36:47 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993, 1994
@@ -36,6 +36,8 @@
 
 #include "opt_compat_netbsd.h"
 #include "opt_modular.h"
+
+#include <sys/ioccom.h>
 
 #if defined(COMPAT_09) || defined(COMPAT_10) || defined(COMPAT_11) || \
     defined(COMPAT_12) || defined(COMPAT_13) || defined(COMPAT_14) || \
