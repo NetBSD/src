@@ -1,4 +1,4 @@
-/*	$NetBSD: env.h,v 1.1 2010/11/14 18:11:42 tron Exp $	*/
+/*	$NetBSD: env.h,v 1.2 2010/11/14 22:04:36 tron Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #include "reentrant.h"
 
 extern ssize_t __getenvslot(const char *name, size_t l_name, bool allocate);
-extern char *__findenv(const char *name, size_t l_name);
+extern char *__findenvvar(const char *name, size_t l_name);
 
 #ifdef _REENTRANT
 extern bool __readlockenv(void);

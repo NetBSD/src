@@ -1,4 +1,4 @@
-/*	$NetBSD: _env.c,v 1.1 2010/11/14 18:11:43 tron Exp $ */
+/*	$NetBSD: _env.c,v 1.2 2010/11/14 22:04:36 tron Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -33,6 +33,7 @@
 
 #include <assert.h>
 #include <errno.h>
+#include <limits.h>
 #include <stdlib.h>
 #include <stddef.h>
 #include <string.h>
@@ -76,6 +77,12 @@ static size_t	allocated_environ_size;
 #ifdef _REENTRANT
 static rwlock_t env_lock = RWLOCK_INITIALIZER;
 #endif
+
+/* Compatibility function. */
+char *__findenv(const char *name, int *offsetp);
+
+__warn_references(__findenv,
+    "warning: __findenv is an internal obsolete function.")
 
 /* Our initialization function. */
 void __libc_env_init(void);
@@ -268,12 +275,31 @@ __getenvslot(const char *name, size_t l_name, bool allocate)
 
 /* Find a string in the environment. */
 char *
-__findenv(const char *name, size_t l_name)
+__findenvvar(const char *name, size_t l_name)
 {
 	ssize_t offset;
 
 	offset = __getenvslot(name, l_name, false);
 	return (offset != -1) ? environ[offset] + l_name + 1 : NULL;
+}
+
+/* Compatibility interface, do *not* call this function. */
+char *
+__findenv(const char *name, int *offsetp)
+{
+	size_t l_name;
+	ssize_t offset;
+
+	l_name = __envvarnamelen(name, false);
+	if (l_name == 0)
+		return NULL;
+
+	offset = __getenvslot(name, l_name, false);
+	if (offset < 0 || offset > INT_MAX)
+		return NULL;
+
+	*offsetp = (int)offset;
+	return environ[offset] + l_name + 1;
 }
 
 #ifdef _REENTRANT
