@@ -1,9 +1,11 @@
-# $NetBSD: Makefile,v 1.2 2010/09/23 17:38:08 christos Exp $
+# $NetBSD: Makefile,v 1.3 2010/11/14 19:19:24 tron Exp $
 
 .include <bsd.own.mk>
 
 TESTSDIR=	${TESTSBASE}/lib/libc/stdlib
 
 TESTS_C+=	t_mi_vector_hash t_environment
+
+LDADD.t_environment=	-pthread
 
 .include <bsd.test.mk>
