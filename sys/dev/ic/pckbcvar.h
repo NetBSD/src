@@ -1,4 +1,4 @@
-/* $NetBSD: pckbcvar.h,v 1.17 2010/02/24 22:37:58 dyoung Exp $ */
+/* $NetBSD: pckbcvar.h,v 1.18 2010/11/14 03:22:01 uebayasi Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -30,6 +30,7 @@
 #define _DEV_IC_PCKBCVAR_H_
 
 #include <sys/callout.h>
+#include <sys/pmf.h>
 
 #include <dev/pckbport/pckbportvar.h>
 
