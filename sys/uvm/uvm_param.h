@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_param.h,v 1.24 2010/11/14 04:25:16 uebayasi Exp $	*/
+/*	$NetBSD: uvm_param.h,v 1.25 2010/11/14 04:31:02 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -151,6 +151,7 @@ extern int *uvmexp_pageshift;
 #define	PAGE_SIZE	(*uvmexp_pagesize)	/* size of page */
 #define	PAGE_MASK	(*uvmexp_pagemask)	/* size of page - 1 */
 #define	PAGE_SHIFT	(*uvmexp_pageshift)	/* bits to shift for pages */
+#define	__uvmexp_pagesize
 #endif /* PAGE_SIZE */
 
 #endif /* _KERNEL */
