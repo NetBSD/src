@@ -1,4 +1,4 @@
-/*	$NetBSD: firewire.h,v 1.5 2010/03/29 03:05:27 kiyohara Exp $	*/
+/*	$NetBSD: firewire.h,v 1.6 2010/11/14 15:47:20 uebayasi Exp $	*/
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
  * Copyright (c) 1998-2002 Katsushi Kobayashi and Hidetoshi Shimokawa
@@ -38,6 +38,8 @@
 
 #ifndef _FIREWIRE_H_
 #define _FIREWIRE_H_
+
+#include <sys/ioccom.h>
 
 #define	DEV_DEF  0
 #define	DEV_DV   2
