@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pglist.c,v 1.46 2010/06/17 03:13:58 mrg Exp $	*/
+/*	$NetBSD: uvm_pglist.c,v 1.47 2010/11/14 15:06:34 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pglist.c,v 1.46 2010/06/17 03:13:58 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pglist.c,v 1.47 2010/11/14 15:06:34 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -133,7 +133,7 @@ uvm_pglistalloc_c_ps(struct vm_physseg *ps, int num, paddr_t low, paddr_t high,
 #endif
 #ifdef PGALLOC_VERBOSE
 	printf("pgalloc: contig %d pgs from psi %ld\n", num,
-	(long)(ps - vm_physmem));
+	(long)(ps - VM_PHYSMEM_PTR(0)));
 #endif
 
 	KASSERT(mutex_owned(&uvm_fpageqlock));
@@ -164,11 +164,11 @@ uvm_pglistalloc_c_ps(struct vm_physseg *ps, int num, paddr_t low, paddr_t high,
 		 * Make sure this is a managed physical page.
 		 */
 
-		if (vm_physseg_find(try, &cidx) != ps - vm_physmem)
+		if (vm_physseg_find(try, &cidx) != ps - VM_PHYSMEM_PTR(0))
 			panic("pgalloc contig: botch1");
 		if (cidx != try - ps->start)
 			panic("pgalloc contig: botch2");
-		if (vm_physseg_find(try + num - 1, &cidx) != ps - vm_physmem)
+		if (vm_physseg_find(try + num - 1, &cidx) != ps - VM_PHYSMEM_PTR(0))
 			panic("pgalloc contig: botch3");
 		if (cidx != try - ps->start + num - 1)
 			panic("pgalloc contig: botch4");
@@ -246,12 +246,12 @@ uvm_pglistalloc_contig(int num, paddr_t low, paddr_t high, paddr_t alignment,
 
 	for (fl = 0; fl < VM_NFREELIST; fl++) {
 #if (VM_PHYSSEG_STRAT == VM_PSTRAT_BIGFIRST)
-		for (psi = vm_nphysseg - 1 ; psi >= 0 ; psi--)
+		for (psi = vm_nphysmem - 1 ; psi >= 0 ; psi--)
 #else
-		for (psi = 0 ; psi < vm_nphysseg ; psi++)
+		for (psi = 0 ; psi < vm_nphysmem ; psi++)
 #endif
 		{
-			ps = &vm_physmem[psi];
+			ps = VM_PHYSMEM_PTR(psi);
 
 			if (ps->free_list != fl)
 				continue;
@@ -292,7 +292,7 @@ uvm_pglistalloc_s_ps(struct vm_physseg *ps, int num, paddr_t low, paddr_t high,
 #endif
 #ifdef PGALLOC_VERBOSE
 	printf("pgalloc: simple %d pgs from psi %ld\n", num,
-	    (long)(ps - vm_physmem));
+	    (long)(ps - VM_PHYSMEM_PTR(0)));
 #endif
 
 	KASSERT(mutex_owned(&uvm_fpageqlock));
@@ -303,7 +303,7 @@ uvm_pglistalloc_s_ps(struct vm_physseg *ps, int num, paddr_t low, paddr_t high,
 	for (try = max(atop(low), ps->avail_start);
 	     try < limit; try ++) {
 #ifdef DEBUG
-		if (vm_physseg_find(try, &cidx) != ps - vm_physmem)
+		if (vm_physseg_find(try, &cidx) != ps - VM_PHYSMEM_PTR(0))
 			panic("pgalloc simple: botch1");
 		if (cidx != (try - ps->start))
 			panic("pgalloc simple: botch2");
@@ -345,12 +345,12 @@ again:
 
 	for (fl = 0; fl < VM_NFREELIST; fl++) {
 #if (VM_PHYSSEG_STRAT == VM_PSTRAT_BIGFIRST)
-		for (psi = vm_nphysseg - 1 ; psi >= 0 ; psi--)
+		for (psi = vm_nphysmem - 1 ; psi >= 0 ; psi--)
 #else
-		for (psi = 0 ; psi < vm_nphysseg ; psi++)
+		for (psi = 0 ; psi < vm_nphysmem ; psi++)
 #endif
 		{
-			ps = &vm_physmem[psi];
+			ps = VM_PHYSMEM_PTR(psi);
 
 			if (ps->free_list != fl)
 				continue;
