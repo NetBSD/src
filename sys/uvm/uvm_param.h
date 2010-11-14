@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_param.h,v 1.23 2010/11/13 12:50:09 uebayasi Exp $	*/
+/*	$NetBSD: uvm_param.h,v 1.24 2010/11/14 04:25:16 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -145,9 +145,12 @@
  * have ones that are compile-time constants.
  */
 #if !defined(PAGE_SIZE)
-#define	PAGE_SIZE	uvmexp.pagesize		/* size of page */
-#define	PAGE_MASK	uvmexp.pagemask		/* size of page - 1 */
-#define	PAGE_SHIFT	uvmexp.pageshift	/* bits to shift for pages */
+extern int *uvmexp_pagesize;
+extern int *uvmexp_pagemask;
+extern int *uvmexp_pageshift;
+#define	PAGE_SIZE	(*uvmexp_pagesize)	/* size of page */
+#define	PAGE_MASK	(*uvmexp_pagemask)	/* size of page - 1 */
+#define	PAGE_SHIFT	(*uvmexp_pageshift)	/* bits to shift for pages */
 #endif /* PAGE_SIZE */
 
 #endif /* _KERNEL */
