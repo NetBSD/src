@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.51 2010/11/06 11:46:04 uebayasi Exp $	*/
+/*	$NetBSD: cpu.c,v 1.52 2010/11/14 13:43:04 bouyer Exp $	*/
 /* NetBSD: cpu.c,v 1.18 2004/02/20 17:35:01 yamt Exp  */
 
 /*-
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.51 2010/11/06 11:46:04 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.52 2010/11/14 13:43:04 bouyer Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -220,7 +220,7 @@ cpu_attach(device_t parent, device_t self, void *aux)
 	struct cpu_attach_args *caa = aux;
 	struct cpu_info *ci;
 	uintptr_t ptr;
-	static bool again = false;
+	static int nphycpu = 0;
 
 	sc->sc_dev = self;
 
@@ -231,24 +231,24 @@ cpu_attach(device_t parent, device_t self, void *aux)
 
 	/*
 	 * If we're an Application Processor, allocate a cpu_info
-	 * structure, otherwise use the primary's.
+	 * If we're the first attached CPU use the primary cpu_info,
+	 * otherwise allocate a new one
 	 */
-	if (caa->cpu_role == CPU_ROLE_AP) {
-		if ((boothowto & RB_MD1) != 0) {
-			aprint_error(": multiprocessor boot disabled\n");
-			if (!pmf_device_register(self, NULL, NULL))
-				aprint_error_dev(self,
-				   "couldn't establish power handler\n");
-			return;
-		}
-		aprint_naive(": Application Processor\n");
+	aprint_naive("\n");
+	aprint_normal("\n");
+	if (nphycpu > 0) {
+		struct cpu_info *tmp;
 		ptr = (uintptr_t)kmem_zalloc(sizeof(*ci) + CACHE_LINE_SIZE - 1,
 		    KM_SLEEP);
 		ci = (struct cpu_info *)roundup2(ptr, CACHE_LINE_SIZE);
 		ci->ci_curldt = -1;
+
+		tmp = phycpu_info_list;
+		while (tmp->ci_next)
+			tmp = tmp->ci_next;
+
+		tmp->ci_next = ci;
 	} else {
-		aprint_naive(": %s Processor\n",
-		    caa->cpu_role == CPU_ROLE_SP ? "Single" : "Boot");
 		ci = &phycpu_info_primary;
 	}
 
@@ -259,50 +259,13 @@ cpu_attach(device_t parent, device_t self, void *aux)
 	ci->ci_acpiid = caa->cpu_id;
 	ci->ci_cpuid = caa->cpu_number;
 	ci->ci_vcpu = NULL;
-
-	/*
-	 * Boot processor may not be attached first, but the below
-	 * must be done to allow booting other processors.
-	 */
-	if (!again) {
-		atomic_or_32(&ci->ci_flags, CPUF_PRESENT | CPUF_PRIMARY);
-		/* Basic init */
-		again = true;
-	}
-
-	printf(": ");
-	switch (caa->cpu_role) {
-	case CPU_ROLE_SP:
-		printf("(uniprocessor)\n");
-		atomic_or_32(&ci->ci_flags, CPUF_SP);
-		break;
-
-	case CPU_ROLE_BP:
-		printf("(boot processor)\n");
-		atomic_or_32(&ci->ci_flags, CPUF_BSP);
-		break;
-
-	case CPU_ROLE_AP:
-		/*
-		 * report on an AP
-		 */
-		printf("(application processor)\n");
-		if (ci->ci_flags & CPUF_PRESENT) {
-			struct cpu_info *tmp;
-
-			tmp = phycpu_info_list;
-			while (tmp->ci_next)
-				tmp = tmp->ci_next;
-
-			tmp->ci_next = ci;
-		}
-		break;
-
-	default:
-		panic("unknown processor type??\n");
-	}
+	ci->ci_index = nphycpu++;
+	ci->ci_cpumask = (1 << cpu_index(ci));
 
 	atomic_or_32(&phycpus_attached, ci->ci_cpumask);
+
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	return;
 }
