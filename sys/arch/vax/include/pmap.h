@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.78 2010/11/12 13:35:51 uebayasi Exp $	   */
+/*	$NetBSD: pmap.h,v 1.79 2010/11/14 13:33:23 uebayasi Exp $	   */
 
 /* 
  * Copyright (c) 1991 Regents of the University of California.
@@ -288,5 +288,15 @@ pmap_remove_all(struct pmap *pmap)
 /* Prototypes */
 void	pmap_bootstrap(void);
 vaddr_t pmap_map(vaddr_t, vaddr_t, vaddr_t, int);
+
+#if 0
+#define	__HAVE_VM_PAGE_MD
+
+struct vm_page_md {
+	unsigned int md_attrs;
+};
+
+#define	VM_MDPAGE_INIT(pg)	((pg)->mdpage.md_attrs = 0)
+#endif
 
 #endif /* PMAP_H */

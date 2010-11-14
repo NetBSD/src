@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.88 2009/11/21 04:16:51 rmind Exp $ */
+/*	$NetBSD: pmap.h,v 1.89 2010/11/14 13:33:23 uebayasi Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -389,6 +389,32 @@ extern void	(*pmap_protect_p)(pmap_t, vaddr_t, vaddr_t, vm_prot_t);
 #define tlb_flush_all_real()		sta(ASI_SRMMUFP_LN, ASI_SRMMUFP, 0)
 
 #endif /* SUN4M || SUN4D */
+
+#define __HAVE_VM_PAGE_MD
+
+/*
+ * For each managed physical page, there is a list of all currently
+ * valid virtual mappings of that page.  Since there is usually one
+ * (or zero) mapping per page, the table begins with an initial entry,
+ * rather than a pointer; this head entry is empty iff its pv_pmap
+ * field is NULL.
+ */
+struct vm_page_md {
+	struct pvlist {
+		struct	pvlist *pv_next;	/* next pvlist, if any */
+		struct	pmap *pv_pmap;		/* pmap of this va */
+		vaddr_t	pv_va;			/* virtual address */
+		int	pv_flags;		/* flags (below) */
+	} pvlisthead;
+};
+#define VM_MDPAGE_PVHEAD(pg)	(&(pg)->mdpage.pvlisthead)
+
+#define VM_MDPAGE_INIT(pg) do {				\
+	(pg)->mdpage.pvlisthead.pv_next = NULL;		\
+	(pg)->mdpage.pvlisthead.pv_pmap = NULL;		\
+	(pg)->mdpage.pvlisthead.pv_va = 0;		\
+	(pg)->mdpage.pvlisthead.pv_flags = 0;		\
+} while(/*CONSTCOND*/0)
 
 #endif /* _KERNEL */
 
