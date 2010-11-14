@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_init.c,v 1.36 2009/10/21 21:12:07 rmind Exp $	*/
+/*	$NetBSD: uvm_init.c,v 1.37 2010/11/14 04:25:16 uebayasi Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_init.c,v 1.36 2009/10/21 21:12:07 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_init.c,v 1.37 2010/11/14 04:25:16 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,6 +65,12 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_init.c,v 1.36 2009/10/21 21:12:07 rmind Exp $");
 struct uvm uvm;		/* decl */
 struct uvmexp uvmexp;	/* decl */
 struct uvm_object *uvm_kernel_object;
+
+#if !defined(PAGE_SIZE)
+int *uvmexp_pagesize = &uvmexp.pagesize;
+int *uvmexp_pagemask = &uvmexp.pagemask;
+int *uvmexp_pageshift = &uvmexp.pageshift;
+#endif
 
 kmutex_t uvm_pageqlock;
 kmutex_t uvm_fpageqlock;
