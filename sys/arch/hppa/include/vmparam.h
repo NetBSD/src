@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.16 2010/11/06 15:42:45 uebayasi Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.17 2010/11/14 03:16:04 uebayasi Exp $	*/
 
 /*	$OpenBSD: vmparam.h,v 1.33 2006/06/04 17:21:24 miod Exp $	*/
 
@@ -27,6 +27,8 @@
 
 #ifndef _HPPA_VMPARAM_H_
 #define _HPPA_VMPARAM_H_
+
+#include <machine/mutex.h>
 
 /*
  * Machine dependent constants for HP PA
@@ -105,7 +107,7 @@
 struct pv_entry;
 
 struct vm_page_md {
-	kmutex_t	pvh_lock;	/* locks every pv on this list */
+	struct kmutex	pvh_lock;	/* locks every pv on this list */
 	struct pv_entry	*pvh_list;	/* head of list (locked by pvh_lock) */
 	u_int		pvh_attrs;	/* to preserve ref/mod */
 	int		pvh_aliases;	/* alias counting */

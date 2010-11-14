@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.78 2010/11/12 07:59:26 uebayasi Exp $	*/
+/*	$NetBSD: pmap.c,v 1.79 2010/11/14 03:16:03 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.78 2010/11/12 07:59:26 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.79 2010/11/14 03:16:03 uebayasi Exp $");
 
 #include "opt_cputype.h"
 
@@ -73,6 +73,7 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.78 2010/11/12 07:59:26 uebayasi Exp $");
 #include <sys/systm.h>
 #include <sys/malloc.h>
 #include <sys/proc.h>
+#include <sys/mutex.h>
 
 #include <uvm/uvm.h>
 
