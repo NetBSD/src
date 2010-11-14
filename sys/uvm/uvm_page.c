@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.165 2010/11/14 15:16:53 uebayasi Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.166 2010/11/14 15:18:07 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.165 2010/11/14 15:16:53 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.166 2010/11/14 15:18:07 uebayasi Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -195,7 +195,9 @@ static void uvm_physseg_free(struct vm_physseg_freelist *,
 static void uvm_physseg_init(void);
 static void uvm_physseg_insert(struct vm_physseg *,
     struct vm_physseg **, int);
+#if 0
 static void uvm_physseg_remove(struct vm_physseg **, struct vm_physseg *);
+#endif
 
 /*
  * per-object tree of pages
@@ -922,6 +924,7 @@ uvm_physseg_insert(struct vm_physseg *ps,
 #endif
 }
 
+#if 0
 static void
 uvm_physseg_remove(struct vm_physseg **segs, struct vm_physseg *seg)
 {
@@ -938,6 +941,7 @@ uvm_physseg_remove(struct vm_physseg **segs, struct vm_physseg *seg)
 	}
 	*segp = NULL;
 }
+#endif
 
 /*
  * vm_physseg_find: find vm_physseg structure that belongs to a PA
