@@ -1,4 +1,4 @@
-/*	$NetBSD: getenv.c,v 1.34 2010/11/14 20:37:02 tron Exp $	*/
+/*	$NetBSD: getenv.c,v 1.35 2010/11/14 22:04:36 tron Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)getenv.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: getenv.c,v 1.34 2010/11/14 20:37:02 tron Exp $");
+__RCSID("$NetBSD: getenv.c,v 1.35 2010/11/14 22:04:36 tron Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -71,7 +71,7 @@ getenv(const char *name)
 
 	result = NULL;
 	if (__readlockenv()) {
-		result = __findenv(name, l_name);
+		result = __findenvvar(name, l_name);
 		(void)__unlockenv();
 	}
 	
@@ -96,7 +96,7 @@ getenv_r(const char *name, char *buf, size_t len)
 	if (__readlockenv()) {
 		const char *value;
 
-		value = __findenv(name, l_name);
+		value = __findenvvar(name, l_name);
 		if (value != NULL) {
 			if (strlcpy(buf, value, len) < len) {
 				rv = 0;
