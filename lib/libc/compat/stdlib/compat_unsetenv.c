@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_unsetenv.c,v 1.2 2010/09/23 17:30:49 christos Exp $	*/
+/*	$NetBSD: compat_unsetenv.c,v 1.3 2010/11/14 18:11:42 tron Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)setenv.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: compat_unsetenv.c,v 1.2 2010/09/23 17:30:49 christos Exp $");
+__RCSID("$NetBSD: compat_unsetenv.c,v 1.3 2010/11/14 18:11:42 tron Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -54,15 +54,11 @@ __RCSID("$NetBSD: compat_unsetenv.c,v 1.2 2010/09/23 17:30:49 christos Exp $");
 __weak_alias(unsetenv,_unsetenv)
 #endif
 
-#ifdef _REENTRANT
-extern rwlock_t __environ_lock;
-#endif
+#include "env.h"
 
 __warn_references(unsetenv,
     "warning: reference to compatibility unsetenv();"
     " include <stdlib.h> for correct reference")
-
-extern char **environ;
 
 /*
  * unsetenv(name) --
@@ -71,15 +67,21 @@ extern char **environ;
 void
 unsetenv(const char *name)
 {
-	char **p;
-	int offset;
+	size_t l_name;
 
 	_DIAGASSERT(name != NULL);
 
-	rwlock_wrlock(&__environ_lock);
-	while (__findenv(name, &offset))	/* if set multiple times */
-		for (p = &environ[offset];; ++p)
-			if (!(*p = *(p + 1)))
-				break;
-	rwlock_unlock(&__environ_lock);
+	l_name = strlen(name);
+	if (__writelockenv()) {
+		ssize_t offset;
+
+		while ((offset = __getenvslot(name, l_name, false)) != -1) {
+			char **p;		
+			for (p = &environ[offset]; ; ++p) {
+				if ((*p = *(p + 1)) == NULL)
+					break;
+			}
+		}
+		(void)__unlockenv();
+	}
 }

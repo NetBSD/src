@@ -1,4 +1,4 @@
-/*	$NetBSD: popen.c,v 1.29 2006/10/15 16:12:02 christos Exp $	*/
+/*	$NetBSD: popen.c,v 1.30 2010/11/14 18:11:42 tron Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)popen.c	8.3 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: popen.c,v 1.29 2006/10/15 16:12:02 christos Exp $");
+__RCSID("$NetBSD: popen.c,v 1.30 2010/11/14 18:11:42 tron Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -54,15 +54,13 @@ __RCSID("$NetBSD: popen.c,v 1.29 2006/10/15 16:12:02 christos Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
+#include "env.h"
 #include "reentrant.h"
 
 #ifdef __weak_alias
 __weak_alias(popen,_popen)
 __weak_alias(pclose,_pclose)
-#endif
-
-#ifdef _REENTRANT
-extern rwlock_t __environ_lock;
 #endif
 
 static struct pid {
@@ -111,13 +109,13 @@ popen(const char *command, const char *type)
 		return (NULL);
 	}
 
-	rwlock_rdlock(&pidlist_lock);
-	rwlock_rdlock(&__environ_lock);
+	(void)rwlock_rdlock(&pidlist_lock);
+	(void)__readlockenv();
 	switch (pid = vfork()) {
 	case -1:			/* Error. */
 		serrno = errno;
-		rwlock_unlock(&__environ_lock);
-		rwlock_unlock(&pidlist_lock);
+		(void)__unlockenv();
+		(void)rwlock_unlock(&pidlist_lock);
 		free(cur);
 		(void)close(pdes[0]);
 		(void)close(pdes[1]);
@@ -155,7 +153,7 @@ popen(const char *command, const char *type)
 		_exit(127);
 		/* NOTREACHED */
 	}
-	rwlock_unlock(&__environ_lock);
+	(void)__unlockenv();
 
 	/* Parent; assume fdopen can't fail. */
 	if (*xtype == 'r') {
@@ -177,7 +175,7 @@ popen(const char *command, const char *type)
 	cur->pid =  pid;
 	cur->next = pidlist;
 	pidlist = cur;
-	rwlock_unlock(&pidlist_lock);
+	(void)rwlock_unlock(&pidlist_lock);
 
 	return (iop);
 }
@@ -204,7 +202,7 @@ pclose(iop)
 		if (cur->fp == iop)
 			break;
 	if (cur == NULL) {
-		rwlock_unlock(&pidlist_lock);
+		(void)rwlock_unlock(&pidlist_lock);
 		return (-1);
 	}
 
@@ -216,7 +214,7 @@ pclose(iop)
 	else
 		last->next = cur->next;
 
-	rwlock_unlock(&pidlist_lock);
+	(void)rwlock_unlock(&pidlist_lock);
 
 	do {
 		pid = waitpid(cur->pid, &pstat, 0);
