@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.58 2010/07/06 20:50:34 cegger Exp $	*/
+/*	$NetBSD: pmap.h,v 1.59 2010/11/14 13:33:22 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -204,6 +204,21 @@ paddr_t mips_pmap_unmap_poolpage(vaddr_t);
 #if defined(_MIPS_PADDR_T_64BIT) || defined(_LP64)
 #define PGC_NOCACHE	0x4000000000000000ULL
 #endif
+
+#define	__HAVE_VM_PAGE_MD
+
+/*
+ * pmap-specific data stored in the vm_page structure.
+ */
+struct vm_page_md {
+	struct pv_entry *pvh_list;	/* pv_entry list */
+	u_int pvh_attrs;		/* page attributes */
+};
+
+#define VM_MDPAGE_INIT(pg)						\
+do {									\
+	(pg)->mdpage.pvh_list = NULL;					\
+} while (/* CONSTCOND */ 0)
 
 #endif	/* _KERNEL */
 #endif	/* _MIPS_PMAP_H_ */

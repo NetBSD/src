@@ -1,4 +1,4 @@
-/* $NetBSD: vmparam.h,v 1.34 2010/11/06 15:42:43 uebayasi Exp $ */
+/* $NetBSD: vmparam.h,v 1.35 2010/11/14 13:33:20 uebayasi Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -150,21 +150,5 @@
 
 #define	VM_NFREELIST		1
 #define	VM_FREELIST_DEFAULT	0
-
-/*
- * pmap-specific data store in the vm_page structure.
- */
-#define	__HAVE_VM_PAGE_MD
-struct vm_page_md {
-	struct pv_entry *pvh_list;		/* pv_entry list */
-	int pvh_attrs;				/* page attributes */
-	unsigned pvh_refcnt;
-};
-
-#define	VM_MDPAGE_INIT(pg)						\
-do {									\
-	(pg)->mdpage.pvh_list = NULL;					\
-	(pg)->mdpage.pvh_refcnt = 0;					\
-} while (/*CONSTCOND*/0)
 
 #endif	/* ! _ALPHA_VMPARAM_H_ */

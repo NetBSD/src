@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.18 2009/11/07 07:27:45 cegger Exp $	*/
+/*	$NetBSD: pmap.h,v 1.19 2010/11/14 13:33:22 uebayasi Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -252,6 +252,20 @@ int pmap_setup_segment0_map(int use_large_pages, ...);
 
 void pmap_zero_page(paddr_t);
 void pmap_copy_page(paddr_t, paddr_t);
+
+LIST_HEAD(pvo_head, pvo_entry);
+
+#define	__HAVE_VM_PAGE_MD
+
+struct vm_page_md {
+	struct pvo_head mdpg_pvoh;
+	unsigned int mdpg_attrs; 
+};
+
+#define	VM_MDPAGE_INIT(pg) do {			\
+	LIST_INIT(&(pg)->mdpage.mdpg_pvoh);	\
+	(pg)->mdpage.mdpg_attrs = 0;		\
+} while (/*CONSTCOND*/0)
 
 __END_DECLS
 #endif	/* _KERNEL */

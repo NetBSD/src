@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.71 2010/11/06 15:42:45 uebayasi Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.72 2010/11/14 13:33:21 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -132,16 +132,5 @@
 #define	VM_FREELIST_FIRST16	1
 #endif /* XEN */
 #define	VM_FREELIST_DEFAULT	0
-
-#include <x86/pmap_pv.h>
-
-#define	__HAVE_VM_PAGE_MD
-#define	VM_MDPAGE_INIT(pg) \
-	memset(&(pg)->mdpage, 0, sizeof((pg)->mdpage)); \
-	PMAP_PAGE_INIT(&(pg)->mdpage.mp_pp)
-
-struct vm_page_md {
-	struct pmap_page mp_pp;
-};
 
 #endif /* _I386_VMPARAM_H_ */
