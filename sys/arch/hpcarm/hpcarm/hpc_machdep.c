@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc_machdep.c,v 1.98 2010/04/29 01:54:26 nonaka Exp $	*/
+/*	$NetBSD: hpc_machdep.c,v 1.99 2010/11/14 03:17:50 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -40,11 +40,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpc_machdep.c,v 1.98 2010/04/29 01:54:26 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpc_machdep.c,v 1.99 2010/11/14 03:17:50 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/reboot.h>
+#include <sys/pmf.h>
 
 #include <uvm/uvm.h>
 
