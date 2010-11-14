@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex.h,v 1.9 2008/04/28 20:23:23 martin Exp $	*/
+/*	$NetBSD: mutex.h,v 1.10 2010/11/14 03:16:04 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
@@ -42,6 +42,7 @@
 
 #ifndef __ASSEMBLER__
 
+#include <machine/intr.h>
 #include <machine/lock.h>
 
 struct kmutex {
@@ -97,7 +98,7 @@ MUTEX_OWNED(uintptr_t owner)
 }
 
 static inline int
-MUTEX_SET_WAITERS(kmutex_t *mtx, uintptr_t owner)
+MUTEX_SET_WAITERS(struct kmutex *mtx, uintptr_t owner)
 {
 	mb_write();
 	mtx->mtx_waiters = 1;
@@ -106,13 +107,13 @@ MUTEX_SET_WAITERS(kmutex_t *mtx, uintptr_t owner)
 }
 
 static inline int
-MUTEX_HAS_WAITERS(volatile kmutex_t *mtx)
+MUTEX_HAS_WAITERS(volatile struct kmutex *mtx)
 {
 	return mtx->mtx_waiters != 0;
 }
 
 static inline void
-MUTEX_INITIALIZE_SPIN(kmutex_t *mtx, bool dodebug, int ipl)
+MUTEX_INITIALIZE_SPIN(struct kmutex *mtx, bool dodebug, int ipl)
 {
 	mtx->mtx_ipl = makeiplcookie(ipl);
 	mtx->mtx_dodebug = dodebug;
@@ -121,7 +122,7 @@ MUTEX_INITIALIZE_SPIN(kmutex_t *mtx, bool dodebug, int ipl)
 }
 
 static inline void
-MUTEX_INITIALIZE_ADAPTIVE(kmutex_t *mtx, bool dodebug)
+MUTEX_INITIALIZE_ADAPTIVE(struct kmutex *mtx, bool dodebug)
 {
 	mtx->mtx_dodebug = dodebug;
 	mtx->mtx_owner = MUTEX_ADAPTIVE_UNOWNED;
@@ -129,32 +130,32 @@ MUTEX_INITIALIZE_ADAPTIVE(kmutex_t *mtx, bool dodebug)
 }
 
 static inline void
-MUTEX_DESTROY(kmutex_t *mtx)
+MUTEX_DESTROY(struct kmutex *mtx)
 {
 	mtx->mtx_owner = 0xffffffff;
 }
 
 static inline bool
-MUTEX_DEBUG_P(kmutex_t *mtx)
+MUTEX_DEBUG_P(struct kmutex *mtx)
 {
 	return mtx->mtx_dodebug != 0;
 }
 
 static inline int
-MUTEX_SPIN_P(volatile kmutex_t *mtx)
+MUTEX_SPIN_P(volatile struct kmutex *mtx)
 {
 	return mtx->mtx_owner == MUTEX_SPIN_FLAG;
 }
 
 static inline int
-MUTEX_ADAPTIVE_P(volatile kmutex_t *mtx)
+MUTEX_ADAPTIVE_P(volatile struct kmutex *mtx)
 {
 	return mtx->mtx_owner != MUTEX_SPIN_FLAG;
 }
 
 /* Acquire an adaptive mutex */
 static inline int
-MUTEX_ACQUIRE(kmutex_t *mtx, uintptr_t curthread)
+MUTEX_ACQUIRE(struct kmutex *mtx, uintptr_t curthread)
 {
 	if (!__cpu_simple_lock_try(&mtx->mtx_lock))
 		return 0;
@@ -164,7 +165,7 @@ MUTEX_ACQUIRE(kmutex_t *mtx, uintptr_t curthread)
 
 /* Release an adaptive mutex */
 static inline void
-MUTEX_RELEASE(kmutex_t *mtx)
+MUTEX_RELEASE(struct kmutex *mtx)
 {
 	mtx->mtx_owner = MUTEX_ADAPTIVE_UNOWNED;
 	__cpu_simple_unlock(&mtx->mtx_lock);
@@ -172,7 +173,7 @@ MUTEX_RELEASE(kmutex_t *mtx)
 }
 
 static inline void
-MUTEX_CLEAR_WAITERS(kmutex_t *mtx)
+MUTEX_CLEAR_WAITERS(struct kmutex *mtx)
 {
 	mtx->mtx_waiters = 0;
 }
