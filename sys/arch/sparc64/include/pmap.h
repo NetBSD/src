@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.52 2010/03/06 08:08:29 mrg Exp $	*/
+/*	$NetBSD: pmap.h,v 1.53 2010/11/14 13:33:23 uebayasi Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -209,6 +209,30 @@ void		pmap_zero_page_phys(paddr_t);
 /* Installed physical memory, as discovered during bootstrap. */
 extern int phys_installed_size;
 extern struct mem_region *phys_installed;
+
+#define	__HAVE_VM_PAGE_MD
+
+/*
+ * For each struct vm_page, there is a list of all currently valid virtual
+ * mappings of that page.  An entry is a pv_entry_t.
+ */
+struct pmap;
+typedef struct pv_entry {
+	struct pv_entry	*pv_next;	/* next pv_entry */
+	struct pmap	*pv_pmap;	/* pmap where mapping lies */
+	vaddr_t		pv_va;		/* virtual address for mapping */
+} *pv_entry_t;
+/* PV flags encoded in the low bits of the VA of the first pv_entry */
+
+struct vm_page_md {
+	struct pv_entry mdpg_pvh;
+};
+#define	VM_MDPAGE_INIT(pg)						\
+do {									\
+	(pg)->mdpage.mdpg_pvh.pv_next = NULL;				\
+	(pg)->mdpage.mdpg_pvh.pv_pmap = NULL;				\
+	(pg)->mdpage.mdpg_pvh.pv_va = 0;				\
+} while (/*CONSTCOND*/0)
 
 #endif	/* _KERNEL */
 

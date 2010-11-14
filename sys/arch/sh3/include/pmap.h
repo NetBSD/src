@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.34 2009/10/21 21:12:02 rmind Exp $	*/
+/*	$NetBSD: pmap.h,v 1.35 2010/11/14 13:33:22 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -83,4 +83,22 @@ void pmap_prefer(vaddr_t, vaddr_t *);
 pt_entry_t *__pmap_pte_lookup(pmap_t, vaddr_t);
 pt_entry_t *__pmap_kpte_lookup(vaddr_t);
 bool __pmap_pte_load(pmap_t, vaddr_t, int);
+
+/* pmap-specific data store in the vm_page structure. */
+#define	__HAVE_VM_PAGE_MD
+#define	PVH_REFERENCED		1
+#define	PVH_MODIFIED		2
+
+struct pv_entry;
+struct vm_page_md {
+	SLIST_HEAD(, pv_entry) pvh_head;
+	int pvh_flags;
+};
+
+#define	VM_MDPAGE_INIT(pg)						\
+do {									\
+	struct vm_page_md *pvh = &(pg)->mdpage;				\
+	SLIST_INIT(&pvh->pvh_head);					\
+	pvh->pvh_flags = 0;						\
+} while (/*CONSTCOND*/0)
 #endif /* !_SH3_PMAP_H_ */
