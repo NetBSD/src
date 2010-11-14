@@ -1,4 +1,4 @@
-.\"	$NetBSD: route.4,v 1.15 2003/08/07 10:31:03 agc Exp $
+.\"	$NetBSD: route.4,v 1.16 2010/11/14 00:38:56 roy Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)route.4	8.6 (Berkeley) 4/19/94
 .\"
-.Dd April 19, 1994
+.Dd November 13, 2010
 .Dt ROUTE 4
 .Os
 .Sh NAME
@@ -192,9 +192,11 @@ The messages are:
 #define	RTM_RESOLVE	0xb    /* request to resolve dst to LL addr */
 #define	RTM_NEWADDR	0xc    /* address being added to iface */
 #define	RTM_DELADDR	0xd    /* address being removed from iface */
-#define	RTM_OIFINFO	0xe    /* Old (pre-1.5) RTM_IFINFO message */
-#define	RTM_IFINFO	0xf    /* iface/link going up/down etc. */
+#define	RTM_OOIFINFO	0xe    /* Old (pre-1.5) RTM_IFINFO message */
+#define	RTM_OIFINFO	0xf    /* Old (pre-6.0) RTM_IFINFO message */
 #define	RTM_IFANNOUNCE	0x10   /* iface arrival/departure */
+#define	RTM_IFINFO	0x14   /* iface/link going up/down etc. */
+#define	RTM_CHGADDR	0x15   /* address has changed on iface */
 .Ed
 .Pp
 A message header consists of one of the following:
@@ -249,7 +251,8 @@ The
 message uses a
 .Ar if_msghdr
 header, the
-.Dv RTM_NEWADDR
+.Dv RTM_NEWADDR ,
+.Dv RTM_CHGADDR
 and
 .Dv RTM_DELADDR
 messages use a
