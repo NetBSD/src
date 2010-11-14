@@ -1,4 +1,4 @@
-/*	$NetBSD: agten.c,v 1.25 2010/11/13 13:52:10 uebayasi Exp $ */
+/*	$NetBSD: agten.c,v 1.26 2010/11/14 03:49:53 uebayasi Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agten.c,v 1.25 2010/11/13 13:52:10 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agten.c,v 1.26 2010/11/14 03:49:53 uebayasi Exp $");
 
 /*
  * a driver for the Fujitsu AG-10e SBus framebuffer
@@ -51,6 +51,8 @@ __KERNEL_RCSID(0, "$NetBSD: agten.c,v 1.25 2010/11/13 13:52:10 uebayasi Exp $");
 #include <sys/kernel.h>
 #include <sys/systm.h>
 #include <sys/conf.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <dev/sun/fbio.h>
 #include <dev/sun/fbvar.h>
