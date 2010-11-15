@@ -1,4 +1,4 @@
-/*	$NetBSD: r128fb.c,v 1.15 2010/11/13 13:52:08 uebayasi Exp $	*/
+/*	$NetBSD: r128fb.c,v 1.16 2010/11/15 23:19:33 macallan Exp $	*/
 
 /*
  * Copyright (c) 2007 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: r128fb.c,v 1.15 2010/11/13 13:52:08 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: r128fb.c,v 1.16 2010/11/15 23:19:33 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -306,8 +306,9 @@ r128fb_attach(device_t parent, device_t self, void *aux)
 
 	/* no suspend/resume support yet */
 	pmf_device_register(sc->sc_dev, NULL, NULL);
+
 	reg = bus_space_read_4(sc->sc_memt, sc->sc_regh, R128_LVDS_GEN_CNTL);
-	DPRINTF("reg: %08x\n", reg);
+	DPRINTF("R128_LVDS_GEN_CNTL: %08x\n", reg);
 	if (reg & R128_LVDS_ON) {
 		sc->sc_have_backlight = 1;
 		sc->sc_bl_on = 1;
@@ -381,6 +382,7 @@ r128fb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 				if (new_mode != sc->sc_mode) {
 					sc->sc_mode = new_mode;
 					if(new_mode == WSDISPLAYIO_MODE_EMUL) {
+						r128fb_init(sc);
 						r128fb_restore_palette(sc);
 						vcons_redraw_screen(ms);
 					}
@@ -957,7 +959,8 @@ r128fb_set_backlight(struct r128fb_softc *sc, int level)
 	level = 255 - level;
 	reg = bus_space_read_4(sc->sc_memt, sc->sc_regh, R128_LVDS_GEN_CNTL);
 	reg &= ~R128_LEVEL_MASK;
-	reg |= level << R128_LEVEL_SHIFT;
+	reg |= (level << R128_LEVEL_SHIFT) | 
+	       (level != 255 ? R128_LVDS_BLON : 0);
 	bus_space_write_4(sc->sc_memt, sc->sc_regh, R128_LVDS_GEN_CNTL, reg);
 	DPRINTF("backlight level: %d reg %08x\n", level, reg);
 }
@@ -973,6 +976,10 @@ r128fb_switch_backlight(struct r128fb_softc *sc, int on)
 	sc->sc_bl_on = on;
 	reg = bus_space_read_4(sc->sc_memt, sc->sc_regh, R128_LVDS_GEN_CNTL);
 	reg &= ~R128_LEVEL_MASK;
+	if (on) {
+		reg |= R128_LVDS_BLON;
+	} else
+		reg &= ~R128_LVDS_BLON;
 	level = on ? 255 - sc->sc_bl_level : 255;
 	reg |= level << R128_LEVEL_SHIFT;
 	bus_space_write_4(sc->sc_memt, sc->sc_regh, R128_LVDS_GEN_CNTL, reg);
