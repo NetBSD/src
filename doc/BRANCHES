@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.298 2010/11/06 09:21:09 uebayasi Exp $
+#	$NetBSD: BRANCHES,v 1.299 2010/11/15 08:35:52 uebayasi Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -1205,13 +1205,28 @@ Description:	Support eXecute-In-Place (XIP)
 Status:		Active
 Start Date:	8 February 2010
 End Date:	
-Base Tag:	uebayasi-xip-base4 (2010-11-06 UTC)
+Base Tag:	uebayasi-xip-base5 (2010-11-09 UTC)
 Maintainer:	Masao Uebayashi <uebayasi@NetBSD.org>
-Scope:		src/include src/sbin/mount src/sbin/mount_ffs
-		src/share/man/man4 src/share/man/man9 src/sys
+Scope:		src/external/gpl3/binutils/usr.sbin/mdsetimage/mdsetimage.8
+		src/include
+		src/sbin/mount
+		src/sbin/mount_ffs
+		src/share/man/man4
 		src/share/man/man5/statvfs.5
-		src/external/gpl3/binutils/usr.sbin/mdsetimage
-		src/usr.sbin/mdsetimage
+		src/share/man/man9
+		src/sys/arch
+		src/sys/common/pmap
+		src/sys/conf
+		src/sys/dev/flash.c
+		src/sys/dev/flashvar.h
+		src/sys/dev/xmd.c
+		src/sys/kern/vfs_syscalls.c
+		src/sys/miscfs/genfs/genfs_io.c
+		src/sys/miscfs/specfs/specdev.h
+		src/sys/sys
+		src/sys/ufs/ffs/ffs_vfsops.c
+		src/sys/uvm
+		src/usr.sbin/mdsetimage/mdsetimage.8
 Notes:		Goals:
 		- Clean up oddities in fault handler
 		- Add a notion of device page
