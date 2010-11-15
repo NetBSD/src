@@ -69,10 +69,10 @@ typedef struct {
 /** pgp_errcode_name_map_t */
 typedef pgp_map_t		pgp_errcode_name_map_t;
 
-typedef struct _ops_crypt_t	pgp_crypt_t;
+typedef struct pgp_crypt_t	pgp_crypt_t;
 
 /** pgp_hash_t */
-typedef struct _ops_hash_t	pgp_hash_t;
+typedef struct pgp_hash_t	pgp_hash_t;
 
 /** Revocation Reason type */
 typedef uint8_t		pgp_ss_rr_code_t;

@@ -62,8 +62,8 @@
 
 #define PGP_MIN_HASH_SIZE	16
 
-/** _ops_hash_t */
-struct _ops_hash_t {
+/** pgp_hash_t */
+struct pgp_hash_t {
 	pgp_hash_alg_t	 alg;		/* algorithm */
 	size_t			 size;		/* size */
 	const char		*name;		/* what it's known as */
@@ -73,8 +73,8 @@ struct _ops_hash_t {
 	void		 	*data;		/* blob for data */
 };
 
-/** _ops_crypt_t */
-struct _ops_crypt_t {
+/** pgp_crypt_t */
+struct pgp_crypt_t {
 	pgp_symm_alg_t	alg;
 	size_t			blocksize;
 	size_t			keysize;

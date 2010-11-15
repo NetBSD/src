@@ -58,7 +58,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: packet-parse.c,v 1.49 2010/11/15 08:50:32 agc Exp $");
+__RCSID("$NetBSD: packet-parse.c,v 1.50 2010/11/15 08:56:30 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -888,7 +888,7 @@ headers_free(pgp_headers_t *headers)
 \brief Free allocated memory
 */
 static void 
-cleartext_trailer_free(struct _ops_hash_t **trailer)
+cleartext_trailer_free(struct pgp_hash_t **trailer)
 {
 	free(*trailer);
 	*trailer = NULL;
