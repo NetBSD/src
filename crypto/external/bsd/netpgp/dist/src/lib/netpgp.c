@@ -34,7 +34,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: netpgp.c,v 1.83 2010/11/15 08:03:39 agc Exp $");
+__RCSID("$NetBSD: netpgp.c,v 1.84 2010/11/15 08:27:40 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -462,23 +462,32 @@ appendkey(pgp_io_t *io, pgp_key_t *key, char *ringfile)
 static unsigned
 isarmoured(pgp_io_t *io, const char *f, const void *memory, const char *text)
 {
+	regmatch_t	 matches[10];
 	unsigned	 armoured;
+	regex_t		 r;
 	FILE		*fp;
 	char	 	 buf[BUFSIZ];
 
 	armoured = 0;
+	(void) regcomp(&r, text, REG_EXTENDED);
 	if (f) {
 		if ((fp = fopen(f, "r")) == NULL) {
 			(void) fprintf(io->errs, "isarmoured: can't open '%s'\n", f);
+			regfree(&r);
 			return 0;
 		}
 		if (fgets(buf, (int)sizeof(buf), fp) != NULL) {
-			armoured = (strncmp(buf, text, strlen(text)) == 0);
+			if (regexec(&r, buf, 10, matches, 0) == 0) {
+				armoured = 1;
+			}
 		}
 		(void) fclose(fp);
 	} else {
-		armoured = (strncmp(memory, text, strlen(text)) == 0);
+		if (regexec(&r, memory, 10, matches, 0) == 0) {
+			armoured = 1;
+		}
 	}
+	regfree(&r);
 	return armoured;
 }
 
@@ -1341,7 +1350,7 @@ netpgp_sign_file(netpgp_t *netpgp,
 	return ret;
 }
 
-#define ARMOR_SIG_HEAD	"-----BEGIN PGP SIGNATURE-----\r\n"
+#define ARMOR_SIG_HEAD	"-----BEGIN PGP (SIGNATURE|SIGNED MESSAGE)-----"
 
 /* verify a file */
 int
