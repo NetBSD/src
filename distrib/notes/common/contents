@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.162 2010/11/13 05:20:21 kiyohara Exp $
+.\"	$NetBSD: contents,v 1.163 2010/11/15 21:39:53 wiz Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -310,7 +310,7 @@ this image.
 .		It Pa floppy/kernel1.fs
 .		It Pa floppy/kernel2.fs
 \*M boot and installation floppy images.  The first is the bootloader on
-old BeFS.  The other images is kernel and embedded ramdisk.
+old BeFS.  The other images contain the kernel and an embedded ramdisk.
 .\}
 .
 .if \n[cats] \{\
