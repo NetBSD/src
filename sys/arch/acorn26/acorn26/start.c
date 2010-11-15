@@ -1,4 +1,4 @@
-/* $NetBSD: start.c,v 1.17 2009/11/27 03:23:03 rmind Exp $ */
+/* $NetBSD: start.c,v 1.18 2010/11/15 06:07:41 uebayasi Exp $ */
 /*-
  * Copyright (c) 1998, 2000 Ben Harris
  * All rights reserved.
@@ -31,13 +31,14 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: start.c,v 1.17 2009/11/27 03:23:03 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: start.c,v 1.18 2010/11/15 06:07:41 uebayasi Exp $");
 
 #include "opt_modular.h"
 
 #include <sys/msgbuf.h>
 #include <sys/syslog.h>
 #include <sys/systm.h>
+#include <sys/lwp.h>
 
 #include <dev/i2c/i2cvar.h>
 #include <acorn26/ioc/iociicvar.h>
