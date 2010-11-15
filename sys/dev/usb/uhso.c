@@ -1,4 +1,4 @@
-/*	$NetBSD: uhso.c,v 1.2 2010/04/05 07:21:49 joerg Exp $	*/
+/*	$NetBSD: uhso.c,v 1.3 2010/11/15 06:01:29 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2009 Iain Hibbert
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhso.c,v 1.2 2010/04/05 07:21:49 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhso.c,v 1.3 2010/11/15 06:01:29 uebayasi Exp $");
 
 #include "opt_inet.h"
 
@@ -55,6 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: uhso.c,v 1.2 2010/04/05 07:21:49 joerg Exp $");
 #include <sys/systm.h>
 #include <sys/tty.h>
 #include <sys/vnode.h>
+#include <sys/lwp.h>
 
 #include <net/bpf.h>
 #include <net/if.h>
