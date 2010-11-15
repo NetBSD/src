@@ -1,4 +1,4 @@
-/*	$NetBSD: filecomplete.c,v 1.19 2010/06/01 18:20:26 christos Exp $	*/
+/*	$NetBSD: filecomplete.c,v 1.20 2010/11/15 21:24:31 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: filecomplete.c,v 1.19 2010/06/01 18:20:26 christos Exp $");
+__RCSID("$NetBSD: filecomplete.c,v 1.20 2010/11/15 21:24:31 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -368,7 +368,7 @@ fn_display_match_list (EditLine *el, char **matches, size_t len, size_t max)
 	for(; count > 0; count--) {
 		int more = limit > 0 && matches[0];
 		for(i = 0; more; i++, idx++) {
-			more = ++i < limit && matches[idx + 1];
+			more = i < limit && matches[idx + 1];
 			(void)fprintf(el->el_outfile, "%-*s%s", (int)max,
 			    matches[idx], more ? " " : "");
 		}
