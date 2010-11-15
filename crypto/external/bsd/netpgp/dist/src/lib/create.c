@@ -57,7 +57,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: create.c,v 1.37 2010/11/07 08:39:59 agc Exp $");
+__RCSID("$NetBSD: create.c,v 1.38 2010/11/15 08:03:39 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -285,7 +285,7 @@ write_seckey_body(const pgp_seckey_t *key,
 	pgp_hash_t    hash;
 	unsigned	done = 0;
 	unsigned	i = 0;
-	uint8_t		hashed[PGP_SHA1_HASH_SIZE];
+	uint8_t		*hashed;
 	uint8_t		sesskey[CAST_KEY_LENGTH];
 
 	if (!write_pubkey_body(&key->pubkey, output)) {
@@ -360,15 +360,21 @@ write_seckey_body(const pgp_seckey_t *key,
 		/* RFC4880: section 3.7.1.1 and 3.7.1.2 */
 
 		for (done = 0, i = 0; done < CAST_KEY_LENGTH; i++) {
+			unsigned 	hashsize;
 			unsigned 	j;
+			unsigned	needed;
+			unsigned	size;
 			uint8_t		zero = 0;
-			int             needed;
-			int             size;
 
+			/* Hard-coded SHA1 for session key */
+			pgp_hash_any(&hash, PGP_HASH_SHA1);
+			hashsize = pgp_hash_size(key->hash_alg);
 			needed = CAST_KEY_LENGTH - done;
-			size = MIN(needed, PGP_SHA1_HASH_SIZE);
-
-			pgp_hash_any(&hash, key->hash_alg);
+			size = MIN(needed, hashsize);
+			if ((hashed = calloc(1, hashsize)) == NULL) {
+				(void) fprintf(stderr, "write_seckey_body: bad alloc\n");
+				return 0;
+			}
 			if (!hash.init(&hash)) {
 				(void) fprintf(stderr, "write_seckey_body: bad alloc\n");
 				return 0;
@@ -396,7 +402,7 @@ write_seckey_body(const pgp_seckey_t *key,
 			 * if more in hash than is needed by session key, use
 			 * the leftmost octets
 			 */
-			(void) memcpy(&sesskey[i * PGP_SHA1_HASH_SIZE],
+			(void) memcpy(&sesskey[i * hashsize],
 					hashed, (unsigned)size);
 			done += (unsigned)size;
 			if (done > CAST_KEY_LENGTH) {
@@ -435,13 +441,9 @@ write_seckey_body(const pgp_seckey_t *key,
 	pgp_push_enc_crypt(output, &crypted);
 
 	switch (key->pubkey.alg) {
-		/* case PGP_PKA_DSA: */
-		/* return pgp_write_mpi(output, key->key.dsa.x); */
-
 	case PGP_PKA_RSA:
 	case PGP_PKA_RSA_ENCRYPT_ONLY:
 	case PGP_PKA_RSA_SIGN_ONLY:
-
 		if (!pgp_write_mpi(output, key->key.rsa.d) ||
 		    !pgp_write_mpi(output, key->key.rsa.p) ||
 		    !pgp_write_mpi(output, key->key.rsa.q) ||
