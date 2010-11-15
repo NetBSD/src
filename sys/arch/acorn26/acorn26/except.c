@@ -1,4 +1,4 @@
-/* $NetBSD: except.c,v 1.25 2010/07/07 01:17:26 chs Exp $ */
+/* $NetBSD: except.c,v 1.26 2010/11/15 06:05:27 uebayasi Exp $ */
 /*-
  * Copyright (c) 1998, 1999, 2000 Ben Harris
  * All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: except.c,v 1.25 2010/07/07 01:17:26 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: except.c,v 1.26 2010/11/15 06:05:27 uebayasi Exp $");
 
 #include "opt_ddb.h"
 
@@ -41,6 +41,8 @@ __KERNEL_RCSID(0, "$NetBSD: except.c,v 1.25 2010/07/07 01:17:26 chs Exp $");
 #include <sys/syslog.h>
 #include <sys/systm.h>
 #include <sys/cpu.h>
+#include <sys/lwp.h>
+#include <sys/proc.h>
 
 #include <uvm/uvm_extern.h>
 
