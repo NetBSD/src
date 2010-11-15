@@ -1,4 +1,4 @@
-/*$NetBSD: dm_target_stripe.c,v 1.11 2010/10/23 21:18:54 haad Exp $*/
+/*$NetBSD: dm_target_stripe.c,v 1.12 2010/11/15 05:54:38 uebayasi Exp $*/
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -38,6 +38,7 @@
 #include <sys/buf.h>
 #include <sys/kmem.h>
 #include <sys/vnode.h>
+#include <sys/lwp.h>
 
 #include "dm.h"
 
