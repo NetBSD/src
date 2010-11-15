@@ -1,4 +1,4 @@
-/*	$NetBSD: t_basic.c,v 1.8 2010/08/27 05:34:46 pooka Exp $	*/
+/*	$NetBSD: t_basic.c,v 1.9 2010/11/15 20:39:00 pooka Exp $	*/
 
 #include <sys/types.h>
 #include <sys/mount.h>
@@ -391,6 +391,49 @@ ATF_TC_BODY(unlink_accessible, tc)
 	FSTEST_DESTRUCTOR(tc, puffs, args);
 }
 
+ATF_TC(signals);
+ATF_TC_HEAD(signals, tc)
+{
+
+	atf_tc_set_md_var(tc, "descr", "Checks that sending a signal can "
+	    "cause an interrupt to puffs wait");
+}
+
+extern struct proc *rumpns_initproc;
+extern void rumpns_psignal(struct proc *, int);
+extern void rumpns_sigclearall(struct proc *, void *, void *);
+ATF_TC_BODY(signals, tc)
+{
+	struct stat sb;
+	void *args;
+
+	rump_boot_setsigmodel(RUMP_SIGMODEL_RECORD);
+
+	FSTEST_CONSTRUCTOR(tc, puffs, args);
+	FSTEST_ENTER();
+	RL(rump_sys_stat(".", &sb));
+
+	/* send SIGUSR1, should not affect puffs ops */
+	rump_schedule();
+	rumpns_psignal(rumpns_initproc, SIGUSR1);
+	rump_unschedule();
+	RL(rump_sys_stat(".", &sb));
+
+	/* send SIGTERM, should get EINTR */
+	rump_schedule();
+	rumpns_psignal(rumpns_initproc, SIGTERM);
+	rump_unschedule();
+	ATF_REQUIRE_ERRNO(EINTR, rump_sys_stat(".", &sb) == -1);
+
+	/* clear sigmask so that we can unmount */
+	rump_schedule();
+	rumpns_sigclearall(rumpns_initproc, NULL, NULL);
+	rump_unschedule();
+
+	FSTEST_EXIT();
+	FSTEST_DESTRUCTOR(tc, puffs, args);
+}
+
 ATF_TP_ADD_TCS(tp)
 {
 
@@ -405,6 +448,8 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, inactive_reclaim);
 	ATF_TP_ADD_TC(tp, reclaim_hardlink);
 	ATF_TP_ADD_TC(tp, unlink_accessible);
+
+	ATF_TP_ADD_TC(tp, signals);
 
 	return atf_no_error();
 }
