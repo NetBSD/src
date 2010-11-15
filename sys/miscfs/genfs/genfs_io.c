@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.36.2.30 2010/11/06 08:08:44 uebayasi Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.36.2.31 2010/11/15 17:32:01 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.36.2.30 2010/11/06 08:08:44 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.36.2.31 2010/11/15 17:32:01 uebayasi Exp $");
 
 #include "opt_xip.h"
 
@@ -873,18 +873,8 @@ genfs_do_getpages_xip1(
 		 *   allocated and linearly ordered by physical address.
 		 */
 		if (blkno < 0) {
-			zero_page = uvm_pagelookup(uobj, 0);
-
-			if (zero_page == NULL) {
-				mutex_enter(&uobj->vmobjlock);
-				zero_page = uvm_pagealloc(uobj, 0, NULL,
-				    UVM_PGA_ZERO);
-				mutex_exit(&uobj->vmobjlock);
-				KASSERT(zero_page != NULL);
-				mutex_enter(&uvm_pageqlock);
-				uvm_pagewire(zero_page);
-				mutex_exit(&uvm_pageqlock);
-			}
+			zero_page = uvm_page_zeropage_alloc();
+			KASSERT(zero_page != NULL);
 			pps[i] = zero_page;
 		} else {
 			struct vm_physseg *seg;
@@ -918,10 +908,10 @@ genfs_do_getpages_xip1(
 	for (i = 0; i < npages; i++) {
 		struct vm_page *pg = pps[i];
 
+		KASSERT((pg->flags & PG_RDONLY) != 0);
 		if (pg == zero_page) {
 		} else {
 			KASSERT((pg->flags & PG_BUSY) == 0);
-			KASSERT((pg->flags & PG_RDONLY) != 0);
 			KASSERT((pg->flags & PG_CLEAN) != 0);
 			KASSERT((pg->flags & PG_DEVICE) != 0);
 			pg->flags |= PG_BUSY;
@@ -1544,8 +1534,8 @@ genfs_do_putpages_xip(struct vnode *vp, off_t startoff, off_t endoff,
 			pg = pgs[i];
 			if (pg == NULL || pg == PGO_DONTCARE)
 				continue;
-			if (pg == zero_page) {
-				put_zero_page = true;
+			if (pg == uvm_page_zeropage) {
+				/* Do nothing for holes. */
 			} else {
 				/*
 				 * Freeing normal XIP pages; nothing to do.
@@ -1560,17 +1550,6 @@ genfs_do_putpages_xip(struct vnode *vp, off_t startoff, off_t endoff,
 			}
 		}
 		off += npages << PAGE_SHIFT;
-	}
-
-	if (put_zero_page) {
-		/*
-		 * Freeing an XIP zero page.
-		 */
-		pmap_page_protect(zero_page, VM_PROT_NONE);
-		mutex_enter(&uvm_pageqlock);
-		uvm_pageunwire(zero_page);
-		mutex_exit(&uvm_pageqlock);
-		uvm_pagefree(zero_page);
 	}
 
 	KASSERT(uobj->uo_npages == 0);
