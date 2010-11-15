@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1251 2010/11/15 23:07:37 skrll Exp $
+# $NetBSD: mi,v 1.1252 2010/11/15 23:10:52 pooka Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1446,6 +1446,7 @@
 ./usr/share/man/cat4/sgimips/wdsc.0		man-sys-catman		.cat
 ./usr/share/man/cat4/sgsmix.0			man-sys-catman		.cat
 ./usr/share/man/cat4/shb.0			man-sys-catman		.cat
+./usr/share/man/cat4/shmif.0			man-sys-catman		.cat
 ./usr/share/man/cat4/shpcic.0			man-sys-catman		.cat
 ./usr/share/man/cat4/si.0			man-sys-catman		.cat
 ./usr/share/man/cat4/siisata.0			man-sys-catman		.cat
@@ -4079,6 +4080,7 @@
 ./usr/share/man/html4/sgimips/wdsc.html		man-sys-htmlman		html
 ./usr/share/man/html4/sgsmix.html		man-sys-htmlman		html
 ./usr/share/man/html4/shb.html			man-sys-htmlman		html
+./usr/share/man/html4/shmif.html		man-sys-htmlman		html
 ./usr/share/man/html4/shpcic.html		man-sys-htmlman		html
 ./usr/share/man/html4/si.html			man-sys-htmlman		html
 ./usr/share/man/html4/siisata.html		man-sys-htmlman		html
@@ -6624,6 +6626,7 @@
 ./usr/share/man/man4/sgimips/wdsc.4		man-sys-man		.man
 ./usr/share/man/man4/sgsmix.4			man-sys-man		.man
 ./usr/share/man/man4/shb.4			man-sys-man		.man
+./usr/share/man/man4/shmif.4			man-sys-man		.man
 ./usr/share/man/man4/shpcic.4			man-sys-man		.man
 ./usr/share/man/man4/si.4			man-sys-man		.man
 ./usr/share/man/man4/siisata.4			man-sys-man		.man
