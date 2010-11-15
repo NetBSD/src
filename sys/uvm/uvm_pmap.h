@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pmap.h,v 1.32.2.6 2010/10/31 03:46:20 uebayasi Exp $	*/
+/*	$NetBSD: uvm_pmap.h,v 1.32.2.7 2010/11/15 15:11:54 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -155,9 +155,6 @@ void		pmap_copy_page(paddr_t, paddr_t);
 struct pmap	*pmap_create(void);
 void		pmap_destroy(pmap_t);
 int		pmap_enter(pmap_t, vaddr_t, paddr_t, vm_prot_t, u_int);
-paddr_t		pmap_mmap(vaddr_t, off_t);
-void		*pmap_physload_device(vaddr_t, size_t, int, int);
-void		pmap_physunload_device(void *);
 bool		pmap_extract(pmap_t, vaddr_t, paddr_t *);
 #if defined(PMAP_GROWKERNEL)
 vaddr_t		pmap_growkernel(vaddr_t);
