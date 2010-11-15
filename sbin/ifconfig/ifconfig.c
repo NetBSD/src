@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.222 2010/11/05 13:52:41 pooka Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.223 2010/11/15 22:42:37 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1983, 1993\
  The Regents of the University of California.  All rights reserved.");
-__RCSID("$NetBSD: ifconfig.c,v 1.222 2010/11/05 13:52:41 pooka Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.223 2010/11/15 22:42:37 pooka Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -126,6 +126,8 @@ static int setifmetric(prop_dictionary_t, prop_dictionary_t);
 static int setifmtu(prop_dictionary_t, prop_dictionary_t);
 static int setifnetmask(prop_dictionary_t, prop_dictionary_t);
 static int setifprefixlen(prop_dictionary_t, prop_dictionary_t);
+static int setlinkstr(prop_dictionary_t, prop_dictionary_t);
+static int unsetlinkstr(prop_dictionary_t, prop_dictionary_t);
 static void status(const struct sockaddr *, prop_dictionary_t,
     prop_dictionary_t);
 static void usage(void);
@@ -164,6 +166,7 @@ extern struct pbranch command_root;
 extern struct pbranch opt_command;
 extern struct pbranch opt_family, opt_silent_family;
 extern struct pkw cloning, silent_family, family, ifcaps, ifflags, misc;
+extern struct pstr parse_linkstr;
 
 struct pinteger parse_metric = PINTEGER_INITIALIZER(&parse_metric, "metric", 10,
     setifmetric, "metric", &command_root.pb_parser);
@@ -202,6 +205,9 @@ static const struct kwinst misckw[] = {
 	, {.k_word = "prefixlen", .k_nextparser = &parse_prefixlen.pi_parser}
 	, {.k_word = "trailers", .k_neg = true,
 	   .k_exec = notrailers, .k_nextparser = &command_root.pb_parser}
+	, {.k_word = "linkstr", .k_nextparser = &parse_linkstr.ps_parser }
+	, {.k_word = "-linkstr", .k_exec = unsetlinkstr,
+	   .k_nextparser = &command_root.pb_parser }
 };
 
 /* key: clonecmd */
@@ -236,6 +242,9 @@ struct paddr broadcast = PADDR_INITIALIZER(&broadcast,
     "broadcast address (address 3)",
     setifbroadaddr, "broadcast", NULL, "dstormask", "broadcast",
     &command_root.pb_parser);
+
+struct pstr parse_linkstr = PSTR_INITIALIZER(&parse_linkstr, "linkstr",
+    setlinkstr, "linkstr", &command_root.pb_parser);
 
 static SIMPLEQ_HEAD(, afswtch) aflist = SIMPLEQ_HEAD_INITIALIZER(aflist);
 
@@ -1159,6 +1168,7 @@ status(const struct sockaddr *sdl, prop_dictionary_t env,
 	statistics_func_t *statistics_f;
 	struct ifdatareq ifdr;
 	struct ifreq ifr;
+	struct ifdrv ifdrv;
 	char fbuf[BUFSIZ];
 	int af, s;
 	const char *ifname;
@@ -1209,6 +1219,25 @@ status(const struct sockaddr *sdl, prop_dictionary_t env,
 		(*status_f->f_func)(env, oenv);
 
 	print_link_addresses(env, true);
+
+	estrlcpy(ifdrv.ifd_name, ifname, sizeof(ifdrv.ifd_name));
+	ifdrv.ifd_cmd = IFLINKSTR_QUERYLEN;
+	ifdrv.ifd_len = 0;
+	ifdrv.ifd_data = NULL;
+	/* interface supports linkstr? */
+	if (ioctl(s, SIOCGLINKSTR, &ifdrv) != -1) {
+		char *p;
+
+		p = malloc(ifdrv.ifd_len);
+		if (p == NULL)
+			err(EXIT_FAILURE, "malloc linkstr buf failed");
+		ifdrv.ifd_data = p;
+		ifdrv.ifd_cmd = 0;
+		if (ioctl(s, SIOCGLINKSTR, &ifdrv) == -1)
+			err(EXIT_FAILURE, "failed to query linkstr");
+		printf("\tlinkstr: %s\n", (char *)ifdrv.ifd_data);
+		free(p);
+	}
 
 	media_status(env, oenv);
 
@@ -1280,6 +1309,46 @@ setifprefixlen(prop_dictionary_t env, prop_dictionary_t oenv)
 		err(EXIT_FAILURE, "%s: prop_dictionary_set", __func__);
 
 	free(pfx);
+	return 0;
+}
+
+static int
+setlinkstr(prop_dictionary_t env, prop_dictionary_t oenv)
+{
+	struct ifdrv ifdrv;
+	const char *linkstr;
+	size_t linkstrlen;
+	prop_data_t data;
+
+	data = (prop_data_t)prop_dictionary_get(env, "linkstr");
+	if (data == NULL) {
+		errno = ENOENT;
+		return -1;
+	}
+	linkstrlen = prop_data_size(data)+1;
+	linkstr = prop_data_data_nocopy(data);
+
+	ifdrv.ifd_cmd = 0;
+	ifdrv.ifd_len = linkstrlen;
+	ifdrv.ifd_data = __UNCONST(linkstr);
+
+	if (direct_ioctl(env, SIOCSLINKSTR, &ifdrv) == -1)
+		err(EXIT_FAILURE, "SIOCSLINKSTR");
+
+	return 0;
+}
+
+static int
+unsetlinkstr(prop_dictionary_t env, prop_dictionary_t oenv)
+{
+	struct ifdrv ifdrv;
+
+	memset(&ifdrv, 0, sizeof(ifdrv));
+	ifdrv.ifd_cmd = IFLINKSTR_UNSET;
+
+	if (direct_ioctl(env, SIOCSLINKSTR, &ifdrv) == -1)
+		err(EXIT_FAILURE, "SIOCSLINKSTR");
+
 	return 0;
 }
 

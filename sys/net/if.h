@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.147 2010/10/20 15:02:17 pooka Exp $	*/
+/*	$NetBSD: if.h,v 1.148 2010/11/15 22:42:36 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -603,6 +603,8 @@ struct  ifdrv {
 	size_t		ifd_len;
 	void		*ifd_data;
 };
+#define IFLINKSTR_QUERYLEN	0x01
+#define IFLINKSTR_UNSET		0x02
 
 /*
  * Structure used in SIOCGIFCONF request.

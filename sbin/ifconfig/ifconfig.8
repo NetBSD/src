@@ -1,4 +1,4 @@
-.\"	$NetBSD: ifconfig.8,v 1.101 2009/09/14 10:36:49 degroote Exp $
+.\"	$NetBSD: ifconfig.8,v 1.102 2010/11/15 22:42:37 pooka Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)ifconfig.8	8.4 (Berkeley) 6/1/94
 .\"
-.Dd August 7, 2009
+.Dd November 15, 2010
 .Dt IFCONFIG 8
 .Os
 .Sh NAME
@@ -569,6 +569,13 @@ Refer to the man page for the specific driver
 for more information.
 .It Fl link[0-2]
 Disable special processing at the link level with the specified interface.
+.It Cm linkstr
+Set a link-level string parameter for the interface.
+This functionality varies from interface to interface.
+Refer to the man page for the specific driver
+for more information.
+.It Fl linkstr
+Remove an interface link-level string parameter.
 .It Cm up
 Mark an interface ``up''.
 This may be used to enable an interface after an ``ifconfig down.''
