@@ -58,7 +58,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: packet-parse.c,v 1.47 2010/11/11 01:08:26 agc Exp $");
+__RCSID("$NetBSD: packet-parse.c,v 1.48 2010/11/15 08:03:40 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -2468,6 +2468,8 @@ parse_seckey(pgp_region_t *region, pgp_stream_t *stream)
 			return 0;
 		}
 
+		/* Hardcoded SHA1 for just now */
+		pkt.u.seckey.hash_alg = PGP_HASH_SHA1;
 		hashsize = pgp_hash_size(pkt.u.seckey.hash_alg);
 		if (hashsize == 0 || hashsize > PGP_MAX_HASH_SIZE) {
 			(void) fprintf(stderr,
@@ -2573,7 +2575,8 @@ parse_seckey(pgp_region_t *region, pgp_stream_t *stream)
 		fprintf(stderr, "parse_seckey: end of crypted passphrase\n");
 	}
 	if (pkt.u.seckey.s2k_usage == PGP_S2KU_ENCRYPTED_AND_HASHED) {
-		pkt.u.seckey.checkhash = calloc(1, PGP_CHECKHASH_SIZE);
+		/* XXX - Hard-coded SHA1 here ?? Check */
+		pkt.u.seckey.checkhash = calloc(1, PGP_SHA1_HASH_SIZE);
 		if (pkt.u.seckey.checkhash == NULL) {
 			(void) fprintf(stderr, "parse_seckey: bad alloc\n");
 			return 0;

@@ -57,7 +57,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: compress.c,v 1.20 2010/11/11 00:58:04 agc Exp $");
+__RCSID("$NetBSD: compress.c,v 1.21 2010/11/15 08:03:39 agc Exp $");
 #endif
 
 #ifdef HAVE_ZLIB_H
@@ -133,18 +133,10 @@ zlib_compressed_data_reader(pgp_stream_t *stream, void *dest, size_t length,
 	    z->zstream.next_out == &z->out[z->offset]) {
 		return 0;
 	}
-
 	if (pgp_get_debug_level(__FILE__)) {
 		(void) fprintf(stderr,
 			"zlib_compressed_data_reader: length %" PRIsize "d\n",
 			length);
-	}
-
-	if (z->region->readc == z->region->length) {
-		if (z->inflate_ret != Z_STREAM_END) {
-			PGP_ERROR(cbinfo->errors, PGP_E_P_DECOMPRESSION_ERROR,
-			"Compressed data didn't end when region ended.");
-		}
 	}
 	for (cc = 0 ; cc < length ; cc += len) {
 		if (&z->out[z->offset] == z->zstream.next_out) {
@@ -221,16 +213,9 @@ bzip2_compressed_data_reader(pgp_stream_t *stream, void *dest, size_t length,
 		(void) fprintf(stderr, "Weird type %d\n", bz->type);
 		return 0;
 	}
-
 	if (bz->inflate_ret == BZ_STREAM_END &&
 	    bz->bzstream.next_out == &bz->out[bz->offset]) {
 		return 0;
-	}
-	if (bz->region->readc == bz->region->length) {
-		if (bz->inflate_ret != BZ_STREAM_END) {
-			PGP_ERROR(cbinfo->errors, PGP_E_P_DECOMPRESSION_ERROR,
-			"Compressed data didn't end when region ended.");
-		}
 	}
 	for (cc = 0 ; cc < length ; cc += len) {
 		if (&bz->out[bz->offset] == bz->bzstream.next_out) {
