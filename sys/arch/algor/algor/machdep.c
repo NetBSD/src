@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.45 2010/02/08 19:02:25 joerg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.46 2010/11/15 06:08:32 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -106,7 +106,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.45 2010/02/08 19:02:25 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.46 2010/11/15 06:08:32 uebayasi Exp $");
 
 #include "opt_algor_p4032.h"
 #include "opt_algor_p5064.h" 
@@ -129,6 +129,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.45 2010/02/08 19:02:25 joerg Exp $");
 #include <sys/termios.h>
 #include <sys/ksyms.h>
 #include <sys/device.h>
+#include <sys/lwp.h>
 
 #include <net/if.h>
 #include <net/if_ether.h>
