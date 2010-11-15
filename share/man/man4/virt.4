@@ -1,0 +1,83 @@
+.\"	$NetBSD: virt.4,v 1.1 2010/11/15 21:52:47 pooka Exp $
+.\"
+.\" Copyright (c) 2010 Antti Kantee
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+.\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+.\" IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+.\" INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+.\" NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+.\" DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+.\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+.\" INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+.\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd November 15, 2010
+.Dt VIRT 4
+.Os
+.Sh NAME
+.Nm virt
+.Nd rump virtual network interface
+.Sh SYNOPSIS
+.In rump/rump.h
+.Ft int
+.Fo rump_pub_virtif_create
+.Fa "int num"
+.Fc
+.Sh DESCRIPTION
+The
+.Nm
+interface acts as a link between a rump virtual kernel and a host
+.Xr tap 4
+interface.
+Interface number <n> always corresponds with the host tap interface tap<n>.
+All data sent by
+.Nm
+is written into
+.Pa /dev/tap<n>
+and all data read from
+.Pa /dev/tap<n>
+is passed as Ethernet input to the rump virtual kernel.
+.Pp
+A
+.Nm
+interface can be created in two ways:
+.Bl -bullet
+.It
+Programmatically by calling
+.Fn rump_pub_virtif_create .
+.It
+Dynamically at runtime with
+.Xr ifconfig 8
+or equivalent using the
+.Em create
+command.
+.El
+.Pp
+Destroying a
+.Nm
+interface is possible only through
+.Xr ifconfig 8
+.Em destroy .
+.Pp
+The host's
+.Xr tap 4
+interface can be further bridged with hardware interfaces to provide
+full internet access to a rump kernel.
+.Sh SEE ALSO
+.Xr rump 3 ,
+.Xr bridge 4 ,
+.Xr tap 4 ,
+.Xr brconfig 8 ,
+.Xr ifconfig 8
