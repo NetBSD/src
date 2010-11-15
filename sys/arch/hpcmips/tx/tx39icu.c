@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39icu.c,v 1.25 2008/04/28 20:23:21 martin Exp $ */
+/*	$NetBSD: tx39icu.c,v 1.26 2010/11/15 06:26:58 uebayasi Exp $ */
 
 /*-
  * Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tx39icu.c,v 1.25 2008/04/28 20:23:21 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tx39icu.c,v 1.26 2010/11/15 06:26:58 uebayasi Exp $");
 
 #include "opt_vr41xx.h"
 #include "opt_tx39xx.h"
@@ -44,6 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: tx39icu.c,v 1.25 2008/04/28 20:23:21 martin Exp $");
 #include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/queue.h>
+#include <sys/cpu.h>
 
 #include <uvm/uvm_extern.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: vr.c,v 1.56 2010/04/10 22:53:59 jun Exp $	*/
+/*	$NetBSD: vr.c,v 1.57 2010/11/15 06:27:41 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1999-2002
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vr.c,v 1.56 2010/04/10 22:53:59 jun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vr.c,v 1.57 2010/11/15 06:27:41 uebayasi Exp $");
 
 #include "opt_vr41xx.h"
 #include "opt_tx39xx.h"
@@ -46,6 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: vr.c,v 1.56 2010/04/10 22:53:59 jun Exp $");
 #include <sys/reboot.h>
 #include <sys/device.h>
 #include <sys/bus.h>
+#include <sys/cpu.h>
 
 #include <uvm/uvm_extern.h>
 
