@@ -1,4 +1,4 @@
-.\" $NetBSD: netpgpverify.1,v 1.4 2010/11/11 04:51:18 agc Exp $
+.\" $NetBSD: netpgpverify.1,v 1.5 2010/11/15 21:29:21 wiz Exp $
 .\"
 .\" Copyright (c) 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -105,24 +105,24 @@ Verification of a file's signature is best viewed using the following example:
 .Bd -literal
 % netpgp --sign --userid=agc@netbsd.org a
 signature  2048/RSA (Encrypt or Sign) 1b68dcfcc0596823 2004-01-12
-Key fingerprint: d415 9deb 336d e4cc cdfa 00cd 1b68 dcfc c059 6823 
-uid              Alistair Crooks \*[Lt]alistair@hockley-crooks.com\*[Gt] 
-uid              Alistair Crooks \*[Lt]agc@pkgsrc.org\*[Gt] 
-uid              Alistair Crooks \*[Lt]agc@netbsd.org\*[Gt] 
-uid              Alistair Crooks \*[Lt]agc@alistaircrooks.com\*[Gt] 
-uid              Alistair Crooks (Yahoo!) \*[Lt]agcrooks@yahoo-inc.com\*[Gt] 
+Key fingerprint: d415 9deb 336d e4cc cdfa 00cd 1b68 dcfc c059 6823
+uid              Alistair Crooks \*[Lt]alistair@hockley-crooks.com\*[Gt]
+uid              Alistair Crooks \*[Lt]agc@pkgsrc.org\*[Gt]
+uid              Alistair Crooks \*[Lt]agc@netbsd.org\*[Gt]
+uid              Alistair Crooks \*[Lt]agc@alistaircrooks.com\*[Gt]
+uid              Alistair Crooks (Yahoo!) \*[Lt]agcrooks@yahoo-inc.com\*[Gt]
 encryption 2048/RSA (Encrypt or Sign) 79deb61e488eee74 2004-01-12
 netpgp passphrase:
 % netpgpverify a.gpg
 Good signature for a.gpg made Thu Jan 29 03:06:00 2009
 using RSA (Encrypt or Sign) key 1B68DCFCC0596823
 signature  2048/RSA (Encrypt or Sign) 1b68dcfcc0596823 2004-01-12
-Key fingerprint: d415 9deb 336d e4cc cdfa 00cd 1b68 dcfc c059 6823 
-uid              Alistair Crooks \*[Lt]alistair@hockley-crooks.com\*[Gt] 
-uid              Alistair Crooks \*[Lt]agc@pkgsrc.org\*[Gt] 
-uid              Alistair Crooks \*[Lt]agc@netbsd.org\*[Gt] 
-uid              Alistair Crooks \*[Lt]agc@alistaircrooks.com\*[Gt] 
-uid              Alistair Crooks (Yahoo!) \*[Lt]agcrooks@yahoo-inc.com\*[Gt] 
+Key fingerprint: d415 9deb 336d e4cc cdfa 00cd 1b68 dcfc c059 6823
+uid              Alistair Crooks \*[Lt]alistair@hockley-crooks.com\*[Gt]
+uid              Alistair Crooks \*[Lt]agc@pkgsrc.org\*[Gt]
+uid              Alistair Crooks \*[Lt]agc@netbsd.org\*[Gt]
+uid              Alistair Crooks \*[Lt]agc@alistaircrooks.com\*[Gt]
+uid              Alistair Crooks (Yahoo!) \*[Lt]agcrooks@yahoo-inc.com\*[Gt]
 encryption 2048/RSA (Encrypt or Sign) 79deb61e488eee74 2004-01-12
 %
 .Ed
