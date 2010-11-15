@@ -1,4 +1,4 @@
-/*	$NetBSD: signals.c,v 1.3 2010/06/10 21:40:42 pooka Exp $	*/
+/*	$NetBSD: signals.c,v 1.4 2010/11/15 20:37:22 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: signals.c,v 1.3 2010/06/10 21:40:42 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: signals.c,v 1.4 2010/11/15 20:37:22 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -85,6 +85,37 @@ rumpsig_raise(pid_t target, int signo)
 	rumpuser_kill(RUMPUSER_PID_SELF, signo, &error);
 }
 
+static void
+rumpsig_record(pid_t target, int sig)
+{
+	struct proc *p = NULL;
+	struct pgrp *pgrp = NULL;
+
+	/* well this is a little silly */
+	mutex_enter(proc_lock);
+	if (target >= 0)
+		p = proc_find_raw(target);
+	else
+		pgrp = pgrp_find(target);
+
+	if (p) {
+		mutex_enter(p->p_lock);
+		if (!sigismember(&p->p_sigctx.ps_sigignore, sig)) {
+			sigaddset(&p->p_sigpend.sp_set, sig);
+		}
+		mutex_exit(p->p_lock);
+	} else if (pgrp) {
+		LIST_FOREACH(p, &pgrp->pg_members, p_pglist) {
+			mutex_enter(p->p_lock);
+			if (!sigismember(&p->p_sigctx.ps_sigignore, sig)) {
+				sigaddset(&p->p_sigpend.sp_set, sig);
+			}
+			mutex_exit(p->p_lock);
+		}
+	}
+	mutex_exit(proc_lock);
+}
+
 typedef void (*rumpsig_fn)(pid_t pid, int sig);
 
 rumpsig_fn rumpsig = rumpsig_panic;
@@ -104,16 +135,19 @@ rump_boot_setsigmodel(enum rump_sigmodel model)
 
 	switch (model) {
 	case RUMP_SIGMODEL_PANIC:
-		atomic_swap_ptr(&rumpsig, rumpsig_panic);
+		rumpsig = rumpsig_panic;
 		break;
 	case RUMP_SIGMODEL_IGNORE:
-		atomic_swap_ptr(&rumpsig, rumpsig_ignore);
+		rumpsig = rumpsig_ignore;
 		break;
 	case RUMP_SIGMODEL_HOST:
-		atomic_swap_ptr(&rumpsig, rumpsig_host);
+		rumpsig = rumpsig_host;
 		break;
 	case RUMP_SIGMODEL_RAISE:
-		atomic_swap_ptr(&rumpsig, rumpsig_raise);
+		rumpsig = rumpsig_raise;
+		break;
+	case RUMP_SIGMODEL_RECORD:
+		rumpsig = rumpsig_record;
 		break;
 	}
 }
@@ -149,29 +183,52 @@ kpgsignal(struct pgrp *pgrp, ksiginfo_t *ksi, void *data, int checkctty)
 int
 sigispending(struct lwp *l, int signo)
 {
+	struct proc *p = l->l_proc;
+	sigset_t tset;
 
+	tset = p->p_sigpend.sp_set;
+
+	if (signo == 0) {
+		if (firstsig(&tset) != 0)
+			return EINTR;
+	} else if (sigismember(&tset, signo))
+		return EINTR;
 	return 0;
 }
 
 void
 sigpending1(struct lwp *l, sigset_t *ss)
 {
+	struct proc *p = l->l_proc;
 
-	sigemptyset(ss);
+	mutex_enter(p->p_lock);
+	*ss = l->l_proc->p_sigpend.sp_set;
+	mutex_exit(p->p_lock);
 }
 
 int
 sigismasked(struct lwp *l, int sig)
 {
 
-	return 0;
+	return sigismember(&l->l_proc->p_sigctx.ps_sigignore, sig);
+}
+
+void
+sigclear(sigpend_t *sp, const sigset_t *mask, ksiginfoq_t *kq)
+{
+
+	if (mask == NULL)
+		sigemptyset(&sp->sp_set);
+	else
+		sigminusset(mask, &sp->sp_set);
 }
 
 void
 sigclearall(struct proc *p, const sigset_t *mask, ksiginfoq_t *kq)
 {
 
-	/* nada */
+	/* don't assert proc lock, hence callable from user context */
+	sigclear(&p->p_sigpend, mask, kq);
 }
 
 void
@@ -182,9 +239,39 @@ ksiginfo_queue_drain0(ksiginfoq_t *kq)
 		panic("how did that get there?");
 }
 
+int
+sigprocmask1(struct lwp *l, int how, const sigset_t *nss, sigset_t *oss)
+{
+	sigset_t *mask = &l->l_proc->p_sigctx.ps_sigignore;
+
+	KASSERT(mutex_owned(l->l_proc->p_lock));
+
+	if (oss)
+		*oss = *mask;
+
+	if (nss) {
+		switch (how) {
+		case SIG_BLOCK:
+			sigplusset(nss, mask);
+			break;
+		case SIG_UNBLOCK:
+			sigminusset(nss, mask);
+			break;
+		case SIG_SETMASK:
+			*mask = *nss;
+			break;
+		default:
+			return EINVAL;
+		}
+	}
+
+	return 0;
+}
+
 void
 siginit(struct proc *p)
 {
 
-	/* nada (?) */
+	sigemptyset(&p->p_sigctx.ps_sigignore);
+	sigemptyset(&p->p_sigpend.sp_set);
 }
