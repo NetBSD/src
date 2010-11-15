@@ -54,7 +54,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: reader.c,v 1.45 2010/11/11 00:58:04 agc Exp $");
+__RCSID("$NetBSD: reader.c,v 1.46 2010/11/15 08:50:32 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -537,7 +537,7 @@ unarmoured_read_char(pgp_stream_t *stream, dearmour_t *dearmour,
  * \return header value if found, otherwise NULL
  */
 static const char *
-pgp_find_header(pgp_headers_t *headers, const char *key)
+find_header(pgp_headers_t *headers, const char *key)
 {
 	unsigned        n;
 
@@ -554,12 +554,12 @@ pgp_find_header(pgp_headers_t *headers, const char *key)
  * \param src
  */
 static void 
-pgp_dup_headers(pgp_headers_t *dest, const pgp_headers_t *src)
+dup_headers(pgp_headers_t *dest, const pgp_headers_t *src)
 {
 	unsigned        n;
 
 	if ((dest->headers = calloc(src->headerc, sizeof(*dest->headers))) == NULL) {
-		(void) fprintf(stderr, "pgp_dup_headers: bad alloc\n");
+		(void) fprintf(stderr, "dup_headers: bad alloc\n");
 	} else {
 		dest->headerc = src->headerc;
 		for (n = 0; n < src->headerc; ++n) {
@@ -592,7 +592,7 @@ process_dash_escaped(pgp_stream_t *stream, dearmour_t *dearmour,
 			"process_dash_escaped: bad alloc");
 		return -1;
 	}
-	hashstr = pgp_find_header(&dearmour->headers, "Hash");
+	hashstr = find_header(&dearmour->headers, "Hash");
 	if (hashstr) {
 		pgp_hash_alg_t alg;
 
@@ -1169,8 +1169,7 @@ got_minus:
 			}
 
 			if (strcmp(buf, "BEGIN PGP SIGNED MESSAGE") == 0) {
-				pgp_dup_headers(
-					&content.u.cleartext_head,
+				dup_headers(&content.u.cleartext_head,
 					&dearmour->headers);
 				CALLBACK(PGP_PTAG_CT_SIGNED_CLEARTEXT_HEADER,
 					cbinfo,

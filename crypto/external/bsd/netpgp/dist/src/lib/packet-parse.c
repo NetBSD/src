@@ -58,7 +58,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: packet-parse.c,v 1.48 2010/11/15 08:03:40 agc Exp $");
+__RCSID("$NetBSD: packet-parse.c,v 1.49 2010/11/15 08:50:32 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -871,7 +871,7 @@ pgp_subpacket_free(pgp_subpacket_t *packet)
 \brief Free allocated memory
 */
 static void 
-pgp_headers_free(pgp_headers_t *headers)
+headers_free(pgp_headers_t *headers)
 {
 	unsigned        n;
 
@@ -899,7 +899,7 @@ cleartext_trailer_free(struct _ops_hash_t **trailer)
 \brief Free allocated memory
 */
 static void 
-pgp_cmd_get_passphrase_free(pgp_seckey_passphrase_t *skp)
+cmd_get_passphrase_free(pgp_seckey_passphrase_t *skp)
 {
 	if (skp->passphrase && *skp->passphrase) {
 		free(*skp->passphrase);
@@ -995,11 +995,11 @@ pgp_parser_content_free(pgp_packet_t *c)
 		break;
 
 	case PGP_PTAG_CT_SIGNED_CLEARTEXT_HEADER:
-		pgp_headers_free(&c->u.cleartext_head);
+		headers_free(&c->u.cleartext_head);
 		break;
 
 	case PGP_PTAG_CT_ARMOUR_HEADER:
-		pgp_headers_free(&c->u.armour_header.headers);
+		headers_free(&c->u.armour_header.headers);
 		break;
 
 	case PGP_PTAG_CT_SIGNED_CLEARTEXT_TRAILER:
@@ -1118,7 +1118,7 @@ pgp_parser_content_free(pgp_packet_t *c)
 		break;
 
 	case PGP_GET_PASSPHRASE:
-		pgp_cmd_get_passphrase_free(&c->u.skey_passphrase);
+		cmd_get_passphrase_free(&c->u.skey_passphrase);
 		break;
 
 	default:
@@ -2868,7 +2868,7 @@ parse_pk_sesskey(pgp_region_t *region,
 }
 
 static int 
-pgp_decrypt_se_data(pgp_content_enum tag, pgp_region_t *region,
+decrypt_se_data(pgp_content_enum tag, pgp_region_t *region,
 		    pgp_stream_t *stream)
 {
 	pgp_crypt_t	*decrypt;
@@ -2928,7 +2928,7 @@ pgp_decrypt_se_data(pgp_content_enum tag, pgp_region_t *region,
 }
 
 static int 
-pgp_decrypt_se_ip_data(pgp_content_enum tag, pgp_region_t *region,
+decrypt_se_ip_data(pgp_content_enum tag, pgp_region_t *region,
 		       pgp_stream_t *stream)
 {
 	pgp_crypt_t	*decrypt;
@@ -2938,7 +2938,7 @@ pgp_decrypt_se_ip_data(pgp_content_enum tag, pgp_region_t *region,
 	decrypt = pgp_get_decrypt(stream);
 	if (decrypt) {
 		if (pgp_get_debug_level(__FILE__)) {
-			(void) fprintf(stderr, "pgp_decrypt_se_ip_data: decrypt\n");
+			(void) fprintf(stderr, "decrypt_se_ip_data: decrypt\n");
 		}
 		pgp_reader_push_decrypt(stream, decrypt, region);
 		pgp_reader_push_se_ip_data(stream, decrypt, region);
@@ -2951,7 +2951,7 @@ pgp_decrypt_se_ip_data(pgp_content_enum tag, pgp_region_t *region,
 		pgp_packet_t pkt;
 
 		if (pgp_get_debug_level(__FILE__)) {
-			(void) fprintf(stderr, "pgp_decrypt_se_ip_data: no decrypt\n");
+			(void) fprintf(stderr, "decrypt_se_ip_data: no decrypt\n");
 		}
 		while (region->readc < region->length) {
 			unsigned        len;
@@ -2991,7 +2991,7 @@ parse_se_data(pgp_region_t *region, pgp_stream_t *stream)
 	 * The content of an encrypted data packet is more OpenPGP packets
 	 * once decrypted, so recursively handle them
 	 */
-	return pgp_decrypt_se_data(PGP_PTAG_CT_SE_DATA_BODY, region, stream);
+	return decrypt_se_data(PGP_PTAG_CT_SE_DATA_BODY, region, stream);
 }
 
 /**
@@ -3025,8 +3025,7 @@ parse_se_ip_data(pgp_region_t *region, pgp_stream_t *stream)
 	 * The content of an encrypted data packet is more OpenPGP packets
 	 * once decrypted, so recursively handle them
 	 */
-	return pgp_decrypt_se_ip_data(PGP_PTAG_CT_SE_IP_DATA_BODY, region,
-			stream);
+	return decrypt_se_ip_data(PGP_PTAG_CT_SE_IP_DATA_BODY, region, stream);
 }
 
 /**
@@ -3063,7 +3062,7 @@ parse_mdc(pgp_region_t *region, pgp_stream_t *stream)
  * \param *pktlen	On return, will contain number of bytes in packet
  * \return 1 on success, 0 on error, -1 on EOF */
 static int 
-pgp_parse_packet(pgp_stream_t *stream, uint32_t *pktlen)
+parse_packet(pgp_stream_t *stream, uint32_t *pktlen)
 {
 	pgp_packet_t	pkt;
 	pgp_region_t	region;
@@ -3077,7 +3076,7 @@ pgp_parse_packet(pgp_stream_t *stream, uint32_t *pktlen)
 
 	if (pgp_get_debug_level(__FILE__)) {
 		(void) fprintf(stderr,
-			"pgp_parse_packet: base_read returned %d, ptag %d\n",
+			"parse_packet: base_read returned %d, ptag %d\n",
 			ret, ptag);
 	}
 
@@ -3138,7 +3137,7 @@ pgp_parse_packet(pgp_stream_t *stream, uint32_t *pktlen)
 	region.length = pkt.u.ptag.length;
 	region.indeterminate = indeterminate;
 	if (pgp_get_debug_level(__FILE__)) {
-		(void) fprintf(stderr, "pgp_parse_packet: type %u\n",
+		(void) fprintf(stderr, "parse_packet: type %u\n",
 			       pkt.u.ptag.type);
 	}
 	switch (pkt.u.ptag.type) {
@@ -3276,7 +3275,7 @@ pgp_parse(pgp_stream_t *stream, const int perrors)
 	int             r;
 
 	do {
-		r = pgp_parse_packet(stream, &pktlen);
+		r = parse_packet(stream, &pktlen);
 	} while (r != -1);
 	if (perrors) {
 		pgp_print_errors(stream->errors);
