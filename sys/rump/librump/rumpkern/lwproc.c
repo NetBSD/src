@@ -1,4 +1,4 @@
-/*      $NetBSD: lwproc.c,v 1.3 2010/10/29 15:32:24 pooka Exp $	*/
+/*      $NetBSD: lwproc.c,v 1.4 2010/11/15 20:37:22 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lwproc.c,v 1.3 2010/10/29 15:32:24 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lwproc.c,v 1.4 2010/11/15 20:37:22 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -277,7 +277,8 @@ rump_lwproc_newproc(void)
 
 /*
  * Switch to a new process/thread.  Release previous one if
- * deemed to be exiting.
+ * deemed to be exiting.  This is considered a slow path for
+ * rump kernel entry.
  */
 void
 rump_lwproc_switch(struct lwp *newlwp)
@@ -309,9 +310,20 @@ rump_lwproc_switch(struct lwp *newlwp)
 
 	rumpuser_set_curlwp(newlwp);
 
+	/*
+	 * Check if the thread should get a signal.  This is
+	 * mostly to satisfy the "record" rump sigmodel.
+	 */
+	mutex_enter(newlwp->l_proc->p_lock);
+	if (sigispending(newlwp, 0)) {
+		newlwp->l_flag |= LW_PENDSIG;
+	}
+	mutex_exit(newlwp->l_proc->p_lock);
+
 	l->l_mutex = NULL;
 	l->l_cpu = NULL;
 	l->l_pflag &= ~LP_RUNNING;
+	l->l_flag &= ~LW_PENDSIG;
 
 	if (l->l_flag & LW_WEXIT) {
 		lwproc_freelwp(l);
