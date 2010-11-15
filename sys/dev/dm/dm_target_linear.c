@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_target_linear.c,v 1.10 2010/05/18 15:10:38 haad Exp $      */
+/*        $NetBSD: dm_target_linear.c,v 1.11 2010/11/15 05:53:29 uebayasi Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -40,6 +40,7 @@
 #include <sys/buf.h>
 #include <sys/kmem.h>
 #include <sys/vnode.h>
+#include <sys/lwp.h>
 
 #include <machine/int_fmtio.h>
 
