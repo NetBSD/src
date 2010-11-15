@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1250 2010/11/15 21:56:46 pooka Exp $
+# $NetBSD: mi,v 1.1251 2010/11/15 23:07:37 skrll Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1279,6 +1279,7 @@
 ./usr/share/man/cat4/njs.0			man-sys-catman		.cat
 ./usr/share/man/cat4/ns.0			man-obsolete		obsolete
 ./usr/share/man/cat4/nsclpcsio.0		man-sys-catman		.cat
+./usr/share/man/cat4/nside.0			man-sys-catman		.cat
 ./usr/share/man/cat4/nsip.0			man-obsolete		obsolete
 ./usr/share/man/cat4/nsmb.0			man-sys-catman		.cat
 ./usr/share/man/cat4/nsp.0			man-sys-catman		.cat
@@ -3936,6 +3937,7 @@
 ./usr/share/man/html4/njata.html		man-sys-htmlman		html
 ./usr/share/man/html4/njs.html			man-sys-htmlman		html
 ./usr/share/man/html4/nsclpcsio.html		man-sys-htmlman		html
+./usr/share/man/html4/nside.html		man-sys-htmlman		html
 ./usr/share/man/html4/nsmb.html			man-sys-htmlman		html
 ./usr/share/man/html4/nsp.html			man-sys-htmlman		html
 ./usr/share/man/html4/nsphy.html		man-sys-htmlman		html
@@ -6455,6 +6457,7 @@
 ./usr/share/man/man4/njs.4			man-sys-man		.man
 ./usr/share/man/man4/ns.4			man-obsolete		obsolete
 ./usr/share/man/man4/nsclpcsio.4		man-sys-man		.man
+./usr/share/man/man4/nside.4			man-sys-man		.man
 ./usr/share/man/man4/nsip.4			man-obsolete		obsolete
 ./usr/share/man/man4/nsmb.4			man-sys-man		.man
 ./usr/share/man/man4/nsp.4			man-sys-man		.man
