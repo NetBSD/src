@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.32 2010/11/12 12:48:49 uebayasi Exp $ */
+/* $NetBSD: pmap.c,v 1.33 2010/11/15 06:06:51 uebayasi Exp $ */
 /*-
  * Copyright (c) 1997, 1998, 2000 Ben Harris
  * All rights reserved.
@@ -102,12 +102,14 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.32 2010/11/12 12:48:49 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.33 2010/11/15 06:06:51 uebayasi Exp $");
 
 #include <sys/kernel.h> /* for cold */
 #include <sys/malloc.h>
 #include <sys/pool.h>
 #include <sys/systm.h>
+#include <sys/lwp.h>
+#include <sys/proc.h>
 
 #include <uvm/uvm.h>
 #include <uvm/uvm_stat.h>
