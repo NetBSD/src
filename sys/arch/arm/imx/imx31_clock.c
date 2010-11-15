@@ -1,4 +1,4 @@
-/*	$NetBSD: imx31_clock.c,v 1.1 2010/11/13 06:51:37 bsh Exp $ */
+/*	$NetBSD: imx31_clock.c,v 1.2 2010/11/15 18:19:19 bsh Exp $ */
 /*
  * Copyright (c) 2009,2010  Genetec corp.  All rights reserved.
  * Written by Hashimoto Kenichi for Genetec corp.
@@ -45,8 +45,14 @@
 
 #include <arm/imx/imx31reg.h>
 #include <arm/imx/imx31var.h>
+#if 0 /* notyet */
 #include <arm/imx/imx31_ccmvar.h>
+#endif
 #include <arm/imx/imxclockvar.h>
+#include <arm/imx/imxepitreg.h>
+
+#include "imxccm.h"	/* if CCM driver is configured into the kernel */
+#include "opt_imx31clk.h"
 
 static int imxclock_match(device_t, struct cfdata *, void *);
 static void imxclock_attach(device_t, device_t, void *);
@@ -105,10 +111,18 @@ imxclock_attach(device_t parent, device_t self, void *aux)
 int
 imxclock_get_timerfreq(struct imxclock_softc *sc)
 {
+#if NIMXCCM > 0
 	struct imx31_clocks clk;
 	imx31_get_clocks(&clk);
 
 	return clk.ipg_clk;
+#else
+#ifndef	IMX31_IPGCLK_FREQ
+#error	IMX31_IPGCLK_FREQ need to be defined.
+#endif
+	return IMX31_IPGCLK_FREQ;
+
+#endif
 }
 
 

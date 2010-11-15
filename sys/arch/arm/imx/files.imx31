@@ -1,4 +1,4 @@
-#	$NetBSD: files.imx31,v 1.5 2010/11/13 06:28:20 bsh Exp $
+#	$NetBSD: files.imx31,v 1.6 2010/11/15 18:19:19 bsh Exp $
 #
 # Configuration info for the Freescale i.MX31
 #
@@ -51,6 +51,14 @@ file	arch/arm/imx/imx31_gpio.c		imxgpio		needs-flag
 
 # iMX clock
 file	arch/arm/imx/imxclock.c
+file	arch/arm/imx/imx31_clock.c
+
+# Clock Control Module
+device	imxccm
+attach	imxccm	at aips
+file	arch/arm/imx/imx31_ccm.c	imxccm		needs-flag
+
+defparam opt_imx31clk.h IMX31_IPGCLK_FREQ
 
 # iMX UART
 device	imxuart
