@@ -1,4 +1,4 @@
-/*	$NetBSD: omap2_intr.h,v 1.5 2010/08/28 04:06:40 kiyohara Exp $ */
+/*	$NetBSD: omap2_intr.h,v 1.6 2010/11/15 09:34:28 bsh Exp $ */
 
 /*
  * Define the SDP2430 specific information and then include the generic OMAP
@@ -34,7 +34,6 @@
 
 #ifndef _LOCORE
 
-#include <arm/cpu.h>
 #include <arm/armreg.h>
 #include <arm/cpufunc.h>
 
