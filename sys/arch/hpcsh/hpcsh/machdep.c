@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.73 2010/05/03 12:16:04 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.74 2010/11/15 06:30:04 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.73 2010/05/03 12:16:04 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.74 2010/11/15 06:30:04 uebayasi Exp $");
 
 #include "opt_md.h"
 #include "opt_ddb.h"
@@ -44,6 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.73 2010/05/03 12:16:04 tsutsui Exp $")
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
+#include <sys/lwp.h>
 
 #include <sys/reboot.h>
 #include <sys/mount.h>
@@ -62,6 +63,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.73 2010/05/03 12:16:04 tsutsui Exp $")
 #include <sh3/cache.h>
 #include <sh3/clock.h>
 #include <sh3/intcreg.h>
+#include <sh3/proc.h>
 
 #ifdef KGDB
 #include <sys/kgdb.h>
