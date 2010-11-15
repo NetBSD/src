@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_net.c,v 1.1 2010/02/26 18:54:20 pooka Exp $	*/
+/*	$NetBSD: rumpuser_net.c,v 1.2 2010/11/15 15:23:32 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser_net.c,v 1.1 2010/02/26 18:54:20 pooka Exp $");
+__RCSID("$NetBSD: rumpuser_net.c,v 1.2 2010/11/15 15:23:32 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -102,9 +102,9 @@ rumpuser_net_getname(int s, struct sockaddr *so, int *lenp,
 
 	*lenp = slen;
 	if (rv == -1)
-		*error = errno;
+		seterror(errno);
 	else
-		*error = 0;
+		seterror(0);
 
 	return rv;
 }
@@ -118,8 +118,8 @@ rumpuser_net_setsockopt(int s, int level, int name,
 
 	rv = setsockopt(s, level, name, data, slen);
 	if (rv == -1)
-		*error = errno;
+		seterror(errno);
 	else
-		*error = 0;
+		seterror(0);
 	return rv;
 }

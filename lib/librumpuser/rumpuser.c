@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.c,v 1.9 2010/08/11 10:25:59 pooka Exp $	*/
+/*	$NetBSD: rumpuser.c,v 1.10 2010/11/15 15:23:32 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2010 Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser.c,v 1.9 2010/08/11 10:25:59 pooka Exp $");
+__RCSID("$NetBSD: rumpuser.c,v 1.10 2010/11/15 15:23:32 pooka Exp $");
 #endif /* !lint */
 
 /* thank the maker for this */
@@ -82,7 +82,7 @@ rumpuser_getfileinfo(const char *path, uint64_t *sizep, int *ftp, int *error)
 	int needsdev = 0, rv = 0, ft;
 
 	if (stat(path, &sb) == -1) {
-		*error = errno;
+		seterror(errno);
 		return -1;
 	}
 
@@ -129,7 +129,7 @@ rumpuser_getfileinfo(const char *path, uint64_t *sizep, int *ftp, int *error)
 
 		fd = open(path, O_RDONLY);
 		if (fd == -1) {
-			*error = errno;
+			seterror(errno);
 			rv = -1;
 			goto out;
 		}
@@ -142,7 +142,7 @@ rumpuser_getfileinfo(const char *path, uint64_t *sizep, int *ftp, int *error)
 		}
 		fprintf(stderr, "error: device size query not implemented on "
 		    "this platform\n");
-		*error = EOPNOTSUPP;
+		sererror(EOPNOTSUPP);
 		rv = -1;
 		goto out;
 #else
@@ -152,13 +152,13 @@ rumpuser_getfileinfo(const char *path, uint64_t *sizep, int *ftp, int *error)
 
 		fd = open(path, O_RDONLY);
 		if (fd == -1) {
-			*error = errno;
+			seterror(errno);
 			rv = -1;
 			goto out;
 		}
 
 		if (ioctl(fd, DIOCGDINFO, &lab) == -1) {
-			*error = errno;
+			seterror(errno);
 			rv = -1;
 			goto out;
 		}
@@ -191,7 +191,7 @@ rumpuser_nanosleep(uint64_t *sec, uint64_t *nsec, int *error)
 
 	KLOCK_WRAP(rv = nanosleep(&rqt, &rmt));
 	if (rv == -1)
-		*error = errno;
+		seterror(errno);
 
 	*sec = rmt.tv_sec;
 	*nsec = rmt.tv_nsec;
@@ -249,7 +249,7 @@ rumpuser_anonmmap(void *prefaddr, size_t size, int alignbit,
 	rv = mmap(prefaddr, size, prot,
 	    MAP_ANON | MAP_ALIGNED(alignbit), -1, 0);
 	if (rv == MAP_FAILED) {
-		*error = errno;
+		seterror(errno);
 		return NULL;
 	}
 	return rv;
@@ -287,11 +287,11 @@ rumpuser_filemmap(int fd, off_t offset, size_t len, int flags, int *error)
 
 	rv = mmap(NULL, len, PROT_READ|PROT_WRITE, mmflags, fd, offset);
 	if (rv == MAP_FAILED) {
-		*error = errno;
+		seterror(errno);
 		return NULL;
 	}
 
-	*error = 0;
+	seterror(0);
 	return rv;
 }
 
@@ -337,7 +337,7 @@ rumpuser_read(int fd, void *data, size_t size, int *error)
 
 	KLOCK_WRAP(rv = read(fd, data, size));
 	if (rv == -1)
-		*error = errno;
+		seterror(errno);
 
 	return rv;
 }
@@ -349,7 +349,7 @@ rumpuser_pread(int fd, void *data, size_t size, off_t offset, int *error)
 
 	KLOCK_WRAP(rv = pread(fd, data, size, offset));
 	if (rv == -1)
-		*error = errno;
+		seterror(errno);
 
 	return rv;
 }
@@ -377,7 +377,7 @@ rumpuser_write(int fd, const void *data, size_t size, int *error)
 
 	KLOCK_WRAP(rv = write(fd, data, size));
 	if (rv == -1)
-		*error = errno;
+		seterror(errno);
 
 	return rv;
 }
@@ -389,7 +389,7 @@ rumpuser_pwrite(int fd, const void *data, size_t size, off_t offset, int *error)
 
 	KLOCK_WRAP(rv = pwrite(fd, data, size, offset));
 	if (rv == -1)
-		*error = errno;
+		seterror(errno);
 
 	return rv;
 }
@@ -420,7 +420,7 @@ rumpuser_readv(int fd, const struct rumpuser_iovec *riov, int iovcnt,
 
 	iovp = malloc(iovcnt * sizeof(struct iovec));
 	if (iovp == NULL) {
-		*error = ENOMEM;
+		seterror(ENOMEM);
 		return -1;
 	}
 	for (i = 0; i < iovcnt; i++) {
@@ -431,7 +431,7 @@ rumpuser_readv(int fd, const struct rumpuser_iovec *riov, int iovcnt,
 
 	KLOCK_WRAP(rv = readv(fd, iovp, iovcnt));
 	if (rv == -1)
-		*error = errno;
+		seterror(errno);
 	free(iovp);
 
 	return rv;
@@ -447,7 +447,7 @@ rumpuser_writev(int fd, const struct rumpuser_iovec *riov, int iovcnt,
 
 	iovp = malloc(iovcnt * sizeof(struct iovec));
 	if (iovp == NULL) {
-		*error = ENOMEM;
+		seterror(ENOMEM);
 		return -1;
 	}
 	for (i = 0; i < iovcnt; i++) {
@@ -458,7 +458,7 @@ rumpuser_writev(int fd, const struct rumpuser_iovec *riov, int iovcnt,
 
 	KLOCK_WRAP(rv = writev(fd, iovp, iovcnt));
 	if (rv == -1)
-		*error = errno;
+		seterror(errno);
 	free(iovp);
 
 	return rv;
@@ -472,7 +472,7 @@ rumpuser_gettime(uint64_t *sec, uint64_t *nsec, int *error)
 
 	rv = gettimeofday(&tv, NULL);
 	if (rv == -1) {
-		*error = errno;
+		seterror(errno);
 		return rv;
 	}
 
@@ -535,7 +535,7 @@ rumpuser_writewatchfile_setup(int kq, int fd, intptr_t opaque, int *error)
 	if (kq == -1) {
 		kq = kqueue();
 		if (kq == -1) {
-			*error = errno;
+			seterror(errno);
 			return -1;
 		}
 	}
@@ -543,7 +543,7 @@ rumpuser_writewatchfile_setup(int kq, int fd, intptr_t opaque, int *error)
 	EV_SET(&kev, fd, EVFILT_VNODE, EV_ADD|EV_ENABLE|EV_CLEAR,
 	    NOTE_WRITE, 0, opaque);
 	if (kevent(kq, &kev, 1, NULL, 0, NULL) == -1) {
-		*error = errno;
+		seterror(errno);
 		return -1;
 	}
 
@@ -561,7 +561,7 @@ rumpuser_writewatchfile_wait(int kq, intptr_t *opaque, int *error)
 	if (rv == -1) {
 		if (errno == EINTR)
 			goto again;
-		*error = errno;
+		seterror(errno);
 		return -1;
 	}
 
@@ -598,7 +598,7 @@ rumpuser_kill(int64_t pid, int sig, int *error)
 	}
 #else
 	/* XXXfixme: signal numbers may not match on non-NetBSD */
-	*error = EOPNOTSUPP;
+	seterror(EOPNOTSUPP);
 	return -1;
 #endif
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_int.h,v 1.3 2010/05/18 14:58:41 pooka Exp $	*/
+/*	$NetBSD: rumpuser_int.h,v 1.4 2010/11/15 15:23:32 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -33,6 +33,8 @@ extern kernel_lockfn rumpuser__klock;
 extern kernel_unlockfn rumpuser__kunlock;
 extern int rumpuser__wantthreads;
 
+#define seterror(value) do { if (error) *error = value;} while (/*CONSTCOND*/0)
+
 #define KLOCK_WRAP(a)							\
 do {									\
 	int nlocks;							\
@@ -46,9 +48,9 @@ do {									\
 	rvtype rv;							\
 	rv = call;							\
 	if (rv == -1)							\
-		*error = errno;						\
+		seterror(errno);					\
 	else								\
-		*error = 0;						\
+		seterror(0);						\
 	return rv;							\
 }
 
@@ -60,8 +62,8 @@ do {									\
 	rv = call;							\
 	rumpuser__klock(nlocks, NULL);					\
 	if (rv == -1)							\
-		*error = errno;						\
+		seterror(errno);					\
 	else								\
-		*error = 0;						\
+		seterror(0);						\
 	return rv;							\
 }
