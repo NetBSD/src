@@ -1,4 +1,4 @@
-/*	$NetBSD: if_shmem.c,v 1.28 2010/08/17 20:42:47 pooka Exp $	*/
+/*	$NetBSD: if_shmem.c,v 1.29 2010/11/15 22:48:06 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.28 2010/08/17 20:42:47 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.29 2010/11/15 22:48:06 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -50,14 +50,17 @@ __KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.28 2010/08/17 20:42:47 pooka Exp $");
 #include "rump_private.h"
 #include "rump_net_private.h"
 
+static int shmif_clone(struct if_clone *, int);
+static int shmif_unclone(struct ifnet *);
+
+struct if_clone shmif_cloner =
+    IF_CLONE_INITIALIZER("shmif", shmif_clone, shmif_unclone);
+
 /*
  * Do r/w prefault for backend pages when attaching the interface.
- * This works aroud the most likely kernel/ffs/x86pmap bug described
- * in http://mail-index.netbsd.org/tech-kern/2010/08/17/msg008749.html
- *
- * NOTE: read prefaulting is not enough (that's done always)!
+ * At least logically thinking improves performance (although no
+ * mlocking is done, so they might go away).
  */
-
 #define PREFAULT_RW
 
 /*
@@ -78,6 +81,9 @@ struct shmif_sc {
 	struct shmif_mem *sc_busmem;
 	int sc_memfd;
 	int sc_kq;
+
+	char *sc_backfile;
+	size_t sc_backfilelen;
 
 	uint64_t sc_devgen;
 	uint32_t sc_nextpacket;
@@ -129,38 +135,64 @@ shmif_unlockbus(struct shmif_mem *busmem)
 	KASSERT(old == LOCK_LOCKED);
 }
 
-int
-rump_shmif_create(const char *path, int *ifnum)
+static int
+allocif(int unit, struct shmif_sc **scp)
 {
+	uint8_t enaddr[ETHER_ADDR_LEN] = { 0xb2, 0xa0, 0x00, 0x00, 0x00, 0x00 };
 	struct shmif_sc *sc;
 	struct ifnet *ifp;
-	uint8_t enaddr[ETHER_ADDR_LEN] = { 0xb2, 0xa0, 0x00, 0x00, 0x00, 0x00 };
 	uint32_t randnum;
-	unsigned mynum;
+	unsigned mynum = unit;
+
+	randnum = arc4random();
+	memcpy(&enaddr[2], &randnum, sizeof(randnum));
+
+	sc = kmem_zalloc(sizeof(*sc), KM_SLEEP);
+	sc->sc_memfd = -1;
+
+	ifp = &sc->sc_ec.ec_if;
+	memcpy(sc->sc_myaddr, enaddr, sizeof(enaddr));
+
+	sprintf(ifp->if_xname, "shmif%d", mynum);
+	ifp->if_softc = sc;
+	ifp->if_flags = IFF_BROADCAST | IFF_MULTICAST;
+	ifp->if_init = shmif_init;
+	ifp->if_ioctl = shmif_ioctl;
+	ifp->if_start = shmif_start;
+	ifp->if_stop = shmif_stop;
+	ifp->if_mtu = ETHERMTU;
+
+	if_attach(ifp);
+	ether_ifattach(ifp, enaddr);
+
+	aprint_verbose("shmif%d: Ethernet address %s\n",
+	    mynum, ether_sprintf(enaddr));
+
+	if (scp)
+		*scp = sc;
+
+	return 0;
+}
+
+static int
+initbackend(struct shmif_sc *sc, int memfd)
+{
 	volatile uint8_t v;
 	volatile uint8_t *p;
 	int error;
 
-	randnum = arc4random();
-	memcpy(&enaddr[2], &randnum, sizeof(randnum));
-	mynum = atomic_inc_uint_nv(&numif)-1;
-
-	sc = kmem_zalloc(sizeof(*sc), KM_SLEEP);
-	ifp = &sc->sc_ec.ec_if;
-	memcpy(sc->sc_myaddr, enaddr, sizeof(enaddr));
-
-	sc->sc_memfd = rumpuser_open(path, O_RDWR | O_CREAT, &error);
-	if (sc->sc_memfd == -1)
-		goto fail;
-	sc->sc_busmem = rumpuser_filemmap(sc->sc_memfd, 0, BUSMEM_SIZE,
+	sc->sc_busmem = rumpuser_filemmap(memfd, 0, BUSMEM_SIZE,
 	    RUMPUSER_FILEMMAP_TRUNCATE | RUMPUSER_FILEMMAP_SHARED
 	    | RUMPUSER_FILEMMAP_READ | RUMPUSER_FILEMMAP_WRITE, &error);
 	if (error)
-		goto fail;
+		return error;
 
-	if (sc->sc_busmem->shm_magic && sc->sc_busmem->shm_magic != SHMIF_MAGIC)
-		panic("bus is not magical");
-
+	if (sc->sc_busmem->shm_magic
+	    && sc->sc_busmem->shm_magic != SHMIF_MAGIC) {
+		printf("bus is not magical");
+		rumpuser_unmap(sc->sc_busmem, BUSMEM_SIZE);
+		return ENOEXEC; 
+	}
 
 	/* Prefault in pages to minimize runtime penalty with buslock */
 	for (p = (uint8_t *)sc->sc_busmem;
@@ -188,38 +220,87 @@ rump_shmif_create(const char *path, int *ifnum)
 #endif
 	shmif_unlockbus(sc->sc_busmem);
 
-	sc->sc_kq = rumpuser_writewatchfile_setup(-1, sc->sc_memfd, 0, &error);
+	sc->sc_kq = rumpuser_writewatchfile_setup(-1, memfd, 0, &error);
 	if (sc->sc_kq == -1)
-		goto fail;
+		return error;
 
-	sprintf(ifp->if_xname, "shmif%d", mynum);
-	ifp->if_softc = sc;
-	ifp->if_flags = IFF_BROADCAST | IFF_MULTICAST;
-	ifp->if_init = shmif_init;
-	ifp->if_ioctl = shmif_ioctl;
-	ifp->if_start = shmif_start;
-	ifp->if_stop = shmif_stop;
-	ifp->if_mtu = ETHERMTU;
+	sc->sc_memfd = memfd;
+	return 0;
+}
 
-	if_attach(ifp);
-	ether_ifattach(ifp, enaddr);
+static void
+finibackend(struct shmif_sc *sc)
+{
+	int dummy;
 
-	aprint_verbose("shmif%d: bus %s\n", mynum, path);
-	aprint_verbose("shmif%d: Ethernet address %s\n",
-	    mynum, ether_sprintf(enaddr));
+	kmem_free(sc->sc_backfile, sc->sc_backfilelen);
+	sc->sc_backfile = NULL;
+	sc->sc_backfilelen = 0;
+
+	rumpuser_unmap(sc->sc_busmem, BUSMEM_SIZE);
+	rumpuser_close(sc->sc_memfd, &dummy);
+	rumpuser_close(sc->sc_kq, &dummy);
+}
+
+int
+rump_shmif_create(const char *path, int *ifnum)
+{
+	struct shmif_sc *sc;
+	int mynum, error, memfd, dummy;
+
+	memfd = rumpuser_open(path, O_RDWR | O_CREAT, &error);
+	if (memfd == -1)
+		return error;
+
+	mynum = atomic_inc_uint_nv(&numif)-1;
+	if ((error = allocif(mynum, &sc)) != 0) {
+		rumpuser_close(memfd, &dummy);
+		return error;
+	}
+	error = initbackend(sc, memfd);
+	if (error) {
+		rumpuser_close(memfd, &dummy);
+		/* XXX: free sc */
+		return error;
+	}
+
+	sc->sc_backfilelen = strlen(path)+1;
+	sc->sc_backfile = kmem_alloc(sc->sc_backfilelen, KM_SLEEP);
+	strcpy(sc->sc_backfile, path);
 
 	if (ifnum)
 		*ifnum = mynum;
-	return 0;
 
- fail:
-	panic("rump_shmemif_create: fixme");
+	return 0;
+}
+
+static int
+shmif_clone(struct if_clone *ifc, int unit)
+{
+	int mynum;
+
+	/* not atomic against rump_shmif_create().  so "don't do it". */
+	if (unit >= mynum)
+		mynum = unit+1;
+
+	return allocif(unit, NULL);
+}
+
+static int
+shmif_unclone(struct ifnet *ifp)
+{
+
+	return EOPNOTSUPP;
 }
 
 static int
 shmif_init(struct ifnet *ifp)
 {
+	struct shmif_sc *sc = ifp->if_softc;
 	int error = 0;
+
+	if (sc->sc_memfd == -1)
+		return ENXIO;
 
 	if (rump_threads) {
 		error = kthread_create(PRI_NONE, KTHREAD_MPSAFE, NULL,
@@ -235,12 +316,89 @@ shmif_init(struct ifnet *ifp)
 static int
 shmif_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
-	int s, rv;
+	struct shmif_sc *sc = ifp->if_softc;
+	struct ifdrv *ifd;
+	char *path;
+	int s, rv, memfd, dummy;
 
 	s = splnet();
-	rv = ether_ioctl(ifp, cmd, data);
-	if (rv == ENETRESET)
-		rv = 0;
+	switch (cmd) {
+	case SIOCGLINKSTR:
+		ifd = data;
+
+		if (sc->sc_backfilelen == 0) {
+			rv = ENOENT;
+			break;
+		}
+
+		ifd->ifd_len = sc->sc_backfilelen;
+		if (ifd->ifd_cmd == IFLINKSTR_QUERYLEN) {
+			rv = 0;
+			break;
+		}
+
+		if (ifd->ifd_cmd != 0) {
+			rv = EINVAL;
+			break;
+		}
+
+		rv = copyoutstr(sc->sc_backfile, ifd->ifd_data,
+		    MIN(sc->sc_backfilelen, ifd->ifd_len), NULL);
+		break;
+	case SIOCSLINKSTR:
+		if (ifp->if_flags & IFF_UP) {
+			rv = EBUSY;
+			break;
+		}
+
+		ifd = data;
+		if (ifd->ifd_cmd == IFLINKSTR_UNSET) {
+			finibackend(sc);
+			rv = 0;
+			break;
+		} else if (ifd->ifd_cmd != 0) {
+			rv = EINVAL;
+			break;
+		} else if (sc->sc_backfile) {
+			rv = EBUSY;
+			break;
+		}
+
+		if (ifd->ifd_len > MAXPATHLEN) {
+			rv = E2BIG;
+			break;
+		} else if (ifd->ifd_len < 1) {
+			rv = EINVAL;
+			break;
+		}
+
+		path = kmem_alloc(ifd->ifd_len, KM_SLEEP);
+		rv = copyinstr(ifd->ifd_data, path, ifd->ifd_len, NULL);
+		if (rv) {
+			kmem_free(path, ifd->ifd_len);
+			break;
+		}
+		memfd = rumpuser_open(path, O_RDWR | O_CREAT, &rv);
+		if (memfd == -1) {
+			kmem_free(path, ifd->ifd_len);
+			break;
+		}
+		rv = initbackend(sc, memfd);
+		if (rv) {
+			kmem_free(path, ifd->ifd_len);
+			rumpuser_close(memfd, &dummy);
+			break;
+		}
+		sc->sc_backfile = path;
+		sc->sc_backfilelen = ifd->ifd_len;
+
+		break;
+	default:
+		rv = ether_ioctl(ifp, cmd, data);
+		if (rv == ENETRESET)
+			rv = 0;
+		break;
+	}
 	splx(s);
 
 	return rv;
