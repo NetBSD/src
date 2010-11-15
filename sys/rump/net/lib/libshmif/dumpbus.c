@@ -1,4 +1,4 @@
-/*	$NetBSD: dumpbus.c,v 1.8 2010/08/13 11:45:47 pooka Exp $	*/
+/*	$NetBSD: dumpbus.c,v 1.9 2010/11/15 22:45:23 pooka Exp $	*/
 
 /*
  * Little utility to convert shmif bus traffic to a pcap file
@@ -26,7 +26,7 @@ static void
 usage(void)
 {
 
-	fprintf(stderr, "usage: a.out [-p pcapfile] buspath\n");
+	fprintf(stderr, "usage: a.out [-h] [-p pcapfile] buspath\n");
 	exit(1);
 }
 
@@ -42,9 +42,13 @@ main(int argc, char *argv[])
 	int fd, pfd, i, ch;
 	int bonus;
 	char *buf;
+	bool hflag = false;
 
-	while ((ch = getopt(argc, argv, "p:")) != -1) {
+	while ((ch = getopt(argc, argv, "hp:")) != -1) {
 		switch (ch) {
+		case 'h':
+			hflag = true;
+			break;
 		case 'p':
 			pcapfile = optarg;
 			break;
@@ -70,11 +74,11 @@ main(int argc, char *argv[])
 	if (fstat(fd, &sb) == -1)
 		err(1, "stat");
 
-	busmem = mmap(NULL, sb.st_size, PROT_READ, MAP_FILE, fd, 0);
+	busmem = mmap(NULL, sb.st_size, PROT_READ, MAP_FILE|MAP_SHARED, fd, 0);
 	if (busmem == MAP_FAILED)
 		err(1, "mmap");
-
 	bmem = busmem;
+
 	if (bmem->shm_magic != SHMIF_MAGIC)
 		errx(1, "%s not a shmif bus", argv[0]);
 	if (bmem->shm_version != SHMIF_VERSION)
@@ -84,6 +88,9 @@ main(int argc, char *argv[])
 	    ", firstoff: 0x%04x, lastoff: 0x%04x\n",
 	    bmem->shm_version, bmem->shm_lock, bmem->shm_gen,
 	    bmem->shm_first, bmem->shm_last);
+
+	if (hflag)
+		exit(0);
 
 	if (pcapfile) {
 		struct pcap_file_header phdr;
