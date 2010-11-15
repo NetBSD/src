@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.111 2010/03/02 21:17:31 pooka Exp $	*/
+/*	$NetBSD: machdep.c,v 1.112 2010/11/15 06:25:42 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura, All rights reserved.
@@ -108,7 +108,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.111 2010/03/02 21:17:31 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.112 2010/11/15 06:25:42 uebayasi Exp $");
 
 #include "opt_vr41xx.h"
 #include "opt_tx39xx.h"
@@ -135,6 +135,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.111 2010/03/02 21:17:31 pooka Exp $");
 #include <sys/boot_flag.h>
 #include <sys/ksyms.h>
 #include <sys/device.h>
+#include <sys/lwp.h>
 
 #include <uvm/uvm_extern.h>
 
