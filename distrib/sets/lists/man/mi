@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1249 2010/11/13 00:47:23 jnemeth Exp $
+# $NetBSD: mi,v 1.1250 2010/11/15 21:56:46 pooka Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1712,6 +1712,7 @@
 ./usr/share/man/cat4/viapm.0			man-obsolete		obsolete
 ./usr/share/man/cat4/video.0			man-sys-catman		.cat
 ./usr/share/man/cat4/vinum.0			man-obsolete		obsolete
+./usr/share/man/cat4/virt.0			man-sys-catman		.cat
 ./usr/share/man/cat4/vlan.0			man-sys-catman		.cat
 ./usr/share/man/cat4/vmmon.0			man-sys-catman		.cat
 ./usr/share/man/cat4/vmnet.0			man-sys-catman		.cat
@@ -4331,6 +4332,7 @@
 ./usr/share/man/html4/viaide.html		man-sys-htmlman		html
 ./usr/share/man/html4/video.html		man-sys-htmlman		html
 ./usr/share/man/html4/vlan.html			man-sys-htmlman		html
+./usr/share/man/html4/virt.html			man-sys-htmlman		html
 ./usr/share/man/html4/vmmon.html		man-sys-htmlman		html
 ./usr/share/man/html4/vmnet.html		man-sys-htmlman		html
 ./usr/share/man/html4/vnd.html			man-sys-htmlman		html
@@ -6886,6 +6888,7 @@
 ./usr/share/man/man4/viapm.4			man-obsolete		obsolete
 ./usr/share/man/man4/video.4			man-sys-man		.man
 ./usr/share/man/man4/vinum.4			man-obsolete		obsolete
+./usr/share/man/man4/virt.4			man-sys-man		.man
 ./usr/share/man/man4/vlan.4			man-sys-man		.man
 ./usr/share/man/man4/vmmon.4			man-sys-man		.man
 ./usr/share/man/man4/vmnet.4			man-sys-man		.man
