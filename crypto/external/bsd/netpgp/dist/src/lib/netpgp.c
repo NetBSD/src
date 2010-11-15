@@ -34,7 +34,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: netpgp.c,v 1.82 2010/11/07 21:41:38 agc Exp $");
+__RCSID("$NetBSD: netpgp.c,v 1.83 2010/11/15 08:03:39 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -697,6 +697,45 @@ formatbignum(char *buffer, BIGNUM *bn)
 	return cc;
 }
 
+#define MAX_PASSPHRASE_ATTEMPTS	3
+
+/* get the passphrase from the user */
+static int
+find_passphrase(FILE *passfp, const char *id, char *passphrase, size_t size)
+{
+	char	 prompt[BUFSIZ];
+	char	 buf[128];
+	char	*cp;
+	int	 cc;
+	int	 i;
+
+	if (passfp) {
+		if (fgets(passphrase, size, passfp) == NULL) {
+			return 0;
+		}
+		return strlen(passphrase);
+	}
+	for (i = 0 ; i < MAX_PASSPHRASE_ATTEMPTS ; i++) {
+		(void) snprintf(prompt, sizeof(prompt), "Enter passphrase for %.16s: ", id);
+		if ((cp = getpass(prompt)) == NULL) {
+			break;
+		}
+		cc = snprintf(buf, sizeof(buf), "%s", cp);
+		(void) snprintf(prompt, sizeof(prompt), "Repeat passphrase for %.16s: ", id);
+		if ((cp = getpass(prompt)) == NULL) {
+			break;
+		}
+		cc = snprintf(passphrase, size, "%s", cp);
+		if (strcmp(buf, passphrase) == 0) {
+			(void) memset(buf, 0x0, sizeof(buf));
+			return cc;
+		}
+	}
+	(void) memset(buf, 0x0, sizeof(buf));
+	(void) memset(passphrase, 0x0, size);
+	return 0;
+}
+
 /***************************************************************************/
 /* exported functions start here */
 /***************************************************************************/
@@ -1086,6 +1125,8 @@ netpgp_import_key(netpgp_t *netpgp, char *f)
 	return pgp_keyring_list(io, netpgp->pubring, 0);
 }
 
+#define ID_OFFSET	38
+
 /* generate a new key */
 int
 netpgp_generate_key(netpgp_t *netpgp, char *id, int numbits)
@@ -1095,11 +1136,13 @@ netpgp_generate_key(netpgp_t *netpgp, char *id, int numbits)
 	pgp_key_t		*key;
 	pgp_io_t		*io;
 	uint8_t			*uid;
+	char			 passphrase[128];
 	char			 newid[1024];
 	char			 filename[MAXPATHLEN];
 	char			 dir[MAXPATHLEN];
 	char			*cp;
 	char			*ringfile;
+	int             	 passc;
 	int             	 fd;
 
 	uid = NULL;
@@ -1123,7 +1166,7 @@ netpgp_generate_key(netpgp_t *netpgp, char *id, int numbits)
 	pgp_sprint_keydata(netpgp->io, NULL, key, &cp, "signature ", &key->key.seckey.pubkey, 0);
 	(void) fprintf(stdout, "%s", cp);
 	/* write public key */
-	(void) snprintf(dir, sizeof(dir), "%s/%.16s", netpgp_getvar(netpgp, "homedir"), &cp[38]);
+	(void) snprintf(dir, sizeof(dir), "%s/%.16s", netpgp_getvar(netpgp, "homedir"), &cp[ID_OFFSET]);
 	if (mkdir(dir, 0700) < 0) {
 		(void) fprintf(io->errs, "can't mkdir '%s'\n", dir);
 		return 0;
@@ -1146,7 +1189,9 @@ netpgp_generate_key(netpgp_t *netpgp, char *id, int numbits)
 		(void) fprintf(io->errs, "can't append secring '%s'\n", ringfile);
 		return 0;
 	}
-	if (!pgp_write_xfer_seckey(create, key, NULL, 0, noarmor)) {
+	/* get the passphrase */
+	passc = find_passphrase(netpgp->passfp, &cp[ID_OFFSET], passphrase, sizeof(passphrase));
+	if (!pgp_write_xfer_seckey(create, key, (uint8_t *)passphrase, passc, noarmor)) {
 		(void) fprintf(io->errs, "Cannot write seckey\n");
 		return 0;
 	}

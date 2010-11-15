@@ -58,7 +58,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: writer.c,v 1.30 2010/11/07 08:40:00 agc Exp $");
+__RCSID("$NetBSD: writer.c,v 1.31 2010/11/15 08:03:40 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -1171,7 +1171,7 @@ pgp_write_se_ip_pktset(pgp_output_t *output,
 
 	/* now construct MDC packet and add to the end of the buffer */
 	pgp_setup_memory_write(&mdcoutput, &mdc, mdcsize);
-	pgp_calc_mdc_hash(preamble, preamblesize, data, len, &hashed[0]);
+	pgp_calc_mdc_hash(preamble, preamblesize, data, len, hashed);
 	pgp_write_mdc(mdcoutput, hashed);
 
 	if (pgp_get_debug_level(__FILE__)) {
@@ -1351,15 +1351,18 @@ pgp_push_checksum_writer(pgp_output_t *output, pgp_seckey_t *seckey)
 {
 	/* XXX: push a SHA-1 checksum writer (and change s2k to 254). */
 	skey_checksum_t *sum;
+	unsigned	 hashsize;
 
 	if ((sum = calloc(1, sizeof(*sum))) == NULL) {
 		(void) fprintf(stderr,
 			"pgp_push_checksum_writer: bad alloc\n");
 	} else {
 		/* configure the arg */
-		sum->hash_alg = seckey->hash_alg;
+		/* Hardcoded SHA1 for just now */
+		sum->hash_alg = PGP_HASH_SHA1;
+		hashsize = pgp_hash_size(sum->hash_alg);
 		if ((sum->hashed = seckey->checkhash) == NULL) {
-			sum->hashed = seckey->checkhash = calloc(1, PGP_CHECKHASH_SIZE);
+			sum->hashed = seckey->checkhash = calloc(1, hashsize);
 		}
 		/* init the hash */
 		pgp_hash_any(&sum->hash, sum->hash_alg);
