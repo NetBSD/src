@@ -1,4 +1,4 @@
-/*	$NetBSD: picvar.h,v 1.4 2008/12/30 05:43:14 matt Exp $	*/
+/*	$NetBSD: picvar.h,v 1.4.4.1 2010/11/15 14:38:22 uebayasi Exp $	*/
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,6 +29,8 @@
  */
 #ifndef _ARM_PIC_PICVAR_H_
 #define _ARM_PIC_PICVAR_H_
+
+#include <sys/evcnt.h>
 
 int	_splraise(int);
 int	_spllower(int);
