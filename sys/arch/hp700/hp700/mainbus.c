@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.72 2010/11/12 06:54:56 skrll Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.73 2010/11/15 06:24:53 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.72 2010/11/12 06:54:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.73 2010/11/15 06:24:53 uebayasi Exp $");
 
 #include "locators.h"
 #include "power.h"
@@ -70,6 +70,7 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.72 2010/11/12 06:54:56 skrll Exp $");
 #include <sys/reboot.h>
 #include <sys/extent.h>
 #include <sys/mbuf.h>
+#include <sys/proc.h>
 
 #include <uvm/uvm_page.h>
 #include <uvm/uvm.h>
