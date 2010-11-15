@@ -57,7 +57,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: keyring.c,v 1.48 2010/11/07 08:39:59 agc Exp $");
+__RCSID("$NetBSD: keyring.c,v 1.49 2010/11/15 08:50:32 agc Exp $");
 #endif
 
 #ifdef HAVE_FCNTL_H
@@ -398,7 +398,7 @@ pgp_is_key_supported(const pgp_key_t *key)
 \note If dst already has a userid, it will be freed.
 */
 static uint8_t * 
-pgp_copy_userid(uint8_t **dst, const uint8_t *src)
+copy_userid(uint8_t **dst, const uint8_t *src)
 {
 	size_t          len;
 
@@ -407,7 +407,7 @@ pgp_copy_userid(uint8_t **dst, const uint8_t *src)
 		free(*dst);
 	}
 	if ((*dst = calloc(1, len + 1)) == NULL) {
-		(void) fprintf(stderr, "pgp_copy_userid: bad alloc\n");
+		(void) fprintf(stderr, "copy_userid: bad alloc\n");
 	} else {
 		(void) memcpy(*dst, src, len);
 	}
@@ -423,13 +423,13 @@ pgp_copy_userid(uint8_t **dst, const uint8_t *src)
 \note If dst already has a packet, it will be freed.
 */
 static pgp_subpacket_t * 
-pgp_copy_packet(pgp_subpacket_t *dst, const pgp_subpacket_t *src)
+copy_packet(pgp_subpacket_t *dst, const pgp_subpacket_t *src)
 {
 	if (dst->raw) {
 		free(dst->raw);
 	}
 	if ((dst->raw = calloc(1, src->length)) == NULL) {
-		(void) fprintf(stderr, "pgp_copy_packet: bad alloc\n");
+		(void) fprintf(stderr, "copy_packet: bad alloc\n");
 	} else {
 		dst->length = src->length;
 		(void) memcpy(dst->raw, src->raw, src->length);
@@ -454,7 +454,7 @@ pgp_add_userid(pgp_key_t *key, const uint8_t *userid)
 	uidp = &key->uids[key->uidc++];
 	*uidp = NULL;
 	/* now copy it */
-	return pgp_copy_userid(uidp, userid);
+	return copy_userid(uidp, userid);
 }
 
 void print_packet_hex(const pgp_subpacket_t *pkt);
@@ -477,7 +477,7 @@ pgp_add_subpacket(pgp_key_t *keydata, const pgp_subpacket_t *packet)
 	subpktp->length = 0;
 	subpktp->raw = NULL;
 	/* now copy it */
-	return pgp_copy_packet(subpktp, packet);
+	return copy_packet(subpktp, packet);
 }
 
 /**

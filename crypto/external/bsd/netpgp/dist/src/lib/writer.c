@@ -58,7 +58,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: writer.c,v 1.31 2010/11/15 08:03:40 agc Exp $");
+__RCSID("$NetBSD: writer.c,v 1.32 2010/11/15 08:50:32 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -1470,13 +1470,13 @@ pgp_push_stream_enc_se_ip(pgp_output_t *output, const pgp_key_t *pubkey, const c
 
 /* calculate the partial data length */
 static unsigned 
-pgp_partial_data_len(unsigned len)
+partial_data_len(unsigned len)
 {
 	unsigned	mask;
 	int		i;
 
 	if (len == 0) {
-		(void) fprintf(stderr, "pgp_partial_data_len: 0 len\n");
+		(void) fprintf(stderr, "partial_data_len: 0 len\n");
 		return 0;
 	}
 	if (len > MAX_PARTIAL_DATA_LENGTH) {
@@ -1516,7 +1516,7 @@ stream_write_litdata(pgp_output_t *output,
 	size_t          pdlen;
 
 	while (len > 0) {
-		pdlen = pgp_partial_data_len(len);
+		pdlen = partial_data_len(len);
 		write_partial_len(output, (unsigned)pdlen);
 		pgp_write(output, data, (unsigned)pdlen);
 		data += pdlen;
@@ -1539,7 +1539,7 @@ stream_write_litdata_first(pgp_output_t *output,
 	size_t		sz_pd;
 
 	sz_towrite = 1 + 1 + 4 + len;
-	sz_pd = (size_t)pgp_partial_data_len(sz_towrite);
+	sz_pd = (size_t)partial_data_len(sz_towrite);
 	if (sz_pd < 512) {
 		(void) fprintf(stderr,
 			"stream_write_litdata_first: bad sz_pd\n");
@@ -1576,7 +1576,7 @@ stream_write_se_ip(pgp_output_t *output,
 	size_t          pdlen;
 
 	while (len > 0) {
-		pdlen = pgp_partial_data_len(len);
+		pdlen = partial_data_len(len);
 		write_partial_len(output, (unsigned)pdlen);
 
 		pgp_push_enc_crypt(output, se_ip->crypt);
@@ -1611,7 +1611,7 @@ stream_write_se_ip_first(pgp_output_t *output,
 			"stream_write_se_ip_first: bad alloc\n");
 		return 0;
 	}
-	sz_pd = (size_t)pgp_partial_data_len((unsigned)sz_towrite);
+	sz_pd = (size_t)partial_data_len((unsigned)sz_towrite);
 	if (sz_pd < 512) {
 		free(preamble);
 		(void) fprintf(stderr,

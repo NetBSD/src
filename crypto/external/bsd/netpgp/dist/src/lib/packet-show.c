@@ -60,7 +60,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: packet-show.c,v 1.19 2010/11/07 08:39:59 agc Exp $");
+__RCSID("$NetBSD: packet-show.c,v 1.20 2010/11/15 08:50:32 agc Exp $");
 #endif
 
 #include <stdlib.h>
@@ -743,7 +743,7 @@ pgp_showall_ss_skapref(const pgp_data_t *ss_skapref)
  * \return string or "Unknown"
 */
 static const char *
-pgp_show_ss_feature(uint8_t octet, unsigned offset)
+show_ss_feature(uint8_t octet, unsigned offset)
 {
 	if (offset >= PGP_ARRAY_SIZE(ss_feature_map)) {
 		return "Unknown";
@@ -780,7 +780,7 @@ pgp_showall_ss_features(pgp_data_t ss_features)
 		for (j = 0; j < 8; j++, mask = (unsigned)mask >> 1) {
 			bit = ss_features.contents[i] & mask;
 			if (bit) {
-				str = pgp_show_ss_feature(bit, i);
+				str = show_ss_feature(bit, i);
 				if (!add_bitmap_entry(text, str, bit)) {
 					pgp_text_free(text);
 					return NULL;

@@ -58,7 +58,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: packet-print.c,v 1.39 2010/11/07 08:39:59 agc Exp $");
+__RCSID("$NetBSD: packet-print.c,v 1.40 2010/11/15 08:50:32 agc Exp $");
 #endif
 
 #include <string.h>
@@ -732,7 +732,7 @@ pgp_sprint_pubkey(const pgp_key_t *key, char *out, size_t outsize)
 \param seckey
 */
 static void
-pgp_print_seckey_verbose(const pgp_content_enum type,
+print_seckey_verbose(const pgp_content_enum type,
 				const pgp_seckey_t *seckey)
 {
 	printf("------- SECRET KEY or ENCRYPTED SECRET KEY ------\n");
@@ -774,7 +774,7 @@ pgp_print_seckey_verbose(const pgp_content_enum type,
 
 	default:
 		(void) fprintf(stderr,
-			"pgp_print_seckey_verbose: unusual algorithm\n");
+			"print_seckey_verbose: unusual algorithm\n");
 	}
 	if (seckey->s2k_usage == PGP_S2KU_ENCRYPTED_AND_HASHED) {
 		print_hexdump(0, "Checkhash", seckey->checkhash,
@@ -792,7 +792,7 @@ pgp_print_seckey_verbose(const pgp_content_enum type,
 \param key
 */
 static void 
-pgp_print_pk_sesskey(pgp_content_enum tag,
+print_pk_sesskey(pgp_content_enum tag,
 			 const pgp_pk_sesskey_t * key)
 {
 	print_tagname(0, (tag == PGP_PTAG_CT_PK_SESSION_KEY) ?
@@ -814,7 +814,7 @@ pgp_print_pk_sesskey(pgp_content_enum tag,
 
 	default:
 		(void) fprintf(stderr,
-			"pgp_print_pk_sesskey: unusual algorithm\n");
+			"print_pk_sesskey: unusual algorithm\n");
 	}
 	if (tag == PGP_PTAG_CT_PK_SESSION_KEY) {
 		printf("Symmetric algorithm: %d (%s)\n", key->symm_alg,
@@ -1345,12 +1345,12 @@ pgp_print_packet(pgp_printstate_t *print, const pgp_packet_t *pkt)
 
 	case PGP_PTAG_CT_SECRET_KEY:
 		print_tagname(print->indent, "PGP_PTAG_CT_SECRET_KEY");
-		pgp_print_seckey_verbose(pkt->tag, &content->seckey);
+		print_seckey_verbose(pkt->tag, &content->seckey);
 		break;
 
 	case PGP_PTAG_CT_ENCRYPTED_SECRET_KEY:
 		print_tagname(print->indent, "PGP_PTAG_CT_ENCRYPTED_SECRET_KEY");
-		pgp_print_seckey_verbose(pkt->tag, &content->seckey);
+		print_seckey_verbose(pkt->tag, &content->seckey);
 		break;
 
 	case PGP_PTAG_CT_ARMOUR_HEADER:
@@ -1394,11 +1394,11 @@ pgp_print_packet(pgp_printstate_t *print, const pgp_packet_t *pkt)
 
 	case PGP_PTAG_CT_PK_SESSION_KEY:
 	case PGP_PTAG_CT_ENCRYPTED_PK_SESSION_KEY:
-		pgp_print_pk_sesskey(pkt->tag, &content->pk_sesskey);
+		print_pk_sesskey(pkt->tag, &content->pk_sesskey);
 		break;
 
 	case PGP_GET_SECKEY:
-		pgp_print_pk_sesskey(PGP_PTAG_CT_ENCRYPTED_PK_SESSION_KEY,
+		print_pk_sesskey(PGP_PTAG_CT_ENCRYPTED_PK_SESSION_KEY,
 				    content->get_seckey.pk_sesskey);
 		break;
 
