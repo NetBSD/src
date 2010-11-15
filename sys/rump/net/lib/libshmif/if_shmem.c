@@ -1,4 +1,4 @@
-/*	$NetBSD: if_shmem.c,v 1.29 2010/11/15 22:48:06 pooka Exp $	*/
+/*	$NetBSD: if_shmem.c,v 1.30 2010/11/15 23:59:06 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.29 2010/11/15 22:48:06 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.30 2010/11/15 23:59:06 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -277,11 +277,10 @@ rump_shmif_create(const char *path, int *ifnum)
 static int
 shmif_clone(struct if_clone *ifc, int unit)
 {
-	int mynum;
 
 	/* not atomic against rump_shmif_create().  so "don't do it". */
-	if (unit >= mynum)
-		mynum = unit+1;
+	if (unit >= numif)
+		numif = unit+1;
 
 	return allocif(unit, NULL);
 }
