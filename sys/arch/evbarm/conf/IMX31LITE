@@ -1,4 +1,4 @@
-#	$NetBSD: IMX31LITE,v 1.9 2009/12/05 20:11:11 pooka Exp $
+#	$NetBSD: IMX31LITE,v 1.10 2010/11/15 18:21:19 bsh Exp $
 #
 #	IMX31LITE -- Freescale IMX31LITE Evaluation Board Kernel
 #
@@ -22,6 +22,7 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 options 	CPU_ARM1136	# Support the SA110 core
 
 # Architecture options
+options        IMX31_IPGCLK_FREQ=66000000	# Fixme. bogus value
 
 # File systems
 
