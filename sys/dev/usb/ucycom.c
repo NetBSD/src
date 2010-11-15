@@ -1,4 +1,4 @@
-/*	$NetBSD: ucycom.c,v 1.31 2010/11/03 22:34:23 dyoung Exp $	*/
+/*	$NetBSD: ucycom.c,v 1.32 2010/11/15 06:01:07 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucycom.c,v 1.31 2010/11/03 22:34:23 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucycom.c,v 1.32 2010/11/15 06:01:07 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,6 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: ucycom.c,v 1.31 2010/11/03 22:34:23 dyoung Exp $");
 #include <sys/file.h>
 #include <sys/vnode.h>
 #include <sys/kauth.h>
+#include <sys/lwp.h>
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbhid.h>
