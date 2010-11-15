@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.26.6.7 2010/11/06 08:08:14 uebayasi Exp $	*/
+/*	$NetBSD: mem.c,v 1.26.6.8 2010/11/15 15:11:53 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
 #include "opt_xip.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.26.6.7 2010/11/06 08:08:14 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.26.6.8 2010/11/15 15:11:53 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -220,6 +220,5 @@ mmmmap(dev_t dev, off_t off, int prot)
 	if (off >= ctob(physmem) && kauth_authorize_machdep(l->l_cred,
 	    KAUTH_MACHDEP_UNMANAGEDMEM, NULL, NULL, NULL, NULL) != 0)
 		return -1;
-
-	return pmap_mmap(0, off);
+	return arm_btop(off);
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.30.2.5 2010/10/30 08:41:05 uebayasi Exp $ */
+/* $NetBSD: pmap.c,v 1.30.2.6 2010/11/15 15:11:52 uebayasi Exp $ */
 /*-
  * Copyright (c) 1997, 1998, 2000 Ben Harris
  * All rights reserved.
@@ -102,7 +102,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.30.2.5 2010/10/30 08:41:05 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.30.2.6 2010/11/15 15:11:52 uebayasi Exp $");
 
 #include <sys/kernel.h> /* for cold */
 #include <sys/malloc.h>
@@ -721,13 +721,6 @@ pmap_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 		}
 	}
 	splx(s);
-}
-
-paddr_t
-pmap_mmap(vaddr_t addr, off_t off)
-{
-
-	return atop(addr + off);
 }
 
 bool

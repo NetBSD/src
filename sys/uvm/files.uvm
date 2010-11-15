@@ -1,4 +1,4 @@
-#	$NetBSD: files.uvm,v 1.16.2.2 2010/10/30 08:41:14 uebayasi Exp $
+#	$NetBSD: files.uvm,v 1.16.2.3 2010/11/15 15:11:54 uebayasi Exp $
 
 #
 # UVM options
@@ -44,5 +44,3 @@ file	uvm/uvm_swapstub.c		!vmswap
 file	uvm/uvm_unix.c
 file	uvm/uvm_user.c
 file	uvm/uvm_vnode.c
-
-file	common/pmap/pmap_common.c
