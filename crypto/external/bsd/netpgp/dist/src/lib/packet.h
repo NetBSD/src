@@ -855,7 +855,7 @@ typedef union {
 	const char 			*armour_trailer;
 	pgp_headers_t			cleartext_head;
 	pgp_fixed_body_t		cleartext_body;
-	struct _ops_hash_t		*cleartext_trailer;
+	struct pgp_hash_t		*cleartext_trailer;
 	pgp_dyn_body_t		unarmoured_text;
 	pgp_pk_sesskey_t		pk_sesskey;
 	pgp_seckey_passphrase_t	skey_passphrase;
