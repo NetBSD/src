@@ -54,7 +54,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: crypto.c,v 1.32 2010/11/07 08:39:59 agc Exp $");
+__RCSID("$NetBSD: crypto.c,v 1.33 2010/11/15 08:50:32 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -316,7 +316,7 @@ write_parsed_cb(const pgp_packet_t *pkt, pgp_cbdata_t *cbinfo)
 	case PGP_PTAG_CT_SE_DATA_BODY:
 	case PGP_PTAG_CT_SE_DATA_HEADER:
 		/* Ignore these packets  */
-		/* They're handled in pgp_parse_packet() */
+		/* They're handled in parse_packet() */
 		/* and nothing else needs to be done */
 		break;
 
