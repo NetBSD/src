@@ -1,4 +1,4 @@
-/*	$NetBSD: i82489reg.h,v 1.9 2010/01/09 20:50:11 cegger Exp $	*/
+/*	$NetBSD: i82489reg.h,v 1.10 2010/11/15 11:58:09 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -142,6 +142,48 @@
 #define LAPIC_BASE		0xfee00000
 
 #define LAPIC_IRQ_MASK(i)	(1 << ((i) + 1))
+
+/* Extended APIC registers, valid when CPUID features4 EAPIC is present */
+#define LEAPIC_FR	0x400				/* Feature register */
+#	define LEAPIC_FR_ELC		__BITS(23,16)	/* Ext. Lvt Count RO */
+#	define LEAPIC_FR_EIDCAP		__BIT(2)	/* Ext. Apic ID Cap. RO */
+#	define LEAPIC_FR_SEIOCAP	__BIT(1)	/* Specific EOI Cap. RO */
+#	define LEAPIC_FR_IERCAP		__BIT(0)	/* Intr. Enable Reg. RO */
+
+#define LEAPIC_CR	0x410	/* Control Register */
+#	define LEAPIC_CR_EID_ENABLE	__BIT(2)	/* Ext. Apic ID enable */
+#	define LEAPIC_CR_SEOI_ENABLE	__BIT(1)	/* Specific EOI enable */
+#	define LEAPIC_CR_IER_ENABLE	__BIT(0)	/* Enable writes to IER */
+
+#define LEAPIC_SEOIR	0x420	/* Specific EOI Register */
+#	define LEAPIC_SEOI_VEC	__BITS(7,0)
+
+#define LEAPIC_IER_480	0x480	/* Interrupts 0-31 */
+#define LEAPIC_IER_490	0x490	/* Interrupts 32-63 */
+#define LEAPIC_IER_4B0	0x4B0	/* Interrupts 64-95 */
+#define LEAPIC_IER_4C0	0x4C0	/* Interrupts 96-127 */
+#define LEAPIC_IER_4D0	0x4D0	/* Interrupts 128-159 */
+#define LEAPIC_IER_4E0	0x4E0	/* Interrupts 160-191 */
+#define LEAPIC_IER_4F0	0x4F0	/* Interrupts 192-255 */
+
+/* Extended Local Vector Table Entries */
+#define LEAPIC_LVTR_500	0x500
+#define LEAPIC_LVTR_504	0x504
+#define LEAPIC_LVTR_508	0x508
+#define LEAPIC_LVTR_50C	0x50C
+#define LEAPIC_LVTR_510	0x510
+#define LEAPIC_LVTR_514	0x514
+#define LEAPIC_LVTR_518	0x518
+#define LEAPIC_LVTR_51C	0x51C
+#define LEAPIC_LVTR_520	0x520
+#define LEAPIC_LVTR_524	0x524
+#define LEAPIC_LVTR_528	0x528
+#define LEAPIC_LVTR_52C	0x52C
+#define LEAPIC_LVTR_530	0x530
+#	define LEAPIC_LVTR_MASK		__BIT(16)	/* interrupt masked RW */
+#	define LEAPIC_LVTR_DSTAT	__BIT(12)	/* delivery state RO */
+#	define LEAPIC_LVTR_MSGTYPE	__BITS(10,8)	/* Message type */
+#	define LEAPIC_LVTR_VEC		__BITS(7,0)	/* the intr. vector */
 
 /*
  * Model specific registers
