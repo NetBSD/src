@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.1 2010/03/02 20:40:15 skrll Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.2 2010/11/15 06:32:38 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -30,9 +30,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.1 2010/03/02 20:40:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.2 2010/11/15 06:32:38 uebayasi Exp $");
 
 #include <sys/param.h>
+#include <sys/lwp.h>
+
 #include <machine/db_machdep.h>
 
 #include <ddb/db_command.h>
