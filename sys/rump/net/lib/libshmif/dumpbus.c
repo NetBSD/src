@@ -1,4 +1,4 @@
-/*	$NetBSD: dumpbus.c,v 1.9 2010/11/15 22:45:23 pooka Exp $	*/
+/*	$NetBSD: dumpbus.c,v 1.10 2010/11/15 22:49:33 pooka Exp $	*/
 
 /*
  * Little utility to convert shmif bus traffic to a pcap file
@@ -26,7 +26,7 @@ static void
 usage(void)
 {
 
-	fprintf(stderr, "usage: a.out [-h] [-p pcapfile] buspath\n");
+	fprintf(stderr, "usage: a.out [-h] [-p pcapfile] buspath\n");
 	exit(1);
 }
 
