@@ -1,4 +1,4 @@
-# $NetBSD: md.ofppc,v 1.10 2010/03/02 21:54:06 matt Exp $
+# $NetBSD: md.ofppc,v 1.11 2010/11/15 12:26:36 njoly Exp $
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/ofppc				comp-c-include
 ./usr/include/ofppc/_G_config.h			comp-obsolete		obsolete
@@ -54,3 +54,4 @@
 ./usr/include/ofppc/varargs.h			comp-c-include
 ./usr/include/ofppc/vmparam.h			comp-c-include
 ./usr/include/ofppc/wchar_limits.h		comp-c-include
+./usr/libdata/debug/usr/sbin/ofctl.debug	comp-sysutil-debug	debug
