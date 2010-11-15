@@ -1,7 +1,6 @@
-# $NetBSD: md.ofppc,v 1.8 2009/06/12 01:55:59 mrg Exp $
+# $NetBSD: md.ofppc,v 1.9 2010/11/15 12:23:06 njoly Exp $
 ./usr/X11R6/bin/X					-unknown-	x11
 ./usr/X11R6/bin/XFree86					-unknown-	x11
-./usr/X11R6/bin/dga					-unknown-	x11
 ./usr/X11R6/bin/gtf					-unknown-	x11
 ./usr/X11R6/bin/kbd_mode				-unknown-	x11
 ./usr/X11R6/bin/mmapr					-unknown-	x11
@@ -178,7 +177,6 @@
 ./usr/X11R6/lib/modules/libxf8_16bpp.a			-unknown-	x11
 ./usr/X11R6/lib/modules/libxf8_32bpp.a			-unknown-	x11
 ./usr/X11R6/man/cat1/XFree86.0				-unknown-	.cat,x11
-./usr/X11R6/man/cat1/dga.0				-unknown-	.cat,x11
 ./usr/X11R6/man/cat1/gtf.0				-unknown-	.cat,x11
 ./usr/X11R6/man/cat1/kbd_mode.0				-unknown-	.cat,x11
 ./usr/X11R6/man/cat1/pcitweak.0				-unknown-	.cat,x11
@@ -222,7 +220,6 @@
 ./usr/X11R6/man/cat4/wsfb.0				-unknown-	.cat,x11
 ./usr/X11R6/man/cat5/XF86Config.0			-unknown-	.cat,x11
 ./usr/X11R6/man/html1/XFree86.html			-unknown-	html,x11
-./usr/X11R6/man/html1/dga.html				-unknown-	html,x11
 ./usr/X11R6/man/html1/gtf.html				-unknown-	html,x11
 ./usr/X11R6/man/html1/kbd_mode.html			-unknown-	html,x11
 ./usr/X11R6/man/html1/pcitweak.html			-unknown-	html,x11
@@ -266,7 +263,6 @@
 ./usr/X11R6/man/html4/wsfb.html				-unknown-	html,x11
 ./usr/X11R6/man/html5/XF86Config.html			-unknown-	html,x11
 ./usr/X11R6/man/man1/XFree86.1				-unknown-	.man,x11
-./usr/X11R6/man/man1/dga.1				-unknown-	.man,x11
 ./usr/X11R6/man/man1/gtf.1				-unknown-	.man,x11
 ./usr/X11R6/man/man1/kbd_mode.1				-unknown-	.man,x11
 ./usr/X11R6/man/man1/pcitweak.1				-unknown-	.man,x11
