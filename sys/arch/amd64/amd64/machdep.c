@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.156 2010/11/12 13:18:56 uebayasi Exp $	*/
+/*	$NetBSD: machdep.c,v 1.157 2010/11/15 06:12:28 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.156 2010/11/12 13:18:56 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.157 2010/11/15 06:12:28 uebayasi Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -148,6 +148,8 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.156 2010/11/12 13:18:56 uebayasi Exp $
 #include <sys/syscallargs.h>
 #include <sys/ksyms.h>
 #include <sys/device.h>
+#include <sys/lwp.h>
+#include <sys/proc.h>
 
 #ifdef KGDB
 #include <sys/kgdb.h>
