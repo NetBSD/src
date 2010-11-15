@@ -1,4 +1,4 @@
-/* $NetBSD: imx31reg.h,v 1.4 2010/11/13 06:44:11 bsh Exp $ */
+/* $NetBSD: imx31reg.h,v 1.5 2010/11/15 18:19:19 bsh Exp $ */
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -57,6 +57,18 @@
 #define	GPIO2_BASE	0x53fd0000
 #define	GPIO3_BASE	0x53fa4000
 /* register definitions in imxgpiore.h */
+
+#define	GPIO_NPINS		32
+#define	GPIO_NGROUPS		3
+
+#define	GPIO_NO_SCLK0		GPIO_NO(3, 2)
+
+
+/* EPIT */
+
+#define	EPIT1_BASE	0x53f94000
+#define	EPIT2_BASE	0x53f98000
+
 
 #define	INTC_BASE		0x68000000
 #define	INTC_SIZE		0x0400
