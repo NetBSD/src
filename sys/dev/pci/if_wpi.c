@@ -1,4 +1,4 @@
-/*  $NetBSD: if_wpi.c,v 1.47 2010/04/05 07:20:28 joerg Exp $    */
+/*  $NetBSD: if_wpi.c,v 1.48 2010/11/15 05:57:39 uebayasi Exp $    */
 
 /*-
  * Copyright (c) 2006, 2007
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wpi.c,v 1.47 2010/04/05 07:20:28 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wpi.c,v 1.48 2010/11/15 05:57:39 uebayasi Exp $");
 
 /*
  * Driver for Intel PRO/Wireless 3945ABG 802.11 network adapters.
@@ -38,6 +38,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_wpi.c,v 1.47 2010/04/05 07:20:28 joerg Exp $");
 #include <sys/conf.h>
 #include <sys/kauth.h>
 #include <sys/callout.h>
+#include <sys/proc.h>
 
 #include <sys/bus.h>
 #include <machine/endian.h>
