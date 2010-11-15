@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep,v 1.1 2010/11/13 05:20:21 kiyohara Exp $
+.\"	$NetBSD: prep,v 1.2 2010/11/15 21:39:12 wiz Exp $
 .
 .Pp
 . 
@@ -16,10 +16,10 @@ Old Be file system
 .Pp
 The
 .Nx*M
-doesn't support to create/read/write both file systems.
+doesn't support creating/reading/writing either of the file systems.
 .Pp
-However nbpowerpc-mkbootimage can create the image of Old Be file system for
-floppy.
+However, nbpowerpc-mkbootimage can create an image using the Old
+Be file system for writing to a floppy.
 .
 .Ss2 Preparing the Bootable Media
 .
@@ -29,18 +29,18 @@ boot loader onto a floppy.
 .Pp
 Go to one of the
 .Nx
-mirror sites and download floppy image from the
+mirror sites and download a floppy image from the
 .Pa bebox/installation/floppy/
 directory named boot.fs or boot_vga.fs or boot_com.fs.
 .Pp
-boot.fs can boot with frame buffer.  If you look the 'Be' logo on your screen
-then use this.  Use boot_vga.fs, if not.
+boot.fs can boot with a frame buffer.  If you see the 'Be' logo on your screen
+then use this.  If not, use boot_vga.fs.
 .Pp
 .(disp
 .No # Ic "dd if=boot.fs of=/dev/rfd0a bs=18k"
 .disp)
 .Pp
-If you have a x86 PC which runs
+If you have an x86 PC which runs
 .Tn Windows
 and use it to write the floppy image(s) to floppy disk,
 you can use the
@@ -53,15 +53,16 @@ directory of the
 .Nx
 distribution.
 .Pp
-Also you can create boot.fs.
+Also you can create boot.fs in the following way:
 .Pp
 .(disp
 .No # Ic "nbpowerpc-mkbootimage -I -m bebox -b mdec/boot/boot boot.fs"
 .disp)
 .
-.Ss2 Loading kernel from Hard disk and Floppy disk.
+.Ss2 Loading the kernel from hard disk or floppy disk
 .
-boot supports load kernel from Hard disk and Floppy disk connect to onboard.
+boot supports loading a kernel from hard disk or floppy disk
+connected directly onboard.
 .
 .(bullet -compact
 Loading a kernel from the 'a' partition on master IDE disk:
@@ -70,7 +71,7 @@ Loading a kernel from the 'a' partition on master IDE disk:
 .disp)
 .Pp
 .It
-Loading a kernel from the Floppy disk:
+Loading a kernel from a floppy disk:
 .(disp
 .Ic /dev/disk/floppy:/netbsd
 .disp)
