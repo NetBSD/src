@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.14.2.1 2010/10/30 08:41:05 uebayasi Exp $	*/
+/*	$NetBSD: mem.c,v 1.14.2.2 2010/11/15 15:11:52 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.14.2.1 2010/10/30 08:41:05 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.14.2.2 2010/11/15 15:11:52 uebayasi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -212,9 +212,7 @@ mmmmap(dev_t dev, off_t off, int prot)
 
 	/* XXX This may botch our cacheing assumptions.  Do we care? */
 	ppn = atop(off);
-	KASSERT(ppn >= 0);
-	if (ppn >= physmem)
-		return -1;
-
-	return pmap_mmap(0, off);
+	if (ppn >= 0 && ppn < physmem)
+		return ppn;
+	return -1;
 }

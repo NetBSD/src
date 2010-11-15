@@ -1,4 +1,4 @@
-/* $NetBSD: mem.c,v 1.40.2.1 2010/10/30 08:41:06 uebayasi Exp $ */
+/* $NetBSD: mem.c,v 1.40.2.2 2010/11/15 15:11:53 uebayasi Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.40.2.1 2010/10/30 08:41:06 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.40.2.2 2010/11/15 15:11:53 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -216,6 +216,5 @@ mmmmap(dev_t dev, off_t off, int prot)
 	 */
 	if ((prot & alpha_pa_access(off)) != prot)
 		return (-1);
-
-	return pmap_mmap(0, off);
+	return (alpha_btop(off));
 }
