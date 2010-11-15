@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.196 2010/11/04 20:54:07 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.197 2010/11/15 20:24:09 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.196 2010/11/04 20:54:07 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.197 2010/11/15 20:24:09 pooka Exp $");
 
 #include <sys/systm.h>
 #define ELFSIZE ARCH_ELFSIZE
@@ -188,10 +188,19 @@ mksysctls(void)
 	    &hostname, MAXHOSTNAMELEN, CTL_KERN, KERN_HOSTNAME, CTL_EOL);
 }
 
+static const struct rumpuser_sp_ops spops = {
+	.spop_schedule		= rump_schedule,
+	.spop_unschedule	= rump_unschedule,
+	.spop_lwproc_switch	= rump_lwproc_switch,
+	.spop_lwproc_release	= rump_lwproc_releaselwp,
+	.spop_lwproc_newproc	= rump_lwproc_newproc,
+	.spop_lwproc_curlwp	= rump_lwproc_curlwp,
+	.spop_syscall		= rump_syscall,
+};
+
 int
 rump__init(int rump_version)
 {
-	struct rumpuser_sp_ops spops;
 	char buf[256];
 	struct timespec ts;
 	uint64_t sec, nsec;
@@ -208,14 +217,6 @@ rump__init(int rump_version)
 		rump_inited = 1;
 
 	/* Check our role as a rump proxy */
-	spops.spop_schedule		= rump_schedule;
-	spops.spop_unschedule		= rump_unschedule;
-	spops.spop_lwproc_switch	= rump_lwproc_switch;
-	spops.spop_lwproc_release	= rump_lwproc_releaselwp;
-	spops.spop_lwproc_newproc	= rump_lwproc_newproc;
-	spops.spop_lwproc_curlwp	= rump_lwproc_curlwp;
-	spops.spop_syscall		= rump_syscall;
-
 	if (rumpuser_getenv("RUMP_SP_SERVER", buf, sizeof(buf), &error) == 0) {
 		error = rumpuser_sp_init(&spops, buf);
 		if (error)
