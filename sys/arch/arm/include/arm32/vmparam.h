@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.24.2.2 2010/02/23 07:03:12 uebayasi Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.24.2.3 2010/11/15 14:38:22 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -97,46 +97,6 @@ extern vaddr_t virtual_end;
 	((virtual_end - virtual_avail) * 4 / 10)
 #endif
 
-/*
- * pmap-specific data store in the vm_page structure.
- */
-#define	__HAVE_VM_PAGE_MD
-struct vm_page_md {
-	SLIST_HEAD(,pv_entry) pvh_list;		/* pv_entry list */
-	struct simplelock pvh_slock;		/* lock on this head */
-	int pvh_attrs;				/* page attributes */
-	u_int uro_mappings;
-	u_int urw_mappings;
-	union {
-		u_short s_mappings[2];	/* Assume kernel count <= 65535 */
-		u_int i_mappings;
-	} k_u;
-#define	kro_mappings	k_u.s_mappings[0]
-#define	krw_mappings	k_u.s_mappings[1]
-#define	k_mappings	k_u.i_mappings
-};
-
-/*
- * Set the default color of each page.
- */
-#if ARM_MMU_V6 > 0
-#define	VM_MDPAGE_PVH_ATTRS_INIT(md, pa) \
-	(md)->pvh_attrs = (pa) & arm_cache_prefer_mask
-#else
-#define	VM_MDPAGE_PVH_ATTRS_INIT(md, pa) \
-	(md)->pvh_attrs = 0
-#endif
- 
-
-#define	VM_MDPAGE_INIT(md, pa)						\
-do {									\
-	SLIST_INIT(&(md)->pvh_list);					\
-	simple_lock_init(&(md)->pvh_slock);				\
-	VM_MDPAGE_PVH_ATTRS_INIT((md), (pa));				\
-	(md)->uro_mappings = 0;						\
-	(md)->urw_mappings = 0;						\
-	(md)->k_mappings = 0;						\
-} while (/*CONSTCOND*/0)
 #endif /* __ASSEMBLER__ */
 
 #endif /* _KERNEL */

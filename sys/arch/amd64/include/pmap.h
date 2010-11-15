@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.22 2008/10/26 00:08:15 mrg Exp $	*/
+/*	$NetBSD: pmap.h,v 1.22.14.1 2010/11/15 14:38:21 uebayasi Exp $	*/
 
 /*
  *
@@ -342,6 +342,17 @@ pmap_pte_flush(void)
 
 void pmap_prealloc_lowmem_ptps(void);
 void pmap_changeprot_local(vaddr_t, vm_prot_t);
+
+#include <x86/pmap_pv.h>
+
+#define	__HAVE_VM_PAGE_MD
+#define	VM_MDPAGE_INIT(md, pa) \
+	memset((md), 0, sizeof(*(md))); \
+	PMAP_PAGE_INIT(&(md)->mp_pp)
+
+struct vm_page_md {
+	struct pmap_page mp_pp;
+};
 
 #else	/*	__x86_64__	*/
 

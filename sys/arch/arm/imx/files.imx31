@@ -1,0 +1,69 @@
+#	$NetBSD: files.imx31,v 1.5.2.2 2010/11/15 14:38:21 uebayasi Exp $
+#
+# Configuration info for the Freescale i.MX31
+#
+
+defparam opt_imx.h				MEMSIZE
+defflag opt_imx.h				IMX51
+
+define	bus_dma_generic
+
+file	arch/arm/imx/imx_space.c
+file	arch/arm/imx/imx_dma.c		bus_dma_generic
+
+# iMX L2 Cache Controller
+device	l2cc
+attach	l2cc at mainbus
+file	arch/arm/imx/imx31_l2cc.c		l2cc
+
+# iMX AHB
+device	ahb  { [addr=-1], [size=0], [intr=-1], [irqbase=-1]} : bus_space_generic
+attach	ahb at mainbus
+file	arch/arm/imx/imx31_ahb.c		ahb
+
+# iMX AdVanced Interrupt Controller
+include "arch/arm/pic/files.pic"
+device	avic: pic
+attach	avic at ahb
+file	arch/arm/imx/imx31_icu.c		avic		needs-flag
+file	arch/arm/arm32/irq_dispatch.S
+
+# iMX IP bus
+device	aips { [addr=-1], [size=0], [intr=-1]} : bus_space_generic
+attach	aips at ahb
+file	arch/arm/imx/imx31_aips.c		aips
+
+# iMX EMI (external memory interface)
+device	emi { [offset=-1], [size=0], [intr=-1] } : bus_space_generic
+attach	emi at ahb
+file	arch/arm/imx/imx31_emi.c		emi
+
+# iMX GPIO
+device	imxgpio: gpiobus
+attach	imxgpio at ahb
+file	arch/arm/imx/imx31_gpio.c		imxgpio		needs-flag
+
+# iMX M3IF - Multi Master Memory Interface
+# iMX ESDCTL/MDDRC - Enhanced SDRAM/LPDDR memory controller
+# iMX PCMCIA - PCMCIA memory controller
+# iMX NANDFC - NAND Flash memory controller
+# iMX WEIM - Wireless External Interface Module
+
+# iMX clock
+file	arch/arm/imx/imxclock.c
+
+# iMX UART
+device	imxuart
+attach	imxuart at aips
+file	arch/arm/imx/imxuart.c			imxuart	needs-flag
+file	arch/arm/imx/imx31_uart.c		imxuart
+defflag	opt_imxuart.h				IMXUARTCONSOLE
+
+attach	ehci at ahb with ehci_ahb : bus_dma_generic
+file	arch/arm/imx/echi_ahb.c			ehci_ahb
+
+attach	ohci at ahb with ohci_ahb : bus_dma_generic
+file	arch/arm/imx/ochi_ahb.c			ohci_ahb
+
+attach	wdc at ahb with wdc_ahb : bus_dma_generic
+file	arch/arm/imx/wdc_ahb.c			wdc_ahb

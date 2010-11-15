@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.75.2.1 2010/02/25 03:44:17 uebayasi Exp $ */
+/* $NetBSD: pmap.h,v 1.75.2.2 2010/11/15 14:38:21 uebayasi Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001, 2007 The NetBSD Foundation, Inc.
@@ -348,6 +348,22 @@ do {									\
 		alpha_pal_imb();					\
 	}								\
 } while (0)
+
+/*
+ * pmap-specific data store in the vm_page structure.
+ */
+#define	__HAVE_VM_PAGE_MD
+struct vm_page_md {
+	struct pv_entry *pvh_list;		/* pv_entry list */
+	int pvh_attrs;				/* page attributes */
+	unsigned pvh_refcnt;
+};
+
+#define	VM_MDPAGE_INIT(md, pa)						\
+do {									\
+	(md)->pvh_list = NULL;						\
+	(md)->pvh_refcnt = 0;						\
+} while (/*CONSTCOND*/0)
 
 #endif /* _KERNEL */
 

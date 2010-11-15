@@ -1,0 +1,13 @@
+#	$NetBSD: files.netwalker,v 1.1.2.2 2010/11/15 14:38:23 uebayasi Exp $
+#
+# Sharp
+#
+
+file	arch/evbarm/netwalker/netwalker_machdep.c
+
+# Kernel boot arguments
+defparam opt_machdep.h				BOOT_ARGS
+
+# CPU support and integrated peripherals
+include "arch/arm/imx/files.imx51"
+
