@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_vnode.c,v 1.93.2.2 2010/08/25 14:21:23 uebayasi Exp $	*/
+/*	$NetBSD: uvm_vnode.c,v 1.93.2.3 2010/11/16 07:44:25 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.93.2.2 2010/08/25 14:21:23 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.93.2.3 2010/11/16 07:44:25 uebayasi Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_xip.h"
@@ -403,4 +403,40 @@ uvn_needs_writefault_p(struct uvm_object *uobj)
 
 	return uvn_clean_p(uobj) ||
 	    (vp->v_iflag & (VI_WRMAP|VI_WRMAPDIRTY)) == VI_WRMAP;
+}
+
+/*
+ * uvn_findpage_xip
+ *	Lookup a physical page identity (== struct vm_page * in
+ *	the current UVM design) within the given vnode, at the
+ *	given offset.
+ */
+struct vm_page *
+uvn_findpage_xip(struct uvm_object *uobj, off_t off)
+{
+	struct vnode *vp = (struct vnode *)uobj;
+	struct vm_physseg *seg;
+	struct vm_page *pg;
+
+	KASSERT((vp->v_vflag & VV_XIP) != 0);
+	KASSERT((off & PAGE_MASK) == 0);
+
+	/*
+	 * Lookup a physical page identity from the underlying physical
+	 * segment.
+	 *
+	 * Eventually, this will be replaced by a call of character
+	 * device pager method, which is a generalized version of
+	 * cdev_mmap().  Which means that v_physseg will become struct
+	 * uvm_object *, and this will call cdev_page(uobj, off).
+	 */
+
+	seg = vp->v_physseg;
+	KASSERT(seg != NULL);
+
+	pg = seg->pgs + (off >> PAGE_SHIFT);
+
+	KASSERT(pg->phys_addr == (seg->start << PAGE_SHIFT) + off);
+
+	return pg;
 }
