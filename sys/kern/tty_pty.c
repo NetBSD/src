@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_pty.c,v 1.123 2010/09/05 18:03:37 dyoung Exp $	*/
+/*	$NetBSD: tty_pty.c,v 1.124 2010/11/16 23:58:11 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.123 2010/09/05 18:03:37 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.124 2010/11/16 23:58:11 dyoung Exp $");
 
 #include "opt_ptm.h"
 
@@ -615,7 +615,7 @@ ptcread(dev_t dev, struct uio *uio, int flag)
 				 * relevant only if the tty got closed and then
 				 * opened again while we were out uiomoving.
 				 */
-				if (pti->pt_send & TIOCPKT_IOCTL) {
+				if (c & TIOCPKT_IOCTL) {
 					cc = min(uio->uio_resid,
 						sizeof(tp->t_termios));
 					uiomove((void *) &tp->t_termios,
