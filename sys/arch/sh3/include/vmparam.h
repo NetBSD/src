@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.19.2.3 2010/04/26 06:19:05 uebayasi Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.19.2.4 2010/11/16 02:50:14 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -83,23 +83,4 @@
 #define	sh3_trunc_page(x)	((uint32_t)(x) & ~PGOFSET)
 #define	sh3_btop(x)		((uint32_t)(x) >> PGSHIFT)
 #define	sh3_ptob(x)		((uint32_t)(x) << PGSHIFT)
-
-/* pmap-specific data store in the vm_page structure. */
-#define	__HAVE_VM_PAGE_MD
-#define	PVH_REFERENCED		1
-#define	PVH_MODIFIED		2
-
-#ifndef _LOCORE
-struct pv_entry;
-struct vm_page_md {
-	SLIST_HEAD(, pv_entry) pvh_head;
-	int pvh_flags;
-};
-
-#define	VM_MDPAGE_INIT(pvh, pa)						\
-do {									\
-	SLIST_INIT(&(pvh)->pvh_head);					\
-	(pvh)->pvh_flags = 0;						\
-} while (/*CONSTCOND*/0)
-#endif /* _LOCORE */
 #endif /* !_SH3_VMPARAM_H_ */

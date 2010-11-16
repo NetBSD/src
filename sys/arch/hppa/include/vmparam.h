@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.14.2.3 2010/04/30 14:39:27 uebayasi Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.14.2.4 2010/11/16 02:50:13 uebayasi Exp $	*/
 
 /*	$OpenBSD: vmparam.h,v 1.33 2006/06/04 17:21:24 miod Exp $	*/
 
@@ -98,26 +98,5 @@
 #define	VM_NFREELIST		2
 #define	VM_FREELIST_DEFAULT	0
 #define	VM_FREELIST_ISADMA	1
-
-#if defined(_KERNEL) && !defined(_LOCORE)
-#define __HAVE_VM_PAGE_MD
-
-struct pv_entry;
-
-struct vm_page_md {
-	kmutex_t	pvh_lock;	/* locks every pv on this list */
-	struct pv_entry	*pvh_list;	/* head of list (locked by pvh_lock) */
-	u_int		pvh_attrs;	/* to preserve ref/mod */
-	int		pvh_aliases;	/* alias counting */
-};
-
-#define	VM_MDPAGE_INIT(md, pa) \
-do {									\
-	mutex_init(&(md)->pvh_lock, MUTEX_NODEBUG, IPL_VM);		\
-	(md)->pvh_list = NULL;						\
-	(md)->pvh_attrs = 0;						\
-	(md)->pvh_aliases = 0;						\
-} while (0)
-#endif
 
 #endif	/* _HPPA_VMPARAM_H_ */

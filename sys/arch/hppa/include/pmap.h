@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.23.2.3 2010/08/17 06:44:33 uebayasi Exp $	*/
+/*	$NetBSD: pmap.h,v 1.23.2.4 2010/11/16 02:50:13 uebayasi Exp $	*/
 
 /*	$OpenBSD: pmap.h,v 1.35 2007/12/14 18:32:23 deraadt Exp $	*/
 
@@ -191,6 +191,25 @@ pmap_protect(struct pmap *pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 #define	pmap_sid(pmap, va) \
 	((((va) & 0xc0000000) != 0xc0000000) ? \
 	 (pmap)->pm_space : HPPA_SID_KERNEL)
+
+#define __HAVE_VM_PAGE_MD
+
+struct pv_entry;
+
+struct vm_page_md {
+	kmutex_t	pvh_lock;	/* locks every pv on this list */
+	struct pv_entry	*pvh_list;	/* head of list (locked by pvh_lock) */
+	u_int		pvh_attrs;	/* to preserve ref/mod */
+	int		pvh_aliases;	/* alias counting */
+};
+
+#define	VM_MDPAGE_INIT(md, pa) \
+do {									\
+	mutex_init(&(md)->pvh_lock, MUTEX_NODEBUG, IPL_VM);		\
+	(md)->pvh_list = NULL;						\
+	(md)->pvh_attrs = 0;						\
+	(md)->pvh_aliases = 0;						\
+} while (0)
 
 #endif /* _KERNEL */
 

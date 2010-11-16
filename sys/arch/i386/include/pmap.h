@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.103.14.2 2010/08/17 06:44:38 uebayasi Exp $	*/
+/*	$NetBSD: pmap.h,v 1.103.14.3 2010/11/16 02:50:13 uebayasi Exp $	*/
 
 /*
  *
@@ -446,5 +446,16 @@ struct trapframe;
 
 int	pmap_exec_fixup(struct vm_map *, struct trapframe *, struct pcb *);
 void	pmap_ldt_cleanup(struct lwp *);
+
+#include <x86/pmap_pv.h>
+
+#define	__HAVE_VM_PAGE_MD
+#define	VM_MDPAGE_INIT(md, pa) \
+	memset((md), 0, sizeof(*(md))); \
+	PMAP_PAGE_INIT(&(md)->mp_pp)
+
+struct vm_page_md {
+	struct pmap_page mp_pp;
+};
 
 #endif	/* _I386_PMAP_H_ */

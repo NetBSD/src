@@ -194,22 +194,4 @@
 #define	VM_FREELIST_FIRST16	2
 #define	VM_FREELIST_MAX		3
 
-#ifndef _LOCORE
-
-LIST_HEAD(pvo_head, pvo_entry);
-
-#define	__HAVE_VM_PAGE_MD
-
-struct vm_page_md {
-	struct pvo_head mdpg_pvoh;
-	unsigned int mdpg_attrs; 
-};
-
-#define	VM_MDPAGE_INIT(md, pa) do {		\
-	LIST_INIT(&(md)->mdpg_pvoh);		\
-	(md)->mdpg_attrs = 0;			\
-} while (/*CONSTCOND*/0)
-
-#endif	/* _LOCORE */
-
 #endif /* _POWERPC_OEA_VMPARAM_H_ */
