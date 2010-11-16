@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.18 2010/04/06 07:47:48 skrll Exp $	*/
+/*	$NetBSD: intr.h,v 1.19 2010/11/16 08:59:30 uebayasi Exp $	*/
 /*	$OpenBSD: intr.h,v 1.26 2009/12/29 13:11:40 jsing Exp $	*/
 
 /*-
@@ -54,6 +54,8 @@
 
 #ifndef _LOCORE
 
+#ifdef _KERNEL
+
 /* The priority level masks. */
 extern int imask[NIPL];
 
@@ -87,6 +89,7 @@ splraiseipl(ipl_cookie_t icookie)
 }
 
 #include <sys/spl.h>
+#endif
 
 #define	setsoftast(l)	((l)->l_md.md_astpending = 1)
 
