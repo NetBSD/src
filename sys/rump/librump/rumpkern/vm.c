@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.99 2010/11/12 05:23:41 uebayasi Exp $	*/
+/*	$NetBSD: vm.c,v 1.100 2010/11/16 01:12:57 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2007-2010 Antti Kantee.  All Rights Reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.99 2010/11/12 05:23:41 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.100 2010/11/16 01:12:57 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -69,6 +69,9 @@ kmutex_t uvm_pageqlock;
 kmutex_t uvm_swap_data_lock;
 
 struct uvmexp uvmexp;
+int *uvmexp_pagesize;
+int *uvmexp_pagemask;
+int *uvmexp_pageshift;
 struct uvm uvm;
 
 struct vm_map rump_vmmap;
