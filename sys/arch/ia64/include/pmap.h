@@ -146,4 +146,23 @@ void pmap_bootstrap(void);
 #define PMAP_VHPT_LOG2SIZE 16 
 
 
+#include <sys/queue.h>
+#include <sys/mutex.h>
+/*
+ * pmap-specific data store in the vm_page structure.
+ */
+#define	__HAVE_VM_PAGE_MD
+struct vm_page_md {
+	TAILQ_HEAD(,pv_entry) pv_list;	/* pv_entry list */
+	int pv_list_count;
+	kmutex_t pv_mutex;		/* lock on this head */
+	int pvh_attrs;			/* page attributes */
+};
+
+#define	VM_MDPAGE_INIT(md, pa)						\
+do {									\
+	TAILQ_INIT(&(md)->pv_list);					\
+	mutex_init(&(md)->pv_mutex, MUTEX_DEFAULT, IPL_NONE);		\
+} while (/*CONSTCOND*/0)
+
 #endif /* _PMAP_MACHINE_ */

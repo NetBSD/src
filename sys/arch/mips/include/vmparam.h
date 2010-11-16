@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.44.2.2 2010/04/26 06:19:04 uebayasi Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.44.2.3 2010/11/16 02:50:14 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -200,21 +200,6 @@
 
 /* VM_PHYSSEG_MAX defined by platform-dependent code. */
 #define	VM_PHYSSEG_STRAT	VM_PSTRAT_BSEARCH
-
-#define	__HAVE_VM_PAGE_MD
-
-/*
- * pmap-specific data stored in the vm_page structure.
- */
-struct vm_page_md {
-	struct pv_entry *pvh_list;	/* pv_entry list */
-	u_int pvh_attrs;		/* page attributes */
-};
-
-#define VM_MDPAGE_INIT(md, pa)						\
-do {									\
-	(md)->pvh_list = NULL;						\
-} while (/* CONSTCOND */ 0)
 
 #ifndef VM_NFREELIST
 #define	VM_NFREELIST		16	/* 16 distinct memory segments */

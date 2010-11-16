@@ -1,4 +1,4 @@
-/* $NetBSD: bus_dma.c,v 1.29.18.1 2010/08/17 06:44:47 uebayasi Exp $ */
+/* $NetBSD: bus_dma.c,v 1.29.18.2 2010/11/16 02:47:24 uebayasi Exp $ */
 
 /*
  * This file was taken from from alpha/common/bus_dma.c
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.29.18.1 2010/08/17 06:44:47 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.29.18.2 2010/11/16 02:47:24 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,7 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.29.18.1 2010/08/17 06:44:47 uebayasi E
 #include <sys/proc.h>
 #include <sys/mbuf.h>
 
-#include <uvm/uvm_extern.h>
+#include <uvm/uvm.h>
 
 #include <machine/cpu.h>
 
