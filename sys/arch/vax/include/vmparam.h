@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.45.2.2 2010/04/26 06:19:06 uebayasi Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.45.2.3 2010/11/16 02:50:15 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -107,16 +107,5 @@
 
 #define	USRIOSIZE		(8 * VAX_NPTEPG)	/* 512MB */
 #define	VM_PHYS_SIZE		(USRIOSIZE*VAX_NBPG)
-
-#if 0
-#define	__HAVE_VM_PAGE_MD
-
-struct vm_page_md {
-	unsigned int md_attrs;
-};
-
-#define	VM_MDPAGE_INIT(md, pa)	((md)->md_attrs = 0)
-#endif
-
 
 #endif

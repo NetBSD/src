@@ -1,4 +1,4 @@
-/*	$NetBSD: cache_r5k.c,v 1.12 2005/12/24 20:07:19 perry Exp $	*/
+/*	$NetBSD: cache_r5k.c,v 1.12.98.1 2010/11/16 02:47:54 uebayasi Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cache_r5k.c,v 1.12 2005/12/24 20:07:19 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cache_r5k.c,v 1.12.98.1 2010/11/16 02:47:54 uebayasi Exp $");
 
 #include <sys/param.h>
 
@@ -621,16 +621,16 @@ r5k_sdcache_wbinv_range_index(vaddr_t va, vsize_t size)
 	r5k_sdcache_wbinv_range(va, size);
 }
 
-#define	round_page(x)		(((x) + (128 * 32 - 1)) & ~(128 * 32 - 1))
-#define	trunc_page(x)		((x) & ~(128 * 32 - 1))
+#define	mips_r5k_round_page(x)		(((x) + (128 * 32 - 1)) & ~(128 * 32 - 1))
+#define	mips_r5k_trunc_page(x)		((x) & ~(128 * 32 - 1))
 
 void
 r5k_sdcache_wbinv_range(vaddr_t va, vsize_t size)
 {
 	uint32_t ostatus, taglo;
-	vaddr_t eva = round_page(va + size);
+	vaddr_t eva = mips_r5k_round_page(va + size);
 
-	va = trunc_page(va);
+	va = mips_r5k_trunc_page(va);
 
 	__asm volatile(
 		".set noreorder		\n\t"
