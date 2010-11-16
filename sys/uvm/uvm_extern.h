@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.161.2.11 2010/11/15 08:41:44 uebayasi Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.161.2.12 2010/11/16 07:44:24 uebayasi Exp $	*/
 
 /*
  *
@@ -763,6 +763,7 @@ void			uvm_vnp_zerorange(struct vnode *, off_t, size_t);
 bool			uvn_text_p(struct uvm_object *);
 bool			uvn_clean_p(struct uvm_object *);
 bool			uvn_needs_writefault_p(struct uvm_object *);
+struct vm_page		*uvn_findpage_xip(struct uvm_object *, off_t);
 
 /* kern_malloc.c */
 void			kmeminit_nkmempages(void);
