@@ -1,4 +1,4 @@
-/*	$NetBSD: _env.c,v 1.2 2010/11/14 22:04:36 tron Exp $ */
+/*	$NetBSD: _env.c,v 1.3 2010/11/16 03:02:20 enami Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@ static size_t	allocated_environ_size;
 
 #define	ENV_ARRAY_SIZE_MIN	16
 
-/* The lock protecting accces to the environment. */
+/* The lock protecting access to the environment. */
 #ifdef _REENTRANT
 static rwlock_t env_lock = RWLOCK_INITIALIZER;
 #endif
@@ -176,9 +176,9 @@ __allocenvvar(size_t length)
 }
 
 /*
- * Check whether an enviroment variable is writable. This function must be
+ * Check whether an environment variable is writable. This function must be
  * called with the environment write locked as the caller will probably
- * overwrite the enviroment variable afterwards.
+ * overwrite the environment variable afterwards.
  */
 bool
 __canoverwriteenvvar(char *envvar, size_t length)
@@ -265,7 +265,7 @@ __getenvslot(const char *name, size_t l_name, bool allocate)
 	(void)memset(&new_environ[num_entries], 0,
 	    (new_size - num_entries) * sizeof(*new_environ));
 
-	/* Use the new environent array. */
+	/* Use the new environment array. */
 	environ = allocated_environ = new_environ;
 	allocated_environ_size = new_size;
 
