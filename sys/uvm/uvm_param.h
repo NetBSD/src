@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_param.h,v 1.22 2009/07/20 03:51:42 kiyohara Exp $	*/
+/*	$NetBSD: uvm_param.h,v 1.22.2.1 2010/11/16 03:03:28 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -72,7 +72,6 @@
 #endif
 #ifdef _KERNEL
 #include <sys/types.h>
-#include <sys/lock.h>
 #include <machine/vmparam.h>
 #include <sys/resourcevar.h>
 #endif
@@ -146,9 +145,13 @@
  * have ones that are compile-time constants.
  */
 #if !defined(PAGE_SIZE)
-#define	PAGE_SIZE	uvmexp.pagesize		/* size of page */
-#define	PAGE_MASK	uvmexp.pagemask		/* size of page - 1 */
-#define	PAGE_SHIFT	uvmexp.pageshift	/* bits to shift for pages */
+extern int *uvmexp_pagesize;
+extern int *uvmexp_pagemask;
+extern int *uvmexp_pageshift;
+#define	PAGE_SIZE	(*uvmexp_pagesize)	/* size of page */
+#define	PAGE_MASK	(*uvmexp_pagemask)	/* size of page - 1 */
+#define	PAGE_SHIFT	(*uvmexp_pageshift)	/* bits to shift for pages */
+#define	__uvmexp_pagesize
 #endif /* PAGE_SIZE */
 
 #endif /* _KERNEL */
