@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex.h,v 1.10 2010/11/14 03:16:04 uebayasi Exp $	*/
+/*	$NetBSD: mutex.h,v 1.11 2010/11/16 09:35:14 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
@@ -42,7 +42,6 @@
 
 #ifndef __ASSEMBLER__
 
-#include <machine/intr.h>
 #include <machine/lock.h>
 
 struct kmutex {
