@@ -1,4 +1,4 @@
-/*	$NetBSD: _env.c,v 1.3 2010/11/16 03:02:20 enami Exp $ */
+/*	$NetBSD: _env.c,v 1.4 2010/11/16 17:23:10 tron Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -29,6 +29,11 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+#if defined(LIBC_SCCS) && !defined(lint)
+__RCSID("$NetBSD: _env.c,v 1.4 2010/11/16 17:23:10 tron Exp $");
+#endif /* LIBC_SCCS and not lint */
+
 #include <sys/rbtree.h>
 
 #include <assert.h>
@@ -49,6 +54,7 @@
 typedef struct {
 	rb_node_t	rb_node;
 	size_t		length;
+	uint8_t		marker;
 	char		data[];
 } env_node_t;
 
@@ -168,6 +174,7 @@ __allocenvvar(size_t length)
 	node = malloc(sizeof(*node) + length);
 	if (node != NULL) {
 		node->length = length;
+		node->marker = 0;
 		rb_tree_insert_node(&env_tree, node);
 		return node->data;
 	} else {
@@ -191,6 +198,50 @@ __canoverwriteenvvar(char *envvar, size_t length)
 	return (node != NULL && length <= node->length);
 }
 
+/* Free all allocated environment variables that are no longer used. */
+static void
+__scrubenv(void)
+{
+	static uint8_t marker = 0;
+	size_t num_entries;
+	env_node_t *node, *next;
+
+	while (++marker == 0);
+
+	/* Mark all nodes which are currently used. */
+	for (num_entries = 0; environ[num_entries] != NULL; num_entries++) {
+		node = rb_tree_find_node(&env_tree, environ[num_entries]);
+		if (node != NULL)
+			node->marker = marker;
+	}
+
+	/* Free all nodes which are currently not used. */
+	for (node = RB_TREE_MIN(&env_tree); node != NULL; node = next) {
+		next = rb_tree_iterate(&env_tree, node, RB_DIR_RIGHT);
+
+		if (node->marker != marker) {
+			rb_tree_remove_node(&env_tree, node);
+			free(node);
+		}
+	}
+
+	/* Deal with the environment array itself. */
+	if (environ == allocated_environ) {
+		/* Clear out spurious entries in the environment. */
+		(void)memset(&environ[num_entries + 1], 0,
+		    (allocated_environ_size - num_entries - 1) *
+		    sizeof(*environ));
+	} else {
+		/*
+		 * The environment array was not allocated by "libc".
+		 * Free our array if we allocated one.
+		 */
+		free(allocated_environ);
+		allocated_environ = NULL;
+		allocated_environ_size = 0;
+	}
+}
+
 /*
  * Get a (new) slot in the environment. This function must be called with
  * the environment write locked.
@@ -200,6 +251,10 @@ __getenvslot(const char *name, size_t l_name, bool allocate)
 {
 	size_t new_size, num_entries, required_size;
 	char **new_environ;
+
+	/* Does the environ need scrubbing? */
+	if (environ != allocated_environ && allocated_environ != NULL)
+		__scrubenv();
 
 	/* Search for an existing environment variable of the given name. */
 	num_entries = 0;
@@ -220,18 +275,10 @@ __getenvslot(const char *name, size_t l_name, bool allocate)
 	required_size = num_entries + 1;
 	if (environ == allocated_environ &&
 	    required_size < allocated_environ_size) {
-		size_t offset;
-
-		/*
-		 * Scrub the environment if somebody erased its contents by
-		 * e.g. setting environ[0] to NULL.
-		 */
-		offset = required_size;
-		while (offset < allocated_environ_size &&
-		    environ[offset] != NULL) {
-			__freeenvvar(environ[offset]);
-			environ[offset] = NULL;
-			offset++;
+		/* Does the environment need scrubbing? */
+		if (required_size < allocated_environ_size &&
+		    allocated_environ[required_size] != NULL) {
+			__scrubenv();
 		}
 
 		/* Return a free slot. */
