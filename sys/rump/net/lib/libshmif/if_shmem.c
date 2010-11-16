@@ -1,4 +1,4 @@
-/*	$NetBSD: if_shmem.c,v 1.30 2010/11/15 23:59:06 pooka Exp $	*/
+/*	$NetBSD: if_shmem.c,v 1.31 2010/11/16 20:08:24 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.30 2010/11/15 23:59:06 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.31 2010/11/16 20:08:24 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -36,7 +36,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.30 2010/11/15 23:59:06 pooka Exp $");
 #include <sys/kmem.h>
 #include <sys/kthread.h>
 #include <sys/lock.h>
-#include <sys/atomic.h>
+#include <sys/vmem.h>
 
 #include <net/if.h>
 #include <net/if_ether.h>
@@ -93,11 +93,11 @@ static const uint32_t busversion = SHMIF_VERSION;
 
 static void shmif_rcv(void *);
 
-static uint32_t numif;
-
 #define LOCK_UNLOCKED	0
 #define LOCK_LOCKED	1
 #define LOCK_COOLDOWN	1001
+
+vmem_t *shmif_units;
 
 /*
  * This locking needs work and will misbehave severely if:
@@ -252,9 +252,11 @@ rump_shmif_create(const char *path, int *ifnum)
 	if (memfd == -1)
 		return error;
 
-	mynum = atomic_inc_uint_nv(&numif)-1;
+	mynum = vmem_xalloc(shmif_units, 1, 0, 0, 0, 0, 0,
+	    VM_INSTANTFIT | VM_SLEEP) - 1;
+
 	if ((error = allocif(mynum, &sc)) != 0) {
-		rumpuser_close(memfd, &dummy);
+		rumpuser_close(memfd, NULL);
 		return error;
 	}
 	error = initbackend(sc, memfd);
@@ -277,10 +279,20 @@ rump_shmif_create(const char *path, int *ifnum)
 static int
 shmif_clone(struct if_clone *ifc, int unit)
 {
+	int unit2;
 
-	/* not atomic against rump_shmif_create().  so "don't do it". */
-	if (unit >= numif)
-		numif = unit+1;
+	/*
+	 * Ok, we know the unit number, but we must still reserve it.
+	 * Otherwise the wildcard-side of things might get the same one.
+	 * This is slightly offset-happy due to vmem.  First, we offset
+	 * the range of unit numbers by +1 since vmem cannot deal with
+	 * ranges starting from 0.  Second, since vmem_xalloc() allocates
+	 * from [min,max) (half-*open* interval), we need to add one extra
+	 * to the one extra we add to maxaddr.  Talk about uuuh.
+	 */
+	unit2 = vmem_xalloc(shmif_units, 1, 0, 0, 0, unit+1, unit+3,
+	    VM_SLEEP | VM_INSTANTFIT);
+	KASSERT(unit2-1 == unit);
 
 	return allocif(unit, NULL);
 }

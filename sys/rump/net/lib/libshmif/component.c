@@ -1,4 +1,4 @@
-/*	$NetBSD: component.c,v 1.1 2010/11/15 23:51:06 pooka Exp $	*/
+/*	$NetBSD: component.c,v 1.2 2010/11/16 20:08:24 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -26,11 +26,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: component.c,v 1.1 2010/11/15 23:51:06 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: component.c,v 1.2 2010/11/16 20:08:24 pooka Exp $");
 
 #include <sys/param.h>
-#include <sys/domain.h>
-#include <sys/protosw.h>
+#include <sys/vmem.h>
 
 #include <net/if.h>
 
@@ -40,6 +39,12 @@ __KERNEL_RCSID(0, "$NetBSD: component.c,v 1.1 2010/11/15 23:51:06 pooka Exp $");
 RUMP_COMPONENT(RUMP_COMPONENT_NET_IF)
 {
 	extern struct if_clone shmif_cloner; /* XXX */
+	extern vmem_t *shmif_units; /* XXX */
+
+	shmif_units = vmem_create("shmif", 1, 1<<15, 1, NULL, NULL, NULL, 1, 
+	    VM_SLEEP, IPL_NONE);
+	if (shmif_units == NULL)
+		panic("shmif vmem_create failed");
 
 	if_clone_attach(&shmif_cloner);
 }
