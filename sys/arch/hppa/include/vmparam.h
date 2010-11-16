@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.18 2010/11/14 13:33:21 uebayasi Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.19 2010/11/16 09:34:24 uebayasi Exp $	*/
 
 /*	$OpenBSD: vmparam.h,v 1.33 2006/06/04 17:21:24 miod Exp $	*/
 
@@ -27,8 +27,6 @@
 
 #ifndef _HPPA_VMPARAM_H_
 #define _HPPA_VMPARAM_H_
-
-#include <machine/mutex.h>
 
 /*
  * Machine dependent constants for HP PA
