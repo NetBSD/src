@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.198 2010/11/17 19:54:09 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.199 2010/11/17 21:52:29 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.198 2010/11/17 19:54:09 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.199 2010/11/17 21:52:29 pooka Exp $");
 
 #include <sys/systm.h>
 #define ELFSIZE ARCH_ELFSIZE
@@ -106,6 +106,8 @@ int rump_threads = 1;
  */
 static struct vmspace sp_vmspace;
 static bool iamtheserver = false;
+
+static int rump_proxy_syscall(int, void *, register_t *);
 
 static char rump_msgbuf[16*1024]; /* 16k should be enough for std rump needs */
 
@@ -195,7 +197,7 @@ static const struct rumpuser_sp_ops spops = {
 	.spop_lwproc_release	= rump_lwproc_releaselwp,
 	.spop_lwproc_newproc	= rump_lwproc_newproc,
 	.spop_lwproc_curlwp	= rump_lwproc_curlwp,
-	.spop_syscall		= rump_syscall,
+	.spop_syscall		= rump_proxy_syscall,
 };
 
 int
@@ -634,8 +636,8 @@ rump_kernelfsym_load(void *symtab, uint64_t symsize,
 	return 0;
 }
 
-int
-rump_syscall(int num, void *arg, register_t *retval)
+static int
+rump_proxy_syscall(int num, void *arg, register_t *retval)
 {
 	struct lwp *l;
 	struct sysent *callp;
@@ -646,11 +648,9 @@ rump_syscall(int num, void *arg, register_t *retval)
 
 	callp = rump_sysent + num;
 	l = curlwp;
-	if (iamtheserver)
-		curproc->p_vmspace = &sp_vmspace;
+	curproc->p_vmspace = &sp_vmspace;
 	rv = sy_call(callp, l, (void *)arg, retval);
-	if (iamtheserver)
-		curproc->p_vmspace = vmspace_kernel();
+	curproc->p_vmspace = vmspace_kernel();
 
 	return rv;
 }
