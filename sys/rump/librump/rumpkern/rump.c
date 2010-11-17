@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.199 2010/11/17 21:52:29 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.200 2010/11/17 21:57:33 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.199 2010/11/17 21:52:29 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.200 2010/11/17 21:57:33 pooka Exp $");
 
 #include <sys/systm.h>
 #define ELFSIZE ARCH_ELFSIZE
@@ -515,15 +515,6 @@ rump_uio_free(struct uio *uio)
 	kmem_free(uio, sizeof(*uio));
 
 	return resid;
-}
-
-/* rump private.  NEEDS WORK! */
-void
-rump_set_vmspace(struct vmspace *vm)
-{
-	struct proc *p = curproc;
-
-	p->p_vmspace = vm;
 }
 
 kauth_cred_t

@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_private.h,v 1.62 2010/11/17 19:54:09 pooka Exp $	*/
+/*	$NetBSD: rump_private.h,v 1.63 2010/11/17 21:57:33 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -86,8 +86,6 @@ extern unsigned long rump_physmemlimit;
 
 void		rump_component_init(enum rump_component_type);
 int		rump_component_count(enum rump_component_type);
-
-void		rump_set_vmspace(struct vmspace *);
 
 typedef void	(*rump_proc_vfs_init_fn)(struct proc *);
 typedef void	(*rump_proc_vfs_release_fn)(struct proc *);
