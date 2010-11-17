@@ -1,4 +1,4 @@
-/*	$NetBSD: _env.c,v 1.4 2010/11/16 17:23:10 tron Exp $ */
+/*	$NetBSD: _env.c,v 1.5 2010/11/17 13:25:53 tron Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,8 +31,10 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: _env.c,v 1.4 2010/11/16 17:23:10 tron Exp $");
+__RCSID("$NetBSD: _env.c,v 1.5 2010/11/17 13:25:53 tron Exp $");
 #endif /* LIBC_SCCS and not lint */
+
+#include "namespace.h"
 
 #include <sys/rbtree.h>
 
