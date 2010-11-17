@@ -1,4 +1,4 @@
-/*	$NetBSD: rb.c,v 1.8 2010/09/25 01:42:38 matt Exp $	*/
+/*	$NetBSD: rb.c,v 1.9 2010/11/17 13:19:32 tron Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -56,17 +56,7 @@ __weak_alias(rb_tree_check, _rb_tree_check)
 __weak_alias(rb_tree_depths, _rb_tree_depths)
 #endif
 
-#define	rb_tree_init		_rb_tree_init
-#define	rb_tree_find_node	_rb_tree_find_node
-#define	rb_tree_find_node_geq	_rb_tree_find_node_geq
-#define	rb_tree_find_node_leq	_rb_tree_find_node_leq
-#define	rb_tree_insert_node	_rb_tree_insert_node
-#define	rb_tree_remove_node	_rb_tree_remove_node
-#define	rb_tree_iterate		_rb_tree_iterate
-#ifdef RBDEBUG
-#define	rb_tree_check		_rb_tree_check
-#define	rb_tree_depths		_rb_tree_depths
-#endif
+#include "namespace.h"
 #endif
 
 #ifdef RBTEST
