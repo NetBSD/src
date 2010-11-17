@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.77 2010/11/16 18:17:32 christos Exp $	*/
+/*	$NetBSD: parser.c,v 1.78 2010/11/17 13:40:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)parser.c	8.7 (Berkeley) 5/16/95";
 #else
-__RCSID("$NetBSD: parser.c,v 1.77 2010/11/16 18:17:32 christos Exp $");
+__RCSID("$NetBSD: parser.c,v 1.78 2010/11/17 13:40:48 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -896,27 +896,20 @@ breakloop:
  * This code assumes that an int is 32 bits. We don't use uint32_t,
  * because the rest of the code does not.
  */
-#define VN (varnest - insub)
-#define ISDBLQUOTE() ((VN < 32) ? (dblquote & (1 << VN)) : \
-    (dblquotep[(VN / 32) - 1] & (1 << (VN % 32))))
+#define ISDBLQUOTE() ((varnest < 32) ? (dblquote & (1 << varnest)) : \
+    (dblquotep[(varnest / 32) - 1] & (1 << (varnest % 32))))
 
 #define SETDBLQUOTE() \
-    do { \
-	    TRACE(("setdblquote varnest=%d insub=%d\n", varnest, insub)); \
-	    if (VN < 32) \
-		    dblquote |= (1 << VN); \
-	    else \
-		    dblquotep[(VN / 32) - 1] |= (1 << (VN % 32));\
-    } while (/*CONSTCOND*/0)
+    if (varnest < 32) \
+	dblquote |= (1 << varnest); \
+    else \
+	dblquotep[(varnest / 32) - 1] |= (1 << (varnest % 32))
 
 #define CLRDBLQUOTE() \
-    do { \
-	    TRACE(("clrdblquote varnest=%d insub=%d\n", varnest, insub)); \
-	    if (VN < 32) \
-		    dblquote &= ~(1 << VN); \
-	    else \
-		    dblquotep[(VN / 32) - 1] &= ~(1 << (VN % 32)); \
-    } while (/*CONSTCOND*/0)
+    if (varnest < 32) \
+	dblquote &= ~(1 << varnest); \
+    else \
+	dblquotep[(varnest / 32) - 1] &= ~(1 << (varnest % 32))
 
 STATIC int
 readtoken1(int firstc, char const *syn, char *eofmark, int striptabs)
@@ -935,7 +928,6 @@ readtoken1(int firstc, char const *syn, char *eofmark, int striptabs)
 	volatile int arinest;	/* levels of arithmetic expansion */
 	volatile int parenlevel;	/* levels of parens in arithmetic */
 	volatile int oldstyle;
-	volatile int insub;
 	char const * volatile prevsyntax;	/* syntax before arithmetic */
 #ifdef __GNUC__
 	prevsyntax = NULL;	/* XXX gcc4 */
@@ -944,9 +936,9 @@ readtoken1(int firstc, char const *syn, char *eofmark, int striptabs)
 	startlinno = plinno;
 	dblquote = 0;
 	varnest = 0;
-	insub = 0;
-	if (syntax == DQSYNTAX)
+	if (syntax == DQSYNTAX) {
 		SETDBLQUOTE();
+	}
 	quotef = 0;
 	bqlist = NULL;
 	arinest = 0;
@@ -1002,17 +994,10 @@ readtoken1(int firstc, char const *syn, char *eofmark, int striptabs)
 					break;
 				}
 				quotef = 1;
-				TRACE(("varnest=%d doubleq=%d c=%c\n",
-				    varnest, ISDBLQUOTE(), c));
 				if (ISDBLQUOTE() && c != '\\' &&
 				    c != '`' && c != '$' &&
-				    (c != '"' || eofmark != NULL)) {
-					if (insub) {
-						USTPUTC(CTLESC, out);
-						USTPUTC(CTLESC, out);
-					} else
-						USTPUTC('\\', out);
-				}
+				    (c != '"' || eofmark != NULL))
+					USTPUTC('\\', out);
 				if (SQSYNTAX[c] == CCTL)
 					USTPUTC(CTLESC, out);
 				else if (eofmark == NULL) {
@@ -1068,8 +1053,6 @@ readtoken1(int firstc, char const *syn, char *eofmark, int striptabs)
 				}
 				if (eofmark != NULL)
 					break;
-				TRACE(("CDQUOTE %d varnest=%d insub=%d\n",
-				    ISDBLQUOTE(), varnest, insub));
 				if (ISDBLQUOTE()) {
 					if (varnest != 0)
 						USTPUTC(CTLQUOTEEND, out);
@@ -1085,7 +1068,6 @@ readtoken1(int firstc, char const *syn, char *eofmark, int striptabs)
 				PARSESUB();		/* parse substitution */
 				break;
 			case CENDVAR:	/* CLOSEBRACE */
-				insub = 0;
 				if (varnest > 0 && !ISDBLQUOTE()) {
 					varnest--;
 					USTPUTC(CTLENDVAR, out);
@@ -1358,9 +1340,7 @@ badsub:			synerror("Bad substitution");
 			flags |= VSQUOTE;
 		*(stackblock() + typeloc) = subtype | flags;
 		if (subtype != VSNORMAL) {
-			TRACE(("varnest=%d subtype=%d\n", varnest, subtype));
 			varnest++;
-			insub = 1;
 			if (varnest >= maxnest) {
 				dblquotep = ckrealloc(dblquotep, maxnest / 8);
 				dblquotep[(maxnest / 32) - 1] = 0;
