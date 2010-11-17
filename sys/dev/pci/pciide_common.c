@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_common.c,v 1.47 2010/11/13 13:52:08 uebayasi Exp $	*/
+/*	$NetBSD: pciide_common.c,v 1.48 2010/11/17 19:36:54 dholland Exp $	*/
 
 
 /*
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide_common.c,v 1.47 2010/11/13 13:52:08 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide_common.c,v 1.48 2010/11/17 19:36:54 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -205,17 +205,21 @@ pciide_common_detach(struct pciide_softc *sc, int flags)
 		}
 
 		for (drive = 0; drive < cp->ata_channel.ch_ndrive; drive++) {
+#if NATA_DMA
 			pciide_dma_table_teardown(sc, channel, drive);
+#endif
 		}
 
 		free(cp->ata_channel.ch_queue, M_DEVBUF);
 		cp->ata_channel.atabus = NULL;
 	}
 
+#if NATA_DMA
 	if (sc->sc_dma_ios != 0)
 		bus_space_unmap(sc->sc_dma_iot, sc->sc_dma_ioh, sc->sc_dma_ios);
 	if (sc->sc_ba5_ss != 0)
 		bus_space_unmap(sc->sc_ba5_st, sc->sc_ba5_sh, sc->sc_ba5_ss);
+#endif
 
 	return 0;
 }
