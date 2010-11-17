@@ -1,4 +1,4 @@
-/*      $NetBSD: lwproc.c,v 1.4 2010/11/15 20:37:22 pooka Exp $	*/
+/*      $NetBSD: lwproc.c,v 1.5 2010/11/17 19:54:09 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lwproc.c,v 1.4 2010/11/15 20:37:22 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lwproc.c,v 1.5 2010/11/17 19:54:09 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -108,7 +108,7 @@ lwproc_newproc(struct proc *parent)
 	p->p_stats = pstatscopy(parent->p_stats);
 
 	/* not based on parent */
-	p->p_vmspace = &vmspace0;
+	p->p_vmspace = vmspace_kernel();
 	p->p_emul = &emul_netbsd;
 	p->p_fd = fd_init(NULL);
 	lim_addref(parent->p_limit);
