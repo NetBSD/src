@@ -1,4 +1,4 @@
-/*	$NetBSD: handler.c,v 1.33 2010/10/21 06:04:33 tteras Exp $	*/
+/*	$NetBSD: handler.c,v 1.34 2010/11/17 10:40:41 tteras Exp $	*/
 
 /* Id: handler.c,v 1.28 2006/05/26 12:17:29 manubsd Exp */
 
@@ -512,6 +512,22 @@ void
 initph1tree()
 {
 	LIST_INIT(&ph1tree);
+}
+
+int
+ph1_rekey_enabled(iph1)
+	struct ph1handle *iph1;
+{
+	if (iph1->rmconf == NULL)
+		return 0;
+	if (iph1->rmconf->rekey == REKEY_FORCE)
+		return 1;
+#ifdef ENABLE_DPD
+	if (iph1->rmconf->rekey == REKEY_ON && iph1->dpd_support &&
+	    iph1->rmconf->dpd_interval)
+		return 1;
+#endif
+	return 0;
 }
 
 /* %%% management phase 2 handler */
