@@ -1,8 +1,8 @@
-/*	$NetBSD: rumpkern_if_priv.h,v 1.9 2010/10/27 20:35:47 pooka Exp $	*/
+/*	$NetBSD: rumpkern_if_priv.h,v 1.10 2010/11/17 21:50:34 pooka Exp $	*/
 
 /*
  * Automatically generated.  DO NOT EDIT.
- * from: NetBSD: rumpkern.ifspec,v 1.7 2010/10/27 20:34:50 pooka Exp 
+ * from: NetBSD: rumpkern.ifspec,v 1.8 2010/11/17 21:49:52 pooka Exp 
  * by:   NetBSD: makerumpif.sh,v 1.5 2010/09/01 19:32:11 pooka Exp 
  */
 
@@ -23,4 +23,3 @@ void rump_lwproc_switch(struct lwp *);
 void rump_lwproc_releaselwp(void);
 struct lwp * rump_lwproc_curlwp(void);
 void rump_allbetsareoff_setid(pid_t, int);
-int rump_syscall(int, void *, register_t *);
