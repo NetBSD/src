@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.144 2010/11/13 19:41:32 christos Exp $	*/
+/*	$NetBSD: namespace.h,v 1.145 2010/11/17 13:19:32 tron Exp $	*/
 
 /*-
  * Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
@@ -804,6 +804,19 @@
 #define dlerror			__dlerror
 #define dladdr			__dladdr
 #define fmtcheck		__fmtcheck
+
+/* RB trees */
+#define	rb_tree_init		_rb_tree_init
+#define	rb_tree_find_node	_rb_tree_find_node
+#define	rb_tree_find_node_geq	_rb_tree_find_node_geq
+#define	rb_tree_find_node_leq	_rb_tree_find_node_leq
+#define	rb_tree_insert_node	_rb_tree_insert_node
+#define	rb_tree_remove_node	_rb_tree_remove_node
+#define	rb_tree_iterate		_rb_tree_iterate
+#ifdef RBDEBUG
+#define	rb_tree_check		_rb_tree_check
+#define	rb_tree_depths		_rb_tree_depths
+#endif
 
 /* rpc locks */
 #define authdes_lock		__rpc_authdes_lock
