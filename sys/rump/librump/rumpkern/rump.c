@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.197 2010/11/15 20:24:09 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.198 2010/11/17 19:54:09 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.197 2010/11/15 20:24:09 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.198 2010/11/17 19:54:09 pooka Exp $");
 
 #include <sys/systm.h>
 #define ELFSIZE ARCH_ELFSIZE
@@ -484,7 +484,7 @@ rump_uio_setup(void *buf, size_t bufsize, off_t offset, enum rump_uiorw rw)
 	uio->uio_offset = offset;
 	uio->uio_resid = bufsize;
 	uio->uio_rw = uiorw;
-	uio->uio_vmspace = UIO_VMSPACE_SYS;
+	UIO_SETUP_SYSSPACE(uio);
 
 	return uio;
 }
@@ -650,7 +650,7 @@ rump_syscall(int num, void *arg, register_t *retval)
 		curproc->p_vmspace = &sp_vmspace;
 	rv = sy_call(callp, l, (void *)arg, retval);
 	if (iamtheserver)
-		curproc->p_vmspace = &vmspace0;
+		curproc->p_vmspace = vmspace_kernel();
 
 	return rv;
 }
