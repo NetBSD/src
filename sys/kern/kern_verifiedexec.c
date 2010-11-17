@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_verifiedexec.c,v 1.121 2009/12/28 07:16:41 elad Exp $	*/
+/*	$NetBSD: kern_verifiedexec.c,v 1.122 2010/11/17 20:07:50 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.121 2009/12/28 07:16:41 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.122 2010/11/17 20:07:50 dholland Exp $");
 
 #include "opt_veriexec.h"
 
@@ -857,7 +857,7 @@ veriexec_removechk(struct lwp *l, struct vnode *vp, const char *pathbuf)
 }
 
 /*
- * Veriexe rename policy.
+ * Veriexec rename policy.
  *
  * XXX: Once there's a way to hook after a successful rename, it would be
  * XXX: nice to update vfe->filename to the new name if it's not NULL and
