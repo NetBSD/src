@@ -1,8 +1,8 @@
-/*	$NetBSD: rumpkern_if_wrappers.c,v 1.9 2010/10/27 20:35:47 pooka Exp $	*/
+/*	$NetBSD: rumpkern_if_wrappers.c,v 1.10 2010/11/17 21:50:34 pooka Exp $	*/
 
 /*
  * Automatically generated.  DO NOT EDIT.
- * from: NetBSD: rumpkern.ifspec,v 1.7 2010/10/27 20:34:50 pooka Exp 
+ * from: NetBSD: rumpkern.ifspec,v 1.8 2010/11/17 21:49:52 pooka Exp 
  * by:   NetBSD: makerumpif.sh,v 1.5 2010/09/01 19:32:11 pooka Exp 
  */
 
@@ -210,16 +210,4 @@ rump_pub_allbetsareoff_setid(pid_t arg1, int arg2)
 	rump_schedule();
 	rump_allbetsareoff_setid(arg1, arg2);
 	rump_unschedule();
-}
-
-int
-rump_pub_syscall(int arg1, void *arg2, register_t *arg3)
-{
-	int rv;
-
-	rump_schedule();
-	rv = rump_syscall(arg1, arg2, arg3);
-	rump_unschedule();
-
-	return rv;
 }
