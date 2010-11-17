@@ -1,4 +1,4 @@
-.\"	$NetBSD: shmif.4,v 1.2 2010/11/17 17:55:00 pooka Exp $
+.\"	$NetBSD: shmif.4,v 1.3 2010/11/17 18:02:20 wiz Exp $
 .\"
 .\" Copyright (c) 2010 Antti Kantee
 .\" All rights reserved.
@@ -42,9 +42,14 @@ interface uses a memory mapped regular file as a virtual Ethernet bus.
 All interfaces connected to the same bus see each others' traffic.
 .Pp
 Using a memory mapped regular file as a bus has two implications:
-1) the bus identifier is not in flat global namespace 2) configuring
-and using the interface is possible without superuser privileges
-on the host (normal host file access permissions for the bus hold).
+.Bl -enum
+.It
+The bus identifier is not in flat global namespace.
+.It
+Configuring and using the interface is possible without superuser
+privileges on the host (normal host file access permissions for
+the bus hold).
+.El
 .Pp
 It is not possible to directly access the host networking
 facilities from a rump virtual kernel using purely
@@ -65,7 +70,7 @@ Programmatically by calling
 .Fn rump_pub_shmif_create .
 The bus pathname is passed in
 .Fa path .
-The number of the newly created interface is available after a succesful
+The number of the newly created interface is available after a successful
 call by dereferencing
 .Fa ifnum .
 .It
@@ -88,4 +93,4 @@ interface is possible only via
 .Sh SEE ALSO
 .Xr rump 3 ,
 .Xr virt 4 ,
-.Xr ifconfig 8 .
+.Xr ifconfig 8
