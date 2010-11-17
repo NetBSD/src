@@ -1,4 +1,4 @@
-/* $NetBSD: rump_syscalls.c,v 1.54 2010/11/11 14:48:14 pooka Exp $ */
+/* $NetBSD: rump_syscalls.c,v 1.55 2010/11/17 21:48:07 pooka Exp $ */
 
 /*
  * System call vector and marshalling for rump.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump_syscalls.c,v 1.54 2010/11/11 14:48:14 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump_syscalls.c,v 1.55 2010/11/17 21:48:07 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/fstypes.h>
@@ -25,16 +25,21 @@ __KERNEL_RCSID(0, "$NetBSD: rump_syscalls.c,v 1.54 2010/11/11 14:48:14 pooka Exp
 #define rsys_seterrno(error) errno = error
 #define rsys_alias(a,b)
 #else
+#include <sys/syscallvar.h>
+
 #include <rump/rumpuser.h>
 #include "rump_private.h"
 
 static int
 rsys_syscall(int num, void *data, size_t dlen, register_t *retval)
 {
+	struct sysent *callp = rump_sysent + num;
 	int rv;
 
+	KASSERT(num > 0 && num < SYS_NSYSENT);
+
 	rump_schedule();
-	rv = rump_syscall(num, data, retval);
+	rv = sy_call(callp, curlwp, data, retval);
 	rump_unschedule();
 
 	return rv;
