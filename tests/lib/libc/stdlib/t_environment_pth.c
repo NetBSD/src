@@ -1,11 +1,11 @@
-/*	$NetBSD: t_environment_pth.c,v 1.1 2010/11/16 14:03:47 tron Exp $	*/
+/*	$NetBSD: t_environment_pth.c,v 1.2 2010/11/17 08:55:27 tron Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by 
+ * by Matthias Scheler.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_environment_pth.c,v 1.1 2010/11/16 14:03:47 tron Exp $");
+__RCSID("$NetBSD: t_environment_pth.c,v 1.2 2010/11/17 08:55:27 tron Exp $");
 
 #include <atf-c.h>
 #include <errno.h>
