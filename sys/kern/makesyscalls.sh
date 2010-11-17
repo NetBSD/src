@@ -1,5 +1,5 @@
 #! /bin/sh -
-#	$NetBSD: makesyscalls.sh,v 1.102 2010/11/04 20:50:29 pooka Exp $
+#	$NetBSD: makesyscalls.sh,v 1.103 2010/11/17 21:47:11 pooka Exp $
 #
 # Copyright (c) 1994, 1996, 2000 Christopher G. Demetriou
 # All rights reserved.
@@ -225,12 +225,16 @@ NR == 1 {
 	printf "    rumpclient_syscall(num, data, dlen, retval)\n" > rumpcalls
 	printf "#define rsys_seterrno(error) errno = error\n" > rumpcalls
 	printf "#define rsys_alias(a,b)\n#else\n" > rumpcalls
+	printf "#include <sys/syscallvar.h>\n\n" > rumpcalls
 	printf "#include <rump/rumpuser.h>\n" > rumpcalls
 	printf "#include \"rump_private.h\"\n\n" > rumpcalls
 	printf "static int\nrsys_syscall" > rumpcalls
 	printf "(int num, void *data, size_t dlen, register_t *retval)" > rumpcalls
-	printf "\n{\n\tint rv;\n\n\trump_schedule();\n" > rumpcalls
-	printf "\trv = rump_syscall(num, data, retval);\n" > rumpcalls
+	printf "\n{\n\tstruct sysent *callp = rump_sysent + num;\n" > rumpcalls
+	printf "\tint rv;\n" > rumpcalls
+	printf "\n\tKASSERT(num > 0 && num < SYS_NSYSENT);\n\n" > rumpcalls
+	printf "\trump_schedule();\n" > rumpcalls
+	printf "\trv = sy_call(callp, curlwp, data, retval);\n" > rumpcalls
 	printf "\trump_unschedule();\n\n\treturn rv;\n}\n\n" > rumpcalls
 	printf "#define rsys_seterrno(error) rumpuser_seterrno(error)\n" > rumpcalls
 	printf "#define rsys_alias(a,b) __weak_alias(a,b);\n#endif\n\n" > rumpcalls
