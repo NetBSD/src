@@ -1,4 +1,4 @@
-/*	$NetBSD: if_shmem.c,v 1.31 2010/11/16 20:08:24 pooka Exp $	*/
+/*	$NetBSD: if_shmem.c,v 1.32 2010/11/17 17:51:22 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.31 2010/11/16 20:08:24 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.32 2010/11/17 17:51:22 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -81,12 +81,19 @@ struct shmif_sc {
 	struct shmif_mem *sc_busmem;
 	int sc_memfd;
 	int sc_kq;
+	int sc_unit;
 
 	char *sc_backfile;
 	size_t sc_backfilelen;
 
 	uint64_t sc_devgen;
 	uint32_t sc_nextpacket;
+
+	kmutex_t sc_mtx;
+	kcondvar_t sc_cv;
+
+	struct lwp *sc_rcvl;
+	bool sc_dying;
 };
 
 static const uint32_t busversion = SHMIF_VERSION;
@@ -142,18 +149,19 @@ allocif(int unit, struct shmif_sc **scp)
 	struct shmif_sc *sc;
 	struct ifnet *ifp;
 	uint32_t randnum;
-	unsigned mynum = unit;
+	int error;
 
 	randnum = arc4random();
 	memcpy(&enaddr[2], &randnum, sizeof(randnum));
 
 	sc = kmem_zalloc(sizeof(*sc), KM_SLEEP);
 	sc->sc_memfd = -1;
+	sc->sc_unit = unit;
 
 	ifp = &sc->sc_ec.ec_if;
 	memcpy(sc->sc_myaddr, enaddr, sizeof(enaddr));
 
-	sprintf(ifp->if_xname, "shmif%d", mynum);
+	sprintf(ifp->if_xname, "shmif%d", unit);
 	ifp->if_softc = sc;
 	ifp->if_flags = IFF_BROADCAST | IFF_MULTICAST;
 	ifp->if_init = shmif_init;
@@ -162,16 +170,32 @@ allocif(int unit, struct shmif_sc **scp)
 	ifp->if_stop = shmif_stop;
 	ifp->if_mtu = ETHERMTU;
 
+	mutex_init(&sc->sc_mtx, MUTEX_DEFAULT, IPL_NONE);
+	cv_init(&sc->sc_cv, "shmifcv");
+
 	if_attach(ifp);
 	ether_ifattach(ifp, enaddr);
 
 	aprint_verbose("shmif%d: Ethernet address %s\n",
-	    mynum, ether_sprintf(enaddr));
+	    unit, ether_sprintf(enaddr));
 
 	if (scp)
 		*scp = sc;
 
-	return 0;
+	error = 0;
+	if (rump_threads) {
+		error = kthread_create(PRI_NONE,
+		    KTHREAD_MPSAFE | KTHREAD_JOINABLE, NULL,
+		    shmif_rcv, ifp, &sc->sc_rcvl, "shmif");
+	} else {
+		printf("WARNING: threads not enabled, shmif NOT working\n");
+	}
+
+	if (error) {
+		shmif_unclone(ifp);
+	}
+
+	return error;
 }
 
 static int
@@ -221,48 +245,56 @@ initbackend(struct shmif_sc *sc, int memfd)
 	shmif_unlockbus(sc->sc_busmem);
 
 	sc->sc_kq = rumpuser_writewatchfile_setup(-1, memfd, 0, &error);
-	if (sc->sc_kq == -1)
+	if (sc->sc_kq == -1) {
+		rumpuser_unmap(sc->sc_busmem, BUSMEM_SIZE);
 		return error;
+	}
 
 	sc->sc_memfd = memfd;
-	return 0;
+
+	return error;
 }
 
 static void
 finibackend(struct shmif_sc *sc)
 {
-	int dummy;
 
-	kmem_free(sc->sc_backfile, sc->sc_backfilelen);
-	sc->sc_backfile = NULL;
-	sc->sc_backfilelen = 0;
+	if (sc->sc_backfile == NULL)
+		return;
+
+	if (sc->sc_backfile) {
+		kmem_free(sc->sc_backfile, sc->sc_backfilelen);
+		sc->sc_backfile = NULL;
+		sc->sc_backfilelen = 0;
+	}
 
 	rumpuser_unmap(sc->sc_busmem, BUSMEM_SIZE);
-	rumpuser_close(sc->sc_memfd, &dummy);
-	rumpuser_close(sc->sc_kq, &dummy);
+	rumpuser_close(sc->sc_memfd, NULL);
+	rumpuser_close(sc->sc_kq, NULL);
+
+	sc->sc_memfd = -1;
 }
 
 int
 rump_shmif_create(const char *path, int *ifnum)
 {
 	struct shmif_sc *sc;
-	int mynum, error, memfd, dummy;
+	int unit, error, memfd;
 
 	memfd = rumpuser_open(path, O_RDWR | O_CREAT, &error);
 	if (memfd == -1)
 		return error;
 
-	mynum = vmem_xalloc(shmif_units, 1, 0, 0, 0, 0, 0,
+	unit = vmem_xalloc(shmif_units, 1, 0, 0, 0, 0, 0,
 	    VM_INSTANTFIT | VM_SLEEP) - 1;
 
-	if ((error = allocif(mynum, &sc)) != 0) {
+	if ((error = allocif(unit, &sc)) != 0) {
 		rumpuser_close(memfd, NULL);
 		return error;
 	}
 	error = initbackend(sc, memfd);
 	if (error) {
-		rumpuser_close(memfd, &dummy);
-		/* XXX: free sc */
+		shmif_unclone(&sc->sc_ec.ec_if);
 		return error;
 	}
 
@@ -271,7 +303,7 @@ rump_shmif_create(const char *path, int *ifnum)
 	strcpy(sc->sc_backfile, path);
 
 	if (ifnum)
-		*ifnum = mynum;
+		*ifnum = unit;
 
 	return 0;
 }
@@ -300,8 +332,32 @@ shmif_clone(struct if_clone *ifc, int unit)
 static int
 shmif_unclone(struct ifnet *ifp)
 {
+	struct shmif_sc *sc = ifp->if_softc;
 
-	return EOPNOTSUPP;
+	shmif_stop(ifp, 1);
+	if_down(ifp);
+	finibackend(sc);
+
+	mutex_enter(&sc->sc_mtx);
+	sc->sc_dying = true;
+	cv_broadcast(&sc->sc_cv);
+	mutex_exit(&sc->sc_mtx);
+
+	if (sc->sc_rcvl)
+		kthread_join(sc->sc_rcvl);
+	sc->sc_rcvl = NULL;
+
+	vmem_xfree(shmif_units, sc->sc_unit+1, 1);
+
+	ether_ifdetach(ifp);
+	if_detach(ifp);
+
+	cv_destroy(&sc->sc_cv);
+	mutex_destroy(&sc->sc_mtx);
+
+	kmem_free(sc, sizeof(*sc));
+
+	return 0;
 }
 
 static int
@@ -312,15 +368,17 @@ shmif_init(struct ifnet *ifp)
 
 	if (sc->sc_memfd == -1)
 		return ENXIO;
-
-	if (rump_threads) {
-		error = kthread_create(PRI_NONE, KTHREAD_MPSAFE, NULL,
-		    shmif_rcv, ifp, NULL, "shmif");
-	} else {
-		printf("WARNING: threads not enabled, shmif NOT working\n");
-	}
+	KASSERT(sc->sc_busmem);
 
 	ifp->if_flags |= IFF_RUNNING;
+
+	mutex_enter(&sc->sc_mtx);
+	sc->sc_nextpacket = sc->sc_busmem->shm_last;
+	sc->sc_devgen = sc->sc_busmem->shm_gen;
+
+	cv_broadcast(&sc->sc_cv);
+	mutex_exit(&sc->sc_mtx);
+
 	return error;
 }
 
@@ -330,7 +388,7 @@ shmif_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	struct shmif_sc *sc = ifp->if_softc;
 	struct ifdrv *ifd;
 	char *path;
-	int s, rv, memfd, dummy;
+	int s, rv, memfd;
 
 	s = splnet();
 	switch (cmd) {
@@ -397,7 +455,7 @@ shmif_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		rv = initbackend(sc, memfd);
 		if (rv) {
 			kmem_free(path, ifd->ifd_len);
-			rumpuser_close(memfd, &dummy);
+			rumpuser_close(memfd, NULL);
 			break;
 		}
 		sc->sc_backfile = path;
@@ -415,7 +473,7 @@ shmif_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	return rv;
 }
 
-/* send everything in-context */
+/* send everything in-context since it's just a matter of mem-to-mem copy */
 static void
 shmif_start(struct ifnet *ifp)
 {
@@ -479,7 +537,7 @@ shmif_start(struct ifnet *ifp)
 
 	ifp->if_flags &= ~IFF_OACTIVE;
 
-	/* wakeup */
+	/* wakeup? */
 	if (wrote)
 		rumpuser_pwrite(sc->sc_memfd,
 		    &busversion, sizeof(busversion), IFMEM_WAKEUP, &error);
@@ -488,8 +546,18 @@ shmif_start(struct ifnet *ifp)
 static void
 shmif_stop(struct ifnet *ifp, int disable)
 {
+	struct shmif_sc *sc = ifp->if_softc;
 
-	panic("%s: unimpl", __func__);
+	ifp->if_flags &= ~IFF_RUNNING;
+	membar_producer();
+
+	/*
+	 * wakeup thread.  this will of course wake up all bus
+	 * listeners, but that's life.
+	 */
+	if (sc->sc_memfd != -1)
+		rumpuser_pwrite(sc->sc_memfd,
+		    &busversion, sizeof(busversion), IFMEM_WAKEUP, NULL);
 }
 
 
@@ -535,14 +603,22 @@ shmif_rcv(void *arg)
 {
 	struct ifnet *ifp = arg;
 	struct shmif_sc *sc = ifp->if_softc;
-	struct shmif_mem *busmem = sc->sc_busmem;
+	struct shmif_mem *busmem;
 	struct mbuf *m = NULL;
 	struct ether_header *eth;
 	uint32_t nextpkt;
 	bool wrap;
 	int error;
 
-	for (;;) {
+ reup:
+	mutex_enter(&sc->sc_mtx);
+	while ((ifp->if_flags & IFF_RUNNING) == 0 && !sc->sc_dying)
+		cv_wait(&sc->sc_cv, &sc->sc_mtx);
+	mutex_exit(&sc->sc_mtx);
+
+	busmem = sc->sc_busmem;
+
+	while (ifp->if_flags & IFF_RUNNING) {
 		struct shmif_pkthdr sp;
 
 		if (m == NULL) {
@@ -566,6 +642,7 @@ shmif_rcv(void *arg)
 			rumpuser_writewatchfile_wait(sc->sc_kq, NULL, &error);
 			if (__predict_false(error))
 				printf("shmif_rcv: wait failed %d\n", error);
+			membar_consumer();
 			continue;
 		}
 
@@ -620,6 +697,11 @@ shmif_rcv(void *arg)
 			m = NULL;
 		}
 	}
+	m_freem(m);
+	m = NULL;
 
-	panic("shmif_worker is a lazy boy %d\n", error);
+	if (!sc->sc_dying)
+		goto reup;
+
+	kthread_exit(0);
 }
