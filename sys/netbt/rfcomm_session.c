@@ -1,4 +1,4 @@
-/*	$NetBSD: rfcomm_session.c,v 1.16 2010/01/03 16:38:15 plunky Exp $	*/
+/*	$NetBSD: rfcomm_session.c,v 1.17 2010/11/17 20:19:25 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rfcomm_session.c,v 1.16 2010/01/03 16:38:15 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rfcomm_session.c,v 1.17 2010/11/17 20:19:25 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -388,6 +388,13 @@ rfcomm_session_disconnected(void *arg, int err)
 	struct rfcomm_dlc *dlc;
 
 	DPRINTF("Disconnected\n");
+
+	/*
+	 * If we have any DLCs outstanding in the unlikely case that the
+	 * L2CAP channel disconnected normally, close them with an error
+	 */
+	if (err == 0)
+		err = ECONNRESET;
 
 	rs->rs_state = RFCOMM_SESSION_CLOSED;
 
@@ -816,7 +823,7 @@ rfcomm_session_recv_disc(struct rfcomm_session *rs, int dlci)
 		return;
 	}
 
-	rfcomm_dlc_close(dlc, ECONNRESET);
+	rfcomm_dlc_close(dlc, 0);
 	rfcomm_session_send_frame(rs, RFCOMM_FRAME_UA, dlci);
 }
 

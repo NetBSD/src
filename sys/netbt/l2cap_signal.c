@@ -1,4 +1,4 @@
-/*	$NetBSD: l2cap_signal.c,v 1.10 2009/09/25 19:44:57 plunky Exp $	*/
+/*	$NetBSD: l2cap_signal.c,v 1.11 2010/11/17 20:19:25 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: l2cap_signal.c,v 1.10 2009/09/25 19:44:57 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: l2cap_signal.c,v 1.11 2010/11/17 20:19:25 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -814,7 +814,7 @@ l2cap_recv_disconnect_req(struct mbuf *m, struct hci_link *link)
 				sizeof(rp), &rp);
 
 	if (chan->lc_state != L2CAP_CLOSED)
-		l2cap_close(chan, ECONNRESET);
+		l2cap_close(chan, 0);
 }
 
 /*
