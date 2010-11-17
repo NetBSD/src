@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.100 2010/11/16 01:12:57 uebayasi Exp $	*/
+/*	$NetBSD: vm.c,v 1.101 2010/11/17 19:54:09 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2010 Antti Kantee.  All Rights Reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.100 2010/11/16 01:12:57 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.101 2010/11/17 19:54:09 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -345,7 +345,7 @@ uvm_mmap(struct vm_map *map, vaddr_t *addr, vsize_t size, vm_prot_t prot,
 	if (*addr != 0)
 		panic("uvm_mmap() variant unsupported");
 
-	if (curproc->p_vmspace == &vmspace0) {
+	if (curproc->p_vmspace == vmspace_kernel()) {
 		uaddr = rumpuser_anonmmap(NULL, size, 0, 0, &error);
 	} else {
 		error = rumpuser_sp_anonmmap(size, &uaddr);
@@ -708,7 +708,7 @@ int
 uvm_vslock(struct vmspace *vs, void *addr, size_t len, vm_prot_t access)
 {
 
-	KASSERT(vs == &vmspace0);
+	KASSERT(vs == vmspace_kernel());
 	return 0;
 }
 
@@ -716,7 +716,7 @@ void
 uvm_vsunlock(struct vmspace *vs, void *addr, size_t len)
 {
 
-	KASSERT(vs == &vmspace0);
+	KASSERT(vs == vmspace_kernel());
 }
 
 void

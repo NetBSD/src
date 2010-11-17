@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpcopy.c,v 1.9 2010/11/09 20:55:14 pooka Exp $	*/
+/*	$NetBSD: rumpcopy.c,v 1.10 2010/11/17 19:54:09 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpcopy.c,v 1.9 2010/11/09 20:55:14 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpcopy.c,v 1.10 2010/11/17 19:54:09 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/lwp.h>
@@ -44,7 +44,7 @@ copyin(const void *uaddr, void *kaddr, size_t len)
 		return EFAULT;
 	}
 
-	if (curproc->p_vmspace == &vmspace0) {
+	if (curproc->p_vmspace == vmspace_kernel()) {
 		memcpy(kaddr, uaddr, len);
 	} else {
 		rumpuser_sp_copyin(uaddr, kaddr, len);
@@ -60,7 +60,7 @@ copyout(const void *kaddr, void *uaddr, size_t len)
 		return EFAULT;
 	}
 
-	if (curproc->p_vmspace == &vmspace0) {
+	if (curproc->p_vmspace == vmspace_kernel()) {
 		memcpy(uaddr, kaddr, len);
 	} else {
 		rumpuser_sp_copyout(kaddr, uaddr, len);
@@ -72,7 +72,7 @@ int
 subyte(void *uaddr, int byte)
 {
 
-	if (curproc->p_vmspace == &vmspace0)
+	if (curproc->p_vmspace == vmspace_kernel())
 		*(char *)uaddr = byte;
 	else
 		rumpuser_sp_copyout(&byte, uaddr, 1);
@@ -106,7 +106,7 @@ copyinstr(const void *uaddr, void *kaddr, size_t len, size_t *done)
 	if (len == 0)
 		return 0;
 
-	if (curproc->p_vmspace == &vmspace0)
+	if (curproc->p_vmspace == vmspace_kernel())
 		return copystr(uaddr, kaddr, len, done);
 
 	if ((rv = rumpuser_sp_copyin(uaddr, kaddr, len)) != 0)
@@ -133,7 +133,7 @@ copyoutstr(const void *kaddr, void *uaddr, size_t len, size_t *done)
 {
 	size_t slen;
 
-	if (curproc->p_vmspace == &vmspace0)
+	if (curproc->p_vmspace == vmspace_kernel())
 		return copystr(kaddr, uaddr, len, done);
 
 	slen = strlen(kaddr)+1;
