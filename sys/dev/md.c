@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.62.2.1 2010/11/18 16:07:52 uebayasi Exp $	*/
+/*	$NetBSD: md.c,v 1.62.2.2 2010/11/18 16:09:46 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross, Leo Weppelman.
@@ -40,9 +40,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: md.c,v 1.62.2.1 2010/11/18 16:07:52 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: md.c,v 1.62.2.2 2010/11/18 16:09:46 uebayasi Exp $");
 
 #include "opt_md.h"
+#include "opt_xip.h"
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -99,6 +100,7 @@ static dev_type_write(mdwrite);
 static dev_type_ioctl(mdioctl);
 static dev_type_strategy(mdstrategy);
 static dev_type_size(mdsize);
+static dev_type_mmap(mdmmap);
 
 const struct bdevsw md_bdevsw = {
 	mdopen, mdclose, mdstrategy, mdioctl, nodump, mdsize, D_DISK
@@ -106,7 +108,7 @@ const struct bdevsw md_bdevsw = {
 
 const struct cdevsw md_cdevsw = {
 	mdopen, mdclose, mdread, mdwrite, mdioctl,
-	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
+	nostop, notty, nopoll, mdmmap, nokqfilter, D_DISK
 };
 
 static struct dkdriver mddkdriver = { mdstrategy, NULL };
@@ -443,6 +445,19 @@ mdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 			pp->part =
 			    &sc->sc_dkdev.dk_label->d_partitions[DISKPART(dev)];
 			return 0;
+
+#if defined(XIP) && !defined(XIP_CDEV_MMAP)
+		case DIOCGPHYSSEG:
+		    {
+			int error = 0;
+
+			if (sc->sc_md.md_phys == NULL)
+				error = EINVAL;
+			else
+				*(void **)data = sc->sc_md.md_phys;
+			return error;
+		    }
+#endif
 		}
 	}
 
@@ -473,6 +488,17 @@ mdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		break;
 	}
 	return EINVAL;
+}
+
+paddr_t
+mdmmap(dev_t dev, off_t off, int flags)
+{
+
+#if defined(MEMORY_DISK_HOOKS) && defined(XIP)
+	return md_mmap_hook(dev, off, flags);
+#else
+	return -1;
+#endif
 }
 
 static void

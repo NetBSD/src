@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.11 2009/12/14 03:11:22 uebayasi Exp $	*/
+/*	$NetBSD: md.h,v 1.11.2.1 2010/11/18 16:09:46 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -38,6 +38,9 @@ struct md_conf {
 	void *md_addr;
 	size_t  md_size;
 	int     md_type;
+#ifndef XIP_CDEV_MMAP
+	void *md_phys;	/* XIP */
+#endif
 };
 
 #define MD_GETCONF	_IOR('r', 0, struct md_conf)	/* get unit config */
@@ -86,6 +89,7 @@ struct md_conf {
 extern void md_attach_hook(int, struct md_conf *);
 extern void md_open_hook(int, struct md_conf *);
 extern void md_root_setconf(char *, size_t);
+extern paddr_t md_mmap_hook(dev_t, off_t, int);
 
 extern int md_is_root;
 #endif /* _KERNEL */
