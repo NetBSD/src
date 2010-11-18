@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pglist.c,v 1.49 2010/11/18 08:41:11 uebayasi Exp $	*/
+/*	$NetBSD: uvm_pglist.c,v 1.50 2010/11/18 11:49:41 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pglist.c,v 1.49 2010/11/18 08:41:11 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pglist.c,v 1.50 2010/11/18 11:49:41 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,7 +59,7 @@ u_long	uvm_pglistalloc_npages;
 #define	STAT_DECR(v)
 #endif
 
-#ifdef DIAGNOSTIC
+#ifdef DEBUG
 static int
 vm_physmem_index(struct vm_physseg *ps)
 {
