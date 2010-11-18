@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module_vfs.c,v 1.7 2010/06/24 13:03:11 hannken Exp $	*/
+/*	$NetBSD: kern_module_vfs.c,v 1.8 2010/11/18 09:50:47 jnemeth Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module_vfs.c,v 1.7 2010/06/24 13:03:11 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module_vfs.c,v 1.8 2010/11/18 09:50:47 jnemeth Exp $");
 
 #define _MODULE_INTERNAL
 #include <sys/param.h>
@@ -65,10 +65,13 @@ module_load_vfs(const char *name, int flags, bool autoload,
 	char *path;
 	bool nochroot;
 	int error;
+	prop_bool_t noload;
+	prop_dictionary_t moduledict;
 
 	nochroot = false;
 	error = 0;
 	path = NULL;
+	moduledict = NULL;
 	if (filedictp)
 		*filedictp = NULL;
 	path = PNBUF_GET();
@@ -99,13 +102,27 @@ module_load_vfs(const char *name, int flags, bool autoload,
 	/*
 	 * Load and process <module>.prop if it exists.
 	 */
-	if ((flags & MODCTL_NO_PROP) == 0 && filedictp) {
-		error = module_load_plist_vfs(path, nochroot, filedictp);
+	if (((flags & MODCTL_NO_PROP) == 0 && filedictp) || autoload) {
+		error = module_load_plist_vfs(path, nochroot, &moduledict);
 		if (error != 0) {
 			module_print("plist load returned error %d for `%s'",
 			    error, path);
 			if (error != ENOENT)
 				goto fail;
+		} else if (autoload) {
+			noload = prop_dictionary_get(moduledict, "noautoload");
+			if (noload != NULL && prop_bool_true(noload)) {
+				module_error("autoloading is disallowed for %s",
+				    path);
+				error = EPERM;
+				goto fail;
+			}
+		}
+		if (error == 0) {	/* can get here if error == ENOENT */
+			if ((flags & MODCTL_NO_PROP) == 0 && filedictp)
+				*filedictp = moduledict;
+			else 
+				prop_object_release(moduledict);
 		}
 	}
 
