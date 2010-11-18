@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge.c,v 1.22 2010/11/18 18:00:40 skrll Exp $	*/
+/*	$NetBSD: footbridge.c,v 1.23 2010/11/18 18:01:20 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: footbridge.c,v 1.22 2010/11/18 18:00:40 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: footbridge.c,v 1.23 2010/11/18 18:01:20 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -198,7 +198,8 @@ footbridge_attach(device_t parent, device_t self, void *aux)
 	/* calibrate the delay loop */
 	calibrate_delay();
 
-	/* it seems that the default of the memory being visible from 0 upwards
+	/*
+	 * It seems that the default of the memory being visible from 0 upwards
 	 * on the PCI bus causes issues when DMAing from traditional PC VGA
 	 * address.  This breaks dumping core on cats, as DMAing pages in the
 	 * range 0xb800-0xc000 cause the system to hang.  This suggests that
