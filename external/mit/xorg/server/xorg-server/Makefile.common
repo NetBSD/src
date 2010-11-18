@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.common,v 1.18 2010/08/01 06:24:31 kiyohara Exp $
+#	$NetBSD: Makefile.common,v 1.19 2010/11/18 08:20:17 mrg Exp $
 
 # These define parts of the Xserver tree that are to be
 # conditionally compiled for different platforms.  See
@@ -19,6 +19,7 @@
     ${MACHINE} == "macppc"	|| \
     ${MACHINE} == "netwinder"	|| \
     ${MACHINE} == "prep"	|| \
+    ${MACHINE} == "ofppc"	|| \
     ${MACHINE} == "sgimips"	|| \
     ${MACHINE} == "shark"	|| \
     ${MACHINE} == "sparc"	|| \

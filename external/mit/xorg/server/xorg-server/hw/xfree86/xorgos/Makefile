@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.23 2010/08/01 06:24:31 kiyohara Exp $
+#	$NetBSD: Makefile,v 1.24 2010/11/18 08:20:17 mrg Exp $
 
 .include "../../../Makefile.serverlib"
 .include "../../../Makefile.servermod"
@@ -32,7 +32,7 @@ CPPFLAGS.${_FN}+=	-DUSE_I386_IOPL -DPCVT_SUPPORT -DWSCONS_SUPPORT \
 .endfor
 .endif
 
-.if ${MACHINE} == "macppc" || ${MACHINE} == "prep" || ${MACHINE} == "bebox"
+.if ${MACHINE} == "macppc" || ${MACHINE} == "prep" || ${MACHINE} == "bebox" || ${MACHINE} == "ofppc"
 SRCS.bsd+=	ppc_video.c stdResource.c pm_noop.c lnx_agp.c
 .for _FN in ${SRCS.bsd}
 CPPFLAGS.${_FN}=	-DWSCONS_SUPPORT -DUSESTDRES -DHAVE_SYSV_IPC
@@ -91,7 +91,7 @@ SRCS.bus+=	Pci.c
     ${MACHINE} == "sgimips" || ${MACHINE} == "shark" || \
     ${MACHINE} == "netwinder" || ${MACHINE_ARCH} == "sparc" || \
     ${MACHINE_ARCH} == "sparc64" || ${MACHINE_ARCH} == "alpha" || \
-    ${MACHINE} == "prep" || ${MACHINE} == "bebox"
+    ${MACHINE} == "prep" || ${MACHINE} == "bebox" || ${MACHINE} == "ofppc"
 #SRCS.bus+=	netbsdPci.c
 .endif
 
