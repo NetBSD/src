@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_io.c,v 1.17 2010/11/18 18:06:21 skrll Exp $	*/
+/*	$NetBSD: footbridge_io.c,v 1.18 2010/11/18 18:12:23 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Causality Limited
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: footbridge_io.c,v 1.17 2010/11/18 18:06:21 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: footbridge_io.c,v 1.18 2010/11/18 18:12:23 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,6 +56,7 @@ bs_protos(generic_armv4);
 bs_protos(bs_notimpl);
 bs_map_proto(footbridge_mem);
 bs_unmap_proto(footbridge_mem);
+bs_mmap_proto(footbridge_io);
 bs_mmap_proto(footbridge_mem);
 
 /* Declare the footbridge bus space tag */
@@ -143,6 +144,7 @@ void footbridge_create_io_bs_tag(t, cookie)
 {
 	*t = footbridge_bs_tag;
 	t->bs_cookie = cookie;
+	t->bs_mmap = footbridge_io_bs_mmap;
 }
 
 void footbridge_create_mem_bs_tag(t, cookie)
@@ -301,6 +303,25 @@ void
 footbridge_bs_barrier(void *t, bus_space_handle_t bsh, bus_size_t offset, bus_size_t len, int flags)
 {
 }	
+
+
+paddr_t
+footbridge_io_bs_mmap(void *t, bus_addr_t addr, off_t offset,
+		       int prot, int flags)
+{
+	paddr_t pa;
+
+	/* allow mapping of IO space */
+	if (addr >= DC21285_PCI_IO_SIZE ||
+	    addr >= DC21285_PCI_IO_SIZE - offset ||
+	    offset < 0 ||
+	    offset >= DC21285_PCI_IO_SIZE)
+		return -1;
+
+	pa = PCI_MAGIC_IO_RANGE + addr + offset;
+
+	return arm_btop(pa);
+}
 
 
 paddr_t
