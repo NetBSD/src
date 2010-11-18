@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2008/07/29 05:01:23 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2010/11/18 18:47:35 tron Exp $
 
 .include <bsd.own.mk>
 
 SUBDIR=	cf
 .if ${MKSHARE} != "no" || \
 	make(clean) || make(cleandir) || make(distclean) || make(obj)
-SUBDIR+=fonts nls
+SUBDIR+=fonts man nls
 .endif
 
 .include <bsd.subdir.mk>
