@@ -1,4 +1,4 @@
-# $NetBSD: md.ofppc,v 1.9 2010/11/15 12:23:06 njoly Exp $
+# $NetBSD: md.ofppc,v 1.10 2010/11/18 07:52:45 mrg Exp $
 ./usr/X11R6/bin/X					-unknown-	x11
 ./usr/X11R6/bin/XFree86					-unknown-	x11
 ./usr/X11R6/bin/gtf					-unknown-	x11
@@ -305,6 +305,4 @@
 ./usr/X11R6/man/man4/wacom.4				-unknown-	.man,x11
 ./usr/X11R6/man/man4/wsfb.4				-unknown-	.man,x11
 ./usr/X11R6/man/man5/XF86Config.5			-unknown-	.man,x11
-./usr/X11R7/lib/X11/doc/README.DRI			-unknown-	xorg
 ./usr/X11R7/lib/X11/doc/README.fonts			-unknown-	obsolete
-./usr/X11R7/lib/X11/doc/README.rapidaccess		-unknown-	xorg
