@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_vnode.c,v 1.93.2.3 2010/11/16 07:44:25 uebayasi Exp $	*/
+/*	$NetBSD: uvm_vnode.c,v 1.93.2.4 2010/11/18 16:16:36 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.93.2.3 2010/11/16 07:44:25 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.93.2.4 2010/11/18 16:16:36 uebayasi Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_xip.h"
@@ -412,12 +412,16 @@ uvn_needs_writefault_p(struct uvm_object *uobj)
  *	given offset.
  */
 struct vm_page *
-uvn_findpage_xip(struct uvm_object *uobj, off_t off)
+uvn_findpage_xip(struct vnode *devvp, struct uvm_object *uobj, off_t off)
 {
+#if defined(DIAGNOSTIC)
 	struct vnode *vp = (struct vnode *)uobj;
+#endif
 	struct vm_physseg *seg;
 	struct vm_page *pg;
 
+#if defined(XIP)
+#if !defined(XIP_CDEV_MMAP)
 	KASSERT((vp->v_vflag & VV_XIP) != 0);
 	KASSERT((off & PAGE_MASK) == 0);
 
@@ -431,10 +435,41 @@ uvn_findpage_xip(struct uvm_object *uobj, off_t off)
 	 * uvm_object *, and this will call cdev_page(uobj, off).
 	 */
 
-	seg = vp->v_physseg;
+	seg = devvp->v_physseg;
 	KASSERT(seg != NULL);
 
 	pg = seg->pgs + (off >> PAGE_SHIFT);
+#else
+	dev_t dev;
+	paddr_t mdpgno, pa, pfn;
+	int segno, segidx;
+
+	KASSERT(vp != NULL);
+	KASSERT((vp->v_vflag & VV_XIP) != 0);
+	KASSERT((off & PAGE_MASK) == 0);
+
+	/*
+	 * Get an "mmap cookie" from device.
+	 */
+	dev = devsw_blk2chr(devvp->v_rdev);
+	mdpgno = cdev_mmap(dev, off, 0);
+	KASSERT(mdpgno != -1);
+
+	/*
+	 * Index the matching vm_page and return it the vnode pager
+	 * (genfs_getpages).
+	 */
+	pa = pmap_phys_address(mdpgno);
+	pfn = atop(pa);
+	segno = vm_physseg_find_device(pfn, &segidx);
+	seg = VM_PHYSDEV_PTR(segno);
+	KASSERT(seg != NULL);
+	KASSERT(segidx == pfn - seg->start);
+	KASSERT(seg->pgs != NULL);
+
+	pg = seg->pgs + segidx;
+#endif
+#endif
 
 	KASSERT(pg->phys_addr == (seg->start << PAGE_SHIFT) + off);
 
