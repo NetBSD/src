@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.94 2010/07/18 07:07:08 mrg Exp $
+# $NetBSD: mi,v 1.95 2010/11/18 18:48:05 tron Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2585,6 +2585,12 @@
 ./usr/X11R7/man/cat5					base-x11-root	xorg
 ./usr/X11R7/man/cat5/fonts-conf.0			-unknown-	.cat,xorg
 ./usr/X11R7/man/cat7					base-x11-root	xorg
+./usr/X11R7/man/cat7/Consortium.0			-unknown-	.cat,xorg
+./usr/X11R7/man/cat7/Standards.0			-unknown-	.cat,xorg
+./usr/X11R7/man/cat7/X.0				-unknown-	.cat,xorg
+./usr/X11R7/man/cat7/XOrgFoundation.0
+./usr/X11R7/man/cat7/XProjectTeam.0			-unknown-	.cat,xorg
+./usr/X11R7/man/cat7/Xsecurity.0			-unknown-	.cat,xorg
 ./usr/X11R7/man/html1					base-x11-root	xorg
 ./usr/X11R7/man/html1/appres.html			-unknown-	html,xorg
 ./usr/X11R7/man/html1/atobm.html			-unknown-	html,xorg
@@ -2713,6 +2719,12 @@
 ./usr/X11R7/man/html5					base-x11-root	xorg
 ./usr/X11R7/man/html5/fonts-conf.html			-unknown-	html,xorg
 ./usr/X11R7/man/html7					base-x11-root	xorg
+./usr/X11R7/man/html7/Consortium.html			-unknown-	html,xorg
+./usr/X11R7/man/html7/Standards.html			-unknown-	html,xorg
+./usr/X11R7/man/html7/X.html				-unknown-	html,xorg
+./usr/X11R7/man/html7/XOrgFoundation.html		-unknown-	html,xorg
+./usr/X11R7/man/html7/XProjectTeam.html			-unknown-	html,xorg
+./usr/X11R7/man/html7/Xsecurity.html			-unknown-	html,xorg
 ./usr/X11R7/man/man1					base-x11-root	xorg
 ./usr/X11R7/man/man1/appres.1				-unknown-	.man,xorg
 ./usr/X11R7/man/man1/atobm.1				-unknown-	.man,xorg
@@ -2842,6 +2854,12 @@
 ./usr/X11R7/man/man5					base-x11-root	xorg
 ./usr/X11R7/man/man5/fonts-conf.5			-unknown-	.man,xorg
 ./usr/X11R7/man/man7					base-x11-root	xorg
+./usr/X11R7/man/man7/Consortium.7			-unknown-	.man,xorg
+./usr/X11R7/man/man7/Standards.7			-unknown-	.man,xorg
+./usr/X11R7/man/man7/X.7				-unknown-	.man,xorg
+./usr/X11R7/man/man7/XOrgFoundation.7			-unknown-	.man,xorg
+./usr/X11R7/man/man7/XProjectTeam.7			-unknown-	.man,xorg
+./usr/X11R7/man/man7/Xsecurity.7			-unknown-	.man,xorg
 ./usr/X11R7/man/whatis.db				-unknown-	man,xorg
 ./usr/X11R7/share					base-x11-root	xorg
 ./usr/X11R7/share/examples				base-x11-root	xorg
