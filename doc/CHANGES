@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1459 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1460 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -788,3 +788,5 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		[bsh 20101113]
 	evbarm: Add initial support for Sharp NetWalker MID.
 		[bsh 20101113]
+	module: Allow disabling autoloading a specific module by setting
+		noautoload property.  [jnemeth 20101118]
