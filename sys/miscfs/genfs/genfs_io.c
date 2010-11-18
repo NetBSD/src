@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.36.2.32 2010/11/16 07:44:25 uebayasi Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.36.2.33 2010/11/18 01:53:04 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.36.2.32 2010/11/16 07:44:25 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.36.2.33 2010/11/18 01:53:04 uebayasi Exp $");
 
 #include "opt_xip.h"
 
@@ -900,15 +900,14 @@ genfs_do_getpages_xip1(
 		struct vm_page *pg = pps[i];
 
 		KASSERT((pg->flags & PG_RDONLY) != 0);
-		if (pg == zero_page) {
-		} else {
-			KASSERT((pg->flags & PG_BUSY) == 0);
-			KASSERT((pg->flags & PG_CLEAN) != 0);
-			KASSERT((pg->flags & PG_DEVICE) != 0);
-			pg->flags |= PG_BUSY;
-			pg->flags &= ~PG_FAKE;
-			pg->uobject = &vp->v_uobj;
-		}
+		if (pg == zero_page)
+			continue;
+		KASSERT((pg->flags & PG_BUSY) == 0);
+		KASSERT((pg->flags & PG_CLEAN) != 0);
+		KASSERT((pg->flags & PG_DEVICE) != 0);
+		pg->flags |= PG_BUSY;
+		pg->flags &= ~PG_FAKE;
+		pg->uobject = &vp->v_uobj;
 	}
 
 	if ((flags & PGO_LOCKED) == 0)
@@ -1525,20 +1524,19 @@ genfs_do_putpages_xip(struct vnode *vp, off_t startoff, off_t endoff,
 			pg = pgs[i];
 			if (pg == NULL || pg == PGO_DONTCARE)
 				continue;
-			if (pg == uvm_page_zeropage) {
+			if (pg == uvm_page_zeropage)
 				/* Do nothing for holes. */
-			} else {
-				/*
-				 * Freeing normal XIP pages; nothing to do.
-				 */
-				pmap_page_protect(pg, VM_PROT_NONE);
-				KASSERT((pg->flags & PG_BUSY) != 0);
-				KASSERT((pg->flags & PG_RDONLY) != 0);
-				KASSERT((pg->flags & PG_CLEAN) != 0);
-				KASSERT((pg->flags & PG_FAKE) == 0);
-				KASSERT((pg->flags & PG_DEVICE) != 0);
-				pg->flags &= ~PG_BUSY;
-			}
+				continue;
+			/*
+			 * Freeing normal XIP pages; nothing to do.
+			 */
+			pmap_page_protect(pg, VM_PROT_NONE);
+			KASSERT((pg->flags & PG_BUSY) != 0);
+			KASSERT((pg->flags & PG_RDONLY) != 0);
+			KASSERT((pg->flags & PG_CLEAN) != 0);
+			KASSERT((pg->flags & PG_FAKE) == 0);
+			KASSERT((pg->flags & PG_DEVICE) != 0);
+			pg->flags &= ~PG_BUSY;
 		}
 		off += npages << PAGE_SHIFT;
 	}
