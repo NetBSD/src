@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pglist.c,v 1.48 2010/11/18 08:18:31 uebayasi Exp $	*/
+/*	$NetBSD: uvm_pglist.c,v 1.49 2010/11/18 08:41:11 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pglist.c,v 1.48 2010/11/18 08:18:31 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pglist.c,v 1.49 2010/11/18 08:41:11 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -178,11 +178,11 @@ uvm_pglistalloc_c_ps(struct vm_physseg *ps, int num, paddr_t low, paddr_t high,
 		 * Make sure this is a managed physical page.
 		 */
 
-		if (vm_physseg_find(try, &cidx) != vm_physmem_index(ps) - vm_physmem_index(VM_PHYSMEM_PTR(0)))
+		if (vm_physseg_find(try, &cidx) != vm_physmem_index(ps))
 			panic("pgalloc contig: botch1");
 		if (cidx != try - ps->start)
 			panic("pgalloc contig: botch2");
-		if (vm_physseg_find(try + num - 1, &cidx) != vm_physmem_index(ps) - vm_physmem_index(VM_PHYSMEM_PTR(0)))
+		if (vm_physseg_find(try + num - 1, &cidx) != vm_physmem_index(ps))
 			panic("pgalloc contig: botch3");
 		if (cidx != try - ps->start + num - 1)
 			panic("pgalloc contig: botch4");
@@ -317,7 +317,7 @@ uvm_pglistalloc_s_ps(struct vm_physseg *ps, int num, paddr_t low, paddr_t high,
 	for (try = max(atop(low), ps->avail_start);
 	     try < limit; try ++) {
 #ifdef DEBUG
-		if (vm_physseg_find(try, &cidx) != vm_physmem_index(ps) - vm_physmem_index(VM_PHYSMEM_PTR(0)))
+		if (vm_physseg_find(try, &cidx) != vm_physmem_index(ps))
 			panic("pgalloc simple: botch1");
 		if (cidx != (try - ps->start))
 			panic("pgalloc simple: botch2");
