@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.36.2.33 2010/11/18 01:53:04 uebayasi Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.36.2.34 2010/11/18 16:16:36 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.36.2.33 2010/11/18 01:53:04 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.36.2.34 2010/11/18 16:16:36 uebayasi Exp $");
 
 #include "opt_xip.h"
 
@@ -880,7 +880,7 @@ genfs_do_getpages_xip1(
 			blk_off = blkno << dev_bshift;
 			fs_off = off - (lbn << fs_bshift);
 
-			pps[i] = uvn_findpage_xip(&devvp->v_uobj,
+			pps[i] = uvn_findpage_xip(devvp, &vp->v_uobj,
 			    blk_off + fs_off);
 			KASSERT(pps[i] != NULL);
 		}
