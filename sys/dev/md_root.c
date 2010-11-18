@@ -1,4 +1,4 @@
-/*	$NetBSD: md_root.c,v 1.17 2009/04/16 14:46:33 tsutsui Exp $	*/
+/*	$NetBSD: md_root.c,v 1.17.2.1 2010/11/18 16:09:46 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -30,13 +30,16 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: md_root.c,v 1.17 2009/04/16 14:46:33 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: md_root.c,v 1.17.2.1 2010/11/18 16:09:46 uebayasi Exp $");
 
 #include "opt_md.h"
+#include "opt_xip.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/reboot.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <dev/md.h>
 
@@ -68,8 +71,16 @@ uint32_t md_root_size = sizeof(md_root_image) & ~(DEV_BSIZE - 1);
  * This array will be patched to contain a file-system image.
  * See the program mdsetimage(8) for details.
  */
+
+#ifdef XIP
+#define	ROOTALIGN	__aligned(PAGE_SIZE)
+CTASSERT(ROOTBYTES % PAGE_SIZE == 0);
+#else
+#define	ROOTALIGN
+#endif
+
 uint32_t md_root_size = ROOTBYTES;
-char md_root_image[ROOTBYTES] = "|This is the root ramdisk!\n";
+char md_root_image[ROOTBYTES]  ROOTALIGN = "|This is the root ramdisk!\n";
 #endif /* MEMORY_DISK_IMAGE */
 #endif /* MEMORY_DISK_DYNAMIC */
 
@@ -103,6 +114,25 @@ md_attach_hook(int unit, struct md_conf *md)
 		md->md_addr = (void *)md_root_image;
 		md->md_size = (size_t)md_root_size;
 		md->md_type = MD_KMEM_FIXED;
+#ifdef XIP
+		paddr_t start, end;
+
+		pmap_extract(pmap_kernel(),
+		    (vaddr_t)md_root_image, &start);
+		pmap_extract(pmap_kernel(),
+		    (vaddr_t)md_root_image + (size_t)md_root_size, &end);
+		if (end - start == md_root_size) {
+			aprint_verbose("md%d: allocating physseg\n", unit);
+#ifndef XIP_CDEV_MMAP
+			md->md_phys =
+#endif
+			uvm_page_physload_device(atop(start), atop(end),
+			    UVM_PROT_READ, 0);
+		} else {
+			aprint_error("md%d: can't alloc non-contig physseg\n",
+			    unit);
+		}
+#endif
 		format_bytes(pbuf, sizeof(pbuf), md->md_size);
 		aprint_verbose("md%d: internal %s image area\n", unit, pbuf);
 	}
@@ -118,4 +148,43 @@ md_open_hook(int unit, struct md_conf *md)
 	if (unit == 0 && md_is_root) {
 		boothowto |= MEMORY_DISK_RBFLAGS;
 	}
+}
+
+paddr_t
+md_mmap_hook(dev_t dev, off_t off, int flags)
+{
+	int success;
+	paddr_t pa;
+
+	success = pmap_extract(pmap_kernel(),
+	    (vaddr_t)(md_root_image + off), &pa);
+	KASSERT(success);
+
+	/* XXXUEBS copied from sys/dev/usb/udl.c */
+	/* XXX we need MI paddr_t -> mmap cookie API */
+#if defined(__alpha__)
+#define PTOMMAP(paddr)	alpha_btop((char *)paddr)
+#elif defined(__arm__)
+#define PTOMMAP(paddr)	arm_btop((u_long)paddr)
+#elif defined(__hppa__)
+#define PTOMMAP(paddr)	btop((u_long)paddr)
+#elif defined(__i386__) || defined(__x86_64__)
+#define PTOMMAP(paddr)	x86_btop(paddr)
+#elif defined(__m68k__)
+#define PTOMMAP(paddr)	m68k_btop((char *)paddr)
+#elif defined(__mips__)
+#define PTOMMAP(paddr)	mips_btop(paddr)
+#elif defined(__powerpc__)
+#define PTOMMAP(paddr)	(paddr)
+#elif defined(__sh__)
+#define PTOMMAP(paddr)	sh3_btop(paddr)
+#elif defined(__sparc__)
+#define PTOMMAP(paddr)	(paddr)
+#elif defined(__sparc64__)
+#define PTOMMAP(paddr)	atop(paddr)
+#elif defined(__vax__)
+#define PTOMMAP(paddr)	btop((u_int)paddr)
+#endif
+
+	return PTOMMAP(pa);
 }
