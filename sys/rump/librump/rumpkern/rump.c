@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.200 2010/11/17 21:57:33 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.201 2010/11/19 17:06:56 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.200 2010/11/17 21:57:33 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.201 2010/11/19 17:06:56 pooka Exp $");
 
 #include <sys/systm.h>
 #define ELFSIZE ARCH_ELFSIZE
@@ -190,14 +190,24 @@ mksysctls(void)
 	    &hostname, MAXHOSTNAMELEN, CTL_KERN, KERN_HOSTNAME, CTL_EOL);
 }
 
+/* there's no convenient kernel entry point for this, so just craft out own */
+static pid_t
+spgetpid(void)
+{
+
+	return curproc->p_pid;
+}
+
 static const struct rumpuser_sp_ops spops = {
 	.spop_schedule		= rump_schedule,
 	.spop_unschedule	= rump_unschedule,
 	.spop_lwproc_switch	= rump_lwproc_switch,
 	.spop_lwproc_release	= rump_lwproc_releaselwp,
 	.spop_lwproc_newproc	= rump_lwproc_newproc,
+	.spop_lwproc_newlwp	= rump_lwproc_newlwp,
 	.spop_lwproc_curlwp	= rump_lwproc_curlwp,
 	.spop_syscall		= rump_proxy_syscall,
+	.spop_getpid		= spgetpid,
 };
 
 int
