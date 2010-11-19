@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1523 2010/11/04 22:05:43 pooka Exp $
+#	$NetBSD: mi,v 1.1524 2010/11/19 06:44:34 dholland Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -9478,6 +9478,7 @@
 ./usr/share/man/cat9/optstr_get.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/p_find.0			comp-obsolete		obsolete
 ./usr/share/man/cat9/panic.0			comp-sys-catman		.cat
+./usr/share/man/cat9/pathbuf.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/pci.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/pci_conf_hook.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/pci_conf_interrupt.0	comp-sys-catman		.cat
@@ -15298,6 +15299,7 @@
 ./usr/share/man/html9/optstr_get.html		comp-sys-htmlman	html
 ./usr/share/man/html9/p_find.html		comp-obsolete		obsolete
 ./usr/share/man/html9/panic.html		comp-sys-htmlman	html
+./usr/share/man/html9/pathbuf.html		comp-sys-htmlman	html
 ./usr/share/man/html9/pci.html			comp-sys-htmlman	html
 ./usr/share/man/html9/pci_conf_hook.html	comp-sys-htmlman	html
 ./usr/share/man/html9/pci_conf_interrupt.html	comp-sys-htmlman	html
@@ -21285,6 +21287,7 @@
 ./usr/share/man/man9/optstr_get.9		comp-sys-man		.man
 ./usr/share/man/man9/p_find.9			comp-obsolete		obsolete
 ./usr/share/man/man9/panic.9			comp-sys-man		.man
+./usr/share/man/man9/pathbuf.9			comp-sys-man		.man
 ./usr/share/man/man9/pci.9			comp-sys-man		.man
 ./usr/share/man/man9/pci_conf_hook.9		comp-sys-man		.man
 ./usr/share/man/man9/pci_conf_interrupt.9	comp-sys-man		.man

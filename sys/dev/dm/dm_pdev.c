@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_pdev.c,v 1.6 2010/01/04 00:19:08 haad Exp $      */
+/*        $NetBSD: dm_pdev.c,v 1.7 2010/11/19 06:44:40 dholland Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -84,6 +84,7 @@ SLIST_HEAD(dm_pdevs, dm_pdev) dm_pdev_list;
 dm_pdev_t *
 dm_pdev_insert(const char *dev_name)
 {
+	struct pathbuf *dev_pb;
 	dm_pdev_t *dmp;
 	int error;
 
@@ -103,7 +104,15 @@ dm_pdev_insert(const char *dev_name)
 	if ((dmp = dm_pdev_alloc(dev_name)) == NULL)
 		return NULL;
 
-	error = dk_lookup(dev_name, curlwp, &dmp->pdev_vnode, UIO_SYSSPACE);
+	dev_pb = pathbuf_create(dev_name);
+	if (dev_pb == NULL) {
+		aprint_debug("pathbuf_create on device: %s failed!\n",
+		    dev_name);
+		kmem_free(dmp, sizeof(dm_pdev_t));
+		return NULL;
+	}
+	error = dk_lookup(dev_pb, curlwp, &dmp->pdev_vnode);
+	pathbuf_destroy(dev_pb);
 	if (error) {
 		aprint_debug("dk_lookup on device: %s failed with error %d!\n",
 		    dev_name, error);

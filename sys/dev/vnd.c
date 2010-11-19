@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.213 2010/09/19 09:41:37 mrg Exp $	*/
+/*	$NetBSD: vnd.c,v 1.214 2010/11/19 06:44:39 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.213 2010/09/19 09:41:37 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.214 2010/11/19 06:44:39 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vnd.h"
@@ -1015,6 +1015,7 @@ vndioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	struct vnd_softc *vnd;
 	struct vnd_ioctl *vio;
 	struct vattr vattr;
+	struct pathbuf *pb;
 	struct nameidata nd;
 	int error, part, pmask;
 	size_t geomsize;
@@ -1100,9 +1101,15 @@ vndioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		fflags = FREAD;
 		if ((vio->vnd_flags & VNDIOF_READONLY) == 0)
 			fflags |= FWRITE;
-		NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, vio->vnd_file);
-		if ((error = vn_open(&nd, fflags, 0)) != 0)
+		error = pathbuf_copyin(vio->vnd_file, &pb);
+		if (error) {
 			goto unlock_and_exit;
+		}
+		NDINIT(&nd, LOOKUP, FOLLOW, pb);
+		if ((error = vn_open(&nd, fflags, 0)) != 0) {
+			pathbuf_destroy(pb);
+			goto unlock_and_exit;
+		}
 		KASSERT(l);
 		error = VOP_GETATTR(nd.ni_vp, &vattr, l->l_cred);
 		if (!error && nd.ni_vp->v_type != VREG)
@@ -1332,10 +1339,12 @@ vndioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 
 		vndunlock(vnd);
 
+		pathbuf_destroy(pb);
 		break;
 
 close_and_exit:
 		(void) vn_close(nd.ni_vp, fflags, l->l_cred);
+		pathbuf_destroy(pb);
 unlock_and_exit:
 #ifdef VND_COMPRESSION
 		/* free any allocated memory (for compressed file) */

@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_bsdpty.c,v 1.16 2010/01/08 11:35:10 pooka Exp $	*/
+/*	$NetBSD: tty_bsdpty.c,v 1.17 2010/11/19 06:44:43 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_bsdpty.c,v 1.16 2010/01/08 11:35:10 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_bsdpty.c,v 1.17 2010/11/19 06:44:43 dholland Exp $");
 
 #include "opt_ptm.h"
 
@@ -117,6 +117,7 @@ pty_allocvp(struct ptm_pty *ptm, struct lwp *l, struct vnode **vp, dev_t dev,
     char ms)
 {
 	int error;
+	struct pathbuf *pb;
 	struct nameidata nd;
 	char name[TTY_NAMESIZE];
 
@@ -124,10 +125,18 @@ pty_allocvp(struct ptm_pty *ptm, struct lwp *l, struct vnode **vp, dev_t dev,
 	if (error)
 		return error;
 
-	NDINIT(&nd, LOOKUP, NOFOLLOW|LOCKLEAF, UIO_SYSSPACE, name);
-	if ((error = namei(&nd)) != 0)
+	pb = pathbuf_create(name);
+	if (pb == NULL) {
+		return ENOMEM;
+	}
+
+	NDINIT(&nd, LOOKUP, NOFOLLOW|LOCKLEAF, pb);
+	if ((error = namei(&nd)) != 0) {
+		pathbuf_destroy(pb);
 		return error;
+	}
 	*vp = nd.ni_vp;
+	pathbuf_destroy(pb);
 	return 0;
 }
 
