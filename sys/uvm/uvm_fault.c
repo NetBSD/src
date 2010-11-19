@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.166.2.23 2010/11/04 08:47:38 uebayasi Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.166.2.24 2010/11/19 01:44:47 uebayasi Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.166.2.23 2010/11/04 08:47:38 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.166.2.24 2010/11/19 01:44:47 uebayasi Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_xip.h"
@@ -1867,9 +1867,11 @@ uvm_fault_lower_io(
 
 	KASSERT((pg->flags & PG_BUSY) != 0);
 
-	mutex_enter(&uvm_pageqlock);
-	uvm_pageactivate(pg);
-	mutex_exit(&uvm_pageqlock);
+	if ((pg->flags & PG_DEVICE) == 0) {
+		mutex_enter(&uvm_pageqlock);
+		uvm_pageactivate(pg);
+		mutex_exit(&uvm_pageqlock);
+	}
 
 	/*
 	 * re-verify the state of the world by first trying to relock
