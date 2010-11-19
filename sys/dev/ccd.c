@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.136 2010/11/19 06:44:39 dholland Exp $	*/
+/*	$NetBSD: ccd.c,v 1.137 2010/11/19 09:11:45 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2007, 2009 The NetBSD Foundation, Inc.
@@ -127,7 +127,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.136 2010/11/19 06:44:39 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.137 2010/11/19 09:11:45 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1173,10 +1173,9 @@ ccdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 				printf("ccdioctl: lookedup = %d\n", lookedup);
 #endif
 			error = pathbuf_copyin(cpp[i], &pb);
-			if (error) {
-				goto out;
+			if (error == 0) {
+				error = dk_lookup(pb, l, &vpp[i]);
 			}
-			error = dk_lookup(pb, l, &vpp[i]);
 			pathbuf_destroy(pb);
 			if (error != 0) {
 				for (j = 0; j < lookedup; ++j)
