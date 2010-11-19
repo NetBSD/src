@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.36.2.40 2010/11/19 05:22:29 uebayasi Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.36.2.41 2010/11/19 05:43:30 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.36.2.40 2010/11/19 05:22:29 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.36.2.41 2010/11/19 05:43:30 uebayasi Exp $");
 
 #include "opt_xip.h"
 
@@ -60,7 +60,6 @@ __KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.36.2.40 2010/11/19 05:22:29 uebayasi 
 #include <uvm/uvm_pager.h>
 
 #ifdef XIP
-static int genfs_do_getpages_xip(void *);
 static int genfs_do_getpages_xip_io(struct vnode *, voff_t, struct vm_page **,
     int *, int, vm_prot_t, int, int);
 static int genfs_do_putpages_xip(struct vnode *, off_t, off_t, int,
@@ -288,7 +287,15 @@ genfs_do_getpages_unlocked()
 #endif
 #if 1
 	if ((ap->a_vp->v_vflag & VV_XIP) != 0)
-		return genfs_do_getpages_xip(v);
+		return genfs_do_getpages_xip_io(
+			ap->a_vp,
+			ap->a_offset,
+			ap->a_m,
+			ap->a_count,
+			ap->a_centeridx,
+			ap->a_access_type,
+			ap->a_advice,
+			ap->a_flags);
 #endif
 	/*
 	 * find the requested pages and make some simple checks.
@@ -497,7 +504,7 @@ genfs_do_getpages_io()
 	} else {
 		mbp->b_flags = B_READ;
 		mbp->b_iodone = NULL;
-	}	
+	}
 	if (async)
 		BIO_SETPRIO(mbp, BPRIO_TIMELIMITED);
 	else
@@ -801,42 +808,11 @@ out_err:
 
 #ifdef XIP
 /*
- * genfs_do_getpages_xip
+ * genfs_do_getpages_xip_io
  *      Return "direct pages" of XIP vnode.  The block addresses of XIP
  *      vnode pages are returned back to the VM fault handler as the
  *	actually mapped physical addresses.
  */
-static int
-genfs_do_getpages_xip(void *v)
-{
-	struct vop_getpages_args /* {
-		struct vnode *a_vp;
-		voff_t a_offset;
-		struct vm_page **a_m;
-		int *a_count;
-		int a_centeridx;
-		vm_prot_t a_access_type;
-		int a_advice;
-		int a_flags;
-	} */ * const ap = v;
-
-	UVMHIST_FUNC("genfs_do_getpages_xip"); UVMHIST_CALLED(ubchist);
-
-	if ((ap->a_flags & PGO_LOCKED) != 0) {
-		*ap->a_count = 0;
-		return 0;
-	} else
-		return genfs_do_getpages_xip_io(
-			ap->a_vp,
-			ap->a_offset,
-			ap->a_m,
-			ap->a_count,
-			ap->a_centeridx,
-			ap->a_access_type,
-			ap->a_advice,
-			ap->a_flags);
-}
-
 static int
 genfs_do_getpages_xip_io(
 	struct vnode *vp,
