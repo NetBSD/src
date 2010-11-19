@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.201 2010/11/19 17:06:56 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.202 2010/11/19 17:11:20 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.201 2010/11/19 17:06:56 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.202 2010/11/19 17:11:20 pooka Exp $");
 
 #include <sys/systm.h>
 #define ELFSIZE ARCH_ELFSIZE
@@ -105,7 +105,6 @@ int rump_threads = 1;
  * but good enough for now.
  */
 static struct vmspace sp_vmspace;
-static bool iamtheserver = false;
 
 static int rump_proxy_syscall(int, void *, register_t *);
 
@@ -233,7 +232,6 @@ rump__init(int rump_version)
 		error = rumpuser_sp_init(&spops, buf);
 		if (error)
 			return error;
-		iamtheserver = true;
 	}
 
 	if (rumpuser_getversion() != RUMPUSER_VERSION) {
