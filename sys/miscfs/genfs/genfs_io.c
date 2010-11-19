@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.36.2.42 2010/11/19 06:38:53 uebayasi Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.36.2.43 2010/11/19 07:09:49 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.36.2.42 2010/11/19 06:38:53 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.36.2.43 2010/11/19 07:09:49 uebayasi Exp $");
 
 #include "opt_xip.h"
 
@@ -311,20 +311,6 @@ genfs_do_getpages_unlocked()
 	    round_page(memeof));
 	const int ridx = (origoffset - startoffset) >> PAGE_SHIFT;
 
-#if 1
-	if ((ap->a_vp->v_vflag & VV_XIP) != 0)
-		return genfs_do_getpages_xip_io(
-			ap->a_vp,
-			ap->a_offset,
-			ap->a_m,
-			ap->a_count,
-			ap->a_centeridx,
-			ap->a_access_type,
-			ap->a_advice,
-			ap->a_flags,
-			orignmempages);
-#endif
-
 	const int pgs_size = sizeof(struct vm_page *) *
 	    ((endoffset - startoffset) >> PAGE_SHIFT);
 	struct vm_page **pgs, *pgs_onstack[UBC_MAX_PAGES];
@@ -372,6 +358,11 @@ genfs_do_getpages_unlocked()
 			kmem_free(pgs, pgs_size);
 		goto startover;
 	}
+
+#if 1
+	if ((ap->a_vp->v_vflag & VV_XIP) != 0)
+		goto find_pagecache_done;
+#endif
 
 	if (uvn_findpages(uobj, origoffset, &npages, &pgs[ridx],
 	    async ? UFP_NOWAIT : UFP_ALL) != orignmempages) {
@@ -478,7 +469,27 @@ genfs_do_getpages_io()
 		}
 	}
 
+#if 1
+find_pagecache_done:
+#endif
+
 	mutex_exit(&uobj->vmobjlock);
+
+#if 1
+	if ((ap->a_vp->v_vflag & VV_XIP) != 0) {
+		error = genfs_do_getpages_xip_io(
+			ap->a_vp,
+			ap->a_offset,
+			ap->a_m,
+			ap->a_count,
+			ap->a_centeridx,
+			ap->a_access_type,
+			ap->a_advice,
+			ap->a_flags,
+			orignmempages);
+		goto out_err_free;
+	}
+#endif
 
     {
 	size_t bytes, iobytes, tailstart, tailbytes, totalbytes, skipbytes;
@@ -831,6 +842,7 @@ genfs_do_getpages_xip_io(
 	const int orignmempages)
 {
 	struct uvm_object * const uobj = &vp->v_uobj;
+	const bool glocked = (flags & PGO_GLOCKHELD) != 0;
 
 	const int fs_bshift = vp2fs_bshift(vp);
 	const int dev_bshift = vp2dev_bshift(vp);
@@ -859,6 +871,8 @@ genfs_do_getpages_xip_io(
 	int i;
 
 	UVMHIST_FUNC("genfs_do_getpages_xip_io"); UVMHIST_CALLED(ubchist);
+
+	KASSERT(glocked || genfs_node_rdlocked(vp));
 
 #if 0
 	GOP_SIZE(vp, vp->v_size, &memeof, GOP_SIZE_MEM);
@@ -937,6 +951,9 @@ genfs_do_getpages_xip_io(
 	}
 
 	mutex_exit(&uobj->vmobjlock);
+
+	if (!glocked)
+		genfs_node_unlock(vp);
 
 	*npagesp = orignmempages;
 
@@ -1535,7 +1552,7 @@ genfs_do_putpages_xip(struct vnode *vp, off_t startoff, off_t endoff,
 		KASSERT(mutex_owned(&uobj->vmobjlock));
 		mutex_exit(&uobj->vmobjlock);
 		error = genfs_do_getpages_xip_io(vp, off, pgs, &npages, 0,
-		    VM_PROT_ALL, 0, 0, orignpages);
+		    VM_PROT_ALL, 0, PGO_GLOCKHELD, orignpages);
 		KASSERT(error == 0);
 		KASSERT(npages == orignpages);
 		mutex_enter(&uobj->vmobjlock);
