@@ -1,4 +1,4 @@
-/*	$NetBSD: kloader.c,v 1.24 2010/11/19 06:44:39 dholland Exp $	*/
+/*	$NetBSD: kloader.c,v 1.25 2010/11/19 09:08:26 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kloader.c,v 1.24 2010/11/19 06:44:39 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kloader.c,v 1.25 2010/11/19 09:08:26 dholland Exp $");
 
 #include "debug_kloader.h"
 
@@ -607,6 +607,7 @@ kloader_open(const char *filename)
 	error = vn_open(&nid, FREAD, 0);
 	if (error != 0) {
 		PRINTF("%s: open failed, errno=%d\n", filename, error);
+		pathbuf_destroy(pb);
 		return (NULL);
 	}
 
