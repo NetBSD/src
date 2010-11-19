@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.53 2010/07/01 19:50:12 ragge Exp $	 */
+/*	$NetBSD: clock.c,v 1.54 2010/11/19 03:31:24 uwe Exp $	 */
 /*
  * Copyright (c) 1995 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.53 2010/07/01 19:50:12 ragge Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.54 2010/11/19 03:31:24 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -199,18 +199,18 @@ yeartonum(int y)
 {
 	int n;
 
-	for (n = 0, y -= 1; y > 69; y--)
+	for (n = 0, y -= 1; y > 1969; y--)
 		n += SECPERYEAR(y);
 	return n;
 }
 
 /* 
- * Converts tick number to a year 70 ->
+ * Converts tick number to a year 1970 ->
  */
 int
 numtoyear(int num)
 {
-	int y = 70, j;
+	int y = 1970, j;
 	while(num >= (j = SECPERYEAR(y))) {
 		y++;
 		num -= j;
