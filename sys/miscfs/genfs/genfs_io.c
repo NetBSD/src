@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.36.2.44 2010/11/19 08:11:04 uebayasi Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.36.2.45 2010/11/19 08:12:12 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.36.2.44 2010/11/19 08:11:04 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.36.2.45 2010/11/19 08:12:12 uebayasi Exp $");
 
 #include "opt_xip.h"
 
@@ -909,46 +909,14 @@ genfs_do_getpages_xip_io(
 	const int fs_bshift = vp2fs_bshift(vp);
 	const int dev_bshift = vp2dev_bshift(vp);
 	const int fs_bsize = 1 << fs_bshift;
-#if 0
-#define	blk_mask	(fs_bsize - 1)
-#define	trunc_blk(x)	((x) & ~blk_mask)
-#define	round_blk(x)	(((x) + blk_mask) & ~blk_mask)
-
-	const int orignmempages = MIN(orignpages,
-	    round_page(memeof - origoffset) >> PAGE_SHIFT);
-	npages = orignmempages;
-	const off_t startoffset = trunc_blk(origoffset);
-	const off_t endoffset = MIN(
-	    round_page(round_blk(origoffset + (npages << PAGE_SHIFT))),
-	    round_page(memeof));
-	const int ridx = (origoffset - startoffset) >> PAGE_SHIFT;
-#endif
 
 	int error;
 	off_t off;
-#if 0
-	off_t memeof;
-	int orignmempages;
-#endif
 	int i;
 
 	UVMHIST_FUNC("genfs_do_getpages_xip_io"); UVMHIST_CALLED(ubchist);
 
 	KASSERT(((flags & PGO_GLOCKHELD) != 0) || genfs_node_rdlocked(vp));
-
-#if 0
-	GOP_SIZE(vp, vp->v_size, &memeof, GOP_SIZE_MEM);
-	orignmempages = MIN(orignpages, round_page(memeof - origoffset) >> PAGE_SHIFT);
-#endif
-
-#if 0
-	int fs_bshift, fs_bsize, dev_bshift, dev_bsize;
-
-	fs_bshift = vp->v_mount->mnt_fs_bshift;
-	fs_bsize = 1 << fs_bshift;
-	dev_bshift = vp->v_mount->mnt_dev_bshift;
-	dev_bsize = 1 << dev_bshift;
-#endif
 
 #ifdef UVMHIST
 	const off_t startoffset = trunc_blk(origoffset);
