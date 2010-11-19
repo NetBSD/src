@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_fcntl.c,v 1.34 2008/03/21 21:54:58 ad Exp $	*/
+/*	$NetBSD: ibcs2_fcntl.c,v 1.35 2010/11/19 06:44:36 dholland Exp $	*/
 
 /*
  * Copyright (c) 1995 Scott Bartram
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_fcntl.c,v 1.34 2008/03/21 21:54:58 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_fcntl.c,v 1.35 2010/11/19 06:44:36 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -224,13 +224,21 @@ ibcs2_sys_eaccess(struct lwp *l, const struct ibcs2_sys_eaccess_args *uap, regis
 	} */
 	struct vnode *vp;
         int error, flags;
+        struct pathbuf *pb;
         struct nameidata nd;
 
-        NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF | TRYEMULROOT, UIO_USERSPACE,
-            SCARG(uap, path));
-        if ((error = namei(&nd)) != 0)
+	error = pathbuf_copyin(SCARG(uap, path), &pb);
+	if (error != 0) {
+		return error;
+	}
+
+        NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF | TRYEMULROOT, pb);
+        if ((error = namei(&nd)) != 0) {
+		pathbuf_destroy(pb);
                 return error;
+	}
         vp = nd.ni_vp;
+	pathbuf_destroy(pb);
 
         /* Flags == 0 means only check for existence. */
         if (SCARG(uap, flags)) {

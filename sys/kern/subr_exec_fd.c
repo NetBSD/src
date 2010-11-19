@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_exec_fd.c,v 1.3 2010/06/24 13:03:11 hannken Exp $	*/
+/*	$NetBSD: subr_exec_fd.c,v 1.4 2010/11/19 06:44:43 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_exec_fd.c,v 1.3 2010/06/24 13:03:11 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_exec_fd.c,v 1.4 2010/11/19 06:44:43 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/file.h>
@@ -110,6 +110,7 @@ int
 fd_checkstd(void)
 {
 	struct proc *p;
+	struct pathbuf *pb;
 	struct nameidata nd;
 	filedesc_t *fdp;
 	file_t *fp;
@@ -133,8 +134,13 @@ fd_checkstd(void)
 		if ((error = fd_allocfile(&fp, &fd)) != 0)
 			return (error);
 		KASSERT(fd < CHECK_UPTO);
-		NDINIT(&nd, LOOKUP, FOLLOW, UIO_SYSSPACE, "/dev/null");
+		pb = pathbuf_create("/dev/null");
+		if (pb == NULL) {
+			return ENOMEM;
+		}
+		NDINIT(&nd, LOOKUP, FOLLOW, pb);
 		if ((error = vn_open(&nd, flags, 0)) != 0) {
+			pathbuf_destroy(pb);
 			fd_abort(p, fp, fd);
 			return (error);
 		}
@@ -144,6 +150,7 @@ fd_checkstd(void)
 		fp->f_type = DTYPE_VNODE;
 		VOP_UNLOCK(nd.ni_vp);
 		fd_affix(p, fp, fd);
+		pathbuf_destroy(pb);
 	}
 	if (closed[0] != '\0') {
 		mutex_enter(proc_lock);

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_export.c,v 1.48 2009/07/07 14:09:05 christos Exp $	*/
+/*	$NetBSD: nfs_export.c,v 1.49 2010/11/19 06:44:46 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2008 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_export.c,v 1.48 2009/07/07 14:09:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_export.c,v 1.49 2010/11/19 06:44:46 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -246,6 +246,7 @@ mountd_set_exports_list(const struct mountd_exports_list *mel, struct lwp *l,
 #endif
 	struct mount *mp;
 	struct netexport *ne;
+	struct pathbuf *pb;
 	struct nameidata nd;
 	struct vnode *vp;
 	size_t fid_size;
@@ -255,13 +256,20 @@ mountd_set_exports_list(const struct mountd_exports_list *mel, struct lwp *l,
 		return EPERM;
 
 	/* Lookup the file system path. */
-	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE, mel->mel_path);
-	error = namei(&nd);
-	if (error != 0)
+	error = pathbuf_copyin(mel->mel_path, &pb);
+	if (error) {
 		return error;
+	}
+	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, pb);
+	error = namei(&nd);
+	if (error != 0) {
+		pathbuf_destroy(pb);
+		return error;
+	}
 	vp = nd.ni_vp;
 	mp = vp->v_mount;
 	KASSERT(nmp == NULL || nmp == mp);
+	pathbuf_destroy(pb);
 
 	/*
 	 * Make sure the file system can do vptofh.  If the file system

@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_attr.c,v 1.26 2009/03/18 16:00:16 cegger Exp $ */
+/*	$NetBSD: darwin_attr.c,v 1.27 2010/11/19 06:44:36 dholland Exp $ */
 
 /*-
  * Copyright (c) 2003, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_attr.c,v 1.26 2009/03/18 16:00:16 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_attr.c,v 1.27 2010/11/19 06:44:36 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -108,6 +108,7 @@ darwin_sys_getattrlist(struct lwp *l, const struct darwin_sys_getattrlist_args *
 	darwin_attrreference_t *vol_mounteddevice_p = NULL;
 	struct stat st;
 	struct statvfs *f;
+	struct pathbuf *pb;
 	struct nameidata nd;
 	struct vnode *vp;
 	kauth_cred_t cred;
@@ -141,12 +142,20 @@ darwin_sys_getattrlist(struct lwp *l, const struct darwin_sys_getattrlist_args *
 	kauth_cred_seteuid(cred, kauth_cred_getuid(l->l_cred));
 	kauth_cred_setegid(cred, kauth_cred_getgid(l->l_cred));
 
-	NDINIT(&nd, LOOKUP, follow | LOCKLEAF | TRYEMULROOT, UIO_USERSPACE,
-	    SCARG(uap, path));
-	if ((error = namei(&nd)) != 0)
+	error = pathbuf_copyin(SCARG(uap, path), &pb);
+	if (error) {
 		goto out2;
+	}
+
+	NDINIT(&nd, LOOKUP, follow | LOCKLEAF | TRYEMULROOT, pb);
+	if ((error = namei(&nd)) != 0) {
+		pathbuf_destroy(pb);
+		goto out2;
+	}
 
 	vp = nd.ni_vp;
+	pathbuf_destroy(pb);
+
 	if ((error = VOP_ACCESS(vp, VREAD | VEXEC, cred)) != 0)
 		goto out3;
 

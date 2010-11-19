@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_srvsubs.c,v 1.6 2010/06/24 13:03:17 hannken Exp $	*/
+/*	$NetBSD: nfs_srvsubs.c,v 1.7 2010/11/19 06:44:46 dholland Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_srvsubs.c,v 1.6 2010/06/24 13:03:17 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_srvsubs.c,v 1.7 2010/11/19 06:44:46 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -241,7 +241,7 @@ nfs_namei(struct nameidata *ndp, nfsrvfh_t *nsfh, uint32_t len, struct nfssvc_so
 	}
 
 	ndp->ni_pathlen = (tocp - cnp->cn_pnbuf) + 1;
-	ndp->ni_segflg = UIO_SYSSPACE;
+	/*ndp->ni_segflg = UIO_SYSSPACE; - obsolete */
 	ndp->ni_rootdir = rootvnode;
 	ndp->ni_erootdir = NULL;
 

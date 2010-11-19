@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_mount.c,v 1.23 2009/03/18 16:00:16 cegger Exp $ */
+/*	$NetBSD: irix_mount.c,v 1.24 2010/11/19 06:44:37 dholland Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_mount.c,v 1.23 2009/03/18 16:00:16 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_mount.c,v 1.24 2010/11/19 06:44:37 dholland Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -60,21 +60,29 @@ irix_sys_getmountid(struct lwp *l, const struct irix_sys_getmountid_args *uap, r
 	kauth_cred_t cred;
 	struct vnode *vp;
 	int error = 0;
+	struct pathbuf *pb;
 	struct nameidata nd;
 	irix_mountid_t mountid;
 	void *addr;
+
+	error = pathbuf_copyin(SCARG(uap, path), &pb);
+	if (error) {
+		return error;
+	}
 
 	cred = kauth_cred_dup(l->l_cred);
 	kauth_cred_seteuid(cred, kauth_cred_getuid(l->l_cred));
 	kauth_cred_setegid(cred, kauth_cred_getgid(l->l_cred));
 
 	/* Get the vnode for the requested path */
-	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF | TRYEMULROOT, UIO_USERSPACE,
-	    SCARG(uap, path));
+	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF | TRYEMULROOT, pb);
 	nd.ni_cnd.cn_cred = cred;
-	if ((error = namei(&nd)) != 0)
+	if ((error = namei(&nd)) != 0) {
+		pathbuf_destroy(pb);
 		goto out;
+	}
 	vp = nd.ni_vp;
+	pathbuf_destroy(pb);
 
 	/* Check for accessibility */
 	if ((error = VOP_ACCESS(vp, VREAD | VEXEC, cred)) != 0)

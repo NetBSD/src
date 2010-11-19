@@ -1,4 +1,4 @@
-/*	$NetBSD: umap_vfsops.c,v 1.85 2010/06/24 13:03:17 hannken Exp $	*/
+/*	$NetBSD: umap_vfsops.c,v 1.86 2010/11/19 06:44:46 dholland Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umap_vfsops.c,v 1.85 2010/06/24 13:03:17 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umap_vfsops.c,v 1.86 2010/11/19 06:44:46 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,6 +71,7 @@ int
 umapfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 {
 	struct lwp *l = curlwp;
+	struct pathbuf *pb;
 	struct nameidata nd;
 	struct umap_args *args = data;
 	struct vnode *lowerrootvp, *vp;
@@ -112,15 +113,21 @@ umapfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	/*
 	 * Find lower node
 	 */
-	NDINIT(&nd, LOOKUP, FOLLOW|LOCKLEAF,
-		UIO_USERSPACE, args->umap_target);
-	if ((error = namei(&nd)) != 0)
-		return (error);
+	error = pathbuf_copyin(args->umap_target, &pb);
+	if (error) {
+		return error;
+	}
+	NDINIT(&nd, LOOKUP, FOLLOW|LOCKLEAF, pb);
+	if ((error = namei(&nd)) != 0) {
+		pathbuf_destroy(pb);
+		return error;
+	}
 
 	/*
 	 * Sanity check on lower vnode
 	 */
 	lowerrootvp = nd.ni_vp;
+	pathbuf_destroy(pb);
 #ifdef UMAPFS_DIAGNOSTIC
 	printf("vp = %p, check for VDIR...\n", lowerrootvp);
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.135 2010/11/14 03:49:52 uebayasi Exp $	*/
+/*	$NetBSD: ccd.c,v 1.136 2010/11/19 06:44:39 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2007, 2009 The NetBSD Foundation, Inc.
@@ -127,7 +127,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.135 2010/11/14 03:49:52 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.136 2010/11/19 06:44:39 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1070,6 +1070,7 @@ ccdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	struct ccd_ioctl *ccio = (struct ccd_ioctl *)data;
 	kauth_cred_t uc;
 	char **cpp;
+	struct pathbuf *pb;
 	struct vnode **vpp;
 #ifdef __HAVE_OLD_DISKLABEL
 	struct disklabel newlabel;
@@ -1171,8 +1172,13 @@ ccdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 			if (ccddebug & CCDB_INIT)
 				printf("ccdioctl: lookedup = %d\n", lookedup);
 #endif
-			if ((error = dk_lookup(cpp[i], l, &vpp[i],
-			    UIO_USERSPACE)) != 0) {
+			error = pathbuf_copyin(cpp[i], &pb);
+			if (error) {
+				goto out;
+			}
+			error = dk_lookup(pb, l, &vpp[i]);
+			pathbuf_destroy(pb);
+			if (error != 0) {
 				for (j = 0; j < lookedup; ++j)
 					(void)vn_close(vpp[j], FREAD|FWRITE,
 					    uc);

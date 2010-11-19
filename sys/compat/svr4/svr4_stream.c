@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_stream.c,v 1.77 2008/04/28 20:23:45 martin Exp $	 */
+/*	$NetBSD: svr4_stream.c,v 1.78 2010/11/19 06:44:38 dholland Exp $	 */
 
 /*-
  * Copyright (c) 1994, 2008 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_stream.c,v 1.77 2008/04/28 20:23:45 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_stream.c,v 1.78 2010/11/19 06:44:38 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -299,16 +299,22 @@ show_msg(const char *str, int fd, struct svr4_strbuf *ctl, struct svr4_strbuf *d
 static int
 clean_pipe(struct lwp *l, const char *path)
 {
+	struct pathbuf *pb;
 	struct nameidata nd;
 	struct vattr va;
 	int error;
 
-	NDINIT(&nd, DELETE, NOFOLLOW | LOCKPARENT | LOCKLEAF | TRYEMULROOT,
-	    UIO_SYSSPACE, path);
+	pb = pathbuf_create(path);
+	if (pb == NULL) {
+		return ENOMEM;
+	}
 
+	NDINIT(&nd, DELETE, NOFOLLOW | LOCKPARENT | LOCKLEAF | TRYEMULROOT, pb);
 	error = namei(&nd);
-	if (error != 0)
+	if (error != 0) {
+		pathbuf_destroy(pb);
 		return error;
+	}
 
 	/*
 	 * Make sure we are dealing with a mode 0 named pipe.
@@ -321,7 +327,9 @@ clean_pipe(struct lwp *l, const char *path)
 	if ((va.va_mode & ALLPERMS) != 0)
 		goto bad;
 
-	return VOP_REMOVE(nd.ni_dvp, nd.ni_vp, &nd.ni_cnd);
+	error = VOP_REMOVE(nd.ni_dvp, nd.ni_vp, &nd.ni_cnd);
+	pathbuf_destroy(pb);
+	return error;
 
     bad:
 	if (nd.ni_dvp == nd.ni_vp)
@@ -329,6 +337,7 @@ clean_pipe(struct lwp *l, const char *path)
 	else
 		vput(nd.ni_dvp);
 	vput(nd.ni_vp);
+	pathbuf_destroy(pb);
 	return error;
 }
 

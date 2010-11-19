@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconstruct.c,v 1.109 2010/11/01 02:35:25 mrg Exp $	*/
+/*	$NetBSD: rf_reconstruct.c,v 1.110 2010/11/19 06:44:40 dholland Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  ************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.109 2010/11/01 02:35:25 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.110 2010/11/19 06:44:40 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/time.h>
@@ -44,6 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.109 2010/11/01 02:35:25 mrg Exp
 #include <sys/ioctl.h>
 #include <sys/fcntl.h>
 #include <sys/vnode.h>
+#include <sys/namei.h> /* for pathbuf */
 #include <dev/raidframe/raidframevar.h>
 
 #include "rf_raid.h"
@@ -348,6 +349,7 @@ rf_ReconstructInPlace(RF_Raid_t *raidPtr, RF_RowCol_t col)
 	RF_ComponentLabel_t *c_label;
 	int     numDisksDone = 0, rc;
 	struct partinfo dpart;
+	struct pathbuf *pb;
 	struct vnode *vp;
 	struct vattr va;
 	int retcode;
@@ -428,7 +430,13 @@ rf_ReconstructInPlace(RF_Raid_t *raidPtr, RF_RowCol_t col)
 	       raidPtr->Disks[col].devname);
 #endif
 	RF_UNLOCK_MUTEX(raidPtr->mutex);
-	retcode = dk_lookup(raidPtr->Disks[col].devname, curlwp, &vp, UIO_SYSSPACE);
+	pb = pathbuf_create(raidPtr->Disks[col].devname);
+	if (pb == NULL) {
+		retcode = ENOMEM;
+	} else {
+		retcode = dk_lookup(pb, curlwp, &vp);
+		pathbuf_destroy(pb);
+	}
 
 	if (retcode) {
 		printf("raid%d: rebuilding: dk_lookup on device: %s failed: %d!\n",raidPtr->raidid,

@@ -1,4 +1,4 @@
-/*	$NetBSD: kloader.c,v 1.23 2010/11/12 16:47:18 uebayasi Exp $	*/
+/*	$NetBSD: kloader.c,v 1.24 2010/11/19 06:44:39 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kloader.c,v 1.23 2010/11/12 16:47:18 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kloader.c,v 1.24 2010/11/19 06:44:39 dholland Exp $");
 
 #include "debug_kloader.h"
 
@@ -585,14 +585,22 @@ kloader_load_segment(Elf_Phdr *p)
 struct vnode *
 kloader_open(const char *filename)
 {
+	struct pathbuf *pb;
 	struct nameidata nid;
 	int error;
 
-	NDINIT(&nid, LOOKUP, FOLLOW, UIO_SYSSPACE, filename);
+	pb = pathbuf_create(filename);
+	if (pb == NULL) {
+		PRINTF("%s: pathbuf_create failed\n", filename);
+		return (NULL);
+	}
+
+	NDINIT(&nid, LOOKUP, FOLLOW, pb);
 
 	error = namei(&nid);
 	if (error != 0) {
 		PRINTF("%s: namei failed, errno=%d\n", filename, error);
+		pathbuf_destroy(pb);
 		return (NULL);
 	}
 
@@ -602,6 +610,7 @@ kloader_open(const char *filename)
 		return (NULL);
 	}
 
+	pathbuf_destroy(pb);
 	return (nid.ni_vp);
 }
 

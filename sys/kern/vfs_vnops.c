@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.179 2010/10/28 20:32:45 pooka Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.180 2010/11/19 06:44:45 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.179 2010/10/28 20:32:45 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.180 2010/11/19 06:44:45 dholland Exp $");
 
 #include "veriexec.h"
 
@@ -138,7 +138,7 @@ vn_open(struct nameidata *ndp, int fmode, int cmode)
 	kauth_cred_t cred = l->l_cred;
 	struct vattr va;
 	int error;
-	char *path;
+	const char *pathstring;
 
 	if ((fmode & (O_CREAT | O_DIRECTORY)) == (O_CREAT | O_DIRECTORY))
 		return EINVAL;
@@ -158,7 +158,10 @@ vn_open(struct nameidata *ndp, int fmode, int cmode)
 			ndp->ni_cnd.cn_flags |= FOLLOW;
 	}
 
-	VERIEXEC_PATH_GET(ndp->ni_dirp, ndp->ni_segflg, ndp->ni_dirp, path);
+	pathstring = pathbuf_stringcopy_get(ndp->ni_pathbuf);
+	if (pathstring == NULL) {
+		return ENOMEM;
+	}
 
 	error = namei(ndp);
 	if (error)
@@ -167,7 +170,7 @@ vn_open(struct nameidata *ndp, int fmode, int cmode)
 	vp = ndp->ni_vp;
 
 #if NVERIEXEC > 0
-	error = veriexec_openchk(l, ndp->ni_vp, ndp->ni_dirp, fmode);
+	error = veriexec_openchk(l, ndp->ni_vp, pathstring, fmode);
 	if (error)
 		goto bad;
 #endif /* NVERIEXEC > 0 */
@@ -236,7 +239,7 @@ bad:
 	if (error)
 		vput(vp);
 out:
-	VERIEXEC_PATH_PUT(path);
+	pathbuf_stringcopy_put(ndp->ni_pathbuf, pathstring);
 	return (error);
 }
 

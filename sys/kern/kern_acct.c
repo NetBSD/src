@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_acct.c,v 1.89 2010/06/24 13:03:11 hannken Exp $	*/
+/*	$NetBSD: kern_acct.c,v 1.90 2010/11/19 06:44:42 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_acct.c,v 1.89 2010/06/24 13:03:11 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_acct.c,v 1.90 2010/11/19 06:44:42 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -290,6 +290,7 @@ sys_acct(struct lwp *l, const struct sys_acct_args *uap, register_t *retval)
 	/* {
 		syscallarg(const char *) path;
 	} */
+	struct pathbuf *pb;
 	struct nameidata nd;
 	int error;
 
@@ -305,10 +306,16 @@ sys_acct(struct lwp *l, const struct sys_acct_args *uap, register_t *retval)
 	if (SCARG(uap, path) != NULL) {
 		struct vattr va;
 		size_t pad;
-		NDINIT(&nd, LOOKUP, FOLLOW | TRYEMULROOT, UIO_USERSPACE,
-		    SCARG(uap, path));
-		if ((error = vn_open(&nd, FWRITE|O_APPEND, 0)) != 0)
-			return (error);
+
+		error = pathbuf_copyin(SCARG(uap, path), &pb);
+		if (error) {
+			return error;
+		}
+		NDINIT(&nd, LOOKUP, FOLLOW | TRYEMULROOT, pb);
+		if ((error = vn_open(&nd, FWRITE|O_APPEND, 0)) != 0) {
+			pathbuf_destroy(pb);
+			return error;
+		}
 		if (nd.ni_vp->v_type != VREG) {
 			VOP_UNLOCK(nd.ni_vp);
 			error = EACCES;
@@ -357,6 +364,8 @@ sys_acct(struct lwp *l, const struct sys_acct_args *uap, register_t *retval)
 	acct_cred = l->l_cred;
 	kauth_cred_hold(acct_cred);
 
+	pathbuf_destroy(pb);
+
 	error = acct_chkfree();		/* Initial guess. */
 	if (error != 0) {
 		acct_stop();
@@ -375,6 +384,7 @@ sys_acct(struct lwp *l, const struct sys_acct_args *uap, register_t *retval)
 	return (error);
  bad:
 	vn_close(nd.ni_vp, FWRITE, l->l_cred);
+	pathbuf_destroy(pb);
 	return error;
 }
 

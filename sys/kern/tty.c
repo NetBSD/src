@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.238 2010/08/21 13:19:39 pgoyette Exp $	*/
+/*	$NetBSD: tty.c,v 1.239 2010/11/19 06:44:43 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.238 2010/08/21 13:19:39 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.239 2010/11/19 06:44:43 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -834,6 +834,7 @@ ttioctl(struct tty *tp, u_long cmd, void *data, int flag, struct lwp *l)
 	struct proc *p = l ? l->l_proc : NULL;
 	struct linesw	*lp;
 	int		s, error;
+	struct pathbuf *pb;
 	struct nameidata nd;
 	char		infobuf[200];
 
@@ -935,12 +936,18 @@ ttioctl(struct tty *tp, u_long cmd, void *data, int flag, struct lwp *l)
 			    (TS_CARR_ON | TS_ISOPEN))
 				return EBUSY;
 
-			NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_SYSSPACE,
-			    "/dev/console");
-			if ((error = namei(&nd)) != 0)
+			pb = pathbuf_create("/dev/console");
+			if (pb == NULL) {
+				return ENOMEM;
+			}
+			NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, pb);
+			if ((error = namei(&nd)) != 0) {
+				pathbuf_destroy(pb);
 				return error;
+			}
 			error = VOP_ACCESS(nd.ni_vp, VREAD, l->l_cred);
 			vput(nd.ni_vp);
+			pathbuf_destroy(pb);
 			if (error)
 				return error;
 

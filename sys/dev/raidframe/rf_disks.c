@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_disks.c,v 1.74 2010/11/01 02:35:25 mrg Exp $	*/
+/*	$NetBSD: rf_disks.c,v 1.75 2010/11/19 06:44:40 dholland Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -60,7 +60,7 @@
  ***************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_disks.c,v 1.74 2010/11/01 02:35:25 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_disks.c,v 1.75 2010/11/19 06:44:40 dholland Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -78,6 +78,7 @@ __KERNEL_RCSID(0, "$NetBSD: rf_disks.c,v 1.74 2010/11/01 02:35:25 mrg Exp $");
 #include <sys/ioctl.h>
 #include <sys/fcntl.h>
 #include <sys/vnode.h>
+#include <sys/namei.h> /* for pathbuf */
 #include <sys/kauth.h>
 
 static int rf_AllocDiskStructures(RF_Raid_t *, RF_Config_t *);
@@ -569,6 +570,7 @@ rf_ConfigureDisk(RF_Raid_t *raidPtr, char *bf, RF_RaidDisk_t *diskPtr,
 		 RF_RowCol_t col)
 {
 	char   *p;
+	struct pathbuf *pb;
 	struct vnode *vp;
 	struct vattr va;
 	int     error;
@@ -593,7 +595,14 @@ rf_ConfigureDisk(RF_Raid_t *raidPtr, char *bf, RF_RaidDisk_t *diskPtr,
 		return (0);
 	}
 
-	error = dk_lookup(diskPtr->devname, curlwp, &vp, UIO_SYSSPACE);
+	pb = pathbuf_create(diskPtr->devname);
+	if (pb == NULL) {
+		printf("pathbuf_create for device: %s failed!\n",
+		       diskPtr->devname);
+		return ENOMEM;
+	}
+	error = dk_lookup(pb, curlwp, &vp);
+	pathbuf_destroy(pb);
 	if (error) {
 		printf("dk_lookup on device: %s failed!\n", diskPtr->devname);
 		if (error == ENXIO) {

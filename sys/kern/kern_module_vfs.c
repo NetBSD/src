@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module_vfs.c,v 1.8 2010/11/18 09:50:47 jnemeth Exp $	*/
+/*	$NetBSD: kern_module_vfs.c,v 1.9 2010/11/19 06:44:43 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module_vfs.c,v 1.8 2010/11/18 09:50:47 jnemeth Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module_vfs.c,v 1.9 2010/11/19 06:44:43 dholland Exp $");
 
 #define _MODULE_INTERNAL
 #include <sys/param.h>
@@ -144,6 +144,7 @@ static int
 module_load_plist_vfs(const char *modpath, const bool nochroot,
 		       prop_dictionary_t *filedictp)
 {
+	struct pathbuf *pb;
 	struct nameidata nd;
 	struct stat sb;
 	void *base;
@@ -167,27 +168,33 @@ module_load_plist_vfs(const char *modpath, const bool nochroot,
 		goto out1;
 	}
 
-	NDINIT(&nd, LOOKUP, FOLLOW | (nochroot ? NOCHROOT : 0),
-	    UIO_SYSSPACE, proppath);
+	/* XXX this makes an unnecessary extra copy of the path */
+	pb = pathbuf_create(proppath);
+	if (pb == NULL) {
+		error = ENOMEM;
+		goto out1;
+	}
+	
+	NDINIT(&nd, LOOKUP, FOLLOW | (nochroot ? NOCHROOT : 0), pb);
 
 	error = vn_open(&nd, FREAD, 0);
  	if (error != 0) {
-	 	goto out1;
+	 	goto out2;
 	}
 
 	error = vn_stat(nd.ni_vp, &sb);
 	if (error != 0) {
-		goto out;
+		goto out3;
 	}
 	if (sb.st_size >= (plistsize - 1)) {	/* leave space for term \0 */
 		error = EFBIG;
-		goto out;
+		goto out3;
 	}
 
 	base = kmem_alloc(plistsize, KM_SLEEP);
 	if (base == NULL) {
 		error = ENOMEM;
-		goto out;
+		goto out3;
 	}
 
 	error = vn_rdwr(UIO_READ, nd.ni_vp, base, sb.st_size, 0,
@@ -199,7 +206,7 @@ module_load_plist_vfs(const char *modpath, const bool nochroot,
 	if (error != 0) {
 		kmem_free(base, plistsize);
 		base = NULL;
-		goto out;
+		goto out3;
 	}
 
 	*filedictp = prop_dictionary_internalize(base);
@@ -210,9 +217,12 @@ module_load_plist_vfs(const char *modpath, const bool nochroot,
 	base = NULL;
 	KASSERT(error == 0);
 
-out:
+out3:
 	VOP_UNLOCK(nd.ni_vp);
 	vn_close(nd.ni_vp, FREAD, kauth_cred_get());
+
+out2:
+	pathbuf_destroy(pb);
 
 out1:
 	PNBUF_PUT(proppath);

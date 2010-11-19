@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.154 2010/10/18 00:09:13 chs Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.155 2010/11/19 06:44:42 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.154 2010/10/18 00:09:13 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.155 2010/11/19 06:44:42 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1256,6 +1256,7 @@ sys_ktrace(struct lwp *l, const struct sys_ktrace_args *uap, register_t *retval)
 	} */
 	struct vnode *vp = NULL;
 	file_t *fp = NULL;
+	struct pathbuf *pb;
 	struct nameidata nd;
 	int error = 0;
 	int fd;
@@ -1267,12 +1268,19 @@ sys_ktrace(struct lwp *l, const struct sys_ktrace_args *uap, register_t *retval)
 		/*
 		 * an operation which requires a file argument.
 		 */
-		NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG(uap, fname));
+		error = pathbuf_copyin(SCARG(uap, fname), &pb);
+		if (error) {
+			ktrexit(l);
+			return (error);
+		}
+		NDINIT(&nd, LOOKUP, FOLLOW, pb);
 		if ((error = vn_open(&nd, FREAD|FWRITE, 0)) != 0) {
+			pathbuf_destroy(pb);
 			ktrexit(l);
 			return (error);
 		}
 		vp = nd.ni_vp;
+		pathbuf_destroy(pb);
 		VOP_UNLOCK(vp);
 		if (vp->v_type != VREG) {
 			vn_close(vp, FREAD|FWRITE, l->l_cred);

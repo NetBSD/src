@@ -1,4 +1,4 @@
-/*	$NetBSD: fss.c,v 1.70 2010/06/24 13:03:08 hannken Exp $	*/
+/*	$NetBSD: fss.c,v 1.71 2010/11/19 06:44:39 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.70 2010/06/24 13:03:08 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.71 2010/11/19 06:44:39 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -582,6 +582,7 @@ fss_create_files(struct fss_softc *sc, struct fss_set *fss,
 	struct timespec ts;
 	struct partinfo dpart;
 	/* nd -> nd2 to reduce mistakes while updating only some namei calls */
+	struct pathbuf *pb2;
 	struct nameidata nd2;
 	struct vnode *vp;
 
@@ -676,15 +677,24 @@ fss_create_files(struct fss_softc *sc, struct fss_set *fss,
 	 * Get the backing store
 	 */
 
-	NDINIT(&nd2, LOOKUP, FOLLOW, UIO_USERSPACE, fss->fss_bstore);
-	if ((error = vn_open(&nd2, FREAD|FWRITE, 0)) != 0)
+	error = pathbuf_copyin(fss->fss_bstore, &pb2);
+	if (error) {
+ 		return error;
+	}
+	NDINIT(&nd2, LOOKUP, FOLLOW, pb2);
+	if ((error = vn_open(&nd2, FREAD|FWRITE, 0)) != 0) {
+		pathbuf_destroy(pb2);
 		return error;
+	}
 	VOP_UNLOCK(nd2.ni_vp);
 
 	sc->sc_bs_vp = nd2.ni_vp;
 
-	if (nd2.ni_vp->v_type != VREG && nd2.ni_vp->v_type != VCHR)
+	if (nd2.ni_vp->v_type != VREG && nd2.ni_vp->v_type != VCHR) {
+		pathbuf_destroy(pb2);
 		return EINVAL;
+	}
+	pathbuf_destroy(pb2);
 
 	if (sc->sc_bs_vp->v_type == VREG) {
 		fsbsize = sc->sc_bs_vp->v_mount->mnt_stat.f_iosize;

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_core.c,v 1.16 2010/06/24 13:03:11 hannken Exp $	*/
+/*	$NetBSD: kern_core.c,v 1.17 2010/11/19 06:44:42 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_core.c,v 1.16 2010/06/24 13:03:11 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_core.c,v 1.17 2010/11/19 06:44:42 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/vnode.h>
@@ -96,6 +96,7 @@ coredump(struct lwp *l, const char *pattern)
 	struct proc		*p;
 	struct vmspace		*vm;
 	kauth_cred_t		cred;
+	struct pathbuf		*pb;
 	struct nameidata	nd;
 	struct vattr		vattr;
 	struct coredump_iostate	io;
@@ -174,11 +175,20 @@ coredump(struct lwp *l, const char *pattern)
 	mutex_exit(proc_lock);
 	if (error)
 		goto done;
-	NDINIT(&nd, LOOKUP, NOFOLLOW, UIO_SYSSPACE, name);
-	if ((error = vn_open(&nd, O_CREAT | O_NOFOLLOW | FWRITE,
-	    S_IRUSR | S_IWUSR)) != 0)
+
+	pb = pathbuf_create(name);
+	if (pb == NULL) {
+		error = ENOMEM;
 		goto done;
+	}
+	NDINIT(&nd, LOOKUP, NOFOLLOW, pb);
+	if ((error = vn_open(&nd, O_CREAT | O_NOFOLLOW | FWRITE,
+	    S_IRUSR | S_IWUSR)) != 0) {
+		pathbuf_destroy(pb);
+		goto done;
+	}
 	vp = nd.ni_vp;
+	pathbuf_destroy(pb);
 
 	/* Don't dump to non-regular files or files with links. */
 	if (vp->v_type != VREG ||

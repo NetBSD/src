@@ -1,4 +1,4 @@
-/* 	$NetBSD: compat_util.c,v 1.43 2009/12/14 04:09:38 mrg Exp $	*/
+/* 	$NetBSD: compat_util.c,v 1.44 2010/11/19 06:44:35 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_util.c,v 1.43 2009/12/14 04:09:38 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_util.c,v 1.44 2010/11/19 06:44:35 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -107,8 +107,14 @@ int
 emul_find_interp(struct lwp *l, struct exec_package *epp, const char *itp)
 {
 	int error;
+	struct pathbuf *pb;
 	struct nameidata nd;
 	unsigned int flags;
+
+	pb = pathbuf_create(itp);
+	if (pb == NULL) {
+		return ENOMEM;
+	}
 
 	/* If we haven't found the emulation root already, do so now */
 	/* Maybe we should remember failures somehow ? */
@@ -129,7 +135,7 @@ emul_find_interp(struct lwp *l, struct exec_package *epp, const char *itp)
 		flags = FOLLOW | TRYEMULROOT | EMULROOTSET;
 	}
 
-	NDINIT(&nd, LOOKUP, flags, UIO_SYSSPACE, itp);
+	NDINIT(&nd, LOOKUP, flags, pb);
 	error = namei(&nd);
 	if (error != 0) {
 		epp->ep_interp = NULL;
@@ -138,6 +144,8 @@ emul_find_interp(struct lwp *l, struct exec_package *epp, const char *itp)
 
 	/* Save interpreter in case we actually need to load it */
 	epp->ep_interp = nd.ni_vp;
+
+	pathbuf_destroy(pb);
 
 	return 0;
 }
