@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.36.2.34 2010/11/18 16:16:36 uebayasi Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.36.2.35 2010/11/19 01:44:47 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.36.2.34 2010/11/18 16:16:36 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.36.2.35 2010/11/19 01:44:47 uebayasi Exp $");
 
 #include "opt_xip.h"
 
@@ -63,6 +63,8 @@ static int genfs_do_getpages(void *);
 #ifdef XIP
 static int genfs_do_getpages_xip(void *);
 static int genfs_do_getpages_xip1(struct vnode *, voff_t, struct vm_page **,
+    int *, int, vm_prot_t, int, int);
+static int genfs_do_getpages_xip_io(struct vnode *, voff_t, struct vm_page **,
     int *, int, vm_prot_t, int, int);
 static int genfs_do_putpages_xip(struct vnode *, off_t, off_t, int,
     struct vm_page **);
@@ -797,6 +799,8 @@ genfs_do_getpages_xip(void *v)
 		int a_flags;
 	} */ * const ap = v;
 
+	UVMHIST_FUNC("genfs_do_getpages_xip"); UVMHIST_CALLED(ubchist);
+
 	return genfs_do_getpages_xip1(
 		ap->a_vp,
 		ap->a_offset,
@@ -819,6 +823,35 @@ genfs_do_getpages_xip1(
 	int advice,
 	int flags)
 {
+
+	KASSERT((vp->v_vflag & VV_XIP) != 0);
+
+	if ((flags & PGO_LOCKED) != 0) {
+		*npagesp = 0;
+		return 0;
+	} else
+		return genfs_do_getpages_xip_io(
+			vp,
+			offset,
+			pps,
+			npagesp,
+			centeridx,
+			access_type,
+			advice,
+			flags);
+}
+
+static int
+genfs_do_getpages_xip_io(
+	struct vnode *vp,
+	voff_t offset,
+	struct vm_page **pps,
+	int *npagesp,
+	int centeridx,
+	vm_prot_t access_type,
+	int advice,
+	int flags)
+{
 	struct uvm_object * const uobj = &vp->v_uobj;
 
 	int error;
@@ -828,9 +861,7 @@ genfs_do_getpages_xip1(
 	int i;
 	struct vm_page *zero_page;
 
-	UVMHIST_FUNC("genfs_do_getpages_xip"); UVMHIST_CALLED(ubchist);
-
-	KASSERT((vp->v_vflag & VV_XIP) != 0);
+	UVMHIST_FUNC("genfs_do_getpages_xip_io"); UVMHIST_CALLED(ubchist);
 
 	GOP_SIZE(vp, vp->v_size, &eof, GOP_SIZE_MEM);
 	npages = MIN(*npagesp, round_page(eof - offset) >> PAGE_SHIFT);
