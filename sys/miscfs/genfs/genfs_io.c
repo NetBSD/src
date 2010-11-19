@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.36.2.35 2010/11/19 01:44:47 uebayasi Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.36.2.36 2010/11/19 02:30:41 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.36.2.35 2010/11/19 01:44:47 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.36.2.36 2010/11/19 02:30:41 uebayasi Exp $");
 
 #include "opt_xip.h"
 
@@ -941,8 +941,7 @@ genfs_do_getpages_xip_io(
 		pg->uobject = &vp->v_uobj;
 	}
 
-	if ((flags & PGO_LOCKED) == 0)
-		mutex_exit(&uobj->vmobjlock);
+	mutex_exit(&uobj->vmobjlock);
 
 	*npagesp = npages;
 
@@ -1547,10 +1546,10 @@ genfs_do_putpages_xip(struct vnode *vp, off_t startoff, off_t endoff,
 		orignpages = npages;
 		KASSERT(mutex_owned(&uobj->vmobjlock));
 		error = genfs_do_getpages_xip1(vp, off, pgs, &npages, 0,
-		    VM_PROT_ALL, 0, PGO_LOCKED);
+		    VM_PROT_ALL, 0, 0);
 		KASSERT(error == 0);
 		KASSERT(npages == orignpages);
-		KASSERT(mutex_owned(&uobj->vmobjlock));
+		mutex_enter(&uobj->vmobjlock);
 		for (i = 0; i < npages; i++) {
 			pg = pgs[i];
 			if (pg == NULL || pg == PGO_DONTCARE)
