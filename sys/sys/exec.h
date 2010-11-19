@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.h,v 1.131 2010/09/11 20:49:28 chs Exp $	*/
+/*	$NetBSD: exec.h,v 1.132 2010/11/19 06:44:34 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -96,6 +96,9 @@
 
 #ifndef _SYS_EXEC_H_
 #define _SYS_EXEC_H_
+
+struct pathbuf; /* from namei.h */
+
 
 /*
  * The following structure is found at the top of the user stack of each
@@ -246,7 +249,7 @@ void	setregs			(struct lwp *, struct exec_package *, vaddr_t);
 int	check_veriexec		(struct lwp *, struct vnode *,
 				     struct exec_package *, int);
 int	check_exec		(struct lwp *, struct exec_package *,
-				     const char *kpath);
+				     struct pathbuf *);
 int	exec_init		(int);
 int	exec_read_from		(struct lwp *, struct vnode *, u_long off,
 				    void *, size_t);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_quota.c,v 1.67 2010/07/21 17:52:14 hannken Exp $	*/
+/*	$NetBSD: ufs_quota.c,v 1.68 2010/11/19 06:44:47 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.67 2010/07/21 17:52:14 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.68 2010/11/19 06:44:47 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -416,6 +416,7 @@ quotaon(struct lwp *l, struct mount *mp, int type, void *fname)
 	struct vnode *vp, **vpp, *mvp;
 	struct dquot *dq;
 	int error;
+	struct pathbuf *pb;
 	struct nameidata nd;
 
 	/* XXX XXX XXX */
@@ -426,10 +427,19 @@ quotaon(struct lwp *l, struct mount *mp, int type, void *fname)
 	}
 
 	vpp = &ump->um_quotas[type];
-	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, fname);
-	if ((error = vn_open(&nd, FREAD|FWRITE, 0)) != 0)
-		return (error);
+
+	error = pathbuf_copyin(fname, &pb);
+	if (error) {
+		return error;
+	}
+	NDINIT(&nd, LOOKUP, FOLLOW, pb);
+	if ((error = vn_open(&nd, FREAD|FWRITE, 0)) != 0) {
+		pathbuf_destroy(pb);
+		return error;
+	}
 	vp = nd.ni_vp;
+	pathbuf_destroy(pb);
+
 	VOP_UNLOCK(vp);
 	if (vp->v_type != VREG) {
 		(void) vn_close(vp, FREAD|FWRITE, l->l_cred);

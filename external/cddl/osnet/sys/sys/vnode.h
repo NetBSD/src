@@ -1,5 +1,5 @@
 
-/*	$NetBSD: vnode.h,v 1.5 2010/06/24 13:03:05 hannken Exp $	*/
+/*	$NetBSD: vnode.h,v 1.6 2010/11/19 06:44:33 dholland Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -511,6 +511,7 @@ static __inline int
 zfs_vn_open(const char *pnamep, enum uio_seg seg, int filemode, int createmode,
     vnode_t **vpp, enum create crwhy, mode_t umask)
 {
+	struct pathbuf *pb;
 	struct nameidata nd;
 	int error;
 
@@ -519,12 +520,17 @@ zfs_vn_open(const char *pnamep, enum uio_seg seg, int filemode, int createmode,
 	ASSERT(crwhy == CRCREAT);
 	ASSERT(umask == 0);
 
-	NDINIT(&nd, LOOKUP, NOFOLLOW, UIO_SYSSPACE, pnamep);
+	pb = pathbuf_create(pnamep);
+	if (pb == NULL) {
+		return ENOMEM;
+	}
+	NDINIT(&nd, LOOKUP, NOFOLLOW, pb);
 	error = vn_open(&nd, filemode, createmode);
 	if (error == 0) {
 		VOP_UNLOCK(nd.ni_vp);
 		*vpp = nd.ni_vp;
 	}
+	pathbuf_destroy(pb);
 	return (error);
 }
 #define	vn_open(pnamep, seg, filemode, createmode, vpp, crwhy, umask)	\

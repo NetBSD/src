@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_vfs.c,v 1.58 2010/09/07 21:11:10 pooka Exp $	*/
+/*	$NetBSD: rump_vfs.c,v 1.59 2010/11/19 06:44:33 dholland Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump_vfs.c,v 1.58 2010/09/07 21:11:10 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump_vfs.c,v 1.59 2010/11/19 06:44:33 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -229,13 +229,20 @@ int
 rump_namei(uint32_t op, uint32_t flags, const char *namep,
 	struct vnode **dvpp, struct vnode **vpp, struct componentname **cnpp)
 {
+	struct pathbuf *pb;
 	struct nameidata nd;
 	int rv;
 
-	NDINIT(&nd, op, flags, UIO_SYSSPACE, namep);
+	pb = pathbuf_create(namep);
+	if (pb == NULL) {
+		return ENOMEM;
+	}
+	NDINIT(&nd, op, flags, pb);
 	rv = namei(&nd);
-	if (rv)
+	if (rv) {
+		pathbuf_destroy(pb);
 		return rv;
+	}
 
 	if (dvpp) {
 		KASSERT(flags & LOCKPARENT);
@@ -264,6 +271,7 @@ rump_namei(uint32_t op, uint32_t flags, const char *namep,
 	} else if (nd.ni_cnd.cn_flags & HASBUF) {
 		panic("%s: pathbuf mismatch", __func__);
 	}
+	pathbuf_destroy(pb);
 
 	return rv;
 }

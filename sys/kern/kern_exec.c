@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.300 2010/08/21 13:19:39 pgoyette Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.301 2010/11/19 06:44:42 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.300 2010/08/21 13:19:39 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.301 2010/11/19 06:44:42 dholland Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_modular.h"
@@ -278,15 +278,14 @@ static struct pool_allocator exec_palloc = {
  */
 int
 /*ARGSUSED*/
-check_exec(struct lwp *l, struct exec_package *epp, const char *kpath)
+check_exec(struct lwp *l, struct exec_package *epp, struct pathbuf *pb)
 {
 	int		error, i;
 	struct vnode	*vp;
 	struct nameidata nd;
 	size_t		resid;
 
-	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF | SAVENAME | TRYEMULROOT,
-	       UIO_SYSSPACE, kpath);
+	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF | SAVENAME | TRYEMULROOT, pb);
 
 	/* first get the vnode */
 	if ((error = namei(&nd)) != 0)
@@ -516,6 +515,7 @@ execve1(struct lwp *l, const char *path, char * const *args,
 {
 	int			error;
 	struct exec_package	pack;
+	struct pathbuf		*pb;
 	struct vattr		attr;
 	struct proc		*p;
 	char			*argp;
@@ -532,7 +532,7 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	int			oldlwpflags;
 	ksiginfo_t		ksi;
 	ksiginfoq_t		kq;
-	char			*pathbuf;
+	const char		*pathstring;
 	char			*resolvedpathbuf;
 	const char		*commandname;
 	u_int			modgen;
@@ -586,12 +586,12 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	 * functions call check_exec() recursively - for example,
 	 * see exec_script_makecmds().
 	 */
-	pathbuf = PNBUF_GET();
-	error = copyinstr(path, pathbuf, MAXPATHLEN, NULL);
+	error = pathbuf_copyin(path, &pb);
 	if (error) {
-		DPRINTF(("execve: copyinstr path %d", error));
+		DPRINTF(("execve: pathbuf_copyin error %d", error));
 		goto clrflg;
 	}
+	pathstring = pathbuf_stringcopy_get(pb);
 	resolvedpathbuf = PNBUF_GET();
 #ifdef DIAGNOSTIC
 	strcpy(resolvedpathbuf, "/wrong");
@@ -601,7 +601,7 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	 * initialize the fields of the exec package.
 	 */
 	pack.ep_name = path;
-	pack.ep_kname = pathbuf;
+	pack.ep_kname = pathstring;
 	pack.ep_resolvedname = resolvedpathbuf;
 	pack.ep_hdr = kmem_alloc(exec_maxhdrsz, KM_SLEEP);
 	pack.ep_hdrlen = exec_maxhdrsz;
@@ -619,7 +619,7 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	rw_enter(&exec_lock, RW_READER);
 
 	/* see if we can run it. */
-	if ((error = check_exec(l, &pack, pathbuf)) != 0) {
+	if ((error = check_exec(l, &pack, pb)) != 0) {
 		if (error != ENOENT) {
 			DPRINTF(("execve: check exec failed %d\n", error));
 		}
@@ -871,8 +871,8 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	 * This handles the majority of the cases.
 	 * In the future perhaps we could canonicalize it?
 	 */
-	if (pathbuf[0] == '/')
-		(void)strlcpy(pack.ep_path = dp, pathbuf, MAXPATHLEN);
+	if (pathstring[0] == '/')
+		(void)strlcpy(pack.ep_path = dp, pathstring, MAXPATHLEN);
 #ifdef notyet
 	/*
 	 * Although this works most of the time [since the entry was just
@@ -1176,7 +1176,8 @@ execve1(struct lwp *l, const char *path, char * const *args,
 		mutex_exit(proc_lock);
 	}
 
-	PNBUF_PUT(pathbuf);
+	pathbuf_stringcopy_put(pb, pathstring);
+	pathbuf_destroy(pb);
 	PNBUF_PUT(resolvedpathbuf);
 	return (EJUSTRETURN);
 
@@ -1203,6 +1204,8 @@ execve1(struct lwp *l, const char *path, char * const *args,
 
 	rw_exit(&exec_lock);
 
+	pathbuf_stringcopy_put(pb, pathstring);
+	pathbuf_destroy(pb);
 	PNBUF_PUT(resolvedpathbuf);
 
  clrflg:
@@ -1210,8 +1213,6 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	l->l_flag |= oldlwpflags;
 	lwp_unlock(l);
 	rw_exit(&p->p_reflock);
-
-	PNBUF_PUT(pathbuf);
 
 	if (modgen != module_gen && error == ENOEXEC) {
 		modgen = module_gen;
@@ -1227,7 +1228,8 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	rw_exit(&p->p_reflock);
 	rw_exit(&exec_lock);
 
-	PNBUF_PUT(pathbuf);
+	pathbuf_stringcopy_put(pb, pathstring);
+	pathbuf_destroy(pb);
 	PNBUF_PUT(resolvedpathbuf);
 
 	/*

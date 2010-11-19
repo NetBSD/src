@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file.c,v 1.100 2010/09/21 19:26:19 chs Exp $	*/
+/*	$NetBSD: linux_file.c,v 1.101 2010/11/19 06:44:37 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.100 2010/09/21 19:26:19 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.101 2010/11/19 06:44:37 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -493,7 +493,8 @@ linux_sys_unlink(struct lwp *l, const struct linux_sys_unlink_args *uap, registe
 	/* {
 		syscallarg(const char *) path;
 	} */
-	int error;
+	int error, error2;
+	struct pathbuf *pb;
 	struct nameidata nd;
 
 	error = sys_unlink(l, (const void *)uap, retval);
@@ -505,9 +506,14 @@ linux_sys_unlink(struct lwp *l, const struct linux_sys_unlink_args *uap, registe
 	 * We return EPERM in such cases. To emulate correct behaviour,
 	 * check if the path points to directory and return EISDIR if this
 	 * is the case.
+	 *
+	 * XXX this should really not copy in the path buffer twice...
 	 */
-	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF | TRYEMULROOT, UIO_USERSPACE,
-	    SCARG(uap, path));
+	error2 = pathbuf_copyin(SCARG(uap, path), &pb);
+	if (error2) {
+		return error2;
+	}
+	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF | TRYEMULROOT, pb);
 	if (namei(&nd) == 0) {
 		struct stat sb;
 
@@ -517,6 +523,7 @@ linux_sys_unlink(struct lwp *l, const struct linux_sys_unlink_args *uap, registe
 
 		vput(nd.ni_vp);
 	}
+	pathbuf_destroy(pb);
 
 	return (error);
 }
