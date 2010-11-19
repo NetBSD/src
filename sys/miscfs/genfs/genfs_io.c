@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.36.2.46 2010/11/19 08:39:25 uebayasi Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.36.2.47 2010/11/19 15:25:37 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.36.2.46 2010/11/19 08:39:25 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.36.2.47 2010/11/19 15:25:37 uebayasi Exp $");
 
 #include "opt_xip.h"
 
@@ -375,7 +375,7 @@ genfs_getpages_io_findpages()
 #endif
 #ifdef XIP
 	if ((ap->a_vp->v_vflag & VV_XIP) != 0)
-		goto genfs_getpages_allocpages_done;
+		goto genfs_getpages_io_read_allocpages_done;
 #endif
 
 	if (uvn_findpages(uobj, origoffset, &npages, &pgs[ridx],
@@ -578,7 +578,7 @@ genfs_getpages_bio_prepare_done:
 		error = genfs_do_getpages_xip_io(
 			ap->a_vp,
 			ap->a_offset,
-			ap->a_m,
+			pgs,
 			ap->a_count,
 			ap->a_centeridx,
 			ap->a_access_type,
@@ -811,7 +811,7 @@ genfs_getpages_biodone_done:
 		error = genfs_do_getpages_xip_io_done(
 			ap->a_vp,
 			ap->a_offset,
-			ap->a_m,
+			pgs,
 			ap->a_count,
 			ap->a_centeridx,
 			ap->a_access_type,
@@ -903,6 +903,10 @@ out:
 		genfs_markdirty(vp);
 	}
 	mutex_exit(&uobj->vmobjlock);
+#if 1
+genfs_getpages_generic_io_done_done:
+	{}
+#endif
 	if (ap->a_m != NULL) {
 		memcpy(ap->a_m, &pgs[ridx],
 		    orignmempages * sizeof(struct vm_page *));
@@ -910,10 +914,6 @@ out:
 #if 0
 }
 
-#endif
-#if 1
-genfs_getpages_generic_io_done_done:
-	{}
 #endif
 
 out_err_free:
@@ -964,8 +964,10 @@ genfs_do_getpages_xip_io(
 	UVMHIST_LOG(ubchist, "xip npages=%d startoffset=%lx endoffset=%lx",
 	    orignmempages, (long)startoffset, (long)endoffset, 0);
 
+	const int ridx = (origoffset - startoffset) >> PAGE_SHIFT;
+
 	off = origoffset;
-	for (i = 0; i < orignmempages; i++) {
+	for (i = ridx; i < ridx + orignmempages; i++) {
 		daddr_t lbn, blkno;
 		int run;
 		struct vnode *devvp;
@@ -1022,9 +1024,15 @@ genfs_do_getpages_xip_io_done(
 	struct uvm_object * const uobj = &vp->v_uobj;
 	int i;
 
+	const int fs_bshift = vp2fs_bshift(vp);
+	const int fs_bsize = 1 << fs_bshift;
+
+	const off_t startoffset = trunc_blk(origoffset);
+	const int ridx = (origoffset - startoffset) >> PAGE_SHIFT;
+
 	mutex_enter(&uobj->vmobjlock);
 
-	for (i = 0; i < orignmempages; i++) {
+	for (i = ridx; i < ridx + orignmempages; i++) {
 		struct vm_page *pg = pps[i];
 
 		KASSERT((pg->flags & PG_RDONLY) != 0);
