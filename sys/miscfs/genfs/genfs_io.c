@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.36.2.37 2010/11/19 04:13:21 uebayasi Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.36.2.38 2010/11/19 04:14:30 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.36.2.37 2010/11/19 04:13:21 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.36.2.38 2010/11/19 04:14:30 uebayasi Exp $");
 
 #include "opt_xip.h"
 
@@ -858,9 +858,6 @@ genfs_do_getpages_xip_io(
 	int npages;
 	int fs_bshift, fs_bsize, dev_bshift, dev_bsize;
 	int i;
-#ifdef XIP_HOLE
-	struct vm_page *zero_page;
-#endif
 
 	UVMHIST_FUNC("genfs_do_getpages_xip_io"); UVMHIST_CALLED(ubchist);
 
@@ -876,9 +873,6 @@ genfs_do_getpages_xip_io(
 	ebkoff = ((offset + PAGE_SIZE * npages) + (fs_bsize - 1)) &
 	    ~(fs_bsize - 1);
 
-#ifdef XIP_HOLE
-	zero_page = NULL;
-#endif
 
 	UVMHIST_LOG(ubchist, "xip npages=%d sbkoff=%lx ebkoff=%lx",
 	    npages, (long)sbkoff, (long)ebkoff, 0);
@@ -905,13 +899,7 @@ genfs_do_getpages_xip_io(
 		 *   page.
 		 */
 		if (blkno < 0) {
-#ifdef XIP_HOLE
-			zero_page = uvm_page_zeropage_alloc();
-			KASSERT(zero_page != NULL);
-			pps[i] = zero_page;
-#else
 			panic("XIP hole is not supported yet!");
-#endif
 		} else {
 			daddr_t blk_off, fs_off;
 
@@ -938,10 +926,6 @@ genfs_do_getpages_xip_io(
 		struct vm_page *pg = pps[i];
 
 		KASSERT((pg->flags & PG_RDONLY) != 0);
-#ifdef XIP_HOLE
-		if (pg == zero_page)
-			continue;
-#endif
 		KASSERT((pg->flags & PG_BUSY) == 0);
 		KASSERT((pg->flags & PG_CLEAN) != 0);
 		KASSERT((pg->flags & PG_DEVICE) != 0);
@@ -1530,10 +1514,6 @@ genfs_do_putpages_xip(struct vnode *vp, off_t startoff, off_t endoff,
 	 */
 
 	off_t off, eof;
-#ifdef XIP_HOLE
-	struct vm_page *zero_page;
-	bool put_zero_page;
-#endif
 
 	off = trunc_page(startoff);
 	if (endoff == 0 || (flags & PGO_ALLPAGES))
@@ -1541,12 +1521,6 @@ genfs_do_putpages_xip(struct vnode *vp, off_t startoff, off_t endoff,
 	else
 		eof = endoff;
 
-#ifdef XIP_HOLE
-	zero_page = uvm_pagelookup(uobj, 0);
-	KASSERT(zero_page != NULL || uobj->uo_npages == 0);
-	KASSERT(zero_page == NULL || uobj->uo_npages == 1);
-	put_zero_page = false;
-#endif
 
 	while (off < eof) {
 		int npages, orignpages, error, i;
@@ -1567,11 +1541,6 @@ genfs_do_putpages_xip(struct vnode *vp, off_t startoff, off_t endoff,
 			pg = pgs[i];
 			if (pg == NULL || pg == PGO_DONTCARE)
 				continue;
-#ifdef XIP_HOLE
-			if (pg == uvm_page_zeropage)
-				/* Do nothing for holes. */
-				continue;
-#endif
 			/*
 			 * Freeing normal XIP pages; nothing to do.
 			 */
