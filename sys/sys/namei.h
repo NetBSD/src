@@ -1,11 +1,11 @@
-/*	$NetBSD: namei.h,v 1.68 2009/12/23 01:09:57 pooka Exp $	*/
+/*	$NetBSD: namei.h,v 1.69 2010/11/19 06:45:29 dholland Exp $	*/
 
 
 /*
  * WARNING: GENERATED FILE.  DO NOT EDIT
  * (edit namei.src and run make namei in src/sys/sys)
- *   by:   NetBSD: gennameih.awk,v 1.4 2008/12/03 10:54:27 ad Exp 
- *   from: NetBSD: namei.src,v 1.14 2009/12/23 01:09:24 pooka Exp 
+ *   by:   NetBSD: gennameih.awk,v 1.5 2009/12/23 14:17:19 pooka Exp 
+ *   from: NetBSD: namei.src,v 1.15 2010/11/19 06:44:34 dholland Exp 
  */
 
 /*
@@ -49,14 +49,44 @@
 #include <sys/kauth.h>
 
 /*
+ * Abstraction for a single pathname.
+ *
+ * This contains both the pathname string and (eventually) all
+ * metadata that determines how the path is to be interpreted.
+ * It is an opaque structure; the implementation is in vfs_lookup.c.
+ *
+ * To call namei, first set up a pathbuf with pathbuf_create or
+ * pathbuf_copyin, then do NDINIT(), then call namei, then AFTER THE
+ * STRUCT NAMEIDATA IS DEAD, call pathbuf_destroy. Don't destroy the
+ * pathbuf before you've finished using the nameidata, or mysterious
+ * bad things may happen.
+ */
+struct pathbuf;
+
+struct pathbuf *pathbuf_create(const char *path);
+int pathbuf_copyin(const char *userpath, struct pathbuf **ret);
+void pathbuf_destroy(struct pathbuf *);
+
+/* get a copy of the (current) path string */
+void pathbuf_copystring(const struct pathbuf *, char *buf, size_t maxlen);
+
+/* hold a reference copy of the original path string */
+const char *pathbuf_stringcopy_get(struct pathbuf *);
+void pathbuf_stringcopy_put(struct pathbuf *, const char *);
+
+// XXX remove this
+int pathbuf_maybe_copyin(const char *userpath, enum uio_seg seg, struct pathbuf **ret);
+
+/*
  * Encapsulation of namei parameters.
  */
 struct nameidata {
 	/*
 	 * Arguments to namei/lookup.
 	 */
-	const char *ni_dirp;		/* pathname pointer */
-	enum	uio_seg ni_segflg;	/* location of pathname */
+	struct pathbuf *ni_pathbuf;	/* pathname container */
+	//const char *ni_dirp;		/* pathname pointer */
+	//enum	uio_seg ni_segflg;	/* location of pathname */
 	/*
 	 * Arguments to lookup.
 	 */
@@ -153,11 +183,10 @@ struct nameidata {
 /*
  * Initialization of an nameidata structure.
  */
-#define NDINIT(ndp, op, flags, segflg, namep) { \
+#define NDINIT(ndp, op, flags, pathbuf) { \
 	(ndp)->ni_cnd.cn_nameiop = op; \
 	(ndp)->ni_cnd.cn_flags = flags; \
-	(ndp)->ni_segflg = segflg; \
-	(ndp)->ni_dirp = namep; \
+	(ndp)->ni_pathbuf = pathbuf; \
 	(ndp)->ni_cnd.cn_cred = kauth_cred_get(); \
 }
 #endif
