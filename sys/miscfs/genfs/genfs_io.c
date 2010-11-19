@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.36.2.41 2010/11/19 05:43:30 uebayasi Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.36.2.42 2010/11/19 06:38:53 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.36.2.41 2010/11/19 05:43:30 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.36.2.42 2010/11/19 06:38:53 uebayasi Exp $");
 
 #include "opt_xip.h"
 
@@ -61,7 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.36.2.41 2010/11/19 05:43:30 uebayasi 
 
 #ifdef XIP
 static int genfs_do_getpages_xip_io(struct vnode *, voff_t, struct vm_page **,
-    int *, int, vm_prot_t, int, int);
+    int *, int, vm_prot_t, int, int, const int);
 static int genfs_do_putpages_xip(struct vnode *, off_t, off_t, int,
     struct vm_page **);
 #endif
@@ -285,27 +285,18 @@ int
 genfs_do_getpages_unlocked()
 {
 #endif
-#if 1
-	if ((ap->a_vp->v_vflag & VV_XIP) != 0)
-		return genfs_do_getpages_xip_io(
-			ap->a_vp,
-			ap->a_offset,
-			ap->a_m,
-			ap->a_count,
-			ap->a_centeridx,
-			ap->a_access_type,
-			ap->a_advice,
-			ap->a_flags);
-#endif
 	/*
 	 * find the requested pages and make some simple checks.
 	 * leave space in the page array for a whole block.
 	 */
 
-	const int fs_bshift = (vp->v_type != VBLK) ?
-	    vp->v_mount->mnt_fs_bshift : DEV_BSHIFT;
-	const int dev_bshift = (vp->v_type != VBLK) ?
-	    vp->v_mount->mnt_dev_bshift : DEV_BSHIFT;
+#define	vp2fs_bshift(vp) \
+	(((vp)->v_type != VBLK) ? (vp)->v_mount->mnt_fs_bshift : DEV_BSHIFT)
+#define	vp2dev_bshift(vp) \
+	(((vp)->v_type != VBLK) ? (vp)->v_mount->mnt_dev_bshift : DEV_BSHIFT)
+
+	const int fs_bshift = vp2fs_bshift(vp);
+	const int dev_bshift = vp2dev_bshift(vp);
 	const int fs_bsize = 1 << fs_bshift;
 #define	blk_mask	(fs_bsize - 1)
 #define	trunc_blk(x)	((x) & ~blk_mask)
@@ -319,6 +310,20 @@ genfs_do_getpages_unlocked()
 	    round_page(round_blk(origoffset + (npages << PAGE_SHIFT))),
 	    round_page(memeof));
 	const int ridx = (origoffset - startoffset) >> PAGE_SHIFT;
+
+#if 1
+	if ((ap->a_vp->v_vflag & VV_XIP) != 0)
+		return genfs_do_getpages_xip_io(
+			ap->a_vp,
+			ap->a_offset,
+			ap->a_m,
+			ap->a_count,
+			ap->a_centeridx,
+			ap->a_access_type,
+			ap->a_advice,
+			ap->a_flags,
+			orignmempages);
+#endif
 
 	const int pgs_size = sizeof(struct vm_page *) *
 	    ((endoffset - startoffset) >> PAGE_SHIFT);
@@ -816,41 +821,69 @@ out_err:
 static int
 genfs_do_getpages_xip_io(
 	struct vnode *vp,
-	voff_t offset,
+	voff_t origoffset,
 	struct vm_page **pps,
 	int *npagesp,
 	int centeridx,
 	vm_prot_t access_type,
 	int advice,
-	int flags)
+	int flags,
+	const int orignmempages)
 {
 	struct uvm_object * const uobj = &vp->v_uobj;
 
+	const int fs_bshift = vp2fs_bshift(vp);
+	const int dev_bshift = vp2dev_bshift(vp);
+	const int fs_bsize = 1 << fs_bshift;
+#if 0
+#define	blk_mask	(fs_bsize - 1)
+#define	trunc_blk(x)	((x) & ~blk_mask)
+#define	round_blk(x)	(((x) + blk_mask) & ~blk_mask)
+
+	const int orignmempages = MIN(orignpages,
+	    round_page(memeof - origoffset) >> PAGE_SHIFT);
+	npages = orignmempages;
+	const off_t startoffset = trunc_blk(origoffset);
+	const off_t endoffset = MIN(
+	    round_page(round_blk(origoffset + (npages << PAGE_SHIFT))),
+	    round_page(memeof));
+	const int ridx = (origoffset - startoffset) >> PAGE_SHIFT;
+#endif
+
 	int error;
-	off_t eof, sbkoff, ebkoff, off;
-	int npages;
-	int fs_bshift, fs_bsize, dev_bshift, dev_bsize;
+	off_t off;
+#if 0
+	off_t memeof;
+	int orignmempages;
+#endif
 	int i;
 
 	UVMHIST_FUNC("genfs_do_getpages_xip_io"); UVMHIST_CALLED(ubchist);
 
-	GOP_SIZE(vp, vp->v_size, &eof, GOP_SIZE_MEM);
-	npages = MIN(*npagesp, round_page(eof - offset) >> PAGE_SHIFT);
+#if 0
+	GOP_SIZE(vp, vp->v_size, &memeof, GOP_SIZE_MEM);
+	orignmempages = MIN(orignpages, round_page(memeof - origoffset) >> PAGE_SHIFT);
+#endif
+
+#if 0
+	int fs_bshift, fs_bsize, dev_bshift, dev_bsize;
 
 	fs_bshift = vp->v_mount->mnt_fs_bshift;
 	fs_bsize = 1 << fs_bshift;
 	dev_bshift = vp->v_mount->mnt_dev_bshift;
 	dev_bsize = 1 << dev_bshift;
+#endif
 
-	sbkoff = offset & ~(fs_bsize - 1);
-	ebkoff = ((offset + PAGE_SIZE * npages) + (fs_bsize - 1)) &
-	    ~(fs_bsize - 1);
+#ifdef UVMHIST
+	const off_t startoffset = trunc_blk(origoffset);
+	const off_t endoffset = round_blk(origoffset + PAGE_SIZE * orignmempages);
+#endif
 
-	UVMHIST_LOG(ubchist, "xip npages=%d sbkoff=%lx ebkoff=%lx",
-	    npages, (long)sbkoff, (long)ebkoff, 0);
+	UVMHIST_LOG(ubchist, "xip npages=%d startoffset=%lx endoffset=%lx",
+	    orignmempages, (long)startoffset, (long)endoffset, 0);
 
-	off = offset;
-	for (i = 0; i < npages; i++) {
+	off = origoffset;
+	for (i = 0; i < orignmempages; i++) {
 		daddr_t lbn, blkno;
 		int run;
 		struct vnode *devvp;
@@ -891,7 +924,7 @@ genfs_do_getpages_xip_io(
 
 	mutex_enter(&uobj->vmobjlock);
 
-	for (i = 0; i < npages; i++) {
+	for (i = 0; i < orignmempages; i++) {
 		struct vm_page *pg = pps[i];
 
 		KASSERT((pg->flags & PG_RDONLY) != 0);
@@ -905,7 +938,7 @@ genfs_do_getpages_xip_io(
 
 	mutex_exit(&uobj->vmobjlock);
 
-	*npagesp = npages;
+	*npagesp = orignmempages;
 
 	return 0;
 }
@@ -1502,7 +1535,7 @@ genfs_do_putpages_xip(struct vnode *vp, off_t startoff, off_t endoff,
 		KASSERT(mutex_owned(&uobj->vmobjlock));
 		mutex_exit(&uobj->vmobjlock);
 		error = genfs_do_getpages_xip_io(vp, off, pgs, &npages, 0,
-		    VM_PROT_ALL, 0, 0);
+		    VM_PROT_ALL, 0, 0, orignpages);
 		KASSERT(error == 0);
 		KASSERT(npages == orignpages);
 		mutex_enter(&uobj->vmobjlock);
