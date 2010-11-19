@@ -1,4 +1,4 @@
-/*	$NetBSD: t_vfsops.c,v 1.7 2010/08/16 10:47:16 pooka Exp $	*/
+/*	$NetBSD: t_vfsops.c,v 1.8 2010/11/19 17:46:02 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -134,10 +134,6 @@ tfhremove(const atf_tc_t *tc, const char *path)
 	void *fhp;
 	int fd;
 
-	/* should repeat above, but ... */
-	if (FSTYPE_TMPFS(tc))
-		atf_tc_skip("file handles broken (PR kern/43605)");
-
 	RL(rump_sys_chdir(path));
 	RL(fd = rump_sys_open(FNAME, O_RDWR | O_CREAT, 0777));
 	RL(rump_sys_close(fd));
@@ -158,6 +154,8 @@ tfhremove(const atf_tc_t *tc, const char *path)
 	if (FSTYPE_MSDOS(tc) || FSTYPE_LFS(tc))
 		atf_tc_expect_fail("fhopen() for removed file succeeds "
 		    "(PR kern/43745)");
+	if (FSTYPE_TMPFS(tc))
+		atf_tc_expect_fail("PR kern/43605");
 	ATF_REQUIRE_ERRNO(ESTALE, rump_sys_fhopen(fhp, fhsize, O_RDONLY) == -1);
 	atf_tc_expect_pass();
 
@@ -177,8 +175,7 @@ tfhinval(const atf_tc_t *tc, const char *path)
 	unsigned long seed;
 	int fd;
 
-	if (FSTYPE_TMPFS(tc))
-		atf_tc_skip("file handles broken (PR kern/43605)");
+	/* XXX: this test succeeds "accidentally" on tmpfs, PR kern/43605 */
 
 	srandom(seed = time(NULL));
 	printf("RNG seed %lu\n", seed);
