@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.962.4.11 2010/03/28 15:07:24 snj Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.962.4.12 2010/11/19 23:44:59 riz Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.962.4.11 2010/03/28 15:03:22 snj Exp
+ *	NetBSD: pcidevs,v 1.962.4.12 2010/11/19 23:40:28 riz Exp
  */
 
 /*
@@ -7724,6 +7724,10 @@ static const struct pci_product pci_products[] = {
 	    "i82801H IFE (G) LAN Controller",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82576_COPPER,
+	    "82576 1000BaseT Ethernet",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801H_IGP_M_V,
 	    "i82801H IGP (MV) LAN Controller",
 	},
@@ -7762,6 +7766,18 @@ static const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801I_BM,
 	    "i82567LM-4 LAN Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82576_FIBER,
+	    "82576 1000BaseX Ethernet",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82576_SERDES,
+	    "82576 gigabit Ethernet (SERDES)",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82576_QUAD_COPPER,
+	    "82576 quad-1000BaseT Ethernet",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PCH_M_LM,
@@ -7922,6 +7938,46 @@ static const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82583V,
 	    "i82583V 1000baseT Ethernet",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82576_NS,
+	    "82576 gigabit Ethernet",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82576_SERDES_QUAD,
+	    "82576 quad-gigabit Ethernet (SERDES)",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82580_COPPER,
+	    "82580 1000BaseT Ethernet",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82580_FIBER,
+	    "82580 1000BaseX Ethernet",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82580_SERDES,
+	    "82580 1000BaseT Ethernet (SERDES)",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82580_SGMII,
+	    "82580 gigabit Ethernet (SGMII)",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82580_COPPER_DUAL,
+	    "82580 dual-1000BaseT Ethernet",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82576_NS_SERDES,
+	    "82576 gigabit Ethernet (SERDES)",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82580_ER,
+	    "82580 1000BaseT Ethernet",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82580_ER_DUAL,
+	    "82580 dual-1000BaseT Ethernet",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_80960_RP,
@@ -14824,4 +14880,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 3105;
+const int pci_nproducts = 3119;
