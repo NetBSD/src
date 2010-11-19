@@ -1,4 +1,4 @@
-/*      $NetBSD: sp_common.c,v 1.5 2010/11/19 15:40:55 pooka Exp $	*/
+/*      $NetBSD: sp_common.c,v 1.6 2010/11/19 17:09:44 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -117,7 +117,9 @@ struct respwait {
 
 struct spclient {
 	int spc_fd;
-	struct lwp *spc_lwp;
+
+	struct lwp *spc_mainlwp;
+	pid_t spc_pid;
 
 	/* incoming */
 	struct rsp_hdr spc_hdr;
@@ -226,11 +228,10 @@ kickwaiter(struct spclient *spc)
 	}
 	if (rw == NULL) {
 		printf("PANIC: no waiter\n");
-		pthread_mutex_unlock(&spc->spc_mtx);
+		abort();
 		return;
 	}
 	rw->rw_data = spc->spc_buf;
-	TAILQ_REMOVE(&spc->spc_respwait, rw, rw_entries);
 	pthread_cond_signal(&rw->rw_cv);
 	pthread_mutex_unlock(&spc->spc_mtx);
 
@@ -288,7 +289,6 @@ waitresp(struct spclient *spc, struct respwait *rw)
 			if (spc->spc_istatus == SPCSTATUS_WANTED)
 				kickall(spc);
 			spc->spc_istatus = SPCSTATUS_FREE;
-			pthread_mutex_unlock(&spc->spc_mtx);
 		} else {
 			spc->spc_istatus = SPCSTATUS_WANTED;
 			pthread_cond_wait(&rw->rw_cv, &spc->spc_mtx);

@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpuser_sp.c,v 1.7 2010/11/19 15:25:49 pooka Exp $	*/
+/*      $NetBSD: rumpuser_sp.c,v 1.8 2010/11/19 17:09:44 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: rumpuser_sp.c,v 1.7 2010/11/19 15:25:49 pooka Exp $");
+__RCSID("$NetBSD: rumpuser_sp.c,v 1.8 2010/11/19 17:09:44 pooka Exp $");
 
 #include <sys/types.h>
 #include <sys/mman.h>
@@ -107,6 +107,18 @@ lwproc_newproc(void)
 	return rv;
 }
 
+static int
+lwproc_newlwp(pid_t pid)
+{
+	int rv;
+
+	spops.spop_schedule();
+	rv = spops.spop_lwproc_newlwp(pid);
+	spops.spop_unschedule();
+
+	return rv;
+}
+
 static struct lwp *
 lwproc_curlwp(void)
 {
@@ -117,6 +129,18 @@ lwproc_curlwp(void)
 	spops.spop_unschedule();
 
 	return l;
+}
+
+static pid_t
+lwproc_getpid(void)
+{
+	pid_t p;
+
+	spops.spop_schedule();
+	p = spops.spop_getpid();
+	spops.spop_unschedule();
+
+	return p;
 }
 
 static int
@@ -271,7 +295,7 @@ serv_handledisco(unsigned int idx)
 
 	DPRINTF(("rump_sp: disconnecting [%u]\n", idx));
 
-	lwproc_switch(spc->spc_lwp);
+	lwproc_switch(spc->spc_mainlwp);
 	lwproc_release();
 
 	pthread_mutex_destroy(&spc->spc_mtx);
@@ -342,8 +366,9 @@ serv_handleconn(int fd, connecthook_fn connhook)
 
 	pfdlist[i].fd = newfd;
 	spclist[i].spc_fd = newfd;
-	spclist[i].spc_lwp = lwproc_curlwp();
+	spclist[i].spc_mainlwp = lwproc_curlwp();
 	spclist[i].spc_istatus = SPCSTATUS_BUSY; /* dedicated receiver */
+	spclist[i].spc_pid = lwproc_getpid();
 
 	TAILQ_INIT(&spclist[i].spc_respwait);
 	pthread_mutex_init(&spclist[i].spc_mtx, NULL);
@@ -353,7 +378,7 @@ serv_handleconn(int fd, connecthook_fn connhook)
 		maxidx = i;
 
 	DPRINTF(("rump_sp: added new connection at idx %u, pid %d\n",
-	    i, 9)); /* XXX: getpid not spop */
+	    i, lwproc_getpid()));
 
 	lwproc_switch(NULL);
 
@@ -371,7 +396,7 @@ serv_handlesyscall(struct spclient *spc, struct rsp_hdr *rhdr, uint8_t *data)
 	    sysnum, 0));
 
 	pthread_setspecific(spclient_tls, spc);
-	lwproc_switch(spc->spc_lwp);
+	lwproc_newlwp(spc->spc_pid);
 	rv = rumpsyscall(sysnum, data, retval);
 	lwproc_switch(NULL);
 	pthread_setspecific(spclient_tls, NULL);
