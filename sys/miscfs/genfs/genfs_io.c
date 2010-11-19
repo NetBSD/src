@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.36.2.45 2010/11/19 08:12:12 uebayasi Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.36.2.46 2010/11/19 08:39:25 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.36.2.45 2010/11/19 08:12:12 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.36.2.46 2010/11/19 08:39:25 uebayasi Exp $");
 
 #include "opt_xip.h"
 
@@ -220,20 +220,20 @@ startover:
 
 	if (flags & PGO_LOCKED) {
 #if 0
-		genfs_do_getpages_locked();
+		genfs_getpages_mem();
 	} else {
-		genfs_do_getpages_unlocked();
+		genfs_getpages_io();
 	}
 }
 
 int
-genfs_do_getpages_locked()
+genfs_getpages_mem()
 {
 #endif
 		int nfound;
 		struct vm_page *pg;
 
-#if 1
+#ifdef XIP
 		if ((ap->a_vp->v_vflag & VV_XIP) != 0) {
 			*ap->a_count = 0;
 			return 0;
@@ -284,7 +284,7 @@ genfs_do_getpages_locked()
 }
 
 int
-genfs_do_getpages_unlocked()
+genfs_getpages_io()
 {
 #endif
 	/*
@@ -331,7 +331,13 @@ genfs_do_getpages_unlocked()
 
 	UVMHIST_LOG(ubchist, "ridx %d npages %d startoff %ld endoff %ld",
 	    ridx, npages, startoffset, endoffset);
+#if 0
+}
 
+int
+genfs_getpages_io_relock()
+{
+#endif
 	if (!has_trans) {
 		fstrans_start(vp->v_mount, FSTRANS_SHARED);
 		has_trans = true;
@@ -360,10 +366,16 @@ genfs_do_getpages_unlocked()
 			kmem_free(pgs, pgs_size);
 		goto startover;
 	}
+#if 0
+}
 
-#if 1
+int
+genfs_getpages_io_findpages()
+{
+#endif
+#ifdef XIP
 	if ((ap->a_vp->v_vflag & VV_XIP) != 0)
-		goto find_pagecache_done;
+		goto genfs_getpages_allocpages_done;
 #endif
 
 	if (uvn_findpages(uobj, origoffset, &npages, &pgs[ridx],
@@ -405,14 +417,14 @@ genfs_do_getpages_unlocked()
 
 	if (overwrite) {
 #if 0
-		genfs_do_getpages_overwrite();
+		genfs_getpages_io_overwrite();
 	} else {
-		genfs_do_getpages_io();
+		genfs_getpages_io_read();
 	}
 }
 
 int
-genfs_do_getpages_overwrite()
+genfs_getpages_io_overwrite()
 {
 	{
 #endif
@@ -433,7 +445,7 @@ genfs_do_getpages_overwrite()
 }
 
 int
-genfs_do_getpages_io()
+genfs_getpages_io_read()
 {
 #endif
 	/*
@@ -441,7 +453,13 @@ genfs_do_getpages_io()
 	 * so we're going to have to do some i/o.
 	 * find any additional pages needed to cover the expanded range.
 	 */
+#if 0
+}
 
+int
+genfs_getpages_io_read_allocpages()
+{
+#endif
 	npages = (endoffset - startoffset) >> PAGE_SHIFT;
 	if (startoffset != origoffset || npages != orignmempages) {
 		int npgs;
@@ -470,11 +488,16 @@ genfs_do_getpages_io()
 			goto out_err_free;
 		}
 	}
-
-#if 1
-find_pagecache_done:
+#ifdef XIP
+genfs_getpages_io_read_allocpages_done:
 #endif
+#if 0
+}
 
+int
+genfs_getpages_io_read_bio()
+{
+#endif
 	mutex_exit(&uobj->vmobjlock);
 
     {
@@ -496,7 +519,13 @@ find_pagecache_done:
 	if ((ap->a_vp->v_vflag & VV_XIP) != 0)
 		goto genfs_getpages_bio_prepare_done;
 #endif
+#if 0
+}
 
+int
+genfs_getpages_io_read_bio_prepare()
+{
+#endif
 	kva = uvm_pagermapin(pgs, npages,
 	    UVMPAGER_MAPIN_READ | UVMPAGER_MAPIN_WAITOK);
 
@@ -516,7 +545,10 @@ find_pagecache_done:
 		BIO_SETPRIO(mbp, BPRIO_TIMELIMITED);
 	else
 		BIO_SETPRIO(mbp, BPRIO_TIMECRITICAL);
+#if 0
+}
 
+#endif
 #if 1
 genfs_getpages_bio_prepare_done:
 #endif
@@ -556,7 +588,13 @@ genfs_getpages_bio_prepare_done:
 		goto loopdone;
 	}
 #endif
+#if 0
+}
 
+int
+genfs_getpages_io_read_bio_loop()
+{
+#endif
 	/*
 	 * now loop over the pages, reading as needed.
 	 */
