@@ -1,4 +1,4 @@
-/*	$NetBSD: vga_pci.c,v 1.50 2010/11/09 21:12:19 shattered Exp $	*/
+/*	$NetBSD: vga_pci.c,v 1.51 2010/11/19 13:38:17 macallan Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga_pci.c,v 1.50 2010/11/09 21:12:19 shattered Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga_pci.c,v 1.51 2010/11/19 13:38:17 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -351,6 +351,16 @@ vga_pci_mmap(void *v, off_t offset, int prot)
 		return (bus_space_mmap(vc->hdl.vh_memt, IOM_BEGIN,
 		    (offset - IOM_BEGIN), prot, 0));
 
+#ifdef PCI_MAGIC_IO_RANGE
+	/* allow to map our IO space on non-x86 machines */
+	if ((offset >= PCI_MAGIC_IO_RANGE) &&
+	    (offset < PCI_MAGIC_IO_RANGE + 0x10000)) {
+		return bus_space_mmap(vc->hdl.vh_iot,
+		    offset - PCI_MAGIC_IO_RANGE,
+		    0, prot, BUS_SPACE_MAP_LINEAR);	
+	}
+#endif
+	
 	/* Range not found. */
 	return (-1);
 }
