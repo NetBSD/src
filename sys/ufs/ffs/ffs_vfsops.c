@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.257.2.13 2010/10/25 08:07:22 uebayasi Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.257.2.14 2010/11/19 02:29:55 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.257.2.13 2010/10/25 08:07:22 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.257.2.14 2010/11/19 02:29:55 uebayasi Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1183,21 +1183,32 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	mp->mnt_iflag |= IMNT_MPSAFE;
 #ifdef XIP
 #define	FS_IS_PAGE_ALIGNED_P(fs) \
-	(((fs)->fs_bsize & PAGE_MASK) == 0)
+	(((fs)->fs_fshift >= PAGE_SHIFT) && \
+	 ((fs)->fs_bshift >= PAGE_SHIFT))
 
+#if !defined(XIP_CDEV_MMAP)
 	void *seg = NULL;
+#endif
 
 	if ((mp->mnt_flag & MNT_XIP) != 0) {
 		if ((mp->mnt_flag & MNT_RDONLY) == 0) {
 			error = EINVAL;
 			goto xip_check_done;
 		}
+#if !defined(XIP_CDEV_MMAP)
 		if (VOP_IOCTL(devvp, DIOCGPHYSSEG, &seg, FREAD, cred) != 0 ||
 		    seg == NULL ||
 		    !FS_IS_PAGE_ALIGNED_P(fs)) {
 			error = ENXIO;
 			goto xip_check_done;
 		}
+#else
+		if (cdev_mmap(devvp->v_rdev, 0, 0) == -1 ||
+		    !FS_IS_PAGE_ALIGNED_P(fs)) {
+			error = ENXIO;
+			goto xip_check_done;
+		}
+#endif
 
 xip_check_done:
 		if (error != 0) {
@@ -1205,7 +1216,9 @@ xip_check_done:
 			goto out;
 		}
 		mp->mnt_flag |= MNT_XIP;
+#if !defined(XIP_CDEV_MMAP)
 		devvp->v_physseg = seg;
+#endif
 	}
 #endif
 #ifdef FFS_EI
