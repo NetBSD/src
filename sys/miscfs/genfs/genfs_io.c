@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.36.2.39 2010/11/19 04:46:24 uebayasi Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.36.2.40 2010/11/19 05:22:29 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.36.2.39 2010/11/19 04:46:24 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.36.2.40 2010/11/19 05:22:29 uebayasi Exp $");
 
 #include "opt_xip.h"
 
@@ -61,8 +61,6 @@ __KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.36.2.39 2010/11/19 04:46:24 uebayasi 
 
 #ifdef XIP
 static int genfs_do_getpages_xip(void *);
-static int genfs_do_getpages_xip1(struct vnode *, voff_t, struct vm_page **,
-    int *, int, vm_prot_t, int, int);
 static int genfs_do_getpages_xip_io(struct vnode *, voff_t, struct vm_page **,
     int *, int, vm_prot_t, int, int);
 static int genfs_do_putpages_xip(struct vnode *, off_t, off_t, int,
@@ -824,44 +822,19 @@ genfs_do_getpages_xip(void *v)
 
 	UVMHIST_FUNC("genfs_do_getpages_xip"); UVMHIST_CALLED(ubchist);
 
-	return genfs_do_getpages_xip1(
-		ap->a_vp,
-		ap->a_offset,
-		ap->a_m,
-		ap->a_count,
-		ap->a_centeridx,
-		ap->a_access_type,
-		ap->a_advice,
-		ap->a_flags);
-}
-
-static int
-genfs_do_getpages_xip1(
-	struct vnode *vp,
-	voff_t offset,
-	struct vm_page **pps,
-	int *npagesp,
-	int centeridx,
-	vm_prot_t access_type,
-	int advice,
-	int flags)
-{
-
-	KASSERT((vp->v_vflag & VV_XIP) != 0);
-
-	if ((flags & PGO_LOCKED) != 0) {
-		*npagesp = 0;
+	if ((ap->a_flags & PGO_LOCKED) != 0) {
+		*ap->a_count = 0;
 		return 0;
 	} else
 		return genfs_do_getpages_xip_io(
-			vp,
-			offset,
-			pps,
-			npagesp,
-			centeridx,
-			access_type,
-			advice,
-			flags);
+			ap->a_vp,
+			ap->a_offset,
+			ap->a_m,
+			ap->a_count,
+			ap->a_centeridx,
+			ap->a_access_type,
+			ap->a_advice,
+			ap->a_flags);
 }
 
 static int
@@ -1530,7 +1503,7 @@ genfs_do_putpages_xip(struct vnode *vp, off_t startoff, off_t endoff,
 	 * We don't know which pages are currently mapped in the given vnode,
 	 * because XIP pages are not added to vnode.  What we can do is to
 	 * locate pages by querying the filesystem as done in getpages.  Call
-	 * genfs_do_getpages_xip1().
+	 * genfs_do_getpages_xip_io().
 	 */
 
 	off_t off, eof;
@@ -1552,7 +1525,7 @@ genfs_do_putpages_xip(struct vnode *vp, off_t startoff, off_t endoff,
 		orignpages = npages;
 		KASSERT(mutex_owned(&uobj->vmobjlock));
 		mutex_exit(&uobj->vmobjlock);
-		error = genfs_do_getpages_xip1(vp, off, pgs, &npages, 0,
+		error = genfs_do_getpages_xip_io(vp, off, pgs, &npages, 0,
 		    VM_PROT_ALL, 0, 0);
 		KASSERT(error == 0);
 		KASSERT(npages == orignpages);
