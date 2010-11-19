@@ -1,4 +1,4 @@
-/*      $NetBSD: sp_common.c,v 1.3 2010/11/10 16:12:15 pooka Exp $	*/
+/*      $NetBSD: sp_common.c,v 1.4 2010/11/19 15:25:49 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -33,6 +33,7 @@
 
 #include <sys/types.h>
 #include <sys/mman.h>
+#include <sys/queue.h>
 #include <sys/socket.h>
 #include <sys/un.h>
 
@@ -44,6 +45,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <poll.h>
+#include <pthread.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -70,17 +72,14 @@ mydprintf(const char *fmt, ...)
  * Bah, I hate writing on-off-wire conversions in C
  */
 
-enum {
-	RUMPSP_SYSCALL_REQ,	RUMPSP_SYSCALL_RESP,
-	RUMPSP_COPYIN_REQ,	RUMPSP_COPYIN_RESP,
-	RUMPSP_COPYOUT_REQ,	/* no copyout resp */
-	RUMPSP_ANONMMAP_REQ,	RUMPSP_ANONMMAP_RESP
-};
+enum { RUMPSP_REQ, RUMPSP_RESP };
+enum { RUMPSP_SYSCALL, RUMPSP_COPYIN, RUMPSP_COPYOUT, RUMPSP_ANONMMAP };
 
 struct rsp_hdr {
 	uint64_t rsp_len;
 	uint64_t rsp_reqno;
-	uint32_t rsp_type;
+	uint16_t rsp_class;
+	uint16_t rsp_type;
 	/*
 	 * We want this structure 64bit-aligned for typecast fun,
 	 * so might as well use the following for something.
@@ -106,6 +105,15 @@ struct rsp_sysresp {
 	register_t rsys_retval[2];
 };
 
+struct respwait {
+	uint64_t rw_reqno;
+	void *rw_data;
+	size_t rw_dlen;
+
+	pthread_cond_t rw_cv;
+
+	TAILQ_ENTRY(respwait) rw_entries;
+};
 
 struct spclient {
 	int spc_fd;
@@ -116,18 +124,47 @@ struct spclient {
 	uint8_t *spc_buf;
 	size_t spc_off;
 
-#if 0
-	/* outgoing */
-	int spc_obusy;
-	pthread_mutex_t spc_omtx;
+	pthread_mutex_t spc_mtx;
 	pthread_cond_t spc_cv;
-#endif
+
+	uint64_t spc_nextreq;
+	int spc_ostatus, spc_istatus;
+
+	TAILQ_HEAD(, respwait) spc_respwait;
 };
+#define SPCSTATUS_FREE 0
+#define SPCSTATUS_BUSY 1
+#define SPCSTATUS_WANTED 2
 
 typedef int (*addrparse_fn)(const char *, struct sockaddr **, int);
 typedef int (*connecthook_fn)(int);
 
-static uint64_t nextreq;
+static int readframe(struct spclient *);
+static void handlereq(struct spclient *);
+
+static void
+sendlock(struct spclient *spc)
+{
+
+	pthread_mutex_lock(&spc->spc_mtx);
+	while (spc->spc_ostatus != SPCSTATUS_FREE) {
+		spc->spc_ostatus = SPCSTATUS_WANTED;
+		pthread_cond_wait(&spc->spc_cv, &spc->spc_mtx);
+	}
+	spc->spc_ostatus = SPCSTATUS_BUSY;
+	pthread_mutex_unlock(&spc->spc_mtx);
+}
+
+static void
+sendunlock(struct spclient *spc)
+{
+
+	pthread_mutex_lock(&spc->spc_mtx);
+	if (spc->spc_ostatus == SPCSTATUS_WANTED)
+		pthread_cond_broadcast(&spc->spc_cv);
+	spc->spc_ostatus = SPCSTATUS_FREE;
+	pthread_mutex_unlock(&spc->spc_mtx);
+}
 
 static int
 dosend(struct spclient *spc, const void *data, size_t dlen)
@@ -161,6 +198,108 @@ dosend(struct spclient *spc, const void *data, size_t dlen)
 	}
 
 	return 0;
+}
+
+static void
+putwait(struct spclient *spc, struct respwait *rw, struct rsp_hdr *rhdr)
+{
+
+	rw->rw_data = NULL;
+	rw->rw_dlen = 0;
+	pthread_cond_init(&rw->rw_cv, NULL);
+
+	pthread_mutex_lock(&spc->spc_mtx);
+	rw->rw_reqno = rhdr->rsp_reqno = spc->spc_nextreq++;
+	TAILQ_INSERT_TAIL(&spc->spc_respwait, rw, rw_entries);
+	pthread_mutex_unlock(&spc->spc_mtx);
+}
+
+static void
+kickwaiter(struct spclient *spc)
+{
+	struct respwait *rw;
+
+	pthread_mutex_lock(&spc->spc_mtx);
+	TAILQ_FOREACH(rw, &spc->spc_respwait, rw_entries) {
+		if (rw->rw_reqno == spc->spc_hdr.rsp_reqno)
+			break;
+	}
+	if (rw == NULL) {
+		printf("PANIC: no waiter\n");
+		pthread_mutex_unlock(&spc->spc_mtx);
+		return;
+	}
+	rw->rw_data = spc->spc_buf;
+	TAILQ_REMOVE(&spc->spc_respwait, rw, rw_entries);
+	pthread_cond_signal(&rw->rw_cv);
+	pthread_mutex_unlock(&spc->spc_mtx);
+
+	spc->spc_buf = NULL;
+	spc->spc_off = 0;
+}
+
+static void
+kickall(struct spclient *spc)
+{
+	struct respwait *rw;
+
+	/* DIAGASSERT(mutex_owned(spc_lock)) */
+	TAILQ_FOREACH(rw, &spc->spc_respwait, rw_entries)
+		pthread_cond_signal(&rw->rw_cv);
+}
+
+static int
+waitresp(struct spclient *spc, struct respwait *rw)
+{
+	struct pollfd pfd;
+	int rv = 0;
+
+	pthread_mutex_lock(&spc->spc_mtx);
+	while (rw->rw_data == NULL) {
+		/* are we free to receive? */
+		if (spc->spc_istatus == SPCSTATUS_FREE) {
+			int gotresp;
+
+			spc->spc_istatus = SPCSTATUS_BUSY;
+			pthread_mutex_unlock(&spc->spc_mtx);
+
+			pfd.fd = spc->spc_fd;
+			pfd.events = POLLIN;
+
+			for (gotresp = 0; !gotresp; ) {
+				while (readframe(spc) < 1)
+					poll(&pfd, 1, INFTIM);
+
+				switch (spc->spc_hdr.rsp_class) {
+				case RUMPSP_RESP:
+					kickwaiter(spc);
+					gotresp = spc->spc_hdr.rsp_reqno ==
+					    rw->rw_reqno;
+					break;
+				case RUMPSP_REQ:
+					handlereq(spc);
+					break;
+				default:
+					/* panic */
+					break;
+				}
+			}
+			pthread_mutex_lock(&spc->spc_mtx);
+			if (spc->spc_istatus == SPCSTATUS_WANTED)
+				kickall(spc);
+			spc->spc_istatus = SPCSTATUS_FREE;
+			pthread_mutex_unlock(&spc->spc_mtx);
+		} else {
+			spc->spc_istatus = SPCSTATUS_WANTED;
+			pthread_cond_wait(&rw->rw_cv, &spc->spc_mtx);
+		}
+	}
+
+	TAILQ_REMOVE(&spc->spc_respwait, rw, rw_entries);
+	pthread_mutex_unlock(&spc->spc_mtx);
+
+	pthread_cond_destroy(&rw->rw_cv);
+	return rv;
 }
 
 static int

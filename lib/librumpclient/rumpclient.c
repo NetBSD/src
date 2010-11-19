@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpclient.c,v 1.2 2010/11/05 13:50:48 pooka Exp $	*/
+/*      $NetBSD: rumpclient.c,v 1.3 2010/11/19 15:25:49 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -58,52 +58,70 @@ __RCSID("$NetBSD");
 static struct spclient clispc;
 
 static int
-send_syscall_req(struct spclient *spc, int sysnum,
-	const void *data, size_t dlen)
+syscall_req(struct spclient *spc, int sysnum,
+	const void *data, size_t dlen, void **resp)
 {
 	struct rsp_hdr rhdr;
+	struct respwait rw;
+	int rv;
 
 	rhdr.rsp_len = sizeof(rhdr) + dlen;
-	rhdr.rsp_reqno = nextreq++;
-	rhdr.rsp_type = RUMPSP_SYSCALL_REQ;
+	rhdr.rsp_class = RUMPSP_REQ;
+	rhdr.rsp_type = RUMPSP_SYSCALL;
 	rhdr.rsp_sysnum = sysnum;
 
-	dosend(spc, &rhdr, sizeof(rhdr));
-	dosend(spc, data, dlen);
+	putwait(spc, &rw, &rhdr);
 
-	return 0;
+	sendlock(spc);
+	rv = dosend(spc, &rhdr, sizeof(rhdr));
+	rv = dosend(spc, data, dlen);
+	sendunlock(spc);
+	if (rv)
+		return rv; /* XXX: unputwait */
+
+	rv = waitresp(spc, &rw);
+	*resp = rw.rw_data;
+	return rv;
 }
 
 static int
 send_copyin_resp(struct spclient *spc, uint64_t reqno, void *data, size_t dlen)
 {
 	struct rsp_hdr rhdr;
+	int rv;
 
 	rhdr.rsp_len = sizeof(rhdr) + dlen;
 	rhdr.rsp_reqno = reqno;
-	rhdr.rsp_type = RUMPSP_COPYIN_RESP;
+	rhdr.rsp_class = RUMPSP_RESP;
+	rhdr.rsp_type = RUMPSP_COPYIN;
 	rhdr.rsp_sysnum = 0;
 
-	dosend(spc, &rhdr, sizeof(rhdr));
-	dosend(spc, data, dlen);
+	sendlock(spc);
+	rv = dosend(spc, &rhdr, sizeof(rhdr));
+	rv = dosend(spc, data, dlen);
+	sendunlock(spc);
 
-	return 0;
+	return rv;
 }
 
 static int
 send_anonmmap_resp(struct spclient *spc, uint64_t reqno, void *addr)
 {
 	struct rsp_hdr rhdr;
+	int rv;
 
 	rhdr.rsp_len = sizeof(rhdr) + sizeof(addr);
 	rhdr.rsp_reqno = reqno;
-	rhdr.rsp_type = RUMPSP_ANONMMAP_RESP;
+	rhdr.rsp_class = RUMPSP_RESP;
+	rhdr.rsp_type = RUMPSP_ANONMMAP;
 	rhdr.rsp_sysnum = 0;
 
-	dosend(spc, &rhdr, sizeof(rhdr));
-	dosend(spc, &addr, sizeof(addr));
+	sendlock(spc);
+	rv = dosend(spc, &rhdr, sizeof(rhdr));
+	rv = dosend(spc, &addr, sizeof(addr));
+	sendunlock(spc);
 
-	return 0;
+	return rv;
 }
 
 int
@@ -111,71 +129,71 @@ rumpclient_syscall(int sysnum, const void *data, size_t dlen,
 	register_t *retval)
 {
 	struct rsp_sysresp *resp;
+	void *rdata;
+	int rv;
+
+	DPRINTF(("rumpsp syscall_req: syscall %d with %p/%zu\n",
+	    sysnum, data, dlen));
+
+	rv = syscall_req(&clispc, sysnum, data, dlen, &rdata);
+	if (rv)
+		return rv;
+
+	resp = rdata;
+	DPRINTF(("rumpsp syscall_resp: syscall %d error %d, rv: %d/%d\n",
+	    sysnum, rv, resp->rsys_retval[0], resp->rsys_retval[1]));
+
+	memcpy(retval, &resp->rsys_retval, sizeof(resp->rsys_retval));
+	rv = resp->rsys_error;
+	free(rdata);
+
+	return rv;
+}
+
+static void
+handlereq(struct spclient *spc)
+{
 	struct rsp_copydata *copydata;
-	struct pollfd pfd;
-	size_t maplen;
 	void *mapaddr;
-	int gotresp;
+	size_t maplen;
 
-	DPRINTF(("rump_sp_syscall: executing syscall %d\n", sysnum));
-
-	send_syscall_req(&clispc, sysnum, data, dlen);
-
-	DPRINTF(("rump_sp_syscall: syscall %d request sent.  "
-	    "waiting for response\n", sysnum));
-
-	pfd.fd = clispc.spc_fd;
-	pfd.events = POLLIN;
-
-	gotresp = 0;
-	while (!gotresp) {
-		while (readframe(&clispc) < 1)
-			poll(&pfd, 1, INFTIM);
-
-		switch (clispc.spc_hdr.rsp_type) {
-		case RUMPSP_COPYIN_REQ:
-			/*LINTED*/
-			copydata = (struct rsp_copydata *)clispc.spc_buf;
-			DPRINTF(("rump_sp_syscall: copyin request: %p/%zu\n",
-			    copydata->rcp_addr, copydata->rcp_len));
-			send_copyin_resp(&clispc, clispc.spc_hdr.rsp_reqno,
-			    copydata->rcp_addr, copydata->rcp_len);
-			clispc.spc_off = 0;
-			break;
-		case RUMPSP_COPYOUT_REQ:
-			/*LINTED*/
-			copydata = (struct rsp_copydata *)clispc.spc_buf;
-			DPRINTF(("rump_sp_syscall: copyout request: %p/%zu\n",
-			    copydata->rcp_addr, copydata->rcp_len));
-			/*LINTED*/
-			memcpy(copydata->rcp_addr, copydata->rcp_data,
-			    copydata->rcp_len);
-			clispc.spc_off = 0;
-			break;
-		case RUMPSP_ANONMMAP_REQ:
-			/*LINTED*/
-			maplen = *(size_t *)clispc.spc_buf;
-			mapaddr = mmap(NULL, maplen, PROT_READ|PROT_WRITE,
-			    MAP_ANON, -1, 0);
-			if (mapaddr == MAP_FAILED)
-				mapaddr = NULL;
-			send_anonmmap_resp(&clispc,
-			    clispc.spc_hdr.rsp_reqno, mapaddr);
-			clispc.spc_off = 0;
-			break;
-		case RUMPSP_SYSCALL_RESP:
-			DPRINTF(("rump_sp_syscall: got response \n"));
-			gotresp = 1;
-			break;
-		}
+	switch (spc->spc_hdr.rsp_type) {
+	case RUMPSP_COPYIN:
+		/*LINTED*/
+		copydata = (struct rsp_copydata *)spc->spc_buf;
+		DPRINTF(("rump_sp handlereq: copyin request: %p/%zu\n",
+		    copydata->rcp_addr, copydata->rcp_len));
+		send_copyin_resp(spc, spc->spc_hdr.rsp_reqno,
+		    copydata->rcp_addr, copydata->rcp_len);
+		break;
+	case RUMPSP_COPYOUT:
+		/*LINTED*/
+		copydata = (struct rsp_copydata *)spc->spc_buf;
+		DPRINTF(("rump_sp handlereq: copyout request: %p/%zu\n",
+		    copydata->rcp_addr, copydata->rcp_len));
+		/*LINTED*/
+		memcpy(copydata->rcp_addr, copydata->rcp_data,
+		    copydata->rcp_len);
+		break;
+	case RUMPSP_ANONMMAP:
+		/*LINTED*/
+		maplen = *(size_t *)spc->spc_buf;
+		mapaddr = mmap(NULL, maplen, PROT_READ|PROT_WRITE,
+		    MAP_ANON, -1, 0);
+		if (mapaddr == MAP_FAILED)
+			mapaddr = NULL;
+		DPRINTF(("rump_sp handlereq: anonmmap: %p\n", mapaddr));
+		send_anonmmap_resp(spc, spc->spc_hdr.rsp_reqno, mapaddr);
+		break;
+	default:
+		printf("PANIC: INVALID TYPE\n");
+		abort();
+		break;
 	}
 
-	/*LINTED*/
-	resp = (struct rsp_sysresp *)clispc.spc_buf;
-	memcpy(retval, &resp->rsys_retval, sizeof(resp->rsys_retval));
-	clispc.spc_off = 0;
-
-	return resp->rsys_error;
+	free(spc->spc_buf);
+	spc->spc_off = 0;
+	spc->spc_buf = NULL;
 }
 
 int
@@ -213,6 +231,9 @@ rumpclient_init()
 		return -1;
 	}
 	clispc.spc_fd = s;
+	TAILQ_INIT(&clispc.spc_respwait);
+	pthread_mutex_init(&clispc.spc_mtx, NULL);
+	pthread_cond_init(&clispc.spc_cv, NULL);
 
 	return 0;
 }
