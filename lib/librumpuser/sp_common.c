@@ -1,4 +1,4 @@
-/*      $NetBSD: sp_common.c,v 1.4 2010/11/19 15:25:49 pooka Exp $	*/
+/*      $NetBSD: sp_common.c,v 1.5 2010/11/19 15:40:55 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -469,10 +469,12 @@ tcp_connecthook(int s)
 	return 0;
 }
 
+/*ARGSUSED*/
 static int
 unix_parse(const char *addr, struct sockaddr **sa, int allow_wildcard)
 {
 	struct sockaddr_un sun;
+	size_t slen;
 
 	if (strlen(addr) > sizeof(sun.sun_path))
 		return ENAMETOOLONG;
@@ -484,12 +486,12 @@ unix_parse(const char *addr, struct sockaddr **sa, int allow_wildcard)
 	memset(&sun, 0, sizeof(sun));
 	sun.sun_family = AF_LOCAL;
 	strlcpy(sun.sun_path, addr, sizeof(sun.sun_path));
-	sun.sun_len = SUN_LEN(&sun);
+	sun.sun_len = slen = SUN_LEN(&sun);
 
-	*sa = malloc(sun.sun_len);
+	*sa = malloc(slen);
 	if (*sa == NULL)
 		return errno;
-	memcpy(*sa, &sun, sun.sun_len);
+	memcpy(*sa, &sun, slen);
 
 	return 0;
 }
