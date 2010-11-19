@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpuser_sp.c,v 1.8 2010/11/19 17:09:44 pooka Exp $	*/
+/*      $NetBSD: rumpuser_sp.c,v 1.9 2010/11/19 17:47:44 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: rumpuser_sp.c,v 1.8 2010/11/19 17:09:44 pooka Exp $");
+__RCSID("$NetBSD: rumpuser_sp.c,v 1.9 2010/11/19 17:47:44 pooka Exp $");
 
 #include <sys/types.h>
 #include <sys/mman.h>
@@ -427,7 +427,7 @@ int
 rumpuser_sp_copyin(const void *uaddr, void *kaddr, size_t len)
 {
 	struct spclient *spc;
-	void *rdata;
+	void *rdata = NULL; /* XXXuninit */
 
 	spc = pthread_getspecific(spclient_tls);
 	if (!spc)
