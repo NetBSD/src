@@ -1,9 +1,10 @@
-# $NetBSD: Makefile,v 1.1 2010/09/24 09:21:53 tnozaki Exp $
+# $NetBSD: Makefile,v 1.2 2010/11/19 18:18:53 njoly Exp $
 
 .include <bsd.own.mk>
 
 TESTSDIR=	${TESTSBASE}/lib/libc/stdio
 
 TESTS_C+=	t_fmemopen
+TESTS_C+=	t_format
 
 .include <bsd.test.mk>
