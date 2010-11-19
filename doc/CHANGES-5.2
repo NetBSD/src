@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.2,v 1.1.2.1 2010/11/19 20:45:36 riz Exp $
+# $NetBSD: CHANGES-5.2,v 1.1.2.2 2010/11/19 21:11:42 riz Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -8,4 +8,9 @@ sys/sys/param.h					patched by hand
 
 	Welcome to 5.1_STABLE.
 	[riz]
+
+crypto/dist/openssl/ssl/t1_lib.c		patch
+
+	Fix a race condition. (CVE-2010-3864)
+	[christos, ticket #1479]
 
