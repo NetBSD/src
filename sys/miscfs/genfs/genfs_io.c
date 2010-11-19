@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.36.2.38 2010/11/19 04:14:30 uebayasi Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.36.2.39 2010/11/19 04:46:24 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.36.2.38 2010/11/19 04:14:30 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.36.2.39 2010/11/19 04:46:24 uebayasi Exp $");
 
 #include "opt_xip.h"
 
@@ -59,7 +59,6 @@ __KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.36.2.38 2010/11/19 04:14:30 uebayasi 
 #include <uvm/uvm.h>
 #include <uvm/uvm_pager.h>
 
-static int genfs_do_getpages(void *);
 #ifdef XIP
 static int genfs_do_getpages_xip(void *);
 static int genfs_do_getpages_xip1(struct vnode *, voff_t, struct vm_page **,
@@ -122,28 +121,6 @@ genfs_markdirty(struct vnode *vp)
 
 int
 genfs_getpages(void *v)
-{
-#ifdef XIP
-	struct vop_getpages_args /* {
-		struct vnode *a_vp;
-		voff_t a_offset;
-		struct vm_page **a_m;
-		int *a_count;
-		int a_centeridx;
-		vm_prot_t a_access_type;
-		int a_advice;
-		int a_flags;
-	} */ * const ap = v;
-
-	if ((ap->a_vp->v_vflag & VV_XIP) != 0)
-		return genfs_do_getpages_xip(v);
-	else
-#endif
-		return genfs_do_getpages(v);
-}
-
-static int
-genfs_do_getpages(void *v)
 {
 	struct vop_getpages_args /* {
 		struct vnode *a_vp;
@@ -243,8 +220,26 @@ startover:
 	 */
 
 	if (flags & PGO_LOCKED) {
+#if 0
+		genfs_do_getpages_locked();
+	} else {
+		genfs_do_getpages_unlocked();
+	}
+}
+
+int
+genfs_do_getpages_locked()
+{
+#endif
 		int nfound;
 		struct vm_page *pg;
+
+#if 1
+		if ((ap->a_vp->v_vflag & VV_XIP) != 0) {
+			*ap->a_count = 0;
+			return 0;
+		}
+#endif
 
 		KASSERT(!glocked);
 		npages = *ap->a_count;
@@ -286,6 +281,17 @@ startover:
 		goto out_err;
 	}
 	mutex_exit(&uobj->vmobjlock);
+#if 0
+}
+
+int
+genfs_do_getpages_unlocked()
+{
+#endif
+#if 1
+	if ((ap->a_vp->v_vflag & VV_XIP) != 0)
+		return genfs_do_getpages_xip(v);
+#endif
 	/*
 	 * find the requested pages and make some simple checks.
 	 * leave space in the page array for a whole block.
@@ -395,6 +401,18 @@ startover:
 	 */
 
 	if (overwrite) {
+#if 0
+		genfs_do_getpages_overwrite();
+	} else {
+		genfs_do_getpages_io();
+	}
+}
+
+int
+genfs_do_getpages_overwrite()
+{
+	{
+#endif
 		if (!glocked) {
 			genfs_node_unlock(vp);
 		}
@@ -408,7 +426,13 @@ startover:
 		npages += ridx;
 		goto out;
 	}
+#if 0
+}
 
+int
+genfs_do_getpages_io()
+{
+#endif
 	/*
 	 * the page wasn't resident and we're not overwriting,
 	 * so we're going to have to do some i/o.
@@ -873,12 +897,8 @@ genfs_do_getpages_xip_io(
 	ebkoff = ((offset + PAGE_SIZE * npages) + (fs_bsize - 1)) &
 	    ~(fs_bsize - 1);
 
-
 	UVMHIST_LOG(ubchist, "xip npages=%d sbkoff=%lx ebkoff=%lx",
 	    npages, (long)sbkoff, (long)ebkoff, 0);
-
-	KASSERT(mutex_owned(&uobj->vmobjlock));
-	mutex_exit(&uobj->vmobjlock);
 
 	off = offset;
 	for (i = 0; i < npages; i++) {
@@ -1521,7 +1541,6 @@ genfs_do_putpages_xip(struct vnode *vp, off_t startoff, off_t endoff,
 	else
 		eof = endoff;
 
-
 	while (off < eof) {
 		int npages, orignpages, error, i;
 		struct vm_page *pgs[maxpages], *pg;
@@ -1532,6 +1551,7 @@ genfs_do_putpages_xip(struct vnode *vp, off_t startoff, off_t endoff,
 
 		orignpages = npages;
 		KASSERT(mutex_owned(&uobj->vmobjlock));
+		mutex_exit(&uobj->vmobjlock);
 		error = genfs_do_getpages_xip1(vp, off, pgs, &npages, 0,
 		    VM_PROT_ALL, 0, 0);
 		KASSERT(error == 0);
