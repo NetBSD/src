@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.122 2010/06/24 13:03:11 hannken Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.123 2010/11/19 06:44:43 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.122 2010/06/24 13:03:11 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.123 2010/11/19 06:44:43 dholland Exp $");
 
 #include "opt_magiclinks.h"
 
@@ -60,11 +60,6 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.122 2010/06/24 13:03:11 hannken Exp
 #ifndef MAGICLINKS
 #define MAGICLINKS 0
 #endif
-
-struct pathname_internal {
-	char *pathbuf;
-	bool needfree;
-};
 
 int vfs_magiclinks = MAGICLINKS;
 
@@ -196,6 +191,147 @@ symlink_magic(struct proc *p, char *cp, size_t *len)
 #undef MATCH
 #undef SUBSTITUTE
 
+////////////////////////////////////////////////////////////
+
+/*
+ * Sealed abstraction for pathnames.
+ *
+ * System-call-layer level code that is going to call namei should
+ * first create a pathbuf and adjust all the bells and whistles on it
+ * as needed by context
+ */
+
+struct pathbuf {
+	char *pb_path;
+	char *pb_pathcopy;
+	unsigned pb_pathcopyuses;
+};
+
+static struct pathbuf *
+pathbuf_create_raw(void)
+{
+	struct pathbuf *pb;
+
+	pb = kmem_alloc(sizeof(*pb), KM_SLEEP);
+	if (pb == NULL) {
+		return NULL;
+	}
+	pb->pb_path = PNBUF_GET();
+	if (pb->pb_path == NULL) {
+		kmem_free(pb, sizeof(*pb));
+		return NULL;
+	}
+	pb->pb_pathcopy = NULL;
+	pb->pb_pathcopyuses = 0;
+	return pb;
+}
+
+void
+pathbuf_destroy(struct pathbuf *pb)
+{
+	KASSERT(pb->pb_pathcopyuses == 0);
+	KASSERT(pb->pb_pathcopy == NULL);
+	PNBUF_PUT(pb->pb_path);
+	kmem_free(pb, sizeof(*pb));
+}
+
+struct pathbuf *
+pathbuf_create(const char *path)
+{
+	struct pathbuf *pb;
+	int error;
+
+	pb = pathbuf_create_raw();
+	if (pb == NULL) {
+		return NULL;
+	}
+	error = copystr(path, pb->pb_path, PATH_MAX, NULL);
+	if (error != 0) {
+		KASSERT(!"kernel path too long in pathbuf_create");
+		/* make sure it's null-terminated, just in case */
+		pb->pb_path[PATH_MAX-1] = '\0';
+	}
+	return pb;
+}
+
+int
+pathbuf_copyin(const char *userpath, struct pathbuf **ret)
+{
+	struct pathbuf *pb;
+	int error;
+
+	pb = pathbuf_create_raw();
+	if (pb == NULL) {
+		return ENOMEM;
+	}
+	error = copyinstr(userpath, pb->pb_path, PATH_MAX, NULL);
+	if (error) {
+		pathbuf_destroy(pb);
+		return error;
+	}
+	*ret = pb;
+	return 0;
+}
+
+/*
+ * XXX should not exist
+ */
+int
+pathbuf_maybe_copyin(const char *path, enum uio_seg seg, struct pathbuf **ret)
+{
+	if (seg == UIO_USERSPACE) {
+		return pathbuf_copyin(path, ret);
+	} else {
+		*ret = pathbuf_create(path);
+		if (*ret == NULL) {
+			return ENOMEM;
+		}
+		return 0;
+	}
+}
+
+/*
+ * Get a copy of the path buffer as it currently exists. If this is
+ * called after namei starts the results may be arbitrary.
+ */
+void
+pathbuf_copystring(const struct pathbuf *pb, char *buf, size_t maxlen)
+{
+	strlcpy(buf, pb->pb_path, maxlen);
+}
+
+/*
+ * These two functions allow access to a saved copy of the original
+ * path string. The first copy should be gotten before namei is
+ * called. Each copy that is gotten should be put back.
+ */
+
+const char *
+pathbuf_stringcopy_get(struct pathbuf *pb)
+{
+	if (pb->pb_pathcopyuses == 0) {
+		pb->pb_pathcopy = PNBUF_GET();
+		strcpy(pb->pb_pathcopy, pb->pb_path);
+	}
+	pb->pb_pathcopyuses++;
+	return pb->pb_pathcopy;
+}
+
+void
+pathbuf_stringcopy_put(struct pathbuf *pb, const char *str)
+{
+	KASSERT(str == pb->pb_pathcopy);
+	KASSERT(pb->pb_pathcopyuses > 0);
+	pb->pb_pathcopyuses--;
+	if (pb->pb_pathcopyuses == 0) {
+		PNBUF_PUT(pb->pb_pathcopy);
+		pb->pb_pathcopy = NULL;
+	}
+}
+
+
+////////////////////////////////////////////////////////////
+
 /*
  * Convert a pathname into a pointer to a locked vnode.
  *
@@ -314,26 +450,22 @@ namei_start2(struct namei_state *state)
 
 	struct cwdinfo *cwdi;		/* pointer to cwd state */
 	struct lwp *self = curlwp;	/* thread doing namei() */
-	int error;
 
-	if (ndp->ni_segflg == UIO_SYSSPACE)
-		error = copystr(ndp->ni_dirp, cnp->cn_pnbuf,
-			    MAXPATHLEN, &ndp->ni_pathlen);
-	else
-		error = copyinstr(ndp->ni_dirp, cnp->cn_pnbuf,
-			    MAXPATHLEN, &ndp->ni_pathlen);
+	/* as both buffers are size PATH_MAX this cannot overflow */
+	strcpy(cnp->cn_pnbuf, ndp->ni_pathbuf->pb_path);
+
+	/* length includes null terminator (was originally from copyinstr) */
+	ndp->ni_pathlen = strlen(cnp->cn_pnbuf) + 1;
 
 	/*
 	 * POSIX.1 requirement: "" is not a valid file name.
 	 */
-	if (!error && ndp->ni_pathlen == 1)
-		error = ENOENT;
-
-	if (error) {
+	if (ndp->ni_pathlen == 1) {
 		PNBUF_PUT(cnp->cn_pnbuf);
 		ndp->ni_vp = NULL;
-		return (error);
+		return ENOENT;
 	}
+
 	ndp->ni_loopcnt = 0;
 
 	/*
@@ -1446,18 +1578,25 @@ namei_simple_kernel(const char *path, namei_simple_flags_t sflags,
 			struct vnode **vp_ret)
 {
 	struct nameidata nd;
+	struct pathbuf *pb;
 	int err;
+
+	pb = pathbuf_create(path);
+	if (pb == NULL) {
+		return ENOMEM;
+	}
 
 	NDINIT(&nd,
 		LOOKUP,
 		namei_simple_convert_flags(sflags),
-		UIO_SYSSPACE,
-		path);
+		pb);
 	err = namei(&nd);
 	if (err != 0) {
+		pathbuf_destroy(pb);
 		return err;
 	}
 	*vp_ret = nd.ni_vp;
+	pathbuf_destroy(pb);
 	return 0;
 }
 
@@ -1465,18 +1604,25 @@ int
 namei_simple_user(const char *path, namei_simple_flags_t sflags,
 			struct vnode **vp_ret)
 {
+	struct pathbuf *pb;
 	struct nameidata nd;
 	int err;
+
+	err = pathbuf_copyin(path, &pb);
+	if (err) {
+		return err;
+	}
 
 	NDINIT(&nd,
 		LOOKUP,
 		namei_simple_convert_flags(sflags),
-		UIO_USERSPACE,
-		path);
+		pb);
 	err = namei(&nd);
 	if (err != 0) {
+		pathbuf_destroy(pb);
 		return err;
 	}
 	*vp_ret = nd.ni_vp;
+	pathbuf_destroy(pb);
 	return 0;
 }

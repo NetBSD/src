@@ -78,6 +78,7 @@ unionfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	u_short		ufile;
 	unionfs_copymode copymode;
 	unionfs_whitemode whitemode;
+	struct pathbuf *pb;
 	struct componentname fakecn;
 	struct nameidata nd, *ndp;
 	struct vattr	va;
@@ -168,9 +169,15 @@ unionfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	/*
 	 * Find upper node
 	 */
-	NDINIT(ndp, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE, args->target);
-	if ((error = namei(ndp)))
-		return (error);
+	error = pathbuf_copyin(args->target, &pb);
+	if (error) {
+		return error;
+	}
+	NDINIT(ndp, LOOKUP, FOLLOW | LOCKLEAF, pb);
+	if ((error = namei(ndp))) {
+		pathbuf_destroy(pb);
+		return error;
+	}
 
 	/* get root vnodes */
 	lowerrootvp = mp->mnt_vnodecovered;
@@ -178,6 +185,7 @@ unionfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 
 	vrele(ndp->ni_dvp);
 	ndp->ni_dvp = NULLVP;
+	pathbuf_destroy(pb);
 
 	/* create unionfs_mount */
 	ump = (struct unionfs_mount *)malloc(sizeof(struct unionfs_mount),

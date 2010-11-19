@@ -1,4 +1,4 @@
-/*	$NetBSD: firmload.c,v 1.14 2010/11/15 05:52:41 uebayasi Exp $	*/
+/*	$NetBSD: firmload.c,v 1.15 2010/11/19 06:44:39 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: firmload.c,v 1.14 2010/11/15 05:52:41 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: firmload.c,v 1.15 2010/11/19 06:44:39 dholland Exp $");
 
 /*
  * The firmload API provides an interface for device drivers to access
@@ -218,6 +218,7 @@ firmware_path_first(const char *drvname, const char *imgname, char *pnbuf,
 int
 firmware_open(const char *drvname, const char *imgname, firmware_handle_t *fhp)
 {
+	struct pathbuf *pb;
 	struct nameidata nd;
 	struct vattr va;
 	char *pnbuf, *path, *prefix;
@@ -241,17 +242,26 @@ firmware_open(const char *drvname, const char *imgname, firmware_handle_t *fhp)
 	fh = firmware_handle_alloc();
 	KASSERT(fh != NULL);
 
+	pb = NULL;
 	error = 0;
 	for (path = firmware_path_first(drvname, imgname, pnbuf, &prefix);
 	     path != NULL;
 	     path = firmware_path_next(drvname, imgname, pnbuf, &prefix)) {
-		NDINIT(&nd, LOOKUP, FOLLOW | NOCHROOT, UIO_SYSSPACE, path);
+		pb = pathbuf_create(path);
+		if (pb == NULL) {
+			error = ENOMEM;
+			break;
+		}
+		NDINIT(&nd, LOOKUP, FOLLOW | NOCHROOT, pb);
 		error = vn_open(&nd, FREAD, 0);
-		if (error == ENOENT)
+		if (error == ENOENT) {
+			pathbuf_destroy(pb);
 			continue;
+		}
 		break;
 	}
 
+	pathbuf_destroy(pb);
 	PNBUF_PUT(pnbuf);
 	if (error) {
 		firmware_handle_free(fh);

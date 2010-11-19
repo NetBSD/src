@@ -1,4 +1,4 @@
-/* $NetBSD: dksubr.c,v 1.41 2010/06/24 13:03:08 hannken Exp $ */
+/* $NetBSD: dksubr.c,v 1.42 2010/11/19 06:44:39 dholland Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.41 2010/06/24 13:03:08 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.42 2010/11/19 06:44:39 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -619,8 +619,7 @@ dk_makedisklabel(struct dk_intf *di, struct dk_softc *dksc)
  * set *vpp to the file's vnode.
  */
 int
-dk_lookup(const char *path, struct lwp *l, struct vnode **vpp,
-    enum uio_seg segflg)
+dk_lookup(struct pathbuf *pb, struct lwp *l, struct vnode **vpp)
 {
 	struct nameidata nd;
 	struct vnode *vp;
@@ -630,7 +629,7 @@ dk_lookup(const char *path, struct lwp *l, struct vnode **vpp,
 	if (l == NULL)
 		return ESRCH;	/* Is ESRCH the best choice? */
 
-	NDINIT(&nd, LOOKUP, FOLLOW, segflg, path);
+	NDINIT(&nd, LOOKUP, FOLLOW, pb);
 	if ((error = vn_open(&nd, FREAD | FWRITE, 0)) != 0) {
 		DPRINTF((DKDB_FOLLOW|DKDB_INIT),
 		    ("dk_lookup: vn_open error = %d\n", error));
