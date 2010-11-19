@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.42 2010/11/09 16:31:48 hannken Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.43 2010/11/19 05:38:10 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.42 2010/11/09 16:31:48 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.43 2010/11/19 05:38:10 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -453,7 +453,7 @@ startover:
 	} else {
 		mbp->b_flags = B_READ;
 		mbp->b_iodone = NULL;
-	}	
+	}
 	if (async)
 		BIO_SETPRIO(mbp, BPRIO_TIMELIMITED);
 	else
