@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wmvar.h,v 1.2.46.3 2010/02/25 10:59:58 sborrill Exp $	*/
+/*	$NetBSD: if_wmvar.h,v 1.2.46.4 2010/11/19 23:40:28 riz Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -86,6 +86,8 @@
 #define	WM_F_PCIE		0x0800	/* bus is PCI-Express */
 #define WM_F_SWFW_SYNC		0x1000  /* Software-Firmware synchronisation */
 #define WM_F_SWFWHW_SYNC	0x2000  /* Software-Firmware synchronisation */
+#define WM_F_SGMII		0x4000  /* use SGMII */
+#define WM_F_NEWQUEUE		0x8000  /* chips which has the new queue system */
 
 typedef enum {
 	WM_T_unknown		= 0,
@@ -107,6 +109,10 @@ typedef enum {
 	WM_T_82573,			/* i82573 */
 	WM_T_82574,			/* i82574 */
 	WM_T_82583,			/* i82583 */
+	WM_T_82575,			/* i82575 */
+	WM_T_82576,			/* i82576 */
+	WM_T_82580,			/* i82580 */
+	WM_T_82580ER,			/* i82580ER */
 	WM_T_80003,			/* i80003 */
 	WM_T_ICH8,			/* ICH8 LAN */
 	WM_T_ICH9,			/* ICH9 LAN */
