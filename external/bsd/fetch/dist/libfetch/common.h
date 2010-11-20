@@ -1,4 +1,4 @@
-/*	$NetBSD: common.h,v 1.1.1.2.4.2 2010/02/03 00:25:23 snj Exp $	*/
+/*	$NetBSD: common.h,v 1.1.1.2.4.3 2010/11/20 20:37:40 riz Exp $	*/
 /*-
  * Copyright (c) 1998-2004 Dag-Erling Coïdan Smørgrav
  * All rights reserved.
@@ -72,6 +72,8 @@ struct fetchconn {
 	const SSL_METHOD *ssl_meth;	/* SSL method */
 #  endif
 #endif
+
+	char		*ftp_home;
 
 	struct url	*cache_url;
 	int		cache_af;
