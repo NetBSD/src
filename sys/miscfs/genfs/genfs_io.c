@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.36.2.49 2010/11/20 04:26:12 uebayasi Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.36.2.50 2010/11/20 05:15:59 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.36.2.49 2010/11/20 04:26:12 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.36.2.50 2010/11/20 05:15:59 uebayasi Exp $");
 
 #include "opt_xip.h"
 
@@ -761,26 +761,26 @@ genfs_getpages_io_read_bio_loop()
 			iobytes >> PAGE_SHIFT,
 			((1 + run) << fs_bshift) >> PAGE_SHIFT);
 		const daddr_t blk_off = blkno << dev_bshift;
-		const daddr_t fs_off = ap->a_offset - startoffset;
+		const daddr_t fs_off = origoffset - startoffset;
 
-		UVMHIST_LOG(ubchist,
-			"xip npgs=%d blk_off=0x%lx fs_off=0x%lx",
-			npgs, (long)blk_off, (long)fs_off, 0);
-
-		for (i = 0; i < npgs; i++) {
+		for (i = ridx + pidx; i < npgs; i++) {
 			const daddr_t pg_off = pidx << PAGE_SHIFT;
 			struct vm_page *pg;
+
+			UVMHIST_LOG(ubchist,
+			    "xip blk_off=0x%lx fs_off=0x%lx pg_off=%lx",
+			    (long)blk_off, (long)fs_off, (long)pg_off, 0);
 
 			pg = uvn_findpage_xip(devvp, &vp->v_uobj,
 			    blk_off + fs_off + pg_off);
 			KASSERT(pg != NULL);
 			UVMHIST_LOG(ubchist,
 				"xip pgs %d => phys_addr=0x%lx (%p)",
-				pidx + i,
+				i,
 				(long)pg->phys_addr,
 				pg,
 				0);
-			pgs[pidx + i] = pg;
+			pgs[i] = pg;
 		}
 	    }
 #endif
@@ -1060,6 +1060,10 @@ genfs_do_getpages_xip_io(
 			KASSERT(off - origoffset == (i - ridx) << PAGE_SHIFT);
 
 			const daddr_t pg_off = (i - ridx) << PAGE_SHIFT;
+
+			UVMHIST_LOG(ubchist,
+			    "xip blk_off=%lx fs_off=%lx pg_off=%lx",
+			    (long)blk_off, (long)fs_off, (long)pg_off, 0);
 
 			pps[i] = uvn_findpage_xip(devvp, &vp->v_uobj,
 			    blk_off + fs_off + pg_off);
