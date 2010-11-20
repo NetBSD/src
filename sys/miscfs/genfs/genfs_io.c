@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.36.2.51 2010/11/20 07:47:34 uebayasi Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.36.2.52 2010/11/20 08:03:22 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.36.2.51 2010/11/20 07:47:34 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.36.2.52 2010/11/20 08:03:22 uebayasi Exp $");
 
 #include "opt_xip.h"
 
@@ -1112,11 +1112,10 @@ genfs_do_getpages_xip_io_done(
 		struct vm_page *pg = pps[i];
 
 		KASSERT((pg->flags & PG_RDONLY) != 0);
-		KASSERT((pg->flags & PG_BUSY) == 0);
+		KASSERT((pg->flags & PG_BUSY) != 0);
 		KASSERT((pg->flags & PG_CLEAN) != 0);
 		KASSERT((pg->flags & PG_DEVICE) != 0);
-		pg->flags |= PG_BUSY;
-		pg->flags &= ~PG_FAKE;
+		KASSERT((pg->flags & PG_FAKE) == 0);
 		pg->uobject = &vp->v_uobj;
 	}
 
