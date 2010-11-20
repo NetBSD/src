@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.963.4.13 2010/11/19 23:59:46 riz Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.963.4.14 2010/11/20 00:19:36 riz Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.962.4.13 2010/11/19 23:58:40 riz Exp
+ *	NetBSD
  */
 
 /*
@@ -2643,6 +2643,7 @@
 #define	PCI_PRODUCT_INTEL_82830MP_IV	0x3577		/* 82830MP Integrated Video */
 #define	PCI_PRODUCT_INTEL_82830MP_IO_2	0x3578		/* 82830MP CPU to I/O Bridge 2 */
 #define	PCI_PRODUCT_INTEL_82855GM_MCH	0x3580		/* 82855GM Host-Hub Controller */
+#define	PCI_PRODUCT_INTEL_82855GM_AGP	0x3581		/* 82855GM Host-AGP Bridge */
 #define	PCI_PRODUCT_INTEL_82855GM_IGD	0x3582		/* 82855GM GMCH Integrated Graphics Device */
 #define	PCI_PRODUCT_INTEL_82855GM_MC	0x3584		/* 82855GM GMCH Memory Controller */
 #define	PCI_PRODUCT_INTEL_82855GM_CP	0x3585		/* 82855GM GMCH Configuration Process */
