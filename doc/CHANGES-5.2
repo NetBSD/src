@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.2,v 1.1.2.4 2010/11/20 00:49:20 riz Exp $
+# $NetBSD: CHANGES-5.2,v 1.1.2.5 2010/11/20 01:20:17 riz Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -130,3 +130,46 @@ sys/arch/atari/dev/ser.c			1.49 via patch
 	Allow atari users to change serial console behavior with
 	binpatch(8), and disable options SERCONSOLE in default kernels.
 	[tsutsui, ticket #1368]
+
+usr.bin/ftp/fetch.c				1.189 via patch
+
+	avoid NULL dereference in log output if the command line parser
+	failed to extract a port number from the URL
+	[lukem, ticket #1369]
+
+usr.bin/ftp/extern.h				1.78
+usr.bin/ftp/fetch.c				1.192
+usr.bin/ftp/util.c				1.153 via patch
+
+	Parse HTTP 'Date' entries in the `C' locale rather than the user's.
+	Fix from [bin/42917] (with minor changes), from KAMADA Ken'ichi.
+	[lukem, ticket #1370]
+
+distrib/atari/floppies/install/list		1.13
+distrib/atari/floppies/prepare/list		1.7
+
+	Add dd(1) to install ramdisk binaries.
+	[tsutsui, ticket #1371]
+
+sys/arch/atari/dev/atari5380.c			1.54
+sys/arch/atari/dev/dma.c			1.25
+
+	Always schedule callback functions via add_sicallback(),
+	which calls softint_schedule(9).
+	[tsutsui, ticket #1373]
+
+share/man/man4/udav.4				1.4
+sys/dev/usb/if_udav.c				1.30
+sys/dev/usb/usbdevs				1.549
+sys/dev/usb/usbdevs.h				regen
+sys/dev/usb/usbdevs_data.h			regen
+
+	Add support for SUNRISING SR9600 Fast Ethernet.
+	[jmcneill, ticket #1379]
+
+sys/dev/pckbport/synaptics.c			1.22-24
+sys/dev/pckbport/synapticsreg.h			1.6
+
+	Fix the synaptics touchpad passthrough device support. PR#42853.
+	[plunky, ticket #1383]
+
