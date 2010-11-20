@@ -1,15 +1,18 @@
 #
-# $NetBSD: SMALL030,v 1.1.2.3 2009/03/12 23:33:48 snj Exp $
+# $NetBSD: SMALL030,v 1.1.2.4 2010/11/20 00:27:31 riz Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
 #
 # Created from:
-#		NetBSD: GENERIC.in,v 1.73.4.5 2009/03/12 23:32:35 snj Exp $
+#		NetBSD$
 include "arch/atari/conf/std.atari"
+
 makeoptions COPTS="-Os"
 maxusers 16
+
 options HZ=64 # Set the clock-rate (48/64/96)
+
 options INSECURE # disable kernel security levels
 options M68030 # support for 030
 options FPU_EMULATE # Support for MC68881/MC68882 emulator
@@ -27,30 +30,40 @@ options COMPAT_40 # NetBSD 4.0 compatibility.
 options COMPAT_BSDPTY # /dev/[pt]ty?? ptys.
 options PIPE_SOCKETPAIR # smaller, but slower pipe(2)
 options ST_POOL_SIZE=24 # smallest that allows TT-HIGH
+
 options TT_SCSI # SCSI-support for TT
 options TT_VIDEO # Graphics support for TT
+
 options FALCON_SCSI # SCSI-support for Falcon
 options FALCON_VIDEO # Graphics support for FALCON
+
 options MEMORY_DISK_HOOKS # Boot RAM-disk
 options DISKLABEL_NBDA # NetBSD disklabels (required)
 options DISKLABEL_AHDI # NetBSD/AHDI disklabels
 config netbsd root on ? type ?
+
 pseudo-device sl # Slip
+
 pseudo-device pty # pseudo-terminals
 pseudo-device loop # Loopback network
+
 pseudo-device md 3 # Boot memory disk
 pseudo-device view 4 # View (graphics mapping)
+
 ncrscsi0 at mainbus0 # NCR5380 SCSI driver
 zs0 at mainbus0 # Serial support through 8530
-grfbus0 at mainbus0 # bitmapped display's
+grfbus0 at mainbus0 # bitmapped display's'
 grfcc0 at grfbus0 # graphics driver
 ite0 at grfcc0 # console
 nvr0 at mainbus0 # nvram driver
 wdc0 at mainbus0 # IDE-bus
 atabus* at wdc? channel ?
 wd* at atabus? drive ?
+
 atapibus* at atabus?
+
 cd* at atapibus? drive ? # ATAPI CD-ROM drives
+
 scsibus* at scsi? # SCSI bus
 sd* at scsibus? target ? lun ? # SCSI disk drives
 cd* at scsibus? target ? lun ? # SCSI CD-ROM drives
