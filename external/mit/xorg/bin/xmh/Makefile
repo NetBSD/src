@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2010/11/20 22:41:49 mrg Exp $
+#	$NetBSD: Makefile,v 1.5 2010/11/20 23:47:30 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -12,7 +12,7 @@ CPPFLAGS+=	-I${X11SRCDIR.${PROG}}/../include
 CPPFLAGS+=	-DHAS_VFORK -DXVENDORNAME=${XVENDORNAME} \
 		-DXORG_RELEASE=${XORG_RELEASE}
 
-APPDEFS=Xmh.ad
+APPDEFS=Xmh
 
 LDADD+=	-lXaw -lXmu -lXt -lSM -lICE -lXpm -lXext -lX11
 DPADD+=	${LIBXAW} ${LIBXMU} ${LIBXT} ${LIBSM} ${LIBICE} \
