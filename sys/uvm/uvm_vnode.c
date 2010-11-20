@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_vnode.c,v 1.93.2.4 2010/11/18 16:16:36 uebayasi Exp $	*/
+/*	$NetBSD: uvm_vnode.c,v 1.93.2.5 2010/11/20 08:00:53 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.93.2.4 2010/11/18 16:16:36 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.93.2.5 2010/11/20 08:00:53 uebayasi Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_xip.h"
@@ -472,6 +472,8 @@ uvn_findpage_xip(struct vnode *devvp, struct uvm_object *uobj, off_t off)
 #endif
 
 	KASSERT(pg->phys_addr == (seg->start << PAGE_SHIFT) + off);
+
+	pg->flags |= PG_BUSY;
 
 	return pg;
 }
