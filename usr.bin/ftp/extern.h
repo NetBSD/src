@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.75 2008/05/10 00:05:31 skd Exp $	*/
+/*	$NetBSD: extern.h,v 1.75.4.1 2010/11/20 01:03:18 riz Exp $	*/
 
 /*-
  * Copyright (c) 1996-2008 The NetBSD Foundation, Inc.
@@ -166,6 +166,7 @@ const char *onoff(int);
 void	opts(int, char **);
 void	newer(int, char **);
 void	page(int, char **);
+const char *parse_rfc2616time(struct tm *, const char *);
 int	parserate(int, char **, int);
 char   *prompt(void);
 void	proxabort(int);
