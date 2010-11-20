@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_neptune.c,v 1.16 2008/05/09 10:09:27 tsutsui Exp $	*/
+/*	$NetBSD: if_ne_neptune.c,v 1.16.8.1 2010/11/20 00:33:46 riz Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ne_neptune.c,v 1.16 2008/05/09 10:09:27 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ne_neptune.c,v 1.16.8.1 2010/11/20 00:33:46 riz Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -77,9 +77,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_ne_neptune.c,v 1.16 2008/05/09 10:09:27 tsutsui E
 
 #include <dev/ic/ne2000reg.h>
 #include <dev/ic/ne2000var.h>
-
-#include <dev/ic/rtl80x9reg.h>
-#include <dev/ic/rtl80x9var.h>
 
 #include <arch/x68k/dev/neptunevar.h>
 
@@ -172,21 +169,10 @@ ne_neptune_attach(device_t parent, device_t self, void *aux)
 
 	case NE2000_TYPE_NE2000:
 		typestr = "NE2000";
-		/*
-		 * Check for a Realtek 8019.
-		 */
-		bus_space_write_1(nict, nich, ED_P0_CR,
-		    ED_CR_PAGE_0 | ED_CR_STP);
-		if (bus_space_read_1(nict, nich, NERTL_RTL0_8019ID0) ==
-								RTL0_8019ID0 &&
-		    bus_space_read_1(nict, nich, NERTL_RTL0_8019ID1) ==
-								RTL0_8019ID1) {
-			typestr = "NE2000 (RTL8019)";
-			dsc->sc_mediachange = rtl80x9_mediachange;
-			dsc->sc_mediastatus = rtl80x9_mediastatus;
-			dsc->init_card = rtl80x9_init_card;
-			dsc->sc_media_init = rtl80x9_media_init;
-		}
+		break;
+
+	case NE2000_TYPE_RTL8019:
+		typestr = "NE2000 (RTL8019)";
 		break;
 
 	default:

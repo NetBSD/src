@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.924.4.6 2009/10/08 09:47:09 sborrill Exp $
+#	$NetBSD: files,v 1.924.4.7 2010/11/20 00:33:48 riz Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -885,7 +885,7 @@ file	dev/ic/cd18xx.c			cd18xx
 # Realtek 8019/8029 NE2000-compatible network interface subroutines
 #
 define	rtl80x9
-file	dev/ic/rtl80x9.c		rtl80x9
+file	dev/ic/rtl80x9.c		rtl80x9			needs-flag
 
 # Realtek 8129/8139 Ethernet controllers
 #
