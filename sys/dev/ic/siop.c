@@ -1,4 +1,4 @@
-/*	$NetBSD: siop.c,v 1.87 2008/04/08 12:07:27 cegger Exp $	*/
+/*	$NetBSD: siop.c,v 1.87.14.1 2010/11/20 18:20:49 riz Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -33,7 +33,7 @@
 /* SYM53c7/8xx PCI-SCSI I/O Processors driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siop.c,v 1.87 2008/04/08 12:07:27 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siop.c,v 1.87.14.1 2010/11/20 18:20:49 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1282,6 +1282,8 @@ siop_scsipi_request(chan, req, arg)
 				    "target %d\n", target);
 				xs->error = XS_RESOURCE_SHORTAGE;
 				scsipi_done(xs);
+				TAILQ_INSERT_TAIL(&sc->free_list,
+				    siop_cmd, next);
 				splx(s);
 				return;
 			}
@@ -1301,6 +1303,8 @@ siop_scsipi_request(chan, req, arg)
 				    target);
 				xs->error = XS_RESOURCE_SHORTAGE;
 				scsipi_done(xs);
+				TAILQ_INSERT_TAIL(&sc->free_list,
+				    siop_cmd, next);
 				splx(s);
 				return;
 			}
@@ -1318,6 +1322,8 @@ siop_scsipi_request(chan, req, arg)
 				    target, lun);
 				xs->error = XS_RESOURCE_SHORTAGE;
 				scsipi_done(xs);
+				TAILQ_INSERT_TAIL(&sc->free_list,
+				    siop_cmd, next);
 				splx(s);
 				return;
 			}
@@ -1334,8 +1340,11 @@ siop_scsipi_request(chan, req, arg)
 		if (error) {
 			aprint_error_dev(&sc->sc_c.sc_dev, "unable to load cmd DMA map: %d\n",
 			    error);
-			xs->error = XS_DRIVER_STUFFUP;
+			xs->error = (error == EAGAIN) ?
+			    XS_RESOURCE_SHORTAGE : XS_DRIVER_STUFFUP;
 			scsipi_done(xs);
+			siop_cmd->cmd_c.status = CMDST_FREE;
+			TAILQ_INSERT_TAIL(&sc->free_list, siop_cmd, next);
 			splx(s);
 			return;
 		}
@@ -1346,12 +1355,17 @@ siop_scsipi_request(chan, req, arg)
 			    ((xs->xs_control & XS_CTL_DATA_IN) ?
 			     BUS_DMA_READ : BUS_DMA_WRITE));
 			if (error) {
-				aprint_error_dev(&sc->sc_c.sc_dev, "unable to load cmd DMA map: %d",
+				aprint_error_dev(sc->sc_c.sc_dev,
+				    "unable to load data DMA map: %d",
 				    error);
-				xs->error = XS_DRIVER_STUFFUP;
+				xs->error = (error == EAGAIN) ?
+				    XS_RESOURCE_SHORTAGE : XS_DRIVER_STUFFUP;
 				scsipi_done(xs);
 				bus_dmamap_unload(sc->sc_c.sc_dmat,
 				    siop_cmd->cmd_c.dmamap_cmd);
+				siop_cmd->cmd_c.status = CMDST_FREE;
+				TAILQ_INSERT_TAIL(&sc->free_list,
+				    siop_cmd, next);
 				splx(s);
 				return;
 			}
