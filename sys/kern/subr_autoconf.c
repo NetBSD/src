@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.163.4.2 2009/03/15 19:43:48 snj Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.163.4.3 2010/11/20 17:41:27 riz Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.163.4.2 2009/03/15 19:43:48 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.163.4.3 2010/11/20 17:41:27 riz Exp $");
 
 #include "opt_ddb.h"
 #include "drvctl.h"
@@ -1829,7 +1829,7 @@ config_finalize(void)
 	    (boothowto & AB_VERBOSE) == 0) {
 		if (config_do_twiddle) {
 			config_do_twiddle = 0;
-			printf_nolog("done.\n");
+			printf_nolog(" done.\n");
 		}
 		if (errcnt != 0) {
 			printf("WARNING: %d error%s while detecting hardware; "
