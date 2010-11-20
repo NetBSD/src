@@ -1,4 +1,4 @@
-/*	$NetBSD: aica.c,v 1.18 2008/08/01 20:19:49 marcus Exp $	*/
+/*	$NetBSD: aica.c,v 1.19 2010/11/20 16:12:23 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2003 SHIMIZU Ryo <ryo@misakimix.org>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aica.c,v 1.18 2008/08/01 20:19:49 marcus Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aica.c,v 1.19 2010/11/20 16:12:23 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -479,6 +479,7 @@ aica_set_params(void *addr, int setmode, int usemode,
 int
 aica_round_blocksize(void *addr, int blk, int mode, const audio_params_t *param)
 {
+#if 0	/* XXX this has not worked since kent-audio1 merge? */
 	struct aica_softc *sc;
 
 	sc = addr;
@@ -505,6 +506,7 @@ aica_round_blocksize(void *addr, int blk, int mode, const audio_params_t *param)
 		break;
 	}
 
+#endif
 	return AICA_DMABUF_SIZE / 4;
 }
 
