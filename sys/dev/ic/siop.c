@@ -1,4 +1,4 @@
-/*	$NetBSD: siop.c,v 1.87.14.1 2010/11/20 18:20:49 riz Exp $	*/
+/*	$NetBSD: siop.c,v 1.87.14.2 2010/11/20 20:12:56 riz Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -33,7 +33,7 @@
 /* SYM53c7/8xx PCI-SCSI I/O Processors driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siop.c,v 1.87.14.1 2010/11/20 18:20:49 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siop.c,v 1.87.14.2 2010/11/20 20:12:56 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1355,7 +1355,7 @@ siop_scsipi_request(chan, req, arg)
 			    ((xs->xs_control & XS_CTL_DATA_IN) ?
 			     BUS_DMA_READ : BUS_DMA_WRITE));
 			if (error) {
-				aprint_error_dev(sc->sc_c.sc_dev,
+				aprint_error_dev(&sc->sc_c.sc_dev,
 				    "unable to load data DMA map: %d",
 				    error);
 				xs->error = (error == EAGAIN) ?
