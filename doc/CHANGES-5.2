@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.2,v 1.1.2.3 2010/11/20 00:02:59 riz Exp $
+# $NetBSD: CHANGES-5.2,v 1.1.2.4 2010/11/20 00:49:20 riz Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -61,3 +61,72 @@ sys/dev/pci/pcidevs_data.h			regen
 	Also BCM5461, BCM5464, BCM5784 and BCM5761, and many bugfixes.
 	[msaitoh, ticket #1359]
 
+usr.bin/passwd/local_passwd.c			1.34
+usr.bin/passwd/pam_passwd.c			1.5
+
+	Log successful and unsuccessful attempts to change passwords, via -l
+	or pam, to ease IT audit guideline compliance.  Patch from Richard
+	Hansen of BBN in private mail.
+	[gdt, ticket #1360]
+
+sys/dev/pci/agp_i810.c				1.67
+sys/dev/pci/agp_intel.c				1.35
+sys/dev/pci/pcidevs				1.1026
+sys/dev/pci/pcidevs.h				regen
+sys/dev/pci/pcidevs_data.h			regen
+
+	Add (non-IGP) AGP port support for Intel 82855GM.
+	[jakllsch, ticket #1362]
+
+distrib/notes/atari/hardware			1.23
+share/man/man4/we.4				1.17
+sys/arch/atari/conf/GENERIC.in			1.84
+sys/arch/atari/conf/ATARITT			regen
+sys/arch/atari/conf/FALCON			regen
+sys/arch/atari/conf/HADES			regen
+sys/arch/atari/conf/MILAN-ISAIDE		regen
+sys/arch/atari/conf/MILAN-PCIIDE		regen
+sys/arch/atari/conf/SMALL030			regen
+sys/arch/atari/conf/files.atari			1.116
+sys/arch/atari/vme/if_we_vme.c			1.1
+sys/arch/atari/vme/if_we_vme.c			1.2
+
+	Add support for the SMC Elite Ultra Ethernet with the SMC_TT
+	VME-ISA bridge.
+	[tsutsui, ticket #1366]
+
+distrib/notes/atari/hardware			1.24
+sys/arch/atari/atari/autoconf.c			1.57
+sys/arch/atari/conf/GENERIC.in			1.85
+sys/arch/atari/conf/HADES			regen
+sys/arch/atari/conf/HADES.in			1.10-11
+sys/arch/atari/conf/MILAN-ISAIDE		regen
+sys/arch/atari/conf/MILAN-PCIIDE		regen
+sys/arch/atari/conf/MILAN.in			1.24-25
+sys/arch/atari/conf/files.atari			1.117
+sys/arch/atari/dev/if_ne_mb.c			1.1-2
+sys/arch/x68k/dev/if_ne_intio.c			1.16
+sys/arch/x68k/dev/if_ne_neptune.c		1.20
+sys/conf/files					1.980
+sys/dev/ic/dp8390.c				1.74-75
+sys/dev/ic/ne2000.c				1.62,1.65-66,1.68,1.71-72
+sys/dev/ic/ne2000var.h				1.21, 1.25
+sys/dev/isa/if_ne_isa.c				1.27
+sys/dev/isapnp/if_ne_isapnp.c			1.27
+
+	Added NE2000 with 8bit bus width support and EtherNEC Ethernet
+	support. 
+	[tsutsui, ticket #1367]
+
+sys/arch/atari/conf/ATARITT			regen
+sys/arch/atari/conf/FALCON			regen
+sys/arch/atari/conf/GENERIC.in			1.86
+sys/arch/atari/conf/HADES			regen
+sys/arch/atari/conf/MILAN-ISAIDE		regen
+sys/arch/atari/conf/MILAN-PCIIDE		regen
+sys/arch/atari/conf/SMALL030			regen
+sys/arch/atari/dev/ser.c			1.49 via patch
+
+	Allow atari users to change serial console behavior with
+	binpatch(8), and disable options SERCONSOLE in default kernels.
+	[tsutsui, ticket #1368]
