@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2010/11/20 22:34:17 mrg Exp $
+#	$NetBSD: Makefile,v 1.3 2010/11/20 23:47:30 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -7,7 +7,7 @@ SRCS=	xload.c get_load.c get_rload.c
 
 CPPFLAGS+=${X11FLAGS.VERSION}
 
-APPDEFS=XLoad.ad
+APPDEFS=XLoad
 
 LDADD+=	-lXaw -lXmu -lXt -lSM -lICE -lXpm -lXext -lX11
 DPADD+=	${LIBXAW} ${LIBXMU} ${LIBXT} ${LIBSM} ${LIBICE} \
