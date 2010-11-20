@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.185.6.1 2010/11/20 00:54:10 riz Exp $	*/
+/*	$NetBSD: fetch.c,v 1.185.6.2 2010/11/20 01:03:18 riz Exp $	*/
 
 /*-
  * Copyright (c) 1997-2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.185.6.1 2010/11/20 00:54:10 riz Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.185.6.2 2010/11/20 01:03:18 riz Exp $");
 #endif /* not lint */
 
 /*
@@ -931,28 +931,18 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 
 			} else if (match_token(&cp, "Last-Modified:")) {
 				struct tm parsed;
-				char *t;
+				const char *t;
 
 				memset(&parsed, 0, sizeof(parsed));
-							/* RFC1123 */
-				if ((t = strptime(cp,
-						"%a, %d %b %Y %H:%M:%S GMT",
-						&parsed))
-							/* RFC0850 */
-				    || (t = strptime(cp,
-						"%a, %d-%b-%y %H:%M:%S GMT",
-						&parsed))
-							/* asctime */
-				    || (t = strptime(cp,
-						"%a, %b %d %H:%M:%S %Y",
-						&parsed))) {
+				t = parse_rfc2616time(&parsed, cp);
+				if (t != NULL) {
 					parsed.tm_isdst = -1;
 					if (*t == '\0')
 						mtime = timegm(&parsed);
 #ifndef NO_DEBUG
 					if (ftp_debug && mtime != -1) {
 						fprintf(ttyout,
-						    "parsed date as: %s",
+						    "parsed time as: %s",
 						rfc2822time(localtime(&mtime)));
 					}
 #endif
