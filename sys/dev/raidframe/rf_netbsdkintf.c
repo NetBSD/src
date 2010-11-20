@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.250.4.6 2010/03/06 20:56:15 sborrill Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.250.4.7 2010/11/20 17:41:26 riz Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -139,7 +139,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.250.4.6 2010/03/06 20:56:15 sborrill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.250.4.7 2010/11/20 17:41:26 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -344,9 +344,7 @@ raidattach(int num)
 	int raidID;
 	int i, rc;
 
-#ifdef DEBUG
-	printf("raidattach: Asked for %d units\n", num);
-#endif
+	aprint_debug("raidattach: Asked for %d units\n", num);
 
 	if (num <= 0) {
 #ifdef DIAGNOSTIC
@@ -433,9 +431,7 @@ rf_autoconfig(struct device *self)
 	raidautoconfig = 0;
 
 	/* 1. locate all RAID components on the system */
-#ifdef DEBUG
-	printf("Searching for RAID components...\n");
-#endif
+	aprint_debug("Searching for RAID components...\n");
 	ac_list = rf_find_raid_components();
 
 	/* 2. Sort them into their respective sets. */
@@ -471,18 +467,14 @@ rf_buildroothack(RF_ConfigSet_t *config_sets)
 		    cset->ac->clabel->autoconfigure==1) {
 			retcode = rf_auto_config_set(cset,&raidID);
 			if (!retcode) {
-#ifdef DEBUG
-				printf("raid%d: configured ok\n", raidID);
-#endif
+				aprint_debug("raid%d: configured ok\n", raidID);
 				if (cset->rootable) {
 					rootID = raidID;
 					num_root++;
 				}
 			} else {
 				/* The autoconfig didn't work :( */
-#ifdef DEBUG
-				printf("Autoconfig failed with code %d for raid%d\n", retcode, raidID);
-#endif
+				aprint_debug("Autoconfig failed with code %d for raid%d\n", retcode, raidID);
 				rf_release_all_vps(cset);
 			}
 		} else {
@@ -533,10 +525,8 @@ rf_buildroothack(RF_ConfigSet_t *config_sets)
 				if (strncmp(devname, device_xname(booted_device), 
 					    strlen(device_xname(booted_device))) != 0)
 					continue;
-#ifdef DEBUG
-				printf("raid%d includes boot device %s\n",
+				aprint_debug("raid%d includes boot device %s\n",
 				       raidID, devname);
-#endif
 				num_root++;
 				rootID = raidID;
 			}
