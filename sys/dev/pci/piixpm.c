@@ -1,4 +1,4 @@
-/* $NetBSD: piixpm.c,v 1.26 2008/10/12 19:01:01 martin Exp $ */
+/* $NetBSD: piixpm.c,v 1.26.4.1 2010/11/20 18:23:20 riz Exp $ */
 /*	$OpenBSD: piixpm.c,v 1.20 2006/02/27 08:25:02 grange Exp $	*/
 
 /*
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: piixpm.c,v 1.26 2008/10/12 19:01:01 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: piixpm.c,v 1.26.4.1 2010/11/20 18:23:20 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -204,9 +204,10 @@ nopowermanagement:
 	}
 
 	sc->sc_poll = 1;
+	aprint_normal_dev(self, "");
 	if ((conf & PIIX_SMB_HOSTC_INTMASK) == PIIX_SMB_HOSTC_SMI) {
 		/* No PCI IRQ */
-		aprint_normal_dev(self, "interrupting at SMI");
+		aprint_normal("interrupting at SMI, ");
 	} else if ((conf & PIIX_SMB_HOSTC_INTMASK) == PIIX_SMB_HOSTC_IRQ) {
 		/* Install interrupt handler */
 		if (pci_intr_map(pa, &ih) == 0) {
@@ -214,14 +215,13 @@ nopowermanagement:
 			sc->sc_smb_ih = pci_intr_establish(pa->pa_pc, ih, IPL_BIO,
 			    piixpm_intr, sc);
 			if (sc->sc_smb_ih != NULL) {
-				aprint_normal_dev(self, "interrupting at %s",
-				    intrstr);
+				aprint_normal("interrupting at %s", intrstr);
 				sc->sc_poll = 0;
 			}
 		}
 	}
 	if (sc->sc_poll)
-		aprint_normal_dev(self, "polling");
+		aprint_normal("polling");
 
 	aprint_normal("\n");
 
