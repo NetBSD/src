@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC.in,v 1.73.4.7 2010/11/20 00:33:46 riz Exp $
+#	$NetBSD: GENERIC.in,v 1.73.4.8 2010/11/20 00:47:55 riz Exp $
 #
 # Generic atari
 #
@@ -231,7 +231,7 @@ options 	DISKLABEL_NBDA		# NetBSD disklabels (required)
 options 	DISKLABEL_AHDI		# NetBSD/AHDI disklabels
 #if !defined(SMALL030_KERNEL)
 #if !defined(FALCON_KERNEL)
-options 	SERCONSOLE		# modem1 console support, breaks Falcon
+#options 	SERCONSOLE		# modem1 console support, breaks Falcon
 #endif /* !FALCON_KERNEL */
 options 	RELOC_KERNEL		# TT/Falcon: relocate kernel to TT-RAM
 options 	MSGBUFSIZE=32768        # size of kernel msg. buffer
