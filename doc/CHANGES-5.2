@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.2,v 1.1.2.6 2010/11/20 17:55:21 riz Exp $
+# $NetBSD: CHANGES-5.2,v 1.1.2.7 2010/11/20 18:24:14 riz Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -186,4 +186,15 @@ sys/kern/subr_autoconf.c			1.169
 
 	'boot -z' bogons
 	[hubertf, ticket #1386]
+
+sys/dev/ic/esiop.c				1.52 via patch
+sys/dev/ic/siop.c				1.95 via patch
+
+	Improve error paths in (e)siop_scsipi_request(). PR#42844
+	[mhitch, ticket #1390]
+
+sys/dev/pci/piixpm.c				1.28
+
+	Fix dmesg output for piixpm (cosmetic).  PR#43278
+	[martin, ticket #1391]
 
