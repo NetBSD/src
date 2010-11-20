@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.36.2.50 2010/11/20 05:15:59 uebayasi Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.36.2.51 2010/11/20 07:47:34 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.36.2.50 2010/11/20 05:15:59 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.36.2.51 2010/11/20 07:47:34 uebayasi Exp $");
 
 #include "opt_xip.h"
 
@@ -668,16 +668,19 @@ genfs_getpages_io_read_bio_loop()
 			int pcount;
 
 			pcount = 1;
+			while ((pidx + pcount < npages) && (
 #ifdef XIP
-		    if ((ap->a_vp->v_vflag & VV_XIP) == 0) {
+			    /*
+			     * in XIP case, we don't know what page to read
+			     * at this point!
+			     */
+			    ((ap->a_vp->v_vflag & VV_XIP) != 0) ||
+#else
+			     0 ||
 #endif
-			while (pidx + pcount < npages &&
-			    pgs[pidx + pcount]->flags & PG_FAKE) {
+			     (pgs[pidx + pcount]->flags & PG_FAKE))) {
 				pcount++;
 			}
-#ifdef XIP
-		    }
-#endif
 			iobytes = MIN(iobytes, (pcount << PAGE_SHIFT) -
 			    (offset - trunc_page(offset)));
 		}
