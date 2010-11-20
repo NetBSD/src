@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.36.2.48 2010/11/20 03:00:42 uebayasi Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.36.2.49 2010/11/20 04:26:12 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.36.2.48 2010/11/20 03:00:42 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.36.2.49 2010/11/20 04:26:12 uebayasi Exp $");
 
 #include "opt_xip.h"
 
@@ -749,8 +749,9 @@ genfs_getpages_io_read_bio_loop()
 		    bp, offset, bp->b_bcount, bp->b_blkno);
 
 		VOP_STRATEGY(devvp, bp);
+	    }
 #ifdef XIP
-	    } else {
+	    else {
 		/*
 		 * XIP page metadata assignment
 		 * - Unallocated block is redirected to the dedicated zero'ed
@@ -760,10 +761,10 @@ genfs_getpages_io_read_bio_loop()
 			iobytes >> PAGE_SHIFT,
 			((1 + run) << fs_bshift) >> PAGE_SHIFT);
 		const daddr_t blk_off = blkno << dev_bshift;
-		const daddr_t fs_off = ap->a_offset - (lbn << fs_bshift);
+		const daddr_t fs_off = ap->a_offset - startoffset;
 
 		UVMHIST_LOG(ubchist,
-			"xip npgs=%d _blk_off=0x%lx _fs_off=0x%lx",
+			"xip npgs=%d blk_off=0x%lx fs_off=0x%lx",
 			npgs, (long)blk_off, (long)fs_off, 0);
 
 		for (i = 0; i < npgs; i++) {
