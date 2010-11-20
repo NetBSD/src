@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.2,v 1.1.2.8 2010/11/20 18:28:23 riz Exp $
+# $NetBSD: CHANGES-5.2,v 1.1.2.9 2010/11/20 20:40:18 riz Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -202,4 +202,11 @@ crypto/dist/ssh/misc.c			patch
 
 	Fix tunnelling (ssh -w).
 	[jnemeth, ticket #1392]
+
+external/bsd/fetch/dist/libfetch/common.c	patch
+external/bsd/fetch/dist/libfetch/common.h	patch
+external/bsd/fetch/dist/libfetch/ftp.c		patch
+
+	Update to libfetch-2.31.  Fixes PR#43013
+	[joerg, ticket #1351]
 
