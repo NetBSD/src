@@ -1,4 +1,4 @@
-/*	$NetBSD: synaptics.c,v 1.21 2008/04/30 14:07:14 ad Exp $	*/
+/*	$NetBSD: synaptics.c,v 1.21.10.1 2010/11/20 01:19:01 riz Exp $	*/
 
 /*
  * Copyright (c) 2005, Steve C. Woodford
@@ -48,7 +48,7 @@
 #include "opt_pms.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: synaptics.c,v 1.21 2008/04/30 14:07:14 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: synaptics.c,v 1.21.10.1 2010/11/20 01:19:01 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -241,6 +241,10 @@ pms_synaptics_probe_init(void *vsc)
 		const char comma[] = ", ";
 		const char *sep = "";
 		aprint_normal_dev(psc->sc_dev, "");
+		if (sc->flags & SYN_FLAG_HAS_PASSTHROUGH) {
+			aprint_normal("%sPassthrough", sep);
+			sep = comma;
+		}
 		if (sc->flags & SYN_FLAG_HAS_MIDDLE_BUTTON) {
 			aprint_normal("%sMiddle button", sep);
 			sep = comma;
@@ -276,8 +280,18 @@ pms_synaptics_enable(void *vsc)
 {
 	struct pms_softc *psc = vsc;
 	struct synaptics_softc *sc = &psc->u.synaptics;
-	u_char cmd[2];
+	u_char cmd[2], resp[2];
 	int res;
+
+	if (sc->flags & SYN_FLAG_HAS_PASSTHROUGH) {
+		/* 
+		 * Extended capability probes can confuse the passthrough device;
+		 * reset the touchpad now to cure that.
+		 */
+		cmd[0] = PMS_RESET;
+		res = pckbport_poll_cmd(psc->sc_kbctag, psc->sc_kbcslot, cmd,
+		    1, 2, resp, 1);
+	}
 
 	/*
 	 * Enable Absolute mode with W (width) reporting, and set
@@ -286,7 +300,7 @@ pms_synaptics_enable(void *vsc)
 	res = pms_synaptics_send_command(psc->sc_kbctag, psc->sc_kbcslot,
 	    SYNAPTICS_MODE_ABSOLUTE | SYNAPTICS_MODE_W | SYNAPTICS_MODE_RATE);
 	cmd[0] = PMS_SET_SAMPLE;
-	cmd[1] = 0x14; /* doit */
+	cmd[1] = SYNAPTICS_CMD_SET_MODE2;
 	res |= pckbport_enqueue_cmd(psc->sc_kbctag, psc->sc_kbcslot, cmd, 2, 0,
 	    1, NULL);
 	sc->up_down = 0;
@@ -616,13 +630,16 @@ pms_synaptics_send_command(pckbport_tag_t tag, pckbport_slot_t slot,
 	u_char cmd[2];
 	int res;
 
+	cmd[0] = PMS_SET_SCALE11;
+	res = pckbport_poll_cmd(tag, slot, cmd, 1, 0, NULL, 0);
+
 	/*
 	 * Need to send 4 Set Resolution commands, with the argument
 	 * encoded in the bottom most 2 bits.
 	 */
 	cmd[0] = PMS_SET_RES;
 	cmd[1] = syn_cmd >> 6;
-	res = pckbport_poll_cmd(tag, slot, cmd, 2, 0, NULL, 0);
+	res |= pckbport_poll_cmd(tag, slot, cmd, 2, 0, NULL, 0);
 
 	cmd[0] = PMS_SET_RES;
 	cmd[1] = (syn_cmd & 0x30) >> 4;
