@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.21.40.2 2010/11/20 00:26:52 riz Exp $
+.\"	$NetBSD: hardware,v 1.21.40.3 2010/11/20 00:33:48 riz Exp $
 .
 .Nx*M
 \*V runs on the TT030, Falcon, Hades and MilanI machines.
@@ -48,6 +48,8 @@ The parallel printer
 IDE interface on both Falcon and Hades (includes ATAPI support)
 .It
 The serial interface on the first 68901 UART (modem1)
+.It
+EtherNEC Ethernet on ROM cartridge slot
 .It
 VME-bus devices (TT030/Hades)
 .(bullet -compact

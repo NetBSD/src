@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC.in,v 1.73.4.6 2010/11/20 00:26:51 riz Exp $
+#	$NetBSD: GENERIC.in,v 1.73.4.7 2010/11/20 00:33:46 riz Exp $
 #
 # Generic atari
 #
@@ -345,6 +345,7 @@ grfcc2		at grfbus0	# 3rd graphics driver
 ite2		at grfcc2	# 3rd tty
 lp0		at mainbus0	# centronics printer
 ser0		at mainbus0	# UART on first 68901 (ttyB0)
+ne0		at mainbus0	# EtherNEC on Atari ROM cartridge slot
 
 #if defined(TT030_KERNEL)
 avmebus0	at mainbus0	# VME bus
