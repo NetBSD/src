@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.36.2.47 2010/11/19 15:25:37 uebayasi Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.36.2.48 2010/11/20 03:00:42 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.36.2.47 2010/11/19 15:25:37 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.36.2.48 2010/11/20 03:00:42 uebayasi Exp $");
 
 #include "opt_xip.h"
 
@@ -585,6 +585,7 @@ genfs_getpages_bio_prepare_done:
 			ap->a_advice,
 			ap->a_flags,
 			orignmempages);
+if (0)
 		goto loopdone;
 	}
 #endif
@@ -614,6 +615,9 @@ genfs_getpages_io_read_bio_loop()
 		 */
 
 		pidx = (offset - startoffset) >> PAGE_SHIFT;
+#ifdef XIP
+	    if ((ap->a_vp->v_vflag & VV_XIP) == 0) {
+#endif
 		while ((pgs[pidx]->flags & PG_FAKE) == 0) {
 			size_t b;
 
@@ -632,6 +636,9 @@ genfs_getpages_io_read_bio_loop()
 				goto loopdone;
 			}
 		}
+#ifdef XIP
+	    }
+#endif
 
 		/*
 		 * bmap the file to find out the blkno to read from and
@@ -661,10 +668,16 @@ genfs_getpages_io_read_bio_loop()
 			int pcount;
 
 			pcount = 1;
+#ifdef XIP
+		    if ((ap->a_vp->v_vflag & VV_XIP) == 0) {
+#endif
 			while (pidx + pcount < npages &&
 			    pgs[pidx + pcount]->flags & PG_FAKE) {
 				pcount++;
 			}
+#ifdef XIP
+		    }
+#endif
 			iobytes = MIN(iobytes, (pcount << PAGE_SHIFT) -
 			    (offset - trunc_page(offset)));
 		}
@@ -676,9 +689,14 @@ genfs_getpages_io_read_bio_loop()
 		 */
 
 		if (blkno == (daddr_t)-1) {
+#ifdef XIP
+		    if ((ap->a_vp->v_vflag & VV_XIP) == 0) {
+#endif
 			int holepages = (round_page(offset + iobytes) -
 			    trunc_page(offset)) >> PAGE_SHIFT;
 			UVMHIST_LOG(ubchist, "lbn 0x%x -> HOLE", lbn,0,0,0);
+
+			KASSERT((ap->a_vp->v_vflag & VV_XIP) == 0);
 
 			sawhole = true;
 			memset((char *)kva + (offset - startoffset), 0,
@@ -693,14 +711,24 @@ genfs_getpages_io_read_bio_loop()
 					pgs[pidx + i]->flags |= PG_RDONLY;
 				}
 			}
+#ifdef XIP
+		    } else {
+			panic("XIP hole page is not supported yet");
+		    }
+#endif
 			continue;
 		}
 
+#ifdef XIP
+	    if ((ap->a_vp->v_vflag & VV_XIP) == 0) {
+#endif
 		/*
 		 * allocate a sub-buf for this piece of the i/o
 		 * (or just use mbp if there's only 1 piece),
 		 * and start it going.
 		 */
+
+		KASSERT((ap->a_vp->v_vflag & VV_XIP) == 0);
 
 		if (offset == startoffset && iobytes == bytes) {
 			bp = mbp;
@@ -721,12 +749,47 @@ genfs_getpages_io_read_bio_loop()
 		    bp, offset, bp->b_bcount, bp->b_blkno);
 
 		VOP_STRATEGY(devvp, bp);
+#ifdef XIP
+	    } else {
+		/*
+		 * XIP page metadata assignment
+		 * - Unallocated block is redirected to the dedicated zero'ed
+		 *   page.
+		 */
+		const int npgs = MIN(
+			iobytes >> PAGE_SHIFT,
+			((1 + run) << fs_bshift) >> PAGE_SHIFT);
+		const daddr_t blk_off = blkno << dev_bshift;
+		const daddr_t fs_off = ap->a_offset - (lbn << fs_bshift);
+
+		UVMHIST_LOG(ubchist,
+			"xip npgs=%d _blk_off=0x%lx _fs_off=0x%lx",
+			npgs, (long)blk_off, (long)fs_off, 0);
+
+		for (i = 0; i < npgs; i++) {
+			const daddr_t pg_off = pidx << PAGE_SHIFT;
+			struct vm_page *pg;
+
+			pg = uvn_findpage_xip(devvp, &vp->v_uobj,
+			    blk_off + fs_off + pg_off);
+			KASSERT(pg != NULL);
+			UVMHIST_LOG(ubchist,
+				"xip pgs %d => phys_addr=0x%lx (%p)",
+				pidx + i,
+				(long)pg->phys_addr,
+				pg,
+				0);
+			pgs[pidx + i] = pg;
+		}
+	    }
+#endif
 	}
 
 loopdone:
 #if 1
-	if ((ap->a_vp->v_vflag & VV_XIP) != 0)
+	if ((ap->a_vp->v_vflag & VV_XIP) != 0) {
 		goto genfs_getpages_biodone_done;
+	}
 #endif
 #if 0
 
@@ -903,6 +966,7 @@ out:
 		genfs_markdirty(vp);
 	}
 	mutex_exit(&uobj->vmobjlock);
+
 #if 1
 genfs_getpages_generic_io_done_done:
 	{}
@@ -968,16 +1032,21 @@ genfs_do_getpages_xip_io(
 
 	off = origoffset;
 	for (i = ridx; i < ridx + orignmempages; i++) {
-		daddr_t lbn, blkno;
+		daddr_t blkno;
 		int run;
 		struct vnode *devvp;
 
-		lbn = (off & ~(fs_bsize - 1)) >> fs_bshift;
+		KASSERT((off - origoffset) >> PAGE_SHIFT == i - ridx);
+
+		const daddr_t lbn = (off & ~(fs_bsize - 1)) >> fs_bshift;
 
 		error = VOP_BMAP(vp, lbn, &devvp, &blkno, &run);
 		KASSERT(error == 0);
 		UVMHIST_LOG(ubchist, "xip VOP_BMAP: lbn=%ld blkno=%ld run=%d",
 		    (long)lbn, (long)blkno, run, 0);
+
+		const daddr_t blk_off = blkno << dev_bshift;
+		const daddr_t fs_off = origoffset - (lbn << fs_bshift);
 
 		/*
 		 * XIP page metadata assignment
@@ -987,13 +1056,12 @@ genfs_do_getpages_xip_io(
 		if (blkno < 0) {
 			panic("XIP hole is not supported yet!");
 		} else {
-			daddr_t blk_off, fs_off;
+			KASSERT(off - origoffset == (i - ridx) << PAGE_SHIFT);
 
-			blk_off = blkno << dev_bshift;
-			fs_off = off - (lbn << fs_bshift);
+			const daddr_t pg_off = (i - ridx) << PAGE_SHIFT;
 
 			pps[i] = uvn_findpage_xip(devvp, &vp->v_uobj,
-			    blk_off + fs_off);
+			    blk_off + fs_off + pg_off);
 			KASSERT(pps[i] != NULL);
 		}
 
