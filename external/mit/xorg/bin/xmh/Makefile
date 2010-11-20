@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2010/11/20 22:40:00 mrg Exp $
+#	$NetBSD: Makefile,v 1.4 2010/11/20 22:41:49 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -8,6 +8,7 @@ SRCS=	bbox.c command.c compfuncs.c folder.c init.c main.c \
 	tocfuncs.c tocutil.c tsource.c util.c viewfuncs.c \
 	miscfuncs.c
 
+CPPFLAGS+=	-I${X11SRCDIR.${PROG}}/../include
 CPPFLAGS+=	-DHAS_VFORK -DXVENDORNAME=${XVENDORNAME} \
 		-DXORG_RELEASE=${XORG_RELEASE}
 
