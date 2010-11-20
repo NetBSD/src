@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.962.4.13 2010/11/19 23:59:46 riz Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.962.4.14 2010/11/20 00:19:37 riz Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.962.4.13 2010/11/19 23:58:40 riz Exp
+ *	NetBSD
  */
 
 /*
@@ -9400,6 +9400,10 @@ static const struct pci_product pci_products[] = {
 	    "82855GM Host-Hub Controller",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82855GM_AGP,
+	    "82855GM Host-AGP Bridge",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82855GM_IGD,
 	    "82855GM GMCH Integrated Graphics Device",
 	},
@@ -14972,4 +14976,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 3142;
+const int pci_nproducts = 3143;
