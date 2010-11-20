@@ -1,4 +1,4 @@
-/*	$NetBSD: local_passwd.c,v 1.31 2008/01/25 19:36:27 christos Exp $	*/
+/*	$NetBSD: local_passwd.c,v 1.31.10.1 2010/11/20 00:12:37 riz Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)local_passwd.c    8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: local_passwd.c,v 1.31 2008/01/25 19:36:27 christos Exp $");
+__RCSID("$NetBSD: local_passwd.c,v 1.31.10.1 2010/11/20 00:12:37 riz Exp $");
 #endif
 #endif /* not lint */
 
@@ -53,6 +53,7 @@ __RCSID("$NetBSD: local_passwd.c,v 1.31 2008/01/25 19:36:27 christos Exp $");
 #include <unistd.h>
 #include <util.h>
 #include <login_cap.h>
+#include <syslog.h>
 
 #include "extern.h"
 
@@ -72,6 +73,10 @@ getnewpasswd(struct passwd *pw, int min_pw_len)
 	    strcmp(crypt(getpass("Old password:"), pw->pw_passwd),
 	    pw->pw_passwd)) {
 		errno = EACCES;
+		syslog(LOG_AUTH | LOG_NOTICE,
+		       "user %s (UID %lu) failed to change the "
+		       "local password of user %s: %m",
+		       pw->pw_name, (unsigned long)uid, pw->pw_name);
 		pw_error(NULL, 1, 1);
 	}
 
@@ -213,6 +218,11 @@ pwlocal_process(const char *username, int argc, char **argv)
 
 	if (pw_mkdb(username, old_change == pw->pw_change) < 0)
 		pw_error((char *)NULL, 0, 1);
+
+	syslog(LOG_AUTH | LOG_INFO,
+	       "user %s (UID %lu) successfully changed "
+	       "the local password of user %s",
+	       uid ? username : "root", (unsigned long)uid, username);
 }
 
 #else /* ! USE_PAM */
@@ -319,6 +329,12 @@ local_chpw(uname)
 
 	if (pw_mkdb(uname, old_change == pw->pw_change) < 0)
 		pw_error((char *)NULL, 0, 1);
+
+	syslog(LOG_AUTH | LOG_INFO,
+	       "user %s (UID %lu) successfully changed "
+	       "the local password of user %s",
+	       uid ? uname : "root", (unsigned long)uid, uname);
+
 	return (0);
 }
 
