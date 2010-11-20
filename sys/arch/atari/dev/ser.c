@@ -1,4 +1,4 @@
-/*	$NetBSD: ser.c,v 1.39 2008/06/11 14:35:53 tsutsui Exp $	*/
+/*	$NetBSD: ser.c,v 1.39.6.1 2010/11/20 00:47:55 riz Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ser.c,v 1.39 2008/06/11 14:35:53 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ser.c,v 1.39.6.1 2010/11/20 00:47:55 riz Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mbtype.h"
@@ -262,6 +262,11 @@ const struct cdevsw ser_cdevsw = {
 	serstop, sertty, serpoll, nommap, ttykqfilter, D_TTY
 };
 
+#ifndef SERCONSOLE
+#define SERCONSOLE	0
+#endif
+int serconsole = SERCONSOLE;	/* patchable */
+
 /*ARGSUSED*/
 static	int
 sermatch(pdp, cfp, auxp)
@@ -316,13 +321,13 @@ void	*auxp;
 
 	callout_init(&sc->sc_diag_ch, 0);
 
-#if SERCONSOLE > 0
-	/*
-	 * Activate serial console when DCD present...
-	 */
-	if (!(MFP->mf_gpip & MCR_DCD))
-		SET(sc->sc_hwflags, SER_HW_CONSOLE);
-#endif /* SERCONSOLE > 0 */
+	if (serconsole) {
+		/*
+		 * Activate serial console when DCD present...
+		 */
+		if (!(MFP->mf_gpip & MCR_DCD))
+			SET(sc->sc_hwflags, SER_HW_CONSOLE);
+	}
 
 	printf("\n");
 	if (ISSET(sc->sc_hwflags, SER_HW_CONSOLE)) {
@@ -1416,11 +1421,10 @@ sercnprobe(cp)
 	/* initialize required fields */
 	/* XXX: LWP What unit? */
 	cp->cn_dev = makedev(cdevsw_lookup_major(&ser_cdevsw), 0);
-#if SERCONSOLE > 0
-	cp->cn_pri = CN_REMOTE;	/* Force a serial port console */
-#else
-	cp->cn_pri = CN_NORMAL;
-#endif /* SERCONSOLE > 0 */
+	if (serconsole)
+		cp->cn_pri = CN_REMOTE;	/* Force a serial port console */
+	else
+		cp->cn_pri = CN_NORMAL;
 }
 
 void
