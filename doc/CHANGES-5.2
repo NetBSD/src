@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.2,v 1.1.2.7 2010/11/20 18:24:14 riz Exp $
+# $NetBSD: CHANGES-5.2,v 1.1.2.8 2010/11/20 18:28:23 riz Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -197,4 +197,9 @@ sys/dev/pci/piixpm.c				1.28
 
 	Fix dmesg output for piixpm (cosmetic).  PR#43278
 	[martin, ticket #1391]
+
+crypto/dist/ssh/misc.c			patch
+
+	Fix tunnelling (ssh -w).
+	[jnemeth, ticket #1392]
 
