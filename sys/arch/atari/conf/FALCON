@@ -1,5 +1,5 @@
 #
-# $NetBSD: FALCON,v 1.84.4.5 2010/11/20 00:27:31 riz Exp $
+# $NetBSD: FALCON,v 1.84.4.6 2010/11/20 00:34:14 riz Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
@@ -147,6 +147,7 @@ grfcc2 at grfbus0 # 3rd graphics driver
 ite2 at grfcc2 # 3rd tty
 lp0 at mainbus0 # centronics printer
 ser0 at mainbus0 # UART on first 68901 (ttyB0)
+ne0 at mainbus0 # EtherNEC on Atari ROM cartridge slot
 wdc0 at mainbus0 # IDE-bus
 atabus* at wdc? channel ?
 wd* at atabus? drive ?
