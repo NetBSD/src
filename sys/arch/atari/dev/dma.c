@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.c,v 1.18 2007/03/04 05:59:40 christos Exp $	*/
+/*	$NetBSD: dma.c,v 1.18.54.1 2010/11/20 01:09:27 riz Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dma.c,v 1.18 2007/03/04 05:59:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dma.c,v 1.18.54.1 2010/11/20 01:09:27 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -232,14 +232,7 @@ int	sr;	/* sr at time of interrupt */
 		 */
 		int_func = dma_active.tqh_first->int_func;
 		softc    = dma_active.tqh_first->softc;
-
-		if(!BASEPRI(sr))
-			add_sicallback((si_farg)int_func, softc, 0);
-		else {
-			spl1();
-			(*int_func)(softc);
-			spl0();
-		}
+		add_sicallback((si_farg)int_func, softc, 0);
 		return 1;
 	}
 	return 0;
