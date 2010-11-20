@@ -1,4 +1,4 @@
-/*	$NetBSD: dp8390.c,v 1.68 2008/03/12 14:31:11 cube Exp $	*/
+/*	$NetBSD: dp8390.c,v 1.68.14.1 2010/11/20 00:33:45 riz Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -14,7 +14,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dp8390.c,v 1.68 2008/03/12 14:31:11 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dp8390.c,v 1.68.14.1 2010/11/20 00:33:45 riz Exp $");
 
 #include "opt_ipkdb.h"
 #include "opt_inet.h"
@@ -118,7 +118,8 @@ dp8390_config(sc)
 	sc->tx_page_start = sc->mem_start >> ED_PAGE_SHIFT;
 	sc->rec_page_start = sc->tx_page_start + sc->txb_cnt * ED_TXBUF_SIZE;
 	sc->rec_page_stop = sc->tx_page_start + (sc->mem_size >> ED_PAGE_SHIFT);
-	sc->mem_ring = sc->mem_start + (sc->rec_page_start << ED_PAGE_SHIFT);
+	sc->mem_ring = sc->mem_start +
+	    ((sc->txb_cnt * ED_TXBUF_SIZE) << ED_PAGE_SHIFT);
 	sc->mem_end = sc->mem_start + sc->mem_size;
 
 	/* Now zero memory and verify that it is clear. */
@@ -1354,7 +1355,8 @@ dp8390_ipkdb_attach(kip)
 	sc->tx_page_start = sc->mem_start >> ED_PAGE_SHIFT;
 	sc->rec_page_start = sc->tx_page_start + sc->txb_cnt * ED_TXBUF_SIZE;
 	sc->rec_page_stop = sc->tx_page_start + (sc->mem_size >> ED_PAGE_SHIFT);
-	sc->mem_ring = sc->mem_start + (sc->rec_page_start << ED_PAGE_SHIFT);
+	sc->mem_ring = sc->mem_start +
+	    ((sc->txb_cnt * ED_TXBUF_SIZE) << ED_PAGE_SHIFT);
 	sc->mem_end = sc->mem_start + sc->mem_size;
 
 	dp8390_stop(sc);

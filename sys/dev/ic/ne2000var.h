@@ -1,4 +1,4 @@
-/*	$NetBSD: ne2000var.h,v 1.19 2008/04/28 20:23:50 martin Exp $	*/
+/*	$NetBSD: ne2000var.h,v 1.19.10.1 2010/11/20 00:33:44 riz Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -46,9 +46,12 @@ struct ne2000_softc {
 		NE2000_TYPE_DL10019,
 		NE2000_TYPE_DL10022,
 		NE2000_TYPE_AX88190,
-		NE2000_TYPE_AX88790
+		NE2000_TYPE_AX88790,
+		NE2000_TYPE_RTL8019
 	} sc_type;
 	int sc_useword;
+	u_int sc_quirk;			/* quirks passed from attachments */
+#define	NE2000_QUIRK_8BIT	0x0001	/* force 8bit mode even on NE2000 */
 };
 
 int	ne2000_attach(struct ne2000_softc *, u_int8_t *);
