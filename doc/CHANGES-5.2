@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.2,v 1.1.2.5 2010/11/20 01:20:17 riz Exp $
+# $NetBSD: CHANGES-5.2,v 1.1.2.6 2010/11/20 17:55:21 riz Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -172,4 +172,18 @@ sys/dev/pckbport/synapticsreg.h			1.6
 
 	Fix the synaptics touchpad passthrough device support. PR#42853.
 	[plunky, ticket #1383]
+
+sys/dev/pci/if_pcn.c				1.51
+
+	silence "boot -z"
+	[hubertf, ticket #1385]
+
+sys/dev/isa/pcppi.c				1.33
+sys/dev/pad/pad.c				1.11
+sys/dev/raidframe/rf_netbsdkintf.c		1.258
+sys/dev/scsipi/cd.c				1.288
+sys/kern/subr_autoconf.c			1.169
+
+	'boot -z' bogons
+	[hubertf, ticket #1386]
 
