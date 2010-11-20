@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.21.40.1 2009/04/25 23:16:33 snj Exp $
+.\"	$NetBSD: hardware,v 1.21.40.2 2010/11/20 00:26:52 riz Exp $
 .
 .Nx*M
 \*V runs on the TT030, Falcon, Hades and MilanI machines.
@@ -51,13 +51,15 @@ The serial interface on the first 68901 UART (modem1)
 .It
 VME-bus devices (TT030/Hades)
 .(bullet -compact
-BVME410 ethernet
+BVME410 Ethernet
 .It
 Circad Leonardo 24-bit VME graphics adapter
 .It
 Crazy Dots VME et4000 graphics adapter
 .It
-Riebl (and possibly PAM) ethernet cards on the VME bus.
+Riebl (and possibly PAM) Ethernet cards on the VME bus.
+.It
+SMC Elite Ultra ISA Ethernet with SMC_TT VME-ISA bridge
 .bullet)
 .It
 PCI-bus devices (Hades and Milan only)

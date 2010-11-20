@@ -1,5 +1,5 @@
 #
-#	$NetBSD: files.atari,v 1.112.20.1 2009/01/08 22:45:30 snj Exp $
+#	$NetBSD: files.atari,v 1.112.20.2 2010/11/20 00:26:51 riz Exp $
 
 maxpartitions 16
 
@@ -90,6 +90,10 @@ file	arch/atari/vme/vme_machdep.c	vme
 # device defined in sys/conf/files
 attach	le at vme with le_vme: le24
 file	arch/atari/vme/if_le_vme.c	le_vme
+
+# SMC Elite Ultra (8216) with SMC_TT VME-ISA bridge
+attach	we at vme with we_vme
+file	arch/atari/vme/if_we_vme.c	we_vme
 
 # Circad Leonardo 24-bit true color video
 device	leo
