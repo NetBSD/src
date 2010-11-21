@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2010/05/23 04:26:19 mrg Exp $
+#	$NetBSD: Makefile,v 1.12 2010/11/21 09:01:35 mrg Exp $
 
 NOLINT=	1	# defined
 
@@ -61,6 +61,9 @@ CPPFLAGS+=	-DHAVE_CONFIG_H \
 		-I${X11SRCDIR.pixman}/../include \
 		-I${X11SRCDIR.pixman}/../combine \
 		-I${X11SRCDIR.pixman}/pixman
+
+# XXX!  wants __thread
+CPPFLAGS+=	-DPIXMAN_NO_TLS
 
 LIBDPLIBS=	m	${.CURDIR}/../../../../../lib/libm
 
