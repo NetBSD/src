@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_proto.c,v 1.82 2008/04/24 11:38:38 ad Exp $	*/
+/*	$NetBSD: in6_proto.c,v 1.82.12.1 2010/11/21 20:45:39 riz Exp $	*/
 /*	$KAME: in6_proto.c,v 1.66 2000/10/10 15:35:47 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.82 2008/04/24 11:38:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.82.12.1 2010/11/21 20:45:39 riz Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -128,7 +128,7 @@ __KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.82 2008/04/24 11:38:38 ad Exp $");
 #endif
 
 #include "etherip.h"
-#if NETHERIP > 1
+#if NETHERIP > 0
 #include <netinet6/ip6_etherip.h>
 #endif
 
@@ -333,7 +333,7 @@ const struct ip6protosw inet6sw[] = {
 	.pr_usrreq = rip6_usrreq,
 	.pr_init = encap_init,
 },
-#if NETHERIP > 1
+#if NETHERIP > 0
 {	.pr_type = SOCK_RAW,
 	.pr_domain = &inet6domain,
 	.pr_protocol = IPPROTO_ETHERIP,
