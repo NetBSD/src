@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.153 2010/11/04 21:01:28 pooka Exp $
+#	$NetBSD: Makefile,v 1.154 2010/11/21 03:43:39 christos Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
@@ -71,6 +71,10 @@ SUBDIR+=	../crypto/external/bsd/openssh/lib
 SUBDIR+=	../crypto/external/bsd/netpgp/libmj
 SUBDIR+=	.WAIT
 SUBDIR+=	../crypto/external/bsd/netpgp/lib
+.endif
+
+.if (${MKLDAP} != "no")
+SUBDIR+=	../external/bsd/openldap/lib
 .endif
 
 #==================== 2nd library dependency barrier ====================
