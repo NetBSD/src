@@ -1,4 +1,4 @@
-/*	$NetBSD: gapspci.c,v 1.16 2008/08/01 11:33:06 marcus Exp $	*/
+/*	$NetBSD: gapspci.c,v 1.17 2010/11/21 16:11:32 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: gapspci.c,v 1.16 2008/08/01 11:33:06 marcus Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gapspci.c,v 1.17 2010/11/21 16:11:32 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,14 +54,14 @@ __KERNEL_RCSID(0, "$NetBSD: gapspci.c,v 1.16 2008/08/01 11:33:06 marcus Exp $");
 #include <dreamcast/dev/g2/g2busvar.h>
 #include <dreamcast/dev/g2/gapspcivar.h>
 
-int	gaps_match(struct device *, struct cfdata *, void *);
-void	gaps_attach(struct device *, struct device *, void *);
+int	gaps_match(device_t, cfdata_t, void *);
+void	gaps_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(gapspci, sizeof(struct gaps_softc),
+CFATTACH_DECL_NEW(gapspci, sizeof(struct gaps_softc),
     gaps_match, gaps_attach, NULL, NULL);
 
 int
-gaps_match(struct device *parent, struct cfdata *match, void *aux)
+gaps_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct g2bus_attach_args *ga = aux;
 	uint8_t idbuf[16];
@@ -81,15 +81,16 @@ gaps_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 void
-gaps_attach(struct device *parent, struct device *self, void *aux)
+gaps_attach(device_t parent, device_t self, void *aux)
 {
 	struct g2bus_attach_args *ga = aux;
-	struct gaps_softc *sc = (void *) self;
+	struct gaps_softc *sc = device_private(self);
 	struct pcibus_attach_args pba;
 	int i;
 
 	printf(": SEGA GAPS PCI Bridge\n");
 
+	sc->sc_dev = self;
 	sc->sc_memt = ga->ga_memt;
 
 	sc->sc_dmabase = 0x1840000;

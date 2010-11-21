@@ -1,4 +1,4 @@
-/*	$NetBSD: g2bus.c,v 1.13 2006/08/07 17:36:53 tsutsui Exp $	*/
+/*	$NetBSD: g2bus.c,v 1.14 2010/11/21 16:11:32 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt
@@ -34,7 +34,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: g2bus.c,v 1.13 2006/08/07 17:36:53 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: g2bus.c,v 1.14 2010/11/21 16:11:32 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,29 +46,29 @@ __KERNEL_RCSID(0, "$NetBSD: g2bus.c,v 1.13 2006/08/07 17:36:53 tsutsui Exp $");
 
 #include <dreamcast/dev/g2/g2busvar.h>
 
-int	g2busmatch(struct device *, struct cfdata *, void *);
-void	g2busattach(struct device *, struct device *, void *);
+int	g2busmatch(device_t, cfdata_t, void *);
+void	g2busattach(device_t, device_t, void *);
 int	g2busprint(void *, const char *);
 
-CFATTACH_DECL(g2bus, sizeof(struct g2bus_softc),
+CFATTACH_DECL_NEW(g2bus, sizeof(struct g2bus_softc),
     g2busmatch, g2busattach, NULL, NULL);
 
-int	g2bussearch(struct device *, struct cfdata *,
-		    const int *, void *);
+int	g2bussearch(device_t, cfdata_t, const int *, void *);
 
 int
-g2busmatch(struct device *parent, struct cfdata *cf, void *aux)
+g2busmatch(device_t parent, cfdata_t cf, void *aux)
 {
 
 	return 1;
 }
 
 void
-g2busattach(struct device *parent, struct device *self, void *aux)
+g2busattach(device_t parent, device_t self, void *aux)
 {
-	struct g2bus_softc *sc = (void *) self;
+	struct g2bus_softc *sc = device_private(self);
 	struct g2bus_attach_args ga;
 
+	sc->sc_dev = self;
 	printf("\n");
 
 	TAILQ_INIT(&sc->sc_subdevs);
@@ -88,8 +88,7 @@ g2busprint(void *aux, const char *pnp)
 }
 
 int
-g2bussearch(struct device *parent, struct cfdata *cf,
-	    const int *ldesc, void *aux)
+g2bussearch(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 {
 
 	if (config_match(parent, cf, aux) > 0)
