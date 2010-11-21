@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.250.4.7 2010/11/20 17:41:26 riz Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.250.4.8 2010/11/21 22:06:53 riz Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -139,7 +139,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.250.4.7 2010/11/20 17:41:26 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.250.4.8 2010/11/21 22:06:53 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -1886,6 +1886,7 @@ raidinit(RF_Raid_t *raidPtr)
 
 	disk_init(&rs->sc_dkdev, rs->sc_xname, &rf_dkdriver);
 	disk_attach(&rs->sc_dkdev);
+	disk_blocksize(&rs->sc_dkdev, raidPtr->bytesPerSector);
 
 	/* XXX There may be a weird interaction here between this, and
 	 * protectedSectors, as used in RAIDframe.  */
@@ -1981,7 +1982,7 @@ raidstart(RF_Raid_t *raidPtr)
 		 * partition.. Need to make it absolute to the underlying
 		 * device.. */
 
-		blocknum = bp->b_blkno;
+		blocknum = bp->b_blkno << DEV_BSHIFT >> raidPtr->logBytesPerSector;
 		if (DISKPART(bp->b_dev) != RAW_PART) {
 			pp = &rs->sc_dkdev.dk_label->d_partitions[DISKPART(bp->b_dev)];
 			blocknum += pp->p_offset;
@@ -2242,7 +2243,7 @@ InitBP(struct buf *bp, struct vnode *b_vp, unsigned rw_flag, dev_t dev,
 	bp->b_error = 0;
 	bp->b_dev = dev;
 	bp->b_data = bf;
-	bp->b_blkno = startSect;
+	bp->b_blkno = startSect << logBytesPerSector >> DEV_BSHIFT;
 	bp->b_resid = bp->b_bcount;	/* XXX is this right!??!?!! */
 	if (bp->b_bcount == 0) {
 		panic("bp->b_bcount is zero in InitBP!!");
@@ -3093,6 +3094,10 @@ rf_reasonable_label(RF_ComponentLabel_t *clabel)
 void
 rf_print_component_label(RF_ComponentLabel_t *clabel)
 {
+	uint64_t numBlocks = clabel->numBlocks;
+
+	numBlocks |= (uint64_t)clabel->numBlocksHi << 32;
+
 	printf("   Row: %d Column: %d Num Rows: %d Num Columns: %d\n",
 	       clabel->row, clabel->column,
 	       clabel->num_rows, clabel->num_columns);
@@ -3103,9 +3108,8 @@ rf_print_component_label(RF_ComponentLabel_t *clabel)
 	       clabel->clean ? "Yes" : "No", clabel->status );
 	printf("   sectPerSU: %d SUsPerPU: %d SUsPerRU: %d\n",
 	       clabel->sectPerSU, clabel->SUsPerPU, clabel->SUsPerRU);
-	printf("   RAID Level: %c  blocksize: %d numBlocks: %d\n",
-	       (char) clabel->parityConfig, clabel->blockSize,
-	       clabel->numBlocks);
+	printf("   RAID Level: %c  blocksize: %d numBlocks: %"PRIu64"\n",
+	       (char) clabel->parityConfig, clabel->blockSize, numBlocks);
 	printf("   Autoconfig: %s\n", clabel->autoconfigure ? "Yes" : "No" );
 	printf("   Contains root partition: %s\n",
 	       clabel->root_partition ? "Yes" : "No" );
@@ -3226,6 +3230,7 @@ rf_does_it_fit(RF_ConfigSet_t *cset, RF_AutoConfig_t *ac)
 	    (clabel1->maxOutstanding == clabel2->maxOutstanding) &&
 	    (clabel1->blockSize == clabel2->blockSize) &&
 	    (clabel1->numBlocks == clabel2->numBlocks) &&
+	    (clabel1->numBlocksHi == clabel2->numBlocksHi) &&
 	    (clabel1->autoconfigure == clabel2->autoconfigure) &&
 	    (clabel1->root_partition == clabel2->root_partition) &&
 	    (clabel1->last_unit == clabel2->last_unit) &&
@@ -3490,6 +3495,7 @@ raid_init_component_label(RF_Raid_t *raidPtr, RF_ComponentLabel_t *clabel)
 
 	clabel->blockSize = raidPtr->bytesPerSector;
 	clabel->numBlocks = raidPtr->sectorsPerDisk;
+	clabel->numBlocksHi = raidPtr->sectorsPerDisk >> 32;
 
 	/* XXX not portable */
 	clabel->parityConfig = raidPtr->Layout.map->parityConfig;
@@ -3662,7 +3668,12 @@ rf_getdisksize(struct vnode *vp, struct lwp *l, RF_RaidDisk_t *diskPtr)
 
 	error = VOP_IOCTL(vp, DIOCGWEDGEINFO, &dkw, FREAD, l->l_cred);
 	if (error == 0) {
-		diskPtr->blockSize = 512;	/* XXX */
+		struct disk *pdk;
+
+		if ((pdk = disk_find(dkw.dkw_parent)) != NULL)
+			diskPtr->blockSize = DEV_BSIZE << pdk->dk_blkshift;
+		else
+			diskPtr->blockSize = 512;	/* XXX */
 		diskPtr->numBlocks = dkw.dkw_size - rf_protectedSectors;
 		diskPtr->partitionSize = dkw.dkw_size;
 		return 0;

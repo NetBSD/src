@@ -1,4 +1,4 @@
-/*	$NetBSD: raidframevar.h,v 1.12.10.1 2009/12/10 22:59:16 snj Exp $ */
+/*	$NetBSD: raidframevar.h,v 1.12.10.2 2010/11/21 22:06:53 riz Exp $ */
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -471,7 +471,9 @@ typedef struct RF_ComponentLabel_s {
 				 done first, (and would become raid0).
 				 This may be in conflict with last_unit!!?! */
 	                      /* Not currently used. */
-	int future_use2[44];  /* More future expansion */
+	u_int numBlocksHi;    /* The top 32-bits of the numBlocks member. */
+	u_int partitionSizeHi;/* The top 32-bits of the partitionSize member. */
+	int future_use2[42];  /* More future expansion */
 } RF_ComponentLabel_t;
 
 typedef struct RF_SingleComponent_s {
