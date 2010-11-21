@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1524 2010/11/19 06:44:34 dholland Exp $
+#	$NetBSD: mi,v 1.1525 2010/11/21 19:58:03 adam Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3528,6 +3528,7 @@
 ./usr/libdata/debug/usr/libexec/sftp-server.debug	comp-secsh-debug	crypto,debug
 ./usr/libdata/debug/usr/libexec/spellprog.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/libexec/ssh-keysign.debug	comp-secsh-debug	crypto,debug
+./usr/libdata/debug/usr/libexec/ssh-pkcs11-helper.debug	comp-secsh-debug	crypto,debug
 ./usr/libdata/debug/usr/libexec/telnetd.debug	comp-netutil-debug	debug
 ./usr/libdata/debug/usr/libexec/tftp-proxy.debug	comp-pf-debug		pf,debug
 ./usr/libdata/debug/usr/libexec/tftpd.debug	comp-netutil-debug	debug

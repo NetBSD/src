@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1252 2010/11/15 23:10:52 pooka Exp $
+# $NetBSD: mi,v 1.1253 2010/11/21 19:58:04 adam Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2673,6 +2673,7 @@
 ./usr/share/man/cat8/spray.0			man-rpcutil-catman	.cat
 ./usr/share/man/cat8/sprayd.0			man-rpcserver-catman	.cat
 ./usr/share/man/cat8/ssh-keysign.0		man-secsh-catman	crypto,.cat
+./usr/share/man/cat8/ssh-pkcs11-helper.0	man-secsh-catman	crypto,.cat
 ./usr/share/man/cat8/sshd.0			man-secsh-catman	crypto,.cat
 ./usr/share/man/cat8/statd.0			man-nfsserver-catman	.cat
 ./usr/share/man/cat8/statmsg.0			man-obsolete		obsolete
@@ -5103,6 +5104,7 @@
 ./usr/share/man/html8/spray.html		man-rpcutil-htmlman	html
 ./usr/share/man/html8/sprayd.html		man-rpcserver-htmlman	html
 ./usr/share/man/html8/ssh-keysign.html		man-secsh-htmlman	crypto,html
+./usr/share/man/html8/ssh-pkcs11-helper.html	man-secsh-htmlman	crypto,html
 ./usr/share/man/html8/sshd.html			man-secsh-htmlman	crypto,html
 ./usr/share/man/html8/statd.html		man-nfsserver-htmlman	html
 ./usr/share/man/html8/stdethers.html		man-nis-htmlman		yp,html
@@ -7853,6 +7855,7 @@
 ./usr/share/man/man8/spray.8			man-rpcutil-man		.man
 ./usr/share/man/man8/sprayd.8			man-rpcserver-man	.man
 ./usr/share/man/man8/ssh-keysign.8		man-secsh-man		crypto,.man
+./usr/share/man/man8/ssh-pkcs11-helper.8	man-secsh-man		crypto,.man
 ./usr/share/man/man8/sshd.8			man-secsh-man		crypto,.man
 ./usr/share/man/man8/statd.8			man-nfsserver-man	.man
 ./usr/share/man/man8/statmsg.8			man-obsolete		obsolete

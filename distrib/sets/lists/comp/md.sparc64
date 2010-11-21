@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.68 2010/11/04 21:15:55 pooka Exp $
+# $NetBSD: md.sparc64,v 1.69 2010/11/21 19:58:03 adam Exp $
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/sparc				comp-c-include
 ./usr/include/sparc/_G_config.h			comp-obsolete		obsolete
@@ -709,7 +709,7 @@
 ./usr/libdata/debug/usr/lib/sparc/libskey.so.2.0.debug			comp-compat-shlib	compat,pic,debug,skey
 ./usr/libdata/debug/usr/lib/sparc/libsl.so.4.0.debug			comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libss.so.6.0.debug			comp-compat-shlib	compat,pic,debug
-./usr/libdata/debug/usr/lib/sparc/libssh.so.15.0.debug			comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/sparc/libssh.so.15.1.debug			comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libssl.so.8.1.debug			comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libstdc++.so.7.0.debug		comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libterminfo.so.1.0.debug		comp-compat-shlib	compat,pic,debug
