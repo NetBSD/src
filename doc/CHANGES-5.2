@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.2,v 1.1.2.17 2010/11/21 18:50:49 riz Exp $
+# $NetBSD: CHANGES-5.2,v 1.1.2.18 2010/11/21 19:41:32 riz Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -672,4 +672,15 @@ sys/dev/dkwedge/dk.c				1.57 via patch
 
 	Avoid a lockdebug panic for dk(4) on raid(4).
 	[bouyer, ticket #1435]
+
+sys/dev/pci/ahcisata_pci.c			1.22 via patch
+
+	Add NVIDIA MCP77 to the quirk table, so ahcisata will attach when the
+	BIOS is set to 'RAID' mode.
+	[jmcneill, ticket #1437]
+
+share/man/man4/ath.4				1.28 via patch
+
+	Remove AR9280 and AR9285 from the supported chips list.
+	[jmcneill, ticket #1438]
 
