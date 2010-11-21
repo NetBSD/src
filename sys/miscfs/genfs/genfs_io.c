@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.36.2.57 2010/11/21 05:19:56 uebayasi Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.36.2.58 2010/11/21 06:46:15 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.36.2.57 2010/11/21 05:19:56 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.36.2.58 2010/11/21 06:46:15 uebayasi Exp $");
 
 #include "opt_xip.h"
 
@@ -50,7 +50,6 @@ __KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.36.2.57 2010/11/21 05:19:56 uebayasi 
 #include <sys/kauth.h>
 #include <sys/fstrans.h>
 #include <sys/buf.h>
-#include <sys/once.h>
 
 #include <miscfs/genfs/genfs.h>
 #include <miscfs/genfs/genfs_node.h>
@@ -711,9 +710,8 @@ genfs_getpages_io_read_bio_loop()
 		    bp, offset, bp->b_bcount, bp->b_blkno);
 
 		VOP_STRATEGY(devvp, bp);
-	    }
+	    } else {
 #ifdef XIP
-	    else {
 		/*
 		 * XIP page metadata assignment
 		 * - Unallocated block is redirected to the dedicated zero'ed
@@ -744,8 +742,8 @@ genfs_getpages_io_read_bio_loop()
 			    ridx + pidx + i, (long)pg->phys_addr, pg, 0);
 			pgs[ridx + pidx + i] = pg;
 		}
-	    }
 #endif
+	    }
 	}
 
 loopdone:
@@ -899,7 +897,6 @@ out:
 		}
 	}
 	mutex_exit(&uvm_pageqlock);
-
 	if (memwrite) {
 		genfs_markdirty(vp);
 	}
@@ -923,9 +920,7 @@ out:
 		pg->uobject = &vp->v_uobj;
 	}
     } /* xip */
-
 	mutex_exit(&uobj->vmobjlock);
-
 	if (ap->a_m != NULL) {
 		memcpy(ap->a_m, &pgs[ridx],
 		    orignmempages * sizeof(struct vm_page *));
