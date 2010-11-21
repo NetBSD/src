@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: makerumpmanpages.sh,v 1.9 2010/03/31 14:45:59 pooka Exp $
+#	$NetBSD: makerumpmanpages.sh,v 1.10 2010/11/21 19:29:01 pooka Exp $
 #
 
 IFS=' '
@@ -9,7 +9,7 @@ MANTMPL=".\\\"	\$NetBSD\$"'
 .\"	WARNING: GENERATED FILE, DO NOT EDIT
 .\"	INSTEAD, EDIT makerumpmanpages.sh AND REGEN
 .\"
-.\" Copyright (c) 2008 Antti Kantee.  All rights reserved.
+.\" Copyright (c) 2008-2010 Antti Kantee.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -32,7 +32,7 @@ MANTMPL=".\\\"	\$NetBSD\$"'
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd March 31, 2010
+.Dd November 21, 2010
 .Dt RUMP_XXXFSXXX 8
 .Os
 .Sh NAME
@@ -44,8 +44,8 @@ MANTMPL=".\\\"	\$NetBSD\$"'
 .Pp
 .Nm
 .Op options
-.Ar special
-.Ar node
+.Ar image
+.Ar mountpoint
 .Sh DESCRIPTION
 .Em NOTE!
 This manual page has been generated from a common source shared between all
@@ -69,19 +69,37 @@ As opposed to
 does not use file system code within the kernel and therefore does
 not require kernel support except
 .Xr puffs 4 .
-Apart from a minor speed penalty (starting from 10% and depending
-on the workload and file system in question), there is no difference
-to using in-kernel code.
+Apart from a minor speed penalty there is no downside with respect to
+in-kernel code.
 .Pp
-In case mounting a file system image from a regular file,
 .Nm
-does not require the use of
+does not require using
 .Xr vnconfig 8
-unlike kernel file systems.
-Instead, the image path can be directly passed as the special file path.
-The exception is if the image contains a disklabel.
-In this case vnconfig is required to resolve the start offset for the
-correct partition within the image.
+for mounts from regular files and the file path can be passed
+directly as the
+.Ar image
+parameter.
+In fact, the use of
+.Xr vnconfig 8
+is discouraged, since it is unable to properly deal with images on
+sparse files.
+.Pp
+In case the image contains multiple partitions, the desired partition
+must be indicated by appending the token
+.Dq %DISKLABEL:p%
+to the
+.Ar image
+path.
+The letter
+.Dq p
+specifies the partition as obtained via
+.Xr disklabel 8 .
+For example, to mount partition
+.Dq e
+from image
+.Pa /tmp/wd0.img ,
+use
+.Dq /tmp/wd0.img%DISKLABEL:e% .
 .Pp
 It is recommended that untrusted file system images be mounted with
 .Nm
@@ -122,8 +140,7 @@ for a full description of the available command line options.
 The
 .Nm
 utility first appeared in
-.Nx 5.0 .
-It is currently considered experimental.'
+.Nx 5.0 .'
 
 # generate the manual pages
 #
