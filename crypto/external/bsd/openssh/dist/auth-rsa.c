@@ -1,4 +1,4 @@
-/*	$NetBSD: auth-rsa.c,v 1.3 2010/11/21 18:29:48 adam Exp $	*/
+/*	$NetBSD: auth-rsa.c,v 1.4 2010/11/21 18:59:04 adam Exp $	*/
 /* $OpenBSD: auth-rsa.c,v 1.78 2010/07/13 23:13:16 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -16,7 +16,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth-rsa.c,v 1.3 2010/11/21 18:29:48 adam Exp $");
+__RCSID("$NetBSD: auth-rsa.c,v 1.4 2010/11/21 18:59:04 adam Exp $");
 #include <sys/types.h>
 #include <sys/stat.h>
 
@@ -177,10 +177,96 @@ auth_rsa_key_allowed(struct passwd *pw, BIGNUM *client_n, Key **rkey)
 	FILE *f;
 	u_long linenum = 0;
 	Key *key;
+#ifdef WITH_LDAP_PUBKEY
+	ldap_key_t * k;
+	unsigned int i = 0;
+#endif
 
 	/* Temporarily use the user's uid. */
 	temporarily_use_uid(pw);
 
+#ifdef WITH_LDAP_PUBKEY
+	/* here is the job */
+	key = key_new(KEY_RSA1);
+
+	if (options.lpk.on) {
+	    debug("[LDAP] trying LDAP first uid=%s", pw->pw_name);
+	    if ( ldap_ismember(&options.lpk, pw->pw_name) > 0) {
+		if ( (k = ldap_getuserkey(&options.lpk, pw->pw_name)) != NULL) {
+		    for (i = 0 ; i < k->num ; i++) {
+			char *cp, *options = NULL;
+
+			for (cp = k->keys[i]->bv_val; *cp == ' ' || *cp == '\t'; cp++)
+			    ;
+			if (!*cp || *cp == '\n' || *cp == '#')
+			    continue;
+
+			/*
+			* Check if there are options for this key, and if so,
+			* save their starting address and skip the option part
+			* for now.  If there are no options, set the starting
+			* address to NULL.
+			 */
+			if (*cp < '0' || *cp > '9') {
+			    int quoted = 0;
+			    options = cp;
+			    for (; *cp && (quoted || (*cp != ' ' && *cp != '\t')); cp++) {
+				if (*cp == '\\' && cp[1] == '"')
+				    cp++;	/* Skip both */
+				else if (*cp == '"')
+				    quoted = !quoted;
+			    }
+			} else
+			    options = NULL;
+
+			/* Parse the key from the line. */
+			if (hostfile_read_key(&cp, &bits, key) == 0) {
+			    debug("[LDAP] line %d: non ssh1 key syntax", i);
+			    continue;
+			}
+			/* cp now points to the comment part. */
+
+			/* Check if the we have found the desired key (identified by its modulus). */
+			if (BN_cmp(key->rsa->n, client_n) != 0)
+			    continue;
+
+			/* check the real bits  */
+			if (bits != (unsigned int)BN_num_bits(key->rsa->n))
+			    logit("[LDAP] Warning: ldap, line %lu: keysize mismatch: "
+				    "actual %d vs. announced %d.", (unsigned long)i, BN_num_bits(key->rsa->n), bits);
+
+			/* We have found the desired key. */
+			/*
+			* If our options do not allow this key to be used,
+			* do not send challenge.
+			 */
+			if (!auth_parse_options(pw, options, "[LDAP]", (unsigned long) i))
+			    continue;
+
+			/* break out, this key is allowed */
+			allowed = 1;
+
+			/* add the return stuff etc... */
+			/* Restore the privileged uid. */
+			restore_uid();
+
+			/* return key if allowed */
+			if (allowed && rkey != NULL)
+			    *rkey = key;
+			else
+			    key_free(key);
+
+			ldap_keys_free(k);
+			return (allowed);
+		    }
+		} else {
+		    logit("[LDAP] no keys found for '%s'!", pw->pw_name);
+		}
+	    } else {
+		logit("[LDAP] '%s' is not in '%s'", pw->pw_name, options.lpk.sgroup);
+	    }
+	}
+#endif
 	/* The authorized keys. */
 	file = authorized_keys_file(pw);
 	debug("trying public RSA key file %s", file);

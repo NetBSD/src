@@ -1,4 +1,4 @@
-/*	$NetBSD: kex.c,v 1.4 2010/11/21 18:29:48 adam Exp $	*/
+/*	$NetBSD: kex.c,v 1.5 2010/11/21 18:59:04 adam Exp $	*/
 /* $OpenBSD: kex.c,v 1.82 2009/10/24 11:13:54 andreas Exp $ */
 /*
  * Copyright (c) 2000, 2001 Markus Friedl.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: kex.c,v 1.4 2010/11/21 18:29:48 adam Exp $");
+__RCSID("$NetBSD: kex.c,v 1.5 2010/11/21 18:59:04 adam Exp $");
 #include <sys/param.h>
 
 #include <signal.h>
@@ -56,6 +56,7 @@ static void kex_kexinit_finish(Kex *);
 static void kex_choose_conf(Kex *);
 
 /* put algorithm proposal into buffer */
+/* used in sshconnect.c as well as kex.c */
 void
 kex_prop2buf(Buffer *b, char *proposal[PROPOSAL_MAX])
 {

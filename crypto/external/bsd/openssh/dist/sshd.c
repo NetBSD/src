@@ -1,4 +1,4 @@
-/*	$NetBSD: sshd.c,v 1.4 2010/11/21 18:29:49 adam Exp $	*/
+/*	$NetBSD: sshd.c,v 1.5 2010/11/21 18:59:04 adam Exp $	*/
 /* $OpenBSD: sshd.c,v 1.377 2010/08/16 04:06:06 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -44,7 +44,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: sshd.c,v 1.4 2010/11/21 18:29:49 adam Exp $");
+__RCSID("$NetBSD: sshd.c,v 1.5 2010/11/21 18:59:04 adam Exp $");
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -115,6 +115,10 @@ __RCSID("$NetBSD: sshd.c,v 1.4 2010/11/21 18:29:49 adam Exp $");
 int allow_severity = LOG_INFO;
 int deny_severity = LOG_WARNING;
 #endif /* LIBWRAP */
+
+#ifdef WITH_LDAP_PUBKEY
+#include "ldapauth.h"
+#endif
 
 #ifndef O_NOCTTY
 #define O_NOCTTY	0
@@ -1487,6 +1491,16 @@ main(int ac, char **av)
 		exit(1);
 	}
 
+#ifdef WITH_LDAP_PUBKEY
+    /* ldap_options_print(&options.lpk); */
+    /* XXX initialize/check ldap connection and set *LD */
+    if (options.lpk.on) {
+        if (options.lpk.l_conf && (ldap_parse_lconf(&options.lpk) < 0) )
+            error("[LDAP] could not parse %s", options.lpk.l_conf);
+        if (ldap_connect(&options.lpk) < 0)
+            error("[LDAP] could not initialize ldap connection");
+    }
+#endif
 	debug("sshd version %.100s", SSH_VERSION);
 
 	/* load private host keys */

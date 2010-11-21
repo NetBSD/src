@@ -1,4 +1,4 @@
-/*	$NetBSD: roaming_common.c,v 1.3 2010/11/21 18:29:49 adam Exp $	*/
+/*	$NetBSD: roaming_common.c,v 1.4 2010/11/21 18:59:04 adam Exp $	*/
 /* $OpenBSD: roaming_common.c,v 1.8 2010/01/12 00:59:29 djm Exp $ */
 /*
  * Copyright (c) 2004-2009 AppGate Network Security AB
@@ -16,7 +16,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #include "includes.h"
-__RCSID("$NetBSD: roaming_common.c,v 1.3 2010/11/21 18:29:49 adam Exp $");
+__RCSID("$NetBSD: roaming_common.c,v 1.4 2010/11/21 18:59:04 adam Exp $");
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -144,6 +144,7 @@ roaming_write(int fd, const void *buf, size_t count, int *cont)
 		if (out_buf_size > 0)
 			buf_append(buf, ret);
 	}
+#ifdef ROAMING_RECONNECT
 	if (out_buf_size > 0 &&
 	    (ret == 0 || (ret == -1 && errno == EPIPE))) {
 		if (wait_for_roaming_reconnect() != 0) {
@@ -154,6 +155,7 @@ roaming_write(int fd, const void *buf, size_t count, int *cont)
 			errno = EAGAIN;
 		}
 	}
+#endif
 	return ret;
 }
 
@@ -172,8 +174,10 @@ roaming_read(int fd, void *buf, size_t count, int *cont)
 		debug("roaming_read failed for %d  ret=%ld  errno=%d",
 		    fd, (long)ret, errno);
 		ret = 0;
+#ifdef ROAMING_RECONNECT
 		if (wait_for_roaming_reconnect() == 0)
 			*cont = 1;
+#endif
 	}
 	return ret;
 }
