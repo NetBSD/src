@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.2,v 1.1.2.21 2010/11/21 21:55:09 riz Exp $
+# $NetBSD: CHANGES-5.2,v 1.1.2.22 2010/11/21 22:10:47 riz Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -759,4 +759,29 @@ sys/kern/subr_disk.c				1.100
 
 	Fix an issue with >2TB disks.
 	[mrg, ticket #1463]
+
+sbin/gpt/gpt.c					1.11
+
+	Ignore GPT errors from the end of the disk if the label at the
+	beginning of the disk was not found.  PR#43105
+	[christos, ticket #1464]
+
+dist/nvi/vi/v_search.c				1.3
+
+	Fix nvi ^A handling.  PR#44006
+	[christos, ticket #1467]
+
+sys/dev/raidframe/raidframevar.h		1.14 via patch
+sys/dev/raidframe/rf_copyback.c			1.43 via patch
+sys/dev/raidframe/rf_disks.c			1.74 via patch
+sys/dev/raidframe/rf_netbsdkintf.c		1.275 via patch
+sys/dev/raidframe/rf_reconstruct.c		1.109 via patch
+
+	Add support for >2TB raid devices.
+	[mrg, ticket #1468]
+
+dist/pppd/pppd/ccp.h				1.2
+
+	Fix MPPE in pppd.  PR#42390
+	[dholland, ticket #1469]
 
