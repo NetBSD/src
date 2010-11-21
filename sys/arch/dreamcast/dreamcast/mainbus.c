@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.10 2010/11/21 17:59:36 tsutsui Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.11 2010/11/21 18:53:56 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -27,18 +27,18 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.10 2010/11/21 17:59:36 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.11 2010/11/21 18:53:56 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <machine/autoconf.h>
 
-int mainbus_match(device_t, cfdata_t, void *);
-void mainbus_attach(device_t, device_t, void *);
-int mainbus_print(void *, const char *);
+static int mainbus_match(device_t, cfdata_t, void *);
+static void mainbus_attach(device_t, device_t, void *);
+static int mainbus_print(void *, const char *);
 
-struct mainbus_attach_args mainbusdevs[] = {
+static struct mainbus_attach_args mainbusdevs[] = {
 	{ "cpu" },
 	{ "shb" },
 	{ NULL }	/* terminator */
