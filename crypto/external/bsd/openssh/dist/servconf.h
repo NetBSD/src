@@ -1,4 +1,4 @@
-/*	$NetBSD: servconf.h,v 1.3 2010/11/21 18:29:49 adam Exp $	*/
+/*	$NetBSD: servconf.h,v 1.4 2010/11/21 18:59:04 adam Exp $	*/
 /* $OpenBSD: servconf.h,v 1.93 2010/05/07 11:30:30 djm Exp $ */
 
 /*
@@ -16,6 +16,10 @@
 
 #ifndef SERVCONF_H
 #define SERVCONF_H
+
+#ifdef WITH_LDAP_PUBKEY
+#include "ldapauth.h"
+#endif
 
 #define MAX_PORTS		256	/* Max # ports. */
 
@@ -163,6 +167,9 @@ typedef struct {
 	char   *adm_forced_command;
 
 	int	permit_tun;
+#ifdef WITH_LDAP_PUBKEY
+        ldap_opt_t lpk;
+#endif
 
 	int	num_permitted_opens;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: session.c,v 1.4 2010/11/21 18:29:49 adam Exp $	*/
+/*	$NetBSD: session.c,v 1.5 2010/11/21 18:59:04 adam Exp $	*/
 /* $OpenBSD: session.c,v 1.256 2010/06/25 07:20:04 djm Exp $ */
 /*
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -35,7 +35,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: session.c,v 1.4 2010/11/21 18:29:49 adam Exp $");
+__RCSID("$NetBSD: session.c,v 1.5 2010/11/21 18:59:04 adam Exp $");
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/un.h>
@@ -2196,7 +2196,7 @@ session_set_fds(Session *s, int fdin, int fdout, int fderr, int ignore_fderr,
 	else 
 		channel_set_fds(s->chanid,
 		    fdout, fdin, fderr,
-	            fderr == -1 ? CHAN_EXTENDED_IGNORE : CHAN_EXTENDED_READ,
+	            ignore_fderr ? CHAN_EXTENDED_IGNORE : CHAN_EXTENDED_READ,
 		    1, is_tty, options.hpn_buffer_size);
 }
 

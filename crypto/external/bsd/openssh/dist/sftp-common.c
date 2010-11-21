@@ -1,4 +1,4 @@
-/*	$NetBSD: sftp-common.c,v 1.3 2010/11/21 18:29:49 adam Exp $	*/
+/*	$NetBSD: sftp-common.c,v 1.4 2010/11/21 18:59:04 adam Exp $	*/
 /* $OpenBSD: sftp-common.c,v 1.23 2010/01/15 09:24:23 markus Exp $ */
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: sftp-common.c,v 1.3 2010/11/21 18:29:49 adam Exp $");
+__RCSID("$NetBSD: sftp-common.c,v 1.4 2010/11/21 18:59:04 adam Exp $");
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/param.h>
@@ -46,6 +46,7 @@ __RCSID("$NetBSD: sftp-common.c,v 1.3 2010/11/21 18:29:49 adam Exp $");
 
 #include "sftp.h"
 #include "sftp-common.h"
+#include "fmt_scaled.h"
 
 /* Clear contents of attributes structure */
 void
@@ -191,7 +192,7 @@ ls_file(const char *name, const struct stat *st, int remote, int si_units)
 {
 	int ulen, glen, sz = 0;
 	struct tm *ltime = localtime(&st->st_mtime);
-	char *user, *group;
+	const char *user, *group;
 	char buf[1024], mode[11+1], tbuf[12+1], ubuf[11+1], gbuf[11+1];
 	char sbuf[FMT_SCALED_STRSIZE];
 

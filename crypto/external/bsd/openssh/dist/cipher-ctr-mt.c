@@ -86,12 +86,12 @@ thread_loop_stats(void *x)
 			s->fills, s->skips, s->waits);
 }
 
- #define STATS_STRUCT(s)	struct thread_stats s;
- #define STATS_INIT(s)		memset(&s, 0, sizeof(s))
- #define STATS_FILL(s)		s.fills++
- #define STATS_SKIP(s)		s.skips++
- #define STATS_WAIT(s)		s.waits++
- #define STATS_DRAIN(s)		s.drains++
+ #define STATS_STRUCT(s)	struct thread_stats s
+ #define STATS_INIT(s)		{ memset(&s, 0, sizeof(s)); }
+ #define STATS_FILL(s)		{ s.fills++; }
+ #define STATS_SKIP(s)		{ s.skips++; }
+ #define STATS_WAIT(s)		{ s.waits++; }
+ #define STATS_DRAIN(s)		{ s.drains++; }
 #else
  #define STATS_STRUCT(s)
  #define STATS_INIT(s)
@@ -126,7 +126,7 @@ struct ssh_aes_ctr_ctx
 {
 	struct kq	q[NUMKQ];
 	AES_KEY		aes_ctx;
-	STATS_STRUCT(stats)
+	STATS_STRUCT(stats);
 	u_char		aes_counter[AES_BLOCK_SIZE];
 	pthread_t	tid[CIPHER_THREADS];
 	int		state;
@@ -184,7 +184,7 @@ static void *
 thread_loop(void *x)
 {
 	AES_KEY key;
-	STATS_STRUCT(stats)
+	STATS_STRUCT(stats);
 	struct ssh_aes_ctr_ctx *c = x;
 	struct kq *q;
 	int i;
@@ -470,4 +470,4 @@ evp_aes_ctr_mt(void)
 #endif
 	return (&aes_ctr);
 }
-#endif
+#endif /* AES_CTR_MT */

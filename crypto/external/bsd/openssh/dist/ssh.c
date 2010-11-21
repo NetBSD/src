@@ -1,4 +1,4 @@
-/*	$NetBSD: ssh.c,v 1.4 2010/11/21 18:29:49 adam Exp $	*/
+/*	$NetBSD: ssh.c,v 1.5 2010/11/21 18:59:04 adam Exp $	*/
 /* $OpenBSD: ssh.c,v 1.348 2010/08/16 04:06:06 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -42,7 +42,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: ssh.c,v 1.4 2010/11/21 18:29:49 adam Exp $");
+__RCSID("$NetBSD: ssh.c,v 1.5 2010/11/21 18:59:04 adam Exp $");
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -1386,6 +1386,7 @@ ssh_session2_open(void)
 
 	packetmax = CHAN_SES_PACKET_DEFAULT;
 	if (tty_flag) {
+		window = 4*CHAN_SES_PACKET_DEFAULT;
 		window >>= 1;
 		packetmax >>= 1;
 	}

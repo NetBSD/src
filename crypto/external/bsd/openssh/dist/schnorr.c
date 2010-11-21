@@ -1,4 +1,4 @@
-/*	$NetBSD: schnorr.c,v 1.3 2009/12/27 01:40:47 christos Exp $	*/
+/*	$NetBSD: schnorr.c,v 1.4 2010/11/21 18:59:04 adam Exp $	*/
 /* $OpenBSD: schnorr.c,v 1.3 2009/03/05 07:18:19 djm Exp $ */
 /*
  * Copyright (c) 2008 Damien Miller.  All rights reserved.
@@ -25,6 +25,8 @@
  *
  * http://grouper.ieee.org/groups/1363/Research/contributions/hao-ryan-2008.pdf
  */
+#include "includes.h"
+__RCSID("$NetBSD: schnorr.c,v 1.4 2010/11/21 18:59:04 adam Exp $");
 
 #include <sys/types.h>
 

@@ -1,4 +1,4 @@
-#	$NetBSD: sshd_config,v 1.4 2010/11/21 18:29:49 adam Exp $
+#	$NetBSD: sshd_config,v 1.5 2010/11/21 18:59:04 adam Exp $
 #	$OpenBSD: sshd_config,v 1.81 2009/10/08 14:03:41 markus Exp $
 
 # This is the sshd server system-wide configuration file.  See
@@ -97,6 +97,22 @@ UsePam yes
 
 # no default banner path
 #Banner none
+
+# here are the new patched ldap related tokens
+# entries in your LDAP must have posixAccount & ldapPublicKey objectclass
+#UseLPK yes
+#LpkLdapConf /etc/ldap.conf
+#LpkServers  ldap://10.1.7.1/ ldap://10.1.7.2/
+#LpkUserDN   ou=users,dc=phear,dc=org
+#LpkGroupDN  ou=groups,dc=phear,dc=org
+#LpkBindDN cn=Manager,dc=phear,dc=org
+#LpkBindPw secret
+#LpkServerGroup mail
+#LpkFilter (hostAccess=master.phear.org)
+#LpkForceTLS no
+#LpkSearchTimelimit 3
+#LpkBindTimelimit 3
+#LpkPubKeyAttr sshPublicKey
 
 # override default of no subsystems
 Subsystem	sftp	/usr/libexec/sftp-server

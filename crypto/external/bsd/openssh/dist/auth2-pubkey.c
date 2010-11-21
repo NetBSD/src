@@ -1,4 +1,4 @@
-/*	$NetBSD: auth2-pubkey.c,v 1.3 2010/11/21 18:29:48 adam Exp $	*/
+/*	$NetBSD: auth2-pubkey.c,v 1.4 2010/11/21 18:59:04 adam Exp $	*/
 /* $OpenBSD: auth2-pubkey.c,v 1.26 2010/06/29 23:16:46 djm Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth2-pubkey.c,v 1.3 2010/11/21 18:29:48 adam Exp $");
+__RCSID("$NetBSD: auth2-pubkey.c,v 1.4 2010/11/21 18:59:04 adam Exp $");
 #include <sys/types.h>
 #include <sys/stat.h>
 
@@ -59,6 +59,10 @@ __RCSID("$NetBSD: auth2-pubkey.c,v 1.3 2010/11/21 18:29:48 adam Exp $");
 #include "misc.h"
 #include "authfile.h"
 #include "match.h"
+
+#ifdef WITH_LDAP_PUBKEY
+#include "ldapauth.h"
+#endif
 
 /* import */
 extern ServerOptions options;
@@ -266,10 +270,79 @@ user_key_allowed2(struct passwd *pw, Key *key, char *file)
 	u_long linenum = 0;
 	Key *found;
 	char *fp;
+#ifdef WITH_LDAP_PUBKEY
+	ldap_key_t * k;
+	unsigned int i = 0;
+#endif
 
 	/* Temporarily use the user's uid. */
 	temporarily_use_uid(pw);
 
+#ifdef WITH_LDAP_PUBKEY
+	found_key = 0;
+	/* allocate a new key type */
+	found = key_new(key->type);
+ 
+	/* first check if the options is enabled, then try.. */
+	if (options.lpk.on) {
+	    debug("[LDAP] trying LDAP first uid=%s",pw->pw_name);
+	    if (ldap_ismember(&options.lpk, pw->pw_name) > 0) {
+		if ((k = ldap_getuserkey(&options.lpk, pw->pw_name)) != NULL) {
+		    /* Skip leading whitespace, empty and comment lines. */
+		    for (i = 0 ; i < k->num ; i++) {
+			/* dont forget if multiple keys to reset options */
+			char *cp, *options = NULL;
+
+			for (cp = (char *)k->keys[i]->bv_val; *cp == ' ' || *cp == '\t'; cp++)
+			    ;
+			if (!*cp || *cp == '\n' || *cp == '#')
+			    continue;
+
+			if (key_read(found, &cp) != 1) {
+			    /* no key?  check if there are options for this key */
+			    int quoted = 0;
+			    debug2("[LDAP] user_key_allowed: check options: '%s'", cp);
+			    options = cp;
+			    for (; *cp && (quoted || (*cp != ' ' && *cp != '\t')); cp++) {
+				if (*cp == '\\' && cp[1] == '"')
+				    cp++;	/* Skip both */
+				else if (*cp == '"')
+				    quoted = !quoted;
+			    }
+			    /* Skip remaining whitespace. */
+			    for (; *cp == ' ' || *cp == '\t'; cp++)
+				;
+			    if (key_read(found, &cp) != 1) {
+				debug2("[LDAP] user_key_allowed: advance: '%s'", cp);
+				/* still no key?  advance to next line*/
+				continue;
+			    }
+			}
+
+			if (key_equal(found, key) &&
+				auth_parse_options(pw, options, file, linenum) == 1) {
+			    found_key = 1;
+			    debug("[LDAP] matching key found");
+			    fp = key_fingerprint(found, SSH_FP_MD5, SSH_FP_HEX);
+			    verbose("[LDAP] Found matching %s key: %s", key_type(found), fp);
+
+			    /* restoring memory */
+			    ldap_keys_free(k);
+			    xfree(fp);
+			    restore_uid();
+			    key_free(found);
+			    return found_key;
+			    break;
+			}
+		    }/* end of LDAP for() */
+		} else {
+		    logit("[LDAP] no keys found for '%s'!", pw->pw_name);
+		}
+	    } else {
+		logit("[LDAP] '%s' is not in '%s'", pw->pw_name, options.lpk.sgroup);
+	    }
+	}
+#endif
 	debug("trying public key file %s", file);
 	f = auth_openkeyfile(file, pw, options.strict_modes);
 

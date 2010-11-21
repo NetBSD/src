@@ -1,4 +1,4 @@
-/*	$NetBSD: jpake.c,v 1.4 2010/11/21 18:29:48 adam Exp $	*/
+/*	$NetBSD: jpake.c,v 1.5 2010/11/21 18:59:04 adam Exp $	*/
 /* $OpenBSD: jpake.c,v 1.4 2010/07/13 23:13:16 djm Exp $ */
 /*
  * Copyright (c) 2008 Damien Miller.  All rights reserved.
@@ -25,6 +25,8 @@
  *
  * http://grouper.ieee.org/groups/1363/Research/contributions/hao-ryan-2008.pdf
  */
+#include "includes.h"
+__RCSID("$NetBSD: jpake.c,v 1.5 2010/11/21 18:59:04 adam Exp $");
 
 #include <sys/types.h>
 

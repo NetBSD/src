@@ -1,4 +1,4 @@
-.\"	$NetBSD: sshd_config.5,v 1.6 2010/11/21 18:29:49 adam Exp $
+.\"	$NetBSD: sshd_config.5,v 1.7 2010/11/21 18:59:04 adam Exp $
 .\"  -*- nroff -*-
 .\"
 .\" Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -1070,6 +1070,62 @@ Specifies the full pathname of the
 program.
 The default is
 .Pa /usr/X11R6/bin/xauth .
+.It Cm UseLPK
+Specifies whether LDAP public key retrieval must be used or not. It allow
+an easy centralisation of public keys within an LDAP directory. The argument must be
+.Dq yes
+or
+.Dq no .
+.It Cm LpkLdapConf
+Specifies whether LDAP Public keys should parse the specified ldap.conf file
+instead of sshd_config Tokens. The argument must be a valid path to an ldap.conf
+file like
+.Pa /etc/ldap.conf
+.It Cm LpkServers
+Specifies LDAP one or more [:space:] separated server's url the following form may be used:
+.Pp
+LpkServers ldaps://127.0.0.1 ldap://127.0.0.2 ldap://127.0.0.3
+.It Cm LpkUserDN
+Specifies the LDAP user DN.
+.Pp
+LpkUserDN ou=users,dc=phear,dc=org
+.It Cm LpkGroupDN
+Specifies the LDAP groups DN.
+.Pp
+LpkGroupDN ou=groups,dc=phear,dc=org
+.It Cm LpkBindDN
+Specifies the LDAP bind DN to use if necessary.
+.Pp
+LpkBindDN cn=Manager,dc=phear,dc=org
+.It Cm LpkBindPw
+Specifies the LDAP bind credential. 
+.Pp
+LpkBindPw secret
+.It Cm LpkServerGroup
+Specifies one or more [:space:] separated group the server is part of. 
+.Pp
+LpkServerGroup unix mail prod
+.It Cm LpkFilter
+Specifies an additional LDAP filter to use for finding SSH keys
+.Pp
+LpkFilter (hostAccess=master.phear.org)
+.It Cm LpkForceTLS
+Specifies if the LDAP server connection must be tried, forced or not used. The argument must be 
+.Dq yes
+or
+.Dq no
+or
+.Dq try .
+.It Cm LpkSearchTimelimit
+Sepcifies the search time limit before the search is considered over. value is
+in seconds.
+.Pp
+LpkSearchTimelimit 3
+.It Cm LpkBindTimelimit
+Sepcifies the bind time limit before the connection is considered dead. value is
+in seconds.
+.Pp
+LpkBindTimelimit 3
 .El
 .Sh TIME FORMATS
 .Xr sshd 8

@@ -1,4 +1,4 @@
-/*	$NetBSD: monitor.c,v 1.4 2010/11/21 18:29:48 adam Exp $	*/
+/*	$NetBSD: monitor.c,v 1.5 2010/11/21 18:59:04 adam Exp $	*/
 /* $OpenBSD: monitor.c,v 1.108 2010/07/13 23:13:16 djm Exp $ */
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -27,7 +27,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: monitor.c,v 1.4 2010/11/21 18:29:48 adam Exp $");
+__RCSID("$NetBSD: monitor.c,v 1.5 2010/11/21 18:59:04 adam Exp $");
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/socket.h>
@@ -983,17 +983,6 @@ mm_answer_pam_free_ctx(int sock, Buffer *m)
 	return (sshpam_authok == sshpam_ctxt);
 }
 #endif
-
-static void
-mm_append_debug(Buffer *m)
-{
-	if (auth_debug_init && buffer_len(&auth_debug)) {
-		debug3("%s: Appending debug messages for child", __func__);
-		buffer_append(m, buffer_ptr(&auth_debug),
-		    buffer_len(&auth_debug));
-		buffer_clear(&auth_debug);
-	}
-}
 
 int
 mm_answer_keyallowed(int sock, Buffer *m)
