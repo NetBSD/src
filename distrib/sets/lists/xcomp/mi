@@ -1,4 +1,4 @@
-#	 $NetBSD: mi,v 1.114 2010/11/21 02:43:31 mrg Exp $
+#	 $NetBSD: mi,v 1.115 2010/11/21 06:01:49 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -5169,7 +5169,7 @@
 ./usr/X11R6/man/man3/gluTessVertex.3			-unknown-	.man,x11
 ./usr/X11R6/man/man3/gluUnProject.3			-unknown-	.man,x11
 ./usr/X11R7/bin/freetype-config				-unknown-	xorg
-./usr/X11R7/bin/xft-config				-unknown-	xorg
+./usr/X11R7/bin/xft-config				-unknown-	obsolete
 ./usr/X11R7/include/GL/GLwDrawA.h			-unknown-	xorg
 ./usr/X11R7/include/GL/GLwDrawAP.h			-unknown-	xorg
 ./usr/X11R7/include/GL/GLwMDrawA.h			-unknown-	xorg
@@ -5356,6 +5356,7 @@
 ./usr/X11R7/include/X11/Xmu/StdCmap.h			-unknown-	xorg
 ./usr/X11R7/include/X11/Xmu/StdSel.h			-unknown-	xorg
 ./usr/X11R7/include/X11/Xmu/SysUtil.h			-unknown-	xorg
+./usr/X11R7/include/X11/Xmu/WhitePoint.h		-unknown-	xorg
 ./usr/X11R7/include/X11/Xmu/WidgetNode.h		-unknown-	xorg
 ./usr/X11R7/include/X11/Xmu/WinUtil.h			-unknown-	xorg
 ./usr/X11R7/include/X11/Xmu/Xct.h			-unknown-	xorg
@@ -6500,7 +6501,7 @@
 ./usr/X11R7/lib/pkgconfig/xxf86misc.pc			-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/xxf86vm.pc			-unknown-	xorg
 ./usr/X11R7/man/cat1/mergelib.0				-unknown-	.cat,xorg
-./usr/X11R7/man/cat1/xft-config.0			-unknown-	.cat,xorg
+./usr/X11R7/man/cat1/xft-config.0			-unknown-	obsolete
 ./usr/X11R7/man/cat3/AllPlanes.0			-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/BlackPixelOfScreen.0		-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/DBE.0				-unknown-	.cat,xorg
@@ -7403,7 +7404,7 @@
 ./usr/X11R7/man/cat3/XvVideoNotify.0			-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/libXp.0				-obsolete-	obsolete
 ./usr/X11R7/man/html1/mergelib.html			-unknown-	html,xorg
-./usr/X11R7/man/html1/xft-config.html			-unknown-	html,xorg
+./usr/X11R7/man/html1/xft-config.html			-unknown-	obsolete
 ./usr/X11R7/man/html3/AllPlanes.html			-unknown-	html,xorg
 ./usr/X11R7/man/html3/BlackPixelOfScreen.html		-unknown-	html,xorg
 ./usr/X11R7/man/html3/DBE.html				-unknown-	html,xorg
@@ -8305,7 +8306,7 @@
 ./usr/X11R7/man/html3/XvUngrabPort.html			-unknown-	html,xorg
 ./usr/X11R7/man/html3/XvVideoNotify.html		-unknown-	html,xorg
 ./usr/X11R7/man/html3/libXp.html			-obsolete-	obsolete
-./usr/X11R7/man/man1/xft-config.1			-unknown-	.man,xorg
+./usr/X11R7/man/man1/xft-config.1			-unknown-	obsolete
 ./usr/X11R7/man/man3/AllPlanes.3			-unknown-	.man,xorg
 ./usr/X11R7/man/man3/BlackPixelOfScreen.3		-unknown-	.man,xorg
 ./usr/X11R7/man/man3/DBE.3				-unknown-	.man,xorg
