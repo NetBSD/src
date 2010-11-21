@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_bio.c,v 1.68.2.12 2010/11/04 08:47:38 uebayasi Exp $	*/
+/*	$NetBSD: uvm_bio.c,v 1.68.2.13 2010/11/21 12:42:59 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.68.2.12 2010/11/04 08:47:38 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.68.2.13 2010/11/21 12:42:59 uebayasi Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_ubc.h"
@@ -224,16 +224,20 @@ ubc_init(void)
 
 static inline int
 ubc_fault_page(const struct uvm_faultinfo *ufi, const struct ubc_map *umap,
-    struct vm_page *pg, vm_prot_t prot, vm_prot_t access_type, vaddr_t va)
+    struct uvm_object *uobj, struct vm_page *pg, vm_prot_t prot,
+    vm_prot_t access_type, vaddr_t va)
 {
-	struct uvm_object *uobj;
 	vm_prot_t mask;
 	int error;
 	bool rdonly;
 
-	uobj = pg->uobject;
+	UVMHIST_FUNC("ubc_fault_page"); UVMHIST_CALLED(ubchist);
+
+	KASSERT(pg != NULL);
+	KASSERT(pg == PGO_ZERO || uobj == pg->uobject);
 	KASSERT(mutex_owned(&uobj->vmobjlock));
 
+    if (__predict_true(pg != PGO_ZERO)) {
 	if (pg->flags & PG_WANTED) {
 		wakeup(pg);
 	}
@@ -264,16 +268,28 @@ ubc_fault_page(const struct uvm_faultinfo *ufi, const struct ubc_map *umap,
 			pg = newpg;
 		}
 	}
+    }
 
 	/*
 	 * Note that a page whose backing store is partially allocated
 	 * is marked as PG_RDONLY.
 	 */
 
-	KASSERT((pg->flags & PG_RDONLY) == 0 ||
+	KASSERT(pg == PGO_ZERO ||
+	    (pg->flags & PG_RDONLY) == 0 ||
 	    (access_type & VM_PROT_WRITE) == 0 ||
 	    pg->offset < umap->writeoff ||
 	    pg->offset + PAGE_SIZE > umap->writeoff + umap->writelen);
+
+	if (__predict_false(pg == PGO_ZERO)) {
+		UVMHIST_LOG(ubchist, "replacing PGO_ZERO with zeropage",0,0,0,0);
+		pg = uvm_page_zeropage_alloc();
+		UVMHIST_LOG(ubchist,
+		    "PGO_ZERO replaced with pg %p (phys_addr=0x%lx)",
+		    pg, VM_PAGE_TO_PHYS(pg), 0, 0);
+		KASSERT(pg != NULL);
+		KASSERT((pg->flags & PG_RDONLY) != 0);
+	}
 
 	rdonly = ((access_type & VM_PROT_WRITE) == 0 &&
 	    (pg->flags & PG_RDONLY) != 0) ||
@@ -283,6 +299,7 @@ ubc_fault_page(const struct uvm_faultinfo *ufi, const struct ubc_map *umap,
 	error = pmap_enter(ufi->orig_map->pmap, va, VM_PAGE_TO_PHYS(pg),
 	    prot & mask, PMAP_CANFAIL | (access_type & mask));
 
+    if (__predict_true(pg != uvm_page_zeropage)) {
 	if (__predict_true((pg->flags & PG_DEVICE) == 0)) {
 		mutex_enter(&uvm_pageqlock);
 		uvm_pageactivate(pg);
@@ -290,6 +307,7 @@ ubc_fault_page(const struct uvm_faultinfo *ufi, const struct ubc_map *umap,
 	}
 	pg->flags &= ~(PG_BUSY|PG_WANTED);
 	UVM_PAGE_OWN(pg, NULL);
+    }
 
 	return error;
 }
@@ -302,7 +320,7 @@ static int
 ubc_fault(struct uvm_faultinfo *ufi, vaddr_t ign1, struct vm_page **ign2,
     int ign3, int ign4, vm_prot_t access_type, int flags)
 {
-	struct uvm_object *uobj;
+	struct uvm_object *uobj, *ouobj;
 	struct ubc_map *umap;
 	vaddr_t va, eva, ubc_offset, slot_offset;
 	struct vm_page *pgs[ubc_winsize >> PAGE_SHIFT];
@@ -353,7 +371,7 @@ ubc_fault(struct uvm_faultinfo *ufi, vaddr_t ign1, struct vm_page **ign2,
 #endif
 
 	/* no umap locking needed since we have a ref on the umap */
-	uobj = umap->uobj;
+	ouobj = uobj = umap->uobj;
 
 	if ((access_type & VM_PROT_WRITE) == 0) {
 		npages = (ubc_winsize - slot_offset) >> PAGE_SHIFT;
@@ -422,6 +440,7 @@ again:
 		if (pg == NULL || pg == PGO_DONTCARE) {
 			continue;
 		}
+	    if (__predict_true(pg != PGO_ZERO)) {
 		if (__predict_false(pg->uobject != uobj)) {
 			/* Check for the first iteration and error cases. */
 			if (uobj != NULL) {
@@ -432,7 +451,14 @@ again:
 			uobj = pg->uobject;
 			mutex_enter(&uobj->vmobjlock);
 		}
-		error = ubc_fault_page(ufi, umap, pg, prot, access_type, va);
+	    } else {
+		if (__predict_false(uobj != ouobj)) {
+			uobj = ouobj;
+			mutex_enter(&uobj->vmobjlock);
+		}
+	    }
+		KASSERT(pg == PGO_ZERO || uobj == pg->uobject);
+		error = ubc_fault_page(ufi, umap, uobj, pg, prot, access_type, va);
 		if (error) {
 			/*
 			 * Flush (there might be pages entered), drop the lock,

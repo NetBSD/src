@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.36.2.59 2010/11/21 07:41:49 uebayasi Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.36.2.60 2010/11/21 12:42:59 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.36.2.59 2010/11/21 07:41:49 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.36.2.60 2010/11/21 12:42:59 uebayasi Exp $");
 
 #include "opt_xip.h"
 
@@ -652,13 +652,11 @@ genfs_getpages_io_read_bio_loop()
 		 */
 
 		if (blkno == (daddr_t)-1) {
-		    if (!xip) {
 			int holepages = (round_page(offset + iobytes) -
 			    trunc_page(offset)) >> PAGE_SHIFT;
 			UVMHIST_LOG(ubchist, "lbn 0x%x -> HOLE", lbn,0,0,0);
 
-			KASSERT(!xip);
-
+		    if (!xip) {
 			sawhole = true;
 			memset((char *)kva + (offset - startoffset), 0,
 			    iobytes);
@@ -673,7 +671,11 @@ genfs_getpages_io_read_bio_loop()
 				}
 			}
 		    } else {
-			panic("XIP hole page is not supported yet");
+			for (i = 0; i < holepages; i++) {
+				pgs[ridx + pidx + i] = PGO_ZERO;
+			}
+			UVMHIST_LOG(ubchist, "xip HOLE pgs %d .. %d",
+			    pidx, pidx + holepages - 1, 0, 0);
 		    }
 			continue;
 		}
@@ -899,6 +901,7 @@ out:
 	for (i = ridx; i < ridx + npages; i++) {
 		struct vm_page *pg = pgs[i];
 
+	    if (pg != PGO_ZERO) {
 		KASSERT(pg != NULL);
 		KASSERT((pg->flags & PG_RDONLY) != 0);
 		KASSERT((pg->flags & PG_BUSY) != 0);
@@ -908,10 +911,18 @@ out:
 
 		/*
 		 * XXXUEBS
-		 * Actually this is not necessary, because device pages are
-		 * "stateless", and they have no owner.
+		 * Actually this is not necessary, because device
+		 * pages are "stateless", and they have no owner.
 		 */
 		pg->uobject = &vp->v_uobj;
+	    } else {
+		/*
+		 * XIP hole pages are passed as a magic pointer
+		 * back to fault handlers.  Fault handlers are
+		 * respoinsible to check it and redirect the VA to
+		 * a single "zero page".
+		 */
+	    }
 	}
     } /* xip */
 	mutex_exit(&uobj->vmobjlock);
