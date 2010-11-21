@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.36.2.54 2010/11/21 04:43:32 uebayasi Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.36.2.55 2010/11/21 04:50:27 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.36.2.54 2010/11/21 04:43:32 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.36.2.55 2010/11/21 04:50:27 uebayasi Exp $");
 
 #include "opt_xip.h"
 
@@ -376,9 +376,7 @@ int
 genfs_getpages_io_findpages()
 {
 #endif
-	if (xip)
-		goto genfs_getpages_io_read_allocpages_done;
-
+    if (!xip) {
 	if (uvn_findpages(uobj, origoffset, &npages, &pgs[ridx],
 	    async ? UFP_NOWAIT : UFP_ALL) != orignmempages) {
 		if (!glocked) {
@@ -411,6 +409,7 @@ genfs_getpages_io_findpages()
 		npages += ridx;
 		goto out;
 	}
+    }
 
 	/*
 	 * if PGO_OVERWRITE is set, don't bother reading the pages.
@@ -429,6 +428,8 @@ genfs_getpages_io_overwrite()
 {
 	{
 #endif
+		KASSERT(!xip);
+
 		if (!glocked) {
 			genfs_node_unlock(vp);
 		}
@@ -461,6 +462,7 @@ int
 genfs_getpages_io_read_allocpages()
 {
 #endif
+    if (!xip) {
 	npages = (endoffset - startoffset) >> PAGE_SHIFT;
 	if (startoffset != origoffset || npages != orignmempages) {
 		int npgs;
@@ -489,9 +491,7 @@ genfs_getpages_io_read_allocpages()
 			goto out_err_free;
 		}
 	}
-#ifdef XIP
-genfs_getpages_io_read_allocpages_done:
-#endif
+    }
 #if 0
 }
 
@@ -515,9 +515,6 @@ genfs_getpages_io_read_bio()
 	bytes = MIN(totalbytes, MAX(diskeof - startoffset, 0));
 	tailbytes = totalbytes - bytes;
 	skipbytes = 0;
-
-	if (xip)
-		goto genfs_getpages_bio_prepare_done;
 #if 0
 }
 
@@ -525,6 +522,7 @@ int
 genfs_getpages_io_read_bio_prepare()
 {
 #endif
+    if (!xip) {
 	kva = uvm_pagermapin(pgs, npages,
 	    UVMPAGER_MAPIN_READ | UVMPAGER_MAPIN_WAITOK);
 
@@ -544,14 +542,11 @@ genfs_getpages_io_read_bio_prepare()
 		BIO_SETPRIO(mbp, BPRIO_TIMELIMITED);
 	else
 		BIO_SETPRIO(mbp, BPRIO_TIMECRITICAL);
+    }
 #if 0
 }
 
 #endif
-#if 1
-genfs_getpages_bio_prepare_done:
-#endif
-
 	/*
 	 * if EOF is in the middle of the range, zero the part past EOF.
 	 * skip over pages which are not PG_FAKE since in that case they have
@@ -756,15 +751,13 @@ genfs_getpages_io_read_bio_loop()
 	}
 
 loopdone:
-	if (xip) {
-		goto genfs_getpages_biodone_done;
-	}
 #if 0
 
 int
 genfs_getpages_biodone()
 {
 #endif
+    if (!xip) {
 	nestiobuf_done(mbp, skipbytes, error);
 	if (async) {
 		UVMHIST_LOG(ubchist, "returning 0 (async)",0,0,0,0);
@@ -823,13 +816,10 @@ genfs_getpages_biodone()
 	}
 
 	putiobuf(mbp);
+    }
 #if 0
 }
 
-#endif
-#if 1
-genfs_getpages_biodone_done:
-	{}
 #endif
     }
 
