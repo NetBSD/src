@@ -1,4 +1,4 @@
-#	$NetBSD: GUMSTIX,v 1.29 2008/10/19 11:34:31 joerg Exp $
+#	$NetBSD: GUMSTIX,v 1.29.4.1 2010/11/21 03:05:06 riz Exp $
 #
 #	GUMSTIX -- Gumstix. Inc. gumstix platforms kernel
 #
@@ -436,6 +436,10 @@ bthub*	at btuart?
 # Bluetooth Keyboard
 #btkbd*	at bthidev? reportid ?
 #wskbd*	at btkbd? console ? mux 1
+
+# Bluetooth Apple Magic Mouse
+btmagic* at bthub?
+wsmouse* at btmagic? mux 0
 
 # Bluetooth Audio support
 #btsco*	at bthub?
