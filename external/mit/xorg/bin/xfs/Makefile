@@ -1,10 +1,12 @@
-#	$NetBSD: Makefile,v 1.6 2010/05/24 05:30:40 veego Exp $
+#	$NetBSD: Makefile,v 1.7 2010/11/21 01:25:33 mrg Exp $
 
 .include <bsd.own.mk>
 
 PROG=	xfs
 
 XFSDIR= ${X11SRCDIR.${PROG}}
+
+.PATH:	${XFSDIR}/man
 
 .PATH:	${XFSDIR}/difs
 SRCS=	atom.c cache.c charinfo.c difsutils.c dispatch.c events.c \
@@ -45,6 +47,7 @@ X11EXTRAMANDEFS+=	-e 's%__configfilepath__%${XFSCONFIGDIR}/config%g; \
 			s%__configfiledesc__%the default file,%g'
 
 
+.PATH:	${XFSDIR}/config
 BUILDSYMLINKS=	config.cpp fsconfig.cpp
 CPPSCRIPTS=	fsconfig
 CPPSCRIPTFLAGS=	-DDEFAULTFONTPATH=${X11FONTDIR}/misc/,${X11FONTDIR}/Type1/,${X11FONTDIR}/75dpi/,${X11FONTDIR}/100dpi/ \
