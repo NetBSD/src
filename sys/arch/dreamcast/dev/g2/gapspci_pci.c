@@ -1,4 +1,4 @@
-/*	$NetBSD: gapspci_pci.c,v 1.11 2008/08/01 20:19:49 marcus Exp $	*/
+/*	$NetBSD: gapspci_pci.c,v 1.12 2010/11/21 16:11:32 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: gapspci_pci.c,v 1.11 2008/08/01 20:19:49 marcus Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gapspci_pci.c,v 1.12 2010/11/21 16:11:32 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,7 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: gapspci_pci.c,v 1.11 2008/08/01 20:19:49 marcus Exp 
 
 #include <dreamcast/dev/g2/gapspcivar.h>
 
-void		gaps_attach_hook(struct device *, struct device *,
+void		gaps_attach_hook(device_t, device_t,
 		    struct pcibus_attach_args *);
 int		gaps_bus_maxdevs(void *, int);
 pcitag_t	gaps_make_tag(void *, int, int, int);
@@ -96,10 +96,9 @@ gaps_pci_init(struct gaps_softc *sc)
 #define	GAPS_PCITAG_MAGIC	0x022473
 
 void
-gaps_attach_hook(struct device *bus, struct device *pci,
-    struct pcibus_attach_args *pba)
+gaps_attach_hook(device_t parent, device_t pci, struct pcibus_attach_args *pba)
 {
-	struct gaps_softc *sc = (void *)bus;
+	struct gaps_softc *sc = device_private(parent);
 
 	/*
 	 * Now that we know there's a bus configured, go ahead and
