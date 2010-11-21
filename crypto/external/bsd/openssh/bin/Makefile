@@ -1,12 +1,11 @@
-#	$NetBSD: Makefile,v 1.2 2009/07/21 00:47:23 mrg Exp $
+#	$NetBSD: Makefile,v 1.3 2010/11/21 19:19:21 adam Exp $
 
 .include <bsd.own.mk>
 
 SSHDIST?= ${NETBSDSRCDIR}/crypto/external/bsd/openssh/dist
 
 SUBDIR=	ssh sshd ssh-add ssh-keygen ssh-agent scp sftp-server \
-	ssh-keysign ssh-keyscan sftp
-#SUBDIR+=scard
+	ssh-keysign ssh-keyscan sftp ssh-pkcs11-helper
 
 .PATH: ${SSHDIST}
 .MADE: moduli
