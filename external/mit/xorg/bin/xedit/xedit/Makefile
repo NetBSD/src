@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2009/03/10 03:55:59 mrg Exp $
+#	$NetBSD: Makefile,v 1.3 2010/11/21 01:25:32 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -8,9 +8,7 @@ SRCS=		xedit.c commands.c util.c ispell.c options.c hook.c lisp.c \
 
 CPPFLAGS+=	-I${X11SRCDIR.xedit}/lisp/re
 
-APPDEFS=	Xedit.ad Xedit-color.ad
-
-BUILDSYMLINKS=	Xedit-xprint.ad Xedit.ad
+APPDEFS=	Xedit Xedit-color
 
 .for _L in lisp mp re
 LIB.${_L}!=	cd ${.CURDIR}/../${_L} && ${PRINTOBJDIR}
