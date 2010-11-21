@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.887 2010/11/03 18:57:32 christos Exp $
+# $NetBSD: mi,v 1.888 2010/11/21 19:58:03 adam Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -1028,6 +1028,7 @@
 ./usr/libexec/spamlogd				base-obsolete		obsolete
 ./usr/libexec/spellprog				base-util-bin
 ./usr/libexec/ssh-keysign			base-secsh-bin		crypto
+./usr/libexec/ssh-pkcs11-helper			base-secsh-bin		crypto
 ./usr/libexec/telnetd				base-netutil-bin
 ./usr/libexec/tftp-proxy			base-pf-bin		pf
 ./usr/libexec/tftpd				base-netutil-bin
