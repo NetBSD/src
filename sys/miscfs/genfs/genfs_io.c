@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.36.2.60 2010/11/21 12:42:59 uebayasi Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.36.2.61 2010/11/21 14:52:23 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.36.2.60 2010/11/21 12:42:59 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.36.2.61 2010/11/21 14:52:23 uebayasi Exp $");
 
 #include "opt_xip.h"
 
@@ -1050,6 +1050,7 @@ retry:
 	flags = origflags;
 	KASSERT((vp->v_iflag & VI_ONWORKLST) != 0 ||
 	    (vp->v_iflag & VI_WRMAPDIRTY) == 0);
+	KASSERT((vp->v_vflag & VV_XIP) == 0 || uobj->uo_npages == 0);
 	if (uobj->uo_npages == 0) {
 		if (vp->v_iflag & VI_ONWORKLST) {
 			vp->v_iflag &= ~VI_WRMAPDIRTY;
