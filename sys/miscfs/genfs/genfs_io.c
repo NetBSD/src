@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.36.2.52 2010/11/20 08:03:22 uebayasi Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.36.2.53 2010/11/21 04:35:53 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.36.2.52 2010/11/20 08:03:22 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.36.2.53 2010/11/21 04:35:53 uebayasi Exp $");
 
 #include "opt_xip.h"
 
@@ -572,23 +572,6 @@ genfs_getpages_bio_prepare_done:
 		tailstart += len;
 		tailbytes -= len;
 	}
-
-#if 1
-	if ((ap->a_vp->v_vflag & VV_XIP) != 0) {
-		error = genfs_do_getpages_xip_io(
-			ap->a_vp,
-			ap->a_offset,
-			pgs,
-			ap->a_count,
-			ap->a_centeridx,
-			ap->a_access_type,
-			ap->a_advice,
-			ap->a_flags,
-			orignmempages);
-if (0)
-		goto loopdone;
-	}
-#endif
 #if 0
 }
 
@@ -760,14 +743,17 @@ genfs_getpages_io_read_bio_loop()
 		 * - Unallocated block is redirected to the dedicated zero'ed
 		 *   page.
 		 */
-		const int npgs = MIN(
-			iobytes >> PAGE_SHIFT,
-			((1 + run) << fs_bshift) >> PAGE_SHIFT);
 		const daddr_t blk_off = blkno << dev_bshift;
 		const daddr_t fs_off = origoffset - startoffset;
 
-		for (i = ridx + pidx; i < npgs; i++) {
-			const daddr_t pg_off = pidx << PAGE_SHIFT;
+		int npgs = iobytes >> PAGE_SHIFT;
+		UVMHIST_LOG(ubchist,
+		    "xip iobytes=0x%lx ridx=%d pidx=%d npgs=%d",
+		    (long)iobytes, ridx, pidx, npgs);
+
+		/* XXX optimize */
+		for (i = 0; i < npgs; i++) {
+			const daddr_t pg_off = i << PAGE_SHIFT;
 			struct vm_page *pg;
 
 			UVMHIST_LOG(ubchist,
@@ -778,12 +764,9 @@ genfs_getpages_io_read_bio_loop()
 			    blk_off + fs_off + pg_off);
 			KASSERT(pg != NULL);
 			UVMHIST_LOG(ubchist,
-				"xip pgs %d => phys_addr=0x%lx (%p)",
-				i,
-				(long)pg->phys_addr,
-				pg,
-				0);
-			pgs[i] = pg;
+			    "xip pg %d => phys_addr=0x%lx (%p)",
+			    ridx + pidx + i, (long)pg->phys_addr, pg, 0);
+			pgs[ridx + pidx + i] = pg;
 		}
 	    }
 #endif
@@ -978,6 +961,7 @@ genfs_getpages_generic_io_done_done:
 	if (ap->a_m != NULL) {
 		memcpy(ap->a_m, &pgs[ridx],
 		    orignmempages * sizeof(struct vm_page *));
+		KASSERT(error != 0 || ap->a_m[ap->a_centeridx] != NULL);
 	}
 #if 0
 }
@@ -1029,10 +1013,11 @@ genfs_do_getpages_xip_io(
 	const off_t endoffset = round_blk(origoffset + PAGE_SIZE * orignmempages);
 #endif
 
-	UVMHIST_LOG(ubchist, "xip npages=%d startoffset=%lx endoffset=%lx",
-	    orignmempages, (long)startoffset, (long)endoffset, 0);
-
 	const int ridx = (origoffset - startoffset) >> PAGE_SHIFT;
+
+	UVMHIST_LOG(ubchist,
+	    "ridx=%d xip npages=%d startoff=0x%lx endoff=0x%lx",
+	    ridx, orignmempages, (long)startoffset, (long)endoffset);
 
 	off = origoffset;
 	for (i = ridx; i < ridx + orignmempages; i++) {
@@ -1042,7 +1027,7 @@ genfs_do_getpages_xip_io(
 
 		KASSERT((off - origoffset) >> PAGE_SHIFT == i - ridx);
 
-		const daddr_t lbn = (off & ~(fs_bsize - 1)) >> fs_bshift;
+		const daddr_t lbn = trunc_blk(off) >> fs_bshift;
 
 		error = VOP_BMAP(vp, lbn, &devvp, &blkno, &run);
 		KASSERT(error == 0);
@@ -1064,20 +1049,20 @@ genfs_do_getpages_xip_io(
 
 			const daddr_t pg_off = (i - ridx) << PAGE_SHIFT;
 
+			struct vm_page *pg;
+
 			UVMHIST_LOG(ubchist,
 			    "xip blk_off=%lx fs_off=%lx pg_off=%lx",
 			    (long)blk_off, (long)fs_off, (long)pg_off, 0);
 
-			pps[i] = uvn_findpage_xip(devvp, &vp->v_uobj,
+			pg = uvn_findpage_xip(devvp, &vp->v_uobj,
 			    blk_off + fs_off + pg_off);
-			KASSERT(pps[i] != NULL);
+			KASSERT(pg != NULL);
+			UVMHIST_LOG(ubchist,
+			    "xip pgs %d => phys_addr=0x%lx (%p)",
+			    i, (long)pg->phys_addr, pg, 0);
+			pps[i] = pg;
 		}
-
-		UVMHIST_LOG(ubchist, "xip pgs %d => phys_addr=0x%lx (%p)",
-			i,
-			(long)pps[i]->phys_addr,
-			pps[i],
-			0);
 
 		off += PAGE_SIZE;
 	}
@@ -1111,6 +1096,7 @@ genfs_do_getpages_xip_io_done(
 	for (i = ridx; i < ridx + orignmempages; i++) {
 		struct vm_page *pg = pps[i];
 
+		KASSERT(pg != NULL);
 		KASSERT((pg->flags & PG_RDONLY) != 0);
 		KASSERT((pg->flags & PG_BUSY) != 0);
 		KASSERT((pg->flags & PG_CLEAN) != 0);
