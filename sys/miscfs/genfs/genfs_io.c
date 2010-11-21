@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.36.2.53 2010/11/21 04:35:53 uebayasi Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.36.2.54 2010/11/21 04:43:32 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.36.2.53 2010/11/21 04:35:53 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.36.2.54 2010/11/21 04:43:32 uebayasi Exp $");
 
 #include "opt_xip.h"
 
@@ -144,6 +144,11 @@ genfs_getpages(void *v)
 	const bool overwrite = (flags & PGO_OVERWRITE) != 0;
 	const bool blockalloc = memwrite && (flags & PGO_NOBLOCKALLOC) == 0;
 	const bool glocked = (flags & PGO_GLOCKHELD) != 0;
+#ifdef XIP
+	const bool xip = (ap->a_vp->v_vflag & VV_XIP) != 0;
+#else
+#define	xip	0
+#endif
 	UVMHIST_FUNC("genfs_getpages"); UVMHIST_CALLED(ubchist);
 
 	UVMHIST_LOG(ubchist, "vp %p off 0x%x/%x count %d",
@@ -233,12 +238,10 @@ genfs_getpages_mem()
 		int nfound;
 		struct vm_page *pg;
 
-#ifdef XIP
-		if ((ap->a_vp->v_vflag & VV_XIP) != 0) {
+		if (xip) {
 			*ap->a_count = 0;
 			return 0;
 		}
-#endif
 
 		KASSERT(!glocked);
 		npages = *ap->a_count;
@@ -373,10 +376,8 @@ int
 genfs_getpages_io_findpages()
 {
 #endif
-#ifdef XIP
-	if ((ap->a_vp->v_vflag & VV_XIP) != 0)
+	if (xip)
 		goto genfs_getpages_io_read_allocpages_done;
-#endif
 
 	if (uvn_findpages(uobj, origoffset, &npages, &pgs[ridx],
 	    async ? UFP_NOWAIT : UFP_ALL) != orignmempages) {
@@ -515,10 +516,8 @@ genfs_getpages_io_read_bio()
 	tailbytes = totalbytes - bytes;
 	skipbytes = 0;
 
-#if 1
-	if ((ap->a_vp->v_vflag & VV_XIP) != 0)
+	if (xip)
 		goto genfs_getpages_bio_prepare_done;
-#endif
 #if 0
 }
 
@@ -598,9 +597,7 @@ genfs_getpages_io_read_bio_loop()
 		 */
 
 		pidx = (offset - startoffset) >> PAGE_SHIFT;
-#ifdef XIP
-	    if ((ap->a_vp->v_vflag & VV_XIP) == 0) {
-#endif
+	    if (!xip) {
 		while ((pgs[pidx]->flags & PG_FAKE) == 0) {
 			size_t b;
 
@@ -619,9 +616,7 @@ genfs_getpages_io_read_bio_loop()
 				goto loopdone;
 			}
 		}
-#ifdef XIP
 	    }
-#endif
 
 		/*
 		 * bmap the file to find out the blkno to read from and
@@ -652,16 +647,12 @@ genfs_getpages_io_read_bio_loop()
 
 			pcount = 1;
 			while ((pidx + pcount < npages) && (
-#ifdef XIP
 			    /*
 			     * in XIP case, we don't know what page to read
 			     * at this point!
 			     */
-			    ((ap->a_vp->v_vflag & VV_XIP) != 0) ||
-#else
-			     0 ||
-#endif
-			     (pgs[pidx + pcount]->flags & PG_FAKE))) {
+			    xip ||
+			    (pgs[pidx + pcount]->flags & PG_FAKE))) {
 				pcount++;
 			}
 			iobytes = MIN(iobytes, (pcount << PAGE_SHIFT) -
@@ -675,14 +666,12 @@ genfs_getpages_io_read_bio_loop()
 		 */
 
 		if (blkno == (daddr_t)-1) {
-#ifdef XIP
-		    if ((ap->a_vp->v_vflag & VV_XIP) == 0) {
-#endif
+		    if (!xip) {
 			int holepages = (round_page(offset + iobytes) -
 			    trunc_page(offset)) >> PAGE_SHIFT;
 			UVMHIST_LOG(ubchist, "lbn 0x%x -> HOLE", lbn,0,0,0);
 
-			KASSERT((ap->a_vp->v_vflag & VV_XIP) == 0);
+			KASSERT(!xip);
 
 			sawhole = true;
 			memset((char *)kva + (offset - startoffset), 0,
@@ -697,24 +686,18 @@ genfs_getpages_io_read_bio_loop()
 					pgs[pidx + i]->flags |= PG_RDONLY;
 				}
 			}
-#ifdef XIP
 		    } else {
 			panic("XIP hole page is not supported yet");
 		    }
-#endif
 			continue;
 		}
 
-#ifdef XIP
-	    if ((ap->a_vp->v_vflag & VV_XIP) == 0) {
-#endif
+	    if (!xip) {
 		/*
 		 * allocate a sub-buf for this piece of the i/o
 		 * (or just use mbp if there's only 1 piece),
 		 * and start it going.
 		 */
-
-		KASSERT((ap->a_vp->v_vflag & VV_XIP) == 0);
 
 		if (offset == startoffset && iobytes == bytes) {
 			bp = mbp;
@@ -773,11 +756,9 @@ genfs_getpages_io_read_bio_loop()
 	}
 
 loopdone:
-#if 1
-	if ((ap->a_vp->v_vflag & VV_XIP) != 0) {
+	if (xip) {
 		goto genfs_getpages_biodone_done;
 	}
-#endif
 #if 0
 
 int
@@ -856,8 +837,7 @@ genfs_getpages_biodone_done:
 		genfs_node_unlock(vp);
 	}
 
-#if 1
-	if ((ap->a_vp->v_vflag & VV_XIP) != 0) {
+	if (xip) {
 		error = genfs_do_getpages_xip_io_done(
 			ap->a_vp,
 			ap->a_offset,
@@ -870,7 +850,6 @@ genfs_getpages_biodone_done:
 			orignmempages);
 		goto genfs_getpages_generic_io_done_done;
 	}
-#endif
 #if 0
 	else {
 		error = genfs_getpages_generic_io_done();
