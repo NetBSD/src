@@ -1,5 +1,5 @@
-/*	$NetBSD: monitor_wrap.c,v 1.3 2009/12/27 01:40:47 christos Exp $	*/
-/* $OpenBSD: monitor_wrap.c,v 1.68 2009/06/22 05:39:28 dtucker Exp $ */
+/*	$NetBSD: monitor_wrap.c,v 1.4 2010/11/21 18:29:49 adam Exp $	*/
+/* $OpenBSD: monitor_wrap.c,v 1.69 2010/03/07 11:57:13 dtucker Exp $ */
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * Copyright 2002 Markus Friedl <markus@openbsd.org>
@@ -27,7 +27,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: monitor_wrap.c,v 1.3 2009/12/27 01:40:47 christos Exp $");
+__RCSID("$NetBSD: monitor_wrap.c,v 1.4 2010/11/21 18:29:49 adam Exp $");
 #include <sys/types.h>
 #include <sys/uio.h>
 #include <sys/queue.h>
@@ -343,19 +343,6 @@ mm_auth_rhosts_rsa_key_allowed(struct passwd *pw, char *user,
 	return (ret);
 }
 
-static void
-mm_send_debug(Buffer *m)
-{
-	char *msg;
-
-	while (buffer_len(m)) {
-		msg = buffer_get_string(m, NULL);
-		debug3("%s: Sending debug: %s", __func__, msg);
-		packet_send_debug("%s", msg);
-		xfree(msg);
-	}
-}
-
 int
 mm_key_allowed(enum mm_keytype type, char *user, char *host, Key *key)
 {
@@ -388,9 +375,6 @@ mm_key_allowed(enum mm_keytype type, char *user, char *host, Key *key)
 	auth_clear_options();
 	have_forced = buffer_get_int(&m);
 	forced_command = have_forced ? xstrdup("true") : NULL;
-
-	/* Send potential debug messages */
-	mm_send_debug(&m);
 
 	buffer_free(&m);
 
@@ -1085,7 +1069,6 @@ mm_auth_rsa_key_allowed(struct passwd *pw, BIGNUM *client_n, Key **rkey)
 		*rkey = key;
 		xfree(blob);
 	}
-	mm_send_debug(&m);
 	buffer_free(&m);
 
 	return (allowed);

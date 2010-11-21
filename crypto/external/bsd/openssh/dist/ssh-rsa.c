@@ -1,5 +1,5 @@
-/*	$NetBSD: ssh-rsa.c,v 1.2 2009/06/07 22:38:47 christos Exp $	*/
-/* $OpenBSD: ssh-rsa.c,v 1.39 2006/08/03 03:34:42 deraadt Exp $ */
+/*	$NetBSD: ssh-rsa.c,v 1.3 2010/11/21 18:29:49 adam Exp $	*/
+/* $OpenBSD: ssh-rsa.c,v 1.44 2010/07/16 14:07:35 djm Exp $ */
 /*
  * Copyright (c) 2000, 2003 Markus Friedl <markus@openbsd.org>
  *
@@ -17,7 +17,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: ssh-rsa.c,v 1.2 2009/06/07 22:38:47 christos Exp $");
+__RCSID("$NetBSD: ssh-rsa.c,v 1.3 2010/11/21 18:29:49 adam Exp $");
 #include <sys/types.h>
 
 #include <openssl/evp.h>
@@ -30,6 +30,7 @@ __RCSID("$NetBSD: ssh-rsa.c,v 1.2 2009/06/07 22:38:47 christos Exp $");
 #include "buffer.h"
 #include "key.h"
 #include "compat.h"
+#include "misc.h"
 #include "ssh.h"
 
 static int openssh_RSA_verify(int, u_char *, u_int, u_char *, u_int, RSA *);
@@ -46,7 +47,8 @@ ssh_rsa_sign(const Key *key, u_char **sigp, u_int *lenp,
 	int ok, nid;
 	Buffer b;
 
-	if (key == NULL || key->type != KEY_RSA || key->rsa == NULL) {
+	if (key == NULL || key->rsa == NULL || (key->type != KEY_RSA &&
+	    key->type != KEY_RSA_CERT && key->type != KEY_RSA_CERT_V00)) {
 		error("ssh_rsa_sign: no RSA key");
 		return -1;
 	}
@@ -113,7 +115,8 @@ ssh_rsa_verify(const Key *key, const u_char *signature, u_int signaturelen,
 	u_int len, dlen, modlen;
 	int rlen, ret, nid;
 
-	if (key == NULL || key->type != KEY_RSA || key->rsa == NULL) {
+	if (key == NULL || key->rsa == NULL || (key->type != KEY_RSA &&
+	    key->type != KEY_RSA_CERT && key->type != KEY_RSA_CERT_V00)) {
 		error("ssh_rsa_verify: no RSA key");
 		return -1;
 	}
@@ -208,7 +211,7 @@ openssh_RSA_verify(int type, u_char *hash, u_int hashlen,
     u_char *sigbuf, u_int siglen, RSA *rsa)
 {
 	u_int ret, rsasize, oidlen = 0, hlen = 0;
-	int len;
+	int len, oidmatch, hashmatch;
 	const u_char *oid = NULL;
 	u_char *decrypted = NULL;
 
@@ -247,11 +250,13 @@ openssh_RSA_verify(int type, u_char *hash, u_int hashlen,
 		error("bad decrypted len: %d != %d + %d", len, hlen, oidlen);
 		goto done;
 	}
-	if (memcmp(decrypted, oid, oidlen) != 0) {
+	oidmatch = timingsafe_bcmp(decrypted, oid, oidlen) == 0;
+	hashmatch = timingsafe_bcmp(decrypted + oidlen, hash, hlen) == 0;
+	if (!oidmatch) {
 		error("oid mismatch");
 		goto done;
 	}
-	if (memcmp(decrypted + oidlen, hash, hlen) != 0) {
+	if (!hashmatch) {
 		error("hash mismatch");
 		goto done;
 	}

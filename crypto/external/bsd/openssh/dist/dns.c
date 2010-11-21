@@ -1,5 +1,5 @@
-/*	$NetBSD: dns.c,v 1.2 2009/06/07 22:38:46 christos Exp $	*/
-/* $OpenBSD: dns.c,v 1.25 2008/06/12 00:03:49 dtucker Exp $ */
+/*	$NetBSD: dns.c,v 1.3 2010/11/21 18:29:48 adam Exp $	*/
+/* $OpenBSD: dns.c,v 1.26 2010/02/26 20:29:54 djm Exp $ */
 
 /*
  * Copyright (c) 2003 Wesley Griffin. All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: dns.c,v 1.2 2009/06/07 22:38:46 christos Exp $");
+__RCSID("$NetBSD: dns.c,v 1.3 2010/11/21 18:29:48 adam Exp $");
 #include <sys/types.h>
 #include <sys/socket.h>
 
@@ -76,7 +76,7 @@ dns_result_totext(unsigned int res)
  */
 static int
 dns_read_key(u_int8_t *algorithm, u_int8_t *digest_type,
-    u_char **digest, u_int *digest_len, const Key *key)
+    u_char **digest, u_int *digest_len, Key *key)
 {
 	int success = 0;
 
@@ -173,7 +173,7 @@ is_numeric_hostname(const char *hostname)
  */
 int
 verify_host_key_dns(const char *hostname, struct sockaddr *address,
-    const Key *hostkey, int *flags)
+    Key *hostkey, int *flags)
 {
 	u_int counter;
 	int result;
@@ -272,7 +272,7 @@ verify_host_key_dns(const char *hostname, struct sockaddr *address,
  * Export the fingerprint of a key as a DNS resource record
  */
 int
-export_dns_rr(const char *hostname, const Key *key, FILE *f, int generic)
+export_dns_rr(const char *hostname, Key *key, FILE *f, int generic)
 {
 	u_int8_t rdata_pubkey_algorithm = 0;
 	u_int8_t rdata_digest_type = SSHFP_HASH_SHA1;

@@ -1,5 +1,5 @@
-.\"	$NetBSD: ssh-keysign.8,v 1.3 2010/05/14 01:46:04 joerg Exp $
-.\" $OpenBSD: ssh-keysign.8,v 1.9 2007/05/31 19:20:16 jmc Exp $
+.\"	$NetBSD: ssh-keysign.8,v 1.4 2010/11/21 18:29:49 adam Exp $
+.\" $OpenBSD: ssh-keysign.8,v 1.11 2010/08/08 19:36:30 jmc Exp $
 .\"
 .\" Copyright (c) 2002 Markus Friedl.  All rights reserved.
 .\"
@@ -23,7 +23,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd May 31, 2007
+.Dd August 8, 2010
 .Dt SSH-KEYSIGN 8
 .Os
 .Sh NAME
@@ -56,12 +56,14 @@ and
 .Xr sshd 8
 for more information about host-based authentication.
 .Sh FILES
-.Bl -tag -width Ds
+.Bl -tag -width Ds -compact
 .It Pa /etc/ssh/ssh_config
 Controls whether
 .Nm
 is enabled.
-.It Pa /etc/ssh/ssh_host_dsa_key, /etc/ssh/ssh_host_rsa_key
+.Pp
+.It Pa /etc/ssh/ssh_host_dsa_key
+.It Pa /etc/ssh/ssh_host_rsa_key
 These files contain the private parts of the host keys used to
 generate the digital signature.
 They should be owned by root, readable only by root, and not
@@ -69,6 +71,11 @@ accessible to others.
 Since they are readable only by root,
 .Nm
 must be set-uid root if host-based authentication is used.
+.Pp
+.It Pa /etc/ssh/ssh_host_dsa_key-cert.pub
+.It Pa /etc/ssh/ssh_host_rsa_key-cert.pub
+If these files exist they are assumed to contain public certificate
+information corresponding with the private keys above.
 .El
 .Sh SEE ALSO
 .Xr ssh 1 ,

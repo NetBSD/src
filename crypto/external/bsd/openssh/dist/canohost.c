@@ -1,5 +1,5 @@
-/*	$NetBSD: canohost.c,v 1.3 2009/12/27 01:40:46 christos Exp $	*/
-/* $OpenBSD: canohost.c,v 1.65 2009/05/27 06:31:25 andreas Exp $ */
+/*	$NetBSD: canohost.c,v 1.4 2010/11/21 18:29:48 adam Exp $	*/
+/* $OpenBSD: canohost.c,v 1.66 2010/01/13 01:20:20 dtucker Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -14,7 +14,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: canohost.c,v 1.3 2009/12/27 01:40:46 christos Exp $");
+__RCSID("$NetBSD: canohost.c,v 1.4 2010/11/21 18:29:48 adam Exp $");
 #include <sys/types.h>
 #include <sys/socket.h>
 
@@ -28,6 +28,7 @@ __RCSID("$NetBSD: canohost.c,v 1.3 2009/12/27 01:40:46 christos Exp $");
 #include <string.h>
 #include <stdarg.h>
 #include <time.h>
+#include <unistd.h>
 
 #include "xmalloc.h"
 #include "packet.h"
@@ -263,9 +264,22 @@ get_local_ipaddr(int sock)
 }
 
 char *
-get_local_name(int sock)
+get_local_name(int fd)
 {
-	return get_socket_address(sock, 0, NI_NAMEREQD);
+	char *host, myname[NI_MAXHOST];
+
+	/* Assume we were passed a socket */
+	if ((host = get_socket_address(fd, 0, NI_NAMEREQD)) != NULL)
+		return host;
+
+	/* Handle the case where we were passed a pipe */
+	if (gethostname(myname, sizeof(myname)) == -1) {
+		verbose("get_local_name: gethostname: %s", strerror(errno));
+	} else {
+		host = xstrdup(myname);
+	}
+
+	return host;
 }
 
 void
