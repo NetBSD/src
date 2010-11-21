@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.h,v 1.38.14.1 2010/10/22 07:22:57 uebayasi Exp $	*/
+/*	$NetBSD: uvm_pager.h,v 1.38.14.2 2010/11/21 12:42:59 uebayasi Exp $	*/
 
 /*
  *
@@ -168,6 +168,8 @@ struct uvm_pagerops {
 
 /* page we are not interested in getting */
 #define PGO_DONTCARE ((struct vm_page *) -1L)	/* [get only] */
+/* page redirected to zero page (XIP hole page) */
+#define PGO_ZERO ((struct vm_page *) -2L)	/* [get only] */
 
 #ifdef _KERNEL
 
