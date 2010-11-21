@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.36.2.62 2010/11/21 15:00:12 uebayasi Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.36.2.63 2010/11/21 17:07:38 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.36.2.62 2010/11/21 15:00:12 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.36.2.63 2010/11/21 17:07:38 uebayasi Exp $");
 
 #include "opt_xip.h"
 
@@ -993,6 +993,12 @@ out_err:
  *	range by an estimate of the relatively higher cost of the hash lookup.
  */
 
+#ifdef XIP
+static int
+genfs_do_putpages_xip_free(struct vnode *vp, off_t startoff, off_t endoff,
+    int origflags);
+#endif
+
 int
 genfs_putpages(void *v)
 {
@@ -1062,6 +1068,15 @@ retry:
 				WAPBL_END(vp->v_mount);
 			fstrans_done(vp->v_mount);
 		}
+#ifdef XIP
+		if ((vp->v_vflag & VV_XIP) != 0) {
+			if (flags & PGO_FREE) {
+				error = genfs_do_putpages_xip_free(vp,
+				    startoff, endoff, origflags);
+				KASSERT(error == 0);
+			}
+		}
+#endif
 		mutex_exit(slock);
 		return (0);
 	}
@@ -1468,6 +1483,83 @@ skip_scan:
 
 	return (error);
 }
+
+#ifdef XIP
+static int
+genfs_do_putpages_xip_free(struct vnode *vp, off_t startoff, off_t endoff,
+    int origflags)
+{
+	struct uvm_object * const uobj = &vp->v_uobj;
+ 
+	KASSERT(uobj->uo_npages == 0);
+
+	/*
+	 * For PGO_FREE (or (PGO_CLEANIT | PGO_FREE)), we invalidate MMU
+	 * mappings of both XIP pages and XIP zero pages.
+	 *
+	 * Hole page is freed when one of its mapped offset is freed, even if
+	 * one file (vnode) has many holes and mapping its zero page to all
+	 * of those hole pages.
+	 *
+	 * We don't know which pages are currently mapped in the given vnode,
+	 * because XIP pages are not added to vnode.  What we can do is to
+	 * locate pages by querying the filesystem as done in getpages.  Call
+	 * genfs_do_getpages_xip_io().
+	 */
+ 
+	off_t off, eof;
+ 
+	off = trunc_page(startoff);
+	if (endoff == 0 || (origflags & PGO_ALLPAGES))
+		GOP_SIZE(vp, vp->v_size, &eof, GOP_SIZE_MEM);
+	else
+		eof = endoff;
+ 
+	while (off < eof) {
+		int npages, orignpages, error, i;
+		struct vm_page *pgs[maxpages], *pg;
+ 
+		npages = round_page(eof - off) >> PAGE_SHIFT;
+		if (npages > maxpages)
+			npages = maxpages;
+ 
+		orignpages = npages;
+		KASSERT(mutex_owned(&uobj->vmobjlock));
+		error = (*uobj->pgops->pgo_get)(uobj, off, pgs, &npages, 0,
+		    VM_PROT_ALL, 0, PGO_SYNCIO);
+		KASSERT(error == 0);
+		KASSERT(npages == orignpages);
+		mutex_enter(&uobj->vmobjlock);
+		for (i = 0; i < npages; i++) {
+			pg = pgs[i];
+			if (pg == NULL || pg == PGO_DONTCARE)
+				continue;
+			if (pg == PGO_HOLE) {
+				pg = uvm_page_holepage;
+				KASSERT(pg != NULL);
+				/*
+				 * XXXUEBS
+				 * Invalidating hole pages may be unnecessary,
+				 * but just for safety.
+				 */
+			} else {
+				/*
+				 * Freeing normal XIP pages; nothing to do.
+				 */
+				KASSERT((pg->flags & PG_RDONLY) != 0);
+				KASSERT((pg->flags & PG_CLEAN) != 0);
+				KASSERT((pg->flags & PG_FAKE) == 0);
+				KASSERT((pg->flags & PG_DEVICE) != 0);
+				pg->flags &= ~PG_BUSY;
+			}
+			pmap_page_protect(pg, VM_PROT_NONE);
+		}
+		off += npages << PAGE_SHIFT;
+	}
+
+	return 0;
+}
+#endif
 
 int
 genfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages, int flags)
