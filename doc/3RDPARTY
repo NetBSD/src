@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.784 2010/11/02 16:39:31 joerg Exp $
+#	$NetBSD: 3RDPARTY,v 1.785 2010/11/21 20:02:35 adam Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -763,10 +763,10 @@ Notes:
 Please submit all changes to the author.
 
 Package:	HPN-SSH
-Version:	5.2p1 13 v6
-Current Vers:	5.2p1 13 v6
+Version:	5.6p1 13 v10
+Current Vers:	5.6p1 13 v10
 Maintainer:	www.psc.edu
-Archive Site:	http://www.psc.edu/networking/projects/hpn-ssh/openssh-5.2p1-hpn13v6.diff.gz
+Archive Site:	http://www.psc.edu/networking/projects/hpn-ssh/openssh-5.6p1-hpn13v10.diff.gz
 Home Page:	http://www.psc.edu/networking/projects/hpn-ssh/
 Mailing List:
 Responsible:	christos
@@ -775,8 +775,8 @@ Notes:
 Patch applied after OpenSSH import.
 
 Package:	OpenSSH
-Version:	5.3
-Current Vers:	5.3 / portable 5.3p1
+Version:	5.6
+Current Vers:	5.6 / portable 5.6p1
 Maintainer:	OpenSSH
 Archive Site:	http://www.openssh.com/ftp.html
 Home Page:	http://www.openssh.com/portable.html
@@ -810,6 +810,7 @@ markus is very cooperative about it):
 - handle setuid and unsetuid the posix way instead of setresuid()
 - add all missing functions
 - always bump major when importing to avoid api problems.
+- disabled roaming reconnect
 
 Package:	OpenSSL
 Version:	SNAP-20091226
