@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2010/05/22 02:27:08 mrg Exp $
+#	$NetBSD: Makefile,v 1.6 2010/11/21 06:01:50 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -75,9 +75,6 @@ INCS=	MITMisc.h \
 	Xge.h \
 	dpms.h \
 	extutil.h \
-	lbxbuf.h \
-	lbxbufstr.h \
-	lbximage.h \
 	multibuf.h \
 	security.h \
 	shape.h \

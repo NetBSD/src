@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2008/09/13 04:32:30 cube Exp $
+#	$NetBSD: Makefile,v 1.3 2010/11/21 06:01:50 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -19,7 +19,8 @@ SRCS=	AllCmap.c Atoms.c ClientWin.c Clip.c CloseHook.c CmapAlloc.c \
 INCS=	Atoms.h CharSet.h CloseHook.h Converters.h CurUtil.h \
 	CvtCache.h DisplayQue.h Drawing.h Editres.h EditresP.h \
 	Error.h ExtAgent.h Initer.h Lookup.h Misc.h StdCmap.h \
-	StdSel.h SysUtil.h WidgetNode.h WinUtil.h Xct.h Xmu.h
+	StdSel.h SysUtil.h WidgetNode.h WinUtil.h Xct.h Xmu.h \
+	WhitePoint.h
 INCSDIR=${X11INCDIR}/X11/Xmu
 
 CPPFLAGS+=	${X11FLAGS.THREADLIB}
