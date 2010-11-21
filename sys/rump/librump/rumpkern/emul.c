@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.146 2010/10/15 15:55:53 tsutsui Exp $	*/
+/*	$NetBSD: emul.c,v 1.147 2010/11/21 17:34:11 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.146 2010/10/15 15:55:53 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.147 2010/11/21 17:34:11 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/null.h>
@@ -263,16 +263,6 @@ cnflush(void)
 	/* done */
 }
 
-void
-cpu_reboot(int howto, char *bootstr)
-{
-
-	rump_reboot(howto);
-
-	/* this function is __dead, we must exit */
-	rumpuser_exit(0);
-}
-
 #ifdef __HAVE_SYSCALL_INTERN
 void
 syscall_intern(struct proc *p)
@@ -288,4 +278,18 @@ xc_send_ipi(struct cpu_info *ci)
 
 	/* I'll think about the implementation if this is ever used */
 	panic("not implemented");
+}
+
+int
+trace_enter(register_t code, const register_t *args, int narg)
+{
+
+	return 0;
+}
+
+void
+trace_exit(register_t code, register_t rval[], int error)
+{
+
+	/* nada */
 }

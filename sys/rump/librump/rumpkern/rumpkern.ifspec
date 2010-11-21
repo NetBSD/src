@@ -1,4 +1,4 @@
-;	$NetBSD: rumpkern.ifspec,v 1.8 2010/11/17 21:49:52 pooka Exp $
+;	$NetBSD: rumpkern.ifspec,v 1.9 2010/11/21 17:34:11 pooka Exp $
 
 NAME|kern
 PUBHDR|include/rump/rumpkern_if_pub.h
@@ -8,7 +8,6 @@ WRAPPERS|librump/rumpkern/rumpkern_if_wrappers.c
 ; type		| name		| args
 ;
 
-void		|reboot		|int
 int		|getversion	|void
 
 int		|module_init	|const struct modinfo * const *, size_t

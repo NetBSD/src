@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.202 2010/11/19 17:11:20 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.203 2010/11/21 17:34:11 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.202 2010/11/19 17:11:20 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.203 2010/11/21 17:34:11 pooka Exp $");
 
 #include <sys/systm.h>
 #define ELFSIZE ARCH_ELFSIZE
@@ -439,9 +439,8 @@ rump__init(int rump_version)
 	return 0;
 }
 
-/* maybe support sys_reboot some day for remote shutdown */
 void
-rump_reboot(int howto)
+cpu_reboot(int howto, char *bootstr)
 {
 
 	/* dump means we really take the dive here */
@@ -457,6 +456,7 @@ rump_reboot(int howto)
 
 	/* your wish is my command */
 	if (howto & RB_HALT) {
+		printf("rump kernel halted\n");
 		for (;;) {
 			uint64_t sec = 5, nsec = 0;
 			int error;
@@ -464,7 +464,9 @@ rump_reboot(int howto)
 			rumpuser_nanosleep(&sec, &nsec, &error);
 		}
 	}
-	rump_inited = -1;
+
+	/* this function is __dead, we must exit */
+	rumpuser_exit(0);
 }
 
 struct uio *
