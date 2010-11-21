@@ -193,8 +193,23 @@ ACCESS(5)                                                            ACCESS(5)
               text.  <b>4</b><i>NN</i> means "try again later", while <b>5</b><i>NN</i> means
               "do not try again".
 
-              The reply code "421" causes Postfix  to  disconnect
-              immediately (Postfix version 2.3 and later).
+              The following responses have  special  meaning  for
+              the Postfix SMTP server:
+
+              <b>421</b> <i>text</i> (Postfix 2.3 and later)
+
+              <b>521</b> <i>text</i> (Postfix 2.6 and later)
+                     After  responding  with the numerical three-
+                     digit code and text, disconnect  immediately
+                     from  the  SMTP  client.  This frees up SMTP
+                     server resources so that they  can  be  made
+                     available to another SMTP client.
+
+                     Note: The "521" response should be used only
+                     with botnets and other malware where  inter-
+                     operability is of no concern.  The "send 521
+                     and disconnect" behavior is NOT  defined  in
+                     the SMTP standard.
 
        <b>REJECT</b> <i>optional text...</i>
               Reject  the  address etc. that matches the pattern.
@@ -271,14 +286,32 @@ ACCESS(5)                                                            ACCESS(5)
        <b>FILTER</b> <i>transport:destination</i>
               After  the  message is queued, send the entire mes-
               sage through the specified external content filter.
-              The  <i>transport:destination</i>  syntax  is described in
-              the <a href="transport.5.html"><b>transport</b>(5)</a>  manual  page.   More  information
-              about  external  content  filters is in the Postfix
-              <a href="FILTER_README.html">FILTER_README</a> file.
+              The  <i>transport</i>  name specifies the first field of a
+              mail delivery agent definition  in  <a href="master.5.html">master.cf</a>;  the
+              syntax  of the next-hop <i>destination</i> is described in
+              the  manual  page  of  the  corresponding  delivery
+              agent.   More  information  about  external content
+              filters is in the Postfix <a href="FILTER_README.html">FILTER_README</a> file.
 
-              Note: this action overrides the <b><a href="postconf.5.html#content_filter">content_filter</a></b> set-
-              ting,  and  currently affects all recipients of the
-              message.
+              Note 1: do not use $<i>number</i> regular expression  sub-
+              stitutions  for <i>transport</i> or <i>destination</i> unless you
+              know that the information has a trusted origin.
+
+              Note 2: this  action  overrides  the  <a href="postconf.5.html">main.cf</a>  <b><a href="postconf.5.html#content_filter">con</a>-</b>
+              <b><a href="postconf.5.html#content_filter">tent_filter</a></b>  setting, and affects all recipients of
+              the message.  In  the  case  that  multiple  <b>FILTER</b>
+              actions fire, only the last one is executed.
+
+              Note  3:  the  purpose  of the FILTER command is to
+              override message routing.  To override the  recipi-
+              ent's  <i>transport</i>  but not the next-hop <i>destination</i>,
+              specify an empty filter  <i>destination</i>  (Postfix  2.7
+              and later), or specify a <i>transport:destination</i> that
+              delivers  through  a  different  Postfix   instance
+              (Postfix  2.6 and earlier). Other options are using
+              the recipient-dependent <b><a href="postconf.5.html#transport_maps">transport_maps</a></b> or the  sen-
+              der-dependent   <b><a href="postconf.5.html#sender_dependent_default_transport_maps">sender_dependent_default_transport</a>-</b>
+              <b><a href="postconf.5.html#sender_dependent_default_transport_maps">_maps</a></b> features.
 
               This feature is available in Postfix 2.0 and later.
 

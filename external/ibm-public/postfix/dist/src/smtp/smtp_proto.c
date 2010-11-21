@@ -1,4 +1,4 @@
-/*	$NetBSD: smtp_proto.c,v 1.1.1.1.2.2 2009/09/15 06:03:33 snj Exp $	*/
+/*	$NetBSD: smtp_proto.c,v 1.1.1.1.2.3 2010/11/21 18:31:35 riz Exp $	*/
 
 /*++
 /* NAME
@@ -1206,21 +1206,39 @@ static int smtp_loop(SMTP_STATE *state, NOCLOBBER int send_state,
 	     * Build the XFORWARD command. With properly sanitized
 	     * information, the command length stays within the 512 byte
 	     * command line length limit.
+	     * 
+	     * XXX smtpd_xforward_preset() initializes some fields as "unknown"
+	     * and some as null; historically, pickup(8) does not send any of
+	     * these, and the queue manager presets absent fields to "not
+	     * available" except for the rewrite context which is preset to
+	     * local by way of migration aid.  These definitions need to be
+	     * centralized for maintainability.
 	     */
+#ifndef CAN_FORWARD_CLIENT_NAME
+#define _ATTR_AVAIL_AND_KNOWN_(val) \
+	(DEL_REQ_ATTR_AVAIL(val) && strcasecmp((val), "unknown"))
+#define CAN_FORWARD_CLIENT_NAME	_ATTR_AVAIL_AND_KNOWN_
+#define CAN_FORWARD_CLIENT_ADDR	_ATTR_AVAIL_AND_KNOWN_
+#define CAN_FORWARD_CLIENT_PORT	_ATTR_AVAIL_AND_KNOWN_
+#define CAN_FORWARD_PROTO_NAME	_ATTR_AVAIL_AND_KNOWN_
+#define CAN_FORWARD_HELO_NAME	DEL_REQ_ATTR_AVAIL
+#define CAN_FORWARD_RWR_CONTEXT	DEL_REQ_ATTR_AVAIL
+#endif
+
 	case SMTP_STATE_XFORWARD_NAME_ADDR:
 	    vstring_strcpy(next_command, XFORWARD_CMD);
 	    if ((session->features & SMTP_FEATURE_XFORWARD_NAME)
-		&& DEL_REQ_ATTR_AVAIL(request->client_name)) {
+		&& CAN_FORWARD_CLIENT_NAME(request->client_name)) {
 		vstring_strcat(next_command, " " XFORWARD_NAME "=");
 		xtext_quote_append(next_command, request->client_name, "");
 	    }
 	    if ((session->features & SMTP_FEATURE_XFORWARD_ADDR)
-		&& DEL_REQ_ATTR_AVAIL(request->client_addr)) {
+		&& CAN_FORWARD_CLIENT_ADDR(request->client_addr)) {
 		vstring_strcat(next_command, " " XFORWARD_ADDR "=");
 		xtext_quote_append(next_command, request->client_addr, "");
 	    }
 	    if ((session->features & SMTP_FEATURE_XFORWARD_PORT)
-		&& DEL_REQ_ATTR_AVAIL(request->client_port)) {
+		&& CAN_FORWARD_CLIENT_PORT(request->client_port)) {
 		vstring_strcat(next_command, " " XFORWARD_PORT "=");
 		xtext_quote_append(next_command, request->client_port, "");
 	    }
@@ -1233,17 +1251,17 @@ static int smtp_loop(SMTP_STATE *state, NOCLOBBER int send_state,
 	case SMTP_STATE_XFORWARD_PROTO_HELO:
 	    vstring_strcpy(next_command, XFORWARD_CMD);
 	    if ((session->features & SMTP_FEATURE_XFORWARD_PROTO)
-		&& DEL_REQ_ATTR_AVAIL(request->client_proto)) {
+		&& CAN_FORWARD_PROTO_NAME(request->client_proto)) {
 		vstring_strcat(next_command, " " XFORWARD_PROTO "=");
 		xtext_quote_append(next_command, request->client_proto, "");
 	    }
 	    if ((session->features & SMTP_FEATURE_XFORWARD_HELO)
-		&& DEL_REQ_ATTR_AVAIL(request->client_helo)) {
+		&& CAN_FORWARD_HELO_NAME(request->client_helo)) {
 		vstring_strcat(next_command, " " XFORWARD_HELO "=");
 		xtext_quote_append(next_command, request->client_helo, "");
 	    }
 	    if ((session->features & SMTP_FEATURE_XFORWARD_DOMAIN)
-		&& DEL_REQ_ATTR_AVAIL(request->rewrite_context)) {
+		&& CAN_FORWARD_RWR_CONTEXT(request->rewrite_context)) {
 		vstring_strcat(next_command, " " XFORWARD_DOMAIN "=");
 		xtext_quote_append(next_command,
 		     strcmp(request->rewrite_context, MAIL_ATTR_RWR_LOCAL) ?
@@ -1294,6 +1312,36 @@ static int smtp_loop(SMTP_STATE *state, NOCLOBBER int send_state,
 		&& (session->features & SMTP_FEATURE_AUTH))
 		vstring_strcat(next_command, " AUTH=<>");
 #endif
+
+	    /*
+	     * CVE-2009-3555 (TLS renegotiation). Try to detect a mail
+	     * hijacking attack that prepends malicious EHLO/MAIL/RCPT/DATA
+	     * commands to our TLS session.
+	     * 
+	     * For the attack to succeed, the remote SMTP server must reply to
+	     * the malicious EHLO/MAIL/RCPT/DATA commands after completing
+	     * TLS (re)negotiation, so that the replies arrive in our TLS
+	     * session (otherwise the Postfix SMTP client would time out
+	     * waiting for an answer). With some luck we can detect this
+	     * specific attack as a server MAIL reply that arrives before we
+	     * send our own MAIL command.
+	     * 
+	     * We don't apply this test to the HELO command because the result
+	     * would be very timing sensitive, and we don't apply this test
+	     * to RCPT and DATA replies because these may be pipelined for
+	     * legitimate reasons.
+	     */
+#ifdef USE_TLS
+	    if (var_smtp_tls_blk_early_mail_reply
+		&& (state->misc_flags & SMTP_MISC_FLAG_IN_STARTTLS) != 0
+		&& (vstream_peek(session->stream) > 0
+		    || peekfd(vstream_fileno(session->stream)) > 0))
+		session->features |= SMTP_FEATURE_EARLY_TLS_MAIL_REPLY;
+#endif
+
+	    /*
+	     * We now return to our regular broadcast.
+	     */
 	    next_state = SMTP_STATE_RCPT;
 	    break;
 
@@ -1514,6 +1562,32 @@ static int smtp_loop(SMTP_STATE *state, NOCLOBBER int send_state,
 				       xfer_request[SMTP_STATE_MAIL]);
 			mail_from_rejected = 1;
 		    }
+
+		    /*
+		     * CVE-2009-3555 (TLS renegotiation). Whatever it was
+		     * that arrived before we sent our MAIL FROM command, it
+		     * was not a fatal-level TLS alert message. It could be a
+		     * warning-level TLS alert message, or a ChangeCipherSpec
+		     * message, but such messages are not normally sent in
+		     * the middle of a TLS session. We disconnect and try
+		     * again later.
+		     */
+#ifdef USE_TLS
+		    if (var_smtp_tls_blk_early_mail_reply
+			&& (session->features & SMTP_FEATURE_EARLY_TLS_MAIL_REPLY)) {
+			smtp_site_fail(state, DSN_BY_LOCAL_MTA,
+				       SMTP_RESP_FAKE(&fake, "4.7.0"),
+				       "unexpected server message");
+			msg_warn("server %s violates %s policy",
+				 session->namaddr,
+				 VAR_SMTP_TLS_BLK_EARLY_MAIL_REPLY);
+			mail_from_rejected = 1;
+		    }
+#endif
+
+		    /*
+		     * We now return to our regular broadcast.
+		     */
 		    recv_state = SMTP_STATE_RCPT;
 		    break;
 
@@ -1925,19 +1999,19 @@ int     smtp_xfer(SMTP_STATE *state)
     send_name_addr =
 	var_smtp_send_xforward
 	&& (((session->features & SMTP_FEATURE_XFORWARD_NAME)
-	     && DEL_REQ_ATTR_AVAIL(request->client_name))
+	     && CAN_FORWARD_CLIENT_NAME(request->client_name))
 	    || ((session->features & SMTP_FEATURE_XFORWARD_ADDR)
-		&& DEL_REQ_ATTR_AVAIL(request->client_addr))
+		&& CAN_FORWARD_CLIENT_ADDR(request->client_addr))
 	    || ((session->features & SMTP_FEATURE_XFORWARD_PORT)
-		&& DEL_REQ_ATTR_AVAIL(request->client_port)));
+		&& CAN_FORWARD_CLIENT_PORT(request->client_port)));
     session->send_proto_helo =
 	var_smtp_send_xforward
 	&& (((session->features & SMTP_FEATURE_XFORWARD_PROTO)
-	     && DEL_REQ_ATTR_AVAIL(request->client_proto))
+	     && CAN_FORWARD_PROTO_NAME(request->client_proto))
 	    || ((session->features & SMTP_FEATURE_XFORWARD_HELO)
-		&& DEL_REQ_ATTR_AVAIL(request->client_helo))
+		&& CAN_FORWARD_HELO_NAME(request->client_helo))
 	    || ((session->features & SMTP_FEATURE_XFORWARD_DOMAIN)
-		&& DEL_REQ_ATTR_AVAIL(request->rewrite_context)));
+		&& CAN_FORWARD_RWR_CONTEXT(request->rewrite_context)));
     if (send_name_addr)
 	recv_state = send_state = SMTP_STATE_XFORWARD_NAME_ADDR;
     else if (session->send_proto_helo)

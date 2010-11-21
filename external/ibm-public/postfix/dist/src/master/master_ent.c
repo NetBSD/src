@@ -1,4 +1,4 @@
-/*	$NetBSD: master_ent.c,v 1.1.1.1.2.2 2009/09/15 06:02:57 snj Exp $	*/
+/*	$NetBSD: master_ent.c,v 1.1.1.1.2.3 2010/11/21 18:31:31 riz Exp $	*/
 
 /*++
 /* NAME
@@ -528,7 +528,7 @@ MASTER_SERV *get_master_ent()
 	argv_add(serv->args, "-u", (char *) 0);
     if (chroot)
 	argv_add(serv->args, "-c", (char *) 0);
-    if ((serv->flags & MASTER_FLAG_LOCAL_ONLY) == 0) {
+    if ((serv->flags & MASTER_FLAG_LOCAL_ONLY) == 0 && serv->max_proc > 1) {
 	argv_add(serv->args, "-o", "stress=" CONFIG_BOOL_YES, (char *) 0);
 	serv->stress_param_val =
 	    serv->args->argv[serv->args->argc - 1] + sizeof("stress=") - 1;

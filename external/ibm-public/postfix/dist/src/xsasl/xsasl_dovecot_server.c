@@ -1,4 +1,4 @@
-/*	$NetBSD: xsasl_dovecot_server.c,v 1.1.1.1.2.2 2009/09/15 06:04:13 snj Exp $	*/
+/*	$NetBSD: xsasl_dovecot_server.c,v 1.1.1.1.2.3 2010/11/21 18:31:38 riz Exp $	*/
 
 /*++
 /* NAME
@@ -367,10 +367,15 @@ static void xsasl_dovecot_server_disconnect(XSASL_DOVECOT_SERVER_IMPL *xp)
 
 /* xsasl_dovecot_server_init - create implementation handle */
 
-XSASL_SERVER_IMPL *xsasl_dovecot_server_init(const char *unused_server_type,
+XSASL_SERVER_IMPL *xsasl_dovecot_server_init(const char *server_type,
 					             const char *path_info)
 {
     XSASL_DOVECOT_SERVER_IMPL *xp;
+
+    if (strchr(path_info, '/') == 0)
+	msg_warn("when SASL type is \"%s\", SASL path \"%s\" "
+		 "should be a socket pathname",
+		 server_type, path_info);
 
     xp = (XSASL_DOVECOT_SERVER_IMPL *) mymalloc(sizeof(*xp));
     xp->xsasl.create = xsasl_dovecot_server_create;

@@ -1,4 +1,4 @@
-/*	$NetBSD: single_server.c,v 1.1.1.1.2.2 2009/09/15 06:02:58 snj Exp $	*/
+/*	$NetBSD: single_server.c,v 1.1.1.1.2.3 2010/11/21 18:31:31 riz Exp $	*/
 
 /*++
 /* NAME
@@ -267,7 +267,9 @@ static void single_server_wakeup(int fd)
 	single_server_abort(EVENT_NULL_TYPE, EVENT_NULL_CONTEXT);
     if (msg_verbose)
 	msg_info("connection closed");
-    use_count++;
+    /* Avoid integer wrap-around in a persistent process.  */
+    if (use_count < INT_MAX)
+	use_count++;
     if (var_idle_limit > 0)
 	event_request_timer(single_server_timeout, (char *) 0, var_idle_limit);
 }
@@ -404,8 +406,10 @@ NORETURN single_server_main(int argc, char **argv, SINGLE_SERVER_FN service,...)
     int     alone = 0;
     int     zerolimit = 0;
     WATCHDOG *watchdog;
+    char   *oname_val;
     char   *oname;
     char   *oval;
+    const char *err;
     char   *generation;
     int     msg_vstream_needed = 0;
     int     redo_syslog_init = 0;
@@ -484,13 +488,13 @@ NORETURN single_server_main(int argc, char **argv, SINGLE_SERVER_FN service,...)
 	    service_name = optarg;
 	    break;
 	case 'o':
-	    /* XXX Use split_nameval() */
-	    oname = mystrdup(optarg);
-	    if ((oval = split_at(oname, '=')) == 0)
-		oval = "";
+	    oname_val = mystrdup(optarg);
+	    if ((err = split_nameval(oname_val, &oname, &oval)) != 0)
+		msg_fatal("invalid \"-o %s\" option value: %s", optarg, err);
 	    mail_conf_update(oname, oval);
 	    if (strcmp(oname, VAR_SYSLOG_NAME) == 0)
 		redo_syslog_init = 1;
+	    myfree(oname_val);
 	    break;
 	case 's':
 	    if ((socket_count = atoi(optarg)) <= 0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: postqueue.c,v 1.1.1.1.2.2 2009/09/15 06:03:31 snj Exp $	*/
+/*	$NetBSD: postqueue.c,v 1.1.1.1.2.3 2010/11/21 18:31:34 riz Exp $	*/
 
 /*++
 /* NAME
@@ -50,8 +50,7 @@
 /*	Each queue entry shows the queue file ID, message
 /*	size, arrival time, sender, and the recipients that still need to
 /*	be delivered.  If mail could not be delivered upon the last attempt,
-/*	the reason for failure is shown. This mode of operation is implemented
-/*	by executing the \fBpostqueue\fR(1) command. The queue ID string
+/*	the reason for failure is shown. The queue ID string
 /*	is followed by an optional status character:
 /* .RS
 /* .IP \fB*\fR

@@ -1,4 +1,4 @@
-/*	$NetBSD: smtpd_proxy.h,v 1.1.1.1.2.2 2009/09/15 06:03:34 snj Exp $	*/
+/*	$NetBSD: smtpd_proxy.h,v 1.1.1.1.2.3 2010/11/21 18:31:36 riz Exp $	*/
 
 /*++
 /* NAME
@@ -20,16 +20,40 @@
  /*
   * Application-specific.
   */
+typedef int PRINTFPTRLIKE(3, 4) (*SMTPD_PROXY_CMD_FN) (SMTPD_STATE *, int, const char *,...);
+typedef int PRINTFPTRLIKE(3, 4) (*SMTPD_PROXY_REC_FPRINTF_FN) (VSTREAM *, int, const char *,...);
+typedef int (*SMTPD_PROXY_REC_PUT_FN) (VSTREAM *, int, const char *, ssize_t);
+
+typedef struct SMTPD_PROXY {
+    /* Public. */
+    VSTREAM *stream;
+    VSTRING *buffer;			/* proxy query/reply buffer */
+    SMTPD_PROXY_CMD_FN cmd;
+    SMTPD_PROXY_REC_FPRINTF_FN rec_fprintf;
+    SMTPD_PROXY_REC_PUT_FN rec_put;
+    /* Private. */
+    int     flags;
+    VSTREAM *service_stream;
+    const char *service_name;
+    int     timeout;
+    const char *ehlo_name;
+    const char *mail_from;
+} SMTPD_PROXY;
+
+#define SMTPD_PROXY_FLAG_SPEED_ADJUST	(1<<0)
+
+#define SMTPD_PROXY_NAME_SPEED_ADJUST	"speed_adjust"
+
+#define SMTPD_PROX_WANT_BAD	0xff	/* Do not use */
 #define SMTPD_PROX_WANT_NONE	'\0'	/* Do not receive reply */
 #define SMTPD_PROX_WANT_ANY	'0'	/* Expect any reply */
 #define SMTPD_PROX_WANT_OK	'2'	/* Expect 2XX reply */
 #define SMTPD_PROX_WANT_MORE	'3'	/* Expect 3XX reply */
 
-extern int smtpd_proxy_open(SMTPD_STATE *, const char *, int, const char *, const char *);
-extern int PRINTFLIKE(3, 4) smtpd_proxy_cmd(SMTPD_STATE *, int, const char *,...);
-extern int smtpd_proxy_rec_put(VSTREAM *, int, const char *, ssize_t);
-extern int PRINTFLIKE(3, 4) smtpd_proxy_rec_fprintf(VSTREAM *, int, const char *,...);
+extern int smtpd_proxy_create(SMTPD_STATE *, int, const char *, int, const char *, const char *);
 extern void smtpd_proxy_close(SMTPD_STATE *);
+extern void smtpd_proxy_free(SMTPD_STATE *);
+extern int smtpd_proxy_parse_opts(const char *, const char *);
 
 /* LICENSE
 /* .ad

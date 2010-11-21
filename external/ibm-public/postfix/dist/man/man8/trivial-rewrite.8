@@ -1,4 +1,4 @@
-.\"	$NetBSD: trivial-rewrite.8,v 1.1.1.1.2.2 2009/09/15 06:02:19 snj Exp $
+.\"	$NetBSD: trivial-rewrite.8,v 1.1.1.1.2.3 2010/11/21 18:31:26 riz Exp $
 .\"
 .TH TRIVIAL-REWRITE 8 
 .ad
@@ -184,6 +184,14 @@ Available in Postfix version 2.5 and later:
 .IP "\fBempty_address_relayhost_maps_lookup_key (<>)\fR"
 The sender_dependent_relayhost_maps search string that will be
 used instead of the null sender address.
+.PP
+Available in Postfix version 2.7 and later:
+.IP "\fBempty_address_default_transport_maps_lookup_key (<>)\fR"
+The sender_dependent_default_transport_maps search string that
+will be used instead of the null sender address.
+.IP "\fBsender_dependent_default_transport_maps (empty)\fR"
+A sender-dependent override for the global default_transport
+parameter setting.
 .SH "ADDRESS VERIFICATION CONTROLS"
 .na
 .nf
@@ -219,6 +227,11 @@ Available in Postfix version 2.3 and later:
 .IP "\fBaddress_verify_sender_dependent_relayhost_maps ($sender_dependent_relayhost_maps)\fR"
 Overrides the sender_dependent_relayhost_maps parameter setting for address
 verification probes.
+.PP
+Available in Postfix version 2.7 and later:
+.IP "\fBaddress_verify_sender_dependent_default_transport_maps ($sender_dependent_default_transport_maps)\fR"
+Overrides the sender_dependent_default_transport_maps parameter
+setting for address verification probes.
 .SH "MISCELLANEOUS CONTROLS"
 .na
 .nf

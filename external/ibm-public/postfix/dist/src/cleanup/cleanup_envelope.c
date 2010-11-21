@@ -1,6 +1,6 @@
-/*	$NetBSD: cleanup_envelope.c,v 1.2.2.2 2009/09/15 06:02:30 snj Exp $	*/
+/*	$NetBSD: cleanup_envelope.c,v 1.2.2.3 2010/11/21 18:31:28 riz Exp $	*/
 
-/*	$NetBSD: cleanup_envelope.c,v 1.2.2.2 2009/09/15 06:02:30 snj Exp $	*/
+/*	$NetBSD: cleanup_envelope.c,v 1.2.2.3 2010/11/21 18:31:28 riz Exp $	*/
 
 /*++
 /* NAME
@@ -389,7 +389,8 @@ static void cleanup_envelope_process(CLEANUP_STATE *state, int type,
 	cleanup_addr_sender(state, buf);
 	if (state->milters || cleanup_milters) {
 	    /* Make room to replace sender. */
-	    rec_pad(state->dst, REC_TYPE_PTR, REC_TYPE_PTR_PAYL_SIZE);
+	    if ((len = strlen(state->sender)) < REC_TYPE_PTR_PAYL_SIZE)
+		rec_pad(state->dst, REC_TYPE_PTR, REC_TYPE_PTR_PAYL_SIZE - len);
 	    /* Remember the after-sender record offset. */
 	    if ((state->sender_pt_target = vstream_ftell(state->dst)) < 0)
 		msg_fatal("%s: vstream_ftell %s: %m:", myname, cleanup_path);

@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_db.c,v 1.1.1.1.2.2 2009/09/15 06:03:55 snj Exp $	*/
+/*	$NetBSD: dict_db.c,v 1.1.1.1.2.3 2010/11/21 18:31:36 riz Exp $	*/
 
 /*++
 /* NAME
@@ -537,8 +537,19 @@ static void dict_db_close(DICT *dict)
 #endif
     if (DICT_DB_SYNC(dict_db->db, 0) < 0)
 	msg_fatal("flush database %s: %m", dict_db->dict.name);
+
+    /*
+     * With some Berkeley DB implementations, close fails with a bogus ENOENT
+     * error, while it reports no errors with put+sync, no errors with
+     * del+sync, and no errors with the sync operation just before this
+     * comment. This happens in programs that never fork and that never share
+     * the database with other processes. The bogus close error has been
+     * reported for programs that use the first/next iterator. Instead of
+     * making Postfix look bad because it reports errors that other programs
+     * ignore, I'm going to report the bogus error as a non-error.
+     */
     if (DICT_DB_CLOSE(dict_db->db) < 0)
-	msg_fatal("close database %s: %m", dict_db->dict.name);
+	msg_info("close database %s: %m", dict_db->dict.name);
     if (dict_db->key_buf)
 	vstring_free(dict_db->key_buf);
     if (dict_db->val_buf)
@@ -666,7 +677,7 @@ static DICT *dict_db_open(const char *class, const char *path, int open_flags,
 	msg_fatal("set DB cache size %d: %m", dict_db_cache_size);
     if (type == DB_HASH && db->set_h_nelem(db, DICT_DB_NELM) != 0)
 	msg_fatal("set DB hash element count %d: %m", DICT_DB_NELM);
-#if (DB_VERSION_MAJOR == 4 && DB_VERSION_MINOR > 0)
+#if DB_VERSION_MAJOR == 5 || (DB_VERSION_MAJOR == 4 && DB_VERSION_MINOR > 0)
     if ((errno = db->open(db, 0, db_path, 0, type, db_flags, 0644)) != 0)
 	msg_fatal("open database %s: %m", db_path);
 #elif (DB_VERSION_MAJOR == 3 || DB_VERSION_MAJOR == 4)

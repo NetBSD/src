@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanup_user.h,v 1.1.1.1.2.2 2009/09/15 06:02:38 snj Exp $	*/
+/*	$NetBSD: cleanup_user.h,v 1.1.1.1.2.3 2010/11/21 18:31:31 riz Exp $	*/
 
 #ifndef _CLEANUP_USER_H_INCLUDED_
 #define _CLEANUP_USER_H_INCLUDED_
@@ -67,7 +67,8 @@
   * These are set when we can't bounce even if we were asked to.
   */
 #define CLEANUP_STAT_MASK_CANT_BOUNCE \
-	(CLEANUP_STAT_BAD | CLEANUP_STAT_WRITE | CLEANUP_STAT_DEFER)
+	(CLEANUP_STAT_BAD | CLEANUP_STAT_WRITE | CLEANUP_STAT_DEFER \
+	    | CLEANUP_STAT_RCPT)
 
  /*
   * These are set when we can't examine every record of a message.

@@ -47,6 +47,10 @@ discard.8.html: ../src/discard/discard.c
 	PATH=../mantools:$$PATH; \
 	srctoman $? | $(AWK) | nroff -man | uniq | $(MAN2HTML) | postlink >$@
 
+dnsblog.8.html: ../src/dnsblog/dnsblog.c
+	PATH=../mantools:$$PATH; \
+	srctoman $? | $(AWK) | nroff -man | uniq | $(MAN2HTML) | postlink >$@
+
 error.8.html: ../src/error/error.c
 	PATH=../mantools:$$PATH; \
 	srctoman $? | $(AWK) | nroff -man | uniq | $(MAN2HTML) | postlink >$@
@@ -91,6 +95,10 @@ pickup.8.html: ../src/pickup/pickup.c
 	srctoman $? | $(AWK) | nroff -man | uniq | $(MAN2HTML) | postlink >$@
 
 pipe.8.html: ../src/pipe/pipe.c
+	PATH=../mantools:$$PATH; \
+	srctoman $? | $(AWK) | nroff -man | uniq | $(MAN2HTML) | postlink >$@
+
+postscreen.8.html: ../src/postscreen/postscreen.c
 	PATH=../mantools:$$PATH; \
 	srctoman $? | $(AWK) | nroff -man | uniq | $(MAN2HTML) | postlink >$@
 

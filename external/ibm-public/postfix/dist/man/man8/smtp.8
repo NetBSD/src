@@ -1,4 +1,4 @@
-.\"	$NetBSD: smtp.8,v 1.1.1.1.2.2 2009/09/15 06:02:19 snj Exp $
+.\"	$NetBSD: smtp.8,v 1.1.1.1.2.3 2010/11/21 18:31:26 riz Exp $
 .\"
 .TH SMTP 8 
 .ad
@@ -187,6 +187,9 @@ per-destination workarounds for CISCO PIX firewall bugs.
 .IP "\fBsmtp_quote_rfc821_envelope (yes)\fR"
 Quote addresses in SMTP MAIL FROM and RCPT TO commands as required
 by RFC 2821.
+.IP "\fBsmtp_reply_filter (empty)\fR"
+A mechanism to transform replies from remote SMTP servers one
+line at a time.
 .IP "\fBsmtp_skip_5xx_greeting (yes)\fR"
 Skip SMTP servers that greet with a 5XX status code (go away, do
 not try again later).
@@ -432,6 +435,12 @@ will use with opportunistic TLS encryption.
 File with the Postfix SMTP client ECDSA certificate in PEM format.
 .IP "\fBsmtp_tls_eckey_file ($smtp_tls_eccert_file)\fR"
 File with the Postfix SMTP client ECDSA private key in PEM format.
+.PP
+Available in Postfix version 2.7 and later:
+.IP "\fBsmtp_tls_block_early_mail_reply (no)\fR"
+Try to detect a mail hijacking attack based on a TLS protocol
+vulnerability (CVE-2009-3555), where an attacker prepends malicious
+HELO, MAIL, RCPT, DATA commands to a Postfix SMTP client TLS session.
 .SH "OBSOLETE STARTTLS CONTROLS"
 .na
 .nf
@@ -612,7 +621,7 @@ The hostname to send in the SMTP EHLO or HELO command.
 .IP "\fBlmtp_lhlo_name ($myhostname)\fR"
 The hostname to send in the LMTP LHLO command.
 .IP "\fBsmtp_host_lookup (dns)\fR"
-What mechanisms when the Postfix SMTP client uses to look up a host's IP
+What mechanisms the Postfix SMTP client uses to look up a host's IP
 address.
 .IP "\fBsmtp_randomize_addresses (yes)\fR"
 Randomize the order of equal-preference MX host addresses.

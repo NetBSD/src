@@ -1,4 +1,4 @@
-/*	$NetBSD: smtp.h,v 1.1.1.1.2.2 2009/09/15 06:03:32 snj Exp $	*/
+/*	$NetBSD: smtp.h,v 1.1.1.1.2.3 2010/11/21 18:31:35 riz Exp $	*/
 
 /*++
 /* NAME
@@ -22,6 +22,7 @@
 #include <vstring.h>
 #include <argv.h>
 #include <htable.h>
+#include <dict.h>
 
  /*
   * Global library.
@@ -121,6 +122,7 @@ typedef struct SMTP_STATE {
 #define SMTP_FEATURE_PIX_NO_ESMTP	(1<<16)	/* PIX smtp fixup mode */
 #define SMTP_FEATURE_PIX_DELAY_DOTCRLF	(1<<17)	/* PIX smtp fixup mode */
 #define SMTP_FEATURE_XFORWARD_PORT	(1<<18)
+#define SMTP_FEATURE_EARLY_TLS_MAIL_REPLY (1<<19)	/* CVE-2009-3555 */
 
  /*
   * Features that passivate under the endpoint.
@@ -367,7 +369,8 @@ typedef struct SMTP_RESP {		/* server response */
     VSTRING *str_buf;			/* reply buffer */
 } SMTP_RESP;
 
-extern void PRINTFLIKE(2, 3) smtp_chat_cmd(SMTP_SESSION *, char *,...);
+extern void PRINTFLIKE(2, 3) smtp_chat_cmd(SMTP_SESSION *, const char *,...);
+extern DICT *smtp_chat_resp_filter;
 extern SMTP_RESP *smtp_chat_resp(SMTP_SESSION *);
 extern void smtp_chat_init(SMTP_SESSION *);
 extern void smtp_chat_reset(SMTP_SESSION *);

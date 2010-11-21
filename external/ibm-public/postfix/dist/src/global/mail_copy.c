@@ -1,4 +1,4 @@
-/*	$NetBSD: mail_copy.c,v 1.1.1.1.2.2 2009/09/15 06:02:45 snj Exp $	*/
+/*	$NetBSD: mail_copy.c,v 1.1.1.1.2.3 2010/11/21 18:31:31 riz Exp $	*/
 
 /*++
 /* NAME
@@ -280,7 +280,8 @@ int     mail_copy(const char *sender,
 #ifndef NO_TRUNCATE
     if ((flags & MAIL_COPY_TOFILE) != 0)
 	if (corrupt_error || read_error || write_error)
-	    ftruncate(vstream_fileno(dst), orig_length);
+	    /* Complain about ignored "undo" errors? So sue me. */
+	    (void) ftruncate(vstream_fileno(dst), orig_length);
 #endif
     write_error |= vstream_fclose(dst);
 

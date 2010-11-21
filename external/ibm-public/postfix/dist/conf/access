@@ -187,8 +187,23 @@
 #               text.  4NN means "try again later", while 5NN means
 #               "do not try again".
 # 
-#               The reply code "421" causes Postfix  to  disconnect
-#               immediately (Postfix version 2.3 and later).
+#               The following responses have  special  meaning  for
+#               the Postfix SMTP server:
+# 
+#               421 text (Postfix 2.3 and later)
+# 
+#               521 text (Postfix 2.6 and later)
+#                      After  responding  with the numerical three-
+#                      digit code and text, disconnect  immediately
+#                      from  the  SMTP  client.  This frees up SMTP
+#                      server resources so that they  can  be  made
+#                      available to another SMTP client.
+# 
+#                      Note: The "521" response should be used only
+#                      with botnets and other malware where  inter-
+#                      operability is of no concern.  The "send 521
+#                      and disconnect" behavior is NOT  defined  in
+#                      the SMTP standard.
 # 
 #        REJECT optional text...
 #               Reject  the  address etc. that matches the pattern.
@@ -265,14 +280,32 @@
 #        FILTER transport:destination
 #               After  the  message is queued, send the entire mes-
 #               sage through the specified external content filter.
-#               The  transport:destination  syntax  is described in
-#               the transport(5)  manual  page.   More  information
-#               about  external  content  filters is in the Postfix
-#               FILTER_README file.
+#               The  transport  name specifies the first field of a
+#               mail delivery agent definition  in  master.cf;  the
+#               syntax  of the next-hop destination is described in
+#               the  manual  page  of  the  corresponding  delivery
+#               agent.   More  information  about  external content
+#               filters is in the Postfix FILTER_README file.
 # 
-#               Note: this action overrides the content_filter set-
-#               ting,  and  currently affects all recipients of the
-#               message.
+#               Note 1: do not use $number regular expression  sub-
+#               stitutions  for transport or destination unless you
+#               know that the information has a trusted origin.
+# 
+#               Note 2: this  action  overrides  the  main.cf  con-
+#               tent_filter  setting, and affects all recipients of
+#               the message.  In  the  case  that  multiple  FILTER
+#               actions fire, only the last one is executed.
+# 
+#               Note  3:  the  purpose  of the FILTER command is to
+#               override message routing.  To override the  recipi-
+#               ent's  transport  but not the next-hop destination,
+#               specify an empty filter  destination  (Postfix  2.7
+#               and later), or specify a transport:destination that
+#               delivers  through  a  different  Postfix   instance
+#               (Postfix  2.6 and earlier). Other options are using
+#               the recipient-dependent transport_maps or the  sen-
+#               der-dependent   sender_dependent_default_transport-
+#               _maps features.
 # 
 #               This feature is available in Postfix 2.0 and later.
 # 

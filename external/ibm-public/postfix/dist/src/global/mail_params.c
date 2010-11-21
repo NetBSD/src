@@ -1,4 +1,4 @@
-/*	$NetBSD: mail_params.c,v 1.1.1.1.2.2 2009/09/15 06:02:46 snj Exp $	*/
+/*	$NetBSD: mail_params.c,v 1.1.1.1.2.3 2010/11/21 18:31:31 riz Exp $	*/
 
 /*++
 /* NAME
@@ -512,7 +512,7 @@ void    mail_params_init()
 	VAR_SYSLOG_FACILITY, DEF_SYSLOG_FACILITY, &var_syslog_facility, 1, 0,
 	VAR_INET_PROTOCOLS, DEF_INET_PROTOCOLS, &var_inet_protocols, 1, 0,
 	VAR_MULTI_CONF_DIRS, DEF_MULTI_CONF_DIRS, &var_multi_conf_dirs, 0, 0,
-	VAR_MULTI_WRAPPER, DEF_MULTI_WRAPPER, &var_multi_wrapper, 0, 0,
+	/* multi_instance_wrapper may have dependencies but not dependents. */
 	VAR_MULTI_GROUP, DEF_MULTI_GROUP, &var_multi_group, 0, 0,
 	VAR_MULTI_NAME, DEF_MULTI_NAME, &var_multi_name, 0, 0,
 	0,
@@ -569,6 +569,8 @@ void    mail_params_init()
 	VAR_PROXYMAP_SERVICE, DEF_PROXYMAP_SERVICE, &var_proxymap_service, 1, 0,
 	VAR_PROXYWRITE_SERVICE, DEF_PROXYWRITE_SERVICE, &var_proxywrite_service, 1, 0,
 	VAR_INT_FILT_CLASSES, DEF_INT_FILT_CLASSES, &var_int_filt_classes, 0, 0,
+	/* multi_instance_wrapper may have dependencies but not dependents. */
+	VAR_MULTI_WRAPPER, DEF_MULTI_WRAPPER, &var_multi_wrapper, 0, 0,
 	0,
     };
     static const CONFIG_STR_FN_TABLE function_str_defaults_2[] = {

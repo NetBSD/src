@@ -1,4 +1,4 @@
-.\"	$NetBSD: oqmgr.8,v 1.1.1.1.2.2 2009/09/15 06:02:19 snj Exp $
+.\"	$NetBSD: oqmgr.8,v 1.1.1.1.2.3 2010/11/21 18:31:26 riz Exp $
 .\"
 .TH OQMGR 8 
 .ad
@@ -185,6 +185,12 @@ Available before Postfix version 2.5:
 .IP "\fBallow_min_user (no)\fR"
 Allow a sender or recipient address to have `-' as the first
 character.
+.PP
+Available with Postfix version 2.7 and later:
+.IP "\fBdefault_filter_nexthop (empty)\fR"
+When a content_filter or FILTER request specifies no explicit
+next-hop destination, use $default_filter_nexthop instead; when
+that value is empty, use the domain in the recipient address.
 .SH "ACTIVE QUEUE CONTROLS"
 .na
 .nf

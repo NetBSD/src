@@ -1,4 +1,4 @@
-/*	$NetBSD: unix_send_fd.c,v 1.2.2.2 2009/09/15 06:04:04 snj Exp $	*/
+/*	$NetBSD: unix_send_fd.c,v 1.2.2.3 2010/11/21 18:31:37 riz Exp $	*/
 
 /*++
 /* NAME
@@ -66,8 +66,8 @@ int     unix_send_fd(int fd, int sendfd)
 
     /*
      * Adapted from: W. Richard Stevens, UNIX Network Programming, Volume 1,
-     * Second edition. Except that we use CMSG_LEN instead of CMSG_SPACE; the
-     * latter breaks on LP64 systems.
+     * Second edition. Except that we use CMSG_LEN instead of CMSG_SPACE, for
+     * portability to some LP64 environments. See also unix_recv_fd.c.
      */
 #if defined(CMSG_SPACE) && !defined(NO_MSGHDR_MSG_CONTROL)
     union {
@@ -76,10 +76,13 @@ int     unix_send_fd(int fd, int sendfd)
     }       control_un;
     struct cmsghdr *cmptr;
 
-    memset((char *) &msg, 0, sizeof(msg));		/* Fix 200512 */
+    memset((char *) &msg, 0, sizeof(msg));	/* Fix 200512 */
     msg.msg_control = control_un.control;
-    msg.msg_controllen = sizeof(control_un.control);	/* Fix 200506 */
-
+    if (unix_pass_fd_fix & UNIX_PASS_FD_FIX_CMSG_LEN) {
+	msg.msg_controllen = CMSG_LEN(sizeof(sendfd));	/* Fix 200506 */
+    } else {
+	msg.msg_controllen = sizeof(control_un.control);	/* normal */
+    }
     cmptr = CMSG_FIRSTHDR(&msg);
     cmptr->cmsg_len = CMSG_LEN(sizeof(sendfd));
     cmptr->cmsg_level = SOL_SOCKET;
@@ -103,7 +106,40 @@ int     unix_send_fd(int fd, int sendfd)
     msg.msg_iov = iov;
     msg.msg_iovlen = 1;
 
-    return (sendmsg(fd, &msg, 0));
+    /*
+     * The CMSG_LEN send/receive workaround was originally developed for
+     * OpenBSD 3.6 on SPARC64. After the workaround was verified to not break
+     * Solaris 8 on SPARC64, it was hard-coded with Postfix 2.3 for all
+     * platforms because of increasing pressure to work on other things. The
+     * workaround does nothing for 32-bit systems.
+     * 
+     * The investigation was reopened with Postfix 2.7 because the workaround
+     * broke with NetBSD 5.0 on 64-bit architectures. This time it was found
+     * that OpenBSD <= 4.3 on AMD64 and SPARC64 needed the workaround for
+     * sending only. The following platforms worked with and without the
+     * workaround: OpenBSD 4.5 on AMD64 and SPARC64, FreeBSD 7.2 on AMD64,
+     * Solaris 8 on SPARC64, and Linux 2.6-11 on x86_64.
+     * 
+     * As this appears to have been an OpenBSD-specific problem, we revert to
+     * the Postfix 2.2 behavior. Instead of hard-coding the workaround for
+     * all platforms, we now detect sendmsg() errors at run time and turn on
+     * the workaround dynamically.
+     * 
+     * The workaround was made run-time configurable to investigate the problem
+     * on multiple platforms. Though set_unix_pass_fd_fix() is over-kill for
+     * this specific problem, it is left in place so that it can serve as an
+     * example of how to add run-time configurable workarounds to Postfix.
+     */
+    if (sendmsg(fd, &msg, 0) >= 0)
+	return (0);
+    if (unix_pass_fd_fix == 0) {
+	if (msg_verbose)
+	    msg_info("sendmsg error (%m). Trying CMSG_LEN workaround.");
+	unix_pass_fd_fix = UNIX_PASS_FD_FIX_CMSG_LEN;
+	return (unix_send_fd(fd, sendfd));
+    } else {
+	return (-1);
+    }
 #endif
 }
 
@@ -127,6 +163,8 @@ int     main(int argc, char **argv)
     char   *path;
     int     server_sock;
     int     client_fd;
+
+    msg_verbose = 1;
 
     if (argc < 3
 	|| (endpoint = split_at(transport = argv[1], ':')) == 0

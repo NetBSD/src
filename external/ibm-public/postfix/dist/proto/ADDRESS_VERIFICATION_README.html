@@ -19,12 +19,11 @@
 
 <h2>WARNING </h2>
 
-<p> The sender/recipient address verification feature described in this
-document is suitable only for low-traffic sites. It performs poorly
-under high load; excessive sender address verification activity may
-even cause your site to be blacklisted by some
-providers. See the "<a href="#limitations">Limitations</a>" section
-below for details. </p>
+<p> Recipient address verification may cause an increased load on
+down-stream servers in the case of a dictionary attack or a flood
+of backscatter bounces. Sender address verification may cause your
+site to be blacklisted by some providers.  See also the "<a
+href="#limitations">Limitations</a>" section below for more.  </p>
 
 <h2><a name="summary">What Postfix address verification can do for you</a></h2>
 
@@ -35,7 +34,7 @@ until the address has been verified to be deliverable.  </p>
 <p> The technique has obvious uses to reject junk mail
 with an unreplyable sender address.  </p>
 
-<p> The technique may also be useful to block mail for undeliverable
+<p> The technique is also useful to block mail for undeliverable
 recipients, for example on a mail relay host that does not have a
 list of all the valid recipient addresses. This prevents undeliverable
 junk mail from entering the queue, so that Postfix doesn't have to
@@ -86,74 +85,96 @@ always discarded.  </p>
 
 <blockquote>
 
-<table>
+<table border="0">
 
 <tr>
 
-    <td bgcolor="#f0f0ff" align="center" valign="middle"> Internet
+    <td rowspan="2" colspan="5" align="center" valign="middle">
+    &nbsp; </td>
+
+    <td rowspan="3" align="center" valign="bottom"> <tt> -&gt; </tt>
     </td>
 
-    <td align="center" valign="middle"> <tt> -&gt; </tt> </td>
+	<td rowspan="3" align="center" valign="middle"> probe<br>
+	message </td>
 
-	<td bgcolor="#f0f0ff" align="center" valign="middle"> <a
-	href="smtpd.8.html">Postfix<br> SMTP<br> server</a> </td>
+    <td rowspan="3" align="center" valign="middle"> <tt> -&gt; </tt>
+    </td>
 
-    <td colspan="2" align="center" valign="middle"> <tt> &lt;-&gt;
+	<td rowspan="3" bgcolor="#f0f0ff" align="center" valign="middle">
+	Postfix<br> mail<br> queue </td>
+
+</tr>
+
+<tr> </tr>
+
+<tr>
+
+    <td rowspan="3" align="center" valign="middle"> Internet </td>
+
+    <td rowspan="3" align="center" valign="middle"> <tt> -&gt; </tt>
+    </td>
+
+	<td rowspan="3" bgcolor="#f0f0ff" align="center" valign="middle">
+	<a href="smtpd.8.html">Postfix<br> SMTP<br> server</a> </td>
+
+    <td rowspan="3" align="center" valign="middle"> <tt> &lt;-&gt;
     </tt> </td>
 
-	<td bgcolor="#f0f0ff" colspan="3" align="center" valign="middle">
+	<td rowspan="3" bgcolor="#f0f0ff" align="center" valign="middle">
 	<a href="verify.8.html">Postfix<br> verify<br> server</a>
 	</td>
 
-    <td colspan="2" align="center" valign="middle"> <tt> &lt;-&gt;
-    </tt> </td>
+</tr>
 
-    <td bgcolor="#f0f0ff" align="center" valign="middle"> Address<br>
-    verification<br> database </td>
+<tr>
+
+    <td rowspan="1" colspan="3"> </td>
+
+    <td rowspan="1" align="center" valign="middle"> <tt> |</tt><br>
+    <tt> v</tt> </td>
 
 </tr>
 
 <tr>
 
-    <td colspan="3"> </td>
+    <td rowspan="3" align="center" valign="top"> <tt> &lt;- </tt>
+    </td>
 
-    <td> &nbsp; &nbsp; </td>
+	<td rowspan="3" align="center" valign="middle"> probe<br>
+	status </td>
 
-    <td colspan="2" align="right" valign="middle"> <tt> |</tt><br>
-    probe<br> messages<br> <tt> v </tt> </td>
+    <td rowspan="3" align="center" valign="middle"> <tt> &lt;- </tt>
+    </td>
 
-    <td> </td>
+	<td rowspan="3" bgcolor="#f0f0ff" align="center" valign="middle">
+	Postfix<br> delivery<br> agents </td>
 
-    <td colspan="2" align="left" valign="middle"> ^<br> delivery<br>
-    status<br> <tt> | </tt> </td>
-
-    <td> </td>
-
-    <td> </td>
+    <td rowspan="3" align="left" valign="middle"> <tt>-&gt;</tt>
+    Local<br> <tt>-&gt;</tt> Remote</td>
 
 </tr>
 
 <tr>
 
-    <td> </td>
+    <td rowspan="3" colspan="4" align="center" valign="middle">
+    &nbsp; </td>
 
-    <td> </td>
+	<td rowspan="3" align="center" valign="middle"> <tt>
+	^</tt><br> <tt> |</tt><br> <tt> v</tt> </td>
 
-    <td> </td>
+</tr>
 
-    <td> </td>
+<tr> </tr>
 
-    <td colspan="2" bgcolor="#f0f0ff" align="center" valign="middle">
-    Postfix<br> queue </td>
+<tr> <td colspan="4"> &nbsp; </td> </tr>
 
-    <td align="center" valign="middle"> <tt> -&gt; </tt> </td>
+<tr>
 
-    <td colspan="2" bgcolor="#f0f0ff" align="center" valign="middle">
-    Postfix<br> delivery<br> agents </td>
+    <td colspan="4" align="center" valign="middle"> &nbsp; </td>
 
-    <td> </td>
-
-    <td> </td>
+	<td bgcolor="#f0f0ff" align="center" valign="middle">
+	Address<br> verification<br> database </td>
 
 </tr>
 
@@ -181,7 +202,8 @@ details. </p>
 MTA for that address, without actually delivering mail to it. If
 the nearest MTA accepts the address, then Postfix assumes that the
 address is deliverable. In reality, mail for a remote address can
-bounce AFTER the nearest MTA accepts the recipient address. </p>
+bounce AFTER the nearest MTA accepts the recipient address, or AFTER
+the nearest MTA accepts the message content. </p>
 
 <li> <p> Some sites may blacklist you when you are probing them
 too often (a probe is an SMTP session that does not deliver mail),
@@ -200,21 +222,25 @@ mail routing and for possible limitations when you have to do this.
 <li> <p> Postfix assumes that an address is undeliverable when the
 nearest MTA for the address rejects the probe, regardless of the
 reason for rejection (client rejected, HELO rejected, MAIL FROM
-rejected, etc.).  Thus, Postfix rejects mail when the sender's MTA
-rejects mail from your machine.  This is a good thing. </p>
+rejected, etc.).  Thus, Postfix rejects an address when the nearest
+MTA for that address rejects mail from your machine for any reason.
+This is not a limitation, but it is mentioned here just in case
+people believe that it is a limitation. </p>
 
-<li> <p> Unfortunately, some major sites such as YAHOO do not reject
+<li> <p> Unfortunately, some sites do not reject
 unknown addresses in reply to the RCPT TO command, but report a
 delivery failure in response to end of DATA after a message is
 transferred.  Postfix address verification does not work with such
 sites. </p>
 
-<li> <p> By default, Postfix probe messages have "double-bounce@$myorigin"
-as the sender address (with Postfix versions before 2.5, the default
+<li> <p> By default, Postfix probe messages have a sender address
+"double-bounce@$myorigin" (with Postfix versions before 2.5, the
+default
 is "postmaster@$myorigin"). This is SAFE because the Postfix SMTP
 server does not reject mail for this address. </p>
 
-<p> You can change this into the null address ("address_verify_sender
+<p> You can change the probe sender address into the null address
+("address_verify_sender
 ="). This is UNSAFE because address probes will fail with
 mis-configured sites that reject MAIL FROM:  &lt;&gt;, while
 probes from "postmaster@$myorigin" would succeed. </p>
@@ -223,7 +249,7 @@ probes from "postmaster@$myorigin" would succeed. </p>
 
 <h2><a name="recipient">Recipient address verification</a></h2>
 
-<p> As mentioned earlier, recipient address verification may be
+<p> As mentioned earlier, recipient address verification is
 useful to block mail for undeliverable recipients on a mail relay
 host that does not have a list of all valid recipient addresses.
 This can help to prevent the mail queue from filling up with
@@ -237,9 +263,11 @@ However, recipient address verification probes can increase the
 load on down-stream MTAs when you're being flooded by backscatter
 bounces, or when some spammer is mounting a dictionary attack. </p>
 
-<p> By default, address verification results are not saved. To avoid
-probing the same address repeatedly, you can store the result in a
-<a href="#caching">persistent database</a> as described later.  </p>
+<p> By default, address verification results are saved in a <a
+href="#caching">persistent database</a> (Postfix version 2.7 and
+later; with earlier versions, specify the database in main.cf as
+described later).  The persistent database helps to avoid probing
+the same address repeatedly.  </p>
 
 <blockquote>
 <pre>
@@ -299,11 +327,13 @@ in forged email.  </p>
     # Postfix 2.6 and later.
     # unverified_sender_defer_code = 250
 
+    # Default setting for Postfix 2.7 and later.
     # Note 1: Be sure to read the "<a href="#caching">Caching</a>" section below!
     # Note 2: Avoid hash files here. Use btree instead.
     address_verify_map = btree:/var/db/postfix/verify
  
 /etc/postfix/sender_access:
+    # Don't do this when you handle lots of email.
     aol.com     reject_unverified_sender
     hotmail.com reject_unverified_sender
     bigfoot.com reject_unverified_sender
@@ -344,6 +374,7 @@ you can see what mail would be blocked: </p>
     # Postfix 2.6 and later.
     # unverified_sender_reject_reason = Address verification failed
 
+    # Default setting for Postfix 2.7 and later.
     # Note 1: Be sure to read the "<a href="#caching">Caching</a>" section below!
     # Note 2: Avoid hash files here. Use btree instead.
     address_verify_map = btree:/var/db/postfix/verify
@@ -402,40 +433,38 @@ sender address verification probe fails with some temporary error.
 
 <h2><a name="caching">Address verification database</a></h2>
 
-<p> NOTE: By default, address verification information is not stored
-in a persistent file. You have to specify one in main.cf (see
-below). Persistent storage is off by default because it may need
-more disk space than is available in your file system. </p>
-
-<p> Address verification information is cached by the Postfix verify
-daemon.  Postfix has a bunch of parameters that control the caching
-of positive and negative results. Refer to the verify(8) manual
-page for details. </p>
-
-<p> The address_verify_map (NOTE: singular) configuration parameter
-specifies an optional database for sender or recipient address
-verification results.  If you don't specify a file, all address
-verification information is lost after "postfix reload" or "postfix
-stop". </p>
-
-<p> If your /var file system has sufficient space, try: </p>
+<p> To improve performance, the Postfix verify(8) daemon can save
+address verification results to a persistent database. This is
+enabled by default with Postfix 2.7 and later.  The
+address_verify_map (NOTE: singular) configuration parameter specifies
+persistent storage for sender or recipient address verification
+results.  If you specify an empty value, all address verification
+results are lost after "postfix reload" or "postfix stop". </p>
 
 <blockquote>
 <pre>
 /etc/postfix/main.cf:
+    # Default setting for Postfix 2.7 and later.
     # Note: avoid hash files here. Use btree instead.
-    address_verify_map = btree:/var/db/postfix/verify
+    address_verify_map = btree:$data_directory/verify_cache
+
+    # Default setting for Postfix 2.6 and earlier.
+    # This uses non-persistent storage only.
+    address_verify_map =
 </pre>
 </blockquote>
 
-<p> NOTE 1: As of version 2.5, Postfix no longer uses root privileges
-when opening this file. The file should now be stored under the
-Postfix-owned data_directory. As a migration aid, an attempt to
-open the file under a non-Postfix directory is redirected to the
-Postfix-owned data_directory, and a warning is logged. If you wish
-to continue using a pre-existing database file, move it to the
-data_directory, and change ownership to the account specified with
-the mail_owner parameter.  </p>
+<p> NOTE 1: The database file should be stored under a Postfix-owned
+directory, such as $data_directory. </p>
+
+<blockquote> As of version 2.5, Postfix no longer uses root privileges
+when opening this file. To maintain backwards compatibility, an
+attempt to open the file under a non-Postfix directory is redirected
+to the Postfix-owned data_directory, and a warning is logged. If
+you wish to continue using a pre-existing database file, change its
+file ownership to the account specified with the mail_owner parameter,
+and either move the file to the data_directory, or move it to some
+other Postfix-owned directory.  </blockquote>
 
 <p> NOTE 2: Do not put this file in a file system that may run out
 of space.  When the address verification table gets corrupted the
@@ -443,23 +472,33 @@ world comes to an end and YOU will have to MANUALLY fix things as
 described in the next section. Meanwhile, you will not receive mail
 via SMTP. </p>
 
-<p> NOTE 3: The verify(8) daemon process will create a new database when
-none exists, and will open/create the file before it enters the
+<p> NOTE 3: The verify(8) daemon will create a new database when
+none exists. It will open or create the file before entering the
 chroot jail. </p>
 
 <h2><a name="dirty_secret">Managing the address verification
 database</a></h2>
 
-<p> The verify(8) manual page describes parameters that control
-how long information remains cached before it needs to be refreshed,
-and how long information can remain "unrefreshed" before it expires.
-Postfix uses different controls for positive results (address was
-accepted) and for negative results (address was rejected). </p>
+<p> The verify(8) manual page describes parameters that control how
+long address verification results are cached before they need to
+be refreshed, and how long results can remain "unrefreshed" before
+they expire.  Postfix uses different controls for positive results
+(address was accepted) and for negative results (address was rejected,
+or address verification failed for some other reason). </p>
 
-<p> Right now, no tools are provided to manage the address verification
-database. If the file gets too big, or if it gets corrupted, you
-can manually rename or delete the file and run "postfix reload".
-The new verify daemon process will then create a new database. </p>
+<p> The verify(8) daemon will periodically remove expired entries
+from the address verification database, and log the number of entries
+retained and dropped (Postfix versions 2.7 and later). A cleanup
+run is logged as "partial" when the daemon terminates early because
+of "postfix reload, "postfix stop", or because the daemon received
+no requests for $max_idle seconds.  Postfix versions 2.6 and earlier
+do not implement automatic address verification database cleanup.
+There, the database is managed manually as described next. </p>
+
+<p> When the address verification database file becomes too big,
+or when it becomes corrupted, the solution is to manually rename
+or delete (NOT: truncate) the file and run "postfix reload".  The
+verify(8) daemon will then create a new database file.  </p>
 
 <h2><a name="probe_routing">Controlling the routing of address
 verification probes</a></h2>

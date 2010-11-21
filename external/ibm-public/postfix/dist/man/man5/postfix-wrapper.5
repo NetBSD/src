@@ -1,4 +1,4 @@
-.\"	$NetBSD: postfix-wrapper.5,v 1.1.1.1.2.2 2009/09/15 06:02:19 snj Exp $
+.\"	$NetBSD: postfix-wrapper.5,v 1.1.1.1.2.3 2010/11/21 18:31:26 riz Exp $
 .\"
 .TH POSTFIX-WRAPPER 5 
 .ad
@@ -10,8 +10,8 @@ Postfix multi-instance API
 .SH DESCRIPTION
 .ad
 .fi
-Postfix versions 2.6 and later provide support for multiple
-Postfix instances. Instances share executable files and
+Support for managing multiple Postfix instances is available
+as of version 2.6. Instances share executable files and
 documentation, but have their own directories for configuration,
 queue and data files.
 
@@ -22,8 +22,8 @@ activities between the postfix(1) command and a multi-instance
 manager program.
 
 With multi-instance support, the default Postfix instance
-is always required. The config_directory parameter's default
-value specifies that instance's configuration file location.
+is always required. This instance is identified by the
+config_directory parameter's default value.
 .SH "GENERAL OPERATION"
 .na
 .nf
@@ -64,8 +64,8 @@ Alternatively, the postfix(1) command accepts the instance's
 configuration directory via the MAIL_CONFIG environment
 variable (the -c command-line option has higher precedence).
 
-When no Postfix instance information is specified, the
-postfix(1) command will operate on all Postfix instances.
+Otherwise, the postfix(1) command will operate on all Postfix
+instances.
 .SH "ENABLING POSTFIX(1) MULTI-INSTANCE MODE"
 .na
 .nf

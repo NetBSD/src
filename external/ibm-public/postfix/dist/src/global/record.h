@@ -1,4 +1,4 @@
-/*	$NetBSD: record.h,v 1.1.1.1.2.2 2009/09/15 06:02:53 snj Exp $	*/
+/*	$NetBSD: record.h,v 1.1.1.1.2.3 2010/11/21 18:31:31 riz Exp $	*/
 
 #ifndef _RECORD_H_INCLUDED_
 #define _RECORD_H_INCLUDED_
@@ -44,13 +44,16 @@ extern int rec_pad(VSTREAM *, int, int);
 
 #define REC_PUT_BUF(v, t, b) rec_put((v), (t), vstring_str(b), VSTRING_LEN(b))
 
-#define REC_FLAG_NONE		(0)
-#define REC_FLAG_FOLLOW_PTR	(1<<0)		/* follow PTR records */
-#define REC_FLAG_SKIP_DTXT	(1<<1)		/* skip DTXT records */
-#define REC_FLAG_SEEK_END	(1<<2)		/* seek EOF after END record */
+#define REC_FLAG_NONE	(0)
+#define REC_FLAG_FOLLOW_PTR	(1<<0)	/* follow PTR records */
+#define REC_FLAG_SKIP_DTXT	(1<<1)	/* skip DTXT records */
+#define REC_FLAG_SEEK_END	(1<<2)	/* seek EOF after END record */
 
 #define REC_FLAG_DEFAULT \
 	(REC_FLAG_FOLLOW_PTR | REC_FLAG_SKIP_DTXT | REC_FLAG_SEEK_END)
+
+#define REC_GET_HIDDEN_TYPE(t) \
+	((t) == REC_TYPE_PTR || (t) == REC_TYPE_DTXT)
 
 #define rec_get(fp, buf, limit) \
 	rec_get_raw((fp), (buf), (limit), REC_FLAG_DEFAULT)

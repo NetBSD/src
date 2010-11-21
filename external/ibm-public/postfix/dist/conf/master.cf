@@ -1,4 +1,4 @@
-#	$NetBSD: master.cf,v 1.2.2.2 2009/09/15 06:02:10 snj Exp $
+#	$NetBSD: master.cf,v 1.2.2.3 2010/11/21 18:31:23 riz Exp $
 #
 #
 # Postfix master process configuration file.  For details on the format
@@ -21,7 +21,7 @@
 #  -o smtpd_sasl_auth_enable=yes
 #  -o smtpd_client_restrictions=permit_sasl_authenticated,reject
 #  -o milter_macro_daemon_name=ORIGINATING
-#628      inet  n       -       n       -       -       qmqpd
+#628       inet  n       -       n       -       -       qmqpd
 pickup    fifo  n       -       n       60      1       pickup
 cleanup   unix  n       -       n       -       0       cleanup
 qmgr      unix  n       -       n       300     1       qmgr
@@ -67,10 +67,14 @@ scache    unix  -       -       n       -       1       scache
 #
 # ====================================================================
 #
-# The Cyrus deliver program has changed incompatibly, multiple times.
+# Recent Cyrus versions can use the existing "lmtp" master.cf entry.
 #
-#old-cyrus unix  -       n       n       -       -       pipe
-#  flags=R user=cyrus argv=/cyrus/bin/deliver -e -m ${extension} ${user}
+# Specify in cyrus.conf:
+#   lmtp    cmd="lmtpd -a" listen="localhost:lmtp" proto=tcp4
+#
+# Specify in main.cf one or more of the following:
+#  mailbox_transport = lmtp:inet:localhost
+#  virtual_transport = lmtp:inet:localhost
 #
 # ====================================================================
 #
@@ -79,6 +83,13 @@ scache    unix  -       -       n       -       1       scache
 #
 #cyrus     unix  -       n       n       -       -       pipe
 #  user=cyrus argv=/cyrus/bin/deliver -e -r ${sender} -m ${extension} ${user}
+#
+# ====================================================================
+#
+# Old example of delivery via Cyrus.
+#
+#old-cyrus unix  -       n       n       -       -       pipe
+#  flags=R user=cyrus argv=/cyrus/bin/deliver -e -m ${extension} ${user}
 #
 # ====================================================================
 #

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_common.c,v 1.1.1.1.2.2 2009/09/15 06:02:39 snj Exp $	*/
+/*	$NetBSD: db_common.c,v 1.1.1.1.2.3 2010/11/21 18:31:31 riz Exp $	*/
 
 /*++
 /* NAME
@@ -230,7 +230,7 @@ int     db_common_parse(DICT *dict, void **ctxPtr, const char *format, int query
 		break;
 	    default:
 		msg_fatal("db_common_parse: %s: Invalid %s template: %s",
-			  dict->name, query ? "query" : "result", format);
+		       ctx->dict->name, query ? "query" : "result", format);
 	    }
     return dynamic;
 }

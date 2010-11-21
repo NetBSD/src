@@ -18,7 +18,7 @@ $append_to = \%leader;
 
 while (<>) {
 
-    if (/^Incompatible changes with/) {
+    if (/^(Incompatible changes|Incompatibility) with/) {
 	die "No date found: $_" unless /(\d\d\d\d\d\d\d\d)/;
 	$append_to = \%body;
 	$prefix = "[Incompat $1] ";

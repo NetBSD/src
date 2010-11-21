@@ -1,4 +1,4 @@
-/*	$NetBSD: record.c,v 1.1.1.1.2.2 2009/09/15 06:02:53 snj Exp $	*/
+/*	$NetBSD: record.c,v 1.1.1.1.2.3 2010/11/21 18:31:31 riz Exp $	*/
 
 /*++
 /* NAME
@@ -63,6 +63,9 @@
 /*	REC_SPACE_NEED(buflen, reclen)
 /*	ssize_t	buflen;
 /*	ssize_t	reclen;
+/*
+/*	REC_GET_HIDDEN_TYPE(type)
+/*	int	type;
 /* DESCRIPTION
 /*	This module reads and writes typed variable-length records.
 /*	Each record contains a 1-byte type code (0..255), a length
@@ -90,6 +93,10 @@
 /*	rec_get() is a wrapper around rec_get_raw() that always
 /*	enables the REC_FLAG_FOLLOW_PTR, REC_FLAG_SKIP_DTXT
 /*	and REC_FLAG_SEEK_END features.
+/*
+/*	REC_GET_HIDDEN_TYPE() is an unsafe macro that returns
+/*	non-zero when the specified record type is "not exposed"
+/*	by rec_get().
 /*
 /*	rec_put() stores the specified record and returns the record
 /*	type, or REC_TYPE_ERROR in case of problems.

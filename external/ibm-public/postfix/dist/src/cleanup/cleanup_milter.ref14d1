@@ -1,0 +1,2 @@
+./cleanup_milter: NOQUEUE: milter-header-discard: header X-SPAM-FLAG: YES from client_name[client_addr]; from=<sender> to=<recipient>: 
+./cleanup_milter: flags = discard_message

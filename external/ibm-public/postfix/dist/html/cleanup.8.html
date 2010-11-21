@@ -58,8 +58,10 @@ CLEANUP(8)                                                          CLEANUP(8)
        <a href="http://tools.ietf.org/html/rfc822">RFC 822</a> (ARPA Internet Text Messages)
        <a href="http://tools.ietf.org/html/rfc2045">RFC 2045</a> (MIME: Format of Internet Message Bodies)
        <a href="http://tools.ietf.org/html/rfc2046">RFC 2046</a> (MIME: Media Types)
+       <a href="http://tools.ietf.org/html/rfc2822">RFC 2822</a> (Internet Message Format)
        <a href="http://tools.ietf.org/html/rfc3463">RFC 3463</a> (Enhanced Status Codes)
        <a href="http://tools.ietf.org/html/rfc3464">RFC 3464</a> (Delivery status notifications)
+       <a href="http://tools.ietf.org/html/rfc5322">RFC 5322</a> (Internet Message Format)
 
 <b>DIAGNOSTICS</b>
        Problems and transactions are logged to <b>syslogd</b>(8).
@@ -223,6 +225,13 @@ CLEANUP(8)                                                          CLEANUP(8)
        <b><a href="postconf.5.html#milter_end_of_header_macros">milter_end_of_header_macros</a> (see 'postconf -d' output)</b>
               The  macros  that  are sent to Milter (mail filter)
               applications after the end of the message header.
+
+       Available in Postfix version 2.7 and later:
+
+       <b><a href="postconf.5.html#milter_header_checks">milter_header_checks</a> (empty)</b>
+              Optional lookup tables for  content  inspection  of
+              message  headers that are produced by Milter appli-
+              cations.
 
 <b>MIME PROCESSING CONTROLS</b>
        Available in Postfix version 2.0 and later:

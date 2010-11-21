@@ -1,4 +1,4 @@
-.\"	$NetBSD: postcat.1,v 1.1.1.1.2.2 2009/09/15 06:02:17 snj Exp $
+.\"	$NetBSD: postcat.1,v 1.1.1.1.2.3 2010/11/21 18:31:25 riz Exp $
 .\"
 .TH POSTCAT 1 
 .ad
@@ -10,27 +10,50 @@ show Postfix queue file contents
 .SH "SYNOPSIS"
 .na
 .nf
-\fBpostcat\fR [\fB-oqv\fR] [\fB-c \fIconfig_dir\fR] [\fIfiles\fR...]
+\fBpostcat\fR [\fB-bdehnoqv\fR] [\fB-c \fIconfig_dir\fR] [\fIfiles\fR...]
 .SH DESCRIPTION
 .ad
 .fi
-The \fBpostcat\fR(1) command prints the contents of the named
-\fIfiles\fR in human-readable form. The files are expected
-to be in Postfix queue file format. If no
-\fIfiles\fR are specified on the command line, the program
-reads from standard input.
+The \fBpostcat\fR(1) command prints the contents of the
+named \fIfiles\fR in human-readable form. The files are
+expected to be in Postfix queue file format. If no \fIfiles\fR
+are specified on the command line, the program reads from
+standard input.
+
+By default, \fBpostcat\fR(1) shows the envelope and message
+content, as if the options \fB-beh\fR were specified. To
+view message content only, specify \fB-bh\fR (Postfix 2.7
+and later).
 
 Options:
+.IP \fB-b\fR
+Show body content.  The \fB-b\fR option starts producing
+output at the first non-header line, and stops when the end
+of the message is reached.
+.sp
+This feature is available in Postfix 2.7 and later.
 .IP "\fB-c \fIconfig_dir\fR"
 The \fBmain.cf\fR configuration file is in the named directory
 instead of the default configuration directory.
+.IP \fB-d\fR
+Print the decimal type of each record.
+.IP \fB-e\fR
+Show message envelope content.
+.sp
+This feature is available in Postfix 2.7 and later.
+.IP \fB-h\fR
+Show message header content.  The \fB-h\fR option produces
+output from the beginning of the message up to, but not
+including, the first non-header line.
+.sp
+This feature is available in Postfix 2.7 and later.
 .IP \fB-o\fR
 Print the queue file offset of each record.
 .IP \fB-q\fR
 Search the Postfix queue for the named \fIfiles\fR instead
 of taking the names literally.
 
-Available in Postfix version 2.0 and later.
+This feature is available in Postfix 2.0 and later.
 .IP \fB-v\fR
 Enable verbose logging for debugging purposes. Multiple \fB-v\fR
 options make the software increasingly verbose.

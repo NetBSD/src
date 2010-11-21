@@ -1,4 +1,4 @@
-/*	$NetBSD: smtpd_check.c,v 1.1.1.2.2.2 2009/09/15 06:03:34 snj Exp $	*/
+/*	$NetBSD: smtpd_check.c,v 1.1.1.2.2.3 2010/11/21 18:31:35 riz Exp $	*/
 
 /*++
 /* NAME
@@ -436,6 +436,12 @@ typedef struct {
     const char *class;			/* name of rejected value */
     const char *txt;			/* randomly selected trimmed TXT rr */
 } SMTPD_RBL_EXPAND_CONTEXT;
+
+ /*
+  * Multiplication factor for free space check. Free space must be at least
+  * smtpd_space_multf * message_size_limit.
+  */
+double  smtpd_space_multf = 1.5;
 
 /* policy_client_register - register policy service endpoint */
 
@@ -3688,6 +3694,34 @@ static int generic_checks(SMTPD_STATE *state, ARGV *restrictions,
 	    }
 	} else if (is_map_command(state, name, CHECK_CCERT_ACL, &cpp)) {
 	    status = check_ccert_access(state, *cpp, def_acl);
+	} else if (is_map_command(state, name, CHECK_CLIENT_NS_ACL, &cpp)) {
+	    if (strcasecmp(state->name, "unknown") != 0) {
+		status = check_server_access(state, *cpp, state->name,
+					     T_NS, state->namaddr,
+					     SMTPD_NAME_CLIENT, def_acl);
+		forbid_whitelist(state, name, status, state->name);
+	    }
+	} else if (is_map_command(state, name, CHECK_CLIENT_MX_ACL, &cpp)) {
+	    if (strcasecmp(state->name, "unknown") != 0) {
+		status = check_server_access(state, *cpp, state->name,
+					     T_MX, state->namaddr,
+					     SMTPD_NAME_CLIENT, def_acl);
+		forbid_whitelist(state, name, status, state->name);
+	    }
+	} else if (is_map_command(state, name, CHECK_REVERSE_CLIENT_NS_ACL, &cpp)) {
+	    if (strcasecmp(state->reverse_name, "unknown") != 0) {
+		status = check_server_access(state, *cpp, state->reverse_name,
+					     T_NS, state->namaddr,
+					     SMTPD_NAME_REV_CLIENT, def_acl);
+		forbid_whitelist(state, name, status, state->reverse_name);
+	    }
+	} else if (is_map_command(state, name, CHECK_REVERSE_CLIENT_MX_ACL, &cpp)) {
+	    if (strcasecmp(state->reverse_name, "unknown") != 0) {
+		status = check_server_access(state, *cpp, state->reverse_name,
+					     T_MX, state->namaddr,
+					     SMTPD_NAME_REV_CLIENT, def_acl);
+		forbid_whitelist(state, name, status, state->reverse_name);
+	    }
 	}
 
 	/*
@@ -4596,13 +4630,14 @@ char   *smtpd_check_queue(SMTPD_STATE *state)
 		 (unsigned long) var_queue_minfree,
 		 (unsigned long) var_message_limit);
     if (BLOCKS(var_queue_minfree) >= fsbuf.block_free
-	|| BLOCKS(var_message_limit) >= fsbuf.block_free / 1.5) {
+	|| BLOCKS(var_message_limit) >= fsbuf.block_free / smtpd_space_multf) {
 	(void) smtpd_check_reject(state, MAIL_ERROR_RESOURCE,
 				  452, "4.3.1",
 				  "Insufficient system storage");
 	msg_warn("not enough free space in mail queue: %lu bytes < "
-		 "1.5*message size limit",
-		 (unsigned long) fsbuf.block_free * fsbuf.block_size);
+		 "%g*message size limit",
+		 (unsigned long) fsbuf.block_free * fsbuf.block_size,
+		smtpd_space_multf);
 	return (STR(error_text));
     }
     return (0);

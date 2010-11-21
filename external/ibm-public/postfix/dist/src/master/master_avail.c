@@ -1,4 +1,4 @@
-/*	$NetBSD: master_avail.c,v 1.1.1.1.2.2 2009/09/15 06:02:57 snj Exp $	*/
+/*	$NetBSD: master_avail.c,v 1.1.1.1.2.3 2010/11/21 18:31:31 riz Exp $	*/
 
 /*++
 /* NAME
@@ -144,6 +144,7 @@ void    master_avail_listen(MASTER_SERV *serv)
 		event_enable_read(serv->listen_fd[n], master_avail_event,
 				  (char *) serv);
 	} else if ((serv->flags & MASTER_FLAG_LOCAL_ONLY) == 0
+		   && serv->max_proc != 1/* XXX postscreen(8) */
 		   && (now = event_time()) - serv->busy_warn_time > 1000) {
 	    serv->busy_warn_time = now;
 	    msg_warn("service \"%s\" (%s) has reached its process limit \"%d\": "

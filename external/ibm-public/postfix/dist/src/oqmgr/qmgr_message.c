@@ -1,4 +1,4 @@
-/*	$NetBSD: qmgr_message.c,v 1.1.1.1.2.2 2009/09/15 06:03:21 snj Exp $	*/
+/*	$NetBSD: qmgr_message.c,v 1.1.1.1.2.3 2010/11/21 18:31:32 riz Exp $	*/
 
 /*++
 /* NAME
@@ -1000,12 +1000,19 @@ static void qmgr_message_resolve(QMGR_MESSAGE *message)
 	 * me" bits turned on, but we handle them here anyway for the sake of
 	 * future proofing.
 	 */
+#define FILTER_WITHOUT_NEXTHOP(filter, next) \
+	(((next) = split_at((filter), ':')) == 0 || *(next) == 0)
+
+#define RCPT_WITHOUT_DOMAIN(rcpt, next) \
+	((next = strrchr(rcpt, '@')) == 0 || *++(next) == 0)
+
 	else if (message->filter_xport
 		 && (message->tflags & DEL_REQ_TRACE_ONLY_MASK) == 0) {
 	    reply.flags = 0;
 	    vstring_strcpy(reply.transport, message->filter_xport);
-	    if ((nexthop = split_at(STR(reply.transport), ':')) == 0
-		|| *nexthop == 0)
+	    if (FILTER_WITHOUT_NEXTHOP(STR(reply.transport), nexthop)
+		&& *(nexthop = var_def_filter_nexthop) == 0
+		&& RCPT_WITHOUT_DOMAIN(recipient->address, nexthop))
 		nexthop = var_myhostname;
 	    vstring_strcpy(reply.nexthop, nexthop);
 	    vstring_strcpy(reply.recipient, recipient->address);

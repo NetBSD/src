@@ -319,7 +319,7 @@ All the mail to these two accounts is forwarded to an inside address.
 1 /etc/postfix/<a href="postconf.5.html">main.cf</a>:
 2     <a href="postconf.5.html#virtual_alias_maps">virtual_alias_maps</a> = hash:/etc/postfix/virtual
 3 
-4 /etc/postfix/<a href="virtual.8.html">virtual</a>:
+4 /etc/postfix/virtual:
 5     postmaster      postmaster@example.com
 6     abuse           abuse@example.com
 </pre>
@@ -425,7 +425,7 @@ follows:  </p>
 1 /etc/postfix/<a href="postconf.5.html">main.cf</a>:
 2     <a href="postconf.5.html#virtual_alias_maps">virtual_alias_maps</a> = hash:/etc/postfix/virtual
 3 
-4 /etc/postfix/<a href="virtual.8.html">virtual</a>:
+4 /etc/postfix/virtual:
 5     root     root@localhost
 6     . . .
 </pre>
@@ -441,6 +441,9 @@ $<a href="postconf.5.html#myorigin">myorigin</a>, when "site" is listed in $<a h
 matches $<a href="postconf.5.html#inet_interfaces">inet_interfaces</a> or $<a href="postconf.5.html#proxy_interfaces">proxy_interfaces</a>. </p>
 
 </ul>
+
+<p> Execute the command "<b>postmap /etc/postfix/virtual</b>" after
+editing the file. </p>.
 
 <h2><a name="intranet">Running Postfix behind a firewall</a></h2>
 
@@ -782,7 +785,7 @@ discussed the first half of this document. </p>
  9 /etc/postfix/canonical:
 10     your-login-name    your-account@your-isp.com
 11 
-12 /etc/postfix/<a href="virtual.8.html">virtual</a>:
+12 /etc/postfix/virtual:
 13     your-account@your-isp.com       your-login-name
 </pre>
 </blockquote>

@@ -299,6 +299,11 @@ created with the <a href="postmap.1.html">postmap(1)</a> or <a href="postalias.1
 name as used in "hash:table" is the database file name without the
 ".db" suffix. </dd>
 
+<dt> <b>internal</b> </dt>
+
+<dd> A non-shared, in-memory hash table. Its content are lost when
+a process terminates. </dd>
+
 <dt> <b>ldap</b> (read-only) </dt>
 
 <dd> Perform lookups using the LDAP protocol. Configuration details
@@ -365,7 +370,7 @@ example, the lookup table "static:foobar" always returns the string
 described in <a href="tcp_table.5.html">tcp_table(5)</a>. The lookup table name is "<a href="tcp_table.5.html">tcp</a>:host:port"
 where "host" specifies a symbolic hostname or a numeric IP address,
 and "port" specifies a symbolic service name or a numeric port
-number. This protocol is not available in the stable Postfix release.
+number.
 </dd>
 
 <dt> <b>unix</b> (read-only) </dt>

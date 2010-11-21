@@ -1,4 +1,4 @@
-/*	$NetBSD: htable.c,v 1.1.1.1.2.2 2009/09/15 06:03:59 snj Exp $	*/
+/*	$NetBSD: htable.c,v 1.1.1.1.2.3 2010/11/21 18:31:37 riz Exp $	*/
 
 /*++
 /* NAME
@@ -48,6 +48,10 @@
 /*
 /*	HTABLE_INFO **htable_list(table)
 /*	HTABLE	*table;
+/*
+/*	HTABLE_INFO *htable_sequence(table, how)
+/*	HTABLE	*table;
+/*	int	how;
 /* DESCRIPTION
 /*	This module maintains one or more hash tables. Each table entry
 /*	consists of a unique string-valued lookup key and a generic
@@ -87,6 +91,12 @@
 /*	htable_list() returns a null-terminated list of pointers to
 /*	all elements in the named table. The list should be passed to
 /*	myfree().
+/*
+/*	htable_sequence() returns the first or next element depending
+/*	on the value of the "how" argument.  Specify HTABLE_SEQ_FIRST
+/*	to start a new sequence, HTABLE_SEQ_NEXT to continue, and
+/*	HTABLE_SEQ_STOP to terminate a sequence early.  The caller
+/*	must not delete the current element.
 /* RESTRICTIONS
 /*	A callback function should not modify the hash table that is
 /*	specified to its caller.
@@ -174,6 +184,7 @@ HTABLE *htable_create(int size)
 
     table = (HTABLE *) mymalloc(sizeof(HTABLE));
     htable_size(table, size < 13 ? 13 : size);
+    table->seq_element = 0;
     return (table);
 }
 
@@ -204,7 +215,7 @@ HTABLE_INFO *htable_enter(HTABLE *table, const char *key, char *value)
 {
     HTABLE_INFO *ht;
 
-    if (table->used >= table->size)
+    if (table->used >= table->size && table->seq_element == 0)
 	htable_grow(table);
     ht = (HTABLE_INFO *) mymalloc(sizeof(HTABLE_INFO));
     ht->key = mystrdup(key);
@@ -334,6 +345,34 @@ HTABLE_INFO **htable_list(HTABLE *table)
     return (list);
 }
 
+/* htable_sequence - dict(3) compatibility iterator */
+
+HTABLE_INFO *htable_sequence(HTABLE *table, int how)
+{
+    if (table == 0)
+	return (0);
+
+    switch (how) {
+    case HTABLE_SEQ_FIRST:			/* start new sequence */
+	table->seq_bucket = table->data;
+	table->seq_element = table->seq_bucket[0];
+	break;
+    case HTABLE_SEQ_NEXT:			/* next element */
+	if (table->seq_element) {
+	    table->seq_element = table->seq_element->next;
+	    break;
+	}
+	/* FALLTHROUGH */
+    default:					/* terminate sequence */
+	return (table->seq_element = 0);
+    }
+
+    while (table->seq_element == 0
+	   && ++(table->seq_bucket) < table->data + table->size)
+	table->seq_element = table->seq_bucket[0];
+    return (table->seq_element);
+}
+
 #ifdef TEST
 #include <vstring_vstream.h>
 #include <myrand.h>
@@ -348,6 +387,7 @@ int main(int unused_argc, char **unused_argv)
     HTABLE_INFO *info;
     int     i;
     int     r;
+    int     op;
 
     /*
      * Load a large number of strings and delete them in a random order.
@@ -355,6 +395,11 @@ int main(int unused_argc, char **unused_argv)
     hash = htable_create(10);
     while (vstring_get(buf, VSTREAM_IN) != VSTREAM_EOF)
 	htable_enter(hash, vstring_str(buf), CAST_INT_TO_CHAR_PTR(count++));
+    for (i = 0, op = HTABLE_SEQ_FIRST; htable_sequence(hash, op) != 0;
+	 i++, op = HTABLE_SEQ_NEXT)
+	 /* void */ ;
+    if (i != hash->used)
+	msg_panic("%d entries found, but %d entries exist", i, hash->used);
     ht_info = htable_list(hash);
     for (i = 0; i < hash->used; i++) {
 	r = myrand() % hash->used;

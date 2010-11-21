@@ -1,4 +1,4 @@
-.\"	$NetBSD: cleanup.8,v 1.1.1.1.2.2 2009/09/15 06:02:19 snj Exp $
+.\"	$NetBSD: cleanup.8,v 1.1.1.1.2.3 2010/11/21 18:31:26 riz Exp $
 .\"
 .TH CLEANUP 8 
 .ad
@@ -56,8 +56,10 @@ in case of trouble.
 RFC 822 (ARPA Internet Text Messages)
 RFC 2045 (MIME: Format of Internet Message Bodies)
 RFC 2046 (MIME: Media Types)
+RFC 2822 (Internet Message Format)
 RFC 3463 (Enhanced Status Codes)
 RFC 3464 (Delivery status notifications)
+RFC 5322 (Internet Message Format)
 .SH DIAGNOSTICS
 .ad
 .fi
@@ -192,6 +194,11 @@ Available in Postfix version 2.5 and later:
 .IP "\fBmilter_end_of_header_macros (see 'postconf -d' output)\fR"
 The macros that are sent to Milter (mail filter) applications
 after the end of the message header.
+.PP
+Available in Postfix version 2.7 and later:
+.IP "\fBmilter_header_checks (empty)\fR"
+Optional lookup tables for content inspection of message headers
+that are produced by Milter applications.
 .SH "MIME PROCESSING CONTROLS"
 .na
 .nf

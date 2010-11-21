@@ -1,4 +1,4 @@
-/*	$NetBSD: trivial-rewrite.h,v 1.1.1.1.2.2 2009/09/15 06:03:52 snj Exp $	*/
+/*	$NetBSD: trivial-rewrite.h,v 1.1.1.1.2.3 2010/11/21 18:31:36 riz Exp $	*/
 
 /*++
 /* NAME
@@ -58,6 +58,9 @@ typedef struct {
     char  **relay_transport;		/* relay transport:nexthop */
     const char *def_transport_name;	/* name of variable */
     char  **def_transport;		/* default transport:nexthop */
+    const char *snd_def_xp_maps_name;	/* name of variable */
+    char  **snd_def_xp_maps;		/* maptype:mapname */
+    MAPS   *snd_def_xp_info;		/* handle */
     const char *relayhost_name;		/* name of variable */
     char  **relayhost;			/* for relay and default transport */
     const char *snd_relay_maps_name;	/* name of variable */

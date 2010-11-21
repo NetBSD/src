@@ -1,4 +1,4 @@
-/*	$NetBSD: smtp_trouble.c,v 1.1.1.1.2.2 2009/09/15 06:03:33 snj Exp $	*/
+/*	$NetBSD: smtp_trouble.c,v 1.1.1.1.2.3 2010/11/21 18:31:35 riz Exp $	*/
 
 /*++
 /* NAME
@@ -290,7 +290,7 @@ static void vsmtp_fill_dsn(SMTP_STATE *state, const char *mta_name,
      * cycles.
      */
     VSTRING_RESET(why->reason);
-    if (mta_name && reply && reply[0] != '4' && reply[0] != '5') {
+    if (mta_name && status && status[0] != '4' && status[0] != '5') {
 	vstring_strcpy(why->reason, "Protocol error: ");
 	status = "5.5.0";
     }

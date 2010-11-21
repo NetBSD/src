@@ -10,7 +10,7 @@ POSTCAT(1)                                                          POSTCAT(1)
        postcat - show Postfix queue file contents
 
 <b>SYNOPSIS</b>
-       <b>postcat</b> [<b>-oqv</b>] [<b>-c</b> <i>config</i><b>_</b><i>dir</i>] [<i>files</i>...]
+       <b>postcat</b> [<b>-bdehnoqv</b>] [<b>-c</b> <i>config</i><b>_</b><i>dir</i>] [<i>files</i>...]
 
 <b>DESCRIPTION</b>
        The  <a href="postcat.1.html"><b>postcat</b>(1)</a>  command  prints the contents of the named
@@ -18,19 +18,41 @@ POSTCAT(1)                                                          POSTCAT(1)
        in Postfix queue file format. If no <i>files</i> are specified on
        the command line, the program reads from standard input.
 
+       By default, <a href="postcat.1.html"><b>postcat</b>(1)</a> shows the envelope and message con-
+       tent,  as if the options <b>-beh</b> were specified. To view mes-
+       sage content only, specify <b>-bh</b> (Postfix 2.7 and later).
+
        Options:
 
+       <b>-b</b>     Show body content.  The <b>-b</b> option starts  producing
+              output at the first non-header line, and stops when
+              the end of the message is reached.
+
+              This feature is available in Postfix 2.7 and later.
+
        <b>-c</b> <i>config</i><b>_</b><i>dir</i>
-              The <a href="postconf.5.html"><b>main.cf</b></a> configuration  file  is  in  the  named
+              The  <a href="postconf.5.html"><b>main.cf</b></a>  configuration  file  is  in the named
               directory  instead  of  the  default  configuration
               directory.
+
+       <b>-d</b>     Print the decimal type of each record.
+
+       <b>-e</b>     Show message envelope content.
+
+              This feature is available in Postfix 2.7 and later.
+
+       <b>-h</b>     Show message header content.  The  <b>-h</b>  option  pro-
+              duces  output  from the beginning of the message up
+              to, but not including, the first non-header line.
+
+              This feature is available in Postfix 2.7 and later.
 
        <b>-o</b>     Print the queue file offset of each record.
 
        <b>-q</b>     Search  the  Postfix  queue  for  the  named  <i>files</i>
               instead of taking the names literally.
 
-              Available in Postfix version 2.0 and later.
+              This feature is available in Postfix 2.0 and later.
 
        <b>-v</b>     Enable verbose logging for debugging purposes. Mul-
               tiple <b>-v</b> options  make  the  software  increasingly

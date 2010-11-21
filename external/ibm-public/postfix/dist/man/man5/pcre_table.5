@@ -1,4 +1,4 @@
-.\"	$NetBSD: pcre_table.5,v 1.1.1.1.2.2 2009/09/15 06:02:18 snj Exp $
+.\"	$NetBSD: pcre_table.5,v 1.1.1.1.2.3 2010/11/21 18:31:25 riz Exp $
 .\"
 .TH PCRE_TABLE 5 
 .ad
@@ -78,7 +78,8 @@ A logical line starts with non-whitespace text. A line that
 starts with whitespace continues a logical line.
 .PP
 Each pattern is a perl-like regular expression. The expression
-delimiter can be any character, except whitespace or characters
+delimiter can be any non-alphanumerical character, except
+whitespace or characters
 that have special meaning (traditionally the forward slash is used).
 The regular expression can contain whitespace.
 
@@ -97,7 +98,7 @@ matching at the start and end of the subject string.
 .IP "\fBs\fR (default: on)"
 Toggles the PCRE_DOTALL flag. When this flag is on, the \fB.\fR
 metacharacter matches the newline character. With
-Postfix versions prior to 2.0, The flag is off by
+Postfix versions prior to 2.0, the flag is off by
 default, which is inconvenient for multi-line message header
 matching.
 .IP "\fBx\fR (default: off)"

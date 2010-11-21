@@ -1,4 +1,4 @@
-.\"	$NetBSD: smtpd.8,v 1.1.1.1.2.2 2009/09/15 06:02:19 snj Exp $
+.\"	$NetBSD: smtpd.8,v 1.1.1.1.2.3 2010/11/21 18:31:26 riz Exp $
 .\"
 .TH SMTPD 8 
 .ad
@@ -141,6 +141,10 @@ is empty).
 Available in Postfix version 2.6 and later:
 .IP "\fBtcp_windowsize (0)\fR"
 An optional workaround for routers that break TCP window scaling.
+.PP
+Available in Postfix version 2.7 and later:
+.IP "\fBsmtpd_command_filter (empty)\fR"
+A mechanism to transform commands from remote SMTP clients.
 .SH "ADDRESS REWRITING CONTROLS"
 .na
 .nf
@@ -170,8 +174,8 @@ an external content filter AFTER the mail is queued. This content
 filter is expected to inject mail back into a (Postfix or other)
 MTA for further delivery. See the FILTER_README document for details.
 .IP "\fBcontent_filter (empty)\fR"
-The name of a mail delivery transport that filters mail after
-it is queued.
+After the message is queued, send the entire message to the
+specified \fItransport:destination\fR.
 .SH "BEFORE QUEUE EXTERNAL CONTENT INSPECTION CONTROLS"
 .na
 .nf
@@ -186,6 +190,9 @@ details on how to configure and operate this feature.
 The hostname and TCP port of the mail filtering proxy server.
 .IP "\fBsmtpd_proxy_ehlo ($myhostname)\fR"
 How the Postfix SMTP server announces itself to the proxy filter.
+.IP "\fBsmtpd_proxy_options (empty)\fR"
+List of options that control how the Postfix SMTP server
+communicates with a before-queue content filter.
 .IP "\fBsmtpd_proxy_timeout (100s)\fR"
 The time limit for connecting to a proxy filter and for sending or
 receiving information.
@@ -379,8 +386,8 @@ File with the Postfix SMTP server RSA private key in PEM format.
 .IP "\fBsmtpd_tls_loglevel (0)\fR"
 Enable additional Postfix SMTP server logging of TLS activity.
 .IP "\fBsmtpd_tls_mandatory_ciphers (medium)\fR"
-The minimum TLS cipher grade that the Postfix SMTP server
-will use with mandatory TLS encryption.
+The minimum TLS cipher grade that the Postfix SMTP server will
+use with mandatory TLS encryption.
 .IP "\fBsmtpd_tls_mandatory_exclude_ciphers (empty)\fR"
 Additional list of ciphers or cipher types to exclude from the
 SMTP server cipher list at mandatory TLS security levels.
@@ -726,8 +733,9 @@ instead of requiring an explicit ".domain.tld" pattern.
 Optional SMTP server access restrictions in the context of a client
 SMTP connection request.
 .IP "\fBsmtpd_helo_required (no)\fR"
-Require that a remote SMTP client introduces itself at the beginning
-of an SMTP session with the HELO or EHLO command.
+Require that a remote SMTP client introduces itself with the HELO
+or EHLO command before sending the MAIL command or other commands
+that require EHLO negotiation.
 .IP "\fBsmtpd_helo_restrictions (empty)\fR"
 Optional restrictions that the Postfix SMTP server applies in the
 context of the SMTP HELO command.
@@ -788,7 +796,7 @@ verification probes is maintained by the \fBverify\fR(8) server.
 See the file ADDRESS_VERIFICATION_README for information
 about how to configure and operate the Postfix sender/recipient
 address verification service.
-.IP "\fBaddress_verify_poll_count (3)\fR"
+.IP "\fBaddress_verify_poll_count (${stress?1}${stress:3})\fR"
 How many times to query the \fBverify\fR(8) service for the completion
 of an address verification request in progress.
 .IP "\fBaddress_verify_poll_delay (3s)\fR"

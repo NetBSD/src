@@ -1,4 +1,4 @@
-/*	$NetBSD: qmgr.c,v 1.1.1.1.2.2 2009/09/15 06:03:31 snj Exp $	*/
+/*	$NetBSD: qmgr.c,v 1.1.1.1.2.3 2010/11/21 18:31:34 riz Exp $	*/
 
 /*++
 /* NAME
@@ -163,6 +163,12 @@
 /* .IP "\fBallow_min_user (no)\fR"
 /*	Allow a sender or recipient address to have `-' as the first
 /*	character.
+/* .PP
+/*	Available with Postfix version 2.7 and later:
+/* .IP "\fBdefault_filter_nexthop (empty)\fR"
+/*	When a content_filter or FILTER request specifies no explicit
+/*	next-hop destination, use $default_filter_nexthop instead; when
+/*	that value is empty, use the domain in the recipient address.
 /* ACTIVE QUEUE CONTROLS
 /* .ad
 /* .fi
@@ -431,6 +437,7 @@ char   *var_conc_neg_feedback;
 int     var_conc_cohort_limit;
 int     var_conc_feedback_debug;
 int     var_dest_rate_delay;
+char   *var_def_filter_nexthop;
 
 static QMGR_SCAN *qmgr_scans[2];
 
@@ -667,6 +674,7 @@ int     main(int argc, char **argv)
 	VAR_DEFER_XPORTS, DEF_DEFER_XPORTS, &var_defer_xports, 0, 0,
 	VAR_CONC_POS_FDBACK, DEF_CONC_POS_FDBACK, &var_conc_pos_feedback, 1, 0,
 	VAR_CONC_NEG_FDBACK, DEF_CONC_NEG_FDBACK, &var_conc_neg_feedback, 1, 0,
+	VAR_DEF_FILTER_NEXTHOP, DEF_DEF_FILTER_NEXTHOP, &var_def_filter_nexthop, 0, 0,
 	0,
     };
     static const CONFIG_TIME_TABLE time_table[] = {

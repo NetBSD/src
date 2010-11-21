@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: postfix-script,v 1.1.1.1.2.2 2009/09/15 06:02:10 snj Exp $
+#	$NetBSD: postfix-script,v 1.1.1.1.2.3 2010/11/21 18:31:23 riz Exp $
 #
 
 #++
@@ -267,6 +267,9 @@ check-warn)
 
 	find $data_directory/. ! -user $mail_owner \
 	    -exec $WARN not owned by $mail_owner: {} \;
+
+	ls -lLd $data_directory | egrep '^.....(w|...w)' >/dev/null && \
+		$WARN group or other writable: $data_directory
 
 	find `ls -d $queue_directory/* | \
 	    egrep '/(saved|incoming|active|defer|deferred|bounce|hold|trace|corrupt|public|private|flush)$'` \

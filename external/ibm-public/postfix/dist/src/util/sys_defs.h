@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_defs.h,v 1.1.1.1.2.2 2009/09/15 06:04:04 snj Exp $	*/
+/*	$NetBSD: sys_defs.h,v 1.1.1.1.2.3 2010/11/21 18:31:37 riz Exp $	*/
 
 #ifndef _SYS_DEFS_H_INCLUDED_
 #define _SYS_DEFS_H_INCLUDED_
@@ -27,6 +27,7 @@
   */
 #if defined(FREEBSD2) || defined(FREEBSD3) || defined(FREEBSD4) \
     || defined(FREEBSD5) || defined(FREEBSD6) || defined(FREEBSD7) \
+    || defined(FREEBSD8) \
     || defined(BSDI2) || defined(BSDI3) || defined(BSDI4) \
     || defined(OPENBSD2) || defined(OPENBSD3) || defined(OPENBSD4) \
     || defined(NETBSD1) || defined(NETBSD2) || defined(NETBSD3) \
@@ -110,6 +111,10 @@
 
 #if __FreeBSD_version >= 420000
 #define HAS_DUPLEX_PIPE			/* 4.1 breaks with kqueue(2) */
+#endif
+
+#if __FreeBSD_version >= 800107		/* safe; don't believe the experts */
+#define HAS_CLOSEFROM
 #endif
 
 /* OpenBSD version is year+month */
@@ -205,7 +210,6 @@
 #define DEF_DB_TYPE	"hash"
 #define ALIAS_DB_MAP	"hash:/etc/aliases"
 #define GETTIMEOFDAY(t) gettimeofday(t,(struct timezone *) 0)
-#define RESOLVE_H_NEEDS_NAMESER8_COMPAT_H
 #define ROOT_PATH	"/bin:/usr/bin:/sbin:/usr/sbin"
 #define USE_STATFS
 #define STATFS_IN_SYS_MOUNT_H
@@ -1473,7 +1477,7 @@ typedef int pid_t;
   * sections above.
   */
 #ifndef PRINTFLIKE
-#if (__GNUC__ == 2 && __GNUC_MINOR__ >= 7) || __GNUC__ == 3
+#if (__GNUC__ == 2 && __GNUC_MINOR__ >= 7) || __GNUC__ >= 3
 #define PRINTFLIKE(x,y) __attribute__ ((format (printf, (x), (y))))
 #else
 #define PRINTFLIKE(x,y)
@@ -1481,10 +1485,23 @@ typedef int pid_t;
 #endif
 
 #ifndef SCANFLIKE
-#if (__GNUC__ == 2 && __GNUC_MINOR__ >= 7) || __GNUC__ == 3
+#if (__GNUC__ == 2 && __GNUC_MINOR__ >= 7) || __GNUC__ >= 3
 #define SCANFLIKE(x,y) __attribute__ ((format (scanf, (x), (y))))
 #else
 #define SCANFLIKE(x,y)
+#endif
+#endif
+
+ /*
+  * Some gcc implementations don't grok these attributes with pointer to
+  * function. Again, wild guess of what is supported. To override, specify
+  * #define PRINTPTRFLIKE  in the system-dependent sections above.
+  */
+#ifndef PRINTFPTRLIKE
+#if (__GNUC__ >= 3)			/* XXX Rough estimate */
+#define PRINTFPTRLIKE(x,y) PRINTFLIKE(x,y)
+#else
+#define PRINTFPTRLIKE(x,y)
 #endif
 #endif
 
