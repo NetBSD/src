@@ -1,4 +1,4 @@
-/* $NetBSD: hdaudio.c,v 1.4.4.3 2009/10/18 16:50:13 bouyer Exp $ */
+/* $NetBSD: hdaudio.c,v 1.4.4.4 2010/11/21 20:18:41 riz Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdaudio.c,v 1.4.4.3 2009/10/18 16:50:13 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdaudio.c,v 1.4.4.4 2010/11/21 20:18:41 riz Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -667,6 +667,10 @@ hdaudio_codec_attach(struct hdaudio_codec *co)
 	rid = hdaudio_command(co, 0, CORB_GET_PARAMETER, COP_REVISION_ID);
 	snc = hdaudio_command(co, 0, CORB_GET_PARAMETER,
 	    COP_SUBORDINATE_NODE_COUNT);
+
+	/* make sure the vendor and product IDs are valid */
+	if (vid == 0xffffffff || vid == 0x00000000)
+		return;
 
 #ifdef HDAUDIO_DEBUG
 	hda_print(sc, "Codec%02X: %04X:%04X HDA %d.%d rev %d stepping %d\n",
