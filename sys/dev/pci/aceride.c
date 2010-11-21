@@ -1,4 +1,4 @@
-/*	$NetBSD: aceride.c,v 1.25 2008/03/18 20:46:36 cube Exp $	*/
+/*	$NetBSD: aceride.c,v 1.25.14.1 2010/11/21 23:41:20 riz Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aceride.c,v 1.25 2008/03/18 20:46:36 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aceride.c,v 1.25.14.1 2010/11/21 23:41:20 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,6 +46,7 @@ static void acer_do_reset(struct ata_channel *, int);
 static void acer_chip_map(struct pciide_softc*, struct pci_attach_args*);
 static void acer_setup_channel(struct ata_channel*);
 static int  acer_pci_intr(void *);
+static int  acer_dma_init(void *, int, int, void *, size_t, int);
 
 static int  aceride_match(device_t, cfdata_t, void *);
 static void aceride_attach(device_t, device_t, void *);
@@ -144,6 +145,12 @@ acer_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 				sc->sc_wdcdev.sc_atac.atac_udma_cap = 2;
 		}
 		sc->sc_wdcdev.irqack = pciide_irqack;
+		if (rev <= 0xc4) {
+			sc->sc_wdcdev.dma_init = acer_dma_init;
+			aprint_verbose_dev(sc->sc_wdcdev.sc_atac.atac_dev,
+			 "using PIO transfers above 137GB as workaround for "
+			 "48bit DMA access bug, expect reduced performance\n");
+		}
 	}
 
 	sc->sc_wdcdev.sc_atac.atac_pio_cap = 4;
@@ -374,4 +381,16 @@ acer_pci_intr(void *arg)
 		}
 	}
 	return rv;
+}
+
+static int
+acer_dma_init(void *v, int channel, int drive, void *databuf,
+    size_t datalen, int flags)
+{
+
+	/* use PIO for LBA48 transfer */
+	if (flags & WDC_DMA_LBA48)
+		return EINVAL;
+
+	return pciide_dma_init(v, channel, drive, databuf, datalen, flags);
 }
