@@ -1,4 +1,4 @@
-/*	$NetBSD: hci_link.c,v 1.20 2008/04/24 11:38:37 ad Exp $	*/
+/*	$NetBSD: hci_link.c,v 1.20.12.1 2010/11/21 21:36:07 riz Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hci_link.c,v 1.20 2008/04/24 11:38:37 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hci_link.c,v 1.20.12.1 2010/11/21 21:36:07 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -450,10 +450,16 @@ hci_acl_recv(struct mbuf *m, struct hci_unit *unit)
 		 * for, just get rid of it. This may happen, if a USB dongle
 		 * is plugged into a self powered hub and does not reset when
 		 * the system is shut down.
+		 *
+		 * This can cause a problem with some Broadcom controllers
+		 * which emit empty ACL packets during connection setup, so
+		 * only disconnect where data is present.
 		 */
-		cp.con_handle = htole16(handle);
-		cp.reason = 0x13; /* "Remote User Terminated Connection" */
-		hci_send_cmd(unit, HCI_CMD_DISCONNECT, &cp, sizeof(cp));
+		if (hdr.length > 0) {
+			cp.con_handle = htole16(handle);
+			cp.reason = 0x13;/*"Remote User Terminated Connection"*/
+			hci_send_cmd(unit, HCI_CMD_DISCONNECT, &cp, sizeof(cp));
+		}
 		goto bad;
 	}
 
