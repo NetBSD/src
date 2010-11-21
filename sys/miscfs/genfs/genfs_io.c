@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.36.2.55 2010/11/21 04:50:27 uebayasi Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.36.2.56 2010/11/21 04:56:36 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.36.2.55 2010/11/21 04:50:27 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.36.2.56 2010/11/21 04:56:36 uebayasi Exp $");
 
 #include "opt_xip.h"
 
@@ -827,7 +827,7 @@ genfs_getpages_biodone()
 		genfs_node_unlock(vp);
 	}
 
-	if (xip) {
+    if (xip) {
 		error = genfs_do_getpages_xip_io_done(
 			ap->a_vp,
 			ap->a_offset,
@@ -838,12 +838,8 @@ genfs_getpages_biodone()
 			ap->a_advice,
 			ap->a_flags,
 			orignmempages);
-		goto genfs_getpages_generic_io_done_done;
-	}
+    } else {
 #if 0
-	else {
-		error = genfs_getpages_generic_io_done();
-	}
 }
 
 int
@@ -922,11 +918,8 @@ out:
 		genfs_markdirty(vp);
 	}
 	mutex_exit(&uobj->vmobjlock);
+    } /* !xip */
 
-#if 1
-genfs_getpages_generic_io_done_done:
-	{}
-#endif
 	if (ap->a_m != NULL) {
 		memcpy(ap->a_m, &pgs[ridx],
 		    orignmempages * sizeof(struct vm_page *));
