@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rumpkern,v 1.99 2010/11/21 17:34:11 pooka Exp $
+#	$NetBSD: Makefile.rumpkern,v 1.100 2010/11/21 21:46:43 pooka Exp $
 #
 
 .include "${RUMPTOP}/Makefile.rump"
@@ -167,13 +167,15 @@ KERNMISCCPPFLAGS+=	-D_RUMPKERNEL
 # Some architectures require a little special massage with atomic
 # compare-and-swap.  This is because the kernel version is using
 # instructions or routines unavailable to us in userspace.  We
-# use effectively the multiprocessor version of the userspace ops.
+# use a very simple CAS routine which (correctly) assumes non-SMP
+# and no preemption.  If some of these archs later develop MP
+# support, switch them to use atomic_cas_generic.c
 #
 .if ${MACHINE_CPU} == "arm" || ${MACHINE_CPU} == "hppa" \
     || ${MACHINE_CPU} == "mips" || ${MACHINE_CPU} == "sh3" \
     || ${MACHINE_CPU} == "vax" || ${MACHINE_ARCH} == "m68000"
 CPPFLAGS+=	-I${RUMPTOP}/../../common/lib/libc/atomic
-SRCS+=		atomic_cas_generic.c
+SRCS+=		atomic_cas_up.c
 .endif
 
 .include <bsd.lib.mk>
