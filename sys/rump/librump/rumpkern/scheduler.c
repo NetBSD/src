@@ -1,4 +1,4 @@
-/*      $NetBSD: scheduler.c,v 1.21 2010/10/29 15:32:24 pooka Exp $	*/
+/*      $NetBSD: scheduler.c,v 1.22 2010/11/21 22:01:15 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scheduler.c,v 1.21 2010/10/29 15:32:24 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scheduler.c,v 1.22 2010/11/21 22:01:15 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -120,15 +120,16 @@ getnextcpu(void)
 
 /* this could/should be mi_attach_cpu? */
 void
-rump_cpus_bootstrap(int num)
+rump_cpus_bootstrap(int *nump)
 {
 	struct rumpcpu *rcpu;
 	struct cpu_info *ci;
+	int num = *nump;
 	int i;
 
 	if (num > MAXCPUS) {
-		aprint_verbose("CPU limit: %d wanted, %d (MAXCPUS) available\n",
-		    num, MAXCPUS);
+		aprint_verbose("CPU limit: %d wanted, %d (MAXCPUS) "
+		    "available (adjusted)\n", num, MAXCPUS);
 		num = MAXCPUS;
 	}
 
@@ -141,6 +142,7 @@ rump_cpus_bootstrap(int num)
 	/* attach first cpu for bootstrap */
 	rump_cpu_attach(&rump_cpus[0]);
 	ncpu = 1;
+	*nump = num;
 }
 
 void
