@@ -1,5 +1,5 @@
-/*	$NetBSD: sshpty.h,v 1.2 2009/06/07 22:38:48 christos Exp $	*/
-/* $OpenBSD: sshpty.h,v 1.11 2008/05/19 15:45:07 djm Exp $ */
+/*	$NetBSD: sshpty.h,v 1.3 2010/11/21 18:29:49 adam Exp $	*/
+/* $OpenBSD: sshpty.h,v 1.12 2010/01/09 05:04:24 djm Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -18,8 +18,8 @@
 #include <termios.h>
 
 struct termios *get_saved_tio(void);
-void	 leave_raw_mode(void);
-void	 enter_raw_mode(void);
+void	 leave_raw_mode(int);
+void	 enter_raw_mode(int);
 
 int	 pty_allocate(int *, int *, char *, size_t);
 void	 pty_release(const char *);
