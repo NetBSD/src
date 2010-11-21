@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.h,v 1.59.2.36 2010/11/15 17:32:01 uebayasi Exp $	*/
+/*	$NetBSD: uvm_page.h,v 1.59.2.37 2010/11/21 15:27:36 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -311,8 +311,8 @@ bool uvm_pageismanaged_device(paddr_t);
 
 int uvm_page_lookup_freelist(struct vm_page *);
 
-extern struct vm_page *uvm_page_zeropage;
-struct vm_page *uvm_page_zeropage_alloc(void);
+extern struct vm_page *uvm_page_holepage;
+struct vm_page *uvm_page_holepage_alloc(void);
 
 int vm_physseg_find(paddr_t, int *);
 struct vm_page *uvm_phys_to_vm_page(paddr_t);

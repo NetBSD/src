@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.153.2.67 2010/11/21 11:57:15 uebayasi Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.153.2.68 2010/11/21 15:27:36 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.153.2.67 2010/11/21 11:57:15 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.153.2.68 2010/11/21 15:27:36 uebayasi Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -2235,22 +2235,22 @@ uvm_page_lookup_freelist(struct vm_page *pg)
 	return (VM_PHYSMEM_PTR(lcv)->free_list);
 }
 
-static int uvm_page_zeropage_init(void);
+static int uvm_page_holepage_init(void);
 
-struct vm_page *uvm_page_zeropage;
+struct vm_page *uvm_page_holepage;
 
 struct vm_page *
-uvm_page_zeropage_alloc(void)
+uvm_page_holepage_alloc(void)
 {
 	static ONCE_DECL(inited);
 
-	(void)RUN_ONCE(&inited, uvm_page_zeropage_init);
-	KASSERT(uvm_page_zeropage != NULL);
-	return uvm_page_zeropage;
+	(void)RUN_ONCE(&inited, uvm_page_holepage_init);
+	KASSERT(uvm_page_holepage != NULL);
+	return uvm_page_holepage;
 }
 
 static int
-uvm_page_zeropage_init(void)
+uvm_page_holepage_init(void)
 {
 	struct pglist mlist;
 	struct vm_page *pg;
@@ -2271,7 +2271,7 @@ uvm_page_zeropage_init(void)
 	uvm_pagewire(pg);
 	mutex_exit(&uvm_pageqlock);
 
-	uvm_page_zeropage = pg;
+	uvm_page_holepage = pg;
 	return 0;
 }
 
