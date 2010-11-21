@@ -1,4 +1,4 @@
-#	 $NetBSD: mi,v 1.113 2010/08/14 08:51:32 mrg Exp $
+#	 $NetBSD: mi,v 1.114 2010/11/21 02:43:31 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -9398,6 +9398,7 @@
 ./usr/libdata/debug/usr/X11R7/bin/imake.debug		-unknown-	debug,xorg
 ./usr/libdata/debug/usr/X11R7/bin/lbxproxy.debug	-obsolete-	obsolete
 ./usr/libdata/debug/usr/X11R7/bin/listres.debug		-unknown-	debug,xorg
+./usr/libdata/debug/usr/X11R7/bin/lndir.debug		-unknown-	debug,xorg
 ./usr/libdata/debug/usr/X11R7/bin/luit.debug		-unknown-	debug,xorg
 ./usr/libdata/debug/usr/X11R7/bin/makedepend.debug	-unknown-	debug,xorg
 ./usr/libdata/debug/usr/X11R7/bin/makestrs.debug	-unknown-	debug,xorg

@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.95 2010/11/18 18:48:05 tron Exp $
+# $NetBSD: mi,v 1.96 2010/11/21 02:43:31 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1376,6 +1376,7 @@
 ./usr/X11R7/bin/imake					-unknown-	xorg
 ./usr/X11R7/bin/lbxproxy				-obsolete	obsolete
 ./usr/X11R7/bin/listres					-unknown-	xorg
+./usr/X11R7/bin/lndir					-unknown-	xorg
 ./usr/X11R7/bin/luit					-unknown-	xorg
 ./usr/X11R7/bin/makedepend				-unknown-	xorg
 ./usr/X11R7/bin/makeg					-unknown-	xorg
@@ -2482,6 +2483,7 @@
 ./usr/X11R7/man/cat1/imake.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat1/lbxproxy.0				-obsolete	obsolete
 ./usr/X11R7/man/cat1/listres.0				-unknown-	.cat,xorg
+./usr/X11R7/man/cat1/lndir.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat1/luit.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat1/makedepend.0			-unknown-	.cat,xorg
 ./usr/X11R7/man/cat1/makeg.0				-unknown-	.cat,xorg
@@ -2616,6 +2618,7 @@
 ./usr/X11R7/man/html1/imake.html			-unknown-	html,xorg
 ./usr/X11R7/man/html1/lbxproxy.html			-obsolete		obsolete
 ./usr/X11R7/man/html1/listres.html			-unknown-	html,xorg
+./usr/X11R7/man/html1/lndir.html			-unknown-	html,xorg
 ./usr/X11R7/man/html1/luit.html				-unknown-	html,xorg
 ./usr/X11R7/man/html1/makedepend.html			-unknown-	html,xorg
 ./usr/X11R7/man/html1/makeg.html			-unknown-	html,xorg
@@ -2750,6 +2753,7 @@
 ./usr/X11R7/man/man1/imake.1				-unknown-	.man,xorg
 ./usr/X11R7/man/man1/lbxproxy.1				-obsolete	obsolete
 ./usr/X11R7/man/man1/listres.1				-unknown-	.man,xorg
+./usr/X11R7/man/man1/lndir.1				-unknown-	.man,xorg
 ./usr/X11R7/man/man1/luit.1				-unknown-	.man,xorg
 ./usr/X11R7/man/man1/makedepend.1			-unknown-	.man,xorg
 ./usr/X11R7/man/man1/makeg.1				-unknown-	.man,xorg
