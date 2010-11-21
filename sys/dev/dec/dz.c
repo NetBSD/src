@@ -1,4 +1,4 @@
-/*	$NetBSD: dz.c,v 1.38 2008/09/08 23:36:54 gmcgarry Exp $	*/
+/*	$NetBSD: dz.c,v 1.38.4.1 2010/11/21 21:27:37 riz Exp $	*/
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dz.c,v 1.38 2008/09/08 23:36:54 gmcgarry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dz.c,v 1.38.4.1 2010/11/21 21:27:37 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -204,16 +204,7 @@ dzattach(struct dz_softc *sc, struct evcnt *parent_evcnt, int consline)
 {
 	int n;
 
-	sc->sc_rxint = sc->sc_brk = 0;
-	sc->sc_consline = consline;
-
-	sc->sc_dr.dr_tcrw = sc->sc_dr.dr_tcr;
-	dz_write2(sc, sc->sc_dr.dr_csr, DZ_CSR_MSE | DZ_CSR_RXIE | DZ_CSR_TXIE);
-	dz_write1(sc, sc->sc_dr.dr_dtr, 0);
-	dz_write1(sc, sc->sc_dr.dr_break, 0);
-	DELAY(10000);
-
-	/* Initialize our softc structure. Should be done in open? */
+	/* Initialize our softc structure. */
 
 	for (n = 0; n < sc->sc_type; n++) {
 		sc->sc_dz[n].dz_sc = sc;
@@ -230,6 +221,15 @@ dzattach(struct dz_softc *sc, struct evcnt *parent_evcnt, int consline)
 	cn_init_magic(&dz_cnm_state);
 	cn_set_magic("\047\001"); /* default magic is BREAK */
 				  /* VAX will change it in MD code */
+
+	sc->sc_rxint = sc->sc_brk = 0;
+	sc->sc_consline = consline;
+
+	sc->sc_dr.dr_tcrw = sc->sc_dr.dr_tcr;
+	dz_write2(sc, sc->sc_dr.dr_csr, DZ_CSR_MSE | DZ_CSR_RXIE | DZ_CSR_TXIE);
+	dz_write1(sc, sc->sc_dr.dr_dtr, 0);
+	dz_write1(sc, sc->sc_dr.dr_break, 0);
+	DELAY(10000);
 
 	/* Alas no interrupt on modem bit changes, so we manually scan */
 	if (dz_timer == 0) {

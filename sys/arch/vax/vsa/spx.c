@@ -1,4 +1,4 @@
-/*	$NetBSD: spx.c,v 1.1 2008/08/12 17:54:47 hans Exp $ */
+/*	$NetBSD: spx.c,v 1.1.10.1 2010/11/21 21:27:37 riz Exp $ */
 /*
  * SPX/LCSPX/SPXg/SPXgt accelerated framebuffer driver for NetBSD/VAX
  * Copyright (c) 2005 Blaz Antonic
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spx.c,v 1.1 2008/08/12 17:54:47 hans Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spx.c,v 1.1.10.1 2010/11/21 21:27:37 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -86,7 +86,7 @@ __KERNEL_RCSID(0, "$NetBSD: spx.c,v 1.1 2008/08/12 17:54:47 hans Exp $");
 
 /*
  * off-screen font storage space 
- * 32x16 glyphs, 256 regular and underliend chars
+ * 32x16 glyphs, 256 regular and underlined chars
  */
 #define FONT_STORAGE_START	(spx_xsize * spx_ysize)
 #define FONT_STORAGE_SIZE	(32 * 16 * 256 * 2)
@@ -204,7 +204,7 @@ CFATTACH_DECL_NEW(spx, sizeof(struct spx_softc),
 static void	spx_cursor(void *, int, int, int);
 static int	spx_mapchar(void *, int, unsigned int *);
 static void	spx_putchar(void *, int, int, u_int, long);
-static void	spx_copycols(void *, int, int, int,int);
+static void	spx_copycols(void *, int, int, int, int);
 static void	spx_erasecols(void *, int, int, int, long);
 static void	spx_copyrows(void *, int, int, int);
 static void	spx_eraserows(void *, int, int, long);
@@ -595,7 +595,8 @@ SPXg_blkset(u_int xpos, u_int ypos, u_int xdim, u_int ydim, char color)
 		counter--;
 }
 
-int spx_match(device_t parent, cfdata_t match, void *aux)
+int
+spx_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct vsbus_softc *sc = device_private(parent);
 #if 0
@@ -608,30 +609,9 @@ int spx_match(device_t parent, cfdata_t match, void *aux)
  * add KA46 when/if ever somebody reports SPXg vax_confdata ID on VS 4000/60
  * Ditto for SPX ID on KA42 & KA43
  */
-	if (vax_boardtype != VAX_BTYP_49)
+	if ((vax_boardtype != VAX_BTYP_49) ||
+	    ((vax_confdata & (CONF_LCSPX | CONF_SPXg)) == 0))
 		return 0;
-
-	/* KA49: Identify framebuffer type */
-	switch (vax_confdata & (CONF_LCSPX | CONF_SPXg)) {
-		case CONF_LCSPX:
-			fb_type = FB_IS_SPX;
-			spx_blkcpy_func = SPX_blkcpy;
-			spx_blkset_func = SPX_blkset;
-			spx_putchar_func = SPX_putchar;
-			break;
-		case CONF_SPXg:
-			fb_type = FB_IS_SPXg;
-			spx_blkcpy_func = SPXg_blkcpy;
-			spx_blkset_func = SPXg_blkset;
-			spx_putchar_func = SPXg_putchar;
-			break;
-		case 0: 
-			aprint_error("spx_match: no framebuffer found\n");
-			break;
-		case CONF_LCSPX | CONF_SPXg:
-			panic("spx_match: incorrect FB configuration\n");
-			break;
-	}
 
 /* FIXME add RAMDAC ID code ??? */
 #if 0
@@ -663,6 +643,24 @@ spx_attach(device_t parent, device_t self, void *aux)
 	aa.console = spxaddr != NULL;
 
 	spx_init_common(self, va);
+
+	/* display FB type based on RAMDAC ID */
+	switch (get_btreg(SPXDAC_REG_ID) & 0xff) {
+	case 0x4a:
+		aprint_normal_dev(self,
+			"RAMDAC ID: 0x%x, Bt459 (SPX/LCSPX) RAMDAC type\n",
+			get_btreg(SPXDAC_REG_ID) & 0xff);
+		break;
+			
+	case 0x4b:
+		aprint_normal_dev(self,
+			"RAMDAC ID: 0x%x, Bt460 (SPXg) RAMDAC type\n", 
+			get_btreg(SPXDAC_REG_ID) & 0xff);
+		break;
+	default:
+		aprint_error_dev(self, "unknown RAMDAC type 0x%x\n",
+			get_btreg(SPXDAC_REG_ID) & 0xff);
+	}
 
 	curscr = &spx_conscreen;
 	prevscr = curscr;
@@ -1071,7 +1069,7 @@ spx_alloc_screen(void *v, const struct wsscreen_descr *type, void **cookiep,
 static void
 spx_free_screen(void *v, void *cookie)
 {
-/* FIXME add something to actually free malloc()ed screen ? */
+/* FIXME add something to actually free malloc()ed screen? */
 }
 
 static int
@@ -1178,7 +1176,7 @@ spxcninit(struct consdev *cndev)
 	spx_blkset(0, 0, spx_xsize, spx_ysize, SPX_BG_COLOR);
 
 	curscr = &spx_conscreen;
-	
+
 	for (i = 0; i < spx_cols * spx_rows; i++)
 		spx_conscreen.ss_image[i].attr =
 			(SPX_BG_COLOR << 4) | SPX_FG_COLOR;
@@ -1203,7 +1201,7 @@ spxcnprobe(struct consdev *cndev)
 
 	/* Only for VS 4000/90, 90A and 96 with LCSPX or SPXg/gt*/
 	if ((vax_boardtype != VAX_BTYP_49) ||
-	    ((vax_confdata & (CONF_LCSPX | CONF_SPXg)) != 0))
+	    ((vax_confdata & (CONF_LCSPX | CONF_SPXg)) == 0))
 		return;
 
 	if (((vax_confdata & 8) && (vax_boardtype == VAX_BTYP_49)) ||
@@ -1213,25 +1211,6 @@ spxcnprobe(struct consdev *cndev)
 	      (vax_boardtype == VAX_BTYP_43)))) {
 		aprint_normal("spxcnprobe: Diagnostic console\n");
 		return; /* Diagnostic console */
-	}
-
-	/* KA49: Identify framebuffer type */
-	switch (vax_confdata & (CONF_LCSPX | CONF_SPXg)) {
-	case CONF_LCSPX:
-		fb_type = FB_IS_SPX;
-		spx_blkcpy_func = SPX_blkcpy;
-		spx_blkset_func = SPX_blkset;
-		break;
-	case CONF_SPXg:
-		fb_type = FB_IS_SPXg;
-		spx_blkcpy_func = SPXg_blkcpy;
-		spx_blkset_func = SPXg_blkset;
-		break;
-	case 0:
-		aprint_error("spxcnprobe: no framebuffer found\n");
-		break;
-	case CONF_LCSPX | CONF_SPXg:
-		panic("spxcnprobe: incorrect FB configuration\n"); break;
 	}
 
 	spx_init_common(NULL, NULL);
@@ -1459,6 +1438,29 @@ spx_init_common(device_t self, struct vsbus_attach_args *va)
 	u_int i, j, k;
 	int cookie;
 	struct wsdisplay_font *wf;
+	static int init_done;
+
+	if (init_done)
+		return;
+
+	/* KA49: Identify framebuffer type */
+	switch (vax_confdata & (CONF_LCSPX | CONF_SPXg)) {
+	case CONF_LCSPX:
+		fb_type = FB_IS_SPX;
+		spx_blkcpy_func = SPX_blkcpy;
+		spx_blkset_func = SPX_blkset;
+		spx_putchar_func = SPX_putchar;
+		break;
+	case CONF_SPXg:
+		fb_type = FB_IS_SPXg;
+		spx_blkcpy_func = SPXg_blkcpy;
+		spx_blkset_func = SPXg_blkset;
+		spx_putchar_func = SPXg_putchar;
+		break;
+	case CONF_LCSPX | CONF_SPXg:
+		panic("spxcnprobe: incorrect FB configuration\n");
+		break;
+	}
 
 	/* map SPX registers first */
 	if (fb_type == FB_IS_SPX) {
@@ -1488,9 +1490,6 @@ spx_init_common(device_t self, struct vsbus_attach_args *va)
 	if (cookie == -1)
 		cookie = wsfont_find(NULL, 0, 0, 0, WSDISPLAY_FONTORDER_R2L,
 				     WSDISPLAY_FONTORDER_L2R);
-
-	if (cookie == -1)
-		aprint_error_dev(self, "spx_common_init: cookie = -1\n");
 
 	if (cookie == -1 || wsfont_lock(cookie, &wf))
 		panic("spx_common_init: unable to load console font");
@@ -1522,24 +1521,6 @@ spx_init_common(device_t self, struct vsbus_attach_args *va)
 		SPX_MAP_FB(self, va, SPX);
 	} else if (fb_type == FB_IS_SPXg) {
 		SPX_MAP_FB(self, va, SPXg);
-	}
-
-	/* display FB type based on RAMDAC ID */
-	switch (get_btreg(SPXDAC_REG_ID) & 0xff) {
-	case 0x4a:
-		aprint_normal_dev(
-			self, "RAMDAC ID: 0x%x, Bt459 (SPX/LCSPX) RAMDAC type\n",
-			get_btreg(SPXDAC_REG_ID) & 0xff);
-		break;
-			
-	case 0x4b:
-		aprint_normal_dev(
-			self, "RAMDAC ID: 0x%x, Bt460 (SPXg) RAMDAC type\n", 
-			get_btreg(SPXDAC_REG_ID) & 0xff);
-		break;
-	default:
-		aprint_error_dev(self, "unknown RAMDAC type 0x%x\n",
-				 get_btreg(SPXDAC_REG_ID) & 0xff);
 	}
 
 	/* render font glyphs to off-screen memory */
@@ -1608,4 +1589,6 @@ spx_init_common(device_t self, struct vsbus_attach_args *va)
 	set_btreg(SPXDAC_REG_WWHI, 0);
 	set_btreg(SPXDAC_REG_WHLO, 0);
 	set_btreg(SPXDAC_REG_WHHI, 0);
+
+	init_done = 1;
 }
