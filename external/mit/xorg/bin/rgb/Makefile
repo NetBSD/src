@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2008/10/14 23:37:19 cube Exp $
+#	$NetBSD: Makefile,v 1.3 2010/11/21 02:33:40 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -13,7 +13,7 @@ X11EXTRAMANDEFS+=	-e 's,__RGB_DB__,${X11LIBDIR}/rgb,g; \
 FILES=	rgb.txt
 FILESDIR=${X11LIBDIR}
 
-.PATH:	${X11SRCDIR.rgb}
+.PATH:	${X11SRCDIR.rgb} ${X11SRCDIR.rgb}/man
 
 .include <bsd.x11.mk>
 .include <bsd.prog.mk>
