@@ -1,5 +1,5 @@
-/*	$NetBSD: ssh-dss.c,v 1.2 2009/06/07 22:38:47 christos Exp $	*/
-/* $OpenBSD: ssh-dss.c,v 1.24 2006/11/06 21:25:28 markus Exp $ */
+/*	$NetBSD: ssh-dss.c,v 1.3 2010/11/21 18:29:49 adam Exp $	*/
+/* $OpenBSD: ssh-dss.c,v 1.26 2010/04/16 01:47:26 djm Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -25,7 +25,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: ssh-dss.c,v 1.2 2009/06/07 22:38:47 christos Exp $");
+__RCSID("$NetBSD: ssh-dss.c,v 1.3 2010/11/21 18:29:49 adam Exp $");
 #include <sys/types.h>
 
 #include <openssl/bn.h>
@@ -53,7 +53,8 @@ ssh_dss_sign(const Key *key, u_char **sigp, u_int *lenp,
 	u_int rlen, slen, len, dlen;
 	Buffer b;
 
-	if (key == NULL || key->type != KEY_DSA || key->dsa == NULL) {
+	if (key == NULL || key->dsa == NULL || (key->type != KEY_DSA &&
+	    key->type != KEY_DSA_CERT && key->type != KEY_DSA_CERT_V00)) {
 		error("ssh_dss_sign: no DSA key");
 		return -1;
 	}
@@ -116,7 +117,8 @@ ssh_dss_verify(const Key *key, const u_char *signature, u_int signaturelen,
 	int rlen, ret;
 	Buffer b;
 
-	if (key == NULL || key->type != KEY_DSA || key->dsa == NULL) {
+	if (key == NULL || key->dsa == NULL || (key->type != KEY_DSA &&
+	    key->type != KEY_DSA_CERT && key->type != KEY_DSA_CERT_V00)) {
 		error("ssh_dss_verify: no DSA key");
 		return -1;
 	}

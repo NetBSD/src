@@ -1,5 +1,5 @@
-/*	$NetBSD: pathnames.h,v 1.3 2009/06/10 16:14:29 njoly Exp $	*/
-/* $OpenBSD: pathnames.h,v 1.17 2008/12/29 02:23:26 stevesk Exp $ */
+/*	$NetBSD: pathnames.h,v 1.4 2010/11/21 18:29:49 adam Exp $	*/
+/* $OpenBSD: pathnames.h,v 1.19 2010/02/11 20:37:47 djm Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -120,6 +120,9 @@
 
 /* Location of ssh-keysign for hostbased authentication */
 #define _PATH_SSH_KEY_SIGN		"/usr/libexec/ssh-keysign"
+
+/* Location of ssh-pkcs11-helper to support keys in tokens */
+#define _PATH_SSH_PKCS11_HELPER		"/usr/libexec/ssh-pkcs11-helper"
 
 /* xauth for X11 forwarding */
 #define _PATH_XAUTH			X11BASE "/bin/xauth"

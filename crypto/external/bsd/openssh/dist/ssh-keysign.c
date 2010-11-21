@@ -1,5 +1,5 @@
-/*	$NetBSD: ssh-keysign.c,v 1.2 2009/06/07 22:38:47 christos Exp $	*/
-/* $OpenBSD: ssh-keysign.c,v 1.29 2006/08/03 03:34:42 deraadt Exp $ */
+/*	$NetBSD: ssh-keysign.c,v 1.3 2010/11/21 18:29:49 adam Exp $	*/
+/* $OpenBSD: ssh-keysign.c,v 1.34 2010/08/16 04:06:06 djm Exp $ */
 /*
  * Copyright (c) 2002 Markus Friedl.  All rights reserved.
  *
@@ -25,7 +25,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: ssh-keysign.c,v 1.2 2009/06/07 22:38:47 christos Exp $");
+__RCSID("$NetBSD: ssh-keysign.c,v 1.3 2010/11/21 18:29:49 adam Exp $");
 #include <sys/types.h>
 
 #include <openssl/evp.h>
@@ -148,7 +148,7 @@ main(int argc, char **argv)
 {
 	Buffer b;
 	Options options;
-	Key *keys[2], *key;
+	Key *keys[2], *key = NULL;
 	struct passwd *pw;
 	int key_fd[2], i, found, version = 2, fd;
 	u_char *signature, *data;
@@ -218,7 +218,7 @@ main(int argc, char **argv)
 	if ((fd == STDIN_FILENO) || (fd == STDOUT_FILENO))
 		fatal("bad fd");
 	if ((host = get_local_name(fd)) == NULL)
-		fatal("cannot get sockname for fd");
+		fatal("cannot get local name for fd");
 
 	data = buffer_get_string(&b, &dlen);
 	if (valid_request(pw, host, &key, data, dlen) < 0)
@@ -228,7 +228,7 @@ main(int argc, char **argv)
 	found = 0;
 	for (i = 0; i < 2; i++) {
 		if (keys[i] != NULL &&
-		    key_equal(key, keys[i])) {
+		    key_equal_public(key, keys[i])) {
 			found = 1;
 			break;
 		}
