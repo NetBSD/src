@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.2,v 1.1.2.19 2010/11/21 20:24:59 riz Exp $
+# $NetBSD: CHANGES-5.2,v 1.1.2.20 2010/11/21 21:05:44 riz Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -703,4 +703,29 @@ sys/dev/pci/hdaudio/hdaudio_afg.c		1.25
 
 	Fix kern/43542: 32kHz playback sounds like hissing analog TV snow.
 	[jmcneill, ticket #1442]
+
+lib/libutil/parsedate.3				1.7 via patch
+lib/libutil/parsedate.y				1.5
+
+	Add support for parsing the data format "@<seconds since epoch>" e.g.
+	"@735275209" for "Tue Apr 20 03:06:49 UTC 1993". This change was
+	inspired by coreutil's "date" utility.
+	[tron, ticket #1443]
+
+sys/netinet6/in6_proto.c			1.89
+sys/netinet6/ip6_etherip.c			1.14
+sys/netinet6/ip6_etherip.h			1.2
+
+	Make the EtherIP in IPv6 input path work.
+	[jakllsch, ticket #1445]
+
+usr.sbin/sa/usrdb.c				1.14
+
+	Fix corruption of /var/account/usracct files on LP64 platforms.
+	[dholland, ticket #1446]
+
+sys/dev/ic/ciss.c				1.23
+
+	Fix a performance problem with the ciss(4) driver. PR#39686.
+	[pettai, ticket #1452]
 
