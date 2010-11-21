@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.2,v 1.1.2.20 2010/11/21 21:05:44 riz Exp $
+# $NetBSD: CHANGES-5.2,v 1.1.2.21 2010/11/21 21:55:09 riz Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -728,4 +728,35 @@ sys/dev/ic/ciss.c				1.23
 
 	Fix a performance problem with the ciss(4) driver. PR#39686.
 	[pettai, ticket #1452]
+
+sys/arch/vax/vsa/dz_vsbus.c			1.41
+sys/arch/vax/vsa/spx.c				1.3
+sys/dev/dec/dz.c				1.39
+
+	Make SPX work as console device on VAXstation 4000/9x.
+	[hans, ticket #1459]
+
+sbin/routed/if.c				1.29
+
+	Fix routed crashing on startup on sparc64.  PR#43695
+	[martin, ticket #1460]
+
+sys/netbt/hci_link.c				1.22
+
+	Fix bluetooth connection for some Broadcom controllers.
+	[plunky, ticket #1461]
+
+sys/dev/acpi/wb_acpi.c				1.3 via patch
+sys/dev/ic/w83l518d.c				1.2 via patch
+sys/dev/ic/w83l518d_sdmmc.c			1.2 via patch
+sys/dev/ic/w83l518d_sdmmc.h			1.2 via patch
+sys/dev/ic/w83l518dvar.h			1.2 via patch
+
+	Add wb(4) power management support.
+	[jmcneill, ticket #1462]
+
+sys/kern/subr_disk.c				1.100
+
+	Fix an issue with >2TB disks.
+	[mrg, ticket #1463]
 
