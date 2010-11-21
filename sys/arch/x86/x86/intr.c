@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.57 2008/07/03 15:44:19 drochner Exp $	*/
+/*	$NetBSD: intr.c,v 1.57.6.1 2010/11/21 02:46:24 riz Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -133,8 +133,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.57 2008/07/03 15:44:19 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.57.6.1 2010/11/21 02:46:24 riz Exp $");
 
+#include "opt_intrdebug.h"
 #include "opt_multiprocessor.h"
 #include "opt_acpi.h"
 
