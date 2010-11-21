@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2010/11/20 23:30:24 mrg Exp $
+#	$NetBSD: Makefile,v 1.4 2010/11/21 02:33:42 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -7,8 +7,8 @@ SRCS=	ScrollByL.c handler.c man.c buttons.c help.c \
 	search.c globals.c main.c misc.c tkfuncs.c vendor.c
 
 CPPFLAGS+=${X11FLAGS.VERSION}
-CPPFLAGS+=-DHAS_SNPRINTF -DHELPFILE=\"${X11LIBDIR}/xman.help\" -DHAS_MKSTEMP
-CPPFLAGS+=-DHAS_GROFF -DMANCONFIGSTYLE_OpenBSD -DMANCONF=\"/etc/man.conf\"
+CPPFLAGS+=-DHELPFILE=\"${X11LIBDIR}/xman.help\"
+CPPFLAGS+=-DMANCONFIGSTYLE_OpenBSD -DMANCONF=\"/etc/man.conf\"
 CPPFLAGS+=-DHAVE_CONFIG_H -I${X11SRCDIR.${PROG}}/../include
 
 APPDEFS=Xman

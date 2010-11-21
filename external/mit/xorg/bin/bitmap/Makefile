@@ -1,23 +1,22 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2008/07/29 05:01:22 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2010/11/21 02:33:40 mrg Exp $
 
 .include <bsd.own.mk>
 
 PROG=	bitmap
 SRCS=	BitEdit.c CutPaste.c Graphics.c ReqMach.c Bitmap.c Dialog.c Handlers.c
 
+.PATH:	${X11SRCDIR.bitmap}/man
 MLINKS=	bitmap.1 bmtoa.1 bitmap.1 atobm.1
 
 FILES=	Dashes Down Excl FlipHoriz FlipVert Fold Left Right RotateLeft \
 	RotateRight Stipple Term Up
 FILESDIR=${X11INCDIR}/X11/bitmaps
 
-APPDEFS=Bitmap.ad Bitmap-color.ad
-
 LDADD+=	-lXaw -lXmu -lXt -lSM -lICE -lXpm -lXext -lX11 -lm
 DPADD+=	${LIBXAW} ${LIBXMU} ${LIBXT} ${LIBSM} ${LIBICE} \
 	${LIBXPM} ${LIBXEXT} ${LIBX11} ${LIBM}
 
-SUBDIR=	bmtoa atobm
+SUBDIR=	bmtoa atobm app-defaults
 
 .PATH:	${X11SRCDIR.bitmap}
 

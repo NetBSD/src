@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2010/11/21 01:25:33 mrg Exp $
+#	$NetBSD: Makefile,v 1.8 2010/11/21 02:33:41 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -21,7 +21,8 @@ CPPFLAGS+=		-I${XFSDIR}/include \
 			-I${DESTDIR}${X11INCDIR}/X11/FS \
 			-I${X11SRCDIR.libXfont}/include \
 			-I${X11SRCDIR.libXfont}/bitmap \
-			-I${XFSDIR}/../include
+			-I${XFSDIR}/../include \
+			-DHAVE_DAEMON
 
 CONN_DEFINES=		${X11FLAGS.CONNECTION} -DFONT_t -DTRANS_SERVER \
 			-DTRANS_REOPEN -DHAS_FCHOWN -DHAS_STICKY_DIR_BIT
