@@ -1,4 +1,4 @@
-/*	$NetBSD: symtab.c,v 1.23 2005/08/19 02:07:19 christos Exp $	*/
+/*	$NetBSD: symtab.c,v 1.23.28.1 2010/11/21 02:30:17 riz Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)symtab.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: symtab.c,v 1.23 2005/08/19 02:07:19 christos Exp $");
+__RCSID("$NetBSD: symtab.c,v 1.23.28.1 2010/11/21 02:30:17 riz Exp $");
 #endif
 #endif /* not lint */
 
@@ -455,7 +455,7 @@ dumpsymtable(const char *filename, int32_t checkpt)
 	FILE *fd;
 	struct symtableheader hdr;
 
-	vprintf(stdout, "Check pointing the restore\n");
+	vprintf(stdout, "Checkpointing the restore\n");
 	if (Nflag)
 		return;
 	if ((fd = fopen(filename, "w")) == NULL) {
