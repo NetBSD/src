@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_bio.c,v 1.68.2.13 2010/11/21 12:42:59 uebayasi Exp $	*/
+/*	$NetBSD: uvm_bio.c,v 1.68.2.14 2010/11/21 15:00:12 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.68.2.13 2010/11/21 12:42:59 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.68.2.14 2010/11/21 15:00:12 uebayasi Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_ubc.h"
@@ -234,10 +234,10 @@ ubc_fault_page(const struct uvm_faultinfo *ufi, const struct ubc_map *umap,
 	UVMHIST_FUNC("ubc_fault_page"); UVMHIST_CALLED(ubchist);
 
 	KASSERT(pg != NULL);
-	KASSERT(pg == PGO_ZERO || uobj == pg->uobject);
+	KASSERT(pg == PGO_HOLE || uobj == pg->uobject);
 	KASSERT(mutex_owned(&uobj->vmobjlock));
 
-    if (__predict_true(pg != PGO_ZERO)) {
+    if (__predict_true(pg != PGO_HOLE)) {
 	if (pg->flags & PG_WANTED) {
 		wakeup(pg);
 	}
@@ -275,17 +275,17 @@ ubc_fault_page(const struct uvm_faultinfo *ufi, const struct ubc_map *umap,
 	 * is marked as PG_RDONLY.
 	 */
 
-	KASSERT(pg == PGO_ZERO ||
+	KASSERT(pg == PGO_HOLE ||
 	    (pg->flags & PG_RDONLY) == 0 ||
 	    (access_type & VM_PROT_WRITE) == 0 ||
 	    pg->offset < umap->writeoff ||
 	    pg->offset + PAGE_SIZE > umap->writeoff + umap->writelen);
 
-	if (__predict_false(pg == PGO_ZERO)) {
-		UVMHIST_LOG(ubchist, "replacing PGO_ZERO with zeropage",0,0,0,0);
-		pg = uvm_page_zeropage_alloc();
+	if (__predict_false(pg == PGO_HOLE)) {
+		UVMHIST_LOG(ubchist, "replacing PGO_HOLE with holepage",0,0,0,0);
+		pg = uvm_page_holepage_alloc();
 		UVMHIST_LOG(ubchist,
-		    "PGO_ZERO replaced with pg %p (phys_addr=0x%lx)",
+		    "PGO_HOLE replaced with pg %p (phys_addr=0x%lx)",
 		    pg, VM_PAGE_TO_PHYS(pg), 0, 0);
 		KASSERT(pg != NULL);
 		KASSERT((pg->flags & PG_RDONLY) != 0);
@@ -299,7 +299,7 @@ ubc_fault_page(const struct uvm_faultinfo *ufi, const struct ubc_map *umap,
 	error = pmap_enter(ufi->orig_map->pmap, va, VM_PAGE_TO_PHYS(pg),
 	    prot & mask, PMAP_CANFAIL | (access_type & mask));
 
-    if (__predict_true(pg != uvm_page_zeropage)) {
+    if (__predict_true(pg != uvm_page_holepage)) {
 	if (__predict_true((pg->flags & PG_DEVICE) == 0)) {
 		mutex_enter(&uvm_pageqlock);
 		uvm_pageactivate(pg);
@@ -440,7 +440,7 @@ again:
 		if (pg == NULL || pg == PGO_DONTCARE) {
 			continue;
 		}
-	    if (__predict_true(pg != PGO_ZERO)) {
+	    if (__predict_true(pg != PGO_HOLE)) {
 		if (__predict_false(pg->uobject != uobj)) {
 			/* Check for the first iteration and error cases. */
 			if (uobj != NULL) {
@@ -457,7 +457,7 @@ again:
 			mutex_enter(&uobj->vmobjlock);
 		}
 	    }
-		KASSERT(pg == PGO_ZERO || uobj == pg->uobject);
+		KASSERT(pg == PGO_HOLE || uobj == pg->uobject);
 		error = ubc_fault_page(ufi, umap, uobj, pg, prot, access_type, va);
 		if (error) {
 			/*
