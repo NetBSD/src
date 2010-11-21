@@ -1,4 +1,4 @@
-/*	$NetBSD: ssh-pkcs11-helper.c,v 1.1.1.1 2010/11/21 17:06:01 adam Exp $	*/
+/*	$NetBSD: ssh-pkcs11-helper.c,v 1.2 2010/11/21 18:59:04 adam Exp $	*/
 /* $OpenBSD: ssh-pkcs11-helper.c,v 1.3 2010/02/24 06:12:53 djm Exp $ */
 /*
  * Copyright (c) 2010 Markus Friedl.  All rights reserved.
@@ -15,10 +15,13 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+#include "includes.h"
+__RCSID("$NetBSD: ssh-pkcs11-helper.c,v 1.2 2010/11/21 18:59:04 adam Exp $");
 
 #include <sys/queue.h>
 #include <sys/types.h>
 #include <sys/time.h>
+#include <sys/param.h>
 
 #include <stdarg.h>
 #include <string.h>
