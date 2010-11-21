@@ -1,19 +1,20 @@
-#	$NetBSD: Makefile,v 1.4 2009/12/27 01:40:47 christos Exp $
+#	$NetBSD: Makefile,v 1.5 2010/11/21 19:19:23 adam Exp $
 
 .include <bsd.own.mk>
 
 LIB=	ssh
 SRCS=	authfd.c authfile.c bufaux.c bufbn.c buffer.c canohost.c channels.c \
-	cipher.c cipher-3des1.c cipher-ctr.c cipher-ctr-mt.c cipher-bf1.c \
-	cleanup.c compat.c compress.c crc32.c deattack.c dns.c fatal.c \
+	cipher.c cipher-3des1.c cipher-bf1.c cipher-ctr.c \
+	cleanup.c compat.c compress.c crc32.c deattack.c fatal.c \
 	hostfile.c log.c match.c nchan.c packet.c readpass.c \
-	rsa.c strtonum.c ttymodes.c xmalloc.c atomicio.c \
-	key.c dispatch.c kex.c mac.c uuencode.c misc.c \
+	rsa.c ttymodes.c xmalloc.c atomicio.c \
+	key.c dispatch.c kex.c mac.c uidswap.c uuencode.c misc.c \
 	ssh-dss.c ssh-rsa.c dh.c kexdh.c kexgex.c \
-	kexdhc.c kexgexc.c scard.c msg.c progressmeter.c \
-	monitor_fdpass.c uidswap.c addrmatch.c roaming_common.c
+	kexdhc.c kexgexc.c msg.c progressmeter.c dns.c \
+	monitor_fdpass.c addrmatch.c schnorr.c jpake.c ssh-pkcs11.c \
+	roaming_common.c
 #	umac.c
-SRCS+=	random.c
+SRCS+=	fmt_scaled.c random.c strtonum.c
 SRCS+=	readpassphrase.c getpeereid.c getrrsetbyname.c
 COPTS.monitor_fdpass.c = -Wno-stack-protector
 
@@ -28,7 +29,7 @@ LIBDPLIBS+=	crypto	${NETBSDSRCDIR}/crypto/external/bsd/openssl/lib/libcrypto \
 		z	${NETBSDSRCDIR}/lib/libz
 
 .if (defined(HAVE_GCC) && ${HAVE_GCC} == 4) || defined(HAVE_PCC)
-.for f in dns channels hostfile
+.for f in dns channels hostfile roaming_common ssh-pkcs11
 COPTS.${f}.c+=	-Wno-pointer-sign
 .endfor
 .endif

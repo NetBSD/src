@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2009/06/07 22:38:45 christos Exp $
+#	$NetBSD: Makefile,v 1.2 2010/11/21 19:19:22 adam Exp $
 
 .include <bsd.own.mk>
 
@@ -6,10 +6,12 @@ BINDIR = /usr/bin
 
 PROG=	ssh
 SRCS=	ssh.c readconf.c clientloop.c sshtty.c \
-	sshconnect.c sshconnect1.c sshconnect2.c mux.c
+	sshconnect.c sshconnect1.c sshconnect2.c mux.c \
+	roaming_client.c
 
 COPTS.sshconnect1.c=	-fno-strict-aliasing
 .if (defined(HAVE_GCC) && ${HAVE_GCC} == 4) || defined(HAVE_PCC)
+COPTS.mux.c=		-Wno-pointer-sign
 COPTS.sshconnect2.c=	-Wno-pointer-sign
 .endif
 
@@ -18,7 +20,6 @@ MAN=	ssh.1 ssh_config.5
 MLINKS=	ssh.1 slogin.1
 
 .if (${USE_KERBEROS} != "no")
-
 # this is not entirely true, libgssapi might be independent of krb5
 SRCS +=	gss-genr.c
 LDADD+=	-lgssapi -lheimntlm
