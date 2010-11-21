@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_private.h,v 1.63 2010/11/17 21:57:33 pooka Exp $	*/
+/*	$NetBSD: rump_private.h,v 1.64 2010/11/21 22:01:15 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -96,7 +96,7 @@ extern struct cpu_info *rump_cpu;
 
 struct lwp *	rump__lwproc_alloclwp(struct proc *);
 
-void	rump_cpus_bootstrap(int);
+void	rump_cpus_bootstrap(int *);
 void	rump_scheduler_init(int);
 void	rump_schedule(void);
 void	rump_unschedule(void);
