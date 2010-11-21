@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.9 2008/04/28 20:23:16 martin Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.10 2010/11/21 17:59:36 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -27,15 +27,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.9 2008/04/28 20:23:16 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.10 2010/11/21 17:59:36 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <machine/autoconf.h>
 
-int mainbus_match(struct device *, struct cfdata *, void *);
-void mainbus_attach(struct device *, struct device *, void *);
+int mainbus_match(device_t, cfdata_t, void *);
+void mainbus_attach(device_t, device_t, void *);
 int mainbus_print(void *, const char *);
 
 struct mainbus_attach_args mainbusdevs[] = {
@@ -44,22 +44,22 @@ struct mainbus_attach_args mainbusdevs[] = {
 	{ NULL }	/* terminator */
 };
 
-CFATTACH_DECL(mainbus, sizeof(struct device),
+CFATTACH_DECL_NEW(mainbus, 0,
     mainbus_match, mainbus_attach, NULL, NULL);
 
 int
-mainbus_match(struct device *parent, struct cfdata *cf, void *aux)
+mainbus_match(device_t parent, cfdata_t cf, void *aux)
 {
 
 	return 1;
 }
 
 void
-mainbus_attach(struct device *parent, struct device *self, void *aux)
+mainbus_attach(device_t parent, device_t self, void *aux)
 {
 	struct mainbus_attach_args *ma;
 
-	printf("\n");
+	aprint_normal("\n");
 
 	for (ma = mainbusdevs; ma->ma_name != NULL; ma++)
 		config_found(self, ma, mainbus_print);
