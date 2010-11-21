@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.36.2.58 2010/11/21 06:46:15 uebayasi Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.36.2.59 2010/11/21 07:41:49 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.36.2.58 2010/11/21 06:46:15 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.36.2.59 2010/11/21 07:41:49 uebayasi Exp $");
 
 #include "opt_xip.h"
 
@@ -58,12 +58,6 @@ __KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.36.2.58 2010/11/21 06:46:15 uebayasi 
 #include <uvm/uvm.h>
 #include <uvm/uvm_pager.h>
 
-#ifdef XIP
-static int genfs_do_getpages_xip_io(struct vnode *, voff_t, struct vm_page **,
-    int *, int, vm_prot_t, int, int, const int);
-static int genfs_do_putpages_xip(struct vnode *, off_t, off_t, int,
-    struct vm_page **);
-#endif
 static int genfs_do_directio(struct vmspace *, vaddr_t, size_t, struct vnode *,
     off_t, enum uio_rw);
 static void genfs_dio_iodone(struct buf *);
@@ -940,100 +934,6 @@ out_err:
 	return error;
 }
 
-#ifdef XIP
-/*
- * genfs_do_getpages_xip_io
- *      Return "direct pages" of XIP vnode.  The block addresses of XIP
- *      vnode pages are returned back to the VM fault handler as the
- *	actually mapped physical addresses.
- */
-static int
-genfs_do_getpages_xip_io(
-	struct vnode *vp,
-	voff_t origoffset,
-	struct vm_page **pps,
-	int *npagesp,
-	int centeridx,
-	vm_prot_t access_type,
-	int advice,
-	int flags,
-	const int orignmempages)
-{
-	const int fs_bshift = vp2fs_bshift(vp);
-	const int dev_bshift = vp2dev_bshift(vp);
-	const int fs_bsize = 1 << fs_bshift;
-
-	int error;
-	off_t off;
-	int i;
-
-	UVMHIST_FUNC("genfs_do_getpages_xip_io"); UVMHIST_CALLED(ubchist);
-
-	KASSERT(((flags & PGO_GLOCKHELD) != 0) || genfs_node_rdlocked(vp));
-
-#ifdef UVMHIST
-	const off_t startoffset = trunc_blk(origoffset);
-	const off_t endoffset = round_blk(origoffset + PAGE_SIZE * orignmempages);
-#endif
-
-	const int ridx = (origoffset - startoffset) >> PAGE_SHIFT;
-
-	UVMHIST_LOG(ubchist,
-	    "ridx=%d xip npages=%d startoff=0x%lx endoff=0x%lx",
-	    ridx, orignmempages, (long)startoffset, (long)endoffset);
-
-	off = origoffset;
-	for (i = ridx; i < ridx + orignmempages; i++) {
-		daddr_t blkno;
-		int run;
-		struct vnode *devvp;
-
-		KASSERT((off - origoffset) >> PAGE_SHIFT == i - ridx);
-
-		const daddr_t lbn = trunc_blk(off) >> fs_bshift;
-
-		error = VOP_BMAP(vp, lbn, &devvp, &blkno, &run);
-		KASSERT(error == 0);
-		UVMHIST_LOG(ubchist, "xip VOP_BMAP: lbn=%ld blkno=%ld run=%d",
-		    (long)lbn, (long)blkno, run, 0);
-
-		const daddr_t blk_off = blkno << dev_bshift;
-		const daddr_t fs_off = origoffset - (lbn << fs_bshift);
-
-		/*
-		 * XIP page metadata assignment
-		 * - Unallocated block is redirected to the dedicated zero'ed
-		 *   page.
-		 */
-		if (blkno < 0) {
-			panic("XIP hole is not supported yet!");
-		} else {
-			KASSERT(off - origoffset == (i - ridx) << PAGE_SHIFT);
-
-			const daddr_t pg_off = (i - ridx) << PAGE_SHIFT;
-
-			struct vm_page *pg;
-
-			UVMHIST_LOG(ubchist,
-			    "xip blk_off=%lx fs_off=%lx pg_off=%lx",
-			    (long)blk_off, (long)fs_off, (long)pg_off, 0);
-
-			pg = uvn_findpage_xip(devvp, &vp->v_uobj,
-			    blk_off + fs_off + pg_off);
-			KASSERT(pg != NULL);
-			UVMHIST_LOG(ubchist,
-			    "xip pgs %d => phys_addr=0x%lx (%p)",
-			    i, (long)pg->phys_addr, pg, 0);
-			pps[i] = pg;
-		}
-
-		off += PAGE_SIZE;
-	}
-
-	return 0;
-}
-#endif
-
 /*
  * generic VM putpages routine.
  * Write the given range of pages to backing store.
@@ -1092,12 +992,6 @@ genfs_putpages(void *v)
 		int a_flags;
 	} */ * const ap = v;
 
-#ifdef XIP
-	if ((ap->a_vp->v_vflag & VV_XIP) != 0)
-		return genfs_do_putpages_xip(ap->a_vp, ap->a_offlo, ap->a_offhi,
-		    ap->a_flags, NULL);
-	else
-#endif
 	return genfs_do_putpages(ap->a_vp, ap->a_offlo, ap->a_offhi,
 	    ap->a_flags, NULL);
 }
@@ -1562,98 +1456,6 @@ skip_scan:
 
 	return (error);
 }
-
-#ifdef XIP
-int
-genfs_do_putpages_xip(struct vnode *vp, off_t startoff, off_t endoff,
-    int flags, struct vm_page **busypg)
-{
-	struct uvm_object *uobj = &vp->v_uobj;
-#ifdef DIAGNOSTIC
-	struct genfs_node * const gp = VTOG(vp);
-#endif
-
-	UVMHIST_FUNC("genfs_do_putpages_xip"); UVMHIST_CALLED(ubchist);
-
-	KASSERT(mutex_owned(&uobj->vmobjlock));
-	KASSERT((vp->v_iflag & VI_ONWORKLST) == 0);
-	KASSERT(vp->v_numoutput == 0);
-	KASSERT(gp->g_dirtygen == 0);
-
-	UVMHIST_LOG(ubchist, "vp %p pages %d off 0x%x len 0x%x",
-	    vp, uobj->uo_npages, startoff, endoff - startoff);
-
-	/*
-	 * XIP pages are read-only, and never become dirty.  They're also never
-	 * queued.  PGO_DEACTIVATE and PGO_CLEANIT are meaningless for XIP
-	 * pages, so we ignore them.
-	 */
-	if ((flags & PGO_FREE) == 0)
-		goto done;
-
-	/*
-	 * For PGO_FREE (or (PGO_CLEANIT | PGO_FREE)), we invalidate MMU
-	 * mappings of both XIP pages and XIP zero pages.
-	 *
-	 * Zero page is freed when one of its mapped offset is freed, even if
-	 * one file (vnode) has many holes and mapping its zero page to all
-	 * of those hole pages.
-	 *
-	 * We don't know which pages are currently mapped in the given vnode,
-	 * because XIP pages are not added to vnode.  What we can do is to
-	 * locate pages by querying the filesystem as done in getpages.  Call
-	 * genfs_do_getpages_xip_io().
-	 */
-
-	off_t off, eof;
-
-	off = trunc_page(startoff);
-	if (endoff == 0 || (flags & PGO_ALLPAGES))
-		GOP_SIZE(vp, vp->v_size, &eof, GOP_SIZE_MEM);
-	else
-		eof = endoff;
-
-	while (off < eof) {
-		int npages, orignpages, error, i;
-		struct vm_page *pgs[maxpages], *pg;
-
-		npages = round_page(eof - off) >> PAGE_SHIFT;
-		if (npages > maxpages)
-			npages = maxpages;
-
-		orignpages = npages;
-		KASSERT(mutex_owned(&uobj->vmobjlock));
-		mutex_exit(&uobj->vmobjlock);
-		error = genfs_do_getpages_xip_io(vp, off, pgs, &npages, 0,
-		    VM_PROT_ALL, 0, PGO_GLOCKHELD, orignpages);
-		KASSERT(error == 0);
-		KASSERT(npages == orignpages);
-		mutex_enter(&uobj->vmobjlock);
-		for (i = 0; i < npages; i++) {
-			pg = pgs[i];
-			if (pg == NULL || pg == PGO_DONTCARE)
-				continue;
-			/*
-			 * Freeing normal XIP pages; nothing to do.
-			 */
-			pmap_page_protect(pg, VM_PROT_NONE);
-			KASSERT((pg->flags & PG_RDONLY) != 0);
-			KASSERT((pg->flags & PG_CLEAN) != 0);
-			KASSERT((pg->flags & PG_FAKE) == 0);
-			KASSERT((pg->flags & PG_DEVICE) != 0);
-			pg->flags &= ~PG_BUSY;
-		}
-		off += npages << PAGE_SHIFT;
-	}
-
-	KASSERT(uobj->uo_npages == 0);
-
-done:
-	KASSERT(mutex_owned(&uobj->vmobjlock));
-	mutex_exit(&uobj->vmobjlock);
-	return 0;
-}
-#endif
 
 int
 genfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages, int flags)
