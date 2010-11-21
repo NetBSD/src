@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rumpkern,v 1.100 2010/11/21 21:46:43 pooka Exp $
+#	$NetBSD: Makefile.rumpkern,v 1.101 2010/11/21 22:17:24 pooka Exp $
 #
 
 .include "${RUMPTOP}/Makefile.rump"
@@ -24,6 +24,12 @@ SRCS+=	compat.c
 # locking at runtime.
 SRCS+=	locks.c
 #SRCS+=	locks_up.c
+
+# Does the arch support multiple processors?
+.if ${MACHINE_ARCH} == "amd64" || ${MACHINE_ARCH} == "i386"
+RUMP_SMP=		# defined
+CPPFLAGS.rump.c+=	-DRUMP_SMP
+.endif
 
 vers.c: ${RUMPTOP}/../conf/newvers.sh ${RUMPTOP}/../conf/osrelease.sh ${RUMPTOP}/../sys/param.h
 	${_MKMSG_CREATE} vers.c
@@ -175,7 +181,11 @@ KERNMISCCPPFLAGS+=	-D_RUMPKERNEL
     || ${MACHINE_CPU} == "mips" || ${MACHINE_CPU} == "sh3" \
     || ${MACHINE_CPU} == "vax" || ${MACHINE_ARCH} == "m68000"
 CPPFLAGS+=	-I${RUMPTOP}/../../common/lib/libc/atomic
+.ifdef RUMP_SMP
+SRCS+=		atomic_cas_generic.c
+.else
 SRCS+=		atomic_cas_up.c
+.endif
 .endif
 
 .include <bsd.lib.mk>

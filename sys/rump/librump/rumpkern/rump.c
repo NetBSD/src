@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.204 2010/11/21 22:01:15 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.205 2010/11/21 22:17:24 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.204 2010/11/21 22:01:15 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.205 2010/11/21 22:17:24 pooka Exp $");
 
 #include <sys/systm.h>
 #define ELFSIZE ARCH_ELFSIZE
@@ -249,7 +249,7 @@ rump__init(int rump_version)
 	if (rumpuser_getenv("RUMP_NCPU", buf, sizeof(buf), &error) == 0)
 		error = 0;
 	/* non-x86 is missing CPU_INFO_FOREACH() support */
-#if defined(__i386__) || defined(__x86_64__)
+#ifdef RUMP_SMP
 	if (error == 0) {
 		numcpu = strtoll(buf, NULL, 10);
 		if (numcpu < 1)
