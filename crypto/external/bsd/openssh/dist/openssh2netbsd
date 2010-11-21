@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: openssh2netbsd,v 1.1 2009/06/07 22:38:47 christos Exp $
+#	$NetBSD: openssh2netbsd,v 1.2 2010/11/21 19:11:09 adam Exp $
 #
 # Copyright (c) 2001 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -33,7 +33,7 @@ find . -name CVS -print | xargs rm -r
 
 ### Remove Makefile and subdirs
 rm -r Makefile Makefile.inc
-rm -r lib ssh-add ssh scp ssh-agent sshd sftp-server ssh-keygen sftp ssh-keyscan ssh-keysign
+rm -r lib ssh-add ssh scp ssh-agent sshd sftp-server ssh-keygen sftp ssh-keyscan ssh-keysign ssh-pkcs11-helper
 
 ### add NetBSD RCS tag
 for i in *.c *.h; do
