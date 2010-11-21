@@ -1,4 +1,4 @@
-.\"	$NetBSD: rump_ffs.8,v 1.10 2010/11/21 19:32:17 pooka Exp $
+.\"	$NetBSD: rump_nqmfs.8,v 1.1 2010/11/21 19:32:18 pooka Exp $
 .\"
 .\"	WARNING: GENERATED FILE, DO NOT EDIT
 .\"	INSTEAD, EDIT makerumpmanpages.sh AND REGEN
@@ -27,11 +27,11 @@
 .\" SUCH DAMAGE.
 .\"
 .Dd November 21, 2010
-.Dt RUMP_FFS 8
+.Dt RUMP_NQMFS 8
 .Os
 .Sh NAME
-.Nm rump_ffs
-.Nd mount the ffs file system using a userspace server
+.Nm rump_nqmfs
+.Nd mount the nqmfs file system using a userspace server
 .Sh SYNOPSIS
 .Cd "file-system PUFFS"
 .Cd "pseudo-device putter"
@@ -47,18 +47,18 @@ This manual page has been generated from a common source shared between all
 file servers.
 Some parts of this manual page may not apply to this particular server.
 After reading this manual page, you may want to verify the details from
-.Xr mount_ffs 8 .
+.Xr mount_nqmfs 8 .
 .Pp
 The
 .Nm
-utility can be used to mount ffs file systems.
+utility can be used to mount nqmfs file systems.
 It uses
 .Xr rump 3
 and
 .Xr p2k 3
 to facilitate running the file system as a server in userspace.
 As opposed to
-.Xr mount_ffs 8 ,
+.Xr mount_nqmfs 8 ,
 .Nm
 does not use file system code within the kernel and therefore does
 not require kernel support except
@@ -98,7 +98,7 @@ use
 It is recommended that untrusted file system images be mounted with
 .Nm
 instead of
-.Xr mount_ffs 8 .
+.Xr mount_nqmfs 8 .
 Corrupt file system images commonly cause the file system
 to crash the entire kernel, but with
 .Nm
@@ -111,25 +111,25 @@ via
 the flags
 .Fl o Ar rump
 and
-.Fl t Ar ffs
+.Fl t Ar nqmfs
 should be given.
 Similarly,
 .Nm
 is run instead of
-.Xr mount_ffs 8
+.Xr mount_nqmfs 8
 if
 .Dq rump
 is added to the options field of
 .Xr fstab 5 .
 .Pp
 Please see
-.Xr mount_ffs 8
+.Xr mount_nqmfs 8
 for a full description of the available command line options.
 .Sh SEE ALSO
 .Xr p2k 3 ,
 .Xr puffs 3 ,
 .Xr rump 3 ,
-.Xr mount_ffs 8
+.Xr mount_nqmfs 8
 .Sh HISTORY
 The
 .Nm
