@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.231.4.7 2009/10/28 09:03:42 bouyer Exp $
+# $NetBSD: GENERIC,v 1.231.4.8 2010/11/21 03:05:09 riz Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.231.4.7 $"
+#ident 		"GENERIC-$Revision: 1.231.4.8 $"
 
 maxusers	64		# estimated number of users
 
@@ -1012,6 +1012,10 @@ wsmouse* at btms? mux 0
 # Bluetooth Keyboard
 btkbd* at bthidev? reportid ?
 wskbd* at btkbd? console ? mux 1
+
+# Bluetooth Apple Magic Mouse
+btmagic* at bthub?
+wsmouse* at btmagic? mux 0
 
 # Bluetooth Audio support
 btsco* at bthub?

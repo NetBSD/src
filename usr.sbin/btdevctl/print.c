@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.9 2007/08/17 17:59:16 pavel Exp $	*/
+/*	$NetBSD: print.c,v 1.9.14.1 2010/11/21 03:05:06 riz Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: print.c,v 1.9 2007/08/17 17:59:16 pavel Exp $");
+__RCSID("$NetBSD: print.c,v 1.9.14.1 2010/11/21 03:05:06 riz Exp $");
 
 #include <sys/types.h>
 
@@ -86,6 +86,7 @@ void
 cfg_print(prop_dictionary_t dict)
 {
 	prop_object_t obj;
+	uint16_t v;
 
 	obj = prop_dictionary_get(dict, BTDEVladdr);
 	if (prop_object_type(obj) != PROP_TYPE_DATA) {
@@ -102,6 +103,12 @@ cfg_print(prop_dictionary_t dict)
 	obj = prop_dictionary_get(dict, BTDEVmode);
 	if (prop_object_type(obj) == PROP_TYPE_STRING)
 		printf("link mode: %s\n", prop_string_cstring_nocopy(obj));
+
+	if (prop_dictionary_get_uint16(dict, BTDEVvendor, &v))
+		printf("vendor id: 0x%04x\n", v);
+
+	if (prop_dictionary_get_uint16(dict, BTDEVproduct, &v))
+		printf("product id: 0x%04x\n", v);
 
 	obj = prop_dictionary_get(dict, BTDEVtype);
 	if (prop_object_type(obj) != PROP_TYPE_STRING) {

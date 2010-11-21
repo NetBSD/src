@@ -1,4 +1,4 @@
-#	$NetBSD: OPENBLOCKS266_OPT,v 1.9 2007/12/02 05:19:13 kiyohara Exp $
+#	$NetBSD: OPENBLOCKS266_OPT,v 1.9.28.1 2010/11/21 03:05:07 riz Exp $
 #
 
 include		"arch/evbppc/conf/OPENBLOCKS266"
@@ -315,6 +315,10 @@ wsmouse* at btms? mux 0
 # Bluetooth Keyboard
 btkbd*	at bthidev? reportid ?
 wskbd*	at btkbd? console ? mux 1
+
+# Bluetooth Apple Magic Mouse
+btmagic* at bthub?
+wsmouse* at btmagic? mux 0
 
 # Bluetooth Audio support
 btsco*	at bthub?

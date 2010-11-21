@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOM0,v 1.33.4.4 2010/02/15 18:04:11 sborrill Exp $
+# $NetBSD: XEN3_DOM0,v 1.33.4.5 2010/11/21 03:05:09 riz Exp $
 
 include 	"arch/amd64/conf/std.xen"
 
@@ -717,6 +717,10 @@ wsmouse* at btms? mux 0
 # Bluetooth Keyboard
 btkbd* at bthidev? reportid ?
 wskbd* at btkbd? console ? mux 1
+
+# Bluetooth Apple Magic Mouse
+btmagic* at bthub?
+wsmouse* at btmagic? mux 0
 
 # Bluetooth Audio support
 btsco* at bthub?

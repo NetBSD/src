@@ -1,4 +1,4 @@
-#	$NetBSD: JORNADA720,v 1.70 2008/07/31 07:41:01 simonb Exp $
+#	$NetBSD: JORNADA720,v 1.70.4.1 2010/11/21 03:05:10 riz Exp $
 #
 #	JORNADA -- Windows-CE based jornada 720
 #
@@ -7,7 +7,7 @@ include	"arch/hpcarm/conf/std.hpcarm"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.70 $"
+#ident 		"GENERIC-$Revision: 1.70.4.1 $"
 
 # estimated number of users
 maxusers	32
@@ -258,6 +258,10 @@ wsmouse* at btms? mux 0
 # Bluetooth Keyboard
 btkbd* at bthidev? reportid ?
 wskbd* at btkbd? console ? mux 1
+
+# Bluetooth Apple Magic Mouse
+btmagic* at bthub?
+wsmouse* at btmagic? mux 0
 
 # Bluetooth Audio support
 #btsco* at bthub?

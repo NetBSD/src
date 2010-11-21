@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.325.4.1 2009/09/16 04:55:41 snj Exp $
+# $NetBSD: GENERIC,v 1.325.4.2 2010/11/21 03:05:07 riz Exp $
 #
 # This machine description file is used to generate the default NetBSD
 # kernel.
@@ -19,7 +19,7 @@ include 	"arch/alpha/conf/std.alpha"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident		"GENERIC-$Revision: 1.325.4.1 $"
+ident		"GENERIC-$Revision: 1.325.4.2 $"
 
 maxusers 32
 
@@ -658,6 +658,10 @@ wsmouse* at btms? mux 0
 # Bluetooth Keyboard
 btkbd* at bthidev? reportid ?
 wskbd* at btkbd? console ? mux 1
+
+# Bluetooth Apple Magic Mouse
+btmagic* at bthub?
+wsmouse* at btmagic? mux 0
 
 # Bluetooth Audio support
 btsco* at bthub?

@@ -1,4 +1,4 @@
-# $NetBSD: MPCSA_GENERIC,v 1.5.4.1 2008/12/27 04:03:55 snj Exp $
+# $NetBSD: MPCSA_GENERIC,v 1.5.4.2 2010/11/21 03:05:06 riz Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include		"arch/evbarm/conf/std.mpcsa"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.5.4.1 $"
+#ident 		"GENERIC-$Revision: 1.5.4.2 $"
 
 maxusers	32		# estimated number of users
 
@@ -625,6 +625,10 @@ ucom*	at uvscom? portno ?
 # Bluetooth Keyboard
 #btkbd* at bthidev? reportid ?
 #wskbd* at btkbd? console ? mux 1
+
+# Bluetooth Apple Magic Mouse
+#btmagic* at bthub?
+#wsmouse* at btmagic? mux 0
 
 # Bluetooth Audio support
 #btsco* at bthub?

@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.51 2008/09/07 12:01:26 tron Exp $
+#	$NetBSD: GENERIC,v 1.51.4.1 2010/11/21 03:05:04 riz Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/iyonix/conf/std.iyonix"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.51 $"
+#ident 		"GENERIC-$Revision: 1.51.4.1 $"
 
 maxusers	32		# estimated number of users
 
@@ -739,6 +739,10 @@ midi*	at midibus?
 # Bluetooth Keyboard
 #btkbd* at bthidev? reportid ?
 #wskbd* at btkbd? console ? mux 1
+
+# Bluetooth Apple Magic Mouse
+#btmagic* at bthub?
+#wsmouse* at btmagic? mux 0
 
 # Bluetooth Audio support
 #btsco* at bthub?
