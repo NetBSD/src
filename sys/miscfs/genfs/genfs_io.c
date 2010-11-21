@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.36.2.61 2010/11/21 14:52:23 uebayasi Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.36.2.62 2010/11/21 15:00:12 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.36.2.61 2010/11/21 14:52:23 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.36.2.62 2010/11/21 15:00:12 uebayasi Exp $");
 
 #include "opt_xip.h"
 
@@ -672,7 +672,7 @@ genfs_getpages_io_read_bio_loop()
 			}
 		    } else {
 			for (i = 0; i < holepages; i++) {
-				pgs[ridx + pidx + i] = PGO_ZERO;
+				pgs[ridx + pidx + i] = PGO_HOLE;
 			}
 			UVMHIST_LOG(ubchist, "xip HOLE pgs %d .. %d",
 			    pidx, pidx + holepages - 1, 0, 0);
@@ -901,7 +901,7 @@ out:
 	for (i = ridx; i < ridx + npages; i++) {
 		struct vm_page *pg = pgs[i];
 
-	    if (pg != PGO_ZERO) {
+	    if (pg != PGO_HOLE) {
 		KASSERT(pg != NULL);
 		KASSERT((pg->flags & PG_RDONLY) != 0);
 		KASSERT((pg->flags & PG_BUSY) != 0);
@@ -920,7 +920,7 @@ out:
 		 * XIP hole pages are passed as a magic pointer
 		 * back to fault handlers.  Fault handlers are
 		 * respoinsible to check it and redirect the VA to
-		 * a single "zero page".
+		 * a single zero'ed "hole page".
 		 */
 	    }
 	}
