@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.2,v 1.1.2.11 2010/11/21 02:44:42 riz Exp $
+# $NetBSD: CHANGES-5.2,v 1.1.2.12 2010/11/21 03:06:55 riz Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -246,4 +246,46 @@ distrib/sets/lists/comp/md.amd64		patch
 
 	Fix amd64 setlists for certain non-default builds.
 	[dholland, ticket #1402]
+
+sys/arch/i386/i386/autoconf.c			1.94
+sys/arch/x86/conf/files.x86			1.49
+sys/arch/x86/x86/intr.c				1.60
+
+	Fix GENERIC/i386 compilation with 'options INTRDEBUG'.
+	[hubertf, ticket #1403]
+
+sys/external/bsd/drm/dist/bsd-core/radeon_drv.c	patch
+
+	Allow suspend with radeondrm.
+	[mrg, ticket #1406]
+
+distrib/sets/lists/man/mi			1.1210
+share/man/man4/btmagic.4			1.1
+share/man/man4/Makefile				1.517 via patch
+sys/arch/alpha/conf/GENERIC			1.337
+sys/arch/amd64/conf/GENERIC			1.279
+sys/arch/amd64/conf/XEN3_DOM0			1.54
+sys/arch/evbarm/conf/GUMSTIX			1.49
+sys/arch/evbarm/conf/MPCSA_GENERIC		1.16
+sys/arch/evbppc/conf/OPENBLOCKS266_OPT		1.14
+sys/arch/hpcarm/conf/JORNADA720			1.78
+sys/arch/hpcsh/conf/GENERIC			1.91
+sys/arch/i386/conf/ALL				1.258
+sys/arch/i386/conf/GENERIC			1.983
+sys/arch/i386/conf/XEN2_DOM0			patch
+sys/arch/iyonix/conf/GENERIC			1.60
+sys/arch/sparc64/conf/GENERIC			1.129
+sys/dev/bluetooth/btdev.h			1.9
+sys/dev/bluetooth/btmagic.c			1.1
+sys/dev/bluetooth/files.bluetooth		1.14
+sys/dev/usb/hid.c				1.29-30
+sys/dev/usb/hid.h				1.13
+sys/dev/usb/usbdevs				1.550
+sys/dev/usb/usbdevs.h				regen
+sys/dev/usb/usbdevs_data.h			regen
+usr.sbin/btdevctl/print.c			1.10
+usr.sbin/btdevctl/sdp.c				1.8 via patch
+
+	Add Apple Magic Mouse driver btmagic(4).
+	[plunky, ticket #1407]
 
