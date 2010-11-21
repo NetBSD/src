@@ -199,30 +199,33 @@ verification probes.
 This feature is available in Postfix 2.1 and later.
 </p>
 
-%PARAM address_verify_map 
+%PARAM address_verify_map see "postconf -d" output
 
 <p>
-Optional lookup table for persistent address verification status
+Lookup table for persistent address verification status
 storage.  The table is maintained by the verify(8) service, and
 is opened before the process releases privileges.
 </p>
 
 <p>
-By default, the information is kept in volatile memory, and is lost
-after "<b>postfix reload</b>" or "<b>postfix stop</b>".
+The lookup table is persistent by default (Postfix 2.7 and later).
+Specify an empty table name to keep the information in volatile
+memory which is lost after "<b>postfix reload</b>" or "<b>postfix
+stop</b>". This is the default with Postfix version 2.6 and earlier.
 </p>
 
 <p>
 Specify a location in a file system that will not fill up. If the
 database becomes corrupted, the world comes to an end. To recover
-delete the file and do "<b>postfix reload</b>".
+delete (NOT: truncate) the file and do "<b>postfix reload</b>".
 </p>
- 
-<p> As of version 2.5, Postfix no longer uses root privileges when
-opening this file. The file should now be stored under the Postfix-owned
-data_directory. As a migration aid, an attempt to open the file
-under a non-Postfix directory is redirected to the Postfix-owned
-data_directory, and a warning is logged. </p>
+
+<p> Postfix daemon processes do not use root privileges when opening
+this file (Postfix 2.5 and later).  The file must therefore be
+stored under a Postfix-owned directory such as the data_directory.
+As a migration aid, an attempt to open the file under a non-Postfix
+directory is redirected to the Postfix-owned data_directory, and a
+warning is logged. </p>
 
 <p>
 Examples:
@@ -280,27 +283,50 @@ Time units: s (seconds), m (minutes), h (hours), d (days), w (weeks).
 This feature is available in Postfix 2.1 and later.
 </p>
 
-%PARAM address_verify_poll_count 3
+%PARAM address_verify_cache_cleanup_interval 12h
+
+<p> The amount of time between verify(8) address verification
+database cleanup runs. This feature requires that the database
+supports the "delete" and "sequence" operators.  Specify a zero
+interval to disable database cleanup. </p>
+
+<p> After each database cleanup run, the verify(8) daemon logs the
+number of entries that were retained and dropped. A cleanup run is
+logged as "partial" when the daemon terminates early after "<b>postfix
+reload</b>", "<b>postfix stop</b>", or no requests for $max_idle
+seconds. </p>
+
+<p> Time units: s (seconds), m (minutes), h (hours), d (days), w
+(weeks). </p>
+
+<p> This feature is available in Postfix 2.7. </p>
+
+%PARAM address_verify_poll_count ${stress?1}${stress:3}
 
 <p>
 How many times to query the verify(8) service for the completion
 of an address verification request in progress.
 </p>
 
-<p>
-The default poll count is 3.
-</p>
+<p> By default, the Postfix SMTP server polls the verify(8) service
+up to three times under non-overload conditions, and only once when
+under overload.  With Postfix version 2.6 and earlier, the SMTP
+server always polls the verify(8) service up to three times by
+default.  </p>
 
 <p>
 Specify 1 to implement a crude form of greylisting, that is, always
-defer the first delivery request for a never seen before address.
+defer the first delivery request for a new address.
 </p>
 
 <p>
-Example:
+Examples:
 </p>
 
 <pre>
+# Postfix &le; 2.6 default
+address_verify_poll_count = 3
+# Poor man's greylisting
 address_verify_poll_count = 1
 </pre>
 
@@ -726,11 +752,11 @@ This feature is available in Postfix 2.1 and later.
 %PARAM bounce_size_limit 50000
 
 <p> The maximal amount of original message text that is sent in a
-non-delivery notification. Specify a byte count. With Postfix 2.4
-and later, a message is returned as either message/rfc822 (the
-complete original) or as text/rfc822-headers (the headers only).
-With earlier Postfix versions, a message is always returned as
-message/rfc822 and is truncated when it exceeds the size limit.
+non-delivery notification. Specify a byte count.  A message is
+returned as either message/rfc822 (the complete original) or as
+text/rfc822-headers (the headers only).  With Postfix version 2.4
+and earlier, a message is always returned as message/rfc822 and is
+truncated when it exceeds the size limit.
 </p>
 
 <p> Notes: </p>
@@ -1231,18 +1257,22 @@ name of the message delivery transport.
 The default mail delivery transport and next-hop destination for
 destinations that do not match $mydestination, $inet_interfaces,
 $proxy_interfaces, $virtual_alias_domains, $virtual_mailbox_domains,
-or $relay_domains.  In order of decreasing precedence, the nexthop
-destination is taken from $default_transport,
+or $relay_domains.  This information can be overruled with the
+sender_dependent_default_transport_maps parameter and with the
+transport(5) table. </p>
+
+<p>
+In order of decreasing precedence, the nexthop destination is taken
+from $sender_dependent_default_transport_maps, $default_transport,
 $sender_dependent_relayhost_maps, $relayhost, or from the recipient
-domain. This information can be overruled with the transport(5)
-table.
+domain. 
 </p>
 
 <p>
 Specify a string of the form <i>transport:nexthop</i>, where <i>transport</i>
 is the name of a mail delivery transport defined in master.cf.
-The <i>:nexthop</i> part is optional.  For more details see the
-transport(5) manual page.
+The <i>:nexthop</i> destination is optional; its syntax is documented
+in the manual page of the corresponding delivery agent.
 </p>
 
 <p>
@@ -2269,8 +2299,8 @@ which is just the name of a service that is defined the master.cf file.
 <p>
 Specify a string of the form <i>transport:nexthop</i>, where <i>transport</i>
 is the name of a mail delivery transport defined in master.cf.
-The <i>:nexthop</i> part is optional.  For more details see the
-transport(5) manual page.
+The <i>:nexthop</i> destination is optional; its syntax is documented 
+in the manual page of the corresponding delivery agent.
 </p>
 
 <p>
@@ -3195,8 +3225,9 @@ server to decide if it will accept any mail at all.
 </p>
 
 <p>
-By default, the Postfix version 2.1 SMTP server rejects MAIL FROM commands
-when the amount of free space is less than 1.5*$message_size_limit.
+By default, the Postfix SMTP server rejects MAIL FROM commands when
+the amount of free space is less than 1.5*$message_size_limit
+(Postfix version 2.1 and later).
 To specify a higher minimum free space limit, specify a queue_minfree
 value that is at least 1.5*$message_size_limit.
 </p>
@@ -3481,7 +3512,8 @@ This feature is available in Postfix 2.0 and later.
 <p>
 The next-hop destination of non-local mail; overrides non-local
 domains in recipient addresses. This information is overruled with
-relay_transport, default_transport, sender_dependent_relayhost_maps
+relay_transport, sender_dependent_default_transport_maps,
+default_transport, sender_dependent_relayhost_maps
 and with the transport(5) table.
 </p>
 
@@ -3539,10 +3571,10 @@ relocated_maps = hash:/etc/postfix/relocated
 %PARAM require_home_directory no
 
 <p>
-Whether or not a local(8) recipient's home directory must exist
+Require that a local(8) recipient's home directory exists
 before mail delivery is attempted. By default this test is disabled.
 It can be useful for environments that import home directories to
-the mail server (NOT RECOMMENDED).
+the mail server (IMPORTING HOME DIRECTORIES IS NOT RECOMMENDED).
 </p>
 
 %PARAM resolve_dequoted_address yes
@@ -4046,8 +4078,9 @@ The default time unit is s (seconds).
 %PARAM smtp_host_lookup dns
 
 <p>
-What mechanisms when the Postfix SMTP client uses to look up a host's IP
-address.  This parameter is ignored when DNS lookups are disabled.
+What mechanisms the Postfix SMTP client uses to look up a host's IP
+address.  This parameter is ignored when DNS lookups are disabled
+(see: disable_dns_lookups).
 </p>
 
 <p>
@@ -4654,7 +4687,7 @@ with the anvil_rate_time_unit configuration parameter.
 </p>
 
 <p>
-By default, a client can make as many recipient addresses per time
+By default, a client can send as many recipient addresses per time
 unit as Postfix can accept.
 </p>
 
@@ -4759,6 +4792,22 @@ Postfix version 2.5).  This feature is available with Postfix version
 parent domains, client IP address, or networks obtained by stripping
 least significant octets. See the access(5) manual page for details. </dd>
 
+<dt><b><a name="check_client_mx_access">check_client_mx_access</a> <i><a href="DATABASE_README.html">type:table</a></i></b></dt>
+
+<dd>Search the specified access(5) database for the MX hosts for the
+client hostname, and execute the corresponding action.  Note: a result
+of "OK" is not allowed for safety reasons. Instead, use DUNNO in order
+to exclude specific hosts from blacklists.  This feature is available
+in Postfix 2.7 and later.  </dd>
+
+<dt><b><a name="check_client_ns_access">check_client_ns_access</a> <i><a href="DATABASE_README.html">type:table</a></i></b></dt>
+
+<dd>Search the specified access(5) database for the DNS servers for
+the client hostname, and execute the corresponding action.  Note: a
+result of "OK" is not allowed for safety reasons. Instead, use DUNNO
+in order to exclude specific hosts from blacklists.  This feature is
+available in Postfix 2.7 and later.  </dd>
+
 <dt><b><a name="check_reverse_client_hostname_access">check_reverse_client_hostname_access</a> <i><a href="DATABASE_README.html">type:table</a></i></b></dt>
 
 <dd>Search the specified access database for the unverified reverse
@@ -4768,6 +4817,22 @@ manual page for details.  Note: a result of "OK" is not allowed for
 safety reasons.  Instead, use DUNNO in order to exclude specific
 hosts from blacklists.  This feature is available in Postfix 2.6
 and later.</dd>
+
+<dt><b><a name="check_reverse_client_hostname_mx_access">check_reverse_client_hostname_mx_access</a> <i><a href="DATABASE_README.html">type:table</a></i></b></dt>
+
+<dd>Search the specified access(5) database for the MX hosts for the
+unverified reverse client hostname, and execute the corresponding
+action.  Note: a result of "OK" is not allowed for safety reasons.
+Instead, use DUNNO in order to exclude specific hosts from blacklists.
+This feature is available in Postfix 2.7 and later.  </dd>
+
+<dt><b><a name="check_reverse_client_hostname_ns_access">check_reverse_client_hostname_ns_access</a> <i><a href="DATABASE_README.html">type:table</a></i></b></dt>
+
+<dd>Search the specified access(5) database for the DNS servers for
+the unverified reverse client hostname, and execute the corresponding
+action.  Note: a result of "OK" is not allowed for safety reasons.
+Instead, use DUNNO in order to exclude specific hosts from blacklists.
+This feature is available in Postfix 2.7 and later.  </dd>
 
 <dt><b><a name="permit_inet_interfaces">permit_inet_interfaces</a></b></dt>
 
@@ -4939,12 +5004,12 @@ of time where it is not allowed, or when the client sends SMTP
 commands ahead of time without knowing that Postfix actually supports
 ESMTP command pipelining. This stops mail from bulk mail software
 that improperly uses ESMTP command pipelining in order to speed up
-deliveries.
+deliveries. 
 <br> With Postfix 2.6 and later, the SMTP server sets a per-session
 flag whenever it detects illegal pipelining, including pipelined
 EHLO or HELO commands. The reject_unauth_pipelining feature simply
 tests whether the flag was set at any point in time during the
-session.   
+session.
 <br> With older Postfix versions, reject_unauth_pipelining checks
 the current status of the input read queue, and its usage is not
 recommended in contexts other than smtpd_data_restrictions.  </dd>
@@ -5177,8 +5242,9 @@ This feature is available in Postfix 2.2 and later.
 %PARAM smtpd_helo_required no
 
 <p>
-Require that a remote SMTP client introduces itself at the beginning
-of an SMTP session with the HELO or EHLO command.
+Require that a remote SMTP client introduces itself with the HELO
+or EHLO command before sending the MAIL command or other commands
+that require EHLO negotiation.
 </p>
 
 <p>
@@ -5327,6 +5393,35 @@ By default, the Postfix hostname is used.
 
 <p>
 This feature is available in Postfix 2.1 and later.
+</p>
+
+%PARAM smtpd_proxy_options 
+
+<p>
+List of options that control how the Postfix SMTP server
+communicates with a before-queue content filter. Specify zero or
+more of the following, separated by comma or whitespace.  </p>
+
+<dl>
+
+<dt><b>speed_adjust</b></dt>
+
+<dd> <p> Do not connect to a before-queue content filter until an entire
+message has been received. This reduces the number of simultaneous
+before-queue content filter processes. </p>
+
+<p> NOTE 1: A filter must not <i>selectively</i> reject recipients
+of a multi-recipient message.  Rejecting all recipients is OK, as
+is accepting all recipients. </p>
+
+<p> NOTE 2: This feature increases the minimum amount of free queue
+space by $message_size_limit. The extra space is needed to save the
+message to a temporary file. </p> </dd>
+
+</dl>
+
+<p>
+This feature is available in Postfix 2.7 and later.
 </p>
 
 %CLASS smtpd-proxy SMTP Proxy filter
@@ -6768,17 +6863,30 @@ allowed set are replaced by underscores.
 
 %PARAM content_filter 
 
-<p>
-The name of a mail delivery transport that filters mail after
-it is queued.
-</p>
+<p> After the message is queued, send the entire message to the
+specified <i>transport:destination</i>. The <i>transport</i> name
+specifies the first field of a mail delivery agent definition in
+master.cf; the syntax of the next-hop <i>destination</i> is described
+in the manual page of the corresponding delivery agent.  More
+information about external content filters is in the Postfix
+FILTER_README file.  </p>
 
-<p>
-This parameter uses the same syntax as the right-hand side of a
-Postfix transport(5) table. This setting has a lower precedence
-than a content filter that is specified with an access(5) table or
-in a header_checks(5) or body_checks(5) table.
-</p>
+<p> Notes: </p>
+
+<ul>
+
+<li> <p> This setting has lower precedence than a FILTER action
+that is specified in an access(5), header_checks(5) or body_checks(5)
+table. </p>
+
+<li> <p> The meaning of an empty next-hop filter <i>destination</i>
+is version dependent.  Postfix 2.7 and later will use the recipient
+domain; earlier versions will use $myhostname.  Specify
+"default_filter_nexthop = $myhostname" for compatibility with Postfix
+2.6 or earlier, or specify a content_filter value with an explicit
+next-hop <i>destination</i>.  </p>
+
+</ul>
 
 %PARAM default_delivery_slot_discount 50
 
@@ -7503,8 +7611,8 @@ the transport(5) table.
 <p>
 Specify a string of the form <i>transport:nexthop</i>, where <i>transport</i>
 is the name of a mail delivery transport defined in master.cf.
-The <i>:nexthop</i> part is optional.  For more details see the
-transport(5) manual page.
+The <i>:nexthop</i> destination is optional; its syntax is documented 
+in the manual page of the corresponding delivery agent.
 </p>
 
 <p>
@@ -7532,6 +7640,8 @@ This feature is available in Postfix 2.0 and later.
 
 <p>
 The name of the directory with example Postfix configuration files.
+Starting with Postfix 2.1, these files have been replaced with the
+postconf(5) manual page.
 </p>
 
 %PARAM sender_based_routing no
@@ -7759,6 +7869,9 @@ access restriction is specified. This prevents the Postfix queue
 from filling up with undeliverable MAILER-DAEMON messages.
 </p>
 
+<p> An address is always considered "known" when it matches a
+virtual(5) alias or a canonical(5) mapping.
+
 <ul>
 
 <li> The recipient domain matches $mydestination, $inet_interfaces
@@ -7788,6 +7901,9 @@ This feature is available in Postfix 2.1 and later.
 sender addresses, even when no explicit reject_unlisted_sender
 access restriction is specified. This can slow down an explosion
 of forged mail from worms or viruses.  </p>
+
+<p> An address is always considered "known" when it matches a
+virtual(5) alias or a canonical(5) mapping.
 
 <ul>
 
@@ -8056,9 +8172,8 @@ value is backwards compatible with Postfix version 1.1.
 %PARAM virtual_mailbox_limit 51200000
 
 <p>
-The maximal size in bytes of an individual mailbox or maildir file,
-or zero (no limit).
-</p>
+The maximal size in bytes of an individual virtual(8) mailbox or
+maildir file, or zero (no limit).  </p>
 
 %PARAM virtual_mailbox_lock see "postconf -d" output
 
@@ -8145,8 +8260,8 @@ This information can be overruled with the transport(5) table.
 <p>
 Specify a string of the form <i>transport:nexthop</i>, where <i>transport</i>
 is the name of a mail delivery transport defined in master.cf.
-The <i>:nexthop</i> part is optional.  For more details see the
-transport(5) manual page.
+The <i>:nexthop</i> destination is optional; its syntax is documented 
+in the manual page of the corresponding delivery agent.
 </p>
 
 <p>
@@ -8562,12 +8677,12 @@ inside the chroot jail. </p>
 
 <p> By default (see smtpd_tls_ask_ccert), client certificates are
 not requested, and smtpd_tls_CApath should remain empty. In contrast
-to smtp_tls_CAfile, DNs of certificate authorities installed
+to smtpd_tls_CAfile, DNs of certificate authorities installed
 in $smtpd_tls_CApath are not included in the client certificate
 request message. MUAs with multiple client certificates may use the
 list of preferred certificate authorities to select the correct
 client certificate.  You may want to put your "preferred" CA or
-CAs in $smtp_tls_CAfile, and install the remaining trusted CAs in
+CAs in $smtpd_tls_CAfile, and install the remaining trusted CAs in
 $smtpd_tls_CApath. </p>
 
 <p> Example: </p>
@@ -9403,7 +9518,7 @@ precision.  </p>
 
 <li> b = time from last active queue entry to connection setup
 
-<li> c = time in connection setup, including DNS, EHLO and TLS
+<li> c = time in connection setup, including DNS, EHLO and STARTTLS
 
 <li> d = time in message transmission
 
@@ -9433,7 +9548,8 @@ setting. The tables are searched by the envelope sender address and
 @domain. A lookup result of DUNNO terminates the search without
 overriding the global relayhost parameter setting (Postfix 2.6 and
 later). This information is overruled with relay_transport,
-default_transport and with the transport(5) table. </p>
+sender_dependent_default_transport_maps, default_transport and with
+the transport(5) table. </p>
 
 <p> For safety reasons, this feature does not allow $number
 substitutions in regular expression maps. </p>
@@ -10408,7 +10524,7 @@ smtp_tls_security_level = none
 # Opportunistic TLS.
 smtp_tls_security_level = may
 # Postfix &ge; 2.6:
-# Do not tweak opportunistic ciphers unless it is essential
+# Do not tweak opportunistic ciphers or protocol unless it is essential
 # to do so (if a security vulnerability is found in the SSL library that
 # can be mitigated by disabling a particular protocol or raising the
 # cipher grade from "export" to "low" or "medium").
@@ -10655,65 +10771,46 @@ meanings.  </p>
 
 %PARAM smtpd_tls_mandatory_ciphers medium
 
-<p> The minimum TLS cipher grade that the Postfix SMTP server
-will use with mandatory TLS encryption. Cipher types listed in
-smtpd_tls_mandatory_exclude_ciphers or smtpd_tls_exclude_ciphers are
-excluded from the base definition of the selected cipher grade. See
-smtpd_tls_ciphers for cipher controls that apply to opportunistic
-TLS. </p>
+<p> The minimum TLS cipher grade that the Postfix SMTP server will
+use with mandatory TLS encryption. The default grade ("medium") is
+sufficiently strong that any benefit from globally restricting TLS
+sessions to a more stringent grade is likely negligible, especially
+given the fact that many implementations still do not offer any stronger
+("high" grade) ciphers, while those that do, will always use "high"
+grade ciphers. So insisting on "high" grade ciphers is generally
+counter-productive. Allowing "export" or "low" ciphers is typically
+not a good idea, as systems limited to just these are limited to
+obsolete browsers. No known SMTP clients fail to support at least 
+one "medium" or "high" grade cipher. </p> 
 
 <p> The following cipher grades are supported: </p>
 
 <dl>
 <dt><b>export</b></dt>
-<dd> Enable the mainstream "EXPORT" grade or better OpenSSL ciphers.
+<dd> Enable "EXPORT" grade or stronger OpenSSL ciphers.
 This is the most appropriate setting for public MX hosts, and is always
 used with opportunistic TLS encryption. The underlying cipherlist
 is specified via the tls_export_cipherlist configuration parameter,
-which you are strongly encouraged to not change. The default value
-of tls_export_cipherlist includes anonymous ciphers, but these are
-automatically filtered out if the server is configured to ask for
-client certificates. If you must always exclude anonymous ciphers,
-set "smtpd_tls_exclude_ciphers = aNULL". To exclude anonymous ciphers
-only when TLS is enforced, set "smtpd_tls_mandatory_exclude_ciphers =
-aNULL". </dd>
+which you are strongly encouraged to not change. </dd>
 
 <dt><b>low</b></dt>
-<dd> Enable the mainstream "LOW" grade or better OpenSSL ciphers. The
+<dd> Enable "LOW" grade or stronger OpenSSL ciphers. The
 underlying cipherlist is specified via the tls_low_cipherlist
 configuration parameter, which you are strongly encouraged to
-not change. The default value of tls_low_cipherlist includes
-anonymous ciphers, but these are automatically filtered out if the
-server is configured to ask for client certificates. If you must
-always exclude anonymous ciphers, set "smtpd_tls_exclude_ciphers =
-aNULL". To exclude anonymous ciphers only when TLS is enforced, set
-"smtpd_tls_mandatory_exclude_ciphers = aNULL". </dd>
+not change. </dd>
 
 <dt><b>medium</b></dt>
-<dd> Enable the mainstream "MEDIUM" grade or better OpenSSL ciphers. These
-are essentially the 128-bit or stronger ciphers. This is the default
-minimum strength for mandatory TLS encryption. MSAs that enforce
-TLS and have clients that do not support any "MEDIUM" or "HIGH"
-grade ciphers, may need to configure a weaker ("low" or "export")
-minimum cipher grade. The underlying cipherlist is specified via the
-tls_medium_cipherlist configuration parameter, which you are strongly
-encouraged to not change. The default value of tls_medium_cipherlist
-includes anonymous ciphers, but these are automatically filtered out if
-the server is configured to ask for client certificates. If you must
-always exclude anonymous ciphers, set "smtpd_tls_exclude_ciphers =
-aNULL". To exclude anonymous ciphers only when TLS is enforced, set
-"smtpd_tls_mandatory_exclude_ciphers = aNULL". </dd>
+<dd> Enable "MEDIUM" grade or stronger OpenSSL ciphers. These use 128-bit
+or longer symmetric bulk-encryption keys. This is the default minimum
+strength for mandatory TLS encryption. The underlying cipherlist is
+specified via the tls_medium_cipherlist configuration parameter, which
+you are strongly encouraged to not change. </dd>
 
 <dt><b>high</b></dt>
-<dd> Enable only the mainstream "HIGH" grade OpenSSL ciphers. The
+<dd> Enable only "HIGH" grade OpenSSL ciphers. The
 underlying cipherlist is specified via the tls_high_cipherlist
 configuration parameter, which you are strongly encouraged to
-not change. The default value of tls_high_cipherlist includes
-anonymous ciphers, but these are automatically filtered out if the
-server is configured to ask for client certificates. If you must
-always exclude anonymous ciphers, set "smtpd_tls_exclude_ciphers =
-aNULL". To exclude anonymous ciphers only when TLS is enforced, set
-"smtpd_tls_mandatory_exclude_ciphers = aNULL". </dd>
+not change. </dd>
 
 <dt><b>null</b></dt>
 <dd> Enable only the "NULL" OpenSSL ciphers, these provide authentication
@@ -10721,11 +10818,24 @@ without encryption.  This setting is only appropriate in the rare
 case that all clients are prepared to use NULL ciphers (not normally
 enabled in TLS clients). The underlying cipherlist is specified via the
 tls_null_cipherlist configuration parameter, which you are strongly
-encouraged to not change. The default value of tls_null_cipherlist
-excludes anonymous ciphers (OpenSSL 0.9.8 has NULL ciphers that offer
-data integrity without encryption or authentication). </dd>
+encouraged to not change. </dd>
 
 </dl>
+
+<p> Cipher types listed in
+smtpd_tls_mandatory_exclude_ciphers or smtpd_tls_exclude_ciphers are
+excluded from the base definition of the selected cipher grade. See
+smtpd_tls_ciphers for cipher controls that apply to opportunistic
+TLS. </p>
+
+<p> The underlying cipherlists for grades other than "null" include
+anonymous ciphers, but these are automatically filtered out if the
+server is configured to ask for client certificates.  You are very
+unlikely to need to take any steps to exclude anonymous ciphers, they
+are excluded automatically as required.  If you must exclude anonymous
+ciphers even when Postfix does not need or use peer certificates, set
+"smtpd_tls_exclude_ciphers = aNULL". To exclude anonymous ciphers only
+when TLS is enforced, set "smtpd_tls_mandatory_exclude_ciphers = aNULL". </p>
 
 <p> This feature is available in Postfix 2.3 and later. </p>
 
@@ -10775,7 +10885,7 @@ works in addition to the exclusions listed with smtpd_tls_exclude_ciphers
 use with
 mandatory TLS encryption.  The default value "medium" is suitable
 for most destinations with which you may want to enforce TLS, and
-is beyond the reach of today's crypt-analytic methods. See
+is beyond the reach of today's cryptanalytic methods. See
 smtp_tls_policy_maps for information on how to configure ciphers
 on a per-destination basis. </p>
 
@@ -10783,47 +10893,32 @@ on a per-destination basis. </p>
 
 <dl>
 <dt><b>export</b></dt>
-<dd> Enable the mainstream "EXPORT" grade or better OpenSSL
-ciphers.  This is always used for opportunistic encryption. It is
+<dd> Enable "EXPORT" grade or better OpenSSL
+ciphers.  This is the default for opportunistic encryption. It is
 not recommended for mandatory encryption unless you must enforce TLS
 with "crippled" peers. The underlying cipherlist is specified via the
 tls_export_cipherlist configuration parameter, which you are strongly
-encouraged to not change. The default value of tls_export_cipherlist
-includes anonymous ciphers, but these are automatically filtered out if
-the client is configured to verify server certificates. If you must 
-exclude anonymous ciphers also at the "encrypt" security level, set
-"smtp_tls_mandatory_exclude_ciphers = aNULL". </dd>
+encouraged to not change. </dd>
 
 <dt><b>low</b></dt>
-<dd> Enable the mainstream "LOW" grade or better OpenSSL ciphers.  This
+<dd> Enable "LOW" grade or better OpenSSL ciphers.  This
 setting is only appropriate for internal mail servers.  The underlying
 cipherlist is specified via the tls_low_cipherlist configuration
-parameter, which you are strongly encouraged to not change. The default
-value of tls_low_cipherlist includes anonymous ciphers, but these are
-automatically filtered out if the client is configured to verify server
-certificates. If you must exclude anonymous ciphers also at the "encrypt"
-security level, set "smtp_tls_mandatory_exclude_ciphers = aNULL". </dd>
+parameter, which you are strongly encouraged to not change. </dd>
 
 <dt><b>medium</b></dt>
-<dd> Enable the mainstream "MEDIUM" grade or better OpenSSL ciphers.
+<dd> Enable "MEDIUM" grade or better OpenSSL ciphers.
 The underlying cipherlist is specified via the tls_medium_cipherlist
 configuration parameter, which you are strongly encouraged to not change.
-The default value of tls_medium_cipherlist includes anonymous ciphers,
-but these are automatically filtered out if the client is configured to
-verify server certificates. If you must exclude anonymous ciphers also
-at the "encrypt" security level, set "smtp_tls_mandatory_exclude_ciphers
-= aNULL". </dd>
+</dd>
 
 <dt><b>high</b></dt>
-<dd> Enable only the mainstream "HIGH" grade OpenSSL ciphers.  This
-setting is appropriate when all mandatory TLS destinations support
-some of "HIGH" grade ciphers, this is not uncommon. The underlying
-cipherlist is specified via the tls_high_cipherlist configuration
-parameter, which you are strongly encouraged to not change. The default
-value of tls_high_cipherlist includes anonymous ciphers, but these are
-automatically filtered out if the client is configured to verify server
-certificates. If you must exclude anonymous ciphers also at the "encrypt"
-security level, set "smtp_tls_mandatory_exclude_ciphers = aNULL". </dd>
+<dd> Enable only "HIGH" grade OpenSSL ciphers.  This setting may
+be appropriate when all mandatory TLS destinations (e.g. when all
+mail is routed to a suitably capable relayhost) support at least one
+"HIGH" grade cipher. The underlying cipherlist is specified via the
+tls_high_cipherlist configuration parameter, which you are strongly
+encouraged to not change. </dd>
 
 <dt><b>null</b></dt>
 <dd> Enable only the "NULL" OpenSSL ciphers, these provide authentication
@@ -10833,11 +10928,19 @@ in TLS servers). A plausible use-case is an LMTP server listening on a
 UNIX-domain socket that is configured to support "NULL" ciphers. The
 underlying cipherlist is specified via the tls_null_cipherlist
 configuration parameter, which you are strongly encouraged to not
-change. The default value of tls_null_cipherlist excludes anonymous
-ciphers (OpenSSL 0.9.8 has NULL ciphers that offer data integrity without
-encryption or authentication). </dd>
+change. </dd>
 
 </dl>
+
+<p> The underlying cipherlists for grades other than "null" include
+anonymous ciphers, but these are automatically filtered out if the
+Postfix SMTP client is configured to verify server certificates.
+You are very unlikely to need to take any steps to exclude anonymous
+ciphers, they are excluded automatically as necessary.  If you must
+exclude anonymous ciphers at the "may" or "encrypt" security levels,
+when the Postfix SMTP client does not need or use peer certificates, set
+"smtp_tls_exclude_ciphers = aNULL". To exclude anonymous ciphers only when
+TLS is enforced, set "smtp_tls_mandatory_exclude_ciphers = aNULL". </p>
 
 <p> This feature is available in Postfix 2.3 and later. </p>
 
@@ -10889,7 +10992,11 @@ attribute. See smtp_tls_policy_maps for notes and examples. </p>
 <p> The OpenSSL cipherlist for "HIGH" grade ciphers. This defines
 the meaning of the "high" setting in smtpd_tls_mandatory_ciphers,
 smtp_tls_mandatory_ciphers and lmtp_tls_mandatory_ciphers. You are
-strongly encouraged to not change this setting. </p>
+strongly encouraged to not change this setting. With OpenSSL 1.0.0 and
+later the cipherlist may start with an "aNULL:" prefix, which restores
+the 0.9.8-compatible ordering of the aNULL ciphers to the top of the
+list when they are enabled. This prefix is not needed with previous
+OpenSSL releases. </p>
 
 <p> This feature is available in Postfix 2.3 and later. </p>
 
@@ -10901,7 +11008,10 @@ smtp_tls_mandatory_ciphers and lmtp_tls_mandatory_ciphers. This is
 the default cipherlist for mandatory TLS encryption in the TLS
 client (with anonymous ciphers disabled when verifying server
 certificates). You are strongly encouraged to not change this
-setting. </p>
+setting.  With OpenSSL 1.0.0 and later the cipherlist may start with an
+"aNULL:" prefix, which restores the 0.9.8-compatible ordering of the
+aNULL ciphers to the top of the list when they are enabled. This prefix
+is not needed with previous OpenSSL releases. </p>
 
 <p> This feature is available in Postfix 2.3 and later. </p>
 
@@ -10910,7 +11020,11 @@ setting. </p>
 <p> The OpenSSL cipherlist for "LOW" or higher grade ciphers. This defines
 the meaning of the "low" setting in smtpd_tls_mandatory_ciphers,
 smtp_tls_mandatory_ciphers and lmtp_tls_mandatory_ciphers. You are
-strongly encouraged to not change this setting. </p>
+strongly encouraged to not change this setting.  With OpenSSL 1.0.0 and
+later the cipherlist may start with an "aNULL:" prefix, which restores
+the 0.9.8-compatible ordering of the aNULL ciphers to the top of the
+list when they are enabled. This prefix is not needed with previous
+OpenSSL releases. </p>
 
 <p> This feature is available in Postfix 2.3 and later. </p>
 
@@ -10921,7 +11035,11 @@ defines the meaning of the "export" setting in smtpd_tls_mandatory_ciphers,
 smtp_tls_mandatory_ciphers and lmtp_tls_mandatory_ciphers. This is
 the cipherlist for the opportunistic ("may") TLS client security
 level and is the default cipherlist for the SMTP server. You are
-strongly encouraged to not change this setting. </p>
+strongly encouraged to not change this setting. With OpenSSL 1.0.0 and
+later the cipherlist may start with an "aNULL:" prefix, which restores
+the 0.9.8-compatible ordering of the aNULL ciphers to the top of the
+list when they are enabled. This prefix is not needed with previous
+OpenSSL releases. </p>
 
 <p> This feature is available in Postfix 2.3 and later. </p>
 
@@ -11447,7 +11565,7 @@ under the SECG name "secp256r1", but OpenSSL does not recognize the
 latter name. </p>
 
 <p> This feature is available in Postfix 2.6 and later, when it is
-compiled and linked with OpenSSL 0.9.9 or later. </p>
+compiled and linked with OpenSSL 1.0.0 or later. </p>
 
 %PARAM tls_eecdh_ultra_curve secp384r1
 
@@ -11466,7 +11584,7 @@ of RFC 4492. You should not generally change this setting. </p>
 classified as TOP SECRET. </p>
 
 <p> This feature is available in Postfix 2.6 and later, when it is
-compiled and linked with OpenSSL 0.9.9 or later. </p>
+compiled and linked with OpenSSL 1.0.0 or later. </p>
 
 %PARAM smtpd_tls_eecdh_grade see "postconf -d" output
 
@@ -11496,7 +11614,7 @@ users. </dd>
 </dl>
 
 <p> This feature is available in Postfix 2.6 and later, when it is
-compiled and linked with OpenSSL 0.9.9 or later. </p>
+compiled and linked with OpenSSL 1.0.0 or later. </p>
 
 %PARAM smtpd_tls_eccert_file
 
@@ -11512,7 +11630,7 @@ smtpd_tls_eccert_file = /etc/postfix/ecdsa-scert.pem
 </pre>
 
 <p> This feature is available in Postfix 2.6 and later, when Postfix is
-compiled and linked with OpenSSL 0.9.9 or later. </p>
+compiled and linked with OpenSSL 1.0.0 or later. </p>
 
 %PARAM smtpd_tls_eckey_file $smtpd_tls_eccert_file
 
@@ -11526,7 +11644,7 @@ access to the system superuser account ("root"), and no access
 to anyone else. </p>
 
 <p> This feature is available in Postfix 2.6 and later, when Postfix is
-compiled and linked with OpenSSL 0.9.9 or later. </p>
+compiled and linked with OpenSSL 1.0.0 or later. </p>
 
 %PARAM smtp_tls_eccert_file
 
@@ -11543,7 +11661,7 @@ smtp_tls_eccert_file = /etc/postfix/ecdsa-ccert.pem
 </pre>
 
 <p> This feature is available in Postfix 2.6 and later, when Postfix is
-compiled and linked with OpenSSL 0.9.9 or later. </p>
+compiled and linked with OpenSSL 1.0.0 or later. </p>
 
 %PARAM smtp_tls_eckey_file $smtp_tls_eccert_file
 
@@ -11557,7 +11675,7 @@ access to the system superuser account ("root"), and no access
 to anyone else. </p>
 
 <p> This feature is available in Postfix 2.6 and later, when Postfix is
-compiled and linked with OpenSSL 0.9.9 or later. </p>
+compiled and linked with OpenSSL 1.0.0 or later. </p>
 
 %PARAM lmtp_tls_eccert_file
 
@@ -11565,7 +11683,7 @@ compiled and linked with OpenSSL 0.9.9 or later. </p>
 parameter.  See there for details. </p>
 
 <p> This feature is available in Postfix 2.6 and later, when Postfix is
-compiled and linked with OpenSSL 0.9.9 or later. </p>
+compiled and linked with OpenSSL 1.0.0 or later. </p>
 
 %PARAM lmtp_tls_eckey_file
 
@@ -11573,7 +11691,7 @@ compiled and linked with OpenSSL 0.9.9 or later. </p>
 parameter.  See there for details. </p>
 
 <p> This feature is available in Postfix 2.6 and later, when Postfix is
-compiled and linked with OpenSSL 0.9.9 or later. </p>
+compiled and linked with OpenSSL 1.0.0 or later. </p>
 
 %PARAM smtp_header_checks
 
@@ -11874,7 +11992,8 @@ unit). </p>
 (weeks). The default time unit is s (seconds). </p>
 
 <p> NOTE: the delay is enforced by the queue manager. The delay
-timer state does not survive "postfix reload" or "postfix stop".
+timer state does not survive "<b>postfix reload</b>" or "<b>postfix
+stop</b>".
 </p>
 
 <p> Use <i>transport</i>_destination_rate_delay to specify a
@@ -12273,3 +12392,233 @@ when not present.  Postfix 2.6 and later add these headers only
 when clients match the local_header_rewrite_clients parameter
 setting.  Earlier Postfix versions always add these headers; this
 may break DKIM signatures that cover non-existent headers. </p>
+
+%PARAM lmtp_header_checks
+
+<p> The LMTP-specific version of the smtp_header_checks configuration
+parameter. See there for details. </p>
+
+<p> This feature is available in Postfix 2.5 and later. </p>
+
+%PARAM lmtp_mime_header_checks
+
+<p> The LMTP-specific version of the smtp_mime_header_checks
+configuration parameter. See there for details. </p>
+
+<p> This feature is available in Postfix 2.5 and later. </p>
+
+%PARAM lmtp_nested_header_checks
+
+<p> The LMTP-specific version of the smtp_nested_header_checks
+configuration parameter. See there for details. </p>
+
+<p> This feature is available in Postfix 2.5 and later. </p>
+
+%PARAM lmtp_body_checks
+
+<p> The LMTP-specific version of the smtp_body_checks configuration
+parameter. See there for details. </p>
+
+<p> This feature is available in Postfix 2.5 and later. </p>
+
+%PARAM milter_header_checks
+
+<p> Optional lookup tables for content inspection of message headers
+that are produced by Milter applications.  See the header_checks(5)
+manual page available actions. Currently, PREPEND is not implemented.
+</p>
+
+<p> The following example sends all mail that is marked as SPAM to
+a spam handling machine. Note that matches are case-insensitive
+by default. </p>
+
+<pre>
+/etc/postfix/main.cf:
+    milter_header_checks = pcre:/etc/postfix/milter_header_checks
+</pre>
+
+<pre>
+/etc/postfix/milter_header_checks:
+    /^X-SPAM-FLAG:\s+YES/ FILTER mysmtp:sanitizer.example.com:25
+</pre>
+
+<p> The milter_header_checks mechanism could also be used for
+whitelisting. For example it could be used to skip heavy content
+inspection for DKIM-signed mail from known friendly domains. </p>
+
+<p> This feature is available in Postfix 2.7, and as an optional
+patch for Postfix 2.6. </p>
+
+%PARAM smtpd_command_filter 
+
+<p> A mechanism to transform commands from remote SMTP clients.
+This is a last-resort tool to work around client commands that break
+inter-operability with the Postfix SMTP server.  Other uses involve
+fault injection to test Postfix's handling of invalid commands.
+</p>
+
+<p> Specify the name of a "type:table" lookup table. The search
+string is the SMTP command as received from the remote SMTP client,
+except that initial whitespace and the trailing &lt;CR&gt;&lt;LF&gt;
+are removed.  The result value is executed by the Postfix SMTP
+server.  </p>
+
+<p> Postfix already implements a number of workarounds for malformed
+client commands. </p>
+
+<ul>
+
+<li> <p> Use "resolve_numeric_domain = yes" to accept
+"<i>user@ipaddress</i>". </p>
+
+<li> <p> Postfix already accepts the correct form
+"<i>user@[ipaddress]</i>".  </p>
+
+<li> <p> Use "strict_rfc821_envelopes = no" to accept "<i>User Name
+&lt;user@example.com&gt;</i>". Postfix will ignore the "User Name"
+part before delivering the mail. </p>
+
+</ul>
+
+<p> Examples: </p>
+
+<pre>
+/etc/postfix/main.cf:
+    smtpd_command_filter = pcre:/etc/postfix/command_filter
+</pre>
+
+<pre>
+/etc/postfix/command_filter:
+    # Work around clients that send malformed HELO commands.
+    /^HELO\s*$/ HELO domain.invalid
+</pre>
+
+<pre>
+    # Work around clients that send empty lines.
+    /^\s*$/     NOOP
+</pre>
+
+<pre>
+    # Work around clients that send RCPT TO:&lt;'user@domain'&gt;.
+    # WARNING: do not lose the parameters that follow the address.
+    /^RCPT\s+TO:\s*&lt;'([^[:space:]]+)'&gt;(.*)/     RCPT TO:&lt;$1&gt;$2
+</pre>
+
+<p> This feature is available in Postfix 2.7. </p>
+
+%PARAM smtp_reply_filter 
+
+<p> A mechanism to transform replies from remote SMTP servers one
+line at a time.  This is a last-resort tool to work around server
+replies that break inter-operability with the Postfix SMTP client.
+Other uses involve fault injection to test Postfix's handling of
+invalid responses. </p>
+
+<p> Notes: </p>
+
+<ul>
+
+<li> <p> In the case of a multi-line reply, the Postfix SMTP client
+uses the final reply line's numerical SMTP reply code and enhanced
+status code.  </p>
+
+<li> <p> The numerical SMTP reply code (XYZ) takes precedence over
+the enhanced status code (X.Y.Z).  When the enhanced status code
+initial digit differs from the SMTP reply code initial digit, or
+when no enhanced status code is present, the Postfix SMTP client
+uses a generic enhanced status code (X.0.0) instead. </p>
+
+</ul>
+
+<p> Specify the name of a "type:table" lookup table. The search
+string is a single SMTP reply line as received from the remote SMTP
+server, except that the trailing &lt;CR&gt;&lt;LF&gt; are removed.  </p>
+
+<p> Examples: </p>
+
+<pre>
+/etc/postfix/main.cf:
+    smtp_reply_filter = pcre:/etc/postfix/reply_filter
+</pre>
+
+<pre>
+/etc/postfix/reply_filter:
+    # Transform garbage into "250-filler..." so that it looks like
+    # one line from a multi-line reply. It does not matter what we
+    # substitute here as long it has the right syntax.  The Postfix
+    # SMTP client will use the final line's numerical SMTP reply
+    # code and enhanced status code.
+    !/^([2-5][0-9][0-9]($|[- ]))/ 250-filler for garbage
+</pre>
+
+<p> This feature is available in Postfix 2.7. </p>
+
+%PARAM lmtp_reply_filter
+
+<p> The LMTP-specific version of the smtp_reply_filter
+configuration parameter.  See there for details. </p>
+
+<p> This feature is available in Postfix 2.7 and later. </p>
+
+%PARAM smtp_tls_block_early_mail_reply no
+
+<p> Try to detect a mail hijacking attack based on a TLS protocol
+vulnerability (CVE-2009-3555), where an attacker prepends malicious
+HELO, MAIL, RCPT, DATA commands to a Postfix SMTP client TLS session.
+The attack would succeed with non-Postfix SMTP servers that reply
+to the malicious HELO, MAIL, RCPT, DATA commands after negotiating
+the Postfix SMTP client TLS session.  </p>
+
+<p> This feature is available in Postfix 2.7. </p>
+
+%PARAM lmtp_tls_block_early_mail_reply
+
+<p> The LMTP-specific version of the smtp_tls_block_early_mail_reply
+configuration parameter.  See there for details. </p>
+
+<p> This feature is available in Postfix 2.7 and later. </p>
+
+%PARAM empty_address_default_transport_maps_lookup_key &lt;&gt;
+
+<p> The sender_dependent_default_transport_maps search string that
+will be used instead of the null sender address. </p>
+
+<p> This feature is available in Postfix 2.7 and later.  </p>
+
+%PARAM sender_dependent_default_transport_maps
+
+<p> A sender-dependent override for the global default_transport
+parameter setting. The tables are searched by the envelope sender
+address and @domain. A lookup result of DUNNO terminates the search
+without overriding the global default_transport parameter setting.
+This information is overruled with the transport(5) table. </p>
+
+<p> Note: this overrides default_transport, not transport_maps, and
+therefore the expected syntax is that of default_transport, not the
+syntax of transport_maps.  Specifically, this does not support the
+transport_maps syntax for null transport, null nexthop, or null
+email addresses. </p>
+
+<p> For safety reasons, this feature does not allow $number
+substitutions in regular expression maps. </p>
+
+<p> This feature is available in Postfix 2.7 and later.  </p>
+
+%PARAM address_verify_sender_dependent_default_transport_maps $sender_dependent_default_transport_maps
+
+<p> Overrides the sender_dependent_default_transport_maps parameter
+setting for address verification probes.  </p>
+
+<p> This feature is available in Postfix 2.7 and later.  </p>
+
+%PARAM default_filter_nexthop 
+
+<p> When a content_filter or FILTER request specifies no explicit
+next-hop destination, use $default_filter_nexthop instead; when
+that value is empty, use the domain in the recipient address.
+Specify "default_filter_nexthop = $myhostname" for compatibility
+with Postfix version 2.6 and earlier, or specify an explicit next-hop
+destination with each content_filter value or FILTER action. </p>
+
+<p> This feature is available in Postfix 2.7 and later.  </p>
+

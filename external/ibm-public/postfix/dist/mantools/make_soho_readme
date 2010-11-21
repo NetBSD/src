@@ -47,11 +47,11 @@ Internet hostname</a>
 
 <ul>
 
-<li><a href="#client_sasl">Enabling SASL authentication in the
+<li><a href="#client_sasl_enable">Enabling SASL authentication in the
 Postfix SMTP client</a></li>
 
-<li><a href="#client_sasl_sender">Supporting multiple ISP accounts
-in the Postfix SMTP client</a></li>
+<li><a href="#client_sasl_sender">Configuring Sender-Dependent SASL
+authentication </a></li>
 
 </ul>
 
@@ -72,8 +72,9 @@ sed -n '/^<h2><a name="fantasy">/,${
 	p
 }' STANDARD_CONFIGURATION_README.html
 
-sed -n '/^<h2><a name="client_sasl">/,${
-	/^<h2><a name="credits/q
+sed -n '/^<h3><a name="client_sasl_enable"/,${
+	/^<h3><a name="client_sasl_policy"/q
+	s/h3>/h2>/g
 	p
 }' SASL_README.html
 

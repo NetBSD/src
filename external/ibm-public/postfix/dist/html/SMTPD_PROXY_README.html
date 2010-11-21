@@ -19,9 +19,9 @@
 
 <h2>WARNING </h2>
 
-<p> The before-queue content filtering feature described in
-this document is suitable only for low-traffic sites. See the "<a
-href="#pros_cons">Pros and Cons</a>" section below for details.
+<p> The before-queue content filtering feature described in this
+document limits the amount of mail that a site can handle. See the
+"<a href="#pros_cons">Pros and Cons</a>" section below for details.
 </p>
 
 <h2>The Postfix before-queue content filter feature</h2>
@@ -108,11 +108,18 @@ filter</a>
 
 <h2><a name="principles">Principles of operation</a></h2>
 
-<p> The before-filter Postfix SMTP server accepts connections from the
+<p> As shown in the diagram above, the before-queue filter sits
+between two Postfix SMTP server processes. </p>
+
+<ul>
+
+<li> <p> The before-filter Postfix SMTP server accepts connections from the
 Internet and does the usual relay access control, SASL authentication,
 TLS negotiation,
 RBL lookups, rejecting non-existent sender or recipient addresses,
-etc.  The before-queue filter receives unfiltered mail content from
+etc. </p>
+
+<li> <p> The before-queue filter receives unfiltered mail content from
 Postfix and does one of the following:  </p>
 
 <ol>
@@ -129,8 +136,10 @@ Postfix and does one of the following:  </p>
 
 </ol>
 
-<p>The after-filter Postfix SMTP server receives mail from the
+<li> <p>The after-filter Postfix SMTP server receives mail from the
 content filter. From then on Postfix processes the mail as usual. </p>
+
+</ul>
 
 <p> The before-queue content filter described here works just like
 the after-queue content filter described in the <a href="FILTER_README.html">FILTER_README</a>
@@ -154,14 +163,27 @@ a deadline.  As the system load increases, fewer and fewer CPU
 cycles remain available to answer within the deadline, and eventually
 you either have to stop accepting mail or you have to stop filtering
 mail. It is for this reason that the before-queue content filter
-can be used only on low-traffic sites. </p>
+limits the amount of mail that a site can handle. </p>
 
 <li> <p> Con: Content filtering software can use lots of memory
-resources. In order to not run out of memory you have to reduce
-the number of before-filter SMTP server processes so that a burst
-of mail will not drive your system into the ground with too many
-content filter processes. This, in turn, means that SMTP clients
-have to wait for a long time before they receive service.  </p>
+resources. You have to reduce the number of simultaneous content
+filter processes so that a burst of mail will not drive your system
+into the ground. </p>
+ 
+<ul>
+
+<li> <p> With Postfix versions 2.7 and later, SMTP clients will
+experience an increase in the delay between the time the client
+sends "end-of-message" and the time the Postfix SMTP server replies
+(here, the number of before-filter SMTP server processes can be
+larger than the number of filter processes).  </p>
+
+<li> <p> With Postfix versions before 2.7, SMTP clients will
+experience an increase in the delay before they can receive service
+(here, the number of before-filter SMTP server processes is always
+equal to the number of filter processes).  </p>
+
+</ul>
 
 </ul>
 
@@ -239,6 +261,8 @@ PERL/SMTP content filtering framework. See:
     smtp      inet  n       -       n       -       20      smtpd
         -o <a href="postconf.5.html#smtpd_proxy_filter">smtpd_proxy_filter</a>=127.0.0.1:10025
         -o <a href="postconf.5.html#smtpd_client_connection_count_limit">smtpd_client_connection_count_limit</a>=10
+	# Postfix 2.7 and later performance feature.
+	# -o <a href="postconf.5.html#smtpd_proxy_options">smtpd_proxy_options</a>=speed_adjust
     #
     # After-filter SMTP server. Receive mail from the content filter
     # on localhost port 10026.
@@ -276,10 +300,24 @@ the top of the <a href="master.5.html">master.cf</a> file: </p>
     later.  Earlier Postfix versions will ignore it.  </p>
 
     <li> <p> The "-o <a href="postconf.5.html#smtpd_proxy_filter">smtpd_proxy_filter</a>=127.0.0.1:10025" tells the
-    before filter SMTP server that it should give incoming mail to
+    before-filter SMTP server that it should give incoming mail to
     the content filter that listens on localhost TCP port 10025.
 
-    <li> <p> Postfix 2.3 supports both TCP and UNIX-domain filters.
+    <li> <p> The "-o <a href="postconf.5.html#smtpd_proxy_options">smtpd_proxy_options</a>=speed_adjust" tells the
+    before-filter SMTP server that it should receive an entire email
+    message before it connects to a content filter. This reduces
+    the number of simultaneous filter processes. </p>
+
+    <p> NOTE 1: When this option is turned on, a content filter must
+    not <i>selectively</i> reject recipients of a multi-recipient
+    message.  Rejecting all recipients is OK, as is accepting all
+    recipients.  </p>
+
+    <p> NOTE 2: This feature increases the minimum amount of free
+    queue space by $<a href="postconf.5.html#message_size_limit">message_size_limit</a>. The extra space is needed
+    to save the message to a temporary file. </p>
+
+    <li> <p> Postfix &ge; 2.3 supports both TCP and UNIX-domain filters.
     The above filter could be specified as "inet:127.0.0.1:10025".
     To specify a UNIX-domain filter, specify "unix:<i>pathname</i>".
     A relative pathname is interpreted relative to the Postfix queue
@@ -299,7 +337,7 @@ the top of the <a href="master.5.html">master.cf</a> file: </p>
 
     <li> <p> The "-o <a href="postconf.5.html#smtpd_authorized_xforward_hosts">smtpd_authorized_xforward_hosts</a>=127.0.0.0/8"
     allows the after-filter SMTP server to receive remote SMTP
-    client information from the before filter SMTP server, so that
+    client information from the before-filter SMTP server, so that
     the after-filter Postfix daemons log the remote SMTP client
     information instead of logging localhost[127.0.0.1]. </p>
 

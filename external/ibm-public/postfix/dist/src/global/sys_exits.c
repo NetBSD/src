@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_exits.c,v 1.1.1.1.2.2 2009/09/15 06:02:54 snj Exp $	*/
+/*	$NetBSD: sys_exits.c,v 1.1.1.1.2.3 2010/11/21 18:31:31 riz Exp $	*/
 
 /*++
 /* NAME
@@ -41,6 +41,8 @@
 /*	sys_exits_detail() returns a table entry with assorted
 /*	information about the specified sendmail-compatible status
 /*	code, or a generic entry for an unknown status code.
+/*	The generic entry may be overwritten with each sys_exits_detail()
+/*	call.
 /*
 /*	sys_exits_softerror() returns non-zero when the specified
 /*	sendmail-compatible status code corresponds to a recoverable error.

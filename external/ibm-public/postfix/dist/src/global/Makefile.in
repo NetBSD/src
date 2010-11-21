@@ -29,7 +29,7 @@ SRCS	= abounce.c anvil_clnt.c been_here.c bounce.c bounce_log.c \
 	user_acl.c valid_mailhost_addr.c verify.c verify_clnt.c \
 	verp_sender.c wildcard_inet_addr.c xtext.c delivered_hdr.c \
 	fold_addr.c header_body_checks.c mkmap_proxy.c data_redirect.c \
-	match_service.c mail_conf_nint.c
+	match_service.c mail_conf_nint.c addr_match_list.c
 OBJS	= abounce.o anvil_clnt.o been_here.o bounce.o bounce_log.o \
 	canon_addr.o cfg_parser.o cleanup_strerror.o cleanup_strflags.o \
 	clnt_stream.o conv_time.o db_common.o debug_peer.o debug_process.o \
@@ -60,7 +60,7 @@ OBJS	= abounce.o anvil_clnt.o been_here.o bounce.o bounce_log.o \
 	user_acl.o valid_mailhost_addr.o verify.o verify_clnt.o \
 	verp_sender.o wildcard_inet_addr.o xtext.o delivered_hdr.o \
 	fold_addr.o header_body_checks.o mkmap_proxy.o data_redirect.o \
-	match_service.o mail_conf_nint.o
+	match_service.o mail_conf_nint.o addr_match_list.o
 HDRS	= abounce.h anvil_clnt.h been_here.h bounce.h bounce_log.h \
 	canon_addr.h cfg_parser.h cleanup_user.h clnt_stream.h config.h \
 	conv_time.h db_common.h debug_peer.h debug_process.h defer.h \
@@ -84,7 +84,8 @@ HDRS	= abounce.h anvil_clnt.h been_here.h bounce.h bounce_log.h \
 	string_list.h strip_addr.h sys_exits.h timed_ipc.h tok822.h \
 	trace.h user_acl.h valid_mailhost_addr.h verify.h verify_clnt.h \
 	verp_sender.h wildcard_inet_addr.h xtext.h delivered_hdr.h \
-	fold_addr.h header_body_checks.h data_redirect.h match_service.h
+	fold_addr.h header_body_checks.h data_redirect.h match_service.h \
+	addr_match_list.h
 TESTSRC	= rec2stream.c stream2rec.c recdump.c
 DEFS	= -I. -I$(INC_DIR) -D$(SYSTYPE)
 CFLAGS	= $(DEBUG) $(OPT) $(DEFS)
@@ -525,6 +526,11 @@ abounce.o: mail_params.h
 abounce.o: mail_proto.h
 abounce.o: msg_stats.h
 abounce.o: recipient_list.h
+addr_match_list.o: ../../include/match_list.h
+addr_match_list.o: ../../include/match_ops.h
+addr_match_list.o: ../../include/sys_defs.h
+addr_match_list.o: addr_match_list.c
+addr_match_list.o: addr_match_list.h
 anvil_clnt.o: ../../include/attr.h
 anvil_clnt.o: ../../include/attr_clnt.h
 anvil_clnt.o: ../../include/iostuff.h

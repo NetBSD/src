@@ -1,4 +1,4 @@
-/*	$NetBSD: postmulti.c,v 1.1.1.1.2.2 2009/09/15 06:03:30 snj Exp $	*/
+/*	$NetBSD: postmulti.c,v 1.1.1.1.2.3 2010/11/21 18:31:34 riz Exp $	*/
 
 /*++
 /* NAME
@@ -7,6 +7,12 @@
 /*	Postfix multi-instance manager
 /* SYNOPSIS
 /* .fi
+/*	\fBENABLING MULTI-INSTANCE MANAGEMENT:\fR
+/*
+/*	\fBpostmulti\fR \fB-e init\fR [\fB-v\fR]
+/*
+/*	\fBITERATOR MODE:\fR
+/*
 /*	\fBpostmulti\fR \fB-l\fR [\fB-aRv\fR] [\fB-g \fIgroup\fR]
 /*	[\fB-i \fIname\fR]
 /*
@@ -16,7 +22,7 @@
 /*	\fBpostmulti\fR \fB-x\fR [\fB-aRv\fR] [\fB-g \fIgroup\fR]
 /*	[\fB-i \fIname\fR] \fIcommand...\fR
 /*
-/*	\fBpostmulti\fR \fB-e init\fR [\fB-v\fR]
+/*	\fBLIFE-CYCLE MANAGEMENT:\fR
 /*
 /*	\fBpostmulti\fR \fB-e create\fR [\fB-av\fR]
 /*	[\fB-g \fIgroup\fR] [\fB-i \fIname\fR] [\fB-G \fIgroup\fR]
@@ -1530,6 +1536,8 @@ static int iterate_command(int iter_cmd, int iter_flags, char **argv,
      */
     FOREACH_ITERATOR_INSTANCE(iter_flags, entry) {
 	ip = RING_TO_INSTANCE(entry);
+	if ((iter_flags & ITER_FLAG_SKIP_DISABLED) && !ip->enabled)
+	    continue;
 	if (!match_instance_selection(ip, selection))
 	    continue;
 	matched = 1;

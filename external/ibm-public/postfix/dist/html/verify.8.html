@@ -40,7 +40,7 @@ VERIFY(8)                                                            VERIFY(8)
 
        <b>query</b> <i>address</i>
               Look  up  the  <i>status</i>  and  <i>text</i>  for the specified
-              address.  If the status is unknown, a probe is sent
+              <i>address</i>.  If the status is unknown, a probe is sent
               and an "in progress" status is returned.
 
 <b>SECURITY</b>
@@ -50,9 +50,9 @@ VERIFY(8)                                                            VERIFY(8)
        low privilege.
 
        The address verification server can be  coerced  to  store
-       unlimited  amounts  of  garbage.  Limiting  the cache size
-       trades one problem (disk space exhaustion) for another one
-       (poor response time to client requests).
+       unlimited  amounts  of  garbage. Limiting the cache expiry
+       time  trades  one  problem  (disk  space  exhaustion)  for
+       another one (poor response time to client requests).
 
        With  Postfix  version 2.5 and later, the <a href="verify.8.html"><b>verify</b>(8)</a> server
        no  longer  uses  root   privileges   when   opening   the
@@ -66,12 +66,12 @@ VERIFY(8)                                                            VERIFY(8)
        Problems and transactions are logged to <b>syslogd</b>(8).
 
 <b>BUGS</b>
-       The  address  verification  service  is  suitable only for
-       sites that handle a low mail volume.  Verification  probes
-       add  additional  traffic  to  the  mail  queue and perform
-       poorly under high load.  Servers may blacklist sites  that
-       probe excessively, or that probe excessively for non-exis-
-       tent recipient addresses.
+       Address verification probe messages add additional traffic
+       to the mail queue.  Recipient verification  may  cause  an
+       increased  load  on  down-stream  servers in the case of a
+       dictionary attack  or  a  flood  of  backscatter  bounces.
+       Sender  address  verification  may  cause  your site to be
+       blacklisted by some providers.
 
        If the persistent database ever gets  corrupted  then  the
        world  comes  to  an end and human intervention is needed.
@@ -79,16 +79,16 @@ VERIFY(8)                                                            VERIFY(8)
 
 <b>CONFIGURATION PARAMETERS</b>
        Changes to <a href="postconf.5.html"><b>main.cf</b></a> are not  picked  up  automatically,  as
-       <a href="verify.8.html"><b>verify</b>(8)</a> processes are persistent. Use the command "<b>post-</b>
+       <a href="verify.8.html"><b>verify</b>(8)</a> processes are long-lived. Use the command "<b>post-</b>
        <b>fix reload</b>" after a configuration change.
 
        The text below provides  only  a  parameter  summary.  See
        <a href="postconf.5.html"><b>postconf</b>(5)</a> for more details including examples.
 
 <b>CACHE CONTROLS</b>
-       <b><a href="postconf.5.html#address_verify_map">address_verify_map</a> (empty)</b>
-              Optional  lookup table for persistent address veri-
-              fication status storage.
+       <b><a href="postconf.5.html#address_verify_map">address_verify_map</a> (see 'postconf -d' output)</b>
+              Lookup  table  for  persistent address verification
+              status storage.
 
        <b><a href="postconf.5.html#address_verify_sender">address_verify_sender</a> ($<a href="postconf.5.html#double_bounce_sender">double_bounce_sender</a>)</b>
               The sender address to use in  address  verification
@@ -115,17 +115,23 @@ VERIFY(8)                                                            VERIFY(8)
               The time after which a failed address  verification
               probe needs to be refreshed.
 
+       Available with Postfix 2.7 and later:
+
+       <b><a href="postconf.5.html#address_verify_cache_cleanup_interval">address_verify_cache_cleanup_interval</a> (12h)</b>
+              The  amount of time between <a href="verify.8.html"><b>verify</b>(8)</a> address veri-
+              fication database cleanup runs.
+
 <b>PROBE MESSAGE ROUTING CONTROLS</b>
-       By  default,  probe  messages  are  delivered via the same
-       route as regular messages.  The following  parameters  can
+       By default, probe messages  are  delivered  via  the  same
+       route  as  regular messages.  The following parameters can
        be used to override specific message routing mechanisms.
 
        <b><a href="postconf.5.html#address_verify_relayhost">address_verify_relayhost</a> ($<a href="postconf.5.html#relayhost">relayhost</a>)</b>
-              Overrides   the  <a href="postconf.5.html#relayhost">relayhost</a>  parameter  setting  for
+              Overrides  the  <a href="postconf.5.html#relayhost">relayhost</a>  parameter  setting   for
               address verification probes.
 
        <b><a href="postconf.5.html#address_verify_transport_maps">address_verify_transport_maps</a> ($<a href="postconf.5.html#transport_maps">transport_maps</a>)</b>
-              Overrides the <a href="postconf.5.html#transport_maps">transport_maps</a> parameter setting  for
+              Overrides  the <a href="postconf.5.html#transport_maps">transport_maps</a> parameter setting for
               address verification probes.
 
        <b><a href="postconf.5.html#address_verify_local_transport">address_verify_local_transport</a> ($<a href="postconf.5.html#local_transport">local_transport</a>)</b>
@@ -133,7 +139,7 @@ VERIFY(8)                                                            VERIFY(8)
               address verification probes.
 
        <b><a href="postconf.5.html#address_verify_virtual_transport">address_verify_virtual_transport</a> ($<a href="postconf.5.html#virtual_transport">virtual_transport</a>)</b>
-              Overrides the <a href="postconf.5.html#virtual_transport">virtual_transport</a>  parameter  setting
+              Overrides  the  <a href="postconf.5.html#virtual_transport">virtual_transport</a> parameter setting
               for address verification probes.
 
        <b><a href="postconf.5.html#address_verify_relay_transport">address_verify_relay_transport</a> ($<a href="postconf.5.html#relay_transport">relay_transport</a>)</b>
@@ -141,17 +147,32 @@ VERIFY(8)                                                            VERIFY(8)
               address verification probes.
 
        <b><a href="postconf.5.html#address_verify_default_transport">address_verify_default_transport</a> ($<a href="postconf.5.html#default_transport">default_transport</a>)</b>
-              Overrides the <a href="postconf.5.html#default_transport">default_transport</a>  parameter  setting
+              Overrides  the  <a href="postconf.5.html#default_transport">default_transport</a> parameter setting
               for address verification probes.
+
+       Available in Postfix 2.3 and later:
+
+       <b><a href="postconf.5.html#address_verify_sender_dependent_relayhost_maps">address_verify_sender_dependent_relayhost_maps</a></b>
+       <b>($<a href="postconf.5.html#sender_dependent_relayhost_maps">sender_dependent_relayhost_maps</a>)</b>
+              Overrides    the    <a href="postconf.5.html#sender_dependent_relayhost_maps">sender_dependent_relayhost_maps</a>
+              parameter  setting for address verification probes.
+
+       Available in Postfix 2.7 and later:
+
+       <b><a href="postconf.5.html#address_verify_sender_dependent_default_transport_maps">address_verify_sender_dependent_default_transport_maps</a></b>
+       <b>($<a href="postconf.5.html#sender_dependent_default_transport_maps">sender_dependent_default_transport_maps</a>)</b>
+              Overrides    the    <a href="postconf.5.html#sender_dependent_default_transport_maps">sender_dependent_default_trans</a>-
+              <a href="postconf.5.html#sender_dependent_default_transport_maps">port_maps</a>  parameter  setting for address verifica-
+              tion probes.
 
 <b>MISCELLANEOUS CONTROLS</b>
        <b><a href="postconf.5.html#config_directory">config_directory</a> (see 'postconf -d' output)</b>
-              The  default  location  of  the Postfix <a href="postconf.5.html">main.cf</a> and
+              The default location of  the  Postfix  <a href="postconf.5.html">main.cf</a>  and
               <a href="master.5.html">master.cf</a> configuration files.
 
        <b><a href="postconf.5.html#daemon_timeout">daemon_timeout</a> (18000s)</b>
-              How much time a Postfix daemon process may take  to
-              handle  a  request  before  it  is  terminated by a
+              How  much time a Postfix daemon process may take to
+              handle a request  before  it  is  terminated  by  a
               built-in watchdog timer.
 
        <b><a href="postconf.5.html#ipc_timeout">ipc_timeout</a> (3600s)</b>
@@ -159,23 +180,23 @@ VERIFY(8)                                                            VERIFY(8)
               over an internal communication channel.
 
        <b><a href="postconf.5.html#process_id">process_id</a> (read-only)</b>
-              The  process  ID  of  a  Postfix  command or daemon
+              The process ID  of  a  Postfix  command  or  daemon
               process.
 
        <b><a href="postconf.5.html#process_name">process_name</a> (read-only)</b>
-              The process name of a  Postfix  command  or  daemon
+              The  process  name  of  a Postfix command or daemon
               process.
 
        <b><a href="postconf.5.html#queue_directory">queue_directory</a> (see 'postconf -d' output)</b>
-              The  location of the Postfix top-level queue direc-
+              The location of the Postfix top-level queue  direc-
               tory.
 
        <b><a href="postconf.5.html#syslog_facility">syslog_facility</a> (mail)</b>
               The syslog facility of Postfix logging.
 
        <b><a href="postconf.5.html#syslog_name">syslog_name</a> (see 'postconf -d' output)</b>
-              The mail system  name  that  is  prepended  to  the
-              process  name  in  syslog  records, so that "smtpd"
+              The  mail  system  name  that  is  prepended to the
+              process name in syslog  records,  so  that  "smtpd"
               becomes, for example, "postfix/smtpd".
 
 <b>SEE ALSO</b>
@@ -188,7 +209,7 @@ VERIFY(8)                                                            VERIFY(8)
        <a href="ADDRESS_VERIFICATION_README.html">ADDRESS_VERIFICATION_README</a>, address verification howto
 
 <b>LICENSE</b>
-       The  Secure  Mailer  license must be distributed with this
+       The Secure Mailer license must be  distributed  with  this
        software.
 
 <b>HISTORY</b>

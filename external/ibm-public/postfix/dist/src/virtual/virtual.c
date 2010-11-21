@@ -1,4 +1,4 @@
-/*	$NetBSD: virtual.c,v 1.1.1.1.2.2 2009/09/15 06:04:13 snj Exp $	*/
+/*	$NetBSD: virtual.c,v 1.1.1.1.2.3 2010/11/21 18:31:37 riz Exp $	*/
 
 /*++
 /* NAME
@@ -213,8 +213,8 @@
 /*	The maximal number of recipients per message for the virtual
 /*	message delivery transport.
 /* .IP "\fBvirtual_mailbox_limit (51200000)\fR"
-/*	The maximal size in bytes of an individual mailbox or maildir file,
-/*	or zero (no limit).
+/*	The maximal size in bytes of an individual \fBvirtual\fR(8) mailbox or
+/*	maildir file, or zero (no limit).
 /* MISCELLANEOUS CONTROLS
 /* .ad
 /* .fi

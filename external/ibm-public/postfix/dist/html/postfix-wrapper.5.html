@@ -10,8 +10,8 @@ POSTFIX-WRAPPER(5)                                          POSTFIX-WRAPPER(5)
        postfix-wrapper - Postfix multi-instance API
 
 <b>DESCRIPTION</b>
-       Postfix  versions 2.6 and later provide support for multi-
-       ple Postfix instances. Instances  share  executable  files
+       Support  for managing multiple Postfix instances is avail-
+       able as of version 2.6. Instances share  executable  files
        and documentation, but have their own directories for con-
        figuration, queue and data files.
 
@@ -22,18 +22,17 @@ POSTFIX-WRAPPER(5)                                          POSTFIX-WRAPPER(5)
        multi-instance manager program.
 
        With multi-instance support, the default Postfix  instance
-       is   always  required.  The  <a href="postconf.5.html#config_directory">config_directory</a>  parameter's
-       default value specifies that instance's configuration file
-       location.
+       is  always  required.  This  instance is identified by the
+       <a href="postconf.5.html#config_directory">config_directory</a> parameter's default value.
 
 <b>GENERAL OPERATION</b>
-       Multi-instance  support  is backwards compatible: when you
-       run only one Postfix instance, commands such  as  "postfix
+       Multi-instance support is backwards compatible:  when  you
+       run  only  one Postfix instance, commands such as "postfix
        start" will not change behavior at all.
 
-       Even  with  multiple Postfix instances, you can keep using
-       the same postfix commands in boot scripts, upgrade  proce-
-       dures,  and  other  places. The commands do more work, but
+       Even with multiple Postfix instances, you can  keep  using
+       the  same postfix commands in boot scripts, upgrade proce-
+       dures, and other places. The commands do  more  work,  but
        humans are not forced to learn new tricks.
 
        For example, to start all Postfix instances, use:
@@ -41,7 +40,7 @@ POSTFIX-WRAPPER(5)                                          POSTFIX-WRAPPER(5)
               # postfix start
 
        Other <a href="postfix.1.html">postfix(1)</a> commands also work as expected. For exam-
-       ple,  to find out what Postfix instances exist in a multi-
+       ple, to find out what Postfix instances exist in a  multi-
        instance configuration, use:
 
               # postfix status
@@ -55,13 +54,13 @@ POSTFIX-WRAPPER(5)                                          POSTFIX-WRAPPER(5)
 
               # postfix -c <i>/path/to/config</i><b>_</b><i>directory command</i>
 
-       Alternatively,  the   <a href="postfix.1.html">postfix(1)</a>   command   accepts   the
-       instance's  configuration  directory  via  the MAIL_CONFIG
+       Alternatively,   the   <a href="postfix.1.html">postfix(1)</a>   command   accepts  the
+       instance's configuration  directory  via  the  MAIL_CONFIG
        environment  variable  (the  -c  command-line  option  has
        higher precedence).
 
-       When  no  Postfix  instance  information is specified, the
-       <a href="postfix.1.html">postfix(1)</a> command will operate on all Postfix  instances.
+       Otherwise, the <a href="postfix.1.html">postfix(1)</a>  command  will  operate  on  all
+       Postfix instances.
 
 <b>ENABLING POSTFIX(1) MULTI-INSTANCE MODE</b>
        By  default,  the  <a href="postfix.1.html">postfix(1)</a>  command operates in single-

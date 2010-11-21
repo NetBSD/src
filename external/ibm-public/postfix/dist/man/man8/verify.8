@@ -1,4 +1,4 @@
-.\"	$NetBSD: verify.8,v 1.1.1.1.2.2 2009/09/15 06:02:19 snj Exp $
+.\"	$NetBSD: verify.8,v 1.1.1.1.2.3 2010/11/21 18:31:26 riz Exp $
 .\"
 .TH VERIFY 8 
 .ad
@@ -38,7 +38,8 @@ The \fBverify\fR(8) server implements the following requests:
 .IP "\fBupdate\fI address status text\fR"
 Update the status and text of the specified address.
 .IP "\fBquery\fI address\fR"
-Look up the \fIstatus\fR and \fItext\fR for the specified address.
+Look up the \fIstatus\fR and \fItext\fR for the specified
+\fIaddress\fR.
 If the status is unknown, a probe is sent and an "in progress"
 status is returned.
 .SH "SECURITY"
@@ -51,7 +52,8 @@ not talk to the network, and it does not talk to local users.
 The verify server can run chrooted at fixed low privilege.
 
 The address verification server can be coerced to store
-unlimited amounts of garbage. Limiting the cache size
+unlimited amounts of garbage. Limiting the cache expiry
+time
 trades one problem (disk space exhaustion) for another
 one (poor response time to client requests).
 
@@ -69,11 +71,13 @@ Problems and transactions are logged to \fBsyslogd\fR(8).
 .SH BUGS
 .ad
 .fi
-The address verification service is suitable only for sites that
-handle a low mail volume. Verification probes add additional
-traffic to the mail queue and perform poorly under high load.
-Servers may blacklist sites that probe excessively, or that
-probe excessively for non-existent recipient addresses.
+Address verification probe messages add additional traffic
+to the mail queue.
+Recipient verification may cause an increased load on
+down-stream servers in the case of a dictionary attack or
+a flood of backscatter bounces.
+Sender address verification may cause your site to be
+blacklisted by some providers.
 
 If the persistent database ever gets corrupted then the world
 comes to an end and human intervention is needed. This violates
@@ -85,7 +89,7 @@ a basic Postfix principle.
 .fi
 Changes to \fBmain.cf\fR are not picked up automatically,
 as \fBverify\fR(8)
-processes are persistent. Use the command "\fBpostfix reload\fR" after
+processes are long-lived. Use the command "\fBpostfix reload\fR" after
 a configuration change.
 
 The text below provides only a parameter summary. See
@@ -95,8 +99,8 @@ The text below provides only a parameter summary. See
 .nf
 .ad
 .fi
-.IP "\fBaddress_verify_map (empty)\fR"
-Optional lookup table for persistent address verification status
+.IP "\fBaddress_verify_map (see 'postconf -d' output)\fR"
+Lookup table for persistent address verification status
 storage.
 .IP "\fBaddress_verify_sender ($double_bounce_sender)\fR"
 The sender address to use in address verification probes; prior
@@ -115,6 +119,11 @@ verification cache.
 .IP "\fBaddress_verify_negative_refresh_time (3h)\fR"
 The time after which a failed address verification probe needs to
 be refreshed.
+.PP
+Available with Postfix 2.7 and later:
+.IP "\fBaddress_verify_cache_cleanup_interval (12h)\fR"
+The amount of time between \fBverify\fR(8) address verification
+database cleanup runs.
 .SH "PROBE MESSAGE ROUTING CONTROLS"
 .na
 .nf
@@ -141,6 +150,16 @@ verification probes.
 .IP "\fBaddress_verify_default_transport ($default_transport)\fR"
 Overrides the default_transport parameter setting for address
 verification probes.
+.PP
+Available in Postfix 2.3 and later:
+.IP "\fBaddress_verify_sender_dependent_relayhost_maps ($sender_dependent_relayhost_maps)\fR"
+Overrides the sender_dependent_relayhost_maps parameter setting for address
+verification probes.
+.PP
+Available in Postfix 2.7 and later:
+.IP "\fBaddress_verify_sender_dependent_default_transport_maps ($sender_dependent_default_transport_maps)\fR"
+Overrides the sender_dependent_default_transport_maps parameter
+setting for address verification probes.
 .SH "MISCELLANEOUS CONTROLS"
 .na
 .nf

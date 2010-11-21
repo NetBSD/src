@@ -1,4 +1,4 @@
-/*	$NetBSD: match_list.c,v 1.1.1.1.2.2 2009/09/15 06:04:00 snj Exp $	*/
+/*	$NetBSD: match_list.c,v 1.1.1.1.2.3 2010/11/21 18:31:37 riz Exp $	*/
 
 /*++
 /* NAME
@@ -118,6 +118,11 @@ static ARGV *match_list_parse(ARGV *list, char *string, int init_match)
      * prepend the negation operator to each item from the file.
      */
     while ((start = mystrtok(&bp, delim)) != 0) {
+	if (*start == '#') {
+	    msg_warn("%s: comment at end of line is not supported: %s %s",
+		      myname, start, bp);
+	    break;
+	}
 	for (match = init_match, item = start; *item == '!'; item++)
 	    match = !match;
 	if (*item == 0)

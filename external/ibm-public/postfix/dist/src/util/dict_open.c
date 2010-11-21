@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_open.c,v 1.1.1.1.2.2 2009/09/15 06:03:56 snj Exp $	*/
+/*	$NetBSD: dict_open.c,v 1.1.1.1.2.3 2010/11/21 18:31:36 riz Exp $	*/
 
 /*++
 /* NAME
@@ -146,13 +146,13 @@
 /*	dict_put() stores the specified key and value into the named
 /*	dictionary.
 /*
-/*	dict_del() removes a dictionary entry, and returns non-zero
+/*	dict_del() removes a dictionary entry, and returns zero
 /*	in case of success.
 /*
 /*	dict_seq() iterates over all members in the named dictionary.
 /*	func is define DICT_SEQ_FUN_FIRST (select first member) or
-/*	DICT_SEQ_FUN_NEXT (select next member). A null result means
-/*	there is more.
+/*	DICT_SEQ_FUN_NEXT (select next member). A zero result means
+/*	that an entry was found.
 /*
 /*	dict_close() closes the specified dictionary and cleans up the
 /*	associated data structures.
@@ -205,6 +205,7 @@
 #include <dict_regexp.h>
 #include <dict_static.h>
 #include <dict_cidr.h>
+#include <dict_ht.h>
 #include <stringops.h>
 #include <split_at.h>
 #include <htable.h>
@@ -222,10 +223,9 @@ static const DICT_OPEN_INFO dict_open_info[] = {
     DICT_TYPE_CDB, dict_cdb_open,
 #endif
     DICT_TYPE_ENVIRON, dict_env_open,
+    DICT_TYPE_HT, dict_ht_open,
     DICT_TYPE_UNIX, dict_unix_open,
-#ifdef SNAPSHOT
     DICT_TYPE_TCP, dict_tcp_open,
-#endif
 #ifdef HAS_SDBM
     DICT_TYPE_SDBM, dict_sdbm_open,
 #endif
@@ -387,7 +387,7 @@ ARGV   *dict_mapnames()
 
 static NORETURN usage(char *myname)
 {
-    msg_fatal("usage: %s type:file read|write|create [fold]", myname);
+    msg_fatal("usage: %s type:file read|write|create [fold] [sync]", myname);
 }
 
 int     main(int argc, char **argv)
@@ -403,6 +403,7 @@ int     main(int argc, char **argv)
     const char *value;
     int     ch;
     int     dict_flags = DICT_FLAG_LOCK | DICT_FLAG_DUP_REPLACE;
+    int     n;
 
     signal(SIGPIPE, SIG_IGN);
 
@@ -417,7 +418,7 @@ int     main(int argc, char **argv)
 	}
     }
     optind = OPTIND;
-    if (argc - optind < 2 || argc - optind > 3)
+    if (argc - optind < 2)
 	usage(argv[0]);
     if (strcasecmp(argv[optind + 1], "create") == 0)
 	open_flags = O_CREAT | O_RDWR | O_TRUNC;
@@ -427,8 +428,14 @@ int     main(int argc, char **argv)
 	open_flags = O_RDONLY;
     else
 	msg_fatal("unknown access mode: %s", argv[2]);
-    if (argv[optind + 2] && strcasecmp(argv[optind + 2], "fold") == 0)
-	dict_flags |= DICT_FLAG_FOLD_ANY;
+    for (n = 2; argv[optind + n]; n++) {
+	if (strcasecmp(argv[optind + 2], "fold") == 0)
+	    dict_flags |= DICT_FLAG_FOLD_ANY;
+	else if (strcasecmp(argv[optind + 2], "sync") == 0)
+	    dict_flags |= DICT_FLAG_SYNC_UPDATE;
+	else
+	    usage(argv[0]);
+    }
     dict_name = argv[optind];
     dict = dict_open(dict_name, open_flags, dict_flags);
     dict_register(dict_name, dict);

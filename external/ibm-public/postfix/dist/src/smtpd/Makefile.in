@@ -312,6 +312,7 @@ smtpd_milter.o: ../../include/name_mask.h
 smtpd_milter.o: ../../include/quote_821_local.h
 smtpd_milter.o: ../../include/quote_flags.h
 smtpd_milter.o: ../../include/resolve_clnt.h
+smtpd_milter.o: ../../include/split_at.h
 smtpd_milter.o: ../../include/sys_defs.h
 smtpd_milter.o: ../../include/tls.h
 smtpd_milter.o: ../../include/vbuf.h
@@ -354,13 +355,16 @@ smtpd_proxy.o: ../../include/iostuff.h
 smtpd_proxy.o: ../../include/mail_error.h
 smtpd_proxy.o: ../../include/mail_params.h
 smtpd_proxy.o: ../../include/mail_proto.h
+smtpd_proxy.o: ../../include/mail_queue.h
 smtpd_proxy.o: ../../include/mail_stream.h
 smtpd_proxy.o: ../../include/milter.h
 smtpd_proxy.o: ../../include/msg.h
 smtpd_proxy.o: ../../include/myaddrinfo.h
+smtpd_proxy.o: ../../include/mymalloc.h
 smtpd_proxy.o: ../../include/name_code.h
 smtpd_proxy.o: ../../include/name_mask.h
 smtpd_proxy.o: ../../include/rec_type.h
+smtpd_proxy.o: ../../include/record.h
 smtpd_proxy.o: ../../include/smtp_stream.h
 smtpd_proxy.o: ../../include/stringops.h
 smtpd_proxy.o: ../../include/sys_defs.h

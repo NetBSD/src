@@ -1,4 +1,4 @@
-/*	$NetBSD: postdrop.c,v 1.1.1.1.2.2 2009/09/15 06:03:29 snj Exp $	*/
+/*	$NetBSD: postdrop.c,v 1.1.1.1.2.3 2010/11/21 18:31:33 riz Exp $	*/
 
 /*++
 /* NAME
@@ -235,6 +235,8 @@ int     main(int argc, char **argv)
     char   *junk;
     struct timeval start;
     int     saved_errno;
+    int     from_count = 0;
+    int     rcpt_count = 0;
 
     /*
      * Fingerprint executables and core dumps.
@@ -317,7 +319,8 @@ int     main(int argc, char **argv)
 	set_file_limit((off_t) var_message_limit);
 
     /*
-     * Strip the environment so we don't have to trust the C library.
+     * This program is installed with setgid privileges. Strip the process
+     * environment so that we don't have to trust the C library.
      */
     import_env = argv_split(var_import_environ, ", \t\r\n");
     clean_env(import_env->argv);
@@ -410,6 +413,12 @@ int     main(int argc, char **argv)
 	/* Override time information from the untrusted caller. */
 	if (rec_type == REC_TYPE_TIME)
 	    continue;
+	/* Check these at submission time instead of pickup time. */
+	if (rec_type == REC_TYPE_FROM)
+	    from_count++;
+	if (rec_type == REC_TYPE_RCPT)
+	    rcpt_count++;
+	/* Limit the attribute types that users may specify. */
 	if (rec_type == REC_TYPE_ATTR) {
 	    if ((error_text = split_nameval(vstring_str(buf), &attr_name,
 					    &attr_value)) != 0) {
@@ -455,9 +464,31 @@ int     main(int argc, char **argv)
     vstring_free(buf);
 
     /*
+     * As of Postfix 2.7 the pickup daemon discards mail without recipients.
+     * Such mail may enter the maildrop queue when "postsuper -r" is invoked
+     * before the queue manager deletes an already delivered message. Looking
+     * at file ownership is not a good way to make decisions on what mail to
+     * discard. Instead, the pickup server now requires that new submissions
+     * always have at least one recipient record.
+     * 
+     * The Postfix sendmail command already rejects mail without recipients.
+     * However, in the future postdrop may receive mail via other programs,
+     * so we add a redundant recipient check here for future proofing.
+     * 
+     * The test for the sender address is just for consistency of error
+     * reporting (report at submission time instead of pickup time). Besides
+     * the segment terminator records, there aren't any other mandatory
+     * records in a Postfix submission queue file.
+     */
+    if (from_count == 0 || rcpt_count == 0) {
+	status = CLEANUP_STAT_BAD;
+	mail_stream_cleanup(dst);
+    }
+
+    /*
      * Finish the file.
      */
-    if ((status = mail_stream_finish(dst, (VSTRING *) 0)) != 0) {
+    else if ((status = mail_stream_finish(dst, (VSTRING *) 0)) != 0) {
 	msg_warn("uid=%ld: %m", (long) uid);
 	postdrop_cleanup();
     }

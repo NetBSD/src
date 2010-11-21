@@ -1,4 +1,4 @@
-/*	$NetBSD: mail_server.h,v 1.1.1.1.2.2 2009/09/15 06:02:57 snj Exp $	*/
+/*	$NetBSD: mail_server.h,v 1.1.1.1.2.3 2010/11/21 18:31:31 riz Exp $	*/
 
 /*++
 /* NAME
@@ -37,12 +37,14 @@
 #define MAIL_SERVER_WATCHDOG	19
 
 #define MAIL_SERVER_IN_FLOW_DELAY	20
+#define MAIL_SERVER_SLOW_EXIT	21
 
 typedef void (*MAIL_SERVER_INIT_FN) (char *, char **);
 typedef int (*MAIL_SERVER_LOOP_FN) (char *, char **);
 typedef void (*MAIL_SERVER_EXIT_FN) (char *, char **);
 typedef void (*MAIL_SERVER_ACCEPT_FN) (char *, char **);
 typedef void (*MAIL_SERVER_DISCONN_FN) (VSTREAM *, char *, char **);
+typedef void (*MAIL_SERVER_SLOW_EXIT_FN) (char *, char **);
 
  /*
   * single_server.c
@@ -57,6 +59,14 @@ typedef void (*MULTI_SERVER_FN) (VSTREAM *, char *, char **);
 extern NORETURN multi_server_main(int, char **, MULTI_SERVER_FN,...);
 extern void multi_server_disconnect(VSTREAM *);
 extern int multi_server_drain(void);
+
+ /*
+  * event_server.c
+  */
+typedef void (*EVENT_SERVER_FN) (VSTREAM *, char *, char **);
+extern NORETURN event_server_main(int, char **, EVENT_SERVER_FN,...);
+extern void event_server_disconnect(VSTREAM *);
+extern int event_server_drain(void);
 
  /*
   * trigger_server.c

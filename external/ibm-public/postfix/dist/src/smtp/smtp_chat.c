@@ -1,4 +1,4 @@
-/*	$NetBSD: smtp_chat.c,v 1.1.1.1.2.2 2009/09/15 06:03:32 snj Exp $	*/
+/*	$NetBSD: smtp_chat.c,v 1.1.1.1.2.3 2010/11/21 18:31:35 riz Exp $	*/
 
 /*++
 /* NAME
@@ -20,7 +20,9 @@
 /*
 /*	void	smtp_chat_cmd(session, format, ...)
 /*	SMTP_SESSION *session;
-/*	char	*format;
+/*	const char *format;
+/*
+/*	DICT	*smtp_chat_resp_filter;
 /*
 /*	SMTP_RESP *smtp_chat_resp(session)
 /*	SMTP_SESSION *session;
@@ -71,6 +73,10 @@
 /*	the client and server get out of step due to a broken proxy
 /*	agent.
 /* .PP
+/*	smtp_chat_resp_filter specifies an optional filter to
+/*	transform one server reply line before it is parsed. The
+/*	filter is invoked once for each line of a multi-line reply.
+/*
 /*	smtp_chat_notify() sends a copy of the SMTP transaction log
 /*	to the postmaster for review. The postmaster notice is sent only
 /*	when delivery is possible immediately. It is an error to call
@@ -109,6 +115,7 @@
 #include <stdlib.h>
 #include <setjmp.h>
 #include <string.h>
+#include <limits.h>
 
 /* Utility library. */
 
@@ -135,6 +142,11 @@
 
 #include "smtp.h"
 
+ /*
+  * Server reply transformations.
+  */
+DICT   *smtp_chat_resp_filter;
+
 /* smtp_chat_init - initialize SMTP transaction log */
 
 void    smtp_chat_init(SMTP_SESSION *session)
@@ -154,7 +166,8 @@ void    smtp_chat_reset(SMTP_SESSION *session)
 
 /* smtp_chat_append - append record to SMTP transaction log */
 
-static void smtp_chat_append(SMTP_SESSION *session, char *direction, char *data)
+static void smtp_chat_append(SMTP_SESSION *session, const char *direction,
+			     const char *data)
 {
     char   *line;
 
@@ -167,7 +180,7 @@ static void smtp_chat_append(SMTP_SESSION *session, char *direction, char *data)
 
 /* smtp_chat_cmd - send an SMTP command */
 
-void    smtp_chat_cmd(SMTP_SESSION *session, char *fmt,...)
+void    smtp_chat_cmd(SMTP_SESSION *session, const char *fmt,...)
 {
     va_list ap;
 
@@ -228,6 +241,9 @@ SMTP_RESP *smtp_chat_resp(SMTP_SESSION *session)
     int     last_char;
     int     three_digs = 0;
     size_t  len;
+    const char *new_reply;
+    int     chat_append_flag;
+    int     chat_append_skipped = 0;
 
     /*
      * Initialize the response data buffer.
@@ -256,17 +272,41 @@ SMTP_RESP *smtp_chat_resp(SMTP_SESSION *session)
 	 * Defend against a denial of service attack by limiting the amount
 	 * of multi-line text that we are willing to store.
 	 */
-	if (LEN(rdata.str_buf) < var_line_limit) {
-	    if (LEN(rdata.str_buf))
-		VSTRING_ADDCH(rdata.str_buf, '\n');
-	    vstring_strcat(rdata.str_buf, STR(session->buffer));
+	chat_append_flag = (LEN(rdata.str_buf) < var_line_limit);
+	if (chat_append_flag)
 	    smtp_chat_append(session, "In:  ", STR(session->buffer));
+	else {
+	    if (chat_append_skipped == 0)
+		msg_warn("%s: multi-line response longer than %d %.30s...",
+		  session->namaddrport, var_line_limit, STR(rdata.str_buf));
+	    if (chat_append_skipped < INT_MAX)
+		chat_append_skipped++;
 	}
 
 	/*
-	 * Parse into code and text. Ignore unrecognized garbage. This means
-	 * that any character except space (or end of line) will have the
-	 * same effect as the '-' line continuation character.
+	 * Server reply substitution, for fault-injection testing, or for
+	 * working around broken systems. Use with care.
+	 */
+	if (smtp_chat_resp_filter != 0) {
+	    new_reply = dict_get(smtp_chat_resp_filter, STR(session->buffer));
+	    if (new_reply != 0) {
+		msg_info("%s: replacing server reply \"%s\" with \"%s\"",
+		     session->namaddrport, STR(session->buffer), new_reply);
+		vstring_strcpy(session->buffer, new_reply);
+		if (chat_append_flag) {
+		    smtp_chat_append(session, "Replaced-by: ", "");
+		    smtp_chat_append(session, "     ", new_reply);
+		}
+	    }
+	}
+	if (chat_append_flag) {
+	    if (LEN(rdata.str_buf))
+		VSTRING_ADDCH(rdata.str_buf, '\n');
+	    vstring_strcat(rdata.str_buf, STR(session->buffer));
+	}
+
+	/*
+	 * Parse into code and text. Do not ignore garbage (see below).
 	 */
 	for (cp = STR(session->buffer); *cp && ISDIGIT(*cp); cp++)
 	     /* void */ ;

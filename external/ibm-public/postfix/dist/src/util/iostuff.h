@@ -1,4 +1,4 @@
-/*	$NetBSD: iostuff.h,v 1.1.1.1.2.2 2009/09/15 06:03:59 snj Exp $	*/
+/*	$NetBSD: iostuff.h,v 1.1.1.1.2.3 2010/11/21 18:31:37 riz Exp $	*/
 
 #ifndef _IOSTUFF_H_INCLUDED_
 #define _IOSTUFF_H_INCLUDED_
@@ -46,6 +46,12 @@ extern void set_inet_windowsize(int, int);
 
 #define CLOSE_ON_EXEC	1
 #define PASS_ON_EXEC	0
+
+extern int unix_pass_fd_fix;
+extern void set_unix_pass_fd_fix(const char *);
+
+#define UNIX_PASS_FD_FIX_NONE		(0)
+#define UNIX_PASS_FD_FIX_CMSG_LEN	(1<<0)
 
 /* LICENSE
 /* .ad

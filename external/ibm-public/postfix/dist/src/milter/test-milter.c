@@ -1,4 +1,4 @@
-/*	$NetBSD: test-milter.c,v 1.1.1.1.2.2 2009/09/15 06:03:20 snj Exp $	*/
+/*	$NetBSD: test-milter.c,v 1.1.1.1.2.3 2010/11/21 18:31:32 riz Exp $	*/
 
 /*++
 /* NAME
@@ -41,7 +41,7 @@
 /*	Insert header at specified position.
 /* .IP "\fB-l\fR"
 /*	Header values include leading space. Specify this option
-/*	before \fB-i\fR or \fB-r\fR.
+/*	before \fB-i\fR or \fB-h\fR.
 /* .IP "\fB-m connect|helo|mail|rcpt|data|eoh|eom\fR"
 /*	The protocol stage that receives the list of macros specified
 /*	with \fB-M\fR.  The default protocol stage is \fBconnect\fR.
@@ -344,8 +344,6 @@ static sfsistat test_eom(SMFICTX *ctx)
 #ifdef SMFIR_CHGFROM
     if (chg_from != 0 && smfi_chgfrom(ctx, chg_from, "whatever") == MI_FAILURE)
 	fprintf(stderr, "smfi_chgfrom failed\n");
-    else
-	printf("smfi_chgfrom OK\n");
 #endif
 #ifdef SMFIR_INSHEADER
     if (ins_hdr && smfi_insheader(ctx, ins_idx, ins_hdr, ins_val) == MI_FAILURE)

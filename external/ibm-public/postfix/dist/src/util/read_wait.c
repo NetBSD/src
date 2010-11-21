@@ -1,4 +1,4 @@
-/*	$NetBSD: read_wait.c,v 1.1.1.1.2.2 2009/09/15 06:04:02 snj Exp $	*/
+/*	$NetBSD: read_wait.c,v 1.1.1.1.2.3 2010/11/21 18:31:37 riz Exp $	*/
 
 /*++
 /* NAME
@@ -17,7 +17,8 @@
 /*
 /*	Arguments:
 /* .IP fd
-/*	File descriptor in the range 0..FD_SETSIZE.
+/*	File descriptor in the range 0..FD_SETSIZE (on systems that
+/*	need to use select(2)).
 /* .IP timeout
 /*	If positive, deadline in seconds. A zero value effects a poll.
 /*	A negative value means wait until something happens.

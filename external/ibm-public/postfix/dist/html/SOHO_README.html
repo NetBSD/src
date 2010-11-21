@@ -44,11 +44,11 @@ Internet hostname</a>
 
 <ul>
 
-<li><a href="#client_sasl">Enabling SASL authentication in the
+<li><a href="#client_sasl_enable">Enabling SASL authentication in the
 Postfix SMTP client</a></li>
 
-<li><a href="#client_sasl_sender">Supporting multiple ISP accounts
-in the Postfix SMTP client</a></li>
+<li><a href="#client_sasl_sender">Configuring Sender-Dependent SASL
+authentication </a></li>
 
 </ul>
 
@@ -180,7 +180,7 @@ discussed the first half of this document. </p>
  9 /etc/postfix/canonical:
 10     your-login-name    your-account@your-isp.com
 11 
-12 /etc/postfix/<a href="virtual.8.html">virtual</a>:
+12 /etc/postfix/virtual:
 13     your-account@your-isp.com       your-login-name
 </pre>
 </blockquote>
@@ -214,124 +214,144 @@ whenever you change the canonical table. </p>
 <p> Execute the command "<b>postmap /etc/postfix/virtual</b>"
 whenever you change the virtual table. </p>
 
-<h2><a name="client_sasl">Enabling SASL authentication in the
-Postfix SMTP client</a></h2>
+<h2><a name="client_sasl_enable">Enabling SASL authentication in the
+Postfix SMTP/LMTP client</a></h2>
 
-<p> Turn on client-side SASL authentication, and specify a table
-with per-host or per-destination username and password information.
-The Postfix SMTP client first searches the table for an entry with
-the remote SMTP server hostname; if no entry is found, then the
-Postfix SMTP client searches the table for
-an entry with the next-hop destination.  Usually, that is the
-right-hand part of an email address, but it can also be the information
-that is specified with the <a href="postconf.5.html#relayhost">relayhost</a> parameter or with a <a href="transport.5.html">transport(5)</a>
-table. </p>
+<p> This section shows a typical scenario where the Postfix SMTP
+client sends all messages via a mail gateway server that requires
+SASL authentication. </p>
+
+<blockquote>
+
+<strong> Trouble solving tips: </strong>
+
+<ul>
+
+<li> <p> If your SASL logins fail with "SASL authentication failure:
+No worthy mechs found" in the mail logfile, then see the section
+"<a href="SASL_README.html#client_sasl_policy">Postfix SMTP/LMTP
+client policy - SASL mechanism <em>properties</em></a>".
+
+<li> <p> For a solution to a more obscure class of SASL authentication
+failures, see "<a href="SASL_README.html#client_sasl_filter">Postfix
+SMTP/LMTP client policy - SASL mechanism <em>names</em></a>".
+
+</ul>
+
+</blockquote>
+
+<p> To make the example more readable we introduce it in two parts.
+The first part takes care of the basic configuration, while the
+second part sets up the username/password information.  </p>
 
 <blockquote>
 <pre>
 /etc/postfix/<a href="postconf.5.html">main.cf</a>:
     <a href="postconf.5.html#smtp_sasl_auth_enable">smtp_sasl_auth_enable</a> = yes
-    <a href="postconf.5.html#smtp_sasl_password_maps">smtp_sasl_password_maps</a> = hash:/etc/postfix/sasl_passwd
-    <a href="postconf.5.html#smtp_sasl_type">smtp_sasl_type</a> = cyrus
-    <a href="postconf.5.html#relayhost">relayhost</a> = [mail.myisp.net]
+    <a href="postconf.5.html#relayhost">relayhost</a> = [mail.isp.example]
     # Alternative form:
-    # <a href="postconf.5.html#relayhost">relayhost</a> = [mail.myisp.net]:submission
-
-/etc/postfix/sasl_passwd:
-    [mail.myisp.net]            username:password
-    [mail.myisp.net]:submission username:password
+    # <a href="postconf.5.html#relayhost">relayhost</a> = [mail.isp.example]:submission
+    <a href="postconf.5.html#smtp_sasl_password_maps">smtp_sasl_password_maps</a> = hash:/etc/postfix/sasl_passwd
 </pre>
 </blockquote>
 
-<p> Notes: </p>
+<ul>
+
+<li> <p> The <code><a href="postconf.5.html#smtp_sasl_auth_enable">smtp_sasl_auth_enable</a></code> setting enables
+client-side authentication. We will configure the client's username
+and password information in the second part of the example. </p>
+</li>
+
+<li> <p> The <code><a href="postconf.5.html#relayhost">relayhost</a></code> setting forces the Postfix SMTP
+to send all remote messages to the specified mail server instead
+of trying to deliver them directly to their destination. </p> </li>
+
+<li> <p> In the <code><a href="postconf.5.html#relayhost">relayhost</a></code> setting, the "<code>[</code>"
+and "<code>]</code>" prevent the Postfix SMTP client from looking
+up MX (mail exchanger) records for the enclosed name.  </p> </li>
+
+<li> <p> The <code><a href="postconf.5.html#relayhost">relayhost</a></code> destination may also specify a
+non-default TCP port. For example, the alternative form
+<code>[mail.isp.example]:submission</code> tells Postfix to connect
+to TCP network port 587, which is reserved for email client
+applications.  </p> </li>
+
+<li> <p> The Postfix SMTP client is compatible with SMTP servers
+that use the non-standard "<code>AUTH=<em>method.</em>...</code>"
+syntax in response to the EHLO command; this requires no additional
+Postfix client configuration. </p> </li>
+
+<li> <p> The Postfix SMTP client does not support the obsolete
+"wrappermode" protocol, which uses TCP port <code>465</code> on the
+SMTP server.  See <a href="TLS_README.html">TLS_README</a> for a solution that uses the
+<code>stunnel</code> command.  </p> </li>
+
+<li> <p> With the <code><a href="postconf.5.html#smtp_sasl_password_maps">smtp_sasl_password_maps</a></code> parameter,
+we configure the Postfix SMTP client to send username and password
+information to the mail gateway server. As discussed in the next
+section, the Postfix SMTP client supports multiple ISP accounts.
+For this reason the username and password are stored in a table
+that contains one username/password combination for each mail gateway
+server.  </p>
+
+</ul>
+
+<blockquote>
+<pre>
+/etc/postfix/sasl_passwd:
+    # destination                   credentials
+    [mail.isp.example]              username:password
+    # Alternative form:
+    # [mail.isp.example]:submission username:password
+</pre>
+</blockquote>
+
+<blockquote>
+
+<strong>Important</strong>
+
+<p> Keep the SASL client password file in <code>/etc/postfix</code>,
+and make the file read+write only for <code>root</code> to protect
+the username/password combinations against other users. The Postfix
+SMTP client will still be able to read the SASL client passwords.
+It opens the file as user <code>root</code> before it drops privileges,
+and before entering an optional chroot jail. </p>
+
+</blockquote>
 
 <ul>
 
-<li> <p> The "submission" destination port tells Postfix to send
-mail via TCP network port 587, which is normally reserved for email
-clients. The default is to send mail to the "smtp" destination port
-(TCP port 25), which is used for receiving mail across the internet.
-If you use an explicit destination port in <a href="postconf.5.html">main.cf</a>, then you must
-use the same form also in the <a href="postconf.5.html#smtp_sasl_password_maps">smtp_sasl_password_maps</a> file.  </p>
+<li> <p> Use the <code>postmap</code> command whenever you
+change the <code>/etc/postfix/sasl_passwd</code> file. </p> </li>
 
-<li> <p> Postfix does not deliver mail via TCP port 465 (the obsolete
-"wrappermode" protocol). See <a href="TLS_README.html">TLS_README</a> for a solution that uses the
-"stunnel" command. </p>
+<li> <p> If you specify the "<code>[</code>" and "<code>]</code>"
+in the <code><a href="postconf.5.html#relayhost">relayhost</a></code> destination, then you must use the
+same form in the <code><a href="postconf.5.html#smtp_sasl_password_maps">smtp_sasl_password_maps</a></code> file.  </p>
+</li>
 
-<li> <p> The "[" and "]" prevent Postfix from looking up the MX
-(mail exchanger) records for the enclosed name.  If you use this
-form in <a href="postconf.5.html">main.cf</a>, then you must use the same form also in the
-<a href="postconf.5.html#smtp_sasl_password_maps">smtp_sasl_password_maps</a> file. </p>
+<li> <p> If you specify a non-default TCP Port (such as
+"<code>:submission</code>" or "<code>:587</code>") in the
+<code><a href="postconf.5.html#relayhost">relayhost</a></code> destination, then you must use the same form
+in the <code><a href="postconf.5.html#smtp_sasl_password_maps">smtp_sasl_password_maps</a></code> file.  </p> </li>
 
-<li> <p> The Postfix SMTP client opens the SASL client password
-file before entering the optional chroot jail, so you can keep the
-file in /etc/postfix and set permissions read / write only for root
-to keep the username:password combinations away from other system
-users. </p>
+</ul>
 
-<li> <p> Specify <b>dbm</b> instead of <b>hash</b> if your system
-uses <b>dbm</b> files instead of <b>db</b> files. To find out what
-lookup tables Postfix supports, use the command "<b>postconf -m</b>".
+<h2><a name="client_sasl_sender">Configuring Sender-Dependent SASL
+authentication</a></h2>
+
+<p> Postfix supports different ISP accounts for different sender
+addresses (version 2.3 and later).  This can be useful when one
+person uses the same machine for work and for personal use, or when
+people with different ISP accounts share the same Postfix server.
 </p>
 
-<li> <p> Execute the command "<b>postmap /etc/postfix/sasl_passwd</b>"
-whenever you change the sasl_passwd table. </p>
-
-</ul>
-
-<p> Workarounds: </p>
-
-<ul>
-
-<li> <p> Some remote SMTP servers support PLAIN or LOGIN authentication only.
-By default, the Postfix SMTP client does not use authentication
-methods that send plaintext passwords, and defers delivery with
-the following error message:  "Authentication failed: cannot SASL
-authenticate to server". To enable plaintext authentication specify,
-for example: </p>
-
-<blockquote>
-<pre>
-/etc/postfix/<a href="postconf.5.html">main.cf</a>:
-    <a href="postconf.5.html#smtp_sasl_security_options">smtp_sasl_security_options</a> = noanonymous
-</pre>
-</blockquote>
-
-<li> <p> Some remote SMTP servers announce authentication mechanisms
-that don't actually work. It is possible via the <a href="postconf.5.html#smtp_sasl_mechanism_filter">smtp_sasl_mechanism_filter</a>
-parameter to restrict the list of server mechanisms that the Postfix
-SMTP client will take into consideration:  </p>
-
-<blockquote>
-<pre>
-/etc/postfix/<a href="postconf.5.html">main.cf</a>:
-    <a href="postconf.5.html#smtp_sasl_mechanism_filter">smtp_sasl_mechanism_filter</a> = !gssapi, !external, static:all
-</pre>
-</blockquote>
-
-<p> In the above example, the Postfix SMTP client will decline to
-use mechanisms
-that require special infrastructure such as Kerberos or TLS. </p>
-
-<li> <p> The Postfix SMTP client is backwards compatible with SMTP
-servers that use the non-standard "AUTH=method..." syntax in response
-to the EHLO command; there is no Postfix client configuration needed
-to work around it. </p>
-
-</ul>
-
-<h2><a name="client_sasl_sender">Supporting multiple ISP accounts
-in the Postfix SMTP client</a></h2>
-
-<p> Postfix version 2.3 supports multiple ISP accounts. This can
-be useful when one person uses the same machine for work and for
-personal use, or when people with different ISP accounts share the
-same Postfix server.  To make this possible, Postfix 2.3 supports
-per-sender SASL passwords and per-sender relay hosts. In the example
-below, Postfix will search the SASL password file by sender before
-it searches that same file by destination. Likewise, Postfix will
-search the per-sender <a href="postconf.5.html#relayhost">relayhost</a> file, and use the default <a href="postconf.5.html#relayhost">relayhost</a>
-only as a final resort.  </p>
+<p> To make this possible, Postfix supports per-sender SASL passwords
+and per-sender relay hosts. In the example below, the Postfix SMTP
+client will search the SASL password file by sender address before
+it searches that same file by destination.  Likewise, the Postfix
+<a href="trivial-rewrite.8.html">trivial-rewrite(8)</a> daemon will search the per-sender <a href="postconf.5.html#relayhost">relayhost</a> file,
+and use the default <code><a href="postconf.5.html#relayhost">relayhost</a></code> setting only as a final
+resort.  </p>
 
 <blockquote>
 <pre>
@@ -340,26 +360,33 @@ only as a final resort.  </p>
     <a href="postconf.5.html#sender_dependent_relayhost_maps">sender_dependent_relayhost_maps</a> = hash:/etc/postfix/sender_relay
     <a href="postconf.5.html#smtp_sasl_auth_enable">smtp_sasl_auth_enable</a> = yes
     <a href="postconf.5.html#smtp_sasl_password_maps">smtp_sasl_password_maps</a> = hash:/etc/postfix/sasl_passwd
-    <a href="postconf.5.html#relayhost">relayhost</a> = [mail.myisp.net]
+    <a href="postconf.5.html#relayhost">relayhost</a> = [mail.isp.example]
     # Alternative form:
-    # <a href="postconf.5.html#relayhost">relayhost</a> = [mail.myisp.net]:submission
-
-/etc/postfix/sasl_passwd:
-    # Per-sender authentication; see also /etc/postfix/sender_relay.
-    user1@example.com           username2:password2
-    user2@example.net           username2:password2
-    # Login information for the default <a href="postconf.5.html#relayhost">relayhost</a>.
-    [mail.myisp.net]            username:password
-    [mail.myisp.net]:submission username:password
-
-/etc/postfix/sender_relay:
-    # Per-sender provider; see also /etc/postfix/sasl_passwd.
-    user1@example.com           [mail.example.com]:submission
-    user2@example.net           [mail.example.net]
+    # <a href="postconf.5.html#relayhost">relayhost</a> = [mail.isp.example]:submission
 </pre>
 </blockquote>
 
-<p> Notes: </p>
+<blockquote>
+<pre>
+/etc/postfix/sasl_passwd:
+    # Per-sender authentication; see also /etc/postfix/sender_relay.
+    user1@example.com               username2:password2
+    user2@example.net               username2:password2
+    # Login information for the default <a href="postconf.5.html#relayhost">relayhost</a>.
+    [mail.isp.example]              username:password
+    # Alternative form:
+    # [mail.isp.example]:submission username:password
+</pre>
+</blockquote>
+
+<blockquote>
+<pre>
+/etc/postfix/sender_relay:
+    # Per-sender provider; see also /etc/postfix/sasl_passwd.
+    user1@example.com               [mail.example.com]:submission
+    user2@example.net               [mail.example.net]
+</pre>
+</blockquote>
 
 <ul>
 
@@ -367,15 +394,14 @@ only as a final resort.  </p>
 tables into one single MySQL database, and configure different
 Postfix queries to extract the appropriate information. </p>
 
-<li> <p> Specify <b>dbm</b> instead of <b>hash</b> if your system
-uses <b>dbm</b> files instead of <b>db</b> files. To find out what
-lookup tables Postfix supports, use the command "<b>postconf -m</b>".
-</p>
+<li> <p> Specify dbm instead of hash if your system uses dbm files
+instead of db files. To find out what lookup tables Postfix supports,
+use the command "postconf -m". </p>
 
-<li> <p> Execute the command "<b>postmap /etc/postfix/sasl_passwd</b>"
+<li> <p> Execute the command "postmap /etc/postfix/sasl_passwd"
 whenever you change the sasl_passwd table. </p>
 
-<li> <p> Execute the command "<b>postmap /etc/postfix/sender_relay</b>"
+<li> <p> Execute the command "postmap /etc/postfix/sender_relay"
 whenever you change the sender_relay table. </p>
 
 </ul>

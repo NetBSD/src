@@ -1,4 +1,4 @@
-/*	$NetBSD: recipient.c,v 1.1.1.1.2.2 2009/09/15 06:02:57 snj Exp $	*/
+/*	$NetBSD: recipient.c,v 1.1.1.1.2.3 2010/11/21 18:31:31 riz Exp $	*/
 
 /*++
 /* NAME
@@ -232,47 +232,10 @@ int     deliver_recipient(LOCAL_STATE state, USER_ATTR usr_attr)
      * normal bounce sending procedure, but would simplify the code below.
      */
     if (delivered_hdr_find(state.loop_info, state.msg_attr.rcpt.address)) {
-	VSTRING *canon_owner = 0;
-
-	if (var_ownreq_special) {
-	    char   *stripped_recipient;
-	    char   *owner_alias;
-	    const char *owner_expansion;
-
-#define FIND_OWNER(lhs, rhs, addr) { \
-	lhs = concatenate("owner-", addr, (char *) 0); \
-	(void) split_at_right(lhs, '@'); \
-	rhs = maps_find(alias_maps, lhs, DICT_FLAG_NONE); \
-    }
-
-	    FIND_OWNER(owner_alias, owner_expansion, state.msg_attr.rcpt.address);
-	    if (owner_expansion == 0
-	    && (stripped_recipient = strip_addr(state.msg_attr.rcpt.address,
-						(char **) 0,
-						*var_rcpt_delim)) != 0) {
-		myfree(owner_alias);
-		FIND_OWNER(owner_alias, owner_expansion, stripped_recipient);
-		myfree(stripped_recipient);
-	    }
-	    if (owner_expansion != 0) {
-		canon_owner = canon_addr_internal(vstring_alloc(10),
-						  var_exp_own_alias ?
-					     owner_expansion : owner_alias);
-		SET_OWNER_ATTR(state.msg_attr, STR(canon_owner), state.level);
-	    }
-	    myfree(owner_alias);
-	}
-	dsb_simple(state.msg_attr.why, "5.4.6",	"mail forwarding loop for %s",
+	dsb_simple(state.msg_attr.why, "5.4.6", "mail forwarding loop for %s",
 		   state.msg_attr.rcpt.address);
-	if (canon_owner) {
-	    rcpt_stat = bounce_one(BOUNCE_FLAGS(state.request),
-				   BOUNCE_ONE_ATTR(state.msg_attr));
-	    vstring_free(canon_owner);
-	} else {
-	    rcpt_stat = bounce_append(BOUNCE_FLAGS(state.request),
-				      BOUNCE_ATTR(state.msg_attr));
-	}
-	return (rcpt_stat);
+	/* Account for possible owner- sender address override. */
+	return (bounce_workaround(state));
     }
 
     /*

@@ -336,19 +336,60 @@ queues.
 
   * The verify(8) server verifies that a sender or recipient address is
     deliverable before the smtpd(8) server accepts it. The verify(8) server
-    injects probe messages into the Postfix queue and processes status updates
-    from delivery agents and/or queue manager. This process is described in the
-    ADDRESS_VERIFICATION_README document. The verify(8) service is available
-    with Postfix version 2.1 and later.
+    queries a cache with address verification results. If a result is not
+    found, the verify(8) server injects a probe message into the Postfix queue
+    and processes the status update from a delivery agent or queue manager.
+    This process is described in the ADDRESS_VERIFICATION_README document. The
+    verify(8) service is available with Postfix version 2.1 and later.
 
-                                                        qmgr(8)      Delivery
-    Network -> smtpd(8) <-> verify(8) ->  cleanup(8) -> Postfix  ->   agents
-                                                         queue
+                               
+                                             probe     Postfix
+                                            message ->   mail
+                                                        queue
+    Network -> smtpd(8) <->   verify(8)  ->
 
-                                      \                      |     /
-                                                             v
-                                        \                        /
-                                                <-   <-
+                                                            |
+                                                            v
+
+                                         <-  probe     Postfix  -> Local
+                                            status  <- delivery -> Network
+                                    ^                   agents
+                                    |
+                                    v
+                                          
+
+                              Address
+                            verification
+                               cache
+
+  * The postscreen(8) server can be put "in front" of Postfix smtpd(8)
+    processes. Its purpose is to accept connections from the network and to
+    decide what SMTP clients are allowed to talk to Postfix. According to the
+    2008 MessageLabs annual report, 81% of all email was spam, and 90% of that
+    was sent by botnets. While postscreen(8) keeps the zombies away, more smtpd
+    (8) processes remain available for legitimate clients.
+
+    The postscreen(8) server is still evolving, and is likely to undergo
+    changes that break compatibility with earlier versions. For this reason the
+    postscreen(8) server is not installed with the stable Postfix release.
+
+    zombie
+
+           \
+
+    zombie -                    - smtpd(8)
+
+             \               /
+
+    other  --- postscreen(8)
+
+             /               \
+
+    other  -                    - smtpd(8)
+
+           /
+
+    zombie
 
 PPoossttffiixx ssuuppppoorrtt ccoommmmaannddss
 
