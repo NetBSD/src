@@ -1,4 +1,4 @@
-#	$NetBSD: mod.mk,v 1.6 2008/10/27 07:48:27 mrg Exp $
+#	$NetBSD: mod.mk,v 1.6.2.1 2010/11/21 17:32:52 riz Exp $
 
 NOLINT=		# don't build a lint library
 NOPROFILE=	# don't build a profile library
@@ -16,6 +16,7 @@ LIBDIR=/usr/lib/security
 WARNS=3
 
 .if ${MKPIC} != "no"
+LIBDPLIBS+=   pam     ${.CURDIR}/../../libpam
 .PRECIOUS: ${DESTDIR}${LIBDIR}/${LIB}.so.${SHLIB_MAJOR}
 libinstall:: ${DESTDIR}${LIBDIR}/${LIB}.so.${SHLIB_MAJOR}
 .else
