@@ -1,5 +1,5 @@
-.\"	$NetBSD: sftp.1,v 1.4 2010/05/14 01:44:05 joerg Exp $
-.\" $OpenBSD: sftp.1,v 1.69 2008/12/09 15:35:00 sobrado Exp $
+.\"	$NetBSD: sftp.1,v 1.5 2010/11/21 18:29:49 adam Exp $
+.\" $OpenBSD: sftp.1,v 1.83 2010/02/08 10:50:20 markus Exp $
 .\"
 .\" Copyright (c) 2001 Damien Miller.  All rights reserved.
 .\"
@@ -23,7 +23,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd December 9, 2008
+.Dd February 8, 2010
 .Dt SFTP 1
 .Os
 .Sh NAME
@@ -32,12 +32,15 @@
 .Sh SYNOPSIS
 .Nm sftp
 .Bk -words
-.Op Fl 1Cv
+.Op Fl 1246Cpqrv
 .Op Fl B Ar buffer_size
 .Op Fl b Ar batchfile
+.Op Fl c Ar cipher
+.Op Fl D Ar sftp_server_path
 .Op Fl F Ar ssh_config
+.Op Fl i Ar identity_file
 .Op Fl o Ar ssh_option
-.Op Fl P Ar sftp_server_path
+.Op Fl P Ar port
 .Op Fl R Ar num_requests
 .Op Fl S Ar program
 .Op Fl s Ar subsystem | sftp_server
@@ -88,6 +91,16 @@ The options are as follows:
 .Bl -tag -width Ds
 .It Fl 1
 Specify the use of protocol version 1.
+.It Fl 2
+Specify the use of protocol version 2.
+.It Fl 4
+Forces
+.Nm
+to use IPv4 addresses only.
+.It Fl 6
+Forces
+.Nm
+to use IPv6 addresses only.
 .It Fl B Ar buffer_size
 Specify the size of the buffer that
 .Nm
@@ -125,10 +138,24 @@ character (for example,
 Enables compression (via ssh's
 .Fl C
 flag).
+.It Fl c Ar cipher
+Selects the cipher to use for encrypting the data transfers.
+This option is directly passed to
+.Xr ssh 1 .
+.It Fl D Ar sftp_server_path
+Connect directly to a local sftp server
+(rather than via
+.Xr ssh 1 ) .
+This option may be useful in debugging the client and server.
 .It Fl F Ar ssh_config
 Specifies an alternative
 per-user configuration file for
 .Xr ssh 1 .
+This option is directly passed to
+.Xr ssh 1 .
+.It Fl i Ar identity_file
+Selects the file from which the identity (private key) for public key
+authentication is read.
 This option is directly passed to
 .Xr ssh 1 .
 .It Fl o Ar ssh_option
@@ -176,6 +203,7 @@ For full details of the options listed below, and their possible values, see
 .It NoHostAuthenticationForLocalhost
 .It NumberOfPasswordPrompts
 .It PasswordAuthentication
+.It PKCS11Provider
 .It Port
 .It PreferredAuthentications
 .It Protocol
@@ -187,7 +215,6 @@ For full details of the options listed below, and their possible values, see
 .It SendEnv
 .It ServerAliveInterval
 .It ServerAliveCountMax
-.It SmartcardDevice
 .It StrictHostKeyChecking
 .It TCPKeepAlive
 .It UsePrivilegedPort
@@ -195,17 +222,26 @@ For full details of the options listed below, and their possible values, see
 .It UserKnownHostsFile
 .It VerifyHostKeyDNS
 .El
-.It Fl P Ar sftp_server_path
-Connect directly to a local sftp server
-(rather than via
-.Xr ssh 1 ) .
-This option may be useful in debugging the client and server.
+.It Fl P Ar port
+Specifies the port to connect to on the remote host.
+.It Fl p
+Preserves modification times, access times, and modes from the
+original files transferred.
+.It Fl q
+Quiet mode: disables the progress meter as well as warning and
+diagnostic messages from
+.Xr ssh 1 .
 .It Fl R Ar num_requests
 Specify how many requests may be outstanding at any one time.
 Increasing this may slightly improve file transfer speed
 but will increase memory usage.
 The default is 256 outstanding requests providing for 8MB
 of outstanding data with a 32KB buffer.
+.It Fl r
+Recursively copy entire directories when uploading and downloading.
+Note that
+.Nm
+does not follow symbolic links encountered in the tree traversal.
 .It Fl S Ar program
 Name of the
 .Ar program
@@ -292,7 +328,7 @@ extension.
 .It Ic exit
 Quit
 .Nm sftp .
-.It Ic get Oo Fl P Oc Ar remote-path Oo Ar local-path Oc
+.It Ic get Oo Fl Ppr Oc Ar remote-path Oo Ar local-path Oc
 Retrieve the
 .Ar remote-file
 and store it on the local machine.
@@ -308,10 +344,20 @@ If it does and
 is specified, then
 .Ar local-path
 must specify a directory.
-If the
+.Pp
+If either the
 .Fl P
+or
+.Fl p
 flag is specified, then full file permissions and access times are
 copied too.
+.Pp
+If the
+.Fl r
+flag is specified then directories will be copied recursively.
+Note that
+.Nm
+does not follow symbolic links when performing recursive transfers.
 .It Ic help
 Display help text.
 .It Ic lcd Ar path
@@ -341,7 +387,7 @@ to
 .Ar newpath .
 .It Ic lpwd
 Print local working directory.
-.It Ic ls Oo Fl 1aflnrSt Oc Oo Ar path Oc
+.It Ic ls Oo Fl 1afhlnrSt Oc Oo Ar path Oc
 Display a remote directory listing of either
 .Ar path
 or the current directory if
@@ -364,6 +410,11 @@ List files beginning with a dot
 .It Fl f
 Do not sort the listing.
 The default sort order is lexicographical.
+.It Fl h
+When used with a long format option, use unit suffixes: Byte, Kilobyte,
+Megabyte, Gigabyte, Terabyte, Petabyte, and Exabyte in order to reduce
+the number of digits to four or fewer using powers of 2 for sizes (K=1024,
+M=1048576, etc.).
 .It Fl l
 Display additional details including permissions
 and ownership information.
@@ -385,7 +436,7 @@ Create remote directory specified by
 .Ar path .
 .It Ic progress
 Toggle display of progress meter.
-.It Ic put Oo Fl P Oc Ar local-path Oo Ar remote-path Oc
+.It Ic put Oo Fl Ppr Oc Ar local-path Oo Ar remote-path Oc
 Upload
 .Ar local-path
 and store it on the remote machine.
@@ -400,10 +451,20 @@ If it does and
 is specified, then
 .Ar remote-path
 must specify a directory.
-If the
+.Pp
+If ether the
 .Fl P
-flag is specified, then the file's full permission and access time are
+or
+.Fl p
+flag is specified, then full file permissions and access times are
 copied too.
+.Pp
+If the
+.Fl r
+flag is specified then directories will be copied recursively.
+Note that
+.Nm
+does not follow symbolic links when performing recursive transfers.
 .It Ic pwd
 Display remote working directory.
 .It Ic quit

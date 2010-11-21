@@ -1,5 +1,5 @@
-/*	$NetBSD: misc.c,v 1.3 2010/05/10 20:28:05 jnemeth Exp $	*/
-/* $OpenBSD: misc.c,v 1.71 2009/02/21 19:32:04 tobias Exp $ */
+/*	$NetBSD: misc.c,v 1.4 2010/11/21 18:29:48 adam Exp $	*/
+/* $OpenBSD: misc.c,v 1.80 2010/07/21 02:10:58 djm Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  * Copyright (c) 2005,2006 Damien Miller.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: misc.c,v 1.3 2010/05/10 20:28:05 jnemeth Exp $");
+__RCSID("$NetBSD: misc.c,v 1.4 2010/11/21 18:29:48 adam Exp $");
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
@@ -175,6 +175,7 @@ strdelim(char **s)
 			return (NULL);		/* no matching quote */
 		} else {
 			*s[0] = '\0';
+			*s += strspn(*s + 1, WHITESPACE) + 1;
 			return (old);
 		}
 	}
@@ -416,7 +417,7 @@ colon(char *cp)
 	int flag = 0;
 
 	if (*cp == ':')		/* Leading colon is part of file name. */
-		return (0);
+		return NULL;
 	if (*cp == '[')
 		flag = 1;
 
@@ -428,9 +429,9 @@ colon(char *cp)
 		if (*cp == ':' && !flag)
 			return (cp);
 		if (*cp == '/')
-			return (0);
+			return NULL;
 	}
-	return (0);
+	return NULL;
 }
 
 /* function to assist building execv() arguments */
@@ -556,11 +557,11 @@ char *
 percent_expand(const char *string, ...)
 {
 #define EXPAND_MAX_KEYS	16
+	u_int num_keys, i, j;
 	struct {
 		const char *key;
 		const char *repl;
 	} keys[EXPAND_MAX_KEYS];
-	u_int num_keys, i, j;
 	char buf[4096];
 	va_list ap;
 
@@ -572,12 +573,11 @@ percent_expand(const char *string, ...)
 			break;
 		keys[num_keys].repl = va_arg(ap, char *);
 		if (keys[num_keys].repl == NULL)
-			fatal("percent_expand: NULL replacement");
+			fatal("%s: NULL replacement", __func__);
 	}
+	if (num_keys == EXPAND_MAX_KEYS && va_arg(ap, char *) != NULL)
+		fatal("%s: too many keys", __func__);
 	va_end(ap);
-
-	if (num_keys >= EXPAND_MAX_KEYS)
-		fatal("percent_expand: too many keys");
 
 	/* Expand string */
 	*buf = '\0';
@@ -586,23 +586,24 @@ percent_expand(const char *string, ...)
  append:
 			buf[i++] = *string;
 			if (i >= sizeof(buf))
-				fatal("percent_expand: string too long");
+				fatal("%s: string too long", __func__);
 			buf[i] = '\0';
 			continue;
 		}
 		string++;
+		/* %% case */
 		if (*string == '%')
 			goto append;
 		for (j = 0; j < num_keys; j++) {
 			if (strchr(keys[j].key, *string) != NULL) {
 				i = strlcat(buf, keys[j].repl, sizeof(buf));
 				if (i >= sizeof(buf))
-					fatal("percent_expand: string too long");
+					fatal("%s: string too long", __func__);
 				break;
 			}
 		}
 		if (j >= num_keys)
-			fatal("percent_expand: unknown key %%%c", *string);
+			fatal("%s: unknown key %%%c", __func__, *string);
 	}
 	return (xstrdup(buf));
 #undef EXPAND_MAX_KEYS
@@ -853,3 +854,13 @@ ms_to_timeval(struct timeval *tv, int ms)
 	tv->tv_usec = (ms % 1000) * 1000;
 }
 
+int
+timingsafe_bcmp(const void *b1, const void *b2, size_t n)
+{
+	const unsigned char *p1 = b1, *p2 = b2;
+	int ret = 0;
+
+	for (; n > 0; n--)
+		ret |= *p1++ ^ *p2++;
+	return (ret != 0);
+}
