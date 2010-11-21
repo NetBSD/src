@@ -1,4 +1,4 @@
-.\"	$NetBSD: ioctl.2,v 1.20 2004/11/08 16:15:42 wiz Exp $
+.\"	$NetBSD: ioctl.2,v 1.20.32.1 2010/11/21 02:27:39 riz Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)ioctl.2	8.2 (Berkeley) 12/11/93
 .\"
-.Dd November 6, 2004
+.Dd May 11, 2010
 .Dt IOCTL 2
 .Os
 .Sh NAME
@@ -96,7 +96,7 @@ which are being held by the kernel for further processing.
 The nature of the required processing depends on the underlying device.
 For tty devices, these bytes are typically queued for delivery
 to the tty hardware.
-For TCP sockets, these bytes have not yet been acknolwedged by the
+For TCP sockets, these bytes have not yet been acknowledged by the
 other side of the connection.
 For files, this operation always returns zero as files do not have
 send queues.
