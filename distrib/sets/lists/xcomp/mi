@@ -1,4 +1,4 @@
-#	 $NetBSD: mi,v 1.115 2010/11/21 06:01:49 mrg Exp $
+#	 $NetBSD: mi,v 1.116 2010/11/21 20:45:02 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -5607,10 +5607,10 @@
 ./usr/X11R7/include/X11/extensions/ge.h			-unknown-	xorg
 ./usr/X11R7/include/X11/extensions/geproto.h		-unknown-	xorg
 ./usr/X11R7/include/X11/extensions/lbx.h		-unknown-	xorg
-./usr/X11R7/include/X11/extensions/lbxbuf.h		-unknown-	xorg
-./usr/X11R7/include/X11/extensions/lbxbufstr.h		-unknown-	xorg
+./usr/X11R7/include/X11/extensions/lbxbuf.h		-unknown-	obsolete
+./usr/X11R7/include/X11/extensions/lbxbufstr.h		-unknown-	obsolete
 ./usr/X11R7/include/X11/extensions/lbxdeltastr.h	-unknown-	obsolete
-./usr/X11R7/include/X11/extensions/lbximage.h		-unknown-	xorg
+./usr/X11R7/include/X11/extensions/lbximage.h		-unknown-	obsolete
 ./usr/X11R7/include/X11/extensions/lbxopts.h		-unknown-	obsolete
 ./usr/X11R7/include/X11/extensions/lbxproto.h		-unknown-	xorg
 ./usr/X11R7/include/X11/extensions/lbxstr.h		-unknown-	obsolete
