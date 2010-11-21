@@ -1,4 +1,4 @@
-/*	$NetBSD: packet.c,v 1.4 2010/11/21 18:29:49 adam Exp $	*/
+/*	$NetBSD: packet.c,v 1.5 2010/11/21 18:59:04 adam Exp $	*/
 /* $OpenBSD: packet.c,v 1.168 2010/07/13 23:13:16 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -39,7 +39,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: packet.c,v 1.4 2010/11/21 18:29:49 adam Exp $");
+__RCSID("$NetBSD: packet.c,v 1.5 2010/11/21 18:59:04 adam Exp $");
 #include <sys/types.h>
 #include <sys/queue.h>
 #include <sys/socket.h>
@@ -954,7 +954,7 @@ packet_send2_wrapped(void)
 static int
 packet_send2(void)
 {
-	int packet_length = 0;
+	static int packet_length = 0;
 	struct packet *p;
 	u_char type, *cp;
 
@@ -1008,7 +1008,7 @@ packet_send(void)
 	else
 		packet_send1();
 	DBG(debug("packet_send done"));
-	return packet_len;
+	return(packet_len);
 }
 
 /*
@@ -1642,8 +1642,9 @@ packet_write_poll(void)
 		len = roaming_write(active_state->connection_out,
 		    buffer_ptr(&active_state->output), len, &cont);
 		if (len == -1) {
-			if (errno == EINTR || errno == EAGAIN)
-				return 0;
+ 			if (errno == EINTR || errno == EAGAIN ||
+ 			    errno == EWOULDBLOCK)
+				return (0);
 			fatal("Write failed: %.100s", strerror(errno));
 		}
 		if (len == 0 && !cont)

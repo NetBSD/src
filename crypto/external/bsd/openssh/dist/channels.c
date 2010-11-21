@@ -1,4 +1,4 @@
-/*	$NetBSD: channels.c,v 1.4 2010/11/21 18:29:48 adam Exp $	*/
+/*	$NetBSD: channels.c,v 1.5 2010/11/21 18:59:04 adam Exp $	*/
 /* $OpenBSD: channels.c,v 1.309 2010/08/05 13:08:42 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -41,7 +41,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: channels.c,v 1.4 2010/11/21 18:29:48 adam Exp $");
+__RCSID("$NetBSD: channels.c,v 1.5 2010/11/21 18:59:04 adam Exp $");
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/ioctl.h>
@@ -806,10 +806,11 @@ channel_pre_connecting(Channel *c, fd_set *readset, fd_set *writeset)
 	FD_SET(c->sock, writeset);
 }
 
-static int channel_tcpwinsz(void)
+static
+int channel_tcpwinsz(void)
 {
-        u_int32_t tcpwinsz = 0;
-        socklen_t optsz = sizeof(tcpwinsz);
+	u_int32_t tcpwinsz = 0;
+	socklen_t optsz = sizeof(tcpwinsz);
 	int ret = -1;
 
 	/* if we aren't on a socket return 128KB*/
