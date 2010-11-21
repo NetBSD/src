@@ -1,4 +1,4 @@
-/*	$NetBSD: aica.c,v 1.19 2010/11/20 16:12:23 tsutsui Exp $	*/
+/*	$NetBSD: aica.c,v 1.20 2010/11/21 16:11:32 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2003 SHIMIZU Ryo <ryo@misakimix.org>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aica.c,v 1.19 2010/11/20 16:12:23 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aica.c,v 1.20 2010/11/21 16:11:32 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,7 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: aica.c,v 1.19 2010/11/20 16:12:23 tsutsui Exp $");
 #define	AICA_TIMEOUT	0x1800
 
 struct aica_softc {
-	struct device		sc_dev;		/* base device */
+	device_t		sc_dev;		/* base device */
 	bus_space_tag_t		sc_memt;
 	bus_space_handle_t	sc_aica_regh;
 	bus_space_handle_t	sc_aica_memh;
@@ -113,11 +113,11 @@ static const struct audio_format aica_formats[AICA_NFORMATS] = {
 	 2, AUFMT_STEREO, 0, {1, 65536}},
 };
 
-int aica_match(struct device *, struct cfdata *, void *);
-void aica_attach(struct device *, struct device *, void *);
+int aica_match(device_t, cfdata_t, void *);
+void aica_attach(device_t, device_t, void *);
 int aica_print(void *, const char *);
 
-CFATTACH_DECL(aica, sizeof(struct aica_softc), aica_match, aica_attach,
+CFATTACH_DECL_NEW(aica, sizeof(struct aica_softc), aica_match, aica_attach,
     NULL, NULL);
 
 const struct audio_device aica_device = {
@@ -194,7 +194,7 @@ const struct audio_hw_if aica_hw_if = {
 };
 
 int
-aica_match(struct device *parent, struct cfdata *cf, void *aux)
+aica_match(device_t parent, cfdata_t cf, void *aux)
 {
 	static int aica_matched = 0;
 
@@ -206,29 +206,30 @@ aica_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 void
-aica_attach(struct device *parent, struct device *self, void *aux)
+aica_attach(device_t parent, device_t self, void *aux)
 {
 	struct aica_softc *sc;
 	struct g2bus_attach_args *ga;
 	int i;
 
-	sc = (struct aica_softc *)self;
+	sc = device_private(self);
 	ga = aux;
+	sc->sc_dev = self;
 	sc->sc_memt = ga->ga_memt;
 
 	if (bus_space_map(sc->sc_memt, AICA_REG_ADDR, 0x3000, 0,
 	    &sc->sc_aica_regh) != 0) {
-		printf(": can't map AICA register space\n");
+		aprint_error(": can't map AICA register space\n");
 		return;
 	}
 
 	if (bus_space_map(sc->sc_memt, AICA_RAM_START, AICA_RAM_SIZE, 0,
 	    &sc->sc_aica_memh) != 0) {
-		printf(": can't map AICA memory space\n");
+		aprint_error(": can't map AICA memory space\n");
 		return;
 	}
 
-	printf(": ARM7 Sound Processing Unit\n");
+	aprint_normal(": ARM7 Sound Processing Unit\n");
 
 	aica_disable(sc);
 
@@ -245,12 +246,12 @@ aica_attach(struct device *parent, struct device *self, void *aux)
 
 	aica_enable(sc);
 
-	printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname,
+	aprint_normal_dev(self, "interrupting at %s\n",
 	    sysasic_intr_string(SYSASIC_IRL9));
 	sysasic_intr_establish(SYSASIC_EVENT_AICA, IPL_BIO, SYSASIC_IRL9,
 	    aica_intr, sc);
 
-	audio_attach_mi(&aica_hw_if, sc, &sc->sc_dev);
+	audio_attach_mi(&aica_hw_if, sc, self);
 
 	/* init parameters */
 	sc->sc_output_master = 255;
