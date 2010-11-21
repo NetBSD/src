@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.2,v 1.1.2.16 2010/11/21 18:47:39 riz Exp $
+# $NetBSD: CHANGES-5.2,v 1.1.2.17 2010/11/21 18:50:49 riz Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -667,4 +667,9 @@ sys/fs/msdosfs/msdosfs_lookup.c			1.22
 	Return EINVAL for rename and delete operations to the
 	root directory instead of the erroneous EROFS.
 	[mlelstv, ticket #1434]
+
+sys/dev/dkwedge/dk.c				1.57 via patch
+
+	Avoid a lockdebug panic for dk(4) on raid(4).
+	[bouyer, ticket #1435]
 
