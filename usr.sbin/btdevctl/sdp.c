@@ -1,4 +1,4 @@
-/*	$NetBSD: sdp.c,v 1.5 2008/04/20 19:34:23 plunky Exp $	*/
+/*	$NetBSD: sdp.c,v 1.5.6.1 2010/11/21 03:05:06 riz Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: sdp.c,v 1.5 2008/04/20 19:34:23 plunky Exp $");
+__RCSID("$NetBSD: sdp.c,v 1.5.6.1 2010/11/21 03:05:06 riz Exp $");
 
 #include <sys/types.h>
 
@@ -80,10 +80,23 @@ static int32_t parse_l2cap_psm(sdp_attr_t *);
 static int32_t parse_rfcomm_channel(sdp_attr_t *);
 static int32_t parse_hid_descriptor(sdp_attr_t *);
 static int32_t parse_boolean(sdp_attr_t *);
+static int32_t parse_uint16(sdp_attr_t *);
 
+static int config_pnp(prop_dictionary_t);
 static int config_hid(prop_dictionary_t);
 static int config_hset(prop_dictionary_t);
 static int config_hf(prop_dictionary_t);
+
+uint16_t pnp_services[] = {
+	SDP_SERVICE_CLASS_PNP_INFORMATION,
+};
+
+uint32_t pnp_attrs[] = {
+	SDP_ATTR_RANGE(	0x0201,		/* Vendor ID */
+			0x0202),	/* Product ID */
+	SDP_ATTR_RANGE(	0x0205,		/* Vendor ID Source */
+			0x0205),
+};
 
 uint16_t hid_services[] = {
 	SDP_SERVICE_CLASS_HUMAN_INTERFACE_DEVICE
@@ -149,6 +162,21 @@ static struct {
 static sdp_attr_t	values[8];
 static uint8_t		buffer[__arraycount(values)][512];
 
+static int32_t
+cfg_search(void *ss, uint32_t plen, uint16_t *pp, uint32_t alen, uint32_t *ap)
+{
+	int i;
+
+	for (i = 0; i < __arraycount(values); i++) {
+		values[i].flags = SDP_ATTR_INVALID;
+		values[i].attr = 0;
+		values[i].vlen = sizeof(buffer[i]);
+		values[i].value = buffer[i];
+	}
+
+	return sdp_search(ss, plen, pp, alen, ap, i, values);
+}
+
 prop_dictionary_t
 cfg_query(bdaddr_t *laddr, bdaddr_t *raddr, const char *service)
 {
@@ -160,13 +188,6 @@ cfg_query(bdaddr_t *laddr, bdaddr_t *raddr, const char *service)
 	if (dict == NULL)
 		return NULL;
 
-	for (i = 0; i < __arraycount(values); i++) {
-		values[i].flags = SDP_ATTR_INVALID;
-		values[i].attr = 0;
-		values[i].vlen = sizeof(buffer[i]);
-		values[i].value = buffer[i];
-	}
-
 	for (i = 0; i < __arraycount(cfgtype); i++) {
 		if (strcasecmp(service, cfgtype[i].name) == 0) {
 			ss = sdp_open(laddr, raddr);
@@ -174,10 +195,15 @@ cfg_query(bdaddr_t *laddr, bdaddr_t *raddr, const char *service)
 			if (ss == NULL || (errno = sdp_error(ss)) != 0)
 				return NULL;
 
-			rv = sdp_search(ss,
+			cfg_search(ss,
+				__arraycount(pnp_services), pnp_services,
+				__arraycount(pnp_attrs), pnp_attrs);
+
+			config_pnp(dict);
+
+			rv = cfg_search(ss,
 				cfgtype[i].nservices, cfgtype[i].services,
-				cfgtype[i].nattrs, cfgtype[i].attrs,
-				__arraycount(values), values);
+				cfgtype[i].nattrs, cfgtype[i].attrs);
 
 			if (rv != 0) {
 				errno = sdp_error(ss);
@@ -198,6 +224,56 @@ cfg_query(bdaddr_t *laddr, bdaddr_t *raddr, const char *service)
 		printf("\t%s\t%s\n", cfgtype[i].name, cfgtype[i].description);
 
 	exit(EXIT_FAILURE);
+}
+
+/*
+ * Configure PnP Information results
+ */
+static int
+config_pnp(prop_dictionary_t dict)
+{
+	int32_t vendor, product, source;
+	int i;
+
+	vendor = -1;
+	product = -1;
+	source = -1;
+
+	for (i = 0; i < __arraycount(values); i++) {
+		if (values[i].flags != SDP_ATTR_OK)
+			continue;
+
+		switch (values[i].attr) {
+		case 0x0201: /* Vendor ID */
+			vendor = parse_uint16(&values[i]);
+			break;
+
+		case 0x0202: /* Product ID */
+			product = parse_uint16(&values[i]);
+			break;
+
+		case 0x0205: /* Vendor ID Source */
+			source = parse_uint16(&values[i]);
+			break;
+
+		default:
+			break;
+		}
+	}
+
+	if (vendor == -1 || product == -1)
+		return ENOATTR;
+
+	if (source != 0x0002)	/* "USB Implementers Forum" */
+		return ENOATTR;
+
+	if (!prop_dictionary_set_uint16(dict, BTDEVvendor, (uint16_t)vendor))
+		return errno;
+
+	if (!prop_dictionary_set_uint16(dict, BTDEVproduct, (uint16_t)product))
+		return errno;
+
+	return 0;
 }
 
 /*
@@ -637,6 +713,28 @@ parse_boolean(sdp_attr_t *a)
 		return (-1);
 
 	return (a->value[1]);
+}
+
+/*
+ * Parse unsigned int value
+ *
+ * uint16 value16
+ */
+static int32_t
+parse_uint16(sdp_attr_t *a)
+{
+	uint8_t	*ptr = a->value;
+	int32_t type, val;
+
+	if (a->vlen < 3)
+		return (-1);
+
+	SDP_GET8(type, ptr);
+	if (type != SDP_DATA_UINT16)
+		return (-1);
+
+	SDP_GET16(val, ptr);
+	return (val);
 }
 
 /*

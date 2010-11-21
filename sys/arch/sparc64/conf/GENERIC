@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.104.2.2 2009/10/16 11:56:10 sborrill Exp $
+# $NetBSD: GENERIC,v 1.104.2.3 2010/11/21 03:05:04 riz Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.104.2.2 $"
+#ident 		"GENERIC-$Revision: 1.104.2.3 $"
 
 maxusers	64
 
@@ -822,6 +822,10 @@ wsmouse* at btms? mux 0
 ## Bluetooth Keyboard
 btkbd* at bthidev? reportid ?
 wskbd* at btkbd? console ? mux 1
+
+## Bluetooth Apple Magic Mouse
+btmagic* at bthub?
+wsmouse* at btmagic? mux 0
 
 ## Bluetooth Audio support
 btsco* at bthub?

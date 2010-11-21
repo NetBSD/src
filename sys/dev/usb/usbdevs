@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.519.4.6 2010/11/20 01:14:22 riz Exp $
+$NetBSD: usbdevs,v 1.519.4.7 2010/11/21 03:05:04 riz Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -681,6 +681,7 @@ product AOX USB101		0x0008	USB ethernet controller engine
 product APPLE EXT_KBD		0x020c	Apple Extended USB Keyboard
 product APPLE OPTMOUSE		0x0302	Optical mouse
 product APPLE MIGHTYMOUSE	0x0304	Mighty Mouse
+product APPLE MAGICMOUSE	0x030d	Magic Mouse
 product APPLE EXT_KBD_HUB	0x1003	Hub in Apple Extended USB Keyboard
 product APPLE SPEAKERS		0x1101	Speakers
 product APPLE IPHONE		0x1290	iPhone

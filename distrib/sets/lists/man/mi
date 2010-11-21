@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1109.2.14 2009/12/03 17:38:36 snj Exp $
+# $NetBSD: mi,v 1.1109.2.15 2010/11/21 03:05:08 riz Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -796,6 +796,7 @@
 ./usr/share/man/cat4/bthset.0			man-obsolete		obsolete
 ./usr/share/man/cat4/bthub.0			man-sys-catman		.cat
 ./usr/share/man/cat4/btkbd.0			man-sys-catman		.cat
+./usr/share/man/cat4/btmagic.0			man-sys-catman		.cat
 ./usr/share/man/cat4/btms.0			man-sys-catman		.cat
 ./usr/share/man/cat4/btsco.0			man-sys-catman		.cat
 ./usr/share/man/cat4/btuart.0			man-sys-catman		.cat
@@ -3343,6 +3344,7 @@
 ./usr/share/man/html4/bthidev.html		man-sys-htmlman		html
 ./usr/share/man/html4/bthub.html		man-sys-htmlman		html
 ./usr/share/man/html4/btkbd.html		man-sys-htmlman		html
+./usr/share/man/html4/btmagic.html		man-sys-htmlman		html
 ./usr/share/man/html4/btms.html			man-sys-htmlman		html
 ./usr/share/man/html4/btsco.html		man-sys-htmlman		html
 ./usr/share/man/html4/btuart.html		man-sys-htmlman		html
@@ -5666,6 +5668,7 @@
 ./usr/share/man/man4/bthset.4			man-obsolete		obsolete
 ./usr/share/man/man4/bthub.4			man-sys-man		.man
 ./usr/share/man/man4/btkbd.4			man-sys-man		.man
+./usr/share/man/man4/btmagic.4			man-sys-man		.man
 ./usr/share/man/man4/btms.4			man-sys-man		.man
 ./usr/share/man/man4/btsco.4			man-sys-man		.man
 ./usr/share/man/man4/btuart.4			man-sys-man		.man

@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.183.4.7 2009/10/28 09:03:42 bouyer Exp $
+# $NetBSD: ALL,v 1.183.4.8 2010/11/21 03:05:05 riz Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.183.4.7 $"
+#ident 		"ALL-$Revision: 1.183.4.8 $"
 
 maxusers	32		# estimated number of users
 
@@ -1405,6 +1405,10 @@ wsmouse* at btms? mux 0
 # Bluetooth Keyboard
 btkbd* at bthidev? reportid ?
 wskbd* at btkbd? console ? mux 1
+
+# Bluetooth Apple Magic Mouse
+btmagic* at bthub?
+wsmouse* at btmagic? mux 0
 
 # Bluetooth Audio support
 btsco* at bthub?
