@@ -1,4 +1,4 @@
-/* $NetBSD: w83l518d_sdmmc.c,v 1.1.2.2 2009/10/08 09:47:09 sborrill Exp $ */
+/* $NetBSD: w83l518d_sdmmc.c,v 1.1.2.3 2010/11/21 21:44:07 riz Exp $ */
 
 /*
  * Copyright (c) 2009 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: w83l518d_sdmmc.c,v 1.1.2.2 2009/10/08 09:47:09 sborrill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: w83l518d_sdmmc.c,v 1.1.2.3 2010/11/21 21:44:07 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -126,12 +126,12 @@ wb_sdmmc_enable(struct wb_softc *wb)
 	/* put the device in a known state */
 	wb_idx_write(wb, WB_INDEX_SETUP, WB_SETUP_SOFT_RST);
 	while (--i > 0 && wb_idx_read(wb, WB_INDEX_SETUP) & WB_SETUP_SOFT_RST)
-		delay(10);
+		delay(100);
 	if (i == 0) {
 		aprint_error_dev(wb->wb_dev, "timeout resetting device\n");
 		return false;
 	}
-	wb_idx_write(wb, WB_INDEX_CLK, WB_CLK_375K);
+	wb_idx_write(wb, WB_INDEX_CLK, wb->wb_sdmmc_clk);
 	wb_idx_write(wb, WB_INDEX_FIFOEN, 0);
 	wb_idx_write(wb, WB_INDEX_DMA, 0);
 	wb_idx_write(wb, WB_INDEX_PBSMSB, 0);
@@ -172,6 +172,7 @@ wb_sdmmc_attach(struct wb_softc *wb)
 	callout_setfunc(&wb->wb_sdmmc_callout, wb_sdmmc_discover, wb);
 
 	wb->wb_sdmmc_width = 1;
+	wb->wb_sdmmc_clk = WB_CLK_375K;
 
 	if (wb_sdmmc_enable(wb) == false)
 		return;
@@ -287,6 +288,8 @@ wb_sdmmc_bus_clock(sdmmc_chipset_handle_t sch, int freq)
 	else
 		clk = WB_CLK_375K;
 
+	wb->wb_sdmmc_clk = clk;
+
 	if (wb_idx_read(wb, WB_INDEX_CLK) != clk)
 		wb_idx_write(wb, WB_INDEX_CLK, clk);
 
@@ -307,7 +310,6 @@ wb_sdmmc_bus_width(sdmmc_chipset_handle_t sch, int width)
 
 	return 0;
 }
-
 
 static void
 wb_sdmmc_rsp_read_long(struct wb_softc *wb, struct sdmmc_command *cmd)
@@ -573,4 +575,31 @@ wb_sdmmc_intr(struct wb_softc *wb)
 		callout_schedule(&wb->wb_sdmmc_callout, hz / 4);
 
 	return 1;
+}
+
+/*
+ * pmf
+ */
+bool
+wb_sdmmc_suspend(struct wb_softc *wb)
+{
+	return wb_sdmmc_disable(wb);
+}
+
+bool
+wb_sdmmc_resume(struct wb_softc *wb)
+{
+	uint8_t val;
+
+	val = wb_read(wb, WB_SD_CSR);
+	val &= ~WB_CSR_POWER_N;
+	wb_write(wb, WB_SD_CSR, val);
+
+	if (wb_sdmmc_enable(wb) == false)
+		return false;
+
+	if (wb_idx_read(wb, WB_INDEX_CLK) != wb->wb_sdmmc_clk)
+		wb_idx_write(wb, WB_INDEX_CLK, wb->wb_sdmmc_clk);
+
+	return true;
 }

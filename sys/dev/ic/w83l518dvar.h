@@ -1,4 +1,4 @@
-/* $NetBSD: w83l518dvar.h,v 1.1.2.2 2009/10/08 09:47:09 sborrill Exp $ */
+/* $NetBSD: w83l518dvar.h,v 1.1.2.3 2010/11/21 21:44:07 riz Exp $ */
 
 /*
  * Copyright (c) 2009 Jared D. McNeill <jmcneill@invisible.ca>
@@ -41,6 +41,7 @@ struct wb_softc {
 	/* private */
 	device_t		wb_sdmmc_dev;
 	int			wb_sdmmc_width;
+	uint8_t			wb_sdmmc_clk;
 	uint8_t			wb_sdmmc_intsts;
 	callout_t		wb_sdmmc_callout;
 };
@@ -55,5 +56,8 @@ uint8_t	wb_idx_read(struct wb_softc *, uint8_t);
 void	wb_idx_write(struct wb_softc *, uint8_t, uint8_t);
 
 void	wb_led(struct wb_softc *, bool);
+
+bool	wb_suspend(struct wb_softc *);
+bool	wb_resume(struct wb_softc *);
 
 #endif
