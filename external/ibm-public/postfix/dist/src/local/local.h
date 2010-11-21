@@ -1,4 +1,4 @@
-/*	$NetBSD: local.h,v 1.1.1.1.2.2 2009/09/15 06:02:56 snj Exp $	*/
+/*	$NetBSD: local.h,v 1.1.1.1.2.3 2010/11/21 18:31:31 riz Exp $	*/
 
 /*++
 /* NAME
@@ -234,6 +234,11 @@ extern MAPS *alias_maps;
   * Silly little macros.
   */
 #define STR(s)	vstring_str(s)
+
+ /*
+  * bounce_workaround.c
+  */
+int     bounce_workaround(LOCAL_STATE);
 
 /* LICENSE
 /* .ad

@@ -1,6 +1,6 @@
-/*	$NetBSD: cleanup.c,v 1.2.2.2 2009/09/15 06:02:30 snj Exp $	*/
+/*	$NetBSD: cleanup.c,v 1.2.2.3 2010/11/21 18:31:28 riz Exp $	*/
 
-/*	$NetBSD: cleanup.c,v 1.2.2.2 2009/09/15 06:02:30 snj Exp $	*/
+/*	$NetBSD: cleanup.c,v 1.2.2.3 2010/11/21 18:31:28 riz Exp $	*/
 
 /*++
 /* NAME
@@ -50,8 +50,10 @@
 /*	RFC 822 (ARPA Internet Text Messages)
 /*	RFC 2045 (MIME: Format of Internet Message Bodies)
 /*	RFC 2046 (MIME: Media Types)
+/*	RFC 2822 (Internet Message Format)
 /*	RFC 3463 (Enhanced Status Codes)
 /*	RFC 3464 (Delivery status notifications)
+/*	RFC 5322 (Internet Message Format)
 /* DIAGNOSTICS
 /*	Problems and transactions are logged to \fBsyslogd\fR(8).
 /* BUGS
@@ -174,6 +176,11 @@
 /* .IP "\fBmilter_end_of_header_macros (see 'postconf -d' output)\fR"
 /*	The macros that are sent to Milter (mail filter) applications
 /*	after the end of the message header.
+/* .PP
+/*	Available in Postfix version 2.7 and later:
+/* .IP "\fBmilter_header_checks (empty)\fR"
+/*	Optional lookup tables for content inspection of message headers
+/*	that are produced by Milter applications.
 /* MIME PROCESSING CONTROLS
 /* .ad
 /* .fi
@@ -466,8 +473,7 @@ static void cleanup_service(VSTREAM *src, char *unused_service, char **argv)
 	    state->errs |= CLEANUP_STAT_BAD;
 	    break;
 	}
-	if (type == REC_TYPE_PTR || type == REC_TYPE_DTXT
-	    || type == REC_TYPE_DRCP) {
+	if (REC_GET_HIDDEN_TYPE(type)) {
 	    msg_warn("%s: record type %d not allowed - discarding this message",
 		     state->queue_id, type);
 	    state->errs |= CLEANUP_STAT_BAD;

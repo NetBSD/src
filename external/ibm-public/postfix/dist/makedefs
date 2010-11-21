@@ -144,6 +144,8 @@ case "$SYSTEM.$RELEASE" in
 		;;
   FreeBSD.7*)	SYSTYPE=FREEBSD7
 		;;
+  FreeBSD.8*)	SYSTYPE=FREEBSD8
+		;;
   OpenBSD.2*)	SYSTYPE=OPENBSD2
 		;;
   OpenBSD.3*)	SYSTYPE=OPENBSD3
@@ -298,7 +300,15 @@ case "$SYSTEM.$RELEASE" in
 		case "$RELEASE" in
 		2.[0-5].*) CCARGS="$CCARGS -DNO_EPOLL";;
 		    # Workaround for retarded libc 
-		    2.6.*) trap 'rm -f makedefs.test makedefs.test.[co]' 1 2 3 15
+		    2.6.*)
+		       if [ `expr "X$CCARGS" : "X.*-DNO_EPOLL"` -gt 0 ]
+                       then
+                           :
+                       elif [ ! -e /usr/include/sys/epoll.h ]
+                       then
+                           echo CCARGS="$CCARGS -DNO_EPOLL"
+                       else
+			   trap 'rm -f makedefs.test makedefs.test.[co]' 1 2 3 15
 			   cat >makedefs.test.c <<'EOF'
 #include <sys/types.h>
 #include <sys/epoll.h>
@@ -320,7 +330,8 @@ EOF
 			   ${CC-gcc} -o makedefs.test makedefs.test.c || exit 1
 			   ./makedefs.test 2>/dev/null ||
 				CCARGS="$CCARGS -DNO_EPOLL"
-			   rm -f makedefs.test makedefs.test.[co];;
+			   rm -f makedefs.test makedefs.test.[co]
+		       fi;;
 		esac
 		;;
      GNU.0*|GNU/kFreeBSD.[567]*)
@@ -409,6 +420,11 @@ ReliantUNIX-?.5.43) SYSTYPE=ReliantUnix543
 		case $RELEASE in
 		 [1-6].*) CCARGS="$CCARGS -DNO_IPV6";;
 		       *) CCARGS="$CCARGS -DBIND_8_COMPAT -DNO_NETINFO";;
+		esac
+		# Darwin 10.3.0 no longer has <nameser8_compat.h>.
+		case $RELEASE in
+		     ?.*) CCARGS="$CCARGS -DRESOLVE_H_NEEDS_NAMESER8_COMPAT_H";;
+		       *) CCARGS="$CCARGS -DRESOLVE_H_NEEDS_ARPA_NAMESER_COMPAT_H";;
 		esac
 		# kqueue and/or poll are broken up to and including MacOS X 10.5
 		CCARGS="$CCARGS -DNO_KQUEUE"

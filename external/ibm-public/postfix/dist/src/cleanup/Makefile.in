@@ -76,7 +76,13 @@ milter_tests: cleanup_milter_test bug_tests \
 	cleanup_milter_test10b cleanup_milter_test10c cleanup_milter_test10d \
 	cleanup_milter_test10e cleanup_milter_test11 cleanup_milter_test12 \
 	cleanup_milter_test13a cleanup_milter_test13b cleanup_milter_test13c \
-	cleanup_milter_test13d
+	cleanup_milter_test13d \
+	cleanup_milter_test14a cleanup_milter_test14b cleanup_milter_test14c \
+	cleanup_milter_test14d cleanup_milter_test14e cleanup_milter_test14f \
+	cleanup_milter_test14g \
+	cleanup_milter_test15a cleanup_milter_test15b cleanup_milter_test15c \
+	cleanup_milter_test15d cleanup_milter_test15e cleanup_milter_test15f \
+	cleanup_milter_test15g cleanup_milter_test15h cleanup_milter_test15i
 
 root_tests:
 
@@ -334,6 +340,166 @@ cleanup_milter_test13d: cleanup_milter test-queue-file13d cleanup_milter.in13d \
 	diff cleanup_milter.ref13d cleanup_milter.tmp
 	rm -f test-queue-file13d.tmp cleanup_milter.tmp
 
+cleanup_milter_test14a: cleanup_milter test-queue-file14 cleanup_milter.in14a \
+	cleanup_milter.ref14a1 ../postcat/postcat cleanup_milter.ref14a2
+	cp test-queue-file14 test-queue-file14a.tmp
+	chmod u+w test-queue-file14a.tmp
+	./cleanup_milter <cleanup_milter.in14a 2>cleanup_milter.tmp1
+	diff cleanup_milter.ref14a1 cleanup_milter.tmp1
+	../postcat/postcat -ov test-queue-file14a.tmp 2>/dev/null >cleanup_milter.tmp2
+	diff cleanup_milter.ref14a2 cleanup_milter.tmp2
+	rm -f test-queue-file14a.tmp cleanup_milter.tmp1 cleanup_milter.tmp2
+
+cleanup_milter_test14b: cleanup_milter test-queue-file14 cleanup_milter.in14b \
+	cleanup_milter.ref14b1 ../postcat/postcat cleanup_milter.ref14b2
+	cp test-queue-file14 test-queue-file14b.tmp
+	chmod u+w test-queue-file14b.tmp
+	./cleanup_milter <cleanup_milter.in14b 2>cleanup_milter.tmp1
+	diff cleanup_milter.ref14b1 cleanup_milter.tmp1
+	../postcat/postcat -ov test-queue-file14b.tmp 2>/dev/null >cleanup_milter.tmp2
+	diff cleanup_milter.ref14b2 cleanup_milter.tmp2
+	rm -f test-queue-file14b.tmp cleanup_milter.tmp1 cleanup_milter.tmp2
+
+cleanup_milter_test14c: cleanup_milter test-queue-file14 cleanup_milter.in14c \
+	cleanup_milter.ref14c1 ../postcat/postcat cleanup_milter.ref14c2
+	cp test-queue-file14 test-queue-file14c.tmp
+	chmod u+w test-queue-file14c.tmp
+	./cleanup_milter <cleanup_milter.in14c 2>cleanup_milter.tmp1
+	diff cleanup_milter.ref14c1 cleanup_milter.tmp1
+	../postcat/postcat -ov test-queue-file14c.tmp 2>/dev/null >cleanup_milter.tmp2
+	diff cleanup_milter.ref14c2 cleanup_milter.tmp2
+	rm -f test-queue-file14c.tmp cleanup_milter.tmp1 cleanup_milter.tmp2
+
+cleanup_milter_test14d: cleanup_milter test-queue-file14 cleanup_milter.in14d \
+	cleanup_milter.ref14d1 ../postcat/postcat cleanup_milter.ref14d2
+	cp test-queue-file14 test-queue-file14d.tmp
+	chmod u+w test-queue-file14d.tmp
+	./cleanup_milter <cleanup_milter.in14d 2>cleanup_milter.tmp1
+	diff cleanup_milter.ref14d1 cleanup_milter.tmp1
+	../postcat/postcat -ov test-queue-file14d.tmp 2>/dev/null >cleanup_milter.tmp2
+	diff cleanup_milter.ref14d2 cleanup_milter.tmp2
+	rm -f test-queue-file14d.tmp cleanup_milter.tmp1 cleanup_milter.tmp2
+
+cleanup_milter_test14e: cleanup_milter test-queue-file14 cleanup_milter.in14e \
+	cleanup_milter.ref14e1 ../postcat/postcat cleanup_milter.ref14e2
+	cp test-queue-file14 test-queue-file14e.tmp
+	chmod u+w test-queue-file14e.tmp
+	./cleanup_milter <cleanup_milter.in14e 2>cleanup_milter.tmp1
+	diff cleanup_milter.ref14e1 cleanup_milter.tmp1
+	../postcat/postcat -ov test-queue-file14e.tmp 2>/dev/null >cleanup_milter.tmp2
+	diff cleanup_milter.ref14e2 cleanup_milter.tmp2
+	rm -f test-queue-file14e.tmp cleanup_milter.tmp1 cleanup_milter.tmp2
+
+cleanup_milter_test14f: cleanup_milter test-queue-file14 cleanup_milter.in14f \
+	cleanup_milter.ref14f1 ../postcat/postcat cleanup_milter.ref14f2
+	cp test-queue-file14 test-queue-file14f.tmp
+	chmod u+w test-queue-file14f.tmp
+	./cleanup_milter <cleanup_milter.in14f 2>cleanup_milter.tmp1
+	diff cleanup_milter.ref14f1 cleanup_milter.tmp1
+	../postcat/postcat -ov test-queue-file14f.tmp 2>/dev/null >cleanup_milter.tmp2
+	diff cleanup_milter.ref14f2 cleanup_milter.tmp2
+	rm -f test-queue-file14f.tmp cleanup_milter.tmp1 cleanup_milter.tmp2
+
+cleanup_milter_test14g: cleanup_milter test-queue-file14 cleanup_milter.in14g \
+	cleanup_milter.ref14g1 ../postcat/postcat cleanup_milter.ref14g2
+	cp test-queue-file14 test-queue-file14g.tmp
+	chmod u+w test-queue-file14g.tmp
+	./cleanup_milter <cleanup_milter.in14g 2>cleanup_milter.tmp1
+	diff cleanup_milter.ref14g1 cleanup_milter.tmp1
+	../postcat/postcat -ov test-queue-file14g.tmp 2>/dev/null >cleanup_milter.tmp2
+	diff cleanup_milter.ref14g2 cleanup_milter.tmp2
+	rm -f test-queue-file14g.tmp cleanup_milter.tmp1 cleanup_milter.tmp2
+
+cleanup_milter_test15a: cleanup_milter test-queue-file15 cleanup_milter.in15a \
+	cleanup_milter.ref15a1 ../postcat/postcat cleanup_milter.ref15a2
+	cp test-queue-file15 test-queue-file15a.tmp
+	chmod u+w test-queue-file15a.tmp
+	./cleanup_milter <cleanup_milter.in15a 2>cleanup_milter.tmp1
+	diff cleanup_milter.ref15a1 cleanup_milter.tmp1
+	../postcat/postcat -ov test-queue-file15a.tmp 2>/dev/null >cleanup_milter.tmp2
+	diff cleanup_milter.ref15a2 cleanup_milter.tmp2
+	rm -f test-queue-file15a.tmp cleanup_milter.tmp1 cleanup_milter.tmp2
+
+cleanup_milter_test15b: cleanup_milter test-queue-file15 cleanup_milter.in15b \
+	cleanup_milter.ref15b1 ../postcat/postcat cleanup_milter.ref15b2
+	cp test-queue-file15 test-queue-file15b.tmp
+	chmod u+w test-queue-file15b.tmp
+	./cleanup_milter <cleanup_milter.in15b 2>cleanup_milter.tmp1
+	diff cleanup_milter.ref15b1 cleanup_milter.tmp1
+	../postcat/postcat -ov test-queue-file15b.tmp 2>/dev/null >cleanup_milter.tmp2
+	diff cleanup_milter.ref15b2 cleanup_milter.tmp2
+	rm -f test-queue-file15b.tmp cleanup_milter.tmp1 cleanup_milter.tmp2
+
+cleanup_milter_test15c: cleanup_milter test-queue-file15 cleanup_milter.in15c \
+	cleanup_milter.ref15c1 ../postcat/postcat cleanup_milter.ref15c2
+	cp test-queue-file15 test-queue-file15c.tmp
+	chmod u+w test-queue-file15c.tmp
+	./cleanup_milter <cleanup_milter.in15c 2>cleanup_milter.tmp1
+	diff cleanup_milter.ref15c1 cleanup_milter.tmp1
+	../postcat/postcat -ov test-queue-file15c.tmp 2>/dev/null >cleanup_milter.tmp2
+	diff cleanup_milter.ref15c2 cleanup_milter.tmp2
+	rm -f test-queue-file15c.tmp cleanup_milter.tmp1 cleanup_milter.tmp2
+
+cleanup_milter_test15d: cleanup_milter test-queue-file15 cleanup_milter.in15d \
+	cleanup_milter.ref15d1 ../postcat/postcat cleanup_milter.ref15d2
+	cp test-queue-file15 test-queue-file15d.tmp
+	chmod u+w test-queue-file15d.tmp
+	./cleanup_milter <cleanup_milter.in15d 2>cleanup_milter.tmp1
+	diff cleanup_milter.ref15d1 cleanup_milter.tmp1
+	../postcat/postcat -ov test-queue-file15d.tmp 2>/dev/null >cleanup_milter.tmp2
+	diff cleanup_milter.ref15d2 cleanup_milter.tmp2
+	rm -f test-queue-file15d.tmp cleanup_milter.tmp1 cleanup_milter.tmp2
+
+cleanup_milter_test15e: cleanup_milter test-queue-file15 cleanup_milter.in15e \
+	cleanup_milter.ref15e1 ../postcat/postcat cleanup_milter.ref15e2
+	cp test-queue-file15 test-queue-file15e.tmp
+	chmod u+w test-queue-file15e.tmp
+	./cleanup_milter <cleanup_milter.in15e 2>cleanup_milter.tmp1
+	diff cleanup_milter.ref15e1 cleanup_milter.tmp1
+	../postcat/postcat -ov test-queue-file15e.tmp 2>/dev/null >cleanup_milter.tmp2
+	diff cleanup_milter.ref15e2 cleanup_milter.tmp2
+	rm -f test-queue-file15e.tmp cleanup_milter.tmp1 cleanup_milter.tmp2
+
+cleanup_milter_test15f: cleanup_milter test-queue-file15 cleanup_milter.in15f \
+	cleanup_milter.ref15f1 ../postcat/postcat cleanup_milter.ref15f2
+	cp test-queue-file15 test-queue-file15f.tmp
+	chmod u+w test-queue-file15f.tmp
+	./cleanup_milter <cleanup_milter.in15f 2>cleanup_milter.tmp1
+	diff cleanup_milter.ref15f1 cleanup_milter.tmp1
+	../postcat/postcat -ov test-queue-file15f.tmp 2>/dev/null >cleanup_milter.tmp2
+	diff cleanup_milter.ref15f2 cleanup_milter.tmp2
+	rm -f test-queue-file15f.tmp cleanup_milter.tmp1 cleanup_milter.tmp2
+
+cleanup_milter_test15g: cleanup_milter test-queue-file15 cleanup_milter.in15g \
+	cleanup_milter.ref15g1 ../postcat/postcat cleanup_milter.ref15g2
+	cp test-queue-file15 test-queue-file15g.tmp
+	chmod u+w test-queue-file15g.tmp
+	./cleanup_milter <cleanup_milter.in15g 2>cleanup_milter.tmp1
+	diff cleanup_milter.ref15g1 cleanup_milter.tmp1
+	../postcat/postcat -ov test-queue-file15g.tmp 2>/dev/null >cleanup_milter.tmp2
+	diff cleanup_milter.ref15g2 cleanup_milter.tmp2
+	rm -f test-queue-file15g.tmp cleanup_milter.tmp1 cleanup_milter.tmp2
+
+cleanup_milter_test15h: cleanup_milter test-queue-file15 cleanup_milter.in15h \
+	cleanup_milter.ref15h1 ../postcat/postcat cleanup_milter.ref15h2
+	cp test-queue-file15 test-queue-file15h.tmp
+	chmod u+w test-queue-file15h.tmp
+	./cleanup_milter <cleanup_milter.in15h 2>cleanup_milter.tmp1
+	diff cleanup_milter.ref15h1 cleanup_milter.tmp1
+	../postcat/postcat -ov test-queue-file15h.tmp 2>/dev/null >cleanup_milter.tmp2
+	diff cleanup_milter.ref15h2 cleanup_milter.tmp2
+	rm -f test-queue-file15h.tmp cleanup_milter.tmp1 cleanup_milter.tmp2
+
+cleanup_milter_test15i: cleanup_milter test-queue-file15 cleanup_milter.in15i \
+	cleanup_milter.ref15i1 ../postcat/postcat cleanup_milter.ref15i2
+	cp test-queue-file15 test-queue-file15i.tmp
+	chmod u+w test-queue-file15i.tmp
+	./cleanup_milter <cleanup_milter.in15i 2>cleanup_milter.tmp1
+	diff cleanup_milter.ref15i1 cleanup_milter.tmp1
+	../postcat/postcat -ov test-queue-file15i.tmp 2>/dev/null >cleanup_milter.tmp2
+	diff cleanup_milter.ref15i2 cleanup_milter.tmp2
+	rm -f test-queue-file15i.tmp cleanup_milter.tmp1 cleanup_milter.tmp2
+
 depend: $(MAKES)
 	(sed '1,/^# do not edit/!d' Makefile.in; \
 	set -e; for i in [a-z][a-z0-9]*.c; do \
@@ -349,6 +515,7 @@ cleanup.o: ../../include/attr.h
 cleanup.o: ../../include/been_here.h
 cleanup.o: ../../include/cleanup_user.h
 cleanup.o: ../../include/dict.h
+cleanup.o: ../../include/header_body_checks.h
 cleanup.o: ../../include/header_opts.h
 cleanup.o: ../../include/htable.h
 cleanup.o: ../../include/iostuff.h
@@ -385,6 +552,7 @@ cleanup_addr.o: ../../include/cleanup_user.h
 cleanup_addr.o: ../../include/dict.h
 cleanup_addr.o: ../../include/dsn_mask.h
 cleanup_addr.o: ../../include/ext_prop.h
+cleanup_addr.o: ../../include/header_body_checks.h
 cleanup_addr.o: ../../include/header_opts.h
 cleanup_addr.o: ../../include/htable.h
 cleanup_addr.o: ../../include/iostuff.h
@@ -422,6 +590,7 @@ cleanup_api.o: ../../include/deliver_request.h
 cleanup_api.o: ../../include/dict.h
 cleanup_api.o: ../../include/dsn.h
 cleanup_api.o: ../../include/dsn_buf.h
+cleanup_api.o: ../../include/header_body_checks.h
 cleanup_api.o: ../../include/header_opts.h
 cleanup_api.o: ../../include/htable.h
 cleanup_api.o: ../../include/iostuff.h
@@ -456,6 +625,7 @@ cleanup_body_edit.o: ../../include/attr.h
 cleanup_body_edit.o: ../../include/been_here.h
 cleanup_body_edit.o: ../../include/cleanup_user.h
 cleanup_body_edit.o: ../../include/dict.h
+cleanup_body_edit.o: ../../include/header_body_checks.h
 cleanup_body_edit.o: ../../include/header_opts.h
 cleanup_body_edit.o: ../../include/htable.h
 cleanup_body_edit.o: ../../include/mail_conf.h
@@ -490,6 +660,7 @@ cleanup_bounce.o: ../../include/dsn.h
 cleanup_bounce.o: ../../include/dsn_buf.h
 cleanup_bounce.o: ../../include/dsn_mask.h
 cleanup_bounce.o: ../../include/dsn_util.h
+cleanup_bounce.o: ../../include/header_body_checks.h
 cleanup_bounce.o: ../../include/header_opts.h
 cleanup_bounce.o: ../../include/htable.h
 cleanup_bounce.o: ../../include/iostuff.h
@@ -527,6 +698,7 @@ cleanup_envelope.o: ../../include/been_here.h
 cleanup_envelope.o: ../../include/cleanup_user.h
 cleanup_envelope.o: ../../include/dict.h
 cleanup_envelope.o: ../../include/dsn_mask.h
+cleanup_envelope.o: ../../include/header_body_checks.h
 cleanup_envelope.o: ../../include/header_opts.h
 cleanup_envelope.o: ../../include/htable.h
 cleanup_envelope.o: ../../include/iostuff.h
@@ -545,6 +717,7 @@ cleanup_envelope.o: ../../include/nvtable.h
 cleanup_envelope.o: ../../include/qmgr_user.h
 cleanup_envelope.o: ../../include/rec_attr_map.h
 cleanup_envelope.o: ../../include/rec_type.h
+cleanup_envelope.o: ../../include/recipient_list.h
 cleanup_envelope.o: ../../include/record.h
 cleanup_envelope.o: ../../include/resolve_clnt.h
 cleanup_envelope.o: ../../include/string_list.h
@@ -563,6 +736,7 @@ cleanup_extracted.o: ../../include/been_here.h
 cleanup_extracted.o: ../../include/cleanup_user.h
 cleanup_extracted.o: ../../include/dict.h
 cleanup_extracted.o: ../../include/dsn_mask.h
+cleanup_extracted.o: ../../include/header_body_checks.h
 cleanup_extracted.o: ../../include/header_opts.h
 cleanup_extracted.o: ../../include/htable.h
 cleanup_extracted.o: ../../include/iostuff.h
@@ -597,6 +771,7 @@ cleanup_final.o: ../../include/attr.h
 cleanup_final.o: ../../include/been_here.h
 cleanup_final.o: ../../include/cleanup_user.h
 cleanup_final.o: ../../include/dict.h
+cleanup_final.o: ../../include/header_body_checks.h
 cleanup_final.o: ../../include/header_opts.h
 cleanup_final.o: ../../include/htable.h
 cleanup_final.o: ../../include/mail_conf.h
@@ -626,6 +801,7 @@ cleanup_init.o: ../../include/cleanup_user.h
 cleanup_init.o: ../../include/dict.h
 cleanup_init.o: ../../include/ext_prop.h
 cleanup_init.o: ../../include/flush_clnt.h
+cleanup_init.o: ../../include/header_body_checks.h
 cleanup_init.o: ../../include/header_opts.h
 cleanup_init.o: ../../include/htable.h
 cleanup_init.o: ../../include/iostuff.h
@@ -658,6 +834,7 @@ cleanup_map11.o: ../../include/attr.h
 cleanup_map11.o: ../../include/been_here.h
 cleanup_map11.o: ../../include/cleanup_user.h
 cleanup_map11.o: ../../include/dict.h
+cleanup_map11.o: ../../include/header_body_checks.h
 cleanup_map11.o: ../../include/header_opts.h
 cleanup_map11.o: ../../include/htable.h
 cleanup_map11.o: ../../include/mail_addr_map.h
@@ -687,6 +864,7 @@ cleanup_map1n.o: ../../include/attr.h
 cleanup_map1n.o: ../../include/been_here.h
 cleanup_map1n.o: ../../include/cleanup_user.h
 cleanup_map1n.o: ../../include/dict.h
+cleanup_map1n.o: ../../include/header_body_checks.h
 cleanup_map1n.o: ../../include/header_opts.h
 cleanup_map1n.o: ../../include/htable.h
 cleanup_map1n.o: ../../include/mail_addr_map.h
@@ -717,6 +895,7 @@ cleanup_masquerade.o: ../../include/attr.h
 cleanup_masquerade.o: ../../include/been_here.h
 cleanup_masquerade.o: ../../include/cleanup_user.h
 cleanup_masquerade.o: ../../include/dict.h
+cleanup_masquerade.o: ../../include/header_body_checks.h
 cleanup_masquerade.o: ../../include/header_opts.h
 cleanup_masquerade.o: ../../include/htable.h
 cleanup_masquerade.o: ../../include/mail_conf.h
@@ -750,6 +929,7 @@ cleanup_message.o: ../../include/conv_time.h
 cleanup_message.o: ../../include/dict.h
 cleanup_message.o: ../../include/dsn_util.h
 cleanup_message.o: ../../include/ext_prop.h
+cleanup_message.o: ../../include/header_body_checks.h
 cleanup_message.o: ../../include/header_opts.h
 cleanup_message.o: ../../include/htable.h
 cleanup_message.o: ../../include/iostuff.h
@@ -790,6 +970,8 @@ cleanup_milter.o: ../../include/been_here.h
 cleanup_milter.o: ../../include/cleanup_user.h
 cleanup_milter.o: ../../include/dict.h
 cleanup_milter.o: ../../include/dsn_mask.h
+cleanup_milter.o: ../../include/dsn_util.h
+cleanup_milter.o: ../../include/header_body_checks.h
 cleanup_milter.o: ../../include/header_opts.h
 cleanup_milter.o: ../../include/htable.h
 cleanup_milter.o: ../../include/iostuff.h
@@ -828,6 +1010,7 @@ cleanup_out.o: ../../include/attr.h
 cleanup_out.o: ../../include/been_here.h
 cleanup_out.o: ../../include/cleanup_user.h
 cleanup_out.o: ../../include/dict.h
+cleanup_out.o: ../../include/header_body_checks.h
 cleanup_out.o: ../../include/header_opts.h
 cleanup_out.o: ../../include/htable.h
 cleanup_out.o: ../../include/lex_822.h
@@ -865,6 +1048,7 @@ cleanup_out_recipient.o: ../../include/dsn.h
 cleanup_out_recipient.o: ../../include/dsn_buf.h
 cleanup_out_recipient.o: ../../include/dsn_mask.h
 cleanup_out_recipient.o: ../../include/ext_prop.h
+cleanup_out_recipient.o: ../../include/header_body_checks.h
 cleanup_out_recipient.o: ../../include/header_opts.h
 cleanup_out_recipient.o: ../../include/htable.h
 cleanup_out_recipient.o: ../../include/iostuff.h
@@ -899,6 +1083,7 @@ cleanup_region.o: ../../include/attr.h
 cleanup_region.o: ../../include/been_here.h
 cleanup_region.o: ../../include/cleanup_user.h
 cleanup_region.o: ../../include/dict.h
+cleanup_region.o: ../../include/header_body_checks.h
 cleanup_region.o: ../../include/header_opts.h
 cleanup_region.o: ../../include/htable.h
 cleanup_region.o: ../../include/mail_conf.h
@@ -925,6 +1110,7 @@ cleanup_rewrite.o: ../../include/attr.h
 cleanup_rewrite.o: ../../include/been_here.h
 cleanup_rewrite.o: ../../include/cleanup_user.h
 cleanup_rewrite.o: ../../include/dict.h
+cleanup_rewrite.o: ../../include/header_body_checks.h
 cleanup_rewrite.o: ../../include/header_opts.h
 cleanup_rewrite.o: ../../include/htable.h
 cleanup_rewrite.o: ../../include/iostuff.h
@@ -956,6 +1142,7 @@ cleanup_state.o: ../../include/attr.h
 cleanup_state.o: ../../include/been_here.h
 cleanup_state.o: ../../include/cleanup_user.h
 cleanup_state.o: ../../include/dict.h
+cleanup_state.o: ../../include/header_body_checks.h
 cleanup_state.o: ../../include/header_opts.h
 cleanup_state.o: ../../include/htable.h
 cleanup_state.o: ../../include/iostuff.h

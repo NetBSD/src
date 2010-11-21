@@ -1,4 +1,4 @@
-.\"	$NetBSD: postqueue.1,v 1.1.1.1.2.2 2009/09/15 06:02:18 snj Exp $
+.\"	$NetBSD: postqueue.1,v 1.1.1.1.2.3 2010/11/21 18:31:25 riz Exp $
 .\"
 .TH POSTQUEUE 1 
 .ad
@@ -56,8 +56,7 @@ by contacting the Postfix \fBshowq\fR(8) daemon.
 Each queue entry shows the queue file ID, message
 size, arrival time, sender, and the recipients that still need to
 be delivered.  If mail could not be delivered upon the last attempt,
-the reason for failure is shown. This mode of operation is implemented
-by executing the \fBpostqueue\fR(1) command. The queue ID string
+the reason for failure is shown. The queue ID string
 is followed by an optional status character:
 .RS
 .IP \fB*\fR

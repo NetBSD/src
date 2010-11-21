@@ -1,0 +1,2 @@
+./cleanup_milter: NOQUEUE: milter-header-filter: header X-SPAM-FLAG: YES from client_name[client_addr]; from=<sender> to=<recipient>: transport:nexthop:port
+./cleanup_milter: flags = enable_header_body_filter enable_milters

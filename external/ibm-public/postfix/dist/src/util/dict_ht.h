@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_ht.h,v 1.1.1.1.2.2 2009/09/15 06:03:55 snj Exp $	*/
+/*	$NetBSD: dict_ht.h,v 1.1.1.1.2.3 2010/11/21 18:31:36 riz Exp $	*/
 
 #ifndef _DICT_HT_H_INCLUDED_
 #define _DICT_HT_H_INCLUDED_
@@ -24,7 +24,7 @@
   */
 #define DICT_TYPE_HT	"internal"
 
-extern DICT *dict_ht_open(const char *, HTABLE *, void (*) (char *));
+extern DICT *dict_ht_open(const char *, int, int);
 
 /* LICENSE
 /* .ad

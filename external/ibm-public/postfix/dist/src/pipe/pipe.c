@@ -1,4 +1,4 @@
-/*	$NetBSD: pipe.c,v 1.1.1.1.2.2 2009/09/15 06:03:22 snj Exp $	*/
+/*	$NetBSD: pipe.c,v 1.1.1.1.2.3 2010/11/21 18:31:33 riz Exp $	*/
 
 /*++
 /* NAME
@@ -179,7 +179,7 @@
 /*	bytes); return them to the sender instead.
 /* .IP "\fBuser\fR=\fIusername\fR (required)"
 /* .IP "\fBuser\fR=\fIusername\fR:\fIgroupname\fR"
-/*	Execute the external command with the rights of the
+/*	Execute the external command with the user ID and group ID of the
 /*	specified \fIusername\fR.  The software refuses to execute
 /*	commands with root privileges, or with the privileges of the
 /*	mail system owner. If \fIgroupname\fR is specified, the
@@ -313,11 +313,11 @@
 /*	follow the conventions defined in <\fBsysexits.h\fR>.
 /*	Exit status 0 means normal successful completion.
 /*
-/*	Postfix version 2.3 and later support RFC 3463-style enhanced
-/*	status codes.  If a command terminates with a non-zero exit
-/*	status, and the command output begins with an enhanced
-/*	status code, this status code takes precedence over the
-/*	non-zero exit status.
+/*	In the case of a non-zero exit status, a limited amount of
+/*	command output is reported in an delivery status notification.
+/*	When the output begins with a 4.X.X or 5.X.X enhanced status
+/*	code, the status code takes precedence over the non-zero
+/*	exit status (Postfix version 2.3 and later).
 /*
 /*	Problems and transactions are logged to \fBsyslogd\fR(8).
 /*	Corrupted message files are marked so that the queue manager

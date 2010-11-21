@@ -31,7 +31,8 @@ SRCS	= alldig.c allprint.c argv.c argv_split.c attr_clnt.c attr_print0.c \
 	vstream_popen.c vstring.c vstring_vstream.c watchdog.c writable.c \
 	write_buf.c write_wait.c sane_basename.c format_tv.c allspace.c \
 	allascii.c load_file.c killme_after.c vstream_tweak.c upass_connect.c \
-	upass_listen.c upass_trigger.c edit_file.c inet_windowsize.c
+	upass_listen.c upass_trigger.c edit_file.c inet_windowsize.c \
+	unix_pass_fd_fix.c dict_cache.c
 OBJS	= alldig.o allprint.o argv.o argv_split.o attr_clnt.o attr_print0.o \
 	attr_print64.o attr_print_plain.o attr_scan0.o attr_scan64.o \
 	attr_scan_plain.o auto_clnt.o base64_code.o basename.o binhash.o \
@@ -64,7 +65,8 @@ OBJS	= alldig.o allprint.o argv.o argv_split.o attr_clnt.o attr_print0.o \
 	vstream_popen.o vstring.o vstring_vstream.o watchdog.o writable.o \
 	write_buf.o write_wait.o sane_basename.o format_tv.o allspace.o \
 	allascii.o load_file.o killme_after.o vstream_tweak.o upass_connect.o \
-	upass_listen.o upass_trigger.o edit_file.o inet_windowsize.o
+	upass_listen.o upass_trigger.o edit_file.o inet_windowsize.o \
+	unix_pass_fd_fix.o dict_cache.o
 HDRS	= argv.h attr.h attr_clnt.h auto_clnt.h base64_code.h binhash.h \
 	chroot_uid.h cidr_match.h clean_env.h connect.h ctable.h dict.h \
 	dict_cdb.h dict_cidr.h dict_db.h dict_dbm.h dict_env.h dict_ht.h \
@@ -84,9 +86,9 @@ HDRS	= argv.h attr.h attr_clnt.h auto_clnt.h base64_code.h binhash.h \
 	stringops.h sys_defs.h timed_connect.h timed_wait.h trigger.h \
 	username.h valid_hostname.h vbuf.h vbuf_print.h vstream.h vstring.h \
 	vstring_vstream.h watchdog.h format_tv.h load_file.h killme_after.h \
-	edit_file.h
+	edit_file.h dict_cache.h
 TESTSRC	= fifo_open.c fifo_rdwr_bug.c fifo_rdonly_bug.c select_bug.c \
-	stream_test.c dup2_pass_on_exec.c 
+	stream_test.c dup2_pass_on_exec.c test_send_fd test_recv_fd
 DEFS	= -I. -D$(SYSTYPE)
 CFLAGS	= $(DEBUG) $(OPT) $(DEFS)
 FILES	= Makefile $(SRCS) $(HDRS)
@@ -101,7 +103,8 @@ TESTPROG= dict_open dup2_pass_on_exec events exec_command fifo_open \
 	inet_addr_list attr_print64 attr_scan64 base64_code attr_print0 \
 	attr_scan0 host_port attr_scan_plain attr_print_plain htable \
 	unix_recv_fd unix_send_fd stream_recv_fd stream_send_fd hex_code \
-	myaddrinfo myaddrinfo4 inet_proto sane_basename format_tv
+	myaddrinfo myaddrinfo4 inet_proto sane_basename format_tv \
+	test_send_fd test_recv_fd
 
 LIB_DIR	= ../../lib
 INC_DIR	= ../../include
@@ -495,6 +498,12 @@ dict_cidr_test: dict_open dict_cidr.in dict_cidr.map dict_cidr.ref
 	diff dict_cidr.ref dict_cidr.tmp
 	rm -f dict_cidr.tmp
 
+dict_seq_test: dict_open testdb dict_seq.in dict_seq.ref
+	rm -f testdb.db testdb.dir testdb.pag
+	./dict_open hash:testdb create sync < dict_seq.in > dict_seq.tmp 2>&1
+	diff dict_seq.ref dict_seq.tmp
+	rm -f testdb.db testdb.dir testdb.pag dict_seq.tmp
+
 host_port_test: host_port host_port.in host_port.ref
 	./host_port <host_port.in >host_port.tmp 2>&1
 	diff host_port.ref host_port.tmp
@@ -568,8 +577,8 @@ argv.o: mymalloc.h
 argv.o: sys_defs.h
 argv_split.o: argv.h
 argv_split.o: argv_split.c
-argv_split.o: mymalloc.h
 argv_split.o: msg.h
+argv_split.o: mymalloc.h
 argv_split.o: stringops.h
 argv_split.o: sys_defs.h
 argv_split.o: vbuf.h
@@ -737,6 +746,17 @@ dict_alloc.o: sys_defs.h
 dict_alloc.o: vbuf.h
 dict_alloc.o: vstream.h
 dict_alloc.o: vstring.h
+dict_cache.o: argv.h
+dict_cache.o: dict.h
+dict_cache.o: dict_cache.c
+dict_cache.o: dict_cache.h
+dict_cache.o: events.h
+dict_cache.o: msg.h
+dict_cache.o: mymalloc.h
+dict_cache.o: sys_defs.h
+dict_cache.o: vbuf.h
+dict_cache.o: vstream.h
+dict_cache.o: vstring.h
 dict_cdb.o: argv.h
 dict_cdb.o: dict.h
 dict_cdb.o: dict_cdb.c
@@ -806,6 +826,7 @@ dict_ht.o: dict_ht.c
 dict_ht.o: dict_ht.h
 dict_ht.o: htable.h
 dict_ht.o: mymalloc.h
+dict_ht.o: stringops.h
 dict_ht.o: sys_defs.h
 dict_ht.o: vbuf.h
 dict_ht.o: vstream.h
@@ -841,6 +862,7 @@ dict_open.o: dict_cidr.h
 dict_open.o: dict_db.h
 dict_open.o: dict_dbm.h
 dict_open.o: dict_env.h
+dict_open.o: dict_ht.h
 dict_open.o: dict_ni.h
 dict_open.o: dict_nis.h
 dict_open.o: dict_nisplus.h
@@ -1502,7 +1524,6 @@ stream_trigger.o: mymalloc.h
 stream_trigger.o: stream_trigger.c
 stream_trigger.o: sys_defs.h
 stream_trigger.o: trigger.h
-sys_compat.o: iostuff.h
 sys_compat.o: sys_compat.c
 sys_compat.o: sys_defs.h
 timed_connect.o: iostuff.h
@@ -1552,6 +1573,12 @@ unix_listen.o: msg.h
 unix_listen.o: sane_accept.h
 unix_listen.o: sys_defs.h
 unix_listen.o: unix_listen.c
+unix_pass_fd_fix.o: iostuff.h
+unix_pass_fd_fix.o: name_mask.h
+unix_pass_fd_fix.o: sys_defs.h
+unix_pass_fd_fix.o: unix_pass_fd_fix.c
+unix_pass_fd_fix.o: vbuf.h
+unix_pass_fd_fix.o: vstring.h
 unix_recv_fd.o: iostuff.h
 unix_recv_fd.o: msg.h
 unix_recv_fd.o: sys_defs.h

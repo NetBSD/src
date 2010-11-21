@@ -4,8 +4,8 @@
 # SUMMARY
 #	Postfix multi-instance API
 # DESCRIPTION
-#	Postfix versions 2.6 and later provide support for multiple
-#	Postfix instances. Instances share executable files and
+#	Support for managing multiple Postfix instances is available
+#	as of version 2.6. Instances share executable files and
 #	documentation, but have their own directories for configuration,
 #	queue and data files.
 #
@@ -16,8 +16,8 @@
 #	manager program.
 #
 #	With multi-instance support, the default Postfix instance
-#	is always required. The config_directory parameter's default
-#	value specifies that instance's configuration file location.
+#	is always required. This instance is identified by the
+#	config_directory parameter's default value.
 # GENERAL OPERATION
 # .ad
 # .fi
@@ -54,8 +54,8 @@
 #	configuration directory via the MAIL_CONFIG environment
 #	variable (the -c command-line option has higher precedence).
 #
-#	When no Postfix instance information is specified, the
-#	postfix(1) command will operate on all Postfix instances.
+#	Otherwise, the postfix(1) command will operate on all Postfix
+#	instances.
 # ENABLING POSTFIX(1) MULTI-INSTANCE MODE
 # .ad
 # .fi

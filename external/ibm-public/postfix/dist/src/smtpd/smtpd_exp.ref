@@ -118,7 +118,7 @@ OK
 >>> helo verisign.com
 OK
 >>> helo example.tld
-./smtpd_check: warning: Unable to look up MX host for example.tld: Host not found
+./smtpd_check: warning: Unable to look up MX host example.tld for Helo command example.tld: hostname nor servname provided, or not known
 OK
 >>> sender_restrictions check_sender_mx_access,hash:smtpd_check_access
 OK

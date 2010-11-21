@@ -651,30 +651,125 @@ align="center" bgcolor="#f0f0ff"> smtp<br> session<br> cache </td>
 
 <li> <p> The <a href="verify.8.html">verify(8)</a> server verifies that a sender or recipient
 address is deliverable before the <a href="smtpd.8.html">smtpd(8)</a> server accepts it.  The
-<a href="verify.8.html">verify(8)</a> server injects probe messages into the Postfix queue and
-processes status updates from delivery agents and/or queue manager.
+<a href="verify.8.html">verify(8)</a> server queries a cache with address verification results.
+If a result is not found, the <a href="verify.8.html">verify(8)</a> server injects a probe
+message into the Postfix queue and processes the status update from
+a delivery agent or queue manager.
 This process is described in the <a href="ADDRESS_VERIFICATION_README.html">ADDRESS_VERIFICATION_README</a>
 document.  The <a href="verify.8.html">verify(8)</a> service is available with Postfix version
 2.1 and later. </p>
 
 <table>
 
-<tr> <td> Network </td> <td> <tt> -&gt; </tt> </td> <td align="center"
-bgcolor="#f0f0ff"> <a href="smtpd.8.html">smtpd(8)</a> </td> <td> <tt> &lt;-&gt; </tt> </td>
-<td align="center" bgcolor="#f0f0ff"> <a href="verify.8.html">verify(8)</a> </td> <td> <tt>
--&gt; </tt> </td> <td align="center" bgcolor="#f0f0ff"> <a href="cleanup.8.html">cleanup(8)</a>
-</td> <td> <tt> -&gt; </tt> </td> <td align="center" bgcolor="#f0f0ff">
-<a href="qmgr.8.html">qmgr(8)</a><br> Postfix <br>queue </td> <td> <tt> -&gt; </tt> </td>
-<td align="center" bgcolor="#f0f0ff"> Delivery<br> agents</td>
+<tr>
+
+    <td rowspan="2" colspan="5" align="center" valign="middle">
+    &nbsp; </td> <td rowspan="3" align="center" valign="bottom">
+    <tt> -&gt; </tt> </td> <td rowspan="3" align="center"
+    valign="middle"> probe<br> message </td> <td rowspan="3"
+    align="center" valign="middle"> <tt> -&gt; </tt> </td> <td
+    rowspan="3" bgcolor="#f0f0ff" align="center" valign="middle">
+    Postfix<br> mail<br> queue </td>
+
 </tr>
 
-<tr> <td colspan="5"> </td> <td align="right"> <table> <tr> <td>
-\ </td> <td> </td> </tr> <tr> <td> </td> <td> \ </td> </tr> </table>
-</td> <td align="center" valign="bottom"> <tt> &lt;- </tt> </td>
-<td valign="bottom"> <tt> &lt;- </tt> </td> <td align="center">
-<tt> |<br> v </tt> </td> <td align="center"> <table> <tr> <td>
-</td> <td> / </td> </tr> <tr> <td> / </td> <td> </td> </tr> </table>
+<tr> </tr>
+
+<tr>
+
+    <td rowspan="3" align="center" valign="middle"> Network </td>
+    <td rowspan="3" align="center" valign="middle"> <tt> -&gt; </tt>
+    </td> <td rowspan="3" bgcolor="#f0f0ff" align="center"
+    valign="middle"> <a href="smtpd.8.html">smtpd(8)</a> </td> <td rowspan="3" align="center"
+    valign="middle"> <tt> &lt;-&gt; </tt> </td> <td rowspan="3"
+    bgcolor="#f0f0ff" align="center" valign="middle"> <a href="verify.8.html">verify(8)</a>
+    </td>
+
+</tr>
+
+<tr>
+
+    <td rowspan="1" colspan="3"> </td> <td rowspan="1" align="center"
+    valign="middle"> <tt> |</tt><br> <tt> v</tt> </td>
+
+</tr>
+
+<tr>
+
+    <td rowspan="3" align="center" valign="top"> <tt> &lt;- </tt>
+    </td> <td rowspan="3" align="center" valign="middle"> probe<br>
+    status </td> <td rowspan="3" align="center" valign="middle">
+    <tt> &lt;- </tt> </td> <td rowspan="3" bgcolor="#f0f0ff"
+    align="center" valign="middle"> Postfix<br> delivery<br> agents
+    </td> <td rowspan="3" align="left" valign="middle"> <tt>-&gt;</tt>
+    Local<br> <tt>-&gt;</tt> Network</td>
+
+</tr>
+
+<tr>
+
+    <td rowspan="3" colspan="4" align="center" valign="middle">
+    &nbsp; </td> <td rowspan="3" align="center" valign="middle">
+    <tt> ^</tt><br> <tt> |</tt><br> <tt> v</tt> </td>
+
+</tr>
+
+<tr> </tr>
+
+<tr> <td colspan="4"> &nbsp; </td> </tr>
+
+<tr>
+
+    <td colspan="4" align="center" valign="middle"> &nbsp; </td>
+    <td bgcolor="#f0f0ff" align="center" valign="middle"> Address<br>
+    verification<br> cache </td>
+
+</tr>
+
+</table>
+
+<li> <p> The <a href="postscreen.8.html">postscreen(8)</a> server can be put "in front" of Postfix
+<a href="smtpd.8.html">smtpd(8)</a> processes. Its purpose is to accept connections from the
+network and to decide what SMTP clients are allowed to talk to
+Postfix.  According to the 2008 MessageLabs annual report, 81% of
+all email was spam, and 90% of that was sent by botnets.  While
+<a href="postscreen.8.html">postscreen(8)</a> keeps the zombies away, more <a href="smtpd.8.html">smtpd(8)</a> processes remain
+available for legitimate clients.  </p>
+
+<p> The <a href="postscreen.8.html">postscreen(8)</a> server is still evolving, and is likely to
+undergo changes that break compatibility with earlier versions.
+For this reason the <a href="postscreen.8.html">postscreen(8)</a> server is not installed with the
+stable Postfix release. </p>
+
+<table>
+
+<tr> <td> zombie </td> </tr>
+
+<tr> <td>  </td> <td align="left"> <tt> \ </tt> </td> </tr>
+
+<tr> <td> zombie </td> <td align="left"> <tt> - </tt> </td> <td>
+</td> <td>  </td> <td>  </td> <td align="right"> <tt> - </tt> </td>
+<td bgcolor="#f0f0ff" align="center"> <a href="smtpd.8.html">smtpd(8)</a> </td> </tr>
+
+<tr> <td>  </td> <td align="right"> <tt> \ </tt> </td> <td> </td>
+<td align="left"> <tt> / </tt> </td> </tr>
+
+<tr> <td bgcolor="#f0f0ff" align="center"> other </td> <td> <tt>
+--- </tt> </td> <td bgcolor="#f0f0ff" align="center" valign="middle">
+<a href="postscreen.8.html">postscreen(8)</a> </td> </tr>
+
+<tr> <td>  </td> <td align="right"> <tt> / </tt> </td> <td> </td>
+<td align="right"> <tt> \ </tt> </td> </tr>
+
+<tr> <td bgcolor="#f0f0ff" align="center"> other </td> <td align="left">
+<tt> - </tt> </td> <td> </td> <td>  </td> <td>  </td> <td align="right">
+<tt> - </tt> </td> <td bgcolor="#f0f0ff" align="center"> <a href="smtpd.8.html">smtpd(8)</a>
 </td> </tr>
+
+<tr> <td>  </td> <td align="left"> <tt> / </tt> </td> </tr>
+
+<tr> <td> zombie </td> </tr>
+
 
 </table>
 

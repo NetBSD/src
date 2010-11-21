@@ -1,4 +1,4 @@
-/*	$NetBSD: mail_queue.h,v 1.1.1.1.2.2 2009/09/15 06:02:46 snj Exp $	*/
+/*	$NetBSD: mail_queue.h,v 1.1.1.1.2.3 2010/11/21 18:31:31 riz Exp $	*/
 
 #ifndef _MAIL_QUEUE_H_INCLUDED_
 #define _MAIL_QUEUE_H_INCLUDED_
@@ -37,6 +37,7 @@
 #define MAIL_QUEUE_BOUNCE	"bounce"
 #define MAIL_QUEUE_CORRUPT	"corrupt"
 #define MAIL_QUEUE_FLUSH	"flush"
+#define MAIL_QUEUE_SAVED	"saved"
 
  /*
   * Queue file modes.

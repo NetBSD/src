@@ -10,6 +10,7 @@ MAKES	= bool_table.h bool_vars.h int_table.h int_vars.h str_table.h \
 	str_vars.h time_table.h time_vars.h raw_table.h raw_vars.h \
 	nint_table.h nint_vars.h
 AUTOS	= auto_table.h auto_vars.h
+DUMMIES	= makes_dummy autos_dummy # for "make -j"
 PROG	= postconf
 SAMPLES	= ../../conf/main.cf.default
 INC_DIR	= ../../include
@@ -43,11 +44,17 @@ update: ../../bin/$(PROG) $(SAMPLES)
 ../../bin/$(PROG): $(PROG)
 	cp $(PROG) ../../bin
 
-$(MAKES): $(INC_DIR)/mail_params.h ../global/mail_params.c
-	$(AWK) -f extract.awk ../*/*.c | $(SHELL)
+$(MAKES): makes_dummy
 
-$(AUTOS): auto.awk
+makes_dummy: $(INC_DIR)/mail_params.h ../global/mail_params.c
+	$(AWK) -f extract.awk ../*/*.c | $(SHELL)
+	touch makes_dummy
+
+$(AUTOS): autos_dummy
+
+autos_dummy: auto.awk
 	$(AWK) -f auto.awk
+	touch autos_dummy
 
 printfck: $(OBJS) $(PROG)
 	rm -rf printfck
@@ -61,7 +68,7 @@ lint:
 	lint $(DEFS) $(SRCS) $(LINTFIX)
 
 clean:
-	rm -f *.o *core $(PROG) $(TESTPROG) junk $(MAKES) $(AUTOS)
+	rm -f *.o *core $(PROG) $(TESTPROG) junk $(MAKES) $(AUTOS) $(DUMMIES)
 	rm -rf printfck
 
 tidy:	clean

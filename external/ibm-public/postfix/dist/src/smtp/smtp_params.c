@@ -1,4 +1,4 @@
-/*	$NetBSD: smtp_params.c,v 1.1.1.1.2.2 2009/09/15 06:03:33 snj Exp $	*/
+/*	$NetBSD: smtp_params.c,v 1.1.1.1.2.3 2010/11/21 18:31:35 riz Exp $	*/
 
     static const CONFIG_STR_TABLE smtp_str_table[] = {
 	VAR_NOTIFY_CLASSES, DEF_NOTIFY_CLASSES, &var_notify_classes, 0, 0,
@@ -54,6 +54,7 @@
 	VAR_SMTP_MIME_CHKS, DEF_SMTP_MIME_CHKS, &var_smtp_mime_chks, 0, 0,
 	VAR_SMTP_NEST_CHKS, DEF_SMTP_NEST_CHKS, &var_smtp_nest_chks, 0, 0,
 	VAR_SMTP_BODY_CHKS, DEF_SMTP_BODY_CHKS, &var_smtp_body_chks, 0, 0,
+	VAR_SMTP_RESP_FILTER, DEF_SMTP_RESP_FILTER, &var_smtp_resp_filter, 0, 0,
 	0,
     };
     static const CONFIG_TIME_TABLE smtp_time_table[] = {
@@ -105,6 +106,7 @@
 #ifdef USE_TLS
 	VAR_SMTP_TLS_ENFORCE_PN, DEF_SMTP_TLS_ENFORCE_PN, &var_smtp_tls_enforce_peername,
 	VAR_SMTP_TLS_NOTEOFFER, DEF_SMTP_TLS_NOTEOFFER, &var_smtp_tls_note_starttls_offer,
+	VAR_SMTP_TLS_BLK_EARLY_MAIL_REPLY, DEF_SMTP_TLS_BLK_EARLY_MAIL_REPLY, &var_smtp_tls_blk_early_mail_reply,
 #endif
 	VAR_SMTP_SENDER_AUTH, DEF_SMTP_SENDER_AUTH, &var_smtp_sender_auth,
 	VAR_SMTP_CNAME_OVERR, DEF_SMTP_CNAME_OVERR, &var_smtp_cname_overr,

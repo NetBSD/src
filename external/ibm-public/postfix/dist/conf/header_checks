@@ -167,38 +167,55 @@
 #               This feature is available in Postfix 2.1 and later.
 # 
 #        FILTER transport:destination
-#               Write a content filter request to the  queue  file,
-#               and  inspect  the  next input line.  After the com-
-#               plete message is received it will be  sent  through
-#               the specified external content filter.  More infor-
-#               mation about external content  filters  is  in  the
-#               Postfix FILTER_README file.
+#               After the message is queued, send the  entire  mes-
+#               sage through the specified external content filter.
+#               The transport name specifies the first field  of  a
+#               mail  delivery  agent  definition in master.cf; the
+#               syntax of the next-hop destination is described  in
+#               the  manual  page  of  the  corresponding  delivery
+#               agent.  More  information  about  external  content
+#               filters is in the Postfix FILTER_README file.
 # 
-#               Note: this action overrides the content_filter set-
-#               ting, and affects all recipients of the message. In
-#               the  case  that  multiple FILTER actions fire, only
-#               the last one is executed.
+#               Note  1: do not use $number regular expression sub-
+#               stitutions for transport or destination unless  you
+#               know that the information has a trusted origin.
+# 
+#               Note  2:  this  action  overrides  the main.cf con-
+#               tent_filter setting, and affects all recipients  of
+#               the  message.  In  the  case  that  multiple FILTER
+#               actions fire, only the last one is executed.
+# 
+#               Note 3: the purpose of the  FILTER  command  is  to
+#               override  message routing.  To override the recipi-
+#               ent's transport but not the  next-hop  destination,
+#               specify  an  empty  filter destination (Postfix 2.7
+#               and later), or specify a transport:destination that
+#               delivers   through  a  different  Postfix  instance
+#               (Postfix 2.6 and earlier). Other options are  using
+#               the  recipient-dependent transport_maps or the sen-
+#               der-dependent   sender_dependent_default_transport-
+#               _maps features.
 # 
 #               This feature is available in Postfix 2.0 and later.
 # 
 #        HOLD optional text...
-#               Arrange  for  the  message to be placed on the hold
-#               queue, and inspect the next input line.   The  mes-
-#               sage  remains  on hold until someone either deletes
-#               it or releases it for delivery.  Log  the  optional
+#               Arrange for the message to be placed  on  the  hold
+#               queue,  and  inspect the next input line.  The mes-
+#               sage remains on hold until someone  either  deletes
+#               it  or  releases it for delivery.  Log the optional
 #               text if specified, otherwise log a generic message.
 # 
-#               Mail that is placed on hold can  be  examined  with
-#               the  postcat(1)  command,  and  can be destroyed or
+#               Mail  that  is  placed on hold can be examined with
+#               the postcat(1) command, and  can  be  destroyed  or
 #               released with the postsuper(1) command.
 # 
-#               Note: use "postsuper -r" to release mail  that  was
-#               kept  on  hold for a significant fraction of $maxi-
+#               Note:  use  "postsuper -r" to release mail that was
+#               kept on hold for a significant fraction  of  $maxi-
 #               mal_queue_lifetime  or  $bounce_queue_lifetime,  or
-#               longer.  Use "postsuper -H" only for mail that will
+#               longer. Use "postsuper -H" only for mail that  will
 #               not expire within a few delivery attempts.
 # 
-#               Note: this action affects  all  recipients  of  the
+#               Note:  this  action  affects  all recipients of the
 #               message.
 # 
 #               This feature is available in Postfix 2.0 and later.
@@ -207,23 +224,23 @@
 #               the next input line.
 # 
 #        PREPEND text...
-#               Prepend  one  line  with  the  specified  text, and
+#               Prepend one  line  with  the  specified  text,  and
 #               inspect the next input line.
 # 
 #               Notes:
 # 
-#               o      The prepended text is output on  a  separate
+#               o      The  prepended  text is output on a separate
 #                      line,  immediately  before  the  input  that
 #                      triggered the PREPEND action.
 # 
 #               o      The prepended text is not considered part of
-#                      the  input  stream:  it  is  not  subject to
+#                      the input  stream:  it  is  not  subject  to
 #                      header/body checks or address rewriting, and
 #                      it does not affect the way that Postfix adds
 #                      missing message headers.
 # 
 #               o      When prepending text before a message header
-#                      line,  the  prepended text must begin with a
+#                      line, the prepended text must begin  with  a
 #                      valid message header label.
 # 
 #               o      This action cannot be used to prepend multi-
@@ -232,46 +249,46 @@
 #               This feature is available in Postfix 2.1 and later.
 # 
 #        REDIRECT user@domain
-#               Write a message redirection request  to  the  queue
-#               file,  and  inspect  the next input line. After the
+#               Write  a  message  redirection request to the queue
+#               file, and inspect the next input  line.  After  the
 #               message is queued, it will be sent to the specified
 #               address instead of the intended recipient(s).
 # 
-#               Note:  this action overrides the FILTER action, and
-#               affects all recipients of the message. If  multiple
-#               REDIRECT  actions  fire,  only the last one is exe-
+#               Note: this action overrides the FILTER action,  and
+#               affects  all recipients of the message. If multiple
+#               REDIRECT actions fire, only the last  one  is  exe-
 #               cuted.
 # 
 #               This feature is available in Postfix 2.1 and later.
 # 
 #        REPLACE text...
-#               Replace  the  current line with the specified text,
+#               Replace the current line with the  specified  text,
 #               and inspect the next input line.
 # 
 #               This feature is available in Postfix 2.2 and later.
-#               The  description below applies to Postfix 2.2.2 and
+#               The description below applies to Postfix 2.2.2  and
 #               later.
 # 
 #               Notes:
 # 
-#               o      When replacing a message  header  line,  the
-#                      replacement  text  must  begin  with a valid
+#               o      When  replacing  a  message header line, the
+#                      replacement text must  begin  with  a  valid
 #                      header label.
 # 
-#               o      The replaced text remains part of the  input
-#                      stream.  Unlike  the result from the PREPEND
-#                      action, a replaced  message  header  may  be
-#                      subject  to address rewriting and may affect
-#                      the way that Postfix  adds  missing  message
+#               o      The  replaced text remains part of the input
+#                      stream. Unlike the result from  the  PREPEND
+#                      action,  a  replaced  message  header may be
+#                      subject to address rewriting and may  affect
+#                      the  way  that  Postfix adds missing message
 #                      headers.
 # 
 #        REJECT optional text...
-#               Reject  the  entire  message.  Reply  with optional
+#               Reject the  entire  message.  Reply  with  optional
 #               text... when the optional text is specified, other-
 #               wise reply with a generic error message.
 # 
-#               Note:   this  action  disables  further  header  or
-#               body_checks inspection of the current  message  and
+#               Note:  this  action  disables  further  header   or
+#               body_checks  inspection  of the current message and
 #               affects all recipients.
 # 
 #               Postfix version 2.3 and later support enhanced sta-
@@ -280,37 +297,37 @@
 #               enhanced status code of "5.7.1".
 # 
 #        WARN optional text...
-#               Log a warning with the optional text... (or  log  a
-#               generic  message), and inspect the next input line.
+#               Log  a  warning with the optional text... (or log a
+#               generic message), and inspect the next input  line.
 #               This action is useful for debugging and for testing
 #               a pattern before applying more drastic actions.
 # 
 # BUGS
 #        Empty lines never match, because some map types mis-behave
-#        when given a zero-length search string.   This  limitation
-#        may  be  removed for regular expression tables in a future
+#        when  given  a zero-length search string.  This limitation
+#        may be removed for regular expression tables in  a  future
 #        release.
 # 
-#        Many people overlook the main limitations  of  header  and
+#        Many  people  overlook  the main limitations of header and
 #        body_checks rules.
 # 
-#        o      These  rules  operate on one logical message header
+#        o      These rules operate on one logical  message  header
 #               or one body line at a time. A decision made for one
 #               line is not carried over to the next line.
 # 
-#        o      If  text  in the message body is encoded (RFC 2045)
+#        o      If text in the message body is encoded  (RFC  2045)
 #               then the rules need to be specified for the encoded
 #               form.
 # 
-#        o      Likewise,  when  message  headers  are encoded (RFC
-#               2047) then the rules need to be specified  for  the
+#        o      Likewise, when message  headers  are  encoded  (RFC
+#               2047)  then  the rules need to be specified for the
 #               encoded form.
 # 
-#        Message  headers added by the cleanup(8) daemon itself are
+#        Message headers added by the cleanup(8) daemon itself  are
 #        excluded from inspection. Examples of such message headers
 #        are From:, To:, Message-ID:, Date:.
 # 
-#        Message  headers  deleted by the cleanup(8) daemon will be
+#        Message headers deleted by the cleanup(8) daemon  will  be
 #        examined before they are deleted. Examples are: Bcc:, Con-
 #        tent-Length:, Return-Path:.
 # 
@@ -318,11 +335,11 @@
 #        body_checks
 #               Lookup tables with content filter rules for message
 #               body lines.  These filters see one physical line at
-#               a  time,  in  chunks  of at most $line_length_limit
+#               a time, in chunks  of  at  most  $line_length_limit
 #               bytes.
 # 
 #        body_checks_size_limit
-#               The amount of  content  per  message  body  segment
+#               The  amount  of  content  per  message body segment
 #               (attachment) that is subjected to $body_checks fil-
 #               tering.
 # 
@@ -332,35 +349,35 @@
 # 
 #        nested_header_checks (default: $header_checks)
 #               Lookup tables with content filter rules for message
-#               header  lines:  respectively,  these are applied to
-#               the initial message  headers  (not  including  MIME
-#               headers),  to the MIME headers anywhere in the mes-
-#               sage, and to the initial headers of  attached  mes-
+#               header lines: respectively, these  are  applied  to
+#               the  initial  message  headers  (not including MIME
+#               headers), to the MIME headers anywhere in the  mes-
+#               sage,  and  to the initial headers of attached mes-
 #               sages.
 # 
-#               Note:  these filters see one logical message header
-#               at a time, even when a message header spans  multi-
-#               ple  lines.  Message  headers  that are longer than
+#               Note: these filters see one logical message  header
+#               at  a time, even when a message header spans multi-
+#               ple lines. Message headers  that  are  longer  than
 #               $header_size_limit characters are truncated.
 # 
 #        disable_mime_input_processing
-#               While receiving mail, give no special treatment  to
-#               MIME  related  message  headers; all text after the
+#               While  receiving mail, give no special treatment to
+#               MIME related message headers; all  text  after  the
 #               initial message headers is considered to be part of
-#               the  message body. This means that header_checks is
-#               applied to all the  initial  message  headers,  and
+#               the message body. This means that header_checks  is
+#               applied  to  all  the  initial message headers, and
 #               that body_checks is applied to the remainder of the
 #               message.
 # 
-#               Note: when used in this  manner,  body_checks  will
-#               process  a  multi-line message header one line at a
+#               Note:  when  used  in this manner, body_checks will
+#               process a multi-line message header one line  at  a
 #               time.
 # 
 # EXAMPLES
-#        Header pattern to block attachments  with  bad  file  name
-#        extensions.   For  convenience, the PCRE /x flag is speci-
-#        fied, so that there is no need  to  collapse  the  pattern
-#        into   a   single  line  of  text.   The  purpose  of  the
+#        Header  pattern  to  block  attachments with bad file name
+#        extensions.  For convenience, the PCRE /x flag  is  speci-
+#        fied,  so  that  there  is no need to collapse the pattern
+#        into  a  single  line  of  text.   The  purpose   of   the
 #        [[:xdigit:]] sub-expressions is to recognize Windows CLSID
 #        strings.
 # 
@@ -399,7 +416,7 @@
 #        RFC 2047, message header encoding for non-ASCII text
 # 
 # README FILES
-#        Use "postconf readme_directory" or  "postconf  html_direc-
+#        Use  "postconf  readme_directory" or "postconf html_direc-
 #        tory" to locate this information.
 #        DATABASE_README, Postfix lookup table overview
 #        CONTENT_INSPECTION_README, Postfix content inspection overview
@@ -407,7 +424,7 @@
 #        BACKSCATTER_README, blocking returned forged mail
 # 
 # LICENSE
-#        The  Secure  Mailer  license must be distributed with this
+#        The Secure Mailer license must be  distributed  with  this
 #        software.
 # 
 # AUTHOR(S)

@@ -1,4 +1,4 @@
-/*	$NetBSD: trivial-rewrite.c,v 1.1.1.1.2.2 2009/09/15 06:03:52 snj Exp $	*/
+/*	$NetBSD: trivial-rewrite.c,v 1.1.1.1.2.3 2010/11/21 18:31:36 riz Exp $	*/
 
 /*++
 /* NAME
@@ -162,6 +162,14 @@
 /* .IP "\fBempty_address_relayhost_maps_lookup_key (<>)\fR"
 /*	The sender_dependent_relayhost_maps search string that will be
 /*	used instead of the null sender address.
+/* .PP
+/*	Available in Postfix version 2.7 and later:
+/* .IP "\fBempty_address_default_transport_maps_lookup_key (<>)\fR"
+/*	The sender_dependent_default_transport_maps search string that
+/*	will be used instead of the null sender address.
+/* .IP "\fBsender_dependent_default_transport_maps (empty)\fR"
+/*	A sender-dependent override for the global default_transport
+/*	parameter setting.
 /* ADDRESS VERIFICATION CONTROLS
 /* .ad
 /* .fi
@@ -195,6 +203,11 @@
 /* .IP "\fBaddress_verify_sender_dependent_relayhost_maps ($sender_dependent_relayhost_maps)\fR"
 /*	Overrides the sender_dependent_relayhost_maps parameter setting for address
 /*	verification probes.
+/* .PP
+/*	Available in Postfix version 2.7 and later:
+/* .IP "\fBaddress_verify_sender_dependent_default_transport_maps ($sender_dependent_default_transport_maps)\fR"
+/*	Overrides the sender_dependent_default_transport_maps parameter
+/*	setting for address verification probes.
 /* MISCELLANEOUS CONTROLS
 /* .ad
 /* .fi
@@ -322,12 +335,14 @@ char   *var_virt_alias_doms;
 char   *var_virt_mailbox_doms;
 char   *var_relocated_maps;
 char   *var_def_transport;
+char   *var_snd_def_xport_maps;
 char   *var_empty_addr;
 int     var_show_unk_rcpt_table;
 int     var_resolve_nulldom;
 char   *var_remote_rwr_domain;
 char   *var_snd_relay_maps;
 char   *var_null_relay_maps_key;
+char   *var_null_def_xport_maps_key;
 int     var_resolve_num_dom;
 bool    var_allow_min_user;
 
@@ -339,6 +354,7 @@ char   *var_vrfy_local_xport;
 char   *var_vrfy_virt_xport;
 char   *var_vrfy_relay_xport;
 char   *var_vrfy_def_xport;
+char   *var_vrfy_snd_def_xport_maps;
 char   *var_vrfy_relayhost;
 char   *var_vrfy_relay_maps;
 
@@ -350,6 +366,7 @@ RES_CONTEXT resolve_regular = {
     VAR_VIRT_TRANSPORT, &var_virt_transport,
     VAR_RELAY_TRANSPORT, &var_relay_transport,
     VAR_DEF_TRANSPORT, &var_def_transport,
+    VAR_SND_DEF_XPORT_MAPS, &var_snd_def_xport_maps, 0,
     VAR_RELAYHOST, &var_relayhost,
     VAR_SND_RELAY_MAPS, &var_snd_relay_maps, 0,
     VAR_TRANSPORT_MAPS, &var_transport_maps, 0
@@ -360,6 +377,7 @@ RES_CONTEXT resolve_verify = {
     VAR_VRFY_VIRT_XPORT, &var_vrfy_virt_xport,
     VAR_VRFY_RELAY_XPORT, &var_vrfy_relay_xport,
     VAR_VRFY_DEF_XPORT, &var_vrfy_def_xport,
+    VAR_VRFY_SND_DEF_XPORT_MAPS, &var_vrfy_snd_def_xport_maps, 0,
     VAR_VRFY_RELAYHOST, &var_vrfy_relayhost,
     VAR_VRFY_RELAY_MAPS, &var_vrfy_relay_maps, 0,
     VAR_VRFY_XPORT_MAPS, &var_vrfy_xport_maps, 0
@@ -526,6 +544,18 @@ static void pre_jail_init(char *unused_name, char **unused_argv)
 			RES_PARAM_VALUE(resolve_verify.snd_relay_maps),
 			DICT_FLAG_LOCK | DICT_FLAG_FOLD_FIX
 			| DICT_FLAG_NO_REGSUB);
+    if (*RES_PARAM_VALUE(resolve_regular.snd_def_xp_maps))
+	resolve_regular.snd_def_xp_info =
+	    maps_create(resolve_regular.snd_def_xp_maps_name,
+			RES_PARAM_VALUE(resolve_regular.snd_def_xp_maps),
+			DICT_FLAG_LOCK | DICT_FLAG_FOLD_FIX
+			| DICT_FLAG_NO_REGSUB);
+    if (*RES_PARAM_VALUE(resolve_verify.snd_def_xp_maps))
+	resolve_verify.snd_def_xp_info =
+	    maps_create(resolve_verify.snd_def_xp_maps_name,
+			RES_PARAM_VALUE(resolve_verify.snd_def_xp_maps),
+			DICT_FLAG_LOCK | DICT_FLAG_FOLD_FIX
+			| DICT_FLAG_NO_REGSUB);
 }
 
 /* post_jail_init - initialize after entering chroot jail */
@@ -537,12 +567,6 @@ static void post_jail_init(char *unused_name, char **unused_argv)
     if (resolve_verify.transport_info)
 	transport_post_init(resolve_verify.transport_info);
     check_table_stats(0, (char *) 0);
-
-    /*
-     * This process is called by clients that already enforce the max_idle
-     * time, so we don't have to do it another time.
-     */
-    var_idle_limit = 1;
 }
 
 MAIL_VERSION_STAMP_DECLARE;
@@ -573,6 +597,9 @@ int     main(int argc, char **argv)
 	VAR_SND_RELAY_MAPS, DEF_SND_RELAY_MAPS, &var_snd_relay_maps, 0, 0,
 	VAR_NULL_RELAY_MAPS_KEY, DEF_NULL_RELAY_MAPS_KEY, &var_null_relay_maps_key, 1, 0,
 	VAR_VRFY_RELAY_MAPS, DEF_VRFY_RELAY_MAPS, &var_vrfy_relay_maps, 0, 0,
+	VAR_SND_DEF_XPORT_MAPS, DEF_SND_DEF_XPORT_MAPS, &var_snd_def_xport_maps, 0, 0,
+	VAR_NULL_DEF_XPORT_MAPS_KEY, DEF_NULL_DEF_XPORT_MAPS_KEY, &var_null_def_xport_maps_key, 1, 0,
+	VAR_VRFY_SND_DEF_XPORT_MAPS, DEF_VRFY_SND_DEF_XPORT_MAPS, &var_vrfy_snd_def_xport_maps, 0, 0,
 	0,
     };
     static const CONFIG_BOOL_TABLE bool_table[] = {
