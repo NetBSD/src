@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.111 2010/10/24 22:37:35 dholland Exp $
+$NetBSD: acronyms.comp,v 1.112 2010/11/21 01:46:20 dholland Exp $
 
 3WHS	three-way handshake
 ABI	application binary interface
@@ -62,6 +62,7 @@ BPS	bits per second
 BQS	Berkeley quality software
 BSD	Berkeley software distribution
 BSOD	blue screen of death
+BSP	binary space partition
 BSP	boot strap processor
 BSS	block started by symbol
 BT	Bluetooth
