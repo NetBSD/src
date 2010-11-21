@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.153.2.66 2010/11/20 07:52:30 uebayasi Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.153.2.67 2010/11/21 11:57:15 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.153.2.66 2010/11/20 07:52:30 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.153.2.67 2010/11/21 11:57:15 uebayasi Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -2254,11 +2254,11 @@ uvm_page_zeropage_init(void)
 {
 	struct pglist mlist;
 	struct vm_page *pg;
-	int n;
+	int error;
 
-	n = uvm_pglistalloc(PAGE_SIZE, 0, -1, PAGE_SIZE, PAGE_SIZE,
+	error = uvm_pglistalloc(PAGE_SIZE, 0, -1, PAGE_SIZE, PAGE_SIZE,
 	    &mlist, 1, 1);
-	KASSERT(n == 1);
+	KASSERT(error == 0);
 
 	pg = TAILQ_FIRST(&mlist);
 	KASSERT(pg != NULL);
