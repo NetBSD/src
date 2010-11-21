@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci_pci.c,v 1.32 2008/04/28 20:23:54 martin Exp $	*/
+/*	$NetBSD: fwohci_pci.c,v 1.32.10.1 2010/11/21 23:34:56 riz Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwohci_pci.c,v 1.32 2008/04/28 20:23:54 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwohci_pci.c,v 1.32.10.1 2010/11/21 23:34:56 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -43,6 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: fwohci_pci.c,v 1.32 2008/04/28 20:23:54 martin Exp $
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
+#include <dev/pci/pcidevs.h>
 #include <dev/ieee1394/fw_port.h>
 #include <dev/ieee1394/firewire.h>
 #include <dev/ieee1394/firewirereg.h>
@@ -74,6 +75,15 @@ fwohci_pci_match(device_t parent, struct cfdata *match,
 {
 	struct pci_attach_args *pa = (struct pci_attach_args *) aux;
 
+	/*
+	 * XXX
+	 * Firewire controllers used in some G3 PowerBooks hang the system
+	 * when trying to discover devices - don't attach to those for now
+	 * until someone with the right hardware can investigate
+	 */
+	if ((PCI_VENDOR(pa->pa_id) == PCI_VENDOR_APPLE) &&
+	    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_APPLE_PBG3_FW))
+	    return 0;
 	if (PCI_CLASS(pa->pa_class) == PCI_CLASS_SERIALBUS &&
 	    PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_SERIALBUS_FIREWIRE &&
 	    PCI_INTERFACE(pa->pa_class) == PCI_INTERFACE_OHCI)
