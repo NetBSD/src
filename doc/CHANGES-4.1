@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.210 2010/11/21 21:39:18 riz Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.211 2010/11/21 21:52:28 riz Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -4263,4 +4263,9 @@ sys/netbt/hci_link.c				1.22
 
 	Fix bluetooth connection for some Broadcom controllers.
 	[plunky, ticket #1409]
+
+sys/kern/subr_disk.c				1.100
+
+	Fix an issue with >2TB disks.
+	[mrg, ticket #1463]
 
