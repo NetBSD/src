@@ -1,4 +1,4 @@
-/*	$NetBSD: progress.c,v 1.17 2008/05/26 04:53:11 dholland Exp $ */
+/*	$NetBSD: progress.c,v 1.17.4.1 2010/11/21 18:40:44 riz Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: progress.c,v 1.17 2008/05/26 04:53:11 dholland Exp $");
+__RCSID("$NetBSD: progress.c,v 1.17.4.1 2010/11/21 18:40:44 riz Exp $");
 #endif				/* not lint */
 
 #include <sys/types.h>
@@ -112,7 +112,7 @@ main(int argc, char *argv[])
 		switch (ch) {
 		case 'b':
 			buffersize = (size_t) strsuftoll("buffer size", optarg,
-			    0, SIZE_T_MAX);
+			    0, SSIZE_MAX);
 			break;
 		case 'e':
 			eflag++;
