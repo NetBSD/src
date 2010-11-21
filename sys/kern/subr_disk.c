@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk.c,v 1.93.10.1 2009/04/04 17:49:21 snj Exp $	*/
+/*	$NetBSD: subr_disk.c,v 1.93.10.2 2010/11/21 21:48:28 riz Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2000, 2009 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.93.10.1 2009/04/04 17:49:21 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.93.10.2 2010/11/21 21:48:28 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -348,8 +348,8 @@ bounds_check_with_label(struct disk *dk, struct buf *bp, int wlabel)
 		return -1;
 	}
 
-	p_size = p->p_size << dk->dk_blkshift;
-	p_offset = p->p_offset << dk->dk_blkshift;
+	p_size = (uint64_t)p->p_size << dk->dk_blkshift;
+	p_offset = (uint64_t)p->p_offset << dk->dk_blkshift;
 #if RAW_PART == 3
 	labelsector = lp->d_partitions[2].p_offset;
 #else
