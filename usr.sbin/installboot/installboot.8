@@ -1,4 +1,4 @@
-.\"	$NetBSD: installboot.8,v 1.74 2010/01/14 17:49:32 drochner Exp $
+.\"	$NetBSD: installboot.8,v 1.75 2010/11/21 21:07:46 jym Exp $
 .\"
 .\" Copyright (c) 2002-2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -244,6 +244,13 @@ to the end of
 .Ar filesystem ,
 which must be a regular file in this case.
 .
+.It Sy bootconf
+.Sy [ amd64 ,
+.Sy i386 ]
+(Don't) read a
+.Dq boot.cfg
+file.
+.
 .It Sy command=\*[Lt]boot command\*[Gt]
 .Sy [ amiga ]
 Modify the default boot command line.
@@ -271,6 +278,11 @@ would swap the lowercase letters
 .Sq y
 and
 .Sq z .
+.
+.It Sy modules
+.Sy [ amd64 ,
+.Sy i386 ]
+(Don't) load kernel modules.
 .
 .It Sy password=\*[Lt]password\*[Gt]
 .Sy [ amd64 ,
@@ -305,18 +317,6 @@ disklabel should use no more than 4 partitions.
 .Sy [ amd64 ,
 .Sy i386 ]
 Set the timeout before the automatic boot begins to the given number of seconds.
-.
-.It Sy modules
-.Sy [ amd64 ,
-.Sy i386 ]
-(Don't) load kernel modules.
-.
-.It Sy bootconf
-.Sy [ amd64 ,
-.Sy i386 ]
-(Don't) read a
-.Dq boot.cfg
-file.
 .El
 .
 .It Fl t Ar fstype
