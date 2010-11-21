@@ -1,8 +1,8 @@
-/*	$NetBSD: rumpkern_if_wrappers.c,v 1.10 2010/11/17 21:50:34 pooka Exp $	*/
+/*	$NetBSD: rumpkern_if_wrappers.c,v 1.11 2010/11/21 17:35:20 pooka Exp $	*/
 
 /*
  * Automatically generated.  DO NOT EDIT.
- * from: NetBSD: rumpkern.ifspec,v 1.8 2010/11/17 21:49:52 pooka Exp 
+ * from: NetBSD: rumpkern.ifspec,v 1.9 2010/11/21 17:34:11 pooka Exp 
  * by:   NetBSD: makerumpif.sh,v 1.5 2010/09/01 19:32:11 pooka Exp 
  */
 
@@ -21,15 +21,6 @@ rump_kern_unavailable(void)
 {
 
 	panic("kern interface unavailable");
-}
-
-void
-rump_pub_reboot(int arg1)
-{
-
-	rump_schedule();
-	rump_reboot(arg1);
-	rump_unschedule();
 }
 
 int

@@ -1,12 +1,11 @@
-/*	$NetBSD: rumpkern_if_pub.h,v 1.11 2010/11/17 21:50:34 pooka Exp $	*/
+/*	$NetBSD: rumpkern_if_pub.h,v 1.12 2010/11/21 17:35:19 pooka Exp $	*/
 
 /*
  * Automatically generated.  DO NOT EDIT.
- * from: NetBSD: rumpkern.ifspec,v 1.8 2010/11/17 21:49:52 pooka Exp 
+ * from: NetBSD: rumpkern.ifspec,v 1.9 2010/11/21 17:34:11 pooka Exp 
  * by:   NetBSD: makerumpif.sh,v 1.5 2010/09/01 19:32:11 pooka Exp 
  */
 
-void rump_pub_reboot(int);
 int rump_pub_getversion(void);
 int rump_pub_module_init(const struct modinfo * const *, size_t);
 int rump_pub_module_fini(const struct modinfo *);
