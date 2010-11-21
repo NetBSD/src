@@ -849,7 +849,8 @@ display_init(struct statics *statics, int percpuinfo)
 	    *ip++ = cpustate_total_length;
 	    if ((i = strlen(*pp++)) > 0)
 	    {
-		cpustate_total_length += i + 8;
+		cpustate_total_length += i + 7;
+		/* strlen(" 100% ") is 6, strlen(" 99.9% ") is 7. Never 8. */
 	    }
 	}
     }
@@ -1146,28 +1147,29 @@ cpustates_tag(int c)
 
 {
     register char *use;
+    unsigned width, u;
 
     static char fmttag[100];
 
-    char *short_tag = ncpu > 1 && multi ? "CPU%d: " : "CPU: ";
-    char *long_tag = ncpu > 1 && multi ? "CPU%d states: " : "CPU states: ";
+    char *short_tag = !multi || ncpu <= 1 ? "CPU: " : "CPU%0*d";
+    char *long_tag = !multi || ncpu <= 1 ? "CPU states: " : "CPU%0*d states: ";
 
-    /* if length + strlen(long_tag) >= screen_width, then we have to
-       use the shorter tag (we subtract 2 to account for ": ") */
-    if (cpustate_total_length + (int)strlen(long_tag) - 2 - ((ncpu > 1) ? 1 : 0)
-	>= screen_width)
-    {
-	use = short_tag;
-    }
-    else
-    {
-	use = long_tag;
+    for (width=0, u=ncpu; u>0; u /= 10) {
+	++width;
     }
 
-    snprintf(fmttag, sizeof(fmttag), use, c);
+    /* if length + strlen(long_tag) > screen_width, then we have to
+       use the shorter tag */
+
+    snprintf(fmttag, sizeof(fmttag), long_tag, width, c);
+
+    if (cpustate_total_length + strlen(fmttag)  > screen_width) {
+    	snprintf(fmttag, sizeof(fmttag), short_tag, width, c);
+    }
 
     /* set x_cpustates accordingly then return result */
     x_cpustates = strlen(fmttag);
+
     return(fmttag);
 }
 
