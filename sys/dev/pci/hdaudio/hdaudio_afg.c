@@ -1,4 +1,4 @@
-/* $NetBSD: hdaudio_afg.c,v 1.14.2.7 2010/11/21 20:18:41 riz Exp $ */
+/* $NetBSD: hdaudio_afg.c,v 1.14.2.8 2010/11/21 20:22:46 riz Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdaudio_afg.c,v 1.14.2.7 2010/11/21 20:18:41 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdaudio_afg.c,v 1.14.2.8 2010/11/21 20:22:46 riz Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -107,6 +107,11 @@ static int hdaudio_afg_debug = 0;
 #define	HDAUDIO_UNSOLTAG_EVENT_HP	0x00
 
 #define	HDAUDIO_HP_SENSE_PERIOD		hz
+
+const u_int hdaudio_afg_possible_rates[] = {
+	8000, 11025, 16000, 22050, 32000, 44100,
+	48000, 88200, 96000, 176500, 192000, /* 384000, */
+};
 
 static const char *hdaudio_afg_mixer_names[] = HDAUDIO_DEVICE_NAMES;
 
@@ -2845,9 +2850,10 @@ hdaudio_afg_bits_supported(struct hdaudio_afg_softc *sc, u_int bits)
 
 static bool
 hdaudio_afg_probe_encoding(struct hdaudio_afg_softc *sc,
-    u_int minrate, u_int maxrate, u_int validbits, u_int precision, bool force)
+    u_int validbits, u_int precision, bool force)
 {
 	struct audio_format f;
+	int i;
 
 	if (!force && hdaudio_afg_bits_supported(sc, validbits) == false)
 		return false;
@@ -2861,8 +2867,11 @@ hdaudio_afg_probe_encoding(struct hdaudio_afg_softc *sc,
 	f.channels = 0;
 	f.channel_mask = 0;
 	f.frequency_type = 0;
-	f.frequency[0] = minrate;
-	f.frequency[1] = maxrate;
+	for (i = 0; i < __arraycount(hdaudio_afg_possible_rates); i++) {
+		u_int rate = hdaudio_afg_possible_rates[i];
+		if (hdaudio_afg_rate_supported(sc, rate))
+			f.frequency[f.frequency_type++] = rate;
+	}
 
 #define HDAUDIO_INITFMT(ch, chmask)			\
 	do {						\
@@ -2895,17 +2904,11 @@ hdaudio_afg_probe_encoding(struct hdaudio_afg_softc *sc,
 static void
 hdaudio_afg_configure_encodings(struct hdaudio_afg_softc *sc)
 {
-	const u_int possible_rates[] = {
-		8000, 11025, 16000, 22050, 32000, 44100,
-		48000, 88200, 96000, 176500, 192000, /* 384000, */
-	};
 	struct hdaudio_assoc *as = sc->sc_assocs;
 	struct audio_format f;
-	u_int minrate, maxrate;
 	int nchan, i;
 
 	sc->sc_pchan = sc->sc_rchan = 0;
-	minrate = maxrate = 0;
 
 	for (nchan = 0, i = 0; i < sc->sc_nassocs; i++) {
 		nchan = hdaudio_afg_assoc_count_channels(sc, &as[i],
@@ -2921,34 +2924,24 @@ hdaudio_afg_configure_encodings(struct hdaudio_afg_softc *sc)
 	}
 	hda_print(sc, "%dch/%dch", sc->sc_pchan, sc->sc_rchan);
 
-	for (i = 0; __arraycount(possible_rates); i++)
-		if (hdaudio_afg_rate_supported(sc, possible_rates[i])) {
-			minrate = possible_rates[i];
-			break;
-		}
-	for (i = __arraycount(possible_rates) - 1; i >= 0; i--)
-		if (hdaudio_afg_rate_supported(sc, possible_rates[i])) {
-			maxrate = possible_rates[i];
-			break;
-		}
-	KASSERT(minrate > 0 && maxrate > 0);	/* impossible */
-	hda_print1(sc, " %uHz", minrate);
-	if (minrate != maxrate)
-		hda_print1(sc, "-%uHz", maxrate);
+	for (i = 0; i < __arraycount(hdaudio_afg_possible_rates); i++)
+		if (hdaudio_afg_rate_supported(sc,
+		    hdaudio_afg_possible_rates[i]))
+			hda_print1(sc, " %uHz", hdaudio_afg_possible_rates[i]);
 
-	if (hdaudio_afg_probe_encoding(sc, minrate, maxrate, 8, 16, false))
+	if (hdaudio_afg_probe_encoding(sc, 8, 16, false))
 		hda_print1(sc, " 8/16");
-	if (hdaudio_afg_probe_encoding(sc, minrate, maxrate, 16, 16, false))
+	if (hdaudio_afg_probe_encoding(sc, 16, 16, false))
 		hda_print1(sc, " 16/16");
-	if (hdaudio_afg_probe_encoding(sc, minrate, maxrate, 20, 32, false))
+	if (hdaudio_afg_probe_encoding(sc, 20, 32, false))
 		hda_print1(sc, " 20/32");
-	if (hdaudio_afg_probe_encoding(sc, minrate, maxrate, 24, 32, false))
+	if (hdaudio_afg_probe_encoding(sc, 24, 32, false))
 		hda_print1(sc, " 24/32");
-	if (hdaudio_afg_probe_encoding(sc, minrate, maxrate, 32, 32, false))
+	if (hdaudio_afg_probe_encoding(sc, 32, 32, false))
 		hda_print1(sc, " 32/32");
 
 	if (sc->sc_audiodev.ad_nformats == 0) {
-		hdaudio_afg_probe_encoding(sc, minrate, maxrate, 16, 16, true);
+		hdaudio_afg_probe_encoding(sc, 16, 16, true);
 		hda_print1(sc, " 16/16*");
 	}
 
