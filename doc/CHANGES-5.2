@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.2,v 1.1.2.18 2010/11/21 19:41:32 riz Exp $
+# $NetBSD: CHANGES-5.2,v 1.1.2.19 2010/11/21 20:24:59 riz Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -683,4 +683,24 @@ share/man/man4/ath.4				1.28 via patch
 
 	Remove AR9280 and AR9285 from the supported chips list.
 	[jmcneill, ticket #1438]
+
+sys/netinet6/esp_aesctr.c			1.13
+sys/netinet6/esp_core.c				1.46
+
+	Fix some code paths where pointers are dereferenced after checking that
+	they are NULL.
+	[jym, ticket #1440]
+
+sys/dev/pci/hdaudio/hdaudio.c			1.7
+sys/dev/pci/hdaudio/hdaudio_afg.c		1.23
+sys/dev/pci/hdaudio/hdaudio_pci.c		1.6
+sys/dev/pci/hdaudio/hdaudio_pci.h		1.1
+
+	Add support for nvidia hdaudio controllers.
+	[jmcneill, ticket #1441]
+
+sys/dev/pci/hdaudio/hdaudio_afg.c		1.25
+
+	Fix kern/43542: 32kHz playback sounds like hissing analog TV snow.
+	[jmcneill, ticket #1442]
 
