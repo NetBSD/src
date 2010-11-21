@@ -1,10 +1,13 @@
-#	$NetBSD: files.x86,v 1.44.4.2 2009/10/05 11:37:14 sborrill Exp $
+#	$NetBSD: files.x86,v 1.44.4.3 2010/11/21 02:46:23 riz Exp $
 
 # options for MP configuration through the MP spec
 defflag opt_mpbios.h MPBIOS MPVERBOSE MPDEBUG MPBIOS_SCANPCI
 
 # MTRR support
 defflag                 MTRR
+
+# Interrupt debug
+defflag opt_intrdebug.h	INTRDEBUG
 
 # PCI fixup options
 defflag opt_pcifixup.h	PCI_ADDR_FIXUP PCI_BUS_FIXUP
