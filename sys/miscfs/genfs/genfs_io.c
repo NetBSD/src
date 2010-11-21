@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.36.2.56 2010/11/21 04:56:36 uebayasi Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.36.2.57 2010/11/21 05:19:56 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.36.2.56 2010/11/21 04:56:36 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.36.2.57 2010/11/21 05:19:56 uebayasi Exp $");
 
 #include "opt_xip.h"
 
@@ -61,8 +61,6 @@ __KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.36.2.56 2010/11/21 04:56:36 uebayasi 
 
 #ifdef XIP
 static int genfs_do_getpages_xip_io(struct vnode *, voff_t, struct vm_page **,
-    int *, int, vm_prot_t, int, int, const int);
-static int genfs_do_getpages_xip_io_done(struct vnode *, voff_t, struct vm_page **,
     int *, int, vm_prot_t, int, int, const int);
 static int genfs_do_putpages_xip(struct vnode *, off_t, off_t, int,
     struct vm_page **);
@@ -827,18 +825,7 @@ genfs_getpages_biodone()
 		genfs_node_unlock(vp);
 	}
 
-    if (xip) {
-		error = genfs_do_getpages_xip_io_done(
-			ap->a_vp,
-			ap->a_offset,
-			pgs,
-			ap->a_count,
-			ap->a_centeridx,
-			ap->a_access_type,
-			ap->a_advice,
-			ap->a_flags,
-			orignmempages);
-    } else {
+	mutex_enter(&uobj->vmobjlock);
 #if 0
 }
 
@@ -846,9 +833,6 @@ int
 genfs_getpages_generic_io_done()
 {
 #endif
-
-	mutex_enter(&uobj->vmobjlock);
-
 	/*
 	 * we're almost done!  release the pages...
 	 * for errors, we free the pages.
@@ -880,6 +864,8 @@ genfs_getpages_generic_io_done()
 out:
 	UVMHIST_LOG(ubchist, "succeeding, npages %d", npages,0,0,0);
 	error = 0;
+
+    if (!xip) {
 	mutex_enter(&uvm_pageqlock);
 	for (i = 0; i < npages; i++) {
 		struct vm_page *pg = pgs[i];
@@ -917,8 +903,28 @@ out:
 	if (memwrite) {
 		genfs_markdirty(vp);
 	}
+    } else {
+	KASSERT(npages == orignmempages);
+	for (i = ridx; i < ridx + npages; i++) {
+		struct vm_page *pg = pgs[i];
+
+		KASSERT(pg != NULL);
+		KASSERT((pg->flags & PG_RDONLY) != 0);
+		KASSERT((pg->flags & PG_BUSY) != 0);
+		KASSERT((pg->flags & PG_CLEAN) != 0);
+		KASSERT((pg->flags & PG_DEVICE) != 0);
+		KASSERT((pg->flags & PG_FAKE) == 0);
+
+		/*
+		 * XXXUEBS
+		 * Actually this is not necessary, because device pages are
+		 * "stateless", and they have no owner.
+		 */
+		pg->uobject = &vp->v_uobj;
+	}
+    } /* xip */
+
 	mutex_exit(&uobj->vmobjlock);
-    } /* !xip */
 
 	if (ap->a_m != NULL) {
 		memcpy(ap->a_m, &pgs[ridx],
@@ -1028,48 +1034,6 @@ genfs_do_getpages_xip_io(
 
 		off += PAGE_SIZE;
 	}
-
-	return 0;
-}
-
-int
-genfs_do_getpages_xip_io_done(
-	struct vnode *vp,
-	voff_t origoffset,
-	struct vm_page **pps,
-	int *npagesp,
-	int centeridx,
-	vm_prot_t access_type,
-	int advice,
-	int flags,
-	const int orignmempages)
-{
-	struct uvm_object * const uobj = &vp->v_uobj;
-	int i;
-
-	const int fs_bshift = vp2fs_bshift(vp);
-	const int fs_bsize = 1 << fs_bshift;
-
-	const off_t startoffset = trunc_blk(origoffset);
-	const int ridx = (origoffset - startoffset) >> PAGE_SHIFT;
-
-	mutex_enter(&uobj->vmobjlock);
-
-	for (i = ridx; i < ridx + orignmempages; i++) {
-		struct vm_page *pg = pps[i];
-
-		KASSERT(pg != NULL);
-		KASSERT((pg->flags & PG_RDONLY) != 0);
-		KASSERT((pg->flags & PG_BUSY) != 0);
-		KASSERT((pg->flags & PG_CLEAN) != 0);
-		KASSERT((pg->flags & PG_DEVICE) != 0);
-		KASSERT((pg->flags & PG_FAKE) == 0);
-		pg->uobject = &vp->v_uobj;
-	}
-
-	mutex_exit(&uobj->vmobjlock);
-
-	*npagesp = orignmempages;
 
 	return 0;
 }
