@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.166.2.25 2010/11/21 12:42:59 uebayasi Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.166.2.26 2010/11/21 14:52:48 uebayasi Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.166.2.25 2010/11/21 12:42:59 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.166.2.26 2010/11/21 14:52:48 uebayasi Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_xip.h"
@@ -568,7 +568,7 @@ uvmfault_promote(struct uvm_faultinfo *ufi,
 		/* object-backed COW */
 		opg = uobjpage;
 	} else {
-		/* ZFOD */
+		/* ZFOD or XIP hole */
 		opg = NULL;
 	}
 	if (opg != NULL) {
@@ -2131,8 +2131,8 @@ uvm_fault_lower_promote(
 		 * uvmfault_promote().
 		 */
 
-		UVMHIST_LOG(maphist,"  zero fill anon/page 0x%x/0%x",
-		    anon, pg, 0, 0);
+		UVMHIST_LOG(maphist,"  zero fill anon/page 0x%x/0%x%s",
+		    anon, pg, (pg == PGO_ZERO) ? " (xip hole)" : "", 0);
 	}
 
 	return uvm_fault_lower_enter(ufi, flt, uobj, anon, pg, uobjpage);
