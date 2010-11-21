@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.209 2010/10/12 10:17:39 bouyer Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.210 2010/11/21 21:39:18 riz Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -4258,4 +4258,9 @@ crypto/external/bsd/openssl/dist/ssl/s3_clnt.c	1.2 via patch
 	thread "openssl-1.0.0a and glibc detected sthg ;)" in openssl-dev.
 	I was getting a SEGV with the example posted there.
 	[jnemeth, ticket #1408]
+
+sys/netbt/hci_link.c				1.22
+
+	Fix bluetooth connection for some Broadcom controllers.
+	[plunky, ticket #1409]
 
