@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.36.2.63 2010/11/21 17:07:38 uebayasi Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.36.2.64 2010/11/21 18:22:32 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.36.2.63 2010/11/21 17:07:38 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.36.2.64 2010/11/21 18:22:32 uebayasi Exp $");
 
 #include "opt_xip.h"
 
@@ -1532,16 +1532,10 @@ genfs_do_putpages_xip_free(struct vnode *vp, off_t startoff, off_t endoff,
 		mutex_enter(&uobj->vmobjlock);
 		for (i = 0; i < npages; i++) {
 			pg = pgs[i];
-			if (pg == NULL || pg == PGO_DONTCARE)
-				continue;
+			KASSERT(pg != NULL && pg != PGO_DONTCARE);
 			if (pg == PGO_HOLE) {
 				pg = uvm_page_holepage;
 				KASSERT(pg != NULL);
-				/*
-				 * XXXUEBS
-				 * Invalidating hole pages may be unnecessary,
-				 * but just for safety.
-				 */
 			} else {
 				/*
 				 * Freeing normal XIP pages; nothing to do.
