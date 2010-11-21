@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_vnode.c,v 1.93.2.5 2010/11/20 08:00:53 uebayasi Exp $	*/
+/*	$NetBSD: uvm_vnode.c,v 1.93.2.6 2010/11/21 12:02:06 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.93.2.5 2010/11/20 08:00:53 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.93.2.6 2010/11/21 12:02:06 uebayasi Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_xip.h"
@@ -420,6 +420,9 @@ uvn_findpage_xip(struct vnode *devvp, struct uvm_object *uobj, off_t off)
 	struct vm_physseg *seg;
 	struct vm_page *pg;
 
+	UVMHIST_FUNC("uvn_findpage_xip"); UVMHIST_CALLED(ubchist);
+	UVMHIST_LOG(ubchist, "called devvp=%p uobj=%p off=%lx",devvp,uobj,(long)off,0);
+
 #if defined(XIP)
 #if !defined(XIP_CDEV_MMAP)
 	KASSERT((vp->v_vflag & VV_XIP) != 0);
@@ -474,6 +477,8 @@ uvn_findpage_xip(struct vnode *devvp, struct uvm_object *uobj, off_t off)
 	KASSERT(pg->phys_addr == (seg->start << PAGE_SHIFT) + off);
 
 	pg->flags |= PG_BUSY;
+
+	UVMHIST_LOG(ubchist, "done pa=%lx seg=%p pg=%p off=%lx",(long)pa,seg,pg,(long)off);
 
 	return pg;
 }
