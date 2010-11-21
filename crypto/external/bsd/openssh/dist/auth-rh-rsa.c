@@ -1,5 +1,5 @@
-/*	$NetBSD: auth-rh-rsa.c,v 1.1.1.1 2009/06/07 22:19:01 christos Exp $	*/
-/* $OpenBSD: auth-rh-rsa.c,v 1.42 2006/08/03 03:34:41 deraadt Exp $ */
+/*	$NetBSD: auth-rh-rsa.c,v 1.1.1.2 2010/11/21 17:05:37 adam Exp $	*/
+/* $OpenBSD: auth-rh-rsa.c,v 1.43 2010/03/04 10:36:03 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -42,6 +42,9 @@ auth_rhosts_rsa_key_allowed(struct passwd *pw, char *cuser, char *chost,
     Key *client_host_key)
 {
 	HostStatus host_status;
+
+	if (auth_key_is_revoked(client_host_key))
+		return 0;
 
 	/* Check if we would accept it using rhosts authentication. */
 	if (!auth_rhosts(pw, cuser))

@@ -1,5 +1,5 @@
-/*	$NetBSD: sshtty.c,v 1.1.1.1 2009/06/07 22:19:31 christos Exp $	*/
-/* $OpenBSD: sshtty.c,v 1.13 2008/05/19 15:45:07 djm Exp $ */
+/*	$NetBSD: sshtty.c,v 1.1.1.2 2010/11/21 17:06:07 adam Exp $	*/
+/* $OpenBSD: sshtty.c,v 1.14 2010/01/09 05:04:24 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -53,23 +53,25 @@ get_saved_tio(void)
 }
 
 void
-leave_raw_mode(void)
+leave_raw_mode(int quiet)
 {
 	if (!_in_raw_mode)
 		return;
-	if (tcsetattr(fileno(stdin), TCSADRAIN, &_saved_tio) == -1)
-		perror("tcsetattr");
-	else
+	if (tcsetattr(fileno(stdin), TCSADRAIN, &_saved_tio) == -1) {
+		if (!quiet)
+			perror("tcsetattr");
+	} else
 		_in_raw_mode = 0;
 }
 
 void
-enter_raw_mode(void)
+enter_raw_mode(int quiet)
 {
 	struct termios tio;
 
 	if (tcgetattr(fileno(stdin), &tio) == -1) {
-		perror("tcgetattr");
+		if (!quiet)
+			perror("tcgetattr");
 		return;
 	}
 	_saved_tio = tio;
@@ -85,8 +87,9 @@ enter_raw_mode(void)
 	tio.c_oflag &= ~OPOST;
 	tio.c_cc[VMIN] = 1;
 	tio.c_cc[VTIME] = 0;
-	if (tcsetattr(fileno(stdin), TCSADRAIN, &tio) == -1)
-		perror("tcsetattr");
-	else
+	if (tcsetattr(fileno(stdin), TCSADRAIN, &tio) == -1) {
+		if (!quiet)
+			perror("tcsetattr");
+	} else
 		_in_raw_mode = 1;
 }

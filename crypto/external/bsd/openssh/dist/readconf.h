@@ -1,5 +1,5 @@
-/*	$NetBSD: readconf.h,v 1.1.1.2 2009/12/27 01:07:02 christos Exp $	*/
-/* $OpenBSD: readconf.h,v 1.79 2009/06/27 09:35:06 andreas Exp $ */
+/*	$NetBSD: readconf.h,v 1.1.1.3 2010/11/21 17:05:53 adam Exp $	*/
+/* $OpenBSD: readconf.h,v 1.86 2010/07/19 09:15:12 djm Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -24,6 +24,7 @@ typedef struct {
 	int	  listen_port;		/* Port to forward. */
 	char	 *connect_host;		/* Host to connect. */
 	int	  connect_port;		/* Port to connect on connect_host. */
+	int	  allocated_port;	/* Dynamically allocated listen port */
 }       Forward;
 /* Data structure for representing option data. */
 
@@ -32,6 +33,7 @@ typedef struct {
 typedef struct {
 	int     forward_agent;	/* Forward authentication agent. */
 	int     forward_x11;	/* Forward X11 display. */
+	int     forward_x11_timeout;	/* Expiration for Cookies */
 	int     forward_x11_trusted;	/* Trust Forward X11 display. */
 	int     exit_on_forward_failure;	/* Exit if bind(2) fails for -L/-R */
 	char   *xauth_location;	/* Location for xauth program */
@@ -85,7 +87,7 @@ typedef struct {
 	char   *user_hostfile2;
 	char   *preferred_authentications;
 	char   *bind_address;	/* local socket address for connection to sshd */
-	char   *smartcard_device; /* Smartcard reader device */
+	char   *pkcs11_provider; /* PKCS#11 provider */
 	int	verify_host_key_dns;	/* Verify host key using DNS */
 
 	int     num_identity_files;	/* Number of files for RSA/DSA identities. */
@@ -94,11 +96,11 @@ typedef struct {
 
 	/* Local TCP/IP forward requests. */
 	int     num_local_forwards;
-	Forward local_forwards[SSH_MAX_FORWARDS_PER_DIRECTION];
+	Forward *local_forwards;
 
 	/* Remote TCP/IP forward requests. */
 	int     num_remote_forwards;
-	Forward remote_forwards[SSH_MAX_FORWARDS_PER_DIRECTION];
+	Forward *remote_forwards;
 	int	clear_forwardings;
 
 	int	enable_ssh_keysign;
@@ -113,6 +115,8 @@ typedef struct {
 
 	char	*control_path;
 	int	control_master;
+	int     control_persist; /* ControlPersist flag */
+	int     control_persist_timeout; /* ControlPersist timeout (seconds) */
 
 	int	hash_known_hosts;
 

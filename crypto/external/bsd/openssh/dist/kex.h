@@ -1,5 +1,5 @@
-/*	$NetBSD: kex.h,v 1.1.1.2 2009/12/27 01:06:55 christos Exp $	*/
-/* $OpenBSD: kex.h,v 1.47 2009/05/27 06:34:36 andreas Exp $ */
+/*	$NetBSD: kex.h,v 1.1.1.3 2010/11/21 17:05:44 adam Exp $	*/
+/* $OpenBSD: kex.h,v 1.49 2010/02/26 20:29:54 djm Exp $ */
 
 /*
  * Copyright (c) 2000, 2001 Markus Friedl.  All rights reserved.
@@ -36,6 +36,7 @@
 #define	KEX_DH14		"diffie-hellman-group14-sha1"
 #define	KEX_DHGEX_SHA1		"diffie-hellman-group-exchange-sha1"
 #define	KEX_DHGEX_SHA256	"diffie-hellman-group-exchange-sha256"
+#define	KEX_RESUME		"resume@appgate.com"
 
 #define COMP_NONE	0
 #define COMP_ZLIB	1
@@ -116,6 +117,7 @@ struct Kex {
 	char	*name;
 	int	hostkey_type;
 	int	kex_type;
+	int	roaming;
 	Buffer	my;
 	Buffer	peer;
 	sig_atomic_t done;
@@ -124,7 +126,8 @@ struct Kex {
 	char	*client_version_string;
 	char	*server_version_string;
 	int	(*verify_host_key)(Key *);
-	Key	*(*load_host_key)(int);
+	Key	*(*load_host_public_key)(int);
+	Key	*(*load_host_private_key)(int);
 	int	(*host_key_index)(Key *);
 	void	(*kex[KEX_MAX])(Kex *);
 };

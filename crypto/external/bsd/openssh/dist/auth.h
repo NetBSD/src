@@ -1,5 +1,5 @@
-/*	$NetBSD: auth.h,v 1.1.1.1 2009/06/07 22:19:02 christos Exp $	*/
-/* $OpenBSD: auth.h,v 1.62 2008/11/04 08:22:12 djm Exp $ */
+/*	$NetBSD: auth.h,v 1.1.1.2 2010/11/21 17:05:37 adam Exp $	*/
+/* $OpenBSD: auth.h,v 1.66 2010/05/07 11:30:29 djm Exp $ */
 
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
@@ -147,8 +147,11 @@ int	verify_response(Authctxt *, const char *);
 
 char	*authorized_keys_file(struct passwd *);
 char	*authorized_keys_file2(struct passwd *);
+char	*authorized_principals_file(struct passwd *);
 
 FILE	*auth_openkeyfile(const char *, struct passwd *, int);
+FILE	*auth_openprincipals(const char *, struct passwd *, int);
+int	 auth_key_is_revoked(Key *);
 
 HostStatus
 check_key_in_hostfiles(struct passwd *, Key *, const char *,
@@ -156,7 +159,8 @@ check_key_in_hostfiles(struct passwd *, Key *, const char *,
 
 /* hostkey handling */
 Key	*get_hostkey_by_index(int);
-Key	*get_hostkey_by_type(int);
+Key	*get_hostkey_public_by_type(int);
+Key	*get_hostkey_private_by_type(int);
 int	 get_hostkey_index(Key *);
 int	 ssh1_session_key(BIGNUM *);
 
@@ -169,5 +173,4 @@ struct passwd *fakepw(void);
 
 #define AUTH_FAIL_MSG "Too many authentication failures for %.100s"
 
-#define SKEY_PROMPT "\nS/Key Password: "
 #endif

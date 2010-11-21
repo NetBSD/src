@@ -1,5 +1,5 @@
-/*	$NetBSD: sftp-client.h,v 1.1.1.1 2009/06/07 22:19:20 christos Exp $	*/
-/* $OpenBSD: sftp-client.h,v 1.17 2008/06/08 20:15:29 dtucker Exp $ */
+/*	$NetBSD: sftp-client.h,v 1.1.1.2 2010/11/21 17:05:57 adam Exp $	*/
+/* $OpenBSD: sftp-client.h,v 1.18 2009/08/18 18:36:20 djm Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Damien Miller <djm@openbsd.org>
@@ -69,7 +69,7 @@ void free_sftp_dirents(SFTP_DIRENT **);
 int do_rm(struct sftp_conn *, char *);
 
 /* Create directory 'path' */
-int do_mkdir(struct sftp_conn *, char *, Attrib *);
+int do_mkdir(struct sftp_conn *, char *, Attrib *, int);
 
 /* Remove directory 'path' */
 int do_rmdir(struct sftp_conn *, char *);
@@ -104,12 +104,27 @@ int do_symlink(struct sftp_conn *, char *, char *);
  * Download 'remote_path' to 'local_path'. Preserve permissions and times
  * if 'pflag' is set
  */
-int do_download(struct sftp_conn *, char *, char *, int);
+int do_download(struct sftp_conn *, char *, char *, Attrib *, int);
+
+/*
+ * Recursively download 'remote_directory' to 'local_directory'. Preserve 
+ * times if 'pflag' is set
+ */
+int download_dir(struct sftp_conn *, char *, char *, Attrib *, int, int);
 
 /*
  * Upload 'local_path' to 'remote_path'. Preserve permissions and times
  * if 'pflag' is set
  */
 int do_upload(struct sftp_conn *, char *, char *, int);
+
+/*
+ * Recursively upload 'local_directory' to 'remote_directory'. Preserve 
+ * times if 'pflag' is set
+ */
+int upload_dir(struct sftp_conn *, char *, char *, int, int);
+
+/* Concatenate paths, taking care of slashes. Caller must free result. */
+char *path_append(char *, char *);
 
 #endif

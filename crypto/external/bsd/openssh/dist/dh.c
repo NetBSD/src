@@ -1,5 +1,5 @@
-/*	$NetBSD: dh.c,v 1.1.1.1 2009/06/07 22:19:08 christos Exp $	*/
-/* $OpenBSD: dh.c,v 1.47 2008/06/26 09:19:39 djm Exp $ */
+/*	$NetBSD: dh.c,v 1.1.1.2 2010/11/21 17:05:43 adam Exp $	*/
+/* $OpenBSD: dh.c,v 1.48 2009/10/01 11:37:33 grunk Exp $ */
 /*
  * Copyright (c) 2000 Niels Provos.  All rights reserved.
  *
@@ -81,7 +81,7 @@ parse_prime(int linenum, char *line, struct dhgroup *dhg)
 		goto fail;
 	strsize = strsep(&cp, " "); /* size */
 	if (cp == NULL || *strsize == '\0' ||
-	    (dhg->size = (u_int)strtonum(strsize, 0, 64*1024, &errstr)) == 0 ||
+	    (dhg->size = (int)strtonum(strsize, 0, 64*1024, &errstr)) == 0 ||
 	    errstr)
 		goto fail;
 	/* The whole group is one bit larger */

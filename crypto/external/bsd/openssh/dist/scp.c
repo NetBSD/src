@@ -1,5 +1,5 @@
-/*	$NetBSD: scp.c,v 1.1.1.1 2009/06/07 22:19:17 christos Exp $	*/
-/* $OpenBSD: scp.c,v 1.164 2008/10/10 04:55:16 stevesk Exp $ */
+/*	$NetBSD: scp.c,v 1.1.1.2 2010/11/21 17:05:54 adam Exp $	*/
+/* $OpenBSD: scp.c,v 1.166 2010/07/01 13:06:59 millert Exp $ */
 /*
  * scp - secure remote copy.  This is basically patched BSD rcp which
  * uses ssh to do the data transfer (instead of using rcmd).
@@ -141,6 +141,20 @@ killchild(int signo)
 	exit(1);
 }
 
+static void
+suspchild(int signo)
+{
+	int status;
+
+	if (do_cmd_pid > 1) {
+		kill(do_cmd_pid, signo);
+		while (waitpid(do_cmd_pid, &status, WUNTRACED) == -1 &&
+		    errno == EINTR)
+			;
+		kill(getpid(), SIGSTOP);
+	}
+}
+
 static int
 do_local_cmd(arglist *a)
 {
@@ -217,6 +231,10 @@ do_cmd(char *host, char *remuser, char *cmd, int *fdin, int *fdout)
 	close(reserved[0]);
 	close(reserved[1]);
 
+	signal(SIGTSTP, suspchild);
+	signal(SIGTTIN, suspchild);
+	signal(SIGTTOU, suspchild);
+
 	/* Fork a child to execute the command on the remote host using ssh. */
 	do_cmd_pid = fork();
 	if (do_cmd_pid == 0) {
@@ -229,8 +247,11 @@ do_cmd(char *host, char *remuser, char *cmd, int *fdin, int *fdout)
 		close(pout[1]);
 
 		replacearg(&args, 0, "%s", ssh_program);
-		if (remuser != NULL)
-			addargs(&args, "-l%s", remuser);
+		if (remuser != NULL) {
+			addargs(&args, "-l");
+			addargs(&args, "%s", remuser);
+		}
+		addargs(&args, "--");
 		addargs(&args, "%s", host);
 		addargs(&args, "%s", cmd);
 
@@ -319,10 +340,12 @@ main(int argc, char **argv)
 		case 'c':
 		case 'i':
 		case 'F':
-			addargs(&args, "-%c%s", ch, optarg);
+			addargs(&args, "-%c", ch);
+			addargs(&args, "%s", optarg);
 			break;
 		case 'P':
-			addargs(&args, "-p%s", optarg);
+			addargs(&args, "-p");
+			addargs(&args, "%s", optarg);
 			break;
 		case 'B':
 			addargs(&args, "-oBatchmode yes");
@@ -527,6 +550,7 @@ toremote(char *targ, int argc, char **argv)
 			} else {
 				host = cleanhostname(argv[i]);
 			}
+			addargs(&alist, "--");
 			addargs(&alist, "%s", host);
 			addargs(&alist, "%s", cmd);
 			addargs(&alist, "%s", src);
@@ -537,7 +561,7 @@ toremote(char *targ, int argc, char **argv)
 				errs = 1;
 		} else {	/* local to remote */
 			if (remin == -1) {
-				xasprintf(&bp, "%s -t %s", cmd, targ);
+				xasprintf(&bp, "%s -t -- %s", cmd, targ);
 				host = cleanhostname(thost);
 				if (do_cmd(host, tuser, bp, &remin,
 				    &remout) < 0)
@@ -570,6 +594,7 @@ tolocal(int argc, char **argv)
 				addargs(&alist, "-r");
 			if (pflag)
 				addargs(&alist, "-p");
+			addargs(&alist, "--");
 			addargs(&alist, "%s", argv[i]);
 			addargs(&alist, "%s", argv[argc-1]);
 			if (do_local_cmd(&alist))
@@ -589,7 +614,7 @@ tolocal(int argc, char **argv)
 				suser = pwd->pw_name;
 		}
 		host = cleanhostname(host);
-		xasprintf(&bp, "%s -f %s", cmd, src);
+		xasprintf(&bp, "%s -f -- %s", cmd, src);
 		if (do_cmd(host, suser, bp, &remin, &remout) < 0) {
 			(void) xfree(bp);
 			++errs;

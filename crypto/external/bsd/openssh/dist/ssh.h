@@ -1,5 +1,5 @@
-/*	$NetBSD: ssh.h,v 1.1.1.1 2009/06/07 22:19:25 christos Exp $	*/
-/* $OpenBSD: ssh.h,v 1.78 2006/08/03 03:34:42 deraadt Exp $ */
+/*	$NetBSD: ssh.h,v 1.1.1.2 2010/11/21 17:06:02 adam Exp $	*/
+/* $OpenBSD: ssh.h,v 1.79 2010/06/25 07:14:46 djm Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -18,9 +18,6 @@
 
 /* Default port number. */
 #define SSH_DEFAULT_PORT	22
-
-/* Maximum number of TCP/IP ports forwarded per direction. */
-#define SSH_MAX_FORWARDS_PER_DIRECTION	100
 
 /*
  * Maximum number of RSA authentication identity files that can be specified

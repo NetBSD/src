@@ -1,5 +1,5 @@
-/*	$NetBSD: auth-rsa.c,v 1.1.1.1 2009/06/07 22:19:02 christos Exp $	*/
-/* $OpenBSD: auth-rsa.c,v 1.73 2008/07/02 12:03:51 dtucker Exp $ */
+/*	$NetBSD: auth-rsa.c,v 1.1.1.2 2010/11/21 17:05:37 adam Exp $	*/
+/* $OpenBSD: auth-rsa.c,v 1.78 2010/07/13 23:13:16 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -32,11 +32,11 @@
 #include "uidswap.h"
 #include "match.h"
 #include "buffer.h"
-#include "auth-options.h"
 #include "pathnames.h"
 #include "log.h"
 #include "servconf.h"
 #include "key.h"
+#include "auth-options.h"
 #include "hostfile.h"
 #include "auth.h"
 #ifdef GSSAPI
@@ -92,6 +92,9 @@ auth_rsa_verify_response(Key *key, BIGNUM *challenge, u_char response[16])
 	MD5_CTX md;
 	int len;
 
+	if (auth_key_is_revoked(key))
+		return 0;
+
 	/* don't allow short keys */
 	if (BN_num_bits(key->rsa->n) < SSH_RSA_MINIMUM_MODULUS_SIZE) {
 		error("auth_rsa_verify_response: RSA modulus too small: %d < minimum %d bits",
@@ -111,7 +114,7 @@ auth_rsa_verify_response(Key *key, BIGNUM *challenge, u_char response[16])
 	MD5_Final(mdbuf, &md);
 
 	/* Verify that the response is the original challenge. */
-	if (memcmp(response, mdbuf, 16) != 0) {
+	if (timingsafe_bcmp(response, mdbuf, 16) != 0) {
 		/* Wrong answer. */
 		return (0);
 	}
@@ -251,7 +254,8 @@ auth_rsa_key_allowed(struct passwd *pw, BIGNUM *client_n, Key **rkey)
 		 */
 		if (!auth_parse_options(pw, key_options, file, linenum))
 			continue;
-
+		if (key_is_cert_authority)
+			continue;
 		/* break out, this key is allowed */
 		allowed = 1;
 		break;
