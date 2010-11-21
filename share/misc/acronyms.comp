@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.112 2010/11/21 01:46:20 dholland Exp $
+$NetBSD: acronyms.comp,v 1.113 2010/11/21 03:36:10 dholland Exp $
 
 3WHS	three-way handshake
 ABI	application binary interface
@@ -236,6 +236,7 @@ GMCH	graphics and memory controller hub
 GNU	GNU's not Unix
 GOT	global offset table
 GPE	general purpose event
+GPF	general protection fault
 GPL	GNU/general public license
 GPU	graphics processing unit
 GRE	generic routing encapsulation
@@ -538,6 +539,7 @@ RIFF	Resource Interchange File Format
 RIP	routing information protocol
 RIR	regional Internet registry
 RISC	reduced instruction set computing
+RKM	ROM Kernel Manual
 RLE	run length encoding
 RLL	run length limited
 RNG	random number generator
@@ -574,6 +576,7 @@ SCSI	small computer system interface
 SCTP	stream control transmission protocol
 SDK	software development kit
 SDRAM	synchronous dynamic random access memory
+SEGV	segmentation violation
 SFI	simple firmware interface
 SGRAM	synchronous graphics random access memory
 SIFS	short inter-frame space
@@ -712,6 +715,7 @@ WLAN	wireless local area network
 VMX	virtual machine extensions
 VMX	vector multimedia extensions
 WDT	watchdog timer
+WORM	write once read many
 WPA	wi-fi protected access
 WRAM	window random access memory
 WWAN	wireless wide area network
