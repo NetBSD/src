@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2008/09/13 04:32:31 cube Exp $
+#	$NetBSD: Makefile,v 1.3 2010/11/21 01:25:33 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -17,4 +17,4 @@ PKGDIST=	font-util
 .include <bsd.x11.mk>
 .include <bsd.prog.mk>
 
-.PATH:  ${X11SRCDIR.font-util}
+.PATH:  ${X11SRCDIR.font-util} ${X11SRCDIR.font-util}/man
