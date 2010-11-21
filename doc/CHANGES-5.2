@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.2,v 1.1.2.10 2010/11/20 20:57:06 riz Exp $
+# $NetBSD: CHANGES-5.2,v 1.1.2.11 2010/11/21 02:44:42 riz Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -220,4 +220,30 @@ sys/dev/pci/aac_pci.c				1.31
 
 	SUN X4140's version of this board. From FreeBSD.
 	[is, ticket #1394]
+
+lib/libc/sys/ioctl.2				1.21 via patch
+
+	Correctly spell 'acknowledged'.
+	[mbalmer, ticket #1395]
+
+sbin/restore/symtab.c				1.26
+
+	Fix grammar in a line of output.
+	[mbalmer, ticket #1397]
+
+lib/libusbhid/data.c				1.6
+
+	Stop hid_get_data() reading an extra byte.
+	[plunky, ticket #1398]
+
+sys/dev/usb/ukbdmap.c				patch
+
+	Enable Hungarian keyboard layout on USB keyboards.
+	[ahoka, ticket #1399]
+
+distrib/sets/lists/base/md.amd64		patch
+distrib/sets/lists/comp/md.amd64		patch
+
+	Fix amd64 setlists for certain non-default builds.
+	[dholland, ticket #1402]
 
