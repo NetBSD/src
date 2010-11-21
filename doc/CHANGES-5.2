@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.2,v 1.1.2.13 2010/11/21 17:44:15 riz Exp $
+# $NetBSD: CHANGES-5.2,v 1.1.2.14 2010/11/21 18:13:12 riz Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -313,4 +313,17 @@ sys/arch/i386/conf/XEN2_DOM0			patch
 
 	Sync DKWEDGE options with GENERIC
 	[bouyer, ticket #1419]
+
+sys/uvm/uvm_bio.c				1.69-70 via patch
+sys/uvm/uvm_fault.c				1.175 via patch
+sys/uvm/uvm_map.c				1.292 via patch
+sys/uvm/uvm_pager.c				1.98 via patch
+
+	UVM pmap_update() fixes.
+	[rmind, ticket #1421]
+
+external/bsd/top/dist/display.c			1.8 via patch
+
+	Avoid steps and other artefacts in head for more than 9 CPUs.
+	[is, ticket #1422]
 
