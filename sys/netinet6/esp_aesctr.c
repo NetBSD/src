@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_aesctr.c,v 1.8 2007/12/25 18:33:47 perry Exp $	*/
+/*	$NetBSD: esp_aesctr.c,v 1.8.20.1 2010/11/21 20:13:01 riz Exp $	*/
 /*	$KAME: esp_aesctr.c,v 1.2 2003/07/20 00:29:37 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_aesctr.c,v 1.8 2007/12/25 18:33:47 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_aesctr.c,v 1.8.20.1 2010/11/21 20:13:01 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,10 +79,10 @@ esp_aesctr_mature(struct secasvar *sav)
 	const struct esp_algorithm *algo;
 
 	algo = esp_algorithm_lookup(sav->alg_enc);
-	if (!algo) {
+	if (algo == NULL) {
 		ipseclog((LOG_ERR,
-		    "esp_aeesctr_mature %s: unsupported algorithm.\n",
-		    algo->name));
+		    "esp_aesctr_mature: unsupported encryption algorithm %d\n",
+		    sav->alg_enc));
 		return 1;
 	}
 
