@@ -1,10 +1,10 @@
 #!/bin/sh
 #
-#	$NetBSD: makerumpmanpages.sh,v 1.10 2010/11/21 19:29:01 pooka Exp $
+#	$NetBSD: makerumpmanpages.sh,v 1.11 2010/11/22 01:07:51 pooka Exp $
 #
 
 IFS=' '
-MANTMPL=".\\\"	\$NetBSD\$"'
+MANTMPL1=".\\\"	\$NetBSD\$"'
 .\"
 .\"	WARNING: GENERATED FILE, DO NOT EDIT
 .\"	INSTEAD, EDIT makerumpmanpages.sh AND REGEN
@@ -37,23 +37,23 @@ MANTMPL=".\\\"	\$NetBSD\$"'
 .Os
 .Sh NAME
 .Nm rump_xxxfsxxx
-.Nd mount the xxxfsxxx file system using a userspace server
+.Nd mount a xxxfsxxx xxxfssrcxxx with a userspace server
 .Sh SYNOPSIS
 .Cd "file-system PUFFS"
 .Cd "pseudo-device putter"
 .Pp
 .Nm
 .Op options
-.Ar image
+.Ar xxximagexxx
 .Ar mountpoint
 .Sh DESCRIPTION
 .Em NOTE!
-This manual page has been generated from a common source shared between all
+This manual page describes features specific to the
 .Xr rump 3
-file servers.
-Some parts of this manual page may not apply to this particular server.
-After reading this manual page, you may want to verify the details from
-.Xr mount_xxxfsxxx 8 .
+file server.
+Please see
+.Xr mount_xxxfsxxx 8
+for a full description of the available command line options.
 .Pp
 The
 .Nm
@@ -70,14 +70,15 @@ does not use file system code within the kernel and therefore does
 not require kernel support except
 .Xr puffs 4 .
 Apart from a minor speed penalty there is no downside with respect to
-in-kernel code.
-.Pp
+in-kernel code.'
+
+MANTMPL_BLK='.Pp
 .Nm
 does not require using
 .Xr vnconfig 8
 for mounts from regular files and the file path can be passed
 directly as the
-.Ar image
+.Ar xxximagexxx
 parameter.
 In fact, the use of
 .Xr vnconfig 8
@@ -88,7 +89,7 @@ In case the image contains multiple partitions, the desired partition
 must be indicated by appending the token
 .Dq %DISKLABEL:p%
 to the
-.Ar image
+.Ar xxximagexxx
 path.
 The letter
 .Dq p
@@ -108,8 +109,24 @@ instead of
 Corrupt file system images commonly cause the file system
 to crash the entire kernel, but with
 .Nm
-only the userspace server process will dump core.
-.Pp
+only the userspace server process will dump core.'
+
+MANTMPL_NET='.Pp
+Even though the
+.Nm
+file system client runs within a virtual rump kernel in userspace,
+it uses host network services
+.Pq by means of Dq rump sockin .
+This means that regardless of whether using
+.Nm
+or
+.Xr mount_xxxfsxxx 8 ,
+the same network configurations will be used.
+Currently,
+.Dq sockin
+supports IPv4.'
+
+MANTMPL2='.Pp
 To use
 .Nm
 via
@@ -121,16 +138,12 @@ and
 should be given.
 Similarly,
 .Nm
-is run instead of
+is used instead of
 .Xr mount_xxxfsxxx 8
 if
 .Dq rump
 is added to the options field of
 .Xr fstab 5 .
-.Pp
-Please see
-.Xr mount_xxxfsxxx 8
-for a full description of the available command line options.
 .Sh SEE ALSO
 .Xr p2k 3 ,
 .Xr puffs 3 ,
@@ -140,21 +153,77 @@ for a full description of the available command line options.
 The
 .Nm
 utility first appeared in
-.Nx 5.0 .'
+.Nx xxxfirstxxx .'
 
-# generate the manual pages
-#
+# vary manpages slightly based on the type of server in question
+disk="cd9660 efs ext2fs ffs hfs lfs msdos ntfs sysvbfs udf"
+net="nfs smbfs"
+fictional="fdesc kernfs tmpfs"
+special="au-naturel nqmfs syspuffs"
+
+first5="cd9660 efs ext2fs ffs hfs lfs msdos nfs ntfs syspuffs sysvbfs tmpfs udf"
+
+member ()
+{
+
+	what=$1
+	shift
+
+	while [ $# -gt 0 ] ; do
+		[ "$1" = "${what}" ] && return 0
+		shift
+	done
+	return 1
+}
+
+sedsub='s/xxxfsxxx/$fs/g\;s/XXXFSXXX/$fsc/g\;s/xxximagexxx/$image/g\;'\
+'s/xxxfirstxxx/$first/g\;s/xxxfssrcxxx/$fssrc/g\;'
+
+# auto manual pages
 for x in rump_*
 do
 	fs=${x#rump_}
 
-	# syspuffs is special, it has a handwritten manpage
-	if [ "$fs" = "syspuffs" ]
-	then
-		continue
+	# see if we are dealing with a new server
+	if ! member $fs $disk $net $fictional $special ; then
+		echo ERROR: $fs not found in any class!
+		exit 1
+	fi
+
+	# special file systems have special manpages
+	member $fs $special && continue
+
+	# figure out our type
+	if member $fs $disk ; then
+		mytype=disk
+		image=image
+		fssrc=image
+	fi
+	if member $fs $net ; then
+		mytype=net
+		image=share
+		fssrc=share
+	fi
+	if member $fs $fictional ; then
+		mytype=special
+		image=$fs
+		fssrc='fictional fs'
+	fi
+
+	# which version did server first appear?
+	if member $fs $first5 ; then
+		first=5.0
+	else
+		first=6.0
 	fi
 
 	fsc=`echo $fs | tr '[:lower:]' '[:upper:]'`
-	echo ${MANTMPL} | sed "s/xxxfsxxx/$fs/g;s/XXXFSXXX/$fsc/g" > \
-	    rump_${fs}/rump_${fs}.8
+	eval sedstr="${sedsub}"
+
+	echo ${MANTMPL1} | sed -e "$sedstr" > rump_${fs}/rump_${fs}.8
+	[ ${mytype} = disk ] && \
+	    echo ${MANTMPL_BLK} | sed -e "$sedstr" >> rump_${fs}/rump_${fs}.8
+	[ ${mytype} = net ] && \
+	    echo ${MANTMPL_NET} | sed -e "$sedstr" >> rump_${fs}/rump_${fs}.8
+	echo ${MANTMPL2} | sed -e "$sedstr" >> rump_${fs}/rump_${fs}.8
 done
