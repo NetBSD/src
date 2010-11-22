@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_wapbl.c,v 1.3.8.1 2009/02/24 04:13:35 snj Exp $	*/
+/*	$NetBSD: vfs_wapbl.c,v 1.3.8.1.2.1 2010/11/22 02:49:47 riz Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2008, 2009 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
  * This implements file system independent write ahead filesystem logging.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.3.8.1 2009/02/24 04:13:35 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.3.8.1.2.1 2010/11/22 02:49:47 riz Exp $");
 
 #include <sys/param.h>
 
@@ -95,6 +95,7 @@ MALLOC_JUSTDEFINE(M_WAPBL, "wapbl", "write-ahead physical block logging");
  *		r = read-only after init
  *		l = rwlock held
  *		m = mutex held
+ *		lm = rwlock held writing or mutex held
  *		u = unlocked access ok
  *		b = bufcache_lock held
  */
@@ -162,9 +163,9 @@ struct wapbl {
 	size_t wl_unsynced_bufbytes; /* Byte count of unsynced buffers */
 #endif
 
-	daddr_t *wl_deallocblks;/* l:	address of block */
-	int *wl_dealloclens;	/* l:	size of block (fragments, kom ihåg) */
-	int wl_dealloccnt;	/* l:	total count */
+	daddr_t *wl_deallocblks;/* lm:	address of block */
+	int *wl_dealloclens;	/* lm:	size of block */
+	int wl_dealloccnt;	/* lm:	total count */
 	int wl_dealloclim;	/* l:	max count */
 
 	/* hashtable of inode numbers for allocated but unlinked inodes */
@@ -1668,6 +1669,7 @@ wapbl_register_deallocation(struct wapbl *wl, daddr_t blk, int len)
 
 	wapbl_jlock_assert(wl);
 
+	mutex_enter(&wl->wl_mtx);
 	/* XXX should eventually instead tie this into resource estimation */
 	/* XXX this KASSERT needs locking/mutex analysis */
 	KASSERT(wl->wl_dealloccnt < wl->wl_dealloclim);
@@ -1676,6 +1678,7 @@ wapbl_register_deallocation(struct wapbl *wl, daddr_t blk, int len)
 	wl->wl_dealloccnt++;
 	WAPBL_PRINTF(WAPBL_PRINT_ALLOC,
 	    ("wapbl_register_deallocation: blk=%"PRId64" len=%d\n", blk, len));
+	mutex_exit(&wl->wl_mtx);
 }
 
 /****************************************************************/
