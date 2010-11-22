@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.99 2010/11/22 01:22:28 mrg Exp $
+# $NetBSD: mi,v 1.100 2010/11/22 15:42:22 tsutsui Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2597,7 +2597,7 @@
 ./usr/X11R7/man/cat7/Consortium.0			-unknown-	.cat,xorg
 ./usr/X11R7/man/cat7/Standards.0			-unknown-	.cat,xorg
 ./usr/X11R7/man/cat7/X.0				-unknown-	.cat,xorg
-./usr/X11R7/man/cat7/XOrgFoundation.0
+./usr/X11R7/man/cat7/XOrgFoundation.0			-unknown-	.cat,xorg
 ./usr/X11R7/man/cat7/XProjectTeam.0			-unknown-	.cat,xorg
 ./usr/X11R7/man/cat7/Xsecurity.0			-unknown-	.cat,xorg
 ./usr/X11R7/man/html1					base-x11-root	xorg
