@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.113 2010/11/21 03:36:10 dholland Exp $
+$NetBSD: acronyms.comp,v 1.114 2010/11/22 23:05:22 dholland Exp $
 
 3WHS	three-way handshake
 ABI	application binary interface
@@ -248,6 +248,7 @@ HAL	hardware abstraction layer
 HBA	host bus adapter
 HCI	host controller interface
 HCI	human-computer interaction
+HCF	halt and catch fire
 HDD	hard disk drive
 HDCP	high-bandwidth digital content protection
 HFM	highest frequency mode
