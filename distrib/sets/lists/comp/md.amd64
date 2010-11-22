@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.79 2010/11/21 19:58:03 adam Exp $
+# $NetBSD: md.amd64,v 1.80 2010/11/22 22:22:28 christos Exp $
 ./usr/include/amd64				comp-c-include
 ./usr/include/amd64/ansi.h			comp-c-include
 ./usr/include/amd64/aout_machdep.h		comp-c-include
@@ -935,7 +935,7 @@
 ./usr/libdata/debug/usr/lib/i386/libskey.so.2.0.debug	comp-compat-shlib	compat,pic,skey,debug
 ./usr/libdata/debug/usr/lib/i386/libsl.so.4.0.debug	comp-compat-shlib	compat,pic,kerberos,debug
 ./usr/libdata/debug/usr/lib/i386/libss.so.6.0.debug	comp-compat-shlib	compat,pic,kerberos,debug
-./usr/libdata/debug/usr/lib/i386/libssh.so.15.1.debug	comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/libssh.so.16.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libssl.so.8.1.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libstdc++.so.7.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libterminfo.so.1.0.debug	comp-compat-shlib	compat,pic,debug
