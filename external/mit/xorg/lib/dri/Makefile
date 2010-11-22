@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.17 2010/11/18 08:41:54 mrg Exp $
+# $NetBSD: Makefile,v 1.18 2010/11/22 21:05:30 mrg Exp $
 
 SUBDIR=		libmesa .WAIT
 
@@ -17,4 +17,10 @@ SUBDIR+=	mga
 
 SUBDIR+=	swrast
 
+PKGCONFIG=	dri
+PKGDIST.dri=	${X11SRCDIR.MesaLib}/src/mesa/drivers/dri
+.include "${.CURDIR}/../libGL/mesa-ver.mk"
+PKGCONFIG_VERSION.dri=	${MESA_VER}
+
 .include <bsd.subdir.mk>
+.include <bsd.x11.mk>

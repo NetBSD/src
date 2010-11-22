@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2010/07/19 05:34:26 mrg Exp $
+#	$NetBSD: Makefile,v 1.8 2010/11/22 21:05:29 mrg Exp $
 
 NOLINT=		1	# XTODO: tess.ln SIGSEGVs lint :(
 
@@ -84,7 +84,8 @@ DPADD+=		${LIBSTDCXX} ${LIBM}
 
 PKGCONFIG=	glu
 PKGDIST.glu=	${X11SRCDIR.MesaLib}/src/glu
-PKGCONFIG_VERSION.glu=	7.8.2
+.include "${.CURDIR}/../libGL/mesa-ver.mk"
+PKGCONFIG_VERSION.glu=	${MESA_VER}
 
 .include <bsd.x11.mk>
 .include <bsd.lib.mk>
