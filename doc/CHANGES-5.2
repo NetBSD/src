@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.2,v 1.1.2.25 2010/11/22 02:55:43 riz Exp $
+# $NetBSD: CHANGES-5.2,v 1.1.2.26 2010/11/22 03:19:23 riz Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -824,4 +824,26 @@ sys/kern/vfs_wapbl.c				1.38 via patch
 	Fix an error that can lead to file system corruption and 
 	freeing free block" panics.
 	[hannken, ticket #1477]
+
+sys/dev/usb/if_kuereg.h				1.12
+
+	Fix panic due to unaligned memory access on MIPS and ARM. 
+	[tsutsui, ticket #1480]
+
+sys/arch/arc/pci/necpb.c			1.33
+
+	Fix multifunction PCI cards on arc.
+	[tsutsui, ticket #1481]
+
+usr.bin/comm/comm.c				1.18
+
+	Don't include newlines when comparing to prevent errors when lines have
+	characters that sort lower such as tabs.
+	[darcy, ticket #1172]
+
+distrib/shark/instkernel/instkernel/Makefile	1.19-20 via patch
+etc/etc.shark/Makefile.inc			1.11 via patch
+
+	Install a.out version of INSTALL kernel in release. PR#41672
+	[is, ticket #1127]
 
