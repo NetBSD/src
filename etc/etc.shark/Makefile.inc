@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.10.6.1 2010/11/22 03:15:33 riz Exp $
+#	$NetBSD: Makefile.inc,v 1.10.6.2 2010/11/22 16:37:15 riz Exp $
 #
 #	etc.shark/Makefile.inc -- shark-specific etc Makefile targets
 #
@@ -10,3 +10,8 @@ KERNEL_SETS=		GENERIC
 KERNEL_SUFFIXES=	aout
 
 BUILD_KERNELS=		INSTALL
+
+INSTALLATION_DIRS+=	installation/instkernel
+
+snap_md_post:
+	${MAKESUMS} -t ${RELEASEDIR}/${RELEASEMACHINEDIR}/installation/instkernel '*.gz'
