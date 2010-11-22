@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.97 2010/11/21 07:26:40 mrg Exp $
+# $NetBSD: mi,v 1.98 2010/11/22 00:12:14 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -259,7 +259,7 @@
 ./usr/X11R6/lib						base-x11-root	x11
 ./usr/X11R6/lib/X11					base-x11-root	x11
 ./usr/X11R6/lib/X11/XErrorDB				-unknown-	x11
-./usr/X11R6/lib/X11/XKeysymDB				-unknown-	x11
+./usr/X11R6/lib/X11/XKeysymDB				-unknown-	obsolete
 ./usr/X11R6/lib/X11/Xcms.txt				-unknown-	x11
 ./usr/X11R6/lib/X11/XftConfig				xbase-obsolete	obsolete
 ./usr/X11R6/lib/X11/XftConfig-OBSOLETE			xbase-obsolete	obsolete
