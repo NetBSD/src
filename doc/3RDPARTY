@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.785 2010/11/21 20:02:35 adam Exp $
+#	$NetBSD: 3RDPARTY,v 1.786 2010/11/22 22:36:54 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -796,6 +796,8 @@ markus is very cooperative about it):
   when someone imports openssl, we can remove this.
 - added moduli from portable openssh
 - added USE_PAM patches and auth_pam.[ch] from portable openssh
+  (see if there is any difference between the current version of opensshX.Yp1
+   and the new opensshZ.Wp1) and apply them.
 - conditionalize login_cap
 - conditionalize bsd_auth
 - restore krb5, krb4, afs, skey
@@ -810,7 +812,6 @@ markus is very cooperative about it):
 - handle setuid and unsetuid the posix way instead of setresuid()
 - add all missing functions
 - always bump major when importing to avoid api problems.
-- disabled roaming reconnect
 
 Package:	OpenSSL
 Version:	SNAP-20091226
