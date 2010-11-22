@@ -1,4 +1,4 @@
-/*	$NetBSD: roaming_client.c,v 1.2 2010/11/21 18:59:04 adam Exp $	*/
+/*	$NetBSD: roaming_client.c,v 1.3 2010/11/22 22:19:54 christos Exp $	*/
 /* $OpenBSD: roaming_client.c,v 1.3 2010/01/18 01:50:27 dtucker Exp $ */
 /*
  * Copyright (c) 2004-2009 AppGate Network Security AB
@@ -16,7 +16,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #include "includes.h"
-__RCSID("$NetBSD: roaming_client.c,v 1.2 2010/11/21 18:59:04 adam Exp $");
+__RCSID("$NetBSD: roaming_client.c,v 1.3 2010/11/22 22:19:54 christos Exp $");
 
 #include <sys/queue.h>
 #include <sys/types.h>
@@ -56,9 +56,7 @@ extern int session_resumed;
 
 static u_int32_t roaming_id;
 static u_int64_t cookie;
-#ifdef ROAMING_RECONNECT
 static u_int64_t lastseenchall;
-#endif
 static u_int64_t key1, key2, oldkey1, oldkey2;
 
 void
@@ -88,7 +86,6 @@ request_roaming(void)
 	client_register_global_confirm(roaming_reply, NULL);
 }
 
-#ifdef ROAMING_RECONNECT
 static void
 roaming_auth_required(void)
 {
@@ -127,7 +124,6 @@ roaming_auth_required(void)
 	debug("Received %llu bytes", (unsigned long long)get_recv_bytes());
 	debug("Sent roaming_auth packet");
 }
-#endif
 
 int
 resume_kex(void)
@@ -139,7 +135,6 @@ resume_kex(void)
 	return 1;
 }
 
-#ifdef ROAMING_RECONNECT
 static int
 roaming_resume(void)
 {
@@ -282,4 +277,3 @@ wait_for_roaming_reconnect(void)
 	fflush(stderr);
 	exit(0);
 }
-#endif
