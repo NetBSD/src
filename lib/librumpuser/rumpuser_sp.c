@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpuser_sp.c,v 1.9 2010/11/19 17:47:44 pooka Exp $	*/
+/*      $NetBSD: rumpuser_sp.c,v 1.10 2010/11/22 20:42:19 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: rumpuser_sp.c,v 1.9 2010/11/19 17:47:44 pooka Exp $");
+__RCSID("$NetBSD: rumpuser_sp.c,v 1.10 2010/11/22 20:42:19 pooka Exp $");
 
 #include <sys/types.h>
 #include <sys/mman.h>
@@ -68,7 +68,6 @@ __RCSID("$NetBSD: rumpuser_sp.c,v 1.9 2010/11/19 17:47:44 pooka Exp $");
 static struct pollfd pfdlist[MAXCLI];
 static struct spclient spclist[MAXCLI];
 static unsigned int nfds, maxidx;
-static pthread_key_t spclient_tls;
 
 static struct rumpuser_sp_ops spops;
 
@@ -96,12 +95,12 @@ lwproc_release(void)
 }
 
 static int
-lwproc_newproc(void)
+lwproc_newproc(struct spclient *spc)
 {
 	int rv;
 
 	spops.spop_schedule();
-	rv = spops.spop_lwproc_newproc();
+	rv = spops.spop_lwproc_newproc(spc);
 	spops.spop_unschedule();
 
 	return rv;
@@ -350,15 +349,15 @@ serv_handleconn(int fd, connecthook_fn connhook)
 		return error;
 	}
 
-	if ((error = lwproc_newproc()) != 0) {
-		close(newfd);
-		return error;
-	}
-
 	/* find empty slot the simple way */
 	for (i = 0; i < MAXCLI; i++) {
 		if (pfdlist[i].fd == -1)
 			break;
+	}
+
+	if ((error = lwproc_newproc(&spclist[i])) != 0) {
+		close(newfd);
+		return error;
 	}
 
 	assert(i < MAXCLI);
@@ -395,11 +394,9 @@ serv_handlesyscall(struct spclient *spc, struct rsp_hdr *rhdr, uint8_t *data)
 	DPRINTF(("rump_sp: handling syscall %d from client %d\n",
 	    sysnum, 0));
 
-	pthread_setspecific(spclient_tls, spc);
 	lwproc_newlwp(spc->spc_pid);
 	rv = rumpsyscall(sysnum, data, retval);
 	lwproc_switch(NULL);
-	pthread_setspecific(spclient_tls, NULL);
 	free(data);
 
 	DPRINTF(("rump_sp: got return value %d & %d/%d\n",
@@ -424,14 +421,10 @@ serv_syscallbouncer(void *arg)
 }
 
 int
-rumpuser_sp_copyin(const void *uaddr, void *kaddr, size_t len)
+rumpuser_sp_copyin(void *arg, const void *uaddr, void *kaddr, size_t len)
 {
-	struct spclient *spc;
+	struct spclient *spc = arg;
 	void *rdata = NULL; /* XXXuninit */
-
-	spc = pthread_getspecific(spclient_tls);
-	if (!spc)
-		return EFAULT;
 
 	copyin_req(spc, uaddr, len, &rdata);
 
@@ -442,15 +435,9 @@ rumpuser_sp_copyin(const void *uaddr, void *kaddr, size_t len)
 }
 
 int
-rumpuser_sp_copyout(const void *kaddr, void *uaddr, size_t dlen)
+rumpuser_sp_copyout(void *arg, const void *kaddr, void *uaddr, size_t dlen)
 {
-	struct spclient *spc;
-
-	spc = pthread_getspecific(spclient_tls);
-	if (!spc) {
-		DPRINTF(("rump_sp: copyout curlwp not found\n"));
-		return EFAULT;
-	}
+	struct spclient *spc = arg;
 
 	if (send_copyout_req(spc, uaddr, kaddr, dlen) != 0)
 		return EFAULT;
@@ -458,15 +445,11 @@ rumpuser_sp_copyout(const void *kaddr, void *uaddr, size_t dlen)
 }
 
 int
-rumpuser_sp_anonmmap(size_t howmuch, void **addr)
+rumpuser_sp_anonmmap(void *arg, size_t howmuch, void **addr)
 {
-	struct spclient *spc;
+	struct spclient *spc = arg;
 	void *resp, *rdata;
 	int rv;
-
-	spc = pthread_getspecific(spclient_tls);
-	if (!spc)
-		return EFAULT;
 
 	rv = anonmmap_req(spc, howmuch, &rdata);
 	if (rv)
@@ -637,12 +620,6 @@ rumpuser_sp_init(const struct rumpuser_sp_ops *spopsp, const char *url)
 	sarg->sps_connhook = parsetab[idx].connhook;
 
 	/* sloppy error recovery */
-
-	error = pthread_key_create(&spclient_tls, NULL);
-	if (error) {
-		fprintf(stderr, "rump_sp: tls create failed\n");
-		return error;
-	}
 
 	/*LINTED*/
 	if (bind(s, sap, sap->sa_len) == -1) {
