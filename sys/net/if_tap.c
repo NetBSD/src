@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tap.c,v 1.65 2010/05/19 20:41:59 christos Exp $	*/
+/*	$NetBSD: if_tap.c,v 1.66 2010/11/22 21:31:51 christos Exp $	*/
 
 /*
  *  Copyright (c) 2003, 2004, 2008, 2009 The NetBSD Foundation.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.65 2010/05/19 20:41:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.66 2010/11/22 21:31:51 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 
@@ -1079,12 +1079,10 @@ tap_fops_ioctl(file_t *fp, u_long cmd, void *data)
 static int
 tap_dev_ioctl(int unit, u_long cmd, void *data, struct lwp *l)
 {
-	struct tap_softc *sc =
-	    device_lookup_private(&tap_cd, unit);
-	int error = 0;
+	struct tap_softc *sc = device_lookup_private(&tap_cd, unit);
 
 	if (sc == NULL)
-		return (ENXIO);
+		return ENXIO;
 
 	switch (cmd) {
 	case FIONREAD:
@@ -1101,27 +1099,26 @@ tap_dev_ioctl(int unit, u_long cmd, void *data, struct lwp *l)
 			else
 				*(int *)data = m->m_pkthdr.len;
 			splx(s);
-		} break;
+			return 0;
+		} 
 	case TIOCSPGRP:
 	case FIOSETOWN:
-		error = fsetown(&sc->sc_pgid, cmd, data);
-		break;
+		return fsetown(&sc->sc_pgid, cmd, data);
 	case TIOCGPGRP:
 	case FIOGETOWN:
-		error = fgetown(sc->sc_pgid, cmd, data);
-		break;
+		return fgetown(sc->sc_pgid, cmd, data);
 	case FIOASYNC:
 		if (*(int *)data)
 			sc->sc_flags |= TAP_ASYNCIO;
 		else
 			sc->sc_flags &= ~TAP_ASYNCIO;
-		break;
+		return 0;
 	case FIONBIO:
 		if (*(int *)data)
 			sc->sc_flags |= TAP_NBIO;
 		else
 			sc->sc_flags &= ~TAP_NBIO;
-		break;
+		return 0;
 #ifdef OTAPGIFNAME
 	case OTAPGIFNAME:
 #endif
@@ -1131,13 +1128,11 @@ tap_dev_ioctl(int unit, u_long cmd, void *data, struct lwp *l)
 			struct ifnet *ifp = &sc->sc_ec.ec_if;
 
 			strlcpy(ifr->ifr_name, ifp->if_xname, IFNAMSIZ);
-		} break;
+			return 0;
+		}
 	default:
-		error = ENOTTY;
-		break;
+		return ENOTTY;
 	}
-
-	return (0);
 }
 
 static int
