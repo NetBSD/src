@@ -1,13 +1,12 @@
 #!/bin/sh
 #
-#	$NetBSD: makerumpmanpages.sh,v 1.11 2010/11/22 01:07:51 pooka Exp $
+#	$NetBSD: makerumpmanpages.sh,v 1.12 2010/11/22 07:56:31 pooka Exp $
 #
 
 IFS=' '
-MANTMPL1=".\\\"	\$NetBSD\$"'
-.\"
-.\"	WARNING: GENERATED FILE, DO NOT EDIT
+COPYRIGHT='.\"	WARNING: GENERATED FILE, DO NOT EDIT
 .\"	INSTEAD, EDIT makerumpmanpages.sh AND REGEN
+.\"	from: $NetBSD: makerumpmanpages.sh,v 1.12 2010/11/22 07:56:31 pooka Exp $
 .\"
 .\" Copyright (c) 2008-2010 Antti Kantee.  All rights reserved.
 .\"
@@ -31,8 +30,9 @@ MANTMPL1=".\\\"	\$NetBSD\$"'
 .\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
-.\"
-.Dd November 21, 2010
+.\"'
+
+MANTMPL1='.Dd November 21, 2010
 .Dt RUMP_XXXFSXXX 8
 .Os
 .Sh NAME
@@ -220,7 +220,10 @@ do
 	fsc=`echo $fs | tr '[:lower:]' '[:upper:]'`
 	eval sedstr="${sedsub}"
 
-	echo ${MANTMPL1} | sed -e "$sedstr" > rump_${fs}/rump_${fs}.8
+	printf '.\\"	$NetBSD: makerumpmanpages.sh,v 1.12 2010/11/22 07:56:31 pooka Exp $\n.\\"\n' > rump_${fs}/rump_${fs}.8
+	echo ${COPYRIGHT} | sed -e 's/\$//g' >> rump_${fs}/rump_${fs}.8
+
+	echo ${MANTMPL1} | sed -e "$sedstr" >> rump_${fs}/rump_${fs}.8
 	[ ${mytype} = disk ] && \
 	    echo ${MANTMPL_BLK} | sed -e "$sedstr" >> rump_${fs}/rump_${fs}.8
 	[ ${mytype} = net ] && \
