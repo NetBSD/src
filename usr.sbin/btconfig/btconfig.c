@@ -1,4 +1,4 @@
-/* $NetBSD: btconfig.c,v 1.22 2009/10/09 12:58:28 plunky Exp $ */
+/* $NetBSD: btconfig.c,v 1.23 2010/11/22 20:02:06 plunky Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2006 Itronix, Inc.  All rights reserved.");
-__RCSID("$NetBSD: btconfig.c,v 1.22 2009/10/09 12:58:28 plunky Exp $");
+__RCSID("$NetBSD: btconfig.c,v 1.23 2010/11/22 20:02:06 plunky Exp $");
 
 #include <sys/ioctl.h>
 #include <sys/param.h>
@@ -62,7 +62,6 @@ void print_class(const char *, uint8_t *);
 void print_class0(void);
 void print_voice(int);
 void tag(const char *);
-void print_features(const char *, uint8_t, uint8_t *);
 void print_features0(uint8_t *);
 void print_features1(uint8_t *);
 void print_result(int, struct bt_devinquiry *);
@@ -646,11 +645,11 @@ print_info(int level)
 		return;
 
 	printf("\tnum_cmd = %d\n"
-	       "\tnum_acl = %d, acl_mtu = %d\n"
-	       "\tnum_sco = %d, sco_mtu = %d\n",
+	       "\tnum_acl = %d (max %d), acl_mtu = %d\n"
+	       "\tnum_sco = %d (max %d), sco_mtu = %d\n",
 	       btr.btr_num_cmd,
-	       btr.btr_num_acl, btr.btr_acl_mtu,
-	       btr.btr_num_sco, btr.btr_sco_mtu);
+	       btr.btr_num_acl, btr.btr_max_acl, btr.btr_acl_mtu,
+	       btr.btr_num_sco, btr.btr_max_sco, btr.btr_sco_mtu);
 
 	if (level-- < 1 || (btr.btr_flags & BTF_UP) == 0)
 		return;
@@ -740,22 +739,13 @@ print_info(int level)
 	if (level-- < 1)
 		return;
 
-	load_value(HCI_CMD_READ_LOCAL_FEATURES, buf, HCI_FEATURES_SIZE);
-	if ((buf[7] & HCI_LMP_EXTENDED_FEATURES) == 0) {
-		print_features("\tfeatures:", 0, buf);
-	} else {
-		hci_read_local_extended_features_rp rp;
+	if (ioctl(hci, SIOCGBTFEAT, &btr) < 0)
+		err(EXIT_FAILURE, "SIOCGBTFEAT");
 
-		rp.page = 0;
-
-		do {
-			hci_req(HCI_CMD_READ_LOCAL_EXTENDED_FEATURES, 0,
-			    &rp.page, sizeof(rp.page), &rp, sizeof(rp));
-
-			print_features("\tfeatures (page %d):",
-			    rp.page, rp.features);
-		} while (rp.page++ < rp.max_page);
-	}
+	width = printf("\tfeatures:");
+	print_features0(btr.btr_features0);
+	print_features1(btr.btr_features1);
+	tag(NULL);
 }
 
 void
@@ -783,21 +773,6 @@ print_stats(void)
 		btr.btr_stats.acl_tx, btr.btr_stats.acl_rx,
 		btr.btr_stats.sco_tx, btr.btr_stats.sco_rx,
 		btr.btr_stats.err_rx, btr.btr_stats.err_tx);
-}
-
-void
-print_features(const char *fmt, uint8_t page, uint8_t *f)
-{
-
-	width = printf(fmt, page);
-
-	switch(page) {
-	case 0:	print_features0(f);	break;
-	case 1:	print_features1(f);	break;
-	default:			break;
-	}
-
-	tag(NULL);
 }
 
 void
