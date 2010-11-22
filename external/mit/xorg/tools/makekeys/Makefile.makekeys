@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.makekeys,v 1.1.1.1 2008/07/29 05:01:23 mrg Exp $
+#	$NetBSD: Makefile.makekeys,v 1.2 2010/11/22 00:52:33 mrg Exp $
 
 MAKEKEYSDIR!=	cd ${NETBSDSRCDIR}/external/mit/xorg/tools/makekeys && ${PRINTOBJDIR}
 MAKEKEYS=	${MAKEKEYSDIR}/makekeys
@@ -14,4 +14,4 @@ KSDEF=	${DESTDIR}${X11INCDIR}/X11/keysymdef.h
 ks_tables.h: ${MAKEKEYS} ${KSDEF}
 	${_MKTARGET_CREATE}
 	rm -f ${.TARGET}
-	${MAKEKEYS} < ${KSDEF} > ${.TARGET}
+	${MAKEKEYS} ${KSDEF} > ${.TARGET}
