@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpfs.c,v 1.73 2010/11/11 18:45:09 pooka Exp $	*/
+/*	$NetBSD: rumpfs.c,v 1.74 2010/11/22 15:15:35 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.73 2010/11/11 18:45:09 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.74 2010/11/22 15:15:35 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -62,6 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.73 2010/11/11 18:45:09 pooka Exp $");
 
 static int rump_vop_lookup(void *);
 static int rump_vop_getattr(void *);
+static int rump_vop_setattr(void *);
 static int rump_vop_mkdir(void *);
 static int rump_vop_rmdir(void *);
 static int rump_vop_remove(void *);
@@ -95,6 +96,7 @@ const struct vnodeopv_entry_desc rump_vnodeop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
 	{ &vop_lookup_desc, rump_vop_lookup },
 	{ &vop_getattr_desc, rump_vop_getattr },
+	{ &vop_setattr_desc, rump_vop_setattr },
 	{ &vop_mkdir_desc, rump_vop_mkdir },
 	{ &vop_rmdir_desc, rump_vop_rmdir },
 	{ &vop_remove_desc, rump_vop_remove },
@@ -753,6 +755,20 @@ rump_vop_getattr(void *v)
 	struct rumpfs_node *rn = ap->a_vp->v_data;
 
 	memcpy(ap->a_vap, &rn->rn_va, sizeof(struct vattr));
+	return 0;
+}
+
+static int
+rump_vop_setattr(void *v)
+{
+	struct vop_getattr_args /* {
+		struct vnode *a_vp;
+		struct vattr *a_vap;
+		kauth_cred_t a_cred;
+	} */ *ap = v;
+	struct rumpfs_node *rn = ap->a_vp->v_data;
+
+	memcpy(&rn->rn_va, ap->a_vap, sizeof(struct vattr));
 	return 0;
 }
 
@@ -1421,6 +1437,7 @@ rump_vop_spec(void *v)
 	switch (ap->a_desc->vdesc_offset) {
 	case VOP_ACCESS_DESCOFFSET:
 	case VOP_GETATTR_DESCOFFSET:
+	case VOP_SETATTR_DESCOFFSET:
 	case VOP_LOCK_DESCOFFSET:
 	case VOP_UNLOCK_DESCOFFSET:
 	case VOP_RECLAIM_DESCOFFSET:
