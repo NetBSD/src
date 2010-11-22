@@ -1,4 +1,4 @@
-/*	$NetBSD: hci_event.c,v 1.21 2009/09/12 18:31:46 plunky Exp $	*/
+/*	$NetBSD: hci_event.c,v 1.22 2010/11/22 19:56:51 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hci_event.c,v 1.21 2009/09/12 18:31:46 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hci_event.c,v 1.22 2010/11/22 19:56:51 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -60,6 +60,7 @@ static void hci_event_read_clock_offset_compl(struct hci_unit *, struct mbuf *);
 static void hci_cmd_read_bdaddr(struct hci_unit *, struct mbuf *);
 static void hci_cmd_read_buffer_size(struct hci_unit *, struct mbuf *);
 static void hci_cmd_read_local_features(struct hci_unit *, struct mbuf *);
+static void hci_cmd_read_local_extended_features(struct hci_unit *, struct mbuf *);
 static void hci_cmd_read_local_ver(struct hci_unit *, struct mbuf *);
 static void hci_cmd_read_local_commands(struct hci_unit *, struct mbuf *);
 static void hci_cmd_reset(struct hci_unit *, struct mbuf *);
@@ -328,6 +329,10 @@ hci_event_command_compl(struct hci_unit *unit, struct mbuf *m)
 
 	case HCI_CMD_READ_LOCAL_FEATURES:
 		hci_cmd_read_local_features(unit, m);
+		break;
+
+	case HCI_CMD_READ_LOCAL_EXTENDED_FEATURES:
+		hci_cmd_read_local_extended_features(unit, m);
 		break;
 
 	case HCI_CMD_READ_LOCAL_VER:
@@ -897,8 +902,10 @@ hci_cmd_read_buffer_size(struct hci_unit *unit, struct mbuf *m)
 
 	unit->hci_max_acl_size = le16toh(rp.max_acl_size);
 	unit->hci_num_acl_pkts = le16toh(rp.num_acl_pkts);
+	unit->hci_max_acl_pkts = le16toh(rp.num_acl_pkts);
 	unit->hci_max_sco_size = rp.max_sco_size;
 	unit->hci_num_sco_pkts = le16toh(rp.num_sco_pkts);
+	unit->hci_max_sco_pkts = le16toh(rp.num_sco_pkts);
 
 	unit->hci_flags &= ~BTF_INIT_BUFFER_SIZE;
 
@@ -923,6 +930,8 @@ hci_cmd_read_local_features(struct hci_unit *unit, struct mbuf *m)
 	if ((unit->hci_flags & BTF_INIT_FEATURES) == 0)
 		return;
 
+	memcpy(unit->hci_feat0, rp.features, HCI_FEATURES_SIZE);
+
 	unit->hci_lmp_mask = 0;
 
 	if (rp.features[0] & HCI_LMP_ROLE_SWITCH)
@@ -936,6 +945,9 @@ hci_cmd_read_local_features(struct hci_unit *unit, struct mbuf *m)
 
 	if (rp.features[1] & HCI_LMP_PARK_MODE)
 		unit->hci_lmp_mask |= HCI_LINK_POLICY_ENABLE_PARK_MODE;
+
+	DPRINTFN(1, "%s: lmp_mask %4.4x\n",
+		device_xname(unit->hci_dev), unit->hci_lmp_mask);
 
 	/* ACL packet mask */
 	unit->hci_acl_mask = HCI_PKT_DM1 | HCI_PKT_DH1;
@@ -964,6 +976,9 @@ hci_cmd_read_local_features(struct hci_unit *unit, struct mbuf *m)
 		unit->hci_acl_mask |= HCI_PKT_2MBPS_DH5
 				    | HCI_PKT_3MBPS_DH5;
 
+	DPRINTFN(1, "%s: acl_mask %4.4x\n",
+		device_xname(unit->hci_dev), unit->hci_acl_mask);
+
 	unit->hci_packet_type = unit->hci_acl_mask;
 
 	/* SCO packet mask */
@@ -988,13 +1003,67 @@ hci_cmd_read_local_features(struct hci_unit *unit, struct mbuf *m)
 
 	/* XXX what do 2MBPS/3MBPS/3SLOT eSCO mean? */
 
+	DPRINTFN(1, "%s: sco_mask %4.4x\n",
+		device_xname(unit->hci_dev), unit->hci_sco_mask);
+
+	/* extended feature masks */
+	if (rp.features[7] & HCI_LMP_EXTENDED_FEATURES) {
+		hci_read_local_extended_features_cp cp;
+
+		cp.page = 0;
+		hci_send_cmd(unit, HCI_CMD_READ_LOCAL_EXTENDED_FEATURES,
+		    &cp, sizeof(cp));
+
+		return;
+	}
+
 	unit->hci_flags &= ~BTF_INIT_FEATURES;
-
 	cv_broadcast(&unit->hci_init);
+}
 
-	DPRINTFN(1, "%s: lmp_mask %4.4x, acl_mask %4.4x, sco_mask %4.4x\n",
-		device_xname(unit->hci_dev), unit->hci_lmp_mask,
-		unit->hci_acl_mask, unit->hci_sco_mask);
+/*
+ * process results of read_local_extended_features command_complete event
+ */
+static void
+hci_cmd_read_local_extended_features(struct hci_unit *unit, struct mbuf *m)
+{
+	hci_read_local_extended_features_rp rp;
+
+	KASSERT(m->m_pkthdr.len >= sizeof(rp));
+	m_copydata(m, 0, sizeof(rp), &rp);
+	m_adj(m, sizeof(rp));
+
+	if (rp.status > 0)
+		return;
+
+	if ((unit->hci_flags & BTF_INIT_FEATURES) == 0)
+		return;
+
+	DPRINTFN(1, "%s: page %d of %d\n", device_xname(unit->hci_dev),
+	    rp.page, rp.max_page);
+
+	switch (rp.page) {
+	case 1:
+		memcpy(unit->hci_feat1, rp.features, HCI_FEATURES_SIZE);
+		break;
+
+	case 0:	/* (already handled) */
+	default: 
+		break;
+	}
+
+	if (rp.page < rp.max_page) {
+		hci_read_local_extended_features_cp cp;
+
+		cp.page = rp.page + 1;
+		hci_send_cmd(unit, HCI_CMD_READ_LOCAL_EXTENDED_FEATURES,
+		    &cp, sizeof(cp));
+
+		return;
+	}
+
+	unit->hci_flags &= ~BTF_INIT_FEATURES;
+	cv_broadcast(&unit->hci_init);
 }
 
 /*
