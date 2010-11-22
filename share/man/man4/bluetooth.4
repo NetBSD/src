@@ -1,4 +1,4 @@
-.\"	$NetBSD: bluetooth.4,v 1.17 2009/10/14 23:10:27 joerg Exp $
+.\"	$NetBSD: bluetooth.4,v 1.18 2010/11/22 19:59:43 plunky Exp $
 .\"
 .\" Copyright (c) 2006 Itronix Inc.
 .\" All rights reserved.
@@ -30,7 +30,7 @@
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd September 24, 2009
+.Dd November 20, 2010
 .Dt BLUETOOTH 4
 .Os
 .Sh NAME
@@ -319,7 +319,13 @@ struct btreq {
 	    uint16_t btri_sco_mtu;	/* SCO mtu */
 	    uint16_t btri_link_policy;	/* Link Policy */
 	    uint16_t btri_packet_type;	/* Packet Type */
+	    uint16_t btri_max_acl;	/* max ACL buffers */
+	    uint16_t btri_max_sco;	/* max SCO buffers */
 	} btri;
+	struct {
+	    uint8_t btrf_page0[HCI_FEATURES_SIZE]; /* basic */
+	    uint8_t btrf_page1[HCI_FEATURES_SIZE]; /* extended */
+	} btrf;
 	struct bt_stats btrs;   /* unit stats */
     } btru;
 };
@@ -333,6 +339,10 @@ struct btreq {
 #define btr_sco_mtu	btru.btri.btri_sco_mtu
 #define btr_link_policy btru.btri.btri_link_policy
 #define btr_packet_type btru.btri.btri_packet_type
+#define btr_max_acl	btru.btri.btri_max_acl
+#define btr_max_sco	btru.btri.btri_max_sco
+#define btr_features0	btru.btrf.btrf_page0
+#define btr_features1	btru.btrf.btrf_page1
 #define btr_stats	btru.btrs
 
 /* btr_flags */
@@ -380,6 +390,9 @@ Thus, you can cycle through all devices in the system.
 .It Dv SIOCSBTFLAGS
 Set Bluetooth device Flags.
 Not all flags are settable.
+.It Dv SIOCGBTFEAT
+Get Bluetooth device Features.
+This returns the cached basic (page 0) and extended (page 1) features.
 .It Dv SIOCSBTPOLICY
 Set Bluetooth device Link Policy.
 Link Policy bits are defined in
