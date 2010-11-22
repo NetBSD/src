@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.101 2010/11/17 19:54:09 pooka Exp $	*/
+/*	$NetBSD: vm.c,v 1.102 2010/11/22 20:42:19 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2010 Antti Kantee.  All Rights Reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.101 2010/11/17 19:54:09 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.102 2010/11/22 20:42:19 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -348,7 +348,8 @@ uvm_mmap(struct vm_map *map, vaddr_t *addr, vsize_t size, vm_prot_t prot,
 	if (curproc->p_vmspace == vmspace_kernel()) {
 		uaddr = rumpuser_anonmmap(NULL, size, 0, 0, &error);
 	} else {
-		error = rumpuser_sp_anonmmap(size, &uaddr);
+		error = rumpuser_sp_anonmmap(curproc->p_vmspace->vm_map.pmap,
+		    size, &uaddr);
 	}
 	if (uaddr == NULL)
 		return error;
@@ -701,14 +702,13 @@ uvm_km_va_drain(struct vm_map *map, uvm_flag_t flags)
 }
 
 /*
- * Mapping and vm space locking routines.
- * XXX: these don't work for non-local vmspaces
+ * VM space locking routines.  We don't really have to do anything,
+ * since the pages are always "wired" (both local and remote processes).
  */
 int
 uvm_vslock(struct vmspace *vs, void *addr, size_t len, vm_prot_t access)
 {
 
-	KASSERT(vs == vmspace_kernel());
 	return 0;
 }
 
@@ -716,19 +716,40 @@ void
 uvm_vsunlock(struct vmspace *vs, void *addr, size_t len)
 {
 
-	KASSERT(vs == vmspace_kernel());
 }
 
+/*
+ * For the local case the buffer mappers don't need to do anything.
+ * For the remote case we need to reserve space and copy data in or
+ * out, depending on B_READ/B_WRITE.
+ */
 void
 vmapbuf(struct buf *bp, vsize_t len)
 {
 
 	bp->b_saveaddr = bp->b_data;
+
+	/* remote case */
+	if (curproc->p_vmspace != vmspace_kernel()) {
+		bp->b_data = rump_hypermalloc(len, 0, true, "vmapbuf");
+		if (BUF_ISWRITE(bp)) {
+			copyin(bp->b_saveaddr, bp->b_data, len);
+		}
+	}
 }
 
 void
 vunmapbuf(struct buf *bp, vsize_t len)
 {
+
+	/* remote case */
+	if (bp->b_proc->p_vmspace != vmspace_kernel()) {
+		if (BUF_ISREAD(bp)) {
+			copyout_proc(bp->b_proc,
+			    bp->b_data, bp->b_saveaddr, len);
+		}
+		rump_hyperfree(bp->b_data, len);
+	}
 
 	bp->b_data = bp->b_saveaddr;
 	bp->b_saveaddr = 0;
@@ -749,17 +770,6 @@ uvmspace_free(struct vmspace *vm)
 {
 
 	/* nothing for now */
-}
-
-int
-uvm_io(struct vm_map *map, struct uio *uio)
-{
-
-	/*
-	 * just do direct uio for now.  but this needs some vmspace
-	 * olympics for rump_sysproxy.
-	 */
-	return uiomove((void *)(vaddr_t)uio->uio_offset, uio->uio_resid, uio);
 }
 
 /*
