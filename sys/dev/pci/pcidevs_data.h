@@ -1,4 +1,4 @@
-/*	$NetBSD: pcidevs_data.h,v 1.962.4.14 2010/11/20 00:19:37 riz Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.962.4.15 2010/11/22 03:40:00 riz Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -3530,6 +3530,10 @@ static const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_PADDINGTON,
 	    "Paddington I/O Controller",
+	},
+	{
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_PBG3_FW,
+	    "PowerBook G3 Firewire",
 	},
 	{
 	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_KEYLARGO_USB,
@@ -14976,4 +14980,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 3143;
+const int pci_nproducts = 3144;
