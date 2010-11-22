@@ -1,4 +1,4 @@
-/*	$NetBSD: servconf.c,v 1.5 2010/11/21 18:59:04 adam Exp $	*/
+/*	$NetBSD: servconf.c,v 1.6 2010/11/22 09:53:01 adam Exp $	*/
 /* $OpenBSD: servconf.c,v 1.209 2010/06/22 04:22:59 djm Exp $ */
 /*
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -12,7 +12,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: servconf.c,v 1.5 2010/11/21 18:59:04 adam Exp $");
+__RCSID("$NetBSD: servconf.c,v 1.6 2010/11/22 09:53:01 adam Exp $");
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/queue.h>
@@ -816,7 +816,8 @@ process_server_config_line(ServerOptions *options, char *line,
 	int cmdline = 0, *intptr, value, n;
 	SyslogFacility *log_facility_ptr;
 	LogLevel *log_level_ptr;
- 	unsigned long lvalue, *longptr;
+ 	unsigned long lvalue;
+	time_t *timetptr;
 	ServerOpCodes opcode;
 	int port = 0;
 	u_int i, flags = 0;
@@ -831,7 +832,7 @@ process_server_config_line(ServerOptions *options, char *line,
 	if (!arg || !*arg || *arg == '#')
 		return 0;
 	intptr = NULL;
-	longptr = NULL;
+	timetptr = NULL;
 	charptr = NULL;
 	opcode = parse_token(arg, filename, linenum, &flags);
 
@@ -1627,19 +1628,19 @@ process_server_config_line(ServerOptions *options, char *line,
 			*intptr = value;
 		break;
 	case sBindTimeout:
-		longptr = (unsigned long *) &options->lpk.b_timeout.tv_sec;
+		timetptr = &options->lpk.b_timeout.tv_sec;
 parse_ulong:
 		arg = strdelim(&cp);
 		if (!arg || *arg == '\0')
 			fatal("%s line %d: missing integer value.",
 			    filename, linenum);
 		lvalue = atol(arg);
-		if (*activep && *longptr == -1)
-			*longptr = lvalue;
+		if (*activep && *timetptr == -1)
+			*timetptr = lvalue;
 		break;
 
 	case sSearchTimeout:
-		longptr = (unsigned long *) &options->lpk.s_timeout.tv_sec;
+		timetptr = &options->lpk.s_timeout.tv_sec;
 		goto parse_ulong;
 		break;
 	case sLdapConf:
