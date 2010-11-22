@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.h,v 1.51 2010/11/19 17:06:57 pooka Exp $	*/
+/*	$NetBSD: rumpuser.h,v 1.52 2010/11/22 20:42:19 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -36,7 +36,7 @@
 #include <stdint.h>
 #endif
 
-#define RUMPUSER_VERSION 4
+#define RUMPUSER_VERSION 5
 int rumpuser_getversion(void);
 
 struct msghdr;
@@ -210,7 +210,7 @@ struct rumpuser_sp_ops {
 
 	void (*spop_lwproc_switch)(struct lwp *);
 	void (*spop_lwproc_release)(void);
-	int (*spop_lwproc_newproc)(void);
+	int (*spop_lwproc_newproc)(void *);
 	int (*spop_lwproc_newlwp)(pid_t);
 	struct lwp * (*spop_lwproc_curlwp)(void);
 	int (*spop_syscall)(int, void *, register_t *);
@@ -218,8 +218,8 @@ struct rumpuser_sp_ops {
 };
 
 int	rumpuser_sp_init(const struct rumpuser_sp_ops *, const char *);
-int	rumpuser_sp_copyin(const void *, void *, size_t);
-int	rumpuser_sp_copyout(const void *, void *, size_t);
-int	rumpuser_sp_anonmmap(size_t, void **);
+int	rumpuser_sp_copyin(void *, const void *, void *, size_t);
+int	rumpuser_sp_copyout(void *, const void *, void *, size_t);
+int	rumpuser_sp_anonmmap(void *, size_t, void **);
 
 #endif /* _RUMP_RUMPUSER_H_ */

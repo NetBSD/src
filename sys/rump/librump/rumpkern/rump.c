@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.205 2010/11/21 22:17:24 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.206 2010/11/22 20:42:19 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.205 2010/11/21 22:17:24 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.206 2010/11/22 20:42:19 pooka Exp $");
 
 #include <sys/systm.h>
 #define ELFSIZE ARCH_ELFSIZE
@@ -100,13 +100,8 @@ int rump_threads = 0;
 int rump_threads = 1;
 #endif
 
-/*
- * System call proxying support.  These deserve another look later,
- * but good enough for now.
- */
-static struct vmspace sp_vmspace;
-
 static int rump_proxy_syscall(int, void *, register_t *);
+static int rump_proxy_newproc(void *);
 
 static char rump_msgbuf[16*1024]; /* 16k should be enough for std rump needs */
 
@@ -202,7 +197,7 @@ static const struct rumpuser_sp_ops spops = {
 	.spop_unschedule	= rump_unschedule,
 	.spop_lwproc_switch	= rump_lwproc_switch,
 	.spop_lwproc_release	= rump_lwproc_releaselwp,
-	.spop_lwproc_newproc	= rump_lwproc_newproc,
+	.spop_lwproc_newproc	= rump_proxy_newproc,
 	.spop_lwproc_newlwp	= rump_lwproc_newlwp,
 	.spop_lwproc_curlwp	= rump_lwproc_curlwp,
 	.spop_syscall		= rump_proxy_syscall,
@@ -649,11 +644,31 @@ rump_proxy_syscall(int num, void *arg, register_t *retval)
 
 	callp = rump_sysent + num;
 	l = curlwp;
-	curproc->p_vmspace = &sp_vmspace;
 	rv = sy_call(callp, l, (void *)arg, retval);
-	curproc->p_vmspace = vmspace_kernel();
 
 	return rv;
+}
+
+static int
+rump_proxy_newproc(void *priv)
+{
+	struct vmspace *newspace;
+	int error;
+
+	if ((error = rump_lwproc_newproc()) != 0)
+		return error;
+
+	/*
+	 * Since it's a proxy proc, adjust the vmspace.
+	 * Refcount will eternally be 1.
+	 */
+	newspace = kmem_alloc(sizeof(*newspace), KM_SLEEP);
+	newspace->vm_refcnt = 1;
+	newspace->vm_map.pmap = priv;
+	KASSERT(curproc->p_vmspace == vmspace_kernel());
+	curproc->p_vmspace = newspace;
+
+	return 0;
 }
 
 int

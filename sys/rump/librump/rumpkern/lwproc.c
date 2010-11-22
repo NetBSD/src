@@ -1,4 +1,4 @@
-/*      $NetBSD: lwproc.c,v 1.5 2010/11/17 19:54:09 pooka Exp $	*/
+/*      $NetBSD: lwproc.c,v 1.6 2010/11/22 20:42:19 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lwproc.c,v 1.5 2010/11/17 19:54:09 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lwproc.c,v 1.6 2010/11/22 20:42:19 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -76,6 +76,12 @@ lwproc_proc_free(struct proc *p)
 	rw_destroy(&p->p_reflock);
 	cv_destroy(&p->p_waitcv);
 	cv_destroy(&p->p_lwpcv);
+
+	/* non-kernel vmspaces are not shared */
+	if (p->p_vmspace != vmspace_kernel()) {
+		KASSERT(p->p_vmspace->vm_refcnt == 1);
+		kmem_free(p->p_vmspace, sizeof(*p->p_vmspace));
+	}
 
 	proc_free_mem(p);
 }
