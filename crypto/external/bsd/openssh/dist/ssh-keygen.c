@@ -1,4 +1,4 @@
-/*	$NetBSD: ssh-keygen.c,v 1.4 2010/11/21 18:29:49 adam Exp $	*/
+/*	$NetBSD: ssh-keygen.c,v 1.5 2010/11/22 09:53:01 adam Exp $	*/
 /* $OpenBSD: ssh-keygen.c,v 1.199 2010/08/16 04:06:06 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -14,7 +14,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: ssh-keygen.c,v 1.4 2010/11/21 18:29:49 adam Exp $");
+__RCSID("$NetBSD: ssh-keygen.c,v 1.5 2010/11/22 09:53:01 adam Exp $");
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
@@ -1445,7 +1445,7 @@ do_ca_sign(struct passwd *pw, int argc, char **argv)
 		if (!quiet) {
 			logit("Signed %s key %s: id \"%s\" serial %llu%s%s "
 			    "valid %s", key_cert_type(public), 
-			    out, public->cert->key_id, public->cert->serial,
+			    out, public->cert->key_id, (unsigned long long)public->cert->serial,
 			    cert_principals != NULL ? " for " : "",
 			    cert_principals != NULL ? cert_principals : "",
 			    fmt_validity(cert_valid_from, cert_valid_to));
@@ -1671,7 +1671,7 @@ do_show_cert(struct passwd *pw)
 	    key_type(key->cert->signature_key), ca_fp);
 	printf("        Key ID: \"%s\"\n", key->cert->key_id);
 	if (!v00)
-		printf("        Serial: %llu\n", key->cert->serial);
+		printf("        Serial: %llu\n", (unsigned long long)key->cert->serial);
 	printf("        Valid: %s\n",
 	    fmt_validity(key->cert->valid_after, key->cert->valid_before));
 	printf("        Principals: ");

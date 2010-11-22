@@ -1,4 +1,4 @@
-/*	$NetBSD: sftp.c,v 1.4 2010/11/21 18:29:49 adam Exp $	*/
+/*	$NetBSD: sftp.c,v 1.5 2010/11/22 09:53:01 adam Exp $	*/
 /* $OpenBSD: sftp.c,v 1.125 2010/06/18 00:58:39 djm Exp $ */
 /*
  * Copyright (c) 2001-2004 Damien Miller <djm@openbsd.org>
@@ -17,7 +17,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: sftp.c,v 1.4 2010/11/21 18:29:49 adam Exp $");
+__RCSID("$NetBSD: sftp.c,v 1.5 2010/11/22 09:53:01 adam Exp $");
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <sys/wait.h>
@@ -1778,7 +1778,7 @@ complete(EditLine *el, int ch)
 	struct complete_ctx *complete_ctx;
 
 	lf = el_line(el);
-	if (el_get(el, EL_CLIENTDATA, (void**)&complete_ctx) != 0)
+	if (el_get(el, EL_CLIENTDATA, &complete_ctx) != 0)
 		fatal("%s: el_get failed", __func__);
 
 	/* Figure out which argument the cursor points to */
