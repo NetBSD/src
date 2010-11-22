@@ -1,4 +1,4 @@
-#	$NetBSD: majors.i386,v 1.41 2010/06/21 21:50:19 pooka Exp $
+#	$NetBSD: majors.i386,v 1.42 2010/11/22 20:28:49 pooka Exp $
 #
 # Device majors for i386
 #
@@ -27,7 +27,7 @@ device-major	uk		char 20			uk
 device-major	apm		char 21			apm
 device-major	filedesc	char 22
 device-major	bpf		char 23			bpfilter  vector=8,linkzero
-device-major	md		char 24  block 17	md
+device-major	md		char 24  block 17	md	vector=4:8
 
 device-major	joy		char 26			joy
 device-major	spkr		char 27			spkr
