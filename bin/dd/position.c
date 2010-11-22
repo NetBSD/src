@@ -1,4 +1,4 @@
-/*	$NetBSD: position.c,v 1.17 2009/02/14 07:13:40 lukem Exp $	*/
+/*	$NetBSD: position.c,v 1.18 2010/11/22 21:04:28 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)position.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: position.c,v 1.17 2009/02/14 07:13:40 lukem Exp $");
+__RCSID("$NetBSD: position.c,v 1.18 2010/11/22 21:04:28 pooka Exp $");
 #endif
 #endif /* not lint */
 
@@ -70,7 +70,7 @@ pos_in(void)
 
 	/* If not a pipe or tape device, try to seek on it. */
 	if (!(in.flags & (ISPIPE|ISTAPE))) {
-		if (lseek(in.fd,
+		if (ddop_lseek(in, in.fd,
 		    (off_t)in.offset * (off_t)in.dbsz, SEEK_CUR) == -1) {
 			err(EXIT_FAILURE, "%s", in.name);
 			/* NOTREACHED */
@@ -85,7 +85,7 @@ pos_in(void)
 	 * blocks for other devices.
 	 */
 	for (bcnt = in.dbsz, cnt = in.offset, warned = 0; cnt;) {
-		if ((nr = read(in.fd, in.db, bcnt)) > 0) {
+		if ((nr = ddop_read(in, in.fd, in.db, bcnt)) > 0) {
 			if (in.flags & ISPIPE) {
 				if (!(bcnt -= nr)) {
 					bcnt = in.dbsz;
@@ -137,7 +137,7 @@ pos_out(void)
 	 * have specified the seek operand.
 	 */
 	if (!(out.flags & ISTAPE)) {
-		if (lseek(out.fd,
+		if (ddop_lseek(out, out.fd,
 		    (off_t)out.offset * (off_t)out.dbsz, SEEK_SET) == -1)
 			err(EXIT_FAILURE, "%s", out.name);
 			/* NOTREACHED */
@@ -149,7 +149,7 @@ pos_out(void)
 		t_op.mt_op = MTFSR;
 		t_op.mt_count = out.offset;
 
-		if (ioctl(out.fd, MTIOCTOP, &t_op) < 0)
+		if (ddop_ioctl(out, out.fd, MTIOCTOP, &t_op) < 0)
 			err(EXIT_FAILURE, "%s", out.name);
 			/* NOTREACHED */
 		return;
@@ -157,7 +157,7 @@ pos_out(void)
 
 	/* Read it. */
 	for (cnt = 0; cnt < out.offset; ++cnt) {
-		if ((n = read(out.fd, out.db, out.dbsz)) > 0)
+		if ((n = ddop_read(out, out.fd, out.db, out.dbsz)) > 0)
 			continue;
 
 		if (n < 0)
@@ -171,12 +171,13 @@ pos_out(void)
 		 */
 		t_op.mt_op = MTBSR;
 		t_op.mt_count = 1;
-		if (ioctl(out.fd, MTIOCTOP, &t_op) == -1)
+		if (ddop_ioctl(out, out.fd, MTIOCTOP, &t_op) == -1)
 			err(EXIT_FAILURE, "%s", out.name);
 			/* NOTREACHED */
 
 		while (cnt++ < out.offset)
-			if ((uint64_t)(n = bwrite(out.fd, out.db, out.dbsz)) != out.dbsz)
+			if ((uint64_t)(n = bwrite(&out,
+			    out.db, out.dbsz)) != out.dbsz)
 				err(EXIT_FAILURE, "%s", out.name);
 				/* NOTREACHED */
 		break;
