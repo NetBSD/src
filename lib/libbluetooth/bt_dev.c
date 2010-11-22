@@ -1,4 +1,4 @@
-/*	$NetBSD: bt_dev.c,v 1.2 2010/11/13 19:43:56 plunky Exp $	*/
+/*	$NetBSD: bt_dev.c,v 1.3 2010/11/22 19:59:04 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2009 Iain Hibbert
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: bt_dev.c,v 1.2 2010/11/13 19:43:56 plunky Exp $");
+__RCSID("$NetBSD: bt_dev.c,v 1.3 2010/11/22 19:59:04 plunky Exp $");
 
 #include <sys/event.h>
 #include <sys/ioctl.h>
@@ -773,17 +773,12 @@ fail:
 
 /*
  * Internal version of bt_devinfo. Fill in the devinfo structure
- * with the socket handle provided. If the device is present and
- * active, the socket will be left connected to the device.
+ * with the socket handle provided.
  */
 static int
 bt__devinfo(int s, const char *name, struct bt_devinfo *info)
 {
-	struct sockaddr_bt		sa;
-	struct bt_devreq		req;
 	struct btreq			btr;
-	hci_read_buffer_size_rp		bp;
-	hci_read_local_features_rp	fp;
 
 	memset(&btr, 0, sizeof(btr));
 	strncpy(btr.btr_name, name, HCI_DEVNAME_SIZE);
@@ -801,9 +796,16 @@ bt__devinfo(int s, const char *name, struct bt_devinfo *info)
 	info->cmd_free = btr.btr_num_cmd;
 	info->sco_free = btr.btr_num_sco;
 	info->acl_free = btr.btr_num_acl;
+	info->sco_pkts = btr.btr_max_sco;
+	info->acl_pkts = btr.btr_max_acl;
 
 	info->link_policy_info = btr.btr_link_policy;
 	info->packet_type_info = btr.btr_packet_type;
+
+	if (ioctl(s, SIOCGBTFEAT, &btr) == -1)
+		return -1;
+
+	memcpy(info->features, btr.btr_features0, HCI_FEATURES_SIZE);
 
 	if (ioctl(s, SIOCGBTSTATS, &btr) == -1)
 		return -1;
@@ -816,40 +818,6 @@ bt__devinfo(int s, const char *name, struct bt_devinfo *info)
 	info->sco_sent = btr.btr_stats.sco_tx;
 	info->bytes_recv = btr.btr_stats.byte_rx;
 	info->bytes_sent = btr.btr_stats.byte_tx;
-
-	/* can only get the rest from enabled devices */
-	if ((info->enabled) == 0)
-		return 0;
-
-	memset(&sa, 0, sizeof(sa));
-	sa.bt_len = sizeof(sa);
-	sa.bt_family = AF_BLUETOOTH;
-	bdaddr_copy(&sa.bt_bdaddr, &info->bdaddr);
-
-	if (bind(s, (struct sockaddr *)&sa, sizeof(sa)) == -1
-	    || connect(s, (struct sockaddr *)&sa, sizeof(sa)) == -1)
-		return -1;
-
-	memset(&req, 0, sizeof(req));
-	req.opcode = HCI_CMD_READ_BUFFER_SIZE;
-	req.rparam = &bp;
-	req.rlen = sizeof(bp);
-
-	if (bt_devreq(s, &req, 5) == -1)
-		return -1;
-
-	info->acl_pkts = bp.max_acl_size;
-	info->sco_pkts = bp.max_sco_size;
-
-	memset(&req, 0, sizeof(req));
-	req.opcode = HCI_CMD_READ_LOCAL_FEATURES;
-	req.rparam = &fp;
-	req.rlen = sizeof(fp);
-
-	if (bt_devreq(s, &req, 5) == -1)
-		return -1;
-
-	memcpy(info->features, fp.features, HCI_FEATURES_SIZE);
 
 	return 0;
 }
@@ -878,6 +846,7 @@ bt_devenum(bt_devenum_cb_t cb, void *arg)
 {
 	struct btreq		btr;
 	struct bt_devinfo	info;
+	struct sockaddr_bt	sa;
 	int			count, fd, rv, s;
 
 	s = socket(PF_BLUETOOTH, SOCK_RAW, BTPROTO_HCI);
@@ -903,6 +872,20 @@ bt_devenum(bt_devenum_cb_t cb, void *arg)
 			close(fd);
 			close(s);
 			return -1;
+		}
+
+		if (info.enabled) {
+			memset(&sa, 0, sizeof(sa));
+			sa.bt_len = sizeof(sa);
+			sa.bt_family = AF_BLUETOOTH;
+			bdaddr_copy(&sa.bt_bdaddr, &info.bdaddr);
+
+			if (bind(fd, (struct sockaddr *)&sa, sizeof(sa)) == -1
+			    || connect(fd, (struct sockaddr *)&sa, sizeof(sa)) == -1) {
+				close(fd);
+				close(s);
+				return -1;
+			}
 		}
 
 		rv = (*cb)(fd, &info, arg);
