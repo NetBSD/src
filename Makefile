@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.278 2010/07/06 05:59:50 mrg Exp $
+#	$NetBSD: Makefile,v 1.279 2010/11/22 08:35:44 plunky Exp $
 
 #
 # This is the top-level makefile for building NetBSD. For an outline of
@@ -416,7 +416,7 @@ BUILD_CC_LIB+= external/bsd/pcc/crtstuff
 BUILD_CC_LIB+= external/bsd/pcc/libpcc
 .endif
 
-.for dir in tools tools/compat lib/csu ${BUILD_CC_LIB} lib/libc lib/libdes lib gnu/lib external/lib crypto/external/lib sys/rump/dev/lib sys/rump/fs/lib sys/rump/kern/lib sys/rump/net/lib sys/modules
+.for dir in tools tools/compat lib/csu ${BUILD_CC_LIB} lib/libc lib gnu/lib external/lib crypto/external/lib sys/rump/dev/lib sys/rump/fs/lib sys/rump/kern/lib sys/rump/net/lib sys/modules
 do-${dir:S/\//-/g}: .PHONY .MAKE
 .for targ in dependall install
 	${MAKEDIRTARGET} ${dir} ${targ}
