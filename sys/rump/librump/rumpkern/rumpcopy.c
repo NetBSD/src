@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpcopy.c,v 1.10 2010/11/17 19:54:09 pooka Exp $	*/
+/*	$NetBSD: rumpcopy.c,v 1.11 2010/11/22 20:42:19 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -26,19 +26,21 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpcopy.c,v 1.10 2010/11/17 19:54:09 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpcopy.c,v 1.11 2010/11/22 20:42:19 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/lwp.h>
 #include <sys/systm.h>
+#include <sys/uio.h>
 
-#include <rump/rump.h>
+#include <rump/rumpuser.h>
 
 #include "rump_private.h"
 
 int
 copyin(const void *uaddr, void *kaddr, size_t len)
 {
+	int error = 0;
 
 	if (__predict_false(uaddr == NULL && len)) {
 		return EFAULT;
@@ -47,14 +49,17 @@ copyin(const void *uaddr, void *kaddr, size_t len)
 	if (curproc->p_vmspace == vmspace_kernel()) {
 		memcpy(kaddr, uaddr, len);
 	} else {
-		rumpuser_sp_copyin(uaddr, kaddr, len);
+		error = rumpuser_sp_copyin(curproc->p_vmspace->vm_map.pmap,
+		    uaddr, kaddr, len);
 	}
-	return 0;
+
+	return error;
 }
 
 int
 copyout(const void *kaddr, void *uaddr, size_t len)
 {
+	int error = 0;
 
 	if (__predict_false(uaddr == NULL && len)) {
 		return EFAULT;
@@ -63,20 +68,24 @@ copyout(const void *kaddr, void *uaddr, size_t len)
 	if (curproc->p_vmspace == vmspace_kernel()) {
 		memcpy(uaddr, kaddr, len);
 	} else {
-		rumpuser_sp_copyout(kaddr, uaddr, len);
+		error = rumpuser_sp_copyout(curproc->p_vmspace->vm_map.pmap,
+		    kaddr, uaddr, len);
 	}
-	return 0;
+	return error;
 }
 
 int
 subyte(void *uaddr, int byte)
 {
+	int error = 0;
 
 	if (curproc->p_vmspace == vmspace_kernel())
 		*(char *)uaddr = byte;
 	else
-		rumpuser_sp_copyout(&byte, uaddr, 1);
-	return 0;
+		error = rumpuser_sp_copyout(curproc->p_vmspace->vm_map.pmap,
+		    &byte, uaddr, 1);
+
+	return error;
 }
 
 int
@@ -109,7 +118,8 @@ copyinstr(const void *uaddr, void *kaddr, size_t len, size_t *done)
 	if (curproc->p_vmspace == vmspace_kernel())
 		return copystr(uaddr, kaddr, len, done);
 
-	if ((rv = rumpuser_sp_copyin(uaddr, kaddr, len)) != 0)
+	if ((rv = rumpuser_sp_copyin(curproc->p_vmspace->vm_map.pmap,
+	    uaddr, kaddr, len)) != 0)
 		return rv;
 
 	/* figure out if we got a terminated string or not */
@@ -132,6 +142,7 @@ int
 copyoutstr(const void *kaddr, void *uaddr, size_t len, size_t *done)
 {
 	size_t slen;
+	int error;
 
 	if (curproc->p_vmspace == vmspace_kernel())
 		return copystr(kaddr, uaddr, len, done);
@@ -140,11 +151,12 @@ copyoutstr(const void *kaddr, void *uaddr, size_t len, size_t *done)
 	if (slen > len)
 		return ENAMETOOLONG;
 
-	rumpuser_sp_copyout(kaddr, uaddr, slen);
+	error = rumpuser_sp_copyout(curproc->p_vmspace->vm_map.pmap,
+	    kaddr, uaddr, slen);
 	if (done)
 		*done = slen;
 
-	return 0;
+	return error;
 }
 
 int
@@ -153,4 +165,44 @@ kcopy(const void *src, void *dst, size_t len)
 
 	memcpy(dst, src, len);
 	return 0;
+}
+
+/*
+ * Low-level I/O routine.  This is used only when "all else fails",
+ * i.e. the current thread does not have an appropriate vm context.
+ */
+int
+uvm_io(struct vm_map *vm, struct uio *uio)
+{
+	int error;
+
+	/* loop over iovecs one-by-one and copyout */
+	for (; uio->uio_resid && uio->uio_iovcnt;
+	    uio->uio_iovcnt--, uio->uio_iov++) {
+		struct iovec *iov = uio->uio_iov;
+		size_t curlen = MIN(uio->uio_resid, iov->iov_len);
+
+		if (__predict_false(curlen == 0))
+			continue;
+
+		if (uio->uio_rw == UIO_READ) {
+			error = rumpuser_sp_copyin(vm->pmap,
+			    (void *)(vaddr_t)uio->uio_offset, iov->iov_base,
+			    curlen);
+		} else {
+			error = rumpuser_sp_copyout(vm->pmap,
+			    iov->iov_base, (void *)(vaddr_t)uio->uio_offset,
+			    curlen);
+		}
+		if (error)
+			break;
+
+		iov->iov_base = (uint8_t *)iov->iov_base + curlen;
+		iov->iov_len -= curlen;
+
+		uio->uio_resid -= curlen;
+		uio->uio_offset += curlen;
+	}
+
+	return error;
 }
