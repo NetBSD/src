@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16.2.1 2010/11/22 03:15:32 riz Exp $
+#	$NetBSD: Makefile,v 1.16.2.2 2010/11/22 16:37:15 riz Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -17,6 +17,10 @@ create-aout= \
 	    -R .debug_frame -R .debug_loc -R .debug_pubnames \
 	    -R .debug_aranges -R .ARM.attributes \
 	    ${.TARGET:R} ${.TARGET}
+
+release::	check_RELEASEDIR .WAIT netbsd-INSTALL.aout.gz
+	${RELEASE_INSTALL} netbsd-INSTALL.aout.gz \
+	    ${RELEASEDIR}/${RELEASEMACHINEDIR}/installation/instkernel/netbsd.gz
 
 .include "${DISTRIBDIR}/common/Makefile.mdset"
 
