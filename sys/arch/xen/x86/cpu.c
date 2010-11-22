@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.28.4.2 2010/04/22 20:02:49 snj Exp $	*/
+/*	$NetBSD: cpu.c,v 1.28.4.3 2010/11/22 01:43:58 riz Exp $	*/
 /* NetBSD: cpu.c,v 1.18 2004/02/20 17:35:01 yamt Exp  */
 
 /*-
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.28.4.2 2010/04/22 20:02:49 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.28.4.3 2010/11/22 01:43:58 riz Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -231,26 +231,22 @@ cpu_attach(device_t parent, device_t self, void *aux)
 	struct cpu_softc *sc = device_private(self);
 	struct cpu_attach_args *caa = aux;
 	struct cpu_info *ci;
-	int cpunum = caa->cpu_number;
+	static int nphycpu = 0;
 
 	sc->sc_dev = self;
 
 	/*
-	 * If we're an Application Processor, allocate a cpu_info
-	 * structure, otherwise use the primary's.
+	 * If we're the first attached CPU use the primary cpu_info,
+	 * otherwise allocate a new one.
 	 */
-	if (caa->cpu_role == CPU_ROLE_AP) {
+	if (nphycpu > 0) {
 		ci = malloc(sizeof(*ci), M_DEVBUF, M_WAITOK | M_ZERO);
 		ci->ci_curldt = -1;
-		if (phycpu_info[cpunum] != NULL)
-			panic("cpu at apic id %d already attached?", cpunum);
-		phycpu_info[cpunum] = ci;
+		if (phycpu_info[nphycpu] != NULL)
+			panic("cpu%d already attached?", nphycpu);
+		phycpu_info[nphycpu] = ci;
 	} else {
 		ci = &phycpu_info_primary;
-		if (cpunum != 0) {
-			phycpu_info[0] = NULL;
-			phycpu_info[cpunum] = ci;
-		}
 	}
 
 	ci->ci_self = ci;
@@ -259,29 +255,9 @@ cpu_attach(device_t parent, device_t self, void *aux)
 	ci->ci_dev = self;
 	ci->ci_cpuid = caa->cpu_number;
 	ci->ci_vcpu = NULL;
+	ci->ci_index = nphycpu++;
 
-	printf(": ");
-	switch (caa->cpu_role) {
-	case CPU_ROLE_SP:
-		printf("(uniprocessor)\n");
-		ci->ci_flags |= CPUF_PRESENT | CPUF_SP | CPUF_PRIMARY;
-		break;
-
-	case CPU_ROLE_BP:
-		printf("(boot processor)\n");
-		ci->ci_flags |= CPUF_PRESENT | CPUF_BSP | CPUF_PRIMARY;
-		break;
-
-	case CPU_ROLE_AP:
-		/*
-		 * report on an AP
-		 */
-		printf("(application processor)\n");
-		break;
-
-	default:
-		panic("unknown processor type??\n");
-	}
+	printf("\n");
 	return;
 #else
 	cpu_attach_common(parent, self, aux);
