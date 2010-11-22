@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpcopy.c,v 1.11 2010/11/22 20:42:19 pooka Exp $	*/
+/*	$NetBSD: rumpcopy.c,v 1.12 2010/11/22 21:46:04 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpcopy.c,v 1.11 2010/11/22 20:42:19 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpcopy.c,v 1.12 2010/11/22 21:46:04 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/lwp.h>
@@ -174,7 +174,7 @@ kcopy(const void *src, void *dst, size_t len)
 int
 uvm_io(struct vm_map *vm, struct uio *uio)
 {
-	int error;
+	int error = 0;
 
 	/* loop over iovecs one-by-one and copyout */
 	for (; uio->uio_resid && uio->uio_iovcnt;
