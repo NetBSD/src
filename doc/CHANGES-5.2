@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.2,v 1.1.2.22 2010/11/21 22:10:47 riz Exp $
+# $NetBSD: CHANGES-5.2,v 1.1.2.23 2010/11/22 00:25:54 riz Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -784,4 +784,26 @@ dist/pppd/pppd/ccp.h				1.2
 
 	Fix MPPE in pppd.  PR#42390
 	[dholland, ticket #1469]
+
+sys/dev/pci/fwohci_pci.c			1.35
+
+	Do not attach to Powerbook G3 onboard Firewire controllers.
+	[macallan, ticket #1470]
+
+sys/dev/pci/aceride.c				1.28
+
+	Add a workaround for 48-bit LBA DMA access bug on M5229 rev. <= 0xc4.
+	[nakayama, ticket #1471]
+
+sys/arch/xen/xen/if_xennet_xenbus.c		1.42-43,1.45 via patch
+
+	Fix xennet hotplug and implment feature-rx-copy. Improves
+	support under Linux dom0.
+	[jym, ticket #1473]
+
+lib/libc/stdlib/getenv.c			1.33 via patch
+
+	Fix a bug in getenv(3) and getenv_r(3) which would return bogus
+  	results under certain circumstances.
+	[tron, ticket #1474]
 
