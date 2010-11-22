@@ -1,4 +1,4 @@
-/*	$NetBSD: hci.h,v 1.33 2009/09/11 18:35:50 plunky Exp $	*/
+/*	$NetBSD: hci.h,v 1.34 2010/11/22 19:56:51 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -54,7 +54,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: hci.h,v 1.33 2009/09/11 18:35:50 plunky Exp $
+ * $Id: hci.h,v 1.34 2010/11/22 19:56:51 plunky Exp $
  * $FreeBSD: src/sys/netgraph/bluetooth/include/ng_hci.h,v 1.6 2005/01/07 01:45:43 imp Exp $
  */
 
@@ -2297,6 +2297,8 @@ hci_filter_test(uint8_t bit, const struct hci_filter *filter)
 #define SIOCBTDUMP	 _IOW('b', 13, struct btreq) /* print debug info */
 #define SIOCSBTSCOMTU	_IOWR('b', 17, struct btreq) /* set sco_mtu value */
 
+#define SIOCGBTFEAT	_IOWR('b', 18, struct btreq) /* get unit features */
+
 struct bt_stats {
 	uint32_t	err_tx;
 	uint32_t	err_rx;
@@ -2324,7 +2326,13 @@ struct btreq {
 		uint16_t btri_sco_mtu;		/* SCO mtu */
 		uint16_t btri_link_policy;	/* Link Policy */
 		uint16_t btri_packet_type;	/* Packet Type */
+		uint16_t btri_max_acl;		/* max ACL buffers */
+		uint16_t btri_max_sco;		/* max SCO buffers */
 	    } btri;
+	    struct {
+		uint8_t btrf_page0[HCI_FEATURES_SIZE];	/* basic */
+		uint8_t btrf_page1[HCI_FEATURES_SIZE];	/* extended */
+	    } btrf;
 	    struct bt_stats btrs;   /* unit stats */
 	} btru;
 };
@@ -2338,6 +2346,10 @@ struct btreq {
 #define btr_sco_mtu	btru.btri.btri_sco_mtu
 #define btr_link_policy btru.btri.btri_link_policy
 #define btr_packet_type btru.btri.btri_packet_type
+#define btr_max_acl	btru.btri.btri_max_acl
+#define btr_max_sco	btru.btri.btri_max_sco
+#define btr_features0	btru.btrf.btrf_page0
+#define btr_features1	btru.btrf.btrf_page1
 #define btr_stats	btru.btrs
 
 /* hci_unit & btr_flags */
@@ -2481,14 +2493,18 @@ struct hci_unit {
 	uint16_t	 hci_link_policy;	/* link policy */
 	uint16_t	 hci_lmp_mask;		/* link policy capabilities */
 
+	uint8_t		 hci_feat0[HCI_FEATURES_SIZE]; /* features mask */
+	uint8_t		 hci_feat1[HCI_FEATURES_SIZE]; /* extended */
 	uint8_t		 hci_cmds[HCI_COMMANDS_SIZE]; /* opcode bitmask */
 
 	/* flow control */
 	uint16_t	 hci_max_acl_size;	/* ACL payload mtu */
 	uint16_t	 hci_num_acl_pkts;	/* free ACL packet buffers */
+	uint16_t	 hci_max_acl_pkts;	/* max ACL packet buffers */
 	uint8_t		 hci_num_cmd_pkts;	/* free CMD packet buffers */
 	uint8_t		 hci_max_sco_size;	/* SCO payload mtu */
 	uint16_t	 hci_num_sco_pkts;	/* free SCO packet buffers */
+	uint16_t	 hci_max_sco_pkts;	/* max SCO packet buffers */
 
 	TAILQ_HEAD(,hci_link)	hci_links;	/* list of ACL/SCO links */
 	LIST_HEAD(,hci_memo)	hci_memos;	/* cached memo list */
