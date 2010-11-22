@@ -1,4 +1,4 @@
-/*	$NetBSD: roaming.h,v 1.2 2010/11/21 18:59:04 adam Exp $	*/
+/*	$NetBSD: roaming.h,v 1.3 2010/11/22 22:19:54 christos Exp $	*/
 /* $OpenBSD: roaming.h,v 1.5 2009/10/24 11:11:58 andreas Exp $ */
 /*
  * Copyright (c) 2004-2009 AppGate Network Security AB
@@ -29,9 +29,7 @@ void	request_roaming(void);
 int	get_snd_buf_size(void);
 int	get_recv_buf_size(void);
 void	add_recv_bytes(u_int64_t);
-#ifdef ROAMING_RECONNECT
 int	wait_for_roaming_reconnect(void);
-#endif
 void	roaming_reply(int, u_int32_t, void *);
 void	set_out_buffer_size(size_t);
 ssize_t	roaming_write(int, const void *, size_t, int *);
