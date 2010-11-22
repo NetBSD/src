@@ -1,4 +1,4 @@
-.\"	$NetBSD: rump_ext2fs.8,v 1.10 2010/11/21 19:32:17 pooka Exp $
+.\"	$NetBSD: rump_ext2fs.8,v 1.11 2010/11/22 01:08:23 pooka Exp $
 .\"
 .\"	WARNING: GENERATED FILE, DO NOT EDIT
 .\"	INSTEAD, EDIT makerumpmanpages.sh AND REGEN
@@ -31,7 +31,7 @@
 .Os
 .Sh NAME
 .Nm rump_ext2fs
-.Nd mount the ext2fs file system using a userspace server
+.Nd mount a ext2fs image with a userspace server
 .Sh SYNOPSIS
 .Cd "file-system PUFFS"
 .Cd "pseudo-device putter"
@@ -42,12 +42,12 @@
 .Ar mountpoint
 .Sh DESCRIPTION
 .Em NOTE!
-This manual page has been generated from a common source shared between all
+This manual page describes features specific to the
 .Xr rump 3
-file servers.
-Some parts of this manual page may not apply to this particular server.
-After reading this manual page, you may want to verify the details from
-.Xr mount_ext2fs 8 .
+file server.
+Please see
+.Xr mount_ext2fs 8
+for a full description of the available command line options.
 .Pp
 The
 .Nm
@@ -115,16 +115,12 @@ and
 should be given.
 Similarly,
 .Nm
-is run instead of
+is used instead of
 .Xr mount_ext2fs 8
 if
 .Dq rump
 is added to the options field of
 .Xr fstab 5 .
-.Pp
-Please see
-.Xr mount_ext2fs 8
-for a full description of the available command line options.
 .Sh SEE ALSO
 .Xr p2k 3 ,
 .Xr puffs 3 ,
