@@ -1,4 +1,4 @@
-/*	$NetBSD: dd.h,v 1.12 2004/01/17 20:48:57 dbj Exp $	*/
+/*	$NetBSD: dd.h,v 1.13 2010/11/22 21:04:27 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -35,6 +35,35 @@
  *	@(#)dd.h	8.3 (Berkeley) 4/2/94
  */
 
+#include <sys/stat.h>
+
+struct ddfops {
+	int (*op_open)(const char *, int, ...);
+	int (*op_close)(int);
+
+	int (*op_fcntl)(int, int, ...);
+	int (*op_ioctl)(int, unsigned long, ...);
+
+	int (*op_fstat)(int, struct stat *);
+	int (*op_fsync)(int);
+	int (*op_ftruncate)(int, off_t);
+
+	off_t (*op_lseek)(int, off_t, int);
+
+	ssize_t (*op_read)(int, void *, size_t);
+	ssize_t (*op_write)(int, const void *, size_t);
+};
+
+#define ddop_open(dir, a1, a2, ...)	dir.ops->op_open(a1, a2, __VA_ARGS__)
+#define ddop_close(dir, a1)		dir.ops->op_close(a1)
+#define ddop_fcntl(dir, a1, a2, ...)	dir.ops->op_fcntl(a1, a2, __VA_ARGS__)
+#define ddop_ioctl(dir, a1, a2, ...)	dir.ops->op_ioctl(a1, a2, __VA_ARGS__)
+#define ddop_fsync(dir, a1)		dir.ops->op_fsync(a1)
+#define ddop_ftruncate(dir, a1, a2)	dir.ops->op_ftruncate(a1, 2)
+#define ddop_lseek(dir, a1, a2, a3)	dir.ops->op_lseek(a1, a2, a3)
+#define ddop_read(dir, a1, a2, a3)	dir.ops->op_read(a1, a2, a3)
+#define ddop_write(dir, a1, a2, a3)	dir.ops->op_write(a1, a2, a3)
+
 /* Input/output stream state. */
 typedef struct {
 	u_char		*db;		/* buffer address */
@@ -52,6 +81,7 @@ typedef struct {
 	const char  	*name;		/* name */
 	int		fd;		/* file descriptor */
 	uint64_t	offset;		/* # of blocks to skip */
+	struct ddfops	const *ops;	/* ops to use with fd */
 } IO;
 
 typedef struct {
@@ -89,3 +119,6 @@ typedef struct {
 #define	C_UNBLOCK	0x80000
 #define	C_OSYNC		0x100000
 #define	C_SPARSE	0x200000
+#define C_RIF		0x400000
+#define C_ROF		0x800000
+#define C_RUMP		0x1000000
