@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_cas_up.c,v 1.1 2010/11/21 21:46:43 pooka Exp $	*/
+/*	$NetBSD: rump_atomic_cas_up.c,v 1.1 2010/11/22 10:50:51 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010 Antti Kantee.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atomic_cas_up.c,v 1.1 2010/11/21 21:46:43 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump_atomic_cas_up.c,v 1.1 2010/11/22 10:50:51 pooka Exp $");
 
 /*
  * Uniprocessor version of atomic CAS.  Since there is no preemption
