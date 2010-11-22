@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2010/07/25 02:25:29 mrg Exp $
+#	$NetBSD: Makefile,v 1.7 2010/11/22 08:34:56 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -85,10 +85,6 @@ CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/freetype2 \
 
 .if !defined(MKSUBPIXEL) || ${MKSUBPIXEL} != "no"
 CPPFLAGS+=	-DFT_CONFIG_OPTION_SUBPIXEL_RENDERING
-.endif
-
-.if !defined(MKTTINTERP) || ${MKTTINTERP} != "no"
-CPPFLAGS+=	-DTT_CONFIG_OPTION_BYTECODE_INTERPRETER
 .endif
 
 LIBDPLIBS= \
