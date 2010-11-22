@@ -1,4 +1,4 @@
-/*	$NetBSD: twareg.h,v 1.10 2008/09/08 23:36:54 gmcgarry Exp $ */
+/*	$NetBSD: twareg.h,v 1.11 2010/11/22 23:02:16 dholland Exp $ */
 /*	$wasabi: twareg.h,v 1.14 2006/07/28 18:29:51 wrstuden Exp $ */
 
 /*-
@@ -102,13 +102,13 @@
 	} while (0)
 #endif
 
-#define TWA_WRITE_9650_COMMAND_QUEUE_HIGH(sc, val)			\
+#define TWA_WRITE_COMMAND_QUEUE_HIGH(sc, val)				\
 	do {								\
 		TWA_WRITE_REGISTER(sc, TWA_COMMAND_QUEUE_OFFSET_HIGH,	\
 				(uint32_t)(((uint64_t)val)>>32));	\
 	} while (0)
 
-#define TWA_WRITE_9650_COMMAND_QUEUE_LOW(sc, val)			\
+#define TWA_WRITE_COMMAND_QUEUE_LOW(sc, val)				\
 	do {								\
 		TWA_WRITE_REGISTER(sc, TWA_COMMAND_QUEUE_OFFSET_LOW,	\
 				(uint32_t)(val));			\

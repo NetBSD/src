@@ -1,4 +1,4 @@
-/*	$NetBSD: twa.c,v 1.35 2010/11/14 05:33:44 uebayasi Exp $ */
+/*	$NetBSD: twa.c,v 1.36 2010/11/22 23:02:16 dholland Exp $ */
 /*	$wasabi: twa.c,v 1.27 2006/07/28 18:17:21 wrstuden Exp $	*/
 
 /*-
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: twa.c,v 1.35 2010/11/14 05:33:44 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: twa.c,v 1.36 2010/11/22 23:02:16 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1054,16 +1054,18 @@ twa_start(struct twa_request *tr)
 	s = splbio();
 
 	/*
-	 * The 9650 has a bug in the detection of the full queue condition.
+	 * The 9650 and 9690 have a bug in the detection of the full queue
+	 * condition.
+	 *
 	 * If a write operation has filled the queue and is directly followed
 	 * by a status read, it sometimes doesn't return the correct result.
 	 * To work around this, the upper 32bit are written first.
 	 * This effectively serialises the hardware, but does not change
 	 * the state of the queue.
 	 */
-	if (sc->sc_product_id == PCI_PRODUCT_3WARE_9650) {
+	if (sc->sc_quirks & TWA_QUIRK_QUEUEFULL_BUG) {
 		/* Write lower 32 bits of address */
-		TWA_WRITE_9650_COMMAND_QUEUE_LOW(sc, tr->tr_cmd_phys +
+		TWA_WRITE_COMMAND_QUEUE_LOW(sc, tr->tr_cmd_phys +
 			sizeof(struct twa_command_header));
 	}
 
@@ -1087,12 +1089,12 @@ twa_start(struct twa_request *tr)
 			sizeof(struct twa_command_packet),
 			BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
 
-		if (sc->sc_product_id == PCI_PRODUCT_3WARE_9650) {
+		if (sc->sc_quirks & TWA_QUIRK_QUEUEFULL_BUG) {
 			/*
-			 * Cmd queue is not full.  Post the command to 9650
+			 * Cmd queue is not full.  Post the command
 			 * by writing upper 32 bits of address.
 			 */
-			TWA_WRITE_9650_COMMAND_QUEUE_HIGH(sc, tr->tr_cmd_phys +
+			TWA_WRITE_COMMAND_QUEUE_HIGH(sc, tr->tr_cmd_phys +
 				sizeof(struct twa_command_header));
 		} else {
 			/* Cmd queue is not full.  Post the command. */
@@ -1505,6 +1507,8 @@ twa_attach(device_t parent, device_t self, void *aux)
 
 	aprint_naive(": RAID controller\n");
 	aprint_normal(": 3ware Apache\n");
+
+	sc->sc_quirks = 0;
 		
 	if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_3WARE_9000) {
 		sc->sc_nunits = TWA_MAX_UNITS;
@@ -1532,6 +1536,7 @@ twa_attach(device_t parent, device_t self, void *aux)
 			aprint_error_dev(&sc->twa_dv, "can't map mem space\n");
 			return;
 		}
+		sc->sc_quirks |= TWA_QUIRK_QUEUEFULL_BUG;
 	} else if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_3WARE_9690) {
 		sc->sc_nunits = TWA_9690_MAX_UNITS;
 		use_64bit = true;
@@ -1541,6 +1546,7 @@ twa_attach(device_t parent, device_t self, void *aux)
 			aprint_error_dev(&sc->twa_dv, "can't map mem space\n");
 			return;
 		}
+		sc->sc_quirks |= TWA_QUIRK_QUEUEFULL_BUG;
 	} else {
 		sc->sc_nunits = 0;
 		use_64bit = false;

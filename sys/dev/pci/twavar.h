@@ -1,4 +1,4 @@
-/*	$NetBSD: twavar.h,v 1.9 2009/05/06 10:34:33 cegger Exp $ */
+/*	$NetBSD: twavar.h,v 1.10 2010/11/22 23:02:16 dholland Exp $ */
 /*	$wasabi: twavar.h,v 1.12 2006/05/01 15:16:59 simonb Exp $	*/
 
 /*-
@@ -107,6 +107,7 @@ struct twa_softc {
 
 	struct twa_request      *sc_twa_request;
 	uint32_t		sc_product_id;
+	unsigned		sc_quirks;
 };
 
 
@@ -144,6 +145,9 @@ struct twa_softc {
 /* Possible values of sc->twa_ioctl_lock.lock. */
 #define TWA_LOCK_FREE		0x0	/* lock is free */
 #define TWA_LOCK_HELD		0x1	/* lock is held */
+
+/* Possible values of sc->sc_quirks. */
+#define TWA_QUIRK_QUEUEFULL_BUG	0x1
 
 /* Driver's request packet. */
 struct twa_request {
