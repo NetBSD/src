@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.153.2.68 2010/11/21 15:27:36 uebayasi Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.153.2.69 2010/11/22 03:20:56 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.153.2.68 2010/11/21 15:27:36 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.153.2.69 2010/11/22 03:20:56 uebayasi Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -782,14 +782,38 @@ uvm_page_physget(paddr_t *paddrp)
  * => we are limited to VM_PHYSSEG_MAX physical memory segments
  */
 
+#define	VM_PHYSSEG_PROT_READ	UVM_PROT_READ	/* 0x00000001 */
+#define	VM_PHYSSEG_PROT_WRITE	UVM_PROT_WRITE	/* 0x00000002 */
+#define	VM_PHYSSEG_PROT_EXEC	UVM_PROT_EXEC	/* 0x00000004 */
+#define	 VM_PHYSSEG_PROT_ALL	UVM_PROT_ALL	/* 0x00000007 */
+#define	 VM_PHYSSEG_PROT_MASK	UVM_PROT_MASK	/* 0x00000007 */
+#define	VM_PHYSSEG_DEVICE	0x00010000
+
+void *
+uvm_page_physload1(paddr_t start, paddr_t end, paddr_t avail_start,
+    paddr_t avail_end, int free_list, int flags);
+static void
+uvm_page_physload_device1(struct vm_physseg *seg, paddr_t start, paddr_t end,
+    int flags);
+
 void *
 uvm_page_physload(paddr_t start, paddr_t end, paddr_t avail_start,
     paddr_t avail_end, int free_list)
 {
+
+	return uvm_page_physload1(start, end, avail_start, avail_end,
+	    free_list, VM_PHYSSEG_PROT_ALL);
+}
+
+void *
+uvm_page_physload1(paddr_t start, paddr_t end, paddr_t avail_start,
+    paddr_t avail_end, int free_list, int flags)
+{
 	struct vm_physseg *seg;
 	int lcv;
 
-	if (free_list >= VM_NFREELIST || free_list < VM_FREELIST_DEFAULT)
+	if (((flags & VM_PHYSSEG_DEVICE) == 0) &&
+	    (free_list >= VM_NFREELIST || free_list < VM_FREELIST_DEFAULT))
 		panic("uvm_page_physload: bad free list %d", free_list);
 
 	seg = uvm_physseg_alloc(&vm_physmem_freelist, vm_physmem_ptrs,
@@ -798,6 +822,9 @@ uvm_page_physload(paddr_t start, paddr_t end, paddr_t avail_start,
 
 	seg->avail_start = avail_start;
 	seg->avail_end = avail_end;
+	seg->free_list = free_list;
+	seg->flags = flags;
+
 	/*
 	 * check to see if this is a "preload" (i.e. uvm_page_init hasn't been
 	 * called yet, so malloc is not available).
@@ -808,14 +835,29 @@ uvm_page_physload(paddr_t start, paddr_t end, paddr_t avail_start,
 			break;
 	}
 	if (lcv == vm_nphysmem) {
+		/* preload */
 		seg->pgs = NULL;
 		seg->endpg = NULL;
-		seg->free_list = free_list;
+
+		if ((flags & VM_PHYSSEG_DEVICE) == 0) {
+			vm_nphysmem++;
+		} else {
+			panic("device physseg preload not supported!");
+		}
 	} else {
-		panic("uvm_page_physload: "
-		    "tried to add RAM after uvm_page_init");
+		/* postload */
+		seg->pgs = kmem_zalloc(sizeof(struct vm_page) * (end - start),
+		    KM_SLEEP);
+		KASSERT(seg->pgs != NULL);
+		seg->endpg = seg->pgs + (end - start);
+
+		if ((flags & VM_PHYSSEG_DEVICE) == 0) {
+			panic("memory physseg postload not supported!");
+		} else {
+			uvm_page_physload_device1(seg, start, end, flags);
+			vm_nphysdev++;
+		}
 	}
-	vm_nphysmem++;
 	return seg;
 }
 
@@ -834,14 +876,10 @@ void *
 uvm_page_physload_device(paddr_t start, paddr_t end, int prot, int flags)
 {
 	struct vm_physseg *seg;
-	int i;
 
 	seg = uvm_physseg_alloc(&vm_physdev_freelist, vm_physdev_ptrs,
 	    vm_nphysdev, start, end);
 	KASSERT(seg != NULL);
-
-	seg->prot = prot;
-	seg->flags = flags;
 
 	/*
 	 * Device page metadata initialization
@@ -854,17 +892,29 @@ uvm_page_physload_device(paddr_t start, paddr_t end, int prot, int flags)
 	    KM_SLEEP);
 	KASSERT(seg->pgs != NULL);
 	seg->endpg = seg->pgs + (end - start);
-	seg->start = start;
-	seg->end = end;
+
+	KASSERT((prot & ~UVM_PROT_ALL) == 0);
+	uvm_page_physload_device1(seg, start, end, prot | flags);
+	vm_nphysdev++;
+	return seg;
+}
+
+static void
+uvm_page_physload_device1(struct vm_physseg *seg, paddr_t start, paddr_t end,
+    int flags)
+{
+	const bool rdonly = (flags & UVM_PROT_MASK) == UVM_PROT_READ;
+	const int pg_flags = PG_CLEAN | PG_DEVICE |
+	    ((rdonly) ? PG_RDONLY : 0);
+	int i;
 
 	for (i = 0; i < end - start; i++) {
 		struct vm_page *pg = seg->pgs + i;
 		paddr_t paddr = (start + i) << PAGE_SHIFT;
 
 		pg->phys_addr = paddr;
-		pg->flags |= PG_CLEAN | PG_DEVICE;
-		if (prot == VM_PROT_READ)
-			pg->flags |= PG_RDONLY;
+		pg->flags = pg_flags;
+
 #ifdef __HAVE_VM_PAGE_MD
 		VM_MDPAGE_INIT(&pg->mdpage, paddr);
 #endif
@@ -880,9 +930,6 @@ uvm_page_physload_device(paddr_t start, paddr_t end, int prot, int flags)
 	pmap_physseg_init(seg);
 #endif
 #endif
-
-	vm_nphysdev++;
-	return seg;
 }
 
 void
