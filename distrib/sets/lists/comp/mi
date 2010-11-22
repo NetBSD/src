@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1525 2010/11/21 19:58:03 adam Exp $
+#	$NetBSD: mi,v 1.1526 2010/11/22 22:20:26 pooka Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2645,6 +2645,9 @@
 ./usr/lib/librumpdev_fss_g.a			-unknown-		debuglib
 ./usr/lib/librumpdev_fss_p.a			comp-c-proflib		profile
 ./usr/lib/librumpdev_g.a			-unknown-		debuglib
+./usr/lib/librumpdev_md.a			comp-c-lib
+./usr/lib/librumpdev_md_g.a			-unknown-		debuglib
+./usr/lib/librumpdev_md_p.a			comp-c-proflib		profile
 ./usr/lib/librumpdev_netsmb.a			comp-c-lib
 ./usr/lib/librumpdev_netsmb_g.a			-unknown-		debuglib
 ./usr/lib/librumpdev_netsmb_p.a			comp-c-proflib		profile
