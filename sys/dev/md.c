@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.63 2010/11/11 11:07:06 hannken Exp $	*/
+/*	$NetBSD: md.c,v 1.64 2010/11/22 21:10:10 pooka Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross, Leo Weppelman.
@@ -40,9 +40,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: md.c,v 1.63 2010/11/11 11:07:06 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: md.c,v 1.64 2010/11/22 21:10:10 pooka Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_md.h"
+#else
+#define MEMORY_DISK_SERVER 1
+#endif
 
 #include <sys/param.h>
 #include <sys/kernel.h>
