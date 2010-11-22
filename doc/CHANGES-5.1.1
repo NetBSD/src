@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1.1,v 1.1.2.2 2010/11/19 21:30:02 riz Exp $
+# $NetBSD: CHANGES-5.1.1,v 1.1.2.3 2010/11/22 02:53:51 riz Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -13,4 +13,10 @@ crypto/dist/openssl/ssl/t1_lib.c		patch
 
 	Fix a race condition. (CVE-2010-3864)
 	[christos, ticket #1479]
+
+sys/kern/vfs_wapbl.c				1.38 via patch
+
+	Fix an error that can lead to file system corruption and 
+	freeing free block" panics.
+	[hannken, ticket #1477]
 
