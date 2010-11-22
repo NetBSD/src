@@ -64,7 +64,7 @@ struct devsw_conv devsw_conv0[] = {
 	{ "apm", -1, 21, DEVNODE_DONTBOTHER, 0, { 0, 0 }},
 	{ "filedesc", -1, 22, DEVNODE_DONTBOTHER, 0, { 0, 0 }},
 	{ "bpf", -1, 23, DEVNODE_VECTOR, DEVNODE_FLAG_LINKZERO, { 8, 0 }},
-	{ "md", 17, 24, DEVNODE_DONTBOTHER, 0, { 0, 0 }},
+	{ "md", 17, 24, DEVNODE_VECTOR, 0, { 4, 8 }},
 	{ "joy", -1, 26, DEVNODE_DONTBOTHER, 0, { 0, 0 }},
 	{ "spkr", -1, 27, DEVNODE_DONTBOTHER, 0, { 0, 0 }},
 	{ "cy", -1, 38, DEVNODE_DONTBOTHER, 0, { 0, 0 }},
