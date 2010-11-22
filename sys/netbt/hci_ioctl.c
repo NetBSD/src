@@ -1,4 +1,4 @@
-/*	$NetBSD: hci_ioctl.c,v 1.9 2009/08/20 21:40:59 plunky Exp $	*/
+/*	$NetBSD: hci_ioctl.c,v 1.10 2010/11/22 19:56:51 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hci_ioctl.c,v 1.9 2009/08/20 21:40:59 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hci_ioctl.c,v 1.10 2010/11/22 19:56:51 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/domain.h>
@@ -175,6 +175,7 @@ hci_ioctl(unsigned long cmd, void *data, struct lwp *l)
 	case SIOCGBTSTATS:
 	case SIOCZBTSTATS:
 	case SIOCSBTSCOMTU:
+	case SIOCGBTFEAT:
 		SIMPLEQ_FOREACH(unit, &hci_unit_list, hci_next) {
 			if (strncmp(device_xname(unit->hci_dev),
 			    btr->btr_name, HCI_DEVNAME_SIZE) == 0)
@@ -216,6 +217,8 @@ hci_ioctl(unsigned long cmd, void *data, struct lwp *l)
 		btr->btr_num_sco = unit->hci_num_sco_pkts;
 		btr->btr_acl_mtu = unit->hci_max_acl_size;
 		btr->btr_sco_mtu = unit->hci_max_sco_size;
+		btr->btr_max_acl = unit->hci_max_acl_pkts;
+		btr->btr_max_sco = unit->hci_max_sco_pkts;
 
 		btr->btr_packet_type = unit->hci_packet_type;
 		btr->btr_link_policy = unit->hci_link_policy;
@@ -301,6 +304,13 @@ hci_ioctl(unsigned long cmd, void *data, struct lwp *l)
 			break;
 
 		unit->hci_max_sco_size = btr->btr_sco_mtu;
+		break;
+
+	case SIOCGBTFEAT:	/* get unit features */
+		memset(btr, 0, sizeof(struct btreq));
+		strlcpy(btr->btr_name, device_xname(unit->hci_dev), HCI_DEVNAME_SIZE);
+		memcpy(btr->btr_features0, unit->hci_feat0, HCI_FEATURES_SIZE);
+		memcpy(btr->btr_features1, unit->hci_feat1, HCI_FEATURES_SIZE);
 		break;
 
 	default:
