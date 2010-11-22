@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rumpkern,v 1.101 2010/11/21 22:17:24 pooka Exp $
+#	$NetBSD: Makefile.rumpkern,v 1.102 2010/11/22 10:50:50 pooka Exp $
 #
 
 .include "${RUMPTOP}/Makefile.rump"
@@ -184,7 +184,7 @@ CPPFLAGS+=	-I${RUMPTOP}/../../common/lib/libc/atomic
 .ifdef RUMP_SMP
 SRCS+=		atomic_cas_generic.c
 .else
-SRCS+=		atomic_cas_up.c
+SRCS+=		rump_atomic_cas_up.c
 .endif
 .endif
 
