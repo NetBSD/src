@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_io.c,v 1.18 2010/11/18 18:12:23 skrll Exp $	*/
+/*	$NetBSD: footbridge_io.c,v 1.19 2010/11/22 07:27:28 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Causality Limited
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: footbridge_io.c,v 1.18 2010/11/18 18:12:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: footbridge_io.c,v 1.19 2010/11/22 07:27:28 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -318,7 +318,7 @@ footbridge_io_bs_mmap(void *t, bus_addr_t addr, off_t offset,
 	    offset >= DC21285_PCI_IO_SIZE)
 		return -1;
 
-	pa = PCI_MAGIC_IO_RANGE + addr + offset;
+	pa = DC21285_PCI_IO_BASE + addr + offset;
 
 	return arm_btop(pa);
 }
