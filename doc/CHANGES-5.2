@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.2,v 1.1.2.23 2010/11/22 00:25:54 riz Exp $
+# $NetBSD: CHANGES-5.2,v 1.1.2.24 2010/11/22 01:45:14 riz Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -806,4 +806,9 @@ lib/libc/stdlib/getenv.c			1.33 via patch
 	Fix a bug in getenv(3) and getenv_r(3) which would return bogus
   	results under certain circumstances.
 	[tron, ticket #1474]
+
+sys/arch/xen/x86/cpu.c				1.52
+
+	Fix an array overflow when cpuid >= 32.
+	[bouyer, ticket #1475]
 
