@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2010/11/21 19:19:22 adam Exp $
+#	$NetBSD: Makefile,v 1.3 2010/11/22 22:19:53 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -7,7 +7,7 @@ BINDIR = /usr/bin
 PROG=	ssh
 SRCS=	ssh.c readconf.c clientloop.c sshtty.c \
 	sshconnect.c sshconnect1.c sshconnect2.c mux.c \
-	roaming_client.c
+	roaming_common.c roaming_client.c
 
 COPTS.sshconnect1.c=	-fno-strict-aliasing
 .if (defined(HAVE_GCC) && ${HAVE_GCC} == 4) || defined(HAVE_PCC)
