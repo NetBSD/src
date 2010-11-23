@@ -1,4 +1,4 @@
-/*	$NetBSD: addbytes.c,v 1.36 2010/02/23 19:48:26 drochner Exp $	*/
+/*	$NetBSD: addbytes.c,v 1.37 2010/11/23 05:38:35 tnozaki Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -34,11 +34,12 @@
 #if 0
 static char sccsid[] = "@(#)addbytes.c	8.4 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: addbytes.c,v 1.36 2010/02/23 19:48:26 drochner Exp $");
+__RCSID("$NetBSD: addbytes.c,v 1.37 2010/11/23 05:38:35 tnozaki Exp $");
 #endif
 #endif				/* not lint */
 
 #include <stdlib.h>
+#include <string.h>
 #include "curses.h"
 #include "curses_private.h"
 #ifdef DEBUG
@@ -129,7 +130,7 @@ __waddbytes(WINDOW *win, const char *bytes, int count, attr_t attr)
 	lp = win->alines[y];
 
 #ifdef HAVE_WCHAR
-	(void)mbrtowc(NULL, NULL, (size_t)0, &st);
+	(void)memset(&st, 0, sizeof(st));
 #endif
 	while (count > 0) {
 #ifndef HAVE_WCHAR
@@ -156,7 +157,7 @@ __waddbytes(WINDOW *win, const char *bytes, int count, attr_t attr)
 			/* not a valid conversion just eat a char */
 			wc = *bytes;
 			n = 1;
-			(void)mbrtowc(NULL, NULL, (size_t)0, &st);
+			(void)memset(&st, 0, sizeof(&st));
 		} else if (wc == 0) {
 			break;
 		}
