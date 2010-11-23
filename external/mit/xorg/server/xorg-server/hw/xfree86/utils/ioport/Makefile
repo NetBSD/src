@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2009/02/14 13:32:13 abs Exp $
+#	$NetBSD: Makefile,v 1.6 2010/11/23 08:22:33 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -11,14 +11,13 @@ MKMAN=	no
 CPPFLAGS+=	-DHAVE_XORG_CONFIG_H \
 		-I${DESTDIR}${X11INCDIR}/xorg \
 		-I${DESTDIR}${X11INCDIR}/pixman-1 \
-		-I${X11SRCDIR.xorg-server}/../include \
-		-I${X11SRCDIR.xorg-server}/hw/xfree86/dummylib
+		-I${X11SRCDIR.xorg-server}/../include
 
 
 LDADD=	-L${XORGOSOBJDIR} -lxorgos \
-	-L${DUMMYOBJDIR} -ldummy -lm
+	-L${DUMMYOBJDIR} -lm
 
-DPADD=	${LIBXORGOS} ${LIBDUMMY} ${LIBM}
+DPADD=	${LIBXORGOS} ${LIBM}
 
 .if ${MACHINE_ARCH} == "i386"
 LDADD+=	-li386

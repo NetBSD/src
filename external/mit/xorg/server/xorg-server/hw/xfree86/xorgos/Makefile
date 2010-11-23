@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.24 2010/11/18 08:20:17 mrg Exp $
+#	$NetBSD: Makefile,v 1.25 2010/11/23 08:22:35 mrg Exp $
 
 .include "../../../Makefile.serverlib"
 .include "../../../Makefile.servermod"
@@ -21,7 +21,7 @@ SRCS.bsd+=	pm_noop.c
 SRCS.bsd+=	bsd_apm.c
 .endif
 .if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
-SRCS.bsd+=	i386_video.c stdResource.c lnx_agp.c
+SRCS.bsd+=	i386_video.c lnx_agp.c
 .for _FN in ${SRCS.bsd}
 .if ${MACHINE_ARCH} == "i386"
 CPPFLAGS.${_FN}+=	-DPCCONS_SUPPORT -DHAS_APERTURE_DRV
@@ -33,21 +33,21 @@ CPPFLAGS.${_FN}+=	-DUSE_I386_IOPL -DPCVT_SUPPORT -DWSCONS_SUPPORT \
 .endif
 
 .if ${MACHINE} == "macppc" || ${MACHINE} == "prep" || ${MACHINE} == "bebox" || ${MACHINE} == "ofppc"
-SRCS.bsd+=	ppc_video.c stdResource.c pm_noop.c lnx_agp.c
+SRCS.bsd+=	ppc_video.c pm_noop.c lnx_agp.c
 .for _FN in ${SRCS.bsd}
 CPPFLAGS.${_FN}=	-DWSCONS_SUPPORT -DUSESTDRES -DHAVE_SYSV_IPC
 .endfor
 .endif
 
 .if ${MACHINE_ARCH} == "alpha"
-SRCS.bsd+=	alpha_video.c bsd_ev56.c stdResource.c pm_noop.c agp_noop.c
+SRCS.bsd+=	alpha_video.c bsd_ev56.c pm_noop.c agp_noop.c
 .for _FN in ${SRCS.bsd}
 CPPFLAGS.${_FN}=	-DWSCONS_SUPPORT -DUSESTDRES -DHAVE_SYSV_IPC -DUSE_ALPHA_PIO
 .endfor
 .endif
 
 .if ${MACHINE_ARCH} == "sparc" || ${MACHINE_ARCH} == "sparc64"
-SRCS.bsd+=	ppc_video.c stdResource.c pm_noop.c agp_noop.c
+SRCS.bsd+=	ppc_video.c pm_noop.c agp_noop.c
 SRCS.bus+=	netbsdSbus.c
 .for _FN in ${SRCS.bsd}
 CPPFLAGS.${_FN}=	-DWSCONS_SUPPORT -DUSESTDRES -DHAVE_SYSV_IPC
@@ -56,7 +56,7 @@ CPPFLAGS.${_FN}=	-DWSCONS_SUPPORT -DUSESTDRES -DHAVE_SYSV_IPC
 
 .if ${MACHINE} == "hpcmips" || \
     ${MACHINE} == "sgimips"
-SRCS.bsd+=	ppc_video.c stdResource.c pm_noop.c agp_noop.c
+SRCS.bsd+=	ppc_video.c pm_noop.c agp_noop.c
 .for _FN in ${SRCS.bsd}
 CPPFLAGS.${_FN}=	-DWSCONS_SUPPORT -DUSESTDRES -DHAVE_SYSV_IPC
 .endfor
@@ -67,16 +67,15 @@ CPPFLAGS.${_FN}=	-DWSCONS_SUPPORT -DUSESTDRES -DHAVE_SYSV_IPC
     ${MACHINE} == "shark" || \
     ${MACHINE} == "netwinder" || \
     ${MACHINE} == "zaurus"
-SRCS.bsd+=      ppc_video.c stdResource.c pm_noop.c agp_noop.c
+SRCS.bsd+=      ppc_video.c pm_noop.c agp_noop.c
 .for _FN in ${SRCS.bsd}
 CPPFLAGS.${_FN}=        -DWSCONS_SUPPORT -DUSESTDRES -DHAVE_SYSV_IPC
 .endfor
-CPPFLAGS.arm_video.c=	-Wno-error
 .endif
 
 .if ${MACHINE} == "dreamcast" || \
     ${MACHINE} == "hpcsh"
-SRCS.bsd+=	ppc_video.c stdResource.c pm_noop.c agp_noop.c
+SRCS.bsd+=	ppc_video.c pm_noop.c agp_noop.c
 .for _FN in ${SRCS.bsd}
 CPPFLAGS.${_FN}=	-DWSCONS_SUPPORT -DUSESTDRES -DHAVE_SYSV_IPC
 .endfor
@@ -100,9 +99,6 @@ SRCS.bus+=	Pci.c
 #CPPFLAGS.netbsdPci.c+= -DPCI_VIA_TTYE0
 .endif
 
-.PATH:	${X11SRCDIR.xorg-server}/hw/xfree86/os-support/misc
-SRCS.misc=	Delay.c
-
 # XXX .S not built from automake either
 .if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
 #SRCS.misc+=	CBUSmemcpy.c CIODelay.c CSlowBcopy.c
@@ -120,7 +116,8 @@ SRCS.misc=	Delay.c
 #SRCS.misc+=     CBUSmemcpy.c CIODelay.c CSlowBcopy.c
 .endif
 
-SRCS.misc+=     BUSmemcpy.c SlowBcopy.c
+.PATH:		${X11SRCDIR.xorg-server}/hw/xfree86/os-support/misc
+SRCS.misc+=     SlowBcopy.c
 
 # XXX namespace collision so avoid it, only has to be done for non-i386.
 #BUILDSYMLINKS=	BUSmemcpy.c CBUSmemcpy.c \

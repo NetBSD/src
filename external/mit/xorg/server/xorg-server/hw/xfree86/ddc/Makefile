@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2009/06/12 01:59:05 mrg Exp $
+#	$NetBSD: Makefile,v 1.4 2010/11/23 08:22:31 mrg Exp $
 
 LIBISPRIVATE=yes
 
@@ -7,7 +7,7 @@ LIBISPRIVATE=yes
 LIB=		ddc
 
 .PATH:		${X11SRCDIR.xorg-server}/hw/xfree86/${LIB}
-SRCS=		xf86DDC.c edid.c interpret_edid.c print_edid.c ddcProperty.c
+SRCS=		ddc.c interpret_edid.c print_edid.c ddcProperty.c
 
 CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/hw/xfree86/${LIB} \
 		-I${X11SRCDIR.xorg-server}/hw/xfree86/common \

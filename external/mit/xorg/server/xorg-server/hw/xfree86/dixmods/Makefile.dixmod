@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.dixmod,v 1.5 2009/06/11 05:43:16 mrg Exp $
+#	$NetBSD: Makefile.dixmod,v 1.6 2010/11/23 08:22:31 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -14,7 +14,8 @@ CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/hw/xfree86/dixmods \
 		-I${X11SRCDIR.xorg-server}/glx \
 		-I${DESTDIR}${X11INCDIR}/X11 \
 		-I${DESTDIR}${X11INCDIR}/pixman-1 \
-		-I${DESTDIR}${X11INCDIR}/xorg
+		-I${DESTDIR}${X11INCDIR}/xorg \
+		-I${X11SRCDIR.xorg-server}/../include
 
 CPPFLAGS+=	${X11FLAGS.DIX}
 

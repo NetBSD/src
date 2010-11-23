@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2010/05/20 12:51:17 christos Exp $
+#	$NetBSD: Makefile,v 1.8 2010/11/23 08:22:35 mrg Exp $
 
 .include "../Makefile.serverlib"
 .include "../Makefile.servermod"
@@ -8,9 +8,9 @@ LIB=		xkb
 .PATH:		${X11SRCDIR.xorg-server}/${LIB}
 .PATH:		${X11SRCDIR.X11}/src
 .PATH:		${X11SRCDIR.xkbfile}/src
-DDXSRCS=	ddxBeep.c ddxCtrls.c ddxFakeMtn.c \
-		ddxInit.c ddxKeyClick.c ddxLEDs.c ddxLoad.c \
-		ddxList.c ddxDevBtn.c
+DDXSRCS=	ddxBeep.c ddxCtrls.c \
+		ddxLEDs.c ddxLoad.c \
+		ddxList.c
 DIXSRCS=	xkb.c xkbUtils.c xkbEvents.c xkbAccessX.c xkbSwap.c \
 		xkbLEDs.c xkbInit.c xkbActions.c xkbPrKeyEv.c
 XKBFILESRCS=	maprules.c xkmread.c xkbtext.c xkbfmisc.c \
@@ -26,6 +26,7 @@ CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/include \
 		-I${X11SRCDIR.xorg-server}/Xext \
 		-I${X11SRCDIR.xorg-server}/Xext/extmod \
 		-I${X11SRCDIR.xorg-server}/mi \
+		-I${X11SRCDIR.xorg-server}/Xi \
 		-I${X11SRCDIR.xorg-server}/${LIB} \
 		-I${X11SRCDIR.xorg-server}/hw/xfree86/common \
 		-I${X11SRCDIR.xorg-server}/../include
