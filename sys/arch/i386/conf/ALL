@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.278 2010/11/13 14:38:44 pgoyette Exp $
+# $NetBSD: ALL,v 1.279 2010/11/23 11:14:00 hannken Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.278 $"
+#ident 		"ALL-$Revision: 1.279 $"
 
 maxusers	64		# estimated number of users
 
@@ -1610,7 +1610,7 @@ options 	RF_INCLUDE_PARITY_DECLUSTERING=1
 options 	RF_INCLUDE_PARITY_DECLUSTERING_DS=1
 pseudo-device	fss			# file system snapshot device
 
-pseudo-device	md		1	# memory disk device (ramdisk)
+pseudo-device	md			# memory disk device (ramdisk)
 options 	MEMORY_DISK_HOOKS	# enable root ramdisk
 options 	MEMORY_DISK_DYNAMIC	# loaded via kernel module
 

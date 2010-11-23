@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC32_IP3x,v 1.85 2010/07/07 01:32:51 chs Exp $
+#	$NetBSD: GENERIC32_IP3x,v 1.86 2010/11/23 11:14:05 hannken Exp $
 #
 # GENERIC32_IP3x machine description file
 # 
@@ -28,7 +28,7 @@ makeoptions	TEXTADDR="0x80069000"	# entry point
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC32_IP3x-$Revision: 1.85 $"
+#ident		"GENERIC32_IP3x-$Revision: 1.86 $"
 
 maxusers	32
 
@@ -429,7 +429,7 @@ pseudo-device	ccd		4	# concatenated/striped disk devices
 #pseudo-device	raid		4	# RAIDframe disk driver
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 pseudo-device	fss			# file system snapshot device
-pseudo-device	md		1	# memory disk device (ramdisk)
+pseudo-device	md			# memory disk device (ramdisk)
 pseudo-device	vnd			# disk-like interface to files
 #options 	VND_COMPRESSION		# compressed vnd(4)
 

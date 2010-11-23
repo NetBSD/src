@@ -1,10 +1,10 @@
-#	$NetBSD: MALTA,v 1.56 2010/05/08 22:16:27 mrg Exp $
+#	$NetBSD: MALTA,v 1.57 2010/11/23 11:13:57 hannken Exp $
 
 include 	"arch/evbmips/conf/std.malta"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"MALTA-$Revision: 1.56 $"
+#ident 		"MALTA-$Revision: 1.57 $"
 
 maxusers	32
 
@@ -302,7 +302,7 @@ audio*		at clct?
 #pseudo-device	raid		4		# RAIDframe disk driver
 #options 	RAID_AUTOCONFIG			# auto-configuration of RAID
 #pseudo-device	fss				# file system snapshot device
-#pseudo-device	md		1		# memory disk device (ramdisk)
+#pseudo-device	md				# memory disk device (ramdisk)
 pseudo-device	vnd				# disk-like interface to files
 
 # Network pseudo-devices

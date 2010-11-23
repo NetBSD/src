@@ -1,4 +1,4 @@
-#	$NetBSD: IQ31244,v 1.48 2010/04/16 13:48:30 pooka Exp $
+#	$NetBSD: IQ31244,v 1.49 2010/11/23 11:13:56 hannken Exp $
 #
 #	IQ31244 -- Intel IQ31244 Evaluation Board Kernel
 #
@@ -208,7 +208,7 @@ ukphy*		at mii? phy ?			# Generic IEEE 802.3u PHYs
 # Pseudo-Devices
 
 # disk/mass storage pseudo-devices
-#pseudo-device	md		1	# memory disk device (ramdisk)
+#pseudo-device	md			# memory disk device (ramdisk)
 pseudo-device	vnd			# disk-like interface to files
 #pseudo-device	fss			# file system snapshot device
 

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.337 2010/05/22 19:02:07 plunky Exp $
+# $NetBSD: GENERIC,v 1.338 2010/11/23 11:13:53 hannken Exp $
 #
 # This machine description file is used to generate the default NetBSD
 # kernel.
@@ -19,7 +19,7 @@ include 	"arch/alpha/conf/std.alpha"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident		"GENERIC-$Revision: 1.337 $"
+ident		"GENERIC-$Revision: 1.338 $"
 
 maxusers 32
 
@@ -715,7 +715,7 @@ options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 pseudo-device	fss			# file system snapshot device
 pseudo-device	ipfilter	1
 pseudo-device	loop		1
-pseudo-device	md		1
+pseudo-device	md		
 pseudo-device	ppp		
 pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
 pseudo-device	pty			# pseudo-terminals

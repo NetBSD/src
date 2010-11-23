@@ -1,4 +1,4 @@
-#	$NetBSD: NSLU2,v 1.16 2009/12/05 20:11:11 pooka Exp $
+#	$NetBSD: NSLU2,v 1.17 2010/11/23 11:13:56 hannken Exp $
 #
 #	Linksys NSLU2 "Slug" NAS Device
 #
@@ -228,7 +228,7 @@ ugen*		at uhub? port ? configuration ? interface ?
 # Pseudo-Devices
 
 # disk/mass storage pseudo-devices
-#pseudo-device	md		1	# memory disk device (ramdisk)
+#pseudo-device	md			# memory disk device (ramdisk)
 #pseudo-device	vnd		4	# disk-like interface to files
 
 # network pseudo-devices

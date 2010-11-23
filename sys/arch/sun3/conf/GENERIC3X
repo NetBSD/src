@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC3X,v 1.108 2010/10/16 13:55:54 tsutsui Exp $
+# $NetBSD: GENERIC3X,v 1.109 2010/11/23 11:14:06 hannken Exp $
 
 # GENERIC Sun3X (3/80, 3/470)
 # Supports root on: ie0, le0, sd*, ...
@@ -7,7 +7,7 @@ include 	"arch/sun3/conf/std.sun3x"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC3X-$Revision: 1.108 $"
+#ident		"GENERIC3X-$Revision: 1.109 $"
 
 makeoptions	COPTS="-Os"	# bootloader has size limit (~2MB)
 
@@ -249,7 +249,7 @@ pseudo-device	accf_data		# "dataready" accept filter
 pseudo-device	accf_http		# "httpready" accept filter
 
 # Memory-disk drivers
-pseudo-device	md		1
+pseudo-device	md		
 
 # Misc.
 pseudo-device	loop		1	# network loopback

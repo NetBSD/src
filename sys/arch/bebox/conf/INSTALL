@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.50 2010/10/20 02:54:10 kiyohara Exp $
+#	$NetBSD: INSTALL,v 1.51 2010/11/23 11:13:55 hannken Exp $
 #
 # First try for BeBox config file
 #
@@ -186,7 +186,7 @@ ukphy*  at mii? phy ?                   # generic unknown PHYs
 
 #pseudo-device	vnd		
 #pseudo-device	fss			# file system snapshot device
-pseudo-device	md		1
+pseudo-device	md		
 pseudo-device	loop
 #pseudo-device	bpfilter		# packet filter
 pseudo-device	pty		2	# pseudo-terminals (Sysinst needs two)

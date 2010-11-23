@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.99 2010/04/16 13:48:28 pooka Exp $
+# $NetBSD: INSTALL,v 1.100 2010/11/23 11:13:53 hannken Exp $
 #
 # Alpha INSTALL kernel.
 
@@ -341,7 +341,7 @@ wskbd*		at	pckbd?
 wsmouse*	at	pms?
 
 pseudo-device	loop		1
-pseudo-device	md		1
+pseudo-device	md		
 pseudo-device	ppp		
 pseudo-device	pty		2	# pseudo-terminals (Sysinst needs two)
 pseudo-device	sl		

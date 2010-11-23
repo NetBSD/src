@@ -1,4 +1,4 @@
-#	$NetBSD: RAMDISK,v 1.7 2009/02/06 18:50:26 jym Exp $
+#	$NetBSD: RAMDISK,v 1.8 2010/11/23 11:13:54 hannken Exp $
 #
 # Amiga install kernel with built-in memory disk image.
 
@@ -11,4 +11,4 @@ options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
 options 	MEMORY_DISK_ROOT_SIZE=8192	# size of memory disk, in blocks
 options 	MEMORY_DISK_RBFLAGS=RB_SINGLE	# boot in single-user mode
 
-pseudo-device	md		1	# memory disk [ramdisk]
+pseudo-device	md			# memory disk [ramdisk]

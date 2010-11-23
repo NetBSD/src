@@ -1,4 +1,4 @@
-#	$NetBSD: NAPPI,v 1.35 2009/12/05 20:11:11 pooka Exp $
+#	$NetBSD: NAPPI,v 1.36 2010/11/23 11:13:56 hannken Exp $
 #
 #	NAPPI -- Netwise APlication Platform Board Kernel
 #
@@ -168,7 +168,7 @@ inphy*  at mii? phy ?                   # Intel 82555 PHYs
 # Pseudo-Devices
 
 # disk/mass storage pseudo-devices
-#pseudo-device	md		1	# memory disk device (ramdisk)
+#pseudo-device	md			# memory disk device (ramdisk)
 #pseudo-device	vnd			# disk-like interface to files
 
 # network pseudo-devices

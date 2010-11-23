@@ -1,4 +1,4 @@
-# $NetBSD: SLAB,v 1.41 2010/05/08 22:16:29 mrg Exp $
+# $NetBSD: SLAB,v 1.42 2010/11/23 11:14:03 hannken Exp $
 #
 # deberg's development machine
 #
@@ -186,7 +186,7 @@ scsibus* at scsi?
 
 
 # Memory-disk drivers
-pseudo-device	md		2
+pseudo-device	md		
 
 # Misc.
 pseudo-device	loop		1	# network loopback

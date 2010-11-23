@@ -1,4 +1,4 @@
-#	$NetBSD: M403,v 1.50 2010/04/16 13:48:29 pooka Exp $
+#	$NetBSD: M403,v 1.51 2010/11/23 11:13:54 hannken Exp $
 #
 #	configuration file for MIPS Magnum 4000 system
 #
@@ -190,7 +190,7 @@ wsmouse*	at pms?
 pseudo-device	ccd		4	# concatenated/striped disk devices
 #pseudo-device	raid		4	# RAIDframe disk driver
 #pseudo-device	fss			# file system snapshot device
-pseudo-device	md		1	# memory disk device (ramdisk)
+pseudo-device	md			# memory disk device (ramdisk)
 pseudo-device	vnd			# disk-like interface to files
 
 # network pseudo-devices

@@ -1,4 +1,4 @@
-#	$NetBSD: VIRTEX_GSRD1,v 1.9 2010/02/08 19:02:28 joerg Exp $
+#	$NetBSD: VIRTEX_GSRD1,v 1.10 2010/11/23 11:13:57 hannken Exp $
 #
 # VIRTEX_GSRD1
 #
@@ -157,7 +157,7 @@ wsdisplay* 	at wsemuldisplaydev?
 makphy* 	at mii? phy ?		# Marvell Semiconductor 88E1000 PHYs
 ukphy*		at mii? phy ?		# generic unknown PHYs
 
-pseudo-device	md		1	# memory disk device
+pseudo-device	md			# memory disk device
 pseudo-device	loop			# network loopback
 pseudo-device	bpfilter	8	# packet filter
 pseudo-device	ipfilter		# IP filter (firewall) and NAT

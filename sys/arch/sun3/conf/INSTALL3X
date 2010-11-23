@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL3X,v 1.45 2010/04/16 13:48:36 pooka Exp $
+# $NetBSD: INSTALL3X,v 1.46 2010/11/23 11:14:06 hannken Exp $
 #
 # INSTALL3X - Installation kernel for the Sun3X
 #
@@ -182,7 +182,7 @@ cd* at scsibus? target ? lun ?		# SCSI CD-ROMs
 #uk* at scsibus? target ? lun ?		# unknown SCSI devices
 
 # Memory-disk drivers
-#pseudo-device	md		2
+#pseudo-device	md		
 
 # Misc.
 pseudo-device	loop		1	# network loopback

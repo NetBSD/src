@@ -1,4 +1,4 @@
-# 	$NetBSD: NEWS1200,v 1.48 2009/12/05 20:11:16 pooka Exp $
+# 	$NetBSD: NEWS1200,v 1.49 2010/11/23 11:14:03 hannken Exp $
 
 #	news1200 config file
 #
@@ -136,7 +136,7 @@ zstty1	at zsc0 channel 1
 # Misc.
 pseudo-device	loop			# loopback interface; required
 pseudo-device	pty			# pseudo-terminals
-pseudo-device	md		1	# memory disk device
+pseudo-device	md			# memory disk device
 pseudo-device	vnd			# disk-like interface to files
 #pseudo-device	ccd		4	# concatenated and striped disks
 #pseudo-device	raid		4	# RAIDframe disk driver

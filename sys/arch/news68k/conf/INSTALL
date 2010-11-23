@@ -1,4 +1,4 @@
-# 	$NetBSD: INSTALL,v 1.50 2010/04/16 13:48:34 pooka Exp $
+# 	$NetBSD: INSTALL,v 1.51 2010/11/23 11:14:03 hannken Exp $
 
 #	config for bootable floppy kernel
 #
@@ -148,7 +148,7 @@ cd*	at scsibus? target ? lun ?		# SCSI CD-ROMs
 # Misc.
 pseudo-device	loop			# loopback interface; required
 pseudo-device	pty		2	# pseudo-terminals (Sysinst needs two)
-pseudo-device	md		1	# memory disk device
+pseudo-device	md			# memory disk device
 #pseudo-device	fss			# file system snapshot device
 pseudo-device	sl			# SLIP interfaces
 

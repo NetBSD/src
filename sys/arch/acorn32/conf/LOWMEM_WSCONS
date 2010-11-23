@@ -1,4 +1,4 @@
-#	$NetBSD: LOWMEM_WSCONS,v 1.54 2010/04/16 13:48:28 pooka Exp $
+#	$NetBSD: LOWMEM_WSCONS,v 1.55 2010/11/23 11:13:52 hannken Exp $
 #
 #	LOWMEM_WSCONS -- RiscPC config with wscons for SMALL machines
 #
@@ -282,7 +282,7 @@ pseudo-device	pty			# pseudo-terminals
 pseudo-device	vnd			# disk-like interface to files
 #pseudo-device	ccd	2		# concatenated disk devices
 #pseudo-device	fss			# file system snapshot device
-pseudo-device	md	1		# Ramdisk driver
+pseudo-device	md			# Ramdisk driver
 pseudo-device	rnd			# /dev/random and /dev/urandom
 pseudo-device	clockctl		# user control of clock subsystem
 

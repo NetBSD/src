@@ -1,4 +1,4 @@
-#	$NetBSD: MMEYE,v 1.39 2010/04/16 13:48:33 pooka Exp $
+#	$NetBSD: MMEYE,v 1.40 2010/11/23 11:14:02 hannken Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -116,4 +116,4 @@ pseudo-device	clockctl		# user control of clock subsystem
 #options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
 #options 	MEMORY_DISK_ROOT_SIZE=3074	# size of memory disk, in blocks
 
-#pseudo-device	md		1	# memory disk device (ramdisk)
+#pseudo-device	md			# memory disk device (ramdisk)

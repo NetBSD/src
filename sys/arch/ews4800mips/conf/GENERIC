@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.32 2010/05/08 22:16:27 mrg Exp $
+# $NetBSD: GENERIC,v 1.33 2010/11/23 11:13:58 hannken Exp $
 #
 # GENERIC machine description file
 # This machine description file is used to generate the default NetBSD
@@ -25,7 +25,7 @@ include 	"arch/ews4800mips/conf/std.ews4800mips"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.32 $"
+#ident		"GENERIC-$Revision: 1.33 $"
 
 maxusers	16
 
@@ -241,7 +241,7 @@ options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 pseudo-device	fss			# file system snapshot device
 pseudo-device	putter			# for puffs and pud
 
-pseudo-device	md		1	# memory disk device (ramdisk)
+pseudo-device	md			# memory disk device (ramdisk)
 pseudo-device	vnd			# virtual disk ick
 options 	VND_COMPRESSION		# compressed vnd(4)
 

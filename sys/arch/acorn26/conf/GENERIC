@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.62 2010/04/29 22:40:48 chs Exp $
+# $NetBSD: GENERIC,v 1.63 2010/11/23 11:13:52 hannken Exp $
 #
 # GENERIC machine description file
 # 
@@ -240,7 +240,7 @@ options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 pseudo-device	fss			# file system snapshot device
 #pseudo-device	ipfilter
 pseudo-device	loop
-pseudo-device	md		1
+pseudo-device	md		
 #options 	MEMORY_DISK_HOOKS
 #options 	MEMORY_DISK_ROOT_SIZE=
 pseudo-device	ppp		

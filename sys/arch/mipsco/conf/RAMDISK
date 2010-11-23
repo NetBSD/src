@@ -1,4 +1,4 @@
-# 	$NetBSD: RAMDISK,v 1.4 2009/02/06 18:50:28 jym Exp $
+# 	$NetBSD: RAMDISK,v 1.5 2010/11/23 11:14:02 hannken Exp $
 #
 # Install kernel with ramdisk added.
 #
@@ -20,4 +20,4 @@ file-system 	MFS		# memory file system
 # Extra Pseudo-Devices
 
 # disk/mass storage pseudo-devices
-pseudo-device	md		1	# memory disk device (ramdisk)
+pseudo-device	md			# memory disk device (ramdisk)

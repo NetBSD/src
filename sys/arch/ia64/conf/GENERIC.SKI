@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC.SKI,v 1.6 2009/07/20 04:41:36 kiyohara Exp $
+# $NetBSD: GENERIC.SKI,v 1.7 2010/11/23 11:14:00 hannken Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/ia64/conf/std.ia64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.6 $"
+#ident 		"GENERIC-$Revision: 1.7 $"
 
 maxusers	32		# estimated number of users
 
@@ -91,5 +91,5 @@ pseudo-device	ssccons			# Ski emulator console
 #pseudo-device	wsmux			# mouse & keyboard multiplexor
 #pseudo-device	wsfont
 pseudo-device	ksyms			# /dev/ksyms
-pseudo-device	md		1
+pseudo-device	md		
 

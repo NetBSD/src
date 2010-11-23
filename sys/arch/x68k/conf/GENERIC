@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.150 2010/04/29 22:40:54 chs Exp $
+# $NetBSD: GENERIC,v 1.151 2010/11/23 11:14:07 hannken Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/x68k/conf/std.x68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.150 $"
+#ident 		"GENERIC-$Revision: 1.151 $"
 
 maxusers	8
 
@@ -462,7 +462,7 @@ options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 ## Memory disk device, used on boot floppies with compressed
 ## kernel-plus-root-disk images.
 
-#pseudo-device	md	1
+#pseudo-device	md	
 
 ## Loopback network interface; required
 pseudo-device	loop

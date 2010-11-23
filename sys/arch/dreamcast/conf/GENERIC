@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.98 2010/10/13 14:34:27 tsutsui Exp $
+# $NetBSD: GENERIC,v 1.99 2010/11/23 11:13:56 hannken Exp $
 #
 # GENERIC machine description file
 # 
@@ -195,7 +195,7 @@ aica*		at g2bus?			# AICA Sound Processing Unit
 audio*		at aica?
 
 #pseudo-device	cgd		2	# cryptographic disk devices
-pseudo-device	md		1	# memory disk device (ramdisk)
+pseudo-device	md			# memory disk device (ramdisk)
 pseudo-device	vnd			# disk-like interface to files
 #options 	VND_COMPRESSION		# compressed vnd(4)
 

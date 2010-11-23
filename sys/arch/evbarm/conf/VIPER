@@ -1,4 +1,4 @@
-#	$NetBSD: VIPER,v 1.19 2010/04/16 13:48:30 pooka Exp $
+#	$NetBSD: VIPER,v 1.20 2010/11/23 11:13:57 hannken Exp $
 #
 #	Arcom Viper
 #
@@ -170,7 +170,7 @@ sqphy*	at mii? phy ?			# Seeq 80220/80221/80223 PHYs
 # Pseudo-Devices
 
 # disk/mass storage pseudo-devices
-#pseudo-device	md		1	# memory disk device (ramdisk)
+#pseudo-device	md			# memory disk device (ramdisk)
 pseudo-device	vnd			# disk-like interface to files
 #pseudo-device	fss			# file system snapshot device
 
