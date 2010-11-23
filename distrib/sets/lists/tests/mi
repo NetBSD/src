@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.159 2010/11/23 15:38:53 pooka Exp $
+# $NetBSD: mi,v 1.160 2010/11/23 18:05:17 pooka Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -219,7 +219,7 @@
 ./usr/libdata/debug/usr/tests/dev/cgd/h_img2cgd					tests-fs-debug
 ./usr/libdata/debug/usr/tests/dev/cgd/h_img2cgd/h_img2cgd.debug			tests-fs-debug		debug,atf
 ./usr/libdata/debug/usr/tests/dev/md					tests-fs-debug
-./usr/libdata/debug/usr/tests/dev/md/h_mdserv.debug					tests-fs-debug
+./usr/libdata/debug/usr/tests/dev/md/h_mdserv.debug					tests-fs-debug	debug,atf
 ./usr/libdata/debug/usr/tests/dev/scsipi					tests-fs-debug
 ./usr/libdata/debug/usr/tests/dev/scsipi/t_cd.debug			tests-fs-debug		debug,atf
 ./usr/libdata/debug/usr/tests/dev/sysmon					tests-fs-debug
