@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.214 2010/06/09 17:29:15 dholland Exp $
+$NetBSD: UPDATING,v 1.215 2010/11/23 06:49:29 mrg Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -15,6 +15,12 @@ See also: BUILDING, build.sh, Makefile.
 
 Recent changes:
 ^^^^^^^^^^^^^^^
+
+20101119:
+	Recent Xorg updates in xsrc/external/mit/ may cause various build
+	or run-time problems.  Delete your entire DESTDIR and OBJDIR if you
+	have any build problems with xsrc, or problems with mismatched
+	versions between xorg-server and drivers.
 
 20100604:
 	The update of ATF to 0.9 causes old tests written in shell to fail
