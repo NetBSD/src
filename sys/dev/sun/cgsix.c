@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix.c,v 1.49 2010/11/13 13:52:11 uebayasi Exp $ */
+/*	$NetBSD: cgsix.c,v 1.50 2010/11/23 22:14:27 mrg Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgsix.c,v 1.49 2010/11/13 13:52:11 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgsix.c,v 1.50 2010/11/23 22:14:27 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1134,6 +1134,10 @@ cgsix_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 		case WSDISPLAYIO_PUTCMAP:
 			return cgsix_putcmap(sc, 
 			    (struct wsdisplay_cmap *)data);
+
+		case WSDISPLAYIO_LINEBYTES:
+			*(u_int *)data = sc->sc_stride;
+			return 0;
 
 		case WSDISPLAYIO_SMODE:
 			{
