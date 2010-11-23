@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2008/08/09 01:15:19 rtr Exp $
+#	$NetBSD: Makefile,v 1.2 2010/11/23 08:22:34 mrg Exp $
 
 .include "../../../Makefile.serverlib"
 .include "../../../Makefile.servermod"
@@ -8,7 +8,8 @@ LIB=	xf86config
 .PATH:	${X11SRCDIR.xorg-server}/hw/xfree86/parser
 SRCS=	DRI.c Device.c Extensions.c Files.c Flags.c Input.c Layout.c \
 	Module.c Monitor.c Pointer.c Screen.c Vendor.c Video.c read.c \
-	scan.c write.c
+	scan.c write.c \
+	InputClass.c
 
 CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/hw/xfree86/common \
                 -I${X11SRCDIR.xorg-server}/include \
@@ -17,7 +18,8 @@ CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/hw/xfree86/common \
 		-I${DESTDIR}${X11INCDIR}/pixman-1 \
 		-I${DESTDIR}${X11INCDIR}/xorg \
                 -I${X11SRCDIR.xorg-server}/Xi \
-		-I${X11SRCDIR.xorg-server}/hw/xfree86/parser
+		-I${X11SRCDIR.xorg-server}/hw/xfree86/parser \
+		-I${X11SRCDIR.xorg-server}/../include
 
 CPPFLAGS+=	${X11FLAGS.DIX}
 

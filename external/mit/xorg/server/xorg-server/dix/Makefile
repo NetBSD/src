@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2009/08/23 09:05:44 mrg Exp $
+#	$NetBSD: Makefile,v 1.10 2010/11/23 08:22:30 mrg Exp $
 
 .include "../Makefile.serverlib"
 .include "../Makefile.servermod"
@@ -12,7 +12,8 @@ SRCS=		atom.c colormap.c cursor.c devices.c dispatch.c dixfonts.c \
 		globals.c glyphcurs.c grabs.c initatoms.c main.c pixmap.c \
 		privates.c property.c resource.c swaprep.c swapreq.c \
 		tables.c window.c \
-		deprecated.c enterleave.c ptrveloc.c registry.c selection.c
+		deprecated.c enterleave.c ptrveloc.c registry.c selection.c \
+		eventconvert.c inpututils.c region.c
 
 
 CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/pixman-1
@@ -24,6 +25,7 @@ CPPFLAGS.globals.c=	-DCOMPILEDDEFAULTFONTPATH=\"${X11DEFAULTFONTPATH:ts,}\" \
 			-DRGB_DB=\"${X11LIBDIR}/rgb\"
 
 # XXX make user variables
+CPPFLAGS.dispatch.c=	-DVENDOR_NAME="\"The Xorg Foundation\""
 CPPFLAGS.main.c=	-DVENDOR_STRING="\"The Xorg Group\"" \
 			-DVENDOR_RELEASE=${XORG_VERSION_CURRENT} \
 			-DVENDOR_NAME="\"The Xorg Foundation\""
@@ -40,6 +42,7 @@ COPTS.dixfonts.c=	-Wno-error
 COPTS.events.c=		-Wno-error
 COPTS.resource.c=	-Wno-error
 COPTS.window.c=		-Wno-error
+COPTS.inpututils.c=	-Wno-error
 
 .include <bsd.x11.mk>
 .include <bsd.lib.mk>
