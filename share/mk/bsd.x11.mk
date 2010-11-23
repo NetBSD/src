@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.x11.mk,v 1.90 2010/10/22 16:48:38 yhardy Exp $
+#	$NetBSD: bsd.x11.mk,v 1.91 2010/11/23 00:02:20 mrg Exp $
 
 .include <bsd.init.mk>
 
@@ -321,6 +321,8 @@ pkgconfig-install: ${_PKGDEST.${_pkg}}
 		s,@GLW_PC_CFLAGS@,,; \
 		s,@GLW_PC_REQ_PRIV@,x11 xt,; \
 		s,@GLW_PC_LIB_PRIV@,,; \
+		s,@DRI_DRIVER_DIR@,\\$$\{libdir\}/modules/dri,; \
+		s,@DRI_PC_REQ_PRIV@,,; \
 		s,@GLW_LIB@,GLw,; \
 		s,@abi_ansic@,0.4,; \
 		s,@abi_videodrv@,5.0,; \
