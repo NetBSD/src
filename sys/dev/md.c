@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.64 2010/11/22 21:10:10 pooka Exp $	*/
+/*	$NetBSD: md.c,v 1.65 2010/11/23 09:30:43 hannken Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross, Leo Weppelman.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: md.c,v 1.64 2010/11/22 21:10:10 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: md.c,v 1.65 2010/11/23 09:30:43 hannken Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_md.h"
@@ -84,6 +84,8 @@ struct md_softc {
 	device_t sc_dev;	/* Self. */
 	struct disk sc_dkdev;	/* hook for generic disk handling */
 	struct md_conf sc_md;
+	kmutex_t sc_lock;	/* Protect self. */
+	kcondvar_t sc_cv;	/* Signal work. */
 	struct bufq_state *sc_buflist;
 };
 /* shorthand for fields in sc_md: */
@@ -105,7 +107,7 @@ static dev_type_strategy(mdstrategy);
 static dev_type_size(mdsize);
 
 const struct bdevsw md_bdevsw = {
-	mdopen, mdclose, mdstrategy, mdioctl, nodump, mdsize, D_DISK
+	mdopen, mdclose, mdstrategy, mdioctl, nodump, mdsize, D_DISK | D_MPSAFE
 };
 
 const struct cdevsw md_cdevsw = {
@@ -144,6 +146,8 @@ md_attach(device_t parent, device_t self, void *aux)
 	struct md_softc *sc = device_private(self);
 
 	sc->sc_dev = self;
+	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
+	cv_init(&sc->sc_cv, "mdidle");
 	bufq_alloc(&sc->sc_buflist, "fcfs", 0);
 
 	/* XXX - Could accept aux info here to set the config. */
@@ -190,6 +194,8 @@ md_detach(device_t self, int flags)
 	disk_detach(&sc->sc_dkdev);
 	disk_destroy(&sc->sc_dkdev);
 	bufq_free(sc->sc_buflist);
+	mutex_destroy(&sc->sc_lock);
+	cv_destroy(&sc->sc_cv);
 	return 0;
 }
 
@@ -211,15 +217,20 @@ static int
 mdsize(dev_t dev)
 {
 	struct md_softc *sc;
+	int res;
 
 	sc = device_lookup_private(&md_cd, MD_UNIT(dev));
 	if (sc == NULL)
 		return 0;
 
+	mutex_enter(&sc->sc_lock);
 	if (sc->sc_type == MD_UNCONFIGURED)
-		return 0;
+		res = 0;
+	else
+		res = sc->sc_size >> DEV_BSHIFT;
+	mutex_exit(&sc->sc_lock);
 
-	return (sc->sc_size >> DEV_BSHIFT);
+	return res;
 }
 
 static int
@@ -373,6 +384,8 @@ mdstrategy(struct buf *bp)
 
 	sc = device_lookup_private(&md_cd, MD_UNIT(bp->b_dev));
 
+	mutex_enter(&sc->sc_lock);
+
 	if (sc == NULL || sc->sc_type == MD_UNCONFIGURED) {
 		bp->b_error = ENXIO;
 		goto done;
@@ -383,7 +396,8 @@ mdstrategy(struct buf *bp)
 	case MD_UMEM_SERVER:
 		/* Just add this job to the server's queue. */
 		bufq_put(sc->sc_buflist, bp);
-		wakeup((void *)sc);
+		cv_signal(&sc->sc_cv);
+		mutex_exit(&sc->sc_lock);
 		/* see md_server_loop() */
 		/* no biodone in this case */
 		return;
@@ -421,6 +435,8 @@ mdstrategy(struct buf *bp)
 	}
  done:
 	biodone(bp);
+
+	mutex_exit(&sc->sc_lock);
 }
 
 static int
@@ -430,15 +446,18 @@ mdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	struct md_conf *umd;
 	struct disklabel *lp;
 	struct partinfo *pp;
+	int error;
 
 	if ((sc = device_lookup_private(&md_cd, MD_UNIT(dev))) == NULL)
 		return ENXIO;
 
+	mutex_enter(&sc->sc_lock);
 	if (sc->sc_type != MD_UNCONFIGURED) {
 		switch (cmd) {
 		case DIOCGDINFO:
 			lp = (struct disklabel *)data;
 			*lp = *sc->sc_dkdev.dk_label;
+			mutex_exit(&sc->sc_lock);
 			return 0;
 
 		case DIOCGPART:
@@ -446,19 +465,24 @@ mdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 			pp->disklab = sc->sc_dkdev.dk_label;
 			pp->part =
 			    &sc->sc_dkdev.dk_label->d_partitions[DISKPART(dev)];
+			mutex_exit(&sc->sc_lock);
 			return 0;
 		}
 	}
 
 	/* If this is not the raw partition, punt! */
-	if (DISKPART(dev) != RAW_PART)
+	if (DISKPART(dev) != RAW_PART) {
+		mutex_exit(&sc->sc_lock);
 		return ENOTTY;
+	}
 
 	umd = (struct md_conf *)data;
+	error = EINVAL;
 	switch (cmd) {
 	case MD_GETCONF:
 		*umd = sc->sc_md;
-		return 0;
+		error = 0;
+		break;
 
 	case MD_SETCONF:
 		/* Can only set it once. */
@@ -466,17 +490,20 @@ mdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 			break;
 		switch (umd->md_type) {
 		case MD_KMEM_ALLOCATED:
-			return md_ioctl_kalloc(sc, umd, l);
+			error = md_ioctl_kalloc(sc, umd, l);
+			break;
 #if MEMORY_DISK_SERVER
 		case MD_UMEM_SERVER:
-			return md_ioctl_server(sc, umd, l);
+			error = md_ioctl_server(sc, umd, l);
+			break;
 #endif	/* MEMORY_DISK_SERVER */
 		default:
 			break;
 		}
 		break;
 	}
-	return EINVAL;
+	mutex_exit(&sc->sc_lock);
+	return error;
 }
 
 static void
@@ -534,6 +561,8 @@ md_ioctl_kalloc(struct md_softc *sc, struct md_conf *umd,
 	vaddr_t addr;
 	vsize_t size;
 
+	KASSERT(mutex_owned(&sc->sc_lock));
+
 	/* Sanity check the size. */
 	size = umd->md_size;
 	addr = uvm_km_alloc(kernel_map, size, 0, UVM_KMF_WIRED|UVM_KMF_ZERO);
@@ -561,6 +590,8 @@ md_ioctl_server(struct md_softc *sc, struct md_conf *umd,
 	vaddr_t end;
 	int error;
 
+	KASSERT(mutex_owned(&sc->sc_lock));
+
 	/* Sanity check addr, size. */
 	end = (vaddr_t) ((char *)umd->md_addr + umd->md_size);
 
@@ -585,8 +616,6 @@ md_ioctl_server(struct md_softc *sc, struct md_conf *umd,
 	return (error);
 }
 
-static int md_sleep_pri = PWAIT | PCATCH;
-
 static int
 md_server_loop(struct md_softc *sc)
 {
@@ -597,15 +626,18 @@ md_server_loop(struct md_softc *sc)
 	int error;
 	bool is_read;
 
+	KASSERT(mutex_owned(&sc->sc_lock));
+
 	for (;;) {
 		/* Wait for some work to arrive. */
 		while ((bp = bufq_get(sc->sc_buflist)) == NULL) {
-			error = tsleep((void *)sc, md_sleep_pri, "md_idle", 0);
+			error = cv_wait_sig(&sc->sc_cv, &sc->sc_lock);
 			if (error)
 				return error;
 		}
 
 		/* Do the transfer to/from user space. */
+		mutex_exit(&sc->sc_lock);
 		error = 0;
 		is_read = ((bp->b_flags & B_READ) == B_READ);
 		bp->b_resid = bp->b_bcount;
@@ -634,6 +666,7 @@ md_server_loop(struct md_softc *sc)
 			bp->b_error = error;
 		}
 		biodone(bp);
+		mutex_enter(&sc->sc_lock);
 	}
 }
 #endif	/* MEMORY_DISK_SERVER */
