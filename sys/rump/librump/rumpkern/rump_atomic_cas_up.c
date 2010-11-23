@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_atomic_cas_up.c,v 1.1 2010/11/22 10:50:51 pooka Exp $	*/
+/*	$NetBSD: rump_atomic_cas_up.c,v 1.2 2010/11/23 12:51:10 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010 Antti Kantee.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump_atomic_cas_up.c,v 1.1 2010/11/22 10:50:51 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump_atomic_cas_up.c,v 1.2 2010/11/23 12:51:10 pooka Exp $");
 
 /*
  * Uniprocessor version of atomic CAS.  Since there is no preemption
@@ -35,10 +35,10 @@ __KERNEL_RCSID(0, "$NetBSD: rump_atomic_cas_up.c,v 1.1 2010/11/22 10:50:51 pooka
 
 #include <sys/types.h>
 
-uint32_t rumpup_cas_32_up(volatile uint32_t *ptr, uint32_t, uint32_t);
+uint32_t rump_cas_32_up(volatile uint32_t *ptr, uint32_t, uint32_t);
 
 uint32_t
-rumpup_cas_32_up(volatile uint32_t *ptr, uint32_t old, uint32_t new)
+rump_cas_32_up(volatile uint32_t *ptr, uint32_t old, uint32_t new)
 {
 	uint32_t ret;
 
@@ -50,11 +50,19 @@ rumpup_cas_32_up(volatile uint32_t *ptr, uint32_t old, uint32_t new)
 	return ret;
 }
 
-__strong_alias(atomic_cas_32,rumpup_cas_32_up)
-__strong_alias(atomic_cas_uint,rumpup_cas_32_up)
-__strong_alias(atomic_cas_ulong,rumpup_cas_32_up)
-__strong_alias(atomic_cas_ptr,rumpup_cas_32_up)
-__strong_alias(atomic_cas_32_ni,rumpup_cas_32_up)
-__strong_alias(atomic_cas_uint_ni,rumpup_cas_32_up)
-__strong_alias(atomic_cas_ulong_ni,rumpup_cas_32_up)
-__strong_alias(atomic_cas_ptr_ni,rumpup_cas_32_up)
+__strong_alias(atomic_cas_32,rump_cas_32_up)
+__strong_alias(_atomic_cas_32,rump_cas_32_up)
+__strong_alias(atomic_cas_uint,rump_cas_32_up)
+__strong_alias(_atomic_cas_uint,rump_cas_32_up)
+__strong_alias(atomic_cas_ulong,rump_cas_32_up)
+__strong_alias(_atomic_cas_ulong,rump_cas_32_up)
+__strong_alias(atomic_cas_ptr,rump_cas_32_up)
+__strong_alias(_atomic_cas_ptr,rump_cas_32_up)
+__strong_alias(atomic_cas_32_ni,rump_cas_32_up)
+__strong_alias(_atomic_cas_32_ni,rump_cas_32_up)
+__strong_alias(atomic_cas_uint_ni,rump_cas_32_up)
+__strong_alias(_atomic_cas_uint_ni,rump_cas_32_up)
+__strong_alias(atomic_cas_ulong_ni,rump_cas_32_up)
+__strong_alias(_atomic_cas_ulong_ni,rump_cas_32_up)
+__strong_alias(atomic_cas_ptr_ni,rump_cas_32_up)
+__strong_alias(_atomic_cas_ptr_ni,rump_cas_32_up)
