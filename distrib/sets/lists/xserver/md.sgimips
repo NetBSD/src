@@ -1,4 +1,4 @@
-# $NetBSD: md.sgimips,v 1.39 2010/11/15 12:23:06 njoly Exp $	x11
+# $NetBSD: md.sgimips,v 1.40 2010/11/23 10:24:04 mrg Exp $	x11
 ./usr/X11R6/bin/X					-unknown-	x11
 ./usr/X11R6/bin/XFree86					-unknown-	x11
 ./usr/X11R6/bin/Xprt					-unknown-	x11
@@ -399,9 +399,10 @@
 ./usr/X11R7/bin/gtf					-unknown-	xorg
 ./usr/X11R7/bin/xorgconfig				-unknown-	obsolete
 ./usr/X11R7/lib/X11/Cards				-unknown-	obsolete
-./usr/X11R7/lib/X11/doc/README.DRI			-unknown-	xorg
+./usr/X11R7/lib/X11/doc/README.DRI			-unknown-	obsolete
 ./usr/X11R7/lib/X11/doc/README.fonts			-unknown-	obsolete
-./usr/X11R7/lib/X11/doc/README.rapidaccess		-unknown-	xorg
+./usr/X11R7/lib/X11/doc/README.modes			-unknown-	xorg
+./usr/X11R7/lib/X11/doc/README.rapidaccess		-unknown-	obsolete
 ./usr/X11R7/lib/modules/drivers/crime_drv.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/crime_drv.so.0		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/kbd_drv.so		-unknown-	xorg

@@ -1,4 +1,4 @@
-# $NetBSD: md.hpcarm,v 1.10 2010/11/13 02:07:29 tsutsui Exp $
+# $NetBSD: md.hpcarm,v 1.11 2010/11/23 10:24:04 mrg Exp $
 ./etc/X11/xorg.conf.640x240-jp				-unknown	xorg
 ./etc/X11/xorg.conf.640x240-us				-unknown	xorg
 ./etc/X11/xorg.conf.640x480-jp				-unknown	xorg
@@ -18,8 +18,9 @@
 ./usr/X11R7/bin/Xorg					-unknown-	xorg
 ./usr/X11R7/bin/cvt					-unknown-	xorg
 ./usr/X11R7/bin/gtf					-unknown-	xorg
-./usr/X11R7/lib/X11/doc/README.DRI			-unknown-	xorg
-./usr/X11R7/lib/X11/doc/README.rapidaccess		-unknown-	xorg
+./usr/X11R7/lib/X11/doc/README.DRI			-unknown-	obsolete
+./usr/X11R7/lib/X11/doc/README.modes			-unknown-	xorg
+./usr/X11R7/lib/X11/doc/README.rapidaccess		-unknown-	obsolete
 ./usr/X11R7/lib/modules/drivers/kbd_drv.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/kbd_drv.so.1		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/mouse_drv.so		-unknown-	xorg
