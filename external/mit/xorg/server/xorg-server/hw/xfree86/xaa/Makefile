@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.5 2009/06/12 01:59:06 mrg Exp $
+# $NetBSD: Makefile,v 1.6 2010/11/23 08:22:34 mrg Exp $
 
 XMODULEDIR=	${X11USRLIBDIR}/modules
 
@@ -40,7 +40,8 @@ CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/X11 \
 		-I${X11SRCDIR.xorg-server}/include/extensions \
 		-I${X11SRCDIR.xorg-server}/mi \
 		-I${X11SRCDIR.xorg-server}/miext/cw \
-		-I${X11SRCDIR.xorg-server}/render
+		-I${X11SRCDIR.xorg-server}/render \
+		-I${X11SRCDIR.xorg-server}/../include
 
 # XXX to find files lokoing for "../../../../hw/something"
 CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/hw/xfree86/dixmods/extmod \
