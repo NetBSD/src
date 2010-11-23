@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.158 2010/11/19 18:18:54 njoly Exp $
+# $NetBSD: mi,v 1.159 2010/11/23 15:38:53 pooka Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -218,6 +218,8 @@
 ./usr/libdata/debug/usr/tests/dev/cgd					tests-fs-debug
 ./usr/libdata/debug/usr/tests/dev/cgd/h_img2cgd					tests-fs-debug
 ./usr/libdata/debug/usr/tests/dev/cgd/h_img2cgd/h_img2cgd.debug			tests-fs-debug		debug,atf
+./usr/libdata/debug/usr/tests/dev/md					tests-fs-debug
+./usr/libdata/debug/usr/tests/dev/md/h_mdserv.debug					tests-fs-debug
 ./usr/libdata/debug/usr/tests/dev/scsipi					tests-fs-debug
 ./usr/libdata/debug/usr/tests/dev/scsipi/t_cd.debug			tests-fs-debug		debug,atf
 ./usr/libdata/debug/usr/tests/dev/sysmon					tests-fs-debug
@@ -1026,6 +1028,10 @@
 ./usr/tests/dev/cgd/h_img2cgd				tests-fs-tests
 ./usr/tests/dev/cgd/h_img2cgd/h_img2cgd			tests-fs-tests		atf
 ./usr/tests/dev/cgd/h_img2cgd/cgd.conf			tests-fs-tests		atf
+./usr/tests/dev/md				tests-fs-tests
+./usr/tests/dev/md/Atffile			tests-fs-tests		atf
+./usr/tests/dev/md/h_mdserv			tests-fs-tests		atf
+./usr/tests/dev/md/t_md			tests-fs-tests		atf
 ./usr/tests/dev/scsipi				tests-fs-tests
 ./usr/tests/dev/scsipi/Atffile			tests-fs-tests		atf
 ./usr/tests/dev/scsipi/t_cd			tests-fs-tests		atf
