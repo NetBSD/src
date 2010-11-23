@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.100 2010/11/22 15:42:22 tsutsui Exp $
+# $NetBSD: mi,v 1.101 2010/11/23 10:24:03 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -259,7 +259,7 @@
 ./usr/X11R6/lib						base-x11-root	x11
 ./usr/X11R6/lib/X11					base-x11-root	x11
 ./usr/X11R6/lib/X11/XErrorDB				-unknown-	x11
-./usr/X11R6/lib/X11/XKeysymDB				-unknown-	obsolete
+./usr/X11R6/lib/X11/XKeysymDB				-unknown-	x11
 ./usr/X11R6/lib/X11/Xcms.txt				-unknown-	x11
 ./usr/X11R6/lib/X11/XftConfig				xbase-obsolete	obsolete
 ./usr/X11R6/lib/X11/XftConfig-OBSOLETE			xbase-obsolete	obsolete
@@ -1523,7 +1523,7 @@
 ./usr/X11R7/lib						base-x11-root	xorg
 ./usr/X11R7/lib/X11					base-x11-root	xorg
 ./usr/X11R7/lib/X11/XErrorDB				-unknown-	xorg
-./usr/X11R7/lib/X11/XKeysymDB				-unknown-	xorg
+./usr/X11R7/lib/X11/XKeysymDB				-unknown-	obsolete
 ./usr/X11R7/lib/X11/Xcms.txt				-unknown-	xorg
 ./usr/X11R7/lib/X11/app-defaults			base-x11-root	xorg
 ./usr/X11R7/lib/X11/app-defaults/Beforelight		-unknown-	xorg

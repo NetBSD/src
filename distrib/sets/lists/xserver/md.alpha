@@ -1,4 +1,4 @@
-# $NetBSD: md.alpha,v 1.29 2010/05/23 21:32:51 mrg Exp $
+# $NetBSD: md.alpha,v 1.30 2010/11/23 10:24:03 mrg Exp $
 ./usr/X11R6/bin/X					-unknown-	x11
 ./usr/X11R6/bin/XalphaNetBSD				-unknown-	x11
 ./usr/X11R6/bin/XdecNetBSD				-unknown-	x11
@@ -10,9 +10,10 @@
 ./usr/X11R7/bin/scanpci					-unknown-	obsolete
 ./usr/X11R7/bin/xorgconfig				-unknown-	obsolete
 ./usr/X11R7/lib/X11/Cards				-unknown-	obsolete
-./usr/X11R7/lib/X11/doc/README.DRI			-unknown-	xorg
+./usr/X11R7/lib/X11/doc/README.DRI			-unknown-	obsolete
 ./usr/X11R7/lib/X11/doc/README.fonts			-unknown-	obsolete
-./usr/X11R7/lib/X11/doc/README.rapidaccess		-unknown-	xorg
+./usr/X11R7/lib/X11/doc/README.modes			-unknown-	xorg
+./usr/X11R7/lib/X11/doc/README.rapidaccess		-unknown-	obsolete
 ./usr/X11R7/lib/modules/dri/mach64_dri.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/dri/mach64_dri.so.0		-unknown-	xorg
 ./usr/X11R7/lib/modules/dri/mga_dri.so			-unknown-	xorg

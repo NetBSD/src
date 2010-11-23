@@ -1,4 +1,4 @@
-# $NetBSD: md.cats,v 1.39 2010/06/19 18:10:56 tsutsui Exp $
+# $NetBSD: md.cats,v 1.40 2010/11/23 10:24:04 mrg Exp $
 ./usr/X11R6/bin/X					-unknown-	x11
 ./usr/X11R6/bin/XFree86					-unknown-	x11
 ./usr/X11R6/bin/gtf					-unknown-	x11
@@ -348,9 +348,10 @@
 ./usr/X11R7/bin/scanpci					-unknown-	obsolete
 ./usr/X11R7/bin/xorgconfig				-unknown-	obsolete
 ./usr/X11R7/lib/X11/Cards				-unknown-	obsolete
-./usr/X11R7/lib/X11/doc/README.DRI			-unknown-	xorg
+./usr/X11R7/lib/X11/doc/README.DRI			-unknown-	obsolete
 ./usr/X11R7/lib/X11/doc/README.fonts			-unknown-	obsolete
-./usr/X11R7/lib/X11/doc/README.rapidaccess		-unknown-	xorg
+./usr/X11R7/lib/X11/doc/README.modes			-unknown-	xorg
+./usr/X11R7/lib/X11/doc/README.rapidaccess		-unknown-	obsolete
 ./usr/X11R7/lib/modules/drivers/apm_drv.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/apm_drv.so.1		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/ark_drv.so		-unknown-	xorg

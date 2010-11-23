@@ -1,4 +1,4 @@
-# $NetBSD: md.shark,v 1.34 2010/05/22 21:12:31 mrg Exp $
+# $NetBSD: md.shark,v 1.35 2010/11/23 10:24:04 mrg Exp $
 ./usr/X11R6/bin/X					-unknown-	x11
 ./usr/X11R6/bin/XFree86					-unknown-	x11
 ./usr/X11R6/bin/gtf					-unknown-	x11
@@ -247,9 +247,10 @@
 ./usr/X11R7/bin/gtf					-unknown-	xorg
 ./usr/X11R7/bin/xorgconfig				-unknown-	obsolete
 ./usr/X11R7/lib/X11/Cards				-unknown-	obsolete
-./usr/X11R7/lib/X11/doc/README.DRI			-unknown-	xorg
+./usr/X11R7/lib/X11/doc/README.DRI			-unknown-	obsolete
 ./usr/X11R7/lib/X11/doc/README.fonts			-unknown-	obsolete
-./usr/X11R7/lib/X11/doc/README.rapidaccess		-unknown-	xorg
+./usr/X11R7/lib/X11/doc/README.modes			-unknown-	xorg
+./usr/X11R7/lib/X11/doc/README.rapidaccess		-unknown-	obsolete
 ./usr/X11R7/lib/modules/drivers/chips_drv.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/chips_drv.so.1		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/igs_drv.so		-unknown-	xorg
