@@ -1,4 +1,4 @@
-#	$NetBSD: P6032,v 1.53 2010/11/13 04:01:42 uebayasi Exp $
+#	$NetBSD: P6032,v 1.54 2010/11/23 11:13:53 hannken Exp $
 #
 # Algorithmics P-6032 kernel.
 #
@@ -7,7 +7,7 @@ include	"arch/algor/conf/std.algor"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"P6032-$Revision: 1.53 $"
+#ident 		"P6032-$Revision: 1.54 $"
 
 maxusers 32
 
@@ -388,7 +388,7 @@ pseudo-device	ccd		4
 #pseudo-device	fss			# file system snapshot device
 pseudo-device	ipfilter	1
 pseudo-device	loop		1
-pseudo-device	md		1
+pseudo-device	md		
 pseudo-device	ppp		
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	sl		

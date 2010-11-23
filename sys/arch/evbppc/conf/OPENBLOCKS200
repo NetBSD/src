@@ -1,4 +1,4 @@
-#	$NetBSD: OPENBLOCKS200,v 1.27 2010/04/16 13:48:31 pooka Exp $
+#	$NetBSD: OPENBLOCKS200,v 1.28 2010/11/23 11:13:57 hannken Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -215,7 +215,7 @@ pseudo-device	ccd		4	# concatenated/striped disk devices
 #pseudo-device	raid		4	# RAIDframe disk driver
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 #pseudo-device	fss			# file system snapshot device
-pseudo-device	md		1	# memory disk device
+pseudo-device	md			# memory disk device
 pseudo-device	loop			# network loopback
 pseudo-device	bpfilter		# packet filter
 pseudo-device	ipfilter		# IP filter (firewall) and NAT

@@ -1,4 +1,4 @@
-#       $NetBSD: NETWALKER_MD,v 1.1 2010/11/13 07:31:32 bsh Exp $
+#       $NetBSD: NETWALKER_MD,v 1.2 2010/11/23 11:13:56 hannken Exp $
 #
 #	M2ID -- i.MX51 evaluation board
 #
@@ -11,5 +11,5 @@ options 	MEMORY_DISK_ROOT_SIZE=8192	# Size in blocks
 options 	MEMORY_DISK_RBFLAGS=RB_SINGLE	# boot in single-user mode
 
 # disk/mass storage pseudo-devices
-pseudo-device	md	1
+pseudo-device	md	
 

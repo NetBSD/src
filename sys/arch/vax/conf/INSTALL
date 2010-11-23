@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.53 2010/04/16 13:48:36 pooka Exp $
+#	$NetBSD: INSTALL,v 1.54 2010/11/23 11:14:07 hannken Exp $
 #
 # INSTALL kernel; all supported devices but nothing fancy.
 #
@@ -216,4 +216,4 @@ pseudo-device	pty		2	# pseudo-terminals (Sysinst needs two)
 #pseudo-device	raid	4		# RAIDframe disk driver
 #pseudo-device	fss			# file system snapshot device
 pseudo-device	rnd			# /dev/random and in-kernel generator
-pseudo-device	md	1
+pseudo-device	md	

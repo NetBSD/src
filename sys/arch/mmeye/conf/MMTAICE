@@ -1,4 +1,4 @@
-#	$NetBSD: MMTAICE,v 1.44 2010/04/16 13:48:33 pooka Exp $
+#	$NetBSD: MMTAICE,v 1.45 2010/11/23 11:14:02 hannken Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -225,7 +225,7 @@ cinclude "arch/mmeye/conf/GENERIC.local"
 # disk/mass storage pseudo-devices
 pseudo-device	ccd		4	# concatenated/striped disk devices
 #pseudo-device	fss			# file system snapshot device
-pseudo-device	md		1	# memory disk device (ramdisk)
+pseudo-device	md			# memory disk device (ramdisk)
 pseudo-device	vnd			# disk-like interface to files
 
 # network pseudo-devices

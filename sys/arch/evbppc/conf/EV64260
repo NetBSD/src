@@ -1,4 +1,4 @@
-#	$NetBSD: EV64260,v 1.44 2010/04/28 13:51:56 kiyohara Exp $
+#	$NetBSD: EV64260,v 1.45 2010/11/23 11:13:57 hannken Exp $
 #
 #	MVP -- Motorola's Multiprocessing Verification Platform
 #
@@ -261,7 +261,7 @@ wd*		at atabus? drive ? flags 0x0000
 #pseudo-device	raid		4	# RAIDframe disk driver
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 #pseudo-device	fss			# file system snapshot device
-pseudo-device	md		1	# memory disk device
+pseudo-device	md			# memory disk device
 pseudo-device	loop			# network loopback
 pseudo-device	bpfilter		# packet filter
 #pseudo-device	ipfilter		# IP filter (firewall) and NAT

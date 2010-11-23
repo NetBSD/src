@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC32_IP2x,v 1.83 2010/07/07 01:32:51 chs Exp $
+#	$NetBSD: GENERIC32_IP2x,v 1.84 2010/11/23 11:14:05 hannken Exp $
 #
 # GENERIC32_IP2x machine description file
 # 
@@ -29,7 +29,7 @@ makeoptions	TEXTADDR=0x88069000	# entry point
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC32-IP2x-$Revision: 1.83 $"
+#ident		"GENERIC32-IP2x-$Revision: 1.84 $"
 
 maxusers	32
 
@@ -288,7 +288,7 @@ pseudo-device	ccd		4	# concatenated/striped disk devices
 #pseudo-device	raid		4	# RAIDframe disk driver
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 pseudo-device	fss			# file system snapshot device
-pseudo-device	md		1	# memory disk device (ramdisk)
+pseudo-device	md			# memory disk device (ramdisk)
 pseudo-device	vnd			# disk-like interface to files
 #options 	VND_COMPRESSION		# compressed vnd(4)
 

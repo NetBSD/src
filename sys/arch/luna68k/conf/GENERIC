@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.90 2010/04/29 22:40:51 chs Exp $
+# $NetBSD: GENERIC,v 1.91 2010/11/23 11:14:01 hannken Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/luna68k/conf/std.luna68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.90 $"
+#ident 		"GENERIC-$Revision: 1.91 $"
 
 maxusers	8
 
@@ -184,7 +184,7 @@ pseudo-device	bpfilter		# Berkeley Packet Filter
 #pseudo-device	gre			# generic L3 over IP tunnel
 #pseudo-device	ipfilter	1	# ip filter
 pseudo-device	loop		1	# loopback interface; required
-pseudo-device	md		1	# memory disk device
+pseudo-device	md			# memory disk device
 #pseudo-device	ppp			# PPP interfaces
 #pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
 pseudo-device	pty			# pseudo-terminals

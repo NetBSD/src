@@ -1,4 +1,4 @@
-#	$NetBSD: COMPUTEX7750,v 1.28 2010/04/06 15:54:30 nonaka Exp $
+#	$NetBSD: COMPUTEX7750,v 1.29 2010/11/23 11:13:58 hannken Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -76,5 +76,5 @@ rtc0	at shb?
 options 	SCICONSOLE,SCICN_SPEED=115200
 sci0 at shb?
 
-pseudo-device	md		1	# memory disk device (ramdisk)
+pseudo-device	md			# memory disk device (ramdisk)
 pseudo-device	clockctl		# user control of clock subsystem
