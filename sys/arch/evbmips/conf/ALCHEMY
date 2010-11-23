@@ -1,11 +1,11 @@
-#	$NetBSD: ALCHEMY,v 1.29 2010/05/08 22:16:27 mrg Exp $
+#	$NetBSD: ALCHEMY,v 1.30 2010/11/23 11:13:57 hannken Exp $
 #
 # Kernel config for the Alchemy Semiconductor (AMD) PB1000, PB1500,
 # DBAu1000 and DBAu1500 evaluation boards.
 
 include 	"arch/evbmips/conf/std.alchemy"
 
-#ident 		"ALCHEMY-$Revision: 1.29 $"
+#ident 		"ALCHEMY-$Revision: 1.30 $"
 
 maxusers	32
 
@@ -241,7 +241,7 @@ obio*		at mainbus?
 #pseudo-device	raid		4		# RAIDframe disk driver
 #options 	RAID_AUTOCONFIG			# auto-configuration of RAID
 #pseudo-device	fss				# file system snapshot device
-#pseudo-device	md		1		# memory disk device (ramdisk)
+#pseudo-device	md				# memory disk device (ramdisk)
 pseudo-device	vnd				# disk-like interface to files
 
 # Network pseudo-devices

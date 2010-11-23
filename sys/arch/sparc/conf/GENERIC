@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.224 2010/05/08 22:16:30 mrg Exp $
+# $NetBSD: GENERIC,v 1.225 2010/11/23 11:14:06 hannken Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/sparc/conf/std.sparc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.224 $"
+#ident 		"GENERIC-$Revision: 1.225 $"
 
 maxusers	32
 
@@ -517,7 +517,7 @@ options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 ## Memory disk device, used on boot floppies with compressed
 ## kernel-plus-root-disk images.
 
-#pseudo-device	md	1
+#pseudo-device	md	
 
 
 #### Network interfaces

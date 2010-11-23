@@ -1,4 +1,4 @@
-#	$NetBSD: AP_MS104_SH4,v 1.1 2010/04/06 15:54:29 nonaka Exp $
+#	$NetBSD: AP_MS104_SH4,v 1.2 2010/11/23 11:13:58 hannken Exp $
 #
 #	Alpha project AP-MS104-SH4 config file
 #
@@ -111,7 +111,7 @@ wd*	at atabus? drive ? flags 0x0000
 # Pseudo-Devices
 
 # disk/mass storage pseudo-devices
-pseudo-device	md		1	# memory disk device (ramdisk)
+pseudo-device	md			# memory disk device (ramdisk)
 
 pseudo-device	vnd			# disk-like interface to files
 options 	VND_COMPRESSION		# compressed vnd(4)

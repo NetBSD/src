@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.211 2010/05/08 22:16:27 mrg Exp $
+# $NetBSD: GENERIC,v 1.212 2010/11/23 11:13:59 hannken Exp $
 #
 # GENERIC machine description file
 # 
@@ -24,7 +24,7 @@ include		"arch/hpcmips/conf/std.hpcmips.tx39"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.211 $"
+#ident 		"GENERIC-$Revision: 1.212 $"
 
 maxusers	16
 
@@ -677,7 +677,7 @@ pseudo-device	clockctl		# user control of clock subsystem
 
 pseudo-device	biconsdev	1	# build-in console device
 pseudo-device	wsmux			# mouse & keyboard multiplexor
-#pseudo-device	md		1	# memory disk device (ramdisk)
+#pseudo-device	md			# memory disk device (ramdisk)
 
 #pseudo-device	raid		8	# RAIDframe disk driver
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID components

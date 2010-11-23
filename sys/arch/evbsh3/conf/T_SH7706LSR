@@ -1,4 +1,4 @@
-#	$NetBSD: T_SH7706LSR,v 1.3 2010/05/08 22:16:27 mrg Exp $
+#	$NetBSD: T_SH7706LSR,v 1.4 2010/11/23 11:13:58 hannken Exp $
 #
 #	TAC T-SH7706LSR Rev.1 config file
 #
@@ -104,7 +104,7 @@ ld* at sdmmc?				# MMC card
 # Pseudo-Devices
 
 # disk/mass storage pseudo-devices
-pseudo-device	md		1	# memory disk device (ramdisk)
+pseudo-device	md			# memory disk device (ramdisk)
 
 pseudo-device	vnd			# disk-like interface to files
 options 	VND_COMPRESSION		# compressed vnd(4)

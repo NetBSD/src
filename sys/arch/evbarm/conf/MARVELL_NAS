@@ -1,4 +1,4 @@
-#	$NetBSD: MARVELL_NAS,v 1.1 2010/10/02 06:15:52 kiyohara Exp $
+#	$NetBSD: MARVELL_NAS,v 1.2 2010/11/23 11:13:56 hannken Exp $
 #
 #  This configuration supports for generically Marvell NAS.
 
@@ -261,7 +261,7 @@ options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 pseudo-device	fss			# file system snapshot device
 pseudo-device	putter			# for puffs and pud
 
-#pseudo-device	md		1	# memory disk device (ramdisk)
+#pseudo-device	md			# memory disk device (ramdisk)
 pseudo-device	vnd			# disk-like interface to files
 options 	VND_COMPRESSION		# compressed vnd(4)
 

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.152 2010/10/16 13:55:54 tsutsui Exp $
+# $NetBSD: GENERIC,v 1.153 2010/11/23 11:14:06 hannken Exp $
 #
 # GENERIC machine description file
 # 
@@ -25,7 +25,7 @@ include 	"arch/sun3/conf/std.sun3"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.152 $"
+#ident		"GENERIC-$Revision: 1.153 $"
 
 makeoptions	COPTS="-Os"		# bootloader has size limit (~2MB)
 
@@ -261,7 +261,7 @@ pseudo-device   accf_data		# "dataready" accept filter
 pseudo-device   accf_http		# "httpready" accept filter
 
 # Memory-disk drivers
-pseudo-device	md		1
+pseudo-device	md		
 
 # Misc.
 pseudo-device	loop		1	# network loopback

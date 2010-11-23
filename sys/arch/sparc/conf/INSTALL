@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.76 2010/07/07 20:58:56 macallan Exp $
+#	$NetBSD: INSTALL,v 1.77 2010/11/23 11:14:06 hannken Exp $
 #
 # from: NetBSD: GENERIC,v 1.84 1999/06/06 13:00:03 mrg Exp
 #
@@ -22,7 +22,7 @@ options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
 options 	MEMORY_DISK_ROOT_SIZE=1800	# size of memory disk, in blocks
 options 	MEMORY_DISK_RBFLAGS=RB_SINGLE	# boot in single-user mode
 
-pseudo-device	md		1	# memory disk device (ramdisk)
+pseudo-device	md			# memory disk device (ramdisk)
 
 ## System kernel configuration.  See options(4) for more detail.
 
@@ -421,7 +421,7 @@ fd*	at fdc0					# the drive itself
 ## Memory disk device, used on boot floppies with compressed
 ## kernel-plus-root-disk images.
 
-#pseudo-device	md	1
+#pseudo-device	md	
 
 
 #### Network interfaces

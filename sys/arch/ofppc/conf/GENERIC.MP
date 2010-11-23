@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC.MP,v 1.11 2010/05/08 22:16:29 mrg Exp $
+# $NetBSD: GENERIC.MP,v 1.12 2010/11/23 11:14:04 hannken Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/ofppc/conf/std.ofppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.11 $"
+#ident 		"GENERIC-$Revision: 1.12 $"
 
 maxusers	32
 
@@ -400,7 +400,7 @@ options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 #options 	RF_INCLUDE_PARITY_DECLUSTERING=1
 #options 	RF_INCLUDE_PARITY_DECLUSTERING_DS=1
 pseudo-device	fss			# file system snapshot device
-pseudo-device	md		1	# memory disk device
+pseudo-device	md			# memory disk device
 pseudo-device	loop			# network loopback
 pseudo-device	bpfilter		# packet filter
 #pseudo-device	carp			# Common Address Redundancy Protocol

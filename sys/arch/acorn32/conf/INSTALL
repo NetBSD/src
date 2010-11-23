@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.57 2010/04/16 13:48:27 pooka Exp $
+#	$NetBSD: INSTALL,v 1.58 2010/11/23 11:13:52 hannken Exp $
 #
 #	INSTALL -- NetBSD/acorn32 install configuration
 #
@@ -22,7 +22,7 @@ include		"arch/acorn32/conf/std.acorn32"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"INSTALL-$Revision: 1.57 $"
+#ident		"INSTALL-$Revision: 1.58 $"
 
 # estimated number of users
 maxusers	32
@@ -324,7 +324,7 @@ pseudo-device	ccd	2		# concatenated disk devices
 # options 	RF_INCLUDE_PARITY_DECLUSTERING=1
 # options	RF_INCLUDE_PARITY_DECLUSTERING_DS=1
 #pseudo-device	fss			# file system snapshot device
-pseudo-device	md	1		# Ramdisk driver
+pseudo-device	md			# Ramdisk driver
 pseudo-device	rnd			# /dev/random and in-kernel generator
 
 # If the standard modes don't work for your monitor, you can specify
