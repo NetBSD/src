@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.79 2010/05/28 11:14:08 njoly Exp $
+# $NetBSD: md.i386,v 1.80 2010/11/23 10:24:04 mrg Exp $
 ./usr/X11R6/bin/X					-unknown-	x11
 ./usr/X11R6/bin/XFree86					-unknown-	x11
 ./usr/X11R6/bin/gtf					-unknown-	x11
@@ -423,9 +423,10 @@
 ./usr/X11R7/bin/scanpci					-unknown-	obsolete
 ./usr/X11R7/bin/xorgconfig				-unknown-	obsolete
 ./usr/X11R7/lib/X11/Cards				-unknown-	obsolete
-./usr/X11R7/lib/X11/doc/README.DRI			-unknown-	xorg
+./usr/X11R7/lib/X11/doc/README.DRI			-unknown-	obsolete
 ./usr/X11R7/lib/X11/doc/README.fonts			-unknown-	obsolete
-./usr/X11R7/lib/X11/doc/README.rapidaccess		-unknown-	xorg
+./usr/X11R7/lib/X11/doc/README.modes			-unknown-	xorg
+./usr/X11R7/lib/X11/doc/README.rapidaccess		-unknown-	obsolete
 ./usr/X11R7/lib/modules/dri/i810_dri.so			-unknown-	xorg
 ./usr/X11R7/lib/modules/dri/i810_dri.so.0		-unknown-	xorg
 ./usr/X11R7/lib/modules/dri/i915_dri.so			-unknown-	xorg

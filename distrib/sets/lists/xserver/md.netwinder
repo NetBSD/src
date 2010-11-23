@@ -1,4 +1,4 @@
-# $NetBSD: md.netwinder,v 1.24 2010/05/22 21:12:30 mrg Exp $
+# $NetBSD: md.netwinder,v 1.25 2010/11/23 10:24:04 mrg Exp $
 ./usr/X11R6/bin/X					-unknown-	x11
 ./usr/X11R6/bin/XFree86					-unknown-	x11
 ./usr/X11R6/bin/gtf					-unknown-	x11
@@ -258,9 +258,10 @@
 ./usr/X11R7/bin/scanpci					-unknown-	obsolete
 ./usr/X11R7/bin/xorgconfig				-unknown-	obsolete
 ./usr/X11R7/lib/X11/Cards				-unknown-	obsolete
-./usr/X11R7/lib/X11/doc/README.DRI			-unknown-	xorg
+./usr/X11R7/lib/X11/doc/README.DRI			-unknown-	obsolete
 ./usr/X11R7/lib/X11/doc/README.fonts			-unknown-	obsolete
-./usr/X11R7/lib/X11/doc/README.rapidaccess		-unknown-	xorg
+./usr/X11R7/lib/X11/doc/README.modes			-unknown-	xorg
+./usr/X11R7/lib/X11/doc/README.rapidaccess		-unknown-	obsolete
 ./usr/X11R7/lib/modules/drivers/kbd_drv.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/kbd_drv.so.1		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/mouse_drv.so		-unknown-	xorg
