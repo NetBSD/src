@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2010/11/22 22:19:54 christos Exp $
+#	$NetBSD: Makefile,v 1.7 2010/11/23 07:12:01 adam Exp $
 
 .include <bsd.own.mk>
 
@@ -29,7 +29,7 @@ LIBDPLIBS+=	crypto	${NETBSDSRCDIR}/crypto/external/bsd/openssl/lib/libcrypto \
 		z	${NETBSDSRCDIR}/lib/libz
 
 .if (defined(HAVE_GCC) && ${HAVE_GCC} == 4) || defined(HAVE_PCC)
-.for f in dns channels hostfile roaming_common ssh-pkcs11
+.for f in dns channels hostfile ssh-pkcs11
 COPTS.${f}.c+=	-Wno-pointer-sign
 .endfor
 .endif
