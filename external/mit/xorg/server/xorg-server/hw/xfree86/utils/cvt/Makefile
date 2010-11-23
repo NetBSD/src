@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2009/06/12 01:59:06 mrg Exp $
+#	$NetBSD: Makefile,v 1.5 2010/11/23 08:22:33 mrg Exp $
 
 PROG=	cvt
 SRCS=	cvt.c xf86cvt.c
@@ -14,8 +14,8 @@ CPPFLAGS+=	${X11FLAGS.DIX} -DHAVE_XORG_CONFIG_H \
 		-I${X11SRCDIR.xorg-server}/hw/xfree86/ddc \
 		-I${X11SRCDIR.xorg-server}/hw/xfree86/parser
 
-LDADD+=	${LIBDUMMY}
-DPADD+=	${LIBDUMMY}
+LDADD+=	-lm
+DPADD+=	${LIBM}
 
 .PATH: ${X11SRCDIR.xorg-server}/hw/xfree86/utils/${PROG}
 .PATH: ${X11SRCDIR.xorg-server}/hw/xfree86/modes

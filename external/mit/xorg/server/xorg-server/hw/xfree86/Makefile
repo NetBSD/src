@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.29 2009/08/27 04:34:52 mrg Exp $
+#	$NetBSD: Makefile,v 1.30 2010/11/23 08:22:30 mrg Exp $
 
-SUBDIR=		common init ddc dixmods doc dri dri2 dummy i2c loader \
+SUBDIR=		common init ddc dixmods doc dri dri2 i2c loader \
 		xf86modes exa \
 		xorgos ramdac shadowfb vbe vgahw \
 		x86emu xaa xf86config xf8_16bpp
@@ -19,7 +19,7 @@ PROG=		Xorg
 BINMODE=	4711
 
 .PATH:		${X11SRCDIR.xorg-server}/hw/xfree86
-SRCS=		xorg.c
+SRCS=		xorg.c libxorg.c
 
 CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/X11 \
 		-I${X11SRCDIR.xc}/include/fonts \
