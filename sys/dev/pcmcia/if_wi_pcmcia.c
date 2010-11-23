@@ -1,4 +1,4 @@
-/* $NetBSD: if_wi_pcmcia.c,v 1.85 2009/09/05 14:44:59 tsutsui Exp $ */
+/* $NetBSD: if_wi_pcmcia.c,v 1.86 2010/11/23 04:33:10 christos Exp $ */
 
 /*-
  * Copyright (c) 2001, 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wi_pcmcia.c,v 1.85 2009/09/05 14:44:59 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wi_pcmcia.c,v 1.86 2010/11/23 04:33:10 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,8 +78,7 @@ static int	wi_pcmcia_match(device_t, cfdata_t, void *);
 static int	wi_pcmcia_validate_config(struct pcmcia_config_entry *);
 static void	wi_pcmcia_attach(device_t, device_t, void *);
 static int	wi_pcmcia_detach(device_t, int);
-static int	wi_pcmcia_enable(struct wi_softc *);
-static void	wi_pcmcia_disable(struct wi_softc *);
+static int	wi_pcmcia_enable(device_t, int);
 
 #if WI_PCMCIA_SPECTRUM24T_FW
 /* support to download firmware for symbol CF card */
@@ -98,7 +97,7 @@ struct wi_pcmcia_softc {
 #define	WI_PCMCIA_ATTACHED	3
 };
 
-CFATTACH_DECL(wi_pcmcia, sizeof(struct wi_pcmcia_softc),
+CFATTACH_DECL_NEW(wi_pcmcia, sizeof(struct wi_pcmcia_softc),
     wi_pcmcia_match, wi_pcmcia_attach, wi_pcmcia_detach, wi_activate);
 
 static const struct pcmcia_product wi_pcmcia_products[] = {
@@ -251,8 +250,7 @@ static const size_t wi_pcmcia_nproducts =
     sizeof(wi_pcmcia_products) / sizeof(wi_pcmcia_products[0]);
 
 static int
-wi_pcmcia_match(device_t parent, cfdata_t match,
-    void *aux)
+wi_pcmcia_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct pcmcia_attach_args *pa = aux;
 
@@ -263,51 +261,50 @@ wi_pcmcia_match(device_t parent, cfdata_t match,
 }
 
 static int
-wi_pcmcia_enable(struct wi_softc *sc)
+wi_pcmcia_enable(device_t self, int onoff)
 {
-	struct wi_pcmcia_softc *psc = (struct wi_pcmcia_softc *)sc;
+	struct wi_pcmcia_softc *psc = device_private(self);
+	struct wi_softc *sc = &psc->sc_wi;
 	struct pcmcia_function *pf = psc->sc_pf;
 	int error;
 
-	/* establish the interrupt. */
-	sc->sc_ih = pcmcia_intr_establish(pf, IPL_NET, wi_intr, sc);
-	if (!sc->sc_ih)
-		return (EIO);
+	if (onoff) {
+		/* establish the interrupt. */
+		sc->sc_ih = pcmcia_intr_establish(pf, IPL_NET, wi_intr, sc);
+		if (!sc->sc_ih)
+			return EIO;
 
-	error = pcmcia_function_enable(pf);
-	if (error) {
-		pcmcia_intr_disestablish(pf, sc->sc_ih);
-		sc->sc_ih = 0;
-		return (EIO);
-	}
-
-	if (psc->sc_symbol_cf) {
-#if WI_PCMCIA_SPECTRUM24T_FW
-		if (wi_pcmcia_load_firm(sc,
-		    spectrum24t_primsym, sizeof(spectrum24t_primsym),
-		    spectrum24t_secsym, sizeof(spectrum24t_secsym))) {
-			aprint_error_dev(&sc->sc_dev, "couldn't load firmware\n");
-			wi_pcmcia_disable(sc);
-			return (EIO);
+		error = pcmcia_function_enable(pf);
+		if (error) {
+			pcmcia_intr_disestablish(pf, sc->sc_ih);
+			sc->sc_ih = 0;
+			return EIO;
 		}
+
+		if (psc->sc_symbol_cf) {
+#if WI_PCMCIA_SPECTRUM24T_FW
+			if (wi_pcmcia_load_firm(sc,
+			    spectrum24t_primsym, sizeof(spectrum24t_primsym),
+			    spectrum24t_secsym, sizeof(spectrum24t_secsym))) {
+				aprint_error_dev(sc->sc_dev,
+				    "couldn't load firmware\n");
+				wi_pcmcia_enable(self, 0);
+				return EIO;
+			}
 #else
-		aprint_error_dev(&sc->sc_dev, "firmware load not configured\n");
-		return EIO;
+			aprint_error_dev(sc->sc_dev,
+			    "firmware load not configured\n");
+			return EIO;
 #endif
+		}
+		DELAY(1000);
+	} else {
+		pcmcia_function_disable(psc->sc_pf);
+		pcmcia_intr_disestablish(psc->sc_pf, sc->sc_ih);
+		sc->sc_ih = 0;
 	}
-	DELAY(1000);
 
-	return (0);
-}
-
-static void
-wi_pcmcia_disable(struct wi_softc *sc)
-{
-	struct wi_pcmcia_softc *psc = (struct wi_pcmcia_softc *)sc;
-
-	pcmcia_function_disable(psc->sc_pf);
-	pcmcia_intr_disestablish(psc->sc_pf, sc->sc_ih);
-	sc->sc_ih = 0;
+	return 0;
 }
 
 static int
@@ -322,10 +319,9 @@ wi_pcmcia_validate_config(struct pcmcia_config_entry *cfe)
 }
 
 static void
-wi_pcmcia_attach(struct device  *parent, device_t self,
-    void *aux)
+wi_pcmcia_attach(device_t parent, device_t self, void *aux)
 {
-	struct wi_pcmcia_softc *psc = (void *)self;
+	struct wi_pcmcia_softc *psc = device_private(self); 
 	struct wi_softc *sc = &psc->sc_wi;
 	struct pcmcia_attach_args *pa = aux;
 	struct pcmcia_config_entry *cfe;
@@ -334,6 +330,7 @@ wi_pcmcia_attach(struct device  *parent, device_t self,
 
 	aprint_naive("\n");
 
+	sc->sc_dev = self;
 	psc->sc_pf = pa->pf;
 
 	error = pcmcia_function_configure(pa->pf, wi_pcmcia_validate_config);
@@ -360,13 +357,12 @@ wi_pcmcia_attach(struct device  *parent, device_t self,
 	    CSR_READ_2(sc, WI_COR) == WI_COR_IOMODE)
 		psc->sc_symbol_cf = 1;
 
-	error = wi_pcmcia_enable(sc);
+	error = wi_pcmcia_enable(self, 1);
 	if (error)
 		goto fail;
 
 	sc->sc_pci = 0;
 	sc->sc_enable = wi_pcmcia_enable;
-	sc->sc_disable = wi_pcmcia_disable;
 
 	printf("%s:", device_xname(self));
 
@@ -381,12 +377,12 @@ wi_pcmcia_attach(struct device  *parent, device_t self,
 	else
 		aprint_error_dev(self, "couldn't establish power handler\n");
 
-	wi_pcmcia_disable(sc);
+	wi_pcmcia_enable(self, 0);
 	psc->sc_state = WI_PCMCIA_ATTACHED;
 	return;
 
 fail2:
-	wi_pcmcia_disable(sc);
+	wi_pcmcia_enable(self, 0);
 fail:
 	pcmcia_function_unconfigure(pa->pf);
 }
@@ -394,7 +390,7 @@ fail:
 static int
 wi_pcmcia_detach(device_t self, int flags)
 {
-	struct wi_pcmcia_softc *psc = (struct wi_pcmcia_softc *)self;
+	struct wi_pcmcia_softc *psc = device_private(self);
 	int error;
 
 	if (psc->sc_state != WI_PCMCIA_ATTACHED)
@@ -422,7 +418,8 @@ wi_pcmcia_detach(device_t self, int flags)
 
 #if WI_PCMCIA_SPECTRUM24T_FW
 static int
-wi_pcmcia_load_firm(struct wi_softc *sc, const void *primsym, int primlen, const void *secsym, int seclen)
+wi_pcmcia_load_firm(struct wi_softc *sc, const void *primsym, int primlen,
+    const void *secsym, int seclen)
 {
 	u_int8_t ebuf[256];
 	int i;
@@ -469,7 +466,8 @@ wi_pcmcia_load_firm(struct wi_softc *sc, const void *primsym, int primlen, const
 }
 
 static int
-wi_pcmcia_write_firm(struct wi_softc *sc, const void *buf, int buflen, const void *ebuf, int ebuflen)
+wi_pcmcia_write_firm(struct wi_softc *sc, const void *buf, int buflen,
+    const void *ebuf, int ebuflen)
 {
 	const u_int8_t *p, *ep, *q, *eq;
 	char *endp;
