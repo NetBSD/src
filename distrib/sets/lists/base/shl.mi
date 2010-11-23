@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.557 2010/11/22 22:22:28 christos Exp $
+# $NetBSD: shl.mi,v 1.558 2010/11/23 12:41:47 pooka Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -55,6 +55,9 @@
 ./lib/libradius.so				base-sys-shlib		dynamicroot
 ./lib/libradius.so.4				base-sys-shlib		dynamicroot
 ./lib/libradius.so.4.0				base-sys-shlib		dynamicroot
+./lib/librumpclient.so				base-sys-shlib		dynamicroot
+./lib/librumpclient.so.0			base-sys-shlib		dynamicroot
+./lib/librumpclient.so.0.0			base-sys-shlib		dynamicroot
 ./lib/libtermcap.so				base-sys-shlib		dynamicroot
 ./lib/libtermcap.so.0				base-sys-shlib		dynamicroot
 ./lib/libtermcap.so.0.6				base-sys-shlib		dynamicroot
