@@ -1,4 +1,4 @@
-#	$NetBSD: RAMDISK,v 1.27 2009/02/06 18:50:28 jym Exp $
+#	$NetBSD: RAMDISK,v 1.28 2010/11/23 11:14:02 hannken Exp $
 
 #
 # RAMDISK: Root/swap on ramdisk
@@ -62,7 +62,7 @@ options 	NFS_BOOT_BOOTPARAM	# Diskless client w/ bootparamd
 pseudo-device	sl
 pseudo-device	ppp	
 pseudo-device	loop
-pseudo-device	md	1
+pseudo-device	md	
 
 mainbus0	at root
 
