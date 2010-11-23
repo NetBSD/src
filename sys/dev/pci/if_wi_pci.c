@@ -1,4 +1,4 @@
-/*      $NetBSD: if_wi_pci.c,v 1.51 2010/11/23 04:33:09 christos Exp $  */
+/*      $NetBSD: if_wi_pci.c,v 1.52 2010/11/23 04:36:09 christos Exp $  */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wi_pci.c,v 1.51 2010/11/23 04:33:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wi_pci.c,v 1.52 2010/11/23 04:36:09 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -129,8 +129,8 @@ static const struct wi_pci_product {
 static int
 wi_pci_enable(device_t self, int onoff)
 {
-	struct wi_pci_softc *psc = device_pivate(self);
-	struct wi_softc *sc = &psc->sc_wi;
+	struct wi_pci_softc *psc = device_private(self);
+	struct wi_softc *sc = &psc->psc_wi;
 
 	if (onoff) {
 		/* establish the interrupt. */
