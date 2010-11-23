@@ -1,4 +1,4 @@
-/*	$NetBSD: xdr_rec.c,v 1.30 2009/02/12 04:40:40 lukem Exp $	*/
+/*	$NetBSD: xdr_rec.c,v 1.31 2010/11/23 14:02:01 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)xdr_rec.c 1.21 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)xdr_rec.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: xdr_rec.c,v 1.30 2009/02/12 04:40:40 lukem Exp $");
+__RCSID("$NetBSD: xdr_rec.c,v 1.31 2010/11/23 14:02:01 christos Exp $");
 #endif
 #endif
 
@@ -581,8 +581,12 @@ __xdrrec_getrec(xdrs, statp, expectdata)
 			return FALSE;
 		}
 		rstrm->in_reclen += fraglen;
-		if ((u_int)rstrm->in_reclen > rstrm->recvsize)
-			realloc_stream(rstrm, rstrm->in_reclen);
+		if ((u_int)rstrm->in_reclen > rstrm->recvsize) {
+			if (!realloc_stream(rstrm, rstrm->in_reclen)) {
+				*statp = XPRT_DIED;
+				return FALSE;
+			}
+		}
 		if (rstrm->in_header & LAST_FRAG) {
 			rstrm->in_header &= ~LAST_FRAG;
 			rstrm->last_frag = TRUE;
