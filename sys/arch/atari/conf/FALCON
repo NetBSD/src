@@ -1,11 +1,11 @@
 #
-# $NetBSD: FALCON,v 1.101 2010/05/08 22:18:23 mrg Exp $
+# $NetBSD: FALCON,v 1.102 2010/11/23 11:16:59 hannken Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
 #
 # Created from:
-#		NetBSD: GENERIC.in,v 1.90 2010/05/08 22:16:26 mrg Exp $
+#		NetBSD: GENERIC.in,v 1.91 2010/11/23 11:13:54 hannken Exp $
 include "arch/atari/conf/std.atari"
 options INCLUDE_CONFIG_FILE # embed config file in kernel binary
 maxusers 16
@@ -84,7 +84,7 @@ pseudo-device sl # Slip
 pseudo-device ppp # ppp
 pseudo-device pty # pseudo-terminals
 pseudo-device loop # Loopback network
-pseudo-device md 3 # Boot memory disk
+pseudo-device md # Boot memory disk
 pseudo-device putter # for puffs and pud
 pseudo-device vnd # 3 pseudo disks (see vnconfig)
 pseudo-device bpfilter # berkeley packet filters

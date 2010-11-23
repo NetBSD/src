@@ -1,11 +1,11 @@
 #
-# $NetBSD: SMALL030,v 1.11 2010/05/08 22:18:23 mrg Exp $
+# $NetBSD: SMALL030,v 1.12 2010/11/23 11:16:59 hannken Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
 #
 # Created from:
-#		NetBSD: GENERIC.in,v 1.90 2010/05/08 22:16:26 mrg Exp $
+#		NetBSD: GENERIC.in,v 1.91 2010/11/23 11:13:54 hannken Exp $
 include "arch/atari/conf/std.atari"
 makeoptions COPTS="-Os"
 maxusers 16
@@ -39,7 +39,7 @@ config netbsd root on ? type ?
 pseudo-device sl # Slip
 pseudo-device pty # pseudo-terminals
 pseudo-device loop # Loopback network
-pseudo-device md 3 # Boot memory disk
+pseudo-device md # Boot memory disk
 pseudo-device putter # for puffs and pud
 pseudo-device view 4 # View (graphics mapping)
 ncrscsi0 at mainbus0 # NCR5380 SCSI driver
