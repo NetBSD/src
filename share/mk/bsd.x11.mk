@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.x11.mk,v 1.91 2010/11/23 00:02:20 mrg Exp $
+#	$NetBSD: bsd.x11.mk,v 1.92 2010/11/23 09:49:30 mrg Exp $
 
 .include <bsd.init.mk>
 
@@ -45,7 +45,8 @@ X11FLAGS.EXTENSION=	${X11FLAGS.BASE_EXTENSION} \
 			${X11FLAGS.PERVASIVE_EXTENSION}
 
 X11FLAGS.DIX=		-DHAVE_DIX_CONFIG_H -D_BSD_SOURCE -DHAS_FCHOWN \
-			-DHAS_STICKY_DIR_BIT -D_POSIX_THREAD_SAFE_FUNCTIONS
+			-DHAS_STICKY_DIR_BIT -D_POSIX_THREAD_SAFE_FUNCTIONS \
+			-DHAVE_XORG_CONFIG_H
 X11INCS.DIX=		-I${X11INCSDIR}/freetype2  \
 			-I${X11INCSDIR}/pixman-1 \
 			-I$(X11SRCDIR.xorg-server)/include \
@@ -59,7 +60,8 @@ X11INCS.DIX=		-I${X11INCSDIR}/freetype2  \
 			-I$(X11SRCDIR.xorg-server)/miext/damage \
 			-I$(X11SRCDIR.xorg-server)/render \
 			-I$(X11SRCDIR.xorg-server)/randr \
-			-I$(X11SRCDIR.xorg-server)/fb
+			-I$(X11SRCDIR.xorg-server)/fb \
+			-I$(X11SRCDIR.xorg-server)/../include
 .else
 X11FLAGS.EXTENSION=	-DMITMISC -DXTEST -DXTRAP -DXSYNC -DXCMISC -DXRECORD \
 			-DMITSHM -DBIGREQS -DXF86MISC -DDBE -DDPMSExtension \
@@ -128,13 +130,13 @@ X11FLAGS.LOADABLE=	-DXFree86LOADER -DIN_MODULE -DXFree86Module \
 .if ${X11FLAVOUR} == "Xorg"
 XVENDORNAMESHORT=	'"X.Org"'
 XVENDORNAME=		'"The X.Org Foundation"'
-XORG_RELEASE=		'"Release 1.6.5"'
+XORG_RELEASE=		'"Release 1.9.2"'
 __XKBDEFRULES__=	'"xorg"'
 XLOCALE.DEFINES=	-DXLOCALEDIR=\"${X11LIBDIR}/locale\" \
 			-DXLOCALELIBDIR=\"${X11LIBDIR}/locale\"
 
 # XXX oh yeah, fix me later
-XORG_VERSION_CURRENT="(((1) * 10000000) + ((6) * 100000) + ((5) * 1000) + 0)"
+XORG_VERSION_CURRENT="(((1) * 10000000) + ((9) * 100000) + ((2) * 1000) + 0)"
 .endif
 
 PRINT_PACKAGE_VERSION=	awk '/^PACKAGE_VERSION=/ {			\
@@ -288,6 +290,8 @@ pkgconfig-install: ${_PKGDEST.${_pkg}}
 		s,@xkb_base@,\\$$\{libdir\}/X11/xkb,; \
 		s,@xcbincludedir@,\\$$\{prefix\}/include/xcb,; \
 		s,@fontrootdir@,\\$$\{libdir\}/X11/fonts,; \
+		s,@LIBXML2_LIBS@,,; \
+		s,@ICONV_LIBS@,,; \
 		s,@NEEDED@,," \
 		-e "s,@moduledir@,\\$$\{libdir\}/modules,; \
 		s,@sdkdir@,\\$$\{includedir\}/xorg,; \
