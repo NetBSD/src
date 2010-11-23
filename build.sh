@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.240 2010/08/24 20:52:31 pgoyette Exp $
+#	$NetBSD: build.sh,v 1.241 2010/11/23 18:30:26 pooka Exp $
 #
 # Copyright (c) 2001-2009 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1384,7 +1384,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.240 2010/08/24 20:52:31 pgoyette Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.241 2010/11/23 18:30:26 pooka Exp $
 # with these arguments: ${_args}
 #
 
@@ -1629,7 +1629,7 @@ dorump()
 	for set in ${RUMP_LIBSETS} ; do
 		IFS="${oIFS}"
 		${runcmd} ${tool_ld} -nostdlib -L${DESTDIR}/usr/lib	\
-		    -static --whole-archive ${set} 2>&1 |		\
+		    -static --whole-archive ${set} 2>&1 -o /tmp/rumptest.$$ | \
 		      awk -v quirks="${md_quirks}" '
 			/undefined reference/ &&
 			    !/more undefined references.*follow/{
@@ -1638,6 +1638,7 @@ dorump()
 					fails[NR] = $0
 			}
 			/cannot find -l/{fails[NR] = $0}
+			/cannot open output file/{fails[NR] = $0}
 			END{
 				for (x in fails)
 					print fails[x]
