@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.base,v 1.61 2010/11/11 22:48:47 pooka Exp $
+#	$NetBSD: NetBSD.dist.base,v 1.62 2010/11/23 15:38:53 pooka Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -210,6 +210,7 @@
 ./usr/libdata/debug/usr/tests/dev/audio
 ./usr/libdata/debug/usr/tests/dev/cgd
 ./usr/libdata/debug/usr/tests/dev/cgd/h_img2cgd
+./usr/libdata/debug/usr/tests/dev/md
 ./usr/libdata/debug/usr/tests/dev/scsipi
 ./usr/libdata/debug/usr/tests/dev/sysmon
 ./usr/libdata/debug/usr/tests/fs
@@ -1149,6 +1150,7 @@
 ./usr/tests/dev/audio
 ./usr/tests/dev/cgd
 ./usr/tests/dev/cgd/h_img2cgd
+./usr/tests/dev/md
 ./usr/tests/dev/scsipi
 ./usr/tests/dev/sysmon
 ./usr/tests/fs
