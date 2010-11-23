@@ -1,0 +1,3 @@
+$Id: README,v 1.1 2010/11/23 20:48:40 yamt Exp $
+
+it's a C-version of tpfmt.sh.  see usr.sbin/tprof/README for the usage.
