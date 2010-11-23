@@ -1,4 +1,4 @@
-/*	$NetBSD: wivar.h,v 1.63 2010/01/17 19:45:06 pooka Exp $	*/
+/*	$NetBSD: wivar.h,v 1.64 2010/11/23 04:33:09 christos Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -74,13 +74,12 @@ typedef SLIST_HEAD(,wi_rssdesc) wi_rssdescq_t;
  * Oslo IETF plenary meeting.
  */
 struct wi_softc	{
-	struct device		sc_dev;
+	device_t		sc_dev;
 	struct ethercom		sc_ec;
 	struct ieee80211com	sc_ic;
 	u_int32_t		sc_ic_flags;	/* backup of ic->ic_flags */
 	void			*sc_ih;		/* interrupt handler */
-	int			(*sc_enable)(struct wi_softc *);
-	void			(*sc_disable)(struct wi_softc *);
+	int			(*sc_enable)(device_t, int);
 	void			(*sc_reset)(struct wi_softc *);
 
 	int			(*sc_newstate)(struct ieee80211com *,
