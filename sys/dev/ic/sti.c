@@ -1,4 +1,4 @@
-/*	$NetBSD: sti.c,v 1.13 2010/11/09 12:24:48 skrll Exp $	*/
+/*	$NetBSD: sti.c,v 1.14 2010/11/24 19:12:08 skrll Exp $	*/
 
 /*	$OpenBSD: sti.c,v 1.61 2009/09/05 14:09:35 miod Exp $	*/
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sti.c,v 1.13 2010/11/09 12:24:48 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sti.c,v 1.14 2010/11/24 19:12:08 skrll Exp $");
 
 #include "wsdisplay.h"
 
@@ -464,6 +464,7 @@ sti_region_setup(struct sti_screen *scr)
 		 */
 		if (regno == 0 && romh == bases[0]) {
 			cc->regions[0] = addr;
+			DPRINTF(("\n"));
 			continue;
 		}
 
@@ -472,14 +473,15 @@ sti_region_setup(struct sti_screen *scr)
 		    r->cache ? BUS_SPACE_MAP_CACHEABLE : 0, &bh)) {
 			DPRINTF((" - already mapped region\n"));
 		} else {
-			DPRINTF(("\n"));
 
 			/* XXX should use bus_space_vaddr */
 			addr = (bus_addr_t)bh;
 			if (regno == 1) {
+				DPRINTF((" - fb"));
 				scr->fbaddr = addr;
 				scr->fblen = r->length << PGSHIFT;
 			}
+			DPRINTF(("\n"));
 		}
 
 		cc->regions[regno] = addr;
