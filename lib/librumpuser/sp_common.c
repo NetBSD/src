@@ -1,4 +1,4 @@
-/*      $NetBSD: sp_common.c,v 1.6 2010/11/19 17:09:44 pooka Exp $	*/
+/*      $NetBSD: sp_common.c,v 1.7 2010/11/24 14:32:42 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -117,11 +117,14 @@ struct respwait {
 
 struct spclient {
 	int spc_fd;
+	int spc_refcnt;
+	int spc_dying;
 
 	struct lwp *spc_mainlwp;
 	pid_t spc_pid;
 
-	/* incoming */
+	struct pollfd *spc_pfd;
+
 	struct rsp_hdr spc_hdr;
 	uint8_t *spc_buf;
 	size_t spc_off;
@@ -256,7 +259,7 @@ waitresp(struct spclient *spc, struct respwait *rw)
 	int rv = 0;
 
 	pthread_mutex_lock(&spc->spc_mtx);
-	while (rw->rw_data == NULL) {
+	while (rw->rw_data == NULL && spc->spc_dying == 0) {
 		/* are we free to receive? */
 		if (spc->spc_istatus == SPCSTATUS_FREE) {
 			int gotresp;
