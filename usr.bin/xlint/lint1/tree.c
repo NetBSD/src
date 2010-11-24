@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.64 2010/03/21 14:29:04 christos Exp $	*/
+/*	$NetBSD: tree.c,v 1.65 2010/11/24 17:51:11 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.64 2010/03/21 14:29:04 christos Exp $");
+__RCSID("$NetBSD: tree.c,v 1.65 2010/11/24 17:51:11 christos Exp $");
 #endif
 
 #include <stdlib.h>
@@ -4007,19 +4007,21 @@ catstrg(strg_t *strg1, strg_t *strg2)
 		return (strg1);
 	}
 
-	len = (len1 = strg1->st_len) + (len2 = strg2->st_len);
+	len1 = strg1->st_len;
+	len2 = strg2->st_len + 1;	/* + NUL */
+	len = len1 + len2;
 
 	if (strg1->st_tspec == CHAR) {
-		strg1->st_cp = xrealloc(strg1->st_cp, len + 1);
-		(void)memcpy(strg1->st_cp + len1, strg2->st_cp, len2 + 1);
+		strg1->st_cp = xrealloc(strg1->st_cp, len);
+		(void)memcpy(strg1->st_cp + len1, strg2->st_cp, len2);
 		free(strg2->st_cp);
 	} else {
-		strg1->st_wcp = xrealloc(strg1->st_wcp,
-					 (len + 1) * sizeof (wchar_t));
+		strg1->st_wcp = xrealloc(strg1->st_wcp, sizeof(*strg1->st_wcp));
 		(void)memcpy(strg1->st_wcp + len1, strg2->st_wcp,
-			     (len2 + 1) * sizeof (wchar_t));
+		    len2 * sizeof(*strg1->st_wcp));
 		free(strg2->st_wcp);
 	}
+	strg1->st_len = len - 1; /* - NUL */;
 	free(strg2);
 
 	return (strg1);
