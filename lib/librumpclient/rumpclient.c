@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpclient.c,v 1.3 2010/11/19 15:25:49 pooka Exp $	*/
+/*      $NetBSD: rumpclient.c,v 1.4 2010/11/24 17:03:39 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -71,13 +71,12 @@ syscall_req(struct spclient *spc, int sysnum,
 	rhdr.rsp_sysnum = sysnum;
 
 	putwait(spc, &rw, &rhdr);
-
-	sendlock(spc);
 	rv = dosend(spc, &rhdr, sizeof(rhdr));
 	rv = dosend(spc, data, dlen);
-	sendunlock(spc);
-	if (rv)
-		return rv; /* XXX: unputwait */
+	if (rv) {
+		unputwait(spc, &rw);
+		return rv;
+	}
 
 	rv = waitresp(spc, &rw);
 	*resp = rw.rw_data;
@@ -224,6 +223,7 @@ rumpclient_init()
 		errno = error;
 		return -1;
 	}
+
 	if ((error = parsetab[idx].connhook(s)) != 0) {
 		error = errno;
 		fprintf(stderr, "rump_sp: connect hook failed\n");
