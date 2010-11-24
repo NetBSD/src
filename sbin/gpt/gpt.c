@@ -31,7 +31,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/gpt.c,v 1.16 2006/07/07 02:44:23 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: gpt.c,v 1.8.6.1 2010/11/21 21:59:38 riz Exp $");
+__RCSID("$NetBSD: gpt.c,v 1.8.6.2 2010/11/24 19:12:44 riz Exp $");
 #endif
 
 #include <sys/param.h>
@@ -597,7 +597,8 @@ gpt_gpt(int fd, off_t lba, int found)
 		if (found) {
 			if (verbose)
 				warn("%s: Cannot read LBA table at sector %llu",
-				    device_name, le64toh(hdr->hdr_lba_table));
+				    device_name, (unsigned long long)
+				    le64toh(hdr->hdr_lba_table));
 			return (-1);
 		}
 		goto fail_hdr;
