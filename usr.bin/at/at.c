@@ -1,4 +1,4 @@
-/*	$NetBSD: at.c,v 1.27 2009/01/18 01:02:41 lukem Exp $	*/
+/*	$NetBSD: at.c,v 1.28 2010/11/24 17:40:41 christos Exp $	*/
 
 /*
  *  at.c : Put file into atrun queue
@@ -72,7 +72,7 @@ enum { ATQ, ATRM, AT, BATCH, CAT };	/* what program we want to run */
 #if 0
 static char rcsid[] = "$OpenBSD: at.c,v 1.15 1998/06/03 16:20:26 deraadt Exp $";
 #else
-__RCSID("$NetBSD: at.c,v 1.27 2009/01/18 01:02:41 lukem Exp $");
+__RCSID("$NetBSD: at.c,v 1.28 2010/11/24 17:40:41 christos Exp $");
 #endif
 #endif
 
@@ -195,7 +195,7 @@ writefile(time_t runtimer, unsigned char queue)
 	(void)sigemptyset(&act.sa_mask);
 	act.sa_flags = 0;
 
-	sigaction(SIGINT, &act, NULL);
+	(void)sigaction(SIGINT, &act, NULL);
 
 	(void)strlcpy(atfile, _PATH_ATJOBS, sizeof(atfile));
 	ppos = atfile + strlen(atfile);
@@ -225,7 +225,7 @@ writefile(time_t runtimer, unsigned char queue)
 	 * Set an alarm so a timeout occurs after ALARMC seconds, in case
 	 * something is seriously broken.
 	 */
-	sigaction(SIGALRM, &act, NULL);
+	(void)sigaction(SIGALRM, &act, NULL);
 	(void)alarm(ALARMC);
 	(void)fcntl(lockdes, F_SETLKW, &lock);
 	(void)alarm(0);
@@ -484,6 +484,7 @@ list_jobs(void)
 		    6, (S_IXUSR & buf.st_mode) ? "" : "(done)",
 		    jobno);
 	}
+	(void)closedir(spool);
 	PRIV_END;
 }
 
@@ -565,6 +566,7 @@ process_jobs(int argc, char **argv, int what)
 			}
 		}
 	}
+	(void)closedir(spool);
 }
 
 /* Global functions */
