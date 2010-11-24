@@ -1,4 +1,4 @@
-/*	$NetBSD: stat.c,v 1.28 2009/04/13 23:02:36 lukem Exp $ */
+/*	$NetBSD: stat.c,v 1.29 2010/11/24 22:57:53 dholland Exp $ */
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: stat.c,v 1.28 2009/04/13 23:02:36 lukem Exp $");
+__RCSID("$NetBSD: stat.c,v 1.29 2010/11/24 22:57:53 dholland Exp $");
 #endif
 
 #if ! HAVE_NBTOOL_CONFIG_H
@@ -718,7 +718,6 @@ format1(const struct stat *st,
 #endif /* HAVE_STRUCT_STAT_ST_BIRTHTIME */
 		small = (sizeof(secs) == 4);
 		data = secs;
-		small = 1;
 		tm = localtime(&secs);
 		(void)strftime(path, sizeof(path), timefmt, tm);
 		sdata = path;
@@ -989,8 +988,9 @@ format1(const struct stat *st,
 				(void)snprintf(tmp, sizeof(tmp), "%d", size);
 				(void)strcat(lfmt, tmp);
 			}
-			(void)strcat(lfmt, "d");
-			return (snprintf(buf, blen, lfmt, secs));
+			(void)strcat(lfmt, "lld");
+			return (snprintf(buf, blen, lfmt,
+			    (long long)secs));
 		}
 
 		/*
@@ -1013,7 +1013,7 @@ format1(const struct stat *st,
 			(void)snprintf(tmp, sizeof(tmp), "%d", size);
 			(void)strcat(lfmt, tmp);
 		}
-		(void)strcat(lfmt, "d");
+		(void)strcat(lfmt, "lld");
 
 		/*
 		 * The stuff after the decimal point always needs zero
@@ -1025,7 +1025,7 @@ format1(const struct stat *st,
 		 * We can "print" at most nine digits of precision.  The
 		 * rest we will pad on at the end.
 		 */
-		(void)snprintf(tmp, sizeof(tmp), "%dd", prec > 9 ? 9 : prec);
+		(void)snprintf(tmp, sizeof(tmp), "%dld", prec > 9 ? 9 : prec);
 		(void)strcat(lfmt, tmp);
 
 		/*
@@ -1039,7 +1039,7 @@ format1(const struct stat *st,
 		 * Use the format, and then tack on any zeroes that
 		 * might be required to make up the requested precision.
 		 */
-		l = snprintf(buf, blen, lfmt, secs, nsecs);
+		l = snprintf(buf, blen, lfmt, (long long)secs, nsecs);
 		for (; prec > 9 && l < (int)blen; prec--, l++)
 			(void)strcat(buf, "0");
 		return (l);
