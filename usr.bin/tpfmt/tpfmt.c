@@ -1,7 +1,7 @@
-/*	$NetBSD: tpfmt.c,v 1.1 2010/11/23 20:48:40 yamt Exp $	*/
+/*	$NetBSD: tpfmt.c,v 1.2 2010/11/24 13:17:56 christos Exp $	*/
 
 /*-
- * Copyright (c)2010 YAMAMOTO Takashi,
+ * Copyright (c) 2010 YAMAMOTO Takashi,
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: tpfmt.c,v 1.1 2010/11/23 20:48:40 yamt Exp $");
+__RCSID("$NetBSD: tpfmt.c,v 1.2 2010/11/24 13:17:56 christos Exp $");
 #endif /* not lint */
 
 #include <sys/rbtree.h>
@@ -40,10 +40,11 @@ __RCSID("$NetBSD: tpfmt.c,v 1.1 2010/11/23 20:48:40 yamt Exp $");
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <util.h>
 
 #include "sym.h"
 
-const char *ksyms = "/dev/ksyms";
+static const char ksyms[] = "/dev/ksyms";
 
 struct addr {
 	struct rb_node node;
@@ -51,9 +52,10 @@ struct addr {
 	unsigned int nsamples;	/* number of samples taken for the address */
 };
 
-rb_tree_t addrtree;
+static rb_tree_t addrtree;
 
 static signed int
+/*ARGSUSED1*/
 addrtree_compare_key(void *ctx, const void *n1, const void *keyp)
 {
 	const struct addr *a1 = n1;
@@ -95,13 +97,13 @@ compare_nsamples(const void *p1, const void *p2)
 }
 
 int
+/*ARGSUSED*/
 main(int argc, char *argv[])
 {
 	struct addr *a;
 	struct addr **l;
 	struct addr **p;
-	unsigned int naddrs;
-	unsigned int i;
+	size_t naddrs, i;
 
 	ksymload(ksyms);
 	rb_tree_init(&addrtree, &addrtree_ops);
@@ -124,7 +126,7 @@ main(int argc, char *argv[])
 				err(EXIT_FAILURE, "fread");
 			}
 		}
-		a = malloc(sizeof(*a));
+		a = emalloc(sizeof(*a));
 		a->addr = (uint64_t)sample;
 		a->nsamples = 1;
 		o = rb_tree_insert_node(&addrtree, a);
@@ -140,7 +142,7 @@ main(int argc, char *argv[])
 	 * sort samples by addresses.
 	 */
 
-	l = malloc(naddrs * sizeof(*l));
+	l = emalloc(naddrs * sizeof(*l));
 	p = l;
 	RB_TREE_FOREACH(a, &addrtree) {
 		*p++ = a;
@@ -161,14 +163,15 @@ main(int argc, char *argv[])
 		a = l[i];
 		name = ksymlookup(a->addr, &offset);
 		if (name == NULL) {
-			snprintf(buf, sizeof(buf), "<%016" PRIx64 ">", a->addr);
+			(void)snprintf(buf, sizeof(buf), "<%016" PRIx64 ">",
+			    a->addr);
 			name = buf;
 		} else if (offset != 0) {
-			snprintf(buf, sizeof(buf), "%s+0x%" PRIx64, name,
+			(void)snprintf(buf, sizeof(buf), "%s+0x%" PRIx64, name,
 			    offset);
 			name = buf;
 		}
 		printf("%8u %016" PRIx64 " %s\n", a->nsamples, a->addr, name);
 	}
-	exit(EXIT_SUCCESS);
+	return EXIT_SUCCESS;
 }

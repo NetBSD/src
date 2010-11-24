@@ -1,7 +1,7 @@
-/*	$NetBSD: sym.h,v 1.1 2010/11/23 20:48:40 yamt Exp $	*/
+/*	$NetBSD: sym.h,v 1.2 2010/11/24 13:17:56 christos Exp $	*/
 
 /*-
- * Copyright (c)2010 YAMAMOTO Takashi,
+ * Copyright (c) 2010 YAMAMOTO Takashi,
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
