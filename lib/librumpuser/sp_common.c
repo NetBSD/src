@@ -1,4 +1,4 @@
-/*      $NetBSD: sp_common.c,v 1.8 2010/11/24 17:00:10 pooka Exp $	*/
+/*      $NetBSD: sp_common.c,v 1.9 2010/11/24 17:20:24 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -278,12 +278,12 @@ waitresp(struct spclient *spc, struct respwait *rw)
 			pfd.events = POLLIN;
 
 			for (gotresp = 0; !gotresp; ) {
-				rv = readframe(spc);
-				switch (rv) {
+				switch (readframe(spc)) {
 				case 0:
 					poll(&pfd, 1, INFTIM);
 					continue;
 				case -1:
+					rv = errno;
 					spc->spc_dying = 1;
 					break;
 				default:
@@ -318,6 +318,7 @@ waitresp(struct spclient *spc, struct respwait *rw)
 	pthread_mutex_unlock(&spc->spc_mtx);
 
 	pthread_cond_destroy(&rw->rw_cv);
+
 	return rv;
 }
 
