@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.137 2010/10/28 14:21:50 seanb Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.138 2010/11/24 14:49:18 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.137 2010/10/28 14:21:50 seanb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.138 2010/11/24 14:49:18 cegger Exp $");
 
 #include "opt_mbuftrace.h"
 #include "opt_nmbclusters.h"
@@ -1600,7 +1600,7 @@ m_print(const struct mbuf *m, const char *modif, void (*pr)(const char *, ...))
 nextchain:
 	(*pr)("MBUF %p\n", m);
 	snprintb(buf, sizeof(buf), M_FLAGS_BITS, (u_int)m->m_flags);
-	(*pr)("  data=%p, len=%d, type=%d, flags=0x%s\n",
+	(*pr)("  data=%p, len=%d, type=%d, flags=%s\n",
 	    m->m_data, m->m_len, m->m_type, buf);
 	(*pr)("  owner=%p, next=%p, nextpkt=%p\n", m->m_owner, m->m_next,
 	    m->m_nextpkt);
