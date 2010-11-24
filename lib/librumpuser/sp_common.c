@@ -1,4 +1,4 @@
-/*      $NetBSD: sp_common.c,v 1.7 2010/11/24 14:32:42 pooka Exp $	*/
+/*      $NetBSD: sp_common.c,v 1.8 2010/11/24 17:00:10 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -216,7 +216,15 @@ putwait(struct spclient *spc, struct respwait *rw, struct rsp_hdr *rhdr)
 	pthread_mutex_lock(&spc->spc_mtx);
 	rw->rw_reqno = rhdr->rsp_reqno = spc->spc_nextreq++;
 	TAILQ_INSERT_TAIL(&spc->spc_respwait, rw, rw_entries);
+}
+
+static void
+unputwait(struct spclient *spc, struct respwait *rw)
+{
+
+	TAILQ_REMOVE(&spc->spc_respwait, rw, rw_entries);
 	pthread_mutex_unlock(&spc->spc_mtx);
+	pthread_cond_destroy(&rw->rw_cv);
 }
 
 static void
@@ -258,7 +266,6 @@ waitresp(struct spclient *spc, struct respwait *rw)
 	struct pollfd pfd;
 	int rv = 0;
 
-	pthread_mutex_lock(&spc->spc_mtx);
 	while (rw->rw_data == NULL && spc->spc_dying == 0) {
 		/* are we free to receive? */
 		if (spc->spc_istatus == SPCSTATUS_FREE) {
@@ -271,8 +278,17 @@ waitresp(struct spclient *spc, struct respwait *rw)
 			pfd.events = POLLIN;
 
 			for (gotresp = 0; !gotresp; ) {
-				while (readframe(spc) < 1)
+				rv = readframe(spc);
+				switch (rv) {
+				case 0:
 					poll(&pfd, 1, INFTIM);
+					continue;
+				case -1:
+					spc->spc_dying = 1;
+					break;
+				default:
+					break;
+				}
 
 				switch (spc->spc_hdr.rsp_class) {
 				case RUMPSP_RESP:
