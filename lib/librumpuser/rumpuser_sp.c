@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpuser_sp.c,v 1.13 2010/11/24 17:00:10 pooka Exp $	*/
+/*      $NetBSD: rumpuser_sp.c,v 1.14 2010/11/24 20:29:13 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: rumpuser_sp.c,v 1.13 2010/11/24 17:00:10 pooka Exp $");
+__RCSID("$NetBSD: rumpuser_sp.c,v 1.14 2010/11/24 20:29:13 pooka Exp $");
 
 #include <sys/types.h>
 #include <sys/atomic.h>
@@ -520,11 +520,11 @@ struct spservarg {
 	connecthook_fn sps_connhook;
 };
 
+static pthread_attr_t pattr_detached;
 static void
 handlereq(struct spclient *spc)
 {
 	struct sysbouncearg *sba;
-	pthread_attr_t pattr;
 	pthread_t pt;
 	int rv;
 
@@ -543,11 +543,9 @@ handlereq(struct spclient *spc)
 	spc->spc_buf = NULL;
 	spc->spc_off = 0;
 
-	pthread_attr_init(&pattr);
-	pthread_attr_setdetachstate(&pattr, 1);
-
 	spcref(spc);
-	if ((rv = pthread_create(&pt, &pattr, serv_syscallbouncer, sba)) != 0) {
+	if ((rv = pthread_create(&pt, &pattr_detached,
+	    serv_syscallbouncer, sba)) != 0) {
 		/* panic */
 		abort();
 	}
@@ -575,6 +573,9 @@ spserver(void *arg)
 	pfdlist[0].events = POLLIN;
 	nfds = 1;
 	maxidx = 0;
+
+	pthread_attr_init(&pattr_detached);
+	pthread_attr_setdetachstate(&pattr_detached, PTHREAD_CREATE_DETACHED);
 
 	DPRINTF(("rump_sp: server mainloop\n"));
 
