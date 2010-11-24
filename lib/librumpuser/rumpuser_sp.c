@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpuser_sp.c,v 1.12 2010/11/24 15:17:46 pooka Exp $	*/
+/*      $NetBSD: rumpuser_sp.c,v 1.13 2010/11/24 17:00:10 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: rumpuser_sp.c,v 1.12 2010/11/24 15:17:46 pooka Exp $");
+__RCSID("$NetBSD: rumpuser_sp.c,v 1.13 2010/11/24 17:00:10 pooka Exp $");
 
 #include <sys/types.h>
 #include <sys/atomic.h>
@@ -61,6 +61,7 @@ __RCSID("$NetBSD: rumpuser_sp.c,v 1.12 2010/11/24 15:17:46 pooka Exp $");
 #include <unistd.h>
 
 #include <rump/rumpuser.h>
+#include "rumpuser_int.h"
 
 #include "sp_common.c"
 
@@ -211,13 +212,12 @@ copyin_req(struct spclient *spc, const void *remaddr, size_t dlen, void **resp)
 	copydata.rcp_len = dlen;
 
 	putwait(spc, &rw, &rhdr);
-
-	sendlock(spc);
 	rv = dosend(spc, &rhdr, sizeof(rhdr));
 	rv = dosend(spc, &copydata, sizeof(copydata));
-	sendunlock(spc);
-	if (rv)
-		return rv; /* XXX: unputwait */
+	if (rv) {
+		unputwait(spc, &rw);
+		return rv;
+	}
 
 	rv = waitresp(spc, &rw);
 
@@ -271,15 +271,15 @@ anonmmap_req(struct spclient *spc, size_t howmuch, void **resp)
 	rhdr.rsp_sysnum = 0;
 
 	putwait(spc, &rw, &rhdr);
-
-	sendlock(spc);
 	rv = dosend(spc, &rhdr, sizeof(rhdr));
 	rv = dosend(spc, &howmuch, sizeof(howmuch));
-	sendunlock(spc);
-	if (rv)
-		return rv; /* XXX: unputwait */
+	if (rv) {
+		unputwait(spc, &rw);
+		return rv;
+	}
 
 	rv = waitresp(spc, &rw);
+
 	*resp = rw.rw_data;
 
 	DPRINTF(("anonmmap: mapped at %p\n", **(void ***)resp));
@@ -310,7 +310,7 @@ spcrelease(struct spclient *spc)
 
 	DPRINTF(("spcrelease: spc %p fd %d\n", spc, spc->spc_fd));
 
-	_DIAGASSERT(TAILQ_EMPTY(spc->spc_respwait));
+	_DIAGASSERT(TAILQ_EMPTY(&spc->spc_respwait));
 	_DIAGASSERT(spc->spc_buf == NULL);
 
 	lwproc_switch(spc->spc_mainlwp);
@@ -394,8 +394,8 @@ serv_handleconn(int fd, connecthook_fn connhook, int busy)
 
 	TAILQ_INIT(&spclist[i].spc_respwait);
 
-	DPRINTF(("rump_sp: added new connection at idx %u, pid %d\n",
-	    i, lwproc_getpid()));
+	DPRINTF(("rump_sp: added new connection fd %d at idx %u, pid %d\n",
+	    newfd, i, lwproc_getpid()));
 
 	lwproc_switch(NULL);
 
@@ -444,15 +444,21 @@ rumpuser_sp_copyin(void *arg, const void *uaddr, void *kaddr, size_t len)
 {
 	struct spclient *spc = arg;
 	void *rdata = NULL; /* XXXuninit */
-	int rv;
+	int rv, nlocks;
+
+	rumpuser__kunlock(0, &nlocks, NULL);
 
 	rv = copyin_req(spc, uaddr, len, &rdata);
 	if (rv)
-		return EFAULT;
+		goto out;
 
 	memcpy(kaddr, rdata, len);
 	free(rdata);
 
+ out:
+	rumpuser__klock(nlocks, NULL);
+	if (rv)
+		return EFAULT;
 	return 0;
 }
 
@@ -460,8 +466,13 @@ int
 rumpuser_sp_copyout(void *arg, const void *kaddr, void *uaddr, size_t dlen)
 {
 	struct spclient *spc = arg;
+	int nlocks, rv;
 
-	if (send_copyout_req(spc, uaddr, kaddr, dlen) != 0)
+	rumpuser__kunlock(0, &nlocks, NULL);
+	rv = send_copyout_req(spc, uaddr, kaddr, dlen);
+	rumpuser__klock(nlocks, NULL);
+
+	if (rv)
 		return EFAULT;
 	return 0;
 }
@@ -471,20 +482,30 @@ rumpuser_sp_anonmmap(void *arg, size_t howmuch, void **addr)
 {
 	struct spclient *spc = arg;
 	void *resp, *rdata;
-	int rv;
+	int nlocks, rv;
+
+	rumpuser__kunlock(0, &nlocks, NULL);
 
 	rv = anonmmap_req(spc, howmuch, &rdata);
-	if (rv)
-		return rv;
+	if (rv) {
+		rv = EFAULT;
+		goto out;
+	}
 
 	resp = *(void **)rdata;
 	free(rdata);
 
 	if (resp == NULL) {
-		return ENOMEM;
+		rv = ENOMEM;
 	}
 
 	*addr = resp;
+
+ out:
+	rumpuser__klock(nlocks, NULL);
+
+	if (rv)
+		return rv;
 	return 0;
 }
 
