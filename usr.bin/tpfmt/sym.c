@@ -1,7 +1,7 @@
-/*	$NetBSD: sym.c,v 1.1 2010/11/23 20:48:40 yamt Exp $	*/
+/*	$NetBSD: sym.c,v 1.2 2010/11/24 13:17:56 christos Exp $	*/
 
 /*-
- * Copyright (c)2010 YAMAMOTO Takashi,
+ * Copyright (c) 2010 YAMAMOTO Takashi,
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: sym.c,v 1.1 2010/11/23 20:48:40 yamt Exp $");
+__RCSID("$NetBSD: sym.c,v 1.2 2010/11/24 13:17:56 christos Exp $");
 #endif /* not lint */
 
 #include <assert.h>
@@ -39,6 +39,7 @@ __RCSID("$NetBSD: sym.c,v 1.1 2010/11/23 20:48:40 yamt Exp $");
 #include <libelf.h>
 #include <stdlib.h>
 #include <string.h>
+#include <util.h>
 
 #include "sym.h"
 
@@ -49,7 +50,7 @@ struct sym {
 };
 
 static struct sym **syms = NULL;
-static unsigned int nsyms = 0;
+static size_t nsyms = 0;
 
 static int
 compare_value(const void *p1, const void *p2)
@@ -74,8 +75,7 @@ ksymload(const char *ksyms)
 	GElf_Shdr *sh;
 	Elf_Data *d;
 	int fd;
-	size_t size;
-	unsigned int i;
+	size_t size, i;
 
 	fd = open(ksyms, O_RDONLY);
 	if (fd == -1) {
@@ -111,22 +111,19 @@ ksymload(const char *ksyms)
 		GElf_Sym *st;
 		struct sym *sym;
 
-		st = gelf_getsym(d, i, &st_store);
+		st = gelf_getsym(d, (int)i, &st_store);
 		if (st == NULL) {
 			goto elffail;
 		}
 		if (ELF_ST_TYPE(st->st_info) != STT_FUNC) {
 			continue;
 		}
-		sym = malloc(sizeof(*sym));
-		sym->name = strdup(elf_strptr(e, sh->sh_link, st->st_name));
+		sym = emalloc(sizeof(*sym));
+		sym->name = estrdup(elf_strptr(e, sh->sh_link, st->st_name));
 		sym->value = (uint64_t)st->st_value;
 		sym->size = st->st_size;
 		nsyms++;
-		syms = realloc(syms, sizeof(*syms) * nsyms);
-		if (syms == NULL) {
-			err(EXIT_FAILURE, "realloc");
-		}
+		syms = erealloc(syms, sizeof(*syms) * nsyms);
 		syms[nsyms - 1] = sym;
 	}
 	qsort(syms, nsyms, sizeof(*syms), compare_value);
@@ -138,7 +135,7 @@ elffail:
 const char *
 ksymlookup(uint64_t value, uint64_t *offset)
 {
-	unsigned int i;
+	size_t i;
 
 	for (i = 0; i < nsyms; i++) {
 		const struct sym *sym = syms[i];
