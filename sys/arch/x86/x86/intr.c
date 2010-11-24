@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.68 2010/06/17 06:40:28 mrg Exp $	*/
+/*	$NetBSD: intr.c,v 1.69 2010/11/24 14:56:18 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.68 2010/06/17 06:40:28 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.69 2010/11/24 14:56:18 cegger Exp $");
 
 #include "opt_intrdebug.h"
 #include "opt_multiprocessor.h"
@@ -174,6 +174,10 @@ __KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.68 2010/06/17 06:40:28 mrg Exp $");
 
 #if NPCI > 0
 #include <dev/pci/ppbreg.h>
+#endif
+
+#ifdef DDB
+#include <ddb/db_output.h>
 #endif
 
 struct pic softintr_pic = {
@@ -1057,6 +1061,11 @@ cpu_intr_init(struct cpu_info *ci)
 }
 
 #if defined(INTRDEBUG) || defined(DDB)
+
+#ifdef DDB
+#define printf db_printf
+#endif
+
 void
 intr_printconfig(void)
 {
@@ -1086,6 +1095,9 @@ intr_printconfig(void)
 		}
 	}
 }
+#ifdef DDB
+#undef printf
+#endif
 #endif
 
 void
