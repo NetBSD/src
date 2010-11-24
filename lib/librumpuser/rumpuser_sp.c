@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpuser_sp.c,v 1.11 2010/11/24 11:40:24 pooka Exp $	*/
+/*      $NetBSD: rumpuser_sp.c,v 1.12 2010/11/24 15:17:46 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: rumpuser_sp.c,v 1.11 2010/11/24 11:40:24 pooka Exp $");
+__RCSID("$NetBSD: rumpuser_sp.c,v 1.12 2010/11/24 15:17:46 pooka Exp $");
 
 #include <sys/types.h>
 #include <sys/atomic.h>
@@ -308,7 +308,9 @@ spcrelease(struct spclient *spc)
 	if (ref > 0)
 		return;
 
-	_DIAGASSERT(TAILQ_EMPTY(&spclist[i].spc_respwait));
+	DPRINTF(("spcrelease: spc %p fd %d\n", spc, spc->spc_fd));
+
+	_DIAGASSERT(TAILQ_EMPTY(spc->spc_respwait));
 	_DIAGASSERT(spc->spc_buf == NULL);
 
 	lwproc_switch(spc->spc_mainlwp);
@@ -317,9 +319,8 @@ spcrelease(struct spclient *spc)
 
 	close(spc->spc_fd);
 	spc->spc_fd = -1;
+	spc->spc_dying = 0;
 
-	spc->spc_pfd->fd = -1;
-	membar_producer();
 	atomic_inc_uint(&disco);
 
 }
@@ -331,6 +332,12 @@ serv_handledisco(unsigned int idx)
 
 	DPRINTF(("rump_sp: disconnecting [%u]\n", idx));
 
+	pfdlist[idx].fd = -1;
+	pfdlist[idx].revents = 0;
+	pthread_mutex_lock(&spc->spc_mtx);
+	spc->spc_dying = 1;
+	kickall(spc);
+	pthread_mutex_unlock(&spc->spc_mtx);
 	spcrelease(spc);
 }
 
@@ -367,7 +374,7 @@ serv_handleconn(int fd, connecthook_fn connhook, int busy)
 
 	/* find empty slot the simple way */
 	for (i = 0; i < MAXCLI; i++) {
-		if (pfdlist[i].fd == -1)
+		if (pfdlist[i].fd == -1 && spclist[i].spc_dying == 0)
 			break;
 	}
 
@@ -427,6 +434,7 @@ serv_syscallbouncer(void *arg)
 	struct sysbouncearg *barg = arg;
 
 	serv_handlesyscall(barg->sba_spc, &barg->sba_hdr, barg->sba_data);
+	spcrelease(barg->sba_spc);
 	free(arg);
 	return NULL;
 }
@@ -436,8 +444,11 @@ rumpuser_sp_copyin(void *arg, const void *uaddr, void *kaddr, size_t len)
 {
 	struct spclient *spc = arg;
 	void *rdata = NULL; /* XXXuninit */
+	int rv;
 
-	copyin_req(spc, uaddr, len, &rdata);
+	rv = copyin_req(spc, uaddr, len, &rdata);
+	if (rv)
+		return EFAULT;
 
 	memcpy(kaddr, rdata, len);
 	free(rdata);
@@ -536,8 +547,6 @@ spserver(void *arg)
 		pfdlist[idx].events = POLLIN;
 
 		spc = &spclist[idx];
-
-		spc->spc_pfd = &pfdlist[idx];
 		pthread_mutex_init(&spc->spc_mtx, NULL);
 		pthread_cond_init(&spc->spc_cv, NULL);
 	}
@@ -553,20 +562,20 @@ spserver(void *arg)
 		if (disco) {
 			int discoed;
 
-			membar_consumer();
 			discoed = atomic_swap_uint(&disco, 0);
 			while (discoed--) {
 				nfds--;
 				idx = maxidx;
-				while (idx--) {
+				while (idx) {
 					if (pfdlist[idx].fd != -1) {
 						maxidx = idx;
 						break;
 					}
-					assert(idx != 0);
+					idx--;
 				}
 				DPRINTF(("rump_sp: set maxidx to [%u]\n",
 				    maxidx));
+				assert(maxidx+1 >= nfds);
 			}
 		}
 
@@ -583,9 +592,7 @@ spserver(void *arg)
 			break;
 		}
 
-		for (idx = 0; seen < rv; idx++) {
-			assert(idx < MAXCLI);
-
+		for (idx = 0; seen < rv && idx < MAXCLI; idx++) {
 			if ((pfdlist[idx].revents & POLLIN) == 0)
 				continue;
 
@@ -594,7 +601,6 @@ spserver(void *arg)
 			    idx, seen, rv));
 			if (idx > 0) {
 				spc = &spclist[idx];
-
 				DPRINTF(("rump_sp: mainloop read [%u]\n", idx));
 				switch (readframe(spc)) {
 				case 0:
@@ -627,6 +633,7 @@ spserver(void *arg)
 					nfds++;
 				if (idx > maxidx)
 					maxidx = idx;
+				DPRINTF(("rump_sp: maxid now %d\n", maxidx));
 			}
 		}
 	}
