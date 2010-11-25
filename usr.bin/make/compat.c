@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.81 2010/09/13 15:36:57 sjg Exp $	*/
+/*	$NetBSD: compat.c,v 1.82 2010/11/25 21:31:09 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: compat.c,v 1.81 2010/09/13 15:36:57 sjg Exp $";
+static char rcsid[] = "$NetBSD: compat.c,v 1.82 2010/11/25 21:31:09 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)compat.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: compat.c,v 1.81 2010/09/13 15:36:57 sjg Exp $");
+__RCSID("$NetBSD: compat.c,v 1.82 2010/11/25 21:31:09 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -527,10 +527,10 @@ Compat_Make(void *gnp, void *pgnp)
 	}
 
 	/*
-	 * All the children were made ok. Now cmtime contains the modification
-	 * time of the newest child, we need to find out if we exist and when
-	 * we were modified last. The criteria for datedness are defined by the
-	 * Make_OODate function.
+	 * All the children were made ok. Now cmgn->mtime contains the
+	 * modification time of the newest child, we need to find out if we
+	 * exist and when we were modified last. The criteria for datedness
+	 * are defined by the Make_OODate function.
 	 */
 	if (DEBUG(MAKE)) {
 	    fprintf(debug_file, "Examining %s...", gn->name);
