@@ -1,4 +1,4 @@
-/*	$NetBSD: startprog.S,v 1.5 2009/12/14 00:46:11 matt Exp $	*/
+/*	$NetBSD: startprog.S,v 1.6 2010/11/25 14:05:27 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -46,10 +46,10 @@ LEAF(startprog)
 	move	a1,a3
 
 #ifdef __mips_o32
-	lw	a2,48(sp)		# load everything from old stack we need
-	lw	a3,52(sp)
-	lw	$8,56(sp)		# use a4/t0 in case N32/N64 kernel
-	lw	$9,60(sp)		# use a5/t1 in case N32/N64 kernel
+	lw	a2,CALLFRAME_SIZ+16(sp)	# load everything from old stack we need
+	lw	a3,CALLFRAME_SIZ+20(sp)
+	lw	$8,CALLFRAME_SIZ+24(sp)	# use a4/t0 in case N32/N64 kernel
+	lw	$9,CALLFRAME_SIZ+28(sp)	# use a5/t1 in case N32/N64 kernel
 #else
 	move	a2,a4
 	move	a3,a5
