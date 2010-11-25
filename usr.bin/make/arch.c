@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.59 2009/01/23 21:58:27 dsl Exp $	*/
+/*	$NetBSD: arch.c,v 1.60 2010/11/25 21:31:08 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: arch.c,v 1.59 2009/01/23 21:58:27 dsl Exp $";
+static char rcsid[] = "$NetBSD: arch.c,v 1.60 2010/11/25 21:31:08 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)arch.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: arch.c,v 1.59 2009/01/23 21:58:27 dsl Exp $");
+__RCSID("$NetBSD: arch.c,v 1.60 2010/11/25 21:31:08 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1212,7 +1212,7 @@ Arch_FindLib(GNode *gn, Lst path)
  *	A library will be considered out-of-date for any of these reasons,
  *	given that it is a target on a dependency line somewhere:
  *	    Its modification time is less than that of one of its
- *	    	  sources (gn->mtime < gn->cmtime).
+ *	    	  sources (gn->mtime < gn->cmgn->mtime).
  *	    Its modification time is greater than the time at which the
  *	    	  make began (i.e. it's been modified in the course
  *	    	  of the make, probably by archiving).
@@ -1245,8 +1245,8 @@ Arch_LibOODate(GNode *gn)
 	oodate = TRUE;
     } else if (OP_NOP(gn->type) && Lst_IsEmpty(gn->children)) {
 	oodate = FALSE;
-    } else if ((!Lst_IsEmpty(gn->children) && gn->cmtime == 0) ||
-	       (gn->mtime > now) || (gn->mtime < gn->cmtime)) {
+    } else if ((!Lst_IsEmpty(gn->children) && gn->cmgn == NULL) ||
+	       (gn->mtime > now) || (gn->mtime < gn->cmgn->mtime)) {
 	oodate = TRUE;
     } else {
 #ifdef RANLIBMAG
@@ -1261,7 +1261,7 @@ Arch_LibOODate(GNode *gn)
 	    if (DEBUG(ARCH) || DEBUG(MAKE)) {
 		fprintf(debug_file, "%s modified %s...", RANLIBMAG, Targ_FmtTime(modTimeTOC));
 	    }
-	    oodate = (gn->cmtime > modTimeTOC);
+	    oodate = (gn->cmgn == NULL || gn->gngm->mtime > modTimeTOC);
 	} else {
 	    /*
 	     * A library w/o a table of contents is out-of-date
