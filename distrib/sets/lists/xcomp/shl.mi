@@ -1,4 +1,4 @@
-#	$NetBSD: shl.mi,v 1.25 2010/07/19 14:30:51 njoly Exp $
+#	$NetBSD: shl.mi,v 1.26 2010/11/25 16:32:39 njoly Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -230,7 +230,7 @@
 ./usr/libdata/debug/usr/X11R7/lib/libexpat.so.2.0.debug	-unknown-		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/libfontconfig.so.2.0.debug	-unknown-		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/libfontenc.so.2.0.debug	-unknown-		xorg,debug
-./usr/libdata/debug/usr/X11R7/lib/libfreetype.so.7.1.debug	-unknown-		xorg,debug
+./usr/libdata/debug/usr/X11R7/lib/libfreetype.so.7.2.debug	-unknown-		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/libglut.so.4.0.debug	-unknown-		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/libpciaccess.so.0.2.debug	-unknown-		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/libpixman-1.so.2.1.debug	-unknown-		xorg,debug
