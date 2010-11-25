@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.2,v 1.1.2.29 2010/11/24 19:13:29 riz Exp $
+# $NetBSD: CHANGES-5.2,v 1.1.2.30 2010/11/25 00:27:19 riz Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -293,14 +293,6 @@ bin/date/date.c					1.53
 
 	Don't blow up on date +''. From Robert Elz in followup to PR 39392.
 	[dholland, ticket #1411]
-
-lib/libpam/Makefile				1.3
-lib/libpam/modules/mod.mk			1.8-9
-lib/libpam/staticmodules/Makefile		1.1
-share/mk/bsd.own.mk				1.612
-
-	Make the dependency to libpam explicit. Fixes afpd in pkgsrc.
-	[christos, ticket #1414]
 
 sys/kern/sys_lwp.c				1.50
 
