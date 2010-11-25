@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips1.S,v 1.69 2010/11/10 01:49:00 dholland Exp $	*/
+/*	$NetBSD: locore_mips1.S,v 1.70 2010/11/25 17:53:24 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -418,9 +418,9 @@ NESTED_NOPROFILE(mips1_SystemCall, CALLFRAME_SIZ, ra)
 	sw	a3, FRAME_A3(k1)
 	lw	a0, CPUVAR(CURLWP)		# 1st arg is curlwp
 	mfhi	v1
-	#sw	t0, FRAME_T0(k1)		# no need to save temp regs
-	#sw	t1, FRAME_T1(k1)
-	#sw	t2, FRAME_T2(k1)
+	sw	t0, FRAME_T0(k1)		# save temp regs t0-t2
+	sw	t1, FRAME_T1(k1)
+	sw	t2, FRAME_T2(k1)
 	#sw	t3, FRAME_T3(k1)
 	mfc0	a1, MIPS_COP_0_STATUS		# 2nd arg is STATUS
 	#sw	t4, FRAME_T4(k1)
