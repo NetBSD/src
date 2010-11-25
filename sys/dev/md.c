@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.65 2010/11/23 09:30:43 hannken Exp $	*/
+/*	$NetBSD: md.c,v 1.66 2010/11/25 08:53:30 hannken Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross, Leo Weppelman.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: md.c,v 1.65 2010/11/23 09:30:43 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: md.c,v 1.66 2010/11/25 08:53:30 hannken Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_md.h"
@@ -85,7 +85,7 @@ struct md_softc {
 	struct disk sc_dkdev;	/* hook for generic disk handling */
 	struct md_conf sc_md;
 	kmutex_t sc_lock;	/* Protect self. */
-	kcondvar_t sc_cv;	/* Signal work. */
+	kcondvar_t sc_cv;	/* Wait here for work. */
 	struct bufq_state *sc_buflist;
 };
 /* shorthand for fields in sc_md: */
@@ -146,6 +146,7 @@ md_attach(device_t parent, device_t self, void *aux)
 	struct md_softc *sc = device_private(self);
 
 	sc->sc_dev = self;
+	sc->sc_type = MD_UNCONFIGURED;
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&sc->sc_cv, "mdidle");
 	bufq_alloc(&sc->sc_buflist, "fcfs", 0);
@@ -181,7 +182,7 @@ md_detach(device_t self, int flags)
 
 	rc = 0;
 	mutex_enter(&sc->sc_dkdev.dk_openlock);
-	if (sc->sc_dkdev.dk_openmask == 0)
+	if (sc->sc_dkdev.dk_openmask == 0 && sc->sc_type == MD_UNCONFIGURED)
 		;	/* nothing to do */
 	else if ((flags & DETACH_FORCE) == 0)
 		rc = EBUSY;
@@ -433,10 +434,11 @@ mdstrategy(struct buf *bp)
 		bp->b_error = EIO;
 		break;
 	}
- done:
-	biodone(bp);
 
+ done:
 	mutex_exit(&sc->sc_lock);
+
+	biodone(bp);
 }
 
 static int
@@ -561,13 +563,22 @@ md_ioctl_kalloc(struct md_softc *sc, struct md_conf *umd,
 	vaddr_t addr;
 	vsize_t size;
 
-	KASSERT(mutex_owned(&sc->sc_lock));
+	mutex_exit(&sc->sc_lock);
 
 	/* Sanity check the size. */
 	size = umd->md_size;
 	addr = uvm_km_alloc(kernel_map, size, 0, UVM_KMF_WIRED|UVM_KMF_ZERO);
+
+	mutex_enter(&sc->sc_lock);
+
 	if (!addr)
 		return ENOMEM;
+
+	/* If another thread beat us to configure this unit:  fail. */
+	if (sc->sc_type != MD_UNCONFIGURED) {
+		uvm_km_free(kernel_map, addr, size, UVM_KMF_WIRED);
+		return EINVAL;
+	}
 
 	/* This unit is now configured. */
 	sc->sc_addr = (void *)addr; 	/* kernel space */
