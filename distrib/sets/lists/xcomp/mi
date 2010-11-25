@@ -1,4 +1,4 @@
-#	 $NetBSD: mi,v 1.118 2010/11/23 10:24:03 mrg Exp $
+#	 $NetBSD: mi,v 1.119 2010/11/25 16:28:18 njoly Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -9398,6 +9398,8 @@
 ./usr/libdata/debug/usr/X11R7/bin/fc-cat.debug		-unknown-	debug,xorg
 ./usr/libdata/debug/usr/X11R7/bin/fc-list.debug		-unknown-	debug,xorg
 ./usr/libdata/debug/usr/X11R7/bin/fc-match.debug	-unknown-	debug,xorg
+./usr/libdata/debug/usr/X11R7/bin/fc-query.debug	-unknown-	debug,xorg
+./usr/libdata/debug/usr/X11R7/bin/fc-scan.debug		-unknown-	debug,xorg
 ./usr/libdata/debug/usr/X11R7/bin/fonttosfnt.debug	-unknown-	debug,xorg
 ./usr/libdata/debug/usr/X11R7/bin/fslsfonts.debug	-unknown-	debug,xorg
 ./usr/libdata/debug/usr/X11R7/bin/fstobdf.debug		-unknown-	debug,xorg
