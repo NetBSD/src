@@ -1,4 +1,4 @@
-/*	$NetBSD: riscospart.c,v 1.2 2006/06/25 21:32:41 christos Exp $	*/
+/*	$NetBSD: riscospart.c,v 1.3 2010/11/25 13:45:17 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2006 Ben Harris
@@ -160,7 +160,7 @@ getdisklabel_acorn(struct open_file *f, struct disklabel *lp)
 	bb = (struct filecore_bootblock *) buf;
 	if (bb->checksum == filecore_checksum((u_char *)bb)) {
 		if (bb->partition_type == PARTITION_FORMAT_RISCBSD)
-			labelsect = (daddr_t)bb->partition_cyl_low *
+			labelsect = ((bb->partition_cyl_high << 8) + bb->partition_cyl_low) *
 			    bb->heads * bb->secspertrack + LABELSECTOR;
 		else {
 			err = EUNLAB;
