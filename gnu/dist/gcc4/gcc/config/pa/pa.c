@@ -5258,7 +5258,7 @@ pa_som_file_start (void)
 static void
 pa_linux_file_start (void)
 {
-  pa_file_start_file (1);
+  pa_file_start_file (0);
   pa_file_start_level ();
   pa_file_start_mcount ("CODE");
 }
