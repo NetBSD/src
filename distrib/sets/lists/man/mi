@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1253 2010/11/21 19:58:04 adam Exp $
+# $NetBSD: mi,v 1.1254 2010/11/25 08:18:33 skrll Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1989,6 +1989,7 @@
 ./usr/share/man/cat8/acorn32/MAKEDEV.0		man-obsolete		obsolete
 ./usr/share/man/cat8/acorn32/boot.0		man-sys-catman		.cat
 ./usr/share/man/cat8/acorn32/boot32.0		man-sys-catman		.cat
+./usr/share/man/cat8/acorn32/nbfs.0		man-sys-catman		.cat
 ./usr/share/man/cat8/acorn32/makedev.0		man-obsolete		obsolete
 ./usr/share/man/cat8/acpidump.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/adduser.0			man-sysutil-catman	.cat
@@ -4585,6 +4586,7 @@
 ./usr/share/man/html8/acorn26/boot26.html	man-sys-htmlman		html
 ./usr/share/man/html8/acorn32/boot.html		man-sys-htmlman		html
 ./usr/share/man/html8/acorn32/boot32.html	man-sys-htmlman		html
+./usr/share/man/html8/acorn32/nbfs.html		man-sys-htmlman		html
 ./usr/share/man/html8/acpidump.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/adduser.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/afterboot.html		man-sysutil-htmlman	html
@@ -7170,6 +7172,7 @@
 ./usr/share/man/man8/acorn32/MAKEDEV.8		man-obsolete		obsolete
 ./usr/share/man/man8/acorn32/boot.8		man-sys-man		.man
 ./usr/share/man/man8/acorn32/boot32.8		man-sys-man		.man
+./usr/share/man/man8/acorn32/nbfs.8		man-sys-man		.man
 ./usr/share/man/man8/acorn32/makedev.8		man-obsolete		obsolete
 ./usr/share/man/man8/acpidump.8			man-sysutil-man		.man
 ./usr/share/man/man8/adduser.8			man-sysutil-man		.man
