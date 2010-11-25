@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.h,v 1.67 2010/11/14 15:06:34 uebayasi Exp $	*/
+/*	$NetBSD: uvm_page.h,v 1.68 2010/11/25 04:45:30 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -238,8 +238,6 @@ struct vm_physseg {
 	int	free_list;		/* which free list they belong on */
 	struct	vm_page *pgs;		/* vm_page structures (from start) */
 	struct	vm_page *lastpg;	/* vm_page structure for end */
-	SIMPLEQ_ENTRY(vm_physseg) list;
-
 #ifdef __HAVE_PMAP_PHYSSEG
 	struct	pmap_physseg pmseg;	/* pmap specific (MD) data */
 #endif
@@ -257,14 +255,12 @@ extern bool vm_page_zero_enable;
  * physical memory config is stored in vm_physmem.
  */
 
-#define	VM_PHYSMEM_PTR(i)	(vm_physmem_ptrs[i])
-#define	VM_PHYSMEM_PTR_SWAP(i, j) \
-	do { VM_PHYSMEM_PTR(i) = VM_PHYSMEM_PTR(j); } while (0)
+#define	VM_PHYSMEM_PTR(i)	(&vm_physmem[i])
+#define VM_PHYSMEM_PTR_SWAP(i, j) \
+	do { vm_physmem[(i)] = vm_physmem[(j)]; } while (0)
 
-extern struct vm_physseg *vm_physmem_ptrs[VM_PHYSSEG_MAX];
-extern int vm_nphysmem;
-
-#define	vm_nphysseg	vm_nphysmem	/* XXX backward compat */
+extern struct vm_physseg vm_physmem[VM_PHYSSEG_MAX];
+extern int vm_nphysseg;
 
 /*
  * prototypes: the following prototypes define the interface to pages
@@ -309,10 +305,6 @@ paddr_t uvm_vm_page_to_phys(const struct vm_page *);
 #define UVM_PAGE_TREE_PENALTY	4	/* XXX: a guess */
 
 #define VM_PAGE_TO_PHYS(entry)	uvm_vm_page_to_phys(entry)
-
-#ifdef __HAVE_VM_PAGE_MD
-#define	VM_PAGE_TO_MD(pg)	(&(pg)->mdpage)
-#endif
 
 /*
  * Compute the page color bucket for a given page.
