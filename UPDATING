@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.215 2010/11/23 06:49:29 mrg Exp $
+$NetBSD: UPDATING,v 1.216 2010/11/25 22:08:49 christos Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -15,6 +15,16 @@ See also: BUILDING, build.sh, Makefile.
 
 Recent changes:
 ^^^^^^^^^^^^^^^
+20101125:
+	The latest changes to setenv(3) dissallow setting environment
+	variables with names that contain '='. Revision 1.18 of env.c
+	assumed that this was allowed. Installing a new libc with an
+	old copy of /usr/bin/env causes env x=1 printenv | grep x= to
+	break which affects the autoconf tests for dependency finding,
+	so building gcc will end up printing:
+	    checking dependency style of gcc... none
+	    configure: error: no usable dependency style found
+	Fix it by rebuilding and re-installing env.
 
 20101119:
 	Recent Xorg updates in xsrc/external/mit/ may cause various build
