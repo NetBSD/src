@@ -1,4 +1,4 @@
-/*	$NetBSD: stat.c,v 1.29 2010/11/24 22:57:53 dholland Exp $ */
+/*	$NetBSD: stat.c,v 1.30 2010/11/25 04:33:30 dholland Exp $ */
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: stat.c,v 1.29 2010/11/24 22:57:53 dholland Exp $");
+__RCSID("$NetBSD: stat.c,v 1.30 2010/11/25 04:33:30 dholland Exp $");
 #endif
 
 #if ! HAVE_NBTOOL_CONFIG_H
@@ -1013,6 +1013,7 @@ format1(const struct stat *st,
 			(void)snprintf(tmp, sizeof(tmp), "%d", size);
 			(void)strcat(lfmt, tmp);
 		}
+		/* Seconds: time_t cast to long long. */
 		(void)strcat(lfmt, "lld");
 
 		/*
@@ -1024,6 +1025,8 @@ format1(const struct stat *st,
 		/*
 		 * We can "print" at most nine digits of precision.  The
 		 * rest we will pad on at the end.
+		 *
+		 * Nanoseconds: long.
 		 */
 		(void)snprintf(tmp, sizeof(tmp), "%dld", prec > 9 ? 9 : prec);
 		(void)strcat(lfmt, tmp);
