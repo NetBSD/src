@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpcopy.c,v 1.12 2010/11/22 21:46:04 pooka Exp $	*/
+/*	$NetBSD: rumpcopy.c,v 1.13 2010/11/25 17:59:03 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpcopy.c,v 1.12 2010/11/22 21:46:04 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpcopy.c,v 1.13 2010/11/25 17:59:03 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/lwp.h>
@@ -118,8 +118,8 @@ copyinstr(const void *uaddr, void *kaddr, size_t len, size_t *done)
 	if (curproc->p_vmspace == vmspace_kernel())
 		return copystr(uaddr, kaddr, len, done);
 
-	if ((rv = rumpuser_sp_copyin(curproc->p_vmspace->vm_map.pmap,
-	    uaddr, kaddr, len)) != 0)
+	if ((rv = rumpuser_sp_copyinstr(curproc->p_vmspace->vm_map.pmap,
+	    uaddr, kaddr, &len)) != 0)
 		return rv;
 
 	/* figure out if we got a terminated string or not */
@@ -151,8 +151,8 @@ copyoutstr(const void *kaddr, void *uaddr, size_t len, size_t *done)
 	if (slen > len)
 		return ENAMETOOLONG;
 
-	error = rumpuser_sp_copyout(curproc->p_vmspace->vm_map.pmap,
-	    kaddr, uaddr, slen);
+	error = rumpuser_sp_copyoutstr(curproc->p_vmspace->vm_map.pmap,
+	    kaddr, uaddr, &slen);
 	if (done)
 		*done = slen;
 
