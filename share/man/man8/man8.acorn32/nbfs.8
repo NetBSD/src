@@ -1,4 +1,4 @@
-.\" $NetBSD: nbfs.8,v 1.1 2010/11/25 08:18:33 skrll Exp $
+.\" $NetBSD: nbfs.8,v 1.2 2010/11/25 09:13:37 wiz Exp $
 .\"
 .\" Copyright (c) 2006 Ben Harris
 .\" All rights reserved.
@@ -49,8 +49,9 @@ follow RISC OS conventions, as described in the various RISC OS
 The underlying FileCore instance used by
 .Nm
 is selected by the filing system's special field, while the disk and
-NetBSD partition are selected by the disk name.  Thus, to refer
-to the first
+.Nx
+partition are selected by the disk name.
+Thus, to refer to the first
 .Nx
 partition of the first ADFS hard disk, one
 would use
