@@ -1,4 +1,4 @@
-/*      $NetBSD: sp_common.c,v 1.9 2010/11/24 17:20:24 pooka Exp $	*/
+/*      $NetBSD: sp_common.c,v 1.10 2010/11/25 17:59:02 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -73,7 +73,10 @@ mydprintf(const char *fmt, ...)
  */
 
 enum { RUMPSP_REQ, RUMPSP_RESP };
-enum { RUMPSP_SYSCALL, RUMPSP_COPYIN, RUMPSP_COPYOUT, RUMPSP_ANONMMAP };
+enum {	RUMPSP_SYSCALL,
+	RUMPSP_COPYIN, RUMPSP_COPYINSTR,
+	RUMPSP_COPYOUT, RUMPSP_COPYOUTSTR,
+	RUMPSP_ANONMMAP };
 
 struct rsp_hdr {
 	uint64_t rsp_len;
@@ -196,8 +199,10 @@ dosend(struct spclient *spc, const void *data, size_t dlen)
 		if (n == 0) {
 			return EFAULT;
 		}
-		if (n == -1 && errno != EAGAIN) {
-			return EFAULT;
+		if (n == -1)  {
+			if (errno != EAGAIN)
+				return EFAULT;
+			continue;
 		}
 		sent += n;
 	}
@@ -242,7 +247,9 @@ kickwaiter(struct spclient *spc)
 		abort();
 		return;
 	}
+	DPRINTF(("rump_sp: client %p woke up waiter at %p\n", spc, rw));
 	rw->rw_data = spc->spc_buf;
+	rw->rw_dlen = (size_t)spc->spc_off;
 	pthread_cond_signal(&rw->rw_cv);
 	pthread_mutex_unlock(&spc->spc_mtx);
 

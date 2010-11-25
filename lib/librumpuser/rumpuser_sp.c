@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpuser_sp.c,v 1.14 2010/11/24 20:29:13 pooka Exp $	*/
+/*      $NetBSD: rumpuser_sp.c,v 1.15 2010/11/25 17:59:02 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: rumpuser_sp.c,v 1.14 2010/11/24 20:29:13 pooka Exp $");
+__RCSID("$NetBSD: rumpuser_sp.c,v 1.15 2010/11/25 17:59:02 pooka Exp $");
 
 #include <sys/types.h>
 #include <sys/atomic.h>
@@ -194,22 +194,26 @@ send_syscall_resp(struct spclient *spc, uint64_t reqno, int error,
 }
 
 static int
-copyin_req(struct spclient *spc, const void *remaddr, size_t dlen, void **resp)
+copyin_req(struct spclient *spc, const void *remaddr, size_t *dlen,
+	int wantstr, void **resp)
 {
 	struct rsp_hdr rhdr;
 	struct rsp_copydata copydata;
 	struct respwait rw;
 	int rv;
 
-	DPRINTF(("copyin_req: %zu bytes from %p\n", dlen, remaddr));
+	DPRINTF(("copyin_req: %zu bytes from %p\n", *dlen, remaddr));
 
 	rhdr.rsp_len = sizeof(rhdr) + sizeof(copydata);
 	rhdr.rsp_class = RUMPSP_REQ;
-	rhdr.rsp_type = RUMPSP_COPYIN;
+	if (wantstr)
+		rhdr.rsp_type = RUMPSP_COPYINSTR;
+	else
+		rhdr.rsp_type = RUMPSP_COPYIN;
 	rhdr.rsp_sysnum = 0;
 
 	copydata.rcp_addr = __UNCONST(remaddr);
-	copydata.rcp_len = dlen;
+	copydata.rcp_len = *dlen;
 
 	putwait(spc, &rw, &rhdr);
 	rv = dosend(spc, &rhdr, sizeof(rhdr));
@@ -224,6 +228,9 @@ copyin_req(struct spclient *spc, const void *remaddr, size_t dlen, void **resp)
 	DPRINTF(("copyin: response %d\n", rv));
 
 	*resp = rw.rw_data;
+	if (wantstr)
+		*dlen = rw.rw_dlen;
+
 	return rv;
 
 }
@@ -439,8 +446,8 @@ serv_syscallbouncer(void *arg)
 	return NULL;
 }
 
-int
-rumpuser_sp_copyin(void *arg, const void *uaddr, void *kaddr, size_t len)
+static int
+sp_copyin(void *arg, const void *raddr, void *laddr, size_t *len, int wantstr)
 {
 	struct spclient *spc = arg;
 	void *rdata = NULL; /* XXXuninit */
@@ -448,11 +455,11 @@ rumpuser_sp_copyin(void *arg, const void *uaddr, void *kaddr, size_t len)
 
 	rumpuser__kunlock(0, &nlocks, NULL);
 
-	rv = copyin_req(spc, uaddr, len, &rdata);
+	rv = copyin_req(spc, raddr, len, wantstr, &rdata);
 	if (rv)
 		goto out;
 
-	memcpy(kaddr, rdata, len);
+	memcpy(laddr, rdata, *len);
 	free(rdata);
 
  out:
@@ -463,18 +470,46 @@ rumpuser_sp_copyin(void *arg, const void *uaddr, void *kaddr, size_t len)
 }
 
 int
-rumpuser_sp_copyout(void *arg, const void *kaddr, void *uaddr, size_t dlen)
+rumpuser_sp_copyin(void *arg, const void *raddr, void *laddr, size_t len)
+{
+
+	return sp_copyin(arg, raddr, laddr, &len, 0);
+}
+
+int
+rumpuser_sp_copyinstr(void *arg, const void *raddr, void *laddr, size_t *len)
+{
+
+	return sp_copyin(arg, raddr, laddr, len, 1);
+}
+
+static int
+sp_copyout(void *arg, const void *laddr, void *raddr, size_t dlen)
 {
 	struct spclient *spc = arg;
 	int nlocks, rv;
 
 	rumpuser__kunlock(0, &nlocks, NULL);
-	rv = send_copyout_req(spc, uaddr, kaddr, dlen);
+	rv = send_copyout_req(spc, raddr, laddr, dlen);
 	rumpuser__klock(nlocks, NULL);
 
 	if (rv)
 		return EFAULT;
 	return 0;
+}
+
+int
+rumpuser_sp_copyout(void *arg, const void *laddr, void *raddr, size_t dlen)
+{
+
+	return sp_copyout(arg, laddr, raddr, dlen);
+}
+
+int
+rumpuser_sp_copyoutstr(void *arg, const void *laddr, void *raddr, size_t *dlen)
+{
+
+	return sp_copyout(arg, laddr, raddr, *dlen);
 }
 
 int
