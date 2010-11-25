@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpclient.c,v 1.4 2010/11/24 17:03:39 pooka Exp $	*/
+/*      $NetBSD: rumpclient.c,v 1.5 2010/11/25 17:59:03 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 __RCSID("$NetBSD");
 
-#include <sys/types.h>
+#include <sys/param.h>
 #include <sys/mman.h>
 #include <sys/socket.h>
 
@@ -84,10 +84,14 @@ syscall_req(struct spclient *spc, int sysnum,
 }
 
 static int
-send_copyin_resp(struct spclient *spc, uint64_t reqno, void *data, size_t dlen)
+send_copyin_resp(struct spclient *spc, uint64_t reqno, void *data, size_t dlen,
+	int wantstr)
 {
 	struct rsp_hdr rhdr;
 	int rv;
+
+	if (wantstr)
+		dlen = MIN(dlen, strlen(data)+1);
 
 	rhdr.rsp_len = sizeof(rhdr) + dlen;
 	rhdr.rsp_reqno = reqno;
@@ -155,17 +159,21 @@ handlereq(struct spclient *spc)
 	struct rsp_copydata *copydata;
 	void *mapaddr;
 	size_t maplen;
+	int reqtype = spc->spc_hdr.rsp_type;
 
-	switch (spc->spc_hdr.rsp_type) {
+	switch (reqtype) {
 	case RUMPSP_COPYIN:
+	case RUMPSP_COPYINSTR:
 		/*LINTED*/
 		copydata = (struct rsp_copydata *)spc->spc_buf;
 		DPRINTF(("rump_sp handlereq: copyin request: %p/%zu\n",
 		    copydata->rcp_addr, copydata->rcp_len));
 		send_copyin_resp(spc, spc->spc_hdr.rsp_reqno,
-		    copydata->rcp_addr, copydata->rcp_len);
+		    copydata->rcp_addr, copydata->rcp_len,
+		    reqtype == RUMPSP_COPYINSTR);
 		break;
 	case RUMPSP_COPYOUT:
+	case RUMPSP_COPYOUTSTR:
 		/*LINTED*/
 		copydata = (struct rsp_copydata *)spc->spc_buf;
 		DPRINTF(("rump_sp handlereq: copyout request: %p/%zu\n",
