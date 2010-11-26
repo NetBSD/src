@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.2,v 1.1.2.31 2010/11/26 17:16:50 riz Exp $
+# $NetBSD: CHANGES-5.2,v 1.1.2.32 2010/11/26 17:30:42 riz Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -861,4 +861,12 @@ sys/arch/hpcmips/tx/txcom.c			1.42-43
 
 	hpcmips com fixes.  PR#43472, PR#43474.
 	[tsutsui, ticket #1485]
+
+sys/dev/usb/umass_quirks.c			1.82 via patch
+sys/dev/usb/usbdevs				1.564 via patch
+sys/dev/usb/usbdevs.h				regen
+sys/dev/usb/usbdevs_data.h			regen
+
+	Add support for Kingston DT Mini 10 pendrive, with quirk.
+	[sborrill, ticket #1489]
 
