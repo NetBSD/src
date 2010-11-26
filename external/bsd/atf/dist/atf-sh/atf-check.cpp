@@ -421,8 +421,6 @@ compare_files(const atf::fs::path& p1, const atf::fs::path& p2)
         if (f2.bad())
             throw std::runtime_error("Failed to read from " + p1.str());
 
-        std::cout << "1 read: " << f1.gcount() << "\n";
-        std::cout << "2 read: " << f2.gcount() << "\n";
         if ((f1.gcount() == 0) && (f2.gcount() == 0)) {
             equal = true;
             break;
