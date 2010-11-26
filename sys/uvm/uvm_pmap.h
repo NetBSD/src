@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pmap.h,v 1.33 2010/07/06 21:11:22 cegger Exp $	*/
+/*	$NetBSD: uvm_pmap.h,v 1.34 2010/11/26 18:51:19 christos Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -73,9 +73,6 @@ struct lwp;		/* for pmap_activate()/pmap_deactivate() proto */
 struct pmap;
 typedef struct pmap *pmap_t;
 
-extern struct pmap	*const kernel_pmap_ptr;
-#define pmap_kernel()	kernel_pmap_ptr
-
 /*
  * Each machine dependent implementation is expected to
  * keep certain statistics.  They may do this anyway they
@@ -90,6 +87,10 @@ typedef struct pmap_statistics	*pmap_statistics_t;
 
 #ifdef _KERNEL
 #include <machine/pmap.h>
+
+extern struct pmap	*const kernel_pmap_ptr;
+#define pmap_kernel()	kernel_pmap_ptr
+
 #endif
 
 /*
