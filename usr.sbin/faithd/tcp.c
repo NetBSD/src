@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp.c,v 1.9 2002/08/20 23:02:45 itojun Exp $	*/
+/*	$NetBSD: tcp.c,v 1.10 2010/11/26 18:58:43 christos Exp $	*/
 /*	$KAME: tcp.c,v 1.10 2002/08/20 23:01:01 itojun Exp $	*/
 
 /*
@@ -54,7 +54,8 @@
 
 static char tcpbuf[16*1024];
 	/* bigger than MSS and may be lesser than window size */
-static int tblen, tboff, oob_exists;
+static ssize_t tblen, tboff;
+static int oob_exists;
 static fd_set readfds, writefds, exceptfds;
 static char atmark_buf[2];
 static pid_t cpid = (pid_t)0;
@@ -62,12 +63,12 @@ static pid_t ppid = (pid_t)0;
 volatile time_t child_lastactive = (time_t)0;
 static time_t parent_lastactive = (time_t)0;
 
-static void sig_ctimeout __P((int));
-static void sig_child __P((int));
-static void notify_inactive __P((void));
-static void notify_active __P((void));
-static void send_data __P((int, int, const char *, int));
-static void relay __P((int, int, const char *, int));
+static void sig_ctimeout(int);
+static void sig_child(int);
+static void notify_inactive(void);
+static void notify_active(void);
+static void send_data(int, int, const char *, int);
+static void relay(int, int, const char *, int);
 
 /*
  * Inactivity timer:
@@ -76,6 +77,7 @@ static void relay __P((int, int, const char *, int));
  * - parent side (ppid == 0) will check the last SIGUSR1 it have seen.
  */
 static void
+/*ARGSUSED*/
 sig_ctimeout(int sig)
 {
 	/* parent side: record notification from the child */
@@ -86,6 +88,7 @@ sig_ctimeout(int sig)
 
 /* parent will terminate if child dies. */
 static void
+/*ARGSUSED*/
 sig_child(int sig)
 {
 	int status;
@@ -118,9 +121,9 @@ notify_inactive()
 	if (FAITH_TIMEOUT < t - child_lastactive
 	 && FAITH_TIMEOUT < t - parent_lastactive) {
 		/* both side timeouted */
-		signal(SIGCHLD, SIG_DFL);
-		kill(cpid, SIGTERM);
-		wait(NULL);
+		(void)signal(SIGCHLD, SIG_DFL);
+		(void)kill(cpid, SIGTERM);
+		(void)wait(NULL);
 		exit_failure("connection timeout");
 		/* NOTREACHED */
 	}
@@ -147,9 +150,10 @@ notify_active()
 }
 
 static void
+/*ARGSUSED*/
 send_data(int s_rcv, int s_snd, const char *service, int direction)
 {
-	int cc;
+	ssize_t cc;
 
 	if (oob_exists) {
 		cc = send(s_snd, atmark_buf, 1, MSG_OOB);
@@ -162,7 +166,7 @@ send_data(int s_rcv, int s_snd, const char *service, int direction)
 	}
 
 	for (; tboff < tblen; tboff += cc) {
-		cc = write(s_snd, tcpbuf + tboff, tblen - tboff);
+		cc = write(s_snd, tcpbuf + tboff, (size_t)(tblen - tboff));
 		if (cc < 0)
 			goto retry_or_err;
 	}
@@ -201,7 +205,7 @@ relay(int s_rcv, int s_snd, const char *service, int direction)
 	FD_ZERO(&readfds);
 	FD_ZERO(&writefds);
 	FD_ZERO(&exceptfds);
-	fcntl(s_snd, F_SETFD, O_NONBLOCK);
+	(void)fcntl(s_snd, F_SETFD, O_NONBLOCK);
 	oreadfds = readfds; owritefds = writefds; oexceptfds = exceptfds;
 	if (s_rcv >= FD_SETSIZE)
 		exit_failure("descriptor too big");
@@ -235,8 +239,8 @@ relay(int s_rcv, int s_snd, const char *service, int direction)
 		if (FD_ISSET(s_rcv, &exceptfds)) {
 			error = ioctl(s_rcv, SIOCATMARK, &atmark);
 			if (error != -1 && atmark == 1) {
-				int cc;
-			    oob_read_retry:
+				ssize_t cc;
+oob_read_retry:
 				cc = read(s_rcv, atmark_buf, 1);
 				if (cc == 1) {
 					if (s_rcv >= FD_SETSIZE)
@@ -269,10 +273,10 @@ relay(int s_rcv, int s_snd, const char *service, int direction)
 				/* NOTREACHED */
 			case 0:
 				/* to close opposite-direction relay process */
-				shutdown(s_snd, 0);
+				(void)shutdown(s_snd, 0);
 
-				close(s_rcv);
-				close(s_snd);
+				(void)close(s_rcv);
+				(void)close(s_snd);
 				exit_success("terminating %s relay", service);
 				/* NOTREACHED */
 			default:
@@ -314,8 +318,8 @@ tcp_relay(int s_src, int s_dst, const char *service)
 	default:
 		/* parent process: relay coming traffic */
 		ppid = (pid_t)0;
-		signal(SIGUSR1, sig_ctimeout);
-		signal(SIGCHLD, sig_child);
+		(void)signal(SIGUSR1, sig_ctimeout);
+		(void)signal(SIGCHLD, sig_child);
 		relay(s_dst, s_src, service, 0);
 		/* NOTREACHED */
 	}

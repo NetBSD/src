@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp.c,v 1.18 2009/04/19 06:09:42 lukem Exp $	*/
+/*	$NetBSD: ftp.c,v 1.19 2010/11/26 18:58:43 christos Exp $	*/
 /*	$KAME: ftp.c,v 1.23 2003/08/19 21:20:33 itojun Exp $	*/
 
 /*
@@ -52,7 +52,6 @@
 #include "faithd.h"
 
 static char rbuf[MSS];
-static char sbuf[MSS];
 static int passivemode = 0;
 static int wport4 = -1;			/* listen() to active */
 static int wport6 = -1;			/* listen() to passive */
@@ -64,19 +63,18 @@ static int epsvall = 0;
 
 enum state { NONE, LPRT, EPRT, LPSV, EPSV };
 
-static int ftp_activeconn __P((void));
-static int ftp_passiveconn __P((void));
-static int ftp_copy __P((int, int));
-static int ftp_copyresult __P((int, int, enum state));
-static int ftp_copycommand __P((int, int, enum state *));
+static int ftp_activeconn(void);
+static int ftp_passiveconn(void);
+static ssize_t ftp_copy(int, int);
+static ssize_t ftp_copyresult(int, int, enum state);
+static ssize_t ftp_copycommand(int, int, enum state *);
 
 void
 ftp_relay(int ctl6, int ctl4)
 {
 	struct pollfd pfd[6];
-	int error;
+	ssize_t error;
 	enum state state = NONE;
-	struct timeval tv;
 
 	syslog(LOG_INFO, "starting ftp control connection");
 
@@ -110,10 +108,8 @@ ftp_relay(int ctl6, int ctl4)
 		pfd[4].fd = pfd[5].fd = -1;
 		pfd[4].events = pfd[5].events = 0;
 #endif
-		tv.tv_sec = FAITH_TIMEOUT;
-		tv.tv_usec = 0;
-
-		error = poll(pfd, sizeof(pfd)/sizeof(pfd[0]), tv.tv_sec * 1000);
+		error = poll(pfd, (unsigned int)(sizeof(pfd) / sizeof(pfd[0])),
+		    FAITH_TIMEOUT * 1000);
 		if (error == -1) {
 			exit_failure("poll: %s", strerror(errno));
 		}
@@ -173,11 +169,11 @@ ftp_relay(int ctl6, int ctl4)
 				goto bad;
 			case 0:
 				if (port4 >= 0) {
-					close(port4);
+					(void)close(port4);
 					port4 = -1;
 				}
 				if (port6 >= 0) {
-					close(port6);
+					(void)close(port6);
 					port6 = -1;
 				}
 				syslog(LOG_INFO, "terminating data connection");
@@ -199,11 +195,11 @@ ftp_relay(int ctl6, int ctl4)
 				goto bad;
 			case 0:
 				if (port4 >= 0) {
-					close(port4);
+					(void)close(port4);
 					port4 = -1;
 				}
 				if (port6 >= 0) {
-					close(port6);
+					(void)close(port6);
 					port6 = -1;
 				}
 				syslog(LOG_INFO, "terminating data connection");
@@ -240,17 +236,15 @@ ftp_activeconn()
 	socklen_t n;
 	int error;
 	struct pollfd pfd[1];
-	struct timeval timeout;
 	struct sockaddr *sa;
 
 	/* get active connection from server */
 	pfd[0].fd = wport4;
 	pfd[0].events = POLLIN;
-	timeout.tv_sec = 120;
-	timeout.tv_usec = 0;
 	n = sizeof(data4);
-	if (poll(pfd, sizeof(pfd)/sizeof(pfd[0]), timeout.tv_sec * 1000) == 0 ||
-	    (port4 = accept(wport4, (struct sockaddr *)&data4, &n)) < 0)
+	if (poll(pfd, (unsigned int)(sizeof(pfd) / sizeof(pfd[0])),
+	    120000) == 0 ||
+	    (port4 = accept(wport4, (void *)&data4, &n)) < 0)
 	{
 		(void)close(wport4);
 		wport4 = -1;
@@ -259,7 +253,7 @@ ftp_activeconn()
 	}
 
 	/* ask active connection to client */
-	sa = (struct sockaddr *)&data6;
+	sa = (void *)&data6;
 	port6 = socket(sa->sa_family, SOCK_STREAM, 0);
 	if (port6 == -1) {
 		(void)close(port4);
@@ -268,7 +262,7 @@ ftp_activeconn()
 		syslog(LOG_INFO, "active mode data connection failed");
 		return -1;
 	}
-	error = connect(port6, sa, sa->sa_len);
+	error = connect(port6, sa, (socklen_t)sa->sa_len);
 	if (error < 0) {
 		(void)close(port6);
 		(void)close(port4);
@@ -288,17 +282,15 @@ ftp_passiveconn()
 	socklen_t len;
 	int error;
 	struct pollfd pfd[1];
-	struct timeval timeout;
 	struct sockaddr *sa;
 
 	/* get passive connection from client */
 	pfd[0].fd = wport6;
 	pfd[0].events = POLLIN;
-	timeout.tv_sec = 120;
-	timeout.tv_usec = 0;
 	len = sizeof(data6);
-	if (poll(pfd, sizeof(pfd)/sizeof(pfd[0]), timeout.tv_sec * 1000) == 0 ||
-	    (port6 = accept(wport6, (struct sockaddr *)&data6, &len)) < 0)
+	if (poll(pfd, (unsigned int)(sizeof(pfd) / sizeof(pfd[0])),
+	    120000) == 0 ||
+	    (port6 = accept(wport6, (void *)&data6, &len)) < 0)
 	{
 		(void)close(wport6);
 		wport6 = -1;
@@ -307,7 +299,7 @@ ftp_passiveconn()
 	}
 
 	/* ask passive connection to server */
-	sa = (struct sockaddr *)&data4;
+	sa = (void *)&data4;
 	port4 = socket(sa->sa_family, SOCK_STREAM, 0);
 	if (port4 == -1) {
 		(void)close(wport6);
@@ -316,7 +308,7 @@ ftp_passiveconn()
 		syslog(LOG_INFO, "passive mode data connection failed");
 		return -1;
 	}
-	error = connect(port4, sa, sa->sa_len);
+	error = connect(port4, sa, (socklen_t)sa->sa_len);
 	if (error < 0) {
 		(void)close(wport6);
 		(void)close(port4);
@@ -330,10 +322,11 @@ ftp_passiveconn()
 	return 0;
 }
 
-static int
+static ssize_t
 ftp_copy(int src, int dst)
 {
-	int error, atmark, n;
+	int error, atmark;
+	ssize_t n;
 
 	/* OOB data handling */
 	error = ioctl(src, SIOCATMARK, &atmark);
@@ -341,12 +334,12 @@ ftp_copy(int src, int dst)
 		n = read(src, rbuf, 1);
 		if (n == -1)
 			goto bad;
-		send(dst, rbuf, n, MSG_OOB);
+		(void)send(dst, rbuf, (size_t)n, MSG_OOB);
 #if 0
 		n = read(src, rbuf, sizeof(rbuf));
 		if (n == -1)
 			goto bad;
-		write(dst, rbuf, n);
+		(void)write(dst, rbuf, (size_t)n);
 		return n;
 #endif
 	}
@@ -357,7 +350,7 @@ ftp_copy(int src, int dst)
 	case 0:
 		return n;
 	default:
-		write(dst, rbuf, n);
+		(void)write(dst, rbuf, (size_t)n);
 		return n;
 	}
 
@@ -367,10 +360,11 @@ ftp_copy(int src, int dst)
 	return 0;	/* to make gcc happy */
 }
 
-static int
+static ssize_t
 ftp_copyresult(int src, int dst, enum state state)
 {
-	int error, atmark, n;
+	int error, atmark;
+	ssize_t n;
 	socklen_t len;
 	char *param;
 	int code;
@@ -383,12 +377,12 @@ ftp_copyresult(int src, int dst, enum state state)
 		n = read(src, rbuf, 1);
 		if (n == -1)
 			goto bad;
-		send(dst, rbuf, n, MSG_OOB);
+		(void)send(dst, rbuf, (size_t)n, MSG_OOB);
 #if 0
 		n = read(src, rbuf, sizeof(rbuf));
 		if (n == -1)
 			goto bad;
-		write(dst, rbuf, n);
+		(void)write(dst, rbuf, (size_t)n);
 		return n;
 #endif
 	}
@@ -405,14 +399,14 @@ ftp_copyresult(int src, int dst, enum state state)
 	for (i = 0; i < 3; i++) {
 		if (!isdigit((unsigned char)*p)) {
 			/* invalid reply */
-			write(dst, rbuf, n);
+			(void)write(dst, rbuf, (size_t)n);
 			return n;
 		}
 		p++;
 	}
 	if (!isspace((unsigned char)*p)) {
 		/* invalid reply */
-		write(dst, rbuf, n);
+		(void)write(dst, rbuf, (size_t)n);
 		return n;
 	}
 	code = atoi(rbuf);
@@ -428,13 +422,13 @@ ftp_copyresult(int src, int dst, enum state state)
 		if (!passivemode && rbuf[0] == '1') {
 			if (ftp_activeconn() < 0) {
 				n = snprintf(rbuf, sizeof(rbuf),
-					"425 Cannot open data connetion\r\n");
+				    "425 Cannot open data connetion\r\n");
 				if (n < 0 || n >= (int)sizeof(rbuf))
 					n = 0;
 			}
 		}
 		if (n)
-			write(dst, rbuf, n);
+			(void)write(dst, rbuf, (size_t)n);
 		return n;
 	case LPRT:
 	case EPRT:
@@ -449,7 +443,7 @@ ftp_copyresult(int src, int dst, enum state state)
 			(void)close(wport4);
 			wport4 = -1;
 		}
-		write(dst, rbuf, n);
+		(void)write(dst, rbuf, (size_t)n);
 		return n;
 	case LPSV:
 	case EPSV:
@@ -461,7 +455,7 @@ ftp_copyresult(int src, int dst, enum state state)
 passivefail0:
 			(void)close(wport6);
 			wport6 = -1;
-			write(dst, rbuf, n);
+			(void)write(dst, rbuf, (size_t)n);
 			return n;
 		}
 
@@ -488,42 +482,37 @@ passivefail0:
 
 		/* keep PORT parameter */
 		memset(&data4, 0, sizeof(data4));
-		sin = (struct sockaddr_in *)&data4;
+		sin = (void *)&data4;
 		sin->sin_len = sizeof(*sin);
 		sin->sin_family = AF_INET;
 		sin->sin_addr.s_addr = 0;
 		for (n = 0; n < 4; n++) {
-			sin->sin_addr.s_addr |=
-				htonl((ho[n] & 0xff) << ((3 - n) * 8));
+			sin->sin_addr.s_addr |= htonl(((uint32_t)(ho[n] & 0xff)
+			    << (int)((3 - n) * 8)));
 		}
 		sin->sin_port = htons(((po[0] & 0xff) << 8) | (po[1] & 0xff));
 
 		/* get ready for passive data connection */
 		memset(&data6, 0, sizeof(data6));
-		sin6 = (struct sockaddr_in6 *)&data6;
+		sin6 = (void *)&data6;
 		sin6->sin6_len = sizeof(*sin6);
 		sin6->sin6_family = AF_INET6;
 		wport6 = socket(sin6->sin6_family, SOCK_STREAM, 0);
 		if (wport6 == -1) {
 passivefail:
-			n = snprintf(sbuf, sizeof(sbuf),
-				"500 could not translate from PASV\r\n");
-			if (n < 0 || n >= (int)sizeof(sbuf))
-				n = 0;
-			if (n)
-				write(src, sbuf, n);
-			return n;
+			return dprintf(src,
+			    "500 could not translate from PASV\r\n");
 		}
 #ifdef IPV6_FAITH
 	    {
 		int on = 1;
 		error = setsockopt(wport6, IPPROTO_IPV6, IPV6_FAITH,
-			&on, sizeof(on));
+			&on, (socklen_t)sizeof(on));
 		if (error == -1)
 			exit_failure("setsockopt(IPV6_FAITH): %s", strerror(errno));
 	    }
 #endif
-		error = bind(wport6, (struct sockaddr *)sin6, sin6->sin6_len);
+		error = bind(wport6, (void *)sin6, (socklen_t)sin6->sin6_len);
 		if (error == -1) {
 			(void)close(wport6);
 			wport6 = -1;
@@ -541,51 +530,42 @@ passivefail:
 		 * addr from dst, port from wport6
 		 */
 		len = sizeof(data6);
-		error = getsockname(wport6, (struct sockaddr *)&data6, &len);
+		error = getsockname(wport6, (void *)&data6, &len);
 		if (error == -1) {
 			(void)close(wport6);
 			wport6 = -1;
 			goto passivefail;
 		}
-		sin6 = (struct sockaddr_in6 *)&data6;
+		sin6 = (void *)&data6;
 		port = sin6->sin6_port;
 
 		len = sizeof(data6);
-		error = getsockname(dst, (struct sockaddr *)&data6, &len);
+		error = getsockname(dst, (void *)&data6, &len);
 		if (error == -1) {
 			(void)close(wport6);
 			wport6 = -1;
 			goto passivefail;
 		}
-		sin6 = (struct sockaddr_in6 *)&data6;
+		sin6 = (void *)&data6;
 		sin6->sin6_port = port;
 
 		if (state == LPSV) {
-			a = (char *)&sin6->sin6_addr;
-			p = (char *)&sin6->sin6_port;
-			n = snprintf(sbuf, sizeof(sbuf),
-"228 Entering Long Passive Mode (%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d)\r\n",
-				6, 16, UC(a[0]), UC(a[1]), UC(a[2]), UC(a[3]),
-				UC(a[4]), UC(a[5]), UC(a[6]), UC(a[7]),
-				UC(a[8]), UC(a[9]), UC(a[10]), UC(a[11]),
-				UC(a[12]), UC(a[13]), UC(a[14]), UC(a[15]),
-				2, UC(p[0]), UC(p[1]));
-			if (n < 0 || n >= (int)sizeof(sbuf))
-				n = 0;
-			if (n)
-				write(dst, sbuf, n);
+			a = (void *)&sin6->sin6_addr;
+			p = (void *)&sin6->sin6_port;
 			passivemode = 1;
-			return n;
+			return dprintf(dst,
+			    "228 Entering Long Passive Mode (%d,%d,%d,%d,%d,%d,"
+			    "%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d)\r\n",
+			    6, 16, UC(a[0]), UC(a[1]), UC(a[2]), UC(a[3]),
+			    UC(a[4]), UC(a[5]), UC(a[6]), UC(a[7]),
+			    UC(a[8]), UC(a[9]), UC(a[10]), UC(a[11]),
+			    UC(a[12]), UC(a[13]), UC(a[14]), UC(a[15]),
+			    2, UC(p[0]), UC(p[1]));
 		} else {
-			n = snprintf(sbuf, sizeof(sbuf),
-"229 Entering Extended Passive Mode (|||%d|)\r\n",
-				ntohs(sin6->sin6_port));
-			if (n < 0 || n >= (int)sizeof(sbuf))
-				n = 0;
-			if (n)
-				write(dst, sbuf, n);
 			passivemode = 1;
-			return n;
+			return dprintf(dst,
+			    "229 Entering Extended Passive Mode (|||%d|)\r\n",
+			    ntohs(sin6->sin6_port));
 		}
 	    }
 	}
@@ -596,10 +576,11 @@ passivefail:
 	return 0;	/* to make gcc happy */
 }
 
-static int
+static ssize_t
 ftp_copycommand(int src, int dst, enum state *state)
 {
-	int error, atmark, n;
+	int error, atmark;
+	ssize_t n;
 	socklen_t len;
 	unsigned int af, hal, ho[16], pal, po[2];
 	char *a, *p, *q;
@@ -616,12 +597,12 @@ ftp_copycommand(int src, int dst, enum state *state)
 		n = read(src, rbuf, 1);
 		if (n == -1)
 			goto bad;
-		send(dst, rbuf, n, MSG_OOB);
+		(void)send(dst, rbuf, (size_t)n, MSG_OOB);
 #if 0
 		n = read(src, rbuf, sizeof(rbuf));
 		if (n == -1)
 			goto bad;
-		write(dst, rbuf, n);
+		(void)write(dst, rbuf, (size_t)n);
 		return n;
 #endif
 	}
@@ -632,7 +613,7 @@ ftp_copycommand(int src, int dst, enum state *state)
 	rbuf[n] = '\0';
 
 	if (n < 4) {
-		write(dst, rbuf, n);
+		(void)write(dst, rbuf, (size_t)n);
 		return n;
 	}
 
@@ -644,7 +625,7 @@ ftp_copycommand(int src, int dst, enum state *state)
 	for (i = 0; i < 4; i++) {
 		if (!isalpha((unsigned char)*p)) {
 			/* invalid command */
-			write(dst, rbuf, n);
+			(void)write(dst, rbuf, (size_t)n);
 			return n;
 		}
 		*q++ = islower((unsigned char)*p) ? toupper((unsigned char)*p) : *p;
@@ -652,7 +633,7 @@ ftp_copycommand(int src, int dst, enum state *state)
 	}
 	if (!isspace((unsigned char)*p)) {
 		/* invalid command */
-		write(dst, rbuf, n);
+		(void)write(dst, rbuf, (size_t)n);
 		return n;
 	}
 	*q = '\0';
@@ -678,35 +659,25 @@ ftp_copycommand(int src, int dst, enum state *state)
 		wport4 = wport6 = port4 = port6 = -1;
 
 		if (epsvall) {
-			n = snprintf(sbuf, sizeof(sbuf), "501 %s disallowed in EPSV ALL\r\n",
-				cmd);
-			if (n < 0 || n >= (int)sizeof(sbuf))
-				n = 0;
-			if (n)
-				write(src, sbuf, n);
-			return n;
+			return dprintf(src, "501 %s disallowed in EPSV ALL\r\n",
+			    cmd);
 		}
 
 		n = sscanf(param,
-"%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u",
-			      &af, &hal, &ho[0], &ho[1], &ho[2], &ho[3],
-			      &ho[4], &ho[5], &ho[6], &ho[7],
-			      &ho[8], &ho[9], &ho[10], &ho[11],
-			      &ho[12], &ho[13], &ho[14], &ho[15],
-			      &pal, &po[0], &po[1]);
+		    "%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,"
+		    "%u,%u,%u", &af, &hal, &ho[0], &ho[1], &ho[2], &ho[3],
+		    &ho[4], &ho[5], &ho[6], &ho[7],
+		    &ho[8], &ho[9], &ho[10], &ho[11],
+		    &ho[12], &ho[13], &ho[14], &ho[15],
+		    &pal, &po[0], &po[1]);
 		if (n != 21 || af != 6 || hal != 16|| pal != 2) {
-			n = snprintf(sbuf, sizeof(sbuf),
-				"501 illegal parameter to LPRT\r\n");
-			if (n < 0 || n >= (int)sizeof(sbuf))
-				n = 0;
-			if (n)
-				write(src, sbuf, n);
-			return n;
+			return dprintf(src,
+			    "501 illegal parameter to LPRT\r\n");
 		}
 
 		/* keep LPRT parameter */
 		memset(&data6, 0, sizeof(data6));
-		sin6 = (struct sockaddr_in6 *)&data6;
+		sin6 = (void *)&data6;
 		sin6->sin6_len = sizeof(*sin6);
 		sin6->sin6_family = AF_INET6;
 		for (n = 0; n < 16; n++)
@@ -716,25 +687,20 @@ ftp_copycommand(int src, int dst, enum state *state)
 sendport:
 		/* get ready for active data connection */
 		len = sizeof(data4);
-		error = getsockname(dst, (struct sockaddr *)&data4, &len);
+		error = getsockname(dst, (void *)&data4, &len);
 		if (error == -1) {
 lprtfail:
-			n = snprintf(sbuf, sizeof(sbuf),
-				"500 could not translate to PORT\r\n");
-			if (n < 0 || n >= (int)sizeof(sbuf))
-				n = 0;
-			if (n)
-				write(src, sbuf, n);
-			return n;
+			return dprintf(src,
+			    "500 could not translate to PORT\r\n");
 		}
-		if (((struct sockaddr *)&data4)->sa_family != AF_INET)
+		if (((struct sockaddr *)(void *)&data4)->sa_family != AF_INET)
 			goto lprtfail;
-		sin = (struct sockaddr_in *)&data4;
+		sin = (void *)&data4;
 		sin->sin_port = 0;
 		wport4 = socket(sin->sin_family, SOCK_STREAM, 0);
 		if (wport4 == -1)
 			goto lprtfail;
-		error = bind(wport4, (struct sockaddr *)sin, sin->sin_len);
+		error = bind(wport4, (void *)sin, (socklen_t)sin->sin_len);
 		if (error == -1) {
 			(void)close(wport4);
 			wport4 = -1;
@@ -749,30 +715,24 @@ lprtfail:
 
 		/* transmit PORT */
 		len = sizeof(data4);
-		error = getsockname(wport4, (struct sockaddr *)&data4, &len);
+		error = getsockname(wport4, (void *)&data4, &len);
 		if (error == -1) {
 			(void)close(wport4);
 			wport4 = -1;
 			goto lprtfail;
 		}
-		if (((struct sockaddr *)&data4)->sa_family != AF_INET) {
+		if (((struct sockaddr *)(void *)&data4)->sa_family != AF_INET) {
 			(void)close(wport4);
 			wport4 = -1;
 			goto lprtfail;
 		}
-		sin = (struct sockaddr_in *)&data4;
-		a = (char *)&sin->sin_addr;
-		p = (char *)&sin->sin_port;
-		n = snprintf(sbuf, sizeof(sbuf), "PORT %d,%d,%d,%d,%d,%d\r\n",
-				  UC(a[0]), UC(a[1]), UC(a[2]), UC(a[3]),
-				  UC(p[0]), UC(p[1]));
-		if (n < 0 || n >= (int)sizeof(sbuf))
-			n = 0;
-		if (n)
-			write(dst, sbuf, n);
+		sin = (void *)&data4;
+		a = (void *)&sin->sin_addr;
+		p = (void *)&sin->sin_port;
 		*state = nstate;
 		passivemode = 0;
-		return n;
+		return dprintf(dst, "PORT %d,%d,%d,%d,%d,%d\r\n",
+		    UC(a[0]), UC(a[1]), UC(a[2]), UC(a[3]), UC(p[0]), UC(p[1]));
 	} else if (strcmp(cmd, "EPRT") == 0 && param) {
 		/*
 		 * EPRT -> PORT
@@ -789,13 +749,8 @@ lprtfail:
 		wport4 = wport6 = port4 = port6 = -1;
 
 		if (epsvall) {
-			n = snprintf(sbuf, sizeof(sbuf), "501 %s disallowed in EPSV ALL\r\n",
-				cmd);
-			if (n < 0 || n >= (int)sizeof(sbuf))
-				n = 0;
-			if (n)
-				write(src, sbuf, n);
-			return n;
+			return dprintf(src, "501 %s disallowed in EPSV ALL\r\n",
+			    cmd);
 		}
 
 		p = param;
@@ -805,13 +760,8 @@ lprtfail:
 			p++;
 		if (!*p) {
 eprtparamfail:
-			n = snprintf(sbuf, sizeof(sbuf),
-				"501 illegal parameter to EPRT\r\n");
-			if (n < 0 || n >= (int)sizeof(sbuf))
-				n = 0;
-			if (n)
-				write(src, sbuf, n);
-			return n;
+			return dprintf(src,
+			    "501 illegal parameter to EPRT\r\n");
 		}
 		*p++ = '\0';
 		hostp = p;
@@ -829,13 +779,8 @@ eprtparamfail:
 
 		n = sscanf(afp, "%d", &af);
 		if (n != 1 || af != 2) {
-			n = snprintf(sbuf, sizeof(sbuf),
-				"501 unsupported address family to EPRT\r\n");
-			if (n < 0 || n >= (int)sizeof(sbuf))
-				n = 0;
-			if (n)
-				write(src, sbuf, n);
-			return n;
+			return dprintf(src,
+			    "501 unsupported address family to EPRT\r\n");
 		}
 		memset(&hints, 0, sizeof(hints));
 		hints.ai_family = AF_UNSPEC;
@@ -843,23 +788,14 @@ eprtparamfail:
 		hints.ai_protocol = IPPROTO_TCP;
 		error = getaddrinfo(hostp, portp, &hints, &res);
 		if (error) {
-			n = snprintf(sbuf, sizeof(sbuf),
-				"501 EPRT: %s\r\n", gai_strerror(error));
-			if (n < 0 || n >= (int)sizeof(sbuf))
-				n = 0;
-			if (n)
-				write(src, sbuf, n);
-			return n;
+			return dprintf(src,
+			    "501 EPRT: %s\r\n", gai_strerror(error));
 		}
 		if (res->ai_next) {
-			n = snprintf(sbuf, sizeof(sbuf),
-				"501 EPRT: %s resolved to multiple addresses\r\n", hostp);
-			if (n < 0 || n >= (int)sizeof(sbuf))
-				n = 0;
-			if (n)
-				write(src, sbuf, n);
 			freeaddrinfo(res);
-			return n;
+			return dprintf(src,
+			    "501 EPRT: %s resolved to multiple addresses\r\n",
+			    hostp);
 		}
 
 		memcpy(&data6, res->ai_addr, res->ai_addrlen);
@@ -879,24 +815,14 @@ eprtparamfail:
 		wport4 = wport6 = port4 = port6 = -1;
 
 		if (epsvall) {
-			n = snprintf(sbuf, sizeof(sbuf), "501 %s disallowed in EPSV ALL\r\n",
-				cmd);
-			if (n < 0 || n >= (int)sizeof(sbuf))
-				n = 0;
-			if (n)
-				write(src, sbuf, n);
-			return n;
+			return dprintf(src, "501 %s disallowed in EPSV ALL\r\n",
+			    cmd);
 		}
 
-		/* transmit PASV */
-		n = snprintf(sbuf, sizeof(sbuf), "PASV\r\n");
-		if (n < 0 || n >= (int)sizeof(sbuf))
-			n = 0;
-		if (n)
-			write(dst, sbuf, n);
 		*state = LPSV;
 		passivemode = 0;	/* to be set to 1 later */
-		return n;
+		/* transmit PASV */
+		return dprintf(dst, "PASV\r\n");
 	} else if (strcmp(cmd, "EPSV") == 0 && !param) {
 		/*
 		 * EPSV -> PASV
@@ -907,36 +833,22 @@ eprtparamfail:
 		(void)close(port6);
 		wport4 = wport6 = port4 = port6 = -1;
 
-		n = snprintf(sbuf, sizeof(sbuf), "PASV\r\n");
-		if (n < 0 || n >= (int)sizeof(sbuf))
-			n = 0;
-		if (n)
-			write(dst, sbuf, n);
 		*state = EPSV;
 		passivemode = 0;	/* to be set to 1 later */
-		return n;
-	} else if (strcmp(cmd, "EPSV") == 0 && param
-	 && strncasecmp(param, "ALL", 3) == 0 && isspace((unsigned char)param[3])) {
+		return dprintf(dst, "PASV\r\n");
+	} else if (strcmp(cmd, "EPSV") == 0 && param &&
+	    strncasecmp(param, "ALL", 3) == 0 &&
+	    isspace((unsigned char)param[3])) {
 		/*
 		 * EPSV ALL
 		 */
 		epsvall = 1;
-		n = snprintf(sbuf, sizeof(sbuf), "200 EPSV ALL command successful.\r\n");
-		if (n < 0 || n >= (int)sizeof(sbuf))
-			n = 0;
-		if (n)
-			write(src, sbuf, n);
-		return n;
+		return dprintf(src, "200 EPSV ALL command successful.\r\n");
 	} else if (strcmp(cmd, "PORT") == 0 || strcmp(cmd, "PASV") == 0) {
 		/*
 		 * reject PORT/PASV
 		 */
-		n = snprintf(sbuf, sizeof(sbuf), "502 %s not implemented.\r\n", cmd);
-		if (n < 0 || n >= (int)sizeof(sbuf))
-			n = 0;
-		if (n)
-			write(src, sbuf, n);
-		return n;
+		return dprintf(src, "502 %s not implemented.\r\n", cmd);
 	} else if (passivemode
 		&& (strcmp(cmd, "STOR") == 0
 		 || strcmp(cmd, "STOU") == 0
@@ -949,24 +861,18 @@ eprtparamfail:
 		 * mode data connection.
 		 */
 
+		*state = NONE;
 		if (ftp_passiveconn() < 0) {
-			n = snprintf(sbuf, sizeof(sbuf), "425 Cannot open data connetion\r\n");
-			if (n < 0 || n >= (int)sizeof(sbuf))
-				n = 0;
-			if (n)
-				write(src, sbuf, n);
+			return dprintf(src,
+			    "425 Cannot open data connetion\r\n");
 		} else {
 			/* simply relay the command */
-			write(dst, rbuf, n);
+			return write(dst, rbuf, (size_t)n);
 		}
-
-		*state = NONE;
-		return n;
 	} else {
 		/* simply relay it */
 		*state = NONE;
-		write(dst, rbuf, n);
-		return n;
+		return write(dst, rbuf, (size_t)n);
 	}
 
  bad:

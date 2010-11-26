@@ -1,4 +1,4 @@
-/*	$NetBSD: prefix.c,v 1.7 2009/04/19 06:09:42 lukem Exp $	*/
+/*	$NetBSD: prefix.c,v 1.8 2010/11/26 18:58:43 christos Exp $	*/
 /*	$KAME: prefix.c,v 1.13 2003/09/02 22:50:17 itojun Exp $	*/
 
 /*
@@ -63,7 +63,6 @@ prefix_set(const char *s, struct prefix *prefix, int slash)
 	char *p = NULL, *q, *r;
 	struct addrinfo hints, *res = NULL;
 	int max;
-	char *a;
 
 	p = strdup(s);
 	if (!p)
@@ -88,14 +87,11 @@ prefix_set(const char *s, struct prefix *prefix, int slash)
 	switch (prefix->a.ss_family) {
 	case AF_INET:
 		max = 32;
-		a = (char *)&((struct sockaddr_in *)&prefix->a)->sin_addr;
 		break;
 	case AF_INET6:
 		max = 128;
-		a = (char *)&((struct sockaddr_in6 *)&prefix->a)->sin6_addr;
 		break;
 	default:
-		a = NULL;
 		max = -1;
 		break;
 	}
@@ -130,10 +126,10 @@ prefix_string(const struct prefix *prefix)
 	static char buf[NI_MAXHOST + 20];
 	char hbuf[NI_MAXHOST];
 
-	if (getnameinfo((const struct sockaddr *)&prefix->a, prefix->a.ss_len,
-	    hbuf, sizeof(hbuf), NULL, 0, niflags))
+	if (getnameinfo((const void *)&prefix->a, (socklen_t)prefix->a.ss_len,
+	    hbuf, (socklen_t)sizeof(hbuf), NULL, 0, niflags))
 		return NULL;
-	snprintf(buf, sizeof(buf), "%s/%d", hbuf, prefix->l);
+	(void)snprintf(buf, sizeof(buf), "%s/%d", hbuf, prefix->l);
 	return buf;
 }
 
@@ -173,8 +169,8 @@ prefix_match(const struct prefix *prefix, const struct sockaddr *sa)
 	if (off + l > a.ss_len)
 		return 0;
 
-	pa = ((char *)&a) + off;
-	pb = ((char *)&b) + off;
+	pa = ((char *)(void *)&a) + off;
+	pb = ((char *)(void *)&b) + off;
 	if (prefix->l % 8) {
 		pa[prefix->l / 8] &= 0xff00 >> (prefix->l % 8);
 		pb[prefix->l / 8] &= 0xff00 >> (prefix->l % 8);
@@ -200,7 +196,7 @@ config_load1(const char *line)
 
 	if (strlen(line) + 1 > sizeof(buf))
 		return NULL;
-	strlcpy(buf, line, sizeof(buf));
+	(void)strlcpy(buf, line, sizeof(buf));
 
 	p = strchr(buf, '\n');
 	if (!p)
@@ -280,7 +276,7 @@ config_load(const char *configfile)
 
 	p = &sentinel;
 	sentinel.next = NULL;
-	while (fgets(buf, sizeof(buf), fp) != NULL) {
+	while (fgets(buf, (int)sizeof(buf), fp) != NULL) {
 		conf = config_load1(buf);
 		if (conf) {
 			p->next = conf;
@@ -289,7 +285,7 @@ config_load(const char *configfile)
 	}
 	config_list = sentinel.next;
 
-	fclose(fp);
+	(void)fclose(fp);
 	return 0;
 }
 
