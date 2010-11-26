@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.2,v 1.1.2.30 2010/11/25 00:27:19 riz Exp $
+# $NetBSD: CHANGES-5.2,v 1.1.2.31 2010/11/26 17:16:50 riz Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -841,4 +841,24 @@ etc/etc.shark/Makefile.inc			1.11-12 via patch
 
 	Install a.out version of INSTALL kernel in release. PR#41672
 	[is/tsutsui, ticket #1127]
+
+x11/bin/xinit/Makefile				1.8
+
+	Disable USE_PAM on ports which have legacy non-XFree86 servers.
+	[tsutsui, ticket #1482]
+
+sys/arch/dreamcast/dev/gdrom.c			1.27
+
+	Dreamcast: Fix unexpected "Bad address" errors on file read ops.
+	[tsutsui, ticket #1483]
+
+sys/arch/hpcmips/dev/plumohci.c			1.13
+
+	Fix ohci(4) panics for TX39XX (hpcmips).  PR#43473
+	[tsutsui, ticket #1484]
+
+sys/arch/hpcmips/tx/txcom.c			1.42-43
+
+	hpcmips com fixes.  PR#43472, PR#43474.
+	[tsutsui, ticket #1485]
 
