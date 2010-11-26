@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpuser_sp.c,v 1.17 2010/11/26 14:37:08 pooka Exp $	*/
+/*      $NetBSD: rumpuser_sp.c,v 1.18 2010/11/26 18:51:03 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: rumpuser_sp.c,v 1.17 2010/11/26 14:37:08 pooka Exp $");
+__RCSID("$NetBSD: rumpuser_sp.c,v 1.18 2010/11/26 18:51:03 pooka Exp $");
 
 #include <sys/types.h>
 #include <sys/atomic.h>
@@ -65,7 +65,7 @@ __RCSID("$NetBSD: rumpuser_sp.c,v 1.17 2010/11/26 14:37:08 pooka Exp $");
 
 #include "sp_common.c"
 
-#define MAXCLI 4
+#define MAXCLI 256
 
 static struct pollfd pfdlist[MAXCLI];
 static struct spclient spclist[MAXCLI];
@@ -329,7 +329,6 @@ spcrelease(struct spclient *spc)
 	spc->spc_dying = 0;
 
 	atomic_inc_uint(&disco);
-
 }
 
 static void
@@ -622,25 +621,22 @@ spserver(void *arg)
 	DPRINTF(("rump_sp: server mainloop\n"));
 
 	for (;;) {
-		/* g/c hangarounds (eventually) */
-		if (disco) {
-			int discoed;
+		int discoed;
 
-			discoed = atomic_swap_uint(&disco, 0);
-			while (discoed--) {
-				nfds--;
-				idx = maxidx;
-				while (idx) {
-					if (pfdlist[idx].fd != -1) {
-						maxidx = idx;
-						break;
-					}
-					idx--;
+		/* g/c hangarounds (eventually) */
+		discoed = atomic_swap_uint(&disco, 0);
+		while (discoed--) {
+			nfds--;
+			idx = maxidx;
+			while (idx) {
+				if (pfdlist[idx].fd != -1) {
+					maxidx = idx;
+					break;
 				}
-				DPRINTF(("rump_sp: set maxidx to [%u]\n",
-				    maxidx));
-				assert(maxidx+1 >= nfds);
+				idx--;
 			}
+			DPRINTF(("rump_sp: set maxidx to [%u]\n",
+			    maxidx));
 		}
 
 		DPRINTF(("rump_sp: loop nfd %d\n", maxidx+1));
@@ -744,7 +740,7 @@ rumpuser_sp_init(const struct rumpuser_sp_ops *spopsp, const char *url)
 		fprintf(stderr, "rump_sp: server bind failed\n");
 		return errno;
 	}
-	if (listen(s, 20) == -1) {
+	if (listen(s, MAXCLI) == -1) {
 		fprintf(stderr, "rump_sp: server listen failed\n");
 		return errno;
 	}
