@@ -1,4 +1,4 @@
-/*      $NetBSD: sp_common.c,v 1.10 2010/11/25 17:59:02 pooka Exp $	*/
+/*      $NetBSD: sp_common.c,v 1.11 2010/11/26 14:37:08 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -47,6 +47,7 @@
 #include <poll.h>
 #include <pthread.h>
 #include <stdarg.h>
+#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -123,22 +124,24 @@ struct spclient {
 	int spc_refcnt;
 	int spc_dying;
 
+	pthread_mutex_t spc_mtx;
+	pthread_cond_t spc_cv;
+
 	struct lwp *spc_mainlwp;
 	pid_t spc_pid;
 
+	TAILQ_HEAD(, respwait) spc_respwait;
+
+	/* rest of the fields are zeroed upon disconnect */
+#define SPC_ZEROFF offsetof(struct spclient, spc_pid)
 	struct pollfd *spc_pfd;
 
 	struct rsp_hdr spc_hdr;
 	uint8_t *spc_buf;
 	size_t spc_off;
 
-	pthread_mutex_t spc_mtx;
-	pthread_cond_t spc_cv;
-
 	uint64_t spc_nextreq;
 	int spc_ostatus, spc_istatus;
-
-	TAILQ_HEAD(, respwait) spc_respwait;
 };
 #define SPCSTATUS_FREE 0
 #define SPCSTATUS_BUSY 1
@@ -249,7 +252,7 @@ kickwaiter(struct spclient *spc)
 	}
 	DPRINTF(("rump_sp: client %p woke up waiter at %p\n", spc, rw));
 	rw->rw_data = spc->spc_buf;
-	rw->rw_dlen = (size_t)spc->spc_off;
+	rw->rw_dlen = (size_t)(spc->spc_off - HDRSZ);
 	pthread_cond_signal(&rw->rw_cv);
 	pthread_mutex_unlock(&spc->spc_mtx);
 
@@ -292,7 +295,7 @@ waitresp(struct spclient *spc, struct respwait *rw)
 				case -1:
 					rv = errno;
 					spc->spc_dying = 1;
-					break;
+					goto cleanup;
 				default:
 					break;
 				}
@@ -311,6 +314,7 @@ waitresp(struct spclient *spc, struct respwait *rw)
 					break;
 				}
 			}
+ cleanup:
 			pthread_mutex_lock(&spc->spc_mtx);
 			if (spc->spc_istatus == SPCSTATUS_WANTED)
 				kickall(spc);
@@ -326,6 +330,8 @@ waitresp(struct spclient *spc, struct respwait *rw)
 
 	pthread_cond_destroy(&rw->rw_cv);
 
+	if (rv == 0 && spc->spc_dying)
+		rv = ENOTCONN;
 	return rv;
 }
 
