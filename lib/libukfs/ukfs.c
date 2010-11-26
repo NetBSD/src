@@ -1,4 +1,4 @@
-/*	$NetBSD: ukfs.c,v 1.54 2010/09/07 17:16:18 pooka Exp $	*/
+/*	$NetBSD: ukfs.c,v 1.55 2010/11/26 11:10:53 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2009  Antti Kantee.  All Rights Reserved.
@@ -62,7 +62,6 @@
 
 #include <rump/rump.h>
 #include <rump/rump_syscalls.h>
-#include <rump/rumpuser.h>
 
 #include "ukfs_int_disklabel.h"
 
