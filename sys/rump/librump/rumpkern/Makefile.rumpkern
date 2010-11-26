@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rumpkern,v 1.102 2010/11/22 10:50:50 pooka Exp $
+#	$NetBSD: Makefile.rumpkern,v 1.103 2010/11/26 09:25:39 pooka Exp $
 #
 
 .include "${RUMPTOP}/Makefile.rump"
@@ -26,7 +26,7 @@ SRCS+=	locks.c
 #SRCS+=	locks_up.c
 
 # Does the arch support multiple processors?
-.if ${MACHINE_ARCH} == "amd64" || ${MACHINE_ARCH} == "i386"
+.if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
 RUMP_SMP=		# defined
 CPPFLAGS.rump.c+=	-DRUMP_SMP
 .endif
