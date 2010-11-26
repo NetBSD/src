@@ -1,4 +1,4 @@
-/*      $NetBSD: sp_common.c,v 1.11 2010/11/26 14:37:08 pooka Exp $	*/
+/*      $NetBSD: sp_common.c,v 1.12 2010/11/26 18:51:03 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -133,7 +133,7 @@ struct spclient {
 	TAILQ_HEAD(, respwait) spc_respwait;
 
 	/* rest of the fields are zeroed upon disconnect */
-#define SPC_ZEROFF offsetof(struct spclient, spc_pid)
+#define SPC_ZEROFF offsetof(struct spclient, spc_pfd)
 	struct pollfd *spc_pfd;
 
 	struct rsp_hdr spc_hdr;
@@ -154,16 +154,34 @@ static int readframe(struct spclient *);
 static void handlereq(struct spclient *);
 
 static void
-sendlock(struct spclient *spc)
+sendlockl(struct spclient *spc)
 {
 
-	pthread_mutex_lock(&spc->spc_mtx);
+	/* assert(pthread_mutex_owned) */
 	while (spc->spc_ostatus != SPCSTATUS_FREE) {
 		spc->spc_ostatus = SPCSTATUS_WANTED;
 		pthread_cond_wait(&spc->spc_cv, &spc->spc_mtx);
 	}
 	spc->spc_ostatus = SPCSTATUS_BUSY;
+}
+
+static void
+sendlock(struct spclient *spc)
+{
+
+	pthread_mutex_lock(&spc->spc_mtx);
+	sendlockl(spc);
 	pthread_mutex_unlock(&spc->spc_mtx);
+}
+
+static void
+sendunlockl(struct spclient *spc)
+{
+
+	/* assert(pthread_mutex_owned) */
+	if (spc->spc_ostatus == SPCSTATUS_WANTED)
+		pthread_cond_broadcast(&spc->spc_cv);
+	spc->spc_ostatus = SPCSTATUS_FREE;
 }
 
 static void
@@ -171,9 +189,7 @@ sendunlock(struct spclient *spc)
 {
 
 	pthread_mutex_lock(&spc->spc_mtx);
-	if (spc->spc_ostatus == SPCSTATUS_WANTED)
-		pthread_cond_broadcast(&spc->spc_cv);
-	spc->spc_ostatus = SPCSTATUS_FREE;
+	sendunlockl(spc);
 	pthread_mutex_unlock(&spc->spc_mtx);
 }
 
@@ -224,11 +240,15 @@ putwait(struct spclient *spc, struct respwait *rw, struct rsp_hdr *rhdr)
 	pthread_mutex_lock(&spc->spc_mtx);
 	rw->rw_reqno = rhdr->rsp_reqno = spc->spc_nextreq++;
 	TAILQ_INSERT_TAIL(&spc->spc_respwait, rw, rw_entries);
+
+	sendlockl(spc);
 }
 
 static void
 unputwait(struct spclient *spc, struct respwait *rw)
 {
+
+	sendunlockl(spc);
 
 	TAILQ_REMOVE(&spc->spc_respwait, rw, rw_entries);
 	pthread_mutex_unlock(&spc->spc_mtx);
@@ -267,7 +287,7 @@ kickall(struct spclient *spc)
 
 	/* DIAGASSERT(mutex_owned(spc_lock)) */
 	TAILQ_FOREACH(rw, &spc->spc_respwait, rw_entries)
-		pthread_cond_signal(&rw->rw_cv);
+		pthread_cond_broadcast(&rw->rw_cv);
 }
 
 static int
@@ -275,6 +295,8 @@ waitresp(struct spclient *spc, struct respwait *rw)
 {
 	struct pollfd pfd;
 	int rv = 0;
+
+	sendunlockl(spc);
 
 	while (rw->rw_data == NULL && spc->spc_dying == 0) {
 		/* are we free to receive? */
