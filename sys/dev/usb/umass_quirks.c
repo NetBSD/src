@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_quirks.c,v 1.76 2008/10/27 21:46:43 joerg Exp $	*/
+/*	$NetBSD: umass_quirks.c,v 1.76.2.1 2010/11/26 17:29:13 riz Exp $	*/
 
 /*
  * Copyright (c) 2001, 2004 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass_quirks.c,v 1.76 2008/10/27 21:46:43 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass_quirks.c,v 1.76.2.1 2010/11/26 17:29:13 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -218,6 +218,14 @@ Static const struct umass_quirk umass_quirks[] = {
 	  UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UNSPEC, 
 	  0,
 	  PQUIRK_NODOORLOCK | PQUIRK_NOSYNCCACHE,
+	  UMATCH_VENDOR_PRODUCT,
+	  NULL, NULL
+	},
+	/* Kingston generic HBA errors */
+	{ { USB_VENDOR_KINGSTON, USB_PRODUCT_KINGSTON_DTMINI10 },
+	  UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UNSPEC,
+	  0,
+	  PQUIRK_NODOORLOCK,
 	  UMATCH_VENDOR_PRODUCT,
 	  NULL, NULL
 	},
