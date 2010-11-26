@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpuser_sp.c,v 1.15 2010/11/25 17:59:02 pooka Exp $	*/
+/*      $NetBSD: rumpuser_sp.c,v 1.16 2010/11/26 10:59:14 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: rumpuser_sp.c,v 1.15 2010/11/25 17:59:02 pooka Exp $");
+__RCSID("$NetBSD: rumpuser_sp.c,v 1.16 2010/11/26 10:59:14 pooka Exp $");
 
 #include <sys/types.h>
 #include <sys/atomic.h>
@@ -421,8 +421,7 @@ serv_handlesyscall(struct spclient *spc, struct rsp_hdr *rhdr, uint8_t *data)
 
 	lwproc_newlwp(spc->spc_pid);
 	rv = rumpsyscall(sysnum, data, retval);
-	lwproc_switch(NULL);
-	free(data);
+	lwproc_release();
 
 	DPRINTF(("rump_sp: got return value %d & %d/%d\n",
 	    rv, retval[0], retval[1]));
@@ -442,7 +441,8 @@ serv_syscallbouncer(void *arg)
 
 	serv_handlesyscall(barg->sba_spc, &barg->sba_hdr, barg->sba_data);
 	spcrelease(barg->sba_spc);
-	free(arg);
+	free(barg->sba_data);
+	free(barg);
 	return NULL;
 }
 
