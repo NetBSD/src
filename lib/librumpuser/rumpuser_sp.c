@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpuser_sp.c,v 1.16 2010/11/26 10:59:14 pooka Exp $	*/
+/*      $NetBSD: rumpuser_sp.c,v 1.17 2010/11/26 14:37:08 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: rumpuser_sp.c,v 1.16 2010/11/26 10:59:14 pooka Exp $");
+__RCSID("$NetBSD: rumpuser_sp.c,v 1.17 2010/11/26 14:37:08 pooka Exp $");
 
 #include <sys/types.h>
 #include <sys/atomic.h>
@@ -345,6 +345,13 @@ serv_handledisco(unsigned int idx)
 	spc->spc_dying = 1;
 	kickall(spc);
 	pthread_mutex_unlock(&spc->spc_mtx);
+
+	/*
+	 * Nobody's going to attempt to send/receive anymore,
+	 * so reinit info relevant to that.
+	 */
+	memset((char *)spc + SPC_ZEROFF, 0, sizeof(*spc) - SPC_ZEROFF);
+
 	spcrelease(spc);
 }
 
