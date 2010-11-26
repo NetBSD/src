@@ -1,4 +1,4 @@
-/*	$NetBSD: p2k.c,v 1.44 2010/09/07 17:22:53 pooka Exp $	*/
+/*	$NetBSD: p2k.c,v 1.45 2010/11/26 11:12:06 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2009  Antti Kantee.  All Rights Reserved.
@@ -411,8 +411,9 @@ setupfs(struct p2k_mount *p2m, const char *vfsname, const char *devpath,
 	/* 
 	 * If we're mounting rumpfs, actually do no mount and redirect
 	 * requests to rump fs namespace root.  Strictly speaking, this
-	 * is not correct, but considering rumpfs doesn't currently
-	 * support VFS_MOUNT(), I don't think anyone will notice.
+	 * is not correct, but I don't think anyone will notice.
+	 * After all, we're mostly interested in things which reside
+	 * specifically on the rootfs, namely the contents of /dev
 	 */
 	if (strcmp(vfsname, MOUNT_RUMPFS) == 0) {
 		if ((rv = rump_pub_vfs_getmp("/", &p2m->p2m_mp)) != 0) {
