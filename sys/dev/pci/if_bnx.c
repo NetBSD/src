@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bnx.c,v 1.33 2010/04/05 07:20:25 joerg Exp $	*/
+/*	$NetBSD: if_bnx.c,v 1.34 2010/11/26 21:59:49 dholland Exp $	*/
 /*	$OpenBSD: if_bnx.c,v 1.85 2009/11/09 14:32:41 dlg Exp $ */
 
 /*-
@@ -35,7 +35,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/sys/dev/bce/if_bce.c,v 1.3 2006/04/13 14:12:26 ru Exp $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.33 2010/04/05 07:20:25 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.34 2010/11/26 21:59:49 dholland Exp $");
 
 /*
  * The following controllers are supported by this driver:
@@ -1996,7 +1996,7 @@ bnx_get_media(struct bnx_softc *sc)
 	} else if (BNX_CHIP_BOND_ID(sc) & BNX_CHIP_BOND_ID_SERDES_BIT)
 		sc->bnx_phy_flags |= BNX_PHY_SERDES_FLAG;
 
-	if (sc->bnx_phy_flags && BNX_PHY_SERDES_FLAG) {
+	if (sc->bnx_phy_flags & BNX_PHY_SERDES_FLAG) {
 		u_int32_t val;
  
 		sc->bnx_flags |= BNX_NO_WOL_FLAG;
