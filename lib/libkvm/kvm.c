@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm.c,v 1.96 2010/10/23 14:34:12 stacktic Exp $	*/
+/*	$NetBSD: kvm.c,v 1.97 2010/11/26 22:01:53 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm.c	8.2 (Berkeley) 2/13/94";
 #else
-__RCSID("$NetBSD: kvm.c,v 1.96 2010/10/23 14:34:12 stacktic Exp $");
+__RCSID("$NetBSD: kvm.c,v 1.97 2010/11/26 22:01:53 dholland Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -759,7 +759,7 @@ kvm_close(kvm_t *kd)
 		free(kd->iobuf);
 	free(kd);
 
-	return (0);
+	return (error);
 }
 
 int
