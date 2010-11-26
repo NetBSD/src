@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.60 2010/11/25 21:31:08 christos Exp $	*/
+/*	$NetBSD: arch.c,v 1.61 2010/11/26 15:14:29 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: arch.c,v 1.60 2010/11/25 21:31:08 christos Exp $";
+static char rcsid[] = "$NetBSD: arch.c,v 1.61 2010/11/26 15:14:29 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)arch.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: arch.c,v 1.60 2010/11/25 21:31:08 christos Exp $");
+__RCSID("$NetBSD: arch.c,v 1.61 2010/11/26 15:14:29 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1246,7 +1246,8 @@ Arch_LibOODate(GNode *gn)
     } else if (OP_NOP(gn->type) && Lst_IsEmpty(gn->children)) {
 	oodate = FALSE;
     } else if ((!Lst_IsEmpty(gn->children) && gn->cmgn == NULL) ||
-	       (gn->mtime > now) || (gn->mtime < gn->cmgn->mtime)) {
+	       (gn->mtime > now) ||
+	       (gn->cmgn != NULL && gn->mtime < gn->cmgn->mtime)) {
 	oodate = TRUE;
     } else {
 #ifdef RANLIBMAG
