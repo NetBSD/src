@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1461 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1462 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -791,3 +791,4 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	module: Allow disabling autoloading a specific module by setting
 		noautoload property.  [jnemeth 20101118]
 	openssh: Import 5.6. [adam 20101121]
+	dhcpcd(8): Import dhcpcd-5.2.9. [roy 20101127]
