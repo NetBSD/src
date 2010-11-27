@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpuser_sp.c,v 1.18 2010/11/26 18:51:03 pooka Exp $	*/
+/*      $NetBSD: rumpuser_sp.c,v 1.19 2010/11/27 18:30:51 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: rumpuser_sp.c,v 1.18 2010/11/26 18:51:03 pooka Exp $");
+__RCSID("$NetBSD: rumpuser_sp.c,v 1.19 2010/11/27 18:30:51 pooka Exp $");
 
 #include <sys/types.h>
 #include <sys/atomic.h>
@@ -617,6 +617,8 @@ spserver(void *arg)
 
 	pthread_attr_init(&pattr_detached);
 	pthread_attr_setdetachstate(&pattr_detached, PTHREAD_CREATE_DETACHED);
+	/* XXX: doesn't stacksize currently work on NetBSD */
+	pthread_attr_setstacksize(&pattr_detached, 32*1024);
 
 	DPRINTF(("rump_sp: server mainloop\n"));
 
