@@ -27,7 +27,7 @@
 .Os
 .Sh NAME
 .Nm dhcpcd.conf
-.Nd dhcpcd configuration file 
+.Nd dhcpcd configuration file
 .Sh DESCRIPTION
 Although
 .Nm dhcpcd
