@@ -1,0 +1,53 @@
+Release plans for NetBSD-6.0
+============================
+
+This file is managed by the release engineering team - please get in touch
+with them with any feedback.
+
+May not make 6.0
+----------------
++ XIP
++ gaols
++ sctp
++ devfs
+
+Will be in 6.0
+--------------
++ ZFS - need an update on viability, needs work
++ in-kernel iSCSI initiator, libisns and userland tools
++ 64-bit time_t
++ rump
++ LVM/dmapper and tools
++ workable MIPS for all
++ netpgp - maybe I am a bit biased in this?
++ able to use external compilers and toolchain
++ cleaned up files in repos - joerg
++ support for wide efficient regexps with tre
++ native X11R7
++ TLS - joerg
++ following on from TLS, modern gdb
++ lua scripting
++ agreement and communication of tiered port system (before release) - pooka
++ other enhancements and new functionality in -current
++ tcp support in libsa? need to merge SoC project
++ sasl - SoC project merged, needs to be hooked into the build
++ namei changes - dholland
++ support for resizing ffs
++ production support for fss - no longer experimental
++ Xen/SMP
++ automated test framework for testing releng autobuilds
++ full functionality for NPF
++ fixed IPSEC NAT-T
+
+Possibly in 6.0
+---------------
++ gcc 4.5+
++ mobile IPv6 - we have the mods, need application of same to the repo
++ kernel modules need work
++ Xen suspend/resume - jym working on it
++ TNF funding for release engineering
+
+
+Alistair Crooks
+On behalf of core and releng teams
+Sat Nov 27 12:32:06 PST 2010
