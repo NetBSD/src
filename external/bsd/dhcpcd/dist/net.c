@@ -525,8 +525,12 @@ do_address(const char *ifname,
 		if (act == 1) {
 			addr->s_addr = a->sin_addr.s_addr;
 			net->s_addr = n->sin_addr.s_addr;
-			if (dst && ifa->ifa_flags & IFF_POINTOPOINT)
-				dst->s_addr = d->sin_addr.s_addr;
+			if (dst) {
+				if (ifa->ifa_flags & IFF_POINTOPOINT)
+					dst->s_addr = d->sin_addr.s_addr;
+				else
+					dst->s_addr = INADDR_ANY;
+			}
 			retval = 1;
 			break;
 		}
