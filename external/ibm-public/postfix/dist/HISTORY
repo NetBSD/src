@@ -15768,3 +15768,51 @@ Apologies for any names omitted.
 
 	Portability: Berkeley DB 5.x has the same API as Berkeley
 	DB 4.1 and later. File: util/dict_db.c.
+
+20100610
+
+	Bugfix (introduced Postfix 2.2): Postfix no longer appends
+	the system default CA certificates to the lists specified
+	with *_tls_CAfile or with *_tls_CApath.  This prevents
+	third-party certificates from getting mail relay permission
+	with the permit_tls_all_clientcerts feature.  Unfortunately
+	this may cause compatibility problems with configurations
+	that rely on certificate verification for other purposes.
+	To get the old behavior, specify "tls_append_default_CA =
+	yes".  Files: tls/tls_certkey.c, tls/tls_misc.c,
+	global/mail_params.h.  proto/postconf.proto, mantools/postlink.
+
+20100714
+
+	Compatibility with Postfix < 2.3: fix 20061207 was incomplete
+	(undoing the change to bounce instead of defer after
+	pipe-to-command delivery fails with a signal). Fix by Thomas
+	Arnett. File: global/pipe_command.c.
+
+20100727
+
+	Bugfix: the milter_header_checks parser provided only the
+	actions that change the message flow (reject, filter,
+	discard, redirect) but disabled the non-flow actions (warn,
+	replace, prepend, ignore, dunno, ok).  File:
+	cleanup/cleanup_milter.c.
+
+20100827
+
+	Performance: fix for poor smtpd_proxy_filter TCP performance
+	over loopback (127.0.0.1) connections. Problem reported by
+	Mark Martinec.  Files: smtpd/smtpd_proxy.c.
+
+20101023
+
+	Cleanup: don't apply reject_rhsbl_helo to non-domain forms
+	such as network addresses.  This would cause false positives
+	with dbl.spamhaus.org.  File: smtpd/smtpd_check.c.
+
+20101117
+
+	Bugfix: the "421" reply after Milter error was overruled
+	by Postfix 1.1 code that replied with "503" for RFC 2821
+	compliance. We now make an exception for "final" replies,
+	as permitted by RFC. Solution by Victor Duchovni. File:
+	smtpd/smtpd.c.
