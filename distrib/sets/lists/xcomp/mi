@@ -1,4 +1,4 @@
-#	 $NetBSD: mi,v 1.119 2010/11/25 16:28:18 njoly Exp $
+#	 $NetBSD: mi,v 1.120 2010/11/27 22:21:27 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -6060,7 +6060,7 @@
 ./usr/X11R7/lib/X11/config/darwin.cf			-unknown-	xorg
 ./usr/X11R7/lib/X11/config/darwinLib.rules		-unknown-	xorg
 ./usr/X11R7/lib/X11/config/darwinLib.tmpl		-unknown-	xorg
-./usr/X11R7/lib/X11/config/date.def			-unknown-	obsolete
+./usr/X11R7/lib/X11/config/date.def			-unknown-	xorg
 ./usr/X11R7/lib/X11/config/fujitsu.cf			-unknown-	xorg
 ./usr/X11R7/lib/X11/config/generic.cf			-unknown-	xorg
 ./usr/X11R7/lib/X11/config/gnu.cf			-unknown-	xorg
