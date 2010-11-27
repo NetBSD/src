@@ -1,4 +1,4 @@
-/*	$NetBSD: unvis.c,v 1.12 2009/02/10 23:06:31 christos Exp $	*/
+/*	$NetBSD: unvis.c,v 1.13 2010/11/27 19:46:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\
 #if 0
 static char sccsid[] = "@(#)unvis.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: unvis.c,v 1.12 2009/02/10 23:06:31 christos Exp $");
+__RCSID("$NetBSD: unvis.c,v 1.13 2010/11/27 19:46:25 christos Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -48,21 +48,25 @@ __RCSID("$NetBSD: unvis.c,v 1.12 2009/02/10 23:06:31 christos Exp $");
 #include <unistd.h>
 #include <vis.h>
 
-static int eflags;
-
-static void process(FILE *fp, const char *filename);
+static void process(FILE *, const char *, int);
 
 int
 main(int argc, char *argv[])
 {
 	FILE *fp;
-	int ch;
+	int ch, eflags = 0;
 
 	setprogname(argv[0]);
-	while ((ch = getopt(argc, argv, "hm")) != -1)
+	while ((ch = getopt(argc, argv, "eHhm")) != -1)
 		switch((char)ch) {
+		case 'e':
+			eflags |= VIS_NOESCAPE;
+			break;
+		case 'H':
+			eflags |= VIS_HTTP1866;
+			break;
 		case 'h':
-			eflags |= VIS_HTTPSTYLE;
+			eflags |= VIS_HTTP1808;
 			break;
 		case 'm':
 			eflags |= VIS_MIMESTYLE;
@@ -70,31 +74,38 @@ main(int argc, char *argv[])
 		case '?':
 		default:
 			(void)fprintf(stderr,
-			    "Usage: %s [-h|-m] [file...]\n", getprogname());
-			return 1;
+			    "Usage: %s [-e] [-Hh | -m] [file...]\n",
+			    getprogname());
+			return EXIT_FAILURE;
 		}
 	argc -= optind;
 	argv += optind;
 
-	if ((eflags & (VIS_HTTPSTYLE|VIS_MIMESTYLE)) ==
-	    (VIS_HTTPSTYLE|VIS_MIMESTYLE))
-		errx(1, "Can't specify -m and -h at the same time");
+	switch (eflags & (VIS_HTTP1808|VIS_HTTP1866|VIS_MIMESTYLE)) {
+	case VIS_HTTP1808|VIS_MIMESTYLE:
+	case VIS_HTTP1866|VIS_MIMESTYLE:
+	case VIS_HTTP1808|VIS_HTTP1866|VIS_MIMESTYLE:
+		errx(EXIT_FAILURE, "Can't mix -m with -h and/or -H");
+		/*NOTREACHED*/
+	default:
+		break;
+	}
 
 	if (*argv)
 		while (*argv) {
 			if ((fp = fopen(*argv, "r")) != NULL)
-				process(fp, *argv);
+				process(fp, *argv, eflags);
 			else
 				warn("%s", *argv);
 			argv++;
 		}
 	else
-		process(stdin, "<stdin>");
-	return 0;
+		process(stdin, "<stdin>", eflags);
+	return EXIT_SUCCESS;
 }
 
 static void
-process(FILE *fp, const char *filename)
+process(FILE *fp, const char *filename, int eflags)
 {
 	int offset = 0, c, ret;
 	int state = 0;
