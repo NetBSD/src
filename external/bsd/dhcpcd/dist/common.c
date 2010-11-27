@@ -26,7 +26,9 @@
  */
 
 /* Needed define to get at getline for glibc and FreeBSD */
-#define _GNU_SOURCE
+#ifndef _GNU_SOURCE
+#  define _GNU_SOURCE
+#endif
 
 #include <sys/cdefs.h>
 

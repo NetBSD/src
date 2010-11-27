@@ -27,7 +27,7 @@
 .Os
 .Sh NAME
 .Nm dhcpcd-run-hooks
-.Nd DHCP client configuration script 
+.Nd DHCP client configuration script
 .Sh DESCRIPTION
 .Nm
 is used by
@@ -35,7 +35,7 @@ is used by
 to run any system and user defined hook scripts.
 System hook scripts are found in
 .Pa @HOOKDIR@
-and the user defined hooks are 
+and the user defined hooks are
 .Pa @SYSCONFDIR@/dhcpcd.enter-hook .
 and
 .Pa @SYSCONFDIR@/dhcpcd.exit-hook .
@@ -97,6 +97,8 @@ dhcpcd is monitoring the interface for a 3rd party to give it an IP address.
 dhcpcd failed to contact any DHCP servers but was able to use an old lease.
 .It Dv EXPIRE
 dhcpcd's lease or state expired and it failed to obtain a new one.
+.It Dv RELEASE
+dhcpcd's lease was released back to the DHCP server for re-use.
 .It Dv NAK
 dhcpcd received a NAK from the DHCP server.
 This should be treated as EXPIRE.
@@ -110,16 +112,15 @@ means it cannot work as a DHCP or ZeroConf client.
 Static configuration and DHCP INFORM is still allowed.
 .It Dv STOP
 dhcpcd stopped running on the interface.
-.iT Dv DUMP
+.It Dv DUMP
 dhcpcd has been asked to dump the last lease for the interface.
 .It Dv TEST
 dhcpcd received an OFFER from a DHCP server but will not configure the
 interface.
 This is primarily used to test the variables are filled correctly for the
 script to process them.
-
 .El
-.Sh FILES 
+.Sh FILES
 When
 .Nm
 runs, it loads
