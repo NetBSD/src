@@ -29,7 +29,7 @@ uniqify()
 	echo "${result# *}"
 }
 
-# List interface config files in a dir
+# List interface config files in a directory.
 # If dhcpcd is running as a single instance then it will have a list of
 # interfaces in the preferred order.
 # Otherwise we just use what we have.
@@ -94,8 +94,8 @@ remove_markers()
 	fi
 }
 
-# Compare two files
-# If different, replace first with second otherwise remove second
+# Compare two files.
+# If different, replace first with second otherwise remove second.
 change_file()
 {
 	if [ -e "$1" ]; then

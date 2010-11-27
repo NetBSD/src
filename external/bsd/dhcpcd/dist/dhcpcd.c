@@ -809,17 +809,23 @@ configure_interface1(struct interface *iface)
 	if (ifo->options & DHCPCD_CLIENTID)
 		syslog(LOG_DEBUG, "%s: using ClientID %s", iface->name,
 		    hwaddr_ntoa(iface->clientid + 1, *iface->clientid));
+	else
+		syslog(LOG_DEBUG, "%s: using hwaddr %s", iface->name,
+		    hwaddr_ntoa(iface->hwaddr, iface->hwlen));
 }
 
 int
 select_profile(struct interface *iface, const char *profile)
 {
 	struct if_options *ifo;
+	int ret;
 
+	ret = 0;
 	ifo = read_config(cffile, iface->name, iface->ssid, profile);
 	if (ifo == NULL) {
 		syslog(LOG_DEBUG, "%s: no profile %s", iface->name, profile);
-		return -1;
+		ret = -1;
+		goto exit;
 	}
 	if (profile != NULL) {
 		strlcpy(iface->state->profile, profile,
@@ -830,8 +836,11 @@ select_profile(struct interface *iface, const char *profile)
 		*iface->state->profile = '\0';
 	free_options(iface->state->options);
 	iface->state->options = ifo;
-	configure_interface1(iface);
-	return 0;
+
+exit:
+	if (profile)
+		configure_interface1(iface);
+	return ret;
 }
 
 static void
@@ -841,7 +850,6 @@ start_fallback(void *arg)
 
 	iface = (struct interface *)arg;
 	select_profile(iface, iface->state->options->fallback);
-	configure_interface1(iface);
 	start_interface(iface);
 }
 
@@ -1273,6 +1281,43 @@ handle_interface(int action, const char *ifname)
 	}
 }
 
+#ifdef RTM_CHGADDR
+void
+handle_hwaddr(const char *ifname, unsigned char *hwaddr, size_t hwlen)
+{
+	struct interface *ifp;
+	struct if_options *ifo;
+
+	for (ifp = ifaces; ifp; ifp = ifp->next)
+		if (strcmp(ifp->name, ifname) == 0 && ifp->hwlen <= hwlen) {
+			ifo = ifp->state->options;
+			if (!(ifo->options &
+			    (DHCPCD_INFORM | DHCPCD_STATIC | DHCPCD_CLIENTID))
+	    		    && ifp->state->new != NULL &&
+			    ifp->state->new->cookie == htonl(MAGIC_COOKIE))
+			{
+				syslog(LOG_INFO,
+				    "%s: expiring for new hardware address",
+				    ifp->name);
+				drop_config(ifp, "EXPIRE");
+			}
+			memcpy(ifp->hwaddr, hwaddr, hwlen);
+			ifp->hwlen = hwlen;
+			if (!(ifo->options &
+			    (DHCPCD_INFORM | DHCPCD_STATIC | DHCPCD_CLIENTID)))
+			{
+				syslog(LOG_DEBUG, "%s: using hwaddr %s",
+				    ifp->name,
+		    		    hwaddr_ntoa(ifp->hwaddr, ifp->hwlen));
+				ifp->state->interval = 0;
+				ifp->state->nakoff = 1;
+				start_interface(ifp);
+			}
+		}
+	free(hwaddr);
+}
+#endif
+
 void
 handle_ifa(int type, const char *ifname,
     struct in_addr *addr, struct in_addr *net, struct in_addr *dst)
@@ -1640,7 +1685,8 @@ open_sockets(struct interface *iface)
 	if (iface->udp_fd == -1 &&
 	    iface->addr.s_addr != 0 &&
 	    iface->state->new != NULL &&
-	    iface->state->new->cookie == htonl(MAGIC_COOKIE))
+	    (iface->state->new->cookie == htonl(MAGIC_COOKIE) ||
+	    iface->state->options->options & DHCPCD_INFORM))
 	{
 		if (open_udp_socket(iface) == -1 && errno != EADDRINUSE)
 			syslog(LOG_ERR, "%s: open_udp_socket: %m", iface->name);
