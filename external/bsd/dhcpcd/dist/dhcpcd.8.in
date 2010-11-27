@@ -74,13 +74,13 @@ is an implementation of the DHCP client specified in
 .Li RFC 2131 .
 .Nm
 gets the host information
-.Po 
+.Po
 IP address, routes, etc
 .Pc
 from a DHCP server and configures the network
 .Ar interface
 of the
-machine on which it is running. 
+machine on which it is running.
 .Nm
 then runs the configuration script which writes DNS information to
 .Xr resolvconf 8 ,
@@ -143,7 +143,7 @@ versions.
 .Pp
 Interfaces are preferred by carrier, DHCP lease/IPv4LL and then lowest metric.
 For systems that support route metrics, each route will be tagged with the
-metric, otherwise 
+metric, otherwise
 .Nm
 changes the routes to use the interface with the same route and the lowest
 metric.
@@ -363,7 +363,7 @@ The default is 10 seconds.
 A setting of 0 seconds causes
 .Nm
 to skip the reboot phase and go straight into discover.
-.It Fl D , -duid 
+.It Fl D , -duid
 Generate an
 .Li RFC 4361
 compliant clientid.
