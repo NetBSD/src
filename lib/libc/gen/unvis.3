@@ -1,4 +1,4 @@
-.\"	$NetBSD: unvis.3,v 1.18 2009/02/10 23:06:31 christos Exp $
+.\"	$NetBSD: unvis.3,v 1.19 2010/11/27 19:44:21 christos Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)unvis.3	8.2 (Berkeley) 12/11/93
 .\"
-.Dd February 10, 2009
+.Dd November 27, 2010
 .Dt UNVIS 3
 .Os
 .Sh NAME
@@ -149,12 +149,22 @@ The
 argument is also used to specify the encoding style of the source.
 If set to
 .Dv VIS_HTTPSTYLE ,
+or
+.Dv VIS_HTTP1808 ,
 .Fn unvis
 will decode URI strings as specified in RFC 1808.
+If set to
+.Dv VIS_HTTP1866 ,
+.Fn unvis
+will decode URI strings as specified in RFC 1866.
 If set to
 .Dv VIS_MIMESTYLE ,
 .Fn unvis
 will decode MIME Quoted-Printable strings as specified in RFC 2045.
+If set to
+.Dv VIS_NOESCAPE ,
+.Fn unvis
+will not decode \e quoted characters.
 .Pp
 The following code fragment illustrates a proper use of
 .Fn unvis .
