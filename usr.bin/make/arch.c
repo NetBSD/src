@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.61 2010/11/26 15:14:29 christos Exp $	*/
+/*	$NetBSD: arch.c,v 1.62 2010/11/27 16:00:09 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: arch.c,v 1.61 2010/11/26 15:14:29 christos Exp $";
+static char rcsid[] = "$NetBSD: arch.c,v 1.62 2010/11/27 16:00:09 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)arch.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: arch.c,v 1.61 2010/11/26 15:14:29 christos Exp $");
+__RCSID("$NetBSD: arch.c,v 1.62 2010/11/27 16:00:09 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1262,7 +1262,7 @@ Arch_LibOODate(GNode *gn)
 	    if (DEBUG(ARCH) || DEBUG(MAKE)) {
 		fprintf(debug_file, "%s modified %s...", RANLIBMAG, Targ_FmtTime(modTimeTOC));
 	    }
-	    oodate = (gn->cmgn == NULL || gn->gngm->mtime > modTimeTOC);
+	    oodate = (gn->cmgn == NULL || gn->cmgn->mtime > modTimeTOC);
 	} else {
 	    /*
 	     * A library w/o a table of contents is out-of-date
