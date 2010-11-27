@@ -1,4 +1,4 @@
-/* $NetBSD: cgdconfig.c,v 1.28 2009/09/08 21:36:35 pooka Exp $ */
+/* $NetBSD: cgdconfig.c,v 1.29 2010/11/27 17:08:36 elric Exp $ */
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 2002, 2003\
  The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: cgdconfig.c,v 1.28 2009/09/08 21:36:35 pooka Exp $");
+__RCSID("$NetBSD: cgdconfig.c,v 1.29 2010/11/27 17:08:36 elric Exp $");
 #endif
 
 #include <err.h>
@@ -393,7 +393,7 @@ maybe_getpass(char *prompt)
 }
 
 /*ARGSUSED*/
-/* 
+/*
  * XXX take, and pass through, a compat flag that indicates whether we
  * provide backwards compatibility with a previous bug.  The previous
  * behaviour is indicated by the keygen method pkcs5_pbkdf2, and a
@@ -795,7 +795,7 @@ verify_reenter(struct params *p)
 
 	ret = 0;
 	for (kg = p->keygen; kg && !ret; kg = kg->next) {
-		if ((kg->kg_method != KEYGEN_PKCS5_PBKDF2_SHA1) && 
+		if ((kg->kg_method != KEYGEN_PKCS5_PBKDF2_SHA1) &&
 		    (kg->kg_method != KEYGEN_PKCS5_PBKDF2_OLD ))
 			continue;
 
