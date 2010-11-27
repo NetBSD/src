@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.61 2009/01/24 10:59:09 dsl Exp $	*/
+/*	$NetBSD: dir.c,v 1.62 2010/11/27 05:02:35 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: dir.c,v 1.61 2009/01/24 10:59:09 dsl Exp $";
+static char rcsid[] = "$NetBSD: dir.c,v 1.62 2010/11/27 05:02:35 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)dir.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: dir.c,v 1.61 2009/01/24 10:59:09 dsl Exp $");
+__RCSID("$NetBSD: dir.c,v 1.62 2010/11/27 05:02:35 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1434,6 +1434,31 @@ Dir_MTime(GNode *gn)
 	    fullName = NULL;
 	else {
 	    fullName = Dir_FindFile(gn->name, Suff_FindPath(gn));
+	    if (fullName == NULL && gn->flags & FROM_DEPEND &&
+		!Lst_IsEmpty(gn->iParents)) {
+		char *cp;
+
+		cp = strrchr(gn->name, '/');
+		if (cp) {
+		    /*
+		     * This is an implied source, and it may have moved,
+		     * see if we can find it via the current .PATH
+		     */
+		    cp++;
+			
+		    fullName = Dir_FindFile(cp, Suff_FindPath(gn));
+		    if (fullName) {
+			/*
+			 * Put the found file in gn->path
+			 * so that we give that to the compiler.
+			 */
+			gn->path = bmake_strdup(fullName);
+			fprintf(stdout,
+				"%s: ignoring stale %s for %s, found %s\n",
+				progname, makeDependfile, gn->name, fullName);
+		    }
+		}
+	    }
 	    if (DEBUG(DIR))
 		fprintf(debug_file, "Found '%s' as '%s'\n",
 			gn->name, fullName ? fullName : "(not found)" );
