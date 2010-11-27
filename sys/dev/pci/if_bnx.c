@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bnx.c,v 1.34 2010/11/26 21:59:49 dholland Exp $	*/
+/*	$NetBSD: if_bnx.c,v 1.35 2010/11/27 17:48:58 jym Exp $	*/
 /*	$OpenBSD: if_bnx.c,v 1.85 2009/11/09 14:32:41 dlg Exp $ */
 
 /*-
@@ -35,7 +35,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/sys/dev/bce/if_bce.c,v 1.3 2006/04/13 14:12:26 ru Exp $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.34 2010/11/26 21:59:49 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.35 2010/11/27 17:48:58 jym Exp $");
 
 /*
  * The following controllers are supported by this driver:
@@ -1975,6 +1975,7 @@ bnx_get_media(struct bnx_softc *sc)
 				DBPRINT(sc, BNX_INFO_LOAD, 
 					"BCM5709 s/w configured for SerDes.\n");
 				sc->bnx_phy_flags |= BNX_PHY_SERDES_FLAG;
+				break;
 			default:
 				DBPRINT(sc, BNX_INFO_LOAD, 
 					"BCM5709 s/w configured for Copper.\n");
@@ -1987,6 +1988,7 @@ bnx_get_media(struct bnx_softc *sc)
 				DBPRINT(sc, BNX_INFO_LOAD, 
 					"BCM5709 s/w configured for SerDes.\n");
 				sc->bnx_phy_flags |= BNX_PHY_SERDES_FLAG;
+				break;
 			default:
 				DBPRINT(sc, BNX_INFO_LOAD, 
 					"BCM5709 s/w configured for Copper.\n");
