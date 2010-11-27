@@ -1,4 +1,4 @@
-/*	$NetBSD: hexsyntax.c,v 1.13 2006/01/04 01:30:21 perry Exp $	*/
+/*	$NetBSD: hexsyntax.c,v 1.14 2010/11/27 20:46:38 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)hexsyntax.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: hexsyntax.c,v 1.13 2006/01/04 01:30:21 perry Exp $");
+__RCSID("$NetBSD: hexsyntax.c,v 1.14 2010/11/27 20:46:38 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -55,7 +55,7 @@ __RCSID("$NetBSD: hexsyntax.c,v 1.13 2006/01/04 01:30:21 perry Exp $");
 off_t skip;				/* bytes to skip */
 
 void
-newsyntax(int argc, char ***argvp)
+hexsyntax(int argc, char ***argvp)
 {
 	int ch;
 	char *p, **argv;
@@ -126,13 +126,4 @@ newsyntax(int argc, char ***argvp)
 	}
 
 	*argvp += optind;
-}
-
-void
-usage(void)
-{
-	(void)fprintf(stderr,
-"hexdump: [-bcCdovx] [-e fmt] [-f fmt_file] [-n length] [-s skip] [file ...]\n"
-	);
-	exit(1);
 }
