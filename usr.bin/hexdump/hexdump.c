@@ -1,4 +1,4 @@
-/*	$NetBSD: hexdump.c,v 1.15 2010/02/09 14:06:37 drochner Exp $	*/
+/*	$NetBSD: hexdump.c,v 1.16 2010/11/27 20:46:38 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\
 #if 0
 static char sccsid[] = "@(#)hexdump.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: hexdump.c,v 1.15 2010/02/09 14:06:37 drochner Exp $");
+__RCSID("$NetBSD: hexdump.c,v 1.16 2010/11/27 20:46:38 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -58,8 +58,7 @@ FS *fshead;				/* head of format strings */
 int blocksize;				/* data block size */
 int exitval;				/* final exit value */
 int length = -1;			/* max bytes to read */
-
-int	main(int, char **);
+static int isod = 0;
 
 int
 main(int argc, char *argv[])
@@ -69,10 +68,11 @@ main(int argc, char *argv[])
 
 	setlocale(LC_ALL, "");
 
-	if (!(p = strrchr(argv[0], 'o')) || strcmp(p, "od"))
-		newsyntax(argc, &argv);
-	else
+	isod = (p = strrchr(argv[0], 'o')) == NULL || strcmp(p, "od") == 0;
+	if (isod)
 		odsyntax(argc, &argv);
+	else
+		hexsyntax(argc, &argv);
 
 	/* figure out the data block size */
 	for (blocksize = 0, tfs = fshead; tfs; tfs = tfs->nextfs) {
@@ -87,4 +87,20 @@ main(int argc, char *argv[])
 	(void)next(argv);
 	display();
 	exit(exitval);
+}
+
+void
+usage(void)
+{
+	const char *pname = getprogname();
+
+	(void)fprintf(stderr, "Usage: %s ", pname);
+	if (isod)
+		(void)fprintf(stderr, "[-aBbcDdeFfHhIiLlOovXx] [-A base] "
+		    "[-j skip] [-N length] [-t type_string] [[+]offset[.][Bb]] "
+		    "[file ...]\n");
+	else
+		(void)fprintf(stderr, "[-bcCdovx] [-e fmt] [-f fmt_file] "
+		    "[-n length] [-s skip] [file ...]\n");
+	exit(1);
 }
