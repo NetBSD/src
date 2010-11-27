@@ -1,4 +1,4 @@
-/*	$NetBSD: tls_misc.c,v 1.1.1.1 2009/06/23 10:08:57 tron Exp $	*/
+/*	$NetBSD: tls_misc.c,v 1.1.1.2 2010/11/27 10:35:46 tron Exp $	*/
 
 /*++
 /* NAME
@@ -17,6 +17,7 @@
 /*	char	*var_tls_eecdh_strong;
 /*	char	*var_tls_eecdh_ultra;
 /*	int	var_tls_daemon_rand_bytes;
+/*	bool    var_tls_append_def_CA;
 /*
 /*	TLS_APPL_STATE *tls_alloc_app_context(ssl_ctx)
 /*	SSL_CTX	*ssl_ctx;
@@ -192,6 +193,7 @@ char   *var_tls_null_clist;
 int     var_tls_daemon_rand_bytes;
 char   *var_tls_eecdh_strong;
 char   *var_tls_eecdh_ultra;
+bool    var_tls_append_def_CA;
 
  /*
   * Index to attach TLScontext pointers to SSL objects, so that they can be
@@ -409,6 +411,10 @@ void    tls_param_init(void)
 	VAR_TLS_DAEMON_RAND_BYTES, DEF_TLS_DAEMON_RAND_BYTES, &var_tls_daemon_rand_bytes, 1, 0,
 	0,
     };
+    static const CONFIG_BOOL_TABLE bool_table[] = {
+	VAR_TLS_APPEND_DEF_CA, DEF_TLS_APPEND_DEF_CA, &var_tls_append_def_CA,
+	0,
+    };
     static int init_done;
 
     if (init_done)
@@ -417,6 +423,7 @@ void    tls_param_init(void)
 
     get_mail_conf_str_table(str_table);
     get_mail_conf_int_table(int_table);
+    get_mail_conf_bool_table(bool_table);
 }
 
 /* tls_set_ciphers - Set SSL context cipher list */

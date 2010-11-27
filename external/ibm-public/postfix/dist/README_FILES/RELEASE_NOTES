@@ -14,6 +14,18 @@ specifies the release date of a stable release or snapshot release.
 If you upgrade from Postfix 2.5 or earlier, read RELEASE_NOTES-2.6
 before proceeding.
 
+Incompatibility with Postfix 2.7.2
+----------------------------------
+
+Postfix no longer appends the system-supplied default CA certificates
+to the lists specified with *_tls_CAfile or with *_tls_CApath. This
+prevents third-party certificates from getting mail relay permission
+with the permit_tls_all_clientcerts feature.
+ 
+Unfortunately this change may cause compatibility problems when
+configurations rely on certificate verification for other purposes.
+Specify "tls_append_default_CA = yes" for backwards compatibility.
+
 Major changes - performance
 ---------------------------
 
