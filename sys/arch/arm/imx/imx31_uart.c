@@ -36,7 +36,7 @@
 
 
 int
-imxuart_match(struct device *parent, struct cfdata *cf, void *aux)
+imxuart_match(device_t parent, struct cfdata *cf, void *aux)
 {
 	struct aips_attach_args * const aipsa = aux;
 
@@ -53,7 +53,7 @@ imxuart_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 void
-imxuart_attach(struct device *parent, struct device *self, void *aux)
+imxuart_attach(device_t parent, device_t self, void *aux)
 {
 	struct aips_attach_args * aa = aux;
 
