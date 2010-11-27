@@ -1,4 +1,4 @@
-/*	$NetBSD: brgphy.c,v 1.55 2010/05/02 13:49:17 pgoyette Exp $	*/
+/*	$NetBSD: brgphy.c,v 1.56 2010/11/27 17:42:04 jym Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: brgphy.c,v 1.55 2010/05/02 13:49:17 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: brgphy.c,v 1.56 2010/11/27 17:42:04 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -519,7 +519,7 @@ brgphy_loop(struct mii_softc *sc)
 static void
 brgphy_reset(struct mii_softc *sc)
 {
-	struct brgphy_softc *bsc = (void *)sc;
+	struct brgphy_softc *bsc = device_private(sc->mii_dev);
 
 	mii_phy_reset(sc);
 
