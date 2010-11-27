@@ -1,4 +1,4 @@
-/*	$NetBSD: smtpd.c,v 1.4 2010/06/17 18:18:15 tron Exp $	*/
+/*	$NetBSD: smtpd.c,v 1.5 2010/11/27 10:41:18 tron Exp $	*/
 
 /*++
 /* NAME
@@ -4489,6 +4489,11 @@ static void smtpd_proto(SMTPD_STATE *state)
 	    }
 	    /* XXX We use the real client for connect access control. */
 	    if (state->access_denied && cmdp->action != quit_cmd) {
+		/* XXX Exception for Milter override. */
+		if (strncmp(state->access_denied + 1, "21", 2) == 0) {
+		    smtpd_chat_reply(state, "%s", state->access_denied);
+		    continue;
+		}
 		smtpd_chat_reply(state, "503 5.7.0 Error: access denied for %s",
 				 state->namaddr);	/* RFC 2821 Sec 3.1 */
 		state->error_count++;

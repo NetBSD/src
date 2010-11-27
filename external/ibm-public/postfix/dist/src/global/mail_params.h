@@ -1,4 +1,4 @@
-/*	$NetBSD: mail_params.h,v 1.4 2010/06/17 18:18:15 tron Exp $	*/
+/*	$NetBSD: mail_params.h,v 1.5 2010/11/27 10:41:17 tron Exp $	*/
 
 #ifndef _MAIL_PARAMS_H_INCLUDED_
 #define _MAIL_PARAMS_H_INCLUDED_
@@ -624,6 +624,10 @@ extern bool var_stat_home_dir;
 #define VAR_DUP_FILTER_LIMIT	"duplicate_filter_limit"
 #define DEF_DUP_FILTER_LIMIT	1000
 extern int var_dup_filter_limit;
+
+#define VAR_TLS_APPEND_DEF_CA	"tls_append_default_CA"
+#define DEF_TLS_APPEND_DEF_CA	0	/* Postfix < 2.8 BC break */
+extern bool var_tls_append_def_CA;
 
 #define VAR_TLS_RAND_EXCH_NAME	"tls_random_exchange_name"
 #define DEF_TLS_RAND_EXCH_NAME	"${data_directory}/prng_exch"

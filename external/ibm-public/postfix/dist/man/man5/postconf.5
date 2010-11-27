@@ -1,4 +1,4 @@
-.\"	$NetBSD: postconf.5,v 1.5 2010/06/17 18:18:15 tron Exp $
+.\"	$NetBSD: postconf.5,v 1.6 2010/11/27 10:41:17 tron Exp $
 .\"
 .TH POSTCONF 5 
 .SH NAME
@@ -5241,6 +5241,10 @@ file may also be used to augment the client certificate trust chain,
 but it is best to include all the required certificates directly in
 $smtp_tls_cert_file.
 .PP
+Specify "tls_append_default_CA = no" to prevent Postfix from
+appending the system-supplied default CAs and trusting third-party
+certificates.
+.PP
 Example:
 .PP
 .nf
@@ -5260,6 +5264,10 @@ with, for example, "$OPENSSL_HOME/bin/c_rehash /etc/postfix/certs".
 .PP
 To use this option in chroot mode, this directory (or a copy)
 must be inside the chroot jail.
+.PP
+Specify "tls_append_default_CA = no" to prevent Postfix from
+appending the system-supplied default CAs and trusting third-party
+certificates.
 .PP
 Example:
 .PP
@@ -6624,8 +6632,11 @@ authenticated via the RFC 4954 (AUTH) protocol.
 Permit the request when the remote SMTP client certificate is
 verified successfully.  This option must be used only if a special
 CA issues the certificates and only this CA is listed as trusted
-CA, otherwise all clients with a recognized certificate would be
-allowed to relay. This feature is available with Postfix version 2.2.
+CA. Otherwise, clients with a third-party certificate would also
+be allowed to relay.  Specify "tls_append_default_CA = no" when the
+trusted CA is specified with smtpd_tls_CAfile or smtpd_tls_CApath,
+to prevent Postfix from appending the system-supplied default CAs.
+This feature is available with Postfix version 2.2.
 .IP "\fBpermit_tls_clientcerts\fR"
 Permit the request when the remote SMTP client certificate
 fingerprint is listed in $relay_clientcerts.
@@ -7830,6 +7841,10 @@ file may also be used to augment the server certificate trust chain,
 but it is best to include all the required certificates directly in the
 server certificate file.
 .PP
+Specify "tls_append_default_CA = no" to prevent Postfix from
+appending the system-supplied default CAs and trusting third-party
+certificates.
+.PP
 By default (see smtpd_tls_ask_ccert), client certificates are not
 requested, and smtpd_tls_CAfile should remain empty. If you do make use
 of client certificates, the distinguished names (DNs) of the certificate
@@ -7858,6 +7873,10 @@ certificates. Do not forget to create the necessary "hash" links with,
 for example, "$OPENSSL_HOME/bin/c_rehash /etc/postfix/certs". To use
 smtpd_tls_CApath in chroot mode, this directory (or a copy) must be
 inside the chroot jail.
+.PP
+Specify "tls_append_default_CA = no" to prevent Postfix from
+appending the system-supplied default CAs and trusting third-party
+certificates.
 .PP
 By default (see smtpd_tls_ask_ccert), client certificates are
 not requested, and smtpd_tls_CApath should remain empty. In contrast
@@ -8713,6 +8732,17 @@ tcp_windowsize change will work only for Postfix TCP clients (\fBsmtp\fR(8),
 \fBlmtp\fR(8)).
 .PP
 This feature is available in Postfix 2.6 and later.
+.SH tls_append_default_CA (default: no)
+Append the system-supplied default certificate authority
+certificates to the ones specified with *_tls_CApath or *_tls_CAfile.
+The default is "no"; this prevents Postfix from trusting third-party
+certificates and giving them relay permission with
+permit_tls_all_clientcerts.
+.PP
+This feature is available in Postfix 2.4.15, 2.5.11, 2.6.8,
+2.7.2 and later versions. Specify "tls_append_default_CA = yes" for
+backwards compatibility, to avoid breaking certificate verification
+with sites that don't use permit_tls_all_clientcerts.
 .SH tls_daemon_random_bytes (default: 32)
 The number of pseudo-random bytes that an \fBsmtp\fR(8) or \fBsmtpd\fR(8)
 process requests from the \fBtlsmgr\fR(8) server in order to seed its
