@@ -1,4 +1,4 @@
-/*	$NetBSD: smtpd_proxy.c,v 1.1.1.2 2010/06/17 18:07:07 tron Exp $	*/
+/*	$NetBSD: smtpd_proxy.c,v 1.1.1.3 2010/11/27 10:35:44 tron Exp $	*/
 
 /*++
 /* NAME
@@ -357,6 +357,9 @@ static int smtpd_proxy_connect(SMTPD_STATE *state)
     /* Needed by our DATA-phase record emulation routines. */
     vstream_control(proxy->service_stream, VSTREAM_CTL_CONTEXT,
 		    (char *) state, VSTREAM_CTL_END);
+    /* Avoid poor performance when TCP MSS > VSTREAM_BUFSIZE. */
+    if (connect_fn == inet_connect)
+	vstream_tweak_tcp(proxy->service_stream);
     smtp_timeout_setup(proxy->service_stream, proxy->timeout);
 
     /*
