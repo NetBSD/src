@@ -224,16 +224,6 @@ delete_q_timeouts(int queue, void *arg, void (*callback)(void *), ...)
 }
 
 void
-delete_timeouts( void *arg, void (*callback)(void *), ...)
-{
-	va_list va;
-
-	va_start(va, callback);
-	v_delete_q_timeouts(0, arg, callback, va);
-	va_end(va);
-}
-
-void
 delete_q_timeout(int queue, void (*callback)(void *), void *arg)
 {
 	struct timeout *t, *tt, *last = NULL;
