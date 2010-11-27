@@ -707,6 +707,9 @@ meta_oodate(GNode *gn, Boolean oodate)
     FILE *fp;
     Boolean ignoreOODATE = FALSE;
 
+    if (oodate)
+	return oodate;		/* we're done */
+
     /*
      * We need to check if the target is out-of-date. This includes
      * checking if the expanded command has changed. This in turn
@@ -714,9 +717,6 @@ meta_oodate(GNode *gn, Boolean oodate)
      * would be if the target needs to be re-built.
      */
     Make_DoAllVar(gn);
-
-    if (oodate)
-	return oodate;		/* we're done */
 
     if (getcwd(latestdir, sizeof(latestdir)) == NULL)
 	err(1, "Could not get current working directory");
@@ -809,11 +809,16 @@ meta_oodate(GNode *gn, Boolean oodate)
 			p = fname1;
 		    }
 
-		    if (stat(p, &fs) == 0 &&
-			!S_ISDIR(fs.st_mode) &&
-			fs.st_mtime > gn->mtime) {
+		    if (stat(p, &fs) == 0) {
+			if (!S_ISDIR(fs.st_mode) &&
+			    fs.st_mtime > gn->mtime) {
+			    if (DEBUG(META))
+				fprintf(debug_file, "%s: %d: file '%s' is newer than the target...\n", fname, lineno, p);
+			    oodate = TRUE;
+			}
+		    } else if (errno == ENOENT) {
 			if (DEBUG(META))
-			    fprintf(debug_file, "%s: %d: file '%s' is newer than the target...\n", fname, lineno, p);
+			    fprintf(debug_file, "%s: %d: file '%s' may have moved?...\n", fname, lineno, p);
 			oodate = TRUE;
 		    }
 		    break;
@@ -903,6 +908,15 @@ meta_oodate(GNode *gn, Boolean oodate)
 	}
 
 	fclose(fp);
+    }
+    if (oodate && ignoreOODATE) {
+	/*
+	 * Target uses .OODATE, so we need to re-compute it.
+	 * We need to clean up what Make_DoAllVar() did.
+	 */
+	Var_Delete(ALLSRC, gn);
+	Var_Delete(OODATE, gn);
+	gn->flags &= ~DONE_ALLSRC;
     }
     return oodate;
 }
