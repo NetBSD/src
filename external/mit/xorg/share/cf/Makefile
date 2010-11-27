@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2010/11/23 08:44:23 mrg Exp $
+#	$NetBSD: Makefile,v 1.8 2010/11/27 22:21:27 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -28,7 +28,7 @@ FILES=	Amoeba.cf DGUX.cf FreeBSD.cf Imake.cf Imake.rules Imake.tmpl \
 
 # Note: acts as '#define InstallEmptyHostDef'
 #
-FILES+=	host.def xorgsite.def
+FILES+=	date.def host.def xorgsite.def
 
 # Handle site.def specificly because it is provided in dist
 #
