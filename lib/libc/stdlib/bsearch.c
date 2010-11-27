@@ -1,4 +1,4 @@
-/*	$NetBSD: bsearch.c,v 1.13 2005/11/29 03:12:00 christos Exp $	*/
+/*	$NetBSD: bsearch.c,v 1.14 2010/11/27 18:33:54 christos Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)bsearch.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: bsearch.c,v 1.13 2005/11/29 03:12:00 christos Exp $");
+__RCSID("$NetBSD: bsearch.c,v 1.14 2010/11/27 18:33:54 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -59,12 +59,8 @@ __RCSID("$NetBSD: bsearch.c,v 1.13 2005/11/29 03:12:00 christos Exp $");
  * look at item 3.
  */
 void *
-bsearch(key, base0, nmemb, size, compar)
-	const void *key;
-	const void *base0;
-	size_t nmemb;
-	size_t size;
-	int (*compar) __P((const void *, const void *));
+bsearch(const void *key, const void *base0, size_t nmemb, size_t size,
+    int (*compar)(const void *, const void *))
 {
 	const char *base = base0;
 	size_t lim;
