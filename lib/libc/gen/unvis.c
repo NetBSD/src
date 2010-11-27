@@ -1,4 +1,4 @@
-/*	$NetBSD: unvis.c,v 1.31 2010/11/27 19:44:21 christos Exp $	*/
+/*	$NetBSD: unvis.c,v 1.32 2010/11/27 21:22:11 christos Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)unvis.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: unvis.c,v 1.31 2010/11/27 19:44:21 christos Exp $");
+__RCSID("$NetBSD: unvis.c,v 1.32 2010/11/27 21:22:11 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -197,8 +197,8 @@ unvis(char *cp, int c, int *astate, int flag)
  * Top 8 bits hold the current character in the http 1866 nv string decoding
  */
 #define GS(a)		((a) & 0xff)
-#define SS(a, b)	(((a) << 24) | (b))
-#define GI(a)		((a) >> 24)
+#define SS(a, b)	(((uint32_t)(a) << 24) | (b))
+#define GI(a)		((uint32_t)(a) >> 24)
 
 	_DIAGASSERT(cp != NULL);
 	_DIAGASSERT(astate != NULL);
