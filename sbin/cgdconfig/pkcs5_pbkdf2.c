@@ -1,4 +1,4 @@
-/* $NetBSD: pkcs5_pbkdf2.c,v 1.14 2008/04/28 20:23:08 martin Exp $ */
+/* $NetBSD: pkcs5_pbkdf2.c,v 1.15 2010/11/27 17:08:37 elric Exp $ */
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pkcs5_pbkdf2.c,v 1.14 2008/04/28 20:23:08 martin Exp $");
+__RCSID("$NetBSD: pkcs5_pbkdf2.c,v 1.15 2010/11/27 17:08:37 elric Exp $");
 #endif
 
 #include <sys/resource.h>
@@ -93,7 +93,7 @@ prf_iterate(u_int8_t *r, const u_int8_t *P, size_t Plen,
 		if (first_time) {
 			(void)memcpy(r, tmp, PRF_BLOCKLEN);
 			first_time = 0;
-		} else 
+		} else
 			memxor(r, tmp, PRF_BLOCKLEN);
 		(void)memcpy(data, tmp, PRF_BLOCKLEN);
 		datalen = PRF_BLOCKLEN;
@@ -128,7 +128,7 @@ pkcs5_pbkdf2(u_int8_t **r, size_t dkLen, const u_int8_t *P, size_t Plen,
 
 	/* Step 3 */
 	for (i = 0; i < l; i++)
-		prf_iterate(*r + (PRF_BLOCKLEN * i), P, Plen, S, Slen, c, 
+		prf_iterate(*r + (PRF_BLOCKLEN * i), P, Plen, S, Slen, c,
 			(compat?i:i+1));
 
 	/* Step 4 and 5
