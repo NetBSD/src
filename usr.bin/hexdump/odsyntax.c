@@ -1,4 +1,4 @@
-/*	$NetBSD: odsyntax.c,v 1.27 2010/11/27 00:42:58 dholland Exp $	*/
+/*	$NetBSD: odsyntax.c,v 1.28 2010/11/27 20:46:38 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)odsyntax.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: odsyntax.c,v 1.27 2010/11/27 00:42:58 dholland Exp $");
+__RCSID("$NetBSD: odsyntax.c,v 1.28 2010/11/27 20:46:38 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -72,7 +72,6 @@ int odmode;
 
 static void odoffset(int, char ***);
 static void posixtypes(char const *);
-static void odusage(void);
 
 void
 odsyntax(int argc, char ***argvp)
@@ -177,7 +176,7 @@ odsyntax(int argc, char ***argvp)
 			break;
 		case '?':
 		default:
-			odusage();
+			usage();
 		}
 
 	if (fshead->nextfs->nextfs == NULL)
@@ -247,7 +246,7 @@ posixtypes(char const *type_string)
 				default:
 					warnx("Bad type-size qualifier '%c'",
 					    *type_string);
-					odusage();
+					usage();
 				}
 				type_string++;
 			} else if (isdigit((unsigned char)*type_string)) {
@@ -277,7 +276,7 @@ posixtypes(char const *type_string)
 				default:
 					warnx("Bad type-size qualifier '%c'",
 					    *type_string);
-					odusage();
+					usage();
 				}
 				type_string++;
 			} else if (isdigit((unsigned char)*type_string)) {
@@ -287,7 +286,7 @@ posixtypes(char const *type_string)
 				nbytes = 4;
 			break;
 		default:
-			odusage();
+			usage();
 		}
 		for (odf = odftab; odf->type != 0; odf++)
 			if (odf->type == type && odf->nbytes == nbytes)
@@ -396,13 +395,4 @@ odoffset(int argc, char ***argvp)
 
 	/* Terminate file list. */
 	(*argvp)[1] = NULL;
-}
-
-static void
-odusage(void)
-{
-	(void)warnx("Usage: od [-aBbcDdeFfHhIiLlOovXx] [-A base] [-j skip]"
-		    " [-N length]");
-	(void)warnx("   [-t type_string] [[+]offset[.][Bb]] [file ...]");
-	exit(1);
 }
