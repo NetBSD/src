@@ -65,9 +65,7 @@
 
 /* FIXME: Why do we need to check for sa_family 255 */
 #define COPYOUT(sin, sa)						      \
-	sin.s_addr = ((sa) != NULL && ((sa)->sa_family == AF_INET ||	      \
-		(sa)->sa_family == 255))				      \
-	    ?								      \
+	sin.s_addr = ((sa) != NULL) ?					      \
 	    (((struct sockaddr_in *)(void *)sa)->sin_addr).s_addr : 0
 
 static int r_fd = -1;
@@ -317,6 +315,10 @@ manage_link(int fd)
 	struct rt rt;
 	struct sockaddr *sa, *rti_info[RTAX_MAX];
 	int len;
+#ifdef RTM_CHGADDR
+	struct sockaddr_dl sdl;
+	unsigned char *hwaddr;
+#endif
 
 	for (;;) {
 		if (ioctl(fd, FIONREAD, &len) == -1)
@@ -376,17 +378,41 @@ manage_link(int fd)
 				COPYOUT(rt.gate, rti_info[RTAX_GATEWAY]);
 				route_deleted(&rt);
 				break;
-			case RTM_DELADDR:
+#ifdef RTM_CHGADDR
+			case RTM_CHGADDR:	/* FALLTHROUGH */
+#endif
+			case RTM_DELADDR:	/* FALLTHROUGH */
 			case RTM_NEWADDR:
 				ifam = (struct ifa_msghdr *)(void *)p;
+				if (!if_indextoname(ifam->ifam_index, ifname))
+					break;
 				cp = (char *)(void *)(ifam + 1);
 				get_addrs(ifam->ifam_addrs, cp, rti_info);
-				COPYOUT(rt.dest, rti_info[RTAX_IFA]);
-				COPYOUT(rt.net, rti_info[RTAX_NETMASK]);
-				COPYOUT(rt.gate, rti_info[RTAX_BRD]);
-				if (if_indextoname(ifam->ifam_index, ifname))
+				if (rti_info[RTAX_IFA] == NULL)
+					break;
+				switch (rti_info[RTAX_IFA]->sa_family) {
+#ifdef RTM_CHGADDR
+				case AF_LINK:
+					if (rtm->rtm_type != RTM_CHGADDR)
+						break;
+					memcpy(&sdl, rti_info[RTAX_IFA],
+					    rti_info[RTAX_IFA]->sa_len);
+					hwaddr = xmalloc(sdl.sdl_alen);
+					memcpy(hwaddr, LLADDR(&sdl),
+					    sdl.sdl_alen);
+					handle_hwaddr(ifname, hwaddr,
+					    sdl.sdl_alen);
+					break;
+#endif
+				case AF_INET:
+				case 255: /* FIXME: Why 255? */
+					COPYOUT(rt.dest, rti_info[RTAX_IFA]);
+					COPYOUT(rt.net, rti_info[RTAX_NETMASK]);
+					COPYOUT(rt.gate, rti_info[RTAX_BRD]);
 					handle_ifa(rtm->rtm_type, ifname,
 					    &rt.dest, &rt.net, &rt.gate);
+					break;
+				}
 				break;
 			}
 		}
