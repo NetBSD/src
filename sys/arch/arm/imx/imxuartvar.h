@@ -1,4 +1,4 @@
-/* $NetBSD: imxuartvar.h,v 1.3 2010/11/13 06:12:17 bsh Exp $ */
+/* $NetBSD: imxuartvar.h,v 1.4 2010/11/27 13:37:27 bsh Exp $ */
 /*
  * driver include for Freescale i.MX31 and i.MX31L UARTs
  */
@@ -36,7 +36,7 @@
 #include  <sys/termios.h>	/* for tcflag_t */
 
 
-void imxuart_attach_common(struct device *parent, struct device *self,
+void imxuart_attach_common(device_t parent, device_t self,
     bus_space_tag_t, paddr_t, size_t, int, int);
 
 int imxuart_kgdb_attach(bus_space_tag_t, paddr_t, u_int, tcflag_t);

@@ -1,4 +1,4 @@
-/* $NetBSD: imxuart.c,v 1.5 2010/11/13 06:12:17 bsh Exp $ */
+/* $NetBSD: imxuart.c,v 1.6 2010/11/27 13:37:27 bsh Exp $ */
 
 /*
  * Copyright (c) 2009, 2010  Genetec Corporation.  All rights reserved.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imxuart.c,v 1.5 2010/11/13 06:12:17 bsh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imxuart.c,v 1.6 2010/11/27 13:37:27 bsh Exp $");
 
 #include "opt_imxuart.h"
 #include "opt_ddb.h"
@@ -388,7 +388,7 @@ void	imxuart_kgdb_putc(void *, int);
 
 
 void
-imxuart_attach_common(struct device *parent, struct device *self,
+imxuart_attach_common(device_t parent, device_t self,
     bus_space_tag_t iot, paddr_t iobase, size_t size, int intr, int flags)
 {
 	imxuart_softc_t *sc = device_private(self);
