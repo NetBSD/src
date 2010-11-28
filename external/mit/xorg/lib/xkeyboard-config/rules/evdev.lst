@@ -63,6 +63,7 @@
   geniuskb19e     Genius KB-19e NB
   geniuskkb2050hs Genius KKB-2050HS
   gyration        Gyration
+  kinesis         Kinesis
   logitech_base   Logitech Generic Keyboard
   logitech_g15    Logitech G15 extra keys via G15daemon
   hpi6            Hewlett-Packard Internet Keyboard
@@ -179,6 +180,7 @@
   ara             Arabic
   al              Albania
   am              Armenia
+  at              Austria
   az              Azerbaijan
   by              Belarus
   be              Belgium
@@ -297,6 +299,9 @@
   eastern         am: Eastern
   western         am: Western
   eastern-alt     am: Alternative Eastern
+  nodeadkeys      at: Eliminate dead keys
+  sundeadkeys     at: Sun dead keys
+  mac             at: Macintosh
   cyrillic        az: Cyrillic
   legacy          by: Legacy
   latin           by: Latin
@@ -341,11 +346,11 @@
   bas_phonetic    bg: New phonetic
   french          ma: French
   tifinagh        ma: Tifinagh
-  tifinagh-alt    ma: Tifinagh Alternative
-  tifinagh-alt-phonetic ma: Tifinagh Alternative Phonetic
-  tifinagh-extended ma: Tifinagh Extended
-  tifinagh-phonetic ma: Tifinagh Phonetic
-  tifinagh-extended-phonetic ma: Tifinagh Extended Phonetic
+  tifinagh-alt    ma: Tifinagh alternative
+  tifinagh-alt-phonetic ma: Tifinagh alternative phonetic
+  tifinagh-extended ma: Tifinagh extended
+  tifinagh-phonetic ma: Tifinagh phonetic
+  tifinagh-extended-phonetic ma: Tifinagh extended phonetic
   fr-dvorak       ca: French Dvorak
   fr-legacy       ca: French (legacy)
   multix          ca: Multilingual
@@ -431,6 +436,7 @@
   dsb             de: Lower Sorbian
   dsb_qwertz      de: Lower Sorbian (qwertz)
   qwerty          de: qwerty
+  ru              de: Russian phonetic
   simple          gr: Simple
   extended        gr: Extended
   nodeadkeys      gr: Eliminate dead keys
@@ -607,6 +613,7 @@
   dvorak          gb: Dvorak
   dvorakukp       gb: Dvorak (UK Punctuation)
   mac             gb: Macintosh
+  mac_intl        gb: Macintosh (International)
   colemak         gb: Colemak
   latin           uz: Latin
   crh             uz: Crimean Tatar (Turkish Q)
@@ -620,6 +627,7 @@
   urd-crulp       pk: CRULP
   urd-nla         pk: NLA
   ara             pk: Arabic
+  snd             pk: Sindhi
   legacy          epo: displaced semicolon and quote (obsolete)
   igbo            ng: Igbo
   yoruba          ng: Yoruba
@@ -639,16 +647,16 @@
   grp:lwin_switch      Left Win (while pressed)
   grp:rwin_switch      Right Win (while pressed)
   grp:win_switch       Any Win key (while pressed)
-  grp:caps_switch      CapsLock (while pressed), Alt+CapsLock does the original capslock action
+  grp:caps_switch      Caps Lock (while pressed), Alt+Caps Lock does the original capslock action
   grp:rctrl_switch     Right Ctrl (while pressed)
   grp:toggle           Right Alt
   grp:lalt_toggle      Left Alt
-  grp:caps_toggle      CapsLock
-  grp:shift_caps_toggle Shift+CapsLock
-  grp:shift_caps_switch CapsLock (to first layout), Shift+CapsLock (to last layout)
+  grp:caps_toggle      Caps Lock
+  grp:shift_caps_toggle Shift+Caps Lock
+  grp:shift_caps_switch Caps Lock (to first layout), Shift+Caps Lock (to last layout)
   grp:win_menu_switch  Left Win (to first layout), Right Win/Menu (to last layout)
   grp:lctrl_rctrl_switch Left Ctrl (to first layout), Right Ctrl (to last layout)
-  grp:alt_caps_toggle  Alt+CapsLock
+  grp:alt_caps_toggle  Alt+Caps Lock
   grp:shifts_toggle    Both Shift keys together
   grp:alts_toggle      Both Alt keys together
   grp:ctrls_toggle     Both Ctrl keys together
@@ -665,7 +673,7 @@
   grp:rshift_toggle    Right Shift
   grp:lctrl_toggle     Left Ctrl
   grp:rctrl_toggle     Right Ctrl
-  grp:sclk_toggle      ScrollLock
+  grp:sclk_toggle      Scroll Lock
   lv3                  Key to choose 3rd level
   lv3:switch           Right Ctrl
   lv3:menu_switch      Menu
@@ -678,22 +686,23 @@
   lv3:ralt_switch_multikey Right Alt, Shift+Right Alt key is Multi_Key
   lv3:ralt_alt         Right Alt key never chooses 3rd level
   lv3:enter_switch     Enter on keypad
-  lv3:caps_switch      CapsLock
+  lv3:caps_switch      Caps Lock
   lv3:bksl_switch      Backslash
   lv3:lsgt_switch      &lt;Less/Greater&gt;
-  lv3:caps_switch_latch CapsLock (chooses 3rd level, latches when pressed together with another 3rd-level-chooser)
+  lv3:caps_switch_latch Caps Lock (chooses 3rd level, latches when pressed together with another 3rd-level-chooser)
   lv3:bksl_switch_latch Backslash chooses 3rd level, latches when pressed together with another 3rd-level-chooser)
   lv3:lsgt_switch_latch &lt;Less/Greater&gt; (chooses 3rd level, latches when pressed together with another 3rd-level-chooser)
   ctrl                 Ctrl key position
-  ctrl:nocaps          Make CapsLock an additional Ctrl
-  ctrl:swapcaps        Swap Ctrl and CapsLock
+  ctrl:nocaps          Make Caps Lock an additional Ctrl
+  ctrl:swapcaps        Swap Ctrl and Caps Lock
   ctrl:ctrl_ac         At left of 'A'
   ctrl:ctrl_aa         At bottom left
   ctrl:ctrl_ra         Right Ctrl as Right Alt
+  ctrl:ctrl_menu       Right Ctrl is mapped to Menu
   grp_led              Use keyboard LED to show alternative layout
-  grp_led:num          NumLock
-  grp_led:caps         CapsLock
-  grp_led:scroll       ScrollLock
+  grp_led:num          Num Lock
+  grp_led:caps         Caps Lock
+  grp_led:scroll       Scroll Lock
   keypad               Numeric keypad layout selection
   keypad:legacy        Legacy
   keypad:oss           Unicode additions (arrows and math operators)
@@ -712,20 +721,20 @@
   kpdl:momayyezoss     Four-level key with momayyez
   kpdl:kposs           Four-level key with abstract separators
   kpdl:semi            Semi-colon on third level
-  caps                 CapsLock key behavior
-  caps:internal        CapsLock uses internal capitalization. Shift "pauses" CapsLock
-  caps:internal_nocancel CapsLock uses internal capitalization. Shift doesn't affect CapsLock
-  caps:shift           CapsLock acts as Shift with locking. Shift "pauses" CapsLock
-  caps:shift_nocancel  CapsLock acts as Shift with locking. Shift doesn't affect CapsLock
-  caps:capslock        CapsLock toggles normal capitalization of alphabetic characters
-  caps:numlock         Make CapsLock an additional NumLock
-  caps:swapescape      Swap ESC and CapsLock
-  caps:escape          Make CapsLock an additional ESC
-  caps:backspace       Make CapsLock an additional Backspace
-  caps:super           Make CapsLock an additional Super
-  caps:hyper           Make CapsLock an additional Hyper
-  caps:shiftlock       CapsLock toggles Shift so all keys are affected
-  caps:none            CapsLock is disabled
+  caps                 Caps Lock key behavior
+  caps:internal        Caps Lock uses internal capitalization. Shift "pauses" Caps Lock
+  caps:internal_nocancel Caps Lock uses internal capitalization. Shift doesn't affect Caps Lock
+  caps:shift           Caps Lock acts as Shift with locking. Shift "pauses" Caps Lock
+  caps:shift_nocancel  Caps Lock acts as Shift with locking. Shift doesn't affect Caps Lock
+  caps:capslock        Caps Lock toggles normal capitalization of alphabetic characters
+  caps:numlock         Make Caps Lock an additional Num Lock
+  caps:swapescape      Swap ESC and Caps Lock
+  caps:escape          Make Caps Lock an additional ESC
+  caps:backspace       Make Caps Lock an additional Backspace
+  caps:super           Make Caps Lock an additional Super
+  caps:hyper           Make Caps Lock an additional Hyper
+  caps:shiftlock       Caps Lock toggles Shift so all keys are affected
+  caps:none            Caps Lock is disabled
   altwin               Alt/Win key behavior
   altwin:menu          Add the standard behavior to Menu key
   altwin:meta_alt      Alt and Meta are on Alt keys
@@ -743,22 +752,22 @@
   compose:menu         Menu
   compose:lctrl        Left Ctrl
   compose:rctrl        Right Ctrl
-  compose:caps         CapsLock
+  compose:caps         Caps Lock
   compose:102          &lt;Less/Greater&gt;
   compose:paus         Pause
   compose:prsc         PrtSc
-  compose:sclk         ScrollLock
+  compose:sclk         Scroll Lock
   compat               Miscellaneous compatibility options
   numpad:pc            Default numeric keypad keys
   numpad:mac           Numeric keypad keys work as with Mac
   numpad:microsoft     Shift with numeric keypad keys works as in MS Windows
-  numpad:shift3        Shift does not cancel NumLock, chooses 3rd level instead
+  numpad:shift3        Shift does not cancel Num Lock, chooses 3rd level instead
   srvrkeys:none        Special keys (Ctrl+Alt+&lt;key&gt;) handled in a server
-  apple:alupckeys      Apple Aluminium Keyboard: emulate PC keys (Print, Scroll_Lock, Pause, NumLock)
-  shift:breaks_caps    Shift cancels CapsLock
+  apple:alupckeys      Apple Aluminium Keyboard: emulate PC keys (Print, Scroll Lock, Pause, Num Lock)
+  shift:breaks_caps    Shift cancels Caps Lock
   misc:typo            Enable extra typographic characters
-  shift:both_capslock  Both Shift-Keys together toggle CapsLock
-  shift:both_capslock_cancel Both Shift-Keys together activate CapsLock, one Shift-Key deactivates
+  shift:both_capslock  Both Shift-Keys together toggle Caps Lock
+  shift:both_capslock_cancel Both Shift-Keys together activate Caps Lock, one Shift-Key deactivates
   shift:both_shiftlock Both Shift-Keys together toggle ShiftLock
   eurosign             Adding EuroSign to certain keys
   eurosign:e           E
