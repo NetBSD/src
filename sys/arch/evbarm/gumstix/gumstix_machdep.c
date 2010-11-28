@@ -1,4 +1,4 @@
-/*	$NetBSD: gumstix_machdep.c,v 1.34 2010/09/23 07:01:41 kiyohara Exp $ */
+/*	$NetBSD: gumstix_machdep.c,v 1.35 2010/11/28 08:23:23 hannken Exp $ */
 /*
  * Copyright (C) 2005, 2006, 2007  WIDE Project and SOUM Corporation.
  * All rights reserved.
@@ -150,7 +150,6 @@
 #include "opt_md.h"
 #include "opt_modular.h"
 #include "opt_com.h"
-#include "md.h"
 
 #include <sys/param.h>
 #include <sys/conf.h>
