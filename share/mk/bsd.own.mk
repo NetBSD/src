@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.643 2010/11/28 18:40:56 skrll Exp $
+#	$NetBSD: bsd.own.mk,v 1.644 2010/11/28 18:44:13 skrll Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -38,10 +38,11 @@ RELEASEMACHINE?=	${MACHINE}
 NEED_OWN_INSTALL_TARGET?=	yes
 
 #
-# This lists the platforms which do not have working in-tree toolchains.
-# For the in-tree gcc 3.3.2 toolchain, this list is empty.
-# If some future port is not supported by the in-tree toolchain, this
-# should be set to "yes" for that port only.
+# This lists the platforms which do not have working in-tree toolchains.  For
+# the in-tree gcc toolchain, this list is empty.
+#
+# If some future port is not supported by the in-tree toolchain, this should
+# be set to "yes" for that port only.
 #
 TOOLCHAIN_MISSING?=	no
 
