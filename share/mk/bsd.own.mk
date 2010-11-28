@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.642 2010/11/12 16:05:49 tsutsui Exp $
+#	$NetBSD: bsd.own.mk,v 1.643 2010/11/28 18:40:56 skrll Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -49,6 +49,13 @@ TOOLCHAIN_MISSING?=	no
 .if !defined(HAVE_GCC) && !defined(HAVE_PCC)
 HAVE_GCC=	4
 .endif
+
+.if \
+    ${MACHINE_ARCH} == "i386" || \
+    ${MACHINE_ARCH} == "x86_64"
+USE_COMPILERCRTSTUFF?=	no
+.endif
+USE_COMPILERCRTSTUFF?=	yes
 
 # default to GDB6
 HAVE_GDB?=	6
