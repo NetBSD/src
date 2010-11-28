@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.192 2010/10/25 06:14:10 jruoho Exp $
+$NetBSD: acronyms,v 1.193 2010/11/28 16:08:28 is Exp $
 AEAP	as early as possible
 AFAIC	as far as I'm concerned
 AFAICR	as far as I can recall
@@ -31,6 +31,7 @@ BBS	be back soon
 BBT	be back tomorrow
 BCNU	be seeing you
 BCNUL8R	be seeing you later
+BCP	best current practice
 BFD	big fucking deal
 BFH	big fucking hammer
 BIAB	back in a bit
