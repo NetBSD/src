@@ -1,4 +1,4 @@
-/*	$NetBSD: hexdump.c,v 1.16 2010/11/27 20:46:38 christos Exp $	*/
+/*	$NetBSD: hexdump.c,v 1.17 2010/11/28 10:45:32 mrg Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\
 #if 0
 static char sccsid[] = "@(#)hexdump.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: hexdump.c,v 1.16 2010/11/27 20:46:38 christos Exp $");
+__RCSID("$NetBSD: hexdump.c,v 1.17 2010/11/28 10:45:32 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -68,7 +68,11 @@ main(int argc, char *argv[])
 
 	setlocale(LC_ALL, "");
 
-	isod = (p = strrchr(argv[0], 'o')) == NULL || strcmp(p, "od") == 0;
+	isod = 0;
+	p = strrchr(argv[0], 'o');
+	if (p != NULL && strcmp(p, "od") == 0)
+		isod = 1;
+
 	if (isod)
 		odsyntax(argc, &argv);
 	else
