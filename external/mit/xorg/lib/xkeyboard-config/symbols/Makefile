@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.4 2010/11/22 00:27:56 mrg Exp $
+#	$NetBSD: Makefile,v 1.5 2010/11/28 04:58:20 mrg Exp $
 
 .include <bsd.own.mk>
 
 XKBNAME=	symbols
 
-FILES=	ad af al altwin am ara at az \
+FILES=	ad af al altwin am ara az \
 	ba bd be bg br brai bt bw by \
 	ca capslock cd ch cn compose ctrl cz \
 	de dk \
