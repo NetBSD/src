@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_machdep.c,v 1.73 2010/02/08 19:02:26 joerg Exp $	*/
+/*	$NetBSD: arm32_machdep.c,v 1.74 2010/11/28 08:23:22 hannken Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.73 2010/02/08 19:02:26 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.74 2010/11/28 08:23:22 hannken Exp $");
 
 #include "opt_modular.h"
 #include "opt_md.h"
@@ -69,13 +69,11 @@ __KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.73 2010/02/08 19:02:26 joerg Exp
 #include <arm/arm32/machdep.h>
 #include <machine/bootconfig.h>
 
-#include "md.h"
-
 struct vm_map *phys_map = NULL;
 
-#if NMD > 0 && defined(MEMORY_DISK_HOOKS) && !defined(MEMORY_DISK_ROOT_SIZE)
+#if defined(MEMORY_DISK_HOOKS) && !defined(MEMORY_DISK_ROOT_SIZE)
 extern size_t md_root_size;		/* Memory disc size */
-#endif	/* NMD && MEMORY_DISK_HOOKS && !MEMORY_DISK_ROOT_SIZE */
+#endif	/* MEMORY_DISK_HOOKS && !MEMORY_DISK_ROOT_SIZE */
 
 pv_addr_t kernelstack;
 
@@ -369,7 +367,7 @@ parse_mi_bootargs(char *args)
 /*	if (get_bootconf_option(args, "nbuf", BOOTOPT_TYPE_INT, &integer))
 		bufpages = integer;*/
 
-#if NMD > 0 && defined(MEMORY_DISK_HOOKS) && !defined(MEMORY_DISK_ROOT_SIZE)
+#if defined(MEMORY_DISK_HOOKS) && !defined(MEMORY_DISK_ROOT_SIZE)
 	if (get_bootconf_option(args, "memorydisc", BOOTOPT_TYPE_INT, &integer)
 	    || get_bootconf_option(args, "memorydisk", BOOTOPT_TYPE_INT, &integer)) {
 		md_root_size = integer;
@@ -379,7 +377,7 @@ parse_mi_bootargs(char *args)
 		if (md_root_size > 2048*1024)
 			md_root_size = 2048*1024;
 	}
-#endif	/* NMD && MEMORY_DISK_HOOKS && !MEMORY_DISK_ROOT_SIZE */
+#endif	/* MEMORY_DISK_HOOKS && !MEMORY_DISK_ROOT_SIZE */
 
 	if (get_bootconf_option(args, "quiet", BOOTOPT_TYPE_BOOLEAN, &integer)
 	    || get_bootconf_option(args, "-q", BOOTOPT_TYPE_BOOLEAN, &integer))

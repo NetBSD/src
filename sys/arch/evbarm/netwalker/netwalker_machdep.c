@@ -1,4 +1,4 @@
-/*	$NetBSD: netwalker_machdep.c,v 1.1 2010/11/13 07:31:32 bsh Exp $	*/
+/*	$NetBSD: netwalker_machdep.c,v 1.2 2010/11/28 08:23:24 hannken Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2005, 2010  Genetec Corporation. 
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netwalker_machdep.c,v 1.1 2010/11/13 07:31:32 bsh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netwalker_machdep.c,v 1.2 2010/11/28 08:23:24 hannken Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -110,7 +110,6 @@ __KERNEL_RCSID(0, "$NetBSD: netwalker_machdep.c,v 1.1 2010/11/13 07:31:32 bsh Ex
 #include "opt_pmap_debug.h"
 #include "opt_md.h"
 #include "opt_com.h"
-#include "md.h"
 #include "imxuart.h"
 #include "opt_imxuart.h"
 #include "opt_imx.h"

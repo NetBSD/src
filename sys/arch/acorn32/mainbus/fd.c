@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.47 2010/02/24 23:03:00 dyoung Exp $	*/
+/*	$NetBSD: fd.c,v 1.48 2010/11/28 08:23:22 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.47 2010/02/24 23:03:00 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.48 2010/11/28 08:23:22 hannken Exp $");
 
 #include "opt_ddb.h"
 
@@ -1479,9 +1479,6 @@ fdformat(dev_t dev, struct ne7_fd_formb *finfo, struct lwp *l)
 	return rv;
 }
 
-#include "md.h"
-#if NMD > 0
-
 #include <dev/md.h>
 
 int load_memory_disc_from_floppy(struct md_conf *md, dev_t dev);
@@ -1559,5 +1556,3 @@ load_memory_disc_from_floppy(struct md_conf *md, dev_t dev)
 	splx(s);
 	return(0);
 }
-
-#endif
