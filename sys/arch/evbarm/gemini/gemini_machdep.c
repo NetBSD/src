@@ -1,4 +1,4 @@
-/*	$NetBSD: gemini_machdep.c,v 1.15 2009/12/26 16:01:24 uebayasi Exp $	*/
+/*	$NetBSD: gemini_machdep.c,v 1.16 2010/11/28 08:23:23 hannken Exp $	*/
 
 /* adapted from:
  *	NetBSD: sdp24xx_machdep.c,v 1.4 2008/08/27 11:03:10 matt Exp
@@ -129,7 +129,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gemini_machdep.c,v 1.15 2009/12/26 16:01:24 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gemini_machdep.c,v 1.16 2010/11/28 08:23:23 hannken Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -140,7 +140,6 @@ __KERNEL_RCSID(0, "$NetBSD: gemini_machdep.c,v 1.15 2009/12/26 16:01:24 uebayasi
 #include "opt_gemini.h"
 #include "geminiwdt.h"
 #include "geminiipm.h"
-#include "md.h"
 
 #include <sys/param.h>
 #include <sys/device.h>
