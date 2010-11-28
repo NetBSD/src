@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module_vfs.c,v 1.9 2010/11/19 06:44:43 dholland Exp $	*/
+/*	$NetBSD: kern_module_vfs.c,v 1.10 2010/11/28 00:26:38 jnemeth Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module_vfs.c,v 1.9 2010/11/19 06:44:43 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module_vfs.c,v 1.10 2010/11/28 00:26:38 jnemeth Exp $");
 
 #define _MODULE_INTERNAL
 #include <sys/param.h>
@@ -100,7 +100,7 @@ module_load_vfs(const char *name, int flags, bool autoload,
 	}
 
 	/*
-	 * Load and process <module>.prop if it exists.
+	 * Load and process <module>.plist if it exists.
 	 */
 	if (((flags & MODCTL_NO_PROP) == 0 && filedictp) || autoload) {
 		error = module_load_plist_vfs(path, nochroot, &moduledict);
@@ -159,10 +159,10 @@ module_load_plist_vfs(const char *modpath, const bool nochroot,
 	proppath = PNBUF_GET();
 	strcpy(proppath, modpath);
 	pathlen = strlen(proppath);
-	if ((pathlen >= 5) && (strcmp(&proppath[pathlen - 5], ".kmod") == 0)) {
-		strcpy(&proppath[pathlen - 5], ".prop");
-	} else if (pathlen < MAXPATHLEN - 5) {
-			strcat(proppath, ".prop");
+	if ((pathlen >= 6) && (strcmp(&proppath[pathlen - 5], ".kmod") == 0)) {
+		strcpy(&proppath[pathlen - 5], ".plist");
+	} else if (pathlen < MAXPATHLEN - 6) {
+			strcat(proppath, ".plist");
 	} else {
 		error = ENOENT;
 		goto out1;
