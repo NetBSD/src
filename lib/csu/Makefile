@@ -1,15 +1,17 @@
-#	$NetBSD: Makefile,v 1.27 2010/08/07 18:01:32 joerg Exp $
+#	$NetBSD: Makefile,v 1.28 2010/11/28 18:40:56 skrll Exp $
 
 .include <bsd.own.mk>
 
 CSU_MACHINE_ARCH?=	${MACHINE_ARCH}
 
-.if ${CSU_MACHINE_ARCH} == "i386" || ${CSU_MACHINE_ARCH} == "x86_64"
+.if ${USE_COMPILERCRTSTUFF} != "yes"
+
 ARCHDIR:=	${.PARSEDIR}/arch/${CSU_MACHINE_ARCH}
 .PATH:	${ARCHDIR}
 .  include "${ARCHDIR}/Makefile.inc"
 
 .  include "${.PARSEDIR}/common/Makefile.inc"
+
 .else
 
 .  if exists(${CSU_MACHINE_ARCH}_elf/Makefile)

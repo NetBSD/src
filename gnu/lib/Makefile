@@ -1,9 +1,12 @@
-#	$NetBSD: Makefile,v 1.46 2009/12/14 12:43:48 uebayasi Exp $
+#	$NetBSD: Makefile,v 1.47 2010/11/28 18:40:55 skrll Exp $
 
 .include <bsd.own.mk>
 
 .if ${MKGCC} != "no"
-SUBDIR+= crtstuff4 libgcc4 libobjc4
+.if ${USE_COMPILERCRTSTUFF} == "yes"
+SUBDIR+= crtstuff4
+.endif
+SUBDIR+= libgcc4 libobjc4
 .if ${MKCXX} != "no"
 SUBDIR+= libsupc++4 libstdc++-v3_4
 .endif

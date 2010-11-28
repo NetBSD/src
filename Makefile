@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.279 2010/11/22 08:35:44 plunky Exp $
+#	$NetBSD: Makefile,v 1.280 2010/11/28 18:40:54 skrll Exp $
 
 #
 # This is the top-level makefile for building NetBSD. For an outline of
@@ -87,7 +87,8 @@
 #                    gnu/lib/crtstuff${LIBGCC_EXT} (if necessary) and
 #                    gnu/lib/libgcc${LIBGCC_EXT}.
 #   do-libpcc:       builds and install prerequisites from
-#                    external/bsd/pcc/crtstuff and external/bsd/pcc/libpcc.
+#                    external/bsd/pcc/crtstuff (if necessary) and
+#                    external/bsd/pcc/libpcc.
 #   do-lib-libc:     builds and installs prerequisites from lib/libc.
 #   do-lib:          builds and installs prerequisites from lib.
 #   do-gnu-lib:      builds and installs prerequisites from gnu/lib.
@@ -409,7 +410,9 @@ do-${targ}: .PHONY ${targ}
 .endfor
 
 .if defined(HAVE_GCC)
+.if ${USE_COMPILERCRTSTUFF} == "yes"
 BUILD_CC_LIB= gnu/lib/crtstuff${LIBGCC_EXT}
+.endif
 BUILD_CC_LIB+= gnu/lib/libgcc${LIBGCC_EXT}
 .elif defined(HAVE_PCC)
 BUILD_CC_LIB+= external/bsd/pcc/crtstuff
@@ -442,8 +445,10 @@ do-tools-obj: .PHONY .MAKE
 do-libgcc: .PHONY .MAKE
 .if defined(HAVE_GCC)
 .if ${MKGCC} != "no"
+.if ${USE_COMPILERCRTSTUFF} == "yes"
 .if (${HAVE_GCC} == "3" || ${HAVE_GCC} == "4")
 	${MAKEDIRTARGET} . do-gnu-lib-crtstuff${LIBGCC_EXT}
+.endif
 .endif
 	${MAKEDIRTARGET} . do-gnu-lib-libgcc${LIBGCC_EXT}
 .endif
@@ -452,7 +457,9 @@ do-libgcc: .PHONY .MAKE
 do-compat-libgcc: .PHONY .MAKE
 .if defined(HAVE_GCC)
 .if ${MKGCC} != "no"
+.if ${USE_COMPILERCRTSTUFF} == "yes"
 	${MAKEDIRTARGET} . do-compat-gnu-lib-crtstuff${LIBGCC_EXT}
+.endif
 	${MAKEDIRTARGET} . do-compat-gnu-lib-libgcc${LIBGCC_EXT}
 .endif
 .endif
@@ -460,7 +467,9 @@ do-compat-libgcc: .PHONY .MAKE
 do-libpcc: .PHONY .MAKE
 .if defined(HAVE_PCC)
 .if ${MKPCC} != "no"
+.if ${USE_COMPILERCRTSTUFF} == "yes"
 	${MAKEDIRTARGET} . do-pcc-lib-crtstuff
+.endif
 	${MAKEDIRTARGET} . do-pcc-lib-libpcc
 .endif
 .endif
