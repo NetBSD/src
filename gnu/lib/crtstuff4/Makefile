@@ -1,17 +1,13 @@
-#	$NetBSD: Makefile,v 1.6 2010/08/07 18:02:40 joerg Exp $
+#	$NetBSD: Makefile,v 1.7 2010/11/28 18:40:55 skrll Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
 
 .include <bsd.own.mk>
 
-.if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
-MODERN_LIB_CSU=yes
-.endif
-
 # If using an external toolchain, we expect crtbegin/crtend to be
 # supplied by that toolchain's run-time support.
-.if !defined(MODERN_LIB_CSU) && !defined(EXTERNAL_TOOLCHAIN) && ${MKGCC} != "no"
+.if !defined(EXTERNAL_TOOLCHAIN) && ${MKGCC} != "no"
 
 DIST=		${NETBSDSRCDIR}/gnu/dist/gcc4
 GNUHOSTDIST=	${DIST}
