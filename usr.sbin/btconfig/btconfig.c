@@ -1,4 +1,4 @@
-/* $NetBSD: btconfig.c,v 1.23 2010/11/22 20:02:06 plunky Exp $ */
+/* $NetBSD: btconfig.c,v 1.24 2010/11/28 20:37:24 plunky Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2006 Itronix, Inc.  All rights reserved.");
-__RCSID("$NetBSD: btconfig.c,v 1.23 2010/11/22 20:02:06 plunky Exp $");
+__RCSID("$NetBSD: btconfig.c,v 1.24 2010/11/28 20:37:24 plunky Exp $");
 
 #include <sys/ioctl.h>
 #include <sys/param.h>
@@ -45,6 +45,7 @@ __RCSID("$NetBSD: btconfig.c,v 1.23 2010/11/22 20:02:06 plunky Exp $");
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include <unistd.h>
 #include <util.h>
 
@@ -474,23 +475,19 @@ config_unit(void)
 	}
 
 	if (opt_reset) {
-		hci_req(HCI_CMD_RESET, 0, NULL, 0, NULL, 0);
+		static const struct timespec ts = { 0, 100000000 }; /* 100ms */
 
 		btr.btr_flags |= BTF_INIT;
 		if (ioctl(hci, SIOCSBTFLAGS, &btr) < 0)
 			err(EXIT_FAILURE, "SIOCSBTFLAGS");
 
-		/*
-		 * although the reset command will automatically
-		 * carry out these commands, we do them manually
-		 * just so we can wait for completion.
-		 */
-		hci_req(HCI_CMD_READ_BDADDR, 0, NULL, 0, NULL, 0);
-		hci_req(HCI_CMD_READ_BUFFER_SIZE, 0, NULL, 0, NULL, 0);
-		hci_req(HCI_CMD_READ_LOCAL_FEATURES, 0, NULL, 0, NULL, 0);
+		hci_req(HCI_CMD_RESET, 0, NULL, 0, NULL, 0);
 
-		if (set_unit(SIOCGBTINFO) < 0)
-			err(EXIT_FAILURE, "%s", btr.btr_name);
+		do {
+			nanosleep(&ts, NULL);
+			if (ioctl(hci, SIOCGBTINFO, &btr) < 0)
+				err(EXIT_FAILURE, "%s", btr.btr_name);
+		} while ((btr.btr_flags & BTF_INIT) != 0);
 	}
 
 	if (opt_master) {
