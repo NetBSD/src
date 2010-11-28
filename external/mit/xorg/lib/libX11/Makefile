@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2010/11/22 00:12:14 mrg Exp $
+#	$NetBSD: Makefile,v 1.10 2010/11/28 07:47:53 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -83,7 +83,7 @@ MAN=		AllPlanes.3 BlackPixelOfScreen.3 DisplayOfCCC.3 \
 
 USETBL=		yes
 
-FILES=		XErrorDB Xcms.txt
+FILES=		XErrorDB XKeysymDB Xcms.txt
 FILESDIR=	${X11LIBDIR}
 
 .PATH:		${X11SRCDIR.X11}
