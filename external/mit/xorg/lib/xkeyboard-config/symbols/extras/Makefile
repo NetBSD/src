@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.2 2010/11/22 00:27:56 mrg Exp $
+#	$NetBSD: Makefile,v 1.3 2010/11/28 04:58:20 mrg Exp $
 
 .include <bsd.own.mk>
 
 FILESDIR=	${X11LIBDIR}/xkb/symbols/extras
-FILES=		apl ir rs ru us
+FILES=		apl rs us
 
 .PATH:		${X11SRCDIR.xkeyboard-config}/symbols/extras
 

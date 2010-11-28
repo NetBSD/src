@@ -80,7 +80,7 @@
               silvercrest \
               sk1300 sk2500 sk6200 sk7100 \
               sven sven303 symplon \
-              toshiba_s3000 trust trustda \
+              tm2030USB toshiba_s3000 trust trustda \
               unitekkb1925 yahoo
 
 // all layouts with 3rd and 4th groups
@@ -228,8 +228,6 @@
   *		yu		yz		=	pc+srp(latinyz)
   *		yu		unicodeyz		=	pc+srp(latinunicodeyz)
   *		rs		combiningkeys		=	pc+extras/rs(combiningkeys)
-  *		ru		chu		=	pc+extras/ru(chu)
-  *		ir		ave		=	pc+extras/ir(ave)
   *		us		alt-intl-unicode		=	pc+extras/us(alt-intl-unicode)
   *		us		crd		=	pc+extras/us(crd)
   *		us		intl-unicode		=	pc+extras/us(intl-unicode)
@@ -318,8 +316,6 @@
   *		yu(unicodeyz)			=	pc+srp(latinunicodeyz)
   *		apl			=	pc+extras/apl
   *		rs(combiningkeys)			=	pc+extras/rs(combiningkeys)
-  *		ru(chu)			=	pc+extras/ru(chu)
-  *		ir(ave)			=	pc+extras/ir(ave)
   *		us(alt-intl-unicode)			=	pc+extras/us(alt-intl-unicode)
   *		us(crd)			=	pc+extras/us(crd)
   *		us(intl-unicode)			=	pc+extras/us(intl-unicode)
@@ -361,6 +357,11 @@
   olpc		$olpclayouts		=	olpc+%l%(m)
   olpc		*			=	olpc+%l%(v)
  $thinkpads   	br			=	pc+br(thinkpad)
+  sl-c3x00	*			=	pc+sharp_vndr/sl-c3x00(basic)
+  ws003sh	*			=	pc+sharp_vndr/ws003sh(basic)
+  ws007sh	*			=	pc+sharp_vndr/ws007sh(basic)
+  ws011sh	*			=	pc+sharp_vndr/ws011sh(basic)
+  ws020sh	*			=	pc+sharp_vndr/ws020sh(basic)
   *	   	$nonlatin		=	pc+us+%l%(v):2
   *		*			=	pc+%l%(v)
 
@@ -444,8 +445,6 @@
   *		yu(unicodeyz)			=	pc+srp(latinunicodeyz)
   *		apl			=	pc+extras/apl%(v[1])
   *		rs(combiningkeys)			=	pc+extras/rs(combiningkeys)
-  *		ru(chu)			=	pc+extras/ru(chu)
-  *		ir(ave)			=	pc+extras/ir(ave)
   *		us(alt-intl-unicode)			=	pc+extras/us(alt-intl-unicode)
   *		us(crd)			=	pc+extras/us(crd)
   *		us(intl-unicode)			=	pc+extras/us(intl-unicode)
@@ -517,8 +516,6 @@
   *		yu		yz		=	pc+srp(latinyz)
   *		yu		unicodeyz		=	pc+srp(latinunicodeyz)
   *		rs		combiningkeys		=	pc+extras/rs(combiningkeys)
-  *		ru		chu		=	pc+extras/ru(chu)
-  *		ir		ave		=	pc+extras/ir(ave)
   *		us		alt-intl-unicode		=	pc+extras/us(alt-intl-unicode)
   *		us		crd		=	pc+extras/us(crd)
   *		us		intl-unicode		=	pc+extras/us(intl-unicode)
@@ -603,8 +600,6 @@
   *		yu(unicodeyz)	=	+srp(latinunicodeyz):2
   *		apl		=	+extras/apl%(v[2]):2
   *		rs(combiningkeys)	=	+extras/rs(combiningkeys):2
-  *		ru(chu)	=	+extras/ru(chu):2
-  *		ir(ave)	=	+extras/ir(ave):2
   *		us(alt-intl-unicode)	=	+extras/us(alt-intl-unicode):2
   *		us(crd)	=	+extras/us(crd):2
   *		us(intl-unicode)	=	+extras/us(intl-unicode):2
@@ -692,8 +687,6 @@
   *		yu(unicodeyz)	=	+srp(latinunicodeyz):3
   *		apl		=	+extras/apl%(v[3]):3
   *		rs(combiningkeys)	=	+extras/rs(combiningkeys):3
-  *		ru(chu)	=	+extras/ru(chu):3
-  *		ir(ave)	=	+extras/ir(ave):3
   *		us(alt-intl-unicode)	=	+extras/us(alt-intl-unicode):3
   *		us(crd)	=	+extras/us(crd):3
   *		us(intl-unicode)	=	+extras/us(intl-unicode):3
@@ -781,8 +774,6 @@
   *		yu(unicodeyz)	=	+srp(latinunicodeyz):4
   *		apl		=	+extras/apl%(v[4]):4
   *		rs(combiningkeys)	=	+extras/rs(combiningkeys):4
-  *		ru(chu)	=	+extras/ru(chu):4
-  *		ir(ave)	=	+extras/ir(ave):4
   *		us(alt-intl-unicode)	=	+extras/us(alt-intl-unicode):4
   *		us(crd)	=	+extras/us(crd):4
   *		us(intl-unicode)	=	+extras/us(intl-unicode):4
@@ -842,8 +833,6 @@
   *		yu		yz	=	+srp(latinyz):2
   *		yu		unicodeyz	=	+srp(latinunicodeyz):2
   *		rs		combiningkeys	=	+extras/rs(combiningkeys):2
-  *		ru		chu	=	+extras/ru(chu):2
-  *		ir		ave	=	+extras/ir(ave):2
   *		us		alt-intl-unicode	=	+extras/us(alt-intl-unicode):2
   *		us		crd	=	+extras/us(crd):2
   *		us		intl-unicode	=	+extras/us(intl-unicode):2
@@ -900,8 +889,6 @@
   *		yu		yz	=	+srp(latinyz):3
   *		yu		unicodeyz	=	+srp(latinunicodeyz):3
   *		rs		combiningkeys	=	+extras/rs(combiningkeys):3
-  *		ru		chu	=	+extras/ru(chu):3
-  *		ir		ave	=	+extras/ir(ave):3
   *		us		alt-intl-unicode	=	+extras/us(alt-intl-unicode):3
   *		us		crd	=	+extras/us(crd):3
   *		us		intl-unicode	=	+extras/us(intl-unicode):3
@@ -958,8 +945,6 @@
   *		yu		yz	=	+srp(latinyz):4
   *		yu		unicodeyz	=	+srp(latinunicodeyz):4
   *		rs		combiningkeys	=	+extras/rs(combiningkeys):4
-  *		ru		chu	=	+extras/ru(chu):4
-  *		ir		ave	=	+extras/ir(ave):4
   *		us		alt-intl-unicode	=	+extras/us(alt-intl-unicode):4
   *		us		crd	=	+extras/us(crd):4
   *		us		intl-unicode	=	+extras/us(intl-unicode):4
@@ -1135,7 +1120,6 @@
   ctrl:ctrl_ac		=	+ctrl(ctrl_ac)
   ctrl:ctrl_aa		=	+ctrl(ctrl_aa)
   ctrl:ctrl_ra		=	+ctrl(ctrl_ra)
-  ctrl:ctrl_menu	=	+ctrl(ctrl_menu)
   compose:ralt		=	+compose(ralt)
   compose:lwin		=	+compose(lwin)
   compose:rwin		=	+compose(rwin)
