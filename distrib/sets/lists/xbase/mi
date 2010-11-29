@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.103 2010/11/28 07:47:53 mrg Exp $
+# $NetBSD: mi,v 1.104 2010/11/29 12:18:45 wiz Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2068,7 +2068,7 @@
 ./usr/X11R7/lib/X11/xkb/symbols/apple			-unknown-	obsolete
 ./usr/X11R7/lib/X11/xkb/symbols/ar			-unknown-	obsolete
 ./usr/X11R7/lib/X11/xkb/symbols/ara			-unknown-	xorg
-./usr/X11R7/lib/X11/xkb/symbols/at			-unknown-	obsolete
+./usr/X11R7/lib/X11/xkb/symbols/at			-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/az			-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/ba			-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/bd			-unknown-	xorg
@@ -2118,9 +2118,9 @@
 ./usr/X11R7/lib/X11/xkb/symbols/et			-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/extras			base-x11-root	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/extras/apl		-unknown-	xorg
-./usr/X11R7/lib/X11/xkb/symbols/extras/ir		-unknown-	obsolete
+./usr/X11R7/lib/X11/xkb/symbols/extras/ir		-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/extras/rs		-unknown-	xorg
-./usr/X11R7/lib/X11/xkb/symbols/extras/ru		-unknown-	obsolete
+./usr/X11R7/lib/X11/xkb/symbols/extras/ru		-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/extras/us		-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/eurosign		-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/fi			-unknown-	xorg
