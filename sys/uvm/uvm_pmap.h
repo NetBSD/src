@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pmap.h,v 1.34 2010/11/26 18:51:19 christos Exp $	*/
+/*	$NetBSD: uvm_pmap.h,v 1.35 2010/11/29 09:49:33 mrg Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -86,10 +86,11 @@ struct pmap_statistics {
 typedef struct pmap_statistics	*pmap_statistics_t;
 
 #ifdef _KERNEL
-#include <machine/pmap.h>
 
 extern struct pmap	*const kernel_pmap_ptr;
 #define pmap_kernel()	kernel_pmap_ptr
+
+#include <machine/pmap.h>
 
 #endif
 
