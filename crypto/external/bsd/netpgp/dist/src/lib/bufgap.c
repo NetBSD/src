@@ -1,4 +1,4 @@
-/* $NetBSD: bufgap.c,v 1.4 2010/08/15 16:10:56 agc Exp $ */
+/* $NetBSD: bufgap.c,v 1.5 2010/11/29 06:21:40 agc Exp $ */
 
 /*-
  * Copyright (c) 1996-2009 The NetBSD Foundation, Inc.
@@ -38,8 +38,8 @@
 #include <sys/stat.h>
 #endif
 
+#include <ctype.h>
 #include <stdio.h>
-
 #include <stdlib.h>
 
 #ifdef HAVE_UNISTD_H
@@ -50,7 +50,6 @@
 #include <string.h>
 #endif
 
-#include "fastctype.h"
 #include "bufgap.h"
 #include "defs.h"
 
