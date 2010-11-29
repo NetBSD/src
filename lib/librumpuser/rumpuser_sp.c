@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpuser_sp.c,v 1.20 2010/11/29 11:40:54 pooka Exp $	*/
+/*      $NetBSD: rumpuser_sp.c,v 1.21 2010/11/29 16:08:03 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: rumpuser_sp.c,v 1.20 2010/11/29 11:40:54 pooka Exp $");
+__RCSID("$NetBSD: rumpuser_sp.c,v 1.21 2010/11/29 16:08:03 pooka Exp $");
 
 #include <sys/types.h>
 #include <sys/atomic.h>
@@ -176,6 +176,22 @@ nextreq(struct spclient *spc)
 	pthread_mutex_unlock(&spc->spc_mtx);
 
 	return nw;
+}
+
+static void
+send_error_resp(struct spclient *spc, uint64_t reqno, int error)
+{
+	struct rsp_hdr rhdr;
+
+	rhdr.rsp_len = sizeof(rhdr);
+	rhdr.rsp_reqno = reqno;
+	rhdr.rsp_class = RUMPSP_ERROR;
+	rhdr.rsp_type = 0;
+	rhdr.rsp_error = error;
+
+	sendlock(spc);
+	(void)dosend(spc, &rhdr, sizeof(rhdr));
+	sendunlock(spc);
 }
 
 static int
@@ -605,21 +621,29 @@ handlereq(struct spclient *spc)
 {
 	struct sysbouncearg *sba;
 	pthread_t pt;
+	int retries;
 
-	/* XXX: check that it's a syscall */
+	if (__predict_false(spc->spc_hdr.rsp_type != RUMPSP_SYSCALL)) {
+		send_error_resp(spc, spc->spc_hdr.rsp_reqno, EINVAL);
+		spcfreebuf(spc);
+		return;
+	}
 
-	sba = malloc(sizeof(*sba));
-	if (sba == NULL) {
-		/* panic */
-		abort();
+	retries = 0;
+	while ((sba = malloc(sizeof(*sba))) == NULL) {
+		if (nworker == 0 || retries > 10) {
+			send_error_resp(spc, spc->spc_hdr.rsp_reqno, EAGAIN);
+			spcfreebuf(spc);
+			return;
+		}
+		/* slim chance of more memory? */
+		usleep(10000);
 	}
 
 	sba->sba_spc = spc;
 	sba->sba_hdr = spc->spc_hdr;
 	sba->sba_data = spc->spc_buf;
-
-	spc->spc_buf = NULL;
-	spc->spc_off = 0;
+	spcresetbuf(spc);
 
 	spcref(spc);
 
@@ -731,8 +755,10 @@ spserver(void *arg)
 						handlereq(spc);
 						break;
 					default:
-						printf("PANIC\n");
-						abort();
+						send_error_resp(spc,
+						    spc->spc_hdr.rsp_reqno,
+						    ENOENT);
+						spcfreebuf(spc);
 						break;
 					}
 					break;

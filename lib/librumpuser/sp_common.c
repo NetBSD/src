@@ -1,4 +1,4 @@
-/*      $NetBSD: sp_common.c,v 1.12 2010/11/26 18:51:03 pooka Exp $	*/
+/*      $NetBSD: sp_common.c,v 1.13 2010/11/29 16:08:03 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -44,6 +44,7 @@
 #include <assert.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <inttypes.h>
 #include <poll.h>
 #include <pthread.h>
 #include <stdarg.h>
@@ -73,7 +74,7 @@ mydprintf(const char *fmt, ...)
  * Bah, I hate writing on-off-wire conversions in C
  */
 
-enum { RUMPSP_REQ, RUMPSP_RESP };
+enum { RUMPSP_REQ, RUMPSP_RESP, RUMPSP_ERROR };
 enum {	RUMPSP_SYSCALL,
 	RUMPSP_COPYIN, RUMPSP_COPYINSTR,
 	RUMPSP_COPYOUT, RUMPSP_COPYOUTSTR,
@@ -88,9 +89,14 @@ struct rsp_hdr {
 	 * We want this structure 64bit-aligned for typecast fun,
 	 * so might as well use the following for something.
 	 */
-	uint32_t rsp_sysnum;
+	union {
+		uint32_t sysnum;
+		uint32_t error;
+	} u;
 };
 #define HDRSZ sizeof(struct rsp_hdr)
+#define rsp_sysnum u.sysnum
+#define rsp_error u.error
 
 /*
  * Data follows the header.  We have two types of structured data.
@@ -113,6 +119,7 @@ struct respwait {
 	uint64_t rw_reqno;
 	void *rw_data;
 	size_t rw_dlen;
+	int rw_error;
 
 	pthread_cond_t rw_cv;
 
@@ -152,6 +159,22 @@ typedef int (*connecthook_fn)(int);
 
 static int readframe(struct spclient *);
 static void handlereq(struct spclient *);
+
+static __inline void
+spcresetbuf(struct spclient *spc)
+{
+
+	spc->spc_buf = NULL;
+	spc->spc_off = 0;
+}
+
+static __inline void
+spcfreebuf(struct spclient *spc)
+{
+
+	free(spc->spc_buf);
+	spcresetbuf(spc);
+}
 
 static void
 sendlockl(struct spclient *spc)
@@ -266,18 +289,25 @@ kickwaiter(struct spclient *spc)
 			break;
 	}
 	if (rw == NULL) {
-		printf("PANIC: no waiter\n");
-		abort();
+		DPRINTF(("no waiter found, invalid reqno %" PRIu64 "?\n",
+		    spc->spc_hdr.rsp_reqno));
 		return;
 	}
 	DPRINTF(("rump_sp: client %p woke up waiter at %p\n", spc, rw));
 	rw->rw_data = spc->spc_buf;
 	rw->rw_dlen = (size_t)(spc->spc_off - HDRSZ);
+	if (spc->spc_hdr.rsp_class == RUMPSP_ERROR) {
+		rw->rw_error = spc->spc_hdr.rsp_error;
+	} else {
+		rw->rw_error = 0;
+	}
 	pthread_cond_signal(&rw->rw_cv);
 	pthread_mutex_unlock(&spc->spc_mtx);
 
-	spc->spc_buf = NULL;
-	spc->spc_off = 0;
+	if (rw->rw_error)
+		spcfreebuf(spc);
+	else
+		spcresetbuf(spc);
 }
 
 static void
@@ -298,7 +328,8 @@ waitresp(struct spclient *spc, struct respwait *rw)
 
 	sendunlockl(spc);
 
-	while (rw->rw_data == NULL && spc->spc_dying == 0) {
+	rw->rw_error = 0;
+	while (rw->rw_data == NULL && rw->rw_error == 0 && spc->spc_dying == 0){
 		/* are we free to receive? */
 		if (spc->spc_istatus == SPCSTATUS_FREE) {
 			int gotresp;
@@ -324,6 +355,7 @@ waitresp(struct spclient *spc, struct respwait *rw)
 
 				switch (spc->spc_hdr.rsp_class) {
 				case RUMPSP_RESP:
+				case RUMPSP_ERROR:
 					kickwaiter(spc);
 					gotresp = spc->spc_hdr.rsp_reqno ==
 					    rw->rw_reqno;
@@ -352,9 +384,11 @@ waitresp(struct spclient *spc, struct respwait *rw)
 
 	pthread_cond_destroy(&rw->rw_cv);
 
-	if (rv == 0 && spc->spc_dying)
-		rv = ENOTCONN;
-	return rv;
+	if (rv)
+		return rv;
+	if (spc->spc_dying)
+		return ENOTCONN;
+	return rw->rw_error;
 }
 
 static int
