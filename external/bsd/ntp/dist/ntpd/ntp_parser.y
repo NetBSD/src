@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_parser.y,v 1.1.1.1 2009/12/13 16:56:11 kardel Exp $	*/
+/*	$NetBSD: ntp_parser.y,v 1.2 2010/11/29 00:39:41 christos Exp $	*/
 
 /* ntp_parser.y
  *
@@ -141,6 +141,7 @@
 %token	<Integer>	T_Maxclock
 %token	<Integer>	T_Maxdist
 %token	<Integer>	T_Maxpoll
+%token	<Integer>	T_Mdnstries
 %token	<Integer>	T_Minclock
 %token	<Integer>	T_Mindist
 %token	<Integer>	T_Minimum
@@ -421,6 +422,8 @@ other_mode_command
 			{ append_queue(cfgt.manycastserver, $2); }
 	|	T_Multicastclient address_list
 			{ append_queue(cfgt.multicastclient, $2); }
+	|	T_Mdnsretries T_Integer
+			{ cfgt.mdnstries = atoi($2); }
 	;
 
 

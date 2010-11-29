@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_config.c,v 1.1.1.1 2009/12/13 16:56:10 kardel Exp $	*/
+/*	$NetBSD: ntp_config.c,v 1.2 2010/11/29 00:39:41 christos Exp $	*/
 
 /* ntp_config.c
  *
@@ -272,6 +272,7 @@ static void config_tinker(struct config_tree *);
 static void config_system_opts(struct config_tree *);
 static void config_logconfig(struct config_tree *);
 static void config_phone(struct config_tree *);
+static void config_mdnstries(struct config_tree *);
 static void config_qos(struct config_tree *);
 static void config_setvar(struct config_tree *);
 static void config_ttl(struct config_tree *);
@@ -378,6 +379,7 @@ init_syntax_tree(
 	ptree->nic_rules = create_queue();
 	ptree->auth.crypto_cmd_list = create_queue();
 	ptree->auth.trusted_key_list = create_queue();
+	ptree->mdnstries = 5;
 }
 
 
@@ -896,6 +898,7 @@ dump_config_tree(
 					case T_Flag2:
 					case T_Flag3:
 					case T_Flag4:
+					case T_Mdnstries:
 						fprintf(df, " %s %d",
 							keyword(atrv->attr),
 							atrv->value.i);
@@ -2721,6 +2724,17 @@ free_config_phone(
 
 
 static void
+config_mdnstries(
+	struct config_tree *ptree
+	)
+{
+#ifdef HAVE_DNSREGISTRATION
+	extern int mdnstries;
+	mdnstries = ptree->mdnstries;
+#endif  /* HAVE_DNSREGISTRATION */
+}
+
+static void
 config_qos(
 	struct config_tree *ptree
 	)
@@ -3707,6 +3721,7 @@ config_ntpd(
 	config_unpeers(ptree);
 	config_fudge(ptree);
 	config_qos(ptree);
+	config_mdnstries(ptree);
 }
 #endif	/* !SIM */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ntpd.c,v 1.3 2010/09/22 14:37:08 christos Exp $	*/
+/*	$NetBSD: ntpd.c,v 1.4 2010/11/29 00:39:41 christos Exp $	*/
 
 /*
  * ntpd.c - main program for the fixed point NTP daemon
@@ -169,7 +169,7 @@ int nofork = 0;			/* Fork by default */
  * minute for up to 5 times. After all, we may be starting before mDNS.
  */
 int mdnsreg = 1;
-int mdnstries = 5;
+int mdnstries;	/* Set by config, default 5 */
 #endif  /* HAVE_DNSREGISTRATION */
 
 #ifdef HAVE_DROPROOT
