@@ -15,7 +15,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: e_jnf.c,v 1.10 2009/01/19 05:58:27 lukem Exp $");
+__RCSID("$NetBSD: e_jnf.c,v 1.11 2010/11/29 15:10:06 drochner Exp $");
 #endif
 
 #include "math.h"
@@ -157,7 +157,12 @@ __ieee754_jnf(int n, float x)
 			}
 	     	    }
 		}
-	    	b = (t*__ieee754_j0f(x)/b);
+		z = __ieee754_j0f(x);
+		w = __ieee754_j1f(x);
+		if (fabsf(z) >= fabsf(w))
+			b = (t*z/b);
+		else
+			b = (t*w/a);
 	    }
 	}
 	if(sgn==1) return -b; else return b;
