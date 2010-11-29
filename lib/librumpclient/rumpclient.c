@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpclient.c,v 1.5 2010/11/25 17:59:03 pooka Exp $	*/
+/*      $NetBSD: rumpclient.c,v 1.6 2010/11/29 16:08:03 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -70,15 +70,18 @@ syscall_req(struct spclient *spc, int sysnum,
 	rhdr.rsp_type = RUMPSP_SYSCALL;
 	rhdr.rsp_sysnum = sysnum;
 
-	putwait(spc, &rw, &rhdr);
-	rv = dosend(spc, &rhdr, sizeof(rhdr));
-	rv = dosend(spc, data, dlen);
-	if (rv) {
-		unputwait(spc, &rw);
-		return rv;
-	}
+	do {
+		putwait(spc, &rw, &rhdr);
+		rv = dosend(spc, &rhdr, sizeof(rhdr));
+		rv = dosend(spc, data, dlen);
+		if (rv) {
+			unputwait(spc, &rw);
+			return rv;
+		}
 
-	rv = waitresp(spc, &rw);
+		rv = waitresp(spc, &rw);
+	} while (rv == EAGAIN);
+
 	*resp = rw.rw_data;
 	return rv;
 }
@@ -198,9 +201,7 @@ handlereq(struct spclient *spc)
 		break;
 	}
 
-	free(spc->spc_buf);
-	spc->spc_off = 0;
-	spc->spc_buf = NULL;
+	spcfreebuf(spc);
 }
 
 int
