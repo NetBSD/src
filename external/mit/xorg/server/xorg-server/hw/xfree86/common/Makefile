@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2010/11/23 08:22:31 mrg Exp $
+#	$NetBSD: Makefile,v 1.15 2010/11/29 09:34:41 skrll Exp $
 
 .include <bsd.sys.mk> # for HOST_SH
 
@@ -87,6 +87,10 @@ CPPFLAGS+=	${X11FLAGS.EXTENSION} ${X11FLAGS.OS_DEFINES} \
 
 .if ${MACHINE_ARCH} == "i386"
 CPPFLAGS+=	-DPCCONS_SUPPORT -DPCVT_SUPPORT
+.endif
+
+.if ${MACHINE} == "cats"
+CPPFLAGS+=	-DPCVT_SUPPORT
 .endif
 
 OS_RELEASE!=	${HOST_SH} ${NETBSDSRCDIR}/sys/conf/osrelease.sh

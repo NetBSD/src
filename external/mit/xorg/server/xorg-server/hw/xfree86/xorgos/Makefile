@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.25 2010/11/23 08:22:35 mrg Exp $
+#	$NetBSD: Makefile,v 1.26 2010/11/29 09:34:41 skrll Exp $
 
 .include "../../../Makefile.serverlib"
 .include "../../../Makefile.servermod"
@@ -70,6 +70,9 @@ CPPFLAGS.${_FN}=	-DWSCONS_SUPPORT -DUSESTDRES -DHAVE_SYSV_IPC
 SRCS.bsd+=      ppc_video.c pm_noop.c agp_noop.c
 .for _FN in ${SRCS.bsd}
 CPPFLAGS.${_FN}=        -DWSCONS_SUPPORT -DUSESTDRES -DHAVE_SYSV_IPC
+.if ${MACHINE} == "cats"
+CPPFLAGS.${_FN}+=	-DPCVT_SUPPORT
+.endif
 .endfor
 .endif
 
