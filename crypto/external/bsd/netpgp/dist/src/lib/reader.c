@@ -54,7 +54,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: reader.c,v 1.46 2010/11/15 08:50:32 agc Exp $");
+__RCSID("$NetBSD: reader.c,v 1.47 2010/11/29 04:20:12 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -2200,10 +2200,11 @@ pgp_get_seckey_cb(const pgp_packet_t *pkt, pgp_cbdata_t *cbinfo)
 {
 	const pgp_contents_t	*content = &pkt->u;
 	const pgp_seckey_t	*secret;
-	const pgp_key_t	*pubkey;
-	const pgp_key_t	*keypair;
+	const pgp_key_t		*pubkey;
+	const pgp_key_t		*keypair;
 	unsigned		 from;
 	pgp_io_t		*io;
+	int			 i;
 
 	io = cbinfo->io;
 	if (pgp_get_debug_level(__FILE__)) {
@@ -2230,16 +2231,24 @@ pgp_get_seckey_cb(const pgp_packet_t *pkt, pgp_cbdata_t *cbinfo)
 		if (pubkey == NULL) {
 			pubkey = keypair;
 		}
-		do {
+		secret = NULL;
+		cbinfo->gotpass = 0;
+		for (i = 0 ; cbinfo->numtries == -1 || i < cbinfo->numtries ; i++) {
 			/* print out the user id */
 			pgp_print_keydata(io, cbinfo->cryptinfo.pubring, pubkey,
 				"signature ", &pubkey->key.pubkey, 0);
 			/* now decrypt key */
 			secret = pgp_decrypt_seckey(keypair, cbinfo->passfp);
-			if (secret == NULL) {
-				(void) fprintf(io->errs, "Bad passphrase\n");
+			if (secret != NULL) {
+				break;
 			}
-		} while (secret == NULL);
+			(void) fprintf(io->errs, "Bad passphrase\n");
+		}
+		if (secret == NULL) {
+			(void) fprintf(io->errs, "Exhausted passphrase attempts\n");
+			return (pgp_cb_ret_t)PGP_RELEASE_MEMORY;
+		}
+		cbinfo->gotpass = 1;
 		*content->get_seckey.seckey = secret;
 		break;
 

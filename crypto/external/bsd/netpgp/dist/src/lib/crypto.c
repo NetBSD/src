@@ -54,7 +54,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: crypto.c,v 1.33 2010/11/15 08:50:32 agc Exp $");
+__RCSID("$NetBSD: crypto.c,v 1.34 2010/11/29 04:20:12 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -447,13 +447,14 @@ pgp_decrypt_file(pgp_io_t *io,
 			const unsigned allow_overwrite,
 			const unsigned sshkeys,
 			void *passfp,
+			int numtries,
 			pgp_cbfunc_t *getpassfunc)
 {
 	pgp_stream_t	*parse = NULL;
-	const int		 printerrors = 1;
-	char			*filename = NULL;
-	int			 fd_in;
-	int			 fd_out;
+	const int	 printerrors = 1;
+	char		*filename = NULL;
+	int		 fd_in;
+	int		 fd_out;
 
 	/* setup for reading from given input file */
 	fd_in = pgp_setup_file_read(io, &parse, infile,
@@ -510,6 +511,7 @@ pgp_decrypt_file(pgp_io_t *io,
 	parse->cbinfo.cryptinfo.getpassphrase = getpassfunc;
 	parse->cbinfo.cryptinfo.pubring = pubring;
 	parse->cbinfo.sshseckey = (sshkeys) ? &secring->keys[0].key.seckey : NULL;
+	parse->cbinfo.numtries = numtries;
 
 	/* Set up armour/passphrase options */
 	if (use_armour) {
@@ -522,6 +524,11 @@ pgp_decrypt_file(pgp_io_t *io,
 	/* Unsetup */
 	if (use_armour) {
 		pgp_reader_pop_dearmour(parse);
+	}
+
+	/* if we didn't get the passphrase, unlink output file */
+	if (!parse->cbinfo.gotpass) {
+		(void) unlink((filename) ? filename : outfile);
 	}
 
 	if (filename) {
@@ -544,6 +551,7 @@ pgp_decrypt_buf(pgp_io_t *io,
 			const unsigned use_armour,
 			const unsigned sshkeys,
 			void *passfp,
+			int numtries,
 			pgp_cbfunc_t *getpassfunc)
 {
 	pgp_stream_t	*parse = NULL;
@@ -575,6 +583,7 @@ pgp_decrypt_buf(pgp_io_t *io,
 	parse->cbinfo.passfp = passfp;
 	parse->cbinfo.cryptinfo.getpassphrase = getpassfunc;
 	parse->cbinfo.sshseckey = (sshkeys) ? &secring->keys[0].key.seckey : NULL;
+	parse->cbinfo.numtries = numtries;
 
 	/* Set up armour/passphrase options */
 	if (use_armour) {
@@ -589,6 +598,7 @@ pgp_decrypt_buf(pgp_io_t *io,
 		pgp_reader_pop_dearmour(parse);
 	}
 
+
 	/* tidy up */
 	pgp_teardown_memory_read(parse, inmem);
 	pgp_memory_release(inmem);
@@ -597,6 +607,6 @@ pgp_decrypt_buf(pgp_io_t *io,
 	pgp_writer_close(parse->cbinfo.output);
 	pgp_output_delete(parse->cbinfo.output);
 
-	return outmem;
+	/* if we didn't get the passphrase, return NULL */
+	return (parse->cbinfo.gotpass) ? outmem : NULL;
 }
-
