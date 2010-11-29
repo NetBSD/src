@@ -1,4 +1,4 @@
-/*	$NetBSD: iic.h,v 1.2 2009/03/14 14:45:51 dsl Exp $	*/
+/*	$NetBSD: iic.h,v 1.3 2010/11/29 16:16:27 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe.
@@ -58,9 +58,9 @@ struct iicbus_attach_args {
 
 /* Prototypes for assembly functions */
 
-void iic_set_state(int data, int clock);
-void iic_set_state_and_ack(int data, int clock);
-void iic_delay(int delay);
+void iic_set_state(int, int);
+void iic_set_state_and_ack(int, int);
+void iic_delay(int);
 
 /* Prototype for kernel interface to IIC bus */
 
