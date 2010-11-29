@@ -1,4 +1,4 @@
-# $NetBSD: t_event.sh,v 1.2 2010/11/11 22:18:53 pgoyette Exp $
+# $NetBSD: t_event.sh,v 1.3 2010/11/29 18:21:15 pgoyette Exp $
 #
 # Copyright (c) 2009 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -35,7 +35,6 @@
 atf_test_case kqueue
 kqueue_head() {
 	atf_set "descr" "Test libevent with kqueue backend"
-	atf_set "timeout" "90"
 }
 kqueue_body() {
 	EVENT_NOPOLL=1 EVENT_NOSELECT=1 \
@@ -45,7 +44,6 @@ kqueue_body() {
 atf_test_case poll
 poll_head() {
 	atf_set "descr" "Test libevent with poll backend"
-	atf_set "timeout" "90"
 }
 poll_body() {
 	EVENT_NOKQUEUE=1 EVENT_NOSELECT=1 \
@@ -55,7 +53,6 @@ poll_body() {
 atf_test_case select
 select_head() {
 	atf_set "descr" "Test libevent with select backend"
-	atf_set "timeout" "90"
 }
 select_body() {
 	EVENT_NOKQUEUE=1 EVENT_NOPOLL=1 \
