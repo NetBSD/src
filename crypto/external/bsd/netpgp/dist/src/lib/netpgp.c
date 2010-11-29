@@ -34,7 +34,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: netpgp.c,v 1.84 2010/11/15 08:27:40 agc Exp $");
+__RCSID("$NetBSD: netpgp.c,v 1.85 2010/11/29 04:20:12 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -707,10 +707,11 @@ formatbignum(char *buffer, BIGNUM *bn)
 }
 
 #define MAX_PASSPHRASE_ATTEMPTS	3
+#define INFINITE_ATTEMPTS	-1
 
 /* get the passphrase from the user */
 static int
-find_passphrase(FILE *passfp, const char *id, char *passphrase, size_t size)
+find_passphrase(FILE *passfp, const char *id, char *passphrase, size_t size, int attempts)
 {
 	char	 prompt[BUFSIZ];
 	char	 buf[128];
@@ -719,12 +720,12 @@ find_passphrase(FILE *passfp, const char *id, char *passphrase, size_t size)
 	int	 i;
 
 	if (passfp) {
-		if (fgets(passphrase, size, passfp) == NULL) {
+		if (fgets(passphrase, (int)size, passfp) == NULL) {
 			return 0;
 		}
 		return strlen(passphrase);
 	}
-	for (i = 0 ; i < MAX_PASSPHRASE_ATTEMPTS ; i++) {
+	for (i = 0 ; i < attempts ; i++) {
 		(void) snprintf(prompt, sizeof(prompt), "Enter passphrase for %.16s: ", id);
 		if ((cp = getpass(prompt)) == NULL) {
 			break;
@@ -1151,6 +1152,8 @@ netpgp_generate_key(netpgp_t *netpgp, char *id, int numbits)
 	char			 dir[MAXPATHLEN];
 	char			*cp;
 	char			*ringfile;
+	char			*numtries;
+	int             	 attempts;
 	int             	 passc;
 	int             	 fd;
 
@@ -1199,8 +1202,14 @@ netpgp_generate_key(netpgp_t *netpgp, char *id, int numbits)
 		return 0;
 	}
 	/* get the passphrase */
-	passc = find_passphrase(netpgp->passfp, &cp[ID_OFFSET], passphrase, sizeof(passphrase));
-	if (!pgp_write_xfer_seckey(create, key, (uint8_t *)passphrase, passc, noarmor)) {
+	if ((numtries = netpgp_getvar(netpgp, "numtries")) == NULL ||
+	    (attempts = atoi(numtries)) <= 0) {
+		attempts = MAX_PASSPHRASE_ATTEMPTS;
+	} else if (strcmp(numtries, "unlimited") == 0) {
+		attempts = INFINITE_ATTEMPTS;
+	}
+	passc = find_passphrase(netpgp->passfp, &cp[ID_OFFSET], passphrase, sizeof(passphrase), attempts);
+	if (!pgp_write_xfer_seckey(create, key, (uint8_t *)passphrase, (const unsigned)passc, noarmor)) {
 		(void) fprintf(io->errs, "Cannot write seckey\n");
 		return 0;
 	}
@@ -1256,6 +1265,8 @@ netpgp_decrypt_file(netpgp_t *netpgp, const char *f, char *out, int armored)
 	pgp_io_t	*io;
 	unsigned	 realarmor;
 	unsigned	 sshkeys;
+	char		*numtries;
+	int            	 attempts;
 
 	__PGP_USED(armored);
 	io = netpgp->io;
@@ -1266,10 +1277,16 @@ netpgp_decrypt_file(netpgp_t *netpgp, const char *f, char *out, int armored)
 	}
 	realarmor = isarmoured(io, f, NULL, ARMOR_HEAD);
 	sshkeys = (unsigned)(netpgp_getvar(netpgp, "ssh keys") != NULL);
+	if ((numtries = netpgp_getvar(netpgp, "numtries")) == NULL ||
+	    (attempts = atoi(numtries)) <= 0) {
+		attempts = MAX_PASSPHRASE_ATTEMPTS;
+	} else if (strcmp(numtries, "unlimited") == 0) {
+		attempts = INFINITE_ATTEMPTS;
+	}
 	return pgp_decrypt_file(netpgp->io, f, out, netpgp->secring,
 				netpgp->pubring,
 				realarmor, overwrite, sshkeys,
-				netpgp->passfp, get_passphrase_cb);
+				netpgp->passfp, attempts, get_passphrase_cb);
 }
 
 /* sign a file */
@@ -1282,13 +1299,16 @@ netpgp_sign_file(netpgp_t *netpgp,
 		int cleartext,
 		int detached)
 {
-	const pgp_key_t	*keypair;
-	const pgp_key_t	*pubkey;
-	pgp_seckey_t		*seckey;
+	const pgp_key_t		*keypair;
+	const pgp_key_t		*pubkey;
 	const unsigned		 overwrite = 1;
-	pgp_io_t		*io;
+	pgp_seckey_t		*seckey;
 	const char		*hashalg;
+	pgp_io_t		*io;
+	char			*numtries;
+	int			 attempts;
 	int			 ret;
+	int			 i;
 
 	io = netpgp->io;
 	if (f == NULL) {
@@ -1301,7 +1321,13 @@ netpgp_sign_file(netpgp_t *netpgp,
 		return 0;
 	}
 	ret = 1;
-	do {
+	if ((numtries = netpgp_getvar(netpgp, "numtries")) == NULL ||
+	    (attempts = atoi(numtries)) <= 0) {
+		attempts = MAX_PASSPHRASE_ATTEMPTS;
+	} else if (strcmp(numtries, "unlimited") == 0) {
+		attempts = INFINITE_ATTEMPTS;
+	}
+	for (i = 0, seckey = NULL ; !seckey && (i < attempts || attempts == INFINITE_ATTEMPTS) ; i++) {
 		if (netpgp->passfp == NULL) {
 			/* print out the user id */
 			pubkey = pgp_getkeybyname(io, netpgp->pubring, userid);
@@ -1327,7 +1353,11 @@ netpgp_sign_file(netpgp_t *netpgp,
 			secring = netpgp->secring;
 			seckey = &secring->keys[0].key.seckey;
 		}
-	} while (seckey == NULL);
+	}
+	if (seckey == NULL) {
+		(void) fprintf(io->errs, "Bad passphrase\n");
+		return 0;
+	}
 	/* sign file */
 	hashalg = netpgp_getvar(netpgp, "hash");
 	if (seckey->pubkey.alg == PGP_PKA_DSA) {
@@ -1399,13 +1429,16 @@ netpgp_sign_memory(netpgp_t *netpgp,
 		const unsigned armored,
 		const unsigned cleartext)
 {
-	const pgp_key_t	*keypair;
-	const pgp_key_t	*pubkey;
+	const pgp_key_t		*keypair;
+	const pgp_key_t		*pubkey;
 	pgp_seckey_t		*seckey;
 	pgp_memory_t		*signedmem;
-	pgp_io_t		*io;
 	const char		*hashalg;
+	pgp_io_t		*io;
+	char 			*numtries;
+	int			 attempts;
 	int			 ret;
+	int			 i;
 
 	io = netpgp->io;
 	if (mem == NULL) {
@@ -1417,7 +1450,13 @@ netpgp_sign_memory(netpgp_t *netpgp,
 		return 0;
 	}
 	ret = 1;
-	do {
+	if ((numtries = netpgp_getvar(netpgp, "numtries")) == NULL ||
+	    (attempts = atoi(numtries)) <= 0) {
+		attempts = MAX_PASSPHRASE_ATTEMPTS;
+	} else if (strcmp(numtries, "unlimited") == 0) {
+		attempts = INFINITE_ATTEMPTS;
+	}
+	for (i = 0, seckey = NULL ; !seckey && (i < attempts || attempts == INFINITE_ATTEMPTS) ; i++) {
 		if (netpgp->passfp == NULL) {
 			/* print out the user id */
 			pubkey = pgp_getkeybyname(io, netpgp->pubring, userid);
@@ -1436,7 +1475,11 @@ netpgp_sign_memory(netpgp_t *netpgp,
 		if (seckey == NULL) {
 			(void) fprintf(io->errs, "Bad passphrase\n");
 		}
-	} while (seckey == NULL);
+	}
+	if (seckey == NULL) {
+		(void) fprintf(io->errs, "Bad passphrase\n");
+		return 0;
+	}
 	/* sign file */
 	(void) memset(out, 0x0, outsize);
 	hashalg = netpgp_getvar(netpgp, "hash");
@@ -1566,6 +1609,8 @@ netpgp_decrypt_memory(netpgp_t *netpgp, const void *input, const size_t insize,
 	unsigned	 realarmour;
 	unsigned	 sshkeys;
 	size_t		 m;
+	char		*numtries;
+	int            	 attempts;
 
 	__PGP_USED(armored);
 	io = netpgp->io;
@@ -1576,11 +1621,21 @@ netpgp_decrypt_memory(netpgp_t *netpgp, const void *input, const size_t insize,
 	}
 	realarmour = isarmoured(io, NULL, input, ARMOR_HEAD);
 	sshkeys = (unsigned)(netpgp_getvar(netpgp, "ssh keys") != NULL);
+	if ((numtries = netpgp_getvar(netpgp, "numtries")) == NULL ||
+	    (attempts = atoi(numtries)) <= 0) {
+		attempts = MAX_PASSPHRASE_ATTEMPTS;
+	} else if (strcmp(numtries, "unlimited") == 0) {
+		attempts = INFINITE_ATTEMPTS;
+	}
 	mem = pgp_decrypt_buf(netpgp->io, input, insize, netpgp->secring,
 				netpgp->pubring,
 				realarmour, sshkeys,
 				netpgp->passfp,
+				attempts,
 				get_passphrase_cb);
+	if (mem == NULL) {
+		return -1;
+	}
 	m = MIN(pgp_mem_len(mem), outsize);
 	(void) memcpy(out, pgp_mem_data(mem), m);
 	pgp_memory_free(mem);

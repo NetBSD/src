@@ -1,4 +1,4 @@
-/* $NetBSD: netpgp.c,v 1.16 2010/11/04 15:39:08 agc Exp $ */
+/* $NetBSD: netpgp.c,v 1.17 2010/11/29 04:20:12 agc Exp $ */
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -65,6 +65,7 @@ static const char *usage =
 	"\t[--coredumps] AND/OR\n"
 	"\t[--homedir=<homedir>] AND/OR\n"
 	"\t[--keyring=<keyring>] AND/OR\n"
+	"\t[--numtries=<attempts>] AND/OR\n"
 	"\t[--userid=<userid>] AND/OR\n"
 	"\t[--maxmemalloc=<number of bytes>] AND/OR\n"
 	"\t[--verbose]\n";
@@ -100,6 +101,7 @@ enum optdefs {
 	DURATION,
 	BIRTHTIME,
 	CIPHER,
+	NUMTRIES,
 
 	/* debug */
 	OPS_DEBUG
@@ -158,6 +160,9 @@ static struct option options[] = {
 	{"duration",	required_argument, 	NULL,	DURATION},
 	{"expiry",	required_argument, 	NULL,	DURATION},
 	{"cipher",	required_argument, 	NULL,	CIPHER},
+	{"num-tries",	required_argument, 	NULL,	NUMTRIES},
+	{"numtries",	required_argument, 	NULL,	NUMTRIES},
+	{"attempts",	required_argument, 	NULL,	NUMTRIES},
 	{ NULL,		0,			NULL,	0},
 };
 
@@ -463,6 +468,9 @@ setoption(netpgp_t *netpgp, prog_t *p, int val, char *arg, int *homeset)
 		break;
 	case CIPHER:
 		netpgp_setvar(netpgp, "cipher", arg);
+		break;
+	case NUMTRIES:
+		netpgp_setvar(netpgp, "numtries", arg);
 		break;
 	case OPS_DEBUG:
 		netpgp_set_debug(arg);
