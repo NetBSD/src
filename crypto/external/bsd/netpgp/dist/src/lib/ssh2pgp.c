@@ -40,9 +40,9 @@
 
 #include <arpa/inet.h>
 
+#include <ctype.h>
 #include <inttypes.h>
 #include <stdio.h>
-
 #include <stdlib.h>
 #include <string.h>
 
@@ -61,7 +61,6 @@
 #include <openssl/pem.h>
 
 #include "bufgap.h"
-#include "fastctype.h"
 
 #include "packet-parse.h"
 #include "netpgpdefs.h"

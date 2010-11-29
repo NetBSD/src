@@ -57,13 +57,14 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: misc.c,v 1.39 2010/11/11 00:58:04 agc Exp $");
+__RCSID("$NetBSD: misc.c,v 1.40 2010/11/29 06:21:40 agc Exp $");
 #endif
 
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/mman.h>
 
+#include <ctype.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -81,7 +82,6 @@ __RCSID("$NetBSD: misc.c,v 1.39 2010/11/11 00:58:04 agc Exp $");
 #include "packet.h"
 #include "crypto.h"
 #include "create.h"
-#include "fastctype.h"
 #include "packet-parse.h"
 #include "packet-show.h"
 #include "signature.h"
@@ -1347,7 +1347,7 @@ netpgp_strcasecmp(const char *s1, const char *s2)
 {
 	int	n;
 
-	for (n = 0 ; *s1 && *s2 && (n = tolower(*s1) - tolower(*s2)) == 0 ; s1++, s2++) {
+	for (n = 0 ; *s1 && *s2 && (n = tolower((uint8_t)*s1) - tolower((uint8_t)*s2)) == 0 ; s1++, s2++) {
 	}
 	return n;
 }

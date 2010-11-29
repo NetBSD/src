@@ -1,4 +1,4 @@
-## $NetBSD: Makefile.am,v 1.9 2010/11/06 03:42:59 agc Exp $
+## $NetBSD: Makefile.am,v 1.10 2010/11/29 06:21:40 agc Exp $
 
 AM_CFLAGS		= $(WARNCFLAGS)
 
@@ -11,7 +11,6 @@ libnetpgp_la_SOURCES	= \
 	compress.c \
 	create.c \
 	crypto.c \
-	fastctype.c \
 	keyring.c \
 	misc.c \
 	netpgp.c \
