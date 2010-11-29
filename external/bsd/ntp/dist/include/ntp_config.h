@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_config.h,v 1.1.1.1 2009/12/13 16:54:50 kardel Exp $	*/
+/*	$NetBSD: ntp_config.h,v 1.2 2010/11/29 00:39:40 christos Exp $	*/
 
 #ifndef NTP_CONFIG_H
 #define NTP_CONFIG_H
@@ -198,6 +198,8 @@ struct config_tree {
     queue *nic_rules;
 
     struct sim_node *sim_details;
+
+    int	mdnstries;
 };
 
 
