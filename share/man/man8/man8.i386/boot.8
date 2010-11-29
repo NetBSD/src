@@ -1,4 +1,4 @@
-.\"	$NetBSD: boot.8,v 1.54 2010/11/07 12:01:07 wiz Exp $
+.\"	$NetBSD: boot.8,v 1.55 2010/11/29 12:44:17 jym Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -465,7 +465,7 @@ is the remote mount point for the root file system.
 .It Ic pciback.hide Ns = Ns Ar pcidevs
 Pass a list of PCI IDs for use with the PCI backend driver.
 .Ar pcidevs
-is formed of multiple IDs (in bus:device:function notation),
+is formed of multiple IDs (in bus:device.function notation),
 each ID being surrounded with brackets.
 PCI domain IDs are currently ignored.
 You can obtains PCI IDs through
