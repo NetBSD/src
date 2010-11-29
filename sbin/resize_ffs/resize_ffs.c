@@ -1,4 +1,4 @@
-/*	$NetBSD: resize_ffs.c,v 1.13 2010/10/30 21:16:07 haad Exp $	*/
+/*	$NetBSD: resize_ffs.c,v 1.14 2010/11/29 19:54:10 riz Exp $	*/
 /* From sources sent on February 17, 2003 */
 /*-
  * As its sole author, I explicitly place this code in the public
@@ -457,13 +457,11 @@ initcg(int cgn)
 	cg->cg_magic = CG_MAGIC;
 	cg->cg_cgx = cgn;
 	cg->cg_old_ncyl = newsb->fs_old_cpg;
-	/* fsck whines if the cg->cg_old_ncyl value in the last cg is fs_old_cpg
-	 * instead of zero, when fs_old_cpg is the correct value. */
-	/* XXX fix once fsck is fixed */
-	if ((cgn == newsb->fs_ncg - 1) /* && (newsb->fs_old_ncyl % newsb->fs_old_cpg) */ ) {
+	/* Update the cg_old_ncyl value for the last cylinder. */
+	if ((cgn == newsb->fs_ncg - 1) && (newsb->fs_old_ncyl % newsb->fs_old_cpg) ) {
 		cg->cg_old_ncyl = newsb->fs_old_ncyl % newsb->fs_old_cpg;
 	}
-	cg->cg_niblk = newsb->fs_ipg;
+	cg->cg_old_niblk = newsb->fs_ipg;
 	cg->cg_ndblk = dmax;
 	/* Set up the bitmap pointers.  We have to be careful to lay out the
 	 * cg _exactly_ the way mkfs and fsck do it, since fsck compares the
@@ -1618,14 +1616,10 @@ shrink(void)
 	 * keeping track of exactly which ones require it. */
 	for (i = 0; i < newsb->fs_ncg; i++)
 		cgflags[i] |= CGF_DIRTY | CGF_BLKMAPS | CGF_INOMAPS;
-	/* Update the cg_old_ncyl value for the last cylinder.  The condition is
-	 * commented out because fsck whines if not - see the similar
-	 * condition in grow() for more. */
-	/* XXX fix once fsck is fixed */
-	/* if (newsb->fs_old_ncyl % newsb->fs_old_cpg) XXX */
-/*XXXJTK*/
-	cgs[newsb->fs_ncg - 1]->cg_old_ncyl =
-	    newsb->fs_old_ncyl % newsb->fs_old_cpg;
+	/* Update the cg_old_ncyl value for the last cylinder. */
+	if (newsb->fs_old_ncyl % newsb->fs_old_cpg)
+		cgs[newsb->fs_ncg - 1]->cg_old_ncyl =
+	    	    newsb->fs_old_ncyl % newsb->fs_old_cpg;
 	/* Make fs_dsize match the new reality. */
 	recompute_fs_dsize();
 }
@@ -1917,7 +1911,7 @@ main(int argc, char **argv)
 		if (where == SBLOCK_UFS2)
 			continue;
 		if (oldsb->fs_old_flags & FS_FLAGS_UPDATED)
-			err(EXIT_FAILURE, "Cannot resize ffsv2 format suberblock!");
+			err(EXIT_FAILURE, "Cannot resize ffsv2 format superblock!");
 	}
 	if (where == (off_t)-1)
 		errx(EXIT_FAILURE, "Bad magic number");
