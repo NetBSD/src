@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpuser_sp.c,v 1.19 2010/11/27 18:30:51 pooka Exp $	*/
+/*      $NetBSD: rumpuser_sp.c,v 1.20 2010/11/29 11:40:54 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: rumpuser_sp.c,v 1.19 2010/11/27 18:30:51 pooka Exp $");
+__RCSID("$NetBSD: rumpuser_sp.c,v 1.20 2010/11/29 11:40:54 pooka Exp $");
 
 #include <sys/types.h>
 #include <sys/atomic.h>
@@ -65,7 +65,17 @@ __RCSID("$NetBSD: rumpuser_sp.c,v 1.19 2010/11/27 18:30:51 pooka Exp $");
 
 #include "sp_common.c"
 
+#ifndef MAXCLI
 #define MAXCLI 256
+#endif
+#ifndef MAXWORKER
+#define MAXWORKER 128
+#endif
+#ifndef IDLEWORKER
+#define IDLEWORKER 16
+#endif
+int rumpsp_maxworker = MAXWORKER;
+int rumpsp_idleworker = IDLEWORKER;
 
 static struct pollfd pfdlist[MAXCLI];
 static struct spclient spclist[MAXCLI];
@@ -439,16 +449,44 @@ struct sysbouncearg {
 	struct spclient *sba_spc;
 	struct rsp_hdr sba_hdr;
 	uint8_t *sba_data;
+
+	TAILQ_ENTRY(sysbouncearg) sba_entries;
 };
+static pthread_mutex_t sbamtx;
+static pthread_cond_t sbacv;
+static int nworker, idleworker;
+static TAILQ_HEAD(, sysbouncearg) syslist = TAILQ_HEAD_INITIALIZER(syslist);
+
+/*ARGSUSED*/
 static void *
 serv_syscallbouncer(void *arg)
 {
-	struct sysbouncearg *barg = arg;
+	struct sysbouncearg *sba;
 
-	serv_handlesyscall(barg->sba_spc, &barg->sba_hdr, barg->sba_data);
-	spcrelease(barg->sba_spc);
-	free(barg->sba_data);
-	free(barg);
+	for (;;) {
+		pthread_mutex_lock(&sbamtx);
+		if (idleworker >= rumpsp_idleworker) {
+			nworker--;
+			pthread_mutex_unlock(&sbamtx);
+			break;
+		}
+		idleworker++;
+		while (TAILQ_EMPTY(&syslist)) {
+			pthread_cond_wait(&sbacv, &sbamtx);
+		}
+
+		sba = TAILQ_FIRST(&syslist);
+		TAILQ_REMOVE(&syslist, sba, sba_entries);
+		idleworker--;
+		pthread_mutex_unlock(&sbamtx);
+
+		serv_handlesyscall(sba->sba_spc,
+		    &sba->sba_hdr, sba->sba_data);
+		spcrelease(sba->sba_spc);
+		free(sba->sba_data);
+		free(sba);
+	}
+
 	return NULL;
 }
 
@@ -567,7 +605,6 @@ handlereq(struct spclient *spc)
 {
 	struct sysbouncearg *sba;
 	pthread_t pt;
-	int rv;
 
 	/* XXX: check that it's a syscall */
 
@@ -585,11 +622,23 @@ handlereq(struct spclient *spc)
 	spc->spc_off = 0;
 
 	spcref(spc);
-	if ((rv = pthread_create(&pt, &pattr_detached,
-	    serv_syscallbouncer, sba)) != 0) {
-		/* panic */
-		abort();
+
+	pthread_mutex_lock(&sbamtx);
+	TAILQ_INSERT_TAIL(&syslist, sba, sba_entries);
+	if (idleworker > 0) {
+		/* do we have a daemon's tool (i.e. idle threads)? */
+		pthread_cond_signal(&sbacv);
+	} else if (nworker < rumpsp_maxworker) {
+		/*
+		 * Else, need to create one
+		 * (if we can, otherwise just expect another
+		 * worker to pick up the syscall)
+		 */
+		if (pthread_create(&pt, &pattr_detached,
+		    serv_syscallbouncer, NULL) == 0)
+			nworker++;
 	}
+	pthread_mutex_unlock(&sbamtx);
 }
 
 static void *
@@ -619,6 +668,9 @@ spserver(void *arg)
 	pthread_attr_setdetachstate(&pattr_detached, PTHREAD_CREATE_DETACHED);
 	/* XXX: doesn't stacksize currently work on NetBSD */
 	pthread_attr_setstacksize(&pattr_detached, 32*1024);
+
+	pthread_mutex_init(&sbamtx, NULL);
+	pthread_cond_init(&sbacv, NULL);
 
 	DPRINTF(("rump_sp: server mainloop\n"));
 
