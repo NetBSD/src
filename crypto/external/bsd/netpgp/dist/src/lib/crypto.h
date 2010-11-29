@@ -64,7 +64,7 @@
 
 /** pgp_hash_t */
 struct pgp_hash_t {
-	pgp_hash_alg_t	 alg;		/* algorithm */
+	pgp_hash_alg_t		 alg;		/* algorithm */
 	size_t			 size;		/* size */
 	const char		*name;		/* what it's known as */
 	int			(*init)(pgp_hash_t *);
@@ -185,6 +185,7 @@ unsigned   pgp_decrypt_file(pgp_io_t *,
 			const unsigned,
 			const unsigned,
 			void *,
+			int,
 			pgp_cbfunc_t *);
 
 pgp_memory_t *
@@ -200,6 +201,7 @@ pgp_decrypt_buf(pgp_io_t *,
 			const unsigned,
 			const unsigned,
 			void *,
+			int,
 			pgp_cbfunc_t *);
 
 /* Keys */
@@ -217,15 +219,15 @@ int openssl_read_pem_seckey(const char *, pgp_key_t *, const char *, int);
 /** pgp_reader_t */
 struct pgp_reader_t {
 	pgp_reader_func_t	*reader; /* reader func to get parse data */
-	pgp_reader_destroyer_t *destroyer;
+	pgp_reader_destroyer_t	*destroyer;
 	void			*arg;	/* args to pass to reader function */
 	unsigned		 accumulate:1;	/* set to gather packet data */
-	uint8_t		*accumulated;	/* the accumulated data */
+	uint8_t			*accumulated;	/* the accumulated data */
 	unsigned		 asize;	/* size of the buffer */
 	unsigned		 alength;/* used buffer */
 	unsigned		 position;	/* reader-specific offset */
 	pgp_reader_t		*next;
-	pgp_stream_t	*parent;/* parent parse_info structure */
+	pgp_stream_t		*parent;/* parent parse_info structure */
 };
 
 
@@ -235,7 +237,7 @@ struct pgp_reader_t {
 struct pgp_cryptinfo_t {
 	char			*passphrase;
 	pgp_keyring_t		*secring;
-	const pgp_key_t	*keydata;
+	const pgp_key_t		*keydata;
 	pgp_cbfunc_t		*getpassphrase;
 	pgp_keyring_t		*pubring;
 };
@@ -246,12 +248,14 @@ struct pgp_cbdata_t {
 	void			*arg;	/* args to pass to callback func */
 	pgp_error_t		**errors; /* address of error stack */
 	pgp_cbdata_t		*next;
-	pgp_output_t		*output;/* used if writing out parsed info */
+	pgp_output_t		*output;	/* when writing out parsed info */
 	pgp_io_t		*io;		/* error/output messages */
 	void			*passfp;	/* fp for passphrase input */
-	pgp_cryptinfo_t	 cryptinfo;	/* used when decrypting */
-	pgp_printstate_t	 printstate;	/* used to keep state when printing */
+	pgp_cryptinfo_t		 cryptinfo;	/* used when decrypting */
+	pgp_printstate_t	 printstate;	/* used to keep printing state */
 	pgp_seckey_t		*sshseckey;	/* secret key for ssh */
+	int			 numtries;	/* # of passphrase attempts */
+	int			 gotpass;	/* when passphrase entered */
 };
 
 /** pgp_hashtype_t */
@@ -294,9 +298,9 @@ struct pgp_stream_t {
 	pgp_error_t		*errors;
 	void			*io;		/* io streams */
 	pgp_crypt_t		 decrypt;
-	pgp_cryptinfo_t	 cryptinfo;
+	pgp_cryptinfo_t		 cryptinfo;
 	size_t			 hashc;
-	pgp_hashtype_t        *hashes;
+	pgp_hashtype_t		*hashes;
 	unsigned		 reading_v3_secret:1;
 	unsigned		 reading_mpi_len:1;
 	unsigned		 exact_read:1;
