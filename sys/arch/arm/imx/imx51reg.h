@@ -1,4 +1,4 @@
-/* $NetBSD: imx51reg.h,v 1.1 2010/11/13 07:11:03 bsh Exp $ */
+/* $NetBSD: imx51reg.h,v 1.2 2010/11/30 13:05:27 bsh Exp $ */
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -89,12 +89,72 @@
 
 #define	USBOH3_BASE	0x73f80000
 #define	USBOH3_PL301_BASE	0x73fc4000
-#define	USB_OTG_BASE	0x43F88000
-#define	USB_EHCI1_BASE	0x43F88200
-#define	USB_EHCI2_BASE	0x43F88400
-#define	USB_EHCI_SIZE	0x0200
-#define	USB_CONTROL	0x43F88600
+#define	USBOH3_EHCI_SIZE	0x200
+#define	USBOH3_OTG	0x000
+#define	USBOH3_EHCI(n)	(USBOH3_EHCI_SIZE*(n))	/* n=1,2,3 */
 
+/* USB_CTRL register */
+#define	USBOH3_USBCTRL   	0x800
+#define	 USBCTRL_OWIR	__BIT(31)	/* OTG Wakeup interrupt request */
+#define	 USBCTRL_OSIC_SHIFT	29
+#define	 USBCTRL_OSIC	__BITS(29,30)	/* OTG Serial interface configuration */
+#define	 USBCTRL_OUIE	__BIT(28)	/* OTG Wake-up interrupt enable */
+#define	 USBCTRL_OBPAL	__BITS(25,26)	/* OTG Bypass value */
+#define	 USBCTRL_OPM	__BIT(24)	/* OTG Power Mask */
+#define	 USBCTRL_ICVOL	__BIT(23)	/* Host1 IC_USB voltage status */
+#define	 USBCTRL_ICTPIE	__BIT(19)	/* IC USB TP interrupt enable */
+#define	 USBCTRL_UBPCKE	__BIT(18)	/* Bypass clock enable */
+#define	 USBCTRL_H1TCKOEN __BIT(17)	/* Host1 ULPO PHY clock enable */
+#define	 USBCTRL_ICTPC	__BIT(16)	/* Clear IC TP interrupt flag */
+#define	 USBCTRL_H1WIR	__BIT(15)	/* Host1 wakeup interrupt request */
+#define	 USBCTRL_H1STC_SHIFT	13
+#define	 USBCTRL_H1SIC	__BITS(13,14)	/* Host1 serial interface config */
+#define	 USBCTRL_H1UIE	__BIT(12)	/* Host1 ILPI interrupt enable */
+#define	 USBCTRL_H1WIE	__BIT(11)	/* Host1 wakeup interrupt enable */
+#define	 USBCTRL_H1BPVAL __BITS(9,10)	/* Host1 bypass value */
+#define	 USBCTRL_H1PM	__BIT(8)	/* Host1 power mask */
+#define	 USBCTRL_OHSTLL	__BIT(7)	/* OTG ULPI TLL enable */
+#define	 USBCTRL_H1HSTLL __BIT(6)	/* Host1 ULPI TLL enable */
+#define	 USBCTRL_H1DISFSTTL __BIT(4)	/* Host1 serial TLL disable */
+#define	 USBCTRL_OTCKOEN __BIT(1)	/* OTG ULPI PHY clock enable */
+#define	 USBCTRL_BPE	__BIT(0)	/* Bypass enable */
+
+#define	USBOH3_OTGMIRROR	0x804
+#define	USBOH3_PHYCTRL0  	0x808
+#define	 PHYCTRL0_VLOAD		__BIT(31)
+#define	 PHYCTRL0_VCONTROL	__BITS(27,30)
+#define	 PHYCTRL0_CONF2		__BIT(26)
+#define	 PHYCTRL0_CONF3		__BIT(25)
+#define	 PHYCTRL0_CHGRDETEN	__BIT(24)
+#define	 PHYCTRL0_CHGRDETON	__BIT(23)
+#define	 PHYCTRL0_VSTATUS	__BITS(15,22)
+#define	 PHYCTRL0_SUSPENDM	__BIT(12)
+#define	 PHYCTRL0_RESET		__BIT(11)
+#define	 PHYCTRL0_UTMI_ON_CLOCK	__BIT(10)
+#define	 PHYCTRL0_OTG_OVER_CUR_POL	__BIT(9)
+#define	 PHYCTRL0_OTG_OVER_CUR_DIS	__BIT(8)
+#define	 PHYCTRL0_OTG_XCVR_CLK_SEL	__BIT(7)
+#define	 PHYCTRL0_H1_XCVR_CLK_SEL	__BIT(4)
+#define	 PHYCTRL0_PWR_POL		__BIT(3)
+#define	 PHYCTRL0_CHRGDET		__BIT(2)
+#define	 PHYCTRL0_CHRGDET_INT_EN	__BIT(1)
+#define	 PHYCTRL0_CHRGDET_INT_FLG	__BIT(0)
+
+#define	USBOH3_PHYCTRL1  	0x80c
+#define	 PHYCTRL1_PLLDIVVALUE_MASK	__BITS(0,1)
+#define	 PHYCTRL1_PLLDIVVALUE_19MHZ	0	/* 19.2MHz */
+#define	 PHYCTRL1_PLLDIVVALUE_24MHZ	1
+#define	 PHYCTRL1_PLLDIVVALUE_26MHZ	2
+#define	 PHYCTRL1_PLLDIVVALUE_27MHZ	3
+#define	USBOH3_USBCTRL1  	0x810
+#define	 USBCTRL1_UH3_EXT_CLK_EN	__BIT(27)
+#define	 USBCTRL1_UH2_EXT_CLK_EN	__BIT(26)
+#define	 USBCTRL1_UH1_EXT_CLK_EN	__BIT(25)
+#define	 USBCTRL1_OTG_EXT_CLK_EN	__BIT(24)
+#define	USBOH3_USBCTRL2  	0x814
+#define	USBOH3_USBCTRL3  	0x818
+
+#define	USBOH3_SIZE	0x820
 
 /* GPIO module */
 
@@ -105,15 +165,14 @@
 #define	GPIO3_BASE	GPIO_BASE(3)
 #define	GPIO4_BASE	GPIO_BASE(4)
 
-#define	GPIO_NPINS		32
-#define	GPIO_NGROUPS		3
+#define	GPIO_NGROUPS		4
 
 #define	KPP_BASE	0x73f94000
 /* register definitions in imxkppreg.h */
 
 #define	WDOG1_BASE	0x73f98000
 #define	WDOG2_BASE	0x73f9c000
-#define	WDOG_SIZE	0x4000
+#define	WDOG_SIZE	0x000a
 
 #define	GPT_BASE	0x73fa0000
 #define	GPT_SIZE	0x4000
@@ -134,25 +193,24 @@
 #define	 IOMUX_CONFIG_ALT5	(5)
 #define	 IOMUX_CONFIG_ALT6	(6)
 #define	 IOMUX_CONFIG_ALT7	(7)
+#define	 IOMUX_CONFIG_SION	__BIT(4)
 #define	IOMUXC_PAD_CTL		0x03f0		/* pad control */
-#define	 PAD_CTL_HYS_NONE	(0x0 << 8)
-#define	 PAD_CTL_HYS_ENABLE	(0x1 << 8)
-#define	 PAD_CTL_PKE_NONE	(0x0 << 7)
-#define	 PAD_CTL_PKE_ENABLE	(0x1 << 7)
-#define	 PAD_CTL_PUE_KEEPER	(0x0 << 6)
-#define	 PAD_CTL_PUE_PULL	(0x1 << 6)
+#define	 PAD_CTL_DDR_INPUT	__BIT(9)
+#define	 PAD_CTL_HYS		__BIT(8)
+#define	 PAD_CTL_PKE		__BIT(7)
+#define	 PAD_CTL_PUE		__BIT(6)
+#define	 PAD_CTL_PULL		(PAD_CTL_PKE|PAD_CTL_PUE)
+#define	 PAD_CTL_KEEPER		(PAD_CTL_PKE|0)
 #define	 PAD_CTL_PUS_100K_PD	(0x0 << 4)
 #define	 PAD_CTL_PUS_47K_PU	(0x1 << 4)
 #define	 PAD_CTL_PUS_100K_PU	(0x2 << 4)
 #define	 PAD_CTL_PUS_22K_PU	(0x3 << 4)
-#define	 PAD_CTL_ODE_CMOS	(0x0 << 3)
-#define	 PAD_CTL_ODE_OpenDrain	(0x1 << 3)
+#define	 PAD_CTL_ODE		__BIT(3)	/* opendrain */
 #define	 PAD_CTL_DSE_LOW	(0x0 << 1)
 #define	 PAD_CTL_DSE_MID	(0x1 << 1)
 #define	 PAD_CTL_DSE_HIGH	(0x2 << 1)
 #define	 PAD_CTL_DSE_MAX	(0x3 << 1)
-#define	 PAD_CTL_SRE_SLOW	(0x0 << 0)
-#define	 PAD_CTL_SRE_FAST	(0x1 << 0)
+#define	 PAD_CTL_SRE		__BIT(0)
 #define	IOMUXC_INPUT_CTL	0x08c4		/* input control */
 #define	 INPUT_DAISY_0		0
 #define	 INPUT_DAISY_1		1
@@ -187,7 +245,7 @@
 #define	SRC_SIZE	0x4000
 
 #define	CCM_BASE	0x73fd4000
-#define	CCM_SIZE	0x4000
+#define	CCM_SIZE	0x0088
 
 #define	GPC_BASE	0x73fd8000
 #define	GPC_SIZE	0x4000

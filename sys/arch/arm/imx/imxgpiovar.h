@@ -1,9 +1,10 @@
+/*	$NetBSD: imxgpiovar.h,v 1.1 2010/11/30 13:05:27 bsh Exp $ */
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Matt Thomas.
+ * by Matt Thomas
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -26,25 +27,27 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef _ARM_IMX_IMXGPIOREG_H
-#define	_ARM_IMX_IMXGPIOREG_H
+#ifndef _ARM_IMX_IMXGRPIOVAR_H
+#define _ARM_IMX_IMXGRPIOVAR_H
 
-#define	GPIO_SIZE	0x0020	/* Size of GPIO registers */
+#include <sys/bus.h>
+#include <sys/device.h>
+#include <arm/imx/imxgpioreg.h>	/* for GPIO_NPINS */
 
-#define	GPIO_DR		0x0000	/* GPIO Data (RW) */
-#define	GPIO_DIR	0x0004	/* GPIO Direction (RW), 1=Output */
-#define	GPIO_PSR	0x0008	/* GPIO Pad Status (R) */
-#define	GPIO_ICR1	0x000c	/* GPIO Interrupt Configuration 1 (RW) */
-#define	GPIO_ICR2	0x0010	/* GPIO Interrupt Configuration 2 (RW) */
-#define	GPIO_IMR	0x0014	/* GPIO Interrupt Mask (RW) */
-#define	GPIO_ISR	0x0018	/* GPIO Interrupt Status (RW, W1C) */
-#define	GPIO_EDGE_SEL	0x001c	/* GPIO Edge Select Register  (i.MX51 only) */
+void imxgpio_attach_common(device_t, bus_space_tag_t, bus_space_handle_t,
+    int, int, int);
+/* defined imx[35]1_gpio.c */
+extern const int imxgpio_ngroups;
+int imxgpio_match(device_t, cfdata_t, void *);
+void imxgpio_attach(device_t, device_t, void *);
 
-#define	GPIO_ICR_LEVEL_LOW	0
-#define	GPIO_ICR_LEVEL_HIGH	1
-#define	GPIO_ICR_EDGE_RISING	2
-#define	GPIO_ICR_EDGE_FALLING	3
 
-#define	GPIO_NPINS		32
+#define	GPIO_NO(group, pin)	(((group) - 1) * GPIO_NPINS + (pin))
+#define	GPIO_MODULE(pin)	((pin) / GPIO_NPINS)
 
-#endif	/* _ARM_IMX_IMXGPIOREG_H */
+/* in-kernel GPIO access utility functions */
+enum GPIO_DIRECTION {GPIO_DIR_IN, GPIO_DIR_OUT};
+void gpio_set_direction(u_int, enum GPIO_DIRECTION);
+void gpio_data_write(u_int, u_int);
+bool gpio_data_read(u_int);
+#endif	/* _ARM_IMX_IMXGRPIOVAR_H */
