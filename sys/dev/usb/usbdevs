@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.568 2010/11/25 14:16:24 sborrill Exp $
+$NetBSD: usbdevs,v 1.569 2010/11/30 11:25:25 phx Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -755,9 +755,29 @@ product AOX USB101		0x0008	USB ethernet controller engine
 
 /* Apple Computer products */
 product APPLE EXT_KBD		0x020c	Apple Extended USB Keyboard
+product APPLE FOUNTAIN_ANSI	0x020e	Apple Internal Keyboard/Trackpad (Fountain/ANSI)
+product APPLE FOUNTAIN_ISO	0x020f	Apple Internal Keyboard/Trackpad (Fountain/ISO)
+product APPLE GEYSER_ANSI	0x0214	Apple Internal Keyboard/Trackpad (Geyser/ANSI)
+product APPLE GEYSER_ISO	0x0215	Apple Internal Keyboard/Trackpad (Geyser/ISO)
+product APPLE GEYSER_JIS	0x0216	Apple Internal Keyboard/Trackpad (Geyser/JIS)
+product APPLE GEYSER3_ANSI	0x0217	Apple Internal Keyboard/Trackpad (Geyser3/ANSI)
+product APPLE GEYSER3_ISO	0x0218	Apple Internal Keyboard/Trackpad (Geyser3/ISO)
+product APPLE GEYSER3_JIS	0x0219	Apple Internal Keyboard/Trackpad (Geyser3/JIS)
+product APPLE GEYSER4_ANSI	0x021a	Apple Internal Keyboard/Trackpad (Geyser4/ANSI)
+product APPLE GEYSER4_ISO	0x021b	Apple Internal Keyboard/Trackpad (Geyser4/ISO)
+product APPLE GEYSER4_JIS	0x021c	Apple Internal Keyboard/Trackpad (Geyser4/JIS)
+product APPLE WELLSPRING_ANSI	0x0223	Apple Internal Keyboard/Trackpad (Wellspring/ANSI)
+product APPLE WELLSPRING_ISO	0x0224	Apple Internal Keyboard/Trackpad (Wellspring/ISO)
+product APPLE WELLSPRING_JIS	0x0225	Apple Internal Keyboard/Trackpad (Wellspring/JIS)
+product APPLE WELLSPRING2_ANSI	0x0230	Apple Internal Keyboard/Trackpad (Wellspring2/ANSI)
+product APPLE WELLSPRING2_ISO	0x0231	Apple Internal Keyboard/Trackpad (Wellspring2/ISO)
+product APPLE WELLSPRING2_JIS	0x0232	Apple Internal Keyboard/Trackpad (Wellspring2/JIS)
 product APPLE OPTMOUSE		0x0302	Optical mouse
 product APPLE MIGHTYMOUSE	0x0304	Mighty Mouse
+product APPLE FOUNTAIN_TP	0x030a	Apple Internal Trackpad (Fountain)
+product APPLE GEYSER1_TP	0x030b	Apple Internal Trackpad (Geyser)
 product APPLE MAGICMOUSE	0x030d	Magic Mouse
+product APPLE ADB		0x1000	Internal ADB device
 product APPLE EXT_KBD_HUB	0x1003	Hub in Apple Extended USB Keyboard
 product APPLE SPEAKERS		0x1101	Speakers
 product APPLE IPHONE		0x1290	iPhone
