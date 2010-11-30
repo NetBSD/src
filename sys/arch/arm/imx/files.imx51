@@ -1,4 +1,4 @@
-#	$NetBSD: files.imx51,v 1.1 2010/11/13 07:11:02 bsh Exp $
+#	$NetBSD: files.imx51,v 1.2 2010/11/30 13:05:27 bsh Exp $
 #
 # Configuration info for the Freescale i.MX51
 #
@@ -46,14 +46,15 @@ defparam opt_imx51clk.h IMX51_AHBCLK_FREQ
 defparam opt_imx51clk.h IMX51_IPGCLK_FREQ
 
 # iMX GPIO
-# device	imxgpio: gpiobus
-# attach	imxgpio at ahb
-# file	arch/arm/imx/imx31_gpio.c		imxgpio		needs-flag
+device	imxgpio: gpiobus
+attach	imxgpio at axi
+file	arch/arm/imx/imxgpio.c		imxgpio		needs-flag
+file	arch/arm/imx/imx51_gpio.c	imxgpio
 
 # iMX IOMUX
 device	imxiomux : bus_space_generic
 attach	imxiomux at axi
-file	arch/arm/imx/imx31_iomux.c		imxiomux
+file	arch/arm/imx/imx51_iomux.c		imxiomux
 
 # LCD controller
 # device	lcd : bus_dma_generic, wsemuldisplaydev, rasops16, rasops8, rasops4, rasops_rotation
@@ -73,8 +74,13 @@ file	arch/arm/imx/imxuart.c			imxuart	needs-flag
 file	arch/arm/imx/imx51_uart.c		imxuart
 defflag	opt_imxuart.h				IMXUARTCONSOLE
 
-# attach	ohci at ahb with ohci_ahb : bus_dma_generic
-# file	arch/arm/imx/ochi_axi.c			ohci_axi
+# USB controller
+# attach of this driver need to be specified in paltform configuration
+device imxusbc { unit, irq } : bus_dma_generic
+file   arch/arm/imx/imx51_usb.c			imxusbc
+
+attach ehci at imxusbc with imxehci
+file   arch/arm/imx/imxusb.c			imxehci
 
 # attach	wdc at ahb with wdc_ahb : bus_dma_generic
 # file	arch/arm/imx/wdc_axi.c			wdc_axi

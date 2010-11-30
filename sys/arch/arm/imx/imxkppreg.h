@@ -1,4 +1,4 @@
-/*	$NetBSD: imxkppreg.h,v 1.1 2010/11/13 07:11:03 bsh Exp $	*/
+/*	$NetBSD: imxkppreg.h,v 1.2 2010/11/30 13:05:27 bsh Exp $	*/
 
 /*
  * Copyright (c) 2010  Genetec Corporation.  All rights reserved.
@@ -49,5 +49,7 @@
 #define	KPP_KDDR	0x0004	/* data direction register */
 
 #define	KPP_KPDR	0x0006	/* data register */
+
+#define	KPP_SIZE	0x0008
 
 #endif	/* _ARM_IMX_IMXKPPREG_H */
