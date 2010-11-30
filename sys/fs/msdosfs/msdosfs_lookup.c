@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_lookup.c,v 1.22 2010/07/30 16:40:43 mlelstv Exp $	*/
+/*	$NetBSD: msdosfs_lookup.c,v 1.23 2010/11/30 10:43:03 dholland Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_lookup.c,v 1.22 2010/07/30 16:40:43 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_lookup.c,v 1.23 2010/11/30 10:43:03 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -381,13 +381,10 @@ notfound:
 		 * We return ni_vp == NULL to indicate that the entry
 		 * does not currently exist; we leave a pointer to
 		 * the (locked) directory inode in ndp->ni_dvp.
-		 * The pathname buffer is saved so that the name
-		 * can be obtained later.
 		 *
 		 * NB - if the directory is unlocked, then this
 		 * information cannot be used.
 		 */
-		cnp->cn_flags |= SAVENAME;
 		return (EJUSTRETURN);
 	}
 
@@ -513,7 +510,6 @@ foundroot:
 		if ((error = deget(pmp, cluster, blkoff, &tdp)) != 0)
 			return (error);
 		*vpp = DETOV(tdp);
-		cnp->cn_flags |= SAVENAME;
 		return (0);
 	}
 

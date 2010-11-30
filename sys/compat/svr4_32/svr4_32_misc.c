@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_misc.c,v 1.72 2010/11/30 10:29:58 dholland Exp $	 */
+/*	$NetBSD: svr4_32_misc.c,v 1.73 2010/11/30 10:43:02 dholland Exp $	 */
 
 /*-
  * Copyright (c) 1994, 2008 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_misc.c,v 1.72 2010/11/30 10:29:58 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_misc.c,v 1.73 2010/11/30 10:43:02 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1333,7 +1333,7 @@ svr4_32_sys_resolvepath(struct lwp *l, const struct svr4_32_sys_resolvepath_args
 		return error;
 	}
 
-	NDINIT(&nd, LOOKUP, NOFOLLOW | SAVENAME | TRYEMULROOT, pb);
+	NDINIT(&nd, LOOKUP, NOFOLLOW | TRYEMULROOT, pb);
 	if ((error = namei(&nd)) != 0) {
 		pathbuf_destroy(pb);
 		return error;

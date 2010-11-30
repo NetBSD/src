@@ -1,4 +1,4 @@
-/*	$NetBSD: union_subr.c,v 1.40 2010/11/30 10:30:01 dholland Exp $	*/
+/*	$NetBSD: union_subr.c,v 1.41 2010/11/30 10:43:04 dholland Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_subr.c,v 1.40 2010/11/30 10:30:01 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_subr.c,v 1.41 2010/11/30 10:43:04 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -806,7 +806,7 @@ union_relookup(
 	*pnbuf_ret = pnbuf;
 
 	cn->cn_nameiop = CREATE;
-	cn->cn_flags = (LOCKPARENT|HASBUF|SAVENAME|ISLASTCN);
+	cn->cn_flags = (LOCKPARENT|ISLASTCN);
 	if (um->um_op == UNMNT_ABOVE)
 		cn->cn_cred = cnp->cn_cred;
 	else
@@ -965,7 +965,7 @@ union_vn_create(struct vnode **vpp, struct union_node *un, struct lwp *l)
 	pnbuf = PNBUF_GET();
 	memcpy(pnbuf, un->un_path, cn.cn_namelen+1);
 	cn.cn_nameiop = CREATE;
-	cn.cn_flags = (LOCKPARENT|HASBUF|SAVENAME|ISLASTCN);
+	cn.cn_flags = (LOCKPARENT|ISLASTCN);
 	cn.cn_cred = l->l_cred;
 	cn.cn_nameptr = pnbuf;
 	cn.cn_hash = un->un_hash;

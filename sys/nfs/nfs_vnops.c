@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.286 2010/11/30 10:30:03 dholland Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.287 2010/11/30 10:43:05 dholland Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.286 2010/11/30 10:30:03 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.287 2010/11/30 10:43:05 dholland Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -800,8 +800,6 @@ nfs_lookup(void *v)
 			return EISDIR;
 		vref(dvp);
 		*vpp = dvp;
-		if (cnp->cn_nameiop != LOOKUP && (flags & ISLASTCN))
-			cnp->cn_flags |= SAVENAME;
 		return 0;
 	}
 
@@ -872,8 +870,6 @@ nfs_lookup(void *v)
 		if (!VOP_GETATTR(newvp, &vattr, cnp->cn_cred)
 		    && vattr.va_ctime.tv_sec == VTONFS(newvp)->n_ctime) {
 			nfsstats.lookupcache_hits++;
-			if (cnp->cn_nameiop != LOOKUP && (flags & ISLASTCN))
-				cnp->cn_flags |= SAVENAME;
 			KASSERT(newvp->v_type != VNON);
 			return (0);
 		}
@@ -894,7 +890,6 @@ dorpc:
 	if (v3 && cnp->cn_nameiop == CREATE &&
 	    (flags & (ISLASTCN|ISDOTDOT)) == ISLASTCN &&
 	    (dvp->v_mount->mnt_flag & MNT_RDONLY) == 0) {
-		cnp->cn_flags |= SAVENAME;
 		return (EJUSTRETURN);
 	}
 #endif /* 0 */
@@ -939,7 +934,6 @@ dorpc:
 			nfsm_loadattr(newvp, (struct vattr *)0, 0);
 		*vpp = newvp;
 		m_freem(mrep);
-		cnp->cn_flags |= SAVENAME;
 		goto validate;
 	}
 
@@ -1001,8 +995,6 @@ dorpc:
 #endif
 			nfsm_loadattr(newvp, (struct vattr *)0, 0);
 	}
-	if (cnp->cn_nameiop != LOOKUP && (flags & ISLASTCN))
-		cnp->cn_flags |= SAVENAME;
 	if ((cnp->cn_flags & MAKEENTRY) &&
 	    (cnp->cn_nameiop != DELETE || !(flags & ISLASTCN))) {
 		nfs_cache_enter(dvp, newvp, cnp);
@@ -1034,7 +1026,6 @@ noentry:
 				error = EROFS;
 			} else {
 				error = EJUSTRETURN;
-				cnp->cn_flags |= SAVENAME;
 			}
 		}
 		*vpp = NULL;
@@ -1767,8 +1758,6 @@ nfs_remove(void *v)
 	struct vattr vattr;
 
 #ifndef DIAGNOSTIC
-	if ((cnp->cn_flags & HASBUF) == 0)
-		panic("nfs_remove: no name");
 	if (vp->v_usecount < 1)
 		panic("nfs_remove: bad v_usecount");
 #endif
@@ -1889,11 +1878,6 @@ nfs_rename(void *v)
 	struct componentname *fcnp = ap->a_fcnp;
 	int error;
 
-#ifndef DIAGNOSTIC
-	if ((tcnp->cn_flags & HASBUF) == 0 ||
-	    (fcnp->cn_flags & HASBUF) == 0)
-		panic("nfs_rename: no name");
-#endif
 	/* Check for cross-device rename */
 	if ((fvp->v_mount != tdvp->v_mount) ||
 	    (tvp && (fvp->v_mount != tvp->v_mount))) {
