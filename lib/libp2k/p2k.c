@@ -1,4 +1,4 @@
-/*	$NetBSD: p2k.c,v 1.45 2010/11/26 11:12:06 pooka Exp $	*/
+/*	$NetBSD: p2k.c,v 1.46 2010/11/30 10:49:22 dholland Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2009  Antti Kantee.  All Rights Reserved.
@@ -696,17 +696,17 @@ p2k_node_lookup(struct puffs_usermount *pu, puffs_cookie_t opc,
 				if (pcn->pcn_flags & RUMP_NAMEI_SAVESTART) {
 					if (p2n_dir->p2n_cn_ren_src)
 						freecn(p2n_dir->p2n_cn_ren_src,
-						    RUMPCN_FORCEFREE);
+						    0);
 					p2n_dir->p2n_cn_ren_src = cn;
 				} else {
-					freecn(cn, RUMPCN_FORCEFREE);
+					freecn(cn, 0);
 					cn = NULL;
 				}
 			} else {
 				assert(pcn->pcn_nameiop == RUMP_NAMEI_RENAME);
 				if (p2n_dir->p2n_cn_ren_targ)
 					freecn(p2n_dir->p2n_cn_ren_targ,
-					    RUMPCN_FORCEFREE);
+					    0);
 				p2n_dir->p2n_cn_ren_targ = cn;
 			}
 		} else {
@@ -803,7 +803,7 @@ do_makenode(struct puffs_usermount *pu, struct p2k_node *p2n_dir,
 		cn = p2n_dir->p2n_cn;
 		p2n_dir->p2n_cn = NULL;
 	} else {
-		cn = makecn(pcn, RUMP_NAMEI_HASBUF);
+		cn = makecn(pcn, 0);
 	}
 
 	RUMP_VOP_LOCK(dvp, LK_EXCLUSIVE);
@@ -1032,11 +1032,11 @@ p2k_node_abortop(struct puffs_usermount *pu, puffs_cookie_t opc,
 		p2n_dir->p2n_cn = NULL;
 	}
 	if ((cnp = p2n_dir->p2n_cn_ren_src) != NULL) {
-		freecn(cnp, RUMPCN_FORCEFREE);
+		freecn(cnp, 0);
 		p2n_dir->p2n_cn_ren_src = NULL;
 	}
 	if ((cnp = p2n_dir->p2n_cn_ren_targ) != NULL) {
-		freecn(cnp, RUMPCN_FORCEFREE);
+		freecn(cnp, 0);
 		p2n_dir->p2n_cn_ren_targ = NULL;
 	}
 
@@ -1056,7 +1056,7 @@ do_nukenode(struct p2k_node *p2n_dir, struct p2k_node *p2n,
 		cn = p2n_dir->p2n_cn;
 		p2n_dir->p2n_cn = NULL;
 	} else {
-		cn = makecn(pcn, RUMP_NAMEI_HASBUF);
+		cn = makecn(pcn, 0);
 	}
 
 	RUMP_VOP_LOCK(dvp, LK_EXCLUSIVE);
@@ -1095,7 +1095,7 @@ p2k_node_link(struct puffs_usermount *pu, puffs_cookie_t opc,
 		cn = p2n_dir->p2n_cn;
 		p2n_dir->p2n_cn = NULL;
 	} else {
-		cn = makecn(pcn, RUMP_NAMEI_HASBUF);
+		cn = makecn(pcn, 0);
 	}
 
 	RUMP_VOP_LOCK(dvp, LK_EXCLUSIVE);
@@ -1123,14 +1123,14 @@ p2k_node_rename(struct puffs_usermount *pu,
 		cn_src = p2n_srcdir->p2n_cn_ren_src;
 		p2n_srcdir->p2n_cn_ren_src = NULL;
 	} else {
-		cn_src = makecn(pcn_src, RUMP_NAMEI_HASBUF);
+		cn_src = makecn(pcn_src, 0);
 	}
 
 	if (p2n_targdir->p2n_cn_ren_targ) {
 		cn_targ = p2n_targdir->p2n_cn_ren_targ;
 		p2n_targdir->p2n_cn_ren_targ = NULL;
 	} else {
-		cn_targ = makecn(pcn_targ, RUMP_NAMEI_HASBUF);
+		cn_targ = makecn(pcn_targ, 0);
 	}
 
 	dvp = OPC2VP(src_dir);
@@ -1153,8 +1153,8 @@ p2k_node_rename(struct puffs_usermount *pu,
 	if (tvp) {
 		assert(RUMP_VOP_ISLOCKED(tvp) == 0);
 	}
-	freecn(cn_src, RUMPCN_FORCEFREE);
-	freecn(cn_targ, RUMPCN_FORCEFREE);
+	freecn(cn_src, 0);
+	freecn(cn_targ, 0);
 
 	return rv;
 }
