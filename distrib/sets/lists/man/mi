@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1256 2010/11/30 20:19:30 jruoho Exp $
+# $NetBSD: mi,v 1.1257 2010/11/30 20:50:28 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1956,6 +1956,11 @@
 ./usr/share/man/cat5/ypserv.acl.0		man-obsolete		obsolete
 ./usr/share/man/cat7/ascii.0			man-reference-catman	.cat
 ./usr/share/man/cat7/atf.0			man-atf-catman		.cat,atf
+./usr/share/man/cat7/c.0			man-reference-catman	.cat
+./usr/share/man/cat7/c78.0			man-reference-catman	.cat
+./usr/share/man/cat7/c89.0			man-reference-catman	.cat
+./usr/share/man/cat7/c90.0			man-reference-catman	.cat
+./usr/share/man/cat7/c99.0			man-reference-catman	.cat
 ./usr/share/man/cat7/des_modes.0		man-reference-catman	crypto,.cat
 ./usr/share/man/cat7/environ.0			man-reference-catman	.cat
 ./usr/share/man/cat7/hier.0			man-reference-catman	.cat
@@ -4562,6 +4567,11 @@
 ./usr/share/man/html5/wtmpx.html		man-sys-htmlman		html
 ./usr/share/man/html7/ascii.html		man-reference-htmlman	html
 ./usr/share/man/html7/atf.html			man-atf-htmlman		html,atf
+./usr/share/man/html7/c.html			man-reference-htmlman	html
+./usr/share/man/html7/c78.html			man-reference-htmlman	html
+./usr/share/man/html7/c89.html			man-reference-htmlman	html
+./usr/share/man/html7/c90.html			man-reference-htmlman	html
+./usr/share/man/html7/c99.html			man-reference-htmlman	html
 ./usr/share/man/html7/des_modes.html		man-reference-htmlman	crypto,html
 ./usr/share/man/html7/environ.html		man-reference-htmlman	html
 ./usr/share/man/html7/hier.html			man-reference-htmlman	html
@@ -7144,6 +7154,11 @@
 ./usr/share/man/man5/ypserv.acl.5		man-obsolete		obsolete
 ./usr/share/man/man7/ascii.7			man-reference-man	.man
 ./usr/share/man/man7/atf.7			man-atf-man		.man,atf
+./usr/share/man/man7/c.7			man-reference-man	.man
+./usr/share/man/man7/c78.7			man-reference-man	.man
+./usr/share/man/man7/c89.7			man-reference-man	.man
+./usr/share/man/man7/c90.7			man-reference-man	.man
+./usr/share/man/man7/c99.7			man-reference-man	.man
 ./usr/share/man/man7/des_modes.7		man-reference-man	crypto,.man
 ./usr/share/man/man7/environ.7			man-reference-man	.man
 ./usr/share/man/man7/hier.7			man-reference-man	.man
