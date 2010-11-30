@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.h,v 1.53 2010/11/25 17:59:02 pooka Exp $	*/
+/*	$NetBSD: rumpuser.h,v 1.54 2010/11/30 14:23:24 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -38,6 +38,9 @@
 
 #define RUMPUSER_VERSION 6
 int rumpuser_getversion(void);
+
+int rumpuser_daemonize_begin(void);
+int rumpuser_daemonize_done(int);
 
 struct msghdr;
 struct pollfd;

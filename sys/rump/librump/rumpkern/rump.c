@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.206 2010/11/22 20:42:19 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.207 2010/11/30 14:23:24 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.206 2010/11/22 20:42:19 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.207 2010/11/30 14:23:24 pooka Exp $");
 
 #include <sys/systm.h>
 #define ELFSIZE ARCH_ELFSIZE
@@ -205,6 +205,23 @@ static const struct rumpuser_sp_ops spops = {
 };
 
 int
+rump_daemonize_begin(void)
+{
+
+	if (rump_inited)
+		return EALREADY;
+
+	return rumpuser_daemonize_begin();
+}
+
+int
+rump_daemonize_done(int error)
+{
+
+	return rumpuser_daemonize_done(error);
+}
+
+int
 rump__init(int rump_version)
 {
 	char buf[256];
@@ -221,13 +238,6 @@ rump__init(int rump_version)
 		panic("rump_init: host process restart required");
 	else
 		rump_inited = 1;
-
-	/* Check our role as a rump proxy */
-	if (rumpuser_getenv("RUMP_SP_SERVER", buf, sizeof(buf), &error) == 0) {
-		error = rumpuser_sp_init(&spops, buf);
-		if (error)
-			return error;
-	}
 
 	if (rumpuser_getversion() != RUMPUSER_VERSION) {
 		/* let's hope the ABI of rumpuser_dprintf is the same ;) */
@@ -432,6 +442,13 @@ rump__init(int rump_version)
 	rump_unschedule();
 
 	return 0;
+}
+
+int
+rump_init_server(const char *url)
+{
+
+	return rumpuser_sp_init(&spops, url);
 }
 
 void
