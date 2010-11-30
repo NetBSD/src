@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpfs.c,v 1.74 2010/11/22 15:15:35 pooka Exp $	*/
+/*	$NetBSD: rumpfs.c,v 1.75 2010/11/30 01:22:50 dholland Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.74 2010/11/22 15:15:35 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.75 2010/11/30 01:22:50 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -324,6 +324,13 @@ doregister(const char *key, const char *hostpath,
 	devminor_t dmin = -1;
 	int hft, error;
 
+	if (key[0] != '/') {
+		return EINVAL;
+	}
+	while (key[0] == '/') {
+		key++;
+	}
+
 	if (rumpuser_getfileinfo(hostpath, &fsize, &hft, &error))
 		return error;
 
@@ -396,7 +403,7 @@ doregister(const char *key, const char *hostpath,
 
 	if (ftype == RUMP_ETFS_BLK) {
 		format_bytes(buf, sizeof(buf), size);
-		aprint_verbose("%s: hostpath %s (%s)\n", key, hostpath, buf);
+		aprint_verbose("/%s: hostpath %s (%s)\n", key, hostpath, buf);
 	}
 
 	return 0;
@@ -424,8 +431,17 @@ int
 rump_etfs_remove(const char *key)
 {
 	struct etfs *et;
-	size_t keylen = strlen(key);
+	size_t keylen;
 	int rv;
+
+	if (key[0] != '/') {
+		return EINVAL;
+	}
+	while (key[0] == '/') {
+		key++;
+	}
+
+	keylen = strlen(key);
 
 	mutex_enter(&etfs_lock);
 	LIST_FOREACH(et, &etfs_list, et_entries) {
@@ -641,13 +657,15 @@ rump_vop_lookup(void *v)
 	if (dvp == rootvnode && cnp->cn_nameiop == LOOKUP) {
 		bool found;
 		mutex_enter(&etfs_lock);
-		found = etfs_find(cnp->cn_pnbuf, &et, false);
+		found = etfs_find(cnp->cn_nameptr, &et, false);
 		mutex_exit(&etfs_lock);
 
 		if (found) {
-			char *offset;
+			const char *offset;
 
-			offset = strstr(cnp->cn_pnbuf, et->et_key);
+			/* pointless as et_key is always the whole string */
+			/*offset = strstr(cnp->cn_nameptr, et->et_key);*/
+			offset = cnp->cn_nameptr;
 			KASSERT(offset);
 
 			rn = et->et_rn;
