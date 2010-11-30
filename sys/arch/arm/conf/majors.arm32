@@ -1,4 +1,4 @@
-#	$NetBSD: majors.arm32,v 1.31 2010/03/06 23:45:39 plunky Exp $
+#	$NetBSD: majors.arm32,v 1.32 2010/11/30 12:42:48 bsh Exp $
 #
 # Device majors for arm32
 #
@@ -97,6 +97,7 @@ device-major	sysmon		char 101		sysmon_envsys | sysmon_wdog | sysmon_power
 device-major	dmoverio	char 102		dmoverio
 device-major	apm		char 103		apm
 device-major	sscom		char 104		sscom
+device-major	imxcom		char 104		imxuart
 device-major	ksyms		char 105		ksyms
 device-major	isdnbchan	char 106		isdnbchan
 device-major	epcom		char 107		epcom
