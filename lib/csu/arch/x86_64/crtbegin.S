@@ -1,4 +1,4 @@
-/*	$NetBSD: crtbegin.S,v 1.1 2010/08/07 18:01:34 joerg Exp $	*/
+/*	$NetBSD: crtbegin.S,v 1.2 2010/11/30 18:37:59 joerg Exp $	*/
 /*-
  * Copyright (c) 2010 Joerg Sonnenberger <joerg@NetBSD.org>
  * All rights reserved.
@@ -30,7 +30,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: crtbegin.S,v 1.1 2010/08/07 18:01:34 joerg Exp $")
+RCSID("$NetBSD: crtbegin.S,v 1.2 2010/11/30 18:37:59 joerg Exp $")
 
 	.section	.ctors, "aw", @progbits
 	.align 8
@@ -82,6 +82,7 @@ __do_global_dtors_aux:
 	je	1f
 	ret
 1:
+	pushq	%rbx
 	movb	$1, __finished(%rip)
 
 
@@ -93,7 +94,6 @@ __do_global_dtors_aux:
 2:
 #endif
 
-	pushq	%rbx
 	leaq	8+__DTOR_LIST__(%rip), %rbx
 3:
 	movq	(%rbx), %rax
@@ -103,14 +103,13 @@ __do_global_dtors_aux:
 	addq	$8, %rbx
 	jmp	3b	
 4:
-	popq	%rbx
 
 	cmpq	$0, __deregister_frame_info@GOTPCREL(%rip)
 	je	5f
 	leaq	__EH_FRAME_LIST__(%rip), %rdi
 	call	__deregister_frame_info@PLT
 5:
-
+	popq	%rbx
 	ret
 
 
@@ -119,6 +118,7 @@ __do_global_ctors_aux:
 	je	1f
 	ret
 1:
+	pushq	%rbx
 	movb	$1, __initialized(%rip)
 
 	cmpq	$0, __register_frame_info@GOTPCREL(%rip)
@@ -136,7 +136,6 @@ __do_global_ctors_aux:
 	call	_Jv_RegisterClasses@PLT
 3:
 
-	pushq	%rbx
 	leaq	-8+__CTOR_LIST_END__(%rip), %rbx
 4:
 	movq	(%rbx), %rax
