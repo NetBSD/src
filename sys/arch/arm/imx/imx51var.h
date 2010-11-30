@@ -1,4 +1,4 @@
-/*	$NetBSD: imx51var.h,v 1.1 2010/11/13 07:11:03 bsh Exp $ */
+/*	$NetBSD: imx51var.h,v 1.2 2010/11/30 13:05:27 bsh Exp $ */
 
 #ifndef _ARM_IMX_IMX51VAR_H
 #define	_ARM_IMX_IMX51VAR_H
@@ -19,5 +19,19 @@ struct axi_attach_args {
 	int		aa_irq;
 	int		aa_irqbase;
 };
+
+
+/* iomux utility functions */
+struct iomux_conf {
+	u_int pin;
+#define	IOMUX_CONF_EOT	((u_int)(-1))
+	u_short mux;
+	u_short pad;
+};
+
+void iomux_set_function(u_int, u_int);
+void iomux_set_pad(u_int, u_int);
+//void iomux_set_input(u_int, u_int);
+void iomux_mux_config(const struct iomux_conf *);
 
 #endif	/* _ARM_IMX_IMX51VAR_H */
