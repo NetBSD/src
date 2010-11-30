@@ -1,8 +1,8 @@
-/*	$NetBSD: rumpvfs_if_wrappers.c,v 1.8 2010/09/07 17:14:19 pooka Exp $	*/
+/*	$NetBSD: rumpvfs_if_wrappers.c,v 1.9 2010/11/30 16:27:31 pooka Exp $	*/
 
 /*
  * Automatically generated.  DO NOT EDIT.
- * from: NetBSD: rumpvfs.ifspec,v 1.6 2010/09/07 17:13:03 pooka Exp 
+ * from: NetBSD: rumpvfs.ifspec,v 1.7 2010/11/30 15:41:35 pooka Exp 
  * by:   NetBSD: makerumpif.sh,v 1.5 2010/09/01 19:32:11 pooka Exp 
  */
 
@@ -186,18 +186,6 @@ rump_pub_freecn(struct componentname *arg1, int arg2)
 	rump_schedule();
 	rump_freecn(arg1, arg2);
 	rump_unschedule();
-}
-
-int
-rump_pub_checksavecn(struct componentname *arg1)
-{
-	int rv;
-
-	rump_schedule();
-	rv = rump_checksavecn(arg1);
-	rump_unschedule();
-
-	return rv;
 }
 
 int
