@@ -1,4 +1,4 @@
-#	$NetBSD: t_md.sh,v 1.2 2010/11/30 14:29:05 pooka Exp $
+#	$NetBSD: t_md.sh,v 1.3 2010/11/30 22:15:02 pooka Exp $
 #
 # Copyright (c) 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -25,8 +25,8 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
-atf_test_case basic
-basic()
+atf_test_case basic cleanup
+basic_head()
 {
 
 	atf_set "descr" "Check that md can be created, read and written"
@@ -45,6 +45,13 @@ basic_body()
 	atf_check -s exit:0 -e ignore dd if=/bin/ls rof=/dev/rmd0d seek=100 count=10
 	atf_check -s exit:0 -e ignore dd of=testfile rif=/dev/rmd0d skip=100 count=10
 	atf_check -s exit:0 -e ignore -o file:testfile dd if=/bin/ls count=10
+}
+
+basic_cleanup()
+{
+
+	export RUMP_SERVER=unix://commsock
+	$(atf_get_srcdir)/../../rump/rumpkern/h_client/h_reboot
 }
 
 atf_init_test_cases()
