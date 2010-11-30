@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpfs.c,v 1.75 2010/11/30 01:22:50 dholland Exp $	*/
+/*	$NetBSD: rumpfs.c,v 1.76 2010/11/30 10:48:27 dholland Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.75 2010/11/30 01:22:50 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.76 2010/11/30 10:48:27 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -731,11 +731,8 @@ rump_vop_lookup(void *v)
 		return ENOENT;
 
 	if (!rd && (cnp->cn_flags & ISLASTCN) && cnp->cn_nameiop == CREATE) {
-		cnp->cn_flags |= SAVENAME;
 		return EJUSTRETURN;
 	}
-	if ((cnp->cn_flags & ISLASTCN) && cnp->cn_nameiop == DELETE)
-		cnp->cn_flags |= SAVENAME;
 
 	rn = rd->rd_node;
 
@@ -814,7 +811,6 @@ rump_vop_mkdir(void *v)
 	makedir(rnd, cnp, rn);
 
  out:
-	PNBUF_PUT(cnp->cn_pnbuf);
 	vput(dvp);
 	return rv;
 }
@@ -843,7 +839,6 @@ rump_vop_rmdir(void *v)
 	rn->rn_flags |= RUMPNODE_CANRECLAIM;
 
 out:
-	PNBUF_PUT(cnp->cn_pnbuf);
 	vput(dvp);
 	vput(vp);
 
@@ -875,7 +870,6 @@ rump_vop_remove(void *v)
 	freedir(rnd, cnp);
 	rn->rn_flags |= RUMPNODE_CANRECLAIM;
 
-	PNBUF_PUT(cnp->cn_pnbuf);
 	vput(dvp);
 	vput(vp);
 
@@ -906,7 +900,6 @@ rump_vop_mknod(void *v)
 	makedir(rnd, cnp, rn);
 
  out:
-	PNBUF_PUT(cnp->cn_pnbuf);
 	vput(dvp);
 	return rv;
 }
@@ -937,7 +930,6 @@ rump_vop_create(void *v)
 	makedir(rnd, cnp, rn);
 
  out:
-	PNBUF_PUT(cnp->cn_pnbuf);
 	vput(dvp);
 	return rv;
 }
