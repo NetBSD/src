@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_cstate.c,v 1.33 2010/08/23 16:20:45 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_cstate.c,v 1.34 2010/11/30 04:31:00 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_cstate.c,v 1.33 2010/08/23 16:20:45 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_cstate.c,v 1.34 2010/11/30 04:31:00 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -682,6 +682,12 @@ acpicpu_cstate_idle(void)
 
 	mutex_exit(&sc->sc_mtx);
 	state = acpicpu_cstate_latency(sc);
+
+	/*
+	 * Apply AMD C1E quirk.
+	 */
+	if ((sc->sc_flags & ACPICPU_FLAG_C_C1E) != 0)
+		acpicpu_md_quirks_c1e();
 
 	/*
 	 * Check for bus master activity. Note that particularly usb(4)
