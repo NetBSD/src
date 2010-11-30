@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpclient.c,v 1.7 2010/11/30 14:24:40 pooka Exp $	*/
+/*      $NetBSD: rumpclient.c,v 1.8 2010/11/30 22:30:43 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -226,7 +226,7 @@ rumpclient_init()
 	if (s == -1)
 		return -1;
 
-	if (connect(s, sap, sap->sa_len) == -1) {
+	if (connect(s, sap, (socklen_t)sap->sa_len) == -1) {
 		error = errno;
 		fprintf(stderr, "rump_sp: client connect failed\n");
 		errno = error;
