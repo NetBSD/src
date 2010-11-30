@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.h,v 1.47 2010/11/15 20:37:21 pooka Exp $	*/
+/*	$NetBSD: rump.h,v 1.48 2010/11/30 10:46:59 dholland Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -75,7 +75,6 @@ enum rump_sigmodel {
 
 /* rumpvfs */
 #define RUMPCN_FREECRED  0x02
-#define RUMPCN_FORCEFREE 0x04
 #define RUMP_ETFS_SIZE_ENDOFF ((uint64_t)-1)
 enum rump_etfs_type {
 	RUMP_ETFS_REG,
