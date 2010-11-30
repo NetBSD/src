@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.43 2010/11/19 05:38:10 uebayasi Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.44 2010/11/30 10:55:25 hannken Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.43 2010/11/19 05:38:10 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.44 2010/11/30 10:55:25 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -569,6 +569,7 @@ startover:
 			    iobytes);
 			skipbytes += iobytes;
 
+			mutex_enter(&uobj->vmobjlock);
 			for (i = 0; i < holepages; i++) {
 				if (memwrite) {
 					pgs[pidx + i]->flags &= ~PG_CLEAN;
@@ -577,6 +578,7 @@ startover:
 					pgs[pidx + i]->flags |= PG_RDONLY;
 				}
 			}
+			mutex_exit(&uobj->vmobjlock);
 			continue;
 		}
 
@@ -638,6 +640,7 @@ loopdone:
 		UVMHIST_LOG(ubchist, "gop_alloc off 0x%x/0x%x -> %d",
 		    startoffset, npages << PAGE_SHIFT, error,0);
 		if (!error) {
+			mutex_enter(&uobj->vmobjlock);
 			for (i = 0; i < npages; i++) {
 				struct vm_page *pg = pgs[i];
 
@@ -648,6 +651,7 @@ loopdone:
 				UVMHIST_LOG(ubchist, "mark dirty pg %p",
 				    pg,0,0,0);
 			}
+			mutex_exit(&uobj->vmobjlock);
 		}
 	}
 	if (!glocked) {
