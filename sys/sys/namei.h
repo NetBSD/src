@@ -1,11 +1,11 @@
-/*	$NetBSD: namei.h,v 1.69 2010/11/19 06:45:29 dholland Exp $	*/
+/*	$NetBSD: namei.h,v 1.70 2010/11/30 10:44:44 dholland Exp $	*/
 
 
 /*
  * WARNING: GENERATED FILE.  DO NOT EDIT
  * (edit namei.src and run make namei in src/sys/sys)
  *   by:   NetBSD: gennameih.awk,v 1.5 2009/12/23 14:17:19 pooka Exp 
- *   from: NetBSD: namei.src,v 1.15 2010/11/19 06:44:34 dholland Exp 
+ *   from: NetBSD: namei.src,v 1.17 2010/11/30 10:43:01 dholland Exp 
  */
 
 /*
@@ -60,10 +60,17 @@
  * STRUCT NAMEIDATA IS DEAD, call pathbuf_destroy. Don't destroy the
  * pathbuf before you've finished using the nameidata, or mysterious
  * bad things may happen.
+ *
+ * pathbuf_assimilate is like pathbuf_create but assumes ownership of
+ * the string buffer passed in, which MUST BE of size PATH_MAX and
+ * have been allocated with PNBUF_GET(). This should only be used when
+ * absolutely necessary; e.g. nfsd uses it for loading paths from
+ * mbufs.
  */
 struct pathbuf;
 
 struct pathbuf *pathbuf_create(const char *path);
+struct pathbuf *pathbuf_assimilate(char *path);
 int pathbuf_copyin(const char *userpath, struct pathbuf **ret);
 void pathbuf_destroy(struct pathbuf *);
 
@@ -85,8 +92,7 @@ struct nameidata {
 	 * Arguments to namei/lookup.
 	 */
 	struct pathbuf *ni_pathbuf;	/* pathname container */
-	//const char *ni_dirp;		/* pathname pointer */
-	//enum	uio_seg ni_segflg;	/* location of pathname */
+	char *ni_pnbuf;			/* extra pathname buffer ref (XXX) */
 	/*
 	 * Arguments to lookup.
 	 */
@@ -119,7 +125,6 @@ struct nameidata {
 		/*
 		 * Shared between lookup and commit routines.
 		 */
-		char		*cn_pnbuf;	/* pathname buffer */
 		const char 	*cn_nameptr;	/* pointer to looked up name */
 		size_t		cn_namelen;	/* length of looked up comp */
 		u_long		cn_hash;	/* hash val of looked up name */
@@ -153,21 +158,13 @@ struct nameidata {
 /*
  * Namei parameter descriptors.
  *
- * SAVENAME may be set by either the callers of namei or by VOP_LOOKUP.
- * If the caller of namei sets the flag (for example execve wants to
- * know the name of the program that is being executed), then it must
- * free the buffer. If VOP_LOOKUP sets the flag, then the buffer must
- * be freed by either the commit routine or the VOP_ABORT routine.
- * SAVESTART is set only by the callers of namei. It implies SAVENAME
- * plus the addition of saving the parent directory that contains the
- * name in ni_startdir. It allows repeated calls to lookup for the
- * name being sought. The caller is responsible for releasing the
- * buffer and for vrele'ing ni_startdir.
+ * SAVESTART is set only by the callers of namei. It implies saving
+ * the parent directory that contains the name in ni_startdir. It
+ * allows repeated calls to lookup for the name being sought. The
+ * caller is responsible for vrele'ing ni_startdir.
  */
 #define	NOCROSSMOUNT	0x0000100	/* do not cross mount points */
 #define	RDONLY		0x0000200	/* lookup with read-only semantics */
-#define	HASBUF		0x0000400	/* has allocated pathname buffer */
-#define	SAVENAME	0x0000800	/* save pathname buffer */
 #define	SAVESTART	0x0001000	/* save starting directory */
 #define	ISDOTDOT	0x0002000	/* current component name is .. */
 #define	MAKEENTRY	0x0004000	/* entry is to be added to name cache */
@@ -325,8 +322,6 @@ extern struct nchstats nchstats;
 #define NAMEI_MODMASK	0x010000fc
 #define NAMEI_NOCROSSMOUNT	0x0000100
 #define NAMEI_RDONLY	0x0000200
-#define NAMEI_HASBUF	0x0000400
-#define NAMEI_SAVENAME	0x0000800
 #define NAMEI_SAVESTART	0x0001000
 #define NAMEI_ISDOTDOT	0x0002000
 #define NAMEI_MAKEENTRY	0x0004000
