@@ -56,12 +56,53 @@ Post-integration tasks.
 
 -		 device properties for unique device id (driver:model-revision-serial-etc).
 -		 use device id to locate disks/partitions
--		 port ZFS snapshot / ctldir stuff.
+PDONE		 port ZFS snapshot / ctldir stuff.
 -		 zfs/nfs integration.
 -		 zfs/iscsi integration.
 -		 native getpages/putpages.
--		 update ZFS to latest.
+PDONE zfs v22	 update ZFS to latest.
 -		 Implement *at syscalls correctly.
+
+Pre netbsd-6.0 tasks
+-		 More testing especially zvol, vdev and zfs code snapshot will stay disabled
+- 		 Get ztest and zdb working
+- 		 Get zfs properties working
+
+Post netbsd-6.0 tasks
+-		 Update to latest version
+-		 Harden zfs, test, survive build.sh on zfs
+- 		 all Post integration tasks
+-		 Write regression test suite 
+-		 RUMP port (might be very good idea.)
+
+
+#######
+## List of Know ZFS bugs/issues
+#######
+   
+User-land
+=========
+
+1) zpool list ENOMEM error .... fixed in rev 1.3 sunddi.h and rev 1.5 zfs_ioctl.h
+2) zfs unmount crash in getmntinfo
+3) ztest TXG dmu commit threshold problem ?? Maybe fixed by replacing atomic functions with mutex.
+4) ztest vdev resize problem (spa_thread ? )							
+
+Kernel
+======
+
+1) Faulted zpool after modload (missing ztest/ dmu_objset)
+   ZDB fails to work with because of this problem. This need to be investigated more.
+   see zdb.c#2904
+
+2) data lost on filesystem after panic
+3) Strange panic during zfs_znode_dmu_init
+4) zpool scrub panic in vdev_open->vdev_disk_open->VOP_IOCTL
+5) zfs set doesn't work -> zfs set dedup=on, zfs set compression=gzip
+6) device nodes in /dev/zvol are not created
+
+
+
 
 
 PDONE = Partialy done.
