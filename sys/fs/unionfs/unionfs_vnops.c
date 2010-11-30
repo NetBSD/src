@@ -49,6 +49,7 @@
 #include <sys/namei.h>
 #include <sys/sysctl.h>
 #include <sys/vnode.h>
+#include <sys/buf.h>
 #include <sys/fcntl.h>
 #include <sys/stat.h>
 #include <sys/dirent.h>
@@ -989,11 +990,6 @@ unionfs_rename(void *v)
 	rtdvp = tdvp;
 	rtvp = tvp;
 	needrelookup = 0;
-
-#ifdef DIAGNOSTIC
-	if (!(fcnp->cn_flags & HASBUF) || !(tcnp->cn_flags & HASBUF))
-		panic("unionfs_rename: no name");
-#endif
 
 	/* check for cross device rename */
 	if (fvp->v_mount != tdvp->v_mount ||

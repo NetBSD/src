@@ -1,4 +1,4 @@
-/*	$NetBSD: adlookup.c,v 1.14 2010/06/24 13:03:08 hannken Exp $	*/
+/*	$NetBSD: adlookup.c,v 1.15 2010/11/30 10:43:02 dholland Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adlookup.c,v 1.14 2010/06/24 13:03:08 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adlookup.c,v 1.15 2010/11/30 10:43:02 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -205,7 +205,6 @@ adosfs_lookup(void *v)
 #endif
 			return (error);
 		}
-		cnp->cn_nameiop |= SAVENAME;
 #ifdef ADOSFS_DIAGNOSTIC
 		printf("EJUSTRETURN)");
 #endif
@@ -236,7 +235,6 @@ found:
 			*vpp = NULL;
 			return (error);
 		}
-		cnp->cn_flags |= SAVENAME;
 		nocache = 1;
 	}
 	if (vdp == *vpp)

@@ -1,4 +1,4 @@
-/*	$NetBSD: sysvbfs_vnops.c,v 1.34 2010/11/30 10:30:00 dholland Exp $	*/
+/*	$NetBSD: sysvbfs_vnops.c,v 1.35 2010/11/30 10:43:04 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vnops.c,v 1.34 2010/11/30 10:30:00 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vnops.c,v 1.35 2010/11/30 10:43:04 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -78,7 +78,6 @@ sysvbfs_lookup(void *arg)
 	const char *name = cnp->cn_nameptr;
 	int namelen = cnp->cn_namelen;
 	int error;
-	bool islastcn = cnp->cn_flags & ISLASTCN;
 
 	DPRINTF("%s: %s op=%d %d\n", __func__, name, nameiop,
 	    cnp->cn_flags);
@@ -103,7 +102,6 @@ sysvbfs_lookup(void *arg)
 			}
 			if ((error = VOP_ACCESS(v, VWRITE, cnp->cn_cred)) != 0)
 				return error;
-			cnp->cn_flags |= SAVENAME;
 			return EJUSTRETURN;
 		}
 
@@ -114,9 +112,6 @@ sysvbfs_lookup(void *arg)
 		}
 		*a->a_vpp = vpp;
 	}
-
-	if (cnp->cn_nameiop != LOOKUP && islastcn)
-		cnp->cn_flags |= SAVENAME;
 
 	return 0;
 }
