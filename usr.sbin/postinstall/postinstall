@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.110 2010/11/21 22:50:37 christos Exp $
+# $NetBSD: postinstall,v 1.111 2010/11/30 14:35:38 njoly Exp $
 #
 # Copyright (c) 2002-2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -482,6 +482,14 @@ obsolete_libs()
 	[ $# -eq 1 ] || err 3 "USAGE: obsolete_libs dir"
 	dir="$1"
 
+	_obsolete_libs "${dir}"
+	_obsolete_libs "/usr/libdata/debug/${dir}"
+}
+
+_obsolete_libs()
+{ 
+	dir="$1"
+
 	(
 
 	if [ ! -e "${DEST_DIR}/${dir}" ]
@@ -522,7 +530,7 @@ function checklib(results, line, regex) {
 	}
 }
 
-/^lib.*\.so\.[0-9]+\.[0-9]+(\.[0-9]+)?$/ {
+/^lib.*\.so\.[0-9]+\.[0-9]+(\.[0-9]+)?(\.debug)?$/ {
 	if (AllLibs)
 		checklib(minor, $0, "^lib.*\\.so\\.")
 	else
