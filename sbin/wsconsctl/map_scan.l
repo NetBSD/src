@@ -1,4 +1,4 @@
-/*	$NetBSD: map_scan.l,v 1.5 2009/10/28 19:43:56 christos Exp $ */
+/*	$NetBSD: map_scan.l,v 1.6 2010/11/30 12:22:06 phx Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -68,6 +68,10 @@ keycode {
 
 keysym {
 		return(T_KEYSYM);
+	}
+
+Cmd {
+		return(T_CMD);
 	}
 
 [a-zA-Z][a-zA-Z0-9_]* {
