@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpuser_sp.c,v 1.21 2010/11/29 16:08:03 pooka Exp $	*/
+/*      $NetBSD: rumpuser_sp.c,v 1.22 2010/11/30 22:32:01 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: rumpuser_sp.c,v 1.21 2010/11/29 16:08:03 pooka Exp $");
+__RCSID("$NetBSD: rumpuser_sp.c,v 1.22 2010/11/30 22:32:01 pooka Exp $");
 
 #include <sys/types.h>
 #include <sys/atomic.h>
@@ -375,6 +375,7 @@ serv_handledisco(unsigned int idx)
 	 * Nobody's going to attempt to send/receive anymore,
 	 * so reinit info relevant to that.
 	 */
+	/*LINTED:pointer casts may be ok*/
 	memset((char *)spc + SPC_ZEROFF, 0, sizeof(*spc) - SPC_ZEROFF);
 
 	spcrelease(spc);
