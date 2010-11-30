@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpfs.c,v 1.76 2010/11/30 10:48:27 dholland Exp $	*/
+/*	$NetBSD: rumpfs.c,v 1.77 2010/11/30 18:20:41 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.76 2010/11/30 10:48:27 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.77 2010/11/30 18:20:41 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -661,16 +661,8 @@ rump_vop_lookup(void *v)
 		mutex_exit(&etfs_lock);
 
 		if (found) {
-			const char *offset;
-
-			/* pointless as et_key is always the whole string */
-			/*offset = strstr(cnp->cn_nameptr, et->et_key);*/
-			offset = cnp->cn_nameptr;
-			KASSERT(offset);
-
 			rn = et->et_rn;
-			cnp->cn_consume += et->et_keylen
-			    - (cnp->cn_nameptr - offset) - cnp->cn_namelen;
+			cnp->cn_consume += et->et_keylen - cnp->cn_namelen;
 			if (rn->rn_va.va_type != VDIR)
 				cnp->cn_flags &= ~REQUIREDIR;
 			goto getvnode;
