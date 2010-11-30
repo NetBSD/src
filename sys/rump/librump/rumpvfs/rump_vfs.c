@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_vfs.c,v 1.62 2010/11/30 15:39:27 pooka Exp $	*/
+/*	$NetBSD: rump_vfs.c,v 1.63 2010/11/30 15:41:35 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump_vfs.c,v 1.62 2010/11/30 15:39:27 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump_vfs.c,v 1.63 2010/11/30 15:41:35 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -214,18 +214,7 @@ rump_freecn(struct componentname *cnp, int flags)
 		rump_cred_put(cnp->cn_cred);
 
 	PNBUF_PUT(rcn->rcn_path);
-	kmem_free(cnp, sizeof(*cnp));
-}
-
-int
-rump_checksavecn(struct componentname *cnp)
-{
-
-	if ((cnp->cn_flags & SAVESTART) == 0) {
-		return 0;
-	} else {
-		return 1;
-	}
+	kmem_free(rcn, sizeof(*rcn));
 }
 
 /* hey baby, what's your namei? */
