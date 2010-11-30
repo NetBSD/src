@@ -1,4 +1,4 @@
-#	$NetBSD: t_md.sh,v 1.1 2010/11/23 15:38:54 pooka Exp $
+#	$NetBSD: t_md.sh,v 1.2 2010/11/30 14:29:05 pooka Exp $
 #
 # Copyright (c) 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -35,12 +35,13 @@ basic()
 basic_body()
 {
 
-	RUMPSOCK=unix://commsock
-	env RUMP_SP_SERVER=${RUMPSOCK} $(atf_get_srcdir)/h_mdserv &
+	# Scope out raw part.  This is actually the *host* raw partition,
+	# but just let it slide for now, since they *should* be the same.
+	rawpart=`sysctl -n kern.rawpartition | tr '01234' 'abcde'`
 
-	sleep 1 # XXX: wait for server to start
+	atf_check -s exit:0 $(atf_get_srcdir)/h_mdserv /dev/rmd0${rawpart}
 
-	export RUMP_SP_CLIENT=${RUMPSOCK}
+	export RUMP_SERVER=unix://commsock
 	atf_check -s exit:0 -e ignore dd if=/bin/ls rof=/dev/rmd0d seek=100 count=10
 	atf_check -s exit:0 -e ignore dd of=testfile rif=/dev/rmd0d skip=100 count=10
 	atf_check -s exit:0 -e ignore -o file:testfile dd if=/bin/ls count=10
