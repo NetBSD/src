@@ -1,4 +1,4 @@
-/* $NetBSD: nilfs_vnops.c,v 1.8 2010/11/30 10:29:59 dholland Exp $ */
+/* $NetBSD: nilfs_vnops.c,v 1.9 2010/11/30 10:43:03 dholland Exp $ */
 
 /*
  * Copyright (c) 2008, 2009 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: nilfs_vnops.c,v 1.8 2010/11/30 10:29:59 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nilfs_vnops.c,v 1.9 2010/11/30 10:43:03 dholland Exp $");
 #endif /* not lint */
 
 
@@ -732,8 +732,6 @@ nilfs_lookup(void *v)
 			if (!error) {
 				error = VOP_ACCESS(dvp, VWRITE, cnp->cn_cred);
 				if (!error) {
-					/* keep the component name */
-					cnp->cn_flags |= SAVENAME;
 					error = EJUSTRETURN;
 				}
 			}

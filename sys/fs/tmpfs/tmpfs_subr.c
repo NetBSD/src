@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_subr.c,v 1.60 2010/11/30 10:30:00 dholland Exp $	*/
+/*	$NetBSD: tmpfs_subr.c,v 1.61 2010/11/30 10:43:04 dholland Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.60 2010/11/30 10:30:00 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.61 2010/11/30 10:43:04 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -457,7 +457,6 @@ tmpfs_alloc_file(struct vnode *dvp, struct vnode **vpp, struct vattr *vap,
 	struct tmpfs_node *parent;
 
 	KASSERT(VOP_ISLOCKED(dvp));
-	KASSERT(cnp->cn_flags & HASBUF);
 
 	tmp = VFS_TO_TMPFS(dvp->v_mount);
 	dnode = VP_TO_TMPFS_DIR(dvp);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_lookup.c,v 1.62 2010/06/24 13:03:18 hannken Exp $	*/
+/*	$NetBSD: ext2fs_lookup.c,v 1.63 2010/11/30 10:43:06 dholland Exp $	*/
 
 /*
  * Modified for NetBSD 1.2E
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_lookup.c,v 1.62 2010/06/24 13:03:18 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_lookup.c,v 1.63 2010/11/30 10:43:06 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -518,13 +518,10 @@ searchloop:
 		 * We return ni_vp == NULL to indicate that the entry
 		 * does not currently exist; we leave a pointer to
 		 * the (locked) directory inode in ndp->ni_dvp.
-		 * The pathname buffer is saved so that the name
-		 * can be obtained later.
 		 *
 		 * NB - if the directory is unlocked, then this
 		 * information cannot be used.
 		 */
-		cnp->cn_flags |= SAVENAME;
 		return (EJUSTRETURN);
 	}
 	/*
@@ -636,7 +633,6 @@ found:
 		if (error)
 			return (error);
 		*vpp = tdp;
-		cnp->cn_flags |= SAVENAME;
 		return (0);
 	}
 
@@ -756,10 +752,6 @@ ext2fs_direnter(struct inode *ip, struct vnode *dvp, struct componentname *cnp)
 	struct ufsmount *ump = VFSTOUFS(dvp->v_mount);
 	int dirblksiz = ump->um_dirblksiz;
 
-#ifdef DIAGNOSTIC
-	if ((cnp->cn_flags & SAVENAME) == 0)
-		panic("direnter: missing name");
-#endif
 	dp = VTOI(dvp);
 	newdir.e2d_ino = h2fs32(ip->i_number);
 	newdir.e2d_namlen = cnp->cn_namelen;

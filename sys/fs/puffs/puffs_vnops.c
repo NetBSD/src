@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.148 2010/11/30 10:29:59 dholland Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.149 2010/11/30 10:43:03 dholland Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.148 2010/11/30 10:29:59 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.149 2010/11/30 10:43:03 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -541,7 +541,6 @@ puffs_vnop_lookup(void *v)
 			} else if ((cnp->cn_flags & ISLASTCN)
 			    && (cnp->cn_nameiop == CREATE
 			      || cnp->cn_nameiop == RENAME)) {
-				cnp->cn_flags |= SAVENAME;
 				error = EJUSTRETURN;
 
 			/* save negative cache entry */
@@ -594,13 +593,6 @@ puffs_vnop_lookup(void *v)
 	if (lookup_msg->pvnr_cn.pkcn_consume)
 		cnp->cn_consume = MIN(lookup_msg->pvnr_cn.pkcn_consume,
 		    strlen(cnp->cn_nameptr) - cnp->cn_namelen);
-
-	/*
-	 * We need the name in remove and rmdir (well, rename too, but
-	 * SAVESTART takes care of that)
-	 */
-	if (cnp->cn_nameiop == DELETE)
-		cnp->cn_flags |= SAVENAME;
 
  out:
 	if (cnp->cn_flags & ISDOTDOT)
