@@ -1,4 +1,4 @@
-/*	$NetBSD: h_mdserv.c,v 1.2 2010/11/30 14:29:05 pooka Exp $	*/
+/*	$NetBSD: h_mdserv.c,v 1.3 2010/11/30 14:31:14 pooka Exp $	*/
 
 #include <sys/types.h>
 #include <sys/mman.h>
@@ -88,11 +88,11 @@ main(int argc, char *argv[])
 
 	/*
 	 * Now, configuring the md driver also causes our process
-	 * to start acting as the worker for the md.  Splitting is
+	 * to start acting as the worker for the md.  Splitting it
 	 * into two steps in the driver is not easy, since md is
 	 * supposed to be unconfigured when the process dies
 	 * (process may exit between calling ioctl1 and ioctl2).
-	 * So, start a probe thread which attempt to read the md
+	 * So, start a probe thread which attempts to read the md
 	 * and declares the md as configured when the read is
 	 * succesful.
 	 */
