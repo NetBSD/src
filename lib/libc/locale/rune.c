@@ -1,4 +1,4 @@
-/* $NetBSD: rune.c,v 1.40 2010/06/19 14:48:16 tnozaki Exp $ */
+/* $NetBSD: rune.c,v 1.41 2010/11/30 15:25:05 tnozaki Exp $ */
 
 /*-
  * Copyright (c)2010 Citrus Project,
@@ -107,14 +107,18 @@ _rune_init_priv(_RuneLocalePriv *rlp)
 
 static __inline void
 _rune_find_codeset(char *s, size_t n,
-    const char *var, size_t lenvar)
+    char *var, size_t *plenvar)
 {
+	size_t lenvar;
 	const char *endvar;
 
 #define _RUNE_CODESET_LEN (sizeof(_RUNE_CODESET)-1)
 
+	lenvar = *plenvar;
 	for (/**/; lenvar > _RUNE_CODESET_LEN; ++var, --lenvar) {
 		if (!memcmp(var, _RUNE_CODESET, _RUNE_CODESET_LEN)) {
+			*var = '\0';
+			*plenvar -= lenvar;
 			endvar = &var[_RUNE_CODESET_LEN];
 			while (n-- > 1 && lenvar-- > _RUNE_CODESET_LEN) {
 				if (*endvar == ' ' || *endvar == '\t')
@@ -226,7 +230,7 @@ do {									\
 	}
 
 	_rune_find_codeset(rlp->rlp_codeset, sizeof(rlp->rlp_codeset),
-	    (const char *)rl->rl_variable, rl->rl_variable_len);
+	    (char *)rl->rl_variable, &rl->rl_variable_len);
 
 	ret = _citrus_ctype_open(&rl->rl_citrus_ctype, frl->frl_encoding,
 	    rl->rl_variable, rl->rl_variable_len, _PRIVSIZE);
