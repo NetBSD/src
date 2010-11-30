@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.85 2010/11/03 22:34:23 dyoung Exp $	*/
+/*	$NetBSD: ucom.c,v 1.86 2010/11/30 15:26:22 bsh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.85 2010/11/03 22:34:23 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.86 2010/11/30 15:26:22 bsh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -596,7 +596,6 @@ ucomclose(dev_t dev, int flag, int mode, struct lwp *l)
 
 	s = spltty();
 	sc->sc_refcnt++;
-	CLR(tp->t_state, TS_BUSY);
 
 	(*tp->t_linesw->l_close)(tp, flag);
 	ttyclose(tp);
