@@ -1,4 +1,4 @@
-/*	$NetBSD: namei.src,v 1.15 2010/11/19 06:44:34 dholland Exp $	*/
+/*	$NetBSD: namei.src,v 1.16 2010/11/30 10:29:57 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1991, 1993
@@ -52,10 +52,17 @@
  * STRUCT NAMEIDATA IS DEAD, call pathbuf_destroy. Don't destroy the
  * pathbuf before you've finished using the nameidata, or mysterious
  * bad things may happen.
+ *
+ * pathbuf_assimilate is like pathbuf_create but assumes ownership of
+ * the string buffer passed in, which MUST BE of size PATH_MAX and
+ * have been allocated with PNBUF_GET(). This should only be used when
+ * absolutely necessary; e.g. nfsd uses it for loading paths from
+ * mbufs.
  */
 struct pathbuf;
 
 struct pathbuf *pathbuf_create(const char *path);
+struct pathbuf *pathbuf_assimilate(char *path);
 int pathbuf_copyin(const char *userpath, struct pathbuf **ret);
 void pathbuf_destroy(struct pathbuf *);
 
@@ -77,8 +84,7 @@ struct nameidata {
 	 * Arguments to namei/lookup.
 	 */
 	struct pathbuf *ni_pathbuf;	/* pathname container */
-	//const char *ni_dirp;		/* pathname pointer */
-	//enum	uio_seg ni_segflg;	/* location of pathname */
+	char *ni_pnbuf;			/* extra pathname buffer ref (XXX) */
 	/*
 	 * Arguments to lookup.
 	 */
@@ -111,7 +117,6 @@ struct nameidata {
 		/*
 		 * Shared between lookup and commit routines.
 		 */
-		char		*cn_pnbuf;	/* pathname buffer */
 		const char 	*cn_nameptr;	/* pointer to looked up name */
 		size_t		cn_namelen;	/* length of looked up comp */
 		u_long		cn_hash;	/* hash val of looked up name */

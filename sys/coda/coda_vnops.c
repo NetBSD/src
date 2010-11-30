@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_vnops.c,v 1.76 2010/07/20 17:26:03 christos Exp $	*/
+/*	$NetBSD: coda_vnops.c,v 1.77 2010/11/30 10:29:57 dholland Exp $	*/
 
 /*
  *
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.76 2010/07/20 17:26:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.77 2010/11/30 10:29:57 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -703,11 +703,11 @@ coda_abortop(void *v)
 	struct vnode *a_dvp;
 	struct componentname *a_cnp;
     } */ *ap = v;
+
+    (void)ap;
 /* upcall decl */
 /* locals */
 
-    if ((ap->a_cnp->cn_flags & (HASBUF | SAVESTART)) == HASBUF)
-	PNBUF_PUT(ap->a_cnp->cn_pnbuf);
     return (0);
 }
 
@@ -1137,10 +1137,6 @@ coda_create(void *v)
 	}
     }
 
-    /* Per vnodeops(9), free name except on success and SAVESTART. */
-    if (error || (cnp->cn_flags & SAVESTART) == 0) {
-	PNBUF_PUT(cnp->cn_pnbuf);
-    }
     return(error);
 }
 
@@ -1461,10 +1457,6 @@ coda_mkdir(void *v)
 	}
     }
 
-    /* Per vnodeops(9), free name except on success and SAVESTART. */
-    if (error || (cnp->cn_flags & SAVESTART) == 0) {
-	PNBUF_PUT(cnp->cn_pnbuf);
-    }
     return(error);
 }
 
@@ -1613,11 +1605,6 @@ coda_symlink(void *v)
  exit:
     /* unlock and deference parent */
     vput(dvp);
-
-    /* Per vnodeops(9), free name except on success and SAVESTART. */
-    if (error || (cnp->cn_flags & SAVESTART) == 0) {
-	PNBUF_PUT(cnp->cn_pnbuf);
-    }
 
     CODADEBUG(CODA_SYMLINK, myprintf(("in symlink result %d\n",error)); )
     return(error);
