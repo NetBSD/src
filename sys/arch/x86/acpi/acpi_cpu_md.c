@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_md.c,v 1.35 2010/11/30 04:31:00 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_md.c,v 1.36 2010/11/30 18:44:07 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.35 2010/11/30 04:31:00 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.36 2010/11/30 18:44:07 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -603,7 +603,11 @@ acpicpu_md_pstate_set(struct acpicpu_pstate *ps)
 	xc = xc_broadcast(0, (xcfunc_t)x86_msr_xcall, &msr, NULL);
 	xc_wait(xc);
 
-	if (acpicpu_pstate_status != false) {
+	/*
+	 * Due several problems, we bypass the
+	 * relatively expensive status check.
+	 */
+	if (acpicpu_pstate_status != true) {
 		DELAY(ps->ps_latency);
 		return 0;
 	}
