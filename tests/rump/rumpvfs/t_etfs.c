@@ -1,4 +1,4 @@
-/*	$NetBSD: t_etfs.c,v 1.8 2010/11/30 18:14:38 pooka Exp $	*/
+/*	$NetBSD: t_etfs.c,v 1.9 2010/11/30 18:19:47 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -279,9 +279,12 @@ ATF_TC_BODY(key, tc)
 
 	RL(rump_sys_open("/key//with/slashes", O_RDONLY));
 	RL(rump_sys_open("key//with/slashes", O_RDONLY));
-
 	ATF_REQUIRE_ERRNO(ENOENT,
 	    rump_sys_open("/key/with/slashes", O_RDONLY) == -1);
+
+	RL(rump_sys_mkdir("/a", 0777));
+	ATF_REQUIRE_ERRNO(ENOENT,
+	    rump_sys_open("/a/key//with/slashes", O_RDONLY) == -1);
 }
 
 ATF_TP_ADD_TCS(tp)
