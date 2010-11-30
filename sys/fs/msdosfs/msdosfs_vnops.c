@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.68 2010/07/22 18:08:11 njoly Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.69 2010/11/30 10:29:59 dholland Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.68 2010/07/22 18:08:11 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.69 2010/11/30 10:29:59 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -99,9 +99,7 @@ __KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.68 2010/07/22 18:08:11 njoly Exp
 
 /*
  * Create a regular file. On entry the directory to contain the file being
- * created is locked.  We must release before we return. We must also free
- * the pathname buffer pointed at by cnp->cn_pnbuf, always on error, or
- * only if the SAVESTART bit in cn_flags is clear on success.
+ * created is locked.  We must release before we return.
  */
 int
 msdosfs_create(void *v)
@@ -159,8 +157,6 @@ msdosfs_create(void *v)
 	DETIMES(&ndirent, NULL, NULL, NULL, pdep->de_pmp->pm_gmtoff);
 	if ((error = createde(&ndirent, pdep, &dep, cnp)) != 0)
 		goto bad;
-	if ((cnp->cn_flags & SAVESTART) == 0)
-		PNBUF_PUT(cnp->cn_pnbuf);
 	fstrans_done(ap->a_dvp->v_mount);
 	VN_KNOTE(ap->a_dvp, NOTE_WRITE);
 	vput(ap->a_dvp);
@@ -169,7 +165,6 @@ msdosfs_create(void *v)
 
 bad:
 	fstrans_done(ap->a_dvp->v_mount);
-	PNBUF_PUT(cnp->cn_pnbuf);
 	vput(ap->a_dvp);
 	return (error);
 }
@@ -1292,8 +1287,6 @@ msdosfs_mkdir(void *v)
 	ndirent.de_devvp = pdep->de_devvp;
 	if ((error = createde(&ndirent, pdep, &dep, cnp)) != 0)
 		goto bad;
-	if ((cnp->cn_flags & SAVESTART) == 0)
-		PNBUF_PUT(cnp->cn_pnbuf);
 	VN_KNOTE(ap->a_dvp, NOTE_WRITE | NOTE_LINK);
 	vput(ap->a_dvp);
 	*ap->a_vpp = DETOV(dep);
@@ -1303,7 +1296,6 @@ msdosfs_mkdir(void *v)
 bad:
 	clusterfree(pmp, newcluster, NULL);
 bad2:
-	PNBUF_PUT(cnp->cn_pnbuf);
 	vput(ap->a_dvp);
 	fstrans_done(ap->a_dvp->v_mount);
 	return (error);

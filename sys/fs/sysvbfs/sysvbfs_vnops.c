@@ -1,4 +1,4 @@
-/*	$NetBSD: sysvbfs_vnops.c,v 1.33 2010/07/17 00:13:42 njoly Exp $	*/
+/*	$NetBSD: sysvbfs_vnops.c,v 1.34 2010/11/30 10:30:00 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vnops.c,v 1.33 2010/07/17 00:13:42 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vnops.c,v 1.34 2010/11/30 10:30:00 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -167,9 +167,6 @@ sysvbfs_create(void *arg)
  unlock_exit:
 	/* unlock parent directory */
 	vput(a->a_dvp);	/* locked at sysvbfs_lookup(); */
-
-	if (err || (a->a_cnp->cn_flags & SAVESTART) == 0)
-		PNBUF_PUT(a->a_cnp->cn_pnbuf);
 
 	return err;
 }
@@ -484,9 +481,6 @@ sysvbfs_remove(void *arg)
 	if (err == 0) {
 		bnode->removed = 1;
 	}
-
-	if (err || (ap->a_cnp->cn_flags & SAVESTART) == 0)
-		PNBUF_PUT(ap->a_cnp->cn_pnbuf);
 
 	return err;
 }

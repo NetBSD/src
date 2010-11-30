@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vnops.c,v 1.73 2010/07/14 16:03:49 pooka Exp $	*/
+/*	$NetBSD: tmpfs_vnops.c,v 1.74 2010/11/30 10:30:00 dholland Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.73 2010/07/14 16:03:49 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.74 2010/11/30 10:30:00 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -728,10 +728,6 @@ out:
 		vrele(dvp);
 	else
 		vput(dvp);
-	if (cnp->cn_flags & HASBUF) {
-		PNBUF_PUT(cnp->cn_pnbuf);
-		cnp->cn_flags &= ~HASBUF;
-	}
 
 	return error;
 }
@@ -806,7 +802,6 @@ tmpfs_link(void *v)
 
 out:
 	VOP_UNLOCK(vp);
-	PNBUF_PUT(cnp->cn_pnbuf);
 	vput(dvp);
 
 	return error;
@@ -1121,7 +1116,6 @@ tmpfs_rmdir(void *v)
 	/* Release the nodes. */
 	vput(dvp);
 	vput(vp);
-	PNBUF_PUT(cnp->cn_pnbuf);
 
 	return error;
 }
