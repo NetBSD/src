@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_vfs.c,v 1.61 2010/11/30 10:48:27 dholland Exp $	*/
+/*	$NetBSD: rump_vfs.c,v 1.62 2010/11/30 15:39:27 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump_vfs.c,v 1.61 2010/11/30 10:48:27 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump_vfs.c,v 1.62 2010/11/30 15:39:27 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -174,19 +174,29 @@ rump_vfs_fini(void)
 	vfs_shutdown();
 }
 
+struct rumpcn {
+	struct componentname rcn_cn;
+	char *rcn_path;
+};
+
 struct componentname *
 rump_makecn(u_long nameiop, u_long flags, const char *name, size_t namelen,
 	kauth_cred_t creds, struct lwp *l)
 {
+	struct rumpcn *rcn;
 	struct componentname *cnp;
 	const char *cp = NULL;
 
-	cnp = kmem_zalloc(sizeof(struct componentname), KM_SLEEP);
+	rcn = kmem_zalloc(sizeof(*rcn), KM_SLEEP);
+	cnp = &rcn->rcn_cn;
+
+	rcn->rcn_path = PNBUF_GET();
+	strlcpy(rcn->rcn_path, name, MAXPATHLEN);
+	cnp->cn_nameptr = rcn->rcn_path;
 
 	cnp->cn_nameiop = nameiop;
 	cnp->cn_flags = flags;
 
-	cnp->cn_nameptr = name;
 	cnp->cn_namelen = namelen;
 	cnp->cn_hash = namei_hash(name, &cp);
 
@@ -198,10 +208,12 @@ rump_makecn(u_long nameiop, u_long flags, const char *name, size_t namelen,
 void
 rump_freecn(struct componentname *cnp, int flags)
 {
+	struct rumpcn *rcn = (void *)cnp;
 
 	if (flags & RUMPCN_FREECRED)
 		rump_cred_put(cnp->cn_cred);
 
+	PNBUF_PUT(rcn->rcn_path);
 	kmem_free(cnp, sizeof(*cnp));
 }
 
