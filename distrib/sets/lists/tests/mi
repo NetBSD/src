@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.163 2010/11/30 22:14:03 pooka Exp $
+# $NetBSD: mi,v 1.164 2010/11/30 23:18:25 riz Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1653,6 +1653,11 @@
 ./usr/tests/rump/rumpvfs/Atffile		tests-rump-tests	atf
 ./usr/tests/rump/rumpvfs/t_etfs		tests-rump-tests	atf
 ./usr/tests/rump/rumpvfs/t_p2kifs		tests-rump-tests	atf
+./usr/tests/sbin				tests-sbin-tests	atf
+./usr/tests/sbin/Atffile			tests-sbin-tests	atf
+./usr/tests/sbin/resize_ffs			tests-sbin-tests	atf
+./usr/tests/sbin/resize_ffs/Atffile		tests-sbin-tests	atf
+./usr/tests/sbin/resize_ffs/t_resize_ffs	tests-sbin-tests	atf
 ./usr/tests/sys				tests-sys-tests
 ./usr/tests/sys/Atffile			tests-sys-tests	atf
 ./usr/tests/sys/rc				tests-sys-tests
