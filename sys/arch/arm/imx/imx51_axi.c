@@ -1,4 +1,4 @@
-/*	$NetBSD: imx51_axi.c,v 1.1 2010/11/13 07:11:02 bsh Exp $	*/
+/*	$NetBSD: imx51_axi.c,v 1.2 2010/11/30 13:05:27 bsh Exp $	*/
 
 /*-
  * Copyright (c) 2010 SHIMIZU Ryo <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx51_axi.c,v 1.1 2010/11/13 07:11:02 bsh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx51_axi.c,v 1.2 2010/11/30 13:05:27 bsh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -101,9 +101,11 @@ axi_critical_search(device_t parent, struct cfdata *cf,
 	aa = aux;
 
 	if ((strcmp(cf->cf_name, "tzic") != 0) &&
-	    (strcmp(cf->cf_name, "imxuart") != 0))
+	    (strcmp(cf->cf_name, "imxuart") != 0) &&
+	    (strcmp(cf->cf_name, "imxgpio") != 0))
 		return 0;
 
+	aa->aa_name = cf->cf_name;
 	aa->aa_addr = cf->cf_loc[AXICF_ADDR];
 	aa->aa_size = cf->cf_loc[AXICF_SIZE];
 	aa->aa_irq = cf->cf_loc[AXICF_IRQ];
