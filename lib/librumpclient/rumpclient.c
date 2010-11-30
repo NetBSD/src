@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpclient.c,v 1.6 2010/11/29 16:08:03 pooka Exp $	*/
+/*      $NetBSD: rumpclient.c,v 1.7 2010/11/30 14:24:40 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -212,7 +212,7 @@ rumpclient_init()
 	unsigned idx;
 	int error, s;
 
-	if ((p = getenv("RUMP_SP_CLIENT")) == NULL) {
+	if ((p = getenv("RUMP_SERVER")) == NULL) {
 		errno = ENOENT;
 		return -1;
 	}
