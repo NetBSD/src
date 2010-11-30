@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_bio.c,v 1.70 2010/06/22 18:34:50 rmind Exp $	*/
+/*	$NetBSD: uvm_bio.c,v 1.71 2010/11/30 10:55:25 hannken Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.70 2010/06/22 18:34:50 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.71 2010/11/30 10:55:25 hannken Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_ubc.h"
@@ -645,6 +645,7 @@ ubc_release(void *va, int flags)
 			memset((char *)umapva + endoff, 0, zerolen);
 		}
 		umap->flags &= ~UMAP_PAGES_LOCKED;
+		mutex_enter(&uobj->vmobjlock);
 		mutex_enter(&uvm_pageqlock);
 		for (i = 0; i < npages; i++) {
 			rv = pmap_extract(pmap_kernel(),
@@ -658,7 +659,6 @@ ubc_release(void *va, int flags)
 		mutex_exit(&uvm_pageqlock);
 		pmap_kremove(umapva, ubc_winsize);
 		pmap_update(pmap_kernel());
-		mutex_enter(&uobj->vmobjlock);
 		uvm_page_unbusy(pgs, npages);
 		mutex_exit(&uobj->vmobjlock);
 		unmapped = true;
