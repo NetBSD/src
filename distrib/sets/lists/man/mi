@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1257 2010/11/30 20:50:28 jruoho Exp $
+# $NetBSD: mi,v 1.1258 2010/11/30 20:59:10 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1963,6 +1963,7 @@
 ./usr/share/man/cat7/c99.0			man-reference-catman	.cat
 ./usr/share/man/cat7/des_modes.0		man-reference-catman	crypto,.cat
 ./usr/share/man/cat7/environ.0			man-reference-catman	.cat
+./usr/share/man/cat7/glob.0			man-reference-catman	.cat
 ./usr/share/man/cat7/hier.0			man-reference-catman	.cat
 ./usr/share/man/cat7/hostname.0			man-reference-catman	.cat
 ./usr/share/man/cat7/intro.0			man-reference-catman	.cat
@@ -4574,6 +4575,7 @@
 ./usr/share/man/html7/c99.html			man-reference-htmlman	html
 ./usr/share/man/html7/des_modes.html		man-reference-htmlman	crypto,html
 ./usr/share/man/html7/environ.html		man-reference-htmlman	html
+./usr/share/man/html7/glob.html			man-reference-htmlman	html
 ./usr/share/man/html7/hier.html			man-reference-htmlman	html
 ./usr/share/man/html7/hostname.html		man-reference-htmlman	html
 ./usr/share/man/html7/intro.html		man-reference-htmlman	html
@@ -7161,6 +7163,7 @@
 ./usr/share/man/man7/c99.7			man-reference-man	.man
 ./usr/share/man/man7/des_modes.7		man-reference-man	crypto,.man
 ./usr/share/man/man7/environ.7			man-reference-man	.man
+./usr/share/man/man7/glob.7			man-reference-man	.man
 ./usr/share/man/man7/hier.7			man-reference-man	.man
 ./usr/share/man/man7/hostname.7			man-reference-man	.man
 ./usr/share/man/man7/intro.7			man-reference-man	.man
