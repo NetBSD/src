@@ -1,4 +1,4 @@
-.\"     $NetBSD: rump_etfs.3,v 1.1 2010/11/30 17:32:29 pooka Exp $
+.\"     $NetBSD: rump_etfs.3,v 1.2 2010/11/30 18:08:46 pooka Exp $
 .\"
 .\" Copyright (c) 2010 Antti Kantee.  All rights reserved.
 .\"
@@ -34,16 +34,16 @@ rump kernel (librump, \-lrump)
 .Sh SYNOPSIS
 .In rump/rump.h
 .Ft int
-.Fo etfs_register
+.Fo rump_pub_etfs_register
 .Fa "const char *key" "const char *hostpath" "enum rump_etfs_type ftype"
 .Fc
 .Ft int
-.Fo etfs_register_withsize
+.Fo rump_pub_etfs_register_withsize
 .Fa "const char *key" "const char *hostpath" "enum rump_etfs_type ftype"
 .Fa "uint64_t begin" "uint64_t end"
 .Fc
 .Ft int
-.Fn etfs_remove "const char *key"
+.Fn rump_pub_etfs_remove "const char *key"
 .Sh DESCRIPTION
 The rump ExtraTerrestrial File System
 .Nm ( )
@@ -101,21 +101,21 @@ a rump kernel to access an entire directory tree.
 .Pp
 The interfaces are:
 .Bl -tag -width xxxx
-.It Fn etfs_register "key" "hostpath" "ftype"
+.It Fn rump_pub_etfs_register "key" "hostpath" "ftype"
 Map
 .Fa key
 to a file of type
 .Fa ftype
 with the contents of
 .Fa hostpath .
-.It Fn etfs_register_withsize "key" "hostpath" "ftype" "begin" "size"
+.It Fn rump_pub_etfs_register_withsize "key" "hostpath" "ftype" "begin" "size"
 Like the above, but map only
 .Fa [ begin , begin+size ]
 from
 .Fa hostpath .
 This is useful when mapping disk images where only one partition is
 relevant to the application.
-.It Fn etfs_remove "key"
+.It Fn rump_pub_etfs_remove "key"
 Remove etfs mapping for
 .Fa key .
 This routine may be called only if the file related to the mapping
@@ -124,7 +124,7 @@ is not in use.
 Map a host image file to a mountable /dev/harddisk path using
 window offsets from the disklabel.
 .Bd -literal -offset indent
-rump_etfs_register_withsize("/dev/harddisk", "disk.img",
+rump_pub_etfs_register_withsize("/dev/harddisk", "disk.img",
     RUMP_ETFS_BLK,
     pp->p_offset << DEV_BSHIFT, pp->p_size << DEV_BSHIFT);
 .Ed
@@ -132,7 +132,7 @@ rump_etfs_register_withsize("/dev/harddisk", "disk.img",
 Make the host kernel module directory hierarchy available within the
 rump kernel.
 .Bd -literal -offset indent
-rump_etfs_register("/stand/i386/5.99.41",
+rump_pub_etfs_register("/stand/i386/5.99.41",
     "/stand/i386/5.99.41", RUMP_ETFS_DIR_SUBDIRS);
 .Ed
 .Sh SEE ALSO
