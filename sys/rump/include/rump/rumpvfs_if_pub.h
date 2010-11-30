@@ -1,8 +1,8 @@
-/*	$NetBSD: rumpvfs_if_pub.h,v 1.8 2010/09/07 17:14:18 pooka Exp $	*/
+/*	$NetBSD: rumpvfs_if_pub.h,v 1.9 2010/11/30 16:27:30 pooka Exp $	*/
 
 /*
  * Automatically generated.  DO NOT EDIT.
- * from: NetBSD: rumpvfs.ifspec,v 1.6 2010/09/07 17:13:03 pooka Exp 
+ * from: NetBSD: rumpvfs.ifspec,v 1.7 2010/11/30 15:41:35 pooka Exp 
  * by:   NetBSD: makerumpif.sh,v 1.5 2010/09/01 19:32:11 pooka Exp 
  */
 
@@ -22,7 +22,6 @@ int rump_pub_etfs_register(const char *, const char *, enum rump_etfs_type);
 int rump_pub_etfs_register_withsize(const char *, const char *, enum rump_etfs_type, uint64_t, uint64_t);
 int rump_pub_etfs_remove(const char *);
 void rump_pub_freecn(struct componentname *, int);
-int rump_pub_checksavecn(struct componentname *);
 int rump_pub_namei(uint32_t, uint32_t, const char *, struct vnode **, struct vnode **, struct componentname **);
 struct componentname * rump_pub_makecn(u_long, u_long, const char *, size_t, struct kauth_cred *, struct lwp *);
 int rump_pub_vfs_unmount(struct mount *, int);
