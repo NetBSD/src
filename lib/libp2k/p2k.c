@@ -1,4 +1,4 @@
-/*	$NetBSD: p2k.c,v 1.46 2010/11/30 10:49:22 dholland Exp $	*/
+/*	$NetBSD: p2k.c,v 1.47 2010/11/30 15:42:11 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2009  Antti Kantee.  All Rights Reserved.
@@ -84,7 +84,6 @@ struct p2k_mount {
 
 struct p2k_node {
 	struct vnode *p2n_vp;
-	struct componentname *p2n_cn;
 
 	/*
 	 * Ok, then, uhm, we need .. *drumroll*.. two componentname
@@ -134,21 +133,21 @@ cred_destroy(struct kauth_cred *cred)
 }
 
 static struct componentname *
-makecn(const struct puffs_cn *pcn, int myflags)
+makecn(const struct puffs_cn *pcn)
 {
 	struct kauth_cred *cred;
 
 	cred = cred_create(pcn->pcn_cred);
 	/* LINTED: prehistoric types in first two args */
-	return rump_pub_makecn(pcn->pcn_nameiop, pcn->pcn_flags | myflags,
+	return rump_pub_makecn(pcn->pcn_nameiop, pcn->pcn_flags,
 	    pcn->pcn_name, pcn->pcn_namelen, cred, rump_pub_lwproc_curlwp());
 }
 
 static __inline void
-freecn(struct componentname *cnp, int flags)
+freecn(struct componentname *cnp)
 {
 
-	rump_pub_freecn(cnp, flags | RUMPCN_FREECRED);
+	rump_pub_freecn(cnp, RUMPCN_FREECRED);
 }
 
 static void
@@ -218,7 +217,6 @@ freep2n(struct p2k_node *p2n)
 {
 
 	assert(p2n->p2n_vp == NULL);
-	assert(p2n->p2n_cn == NULL);
 	LIST_REMOVE(p2n, p2n_entries);
 	free(p2n);
 }
@@ -675,48 +673,42 @@ p2k_node_lookup(struct puffs_usermount *pu, puffs_cookie_t opc,
 	uint64_t rdev; /* XXX: uint64_t because of stack overwrite in compat */
 	int rv;
 
-	cn = makecn(pcn, 0);
+	cn = makecn(pcn);
 	RUMP_VOP_LOCK(dvp, LK_EXCLUSIVE);
 	rv = RUMP_VOP_LOOKUP(dvp, &vp, cn);
 	RUMP_VOP_UNLOCK(dvp);
-	if (rump_pub_checksavecn(cn)) {
-		/*
-		 * XXX the rename lookup protocol is currently horribly
-		 * broken.  We get 1) DELETE with SAVESTART 2) DELETE
-		 * without SAVESTART 3) RENAME.  Hold on to this like
-		 * it were the absolute truth for now.  However, do
-		 * not sprinkle asserts based on this due to abovementioned
-		 * brokenness -- some file system drivers might not
-		 * even issue ABORT properly, so just free resources
-		 * on the fly and hope for the best.  PR kern/42348
-		 */
-		if (pcn->pcn_flags & RUMP_NAMEI_INRENAME) {
-			if (pcn->pcn_nameiop == RUMP_NAMEI_DELETE) {
-				/* save path from the first lookup */
-				if (pcn->pcn_flags & RUMP_NAMEI_SAVESTART) {
-					if (p2n_dir->p2n_cn_ren_src)
-						freecn(p2n_dir->p2n_cn_ren_src,
-						    0);
-					p2n_dir->p2n_cn_ren_src = cn;
-				} else {
-					freecn(cn, 0);
-					cn = NULL;
-				}
+
+	/*
+	 * XXX the rename lookup protocol is currently horribly
+	 * broken.  We get 1) DELETE with SAVESTART 2) DELETE
+	 * without SAVESTART 3) RENAME.  Hold on to this like
+	 * it were the absolute truth for now.  However, do
+	 * not sprinkle asserts based on this due to abovementioned
+	 * brokenness -- some file system drivers might not
+	 * even issue ABORT properly, so just free resources
+	 * on the fly and hope for the best.  PR kern/42348
+	 */
+	if (pcn->pcn_flags & RUMP_NAMEI_INRENAME) {
+		if (pcn->pcn_nameiop == RUMP_NAMEI_DELETE) {
+			/* save path from the first lookup */
+			if (pcn->pcn_flags & RUMP_NAMEI_SAVESTART) {
+				if (p2n_dir->p2n_cn_ren_src)
+					freecn(p2n_dir->p2n_cn_ren_src);
+				p2n_dir->p2n_cn_ren_src = cn;
 			} else {
-				assert(pcn->pcn_nameiop == RUMP_NAMEI_RENAME);
-				if (p2n_dir->p2n_cn_ren_targ)
-					freecn(p2n_dir->p2n_cn_ren_targ,
-					    0);
-				p2n_dir->p2n_cn_ren_targ = cn;
+				freecn(cn);
+				cn = NULL;
 			}
 		} else {
-			assert(p2n_dir->p2n_cn == NULL);
-			p2n_dir->p2n_cn = cn;
+			assert(pcn->pcn_nameiop == RUMP_NAMEI_RENAME);
+			if (p2n_dir->p2n_cn_ren_targ)
+				freecn(p2n_dir->p2n_cn_ren_targ);
+			p2n_dir->p2n_cn_ren_targ = cn;
 		}
 	} else {
-		freecn(cn, 0);
-		cn = NULL;
+		freecn(cn);
 	}
+
 	if (rv) {
 		if (rv == EJUSTRETURN) {
 			rv = ENOENT;
@@ -733,11 +725,9 @@ p2k_node_lookup(struct puffs_usermount *pu, puffs_cookie_t opc,
 			} else {
 				p2n_dir->p2n_cn_ren_targ = NULL;
 			}
-		} else {
-			p2n_dir->p2n_cn = NULL;
+
+			RUMP_VOP_ABORTOP(dvp, cn);
 		}
-		/* XXX: what in the world should happen with SAVESTART? */
-		RUMP_VOP_ABORTOP(dvp, cn);
 		return ENOMEM;
 	}
 
@@ -799,13 +789,7 @@ do_makenode(struct puffs_usermount *pu, struct p2k_node *p2n_dir,
 		return ENOMEM;
 	DOCOMPAT(vap, va_x);
 
-	if (p2n_dir->p2n_cn) {
-		cn = p2n_dir->p2n_cn;
-		p2n_dir->p2n_cn = NULL;
-	} else {
-		cn = makecn(pcn, 0);
-	}
-
+	cn = makecn(pcn);
 	RUMP_VOP_LOCK(dvp, LK_EXCLUSIVE);
 	rump_pub_vp_incref(dvp);
 	if (makefn) {
@@ -814,7 +798,7 @@ do_makenode(struct puffs_usermount *pu, struct p2k_node *p2n_dir,
 		rv = symfn(dvp, &vp, cn, va_x, link_target);
 	}
 	assert(RUMP_VOP_ISLOCKED(dvp) == 0);
-	freecn(cn, 0);
+	freecn(cn);
 
 	if (rv == 0) {
 		RUMP_VOP_UNLOCK(vp);
@@ -1027,16 +1011,12 @@ p2k_node_abortop(struct puffs_usermount *pu, puffs_cookie_t opc,
 	struct p2k_node *p2n_dir = opc;
 	struct componentname *cnp;
 
-	if ((cnp = p2n_dir->p2n_cn) != NULL) {
-		freecn(cnp, 0);
-		p2n_dir->p2n_cn = NULL;
-	}
 	if ((cnp = p2n_dir->p2n_cn_ren_src) != NULL) {
-		freecn(cnp, 0);
+		freecn(cnp);
 		p2n_dir->p2n_cn_ren_src = NULL;
 	}
 	if ((cnp = p2n_dir->p2n_cn_ren_targ) != NULL) {
-		freecn(cnp, 0);
+		freecn(cnp);
 		p2n_dir->p2n_cn_ren_targ = NULL;
 	}
 
@@ -1052,13 +1032,7 @@ do_nukenode(struct p2k_node *p2n_dir, struct p2k_node *p2n,
 	struct componentname *cn;
 	int rv;
 
-	if (p2n_dir->p2n_cn) {
-		cn = p2n_dir->p2n_cn;
-		p2n_dir->p2n_cn = NULL;
-	} else {
-		cn = makecn(pcn, 0);
-	}
-
+	cn = makecn(pcn);
 	RUMP_VOP_LOCK(dvp, LK_EXCLUSIVE);
 	rump_pub_vp_incref(dvp);
 	RUMP_VOP_LOCK(vp, LK_EXCLUSIVE);
@@ -1066,7 +1040,7 @@ do_nukenode(struct p2k_node *p2n_dir, struct p2k_node *p2n,
 	rv = nukefn(dvp, vp, cn);
 	assert(RUMP_VOP_ISLOCKED(dvp) == 0);
 	assert(RUMP_VOP_ISLOCKED(vp) == 0);
-	freecn(cn, 0);
+	freecn(cn);
 
 	return rv;
 
@@ -1087,21 +1061,14 @@ p2k_node_link(struct puffs_usermount *pu, puffs_cookie_t opc,
 	puffs_cookie_t targ, const struct puffs_cn *pcn)
 {
 	struct vnode *dvp = OPC2VP(opc);
-	struct p2k_node *p2n_dir = opc;
 	struct componentname *cn;
 	int rv;
 
-	if (p2n_dir->p2n_cn) {
-		cn = p2n_dir->p2n_cn;
-		p2n_dir->p2n_cn = NULL;
-	} else {
-		cn = makecn(pcn, 0);
-	}
-
+	cn = makecn(pcn);
 	RUMP_VOP_LOCK(dvp, LK_EXCLUSIVE);
 	rump_pub_vp_incref(dvp);
 	rv = RUMP_VOP_LINK(dvp, OPC2VP(targ), cn);
-	freecn(cn, 0);
+	freecn(cn);
 
 	return rv;
 }
@@ -1123,14 +1090,14 @@ p2k_node_rename(struct puffs_usermount *pu,
 		cn_src = p2n_srcdir->p2n_cn_ren_src;
 		p2n_srcdir->p2n_cn_ren_src = NULL;
 	} else {
-		cn_src = makecn(pcn_src, 0);
+		cn_src = makecn(pcn_src);
 	}
 
 	if (p2n_targdir->p2n_cn_ren_targ) {
 		cn_targ = p2n_targdir->p2n_cn_ren_targ;
 		p2n_targdir->p2n_cn_ren_targ = NULL;
 	} else {
-		cn_targ = makecn(pcn_targ, 0);
+		cn_targ = makecn(pcn_targ);
 	}
 
 	dvp = OPC2VP(src_dir);
@@ -1153,8 +1120,8 @@ p2k_node_rename(struct puffs_usermount *pu,
 	if (tvp) {
 		assert(RUMP_VOP_ISLOCKED(tvp) == 0);
 	}
-	freecn(cn_src, 0);
-	freecn(cn_targ, 0);
+	freecn(cn_src);
+	freecn(cn_targ);
 
 	return rv;
 }
