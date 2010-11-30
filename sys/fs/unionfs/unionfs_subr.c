@@ -310,7 +310,7 @@ unionfs_relookup(struct vnode *dvp, struct vnode **vpp,
 	pnbuf[pathlen] = '\0';
 
 	cn->cn_nameiop = nameiop;
-	cn->cn_flags = (LOCKPARENT | LOCKLEAF | HASBUF | SAVENAME | ISLASTCN);
+	cn->cn_flags = (LOCKPARENT | LOCKLEAF | ISLASTCN);
 	cn->cn_cred = cnp->cn_cred;
 
 	cn->cn_nameptr = pnbuf;
@@ -327,7 +327,6 @@ unionfs_relookup(struct vnode *dvp, struct vnode **vpp,
 	if ((error = relookup(dvp, vpp, cn))) {
 		PNBUF_PUT(pnbuf);
 		*pnbuf_ret = NULL;
-		cn->cn_flags &= ~HASBUF;
 		vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY);
 	} else {
 		*pnbuf_ret = pnbuf;
@@ -626,7 +625,7 @@ unionfs_vn_create_on_upper(struct vnode **vpp, struct vnode *udvp,
 	pnbuf = PNBUF_GET();
 	memcpy(pnbuf, unp->un_path, cn.cn_namelen + 1);
 	cn.cn_nameiop = CREATE;
-	cn.cn_flags = (LOCKPARENT | LOCKLEAF | HASBUF | SAVENAME | ISLASTCN);
+	cn.cn_flags = (LOCKPARENT | LOCKLEAF | ISLASTCN);
 	cn.cn_cred = cred;
 	cn.cn_nameptr = pnbuf;
 	cn.cn_consume = 0;
@@ -861,7 +860,7 @@ unionfs_check_rmdir(struct vnode *vp, kauth_cred_t cred)
 			cn.cn_namelen = dp->d_namlen;
 			cn.cn_nameptr = dp->d_name;
 			cn.cn_nameiop = LOOKUP;
-			cn.cn_flags = (LOCKPARENT | LOCKLEAF | SAVENAME | RDONLY | ISLASTCN);
+			cn.cn_flags = (LOCKPARENT | LOCKLEAF | RDONLY | ISLASTCN);
 			cn.cn_cred = cred;
 			cn.cn_consume = 0;
 
@@ -882,7 +881,7 @@ unionfs_check_rmdir(struct vnode *vp, kauth_cred_t cred)
 			 * If it has no exist/whiteout entry in upper,
 			 * directory is not empty.
 			 */
-			cn.cn_flags = (LOCKPARENT | LOCKLEAF | SAVENAME | RDONLY | ISLASTCN);
+			cn.cn_flags = (LOCKPARENT | LOCKLEAF | RDONLY | ISLASTCN);
 			lookuperr = VOP_LOOKUP(uvp, &tvp, &cn);
 
 			if (!lookuperr)

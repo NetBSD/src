@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vnops.c,v 1.95 2010/11/30 10:30:03 dholland Exp $	*/
+/*	$NetBSD: ext2fs_vnops.c,v 1.96 2010/11/30 10:43:06 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.95 2010/11/30 10:30:03 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.96 2010/11/30 10:43:06 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -568,10 +568,6 @@ ext2fs_link(void *v)
 	struct inode *ip;
 	int error;
 
-#ifdef DIAGNOSTIC
-	if ((cnp->cn_flags & HASBUF) == 0)
-		panic("ext2fs_link: no name");
-#endif
 	if (vp->v_type == VDIR) {
 		VOP_ABORTOP(dvp, cnp);
 		error = EISDIR;
@@ -663,11 +659,6 @@ ext2fs_rename(void *v)
 	int error = 0;
 	u_char namlen;
 
-#ifdef DIAGNOSTIC
-	if ((tcnp->cn_flags & HASBUF) == 0 ||
-	    (fcnp->cn_flags & HASBUF) == 0)
-		panic("ext2fs_rename: no name");
-#endif
 	/*
 	 * Check for cross-device rename.
 	 */
@@ -1060,10 +1051,6 @@ ext2fs_mkdir(void *v)
 	struct ext2fs_dirtemplate dirtemplate;
 	int			error, dmode;
 
-#ifdef DIAGNOSTIC
-	if ((cnp->cn_flags & HASBUF) == 0)
-		panic("ext2fs_mkdir: no name");
-#endif
 	if ((nlink_t)dp->i_e2fs_nlink >= LINK_MAX) {
 		error = EMLINK;
 		goto out;
@@ -1425,10 +1412,6 @@ ext2fs_makeinode(int mode, struct vnode *dvp, struct vnode **vpp,
 	int error, ismember = 0;
 
 	pdir = VTOI(dvp);
-#ifdef DIAGNOSTIC
-	if ((cnp->cn_flags & HASBUF) == 0)
-		panic("ext2fs_makeinode: no name");
-#endif
 	*vpp = NULL;
 	if ((mode & IFMT) == 0)
 		mode |= IFREG;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.184 2010/11/30 10:30:04 dholland Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.185 2010/11/30 10:43:06 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.184 2010/11/30 10:30:04 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.185 2010/11/30 10:43:06 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -804,10 +804,7 @@ ufs_link(void *v)
 	dvp = ap->a_dvp;
 	vp = ap->a_vp;
 	cnp = ap->a_cnp;
-#ifdef DIAGNOSTIC
-	if ((cnp->cn_flags & HASBUF) == 0)
-		panic("ufs_link: no name");
-#endif
+
 	fstrans_start(dvp->v_mount, FSTRANS_SHARED);
 	if (vp->v_type == VDIR) {
 		VOP_ABORTOP(dvp, cnp);
@@ -896,8 +893,6 @@ ufs_whiteout(void *v)
 		/* create a new directory whiteout */
 		fstrans_start(dvp->v_mount, FSTRANS_SHARED);
 #ifdef DIAGNOSTIC
-		if ((cnp->cn_flags & SAVENAME) == 0)
-			panic("ufs_whiteout: missing name");
 		if (ump->um_maxsymlinklen <= 0)
 			panic("ufs_whiteout: old format filesystem");
 #endif
@@ -988,11 +983,6 @@ ufs_rename(void *v)
 	fcnp = ap->a_fcnp;
 	doingdirectory = oldparent = newparent = error = 0;
 
-#ifdef DIAGNOSTIC
-	if ((tcnp->cn_flags & HASBUF) == 0 ||
-	    (fcnp->cn_flags & HASBUF) == 0)
-		panic("ufs_rename: no name");
-#endif
 	/*
 	 * Check for cross-device rename.
 	 */
@@ -1366,10 +1356,6 @@ ufs_mkdir(void *v)
 
 	fstrans_start(dvp->v_mount, FSTRANS_SHARED);
 
-#ifdef DIAGNOSTIC
-	if ((cnp->cn_flags & HASBUF) == 0)
-		panic("ufs_mkdir: no name");
-#endif
 	if ((nlink_t)dp->i_nlink >= LINK_MAX) {
 		error = EMLINK;
 		goto out;
@@ -2177,10 +2163,7 @@ ufs_makeinode(int mode, struct vnode *dvp, struct vnode **vpp,
 	UFS_WAPBL_JUNLOCK_ASSERT(dvp->v_mount);
 
 	pdir = VTOI(dvp);
-#ifdef DIAGNOSTIC
-	if ((cnp->cn_flags & HASBUF) == 0)
-		panic("ufs_makeinode: no name");
-#endif
+
 	if ((mode & IFMT) == 0)
 		mode |= IFREG;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_vnops.c,v 1.77 2010/11/30 10:29:57 dholland Exp $	*/
+/*	$NetBSD: coda_vnops.c,v 1.78 2010/11/30 10:43:01 dholland Exp $	*/
 
 /*
  *
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.77 2010/11/30 10:29:57 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.78 2010/11/30 10:43:01 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -997,21 +997,7 @@ coda_lookup(void *v)
 	&& (error == ENOENT))
     {
 	error = EJUSTRETURN;
-	cnp->cn_flags |= SAVENAME;
 	*ap->a_vpp = NULL;
-    }
-
-    /*
-     * If we are removing, and we are at the last element, and we
-     * found it, then we need to keep the name around so that the
-     * removal will go ahead as planned.
-     * XXX Check against new lookup rules.
-     */
-    if ((cnp->cn_nameiop == DELETE)
-	&& (cnp->cn_flags & ISLASTCN)
-	&& !error)
-    {
-	cnp->cn_flags |= SAVENAME;
     }
 
     /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.302 2010/11/30 10:30:02 dholland Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.303 2010/11/30 10:43:05 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.302 2010/11/30 10:30:02 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.303 2010/11/30 10:43:05 dholland Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_modular.h"
@@ -285,7 +285,7 @@ check_exec(struct lwp *l, struct exec_package *epp, struct pathbuf *pb)
 	struct nameidata nd;
 	size_t		resid;
 
-	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF | SAVENAME | TRYEMULROOT, pb);
+	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF | TRYEMULROOT, pb);
 
 	/* first get the vnode */
 	if ((error = namei(&nd)) != 0)

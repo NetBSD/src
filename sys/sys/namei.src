@@ -1,4 +1,4 @@
-/*	$NetBSD: namei.src,v 1.16 2010/11/30 10:29:57 dholland Exp $	*/
+/*	$NetBSD: namei.src,v 1.17 2010/11/30 10:43:01 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1991, 1993
@@ -150,21 +150,13 @@ NAMEIFL	MODMASK		0x010000fc	/* mask of operational modifiers */
 /*
  * Namei parameter descriptors.
  *
- * SAVENAME may be set by either the callers of namei or by VOP_LOOKUP.
- * If the caller of namei sets the flag (for example execve wants to
- * know the name of the program that is being executed), then it must
- * free the buffer. If VOP_LOOKUP sets the flag, then the buffer must
- * be freed by either the commit routine or the VOP_ABORT routine.
- * SAVESTART is set only by the callers of namei. It implies SAVENAME
- * plus the addition of saving the parent directory that contains the
- * name in ni_startdir. It allows repeated calls to lookup for the
- * name being sought. The caller is responsible for releasing the
- * buffer and for vrele'ing ni_startdir.
+ * SAVESTART is set only by the callers of namei. It implies saving
+ * the parent directory that contains the name in ni_startdir. It
+ * allows repeated calls to lookup for the name being sought. The
+ * caller is responsible for vrele'ing ni_startdir.
  */
 NAMEIFL	NOCROSSMOUNT	0x0000100	/* do not cross mount points */
 NAMEIFL	RDONLY		0x0000200	/* lookup with read-only semantics */
-NAMEIFL	HASBUF		0x0000400	/* has allocated pathname buffer */
-NAMEIFL	SAVENAME	0x0000800	/* save pathname buffer */
 NAMEIFL	SAVESTART	0x0001000	/* save starting directory */
 NAMEIFL	ISDOTDOT	0x0002000	/* current component name is .. */
 NAMEIFL	MAKEENTRY	0x0004000	/* entry is to be added to name cache */

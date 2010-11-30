@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vnops.c,v 1.76 2010/11/30 10:30:00 dholland Exp $	*/
+/*	$NetBSD: smbfs_vnops.c,v 1.77 2010/11/30 10:43:03 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_vnops.c,v 1.76 2010/11/30 10:30:00 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_vnops.c,v 1.77 2010/11/30 10:43:03 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1237,9 +1237,6 @@ smbfs_lookup(void *v)
 			&& vattr.va_ctime.tv_sec == VTOSMB(newvp)->n_ctime)
 		{
 			/* nfsstats.lookupcache_hits++; */
-			if (cnp->cn_nameiop != LOOKUP && islastcn)
-				cnp->cn_flags |= SAVENAME;
-
 			return (0);
 		}
 
@@ -1292,7 +1289,6 @@ smbfs_lookup(void *v)
 			if (error)
 				return (error);
 
-			cnp->cn_flags |= SAVENAME;
 			return (EJUSTRETURN);
 		}
 
@@ -1322,7 +1318,6 @@ smbfs_lookup(void *v)
 			vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY);
 		if (error)
 			return (error);
-		cnp->cn_flags |= SAVENAME;
 		return (0);
 	}
 
@@ -1352,9 +1347,6 @@ smbfs_lookup(void *v)
 		if (error)
 			return error;
 	}
-
-	if (cnp->cn_nameiop != LOOKUP && (flags & ISLASTCN))
-		cnp->cn_flags |= SAVENAME;
 
 	if ((cnp->cn_flags & MAKEENTRY)) {
 		KASSERT(error == 0);

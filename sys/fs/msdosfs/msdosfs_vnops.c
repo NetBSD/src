@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.69 2010/11/30 10:29:59 dholland Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.70 2010/11/30 10:43:03 dholland Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.69 2010/11/30 10:29:59 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.70 2010/11/30 10:43:03 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -138,10 +138,6 @@ msdosfs_create(void *v)
 	 * use the absence of the owner write bit to make the file
 	 * readonly.
 	 */
-#ifdef DIAGNOSTIC
-	if ((cnp->cn_flags & HASBUF) == 0)
-		panic("msdosfs_create: no name");
-#endif
 	memset(&ndirent, 0, sizeof(ndirent));
 	if ((error = uniqdosname(pdep, cnp, ndirent.de_Name)) != 0)
 		goto bad;
@@ -837,11 +833,6 @@ msdosfs_rename(void *v)
 
 	pmp = VFSTOMSDOSFS(fdvp->v_mount);
 
-#ifdef DIAGNOSTIC
-	if ((tcnp->cn_flags & HASBUF) == 0 ||
-	    (fcnp->cn_flags & HASBUF) == 0)
-		panic("msdosfs_rename: no name");
-#endif
 	/*
 	 * Check for cross-device rename.
 	 */
@@ -1273,10 +1264,6 @@ msdosfs_mkdir(void *v)
 	 * cluster.  This will be written to an empty slot in the parent
 	 * directory.
 	 */
-#ifdef DIAGNOSTIC
-	if ((cnp->cn_flags & HASBUF) == 0)
-		panic("msdosfs_mkdir: no name");
-#endif
 	if ((error = uniqdosname(pdep, cnp, ndirent.de_Name)) != 0)
 		goto bad;
 

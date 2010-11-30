@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vnops.c,v 1.74 2010/11/30 10:30:00 dholland Exp $	*/
+/*	$NetBSD: tmpfs_vnops.c,v 1.75 2010/11/30 10:43:04 dholland Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.74 2010/11/30 10:30:00 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.75 2010/11/30 10:43:04 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -203,8 +203,6 @@ tmpfs_lookup(void *v)
 			if (error) {
 				goto out;
 			}
-			/* Keep the component name for future uses. */
-			cnp->cn_flags |= SAVENAME;
 			error = EJUSTRETURN;
 		} else {
 			error = ENOENT;
@@ -252,7 +250,6 @@ tmpfs_lookup(void *v)
 			if (error) {
 				goto out;
 			}
-			cnp->cn_flags |= SAVENAME;
 		}
 		/* Allocate a new vnode on the matching entry. */
 		error = tmpfs_alloc_vp(dvp->v_mount, tnode, vpp);
@@ -747,7 +744,6 @@ tmpfs_link(void *v)
 	struct tmpfs_node *node;
 
 	KASSERT(VOP_ISLOCKED(dvp));
-	KASSERT(cnp->cn_flags & HASBUF);
 	KASSERT(dvp != vp); /* XXX When can this be false? */
 
 	dnode = VP_TO_TMPFS_DIR(dvp);
@@ -841,8 +837,6 @@ tmpfs_rename(void *v)
 
 	KASSERT(VOP_ISLOCKED(tdvp));
 	KASSERT(IMPLIES(tvp != NULL, VOP_ISLOCKED(tvp) == LK_EXCLUSIVE));
-	KASSERT(fcnp->cn_flags & HASBUF);
-	KASSERT(tcnp->cn_flags & HASBUF);
 
 	newname = NULL;
 	namelen = 0;

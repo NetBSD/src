@@ -1,4 +1,4 @@
-/*  $NetBSD: ufs_wapbl.c,v 1.10 2010/06/24 13:03:20 hannken Exp $ */
+/*  $NetBSD: ufs_wapbl.c,v 1.11 2010/11/30 10:43:06 dholland Exp $ */
 
 /*-
  * Copyright (c) 2003,2006,2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_wapbl.c,v 1.10 2010/06/24 13:03:20 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_wapbl.c,v 1.11 2010/11/30 10:43:06 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -178,11 +178,6 @@ wapbl_ufs_rename(void *v)
 	fcnp = ap->a_fcnp;
 	doingdirectory = oldparent = newparent = error = 0;
 
-#ifdef DIAGNOSTIC
-	if ((tcnp->cn_flags & HASBUF) == 0 ||
-	    (fcnp->cn_flags & HASBUF) == 0)
-		panic("ufs_rename: no name");
-#endif
 	/*
 	 * Check for cross-device rename.
 	 */

@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.184 2010/11/30 10:30:02 dholland Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.185 2010/11/30 10:43:05 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.184 2010/11/30 10:30:02 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.185 2010/11/30 10:43:05 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -188,7 +188,7 @@ genfs_eopnotsupp(void *v)
 	KASSERT(desc->vdesc_offset != VOP_ABORTOP_DESCOFFSET);
 
 	/*
-	 * Free componentname that lookup potentially SAVENAMEd.
+	 * Abort any componentname that lookup potentially left state in.
 	 *
 	 * As is logical, componentnames for VOP_RENAME are handled by
 	 * the caller of VOP_RENAME.  Yay, rename!

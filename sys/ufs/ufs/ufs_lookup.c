@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_lookup.c,v 1.105 2010/06/24 13:03:20 hannken Exp $	*/
+/*	$NetBSD: ufs_lookup.c,v 1.106 2010/11/30 10:43:06 dholland Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.105 2010/06/24 13:03:20 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.106 2010/11/30 10:43:06 dholland Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ffs.h"
@@ -465,13 +465,10 @@ notfound:
 		 * We return ni_vp == NULL to indicate that the entry
 		 * does not currently exist; we leave a pointer to
 		 * the (locked) directory inode in ndp->ni_dvp.
-		 * The pathname buffer is saved so that the name
-		 * can be obtained later.
 		 *
 		 * NB - if the directory is unlocked, then this
 		 * information cannot be used.
 		 */
-		cnp->cn_flags |= SAVENAME;
 		error = EJUSTRETURN;
 		goto out;
 	}
@@ -588,7 +585,6 @@ found:
 		if (error)
 			goto out;
 		*vpp = tdp;
-		cnp->cn_flags |= SAVENAME;
 		error = 0;
 		goto out;
 	}
@@ -723,10 +719,6 @@ void
 ufs_makedirentry(struct inode *ip, struct componentname *cnp,
     struct direct *newdirp)
 {
-#ifdef DIAGNOSTIC
-	if ((cnp->cn_flags & SAVENAME) == 0)
-		panic("makedirentry: missing name");
-#endif
 	newdirp->d_ino = ip->i_number;
 	newdirp->d_namlen = cnp->cn_namelen;
 	memcpy(newdirp->d_name, cnp->cn_nameptr, (size_t)cnp->cn_namelen);

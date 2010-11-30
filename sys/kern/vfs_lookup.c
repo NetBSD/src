@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.124 2010/11/30 10:30:02 dholland Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.125 2010/11/30 10:43:05 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.124 2010/11/30 10:30:02 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.125 2010/11/30 10:43:05 dholland Exp $");
 
 #include "opt_magiclinks.h"
 
@@ -445,7 +445,6 @@ namei_start1(struct namei_state *state)
 		panic("namei: flags contaminated with nameiops");
 #endif
 
-	KASSERT((state->cnp->cn_flags & HASBUF) == 0);
 	/*
 	 * The buffer for name translation shall be the one inside the
 	 * pathbuf.
