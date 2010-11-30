@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2010/11/30 14:08:39 pooka Exp $
+#	$NetBSD: Makefile,v 1.5 2010/11/30 14:23:24 pooka Exp $
 #
 
 WARNS=		4
@@ -12,7 +12,7 @@ LIBDPLIBS+=	pthread ${.CURDIR}/../libpthread
 
 SRCS=		rumpuser.c rumpuser_net.c
 SRCS+=		rumpuser_pth.c
-SRCS+=		rumpuser_dl.c rumpuser_sp.c
+SRCS+=		rumpuser_dl.c rumpuser_sp.c rumpuser_daemonize.c
 
 INCSDIR=	/usr/include/rump
 INCS=		rumpuser.h
