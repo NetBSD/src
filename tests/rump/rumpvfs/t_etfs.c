@@ -1,4 +1,4 @@
-/*	$NetBSD: t_etfs.c,v 1.7 2010/11/07 17:51:21 jmmv Exp $	*/
+/*	$NetBSD: t_etfs.c,v 1.8 2010/11/30 18:14:38 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -253,6 +253,37 @@ ATF_TC_BODY(range_blk, tc)
 	ATF_REQUIRE_EQ(memcmp(buf, cmpbuf, sizeof(buf)), 0);
 }
 
+ATF_TC(key);
+ATF_TC_HEAD(key, tc)
+{
+
+	atf_tc_set_md_var(tc, "descr", "Checks key format");
+}
+
+ATF_TC_BODY(key, tc)
+{
+
+	RZ(rump_init());
+
+	RL(open("hostfile", O_RDWR | O_CREAT, 0777));
+
+	RZ(rump_pub_etfs_register("/key", "hostfile", RUMP_ETFS_REG));
+	ATF_REQUIRE_EQ(rump_pub_etfs_register("key", "hostfile", RUMP_ETFS_REG),
+	    EINVAL);
+
+	RL(rump_sys_open("/key", O_RDONLY));
+	RL(rump_sys_open("////////key", O_RDONLY));
+
+	RZ(rump_pub_etfs_register("////key//with/slashes", "hostfile",
+	    RUMP_ETFS_REG));
+
+	RL(rump_sys_open("/key//with/slashes", O_RDONLY));
+	RL(rump_sys_open("key//with/slashes", O_RDONLY));
+
+	ATF_REQUIRE_ERRNO(ENOENT,
+	    rump_sys_open("/key/with/slashes", O_RDONLY) == -1);
+}
+
 ATF_TP_ADD_TCS(tp)
 {
 
@@ -260,6 +291,7 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, reregister_blk);
 	ATF_TP_ADD_TC(tp, large_blk);
 	ATF_TP_ADD_TC(tp, range_blk);
+	ATF_TP_ADD_TC(tp, key);
 
 	return atf_no_error();
 }
