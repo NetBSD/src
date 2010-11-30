@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_quirks.c,v 1.69 2010/11/03 22:34:24 dyoung Exp $	*/
+/*	$NetBSD: usb_quirks.c,v 1.70 2010/11/30 11:35:30 phx Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_quirks.c,v 1.30 2003/01/02 04:15:55 imp Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_quirks.c,v 1.69 2010/11/03 22:34:24 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_quirks.c,v 1.70 2010/11/30 11:35:30 phx Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,6 +56,7 @@ Static const struct usbd_quirk_entry {
 } usb_quirks[] = {
  /* Devices which should be ignored by uhid */
  { USB_VENDOR_APC, USB_PRODUCT_APC_UPS,		    ANY,   { UQ_HID_IGNORE }},
+ { USB_VENDOR_APPLE, USB_PRODUCT_APPLE_ADB,	    ANY,   { UQ_HID_IGNORE }},
  { USB_VENDOR_CYBERPOWER, USB_PRODUCT_CYBERPOWER_UPS, ANY, { UQ_HID_IGNORE }},
  { USB_VENDOR_MGE, USB_PRODUCT_MGE_UPS1,	    ANY,   { UQ_HID_IGNORE }},
  { USB_VENDOR_MGE, USB_PRODUCT_MGE_UPS2,	    ANY,   { UQ_HID_IGNORE }},
@@ -63,7 +64,6 @@ Static const struct usbd_quirk_entry {
 	ANY,	{ UQ_HID_IGNORE }},
  { USB_VENDOR_TRIPPLITE2, USB_PRODUCT_TRIPPLITE2_UPS,	    
 	ANY,   { UQ_HID_IGNORE }},
-
  { USB_VENDOR_METAGEEK, USB_PRODUCT_METAGEEK_WISPY_24X, ANY, { UQ_HID_IGNORE }},
 
  { USB_VENDOR_KYE, USB_PRODUCT_KYE_NICHE,	    0x100, { UQ_NO_SET_PROTO}},
@@ -118,6 +118,12 @@ Static const struct usbd_quirk_entry {
  { USB_VENDOR_NEC, USB_PRODUCT_NEC_PICTY800,	    ANY,   { UQ_BROKEN_BIDIR }},
 
  { USB_VENDOR_HP, USB_PRODUCT_HP_1220C,		    ANY,   { UQ_BROKEN_BIDIR }},
+
+ /* Apple internal notebook ISO keyboards have swapped keys */
+ { USB_VENDOR_APPLE, USB_PRODUCT_APPLE_FOUNTAIN_ISO,
+	ANY, { UQ_APPLE_ISO }},
+ { USB_VENDOR_APPLE, USB_PRODUCT_APPLE_GEYSER_ISO,
+	ANY, { UQ_APPLE_ISO }},
 
  /* HID and audio are both invalid on iPhone/iPod Touch */
  { USB_VENDOR_APPLE, USB_PRODUCT_APPLE_IPHONE,

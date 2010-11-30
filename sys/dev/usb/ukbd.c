@@ -1,4 +1,4 @@
-/*      $NetBSD: ukbd.c,v 1.108 2010/11/03 22:34:24 dyoung Exp $        */
+/*      $NetBSD: ukbd.c,v 1.109 2010/11/30 11:35:30 phx Exp $        */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.108 2010/11/03 22:34:24 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.109 2010/11/30 11:35:30 phx Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,6 +91,57 @@ struct ukbd_data {
 #define PRESS    0x000
 #define RELEASE  0x100
 #define CODEMASK 0x0ff
+
+struct ukbd_keycodetrans {
+	u_int8_t	from;
+	u_int8_t	to;
+};
+
+Static const struct ukbd_keycodetrans trtab_apple_fn[] = {
+	{ 0x0c, 0x5d },	/* i -> KP 5 */
+	{ 0x0d, 0x59 },	/* j -> KP 1 */
+	{ 0x0e, 0x5a },	/* k -> KP 2 */
+	{ 0x0f, 0x5b },	/* l -> KP 3 */
+	{ 0x10, 0x62 },	/* m -> KP 0 */
+	{ 0x12, 0x5e },	/* o -> KP 6 */
+	{ 0x13, 0x55 },	/* o -> KP * */
+	{ 0x18, 0x5c },	/* u -> KP 4 */
+	{ 0x0c, 0x5d },	/* i -> KP 5 */
+	{ 0x2a, 0x4c },	/* Backspace -> Delete */
+	{ 0x28, 0x49 },	/* Return -> Insert */
+	{ 0x24, 0x5f }, /* 7 -> KP 7 */
+	{ 0x25, 0x60 }, /* 8 -> KP 8 */
+	{ 0x26, 0x61 }, /* 9 -> KP 9 */
+	{ 0x27, 0x54 }, /* 0 -> KP / */
+	{ 0x2d, 0x67 }, /* - -> KP = */
+	{ 0x33, 0x56 },	/* ; -> KP - */
+	{ 0x37, 0x63 },	/* . -> KP . */
+	{ 0x38, 0x57 },	/* / -> KP + */
+	{ 0x3a, 0xd1 },	/* F1..F12 mapped to reserved codes 0xd1..0xdc */
+	{ 0x3b, 0xd2 },
+	{ 0x3c, 0xd3 },
+	{ 0x3d, 0xd4 },
+	{ 0x3e, 0xd5 },
+	{ 0x3f, 0xd6 },
+	{ 0x40, 0xd7 },
+	{ 0x41, 0xd8 },
+	{ 0x42, 0xd9 },
+	{ 0x43, 0xda },
+	{ 0x44, 0xdb },
+	{ 0x45, 0xdc },
+	{ 0x4f, 0x4d },	/* Right -> End */
+	{ 0x50, 0x4a },	/* Left -> Home */
+	{ 0x51, 0x4e },	/* Down -> PageDown */
+	{ 0x52, 0x4b },	/* Up -> PageUp */
+	{ 0x00, 0x00 }
+};
+
+Static const struct ukbd_keycodetrans trtab_apple_iso[] = {
+	{ 0x35, 0x64 },	/* swap the key above tab with key right of shift */
+	{ 0x64, 0x35 },
+	{ 0x31, 0x32 },	/* key left of return is Europe1, not "\|" */
+	{ 0x00, 0x00 }
+};
 
 #if defined(__NetBSD__) && defined(WSDISPLAY_COMPAT_RAWKBD)
 #define NN 0			/* no translation */
@@ -160,14 +211,21 @@ struct ukbd_softc {
 	struct hid_location sc_keycodeloc;
 	u_int sc_nkeycode;
 
-	char sc_enabled;
+	u_int sc_flags;			/* flags */
+#define FLAG_ENABLED		0x0001
+#define FLAG_POLLING		0x0002
+#define FLAG_DEBOUNCE		0x0004	/* for quirk handling */
+#define FLAG_APPLE_FIX_ISO	0x0008
+#define FLAG_APPLE_FN		0x0010
+#define FLAG_FN_PRESSED		0x0100	/* FN key is held down */
+#define FLAG_FN_ALT		0x0200	/* Last Alt key was FN-Alt = AltGr */
 
 	int sc_console_keyboard;	/* we are the console keyboard */
 
-	char sc_debounce;		/* for quirk handling */
-	struct callout sc_delay;		/* for quirk handling */
+	struct callout sc_delay;	/* for quirk handling */
 	struct ukbd_data sc_data;	/* for quirk handling */
 
+	struct hid_location sc_apple_fn;
 	struct hid_location sc_numloc;
 	struct hid_location sc_capsloc;
 	struct hid_location sc_scroloc;
@@ -187,7 +245,6 @@ struct ukbd_softc {
 #endif /* defined(WSDISPLAY_COMPAT_RAWKBD) */
 
 	int sc_spl;
-	int sc_polling;
 	int sc_npollchar;
 	u_int16_t sc_pollchars[MAXKEYS];
 #endif /* defined(__NetBSD__) */
@@ -317,6 +374,7 @@ ukbd_attach(device_t parent, device_t self, void *aux)
 	sc->sc_hdev.sc_intr = ukbd_intr;
 	sc->sc_hdev.sc_parent = uha->parent;
 	sc->sc_hdev.sc_report_id = uha->reportid;
+	sc->sc_flags = 0;
 
 	if (!pmf_device_register(self, NULL, NULL)) {
 		aprint_normal("\n");
@@ -330,14 +388,22 @@ ukbd_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
+	/* Quirks */
+	qflags = usbd_get_quirks(uha->parent->sc_udev)->uq_flags;
+	if (qflags & UQ_SPUR_BUT_UP)
+		sc->sc_flags |= FLAG_DEBOUNCE;
+	if (qflags & UQ_APPLE_ISO)
+		sc->sc_flags |= FLAG_APPLE_FIX_ISO;
+
 #ifdef DIAGNOSTIC
 	aprint_normal(": %d modifier keys, %d key codes", sc->sc_nmod,
 	       sc->sc_nkeycode);
+	if (sc->sc_flags & FLAG_APPLE_FN)
+		aprint_normal(", apple fn key");
+	if (sc->sc_flags & FLAG_APPLE_FIX_ISO)
+		aprint_normal(", fix apple iso");
 #endif
 	aprint_normal("\n");
-
-	qflags = usbd_get_quirks(uha->parent->sc_udev)->uq_flags;
-	sc->sc_debounce = (qflags & UQ_SPUR_BUT_UP) != 0;
 
 	/*
 	 * Remember if we're the console keyboard.
@@ -388,7 +454,7 @@ ukbd_enable(void *v, int on)
 		return (EIO);
 
 	/* Should only be called to change state */
-	if (sc->sc_enabled == on) {
+	if ((sc->sc_flags & FLAG_ENABLED) != 0 && on != 0) {
 #ifdef DIAGNOSTIC
 		printf("ukbd_enable: %s: bad call on=%d\n",
 		       device_xname(sc->sc_hdev.sc_dev), on);
@@ -397,10 +463,11 @@ ukbd_enable(void *v, int on)
 	}
 
 	DPRINTF(("ukbd_enable: sc=%p on=%d\n", sc, on));
-	sc->sc_enabled = on;
 	if (on) {
+		sc->sc_flags |= FLAG_ENABLED;
 		return (uhidev_open(&sc->sc_hdev));
 	} else {
+		sc->sc_flags &= ~FLAG_ENABLED;
 		uhidev_close(&sc->sc_hdev);
 		return (0);
 	}
@@ -476,6 +543,46 @@ ukbd_detach(device_t self, int flags)
 	return (rv);
 }
 
+static void
+ukbd_translate_keycodes(struct ukbd_softc *sc, struct ukbd_data *ud,
+    const struct ukbd_keycodetrans *tab)
+{
+	const struct ukbd_keycodetrans *tp;
+	int i;
+	u_int8_t key;
+
+	for (i = 0; i < sc->sc_nkeycode; i++) {
+		key = ud->keycode[i];
+		if (key)
+			for (tp = tab; tp->from; tp++)
+				if (tp->from == key) {
+					ud->keycode[i] = tp->to;
+					break;
+				}
+	}
+}
+
+static u_int16_t
+ukbd_translate_modifier(struct ukbd_softc *sc, u_int16_t key)
+{
+	if ((sc->sc_flags & FLAG_APPLE_FN) && (key & CODEMASK) == 0x00e2) {
+		if ((key & ~CODEMASK) == PRESS) {
+			if (sc->sc_flags & FLAG_FN_PRESSED) {
+				/* pressed FN-Alt, translate to AltGr */
+				key = 0x00e6 | PRESS;
+				sc->sc_flags |= FLAG_FN_ALT;
+			}
+		} else {
+			if (sc->sc_flags & FLAG_FN_ALT) {
+				/* released Alt, which was treated as FN-Alt */
+				key = 0x00e6 | RELEASE;
+				sc->sc_flags &= ~FLAG_FN_ALT;
+			}
+		}
+	}
+	return key;
+}
+
 void
 ukbd_intr(struct uhidev *addr, void *ibuf, u_int len)
 {
@@ -499,7 +606,16 @@ ukbd_intr(struct uhidev *addr, void *ibuf, u_int len)
 	memcpy(ud->keycode, (char *)ibuf + sc->sc_keycodeloc.pos / 8,
 	       sc->sc_nkeycode);
 
-	if (sc->sc_debounce && !sc->sc_polling) {
+	if (sc->sc_flags & FLAG_APPLE_FN) {
+		if (hid_get_data(ibuf, &sc->sc_apple_fn)) {
+			sc->sc_flags |= FLAG_FN_PRESSED;
+			ukbd_translate_keycodes(sc, ud, trtab_apple_fn);
+		}
+		else
+			sc->sc_flags &= ~FLAG_FN_PRESSED;
+	}
+
+	if ((sc->sc_flags & FLAG_DEBOUNCE) && !(sc->sc_flags & FLAG_POLLING)) {
 		/*
 		 * Some keyboards have a peculiar quirk.  They sometimes
 		 * generate a key up followed by a key down for the same
@@ -509,7 +625,7 @@ ukbd_intr(struct uhidev *addr, void *ibuf, u_int len)
 		sc->sc_data = *ud;
 		callout_reset(&sc->sc_delay, hz / 50, ukbd_delayed_decode, sc);
 #ifdef DDB
-	} else if (sc->sc_console_keyboard && !sc->sc_polling) {
+	} else if (sc->sc_console_keyboard && !(sc->sc_flags & FLAG_POLLING)) {
 		/*
 		 * For the console keyboard we can't deliver CTL-ALT-ESC
 		 * from the interrupt routine.  Doing so would start
@@ -570,16 +686,22 @@ ukbd_decode(struct ukbd_softc *sc, struct ukbd_data *ud)
 		DPRINTF(("ukbd_intr: KEY_ERROR\n"));
 		return;		/* ignore  */
 	}
+
+	if (sc->sc_flags & FLAG_APPLE_FIX_ISO)
+		ukbd_translate_keycodes(sc, ud, trtab_apple_iso);
+
 	nkeys = 0;
 	mod = ud->modifiers;
 	omod = sc->sc_odata.modifiers;
 	if (mod != omod)
 		for (i = 0; i < sc->sc_nmod; i++)
 			if (( mod & sc->sc_mods[i].mask) !=
-			    (omod & sc->sc_mods[i].mask))
-				ADDKEY(sc->sc_mods[i].key |
-				       (mod & sc->sc_mods[i].mask
-					  ? PRESS : RELEASE));
+			    (omod & sc->sc_mods[i].mask)) {
+				key = sc->sc_mods[i].key |
+				    ((mod & sc->sc_mods[i].mask) ?
+				    PRESS : RELEASE);
+				ADDKEY(ukbd_translate_modifier(sc, key));
+			}
 	if (memcmp(ud->keycode, sc->sc_odata.keycode, sc->sc_nkeycode) != 0) {
 		/* Check for released keys. */
 		for (i = 0; i < sc->sc_nkeycode; i++) {
@@ -614,7 +736,7 @@ ukbd_decode(struct ukbd_softc *sc, struct ukbd_data *ud)
 	if (nkeys == 0)
 		return;
 
-	if (sc->sc_polling) {
+	if (sc->sc_flags & FLAG_POLLING) {
 		DPRINTFN(1,("ukbd_intr: pollchar = 0x%03x\n", ibuf[0]));
 		memcpy(sc->sc_pollchars, ibuf, nkeys * sizeof(u_int16_t));
 		sc->sc_npollchar = nkeys;
@@ -779,10 +901,10 @@ ukbd_cngetc(void *v, u_int *type, int *data)
 		broken = 0;
 
 	DPRINTFN(0,("ukbd_cngetc: enter\n"));
-	sc->sc_polling = 1;
+	sc->sc_flags |= FLAG_POLLING;
 	while(sc->sc_npollchar <= 0)
 		usbd_dopoll(sc->sc_hdev.sc_parent->sc_iface);
-	sc->sc_polling = 0;
+	sc->sc_flags &= ~FLAG_POLLING;
 	c = sc->sc_pollchars[0];
 	sc->sc_npollchar--;
 	memcpy(sc->sc_pollchars, sc->sc_pollchars+1,
@@ -842,6 +964,15 @@ ukbd_parse_desc(struct ukbd_softc *sc)
 	while (hid_get_item(d, &h)) {
 		/*printf("ukbd: id=%d kind=%d usage=0x%x flags=0x%x pos=%d size=%d cnt=%d\n",
 		  h.report_ID, h.kind, h.usage, h.flags, h.loc.pos, h.loc.size, h.loc.count);*/
+
+		/* Check for special Apple notebook FN key */
+		if (HID_GET_USAGE_PAGE(h.usage) == 0x00ff &&
+		    HID_GET_USAGE(h.usage) == 0x0003 &&
+		    h.kind == hid_input && (h.flags & HIO_VARIABLE)) {
+			sc->sc_flags |= FLAG_APPLE_FN;
+			sc->sc_apple_fn = h.loc;
+		}
+
 		if (h.kind != hid_input || (h.flags & HIO_CONST) ||
 		    HID_GET_USAGE_PAGE(h.usage) != HUP_KEYBOARD ||
 		    h.report_ID != sc->sc_hdev.sc_report_id)
