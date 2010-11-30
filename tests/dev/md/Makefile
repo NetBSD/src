@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2010/11/23 15:38:54 pooka Exp $
+#	$NetBSD: Makefile,v 1.2 2010/11/30 19:03:44 pooka Exp $
 #
 
 .include <bsd.own.mk>
@@ -14,7 +14,6 @@ ATFFILE=	yes
 LDADD+=	-lrumpdev_md -lrumpdev_disk -lrumpdev -lrumpvfs
 LDADD+=	-lrump
 LDADD+=	-lrumpuser
-LDADD+=	-lrump
 LDADD+=	-lpthread
 
 WARNS=	4
