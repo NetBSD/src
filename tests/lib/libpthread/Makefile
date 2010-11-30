@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2010/07/28 21:29:15 jruoho Exp $
+# $NetBSD: Makefile,v 1.3 2010/11/30 18:38:54 joerg Exp $
 
 NOMAN=		# defined
 
@@ -6,6 +6,11 @@ NOMAN=		# defined
 
 TESTSDIR=	${TESTSBASE}/lib/libpthread
 LDADD+=		-lpthread
+
+.include "${.PARSEDIR}/../csu/Makefile.check_stack"
+
+SRCS.t_join=	t_join.c ${SRCS_CHECK_STACK}
+CPPFLAGS.t_join.c+=	${CPPFLAGS_CHECK_STACK}
 
 TESTS_SH+=	t_atexit
 TESTS_C+=	t_barrier
