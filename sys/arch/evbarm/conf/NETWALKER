@@ -1,4 +1,4 @@
-#	$NetBSD: NETWALKER,v 1.2 2010/11/23 11:13:56 hannken Exp $
+#	$NetBSD: NETWALKER,v 1.3 2010/11/30 13:07:29 bsh Exp $
 #
 #	NETWALKER -- Sharp
 #
@@ -23,7 +23,7 @@ options 	PMAPCOUNTERS
 
 # Architecture options
 
-options        IMX51_IPGCLK_FREQ=50000000
+options        IMX51_IPGCLK_FREQ=50000000   # XXX This value is not correct.
 
 # File systems
 
@@ -183,6 +183,74 @@ options		IMXUARTCONSOLE
 # Enhanced Periodic Interrupt Timer
 imxclock0	at axi? addr 0x73fac000 size 0x4000 irq 40
 imxclock1	at axi? addr 0x73fb0000 size 0x4000 irq 41
+
+# IOMUX
+imxiomux0	at axi? addr 0x73fa8000
+
+# GPIO
+imxgpio0	at axi? addr 0x73f84000
+imxgpio1	at axi? addr 0x73f88000
+imxgpio2	at axi? addr 0x73f8c000
+imxgpio3	at axi? addr 0x73f90000
+
+# USB
+imxusbc0  at axi?  addr 0x73f80000
+ehci0	  at imxusbc0	unit 0	irq 18 # OTG
+ehci1	  at imxusbc0	unit 1	irq 14 # Host1
+#ehci2	  at imxusbc0	unit 2	irq 16 # Host2
+#ehci3	  at imxusbc0	unit 3	irq 17 # Host3
+
+usb*		at ehci?
+uhub*		at usb?
+uhub*		at uhub? port ?
+ugen*		at uhub? port ?
+
+# USB HID device
+uhidev* at uhub? port ? configuration ? interface ?
+
+# USB Mice
+ums*	at uhidev? reportid ?
+wsmouse* at ums? mux 0
+
+# USB Keyboards
+ukbd*	at uhidev? reportid ?
+wskbd*	at ukbd? console ? mux 1
+
+# USB Mass Storage
+umass*	at uhub? port ? configuration ? interface ?
+wd*	at umass?
+
+# Serial adapters
+ubsa*	at uhub? port ?		# Belkin serial adapter
+ucom*	at ubsa? portno ?
+
+uchcom* at uhub? port ? 	# WinChipHead CH341/CH340 serial adapter
+ucom*	at uchcom? portno ?
+
+uftdi*	at uhub? port ?		# FTDI FT8U100AX serial adapter
+ucom*	at uftdi? portno ?
+
+umct*	at uhub? port ?		# MCT USB-RS232 serial adapter
+ucom*	at umct? portno ?
+
+uplcom* at uhub? port ? 	# I/O DATA USB-RSAQ2 serial adapter
+ucom*	at uplcom? portno ?
+
+uslsa*	at uhub? port ?		# Silicon Labs USB-RS232 serial adapter
+ucom*	at uslsa? portno ?
+
+uvscom* at uhub? port ? 	# SUNTAC Slipper U VS-10U serial adapter
+ucom*	at uvscom? portno ?
+
+# USB generic serial port (e.g., data over cellular)
+ugensa* at uhub? port ?
+ucom*	at ugensa?
+
+# SCSI bus support
+scsibus* at scsi?
+
+# SCSI devices
+sd*	at scsibus? target ? lun ?	# SCSI disk drives
 
 # Pseudo-Devices
 
