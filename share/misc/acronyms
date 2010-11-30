@@ -1,23 +1,34 @@
-$NetBSD: acronyms,v 1.193 2010/11/28 16:08:28 is Exp $
+$NetBSD: acronyms,v 1.194 2010/11/30 19:07:15 jruoho Exp $
+10Q	thank you
+10X	thanks
+1337	leet/elite
+224	today, tomorrow, forever
+4TW	for the win
+AC	audible chuckle
 AEAP	as early as possible
+AFAIAC	as far as I am concerned
 AFAIC	as far as I'm concerned
 AFAICR	as far as I can recall
+AFAICS	as far as I can see
 AFAICT	as far as I can tell
 AFAIK	as far as I know
-AFAIR	as far as I recall
+AFAIR	as far as I {recall, remember}
 AFAIU	as far as I understand
 AFD	away from desktop
 AFK	away from keyboard
 AFU	all fucked up
 AFW	away from window
+AINEC	and it's not even close
 AIU	as I understand
 AIUI	as I understand it
 AKA	also known as
+AMOL	a mountain of love
 ASAIC	as soon as I can
 ASAP	as soon as possible
 ATEOTD	at the end of the day
 ATM	at the moment
 ATM	automatic teller machine
+ATW	around the world
 AWOL	absent without official leave
 AYBABTU	all your base are belong to us
 AYT	are you there
@@ -31,14 +42,18 @@ BBS	be back soon
 BBT	be back tomorrow
 BCNU	be seeing you
 BCNUL8R	be seeing you later
+BF	best friend
+BF	boyfriend
 BCP	best current practice
 BFD	big fucking deal
+BFF	best friend forever
 BFH	big fucking hammer
 BIAB	back in a bit
 BIAF	back in a few
 BIALW	back in a little while
 BIAS	back in a second
 BIAW	back in a while
+BNYA	burned now you are
 BOATILAS	bend over and take it like a slut
 BOFH	bastard operator from hell
 BOGAHICA	bend over, grab ankles, here it comes again
@@ -57,6 +72,7 @@ COTS	commercial off-the-shelf
 CU	see you
 CYA	see you around
 D/L	download
+DBEYR	don't believe everything you read
 DGAS	don't give a shit
 DIY	do it yourself
 DKDC	don't know, don't care
@@ -74,25 +90,34 @@ EOD	end of discussion
 EOL	end of life
 EOM	end of message
 ETA	estimated time of arrival
+ETA	edited to add
 ETLA	extended three letter acronym
 EWAG	experienced wild-ass guess
+F9	fine
 FAQ	frequently asked question
 FCFS	first come first served
 FFS	for fuck's sake
+FFS	free for shipping
 FIGJAM	fuck I'm good, just ask me
 FIIK	fuck[ed] if I know
 FIIR	fuck[ed] if I remember
 FM	fucking magic
+FML	fuck my life
 FNO	from now on
 FNO	for nerds only
 FOAD	{fuck off,fall over} and die
 FOS	full of shit
+FSCK	fuck
 FSDO	for some definition of
 FSVO	for some value of
 FTBFS	fails to build from source
+FTFA	from the fucking article
 FTFM	fuck the fuckin' manual!
+FTFY	fixed that for you
 FTHOI	for the {heck,hell} of it
 FTL	for the loss
+FTMFW	for the motherfucking win
+FTS	fuck that shit
 FTW	for the win
 FUBAR	fucked up beyond all recognition
 FUD	fear, uncertainty and doubt
@@ -100,18 +125,29 @@ FWIW	for what it's worth
 FYI	for your information
 G	grin
 G/C	garbage collect
+G2G	got to go
+G2K	good to know
 GAC	get a clue
 GAL	get a life
 GBTW	get back to work
+GF	girlfriend
 GFU	good for you
+GFY	good for you
+GFY	go fuck yourself
 GIGO	garbage in, garbage out
+GIYF	google is your friend
 GJ	good job
 GL	good luck
+GLHF	good luck, have fun
 GMTA	great minds think alike
+GR8	great
 GTFO	get the fuck out
 GTG	got to go
+GTH	go to hell
 GWS	get well soon
+H8	hate
 HAND	have a nice day
+HE	how embarrasing
 HF	have fun
 HFIW	HOLY FUCK IT WORKS
 HHIS	hanging head in shame
@@ -122,10 +158,12 @@ HSIW	HOLY SHIT IT WORKS
 HTH	hope this helps
 IAC	in any case
 IANAL	I am not a lawyer
+IAWTC	I agree with this comment
 IC	I see
 ICBW	I could be wrong
 ICCL	I couldn't care less
 IDK	I don't know
+IDRC	I don't really care
 IHAFC	I haven't a fucking clue
 IHBW	I have been wrong
 IHNFC	I have no fucking clue
@@ -140,6 +178,7 @@ IMHO	in my humble opinion
 IMNSHO	in my not so humble opinion
 IMO	in my opinion
 IOW	in other words
+IPML	I pissed myself laughing
 IRL	in real life
 ISAGN	I see a great need
 ISTM	it seems to me
@@ -160,17 +199,26 @@ JSYK	just so you know
 JTLYK	just to let you know
 KISS	keep it simple, stupid
 KITA	kick in the ass
+KK	okay, okay
 KNF	kernel normal form
 KOS	kill on sight
+KTHX	okay, thanks
+L8	late
 L8R	later
 LART	luser attitude readjustment tool (ie, hammer)
 LBNL	last but not least
 LGTM	looks good to me
 LJBF	let's just be friends
 LMAO	laughing my ass off
+LMB	lick my balls
+LMFAO	laughing my fucking ass off
+LMHO	laughing my head off
+LMNO	laughing my nuts off
 LMSO	laughing my socks off
 LOL	laughing out loud
 LTNS	long time no see
+LWYL	laugh with you later
+M8	mate
 MIA	missing in action
 MOTAS	member of the appropriate sex
 MOTOS	member of the opposite sex
@@ -178,7 +226,9 @@ MOTSS	member of the same sex
 MTF	more to follow
 MYOB	mind your own business
 N/M	never mind
+NAFAIK	not as far as I know
 NBD	no big deal
+NE1	anyone
 NFC	no fucking clue
 NFI	no fucking idea
 NFW	no fucking way
@@ -186,23 +236,30 @@ NIFOC	naked in front of computer
 NIH	not invented here
 NMF	not my fault
 NMP	not my problem
+NOOB	noob/newbie
 NOYB	none of your business
 NOYFB	none of your fucking business
 NP	no problem
 NRFPT	not ready for prime time
+NRN	not right now
 NRN	no reply necessary
 NSFW	not suitable for work
 NVM	never mind
+NXT	next
 O2W	off to work
+OH	other half
 OIC	oh, I see
+OMFG	oh my fucking god
 OMG	oh, my god
 OMW	on my way
 OOB	out of bounds
+OOI	out of interest
 OT	off topic
 OTL	out to lunch
 OTOH	on the other hand
 OTT	over the top
 OTTOMH	off the top of my head
+OWITE	or words to that effect
 PDQ	pretty darn quick
 PEBKAC	problem exists between keyboard and chair
 PFO	please fuck off
@@ -211,6 +268,7 @@ PHB	pointy haired boss
 PIN	personal identification number
 PITA	pain in the ass
 PKSP	pound keys and spew profanity
+PMSL	pissing myself laughing
 PNG	persona non grata
 PNP	plug and pray
 POC	point of contact
@@ -245,8 +303,10 @@ RTFS	read the fine/fucking source
 SCNR	sorry, could not resist
 SEP	someone else's problem
 SFA	sweet fuck all
+SFAICT	as far as I can tell
 SHID	slaps head in disgust
 SIMCA	sitting in my chair amused
+SMH	shaking my head
 SMLSFB	so many losers, so few bullets
 SMOP	simple matter of programming
 SNAFU	situation normal, all fucked up
@@ -284,6 +344,7 @@ TLA	three letter acronym
 TLC	tender loving care
 TLDR	too long, didn't read
 TMA	too many abbreviations
+TMG	too much government
 TMI	too much information
 TMTOWTDI	there's more than one way to do it
 TNF	The NetBSD Foundation
@@ -295,6 +356,7 @@ TTBOMK	to the best of my knowledge
 TTFN	ta ta for now
 TTYL	talk to you later
 TTYS	talk to you soon
+TWDT	the whole damn thing
 TWIAVBP	the world is a very big place
 TY	thank you
 TYVM	thank you very much
@@ -303,6 +365,7 @@ UTSL	use the source, Luke
 VEG	very evil grin
 W/	with
 W/O	without
+W8	wait
 WAG	wild-ass guess
 WB	welcome back
 WCPGW	what could possibly go wrong
@@ -314,10 +377,13 @@ WMNC	watch me not care
 WOFTAM	waste of fucking time and money
 WOMBAT	waste of money, brain, and time
 WRT	with respect to
+WTB	{want,willing,waiting} to buy
 WTF	{what,when,where,who,why} the fuck
 WTFRUD	what the fuck are you doing
 WTG	way to go
 WTH	{what,when,where,who,why} the hell
+WTS	{want,willing,waiting} to sell
+WTT	{want,willing,waiting} to trade
 WYSIWYG	what you see is what you get
 YAGNI	you ain't gonna need it
 YALIMO	you are lame, in my opinion
