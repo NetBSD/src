@@ -1,4 +1,4 @@
-/*	$NetBSD: map_parse.y,v 1.8 2009/04/06 12:35:20 lukem Exp $ */
+/*	$NetBSD: map_parse.y,v 1.9 2010/11/30 12:22:06 phx Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -89,7 +89,7 @@ ksym_lookup(keysym_t ksym)
 		int ival;
 	}
 
-%token T_KEYSYM T_KEYCODE
+%token T_KEYSYM T_KEYCODE T_CMD
 %token <kval> T_KEYSYM_VAR T_KEYSYM_CMD_VAR
 %token <ival> T_NUMBER
 
@@ -147,9 +147,14 @@ keysym_cmd	: /* empty */
 		| T_KEYSYM_CMD_VAR = {
 			cur_mp->command = $1;
 		}
+		| T_CMD T_KEYSYM_CMD_VAR = {
+			cur_mp->command = KS_Cmd;
+			cur_mp->group1[0] = $2;
+		}
 		;
 
-keysym_list	: keysym_var = {
+keysym_list	: /* empty */
+		| keysym_var = {
 			cur_mp->group1[0] = $1;
 			cur_mp->group1[1] = ksym_upcase(cur_mp->group1[0]);
 			cur_mp->group2[0] = cur_mp->group1[0];
