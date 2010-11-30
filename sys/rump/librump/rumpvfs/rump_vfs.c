@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_vfs.c,v 1.60 2010/11/21 16:19:19 pooka Exp $	*/
+/*	$NetBSD: rump_vfs.c,v 1.61 2010/11/30 10:48:27 dholland Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump_vfs.c,v 1.60 2010/11/21 16:19:19 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump_vfs.c,v 1.61 2010/11/30 10:48:27 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -186,9 +186,7 @@ rump_makecn(u_long nameiop, u_long flags, const char *name, size_t namelen,
 	cnp->cn_nameiop = nameiop;
 	cnp->cn_flags = flags;
 
-	cnp->cn_pnbuf = PNBUF_GET();
-	strcpy(cnp->cn_pnbuf, name);
-	cnp->cn_nameptr = cnp->cn_pnbuf;
+	cnp->cn_nameptr = name;
 	cnp->cn_namelen = namelen;
 	cnp->cn_hash = namei_hash(name, &cp);
 
@@ -204,8 +202,6 @@ rump_freecn(struct componentname *cnp, int flags)
 	if (flags & RUMPCN_FREECRED)
 		rump_cred_put(cnp->cn_cred);
 
-	if ((cnp->cn_flags & SAVENAME) == 0 || flags & RUMPCN_FORCEFREE)
-		PNBUF_PUT(cnp->cn_pnbuf);
 	kmem_free(cnp, sizeof(*cnp));
 }
 
@@ -213,10 +209,9 @@ int
 rump_checksavecn(struct componentname *cnp)
 {
 
-	if ((cnp->cn_flags & (SAVENAME | SAVESTART)) == 0) {
+	if ((cnp->cn_flags & SAVESTART) == 0) {
 		return 0;
 	} else {
-		cnp->cn_flags |= HASBUF;
 		return 1;
 	}
 }
@@ -265,8 +260,6 @@ rump_namei(uint32_t op, uint32_t flags, const char *namep,
 		cnp = kmem_alloc(sizeof(*cnp), KM_SLEEP);
 		memcpy(cnp, &nd.ni_cnd, sizeof(*cnp));
 		*cnpp = cnp;
-	} else if (nd.ni_cnd.cn_flags & HASBUF) {
-		panic("%s: pathbuf mismatch", __func__);
 	}
 	pathbuf_destroy(pb);
 
