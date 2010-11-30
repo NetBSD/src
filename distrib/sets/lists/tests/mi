@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.162 2010/11/30 16:16:33 pooka Exp $
+# $NetBSD: mi,v 1.163 2010/11/30 22:14:03 pooka Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -409,6 +409,12 @@
 ./usr/libdata/debug/usr/tests/rump/rumpkern/t_threads.debug		tests-syscall-debug	debug,atf
 ./usr/libdata/debug/usr/tests/rump/rumpkern/t_tsleep.debug		tests-syscall-debug	debug,atf
 ./usr/libdata/debug/usr/tests/rump/rumpkern/t_vm.debug			tests-syscall-debug	debug,atf
+./usr/libdata/debug/usr/tests/rump/rumpkern/h_client			tests-syscall-debug
+./usr/libdata/debug/usr/tests/rump/rumpkern/h_client/h_reboot.debug			tests-syscall-debug	debug,atf
+./usr/libdata/debug/usr/tests/rump/rumpkern/h_client/h_simplecli.debug			tests-syscall-debug	debug,atf
+./usr/libdata/debug/usr/tests/rump/rumpkern/h_client/h_stresscli.debug			tests-syscall-debug	debug,atf
+./usr/libdata/debug/usr/tests/rump/rumpkern/h_server			tests-syscall-debug
+./usr/libdata/debug/usr/tests/rump/rumpkern/h_server/h_simpleserver.debug			tests-syscall-debug	debug,atf
 ./usr/libdata/debug/usr/tests/rump/rumpvfs				tests-syscall-debug
 ./usr/libdata/debug/usr/tests/rump/rumpvfs/t_etfs.debug		tests-syscall-debug	debug,atf
 ./usr/libdata/debug/usr/tests/rump/rumpvfs/t_p2kifs.debug		tests-syscall-debug	debug,atf
@@ -1633,9 +1639,16 @@
 ./usr/tests/rump/rumpkern/t_lwproc		tests-rump-tests	atf
 ./usr/tests/rump/rumpkern/t_modcmd		tests-rump-tests	atf
 ./usr/tests/rump/rumpkern/t_modlinkset		tests-rump-tests	atf
+./usr/tests/rump/rumpkern/t_sp			tests-rump-tests	atf
 ./usr/tests/rump/rumpkern/t_threads		tests-rump-tests	atf
 ./usr/tests/rump/rumpkern/t_tsleep		tests-rump-tests	atf
 ./usr/tests/rump/rumpkern/t_vm			tests-rump-tests	atf
+./usr/tests/rump/rumpkern/h_client			tests-rump-tests
+./usr/tests/rump/rumpkern/h_client/h_reboot		tests-rump-tests	atf
+./usr/tests/rump/rumpkern/h_client/h_simplecli		tests-rump-tests	atf
+./usr/tests/rump/rumpkern/h_client/h_stresscli		tests-rump-tests	atf
+./usr/tests/rump/rumpkern/h_server			tests-rump-tests
+./usr/tests/rump/rumpkern/h_server/h_simpleserver		tests-rump-tests	atf
 ./usr/tests/rump/rumpvfs			tests-rump-tests
 ./usr/tests/rump/rumpvfs/Atffile		tests-rump-tests	atf
 ./usr/tests/rump/rumpvfs/t_etfs		tests-rump-tests	atf
