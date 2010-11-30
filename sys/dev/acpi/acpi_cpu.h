@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu.h,v 1.25 2010/08/27 03:05:26 jruoho Exp $ */
+/* $NetBSD: acpi_cpu.h,v 1.26 2010/11/30 04:31:00 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -236,6 +236,7 @@ int		acpicpu_tstate_set(struct acpicpu_softc *, uint32_t);
 
 uint32_t	acpicpu_md_cap(void);
 uint32_t	acpicpu_md_quirks(void);
+void		acpicpu_md_quirks_c1e(void);
 uint32_t	acpicpu_md_cpus_running(void);
 int		acpicpu_md_idle_start(struct acpicpu_softc *);
 int		acpicpu_md_idle_stop(void);
