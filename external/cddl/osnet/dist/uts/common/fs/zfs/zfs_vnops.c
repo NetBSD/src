@@ -1331,13 +1331,10 @@ zfs_lookup(vnode_t *dvp, char *nm, vnode_t **vpp, struct componentname *cnp,
 		case RENAME:
 			if (error == ENOENT) {
 				error = EJUSTRETURN;
-				cnp->cn_flags |= SAVENAME;
 				break;
 			}
 			/* FALLTHROUGH */
 		case DELETE:
-			if (error == 0)
-				cnp->cn_flags |= SAVENAME;
 			break;
 		}
 	}
@@ -4863,8 +4860,6 @@ zfs_netbsd_create(struct vop_create_args *ap)
 	vattr_t *vap = ap->a_vap;
 	int mode;
 
-	ASSERT(cnp->cn_flags & SAVENAME);
-
 	vattr_init_mask(vap);
 	mode = vap->va_mode & ALLPERMS;
 
@@ -4876,8 +4871,6 @@ static int
 zfs_netbsd_remove(struct vop_remove_args *ap)
 {
 
-	ASSERT(ap->a_cnp->cn_flags & SAVENAME);
-
 	return (zfs_remove(ap->a_dvp, (char *)ap->a_cnp->cn_nameptr,
 	    ap->a_cnp->cn_cred, NULL, 0));
 }
@@ -4886,8 +4879,6 @@ static int
 zfs_netbsd_mkdir(struct vop_mkdir_args *ap)
 {
 	vattr_t *vap = ap->a_vap;
-
-	ASSERT(ap->a_cnp->cn_flags & SAVENAME);
 
 	vattr_init_mask(vap);
 
@@ -4899,8 +4890,6 @@ static int
 zfs_netbsd_rmdir(struct vop_rmdir_args *ap)
 {
 	struct componentname *cnp = ap->a_cnp;
-
-	ASSERT(cnp->cn_flags & SAVENAME);
 
 	return (zfs_rmdir(ap->a_dvp, (char *)cnp->cn_nameptr, NULL, cnp->cn_cred, NULL, 0));
 }
@@ -5053,8 +5042,8 @@ zfs_netbsd_rename(ap)
 	vnode_t *tvp = ap->a_tvp;
 	int error;
 
-	ASSERT(ap->a_fcnp->cn_flags & (SAVENAME|SAVESTART));
-	ASSERT(ap->a_tcnp->cn_flags & (SAVENAME|SAVESTART));
+	ASSERT(ap->a_fcnp->cn_flags & SAVESTART);
+	ASSERT(ap->a_tcnp->cn_flags & SAVESTART);
 
 	error = zfs_rename(fdvp, (char *)ap->a_fcnp->cn_nameptr, tdvp,
 	    (char *)ap->a_tcnp->cn_nameptr, ap->a_fcnp->cn_cred, NULL, 0);
@@ -5076,8 +5065,6 @@ zfs_netbsd_symlink(struct vop_symlink_args *ap)
 {
 	struct componentname *cnp = ap->a_cnp;
 	vattr_t *vap = ap->a_vap;
-
-	ASSERT(cnp->cn_flags & SAVENAME);
 
 	vap->va_type = VLNK;	/* Netbsd: Syscall only sets va_mode. */
 	vattr_init_mask(vap);
@@ -5263,8 +5250,6 @@ static int
 zfs_netbsd_link(struct vop_link_args *ap)
 {
 	struct componentname *cnp = ap->a_cnp;
-
-	ASSERT(cnp->cn_flags & SAVENAME);
 
 	return (zfs_link(ap->a_dvp, ap->a_vp, (char *)cnp->cn_nameptr, cnp->cn_cred, NULL, 0));
 }
