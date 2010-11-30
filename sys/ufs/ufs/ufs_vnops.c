@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.183 2010/06/24 13:03:20 hannken Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.184 2010/11/30 10:30:04 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.183 2010/06/24 13:03:20 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.184 2010/11/30 10:30:04 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -855,7 +855,6 @@ ufs_link(void *v)
 		ip->i_flag |= IN_CHANGE;
 		UFS_WAPBL_UPDATE(vp, NULL, NULL, UPDATE_DIROP);
 	}
-	PNBUF_PUT(cnp->cn_pnbuf);
 	UFS_WAPBL_END(vp->v_mount);
  out1:
 	if (dvp != vp)
@@ -928,10 +927,6 @@ ufs_whiteout(void *v)
 	default:
 		panic("ufs_whiteout: unknown op");
 		/* NOTREACHED */
-	}
-	if (cnp->cn_flags & HASBUF) {
-		PNBUF_PUT(cnp->cn_pnbuf);
-		cnp->cn_flags &= ~HASBUF;
 	}
 	fstrans_done(dvp->v_mount);
 	return (error);
@@ -1399,7 +1394,6 @@ ufs_mkdir(void *v)
 	DIP_ASSIGN(ip, gid, ip->i_gid);
 #ifdef QUOTA
 	if ((error = chkiq(ip, 1, cnp->cn_cred, 0))) {
-		PNBUF_PUT(cnp->cn_pnbuf);
 		UFS_VFREE(tvp, ip->i_number, dmode);
 		UFS_WAPBL_END(dvp->v_mount);
 		fstrans_done(dvp->v_mount);
@@ -1500,7 +1494,6 @@ ufs_mkdir(void *v)
 		vput(tvp);
 	}
  out:
-	PNBUF_PUT(cnp->cn_pnbuf);
 	fstrans_done(dvp->v_mount);
 	vput(dvp);
 	return (error);
@@ -2192,7 +2185,6 @@ ufs_makeinode(int mode, struct vnode *dvp, struct vnode **vpp,
 		mode |= IFREG;
 
 	if ((error = UFS_VALLOC(dvp, mode, cnp->cn_cred, vpp)) != 0) {
-		PNBUF_PUT(cnp->cn_pnbuf);
 		vput(dvp);
 		return (error);
 	}
@@ -2210,7 +2202,6 @@ ufs_makeinode(int mode, struct vnode *dvp, struct vnode **vpp,
 		 * the vnode dangling from the journal.
 		 */
 		vput(tvp);
-		PNBUF_PUT(cnp->cn_pnbuf);
 		vput(dvp);
 		return (error);
 	}
@@ -2219,7 +2210,6 @@ ufs_makeinode(int mode, struct vnode *dvp, struct vnode **vpp,
 		UFS_VFREE(tvp, ip->i_number, mode);
 		UFS_WAPBL_END1(dvp->v_mount, dvp);
 		vput(tvp);
-		PNBUF_PUT(cnp->cn_pnbuf);
 		vput(dvp);
 		return (error);
 	}
@@ -2253,8 +2243,6 @@ ufs_makeinode(int mode, struct vnode *dvp, struct vnode **vpp,
 	pool_cache_put(ufs_direct_cache, newdir);
 	if (error)
 		goto bad;
-	if ((cnp->cn_flags & SAVESTART) == 0)
-		PNBUF_PUT(cnp->cn_pnbuf);
 	vput(dvp);
 	*vpp = tvp;
 	return (0);
@@ -2273,7 +2261,6 @@ ufs_makeinode(int mode, struct vnode *dvp, struct vnode **vpp,
 	tvp->v_type = VNON;		/* explodes later if VBLK */
 	UFS_WAPBL_END1(dvp->v_mount, dvp);
 	vput(tvp);
-	PNBUF_PUT(cnp->cn_pnbuf);
 	vput(dvp);
 	return (error);
 }

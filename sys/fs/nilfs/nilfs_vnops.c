@@ -1,4 +1,4 @@
-/* $NetBSD: nilfs_vnops.c,v 1.7 2010/06/24 13:03:10 hannken Exp $ */
+/* $NetBSD: nilfs_vnops.c,v 1.8 2010/11/30 10:29:59 dholland Exp $ */
 
 /*
  * Copyright (c) 2008, 2009 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: nilfs_vnops.c,v 1.7 2010/06/24 13:03:10 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nilfs_vnops.c,v 1.8 2010/11/30 10:29:59 dholland Exp $");
 #endif /* not lint */
 
 
@@ -1099,8 +1099,6 @@ nilfs_create(void *v)
 	DPRINTF(VFSCALL, ("nilfs_create called\n"));
 	error = nilfs_create_node(dvp, vpp, vap, cnp);
 
-	if (error || !(cnp->cn_flags & SAVESTART))
-		PNBUF_PUT(cnp->cn_pnbuf);
 	vput(dvp);
 	return error;
 }
@@ -1125,8 +1123,6 @@ nilfs_mknod(void *v)
 	DPRINTF(VFSCALL, ("nilfs_mknod called\n"));
 	error = nilfs_create_node(dvp, vpp, vap, cnp);
 
-	if (error || !(cnp->cn_flags & SAVESTART))
-		PNBUF_PUT(cnp->cn_pnbuf);
 	vput(dvp);
 	return error;
 }
@@ -1151,8 +1147,6 @@ nilfs_mkdir(void *v)
 	DPRINTF(VFSCALL, ("nilfs_mkdir called\n"));
 	error = nilfs_create_node(dvp, vpp, vap, cnp);
 
-	if (error || !(cnp->cn_flags & SAVESTART))
-		PNBUF_PUT(cnp->cn_pnbuf);
 	vput(dvp);
 	return error;
 }
@@ -1271,8 +1265,6 @@ nilfs_symlink(void *v)
 			nilfs_dir_detach(nilfs_node->ump, dir_node, nilfs_node, cnp);
 		}
 	}
-	if (error || !(cnp->cn_flags & SAVESTART))
-		PNBUF_PUT(cnp->cn_pnbuf);
 	vput(dvp);
 	return error;
 }

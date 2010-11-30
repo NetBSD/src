@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_subr.c,v 1.59 2010/07/21 17:52:11 hannken Exp $	*/
+/*	$NetBSD: tmpfs_subr.c,v 1.60 2010/11/30 10:30:00 dholland Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.59 2010/07/21 17:52:11 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.60 2010/11/30 10:30:00 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -512,8 +512,6 @@ tmpfs_alloc_file(struct vnode *dvp, struct vnode **vpp, struct vattr *vap,
 	}
 
 out:
-	if (error != 0 || !(cnp->cn_flags & SAVESTART))
-		PNBUF_PUT(cnp->cn_pnbuf);
 	vput(dvp);
 
 	KASSERT(IFF(error == 0, *vpp != NULL));

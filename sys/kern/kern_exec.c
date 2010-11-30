@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.301 2010/11/19 06:44:42 dholland Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.302 2010/11/30 10:30:02 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.301 2010/11/19 06:44:42 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.302 2010/11/30 10:30:02 dholland Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_modular.h"
@@ -292,14 +292,12 @@ check_exec(struct lwp *l, struct exec_package *epp, struct pathbuf *pb)
 		return error;
 	epp->ep_vp = vp = nd.ni_vp;
 	/* this cannot overflow as both are size PATH_MAX */
-	strcpy(epp->ep_resolvedname, nd.ni_cnd.cn_pnbuf);
+	strcpy(epp->ep_resolvedname, nd.ni_pnbuf);
 
-	/* dump this right away */
 #ifdef DIAGNOSTIC
 	/* paranoia (take this out once namei stuff stabilizes) */
-	memset(nd.ni_cnd.cn_pnbuf, '~', PATH_MAX);
+	memset(nd.ni_pnbuf, '~', PATH_MAX);
 #endif
-	PNBUF_PUT(nd.ni_cnd.cn_pnbuf);
 
 	/* check access and type */
 	if (vp->v_type != VREG) {

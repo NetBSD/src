@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vnops.c,v 1.75 2010/06/24 13:03:10 hannken Exp $	*/
+/*	$NetBSD: smbfs_vnops.c,v 1.76 2010/11/30 10:30:00 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_vnops.c,v 1.75 2010/06/24 13:03:10 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_vnops.c,v 1.76 2010/11/30 10:30:00 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -554,9 +554,7 @@ smbfs_write(void *v)
 /*
  * smbfs_create call
  * Create a regular file. On entry the directory to contain the file being
- * created is locked.  We must release before we return. We must also free
- * the pathname buffer pointed at by cnp->cn_pnbuf, always on error, or
- * only if the SAVESTART bit in cn_flags is clear on success.
+ * created is locked.  We must release before we return.
  */
 int
 smbfs_create(void *v)
@@ -598,8 +596,6 @@ smbfs_create(void *v)
 		cache_enter(dvp, *ap->a_vpp, cnp);
 
   out:
-	if (error || ((cnp->cn_flags & SAVESTART) == 0))
-		PNBUF_PUT(cnp->cn_pnbuf);
 	VN_KNOTE(dvp, NOTE_WRITE);
 	vput(dvp);
 	return (error);
@@ -799,8 +795,6 @@ smbfs_mkdir(void *v)
 	*ap->a_vpp = vp;
 
  out:
-	if (error || ((cnp->cn_flags & SAVESTART) == 0))
-		PNBUF_PUT(cnp->cn_pnbuf);
 	VN_KNOTE(dvp, NOTE_WRITE | NOTE_LINK);
 	vput(dvp);
 

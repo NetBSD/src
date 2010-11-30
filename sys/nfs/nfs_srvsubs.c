@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_srvsubs.c,v 1.7 2010/11/19 06:44:46 dholland Exp $	*/
+/*	$NetBSD: nfs_srvsubs.c,v 1.8 2010/11/30 10:30:03 dholland Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_srvsubs.c,v 1.7 2010/11/19 06:44:46 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_srvsubs.c,v 1.8 2010/11/30 10:30:03 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -120,26 +120,27 @@ nfs_namei(struct nameidata *ndp, nfsrvfh_t *nsfh, uint32_t len, struct nfssvc_so
 {
 	int i, rem;
 	struct mbuf *md;
-	char *fromcp, *tocp, *cp;
+	char *fromcp, *tocp, *cp, *path;
 	struct vnode *dp;
 	int error, rdonly;
 	int neverfollow;
 	struct componentname *cnp = &ndp->ni_cnd;
 
 	*retdirp = NULL;
+	ndp->ni_pathbuf = NULL;
 
 	if ((len + 1) > MAXPATHLEN)
 		return (ENAMETOOLONG);
 	if (len == 0)
 		return (EACCES);
-	cnp->cn_pnbuf = PNBUF_GET();
 
 	/*
-	 * Copy the name from the mbuf list to ndp->ni_pnbuf
+	 * Copy the name from the mbuf list to ndp->ni_pathbuf
 	 * and set the various ndp fields appropriately.
 	 */
+	path = PNBUF_GET();
 	fromcp = *dposp;
-	tocp = cnp->cn_pnbuf;
+	tocp = path;
 	md = *mdp;
 	rem = mtod(md, char *) + md->m_len - fromcp;
 	for (i = 0; i < len; i++) {
@@ -194,7 +195,7 @@ nfs_namei(struct nameidata *ndp, nfsrvfh_t *nsfh, uint32_t len, struct nfssvc_so
 		 * and the 'native path' indicator.
 		 */
 		cp = PNBUF_GET();
-		fromcp = cnp->cn_pnbuf;
+		fromcp = path;
 		tocp = cp;
 		if ((unsigned char)*fromcp >= WEBNFS_SPECCHAR_START) {
 			switch ((unsigned char)*fromcp) {
@@ -236,18 +237,23 @@ nfs_namei(struct nameidata *ndp, nfsrvfh_t *nsfh, uint32_t len, struct nfssvc_so
 				*tocp++ = *fromcp++;
 		}
 		*tocp = '\0';
-		PNBUF_PUT(cnp->cn_pnbuf);
-		cnp->cn_pnbuf = cp;
+		PNBUF_PUT(path);
+		path = cp;
 	}
 
-	ndp->ni_pathlen = (tocp - cnp->cn_pnbuf) + 1;
+	ndp->ni_pathbuf = pathbuf_assimilate(path);
+	if (ndp->ni_pathbuf == NULL) {
+		error = ENOMEM;
+		goto out;
+	}
+	ndp->ni_pathlen = (tocp - path) + 1;
 	/*ndp->ni_segflg = UIO_SYSSPACE; - obsolete */
 	ndp->ni_rootdir = rootvnode;
 	ndp->ni_erootdir = NULL;
 
 	if (pubflag) {
 		ndp->ni_loopcnt = 0;
-		if (cnp->cn_pnbuf[0] == '/')
+		if (path[0] == '/')
 			dp = rootvnode;
 	} else {
 		cnp->cn_flags |= NOCROSSMOUNT;
@@ -257,6 +263,9 @@ nfs_namei(struct nameidata *ndp, nfsrvfh_t *nsfh, uint32_t len, struct nfssvc_so
 
 	/*
 	 * And call lookup() to do the real work
+	 *
+	 * Note: ndp->ni_pathbuf is left undestroyed; caller must
+	 * clean it up.
 	 */
 	error = lookup_for_nfsd(ndp, dp, neverfollow);
 	if (error) {
@@ -265,7 +274,11 @@ nfs_namei(struct nameidata *ndp, nfsrvfh_t *nsfh, uint32_t len, struct nfssvc_so
 	return 0;
 
 out:
-	PNBUF_PUT(cnp->cn_pnbuf);
+	if (ndp->ni_pathbuf != NULL) {
+		pathbuf_destroy(ndp->ni_pathbuf);
+	} else {
+		PNBUF_PUT(path);
+	}
 	return (error);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.183 2010/09/01 16:56:19 chs Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.184 2010/11/30 10:30:02 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.183 2010/09/01 16:56:19 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.184 2010/11/30 10:30:02 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -121,8 +121,8 @@ genfs_abortop(void *v)
 		struct componentname *a_cnp;
 	} */ *ap = v;
 
-	if ((ap->a_cnp->cn_flags & (HASBUF | SAVESTART)) == HASBUF)
-		PNBUF_PUT(ap->a_cnp->cn_pnbuf);
+	(void)ap;
+
 	return (0);
 }
 

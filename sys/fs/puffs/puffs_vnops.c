@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.147 2010/07/14 14:07:37 pooka Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.148 2010/11/30 10:29:59 dholland Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.147 2010/07/14 14:07:37 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.148 2010/11/30 10:29:59 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -673,8 +673,6 @@ puffs_vnop_create(void *v)
 
  out:
 	vput(dvp);
-	if (error || (cnp->cn_flags & SAVESTART) == 0)
-		PNBUF_PUT(cnp->cn_pnbuf);
 
 	DPRINTF(("puffs_create: return %d\n", error));
 	PUFFS_MSG_RELEASE(create);
@@ -722,8 +720,6 @@ puffs_vnop_mknod(void *v)
  out:
 	vput(dvp);
 	PUFFS_MSG_RELEASE(mknod);
-	if (error || (cnp->cn_flags & SAVESTART) == 0)
-		PNBUF_PUT(cnp->cn_pnbuf);
 	return error;
 }
 
@@ -1484,8 +1480,6 @@ puffs_vnop_remove(void *v)
 	RELEPN_AND_VP(vp, pn);
 
 	error = checkerr(pmp, error, __func__);
-	if (error || (cnp->cn_flags & SAVESTART) == 0)
-		PNBUF_PUT(cnp->cn_pnbuf);
 	return error;
 }
 
@@ -1529,8 +1523,6 @@ puffs_vnop_mkdir(void *v)
  out:
 	vput(dvp);
 	PUFFS_MSG_RELEASE(mkdir);
-	if (error || (cnp->cn_flags & SAVESTART) == 0)
-		PNBUF_PUT(cnp->cn_pnbuf);
 	return error;
 }
 
@@ -1589,9 +1581,6 @@ puffs_vnop_rmdir(void *v)
 	RELEPN_AND_VP(dvp, dpn);
 	RELEPN_AND_VP(vp, pn);
 
-	if (error || (cnp->cn_flags & SAVESTART) == 0)
-		PNBUF_PUT(cnp->cn_pnbuf);
-
 	return error;
 }
 
@@ -1636,7 +1625,6 @@ puffs_vnop_link(void *v)
 	if (error == 0)
 		puffs_updatenode(pn, PUFFS_UPDATECTIME, 0);
 
-	PNBUF_PUT(cnp->cn_pnbuf);
 	RELEPN_AND_VP(dvp, dpn);
 	puffs_releasenode(pn);
 
@@ -1688,8 +1676,6 @@ puffs_vnop_symlink(void *v)
  out:
 	vput(dvp);
 	PUFFS_MSG_RELEASE(symlink);
-	if (error || (cnp->cn_flags & SAVESTART) == 0)
-		PNBUF_PUT(cnp->cn_pnbuf);
 
 	return error;
 }

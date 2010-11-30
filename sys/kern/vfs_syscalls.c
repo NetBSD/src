@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.409 2010/11/19 06:44:43 dholland Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.410 2010/11/30 10:30:02 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.409 2010/11/19 06:44:43 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.410 2010/11/30 10:30:02 dholland Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -3599,11 +3599,9 @@ out:
 		vrele(fvp);
 	}
 	vrele(tond.ni_startdir);
-	PNBUF_PUT(tond.ni_cnd.cn_pnbuf);
 out1:
 	if (fromnd.ni_startdir)
 		vrele(fromnd.ni_startdir);
-	PNBUF_PUT(fromnd.ni_cnd.cn_pnbuf);
 	pathbuf_destroy(frompb);
 	pathbuf_destroy(topb);
 	return (error == -1 ? 0 : error);

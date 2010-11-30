@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_misc.c,v 1.71 2010/11/19 06:44:38 dholland Exp $	 */
+/*	$NetBSD: svr4_32_misc.c,v 1.72 2010/11/30 10:29:58 dholland Exp $	 */
 
 /*-
  * Copyright (c) 1994, 2008 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_misc.c,v 1.71 2010/11/19 06:44:38 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_misc.c,v 1.72 2010/11/30 10:29:58 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1339,7 +1339,7 @@ svr4_32_sys_resolvepath(struct lwp *l, const struct svr4_32_sys_resolvepath_args
 		return error;
 	}
 
-	if ((error = copyoutstr(nd.ni_cnd.cn_pnbuf,
+	if ((error = copyoutstr(nd.ni_pnbuf,
 	    SCARG_P32(uap, buf),
 	    SCARG(uap, bufsiz), &len)) != 0)
 		goto bad;
@@ -1347,7 +1347,6 @@ svr4_32_sys_resolvepath(struct lwp *l, const struct svr4_32_sys_resolvepath_args
 	*retval = len;
 bad:
 	vrele(nd.ni_vp);
-	PNBUF_PUT(nd.ni_cnd.cn_pnbuf);
 	pathbuf_destroy(pb);
 	return error;
 }
