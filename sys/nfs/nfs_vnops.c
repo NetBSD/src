@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.285 2010/10/26 11:44:53 cegger Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.286 2010/11/30 10:30:03 dholland Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.285 2010/10/26 11:44:53 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.286 2010/11/30 10:30:03 dholland Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -1568,7 +1568,6 @@ nfs_mknodrpc(struct vnode *dvp, struct vnode **vpp, struct componentname *cnp, s
 			nfs_cache_enter(dvp, newvp, cnp);
 		*vpp = newvp;
 	}
-	PNBUF_PUT(cnp->cn_pnbuf);
 	VTONFS(dvp)->n_flag |= NMODIFIED;
 	if (!wccflag)
 		NFS_INVALIDATE_ATTRCACHE(VTONFS(dvp));
@@ -1732,7 +1731,6 @@ again:
 		if (error == EEXIST)
 			cache_purge1(dvp, cnp, 0);
 	}
-	PNBUF_PUT(cnp->cn_pnbuf);
 	VTONFS(dvp)->n_flag |= NMODIFIED;
 	if (!wccflag)
 		NFS_INVALIDATE_ATTRCACHE(VTONFS(dvp));
@@ -1798,7 +1796,6 @@ nfs_remove(void *v)
 				cnp->cn_namelen, cnp->cn_cred, curlwp);
 	} else if (!np->n_sillyrename)
 		error = nfs_sillyrename(dvp, vp, cnp, false);
-	PNBUF_PUT(cnp->cn_pnbuf);
 	if (!error && nfs_getattrcache(vp, &vattr) == 0 &&
 	    vattr.va_nlink == 1) {
 		np->n_flag |= NREMOVED;
@@ -2102,7 +2099,6 @@ nfs_link(void *v)
 
 	if (error == 0)
 		cache_purge1(dvp, cnp, 0);
-	PNBUF_PUT(cnp->cn_pnbuf);
 	if (dvp != vp)
 		VOP_UNLOCK(vp);
 	VN_KNOTE(vp, NOTE_LINK);
@@ -2193,7 +2189,6 @@ nfs_symlink(void *v)
 	} else {
 		*ap->a_vpp = newvp;
 	}
-	PNBUF_PUT(cnp->cn_pnbuf);
 	VTONFS(dvp)->n_flag |= NMODIFIED;
 	if (!wccflag)
 		NFS_INVALIDATE_ATTRCACHE(VTONFS(dvp));
@@ -2290,7 +2285,6 @@ nfs_mkdir(void *v)
 			nfs_cache_enter(dvp, newvp, cnp);
 		*ap->a_vpp = newvp;
 	}
-	PNBUF_PUT(cnp->cn_pnbuf);
 	vput(dvp);
 	return (error);
 }
@@ -2326,7 +2320,6 @@ nfs_rmdir(void *v)
 	if (dvp == vp) {
 		vrele(dvp);
 		vput(dvp);
-		PNBUF_PUT(cnp->cn_pnbuf);
 		return (EINVAL);
 	}
 	nfsstats.rpccnt[NFSPROC_RMDIR]++;
@@ -2341,7 +2334,6 @@ nfs_rmdir(void *v)
 		nfsm_wcc_data(dvp, wccflag, 0, !error);
 #endif
 	nfsm_reqdone;
-	PNBUF_PUT(cnp->cn_pnbuf);
 	VTONFS(dvp)->n_flag |= NMODIFIED;
 	if (!wccflag)
 		NFS_INVALIDATE_ATTRCACHE(VTONFS(dvp));

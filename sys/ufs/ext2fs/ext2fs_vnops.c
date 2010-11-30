@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vnops.c,v 1.94 2010/07/28 11:03:48 hannken Exp $	*/
+/*	$NetBSD: ext2fs_vnops.c,v 1.95 2010/11/30 10:30:03 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.94 2010/07/28 11:03:48 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.95 2010/11/30 10:30:03 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -606,7 +606,6 @@ ext2fs_link(void *v)
 		ip->i_e2fs_nlink--;
 		ip->i_flag |= IN_CHANGE;
 	}
-	PNBUF_PUT(cnp->cn_pnbuf);
 out1:
 	if (dvp != vp)
 		VOP_UNLOCK(vp);
@@ -1165,7 +1164,6 @@ bad:
 		*ap->a_vpp = tvp;
 	}
 out:
-	PNBUF_PUT(cnp->cn_pnbuf);
 	vput(dvp);
 	return (error);
 }
@@ -1436,7 +1434,6 @@ ext2fs_makeinode(int mode, struct vnode *dvp, struct vnode **vpp,
 		mode |= IFREG;
 
 	if ((error = ext2fs_valloc(dvp, mode, cnp->cn_cred, &tvp)) != 0) {
-		PNBUF_PUT(cnp->cn_pnbuf);
 		vput(dvp);
 		return (error);
 	}
@@ -1469,8 +1466,6 @@ ext2fs_makeinode(int mode, struct vnode *dvp, struct vnode **vpp,
 	error = ext2fs_direnter(ip, dvp, cnp);
 	if (error != 0)
 		goto bad;
-	if ((cnp->cn_flags & SAVESTART) == 0)
-		PNBUF_PUT(cnp->cn_pnbuf);
 	vput(dvp);
 	*vpp = tvp;
 	return (0);
@@ -1484,7 +1479,6 @@ bad:
 	ip->i_e2fs_nlink = 0;
 	ip->i_flag |= IN_CHANGE;
 	vput(tvp);
-	PNBUF_PUT(cnp->cn_pnbuf);
 	vput(dvp);
 	return (error);
 }
