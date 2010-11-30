@@ -1,4 +1,4 @@
-/* $NetBSD: t_join.c,v 1.4 2010/07/29 12:56:16 hans Exp $ */
+/* $NetBSD: t_join.c,v 1.5 2010/11/30 18:38:54 joerg Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_join.c,v 1.4 2010/07/29 12:56:16 hans Exp $");
+__RCSID("$NetBSD: t_join.c,v 1.5 2010/11/30 18:38:54 joerg Exp $");
 
 #include <errno.h>
 #include <pthread.h>
@@ -37,6 +37,10 @@ __RCSID("$NetBSD: t_join.c,v 1.4 2010/07/29 12:56:16 hans Exp $");
 #include <atf-c.h>
 
 #include "h_common.h"
+
+#ifdef CHECK_STACK_ALIGNMENT
+extern int check_stack_alignment(void);
+#endif
 
 static bool error;
 
@@ -69,6 +73,13 @@ threadfunc1(void *arg)
 	int rv;
 
 	caller = pthread_self();
+
+#ifdef CHECK_STACK_ALIGNMENT
+	/*
+	 * Check alignment of thread stack, if supported.
+	 */
+	ATF_REQUIRE(check_stack_alignment());
+#endif
 
 	/*
 	 * The behavior is undefined, but should error
