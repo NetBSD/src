@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1255 2010/11/28 01:58:39 christos Exp $
+# $NetBSD: mi,v 1.1256 2010/11/30 20:19:30 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1968,6 +1968,7 @@
 ./usr/share/man/cat7/miscellaneous.0		man-obsolete		obsolete
 ./usr/share/man/cat7/msafer.0			man-obsolete		obsolete
 ./usr/share/man/cat7/nls.0			man-reference-catman	.cat
+./usr/share/man/cat7/orders.0			man-reference-catman	.cat
 ./usr/share/man/cat7/packages.0			man-obsolete		obsolete
 ./usr/share/man/cat7/pkgsrc.0			man-reference-catman	.cat
 ./usr/share/man/cat7/re_format.0		man-reference-catman	.cat
@@ -4570,6 +4571,7 @@
 ./usr/share/man/html7/mailaddr.html		man-reference-htmlman	html
 ./usr/share/man/html7/mdoc.html			man-groff-htmlman	html,groff
 ./usr/share/man/html7/nls.html			man-reference-htmlman	html
+./usr/share/man/html7/orders.html		man-reference-htmlman	html
 ./usr/share/man/html7/pkgsrc.html		man-reference-htmlman	html
 ./usr/share/man/html7/re_format.html		man-reference-htmlman	html
 ./usr/share/man/html7/release.html		man-reference-htmlman	html
@@ -7153,6 +7155,7 @@
 ./usr/share/man/man7/mdoc.7			man-groff-man		.man,groff
 ./usr/share/man/man7/msafer.7			man-obsolete		obsolete
 ./usr/share/man/man7/nls.7			man-reference-man	.man
+./usr/share/man/man7/orders.7			man-reference-man	.man
 ./usr/share/man/man7/packages.7			man-obsolete		obsolete
 ./usr/share/man/man7/pkgsrc.7			man-reference-man	.man
 ./usr/share/man/man7/re_format.7		man-reference-man	.man
