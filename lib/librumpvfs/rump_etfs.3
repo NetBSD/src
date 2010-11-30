@@ -1,4 +1,4 @@
-.\"     $NetBSD: rump_etfs.3,v 1.3 2010/11/30 19:50:25 pooka Exp $
+.\"     $NetBSD: rump_etfs.3,v 1.4 2010/11/30 22:00:01 wiz Exp $
 .\"
 .\" Copyright (c) 2010 Antti Kantee.  All rights reserved.
 .\"
@@ -77,12 +77,12 @@ have to match the host type, although some limitations apply.
 Possible values are:
 .Bl -tag -width RUMP_ETFS_DIR_SUBDIRSXXX
 .It Dv RUMP_ETFS_REG
-regular file
+regular file.
 .It Dv RUMP_ETFS_BLK
 block device.
 This is often used when mapping file system images.
 .It Dv RUMP_ETFS_CHR
-character device
+character device.
 .It Dv RUMP_ETFS_DIR
 directory.
 This option is valid only when
@@ -122,8 +122,9 @@ This routine may be called only if the file related to the mapping
 is not in use.
 .El
 .Sh EXAMPLES
-Map a host image file to a mountable /dev/harddisk path using
-window offsets from the disklabel.
+Map a host image file to a mountable
+.Pa /dev/harddisk
+path using window offsets from the disklabel.
 .Bd -literal -offset indent
 rump_pub_etfs_register_withsize("/dev/harddisk", "disk.img",
     RUMP_ETFS_BLK,
