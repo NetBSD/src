@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.161 2010/11/29 19:29:47 njoly Exp $
+# $NetBSD: mi,v 1.162 2010/11/30 16:16:33 pooka Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -411,6 +411,7 @@
 ./usr/libdata/debug/usr/tests/rump/rumpkern/t_vm.debug			tests-syscall-debug	debug,atf
 ./usr/libdata/debug/usr/tests/rump/rumpvfs				tests-syscall-debug
 ./usr/libdata/debug/usr/tests/rump/rumpvfs/t_etfs.debug		tests-syscall-debug	debug,atf
+./usr/libdata/debug/usr/tests/rump/rumpvfs/t_p2kifs.debug		tests-syscall-debug	debug,atf
 ./usr/libdata/debug/usr/tests/syscall					tests-syscall-debug
 ./usr/libdata/debug/usr/tests/syscall/t_cmsg.debug			tests-syscall-debug	debug,atf
 ./usr/libdata/debug/usr/tests/syscall/t_timer.debug			tests-syscall-debug	debug,atf
@@ -1638,6 +1639,7 @@
 ./usr/tests/rump/rumpvfs			tests-rump-tests
 ./usr/tests/rump/rumpvfs/Atffile		tests-rump-tests	atf
 ./usr/tests/rump/rumpvfs/t_etfs		tests-rump-tests	atf
+./usr/tests/rump/rumpvfs/t_p2kifs		tests-rump-tests	atf
 ./usr/tests/sys				tests-sys-tests
 ./usr/tests/sys/Atffile			tests-sys-tests	atf
 ./usr/tests/sys/rc				tests-sys-tests
