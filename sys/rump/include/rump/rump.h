@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.h,v 1.48 2010/11/30 10:46:59 dholland Exp $	*/
+/*	$NetBSD: rump.h,v 1.49 2010/11/30 14:23:24 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -88,8 +88,8 @@ enum rump_etfs_type {
  * Something like rump capabilities would be nicer, but let's
  * do this for a start.
  */
-#define RUMP_VERSION	01
-#define rump_init()	rump__init(RUMP_VERSION)
+#define RUMP_VERSION			01
+#define rump_init()			rump__init(RUMP_VERSION)
 
 /* um, what's the point ?-) */
 #ifdef _BEGIN_DECLS
@@ -105,7 +105,11 @@ void	rump_unschedule(void);
 
 void	rump_printevcnts(void);
 
+int	rump_daemonize_begin(void);
 int	rump__init(int);
+int	rump_init_server(const char *);
+int	rump_daemonize_done(int);
+#define RUMP_DAEMONIZE_SUCCESS 0
 
 #ifndef _KERNEL
 #include <rump/rumpkern_if_pub.h>
