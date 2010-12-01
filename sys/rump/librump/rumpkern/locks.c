@@ -1,4 +1,4 @@
-/*	$NetBSD: locks.c,v 1.43 2010/12/01 14:59:38 pooka Exp $	*/
+/*	$NetBSD: locks.c,v 1.44 2010/12/01 17:22:51 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: locks.c,v 1.43 2010/12/01 14:59:38 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locks.c,v 1.44 2010/12/01 17:22:51 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -109,7 +109,14 @@ int
 mutex_owned(kmutex_t *mtx)
 {
 
-	return rumpuser_mutex_held(RUMPMTX(mtx));
+	return mutex_owner(mtx) == curlwp;
+}
+
+struct lwp *
+mutex_owner(kmutex_t *mtx)
+{
+
+	return rumpuser_mutex_owner(RUMPMTX(mtx));
 }
 
 #define RUMPRW(rw) (*(struct rumpuser_rw **)(rw))

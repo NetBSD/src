@@ -1,4 +1,4 @@
-/*	$NetBSD: locks_up.c,v 1.4 2010/06/14 21:04:56 pooka Exp $	*/
+/*	$NetBSD: locks_up.c,v 1.5 2010/12/01 17:22:51 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: locks_up.c,v 1.4 2010/06/14 21:04:56 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locks_up.c,v 1.5 2010/12/01 17:22:51 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -155,6 +155,13 @@ mutex_owned(kmutex_t *mtx)
 	UPMTX(mtx);
 
 	return upm->upm_owner == curlwp;
+}
+
+struct lwp *
+mutex_owner(kmutex_t *mtx)
+{
+
+	return upm->upm_owner;
 }
 
 struct uprw {
