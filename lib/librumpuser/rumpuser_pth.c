@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_pth.c,v 1.4 2010/12/01 14:59:37 pooka Exp $	*/
+/*	$NetBSD: rumpuser_pth.c,v 1.5 2010/12/01 15:01:52 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2010 Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser_pth.c,v 1.4 2010/12/01 14:59:37 pooka Exp $");
+__RCSID("$NetBSD: rumpuser_pth.c,v 1.5 2010/12/01 15:01:52 pooka Exp $");
 #endif /* !lint */
 
 #ifdef __linux__
@@ -284,22 +284,6 @@ rumpuser_mutex_init_kmutex(struct rumpuser_mtx **mtx)
 
 	rumpuser_mutex_init(mtx);
 	(*mtx)->iskmutex = 1;
-}
-
-void
-rumpuser_mutex_init_krecursive(struct rumpuser_mtx **mtx)
-{
-	pthread_mutexattr_t mattr;
-
-	pthread_mutexattr_init(&mattr);
-	pthread_mutexattr_settype(&mattr, PTHREAD_MUTEX_RECURSIVE);
-
-	NOFAIL(*mtx = malloc(sizeof(struct rumpuser_mtx)));
-	NOFAIL_ERRNO(pthread_mutex_init(&((*mtx)->pthmtx), &mattr));
-	(*mtx)->owner = NULL;
-	(*mtx)->iskmutex = 1;
-
-	pthread_mutexattr_destroy(&mattr);
 }
 
 static void
