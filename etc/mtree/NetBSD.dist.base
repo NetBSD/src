@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.base,v 1.64 2010/11/30 23:18:25 riz Exp $
+#	$NetBSD: NetBSD.dist.base,v 1.65 2010/12/01 07:03:21 pooka Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -274,6 +274,8 @@
 ./usr/libdata/debug/usr/tests/rump/rumpkern/h_client
 ./usr/libdata/debug/usr/tests/rump/rumpkern/h_server
 ./usr/libdata/debug/usr/tests/rump/rumpvfs
+./usr/libdata/debug/usr/tests/sbin
+./usr/libdata/debug/usr/tests/sbin/resize_ffs
 ./usr/libdata/debug/usr/tests/syscall
 ./usr/libdata/debug/usr/tests/util
 ./usr/libdata/debug/usr/tests/util/df
