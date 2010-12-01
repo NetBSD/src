@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.h,v 1.55 2010/12/01 14:59:39 pooka Exp $	*/
+/*	$NetBSD: rumpuser.h,v 1.56 2010/12/01 15:02:04 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -36,7 +36,7 @@
 #include <stdint.h>
 #endif
 
-#define RUMPUSER_VERSION 6
+#define RUMPUSER_VERSION 7
 int rumpuser_getversion(void);
 
 int rumpuser_daemonize_begin(void);
