@@ -1,4 +1,4 @@
-/*	$NetBSD: locks.c,v 1.42 2010/06/09 07:54:13 pooka Exp $	*/
+/*	$NetBSD: locks.c,v 1.43 2010/12/01 14:59:38 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: locks.c,v 1.42 2010/06/09 07:54:13 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locks.c,v 1.43 2010/12/01 14:59:38 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -60,7 +60,7 @@ mutex_init(kmutex_t *mtx, kmutex_type_t type, int ipl)
 
 	CTASSERT(sizeof(kmutex_t) >= sizeof(void *));
 
-	rumpuser_mutex_init((struct rumpuser_mtx **)mtx);
+	rumpuser_mutex_init_kmutex((struct rumpuser_mtx **)mtx);
 }
 
 void

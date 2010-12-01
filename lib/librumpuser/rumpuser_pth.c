@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_pth.c,v 1.3 2010/05/31 23:09:30 pooka Exp $	*/
+/*	$NetBSD: rumpuser_pth.c,v 1.4 2010/12/01 14:59:37 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2010 Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser_pth.c,v 1.3 2010/05/31 23:09:30 pooka Exp $");
+__RCSID("$NetBSD: rumpuser_pth.c,v 1.4 2010/12/01 14:59:37 pooka Exp $");
 #endif /* !lint */
 
 #ifdef __linux__
@@ -62,22 +62,20 @@ do {									\
 	}								\
 } while (/*CONSTCOND*/0)
 
-#define RUMTX_INCRECURSION(mtx) ((mtx)->recursion++)
-#define RUMTX_DECRECURSION(mtx) ((mtx)->recursion--)
 struct rumpuser_mtx {
 	pthread_mutex_t pthmtx;
-	pthread_t owner;
-	unsigned recursion;
+	struct lwp *owner;
+	int iskmutex;
 };
 
-#define RURW_AMWRITER(rw) (pthread_equal(rw->writer, pthread_self())	\
+#define RURW_AMWRITER(rw) (rw->writer == rumpuser_get_curlwp()		\
 				&& rw->readers == -1)
 #define RURW_HASREAD(rw)  (rw->readers > 0)
 
 #define RURW_SETWRITE(rw)						\
 do {									\
 	assert(rw->readers == 0);					\
-	rw->writer = pthread_self();					\
+	rw->writer = rumpuser_get_curlwp();				\
 	rw->readers = -1;						\
 } while (/*CONSTCOND*/0)
 #define RURW_CLRWRITE(rw)						\
@@ -104,7 +102,7 @@ struct rumpuser_rw {
 	pthread_rwlock_t pthrw;
 	pthread_spinlock_t spin;
 	int readers;
-	pthread_t writer;
+	struct lwp *writer;
 };
 
 struct rumpuser_cv {
@@ -277,11 +275,19 @@ rumpuser_mutex_init(struct rumpuser_mtx **mtx)
 	pthread_mutexattr_destroy(&att);
 
 	(*mtx)->owner = NULL;
-	(*mtx)->recursion = 0;
+	(*mtx)->iskmutex = 0;
 }
 
 void
-rumpuser_mutex_recursive_init(struct rumpuser_mtx **mtx)
+rumpuser_mutex_init_kmutex(struct rumpuser_mtx **mtx)
+{
+
+	rumpuser_mutex_init(mtx);
+	(*mtx)->iskmutex = 1;
+}
+
+void
+rumpuser_mutex_init_krecursive(struct rumpuser_mtx **mtx)
 {
 	pthread_mutexattr_t mattr;
 
@@ -291,7 +297,7 @@ rumpuser_mutex_recursive_init(struct rumpuser_mtx **mtx)
 	NOFAIL(*mtx = malloc(sizeof(struct rumpuser_mtx)));
 	NOFAIL_ERRNO(pthread_mutex_init(&((*mtx)->pthmtx), &mattr));
 	(*mtx)->owner = NULL;
-	(*mtx)->recursion = 0;
+	(*mtx)->iskmutex = 1;
 
 	pthread_mutexattr_destroy(&mattr);
 }
@@ -300,21 +306,22 @@ static void
 mtxenter(struct rumpuser_mtx *mtx)
 {
 
-	if (mtx->recursion++ == 0) {
-		assert(mtx->owner == NULL);
-		mtx->owner = pthread_self();
-	} else {
-		assert(pthread_equal(mtx->owner, pthread_self()));
-	}
+	if (!mtx->iskmutex)
+		return;
+
+	assert(mtx->owner == NULL);
+	mtx->owner = rumpuser_get_curlwp();
 }
 
 static void
 mtxexit(struct rumpuser_mtx *mtx)
 {
 
+	if (!mtx->iskmutex)
+		return;
+
 	assert(mtx->owner != NULL);
-	if (--mtx->recursion == 0)
-		mtx->owner = NULL;
+	mtx->owner = NULL;
 }
 
 void
@@ -367,7 +374,12 @@ int
 rumpuser_mutex_held(struct rumpuser_mtx *mtx)
 {
 
-	return mtx->recursion && pthread_equal(mtx->owner, pthread_self());
+	if (__predict_false(!mtx->iskmutex)) {
+		printf("panic: rumpuser_mutex_held unsupported on non-kmtx\n");
+		abort();
+	}
+
+	return mtx->owner == rumpuser_get_curlwp();
 }
 
 void
@@ -481,7 +493,6 @@ rumpuser_cv_wait(struct rumpuser_cv *cv, struct rumpuser_mtx *mtx)
 
 	cv->nwaiters++;
 	rumpuser__kunlock(0, &nlocks, mtx);
-	assert(mtx->recursion == 1);
 	mtxexit(mtx);
 	NOFAIL_ERRNO(pthread_cond_wait(&cv->pthcv, &mtx->pthmtx));
 	mtxenter(mtx);
@@ -494,7 +505,6 @@ rumpuser_cv_wait_nowrap(struct rumpuser_cv *cv, struct rumpuser_mtx *mtx)
 {
 
 	cv->nwaiters++;
-	assert(mtx->recursion == 1);
 	mtxexit(mtx);
 	NOFAIL_ERRNO(pthread_cond_wait(&cv->pthcv, &mtx->pthmtx));
 	mtxenter(mtx);

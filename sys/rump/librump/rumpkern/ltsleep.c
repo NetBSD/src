@@ -1,4 +1,4 @@
-/*	$NetBSD: ltsleep.c,v 1.27 2010/05/31 23:18:33 pooka Exp $	*/
+/*	$NetBSD: ltsleep.c,v 1.28 2010/12/01 14:59:38 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Antti Kantee.  All Rights Reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ltsleep.c,v 1.27 2010/05/31 23:18:33 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ltsleep.c,v 1.28 2010/12/01 14:59:38 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -128,18 +128,19 @@ ltsleep(wchan_t ident, pri_t prio, const char *wmesg, int timo,
 {
 	int rv, nlocks;
 
-	/*
-	 * Since we cannot use slock as the rumpuser interlock,
-	 * require that everyone using this prehistoric interface
-	 * is biglocked.
-	 */
-	KASSERT(rump_kernel_isbiglocked());
 	if (slock)
 		simple_unlock(slock);
 
-	rump_kernel_unlock_allbutone(&nlocks);
+	/*
+	 * Since we cannot use slock as the rumpuser interlock,
+	 * require that everyone using this prehistoric interface
+	 * is biglocked.  Wrap around the biglock and drop lockcnt,
+	 * but retain the rumpuser mutex so that we can use it as an
+	 * interlock to rumpuser_cv_wait().
+	 */
+	rump_kernel_bigwrap(&nlocks);
 	rv = sleeper(ident, timo, NULL);
-	rump_kernel_ununlock_allbutone(nlocks);
+	rump_kernel_bigunwrap(nlocks);
 
 	if (slock && (prio & PNORELOCK) == 0)
 		simple_lock(slock);
