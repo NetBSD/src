@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.207 2010/11/30 14:23:24 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.208 2010/12/01 14:59:38 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.207 2010/11/30 14:23:24 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.208 2010/12/01 14:59:38 pooka Exp $");
 
 #include <sys/systm.h>
 #define ELFSIZE ARCH_ELFSIZE
@@ -87,8 +87,6 @@ __KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.207 2010/11/30 14:23:24 pooka Exp $");
 char machine[] = MACHINE;
 
 struct proc *initproc;
-
-struct rumpuser_mtx *rump_giantlock;
 
 struct device rump_rootdev = {
 	.dv_class = DV_VIRTUAL
@@ -306,7 +304,7 @@ rump__init(int rump_version)
 	rumpuser_set_curlwp(l);
 
 	mutex_init(&tty_lock, MUTEX_DEFAULT, IPL_NONE);
-	rumpuser_mutex_recursive_init(&rump_giantlock);
+	rumpuser_mutex_init(&rump_giantlock);
 	ksyms_init();
 	uvm_init();
 	evcnt_init();
