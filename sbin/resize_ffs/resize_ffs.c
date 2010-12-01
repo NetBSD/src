@@ -1,4 +1,4 @@
-/*	$NetBSD: resize_ffs.c,v 1.14 2010/11/29 19:54:10 riz Exp $	*/
+/*	$NetBSD: resize_ffs.c,v 1.15 2010/12/01 17:33:45 riz Exp $	*/
 /* From sources sent on February 17, 2003 */
 /*-
  * As its sole author, I explicitly place this code in the public
@@ -15,9 +15,9 @@
  *
  * Resize a filesystem.  Is capable of both growing and shrinking.
  *
- * Usage: resize_ffs filesystem newsize
+ * Usage: resize_ffs [-s newsize] [-y] filesystem
  *
- * Example: resize_ffs /dev/rsd1e 29574
+ * Example: resize_ffs -s 29574 /dev/rsd1e
  *
  * newsize is in DEV_BSIZE units (ie, disk sectors, usually 512 bytes
  *  each).
@@ -41,13 +41,6 @@
  */
 
 #include <sys/cdefs.h>
-#include <stdio.h>
-#include <errno.h>
-#include <fcntl.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <strings.h>
-#include <err.h>
 #include <sys/disk.h>
 #include <sys/disklabel.h>
 #include <sys/dkio.h>
@@ -59,6 +52,14 @@
 #include <ufs/ufs/dir.h>
 #include <ufs/ufs/dinode.h>
 #include <ufs/ufs/ufs_bswap.h>	/* ufs_rw32 */
+
+#include <err.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <strings.h>
+#include <unistd.h>
 
 /* new size of filesystem, in sectors */
 static uint32_t newsize;
@@ -81,7 +82,8 @@ static off_t where;
 static struct fs *oldsb;	/* before we started */
 static struct fs *newsb;	/* copy to work with */
 /* Buffer to hold the above.  Make sure it's aligned correctly. */
-static char sbbuf[2 * SBLOCKSIZE] __attribute__((__aligned__(__alignof__(struct fs))));
+static char sbbuf[2 * SBLOCKSIZE]
+	__attribute__((__aligned__(__alignof__(struct fs))));
 
 /* a cg's worth of brand new squeaky-clean inodes */
 static struct ufs1_dinode *zinodes;
@@ -115,25 +117,7 @@ static unsigned char *iflags;
 				 * block of inodes, and applies to the whole
 				 * block. */
 
-/* Old FFS1 macros */
-#define cg_blktot(cgp, ns) \
-    (cg_chkmagic(cgp, ns) ? \
-    ((int32_t *)((u_int8_t *)(cgp) + ufs_rw32((cgp)->cg_old_btotoff, (ns)))) \
-    : (((struct ocg *)(cgp))->cg_btot))
-#define cg_blks(fs, cgp, cylno, ns) \
-    (cg_chkmagic(cgp, ns) ? \
-    ((int16_t *)((u_int8_t *)(cgp) + ufs_rw32((cgp)->cg_old_boff, (ns))) + \
-	(cylno) * (fs)->fs_old_nrpos) \
-    : (((struct ocg *)(cgp))->cg_b[cylno]))
-#define cbtocylno(fs, bno) \
-   (fsbtodb(fs, bno) / (fs)->fs_old_spc) 
-#define cbtorpos(fs, bno) \
-    ((fs)->fs_old_nrpos <= 1 ? 0 : \
-     (fsbtodb(fs, bno) % (fs)->fs_old_spc / \
-      (fs)->fs_old_nsect * (fs)->fs_old_trackskew + \
-      fsbtodb(fs, bno) % (fs)->fs_old_spc % \
-      (fs)->fs_old_nsect * (fs)->fs_old_interleave) %\
-    (fs)->fs_old_nsect * (fs)->fs_old_nrpos / (fs)->fs_old_npsect)
+/* resize_ffs works directly on dinodes, adapt blksize() */
 #define dblksize(fs, dip, lbn) \
     (((lbn) >= NDADDR || (dip)->di_size >= lblktosize(fs, (lbn) + 1)) \
     ? (fs)->fs_bsize \
@@ -174,7 +158,7 @@ readat(off_t blkno, void *buf, int size)
 {
 	/* Seek to the correct place. */
 	if (lseek(fd, blkno * DEV_BSIZE, L_SET) < 0)
-		err(1, "lseek failed");
+		err(EXIT_FAILURE, "lseek failed");
 
 	/* See if we have to break up the transfer... */
 	if (smallio) {
@@ -190,7 +174,8 @@ readat(off_t blkno, void *buf, int size)
 			if (rv < 0)
 				err(EXIT_FAILURE, "read failed");
 			if (rv != n)
-				errx(1, "read: wanted %d, got %d", n, rv);
+				errx(EXIT_FAILURE,
+				    "read: wanted %d, got %d", n, rv);
 			bp += n;
 			left -= n;
 		}
@@ -200,7 +185,7 @@ readat(off_t blkno, void *buf, int size)
 		if (rv < 0)
 			err(EXIT_FAILURE, "read failed");
 		if (rv != size)
-			errx(1, "read: wanted %d, got %d", size, rv);
+			errx(EXIT_FAILURE, "read: wanted %d, got %d", size, rv);
 	}
 }
 /*
@@ -227,7 +212,8 @@ writeat(off_t blkno, const void *buf, int size)
 			if (rv < 0)
 				err(EXIT_FAILURE, "write failed");
 			if (rv != n)
-				errx(1, "write: wanted %d, got %d", n, rv);
+				errx(EXIT_FAILURE,
+				    "write: wanted %d, got %d", n, rv);
 			bp += n;
 			left -= n;
 		}
@@ -237,7 +223,8 @@ writeat(off_t blkno, const void *buf, int size)
 		if (rv < 0)
 			err(EXIT_FAILURE, "write failed");
 		if (rv != size)
-			errx(1, "write: wanted %d, got %d", size, rv);
+			errx(EXIT_FAILURE,
+			    "write: wanted %d, got %d", size, rv);
 	}
 }
 /*
@@ -458,7 +445,8 @@ initcg(int cgn)
 	cg->cg_cgx = cgn;
 	cg->cg_old_ncyl = newsb->fs_old_cpg;
 	/* Update the cg_old_ncyl value for the last cylinder. */
-	if ((cgn == newsb->fs_ncg - 1) && (newsb->fs_old_ncyl % newsb->fs_old_cpg) ) {
+	if ((cgn == newsb->fs_ncg - 1) && 
+	    (newsb->fs_old_ncyl % newsb->fs_old_cpg) ) {
 		cg->cg_old_ncyl = newsb->fs_old_ncyl % newsb->fs_old_cpg;
 	}
 	cg->cg_old_niblk = newsb->fs_ipg;
@@ -515,8 +503,9 @@ initcg(int cgn)
 	 * pre-sb data area always starts at 0, and thus is block-aligned, and
 	 * always ends at the sb, which is block-aligned.) */
 	for (i = 0; i < dlow; i += newsb->fs_frag) {
-		cg_blktot(cg, 0)[cbtocylno(newsb, i)]++;
-		cg_blks(newsb, cg, cbtocylno(newsb, i), 0)[cbtorpos(newsb, i)]++;
+		old_cg_blktot(cg, 0)[old_cbtocylno(newsb, i)]++;
+		old_cg_blks(newsb, cg,
+		    old_cbtocylno(newsb, i), 0)[old_cbtorpos(newsb, i)]++;
 	}
 	/* Deal with a partial block at the beginning of the post-inode area.
 	 * I'm not convinced this can happen - I think the inodes are always
@@ -539,9 +528,9 @@ initcg(int cgn)
 			    newsb->fs_contigsumsize : n]++;
 		}
 		for (i = n; i > 0; i--) {
-			cg_blktot(cg, 0)[cbtocylno(newsb, dhigh)]++;
-			cg_blks(newsb, cg,
-			    cbtocylno(newsb, dhigh), 0)[cbtorpos(newsb,
+			old_cg_blktot(cg, 0)[old_cbtocylno(newsb, dhigh)]++;
+			old_cg_blks(newsb, cg,
+			    old_cbtocylno(newsb, dhigh), 0)[old_cbtorpos(newsb,
 				dhigh)]++;
 			dhigh += newsb->fs_frag;
 		}
@@ -811,7 +800,7 @@ csum_fixup(void)
 	newloc = find_freespace(ntot);
 	if (newloc < 0) {
 		printf("Sorry, no space available for new csums\n");
-		exit(1);
+		exit(EXIT_FAILURE);
 	}
 	for (i = 0, f = newsb->fs_csaddr, t = newloc; i < ntot; i++, f++, t++) {
 		if (i < nold) {
@@ -882,7 +871,8 @@ grow(void)
 	 * a frag larger than the old size - unlikely, but no excuse to
 	 * misbehave if it happens.) */
 	if (newsb->fs_size == oldsb->fs_size) {
-		printf("New fs size %"PRIu64" = odl fs size %"PRIu64", not growing.\n", newsb->fs_size, oldsb->fs_size);
+		printf("New fs size %"PRIu64" = odl fs size %"PRIu64
+		    ", not growing.\n", newsb->fs_size, oldsb->fs_size);
 		return;
 	}
 	/* Check that the new last sector (frag, actually) is writable.  Since
@@ -902,7 +892,8 @@ grow(void)
 	if (cgdmin(newsb, newsb->fs_ncg - 1) > newsb->fs_size) {
 		newsb->fs_ncg--;
 		newsb->fs_old_ncyl = newsb->fs_ncg * newsb->fs_old_cpg;
-		newsb->fs_size = (newsb->fs_old_ncyl * newsb->fs_old_spc) / NSPF(newsb);
+		newsb->fs_size = (newsb->fs_old_ncyl * newsb->fs_old_spc)
+		    / NSPF(newsb);
 		printf("Warning: last cylinder group is too small;\n");
 		printf("    dropping it.  New size = %lu.\n",
 		    (unsigned long int) fsbtodb(newsb, newsb->fs_size));
@@ -944,7 +935,8 @@ grow(void)
 			newcgsize = newsb->fs_fpg;
 		oldcgsize = oldsb->fs_size % oldsb->fs_fpg;
 		set_bits(cg_blksfree(cg, 0), oldcgsize, newcgsize - oldcgsize);
-		cg->cg_old_ncyl = howmany(newcgsize * NSPF(newsb), newsb->fs_old_spc);
+		cg->cg_old_ncyl = howmany(newcgsize * NSPF(newsb),
+		    newsb->fs_old_spc);
 		cg->cg_ndblk = newcgsize;
 	}
 	/* Fix up the csum info, if necessary. */
@@ -958,7 +950,8 @@ grow(void)
  *  over either the old or the new filesystem's set of inodes.
  */
 static void
-map_inodes(void (*fn) (struct ufs1_dinode * di, unsigned int, void *arg), int ncg, void *cbarg) {
+map_inodes(void (*fn) (struct ufs1_dinode * di, unsigned int, void *arg),
+	   int ncg, void *cbarg) {
 	int i;
 	int ni;
 
@@ -977,7 +970,8 @@ map_inodes(void (*fn) (struct ufs1_dinode * di, unsigned int, void *arg), int nc
 #define MDB_INDIR_PRE  2
 #define MDB_INDIR_POST 3
 
-typedef void (*mark_callback_t) (unsigned int blocknum, unsigned int nfrags, unsigned int blksize, int opcode);
+typedef void (*mark_callback_t) (unsigned int blocknum, unsigned int nfrags,
+				 unsigned int blksize, int opcode);
 
 /* Helper function - handles a data block.  Calls the callback
  * function and returns number of bytes occupied in file (actually,
@@ -1123,7 +1117,8 @@ loadinodes(void)
 	int cg;
 	struct ufs1_dinode *iptr;
 
-	inodes = alloconce(oldsb->fs_ncg * oldsb->fs_ipg * sizeof(struct ufs1_dinode), "inodes");
+	inodes = alloconce(oldsb->fs_ncg * oldsb->fs_ipg *
+	    sizeof(struct ufs1_dinode), "inodes");
 	iflags = alloconce(oldsb->fs_ncg * oldsb->fs_ipg, "inode flags");
 	bzero(iflags, oldsb->fs_ncg * oldsb->fs_ipg);
 	iptr = inodes;
@@ -1140,7 +1135,7 @@ static void
 toofull(void)
 {
 	printf("Sorry, would run out of data blocks\n");
-	exit(1);
+	exit(EXIT_FAILURE);
 }
 /*
  * Record a desire to move "n" frags from "from" to "to".
@@ -1336,7 +1331,8 @@ moveblocks_callback(struct ufs1_dinode * di, unsigned int inum, void *arg)
 }
 
 static void
-moveindir_callback(unsigned int off, unsigned int nfrag, unsigned int nbytes, int kind)
+moveindir_callback(unsigned int off, unsigned int nfrag, unsigned int nbytes,
+		   int kind)
 {
 	if (kind == MDB_INDIR_PRE) {
 		int32_t blk[howmany(MAXBSIZE, sizeof(int32_t))];
@@ -1419,7 +1415,7 @@ evict_inodes(struct cg * cg)
 			if (fi < 0) {
 				printf("Sorry, inodes evaporated - "
 				    "filesystem probably needs fsck\n");
-				exit(1);
+				exit(EXIT_FAILURE);
 			}
 			inomove[inum] = fi;
 			clr_bits(cg_inosused(cg, 0), i, 1);
@@ -1532,7 +1528,8 @@ shrink(void)
 	if (cgdmin(newsb, newsb->fs_ncg - 1) > newsb->fs_size) {
 		newsb->fs_ncg--;
 		newsb->fs_old_ncyl = newsb->fs_ncg * newsb->fs_old_cpg;
-		newsb->fs_size = (newsb->fs_old_ncyl * newsb->fs_old_spc) / NSPF(newsb);
+		newsb->fs_size = (newsb->fs_old_ncyl * newsb->fs_old_spc) /
+		    NSPF(newsb);
 		printf("Warning: last cylinder group is too small;\n");
 		printf("    dropping it.  New size = %lu.\n",
 		    (unsigned long int) fsbtodb(newsb, newsb->fs_size));
@@ -1540,7 +1537,7 @@ shrink(void)
 	/* Let's make sure we're not being shrunk into oblivion. */
 	if (newsb->fs_ncg < 1) {
 		printf("Size too small - filesystem would have no cylinders\n");
-		exit(1);
+		exit(EXIT_FAILURE);
 	}
 	/* Initialize for block motion. */
 	blkmove_init();
@@ -1578,7 +1575,8 @@ shrink(void)
 		int newcgsize;
 		cg = cgs[newsb->fs_ncg - 1];
 		newcgsize = newsb->fs_size % newsb->fs_fpg;
-		oldcgsize = oldsb->fs_size - ((newsb->fs_ncg - 1) & oldsb->fs_fpg);
+		oldcgsize = oldsb->fs_size - ((newsb->fs_ncg - 1) &
+		    oldsb->fs_fpg);
 		if (oldcgsize > oldsb->fs_fpg)
 			oldcgsize = oldsb->fs_fpg;
 		evict_data(cg, newcgsize, oldcgsize - newcgsize);
@@ -1596,7 +1594,7 @@ shrink(void)
 			slop -= oldsb->fs_ipg - cgs[i]->cg_cs.cs_nifree;
 		if (slop < 0) {
 			printf("Sorry, would run out of inodes\n");
-			exit(1);
+			exit(EXIT_FAILURE);
 		}
 	}
 	/* Copy data, then update pointers to data.  See the comment header on
@@ -1647,19 +1645,19 @@ rescan_blkmaps(int cgn)
 	cg->cg_cs.cs_nffree = 0;
 	cg->cg_cs.cs_nbfree = 0;
 	bzero(&cg->cg_frsum[0], MAXFRAG * sizeof(cg->cg_frsum[0]));
-	bzero(&cg_blktot(cg, 0)[0],
-	    newsb->fs_old_cpg * sizeof(cg_blktot(cg, 0)[0]));
-	bzero(&cg_blks(newsb, cg, 0, 0)[0],
+	bzero(&old_cg_blktot(cg, 0)[0],
+	    newsb->fs_old_cpg * sizeof(old_cg_blktot(cg, 0)[0]));
+	bzero(&old_cg_blks(newsb, cg, 0, 0)[0],
 	    newsb->fs_old_cpg * newsb->fs_old_nrpos *
-	    sizeof(cg_blks(newsb, cg, 0, 0)[0]));
+	    sizeof(old_cg_blks(newsb, cg, 0, 0)[0]));
 	if (newsb->fs_contigsumsize > 0) {
 		cg->cg_nclusterblks = cg->cg_ndblk / newsb->fs_frag;
 		bzero(&cg_clustersum(cg, 0)[1],
 		    newsb->fs_contigsumsize *
 		    sizeof(cg_clustersum(cg, 0)[1]));
 		bzero(&cg_clustersfree(cg, 0)[0],
-		    howmany((newsb->fs_old_cpg * newsb->fs_old_spc) / NSPB(newsb),
-			NBBY));
+		    howmany((newsb->fs_old_cpg * newsb->fs_old_spc) /
+		    NSPB(newsb), NBBY));
 	}
 	/* Scan the free-frag bitmap.  Runs of free frags are kept track of
 	 * with fragrun, and recorded into cg_frsum[] and cg_cs.cs_nffree; on
@@ -1688,10 +1686,12 @@ rescan_blkmaps(int cgn)
 				cg->cg_cs.cs_nbfree++;
 				if (newsb->fs_contigsumsize > 0)
 					set_bits(cg_clustersfree(cg, 0), b, 1);
-				cg_blktot(cg, 0)[cbtocylno(newsb, f - newsb->fs_frag)]++;
-				cg_blks(newsb, cg,
-				    cbtocylno(newsb, f - newsb->fs_frag),
-				    0)[cbtorpos(newsb, f - newsb->fs_frag)]++;
+				old_cg_blktot(cg, 0)[old_cbtocylno(newsb,
+				    f - newsb->fs_frag)]++;
+				old_cg_blks(newsb, cg,
+				    old_cbtocylno(newsb, f - newsb->fs_frag),
+				    0)[old_cbtorpos(newsb,
+				    f - newsb->fs_frag)]++;
 				blkrun++;
 			} else {
 				if (fragrun > 0) {
@@ -1700,7 +1700,10 @@ rescan_blkmaps(int cgn)
 				}
 				if (newsb->fs_contigsumsize > 0) {
 					if (blkrun > 0) {
-						cg_clustersum(cg, 0)[(blkrun > newsb->fs_contigsumsize) ? newsb->fs_contigsumsize : blkrun]++;
+						cg_clustersum(cg, 0)[(blkrun
+						    > newsb->fs_contigsumsize)
+						    ? newsb->fs_contigsumsize
+						    : blkrun]++;
 					}
 				}
 				blkrun = 0;
@@ -1893,13 +1896,14 @@ main(int argc, char **argv)
 	
 	fd = open(device, O_RDWR, 0);
 	if (fd < 0)
-		err(EXIT_FAILURE, "Cannot open `%s'", device);
+		err(EXIT_FAILURE, "Can't open `%s'", device);
 	checksmallio();
 
 	if (SFlag == 0) {
 		newsize = get_dev_size(device);
 		if (newsize == 0)
-			err(EXIT_FAILURE, "Cannot resize filesystem, newsize not known.");
+			err(EXIT_FAILURE,
+			    "Can't resize filesystem, newsize not known.");
 	}
 	
 	oldsb = (struct fs *) & sbbuf;
@@ -1911,15 +1915,16 @@ main(int argc, char **argv)
 		if (where == SBLOCK_UFS2)
 			continue;
 		if (oldsb->fs_old_flags & FS_FLAGS_UPDATED)
-			err(EXIT_FAILURE, "Cannot resize ffsv2 format superblock!");
+			err(EXIT_FAILURE,
+			    "Can't resize ffsv2 format superblock!");
 	}
 	if (where == (off_t)-1)
 		errx(EXIT_FAILURE, "Bad magic number");
 	oldsb->fs_qbmask = ~(int64_t) oldsb->fs_bmask;
 	oldsb->fs_qfmask = ~(int64_t) oldsb->fs_fmask;
 	if (oldsb->fs_ipg % INOPB(oldsb)) {
-		(void)fprintf(stderr, "ipg[%d] %% INOPB[%d] != 0\n", (int) oldsb->fs_ipg,
-		    (int) INOPB(oldsb));
+		(void)fprintf(stderr, "ipg[%d] %% INOPB[%d] != 0\n",
+		    (int) oldsb->fs_ipg, (int) INOPB(oldsb));
 		exit(EXIT_FAILURE);
 	}
 	/* The superblock is bigger than struct fs (there are trailing tables,
