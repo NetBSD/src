@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.102 2010/11/22 20:42:19 pooka Exp $	*/
+/*	$NetBSD: vm.c,v 1.103 2010/12/01 11:19:18 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2010 Antti Kantee.  All Rights Reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.102 2010/11/22 20:42:19 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.103 2010/12/01 11:19:18 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -146,8 +146,9 @@ pgctor(void *arg, void *obj, int flags)
 	struct vm_page *pg = obj;
 
 	memset(pg, 0, sizeof(*pg));
-	pg->uanon = rump_hypermalloc(PAGE_SIZE, PAGE_SIZE, true, "pgalloc");
-	return 0;
+	pg->uanon = rump_hypermalloc(PAGE_SIZE, PAGE_SIZE,
+	    (flags & PR_WAITOK) == PR_WAITOK, "pgalloc");
+	return pg->uanon == NULL;
 }
 
 static void
@@ -172,7 +173,10 @@ uvm_pagealloc_strat(struct uvm_object *uobj, voff_t off, struct vm_anon *anon,
 	KASSERT(uobj && mutex_owned(&uobj->vmobjlock));
 	KASSERT(anon == NULL);
 
-	pg = pool_cache_get(&pagecache, PR_WAITOK);
+	pg = pool_cache_get(&pagecache, PR_NOWAIT);
+	if (__predict_false(pg == NULL))
+		return NULL;
+
 	pg->offset = off;
 	pg->uobject = uobj;
 
@@ -326,8 +330,7 @@ uvm_init_limits(struct proc *p)
 /*
  * This satisfies the "disgusting mmap hack" used by proplib.
  * We probably should grow some more assertables to make sure we're
- * not satisfying anything we shouldn't be satisfying.  At least we
- * should make sure it's the local machine we're mmapping ...
+ * not satisfying anything we shouldn't be satisfying.
  */
 int
 uvm_mmap(struct vm_map *map, vaddr_t *addr, vsize_t size, vm_prot_t prot,
@@ -760,8 +763,7 @@ uvmspace_addref(struct vmspace *vm)
 {
 
 	/*
-	 * there is only vmspace0.  we're not planning on
-	 * feeding it to the fishes.
+	 * No dynamically allocated vmspaces exist.
 	 */
 }
 
@@ -1052,8 +1054,9 @@ rump_hypermalloc(size_t howmuch, int alignment, bool waitok, const char *wmsg)
 		newmem = atomic_add_long_nv(&curphysmem, howmuch);
 		if (newmem > rump_physmemlimit) {
 			newmem = atomic_add_long_nv(&curphysmem, -howmuch);
-			if (!waitok)
+			if (!waitok) {
 				return NULL;
+			}
 			uvm_wait(wmsg);
 			goto limitagain;
 		}
