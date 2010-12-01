@@ -34,7 +34,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: netpgp.c,v 1.85 2010/11/29 04:20:12 agc Exp $");
+__RCSID("$NetBSD: netpgp.c,v 1.86 2010/12/01 22:01:41 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -1156,6 +1156,7 @@ netpgp_generate_key(netpgp_t *netpgp, char *id, int numbits)
 	int             	 attempts;
 	int             	 passc;
 	int             	 fd;
+	int             	 cc;
 
 	uid = NULL;
 	io = netpgp->io;
@@ -1178,7 +1179,8 @@ netpgp_generate_key(netpgp_t *netpgp, char *id, int numbits)
 	pgp_sprint_keydata(netpgp->io, NULL, key, &cp, "signature ", &key->key.seckey.pubkey, 0);
 	(void) fprintf(stdout, "%s", cp);
 	/* write public key */
-	(void) snprintf(dir, sizeof(dir), "%s/%.16s", netpgp_getvar(netpgp, "homedir"), &cp[ID_OFFSET]);
+	cc = snprintf(dir, sizeof(dir), "%s/%.16s", netpgp_getvar(netpgp, "homedir"), &cp[ID_OFFSET]);
+	netpgp_setvar(netpgp, "userid", &dir[cc - 16]);
 	if (mkdir(dir, 0700) < 0) {
 		(void) fprintf(io->errs, "can't mkdir '%s'\n", dir);
 		return 0;
