@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wi_obio.c,v 1.19 2008/09/26 04:06:59 macallan Exp $	*/
+/*	$NetBSD: if_wi_obio.c,v 1.20 2010/12/01 09:52:28 he Exp $	*/
 
 /*-
  * Copyright (c) 2001 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wi_obio.c,v 1.19 2008/09/26 04:06:59 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wi_obio.c,v 1.20 2010/12/01 09:52:28 he Exp $");
 
 #include "opt_inet.h"
 
@@ -56,8 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_wi_obio.c,v 1.19 2008/09/26 04:06:59 macallan Exp
 
 static int wi_obio_match(struct device *, struct cfdata *, void *);
 static void wi_obio_attach(struct device *, struct device *, void *);
-static int wi_obio_enable(struct wi_softc *);
-static void wi_obio_disable(struct wi_softc *);
+static int wi_obio_enable(device_t, int);
 
 struct wi_obio_softc {
 	struct wi_softc sc_wi;
@@ -105,7 +104,6 @@ wi_obio_attach(struct device *parent, struct device *self, void *aux)
 
 	wisc->sc_enabled = 1;
 	wisc->sc_enable = wi_obio_enable;
-	wisc->sc_disable = wi_obio_disable;
 
 	if (wi_attach(wisc, 0)) {
 		printf("%s: failed to attach controller\n", self->dv_xname);
@@ -119,52 +117,48 @@ wi_obio_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Disable the card. */
 	wisc->sc_enabled = 0;
-	wi_obio_disable(wisc);
+	wi_obio_enable(self, 0);
 }
 
 int
-wi_obio_enable(struct wi_softc *wisc)
+wi_obio_enable(device_t self, int enable)
 {
 	uint32_t x;
 
-	x = obio_read_4(OBIO_WI_FCR2);
-	x |= 0x4;
-	obio_write_4(OBIO_WI_FCR2, x);
+	if (enable) {
+		x = obio_read_4(OBIO_WI_FCR2);
+		x |= 0x4;
+		obio_write_4(OBIO_WI_FCR2, x);
 
-	/* Enable card slot. */
-	obio_write_1(OBIO_WI_GPIO + 0x0f, 5);
-	delay(1000);
-	obio_write_1(OBIO_WI_GPIO + 0x0f, 4);
-	delay(1000);
-	x = obio_read_4(OBIO_WI_FCR2);
-	x &= ~0x8000000;
+		/* Enable card slot. */
+		obio_write_1(OBIO_WI_GPIO + 0x0f, 5);
+		delay(1000);
+		obio_write_1(OBIO_WI_GPIO + 0x0f, 4);
+		delay(1000);
+		x = obio_read_4(OBIO_WI_FCR2);
+		x &= ~0x8000000;
 
-	obio_write_4(OBIO_WI_FCR2, x);
-	/* out8(gpio + 0x10, 4); */
+		obio_write_4(OBIO_WI_FCR2, x);
+		/* out8(gpio + 0x10, 4); */
 
-	obio_write_1(OBIO_WI_EXTINT + 0x0b, 0);
-	obio_write_1(OBIO_WI_EXTINT + 0x0a, 0x28);
-	obio_write_1(OBIO_WI_EXTINT + 0x0d, 0x28);
-	obio_write_1(OBIO_WI_GPIO + 0x0d, 0x28);
-	obio_write_1(OBIO_WI_GPIO + 0x0e, 0x28);
-	obio_write_4(0x1c000, 0);
+		obio_write_1(OBIO_WI_EXTINT + 0x0b, 0);
+		obio_write_1(OBIO_WI_EXTINT + 0x0a, 0x28);
+		obio_write_1(OBIO_WI_EXTINT + 0x0d, 0x28);
+		obio_write_1(OBIO_WI_GPIO + 0x0d, 0x28);
+		obio_write_1(OBIO_WI_GPIO + 0x0e, 0x28);
+		obio_write_4(0x1c000, 0);
 
-	/* Initialize the card. */
-	obio_write_4(0x1a3e0, 0x41);
-	x = obio_read_4(OBIO_WI_FCR2);
-	x |= 0x8000000;
-	obio_write_4(OBIO_WI_FCR2, x);
+		/* Initialize the card. */
+		obio_write_4(0x1a3e0, 0x41);
+		x = obio_read_4(OBIO_WI_FCR2);
+		x |= 0x8000000;
+		obio_write_4(OBIO_WI_FCR2, x);
+	} else {
+		x = obio_read_4(OBIO_WI_FCR2);
+		x &= ~0x4;
+		obio_write_4(OBIO_WI_FCR2, x);
+		/* out8(gpio + 0x10, 0); */
+	}
 
 	return 0;
-}
-
-void
-wi_obio_disable(struct wi_softc *wisc)
-{
-	uint32_t x;
-
-	x = obio_read_4(OBIO_WI_FCR2);
-	x &= ~0x4;
-	obio_write_4(OBIO_WI_FCR2, x);
-	/* out8(gpio + 0x10, 0); */
 }
