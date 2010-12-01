@@ -34,7 +34,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: netpgp.c,v 1.86 2010/12/01 22:01:41 agc Exp $");
+__RCSID("$NetBSD: netpgp.c,v 1.87 2010/12/01 22:14:52 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -755,6 +755,7 @@ int
 netpgp_init(netpgp_t *netpgp)
 {
 	pgp_io_t	*io;
+	time_t		 t;
 	char		 id[MAX_ID_LENGTH];
 	char		*homedir;
 	char		*userid;
@@ -870,6 +871,8 @@ netpgp_init(netpgp_t *netpgp)
 			(void) netpgp_setvar(netpgp, "userid", userid);
 		}
 	}
+	t = time(NULL);
+	netpgp_setvar(netpgp, "initialised", ctime(&t));
 	return 1;
 }
 
@@ -1180,7 +1183,7 @@ netpgp_generate_key(netpgp_t *netpgp, char *id, int numbits)
 	(void) fprintf(stdout, "%s", cp);
 	/* write public key */
 	cc = snprintf(dir, sizeof(dir), "%s/%.16s", netpgp_getvar(netpgp, "homedir"), &cp[ID_OFFSET]);
-	netpgp_setvar(netpgp, "userid", &dir[cc - 16]);
+	netpgp_setvar(netpgp, "generated userid", &dir[cc - 16]);
 	if (mkdir(dir, 0700) < 0) {
 		(void) fprintf(io->errs, "can't mkdir '%s'\n", dir);
 		return 0;
