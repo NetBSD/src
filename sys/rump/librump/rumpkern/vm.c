@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.103 2010/12/01 11:19:18 pooka Exp $	*/
+/*	$NetBSD: vm.c,v 1.104 2010/12/01 20:29:57 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2010 Antti Kantee.  All Rights Reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.103 2010/12/01 11:19:18 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.104 2010/12/01 20:29:57 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -174,8 +174,9 @@ uvm_pagealloc_strat(struct uvm_object *uobj, voff_t off, struct vm_anon *anon,
 	KASSERT(anon == NULL);
 
 	pg = pool_cache_get(&pagecache, PR_NOWAIT);
-	if (__predict_false(pg == NULL))
+	if (__predict_false(pg == NULL)) {
 		return NULL;
+	}
 
 	pg->offset = off;
 	pg->uobject = uobj;
@@ -866,7 +867,7 @@ uvm_pageout_done(int npages)
 }
 
 static bool
-processpage(struct vm_page *pg)
+processpage(struct vm_page *pg, bool *lockrunning)
 {
 	struct uvm_object *uobj;
 
@@ -881,6 +882,18 @@ processpage(struct vm_page *pg)
 			return true;
 		} else {
 			mutex_exit(&uobj->vmobjlock);
+		}
+	} else if (*lockrunning == false && ncpu > 1) {
+		CPU_INFO_ITERATOR cii;
+		struct cpu_info *ci;
+		struct lwp *l;
+
+		l = mutex_owner(&uobj->vmobjlock);
+		for (CPU_INFO_FOREACH(cii, ci)) {
+			if (ci->ci_curlwp == l) {
+				*lockrunning = true;
+				break;
+			}
 		}
 	}
 
@@ -899,6 +912,7 @@ uvm_pageout(void *arg)
 	int timo = 0;
 	int cleaned, skip, skipped;
 	bool succ = false;
+	bool lockrunning;
 
 	mutex_enter(&pdaemonmtx);
 	for (;;) {
@@ -913,8 +927,10 @@ uvm_pageout(void *arg)
 		}
 		succ = false;
 
-		cv_timedwait(&pdaemoncv, &pdaemonmtx, timo);
-		uvmexp.pdwoke++;
+		if (pdaemon_waiters == 0) {
+			cv_timedwait(&pdaemoncv, &pdaemonmtx, timo);
+			uvmexp.pdwoke++;
+		}
 
 		/* tell the world that we are hungry */
 		kernel_map->flags |= VM_MAP_WANTVA;
@@ -943,6 +959,7 @@ uvm_pageout(void *arg)
 		 */
 		cleaned = 0;
 		skip = 0;
+		lockrunning = false;
  again:
 		mutex_enter(&uvm_pageqlock);
 		while (cleaned < PAGEDAEMON_OBJCHUNK) {
@@ -958,7 +975,7 @@ uvm_pageout(void *arg)
 				while (skipped++ < skip)
 					continue;
 
-				if (processpage(pg)) {
+				if (processpage(pg, &lockrunning)) {
 					cleaned++;
 					goto again;
 				}
@@ -968,6 +985,28 @@ uvm_pageout(void *arg)
 			break;
 		}
 		mutex_exit(&uvm_pageqlock);
+
+		/*
+		 * Ok, someone is running with an object lock held.
+		 * We want to yield the host CPU to make sure the
+		 * thread is not parked on the host.  Since sched_yield()
+		 * doesn't appear to do anything on NetBSD, nanosleep
+		 * for the smallest possible time and hope we're back in
+		 * the game soon.
+		 */
+		if (cleaned == 0 && lockrunning) {
+			uint64_t sec, nsec;
+
+			sec = 0;
+			nsec = 1;
+			rumpuser_nanosleep(&sec, &nsec, NULL);
+
+			lockrunning = false;
+			skip = 0;
+
+			/* and here we go again */
+			goto again;
+		}
 
 		/*
 		 * And of course we need to reclaim the page cache
@@ -1012,7 +1051,7 @@ uvm_pageout(void *arg)
 		 * Unfortunately, the wife just borrowed it.
 		 */
 
-		if (!succ) {
+		if (!succ && cleaned == 0) {
 			rumpuser_dprintf("pagedaemoness: failed to reclaim "
 			    "memory ... sleeping (deadlock?)\n");
 			timo = hz;
