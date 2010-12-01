@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.425.2.14 2010/11/06 03:42:21 snj Exp $
+.\"	$NetBSD: main,v 1.425.2.15 2010/12/01 12:28:38 sborrill Exp $
 .\"
 .\" Copyright (c) 1999-2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -2363,6 +2363,7 @@ If you're one of them, and would like to be mentioned, tell us!)
 .It Ta Soren Jacobsen Ta Mt snj@NetBSD.org
 .It Ta Phil Nelson Ta Mt phil@NetBSD.org
 .It Ta Jeff Rizzo Ta Mt riz@NetBSD.org
+.It Ta Stephen Borrill Ta Mt sborrill@NetBSD.org
 .It Ta Ta
 .
 .br_ne 2i
