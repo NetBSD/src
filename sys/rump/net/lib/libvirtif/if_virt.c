@@ -1,4 +1,4 @@
-/*	$NetBSD: if_virt.c,v 1.21 2010/11/15 20:23:11 pooka Exp $	*/
+/*	$NetBSD: if_virt.c,v 1.22 2010/12/01 15:13:24 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_virt.c,v 1.21 2010/11/15 20:23:11 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_virt.c,v 1.22 2010/12/01 15:13:24 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>
@@ -257,8 +257,6 @@ virtif_receiver(void *arg)
 
 	pfd.fd = sc->sc_tapfd;
 	pfd.events = POLLIN;
-
-	KASSERT(rump_kernel_isbiglocked());
 
 	for (;;) {
 		m = m_gethdr(M_WAIT, MT_DATA);
