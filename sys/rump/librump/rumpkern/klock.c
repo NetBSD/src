@@ -1,4 +1,4 @@
-/*	$NetBSD: klock.c,v 1.2 2010/05/18 15:16:10 pooka Exp $	*/
+/*	$NetBSD: klock.c,v 1.3 2010/12/01 14:59:38 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2010 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: klock.c,v 1.2 2010/05/18 15:16:10 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: klock.c,v 1.3 2010/12/01 14:59:38 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -42,57 +42,48 @@ __KERNEL_RCSID(0, "$NetBSD: klock.c,v 1.2 2010/05/18 15:16:10 pooka Exp $");
  * giant lock
  */
 
-static volatile int lockcnt;
+struct rumpuser_mtx *rump_giantlock;
+static int giantcnt;
+static struct lwp *giantowner;
 
-bool
-rump_kernel_isbiglocked()
+void
+rump_kernel_bigwrap(int *nlocks)
 {
 
-	return rumpuser_mutex_held(rump_giantlock) && lockcnt > 0;
+	KASSERT(giantcnt > 0 && curlwp == giantowner);
+	giantowner = NULL; 
+	*nlocks = giantcnt;
+	giantcnt = 0;
 }
 
 void
-rump_kernel_unlock_allbutone(int *countp)
-{
-	int minusone = lockcnt-1;
-
-	KASSERT(rump_kernel_isbiglocked());
-	if (minusone) {
-		_kernel_unlock(minusone, countp);
-	}
-	KASSERT(lockcnt == 1);
-	*countp = minusone;
-
-	/*
-	 * We drop lockcnt to 0 since rumpuser doesn't know that the
-	 * kernel biglock is being used as the interlock for cv in
-	 * tsleep.
-	 */
-	lockcnt = 0;
-}
-
-void
-rump_kernel_ununlock_allbutone(int nlocks)
+rump_kernel_bigunwrap(int nlocks)
 {
 
-	KASSERT(rumpuser_mutex_held(rump_giantlock) && lockcnt == 0);
-	lockcnt = 1;
-	_kernel_lock(nlocks);
+	KASSERT(giantowner == NULL);
+	giantowner = curlwp;
+	giantcnt = nlocks;
 }
 
 void
 _kernel_lock(int nlocks)
 {
+	struct lwp *l = curlwp;
 
-	while (nlocks--) {
-		if (!rumpuser_mutex_tryenter(rump_giantlock)) {
-			struct lwp *l = curlwp;
-
-			rump_unschedule_cpu1(l, NULL);
-			rumpuser_mutex_enter_nowrap(rump_giantlock);
-			rump_schedule_cpu(l);
+	while (nlocks) {
+		if (giantowner == l) {
+			giantcnt += nlocks;
+			nlocks = 0;
+		} else {
+			if (!rumpuser_mutex_tryenter(rump_giantlock)) {
+				rump_unschedule_cpu1(l, NULL);
+				rumpuser_mutex_enter_nowrap(rump_giantlock);
+				rump_schedule_cpu(l);
+			}
+			giantowner = l;
+			giantcnt = 1;
+			nlocks--;
 		}
-		lockcnt++;
 	}
 }
 
@@ -100,7 +91,7 @@ void
 _kernel_unlock(int nlocks, int *countp)
 {
 
-	if (!rumpuser_mutex_held(rump_giantlock)) {
+	if (giantowner != curlwp) {
 		KASSERT(nlocks == 0);
 		if (countp)
 			*countp = 0;
@@ -108,16 +99,20 @@ _kernel_unlock(int nlocks, int *countp)
 	}
 
 	if (countp)
-		*countp = lockcnt;
+		*countp = giantcnt;
 	if (nlocks == 0)
-		nlocks = lockcnt;
+		nlocks = giantcnt;
 	if (nlocks == -1) {
-		KASSERT(lockcnt == 1);
+		KASSERT(giantcnt == 1);
 		nlocks = 1;
 	}
-	KASSERT(nlocks <= lockcnt);
+	KASSERT(nlocks <= giantcnt);
 	while (nlocks--) {
-		lockcnt--;
+		giantcnt--;
+	}
+
+	if (giantcnt == 0) {
+		giantowner = NULL;
 		rumpuser_mutex_exit(rump_giantlock);
 	}
 }
