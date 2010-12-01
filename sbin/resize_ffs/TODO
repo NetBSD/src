@@ -1,15 +1,9 @@
-Preliminary version of resize_ffs, based on der Mouse's fsresize tool.
-I didn't have time to clean it up completely before my legal status
-w.r.t. open source projects goes into limbo for a while.  Other
-developers are encouraged to play with the tool and get it into
-release-worthy shape.
+resize_ffs(8) TODO list
 
-TODO list (see TODO file)
-
-* -current; put it into release lists/etc. and src/sbin/Makefile
-  (built & tested on 1.6.1)
-* make it ask questions before doing any work (confirm)
-* create regression test suite (see discussions on tech-kern and
-  developers) and fix any bugs
-* verify conversion to ANSI C didn't break anything
-* port to UFS2
+* Determine why shrinking a v1 file system gets the free block/frag info
+  wrong, requiring a fsck.
+* Add support for swapped byte order
+* Fix support for disk blocks of size other than 512 bytes
+* Add support for plain files (primarily to ease testing)
+* Extend to support UFS2.  Probably growth first, then shrinking separately.
+* Expand the testing done in src/tests/sbin/resize_ffs
