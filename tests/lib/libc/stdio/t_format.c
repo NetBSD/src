@@ -46,6 +46,7 @@ ATF_TC_BODY(zero_padding, tc)
 	ATF_CHECK(sprintf(str, "%010f", 0.0) == 10);
 	ATF_REQUIRE_STREQ(str, "000.000000");
 
+	/* ieeefp */
 #ifndef __vax__
 	/* PR/44113: printf(3) should ignore zero padding for nan/inf */
 	ATF_CHECK(sprintf(str, "%010f", NAN) == 10);
