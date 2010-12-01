@@ -1,4 +1,4 @@
-/*	$NetBSD: resize_ffs.c,v 1.15 2010/12/01 17:33:45 riz Exp $	*/
+/*	$NetBSD: resize_ffs.c,v 1.16 2010/12/01 17:39:21 riz Exp $	*/
 /* From sources sent on February 17, 2003 */
 /*-
  * As its sole author, I explicitly place this code in the public
@@ -1910,10 +1910,10 @@ main(int argc, char **argv)
 	newsb = (struct fs *) (SBLOCKSIZE + (char *) &sbbuf);
 	for (where = search[i = 0]; search[i] != -1; where = search[++i]) {
 		readat(where / DEV_BSIZE, oldsb, SBLOCKSIZE);
+		if (where == SBLOCK_UFS2 && (oldsb->fs_magic == FS_UFS1_MAGIC))
+			continue;
 		if (oldsb->fs_magic == FS_UFS1_MAGIC)
 			break;
-		if (where == SBLOCK_UFS2)
-			continue;
 		if (oldsb->fs_old_flags & FS_FLAGS_UPDATED)
 			err(EXIT_FAILURE,
 			    "Can't resize ffsv2 format superblock!");
