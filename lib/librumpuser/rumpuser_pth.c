@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_pth.c,v 1.5 2010/12/01 15:01:52 pooka Exp $	*/
+/*	$NetBSD: rumpuser_pth.c,v 1.6 2010/12/01 17:22:51 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2010 Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser_pth.c,v 1.5 2010/12/01 15:01:52 pooka Exp $");
+__RCSID("$NetBSD: rumpuser_pth.c,v 1.6 2010/12/01 17:22:51 pooka Exp $");
 #endif /* !lint */
 
 #ifdef __linux__
@@ -354,8 +354,8 @@ rumpuser_mutex_destroy(struct rumpuser_mtx *mtx)
 	free(mtx);
 }
 
-int
-rumpuser_mutex_held(struct rumpuser_mtx *mtx)
+struct lwp *
+rumpuser_mutex_owner(struct rumpuser_mtx *mtx)
 {
 
 	if (__predict_false(!mtx->iskmutex)) {
@@ -363,7 +363,7 @@ rumpuser_mutex_held(struct rumpuser_mtx *mtx)
 		abort();
 	}
 
-	return mtx->owner == rumpuser_get_curlwp();
+	return mtx->owner;
 }
 
 void
