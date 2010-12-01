@@ -1,4 +1,4 @@
-.\" $NetBSD: c.7,v 1.4 2010/12/01 11:24:38 dholland Exp $
+.\" $NetBSD: c.7,v 1.5 2010/12/01 13:27:15 jruoho Exp $
 .\"
 .\" Copyright (C) 2007, 2010 Gabor Kovesdan. All rights reserved.
 .\"
@@ -117,23 +117,30 @@ publication year as C99.
 The improvements include the following:
 .Bl -bullet -offset indent
 .It
-Inline functions
+Inline functions.
 .It
-Support for variable length arrays
+Support for variable length arrays.
 .It
-New high-precision integer type named long long int, and other integer types
-defined in stdint.h
+New high-precision integer type named
+.Vt long long int ,
+and other integer types described in
+.Xr stdint 3
+and
+.Xr inttypes 3 .
 .It
-New boolean data type implemented in stdbool.h
+New boolean data type; see
+.Xr stdbool 3 .
 .It
-One line comments taken from the C++ language
+One line comments taken from the C++ language.
 .It
-Some new preprocessor features
+Some new preprocessor features.
 .It
 New variables can be declared anywhere, not just in the beginning of the
-program or program blocks
+program or program blocks.
 .It
-No implicit int type
+No implicit
+.Vt int
+type.
 .El
 .Pp
 Since then new standards have not been published, but the C language is still
