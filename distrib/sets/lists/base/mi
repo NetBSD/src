@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.889 2010/11/27 12:11:54 roy Exp $
+# $NetBSD: mi,v 1.890 2010/12/02 02:58:28 pgoyette Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -4105,6 +4105,7 @@
 ./usr/share/wscons/keymaps/pckbd.pl.iso8859-2	base-util-share		share
 ./usr/share/wscons/keymaps/pckbd.ru.koi8-r	base-util-share		share
 ./usr/share/wscons/keymaps/pckbd.sv.svascii	base-util-share		share
+./usr/share/wscons/keymaps/ukbd.any.powerbook	base-util-share		share
 ./usr/share/wscons/keymaps/ukbd.be.azerty	base-util-share		share
 ./usr/share/zoneinfo				base-sys-share
 ./usr/share/zoneinfo/Africa			base-sys-share
