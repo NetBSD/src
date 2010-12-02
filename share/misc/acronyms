@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.195 2010/12/01 05:18:09 jruoho Exp $
+$NetBSD: acronyms,v 1.196 2010/12/02 08:32:32 dholland Exp $
 10Q	thank you
 10X	thanks
 1337	leet/elite
@@ -107,6 +107,7 @@ FNO	from now on
 FNO	for nerds only
 FOAD	{fuck off,fall over} and die
 FOS	full of shit
+FPS	first person shooter
 FSCK	fuck
 FSDO	for some definition of
 FSVO	for some value of
@@ -134,6 +135,8 @@ GF	girlfriend
 GFU	good for you
 GFY	good for you
 GFY	go fuck yourself
+GG	good game
+GGWP	good game, well played
 GIGO	garbage in, garbage out
 GIYF	google is your friend
 GJ	good job
@@ -253,6 +256,7 @@ OMFG	oh my fucking god
 OMG	oh, my god
 OMW	on my way
 OOB	out of bounds
+OOC	out of curiosity
 OOI	out of interest
 OT	off topic
 OTL	out to lunch
@@ -303,7 +307,7 @@ RTFS	read the fine/fucking source
 SCNR	sorry, could not resist
 SEP	someone else's problem
 SFA	sweet fuck all
-SFAICT	as far as I can tell
+SFAICT	so far as I can tell
 SHID	slaps head in disgust
 SIMCA	sitting in my chair amused
 SMH	shaking my head
@@ -346,6 +350,7 @@ TLDR	too long, didn't read
 TMA	too many abbreviations
 TMG	too much government
 TMI	too much information
+TMJ	temporomandibular joint
 TMTOWTDI	there's more than one way to do it
 TNF	The NetBSD Foundation
 TOCTOU	time of check to time of use
