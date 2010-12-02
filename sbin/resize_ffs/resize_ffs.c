@@ -1,4 +1,4 @@
-/*	$NetBSD: resize_ffs.c,v 1.16 2010/12/01 17:39:21 riz Exp $	*/
+/*	$NetBSD: resize_ffs.c,v 1.17 2010/12/02 22:00:27 riz Exp $	*/
 /* From sources sent on February 17, 2003 */
 /*-
  * As its sole author, I explicitly place this code in the public
@@ -882,7 +882,8 @@ grow(void)
 	 * to be at least one frag in size.) */
 	writeat(newsb->fs_size - 1, &sbbuf, newsb->fs_fsize);
 	/* Update fs_old_ncyl and fs_ncg. */
-	newsb->fs_old_ncyl = (newsb->fs_size * NSPF(newsb)) / newsb->fs_old_spc;
+	newsb->fs_old_ncyl = howmany(newsb->fs_size * NSPF(newsb),
+	    newsb->fs_old_spc);
 	newsb->fs_ncg = howmany(newsb->fs_old_ncyl, newsb->fs_old_cpg);
 	/* Does the last cg end before the end of its inode area? There is no
 	 * reason why this couldn't be handled, but it would complicate a lot
@@ -1521,7 +1522,8 @@ shrink(void)
 	newsb->fs_time = timestamp();
 	/* Update the size figures. */
 	newsb->fs_size = dbtofsb(newsb, newsize);
-	newsb->fs_old_ncyl = (newsb->fs_size * NSPF(newsb)) / newsb->fs_old_spc;
+	newsb->fs_old_ncyl = howmany(newsb->fs_size * NSPF(newsb),
+	    newsb->fs_old_spc);
 	newsb->fs_ncg = howmany(newsb->fs_old_ncyl, newsb->fs_old_cpg);
 	/* Does the (new) last cg end before the end of its inode area?  See
 	 * the similar code in grow() for more on this. */
