@@ -1,4 +1,4 @@
-/*	$NetBSD: dighost.c,v 1.5 2010/08/06 10:58:03 christos Exp $	*/
+/*	$NetBSD: dighost.c,v 1.6 2010/12/02 14:52:17 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: dighost.c,v 1.328.22.3 2010/06/24 07:29:07 marka Exp */
+/* Id: dighost.c,v 1.328.22.4 2010/08/10 08:43:40 marka Exp */
 
 /*! \file
  *  \note
@@ -1388,14 +1388,15 @@ add_opt(dns_message_t *msg, isc_uint16_t udpsize, isc_uint16_t edns,
 	if (dnssec)
 		rdatalist->ttl |= DNS_MESSAGEEXTFLAG_DO;
 	if (nsid) {
-		unsigned char data[4];
-		isc_buffer_t buf;
+		isc_buffer_t *b = NULL;
 
-		isc_buffer_init(&buf, data, sizeof(data));
-		isc_buffer_putuint16(&buf, DNS_OPT_NSID);
-		isc_buffer_putuint16(&buf, 0);
-		rdata->data = data;
-		rdata->length = sizeof(data);
+		result = isc_buffer_allocate(mctx, &b, 4);
+		check_result(result, "isc_buffer_allocate");
+		isc_buffer_putuint16(b, DNS_OPT_NSID);
+		isc_buffer_putuint16(b, 0);
+		rdata->data = isc_buffer_base(b);
+		rdata->length = isc_buffer_usedlength(b);
+		dns_message_takebuffer(msg, &b);
 	} else {
 		rdata->data = NULL;
 		rdata->length = 0;
