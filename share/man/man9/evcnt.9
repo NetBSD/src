@@ -1,4 +1,4 @@
-.\" $NetBSD: evcnt.9,v 1.19 2010/08/07 16:15:47 jruoho Exp $
+.\" $NetBSD: evcnt.9,v 1.20 2010/12/02 12:54:13 wiz Exp $
 .\"
 .\" Copyright (c) 2000 Christopher G. Demetriou
 .\" All rights reserved.
@@ -280,13 +280,6 @@ To attach this event counter, code like the following could be used:
 	evcnt_attach_static(\*[Am]aligntrap_ev);
 .Ed
 .Sh CODE REFERENCES
-This section describes places within the
-.Nx
-source tree where actual
-code implementing or using the event counter framework can be found.
-All pathnames are relative to
-.Pa /usr/src .
-.Pp
 The event counter framework itself is implemented within the file
 .Pa sys/kern/subr_evcnt.c .
 Data structures and function prototypes for the framework are located in

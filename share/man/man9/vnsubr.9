@@ -1,4 +1,4 @@
-.\"     $NetBSD: vnsubr.9,v 1.39 2010/06/18 16:29:01 hannken Exp $
+.\"     $NetBSD: vnsubr.9,v 1.40 2010/12/02 12:54:13 wiz Exp $
 .\"
 .\" Copyright (c) 2001, 2005, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -253,13 +253,6 @@ This error is only returned if the LK_RETRY flag is not passed to
 Cannot write to a vnode since is a process's text image.
 .El
 .Sh CODE REFERENCES
-This section describes places within the
-.Nx
-source tree where actual code implementing or using the vnode
-framework can be found.
-All pathnames are relative to
-.Pa /usr/src .
-.Pp
 The high-level convenience functions are implemented within the files
 .Pa sys/kern/vfs_vnops.c
 and

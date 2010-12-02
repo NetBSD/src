@@ -1,4 +1,4 @@
-.\"     $NetBSD: vnfileops.9,v 1.15 2008/05/31 16:24:59 enami Exp $
+.\"     $NetBSD: vnfileops.9,v 1.16 2010/12/02 12:54:13 wiz Exp $
 .\"
 .\" Copyright (c) 2001, 2005, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -178,13 +178,6 @@ If the operation is successful zero is returned, otherwise an
 appropriate error is returned.
 .El
 .Sh CODE REFERENCES
-This section describes places within the
-.Nx
-source tree where actual code implementing or using the vnode
-framework can be found.
-All pathnames are relative to
-.Pa /usr/src .
-.Pp
 The high-level convenience functions are implemented within the file
 .Pa sys/kern/vfs_vnops.c .
 .Sh SEE ALSO

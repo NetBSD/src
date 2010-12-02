@@ -1,4 +1,4 @@
-.\"     $NetBSD: kthread.9,v 1.23 2010/05/13 13:04:56 jruoho Exp $
+.\"     $NetBSD: kthread.9,v 1.24 2010/12/02 12:54:13 wiz Exp $
 .\"
 .\" Copyright (c) 2000, 2007, 2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -176,13 +176,6 @@ on the total number of processes under execution by this
 user id would be exceeded.
 .El
 .Sh CODE REFERENCES
-This section describes places within the
-.Nx
-source tree where actual code implementing or using the kthread
-framework can be found.
-All pathnames are relative to
-.Pa /usr/src .
-.Pp
 The kthread framework itself is implemented within the file
 .Pa sys/kern/kern_kthread.c .
 Data structures and function prototypes for the framework are located in
