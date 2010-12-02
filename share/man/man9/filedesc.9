@@ -1,4 +1,4 @@
-.\"     $NetBSD: filedesc.9,v 1.15 2008/04/30 13:10:58 martin Exp $
+.\"     $NetBSD: filedesc.9,v 1.16 2010/12/02 12:54:13 wiz Exp $
 .\"
 .\" Copyright (c) 2002, 2005, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -297,13 +297,6 @@ Cannot exceed file descriptor limit.
 No space left in file descriptor table.
 .El
 .Sh CODE REFERENCES
-This section describes places within the
-.Nx
-source tree where actual code implementing or using file
-descriptors can be found.
-All pathnames are relative to
-.Pa /usr/src .
-.Pp
 The framework for file descriptor handling is implemented within the
 file
 .Pa sys/kern/kern_descrip.c .

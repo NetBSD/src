@@ -1,4 +1,4 @@
-.\"	$NetBSD: rwlock.9,v 1.14 2009/11/22 18:40:26 mbalmer Exp $
+.\"	$NetBSD: rwlock.9,v 1.15 2010/12/02 12:54:13 wiz Exp $
 .\"
 .\" Copyright (c) 2006, 2007, 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -200,12 +200,6 @@ Generally speaking, it is better to organise code paths and/or
 data flows such that fewer and weaker synchronization points are required
 to ensure correct operation.
 .Sh CODE REFERENCES
-This section describes places within the
-.Nx
-source tree where code implementing RW locks can be found.
-All pathnames are relative to
-.Pa /usr/src .
-.Pp
 The core of the RW lock implementation is in
 .Pa sys/kern/kern_rwlock.c .
 .Pp

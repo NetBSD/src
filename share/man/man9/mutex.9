@@ -1,4 +1,4 @@
-.\"	$NetBSD: mutex.9,v 1.23 2010/09/14 21:35:53 ahoka Exp $
+.\"	$NetBSD: mutex.9,v 1.24 2010/12/02 12:54:13 wiz Exp $
 .\"
 .\" Copyright (c) 2007, 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -238,12 +238,6 @@ the following can be used to optimistically lock in reverse order:
 .Ed
 .El
 .Sh CODE REFERENCES
-This section describes places within the
-.Nx
-source tree where code implementing mutexes can be found.
-All pathnames are relative to
-.Pa /usr/src .
-.Pp
 The core of the mutex implementation is in
 .Pa sys/kern/kern_mutex.c .
 .Pp

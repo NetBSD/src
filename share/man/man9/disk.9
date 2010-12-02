@@ -1,4 +1,4 @@
-.\"	$NetBSD: disk.9,v 1.35 2009/12/30 14:53:02 wiz Exp $
+.\"	$NetBSD: disk.9,v 1.36 2010/12/02 12:54:13 wiz Exp $
 .\"
 .\" Copyright (c) 1995, 1996 Jason R. Thorpe.
 .\" All rights reserved.
@@ -484,13 +484,6 @@ and
 .Fn disk_unbusy
 it requires explicit locking from user side.
 .Sh CODE REFERENCES
-This section describes places within the
-.Nx
-source tree where actual
-code implementing or using the disk framework can be found.
-All pathnames are relative to
-.Pa /usr/src .
-.Pp
 The disk framework itself is implemented within the file
 .Pa sys/kern/subr_disk.c .
 Data structures and function prototypes for the framework are located in
