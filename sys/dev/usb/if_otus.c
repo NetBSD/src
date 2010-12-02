@@ -1,4 +1,4 @@
-/*	$NetBSD: if_otus.c,v 1.7 2010/11/04 14:08:31 christos Exp $	*/
+/*	$NetBSD: if_otus.c,v 1.8 2010/12/02 16:56:21 christos Exp $	*/
 /*	$OpenBSD: if_otus.c,v 1.18 2010/08/27 17:08:00 jsg Exp $	*/
 
 /*-
@@ -644,6 +644,9 @@ otus_detach(device_t self, int flags)
 	int s;
 
 	DPRINTF("otus_detach\n");
+
+	if (ifp == NULL)	/* Failed to attach properly */
+		return 0;
 
 	otus_stop(ifp);
 
