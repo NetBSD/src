@@ -1,4 +1,4 @@
-.\"     $NetBSD: autoconf.9,v 1.27 2010/06/25 15:16:14 tsutsui Exp $
+.\"     $NetBSD: autoconf.9,v 1.28 2010/12/02 12:54:13 wiz Exp $
 .\"
 .\" Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -402,13 +402,6 @@ another time, but they should be aware that they still might be in case one of
 them returns 1.
 .El
 .Sh CODE REFERENCES
-This section describes places within the
-.Nx
-source tree where actual code implementing or using the
-autoconfiguration framework can be found.
-All pathnames are relative to
-.Pa /usr/src .
-.Pp
 The autoconfiguration framework itself is implemented within the file
 .Pa sys/kern/subr_autoconf.c .
 Data structures and function prototypes for the framework are located in

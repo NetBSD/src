@@ -1,4 +1,4 @@
-.\"	$NetBSD: mbuf.9,v 1.49 2009/03/09 17:28:12 joerg Exp $
+.\"	$NetBSD: mbuf.9,v 1.50 2010/12/02 12:54:13 wiz Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -714,7 +714,7 @@ and places the successor, if any, in mbuf
 .Fa n .
 Implemented as a macro.
 .El
-.Sh FILES
+.Sh CODE REFERENCES
 The
 .Nm
 management functions are implemented within the file
@@ -722,10 +722,6 @@ management functions are implemented within the file
 Function prototypes, and the functions implemented as macros
 are located in
 .Pa sys/sys/mbuf.h .
-Both pathnames are relative to the root of the
-.Nx
-source tree,
-.Pa /usr/src .
 .Sh SEE ALSO
 .Pa /usr/share/doc/smm/18.net ,
 .Xr netstat 1 ,

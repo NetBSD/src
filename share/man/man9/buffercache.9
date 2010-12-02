@@ -1,4 +1,4 @@
-.\"     $NetBSD: buffercache.9,v 1.24 2009/11/11 08:43:18 rmind Exp $
+.\"     $NetBSD: buffercache.9,v 1.25 2010/12/02 12:54:13 wiz Exp $
 .\"
 .\" Copyright (c)2003 YAMAMOTO Takashi,
 .\" All rights reserved.
@@ -335,13 +335,6 @@ When they do, extract and return the I/O's error value.
 .El
 .\" ------------------------------------------------------------
 .Sh CODE REFERENCES
-This section describes places within the
-.Nx
-source tree where actual code implementing the buffer cache subsystem
-can be found.
-All pathnames are relative to
-.Pa /usr/src .
-.Pp
 The buffer cache subsystem is implemented within the file
 .Pa sys/kern/vfs_bio.c .
 .Sh SEE ALSO

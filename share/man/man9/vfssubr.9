@@ -1,4 +1,4 @@
-.\"     $NetBSD: vfssubr.9,v 1.19 2009/05/09 08:14:42 wiz Exp $
+.\"     $NetBSD: vfssubr.9,v 1.20 2010/12/02 12:54:13 wiz Exp $
 .\"
 .\" Copyright (c) 2003, 2005, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -203,13 +203,6 @@ appropriate error code is returned.
 Request a mounted file system to resume operations.
 .El
 .Sh CODE REFERENCES
-This section describes places within the
-.Nx
-source tree where actual code implementing or using the vfs
-operations can be found.
-All pathnames are relative to
-.Pa /usr/src .
-.Pp
 The vfs interface functions are implemented within the files
 .Pa sys/kern/vfs_subr.c
 and

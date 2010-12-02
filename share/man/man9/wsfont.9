@@ -1,4 +1,4 @@
-.\"     $NetBSD: wsfont.9,v 1.14 2009/05/18 00:07:47 snj Exp $
+.\"     $NetBSD: wsfont.9,v 1.15 2010/12/02 12:54:13 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -221,13 +221,6 @@ to glyph for font
 Returns the glyph on success or \-1 on error.
 .El
 .Sh CODE REFERENCES
-This section describes places within the
-.Nx
-source tree where actual code implementing or using the
-machine-independent wsfont subsystem can be found.
-All pathnames are relative to
-.Pa /usr/src .
-.Pp
 The wscons subsystem is implemented within the directory
 .Pa sys/dev/wscons .
 The wsfont subsystem itself is implemented within the file

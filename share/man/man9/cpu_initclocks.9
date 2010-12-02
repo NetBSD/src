@@ -1,4 +1,4 @@
-.\"     $NetBSD: cpu_initclocks.9,v 1.7 2008/04/30 13:10:58 martin Exp $
+.\"     $NetBSD: cpu_initclocks.9,v 1.8 2010/12/02 12:54:13 wiz Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -45,13 +45,6 @@ during system bootstrap, immediately after autoconfiguration, to
 perform the machine-dependent initialization of clock frequencies and
 start the real-time and statistic clocks running.
 .Sh CODE REFERENCES
-This section describes places within the
-.Nx
-source tree where actual code implementing or using the
-machine-dependent clocks initialization interface can be found.
-All pathnames are relative to
-.Pa /usr/src .
-.Pp
 Machine-independent clock interface operations are performed within
 the file
 .Pa sys/kern/kern_clock.c .

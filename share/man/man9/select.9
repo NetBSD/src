@@ -1,4 +1,4 @@
-.\"     $NetBSD: select.9,v 1.4 2010/04/05 19:36:29 joerg Exp $
+.\"     $NetBSD: select.9,v 1.5 2010/12/02 12:54:13 wiz Exp $
 .\"
 .\" Copyright (C) 2002 Chad David <davidc@acns.ab.ca>. All rights reserved.
 .\"
@@ -111,13 +111,6 @@ passing
 .Va knhint
 as an argument.
 .Sh CODE REFERENCES
-This section describes places within the
-.Nx
-source tree where actual code implementing select and poll
-subsystem can be found.
-All pathnames are relative to
-.Pa /usr/src .
-.Pp
 The core of the select and poll subsystem implementation is in
 .Pa sys/kern/sys_select.c .
 Data structures and function prototypes are located in

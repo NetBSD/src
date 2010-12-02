@@ -1,4 +1,4 @@
-.\"     $NetBSD: dofileread.9,v 1.8 2008/05/31 16:24:59 enami Exp $
+.\"     $NetBSD: dofileread.9,v 1.9 2010/12/02 12:54:13 wiz Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -114,13 +114,6 @@ is returned in
 Upon successful completion zero is returned, otherwise an appropriate
 error is returned.
 .Sh CODE REFERENCES
-This section describes places within the
-.Nx
-source tree where actual code implementing or using these file
-operations can be found.
-All pathnames are relative to
-.Pa /usr/src .
-.Pp
 The framework for these file operations is implemented within the file
 .Pa sys/kern/sys_generic.c .
 .Sh SEE ALSO

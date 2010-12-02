@@ -1,4 +1,4 @@
-.\"     $NetBSD: ioasic.9,v 1.10 2008/04/30 13:10:58 martin Exp $
+.\"     $NetBSD: ioasic.9,v 1.11 2010/12/02 12:54:13 wiz Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -202,13 +202,6 @@ next block in the DMA transfer.
 The address pointer update must be completed before the completion of
 the second DMA block, otherwise a DMA overrun error condition will occur.
 .Sh CODE REFERENCES
-This section describes places within the
-.Nx
-source tree where actual code implementing or using the
-machine-independent IOASIC subsystem can be found.
-All pathnames are relative to
-.Pa /usr/src .
-.Pp
 The IOASIC subsystem itself is implemented within the file
 .Pa sys/dev/tc/ioasic_subr.c .
 Machine-dependent portions can be found in

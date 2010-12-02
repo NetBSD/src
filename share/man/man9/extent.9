@@ -1,4 +1,4 @@
-.\" $NetBSD: extent.9,v 1.28 2008/04/30 13:10:58 martin Exp $
+.\" $NetBSD: extent.9,v 1.29 2010/12/02 12:54:13 wiz Exp $
 .\"
 .\" Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -358,13 +358,6 @@ func()
 }
 .Ed
 .Sh CODE REFERENCES
-This section describes places within the
-.Nx
-source tree where
-actual code implementing or using the extent manager can be found.
-All pathnames are relative to
-.Pa /usr/src .
-.Pp
 The extent manager itself is implemented within the file
 .Pa sys/kern/subr_extent.c .
 Function prototypes for the framework are located in

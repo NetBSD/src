@@ -1,4 +1,4 @@
-.\"     $NetBSD: file.9,v 1.13 2009/05/17 14:46:33 elad Exp $
+.\"     $NetBSD: file.9,v 1.14 2010/12/02 12:54:13 wiz Exp $
 .\"
 .\" Copyright (c) 2002, 2005, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -243,13 +243,6 @@ the FIF_LARVAL flag in
 .Em f_iflags .
 .El
 .Sh CODE REFERENCES
-This section describes places within the
-.Nx
-source tree where actual code implementing or using file entries
-can be found.
-All pathnames are relative to
-.Pa /usr/src .
-.Pp
 The framework for file entry handling is implemented within the file
 .Pa sys/kern/kern_descrip.c .
 .Sh SEE ALSO

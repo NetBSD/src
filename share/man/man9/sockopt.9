@@ -1,4 +1,4 @@
-.\"	$NetBSD: sockopt.9,v 1.7 2009/09/04 11:34:38 plunky Exp $
+.\"	$NetBSD: sockopt.9,v 1.8 2010/12/02 12:54:13 wiz Exp $
 .\"
 .\" Copyright (c) 2008 Iain Hibbert
 .\" All rights reserved.
@@ -137,12 +137,6 @@ The sockpt structure must contain an int sized data field or be previously
 unset, in which case the data pointer will be set to the internal storage.
 .El
 .Sh CODE REFERENCES
-This section describes places within the
-.Nx
-source tree where code implementing socket options can be found.
-All pathnames are relative to
-.Pa /usr/src .
-.Pp
 The function prototypes and sockopt structure are defined in the
 .Pa sys/sys/socketvar.h
 header file, and the socket options implementation is in

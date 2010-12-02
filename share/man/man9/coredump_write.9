@@ -1,4 +1,4 @@
-.\"     $NetBSD: coredump_write.9,v 1.4 2008/07/11 13:20:17 gdt Exp $
+.\"     $NetBSD: coredump_write.9,v 1.5 2010/12/02 12:54:13 wiz Exp $
 .\"
 .\" Copyright (c) 2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -57,14 +57,6 @@ is the amount of data to be written.
 .Fn coredump_write
 returns 0 on success and an appropriate error code on failure.
 .Sh CODE REFERENCES
-This section describes places within the
-.Nx
-source tree where actual code implementing or using
-.Fn coredump_write
-can be found.
-All pathnames are relative to
-.Pa /usr/src .
-.Pp
 Process core dumps are initiated within the file
 .Pa sys/kern/kern_sig.c .
 Process core dumps for ELF

@@ -1,4 +1,4 @@
-.\"     $NetBSD: sched_4bsd.9,v 1.7 2010/03/07 05:37:25 jruoho Exp $
+.\"     $NetBSD: sched_4bsd.9,v 1.8 2010/12/02 12:54:13 wiz Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -79,12 +79,6 @@ checks if an LWP has slept for more than one second.
 If so, its priority is updated by
 .Fn updatepri .
 .Sh CODE REFERENCES
-This section describes places within the
-.Nx
-source tree where actual code implementing the scheduler can be found.
-All pathnames are relative to
-.Pa /usr/src .
-.Pp
 The
 .Bx 4.4
 scheduler subsystem is implemented within the file

@@ -1,4 +1,4 @@
-.\"     $NetBSD: rasops.9,v 1.11 2008/04/30 13:10:58 martin Exp $
+.\"     $NetBSD: rasops.9,v 1.12 2010/12/02 12:54:13 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -176,13 +176,6 @@ to change the font and ri_wsfcookie \*[Ge] 0, you must call
 on it, and reset it to -1 (or a new, valid cookie).
 .El
 .Sh CODE REFERENCES
-This section describes places within the
-.Nx
-source tree where actual code implementing or using the rasops
-subsystem can be found.
-All pathnames are relative to
-.Pa /usr/src .
-.Pp
 The rasops subsystem is implemented within the directory
 .Pa sys/dev/rasops .
 The
