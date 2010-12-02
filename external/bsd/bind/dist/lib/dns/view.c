@@ -1,4 +1,4 @@
-/*	$NetBSD: view.c,v 1.1.1.4 2010/08/05 20:13:11 christos Exp $	*/
+/*	$NetBSD: view.c,v 1.1.1.5 2010/12/02 14:23:25 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
@@ -17,13 +17,14 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: view.c,v 1.159.8.7 2010/07/11 00:12:19 each Exp */
+/* Id: view.c,v 1.159.8.9.6.1 2010/09/24 06:32:57 marka Exp */
 
 /*! \file */
 
 #include <config.h>
 
 #include <isc/hash.h>
+#include <isc/sha2.h>
 #include <isc/stats.h>
 #include <isc/string.h>		/* Required for HP/UX (and others?) */
 #include <isc/task.h>
@@ -159,6 +160,8 @@ dns_view_create(isc_mem_t *mctx, dns_rdataclass_t rdclass,
 	view->acceptexpired = ISC_FALSE;
 	view->minimalresponses = ISC_FALSE;
 	view->transfer_format = dns_one_answer;
+	view->cacheacl = NULL;
+	view->cacheonacl = NULL;
 	view->queryacl = NULL;
 	view->queryonacl = NULL;
 	view->recursionacl = NULL;
@@ -185,8 +188,11 @@ dns_view_create(isc_mem_t *mctx, dns_rdataclass_t rdclass,
 	view->v4_aaaa_acl = NULL;
 	dns_fixedname_init(&view->dlv_fixed);
 	view->managed_keys = NULL;
-
 #ifdef BIND9
+	view->new_zone_file = NULL;
+	view->new_zone_config = NULL;
+	view->cfg_destroy = NULL;
+
 	result = dns_order_create(view->mctx, &view->order);
 	if (result != ISC_R_SUCCESS)
 		goto cleanup_dynkeys;
@@ -296,6 +302,10 @@ destroy(dns_view_t *view) {
 		dns_acl_detach(&view->matchclients);
 	if (view->matchdestinations != NULL)
 		dns_acl_detach(&view->matchdestinations);
+	if (view->cacheacl != NULL)
+		dns_acl_detach(&view->cacheacl);
+	if (view->cacheonacl != NULL)
+		dns_acl_detach(&view->cacheonacl);
 	if (view->queryacl != NULL)
 		dns_acl_detach(&view->queryacl);
 	if (view->queryonacl != NULL)
@@ -368,6 +378,7 @@ destroy(dns_view_t *view) {
 #ifdef BIND9
 	if (view->managed_keys != NULL)
 		dns_zone_detach(&view->managed_keys);
+	dns_view_setnewzones(view, ISC_FALSE, NULL, NULL);
 #endif
 	dns_fwdtable_destroy(&view->fwdtable);
 	dns_aclenv_destroy(&view->aclenv);
@@ -1622,3 +1633,38 @@ dns_view_untrust(dns_view_t *view, dns_name_t *keyname,
 	dst_key_free(&key);
 }
 
+#define NZF ".nzf"
+
+void
+dns_view_setnewzones(dns_view_t *view, isc_boolean_t allow, void *cfgctx,
+		     void (*cfg_destroy)(void **))
+{
+	REQUIRE(DNS_VIEW_VALID(view));
+	REQUIRE((cfgctx != NULL && cfg_destroy != NULL) || !allow);
+
+#ifdef BIND9
+	if (allow) {
+		char buffer[ISC_SHA256_DIGESTSTRINGLENGTH + sizeof(NZF)];
+		isc_sha256_data((void *)view->name, strlen(view->name), buffer);
+		/* Truncate the hash at 16 chars; full length is overkill */
+		isc_string_printf(buffer + 16, sizeof(NZF), "%s", NZF);
+		view->new_zone_file = isc_mem_strdup(view->mctx, buffer);
+		view->new_zone_config = cfgctx;
+		view->cfg_destroy = cfg_destroy;
+	} else {
+		if (view->new_zone_file != NULL) {
+			isc_mem_free(view->mctx, view->new_zone_file);
+			view->new_zone_file = NULL;
+		}
+
+		if (view->new_zone_config != NULL) {
+			view->cfg_destroy(&view->new_zone_config);
+			view->cfg_destroy = NULL;
+		}
+	}
+#else
+	UNUSED(allow);
+	UNUSED(cfgctx);
+	UNUSED(cfg_destroy);
+#endif
+}

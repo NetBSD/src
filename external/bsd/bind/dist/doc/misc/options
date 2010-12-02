@@ -55,6 +55,7 @@ options {
         acache-enable <boolean>;
         additional-from-auth <boolean>;
         additional-from-cache <boolean>;
+        allow-new-zones <boolean>;
         allow-notify { <address_match_element>; ... };
         allow-query { <address_match_element>; ... };
         allow-query-cache { <address_match_element>; ... };
@@ -161,7 +162,6 @@ options {
         multi-master <boolean>;
         multiple-cnames <boolean>; // obsolete
         named-xfer <quoted_string>; // obsolete
-        new-zone-file ( <quoted_string> | none );
         notify <notifytype>;
         notify-delay <integer>;
         notify-source ( <ipv4_address> | * ) [ port ( <integer> | * ) ];
@@ -262,6 +262,7 @@ view <string> <optional_class> {
         acache-enable <boolean>;
         additional-from-auth <boolean>;
         additional-from-cache <boolean>;
+        allow-new-zones <boolean>;
         allow-notify { <address_match_element>; ... };
         allow-query { <address_match_element>; ... };
         allow-query-cache { <address_match_element>; ... };
@@ -355,7 +356,6 @@ view <string> <optional_class> {
         min-roots <integer>; // not implemented
         minimal-responses <boolean>;
         multi-master <boolean>;
-        new-zone-file ( <quoted_string> | none );
         notify <notifytype>;
         notify-delay <integer>;
         notify-source ( <ipv4_address> | * ) [ port ( <integer> | * ) ];

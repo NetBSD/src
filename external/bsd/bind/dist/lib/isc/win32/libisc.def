@@ -58,6 +58,7 @@ isc__mem_getname
 isc__mem_getquota
 isc__mem_gettag
 isc__mem_inuse
+isc__mem_isovermem
 isc__mem_ondestroy
 isc__mem_references
 isc__mem_setdestroycheck

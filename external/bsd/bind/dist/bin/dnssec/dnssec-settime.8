@@ -1,4 +1,4 @@
-.\"	$NetBSD: dnssec-settime.8,v 1.1.1.3 2010/08/05 19:53:01 christos Exp $
+.\"	$NetBSD: dnssec-settime.8,v 1.1.1.4 2010/12/02 14:22:25 christos Exp $
 .\"
 .\" Copyright (C) 2009, 2010 Internet Systems Consortium, Inc. ("ISC")
 .\" 
@@ -14,7 +14,7 @@
 .\" OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 .\" PERFORMANCE OF THIS SOFTWARE.
 .\"
-.\" Id: dnssec-settime.8,v 1.9.24.5 2010/05/18 04:04:36 tbox Exp
+.\" Id: dnssec-settime.8,v 1.9.24.6 2010/08/17 00:08:22 tbox Exp
 .\"
 .hy 0
 .ad l
@@ -110,6 +110,20 @@ Sets the date on which the key is to be retired. After that date, the key will s
 \-D \fIdate/offset\fR
 .RS 4
 Sets the date on which the key is to be deleted. After that date, the key will no longer be included in the zone. (It may remain in the key repository, however.)
+.RE
+.PP
+\-S \fIpredecessor key\fR
+.RS 4
+Select a key for which the key being modified will be an explicit successor. The name, algorithm, size, and type of the predecessor key must exactly match those of the key being modified. The activation date of the successor key will be set to the inactivation date of the predecessor. The publication date will be set to the activation date minus the prepublication interval, which defaults to 30 days.
+.RE
+.PP
+\-i \fIinterval\fR
+.RS 4
+Sets the prepublication interval for a key. If set, then the publication and activation dates must be separated by at least this much time. If the activation date is specified but the publication date isn't, then the publication date will default to this much time before the activation date; conversely, if the publication date is specified but activation date isn't, then activation will be set to this much time after publication.
+.sp
+If the key is being set to be an explicit successor to another key, then the default prepublication interval is 30 days; otherwise it is zero.
+.sp
+As with date offsets, if the argument is followed by one of the suffixes 'y', 'mo', 'w', 'd', 'h', or 'mi', then the interval is measured in years, months, weeks, days, hours, or minutes, respectively. Without a suffix, the interval is measured in seconds.
 .RE
 .SH "PRINTING OPTIONS"
 .PP

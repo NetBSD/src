@@ -1,4 +1,4 @@
-/*	$NetBSD: query.c,v 1.1.1.4 2010/08/05 19:53:37 christos Exp $	*/
+/*	$NetBSD: query.c,v 1.1.1.5 2010/12/02 14:22:28 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: query.c,v 1.335.8.8 2010/07/15 01:26:10 jinmei Exp */
+/* Id: query.c,v 1.335.8.8.6.2 2010/09/24 06:32:56 marka Exp */
 
 /*! \file */
 
@@ -822,17 +822,15 @@ query_getcachedb(ns_client_t *client, dns_name_t *name, dns_rdatatype_t qtype,
 		return (DNS_R_REFUSED);
 	dns_db_attach(client->view->cachedb, &db);
 
-	if ((client->query.attributes &
-	     NS_QUERYATTR_QUERYOKVALID) != 0) {
+	if ((client->query.attributes & NS_QUERYATTR_CACHEACLOKVALID) != 0) {
 		/*
-		 * We've evaluated the view's queryacl already.  If
-		 * NS_QUERYATTR_QUERYOK is set, then the client is
+		 * We've evaluated the view's cacheacl already.  If
+		 * NS_QUERYATTR_CACHEACLOK is set, then the client is
 		 * allowed to make queries, otherwise the query should
 		 * be refused.
 		 */
 		check_acl = ISC_FALSE;
-		if ((client->query.attributes &
-		     NS_QUERYATTR_QUERYOK) == 0)
+		if ((client->query.attributes & NS_QUERYATTR_CACHEACLOK) == 0)
 			goto refuse;
 	} else {
 		/*
@@ -846,16 +844,15 @@ query_getcachedb(ns_client_t *client, dns_name_t *name, dns_rdatatype_t qtype,
 		char msg[NS_CLIENT_ACLMSGSIZE("query (cache)")];
 
 		result = ns_client_checkaclsilent(client, NULL,
-						  client->view->queryacl,
+						  client->view->cacheacl,
 						  ISC_TRUE);
 		if (result == ISC_R_SUCCESS) {
 			/*
-			 * We were allowed by the default
-			 * "allow-query" ACL.  Remember this so we
-			 * don't have to check again.
+			 * We were allowed by the "allow-query-cache" ACL.
+			 * Remember this so we don't have to check again.
 			 */
 			client->query.attributes |=
-				NS_QUERYATTR_QUERYOK;
+				NS_QUERYATTR_CACHEACLOK;
 			if (log && isc_log_wouldlog(ns_g_lctx,
 						     ISC_LOG_DEBUG(3)))
 			{
@@ -878,9 +875,9 @@ query_getcachedb(ns_client_t *client, dns_name_t *name, dns_rdatatype_t qtype,
 		}
 		/*
 		 * We've now evaluated the view's query ACL, and
-		 * the NS_QUERYATTR_QUERYOK attribute is now valid.
+		 * the NS_QUERYATTR_CACHEACLOKVALID attribute is now valid.
 		 */
-		client->query.attributes |= NS_QUERYATTR_QUERYOKVALID;
+		client->query.attributes |= NS_QUERYATTR_CACHEACLOKVALID;
 
 		if (result != ISC_R_SUCCESS)
 			goto refuse;
@@ -5366,8 +5363,12 @@ ns_query_start(ns_client_t *client) {
 	/*
 	 * Assume authoritative response until it is known to be
 	 * otherwise.
+	 *
+	 * If "-T noaa" has been set on the command line don't set
+	 * AA on authoritative answers.
 	 */
-	message->flags |= DNS_MESSAGEFLAG_AA;
+	if (!ns_g_noaa)
+		message->flags |= DNS_MESSAGEFLAG_AA;
 
 	/*
 	 * Set AD.  We must clear it if we add non-validated data to a

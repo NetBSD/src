@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 #
-# Copyright (C) 2004, 2007  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004, 2007, 2010  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 2002  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -32,7 +32,7 @@
 #
 #    perl -MCPAN -e "install Net::DNS"
 #
-# Id: dnssec_update_test.pl,v 1.5 2007/06/19 23:47:02 tbox Exp
+# Id: dnssec_update_test.pl,v 1.5.558.2 2010/08/13 23:46:28 tbox Exp
 #
 
 use Getopt::Std;
@@ -97,9 +97,9 @@ section("Delete the name");
 test("NOERROR", ["update", rr_del("a.$zone")]);
 
 if ($failures) {
-    print "I:$failures tests failed.\n";
+    print "I:$failures update tests failed.\n";
 } else {
-    print "I:All tests successful.\n";
+    print "I:All update tests successful.\n";
 }
 
 exit $failures;

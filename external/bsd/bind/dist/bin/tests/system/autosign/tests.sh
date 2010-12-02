@@ -14,7 +14,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: tests.sh,v 1.4.6.6 2010/06/07 04:47:26 marka Exp
+# Id: tests.sh,v 1.4.6.7 2010/08/16 22:27:17 marka Exp
 
 SYSTEMTESTTOP=..
 . $SYSTEMTESTTOP/conf.sh
@@ -666,19 +666,19 @@ file="ns1/`cat vanishing.key`.private"
 rm -f $file
 
 echo "I:preparing ZSK roll"
-newid=`sed 's/^K.+007+0*//' < standby.key`
-file="ns1/`cat standby.key`.key"
-$SETTIME -A now $file > /dev/null
+oldfile=`cat active.key`
 oldid=`sed 's/^K.+007+0*//' < active.key`
-file="ns1/`cat active.key`.key"
-$SETTIME -I now -D now+10 $file > /dev/null
+newfile=`cat standby.key`
+newid=`sed 's/^K.+007+0*//' < standby.key`
+$SETTIME -K ns1 -I now -D now+15 $oldfile > /dev/null
+$SETTIME -K ns1 -i 0 -S $oldfile $newfile > /dev/null
 
-$RNDC -c ../common/rndc.conf -s 10.53.0.1 -p 9953 sign . 2>&1 | sed 's/^/I:ns1 /'
+$RNDC -c ../common/rndc.conf -s 10.53.0.1 -p 9953 loadkeys . 2>&1 | sed 's/^/I:ns1 /'
 
 echo "I:revoking key to duplicated key ID"
-$SETTIME -R now ns2/Kbar.+005+30676.key > /dev/null
+$SETTIME -R now -K ns2 Kbar.+005+30676.key > /dev/null
 
-$RNDC -c ../common/rndc.conf -s 10.53.0.2 -p 9953 sign bar. 2>&1 | sed 's/^/I:ns2 /'
+$RNDC -c ../common/rndc.conf -s 10.53.0.2 -p 9953 loadkeys bar. 2>&1 | sed 's/^/I:ns2 /'
 
 echo "I:waiting for changes to take effect"
 sleep 5
@@ -687,6 +687,30 @@ echo "I:checking former standby key is now active ($n)"
 ret=0
 $DIG $DIGOPTS dnskey . @10.53.0.1 > dig.out.ns1.test$n || ret=1
 grep 'RRSIG.*'" $newid "'\. ' dig.out.ns1.test$n > /dev/null || ret=1
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I:checking former standby key has only signed incrementally ($n)"
+ret=0
+$DIG $DIGOPTS txt . @10.53.0.1 > dig.out.ns1.test$n || ret=1
+grep 'RRSIG.*'" $newid "'\. ' dig.out.ns1.test$n > /dev/null && ret=1
+grep 'RRSIG.*'" $oldid "'\. ' dig.out.ns1.test$n > /dev/null || ret=1
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I:forcing full sign"
+$RNDC -c ../common/rndc.conf -s 10.53.0.1 -p 9953 sign . 2>&1 | sed 's/^/I:ns1 /'
+
+echo "I:waiting for change to take effect"
+sleep 5
+
+echo "I:checking former standby key has now signed fully ($n)"
+ret=0
+$DIG $DIGOPTS txt . @10.53.0.1 > dig.out.ns1.test$n || ret=1
+grep 'RRSIG.*'" $newid "'\. ' dig.out.ns1.test$n > /dev/null || ret=1
+grep 'RRSIG.*'" $oldid "'\. ' dig.out.ns1.test$n > /dev/null || ret=1
 n=`expr $n + 1`
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`

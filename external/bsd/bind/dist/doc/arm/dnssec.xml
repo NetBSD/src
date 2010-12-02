@@ -15,7 +15,7 @@
  - PERFORMANCE OF THIS SOFTWARE.
 -->
 
-<!-- Id: dnssec.xml,v 1.2.2.2 2010/02/03 23:48:29 tbox Exp -->
+<!-- Id: dnssec.xml,v 1.2.2.3 2010/08/16 22:27:17 marka Exp -->
 
 <sect1 id="dnssec.dynamic.zones">
   <title>DNSSEC, Dynamic Zones, and Automatic Signing</title>
@@ -100,7 +100,8 @@
   <command>named</command> can search the key directory for keys
   matching the zone, insert them into the zone, and use them to
   sign the zone. It will do so only when it receives an 
-  <command>rndc sign &lt;zonename&gt;</command> command.</para>
+  <command>rndc sign &lt;zonename&gt;</command> or 
+  <command>rndc loadkeys &lt;zonename&gt;</command> command.</para>
   <para>
   <!-- TODO: this is repeated in the ARM -->
   <command>auto-dnssec maintain</command> includes the above
@@ -110,8 +111,10 @@
   <xref linkend="man.dnssec-settime"/> for more information.) 
   If keys are present in the key directory the first time the zone
   is loaded, it will be signed immediately, without waiting for an 
-  <command>rndc sign</command> command. (This command can still be
-  used for unscheduled key changes, however.)</para>
+  <command>rndc sign</command> or <command>rndc loadkeys</command>
+  command. (Those commands can still be used when there are unscheduled
+  key changes, however.)
+  </para>
   <para>Using the 
   <command>auto-dnssec</command> option requires the zone to be
   configured to allow dynamic updates, by adding an 
@@ -158,11 +161,16 @@
 </literallayout>
   </para>
   <sect2>
-    <title>DNSKEY rollovers via UPDATE</title>
+    <title>DNSKEY rollovers</title>
   </sect2>
-  <para>It is possible to perform key rollovers via dynamic update.
-  You need to add the 
-  <filename>K*</filename> files for the new keys so that 
+  <para>As with insecure-to-secure conversions, rolling DNSSEC
+  keys can be done in two ways: using a dynamic DNS update, or the 
+  <command>auto-dnssec</command> zone option.</para>
+  <sect2>
+    <title>Dynamic DNS update method</title>
+  </sect2>
+  <para> To perform key rollovers via dynamic update, you need to add
+  the <filename>K*</filename> files for the new keys so that 
   <command>named</command> can find them. You can then add the new
   DNSKEY RRs via dynamic update. 
   <command>named</command> will then cause the zone to be signed
@@ -181,6 +189,22 @@
   specify the correct key. 
   <command>named</command> will clean out any signatures generated
   by the old key after the update completes.</para>
+  <sect2>
+    <title>Automatic key rollovers</title>
+  </sect2>
+  <para>When a new key reaches its activation date (as set by
+  <command>dnssec-keygen</command> or <command>dnssec-settime</command>),
+  if the <command>auto-dnssec</command> zone option is set to 
+  <constant>maintain</constant>, <command>named</command> will
+  automatically carry out the key rollover.  If the key's algorithm
+  has not previously been used to sign the zone, then the zone will
+  be fully signed as quickly as possible.  However, if the new key
+  is replacing an existing key of the same algorithm, then the
+  zone will be re-signed incrementally, with signatures from the
+  old key being replaced with signatures from the new key as their
+  signature validity periods expire.  By default, this rollover
+  completes in 30 days, after which it will be safe to remove the
+  old key from the DNSKEY RRset.</para>
   <sect2>
     <title>NSEC3PARAM rollovers via UPDATE</title>
   </sect2>

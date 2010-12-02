@@ -15,7 +15,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: conf.sh.in,v 1.43.8.6 2010/06/11 01:59:22 marka Exp
+# Id: conf.sh.in,v 1.43.8.8.6.1 2010/11/16 02:26:24 sar Exp
 
 #
 # Common configuration data for system tests, to be sourced into
@@ -51,10 +51,11 @@ PK11DEL="$TOP/bin/pkcs11/pkcs11-destroy -s 0 -p 1234"
 # The "stress" test is not run by default since it creates enough
 # load on the machine to make it unusable to other users.
 # v6synth
-SUBDIRS="acl autosign cacheclean checkconf checknames dlv dnssec forward glue
-    ixfr limits lwresd masterfile masterformat metadata notify nsupdate
-    pending pkcs11 resolver rrsetorder sortlist smartsign stub tkey
-    unknown upforwd views xfer xferquota zonechecks"
+SUBDIRS="acl allow_query addzone autosign cacheclean checkconf checknames
+    dlv @DLZ_SYSTEM_TEST@ dnssec forward glue ixfr limits lwresd
+    masterfile masterformat metadata notify nsupdate pending pkcs11
+    resolver rrsetorder sortlist smartsign stub tkey unknown upforwd
+    views xfer xferquota zonechecks"
 
 # PERL will be an empty string if no perl interpreter was found.
 PERL=@PERL@

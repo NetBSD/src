@@ -1,3 +1,138 @@
+	--- 9.7.2-P3 released ---
+
+2973.	[bug]		bind.keys.h was being removed by the "make clean"
+			at the end of configure resulting in build failures
+			where there is very old version of perl installed.
+			Move it to "make maintainer-clean". [RT #22230]
+
+2972.	[bug]		win32: address windows socket errors. [RT #21906]
+
+2971.	[bug]		Fixed a bug that caused journal files not to be
+			compacted on Windows systems as a result of
+			non-POSIX-compliant rename() semantics. [RT #22434]
+
+2970.	[security]	Adding a NO DATA negative cache entry failed to clear
+			any matching RRSIG records.  A subsequent lookup of
+			of NO DATA cache entry could trigger a INSIST when the
+			unexpected RRSIG was also returned with the NO DATA
+			cache entry.
+
+			CVE-2010-3613, VU#706148. [RT #22288]
+
+2969.	[security]	Fix acl type processing so that allow-query works
+			in options and view statements.  Also add a new
+			set of tests to verify proper functioning.
+
+			CVE-2010-3615, VU#510208. [RT #22418]
+
+2968.	[security]	Named could fail to prove a data set was insecure
+			before marking it as insecure.  One set of conditions
+			that can trigger this occurs naturally when rolling
+			DNSKEY algorithms.
+
+			CVE-2010-3614, VU#837744. [RT #22309]
+
+	--- 9.7.2-P2 released ---
+
+2963.	[security]	The allow-query acl was being applied instead of the
+			allow-query-cache acl to cache lookups. [RT #22114]
+
+	--- 9.7.2-P1 released ---
+
+2961.	[bug]		Be still more selective about the non-authoritative
+			answers we apply change 2748 to. [RT #22074]
+
+2960.	[func]		Check that named accepts non-authoritative answers.
+			[RT #21594]
+
+2959.	[func]		Check that named starts with a missing masterfile.
+			[RT #22076]
+
+2958.	[bug]		named failed to start with a missing master file.
+			[RT #22076]
+
+2928.	[bug]		Be more selective about the non-authoritative
+			answer we apply change 2748 to. [RT #21594]
+
+	--- 9.7.2 released ---
+
+2946.	[doc]		Document the default values for the minimum and maximum
+			zone refresh and retry values in the ARM. [RT #21886]
+
+2945.	[doc]		Update empty-zones list in ARM. [RT #21772]
+
+2944.	[maint]		Remove ORCHID prefix from built in empty zones.
+			[RT #21772]
+
+	--- 9.7.2rc1 released ---
+
+2943.	[func]		Add support to load new keys into managed zones
+			without signing immediately with "rndc loadkeys".
+			Add support to link keys with "dnssec-keygen -S"
+			and "dnssec-settime -S".  [RT #21351]
+
+2942.	[contrib]	zone2sqlite failed to setup the entropy sources.
+			[RT #21610]
+
+2941.	[bug]		sdb and sdlz (dlz's zone database) failed to support
+			DNAME at the zone apex.  [RT #21610]
+
+2940.	[port]		Remove connection aborted error message on
+			Windows. [RT #21549]
+
+2939.	[func]		Check that named successfully skips NSEC3 records
+			that fail to match the NSEC3PARAM record currently
+			in use. [RT# 21868]
+
+2938.	[bug]		When generating signed responses, from a signed zone
+			that uses NSEC3, named would use a uninitialised
+			pointer if it needed to skip a NSEC3 record because
+			it didn't match the selected NSEC3PARAM record for
+			zone. [RT# 21868]
+
+2937.	[bug]		Worked around an apparent race condition in over
+			memory conditions.  Without this fix a DNS cache DB or
+			ADB could incorrectly stay in an over memory state,
+			effectively refusing further caching, which
+			subsequently made a BIND 9 caching server unworkable.
+			This fix prevents this problem from happening by
+			polling the state of the memory context, rather than
+			making a copy of the state, which appeared to cause
+			a race.  This is a "workaround" in that it doesn't
+			solve the possible race per se, but several experiments
+			proved this change solves the symptom.  Also, the
+			polling overhead hasn't been reported to be an issue.
+			This bug should only affect a caching server that
+			specifies a finite max-cache-size.  It's also quite
+			likely that the bug happens only when enabling threads,
+			but it's not confirmed yet. [RT #21818]
+
+2936.	[func]		Improved configuration syntax and multiple-view
+			support for addzone/delzone feature (see change
+			#2930).  Removed "new-zone-file" option, replaced
+			with "allow-new-zones (yes|no)".  The new-zone-file
+			for each view is now created automatically, with
+			a filename generated from a hash of the view name.
+			It is no longer necessary to "include" the
+			new-zone-file in named.conf; this happens
+			automatically.  Zones that were not added via
+			"rndc addzone" can no longer be removed with
+			"rndc delzone". [RT #19447]
+
+2935.	[bug]		nsupdate: improve 'file not found' error message.
+			[RT #21871]
+
+2934.	[bug]		Use ANSI C compliant shift range in lib/isc/entropy.c.
+			[RT #21871]
+
+2933.	[bug]		'dig +nsid' used stack memory after it went out of
+			scope.  This could potentially result in a unknown,
+			potentially malformed, EDNS option being sent instead
+			of the desired NSID option. [RT #21781]
+
+2932.	[cleanup]	Corrected a numbering error in the "dnssec" test.
+			[RT #21597]
+
 	--- 9.7.2b1 released ---
 
 2931.	[bug]		Temporarily and partially disable change 2864
@@ -5,7 +140,6 @@
 			queries.  This is an urgent care fix; we'll
 			revisit the issue and complete the fix later.
 			[RT #21710]
-
 
 2930.	[experimental]	New "rndc addzone" and "rndc delzone" commads
 			allow dynamic addition and deletion of zones.

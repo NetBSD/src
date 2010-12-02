@@ -1,4 +1,4 @@
-/*	$NetBSD: check.c,v 1.1.1.5 2010/08/05 20:11:24 christos Exp $	*/
+/*	$NetBSD: check.c,v 1.1.1.6 2010/12/02 14:23:17 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: check.c,v 1.114.4.5 2010/06/26 05:31:17 marka Exp */
+/* Id: check.c,v 1.114.4.6 2010/08/11 18:19:57 each Exp */
 
 /*! \file */
 
@@ -2103,7 +2103,7 @@ check_viewconf(const cfg_obj_t *config, const cfg_obj_t *voptions,
 	if (tresult != ISC_R_SUCCESS)
 		result = tresult;
 
-	cfg_aclconfctx_destroy(&actx);
+	cfg_aclconfctx_clear(&actx);
 
 	return (result);
 }
@@ -2348,7 +2348,7 @@ bind9_check_controls(const cfg_obj_t *config, isc_log_t *logctx,
 				result = tresult;
 		}
 	}
-	cfg_aclconfctx_destroy(&actx);
+	cfg_aclconfctx_clear(&actx);
 	return (result);
 }
 

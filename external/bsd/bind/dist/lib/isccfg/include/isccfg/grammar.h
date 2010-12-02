@@ -1,4 +1,4 @@
-/*	$NetBSD: grammar.h,v 1.1.1.3 2010/08/05 20:16:04 christos Exp $	*/
+/*	$NetBSD: grammar.h,v 1.1.1.4 2010/12/02 14:23:36 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: grammar.h,v 1.19.136.2 2010/06/23 23:46:36 tbox Exp */
+/* Id: grammar.h,v 1.19.136.3 2010/08/11 18:19:58 each Exp */
 
 #ifndef ISCCFG_GRAMMAR_H
 #define ISCCFG_GRAMMAR_H 1
@@ -161,6 +161,7 @@ struct cfg_obj {
 		isc_sockaddr_t	sockaddr;
 		cfg_netprefix_t netprefix;
 	}               value;
+	isc_refcount_t  references;     /*%< reference counter */
 	const char *	file;
 	unsigned int    line;
 };
@@ -219,6 +220,9 @@ struct cfg_parser {
 	 * from one token to the next.
 	 */
 	unsigned int flags;
+
+	/*%< Reference counter */
+	isc_refcount_t  references;
 
 	cfg_parsecallback_t callback;
 	void *callbackarg;

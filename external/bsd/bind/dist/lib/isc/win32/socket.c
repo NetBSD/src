@@ -1,7 +1,7 @@
-/*	$NetBSD: socket.c,v 1.1.1.3 2009/12/26 22:26:06 christos Exp $	*/
+/*	$NetBSD: socket.c,v 1.1.1.4 2010/12/02 14:23:35 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: socket.c,v 1.81 2009/11/10 18:31:47 each Exp */
+/* Id: socket.c,v 1.81.22.1.6.2 2010/11/18 00:59:28 tbox Exp */
 
 /* This code uses functions which are only available on Server 2003 and
  * higher, and Windows XP and higher.
@@ -274,7 +274,6 @@ struct isc_socket {
 	unsigned int		pending_accept; /* Number of outstanding accept() calls. */
 	unsigned int		state; /* Socket state. Debugging and consistency checking. */
 	int			state_lineno;  /* line which last touched state */
-	int			in_recovery_cnt; /* avoid recovery loop. */
 };
 
 #define _set_state(sock, _state) do { (sock)->state = (_state); (sock)->state_lineno = __LINE__; } while (0)
@@ -367,8 +366,6 @@ static void send_connectdone_event(isc_socket_t *sock, isc_socket_connev_t **cde
 static void send_recvdone_abort(isc_socket_t *sock, isc_result_t result);
 static void queue_receive_event(isc_socket_t *sock, isc_task_t *task, isc_socketevent_t *dev);
 static void queue_receive_request(isc_socket_t *sock);
-static void hard_recover_receive_request(isc_socket_t *sock);
-static void recover_receive_request(isc_socket_t *sock, void **lplpo);
 
 /*
  * This is used to dump the contents of the sock structure
@@ -721,22 +718,31 @@ queue_receive_request(isc_socket_t *sock) {
 	int total_bytes = 0;
 	int Result;
 	int Error;
-	isc_boolean_t need_recovering = ISC_FALSE;
+	int need_retry;
 	WSABUF iov[1];
-	IoCompletionInfo *lpo;
+	IoCompletionInfo *lpo = NULL;
 	isc_result_t isc_result;
+
+ retry:
+	need_retry = ISC_FALSE;
 
 	/*
 	 * If we already have a receive pending, do nothing.
 	 */
-	if (sock->pending_recv > 0)
+	if (sock->pending_recv > 0) {
+		if (lpo != NULL)
+			HeapFree(hHeapHandle, 0, lpo);
 		return;
+	}
 
 	/*
 	 * If no one is waiting, do nothing.
 	 */
-	if (ISC_LIST_EMPTY(sock->recv_list))
+	if (ISC_LIST_EMPTY(sock->recv_list)) {
+		if (lpo != NULL)
+			HeapFree(hHeapHandle, 0, lpo);
 		return;
+	}
 
 	INSIST(sock->recvbuf.remaining == 0);
 	INSIST(sock->fd != INVALID_SOCKET);
@@ -744,10 +750,13 @@ queue_receive_request(isc_socket_t *sock) {
 	iov[0].len = sock->recvbuf.len;
 	iov[0].buf = sock->recvbuf.base;
 
-	lpo = (IoCompletionInfo *)HeapAlloc(hHeapHandle,
-					    HEAP_ZERO_MEMORY,
-					    sizeof(IoCompletionInfo));
-	RUNTIME_CHECK(lpo != NULL);
+	if (lpo == NULL) {
+		lpo = (IoCompletionInfo *)HeapAlloc(hHeapHandle,
+						    HEAP_ZERO_MEMORY,
+						    sizeof(IoCompletionInfo));
+		RUNTIME_CHECK(lpo != NULL);
+	} else
+		ZeroMemory(lpo, sizeof(IoCompletionInfo));
 	lpo->request_type = SOCKET_RECV;
 
 	sock->recvbuf.from_addr_len = sizeof(sock->recvbuf.from_addr);
@@ -769,43 +778,26 @@ queue_receive_request(isc_socket_t *sock) {
 			sock->pending_recv++;
 			break;
 
+		/* direct error: no completion event */
 		case ERROR_HOST_UNREACHABLE:
-			if (sock->type == isc_sockettype_udp) {
-				UNEXPECTED_ERROR(__FILE__, __LINE__,
-					 "WSARecvFrom ERROR_HOST_UNREACHABLE: trying to recover");
-				need_recovering = ISC_TRUE;
-				break;
-			} else
-				goto fail;
-
 		case WSAENETRESET:
-			if (sock->type == isc_sockettype_udp) {
-				UNEXPECTED_ERROR(__FILE__, __LINE__,
-					 "WSARecvFrom WSAENETRESET: trying to recover");
-				need_recovering = ISC_TRUE;
-				break;
-			} else
-				goto fail;
-
 		case WSAECONNRESET:
-			if (sock->type == isc_sockettype_udp) {
-				UNEXPECTED_ERROR(__FILE__, __LINE__,
-					 "WSARecvFrom WSAECONNRESET: trying to recover");
-				need_recovering = ISC_TRUE;
+			if (!sock->connected) {
+				/* soft error */
+				need_retry = ISC_TRUE;
 				break;
-			} else
-				goto fail;
+			}
+			/* FALLTHROUGH */
 
 		default:
-		fail:
 			isc_result = isc__errno2result(Error);
-			if ((isc_result == ISC_R_UNEXPECTED) ||
-			    (isc_result == ISC_R_CONNECTIONRESET) ||
-			    (isc_result == ISC_R_HOSTUNREACH))
+			if (isc_result == ISC_R_UNEXPECTED)
 				UNEXPECTED_ERROR(__FILE__, __LINE__,
 					"WSARecvFrom: Windows error code: %d, isc result %d",
 					Error, isc_result);
 			send_recvdone_abort(sock, isc_result);
+			HeapFree(hHeapHandle, 0, lpo);
+			lpo = NULL;
 			break;
 		}
 	} else {
@@ -816,7 +808,6 @@ queue_receive_request(isc_socket_t *sock) {
 		 */
 		sock->pending_iocp++;
 		sock->pending_recv++;
-		sock->in_recovery_cnt = 0;
 	}
 
 	socket_log(__LINE__, sock, NULL, IOEVENT,
@@ -827,40 +818,8 @@ queue_receive_request(isc_socket_t *sock) {
 
 	CONSISTENT(sock);
 
-	if (need_recovering)
-		recover_receive_request(sock, &lpo);
-}
-
-/*
- * (placeholder) Hard recovery, doing nothing useful today
- * (other than to avoid unlimited recursion).
- */
-static void
-hard_recover_receive_request(isc_socket_t *sock)
-{
-	UNEXPECTED_ERROR(__FILE__, __LINE__,
-			 "can't recover fd %d sock %p",
-			 sock->fd, sock);
-	send_recvdone_abort(sock, ISC_R_UNEXPECTED);
-}
-
-/*
- * Recovery from a Windows 2008 Server bug
- * (WSARecvFrom() getting an ERROR_HOST_UNREACHABLE).
- * Free the overlapped pointer and requeue a receive request.
- */
-static void
-recover_receive_request(isc_socket_t *sock, void **lplpo)
-{
-	if (*lplpo != NULL)
-		HeapFree(hHeapHandle, 0, *lplpo);
-	*lplpo = NULL;
-
-	/* limit recursion to 20 */
-	if (sock->in_recovery_cnt++ < 20)
-		queue_receive_request(sock);
-	else
-		hard_recover_receive_request(sock);
+	if (need_retry)
+		goto retry;
 }
 
 static void
@@ -1504,7 +1463,6 @@ allocate_socket(isc_socketmgr_t *manager, isc_sockettype_t type,
 	sock->connected = 0;
 	sock->pending_connect = 0;
 	sock->bound = 0;
-	sock->in_recovery_cnt = 0;
 	memset(sock->name, 0, sizeof(sock->name));	// zero the name field
 	_set_state(sock, SOCK_INITIALIZED);
 
@@ -2348,6 +2306,63 @@ connectdone_is_active(isc_socket_t *sock, isc_socket_connev_t *dev)
 	return (sock->connect_ev == dev ? ISC_TRUE : ISC_FALSE);
 }
 
+//
+// The Windows network stack seems to have two very distinct paths depending
+// on what is installed.  Specifically, if something is looking at network
+// connections (like an anti-virus or anti-malware application, such as
+// McAfee products) Windows may return additional error conditions which
+// were not previously returned.
+//
+// One specific one is when a TCP SYN scan is used.  In this situation,
+// Windows responds with the SYN-ACK, but the scanner never responds with
+// the 3rd packet, the ACK.  Windows consiers this a partially open connection.
+// Most Unix networking stacks, and Windows without McAfee installed, will
+// not return this to the caller.  However, with this product installed,
+// Windows returns this as a failed status on the Accept() call.  Here, we
+// will just re-issue the ISCAcceptEx() call as if nothing had happened.
+//
+// This code should only be called when the listening socket has received
+// such an error.  Additionally, the "parent" socket must be locked.
+// Additionally, the lpo argument is re-used here, and must not be freed
+// by the caller.
+//
+static isc_result_t
+restart_accept(isc_socket_t *parent, IoCompletionInfo *lpo)
+{
+	isc_socket_t *nsock = lpo->adev->newsocket;
+	SOCKET new_fd;
+
+	/*
+	 * AcceptEx() requires we pass in a socket.  Note that we carefully
+	 * do not close the previous socket in case of an error message returned by
+	 * our new socket() call.  If we return an error here, our caller will
+	 * clean up.
+	 */
+	new_fd = socket(parent->pf, SOCK_STREAM, IPPROTO_TCP);
+	if (nsock->fd == INVALID_SOCKET) {
+		return (ISC_R_FAILURE); // parent will ask windows for error message
+	}
+	closesocket(nsock->fd);
+	nsock->fd = new_fd;
+
+	memset(&lpo->overlapped, 0, sizeof(lpo->overlapped));
+
+	ISCAcceptEx(parent->fd,
+		    nsock->fd,				/* Accepted Socket */
+		    lpo->acceptbuffer,			/* Buffer for initial Recv */
+		    0,					/* Length of Buffer */
+		    sizeof(SOCKADDR_STORAGE) + 16,	/* Local address length + 16 */
+		    sizeof(SOCKADDR_STORAGE) + 16,	/* Remote address lengh + 16 */
+		    (LPDWORD)&lpo->received_bytes,	/* Bytes Recved */
+		    (LPOVERLAPPED)lpo			/* Overlapped structure */
+		    );
+
+	InterlockedDecrement(&nsock->manager->iocp_total);
+	iocompletionport_update(nsock);
+
+	return (ISC_R_SUCCESS);
+}
+
 /*
  * This is the I/O Completion Port Worker Function. It loops forever
  * waiting for I/O to complete and then forwards them for further
@@ -2388,6 +2403,7 @@ SocketIoThread(LPVOID ThreadContext) {
 	 * Loop forever waiting on I/O Completions and then processing them
 	 */
 	while (TRUE) {
+		wait_again:
 		bSuccess = GetQueuedCompletionStatus(manager->hIoCompletionPort,
 						     &nbytes, (LPDWORD)&sock,
 						     (LPWSAOVERLAPPED *)&lpo,
@@ -2417,32 +2433,16 @@ SocketIoThread(LPVOID ThreadContext) {
 				sock->pending_iocp--;
 				INSIST(sock->pending_recv > 0);
 				sock->pending_recv--;
-				if ((sock->type == isc_sockettype_udp) &&
-				    (errstatus == ERROR_HOST_UNREACHABLE)) {
-					UNEXPECTED_ERROR(__FILE__, __LINE__,
-							 "SOCKET_RECV ERROR_HOST_UNREACHABLE: trying to recover");
-					recover_receive_request(sock, &lpo);
-					break;
-				}
-				if ((sock->type == isc_sockettype_udp) &&
-				    (errstatus == WSAENETRESET)) {
-					UNEXPECTED_ERROR(__FILE__, __LINE__,
-							 "SOCKET_RECV WSAENETRESET: trying to recover");
-					recover_receive_request(sock, &lpo);
-					break;
-				}
-				if ((sock->type == isc_sockettype_udp) &&
-				    (errstatus == WSAECONNRESET)) {
-					UNEXPECTED_ERROR(__FILE__, __LINE__,
-							 "SOCKET_RECV WSAECONNRESET: trying to recover");
-					recover_receive_request(sock, &lpo);
+				if (!sock->connected &&
+				    ((errstatus == ERROR_HOST_UNREACHABLE) ||
+				     (errstatus == WSAENETRESET) ||
+				     (errstatus == WSAECONNRESET))) {
+					/* ignore soft errors */
+					queue_receive_request(sock);
 					break;
 				}
 				send_recvdone_abort(sock, isc_result);
-				if ((isc_result == ISC_R_UNEXPECTED) ||
-				    ((isc_result == ISC_R_CONNECTIONRESET) &&
-				     (errstatus != ERROR_OPERATION_ABORTED)) ||
-				    (isc_result == ISC_R_HOSTUNREACH)) {
+				if (isc_result == ISC_R_UNEXPECTED) {
 					UNEXPECTED_ERROR(__FILE__, __LINE__,
 						"SOCKET_RECV: Windows error code: %d, returning ISC error %d",
 						errstatus, isc_result);
@@ -2464,8 +2464,25 @@ SocketIoThread(LPVOID ThreadContext) {
 
 			case SOCKET_ACCEPT:
 				INSIST(sock->pending_iocp > 0);
-				sock->pending_iocp--;
 				INSIST(sock->pending_accept > 0);
+
+				socket_log(__LINE__, sock, NULL, EVENT, NULL, 0, 0,
+					"Accept: errstatus=%d isc_result=%d", errstatus, isc_result);
+
+				if (acceptdone_is_active(sock, lpo->adev)) {
+					if (restart_accept(sock, lpo) == ISC_R_SUCCESS) {
+						UNLOCK(&sock->lock);
+						goto wait_again;
+					} else {
+						errstatus = GetLastError();
+						isc_result = isc__errno2resultx(errstatus, __FILE__, __LINE__);
+						socket_log(__LINE__, sock, NULL, EVENT, NULL, 0, 0,
+							"restart_accept() failed: errstatus=%d isc_result=%d",
+							errstatus, isc_result);
+					}
+				}
+
+				sock->pending_iocp--;
 				sock->pending_accept--;
 				if (acceptdone_is_active(sock, lpo->adev)) {
 					closesocket(lpo->adev->newsocket->fd);

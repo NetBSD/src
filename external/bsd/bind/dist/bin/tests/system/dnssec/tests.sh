@@ -15,7 +15,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: tests.sh,v 1.55.32.11 2010/07/15 01:26:10 jinmei Exp
+# Id: tests.sh,v 1.55.32.13.6.1 2010/11/16 01:31:37 marka Exp
 
 SYSTEMTESTTOP=..
 . $SYSTEMTESTTOP/conf.sh
@@ -934,11 +934,12 @@ ret=0
 cd signer
 RANDFILE=../random.data
 zone=example
-key1=`$KEYGEN -r $RANDFILE -a NSEC3RSASHA1 -b 1024 -n zone $zone`
-key2=`$KEYGEN -r $RANDFILE -f KSK -a NSEC3RSASHA1 -b 1024 -n zone $zone`
+key1=`$KEYGEN -q -r $RANDFILE -a NSEC3RSASHA1 -b 1024 -n zone $zone`
+key2=`$KEYGEN -q -r $RANDFILE -f KSK -a NSEC3RSASHA1 -b 1024 -n zone $zone`
 cat example.db.in $key1.key $key2.key > example.db
 $SIGNER -o example -f example.db example.db > /dev/null 2>&1
 ) || ret=1
+n=`expr $n + 1`
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
 
@@ -948,12 +949,13 @@ ret=0
 cd signer
 RANDFILE=../random.data
 zone=example
-key1=`$KEYGEN -r $RANDFILE -a NSEC3RSASHA1 -b 1024 -n zone $zone`
-key2=`$KEYGEN -r $RANDFILE -f KSK -a NSEC3RSASHA1 -b 1024 -n zone $zone`
+key1=`$KEYGEN -q -r $RANDFILE -a NSEC3RSASHA1 -b 1024 -n zone $zone`
+key2=`$KEYGEN -q -r $RANDFILE -f KSK -a NSEC3RSASHA1 -b 1024 -n zone $zone`
 cat example.db.in $key1.key $key2.key > example.db
 $SIGNER -3 - -H 10 -o example -f example.db example.db > /dev/null 2>&1
 grep "IQF9LQTLKKNFK0KVIFELRAK4IC4QLTMG.example. 0 IN NSEC3 1 0 10 - IQF9LQTLKKNFK0KVIFELRAK4IC4QLTMG A NS SOA RRSIG DNSKEY NSEC3PARAM" example.db > /dev/null 
 ) || ret=1
+n=`expr $n + 1`
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
 
@@ -969,17 +971,6 @@ linecount=`cat ns4/named.secroots | wc -l`
 n=`expr $n + 1`
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
-
-# Run a minimal update test if possible.  This is really just
-# a regression test for RT #2399; more tests should be added.
-
-if $PERL -e 'use Net::DNS;' 2>/dev/null
-then
-    echo "I:running DNSSEC update test"
-    $PERL dnssec_update_test.pl -s 10.53.0.3 -p 5300 dynamic.example. || status=1
-else
-    echo "I:The DNSSEC update test requires the Net::DNS library." >&2
-fi
 
 # Check direct query for RRSIG.  If we first ask for normal (non RRSIG)
 # record, the corresponding RRSIG should be cached and subsequent query
@@ -1003,6 +994,36 @@ test -z "$ans" || ret=1
 n=`expr $n + 1`
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
+
+#
+# RT21868 regression test.
+#
+echo "I:checking NSEC3 zone with mismatched NSEC3PARAM / NSEC parameters ($n)"
+ret=0
+$DIG $DIGOPTS non-exist.badparam. @10.53.0.2 a > dig.out.ns2.test$n || ret=1
+grep "status: NXDOMAIN" dig.out.ns2.test$n > /dev/null || ret=1
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I:checking that a zone finishing the transition from RSASHA1 to RSASHA256 validates secure ($n)"
+ret=0
+$DIG $DIGOPTS ns algroll. @10.53.0.4 > dig.out.ns4.test$n || ret=1
+grep "NOERROR" dig.out.ns4.test$n > /dev/null || ret=1
+grep "flags:[^;]* ad[^;]*;" dig.out.ns4.test$n > /dev/null || ret=1
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+# Run a minimal update test if possible.  This is really just
+# a regression test for RT #2399; more tests should be added.
+
+if $PERL -e 'use Net::DNS;' 2>/dev/null
+then
+    echo "I:running DNSSEC update test"
+    $PERL dnssec_update_test.pl -s 10.53.0.3 -p 5300 dynamic.example. || status=1
+else
+    echo "I:The DNSSEC update test requires the Net::DNS library." >&2
+fi
 
 echo "I:exit status: $status"
 exit $status

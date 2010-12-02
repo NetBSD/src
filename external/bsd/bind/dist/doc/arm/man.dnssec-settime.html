@@ -14,7 +14,7 @@
  - OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  - PERFORMANCE OF THIS SOFTWARE.
 -->
-<!-- Id: man.dnssec-settime.html,v 1.30.4.11 2010/06/26 02:41:19 tbox Exp -->
+<!-- Id: man.dnssec-settime.html,v 1.30.4.14 2010/08/20 02:40:26 tbox Exp -->
 <html>
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
@@ -50,7 +50,7 @@
 <div class="cmdsynopsis"><p><code class="command">dnssec-settime</code>  [<code class="option">-f</code>] [<code class="option">-K <em class="replaceable"><code>directory</code></em></code>] [<code class="option">-P <em class="replaceable"><code>date/offset</code></em></code>] [<code class="option">-A <em class="replaceable"><code>date/offset</code></em></code>] [<code class="option">-R <em class="replaceable"><code>date/offset</code></em></code>] [<code class="option">-I <em class="replaceable"><code>date/offset</code></em></code>] [<code class="option">-D <em class="replaceable"><code>date/offset</code></em></code>] [<code class="option">-h</code>] [<code class="option">-v <em class="replaceable"><code>level</code></em></code>] [<code class="option">-E <em class="replaceable"><code>engine</code></em></code>] {keyfile}</p></div>
 </div>
 <div class="refsect1" lang="en">
-<a name="id2614105"></a><h2>DESCRIPTION</h2>
+<a name="id2614241"></a><h2>DESCRIPTION</h2>
 <p><span><strong class="command">dnssec-settime</strong></span>
       reads a DNSSEC private key file and sets the key timing metadata
       as specified by the <code class="option">-P</code>, <code class="option">-A</code>,
@@ -75,7 +75,7 @@
     </p>
 </div>
 <div class="refsect1" lang="en">
-<a name="id2614164"></a><h2>OPTIONS</h2>
+<a name="id2614299"></a><h2>OPTIONS</h2>
 <div class="variablelist"><dl>
 <dt><span class="term">-f</span></dt>
 <dd><p>
@@ -106,7 +106,7 @@
 </dl></div>
 </div>
 <div class="refsect1" lang="en">
-<a name="id2614326"></a><h2>TIMING OPTIONS</h2>
+<a name="id2614393"></a><h2>TIMING OPTIONS</h2>
 <p>
       Dates can be expressed in the format YYYYMMDD or YYYYMMDDHHMMSS.
       If the argument begins with a '+' or '-', it is interpreted as
@@ -148,10 +148,44 @@
             date, the key will no longer be included in the zone.  (It
             may remain in the key repository, however.)
           </p></dd>
+<dt><span class="term">-S <em class="replaceable"><code>predecessor key</code></em></span></dt>
+<dd><p>
+            Select a key for which the key being modified will be an
+            explicit successor.  The name, algorithm, size, and type of the
+            predecessor key must exactly match those of the key being
+            modified.  The activation date of the successor key will be set
+            to the inactivation date of the predecessor.  The publication
+            date will be set to the activation date minus the prepublication
+            interval, which defaults to 30 days.
+          </p></dd>
+<dt><span class="term">-i <em class="replaceable"><code>interval</code></em></span></dt>
+<dd>
+<p>
+            Sets the prepublication interval for a key.  If set, then
+            the publication and activation dates must be separated by at least
+            this much time.  If the activation date is specified but the
+            publication date isn't, then the publication date will default
+            to this much time before the activation date; conversely, if
+            the publication date is specified but activation date isn't,
+            then activation will be set to this much time after publication.
+          </p>
+<p>
+            If the key is being set to be an explicit successor to another
+            key, then the default prepublication interval is 30 days; 
+            otherwise it is zero.
+          </p>
+<p>
+            As with date offsets, if the argument is followed by one of
+            the suffixes 'y', 'mo', 'w', 'd', 'h', or 'mi', then the
+            interval is measured in years, months, weeks, days, hours,
+            or minutes, respectively.  Without a suffix, the interval is
+            measured in seconds.
+          </p>
+</dd>
 </dl></div>
 </div>
 <div class="refsect1" lang="en">
-<a name="id2614492"></a><h2>PRINTING OPTIONS</h2>
+<a name="id2614532"></a><h2>PRINTING OPTIONS</h2>
 <p>
       <span><strong class="command">dnssec-settime</strong></span> can also be used to print the
       timing metadata associated with a key.
@@ -177,7 +211,7 @@
 </dl></div>
 </div>
 <div class="refsect1" lang="en">
-<a name="id2614572"></a><h2>SEE ALSO</h2>
+<a name="id2614680"></a><h2>SEE ALSO</h2>
 <p><span class="citerefentry"><span class="refentrytitle">dnssec-keygen</span>(8)</span>,
       <span class="citerefentry"><span class="refentrytitle">dnssec-signzone</span>(8)</span>,
       <em class="citetitle">BIND 9 Administrator Reference Manual</em>,
@@ -185,7 +219,7 @@
     </p>
 </div>
 <div class="refsect1" lang="en">
-<a name="id2614605"></a><h2>AUTHOR</h2>
+<a name="id2615805"></a><h2>AUTHOR</h2>
 <p><span class="corpauthor">Internet Systems Consortium</span>
     </p>
 </div>

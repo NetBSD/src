@@ -15,7 +15,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: sign.sh,v 1.30.32.3 2010/06/25 23:46:33 tbox Exp
+# Id: sign.sh,v 1.30.32.3.8.1 2010/11/16 01:31:38 marka Exp
 
 SYSTEMTESTTOP=../..
 . $SYSTEMTESTTOP/conf.sh
@@ -30,6 +30,7 @@ zonefile=root.db
 
 cp ../ns2/dsset-example. .
 cp ../ns2/dsset-dlv. .
+grep "8 [12]" ../ns2/dsset-algroll. > dsset-algroll.
 
 keyname=`$KEYGEN -q -r $RANDFILE -a RSAMD5 -b 768 -n zone $zone`
 
