@@ -1,4 +1,4 @@
-/*	$NetBSD: zoneconf.c,v 1.1.1.4 2010/08/05 19:53:54 christos Exp $	*/
+/*	$NetBSD: zoneconf.c,v 1.1.1.5 2010/12/02 14:22:29 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: zoneconf.c,v 1.161.4.2 2010/07/11 23:46:35 tbox Exp */
+/* Id: zoneconf.c,v 1.161.4.3.6.1 2010/09/15 03:42:58 marka Exp */
 
 /*% */
 
@@ -137,8 +137,11 @@ configure_zone_acl(const cfg_obj_t *zconfig, const cfg_obj_t *vconfig,
 	}
 
 	/* Check for default ACLs that haven't been parsed yet */
-	if (vconfig != NULL)
-		maps[i++] = cfg_tuple_get(vconfig, "options");
+	if (vconfig != NULL) {
+		const cfg_obj_t *options = cfg_tuple_get(vconfig, "options");
+		if (options != NULL)
+			maps[i++] = options;
+	}
 	if (config != NULL) {
 		const cfg_obj_t *options = NULL;
 		(void)cfg_map_get(config, "options", &options);
@@ -564,22 +567,13 @@ ns_zone_configure(const cfg_obj_t *config, const cfg_obj_t *vconfig,
 	 * Unless we're using some alternative database, a master zone
 	 * will be needing a master file.
 	 */
-	if (ztype == dns_zone_master && cpval == default_dbtype) {
-		if (filename == NULL) {
-			isc_log_write(ns_g_lctx, NS_LOGCATEGORY_GENERAL,
-				      NS_LOGMODULE_SERVER, ISC_LOG_ERROR,
-				      "zone '%s': 'file' not specified",
-				      zname);
-			return (ISC_R_FAILURE);
-		}
-
-		if (!isc_file_exists(filename)) {
-			isc_log_write(ns_g_lctx, NS_LOGCATEGORY_GENERAL,
-				      NS_LOGMODULE_SERVER, ISC_LOG_ERROR,
-				      "zone '%s': master file not found",
-				      zname);
-			return (ISC_R_NOTFOUND);
-		}
+	if (ztype == dns_zone_master && cpval == default_dbtype &&
+	    filename == NULL) {
+		isc_log_write(ns_g_lctx, NS_LOGCATEGORY_GENERAL,
+			      NS_LOGMODULE_SERVER, ISC_LOG_ERROR,
+			      "zone '%s': 'file' not specified",
+			      zname);
+		return (ISC_R_FAILURE);
 	}
 
 	masterformat = dns_masterformat_text;

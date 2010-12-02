@@ -705,6 +705,7 @@ dns_view_setcache2
 dns_view_setdstport
 dns_view_sethints
 dns_view_setkeyring
+dns_view_setnewzones
 dns_view_setresquerystats
 dns_view_setresstats
 dns_view_setrootdelonly
@@ -738,6 +739,7 @@ dns_zone_flush
 dns_zone_forcereload
 dns_zone_forwardupdate
 dns_zone_fulldumptostream
+dns_zone_getadded
 dns_zone_getchecknames
 dns_zone_getclass
 dns_zone_getdb
@@ -795,6 +797,7 @@ dns_zone_refresh
 dns_zone_rekey
 dns_zone_replacedb
 dns_zone_setacache
+dns_zone_setadded
 dns_zone_setalsonotify
 dns_zone_setaltxfrsource4
 dns_zone_setaltxfrsource6

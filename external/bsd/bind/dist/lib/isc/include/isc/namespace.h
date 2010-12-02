@@ -1,7 +1,7 @@
-/*	$NetBSD: namespace.h,v 1.1.1.1 2009/10/25 00:02:45 christos Exp $	*/
+/*	$NetBSD: namespace.h,v 1.1.1.2 2010/12/02 14:23:33 christos Exp $	*/
 
 /*
- * Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2009, 2010  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: namespace.h,v 1.5 2009/10/01 01:30:01 sar Exp */
+/* Id: namespace.h,v 1.5.62.2 2010/08/13 23:46:28 tbox Exp */
 
 #ifndef ISCAPI_NAMESPACE_H
 #define ISCAPI_NAMESPACE_H 1
@@ -69,6 +69,7 @@
 #define isc_mem_getquota isc__mem_getquota
 #define isc_mem_gettag isc__mem_gettag
 #define isc_mem_inuse isc__mem_inuse
+#define isc_mem_isovermem isc__mem_isovermem
 #define isc_mem_setname isc__mem_setname
 #define isc_mem_setwater isc__mem_setwater
 #define isc_mem_printallactive isc__mem_printallactive

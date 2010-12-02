@@ -14,7 +14,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: tests.sh,v 1.1.4.4 2010/05/06 11:27:38 marka Exp
+# Id: tests.sh,v 1.1.4.5 2010/08/16 22:27:17 marka Exp
 
 SYSTEMTESTTOP=..
 . $SYSTEMTESTTOP/conf.sh
@@ -41,6 +41,13 @@ czsk3=`$KEYGEN -q -r $RANDFILE -A none $czone`
 
 # inactive
 czsk4=`$KEYGEN -q -r $RANDFILE -P now-24h -A now-24h -I now $czone`
+
+# active in 12 hours, inactive 12 hours after that...
+czsk5=`$KEYGEN -q -r $RANDFILE -P now+12h -A now+12h -I now+24h $czone`
+
+# explicit successor to czk5
+# (suppressing warning about lack of removal date)
+czsk6=`$KEYGEN -q -r $RANDFILE -S $czsk5 -i 6h 2>&-` 
 
 # active ksk
 cksk1=`$KEYGEN -q -r $RANDFILE -fk $czone`
@@ -69,6 +76,8 @@ czactive=`echo $czsk1 | sed 's/^K.*+005+0*//'`
 czgenerated=`echo $czsk2 | sed 's/^K.*+005+0*//'`
 czpublished=`echo $czsk3 | sed 's/^K.*+005+0*//'`
 czinactive=`echo $czsk4 | sed 's/^K.*+005+0*//'`
+czpredecessor=`echo $czsk5 | sed 's/^K.*+005+0*//'`
+czsuccessor=`echo $czsk6 | sed 's/^K.*+005+0*//'`
 ckactive=`echo $cksk1 | sed 's/^K.*+005+0*//'`
 ckpublished=`echo $cksk2 | sed 's/^K.*+005+0*//'`
 ckprerevoke=`echo $cksk3 | sed 's/^K.*+005+0*//'`
@@ -115,6 +124,10 @@ grep "key id = $czinactive" $cfile.signed > /dev/null || ret=1
 # should not be there, hence the &&
 grep "key id = $ckprerevoke" $cfile.signed > /dev/null && ret=1
 grep "key id = $czgenerated" $cfile.signed > /dev/null && ret=1
+grep "key id = $czpredecessor" $cfile.signed && echo pred is there
+grep "key id = $czsuccessor" $cfile.signed && echo succ is there
+#grep "key id = $czpredecessor" $cfile.signed > /dev/null && ret=1
+#grep "key id = $czsuccessor" $cfile.signed > /dev/null && ret=1
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
 
@@ -141,6 +154,8 @@ grep "$ckrevoked" other.sigs > /dev/null && ret=1
 grep "$czpublished" other.sigs > /dev/null && ret=1
 grep "$czinactive" other.sigs > /dev/null && ret=1
 grep "$czgenerated" other.sigs > /dev/null && ret=1
+grep "$czpredecessor" other.sigs > /dev/null && ret=1
+grep "$czsuccessor" other.sigs > /dev/null && ret=1
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
 

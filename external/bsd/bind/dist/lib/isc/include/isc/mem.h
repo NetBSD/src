@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.h,v 1.1.1.3 2010/08/05 20:15:10 christos Exp $	*/
+/*	$NetBSD: mem.h,v 1.1.1.4 2010/12/02 14:23:32 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: mem.h,v 1.86.102.2 2010/03/04 23:49:20 tbox Exp */
+/* Id: mem.h,v 1.86.102.3 2010/08/11 22:56:59 jinmei Exp */
 
 #ifndef ISC_MEM_H
 #define ISC_MEM_H 1
@@ -226,6 +226,7 @@ typedef struct isc_memmethods {
 			 void *water_arg, size_t hiwater, size_t lowater);
 	void (*waterack)(isc_mem_t *ctx, int flag);
 	size_t (*inuse)(isc_mem_t *mctx);
+	isc_boolean_t (*isovermem)(isc_mem_t *mctx);
 	isc_result_t (*mpcreate)(isc_mem_t *mctx, size_t size,
 				 isc_mempool_t **mpctxp);
 } isc_memmethods_t;
@@ -420,6 +421,14 @@ isc_mem_inuse(isc_mem_t *mctx);
  * Get an estimate of the number of memory in use in 'mctx', in bytes.
  * This includes quantization overhead, but does not include memory
  * allocated from the system but not yet used.
+ */
+
+isc_boolean_t
+isc_mem_isovermem(isc_mem_t *mctx);
+/*%<
+ * Return true iff the memory context is in "over memory" state, i.e.,
+ * a hiwater mark has been set and the used amount of memory has exceeds
+ * the mark.
  */
 
 void
