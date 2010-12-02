@@ -1,6 +1,4 @@
-#define opendisk1(x,y,z,t,u,v) opendisk(x,y,z,t,u)
-
-/* $NetBSD: cgdconfig.c,v 1.30 2010/12/02 04:54:32 elric Exp $ */
+/* $NetBSD: cgdconfig.c,v 1.31 2010/12/02 18:02:58 elric Exp $ */
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -35,7 +33,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 2002, 2003\
  The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: cgdconfig.c,v 1.30 2010/12/02 04:54:32 elric Exp $");
+__RCSID("$NetBSD: cgdconfig.c,v 1.31 2010/12/02 18:02:58 elric Exp $");
 #endif
 
 #include <err.h>
