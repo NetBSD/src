@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.12 2009/10/15 16:46:37 pooka Exp $	*/
+/*	$NetBSD: cpu.h,v 1.13 2010/12/02 21:20:39 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -38,6 +38,7 @@
 struct cpu_info {
 	struct cpu_data ci_data;
 	cpuid_t ci_cpuid;
+	struct lwp *ci_curlwp;
 
 /*
  * XXX: horrible workaround for vax lock.h.
