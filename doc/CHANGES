@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1465 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1466 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -792,4 +792,5 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	dhcpcd(8): Import dhcpcd-5.2.9. [roy 20101127]
 	postfix(1): Import version 2.7.2 [tron 20101127]
 	module: Rename <module>.prop to <module>.plist.  [jnemeth 20101127]
-	bind: Update to 9.7.2-P3 [christos 20101202]
+	bind: Update to 9.7.2-P3. Bug and security fixes since 9.7.2b1. See
+		src/external/bsd/bind/dist/CHANGES [christos 20101202]
