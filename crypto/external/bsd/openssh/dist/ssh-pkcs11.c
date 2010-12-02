@@ -1,4 +1,4 @@
-/*	$NetBSD: ssh-pkcs11.c,v 1.2 2010/11/21 18:59:04 adam Exp $	*/
+/*	$NetBSD: ssh-pkcs11.c,v 1.3 2010/12/02 10:23:51 he Exp $	*/
 /* $OpenBSD: ssh-pkcs11.c,v 1.6 2010/06/08 21:32:19 markus Exp $ */
 /*
  * Copyright (c) 2010 Markus Friedl.  All rights reserved.
@@ -16,7 +16,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #include "includes.h"
-__RCSID("$NetBSD: ssh-pkcs11.c,v 1.2 2010/11/21 18:59:04 adam Exp $");
+__RCSID("$NetBSD: ssh-pkcs11.c,v 1.3 2010/12/02 10:23:51 he Exp $");
 
 #include <sys/types.h>
 #include <sys/queue.h>
@@ -166,6 +166,7 @@ pkcs11_del_provider(char *provider_id)
 	return (-1);
 }
 
+#ifdef HAVE_DLOPEN
 /* openssl callback for freeing an RSA key */
 static int
 pkcs11_rsa_finish(RSA *rsa)
@@ -466,7 +467,6 @@ pkcs11_fetch_keys(struct pkcs11_provider *p, CK_ULONG slotidx, Key ***keysp,
 	return (0);
 }
 
-#ifdef HAVE_DLOPEN
 /* register a new provider, fails if provider already exists */
 int
 pkcs11_add_provider(char *provider_id, char *pin, Key ***keyp)
