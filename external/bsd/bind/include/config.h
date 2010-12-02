@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: config.h.in,v 1.122.32.10 2010/06/22 04:04:22 marka Exp */
+/* Id: config.h.in,v 1.122.32.11 2010/08/16 05:14:58 marka Exp */
 
 /*! \file */
 
@@ -373,9 +373,6 @@ int sigwait(const unsigned int *set, int *sig);
 /* Defined if you need to use ioctl(FIONBIO) instead a fcntl call to make
    non-blocking. */
 /* #undef USE_FIONBIO_IOCTL */
-
-/** define if the system have backtrace function. */
-/* #undef HAVE_LIBCTRACE */
 
 /* define if idnkit support is to be included. */
 /* #undef WITH_IDN */
