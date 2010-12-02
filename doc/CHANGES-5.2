@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.2,v 1.1.2.33 2010/11/27 21:12:50 riz Exp $
+# $NetBSD: CHANGES-5.2,v 1.1.2.34 2010/12/02 23:50:29 snj Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -864,4 +864,18 @@ sys/dev/usb/usbdevs_data.h			regen
 
 	Add support for Kingston DT Mini 10 pendrive, with quirk.
 	[sborrill, ticket #1489]
+
+sys/dev/ic/iavc.c				1.8
+
+	Make this compile.
+	[riz, ticket #1418]
+
+sys/dev/ic/mpt.c				1.14
+sys/dev/ic/mpt.h				1.7
+sys/dev/ic/mpt_debug.c				1.7
+sys/dev/ic/mpt_netbsd.c				1.15
+
+	Add byte-swapping so that this works on BE platforms.  The logic
+	is based on the current freebsd driver.  Fixes PR 42870.
+	[riz, ticket #1487]
 
