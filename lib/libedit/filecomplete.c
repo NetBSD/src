@@ -1,4 +1,4 @@
-/*	$NetBSD: filecomplete.c,v 1.20 2010/11/15 21:24:31 christos Exp $	*/
+/*	$NetBSD: filecomplete.c,v 1.21 2010/12/02 04:35:17 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: filecomplete.c,v 1.20 2010/11/15 21:24:31 christos Exp $");
+__RCSID("$NetBSD: filecomplete.c,v 1.21 2010/12/02 04:35:17 dholland Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -338,39 +338,45 @@ _fn_qsort_string_compare(const void *i1, const void *i2)
 
 /*
  * Display list of strings in columnar format on readline's output stream.
- * 'matches' is list of strings, 'len' is number of strings in 'matches',
- * 'max' is maximum length of string in 'matches'.
+ * 'matches' is list of strings, 'num' is number of strings in 'matches',
+ * 'width' is maximum length of string in 'matches'.
+ *
+ * matches[0] is not one of the match strings, so the strings are
+ * matches[1] *through* matches[num].
  */
 void
-fn_display_match_list (EditLine *el, char **matches, size_t len, size_t max)
+fn_display_match_list (EditLine *el, char **matches, size_t num, size_t width)
 {
-	size_t i, idx, limit, count;
+	size_t line, lines, col, cols, thisguy;
 	int screenwidth = el->el_term.t_size.h;
 
+	/* Ignore matches[0]. Avoid 1-based array logic below. */
+	matches++;
+
 	/*
-	 * Find out how many entries can be put on one line, count
-	 * with two spaces between strings.
+	 * Find out how many entries can be put on one line; count
+	 * with one space between strings the same way it's printed.
 	 */
-	limit = screenwidth / (max + 2);
-	if (limit == 0)
-		limit = 1;
+	cols = screenwidth / (width + 1);
+	if (cols == 0)
+		cols = 1;
 
-	/* how many lines of output */
-	count = len / limit;
-	if (count * limit < len)
-		count++;
+	/* how many lines of output, rounded up */
+	lines = (num + cols - 1) / cols;
 
-	/* Sort the items if they are not already sorted. */
-	qsort(&matches[1], (size_t)(len - 1), sizeof(char *),
-	    _fn_qsort_string_compare);
+	/* Sort the items. */
+	qsort(matches, num, sizeof(char *), _fn_qsort_string_compare);
 
-	idx = 1;
-	for(; count > 0; count--) {
-		int more = limit > 0 && matches[0];
-		for(i = 0; more; i++, idx++) {
-			more = i < limit && matches[idx + 1];
-			(void)fprintf(el->el_outfile, "%-*s%s", (int)max,
-			    matches[idx], more ? " " : "");
+	/*
+	 * On the ith line print elements i, i+lines, i+lines*2, etc.
+	 */
+	for (line = 0; line < lines; line++) {
+		for (col = 0; col < cols; col++) {
+			thisguy = line + col * lines;
+			if (thisguy >= num)
+				break;
+			(void)fprintf(el->el_outfile, "%s%-*s",
+			    col == 0 ? "" : " ", (int)width, matches[thisguy]);
 		}
 		(void)fprintf(el->el_outfile, "\n");
 	}
@@ -492,6 +498,7 @@ fn_complete(EditLine *el,
 				if (match_len > maxlen)
 					maxlen = match_len;
 			}
+			/* matches[1] through matches[i-1] are available */
 			matches_num = i - 1;
 				
 			/* newline to get on next line from command line */
