@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.1.1.3 2010/08/05 20:16:03 christos Exp $	*/
+/*	$NetBSD: parser.c,v 1.1.1.4 2010/12/02 14:23:36 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: parser.c,v 1.132.104.2 2010/06/23 23:46:36 tbox Exp */
+/* Id: parser.c,v 1.132.104.3 2010/08/11 18:19:58 each Exp */
 
 /*! \file */
 
@@ -389,6 +389,12 @@ cfg_parser_create(isc_mem_t *mctx, isc_log_t *lctx, cfg_parser_t **ret) {
 	if (pctx == NULL)
 		return (ISC_R_NOMEMORY);
 
+	result = isc_refcount_init(&pctx->references, 1);
+	if (result != ISC_R_SUCCESS) {
+		isc_mem_put(mctx, pctx, sizeof(*pctx));
+		return (result);
+	}
+
 	pctx->mctx = mctx;
 	pctx->lctx = lctx;
 	pctx->lexer = NULL;
@@ -529,17 +535,30 @@ cfg_parse_buffer(cfg_parser_t *pctx, isc_buffer_t *buffer,
 }
 
 void
+cfg_parser_attach(cfg_parser_t *src, cfg_parser_t **dest) {
+	REQUIRE(src != NULL);
+	REQUIRE(dest != NULL && *dest == NULL);
+	isc_refcount_increment(&src->references, NULL);
+	*dest = src;
+}
+
+void
 cfg_parser_destroy(cfg_parser_t **pctxp) {
 	cfg_parser_t *pctx = *pctxp;
-	isc_lex_destroy(&pctx->lexer);
-	/*
-	 * Cleaning up open_files does not
-	 * close the files; that was already done
-	 * by closing the lexer.
-	 */
-	CLEANUP_OBJ(pctx->open_files);
-	CLEANUP_OBJ(pctx->closed_files);
-	isc_mem_put(pctx->mctx, pctx, sizeof(*pctx));
+	unsigned int refs;
+
+	isc_refcount_decrement(&pctx->references, &refs);
+	if (refs == 0) {
+		isc_lex_destroy(&pctx->lexer);
+		/*
+		 * Cleaning up open_files does not
+		 * close the files; that was already done
+		 * by closing the lexer.
+		 */
+		CLEANUP_OBJ(pctx->open_files);
+		CLEANUP_OBJ(pctx->closed_files);
+		isc_mem_put(pctx->mctx, pctx, sizeof(*pctx));
+	}
 	*pctxp = NULL;
 }
 
@@ -1135,7 +1154,7 @@ cfg_list_length(const cfg_obj_t *obj, isc_boolean_t recurse) {
 	return (count);
 }
 
-const cfg_obj_t *
+cfg_obj_t *
 cfg_listelt_value(const cfg_listelt_t *elt) {
 	REQUIRE(elt != NULL);
 	return (elt->obj);
@@ -2317,6 +2336,7 @@ cfg_obj_line(const cfg_obj_t *obj) {
 
 isc_result_t
 cfg_create_obj(cfg_parser_t *pctx, const cfg_type_t *type, cfg_obj_t **ret) {
+	isc_result_t result;
 	cfg_obj_t *obj;
 
 	obj = isc_mem_get(pctx->mctx, sizeof(cfg_obj_t));
@@ -2325,9 +2345,15 @@ cfg_create_obj(cfg_parser_t *pctx, const cfg_type_t *type, cfg_obj_t **ret) {
 	obj->type = type;
 	obj->file = current_file(pctx);
 	obj->line = pctx->line;
+	result = isc_refcount_init(&obj->references, 1);
+	if (result != ISC_R_SUCCESS) {
+		isc_mem_put(pctx->mctx, obj, sizeof(cfg_obj_t));
+		return (result);
+	}
 	*ret = obj;
 	return (ISC_R_SUCCESS);
 }
+
 
 static void
 map_symtabitem_destroy(char *key, unsigned int type,
@@ -2382,9 +2408,23 @@ cfg_obj_istype(const cfg_obj_t *obj, const cfg_type_t *type) {
 void
 cfg_obj_destroy(cfg_parser_t *pctx, cfg_obj_t **objp) {
 	cfg_obj_t *obj = *objp;
-	obj->type->rep->free(pctx, obj);
-	isc_mem_put(pctx->mctx, obj, sizeof(cfg_obj_t));
+	unsigned int refs;
+
+	isc_refcount_decrement(&obj->references, &refs);
+	if (refs == 0) {
+		obj->type->rep->free(pctx, obj);
+		isc_refcount_destroy(&obj->references);
+		isc_mem_put(pctx->mctx, obj, sizeof(cfg_obj_t));
+	}
 	*objp = NULL;
+}
+
+void
+cfg_obj_attach(cfg_obj_t *src, cfg_obj_t **dest) {
+    REQUIRE(src != NULL);
+    REQUIRE(dest != NULL && *dest == NULL);
+    isc_refcount_increment(&src->references, NULL);
+    *dest = src;
 }
 
 static void

@@ -2,7 +2,7 @@
                "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd"
 	       [<!ENTITY mdash "&#8212;">]>
 <!--
- - Copyright (C) 2004, 2005, 2007-2009  Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2004, 2005, 2007-2010  Internet Systems Consortium, Inc. ("ISC")
  - Copyright (C) 2000-2003  Internet Software Consortium.
  -
  - Permission to use, copy, modify, and/or distribute this software for any
@@ -18,7 +18,7 @@
  - PERFORMANCE OF THIS SOFTWARE.
 -->
 
-<!-- Id: dnssec-keygen.docbook,v 1.33 2009/11/03 21:44:46 each Exp -->
+<!-- Id: dnssec-keygen.docbook,v 1.33.24.2 2010/08/16 23:46:30 tbox Exp -->
 <refentry id="man.dnssec-keygen">
   <refentryinfo>
     <date>June 30, 2000</date>
@@ -42,6 +42,7 @@
       <year>2007</year>
       <year>2008</year>
       <year>2009</year>
+      <year>2010</year>
       <holder>Internet Systems Consortium, Inc. ("ISC")</holder>
     </copyright>
     <copyright>
@@ -71,6 +72,7 @@
       <arg><option>-g <replaceable class="parameter">generator</replaceable></option></arg>
       <arg><option>-h</option></arg>
       <arg><option>-I <replaceable class="parameter">date/offset</replaceable></option></arg>
+      <arg><option>-i <replaceable class="parameter">interval</replaceable></option></arg>
       <arg><option>-K <replaceable class="parameter">directory</replaceable></option></arg>
       <arg><option>-k</option></arg>
       <arg><option>-P <replaceable class="parameter">date/offset</replaceable></option></arg>
@@ -78,6 +80,7 @@
       <arg><option>-q</option></arg>
       <arg><option>-R <replaceable class="parameter">date/offset</replaceable></option></arg>
       <arg><option>-r <replaceable class="parameter">randomdev</replaceable></option></arg>
+      <arg><option>-S <replaceable class="parameter">key</replaceable></option></arg>
       <arg><option>-s <replaceable class="parameter">strength</replaceable></option></arg>
       <arg><option>-t <replaceable class="parameter">type</replaceable></option></arg>
       <arg><option>-v <replaceable class="parameter">level</replaceable></option></arg>
@@ -342,6 +345,21 @@
       </varlistentry>
 
       <varlistentry>
+        <term>-S <replaceable class="parameter">key</replaceable></term>
+        <listitem>
+          <para>
+            Create a new key which is an explicit successor to an
+            existing key.  The name, algorithm, size, and type of the
+            key will be set to match the existing key.  The activation
+            date of the new key will be set to the inactivation date of
+            the existing one.  The publication date will be set to the
+            activation date minus the prepublication interval, which
+            defaults to 30 days.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
         <term>-s <replaceable class="parameter">strength</replaceable></term>
         <listitem>
           <para>
@@ -463,6 +481,34 @@
           </para>
         </listitem>
       </varlistentry>
+
+      <varlistentry>
+        <term>-i <replaceable class="parameter">interval</replaceable></term>
+        <listitem>
+          <para>
+            Sets the prepublication interval for a key.  If set, then
+            the publication and activation dates must be separated by at least
+            this much time.  If the activation date is specified but the
+            publication date isn't, then the publication date will default
+            to this much time before the activation date; conversely, if
+            the publication date is specified but activation date isn't,
+            then activation will be set to this much time after publication.
+          </para>
+          <para>
+            If the key is being created as an explicit successor to another
+            key, then the default prepublication interval is 30 days; 
+            otherwise it is zero.
+          </para>
+          <para>
+            As with date offsets, if the argument is followed by one of
+            the suffixes 'y', 'mo', 'w', 'd', 'h', or 'mi', then the
+            interval is measured in years, months, weeks, days, hours,
+            or minutes, respectively.  Without a suffix, the interval is
+            measured in seconds.
+          </para>
+        </listitem>
+      </varlistentry>
+
     </variablelist>
   </refsect1>
 
