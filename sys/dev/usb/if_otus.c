@@ -1,4 +1,4 @@
-/*	$NetBSD: if_otus.c,v 1.8 2010/12/02 16:56:21 christos Exp $	*/
+/*	$NetBSD: if_otus.c,v 1.9 2010/12/02 17:38:05 christos Exp $	*/
 /*	$OpenBSD: if_otus.c,v 1.18 2010/08/27 17:08:00 jsg Exp $	*/
 
 /*-
@@ -645,22 +645,22 @@ otus_detach(device_t self, int flags)
 
 	DPRINTF("otus_detach\n");
 
-	if (ifp == NULL)	/* Failed to attach properly */
-		return 0;
-
-	otus_stop(ifp);
+	if (ifp != NULL)	/* Failed to attach properly */
+		otus_stop(ifp);
 
 	s = splnet();
 
 	/* Wait for all queued asynchronous commands to complete. */
-	while (sc->sc_cmdq.queued > 0)
-		tsleep(&sc->sc_cmdq, 0, "sc_cmdq", 0);
+	if (ifp != NULL) {
+		while (sc->sc_cmdq.queued > 0)
+			tsleep(&sc->sc_cmdq, 0, "sc_cmdq", 0);
+	}
 
 	usb_rem_task(sc->sc_udev, &sc->sc_task);
 	callout_destroy(&sc->sc_scan_to);
 	callout_destroy(&sc->sc_calib_to);
 
-	if (ifp->if_flags != 0) {	/* if_attach() has been called. */
+	if (ifp && ifp->if_flags != 0) { /* if_attach() has been called. */
 		ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 		bpf_detach(ifp);
 		ieee80211_ifdetach(&sc->sc_ic);
