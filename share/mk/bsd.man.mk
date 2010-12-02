@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.man.mk,v 1.104 2010/06/01 23:29:10 joerg Exp $
+#	$NetBSD: bsd.man.mk,v 1.105 2010/12/02 23:08:04 wiz Exp $
 #	@(#)bsd.man.mk	8.1 (Berkeley) 6/8/93
 
 .include <bsd.init.mk>
@@ -23,7 +23,6 @@ CATDEPS?=	${TMACDEPDIR}/andoc.tmac \
 		${TMACDEPDIR}/mdoc/doc-ditroff \
 		${TMACDEPDIR}/mdoc/doc-nroff \
 		${TMACDEPDIR}/mdoc/doc-syms
-HTMLDEPS?=	${TMACDEPDIR}/doc2html.tmac
 MANTARGET?=	cat
 
 MAN?=
@@ -193,9 +192,8 @@ HTMLPAGES=	${MAN:C/\.([1-9])$/.html\1/}
 realall:	${HTMLPAGES}
 .NOPATH:	${HTMLPAGES}
 .SUFFIXES:	${_MNUMBERS:@N@.html$N@}
-.MADE:	${HTMLDEPS}
 
-${_MNUMBERS:@N@.$N.html$N@}: ${HTMLDEPS}			# build rule
+${_MNUMBERS:@N@.$N.html$N@}: 				# build rule
 	${_MKTARGET_FORMAT}
 	${TOOL_MANDOC_HTML} ${.IMPSRC} > ${.TARGET}.tmp && \
 	    mv ${.TARGET}.tmp ${.TARGET}
