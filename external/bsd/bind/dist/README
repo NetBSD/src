@@ -53,6 +53,8 @@ BIND 9.7.2
 	BIND 9.7.2 will address bugs in 9.7.1, and also introduces
         some new functionality:
 
+	- "rndc loadkeys" to allow new keys to be added to a managed
+	  zone without having them sign the content immediately.
         - "rndc addzone" and "rndc delzone" allow adding and deleting
           zones at runtime.  This requires the view to have the
           "new-zone-file" option set to a filename.  Zone configuration

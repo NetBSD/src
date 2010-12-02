@@ -1,4 +1,4 @@
-/*	$NetBSD: zone.c,v 1.1.1.5 2010/08/05 20:13:27 christos Exp $	*/
+/*	$NetBSD: zone.c,v 1.1.1.6 2010/12/02 14:23:27 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: zone.c,v 1.540.2.26 2010/06/02 01:00:28 marka Exp */
+/* Id: zone.c,v 1.540.2.29 2010/08/16 23:46:30 tbox Exp */
 
 /*! \file */
 
@@ -319,6 +319,11 @@ struct dns_zone {
 	 * Autosigning/key-maintenance options
 	 */
 	isc_uint32_t		keyopts;
+
+	/*%
+	 * True if added by "rndc addzone"
+	 */
+	isc_boolean_t           added;
 };
 
 #define DNS_ZONE_FLAG(z,f) (ISC_TF(((z)->flags & (f)) != 0))
@@ -829,6 +834,7 @@ dns_zone_create(dns_zone_t **zonep, isc_mem_t *mctx) {
 	zone->signatures = 10;
 	zone->nodes = 100;
 	zone->privatetype = (dns_rdatatype_t)0xffffU;
+	zone->added = ISC_FALSE;
 
 	zone->magic = ZONE_MAGIC;
 
@@ -13726,6 +13732,36 @@ clean_nsec3param(dns_zone_t *zone, dns_db_t *db, dns_dbversion_t *ver,
 	return (result);
 }
 
+/*
+ * Given an RRSIG rdataset and an algorithm, determine whether there
+ * are any signatures using that algorithm.
+ */
+static isc_boolean_t
+signed_with_alg(dns_rdataset_t *rdataset, dns_secalg_t alg) {
+	dns_rdata_t rdata = DNS_RDATA_INIT;
+	dns_rdata_rrsig_t rrsig;
+	isc_result_t result;
+
+	REQUIRE(rdataset == NULL || rdataset->type == dns_rdatatype_rrsig);
+	if (rdataset == NULL || !dns_rdataset_isassociated(rdataset)) {
+		return (ISC_FALSE);
+	}
+
+	for (result = dns_rdataset_first(rdataset);
+	     result == ISC_R_SUCCESS;
+	     result = dns_rdataset_next(rdataset))
+	{
+		dns_rdataset_current(rdataset, &rdata);
+		result = dns_rdata_tostruct(&rdata, &rrsig, NULL);
+		RUNTIME_CHECK(result == ISC_R_SUCCESS);
+		dns_rdata_reset(&rdata);
+		if (rrsig.algorithm == alg)
+			return (ISC_TRUE);
+	}
+
+	return (ISC_FALSE);
+}
+
 static void
 zone_rekey(dns_zone_t *zone) {
 	isc_result_t result;
@@ -13737,12 +13773,14 @@ zone_rekey(dns_zone_t *zone) {
 	dns_dnsseckey_t *key;
 	dns_diff_t diff;
 	isc_boolean_t commit = ISC_FALSE, newactive = ISC_FALSE;
+	isc_boolean_t fullsign;
 	dns_ttl_t ttl = 3600;
 	const char *dir;
 	isc_mem_t *mctx;
 	isc_stdtime_t now;
 	isc_time_t timenow;
 	isc_interval_t ival;
+	char timebuf[80];
 
 	REQUIRE(DNS_ZONE_VALID(zone));
 
@@ -13785,6 +13823,12 @@ zone_rekey(dns_zone_t *zone) {
 	} else if (result != ISC_R_NOTFOUND)
 		goto failure;
 
+	/*
+	 * True when called from "rndc sign".  Indicates the zone should be
+	 * fully signed now.
+	 */
+	fullsign = ISC_TF(DNS_ZONEKEY_OPTION(zone, DNS_ZONEKEY_FULLSIGN) != 0);
+
 	result = dns_dnssec_findmatchingkeys(&zone->origin, dir, mctx, &keys);
 	if (result == ISC_R_SUCCESS) {
 		isc_boolean_t check_ksk;
@@ -13814,7 +13858,7 @@ zone_rekey(dns_zone_t *zone) {
 			}
 		}
 
-		if ((newactive || !ISC_LIST_EMPTY(diff.tuples)) &&
+		if ((newactive || fullsign || !ISC_LIST_EMPTY(diff.tuples)) &&
 		    dnskey_sane(zone, db, ver, &diff)) {
 			CHECK(dns_diff_apply(&diff, db, ver));
 			CHECK(clean_nsec3param(zone, db, ver, &diff));
@@ -13835,6 +13879,8 @@ zone_rekey(dns_zone_t *zone) {
 	if (commit) {
 		isc_time_t timenow;
 		dns_difftuple_t *tuple;
+		isc_boolean_t newkey = ISC_FALSE;
+		isc_boolean_t newalg = ISC_FALSE;
 
 		LOCK_ZONE(zone);
 		DNS_ZONE_SETFLAG(zone, DNS_ZONEFLG_NEEDNOTIFY);
@@ -13844,32 +13890,125 @@ zone_rekey(dns_zone_t *zone) {
 		TIME_NOW(&timenow);
 		zone_settimer(zone, &timenow);
 
+		/*
+		 * Has a new key become active?  If so, is it for
+		 * a new algorithm?
+		 */
 		for (tuple = ISC_LIST_HEAD(diff.tuples);
 		     tuple != NULL;
 		     tuple = ISC_LIST_NEXT(tuple, link)) {
 			dns_rdata_dnskey_t dnskey;
-			dns_secalg_t algorithm;
-			isc_region_t r;
-			isc_uint16_t keyid;
 
 			if (tuple->rdata.type != dns_rdatatype_dnskey)
 				continue;
 
-			result = dns_rdata_tostruct(&tuple->rdata, &dnskey,
-						    NULL);
-			RUNTIME_CHECK(result == ISC_R_SUCCESS);
-			dns_rdata_toregion(&tuple->rdata, &r);
-			algorithm = dnskey.algorithm;
-			keyid = dst_region_computeid(&r, algorithm);
+			newkey = ISC_TRUE;
+			if (!dns_rdataset_isassociated(&keysigs)) {
+				newalg = ISC_TRUE;
+				break;
+			}
 
-			result = zone_signwithkey(zone, algorithm, keyid,
-					ISC_TF(tuple->op == DNS_DIFFOP_DEL));
-			if (result != ISC_R_SUCCESS) {
-				dns_zone_log(zone, ISC_LOG_ERROR,
-					     "zone_signwithkey failed: %s",
-					      dns_result_totext(result));
+			result = dns_rdata_tostruct(&tuple->rdata,
+						    &dnskey, NULL);
+			RUNTIME_CHECK(result == ISC_R_SUCCESS);
+			if (!signed_with_alg(&keysigs,
+					     dnskey.algorithm)) {
+				newalg = ISC_TRUE;
+				break;
 			}
 		}
+
+		/*
+		 * If we found a new algorithm, we need to sign the
+		 * zone fully.  If there's a new key, but it's for an
+		 * already-existing algorithm, then the zone signing
+		 * can be handled incrementally.
+		 */
+		if (newkey && !newalg)
+			set_resigntime(zone);
+
+		/* Remove any signatures from removed keys.  */
+		if (!ISC_LIST_EMPTY(rmkeys)) {
+			for (key = ISC_LIST_HEAD(rmkeys);
+			     key != NULL;
+			     key = ISC_LIST_NEXT(key, link)) {
+				result = zone_signwithkey(zone,
+							  dst_key_alg(key->key),
+							  dst_key_id(key->key),
+							  ISC_TRUE);
+				if (result != ISC_R_SUCCESS) {
+					dns_zone_log(zone, ISC_LOG_ERROR,
+					     "zone_signwithkey failed: %s",
+					     dns_result_totext(result));
+				}
+			}
+		}
+
+
+		if (fullsign) {
+			/*
+			 * "rndc sign" was called, so we now sign the zone
+			 * with all active keys, whether they're new or not.
+			 */
+			for (key = ISC_LIST_HEAD(dnskeys);
+			     key != NULL;
+			     key = ISC_LIST_NEXT(key, link)) {
+				if (!key->force_sign && !key->hint_sign)
+					continue;
+
+				result = zone_signwithkey(zone,
+							  dst_key_alg(key->key),
+							  dst_key_id(key->key),
+							  ISC_FALSE);
+				if (result != ISC_R_SUCCESS) {
+					dns_zone_log(zone, ISC_LOG_ERROR,
+					     "zone_signwithkey failed: %s",
+					     dns_result_totext(result));
+				}
+			}
+		} else if (newalg) {
+			/*
+			 * We haven't been told to sign fully, but a new
+			 * algorithm was added to the DNSKEY.  We sign
+			 * the full zone, but only with the newly-added
+			 * keys.
+			 */
+			for (tuple = ISC_LIST_HEAD(diff.tuples);
+			     tuple != NULL;
+			     tuple = ISC_LIST_NEXT(tuple, link)) {
+				dns_rdata_dnskey_t dnskey;
+				dns_secalg_t algorithm;
+				isc_region_t r;
+				isc_uint16_t keyid;
+
+				if (tuple->rdata.type != dns_rdatatype_dnskey ||
+				    tuple->op == DNS_DIFFOP_DEL)
+					continue;
+
+				result = dns_rdata_tostruct(&tuple->rdata,
+							    &dnskey, NULL);
+				RUNTIME_CHECK(result == ISC_R_SUCCESS);
+				dns_rdata_toregion(&tuple->rdata, &r);
+				algorithm = dnskey.algorithm;
+				keyid = dst_region_computeid(&r, algorithm);
+
+				result = zone_signwithkey(zone, algorithm,
+							  keyid,
+							  ISC_TF(tuple->op ==
+							      DNS_DIFFOP_DEL));
+				if (result != ISC_R_SUCCESS) {
+					dns_zone_log(zone, ISC_LOG_ERROR,
+					     "zone_signwithkey failed: %s",
+					     dns_result_totext(result));
+				}
+			}
+		}
+
+		/*
+		 * Clear fullsign flag, if it was set, so we don't do
+		 * another full signing next time
+		 */
+		zone->keyopts &= ~DNS_ZONEKEY_FULLSIGN;
 
 		/*
 		 * Cause the zone to add/delete NSEC3 chains for the
@@ -13935,6 +14074,17 @@ zone_rekey(dns_zone_t *zone) {
 		UNLOCK_ZONE(zone);
 	}
 
+	/*
+	 * If no key event is scheduled, we should still check the key
+	 * repository for updates every so often.  (Currently this is
+	 * hard-coded to 12 hours, but it could be configurable.)
+	 */
+	if (isc_time_isepoch(&zone->refreshkeytime))
+		DNS_ZONE_TIME_ADD(&timenow, (3600 * 12), &zone->refreshkeytime);
+
+	isc_time_formattimestamp(&zone->refreshkeytime, timebuf, 80);
+	dns_zone_log(zone, ISC_LOG_INFO, "next key event: %s", timebuf);
+
  failure:
 	dns_diff_clear(&diff);
 
@@ -13963,15 +14113,19 @@ zone_rekey(dns_zone_t *zone) {
 }
 
 void
-dns_zone_rekey(dns_zone_t *zone) {
+dns_zone_rekey(dns_zone_t *zone, isc_boolean_t fullsign) {
 	isc_time_t now;
 
 	if (zone->type == dns_zone_master && zone->task != NULL) {
 		LOCK_ZONE(zone);
 
+		if (fullsign)
+			zone->keyopts |= DNS_ZONEKEY_FULLSIGN;
+
 		TIME_NOW(&now);
 		zone->refreshkeytime = now;
 		zone_settimer(zone, &now);
+
 		UNLOCK_ZONE(zone);
 	}
 }
@@ -13993,4 +14147,18 @@ dns_zone_nscheck(dns_zone_t *zone, dns_db_t *db, dns_dbversion_t *version,
 				  ISC_FALSE);
 	dns_db_detachnode(db, &node);
 	return (result);
+}
+
+void
+dns_zone_setadded(dns_zone_t *zone, isc_boolean_t added) {
+	REQUIRE(DNS_ZONE_VALID(zone));
+	LOCK_ZONE(zone);
+	zone->added = added;
+	UNLOCK_ZONE(zone);
+}
+
+isc_boolean_t
+dns_zone_getadded(dns_zone_t *zone) {
+	REQUIRE(DNS_ZONE_VALID(zone));
+	return (zone->added);
 }

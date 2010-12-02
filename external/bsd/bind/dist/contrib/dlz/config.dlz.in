@@ -339,7 +339,7 @@ case "$use_dlz_filesystem" in
 		;;
 	*)
 		DLZ_ADD_DRIVER(FILESYSTEM, dlz_filesystem_driver)
-
+		DLZ_SYSTEM_TEST=dlz
 		AC_MSG_RESULT(yes)
 		;;
 esac
