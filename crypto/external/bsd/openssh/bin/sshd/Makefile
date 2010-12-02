@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2010/11/22 22:19:54 christos Exp $
+#	$NetBSD: Makefile,v 1.4 2010/12/02 10:21:28 he Exp $
 
 .include <bsd.own.mk>
 
@@ -58,8 +58,8 @@ DPADD+=	${LIBCOM_ERR} ${LIBROKEN}
 
 .if (${USE_LDAP} != "no")
 SRCS+=	ldapauth.c
-LDADD+=	-lldap
-DPADD+=	${LIBLDAP}
+LDADD+=	-lldap -lssl -llber
+DPADD+=	${LIBLDAP} ${LIBSSL} ${LIBLBER}
 .endif
 
 .include <bsd.prog.mk>
