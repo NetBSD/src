@@ -1,4 +1,4 @@
-.\" $NetBSD: c.7,v 1.5 2010/12/01 13:27:15 jruoho Exp $
+.\" $NetBSD: c.7,v 1.6 2010/12/02 12:04:01 wiz Exp $
 .\"
 .\" Copyright (C) 2007, 2010 Gabor Kovesdan. All rights reserved.
 .\"
@@ -38,42 +38,45 @@ majority of those systems were written in the C language.
 The C language contains some basic ideas from the BCPL language through
 the B language written by Ken Thompson in 1970 for the DEC PDP-7 machines.
 The development of the UNIX operating system was started on a PDP-7
-machine in assembly language, but it made very difficult to port the existing
-code to other systems.
+machine in assembly language, but this choice made it very difficult
+to port the existing code to other systems.
 .Pp
 In 1972 Dennis M. Ritchie worked out the C programming language for
 further development of the UNIX operating system.
 The idea was to implement only the C compiler for different
-platforms, and implement most part of the operating system
+platforms, and implement most parts of the operating system
 in the new programming language to simplify the portability between
 different architectures.
-It follows that C is very eligible for (but not limited to) writing
+It follows that C is very well adapted for (but not limited to) writing
 operating systems and low-level applications.
 .Pp
 The C language did not have a specification or standardized version for
 a long time.
 It went through a lot of changes and improvements for ages.
 In 1978, Brian W. Kernighan and Dennis M. Ritchie published the
-first book about C under the title "The C Programming Language".
+first book about C under the title
+.Dq The C Programming Language .
 We can think of this book as the first specification of the language.
-This version is often referred as K&R C after the names of the authors.
-Sometimes it is referred as C78, as well, after the publishing year of
+This version is often referred to as
+.Dq K&R C
+after the names of the authors.
+Sometimes it is referred to as C78, as well, after the publishing year of
 the first edition of the book.
 .Pp
-It is important to notice, that the instruction set of the language is
+It is important to notice that the instruction set of the language is
 limited to the most fundamental elements for simplicity.
-Handling of the standard I/O and such common functions are implemented in
+Handling of the standard I/O and similar common functions are implemented in
 the libraries shipped with the compiler.
 As these functions are also widely used, it was demanded to include into
 the description what requisites the library should conform to, not just
 strictly the language itself.
 Accordingly, the aforementioned standards cover the library elements, as well.
-The elements of this standard library is still not enough for more
+The elements of this standard library are still not enough for more
 complicated tasks.
 In this case the provided system calls of the given operating system can be
 used.
-To not loose the portability by using these system calls, the POSIX
-(Portable Operating System Interface) standard evolved.
+To not lose the portability by using these system calls, the POSIX
+(Portable Operating System Interface (for Unix)) standard evolved.
 It describes what functions should be available to keep portability.
 Note, that POSIX is not a C standard, but an operating system standard
 and thus is beyond the scope of this manual.
@@ -82,22 +85,21 @@ the C programming language and the accompanying library.
 .Pp
 After the publication of the book mentioned before,
 the American National Standards Institute (ANSI) started to work on
-standardizing the language, and they announced ANSI X3.159-1989
-in 1989.
-It is usually referred as ANSI C or C89.
+standardizing the language, and in 1989 they announced ANSI X3.159-1989.
+It is usually referred to as ANSI C or C89.
 The main difference in this standard were the function prototypes,
-which is a new way of declaring functions.
+which was a new way of declaring functions.
 With the old-style function declarations, the compiler was unable to
-check the sanity of the actual parameters at a function call.
+check the sanity of the actual parameters of a function call.
 The old syntax was highly error-prone because incompatible parameters
 were hard to detect in the program code and the problem only showed up
 at run-time.
 .Pp
 In 1990, the International Organization for Standardization (ISO) adopted
-the ANSI standard as ISO/IEC 9899:1990 in 1990.
-This is also referred as ISO C or C90.
+the ANSI standard as ISO/IEC 9899:1990.
+This is also referred to as ISO C or C90.
 It only contains negligible minor modifications against ANSI C,
-so the two standards often considered to be fully equivalent.
+so the two standards are often considered to be fully equivalent.
 This was a very important milestone in the history of the C language, but the
 development of the language did not stop.
 .Pp
@@ -105,8 +107,8 @@ The ISO C standard was later extended with an amendment as
 ISO/IEC 9899 AM1 in 1995.
 This contained, for example, the wide-character support in wchar.h and
 wctype.h.
-Two corregenda were also published: Technical Corrigendum 1 as
-ISO/IEC 9899 TCOR1 in 1995 and Technical Corrigendum 2 as ISO/IEC 9899 TCOR1
+Two corrigenda were also published: Technical Corrigendum 1 as
+ISO/IEC 9899 TCOR1 in 1995 and Technical Corrigendum 2 as ISO/IEC 9899 TCOR2
 in 1996.
 The continuous development and growth made it necessary to work out a new
 standard, which contains the new features and fixes the known defects and
@@ -143,17 +145,18 @@ No implicit
 type.
 .El
 .Pp
-Since then new standards have not been published, but the C language is still
+Since then no new standards have been published, but the C language is still
 evolving.
-New and useful features have been showed up in the most famous
-C compiler: GNU C.
+New and useful features have been showing up in the most famous
+C compiler: GNU C
+.Pq Xr gcc 1 .
 Most of the UNIX-like operating systems use GNU C as a system compiler,
-but the various extensions to GNU C should not be considered
+but the various extensions of GNU C should not be considered
 standard features.
 .Sh SEE ALSO
-.Xr cc 1 ,
 .Xr c89 1 ,
-.Xr c99 1
+.Xr c99 1 ,
+.Xr cc 1
 .Rs
 .%A Brian W. Kernighan
 .%A Dennis M. Ritchie
