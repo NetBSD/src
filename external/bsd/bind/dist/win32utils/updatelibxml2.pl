@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 #
-# Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2009, 2010  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -14,7 +14,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: updatelibxml2.pl,v 1.3 2009/07/19 04:50:15 each Exp
+# Id: updatelibxml2.pl,v 1.3.126.2 2010/08/17 23:46:28 tbox Exp
 
 # updatelibxml2.pl
 # This script locates the latest version of libxml2 in the grandparent
@@ -65,6 +65,8 @@ $path = "..\\..\\";
              "../bin/nsupdate/win32/nsupdate.mak",
              "../bin/rndc/win32/rndc.dsp",
              "../bin/rndc/win32/rndc.mak",
+             "../bin/tools/win32/journalprint.dsp",
+             "../bin/tools/win32/journalprint.mak",
              "../lib/bind9/win32/libbind9.dsp",
              "../lib/bind9/win32/libbind9.mak",
              "../lib/dns/win32/libdns.dsp",

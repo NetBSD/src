@@ -1,7 +1,7 @@
-/*	$NetBSD: aclconf.c,v 1.1.1.2 2009/10/25 00:02:49 christos Exp $	*/
+/*	$NetBSD: aclconf.c,v 1.1.1.3 2010/12/02 14:23:35 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: aclconf.c,v 1.27 2009/10/01 23:48:08 tbox Exp */
+/* Id: aclconf.c,v 1.27.62.2 2010/08/13 23:46:28 tbox Exp */
 
 #include <config.h>
 
@@ -41,7 +41,7 @@ cfg_aclconfctx_init(cfg_aclconfctx_t *ctx) {
 }
 
 void
-cfg_aclconfctx_destroy(cfg_aclconfctx_t *ctx) {
+cfg_aclconfctx_clear(cfg_aclconfctx_t *ctx) {
 	dns_acl_t *dacl, *next;
 
 	for (dacl = ISC_LIST_HEAD(ctx->named_acl_cache);
@@ -50,6 +50,23 @@ cfg_aclconfctx_destroy(cfg_aclconfctx_t *ctx) {
 	{
 		next = ISC_LIST_NEXT(dacl, nextincache);
 		dns_acl_detach(&dacl);
+	}
+}
+
+void
+cfg_aclconfctx_clone(cfg_aclconfctx_t *src, cfg_aclconfctx_t *dest) {
+	dns_acl_t *dacl, *next;
+	REQUIRE(src != NULL && dest != NULL);
+
+	cfg_aclconfctx_init(dest);
+	for (dacl = ISC_LIST_HEAD(src->named_acl_cache);
+	     dacl != NULL;
+	     dacl = next)
+	{
+		dns_acl_t *copy;
+		next = ISC_LIST_NEXT(dacl, nextincache);
+		dns_acl_attach(dacl, &copy);
+		ISC_LIST_APPEND(dest->named_acl_cache, copy, nextincache);
 	}
 }
 

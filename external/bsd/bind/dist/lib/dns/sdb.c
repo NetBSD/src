@@ -1,4 +1,4 @@
-/*	$NetBSD: sdb.c,v 1.1.1.4 2010/08/05 20:12:54 christos Exp $	*/
+/*	$NetBSD: sdb.c,v 1.1.1.5 2010/12/02 14:23:24 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2010  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: sdb.c,v 1.71.54.2 2010/02/25 05:25:53 tbox Exp */
+/* Id: sdb.c,v 1.71.54.3 2010/08/16 05:14:15 marka Exp */
 
 /*! \file */
 
@@ -838,13 +838,6 @@ find(dns_db_t *db, dns_name_t *name, dns_dbversion_t *version,
 	result = DNS_R_NXDOMAIN;
 
 	for (i = olabels; i <= nlabels; i++) {
-		/*
-		 * Unless this is an explicit lookup at the origin, don't
-		 * look at the origin.
-		 */
-		if (i == olabels && i != nlabels)
-			continue;
-
 		/*
 		 * Look up the next label.
 		 */
