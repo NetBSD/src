@@ -1,4 +1,6 @@
-/* $NetBSD: cgdconfig.c,v 1.29 2010/11/27 17:08:36 elric Exp $ */
+#define opendisk1(x,y,z,t,u,v) opendisk(x,y,z,t,u)
+
+/* $NetBSD: cgdconfig.c,v 1.30 2010/12/02 04:54:32 elric Exp $ */
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -33,7 +35,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 2002, 2003\
  The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: cgdconfig.c,v 1.29 2010/11/27 17:08:36 elric Exp $");
+__RCSID("$NetBSD: cgdconfig.c,v 1.30 2010/12/02 04:54:32 elric Exp $");
 #endif
 
 #include <err.h>
@@ -872,11 +874,17 @@ generate_convert(struct params *p, int argc, char **argv, const char *outfile)
 
 	/* for sanity, we ensure that none of the keygens are randomkey */
 	for (kg=p->keygen; kg; kg=kg->next)
-		if (kg->kg_method == KEYGEN_RANDOMKEY)
+		if ((kg->kg_method == KEYGEN_RANDOMKEY) ||
+		    (kg->kg_method == KEYGEN_URANDOMKEY)) {
+			warnx("can't preserve randomly generated key");
 			goto bail;
+		}
 	for (kg=oldp->keygen; kg; kg=kg->next)
-		if (kg->kg_method == KEYGEN_RANDOMKEY)
+		if ((kg->kg_method == KEYGEN_RANDOMKEY) ||
+		    (kg->kg_method == KEYGEN_URANDOMKEY)) {
+			warnx("can't preserve randomly generated key");
 			goto bail;
+		}
 
 	if (!params_verify(oldp)) {
 		warnx("invalid old parameters file \"%s\"", *argv);
