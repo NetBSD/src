@@ -1,4 +1,4 @@
-.\"     $NetBSD: config.9,v 1.28 2010/04/05 19:27:16 joerg Exp $
+.\"     $NetBSD: config.9,v 1.29 2010/12/02 12:54:13 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -319,13 +319,6 @@ enclose the locator in square brackets.
 This can be used when some locators do not make sense for some devices,
 but the software interface requires them.
 .Sh CODE REFERENCES
-This section describes places within the
-.Nx
-source tree where actual code implementing or using the
-autoconfiguration framework can be found.
-All pathnames are relative to
-.Pa /usr/src .
-.Pp
 The device definition files are in
 .Pa sys/conf/files ,
 .Pa sys/arch/\*[Lt]arch\*[Gt]/conf/files.\*[Lt]arch\*[Gt] ,

@@ -1,4 +1,4 @@
-.\"     $NetBSD: pcmcia.9,v 1.18 2010/04/15 08:40:46 jruoho Exp $
+.\"     $NetBSD: pcmcia.9,v 1.19 2010/12/02 12:54:13 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -404,13 +404,6 @@ through this interface.
 .Sh DMA SUPPORT
 PCMCIA devices do not support DMA.
 .Sh CODE REFERENCES
-This section describes places within the
-.Nx
-source tree where actual code implementing or using the
-machine-independent PCMCIA subsystem can be found.
-All pathnames are relative to
-.Pa /usr/src .
-.Pp
 The PCMCIA subsystem itself is implemented within the file
 .Pa sys/dev/pcmcia/pcmcia.c .
 The database of known devices exists within the file

@@ -1,4 +1,4 @@
-.\"     $NetBSD: cardbus.9,v 1.15 2010/04/15 08:40:46 jruoho Exp $
+.\"     $NetBSD: cardbus.9,v 1.16 2010/12/02 12:54:13 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -304,13 +304,6 @@ facilities provided by the
 .Xr bus_dma 9
 interface.
 .Sh CODE REFERENCES
-This section describes places within the
-.Nx
-source tree where actual code implementing or using the
-machine-independent CardBus subsystem can be found.
-All pathnames are relative to
-.Pa /usr/src .
-.Pp
 The CardBus subsystem itself is implemented within the files
 .Pa sys/dev/cardbus/cardbus.c ,
 .Pa sys/dev/cardbus/cardbus_map.c

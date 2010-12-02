@@ -1,4 +1,4 @@
-.\"     $NetBSD: namecache.9,v 1.14 2010/07/21 09:01:35 hannken Exp $
+.\"     $NetBSD: namecache.9,v 1.15 2010/12/02 12:54:13 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -202,13 +202,6 @@ format.
 is only defined if the kernel option DDB is compiled into the kernel.
 .El
 .Sh CODE REFERENCES
-This section describes places within the
-.Nx
-source tree where actual code implementing or using the name
-lookup cache can be found.
-All pathnames are relative to
-.Pa /usr/src .
-.Pp
 The name lookup cache is implemented within the file
 .Pa sys/kern/vfs_cache.c .
 .Sh SEE ALSO

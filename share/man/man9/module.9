@@ -1,4 +1,4 @@
-.\"	$NetBSD: module.9,v 1.22 2010/11/28 00:26:38 jnemeth Exp $
+.\"	$NetBSD: module.9,v 1.23 2010/12/02 12:54:13 wiz Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -402,12 +402,6 @@ routine, or use
 to increment its reference count.
 .El
 .Sh CODE REFERENCES
-This section describes places within the
-.Nx
-source tree where code implementing the kernel module loader can be found.
-All pathnames are relative to
-.Pa /usr/src .
-.Pp
 The core of the kernel module implementation is in
 .Pa sys/kern/kern_module.c
 and

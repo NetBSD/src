@@ -1,4 +1,4 @@
-.\"     $NetBSD: vfsops.9,v 1.42 2009/04/22 20:53:44 elad Exp $
+.\"     $NetBSD: vfsops.9,v 1.43 2010/12/02 12:54:13 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -408,13 +408,6 @@ If the file system does not support this function, it should return
 .Er EOPNOTSUPP .
 .El
 .Sh CODE REFERENCES
-This section describes places within the
-.Nx
-source tree where actual code implementing or using the vfs
-operations can be found.
-All pathnames are relative to
-.Pa /usr/src .
-.Pp
 The vfs operations are implemented within the files
 .Pa sys/kern/vfs_subr.c
 and
