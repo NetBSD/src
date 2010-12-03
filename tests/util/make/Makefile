@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2010/07/10 16:16:12 jmmv Exp $
+# $NetBSD: Makefile,v 1.3 2010/12/03 01:29:55 christos Exp $
 
 NOMAN=			# defined
 
@@ -37,6 +37,8 @@ FILES+=			d_qequals.mk
 FILES+=			d_qequals.out
 FILES+=			d_ternary.mk
 FILES+=			d_ternary.out
+FILES+=			d_unmatchedvarparen.mk
+FILES+=			d_unmatchedvarparen.out
 FILES+=			d_varcmd.mk
 FILES+=			d_varcmd.out
 
