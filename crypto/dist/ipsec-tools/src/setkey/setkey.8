@@ -1,4 +1,4 @@
-.\"	$NetBSD: setkey.8,v 1.25 2010/06/04 21:53:36 wiz Exp $
+.\"	$NetBSD: setkey.8,v 1.26 2010/12/03 14:32:52 tteras Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, 1998, and 1999 WIDE Project.
 .\" All rights reserved.
@@ -430,24 +430,30 @@ as
 or
 .Li icmp6 ,
 .Li ip4 ,
+.Li gre ,
 or
 .Li any .
 .Li any
 stands for
 .Dq any protocol .
 You can also use the protocol number.
-You can specify a type and/or a code of ICMPv6 when the
-upper-layer protocol is ICMPv6.
-The specification can be placed after
-.Li icmp6 .
-A type is separated from a code by single comma.
-A code must always be specified.
+Additional specification can be placed after the protocol name for
+some protocols.
+You can specify a type and/or a code of ICMP or ICMPv6.
+The type is separated from a code by single comma and the code must
+always be specified.
+GRE key can be specified in dotted-quad format or as plain number.
 When a zero is specified, the kernel deals with it as a wildcard.
 Note that the kernel can not distinguish a wildcard from an ICPMv6
 type of zero.
+.Pp
 For example, the following means that the policy doesn't require IPsec
 for any inbound Neighbor Solicitation.
 .Dl spdadd ::/0 ::/0 icmp6 135,0 -P in none ;
+.Pp
+A second example of requiring transport mode encryption of specific
+GRE tunnel:
+.Dl spdadd 0.0.0.0 0.0.0.0 gre 1234 ipsec esp/transport//require ;
 .Pp
 .Em Note :
 .Ar upperspec
@@ -456,7 +462,7 @@ as it requires extra reassembly at the forwarding node
 .Pq not implemented at this moment .
 There are many protocols in
 .Pa /etc/protocols ,
-but all protocols except of TCP, UDP, and ICMP may not be suitable
+but all protocols except of TCP, UDP, GRE, and ICMP may not be suitable
 to use with IPsec.
 You have to consider carefully what to use.
 .\"

@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.y,v 1.13 2010/06/04 13:06:03 vanhu Exp $	*/
+/*	$NetBSD: parse.y,v 1.14 2010/12/03 14:32:52 tteras Exp $	*/
 
 /*	$KAME: parse.y,v 1.81 2003/07/01 04:01:48 itojun Exp $	*/
 
@@ -57,10 +57,6 @@
 #include "vchar.h"
 #include "extern.h"
 
-#ifndef IPPROTO_MH
-#define IPPROTO_MH		135
-#endif
-
 #define DEFAULT_NATT_PORT	4500
 
 #ifndef UDP_ENCAP_ESPINUDP
@@ -95,7 +91,7 @@ static struct addrinfo * p_natt_oa = NULL;
 static int p_aiflags = 0, p_aifamily = PF_UNSPEC;
 
 static struct addrinfo *parse_addr __P((char *, char *));
-static int fix_portstr __P((vchar_t *, vchar_t *, vchar_t *));
+static int fix_portstr __P((int, vchar_t *, vchar_t *, vchar_t *));
 static int setvarbuf __P((char *, int *, struct sadb_ext *, int, 
     const void *, int));
 void parse_init __P((void));
@@ -584,16 +580,8 @@ spdadd_command
 #endif
 
 			/* fixed port fields if ulp is icmp */
-			if ($10.buf != NULL) {
-				if (($9 != IPPROTO_ICMPV6) &&
-					($9 != IPPROTO_ICMP) &&
-					($9 != IPPROTO_MH))
-					return -1;
-				free($5.buf);
-				free($8.buf);
-				if (fix_portstr(&$10, &$5, &$8))
-					return -1;
-			}
+			if (fix_portstr($9, &$10, &$5, &$8))
+				return -1;
 
 			src = parse_addr($3.buf, $5.buf);
 			dst = parse_addr($6.buf, $8.buf);
@@ -638,16 +626,8 @@ spdupdate_command
 #endif
 
 			/* fixed port fields if ulp is icmp */
-			if ($10.buf != NULL) {
-				if (($9 != IPPROTO_ICMPV6) &&
-					($9 != IPPROTO_ICMP) &&
-					($9 != IPPROTO_MH))
-					return -1;
-				free($5.buf);
-				free($8.buf);
-				if (fix_portstr(&$10, &$5, &$8))
-					return -1;
-			}
+			if (fix_portstr($9, &$10, &$5, &$8))
+				return -1;
 
 			src = parse_addr($3.buf, $5.buf);
 			dst = parse_addr($6.buf, $8.buf);
@@ -687,16 +667,8 @@ spddelete_command
 			struct addrinfo *src, *dst;
 
 			/* fixed port fields if ulp is icmp */
-			if ($10.buf != NULL) {
-				if (($9 != IPPROTO_ICMPV6) &&
-					($9 != IPPROTO_ICMP) &&
-					($9 != IPPROTO_MH))
-					return -1;
-				free($5.buf);
-				free($8.buf);
-				if (fix_portstr(&$10, &$5, &$8))
-					return -1;
-			}
+			if (fix_portstr($9, &$10, &$5, &$8))
+				return -1;
 
 			src = parse_addr($3.buf, $5.buf);
 			dst = parse_addr($6.buf, $8.buf);
@@ -1584,36 +1556,55 @@ parse_addr(host, port)
 }
 
 static int
-fix_portstr(spec, sport, dport)
+fix_portstr(ulproto, spec, sport, dport)
+	int ulproto;
 	vchar_t *spec, *sport, *dport;
 {
-	const char *p, *p2 = "0";
-	char *q;
-	u_int l;
+	char sp[16], dp[16];
+	int a, b, c, d;
+	unsigned long u;
 
-	l = 0;
-	for (q = spec->buf; *q != ',' && *q != '\0' && l < spec->len; q++, l++)
-		;
-	if (*q != '\0') {
-		if (*q == ',') {
-			*q = '\0';
-			p2 = ++q;
-		}
-		for (p = p2; *p != '\0' && l < spec->len; p++, l++)
-			;
-		if (*p != '\0' || *p2 == '\0') {
+	if (spec->buf == NULL)
+		return 0;
+
+	switch (ulproto) {
+	case IPPROTO_ICMP:
+	case IPPROTO_ICMPV6:
+	case IPPROTO_MH:
+		if (sscanf(spec->buf, "%d,%d", &a, &b) == 2) {
+			sprintf(sp, "%d", a);
+			sprintf(dp, "%d", b);
+		} else if (sscanf(spec->buf, "%d", &a) == 1) {
+			sprintf(sp, "%d", a);
+		} else {
 			yyerror("invalid an upper layer protocol spec");
 			return -1;
 		}
+		break;
+	case IPPROTO_GRE:
+		if (sscanf(spec->buf, "%d.%d.%d.%d", &a, &b, &c, &d) == 4) {
+			sprintf(sp, "%d", (a << 8) + b);
+			sprintf(dp, "%d", (c << 8) + d);
+		} else if (sscanf(spec->buf, "%lu", &u) == 1) {
+			sprintf(sp, "%d", (int) (u >> 16));
+			sprintf(dp, "%d", (int) (u & 0xffff));
+		} else {
+			yyerror("invalid an upper layer protocol spec");
+			return -1;
+		}
+		break;
 	}
 
-	sport->buf = strdup(spec->buf);
+	free(sport->buf);
+	sport->buf = strdup(sp);
 	if (!sport->buf) {
 		yyerror("insufficient memory");
 		return -1;
 	}
 	sport->len = strlen(sport->buf);
-	dport->buf = strdup(p2);
+
+	free(dport->buf);
+	dport->buf = strdup(dp);
 	if (!dport->buf) {
 		yyerror("insufficient memory");
 		return -1;
