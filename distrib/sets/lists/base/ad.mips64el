@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips64el,v 1.27 2010/12/02 14:54:43 christos Exp $
+# $NetBSD: ad.mips64el,v 1.28 2010/12/03 21:38:48 plunky Exp $
 ./libexec/ld.elf_so-64				base-compat-shlib	compat,pic
 ./libexec/ld.elf_so-o32				base-sysutil-bin	compat,pic
 ./usr/lib/64					base-compat-lib
@@ -49,6 +49,10 @@
 ./usr/lib/64/i18n/libmapper_std.so.5.0		base-i18n-shlib		compat,pic
 ./usr/lib/64/i18n/libmapper_zone.so.5		base-i18n-shlib		compat,pic
 ./usr/lib/64/i18n/libmapper_zone.so.5.0		base-i18n-shlib		compat,pic
+./usr/lib/64/libamu.so.4			base-compat-shlib	compat,pic
+./usr/lib/64/libamu.so.4.0			base-compat-shlib	compat,pic
+./usr/lib/64/libarchive.so.3			base-compat-shlib	compat,pic
+./usr/lib/64/libarchive.so.3.1			base-compat-shlib	compat,pic
 ./usr/lib/64/libasn1.so.8			base-compat-shlib	compat,pic,kerberos
 ./usr/lib/64/libasn1.so.8.0			base-compat-shlib	compat,pic,kerberos
 ./usr/lib/64/libbfd.so.11			base-compat-shlib	compat,pic,binutils
@@ -75,10 +79,18 @@
 ./usr/lib/64/libdes.so.8.1			base-compat-shlib	compat,pic,crypto
 ./usr/lib/64/libdns.so.5			base-compat-shlib	compat,pic
 ./usr/lib/64/libdns.so.5.2			base-compat-shlib	compat,pic
+./usr/lib/64/libdns_sd.so.0			base-compat-shlib	compat,pic,mdns
+./usr/lib/64/libdns_sd.so.0.0			base-compat-shlib	compat,pic,mdns
+./usr/lib/64/libdwarf.so.0			base-compat-shlib	compat,pic
+./usr/lib/64/libdwarf.so.0.0			base-compat-shlib	compat,pic
 ./usr/lib/64/libedit.so.3			base-compat-shlib	compat,pic
 ./usr/lib/64/libedit.so.3.0			base-compat-shlib	compat,pic
+./usr/lib/64/libelf.so.0			base-compat-shlib	compat,pic
+./usr/lib/64/libelf.so.0.0			base-compat-shlib	compat,pic
 ./usr/lib/64/libevent.so.3			base-compat-shlib	compat,pic
 ./usr/lib/64/libevent.so.3.2			base-compat-shlib	compat,pic
+./usr/lib/64/libfetch.so.3			base-compat-shlib	compat,pic
+./usr/lib/64/libfetch.so.3.0			base-compat-shlib	compat,pic
 ./usr/lib/64/libform.so.6			base-compat-shlib	compat,pic
 ./usr/lib/64/libform.so.6.0			base-compat-shlib	compat,pic
 ./usr/lib/64/libgcc_s.so.1			base-compat-shlib	compat,pic
@@ -290,6 +302,10 @@
 ./usr/lib/o32/i18n/libmapper_std.so.5.0		base-i18n-shlib		compat,pic
 ./usr/lib/o32/i18n/libmapper_zone.so.5		base-i18n-shlib		compat,pic
 ./usr/lib/o32/i18n/libmapper_zone.so.5.0	base-i18n-shlib		compat,pic
+./usr/lib/o32/libamu.so.4			base-compat-shlib	compat,pic
+./usr/lib/o32/libamu.so.4.0			base-compat-shlib	compat,pic
+./usr/lib/o32/libarchive.so.3			base-compat-shlib	compat,pic
+./usr/lib/o32/libarchive.so.3.1			base-compat-shlib	compat,pic
 ./usr/lib/o32/libasn1.so.8			base-compat-shlib	compat,pic,kerberos
 ./usr/lib/o32/libasn1.so.8.0			base-compat-shlib	compat,pic,kerberos
 ./usr/lib/o32/libbfd.so.11			base-compat-shlib	compat,pic,binutils
@@ -316,10 +332,18 @@
 ./usr/lib/o32/libdes.so.8.1			base-compat-shlib	compat,pic,crypto
 ./usr/lib/o32/libdns.so.5			base-compat-shlib	compat,pic
 ./usr/lib/o32/libdns.so.5.2			base-compat-shlib	compat,pic
+./usr/lib/o32/libdns_sd.so.0			base-compat-shlib	compat,pic,mdns
+./usr/lib/o32/libdns_sd.so.0.0			base-compat-shlib	compat,pic,mdns
+./usr/lib/o32/libdwarf.so.0			base-compat-shlib	compat,pic
+./usr/lib/o32/libdwarf.so.0.0			base-compat-shlib	compat,pic
 ./usr/lib/o32/libedit.so.3			base-compat-shlib	compat,pic
 ./usr/lib/o32/libedit.so.3.0			base-compat-shlib	compat,pic
+./usr/lib/o32/libelf.so.0			base-compat-shlib	compat,pic
+./usr/lib/o32/libelf.so.0.0			base-compat-shlib	compat,pic
 ./usr/lib/o32/libevent.so.3			base-compat-shlib	compat,pic
 ./usr/lib/o32/libevent.so.3.2			base-compat-shlib	compat,pic
+./usr/lib/o32/libfetch.so.3			base-compat-shlib	compat,pic
+./usr/lib/o32/libfetch.so.3.0			base-compat-shlib	compat,pic
 ./usr/lib/o32/libform.so.6			base-compat-shlib	compat,pic
 ./usr/lib/o32/libform.so.6.0			base-compat-shlib	compat,pic
 ./usr/lib/o32/libgcc_s.so.1			base-compat-shlib	compat,pic
