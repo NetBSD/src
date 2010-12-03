@@ -1,10 +1,10 @@
 #!/bin/sh
-# $NetBSD: prepare-import.sh,v 1.1 2009/12/23 00:06:53 darran Exp $
+# $NetBSD: prepare-import.sh,v 1.2 2010/12/03 21:38:48 plunky Exp $
 
 # Copy the FreeBSD src/lib/libdwarf directory contents to dist.  Run
 # this script and you're done.
 #
-# lib/ is built as SUBDIR from external/lib/Makefile.
+# lib/ is built as SUBDIR from lib/Makefile.
 #
 # Use the following template to import
 #  cvs import src/external/bsd/libdwarf/dist FreeBSD FreeBSD-X-Y-Z

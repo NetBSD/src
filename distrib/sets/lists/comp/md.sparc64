@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.71 2010/12/02 14:54:44 christos Exp $
+# $NetBSD: md.sparc64,v 1.72 2010/12/03 21:38:48 plunky Exp $
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/sparc				comp-c-include
 ./usr/include/sparc/_G_config.h			comp-obsolete		obsolete
@@ -233,6 +233,10 @@
 ./usr/lib/sparc/i18n/libmapper_zone.so		base-sys-shlib		compat,pic
 ./usr/lib/sparc/i18n/libmapper_zone_p.a		comp-obsolete		obsolete
 ./usr/lib/sparc/i18n/libmapper_zone_pic.a	comp-obsolete		obsolete
+./usr/lib/sparc/libarchive.a			comp-c-lib		compat
+./usr/lib/sparc/libarchive.so			base-sys-shlib		compat,pic
+./usr/lib/sparc/libarchive_p.a			comp-c-proflib		compat,profile
+./usr/lib/sparc/libarchive_pic.a		comp-c-piclib		compat,pic
 ./usr/lib/sparc/libasn1.a			comp-c-lib		compat,kerberos
 ./usr/lib/sparc/libasn1.so			base-sys-shlib		compat,pic,kerberos
 ./usr/lib/sparc/libasn1_p.a			comp-c-proflib		compat,profile,kerberos
@@ -300,14 +304,30 @@
 ./usr/lib/sparc/libdns.so			base-sys-shlib		compat,pic
 ./usr/lib/sparc/libdns_p.a			comp-c-proflib		compat,profile
 ./usr/lib/sparc/libdns_pic.a			comp-c-piclib		compat,pic
+./usr/lib/sparc/libdns_sd.a			comp-c-lib		compat,mdns
+./usr/lib/sparc/libdns_sd.so			base-mdns-shlib		compat,pic,mdns
+./usr/lib/sparc/libdns_sd_p.a			comp-c-proflib		compat,profile,mdns
+./usr/lib/sparc/libdns_sd_pic.a			comp-c-piclib		compat,pic,mdns
+./usr/lib/sparc/libdwarf.a			comp-c-lib		compat
+./usr/lib/sparc/libdwarf.so			base-sys-shlib		compat,pic
+./usr/lib/sparc/libdwarf_p.a			comp-c-proflib		compat,profile
+./usr/lib/sparc/libdwarf_pic.a			comp-c-piclib		compat,pic
 ./usr/lib/sparc/libedit.a			comp-c-lib		compat
 ./usr/lib/sparc/libedit.so			base-sys-shlib		compat,pic
 ./usr/lib/sparc/libedit_p.a			comp-c-proflib		compat,profile
 ./usr/lib/sparc/libedit_pic.a			comp-c-piclib		compat,pic
+./usr/lib/sparc/libelf.a			comp-c-lib		compat
+./usr/lib/sparc/libelf.so			base-sys-shlib		compat,pic
+./usr/lib/sparc/libelf_p.a			comp-c-proflib		compat,profile
+./usr/lib/sparc/libelf_pic.a			comp-c-piclib		compat,pic
 ./usr/lib/sparc/libevent.a			comp-c-lib		compat
 ./usr/lib/sparc/libevent.so			base-sys-shlib		compat,pic
 ./usr/lib/sparc/libevent_p.a			comp-c-proflib		compat,profile
 ./usr/lib/sparc/libevent_pic.a			comp-c-piclib		compat,pic
+./usr/lib/sparc/libfetch.a			comp-c-lib		compat
+./usr/lib/sparc/libfetch.so			base-sys-shlib		compat,pic
+./usr/lib/sparc/libfetch_p.a			comp-c-proflib		compat,profile
+./usr/lib/sparc/libfetch_pic.a			comp-c-piclib		compat,pic
 ./usr/lib/sparc/libfl.a				comp-c-lib		compat
 ./usr/lib/sparc/libfl_p.a			comp-c-proflib		compat,profile
 ./usr/lib/sparc/libform.a			comp-c-lib		compat
@@ -637,6 +657,8 @@
 ./usr/libdata/debug/usr/lib/sparc/i18n/libmapper_serial.so.5.0.debug	comp-i18n-shlib		compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/i18n/libmapper_std.so.5.0.debug	comp-i18n-shlib		compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/i18n/libmapper_zone.so.5.0.debug	comp-i18n-shlib		compat,pic,debug
+./usr/libdata/debug/usr/lib/sparc/libamu.so.4.0.debug			comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/sparc/libarchive.so.3.1.debug		comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libasn1.so.8.0.debug			comp-compat-shlib	compat,pic,debug,kerberos
 ./usr/libdata/debug/usr/lib/sparc/libbfd.so.11.0.debug			comp-compat-shlib	compat,pic,binutils,debug
 ./usr/libdata/debug/usr/lib/sparc/libbind9.so.5.2.debug			comp-compat-shlib	compat,pic,debug
@@ -650,8 +672,12 @@
 ./usr/libdata/debug/usr/lib/sparc/libcurses.so.7.0.debug		comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libdes.so.8.1.debug			comp-compat-shlib	compat,pic,debug,crypto
 ./usr/libdata/debug/usr/lib/sparc/libdns.so.5.2.debug			comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/sparc/libdns_sd.so.0.0.debug		comp-compat-shlib	compat,pic,debug,mdns
+./usr/libdata/debug/usr/lib/sparc/libdwarf.so.0.0.debug			comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libedit.so.3.0.debug			comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/sparc/libelf.so.0.0.debug			comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libevent.so.3.2.debug			comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/sparc/libfetch.so.3.0.debug			comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libform.so.6.0.debug			comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libgcc_s.so.1.0.debug			comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libgnumalloc.so.1.0.debug		comp-compat-shlib	compat,pic,debug

@@ -1,11 +1,11 @@
 #!/bin/sh
-# $NetBSD: prepare-import.sh,v 1.1 2009/11/02 10:03:56 plunky Exp $
+# $NetBSD: prepare-import.sh,v 1.2 2010/12/03 21:38:49 plunky Exp $
 
 # Extract the new tarball and rename the libevent-X.Y.Z directory
 # to dist.  Run this script and check for additional files and
 # directories to prune, only relevant content is included.
 #
-# lib/ is built as SUBDIR from external/lib/Makefile, and
+# lib/ is built as SUBDIR from lib/Makefile, and
 # the regression tests are used from tests/lib/libevent
 #
 # Use the following template to import

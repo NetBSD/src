@@ -1,10 +1,10 @@
 #!/bin/sh
-# $NetBSD: prepare-import.sh,v 1.2 2009/12/29 16:56:25 thorpej Exp $
+# $NetBSD: prepare-import.sh,v 1.3 2010/12/03 21:38:49 plunky Exp $
 
 # Copy the FreeBSD src/lib/libelf directory contents to dist.  Run
 # this script and you're done.
 #
-# lib/ is built as SUBDIR from external/lib/Makefile.
+# lib/ is built as SUBDIR from lib/Makefile.
 #
 # Use the following template to import
 #  cvs import src/external/bsd/libelf/dist FreeBSD FreeBSD-X-Y-Z

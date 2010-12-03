@@ -1,9 +1,27 @@
-#	$NetBSD: Makefile,v 1.154 2010/11/21 03:43:39 christos Exp $
+#	$NetBSD: Makefile,v 1.155 2010/12/03 21:38:47 plunky Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
 
-SUBDIR=	csu libc .WAIT libarch \
+SUBDIR=		csu
+
+.if (${MKGCC} != "no")
+.if (${USE_COMPILERCRTSTUFF} == "yes")
+SUBDIR+=	../gnu/lib/crtstuff4
+.endif
+SUBDIR+=	../gnu/lib/libgcc4
+.endif
+
+SUBDIR+=	libc
+SUBDIR+=	.WAIT
+
+#
+# The SUBDIRs above are included here for completeness but should be built
+# and installed prior to make(dependall) in this file, as libraries listed
+# below will depend on versions from DESTDIR only.
+#
+
+SUBDIR+=libarch \
 	libbsdmalloc libbluetooth libbz2 \
 	libcompat libcrypt \
 	libintl libkvm libm \
@@ -11,8 +29,30 @@ SUBDIR=	csu libc .WAIT libarch \
 	libpthread_dbg libpuffs libresolv librmt librpcsvc librt \
 	librumpclient libterminfo libusbhid libutil libwrap liby libz
 
-SUBDIR+=../external/bsd/flex/lib
-SUBDIR+=../external/mit/lua/lib
+.if (${MKMDNS} != "no")
+SUBDIR+=	../external/apache2/mDNSResponder/lib
+.endif
+
+SUBDIR+=	../external/bsd/am-utils/lib
+
+.if (${MKATF} != "no")
+SUBDIR+=	../external/bsd/atf/lib
+.endif
+
+SUBDIR+=	../external/bsd/flex/lib
+SUBDIR+=	../external/bsd/libdwarf/lib
+SUBDIR+=	../external/bsd/libelf/lib
+SUBDIR+=	../external/bsd/libevent/lib
+
+SUBDIR+=	../external/mit/lua/lib
+
+SUBDIR+=	../external/public-domain/xz/lib
+
+SUBDIR+=	../gnu/lib/libmalloc
+
+.if (${MKGCC} != "no")
+SUBDIR+=	../gnu/lib/libobjc4
+.endif
 
 # libcurses needs libtermlib
 SUBDIR+=	.WAIT libcurses
@@ -73,8 +113,27 @@ SUBDIR+=	.WAIT
 SUBDIR+=	../crypto/external/bsd/netpgp/lib
 .endif
 
+SUBDIR+=	../external/bsd/bind/lib	# depends on libcrypto
+SUBDIR+=	../external/bsd/fetch/lib	# depends on libssl
+SUBDIR+=	../external/bsd/file/lib	# depends on libz
+
+.if (${MKISCSI} != "no")
+SUBDIR+=	../external/bsd/iscsi/lib	# depends on libpthread
+.endif
+
+SUBDIR+=	../external/bsd/libarchive/lib	# depends on libxz
+
 .if (${MKLDAP} != "no")
 SUBDIR+=	../external/bsd/openldap/lib
+.endif
+
+.if (${MKBINUTILS} != "no")
+SUBDIR+=	../external/gpl3/binutils/lib	# libbfd depends on libz
+.endif
+
+.if (${MKGCC} != "no" && ${MKCXX} != "no")
+SUBDIR+=	../gnu/lib/libstdc++-v3_4	# depends on libm
+SUBDIR+=	../gnu/lib/libsupc++4
 .endif
 
 #==================== 2nd library dependency barrier ====================
