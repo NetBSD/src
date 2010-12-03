@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld_start.S,v 1.6 2003/02/28 22:37:35 mycroft Exp $	*/
+/*	$NetBSD: rtld_start.S,v 1.7 2010/12/03 22:48:25 joerg Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -67,6 +67,9 @@
 	.globl	_rtld_bind_start
 	.type	_rtld_bind_start,@function
 _rtld_bind_start:	# (obj, reloff)
+	# This function is called with a misaligned stack from the PLT
+	# due to the additional argument pushed.
+	# At this point %rsp % 16 == 8.
 	pushfq				# save caller-saved registers
 	pushq	%rax
 	pushq	%rcx
