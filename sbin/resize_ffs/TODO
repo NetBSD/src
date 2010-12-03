@@ -2,6 +2,5 @@ resize_ffs(8) TODO list
 
 * Add support for swapped byte order
 * Fix support for disk blocks of size other than 512 bytes
-* Add support for plain files (primarily to ease testing)
 * Extend to support UFS2.  Probably growth first, then shrinking separately.
 * Expand the testing done in src/tests/sbin/resize_ffs
