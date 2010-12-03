@@ -1,4 +1,4 @@
-/*	$NetBSD: xmalloc.c,v 1.9 2009/05/19 20:44:52 christos Exp $	*/
+/*	$NetBSD: xmalloc.c,v 1.10 2010/12/03 23:07:49 joerg Exp $	*/
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -77,7 +77,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: xmalloc.c,v 1.9 2009/05/19 20:44:52 christos Exp $");
+__RCSID("$NetBSD: xmalloc.c,v 1.10 2010/12/03 23:07:49 joerg Exp $");
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -160,8 +160,7 @@ static	u_int nmalloc[NBUCKETS];
 #if defined(MALLOC_DEBUG) || defined(RCHECK)
 #define	ASSERT(p)   if (!(p)) botch("p")
 static void
-botch(
-    const char *s)
+botch(const char *s)
 {
     xwarnx("\r\nassertion botched: %s\r\n", s);
     abort();
@@ -301,8 +300,7 @@ morecore(size_t bucket)
 }
 
 void
-xfree(cp)
-	void *cp;
+xfree(void *cp)
 {
   	int size;
 	union overhead *op;
@@ -386,6 +384,7 @@ irealloc(void *cp, size_t nbytes)
  * for each size category, the second showing the number of mallocs -
  * frees for each size category.
  */
+void
 mstats(char *s)
 {
   	int i, j;
