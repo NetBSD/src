@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips64eb,v 1.13 2010/11/06 09:40:31 plunky Exp $
+# $NetBSD: ad.mips64eb,v 1.14 2010/12/03 21:38:48 plunky Exp $
 ./usr/bin/elf2aout				comp-obsolete	obsolete
 ./usr/bin/elf2ecoff				comp-sysutil-bin
 ./usr/include/mips				comp-c-include
@@ -160,6 +160,10 @@
 ./usr/lib/64/i18n/libmapper_zone.so		base-sys-shlib		compat,pic
 ./usr/lib/64/i18n/libmapper_zone_p.a		comp-obsolete		obsolete
 ./usr/lib/64/i18n/libmapper_zone_pic.a		comp-obsolete		obsolete
+./usr/lib/64/libarchive.a			comp-c-lib		compat
+./usr/lib/64/libarchive.so			base-sys-shlib		compat,pic
+./usr/lib/64/libarchive_p.a			comp-c-proflib		compat,profile
+./usr/lib/64/libarchive_pic.a			comp-c-piclib		compat,pic
 ./usr/lib/64/libasn1.a				comp-c-lib		compat,kerberos
 ./usr/lib/64/libasn1.so				base-sys-shlib		compat,pic,kerberos
 ./usr/lib/64/libasn1_p.a			comp-c-proflib		compat,profile,kerberos
@@ -227,14 +231,30 @@
 ./usr/lib/64/libdns.so				base-sys-shlib		compat,pic
 ./usr/lib/64/libdns_p.a				comp-c-proflib		compat,profile
 ./usr/lib/64/libdns_pic.a			comp-c-piclib		compat,pic
+./usr/lib/64/libdns_sd.a			comp-c-lib		compat,mdns
+./usr/lib/64/libdns_sd.so			base-mdns-shlib		compat,pic,mdns
+./usr/lib/64/libdns_sd_p.a			comp-c-proflib		compat,profile,mdns
+./usr/lib/64/libdns_sd_pic.a			comp-c-piclib		compat,pic,mdns
+./usr/lib/64/libdwarf.a				comp-c-lib		compat
+./usr/lib/64/libdwarf.so			base-sys-shlib		compat,pic
+./usr/lib/64/libdwarf_p.a			comp-c-proflib		compat,profile
+./usr/lib/64/libdwarf_pic.a			comp-c-piclib		compat,pic
 ./usr/lib/64/libedit.a				comp-c-lib		compat
 ./usr/lib/64/libedit.so				base-sys-shlib		compat,pic
 ./usr/lib/64/libedit_p.a			comp-c-proflib		compat,profile
 ./usr/lib/64/libedit_pic.a			comp-c-piclib		compat,pic
+./usr/lib/64/libelf.a				comp-c-lib		compat
+./usr/lib/64/libelf.so				base-sys-shlib		compat,pic
+./usr/lib/64/libelf_p.a				comp-c-proflib		compat,profile
+./usr/lib/64/libelf_pic.a			comp-c-piclib		compat,pic
 ./usr/lib/64/libevent.a				comp-c-lib		compat
 ./usr/lib/64/libevent.so			base-sys-shlib		compat,pic
 ./usr/lib/64/libevent_p.a			comp-c-proflib		compat,profile
 ./usr/lib/64/libevent_pic.a			comp-c-piclib		compat,pic
+./usr/lib/64/libfetch.a				comp-c-lib		compat
+./usr/lib/64/libfetch.so			base-sys-shlib		compat,pic
+./usr/lib/64/libfetch_p.a			comp-c-proflib		compat,profile
+./usr/lib/64/libfetch_pic.a			comp-c-piclib		compat,pic
 ./usr/lib/64/libfl.a				comp-c-lib		compat
 ./usr/lib/64/libfl_p.a				comp-c-proflib		compat,profile
 ./usr/lib/64/libform.a				comp-c-lib		compat
@@ -641,6 +661,10 @@
 ./usr/lib/o32/i18n/libmapper_zone.so		base-sys-shlib		compat,pic
 ./usr/lib/o32/i18n/libmapper_zone_p.a		comp-obsolete		obsolete
 ./usr/lib/o32/i18n/libmapper_zone_pic.a		comp-obsolete		obsolete
+./usr/lib/o32/libarchive.a			comp-c-lib		compat
+./usr/lib/o32/libarchive.so			base-sys-shlib		compat,pic
+./usr/lib/o32/libarchive_p.a			comp-c-proflib		compat,profile
+./usr/lib/o32/libarchive_pic.a			comp-c-piclib		compat,pic
 ./usr/lib/o32/libasn1.a				comp-c-lib		compat,kerberos
 ./usr/lib/o32/libasn1.so			base-sys-shlib		compat,pic,kerberos
 ./usr/lib/o32/libasn1_p.a			comp-c-proflib		compat,profile,kerberos
@@ -708,14 +732,30 @@
 ./usr/lib/o32/libdns.so				base-sys-shlib		compat,pic
 ./usr/lib/o32/libdns_p.a			comp-c-proflib		compat,profile
 ./usr/lib/o32/libdns_pic.a			comp-c-piclib		compat,pic
+./usr/lib/o32/libdns_sd.a			comp-c-lib		compat,mdns
+./usr/lib/o32/libdns_sd.so			base-mdns-shlib		compat,pic,mdns
+./usr/lib/o32/libdns_sd_p.a			comp-c-proflib		compat,profile,mdns
+./usr/lib/o32/libdns_sd_pic.a			comp-c-piclib		compat,pic,mdns
+./usr/lib/o32/libdwarf.a			comp-c-lib		compat
+./usr/lib/o32/libdwarf.so			base-sys-shlib		compat,pic
+./usr/lib/o32/libdwarf_p.a			comp-c-proflib		compat,profile
+./usr/lib/o32/libdwarf_pic.a			comp-c-piclib		compat,pic
 ./usr/lib/o32/libedit.a				comp-c-lib		compat
 ./usr/lib/o32/libedit.so			base-sys-shlib		compat,pic
 ./usr/lib/o32/libedit_p.a			comp-c-proflib		compat,profile
 ./usr/lib/o32/libedit_pic.a			comp-c-piclib		compat,pic
+./usr/lib/o32/libelf.a				comp-c-lib		compat
+./usr/lib/o32/libelf.so				base-sys-shlib		compat,pic
+./usr/lib/o32/libelf_p.a			comp-c-proflib		compat,profile
+./usr/lib/o32/libelf_pic.a			comp-c-piclib		compat,pic
 ./usr/lib/o32/libevent.a			comp-c-lib		compat
 ./usr/lib/o32/libevent.so			base-sys-shlib		compat,pic
 ./usr/lib/o32/libevent_p.a			comp-c-proflib		compat,profile
 ./usr/lib/o32/libevent_pic.a			comp-c-piclib		compat,pic
+./usr/lib/o32/libfetch.a			comp-c-lib		compat
+./usr/lib/o32/libfetch.so			base-sys-shlib		compat,pic
+./usr/lib/o32/libfetch_p.a			comp-c-proflib		compat,profile
+./usr/lib/o32/libfetch_pic.a			comp-c-piclib		compat,pic
 ./usr/lib/o32/libfl.a				comp-c-lib		compat
 ./usr/lib/o32/libfl_p.a				comp-c-proflib		compat,profile
 ./usr/lib/o32/libform.a				comp-c-lib		compat
