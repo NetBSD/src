@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_dump_policy.c,v 1.8 2007/07/18 12:07:50 vanhu Exp $	*/
+/*	$NetBSD: ipsec_dump_policy.c,v 1.9 2010/12/03 15:01:11 tteras Exp $	*/
 
 /* Id: ipsec_dump_policy.c,v 1.10 2005/06/29 09:12:37 manubsd Exp */
 
@@ -53,7 +53,10 @@
 #include "libpfkey.h"
 
 static const char *ipsp_dir_strs[] = {
-	"any", "in", "out", "fwd"
+	"any", "in", "out", "fwd",
+#ifdef __linux__
+	"in(socket)", "out(socket)"
+#endif
 };
 
 static const char *ipsp_policy_strs[] = {
@@ -165,6 +168,8 @@ ipsec_dump_policy1(policy, delimiter, withports)
 	case IPSEC_DIR_OUTBOUND:
 #ifdef HAVE_POLICY_FWD
 	case IPSEC_DIR_FWD:
+	case IPSEC_DIR_FWD + 1:
+	case IPSEC_DIR_FWD + 2:
 #endif
 		break;
 	default:
