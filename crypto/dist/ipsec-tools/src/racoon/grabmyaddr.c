@@ -1,4 +1,4 @@
-/*	$NetBSD: grabmyaddr.c,v 1.26 2010/10/22 06:26:26 tteras Exp $	*/
+/*	$NetBSD: grabmyaddr.c,v 1.27 2010/12/03 09:46:24 tteras Exp $	*/
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * Copyright (C) 2008 Timo Teras <timo.teras@iki.fi>.
@@ -319,6 +319,11 @@ myaddr_close()
 
 #if defined(USE_NETLINK)
 
+static int netlink_fd = -1;
+
+#define NLMSG_TAIL(nmsg) \
+	((struct rtattr *) (((void *) (nmsg)) + NLMSG_ALIGN((nmsg)->nlmsg_len)))
+
 static void
 parse_rtattr(struct rtattr *tb[], int max, struct rtattr *rta, int len)
 {
@@ -328,6 +333,24 @@ parse_rtattr(struct rtattr *tb[], int max, struct rtattr *rta, int len)
 			tb[rta->rta_type] = rta;
 		rta = RTA_NEXT(rta,len);
 	}
+}
+
+static int
+netlink_add_rtattr_l(struct nlmsghdr *n, int maxlen, int type,
+		     const void *data, int alen)
+{
+	int len = RTA_LENGTH(alen);
+	struct rtattr *rta;
+
+	if (NLMSG_ALIGN(n->nlmsg_len) + RTA_ALIGN(len) > maxlen)
+		return FALSE;
+
+	rta = NLMSG_TAIL(n);
+	rta->rta_type = type;
+	rta->rta_len = len;
+	memcpy(RTA_DATA(rta), data, alen);
+	n->nlmsg_len = NLMSG_ALIGN(n->nlmsg_len) + RTA_ALIGN(len);
+	return TRUE;
 }
 
 static int
@@ -410,6 +433,42 @@ netlink_process_addr(struct nlmsghdr *h)
 #endif
 
 static int
+netlink_route_is_local(int family, const unsigned char *addr, size_t addr_len)
+{
+	struct {
+		struct nlmsghdr n;
+		struct rtmsg    r;
+		char            buf[1024];
+	} req;
+	struct rtmsg *r = NLMSG_DATA(&req.n);
+	struct rtattr *rta[RTA_MAX+1];
+	struct sockaddr_nl nladdr;
+	ssize_t rlen;
+
+	memset(&req, 0, sizeof(req));
+	req.n.nlmsg_len = NLMSG_LENGTH(sizeof(struct rtmsg));
+	req.n.nlmsg_flags = NLM_F_REQUEST;
+	req.n.nlmsg_type = RTM_GETROUTE;
+	req.r.rtm_family = family;
+	netlink_add_rtattr_l(&req.n, sizeof(req), RTA_DST,
+			     addr, addr_len);
+	req.r.rtm_dst_len = addr_len * 8;
+
+	memset(&nladdr, 0, sizeof(nladdr));
+	nladdr.nl_family = AF_NETLINK;
+
+	if (sendto(netlink_fd, &req, sizeof(req), 0,
+		   (struct sockaddr *) &nladdr, sizeof(nladdr)) < 0)
+		return 0;
+	rlen = recv(netlink_fd, &req, sizeof(req), 0);
+	if (rlen < 0)
+		return 0;
+
+	return  req.n.nlmsg_type == RTM_NEWROUTE &&
+		req.r.rtm_type == RTN_LOCAL;
+}
+
+static int
 netlink_process_route(struct nlmsghdr *h)
 {
 	struct sockaddr_storage addr;
@@ -452,6 +511,18 @@ netlink_process_route(struct nlmsghdr *h)
 		break;
 #endif
 	default:
+		return 0;
+	}
+
+	/* If local route was deleted, check if there is still local
+	 * route for the same IP on another interface */
+	if (h->nlmsg_type == RTM_DELROUTE &&
+	    netlink_route_is_local(rtm->rtm_family,
+				   RTA_DATA(rta[RTA_DST]),
+				   RTA_PAYLOAD(rta[RTA_DST]))) {
+		plog(LLV_DEBUG, LOCATION, NULL,
+			"Netlink: not deleting %s yet, it exists still\n",
+			saddrwop2str((struct sockaddr *) &addr));
 		return 0;
 	}
 
@@ -518,9 +589,8 @@ kernel_receive(ctx, fd)
 }
 
 static int
-kernel_open_socket()
+netlink_open_socket()
 {
-	struct sockaddr_nl nl;
 	int fd;
 
 	fd = socket(PF_NETLINK, SOCK_RAW, NETLINK_ROUTE);
@@ -534,6 +604,25 @@ kernel_open_socket()
 	if (fcntl(fd, F_SETFL, O_NONBLOCK) == -1)
 		plog(LLV_WARNING, LOCATION, NULL,
 		     "failed to put socket in non-blocking mode\n");
+
+	return fd;
+}
+
+static int
+kernel_open_socket()
+{
+	struct sockaddr_nl nl;
+	int fd;
+
+	if (netlink_fd < 0) {
+		netlink_fd = netlink_open_socket();
+		if (netlink_fd < 0)
+			return -1;
+	}
+
+	fd = netlink_open_socket();
+	if (fd < 0)
+		return fd;
 
 	/* We monitor IPv4 addresses using RTMGRP_IPV4_ROUTE group
 	 * the get the RTN_LOCAL routes which are automatically added
