@@ -1,4 +1,4 @@
-/*	$NetBSD: libpfkey.h,v 1.17 2009/08/17 13:52:14 vanhu Exp $	*/
+/*	$NetBSD: libpfkey.h,v 1.18 2010/12/03 14:32:52 tteras Exp $	*/
 
 /* Id: libpfkey.h,v 1.13 2005/12/04 20:26:43 manubsd Exp */
 
@@ -208,6 +208,10 @@ int pfkey_send_add_nat __P((int, u_int, u_int, struct sockaddr *,
 
 #ifndef IPPROTO_IPCOMP
 #define IPPROTO_IPCOMP IPPROTO_COMP
+#endif
+
+#ifndef IPPROTO_MH
+#define IPPROTO_MH		135
 #endif
 
 static __inline u_int8_t
