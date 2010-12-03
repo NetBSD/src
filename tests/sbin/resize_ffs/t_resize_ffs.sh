@@ -1,4 +1,4 @@
-# $NetBSD: t_resize_ffs.sh,v 1.2 2010/12/02 22:03:23 riz Exp $
+# $NetBSD: t_resize_ffs.sh,v 1.3 2010/12/03 04:10:36 riz Exp $
 #
 # Copyright (c) 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -68,7 +68,7 @@ grow_ffsv1_partial_cg_cleanup()
 }
 
 atf_test_case grow_ffsv1_64k cleanup
-grow_ffsv1_64k()
+grow_ffsv1_64k_head()
 {
 	atf_set "descr" "Checks successful ffsv1 growth with 64k blocksize"
 	atf_set "require.user"	"root"
@@ -102,7 +102,7 @@ grow_ffsv1_64k_cleanup()
 }
 
 atf_test_case shrink_ffsv1_64k cleanup
-shrink_ffsv1_64k()
+shrink_ffsv1_64k_head()
 {
 	atf_set "descr" "Checks successful ffsv1 shrinkage with 64k blocksize"
 	atf_set "require.user"	"root"
