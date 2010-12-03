@@ -1,4 +1,4 @@
-# $NetBSD: t_make.sh,v 1.2 2010/11/07 17:51:23 jmmv Exp $
+# $NetBSD: t_make.sh,v 1.3 2010/12/03 01:29:55 christos Exp $
 #
 # Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -66,6 +66,7 @@ test_case posix "Checks conformance to POSIX"
 test_case qequals "Checks operator ?="
 test_case ternary "Checks ternary modifier"
 test_case varcmd "Checks behavior of command line variable assignments"
+test_case unmatchedvarparen "Checks $ ( ) matches"
 
 atf_init_test_cases()
 {
@@ -84,4 +85,5 @@ atf_init_test_cases()
 	atf_add_test_case qequals
 	atf_add_test_case ternary
 	atf_add_test_case varcmd
+	atf_add_test_case unmathedvarparen
 }
