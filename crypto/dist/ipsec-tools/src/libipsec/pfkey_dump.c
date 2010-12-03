@@ -1,4 +1,4 @@
-/*	$NetBSD: pfkey_dump.c,v 1.17 2010/04/02 15:13:26 christos Exp $	*/
+/*	$NetBSD: pfkey_dump.c,v 1.18 2010/12/03 14:32:52 tteras Exp $	*/
 
 /*	$KAME: pfkey_dump.c,v 1.45 2003/09/08 10:14:56 itojun Exp $	*/
 
@@ -716,13 +716,19 @@ str_prefport(family, pref, port, ulp)
 	else
 		snprintf(prefbuf, sizeof(prefbuf), "/%u", pref);
 
-	if (ulp == IPPROTO_ICMPV6)
+	switch (ulp) {
+	case IPPROTO_ICMP:
+	case IPPROTO_ICMPV6:
+	case IPPROTO_MH:
+	case IPPROTO_GRE:
 		memset(portbuf, 0, sizeof(portbuf));
-	else {
+		break;
+	default:
 		if (port == IPSEC_PORT_ANY)
-			snprintf(portbuf, sizeof(portbuf), "[%s]", "any");
+			strcpy(portbuf, "[any]");
 		else
 			snprintf(portbuf, sizeof(portbuf), "[%u]", port);
+		break;
 	}
 
 	snprintf(buf, sizeof(buf), "%s%s", prefbuf, portbuf);
@@ -734,29 +740,26 @@ static void
 str_upperspec(ulp, p1, p2)
 	u_int ulp, p1, p2;
 {
-	if (ulp == IPSEC_ULPROTO_ANY)
-		printf("any");
-	else if (ulp == IPPROTO_ICMPV6) {
-		printf("icmp6");
-		if (!(p1 == IPSEC_PORT_ANY && p2 == IPSEC_PORT_ANY))
-			printf(" %u,%u", p1, p2);
-	} else {
-		struct protoent *ent;
+	struct protoent *ent;
 
-		switch (ulp) {
-		case IPPROTO_IPV4:
-			printf("ip4");
-			break;
-		default:
-			ent = getprotobynumber((int)ulp);
-			if (ent)
-				printf("%s", ent->p_name);
-			else
-				printf("%u", ulp);
+	ent = getprotobynumber((int)ulp);
+	if (ent)
+		printf("%s", ent->p_name);
+	else
+		printf("%u", ulp);
 
-			endprotoent();
-			break;
-		}
+	if (p1 == IPSEC_PORT_ANY && p2 == IPSEC_PORT_ANY)
+		return;
+
+	switch (ulp) {
+	case IPPROTO_ICMP:
+	case IPPROTO_ICMPV6:
+	case IPPROTO_MH:
+		printf(" %u,%u", p1, p2);
+		break;
+	case IPPROTO_GRE:
+		printf(" %u", (p1 << 16) + p2);
+		break;
 	}
 }
 
