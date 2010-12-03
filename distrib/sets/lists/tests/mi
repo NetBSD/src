@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.167 2010/12/03 12:02:28 hannken Exp $
+# $NetBSD: mi,v 1.168 2010/12/03 13:11:50 njoly Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -328,6 +328,7 @@
 ./usr/libdata/debug/usr/tests/lib/libc/stdlib/t_environment.debug	tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/stdlib/t_environment_pth.debug	tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/stdlib/t_mi_vector_hash.debug	tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libc/stdlib/t_strtox.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc/string				tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/lib/libc/string/t_popcount.debug		tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/lib/libdes				tests-lib-debug
@@ -1528,6 +1529,7 @@
 ./usr/tests/lib/libc/stdlib/t_environment	tests-lib-tests		atf
 ./usr/tests/lib/libc/stdlib/t_environment_pth	tests-lib-tests		atf
 ./usr/tests/lib/libc/stdlib/t_mi_vector_hash	tests-lib-tests		atf
+./usr/tests/lib/libc/stdlib/t_strtox		tests-lib-tests		atf
 ./usr/tests/lib/libc/stdio			tests-lib-tests
 ./usr/tests/lib/libc/stdio/Atffile		tests-lib-tests		atf
 ./usr/tests/lib/libc/stdio/t_fmemopen		tests-lib-tests		atf
