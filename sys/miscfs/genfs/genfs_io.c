@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.44 2010/11/30 10:55:25 hannken Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.45 2010/12/03 08:42:14 hannken Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.44 2010/11/30 10:55:25 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.45 2010/12/03 08:42:14 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1224,7 +1224,7 @@ retry:
 	    (vp->v_iflag & VI_ONWORKLST) != 0) {
 #if defined(DEBUG)
 		TAILQ_FOREACH(pg, &uobj->memq, listq.queue) {
-			if ((pg->flags & PG_MARKER) != 0) {
+			if ((pg->flags & (PG_FAKE | PG_MARKER)) != 0) {
 				continue;
 			}
 			if ((pg->flags & PG_CLEAN) == 0) {
