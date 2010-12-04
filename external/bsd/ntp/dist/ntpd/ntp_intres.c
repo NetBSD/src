@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_intres.c,v 1.2 2010/08/29 18:54:30 kardel Exp $	*/
+/*	$NetBSD: ntp_intres.c,v 1.3 2010/12/04 23:08:35 christos Exp $	*/
 
 /*
  * ripped off from ../ntpres/ntpres.c by Greg Troxel 4/2/92
@@ -812,7 +812,7 @@ request(
 		total_len = pchEnd - (char *)&reqpkt;
 		if (total_len > sizeof(reqpkt)) {
 			msyslog(LOG_ERR,
-				"intres total_len %u limit is %u (%u octet digest)\n",
+				"intres total_len %zu limit is %zu (%zu octet digest)\n",
 				total_len, sizeof(reqpkt),
 				req_hashlen);
 			resolver_exit(1);
@@ -831,7 +831,7 @@ request(
 		n = authencrypt(req_keyid, (void *)&reqpkt, req_len);
 		if ((size_t)n != req_hashlen + sizeof(reqpkt.keyid)) {
 			msyslog(LOG_ERR,
-				"intres maclen %d expected %u\n",
+				"intres maclen %d expected %zu\n",
 				n, req_hashlen + sizeof(reqpkt.keyid));
 			resolver_exit(1);
 		}
@@ -946,7 +946,7 @@ request(
 		 * Got one.  Check through to make sure it is what
 		 * we expect.
 		 */
-		if (n < RESP_HEADER_SIZE) {
+		if (n < (int)RESP_HEADER_SIZE) {
 			msyslog(LOG_ERR, "received runt response (%d octets)",
 				n);
 			continue;

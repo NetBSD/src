@@ -1,4 +1,4 @@
-/*	$NetBSD: humandate.c,v 1.1.1.1 2009/12/13 16:55:03 kardel Exp $	*/
+/*	$NetBSD: humandate.c,v 1.2 2010/12/04 23:08:34 christos Exp $	*/
 
 /*
  * humandate - convert an NTP (or the current) time to something readable
@@ -14,7 +14,7 @@ extern const char *months[];	/* prettydate.c */
 /* This is used in msyslog.c; we don't want to clutter up the log with
    the year and day of the week, etc.; just the minimal date and time.  */
 
-char *
+const char *
 humanlogtime(void)
 {
 	char *bp;

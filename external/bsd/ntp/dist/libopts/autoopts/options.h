@@ -1,4 +1,4 @@
-/*	$NetBSD: options.h,v 1.1.1.1 2009/12/13 16:55:16 kardel Exp $	*/
+/*	$NetBSD: options.h,v 1.2 2010/12/04 23:08:34 christos Exp $	*/
 
 /*   -*- buffer-read-only: t -*- vi: set ro:
  *  
@@ -408,7 +408,7 @@ typedef void (tOptionXlateProc)(void);
 
 struct options {
     int const           structVersion;
-    int                 origArgCt;
+    unsigned int        origArgCt;
     char**              origArgVect;
     unsigned int        fOptSet;
     unsigned int        curOptIdx;
@@ -436,8 +436,8 @@ struct options {
     tOptionXlateProc*   pTransProc;
 
     tOptSpecIndex       specOptIdx;
-    int const           optCt;
-    int const           presetOptCt;
+    size_t 		optCt;
+    size_t 		presetOptCt;
     char const *        pzFullUsage;
     char const *        pzShortUsage;
     /* PUBLIC: */
@@ -1009,7 +1009,7 @@ extern char const* optionKeywordName(tOptDesc*, unsigned int);
 
 extern void optionLoadOpt(tOptions*, tOptDesc*);
 
-extern ag_bool optionMakePath(char*, int, char const*, char const*);
+extern ag_bool optionMakePath(char*, size_t, char const*, char const*);
 
 extern void optionNestedVal(tOptions*, tOptDesc*);
 

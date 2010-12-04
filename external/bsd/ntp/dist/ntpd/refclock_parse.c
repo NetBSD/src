@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_parse.c,v 1.2 2009/12/14 00:46:21 christos Exp $	*/
+/*	$NetBSD: refclock_parse.c,v 1.3 2010/12/04 23:08:35 christos Exp $	*/
 
 /*
  * /src/NTP/REPOSITORY/ntp4-dev/ntpd/refclock_parse.c,v 4.81 2009/05/01 10:15:29 kardel RELEASE_20090105_A
@@ -1390,7 +1390,7 @@ clear_err(
 {
 	if (lstate == ERR_ALL)
 	{
-		int i;
+		size_t i;
 
 		for (i = 0; i < ERR_CNT; i++)
 		{
@@ -1623,6 +1623,16 @@ static bind_t io_bindings[] =
 	},
 	{
 		(char *)0,
+		NULL,
+		NULL,
+		NULL,
+		NULL,
+		NULL,
+		NULL,
+		NULL,
+		NULL,
+		NULL,
+		NULL,
 	}
 };
 
@@ -2342,7 +2352,7 @@ parsestate(
 		  { PARSEB_TIMECODE,   "TIME CODE" },
 		  { PARSEB_PPS,        "PPS" },
 		  { PARSEB_POSITION,   "POSITION" },
-		  { 0 }
+		  { 0,		       NULL }
 	  };
 
 	static struct sbits
@@ -2355,7 +2365,7 @@ parsestate(
 		  { PARSEB_S_PPS,      "PPS SIGNAL" },
 		  { PARSEB_S_ANTENNA,  "ANTENNA" },
 		  { PARSEB_S_POSITION, "POSITION" },
-		  { 0 }
+		  { 0,		       NULL }
 	  };
 	int i;
 	char *s, *t;
@@ -2432,7 +2442,7 @@ parsestatus(
 		  { CVT_BADDATE, "DATE ILLEGAL" },
 		  { CVT_BADTIME, "TIME ILLEGAL" },
 		  { CVT_ADDITIONAL, "ADDITIONAL DATA" },
-		  { 0 }
+		  { 0,		 NULL }
 	  };
 	int i;
 
@@ -2475,12 +2485,12 @@ clockstatus(
 		  { CEVNT_PROP,    "PROPAGATION DELAY" },
 		  { CEVNT_BADDATE, "ILLEGAL DATE" },
 		  { CEVNT_BADTIME, "ILLEGAL TIME" },
-		  { (unsigned)~0L }
+		  { (unsigned)~0L, NULL }
 	  };
 	int i;
 
 	i = 0;
-	while (flagstrings[i].value != ~0)
+	while (flagstrings[i].value != (u_int)~0)
 	{
 		if (flagstrings[i].value == lstate)
 		{
@@ -2714,7 +2724,7 @@ parse_ppsapi(
 	)
 {
 	int cap, mode_ppsoffset;
-	char *cp;
+	const char *cp;
 	
 	parse->flags &= ~PARSE_PPSCLOCK;
 
@@ -2822,7 +2832,7 @@ parse_start(
 	type = CLK_TYPE(peer);
 	unit = CLK_UNIT(peer);
 
-	if ((type == ~0) || (parse_clockinfo[type].cl_description == (char *)0))
+	if ((type == (u_int)~0) || (parse_clockinfo[type].cl_description == (char *)0))
 	{
 		msyslog(LOG_ERR, "PARSE receiver #%d: parse_start: unsupported clock type %d (max %d)",
 			unit, CLK_REALTYPE(peer), ncltypes-1);
@@ -3273,7 +3283,7 @@ parse_poll(
 	parse->generic->polls++;
 
 	if (parse->pollneeddata && 
-	    ((current_time - parse->pollneeddata) > (1<<(max(min(parse->peer->hpoll, parse->peer->ppoll), parse->peer->minpoll)))))
+	    ((int)(current_time - parse->pollneeddata) > (1<<(max(min(parse->peer->hpoll, parse->peer->ppoll), parse->peer->minpoll)))))
 	{
 		/*
 		 * start worrying when exceeding a poll inteval
@@ -4721,7 +4731,7 @@ trimbletaip_event(
 				    }
 				    else
 				    {
-					    if (rtc != strlen(*iv))
+					    if (rtc != (int)strlen(*iv))
 					    {
 						    msyslog(LOG_ERR, "PARSE receiver #%d: trimbletaip_event: failed to send cmd incomplete (%d of %d bytes sent)",
 							    CLK_UNIT(parse->peer), rtc, (int)strlen(*iv));
@@ -5252,7 +5262,7 @@ trimbletsip_message(
 	{
 #ifdef DEBUG
 		if (debug > 2) {
-			int i;
+			size_t i;
 
 			printf("TRIMBLE BAD packet, size %d:\n	", size);
 			for (i = 0; i < size; i++) {
@@ -5275,7 +5285,7 @@ trimbletsip_message(
 		
 #ifdef DEBUG
 		if (debug > 3) {
-			int i;
+			size_t i;
 
 			printf("TRIMBLE packet 0x%02x, size %d:\n	", cmd, size);
 			for (i = 0; i < size; i++) {
