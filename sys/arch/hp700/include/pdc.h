@@ -1,4 +1,4 @@
-/*	$NetBSD: pdc.h,v 1.11 2009/11/19 19:28:14 skrll Exp $	*/
+/*	$NetBSD: pdc.h,v 1.12 2010/12/04 15:58:52 skrll Exp $	*/
 
 /*	$OpenBSD: pdc.h,v 1.35 2007/07/15 20:03:48 kettenis Exp $	*/
 
@@ -126,7 +126,7 @@
 #define	PDC_MODEL_ENSPEC	4	/* enable product-specific instrs */
 #define	PDC_MODEL_DISPEC	5	/* disable product-specific instrs */
 #define	PDC_MODEL_CPUID		6	/* return CPU versions */
-#define	PDC_MODEL_CPBALITIES	7	/* return capabilites */
+#define	PDC_MODEL_CAPABILITES	7	/* return capabilites */
 #define	PDC_MODEL_GETBOOTSTOPTS	8	/* return boot test options */
 #define	PDC_MODEL_SETBOOTSTOPTS	9	/* set boot test options */
 
