@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.es,v 1.29 2010/03/30 20:09:25 martin Exp $	*/
+/*	$NetBSD: msg.mi.es,v 1.30 2010/12/04 14:57:56 jmmv Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -855,23 +855,6 @@ zona horaria.
 message tz_back
 { Volver a la lista principal de zonas horarias}
 
-message choose_crypt
-{Por favor, seleccione el algoritmo de cifrado de contraseñas a usar.
-NetBSD puede ser configurado para usar los esquemas DES, MD5 o Blowfish.
-
-El esquema tradicional DES es compatible con la mayoría de los demás
-sistemas operativos de tipo Unix, pero sólo se reconocerán los primeros 8
-carácteres de cualquier contraseña.
-Los esquemas MD5 y Blowfish permiten contraseñas más largas, y algunos
-aseguran que es más seguro.
-
-Si tiene una red y pretende usar NIS, por favor considere las capacidades
-de otras máquinas en su red.
-
-Si está actualizando y le gustaria mantener la configuración sin cambios,
-escoja la última opción «no cambiar».
-}
-
 message swapactive
 {El disco que ha seleccionado tiene una partición de intercambio (swap) que
 puede que esté en uso actualmente si su sistema tiene poca memoria.  Como 
@@ -966,12 +949,6 @@ message Skip_set {Omitir conjunto}
 message Skip_group {Omitir grupo de conjuntos}
 message Abandon {Abandonar instalación}
 message Abort_fetch {Abortar lectura}
-message Password_cipher {Cifrado de las contraseñas}
-message DES {DES}
-message MD5 {MD5}
-message Blowfish_2_7_round {Blowfish 2^7 round}
-message SHA1 {SHA1}
-message do_not_change {no cambiar}
 message Device {Dispositivo}
 message File_system {Sistema de archivos}
 message Select_IPv6_DNS_server {  Seleccione servidor DNS de IPv6}
