@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.fr,v 1.110 2010/03/30 20:09:25 martin Exp $	*/
+/*	$NetBSD: msg.mi.fr,v 1.111 2010/12/04 14:57:56 jmmv Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -912,23 +912,6 @@ Appuyez sur "x" puis Entrée pour valider la sélection en cours.
 message tz_back
 { Retour à la liste principale des fuseaux horaires}
 
-message choose_crypt	
-{
-Veuillez sélectionner le type de hachage des mots de passe.
-NetBSD supporte DES, MD5, Blowfish et SHA1.
-
-DES est compatible avec la plupart des systèmes de type Unix mais ne
-permet pas d'utiliser plus de huit caractères pour les mots de passe.
-MD5, Blowfish et SHA1 permettent d'utiliser des mots de passe plus longs,
-ce qui peut être plus sécurisé.
-
-Si votre réseau comporte NIS, veuillez vérifier la capacité des
-autres machines composant ce dernier.
-
-Si vous effectuez une mise à jour et que vous souhaitez conserver la
-configuration déjà existante, veuillez choisir "Ne rien changer".
-}
-
 message swapactive
 {
 Le disque sélectionné dispose d'une partition d'échange (swap) qui
@@ -1032,12 +1015,6 @@ message Skip_set {Sauter cet ensemble}
 message Skip_group {Sauter ce groupe}
 message Abandon {Abandonner l'installation}
 message Abort_fetch {Annuler la récupération}
-message Password_cipher {Chiffrement du mot de passe}
-message DES {DES}
-message MD5 {MD5}
-message Blowfish_2_7_round {Blowfish à 2^7 rondes}
-message SHA1 {SHA1}
-message do_not_change {ne rien changer}
 message Device {Périphérique}
 message File_system {Système de fichiers}
 message Select_IPv6_DNS_server {  Choisissez un serveur de noms IPv6 :}

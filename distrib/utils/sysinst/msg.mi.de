@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.de,v 1.52 2010/03/30 20:09:25 martin Exp $	*/
+/*	$NetBSD: msg.mi.de,v 1.53 2010/12/04 14:57:56 jmmv Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -890,22 +890,6 @@ die Taste 'x' gefolgt von der Eingabetaste, um das Menü zu verlassen.
 message tz_back
 { Zurück zum Zeitzonenmenü.}
 
-message choose_crypt
-{Bitte wählen Sie den gewünschten Ver-/Entschlüsselungsalgorithmus (Cipher)
-für Benutzerpassworte. NetBSD kann DES, MD5, Blowfish oder SHA1 benutzen.
-
-Das traditionelle DES-System ist mit den meisten anderen UNIX-ähnlichen
-Betriebssystemen kompatibel, allerdings werden nur die ersten 8 Zeichen eines
-jeden Passworts berücksichtigt. Das MD5, Blowfish und SHA1 System erlaubt
-längere Passwörter, was unter Umständen als sicherer interpretiert werden kann.
-
-Wenn Sie ein Netzwerk haben und planen, NIS zu nutzen, berücksichtigen
-Sie hier bitte auch die Möglichkeiten der anderen Maschinen im Netzwerk.
-
-Wenn Sie NetBSD aktualisieren und die bestehende Konfiguration nicht
-verändern möchten, so wählen Sie "Beibehalten".
-}
-
 message swapactive
 {Das Laufwerk, das Sie ausgewählt haben, verfügt über eine Swappartition, die
 gegenwärtig auch benutzt wird.
@@ -998,12 +982,6 @@ message Skip_set {Paket überspringen}
 message Skip_group {Paketgruppe überspringen}
 message Abandon {Installation abbrechen}
 message Abort_fetch {Holen abbrechen}
-message Password_cipher {Passwort Verschlüsselungsverfahren}
-message DES {DES}
-message MD5 {MD5}
-message Blowfish_2_7_round {Blowfish mit 2^7 Wiederholungen}
-message SHA1 {SHA1}
-message do_not_change {Beibehalten}
 message Device {Gerät}
 message File_system {Dateisystem}
 message Select_IPv6_DNS_server {  Auswählen eines IPv6 DNS Servers}
