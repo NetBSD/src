@@ -1,4 +1,4 @@
-/*	$NetBSD: log.h,v 1.1.1.1 2009/12/13 16:57:10 kardel Exp $	*/
+/*	$NetBSD: log.h,v 1.2 2010/12/04 23:08:36 christos Exp $	*/
 
 #ifndef LOG_H
 #define LOG_H
@@ -12,8 +12,8 @@
 #include <time.h>
 
 
-void log_msg(char *message, char type);
-void debug_msg(char *message);
+void log_msg(const char *message, char type);
+void debug_msg(const char *message);
 
 void init_log(const char *logfile);
 void cleanup_log(void);

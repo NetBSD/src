@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_parser.y,v 1.3 2010/11/30 15:00:10 christos Exp $	*/
+/*	$NetBSD: ntp_parser.y,v 1.4 2010/12/04 23:08:35 christos Exp $	*/
 
 /* ntp_parser.y
  *
@@ -39,7 +39,7 @@
   #define YYFREE	free
   #define YYERROR_VERBOSE
   #define YYMAXDEPTH	1000   /* stop the madness sooner */
-  void yyerror (char *msg);
+  void yyerror (const char *msg);
   extern int input_from_file;  /* 0=input from ntpq :config */
 %}
 
@@ -921,8 +921,8 @@ drift_parm
 	|	T_String T_Double
 			{ enqueue(cfgt.vars, create_attr_dval(T_WanderThreshold, $2));
 			  enqueue(cfgt.vars, create_attr_sval(T_Driftfile, $1)); }
-	|	/* Null driftfile,  indicated by null string "\0" */
-			{ enqueue(cfgt.vars, create_attr_sval(T_Driftfile, "\0")); }
+	|	/* Null driftfile */
+			{ enqueue(cfgt.vars, create_attr_sval(T_Driftfile, NULL)); }
 	;
 
 variable_assign
@@ -1117,7 +1117,7 @@ sim_act_stmt
 
 %%
 
-void yyerror (char *msg)
+void yyerror (const char *msg)
 {
 	int retval;
 

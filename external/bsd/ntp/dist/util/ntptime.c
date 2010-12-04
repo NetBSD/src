@@ -1,4 +1,4 @@
-/*	$NetBSD: ntptime.c,v 1.1.1.1 2009/12/13 16:57:31 kardel Exp $	*/
+/*	$NetBSD: ntptime.c,v 1.2 2010/12/04 23:08:48 christos Exp $	*/
 
 /*
  * NTP test program
@@ -55,7 +55,7 @@
  * Function prototypes
  */
 char *sprintb		(u_int, const char *);
-const char *timex_state	(int);
+const char *timex_state	(size_t);
 
 #ifdef SIGSYS
 void pll_trap		(int);
@@ -94,14 +94,15 @@ main(
 	volatile unsigned ts_mask = TS_MASK;		/* defaults to 20 bits (us) */
 	volatile unsigned ts_roundbit = TS_ROUNDBIT;	/* defaults to 20 bits (us) */
 	volatile int fdigits = 6;			/* fractional digits for us */
-	int c;
+	size_t c;
+	int ch;
 	int errflg	= 0;
 	int cost	= 0;
 	volatile int rawtime	= 0;
 
 	memset((char *)&ntx, 0, sizeof(ntx));
 	progname = argv[0];
-	while ((c = ntp_getopt(argc, argv, optargs)) != EOF) switch (c) {
+	while ((ch = ntp_getopt(argc, argv, optargs)) != EOF) switch (ch) {
 #ifdef MOD_MICRO
 	    case 'M':
 		ntx.modes |= MOD_MICRO;
@@ -431,13 +432,13 @@ const char *timex_states[] = {
 
 const char *
 timex_state(
-	register int s
+	register size_t s
 	)
 {
 	static char buf[32];
 
-	if (s >= 0 && s < sizeof(timex_states) / sizeof(timex_states[0]))
+	if (s < sizeof(timex_states) / sizeof(timex_states[0]))
 	    return (timex_states[s]);
-	sprintf(buf, "TIME-#%d", s);
+	sprintf(buf, "TIME-#%zu", s);
 	return (buf);
 }

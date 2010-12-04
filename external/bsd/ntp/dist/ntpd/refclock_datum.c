@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_datum.c,v 1.1.1.1 2009/12/13 16:55:47 kardel Exp $	*/
+/*	$NetBSD: refclock_datum.c,v 1.2 2010/12/04 23:08:35 christos Exp $	*/
 
 /*
 ** refclock_datum - clock driver for the Datum Programmable Time Server
@@ -380,7 +380,7 @@ datum_pts_shutdown(
 	*/
 
 	for (i=0; i<nunits; i++) {
-		if (datum_pts_unit[i]->unit == unit) {
+		if ((int)datum_pts_unit[i]->unit == unit) {
 
 			/*
 			** We found the unit so close the file descriptor and free up the memory used
@@ -459,7 +459,7 @@ datum_pts_poll(
 
 	unit_index = -1;
 	for (i=0; i<nunits; i++) {
-		if (datum_pts_unit[i]->unit == unit) {
+		if ((int)datum_pts_unit[i]->unit == unit) {
 			unit_index = i;
 			datum_pts = datum_pts_unit[i];
 			error_code = write(datum_pts->PTS_fd, TIME_REQUEST, 6);

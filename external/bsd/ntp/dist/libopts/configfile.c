@@ -1,4 +1,4 @@
-/*	$NetBSD: configfile.c,v 1.1.1.1 2009/12/13 16:55:10 kardel Exp $	*/
+/*	$NetBSD: configfile.c,v 1.2 2010/12/04 23:08:34 christos Exp $	*/
 
 /*
  *  Id: f1650b45a91ec95af830ff76041cc4f0048e60f0
@@ -184,7 +184,7 @@ optionFindValue( const tOptDesc* pOptDesc,
     else do {
         tArgList* pAL = pOptDesc->optCookie;
         int    ct   = pAL->useCt;
-        void** ppOV = (void**)(pAL->apzArgs);
+        void** ppOV = (void**)(intptr_t)(pAL->apzArgs);
 
         if (ct == 0) {
             errno = ENOENT;
@@ -261,7 +261,7 @@ optionFindNextValue( const tOptDesc* pOptDesc, const tOptionValue* pPrevVal,
     else do {
         tArgList* pAL = pOptDesc->optCookie;
         int    ct   = pAL->useCt;
-        void** ppOV = (void**)pAL->apzArgs;
+        void** ppOV = (void**)(intptr_t)pAL->apzArgs;
 
         if (ct == 0) {
             errno = ENOENT;
@@ -324,7 +324,7 @@ optionGetValue( const tOptionValue* pOld, char const* pzValName )
 
     if (pAL->useCt > 0) {
         int    ct    = pAL->useCt;
-        void** papOV = (void**)(pAL->apzArgs);
+        void** papOV = (void**)(intptr_t)(pAL->apzArgs);
 
         if (pzValName == NULL) {
             pRes = (tOptionValue*)*papOV;
@@ -385,7 +385,7 @@ optionNextValue(tOptionValue const * pOVList,tOptionValue const * pOldOV )
     pAL = pOVList->v.nestVal;
     {
         int    ct    = pAL->useCt;
-        void** papNV = (void**)(pAL->apzArgs);
+        void** papNV = (void**)(intptr_t)(pAL->apzArgs);
 
         while (ct-- > 0) {
             tOptionValue* pNV = *(papNV++);

@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_jjy.c,v 1.1.1.1 2009/12/13 16:55:50 kardel Exp $	*/
+/*	$NetBSD: refclock_jjy.c,v 1.2 2010/12/04 23:08:35 christos Exp $	*/
 
 /*
  * refclock_jjy - clock driver for JJY receivers
@@ -568,8 +568,6 @@ static int
 jjy_receive_tristate_jjy01 ( struct recvbuf *rbufp )
 {
 
-	static	char	*sFunctionName = "jjy_receive_tristate_jjy01" ;
-
 	struct jjyunit      *up ;
 	struct refclockproc *pp ;
 	struct peer         *peer;
@@ -600,7 +598,7 @@ jjy_receive_tristate_jjy01 ( struct recvbuf *rbufp )
 		if ( iLen != 14 ) {
 #ifdef DEBUG
 	        if ( debug >= 2 ) {
-		        printf ( "%s (refclock_jjy.c) : Reply length error ( up->linecount=%d  iLen=%d )\n", sFunctionName, up->linecount, iLen ) ;
+		        printf ( "%s (refclock_jjy.c) : Reply length error ( up->linecount=%d  iLen=%d )\n", __func__, up->linecount, iLen ) ;
 	        }
 #endif
 			up->lineerror = 1 ;
@@ -610,7 +608,7 @@ jjy_receive_tristate_jjy01 ( struct recvbuf *rbufp )
 		if ( rc != 3 || up->year < 2000 || up->month < 1 || up->month > 12 || up->day < 1 || up->day > 31 ) {
 #ifdef DEBUG
 	        if ( debug >= 2 ) {
-		        printf ( "%s (refclock_jjy.c) : Date error ( up->linecount=%d )\n", sFunctionName, up->linecount ) ;
+		        printf ( "%s (refclock_jjy.c) : Date error ( up->linecount=%d )\n", __func__, up->linecount ) ;
 	        }
 #endif
 			up->lineerror = 1 ;
@@ -633,7 +631,7 @@ jjy_receive_tristate_jjy01 ( struct recvbuf *rbufp )
 		if ( up->version >= 100 ) {
 #ifdef DEBUG
 			if ( debug ) {
-				printf ( "%s (refclock_jjy.c) : send 'stim<CR><LF>'\n", sFunctionName ) ;
+				printf ( "%s (refclock_jjy.c) : send 'stim<CR><LF>'\n", __func__ ) ;
 			}
 #endif
 			if ( write ( pp->io.fd, "stim\r\n",6 ) != 6  ) {
@@ -642,7 +640,7 @@ jjy_receive_tristate_jjy01 ( struct recvbuf *rbufp )
 		} else {
 #ifdef DEBUG
 			if ( debug ) {
-				printf ( "%s (refclock_jjy.c) : send 'time<CR><LF>'\n", sFunctionName ) ;
+				printf ( "%s (refclock_jjy.c) : send 'time<CR><LF>'\n", __func__ ) ;
 			}
 #endif
 			if ( write ( pp->io.fd, "time\r\n",6 ) != 6  ) {
@@ -658,7 +656,7 @@ jjy_receive_tristate_jjy01 ( struct recvbuf *rbufp )
 		if ( iLen != 8 ) {
 #ifdef DEBUG
 	        if ( debug >= 2 ) {
-		        printf ( "%s (refclock_jjy.c) : Reply length error ( up->linecount=%d  iLen=%d )\n", sFunctionName, up->linecount, iLen ) ;
+		        printf ( "%s (refclock_jjy.c) : Reply length error ( up->linecount=%d  iLen=%d )\n", __func__, up->linecount, iLen ) ;
 	        }
 #endif
 			up->lineerror = 1 ;
@@ -668,7 +666,7 @@ jjy_receive_tristate_jjy01 ( struct recvbuf *rbufp )
 		if ( rc != 3 || up->hour > 23 || up->minute > 59 || up->second > 60 ) {
 #ifdef DEBUG
 	        if ( debug >= 2 ) {
-		        printf ( "%s (refclock_jjy.c) : Time error ( up->linecount=%d )\n", sFunctionName, up->linecount ) ;
+		        printf ( "%s (refclock_jjy.c) : Time error ( up->linecount=%d )\n", __func__, up->linecount ) ;
 	        }
 #endif
 			up->lineerror = 1 ;
@@ -702,8 +700,6 @@ static int
 jjy_receive_cdex_jst2000 ( struct recvbuf *rbufp )
 {
 
-	static	char	*sFunctionName = "jjy_receive_cdex_jst2000" ;
-
 	struct jjyunit      *up ;
 	struct refclockproc *pp ;
 	struct peer         *peer;
@@ -734,7 +730,7 @@ jjy_receive_cdex_jst2000 ( struct recvbuf *rbufp )
 		if ( iLen != 15 ) {
 #ifdef DEBUG
 	        if ( debug >= 2 ) {
-		        printf ( "%s (refclock_jjy.c) : Reply length error ( iLen=%d )\n", sFunctionName, iLen ) ;
+		        printf ( "%s (refclock_jjy.c) : Reply length error ( iLen=%d )\n", __func__, iLen ) ;
 	        }
 #endif
 			up->lineerror = 1 ;
@@ -746,7 +742,7 @@ jjy_receive_cdex_jst2000 ( struct recvbuf *rbufp )
 		  || up->hour > 23 || up->minute > 59 || up->second > 60 ) {
 #ifdef DEBUG
 	        if ( debug >= 2 ) {
-		        printf ( "%s (refclock_jjy.c) : Time error (rc=%d) [ %02d %02d %02d * %02d %02d %02d.%1d ]\n", sFunctionName,
+		        printf ( "%s (refclock_jjy.c) : Time error (rc=%d) [ %02d %02d %02d * %02d %02d %02d.%1d ]\n", __func__,
 						 rc, up->year, up->month, up->day, up->hour, up->minute, up->second, up->msecond ) ;
 	        }
 #endif
@@ -773,8 +769,6 @@ jjy_receive_cdex_jst2000 ( struct recvbuf *rbufp )
 static int
 jjy_receive_echokeisokuki_lt2000 ( struct recvbuf *rbufp )
 {
-
-	static	char	*sFunctionName = "jjy_receive_echokeisokuki_lt2000" ;
 
 	struct jjyunit      *up ;
 	struct refclockproc *pp ;
@@ -807,13 +801,13 @@ jjy_receive_echokeisokuki_lt2000 ( struct recvbuf *rbufp )
 		if ( ( up->operationmode == 1 && iLen != 15 ) || ( up->operationmode == 2 && iLen != 17 ) ) {
 #ifdef DEBUG
 	        if ( debug >= 2 ) {
-		        printf ( "%s (refclock_jjy.c) : Reply length error ( iLen=%d )\n", sFunctionName, iLen ) ;
+		        printf ( "%s (refclock_jjy.c) : Reply length error ( iLen=%d )\n", __func__, iLen ) ;
 	        }
 #endif
 			if ( up->operationmode == 1 ) {
 #ifdef DEBUG
 				if ( debug ) {
-					printf ( "%s (refclock_jjy.c) : send '#'\n", sFunctionName ) ;
+					printf ( "%s (refclock_jjy.c) : send '#'\n", __func__ ) ;
 				}
 #endif
 				if ( write ( pp->io.fd, "#",1 ) != 1  ) {
@@ -832,7 +826,7 @@ jjy_receive_echokeisokuki_lt2000 ( struct recvbuf *rbufp )
         	if ( pBuf[13] != ibcc1 || pBuf[14] != ibcc2 ) {
 #ifdef DEBUG
 	        	if ( debug >= 2 ) {
-		        	printf ( "%s (refclock_jjy.c) : BCC error ( Recv=%02X,%02X / Calc=%02X,%02X)\n", sFunctionName, pBuf[13]&0xFF, pBuf[14]&0xFF, ibcc1, ibcc2 ) ;
+		        	printf ( "%s (refclock_jjy.c) : BCC error ( Recv=%02X,%02X / Calc=%02X,%02X)\n", __func__, pBuf[13]&0xFF, pBuf[14]&0xFF, ibcc1, ibcc2 ) ;
 	        	}
 #endif
 				up->lineerror = 1 ;
@@ -847,7 +841,7 @@ jjy_receive_echokeisokuki_lt2000 ( struct recvbuf *rbufp )
 		  || up->hour > 23 || up->minute > 59 || up->second > 60 ) {
 #ifdef DEBUG
 	        if ( debug >= 2 ) {
-		        printf ( "%s (refclock_jjy.c) : Time error (rc=%d) [ %02d %02d %02d * %02d %02d %02d ]\n", sFunctionName,
+		        printf ( "%s (refclock_jjy.c) : Time error (rc=%d) [ %02d %02d %02d * %02d %02d %02d ]\n", __func__,
 						 rc, up->year, up->month, up->day, up->hour, up->minute, up->second ) ;
 	        }
 #endif
@@ -882,7 +876,7 @@ jjy_receive_echokeisokuki_lt2000 ( struct recvbuf *rbufp )
 			/* Switch from mode 2 to mode 1 in order to restraint of useless time stamp. */
 #ifdef DEBUG
 			if ( debug ) {
-				printf ( "%s (refclock_jjy.c) : send '#'\n", sFunctionName ) ;
+				printf ( "%s (refclock_jjy.c) : send '#'\n", __func__ ) ;
 			}
 #endif
 			if ( write ( pp->io.fd, "#",1 ) != 1  ) {
@@ -897,7 +891,7 @@ jjy_receive_echokeisokuki_lt2000 ( struct recvbuf *rbufp )
 
 #ifdef DEBUG
 		if ( debug ) {
-			printf ( "%s (refclock_jjy.c) : send '#'\n", sFunctionName ) ;
+			printf ( "%s (refclock_jjy.c) : send '#'\n", __func__ ) ;
 		}
 #endif
 		if ( write ( pp->io.fd, "#",1 ) != 1  ) {
@@ -918,8 +912,6 @@ jjy_receive_echokeisokuki_lt2000 ( struct recvbuf *rbufp )
 static int
 jjy_receive_citizentic_jjy200 ( struct recvbuf *rbufp )
 {
-
-    static  char    *sFunctionName = "jjy_receive_citizentic_jjy200" ;
 
     struct jjyunit      *up ;
     struct refclockproc *pp ;
@@ -959,7 +951,7 @@ jjy_receive_citizentic_jjy200 ( struct recvbuf *rbufp )
         if ( iLen != 23 ) {
 #ifdef DEBUG
             if ( debug >= 2 ) {
-                printf ( "%s (refclock_jjy.c) : Reply length error ( iLen=%d )\n", sFunctionName, iLen ) ;
+                printf ( "%s (refclock_jjy.c) : Reply length error ( iLen=%d )\n", __func__, iLen ) ;
             }
 #endif
             up->lineerror = 1 ;
@@ -976,7 +968,7 @@ jjy_receive_citizentic_jjy200 ( struct recvbuf *rbufp )
           || up->hour > 23 || up->minute > 59 || up->second > 60 ) {
 #ifdef DEBUG
             if ( debug >= 2 ) {
-                printf ( "%s (refclock_jjy.c) : Time error (rc=%d) [ %c %2s %02d %02d %02d %d %02d %02d %02d ]\n", sFunctionName,
+                printf ( "%s (refclock_jjy.c) : Time error (rc=%d) [ %c %2s %02d %02d %02d %d %02d %02d %02d ]\n", __func__,
                          rc, cApostrophe, sStatus, up->year, up->month, up->day, iWeekday, up->hour, up->minute, up->second ) ;
             }
 #endif

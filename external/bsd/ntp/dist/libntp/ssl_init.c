@@ -1,4 +1,4 @@
-/*	$NetBSD: ssl_init.c,v 1.1.1.1 2009/12/13 16:55:05 kardel Exp $	*/
+/*	$NetBSD: ssl_init.c,v 1.2 2010/12/04 23:08:34 christos Exp $	*/
 
 /*
  * ssl_init.c	Common OpenSSL initialization code for the various
@@ -81,13 +81,13 @@ keytype_from_text(
 	LIB_GETBUF(upcased);
 	strncpy(upcased, text, LIB_BUFLENGTH);
 	for (pch = upcased; '\0' != *pch; pch++)
-		*pch = (char)toupper(*pch);
+		*pch = (char)toupper((unsigned char)*pch);
 	key_type = OBJ_sn2nid(upcased);
 #else
 	key_type = 0;
 #endif
 
-	if (!key_type && 'm' == tolower(text[0]))
+	if (!key_type && 'm' == tolower((unsigned char)text[0]))
 		key_type = NID_md5;
 
 	if (!key_type)
@@ -101,11 +101,11 @@ keytype_from_text(
 			fprintf(stderr,
 				"key type %s %u octet digests are too big, max %u\n",
 				keytype_name(key_type), digest_len,
-				MAX_MAC_LEN - sizeof(keyid_t));
+				(unsigned)(MAX_MAC_LEN - sizeof(keyid_t)));
 			msyslog(LOG_ERR,
 				"key type %s %u octet digests are too big, max %u",
 				keytype_name(key_type), digest_len,
-				MAX_MAC_LEN - sizeof(keyid_t));
+				(unsigned)(MAX_MAC_LEN - sizeof(keyid_t)));
 			return 0;
 		}
 #else

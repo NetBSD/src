@@ -1,4 +1,4 @@
-/*	$NetBSD: icom.c,v 1.1.1.1 2009/12/13 16:55:03 kardel Exp $	*/
+/*	$NetBSD: icom.c,v 1.2 2010/12/04 23:08:34 christos Exp $	*/
 
 /*
  * Program to control ICOM radios
@@ -114,7 +114,7 @@ doublefreq(			/* returns void */
  */
 int
 icom_init(
-	char *device,		/* device name/link */
+	const char *device,	/* device name/link */
 	int speed,		/* line speed */
 	int trace		/* trace flags */	)
 {

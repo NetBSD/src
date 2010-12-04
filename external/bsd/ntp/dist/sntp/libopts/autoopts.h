@@ -1,4 +1,4 @@
-/*	$NetBSD: autoopts.h,v 1.1.1.1 2009/12/13 16:57:17 kardel Exp $	*/
+/*	$NetBSD: autoopts.h,v 1.2 2010/12/04 23:08:36 christos Exp $	*/
 
 
 /*
@@ -215,7 +215,10 @@ typedef struct {
 
 #define AGALOC( c, w )          ao_malloc((size_t)c)
 #define AGREALOC( p, c, w )     ao_realloc((void*)p, (size_t)c)
-#define AGFREE(_p)              do{void*X=(void*)_p;ao_free(X);}while(0)
+#define AGFREE(_p)              do{ \
+    void* X = (void*)(intptr_t)_p; \
+    ao_free(X); \
+} while (/*CONSTCOND*/0)
 #define AGDUPSTR( p, s, w )     (p = ao_strdup(s))
 
 static void *

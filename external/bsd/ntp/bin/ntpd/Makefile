@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.6 2010/08/29 18:55:50 kardel Exp $
+#	$NetBSD: Makefile,v 1.7 2010/12/04 23:08:33 christos Exp $
 
-NOGCCERROR=yes
+#NOGCCERROR=yes
 
 .include <bsd.own.mk>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: file.c,v 1.1.1.1 2009/12/13 16:55:09 kardel Exp $	*/
+/*	$NetBSD: file.c,v 1.2 2010/12/04 23:08:34 christos Exp $	*/
 
 
 /*
@@ -133,7 +133,7 @@ optionFileCheck(tOptions* pOpts, tOptDesc* pOD,
         }
 
         if ((pOD->fOptState & OPTST_ALLOC_ARG) != 0)
-            pOD->optCookie = (void *)pOD->optArg.argString;
+            pOD->optCookie = (void *)(intptr_t)pOD->optArg.argString;
         else
             AGDUPSTR(pOD->optCookie, pOD->optArg.argString, "file name");
 
@@ -153,7 +153,7 @@ optionFileCheck(tOptions* pOpts, tOptDesc* pOD,
         }
 
         if ((pOD->fOptState & OPTST_ALLOC_ARG) != 0)
-            pOD->optCookie = (void *)pOD->optArg.argString;
+            pOD->optCookie = (void *)(intptr_t)pOD->optArg.argString;
         else
             AGDUPSTR(pOD->optCookie, pOD->optArg.argString, "file name");
 

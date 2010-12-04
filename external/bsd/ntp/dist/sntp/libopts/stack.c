@@ -1,4 +1,4 @@
-/*	$NetBSD: stack.c,v 1.1.1.1 2009/12/13 16:57:21 kardel Exp $	*/
+/*	$NetBSD: stack.c,v 1.2 2010/12/04 23:08:36 christos Exp $	*/
 
 
 /*
@@ -166,7 +166,7 @@ optionUnstackArg(
         pOptDesc->fOptState &= OPTST_PERSISTENT_MASK;
         if ( (pOptDesc->fOptState & OPTST_INITENABLED) == 0)
             pOptDesc->fOptState |= OPTST_DISABLED;
-        AGFREE( (void*)pAL );
+        AGFREE( pAL );
         pOptDesc->optCookie = NULL;
     }
 }

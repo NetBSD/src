@@ -1,6 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2010/08/28 15:42:45 kardel Exp $
-
-WARNS?=	1	# XXX -Wshadow -Wsign-compare -Wcast-qual
+# $NetBSD: Makefile,v 1.2 2010/12/04 23:08:33 christos Exp $
 
 USE_FORT?= yes	# network client/server
 

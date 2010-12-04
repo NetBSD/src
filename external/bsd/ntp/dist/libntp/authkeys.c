@@ -1,4 +1,4 @@
-/*	$NetBSD: authkeys.c,v 1.1.1.1 2009/12/13 16:55:02 kardel Exp $	*/
+/*	$NetBSD: authkeys.c,v 1.2 2010/12/04 23:08:34 christos Exp $	*/
 
 /*
  * authkeys.c - routines to manage the storage of authentication keys
@@ -339,7 +339,7 @@ MD5auth_setkey(
 	keyid_t keyno,
 	int	keytype,
 	const u_char *key,
-	const int len
+	size_t len
 	)
 {
 	struct savekey *sk;
