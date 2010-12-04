@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.pl,v 1.68 2010/03/30 20:09:25 martin Exp $	*/
+/*	$NetBSD: msg.mi.pl,v 1.69 2010/12/04 14:57:57 jmmv Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.mi.pl,v 1.36 2004/04/17 18:55:35 atatat Exp       */
 
@@ -828,22 +828,6 @@ Nacisnij 'x' a potem ENTER aby wyjsc.
 message tz_back
 {Powroc do glownej listy stref}
 
-message choose_crypt
-{Wybierz sposob szyfrowania hasel, ktorego chcesz uzywac. NetBSD moze korzystac
-z DES, MD5 lub Blowfish.
-
-Tradycyjna metoda DES jest kompatybilna z wiekszoscia unixowych systemow
-operacyjnych, ale wtedy tylko 8 pierwszych znakow w hasle jest rozpoznawanych.
-Metody MD5 oraz Blowfish umozliwiaja dluzsze hasla, niektorzy uwazaja to za
-bardziej bezpieczne.
-
-Jesli posiadasz siec oraz zamierasz korzystac z NIS, pamietaj o mozliwosciach
-maszyn w twojej sieci i wynikajacych stad ograniczeniach.
-
-Jezeli uaktualniasz swoj system i nie chcesz, aby zostaly dokonane zmiany w
-konfiguracji, wybierz ostatnia opcje "nie zmieniaj".
-}
-
 message swapactive
 {Dysk, ktory wybrales posiada partycje wymiany, ktora moze byc aktualnie
 w uzyciu jesli twoj system ma malo pamieci. Poniewaz chcesz zmienic uklad
@@ -933,12 +917,6 @@ message Skip_set {Pomin pakiet}
 message Skip_group {Pomin grupe pakietow}
 message Abandon {Przerwij instalacje}
 message Abort_fetch {Przerwij pobieranie}
-message Password_cipher {Kodowanie hasel}
-message DES {DES}
-message MD5 {MD5}
-message Blowfish_2_7_round {Blowfish 2^7 round}
-message SHA1 {SHA1}
-message do_not_change {nie zmieniaj}
 message Device {Urzadzenie}
 message File_system {SystemPlikow}
 message Select_IPv6_DNS_server {  Wybierz serwer nazw IPv6}

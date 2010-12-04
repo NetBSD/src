@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.en,v 1.160 2010/03/30 20:09:25 martin Exp $	*/
+/*	$NetBSD: msg.mi.en,v 1.161 2010/12/04 14:57:56 jmmv Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -831,22 +831,6 @@ Press 'x' followed by RETURN to quit the timezone selection.
 message tz_back
 { Back to main timezone list}
 
-message choose_crypt
-{Please choose the password cipher to use. NetBSD can be configured to use
-either the DES, MD5, Blowfish or SHA1 schemes.
-
-The traditional DES scheme is compatible with most other Unix-like operating
-systems, but only the first 8 characters of any password will be recognised.
-The MD5, Blowfish and SHA1 schemes allow for longer passwords, and some would
-argue that it's more secure.
-
-If you have a network and intend to use NIS, please bear in mind the
-capabilities of other machines on your network.
-
-If you are upgrading and would like to keep configuration unchanged,
-choose the last option "do not change".
-}
-
 message swapactive
 {The disk that you selected has a swap partition that may currently be
 in use if your system is low on memory. Because you are going to
@@ -940,12 +924,6 @@ message Skip_set {Skip set}
 message Skip_group {Skip set group}
 message Abandon {Abandon installation}
 message Abort_fetch {Abort fetch}
-message Password_cipher {Password cipher}
-message DES {DES}
-message MD5 {MD5}
-message Blowfish_2_7_round {Blowfish 2^7 round}
-message SHA1 {SHA1}
-message do_not_change {do not change}
 message Device {Device}
 message File_system {File system}
 message Select_IPv6_DNS_server {  Select IPv6 DNS server}

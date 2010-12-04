@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.165 2010/04/05 22:53:02 martin Exp $	*/
+/*	$NetBSD: util.c,v 1.166 2010/12/04 14:57:57 jmmv Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1352,41 +1352,6 @@ set_timezone(void)
 	
 done:
 	return 1;
-}
-
-static
-void
-replace_crypt_type(const char *localcipher, const char *ypcipher)
-{
-
-	replace("/etc/passwd.conf", "s/^.*default:.*$/default:/;"
-	    "s/^.*localcipher.*$/\tlocalcipher = %s/;"
-	    "s/^.*ypcipher.*$/\typcipher = %s/", localcipher, ypcipher);
-}
-
-void
-set_crypt_type(void)
-{
-
-	msg_display(MSG_choose_crypt);
-	process_menu(MENU_crypttype, NULL);
-
-	switch (yesno) {
-	case 0:
-		break;
-	case 1:	/* DES */
-		replace_crypt_type("old", "old");
-		break;
-	case 2:	/* MD5 */
-		replace_crypt_type("md5", "md5");
-		break;
-	case 3:	/* blowfish 2^7 */
-		replace_crypt_type("blowfish,7", "blowfish,7");
-		break;
-	case 4:	/* sha1 */
-		replace_crypt_type("sha1", "sha1");
-		break;
-	}
 }
 
 int
