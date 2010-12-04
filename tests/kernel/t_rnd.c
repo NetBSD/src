@@ -1,4 +1,4 @@
-/*	$NetBSD: t_rnd.c,v 1.1 2009/09/08 20:37:45 pooka Exp $	*/
+/*	$NetBSD: t_rnd.c,v 1.2 2010/12/04 17:38:42 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_rnd.c,v 1.1 2009/09/08 20:37:45 pooka Exp $");
+__RCSID("$NetBSD: t_rnd.c,v 1.2 2010/12/04 17:38:42 pooka Exp $");
 
 #include <sys/types.h>
 #include <sys/fcntl.h>
@@ -64,9 +64,32 @@ ATF_TC_BODY(RNDADDDATA, tc)
 		atf_tc_fail_errno("RNDADDDATA");
 }
 
+ATF_TC(RNDADDDATA2);
+ATF_TC_HEAD(RNDADDDATA2, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "checks ioctl(RNDADDDATA) deals with "
+	    "garbage len field");
+}
+ATF_TC_BODY(RNDADDDATA2, tc)
+{
+	rnddata_t rd;
+	int fd;
+
+	rump_init();
+	fd = rump_sys_open("/dev/random", O_RDWR, 0);
+	if (fd == -1)
+		atf_tc_fail_errno("cannot open /dev/random");
+		
+	rd.entropy = 1;
+	rd.len = -1;
+	atf_tc_expect_signal(-1, "PR kern/44190");
+	ATF_REQUIRE_ERRNO(E2BIG, rump_sys_ioctl(fd, RNDADDDATA, &rd) == -1);
+}
+
 ATF_TP_ADD_TCS(tp)
 {
 	ATF_TP_ADD_TC(tp, RNDADDDATA);
+	ATF_TP_ADD_TC(tp, RNDADDDATA2);
 
 	return atf_no_error();
 }
