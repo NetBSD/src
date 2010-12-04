@@ -1,4 +1,4 @@
-/*	$NetBSD: pdc.h,v 1.14 2010/12/04 16:02:55 skrll Exp $	*/
+/*	$NetBSD: pdc.h,v 1.15 2010/12/04 16:04:45 skrll Exp $	*/
 
 /*	$OpenBSD: pdc.h,v 1.35 2007/07/15 20:03:48 kettenis Exp $	*/
 
@@ -299,7 +299,7 @@
 #define	PDC_ERR_NOPROC		-1	/* no such procedure */
 #define	PDC_ERR_NOPT		-2	/* no such option */
 #define	PDC_ERR_COMPL		-3	/* unable to complete w/o error */
-#define	PDC_ERR_NMOD		-5	/* module not found */                                                                                                                                  
+#define	PDC_ERR_NMOD		-5	/* module not found */
 #define	PDC_ERR_EOD		-9	/* end of device list */
 #define	PDC_ERR_INVAL		-10	/* invalid argument */
 #define	PDC_ERR_PFAIL		-12	/* aborted by powerfail */
