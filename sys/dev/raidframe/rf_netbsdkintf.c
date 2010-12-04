@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.275 2010/11/01 02:35:25 mrg Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.276 2010/12/04 10:01:16 mrg Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -139,7 +139,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.275 2010/11/01 02:35:25 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.276 2010/12/04 10:01:16 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -227,10 +227,10 @@ static int raidread_component_area(dev_t, struct vnode *, void *, size_t,
 static int raidwrite_component_area(dev_t, struct vnode *, void *, size_t,
     daddr_t, daddr_t, int);
 
-static int raidwrite_component_label(dev_t, struct vnode *,
-    RF_ComponentLabel_t *);
-static int raidread_component_label(dev_t, struct vnode *,
-    RF_ComponentLabel_t *);
+static int raidwrite_component_label(unsigned,
+    dev_t, struct vnode *, RF_ComponentLabel_t *);
+static int raidread_component_label(unsigned,
+    dev_t, struct vnode *, RF_ComponentLabel_t *);
 
 
 dev_type_open(raidopen);
@@ -1033,8 +1033,8 @@ raidioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	rs = &raid_softc[unit];
 	raidPtr = raidPtrs[unit];
 
-	db1_printf(("raidioctl: %d %d %d %d\n", (int) dev,
-		(int) DISKPART(dev), (int) unit, (int) cmd));
+	db1_printf(("raidioctl: %d %d %d %lu\n", (int) dev,
+		(int) DISKPART(dev), (int) unit, cmd));
 
 	/* Must be open for writes for these commands... */
 	switch (cmd) {
@@ -2441,9 +2441,56 @@ raidunlock(struct raid_softc *rs)
 
 #define RF_COMPONENT_INFO_OFFSET  16384 /* bytes */
 #define RF_COMPONENT_INFO_SIZE     1024 /* bytes */
-#define RF_PARITY_MAP_OFFSET \
-	(RF_COMPONENT_INFO_OFFSET + RF_COMPONENT_INFO_SIZE)
 #define RF_PARITY_MAP_SIZE   RF_PARITYMAP_NBYTE
+
+static daddr_t
+rf_component_info_offset(void)
+{
+
+	return RF_COMPONENT_INFO_OFFSET;
+}
+
+static daddr_t
+rf_component_info_size(unsigned secsize)
+{
+	daddr_t info_size;
+
+	KASSERT(secsize);
+	if (secsize > RF_COMPONENT_INFO_SIZE)
+		info_size = secsize;
+	else
+		info_size = RF_COMPONENT_INFO_SIZE;
+
+	return info_size;
+}
+
+static daddr_t
+rf_parity_map_offset(RF_Raid_t *raidPtr)
+{
+	daddr_t map_offset;
+
+	KASSERT(raidPtr->bytesPerSector);
+	if (raidPtr->bytesPerSector > RF_COMPONENT_INFO_SIZE)
+		map_offset = raidPtr->bytesPerSector;
+	else
+		map_offset = RF_COMPONENT_INFO_SIZE;
+	map_offset += rf_component_info_offset();
+
+	return map_offset;
+}
+
+static daddr_t
+rf_parity_map_size(RF_Raid_t *raidPtr)
+{
+	daddr_t map_size;
+
+	if (raidPtr->bytesPerSector > RF_PARITY_MAP_SIZE)
+		map_size = raidPtr->bytesPerSector;
+	else
+		map_size = RF_PARITY_MAP_SIZE;
+
+	return map_size;
+}
 
 int
 raidmarkclean(RF_Raid_t *raidPtr, RF_RowCol_t col)
@@ -2471,7 +2518,9 @@ raidmarkdirty(RF_Raid_t *raidPtr, RF_RowCol_t col)
 int
 raidfetch_component_label(RF_Raid_t *raidPtr, RF_RowCol_t col)
 {
-	return raidread_component_label(raidPtr->Disks[col].dev,
+	KASSERT(raidPtr->bytesPerSector);
+	return raidread_component_label(raidPtr->bytesPerSector,
+	    raidPtr->Disks[col].dev,
 	    raidPtr->raid_cinfo[col].ci_vp, 
 	    &raidPtr->raid_cinfo[col].ci_label);
 }
@@ -2492,18 +2541,20 @@ raidflush_component_label(RF_Raid_t *raidPtr, RF_RowCol_t col)
 #ifndef RF_NO_PARITY_MAP
 	label->parity_map_modcount = label->mod_counter;
 #endif
-	return raidwrite_component_label(raidPtr->Disks[col].dev,
+	return raidwrite_component_label(raidPtr->bytesPerSector,
+	    raidPtr->Disks[col].dev,
 	    raidPtr->raid_cinfo[col].ci_vp, label);
 }
 
 
 static int
-raidread_component_label(dev_t dev, struct vnode *b_vp,
+raidread_component_label(unsigned secsize, dev_t dev, struct vnode *b_vp,
     RF_ComponentLabel_t *clabel)
 {
 	return raidread_component_area(dev, b_vp, clabel, 
 	    sizeof(RF_ComponentLabel_t),
-	    RF_COMPONENT_INFO_OFFSET, RF_COMPONENT_INFO_SIZE);
+	    rf_component_info_offset(),
+	    rf_component_info_size(secsize));
 }
 
 /* ARGSUSED */
@@ -2551,12 +2602,13 @@ raidread_component_area(dev_t dev, struct vnode *b_vp, void *data,
 
 
 static int
-raidwrite_component_label(dev_t dev, struct vnode *b_vp,
-	RF_ComponentLabel_t *clabel)
+raidwrite_component_label(unsigned secsize, dev_t dev, struct vnode *b_vp,
+    RF_ComponentLabel_t *clabel)
 {
 	return raidwrite_component_area(dev, b_vp, clabel,
 	    sizeof(RF_ComponentLabel_t),
-	    RF_COMPONENT_INFO_OFFSET, RF_COMPONENT_INFO_SIZE, 0);
+	    rf_component_info_offset(),
+	    rf_component_info_size(secsize), 0);
 }
 
 /* ARGSUSED */
@@ -2611,7 +2663,8 @@ rf_paritymap_kern_write(RF_Raid_t *raidPtr, struct rf_paritymap_ondisk *map)
 		raidwrite_component_area(raidPtr->Disks[c].dev,
 		    raidPtr->raid_cinfo[c].ci_vp, map,
 		    RF_PARITYMAP_NBYTE,
-		    RF_PARITY_MAP_OFFSET, RF_PARITY_MAP_SIZE, 0);
+		    rf_parity_map_offset(raidPtr),
+		    rf_parity_map_size(raidPtr), 0);
 	}
 }
 
@@ -2629,7 +2682,8 @@ rf_paritymap_kern_read(RF_Raid_t *raidPtr, struct rf_paritymap_ondisk *map)
 		raidread_component_area(raidPtr->Disks[c].dev,
 		    raidPtr->raid_cinfo[c].ci_vp, &tmp,
 		    RF_PARITYMAP_NBYTE,
-		    RF_PARITY_MAP_OFFSET, RF_PARITY_MAP_SIZE);
+		    rf_parity_map_offset(raidPtr),
+		    rf_parity_map_size(raidPtr));
 		if (first) {
 			memcpy(map, &tmp, sizeof(*map));
 			first = 0;
@@ -2909,7 +2963,8 @@ rf_ReconstructInPlaceThread(struct rf_recon_req *req)
 
 static RF_AutoConfig_t *
 rf_get_component(RF_AutoConfig_t *ac_list, dev_t dev, struct vnode *vp,
-    const char *cname, RF_SectorCount_t size)
+    const char *cname, RF_SectorCount_t size, uint64_t numsecs,
+    unsigned secsize)
 {
 	int good_one = 0;
 	RF_ComponentLabel_t *clabel; 
@@ -2929,30 +2984,30 @@ oomem:
 		    return NULL; /* XXX probably should panic? */
 	}
 
-	if (!raidread_component_label(dev, vp, clabel)) {
-		    /* Got the label.  Does it look reasonable? */
-		    if (rf_reasonable_label(clabel) && 
-			(clabel->partitionSize <= size)) {
+	if (!raidread_component_label(secsize, dev, vp, clabel)) {
+		/* Got the label.  Does it look reasonable? */
+		if (rf_reasonable_label(clabel) && 
+		    (clabel->partitionSize <= size)) {
 #ifdef DEBUG
-			    printf("Component on: %s: %llu\n",
+			printf("Component on: %s: %llu\n",
 				cname, (unsigned long long)size);
-			    rf_print_component_label(clabel);
+			rf_print_component_label(clabel);
 #endif
-			    /* if it's reasonable, add it, else ignore it. */
-			    ac = malloc(sizeof(RF_AutoConfig_t), M_RAIDFRAME,
+			/* if it's reasonable, add it, else ignore it. */
+			ac = malloc(sizeof(RF_AutoConfig_t), M_RAIDFRAME,
 				M_NOWAIT);
-			    if (ac == NULL) {
-				    free(clabel, M_RAIDFRAME);
-				    goto oomem;
-			    }
-			    strlcpy(ac->devname, cname, sizeof(ac->devname));
-			    ac->dev = dev;
-			    ac->vp = vp;
-			    ac->clabel = clabel;
-			    ac->next = ac_list;
-			    ac_list = ac;
-			    good_one = 1;
-		    }
+			if (ac == NULL) {
+				free(clabel, M_RAIDFRAME);
+				goto oomem;
+			}
+			strlcpy(ac->devname, cname, sizeof(ac->devname));
+			ac->dev = dev;
+			ac->vp = vp;
+			ac->clabel = clabel;
+			ac->next = ac_list;
+			ac_list = ac;
+			good_one = 1;
+		}
 	}
 	if (!good_one) {
 		/* cleanup */
@@ -2976,7 +3031,10 @@ rf_find_raid_components(void)
 	int error;
 	int i;
 	RF_AutoConfig_t *ac_list;
+	uint64_t numsecs;
+	unsigned secsize;
 
+	RF_ASSERT(raidPtr->bytesPerSector < rf_component_info_offset());
 
 	/* initialize the AutoConfig list */
 	ac_list = NULL;
@@ -3036,6 +3094,11 @@ rf_find_raid_components(void)
 			continue;
 		}
 
+		error = getdisksize(vp, &numsecs, &secsize);
+		if (error) {
+			vput(vp);
+			continue;
+		}
 		if (wedge) {
 			struct dkwedge_info dkw;
 			error = VOP_IOCTL(vp, DIOCGWEDGEINFO, &dkw, FREAD,
@@ -3057,7 +3120,7 @@ rf_find_raid_components(void)
 			}
 				
 			ac_list = rf_get_component(ac_list, dev, vp,
-			    device_xname(dv), dkw.dkw_size);
+			    device_xname(dv), dkw.dkw_size, numsecs, secsize);
 			continue;
 		}
 
@@ -3102,7 +3165,7 @@ rf_find_raid_components(void)
 			snprintf(cname, sizeof(cname), "%s%c",
 			    device_xname(dv), 'a' + i);
 			ac_list = rf_get_component(ac_list, dev, vp, cname,
-				label.d_partitions[i].p_size);
+				label.d_partitions[i].p_size, numsecs, secsize);
 		}
 	}
 	deviter_release(&di);
