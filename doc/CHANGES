@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1467 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1468 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -794,4 +794,8 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	module: Rename <module>.prop to <module>.plist.  [jnemeth 20101127]
 	bind: Update to 9.7.2-P3. Bug and security fixes since 9.7.2b1. See
 		src/external/bsd/bind/dist/CHANGES [christos 20101202]
+	passwd.conf(5): Set the default local cipher for passwords to 'sha1'.
+		[jmmv 20101201]
 	raid(4):  Add support for non 512-byte sector devices.  [mrg 20101203]
+	sysinst(8): Drop the question to select a password cipher algorithm.
+		[jmmv 20101204]
