@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_peer.c,v 1.1.1.1 2009/12/13 16:55:35 kardel Exp $	*/
+/*	$NetBSD: ntp_peer.c,v 1.2 2010/12/04 23:08:35 christos Exp $	*/
 
 /*
  * ntp_peer.c - management of data maintained for peer associations
@@ -462,7 +462,7 @@ peer_config(
 	u_int flags,
 	int ttl,
 	keyid_t key,
-	u_char *keystr
+	const u_char *keystr
 	)
 {
 	u_char cast_flags;

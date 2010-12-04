@@ -1,4 +1,4 @@
-/*	$NetBSD: ntpq-subs.c,v 1.2 2009/12/14 00:49:45 christos Exp $	*/
+/*	$NetBSD: ntpq-subs.c,v 1.3 2010/12/04 23:08:35 christos Exp $	*/
 
 /*
  * ntpq_ops.c - subroutines which are called to perform operations by ntpq
@@ -196,7 +196,7 @@ char flash2[] = " .+*    "; /* flash decode for version 2 */
 char flash3[] = " x.-+#*o"; /* flash decode for peer status version 3 */
 
 struct varlist {
-	char *name;
+	const char *name;
 	char *value;
 } g_varlist[MAXLIST] = { { 0, 0 } };
 
@@ -309,7 +309,7 @@ dormvlist(
 			(void) fprintf(stderr, "Variable `%s' not found\n",
 				       name);
 		} else {
-			free((void *)vl->name);
+			free((void *)(intptr_t)vl->name);
 			if (vl->value != 0)
 			    free(vl->value);
 			for ( ; (vl+1) < (g_varlist + MAXLIST)
@@ -334,7 +334,7 @@ doclearvlist(
 	register struct varlist *vl;
 
 	for (vl = vlist; vl < vlist + MAXLIST && vl->name != 0; vl++) {
-		free((void *)vl->name);
+		free((void *)(intptr_t)vl->name);
 		vl->name = 0;
 		if (vl->value != 0) {
 			free(vl->value);
@@ -1434,7 +1434,7 @@ doprintpeers(
 	sockaddr_u srcadr;
 	sockaddr_u dstadr;
 	u_long srcport = 0;
-	char *dstadr_refid = "0.0.0.0";
+	const char *dstadr_refid = "0.0.0.0";
 	u_long stratum = 0;
 	long ppoll = 0;
 	long hpoll = 0;

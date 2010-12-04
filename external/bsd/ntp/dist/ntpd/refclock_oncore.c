@@ -1,4 +1,5 @@
-/*	$NetBSD: refclock_oncore.c,v 1.2 2009/12/14 00:46:21 christos Exp $	*/
+/*	$NetBSD: refclock_oncore.c,v 1.3 2010/12/04 23:08:35 christos Exp $	*/
+
 
 /*
  * ----------------------------------------------------------------------------
@@ -332,7 +333,7 @@ struct instance {
 	u_char	printed;
 	u_char	polled;
 	u_long	ev_serial;
-	int	Rcvptr;
+	unsigned	Rcvptr;
 	u_char	Rcvbuf[500];
 	u_char	BEHa[160];	/* Ba, Ea or Ha */
 	u_char	BEHn[80];	/* Bn , En , or Hn */
@@ -435,47 +436,47 @@ static struct msg_desc {
 	int		shmem;
 } oncore_messages[] = {
 			/* Ea and En first since they're most common */
-	{ "Ea",  76,    oncore_msg_BaEaHa, "mdyyhmsffffaaaaoooohhhhmmmmvvhhddtntimsdimsdimsdimsdimsdimsdimsdimsdsC" },
-	{ "Ba",  68,    oncore_msg_BaEaHa, "mdyyhmsffffaaaaoooohhhhmmmmvvhhddtntimsdimsdimsdimsdimsdimsdsC" },
-	{ "Ha", 154,    oncore_msg_BaEaHa, "mdyyhmsffffaaaaoooohhhhmmmmaaaaoooohhhhmmmmVVvvhhddntimsiddimsiddimsiddimsiddimsiddimsiddimsiddimsiddimsiddimsiddimsiddimsiddssrrccooooTTushmvvvvvvC" },
-	{ "Bn",  59,    oncore_msg_BnEnHn, "otaapxxxxxxxxxxpysreensffffsffffsffffsffffsffffsffffC" },
-	{ "En",  69,    oncore_msg_BnEnHn, "otaapxxxxxxxxxxpysreensffffsffffsffffsffffsffffsffffsffffsffffC" },
-	{ "Hn",  78,    oncore_msg_BnEnHn, "" },
-	{ "Ab",  10,    0,                 "" },
-	{ "Ac",  11,    0,                 "" },
-	{ "Ad",  11,    oncore_msg_Adef,   "" },
-	{ "Ae",  11,    oncore_msg_Adef,   "" },
-	{ "Af",  15,    oncore_msg_Adef,   "" },
-	{ "Ag",   8,    oncore_msg_Ag,     "" }, /* Satellite mask angle */
-	{ "As",  20,    oncore_msg_As,     "" },
-	{ "At",   8,    oncore_msg_At,     "" },
-	{ "Au",  12,    0,                 "" },
-	{ "Av",   8,    0,                 "" },
-	{ "Aw",   8,    0,                 "" },
-	{ "Ay",  11,    oncore_msg_Ay,     "" },
-	{ "Az",  11,    oncore_msg_Az,     "" },
-	{ "AB",   8,    0,                 "" },
-	{ "Bb",  92,    0,                 "" },
-	{ "Bd",  23,    oncore_msg_Bd,     "" },
-	{ "Bj",   8,    oncore_msg_Bj,     "" },
-	{ "Bl",  41,    oncore_msg_Bl,     "" },
-	{ "Ca",   9,    oncore_msg_CaFaIa, "" },
-	{ "Cb",  33,    oncore_msg_Cb,     "" },
-	{ "Cf",   7,    oncore_msg_Cf,     "" },
-	{ "Cg",   8,    0,                 "" },
-	{ "Ch",   9,    0,                 "" },
-	{ "Cj", 294,    oncore_msg_Cj,     "" },
-	{ "Ek",  71,    0,                 "" },
-	{ "Fa",   9,    oncore_msg_CaFaIa, "" },
-	{ "Ga",  20,    oncore_msg_Ga,     "" },
-	{ "Gb",  17,    oncore_msg_Gb,     "" },
-	{ "Gc",   8,    0,                 "" },
-	{ "Gd",   8,    0,                 "" },
-	{ "Ge",   8,    0,                 "" },
-	{ "Gj",  21,    oncore_msg_Gj,     "" },
-	{ "Ia",  10,    oncore_msg_CaFaIa, "" },
-	{ "Sz",   8,    oncore_msg_Sz,     "" },
-	{ {0},	  7,	0,		   "" }
+	{ "Ea",  76,    oncore_msg_BaEaHa, "mdyyhmsffffaaaaoooohhhhmmmmvvhhddtntimsdimsdimsdimsdimsdimsdimsdimsdsC", 0 },
+	{ "Ba",  68,    oncore_msg_BaEaHa, "mdyyhmsffffaaaaoooohhhhmmmmvvhhddtntimsdimsdimsdimsdimsdimsdsC", 0 },
+	{ "Ha", 154,    oncore_msg_BaEaHa, "mdyyhmsffffaaaaoooohhhhmmmmaaaaoooohhhhmmmmVVvvhhddntimsiddimsiddimsiddimsiddimsiddimsiddimsiddimsiddimsiddimsiddimsiddimsiddssrrccooooTTushmvvvvvvC", 0 },
+	{ "Bn",  59,    oncore_msg_BnEnHn, "otaapxxxxxxxxxxpysreensffffsffffsffffsffffsffffsffffC", 0 },
+	{ "En",  69,    oncore_msg_BnEnHn, "otaapxxxxxxxxxxpysreensffffsffffsffffsffffsffffsffffsffffsffffC", 0 },
+	{ "Hn",  78,    oncore_msg_BnEnHn, "", 0 },
+	{ "Ab",  10,    0,                 "", 0 },
+	{ "Ac",  11,    0,                 "", 0 },
+	{ "Ad",  11,    oncore_msg_Adef,   "", 0 },
+	{ "Ae",  11,    oncore_msg_Adef,   "", 0 },
+	{ "Af",  15,    oncore_msg_Adef,   "", 0 },
+	{ "Ag",   8,    oncore_msg_Ag,     "", 0 }, /* Satellite mask angle */
+	{ "As",  20,    oncore_msg_As,     "", 0 },
+	{ "At",   8,    oncore_msg_At,     "", 0 },
+	{ "Au",  12,    0,                 "", 0 },
+	{ "Av",   8,    0,                 "", 0 },
+	{ "Aw",   8,    0,                 "", 0 },
+	{ "Ay",  11,    oncore_msg_Ay,     "", 0 },
+	{ "Az",  11,    oncore_msg_Az,     "", 0 },
+	{ "AB",   8,    0,                 "", 0 },
+	{ "Bb",  92,    0,                 "", 0 },
+	{ "Bd",  23,    oncore_msg_Bd,     "", 0 },
+	{ "Bj",   8,    oncore_msg_Bj,     "", 0 },
+	{ "Bl",  41,    oncore_msg_Bl,     "", 0 },
+	{ "Ca",   9,    oncore_msg_CaFaIa, "", 0 },
+	{ "Cb",  33,    oncore_msg_Cb,     "", 0 },
+	{ "Cf",   7,    oncore_msg_Cf,     "", 0 },
+	{ "Cg",   8,    0,                 "", 0 },
+	{ "Ch",   9,    0,                 "", 0 },
+	{ "Cj", 294,    oncore_msg_Cj,     "", 0 },
+	{ "Ek",  71,    0,                 "", 0 },
+	{ "Fa",   9,    oncore_msg_CaFaIa, "", 0 },
+	{ "Ga",  20,    oncore_msg_Ga,     "", 0 },
+	{ "Gb",  17,    oncore_msg_Gb,     "", 0 },
+	{ "Gc",   8,    0,                 "", 0 },
+	{ "Gd",   8,    0,                 "", 0 },
+	{ "Ge",   8,    0,                 "", 0 },
+	{ "Gj",  21,    oncore_msg_Gj,     "", 0 },
+	{ "Ia",  10,    oncore_msg_CaFaIa, "", 0 },
+	{ "Sz",   8,    oncore_msg_Sz,     "", 0 },
+	{ {0},	  7,	0,		   "", 0 }
 };
 
 
@@ -552,7 +553,7 @@ static u_char oncore_cmd_Ia[]  = { 'I', 'a' };					    /* 12	Self Test				*/
  * Gj in UT as of 3.0, 1999 , Bj as of 1.3
  */
 
-static char *Month[] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jly",
+static const char *Month[] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jly",
 	"Aug", "Sep", "Oct", "Nov", "Dec" };
 
 #define DEVICE1 	"/dev/oncore.serial.%d" /* name of serial device */
@@ -844,7 +845,8 @@ oncore_ppsapi(
 	)
 {
 	int cap, mode, mode1;
-	char *cp, Msg[160];
+	const char *cp;
+	char Msg[160];
 
 	if (time_pps_getcap(instance->pps_h, &cap) < 0) {
 		oncore_log(instance, LOG_ERR, "time_pps_getcap failed: %m");
@@ -928,12 +930,12 @@ oncore_init_shmem(
 	struct instance *instance
 	)
 {
-	int i, l, n, fd, shmem_old_size, n1;
+	int l, fd;
 	char Msg[160];
 	u_char *cp, *cp1, *buf, *shmem_old;
 	struct msg_desc *mp;
 	struct stat sbuf;
-	size_t shmem_length;
+	size_t i, n, n1, shmem_length, shmem_old_size;
 
 	/*
 	* The first thing we do is see if there is an instance->shmem_fname file (still)
@@ -1197,8 +1199,9 @@ oncore_read_config(
  */
 
 	FILE	*fd;
-	char	*cp, *cc, *ca, line[100], units[2], device[64], Msg[160], **cpp;
-	char	*dirs[] = { "/etc/ntp", "/etc", 0 };
+	char	*cc, *ca, line[100], units[2], device[64], Msg[160];
+	const char *cp;
+	const char **cpp, *dirs[] = { "/etc/ntp", "/etc", 0 };
 	int	i, sign, lat_flg, long_flg, ht_flg, mode, mask;
 	double	f1, f2, f3;
 
@@ -1226,10 +1229,11 @@ oncore_read_config(
 	mode = mask = 0;
 	lat_flg = long_flg = ht_flg = 0;
 	while (fgets(line, 100, fd)) {
+		char *cpw;
 
 		/* Remove comments */
-		if ((cp = strchr(line, '#')))
-			*cp = '\0';
+		if ((cpw = strchr(line, '#')))
+			*cpw = '\0';
 
 		/* Remove trailing space */
 		for (i = strlen(line);
@@ -1265,9 +1269,9 @@ oncore_read_config(
 		}
 
 		/* Uppercase argument as well */
-		for (cp = ca; *cp; cp++)
-			if (isascii((unsigned char)*cp) && islower((unsigned char)*cp))
-				*cp = toupper((unsigned char)*cp);
+		for (cpw = ca; *cpw; cpw++)
+			if (isascii((unsigned char)*cpw) && islower((unsigned char)*cpw))
+				*cpw = toupper((unsigned char)*cpw);
 
 		if (!strncmp(cc, "LAT", (size_t) 3)) {
 			f1 = f2 = f3 = 0;
@@ -1457,8 +1461,7 @@ oncore_consume(
 	struct instance *instance
 	)
 {
-	int i, m;
-	unsigned l;
+	unsigned i, m, l;
 
 	while (rcvptr >= 7) {
 		if (rcvbuf[0] != '@' || rcvbuf[1] != '@') {
@@ -1956,7 +1959,8 @@ oncore_msg_Ag(
 	u_char *buf,
 	size_t len
 	)
-{		char  Msg[160], *cp;
+{		char  Msg[160];
+		const char *cp;
 
 		cp = "set to";
 		if (instance->o_state == ONCORE_RUN)
@@ -2484,7 +2488,8 @@ oncore_msg_Bl(
 {
 	int	chan, id, subframe, valid, page, i, j, tow;
 	int	day_now, day_lsf;
-	char	*cp, Msg[120];
+	const char *cp;
+	char Msg[120];
 	enum {
 		WARN_NOT_YET,
 		WARN_0,
@@ -2870,19 +2875,20 @@ oncore_msg_Cj_id(
 	size_t len
 	)
 {
-	char *cp, *cp1, *cp2, Model[21], Msg[160];
+	const char *cp, *cp1;
+	char *cp2, Model[21], Msg[160];
 
 	/* Write Receiver ID message to clockstats file */
 
 	instance->Cj[294] = '\0';
-	for (cp=(char *)instance->Cj; cp< (char *) &instance->Cj[294]; ) {
-		cp1 = strchr(cp, '\r');
-		if (!cp1)
-			cp1 = (char *)&instance->Cj[294];
-		*cp1 = '\0';
+	for (cp= (char *)instance->Cj; cp< (char *) &instance->Cj[294]; ) {
+		char *cpw = strchr(cp, '\r');
+		if (!cpw)
+			cpw = (char *)&instance->Cj[294];
+		*cpw = '\0';
 		oncore_log(instance, LOG_NOTICE, cp);
-		*cp1 = '\r';
-		cp = cp1+2;
+		*cpw = '\r';
+		cp = cpw+2;
 	}
 
 	/* next, the Firmware Version and Revision numbers */
@@ -3031,7 +3037,7 @@ oncore_msg_Cj_init(
 	if (mode != 0) {
 			/* cable delay in ns */
 		memcpy(Cmd, oncore_cmd_Az, (size_t) sizeof(oncore_cmd_Az));
-		w32_buf(&Cmd[-2+4], instance->delay);
+		w32_buf(&Cmd[-2+4], (int)instance->delay);
 		oncore_sendmsg(instance, Cmd,  sizeof(oncore_cmd_Az));	/* 6,8,12 */
 
 			/* PPS offset in ns */
@@ -3134,7 +3140,8 @@ oncore_msg_Gb(
 	size_t len
 	)
 {
-	char	Msg[160], *gmts;
+	char	Msg[160];
+	const char *gmts;
 	int	mo, d, y, h, m, s, gmth, gmtm;
 
 	mo = buf[4];
@@ -3168,7 +3175,8 @@ oncore_msg_Gj(
 	)
 {
 	int dt;
-	char Msg[160], *cp;
+	char Msg[160];
+	const char *cp;
 
 	instance->saw_Gj = 1; /* flag, saw_Gj, dont need to try Bj in check_leap */
 
@@ -3238,7 +3246,7 @@ oncore_antenna_report(
 	struct instance *instance,
 	enum antenna_state new_state)
 {
-	char *cp;
+	const char *cp;
 
 	if (instance->ant_state == new_state)
 		return;

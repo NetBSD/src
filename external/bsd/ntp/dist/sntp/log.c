@@ -1,4 +1,4 @@
-/*	$NetBSD: log.c,v 1.1.1.1 2009/12/13 16:57:10 kardel Exp $	*/
+/*	$NetBSD: log.c,v 1.2 2010/12/04 23:08:36 christos Exp $	*/
 
 #include "log.h"
 #include "sntp-opts.h"
@@ -9,7 +9,7 @@ int filelog = 0;
 FILE *log_file;
 
 
-void log_msg(char *message, char type) {
+void log_msg(const char *message, char type) {
 	if(init) {
 		time_t cur_time = time(NULL);
 		char *timestamp = ctime(&cur_time);
@@ -36,7 +36,7 @@ void log_msg(char *message, char type) {
 	}
 }
 
-void debug_msg(char *message) {
+void debug_msg(const char *message) {
 	if(HAVE_OPT(FILELOG)) {
 		time_t cur_time = time(NULL);
 		char *timestamp = ctime(&cur_time);

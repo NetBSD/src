@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_scanner.c,v 1.2 2010/08/28 20:52:55 kardel Exp $	*/
+/*	$NetBSD: ntp_scanner.c,v 1.3 2010/12/04 23:08:35 christos Exp $	*/
 
 
 /* ntp_scanner.c
@@ -71,12 +71,12 @@ keyword(
 	int token
 	)
 {
-	int i;
+	size_t i;
 	const char *text;
 
 	i = token - LOWEST_KEYWORD_ID;
 
-	if (i >= 0 && i < COUNTOF(keyword_text))
+	if (i < COUNTOF(keyword_text))
 		text = keyword_text[i];
 	else
 		text = NULL;
@@ -278,7 +278,7 @@ is_integer(
 
 	/* Check that all the remaining characters are digits */
 	for (; lexeme[i]; ++i) {
-		if (!isdigit(lexeme[i]))
+		if (!isdigit((unsigned char)lexeme[i]))
 			return 0;
 	}
 	return 1;
@@ -301,7 +301,7 @@ is_double(
 		i++;
 
 	/* Read the integer part */
-	for (; lexeme[i] && isdigit(lexeme[i]); i++)
+	for (; lexeme[i] && isdigit((unsigned char)lexeme[i]); i++)
 		num_digits++;
 
 	/* Check for the required decimal point */
@@ -311,7 +311,7 @@ is_double(
 		return 0;
 
 	/* Check for any digits after the decimal point */
-	for (; lexeme[i] && isdigit(lexeme[i]); i++)
+	for (; lexeme[i] && isdigit((unsigned char)lexeme[i]); i++)
 		num_digits++;
 
 	/*
@@ -326,7 +326,7 @@ is_double(
 		return 1;
 
 	/* There is still more input, read the exponent */
-	if ('e' == tolower(lexeme[i]))
+	if ('e' == tolower((unsigned char)lexeme[i]))
 		i++;
 	else
 		return 0;
@@ -336,7 +336,7 @@ is_double(
 		i++;
 
 	/* Now read the exponent part */
-	while (lexeme[i] && isdigit(lexeme[i]))
+	while (lexeme[i] && isdigit((unsigned char)lexeme[i]))
 		i++;
 
 	/* Check if we are done */
@@ -401,7 +401,7 @@ create_string_token(
 	 * ignore end of line whitespace
 	 */
 	pch = lexeme;
-	while (*pch && isspace(*pch))
+	while (*pch && isspace((unsigned char)*pch))
 		pch++;
 
 	if (!*pch) {
@@ -426,7 +426,8 @@ yylex(
 	void
 	)
 {
-	int i, instring = 0;
+	size_t i;
+	int instring = 0;
 	int yylval_was_set = 0;
 	int token;		/* The return value/the recognized token */
 	int ch;
@@ -638,7 +639,7 @@ normal_return:
 lex_too_long:
 	yytext[min(sizeof(yytext) - 1, 50)] = 0;
 	msyslog(LOG_ERR, 
-		"configuration item on line %d longer than limit of %d, began with '%s'",
+		"configuration item on line %d longer than limit of %zu, began with '%s'",
 		ip_file->line_no, sizeof(yytext) - 1, yytext);
 
 	/*

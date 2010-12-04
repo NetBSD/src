@@ -1,4 +1,4 @@
-/*	$NetBSD: ntpdate.c,v 1.1.1.1 2009/12/13 16:56:20 kardel Exp $	*/
+/*	$NetBSD: ntpdate.c,v 1.2 2010/12/04 23:08:35 christos Exp $	*/
 
 /*
  * ntpdate - set the time of day by polling one or more NTP servers
@@ -759,7 +759,7 @@ receive(
 	 */
 	if (rbufp->recv_length == LEN_PKT_NOMAC)
 		has_mac = 0;
-	else if (rbufp->recv_length >= LEN_PKT_NOMAC)
+	else if (rbufp->recv_length >= (int)LEN_PKT_NOMAC)
 		has_mac = 1;
 	else {
 		if (debug)
@@ -1867,7 +1867,7 @@ input_handler(void)
 	register int n;
 	register struct recvbuf *rb;
 	struct sock_timeval tvzero;
-	int fromlen;
+	socklen_t fromlen;
 	l_fp ts;
 	int i;
 #ifdef HAVE_POLL_H

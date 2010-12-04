@@ -1,4 +1,4 @@
-/*	$NetBSD: ntpq.c,v 1.1.1.1 2009/12/13 16:56:31 kardel Exp $	*/
+/*	$NetBSD: ntpq.c,v 1.2 2010/12/04 23:08:35 christos Exp $	*/
 
 /*
  * ntpq - query an NTP server using mode 6 commands
@@ -397,7 +397,7 @@ struct sock_timeval tvout = { DEFTIMEOUT, 0 };	/* time out for reads */
 struct sock_timeval tvsout = { DEFSTIMEOUT, 0 };/* secondary time out */
 l_fp delay_time;				/* delay time */
 char currenthost[LENHOSTNAME];			/* current host name */
-struct sockaddr_in hostaddr = { 0 };		/* host address */
+struct sockaddr_in hostaddr;			/* host address */
 int showhostnames = 1;				/* show host names by default */
 
 int ai_fam_templ;				/* address family */
@@ -797,7 +797,7 @@ sendpkt(
 	)
 {
 	if (debug >= 3)
-		printf("Sending %u octets\n", xdatalen);
+		printf("Sending %zu octets\n", xdatalen);
 
 	if (send(sockfd, xdata, (size_t)xdatalen, 0) == -1) {
 		warning("write to %s failed", currenthost, "");
@@ -1053,7 +1053,7 @@ getresponse(
 			shouldbesize = (shouldbesize + 7) & ~7;
 
 			maclen = n - shouldbesize;
-			if (maclen >= MIN_MAC_LEN) {
+			if (maclen >= (int)MIN_MAC_LEN) {
 				printf(
 					"Packet shows signs of authentication (total %d, data %d, mac %d)\n",
 					n, shouldbesize, maclen);
@@ -1314,7 +1314,7 @@ sendrequest(
 		return 1;
 	} else if ((size_t)maclen != (info_auth_hashlen + sizeof(keyid_t))) {
 		fprintf(stderr,
-			"%d octet MAC, %u expected with %u octet digest\n",
+			"%d octet MAC, %zu expected with %zu octet digest\n",
 			maclen, (info_auth_hashlen + sizeof(keyid_t)),
 			info_auth_hashlen);
 		return 1;
@@ -2395,7 +2395,7 @@ keytype(
 	int		key_type;
 
 	if (!pcmd->nargs) {
-		fprintf(fp, "keytype is %s with %u octet digests\n",
+		fprintf(fp, "keytype is %s with %zu octet digests\n",
 			keytype_name(info_auth_keytype),
 			info_auth_hashlen);
 		return;
@@ -2986,7 +2986,7 @@ rawprint(
 			 */
 			if (cp == (cpend - 1) || *(cp + 1) != '\n')
 			    makeascii(1, cp, fp);
-		} else if (isspace(*cp) || isprint(*cp))
+		} else if (isspace((unsigned char)*cp) || isprint((unsigned char)*cp))
 			putc(*cp, fp);
 		else
 			makeascii(1, cp, fp);

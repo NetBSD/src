@@ -1,9 +1,9 @@
-/*	$NetBSD: crypto.c,v 1.1.1.1 2009/12/13 16:57:10 kardel Exp $	*/
+/*	$NetBSD: crypto.c,v 1.2 2010/12/04 23:08:36 christos Exp $	*/
 
 #include "crypto.h"
 
 struct key *key_ptr;
-int key_cnt = 0;
+size_t key_cnt = 0;
 
 /* Generates a md5 digest of the ntp packet (exluding the MAC) concatinated
  * with the key specified in keyid and compares this digest to the digest in
@@ -17,7 +17,7 @@ auth_md5(
 	struct key *cmp_key
 	)
 {
-	register int a;
+	size_t a;
 	char digest[16];
 	MD5_CTX ctx;
 	char *digest_data;
@@ -32,7 +32,7 @@ auth_md5(
 	for (a = 0; a < LEN_PKT_NOMAC; a++)
 		digest_data[a] = pkt_data[a];
 
-	for (a = 0; a < cmp_key->key_len; a++)
+	for (a = 0; a < (size_t)cmp_key->key_len; a++)
 		digest_data[LEN_PKT_NOMAC + a] = cmp_key->key_seq[a];
 
 	MD5Update(&ctx, (u_char *)digest_data, LEN_PKT_NOMAC + cmp_key->key_len);
@@ -59,7 +59,8 @@ auth_init(
 {
 	FILE *keyf = fopen(keyfile, "r"); 
 	struct key *prev = NULL;
-	register int a, line_limit;
+	size_t a;
+	int line_limit;
 	int scan_cnt, line_cnt = 0;
 	char kbuf[96];
 
@@ -160,7 +161,7 @@ get_key(
 	struct key **d_key
 	)
 {
-	register int a;
+	size_t a;
 	struct key *itr_key = key_ptr;
 
 	if (key_cnt == 0)

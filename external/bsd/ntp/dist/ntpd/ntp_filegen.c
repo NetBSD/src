@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_filegen.c,v 1.1.1.1 2009/12/13 16:55:31 kardel Exp $	*/
+/*	$NetBSD: ntp_filegen.c,v 1.2 2010/12/04 23:08:35 christos Exp $	*/
 
 /*
  * ntp_filegen.c,v 3.12 1994/01/25 19:06:11 kardel Exp
@@ -592,7 +592,7 @@ filegen_register(
 #ifdef DEBUG
 void
 filegen_unregister(
-	char *name
+	const char *name
 	)
 {
 	struct filegen_entry **	ppfe;

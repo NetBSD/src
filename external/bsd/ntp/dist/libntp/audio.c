@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.2 2009/12/14 00:38:48 christos Exp $	*/
+/*	$NetBSD: audio.c,v 1.3 2010/12/04 23:08:34 christos Exp $	*/
 
 /*
  * audio.c - audio interface for reference clock audio drivers
@@ -209,7 +209,7 @@ audio_config_read(
  */
 int
 audio_init(
-	char	*dname,		/* device name */
+	const char *dname,	/* device name */
 	int	bufsiz,		/* buffer size */
 	int	unit		/* device unit (0-3) */
 	)
@@ -226,7 +226,7 @@ audio_init(
 #endif
 	int fd;
 	int rval;
-	char *actl =
+	const char *actl =
 #ifdef PCM_STYLE_SOUND
 		actl_dev
 #else

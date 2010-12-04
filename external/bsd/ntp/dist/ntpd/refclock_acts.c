@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_acts.c,v 1.2 2009/12/14 00:42:21 christos Exp $	*/
+/*	$NetBSD: refclock_acts.c,v 1.3 2010/12/04 23:08:35 christos Exp $	*/
 
 /*
  * refclock_acts - clock driver for the NIST/USNO/PTB/NPL Computer Time
@@ -452,7 +452,7 @@ acts_timecode(
 	char	dstchar;	/* WWVB daylight/savings indicator */
 	int	tz;		/* WWVB timezone */
 
-	u_int	leapmonth;	/* PTB/NPL month of leap */
+	int	leapmonth;	/* PTB/NPL month of leap */
 	char	leapdir;	/* PTB/NPL leap direction */
 
 	/*

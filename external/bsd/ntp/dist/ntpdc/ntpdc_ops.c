@@ -1,4 +1,4 @@
-/*	$NetBSD: ntpdc_ops.c,v 1.1.1.1 2009/12/13 16:56:25 kardel Exp $	*/
+/*	$NetBSD: ntpdc_ops.c,v 1.2 2010/12/04 23:08:35 christos Exp $	*/
 
 /*
  * ntpdc_ops.c - subroutines which are called to perform operations by
@@ -1369,7 +1369,7 @@ again:
 		sendsize = v4sizeof(struct conf_peer);
 
 	items = 1;
-	while (pcmd->nargs > items) {
+	while (pcmd->nargs > (size_t)items) {
 		if (STREQ(pcmd->argval[items].string, "prefer"))
 		    flags |= CONF_FLAG_PREFER;
 		else if (STREQ(pcmd->argval[items].string, "burst"))
@@ -1596,7 +1596,7 @@ doset(
 
 	sys.flags = 0;
 	res = 0;
-	for (items = 0; items < pcmd->nargs; items++) {
+	for (items = 0; (size_t)items < pcmd->nargs; items++) {
 		if (STREQ(pcmd->argval[items].string, "auth"))
 			sys.flags |= SYS_FLAG_AUTH;
 		else if (STREQ(pcmd->argval[items].string, "bclient"))
@@ -1853,7 +1853,7 @@ do_restrict(
 	u_int32 num;
 	u_long bit;
 	int i;
-	int res;
+	size_t res;
 	int err;
 	int sendsize;
 
@@ -2112,7 +2112,7 @@ reset(
 	int itemsize;
 	char *dummy;
 	int i;
-	int res;
+	size_t res;
 	int err;
 
 	err = 0;
@@ -2279,7 +2279,7 @@ do_trustkey(
 	)
 {
 	u_long keyids[MAXARGS];
-	int i;
+	size_t i;
 	int items;
 	int itemsize;
 	char *dummy;
@@ -3076,7 +3076,7 @@ iflist(
 	int res
 	)
 {
-	static char *actions = "?.+-";
+	static const char *actions = "?.+-";
 	sockaddr_u saddr;
 
 	if (res != 0)

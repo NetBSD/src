@@ -1,4 +1,4 @@
-/*	$NetBSD: ntpdc.c,v 1.1.1.1 2009/12/13 16:56:24 kardel Exp $	*/
+/*	$NetBSD: ntpdc.c,v 1.2 2010/12/04 23:08:35 christos Exp $	*/
 
 /*
  * ntpdc - control and monitor your ntpd daemon
@@ -668,7 +668,7 @@ getresponse(
 	int numrecv;
 	int seq;
 	fd_set fds;
-	int n;
+	ssize_t n;
 	int pad;
 
 	/*
@@ -716,7 +716,7 @@ getresponse(
 				printf("Received sequence numbers");
 				for (n = 0; n <= MAXSEQ; n++)
 				    if (haveseq[n])
-					printf(" %d,", n);
+					printf(" %zd,", n);
 				if (lastseq != 999)
 				    printf(" last frame received\n");
 				else
@@ -736,9 +736,9 @@ getresponse(
 	/*
 	 * Check for format errors.  Bug proofing.
 	 */
-	if (n < RESP_HEADER_SIZE) {
+	if (n < (ssize_t)RESP_HEADER_SIZE) {
 		if (debug)
-		    printf("Short (%d byte) packet received\n", n);
+		    printf("Short (%zd byte) packet received\n", n);
 		goto again;
 	}
 	if (INFO_VERSION(rpkt.rm_vn_mode) > NTP_VERSION ||
@@ -806,7 +806,7 @@ getresponse(
 	if ((size_t)datasize > (n-RESP_HEADER_SIZE)) {
 		if (debug)
 		    printf(
-			    "Received items %d, size %d (total %d), data in packet is %d\n",
+			    "Received items %d, size %d (total %d), data in packet is %zu\n",
 			    items, size, datasize, n-RESP_HEADER_SIZE);
 		goto again;
 	}
@@ -993,9 +993,9 @@ sendrequest(
 	if (!maclen) {  
 		fprintf(stderr, "Key not found\n");
 		return 1;
-	} else if (maclen != (info_auth_hashlen + sizeof(keyid_t))) {
+	} else if (maclen != (int)(info_auth_hashlen + sizeof(keyid_t))) {
 		fprintf(stderr,
-			"%d octet MAC, %u expected with %u octet digest\n",
+			"%d octet MAC, %zu expected with %zu octet digest\n",
 			maclen, (info_auth_hashlen + sizeof(keyid_t)),
 			info_auth_hashlen);
 		return 1;
@@ -1807,7 +1807,7 @@ keytype(
 	int		key_type;
 
 	if (!pcmd->nargs) {
-		fprintf(fp, "keytype is %s with %u octet digests\n",
+		fprintf(fp, "keytype is %s with %zu octet digests\n",
 			keytype_name(info_auth_keytype),
 			info_auth_hashlen);
 		return;

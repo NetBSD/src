@@ -1,4 +1,4 @@
-/*	$NetBSD: nested.c,v 1.1.1.1 2009/12/13 16:55:11 kardel Exp $	*/
+/*	$NetBSD: nested.c,v 1.2 2010/12/04 23:08:34 christos Exp $	*/
 
 
 /*
@@ -441,8 +441,8 @@ scanXmlEntry( char const* pzName, tOptionValue* pRes )
     switch (*pzScan) {
     case ' ':
     case '\t':
-        pzScan = parseAttributes(
-            NULL, (char*)pzScan, &option_load_mode, &valu );
+        pzScan = parseAttributes(NULL, (char *)(intptr_t)pzScan,
+	    &option_load_mode, &valu );
         if (*pzScan == '>') {
             pzScan++;
             break;
@@ -558,13 +558,13 @@ unloadNestedArglist( tArgList* pAL )
     tCC** ppNV = pAL->apzArgs;
 
     while (ct-- > 0) {
-        tOptionValue* pNV = (tOptionValue*)(void*)*(ppNV++);
+        tOptionValue* pNV = (tOptionValue*)(void*)(intptr_t)*(ppNV++);
         if (pNV->valType == OPARG_TYPE_HIERARCHY)
             unloadNestedArglist( pNV->v.nestVal );
         AGFREE( pNV );
     }
 
-    AGFREE( (void*)pAL );
+    AGFREE( pAL );
 }
 
 
@@ -589,7 +589,7 @@ optionUnloadNested( tOptionValue const * pOV )
 
     unloadNestedArglist( pOV->v.nestVal );
 
-    AGFREE( (void*)pOV );
+    AGFREE(pOV);
 }
 
 
@@ -610,8 +610,8 @@ sortNestedList( tArgList* pAL )
      */
     for (ix = 0; ++ix < lm;) {
         int iy = ix-1;
-        tOptionValue* pNewNV = (tOptionValue*)(void*)(pAL->apzArgs[ix]);
-        tOptionValue* pOldNV = (tOptionValue*)(void*)(pAL->apzArgs[iy]);
+        tOptionValue* pNewNV = (tOptionValue*)(void*)(intptr_t)(pAL->apzArgs[ix]);
+        tOptionValue* pOldNV = (tOptionValue*)(void*)(intptr_t)(pAL->apzArgs[iy]);
 
         /*
          *  For as long as the new entry precedes the "old" entry,
@@ -620,7 +620,7 @@ sortNestedList( tArgList* pAL )
          */
         while (strcmp( pOldNV->pzName, pNewNV->pzName ) > 0) {
             pAL->apzArgs[iy+1] = (void*)pOldNV;
-            pOldNV = (tOptionValue*)(void*)(pAL->apzArgs[--iy]);
+            pOldNV = (tOptionValue*)(void*)(intptr_t)(pAL->apzArgs[--iy]);
             if (iy < 0)
                 break;
         }
@@ -745,7 +745,7 @@ optionNestedVal(tOptions* pOpts, tOptDesc* pOD)
         av = pAL->apzArgs;
 
         while (--ct >= 0) {
-            void * p = (void *)*(av++);
+            void * p = (void *)(intptr_t)*(av++);
             optionUnloadNested((tOptionValue const *)p);
         }
 
@@ -768,6 +768,7 @@ LOCAL int
 get_special_char(char const ** ppz, int * ct)
 {
     char const * pz = *ppz;
+    char *rz;
 
     if (*ct < 3)
         return '&';
@@ -781,15 +782,15 @@ get_special_char(char const ** ppz, int * ct)
             base = 16;
             pz++;
         }
-        retch = (int)strtoul(pz, (char **)&pz, base);
-        if (*pz != ';')
+        retch = (int)strtoul(pz, &rz, base);
+        if (*rz != ';')
             return '&';
-        base = ++pz - *ppz;
+        base = ++rz - *ppz;
         if (base > *ct)
             return '&';
 
         *ct -= base;
-        *ppz = pz;
+        *ppz = rz;
         return retch;
     }
 

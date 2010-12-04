@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.1.1.1 2009/12/13 16:57:10 kardel Exp $	*/
+/*	$NetBSD: main.c,v 1.2 2010/12/04 23:08:36 christos Exp $	*/
 
 #include <l_stdlib.h>
 #include <ntp_fp.h>
@@ -17,7 +17,7 @@
 #include "utilities.h"
 #include "log.h"
 
-char *progname = "sntp";	/* for msyslog */
+const char *progname = "sntp";	/* for msyslog */
 
 int ai_fam_pref = AF_UNSPEC;
 volatile int debug;

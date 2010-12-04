@@ -1,4 +1,4 @@
-/*	$NetBSD: clk_meinberg.c,v 1.1.1.1 2009/12/13 16:55:18 kardel Exp $	*/
+/*	$NetBSD: clk_meinberg.c,v 1.2 2010/12/04 23:08:35 christos Exp $	*/
 
 /*
  * /src/NTP/REPOSITORY/ntp4-dev/libparse/clk_meinberg.c,v 4.12.2.1 2005/09/25 10:22:35 kardel RELEASE_20050925_A
@@ -159,7 +159,7 @@ mbg_csum(
 	 )
 {
   unsigned long sum = 0;
-  short i;
+  unsigned int i;
   
   for ( i = 0; i < n; i++ )
     sum += *p++;

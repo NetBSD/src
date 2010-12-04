@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_pton.c,v 1.1.1.1 2009/12/13 16:54:19 kardel Exp $	*/
+/*	$NetBSD: inet_pton.c,v 1.2 2010/12/04 23:08:33 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
@@ -43,6 +43,7 @@ static char rcsid[] =
  * sizeof(int) < 4.  sizeof(int) > 4 is fine; all the world's not a VAX.
  */
 
+#ifdef notdef
 static int inet_pton4(const char *src, unsigned char *dst);
 static int inet_pton6(const char *src, unsigned char *dst);
 
@@ -214,3 +215,4 @@ inet_pton6(const char *src, unsigned char *dst) {
 	memcpy(dst, tmp, NS_IN6ADDRSZ);
 	return (1);
 }
+#endif

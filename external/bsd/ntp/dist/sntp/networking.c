@@ -1,4 +1,4 @@
-/*	$NetBSD: networking.c,v 1.3 2010/08/28 20:54:24 kardel Exp $	*/
+/*	$NetBSD: networking.c,v 1.4 2010/12/04 23:08:36 christos Exp $	*/
 
 #include "networking.h"
 
@@ -14,7 +14,7 @@ char adr_buf[INET6_ADDRSTRLEN];
 int 
 resolve_hosts (
 		char **hosts, 
-		int hostc, 
+		size_t hostc, 
 		struct addrinfo ***res,
 		int pref_family
 		) 
@@ -208,7 +208,7 @@ recv_bcst_data (
 		mdevadr.imr_multiaddr.s_addr = NSRCADR(sas); 
 		mdevadr.imr_interface.s_addr = htonl(INADDR_ANY);
 
-		if (mdevadr.imr_multiaddr.s_addr == -1) {
+		if (mdevadr.imr_multiaddr.s_addr == (uint32_t)-1) {
 			if (ENABLED_OPT(NORMALVERBOSE)) {
 				printf("sntp recv_bcst_data: %s is not a broad-/multicast address, aborting...\n",
 				       stoa(sas));
@@ -354,7 +354,7 @@ recv_bcst_pkt (
 		has_mac = 0;
 
 	/* If there's more than just the NTP packet it should be a MAC */	
-	else if(pkt_len > LEN_PKT_NOMAC) 
+	else if (pkt_len > (int)LEN_PKT_NOMAC) 
 		has_mac = pkt_len - LEN_PKT_NOMAC;
 	else
 		if(ENABLED_OPT(NORMALVERBOSE)) {
@@ -365,7 +365,7 @@ recv_bcst_pkt (
 		}
 
 	/* Packet too big */
-	if(pkt_len > LEN_PKT_NOMAC + MAX_MAC_LEN) {
+	if (pkt_len > (int)(LEN_PKT_NOMAC + MAX_MAC_LEN)) {
 		if(ENABLED_OPT(NORMALVERBOSE))
 			printf("sntp recv_bcst_pkt: Received packet is too big (%i bytes), trying again to get a useFable packet\n", 
 					pkt_len);
@@ -375,7 +375,7 @@ recv_bcst_pkt (
 	}
 	
 	orig_pkt_len = pkt_len;
-	pkt_len = min(pkt_len, sizeof(struct pkt));
+	pkt_len = min(pkt_len, (int)sizeof(struct pkt));
 
 	/* Let's copy the received data to the packet structure */
 	for (a = 0; a < pkt_len; a++) 
@@ -389,7 +389,7 @@ recv_bcst_pkt (
 	/* MAC could be useable for us */
 	if (has_mac) {
 		/* Two more things that the MAC must conform to */
-		if (has_mac > MAX_MAC_LEN || has_mac % 4 != 0) {
+		if (has_mac > (int)MAX_MAC_LEN || has_mac % 4 != 0) {
 			is_authentic = 0; /* Or should we discard this packet? */
 		}
 		else  {
@@ -540,7 +540,7 @@ recvpkt (
 		has_mac = 0;
 
 	/* If there's more than just the NTP packet it should be a MAC */	
-	else if (pkt_len > LEN_PKT_NOMAC) 
+	else if (pkt_len > (int)LEN_PKT_NOMAC) 
 		has_mac = pkt_len - LEN_PKT_NOMAC;
 	
 	else {
@@ -552,7 +552,7 @@ recvpkt (
 	}
 
 	/* Packet too big */
-	if (pkt_len > LEN_PKT_MAC) {
+	if (pkt_len > (int)(LEN_PKT_MAC)) {
 		if (ENABLED_OPT(NORMALVERBOSE))
 			printf("sntp recvpkt: Received packet is too big (%i bytes), trying again to get a useable packet\n", 
 					pkt_len);
@@ -562,7 +562,7 @@ recvpkt (
 	}
 
 	orig_pkt_len = pkt_len;
-	pkt_len = min(pkt_len, sizeof(struct pkt));
+	pkt_len = min(pkt_len, (int)sizeof(struct pkt));
 	
 	for (a = 0; a < pkt_len; a++) 
 		/* FIXME! */
@@ -577,7 +577,7 @@ recvpkt (
 	/* MAC could be useable for us */
 	if (has_mac) {
 		/* Two more things that the MAC must conform to */
-		if(has_mac > MAX_MAC_LEN || has_mac % 4 != 0) {
+		if(has_mac > (int)MAX_MAC_LEN || has_mac % 4 != 0) {
 			is_authentic = 0; /* Or should we discard this packet? */
 		}
 		else {

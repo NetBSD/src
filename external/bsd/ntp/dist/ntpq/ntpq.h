@@ -1,4 +1,4 @@
-/*	$NetBSD: ntpq.h,v 1.1.1.1 2009/12/13 16:56:26 kardel Exp $	*/
+/*	$NetBSD: ntpq.h,v 1.2 2010/12/04 23:08:36 christos Exp $	*/
 
 /*
  * ntpq.h - definitions of interest to ntpq
@@ -45,7 +45,7 @@ typedef union {
 struct parse {
 	const char *keyword;
 	arg_v argval[MAXARGS];
-	int nargs;
+	size_t nargs;
 };
 
 /*

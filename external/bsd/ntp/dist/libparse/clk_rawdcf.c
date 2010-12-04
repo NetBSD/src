@@ -1,4 +1,4 @@
-/*	$NetBSD: clk_rawdcf.c,v 1.1.1.1 2009/12/13 16:55:21 kardel Exp $	*/
+/*	$NetBSD: clk_rawdcf.c,v 1.2 2010/12/04 23:08:35 christos Exp $	*/
 
 /*
  * /src/NTP/REPOSITORY/ntp4-dev/libparse/clk_rawdcf.c,v 4.18 2006/06/22 18:40:01 kardel RELEASE_20060622_A
@@ -127,12 +127,12 @@ clockformat_t clock_rawdcf =
 
 static struct dcfparam
 {
-	unsigned char *onebits;
-	unsigned char *zerobits;
+	const unsigned char *onebits;
+	const unsigned char *zerobits;
 } dcfparameter = 
 {
-	(unsigned char *)"###############RADMLS1248124P124812P1248121241248112481248P??", /* 'ONE' representation */
-	(unsigned char *)"--------------------s-------p------p----------------------p__"  /* 'ZERO' representation */
+	(const unsigned char *)"###############RADMLS1248124P124812P1248121241248112481248P??", /* 'ONE' representation */
+	(const unsigned char *)"--------------------s-------p------p----------------------p__"  /* 'ZERO' representation */
 };
 
 static struct rawdcfcode 
@@ -184,7 +184,7 @@ static u_long
 ext_bf(
 	unsigned char *buf,
 	int   idx,
-	unsigned char *zero
+	const unsigned char *zero
 	)
 {
 	u_long sum = 0;
@@ -204,7 +204,7 @@ static unsigned
 pcheck(
        unsigned char *buf,
        int   idx,
-       unsigned char *zero
+       const unsigned char *zero
        )
 {
 	int i,last;
@@ -227,8 +227,8 @@ convert_rawdcf(
 	       )
 {
 	unsigned char *s = buffer;
-	unsigned char *b = dcfprm->onebits;
-	unsigned char *c = dcfprm->zerobits;
+	const unsigned char *b = dcfprm->onebits;
+	const unsigned char *c = dcfprm->zerobits;
 	int i;
 
 	parseprintf(DD_RAWDCF,("parse: convert_rawdcf: \"%s\"\n", buffer));
@@ -344,8 +344,8 @@ cvt_rawdcf(
 	last_tcode_t  *t = (last_tcode_t *)local;
 	unsigned char *s = (unsigned char *)buffer;
 	unsigned char *e = s + size;
-	unsigned char *b = dcfparameter.onebits;
-	unsigned char *c = dcfparameter.zerobits;
+	const unsigned char *b = dcfparameter.onebits;
+	const unsigned char *c = dcfparameter.zerobits;
 	u_long       rtc = CVT_NONE;
 	unsigned int i, lowmax, highmax, cutoff, span;
 #define BITS 9

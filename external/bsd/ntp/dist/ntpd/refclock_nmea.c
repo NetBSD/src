@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_nmea.c,v 1.2 2009/12/14 00:46:21 christos Exp $	*/
+/*	$NetBSD: refclock_nmea.c,v 1.3 2010/12/04 23:08:35 christos Exp $	*/
 
 /*
  * refclock_nmea.c - clock driver for an NMEA GPS CLOCK
@@ -178,7 +178,7 @@ nmea_start(
 	int fd;
 	char device[20];
 	int baudrate;
-	char *baudtext;
+	const char *baudtext;
 
 	pp = peer->procptr;
 

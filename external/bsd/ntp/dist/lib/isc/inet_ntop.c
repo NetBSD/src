@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_ntop.c,v 1.1.1.1 2009/12/13 16:54:15 kardel Exp $	*/
+/*	$NetBSD: inet_ntop.c,v 1.2 2010/12/04 23:08:33 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
@@ -43,6 +43,7 @@ static char rcsid[] =
  * sizeof(int) < 4.  sizeof(int) > 4 is fine; all the world's not a VAX.
  */
 
+#ifdef notdef
 static const char *inet_ntop4(const unsigned char *src, char *dst,
 			      size_t size);
 
@@ -50,7 +51,9 @@ static const char *inet_ntop4(const unsigned char *src, char *dst,
 static const char *inet_ntop6(const unsigned char *src, char *dst,
 			      size_t size);
 #endif
+#endif
 
+#ifdef notdef
 /*! char *
  * isc_net_ntop(af, src, dst, size)
  *	convert a network format address to presentation format.
@@ -202,3 +205,4 @@ inet_ntop6(const unsigned char *src, char *dst, size_t size)
 	return (dst);
 }
 #endif /* AF_INET6 */
+#endif

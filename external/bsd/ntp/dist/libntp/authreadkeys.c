@@ -1,4 +1,4 @@
-/*	$NetBSD: authreadkeys.c,v 1.1.1.1 2009/12/13 16:54:59 kardel Exp $	*/
+/*	$NetBSD: authreadkeys.c,v 1.2 2010/12/04 23:08:34 christos Exp $	*/
 
 /*
  * authreadkeys.c - routines to support the reading of the key file
@@ -78,8 +78,8 @@ authreadkeys(
 	int	keytype;
 	char	buf[512];		/* lots of room for line */
 	u_char	keystr[20];
-	int	len;
-	int	j;
+	size_t	len;
+	size_t	j;
 
 	/*
 	 * Open file.  Complain and return if it can't be opened.
@@ -182,11 +182,11 @@ authreadkeys(
 			char	hex[] = "0123456789abcdef";
 			u_char	temp;
 			char	*ptr;
-			int	jlim;
+			size_t	jlim;
 
 			jlim = min(len, 2 * sizeof(keystr));
 			for (j = 0; j < jlim; j++) {
-				ptr = strchr(hex, tolower(token[j]));
+				ptr = strchr(hex, tolower((unsigned char)token[j]));
 				if (ptr == NULL) {
 					msyslog(LOG_ERR,
 					    "authreadkeys: invalid hex digit for key %d", keyno);

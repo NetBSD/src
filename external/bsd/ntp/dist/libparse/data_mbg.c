@@ -1,4 +1,4 @@
-/*	$NetBSD: data_mbg.c,v 1.1.1.1 2009/12/13 16:55:23 kardel Exp $	*/
+/*	$NetBSD: data_mbg.c,v 1.2 2010/12/04 23:08:35 christos Exp $	*/
 
 /*
  * /src/NTP/REPOSITORY/ntp4-dev/libparse/data_mbg.c,v 4.8 2006/06/22 18:40:01 kardel RELEASE_20060622_A
@@ -384,7 +384,7 @@ get_mbg_comparam(
 	COM_PARM *comparamp
 	)
 {
-  int i;
+  size_t i;
   
   comparamp->baud_rate = get_lsb_long(buffpp);
   for (i = 0; i < sizeof(comparamp->framing); i++)

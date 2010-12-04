@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_io.c,v 1.3 2010/11/06 20:40:12 christos Exp $	*/
+/*	$NetBSD: ntp_io.c,v 1.4 2010/12/04 23:08:35 christos Exp $	*/
 
 /*
  * ntp_io.c - input/output routines for ntpd.	The socket-opening code
@@ -206,7 +206,7 @@ static	isc_boolean_t	socket_multicast_disable(struct interface *, sockaddr_u *);
 #ifdef DEBUG
 static void interface_dump	(struct interface *);
 static void sockaddr_dump	(sockaddr_u *psau);
-static void print_interface	(struct interface *, char *, char *);
+static void print_interface	(struct interface *, const char *, const char *);
 #define DPRINT_INTERFACE(level, args) do { if (debug >= (level)) { print_interface args; } } while (0)
 #else
 #define DPRINT_INTERFACE(level, args) do {} while (0)
@@ -616,7 +616,7 @@ sockaddr_dump(sockaddr_u *psau)
  * print_interface - helper to output debug information
  */
 static void
-print_interface(struct interface *iface, char *pfx, char *sfx)
+print_interface(struct interface *iface, const char *pfx, const char *sfx)
 {
 	printf("%sinterface #%d: fd=%d, bfd=%d, name=%s, flags=0x%x, scope=%d, sin=%s",
 	       pfx,
@@ -3010,8 +3010,8 @@ read_refclock_packet(SOCKET fd, struct refclockio *rp, l_fp ts)
 	}
 
 	i = (rp->datalen == 0
-	     || rp->datalen > sizeof(rb->recv_space))
-		? sizeof(rb->recv_space)
+	     || rp->datalen > (int)sizeof(rb->recv_space))
+		? (int)sizeof(rb->recv_space)
 		: rp->datalen;
 	buflen = read(fd, (char *)&rb->recv_space, (unsigned)i);
 
@@ -3081,7 +3081,7 @@ fetch_timestamp(
 
 			tvp = (struct timeval *)CMSG_DATA(cmsghdr);
 			DPRINTF(4, ("fetch_timestamp: system network time stamp: %lld.%06ld\n",
-				    (long long)tvp->tv_sec, tvp->tv_usec));
+				    (long long)tvp->tv_sec, (long)tvp->tv_usec));
 			nts.l_i = tvp->tv_sec + JAN_1970;
 			dtemp = (tvp->tv_usec 
 				 + (ntp_random() * 2. / FRAC)) / 1e6;
@@ -4056,7 +4056,7 @@ same_network_v6(
 	struct sockaddr_in6 *addr2
 	)
 {
-	int i;
+	size_t i;
 
 	for (i = 0; 
 	     i < sizeof(addr1->sin6_addr.s6_addr) / 

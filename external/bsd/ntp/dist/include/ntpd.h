@@ -1,4 +1,4 @@
-/*	$NetBSD: ntpd.h,v 1.1.1.1 2009/12/13 16:54:50 kardel Exp $	*/
+/*	$NetBSD: ntpd.h,v 1.2 2010/12/04 23:08:33 christos Exp $	*/
 
 /*
  * ntpd.h - Prototypes for ntpd.
@@ -39,7 +39,7 @@ extern	void	report_event	(int, struct peer *, const char *);
 struct ctl_var {
 	u_short code;
 	u_short flags;
-	char *text;
+	const char *text;
 };
 /*
  * Flag values
@@ -136,7 +136,7 @@ extern  void	set_peerdstadr	(struct peer *peer, struct interface *interface);
 extern	struct peer *newpeer	(sockaddr_u *, struct interface *, int, int, int, int, u_int, u_char, int, keyid_t);
 extern	void	peer_all_reset	(void);
 extern	void	peer_clr_stats	(void);
-extern	struct peer *peer_config (sockaddr_u *, struct interface *, int, int, int, int, u_int, int, keyid_t, u_char *);
+extern	struct peer *peer_config (sockaddr_u *, struct interface *, int, int, int, int, u_int, int, keyid_t, const u_char *);
 extern	void	peer_reset	(struct peer *);
 extern	void	refresh_all_peerinterfaces (void);
 extern	void	unpeer		(struct peer *);
@@ -173,7 +173,7 @@ extern struct value tai_leap;
 /* ntp_proto.c */
 extern	void	transmit	(struct peer *);
 extern	void	receive 	(struct recvbuf *);
-extern	void	peer_clear	(struct peer *, char *);
+extern	void	peer_clear	(struct peer *, const char *);
 extern	void 	process_packet	(struct peer *, struct pkt *, u_int);
 extern	void	clock_select	(void);
 

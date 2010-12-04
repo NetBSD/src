@@ -1,4 +1,4 @@
-/*	$NetBSD: icom.h,v 1.1.1.1 2009/12/13 16:54:48 kardel Exp $	*/
+/*	$NetBSD: icom.h,v 1.2 2010/12/04 23:08:33 christos Exp $	*/
 
 /*
  * Header file for ICOM radios
@@ -85,5 +85,5 @@
 /*
  * Function prototypes
  */
-int	icom_init		(char *, int, int);
+int	icom_init		(const char *, int, int);
 int	icom_freq		(int, int, double);

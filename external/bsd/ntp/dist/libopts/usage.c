@@ -1,4 +1,4 @@
-/*	$NetBSD: usage.c,v 1.1.1.1 2009/12/13 16:55:14 kardel Exp $	*/
+/*	$NetBSD: usage.c,v 1.2 2010/12/04 23:08:34 christos Exp $	*/
 
 
 /*
@@ -563,7 +563,7 @@ printOptionUsage(
     tCC *       pOptTitle )
 {
     int         ct     = pOpts->optCt;
-    int         optNo  = 0;
+    size_t      optNo  = 0;
     tOptDesc *  pOD    = pOpts->pOptDesc;
     int         docCt  = 0;
 

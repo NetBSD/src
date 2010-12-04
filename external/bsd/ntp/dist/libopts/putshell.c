@@ -1,4 +1,4 @@
-/*	$NetBSD: putshell.c,v 1.1.1.1 2009/12/13 16:55:12 kardel Exp $	*/
+/*	$NetBSD: putshell.c,v 1.2 2010/12/04 23:08:34 christos Exp $	*/
 
 
 /*
@@ -108,7 +108,7 @@ putQuotedStr( tCC* pzStr )
 void
 optionPutShell( tOptions* pOpts )
 {
-    int  optIx = 0;
+    size_t optIx = 0;
     tSCC zOptCtFmt[]  = "OPTION_CT=%d\nexport OPTION_CT\n";
     tSCC zOptNumFmt[] = "%1$s_%2$s=%3$d # 0x%3$X\nexport %1$s_%2$s\n";
     tSCC zOptDisabl[] = "%1$s_%2$s=%3$s\nexport %1$s_%2$s\n";

@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_jupiter.c,v 1.1.1.1 2009/12/13 16:55:44 kardel Exp $	*/
+/*	$NetBSD: refclock_jupiter.c,v 1.2 2010/12/04 23:08:35 christos Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 2003
@@ -140,10 +140,10 @@ struct instance {
 static	void	jupiter_canmsg	(struct instance *, u_int);
 static	u_short	jupiter_cksum	(u_short *, u_int);
 static	int	jupiter_config	(struct instance *);
-static	void	jupiter_debug	(struct peer *, char *, char *, ...)
+static	void	jupiter_debug	(struct peer *, const char *, const char *, ...)
     __attribute__ ((format (printf, 3, 4)));
-static	char *	jupiter_parse_t	(struct instance *, u_short *);
-static	char *	jupiter_parse_gpos	(struct instance *, u_short *);
+static	const char *jupiter_parse_t	(struct instance *, u_short *);
+static	const char *jupiter_parse_gpos	(struct instance *, u_short *);
 static	void	jupiter_platform	(struct instance *, u_int);
 static	void	jupiter_poll	(int, struct peer *);
 static	void	jupiter_control	(int, struct refclockstat *, struct
@@ -193,7 +193,7 @@ jupiter_start(
 	(void)sprintf(gpsdev, DEVICE, unit);
 	fd = refclock_open(gpsdev, SPEED232, LDISC_RAW);
 	if (fd == 0) {
-		jupiter_debug(peer, "jupiter_start", "open %s: %s",
+		jupiter_debug(peer, __func__, "open %s: %s",
 		    gpsdev, strerror(errno));
 		return (0);
 	}
@@ -284,7 +284,7 @@ jupiter_shutdown(int unit, struct peer *peer)
 static int
 jupiter_config(struct instance *instance)
 {
-	jupiter_debug(instance->peer, "jupiter_config", "init receiver");
+	jupiter_debug(instance->peer, __func__, "init receiver");
 
 	/*
 	 * Initialize the unit variables
@@ -292,8 +292,7 @@ jupiter_config(struct instance *instance)
 	instance->sloppyclockflag = instance->peer->procptr->sloppyclockflag;
 	instance->moving = !!(instance->sloppyclockflag & CLK_FLAG2);
 	if (instance->moving)
-		jupiter_debug(instance->peer, "jupiter_config",
-			"mobile platform");
+		jupiter_debug(instance->peer, __func__, "mobile platform");
 
 	instance->pollcnt     = 2;
 	instance->polled      = 0;
@@ -377,7 +376,7 @@ jupiter_ppsapi(
 #if DEBUG
 	if (debug) {
 		time_pps_getparams(instance->pps_handle, &instance->pps_params);
-		jupiter_debug(instance->peer, "refclock_jupiter",
+		jupiter_debug(instance->peer, __func__,
 			"pps capability 0x%x version %d mode 0x%x kern %d",
 			capability, instance->pps_params.api_version,
 			instance->pps_params.mode, instance->hardpps);
@@ -507,8 +506,7 @@ jupiter_control(
 	instance->sloppyclockflag = pp->sloppyclockflag;
 	if ((instance->sloppyclockflag & CLK_FLAG2) !=
 	    (sloppyclockflag & CLK_FLAG2)) {
-		jupiter_debug(peer,
-		    "jupiter_control",
+		jupiter_debug(peer, __func__,
 		    "mode switch: reset receiver");
 		jupiter_config(instance);
 		return;
@@ -522,10 +520,11 @@ jupiter_control(
 static void
 jupiter_receive(struct recvbuf *rbufp)
 {
-	int bpcnt, cc, size, ppsret;
+	size_t bpcnt;
+	int cc, size, ppsret;
 	time_t last_timecode;
 	u_int32 laststime;
-	char *cp;
+	const char *cp;
 	u_char *bp;
 	u_short *sp;
 	struct jid *ip;
@@ -552,7 +551,7 @@ jupiter_receive(struct recvbuf *rbufp)
 	instance->ssize += bpcnt;
 
 	/* While there's at least a header and we parse an intact message */
-	while (instance->ssize > sizeof(*hp) && (cc = jupiter_recv(instance)) > 0) {
+	while (instance->ssize > (int)sizeof(*hp) && (cc = jupiter_recv(instance)) > 0) {
 		instance->pollcnt = 2;
 
 		tstamp = rbufp->recv_time;
@@ -563,8 +562,8 @@ jupiter_receive(struct recvbuf *rbufp)
 
 		case JUPITER_O_PULSE:
 			if (size != sizeof(struct jpulse)) {
-				jupiter_debug(peer,
-				    "jupiter_receive", "pulse: len %d != %u",
+				jupiter_debug(peer, __func__,
+				    "pulse: len %d != %u",
 				    size, (int)sizeof(struct jpulse));
 				refclock_report(peer, CEVNT_BADREPLY);
 				break;
@@ -583,7 +582,7 @@ jupiter_receive(struct recvbuf *rbufp)
 			laststime = instance->stime;
 			instance->stime = DS2UI(((struct jpulse *)sp)->stime);
 			if (laststime != 0 && instance->stime - laststime <= 21) {
-				jupiter_debug(peer, "jupiter_receive", 
+				jupiter_debug(peer, __func__,
 				"avoided firmware bug (stime %.2f, laststime %.2f)",
 				(double)instance->stime * 0.01, (double)laststime * 0.01);
 				break;
@@ -604,8 +603,8 @@ jupiter_receive(struct recvbuf *rbufp)
 			/* Parse timecode (even when there's no pps) */
 			last_timecode = instance->timecode;
 			if ((cp = jupiter_parse_t(instance, sp)) != NULL) {
-				jupiter_debug(peer,
-				    "jupiter_receive", "pulse: %s", cp);
+				jupiter_debug(peer, __func__,
+				    "pulse: %s", cp);
 				break;
 			}
 
@@ -654,24 +653,24 @@ jupiter_receive(struct recvbuf *rbufp)
 
 		case JUPITER_O_GPOS:
 			if (size != sizeof(struct jgpos)) {
-				jupiter_debug(peer,
-				    "jupiter_receive", "gpos: len %d != %u",
+				jupiter_debug(peer, __func__,
+				    "gpos: len %d != %u",
 				    size, (int)sizeof(struct jgpos));
 				refclock_report(peer, CEVNT_BADREPLY);
 				break;
 			}
 
 			if ((cp = jupiter_parse_gpos(instance, sp)) != NULL) {
-				jupiter_debug(peer,
-				    "jupiter_receive", "gpos: %s", cp);
+				jupiter_debug(peer, __func__,
+				    "gpos: %s", cp);
 				break;
 			}
 			break;
 
 		case JUPITER_O_ID:
 			if (size != sizeof(struct jid)) {
-				jupiter_debug(peer,
-				    "jupiter_receive", "id: len %d != %u",
+				jupiter_debug(peer, __func__,
+				    "id: len %d != %u",
 				    size, (int)sizeof(struct jid));
 				refclock_report(peer, CEVNT_BADREPLY);
 				break;
@@ -681,8 +680,8 @@ jupiter_receive(struct recvbuf *rbufp)
 			 * just powered instance, it needs to be reconfigured.
 			 */
 			ip = (struct jid *)sp;
-			jupiter_debug(peer,
-			    "jupiter_receive", "%s chan ver %s, %s (%s)",
+			jupiter_debug(peer, __func__,
+			    "%s chan ver %s, %s (%s)",
 			    ip->chans, ip->vers, ip->date, ip->opts);
 			msyslog(LOG_DEBUG,
 			    "jupiter_receive: %s chan ver %s, %s (%s)",
@@ -690,8 +689,7 @@ jupiter_receive(struct recvbuf *rbufp)
 			if (instance->wantid)
 				instance->wantid = 0;
 			else {
-				jupiter_debug(peer,
-				    "jupiter_receive", "reset receiver");
+				jupiter_debug(peer, __func__, "reset receiver");
 				jupiter_config(instance);
 				/*
 				 * Restore since jupiter_config() just
@@ -702,8 +700,7 @@ jupiter_receive(struct recvbuf *rbufp)
 			break;
 
 		default:
-			jupiter_debug(peer,
-			    "jupiter_receive", "unknown message id %d",
+			jupiter_debug(peer, __func__, "unknown message id %d",
 			    getshort(hp->id));
 			break;
 		}
@@ -716,7 +713,7 @@ jupiter_receive(struct recvbuf *rbufp)
 	}
 }
 
-static char *
+static const char *
 jupiter_parse_t(struct instance *instance, u_short *sp)
 {
 	struct tm *tm;
@@ -766,8 +763,8 @@ jupiter_parse_t(struct instance *instance, u_short *sp)
 	}
 	else if (sweek == 0 && instance->lastsweek == WEEKSECS - 1) {
 		++instance->gweek;
-		jupiter_debug(instance->peer,
-		    "jupiter_parse_t", "NEW gps week %u", instance->gweek);
+		jupiter_debug(instance->peer, __func__,
+		    "NEW gps week %u", instance->gweek);
 	}
 
 	/*
@@ -783,14 +780,14 @@ jupiter_parse_t(struct instance *instance, u_short *sp)
 	 * Then we warped.
 	 */
 	if (instance->lastsweek == sweek)
-		jupiter_debug(instance->peer,
-		    "jupiter_parse_t", "gps sweek not incrementing (%d)",
+		jupiter_debug(instance->peer, __func__,
+		    "gps sweek not incrementing (%d)",
 		    sweek);
 	else if (instance->lastsweek != 2 * WEEKSECS &&
 	    instance->lastsweek + 1 != sweek &&
 	    !(sweek == 0 && instance->lastsweek == WEEKSECS - 1))
-		jupiter_debug(instance->peer,
-		    "jupiter_parse_t", "gps sweek jumped (was %d, now %d)",
+		jupiter_debug(instance->peer, __func__,
+		    "gps sweek jumped (was %d, now %d)",
 		    instance->lastsweek, sweek);
 	instance->lastsweek = sweek;
 
@@ -801,16 +798,16 @@ jupiter_parse_t(struct instance *instance, u_short *sp)
 
 	if (last_timecode == 0)
 		/* XXX debugging */
-		jupiter_debug(instance->peer,
-		    "jupiter_parse_t", "UTC <none> (gweek/sweek %u/%u)",
+		jupiter_debug(instance->peer, __func__,
+		    "UTC <none> (gweek/sweek %u/%u)",
 		    instance->gweek, sweek);
 	else {
 		/* XXX debugging */
 		tm = gmtime(&last_timecode);
 		cp = asctime(tm);
 
-		jupiter_debug(instance->peer,
-		    "jupiter_parse_t", "UTC %.24s (gweek/sweek %u/%u)",
+		jupiter_debug(instance->peer, __func__,
+		    "UTC %.24s (gweek/sweek %u/%u)",
 		    cp, instance->gweek, sweek);
 
 		/* Billboard last_timecode (which is now the current time) */
@@ -838,7 +835,7 @@ jupiter_parse_t(struct instance *instance, u_short *sp)
 	return (NULL);
 }
 
-static char *
+static const char *
 jupiter_parse_gpos(struct instance *instance, u_short *sp)
 {
 	struct jgpos *jg;
@@ -870,8 +867,8 @@ jupiter_parse_gpos(struct instance *instance, u_short *sp)
 	tm = gmtime(&t);
 	cp = asctime(tm);
 
-	jupiter_debug(instance->peer,
-		"jupiter_parse_g", "GPS %.24s (gweek/sweek %u/%u)",
+	jupiter_debug(instance->peer, __func__,
+		"GPS %.24s (gweek/sweek %u/%u)",
 		cp, instance->gpos_gweek, instance->gpos_sweek);
 	return (NULL);
 }
@@ -881,7 +878,7 @@ jupiter_parse_gpos(struct instance *instance, u_short *sp)
  */
 #if defined(__STDC__) || defined(SYS_WINNT)
 static void
-jupiter_debug(struct peer *peer, char *function, char *fmt, ...)
+jupiter_debug(struct peer *peer, const char *function, const char *fmt, ...)
 #else
 static void
 jupiter_debug(peer, function, fmt, va_alist)
@@ -921,7 +918,7 @@ static char *
 jupiter_send(struct instance *instance, struct jheader *hp)
 {
 	u_int len, size;
-	int cc;
+	ssize_t cc;
 	u_short *sp;
 	static char errstr[132];
 
@@ -938,8 +935,8 @@ jupiter_send(struct instance *instance, struct jheader *hp)
 	if ((cc = write(instance->peer->procptr->io.fd, (char *)hp, size)) < 0) {
 		(void)sprintf(errstr, "write: %s", strerror(errno));
 		return (errstr);
-	} else if (cc != size) {
-		(void)sprintf(errstr, "short write (%d != %d)", cc, size);
+	} else if (cc != (ssize_t)size) {
+		(void)sprintf(errstr, "short write (%zd != %u)", cc, size);
 		return (errstr);
 	}
 	return (NULL);
@@ -972,7 +969,7 @@ jupiter_reqmsg(struct instance *instance, u_int id,
 	rp->trigger = putshort(interval == 0);
 	rp->interval = putshort(interval);
 	if ((cp = jupiter_send(instance, hp)) != NULL)
-		jupiter_debug(instance->peer, "jupiter_reqmsg", "%u: %s", id, cp);
+		jupiter_debug(instance->peer, __func__, "%u: %s", id, cp);
 }
 
 /* Cancel periodic message output */
@@ -991,7 +988,7 @@ jupiter_canmsg(struct instance *instance, u_int id)
 	hp = &canmsg;
 	hp->id = putshort(id);
 	if ((cp = jupiter_send(instance, hp)) != NULL)
-		jupiter_debug(instance->peer, "jupiter_canmsg", "%u: %s", id, cp);
+		jupiter_debug(instance->peer, __func__, "%u: %s", id, cp);
 }
 
 /* Request a single message output */
@@ -1010,7 +1007,7 @@ jupiter_reqonemsg(struct instance *instance, u_int id)
 	hp = &reqonemsg;
 	hp->id = putshort(id);
 	if ((cp = jupiter_send(instance, hp)) != NULL)
-		jupiter_debug(instance->peer, "jupiter_reqonemsg", "%u: %s", id, cp);
+		jupiter_debug(instance->peer, __func__, "%u: %s", id, cp);
 }
 
 /* Set the platform dynamics */
@@ -1035,7 +1032,7 @@ jupiter_platform(struct instance *instance, u_int platform)
 	pp = &platmsg.jplat;
 	pp->platform = putshort(platform);
 	if ((cp = jupiter_send(instance, hp)) != NULL)
-		jupiter_debug(instance->peer, "jupiter_platform", "%u: %s", platform, cp);
+		jupiter_debug(instance->peer, __func__, "%u: %s", platform, cp);
 }
 
 /* Checksum "len" shorts */
@@ -1072,13 +1069,14 @@ jupiter_recv(struct instance *instance)
 	hp = (struct jheader *)sp;
 	if (getshort(hp->sync) != JUPITER_SYNC) {
 		/* Wasn't at the front, sync up */
-		jupiter_debug(instance->peer, "jupiter_recv", "syncing");
+		jupiter_debug(instance->peer, __func__, "syncing");
 		bp = (u_char *)sp;
 		n = size;
 		while (n >= 2) {
 			if (bp[0] != (JUPITER_SYNC & 0xff)) {
 				/*
-				jupiter_debug(instance->peer, "{0x%x}", bp[0]);
+				jupiter_debug(instance->peer, __func__,
+				    "{0x%x}", bp[0]);
 				*/
 				++bp;
 				--n;
@@ -1087,13 +1085,14 @@ jupiter_recv(struct instance *instance)
 			if (bp[1] == ((JUPITER_SYNC >> 8) & 0xff))
 				break;
 			/*
-			jupiter_debug(instance->peer, "{0x%x 0x%x}", bp[0], bp[1]);
+			jupiter_debug(instance->peer, __func__,
+			    "{0x%x 0x%x}", bp[0], bp[1]);
 			*/
 			bp += 2;
 			n -= 2;
 		}
 		/*
-		jupiter_debug(instance->peer, "\n");
+		jupiter_debug(instance->peer, __func__, "\n");
 		*/
 		/* Shuffle data to front of input buffer */
 		if (n > 0)
@@ -1106,7 +1105,7 @@ jupiter_recv(struct instance *instance)
 
 	if (jupiter_cksum(sp, (cc / sizeof(u_short) - 1)) !=
 	    getshort(hp->hsum)) {
-	    jupiter_debug(instance->peer, "jupiter_recv", "bad header checksum!");
+	    jupiter_debug(instance->peer, __func__, "bad header checksum!");
 		/* This is drastic but checksum errors should be rare */
 		instance->ssize = 0;
 		return (0);
@@ -1124,7 +1123,7 @@ jupiter_recv(struct instance *instance)
 		sp = (u_short *)(hp + 1);
 		if (jupiter_cksum(sp, len) != getshort(sp[len])) {
 			jupiter_debug(instance->peer,
-			    "jupiter_recv", "bad payload checksum!");
+			    __func__, "bad payload checksum!");
 			/* This is drastic but checksum errors should be rare */
 			instance->ssize = 0;
 			return (0);

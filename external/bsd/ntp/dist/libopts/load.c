@@ -1,4 +1,4 @@
-/*	$NetBSD: load.c,v 1.1.1.1 2009/12/13 16:55:08 kardel Exp $	*/
+/*	$NetBSD: load.c,v 1.2 2010/12/04 23:08:34 christos Exp $	*/
 
 
 /*
@@ -37,14 +37,14 @@ tOptionLoadMode option_load_mode = OPTION_LOAD_UNCOOKED;
 static ag_bool
 insertProgramPath(
     char*   pzBuf,
-    int     bufSize,
+    size_t  bufSize,
     tCC*    pzName,
     tCC*    pzProgPath );
 
 static ag_bool
 insertEnvVal(
     char*   pzBuf,
-    int     bufSize,
+    size_t  bufSize,
     tCC*    pzName,
     tCC*    pzProgPath );
 
@@ -106,7 +106,7 @@ assembleArgValue( char* pzTxt, tOptionLoadMode mode );
 ag_bool
 optionMakePath(
     char*   pzBuf,
-    int     bufSize,
+    size_t  bufSize,
     tCC*    pzName,
     tCC*    pzProgPath )
 {
@@ -199,7 +199,7 @@ optionMakePath(
 static ag_bool
 insertProgramPath(
     char*   pzBuf,
-    int     bufSize,
+    size_t  bufSize,
     tCC*    pzName,
     tCC*    pzProgPath )
 {
@@ -224,7 +224,7 @@ insertProgramPath(
     if (strchr( pzProgPath, DIRCH ) != NULL)
         pzPath = pzProgPath;
     else {
-        pzPath = pathfind( getenv( "PATH" ), (char*)pzProgPath, "rx" );
+        pzPath = pathfind( getenv( "PATH" ), (const char*)pzProgPath, "rx" );
 
         if (pzPath == NULL)
             return AG_FALSE;
@@ -264,7 +264,7 @@ insertProgramPath(
 static ag_bool
 insertEnvVal(
     char*   pzBuf,
-    int     bufSize,
+    size_t  bufSize,
     tCC*    pzName,
     tCC*    pzProgPath )
 {

@@ -1,4 +1,4 @@
-/*	$NetBSD: networking.h,v 1.1.1.1 2009/12/13 16:57:11 kardel Exp $	*/
+/*	$NetBSD: networking.h,v 1.2 2010/12/04 23:08:36 christos Exp $	*/
 
 #ifndef NETWORKING_H
 #define NETWORKING_H
@@ -38,7 +38,7 @@
 /* From ntpdate.c */
 int is_reachable (struct addrinfo *dst);
 
-int resolve_hosts (char **hosts, int hostc, struct addrinfo ***res, int pref_family);
+int resolve_hosts (char **hosts, size_t hostc, struct addrinfo ***res, int pref_family);
 
 void create_socket (SOCKET *rsock, sockaddr_u *dest);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoopts.c,v 1.1.1.1 2009/12/13 16:55:09 kardel Exp $	*/
+/*	$NetBSD: autoopts.c,v 1.2 2010/12/04 23:08:34 christos Exp $	*/
 
 
 /*
@@ -178,8 +178,9 @@ handleOption( tOptions* pOpts, tOptState* pOptState )
              *  THEN we have a usage problem.
              */
             if (p->optActualIndex != pOD->optIndex) {
-                fprintf( stderr, (char*)zMultiEquiv, p->pz_Name, pOD->pz_Name,
-                         (pOpts->pOptDesc + p->optActualIndex)->pz_Name);
+                fprintf( stderr, (const char*)zMultiEquiv, p->pz_Name,
+		    pOD->pz_Name,
+		    (pOpts->pOptDesc + p->optActualIndex)->pz_Name);
                 return FAILURE;
             }
         } else {
@@ -271,7 +272,7 @@ longOptionFind( tOptions* pOpts, char* pzOptName, tOptState* pOptState )
     int        idxLim   = pOpts->optCt;
     int        matchCt  = 0;
     int        matchIdx = 0;
-    int        nameLen;
+    size_t        nameLen;
     char       opt_name_buf[128];
 
     /*
@@ -512,7 +513,7 @@ findOptDesc( tOptions* pOpts, tOptState* pOptState )
          *  strip off the "const" quality of the "default_opt" field.
          */
         while (*(++pz) == '-')   ;
-        def_opt = (void *)&(pOpts->specOptIdx.default_opt);
+        def_opt = (void *)(intptr_t)&(pOpts->specOptIdx.default_opt);
         def = *def_opt;
         *def_opt = NO_EQUIVALENT;
         res = longOptionFind(pOpts, pz, pOptState);

@@ -1,4 +1,4 @@
-/*	$NetBSD: enumeration.c,v 1.1.1.1 2009/12/13 16:55:09 kardel Exp $	*/
+/*	$NetBSD: enumeration.c,v 1.2 2010/12/04 23:08:34 christos Exp $	*/
 
 
 /*
@@ -125,7 +125,7 @@ enumError(
      *  Otherwise, columnize the output
      */
     else {
-        int   ent_no = 0;
+        size_t   ent_no = 0;
         char  zFmt[16];  /* format for all-but-last entries on a line */
 
         sprintf( zFmt, "%%-%ds", (int)max_len );
@@ -181,11 +181,11 @@ findName(
      *  The result gets stashed in a char* pointer.
      */
     uintptr_t     res = name_ct;
-    size_t        len = strlen( (char*)pzName );
+    size_t        len = strlen( (const char*)pzName );
     uintptr_t     idx;
 
     if (IS_DEC_DIGIT_CHAR(*pzName)) {
-        char * pz = (char *)(void *)pzName;
+        char * pz = (char *)(void *)(intptr_t)pzName;
         unsigned long val = strtoul(pz, &pz, 0);
         if ((*pz == NUL) && (val < name_ct))
             return (uintptr_t)val;
@@ -198,11 +198,11 @@ findName(
      *  Multiple partial matches means we have an ambiguous match.
      */
     for (idx = 0; idx < name_ct; idx++) {
-        if (strncmp( (char*)paz_names[idx], (char*)pzName, len) == 0) {
+        if (strncmp((const char*)paz_names[idx], (const char*)pzName, len) == 0) {
             if (paz_names[idx][len] == NUL)
                 return idx;  /* full match */
 
-            res = (res != name_ct) ? ~0 : idx; /* save partial match */
+            res = (res != name_ct) ? (uintptr_t)~0 : idx; /* save partial match */
         }
     }
 
@@ -362,7 +362,7 @@ optionSetMembers(
         /*
          *  print the name string.
          */
-        int       ix   =  0;
+        size_t    ix   =  0;
         uintptr_t bits = (uintptr_t)pOD->optCookie;
         size_t    len  = 0;
 
@@ -383,7 +383,7 @@ optionSetMembers(
     {
         char*     pz;
         uintptr_t bits = (uintptr_t)pOD->optCookie;
-        int       ix   = 0;
+        size_t    ix   = 0;
         size_t    len  = 5;
 
         bits &= ((uintptr_t)1 << (uintptr_t)name_ct) - (uintptr_t)1;
@@ -469,7 +469,7 @@ optionSetMembers(
                 if (pz != pzArg + len) {
                     char z[ AO_NAME_SIZE ];
                     tCC* p;
-                    int  shift_ct;
+                    unsigned int  shift_ct;
 
                     if (*pz != NUL) {
                         if (len >= AO_NAME_LIMIT)

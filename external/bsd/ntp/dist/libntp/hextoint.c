@@ -1,4 +1,4 @@
-/*	$NetBSD: hextoint.c,v 1.1.1.1 2009/12/13 16:55:03 kardel Exp $	*/
+/*	$NetBSD: hextoint.c,v 1.2 2010/12/04 23:08:34 christos Exp $	*/
 
 /*
  * hextoint - convert an ascii string in hex to an unsigned
@@ -24,7 +24,7 @@ hextoint(
 
 	u = 0;
 	while (*cp != '\0') {
-		if (!isxdigit(*cp))
+		if (!isxdigit((unsigned char)*cp))
 			return 0;
 		if (u & 0xF0000000)
 			return 0;	/* overflow */

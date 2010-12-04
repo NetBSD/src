@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_crypto.c,v 1.2 2009/12/14 00:40:26 christos Exp $	*/
+/*	$NetBSD: ntp_crypto.c,v 1.3 2010/12/04 23:08:35 christos Exp $	*/
 
 /*
  * ntp_crypto.c - NTP version 4 public key routines
@@ -310,7 +310,7 @@ make_keylist(
 	 * cookie if client mode or the host cookie if symmetric modes.
 	 */
 	mpoll = 1 << min(peer->ppoll, peer->hpoll);
-	lifetime = min(1 << sys_automax, NTP_MAXSESSION * mpoll);
+	lifetime = min((unsigned)1 << sys_automax, NTP_MAXSESSION * mpoll);
 	if (peer->hmode == MODE_BROADCAST)
 		cookie = 0;
 	else
@@ -418,7 +418,7 @@ crypto_recv(
 	 */
 	authlen = LEN_PKT_NOMAC;
 	hismode = (int)PKT_MODE((&rbufp->recv_pkt)->li_vn_mode);
-	while ((has_mac = rbufp->recv_length - authlen) > MAX_MAC_LEN) {
+	while ((has_mac = rbufp->recv_length - authlen) > (int)MAX_MAC_LEN) {
 		pkt = (u_int32 *)&rbufp->recv_pkt + authlen / 4;
 		ep = (struct exten *)pkt;
 		code = ntohl(ep->opcode) & 0xffff0000;
@@ -1718,7 +1718,7 @@ crypto_send(
 	)
 {
 	u_int	len, vallen, siglen, opcode;
-	int	i, j;
+	u_int	i, j;
 
 	/*
 	 * Calculate extension field length and check for buffer
@@ -2990,7 +2990,7 @@ cert_sign(
 	X509_gmtime_adj(X509_get_notAfter(cert), YEAR);
 	subj = X509_get_issuer_name(cert);
 	X509_NAME_add_entry_by_txt(subj, "commonName", MBSTRING_ASC,
-	    hostval.ptr, strlen(hostval.ptr), -1, 0);
+	    hostval.ptr, strlen((const char *)hostval.ptr), -1, 0);
 	subj = X509_get_subject_name(req);
 	X509_set_subject_name(cert, subj);
 	X509_set_pubkey(cert, pkey);
@@ -3030,7 +3030,7 @@ cert_sign(
 	vp->vallen = htonl(len);
 	vp->ptr = emalloc(len);
 	ptr = vp->ptr;
-	i2d_X509(cert, (unsigned char **)&ptr);
+	i2d_X509(cert, (unsigned char **)(intptr_t)&ptr);
 	vp->siglen = 0;
 	if (tstamp != 0) {
 		vp->sig = emalloc(sign_siglen);
@@ -3264,7 +3264,7 @@ cert_parse(
 	ret->version = X509_get_version(cert);
 	X509_NAME_oneline(X509_get_subject_name(cert), pathbuf,
 	    MAXFILENAME);
-	ptr = strstr(pathbuf, "CN=");
+	ptr = (unsigned char *)strstr(pathbuf, "CN=");
 	if (ptr == NULL) {
 		msyslog(LOG_NOTICE, "cert_parse: invalid subject %s",
 		    pathbuf);
@@ -3272,7 +3272,7 @@ cert_parse(
 		X509_free(cert);
 		return (NULL);
 	}
-	ret->subject = estrdup(ptr + 3);
+	ret->subject = estrdup((const char *)ptr + 3);
 
 	/*
 	 * Extract remaining objects. Note that the NTP serial number is
@@ -3287,14 +3287,14 @@ cert_parse(
 	    (u_long)ASN1_INTEGER_get(X509_get_serialNumber(cert));
 	X509_NAME_oneline(X509_get_issuer_name(cert), pathbuf,
 	    MAXFILENAME);
-	if ((ptr = strstr(pathbuf, "CN=")) == NULL) {
+	if ((ptr = (unsigned char *)strstr(pathbuf, "CN=")) == NULL) {
 		msyslog(LOG_NOTICE, "cert_parse: invalid issuer %s",
 		    pathbuf);
 		cert_free(ret);
 		X509_free(cert);
 		return (NULL);
 	}
-	ret->issuer = estrdup(ptr + 3);
+	ret->issuer = estrdup((const char *)ptr + 3);
 	ret->first = asn2ntp(X509_get_notBefore(cert));
 	ret->last = asn2ntp(X509_get_notAfter(cert));
 
@@ -3365,7 +3365,7 @@ cert_parse(
 		/*
 		 * Check for a certificate loop.
 		 */
-		if (strcmp(hostval.ptr, ret->issuer) == 0) {
+		if (strcmp((const char *)hostval.ptr, ret->issuer) == 0) {
 			msyslog(LOG_NOTICE,
 			    "cert_parse: certificate trail loop %s",
 			    ret->subject);
@@ -3799,7 +3799,7 @@ crypto_setup(void)
 		exit (-1);
 	}
 	hostval.vallen = htonl(strlen(cinfo->subject));
-	hostval.ptr = cinfo->subject;
+	hostval.ptr = (unsigned char *)cinfo->subject;
 
 	/*
 	 * If trusted certificate, the subject name must match the group
@@ -3807,8 +3807,8 @@ crypto_setup(void)
 	 */
 	if (cinfo->flags & CERT_TRUST) {
 		if (sys_groupname == NULL) {
-			sys_groupname = hostval.ptr;
-		} else if (strcmp(hostval.ptr, sys_groupname) != 0) {
+			sys_groupname = (char *)hostval.ptr;
+		} else if (strcmp((const char *)hostval.ptr, sys_groupname) != 0) {
 			msyslog(LOG_ERR,
 			    "crypto_setup: trusted certificate name %s does not match group name %s",
 			    hostval.ptr, sys_groupname);

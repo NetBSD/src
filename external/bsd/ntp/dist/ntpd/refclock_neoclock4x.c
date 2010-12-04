@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_neoclock4x.c,v 1.2 2009/12/14 00:46:21 christos Exp $	*/
+/*	$NetBSD: refclock_neoclock4x.c,v 1.3 2010/12/04 23:08:35 christos Exp $	*/
 
 /*
  *
@@ -910,7 +910,7 @@ neol_query_firmware(int fd,
 		    int maxlen)
 {
   char tmpbuf[256];
-  int len;
+  size_t len;
   int lastsearch;
   unsigned char c;
   int last_c_was_crlf;
@@ -1010,7 +1010,7 @@ neol_query_firmware(int fd,
 		tmpbuf[len++] = (char) c;
 	    }
 	  tmpbuf[len] = '\0';
-	  if(len > sizeof(tmpbuf)-5)
+	  if (len > sizeof(tmpbuf)-5)
 	    break;
 	}
     }
