@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_request.c,v 1.3 2010/04/25 22:50:11 tonnerre Exp $	*/
+/*	$NetBSD: ntp_request.c,v 1.4 2010/12/04 23:08:35 christos Exp $	*/
 
 /*
  * ntp_request.c - respond to information requests
@@ -60,7 +60,7 @@ struct req_proc {
  * Universal request codes
  */
 static	struct req_proc univ_codes[] = {
-	{ NO_REQUEST,		NOAUTH,	 0,	0 }
+	{ NO_REQUEST,		NOAUTH,	 0,	0, NULL }
 };
 
 static	void	req_ack	(sockaddr_u *, struct interface *, struct req_pkt *, int);
@@ -231,7 +231,7 @@ static struct interface *frominter;
 void
 init_request (void)
 {
-	int i;
+	size_t i;
 
 	numrequests = 0;
 	numresppkts = 0;
@@ -448,7 +448,7 @@ process_private(
 	    || (++ec, INFO_SEQ(inpkt->auth_seq) != 0)
 	    || (++ec, INFO_ERR(inpkt->err_nitems) != 0)
 	    || (++ec, INFO_MBZ(inpkt->mbz_itemsize) != 0)
-	    || (++ec, rbufp->recv_length < REQ_LEN_HDR)
+	    || (++ec, rbufp->recv_length < (int)REQ_LEN_HDR)
 		) {
 		NLOG(NLOG_SYSEVENT)
 			if (current_time >= quiet_until) {
@@ -584,13 +584,13 @@ process_private(
 		 */
 		if (!INFO_IS_AUTH(inpkt->auth_seq) || !info_auth_keyid
 		    || ntohl(tailinpkt->keyid) != info_auth_keyid) {
-			DPRINTF(5, ("failed auth %d info_auth_keyid %u pkt keyid %u maclen %u\n",
+			DPRINTF(5, ("failed auth %d info_auth_keyid %u pkt keyid %u maclen %zu\n",
 				    INFO_IS_AUTH(inpkt->auth_seq),
 				    info_auth_keyid,
 				    ntohl(tailinpkt->keyid), mac_len));
 #ifdef DEBUG
 			msyslog(LOG_DEBUG,
-				"process_private: failed auth %d info_auth_keyid %u pkt keyid %u maclen %u\n",
+				"process_private: failed auth %d info_auth_keyid %u pkt keyid %u maclen %zu\n",
 				INFO_IS_AUTH(inpkt->auth_seq),
 				info_auth_keyid,
 				ntohl(tailinpkt->keyid), mac_len);
@@ -599,9 +599,9 @@ process_private(
 			return;
 		}
 		if (recv_len > REQ_LEN_NOMAC + MAX_MAC_LEN) {
-			DPRINTF(5, ("bad pkt length %d\n", recv_len));
+			DPRINTF(5, ("bad pkt length %zu\n", recv_len));
 			msyslog(LOG_ERR,
-				"process_private: bad pkt length %d",
+				"process_private: bad pkt length %zu",
 				recv_len);
 			req_ack(srcadr, inter, inpkt, INFO_ERR_FMT);
 			return;

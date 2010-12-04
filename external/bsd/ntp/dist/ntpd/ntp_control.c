@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_control.c,v 1.1.1.1 2009/12/13 16:55:26 kardel Exp $	*/
+/*	$NetBSD: ntp_control.c,v 1.2 2010/12/04 23:08:35 christos Exp $	*/
 
 /*
  * ntp_control.c - respond to control messages and send async traps
@@ -94,7 +94,7 @@ static	struct ctl_proc control_codes[] = {
 	{ CTL_OP_UNSETTRAP,	NOAUTH, unset_trap },
 	{ CTL_OP_SAVECONFIG,	AUTH,	save_config },
 	{ CTL_OP_CONFIGURE,	AUTH,	configure },
-	{ NO_REQUEST,		0 }
+	{ NO_REQUEST,		0,	NULL }
 };
 
 /*
@@ -684,7 +684,7 @@ process_control(
 	register int req_data;
 	register struct ctl_proc *cc;
 	int properlen;
-	int maclen;
+	size_t maclen;
 
 	DPRINTF(3, ("in process_control()\n"));
 
@@ -773,7 +773,7 @@ process_control(
 		res_keyid = ntohl(*(u_int32 *)((u_char *)pkt +
 					       properlen));
 
-		DPRINTF(3, ("recv_len %d, properlen %d, wants auth with keyid %08x, MAC length=%d\n",
+		DPRINTF(3, ("recv_len %d, properlen %d, wants auth with keyid %08x, MAC length=%zu\n",
 			    rbufp->recv_length, properlen, res_keyid,
 			    maclen));
 
@@ -1054,7 +1054,7 @@ ctl_putstr(
 	if (len > 0) {
 		*cp++ = '=';
 		*cp++ = '"';
-		if (len > (int) (sizeof(buffer) - (cp - buffer) - 1))
+		if (len > (sizeof(buffer) - (cp - buffer) - 1))
 			len = sizeof(buffer) - (cp - buffer) - 1;
 		memmove(cp, data, (unsigned)len);
 		cp += len;
@@ -2042,9 +2042,9 @@ ctl_getitem(
 	)
 {
 	register struct ctl_var *v;
-	register char *cp;
-	register char *tp;
-	static struct ctl_var eol = { 0, EOV, };
+	register char *cp, *dp;
+	register const char *tp;
+	static struct ctl_var eol = { 0, EOV, NULL };
 	static char buf[128];
 
 	/*
@@ -2086,12 +2086,12 @@ ctl_getitem(
 				}
 				if (*cp == '=') {
 					cp++;
-					tp = buf;
+					dp = buf;
 					while (cp < reqend && isspace((unsigned char)*cp))
 						cp++;
 					while (cp < reqend && *cp != ',') {
-						*tp++ = *cp++;
-						if (tp >= buf + sizeof(buf)) {
+						*dp++ = *cp++;
+						if (dp >= buf + sizeof(buf)) {
 							ctl_error(CERR_BADFMT);
 							numctlbadpkts++;
 #if 0	/* Avoid possible DOS attack */
@@ -2106,11 +2106,11 @@ ctl_getitem(
 					}
 					if (cp < reqend)
 						cp++;
-					*tp-- = '\0';
-					while (tp >= buf) {
-						if (!isspace((unsigned int)(*tp)))
+					*dp-- = '\0';
+					while (dp >= buf) {
+						if (!isspace((unsigned int)(*dp)))
 							break;
-						*tp-- = '\0';
+						*dp-- = '\0';
 					}
 					reqpt = cp;
 					*data = buf;
@@ -3131,7 +3131,7 @@ add_var(
 	(*kv)[c+1].code  = 0;
 	(*kv)[c+1].text  = (char *)0;
 	(*kv)[c+1].flags = EOV;
-	return (char *)(*kv)[c].text;
+	return (char *)(intptr_t)(*kv)[c].text;
 }
 
 void
@@ -3161,7 +3161,7 @@ set_var(
 					t++;
 				}
 				if (*s == *t && ((*t == '=') || !*t)) {
-					free((void *)k->text);
+					free((void *)(intptr_t)k->text);
 					td = (char *)emalloc(size);
 					memmove(td, data, size);
 					k->text =td;
@@ -3200,7 +3200,7 @@ free_varlist(
 	struct ctl_var *k;
 	if (kv) {
 		for (k = kv; !(k->flags & EOV); k++)
-			free((void *)k->text);
+			free((void *)(intptr_t)k->text);
 		free((void *)kv);
 	}
 }

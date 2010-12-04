@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_config.c,v 1.2 2010/11/29 00:39:41 christos Exp $	*/
+/*	$NetBSD: ntp_config.c,v 1.3 2010/12/04 23:08:35 christos Exp $	*/
 
 /* ntp_config.c
  *
@@ -315,7 +315,8 @@ static int get_multiple_netnums(const char *num, sockaddr_u *addr,
 				enum gnn_type a_type);
 static void save_resolve(char *name, int no_needed, int type,
 			 int mode, int version, int minpoll, int maxpoll,
-			 u_int flags, int ttl, keyid_t keyid, u_char *keystr);
+			 u_int flags, int ttl, keyid_t keyid,
+			 const u_char *keystr);
 static void abort_resolve(void);
 static void do_resolve_internal(void);
 
@@ -512,7 +513,7 @@ dump_config_tree(
 	nic_rule_node *rule_node;
 
 	char **pstr = NULL;
-	char *s1;
+	const char *s1;
 	char *s2;
 	int *intp = NULL;
 	int *key_val;
@@ -1031,12 +1032,13 @@ dump_config_tree(
 	list_ptr = queue_head(ptree->setvar);
 	for(;	list_ptr != NULL;
 		list_ptr = next_node(list_ptr)) {
+		char *s;
 
 		setv_node = list_ptr;
-		s1 = quote_if_needed(setv_node->var);
+		s = quote_if_needed(setv_node->var);
 		s2 = quote_if_needed(setv_node->val);
-		fprintf(df, "setvar %s = %s", s1, s2);
-		free(s1);
+		fprintf(df, "setvar %s = %s", s, s2);
+		free(s);
 		free(s2);
 
 		if (setv_node->isdefault)
@@ -1376,7 +1378,7 @@ create_unpeer_node(
 	 * We treat all valid 16-bit numbers as association IDs.
 	 */
 	pch = addr->address;
-	while (*pch && isdigit(*pch))
+	while (*pch && isdigit((unsigned char)*pch))
 		pch++;
 
 	if (!*pch 
@@ -2688,7 +2690,7 @@ config_phone(
 	struct config_tree *ptree
 	)
 {
-	int i = 0;
+	size_t i = 0;
 	char **s;
 
 	s = queue_head(ptree->phone);
@@ -2698,7 +2700,7 @@ config_phone(
 		else
 			msyslog(LOG_INFO,
 				"phone: Number of phone entries exceeds %d. Ignoring phone %s...",
-				COUNTOF(sys_phone) - 1, *s);
+				(int)COUNTOF(sys_phone) - 1, *s);
 		s = next_node(s);
 	}
 
@@ -2857,7 +2859,7 @@ config_ttl(
 	struct config_tree *ptree
 	)
 {
-	int i = 0;
+	size_t i = 0;
 	int *curr_ttl;
 
 	curr_ttl = queue_head(ptree->ttl);
@@ -2867,7 +2869,7 @@ config_ttl(
 		else
 			msyslog(LOG_INFO,
 				"ttl: Number of TTL entries exceeds %d. Ignoring TTL %d...",
-				COUNTOF(sys_ttl), *curr_ttl);
+				(int)COUNTOF(sys_ttl), *curr_ttl);
 
 		curr_ttl = next_node(curr_ttl);
 	}
@@ -3437,7 +3439,7 @@ config_peers(
 				     peerflags,
 				     curr_peer->ttl,
 				     curr_peer->peerkey,
-				     (u_char *)"*");
+				     (const u_char *)"*");
 		}
 		/* Yippie!! Name resolution has succeeded!!!
 		 * Now we can proceed to some more sanity checks on
@@ -3469,7 +3471,7 @@ config_peers(
 					    peerflags,
 					    curr_peer->ttl,
 					    curr_peer->peerkey,
-					    (u_char *)"*");
+					    (const u_char *)"*");
 			}
 			freeaddrinfo(res_bak);
 		}
@@ -4417,7 +4419,7 @@ save_resolve(
 	u_int flags,
 	int ttl,
 	keyid_t keyid,
-	u_char *keystr
+	const u_char *keystr
 	)
 {
 #ifndef SYS_VXWORKS

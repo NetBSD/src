@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp-keygen-opts.c,v 1.1.1.1 2009/12/13 16:57:26 kardel Exp $	*/
+/*	$NetBSD: ntp-keygen-opts.c,v 1.2 2010/12/04 23:08:48 christos Exp $	*/
 
 /*  
  *  EDIT THIS FILE WITH CAUTION  (ntp-keygen-opts.c)
@@ -865,12 +865,12 @@ doOptModulus(tOptions* pOptions, tOptDesc* pOptDesc)
     option_usage_fp = stderr;
 
   emit_ranges:
-    optionShowRange(pOptions, pOptDesc, (void *)rng, 1);
+    optionShowRange(pOptions, pOptDesc, (void *)(intptr_t)rng, 1);
     return;
 
   valid_return:
     if ((pOptDesc->fOptState & OPTST_ALLOC_ARG) != 0) {
-        free((void *)pOptDesc->optArg.argString);
+        free((void *)(intptr_t)pOptDesc->optArg.argString);
         pOptDesc->fOptState &= ~OPTST_ALLOC_ARG;
     }
     pOptDesc->optArg.argInt = val;

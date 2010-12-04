@@ -1,4 +1,4 @@
-/*	$NetBSD: options.h,v 1.1.1.1 2009/12/13 16:57:25 kardel Exp $	*/
+/*	$NetBSD: options.h,v 1.2 2010/12/04 23:08:48 christos Exp $	*/
 
 /*   -*- buffer-read-only: t -*- vi: set ro:
  *  
@@ -408,7 +408,7 @@ typedef void (tOptionXlateProc)(void);
 
 struct options {
     int const           structVersion;
-    int                 origArgCt;
+    unsigned int        origArgCt;
     char**              origArgVect;
     unsigned int        fOptSet;
     unsigned int        curOptIdx;

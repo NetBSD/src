@@ -98,7 +98,7 @@
   #define YYFREE	free
   #define YYERROR_VERBOSE
   #define YYMAXDEPTH	1000   /* stop the madness sooner */
-  void yyerror (char *msg);
+  void yyerror (const char *msg);
   extern int input_from_file;  /* 0=input from ntpq :config */
 
 
@@ -3316,7 +3316,7 @@ yyreduce:
 
 /* Line 1455 of yacc.c  */
 #line 925 "ntp_parser.y"
-    { enqueue(cfgt.vars, create_attr_sval(T_Driftfile, "\0")); }
+    { enqueue(cfgt.vars, create_attr_sval(T_Driftfile, NULL)); }
     break;
 
   case 195:
@@ -3859,7 +3859,7 @@ yyreturn:
 #line 1118 "ntp_parser.y"
 
 
-void yyerror (char *msg)
+void yyerror (const char *msg)
 {
 	int retval;
 

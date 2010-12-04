@@ -1,4 +1,4 @@
-/*	$NetBSD: nested.c,v 1.1.1.1 2009/12/13 16:57:19 kardel Exp $	*/
+/*	$NetBSD: nested.c,v 1.2 2010/12/04 23:08:36 christos Exp $	*/
 
 
 /*
@@ -564,7 +564,7 @@ unloadNestedArglist( tArgList* pAL )
         AGFREE( pNV );
     }
 
-    AGFREE( (void*)pAL );
+    AGFREE( pAL );
 }
 
 
@@ -589,7 +589,7 @@ optionUnloadNested( tOptionValue const * pOV )
 
     unloadNestedArglist( pOV->v.nestVal );
 
-    AGFREE( (void*)pOV );
+    AGFREE( pOV );
 }
 
 

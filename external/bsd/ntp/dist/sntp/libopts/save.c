@@ -1,4 +1,4 @@
-/*	$NetBSD: save.c,v 1.1.1.1 2009/12/13 16:57:21 kardel Exp $	*/
+/*	$NetBSD: save.c,v 1.2 2010/12/04 23:08:36 christos Exp $	*/
 
 
 /*
@@ -214,7 +214,7 @@ findFileName( tOptions* pOpts, int* p_free_name )
         fprintf( stderr, zWarn, pOpts->pzProgName );
         fprintf( stderr, zNoStat, errno, strerror( errno ), pzDir );
         if (free_dir_name)
-            AGFREE( (void*)pzDir );
+            AGFREE( pzDir );
         return NULL;
     } while (0);
 
@@ -233,7 +233,7 @@ findFileName( tOptions* pOpts, int* p_free_name )
             sprintf( pzPath, "%s/%s", pzDir, pOpts->pzRcName );
 #endif
             if (free_dir_name)
-                AGFREE( (void*)pzDir );
+                AGFREE( pzDir );
             pzDir = pzPath;
             free_dir_name = 1;
         }
@@ -247,7 +247,7 @@ findFileName( tOptions* pOpts, int* p_free_name )
                 fprintf( stderr, zWarn, pOpts->pzProgName );
                 fprintf( stderr, zNoStat, errno, strerror( errno ),
                          pzDir );
-                AGFREE( (void*)pzDir );
+                AGFREE( pzDir );
                 return NULL;
             }
 
@@ -266,7 +266,7 @@ findFileName( tOptions* pOpts, int* p_free_name )
         fprintf( stderr, zWarn, pOpts->pzProgName );
         fprintf( stderr, zNotFile, pzDir );
         if (free_dir_name)
-            AGFREE( (void*)pzDir );
+            AGFREE( pzDir );
         return NULL;
     }
 
@@ -385,7 +385,7 @@ print_a_value(FILE * fp, int depth, tOptDesc * pOD, tOptionValue const * ovp)
                     /*
                      *  set membership strings get allocated
                      */
-                    AGFREE( (void*)pOD->optArg.argString );
+                    AGFREE( pOD->optArg.argString );
                 }
             }
 
@@ -536,12 +536,12 @@ openSaveFile( tOptions* pOpts )
             fprintf( stderr, zWarn, pOpts->pzProgName );
             fprintf( stderr, zNoCreat, errno, strerror( errno ), pzFName );
             if (free_name)
-                AGFREE((void*) pzFName );
+                AGFREE( pzFName );
             return fp;
         }
 
         if (free_name)
-            AGFREE( (void*)pzFName );
+            AGFREE( pzFName );
     }
 
     {
@@ -561,7 +561,7 @@ openSaveFile( tOptions* pOpts )
          *  normally point to static data that is overwritten by each call.
          *  The test to detect allocated ctime, so we leak the memory.
          */
-        AGFREE( (void*)pzTime );
+        AGFREE( pzTime );
 #endif
     }
 
@@ -641,7 +641,7 @@ printSetMemberArg(FILE * fp, tOptDesc * pOD)
         /*
          *  set membership strings get allocated
          */
-        AGFREE( (void*)pOD->optArg.argString );
+        AGFREE( pOD->optArg.argString );
         pOD->fOptState &= ~OPTST_ALLOC_ARG;
     }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_proto.c,v 1.1.1.1 2009/12/13 16:55:38 kardel Exp $	*/
+/*	$NetBSD: ntp_proto.c,v 1.2 2010/12/04 23:08:35 christos Exp $	*/
 
 /*
  * ntp_proto.c - NTP version 4 protocol machinery
@@ -434,18 +434,18 @@ receive(
 	while (has_mac != 0) {
 		u_int32	len;
 
-		if (has_mac % 4 != 0 || has_mac < MIN_MAC_LEN) {
+		if (has_mac % 4 != 0 || has_mac < (int)MIN_MAC_LEN) {
 			sys_badlength++;
 			return;			/* bad length */
 		}
-		if (has_mac <= MAX_MAC_LEN) {
+		if (has_mac <= (int)MAX_MAC_LEN) {
 			skeyid = ntohl(((u_int32 *)pkt)[authlen / 4]);
 			break;
 
 		} else {
 			opcode = ntohl(((u_int32 *)pkt)[authlen / 4]);
  			len = opcode & 0xffff;
-			if (len % 4 != 0 || len < 4 || len + authlen >
+			if (len % 4 != 0 || len < 4 || (int)(len + authlen) >
 			    rbufp->recv_length) {
 				sys_badlength++;
 				return;		/* bad length */
@@ -609,7 +609,7 @@ receive(
 			 * # if unsync, 0
 			 * % can't happen
 			 */
-			if (has_mac < MAX_MD5_LEN) {
+			if (has_mac < (int)MAX_MD5_LEN) {
 				sys_badauth++;
 				return;
 			}
@@ -647,7 +647,7 @@ receive(
 			 * purposes is zero. Note the hash is saved for
 			 * use later in the autokey mambo.
 			 */
-			if (authlen > LEN_PKT_NOMAC && pkeyid != 0) {
+			if (authlen > (int)LEN_PKT_NOMAC && pkeyid != 0) {
 				session_key(&rbufp->recv_srcadr,
 				    dstadr_sin, skeyid, 0, 2);
 				tkeyid = session_key(
@@ -1291,7 +1291,7 @@ receive(
 	if (peer->flip != 0) {
 		peer->rec = p_rec;
 		peer->dst = rbufp->recv_time;
-		if (peer->nextdate - current_time < (1 << min(peer->ppoll,
+		if ((int)(peer->nextdate - current_time) < (1 << min(peer->ppoll,
 		    peer->hpoll)) / 2)
 			peer->nextdate++;
 		else
@@ -1910,7 +1910,7 @@ poll_update(
 void
 peer_clear(
 	struct peer *peer,		/* peer structure */
-	char	*ident			/* tally lights */
+	const char *ident		/* tally lights */
 	)
 {
 	int	i;
@@ -2052,7 +2052,7 @@ clock_filter(
 		if (peer->filter_disp[j] >= MAXDISPERSE) { 
 			peer->filter_disp[j] = MAXDISPERSE;
 			dst[i] = MAXDISPERSE;
-		} else if (peer->update - peer->filter_epoch[j] >
+		} else if ((int)(peer->update - peer->filter_epoch[j]) >
 		    ULOGTOD(allan_xpt)) {
 			dst[i] = peer->filter_delay[j] +
 			    peer->filter_disp[j];
@@ -3115,7 +3115,7 @@ peer_xmit(
 		 * Calculate the next session key. Since extension
 		 * fields are present, the cookie value is zero.
 		 */
-		if (sendlen > LEN_PKT_NOMAC) {
+		if (sendlen > (int)LEN_PKT_NOMAC) {
 			session_key(&peer->dstadr->sin, &peer->srcadr,
 			    xkeyid, 0, 2);
 		}
@@ -3156,7 +3156,7 @@ peer_xmit(
 	if (xkeyid > NTP_MAXKEY)
 		authtrust(xkeyid, 0);
 #endif /* OPENSSL */
-	if (sendlen > sizeof(xpkt)) {
+	if (sendlen > (int)sizeof(xpkt)) {
 		msyslog(LOG_ERR, "proto: buffer overflow %u", sendlen);
 		exit (-1);
 	}
@@ -3321,7 +3321,7 @@ fast_xmit(
 		 */
 		cookie = session_key(&rbufp->recv_srcadr,
 		    &rbufp->dstadr->sin, 0, sys_private, 0);
-		if (rbufp->recv_length > sendlen + MAX_MAC_LEN) {
+		if (rbufp->recv_length > (int)(sendlen + MAX_MAC_LEN)) {
 			session_key(&rbufp->dstadr->sin,
 			    &rbufp->recv_srcadr, xkeyid, 0, 2);
 			temp32 = CRYPTO_RESP;
