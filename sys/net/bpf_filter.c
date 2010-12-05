@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf_filter.c,v 1.36 2010/04/21 16:35:09 drochner Exp $	*/
+/*	$NetBSD: bpf_filter.c,v 1.37 2010/12/05 00:34:21 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf_filter.c,v 1.36 2010/04/21 16:35:09 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf_filter.c,v 1.37 2010/12/05 00:34:21 christos Exp $");
 
 #if 0
 #if !(defined(lint) || defined(KERNEL))
@@ -67,11 +67,11 @@ static const char rcsid[] =
 	} 				\
 }
 
-static int m_xword (struct mbuf *, uint32_t, int *);
-static int m_xhalf (struct mbuf *, uint32_t, int *);
+static int m_xword (const struct mbuf *, uint32_t, int *);
+static int m_xhalf (const struct mbuf *, uint32_t, int *);
 
 static int
-m_xword(struct mbuf *m, uint32_t k, int *err)
+m_xword(const struct mbuf *m, uint32_t k, int *err)
 {
 	int len;
 	u_char *cp, *np;
@@ -103,7 +103,7 @@ m_xword(struct mbuf *m, uint32_t k, int *err)
 }
 
 static int
-m_xhalf(struct mbuf *m, uint32_t k, int *err)
+m_xhalf(const struct mbuf *m, uint32_t k, int *err)
 {
 	int len;
 	u_char *cp;
@@ -134,7 +134,8 @@ m_xhalf(struct mbuf *m, uint32_t k, int *err)
  * buflen is the amount of data present
  */
 u_int
-bpf_filter(struct bpf_insn *pc, u_char *p, u_int wirelen, u_int buflen)
+bpf_filter(const struct bpf_insn *pc, const u_char *p, u_int wirelen,
+    u_int buflen)
 {
 	uint32_t A, X, k;
 	uint32_t mem[BPF_MEMWORDS];
@@ -172,7 +173,7 @@ bpf_filter(struct bpf_insn *pc, u_char *p, u_int wirelen, u_int buflen)
 
 				if (buflen != 0)
 					return 0;
-				A = m_xword((struct mbuf *)p, k, &merr);
+				A = m_xword((const struct mbuf *)p, k, &merr);
 				if (merr != 0)
 					return 0;
 				continue;
@@ -191,7 +192,7 @@ bpf_filter(struct bpf_insn *pc, u_char *p, u_int wirelen, u_int buflen)
 
 				if (buflen != 0)
 					return 0;
-				A = m_xhalf((struct mbuf *)p, k, &merr);
+				A = m_xhalf((const struct mbuf *)p, k, &merr);
 				if (merr != 0)
 					return 0;
 				continue;
@@ -206,12 +207,12 @@ bpf_filter(struct bpf_insn *pc, u_char *p, u_int wirelen, u_int buflen)
 			k = pc->k;
 			if (k >= buflen) {
 #ifdef _KERNEL
-				struct mbuf *m;
+				const struct mbuf *m;
 				int len;
 
 				if (buflen != 0)
 					return 0;
-				m = (struct mbuf *)p;
+				m = (const struct mbuf *)p;
 				MINDEX(len, m, k);
 				A = mtod(m, u_char *)[k];
 				continue;
@@ -238,7 +239,7 @@ bpf_filter(struct bpf_insn *pc, u_char *p, u_int wirelen, u_int buflen)
 
 				if (buflen != 0)
 					return 0;
-				A = m_xword((struct mbuf *)p, k, &merr);
+				A = m_xword((const struct mbuf *)p, k, &merr);
 				if (merr != 0)
 					return 0;
 				continue;
@@ -257,7 +258,7 @@ bpf_filter(struct bpf_insn *pc, u_char *p, u_int wirelen, u_int buflen)
 
 				if (buflen != 0)
 					return 0;
-				A = m_xhalf((struct mbuf *)p, k, &merr);
+				A = m_xhalf((const struct mbuf *)p, k, &merr);
 				if (merr != 0)
 					return 0;
 				continue;
@@ -272,12 +273,12 @@ bpf_filter(struct bpf_insn *pc, u_char *p, u_int wirelen, u_int buflen)
 			k = X + pc->k;
 			if (k >= buflen) {
 #ifdef _KERNEL
-				struct mbuf *m;
+				const struct mbuf *m;
 				int len;
 
 				if (buflen != 0)
 					return 0;
-				m = (struct mbuf *)p;
+				m = (const struct mbuf *)p;
 				MINDEX(len, m, k);
 				A = mtod(m, u_char *)[k];
 				continue;
@@ -292,12 +293,12 @@ bpf_filter(struct bpf_insn *pc, u_char *p, u_int wirelen, u_int buflen)
 			k = pc->k;
 			if (k >= buflen) {
 #ifdef _KERNEL
-				struct mbuf *m;
+				const struct mbuf *m;
 				int len;
 
 				if (buflen != 0)
 					return 0;
-				m = (struct mbuf *)p;
+				m = (const struct mbuf *)p;
 				MINDEX(len, m, k);
 				X = (mtod(m, char *)[k] & 0xf) << 2;
 				continue;
