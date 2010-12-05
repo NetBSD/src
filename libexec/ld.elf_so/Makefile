@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.98 2010/10/29 15:08:17 christos Exp $
+#	$NetBSD: Makefile,v 1.99 2010/12/05 00:56:06 joerg Exp $
 #
 # NOTE: when changing ld.so, ensure that ldd still compiles.
 #
@@ -40,6 +40,7 @@ M=		${.CURDIR}/arch/${ARCHSUBDIR}
 
 LDFLAGS+=	-shared -symbolic -nostartfiles
 LDFLAGS+=	-Wl,-static
+CFLAGS+=	-fvisibility=hidden
 
 # Adds SRCS, CPPFLAGS, LDFLAGS, etc.  Must go first so MD startup source
 # is first.
