@@ -1,4 +1,4 @@
-/*	$NetBSD: lasi.c,v 1.15 2009/11/03 05:07:25 snj Exp $	*/
+/*	$NetBSD: lasi.c,v 1.16 2010/12/05 12:19:09 skrll Exp $	*/
 
 /*	$OpenBSD: lasi.c,v 1.4 2001/06/09 03:57:19 mickey Exp $	*/
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lasi.c,v 1.15 2009/11/03 05:07:25 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lasi.c,v 1.16 2010/12/05 12:19:09 skrll Exp $");
 
 #undef LASIDEBUG
 
@@ -190,6 +190,7 @@ lasiattach(device_t parent, device_t self, void *aux)
 
 	/* Establish the interrupt register. */
 	hp700_intr_reg_establish(&sc->sc_int_reg);
+	sc->sc_int_reg.int_reg_name = device_xname(self);
 	sc->sc_int_reg.int_reg_mask = &sc->sc_trs->lasi_imr;
 	sc->sc_int_reg.int_reg_req = &sc->sc_trs->lasi_irr;
 

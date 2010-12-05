@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.12 2010/12/05 10:27:50 skrll Exp $	*/
+/*	$NetBSD: intr.h,v 1.13 2010/12/05 12:19:09 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@ struct hp700_int_reg {
 	/*
 	 * The device name for this interrupt register.
 	 */
-	const char *int_reg_dev;
+	const char *int_reg_name;
 
 	/*
 	 * The virtual address of the mask, request and level
@@ -74,6 +74,7 @@ struct hp700_int_reg {
 	unsigned int int_reg_bits_map[HP700_INT_BITS];
 #define	INT_REG_BIT_REG		0xffffff00
 #define	INT_REG_BIT_UNUSED	INT_REG_BIT_REG
+#define	INT_REG_BIT_NESTED_P(x)	(((x) & ~INT_REG_BIT_UNUSED) != 0)
 
 	/*
 	 * The mask of allocatable bit numbers.
@@ -84,8 +85,8 @@ struct hp700_int_reg {
 extern	struct hp700_int_reg int_reg_cpu;
 void	hp700_intr_bootstrap(void);
 void	hp700_intr_reg_establish(struct hp700_int_reg *);
-void *	hp700_intr_establish(device_t, int, int (*)(void *), void *,
-	    struct hp700_int_reg *, int);
+void *	hp700_intr_establish(int, int (*)(void *), void *, 
+    struct hp700_int_reg *, int);
 int	hp700_intr_allocate_bit(struct hp700_int_reg *);
 int	_hp700_intr_ipl_next(void);
 void	hp700_intr_init(void);
