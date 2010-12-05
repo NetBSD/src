@@ -1,4 +1,4 @@
-/*	$NetBSD: bog.c,v 1.25 2010/12/05 04:11:51 pgoyette Exp $	*/
+/*	$NetBSD: bog.c,v 1.26 2010/12/05 04:34:22 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\
 #if 0
 static char sccsid[] = "@(#)bog.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: bog.c,v 1.25 2010/12/05 04:11:51 pgoyette Exp $");
+__RCSID("$NetBSD: bog.c,v 1.26 2010/12/05 04:34:22 pgoyette Exp $");
 #endif
 #endif /* not lint */
 
@@ -707,6 +707,7 @@ static void
 usage(void)
 {
 	(void) fprintf(stderr,
-	    "usage: boggle [-bd] [-s#] [-t#] [-w#] [+[+]] [boardspec]\n");
+	    "usage: %s [-bd] [-s#] [-t#] [-w#] [+[+]] [boardspec]\n",
+	    getprogname());
 	exit(1);
 }

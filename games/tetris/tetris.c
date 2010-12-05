@@ -1,4 +1,4 @@
-/*	$NetBSD: tetris.c,v 1.22 2009/08/12 08:51:21 dholland Exp $	*/
+/*	$NetBSD: tetris.c,v 1.23 2010/12/05 04:34:23 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -328,6 +328,7 @@ onintr(int signo __unused)
 static void
 usage(void)
 {
-	(void)fprintf(stderr, "usage: tetris [-ps] [-k keys] [-l level]\n");
+	(void)fprintf(stderr, "usage: %s [-ps] [-k keys] [-l level]\n",
+	    getprogname());
 	exit(1);
 }
