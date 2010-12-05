@@ -46,6 +46,8 @@ Possibly in 6.0
 + kernel modules need work
 + Xen suspend/resume - jym working on it
 + TNF funding for release engineering
++ GPT-aware bootloader for i386/amd64 - seeking volunteer to finish and
+  integrate existing work.
 
 
 Alistair Crooks
