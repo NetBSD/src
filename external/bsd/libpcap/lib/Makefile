@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2010/12/05 01:45:46 christos Exp $	
+# $NetBSD: Makefile,v 1.2 2010/12/05 03:03:27 christos Exp $	
 
 .include <bsd.own.mk>
 
@@ -6,9 +6,17 @@ USE_FORT?= yes	# network protocol library
 
 .SUFFIXES: .3 .3pcap
 
+__sed: .USE
+	@rm -f ${.TARGET}
+	${TOOL_SED} -e 's,@MAN_FILE_FORMATS@,5,g' \
+	    -e 's,@MAN_MISC_INFO@,7,g' \
+	    -e 's,3PCAP,3,g' < ${.ALLSRC} > ${.TARGET}
+
 .3pcap.3:
-	rm -f ${.TARGET}
-	cp ${.IMPSRC} ${.TARGET}
+	@rm -f ${.TARGET}
+	${TOOL_SED} -e 's,@MAN_FILE_FORMATS@,5,g' \
+	    -e 's,@MAN_MISC_INFO@,7,g' \
+	    -e 's,3PCAP,3,g' < ${.ALLSRC} > ${.TARGET}
 
 
 SRCDIR=		${.CURDIR}/../dist/
@@ -43,11 +51,6 @@ CLEANFILES+= ${MAN}
 
 WARNS?=		5
 
-__sed: .USE
-	@rm -f ${.TARGET}
-	${TOOL_SED} -e 's,@MAN_FILE_FORMATS@,5,g' \
-	    -e 's,@MAN_MISC_INFO@,7,g' < ${.ALLSRC} > ${.TARGET}
-
 .for i in ${MAN3IN}
 ${i:S/pcap.in//}: ${i} __sed
 .endfor
@@ -80,12 +83,12 @@ CPPFLAGS+=	-DINET6
 
 SRCS=	scanner.l savefile.c pcap.c pcap-bpf.c optimize.c nametoaddr.c \
 	inet.c grammar.y gencode.c fad-getad.c etherent.c bpf_image.c \
-	bpf_dump.c version.c
+	bpf_dump.c version.c sf-pcap-ng.c sf-pcap.c pcap-common.c
 
 .PATH:	${NETBSDSRCDIR}/sys/net
 SRCS+=	bpf_filter.c
 
-INCS=		pcap-namedb.h pcap.h
+INCS=		pcap-namedb.h pcap.h pcap/pcap.h pcap/namedb.h pcap/bpf.h
 INCSDIR=	/usr/include
 
 scanner.d scanner.o: tokdefs.h
