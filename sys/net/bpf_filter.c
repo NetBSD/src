@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf_filter.c,v 1.38 2010/12/05 02:40:40 christos Exp $	*/
+/*	$NetBSD: bpf_filter.c,v 1.39 2010/12/05 08:45:46 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf_filter.c,v 1.38 2010/12/05 02:40:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf_filter.c,v 1.39 2010/12/05 08:45:46 mrg Exp $");
 
 #if 0
 #if !(defined(lint) || defined(KERNEL))
@@ -462,11 +462,12 @@ bpf_filter(const struct bpf_insn *pc, const u_char *p, u_int wirelen,
  * Otherwise, a bogus program could easily crash the system.
  */
 int
-bpf_validate(const struct bpf_insn *f, int len)
+bpf_validate(const struct bpf_insn *f, int signed_len)
 {
-	u_int i, from;
+	u_int i, from, len;
 	const struct bpf_insn *p;
 
+	len = (u_int)signed_len;
 	if (len < 1)
 		return 0;
 #if defined(KERNEL) || defined(_KERNEL)
