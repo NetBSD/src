@@ -1,4 +1,4 @@
-/*	$NetBSD: snake.c,v 1.26 2009/08/12 08:48:15 dholland Exp $	*/
+/*	$NetBSD: snake.c,v 1.27 2010/12/05 04:34:22 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\
 #if 0
 static char sccsid[] = "@(#)snake.c	8.2 (Berkeley) 1/7/94";
 #else
-__RCSID("$NetBSD: snake.c,v 1.26 2009/08/12 08:48:15 dholland Exp $");
+__RCSID("$NetBSD: snake.c,v 1.27 2010/12/05 04:34:22 pgoyette Exp $");
 #endif
 #endif				/* not lint */
 
@@ -180,9 +180,13 @@ main(argc, argv)
 		case '?':
 		default:
 #ifdef DEBUG
-			fputs("usage: snake [-d seed] [-w width] [-l length] [-t]\n", stderr);
+			fprintf(stderr,
+			    "usage: %s [-d seed] [-w width] [-l length] [-t]\n",
+			    getprogname());
 #else
-			fputs("usage: snake [-w width] [-l length] [-t]\n", stderr);
+			fprintf(stderr,
+			    "usage: %s [-w width] [-l length] [-t]\n",
+			    getprogname());
 #endif
 			exit(1);
 		}
