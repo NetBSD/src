@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld_start.S,v 1.7 2010/12/03 22:48:25 joerg Exp $	*/
+/*	$NetBSD: rtld_start.S,v 1.8 2010/12/05 00:56:07 joerg Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -40,6 +40,7 @@
 	.text
 	.align	16
 	.globl	.rtld_start
+	.hidden	.rtld_start
 	.type	.rtld_start,@function
 .rtld_start:
 	subq	$16,%rsp		# make room of obj_main and exit proc
@@ -52,11 +53,11 @@
 	subq	(%rax),%rbx		# relocbase
 
 	movq	%rbx,%rsi
-	call	_rtld_relocate_nonplt_self@PLT
+	call	_rtld_relocate_nonplt_self
 
 	movq	%r12,%rdi
 	movq	%rbx,%rsi
-	call	_rtld@PLT		# _rtld(sp, relocbase)
+	call	_rtld			# _rtld(sp, relocbase)
 
 	popq	%rbx			# %rbx = ps_strings
 	popq	%rdx			# %rdx = cleanup
@@ -65,6 +66,7 @@
 
 	.align	4
 	.globl	_rtld_bind_start
+	.hidden	_rtld_bind_start
 	.type	_rtld_bind_start,@function
 _rtld_bind_start:	# (obj, reloff)
 	# This function is called with a misaligned stack from the PLT
@@ -84,7 +86,7 @@ _rtld_bind_start:	# (obj, reloff)
 	movq	80(%rsp),%rdi
 	movq	88(%rsp),%rsi
 
-	call	_rtld_bind@PLT		# call the binder
+	call	_rtld_bind		# call the binder
 	movq	%rax,88(%rsp)		# store function in obj
 
 	popq	%r11
