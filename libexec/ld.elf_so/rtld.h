@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.h,v 1.95 2010/10/16 10:27:07 skrll Exp $	 */
+/*	$NetBSD: rtld.h,v 1.96 2010/12/05 00:56:06 joerg Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -254,13 +254,13 @@ extern Elf_Sym _rtld_sym_zero;
 /* rtld.c */
 
 /* We export these symbols using _rtld_symbol_lookup and is_exported. */
-char *dlerror(void);
-void *dlopen(const char *, int);
-void *dlsym(void *, const char *);
-int dlclose(void *);
-int dladdr(const void *, Dl_info *);
-int dlinfo(void *, int, void *);
-int dl_iterate_phdr(int (*)(struct dl_phdr_info *, size_t, void *),
+__dso_public char *dlerror(void);
+__dso_public void *dlopen(const char *, int);
+__dso_public void *dlsym(void *, const char *);
+__dso_public int dlclose(void *);
+__dso_public int dladdr(const void *, Dl_info *);
+__dso_public int dlinfo(void *, int, void *);
+__dso_public int dl_iterate_phdr(int (*)(struct dl_phdr_info *, size_t, void *),
     void *);
 
 /* These aren't exported */
