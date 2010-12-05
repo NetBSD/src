@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2010/12/05 05:14:00 christos Exp $	
+#	$NetBSD: Makefile,v 1.2 2010/12/05 05:24:03 christos Exp $	
 
 WARNS?=	1	# XXX: need to cleanup later
 
@@ -6,6 +6,7 @@ WARNS?=	1	# XXX: need to cleanup later
 
 USE_FORT?= yes	# network client
 
+BINDIR=/usr/bin
 SRCDIR=	${.CURDIR}/../dist
 .PATH:	${SRCDIR}
 
@@ -75,13 +76,6 @@ CPPFLAGS+=-DHAVE_LIBCRYPTO=1
 LDADD+=	-lcrypto -lcrypt
 DPADD+=	${LIBCRYPTO} ${LIBCRYPT}
 .endif
-
-#.if (defined(HAVE_GCC) && ${HAVE_GCC} == 4) || defined(HAVE_PCC)
-#COPTS+=	-fno-strict-aliasing
-#.for f in print-802_11 print-esp print-fr print-radius print-telnet tcpdump util
-#COPTS.${f}.c+=  -Wno-pointer-sign
-#.endfor
-#.endif
 
 CLEANFILES+=	version.c tcpdump.8
 
