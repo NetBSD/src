@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.1 2009/06/09 16:16:15 pooka Exp $
+#	$NetBSD: Makefile,v 1.2 2010/12/05 16:53:46 pooka Exp $
 #
 
-.include "${.CURDIR}/../Makefile.rumpdev"
+.include "${.CURDIR}/../Makefile.rumpdevcomp"
 
 SUBDIR+=	${RUMPDEVLIBS}
 
