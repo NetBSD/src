@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.155 2010/12/03 21:38:47 plunky Exp $
+#	$NetBSD: Makefile,v 1.156 2010/12/05 05:58:12 christos Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
@@ -25,9 +25,11 @@ SUBDIR+=libarch \
 	libbsdmalloc libbluetooth libbz2 \
 	libcompat libcrypt \
 	libintl libkvm libm \
-	libossaudio libpcap libpci libpmc libposix libprop libpthread \
+	libossaudio libpci libpmc libposix libprop libpthread \
 	libpthread_dbg libpuffs libresolv librmt librpcsvc librt \
 	librumpclient libterminfo libusbhid libutil libwrap liby libz
+
+SUBDIR+=	../external/bsd/libpcap/lib
 
 .if (${MKMDNS} != "no")
 SUBDIR+=	../external/apache2/mDNSResponder/lib
