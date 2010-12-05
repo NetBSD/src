@@ -176,8 +176,11 @@
 /* define if your compiler has __attribute__ */
 #define HAVE___ATTRIBUTE__ 1
 
+#ifdef notdef
+/* From the Makefile */
 /* IPv6 */
 #define INET6 1
+#endif
 
 /* if unaligned access fails */
 /* #undef LBL_ALIGN */
