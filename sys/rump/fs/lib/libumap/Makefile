@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2010/04/11 05:45:57 pooka Exp $
+#	$NetBSD: Makefile,v 1.1 2010/12/05 16:11:17 pooka Exp $
 #
 
 .PATH:  ${.CURDIR}/../../../../miscfs/umapfs
