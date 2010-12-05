@@ -30,7 +30,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * @(#) $Header: /cvsroot/src/external/bsd/libpcap/dist/pcap-int.h,v 1.1.1.1 2010/12/05 01:20:27 christos Exp $ (LBL)
+ * @(#) Header: /tcpdump/master/libpcap/pcap-int.h,v 1.94 2008-09-16 00:20:23 guy Exp (LBL)
  */
 
 #ifndef pcap_int_h
