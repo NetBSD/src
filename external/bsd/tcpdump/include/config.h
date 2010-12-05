@@ -33,8 +33,11 @@
 /* define if INADDRSZ is defined (XXX not used!) */
 #define HAVE_INADDRSZ 1
 
+#ifdef notdef
+/* From the Makefile */
 /* define if RES_USE_INET6 is defined */
 #define HAVE_RES_USE_INET6 1
+#endif
 
 /* define if you have struct sockaddr_storage */
 #define HAVE_SOCKADDR_STORAGE 1
@@ -118,8 +121,11 @@
 /* Define to 1 if you have the <inttypes.h> header file. */
 #define HAVE_INTTYPES_H 1
 
+#ifdef notdef
+/* From the Makefile */
 /* Define to 1 if you have the `crypto' library (-lcrypto). */
 #define HAVE_LIBCRYPTO 1
+#endif
 
 /* Define to 1 if you have the `rpc' library (-lrpc). */
 /* #undef HAVE_LIBRPC */
