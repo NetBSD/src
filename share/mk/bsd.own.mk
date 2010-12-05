@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.644 2010/11/28 18:44:13 skrll Exp $
+#	$NetBSD: bsd.own.mk,v 1.645 2010/12/05 09:54:34 mrg Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -753,7 +753,6 @@ ${var}?=no
     ${MACHINE} == "ews4800mips"	|| \
     ${MACHINE} == "mac68k"	|| \
     ${MACHINE} == "newsmips"	|| \
-    ${MACHINE} == "ofppc"	|| \
     ${MACHINE} == "pmax"	|| \
     ${MACHINE} == "sun3"	|| \
     ${MACHINE} == "x68k"
