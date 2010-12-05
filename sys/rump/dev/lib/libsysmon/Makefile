@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2010/10/19 11:58:01 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.5 2010/12/05 16:50:09 pooka Exp $
 #
 
 .PATH:	${.CURDIR}/../../../../dev/sysmon
@@ -10,7 +10,7 @@ SRCS=	sysmon_taskq.c sysmon_power.c sysmon_envsys.c sysmon_envsys_events.c \
 	sysmon_envsys_tables.c sysmon_envsys_util.c sysmon_wdog.c sysmon.c \
 	swsensor.c swwdog.c
 
-SRCS+=	component.c 
+SRCS+=	component.c
 
 CPPFLAGS+=	-I${RUMPTOP}/librump/rumpvfs -I${.CURDIR}/opt
 
