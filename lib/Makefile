@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.156 2010/12/05 05:58:12 christos Exp $
+#	$NetBSD: Makefile,v 1.157 2010/12/05 20:11:21 pooka Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
@@ -157,9 +157,6 @@ SUBDIR+=	.WAIT
 SUBDIR+=	libpam		# depends on libkrb5, libkafs and more
 .endif
 
-.if (${MKCRYPTO} != "no")
-SUBDIR+=	librumpcrypto	# depends on librump
-.endif
 SUBDIR+=	librumpdev	# depends on librump
 SUBDIR+=	librumpnet	# depends on librump
 SUBDIR+=	librumpvfs	# depends on librump

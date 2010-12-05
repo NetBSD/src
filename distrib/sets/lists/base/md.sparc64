@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.97 2010/12/05 06:02:28 christos Exp $
+# $NetBSD: md.sparc64,v 1.98 2010/12/05 20:11:22 pooka Exp $
 ./libexec/ld.elf_so-sparc			base-sysutil-bin	compat,pic
 ./sbin/edlabel					base-sysutil-root	obsolete
 ./usr/bin/fdformat				base-util-bin
@@ -192,8 +192,8 @@
 ./usr/lib/sparc/librump.so.0.0			base-compat-shlib	compat,pic
 ./usr/lib/sparc/librumpclient.so.0		base-compat-shlib	compat,pic
 ./usr/lib/sparc/librumpclient.so.0.0		base-compat-shlib	compat,pic
-./usr/lib/sparc/librumpcrypto.so.0		base-compat-shlib	compat,pic,crypto
-./usr/lib/sparc/librumpcrypto.so.0.0		base-compat-shlib	compat,pic,crypto
+./usr/lib/sparc/librumpcrypto.so.0		base-obsolete		obsolete
+./usr/lib/sparc/librumpcrypto.so.0.0		base-obsolete		obsolete
 ./usr/lib/sparc/librumpdev.so.0			base-compat-shlib	compat,pic
 ./usr/lib/sparc/librumpdev.so.0.0		base-compat-shlib	compat,pic
 ./usr/lib/sparc/librumpnet.so.0			base-compat-shlib	compat,pic

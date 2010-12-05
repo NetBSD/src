@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.142 2010/12/05 06:02:29 christos Exp $
+# $NetBSD: shl.mi,v 1.143 2010/12/05 20:11:23 pooka Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -95,7 +95,7 @@
 ./usr/lib/librpcsvc_pic.a			comp-c-piclib
 ./usr/lib/librt_pic.a				comp-c-piclib
 ./usr/lib/librump_pic.a				comp-c-piclib
-./usr/lib/librumpcrypto_pic.a			comp-c-piclib		crypto
+./usr/lib/librumpcrypto_pic.a			comp-obsolete		obsolete
 ./usr/lib/librumpdev_audio_pic.a		comp-c-piclib
 ./usr/lib/librumpdev_bpf_pic.a			comp-c-piclib
 ./usr/lib/librumpdev_cgd_pic.a			comp-c-piclib
@@ -145,6 +145,7 @@
 ./usr/lib/librumpfs_umap_pic.a			comp-c-piclib
 ./usr/lib/librumpfs_umapfs_pic.a		comp-obsolete		obsolete
 ./usr/lib/librumpfs_union_pic.a			comp-c-piclib
+./usr/lib/librumpkern_crypto_pic.a			comp-c-piclib
 ./usr/lib/librumpkern_ksem_pic.a		comp-c-piclib
 ./usr/lib/librumpkern_tty_pic.a			comp-c-piclib
 ./usr/lib/librumpkern_z_pic.a			comp-c-piclib
@@ -281,7 +282,7 @@
 ./usr/libdata/debug/usr/lib/librpcsvc.so.1.0.debug	comp-net-debug	debug
 ./usr/libdata/debug/usr/lib/librt.so.1.0.debug		comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/librump.so.0.0.debug	comp-rump-debug	debug
-./usr/libdata/debug/usr/lib/librumpcrypto.so.0.0.debug	comp-rump-debug	debug,crypto
+./usr/libdata/debug/usr/lib/librumpcrypto.so.0.0.debug	comp-obsolete		obsolete
 ./usr/libdata/debug/usr/lib/librumpdev.so.0.0.debug	comp-rump-debug	debug
 ./usr/libdata/debug/usr/lib/librumpdev_audio.so.0.0.debug	comp-rump-debug	debug
 ./usr/libdata/debug/usr/lib/librumpdev_bpf.so.0.0.debug	comp-rump-debug	debug
@@ -328,6 +329,7 @@
 ./usr/libdata/debug/usr/lib/librumpfs_udf.so.0.0.debug	comp-rump-debug	debug
 ./usr/libdata/debug/usr/lib/librumpfs_umap.so.0.0.debug	comp-rump-debug	debug
 ./usr/libdata/debug/usr/lib/librumpfs_union.so.0.0.debug	comp-rump-debug	debug
+./usr/libdata/debug/usr/lib/librumpkern_crypto.so.0.0.debug	comp-rump-debug	debug
 ./usr/libdata/debug/usr/lib/librumpkern_ksem.so.0.0.debug	comp-rump-debug	debug
 ./usr/libdata/debug/usr/lib/librumpkern_tty.so.0.0.debug	comp-rump-debug	debug
 ./usr/libdata/debug/usr/lib/librumpkern_z.so.0.0.debug	comp-rump-debug	debug

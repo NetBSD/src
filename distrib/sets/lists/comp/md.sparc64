@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.73 2010/12/05 06:02:28 christos Exp $
+# $NetBSD: md.sparc64,v 1.74 2010/12/05 20:11:22 pooka Exp $
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/sparc				comp-c-include
 ./usr/include/sparc/_G_config.h			comp-obsolete		obsolete
@@ -543,10 +543,10 @@
 ./usr/lib/sparc/librumpclient.so			base-sys-shlib		compat,pic
 ./usr/lib/sparc/librumpclient_p.a			comp-c-proflib		compat,profile
 ./usr/lib/sparc/librumpclient_pic.a		comp-c-piclib		compat,pic
-./usr/lib/sparc/librumpcrypto.a			comp-c-lib		compat,crypto
-./usr/lib/sparc/librumpcrypto.so		base-sys-shlib		compat,pic,crypto
-./usr/lib/sparc/librumpcrypto_p.a		comp-c-proflib		compat,profile,crypto
-./usr/lib/sparc/librumpcrypto_pic.a		comp-c-piclib		compat,pic,crypto
+./usr/lib/sparc/librumpcrypto.a			comp-obsolete		obsolete
+./usr/lib/sparc/librumpcrypto.so		base-obsolete		obsolete
+./usr/lib/sparc/librumpcrypto_p.a		comp-obsolete		obsolete
+./usr/lib/sparc/librumpcrypto_pic.a		comp-obsolete		obsolete
 ./usr/lib/sparc/librumpdev.a			comp-c-lib		compat
 ./usr/lib/sparc/librumpdev.so			base-sys-shlib		compat,pic
 ./usr/lib/sparc/librumpdev_p.a			comp-c-proflib		compat,profile
@@ -726,7 +726,7 @@
 ./usr/libdata/debug/usr/lib/sparc/librpcsvc.so.1.0.debug		comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/librt.so.1.0.debug			comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/librump.so.0.0.debug			comp-compat-shlib	compat,pic,debug
-./usr/libdata/debug/usr/lib/sparc/librumpcrypto.so.0.0.debug		comp-compat-shlib	compat,pic,debug,crypto
+./usr/libdata/debug/usr/lib/sparc/librumpcrypto.so.0.0.debug		comp-obsolete		obsolete
 ./usr/libdata/debug/usr/lib/sparc/librumpdev.so.0.0.debug		comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/librumpnet.so.0.0.debug		comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/librumpuser.so.0.0.debug		comp-compat-shlib	compat,pic,debug
