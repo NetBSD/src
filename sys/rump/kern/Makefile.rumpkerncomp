@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile.rumpkerncomp,v 1.1 2010/12/05 16:27:42 pooka Exp $
+#	$NetBSD: Makefile.rumpkerncomp,v 1.2 2010/12/05 20:11:22 pooka Exp $
 #
 
-RUMPKERNCOMPS=	ksem tty z
+RUMPKERNCOMPS=	crypto ksem tty z
 
 .for var in ${RUMPKERNCOMPS}
 RUMPKERNLIBS+=lib${var}
