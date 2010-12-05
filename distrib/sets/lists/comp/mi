@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1528 2010/12/05 06:02:28 christos Exp $
+#	$NetBSD: mi,v 1.1529 2010/12/05 17:37:33 pooka Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3308,6 +3308,7 @@
 ./usr/libdata/debug/usr/bin/rpcinfo.debug	comp-rpcutil-debug	debug
 ./usr/libdata/debug/usr/bin/rs.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/rsh.debug		comp-netutil-debug	debug
+./usr/libdata/debug/usr/bin/rump_allserver.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/rup.debug		comp-netutil-debug	debug
 ./usr/libdata/debug/usr/bin/ruptime.debug	comp-netutil-debug	debug
 ./usr/libdata/debug/usr/bin/rusers.debug	comp-netutil-debug	debug
