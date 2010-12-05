@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rumpfs,v 1.26 2010/12/05 16:11:16 pooka Exp $
+#	$NetBSD: Makefile.rumpfscomp,v 1.1 2010/12/05 16:53:46 pooka Exp $
 #
 
 RUMPFSCOMP=	cd9660 efs ext2fs fdesc ffs hfs kernfs lfs mfs msdos	\
