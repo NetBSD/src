@@ -30,7 +30,7 @@
 
 #ifndef lint
 static const char rcsid[] _U_ =
-    "@(#) $Header: /cvsroot/src/external/bsd/libpcap/dist/sf-pcap.c,v 1.1.1.1 2010/12/05 01:20:44 christos Exp $ (LBL)";
+    "@(#) $Header: /cvsroot/src/external/bsd/libpcap/dist/sf-pcap.c,v 1.2 2010/12/05 03:02:41 christos Exp $ (LBL)";
 #endif
 
 #ifdef HAVE_CONFIG_H
@@ -357,7 +357,7 @@ pcap_next_packet(pcap_t *p, struct pcap_pkthdr *hdr, u_char **data)
 		break;
 	}
 
-	if (hdr->caplen > p->bufsize) {
+	if ((int)hdr->caplen > p->bufsize) {
 		/*
 		 * This can happen due to Solaris 2.3 systems tripping
 		 * over the BUFMOD problem and not setting the snapshot
