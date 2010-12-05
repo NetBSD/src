@@ -6119,7 +6119,7 @@ gen_scode(name, q)
 			ai = res;
 			b = tmp = NULL;
 			tproto = tproto6 = proto;
-			if (off_linktype == -1 && tproto == Q_DEFAULT) {
+			if (off_linktype == (u_int)-1 && tproto == Q_DEFAULT) {
 				tproto = Q_IP;
 				tproto6 = Q_IPV6;
 			}
@@ -6468,7 +6468,7 @@ gen_mcode6(s1, s2, masklen, q)
 		bpf_error("%s resolved to multiple address", s1);
 	addr = &((struct sockaddr_in6 *)res->ai_addr)->sin6_addr;
 
-	if (sizeof(mask) * 8 < masklen)
+	if ((int)sizeof(mask) * 8 < masklen)
 		bpf_error("mask length must be <= %u", (unsigned int)(sizeof(mask) * 8));
 	memset(&mask, 0, sizeof(mask));
 	memset(&mask, 0xff, masklen / 8);

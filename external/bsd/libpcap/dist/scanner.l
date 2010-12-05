@@ -77,7 +77,6 @@ static int stoi(char *);
 static inline int xdtoi(int);
 
 #ifdef FLEX_SCANNER
-#define YY_NO_UNPUT
 static YY_BUFFER_STATE in_buffer;
 #else
 static const char *in_buffer;
@@ -184,6 +183,8 @@ V6		({V680}|{V670}|{V671}|{V672}|{V673}|{V674}|{V675}|{V676}|{V677}|{V660}|{V661
 MAC		({B}:{B}:{B}:{B}:{B}:{B}|{B}\-{B}\-{B}\-{B}\-{B}\-{B}|{B}\.{B}\.{B}\.{B}\.{B}\.{B}|{B2}\.{B2}\.{B2}|{B2}{3})
 
 
+
+%option nounput
 
 %%
 dst		return DST;

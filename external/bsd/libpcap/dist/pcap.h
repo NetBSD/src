@@ -32,6 +32,8 @@
  *
  * @(#) Header: /tcpdump/master/libpcap/pcap.h,v 1.59 2006-10-04 18:09:22 guy Exp (LBL)
  */
+/* $NetBSD: pcap.h,v 1.2 2010/12/05 01:45:46 christos Exp $ */
+
 
 /*
  * For backwards compatibility.
