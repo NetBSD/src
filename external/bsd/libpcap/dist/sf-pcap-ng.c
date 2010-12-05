@@ -23,7 +23,7 @@
 
 #ifndef lint
 static const char rcsid[] _U_ =
-    "@(#) $Header: /cvsroot/src/external/bsd/libpcap/dist/sf-pcap-ng.c,v 1.1.1.1 2010/12/05 01:20:42 christos Exp $ (LBL)";
+    "@(#) $Header: /cvsroot/src/external/bsd/libpcap/dist/sf-pcap-ng.c,v 1.2 2010/12/05 03:02:41 christos Exp $ (LBL)";
 #endif
 
 #ifdef HAVE_CONFIG_H
@@ -274,7 +274,7 @@ read_block(FILE *fp, pcap_t *p, struct block_cursor *cursor, char *errbuf)
 	/*
 	 * Is the buffer big enough?
 	 */
-	if (p->bufsize < bhdr.total_length) {
+	if (p->bufsize < (int)bhdr.total_length) {
 		/*
 		 * No - make it big enough.
 		 */
@@ -348,7 +348,7 @@ get_opthdr_from_block_data(pcap_t *p, struct block_cursor *cursor, char *errbuf)
 	 */
 	if (p->sf.swapped) {
 		opthdr->option_code = SWAPSHORT(opthdr->option_code);
-		opthdr->option_length = SWAPSHORT(opthdr->option_length);
+		opthdr->option_length = SWAPSHORT((uint32_t)opthdr->option_length);
 	}
 
 	return (opthdr);
@@ -482,7 +482,7 @@ process_idb_options(pcap_t *p, struct block_cursor *cursor, u_int *tsresol,
 			saw_tsoffset = 1;
 			memcpy(tsoffset, optvalue, sizeof(*tsoffset));
 			if (p->sf.swapped)
-				*tsoffset = SWAPLL(*tsoffset);
+				*tsoffset = (uint64_t)SWAPLL(*tsoffset);
 			break;
 
 		default:
@@ -604,7 +604,7 @@ pcap_ng_check_header(pcap_t *p, bpf_u_int32 magic, FILE *fp, char *errbuf)
 	 * If we find a bigger block, we reallocate the buffer.
 	 */
 	p->bufsize = 2048;
-	if (p->bufsize < total_length)
+	if (p->bufsize < (int)total_length)
 		p->bufsize = total_length;
 	p->buffer = malloc(p->bufsize);
 	if (p->buffer == NULL) {
@@ -616,8 +616,8 @@ pcap_ng_check_header(pcap_t *p, bpf_u_int32 magic, FILE *fp, char *errbuf)
 	 * Copy the stuff we've read to the buffer, and read the rest
 	 * of the SHB.
 	 */
-	bhdrp = (struct block_header *)p->buffer;
-	shbp = (struct section_header_block *)(p->buffer + sizeof(struct block_header));
+	bhdrp = (struct block_header *)(void *)p->buffer;
+	shbp = (struct section_header_block *)(void *)(p->buffer + sizeof(struct block_header));
 	bhdrp->block_type = magic;
 	bhdrp->total_length = total_length;
 	shbp->byte_order_magic = byte_order_magic;
@@ -631,8 +631,8 @@ pcap_ng_check_header(pcap_t *p, bpf_u_int32 magic, FILE *fp, char *errbuf)
 		/*
 		 * Byte-swap the fields we've read.
 		 */
-		shbp->major_version = SWAPSHORT(shbp->major_version);
-		shbp->minor_version = SWAPSHORT(shbp->minor_version);
+		shbp->major_version = SWAPSHORT((uint32_t)shbp->major_version);
+		shbp->minor_version = SWAPSHORT((uint32_t)shbp->minor_version);
 
 		/*
 		 * XXX - we don't care about the section length.
@@ -686,7 +686,7 @@ pcap_ng_check_header(pcap_t *p, bpf_u_int32 magic, FILE *fp, char *errbuf)
 			 * Byte-swap it if necessary.
 			 */
 			if (p->sf.swapped) {
-				idbp->linktype = SWAPSHORT(idbp->linktype);
+				idbp->linktype = SWAPSHORT((uint16_t)idbp->linktype);
 				idbp->snaplen = SWAPLONG(idbp->snaplen);
 			}
 
@@ -823,7 +823,6 @@ pcap_ng_next_packet(pcap_t *p, struct pcap_pkthdr *hdr, u_char **data)
 				t = ((u_int64_t)epbp->timestamp_high) << 32 |
 				    epbp->timestamp_low;
 			}
-			pblock_len = sizeof(*epbp);
 			goto found;
 			
 		case BT_SPB:
@@ -857,7 +856,7 @@ pcap_ng_next_packet(pcap_t *p, struct pcap_pkthdr *hdr, u_char **data)
 			 * and the packet length.
 			 */
 			hdr->caplen = hdr->len;
-			if (hdr->caplen > p->snapshot)
+			if ((int)hdr->caplen > p->snapshot)
 				hdr->caplen = p->snapshot;
 			t = 0;	/* no time stamps */
 			pblock_len = sizeof(*spbp);
@@ -878,7 +877,7 @@ pcap_ng_next_packet(pcap_t *p, struct pcap_pkthdr *hdr, u_char **data)
 			 */
 			if (p->sf.swapped) {
 				/* these were written in opposite byte order */
-				interface_id = SWAPSHORT(pbp->interface_id);
+				interface_id = SWAPSHORT((uint32_t)pbp->interface_id);
 				hdr->caplen = SWAPLONG(pbp->caplen);
 				hdr->len = SWAPLONG(pbp->len);
 				t = ((u_int64_t)SWAPLONG(pbp->timestamp_high)) << 32 |
@@ -907,7 +906,7 @@ pcap_ng_next_packet(pcap_t *p, struct pcap_pkthdr *hdr, u_char **data)
 			 * Byte-swap it if necessary.
 			 */
 			if (p->sf.swapped) {
-				idbp->linktype = SWAPSHORT(idbp->linktype);
+				idbp->linktype = SWAPSHORT((uint32_t)idbp->linktype);
 				idbp->snaplen = SWAPLONG(idbp->snaplen);
 			}
 
@@ -925,7 +924,7 @@ pcap_ng_next_packet(pcap_t *p, struct pcap_pkthdr *hdr, u_char **data)
 				    idbp->linktype);
 				return (-1);
 			}
-			if (p->snapshot != idbp->snaplen) {
+			if (p->snapshot != (int)idbp->snaplen) {
 				snprintf(p->errbuf, PCAP_ERRBUF_SIZE,
 				    "an interface has a snapshot length %u different from the type of the first interface",
 				    idbp->snaplen);
@@ -985,7 +984,7 @@ pcap_ng_next_packet(pcap_t *p, struct pcap_pkthdr *hdr, u_char **data)
 				shbp->byte_order_magic =
 				    SWAPLONG(shbp->byte_order_magic);
 				shbp->major_version =
-				    SWAPSHORT(shbp->major_version);
+				    SWAPSHORT((uint32_t)shbp->major_version);
 			}
 
 			/*
@@ -1082,7 +1081,7 @@ found:
 		frac *= p->sf.tsscale;
 	}
 	hdr->ts.tv_sec = sec;
-	hdr->ts.tv_usec = frac;
+	hdr->ts.tv_usec = (suseconds_t)frac;
 
 	/*
 	 * Get a pointer to the packet data.
