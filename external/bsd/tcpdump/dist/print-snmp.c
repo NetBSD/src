@@ -56,9 +56,14 @@
  #	@(#)snmp.awk.x	1.1 (LANL) 1/15/90
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static const char rcsid[] _U_ =
     "@(#) Header: /tcpdump/master/tcpdump/print-snmp.c,v 1.64 2005-05-06 07:56:53 guy Exp (LBL)";
+#else
+__RCSID("$NetBSD: print-snmp.c,v 1.2 2010/12/05 05:11:30 christos Exp $");
+#endif
 #endif
 
 #ifdef HAVE_CONFIG_H

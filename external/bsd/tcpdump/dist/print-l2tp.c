@@ -21,9 +21,14 @@
  * L2TP support contributed by Motonori Shindo (mshindo@mshindo.net)
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static const char rcsid[] _U_ =
     "@(#) Header: /tcpdump/master/tcpdump/print-l2tp.c,v 1.20 2006-06-23 02:03:09 hannes Exp";
+#else
+__RCSID("$NetBSD: print-l2tp.c,v 1.2 2010/12/05 05:11:30 christos Exp $");
+#endif
 #endif
 
 #ifdef HAVE_CONFIG_H

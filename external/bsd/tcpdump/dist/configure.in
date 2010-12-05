@@ -15,7 +15,7 @@ dnl
 # config.sub.
 #
 
-AC_REVISION($Revision: 1.1.1.1 $)
+AC_REVISION($Revision: 1.2 $)
 AC_PREREQ(2.50)
 AC_INIT(tcpdump.c)
 
@@ -845,7 +845,7 @@ solaris*)
 	;;
 esac
 
-if test -f /dev/bpf0 ; then
+if test -f /dev/bpf -o -f /dev/bpf0; then
 	V_GROUP=bpf
 fi
 
