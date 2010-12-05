@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.791 2010/12/02 14:55:40 christos Exp $
+#	$NetBSD: 3RDPARTY,v 1.792 2010/12/05 05:15:59 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -580,8 +580,8 @@ We maintain our own version of libdevmapper ioctl protocol code, therefore we
 should test it before import. Talk to haad before importing new version.
 
 Package:	libpcap
-Version:	0.9.4
-Current Vers:	1.0.0
+Version:	1.1.1
+Current Vers:	1.1.1
 Maintainer:	tcpdump-workers@tcpdump.org
 Archive Site:	http://www.tcpdump.org/release/
 Home Page:	http://www.tcpdump.org/
@@ -589,6 +589,8 @@ Mailing List:	tcpdump-workers@tcpdump.org
 Responsible:	dyoung
 License:	BSD (3/4-clause)
 Notes:
+Use the src/external/bsd/libpcap/dist/libpcap2netbsd script to prepare source
+tree.
 
 Package:	libwrap
 Version:	tcp_wrappers 7.6 w/ large amount of IPv6 changes
@@ -994,8 +996,8 @@ arithmetic code is unchanged, though, and should behave exactly like the
 original.
 
 Package:	tcpdump
-Version:	3.9.7
-Current Vers:	4.0.0
+Version:	4.1.1
+Current Vers:	4.1.1
 Maintainer:	tcpdump-workers@lists.tcpdump.org
 Archive Site:	http://www.tcpdump.org/release/
 Home Page:	http://www.tcpdump.org/
@@ -1003,8 +1005,8 @@ Mailing List:	tcpdump-workers@lists.tcpdump.org
 Responsible:
 License:	BSD (3-clause)
 Notes:
-Code will be imported into src/dist/tcpdump.  Changes have to go back to
-tcpdump.org.
+Use the src/external/bsd/tcpdump/dist/tcpdump2netbsd script to prepare source
+tree.
 
 Package:	termcap.src
 Version:	9.13.25
@@ -1117,8 +1119,8 @@ Notes:
 Imported to src/common/dist/zlib and shared by the kernel and userland.
 
 Package:	services, protocols
-Version:	2007-06-14
-Current Vers:	2010-10-04
+Version:	2010-10-04
+Current Vers:	2010-11-30
 Maintainer:	IANA
 Archive Site:	http://www.iana.org/assignments/protocol-numbers/protocol-numbers.txt
 Archive Site:	http://www.iana.org/assignments/port-numbers
