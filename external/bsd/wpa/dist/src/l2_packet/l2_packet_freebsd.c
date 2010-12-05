@@ -14,7 +14,7 @@
  */
 
 #include "includes.h"
-#if defined(__APPLE__) || defined(__GLIBC__)
+#if defined(__APPLE__) || defined(__GLIBC__) || defined(__NetBSD__)
 #include <net/bpf.h>
 #endif /* __APPLE__ */
 #include <pcap.h>
