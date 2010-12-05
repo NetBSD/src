@@ -1,4 +1,4 @@
-/*	$NetBSD: args.c,v 1.27 2010/11/22 21:04:27 pooka Exp $	*/
+/*	$NetBSD: args.c,v 1.28 2010/12/05 23:35:59 jym Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)args.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: args.c,v 1.27 2010/11/22 21:04:27 pooka Exp $");
+__RCSID("$NetBSD: args.c,v 1.28 2010/12/05 23:35:59 jym Exp $");
 #endif
 #endif /* not lint */
 
@@ -100,7 +100,7 @@ static const struct arg {
 	{ "progress",	f_progress,	0,	 0 },
 #ifndef SMALL
 	{ "rif",	f_rif,		C_RIF|C_RUMP,	 C_RIF|C_IF },
-	{ "rof",	f_rof,		C_ROF|C_RUMP,	 C_ROF|C_ROF },
+	{ "rof",	f_rof,		C_ROF|C_RUMP,	 C_ROF|C_OF },
 #endif
 	{ "seek",	f_seek,		C_SEEK,	 C_SEEK },
 	{ "skip",	f_skip,		C_SKIP,	 C_SKIP },
