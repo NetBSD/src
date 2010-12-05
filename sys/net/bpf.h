@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.h,v 1.56 2010/12/05 00:34:21 christos Exp $	*/
+/*	$NetBSD: bpf.h,v 1.57 2010/12/05 02:40:40 christos Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -358,9 +358,9 @@ void     bpf_ops_handover_exit(void);
 
 void	 bpfilterattach(int);
 
-int	 bpf_validate(struct bpf_insn *, int);
 #endif
 
+int	 bpf_validate(const struct bpf_insn *, int);
 u_int	 bpf_filter(const struct bpf_insn *, const u_char *, u_int, u_int);
 
 /*
