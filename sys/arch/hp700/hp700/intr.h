@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.10 2009/05/08 09:33:58 skrll Exp $	*/
+/*	$NetBSD: intr.h,v 1.11 2010/12/05 10:21:18 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -56,22 +56,20 @@ struct hp700_int_reg {
 	volatile int *int_reg_level;
 
 	/*
-	 * This array has one entry for each bit in the
-	 * interrupt request register. If the 24 most
-	 * significant bits are set, the low 8
-	 * bits are the index of the hp700_int_reg
-	 * that this interrupt bit leads to, with zero
-	 * meaning that the interrupt bit is unused.
-	 * Otherwise this bits correspond to the
-	 * hp700_int_bits. I.e. this bits are ored to
-	 * ipending_new in hp700_intr_ipending_new()
-	 * when an interrupt happend.
+	 * This array has one entry for each bit in the interrupt request
+	 * register.
 	 *
-	 * Note that this array is indexed by HP bit
-	 * number, *not* by "normal" bit number.  In
-	 * other words, the least significant bit in
-	 * the interrupt register corresponds to array
-	 * index 31.
+	 * If the 24 most significant bits are set, the low 8 bits  are the
+	 * index of the hp700_int_reg that this interrupt bit leads to, with
+	 * zero meaning that the interrupt bit is unused.
+	 *
+	 * Otherwise these bits correspond to hp700_int_bits. That is, these
+	 * bits are ORed to ipending_new in hp700_intr_ipending_new() when an
+	 * interrupt happens.
+	 *
+	 * Note that this array is indexed by HP bit number, *not* by "normal"
+	 * bit number.  In other words, the least significant bit in the inter-
+	 * rupt register corresponds to array index 31.
 	 */
 	unsigned int int_reg_bits_map[HP700_INT_BITS];
 #define	INT_REG_BIT_REG		0xffffff00
