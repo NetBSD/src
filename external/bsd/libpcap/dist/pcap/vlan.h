@@ -30,7 +30,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * @(#) $Header: /cvsroot/src/external/bsd/libpcap/dist/pcap/vlan.h,v 1.1.1.1 2010/12/05 01:20:56 christos Exp $
+ * @(#) Header: /tcpdump/master/libpcap/pcap/vlan.h,v 1.1 2008-08-06 07:45:00 guy Exp
  */
 
 #ifndef lib_pcap_vlan_h
