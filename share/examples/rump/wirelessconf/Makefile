@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2010/02/10 02:31:01 pooka Exp $
+#	$NetBSD: Makefile,v 1.5 2010/12/05 20:13:26 pooka Exp $
 #
 
 PROG=	wirelessconf
@@ -6,7 +6,8 @@ PROG=	wirelessconf
 LDADD+=	-lrumpdev_usbrum -lrumpdev_ugenhc
 LDADD+=	-lrumpdev_usb -lrumpdev
 LDADD+=	-lrumpnet_net80211 -lrumpnet_netinet -lrumpnet_net -lrumpnet
-LDADD+= -lrumpvfs -lrumpcrypto -lrump 
+LDADD+= -lrumpkern_crypto
+LDADD+= -lrumpvfs -lrump 
 LDADD+=	-lrumpuser -lpthread
 
 DBG=	-g
