@@ -39,6 +39,19 @@ then
 		RPATH=@V_RPATH_OPT@@libdir@
 	fi
 fi
+if [ "@includedir@" != "/usr/include" ]
+then
+	i="-I@includedir@"
+fi
+if [ "@libdir@" != "/usr/lib" ]
+then
+	l="-L@libdir@"
+fi
+if [ -n "@LIBS@" ]
+then
+	L="@LIBS@"
+fi
+
 if [ "$static" = 1 ]
 then
 	#
@@ -47,19 +60,19 @@ then
 	#
 	if [ "$show_cflags" = 1 -a "$show_libs" = 1 ]
 	then
-		echo "-I@includedir@ -L@libdir@ -lpcap @LIBS@"
+		echo "$i $l -lpcap $L"
 	elif [ "$show_cflags" = 1 -a "$show_additional_libs" = 1 ]
 	then
-		echo "-I@includedir@ -L@libdir@ @LIBS@"
+		echo "$i $l $L"
 	elif [ "$show_cflags" = 1 ]
 	then
-		echo "-I@includedir@"
+		echo "$i"
 	elif [ "$show_libs" = 1 ]
 	then
-		echo "-L@libdir@ -lpcap @LIBS@"
+		echo "$l -lpcap $L"
 	elif [ "$show_additional_libs" = 1 ]
 	then
-		echo "@LIBS@"
+		echo "$L"
 	fi
 else
 	#
@@ -68,15 +81,15 @@ else
 	#
 	if [ "$show_cflags" = 1 -a "$show_libs" = 1 ]
 	then
-		echo "-I@includedir@ -L@libdir@ $RPATH -lpcap"
+		echo "$l $RPATH -lpcap"
 	elif [ "$show_cflags" = 1 -a "$show_additional_libs" = 1 ]
 	then
-		echo "-I@includedir@"
+		echo "$i"
 	elif [ "$show_cflags" = 1 ]
 	then
-		echo "-I@includedir@"
+		echo "$i"
 	elif [ "$show_libs" = 1 ]
 	then
-		echo "-L@libdir@ $RPATH -lpcap"
+		echo "$l $RPATH -lpcap"
 	fi
 fi
