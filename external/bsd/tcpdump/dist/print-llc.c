@@ -22,9 +22,14 @@
  *	with an awful lot of hacking by Jeffrey Mogul, DECWRL
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static const char rcsid[] _U_ =
     "@(#) Header: /tcpdump/master/tcpdump/print-llc.c,v 1.75 2007-04-13 09:43:11 hannes Exp";
+#else
+__RCSID("$NetBSD: print-llc.c,v 1.2 2010/12/05 05:11:30 christos Exp $");
+#endif
 #endif
 
 #ifdef HAVE_CONFIG_H

@@ -1,4 +1,4 @@
-/* Copyright (c) 2001 NETLAB, Temple University
+/*
  * Copyright (c) 2001 Protocol Engineering Lab, University of Delaware
  *
  * Jerry Heinz <gheinz@astro.temple.edu>
@@ -33,9 +33,14 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static const char rcsid[] _U_ =
 "@(#) Header: /tcpdump/master/tcpdump/print-sctp.c,v 1.21 2007-09-13 18:03:49 guy Exp (NETLAB/PEL)";
+#else
+__RCSID("$NetBSD: print-sctp.c,v 1.2 2010/12/05 05:11:30 christos Exp $");
+#endif
 #endif
 
 #ifdef HAVE_CONFIG_H

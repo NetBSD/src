@@ -23,9 +23,14 @@
  * Further tweaked to more closely resemble print-fddi.c
  *	Guy Harris <guy@alum.mit.edu>
  */
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static const char rcsid[] _U_ =
     "@(#) Header: /tcpdump/master/tcpdump/print-token.c,v 1.27 2005-11-13 12:12:43 guy Exp";
+#else
+__RCSID("$NetBSD: print-token.c,v 1.2 2010/12/05 05:11:31 christos Exp $");
+#endif
 #endif
 
 #ifdef HAVE_CONFIG_H

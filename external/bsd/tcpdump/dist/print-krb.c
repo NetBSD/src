@@ -21,9 +21,14 @@
  * Initial contribution from John Hawkinson (jhawk@mit.edu).
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static const char rcsid[] _U_ =
     "@(#) Header: /tcpdump/master/tcpdump/print-krb.c,v 1.23 2003-11-16 09:36:26 guy Exp";
+#else
+__RCSID("$NetBSD: print-krb.c,v 1.2 2010/12/05 05:11:30 christos Exp $");
+#endif
 #endif
 
 #ifdef HAVE_CONFIG_H

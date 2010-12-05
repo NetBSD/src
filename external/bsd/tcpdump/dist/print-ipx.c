@@ -22,9 +22,14 @@
  * Contributed by Brad Parker (brad@fcr.com).
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static const char rcsid[] _U_ =
     "@(#) Header: /tcpdump/master/tcpdump/print-ipx.c,v 1.42 2005-05-06 08:26:44 guy Exp";
+#else
+__RCSID("$NetBSD: print-ipx.c,v 1.2 2010/12/05 05:11:30 christos Exp $");
+#endif
 #endif
 
 #ifdef HAVE_CONFIG_H

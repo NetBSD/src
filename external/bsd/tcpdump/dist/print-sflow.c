@@ -17,9 +17,14 @@
  * Original code by Carles Kishimoto <carles.kishimoto@gmail.com>
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static const char rcsid[] _U_ =
 "@(#) Header: /tcpdump/master/tcpdump/print-sflow.c,v 1.1 2007-08-08 17:20:58 hannes Exp";
+#else
+__RCSID("$NetBSD: print-sflow.c,v 1.2 2010/12/05 05:11:30 christos Exp $");
+#endif
 #endif
 
 #ifdef HAVE_CONFIG_H

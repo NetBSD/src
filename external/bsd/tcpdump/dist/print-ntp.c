@@ -23,9 +23,14 @@
  *	loosely based on print-bootp.c
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static const char rcsid[] _U_ =
     "@(#) Header: /tcpdump/master/tcpdump/print-ntp.c,v 1.43 2007-11-30 13:45:10 hannes Exp (LBL)";
+#else
+__RCSID("$NetBSD: print-ntp.c,v 1.2 2010/12/05 05:11:30 christos Exp $");
+#endif
 #endif
 
 #ifdef HAVE_CONFIG_H

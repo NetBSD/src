@@ -31,9 +31,14 @@
 #include "config.h"
 #endif
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static const char rcsid[] _U_ =
      "@(#) Header: /tcpdump/master/tcpdump/print-ip6opts.c,v 1.18 2005-04-20 22:18:50 guy Exp";
+#else
+__RCSID("$NetBSD: print-ip6opts.c,v 1.2 2010/12/05 05:11:30 christos Exp $");
+#endif
 #endif
 
 #ifdef INET6

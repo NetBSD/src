@@ -24,9 +24,14 @@
  *    http://www.cisco.com/univercd/cc/td/doc/product/lan/trsrb/frames.htm
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static const char rcsid[] _U_ =
     "@(#) Header: /tcpdump/master/tcpdump/print-cdp.c,v 1.25 2004-10-07 14:53:11 hannes Exp";
+#else
+__RCSID("$NetBSD: print-cdp.c,v 1.2 2010/12/05 05:11:30 christos Exp $");
+#endif
 #endif
 
 #ifdef HAVE_CONFIG_H

@@ -29,9 +29,14 @@
  * o BAP support
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static const char rcsid[] _U_ =
     "@(#) Header: /tcpdump/master/tcpdump/print-ppp.c,v 1.114 2005-12-05 11:35:58 hannes Exp (LBL)";
+#else
+__RCSID("$NetBSD: print-ppp.c,v 1.2 2010/12/05 05:11:30 christos Exp $");
+#endif
 #endif
 
 #ifdef HAVE_CONFIG_H

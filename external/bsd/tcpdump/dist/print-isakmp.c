@@ -28,9 +28,14 @@
  *
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static const char rcsid[] _U_ =
     "@(#) Header: /tcpdump/master/tcpdump/print-isakmp.c,v 1.61 2008-02-05 19:34:25 guy Exp (LBL)";
+#else
+__RCSID("$NetBSD: print-isakmp.c,v 1.2 2010/12/05 05:11:30 christos Exp $");
+#endif
 #endif
 
 #define NETDISSECT_REWORKED

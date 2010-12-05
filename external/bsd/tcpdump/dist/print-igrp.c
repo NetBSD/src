@@ -21,9 +21,14 @@
  * Initial contribution from Francis Dupont (francis.dupont@inria.fr)
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static const char rcsid[] _U_ =
     "@(#) Header: /tcpdump/master/tcpdump/print-igrp.c,v 1.21 2005-04-20 21:01:56 guy Exp (LBL)";
+#else
+__RCSID("$NetBSD: print-igrp.c,v 1.2 2010/12/05 05:11:30 christos Exp $");
+#endif
 #endif
 
 #ifdef HAVE_CONFIG_H

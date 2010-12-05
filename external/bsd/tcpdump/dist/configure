@@ -11779,7 +11779,7 @@ solaris*)
 	;;
 esac
 
-if test -f /dev/bpf0 ; then
+if test -f /dev/bpf0 -o -f /dev/bpf; then
 	V_GROUP=bpf
 fi
 

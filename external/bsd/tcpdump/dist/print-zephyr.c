@@ -20,9 +20,14 @@
  * PURPOSE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static const char rcsid[] _U_ =
     "@(#) Header: /tcpdump/master/tcpdump/print-zephyr.c,v 1.10 2007-08-09 18:47:27 hannes Exp";
+#else
+__RCSID("$NetBSD: print-zephyr.c,v 1.2 2010/12/05 05:11:31 christos Exp $");
+#endif
 #endif
 
 #ifdef HAVE_CONFIG_H
@@ -148,6 +153,8 @@ zephyr_print(const u_char *cp, int length)
     z.opcode = 0;
     z.sender = 0;
     z.recipient = 0;
+
+    memset(&z, 0, sizeof(z));	/* XXX gcc */
 
 #define PARSE_STRING				\
 	s = parse_field(&parse, &parselen);	\

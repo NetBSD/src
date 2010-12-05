@@ -1,6 +1,6 @@
 .\" @(#) Header: /tcpdump/master/tcpdump/tcpdump.1.in,v 1.2 2008-11-09 23:35:03 mcr Exp (LBL)
 .\"
-.\"	$NetBSD: tcpdump.1.in,v 1.1.1.1 2010/12/05 03:15:41 christos Exp $
+.\"	$NetBSD: tcpdump.1.in,v 1.2 2010/12/05 05:11:31 christos Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1989, 1990, 1991, 1992, 1994, 1995, 1996, 1997
 .\"	The Regents of the University of California.  All rights reserved.
@@ -22,7 +22,7 @@
 .\" WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
 .\" MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 .\"
-.TH TCPDUMP 1  "05 March 2009"
+.TH TCPDUMP 8  "5 December 2010"
 .SH NAME
 tcpdump \- dump traffic on a network
 .SH SYNOPSIS
@@ -174,11 +174,13 @@ it will be reported as 0).
 On platforms that support the SIGINFO signal, such as most BSDs
 (including Mac OS X) and Digital/Tru64 UNIX, it will report those counts
 when it receives a SIGINFO signal (generated, for example, by typing
-your ``status'' character, typically control-T, although on some
-platforms, such as Mac OS X, the ``status'' character is not set by
-default, so you must set it with
-.BR stty (1)
-in order to use it) and will continue capturing packets.
+your ``status'' character, typically control-T)
+.\" , although on some
+.\" platforms, such as Mac OS X, the ``status'' character is not set by
+.\" default, so you must set it with
+.\" .BR stty (1)
+.\" in order to use it)
+and will continue capturing packets.
 .LP
 Reading packets from a network interface may require that you have
 special privileges; see the
@@ -190,6 +192,8 @@ special privileges.
 .B \-A
 Print each packet (minus its link level header) in ASCII.  Handy for
 capturing web pages.
+.B \-a
+Attempt to convert network and broadcast addresses to names.
 .TP
 .B \-b
 Print the AS number in BGP packets in ASDOT notation rather than ASPLAIN
@@ -272,7 +276,7 @@ The ability to decrypt packets is only present if \fItcpdump\fP was compiled
 with cryptography enabled.
 .IP
 \fIsecret\fP is the ASCII text for ESP secret key. 
-If preceeded by 0x, then a hex value will be read.
+If preceded by 0x, then a hex value will be read.
 .IP
 The option assumes RFC2406 ESP, not RFC1827 ESP.
 The option is only for debugging purposes, and
@@ -295,7 +299,7 @@ internet numbers).
 .IP
 The test for `foreign' IPv4 addresses is done using the IPv4 address and
 netmask of the interface on which capture is being done.  If that
-address or netmask are not available, available, either because the
+address or netmask are not available, either because the
 interface on which capture is being done has no address or netmask or
 because the capture is being done on the Linux "any" interface, which
 can capture on more than one interface, this option will not work
@@ -324,12 +328,12 @@ Listen on \fIinterface\fP.
 If unspecified, \fItcpdump\fP searches the system interface list for the
 lowest numbered, configured up interface (excluding loopback).
 Ties are broken by choosing the earliest match.
-.IP
-On Linux systems with 2.2 or later kernels, an
-.I interface
-argument of ``any'' can be used to capture packets from all interfaces.
-Note that captures on the ``any'' device will not be done in promiscuous
-mode.
+.\" .IP
+.\" On Linux systems with 2.2 or later kernels, an
+.\" .I interface
+.\" argument of ``any'' can be used to capture packets from all interfaces.
+.\" Note that captures on the ``any'' device will not be done in promiscuous
+.\" mode.
 .IP
 If the
 .B \-D
@@ -588,6 +592,7 @@ its link level header, in hex and ASCII.
 .TP
 .B \-y
 Set the data link type to use while capturing packets to \fIdatalinktype\fP.
+The available data link types may be found using the \-L option.
 .TP
 .B \-z
 Used in conjunction with the
@@ -1638,8 +1643,7 @@ is made to account for the time lag between when the
 Ethernet interface removed the packet from the wire and when the kernel
 serviced the `new packet' interrupt.
 .SH "SEE ALSO"
-stty(1), pcap(3PCAP), bpf(4), nit(4P), pcap-savefile(@MAN_FILE_FORMATS@),
-pcap-filter(@MAN_MISC_INFO@)
+pcap(3), bpf(4), pcap-savefile(5), pcap-filter(7)
 .SH AUTHORS
 The original authors are:
 .LP
@@ -1671,27 +1675,27 @@ etc. to:
 .RS
 tcpdump-workers@lists.tcpdump.org
 .RE
-.LP
-NIT doesn't let you watch your own outbound traffic, BPF will.
-We recommend that you use the latter.
-.LP
-On Linux systems with 2.0[.x] kernels:
-.IP
-packets on the loopback device will be seen twice;
-.IP
-packet filtering cannot be done in the kernel, so that all packets must
-be copied from the kernel in order to be filtered in user mode;
-.IP
-all of a packet, not just the part that's within the snapshot length,
-will be copied from the kernel (the 2.0[.x] packet capture mechanism, if
-asked to copy only part of a packet to userland, will not report the
-true length of the packet; this would cause most IP packets to get an
-error from
-.BR tcpdump );
-.IP
-capturing on some PPP devices won't work correctly.
-.LP
-We recommend that you upgrade to a 2.2 or later kernel.
+.\" .LP
+.\" NIT doesn't let you watch your own outbound traffic, BPF will.
+.\" We recommend that you use the latter.
+.\" .LP
+.\" On Linux systems with 2.0[.x] kernels:
+.\" .IP
+.\" packets on the loopback device will be seen twice;
+.\" .IP
+.\" packet filtering cannot be done in the kernel, so that all packets must
+.\" be copied from the kernel in order to be filtered in user mode;
+.\" .IP
+.\" all of a packet, not just the part that's within the snapshot length,
+.\" will be copied from the kernel (the 2.0[.x] packet capture mechanism, if
+.\" asked to copy only part of a packet to userland, will not report the
+.\" true length of the packet; this would cause most IP packets to get an
+.\" error from
+.\" .BR tcpdump );
+.\" .IP
+.\" capturing on some PPP devices won't work correctly.
+.\" .LP
+.\" We recommend that you upgrade to a 2.2 or later kernel.
 .LP
 Some attempt should be made to reassemble IP fragments or, at least
 to compute the right length for the higher level protocol.

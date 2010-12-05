@@ -21,9 +21,14 @@
  * Original code by Greg Stark <gsstark@mit.edu> 
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static const char rcsid[] _U_ =
 "@(#) Header: /tcpdump/master/tcpdump/print-pppoe.c,v 1.31 2005-04-26 19:48:38 guy Exp (LBL)";
+#else
+__RCSID("$NetBSD: print-pppoe.c,v 1.2 2010/12/05 05:11:30 christos Exp $");
+#endif
 #endif
 
 #ifdef HAVE_CONFIG_H

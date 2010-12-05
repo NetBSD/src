@@ -10,9 +10,14 @@
 #include "config.h"
 #endif
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static const char rcsid[] _U_ =
      "@(#) Header: /tcpdump/master/tcpdump/print-smb.c,v 1.47 2007-12-09 00:30:47 guy Exp";
+#else
+__RCSID("$NetBSD: print-smb.c,v 1.2 2010/12/05 05:11:30 christos Exp $");
+#endif
 #endif
 
 #include <tcpdump-stdinc.h>
@@ -1499,7 +1504,8 @@ ipx_netbios_print(const u_char *data, u_int length)
 	    break;
 	if (memcmp(&data[i], "\377SMB", 4) == 0) {
 	    smb_fdata(data, "\n>>> IPX transport ", &data[i], 0);
-	    print_smb(&data[i], maxbuf);
+	    if (data != NULL)
+		print_smb(&data[i], maxbuf);
 	    printf("\n");
 	    fflush(stdout);
 	    break;

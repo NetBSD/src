@@ -13,9 +13,14 @@
  * Original code by Andy Heffernan (ahh@juniper.net)
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static const char rcsid[] _U_ =
     "@(#) Header: /tcpdump/master/tcpdump/print-pgm.c,v 1.5 2005-06-07 22:05:58 guy Exp";
+#else
+__RCSID("$NetBSD: print-pgm.c,v 1.2 2010/12/05 05:11:30 christos Exp $");
+#endif
 #endif
 
 #ifdef HAVE_CONFIG_H
