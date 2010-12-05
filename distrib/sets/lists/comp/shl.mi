@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.141 2010/12/02 14:54:44 christos Exp $
+# $NetBSD: shl.mi,v 1.142 2010/12/05 06:02:29 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -267,7 +267,7 @@
 ./usr/libdata/debug/usr/lib/libossaudio.so.1.0.debug	comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libp2k.so.2.0.debug		comp-puffs-debug	debug
 ./usr/libdata/debug/usr/lib/libpam.so.3.0.debug		comp-sys-debug	pam,debug
-./usr/libdata/debug/usr/lib/libpcap.so.3.0.debug	comp-net-debug	debug
+./usr/libdata/debug/usr/lib/libpcap.so.4.0.debug	comp-net-debug	debug
 ./usr/libdata/debug/usr/lib/libpci.so.2.0.debug		comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libposix.so.0.1.debug	comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libprop.so.1.1.debug	comp-sys-debug	debug
