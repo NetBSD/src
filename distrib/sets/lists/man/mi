@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1259 2010/12/05 06:02:29 christos Exp $
+# $NetBSD: mi,v 1.1260 2010/12/05 09:02:28 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -374,6 +374,7 @@
 ./usr/share/man/cat1/pawd.0			man-amd-catman		.cat
 ./usr/share/man/cat1/pax.0			man-util-catman		.cat
 ./usr/share/man/cat1/paxctl.0			man-obsolete		obsolete
+./usr/share/man/cat1/pcap-config.0		man-util-catman		.cat
 ./usr/share/man/cat1/pcc.0			man-util-catman		pcccmds,.cat
 ./usr/share/man/cat1/pcpp.0			man-util-catman		pcccmds,.cat
 ./usr/share/man/cat1/pgrep.0			man-util-catman		.cat
@@ -1887,6 +1888,7 @@
 ./usr/share/man/cat5/pam.conf.0			man-sys-catman		.cat
 ./usr/share/man/cat5/passwd.0			man-sys-catman		.cat
 ./usr/share/man/cat5/passwd.conf.0		man-sys-catman		.cat
+./usr/share/man/cat5/pcap-savefile.0		man-net-catman		.cat
 ./usr/share/man/cat5/pcfs.0			man-obsolete		obsolete
 ./usr/share/man/cat5/pcre_table.0		man-postfix-catman	postfix,.cat
 ./usr/share/man/cat5/pf.boot.conf.0		man-pf-catman		pf,.cat
@@ -1976,6 +1978,8 @@
 ./usr/share/man/cat7/nls.0			man-reference-catman	.cat
 ./usr/share/man/cat7/orders.0			man-reference-catman	.cat
 ./usr/share/man/cat7/packages.0			man-obsolete		obsolete
+./usr/share/man/cat7/pcap-filter.0		man-netutil-catman	.cat
+./usr/share/man/cat7/pcap-linktype.0		man-netutil-catman	.cat
 ./usr/share/man/cat7/pkgsrc.0			man-reference-catman	.cat
 ./usr/share/man/cat7/re_format.0		man-reference-catman	.cat
 ./usr/share/man/cat7/release.0			man-reference-catman	.cat
@@ -3149,6 +3153,7 @@
 ./usr/share/man/html1/pathchk.html		man-util-htmlman	html
 ./usr/share/man/html1/pawd.html			man-amd-htmlman		html
 ./usr/share/man/html1/pax.html			man-util-htmlman	html
+./usr/share/man/html1/pcap-config.html		man-util-htmlman	html
 ./usr/share/man/html1/pcc.html			man-util-htmlman	pcccmds,html
 ./usr/share/man/html1/pcpp.html			man-util-htmlman	pcccmds,html
 ./usr/share/man/html1/pgrep.html		man-util-htmlman	html
@@ -4510,6 +4515,7 @@
 ./usr/share/man/html5/pam.conf.html		man-sys-htmlman		html
 ./usr/share/man/html5/passwd.html		man-sys-htmlman		html
 ./usr/share/man/html5/passwd.conf.html		man-sys-htmlman		html
+./usr/share/man/html5/pcap-savefile.html	man-sys-htmlman		html
 ./usr/share/man/html5/pcre_table.html		man-postfix-htmlman	postfix,html
 ./usr/share/man/html5/pf.boot.conf.html		man-pf-htmlman		pf,html
 ./usr/share/man/html5/pf.conf.html		man-pf-htmlman		pf,html
@@ -4584,6 +4590,8 @@
 ./usr/share/man/html7/mdoc.html			man-groff-htmlman	html,groff
 ./usr/share/man/html7/nls.html			man-reference-htmlman	html
 ./usr/share/man/html7/orders.html		man-reference-htmlman	html
+./usr/share/man/html7/pcap-filter.html		man-netutil-htmlman	html
+./usr/share/man/html7/pcap-linktype.html	man-netutil-htmlman	html
 ./usr/share/man/html7/pkgsrc.html		man-reference-htmlman	html
 ./usr/share/man/html7/re_format.html		man-reference-htmlman	html
 ./usr/share/man/html7/release.html		man-reference-htmlman	html
@@ -7088,6 +7096,7 @@
 ./usr/share/man/man5/pam.conf.5			man-sys-man		.man
 ./usr/share/man/man5/passwd.5			man-sys-man		.man
 ./usr/share/man/man5/passwd.conf.5		man-sys-man		.man
+./usr/share/man/man5/pcap-savefile.5		man-netutil-man		.man
 ./usr/share/man/man5/pcfs.5			man-obsolete		obsolete
 ./usr/share/man/man5/pcre_table.5		man-postfix-man		postfix,.man
 ./usr/share/man/man5/pf.boot.conf.5		man-pf-man		pf,.man
@@ -7176,6 +7185,8 @@
 ./usr/share/man/man7/nls.7			man-reference-man	.man
 ./usr/share/man/man7/orders.7			man-reference-man	.man
 ./usr/share/man/man7/packages.7			man-obsolete		obsolete
+./usr/share/man/man7/pcap-filter.7		man-netutil-man		.man
+./usr/share/man/man7/pcap-linktype.7		man-netutil-man		.man
 ./usr/share/man/man7/pkgsrc.7			man-reference-man	.man
 ./usr/share/man/man7/re_format.7		man-reference-man	.man
 ./usr/share/man/man7/release.7			man-reference-man	.man
