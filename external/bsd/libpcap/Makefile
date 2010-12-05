@@ -1,5 +1,5 @@
-#	$NetBSD: Makefile,v 1.1 2010/12/05 01:45:46 christos Exp $
+#	$NetBSD: Makefile,v 1.2 2010/12/05 03:00:44 christos Exp $
 
-SUBDIR=	lib
+SUBDIR=	bin lib
 
 .include <bsd.subdir.mk>
