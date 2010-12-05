@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.26 2010/07/07 01:18:39 chs Exp $	*/
+/*	$NetBSD: intr.c,v 1.27 2010/12/05 10:11:46 skrll Exp $	*/
 /*	$OpenBSD: intr.c,v 1.27 2009/12/31 12:52:35 jsing Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.26 2010/07/07 01:18:39 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.27 2010/12/05 10:11:46 skrll Exp $");
 
 #define __MUTEX_PRIVATE
 
@@ -171,16 +171,16 @@ hp700_intr_establish(device_t dv, int ipl, int (*handler)(void *),
 		panic("%s: bad interrupt bit %d", __func__, bit_pos);
 
 	/*
-	 * Panic if this int bit is already handled,
-	 * but allow shared interrupts for PCI.
+	 * Panic if this int bit is already handled, but allow shared
+	 * interrupts for PCI.
 	 */
 	if (int_reg->int_reg_bits_map[31 ^ bit_pos] != INT_REG_BIT_UNUSED
 	    && strncmp(device_xname(dv), "dino", 4) != 0 && handler == NULL)
 		panic("hp700_intr_establish: int already handled");
 
 	/*
-	 * If this interrupt bit leads us to another interrupt
-	 * register, simply note that in the mapping for the bit.
+	 * If this interrupt bit leads us to another interrupt register,
+	 * simply note that in the mapping for the bit.
 	 */
 	if (handler == NULL) {
 		for (idx = 0; idx < HP700_INT_BITS; idx++)
