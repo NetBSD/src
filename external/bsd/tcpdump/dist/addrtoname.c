@@ -21,9 +21,14 @@
  *  Internet, ethernet, port, and protocol string to address
  *  and address to string conversion routines
  */
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static const char rcsid[] _U_ =
     "@(#) Header: /tcpdump/master/tcpdump/addrtoname.c,v 1.119 2007-08-08 14:06:34 hannes Exp (LBL)";
+#else
+__RCSID("$NetBSD: addrtoname.c,v 1.2 2010/12/05 05:11:30 christos Exp $");
+#endif
 #endif
 
 #ifdef HAVE_CONFIG_H

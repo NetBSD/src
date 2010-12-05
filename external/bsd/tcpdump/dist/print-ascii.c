@@ -1,4 +1,4 @@
-/*	$NetBSD: print-ascii.c,v 1.1.1.1 2010/12/05 03:15:09 christos Exp $ 	*/
+/*	NetBSD: print-ascii.c,v 1.1 1999/09/30 14:49:12 sjg Exp  	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -40,9 +33,14 @@
 #include "config.h"
 #endif
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static const char rcsid[] _U_ =
      "@(#) Header: /tcpdump/master/tcpdump/print-ascii.c,v 1.17 2005-07-06 20:53:32 guy Exp";
+#else
+__RCSID("$NetBSD: print-ascii.c,v 1.2 2010/12/05 05:11:30 christos Exp $");
+#endif
 #endif
 #include <tcpdump-stdinc.h>
 #include <stdio.h>

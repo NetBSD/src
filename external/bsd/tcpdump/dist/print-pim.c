@@ -19,9 +19,14 @@
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static const char rcsid[] _U_ =
     "@(#) Header: /tcpdump/master/tcpdump/print-pim.c,v 1.49 2006-02-13 01:31:35 hannes Exp (LBL)";
+#else
+__RCSID("$NetBSD: print-pim.c,v 1.2 2010/12/05 05:11:30 christos Exp $");
+#endif
 #endif
 
 #ifdef HAVE_CONFIG_H
@@ -87,7 +92,7 @@ static struct tok pimv2_register_flag_values[] = {
     { PIMV2_REGISTER_FLAG_BORDER, "Border" },
     { PIMV2_REGISTER_FLAG_NULL, "Null" },
     { 0, NULL}
-};    
+};
 
 /*
  * XXX: We consider a case where IPv6 is not ready yet for portability,

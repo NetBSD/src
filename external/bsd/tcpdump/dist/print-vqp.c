@@ -17,9 +17,14 @@
  * Original code by Carles Kishimoto <Carles.Kishimoto@bsc.es>
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static const char rcsid[] _U_ =
     "@(#) Header: /tcpdump/master/tcpdump/print-vqp.c,v 1.3 2006-08-19 06:51:13 guy Exp";
+#else
+__RCSID("$NetBSD: print-vqp.c,v 1.2 2010/12/05 05:11:31 christos Exp $");
+#endif
 #endif
 
 #ifdef HAVE_CONFIG_H

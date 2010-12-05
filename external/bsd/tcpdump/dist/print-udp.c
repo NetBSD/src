@@ -19,9 +19,14 @@
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static const char rcsid[] _U_ =
     "@(#) Header: /tcpdump/master/tcpdump/print-udp.c,v 1.142 2007-08-08 17:20:58 hannes Exp (LBL)";
+#else
+__RCSID("$NetBSD: print-udp.c,v 1.2 2010/12/05 05:11:31 christos Exp $");
+#endif
 #endif
 
 #ifdef HAVE_CONFIG_H

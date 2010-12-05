@@ -18,9 +18,14 @@
  * Initial contribution from Jeff Honig (jch@MITCHELL.CIT.CORNELL.EDU).
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static const char rcsid[] _U_ =
     "@(#) Header: /tcpdump/master/tcpdump/print-egp.c,v 1.38 2006-02-11 22:13:24 hannes Exp (LBL)";
+#else
+__RCSID("$NetBSD: print-egp.c,v 1.2 2010/12/05 05:11:30 christos Exp $");
+#endif
 #endif
 
 #ifdef HAVE_CONFIG_H

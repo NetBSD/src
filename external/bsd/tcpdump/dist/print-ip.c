@@ -19,9 +19,14 @@
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static const char rcsid[] _U_ =
     "@(#) Header: /tcpdump/master/tcpdump/print-ip.c,v 1.159 2007-09-14 01:29:28 guy Exp (LBL)";
+#else
+__RCSID("$NetBSD: print-ip.c,v 1.2 2010/12/05 05:11:30 christos Exp $");
+#endif
 #endif
 
 #ifdef HAVE_CONFIG_H
@@ -518,6 +523,10 @@ again:
 
 	case IPPROTO_PGM:
 		pgm_print(ipds->cp, ipds->len, (const u_char *)ipds->ip);
+		break;
+
+	case IPPROTO_PFSYNC:
+		pfsync_ip_print(ipds->cp, ipds->len, (const u_char *)ipds->ip);
 		break;
 
 	default:

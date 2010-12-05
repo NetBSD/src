@@ -23,9 +23,14 @@
 #include "config.h"
 #endif
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static const char rcsid[] _U_ =
     "@(#) Header: /tcpdump/master/tcpdump/print-vjc.c,v 1.15 2004-03-25 03:31:17 mcr Exp (LBL)";
+#else
+__RCSID("$NetBSD: print-vjc.c,v 1.2 2010/12/05 05:11:31 christos Exp $");
+#endif
 #endif
 
 #include <tcpdump-stdinc.h>
