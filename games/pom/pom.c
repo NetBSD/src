@@ -1,4 +1,4 @@
-/*	$NetBSD: pom.c,v 1.19 2009/08/12 08:23:20 dholland Exp $	*/
+/*	$NetBSD: pom.c,v 1.20 2010/12/05 04:34:22 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\
 #if 0
 static char sccsid[] = "@(#)pom.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: pom.c,v 1.19 2009/08/12 08:23:20 dholland Exp $");
+__RCSID("$NetBSD: pom.c,v 1.20 2010/12/05 04:34:22 pgoyette Exp $");
 #endif
 #endif /* not lint */
 
@@ -272,6 +272,7 @@ static void
 badformat(void)
 {
 	warnx("illegal time format");
-	(void)fprintf(stderr, "usage: pom [[[[[cc]yy]mm]dd]HH]\n");
+	(void)fprintf(stderr, "usage: %s [[[[[cc]yy]mm]dd]HH]\n",
+	    getprogname());
 	exit(EXIT_FAILURE);
 }
