@@ -1,4 +1,4 @@
-/*	$NetBSD: wax.c,v 1.15 2010/02/10 20:33:27 skrll Exp $	*/
+/*	$NetBSD: wax.c,v 1.16 2010/12/05 12:19:09 skrll Exp $	*/
 
 /*	$OpenBSD: wax.c,v 1.1 1998/11/23 03:04:10 mickey Exp $	*/
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wax.c,v 1.15 2010/02/10 20:33:27 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wax.c,v 1.16 2010/12/05 12:19:09 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -149,6 +149,7 @@ waxattach(device_t parent, device_t self, void *aux)
 
 	/* Establish the interrupt register. */
 	hp700_intr_reg_establish(&sc->sc_int_reg);
+	sc->sc_int_reg.int_reg_name = device_xname(self);
 	sc->sc_int_reg.int_reg_mask = &sc->sc_regs->wax_imr;
 	sc->sc_int_reg.int_reg_req = &sc->sc_regs->wax_irr;
 
