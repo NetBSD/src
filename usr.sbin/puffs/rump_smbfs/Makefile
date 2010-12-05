@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2009/12/11 16:46:27 pooka Exp $
+#	$NetBSD: Makefile,v 1.6 2010/12/05 20:13:26 pooka Exp $
 #
 
 WARNS=2
@@ -9,7 +9,7 @@ MOUNTNAME=	smbfs
 SRCS+=		smb_rumpops.c
 
 LDADD+= 	-lrumpnet_sockin -lrumpnet
-LDADD+=		-lrumpcrypto -lrumpdev_netsmb -lrumpdev
+LDADD+=		-lrumpkern_crypto -lrumpdev_netsmb -lrumpdev
 
 ISRUMP=		# it is
 
