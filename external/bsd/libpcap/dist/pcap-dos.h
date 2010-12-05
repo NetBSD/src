@@ -2,7 +2,7 @@
  * Internal details for libpcap on DOS.
  * 32-bit targets: djgpp, Pharlap or DOS4GW.
  *
- * @(#) $Header: /cvsroot/src/external/bsd/libpcap/dist/pcap-dos.h,v 1.1.1.1 2010/12/05 01:20:34 christos Exp $ (LBL)
+ * @(#) Header: /tcpdump/master/libpcap/pcap-dos.h,v 1.1 2004-12-18 08:52:10 guy Exp (LBL)
  */
 
 #ifndef __PCAP_DOS_H

@@ -30,7 +30,7 @@
  * bluetooth data struct
  * By Paolo Abeni <paolo.abeni@email.it>
  *
- * @(#) $Header: /cvsroot/src/external/bsd/libpcap/dist/pcap/bluetooth.h,v 1.1.1.1 2010/12/05 01:20:55 christos Exp $
+ * @(#) Header: /tcpdump/master/libpcap/pcap/bluetooth.h,v 1.1 2007-09-22 02:10:17 guy Exp
  */
  
 #ifndef _PCAP_BLUETOOTH_STRUCTS_H__

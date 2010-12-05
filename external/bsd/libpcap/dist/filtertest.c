@@ -24,7 +24,7 @@ static const char copyright[] _U_ =
     "@(#) Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 2000\n\
 The Regents of the University of California.  All rights reserved.\n";
 static const char rcsid[] _U_ =
-    "@(#) $Header: /cvsroot/src/external/bsd/libpcap/dist/Attic/filtertest.c,v 1.1.1.1 2010/12/05 01:20:42 christos Exp $ (LBL)";
+    "@(#) Header: /tcpdump/master/libpcap/filtertest.c,v 1.2 2005-08-08 17:50:13 guy Exp (LBL)";
 #endif
 
 #ifdef HAVE_CONFIG_H
