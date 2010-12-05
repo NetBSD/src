@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf_filter.c,v 1.37 2010/12/05 00:34:21 christos Exp $	*/
+/*	$NetBSD: bpf_filter.c,v 1.38 2010/12/05 02:40:40 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf_filter.c,v 1.37 2010/12/05 00:34:21 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf_filter.c,v 1.38 2010/12/05 02:40:40 christos Exp $");
 
 #if 0
 #if !(defined(lint) || defined(KERNEL))
@@ -450,7 +450,6 @@ bpf_filter(const struct bpf_insn *pc, const u_char *p, u_int wirelen,
 	}
 }
 
-#ifdef _KERNEL
 /*
  * Return true if the 'fcode' is a valid filter program.
  * The constraints are that each jump be forward and to a valid
@@ -463,13 +462,17 @@ bpf_filter(const struct bpf_insn *pc, const u_char *p, u_int wirelen,
  * Otherwise, a bogus program could easily crash the system.
  */
 int
-bpf_validate(struct bpf_insn *f, int len)
+bpf_validate(const struct bpf_insn *f, int len)
 {
 	u_int i, from;
-	struct bpf_insn *p;
+	const struct bpf_insn *p;
 
-	if (len < 1 || len > BPF_MAXINSNS)
+	if (len < 1)
 		return 0;
+#if defined(KERNEL) || defined(_KERNEL)
+	if (len > BPF_MAXINSNS)
+		return 0;
+#endif
 
 	for (i = 0; i < len; ++i) {
 		p = &f[i];
@@ -480,14 +483,29 @@ bpf_validate(struct bpf_insn *f, int len)
 		case BPF_LD:
 		case BPF_LDX:
 			switch (BPF_MODE(p->code)) {
-			case BPF_MEM:
-				if (p->k >= BPF_MEMWORDS)
-					return 0;
+			case BPF_IMM:
 				break;
 			case BPF_ABS:
 			case BPF_IND:
 			case BPF_MSH:
-			case BPF_IMM:
+				/*
+				 * There's no maximum packet data size
+				 * in userland.  The runtime packet length
+				 * check suffices.
+				 */
+#if defined(KERNEL) || defined(_KERNEL)
+				/*
+				 * More strict check with actual packet length
+				 * is done runtime.
+				 */
+				if (p->k >= BPF_MEMWORDS)
+					return 0;
+#endif
+				break;
+			case BPF_MEM:
+				if (p->k >= BPF_MEMWORDS)
+					return 0;
+				break;
 			case BPF_LEN:
 				break;
 			default:
@@ -514,7 +532,7 @@ bpf_validate(struct bpf_insn *f, int len)
 				/*
 				 * Check for constant division by 0.
 				 */
-				if (BPF_SRC(p->code) == BPF_K && p->k == 0)
+				if (BPF_RVAL(p->code) == BPF_K && p->k == 0)
 					return 0;
 				break;
 			default:
@@ -537,18 +555,32 @@ bpf_validate(struct bpf_insn *f, int len)
 			 * We know that len is <= BPF_MAXINSNS, and we
 			 * assume that BPF_MAXINSNS is < the maximum size
 			 * of a u_int, so that i + 1 doesn't overflow.
+			 *
+			 * For userland, we don't know that the from
+			 * or len are <= BPF_MAXINSNS, but we know that
+			 * from <= len, and, except on a 64-bit system,
+			 * it's unlikely that len, if it truly reflects
+			 * the size of the program we've been handed,
+			 * will be anywhere near the maximum size of
+			 * a u_int.  We also don't check for backward
+			 * branches, as we currently support them in
+			 * userland for the protochain operation.
 			 */
 			from = i + 1;
 			switch (BPF_OP(p->code)) {
 			case BPF_JA:
+#if defined(KERNEL) || defined(_KERNEL)
 				if (from + p->k < from || from + p->k >= len)
+#else
+				if (from + p->k >= len)
+#endif
 					return 0;
 				break;
 			case BPF_JEQ:
 			case BPF_JGT:
 			case BPF_JGE:
 			case BPF_JSET:
-				if (from + p->jt >= len || from + p->jf >= len) 
+				if (from + p->jt >= len || from + p->jf >= len)
 					return 0;
 				break;
 			default:
@@ -566,4 +598,3 @@ bpf_validate(struct bpf_insn *f, int len)
 
 	return BPF_CLASS(f[len - 1].code) == BPF_RET;
 }
-#endif
