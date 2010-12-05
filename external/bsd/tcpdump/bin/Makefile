@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2010/12/05 05:24:03 christos Exp $	
+#	$NetBSD: Makefile,v 1.3 2010/12/05 05:52:46 christos Exp $	
 
 WARNS?=	1	# XXX: need to cleanup later
 
@@ -6,7 +6,7 @@ WARNS?=	1	# XXX: need to cleanup later
 
 USE_FORT?= yes	# network client
 
-BINDIR=/usr/bin
+BINDIR=/usr/sbin
 SRCDIR=	${.CURDIR}/../dist
 .PATH:	${SRCDIR}
 
