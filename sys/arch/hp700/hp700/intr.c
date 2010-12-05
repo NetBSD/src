@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.28 2010/12/05 10:27:50 skrll Exp $	*/
+/*	$NetBSD: intr.c,v 1.29 2010/12/05 10:47:22 skrll Exp $	*/
 /*	$OpenBSD: intr.c,v 1.27 2009/12/31 12:52:35 jsing Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.28 2010/12/05 10:27:50 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.29 2010/12/05 10:47:22 skrll Exp $");
 
 #define __MUTEX_PRIVATE
 
@@ -190,7 +190,7 @@ hp700_intr_establish(device_t dv, int ipl, int (*handler)(void *),
 			panic("hp700_intr_establish: unknown int reg");
 		int_reg->int_reg_bits_map[31 ^ bit_pos] =
 			(INT_REG_BIT_REG | idx);
-		return (NULL);
+		return NULL;
 	}
 
 	/*
@@ -215,7 +215,7 @@ hp700_intr_establish(device_t dv, int ipl, int (*handler)(void *),
 	int_bit->int_bit_handler = handler;
 	int_bit->int_bit_arg = arg;
 
-	return (int_bit);
+	return int_bit;
 }
 
 /*
@@ -234,7 +234,7 @@ hp700_intr_allocate_bit(struct hp700_int_reg *int_reg)
 			break;
 	if (bit_pos >= 0)
 		int_reg->int_reg_allocatable_bits &= ~mask;
-	return (bit_pos);
+	return bit_pos;
 }
 
 /*
