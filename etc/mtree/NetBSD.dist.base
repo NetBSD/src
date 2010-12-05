@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.base,v 1.65 2010/12/01 07:03:21 pooka Exp $
+#	$NetBSD: NetBSD.dist.base,v 1.66 2010/12/05 05:55:29 christos Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -156,6 +156,7 @@
 ./usr/include/ntfs
 ./usr/include/objc
 ./usr/include/openssl
+./usr/include/pcap
 ./usr/include/prop
 ./usr/include/protocols
 ./usr/include/readline
