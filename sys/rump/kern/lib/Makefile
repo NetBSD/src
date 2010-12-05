@@ -1,6 +1,8 @@
-#	$NetBSD: Makefile,v 1.3 2010/06/21 21:43:28 pooka Exp $
+#	$NetBSD: Makefile,v 1.4 2010/12/05 16:27:42 pooka Exp $
 #
 
-SUBDIR+=	libksem libtty libz
+.include "${.CURDIR}/../Makefile.rumpkerncomp"
+
+SUBDIR+=	${RUMPKERNLIBS}
 
 .include <bsd.subdir.mk>
