@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.11 2010/12/05 10:21:18 skrll Exp $	*/
+/*	$NetBSD: intr.h,v 1.12 2010/12/05 10:27:50 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -88,6 +88,5 @@ void *	hp700_intr_establish(device_t, int, int (*)(void *), void *,
 	    struct hp700_int_reg *, int);
 int	hp700_intr_allocate_bit(struct hp700_int_reg *);
 int	_hp700_intr_ipl_next(void);
-int	_hp700_intr_spl_mask(void *);
 void	hp700_intr_init(void);
 void	hp700_intr_dispatch(int, int, struct trapframe *);
