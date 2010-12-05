@@ -9,9 +9,14 @@
  * Contributed by Lennert Buytenhek <buytenh@gnu.org>
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static const char rcsid[] _U_ =
 "@(#) Header: /tcpdump/master/tcpdump/print-stp.c,v 1.20 2007-03-18 17:11:46 hannes Exp";
+#else
+__RCSID("$NetBSD: print-stp.c,v 1.2 2010/12/05 05:11:30 christos Exp $");
+#endif
 #endif
 
 #ifdef HAVE_CONFIG_H

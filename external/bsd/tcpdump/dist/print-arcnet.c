@@ -20,9 +20,14 @@
  *
  * From: NetBSD: print-arcnet.c,v 1.2 2000/04/24 13:02:28 itojun Exp
  */
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static const char rcsid[] _U_ =
     "@(#) Header: /tcpdump/master/tcpdump/print-arcnet.c,v 1.20 2005-04-06 21:32:38 mcr Exp (LBL)";
+#else
+__RCSID("$NetBSD: print-arcnet.c,v 1.2 2010/12/05 05:11:30 christos Exp $");
+#endif
 #endif
 
 #ifdef HAVE_CONFIG_H

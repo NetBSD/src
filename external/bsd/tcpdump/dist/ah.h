@@ -1,4 +1,4 @@
-/*	$NetBSD: ah.h,v 1.1.1.1 2010/12/05 03:14:51 christos Exp $	*/
+/*	NetBSD: ah.h,v 1.12 2000/07/23 05:23:04 itojun Exp 	*/
 /*	$KAME: ah.h,v 1.12 2000/07/20 17:41:01 itojun Exp $	*/
 
 /*

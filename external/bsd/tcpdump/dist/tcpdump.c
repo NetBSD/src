@@ -25,12 +25,17 @@
  *	Seth Webster <swebster@sst.ll.mit.edu>
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static const char copyright[] _U_ =
     "@(#) Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 2000\n\
 The Regents of the University of California.  All rights reserved.\n";
 static const char rcsid[] _U_ =
     "@(#) Header: /tcpdump/master/tcpdump/tcpdump.c,v 1.283 2008-09-25 21:45:50 guy Exp (LBL)";
+#else
+__RCSID("$NetBSD: tcpdump.c,v 1.2 2010/12/05 05:11:31 christos Exp $");
+#endif
 #endif
 
 /*
@@ -203,6 +208,9 @@ static struct printer printers[] = {
 #endif
 #if defined(DLT_PFLOG) && defined(HAVE_NET_PFVAR_H)
 	{ pflog_if_print,	DLT_PFLOG },
+#endif
+#ifdef DLT_PFSYNC
+	{ pfsync_if_print,  DLT_PFSYNC },
 #endif
 #ifdef DLT_FR
 	{ fr_if_print,		DLT_FR },
