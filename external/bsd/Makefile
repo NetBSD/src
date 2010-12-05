@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.25 2010/08/28 15:47:08 kardel Exp $
+#	$NetBSD: Makefile,v 1.26 2010/12/05 05:59:59 christos Exp $
 
 .include <bsd.own.mk>
 
 SUBDIR+= am-utils bind cron dhcpcd fetch file flex libarchive libevent liblzf \
-	mdocml openresolv top byacc wpa ntp
+	libpcap mdocml openresolv top byacc wpa ntp tcpdump
 
 .if (${MKATF} != "no")
 SUBDIR+= atf
