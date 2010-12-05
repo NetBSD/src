@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld_start.S,v 1.10 2008/04/28 20:23:03 martin Exp $	*/
+/*	$NetBSD: rtld_start.S,v 1.11 2010/12/05 00:56:07 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -34,6 +34,7 @@
 	.text
 	.align	4
 	.globl	.rtld_start
+	.hidden	.rtld_start
 	.type	.rtld_start,@function
 .rtld_start:
 	subl	$8,%esp			# make room of obj_main and exit proc
@@ -48,12 +49,12 @@
 
 	pushl	%ebx			# relocbase
 	pushl	%ecx			# &_DYNAMIC
-	call	_rtld_relocate_nonplt_self@PLT
+	call	_rtld_relocate_nonplt_self
 
 	leal	12(%esp),%eax		# &cleanup
 	pushl	%ebx			# relocbase
 	pushl	%eax			# sp
-	call	_rtld@PLT		# _rtld(sp, relocbase)
+	call	_rtld			# _rtld(sp, relocbase)
 
 	addl	$16,%esp		# pop args
 
@@ -64,6 +65,7 @@
 
 	.align	4
 	.globl	_rtld_bind_start
+	.hidden	_rtld_bind_start
 	.type	_rtld_bind_start,@function
 _rtld_bind_start:	# (obj, reloff)
 	pushf				# save registers
@@ -73,7 +75,7 @@ _rtld_bind_start:	# (obj, reloff)
 
 	pushl	20(%esp)		# Copy of reloff
 	pushl	20(%esp)		# Copy of obj
-	call	_rtld_bind@PLT		# Call the binder
+	call	_rtld_bind		# Call the binder
 	addl	$8,%esp			# pop binder args
 	movl	%eax,20(%esp)		# Store function to be called in obj
 
