@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1529 2010/12/05 17:37:33 pooka Exp $
+#	$NetBSD: mi,v 1.1530 2010/12/05 20:11:22 pooka Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2625,9 +2625,9 @@
 ./usr/lib/librumpclient.a				comp-c-lib
 ./usr/lib/librumpclient_g.a			-unknown-		debuglib
 ./usr/lib/librumpclient_p.a			comp-c-proflib		profile
-./usr/lib/librumpcrypto.a			comp-c-lib		crypto
-./usr/lib/librumpcrypto_g.a			-unknown-		debuglib,crypto
-./usr/lib/librumpcrypto_p.a			comp-c-proflib		profile,crypto
+./usr/lib/librumpcrypto.a			comp-obsolete		obsolete
+./usr/lib/librumpcrypto_g.a			comp-obsolete		obsolete
+./usr/lib/librumpcrypto_p.a			comp-obsolete		obsolete
 ./usr/lib/librumpdev.a				comp-c-lib
 ./usr/lib/librumpdev_audio.a			comp-c-lib
 ./usr/lib/librumpdev_audio_g.a			-unknown-		debuglib
@@ -2775,6 +2775,9 @@
 ./usr/lib/librumpfs_union.a			comp-c-lib
 ./usr/lib/librumpfs_union_g.a			-unknown-		debuglib
 ./usr/lib/librumpfs_union_p.a			comp-c-proflib		profile
+./usr/lib/librumpkern_crypto.a			comp-c-lib
+./usr/lib/librumpkern_crypto_g.a			-unknown-		debuglib
+./usr/lib/librumpkern_crypto_p.a			comp-c-proflib		profile
 ./usr/lib/librumpkern_ksem.a			comp-c-lib
 ./usr/lib/librumpkern_ksem_g.a			-unknown-		debuglib
 ./usr/lib/librumpkern_ksem_p.a			comp-c-proflib		profile
