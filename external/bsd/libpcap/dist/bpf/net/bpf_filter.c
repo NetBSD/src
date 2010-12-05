@@ -108,18 +108,18 @@ static const char rcsid[] _U_ =
 #include <netinet/in.h>
 #endif
 
-#define EXTRACT_SHORT(p)	((u_short)ntohs(*(u_short *)p))
-#define EXTRACT_LONG(p)		(ntohl(*(u_int32 *)p))
+#define EXTRACT_SHORT(p)	((u_short)ntohs(*(const u_short *)p))
+#define EXTRACT_LONG(p)		(ntohl(*(const u_int32 *)p))
 #else
 #define EXTRACT_SHORT(p)\
 	((u_short)\
-		((u_short)*((u_char *)p+0)<<8|\
-		 (u_short)*((u_char *)p+1)<<0))
+		((u_short)*((const u_char *)p+0)<<8|\
+		 (u_short)*((const u_char *)p+1)<<0))
 #define EXTRACT_LONG(p)\
-		((u_int32)*((u_char *)p+0)<<24|\
-		 (u_int32)*((u_char *)p+1)<<16|\
-		 (u_int32)*((u_char *)p+2)<<8|\
-		 (u_int32)*((u_char *)p+3)<<0)
+		((u_int32)*((const u_char *)p+0)<<24|\
+		 (u_int32)*((const u_char *)p+1)<<16|\
+		 (u_int32)*((const u_char *)p+2)<<8|\
+		 (u_int32)*((const u_char *)p+3)<<0)
 #endif
 
 #if defined(KERNEL) || defined(_KERNEL)
@@ -289,7 +289,7 @@ bpf_filter(pc, p, wirelen, buflen)
 
 		case BPF_LD|BPF_B|BPF_ABS:
 			k = pc->k;
-			if (k >= buflen) {
+			if (k >= (int)buflen) {
 #if defined(KERNEL) || defined(_KERNEL)
 				if (m == NULL)
 					return 0;
@@ -348,7 +348,7 @@ bpf_filter(pc, p, wirelen, buflen)
 
 		case BPF_LD|BPF_B|BPF_IND:
 			k = X + pc->k;
-			if (k >= buflen) {
+			if (k >= (int)buflen) {
 #if defined(KERNEL) || defined(_KERNEL)
 				if (m == NULL)
 					return 0;
@@ -365,7 +365,7 @@ bpf_filter(pc, p, wirelen, buflen)
 
 		case BPF_LDX|BPF_MSH|BPF_B:
 			k = pc->k;
-			if (k >= buflen) {
+			if (k >= (int)buflen) {
 #if defined(KERNEL) || defined(_KERNEL)
 				if (m == NULL)
 					return 0;
@@ -550,7 +550,7 @@ bpf_validate(f, len)
 		return 0;
 #endif
 
-	for (i = 0; i < len; ++i) {
+	for (i = 0; i < (u_int)len; ++i) {
 		p = &f[i];
 		switch (BPF_CLASS(p->code)) {
 		/*
@@ -648,7 +648,7 @@ bpf_validate(f, len)
 #if defined(KERNEL) || defined(_KERNEL)
 				if (from + p->k < from || from + p->k >= len)
 #else
-				if (from + p->k >= len)
+				if (from + p->k >= (u_int)len)
 #endif
 					return 0;
 				break;
@@ -656,7 +656,7 @@ bpf_validate(f, len)
 			case BPF_JGT:
 			case BPF_JGE:
 			case BPF_JSET:
-				if (from + p->jt >= len || from + p->jf >= len)
+				if (from + p->jt >= (u_int)len || from + p->jf >= (u_int)len)
 					return 0;
 				break;
 			default:
