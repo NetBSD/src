@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.560 2010/12/05 06:02:28 christos Exp $
+# $NetBSD: shl.mi,v 1.561 2010/12/05 20:11:22 pooka Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -378,9 +378,9 @@
 ./usr/lib/librumpclient.so			base-rumpclient-shlib
 ./usr/lib/librumpclient.so.0			base-rumpclient-shlib
 ./usr/lib/librumpclient.so.0.0			base-rumpclient-shlib
-./usr/lib/librumpcrypto.so			base-rump-shlib		crypto
-./usr/lib/librumpcrypto.so.0			base-rump-shlib		crypto
-./usr/lib/librumpcrypto.so.0.0			base-rump-shlib		crypto
+./usr/lib/librumpcrypto.so			base-obsolete		obsolete
+./usr/lib/librumpcrypto.so.0			base-obsolete		obsolete
+./usr/lib/librumpcrypto.so.0.0			base-obsolete		obsolete
 ./usr/lib/librumpdev.so				base-rump-shlib
 ./usr/lib/librumpdev.so.0			base-rump-shlib
 ./usr/lib/librumpdev.so.0.0			base-rump-shlib
@@ -528,6 +528,9 @@
 ./usr/lib/librumpfs_union.so			base-rump-shlib
 ./usr/lib/librumpfs_union.so.0			base-rump-shlib
 ./usr/lib/librumpfs_union.so.0.0		base-rump-shlib
+./usr/lib/librumpkern_crypto.so			base-rump-shlib
+./usr/lib/librumpkern_crypto.so.0		base-rump-shlib
+./usr/lib/librumpkern_crypto.so.0.0		base-rump-shlib
 ./usr/lib/librumpkern_ksem.so			base-rump-shlib
 ./usr/lib/librumpkern_ksem.so.0			base-rump-shlib
 ./usr/lib/librumpkern_ksem.so.0.0		base-rump-shlib
