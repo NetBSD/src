@@ -920,7 +920,7 @@ opt_peep(b)
 	if (b->s.code == (BPF_JMP|BPF_K|BPF_JSET)) {
 		if (b->s.k == 0)
 			JT(b) = JF(b);
-		if (b->s.k == 0xffffffff)
+		if (b->s.k == (int)0xffffffff)
 			JF(b) = JT(b);
 	}
 	/*
@@ -948,11 +948,11 @@ opt_peep(b)
 			break;
 
 		case BPF_JGT:
-			v = (unsigned)v > b->s.k;
+			v = (unsigned)v > (unsigned)b->s.k;
 			break;
 
 		case BPF_JGE:
-			v = (unsigned)v >= b->s.k;
+			v = (unsigned)v >= (unsigned)b->s.k;
 			break;
 
 		case BPF_JSET:
@@ -2093,7 +2093,7 @@ convert_code_r(p)
 {
 	struct bpf_insn *dst;
 	struct slist *src;
-	int slen;
+	u_int slen;
 	u_int off;
 	int extrajmps;		/* number of extra jumps inserted */
 	struct slist **offset = NULL;
@@ -2151,7 +2151,7 @@ convert_code_r(p)
 			goto filled;
 
 	    {
-		int i;
+		u_int i;
 		int jt, jf;
 		const char *ljerr = "%s for block-local relative jump: off=%d";
 
