@@ -1,4 +1,4 @@
-.\" @(#) $Header: /cvsroot/src/external/bsd/libpcap/dist/Attic/pcap_free_datalinks.3pcap,v 1.1.1.1 2010/12/05 01:20:33 christos Exp $
+.\" @(#) Header: /tcpdump/master/libpcap/pcap_free_datalinks.3pcap,v 1.1 2008-05-26 19:58:06 guy Exp
 .\"
 .\" Copyright (c) 1994, 1996, 1997
 .\"	The Regents of the University of California.  All rights reserved.

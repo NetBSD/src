@@ -18,7 +18,7 @@
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * @(#) $Header: /cvsroot/src/external/bsd/libpcap/dist/lbl/os-aix4.h,v 1.1.1.1 2010/12/05 01:20:55 christos Exp $
+ * @(#) Header: /tcpdump/master/libpcap/lbl/os-aix4.h,v 1.1 2002-06-01 09:37:40 guy Exp
  */
 
 /* Prototypes missing in AIX 4.x */

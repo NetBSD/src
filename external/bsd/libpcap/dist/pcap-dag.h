@@ -7,7 +7,7 @@
  *
  * Author: Richard Littin, Sean Irvine ({richard,sean}@reeltwo.com)
  *
- * @(#) $Header: /cvsroot/src/external/bsd/libpcap/dist/pcap-dag.h,v 1.1.1.1 2010/12/05 01:20:33 christos Exp $ (LBL)
+ * @(#) Header: /tcpdump/master/libpcap/pcap-dag.h,v 1.7 2008-04-04 19:37:45 guy Exp (LBL)
  */
 
 pcap_t *dag_create(const char *, char *);
