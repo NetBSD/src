@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2010/11/23 10:19:55 mrg Exp $
+#	$NetBSD: Makefile,v 1.9 2010/12/05 15:57:40 adam Exp $
 
 .include "../../../Makefile.serverlib"
 .include "../../../Makefile.servermod"
@@ -29,7 +29,6 @@ CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/hw/xfree86/${LIB} \
 		-I${X11SRCDIR.xorg-server}/mi \
 		-I${X11SRCDIR.xorg-server}/xfixes \
 		-I${DESTDIR}${X11INCDIR}/X11 \
-		-I${DESTDIR}${X11INCDIR}/X11/extensions \
 		-I${DESTDIR}${X11INCDIR}/pixman-1 \
 		-I${DESTDIR}${X11INCDIR}/xorg
 
