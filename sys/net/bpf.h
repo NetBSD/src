@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.h,v 1.55 2010/04/05 07:22:22 joerg Exp $	*/
+/*	$NetBSD: bpf.h,v 1.56 2010/12/05 00:34:21 christos Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -361,7 +361,7 @@ void	 bpfilterattach(int);
 int	 bpf_validate(struct bpf_insn *, int);
 #endif
 
-u_int	 bpf_filter(struct bpf_insn *, u_char *, u_int, u_int);
+u_int	 bpf_filter(const struct bpf_insn *, const u_char *, u_int, u_int);
 
 /*
  * Number of scratch memory words (for BPF_LD|BPF_MEM and BPF_ST).
