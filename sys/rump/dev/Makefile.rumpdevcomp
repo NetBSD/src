@@ -1,10 +1,16 @@
-#	$NetBSD: Makefile.rumpdevcomp,v 1.1 2010/12/05 16:53:46 pooka Exp $
+#	$NetBSD: Makefile.rumpdevcomp,v 1.2 2010/12/05 20:39:10 pooka Exp $
 #
 
 RUMPDEVLIST=	audio bpf cgd disk dm fss md netsmb pad putter raidframe \
-		rnd scsipi scsitest sysmon ubt ucom ugenhc ulpt umass usb wscons
+		rnd scsipi scsitest sysmon wscons
+
+RUMPUSBDEVS=	ubt ucom ugenhc ulpt umass usb
 
 .for var in ${RUMPDEVLIST}
 RUMPDEVLIBS+=lib${var}
 RUMPDEVLDADD+=-lrumpdev_${var}
+.endfor
+
+.for var in ${RUMPUSBDEVS}
+RUMPDEVLIBS+=lib${var}
 .endfor
