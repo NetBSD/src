@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.891 2010/12/03 17:57:43 phx Exp $
+# $NetBSD: mi,v 1.892 2010/12/05 06:02:28 christos Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -550,6 +550,7 @@
 ./usr/bin/pathchk				base-util-bin
 ./usr/bin/pawd					base-amd-bin
 ./usr/bin/paxctl				base-obsolete		obsolete
+./usr/bin/pcap-config				base-util-bin
 ./usr/bin/pgrep					base-util-bin
 ./usr/bin/pigz					base-util-bin
 ./usr/bin/pkill					base-util-bin

@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1258 2010/11/30 20:59:10 jruoho Exp $
+# $NetBSD: mi,v 1.1259 2010/12/05 06:02:29 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -5574,6 +5574,7 @@
 ./usr/share/man/man1/pawd.1			man-amd-man		.man
 ./usr/share/man/man1/pax.1			man-util-man		.man
 ./usr/share/man/man1/paxctl.1			man-obsolete		obsolete
+./usr/share/man/man1/pcap-config.1		man-util-man		.man
 ./usr/share/man/man1/pcc.1			man-util-man		pcccmds,.man
 ./usr/share/man/man1/pcpp.1			man-util-man		pcccmds,.man
 ./usr/share/man/man1/pgrep.1			man-util-man		.man

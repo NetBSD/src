@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1527 2010/11/30 17:32:28 pooka Exp $
+#	$NetBSD: mi,v 1.1528 2010/12/05 06:02:28 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1835,6 +1835,9 @@
 ./usr/include/paths.h				comp-c-include
 ./usr/include/pcap-namedb.h			comp-c-include
 ./usr/include/pcap.h				comp-c-include
+./usr/include/pcap/bpf.h			comp-c-include
+./usr/include/pcap/namedb.h			comp-c-include
+./usr/include/pcap/pcap.h			comp-c-include
 ./usr/include/pci.h				comp-c-include
 ./usr/include/poll.h				comp-c-include
 ./usr/include/prop/plistref.h			comp-c-include
@@ -7455,6 +7458,55 @@
 ./usr/share/man/cat3/parsedate.0		comp-c-catman		.cat
 ./usr/share/man/cat3/pause.0			comp-c-catman		.cat
 ./usr/share/man/cat3/pcap.0			comp-c-catman		.cat
+./usr/share/man/cat3/pcap_activate.0		comp-c-catman		.cat
+./usr/share/man/cat3/pcap_breakloop.0		comp-c-catman		.cat
+./usr/share/man/cat3/pcap_can_set_rfmon.0	comp-c-catman		.cat
+./usr/share/man/cat3/pcap_close.0		comp-c-catman		.cat
+./usr/share/man/cat3/pcap_compile.0		comp-c-catman		.cat
+./usr/share/man/cat3/pcap_create.0		comp-c-catman		.cat
+./usr/share/man/cat3/pcap_datalink.0		comp-c-catman		.cat
+./usr/share/man/cat3/pcap_datalink_name_to_val.0 comp-c-catman		.cat
+./usr/share/man/cat3/pcap_datalink_val_to_name.0 comp-c-catman		.cat
+./usr/share/man/cat3/pcap_dump.0		comp-c-catman		.cat
+./usr/share/man/cat3/pcap_dump_close.0		comp-c-catman		.cat
+./usr/share/man/cat3/pcap_dump_file.0		comp-c-catman		.cat
+./usr/share/man/cat3/pcap_dump_flush.0		comp-c-catman		.cat
+./usr/share/man/cat3/pcap_dump_ftell.0		comp-c-catman		.cat
+./usr/share/man/cat3/pcap_dump_open.0		comp-c-catman		.cat
+./usr/share/man/cat3/pcap_file.0		comp-c-catman		.cat
+./usr/share/man/cat3/pcap_fileno.0		comp-c-catman		.cat
+./usr/share/man/cat3/pcap_findalldevs.0		comp-c-catman		.cat
+./usr/share/man/cat3/pcap_free_datalinks.0	comp-c-catman		.cat
+./usr/share/man/cat3/pcap_freealldevs.0		comp-c-catman		.cat
+./usr/share/man/cat3/pcap_freecode.0		comp-c-catman		.cat
+./usr/share/man/cat3/pcap_get_selectable_fd.0	comp-c-catman		.cat
+./usr/share/man/cat3/pcap_geterr.0		comp-c-catman		.cat
+./usr/share/man/cat3/pcap_inject.0		comp-c-catman		.cat
+./usr/share/man/cat3/pcap_is_swapped.0		comp-c-catman		.cat
+./usr/share/man/cat3/pcap_lib_version.0		comp-c-catman		.cat
+./usr/share/man/cat3/pcap_list_datalinks.0	comp-c-catman		.cat
+./usr/share/man/cat3/pcap_lookupdev.0		comp-c-catman		.cat
+./usr/share/man/cat3/pcap_lookupnet.0		comp-c-catman		.cat
+./usr/share/man/cat3/pcap_loop.0		comp-c-catman		.cat
+./usr/share/man/cat3/pcap_major_version.0	comp-c-catman		.cat
+./usr/share/man/cat3/pcap_next_ex.0		comp-c-catman		.cat
+./usr/share/man/cat3/pcap_offline_filter.0	comp-c-catman		.cat
+./usr/share/man/cat3/pcap_open_dead.0		comp-c-catman		.cat
+./usr/share/man/cat3/pcap_open_live.0		comp-c-catman		.cat
+./usr/share/man/cat3/pcap_open_offline.0	comp-c-catman		.cat
+./usr/share/man/cat3/pcap_set_buffer_size.0	comp-c-catman		.cat
+./usr/share/man/cat3/pcap_set_datalink.0	comp-c-catman		.cat
+./usr/share/man/cat3/pcap_set_promisc.0		comp-c-catman		.cat
+./usr/share/man/cat3/pcap_set_rfmon.0		comp-c-catman		.cat
+./usr/share/man/cat3/pcap_set_snaplen.0		comp-c-catman		.cat
+./usr/share/man/cat3/pcap_set_timeout.0		comp-c-catman		.cat
+./usr/share/man/cat3/pcap_setdirection.0	comp-c-catman		.cat
+./usr/share/man/cat3/pcap_setfilter.0		comp-c-catman		.cat
+./usr/share/man/cat3/pcap_setnonblock.0		comp-c-catman		.cat
+./usr/share/man/cat3/pcap_snapshot.0		comp-c-catman		.cat
+./usr/share/man/cat3/pcap_stats.0		comp-c-catman		.cat
+./usr/share/man/cat3/pcap_statustostr.0		comp-c-catman		.cat
+./usr/share/man/cat3/pcap_strerror.0		comp-c-catman		.cat
 ./usr/share/man/cat3/pci.0			comp-c-catman		.cat
 ./usr/share/man/cat3/pci_conf_print.0		comp-c-catman		.cat
 ./usr/share/man/cat3/pci_devinfo.0		comp-c-catman		.cat
@@ -13366,6 +13418,55 @@
 ./usr/share/man/html3/parsedate.html		comp-c-htmlman		html
 ./usr/share/man/html3/pause.html		comp-c-htmlman		html
 ./usr/share/man/html3/pcap.html			comp-c-htmlman		html
+./usr/share/man/html3/pcap_activate.html	comp-c-htmlman		html
+./usr/share/man/html3/pcap_breakloop.html	comp-c-htmlman		html
+./usr/share/man/html3/pcap_can_set_rfmon.html	comp-c-htmlman		html
+./usr/share/man/html3/pcap_close.html		comp-c-htmlman		html
+./usr/share/man/html3/pcap_compile.html		comp-c-htmlman		html
+./usr/share/man/html3/pcap_create.html		comp-c-htmlman		html
+./usr/share/man/html3/pcap_datalink.html	comp-c-htmlman		html
+./usr/share/man/html3/pcap_datalink_name_to_val.html comp-c-htmlman	html
+./usr/share/man/html3/pcap_datalink_val_to_name.html comp-c-htmlman	html
+./usr/share/man/html3/pcap_dump.html		comp-c-htmlman		html
+./usr/share/man/html3/pcap_dump_close.html	comp-c-htmlman		html
+./usr/share/man/html3/pcap_dump_file.html	comp-c-htmlman		html
+./usr/share/man/html3/pcap_dump_flush.html	comp-c-htmlman		html
+./usr/share/man/html3/pcap_dump_ftell.html	comp-c-htmlman		html
+./usr/share/man/html3/pcap_dump_open.html	comp-c-htmlman		html
+./usr/share/man/html3/pcap_file.html		comp-c-htmlman		html
+./usr/share/man/html3/pcap_fileno.html		comp-c-htmlman		html
+./usr/share/man/html3/pcap_findalldevs.html	comp-c-htmlman		html
+./usr/share/man/html3/pcap_free_datalinks.html	comp-c-htmlman		html
+./usr/share/man/html3/pcap_freealldevs.html	comp-c-htmlman		html
+./usr/share/man/html3/pcap_freecode.html	comp-c-htmlman		html
+./usr/share/man/html3/pcap_get_selectable_fd.html comp-c-htmlman	html
+./usr/share/man/html3/pcap_geterr.html		comp-c-htmlman		html
+./usr/share/man/html3/pcap_inject.html		comp-c-htmlman		html
+./usr/share/man/html3/pcap_is_swapped.html	comp-c-htmlman		html
+./usr/share/man/html3/pcap_lib_version.html	comp-c-htmlman		html
+./usr/share/man/html3/pcap_list_datalinks.html	comp-c-htmlman		html
+./usr/share/man/html3/pcap_lookupdev.html	comp-c-htmlman		html
+./usr/share/man/html3/pcap_lookupnet.html	comp-c-htmlman		html
+./usr/share/man/html3/pcap_loop.html		comp-c-htmlman		html
+./usr/share/man/html3/pcap_major_version.html	comp-c-htmlman		html
+./usr/share/man/html3/pcap_next_ex.html		comp-c-htmlman		html
+./usr/share/man/html3/pcap_offline_filter.html	comp-c-htmlman		html
+./usr/share/man/html3/pcap_open_dead.html	comp-c-htmlman		html
+./usr/share/man/html3/pcap_open_live.html	comp-c-htmlman		html
+./usr/share/man/html3/pcap_open_offline.html	comp-c-htmlman		html
+./usr/share/man/html3/pcap_set_buffer_size.html	comp-c-htmlman		html
+./usr/share/man/html3/pcap_set_datalink.html	comp-c-htmlman		html
+./usr/share/man/html3/pcap_set_promisc.html	comp-c-htmlman		html
+./usr/share/man/html3/pcap_set_rfmon.html	comp-c-htmlman		html
+./usr/share/man/html3/pcap_set_snaplen.html	comp-c-htmlman		html
+./usr/share/man/html3/pcap_set_timeout.html	comp-c-htmlman		html
+./usr/share/man/html3/pcap_setdirection.html	comp-c-htmlman		html
+./usr/share/man/html3/pcap_setfilter.html	comp-c-htmlman		html
+./usr/share/man/html3/pcap_setnonblock.html	comp-c-htmlman		html
+./usr/share/man/html3/pcap_snapshot.html	comp-c-htmlman		html
+./usr/share/man/html3/pcap_stats.html		comp-c-htmlman		html
+./usr/share/man/html3/pcap_statustostr.html	comp-c-htmlman		html
+./usr/share/man/html3/pcap_strerror.html	comp-c-htmlman		html
 ./usr/share/man/html3/pci.html			comp-c-htmlman		html
 ./usr/share/man/html3/pci_conf_print.html	comp-c-htmlman		html
 ./usr/share/man/html3/pci_devinfo.html		comp-c-htmlman		html
@@ -19271,6 +19372,55 @@
 ./usr/share/man/man3/parsedate.3		comp-c-man		.man
 ./usr/share/man/man3/pause.3			comp-c-man		.man
 ./usr/share/man/man3/pcap.3			comp-c-man		.man
+./usr/share/man/man3/pcap_activate.3		comp-c-man		.man
+./usr/share/man/man3/pcap_breakloop.3		comp-c-man		.man
+./usr/share/man/man3/pcap_can_set_rfmon.3	comp-c-man		.man
+./usr/share/man/man3/pcap_close.3		comp-c-man		.man
+./usr/share/man/man3/pcap_compile.3		comp-c-man		.man
+./usr/share/man/man3/pcap_create.3		comp-c-man		.man
+./usr/share/man/man3/pcap_datalink.3		comp-c-man		.man
+./usr/share/man/man3/pcap_datalink_name_to_val.3 comp-c-man		.man
+./usr/share/man/man3/pcap_datalink_val_to_name.3 comp-c-man		.man
+./usr/share/man/man3/pcap_dump.3		comp-c-man		.man
+./usr/share/man/man3/pcap_dump_close.3		comp-c-man		.man
+./usr/share/man/man3/pcap_dump_file.3		comp-c-man		.man
+./usr/share/man/man3/pcap_dump_flush.3		comp-c-man		.man
+./usr/share/man/man3/pcap_dump_ftell.3		comp-c-man		.man
+./usr/share/man/man3/pcap_dump_open.3		comp-c-man		.man
+./usr/share/man/man3/pcap_file.3		comp-c-man		.man
+./usr/share/man/man3/pcap_fileno.3		comp-c-man		.man
+./usr/share/man/man3/pcap_findalldevs.3		comp-c-man		.man
+./usr/share/man/man3/pcap_free_datalinks.3	comp-c-man		.man
+./usr/share/man/man3/pcap_freealldevs.3		comp-c-man		.man
+./usr/share/man/man3/pcap_freecode.3		comp-c-man		.man
+./usr/share/man/man3/pcap_get_selectable_fd.3	comp-c-man		.man
+./usr/share/man/man3/pcap_geterr.3		comp-c-man		.man
+./usr/share/man/man3/pcap_inject.3		comp-c-man		.man
+./usr/share/man/man3/pcap_is_swapped.3		comp-c-man		.man
+./usr/share/man/man3/pcap_lib_version.3		comp-c-man		.man
+./usr/share/man/man3/pcap_list_datalinks.3	comp-c-man		.man
+./usr/share/man/man3/pcap_lookupdev.3		comp-c-man		.man
+./usr/share/man/man3/pcap_lookupnet.3		comp-c-man		.man
+./usr/share/man/man3/pcap_loop.3		comp-c-man		.man
+./usr/share/man/man3/pcap_major_version.3	comp-c-man		.man
+./usr/share/man/man3/pcap_next_ex.3		comp-c-man		.man
+./usr/share/man/man3/pcap_offline_filter.3	comp-c-man		.man
+./usr/share/man/man3/pcap_open_dead.3		comp-c-man		.man
+./usr/share/man/man3/pcap_open_live.3		comp-c-man		.man
+./usr/share/man/man3/pcap_open_offline.3	comp-c-man		.man
+./usr/share/man/man3/pcap_set_buffer_size.3	comp-c-man		.man
+./usr/share/man/man3/pcap_set_datalink.3	comp-c-man		.man
+./usr/share/man/man3/pcap_set_promisc.3		comp-c-man		.man
+./usr/share/man/man3/pcap_set_rfmon.3		comp-c-man		.man
+./usr/share/man/man3/pcap_set_snaplen.3		comp-c-man		.man
+./usr/share/man/man3/pcap_set_timeout.3		comp-c-man		.man
+./usr/share/man/man3/pcap_setdirection.3	comp-c-man		.man
+./usr/share/man/man3/pcap_setfilter.3		comp-c-man		.man
+./usr/share/man/man3/pcap_setnonblock.3		comp-c-man		.man
+./usr/share/man/man3/pcap_snapshot.3		comp-c-man		.man
+./usr/share/man/man3/pcap_stats.3		comp-c-man		.man
+./usr/share/man/man3/pcap_statustostr.3		comp-c-man		.man
+./usr/share/man/man3/pcap_strerror.3		comp-c-man		.man
 ./usr/share/man/man3/pci.3			comp-c-man		.man
 ./usr/share/man/man3/pci_conf_print.3		comp-c-man		.man
 ./usr/share/man/man3/pci_devinfo.3		comp-c-man		.man
