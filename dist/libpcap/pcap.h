@@ -1,4 +1,4 @@
-/* $NetBSD: pcap.h,v 1.3 2006/02/27 15:57:17 drochner Exp $ */
+/* $NetBSD: pcap.h,v 1.4 2010/12/05 05:20:28 christos Exp $ */
 
 /* -*- Mode: c; tab-width: 8; indent-tabs-mode: 1; c-basic-offset: 8; -*- */
 /*
@@ -33,7 +33,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * @(#) $Header: /cvsroot/src/dist/libpcap/Attic/pcap.h,v 1.3 2006/02/27 15:57:17 drochner Exp $ (LBL)
+ * @(#) $Header: /cvsroot/src/dist/libpcap/Attic/pcap.h,v 1.4 2010/12/05 05:20:28 christos Exp $ (LBL)
  */
 
 #ifndef lib_pcap_h
@@ -269,7 +269,7 @@ const char *pcap_lib_version(void);
 /* XXX this guy lives in the bpf tree */
 u_int	bpf_filter(struct bpf_insn *, u_char *, u_int, u_int);
 #endif
-int	bpf_validate(struct bpf_insn *f, int len);
+int	bpf_validate(const struct bpf_insn *f, int len);
 char	*bpf_image(struct bpf_insn *, int);
 void	bpf_dump(struct bpf_program *, int);
 
