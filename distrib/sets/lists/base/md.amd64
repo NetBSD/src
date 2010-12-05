@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.103 2010/12/05 06:02:28 christos Exp $
+# $NetBSD: md.amd64,v 1.104 2010/12/05 20:11:22 pooka Exp $
 ./dev/lms0					base-obsolete		obsolete
 ./dev/mms0					base-obsolete		obsolete
 ./libexec/ld.elf_so-i386			base-sys-shlib		compat,pic
@@ -193,8 +193,8 @@
 ./usr/lib/i386/librt.so.1.0			base-compat-shlib	compat,pic
 ./usr/lib/i386/librump.so.0			base-compat-shlib	compat,pic
 ./usr/lib/i386/librump.so.0.0			base-compat-shlib	compat,pic
-./usr/lib/i386/librumpcrypto.so.0		base-compat-shlib	compat,pic,crypto
-./usr/lib/i386/librumpcrypto.so.0.0		base-compat-shlib	compat,pic,crypto
+./usr/lib/i386/librumpcrypto.so.0		base-obsolete		obsolete
+./usr/lib/i386/librumpcrypto.so.0.0		base-obsolete		obsolete
 ./usr/lib/i386/librumpclient.so.0			base-compat-shlib	compat,pic
 ./usr/lib/i386/librumpclient.so.0.0		base-compat-shlib	compat,pic
 ./usr/lib/i386/librumpdev.so.0			base-compat-shlib	compat,pic
