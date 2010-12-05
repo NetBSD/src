@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.27 2010/12/05 10:11:46 skrll Exp $	*/
+/*	$NetBSD: intr.c,v 1.28 2010/12/05 10:27:50 skrll Exp $	*/
 /*	$OpenBSD: intr.c,v 1.27 2009/12/31 12:52:35 jsing Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.27 2010/12/05 10:11:46 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.28 2010/12/05 10:27:50 skrll Exp $");
 
 #define __MUTEX_PRIVATE
 
@@ -251,17 +251,6 @@ _hp700_intr_ipl_next(void)
 	if (idx == HP700_INT_BITS)
 		panic("_hp700_intr_spl_bit: too many devices");
 	return idx;
-}
-
-/*
- * This return the single-bit spl mask for an interrupt.  This can only be
- * called immediately after hp700_intr_establish, and is not intended for wide
- * use.
- */
-int
-_hp700_intr_spl_mask(void *_int_bit)
-{
-	return ((struct hp700_int_bit *) _int_bit)->int_bit_spl;
 }
 
 /*
