@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf_filter.c,v 1.39 2010/12/05 08:45:46 mrg Exp $	*/
+/*	$NetBSD: bpf_filter.c,v 1.40 2010/12/05 09:42:20 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf_filter.c,v 1.39 2010/12/05 08:45:46 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf_filter.c,v 1.40 2010/12/05 09:42:20 mrg Exp $");
 
 #if 0
 #if !(defined(lint) || defined(KERNEL))
@@ -484,11 +484,7 @@ bpf_validate(const struct bpf_insn *f, int signed_len)
 		case BPF_LD:
 		case BPF_LDX:
 			switch (BPF_MODE(p->code)) {
-			case BPF_IMM:
-				break;
-			case BPF_ABS:
-			case BPF_IND:
-			case BPF_MSH:
+			case BPF_MEM:
 				/*
 				 * There's no maximum packet data size
 				 * in userland.  The runtime packet length
@@ -503,10 +499,10 @@ bpf_validate(const struct bpf_insn *f, int signed_len)
 					return 0;
 #endif
 				break;
-			case BPF_MEM:
-				if (p->k >= BPF_MEMWORDS)
-					return 0;
-				break;
+			case BPF_ABS:
+			case BPF_IND:
+			case BPF_MSH:
+			case BPF_IMM:
 			case BPF_LEN:
 				break;
 			default:
