@@ -23,9 +23,14 @@
  * FOR A PARTICULAR PURPOSE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static const char rcsid[] _U_ =
     "@(#) Header: /tcpdump/master/tcpdump/print-vrrp.c,v 1.10 2005-05-06 07:56:54 guy Exp";
+#else
+__RCSID("$NetBSD: print-vrrp.c,v 1.2 2010/12/05 05:11:31 christos Exp $");
+#endif
 #endif
 
 #ifdef HAVE_CONFIG_H

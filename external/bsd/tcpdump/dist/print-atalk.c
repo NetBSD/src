@@ -21,9 +21,14 @@
  * Format and print AppleTalk packets.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static const char rcsid[] _U_ =
     "@(#) Header: /tcpdump/master/tcpdump/print-atalk.c,v 1.81 2004-05-01 09:41:50 hannes Exp (LBL)";
+#else
+__RCSID("$NetBSD: print-atalk.c,v 1.2 2010/12/05 05:11:30 christos Exp $");
+#endif
 #endif
 
 #ifdef HAVE_CONFIG_H
