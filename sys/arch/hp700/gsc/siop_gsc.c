@@ -1,4 +1,4 @@
-/*	$NetBSD: siop_gsc.c,v 1.11 2009/05/24 06:53:35 skrll Exp $	*/
+/*	$NetBSD: siop_gsc.c,v 1.12 2010/12/05 12:19:09 skrll Exp $	*/
 
 /*	$OpenBSD: siop_gsc.c,v 1.4 2007/08/23 21:01:22 kettenis Exp $	*/
 
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siop_gsc.c,v 1.11 2009/05/24 06:53:35 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siop_gsc.c,v 1.12 2010/12/05 12:19:09 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -124,8 +124,8 @@ siop_gsc_attach(device_t parent, device_t self, void *aux)
 
 	siop_attach(sc);
 
-	(void)hp700_intr_establish(self, IPL_BIO,
-	    siop_intr, sc, ga->ga_int_reg, ga->ga_irq);
+	(void)hp700_intr_establish(IPL_BIO, siop_intr, sc, ga->ga_int_reg,
+	    ga->ga_irq);
 
 }
 
