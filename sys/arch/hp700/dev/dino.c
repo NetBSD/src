@@ -1,4 +1,4 @@
-/*	$NetBSD: dino.c,v 1.26 2010/11/08 23:10:24 skrll Exp $ */
+/*	$NetBSD: dino.c,v 1.27 2010/12/05 12:19:09 skrll Exp $ */
 
 /*	$OpenBSD: dino.c,v 1.5 2004/02/13 20:39:31 mickey Exp $	*/
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dino.c,v 1.26 2010/11/08 23:10:24 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dino.c,v 1.27 2010/12/05 12:19:09 skrll Exp $");
 
 /* #include "cardbus.h" */
 
@@ -407,8 +407,7 @@ dino_intr_establish(void *v, pci_intr_handle_t ih,
 {
 	struct dino_softc *sc = v;
 
-	return hp700_intr_establish(sc->sc_dv, pri, handler, arg,
-	    &sc->sc_int_reg, ih);
+	return hp700_intr_establish(pri, handler, arg, &sc->sc_int_reg, ih);
 }
 
 void
@@ -1661,13 +1660,14 @@ dinoattach(device_t parent, device_t self, void *aux)
 	splx(s);
 	/* Establish the interrupt register. */
 	hp700_intr_reg_establish(&sc->sc_int_reg);
+	sc->sc_int_reg.int_reg_name = device_xname(self);
 	sc->sc_int_reg.int_reg_mask = &r->imr;
 	sc->sc_int_reg.int_reg_req = &r->irr0;
 	sc->sc_int_reg.int_reg_level = &r->ilr;
 	/* Add the I/O interrupt register. */
-	sc->sc_int_reg.int_reg_dev = device_xname(self);
-	sc->sc_ih = hp700_intr_establish(sc->sc_dv, IPL_NONE,
-	    NULL, &sc->sc_int_reg, &int_reg_cpu, ca->ca_irq);
+
+	sc->sc_ih = hp700_intr_establish(IPL_NONE, NULL, &sc->sc_int_reg,
+	    &int_reg_cpu, ca->ca_irq);
 
 	/* TODO establish the bus error interrupt */
 
