@@ -1,4 +1,4 @@
-/*	$NetBSD: apic.c,v 1.7 2010/04/24 10:41:21 skrll Exp $	*/
+/*	$NetBSD: apic.c,v 1.8 2010/12/05 12:19:09 skrll Exp $	*/
 
 /*	$OpenBSD: apic.c,v 1.7 2007/10/06 23:50:54 krw Exp $	*/
 
@@ -71,6 +71,7 @@ struct apic_iv {
 	void *arg;
 	struct apic_iv *next;
 	struct evcnt *cnt;
+	char aiv_name[32];
 };
 
 struct apic_iv *apic_intr_list[CPU_NINTS];
@@ -189,8 +190,11 @@ apic_intr_establish(void *v, pci_intr_handle_t ih,
 			return NULL;
 		}
 
+		snprintf(aiv->aiv_name, sizeof(aiv->aiv_name), "line %d irq %d",
+		    line, irq);
+
 		evcnt_attach_dynamic(cnt, EVCNT_TYPE_INTR, NULL,
-		    device_xname(sc->sc_dv), "irq" /* XXXNH */);
+		    device_xname(sc->sc_dv), aiv->aiv_name);
 		biv = apic_intr_list[irq];
 		while (biv->next)
 			biv = biv->next;
@@ -199,8 +203,8 @@ apic_intr_establish(void *v, pci_intr_handle_t ih,
 		return arg;
 	}
 
-	if ((iv = hp700_intr_establish(sc->sc_dv, pri, apic_intr,
-	     aiv, &int_reg_cpu, irq))) {
+	iv = hp700_intr_establish(pri, apic_intr, aiv, &int_reg_cpu, irq);
+	if (iv) {
 		ent0 = (31 - irq) & APIC_ENT0_VEC;
 		ent0 |= apic_get_int_ent0(sc, line);
 #if 0

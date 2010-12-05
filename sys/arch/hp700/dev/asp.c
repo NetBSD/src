@@ -1,4 +1,4 @@
-/*	$NetBSD: asp.c,v 1.15 2009/11/03 05:07:25 snj Exp $	*/
+/*	$NetBSD: asp.c,v 1.16 2010/12/05 12:19:09 skrll Exp $	*/
 
 /*	$OpenBSD: asp.c,v 1.5 2000/02/09 05:04:22 mickey Exp $	*/
 
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: asp.c,v 1.15 2009/11/03 05:07:25 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asp.c,v 1.16 2010/12/05 12:19:09 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -246,6 +246,7 @@ aspattach(device_t parent, device_t self, void *aux)
 
 	/* Establish the interrupt register. */
 	hp700_intr_reg_establish(&sc->sc_int_reg);
+	sc->sc_int_reg.int_reg_name = device_xname(self);
 	sc->sc_int_reg.int_reg_mask = &sc->sc_trs->asp_imr;
 	sc->sc_int_reg.int_reg_req = &sc->sc_trs->asp_irr;
 
