@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.30 2010/10/20 18:52:33 phx Exp $	*/
+/*	$NetBSD: obio.c,v 1.31 2010/12/05 13:33:50 phx Exp $	*/
 
 /*-
  * Copyright (C) 1998	Internet Research Institute, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.30 2010/10/20 18:52:33 phx Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.31 2010/12/05 13:33:50 phx Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -329,10 +329,10 @@ uint8_t obio_read_1(int offset)
 static void
 obio_setup_gpios(struct obio_softc *sc, int node)
 {
-	uint32_t reg[6];
+	uint32_t gpio_base, reg[6];
 	struct sysctlnode *sysctl_node;
 	char name[32];
-	int gpio_base, child, use_dfs;
+	int child, use_dfs;
 
 	if (of_compatible(sc->sc_node, keylargo) == -1)
 		return;
@@ -352,6 +352,15 @@ obio_setup_gpios(struct obio_softc *sc, int node)
 
 		if (OF_getprop(child, "reg", reg, sizeof(reg)) < 4)
 			continue;
+
+		/*
+		 * These register offsets either have to be added to the obio
+		 * base address or to the gpio base address. This differs
+		 * even in the same OF-tree! So we guess the offset is
+		 * based on obio when it is larger than the gpio_base.
+		 */
+		if (reg[0] >= gpio_base)
+			reg[0] -= gpio_base;
 
 		if (strcmp(name, "frequency-gpio") == 0) {
 			DPRINTF("found frequency_gpio at %02x\n", reg[0]);
@@ -381,9 +390,8 @@ obio_setup_gpios(struct obio_softc *sc, int node)
 	    CTLFLAG_READWRITE | CTLFLAG_OWNDESC | CTLFLAG_IMMEDIATE,
 	    CTLTYPE_INT, "cpu_speed", "CPU speed", sysctl_cpuspeed_temp, 
 	    (unsigned long)sc, NULL, 0, CTL_MACHDEP, CTL_CREATE, CTL_EOL);
-	if (sysctl_node != NULL) {
+	if (sysctl_node != NULL)
 		sysctl_node->sysctl_data = (void *)sc;
-	}
 }
 
 static void
@@ -437,7 +445,7 @@ obio_get_cpu_speed(struct obio_softc *sc)
 	if (sc->sc_busspeed >= 0) {
 		if (bus_space_read_1(sc->sc_tag, sc->sc_bh, sc->sc_busspeed)
 		    & 1)
-		return 1;
+			return 1;
 	}
 	else
 		return cpu_get_dfs() == 1;
