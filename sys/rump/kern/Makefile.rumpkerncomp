@@ -1,0 +1,9 @@
+#	$NetBSD: Makefile.rumpkerncomp,v 1.1 2010/12/05 16:27:42 pooka Exp $
+#
+
+RUMPKERNCOMPS=	ksem tty z
+
+.for var in ${RUMPKERNCOMPS}
+RUMPKERNLIBS+=lib${var}
+RUMPKERNLDADD+=-lrumpkern_${var}
+.endfor
