@@ -532,7 +532,7 @@ pcap_set_datalink(pcap_t *p, int dlt)
 		return (0);
 	}
 	for (i = 0; i < p->dlt_count; i++)
-		if (p->dlt_list[i] == dlt)
+		if (p->dlt_list[i] == (u_int)dlt)
 			break;
 	if (i >= p->dlt_count)
 		goto unsupported;
@@ -604,6 +604,7 @@ static struct dlt_choice dlt_choices[] = {
 	DLT_CHOICE(DLT_LINUX_SLL, "Linux cooked"),
 	DLT_CHOICE(DLT_LTALK, "Localtalk"),
 	DLT_CHOICE(DLT_PFLOG, "OpenBSD pflog file"),
+	DLT_CHOICE(DLT_PFSYNC, "Packet filter state syncing"),   
 	DLT_CHOICE(DLT_PRISM_HEADER, "802.11 plus Prism header"),
 	DLT_CHOICE(DLT_IP_OVER_FC, "RFC 2625 IP-over-Fibre Channel"),
 	DLT_CHOICE(DLT_SUNATM, "Sun raw ATM"),

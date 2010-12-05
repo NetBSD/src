@@ -298,7 +298,7 @@ struct bpf_version {
  *
  * XXX: is there a conflict with DLT_PFSYNC 18 as well?
  */
-#ifdef __OpenBSD__
+#if defined(__OpenBSD__) || defined(__NetBSD__)
 #define DLT_OLD_PFLOG	17
 #define DLT_PFSYNC	18
 #endif
