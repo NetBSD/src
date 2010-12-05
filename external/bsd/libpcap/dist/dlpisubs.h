@@ -1,5 +1,5 @@
 /*
- * @(#) $Header: /cvsroot/src/external/bsd/libpcap/dist/dlpisubs.h,v 1.1.1.1 2010/12/05 01:20:30 christos Exp $
+ * @(#) Header: /tcpdump/master/libpcap/dlpisubs.h,v 1.2 2008-04-04 19:37:45 guy Exp
  */
 
 #ifndef dlpisubs_h

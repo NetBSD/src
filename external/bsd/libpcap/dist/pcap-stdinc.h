@@ -28,7 +28,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * @(#) $Header: /cvsroot/src/external/bsd/libpcap/dist/pcap-stdinc.h,v 1.1.1.1 2010/12/05 01:20:44 christos Exp $ (LBL)
+ * @(#) Header: /tcpdump/master/libpcap/pcap-stdinc.h,v 1.10.2.1 2008-10-06 15:38:39 gianluca Exp (LBL)
  */
 #ifndef pcap_stdinc_h
 #define pcap_stdinc_h

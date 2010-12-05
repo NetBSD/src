@@ -22,7 +22,7 @@
  */
 #ifndef lint
 static const char rcsid[] _U_ =
-    "@(#) $Header: /cvsroot/src/external/bsd/libpcap/dist/grammar.y,v 1.1.1.1 2010/12/05 01:20:29 christos Exp $ (LBL)";
+    "@(#) Header: /tcpdump/master/libpcap/grammar.y,v 1.101 2007-11-18 02:03:52 guy Exp (LBL)";
 #endif
 
 #ifdef HAVE_CONFIG_H
