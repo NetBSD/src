@@ -51,6 +51,9 @@ static const char rcsid[] _U_ =
 #include <sys/ioccom.h>
 #endif
 #include <sys/utsname.h>
+#ifdef __NetBSD__
+#include <paths.h>
+#endif
 
 #ifdef HAVE_ZEROCOPY_BPF
 #include <machine/atomic.h>
@@ -773,7 +776,7 @@ pcap_read_bpf(pcap_t *p, int cnt, pcap_handler callback, u_char *user)
 	register u_char *bp, *ep;
 	u_char *datap;
 #ifdef PCAP_FDDIPAD
-	register int pad;
+	register u_int pad;
 #endif
 #ifdef HAVE_ZEROCOPY_BPF
 	int i;
@@ -898,7 +901,7 @@ pcap_read_bpf(pcap_t *p, int cnt, pcap_handler callback, u_char *user)
 	pad = p->fddipad;
 #endif
 	while (bp < ep) {
-		register int caplen, hdrlen;
+		register u_int caplen, hdrlen;
 
 		/*
 		 * Has "pcap_breakloop()" been called?
@@ -1401,7 +1404,7 @@ pcap_activate_bpf(pcap_t *p)
 #ifdef BIOCGDLTLIST
 	struct bpf_dltlist bdl;
 #if defined(__APPLE__) || defined(HAVE_BSD_IEEE80211)
-	int new_dlt;
+	u_int new_dlt;
 #endif
 #endif /* BIOCGDLTLIST */
 #if defined(BIOCGHDRCMPLT) && defined(BIOCSHDRCMPLT)
@@ -1873,7 +1876,7 @@ pcap_activate_bpf(pcap_t *p)
 		 * already in that mode.
 		 */
 		new_dlt = find_802_11(&bdl);
-		if (new_dlt != -1) {
+		if (new_dlt != (unsigned)-1) {
 			/*
 			 * We have at least one 802.11 DLT_ value.
 			 * new_dlt is the best of the 802.11
@@ -2343,7 +2346,7 @@ static int
 find_802_11(struct bpf_dltlist *bdlp)
 {
 	int new_dlt;
-	int i;
+	u_int i;
 
 	/*
 	 * Scan the list of DLT_ values, looking for 802.11 values,
