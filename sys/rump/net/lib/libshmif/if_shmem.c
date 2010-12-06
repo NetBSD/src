@@ -1,4 +1,4 @@
-/*	$NetBSD: if_shmem.c,v 1.32 2010/11/17 17:51:22 pooka Exp $	*/
+/*	$NetBSD: if_shmem.c,v 1.33 2010/12/06 10:48:18 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.32 2010/11/17 17:51:22 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.33 2010/12/06 10:48:18 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -279,19 +279,27 @@ int
 rump_shmif_create(const char *path, int *ifnum)
 {
 	struct shmif_sc *sc;
-	int unit, error, memfd;
+	int unit, error;
+	int memfd = -1; /* XXXgcc */
 
-	memfd = rumpuser_open(path, O_RDWR | O_CREAT, &error);
-	if (memfd == -1)
-		return error;
+	if (path) {
+		memfd = rumpuser_open(path, O_RDWR | O_CREAT, &error);
+		if (memfd == -1)
+			return error;
+	}
 
 	unit = vmem_xalloc(shmif_units, 1, 0, 0, 0, 0, 0,
 	    VM_INSTANTFIT | VM_SLEEP) - 1;
 
 	if ((error = allocif(unit, &sc)) != 0) {
-		rumpuser_close(memfd, NULL);
+		if (path)
+			rumpuser_close(memfd, NULL);
 		return error;
 	}
+
+	if (!path)
+		goto out;
+
 	error = initbackend(sc, memfd);
 	if (error) {
 		shmif_unclone(&sc->sc_ec.ec_if);
@@ -302,6 +310,7 @@ rump_shmif_create(const char *path, int *ifnum)
 	sc->sc_backfile = kmem_alloc(sc->sc_backfilelen, KM_SLEEP);
 	strcpy(sc->sc_backfile, path);
 
+ out:
 	if (ifnum)
 		*ifnum = unit;
 
