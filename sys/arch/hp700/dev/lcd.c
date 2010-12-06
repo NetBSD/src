@@ -1,4 +1,4 @@
-/*	$NetBSD: lcd.c,v 1.1 2010/06/01 10:20:29 skrll Exp $	*/
+/*	$NetBSD: lcd.c,v 1.2 2010/12/06 10:24:04 skrll Exp $	*/
 /*	OpenBSD: lcd.c,v 1.2 2007/07/20 22:13:45 kettenis Exp 	*/
 
 /*
@@ -80,13 +80,13 @@ lcd_attach(device_t parent, device_t self, void *aux)
 
 	if (bus_space_map(sc->sc_iot, pdc_lcd->cmd_addr,
 		1, 0, &sc->sc_cmdh)) {
-		aprint_error(": cannot map cmd register\n");
+		aprint_error(": can't map cmd register\n");
 		return;
 	}
 
 	if (bus_space_map(sc->sc_iot, pdc_lcd->data_addr,
 		1, 0, &sc->sc_datah)) {
-		aprint_error(": cannot map data register\n");
+		aprint_error(": can't map data register\n");
 		bus_space_unmap(sc->sc_iot, sc->sc_cmdh, 1);
 		return;
 	}
