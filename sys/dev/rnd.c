@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd.c,v 1.79 2010/12/04 17:39:50 pooka Exp $	*/
+/*	$NetBSD: rnd.c,v 1.80 2010/12/06 16:22:57 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rnd.c,v 1.79 2010/12/04 17:39:50 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rnd.c,v 1.80 2010/12/06 16:22:57 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -663,7 +663,7 @@ rndioctl(dev_t dev, u_long cmd, void *addr, int flag,
 		rnddata = (rnddata_t *)addr;
 
 		if (rnddata->len > sizeof(rnddata->data))
-			return E2BIG;
+			return EINVAL;
 
 		mutex_enter(&rndpool_mtx);
 		rndpool_add_data(&rnd_pool, rnddata->data, rnddata->len,
