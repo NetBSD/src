@@ -1,4 +1,4 @@
-/*	$NetBSD: dd.h,v 1.13 2010/11/22 21:04:27 pooka Exp $	*/
+/*	$NetBSD: dd.h,v 1.14 2010/12/06 15:23:29 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -59,7 +59,7 @@ struct ddfops {
 #define ddop_fcntl(dir, a1, a2, ...)	dir.ops->op_fcntl(a1, a2, __VA_ARGS__)
 #define ddop_ioctl(dir, a1, a2, ...)	dir.ops->op_ioctl(a1, a2, __VA_ARGS__)
 #define ddop_fsync(dir, a1)		dir.ops->op_fsync(a1)
-#define ddop_ftruncate(dir, a1, a2)	dir.ops->op_ftruncate(a1, 2)
+#define ddop_ftruncate(dir, a1, a2)	dir.ops->op_ftruncate(a1, a2)
 #define ddop_lseek(dir, a1, a2, a3)	dir.ops->op_lseek(a1, a2, a3)
 #define ddop_read(dir, a1, a2, a3)	dir.ops->op_read(a1, a2, a3)
 #define ddop_write(dir, a1, a2, a3)	dir.ops->op_write(a1, a2, a3)
