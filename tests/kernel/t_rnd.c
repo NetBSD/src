@@ -1,4 +1,4 @@
-/*	$NetBSD: t_rnd.c,v 1.3 2010/12/04 17:41:18 pooka Exp $	*/
+/*	$NetBSD: t_rnd.c,v 1.4 2010/12/06 16:37:25 christos Exp $	*/
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_rnd.c,v 1.3 2010/12/04 17:41:18 pooka Exp $");
+__RCSID("$NetBSD: t_rnd.c,v 1.4 2010/12/06 16:37:25 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/fcntl.h>
@@ -82,7 +82,7 @@ ATF_TC_BODY(RNDADDDATA2, tc)
 		
 	rd.entropy = 1;
 	rd.len = -1;
-	ATF_REQUIRE_ERRNO(E2BIG, rump_sys_ioctl(fd, RNDADDDATA, &rd) == -1);
+	ATF_REQUIRE_ERRNO(EINVAL, rump_sys_ioctl(fd, RNDADDDATA, &rd) == -1);
 }
 
 ATF_TP_ADD_TCS(tp)
