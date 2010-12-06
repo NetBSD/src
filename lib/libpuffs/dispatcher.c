@@ -1,4 +1,4 @@
-/*	$NetBSD: dispatcher.c,v 1.34 2010/05/21 10:50:52 pooka Exp $	*/
+/*	$NetBSD: dispatcher.c,v 1.35 2010/12/06 14:50:34 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2008 Antti Kantee.  All Rights Reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: dispatcher.c,v 1.34 2010/05/21 10:50:52 pooka Exp $");
+__RCSID("$NetBSD: dispatcher.c,v 1.35 2010/12/06 14:50:34 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -39,9 +39,7 @@ __RCSID("$NetBSD: dispatcher.c,v 1.34 2010/05/21 10:50:52 pooka Exp $");
 
 #include <assert.h>
 #include <errno.h>
-#ifdef PUFFS_WITH_THREADS
 #include <pthread.h>
-#endif
 #include <puffs.h>
 #include <puffsdump.h>
 #include <stdio.h>
@@ -49,16 +47,6 @@ __RCSID("$NetBSD: dispatcher.c,v 1.34 2010/05/21 10:50:52 pooka Exp $");
 #include <unistd.h>
 
 #include "puffs_priv.h"
-
-#if 0 /* me not worka now */
-/*
- * Set the following to 1 to handle each request in a separate pthread.
- * This is not exported as it should not be used yet unless having a
- * very good knowledge of what you're signing up for (libpuffs is not
- * threadsafe).
- */
-int puffs_usethreads;
-#endif
 
 static void dispatch(struct puffs_cc *);
 
