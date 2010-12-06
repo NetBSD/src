@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.241 2010/11/23 18:30:26 pooka Exp $
+#	$NetBSD: build.sh,v 1.242 2010/12/06 09:08:39 pooka Exp $
 #
 # Copyright (c) 2001-2009 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1384,7 +1384,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.241 2010/11/23 18:30:26 pooka Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.242 2010/12/06 09:08:39 pooka Exp $
 # with these arguments: ${_args}
 #
 
@@ -1581,10 +1581,10 @@ RUMP_LIBSETS='
 	-lrumpfs_ffs -lrumpfs_msdos -lrumpvfs -lrumpdev_disk -lrumpdev -lrump,
 	-lrumpnet_virtif -lrumpnet_netinet -lrumpnet_net -lrumpnet -lrump,
 	-lrumpnet_sockin -lrumpfs_smbfs -lrumpdev_netsmb
-	    -lrumpcrypto -lrumpdev -lrumpnet -lrumpvfs -lrump,
+	    -lrumpkern_crypto -lrumpdev -lrumpnet -lrumpvfs -lrump,
 	-lrumpnet_sockin -lrumpfs_nfs -lrumpnet -lrumpvfs -lrump,
 	-lrumpdev_cgd -lrumpdev_raidframe -lrumpdev_disk -lrumpdev_rnd
-	    -lrumpdev -lrumpvfs -lrumpcrypto -lrump'
+	    -lrumpdev_dm -lrumpdev -lrumpvfs -lrumpkern_crypto -lrump'
 dorump()
 {
 	local doclean=""
