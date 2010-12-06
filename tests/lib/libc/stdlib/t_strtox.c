@@ -1,4 +1,4 @@
-/*	$NetBSD: t_strtox.c,v 1.1 2010/12/03 13:11:50 njoly Exp $	*/
+/*	$NetBSD: t_strtox.c,v 1.2 2010/12/06 17:30:07 pooka Exp $	*/
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_strtox.c,v 1.1 2010/12/03 13:11:50 njoly Exp $");
+__RCSID("$NetBSD: t_strtox.c,v 1.2 2010/12/06 17:30:07 pooka Exp $");
 
 #include <atf-c.h>
 #include <stdlib.h>
@@ -50,7 +50,7 @@ ATF_TC_BODY(hexadecimal, tc)
 	str = "-0x0";
 	ATF_REQUIRE(strtod(str, &end) == -0.0 && end == str+4);
 
-	atf_tc_expect_fail("PR/44189");
+	atf_tc_expect_fail("PR lib/44189");
 	str = "-0x";
 	ATF_REQUIRE(strtod(str, &end) == -0.0 && end == str+2);
 	atf_tc_expect_pass();
