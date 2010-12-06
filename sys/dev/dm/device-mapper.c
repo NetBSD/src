@@ -1,4 +1,4 @@
-/*        $NetBSD: device-mapper.c,v 1.25 2010/10/23 21:18:54 haad Exp $ */
+/*        $NetBSD: device-mapper.c,v 1.26 2010/12/06 09:12:23 haad Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -110,7 +110,7 @@ CFATTACH_DECL3_NEW(dm, 0,
 
 extern struct cfdriver dm_cd;
 
-extern uint64_t dm_dev_counter;
+extern uint32_t dm_dev_counter;
 
 /*
  * This array is used to translate cmd to function pointer.
@@ -277,7 +277,7 @@ dm_detach(device_t self, int flags)
 	(void)dm_dev_free(dmv);
 
 	/* Decrement device counter After removing device */
-	atomic_dec_64(&dm_dev_counter);
+	atomic_dec_32(&dm_dev_counter);
 
 	return 0;
 }
