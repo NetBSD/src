@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1260 2010/12/05 09:02:28 mrg Exp $
+# $NetBSD: mi,v 1.1261 2010/12/06 21:16:54 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -378,6 +378,7 @@
 ./usr/share/man/cat1/pcc.0			man-util-catman		pcccmds,.cat
 ./usr/share/man/cat1/pcpp.0			man-util-catman		pcccmds,.cat
 ./usr/share/man/cat1/pgrep.0			man-util-catman		.cat
+./usr/share/man/cat1/prenice.0			man-util-catman		.cat
 ./usr/share/man/cat1/pigz.0			man-util-catman		.cat
 ./usr/share/man/cat1/pim6stat.0			man-obsolete		obsolete
 ./usr/share/man/cat1/pkg_add.0			man-pkgutil-catman	crypto,.cat
@@ -3157,6 +3158,7 @@
 ./usr/share/man/html1/pcc.html			man-util-htmlman	pcccmds,html
 ./usr/share/man/html1/pcpp.html			man-util-htmlman	pcccmds,html
 ./usr/share/man/html1/pgrep.html		man-util-htmlman	html
+./usr/share/man/html1/prenice.html		man-util-htmlman	html
 ./usr/share/man/html1/pigz.html			man-util-htmlman	html
 ./usr/share/man/html1/pkg_add.html		man-pkgutil-htmlman	crypto,html
 ./usr/share/man/html1/pkg_admin.html		man-pkgutil-htmlman	crypto,html
@@ -5586,6 +5588,7 @@
 ./usr/share/man/man1/pcc.1			man-util-man		pcccmds,.man
 ./usr/share/man/man1/pcpp.1			man-util-man		pcccmds,.man
 ./usr/share/man/man1/pgrep.1			man-util-man		.man
+./usr/share/man/man1/prenice.1			man-util-man		.man
 ./usr/share/man/man1/pigz.1			man-util-man		.man
 ./usr/share/man/man1/pim6stat.1			man-obsolete		obsolete
 ./usr/share/man/man1/pkg_add.1			man-pkgutil-man		crypto,.man
