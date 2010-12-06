@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.45 2010/12/03 08:42:14 hannken Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.46 2010/12/06 10:22:43 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.45 2010/12/03 08:42:14 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.46 2010/12/06 10:22:43 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -240,7 +240,8 @@ startover:
 				if (pg != NULL && pg != PGO_DONTCARE) {
 					ap->a_m[i] = NULL;
 				}
-				KASSERT(pg == NULL || pg == PGO_DONTCARE);
+				KASSERT(ap->a_m[i] == NULL ||
+				    ap->a_m[i] == PGO_DONTCARE);
 			}
 		} else {
 			genfs_node_unlock(vp);
