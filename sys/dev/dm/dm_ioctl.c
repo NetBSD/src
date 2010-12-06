@@ -1,4 +1,4 @@
-/* $NetBSD: dm_ioctl.c,v 1.22 2010/05/18 15:01:17 haad Exp $      */
+/* $NetBSD: dm_ioctl.c,v 1.23 2010/12/06 08:54:49 haad Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -93,7 +93,7 @@
 #include "netbsd-dm.h"
 #include "dm.h"
 
-static uint64_t sc_minor_num;
+static uint32_t sc_minor_num;
 extern const struct dkdriver dmdkdriver;
 uint64_t dm_dev_counter;
 
@@ -236,7 +236,7 @@ dm_dev_create_ioctl(prop_dictionary_t dm_dict)
 	if (name)
 		strlcpy(dmv->name, name, DM_NAME_LEN);
 
-	dmv->minor = atomic_inc_64_nv(&sc_minor_num);
+	dmv->minor = (uint64_t)atomic_inc_32_nv(&sc_minor_num);
 	dmv->flags = 0;		/* device flags are set when needed */
 	dmv->ref_cnt = 0;
 	dmv->event_nr = 0;
