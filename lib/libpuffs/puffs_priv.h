@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_priv.h,v 1.42 2010/01/12 18:42:39 pooka Exp $	*/
+/*	$NetBSD: puffs_priv.h,v 1.43 2010/12/06 14:50:34 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2008 Antti Kantee.  All Rights Reserved.
@@ -31,19 +31,13 @@
 #include <sys/types.h>
 #include <fs/puffs/puffs_msgif.h>
 
+#include <pthread.h>
 #include <puffs.h>
 #include <ucontext.h>
-
-#ifdef PUFFS_WITH_THREADS
-#include <pthread.h>
 
 extern pthread_mutex_t pu_lock;
 #define PU_LOCK() pthread_mutex_lock(&pu_lock)
 #define PU_UNLOCK() pthread_mutex_unlock(&pu_lock)
-#else
-#define PU_LOCK()
-#define PU_UNLOCK()
-#endif
 
 #define PU_CMAP(pu, c) (pu->pu_cmap ? pu->pu_cmap(pu,c) : (struct puffs_node*)c)
 
