@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.168 2010/12/03 13:11:50 njoly Exp $
+# $NetBSD: mi,v 1.169 2010/12/06 11:32:56 pooka Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -386,6 +386,7 @@
 ./usr/libdata/debug/usr/tests/modules/t_modctl.debug			tests-sys-debug		debug,atf
 ./usr/libdata/debug/usr/tests/net					tests-net-debug
 ./usr/libdata/debug/usr/tests/net/bpf					tests-net-debug
+./usr/libdata/debug/usr/tests/net/bpf/t_bpf.debug		tests-net-debug		debug,atf
 ./usr/libdata/debug/usr/tests/net/bpf/t_div-by-zero.debug		tests-net-debug		debug,atf
 ./usr/libdata/debug/usr/tests/net/carp					tests-net-debug
 ./usr/libdata/debug/usr/tests/net/carp/t_basic.debug		tests-net-debug		debug,atf
@@ -1614,6 +1615,7 @@
 ./usr/tests/net/Atffile				tests-net-tests		atf
 ./usr/tests/net/bpf				tests-net-tests
 ./usr/tests/net/bpf/Atffile			tests-net-tests		atf
+./usr/tests/net/bpf/t_bpf		tests-net-tests		atf
 ./usr/tests/net/bpf/t_div-by-zero		tests-net-tests		atf
 ./usr/tests/net/carp				tests-net-tests
 ./usr/tests/net/carp/Atffile			tests-net-tests		atf
