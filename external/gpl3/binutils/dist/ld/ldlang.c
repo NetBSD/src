@@ -1,6 +1,6 @@
 /* Linker command language support.
    Copyright 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000,
-   2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008
+   2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009
    Free Software Foundation, Inc.
 
    This file is part of the GNU Binutils.
@@ -64,6 +64,8 @@ static const char *current_target;
 static const char *output_target;
 static lang_statement_list_type statement_list;
 static struct bfd_hash_table lang_definedness_table;
+static lang_statement_list_type *stat_save[10];
+static lang_statement_list_type **stat_save_ptr = &stat_save[0];
 
 /* Forward declarations.  */
 static void exp_init_os (etree_type *);
@@ -193,7 +195,7 @@ input_statement_is_archive_path (const char *file_spec, char *sep,
   return match;
 }
 
-bfd_boolean
+static bfd_boolean
 unique_section_p (const asection *sec)
 {
   struct unique_sections *unam;
@@ -925,6 +927,23 @@ lang_list_init (lang_statement_list_type *list)
   list->tail = &list->head;
 }
 
+void
+push_stat_ptr (lang_statement_list_type *new_ptr)
+{
+  if (stat_save_ptr >= stat_save + sizeof (stat_save) / sizeof (stat_save[0]))
+    abort ();
+  *stat_save_ptr++ = stat_ptr;
+  stat_ptr = new_ptr;
+}
+
+void
+pop_stat_ptr (void)
+{
+  if (stat_save_ptr <= stat_save)
+    abort ();
+  stat_ptr = *--stat_save_ptr;
+}
+
 /* Build a new statement node for the parse tree.  */
 
 static lang_statement_union_type *
@@ -1278,19 +1297,25 @@ lang_output_section_statement_lookup (const char *const name,
       struct out_section_hash_entry *last_ent;
       unsigned long hash = entry->root.hash;
 
-      do
-	{
-	  if (entry->s.output_section_statement.constraint >= 0
-	      && (constraint == 0
-		  || (constraint == entry->s.output_section_statement.constraint
-		      && constraint != SPECIAL)))
-	    return &entry->s.output_section_statement;
-	  last_ent = entry;
-	  entry = (struct out_section_hash_entry *) entry->root.next;
-	}
-      while (entry != NULL
-	     && entry->root.hash == hash
-	     && strcmp (name, entry->s.output_section_statement.name) == 0);
+      if (create && constraint == SPECIAL)
+	/* Not traversing to the end reverses the order of the second
+	   and subsequent SPECIAL sections in the hash table chain,
+	   but that shouldn't matter.  */
+	last_ent = entry;
+      else
+	do
+	  {
+	    if (entry->s.output_section_statement.constraint >= 0
+		&& (constraint == 0
+		    || (constraint
+			== entry->s.output_section_statement.constraint)))
+	      return &entry->s.output_section_statement;
+	    last_ent = entry;
+	    entry = (struct out_section_hash_entry *) entry->root.next;
+	  }
+	while (entry != NULL
+	       && entry->root.hash == hash
+	       && strcmp (name, entry->s.output_section_statement.name) == 0);
 
       if (!create)
 	return NULL;
@@ -1556,28 +1581,24 @@ insert_os_after (lang_output_section_statement_type *after)
 lang_output_section_statement_type *
 lang_insert_orphan (asection *s,
 		    const char *secname,
+		    int constraint,
 		    lang_output_section_statement_type *after,
 		    struct orphan_save *place,
 		    etree_type *address,
 		    lang_statement_list_type *add_child)
 {
-  lang_statement_list_type *old;
   lang_statement_list_type add;
   const char *ps;
   lang_output_section_statement_type *os;
   lang_output_section_statement_type **os_tail;
-
-  /* Start building a list of statements for this section.
-     First save the current statement pointer.  */
-  old = stat_ptr;
 
   /* If we have found an appropriate place for the output section
      statements for this orphan, add them to our own private list,
      inserting them later into the global statement list.  */
   if (after != NULL)
     {
-      stat_ptr = &add;
-      lang_list_init (stat_ptr);
+      lang_list_init (&add);
+      push_stat_ptr (&add);
     }
 
   ps = NULL;
@@ -1611,7 +1632,7 @@ lang_insert_orphan (asection *s,
   os_tail = ((lang_output_section_statement_type **)
 	     lang_output_section_statement.tail);
   os = lang_enter_output_section_statement (secname, address, 0, NULL, NULL,
-					    NULL, 0);
+					    NULL, constraint);
 
   if (add_child == NULL)
     add_child = &os->children;
@@ -1623,11 +1644,6 @@ lang_insert_orphan (asection *s,
     {
       char *symname;
 
-      /* lang_leave_ouput_section_statement resets stat_ptr.
-	 Put stat_ptr back where we want it.  */
-      if (after != NULL)
-	stat_ptr = &add;
-
       symname = (char *) xmalloc (ps - secname + sizeof "__stop_" + 1);
       symname[0] = bfd_get_symbol_leading_char (link_info.output_bfd);
       sprintf (symname + (symname[0] != 0), "__stop_%s", secname);
@@ -1638,7 +1654,7 @@ lang_insert_orphan (asection *s,
 
   /* Restore the global list pointer.  */
   if (after != NULL)
-    stat_ptr = old;
+    pop_stat_ptr ();
 
   if (after != NULL && os->bfd_section != NULL)
     {
@@ -1724,8 +1740,8 @@ lang_insert_orphan (asection *s,
 
 	  /* Fix the global list pointer if we happened to tack our
 	     new list at the tail.  */
-	  if (*old->tail == add.head)
-	    old->tail = add.tail;
+	  if (*stat_ptr->tail == add.head)
+	    stat_ptr->tail = add.tail;
 
 	  /* Save the end of this list.  */
 	  place->stmt = add.tail;
@@ -1914,10 +1930,11 @@ init_os (lang_output_section_statement_type *s, asection *isec,
   if (strcmp (s->name, DISCARD_SECTION_NAME) == 0)
     einfo (_("%P%F: Illegal use of `%s' section\n"), DISCARD_SECTION_NAME);
 
-  s->bfd_section = bfd_get_section_by_name (link_info.output_bfd, s->name);
+  if (s->constraint != SPECIAL)
+    s->bfd_section = bfd_get_section_by_name (link_info.output_bfd, s->name);
   if (s->bfd_section == NULL)
-    s->bfd_section = bfd_make_section_with_flags (link_info.output_bfd,
-						  s->name, flags);
+    s->bfd_section = bfd_make_section_anyway_with_flags (link_info.output_bfd,
+							 s->name, flags);
   if (s->bfd_section == NULL)
     {
       einfo (_("%P%F: output format %s cannot represent section called %s\n"),
@@ -2455,8 +2472,6 @@ load_symbols (lang_input_statement_type *entry,
       && ! bfd_check_format_matches (entry->the_bfd, bfd_object, &matching))
     {
       bfd_error_type err;
-      lang_statement_list_type *hold;
-      bfd_boolean bad_load = TRUE;
       bfd_boolean save_ldlang_sysrooted_script;
       bfd_boolean save_as_needed, save_add_needed;
 
@@ -2479,8 +2494,6 @@ load_symbols (lang_input_statement_type *entry,
       else if (err != bfd_error_file_not_recognized
 	       || place == NULL)
 	einfo (_("%F%B: file not recognized: %E\n"), entry->the_bfd);
-      else
-	bad_load = FALSE;
 
       bfd_close (entry->the_bfd);
       entry->the_bfd = NULL;
@@ -2488,8 +2501,7 @@ load_symbols (lang_input_statement_type *entry,
       /* Try to interpret the file as a linker script.  */
       ldfile_open_command_file (entry->filename);
 
-      hold = stat_ptr;
-      stat_ptr = place;
+      push_stat_ptr (place);
       save_ldlang_sysrooted_script = ldlang_sysrooted_script;
       ldlang_sysrooted_script = entry->sysrooted;
       save_as_needed = as_needed;
@@ -2508,9 +2520,9 @@ load_symbols (lang_input_statement_type *entry,
       ldlang_sysrooted_script = save_ldlang_sysrooted_script;
       as_needed = save_as_needed;
       add_needed = save_add_needed;
-      stat_ptr = hold;
+      pop_stat_ptr ();
 
-      return ! bad_load;
+      return TRUE;
     }
 
   if (ldemul_recognized_file (entry))
@@ -2982,6 +2994,7 @@ open_input_bfds (lang_statement_union_type *s, bfd_boolean force)
 	case lang_input_statement_enum:
 	  if (s->input_statement.real)
 	    {
+	      lang_statement_union_type **os_tail;
 	      lang_statement_list_type add;
 
 	      s->input_statement.target = current_target;
@@ -2997,6 +3010,7 @@ open_input_bfds (lang_statement_union_type *s, bfd_boolean force)
 				       bfd_archive))
 		s->input_statement.loaded = FALSE;
 
+	      os_tail = lang_output_section_statement.tail;
 	      lang_list_init (&add);
 
 	      if (! load_symbols (&s->input_statement, &add))
@@ -3004,8 +3018,25 @@ open_input_bfds (lang_statement_union_type *s, bfd_boolean force)
 
 	      if (add.head != NULL)
 		{
-		  *add.tail = s->header.next;
-		  s->header.next = add.head;
+		  /* If this was a script with output sections then
+		     tack any added statements on to the end of the
+		     list.  This avoids having to reorder the output
+		     section statement list.  Very likely the user
+		     forgot -T, and whatever we do here will not meet
+		     naive user expectations.  */
+		  if (os_tail != lang_output_section_statement.tail)
+		    {
+		      einfo (_("%P: warning: %s contains output sections;"
+			       " did you forget -T?\n"),
+			     s->input_statement.filename);
+		      *stat_ptr->tail = add.head;
+		      stat_ptr->tail = add.tail;
+		    }
+		  else
+		    {
+		      *add.tail = s->header.next;
+		      s->header.next = add.head;
+		    }
 		}
 	    }
 	  break;
@@ -5652,14 +5683,22 @@ lang_place_orphans (void)
 					default_common_section);
 		    }
 		}
-	      else if (ldemul_place_orphan (s))
-		;
 	      else
 		{
-		  lang_output_section_statement_type *os;
+		  const char *name = s->name;
+		  int constraint = 0;
 
-		  os = lang_output_section_statement_lookup (s->name, 0, TRUE);
-		  lang_add_section (&os->children, s, os);
+		  if (config.unique_orphan_sections || unique_section_p (s))
+		    constraint = SPECIAL;
+
+		  if (!ldemul_place_orphan (s, name, constraint))
+		    {
+		      lang_output_section_statement_type *os;
+		      os = lang_output_section_statement_lookup (name,
+								 constraint,
+								 TRUE);
+		      lang_add_section (&os->children, s, os);
+		    }
 		}
 	    }
 	}
@@ -5821,7 +5860,7 @@ lang_enter_output_section_statement (const char *output_section_statement_name,
   os->block_value = 1;
 
   /* Make next things chain into subchain of this.  */
-  stat_ptr = &os->children;
+  push_stat_ptr (&os->children);
 
   os->subsection_alignment =
     topower (exp_get_value_int (subalign, -1, "subsection alignment"));
@@ -6430,7 +6469,7 @@ lang_leave_output_section_statement (fill_type *fill, const char *memspec,
 		    current_section->addr_tree != NULL);
   current_section->fill = fill;
   current_section->phdrs = phdrs;
-  stat_ptr = &statement_list;
+  pop_stat_ptr ();
 }
 
 /* Create an absolute symbol with the given name with the value of the
@@ -6547,7 +6586,7 @@ lang_enter_group (void)
 
   g = new_stat (lang_group_statement, stat_ptr);
   lang_list_init (&g->children);
-  stat_ptr = &g->children;
+  push_stat_ptr (&g->children);
 }
 
 /* Leave a group.  This just resets stat_ptr to start writing to the
@@ -6558,7 +6597,7 @@ lang_enter_group (void)
 void
 lang_leave_group (void)
 {
-  stat_ptr = &statement_list;
+  pop_stat_ptr ();
 }
 
 /* Add a new program header.  This is called for each entry in a PHDRS

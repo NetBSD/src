@@ -63,7 +63,7 @@ powerpc_init_dialect (struct disassemble_info *info)
     dialect |= PPC_OPCODE_PPCPS;
   else if (info->disassembler_options
       && strstr (info->disassembler_options, "booke") != NULL)
-    dialect |= PPC_OPCODE_BOOKE | PPC_OPCODE_BOOKE64;
+    dialect |= PPC_OPCODE_BOOKE;
   else if ((info->mach == bfd_mach_ppc_e500mc)
 	   || (info->disassembler_options
 	       && strstr (info->disassembler_options, "e500mc") != NULL))
@@ -112,8 +112,9 @@ powerpc_init_dialect (struct disassemble_info *info)
 
   if (info->disassembler_options
       && strstr (info->disassembler_options, "power7") != NULL)
-    dialect |= PPC_OPCODE_POWER4 | PPC_OPCODE_POWER5 | PPC_OPCODE_POWER6
-	       | PPC_OPCODE_ALTIVEC | PPC_OPCODE_VSX;
+    dialect |= PPC_OPCODE_POWER4 | PPC_OPCODE_POWER5
+	       | PPC_OPCODE_POWER6 | PPC_OPCODE_POWER7
+	       | PPC_OPCODE_ISEL | PPC_OPCODE_ALTIVEC | PPC_OPCODE_VSX;
 
   if (info->disassembler_options
       && strstr (info->disassembler_options, "vsx") != NULL)
@@ -266,7 +267,8 @@ print_insn_powerpc (bfd_vma memaddr,
 	continue;
 
       if ((insn & opcode->mask) != opcode->opcode
-	  || (opcode->flags & dialect) == 0)
+	  || (opcode->flags & dialect) == 0
+	  || (opcode->deprecated & dialect) != 0)
 	continue;
 
       /* Make two passes over the operands.  First see if any of them
@@ -402,7 +404,7 @@ print_ppc_disassembler_options (FILE *stream)
 The following PPC specific disassembler options are supported for use with\n\
 the -M switch:\n");
 
-  fprintf (stream, "  booke|booke32|booke64    Disassemble the BookE instructions\n");
+  fprintf (stream, "  booke                    Disassemble the BookE instructions\n");
   fprintf (stream, "  e300                     Disassemble the e300 instructions\n");
   fprintf (stream, "  e500|e500x2              Disassemble the e500 instructions\n");
   fprintf (stream, "  e500mc                   Disassemble the e500mc instructions\n");

@@ -854,10 +854,11 @@ avr_final_link_relocate (reloc_howto_type *                 howto,
 	{
           /* Relative distance is too large.  */
 
-	  /* Always apply WRAPAROUND for avr2 and avr4.  */
+	  /* Always apply WRAPAROUND for avr2, avr25, and avr4.  */
 	  switch (bfd_get_mach (input_bfd))
 	    {
 	    case bfd_mach_avr2:
+	    case bfd_mach_avr25:
 	    case bfd_mach_avr4:
 	      break;
 
@@ -1553,7 +1554,8 @@ elf32_avr_relax_delete_bytes (bfd *abfd,
   /* Adjust the local symbols defined in this section.  */
   isym = (Elf_Internal_Sym *) symtab_hdr->contents;
   isymend = isym + symtab_hdr->sh_info;
-  for (; isym < isymend; isym++)
+  /* Fix PR 9841, there may be no local symbols.  */ 
+  for (; isym != NULL && isym < isymend; isym++)
     {
       if (isym->st_shndx == sec_shndx
           && isym->st_value > addr

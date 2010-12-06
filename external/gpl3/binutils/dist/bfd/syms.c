@@ -1,6 +1,6 @@
 /* Generic symbol-table support for the BFD library.
    Copyright 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999,
-   2000, 2001, 2002, 2003, 2004, 2007
+   2000, 2001, 2002, 2003, 2004, 2007, 2008, 2009
    Free Software Foundation, Inc.
    Written by Cygnus Support.
 
@@ -1379,10 +1379,11 @@ _bfd_stab_section_find_nearest_line (bfd *abfd,
 	{
 	  size_t len;
 
-	  if (info->filename != NULL)
-	    free (info->filename);
+	  /* Don't free info->filename here.  objdump and other
+	     apps keep a copy of a previously returned file name
+	     pointer.  */
 	  len = strlen (file_name) + 1;
-	  info->filename = bfd_malloc (dirlen + len);
+	  info->filename = bfd_alloc (abfd, dirlen + len);
 	  if (info->filename == NULL)
 	    return FALSE;
 	  memcpy (info->filename, directory_name, dirlen);

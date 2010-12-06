@@ -1,9 +1,4 @@
-	.file	"power7.c"
 	.section	".text"
-	.align 2
-	.p2align 4,,15
-	.globl power7
-	.type	power7, @function
 power7:
 	lxvd2x    3,4,5
 	lxvd2ux   3,4,5
@@ -31,6 +26,12 @@ power7:
 	xvcpsgndp 43,44,44
 	xvcpsgndp 3,4,5
 	xvcpsgndp 43,44,45
+	wait
+	wait 0
+	waitrsv
+	wait 1
+	waitimpl
+	wait 2
 	doze
 	nap
 	sleep
@@ -40,10 +41,7 @@ power7:
 	mfcfar    10
 	mtcfar    11
 	cmpb      3,4,5
-	mffgpr    6,7
-	mftgpr    8,9
 	lwzcix    10,11,12
-	lfdpx     13,14,15
 	dadd      16,17,18
 	daddq     20,22,24
 	dss       3
@@ -52,7 +50,57 @@ power7:
 	dstt      8,7,0
 	dstst     5,6,3
 	dststt    4,5,2
-	blr
-	.size	power7,.-power7
-	.ident	"GCC: (GNU) 4.1.2 20070115 (prerelease) (SUSE Linux)"
-	.section	.note.GNU-stack,"",@progbits
+	divwe	  10,11,12
+	divwe.	  11,12,13
+	divweo	  12,13,14
+	divweo.	  13,14,15
+	divweu	  10,11,12
+	divweu.	  11,12,13
+	divweuo	  12,13,14
+	divweuo.  13,14,15
+	bpermd    7,17,27
+	popcntw   10,20
+	popcntd   10,20
+	ldbrx     20,21,22
+	stdbrx    20,21,22
+	lfiwzx	  10,0,10
+	lfiwzx	  10,9,10
+	fcfids    4,5
+	fcfids.   4,5
+	fcfidus   4,5
+	fcfidus.  4,5
+	fctiwu    4,5
+	fctiwu.   4,5
+	fctiwuz   4,5
+	fctiwuz.  4,5
+	fctidu    4,5
+	fctidu.   4,5
+	fctiduz   4,5
+	fctiduz.  4,5
+	fcfidu    4,5
+	fcfidu.   4,5
+	ftdiv     0,10,11
+	ftdiv     7,10,11
+	ftsqrt    0,10
+	ftsqrt    7,10
+	dcbtt     8,9
+	dcbtstt   8,9
+	dcffix    10,12
+	dcffix.   20,22
+	lbarx     10,11,12
+	lbarx     10,11,12,0
+	lbarx     10,11,12,1
+	lharx     20,21,22
+	lharx     20,21,22,0
+	lharx     20,21,22,1
+	stbcx.    10,11,12
+	sthcx.    10,11,12
+	fre       14,15
+	fre.      14,15
+	fres      14,15
+	fres.     14,15
+	frsqrte   14,15
+	frsqrte.  14,15
+	frsqrtes  14,15
+	frsqrtes. 14,15
+	isel	  2,3,4,28

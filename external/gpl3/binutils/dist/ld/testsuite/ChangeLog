@@ -1,3 +1,26 @@
+2009-03-02  Alan Modra  <amodra@bigpond.net.au>
+
+	2009-02-01  Jan Kratochvil  <jan.kratochvil@redhat.com>
+	* ld-elf/eh-group2.s: New `.cfi_lsda' referencing `.gcc_except_table'.
+	* ld-elf/eh-group.exp: New test and conditional defininiton of `ELF64'.
+
+	2009-01-26  Nathan Sidwell  <nathan@codesourcery.com>
+	* ld-powerpc/powerpc.exp: Add vxworks relax testcase.
+	* ld-powerpc/vxworks-relax.s, ld-powerpc/vxworks-relax.rd: New.
+	* ld-powerpc/vxworks1.ld: Add .pad and .far input sections.
+	* ld-powerpc/vxworks1.rd: Correct regexp for undefined symbols.
+
+	2009-01-11  Jan Kratochvil  <jan.kratochvil@redhat.com>
+	* ld-elf/linkoncerdiff.d, ld-elf/linkoncerdiff1.s,
+	ld-elf/linkoncerdiff2.s: New.
+
+	2008-10-10  Nathan Froyd  <froydnj@codesourcery.com>
+	* ld-powerpc/attr-gnu-12-1.s: New file.
+	* ld-powerpc/attr-gnu-12-2.s: New file.
+	* ld-powerpc/attr-gnu-12-11.d: New file.
+	* ld-powerpc/attr-gnu-12-21.d: New file.
+	* ld-powerpc/powerpc.exp: Run new dump tests.
+
 2009-01-14  Joseph Myers  <joseph@codesourcery.com>
 
 	* ld-arm/thumb2-bl-undefweak.d, ld-arm/thumb2-bl-undefweak.s: New.

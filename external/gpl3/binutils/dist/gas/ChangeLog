@@ -1,3 +1,39 @@
+2009-04-01  Nick Clifton  <nickc@redhat.com>
+
+	* Import this patch:
+
+	2008-11-14  Peter Jansen  <pwjansen@yahoo.com>
+
+	PR 7026
+	* config/tc-arm.c: Ensure that all uses of as_bad have a
+	formatting string.
+
+2009-03-04  Alan Modra  <amodra@bigpond.net.au>
+
+	* config/tc-ppc.c (md_assemble): APUinfo only for e500.
+
+2009-03-02  Alan Modra  <amodra@bigpond.net.au>
+
+	2009-02-26  Peter Bergner  <bergner@vnet.ibm.com>
+	* config/tc-ppc.c (pre_defined_registers): Add "f32" to "f63",
+	"f.32" to "f.63", "vs0" to "vs63" and "vs.0" to "vs.63".
+	(parse_cpu): Extend -mpower7 to accept power7 and isel instructions.
+
+	2009-01-09  Peter Bergner  <bergner@vnet.ibm.com>
+	* config/tc-ppc.c (ppc_setup_opcodes): Remove PPC_OPCODE_NOPOWER4 test.
+	Test the new "deprecated" opcode field.
+
+	2008-12-04  Ben Elliston  <bje@au.ibm.com>
+	* config/tc-ppc.c (parse_cpu): Remove booke64 support. Update
+	usage strings.
+	(ppc_setup_opcodes): Likewise, remove booke64 support.
+	* doc/c-ppc.texi (PowerPC-Opts): Remove -mbooke32 and -mbooke64.
+	* doc/as.texinfo (Overview): Likewise.
+
+	2008-09-09  Peter Bergner  <bergner@vnet.ibm.com>
+	* config/tc-ppc.c (ppc_setup_opcodes): Simplify POWER4/NOPOWER4 test.
+	Remove POWER5 and POWER6 tests.
+
 2009-01-14  Jakub Jelinek  <jakub@redhat.com>
 
 	* Makefile.am (ehopt.o): Add struc-symbol.h.
@@ -132,7 +168,7 @@
 	targets.
 	* doc/c-i386.texi (i386-Directives): New node.  Used to document
 	the .lcomm directive.
-	
+
 2008-08-30  John David Anglin  <dave.anglin@nrc-cnrc.gc.ca>
 
 	* config/tc-hppa.h: Don't define DWARF2_EH_FRAME_READ_ONLY on Linux

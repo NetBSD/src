@@ -14,7 +14,7 @@ SECTIONS
   .plt : { *(.plt) }
 
   . = ALIGN (0x400);
-  .text : { *(.text) }
+  .text : { *(.text) *(.pad) *(.far) }
 
   . = ALIGN (0x10000);
   .dynamic : { *(.dynamic) }
