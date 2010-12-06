@@ -1,4 +1,4 @@
-/*	$NetBSD: pkill.c,v 1.25 2009/04/13 00:12:16 lukem Exp $	*/
+/*	$NetBSD: pkill.c,v 1.26 2010/12/06 04:00:11 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pkill.c,v 1.25 2009/04/13 00:12:16 lukem Exp $");
+__RCSID("$NetBSD: pkill.c,v 1.26 2010/12/06 04:00:11 mrg Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -82,7 +82,9 @@ static char	*selected;
 static const char *delim = "\n";
 static int	nproc;
 static int	pgrep;
+static int	prenice;
 static int	signum = SIGTERM;
+static int	nicenum;
 static int	newest;
 static int	inverse;
 static int	longfmt;
@@ -103,6 +105,7 @@ static struct listhead sidlist = SLIST_HEAD_INITIALIZER(list);
 int	main(int, char **);
 static void	usage(void) __dead;
 static int	killact(const struct kinfo_proc2 *);
+static int	reniceact(const struct kinfo_proc2 *);
 static int	grepact(const struct kinfo_proc2 *);
 static void	makelist(struct listhead *, enum listtype, char *);
 
@@ -124,6 +127,20 @@ main(int argc, char **argv)
 	if (strcmp(getprogname(), "pgrep") == 0) {
 		action = grepact;
 		pgrep = 1;
+	} else if (strcmp(getprogname(), "prenice") == 0) {
+		prenice = 1;
+		if (argc < 2)
+			usage();
+		action = reniceact;
+		p = argv[1];
+
+		i = (int)strtol(p, &q, 10);
+		if (*q == '\0') {
+			nicenum = i;
+			argv++;
+			argc--;
+		} else
+			usage();
 	} else {
 		action = killact;
 		p = argv[1];
@@ -152,64 +169,66 @@ main(int argc, char **argv)
 
 	criteria = 0;
 
-	while ((ch = getopt(argc, argv, "G:P:U:d:fg:ilns:t:u:vx")) != -1)
-		switch (ch) {
-		case 'G':
-			makelist(&rgidlist, LT_GROUP, optarg);
-			criteria = 1;
-			break;
-		case 'P':
-			makelist(&ppidlist, LT_GENERIC, optarg);
-			criteria = 1;
-			break;
-		case 'U':
-			makelist(&ruidlist, LT_USER, optarg);
-			criteria = 1;
-			break;
-		case 'd':
-			if (!pgrep)
+	if (!prenice) {
+		while ((ch = getopt(argc, argv, "G:P:U:d:fg:ilns:t:u:vx")) != -1)
+			switch (ch) {
+			case 'G':
+				makelist(&rgidlist, LT_GROUP, optarg);
+				criteria = 1;
+				break;
+			case 'P':
+				makelist(&ppidlist, LT_GENERIC, optarg);
+				criteria = 1;
+				break;
+			case 'U':
+				makelist(&ruidlist, LT_USER, optarg);
+				criteria = 1;
+				break;
+			case 'd':
+				if (!pgrep)
+					usage();
+				delim = optarg;
+				break;
+			case 'f':
+				matchargs = 1;
+				break;
+			case 'g':
+				makelist(&pgrplist, LT_PGRP, optarg);
+				criteria = 1;
+				break;
+			case 'i':
+				cflags |= REG_ICASE;
+				break;
+			case 'l':
+				longfmt = 1;
+				break;
+			case 'n':
+				newest = 1;
+				criteria = 1;
+				break;
+			case 's':
+				makelist(&sidlist, LT_SID, optarg);
+				criteria = 1;
+				break;
+			case 't':
+				makelist(&tdevlist, LT_TTY, optarg);
+				criteria = 1;
+				break;
+			case 'u':
+				makelist(&euidlist, LT_USER, optarg);
+				criteria = 1;
+				break;
+			case 'v':
+				inverse = 1;
+				break;
+			case 'x':
+				fullmatch = 1;
+				break;
+			default:
 				usage();
-			delim = optarg;
-			break;
-		case 'f':
-			matchargs = 1;
-			break;
-		case 'g':
-			makelist(&pgrplist, LT_PGRP, optarg);
-			criteria = 1;
-			break;
-		case 'i':
-			cflags |= REG_ICASE;
-			break;
-		case 'l':
-			longfmt = 1;
-			break;
-		case 'n':
-			newest = 1;
-			criteria = 1;
-			break;
-		case 's':
-			makelist(&sidlist, LT_SID, optarg);
-			criteria = 1;
-			break;
-		case 't':
-			makelist(&tdevlist, LT_TTY, optarg);
-			criteria = 1;
-			break;
-		case 'u':
-			makelist(&euidlist, LT_USER, optarg);
-			criteria = 1;
-			break;
-		case 'v':
-			inverse = 1;
-			break;
-		case 'x':
-			fullmatch = 1;
-			break;
-		default:
-			usage();
-			/* NOTREACHED */
-		}
+				/* NOTREACHED */
+			}
+	}
 
 	argc -= optind;
 	argv += optind;
@@ -407,15 +426,21 @@ usage(void)
 {
 	const char *ustr;
 
-	if (pgrep)
-		ustr = "[-filnvx] [-d delim]";
-	else
-		ustr = "[-signal] [-filnvx]";
+	if (prenice)
+		fprintf(stderr, "Usage: %s priority pattern ...\n",
+		    getprogname());
+	else {
+		if (pgrep)
+			ustr = "[-filnvx] [-d delim]";
+		else
+			ustr = "[-signal] [-filnvx]";
 
-	(void)fprintf(stderr,
-		"Usage: %s %s [-G gid] [-g pgrp] [-P ppid] [-s sid] [-t tty]\n"
-		"             [-U uid] [-u euid] pattern ...\n", getprogname(),
-		ustr);
+		(void)fprintf(stderr,
+		    "Usage: %s %s [-G gid] [-g pgrp] [-P ppid] [-s sid] "
+			   "[-t tty]\n"
+		    "             [-U uid] [-u euid] pattern ...\n",
+			      getprogname(), ustr);
+	}
 
 	exit(STATUS_BADUSAGE);
 }
@@ -442,6 +467,32 @@ killact(const struct kinfo_proc2 *kp)
 		 */
 		return 0;
 	}
+
+	return 1;
+}
+
+static int
+reniceact(const struct kinfo_proc2 *kp)
+{
+	int oldprio;
+
+	if (longfmt)
+		grepact(kp);
+
+	errno = 0;
+	if ((oldprio = getpriority(PRIO_PROCESS, kp->p_pid)) == -1 &&
+	    errno != 0) {
+		warn("%d: getpriority", kp->p_pid);
+		return 0;
+	}
+
+	if (setpriority(PRIO_PROCESS, kp->p_pid, nicenum) == -1) {
+		warn("%d: setpriority", kp->p_pid);
+		return 0;
+	}
+
+	(void)printf("%d: old priority %d, new priority %d\n",
+	    kp->p_pid, oldprio, nicenum);
 
 	return 1;
 }
