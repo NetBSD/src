@@ -15,11 +15,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -35,7 +31,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)bpf.c	7.5 (Berkeley) 7/15/91
+ *	@(#)bpf_filter.c	8.1 (Berkeley) 6/10/93
  */
 
 #if !(defined(lint) || defined(KERNEL) || defined(_KERNEL))
@@ -138,15 +134,17 @@ static const char rcsid[] _U_ =
 	} \
 }
 
-static int
-m_xword(m, k, err)
-	register struct mbuf *m;
-	register int k, *err;
-{
-	register int len;
-	register u_char *cp, *np;
-	register struct mbuf *m0;
+static int m_xword (const struct mbuf *, uint32_t, int *);
+static int m_xhalf (const struct mbuf *, uint32_t, int *);
 
+static int
+m_xword(const struct mbuf *m, uint32_t k, int *err)
+{
+	int len;
+	u_char *cp, *np;
+	struct mbuf *m0;
+
+	*err = 1;
 	MINDEX(len, m, k);
 	cp = mtod(m, u_char *) + k;
 	if (len - k >= 4) {
@@ -155,7 +153,7 @@ m_xword(m, k, err)
 	}
 	m0 = m->m_next;
 	if (m0 == 0 || MLEN(m0) + len - k < 4)
-		goto bad;
+		return 0;
 	*err = 0;
 	np = mtod(m0, u_char *);
 	switch (len - k) {
@@ -169,20 +167,16 @@ m_xword(m, k, err)
 	default:
 		return (cp[0] << 24) | (cp[1] << 16) | (cp[2] << 8) | np[0];
 	}
-    bad:
-	*err = 1;
-	return 0;
 }
 
 static int
-m_xhalf(m, k, err)
-	register struct mbuf *m;
-	register int k, *err;
+m_xhalf(const struct mbuf *m, uint32_t k, int *err)
 {
-	register int len;
-	register u_char *cp;
-	register struct mbuf *m0;
+	int len;
+	u_char *cp;
+	struct mbuf *m0;
 
+	*err = 1;
 	MINDEX(len, m, k);
 	cp = mtod(m, u_char *) + k;
 	if (len - k >= 2) {
@@ -191,12 +185,9 @@ m_xhalf(m, k, err)
 	}
 	m0 = m->m_next;
 	if (m0 == 0)
-		goto bad;
+		return 0;
 	*err = 0;
 	return (cp[0] << 8) | mtod(m0, u_char *)[0];
- bad:
-	*err = 1;
-	return 0;
 }
 #endif
 
@@ -208,14 +199,10 @@ m_xhalf(m, k, err)
  * in all other cases, p is a pointer to a buffer and buflen is its size.
  */
 u_int
-bpf_filter(pc, p, wirelen, buflen)
-	register const struct bpf_insn *pc;
-	register const u_char *p;
-	u_int wirelen;
-	register u_int buflen;
+bpf_filter(const struct bpf_insn *pc, const u_char *p, u_int wirelen,
+    u_int buflen)
 {
-	register u_int32 A, X;
-	register int k;
+	u_int32 A, X, k;
 	int32 mem[BPF_MEMWORDS];
 #if defined(KERNEL) || defined(_KERNEL)
 	struct mbuf *m, *n;
@@ -237,6 +224,7 @@ bpf_filter(pc, p, wirelen, buflen)
 	A = 0;
 	X = 0;
 	--pc;
+	/* CONSTCOND */
 	while (1) {
 		++pc;
 		switch (pc->code) {
@@ -533,13 +521,12 @@ bpf_filter(pc, p, wirelen, buflen)
  * Otherwise, a bogus program could easily crash the system.
  */
 int
-bpf_validate(f, len)
-	const struct bpf_insn *f;
-	int len;
+bpf_validate(const struct bpf_insn *f, int signed_len)
 {
-	u_int i, from;
+	u_int i, from, len;
 	const struct bpf_insn *p;
 
+	len = (u_int)signed_len;
 	if (len < 1)
 		return 0;
 	/*
@@ -550,7 +537,7 @@ bpf_validate(f, len)
 		return 0;
 #endif
 
-	for (i = 0; i < (u_int)len; ++i) {
+	for (i = 0; i < len; ++i) {
 		p = &f[i];
 		switch (BPF_CLASS(p->code)) {
 		/*
@@ -559,11 +546,7 @@ bpf_validate(f, len)
 		case BPF_LD:
 		case BPF_LDX:
 			switch (BPF_MODE(p->code)) {
-			case BPF_IMM:
-				break;
-			case BPF_ABS:
-			case BPF_IND:
-			case BPF_MSH:
+			case BPF_MEM:
 				/*
 				 * There's no maximum packet data size
 				 * in userland.  The runtime packet length
@@ -574,10 +557,14 @@ bpf_validate(f, len)
 				 * More strict check with actual packet length
 				 * is done runtime.
 				 */
-				if (p->k >= bpf_maxbufsize)
+				if (p->k >= BPF_MEMWORDS)
 					return 0;
 #endif
 				break;
+			case BPF_ABS:
+			case BPF_IND:
+			case BPF_MSH:
+			case BPF_IMM:
 			case BPF_MEM:
 				if (p->k >= BPF_MEMWORDS)
 					return 0;
@@ -608,7 +595,7 @@ bpf_validate(f, len)
 				/*
 				 * Check for constant division by 0.
 				 */
-				if (BPF_RVAL(p->code) == BPF_K && p->k == 0)
+				if (BPF_SRC(p->code) == BPF_K && p->k == 0)
 					return 0;
 				break;
 			default:
@@ -648,7 +635,7 @@ bpf_validate(f, len)
 #if defined(KERNEL) || defined(_KERNEL)
 				if (from + p->k < from || from + p->k >= len)
 #else
-				if (from + p->k >= (u_int)len)
+				if (from + p->k >= len)
 #endif
 					return 0;
 				break;
@@ -656,7 +643,7 @@ bpf_validate(f, len)
 			case BPF_JGT:
 			case BPF_JGE:
 			case BPF_JSET:
-				if (from + p->jt >= (u_int)len || from + p->jf >= (u_int)len)
+				if (from + p->jt >= len || from + p->jf >= len)
 					return 0;
 				break;
 			default:
