@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsys_events.c,v 1.93 2010/09/22 00:13:55 pgoyette Exp $ */
+/* $NetBSD: sysmon_envsys_events.c,v 1.94 2010/12/06 23:26:44 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.93 2010/09/22 00:13:55 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.94 2010/12/06 23:26:44 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -780,8 +780,8 @@ sme_deliver_event(sme_event_t *see)
 
 		see->see_evsent = edata->state;
 		DPRINTFOBJ(("%s: (%s) desc=%s sensor=%d state=%d send_ev=%d\n",
-		    __func__, sme->sme_name, edata->desc, edata->sensor,
-		    edata->state,
+		    __func__, see->see_sme->sme_name, edata->desc,
+		    edata->sensor, edata->state,
 		    (edata->state == ENVSYS_SVALID) ? PENVSYS_EVENT_NORMAL :
 			sse[i].event));
 
