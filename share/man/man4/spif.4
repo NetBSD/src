@@ -1,4 +1,4 @@
-.\"     $NetBSD: spif.4,v 1.4 2008/03/15 11:40:38 plunky Exp $
+.\"     $NetBSD: spif.4,v 1.5 2010/12/06 11:54:04 hauke Exp $
 .\"     $OpenBSD: spif.4,v 1.12 2003/11/09 16:06:07 jmc Exp $
 .\"
 .\" Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -32,18 +32,16 @@
 .Nm spif
 .Nd SBus (spiffy) Serial/Parallel Interface
 .Sh SYNOPSIS
-.Cd "spif* at sbus? slot ? offset ?                " Pq "sun4c/sun4m"
-.Cd "stty* at spif?                                " Pq "sun4c/sun4m"
-.Cd "sbpp* at spif?                                " Pq "sun4c/sun4m"
+.Cd "spif* at sbus? slot ? offset ?                " Pq "sun4c/sun4m/sun4u"
+.Cd "stty* at spif?                                " Pq "sun4c/sun4m/sun4u"
+.Cd "sbpp* at spif?                                " Pq "sun4c/sun4m/sun4u"
 .Sh DESCRIPTION
 The
 .Nm spif
 driver provides support for the Sun Serial/Parallel Interface card
-(Sun part number 501-1931)
-based around the
+(Sun part number 501-1931), which is based on the
 Cirrus Logic CD180 octal serial controller
-and the
-Cirrus Logic PPC2 parallel port controller.
+and the Cirrus Logic PPC2 parallel port controller.
 .Pp
 The device minor numbers for this driver are encoded as follows:
 .Bd -literal
@@ -67,10 +65,10 @@ Up to four cards are supported in the system.
 Each of the serial ports has an 8 byte FIFO for receive and transmit as
 well as automatic hardware (RTS/CTS) flow control.
 .Sh FILES
-.Bl -tag -width /dev/tty[jkl][0-7] -compact
-.It /dev/tty[jkl][0-7]
+.Bl -tag -width /dev/ttyS[0123][0-7] -compact
+.It /dev/ttyS[0123][0-7]
 Serial ports
-.It /dev/sbpp[0-3]
+.It /dev/bppS[0-3]
 Parallel ports
 .El
 .Sh DIAGNOSTICS
@@ -88,8 +86,10 @@ in control of the device did not read the input fast enough.
 .Sh HISTORY
 The
 .Nm spif
-driver was first supported in
+adapter was first supported in
 .Ox 2.5 .
+The driver was ported to
+.Nx 3.0 .
 .Sh AUTHORS
 .An -nosplit
 The driver was written by
