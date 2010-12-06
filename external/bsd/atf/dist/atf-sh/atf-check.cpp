@@ -378,7 +378,7 @@ grep_file(const atf::fs::path& path, const std::string& regexp)
     bool found = false;
 
     std::string line;
-    while (!found && std::getline(stream, line).good()) {
+    while (!found && !std::getline(stream, line).fail()) {
         if (atf::text::match(line, regexp))
             found = true;
     }
