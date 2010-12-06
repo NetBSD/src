@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.89 2010/11/08 19:59:20 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.90 2010/12/06 18:42:09 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.89 2010/11/08 19:59:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.90 2010/12/06 18:42:09 skrll Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -715,7 +715,9 @@ cpuid(void)
 	
 	usebtlb = 0;
 	if (cpu_version == HPPA_CPU_PCXW || cpu_version > HPPA_CPU_PCXL2) {
+#ifdef DEBUG
 		printf("WARNING: BTLB no supported on cpu %d\n", cpu_version);
+#endif
 	} else {
 
 		/* BTLB params */
