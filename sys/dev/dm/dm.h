@@ -1,4 +1,4 @@
-/*        $NetBSD: dm.h,v 1.19 2010/10/23 21:18:54 haad Exp $      */
+/*        $NetBSD: dm.h,v 1.20 2010/12/06 08:54:49 haad Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -124,7 +124,7 @@ typedef struct dm_dev {
 	char uuid[DM_UUID_LEN];
 
 	device_t devt; /* pointer to autoconf device_t structure */
-	uint64_t minor;
+	uint64_t minor; /* Device minor number */
 	uint32_t flags; /* store communication protocol flags */
 
 	kmutex_t dev_mtx; /* mutex for generall device lock */
