@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1469 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1470 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -803,3 +803,5 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		for the list of changes [christos 20101205]
 	tcpdump(8): Update to 4.1.1; see src/external/bsd/tcpdump/dist/CHANGES
 		for the list of changes [christos 20101205]
+	prenice(1): Add new command to change process priorities based upon
+		the command name, like pkill(1) and pgrep(1).  [mrg 20101205]
