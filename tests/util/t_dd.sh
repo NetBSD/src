@@ -1,4 +1,4 @@
-# $NetBSD: t_dd.sh,v 1.2 2008/04/30 13:11:00 martin Exp $
+# $NetBSD: t_dd.sh,v 1.3 2010/12/06 15:54:00 pooka Exp $
 #
 # Copyright (c) 2007 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -101,8 +101,26 @@ io_body() {
 	           "$allvisbits" "$ebcdicvisbits"
 }
 
+atf_test_case seek
+seek_head() {
+	atf_set "descr" "Tests output file seeking"
+}
+
+seek_body() {
+	echo TEST1234 > testfile
+	atf_check -s exit:0 -e ignore \
+	    dd if=/dev/zero of=testfile seek=1 bs=8k count=1
+	atf_check -s exit:0 -e ignore -o match:'^TEST1234$' dd if=testfile
+
+	echo TEST1234 > tf2
+	atf_check -s exit:0 -e ignore -x \
+	    'dd bs=4 if=/dev/zero count=1 | tr \\0 \\n | dd of=tf2 bs=4 seek=1'
+	atf_check -s exit:0 -e ignore -o match:'^TEST$' dd if=tf2
+}
+
 atf_init_test_cases()
 {
 	atf_add_test_case length
 	atf_add_test_case io
+	atf_add_test_case seek
 }
