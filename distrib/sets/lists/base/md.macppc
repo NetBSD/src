@@ -1,4 +1,4 @@
-# $NetBSD: md.macppc,v 1.29 2010/12/01 17:48:04 phx Exp $
+# $NetBSD: md.macppc,v 1.30 2010/12/06 18:26:28 phx Exp $
 ./sbin/pdisk					base-sysutil-root
 ./usr/mdec/bootxx				base-sysutil-bin
 ./usr/mdec/installboot				base-obsolete		obsolete
@@ -11,4 +11,3 @@
 ./usr/sbin/zzz					base-sysutil-bin
 ./usr/sbin/eeprom				base-sysutil-bin
 ./usr/sbin/ofctl				base-sysutil-bin
-./usr/share/wscons/keymaps/ukbd.any.powerbook	base-util-share
