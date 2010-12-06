@@ -1,4 +1,4 @@
-/*	$NetBSD: filecomplete.c,v 1.22 2010/12/02 04:42:46 dholland Exp $	*/
+/*	$NetBSD: filecomplete.c,v 1.23 2010/12/06 00:05:38 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: filecomplete.c,v 1.22 2010/12/02 04:42:46 dholland Exp $");
+__RCSID("$NetBSD: filecomplete.c,v 1.23 2010/12/06 00:05:38 dholland Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -341,8 +341,8 @@ _fn_qsort_string_compare(const void *i1, const void *i2)
  * 'matches' is list of strings, 'num' is number of strings in 'matches',
  * 'width' is maximum length of string in 'matches'.
  *
- * matches[0] is not one of the match strings, so the strings are
- * matches[1] *through* matches[num].
+ * matches[0] is not one of the match strings, but it is counted in
+ * num, so the strings are matches[1] *through* matches[num-1].
  */
 void
 fn_display_match_list (EditLine *el, char **matches, size_t num, size_t width)
@@ -352,6 +352,7 @@ fn_display_match_list (EditLine *el, char **matches, size_t num, size_t width)
 
 	/* Ignore matches[0]. Avoid 1-based array logic below. */
 	matches++;
+	num--;
 
 	/*
 	 * Find out how many entries can be put on one line; count
@@ -518,9 +519,17 @@ fn_complete(EditLine *el,
 				(void)fprintf(el->el_outfile, "\n");
 			}
 
-			if (match_display)
-				fn_display_match_list(el, matches, matches_num,
-				    maxlen);
+			if (match_display) {
+				/*
+				 * Interface of this function requires the
+				 * strings be matches[1..num-1] for compat.
+				 * We have matches_num strings not counting
+				 * the prefix in matches[0], so we need to
+				 * add 1 to matches_num for the call.
+				 */
+				fn_display_match_list(el, matches,
+				    matches_num+1, maxlen);
+			}
 			retval = CC_REDISPLAY;
 		} else if (matches[0][0]) {
 			/*
