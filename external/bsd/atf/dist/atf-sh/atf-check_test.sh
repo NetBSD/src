@@ -234,6 +234,7 @@ oflag_match_head()
 }
 oflag_match_body()
 {
+    h_pass "printf no-newline" -o "match:^no-newline"
     h_pass "echo line1; echo foo bar" -o "match:^foo"
     h_pass "echo foo bar" -o "match:o b"
     h_fail "echo foo bar" -o "match:baz"
@@ -365,6 +366,7 @@ eflag_match_head()
 }
 eflag_match_body()
 {
+    h_pass "printf no-newline 1>&2" -e "match:^no-newline"
     h_pass "echo line1 1>&2; echo foo bar 1>&2" -e "match:^foo"
     h_pass "echo foo bar 1>&2" -e "match:o b"
     h_fail "echo foo bar 1>&2" -e "match:baz"
