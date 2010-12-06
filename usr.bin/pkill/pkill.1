@@ -1,4 +1,4 @@
-.\"	$NetBSD: pkill.1,v 1.19 2010/12/06 04:00:11 mrg Exp $
+.\"	$NetBSD: pkill.1,v 1.20 2010/12/06 08:34:28 wiz Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd February 28, 2009
+.Dd December 6, 2010
 .Dt PKILL 1
 .Os
 .Sh NAME
@@ -178,7 +178,7 @@ process will never consider itself or system processes (kernel threads) as
 a potential match.
 .Sh EXIT STATUS
 .Nm pgrep ,
-.Nm pkill
+.Nm pkill ,
 and
 .Nm prenice
 return one of the following values upon exit:
@@ -199,8 +199,8 @@ An internal error occurred.
 .Xr kill 2 ,
 .Xr sigaction 2 ,
 .Xr re_format 7 ,
-.Xr renice 1 ,
-.Xr signal 7
+.Xr signal 7 ,
+.Xr renice 8
 .Sh HISTORY
 .Nm pkill
 and
