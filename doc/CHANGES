@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1470 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1471 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -792,6 +792,9 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	dhcpcd(8): Import dhcpcd-5.2.9. [roy 20101127]
 	postfix(1): Import version 2.7.2 [tron 20101127]
 	module: Rename <module>.prop to <module>.plist.  [jnemeth 20101127]
+	ukbd(4): Support for Apple notebook keyboards: swapped keys on ISO
+		keyboards, Apple FN key, simulate AltGr with FN-Alt,
+		generate special keycodes for the hotkeys. [phx 20101130]
 	bind: Update to 9.7.2-P3. Bug and security fixes since 9.7.2b1. See
 		src/external/bsd/bind/dist/CHANGES [christos 20101202]
 	passwd.conf(5): Set the default local cipher for passwords to 'sha1'.
