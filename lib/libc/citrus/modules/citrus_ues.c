@@ -1,4 +1,4 @@
-/* $NetBSD: citrus_ues.c,v 1.1 2006/11/13 15:16:31 tnozaki Exp $ */
+/* $NetBSD: citrus_ues.c,v 1.2 2010/12/07 22:01:22 joerg Exp $ */
 
 /*-
  * Copyright (c)2006 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_ues.c,v 1.1 2006/11/13 15:16:31 tnozaki Exp $");
+__RCSID("$NetBSD: citrus_ues.c,v 1.2 2010/12/07 22:01:22 joerg Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -367,6 +367,7 @@ e2big:
 }
 
 /*ARGSUSED*/
+static int
 _citrus_UES_stdenc_wctocs(_UESEncodingInfo * __restrict ei,
 	_csid_t * __restrict csid, _index_t * __restrict idx, wchar_t wc)
 {
