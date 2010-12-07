@@ -1,9 +1,15 @@
-#	$NetBSD: Makefile.rumpnetcomp,v 1.1 2010/12/05 16:53:46 pooka Exp $
+#	$NetBSD: Makefile.rumpnetcomp,v 1.2 2010/12/07 17:23:27 pooka Exp $
 #
 
-RUMPNETCOMP=	net net80211 netbt netinet local sockin shmif virtif
+RUMPNETCOMP=	net net80211 netbt netinet local shmif virtif
+
+RUMPNETSOCKIN=	sockin
 
 .for var in ${RUMPNETCOMP}
 RUMPNETLIBS+=lib${var}
 RUMPNETLDADD+=-lrumpnet_${var}
+.endfor
+
+.for var in ${RUMPNETSOCKIN}
+RUMPNETLIBS+=lib${var}
 .endfor
