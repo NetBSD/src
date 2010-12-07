@@ -1,4 +1,4 @@
-/*	$NetBSD: stack_protector.c,v 1.4 2009/11/17 20:46:20 drochner Exp $	*/
+/*	$NetBSD: stack_protector.c,v 1.5 2010/12/07 20:10:53 joerg Exp $	*/
 /*	$OpenBSD: stack_protector.c,v 1.10 2006/03/31 05:34:44 deraadt Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
  *
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: stack_protector.c,v 1.4 2009/11/17 20:46:20 drochner Exp $");
+__RCSID("$NetBSD: stack_protector.c,v 1.5 2010/12/07 20:10:53 joerg Exp $");
 
 #ifdef _LIBC
 #include "namespace.h"
@@ -93,7 +93,7 @@ __fail(const char *msg)
 
 #ifdef _LIBC
 	/* This may fail on a chroot jail... */
-	syslog_ss(LOG_CRIT, &sdata, msg);
+	syslog_ss(LOG_CRIT, &sdata, "%s", msg);
 #else
 	xprintf("%s: %s\n", getprogname(), msg);
 #endif
