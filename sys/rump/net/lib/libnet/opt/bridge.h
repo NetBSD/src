@@ -1,3 +1,3 @@
-/*	$NetBSD: bridge.h,v 1.1 2008/10/06 00:27:06 pooka Exp $	*/
+/*	$NetBSD: bridge.h,v 1.2 2010/12/07 20:39:07 pooka Exp $	*/
 
-/* dummy */
+#define NBRIDGE 1
