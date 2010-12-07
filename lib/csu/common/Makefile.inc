@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.1 2010/08/07 18:01:33 joerg Exp $
+#	$NetBSD: Makefile.inc,v 1.2 2010/12/07 19:51:02 joerg Exp $
 
 .include <bsd.own.mk>
 
@@ -14,7 +14,7 @@ realall: ${OBJS}
 
 crtbegin.o: crtbegin.S
 	${_MKTARGET_COMPILE}
-	${COMPILE.c} ${ARCHDIR}/crtbegin.S -o ${.TARGET}.o
+	${COMPILE.S} ${ARCHDIR}/crtbegin.S -o ${.TARGET}.o
 	${LD} -x -r -o ${.TARGET} ${.TARGET}.o
 	rm -f ${.TARGET}.o
 .if ${MKSTRIPIDENT} != "no"
@@ -23,7 +23,7 @@ crtbegin.o: crtbegin.S
 
 crtbeginS.o: crtbegin.S
 	${_MKTARGET_COMPILE}
-	${COMPILE.c} -DSHARED ${ARCHDIR}/crtbegin.S -o ${.TARGET}.o
+	${COMPILE.S} -DSHARED ${ARCHDIR}/crtbegin.S -o ${.TARGET}.o
 	${LD} -x -r -o ${.TARGET} ${.TARGET}.o
 	rm -f ${.TARGET}.o
 .if ${MKSTRIPIDENT} != "no"
@@ -32,7 +32,7 @@ crtbeginS.o: crtbegin.S
 
 crtend.o: crtend.S
 	${_MKTARGET_COMPILE}
-	${COMPILE.c} ${ARCHDIR}/crtend.S -o ${.TARGET}.o
+	${COMPILE.S} ${ARCHDIR}/crtend.S -o ${.TARGET}.o
 	${LD} -x -r -o ${.TARGET} ${.TARGET}.o
 	rm -f ${.TARGET}.o
 .if ${MKSTRIPIDENT} != "no"
@@ -48,7 +48,7 @@ PICFLAGS=
 crt0.o: crt0-common.c crt0.S
 	${_MKTARGET_COMPILE}
 	${COMPILE.c} ${PICFLAGS} ${COMMON_DIR}/crt0-common.c -o ${.TARGET}.c.o
-	${COMPILE.c} ${ARCHDIR}/crt0.S -o ${.TARGET}.S.o
+	${COMPILE.S} ${ARCHDIR}/crt0.S -o ${.TARGET}.S.o
 	${LD} -x -r -o ${.TARGET} ${.TARGET}.c.o ${.TARGET}.S.o
 	rm -f ${.TARGET}.c.o ${.TARGET}.S.o
 .if ${MKSTRIPIDENT} != "no"
@@ -58,7 +58,7 @@ crt0.o: crt0-common.c crt0.S
 gcrt0.o: crt0-common.c crt0.S
 	${_MKTARGET_COMPILE}
 	${COMPILE.c} ${PICFLAGS} -DMCRT0 ${COMMON_DIR}/crt0-common.c -o ${.TARGET}.c.o
-	${COMPILE.c} ${ARCHDIR}/crt0.S -o ${.TARGET}.S.o
+	${COMPILE.S} ${ARCHDIR}/crt0.S -o ${.TARGET}.S.o
 	${LD} -x -r -o ${.TARGET} ${.TARGET}.c.o ${.TARGET}.S.o
 	rm -f ${.TARGET}.c.o ${.TARGET}.S.o
 .if ${MKSTRIPIDENT} != "no"
