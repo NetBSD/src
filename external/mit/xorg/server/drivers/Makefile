@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.50 2010/11/18 08:20:16 mrg Exp $
+#	$NetBSD: Makefile,v 1.51 2010/12/07 05:39:53 kiyohara Exp $
 
 # xf86-input drivers
 
@@ -109,8 +109,7 @@ SUBDIR+= \
 	xf86-video-cirrus_alpine \
 	xf86-video-mga \
 	xf86-video-s3 \
-	xf86-video-s3virge \
-	xf86-video-vga
+	xf86-video-s3virge
 .endif	# ${MACHINE} == "bebox"
 
 .if ${MACHINE} == "cats"
@@ -193,8 +192,7 @@ SUBDIR+= \
 	xf86-video-cirrus \
 	xf86-video-cirrus_alpine \
 	xf86-video-mga \
-	xf86-video-s3 \
-	xf86-video-vga
+	xf86-video-s3
 .endif	# ${MACHINE} == "prep"
 
 .if ${MACHINE} == "sgimips"
@@ -244,5 +242,9 @@ SUBDIR+= \
 #	xf86-video-vga \
 # alpha
 #	xf86-video-vga \
+# bebox
+#	xf86-video-vga
+# prep
+#	xf86-video-vga
 
 .include <bsd.subdir.mk>
