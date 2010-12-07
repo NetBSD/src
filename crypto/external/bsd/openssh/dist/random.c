@@ -1,4 +1,4 @@
-/*	$NetBSD: random.c,v 1.1 2009/06/07 22:38:47 christos Exp $	*/
+/*	$NetBSD: random.c,v 1.2 2010/12/07 22:50:37 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include "includes.h"
 #ifndef lint
-__RCSID("$NetBSD: random.c,v 1.1 2009/06/07 22:38:47 christos Exp $");
+__RCSID("$NetBSD: random.c,v 1.2 2010/12/07 22:50:37 joerg Exp $");
 #endif
 
 /*
@@ -52,8 +52,6 @@ __RCSID("$NetBSD: random.c,v 1.1 2009/06/07 22:38:47 christos Exp $");
 #include "random.h"
 #include "log.h"
 
-static const char *rndfail = "random number device is mandatory.  see rnd(4).";
-
 int
 arc4random_check(void)
 {
@@ -61,7 +59,7 @@ arc4random_check(void)
 
 	fd = open(_PATH_URANDOM, O_RDONLY, 0666);
 	if (fd < 0) {
-		fatal(rndfail);
+		fatal("random number device is mandatory.  see rnd(4).");
 		/*NOTREACHED*/
 	}
 	close(fd);
