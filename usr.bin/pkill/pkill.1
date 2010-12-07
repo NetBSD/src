@@ -1,4 +1,4 @@
-.\"	$NetBSD: pkill.1,v 1.22 2010/12/07 08:55:52 wiz Exp $
+.\"	$NetBSD: pkill.1,v 1.23 2010/12/07 09:00:23 enami Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -44,10 +44,10 @@
 .Op Fl t Ar tty
 .Op Fl U Ar uid
 .Op Fl u Ar euid
-.Op Ar pattern ...
+.Ar pattern ...
 .Nm pkill
 .Op Fl signal
-.Op Fl finvx
+.Op Fl filnvx
 .Op Fl G Ar gid
 .Op Fl g Ar pgrp
 .Op Fl P Ar ppid
@@ -55,11 +55,11 @@
 .Op Fl t Ar tty
 .Op Fl U Ar uid
 .Op Fl u Ar euid
-.Op Ar pattern ...
+.Ar pattern ...
 .Nm prenice
 .Op Fl l
-.Op Ar priority
-.Op Ar pattern ...
+.Ar priority
+.Ar pattern ...
 .Sh DESCRIPTION
 The
 .Nm pgrep
