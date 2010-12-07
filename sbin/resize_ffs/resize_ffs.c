@@ -1,4 +1,4 @@
-/*	$NetBSD: resize_ffs.c,v 1.17 2010/12/02 22:00:27 riz Exp $	*/
+/*	$NetBSD: resize_ffs.c,v 1.18 2010/12/07 23:29:55 riz Exp $	*/
 /* From sources sent on February 17, 2003 */
 /*-
  * As its sole author, I explicitly place this code in the public
@@ -880,7 +880,7 @@ grow(void)
 	 * overwriting anything important by this.  (The choice of sbbuf as
 	 * what to write is irrelevant; it's just something handy that's known
 	 * to be at least one frag in size.) */
-	writeat(newsb->fs_size - 1, &sbbuf, newsb->fs_fsize);
+	writeat(fsbtodb(newsb,newsb->fs_size - 1), &sbbuf, newsb->fs_fsize);
 	/* Update fs_old_ncyl and fs_ncg. */
 	newsb->fs_old_ncyl = howmany(newsb->fs_size * NSPF(newsb),
 	    newsb->fs_old_spc);
