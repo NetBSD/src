@@ -1,4 +1,4 @@
-/*	$NetBSD: getch.c,v 1.56 2010/11/05 11:38:54 blymn Exp $	*/
+/*	$NetBSD: getch.c,v 1.57 2010/12/07 22:02:52 joerg Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)getch.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: getch.c,v 1.56 2010/11/05 11:38:54 blymn Exp $");
+__RCSID("$NetBSD: getch.c,v 1.57 2010/12/07 22:02:52 joerg Exp $");
 #endif
 #endif					/* not lint */
 
@@ -467,7 +467,7 @@ __init_getch(SCREEN *screen)
 		if (s == NULL)
 			continue;
 		l = strlen(s) + 1;
-		if (limit - l < 0)
+		if (limit < l)
 			continue;
 		strlcpy(p, s, limit);
 		p += l;
