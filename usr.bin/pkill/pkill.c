@@ -1,4 +1,4 @@
-/*	$NetBSD: pkill.c,v 1.26 2010/12/06 04:00:11 mrg Exp $	*/
+/*	$NetBSD: pkill.c,v 1.27 2010/12/07 07:39:15 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pkill.c,v 1.26 2010/12/06 04:00:11 mrg Exp $");
+__RCSID("$NetBSD: pkill.c,v 1.27 2010/12/07 07:39:15 mrg Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -129,18 +129,7 @@ main(int argc, char **argv)
 		pgrep = 1;
 	} else if (strcmp(getprogname(), "prenice") == 0) {
 		prenice = 1;
-		if (argc < 2)
-			usage();
-		action = reniceact;
-		p = argv[1];
 
-		i = (int)strtol(p, &q, 10);
-		if (*q == '\0') {
-			nicenum = i;
-			argv++;
-			argc--;
-		} else
-			usage();
 	} else {
 		action = killact;
 		p = argv[1];
@@ -169,7 +158,30 @@ main(int argc, char **argv)
 
 	criteria = 0;
 
-	if (!prenice) {
+	if (prenice) {
+		if (argc < 2)
+			usage();
+
+		if (strcmp(argv[1], "-l") == 0) {
+			longfmt = 1;
+			argv++;
+			argc--;
+		}
+
+		if (argc < 2)
+			usage();
+
+		action = reniceact;
+		p = argv[1];
+
+		i = (int)strtol(p, &q, 10);
+		if (*q == '\0') {
+			nicenum = i;
+			argv++;
+			argc--;
+		} else
+			usage();
+	} else {
 		while ((ch = getopt(argc, argv, "G:P:U:d:fg:ilns:t:u:vx")) != -1)
 			switch (ch) {
 			case 'G':
@@ -228,10 +240,10 @@ main(int argc, char **argv)
 				usage();
 				/* NOTREACHED */
 			}
+		argc -= optind;
+		argv += optind;
 	}
 
-	argc -= optind;
-	argv += optind;
 	if (argc != 0)
 		criteria = 1;
 	if (!criteria)
@@ -427,7 +439,7 @@ usage(void)
 	const char *ustr;
 
 	if (prenice)
-		fprintf(stderr, "Usage: %s priority pattern ...\n",
+		fprintf(stderr, "Usage: %s [-l] priority pattern ...\n",
 		    getprogname());
 	else {
 		if (pgrep)
