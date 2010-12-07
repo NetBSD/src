@@ -1,4 +1,4 @@
-.\"	$NetBSD: pkill.1,v 1.20 2010/12/06 08:34:28 wiz Exp $
+.\"	$NetBSD: pkill.1,v 1.21 2010/12/07 07:39:15 mrg Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -57,6 +57,7 @@
 .Op Fl u Ar euid
 .Op Ar pattern ...
 .Nm prenice
+.Op Fl l
 .Op Ar priority
 .Op Ar pattern ...
 .Sh DESCRIPTION
@@ -79,7 +80,9 @@ priority of all processes that match the criteria given on the command line.
 The following options are available for
 .Nm pkill
 and
-.Nm pgrep :
+.Nm pgrep ,
+and some are available for
+.Nm prenice :
 .Bl -tag -width xxxxxxxx
 .It Fl d Ar delim
 Specify a delimiter to be printed between each process ID.
