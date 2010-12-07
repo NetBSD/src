@@ -33,7 +33,7 @@
 
 #include "hx_locl.h"
 __RCSID("$Heimdal: ks_p11.c 22071 2007-11-14 20:04:50Z lha $"
-        "$NetBSD: ks_p11.c,v 1.1 2008/03/22 09:42:41 mlelstv Exp $");
+        "$NetBSD: ks_p11.c,v 1.2 2010/12/07 22:08:27 joerg Exp $");
 #ifdef HAVE_DLFCN_H
 #include <dlfcn.h>
 #endif
@@ -944,11 +944,7 @@ p11_release_module(struct p11_module *p)
 	if (p->slot[i].flags & P11_SESSION_IN_USE)
 	    _hx509_abort("pkcs11 module release while session in use");
 	if (p->slot[i].flags & P11_SESSION) {
-	    int ret;
-
-	    ret = P11FUNC(p, CloseSession, (p->slot[i].session));
-	    if (ret != CKR_OK)
-		;
+	    P11FUNC(p, CloseSession, (p->slot[i].session));
 	}
 
 	if (p->slot[i].name)
