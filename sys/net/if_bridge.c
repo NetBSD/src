@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.71 2010/01/19 22:08:00 pooka Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.72 2010/12/07 20:38:26 pooka Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -80,11 +80,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.71 2010/01/19 22:08:00 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.72 2010/12/07 20:38:26 pooka Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_bridge_ipf.h"
 #include "opt_inet.h"
 #include "opt_pfil_hooks.h"
+#endif /* _KERNEL_OPT */
 
 #include <sys/param.h>
 #include <sys/kernel.h>
