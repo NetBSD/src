@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.2,v 1.1.2.34 2010/12/02 23:50:29 snj Exp $
+# $NetBSD: CHANGES-5.2,v 1.1.2.35 2010/12/08 04:36:02 riz Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -878,4 +878,34 @@ sys/dev/ic/mpt_netbsd.c				1.15
 	Add byte-swapping so that this works on BE platforms.  The logic
 	is based on the current freebsd driver.  Fixes PR 42870.
 	[riz, ticket #1487]
+
+sys/dev/pci/drm/files.pcidrm				patch
+sys/external/bsd/drm/dist/bsd-core/drmP.h		patch
+sys/external/bsd/drm/dist/bsd-core/drm_pciids.h		patch
+sys/external/bsd/drm/dist/bsd-core/drm_sysctl.c		patch
+sys/external/bsd/drm/dist/shared-core/r600_blit.c	new file
+sys/external/bsd/drm/dist/shared-core/r600_cp.c		patch
+sys/external/bsd/drm/dist/shared-core/radeon_cp.c	patch
+sys/external/bsd/drm/dist/shared-core/radeon_cs.c	new file
+sys/external/bsd/drm/dist/shared-core/radeon_drm.h	patch
+sys/external/bsd/drm/dist/shared-core/radeon_drv.h	patch
+sys/external/bsd/drm/dist/shared-core/radeon_state.c	patch
+
+	Implement DRM_RADEON_CS ioctl, necessary for r600_dri to function.
+	[mrg, ticket #1488]
+
+sbin/dump_lfs/Makefile				1.10
+sbin/ifconfig/Makefile				1.40
+sbin/sysctl/Makefile				1.18
+usr.bin/mkdep/Makefile				1.16
+usr.sbin/racoonctl/Makefile			1.3 via patch
+usr.sbin/services_mkdb/Makefile			1.5
+
+	Disable stray debug options.
+	[uwe, ticket #1490]
+
+usr.bin/xlint/lint1/Makefile			1.41
+
+	Comment out CFLAGS+=-g.
+	[uwe, ticket #1491]
 
