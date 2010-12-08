@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_envsys.c,v 1.107 2010/04/11 01:12:28 pgoyette Exp $	*/
+/*	$NetBSD: sysmon_envsys.c,v 1.108 2010/12/08 00:09:14 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.107 2010/04/11 01:12:28 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.108 2010/12/08 00:09:14 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -1143,8 +1143,10 @@ sme_remove_userprops(void)
 				lims = edata->limits;
 				(*sme->sme_get_limits)(sme, edata, &lims,
 						       &edata->upropset);
-			}
-			if (edata->upropset) {
+			} else
+				edata->upropset &= ~PROP_LIMITS;
+
+			if (edata->upropset & PROP_LIMITS) {
 				DPRINTF(("%s: install limits for %s %s\n",
 					__func__, sme->sme_name, edata->desc));
 				sme_update_limits(sme, edata);
