@@ -1,4 +1,4 @@
-/*	$NetBSD: admin.c,v 1.37 2010/11/12 10:36:37 tteras Exp $	*/
+/*	$NetBSD: admin.c,v 1.38 2010/12/08 07:38:35 tteras Exp $	*/
 
 /* Id: admin.c,v 1.25 2006/04/06 14:31:04 manubsd Exp */
 
@@ -564,12 +564,17 @@ admin_process(so2, combuf)
 			iph2->status = PHASE2ST_STATUS2;
 
 			/* set end addresses of SA */
+			iph2->sa_dst = dupsaddr(dst);
+			iph2->sa_src = dupsaddr(src);
 			iph2->dst = dupsaddr(dst);
 			iph2->src = dupsaddr(src);
-			if (iph2->dst == NULL || iph2->src == NULL) {
+			if (iph2->sa_src == NULL || iph2->sa_dst == NULL ||
+			    iph2->dst == NULL || iph2->src == NULL) {
 				delph2(iph2);
 				break;
 			}
+			set_port(iph2->dst, 0);
+			set_port(iph2->src, 0);
 
 			if (isakmp_get_sainfo(iph2, sp_out, sp_in) < 0) {
 				delph2(iph2);
