@@ -23,6 +23,7 @@ Cambridge, MA 02139, USA.
 #define	_MALLOC_INTERNAL
 #include <malloc.h>
 #endif
+#include <unistd.h>
 
 #ifdef	__GNU_LIBRARY__
 extern size_t __getpagesize __P ((void));
