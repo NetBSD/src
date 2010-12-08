@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.145 2010/12/08 18:16:17 pooka Exp $
+# $NetBSD: shl.mi,v 1.146 2010/12/08 20:23:12 pooka Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -150,6 +150,7 @@
 ./usr/lib/librumpkern_ksem_pic.a		comp-c-piclib
 ./usr/lib/librumpkern_tty_pic.a			comp-c-piclib
 ./usr/lib/librumpkern_z_pic.a			comp-c-piclib
+./usr/lib/librumpnet_agr_pic.a		comp-c-piclib
 ./usr/lib/librumpnet_bridge_pic.a		comp-c-piclib
 ./usr/lib/librumpnet_local_pic.a		comp-c-piclib
 ./usr/lib/librumpnet_net80211_pic.a		comp-c-piclib
@@ -337,6 +338,7 @@
 ./usr/libdata/debug/usr/lib/librumpkern_tty.so.0.0.debug	comp-rump-debug	debug
 ./usr/libdata/debug/usr/lib/librumpkern_z.so.0.0.debug	comp-rump-debug	debug
 ./usr/libdata/debug/usr/lib/librumpnet.so.0.0.debug	comp-rump-debug	debug
+./usr/libdata/debug/usr/lib/librumpnet_agr.so.0.0.debug	comp-rump-debug	debug
 ./usr/libdata/debug/usr/lib/librumpnet_bridge.so.0.0.debug	comp-rump-debug	debug
 ./usr/libdata/debug/usr/lib/librumpnet_local.so.0.0.debug	comp-rump-debug	debug
 ./usr/libdata/debug/usr/lib/librumpnet_net.so.0.0.debug	comp-rump-debug	debug
