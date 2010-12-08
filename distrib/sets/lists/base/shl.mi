@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.562 2010/12/07 21:40:08 pooka Exp $
+# $NetBSD: shl.mi,v 1.563 2010/12/08 18:16:16 pooka Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -546,6 +546,9 @@
 ./usr/lib/librumpnet.so				base-rump-shlib
 ./usr/lib/librumpnet.so.0			base-rump-shlib
 ./usr/lib/librumpnet.so.0.0			base-rump-shlib
+./usr/lib/librumpnet_bridge.so			base-rump-shlib
+./usr/lib/librumpnet_bridge.so.0			base-rump-shlib
+./usr/lib/librumpnet_bridge.so.0.0		base-rump-shlib
 ./usr/lib/librumpnet_local.so			base-rump-shlib
 ./usr/lib/librumpnet_local.so.0			base-rump-shlib
 ./usr/lib/librumpnet_local.so.0.0		base-rump-shlib
