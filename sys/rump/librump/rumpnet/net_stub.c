@@ -1,4 +1,4 @@
-/*	$NetBSD: net_stub.c,v 1.10 2010/12/08 18:06:58 pooka Exp $	*/
+/*	$NetBSD: net_stub.c,v 1.11 2010/12/08 20:20:52 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: net_stub.c,v 1.10 2010/12/08 18:06:58 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: net_stub.c,v 1.11 2010/12/08 20:20:52 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/protosw.h>
@@ -64,6 +64,11 @@ __weak_alias(route_cb,__rumpnet_stub);
 __weak_alias(bridge_ifdetach,__rumpnet_stub);
 __weak_alias(bridge_output,__rumpnet_stub);
 __weak_alias(bridge_input,__rumpnet_stub);
+
+/* agr */
+__weak_alias(agr_input,__rumpnet_stub);
+__weak_alias(ieee8023ad_lacp_input,__rumpnet_stub);
+__weak_alias(ieee8023ad_marker_input,__rumpnet_stub);
 
 struct ifnet_head ifnet;
 
