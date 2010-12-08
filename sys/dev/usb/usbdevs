@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.569 2010/11/30 11:25:25 phx Exp $
+$NetBSD: usbdevs,v 1.570 2010/12/08 20:59:58 phx Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -777,7 +777,7 @@ product APPLE MIGHTYMOUSE	0x0304	Mighty Mouse
 product APPLE FOUNTAIN_TP	0x030a	Apple Internal Trackpad (Fountain)
 product APPLE GEYSER1_TP	0x030b	Apple Internal Trackpad (Geyser)
 product APPLE MAGICMOUSE	0x030d	Magic Mouse
-product APPLE ADB		0x1000	Internal ADB device
+product APPLE BLUETOOTH_HIDMODE	0x1000	Bluetooth HCI (HID-proxy mode)
 product APPLE EXT_KBD_HUB	0x1003	Hub in Apple Extended USB Keyboard
 product APPLE SPEAKERS		0x1101	Speakers
 product APPLE IPHONE		0x1290	iPhone
