@@ -1,4 +1,4 @@
-/*	$NetBSD: mt_misc.c,v 1.7 2008/04/28 20:23:00 martin Exp $	*/
+/*	$NetBSD: mt_misc.c,v 1.8 2010/12/08 02:06:38 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: mt_misc.c,v 1.7 2008/04/28 20:23:00 martin Exp $");
+__RCSID("$NetBSD: mt_misc.c,v 1.8 2010/12/08 02:06:38 joerg Exp $");
 #endif
 
 #include	"namespace.h"
@@ -116,7 +116,6 @@ __rpc_createerr()
 {
 #ifdef _REENTRANT
 	struct rpc_createerr *rce_addr = 0;
-	extern int __isthreaded;
 
 	if (__isthreaded == 0)
 		return (&rpc_createerr);
