@@ -30,8 +30,6 @@
 #ifndef ARRAY_H
 #define ARRAY_H
 
-#include "inlinedefs.h"
-
 #define ARRAYS_CHECKED
 
 #ifdef ARRAYS_CHECKED
@@ -65,7 +63,7 @@ void array_remove(struct array *a, unsigned index_);
 // inlining for base operations
 
 #ifndef ARRAYINLINE
-#define ARRAYINLINE INLINE
+#define ARRAYINLINE __c99inline
 #endif
 
 ARRAYINLINE unsigned
