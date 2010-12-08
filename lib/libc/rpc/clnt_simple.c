@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_simple.c,v 1.29 2006/11/03 23:16:12 christos Exp $	*/
+/*	$NetBSD: clnt_simple.c,v 1.30 2010/12/08 02:06:38 joerg Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)clnt_simple.c 1.49 89/01/31 Copyr 1984 Sun Micro";
 #else
-__RCSID("$NetBSD: clnt_simple.c,v 1.29 2006/11/03 23:16:12 christos Exp $");
+__RCSID("$NetBSD: clnt_simple.c,v 1.30 2010/12/08 02:06:38 joerg Exp $");
 #endif
 #endif
 
@@ -131,7 +131,6 @@ rpc_call(host, prognum, versnum, procnum, inproc, in, outproc, out, nettype)
 	struct rpc_call_private *rcp = (struct rpc_call_private *) 0;
 	enum clnt_stat clnt_stat;
 	struct timeval timeout, tottimeout;
-	extern int __isthreaded;
 
 	_DIAGASSERT(host != NULL);
 	/* XXX: in may be NULL ??? */
