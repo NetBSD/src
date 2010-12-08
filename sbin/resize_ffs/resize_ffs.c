@@ -1,4 +1,4 @@
-/*	$NetBSD: resize_ffs.c,v 1.18 2010/12/07 23:29:55 riz Exp $	*/
+/*	$NetBSD: resize_ffs.c,v 1.19 2010/12/08 00:25:54 riz Exp $	*/
 /* From sources sent on February 17, 2003 */
 /*-
  * As its sole author, I explicitly place this code in the public
@@ -148,6 +148,15 @@ checksmallio(void)
 
 	fstat(fd, &stb);
 	smallio = ((stb.st_mode & S_IFMT) == S_IFCHR);
+}
+
+static int
+isplainfile(void)
+{
+	struct stat stb;
+
+	fstat(fd, &stb);
+	return S_ISREG(stb.st_mode);
 }
 /*
  * Read size bytes starting at blkno into buf.  blkno is in DEV_BSIZE
@@ -1942,6 +1951,8 @@ main(int argc, char **argv)
 	}
 	flush_cgs();
 	write_sbs();
+	if (isplainfile())
+		ftruncate(fd,newsize * DEV_BSIZE);
 	return 0;
 }
 
