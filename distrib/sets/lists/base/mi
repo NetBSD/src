@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.897 2010/12/08 07:20:59 kefren Exp $
+# $NetBSD: mi,v 1.898 2010/12/08 23:56:01 njoly Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -4805,7 +4805,7 @@
 ./var/db/obsolete/games				base-sys-root
 ./var/db/obsolete/man				base-sys-root
 ./var/db/obsolete/misc				base-sys-root
-./var/db/obsolete/tests				base-sys-root
+./var/db/obsolete/tests				base-sys-root		atf
 ./var/db/obsolete/text				base-sys-root
 ./var/db/postfix				base-postfix-root
 ./var/db/xdm					base-sys-root
