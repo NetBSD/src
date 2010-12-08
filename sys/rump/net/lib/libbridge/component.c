@@ -1,9 +1,7 @@
-/*	$NetBSD: component.c,v 1.7 2010/12/08 18:06:43 pooka Exp $	*/
+/*	$NetBSD: component.c,v 1.1 2010/12/08 18:06:43 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
- *
- * Development of this software was supported by The Nokia Foundation
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -28,27 +26,17 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: component.c,v 1.7 2010/12/08 18:06:43 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: component.c,v 1.1 2010/12/08 18:06:43 pooka Exp $");
 
 #include <sys/param.h>
-#include <sys/domain.h>
-#include <sys/protosw.h>
-
-#include <net/if.h>
-#include <net/route.h>
 
 #include "rump_private.h"
 #include "rump_net_private.h"
 
-extern void bridgeattach(int);
+int bridgeattach(int);
 
-RUMP_COMPONENT(RUMP_COMPONENT_NET_ROUTE)
+RUMP_COMPONENT(RUMP_COMPONENT_NET_IF)
 {
-	extern struct domain routedomain, linkdomain;
 
-	ifinit1();
-	ifinit();
-	loopattach(1);
-	DOMAINADD(linkdomain);
-	DOMAINADD(routedomain);
+	bridgeattach(0);
 }

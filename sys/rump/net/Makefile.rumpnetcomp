@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile.rumpnetcomp,v 1.2 2010/12/07 17:23:27 pooka Exp $
+#	$NetBSD: Makefile.rumpnetcomp,v 1.3 2010/12/08 18:06:43 pooka Exp $
 #
 
-RUMPNETCOMP=	net net80211 netbt netinet local shmif virtif
+RUMPNETCOMP=	bridge net net80211 netbt netinet local shmif virtif
 
 RUMPNETSOCKIN=	sockin
 
