@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.15 2010/06/06 12:13:35 skrll Exp $	*/
+/*	$NetBSD: cpu.c,v 1.16 2010/12/08 09:48:27 skrll Exp $	*/
 
 /*	$OpenBSD: cpu.c,v 1.28 2004/12/28 05:18:25 mickey Exp $	*/
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.15 2010/06/06 12:13:35 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.16 2010/12/08 09:48:27 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -152,9 +152,8 @@ cpuattach(device_t parent, device_t self, void *aux)
 
 	/* sanity against luser amongst config editors */
 	if (ca->ca_irq == 31) {
-		sc->sc_ih = hp700_intr_establish(sc->sc_dev, IPL_CLOCK,
-		    clock_intr, NULL /*clockframe*/, &int_reg_cpu,
-		    ca->ca_irq);
+		sc->sc_ih = hp700_intr_establish(IPL_CLOCK, clock_intr,
+		    NULL /*clockframe*/, &int_reg_cpu, ca->ca_irq);
 	} else {
 		aprint_error_dev(self, "bad irq number %d\n", ca->ca_irq);
 	}
