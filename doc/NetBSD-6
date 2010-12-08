@@ -38,6 +38,7 @@ Will be in 6.0
 + automated test framework for testing releng autobuilds
 + full functionality for NPF
 + fixed IPSEC NAT-T
++ GPT-aware bootloader for i386/amd64
 
 Possibly in 6.0
 ---------------
@@ -46,8 +47,6 @@ Possibly in 6.0
 + kernel modules need work
 + Xen suspend/resume - jym working on it
 + TNF funding for release engineering
-+ GPT-aware bootloader for i386/amd64 - seeking volunteer to finish and
-  integrate existing work.
 
 
 Alistair Crooks
