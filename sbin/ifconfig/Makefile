@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.38.2.1 2008/12/06 21:25:44 snj Exp $
+#	$NetBSD: Makefile,v 1.38.2.2 2010/12/08 04:31:41 riz Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/5/93
 
 # when making a change to this file, please check if the change is
@@ -9,7 +9,7 @@
 MAN=	ifconfig.8
 
 WARNS=4
-CFLAGS+=-g
+#CFLAGS+=-g
 SRCS= af_atalk.c af_iso.c af_link.c carp.c
 .if (${USE_INET6} != "no")
 CPPFLAGS+=	-DINET6
