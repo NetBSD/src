@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_generic.c,v 1.23 2008/04/25 17:44:44 christos Exp $	*/
+/*	$NetBSD: rpc_generic.c,v 1.24 2010/12/08 02:06:38 joerg Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: rpc_generic.c,v 1.23 2008/04/25 17:44:44 christos Exp $");
+__RCSID("$NetBSD: rpc_generic.c,v 1.24 2010/12/08 02:06:38 joerg Exp $");
 #endif
 
 #include "namespace.h"
@@ -258,8 +258,6 @@ __rpc_getconfip(nettype)
 	static char *netid_udp_main;
 	struct netconfig *dummy;
 #ifdef _REENTRANT
-	extern int __isthreaded;
-
 	if (__isthreaded == 0) {
 		netid_udp = netid_udp_main;
 		netid_tcp = netid_tcp_main;
