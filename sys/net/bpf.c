@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.158 2010/04/14 13:31:33 pooka Exp $	*/
+/*	$NetBSD: bpf.c,v 1.159 2010/12/08 17:10:13 pooka Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.158 2010/04/14 13:31:33 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.159 2010/12/08 17:10:13 pooka Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_bpf.h"
@@ -1896,37 +1896,39 @@ sysctl_net_bpf_peers(SYSCTLFN_ARGS)
 	return (error);
 }
 
-SYSCTL_SETUP(sysctl_net_bpf_setup, "sysctl net.bpf subtree setup")
+static struct sysctllog *bpf_sysctllog;
+static void
+sysctl_net_bpf_setup(void)
 {
 	const struct sysctlnode *node;
 
-	sysctl_createv(clog, 0, NULL, NULL,
+	sysctl_createv(&bpf_sysctllog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "net", NULL,
 		       NULL, 0, NULL, 0,
 		       CTL_NET, CTL_EOL);
 
 	node = NULL;
-	sysctl_createv(clog, 0, NULL, &node,
+	sysctl_createv(&bpf_sysctllog, 0, NULL, &node,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "bpf",
 		       SYSCTL_DESCR("BPF options"),
 		       NULL, 0, NULL, 0,
 		       CTL_NET, CTL_CREATE, CTL_EOL);
 	if (node != NULL) {
-		sysctl_createv(clog, 0, NULL, NULL,
+		sysctl_createv(&bpf_sysctllog, 0, NULL, NULL,
 			CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 			CTLTYPE_INT, "maxbufsize",
 			SYSCTL_DESCR("Maximum size for data capture buffer"),
 			sysctl_net_bpf_maxbufsize, 0, &bpf_maxbufsize, 0,
 			CTL_NET, node->sysctl_num, CTL_CREATE, CTL_EOL);
-		sysctl_createv(clog, 0, NULL, NULL,
+		sysctl_createv(&bpf_sysctllog, 0, NULL, NULL,
 			CTLFLAG_PERMANENT,
 			CTLTYPE_STRUCT, "stats",
 			SYSCTL_DESCR("BPF stats"),
 			NULL, 0, &bpf_gstats, sizeof(bpf_gstats),
 			CTL_NET, node->sysctl_num, CTL_CREATE, CTL_EOL);
-		sysctl_createv(clog, 0, NULL, NULL,
+		sysctl_createv(&bpf_sysctllog, 0, NULL, NULL,
 			CTLFLAG_PERMANENT,
 			CTLTYPE_STRUCT, "peers",
 			SYSCTL_DESCR("BPF peers"),
@@ -1972,6 +1974,7 @@ bpf_modcmd(modcmd_t cmd, void *arg)
 		bpf_ops_handover_enter(&bpf_ops_kernel);
 		atomic_swap_ptr(&bpf_ops, &bpf_ops_kernel);
 		bpf_ops_handover_exit();
+		sysctl_net_bpf_setup();
 		break;
 
 	case MODULE_CMD_FINI:
@@ -1996,6 +1999,7 @@ bpf_modcmd(modcmd_t cmd, void *arg)
 		 * disable packet capture.
 		 */
 		error = EOPNOTSUPP;
+		/* insert sysctl teardown */
 		break;
 
 	default:
