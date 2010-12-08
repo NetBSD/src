@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs_elf.h,v 1.33 2010/10/12 06:39:48 skrll Exp $	*/
+/*	$NetBSD: cdefs_elf.h,v 1.34 2010/12/08 01:18:55 joerg Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -70,10 +70,16 @@
 #define	__weak_reference(sym)	; __asm(".weak " _C_LABEL_STRING(#sym))
 #endif
 
+#if defined(__clang__)
+#define	__warn_references(sym,msg)					\
+    static __attribute__((__used__, __section__(".gnu.warning." #sym))) \
+    const char ___CONCAT(__warn_reference_##sym,__COUNTER__)[] = msg;
+#else
 #define	__warn_references(sym,msg)					\
     __asm(".pushsection .gnu.warning." #sym "\n"			\
 	  ".ascii \"" msg "\"\n"					\
 	  ".popsection");
+#endif
 
 #else /* !__STDC__ */
 
@@ -100,7 +106,11 @@
 
 #endif /* !__STDC__ */
 
-#if __STDC__
+#if defined(__clang__)
+#define	__SECTIONSTRING(_sec, _str)					\
+	static __attribute__((__used__, __section__(#_sec))) const char \
+	___CONCAT(__sectstr,__COUNTER__)[] = _str
+#elif __STDC__
 #define	__SECTIONSTRING(_sec, _str)					\
 	__asm(".pushsection " #_sec "\n"				\
 	      ".asciz \"" _str "\"\n"					\
