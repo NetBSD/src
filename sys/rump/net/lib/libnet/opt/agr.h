@@ -1,3 +1,3 @@
-/*	$NetBSD: agr.h,v 1.1 2008/10/06 00:27:06 pooka Exp $	*/
+/*	$NetBSD: agr.h,v 1.2 2010/12/08 20:20:17 pooka Exp $	*/
 
-/* dummy */
+#define NAGR 1
