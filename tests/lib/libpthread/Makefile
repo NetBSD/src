@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.3 2010/11/30 18:38:54 joerg Exp $
+# $NetBSD: Makefile,v 1.4 2010/12/08 23:50:14 joerg Exp $
 
 NOMAN=		# defined
 
@@ -6,6 +6,7 @@ NOMAN=		# defined
 
 TESTSDIR=	${TESTSBASE}/lib/libpthread
 LDADD+=		-lpthread
+LDADD.t_fpu+=	-lm
 
 .include "${.PARSEDIR}/../csu/Makefile.check_stack"
 
