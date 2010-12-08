@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.276 2010/12/04 10:01:16 mrg Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.277 2010/12/08 16:18:06 christos Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -139,7 +139,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.276 2010/12/04 10:01:16 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.277 2010/12/08 16:18:06 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1186,7 +1186,7 @@ raidioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		 *  there is no stale data left in the case of a
 		 *  reconfiguration
 		 */
-		memset((char *) raidPtr, 0, sizeof(RF_Raid_t));
+		memset(raidPtr, 0, sizeof(*raidPtr));
 		raidPtr->raidid = unit;
 
 		retcode = rf_Configure(raidPtr, k_cfg, NULL);
@@ -1252,11 +1252,11 @@ raidioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		 */
 		RF_Malloc(clabel, sizeof(*clabel), (RF_ComponentLabel_t *));
 
-		retcode = copyin( *clabel_ptr, clabel,
-				  sizeof(RF_ComponentLabel_t));
+		retcode = copyin(*clabel_ptr, clabel, sizeof(*clabel));
 
 		if (retcode) {
-			return(retcode);
+			RF_Free(clabel, sizeof(*clabel));
+			return retcode;
 		}
 
 		clabel->row = 0; /* Don't allow looking at anything else.*/
@@ -1264,19 +1264,16 @@ raidioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		column = clabel->column;
 
 		if ((column < 0) || (column >= raidPtr->numCol +
-				     raidPtr->numSpare)) {
-			return(EINVAL);
+		    raidPtr->numSpare)) {
+			RF_Free(clabel, sizeof(*clabel));
+			return EINVAL;
 		}
 
 		RF_Free(clabel, sizeof(*clabel));
 
 		clabel = raidget_component_label(raidPtr, column);
 
-		if (retcode == 0) {
-			retcode = copyout(clabel, *clabel_ptr,
-					  sizeof(RF_ComponentLabel_t));
-		}
-		return (retcode);
+		return copyout(clabel, *clabel_ptr, sizeof(**clabel_ptr));
 
 #if 0
 	case RAIDFRAME_SET_COMPONENT_LABEL:
