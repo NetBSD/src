@@ -34,7 +34,7 @@
 #include "krb5/gsskrb5_locl.h"
 
 __RCSID("$Heimdal: display_status.c 19031 2006-11-13 18:02:57Z lha $"
-        "$NetBSD: display_status.c,v 1.1 2008/03/22 09:39:22 mlelstv Exp $");
+        "$NetBSD: display_status.c,v 1.2 2010/12/08 01:45:57 joerg Exp $");
 
 static const char *
 calling_error(OM_uint32 v)
@@ -136,7 +136,7 @@ _gsskrb5_set_status (const char *fmt, ...)
     vasprintf(&str, fmt, args);
     va_end(args);
     if (str) {
-	krb5_set_error_string(context, str);
+	krb5_set_error_string(context, "%s", str);
 	free(str);
     }
 }
