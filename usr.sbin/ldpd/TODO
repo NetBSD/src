@@ -1,0 +1,12 @@
+# $NetBSD: TODO,v 1.1 2010/12/08 07:20:14 kefren Exp $
+
+TODO
+====
+
+* send notifications for every error I encounter - kefren
+* document better Label Distribution (downstream on demand or
+  unsolicited downstream), distribution control (independent or
+  ordered) and retention mode (liberal or conservative) - kefren
+* config/options file
+* future: IPv6 support. Have no infrastructure to test right
+  now - kefren
