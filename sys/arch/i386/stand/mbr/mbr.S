@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.S,v 1.22 2009/11/19 22:10:03 dsl Exp $	*/
+/*	$NetBSD: mbr.S,v 1.23 2010/12/08 21:56:42 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 1999-2004 The NetBSD Foundation, Inc. 
@@ -121,7 +121,7 @@
 	.code16
 /*
  * Move ourselves out of the way first.
- * (to the address we are linked at - 0x600)
+ * (to the address we are linked at)
  * and zero our bss
  */
 ENTRY(start)
