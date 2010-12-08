@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1531 2010/12/07 21:40:09 pooka Exp $
+#	$NetBSD: mi,v 1.1532 2010/12/08 16:38:52 njoly Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3648,6 +3648,7 @@
 ./usr/libdata/debug/usr/sbin/kstash.debug	comp-krb5-debug		kerberos,debug
 ./usr/libdata/debug/usr/sbin/ktutil.debug	comp-krb5-debug		kerberos,debug
 ./usr/libdata/debug/usr/sbin/lastlogin.debug	comp-sysutil-debug	debug
+./usr/libdata/debug/usr/sbin/ldpd.debug		comp-router-debug	debug
 ./usr/libdata/debug/usr/sbin/link.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/lmcconfig.debug	comp-netutil-debug	debug
 ./usr/libdata/debug/usr/sbin/lockstat.debug	comp-sysutil-debug	debug
