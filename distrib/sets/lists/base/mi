@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.896 2010/12/06 21:16:53 mrg Exp $
+# $NetBSD: mi,v 1.897 2010/12/08 07:20:59 kefren Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -1201,6 +1201,7 @@
 ./usr/sbin/ktutil				base-krb5-bin		kerberos
 ./usr/sbin/kvm_mkdb				base-obsolete		obsolete
 ./usr/sbin/lastlogin				base-sysutil-bin
+./usr/sbin/ldpd					base-router-bin
 ./usr/sbin/link					base-sysutil-bin
 ./usr/sbin/linkfarm				base-obsolete		obsolete
 ./usr/sbin/lmcconfig				base-netutil-bin
