@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.kmodule.mk,v 1.24 2010/01/18 23:39:07 jmmv Exp $
+#	$NetBSD: bsd.kmodule.mk,v 1.25 2010/12/08 02:04:13 joerg Exp $
 
 # We are not building this with PIE
 MKPIE=no
@@ -55,7 +55,7 @@ ${OBJS} ${LOBJS}: ${DPSRCS}
 
 ${PROG}: ${OBJS} ${DPADD}
 	${_MKTARGET_LINK}
-	${CC} ${LDFLAGS} -nostdlib -r -Wl,-T,${KMODSCRIPT},-d \
+	${CC} ${LDFLAGS} -nostdlib -Wl,-r -Wl,-T,${KMODSCRIPT},-d \
 		-o ${.TARGET} ${OBJS}
 
 ##### Install rules
