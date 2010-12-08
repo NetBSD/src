@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.x11.mk,v 1.92 2010/11/23 09:49:30 mrg Exp $
+#	$NetBSD: bsd.x11.mk,v 1.93 2010/12/08 01:57:22 joerg Exp $
 
 .include <bsd.init.mk>
 
@@ -173,7 +173,7 @@ CPPFLAGS+=		-D__AMD64__
 .endif
 
 LDFLAGS+=		-Wl,-rpath-link,${DESTDIR}${X11USRLIBDIR} \
-			-R${X11USRLIBDIR} \
+			-Wl,-rpath,${X11USRLIBDIR} \
 			-L${DESTDIR}${X11USRLIBDIR}
 
 
@@ -335,7 +335,7 @@ pkgconfig-install: ${_PKGDEST.${_pkg}}
 		s,@abi_font@,0.6,; \
 		s,@fchown_define@,-DHAS_FCHOWN,; \
 		s,@sticky_bit_define@,-DHAS_STICKY_DIR_BIT," \
-		-e '/^Libs:/ s%-L\([^ 	]*\)%-Wl,-R\1 &%g' \
+		-e '/^Libs:/ s%-L\([^ 	]*\)%-Wl,-rpath,\1 &%g' \
 		< ${.IMPSRC} > ${.TARGET}.tmp && \
 	mv -f ${.TARGET}.tmp ${.TARGET}
 
