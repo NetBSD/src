@@ -1,4 +1,4 @@
-/*	$NetBSD: net_stub.c,v 1.8 2009/01/23 21:57:35 pooka Exp $	*/
+/*	$NetBSD: net_stub.c,v 1.9 2010/12/08 01:22:55 joerg Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: net_stub.c,v 1.8 2009/01/23 21:57:35 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: net_stub.c,v 1.9 2010/12/08 01:22:55 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/protosw.h>
@@ -47,7 +47,6 @@ __rumpnet_stub(void)
 }
 __weak_alias(rtioctl,__rumpnet_stub);
 __weak_alias(rt_walktree,__rumpnet_stub);
-__weak_alias(rtrequest,__rumpnet_stub);
 __weak_alias(rtrequest,__rumpnet_stub);
 __weak_alias(ifioctl,__rumpnet_stub);
 __weak_alias(ifunit,__rumpnet_stub);
