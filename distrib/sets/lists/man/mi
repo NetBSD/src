@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1261 2010/12/06 21:16:54 mrg Exp $
+# $NetBSD: mi,v 1.1262 2010/12/08 07:20:59 kefren Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2297,6 +2297,7 @@
 ./usr/share/man/cat8/kvm_mkdb.0			man-obsolete		obsolete
 ./usr/share/man/cat8/lastlogin.0		man-sysutil-catman	.cat
 ./usr/share/man/cat8/ldconfig.0			man-sysutil-catman	.cat
+./usr/share/man/cat8/ldpd.0			man-router-catman	.cat
 ./usr/share/man/cat8/lfs_cleanerd.0		man-sysutil-catman	.cat
 ./usr/share/man/cat8/link.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/lmcconfig.0		man-sysutil-catman	.cat
@@ -4826,6 +4827,7 @@
 ./usr/share/man/html8/ktutil.html		man-krb5-htmlman	kerberos,html
 ./usr/share/man/html8/lastlogin.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/ldconfig.html		man-sysutil-htmlman	html
+./usr/share/man/html8/ldpd.html			man-router-htmlman	html
 ./usr/share/man/html8/lfs_cleanerd.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/link.html			man-sysutil-htmlman	html
 ./usr/share/man/html8/lmcconfig.html		man-sysutil-htmlman	html
@@ -7507,6 +7509,7 @@
 ./usr/share/man/man8/kvm_mkdb.8			man-obsolete		obsolete
 ./usr/share/man/man8/lastlogin.8		man-sysutil-man		.man
 ./usr/share/man/man8/ldconfig.8			man-sysutil-man		.man
+./usr/share/man/man8/ldpd.8			man-router-man		.man
 ./usr/share/man/man8/lfs_cleanerd.8		man-sysutil-man		.man
 ./usr/share/man/man8/link.8			man-sysutil-man		.man
 ./usr/share/man/man8/lmcconfig.8		man-sysutil-man		.man
