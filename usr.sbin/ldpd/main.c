@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.1 2010/12/08 07:20:14 kefren Exp $ */
+/* $NetBSD: main.c,v 1.2 2010/12/08 09:43:28 wiz Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@ extern	struct sockaddr	mplssockaddr;
 
 void print_usage(char *myself)
 {
-	printf("\nUsage: %s [-hdDW] [-p PORT]\n\n", myself);
+	printf("\nUsage: %s [-DdfhW] [-p PORT]\n\n", myself);
 }
 
 int 
@@ -70,11 +70,11 @@ main(int argc, char *argv[])
 
 	while((ch = getopt(argc, argv, "dDfhp:W")) != -1)
 		switch(ch) {
-		case 'd':
-			dont_catch = 1;
-			break;
 		case 'D':
 			debug_f = 1;
+			break;
+		case 'd':
+			dont_catch = 1;
 			break;
 		case 'f':
 			dontfork = 1;
