@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsys_events.c,v 1.94 2010/12/06 23:26:44 pgoyette Exp $ */
+/* $NetBSD: sysmon_envsys_events.c,v 1.95 2010/12/08 00:09:14 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.94 2010/12/06 23:26:44 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.95 2010/12/08 00:09:14 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -151,29 +151,28 @@ sme_event_register(prop_dictionary_t sdict, envsys_data_t *edata,
 		    __func__, sme->sme_name, edata->desc, crittype));
 
 		see = osee;
-		if (props & (PROP_CRITMAX | PROP_BATTMAX)) {
+		if (props & edata->upropset & (PROP_CRITMAX | PROP_BATTMAX)) {
 			if (lims->sel_critmax == edata->limits.sel_critmax) {
-				DPRINTF(("%s: type=%d (critmax exists)\n",
-				    __func__, crittype));
+				DPRINTF(("%s: critmax exists\n", __func__));
 				error = EEXIST;
 				props &= ~(PROP_CRITMAX | PROP_BATTMAX);
 			}
 		}
-		if (props & (PROP_WARNMAX | PROP_BATTHIGH)) {
+		if (props & edata->upropset & (PROP_WARNMAX | PROP_BATTHIGH)) {
 			if (lims->sel_warnmax == edata->limits.sel_warnmax) {
 				DPRINTF(("%s: warnmax exists\n", __func__));
 				error = EEXIST;
 				props &= ~(PROP_WARNMAX | PROP_BATTHIGH);
 			}
 		}
-		if (props & (PROP_WARNMIN | PROP_BATTWARN)) {
+		if (props & edata->upropset & (PROP_WARNMIN | PROP_BATTWARN)) {
 			if (lims->sel_warnmin == edata->limits.sel_warnmin) {
 				DPRINTF(("%s: warnmin exists\n", __func__));
 				error = EEXIST;
 				props &= ~(PROP_WARNMIN | PROP_BATTWARN);
 			}
 		}
-		if (props & (PROP_CRITMIN | PROP_BATTCAP)) {
+		if (props & edata->upropset & (PROP_CRITMIN | PROP_BATTCAP)) {
 			if (lims->sel_critmin == edata->limits.sel_critmin) {
 				DPRINTF(("%s: critmin exists\n", __func__));
 				error = EEXIST;
