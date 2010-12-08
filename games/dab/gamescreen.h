@@ -1,4 +1,4 @@
-/*	$NetBSD: gamescreen.h,v 1.2 2008/04/28 20:22:54 martin Exp $	*/
+/*	$NetBSD: gamescreen.h,v 1.3 2010/12/08 17:08:07 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -63,9 +63,9 @@ class GAMESCREEN {
     virtual void redraw(void) = 0;			// Refresh
     virtual int getinput(void) = 0;			// Get user input
     virtual void bell(void) = 0;			// Beep
-    virtual void score(size_t p, const PLAYER& p) = 0;	// Post current score
-    virtual void games(size_t p, const PLAYER& p) = 0;	// Post games won
-    virtual void total(size_t p, const PLAYER& p) = 0;	// Post total score
+    virtual void score(size_t l, const PLAYER& p) = 0;	// Post current score
+    virtual void games(size_t l, const PLAYER& p) = 0;	// Post games won
+    virtual void total(size_t l, const PLAYER& p) = 0;	// Post total score
     virtual void ties(const PLAYER& p) = 0;		// Post tie games
 };
 
