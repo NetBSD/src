@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 2010/04/27 03:01:25 dyoung Exp $
+#	$NetBSD: Makefile,v 1.18 2010/12/08 23:56:02 njoly Exp $
 
 .include <bsd.own.mk>
 
@@ -12,6 +12,10 @@ EXTRA_DIST_FILES=	${.CURDIR}/NetBSD.dist.XFree86
 
 .if exists(NetBSD.dist.${MACHINE_ARCH})
 EXTRA_DIST_FILES+=	${.CURDIR}/NetBSD.dist.${MACHINE_ARCH}
+.endif
+
+.if ${MKATF} != "no"
+EXTRA_DIST_FILES+=	${.CURDIR}/NetBSD.dist.tests
 .endif
 
 .if ${MKEXTSRC} != "no"
