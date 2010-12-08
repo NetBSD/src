@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_soc.c,v 1.12 2005/11/29 03:12:00 christos Exp $	*/
+/*	$NetBSD: rpc_soc.c,v 1.13 2010/12/08 02:06:38 joerg Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)rpc_soc.c 1.41 89/05/02 Copyr 1988 Sun Micro";
 #else
-__RCSID("$NetBSD: rpc_soc.c,v 1.12 2005/11/29 03:12:00 christos Exp $");
+__RCSID("$NetBSD: rpc_soc.c,v 1.13 2010/12/08 02:06:38 joerg Exp $");
 #endif
 #endif
 
@@ -395,9 +395,6 @@ rpc_wrap_bcast(resultp, addr, nconf)
 	struct netconfig *nconf; /* Netconf of the transport */
 {
 	resultproc_t clnt_broadcast_result;
-#ifdef _REENTRANT
-	extern int __isthreaded;
-#endif
 
 	_DIAGASSERT(resultp != NULL);
 	_DIAGASSERT(addr != NULL);
@@ -443,8 +440,6 @@ clnt_broadcast(prog, vers, proc, xargs, argsp, xresults, resultsp, eachresult)
 	resultproc_t	eachresult;	/* call with each result obtained */
 {
 #ifdef _REENTRANT
-	extern int __isthreaded;
-
 	if (__isthreaded == 0)
 		clnt_broadcast_result_main = eachresult;
 	else {
