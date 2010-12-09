@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm.h,v 1.58 2010/04/25 15:54:14 ad Exp $	*/
+/*	$NetBSD: uvm.h,v 1.59 2010/12/09 01:48:05 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -67,6 +67,7 @@
 #include "opt_lockdebug.h"
 #include "opt_multiprocessor.h"
 #include "opt_uvmhist.h"
+#include "opt_uvm_page_trkown.h"
 #endif
 
 #include <uvm/uvm_extern.h>
