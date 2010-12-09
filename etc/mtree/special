@@ -1,4 +1,4 @@
-#	$NetBSD: special,v 1.121.2.3 2009/09/18 02:01:38 snj Exp $
+#	$NetBSD: special,v 1.121.2.4 2010/12/09 04:17:22 riz Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
 # This file may be overwritten on upgrades.
@@ -285,8 +285,8 @@
 ./etc/rc.d/wpa_supplicant	type=file mode=0555
 ./etc/rc.d/wscons		type=file mode=0555
 ./etc/rc.d/wsmoused		type=file mode=0555
-./etc/rc.d/xdm			type=file mode=0555
-./etc/rc.d/xfs			type=file mode=0555
+./etc/rc.d/xdm			type=file mode=0555 optional
+./etc/rc.d/xfs			type=file mode=0555 optional
 ./etc/rc.d/ypbind		type=file mode=0555
 ./etc/rc.d/yppasswdd		type=file mode=0555
 ./etc/rc.d/ypserv		type=file mode=0555
