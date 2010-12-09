@@ -1,4 +1,4 @@
-.\"	$NetBSD: ctime.3,v 1.34 2010/10/27 19:18:00 wiz Exp $
+.\"	$NetBSD: ctime.3,v 1.35 2010/12/09 09:22:31 njoly Exp $
 .Dd October 27, 2010
 .Dt CTIME 3
 .Os
@@ -18,7 +18,7 @@
 .Lb libc
 .Sh SYNOPSIS
 .In time.h
-.Dv extern char *tzname[2];
+.Vt extern char *tzname[2];
 .Ft char *
 .Fn ctime "const time_t *clock"
 .Ft char *
@@ -42,7 +42,7 @@
 .Sh DESCRIPTION
 .Fn ctime
 converts a
-.Tp time_t ,
+.Vt time_t ,
 pointed to by
 .Fa clock ,
 representing the time in seconds since
@@ -235,7 +235,7 @@ is set to indicate the error.
 The
 .Fn mktime
 function returns the specified time since the Epoch as a
-.Va time_t
+.Vt time_t
 type value.
 If the time cannot be represented, then
 .Fn mktime
