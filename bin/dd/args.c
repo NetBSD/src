@@ -1,4 +1,4 @@
-/*	$NetBSD: args.c,v 1.28 2010/12/05 23:35:59 jym Exp $	*/
+/*	$NetBSD: args.c,v 1.29 2010/12/09 10:24:56 enami Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)args.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: args.c,v 1.28 2010/12/05 23:35:59 jym Exp $");
+__RCSID("$NetBSD: args.c,v 1.29 2010/12/09 10:24:56 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -382,7 +382,8 @@ f_conv(char *arg)
 			/* NOTREACHED */
 		}
 		if (ddflags & cp->noset) {
-			errx(EXIT_FAILURE, "%s: illegal conversion combination", tmp.name);
+			errx(EXIT_FAILURE,
+			    "%s: illegal conversion combination", tmp.name);
 			/* NOTREACHED */
 		}
 		ddflags |= cp->set;
