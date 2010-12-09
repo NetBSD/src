@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.48 2010/11/28 08:23:22 hannken Exp $	*/
+/*	$NetBSD: fd.c,v 1.49 2010/12/09 05:14:28 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.48 2010/11/28 08:23:22 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.49 2010/12/09 05:14:28 uebayasi Exp $");
 
 #include "opt_ddb.h"
 
@@ -1452,7 +1452,7 @@ fdformat(dev_t dev, struct ne7_fd_formb *finfo, struct lwp *l)
 	bp->b_data = (void *)finfo;
 
 #ifdef DEBUG
-	printf("fdformat: blkno %llx count %lx\n",
+	printf("fdformat: blkno %llx count %x\n",
 	    (unsigned long long)bp->b_blkno, bp->b_bcount);
 #endif
 
