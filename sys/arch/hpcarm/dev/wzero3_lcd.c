@@ -1,4 +1,4 @@
-/*	$NetBSD: wzero3_lcd.c,v 1.1 2010/04/17 13:36:21 nonaka Exp $	*/
+/*	$NetBSD: wzero3_lcd.c,v 1.2 2010/12/09 04:37:04 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2008,2009 NONAKA Kimihiro <nonaka@netbsd.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wzero3_lcd.c,v 1.1 2010/04/17 13:36:21 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wzero3_lcd.c,v 1.2 2010/12/09 04:37:04 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -450,18 +450,18 @@ wzero3lcd_param(struct pxa2x0_lcd_softc *sc, u_long cmd, struct wsdisplay_param 
 	switch (dp->param) {
 	case WSDISPLAYIO_PARAM_BACKLIGHT:
 		/* unsupported */
-		DPRINTF(("%s: ioctl(WSDISPLAYIO_PARAM_BACKLIGHT) isn't supported\n", device_xname(&sc->dev)));
+		DPRINTF(("%s: ioctl(WSDISPLAYIO_PARAM_BACKLIGHT) isn't supported\n", device_xname(sc->dev)));
 		res = ENOTTY;
 		break;
 
 	case WSDISPLAYIO_PARAM_CONTRAST:
-		DPRINTF(("%s: ioctl(WSDISPLAYIO_PARAM_CONTRAST) isn't supported\n", device_xname(&sc->dev)));
+		DPRINTF(("%s: ioctl(WSDISPLAYIO_PARAM_CONTRAST) isn't supported\n", device_xname(sc->dev)));
 		/* unsupported */
 		res = ENOTTY;
 		break;
 
 	case WSDISPLAYIO_PARAM_BRIGHTNESS:
-		DPRINTF(("%s: ioctl(WSDISPLAYIO_PARAM_BRIGHTNESS) isn't supported\n", device_xname(&sc->dev)));
+		DPRINTF(("%s: ioctl(WSDISPLAYIO_PARAM_BRIGHTNESS) isn't supported\n", device_xname(sc->dev)));
 		/* unsupported */
 		res = ENOTTY;
 	}

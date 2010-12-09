@@ -1,4 +1,4 @@
-/*	$NetBSD: ds17485.c,v 1.6 2008/04/28 20:23:17 martin Exp $	*/
+/*	$NetBSD: ds17485.c,v 1.7 2010/12/09 04:31:57 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -150,7 +150,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ds17485.c,v 1.6 2008/04/28 20:23:17 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ds17485.c,v 1.7 2010/12/09 04:31:57 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -201,9 +201,6 @@ rtc_attach(device_t parent, device_t self, void *aux)
 	}
 
 	rtc_attached = 1;
-#ifdef DEBUG
-	rtc_print();
-#endif
 	rtc_write(sc, MC_REGA, MC_BASE_32_KHz | MC_RATE_1024_Hz);
 	rtc_write(sc, MC_REGB, MC_REGB_24HR);
 
