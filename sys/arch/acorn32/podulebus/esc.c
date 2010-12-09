@@ -1,4 +1,4 @@
-/*	$NetBSD: esc.c,v 1.23 2009/05/16 16:40:58 cegger Exp $	*/
+/*	$NetBSD: esc.c,v 1.24 2010/12/09 05:14:48 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esc.c,v 1.23 2009/05/16 16:40:58 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esc.c,v 1.24 2010/12/09 05:14:48 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -144,6 +144,7 @@ int esc_postaction(struct esc_softc *, esc_regmap_p, struct nexus *);
 u_char	esc_inhibit_sync[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
 u_char	esc_inhibit_disc[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
 
+#undef DEBUG
 #define DEBUG
 #ifdef DEBUG
 #define QPRINTF(a) if (esc_debug > 1) printf a

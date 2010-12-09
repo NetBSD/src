@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.14 2008/04/28 20:23:10 martin Exp $	*/
+/*	$NetBSD: bus.h,v 1.15 2010/12/09 05:15:06 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@
 #define	__BUS_SPACE_ADDRESS_SANITY(p, t, d)				\
 ({									\
 	if (__BUS_SPACE_ALIGNED_ADDRESS((p), t) == 0) {			\
-		printf("%s 0x%lx not aligned to %lu bytes %s:%d\n",	\
+		printf("%s 0x%lx not aligned to %zu bytes %s:%d\n",	\
 		    d, (u_long)(p), sizeof(t), __FILE__, __LINE__);	\
 	}								\
 	(void) 0;							\
