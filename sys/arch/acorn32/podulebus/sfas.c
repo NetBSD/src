@@ -1,4 +1,4 @@
-/*	$NetBSD: sfas.c,v 1.20 2009/05/16 16:40:58 cegger Exp $	*/
+/*	$NetBSD: sfas.c,v 1.21 2010/12/09 05:14:48 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sfas.c,v 1.20 2009/05/16 16:40:58 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sfas.c,v 1.21 2010/12/09 05:14:48 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -137,6 +137,7 @@ int sfas_postaction(struct sfas_softc *, sfas_regmap_p, struct nexus *);
 u_char	sfas_inhibit_sync[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
 u_char	sfas_inhibit_disc[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
 
+#undef DEBUG
 #define DEBUG
 #ifdef DEBUG
 #define QPRINTF(a) if (sfas_debug > 1) printf a
