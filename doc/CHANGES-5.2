@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.2,v 1.1.2.35 2010/12/08 04:36:02 riz Exp $
+# $NetBSD: CHANGES-5.2,v 1.1.2.36 2010/12/09 04:18:20 riz Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -908,4 +908,19 @@ usr.bin/xlint/lint1/Makefile			1.41
 
 	Comment out CFLAGS+=-g.
 	[uwe, ticket #1491]
+
+sys/net/if_tap.c				1.66
+
+	Make tap_dev_ioctl() properly return an error.  PR#44131.
+	[christos, ticket #1492]
+
+lib/libc/rpc/xdr_rec.c				1.31 via patch
+
+	Don't overwrite not-allocated memory.  PR#44132.
+	[dholland, ticket #1493]
+
+etc/mtree/special				1.132
+
+	Add "optional" keyword to rc.d/xdm and rc.d/xfs. PR#43307.
+	[uwe, ticket #1494]
 
