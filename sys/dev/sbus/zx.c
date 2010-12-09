@@ -1,4 +1,4 @@
-/*	$NetBSD: zx.c,v 1.37 2010/11/13 13:52:10 uebayasi Exp $	*/
+/*	$NetBSD: zx.c,v 1.38 2010/12/09 04:35:36 uebayasi Exp $	*/
 
 /*
  *  Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zx.c,v 1.37 2010/11/13 13:52:10 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zx.c,v 1.38 2010/12/09 04:35:36 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,6 +57,11 @@ __KERNEL_RCSID(0, "$NetBSD: zx.c,v 1.37 2010/11/13 13:52:10 uebayasi Exp $");
 #include <sys/conf.h>
 #include <sys/syslog.h>
 #include <sys/buf.h>
+#ifdef DEBUG
+/* for log(9) in zxioctl() */
+#include <sys/lwp.h>
+#include <sys/proc.h>
+#endif
 
 #include <sys/bus.h>
 #include <machine/autoconf.h>
