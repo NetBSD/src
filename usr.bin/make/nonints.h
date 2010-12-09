@@ -1,4 +1,4 @@
-/*	$NetBSD: nonints.h,v 1.60 2010/08/07 06:44:08 sjg Exp $	*/
+/*	$NetBSD: nonints.h,v 1.61 2010/12/09 22:30:17 sjg Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -124,6 +124,7 @@ int PrintAddr(void *, void *);
 void Finish(int);
 int eunlink(const char *);
 void execError(const char *, const char *);
+char *getTmpdir(void);
 
 /* parse.c */
 void Parse_Error(int, const char *, ...)

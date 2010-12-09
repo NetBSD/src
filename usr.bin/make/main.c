@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.190 2010/09/13 15:36:57 sjg Exp $	*/
+/*	$NetBSD: main.c,v 1.191 2010/12/09 22:30:16 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,7 +69,7 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: main.c,v 1.190 2010/09/13 15:36:57 sjg Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.191 2010/12/09 22:30:16 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.190 2010/09/13 15:36:57 sjg Exp $");
+__RCSID("$NetBSD: main.c,v 1.191 2010/12/09 22:30:16 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1966,20 +1966,10 @@ Main_ExportMAKEFLAGS(Boolean first)
     }
 }
 
-/*
- * Create and open a temp file using "pattern".
- * If "fnamep" is provided set it to a copy of the filename created.
- * Otherwise unlink the file once open.
- */
-int
-mkTempFile(const char *pattern, char **fnamep)
+char *
+getTmpdir(void)
 {
     static char *tmpdir = NULL;
-    char tfile[MAXPATHLEN];
-    int fd;
-    
-    if (!pattern)
-	pattern = TMPPAT;
 
     if (!tmpdir) {
 	struct stat st;
@@ -1994,6 +1984,25 @@ mkTempFile(const char *pattern, char **fnamep)
 	    tmpdir = bmake_strdup(_PATH_TMP);
 	}
     }
+    return tmpdir;
+}
+
+/*
+ * Create and open a temp file using "pattern".
+ * If "fnamep" is provided set it to a copy of the filename created.
+ * Otherwise unlink the file once open.
+ */
+int
+mkTempFile(const char *pattern, char **fnamep)
+{
+    static char *tmpdir = NULL;
+    char tfile[MAXPATHLEN];
+    int fd;
+    
+    if (!pattern)
+	pattern = TMPPAT;
+    if (!tmpdir)
+	tmpdir = getTmpdir();
     if (pattern[0] == '/') {
 	snprintf(tfile, sizeof(tfile), "%s", pattern);
     } else {
