@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bnx.c,v 1.35 2010/11/27 17:48:58 jym Exp $	*/
+/*	$NetBSD: if_bnx.c,v 1.36 2010/12/09 22:34:37 jym Exp $	*/
 /*	$OpenBSD: if_bnx.c,v 1.85 2009/11/09 14:32:41 dlg Exp $ */
 
 /*-
@@ -35,7 +35,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/sys/dev/bce/if_bce.c,v 1.3 2006/04/13 14:12:26 ru Exp $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.35 2010/11/27 17:48:58 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.36 2010/12/09 22:34:37 jym Exp $");
 
 /*
  * The following controllers are supported by this driver:
@@ -60,6 +60,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.35 2010/11/27 17:48:58 jym Exp $");
 #include <sys/mutex.h>
 
 #include <dev/pci/if_bnxreg.h>
+#include <dev/pci/if_bnxvar.h>
+
 #include <dev/microcode/bnx/bnxfw.h>
 
 /****************************************************************************/
