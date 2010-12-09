@@ -1,4 +1,4 @@
-/* $NetBSD: mpls_routes.c,v 1.1 2010/12/08 07:20:15 kefren Exp $ */
+/* $NetBSD: mpls_routes.c,v 1.2 2010/12/09 00:10:59 christos Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -158,14 +158,12 @@ make_inet_union(char *s)
 {
 	union sockunion *so_inet;
 
-	so_inet = (union sockunion *) malloc(sizeof(union sockunion));
+	so_inet = calloc(1, sizeof(*so_inet));
 
 	if (!so_inet) {
 		fatalp("make_inet_union: malloc problem\n");
 		return NULL;
-		}
-
-	memset(so_inet, 0, sizeof(union sockunion));
+	}
 
 	so_inet->sin.sin_len = sizeof(struct sockaddr_in);
 	so_inet->sin.sin_family = AF_INET;
@@ -180,14 +178,12 @@ make_mpls_union(uint32_t label)
 {
 	union sockunion *so_mpls;
 
-	so_mpls = (union sockunion *) malloc(sizeof(union sockunion));
+	so_mpls = calloc(1, sizeof(*so_mpls));
 
 	if (!so_mpls) {
 		fatalp("make_mpls_union: malloc problem\n");
 		return NULL;
-		}
-
-	memset(so_mpls, 0, sizeof(union sockunion));
+	}
 
 	so_mpls->smpls.smpls_len = sizeof(struct sockaddr_mpls);
 	so_mpls->smpls.smpls_family = AF_MPLS;
@@ -218,15 +214,12 @@ from_cidr_to_union(uint8_t prefixlen)
 	*m = (*m >> (32 - prefixlen) ) << (32 - prefixlen);
 	*m = ntohl(*m);
 
-	u = (union sockunion *) malloc(sizeof(union sockunion));
+	u = calloc(1, sizeof(*u));
 
 	if (!u) {
 		fatalp("from_cidr_to_union: malloc problem\n");
 		return NULL;
 	}
-
-	memset (u, 0, sizeof(union sockunion));
-
 	u->sin.sin_len = sizeof(struct sockaddr_in);
 	u->sin.sin_family = AF_INET;
 	u->sin.sin_addr.s_addr = *m;
@@ -848,8 +841,10 @@ flush_mpls_routes()
 		fatalp("route-sysctl-estimate: %s", strerror(errno));
 		return LDP_E_ROUTE_ERROR;
 	}
-	if ((buf = malloc(needed)) == 0)
-		return LDP_E_ROUTE_ERROR;
+	if ((buf = malloc(needed)) == NULL) {
+		fatalp("route-sysctl-estimate: %s", strerror(errno));
+		return LDP_E_MEMORY;
+	}
 	if (sysctl(mib, 6, buf, &needed, NULL, 0) < 0) {
 		free(buf);
 		return LDP_E_ROUTE_ERROR;

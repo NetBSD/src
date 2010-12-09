@@ -1,4 +1,4 @@
-/* $NetBSD: tlv_stack.c,v 1.1 2010/12/08 07:20:15 kefren Exp $ */
+/* $NetBSD: tlv_stack.c,v 1.2 2010/12/09 00:10:59 christos Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -217,7 +217,7 @@ send_label_tlv(struct ldp_peer * peer, struct in_addr * addr,
 	 * Got it ?
 	 */
 
-	lmt = (struct label_map_tlv *) malloc(
+	lmt = malloc(
 		sizeof(struct label_map_tlv) +
 		sizeof(struct fec_tlv) +
 		sizeof(struct prefix_tlv) - sizeof(struct in_addr) +
@@ -229,7 +229,7 @@ send_label_tlv(struct ldp_peer * peer, struct in_addr * addr,
 	if (!lmt) {
 		fatalp("send_label_tlv: malloc problem\n");
 		return;
-		}
+	}
 
 	lmt->type = htons(LDP_LABEL_MAPPING);
 	lmt->length = htons(sizeof(struct label_map_tlv) - TLV_TYPE_LENGTH
@@ -314,7 +314,7 @@ send_withdraw_tlv(struct ldp_peer * peer, struct in_addr * addr,
 	 * network. Yes, we don't have to announce label here
 	 */
 
-	lmt = (struct label_map_tlv *) malloc(sizeof(struct label_map_tlv)
+	lmt = malloc(sizeof(struct label_map_tlv)
 	      + sizeof(struct fec_tlv)
 	      + sizeof(struct prefix_tlv) - sizeof(struct in_addr) +
 			ldp_ceil8(prefixlen));

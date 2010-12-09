@@ -1,4 +1,4 @@
-/* $NetBSD: label.c,v 1.1 2010/12/08 07:20:14 kefren Exp $ */
+/* $NetBSD: label.c,v 1.2 2010/12/09 00:10:59 christos Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -58,13 +58,12 @@ label_add(union sockunion * so_dest, union sockunion * so_pref,
 	struct label   *l;
 	char	spreftmp[INET_ADDRSTRLEN];
 
-	l = (struct label *) malloc(sizeof(struct label));
-	memset(l, 0, sizeof(struct label));
+	l = calloc(1, sizeof(*l));
 
 	if (!l) {
 		fatalp("label_add: malloc problem\n");
 		return NULL;
-		}
+	}
 
 	assert(so_dest);
 	assert(so_pref);

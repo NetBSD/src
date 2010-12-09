@@ -1,4 +1,4 @@
-/* $NetBSD: ldp_peer.c,v 1.1 2010/12/08 07:20:14 kefren Exp $ */
+/* $NetBSD: ldp_peer.c,v 1.2 2010/12/09 00:10:59 christos Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -87,14 +87,13 @@ ldp_peer_new(struct in_addr * ldp_id, struct in_addr * a,
 	}
 
 	/* Set the peer in CONNECTING/CONNECTED state */
-	p = (struct ldp_peer *) malloc(sizeof(struct ldp_peer));
+	p = calloc(1, sizeof(*p));
 
 	if (!p) {
 		fatalp("ldp_peer_new: malloc problem\n");
 		return NULL;
-		}
+	}
 
-	memset(p, 0, sizeof(struct ldp_peer));
 	SLIST_INSERT_HEAD(&ldp_peer_head, p, peers);
 	memcpy(&p->address, a, sizeof(struct in_addr));
 	memcpy(&p->ldp_id, ldp_id, sizeof(struct in_addr));
@@ -282,14 +281,12 @@ add_ifaddr(struct ldp_peer * p, struct in_addr * a)
 	if (check_ifaddr(p, a))
 		return LDP_E_ALREADY_DONE;
 
-	lpa = (struct ldp_peer_address*)malloc(sizeof(struct ldp_peer_address));
+	lpa = calloc(1, sizeof(*lpa));
 
 	if (!lpa) {
 		fatalp("add_ifaddr: malloc problem\n");
 		return LDP_E_MEMORY;
-		}
-
-	memset(lpa, 0, sizeof(struct ldp_peer_address));
+	}
 
 	memcpy(&lpa->address, a, sizeof(struct in_addr));
 
@@ -355,8 +352,7 @@ print_bounded_addresses(struct ldp_peer * p)
 void 
 add_my_if_addrs(struct in_addr * a, int count)
 {
-	myaddresses = (struct in_addr *) malloc((count + 1) *
-	    (sizeof(struct in_addr)));
+	myaddresses = calloc((count + 1), sizeof(*myaddresses));
 
 	if (!myaddresses) {
 		fatalp("add_my_if_addrs: malloc problem\n");
@@ -378,7 +374,7 @@ ldp_peer_add_mapping(struct ldp_peer * p, struct in_addr * a, int prefix,
 	if (ldp_peer_get_lm(p, a, prefix))
 		return LDP_E_ALREADY_DONE;
 
-	lma = (struct label_mapping *) malloc(sizeof(struct label_mapping));
+	lma = malloc(sizeof(*lma));
 
 	if (!lma) {
 		fatalp("ldp_peer_add_mapping: malloc problem\n");
@@ -468,7 +464,7 @@ ldp_test_mapping(struct in_addr * a, int prefix, struct in_addr * gate)
 		debugp("Cannot match that prefix to the specified peer\n");
 		return NULL;
 	}
-	rv = (struct peer_map *) malloc(sizeof(struct peer_map));
+	rv = malloc(sizeof(*rv));
 
 	if (!rv) {
 		fatalp("ldp_test_mapping: malloc problem\n");

@@ -1,4 +1,4 @@
-/* $NetBSD: fsm.c,v 1.1 2010/12/08 07:20:14 kefren Exp $ */
+/* $NetBSD: fsm.c,v 1.2 2010/12/09 00:10:59 christos Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@ run_ldp_hello(struct ldp_pdu * pduid, struct hello_tlv * ht,
 		if (hi->ldp_id.s_addr == pduid->ldp_id.s_addr)
 			break;
 	if (hi == NULL) {
-		hi = (struct hello_info *)malloc(sizeof(struct hello_info));
+		hi = malloc(sizeof(*hi));
 		if (!hi) {
 			fatalp("Cannot alloc a hello info");
 			return;
@@ -145,13 +145,12 @@ build_address_list_tlv(void)
 			if (sa->sin_addr.s_addr << 24 >> 24 != 127)
 				adrcount++;
 		}
-	t = (struct address_list_tlv *) malloc(sizeof(struct address_list_tlv)
-				 + (adrcount - 1) * sizeof(struct in_addr));
+	t = malloc(sizeof(*t) + (adrcount - 1) * sizeof(struct in_addr));
 
 	if (!t) {
 		fatalp("build_address_list_tlv: malloc problem\n");
 		return NULL;
-		}
+	}
 
 	t->type = htons(LDP_ADDRESS);
 	t->length = htons(sizeof(struct address_list_tlv) - TLV_TYPE_LENGTH
