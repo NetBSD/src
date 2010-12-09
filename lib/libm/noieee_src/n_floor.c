@@ -1,4 +1,4 @@
-/*      $NetBSD: n_floor.c,v 1.6 2004/05/13 20:35:40 mhitch Exp $ */
+/*      $NetBSD: n_floor.c,v 1.7 2010/12/09 22:52:59 abs Exp $ */
 /*
  * Copyright (c) 1985, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -144,3 +144,75 @@ rint(double x)
 	return (t - s);
 }
 #endif	/* not national */
+
+long
+lrint(double x)
+{
+	double s;
+	volatile double t;
+	const double one = 1.0;
+
+#if !defined(__vax__)&&!defined(tahoe)
+	if (x != x)				/* NaN */
+		return (x);
+#endif	/* !defined(__vax__)&&!defined(tahoe) */
+	if (copysign(x,one) >= L)		/* already an integer */
+	    return (x);
+	s = copysign(L,x);
+	t = x + s;				/* x+s rounded to integer */
+	return (t - s);
+}
+
+long long
+llrint(double x)
+{
+	double s;
+	volatile double t;
+	const double one = 1.0;
+
+#if !defined(__vax__)&&!defined(tahoe)
+	if (x != x)				/* NaN */
+		return (x);
+#endif	/* !defined(__vax__)&&!defined(tahoe) */
+	if (copysign(x,one) >= L)		/* already an integer */
+	    return (x);
+	s = copysign(L,x);
+	t = x + s;				/* x+s rounded to integer */
+	return (t - s);
+}
+
+long
+lrintf(float x)
+{
+	float s;
+	volatile float t;
+	const float one = 1.0;
+
+#if !defined(__vax__)&&!defined(tahoe)
+	if (x != x)				/* NaN */
+		return (x);
+#endif	/* !defined(__vax__)&&!defined(tahoe) */
+	if (copysign(x,one) >= L)		/* already an integer */
+	    return (x);
+	s = copysign(L,x);
+	t = x + s;				/* x+s rounded to integer */
+	return (t - s);
+}
+
+long long
+llrintf(float x)
+{
+	float s;
+	volatile float t;
+	const float one = 1.0;
+
+#if !defined(__vax__)&&!defined(tahoe)
+	if (x != x)				/* NaN */
+		return (x);
+#endif	/* !defined(__vax__)&&!defined(tahoe) */
+	if (copysign(x,one) >= L)		/* already an integer */
+	    return (x);
+	s = copysign(L,x);
+	t = x + s;				/* x+s rounded to integer */
+	return (t - s);
+}
