@@ -1,4 +1,4 @@
-# $NetBSD: t_shrink.sh,v 1.1 2010/12/09 05:19:02 riz Exp $
+# $NetBSD: t_shrink.sh,v 1.2 2010/12/09 17:28:05 riz Exp $
 #
 # Copyright (c) 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -82,6 +82,9 @@ shrink_ffs()
 # created fs.  'level' is the fs-level (-O 0,1,2) passed to newfs.
 # If 'swap' is included, byteswap the fs
 test_case shrink_24M_16M_v1_4096 shrink_ffs 4096 512 49152 32768 1 41
+test_case_xfail shrink_24M_16M_v1_4096_swapped "PR bin/44203" shrink_ffs 4096 512 49152 32768 1 41 swap
+test_case_xfail shrink_24M_16M_v2_4096 "PR bin/44205" shrink_ffs 4096 512 49152 32768 2 41 swap
+test_case_xfail shrink_24M_16M_v2_4096_swapped "PR bin/44203, PR bin/44205" shrink_ffs 4096 512 49152 32768 2 41 swap
 test_case shrink_24M_16M_v1_8192 shrink_ffs 8192 1024 49152 32768 1 42
 test_case shrink_24M_16M_v1_16384 shrink_ffs 16384 2048 49152 32768 1 43
 test_case shrink_24M_16M_v1_32768 shrink_ffs 32768 4096 49152 32768 1 42
@@ -104,7 +107,7 @@ test_case_xfail shrink_64M_48M_v1_32768 "PR bin/44209" shrink_ffs 32768 4096 131
 test_case shrink_64M_48M_v1_65536 shrink_ffs 65536 8192 131072 98304 1 101
 test_case_xfail shrink_64M_48M_v1_65536_swapped "PR bin/44203" shrink_ffs 65536 8192 131072 98304 1 101 swap
 test_case_xfail shrink_64M_48M_v2_65536 "PR bin/44205" shrink_ffs 65536 8192 131072 98304 2 101
-test_case_xfail shrink_64M_48M_v2_65536_swapped "PR bin/44203; PR bin/44205" shrink_ffs 65536 8192 131072 98304 2 101 swap
+test_case_xfail shrink_64M_48M_v2_65536_swapped "PR bin/44203, PR bin/44205" shrink_ffs 65536 8192 131072 98304 2 101 swap
 
 atf_test_case shrink_ffsv1_partial_cg
 shrink_ffsv1_partial_cg_head()
@@ -127,6 +130,9 @@ atf_init_test_cases()
 {
 	setupvars
 	atf_add_test_case shrink_24M_16M_v1_4096
+	atf_add_test_case shrink_24M_16M_v1_4096_swapped
+	atf_add_test_case shrink_24M_16M_v2_4096
+	atf_add_test_case shrink_24M_16M_v2_4096_swapped
 	atf_add_test_case shrink_24M_16M_v1_8192
 	atf_add_test_case shrink_24M_16M_v1_16384
 	atf_add_test_case shrink_24M_16M_v1_32768
@@ -136,6 +142,7 @@ atf_init_test_cases()
 	atf_add_test_case shrink_32M_24M_v1_16384
 	atf_add_test_case shrink_32M_24M_v1_32768
 	atf_add_test_case shrink_32M_24M_v1_65536
+if [ "X${RESIZE_FFS_BIG_TESTS}" != "X" ]; then
 	atf_add_test_case shrink_48M_16M_v1_4096
 	atf_add_test_case shrink_48M_16M_v1_8192
 	atf_add_test_case shrink_48M_16M_v1_16384
@@ -149,5 +156,6 @@ atf_init_test_cases()
 	atf_add_test_case shrink_64M_48M_v1_65536_swapped
 	atf_add_test_case shrink_64M_48M_v2_65536
 	atf_add_test_case shrink_64M_48M_v2_65536_swapped
+fi
 	atf_add_test_case shrink_ffsv1_partial_cg
 }
