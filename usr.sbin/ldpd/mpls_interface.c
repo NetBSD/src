@@ -1,4 +1,4 @@
-/* $NetBSD: mpls_interface.c,v 1.1 2010/12/08 07:20:14 kefren Exp $ */
+/* $NetBSD: mpls_interface.c,v 1.2 2010/12/09 00:10:59 christos Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -164,7 +164,11 @@ mpls_add_label(struct ldp_peer * p, struct rt_msg * inh_rg,
 
 	/* Add switching route */
 	so_dest = make_mpls_union(lab->binding);
-	so_nexthop = (union sockunion *)malloc(sizeof(union sockunion));
+	so_nexthop = malloc(sizeof(*so_nexthop));
+	if (!so_nexthop) {
+		fatalp("Out of memory\n");
+		return LDP_E_MEMORY;
+	}
 	memcpy(so_nexthop, so_gate, so_gate->sa.sa_len);
 	so_tag = make_mpls_union(label);
 	if (add_route(so_dest, NULL, so_nexthop, NULL, so_tag, FREESO, RTM_ADD) != LDP_E_OK)
@@ -183,11 +187,19 @@ mpls_add_label(struct ldp_peer * p, struct rt_msg * inh_rg,
 		so_pref = from_cidr_to_union(len);
 
 	/* Add tag to route */
-	so_nexthop = (union sockunion *)malloc(sizeof(union sockunion));
+	so_nexthop = malloc(sizeof(*so_nexthop));
+	if (!so_nexthop) {
+		fatalp("Out of memory\n");
+		return LDP_E_MEMORY;
+	}
 	memcpy(so_nexthop, so_gate, so_gate->sa.sa_len);
 	so_tag = make_mpls_union(label);
 	if (so_oldifa != NULL) {
-		so_ifa = (union sockunion *)malloc(sizeof(union sockunion));
+		so_ifa = malloc(sizeof(*so_ifa));
+		if (!so_ifa) {
+			fatalp("Out of memory\n");
+			return LDP_E_MEMORY;
+		}
 		memcpy(so_ifa, so_oldifa, so_oldifa->sa.sa_len);
 	} else
 		so_ifa = NULL;
