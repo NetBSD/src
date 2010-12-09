@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.90 2010/12/06 18:42:09 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.91 2010/12/09 10:19:23 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.90 2010/12/06 18:42:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.91 2010/12/09 10:19:23 skrll Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -429,12 +429,13 @@ hppa_init(paddr_t start, void *bi)
 #ifdef KGDB
 	boothowto |= RB_KDB;	/* go to kgdb early if compiled in. */
 #endif
-	/* Setup curlwp/curcpu early for LOCKDEBUG */
+	/* Setup curlwp/curcpu early for LOCKDEBUG and spl* */
 #ifdef MULTIPROCESSOR
 	mtctl(&cpus[0], CR_CURCPU);
 #else
 	mtctl(&lwp0, CR_CURLWP);
 #endif
+	lwp0.l_cpu = &cpus[0];
 
 	/* Copy bootinfo */
 	if (bi != NULL)
