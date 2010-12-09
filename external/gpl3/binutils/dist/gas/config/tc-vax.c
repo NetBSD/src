@@ -266,23 +266,6 @@ const pseudo_typeS md_pseudo_table[] =
 
 #define min(a, b)	((a) < (b) ? (a) : (b))
 
-#ifdef OBJ_ELF
-static int
-S_IS_HIDDEN(symbolS *symbolP)
-{
-  asymbol *bfdsym;
-  elf_symbol_type *elfsym;
-
-  bfdsym = symbol_get_bfdsym (symbolP);
-  elfsym = elf_symbol_from (bfd_asymbol_bfd (bfdsym), bfdsym);
-  
-  assert (elfsym);
-
-  return (elfsym->internal_elf_sym.st_other & 3) == STV_HIDDEN;
-}
-#endif /* OBJ_ELF */
-
-
 void
 md_number_to_chars (char con[], valueT value, int nbytes)
 {
@@ -410,7 +393,7 @@ md_estimate_size_before_relax (fragS *fragP, segT segment)
 	      && fragP->fr_symbol != NULL
 	      && flag_want_pic
 #ifdef OBJ_ELF
-	      && !S_IS_HIDDEN (fragP->fr_symbol)
+	      && ELF_ST_VISIBILITY (S_GET_OTHER (fragP->fr_symbol)) != STV_HIDDEN
 #endif
 	      && (!S_IS_DEFINED (fragP->fr_symbol)
 	          || S_IS_WEAK (fragP->fr_symbol)
