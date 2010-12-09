@@ -17,19 +17,6 @@ setupvars()
 	fi
 }
 
-# make sure to remove test_redo before committing
-test_redo ()
-{
-        local fpi=$((${2} * 4))
-        local i
-        if [ $fpi -gt 16384 ]; then
-                i="-i 16384"
-        fi
-	sudo umount ${MNTPT}
-	newfs -O1 $i -b $1 -f $2 -s $3 -F ${IMG}
-	sudo rump_ffs ${IMG} ${MNTPT}
-}
-
 # test_case() taken from the tests/ipf/h_common.sh
 # Used to declare the atf goop for a test.
 test_case()
@@ -91,17 +78,6 @@ remove_multiple ()
 		remove_data $i
 	done
 }
-
-mount_test_fs_image ()
-{
-	rump_ffs ${IMG} ${MNTPT}
-}
-
-unmount_test_fs_image ()
-{
-	umount -f ${MNTPT}
-}
-
 
 # verify that the data in a particular directory is still OK
 # generated md5 file doesn't need explicit cleanup thanks to ATF
