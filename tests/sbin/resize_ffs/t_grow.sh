@@ -1,4 +1,4 @@
-# $NetBSD: t_grow.sh,v 1.1 2010/12/09 05:19:02 riz Exp $
+# $NetBSD: t_grow.sh,v 1.2 2010/12/09 17:28:05 riz Exp $
 #
 # Copyright (c) 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -76,6 +76,9 @@ grow_ffs()
 # created fs.  'level' is the fs-level (-O 0,1,2) passed to newfs.
 # If 'swap' is included, byteswap the fs
 test_case grow_16M_v1_4096 grow_ffs 4096 512 32768 131072 1 28
+test_case_xfail grow_16M_v1_4096_swapped "PR bin/44203" grow_ffs 4096 512 32768 131072 1 28 swap
+test_case_xfail grow_16M_v2_4096 "PR bin/44205" grow_ffs 4096 512 32768 131072 2 28
+test_case_xfail grow_16M_v2_4096_swapped "PR bin/44203, PR bin/44205" grow_ffs 4096 512 32768 131072 2 28 swap
 test_case grow_16M_v1_8192 grow_ffs 8192 1024 32768 131072 1 28
 test_case grow_16M_v1_16384 grow_ffs 16384 2048 32768 131072 1 29
 test_case grow_16M_v1_32768 grow_ffs 32768 4096 32768 131072 1 28
@@ -103,7 +106,7 @@ test_case_xfail grow_64M_v1_32768 "PR bin/44209" grow_ffs 32768 4096 131072 2621
 test_case grow_64M_v1_65536 grow_ffs 65536 8192 131072 262144 1 101
 test_case_xfail grow_64M_v1_65536_swapped "PR bin/44203" grow_ffs 65536 8192 131072 262144 1 101 swap
 test_case_xfail grow_64M_v2_65536 "PR bin/44205" grow_ffs 65536 8192 131072 262144 2 101
-test_case_xfail grow_64M_v2_65536_swapped "PR bin/44203; PR bin/44205" grow_ffs 65536 8192 131072 262144 2 101 swap
+test_case_xfail grow_64M_v2_65536_swapped "PR bin/44203, PR bin/44205" grow_ffs 65536 8192 131072 262144 2 101 swap
 
 atf_test_case grow_ffsv1_partial_cg
 grow_ffsv1_partial_cg_head()
@@ -127,6 +130,9 @@ atf_init_test_cases()
 {
 	setupvars
 	atf_add_test_case grow_16M_v1_4096
+	atf_add_test_case grow_16M_v1_4096_swapped
+	atf_add_test_case grow_16M_v2_4096
+	atf_add_test_case grow_16M_v2_4096_swapped
 	atf_add_test_case grow_16M_v1_8192
 	atf_add_test_case grow_16M_v1_16384
 	atf_add_test_case grow_16M_v1_32768
@@ -141,6 +147,7 @@ atf_init_test_cases()
 	atf_add_test_case grow_32M_v1_16384
 	atf_add_test_case grow_32M_v1_32768
 	atf_add_test_case grow_32M_v1_65536
+if [ "X${RESIZE_FFS_BIG_TESTS}" != "X" ]; then
 	atf_add_test_case grow_48M_v1_4096
 	atf_add_test_case grow_48M_v1_8192
 	atf_add_test_case grow_48M_v1_16384
@@ -154,5 +161,6 @@ atf_init_test_cases()
 	atf_add_test_case grow_64M_v1_65536_swapped
 	atf_add_test_case grow_64M_v2_65536
 	atf_add_test_case grow_64M_v2_65536_swapped
+fi
 	atf_add_test_case grow_ffsv1_partial_cg
 }
