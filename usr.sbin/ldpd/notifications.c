@@ -1,4 +1,4 @@
-/* $NetBSD: notifications.c,v 1.1 2010/12/08 07:20:15 kefren Exp $ */
+/* $NetBSD: notifications.c,v 1.2 2010/12/09 00:10:59 christos Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -44,12 +44,12 @@ struct notification_tlv *
 build_notification(uint32_t msg, uint32_t n)
 {
 	struct notification_tlv *t;
-	t = (struct notification_tlv *) malloc(sizeof(struct notification_tlv));
+	t = malloc(sizeof(*t));
 
 	if (!t) {
 		fatalp("build_notification: malloc problem\n");
 		return NULL;
-		}
+	}
 
 	t->type = htons(LDP_NOTIFICATION);
 	t->length = htons(sizeof(struct notification_tlv) - TLV_TYPE_LENGTH);
