@@ -1,4 +1,4 @@
-/* $NetBSD: socketops.c,v 1.1 2010/12/08 07:20:15 kefren Exp $ */
+/* $NetBSD: socketops.c,v 1.2 2010/12/09 00:10:59 christos Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -250,11 +250,10 @@ send_hello(void)
 			/* IPv4 Transport Address */			\
 			sizeof(struct transport_address_tlv))
 
-	if ((v = malloc(HELLO_MSG_SIZE)) == NULL) {
+	if ((v = calloc(1, HELLO_MSG_SIZE)) == NULL) {
 		fatalp("malloc problem in send_hello()\n");
 		return;
 	}
-	memset(v, 0, HELLO_MSG_SIZE);
 
 	spdu = (struct ldp_pdu *)((char *)v);
 	t = (struct hello_tlv *)(spdu + 1);
