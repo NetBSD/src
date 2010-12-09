@@ -1,4 +1,4 @@
-#  $NetBSD: Makefile,v 1.98 2010/09/15 16:11:29 christos Exp $
+#  $NetBSD: Makefile,v 1.99 2010/12/09 22:52:59 abs Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24
 #
@@ -163,7 +163,7 @@ NOIEEE_SRCS = n_asincos.c n_acosh.c n_asinh.c n_atan.c n_atanh.c n_cosh.c \
 	n_lgamma.c n_j0.c n_j1.c n_jn.c n_log.c n_log10.c n_log1p.c \
 	n_log__L.c n_pow.c n_sinh.c n_tanh.c \
 	n_sincos.c n_tan.c \
-	n_round.c n_roundf.c
+	n_round.c n_roundf.c n_lround.c n_lroundf.c
 #	n_sqrt.c n_argred.c n_infnan.c n_atan2.c n_cabs.c n_cbrt.c n_support.c
 
 
