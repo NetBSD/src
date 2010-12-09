@@ -1,4 +1,4 @@
-/*	$NetBSD: netwalker_machdep.c,v 1.2 2010/11/28 08:23:24 hannken Exp $	*/
+/*	$NetBSD: netwalker_machdep.c,v 1.3 2010/12/09 05:00:14 bsh Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2005, 2010  Genetec Corporation. 
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netwalker_machdep.c,v 1.2 2010/11/28 08:23:24 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netwalker_machdep.c,v 1.3 2010/12/09 05:00:14 bsh Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -946,45 +946,25 @@ const struct iomux_setup iomux_setup_data[] = {
 
 	/* left buttons */
 	IOMUX_DATA(EIM_EB2, IOMUX_CONFIG_ALT1,
-		   PAD_CTL_HYS_ENABLE),
+		   PAD_CTL_HYS),
 	/* right buttons */
 	IOMUX_DATA(EIM_EB3, IOMUX_CONFIG_ALT1,
-		   PAD_CTL_HYS_ENABLE),
-		   
+		   PAD_CTL_HYS),
 
-#if 0
-	/* UART1 */
-	IOMUX_DATA(UART1_RXD, IOMUX_CONFIG_ALT0,
-		   (PAD_CTL_HYS_ENABLE | PAD_CTL_PKE_ENABLE |
-		    PAD_CTL_PUE_PULL	 | PAD_CTL_DSE_HIGH   |
-		    PAD_CTL_SRE_FAST)),
-	IOMUX_DATA(UART1_TXD, IOMUX_CONFIG_ALT0,
-		   (PAD_CTL_HYS_ENABLE | PAD_CTL_PKE_ENABLE |
-		    PAD_CTL_PUE_PULL	 | PAD_CTL_DSE_HIGH   |
-		    PAD_CTL_SRE_FAST)),
-	IOMUX_DATA(UART1_RTS, IOMUX_CONFIG_ALT0,
-		   (PAD_CTL_HYS_ENABLE | PAD_CTL_PKE_ENABLE |
-		    PAD_CTL_PUE_PULL	 | PAD_CTL_DSE_HIGH)),
-	IOMUX_DATA(UART1_CTS, IOMUX_CONFIG_ALT0,
-		   (PAD_CTL_HYS_ENABLE | PAD_CTL_PKE_ENABLE |
-		    PAD_CTL_PUE_PULL	 | PAD_CTL_DSE_HIGH)),
-#else
 	/* UART1 */
 #if 1
 	IOMUX_DATA(UART1_RXD, IOMUX_CONFIG_ALT0,
-		   PAD_CTL_DSE_HIGH | PAD_CTL_SRE_FAST),
+		   PAD_CTL_DSE_HIGH | PAD_CTL_SRE),
 #else
 	IOMUX_DATA(UART1_RXD, IOMUX_CONFIG_ALT3,	/* gpio4[28] */
-		   PAD_CTL_DSE_HIGH | PAD_CTL_SRE_FAST),
+		   PAD_CTL_DSE_HIGH | PAD_CTL_SRE),
 #endif
 	IOMUX_DATA(UART1_TXD, IOMUX_CONFIG_ALT0,
-		   PAD_CTL_DSE_HIGH | PAD_CTL_SRE_FAST),
+		   PAD_CTL_DSE_HIGH | PAD_CTL_SRE),
 	IOMUX_DATA(UART1_RTS, IOMUX_CONFIG_ALT0,
 		   PAD_CTL_DSE_HIGH),
 	IOMUX_DATA(UART1_CTS, IOMUX_CONFIG_ALT0,
 		   PAD_CTL_DSE_HIGH),
-#endif
-
 };
 
 static void
@@ -1157,6 +1137,9 @@ dump_registers(void)
 	}
 	printf("\n");
 
+	printf("\nCCM\n");
+	dump_sub(CCM_BASE, CCM_SIZE);
+
 #if 0
 	/* disable power down counter in watch dog,
 	   This must be done within 16 seconds of start-up. */
@@ -1179,5 +1162,29 @@ dump_registers(void)
 	}
 #endif
 
+}
+#endif
+
+
+#if 0
+#include <arm/imx/imxgpiovar.h>
+
+void gpio_test(void)
+void
+gpio_test(void)
+{
+	int left, right;
+
+	gpio_set_direction(GPIO_NO(2, 22), GPIO_DIR_IN);
+	gpio_set_direction(GPIO_NO(2, 23), GPIO_DIR_IN);
+
+	for (;;) {
+		left = gpio_data_read(GPIO_NO(2, 22));
+		right = gpio_data_read(GPIO_NO(2, 23));
+
+		printf("\r%s %s",
+		    left ? "off" : "ON ",
+		    right ? "off" : "ON ");
+	}
 }
 #endif
