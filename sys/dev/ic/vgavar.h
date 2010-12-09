@@ -1,4 +1,4 @@
-/* $NetBSD: vgavar.h,v 1.28 2008/03/14 22:12:08 cube Exp $ */
+/* $NetBSD: vgavar.h,v 1.29 2010/12/09 23:33:30 christos Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -68,6 +68,7 @@ struct vga_config {
 	int vc_type;
 	const struct vga_funcs *vc_funcs;
 
+	u_int8_t palette[256 * 3];
 #ifndef VGA_RASTERCONSOLE
 	int currentfontset1, currentfontset2;
 	int vc_nfontslots;
@@ -91,73 +92,81 @@ static __inline void 	_vga_ts_write(struct vga_handle *, int, u_int8_t);
 static __inline u_int8_t 	_vga_gdc_read(struct vga_handle *, int);
 static __inline void 	_vga_gdc_write(struct vga_handle *, int, u_int8_t);
 
+#define	vga_raw_read(vh, reg) \
+    bus_space_read_1(vh->vh_iot, vh->vh_ioh_vga, reg)
+#define	vga_raw_write(vh, reg, value) \
+    bus_space_write_1(vh->vh_iot, vh->vh_ioh_vga, reg, value)
+
+#define	vga_enable(vh) \
+    vga_raw_write(vh, 0, 0x20)
+
+#define vga_reset_state(vh) \
+    (void) bus_space_read_1(vh->vh_iot, vh->vh_ioh_6845, 10)
+
 static __inline u_int8_t
 _vga_attr_read(struct vga_handle *vh, int reg)
 {
 	u_int8_t res;
 
 	/* reset state */
-	(void) bus_space_read_1(vh->vh_iot, vh->vh_ioh_6845, 10);
+	vga_reset_state(vh);
 
-	bus_space_write_1(vh->vh_iot, vh->vh_ioh_vga, VGA_ATC_INDEX, reg);
-	res = bus_space_read_1(vh->vh_iot, vh->vh_ioh_vga, VGA_ATC_DATAR);
+	vga_raw_write(vh, VGA_ATC_INDEX, reg);
+	res = vga_raw_read(vh, VGA_ATC_DATAR);
 
-	/* reset state XXX unneeded? */
-	(void) bus_space_read_1(vh->vh_iot, vh->vh_ioh_6845, 10);
+	/* XXX unneeded? */
+	vga_reset_state(vh);
 
-	/* enable */
-	bus_space_write_1(vh->vh_iot, vh->vh_ioh_vga, 0, 0x20);
+	vga_enable(vh);
 
-	return (res);
+	return res;
 }
 
 static __inline void
 _vga_attr_write(struct vga_handle *vh, int reg, u_int8_t val)
 {
 
-	/* reset state */
-	(void) bus_space_read_1(vh->vh_iot, vh->vh_ioh_6845, 10);
+	vga_reset_state(vh);
 
-	bus_space_write_1(vh->vh_iot, vh->vh_ioh_vga, VGA_ATC_INDEX, reg);
-	bus_space_write_1(vh->vh_iot, vh->vh_ioh_vga, VGA_ATC_DATAW, val);
+	vga_raw_write(vh, VGA_ATC_INDEX, reg);
+	vga_raw_write(vh, VGA_ATC_DATAW, val);
 
-	/* reset state XXX unneeded? */
-	(void) bus_space_read_1(vh->vh_iot, vh->vh_ioh_6845, 10);
+	/* XXX unneeded? */
+	vga_reset_state(vh);
 
-	/* enable */
-	bus_space_write_1(vh->vh_iot, vh->vh_ioh_vga, 0, 0x20);
+	vga_enable(vh);
 }
 
 static __inline u_int8_t
 _vga_ts_read(struct vga_handle *vh, int reg)
 {
 
-	bus_space_write_1(vh->vh_iot, vh->vh_ioh_vga, VGA_TS_INDEX, reg);
-	return (bus_space_read_1(vh->vh_iot, vh->vh_ioh_vga, VGA_TS_DATA));
+	vga_raw_write(vh, VGA_TS_INDEX, reg);
+	return vga_raw_read(vh, VGA_TS_DATA);
 }
 
 static __inline void
 _vga_ts_write(struct vga_handle *vh, int reg, u_int8_t val)
 {
 
-	bus_space_write_1(vh->vh_iot, vh->vh_ioh_vga, VGA_TS_INDEX, reg);
-	bus_space_write_1(vh->vh_iot, vh->vh_ioh_vga, VGA_TS_DATA, val);
+	vga_raw_write(vh, VGA_TS_INDEX, reg);
+	vga_raw_write(vh, VGA_TS_DATA, val);
 }
 
 static __inline u_int8_t
 _vga_gdc_read(struct vga_handle *vh, int reg)
 {
 
-	bus_space_write_1(vh->vh_iot, vh->vh_ioh_vga, VGA_GDC_INDEX, reg);
-	return (bus_space_read_1(vh->vh_iot, vh->vh_ioh_vga, VGA_GDC_DATA));
+	vga_raw_write(vh, VGA_GDC_INDEX, reg);
+	return vga_raw_read(vh, VGA_GDC_DATA);
 }
 
 static __inline void
 _vga_gdc_write(struct vga_handle *vh, int reg, u_int8_t val)
 {
 
-	bus_space_write_1(vh->vh_iot, vh->vh_ioh_vga, VGA_GDC_INDEX, reg);
-	bus_space_write_1(vh->vh_iot, vh->vh_ioh_vga, VGA_GDC_DATA, val);
+	vga_raw_write(vh, VGA_GDC_INDEX, reg);
+	vga_raw_write(vh, VGA_GDC_DATA, val);
 }
 
 #define vga_attr_read(vh, reg) \
@@ -208,5 +217,7 @@ void 	vga_load_builtinfont(struct vga_handle *, u_int8_t *, int, int);
 #endif /* !VGA_RASTERCONSOLE */
 void	vga_reset(struct vga_handle *, void (*)(struct vga_handle *));
 void	vga_initregs(struct vga_handle *);
+void	vga_save_palette(struct vga_config *);
+void	vga_restore_palette(struct vga_config *);
 
 extern int vga_no_builtinfont;
