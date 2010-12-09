@@ -695,15 +695,24 @@ fgetLine(char **bufp, size_t *szp, int o, FILE *fp)
 /*
  * When running with 'meta' functionality, a target can be out-of-date
  * if any of the references in it's meta data file is more recent.
+ * We have to track the latestdir on a per-process basis.
  */
+#define LDIR_VNAME_FMT ".meta.%d.ldir"
+
 Boolean
 meta_oodate(GNode *gn, Boolean oodate)
 {
+    static char *tmpdir = NULL;
+    char ldir_vname[64];
+    char cwd[MAXPATHLEN];
     char latestdir[MAXPATHLEN];
     char fname[MAXPATHLEN];
     char fname1[MAXPATHLEN];
+    char fname2[MAXPATHLEN];
     char *p;
     char *cp;
+    size_t cwdlen;
+    size_t tmplen = 0;
     FILE *fp;
     Boolean ignoreOODATE = FALSE;
 
@@ -718,7 +727,7 @@ meta_oodate(GNode *gn, Boolean oodate)
      */
     Make_DoAllVar(gn);
 
-    if (getcwd(latestdir, sizeof(latestdir)) == NULL)
+    if (getcwd(cwd, sizeof(cwd)) == NULL)
 	err(1, "Could not get current working directory");
 
     meta_name(gn, fname, sizeof(fname), NULL, NULL);
@@ -727,6 +736,8 @@ meta_oodate(GNode *gn, Boolean oodate)
 	static char *buf = NULL;
 	static size_t bufsz;
 	int lineno = 0;
+	int lastpid = 0;
+	int pid;
 	int f = 0;
 	int x;
 	LstNode ln;
@@ -736,9 +747,16 @@ meta_oodate(GNode *gn, Boolean oodate)
 	    bufsz = 8 * BUFSIZ;
 	    buf = bmake_malloc(bufsz);
 	}
-	
+
+	if (!tmpdir) {
+	    tmpdir = getTmpdir();
+	    tmplen = strlen(tmpdir);
+	}
+
 	/* we want to track all the .meta we read */
 	Var_Append(".MAKE.META.FILES", fname, VAR_GLOBAL);
+
+	cwdlen = strlen(cwd);
 
 	ln = Lst_First(gn->commands);
 	while (!oodate && (x = fgetLine(&buf, &bufsz, 0, fp)) > 0) {
@@ -764,28 +782,102 @@ meta_oodate(GNode *gn, Boolean oodate)
 	    p = buf;
 	    strsep(&p, " ");
 	    if (f) {
+		/*
+		 * We are in the 'filemon' output section.
+		 * Each record from filemon follows the general form:
+		 *
+		 * <key> <pid> <data>
+		 *
+		 * Where:
+		 * <key> is a single letter, denoting the syscall.
+		 * <pid> is the process that made the syscall.
+		 * <data> is the arguments (of interest).
+		 */
+		switch(buf[0]) {
+		case '#':		/* comment */
+		case 'V':		/* version */
+		    break;
+		default:
+		    /*
+		     * We need to track pathnames per-process.
+		     *
+		     * Each process run by make, starts off in the 'CWD'
+		     * recorded in the .meta file, if it chdirs ('C')
+		     * elsewhere we need to track that - but only for
+		     * that process.  If it forks ('F'), we initialize
+		     * the child to have the same cwd as its parent.
+		     *
+		     * We also need to track the 'latestdir' of
+		     * interest.  This is usually the same as cwd, but
+		     * not if a process is reading directories.
+		     *
+		     * Each time we spot a different process ('pid')
+		     * we save the current value of 'latestdir' in a
+		     * variable qualified by 'lastpid', and
+		     * re-initialize 'latestdir' to any pre-saved
+		     * value for the current 'pid' and 'CWD' if none.
+		     */
+		    pid = atoi(p);
+		    if (pid > 0 && pid != lastpid) {
+			char *ldir;
+			char *tp;
+		    
+			if (lastpid > 0) {
+			    /* We need to remember this. */
+			    Var_Set(ldir_vname, latestdir, VAR_GLOBAL, 0);
+			}
+			snprintf(ldir_vname, sizeof(ldir_vname), LDIR_VNAME_FMT, pid);
+			lastpid = pid;
+			ldir = Var_Value(ldir_vname, VAR_GLOBAL, &tp);
+			if (ldir) {
+			    strlcpy(latestdir, ldir, sizeof(latestdir));
+			    if (tp)
+				free(tp);
+			} else 
+			    strlcpy(latestdir, cwd, sizeof(latestdir));
+		    }
+		    /* Skip past the pid. */
+		    if (strsep(&p, " ") == NULL)
+			continue;
+		    break;
+		}
+
 		/* Process according to record type. */
 		switch (buf[0]) {
-		case 'C':
-		    /* Skip the pid. */
-		    if (strsep(&p, " ") == NULL)
-			break;
+		case 'X':		/* eXit */
+		    Var_Delete(ldir_vname, VAR_GLOBAL);
+		    lastpid = 0;	/* no need to save ldir_vname */
+		    break;
 
+		case 'F':		/* [v]Fork */
+		    {
+			char cldir[64];
+			int child;
+
+			child = atoi(p);
+			if (child > 0) {
+			    snprintf(cldir, sizeof(cldir), LDIR_VNAME_FMT, child);
+			    Var_Set(cldir, latestdir, VAR_GLOBAL, 0);
+			}
+		    }
+		    break;
+
+		case 'C':		/* Chdir */
 		    /* Update the latest directory. */
 		    strlcpy(latestdir, p, sizeof(latestdir));
 		    break;
 
-		case 'R':
-		case 'E':
-		    /* Skip the pid. */
-		    if (strsep(&p, " ") == NULL)
-			break;
-
+		case 'R':		/* Read */
+		case 'E':		/* Exec */
 		    /*
 		     * Check for runtime files that can't
 		     * be part of the dependencies because
 		     * they are _expected_ to change.
 		     */
+		    if (strncmp(p, "/tmp/", 5) == 0 ||
+			strncmp(p, tmpdir, tmplen) == 0)
+			break;
+
 		    if (strncmp(p, "/var/", 5) == 0)
 			break;
 
@@ -798,39 +890,69 @@ meta_oodate(GNode *gn, Boolean oodate)
 			break;
 
 		    /*
-		     * The rest of the record is the
-		     * file name.
-		     * Check if it's not an absolute
-		     * path.
+		     * The rest of the record is the file name.
+		     * Check if it's not an absolute path.
 		     */
-		    if (*p != '/') {
-			/* Use the latest path seen. */
-			snprintf(fname1, sizeof(fname1), "%s/%s", latestdir, p);
-			p = fname1;
-		    }
+		    {
+			char *sdirs[4];
+			char **sdp;
+			int sdx = 0;
+			int found = 0;
 
-		    if (stat(p, &fs) == 0) {
-			if (!S_ISDIR(fs.st_mode) &&
-			    fs.st_mtime > gn->mtime) {
+			if (*p == '/') {
+			    sdirs[sdx++] = p; /* done */
+			} else {
+			    if (strcmp(".", p) == 0)
+				continue;  /* no point */
+
+			    /* Check vs latestdir */
+			    snprintf(fname1, sizeof(fname1), "%s/%s", latestdir, p);
+			    sdirs[sdx++] = fname1;
+
+			    if (strcmp(latestdir, cwd) != 0) {
+				/* Check vs cwd */
+				snprintf(fname2, sizeof(fname2), "%s/%s", cwd, p);
+				sdirs[sdx++] = fname2;
+			    }
+			}
+			sdirs[sdx++] = NULL;
+
+			for (sdp = sdirs; *sdp && !found; sdp++) {
+			    if (stat(*sdp, &fs) == 0) {
+				found = 1;
+				p = *sdp;
+			    }
+			}
+			if (found) {
+			    if (!S_ISDIR(fs.st_mode) &&
+				fs.st_mtime > gn->mtime) {
+				if (DEBUG(META))
+				    fprintf(debug_file, "%s: %d: file '%s' is newer than the target...\n", fname, lineno, p);
+				oodate = TRUE;
+			    } else if (S_ISDIR(fs.st_mode)) {
+				/* Update the latest directory. */
+				realpath(p, latestdir);
+			    }
+			} else if (errno == ENOENT && *p == '/' &&
+				   strncmp(p, cwd, cwdlen) != 0) {
+			    /*
+			     * A referenced file outside of CWD is missing.
+			     * We cannot catch every eventuality here...
+			     */
 			    if (DEBUG(META))
-				fprintf(debug_file, "%s: %d: file '%s' is newer than the target...\n", fname, lineno, p);
+				fprintf(debug_file, "%s: %d: file '%s' may have moved?...\n", fname, lineno, p);
 			    oodate = TRUE;
 			}
-		    } else if (errno == ENOENT) {
-			if (DEBUG(META))
-			    fprintf(debug_file, "%s: %d: file '%s' may have moved?...\n", fname, lineno, p);
-			oodate = TRUE;
 		    }
 		    break;
 		default:
 		    break;
 		}
-
+	    } else if (strcmp(buf, "CMD") == 0) {
 		/*
 		 * Compare the current command with the one in the
 		 * meta data file.
 		 */
-	    } else if (strcmp(buf, "CMD") == 0) {
 		if (ln == NULL) {
 		    if (DEBUG(META))
 			fprintf(debug_file, "%s: %d: there were more build commands in the meta data file than there are now...\n", fname, lineno);
