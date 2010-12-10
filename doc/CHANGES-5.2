@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.2,v 1.1.2.36 2010/12/09 04:18:20 riz Exp $
+# $NetBSD: CHANGES-5.2,v 1.1.2.37 2010/12/10 21:45:33 bouyer Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -923,4 +923,23 @@ etc/mtree/special				1.132
 
 	Add "optional" keyword to rc.d/xdm and rc.d/xfs. PR#43307.
 	[uwe, ticket #1494]
+
+crypto/external/bsd/openssl/dist/ssl/s3_clnt.c	1.3 via patch
+crypto/external/bsd/openssl/dist/ssl/s3_srvr.c	1.6 via patch
+
+	openssl security patch of the day:
+	Fix a flaw in the OpenSSL SSL/TLS server code where an old bug
+	workaround allows malicous clients to modify the stored session cache
+	ciphersuite. In some cases the ciphersuite can be downgraded to a
+	weaker one on subsequent connections. See
+	http://www.openssl.org/news/secadv_20101202.txt
+	(CVE-2010-4180)
+	[drochner, ticket #1509]
+
+crypto/external/bsd/openssl/dist/ssl/t1_lib.c	1.3 via patch
+
+	fix bug introduced by last security patch, from upstream CVS:
+	Don't assume a decode error if session tlsext_ecpointformatlist is
+	not NULL: it can be legitimately set elsewhere.
+	[drochner, ticket #1510]
 
