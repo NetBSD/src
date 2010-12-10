@@ -1,4 +1,4 @@
-/*	$NetBSD: spif.c,v 1.9 2006/10/01 20:31:51 elad Exp $	*/
+/*	$NetBSD: spif.c,v 1.9.2.1 2010/12/10 22:16:16 bouyer Exp $	*/
 /*	$OpenBSD: spif.c,v 1.12 2003/10/03 16:44:51 miod Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spif.c,v 1.9 2006/10/01 20:31:51 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spif.c,v 1.9.2.1 2010/12/10 22:16:16 bouyer Exp $");
 
 #include "spif.h"
 #if NSPIF > 0
@@ -110,7 +110,7 @@ dev_type_poll(sbpp_poll);
 
 const struct cdevsw sbpp_cdevsw = {
 	sbpp_open, sbpp_close, sbpp_read, sbpp_write, sbpp_ioctl,
-	nostop, notty, sbpp_poll, nommap, nokqfilter,
+	nostop, notty, sbpp_poll, nommap, nokqfilter, D_OTHER
 };
 
 
