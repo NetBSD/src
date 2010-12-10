@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC.MP,v 1.12 2010/11/23 11:14:04 hannken Exp $
+# $NetBSD: GENERIC.MP,v 1.13 2010/12/10 21:27:21 phx Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/ofppc/conf/std.ofppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.12 $"
+#ident 		"GENERIC-$Revision: 1.13 $"
 
 maxusers	32
 
@@ -215,6 +215,9 @@ wsdisplay*      at wsemuldisplaydev?
 attimer0	at isa?			# AT Timer
 pcppi0		at isa?			# PC prog. periph. interface
 # FIX ISABEEP LATER
+
+# VIA VT82C686A/VT8231 Hardware Monitor and Power Management Timer
+viaenv* 	at pci? dev ? function ?
 
 # Serial Devices
 # ISA serial interfaces
