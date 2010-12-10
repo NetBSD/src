@@ -959,12 +959,17 @@ int ssl3_get_client_hello(SSL *s)
 			}
 		if (j == 0)
 			{
+/* Disabled because it can be used in a ciphersuite downgrade
+ * attack: CVE-2010-4180.
+ */
+#if 0
 			if ((s->options & SSL_OP_NETSCAPE_REUSE_CIPHER_CHANGE_BUG) && (sk_SSL_CIPHER_num(ciphers) == 1))
 				{
 				/* Very bad for multi-threading.... */
 				s->session->cipher=sk_SSL_CIPHER_value(ciphers, 0);
 				}
 			else
+#endif
 				{
 				/* we need to have the cipher in the cipher
 				 * list if we are asked to reuse it */
