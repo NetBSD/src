@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm_armv6.S,v 1.3 2010/06/19 19:44:57 matt Exp $	*/
+/*	$NetBSD: cpufunc_asm_armv6.S,v 1.4 2010/12/10 02:06:22 bsh Exp $	*/
 
 /*
  * Copyright (c) 2002, 2005 ARM Limited
@@ -83,7 +83,7 @@ ENTRY_NP(armv6_icache_sync_all)
 	mcr	p15, 0, r0, c7, c10, 4	/* drain the write buffer */
 	RET
 
-/* LINTSTUB: void armv6_icache_sync_range(vaddr_t, vsize_t); */
+/* LINTSTUB: void armv6_dcache_wb_range(vaddr_t, vsize_t); */
 ENTRY(armv6_dcache_wb_range)
 	add	r1, r1, r0
 	sub	r1, r1, #1
