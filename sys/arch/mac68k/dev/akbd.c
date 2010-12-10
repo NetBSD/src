@@ -1,4 +1,4 @@
-/*	$NetBSD: akbd.c,v 1.21 2007/03/10 16:35:14 hauke Exp $	*/
+/*	$NetBSD: akbd.c,v 1.22 2010/12/10 00:17:08 macallan Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: akbd.c,v 1.21 2007/03/10 16:35:14 hauke Exp $");
+__KERNEL_RCSID(0, "$NetBSD: akbd.c,v 1.22 2010/12/10 00:17:08 macallan Exp $");
 
 #include "opt_adb.h"
 
@@ -464,7 +464,7 @@ akbd_ioctl(void *v, u_long cmd, void *data, int flag, struct lwp *l)
 	switch (cmd) {
 
 	case WSKBDIO_GTYPE:
-		*(int *)data = 0;		/* XXX */
+		*(int *)data = WSKBD_TYPE_ADB;
 		return 0;
 	case WSKBDIO_SETLEDS:
 		return 0;
