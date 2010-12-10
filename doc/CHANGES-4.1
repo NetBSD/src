@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.212 2010/11/21 21:53:13 riz Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.213 2010/12/10 22:16:45 bouyer Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -4268,4 +4268,19 @@ sys/kern/subr_disk.c				1.100
 
 	Fix an issue with >2TB disks.
 	[mrg, ticket #1411]
+
+sys/arch/i386/i386/locore.S			patch
+
+	In cpu_switch, avoid flipping interrupts on while holding the
+	scheduler lock. Doing so can cause locking against oneself via
+	endtsleep(). Fixes PR kern/38183, where the overt symptom was
+	that LOCKDEBUG + INSTALL_LARGE would panic during boot.
+	Should fix PR 38183.
+	[dholland, ticket #1410]
+
+sys/dev/sbus/spif.c				1.19
+
+	Fix warning about missing initializer that showed up in sparc64
+	builds, but, strangely enough, not in sparc builds.
+	[hauke, ticket #1412]
 
