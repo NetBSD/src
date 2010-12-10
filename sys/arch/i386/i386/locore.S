@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.44 2006/10/25 13:56:15 jmmv Exp $	*/
+/*	$NetBSD: locore.S,v 1.44.2.1 2010/12/10 22:14:57 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004 The NetBSD Foundation, Inc.
@@ -920,7 +920,7 @@ switch_dequeue:
 	 * we're running at splhigh(), but it's otherwise okay to take
 	 * interrupts here.
 	 */
-	sti
+	/*sti -- no it isn't! */
 	leal	_C_LABEL(sched_qs)(,%ebx,8),%eax # select q
 
 	movl	L_FORW(%eax),%edi	# unlink from front of process q
@@ -1049,7 +1049,7 @@ switch_restored:
 	SET_CURPCB(%esi)
 
 	/* Interrupts are okay again. */
-	sti
+	/*sti -- nope, not yet! */
 
 /*
  *  Check for restartable atomic sequences (RAS)
@@ -1065,6 +1065,7 @@ switch_return:
 #if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 	call    _C_LABEL(sched_unlock_idle)
 #endif
+	sti	/* NOW we can do this, after releasing sched_lock */
 	cmpl	$0,CPUVAR(IPENDING)
 	jz	3f
 	pushl	$IPL_NONE		# spl0()
@@ -1129,7 +1130,7 @@ ENTRY(cpu_switchto)
 	 * We're running at splhigh(), but it's otherwise okay to take
 	 * interrupts here.
 	 */
-	sti
+	/*sti -- no it isn't! */
 
 	/* Jump into the middle of cpu_switch */
 	xorl	%eax,%eax
