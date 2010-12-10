@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.284 2010/12/10 00:31:26 macallan Exp $
+# $NetBSD: GENERIC,v 1.285 2010/12/10 00:36:03 macallan Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/macppc/conf/std.macppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.284 $"
+#ident 		"GENERIC-$Revision: 1.285 $"
 
 maxusers	32
 
@@ -514,6 +514,7 @@ ugen*	at uhub? port ? configuration ? interface ?	# USB Generic driver
 # USB 802.11 adapters
 atu*	at uhub? port ?		# Atmel at76c50x 802.11b
 ral*	at uhub? port ?		# Ralink Technology RT25x0 802.11a/b/g
+rum*	at uhub? port ?		# Ralink Technology RT2501/RT2601 802.11a/b/g
 #zyd*	at uhub? port ?		# Zydas ZD1211
 
 # PCI IEEE1394 controllers
