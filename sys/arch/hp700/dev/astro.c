@@ -1,4 +1,4 @@
-/*	$NetBSD: astro.c,v 1.10 2010/11/12 13:18:57 uebayasi Exp $	*/
+/*	$NetBSD: astro.c,v 1.11 2010/12/11 19:32:05 skrll Exp $	*/
 
 /*	$OpenBSD: astro.c,v 1.8 2007/10/06 23:50:54 krw Exp $	*/
 
@@ -278,13 +278,17 @@ astro_attach(device_t parent, device_t self, void *aux)
 
 	size = (1 << (iova_bits - PAGE_SHIFT)) * sizeof(uint64_t);
 	TAILQ_INIT(&mlist);
-	if (uvm_pglistalloc(size, 0, -1, PAGE_SIZE, 0, &mlist, 1, 0) != 0)
-		panic("astrottach: no memory");
+	if (uvm_pglistalloc(size, 0, -1, PAGE_SIZE, 0, &mlist, 1, 0) != 0) {
+		aprint_error(": can't allocate PDIR\n");
+		return;
+	}
 
 	va = uvm_km_alloc(kernel_map, size, 0, UVM_KMF_VAONLY | UVM_KMF_NOWAIT);
 
-	if (va == 0)
-		panic("astroattach: no memory");
+	if (va == 0) {
+		aprint_error(": can't map PDIR\n");
+		return;
+	}
 	sc->sc_pdir = (uint64_t *)va;
 
 	m = TAILQ_FIRST(&mlist);
