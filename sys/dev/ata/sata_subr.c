@@ -1,4 +1,4 @@
-/*	$NetBSD: sata_subr.c,v 1.12 2008/11/18 09:52:10 cegger Exp $	*/
+/*	$NetBSD: sata_subr.c,v 1.13 2010/12/11 22:45:31 matt Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
  * Common functions for Serial ATA.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sata_subr.c,v 1.12 2008/11/18 09:52:10 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sata_subr.c,v 1.13 2010/12/11 22:45:31 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -51,7 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: sata_subr.c,v 1.12 2008/11/18 09:52:10 cegger Exp $"
 const char *
 sata_speed(uint32_t sstatus)
 {
-	static const char *sata_speedtab[] = {
+	static const char * const sata_speedtab[] = {
 		"no negotiated speed",
 		"1.5Gb/s",
 		"3.0Gb/s",
@@ -85,7 +85,7 @@ sata_reset_interface(struct ata_channel *chp, bus_space_tag_t sata_t,
 	int i;
 
 	/* bring the PHYs online.
-	 * The work-around for errata #1 for the 31244 says that we must
+	 * The work-around for errata #1 for the 3124 says that we must
 	 * write 0 to the port first to be sure of correctly initializing
 	 * the device. It doesn't hurt for other devices.
 	 */
