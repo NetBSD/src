@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.84 2010/12/05 20:11:22 pooka Exp $
+# $NetBSD: md.amd64,v 1.85 2010/12/11 10:41:12 rtr Exp $
 ./usr/include/amd64				comp-c-include
 ./usr/include/amd64/ansi.h			comp-c-include
 ./usr/include/amd64/aout_machdep.h		comp-c-include
@@ -609,6 +609,7 @@
 ./usr/lib/i386/libldap_r_p.a			comp-c-proflib		compat,profile,ldap
 ./usr/lib/i386/libldap_r_pic.a			comp-c-piclib		compat,pic,ldap
 ./usr/lib/i386/liblua.a				comp-c-lib		compat
+./usr/lib/i386/liblua_g.a			comp-c-proflib		compat,debuglib
 ./usr/lib/i386/liblua_p.a			comp-c-proflib		compat,profile
 ./usr/lib/i386/liblua_pic.a			comp-c-piclib		compat,pic
 ./usr/lib/i386/liblwres.a			comp-c-lib		compat

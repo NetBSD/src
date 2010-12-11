@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1534 2010/12/08 20:23:12 pooka Exp $
+#	$NetBSD: mi,v 1.1535 2010/12/11 10:41:11 rtr Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2528,6 +2528,7 @@
 ./usr/lib/libldap_r_g.a				-unknown-		debuglib,ldap
 ./usr/lib/libldap_r_p.a				comp-ldap-proflib	profile,ldap
 ./usr/lib/liblua.a				comp-c-lib
+./usr/lib/liblua_g.a				comp-c-proflib		debuglib
 ./usr/lib/liblua_p.a				comp-c-proflib		profile
 ./usr/lib/liblwres.a				comp-bind-lib
 ./usr/lib/liblwres_g.a				-unknown-		debuglib
