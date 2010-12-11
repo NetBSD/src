@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_softint.c,v 1.31 2010/01/09 19:02:17 rmind Exp $	*/
+/*	$NetBSD: kern_softint.c,v 1.32 2010/12/11 22:32:13 matt Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -176,7 +176,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.31 2010/01/09 19:02:17 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.32 2010/12/11 22:32:13 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -345,9 +345,10 @@ softint_establish(u_int flags, void (*func)(void *), void *arg)
 
 	/* Find a free slot. */
 	sc = curcpu()->ci_data.cpu_softcpu;
-	for (index = 1; index < softint_max; index++)
+	for (index = 1; index < softint_max; index++) {
 		if (sc->sc_hand[index].sh_func == NULL)
 			break;
+	}
 	if (index == softint_max) {
 		mutex_exit(&softint_lock);
 		printf("WARNING: softint_establish: table full, "
@@ -463,8 +464,9 @@ softint_schedule(void *arg)
 	sh = (softhand_t *)((uint8_t *)curcpu()->ci_data.cpu_softcpu + offset);
 
 	/* If it's already pending there's nothing to do. */
-	if ((sh->sh_flags & SOFTINT_PENDING) != 0)
+	if ((sh->sh_flags & SOFTINT_PENDING) != 0) {
 		return;
+	}
 
 	/*
 	 * Enqueue the handler into the LWP's pending list.
