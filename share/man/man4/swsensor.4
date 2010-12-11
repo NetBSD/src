@@ -1,4 +1,4 @@
-.\"	$NetBSD: swsensor.4,v 1.3 2010/12/11 04:13:03 pgoyette Exp $
+.\"	$NetBSD: swsensor.4,v 1.4 2010/12/11 15:49:34 wiz Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation
 .\" All rights reserved.
@@ -58,7 +58,7 @@ module to alter the driver's behavior.
 .Bl -tag -width "variable"
 .It Sy "Variable" Sy "Usage"
 .It Li "mode"
-Controls whether or not 
+Controls whether or not
 .Nm
 provides internally-maintained limits and limit checking
 .Bl -tag -width "Value"
@@ -95,6 +95,13 @@ variable
 .Xr modctl 2 ,
 .Xr envstat 8 ,
 .Xr sysctl 8
+.Sh HISTORY
+The
+.Nm
+driver was written by
+.An Paul Goyette
+and first appeared in
+.Nx 6.0 .
 .Sh BUGS
 The
 .Nm
@@ -106,10 +113,3 @@ driver can only emulate one hardware-managed limit; this is assumed to
 be the
 .Dv critical-min
 limit.
-.Sh HISTORY
-The
-.Nm
-driver was written by
-.An Paul Goyette
-and first appeared in
-.Nx 6.0 .
