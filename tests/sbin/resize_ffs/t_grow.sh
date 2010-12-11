@@ -1,4 +1,4 @@
-# $NetBSD: t_grow.sh,v 1.2 2010/12/09 17:28:05 riz Exp $
+# $NetBSD: t_grow.sh,v 1.3 2010/12/11 11:31:27 pooka Exp $
 #
 # Copyright (c) 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -38,7 +38,7 @@ grow_ffs()
 	local fslevel=$5
 	local numdata=$6
 	local swap=$7
-	mkdir -p ${MNTPT}
+	mkdir -p mnt
 	echo "bs is ${bs} numdata is ${numdata}"
 	echo "****growing fs with blocksize ${bs}"
 
@@ -57,15 +57,15 @@ grow_ffs()
 	fi
 
 	# we're specifying relative paths, so rump_ffs warns - ignore.
-	atf_check -s exit:0 -e ignore rump_ffs ${IMG} ${MNTPT}
+	atf_check -s exit:0 -e ignore rump_ffs ${IMG} mnt
 	copy_multiple ${numdata}
-	umount ${MNTPT}
+	umount mnt
 	atf_check -s exit:0 resize_ffs -y -s ${nsize} ${IMG}
 	atf_check -s exit:0 -o ignore fsck_ffs -f -n -F ${IMG}
-	atf_check -s exit:0 -e ignore rump_ffs ${IMG} ${MNTPT}
+	atf_check -s exit:0 -e ignore rump_ffs ${IMG} mnt
 	# checking everything because we don't delete on grow
 	check_data_range 1 ${numdata}
-	umount ${MNTPT}
+	umount mnt
 	rm -f ${IMG}	# probably unnecessary
 }
 
