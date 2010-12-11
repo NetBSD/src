@@ -1,4 +1,4 @@
-/* $NetBSD: date.c,v 1.55 2010/10/03 08:21:27 gson Exp $ */
+/* $NetBSD: date.c,v 1.56 2010/12/11 16:57:51 christos Exp $ */
 
 /*
  * Copyright (c) 1985, 1987, 1988, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)date.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: date.c,v 1.55 2010/10/03 08:21:27 gson Exp $");
+__RCSID("$NetBSD: date.c,v 1.56 2010/12/11 16:57:51 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -50,6 +50,7 @@ __RCSID("$NetBSD: date.c,v 1.55 2010/10/03 08:21:27 gson Exp $");
 #include <ctype.h>
 #include <err.h>
 #include <fcntl.h>
+#include <errno.h>
 #include <locale.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -64,13 +65,12 @@ __RCSID("$NetBSD: date.c,v 1.55 2010/10/03 08:21:27 gson Exp $");
 
 static time_t tval;
 static int aflag, jflag, rflag, nflag;
-int retval;
 
 static void badformat(void);
 static void badtime(void);
 static void badvalue(const char *);
 static void setthetime(const char *);
-static void usage(void);
+static void usage(void) __attribute__((__noreturn__));
 
 int
 main(int argc, char *argv[])
@@ -79,6 +79,7 @@ main(int argc, char *argv[])
 	size_t bufsiz;
 	const char *format;
 	int ch;
+	long long val;
 
 	setprogname(argv[0]);
 	(void)setlocale(LC_ALL, "");
@@ -92,8 +93,9 @@ main(int argc, char *argv[])
 		case 'd':
 			rflag = 1;
 			tval = parsedate(optarg, NULL, NULL);
-			if (tval == -1)
-				errx(1, "Cannot parse `%s'", optarg);
+			if (tval == -1) 
+badarg:				 errx(EXIT_FAILURE,
+				    "Cannot parse `%s'", optarg);
 			break;
 		case 'j':		/* don't set time */
 			jflag = 1;
@@ -102,8 +104,15 @@ main(int argc, char *argv[])
 			nflag = 1;
 			break;
 		case 'r':		/* user specified seconds */
+			errno = 0;
+			val = strtoll(optarg, &buf, 0);
+			if (optarg[0] == '\0' || *buf != '\0')
+				goto badarg;
+			if (errno == ERANGE && (val == LLONG_MAX ||
+			    val == LLONG_MIN))
+				err(EXIT_FAILURE, "Bad number `%s'", optarg);
 			rflag = 1;
-			tval = strtoll(optarg, NULL, 0);
+			tval = (time_t)val;
 			break;
 		case 'u':		/* do everything in UTC */
 			(void)setenv("TZ", "UTC0", 1);
@@ -118,13 +127,13 @@ main(int argc, char *argv[])
 	if (!rflag && time(&tval) == -1)
 		err(EXIT_FAILURE, "time");
 
-	format = "+%a %b %e %H:%M:%S %Z %Y";
 
 	/* allow the operands in any order */
 	if (*argv && **argv == '+') {
 		format = *argv;
 		++argv;
-	}
+	} else
+		format = "+%a %b %e %H:%M:%S %Z %Y";
 
 	if (*argv) {
 		setthetime(*argv);
@@ -143,7 +152,7 @@ main(int argc, char *argv[])
 	free(buf);
 	return 0;
 bad:
-	err(1, "Cannot allocate format buffer");
+	err(EXIT_FAILURE, "Cannot allocate format buffer");
 }
 
 static void
@@ -317,7 +326,8 @@ static void
 usage(void)
 {
 	(void)fprintf(stderr,
-	    "usage: %s [-ajnu] [-d date] [-r seconds] [+format]", getprogname());
+	    "Usage: %s [-ajnu] [-d date] [-r seconds] [+format]",
+	    getprogname());
 	(void)fprintf(stderr, " [[[[[[CC]yy]mm]dd]HH]MM[.SS]]\n");
 	exit(EXIT_FAILURE);
 	/* NOTREACHED */
