@@ -1,4 +1,4 @@
-/* $NetBSD: netdate.c,v 1.27 2008/02/24 04:49:45 dholland Exp $ */
+/* $NetBSD: netdate.c,v 1.28 2010/12/11 16:57:51 christos Exp $ */
 
 /*-
  * Copyright (c) 1990, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)netdate.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: netdate.c,v 1.27 2008/02/24 04:49:45 dholland Exp $");
+__RCSID("$NetBSD: netdate.c,v 1.28 2010/12/11 16:57:51 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -59,8 +59,6 @@ __RCSID("$NetBSD: netdate.c,v 1.27 2008/02/24 04:49:45 dholland Exp $");
 #define	WAITACK		2000	/* milliseconds */
 #define	WAITDATEACK	5000	/* milliseconds */
 
-extern int retval;
-
 static const char *
 tsp_type_to_string(const struct tsp *msg)
 {
@@ -75,7 +73,7 @@ tsp_type_to_string(const struct tsp *msg)
  * new date to the local timedaemon.  If the timedaemon is in the master state,
  * it performs the correction on all slaves.  If it is in the slave state, it
  * notifies the master that a correction is needed.
- * Returns 0 on success.  Returns > 0 on failure, setting retval to 2;
+ * Returns 0 on success.  Returns > 0 on failure.
  */
 int
 netsettime(time_t tval)
@@ -89,7 +87,7 @@ netsettime(time_t tval)
 
 	if ((sp = getservbyname("timed", "udp")) == NULL) {
 		warnx("udp/timed: unknown service");
-		return (retval = 2);
+		return 2;
 	}
 
 	(void)memset(&dest, 0, sizeof(dest));
@@ -100,18 +98,18 @@ netsettime(time_t tval)
 	dest.sin_port = sp->s_port;
 	dest.sin_addr.s_addr = htonl(INADDR_ANY);
 	s = socket(AF_INET, SOCK_DGRAM, 0);
-	if (s < 0) {
+	if (s == -1) {
 		if (errno != EAFNOSUPPORT)
 			warn("timed");
-		return (retval = 2);
+		return 2;
 	}
 
 #ifdef IP_PORTRANGE
 	{
 		static const int on = IP_PORTRANGE_LOW;
 
-		if (setsockopt(s, IPPROTO_IP, IP_PORTRANGE,
-			    &on, sizeof(on)) < 0) {
+		if (setsockopt(s, IPPROTO_IP, IP_PORTRANGE, &on,
+		    sizeof(on)) == -1) {
 			warn("setsockopt");
 			goto bad;
 		}
@@ -120,20 +118,19 @@ netsettime(time_t tval)
 
 	msg.tsp_type = TSP_SETDATE;
 	msg.tsp_vers = TSPVERSION;
-	if (gethostname(hostname, sizeof(hostname))) {
+	if (gethostname(hostname, sizeof(hostname)) == -1) {
 		warn("gethostname");
 		goto bad;
 	}
-	strncpy(msg.tsp_name, hostname, sizeof(msg.tsp_name));
-	msg.tsp_name[sizeof(msg.tsp_name) - 1] = '\0';
+	(void)strlcpy(msg.tsp_name, hostname, sizeof(msg.tsp_name));
 	msg.tsp_seq = htons((uint16_t)0);
 	msg.tsp_time.tv_sec = htonl((uint32_t)tval); /* XXX: y2038 */
 	msg.tsp_time.tv_usec = htonl((uint32_t)0);
-	if (connect(s, (const struct sockaddr *)&dest, sizeof(dest)) < 0) {
+	if (connect(s, (const void *)&dest, sizeof(dest)) == -1) {
 		warn("connect");
 		goto bad;
 	}
-	if (send(s, &msg, sizeof(msg), 0) < 0) {
+	if (send(s, &msg, sizeof(msg), 0) == -1) {
 		if (errno != ECONNREFUSED)
 			warn("send");
 		goto bad;
@@ -151,7 +148,7 @@ loop:
 		int error;
 
 		length = sizeof(error);
-		if (!getsockopt(s, SOL_SOCKET, SO_ERROR, &error, &length)
+		if (getsockopt(s, SOL_SOCKET, SO_ERROR, &error, &length) == -1
 		    && error) {
 			if (error != ECONNREFUSED)
 				warn("send (delayed error)");
@@ -162,8 +159,8 @@ loop:
 	if (found > 0 && ready.revents & POLLIN) {
 		ssize_t ret;
 
-		ret = recv(s, &msg, sizeof(msg), 0);
-		if (ret < 0) {
+		if ((ret = recv(s, &msg, sizeof(msg), 0)) == -1) {
+		if (ret < 0)
 			if (errno != ECONNREFUSED)
 				warn("recv");
 			goto bad;
@@ -182,7 +179,7 @@ loop:
 			goto loop;
 		case TSP_DATEACK:
 			(void)close(s);
-			return (0);
+			return 0;
 		default:
 			warnx("wrong ack received from timed: %s", 
 			    tsp_type_to_string(&msg));
@@ -195,5 +192,5 @@ loop:
 
 bad:
 	(void)close(s);
-	return (retval = 2);
+	return 2;
 }
