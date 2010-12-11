@@ -1,4 +1,4 @@
-/*	$NetBSD: lasi.c,v 1.16 2010/12/05 12:19:09 skrll Exp $	*/
+/*	$NetBSD: lasi.c,v 1.17 2010/12/11 19:32:05 skrll Exp $	*/
 
 /*	$OpenBSD: lasi.c,v 1.4 2001/06/09 03:57:19 mickey Exp $	*/
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lasi.c,v 1.16 2010/12/05 12:19:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lasi.c,v 1.17 2010/12/11 19:32:05 skrll Exp $");
 
 #undef LASIDEBUG
 
@@ -162,16 +162,20 @@ lasiattach(device_t parent, device_t self, void *aux)
 	 * Map the LASI interrupt registers.
 	 */
 	if (bus_space_map(ca->ca_iot, ca->ca_hpa + LASI_REG_INT,
-			  sizeof(struct lasi_trs), 0, &ioh))
-		panic("lasiattach: can't map interrupt registers");
+			  sizeof(struct lasi_trs), 0, &ioh)) {
+		aprint_error(": can't map interrupt registers\n");
+		return;
+	}
 	sc->sc_trs = (struct lasi_trs *)ioh;
 
 	/*
 	 * Map the LASI miscellaneous registers.
 	 */
 	if (bus_space_map(ca->ca_iot, ca->ca_hpa + LASI_REG_MISC,
-			  sizeof(struct lasi_hwr), 0, &ioh))
-		panic("lasiattach: can't map misc registers");
+			  sizeof(struct lasi_hwr), 0, &ioh)) {
+		aprint_error(": can't map misc registers\n");
+		return;
+	}
 	sc->sc_hw = (struct lasi_hwr *)ioh;
 
 	/* XXX should we reset the chip here? */

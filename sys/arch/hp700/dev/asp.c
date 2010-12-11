@@ -1,4 +1,4 @@
-/*	$NetBSD: asp.c,v 1.16 2010/12/05 12:19:09 skrll Exp $	*/
+/*	$NetBSD: asp.c,v 1.17 2010/12/11 19:32:05 skrll Exp $	*/
 
 /*	$OpenBSD: asp.c,v 1.5 2000/02/09 05:04:22 mickey Exp $	*/
 
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: asp.c,v 1.16 2010/12/05 12:19:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asp.c,v 1.17 2010/12/11 19:32:05 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -201,24 +201,30 @@ aspattach(device_t parent, device_t self, void *aux)
 	 * Map the ASP interrupt registers.
 	 */
 	if (bus_space_map(ca->ca_iot, ca->ca_hpa + ASP_REG_INT,
-			  sizeof(struct asp_trs), 0, &ioh))
-		panic("aspattach: can't map interrupt registers.");
+			  sizeof(struct asp_trs), 0, &ioh)) {
+		aprint_error(": can't map interrupt registers.\n");
+		return;
+	}
 	sc->sc_trs = (struct asp_trs *)ioh;
 
 	/*
 	 * Map the ASP miscellaneous registers.
 	 */
 	if (bus_space_map(ca->ca_iot, ca->ca_hpa + ASP_REG_MISC,
-			  sizeof(struct asp_hwr), 0, &ioh))
-		panic("aspattach: can't map miscellaneous registers.");
+			  sizeof(struct asp_hwr), 0, &ioh)) {
+		aprint_error(": can't map miscellaneous registers.\n");
+		return;
+	}
 	sc->sc_hw = (struct asp_hwr *)ioh;
 
 	/*
 	 * Map the Ethernet address and read it out.
 	 */
 	if (bus_space_map(ca->ca_iot, ca->ca_hpa + ASP_ETHER_ADDR,
-			  sizeof(ga.ga_ether_address), 0, &ioh))
-		panic("aspattach: can't map EEPROM.");
+			  sizeof(ga.ga_ether_address), 0, &ioh)) {
+		aprint_error(": can't map EEPROM.\n");
+		return;
+	}
 	bus_space_read_region_1(ca->ca_iot, ioh, 0,
 		ga.ga_ether_address, sizeof(ga.ga_ether_address));
 	bus_space_unmap(ca->ca_iot, ioh, sizeof(ga.ga_ether_address));
