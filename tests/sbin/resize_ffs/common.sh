@@ -29,6 +29,7 @@ test_case()
 	}"
 	eval "${name}_cleanup() { \
 		umount -f mnt  ; \
+		: reset error ; \
 	}"
 }
 
@@ -46,6 +47,7 @@ test_case_xfail()
 	}"
 	eval "${name}_cleanup() { \
 		umount -f mnt  ; \
+		: reset error ; \
 	}"
 }
 
