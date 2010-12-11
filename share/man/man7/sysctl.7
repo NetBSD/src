@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.7,v 1.51 2010/08/06 18:36:09 jruoho Exp $
+.\"	$NetBSD: sysctl.7,v 1.52 2010/12/11 19:55:53 jruoho Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)sysctl.3	8.4 (Berkeley) 5/9/95
 .\"
-.Dd August 6, 2010
+.Dd December 11, 2010
 .Dt SYSCTL 7
 .Os
 .Sh NAME
@@ -699,8 +699,8 @@ The variables are as follows:
 .Bl -tag -width "123456"
 .It Li kern.module.autoload
 A boolean that controls whether kernel modules are loaded automatically.
-See for example
-.Xr modstat 8
+See
+.Xr module 9
 for additional details.
 .It Li kern.module.verbose
 A boolean that enables or disables verbose
