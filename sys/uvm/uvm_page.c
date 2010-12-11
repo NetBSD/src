@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.167 2010/11/25 04:45:30 uebayasi Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.168 2010/12/11 22:34:03 matt Exp $	*/
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.167 2010/11/25 04:45:30 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.168 2010/12/11 22:34:03 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -542,7 +542,8 @@ uvm_setpagesize(void)
 	}
 	uvmexp.pagemask = uvmexp.pagesize - 1;
 	if ((uvmexp.pagemask & uvmexp.pagesize) != 0)
-		panic("uvm_setpagesize: page size not a power of two");
+		panic("uvm_setpagesize: page size %u (%#x) not a power of two",
+		    uvmexp.pagesize, uvmexp.pagesize);
 	for (uvmexp.pageshift = 0; ; uvmexp.pageshift++)
 		if ((1 << uvmexp.pageshift) == uvmexp.pagesize)
 			break;
