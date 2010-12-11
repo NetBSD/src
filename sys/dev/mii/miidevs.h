@@ -1,10 +1,10 @@
-/*	$NetBSD: miidevs.h,v 1.100 2010/11/27 20:15:43 christos Exp $	*/
+/*	$NetBSD: miidevs.h,v 1.101 2010/12/11 18:09:33 matt Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: miidevs,v 1.97 2010/11/27 20:15:27 christos Exp
+ *	NetBSD: miidevs,v 1.98 2010/12/11 18:09:13 matt Exp
  */
 
 /*-
@@ -132,6 +132,8 @@
 #define	MII_STR_ATTANSIC_L1	"L1 10/100/1000 PHY"
 #define	MII_MODEL_ATTANSIC_L2	0x0002
 #define	MII_STR_ATTANSIC_L2	"L2 10/100 PHY"
+#define	MII_MODEL_ATTANSIC_AR8021	0x0004
+#define	MII_STR_ATTANSIC_AR8021	"Atheros AR8021 10/100/1000 PHY"
 
 /* Altima Communications PHYs */
 /* Don't know the model for ACXXX */
@@ -329,6 +331,8 @@
 #define	MII_STR_xxMARVELL_E1149	"Marvell 88E1149 Gigabit PHY"
 #define	MII_MODEL_xxMARVELL_E1111	0x000c
 #define	MII_STR_xxMARVELL_E1111	"Marvell 88E1111 Gigabit PHY"
+#define	MII_MODEL_xxMARVELL_E1145	0x000d
+#define	MII_STR_xxMARVELL_E1145	"Marvell 88E1145 Quad Gigabit PHY"
 #define	MII_MODEL_xxMARVELL_E1116	0x0021
 #define	MII_STR_xxMARVELL_E1116	"Marvell 88E1116 Gigabit PHY"
 #define	MII_MODEL_xxMARVELL_E1116R	0x0024
