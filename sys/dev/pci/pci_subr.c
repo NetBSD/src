@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.85 2010/08/21 13:18:35 pgoyette Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.86 2010/12/11 18:22:24 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.85 2010/08/21 13:18:35 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.86 2010/12/11 18:22:24 matt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -433,8 +433,9 @@ pci_devinfo(pcireg_t id_reg, pcireg_t class_reg, int showclass, char *cp,
 
 #define	i2o(i)	((i) * 4)
 #define	o2i(o)	((o) / 4)
-#define	onoff(str, bit)							\
-	printf("      %s: %s\n", (str), (rval & (bit)) ? "on" : "off");
+#define	onoff2(str, bit, onstr, offstr)					\
+	printf("      %s: %s\n", (str), (rval & (bit)) ? onstr : offstr);
+#define	onoff(str, bit)	onoff2(str, bit, "on", "off")
 
 static void
 pci_conf_print_common(
@@ -477,6 +478,7 @@ pci_conf_print_common(
 	onoff("Interrupt disable", PCI_COMMAND_INTERRUPT_DISABLE);
 
 	printf("    Status register: 0x%04x\n", (rval >> 16) & 0xffff);
+	onoff2("Interrupt status", PCI_STATUS_INT_STATUS, "active", "inactive");
 	onoff("Capability List support", PCI_STATUS_CAPLIST_SUPPORT);
 	onoff("66 MHz capable", PCI_STATUS_66MHZ_SUPPORT);
 	onoff("User Definable Features (UDF) support", PCI_STATUS_UDF_SUPPORT);
@@ -819,6 +821,29 @@ pci_conf_print_pcie_cap(const pcireg_t *regs, int capoff)
 		printf("    Slot implemented\n");
 	printf("    Interrupt Message Number: %x\n",
 	    (unsigned int)((regs[o2i(capoff)] & 0x4e000000) >> 27));
+	printf("    Link Capabilities Register: 0x%08x\n",
+	    regs[o2i(capoff + 0x0c)]);
+	printf("      Maximum Link Speed: ");
+	if ((regs[o2i(capoff + 0x0c)] & 0x000f) != 1) {
+		printf("unknown %u value\n", 
+		    (regs[o2i(capoff + 0x0c)] & 0x000f));
+	} else {
+		printf("2.5Gb/s\n");
+	}
+	printf("      Maximum Link Width: x%u lanes\n",
+	    (regs[o2i(capoff + 0x0c)] & 0x03f0) >> 4);
+	printf("      Port Number: %u\n", regs[o2i(capoff + 0x0c)] >> 24);
+	printf("    Link Status Register: 0x%04x\n",
+	    regs[o2i(capoff + 0x10)] >> 16);
+	printf("      Negotiated Link Speed: ");
+	if (((regs[o2i(capoff + 0x10)] >> 16) & 0x000f) != 1) {
+		printf("unknown %u value\n", 
+		    (regs[o2i(capoff + 0x10)] >> 16) & 0x000f);
+	} else {
+		printf("2.5Gb/s\n");
+	}
+	printf("      Negotiated Link Width: x%u lanes\n",
+	    (regs[o2i(capoff + 0x10)] >> 20) & 0x003f);
 	if ((regs[o2i(capoff + 0x18)] & 0x07ff) != 0) {
 		printf("    Slot Control Register:\n");
 		if ((regs[o2i(capoff + 0x18)] & 0x0001) != 0)
@@ -934,6 +959,41 @@ pci_conf_print_pcipm_cap(const pcireg_t *regs, int capoff)
 }
 
 static void
+pci_conf_print_msi_cap(const pcireg_t *regs, int capoff)
+{
+	uint32_t ctl, mmc, mme;
+
+	regs += o2i(capoff);
+	ctl = *regs++;
+	mmc = (ctl >> PCI_MSI_CTL_MMC_SHIFT) & PCI_MSI_CTL_MMC_MASK;
+	mme = (ctl >> PCI_MSI_CTL_MME_SHIFT) & PCI_MSI_CTL_MME_MASK;
+
+	printf("\n  PCI Message Signaled Interrupt\n");
+
+	printf("    Message Control register: 0x%04x\n", ctl >> 16);
+	printf("      MSI Enabled: %s\n",
+	    ctl & PCI_MSI_CTL_MSI_ENABLE ? "yes" : "no");
+	printf("      Multiple Message Capable: %s (%d vector%s)\n",
+	    mmc > 0 ? "yes" : "no", 1 << mmc, mmc > 0 ? "s" : "");
+	printf("      Multiple Message Enabled: %s (%d vector%s)\n",
+	    mme > 0 ? "on" : "off", 1 << mme, mme > 0 ? "s" : "");
+	printf("      64 Bit Address Capable: %s\n",
+	    ctl & PCI_MSI_CTL_64BIT_ADDR ? "yes" : "no");
+	printf("      Per-Vector Masking Capable: %s\n",
+	    ctl & PCI_MSI_CTL_PERVEC_MASK ? "yes" : "no");
+	printf("    Message Address %sregister: 0x%08x\n",
+	    ctl & PCI_MSI_CTL_64BIT_ADDR ? "(lower) " : "", *regs++);
+	if (ctl & PCI_MSI_CTL_64BIT_ADDR) {
+		printf("    Message Address %sregister: 0x%08x\n",
+		    "(upper) ", *regs++);
+	}
+	printf("    Message Data register: 0x%08x\n", *regs++);
+	if (ctl & PCI_MSI_CTL_PERVEC_MASK) {
+		printf("    Vector Mask register: 0x%08x\n", *regs++);
+		printf("    Vector Pending register: 0x%08x\n", *regs++);
+	}
+}
+static void
 pci_conf_print_caplist(
 #ifdef _KERNEL
     pci_chipset_tag_t pc, pcitag_t tag,
@@ -942,7 +1002,7 @@ pci_conf_print_caplist(
 {
 	int off;
 	pcireg_t rval;
-	int pcie_off = -1, pcipm_off = -1;
+	int pcie_off = -1, pcipm_off = -1, msi_off = -1;
 
 	for (off = PCI_CAPLIST_PTR(regs[o2i(capoff)]);
 	     off != 0;
@@ -973,6 +1033,7 @@ pci_conf_print_caplist(
 			break;
 		case PCI_CAP_MSI:
 			printf("MSI");
+			msi_off = off;
 			break;
 		case PCI_CAP_CPCI_HOTSWAP:
 			printf("CompactPCI Hot-swapping");
@@ -1013,6 +1074,8 @@ pci_conf_print_caplist(
 		}
 		printf(")\n");
 	}
+	if (msi_off != -1)
+		pci_conf_print_msi_cap(regs, msi_off);
 	if (pcipm_off != -1)
 		pci_conf_print_pcipm_cap(regs, pcipm_off);
 	if (pcie_off != -1)
