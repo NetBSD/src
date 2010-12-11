@@ -8,7 +8,6 @@ setupvars()
 	IMG=fsimage
 	TDBASE64=$(atf_get_srcdir)/testdata.tar.gz.base64
 	GOODMD5=$(atf_get_srcdir)/testdata.md5
-	MNTPT=mnt
 	# set BYTESWAP to opposite-endian.
 	if [ $(sysctl -n hw.byteorder) = "1234" ]; then
 		BYTESWAP=be
@@ -29,7 +28,7 @@ test_case()
 		${check_function} " "${@}" "; \
 	}"
 	eval "${name}_cleanup() { \
-		umount -f ${MNTPT}  ; \
+		umount -f mnt  ; \
 	}"
 }
 
@@ -46,14 +45,14 @@ test_case_xfail()
 		${check_function} " "${@}" "; \
 	}"
 	eval "${name}_cleanup() { \
-		umount -f ${MNTPT}  ; \
+		umount -f mnt  ; \
 	}"
 }
 
 # copy_data requires the mount already done;  makes one copy of the test data
 copy_data ()
 {
-	uudecode -p ${TDBASE64} | (cd ${MNTPT}; tar xzf - -s/testdata/TD$1/)
+	uudecode -p ${TDBASE64} | (cd mnt; tar xzf - -s/testdata/TD$1/)
 }
 
 copy_multiple ()
@@ -68,7 +67,7 @@ copy_multiple ()
 # is to ensure data exists near the end of the fs under test.
 remove_data ()
 {
-	rm -rf ${MNTPT}/TD$1
+	rm -rf mnt/TD$1
 }
 
 remove_multiple ()
@@ -83,7 +82,7 @@ remove_multiple ()
 # generated md5 file doesn't need explicit cleanup thanks to ATF
 check_data ()
 {
-	(cd ${MNTPT}/TD$1 && md5 *) > TD$1.md5
+	(cd mnt/TD$1 && md5 *) > TD$1.md5
 	atf_check diff -u ${GOODMD5} TD$1.md5
 }
 
