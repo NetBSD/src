@@ -1,4 +1,4 @@
-/* $NetBSD: vme.c,v 1.23 2009/05/12 14:47:27 cegger Exp $ */
+/* $NetBSD: vme.c,v 1.24 2010/12/11 18:12:45 matt Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vme.c,v 1.23 2009/05/12 14:47:27 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vme.c,v 1.24 2010/12/11 18:12:45 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -125,7 +125,7 @@ vmeprint(struct vme_attach_args *v, char *dummy)
 static int
 vmesubmatch1(device_t bus, cfdata_t dev, const int *ldesc, void *aux)
 {
-	struct vmebus_softc *sc = (struct vmebus_softc*)bus;
+	struct vmebus_softc *sc = device_private(bus);
 	struct vme_attach_args v;
 
 	if (strcmp(dev->cf_name, VME_SLAVE_DUMMYDRV))
@@ -142,7 +142,7 @@ vmesubmatch1(device_t bus, cfdata_t dev, const int *ldesc, void *aux)
 static int
 vmesubmatch(device_t bus, cfdata_t dev, const int *ldesc, void *aux)
 {
-	struct vmebus_softc *sc = (struct vmebus_softc*)bus;
+	struct vmebus_softc *sc = device_private(bus);
 	struct vme_attach_args v;
 
 	if (!strcmp(dev->cf_name, VME_SLAVE_DUMMYDRV))
