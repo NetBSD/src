@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1049 2010/11/11 14:38:36 cegger Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1050 2010/12/11 17:46:58 matt Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1052 2010/11/11 14:37:41 cegger Exp
+ *	NetBSD: pcidevs,v 1.1053 2010/12/11 17:45:38 matt Exp
  */
 
 /*
@@ -542,6 +542,7 @@
 #define	PCI_VENDOR_USR2	0x16ec		/* US Robotics */
 #define	PCI_VENDOR_PICTUREEL	0x12c5		/* Picture Elements */
 #define	PCI_VENDOR_NVIDIA_SGS	0x12d2		/* Nvidia & SGS-Thomson Microelectronics */
+#define	PCI_VENDOR_PERICOM	0x12d8		/* Pericom Semiconductors */
 #define	PCI_VENDOR_RAINBOW	0x12de		/* Rainbow Technologies */
 #define	PCI_VENDOR_DATUM	0x12e2		/* Datum Inc. Bancomm-Timing Division */
 #define	PCI_VENDOR_AUREAL	0x12eb		/* Aureal Semiconductor */
@@ -624,6 +625,7 @@
 #define	PCI_VENDOR_RMI	0x182e		/* Raza Microelectronics Inc. (NetLogic) */
 #define	PCI_VENDOR_BBELEC	0x1896		/* B & B Electronics */
 #define	PCI_VENDOR_RENESAS	0x1912		/* Renesas Technologies */
+#define	PCI_VENDOR_FREESCALE	0x1957		/* Freescale Semiconductor */
 #define	PCI_VENDOR_ATTANSIC	0x1969		/* Attansic Technologies */
 #define	PCI_VENDOR_JMICRON	0x197b		/* JMicron Technology */
 #define	PCI_VENDOR_EVE	0x1adb		/* EVE */
@@ -1104,6 +1106,7 @@
 /* Attansic Technology Corp. */
 #define	PCI_PRODUCT_ATTANSIC_ETHERNET_L1E	0x1026		/* L1E Gigabit Ethernet Adapter */
 #define	PCI_PRODUCT_ATTANSIC_ETHERNET_GIGA	0x1048		/* L1 Gigabit Ethernet Adapter */
+#define	PCI_PRODUCT_ATTANSIC_AR8131	0x1063		/* Atheros AR8131 Gigabit Ethernet Adapter */
 #define	PCI_PRODUCT_ATTANSIC_ETHERNET_100	0x2048		/* L2 100 Mbit Ethernet Adapter */
 
 /* ATI products */
@@ -2029,6 +2032,21 @@
 #define	PCI_PRODUCT_EFFICIENTNETS_ENI155PA	0x0002		/* 155P-MF1 ATM (ASIC) */
 #define	PCI_PRODUCT_EFFICIENTNETS_ENI25P	0x0003		/* SpeedStream ENI-25p */
 #define	PCI_PRODUCT_EFFICIENTNETS_SS3000	0x0005		/* SpeedStream 3000 */
+
+/* Freescale Semiconductor products */
+#define	PCI_PRODUCT_FREESCALE_MPC8548E	0x0012		/* MPC8548E */
+#define	PCI_PRODUCT_FREESCALE_MPC8548	0x0013		/* MPC8548 */
+#define	PCI_PRODUCT_FREESCALE_MPC8543E	0x0014		/* MPC8543E */
+#define	PCI_PRODUCT_FREESCALE_MPC8543	0x0015		/* MPC8543 */
+#define	PCI_PRODUCT_FREESCALE_MPC8547E	0x0018		/* MPC8547E */
+#define	PCI_PRODUCT_FREESCALE_MPC8545E	0x0019		/* MPC8545E */
+#define	PCI_PRODUCT_FREESCALE_MPC8545	0x001a		/* MPC8545 */
+#define	PCI_PRODUCT_FREESCALE_MPC8544E	0x0032		/* MPC8544E */
+#define	PCI_PRODUCT_FREESCALE_MPC8544	0x0033		/* MPC8544 */
+#define	PCI_PRODUCT_FREESCALE_MPC8572E	0x0040		/* MPC8572E */
+#define	PCI_PRODUCT_FREESCALE_MPC8572	0x0041		/* MPC8572 */
+#define	PCI_PRODUCT_FREESCALE_MPC8536E	0x0050		/* MPC8536E */
+#define	PCI_PRODUCT_FREESCALE_MPC8536	0x0051		/* MPC8536 */
 
 /* Marvell products */
 #define	PCI_PRODUCT_MARVELL_GT64010A	0x0146		/* GT-64010A System Controller */
@@ -3141,6 +3159,10 @@
 #define	PCI_PRODUCT_MOT_MPC8240	0x0003		/* MPC8240 \"Kahlua\" Host Bridge */
 #define	PCI_PRODUCT_MOT_MPC107	0x0004		/* MPC107 \"Chaparral\" Host Bridge */
 #define	PCI_PRODUCT_MOT_MPC8245	0x0006		/* MPC8245 \"Kahlua II\" Host Bridge */
+#define	PCI_PRODUCT_MOT_MPC8555E	0x000a		/* MPC8555E */
+#define	PCI_PRODUCT_MOT_MPC8541	0x000c		/* MPC8541 */
+#define	PCI_PRODUCT_MOT_MPC8548E	0x0012		/* MPC8548E */
+#define	PCI_PRODUCT_MOT_MPC8548	0x0013		/* MPC8548 */
 #define	PCI_PRODUCT_MOT_RAVEN	0x4801		/* Raven Host Bridge & Multi-Processor Interrupt Controller */
 #define	PCI_PRODUCT_MOT_FALCON	0x4802		/* Falcon ECC Memory Controller Chip Set */
 #define	PCI_PRODUCT_MOT_HAWK	0x4803		/* Hawk System Memory Controller & PCI Host Bridge */
@@ -3327,6 +3349,7 @@
 #define	PCI_PRODUCT_NETMOS_NM9835	0x9835		/* Dual UART and 1284 Printer Port */
 #define	PCI_PRODUCT_NETMOS_NM9845	0x9845		/* Quad UART and 1284 Printer Port */
 #define	PCI_PRODUCT_NETMOS_NM9855	0x9855		/* 9855 Quad UART and 1284 Printer Port */
+#define	PCI_PRODUCT_NETMOS_MCS9990	0x9990		/* MCS9990 Quad USB 2.0 Port */
 #define	PCI_PRODUCT_NETMOS_NM9901	0x9901		/* Dual PCI-E UART */
 
 /* Network Security Technologies */
@@ -3701,6 +3724,10 @@
 
 /* Peak System Technik products */
 #define	PCI_PRODUCT_PEAK_PCAN	0x0001		/* PCAN CAN Controller */
+
+/* Pericom Semiconductor products */
+#define	PCI_PRODUCT_PERICOM_P17C9X110	0xe110		/* P17C9X110 PCIe to PCI Bridge */
+#define	PCI_PRODUCT_PERICOM_P17C9X	0xe111		/* P17C9X PCIe to PCI Bridge */
 
 /* Planex products */
 #define	PCI_PRODUCT_PLANEX_FNW_3603_TX	0xab06		/* FNW-3603-TX 10/100 Ethernet */
