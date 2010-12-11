@@ -1,4 +1,4 @@
-/*	$NetBSD: in_offload.c,v 1.2 2007/04/24 23:43:50 dyoung Exp $	*/
+/*	$NetBSD: in_offload.c,v 1.3 2010/12/11 22:37:46 matt Exp $	*/
 
 /*-
  * Copyright (c)2005, 2006 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_offload.c,v 1.2 2007/04/24 23:43:50 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_offload.c,v 1.3 2010/12/11 22:37:46 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -194,4 +194,58 @@ quit:
 	}
 
 	return error;
+}
+
+void
+ip_undefer_csum(struct mbuf *m, size_t hdrlen, int csum_flags)
+{
+	KASSERT(m->m_flags & M_PKTHDR);
+	KASSERT((m->m_pkthdr.csum_flags & csum_flags) == csum_flags);
+	uint16_t csum;
+	uint16_t ip_len;
+	uint16_t *csump;
+	size_t iphdrlen;
+
+	if (__predict_true(hdrlen + sizeof(struct ip) <= m->m_len)) {
+		struct ip *ip = (struct ip *)(mtod(m, uint8_t *) + hdrlen);
+		ip_len = ip->ip_len;
+		iphdrlen = ip->ip_hl << 2;
+		csump = &ip->ip_sum;
+	} else {
+		uint8_t ip_vhl;
+		const size_t ip_len_offset = hdrlen + offsetof(struct ip, ip_len);
+		m_copydata(m, hdrlen, sizeof(ip_vhl), &ip_vhl);
+		m_copydata(m, ip_len_offset, sizeof(ip_len), &ip_len);
+		iphdrlen = (ip_vhl & 0x0f) << 2;
+		csump = NULL;
+	}
+
+	if (csum_flags & M_CSUM_IPv4) {
+		const size_t offset = hdrlen + offsetof(struct ip, ip_sum);
+		csum = in4_cksum(m, 0, hdrlen, iphdrlen);
+		if (csump != NULL) {
+			*csump = csum;
+		} else {
+			m_copyback(m, offset, sizeof(uint16_t), &csum);
+		}
+	}
+
+	if (csum_flags & (M_CSUM_UDPv4|M_CSUM_TCPv4)) {
+		size_t l4offset = hdrlen
+		    + M_CSUM_DATA_IPv4_IPHL(m->m_pkthdr.csum_data);
+
+		csum = in4_cksum(m, 0, hdrlen + l4offset, ip_len - l4offset);
+		if (csum == 0 && (csum_flags & M_CSUM_UDPv4) != 0)
+			csum = 0xffff;
+
+		l4offset += M_CSUM_DATA_IPv4_OFFSET(m->m_pkthdr.csum_data);
+
+		if (__predict_true(l4offset + sizeof(uint16_t) <= m->m_len)) {
+			*(uint16_t *)(mtod(m, char *) + l4offset) = csum;
+		} else {
+			m_copyback(m, l4offset, sizeof(csum), (void *) &csum);
+		}
+	}
+
+	m->m_pkthdr.csum_flags ^= csum_flags;
 }
