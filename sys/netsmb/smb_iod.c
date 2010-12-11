@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_iod.c,v 1.36 2010/12/10 19:44:18 ahoka Exp $	*/
+/*	$NetBSD: smb_iod.c,v 1.37 2010/12/11 04:21:17 christos Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_iod.c,v 1.36 2010/12/10 19:44:18 ahoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_iod.c,v 1.37 2010/12/11 04:21:17 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -744,8 +744,10 @@ smb_iod_init(void)
 	return 0;
 }
 
+#ifndef __NetBSD__
 int
 smb_iod_done(void)
 {
 	return 0;
 }
+#endif
