@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bnx.c,v 1.38 2010/12/11 14:19:29 pgoyette Exp $	*/
+/*	$NetBSD: if_bnx.c,v 1.39 2010/12/11 14:28:38 martin Exp $	*/
 /*	$OpenBSD: if_bnx.c,v 1.85 2009/11/09 14:32:41 dlg Exp $ */
 
 /*-
@@ -35,7 +35,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/sys/dev/bce/if_bce.c,v 1.3 2006/04/13 14:12:26 ru Exp $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.38 2010/12/11 14:19:29 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.39 2010/12/11 14:28:38 martin Exp $");
 
 /*
  * The following controllers are supported by this driver:
@@ -3105,12 +3105,12 @@ bnx_init_context(struct bnx_softc *sc)
 		vcid_addr = GET_CID_ADDR(96);
 		while (vcid_addr) {
 
-			vcid_addr -= PHY_BNX_CTX_SIZE;
+			vcid_addr -= BNX_PHY_CTX_SIZE;
 
 			REG_WR(sc, BNX_CTX_VIRT_ADDR, 0);
 			REG_WR(sc, BNX_CTX_PAGE_TBL, vcid_addr);
 
-			for(offset = 0; offset < PHY_BNX_CTX_SIZE; offset += 4) {
+			for(offset = 0; offset < BNX_PHY_CTX_SIZE; offset += 4) {
 				CTX_WR(sc, 0x00, offset, 0);
 			}
 
@@ -3411,7 +3411,7 @@ bnx_chipinit(struct bnx_softc *sc)
 
 	REG_WR(sc, BNX_MQ_CONFIG, val);
 
-	val = 0x10000 + (MAX_CID_CNT * MB_KERNEL_BNX_CTX_SIZE);
+	val = 0x10000 + (MAX_CID_CNT * BNX_MB_KERNEL_CTX_SIZE);
 	REG_WR(sc, BNX_MQ_KNL_BYP_WIND_START, val);
 	REG_WR(sc, BNX_MQ_KNL_WIND_END, val);
 
