@@ -1,4 +1,4 @@
-/*	$NetBSD: ppb.c,v 1.42 2010/02/24 22:38:01 dyoung Exp $	*/
+/*	$NetBSD: ppb.c,v 1.43 2010/12/11 18:25:02 matt Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppb.c,v 1.42 2010/02/24 22:38:01 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppb.c,v 1.43 2010/12/11 18:25:02 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,6 +67,17 @@ ppbmatch(device_t parent, cfdata_t match, void *aux)
 	if (PCI_CLASS(pa->pa_class) == PCI_CLASS_BRIDGE &&
 	    PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_BRIDGE_PCI)
 		return 1;
+
+#ifdef __powerpc__
+	if (PCI_CLASS(pa->pa_class) == PCI_CLASS_PROCESSOR &&
+	    PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_PROCESSOR_POWERPC) {
+		pcireg_t bhlc = pci_conf_read(pa->pa_pc, pa->pa_tag,
+		    PCI_BHLC_REG);
+		if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_FREESCALE
+		    && PCI_HDRTYPE(bhlc) == PCI_HDRTYPE_RC)
+		return 1;
+	}
+#endif
 
 	return 0;
 }
