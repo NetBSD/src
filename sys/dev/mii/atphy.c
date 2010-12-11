@@ -1,4 +1,4 @@
-/*	$NetBSD: atphy.c,v 1.6 2009/07/25 16:25:13 cegger Exp $ */
+/*	$NetBSD: atphy.c,v 1.7 2010/12/11 18:10:16 matt Exp $ */
 /*	$OpenBSD: atphy.c,v 1.1 2008/09/25 20:47:16 brad Exp $	*/
 
 /*-
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atphy.c,v 1.6 2009/07/25 16:25:13 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atphy.c,v 1.7 2010/12/11 18:10:16 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,6 +94,8 @@ static const struct mii_phydesc etphys[] = {
 	  MII_STR_ATHEROS_F1 },
 	{ MII_OUI_ATTANSIC,	MII_MODEL_ATTANSIC_L1,
 	  MII_STR_ATTANSIC_L1 },
+	{ MII_OUI_ATTANSIC,	MII_MODEL_ATTANSIC_AR8021,
+	  MII_STR_ATTANSIC_AR8021 },
 	{ 0,			0,
 	  NULL },
 };
