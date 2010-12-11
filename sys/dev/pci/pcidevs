@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1052 2010/11/11 14:37:41 cegger Exp $
+$NetBSD: pcidevs,v 1.1053 2010/12/11 17:45:38 matt Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -535,6 +535,7 @@ vendor USR		0x12b9	US Robotics (3Com)
 vendor USR2		0x16ec	US Robotics
 vendor PICTUREEL	0x12c5	Picture Elements
 vendor NVIDIA_SGS	0x12d2	Nvidia & SGS-Thomson Microelectronics
+vendor PERICOM		0x12d8	Pericom Semiconductors
 vendor RAINBOW		0x12de	Rainbow Technologies
 vendor DATUM		0x12e2	Datum Inc. Bancomm-Timing Division
 vendor AUREAL		0x12eb	Aureal Semiconductor
@@ -617,6 +618,7 @@ vendor RALINK		0x1814	Ralink Technologies
 vendor RMI		0x182e	Raza Microelectronics Inc. (NetLogic)
 vendor BBELEC		0x1896	B & B Electronics
 vendor RENESAS		0x1912	Renesas Technologies
+vendor FREESCALE	0x1957	Freescale Semiconductor
 vendor ATTANSIC		0x1969	Attansic Technologies
 vendor JMICRON		0x197b	JMicron Technology
 vendor EVE		0x1adb	EVE
@@ -1097,6 +1099,7 @@ product ASUSTEK HFCPCI		0x0675	ISDN
 /* Attansic Technology Corp. */
 product ATTANSIC ETHERNET_L1E	0x1026	L1E Gigabit Ethernet Adapter
 product ATTANSIC ETHERNET_GIGA	0x1048	L1 Gigabit Ethernet Adapter
+product ATTANSIC AR8131		0x1063	Atheros AR8131 Gigabit Ethernet Adapter
 product ATTANSIC ETHERNET_100	0x2048	L2 100 Mbit Ethernet Adapter
 
 /* ATI products */
@@ -2022,6 +2025,21 @@ product EFFICIENTNETS ENI155PF	0x0000	155P-MF1 ATM (FPGA)
 product EFFICIENTNETS ENI155PA	0x0002	155P-MF1 ATM (ASIC)
 product EFFICIENTNETS ENI25P	0x0003	SpeedStream ENI-25p
 product EFFICIENTNETS SS3000	0x0005	SpeedStream 3000
+
+/* Freescale Semiconductor products */
+product FREESCALE MPC8548E	0x0012	MPC8548E
+product FREESCALE MPC8548	0x0013	MPC8548
+product FREESCALE MPC8543E	0x0014	MPC8543E
+product FREESCALE MPC8543	0x0015	MPC8543
+product FREESCALE MPC8547E	0x0018	MPC8547E
+product FREESCALE MPC8545E	0x0019	MPC8545E
+product FREESCALE MPC8545	0x001a	MPC8545
+product FREESCALE MPC8544E	0x0032	MPC8544E
+product FREESCALE MPC8544	0x0033	MPC8544
+product FREESCALE MPC8572E	0x0040	MPC8572E
+product FREESCALE MPC8572	0x0041	MPC8572
+product FREESCALE MPC8536E	0x0050	MPC8536E
+product FREESCALE MPC8536	0x0051	MPC8536
 
 /* Marvell products */
 product MARVELL GT64010A	0x0146	GT-64010A System Controller
@@ -3134,6 +3152,10 @@ product MOT MPC106	0x0002	MPC106 \"Grackle\" Host Bridge
 product MOT MPC8240	0x0003	MPC8240 \"Kahlua\" Host Bridge
 product MOT MPC107	0x0004	MPC107 \"Chaparral\" Host Bridge
 product MOT MPC8245	0x0006	MPC8245 \"Kahlua II\" Host Bridge
+product MOT MPC8555E	0x000a	MPC8555E
+product MOT MPC8541	0x000c	MPC8541
+product MOT MPC8548E	0x0012  MPC8548E
+product MOT MPC8548	0x0013  MPC8548
 product MOT RAVEN	0x4801	Raven Host Bridge & Multi-Processor Interrupt Controller
 product MOT FALCON	0x4802	Falcon ECC Memory Controller Chip Set
 product MOT HAWK	0x4803	Hawk System Memory Controller & PCI Host Bridge
@@ -3320,6 +3342,7 @@ product NETMOS NM9820	0x9820	Single UART
 product NETMOS NM9835	0x9835	Dual UART and 1284 Printer Port
 product NETMOS NM9845	0x9845	Quad UART and 1284 Printer Port
 product NETMOS NM9855	0x9855	9855 Quad UART and 1284 Printer Port
+product NETMOS MCS9990	0x9990	MCS9990 Quad USB 2.0 Port
 product NETMOS NM9901	0x9901	Dual PCI-E UART
 
 /* Network Security Technologies */
@@ -3693,7 +3716,11 @@ product PCHDTV HD5500	0x5500	HD-5500 HDTV Video Capture
 product PCTECH RZ1000	0x1000	RZ1000
 
 /* Peak System Technik products */
-product PEAK PCAN	0x0001	PCAN	CAN Controller
+product PEAK PCAN	0x0001	PCAN CAN Controller
+
+/* Pericom Semiconductor products */
+product PERICOM P17C9X110	0xe110	P17C9X110 PCIe to PCI Bridge
+product PERICOM P17C9X	0xe111	P17C9X PCIe to PCI Bridge
 
 /* Planex products */
 product PLANEX FNW_3603_TX	0xab06	FNW-3603-TX 10/100 Ethernet
