@@ -1,4 +1,4 @@
-/* $NetBSD: subr_evcnt.c,v 1.6 2009/03/29 18:21:06 pooka Exp $ */
+/* $NetBSD: subr_evcnt.c,v 1.7 2010/12/11 22:30:54 matt Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_evcnt.c,v 1.6 2009/03/29 18:21:06 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_evcnt.c,v 1.7 2010/12/11 22:30:54 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -147,16 +147,27 @@ evcnt_attach_static(struct evcnt *ev)
  * and string pointers and then act like it was statically initialized.
  */
 void
-evcnt_attach_dynamic(struct evcnt *ev, int type, const struct evcnt *parent,
-    const char *group, const char *name)
+evcnt_attach_dynamic_nozero(struct evcnt *ev, int type,
+    const struct evcnt *parent, const char *group, const char *name)
 {
 
-	memset(ev, 0, sizeof *ev);
 	ev->ev_type = type;
 	ev->ev_parent = parent;
 	ev->ev_group = group;
 	ev->ev_name = name;
 	evcnt_attach_static(ev);
+}
+/*
+ * Attach a dynamically-initialized event.  Zero it, set up the type
+ * and string pointers and then act like it was statically initialized.
+ */
+void
+evcnt_attach_dynamic(struct evcnt *ev, int type, const struct evcnt *parent,
+    const char *group, const char *name)
+{
+
+	memset(ev, 0, sizeof *ev);
+	evcnt_attach_dynamic_nozero(ev, type, parent, group, name);
 }
 
 /*
