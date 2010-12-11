@@ -1,4 +1,4 @@
-$NetBSD: miidevs,v 1.97 2010/11/27 20:15:27 christos Exp $
+$NetBSD: miidevs,v 1.98 2010/12/11 18:09:13 matt Exp $
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -120,6 +120,7 @@ model ATHEROS F2		0x0002 F2 10/100 PHY
 /* Attansic PHYs */
 model ATTANSIC L1		0x0001 L1 10/100/1000 PHY
 model ATTANSIC L2		0x0002 L2 10/100 PHY
+model ATTANSIC AR8021		0x0004 Atheros AR8021 10/100/1000 PHY
 
 /* Altima Communications PHYs */
 /* Don't know the model for ACXXX */
@@ -232,6 +233,7 @@ model xxMARVELL E1000_5		0x0005 Marvell 88E1000 Gigabit PHY
 model xxMARVELL E6060		0x0008 Marvell 88E6060 10/100 5-port PHY switch
 model xxMARVELL E1149		0x000b Marvell 88E1149 Gigabit PHY
 model xxMARVELL E1111		0x000c Marvell 88E1111 Gigabit PHY
+model xxMARVELL E1145		0x000d Marvell 88E1145 Quad Gigabit PHY
 model xxMARVELL E1116		0x0021 Marvell 88E1116 Gigabit PHY
 model xxMARVELL E1116R		0x0024 Marvell 88E1116R Gigabit PHY
 
