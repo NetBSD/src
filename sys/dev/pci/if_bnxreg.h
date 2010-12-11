@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bnxreg.h,v 1.11 2010/12/09 22:34:37 jym Exp $	*/
+/*	$NetBSD: if_bnxreg.h,v 1.12 2010/12/11 12:14:06 martin Exp $	*/
 /*	$OpenBSD: if_bnxreg.h,v 1.33 2009/09/05 16:02:28 claudio Exp $  */
 
 /*-
@@ -4584,26 +4584,26 @@ struct l2_fhdr {
 #define RX_IDX(x) ((x) & USABLE_RX_BD_PER_PAGE)
 
 /* Context size. */
-#define CTX_SHIFT                   7
-#define CTX_SIZE                    (1 << CTX_SHIFT)
-#define CTX_MASK                    (CTX_SIZE - 1)
-#define GET_CID_ADDR(_cid)          ((_cid) << CTX_SHIFT)
-#define GET_CID(_cid_addr)          ((_cid_addr) >> CTX_SHIFT)
+#define BNX_CTX_SHIFT			7
+#define BNX_CTX_SIZE			(1 << BNX_CTX_SHIFT)
+#define BNX_CTX_MASK			(BNX_CTX_SIZE - 1)
+#define GET_CID_ADDR(_cid)		((_cid) << BNX_CTX_SHIFT)
+#define GET_CID(_cid_addr)		((_cid_addr) >> BNX_CTX_SHIFT)
 
-#define PHY_CTX_SHIFT               6
-#define PHY_CTX_SIZE                (1 << PHY_CTX_SHIFT)
-#define PHY_CTX_MASK                (PHY_CTX_SIZE - 1)
-#define GET_PCID_ADDR(_pcid)        ((_pcid) << PHY_CTX_SHIFT)
-#define GET_PCID(_pcid_addr)        ((_pcid_addr) >> PHY_CTX_SHIFT)
+#define PHY_BNX_CTX_SHIFT		6
+#define PHY_BNX_CTX_SIZE		(1 << PHY_BNX_CTX_SHIFT)
+#define PHY_BNX_CTX_MASK		(PHY_BNX_CTX_SIZE - 1)
+#define GET_PCID_ADDR(_pcid)		((_pcid) << PHY_BNX_CTX_SHIFT)
+#define GET_PCID(_pcid_addr)		((_pcid_addr) >> PHY_BNX_CTX_SHIFT)
 
-#define MB_KERNEL_CTX_SHIFT         8
-#define MB_KERNEL_CTX_SIZE          (1 << MB_KERNEL_CTX_SHIFT)
-#define MB_KERNEL_CTX_MASK          (MB_KERNEL_CTX_SIZE - 1)
-#define MB_GET_CID_ADDR(_cid)       (0x10000 + ((_cid) << MB_KERNEL_CTX_SHIFT))
+#define MB_KERNEL_BNX_CTX_SHIFT 	8
+#define MB_KERNEL_BNX_CTX_SIZE		(1 << MB_KERNEL_BNX_CTX_SHIFT)
+#define MB_KERNEL_BNX_CTX_MASK		(MB_KERNEL_BNX_CTX_SIZE - 1)
+#define MB_GET_CID_ADDR(_cid)		(0x10000 + ((_cid) << MB_KERNEL_BNX_CTX_SHIFT))
 
-#define MAX_CID_CNT                 0x4000
-#define MAX_CID_ADDR                (GET_CID_ADDR(MAX_CID_CNT))
-#define INVALID_CID_ADDR            0xffffffff
+#define MAX_CID_CNT			0x4000
+#define MAX_CID_ADDR			(GET_CID_ADDR(MAX_CID_CNT))
+#define INVALID_CID_ADDR		0xffffffff
 
 #define TX_CID		16
 #define RX_CID		0
