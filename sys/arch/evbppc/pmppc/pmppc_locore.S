@@ -1,4 +1,4 @@
-/*	$NetBSD: pmppc_locore.S,v 1.7 2010/03/03 00:30:15 pooka Exp $	*/
+/*	$NetBSD: pmppc_locore.S,v 1.8 2010/12/11 17:13:49 matt Exp $	*/
 /*	$OpenBSD: locore.S,v 1.4 1997/01/26 09:06:38 rahnds Exp $	*/
 
 /*
@@ -100,7 +100,7 @@ __start:
 	lis	4,_C_LABEL(end)@ha
 	addi	4,4,_C_LABEL(end)@l
 
-	INIT_CPUINFO(4,1,9,0)
+	INIT_CPUINFO(4,1,9,5)
 
 	lis	3,__start@ha
 	addi	3,3,__start@l
