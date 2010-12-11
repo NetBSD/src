@@ -1,4 +1,4 @@
-/*	$NetBSD: pciconf.c,v 1.31 2009/08/02 11:25:50 gavan Exp $	*/
+/*	$NetBSD: pciconf.c,v 1.32 2010/12/11 18:21:14 matt Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciconf.c,v 1.31 2009/08/02 11:25:50 gavan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciconf.c,v 1.32 2010/12/11 18:21:14 matt Exp $");
 
 #include "opt_pci.h"
 
@@ -74,6 +74,7 @@ __KERNEL_RCSID(0, "$NetBSD: pciconf.c,v 1.31 2009/08/02 11:25:50 gavan Exp $");
 #include <sys/queue.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
+#include <sys/kmem.h>
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pciconf.h>
@@ -320,7 +321,7 @@ query_bus(pciconf_bus_t *parent, pciconf_dev_t *pd, int dev)
 	pcireg_t	io, pmem;
 	pciconf_win_t	*pi, *pm;
 
-	pb = malloc (sizeof (pciconf_bus_t), M_DEVBUF, M_NOWAIT);
+	pb = kmem_zalloc(sizeof (pciconf_bus_t), KM_NOSLEEP);
 	if (!pb)
 		panic("Unable to allocate memory for PCI configuration.");
 
@@ -419,7 +420,7 @@ query_bus(pciconf_bus_t *parent, pciconf_dev_t *pd, int dev)
 
 	return pb;
 err:
-	free(pb, M_DEVBUF);
+	kmem_free(pb, sizeof(*pb));
 	return NULL;
 }
 
@@ -441,8 +442,10 @@ pci_do_device_query(pciconf_bus_t *pb, pcitag_t tag, int dev, int func, int mode
 	class = pci_conf_read(pb->pc, tag, PCI_CLASS_REG);
 
 	cmd = pci_conf_read(pb->pc, tag, PCI_COMMAND_STATUS_REG);
+	bhlc = pci_conf_read(pb->pc, tag, PCI_BHLC_REG);
 
-	if (PCI_CLASS(class) != PCI_CLASS_BRIDGE) {
+	if (PCI_CLASS(class) != PCI_CLASS_BRIDGE
+	    && PCI_HDRTYPE_TYPE(bhlc) != PCI_HDRTYPE_PPB) {
 		cmd &= ~(PCI_COMMAND_MASTER_ENABLE |
 		    PCI_COMMAND_IO_ENABLE | PCI_COMMAND_MEM_ENABLE);
 		pci_conf_write(pb->pc, tag, PCI_COMMAND_STATUS_REG, cmd);
@@ -457,7 +460,6 @@ pci_do_device_query(pciconf_bus_t *pb, pcitag_t tag, int dev, int func, int mode
 	if ((cmd & PCI_STATUS_66MHZ_SUPPORT) == 0)
 		pb->freq_66 = 0;
 
-	bhlc = pci_conf_read(pb->pc, tag, PCI_BHLC_REG);
 	switch (PCI_HDRTYPE_TYPE(bhlc)) {
 	case PCI_HDRTYPE_DEVICE:
 		reg_start = PCI_MAPREG_START;
@@ -919,14 +921,14 @@ configure_bridge(pciconf_dev_t *pd)
 	/*
 	 * XXX -- 64-bit systems need a lot more than just this...
 	 */
-	if (sizeof(u_long) > 4) {
-		mem_base  = (int64_t) mem_base  >> 32;
-		mem_limit = (int64_t) mem_limit >> 32;
+	if (PCI_BRIDGE_PREFETCHMEM_64BITS(mem)) {
+		mem_base  = (uint64_t) mem_base  >> 32;
+		mem_limit = (uint64_t) mem_limit >> 32;
+		pci_conf_write(pb->pc, pd->tag, PCI_BRIDGE_PREFETCHBASE32_REG,
+		    mem_base & 0xffffffff);
+		pci_conf_write(pb->pc, pd->tag, PCI_BRIDGE_PREFETCHLIMIT32_REG,
+		    mem_limit & 0xffffffff);
 	}
-	pci_conf_write(pb->pc, pd->tag, PCI_BRIDGE_PREFETCHBASE32_REG,
-	    mem_base & 0xffffffff);
-	pci_conf_write(pb->pc, pd->tag, PCI_BRIDGE_PREFETCHLIMIT32_REG,
-	    mem_limit & 0xffffffff);
 
 	rv = configure_bus(pb);
 
@@ -1100,7 +1102,7 @@ pci_configure_bus(pci_chipset_tag_t pc, struct extent *ioext,
 	pciconf_bus_t	*pb;
 	int		rv;
 
-	pb = malloc (sizeof (pciconf_bus_t), M_DEVBUF, M_NOWAIT);
+	pb = kmem_zalloc(sizeof (pciconf_bus_t), KM_NOSLEEP);
 	pb->busno = firstbus;
 	pb->next_busno = pb->busno + 1;
 	pb->last_busno = 255;
@@ -1128,6 +1130,6 @@ pci_configure_bus(pci_chipset_tag_t pc, struct extent *ioext,
 	/*
 	 * All done!
 	 */
-	free(pb, M_DEVBUF);
+	kmem_free(pb, sizeof(*pb));
 	return rv;
 }
