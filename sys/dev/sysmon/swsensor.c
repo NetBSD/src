@@ -1,4 +1,4 @@
-/*	$NetBSD: swsensor.c,v 1.4 2010/10/23 11:24:16 pooka Exp $ */
+/*	$NetBSD: swsensor.c,v 1.5 2010/12/11 04:13:03 pgoyette Exp $ */
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: swsensor.c,v 1.4 2010/10/23 11:24:16 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: swsensor.c,v 1.5 2010/12/11 04:13:03 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -37,6 +37,10 @@ __KERNEL_RCSID(0, "$NetBSD: swsensor.c,v 1.4 2010/10/23 11:24:16 pooka Exp $");
 #include <dev/sysmon/sysmonvar.h>
 
 #include <prop/proplib.h>
+
+#ifndef _MODULE
+#include "opt_modular.h"
+#endif
 
 int swsensorattach(int);
 
@@ -48,6 +52,10 @@ static struct sysmon_envsys *swsensor_sme;
 static envsys_data_t swsensor_edata;
 
 static int32_t sw_sensor_value;
+static int32_t sw_sensor_limit;
+static int32_t sw_sensor_mode;
+static int32_t sw_sensor_defprops;
+sysmon_envsys_lim_t sw_sensor_deflims;
 
 MODULE(MODULE_CLASS_DRIVER, swsensor, NULL);
 
@@ -93,7 +101,53 @@ swsensor_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 {
 
 	edata->value_cur = sw_sensor_value;
-	edata->state = ENVSYS_SVALID;
+
+	/*
+	 * Set state.  If we're handling the limits ourselves, do the
+	 * compare; otherwise just assume the value is valid.
+	 */
+	if ((sw_sensor_mode == 2) && (edata->upropset & PROP_CRITMIN) &&
+	    (edata->upropset & PROP_DRIVER_LIMITS) &&
+	    (edata->value_cur < edata->limits.sel_critmin))
+		edata->state = ENVSYS_SCRITUNDER;
+	else
+		edata->state = ENVSYS_SVALID;
+}
+
+/*
+ * Sensor get/set limit routines
+ */
+
+static void     
+swsensor_get_limits(struct sysmon_envsys *sme, envsys_data_t *edata,
+                  sysmon_envsys_lim_t *limits, uint32_t *props)  
+{
+
+	*props = PROP_CRITMIN | PROP_DRIVER_LIMITS;
+	limits->sel_critmin = sw_sensor_limit;
+}
+
+static void     
+swsensor_set_limits(struct sysmon_envsys *sme, envsys_data_t *edata,
+                  sysmon_envsys_lim_t *limits, uint32_t *props)  
+{
+
+	if (limits == NULL) {
+		limits = &sw_sensor_deflims;
+		props = &sw_sensor_defprops;
+	}
+	if (*props & PROP_CRITMIN)
+		sw_sensor_limit = limits->sel_critmin;
+
+	/*
+	 * If the limit we can handle (crit-min) is set, and no
+	 * other limit is set, tell sysmon that the driver will
+	 * handle the limit checking.
+	 */
+	if ((*props & PROP_LIMITS) == PROP_CRITMIN)
+		*props |= PROP_DRIVER_LIMITS;
+	else
+		*props &= ~PROP_DRIVER_LIMITS;
 }
 
 /*
@@ -107,7 +161,6 @@ swsensor_init(void *arg)
 	int error;
 	prop_dictionary_t pd = (prop_dictionary_t)arg;
 	prop_object_t po = NULL;
-	int pv;
 
 	swsensor_sme = sysmon_envsys_create();
 	if (swsensor_sme == NULL)
@@ -123,7 +176,6 @@ swsensor_init(void *arg)
 	if (pd != NULL)
 		po = prop_dictionary_get(pd, "type");
 
-	pv = -1;
 	if (po != NULL && prop_object_type(po) == PROP_TYPE_NUMBER)
 		swsensor_edata.units = prop_number_integer_value(po);
 	else
@@ -133,13 +185,50 @@ swsensor_init(void *arg)
 	if (pd != NULL)
 		po = prop_dictionary_get(pd, "flags");
 
-	pv = -1;
 	if (po != NULL && prop_object_type(po) == PROP_TYPE_NUMBER)
 		swsensor_edata.flags = prop_number_integer_value(po);
 	else
 		swsensor_edata.flags = 0;
 
+	/*
+	 * Get requested sensor limit behavior
+	 *	0 - simple sensor, no hw limits
+	 *	1 - simple sensor, hw provides an initial limit
+	 *	2 - complex sensor, hw provides settable limits and
+	 *	    does its own limit checking
+	 */
+	if (pd != NULL)
+		po = prop_dictionary_get(pd, "mode");
+
+	if  (po != NULL && prop_object_type(po) == PROP_TYPE_NUMBER) {
+		sw_sensor_mode = prop_number_integer_value(po);
+		if (sw_sensor_mode > 2)
+			sw_sensor_mode = 2;
+	} else
+		sw_sensor_mode = 0;
+
+	if (sw_sensor_mode >= 1)
+		swsensor_sme->sme_get_limits = swsensor_get_limits;
+
+	if (sw_sensor_mode == 2)
+		swsensor_sme->sme_set_limits = swsensor_set_limits;
+
+	/* See if a limit value was provided - if not, use 0 */
+	if (sw_sensor_mode != 0) {
+		swsensor_edata.flags |= ENVSYS_FMONLIMITS;
+		sw_sensor_limit = 0;
+		if (pd != NULL)
+			po = prop_dictionary_get(pd, "limit");
+
+		if (po != NULL && prop_object_type(po) == PROP_TYPE_NUMBER)
+			sw_sensor_limit = prop_number_integer_value(po);
+
+		swsensor_get_limits(swsensor_sme, &swsensor_edata,
+		    &sw_sensor_deflims, &sw_sensor_defprops);
+	}
+
 	swsensor_edata.value_cur = 0;
+
 	strlcpy(swsensor_edata.desc, "sensor", ENVSYS_DESCLEN);
 
 	error = sysmon_envsys_sensor_attach(swsensor_sme, &swsensor_edata);
@@ -156,6 +245,8 @@ swsensor_init(void *arg)
 	else
 		printf("sysmon_envsys_register failed: %d\n", error);
 
+	if (error == 0)
+		printf("swsensor: initialized\n");
 	return error;
 }
 
@@ -197,7 +288,15 @@ swsensor_modcmd(modcmd_t cmd, void *arg)
 int
 swsensorattach(int n __unused)
 {
-	printf("%s: ", "swsensor0");
 
+#ifdef MODULAR
+	/*
+	 * Modular kernels will automatically load any built-in modules
+	 * and call their modcmd() routine, so we don't need to do it
+	 * again as part of pseudo-device configuration.
+	 */
+	return 0;
+#else
 	return swsensor_init(NULL);
+#endif
 }
