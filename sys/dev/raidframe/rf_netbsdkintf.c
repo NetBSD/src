@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.277 2010/12/08 16:18:06 christos Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.278 2010/12/11 03:12:10 mrg Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -139,7 +139,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.277 2010/12/08 16:18:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.278 2010/12/11 03:12:10 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -341,6 +341,7 @@ void rf_release_all_vps(RF_ConfigSet_t *);
 void rf_cleanup_config_set(RF_ConfigSet_t *);
 int rf_have_enough_components(RF_ConfigSet_t *);
 int rf_auto_config_set(RF_ConfigSet_t *, int *);
+static void rf_fix_old_label_size(RF_ComponentLabel_t *, uint64_t);
 
 static int raidautoconfig = 0; /* Debugging, mostly.  Set to 0 to not
 				  allow autoconfig to take place.
@@ -2985,6 +2986,7 @@ oomem:
 		/* Got the label.  Does it look reasonable? */
 		if (rf_reasonable_label(clabel) && 
 		    (clabel->partitionSize <= size)) {
+			rf_fix_old_label_size(clabel, numsecs);
 #ifdef DEBUG
 			printf("Component on: %s: %llu\n",
 				cname, (unsigned long long)size);
@@ -3190,6 +3192,24 @@ rf_reasonable_label(RF_ComponentLabel_t *clabel)
 		return(1);
 	}
 	return(0);
+}
+
+
+/*
+ * For reasons yet unknown, some old component labels have garbage in
+ * the newer numBlocksHi region, and this causes lossage.  Since those
+ * disks will also have numsecs set to less than 32 bits of sectors,
+ * we can determine when this corruption has occured, and fix it.
+ */
+static void
+rf_fix_old_label_size(RF_ComponentLabel_t *clabel, uint64_t numsecs)
+{
+
+	if (clabel->numBlocksHi && numsecs < ((uint64_t)1 << 32)) {
+		printf("WARNING: total sectors < 32 bits, yet numBlocksHi set\n"
+		       "WARNING: resetting numBlocksHi to zero.\n");
+		clabel->numBlocksHi = 0;
+	}
 }
 
 
