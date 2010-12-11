@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.boot,v 1.45 2010/09/11 12:43:54 tsutsui Exp $
+# $NetBSD: Makefile.boot,v 1.46 2010/12/11 08:20:17 mrg Exp $
 
 S=	${.CURDIR}/../../../../..
 
@@ -72,7 +72,10 @@ CPPFLAGS+= -DCONSOLE_KEYMAP=boot_params.bp_keymap
 CPPFLAGS+= -DSUPPORT_CD9660
 CPPFLAGS+= -DSUPPORT_USTARFS
 CPPFLAGS+= -DSUPPORT_DOSFS
+# XXX this bloats(?) /boot and it can't boot from cd anymore
+.if ${MACHINE_ARCH} != "x86_64"
 CPPFLAGS+= -DSUPPORT_EXT2FS
+.endif
 CPPFLAGS+= -DPASS_BIOSGEOM
 CPPFLAGS+= -DPASS_MEMMAP
 #CPPFLAGS+= -DBOOTPASSWD
