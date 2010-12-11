@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_allserver.c,v 1.1 2010/12/05 17:37:33 pooka Exp $	*/
+/*	$NetBSD: rump_allserver.c,v 1.2 2010/12/11 10:44:55 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rump_allserver.c,v 1.1 2010/12/05 17:37:33 pooka Exp $");
+__RCSID("$NetBSD: rump_allserver.c,v 1.2 2010/12/11 10:44:55 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -49,21 +49,60 @@ usage(void)
 	exit(1);
 }
 
+static void
+die(int sflag, int error, const char *reason)
+{
+
+	warnx("%s: %s", reason, strerror(error));
+	if (!sflag)
+		rump_daemonize_done(error);
+	exit(1);
+}
+
 int
 main(int argc, char *argv[])
 {
+	const char *serverurl;
 	int error;
+	int ch, sflag;
 
 	setprogname(argv[0]);
 
-	if (argc != 2)
+	sflag = 0;
+	while ((ch = getopt(argc, argv, "s")) != -1) {
+		switch (ch) {
+		case 's':
+			sflag = 1;
+			break;
+		default:
+			usage();
+			/*NOTREACHED*/
+		}
+	}
+
+	argc -= optind;
+	argv += optind;
+
+	if (argc != 1)
 		usage();
+
+	serverurl = argv[0];
+
+	if (!sflag) {
+		error = rump_daemonize_begin();
+		if (error)
+			errx(1, "rump daemonize: %s", strerror(error));
+	}
 
 	error = rump_init();
 	if (error)
-		errx(1, "rump init failed: %s", strerror(error));
-	error = rump_init_server(argv[1]);
+		die(sflag, error, "rump init failed");
+	error = rump_init_server(serverurl);
 	if (error)
-		errx(1, "rump server init failed: %s", strerror(error));
+		die(sflag, error, "rump server init failed");
+
+	if (!sflag)
+		rump_daemonize_done(0);
+
 	pause();
 }
