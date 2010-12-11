@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_envsys.c,v 1.108 2010/12/08 00:09:14 pgoyette Exp $	*/
+/*	$NetBSD: sysmon_envsys.c,v 1.109 2010/12/11 15:17:15 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.108 2010/12/08 00:09:14 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.109 2010/12/11 15:17:15 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -1054,7 +1054,9 @@ sme_remove_userprops(void)
 	envsys_data_t *edata = NULL;
 	char tmp[ENVSYS_DESCLEN];
 	sysmon_envsys_lim_t lims;
-	int ptype;
+	const struct sme_description_table *sdt_units;
+	uint32_t props;
+	int ptype, i;
 
 	mutex_enter(&sme_global_mtx);
 	LIST_FOREACH(sme, &sysmon_envsys_list, sme_list) {
@@ -1128,28 +1130,51 @@ sme_remove_userprops(void)
 			 *
 			 * First, tell the driver that we need it to 
 			 * restore any h/w limits which may have been 
-			 * changed to stored, boot-time values.  Then
-			 * we need to retrieve those limits and update
-			 * the event data in the dictionary.
+			 * changed to stored, boot-time values.
 			 */
 			if (sme->sme_set_limits) {
 				DPRINTF(("%s: reset limits for %s %s\n",
 					__func__, sme->sme_name, edata->desc));
 				(*sme->sme_set_limits)(sme, edata, NULL, NULL);
 			}
+
+			/*
+			 * Next, we need to retrieve those initial limits.
+			 */
+			edata->upropset &= ~PROP_LIMITS;
 			if (sme->sme_get_limits) {
 				DPRINTF(("%s: retrieve limits for %s %s\n",
 					__func__, sme->sme_name, edata->desc));
 				lims = edata->limits;
 				(*sme->sme_get_limits)(sme, edata, &lims,
-						       &edata->upropset);
-			} else
-				edata->upropset &= ~PROP_LIMITS;
+						       &props);
+			}
 
-			if (edata->upropset & PROP_LIMITS) {
+			/*
+			 * Finally, remove any old limits event, then
+			 * install a new event (which will update the
+			 * dictionary)
+			 */
+			sme_event_unregister(sme, edata->desc,
+			    PENVSYS_EVENT_LIMITS);
+
+			if (props & PROP_LIMITS) {
 				DPRINTF(("%s: install limits for %s %s\n",
 					__func__, sme->sme_name, edata->desc));
-				sme_update_limits(sme, edata);
+
+
+				/*
+				 * Find the correct units for this sensor.
+				 */
+				sdt_units =
+				    sme_get_description_table(SME_DESC_UNITS);
+				for (i = 0; sdt_units[i].type != -1; i++)
+					if (sdt_units[i].type == edata->units)
+						break;
+
+				sme_event_register(sdict, edata, sme,
+				    &lims, props, PENVSYS_EVENT_LIMITS,
+				    sdt_units[i].crittype);
 			}
 		}
 
