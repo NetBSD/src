@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.8 2009/11/21 17:40:28 rmind Exp $	*/
+/*	$NetBSD: machdep.c,v 1.9 2010/12/11 17:12:44 matt Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.8 2009/11/21 17:40:28 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.9 2010/12/11 17:12:44 matt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -164,17 +164,6 @@ void initppc(u_int, u_int, u_int, void *); /* Called from locore */
 void pmppc_setup(void);
 void setleds(int leds);
 
-/*
- * Force cpu_info to be in the data segment to avoid the
- * memset() blowing away the data set up by locore.S.
- */
-#if 0
- /* this is defined in powerpc/oea/cpu_subr.c, I don't understand the above
-  * comment however.
-  */
-struct cpu_info cpu_info[1] = { { .ci_curlwp = &lwp0, }, };
-#endif
-
 void
 initppc(u_int startkernel, u_int endkernel, u_int args, void *btinfo)
 {
@@ -205,14 +194,6 @@ initppc(u_int startkernel, u_int endkernel, u_int args, void *btinfo)
 		panic("bus_space_init failed");
 
 	/*
-	 * Get CPU clock
-	 */
-	ticks_per_sec = a_config.a_bus_freq;
-	ticks_per_sec /= 4;	/* 4 cycles per DEC tick */
-	cpu_timebase = ticks_per_sec;
-	cpu_initclocks();
-
-	/*
 	 * Initialize the BAT registers
 	 */
 	oea_batinit(
@@ -225,6 +206,13 @@ initppc(u_int startkernel, u_int endkernel, u_int args, void *btinfo)
 	 * Set up trap vectors
 	 */
 	oea_init(NULL);
+
+	/*
+	 * Get CPU clock
+	 */
+	ticks_per_sec = a_config.a_bus_freq;
+	ticks_per_sec /= 4;	/* 4 cycles per DEC tick */
+	cpu_timebase = ticks_per_sec;
 
 	/*
 	 * Set up console.
