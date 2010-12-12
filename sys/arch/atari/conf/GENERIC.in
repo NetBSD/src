@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC.in,v 1.91 2010/11/23 11:13:54 hannken Exp $
+#	$NetBSD: GENERIC.in,v 1.92 2010/12/12 09:56:15 tsutsui Exp $
 #
 # Generic atari
 #
@@ -357,7 +357,7 @@ vme0		at avmebus0
 le0		at vme0	irq 5	# Lance ethernet (Riebl/PAM).
 le0		at vme0 irq 4	# Lance ethernet (BVME410).
 we0		at vme0 irq 4	# SMC Elite Ultra with SMC_TT VME-ISA bridge
-et0		at vme0		# Crazy Dots II
+et4k0		at vme0		# Crazy Dots II
 #endif /* TT030_KERNEL */
 #endif /* SMALL030_KERNEL */
 
