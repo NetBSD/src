@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1264 2010/12/12 19:04:08 christos Exp $
+# $NetBSD: mi,v 1.1265 2010/12/12 19:29:23 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1239,6 +1239,7 @@
 ./usr/share/man/cat4/mk48txx.0			man-sys-catman		.cat
 ./usr/share/man/cat4/mlx.0			man-sys-catman		.cat
 ./usr/share/man/cat4/mly.0			man-sys-catman		.cat
+./usr/share/man/cat4/module.0			man-sys-catman		.cat
 ./usr/share/man/cat4/mpls.0			man-sys-catman		.cat
 ./usr/share/man/cat4/mpt.0			man-sys-catman		.cat
 ./usr/share/man/cat4/mpu.0			man-sys-catman		.cat
@@ -3918,6 +3919,7 @@
 ./usr/share/man/html4/mk48txx.html		man-sys-htmlman		html
 ./usr/share/man/html4/mlx.html			man-sys-htmlman		html
 ./usr/share/man/html4/mly.html			man-sys-htmlman		html
+./usr/share/man/html4/module.html		man-sys-htmlman		html
 ./usr/share/man/html4/mpls.html			man-sys-htmlman		html
 ./usr/share/man/html4/mpt.html			man-sys-htmlman		html
 ./usr/share/man/html4/mpu.html			man-sys-htmlman		html
@@ -6453,6 +6455,7 @@
 ./usr/share/man/man4/mk48txx.4			man-sys-man		.man
 ./usr/share/man/man4/mlx.4			man-sys-man		.man
 ./usr/share/man/man4/mly.4			man-sys-man		.man
+./usr/share/man/man4/module.4			man-sys-man		.man
 ./usr/share/man/man4/mpls.4			man-sys-man		.man
 ./usr/share/man/man4/mpt.4			man-sys-man		.man
 ./usr/share/man/man4/mpu.4			man-sys-man		.man
