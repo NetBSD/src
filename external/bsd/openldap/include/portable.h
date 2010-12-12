@@ -5,7 +5,7 @@
 /* begin of portable.h.pre */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2009 The OpenLDAP Foundation
+ * Copyright 1998-2010 The OpenLDAP Foundation
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -48,9 +48,6 @@
 
 /* end of portable.h.pre */
 
-
-/* Define if building universal (internal helper macro) */
-/* #undef AC_APPLE_UNIVERSAL_BUILD */
 
 /* define to use both <string.h> and <strings.h> */
 /* #undef BOTH_STRINGS_H */
@@ -244,6 +241,9 @@
 /* Define to 1 if you have the <gmp.h> header file. */
 /* #undef HAVE_GMP_H */
 
+/* Define to 1 if you have the `gmtime_r' function. */
+#define HAVE_GMTIME_R 1
+
 /* define if you have GNUtls */
 /* #undef HAVE_GNUTLS */
 
@@ -322,6 +322,9 @@
 /* Define to 1 if you have the <locale.h> header file. */
 #define HAVE_LOCALE_H 1
 
+/* Define to 1 if you have the `localtime_r' function. */
+#define HAVE_LOCALTIME_R 1
+
 /* Define to 1 if you have the `lockf' function. */
 #define HAVE_LOCKF 1
 
@@ -367,9 +370,6 @@
 /* define this if you have mkversion */
 #define HAVE_MKVERSION 1
 
-/* define if you have MozNSS */
-/* #undef HAVE_MOZNSS */
-
 /* Define to 1 if you have the <ndir.h> header file, and it defines `DIR'. */
 /* #undef HAVE_NDIR_H */
 
@@ -378,9 +378,6 @@
 
 /* define if strerror_r returns char* instead of int */
 /* #undef HAVE_NONPOSIX_STRERROR_R */
-
-/* Define to 1 if you have the <nssutil.h> header file. */
-/* #undef HAVE_NSSUTIL_H */
 
 /* if you have NT Event Log */
 /* #undef HAVE_NT_EVENT_LOG */
@@ -852,7 +849,7 @@
 #define LDAP_SYSLOG 1
 
 /* Version */
-#define LDAP_VENDOR_VERSION 20421
+#define LDAP_VENDOR_VERSION 20423
 
 /* Major */
 #define LDAP_VENDOR_VERSION_MAJOR 2
@@ -861,7 +858,7 @@
 #define LDAP_VENDOR_VERSION_MINOR 4
 
 /* Patch */
-#define LDAP_VENDOR_VERSION_PATCH 21
+#define LDAP_VENDOR_VERSION_PATCH 23
 
 /* define if memcmp is not 8-bit clean or is otherwise broken */
 /* #undef NEED_MEMCMP_REPLACEMENT */
@@ -876,7 +873,7 @@
 #define OPENLDAP_PACKAGE "OpenLDAP"
 
 /* Version */
-#define OPENLDAP_VERSION "2.4.21"
+#define OPENLDAP_VERSION "2.4.23"
 
 /* Define to the address where bug reports for this package should be sent. */
 #define PACKAGE_BUGREPORT ""
@@ -912,7 +909,7 @@
 #define SIZEOF_INT 4
 
 /* The size of `long', as computed by sizeof. */
-#define SIZEOF_LONG 4
+#define SIZEOF_LONG 8
 
 /* The size of `long long', as computed by sizeof. */
 #define SIZEOF_LONG_LONG 8
@@ -1079,16 +1076,10 @@
 /* define to use 'long long' for MP */
 #define USE_MP_LONG_LONG 1
 
-/* Define WORDS_BIGENDIAN to 1 if your processor stores words with the most
-   significant byte first (like Motorola and SPARC, unlike Intel). */
-#if defined AC_APPLE_UNIVERSAL_BUILD
-# if defined __BIG_ENDIAN__
+/* Define to 1 if your processor stores words with the most significant byte
+   first (like Motorola and SPARC, unlike Intel and VAX). */
+#if defined __BIG_ENDIAN__
 #  define WORDS_BIGENDIAN 1
-# endif
-#else
-# ifndef WORDS_BIGENDIAN
-/* #  undef WORDS_BIGENDIAN */
-# endif
 #endif
 
 /* Define to the type of arg 3 for `accept'. */
