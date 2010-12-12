@@ -1,5 +1,5 @@
 #! /usr/bin/awk -f
-#	$NetBSD: errlist.awk,v 1.2 2010/12/12 20:16:09 christos Exp $
+#	$NetBSD: errlist.awk,v 1.3 2010/12/12 22:34:44 joerg Exp $
 #
 # Copyright (c) 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -55,13 +55,7 @@ function perror(name, number, desc)
 BEGIN {
 	printf("/* Automatically generated file; do not edit */\n");
 	printf("#include <sys/cdefs.h>\n");
-	printf("#if defined(LIBC_SCCS) && !defined(lint)\n");
-	printf("#if 0\n");
-	printf("static char sccsid[] = \"@(#)errlst.c	8.2 (Berkeley) 11/16/93\";\n");
-	printf("#else\n");
-	printf("__RCSID(\"$NetBSD: errlist.awk,v 1.2 2010/12/12 20:16:09 christos Exp $\");\n");
-	printf("#endif\n");
-	printf("#endif /* LIBC_SCCS and not lint */\n\n");
+	printf("__RCSID(\"$NetBSD: errlist.awk,v 1.3 2010/12/12 22:34:44 joerg Exp $\");\n");
 	printf("#include <errno.h>\n");
 	printf("static const char *const errlist[] = {\n");
 	perror("ENOERROR", 0, "Undefined error: 0");
