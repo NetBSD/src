@@ -1,4 +1,4 @@
-#	$NetBSD: t_md.sh,v 1.3 2010/11/30 22:15:02 pooka Exp $
+#	$NetBSD: t_md.sh,v 1.4 2010/12/12 12:49:59 pooka Exp $
 #
 # Copyright (c) 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -50,8 +50,7 @@ basic_body()
 basic_cleanup()
 {
 
-	export RUMP_SERVER=unix://commsock
-	$(atf_get_srcdir)/../../rump/rumpkern/h_client/h_reboot
+	env RUMP_SERVER=unix://commsock rump.halt
 }
 
 atf_init_test_cases()
