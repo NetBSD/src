@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_allserver.c,v 1.2 2010/12/11 10:44:55 pooka Exp $	*/
+/*	$NetBSD: rump_allserver.c,v 1.3 2010/12/12 12:49:37 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rump_allserver.c,v 1.2 2010/12/11 10:44:55 pooka Exp $");
+__RCSID("$NetBSD: rump_allserver.c,v 1.3 2010/12/12 12:49:37 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -102,7 +102,7 @@ main(int argc, char *argv[])
 		die(sflag, error, "rump server init failed");
 
 	if (!sflag)
-		rump_daemonize_done(0);
+		rump_daemonize_done(RUMP_DAEMONIZE_SUCCESS);
 
 	pause();
 }
