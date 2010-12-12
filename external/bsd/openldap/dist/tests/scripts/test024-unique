@@ -1,8 +1,8 @@
 #! /bin/sh
-# OpenLDAP: pkg/ldap/tests/scripts/test024-unique,v 1.8.2.7 2009/07/27 18:39:18 quanah Exp
+# OpenLDAP: pkg/ldap/tests/scripts/test024-unique,v 1.8.2.9 2010/04/19 19:14:34 quanah Exp
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 2004-2009 The OpenLDAP Foundation.
+## Copyright 2004-2010 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -20,6 +20,9 @@ if test $UNIQUE = uniqueno; then
 	echo "Attribute Uniqueness overlay not available, test skipped"
 	exit 0
 fi
+
+RCODEconstraint=19
+test $BACKEND = null && RCODEconstraint=0
 
 mkdir -p $TESTDIR $DBDIR1
 
@@ -107,7 +110,7 @@ employeeType: contractor
 givenName: Bill
 EOTUNIQ2
 RC=$?
-if test $RC != 19 ; then
+if test $RC != $RCODEconstraint ; then
 	echo "unique check failed ($RC)!"
 	test $KILLSERVERS != no && kill -HUP $KILLPIDS
 	exit -1
@@ -223,7 +226,7 @@ employeeType: contractor
 givenName: Bill
 EOTUNIQ2
 RC=$?
-if test $RC != 19 ; then
+if test $RC != $RCODEconstraint ; then
 	echo "unique check failed ($RC)!"
 	test $KILLSERVERS != no && kill -HUP $KILLPIDS
 	exit -1
@@ -280,7 +283,7 @@ employeeType: contractor
 givenName: Bill
 EOTUNIQ2
 RC=$?
-if test $RC != 19 ; then
+if test $RC != $RCODEconstraint ; then
 	echo "olcUniqueAttribtue single deletion hit the wrong value"
 	test $KILLSERVERS != no && kill -HUP $KILLPIDS
 	exit -1
@@ -340,7 +343,7 @@ employeeType: contractor
 givenName: Bill
 EOTUNIQ2
 RC=$?
-if test $RC != 19 ; then
+if test $RC != $RCODEconstraint ; then
 	echo "unique check failed ($RC)!"
 	test $KILLSERVERS != no && kill -HUP $KILLPIDS
 	exit -1
@@ -505,7 +508,7 @@ cn: elvis
 EOF
 
 RC=$?
-if test $RC != 19 ; then
+if test $RC != $RCODEconstraint ; then
 	echo "unique check failed ($RC)!"
 	test $KILLSERVERS != no && kill -HUP $KILLPIDS
 	exit -1
@@ -577,7 +580,7 @@ description: left the building
 EOF
 
 RC=$?
-if test $RC != 19 ; then
+if test $RC != $RCODEconstraint ; then
 	echo "unique check failed ($RC)!"
 	test $KILLSERVERS != no && kill -HUP $KILLPIDS
 	exit -1

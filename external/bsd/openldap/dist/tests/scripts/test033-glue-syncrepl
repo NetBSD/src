@@ -1,8 +1,8 @@
 #! /bin/sh
-# OpenLDAP: pkg/ldap/tests/scripts/test033-glue-syncrepl,v 1.17.2.6 2009/03/05 22:19:39 quanah Exp */
+# OpenLDAP: pkg/ldap/tests/scripts/test033-glue-syncrepl,v 1.17.2.8 2010/04/19 19:14:35 quanah Exp */
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 1998-2009 The OpenLDAP Foundation.
+## Copyright 1998-2010 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -12,11 +12,6 @@
 ## A copy of this license is available in the file LICENSE in the
 ## top-level directory of the distribution or, alternatively, at
 ## <http://www.OpenLDAP.org/license.html>.
-
-case $BACKEND in bdb | hdb | ldif) : ;; *)
-	echo "Test does not support $BACKEND backend, test skipped"
-	exit 0
-esac
 
 echo "running defines.sh"
 . $SRCDIR/scripts/defines.sh
@@ -137,7 +132,7 @@ echo "Waiting $SLEEP1 seconds for shadow subtrees to sync..."
 sleep $SLEEP1
 
 echo "Filtering original ldif used to create database..."
-. $LDIFFILTER < $GLUESYNCOUT > $LDIFFLT
+$LDIFFILTER < $GLUESYNCOUT > $LDIFFLT
 
 for P in $PORT1 $PORT2 ; do
 	echo "Using ldapsearch to read all the entries from port $P..."
@@ -152,7 +147,7 @@ for P in $PORT1 $PORT2 ; do
 	fi
 
 	echo "Filtering ldapsearch results..."
-	. $LDIFFILTER < "${SEARCHOUT}.${P}" > $SEARCHFLT
+	$LDIFFILTER < "${SEARCHOUT}.${P}" > $SEARCHFLT
 	echo "Comparing filter output..."
 	$CMP $SEARCHFLT $LDIFFLT > $CMPOUT
 
@@ -178,7 +173,7 @@ sleep 1
 
 $LDAPSEARCH -H $URI2 -b "$BABSDN" > $TESTOUT 2>&1
 RC=$?
-if test $RC = 0 ; then
+if test $RC = 0 && test $BACKEND != null ; then
 	echo "ldapsearch should have failed ($RC)!"
 	test $KILLSERVERS != no && kill -HUP $KILLPIDS
 	exit -1

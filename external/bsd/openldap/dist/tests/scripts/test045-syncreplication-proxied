@@ -1,8 +1,8 @@
 #! /bin/sh
-# OpenLDAP: pkg/ldap/tests/scripts/test045-syncreplication-proxied,v 1.14.2.9 2009/03/10 16:28:14 quanah Exp
+# OpenLDAP: pkg/ldap/tests/scripts/test045-syncreplication-proxied,v 1.14.2.11 2010/04/19 19:14:36 quanah Exp
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 1998-2009 The OpenLDAP Foundation.
+## Copyright 1998-2010 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -13,10 +13,6 @@
 ## top-level directory of the distribution or, alternatively, at
 ## <http://www.OpenLDAP.org/license.html>.
 
-if test "$BACKEND" != "bdb" && test "$BACKEND" != "hdb" ; then
-	echo "Test does not support $BACKEND"
-	exit 0
-fi
 
 # test now handles known issues
 #if test x"$PROXYSYNC" = x ; then
@@ -230,9 +226,9 @@ if test $RC != 0 ; then
 fi
 
 #echo "Filtering master results..."
-. $LDIFFILTER < "${MASTEROUT}.$CHECK" > $MASTERFLT
+$LDIFFILTER < "${MASTEROUT}.$CHECK" > $MASTERFLT
 #echo "Filtering slave results..."
-. $LDIFFILTER < "${SLAVEOUT}.$CHECK" > $SLAVEFLT
+$LDIFFILTER < "${SLAVEOUT}.$CHECK" > $SLAVEFLT
 
 echo "$CHECK < Comparing retrieved entries from master and slave..."
 $CMP $MASTERFLT $SLAVEFLT > $CMPOUT
@@ -420,9 +416,9 @@ if test $RC != 0 ; then
 fi
 
 #echo "Filtering master results..."
-. $LDIFFILTER < "${MASTEROUT}.$CHECK" > $MASTERFLT
+$LDIFFILTER < "${MASTEROUT}.$CHECK" > $MASTERFLT
 #echo "Filtering slave results..."
-. $LDIFFILTER < "${SLAVEOUT}.$CHECK" > $SLAVEFLT
+$LDIFFILTER < "${SLAVEOUT}.$CHECK" > $SLAVEFLT
 
 echo "$CHECK < Comparing retrieved entries from master and slave..."
 $CMP $MASTERFLT $SLAVEFLT > $CMPOUT
@@ -527,9 +523,9 @@ if test $RC != 0 ; then
 fi
 
 #echo "Filtering master results..."
-. $LDIFFILTER < "${MASTEROUT}.$CHECK" > $MASTERFLT
+$LDIFFILTER < "${MASTEROUT}.$CHECK" > $MASTERFLT
 #echo "Filtering slave results..."
-. $LDIFFILTER < "${SLAVEOUT}.$CHECK" > $SLAVEFLT
+$LDIFFILTER < "${SLAVEOUT}.$CHECK" > $SLAVEFLT
 
 echo "$CHECK < Comparing retrieved entries from master and slave..."
 $CMP $MASTERFLT $SLAVEFLT > $CMPOUT
@@ -616,9 +612,9 @@ if test $RC != 0 ; then
 fi
 
 #echo "Filtering master results..."
-. $LDIFFILTER < "${MASTEROUT}.$CHECK" > $MASTERFLT
+$LDIFFILTER < "${MASTEROUT}.$CHECK" > $MASTERFLT
 #echo "Filtering slave results..."
-. $LDIFFILTER < "${SLAVEOUT}.$CHECK" > $SLAVEFLT
+$LDIFFILTER < "${SLAVEOUT}.$CHECK" > $SLAVEFLT
 
 echo "$CHECK < Comparing retrieved entries from master and slave..."
 $CMP $MASTERFLT $SLAVEFLT > $CMPOUT
@@ -713,9 +709,9 @@ if test $RC != 0 ; then
 fi
 
 #echo "Filtering master results..."
-. $LDIFFILTER < "${MASTEROUT}.$CHECK" > $MASTERFLT
+$LDIFFILTER < "${MASTEROUT}.$CHECK" > $MASTERFLT
 #echo "Filtering slave results..."
-. $LDIFFILTER < "${SLAVEOUT}.$CHECK" > $SLAVEFLT
+$LDIFFILTER < "${SLAVEOUT}.$CHECK" > $SLAVEFLT
 
 echo "$CHECK < Comparing retrieved entries from master and slave..."
 $CMP $MASTERFLT $SLAVEFLT > $CMPOUT
@@ -758,7 +754,7 @@ if test $? != 0 ; then
 	fi
 
 	#echo "Filtering slave results..."
-	. $LDIFFILTER < "${SLAVEOUT}.5.1" > $SLAVEFLT
+	$LDIFFILTER < "${SLAVEOUT}.5.1" > $SLAVEFLT
 
 	echo "	${CHECK}.1 < Comparing retrieved entries from master and slave..."
 	$CMP $MASTERFLT $SLAVEFLT > $CMPOUT
@@ -853,9 +849,9 @@ if test $RC != 0 ; then
 fi
 
 #echo "Filtering master results..."
-. $LDIFFILTER < "${MASTEROUT}.$CHECK" > $MASTERFLT
+$LDIFFILTER < "${MASTEROUT}.$CHECK" > $MASTERFLT
 #echo "Filtering slave results..."
-. $LDIFFILTER < "${SLAVEOUT}.$CHECK" > $SLAVEFLT
+$LDIFFILTER < "${SLAVEOUT}.$CHECK" > $SLAVEFLT
 
 echo "$CHECK < Comparing retrieved entries from master and slave..."
 $CMP $MASTERFLT $SLAVEFLT > $CMPOUT
