@@ -1,10 +1,10 @@
-/*	$NetBSD: refint.c,v 1.1.1.3 2010/03/08 02:14:20 lukem Exp $	*/
+/*	$NetBSD: refint.c,v 1.1.1.4 2010/12/12 15:23:40 adam Exp $	*/
 
 /* refint.c - referential integrity module */
-/* OpenLDAP: pkg/ldap/servers/slapd/overlays/refint.c,v 1.19.2.12 2009/06/04 23:27:42 quanah Exp */
+/* OpenLDAP: pkg/ldap/servers/slapd/overlays/refint.c,v 1.19.2.15 2010/06/17 20:08:31 quanah Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2004-2009 The OpenLDAP Foundation.
+ * Copyright 2004-2010 The OpenLDAP Foundation.
  * Portions Copyright 2004 Symas Corporation.
  * All rights reserved.
  *
@@ -78,7 +78,6 @@ typedef struct refint_q {
 } refint_q;
 
 typedef struct refint_data_s {
-	const char *message;			/* breadcrumbs */
 	struct refint_attrs_s *attrs;	/* list of known attrs */
 	BerValue dn;				/* basedn in parent, */
 	BerValue nothing;			/* the nothing value, if needed */
@@ -212,21 +211,17 @@ refint_cf_gen(ConfigArgs *c)
 			rc = 0;
 			break;
 		case REFINT_NOTHING:
-			if ( dd->nothing.bv_val )
-				ber_memfree ( dd->nothing.bv_val );
-			if ( dd->nnothing.bv_val )
-				ber_memfree ( dd->nnothing.bv_val );
-			dd->nothing.bv_len = 0;
-			dd->nnothing.bv_len = 0;
+			ch_free( dd->nothing.bv_val );
+			ch_free( dd->nnothing.bv_val );
+			BER_BVZERO( &dd->nothing );
+			BER_BVZERO( &dd->nnothing );
 			rc = 0;
 			break;
 		case REFINT_MODIFIERSNAME:
-			if ( dd->refint_dn.bv_val )
-				ber_memfree ( dd->refint_dn.bv_val );
-			if ( dd->refint_ndn.bv_val )
-				ber_memfree ( dd->refint_ndn.bv_val );
-			dd->refint_dn.bv_len = 0;
-			dd->refint_ndn.bv_len = 0;
+			ch_free( dd->refint_dn.bv_val );
+			ch_free( dd->refint_ndn.bv_val );
+			BER_BVZERO( &dd->refint_dn );
+			BER_BVZERO( &dd->refint_ndn );
 			rc = 0;
 			break;
 		default:
@@ -258,22 +253,26 @@ refint_cf_gen(ConfigArgs *c)
 			}
 			break;
 		case REFINT_NOTHING:
-			if ( dd->nothing.bv_val )
-				ber_memfree ( dd->nothing.bv_val );
-			if ( dd->nnothing.bv_val )
-				ber_memfree ( dd->nnothing.bv_val );
-			dd->nothing = c->value_dn;
-			dd->nnothing = c->value_ndn;
-			rc = 0;
+			if ( !BER_BVISNULL( &c->value_ndn )) {
+				ch_free ( dd->nothing.bv_val );
+				ch_free ( dd->nnothing.bv_val );
+				dd->nothing = c->value_dn;
+				dd->nnothing = c->value_ndn;
+				rc = 0;
+			} else {
+				rc = ARG_BAD_CONF;
+			}
 			break;
 		case REFINT_MODIFIERSNAME:
-			if ( dd->refint_dn.bv_val )
-				ber_memfree ( dd->refint_dn.bv_val );
-			if ( dd->refint_ndn.bv_val )
-				ber_memfree ( dd->refint_ndn.bv_val );
-			dd->refint_dn = c->value_dn;
-			dd->refint_ndn = c->value_ndn;
-			rc = 0;
+			if ( !BER_BVISNULL( &c->value_ndn )) {
+				ch_free( dd->refint_dn.bv_val );
+				ch_free( dd->refint_ndn.bv_val );
+				dd->refint_dn = c->value_dn;
+				dd->refint_ndn = c->value_ndn;
+				rc = 0;
+			} else {
+				rc = ARG_BAD_CONF;
+			}
 			break;
 		default:
 			abort ();
@@ -301,7 +300,6 @@ refint_db_init(
 	slap_overinst *on = (slap_overinst *)be->bd_info;
 	refint_data *id = ch_calloc(1,sizeof(refint_data));
 
-	id->message = "_init";
 	on->on_bi.bi_private = id;
 	ldap_pvt_thread_mutex_init( &id->qmutex );
 	return(0);
@@ -337,7 +335,6 @@ refint_open(
 {
 	slap_overinst *on	= (slap_overinst *)be->bd_info;
 	refint_data *id	= on->on_bi.bi_private;
-	id->message		= "_open";
 
 	if ( BER_BVISNULL( &id->dn )) {
 		if ( BER_BVISNULL( &be->be_nsuffix[0] ))
@@ -356,7 +353,6 @@ refint_open(
 ** foreach configured attribute:
 **	free it;
 ** free our basedn;
-** (do not) free id->message;
 ** reset on_bi.bi_private;
 ** free our config data;
 **
@@ -371,7 +367,6 @@ refint_close(
 	slap_overinst *on	= (slap_overinst *) be->bd_info;
 	refint_data *id	= on->on_bi.bi_private;
 	refint_attrs *ii, *ij;
-	id->message		= "_close";
 
 	for(ii = id->attrs; ii; ii = ij) {
 		ij = ii->next;
@@ -871,8 +866,6 @@ refint_response(
 	refint_q *rq;
 	BackendDB *db = NULL;
 	refint_attrs *ip;
-
-	id->message = "_refint_response";
 
 	/* If the main op failed or is not a Delete or ModRdn, ignore it */
 	if (( op->o_tag != LDAP_REQ_DELETE && op->o_tag != LDAP_REQ_MODRDN ) ||

@@ -1,5 +1,5 @@
-# OpenLDAP: pkg/openldap-guide/admin/overlays.sdf,v 1.8.2.28 2009/12/16 19:07:08 quanah Exp
-# Copyright 2007-2009 The OpenLDAP Foundation, All Rights Reserved.
+# OpenLDAP: pkg/openldap-guide/admin/overlays.sdf,v 1.8.2.30 2010/04/15 18:25:42 quanah Exp
+# Copyright 2007-2010 The OpenLDAP Foundation, All Rights Reserved.
 # COPYING RESTRICTIONS APPLY, see COPYRIGHT.
 
 H1: Overlays
@@ -613,8 +613,7 @@ specific database. For example, with the following minimal slapd.conf:
 
 >        include /usr/share/openldap/schema/core.schema
 >        include /usr/share/openldap/schema/cosine.schema
->        modulepath      /usr/lib/openldap
->        moduleload      memberof.la
+>
 >        authz-regexp "gidNumber=0\\\+uidNumber=0,cn=peercred,cn=external,cn=auth"
 >                "cn=Manager,dc=example,dc=com"
 >        database        bdb
@@ -1174,11 +1173,6 @@ First we configure the overlay in the normal manner:
 >       
 >       pidfile     ./slapd.pid
 >       argsfile    ./slapd.args
->       
->       modulepath  /usr/local/libexec/openldap
->       moduleload  back_bdb.la
->       moduleload  back_ldap.la
->       moduleload  translucent.la
 >       
 >       database    bdb
 >       suffix      "dc=suretecsystems,dc=com"
