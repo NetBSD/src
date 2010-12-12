@@ -1,4 +1,4 @@
-.\" $NetBSD: module.4,v 1.1 2010/12/12 19:29:01 pgoyette Exp $
+.\" $NetBSD: module.4,v 1.2 2010/12/12 22:11:02 wiz Exp $
 .\"
 .\" Copyright (c) 1993 Christopher G. Demetriou
 .\" All rights reserved.
@@ -50,7 +50,7 @@ test their changes.
 Additionally, the kernel may automatically load software modules as
 needed to perform requested operations.
 For example, an xyzfs module can be loaded automatically when an
-attempt is made to mount an xyzfs filesystem.
+attempt is made to mount an xyzfs file system.
 Modules can also depend on other modules, and dependant modules are
 automatically loaded.
 When a module is no longer needed, it can be automatically unloaded.
@@ -106,7 +106,6 @@ an appropriately layered console driver.
 Alternate system security models may loaded using the
 .Nm
 facility.
-.Pp
 .Sh NOTES
 .Ss Security considerations
 Kernel modules can do anything with kernel structures.
@@ -135,8 +134,8 @@ directory with all required modules.
 in future versions of the
 .Nx
 operating system.)
-.Ss Missing filesystem modules may prevent the system from booting
-If you attempt to boot the operating system from a filesystem for
+.Ss Missing file system modules may prevent the system from booting
+If you attempt to boot the operating system from a file system for
 which the module is not built into the kernel, the boot may fail
 with the message
 .Dq "Cannot mount root, error 79" .
@@ -150,7 +149,7 @@ Since the absence of required modules, or the inability of the bootloader
 to load the modules, is a common reason for a
 .Dv MODULAR
 kernel's failure to boot, you might want to maintain a non-MODULAR
-kernel in the root filesystem for recovery purposes.
+kernel in the root file system for recovery purposes.
 .Sh SEE ALSO
 .Xr modctl 2 ,
 .Xr modload 8 ,
