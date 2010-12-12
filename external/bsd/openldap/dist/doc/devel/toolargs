@@ -1,12 +1,13 @@
 Tools           ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz
 slapacl            D F              U  X   b d f        o     uv
-slapadd              F                     bcd f     l n  q  tuvw
-slapauth             F      M    R  U  X     d f               v
-slapcat              F                    abcd f     l n    s  v
-slapdn               F       N P             d f               v
-slapindex            F                     bcd f       n  q    v
+slapadd              F            S        bcd fg  j l no q s uvw
+slapauth             F      M    R  U  X     d f        o      v
+slapcat              F H                  abcd fg    l no   s  v
+slapdn               F       N P             d f        o      v
+slapindex            F                     bcd fg      no q  t v
 slappasswd                         T        c    h          s uv
-slaptest             F                       d f              uv
+slapschema	     F H                  abcd fg    l no   s  v
+slaptest             F          Q            d f       no     uv
 
 * General flags:
 	-F config directory
@@ -18,10 +19,11 @@ slaptest             F                       d f              uv
 	-f config file
 	-l LDIF file
 	-n database number
+	-o options
 	-q "quick" mode
 	-s subtree
 	-u dryrun (slappasswd: RFC2307 userPassword)
 	-v verbose
 
 ---
-OpenLDAP: pkg/ldap/doc/devel/toolargs,v 1.1.6.1 2007/08/31 23:13:52 quanah Exp
+OpenLDAP: pkg/ldap/doc/devel/toolargs,v 1.1.6.3 2010/04/14 22:59:08 quanah Exp

@@ -1,8 +1,8 @@
 #! /bin/sh
-# OpenLDAP: pkg/ldap/tests/scripts/test054-syncreplication-parallel-load,v 1.1.2.3 2009/03/05 22:19:39 quanah Exp
+# OpenLDAP: pkg/ldap/tests/scripts/test054-syncreplication-parallel-load,v 1.1.2.5 2010/04/19 19:14:36 quanah Exp
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 1998-2009 The OpenLDAP Foundation.
+## Copyright 1998-2010 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -12,11 +12,6 @@
 ## A copy of this license is available in the file LICENSE in the
 ## top-level directory of the distribution or, alternatively, at
 ## <http://www.OpenLDAP.org/license.html>.
-
-if test "$BACKEND" != "bdb" && test "$BACKEND" != "hdb" ; then
-	echo "Test does not support $BACKEND"
-	exit 0
-fi
 
 echo "running defines.sh"
 . $SRCDIR/scripts/defines.sh
@@ -363,9 +358,9 @@ fi
 test $KILLSERVERS != no && kill -HUP $KILLPIDS
 
 echo "Filtering producer results..."
-. $LDIFFILTER < $MASTEROUT > $MASTERFLT
+$LDIFFILTER < $MASTEROUT > $MASTERFLT
 echo "Filtering consumer results..."
-. $LDIFFILTER < $SLAVEOUT > $SLAVEFLT
+$LDIFFILTER < $SLAVEOUT > $SLAVEFLT
 
 echo "Comparing retrieved entries from producer and consumer..."
 $CMP $MASTERFLT $SLAVEFLT > $CMPOUT

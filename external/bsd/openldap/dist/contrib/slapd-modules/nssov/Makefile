@@ -1,7 +1,7 @@
-# OpenLDAP: pkg/ldap/contrib/slapd-modules/nssov/Makefile,v 1.1.2.5 2009/09/01 22:53:30 quanah Exp
+# OpenLDAP: pkg/ldap/contrib/slapd-modules/nssov/Makefile,v 1.1.2.7 2010/04/15 21:32:56 quanah Exp
 # This work is part of OpenLDAP Software <http://www.openldap.org/>.
 #
-# Copyright 2008-2009 The OpenLDAP Foundation.
+# Copyright 2008-2010 The OpenLDAP Foundation.
 # Portions Copyright 2008 Howard Chu, Symas Corp. All Rights Reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -24,7 +24,7 @@ OPT=-g -O2
 CC=gcc
 
 LDAP_INC=-I$(LDAPOBJ)/include -I$(LDAPSRC)/include -I$(LDAPSRC)/servers/slapd
-NLDAPD_INC=-Inss-ldapd
+NLDAPD_INC=-Inss-pam-ldapd
 INCS=$(LDAP_INC) $(NLDAPD_INC)
 
 LDAP_LIB=-lldap_r -llber
@@ -40,7 +40,7 @@ moduledir = $(libexecdir)$(ldap_subdir)
 sysconfdir = $(prefix)/etc$(ldap_subdir)
 schemadir = $(sysconfdir)/schema
 
-all:	install
+all:	nssov.la
 
 XOBJS = tio.lo
 
@@ -52,8 +52,8 @@ OBJS = alias.lo ether.lo group.lo host.lo netgroup.lo network.lo \
 .c.lo:
 	$(LIBTOOL) --mode=compile $(CC) $(OPT) $(DEFS) $(INCS) -c $<
 
-tio.lo:	nss-ldapd/common/tio.c
-	$(LIBTOOL) --mode=compile $(CC) $(OPT) $(DEFS) $(NLDAPD_INC) -c $?
+tio.lo:	nss-pam-ldapd/tio.c
+	$(LIBTOOL) --mode=compile $(CC) $(OPT) $(DEFS) $(INCS) -c $?
 
 $(OBJS):	nssov.h
 
@@ -68,3 +68,4 @@ install: nssov.la
 
 clean:
 	rm -f *.*o *.la .libs/*
+	rm -rf .libs

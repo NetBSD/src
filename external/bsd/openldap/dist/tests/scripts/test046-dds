@@ -1,8 +1,8 @@
 #! /bin/sh
-# OpenLDAP: pkg/ldap/tests/scripts/test046-dds,v 1.4.2.6 2009/08/13 00:47:41 quanah Exp
+# OpenLDAP: pkg/ldap/tests/scripts/test046-dds,v 1.4.2.8 2010/04/19 19:14:36 quanah Exp
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 2005-2009 The OpenLDAP Foundation.
+## Copyright 2005-2010 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -16,10 +16,11 @@
 echo "running defines.sh"
 . $SRCDIR/scripts/defines.sh
 
-if test $BACKEND = "ldif" ; then
-        echo "LDIF backend does not support acls, test skipped"
+case $BACKEND in ldif | null)
+	# LDIF lacks ACL support, NULL cannot hold dynamic entries
+        echo "Test does not support $BACKEND backend, test skipped"
         exit 0
-fi
+esac
 
 if test $DDS = ddsno; then 
 	echo "Dynamic Directory Services overlay not available, test skipped"
@@ -444,7 +445,7 @@ case $RC in
 0)
 	echo "ldapmodify should have failed ($RC)!"
 	test $KILLSERVERS != no && kill -HUP $KILLPIDS
-	exit $RC
+	exit -1
 	;;
 50)
 	echo "ldapmodify failed ($RC)"
@@ -475,7 +476,7 @@ RC=$?
 if test $RC = 0 ; then
 	echo "ldapexop should have failed ($RC)!"
 	test $KILLSERVERS != no && kill -HUP $KILLPIDS
-	exit $RC
+	exit -1
 fi
 
 echo "Trying to refresh the meeting as $JAJDN (should fail)..."
@@ -486,7 +487,7 @@ RC=$?
 if test $RC = 0 ; then
 	echo "ldapexop should have failed ($RC)!"
 	test $KILLSERVERS != no && kill -HUP $KILLPIDS
-	exit $RC
+	exit -1
 fi
 
 echo "Trying to delete the meeting as $BABSDN (should fail)..."
@@ -500,7 +501,7 @@ case $RC in
 0)
 	echo "ldapdelete should have failed ($RC)!"
 	test $KILLSERVERS != no && kill -HUP $KILLPIDS
-	exit $RC
+	exit -1
 	;;
 50)
 	echo "ldapdelete failed ($RC)"
@@ -530,9 +531,9 @@ test $KILLSERVERS != no && kill -HUP $KILLPIDS
 LDIF=$DDSOUT
 
 echo "Filtering ldapsearch results..."
-. $LDIFFILTER < $SEARCHOUT > $SEARCHFLT
+$LDIFFILTER < $SEARCHOUT > $SEARCHFLT
 echo "Filtering original ldif used to create database..."
-. $LDIFFILTER < $LDIF > $LDIFFLT
+$LDIFFILTER < $LDIF > $LDIFFLT
 echo "Comparing filter output..."
 $CMP $SEARCHFLT $LDIFFLT > $CMPOUT
 

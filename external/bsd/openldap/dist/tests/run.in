@@ -1,8 +1,8 @@
 #!/bin/sh
-# OpenLDAP: pkg/ldap/tests/run.in,v 1.47.2.14 2009/08/13 00:05:07 quanah Exp
+# OpenLDAP: pkg/ldap/tests/run.in,v 1.47.2.16 2010/04/19 19:14:26 quanah Exp
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 1998-2009 The OpenLDAP Foundation.
+## Copyright 1998-2010 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -23,9 +23,13 @@ EGREP_CMD="@EGREP@"
 
 export SRCDIR TOPSRCDIR LN_S EGREP_CMD
 
-# backends
+# backends known to ./run -b <backend> (used to deduce $BACKENDTYPE)
 AC_bdb=@BUILD_BDB@
 AC_hdb=@BUILD_HDB@
+AC_ldif=yes
+AC_null=@BUILD_NULL@
+
+# other backends
 AC_ldap=ldap@BUILD_LDAP@
 AC_meta=meta@BUILD_META@
 AC_monitor=@BUILD_MONITOR@
@@ -63,7 +67,7 @@ if test "${AC_meta}" = "metamod" && test "${AC_LIBS_DYNAMIC}" = "static" ; then
 	AC_meta="metano"
 fi
 
-export AC_bdb AC_hdb AC_ldap AC_meta AC_monitor AC_relay AC_sql \
+export AC_bdb AC_hdb AC_ldap AC_meta AC_monitor AC_null AC_relay AC_sql \
 	AC_accesslog AC_dds AC_dynlist AC_memberof AC_pcache AC_ppolicy \
 	AC_refint AC_retcode AC_rwm AC_unique AC_syncprov AC_translucent \
 	AC_valsort \

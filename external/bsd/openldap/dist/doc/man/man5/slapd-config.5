@@ -1,7 +1,7 @@
 .TH SLAPD-CONFIG 5 "RELEASEDATE" "OpenLDAP LDVERSION"
-.\" Copyright 1998-2009 The OpenLDAP Foundation All Rights Reserved.
+.\" Copyright 1998-2010 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
-.\" OpenLDAP: pkg/ldap/doc/man/man5/slapd-config.5,v 1.13.2.23 2009/11/22 20:31:59 quanah Exp
+.\" OpenLDAP: pkg/ldap/doc/man/man5/slapd-config.5,v 1.13.2.26 2010/06/10 17:17:53 quanah Exp
 .SH NAME
 slapd\-config \- configuration backend to slapd
 .SH SYNOPSIS
@@ -1552,6 +1552,13 @@ a namingContext (suffix) of the database, a simple bind password
 may also be provided using the
 .B olcRootPW
 directive. Note that the rootdn is always needed when using syncrepl.
+The
+.B olcRootDN
+of the
+.B cn=config
+database defaults to
+.B cn=config
+itself.
 .TP
 .B olcRootPW: <password>
 Specify a password (or hash of the password) for the rootdn.  The
@@ -1661,6 +1668,7 @@ FALSE, meaning the contextCSN is stored in the context entry.
 .B [credentials=<passwd>]
 .B [realm=<realm>]
 .B [secprops=<properties>]
+.B [keepalive=<idle>:<probes>:<interval>]
 .B [starttls=yes|critical]
 .B [tls_cert=<file>]
 .B [tls_key=<file>]
@@ -1802,6 +1810,22 @@ should grant that identity appropriate access privileges to the data
 that is being replicated (\fBaccess\fP directive), and appropriate time 
 and size limits (\fBlimits\fP directive).
 
+The
+.B keepalive
+parameter sets the values of \fIidle\fP, \fIprobes\fP, and \fIinterval\fP
+used to check whether a socket is alive;
+.I idle
+is the number of seconds a connection needs to remain idle before TCP 
+starts sending keepalive probes;
+.I probes
+is the maximum number of keepalive probes TCP should send before dropping
+the connection;
+.I interval
+is interval in seconds between individual keepalive probes.
+Only some systems support the customization of these values;
+the
+.B keepalive
+parameter is ignored otherwise, and system-wide settings are used.
 
 The
 .B starttls

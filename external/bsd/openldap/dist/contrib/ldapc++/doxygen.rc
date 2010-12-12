@@ -1,4 +1,4 @@
-# OpenLDAP: pkg/ldap/contrib/ldapc++/doxygen.rc,v 1.2.10.2 2008/04/14 23:20:12 quanah Exp
+# OpenLDAP: pkg/ldap/contrib/ldapc++/doxygen.rc,v 1.2.10.3 2010/04/14 23:50:43 quanah Exp
 
 # Doxyfile 1.5.4
 
@@ -262,7 +262,7 @@ EXTRACT_ALL            = YES
 # If the EXTRACT_PRIVATE tag is set to YES all private members of a class 
 # will be included in the documentation.
 
-EXTRACT_PRIVATE        = YES
+EXTRACT_PRIVATE        = NO
 
 # If the EXTRACT_STATIC tag is set to YES all static members of a file 
 # will be included in the documentation.
@@ -273,7 +273,7 @@ EXTRACT_STATIC         = NO
 # defined locally in source files will be included in the documentation. 
 # If set to NO only classes defined in header files are included.
 
-EXTRACT_LOCAL_CLASSES  = YES
+EXTRACT_LOCAL_CLASSES  = NO
 
 # This flag is only useful for Objective-C code. When set to YES local 
 # methods, which are defined in the implementation section but not in 

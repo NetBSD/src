@@ -1,8 +1,8 @@
 #! /bin/sh
-# OpenLDAP: pkg/ldap/tests/scripts/sql-test001-concurrency,v 1.4.2.6 2009/01/22 00:01:18 kurt Exp
+# OpenLDAP: pkg/ldap/tests/scripts/sql-test001-concurrency,v 1.4.2.8 2010/04/19 19:14:32 quanah Exp
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 1998-2009 The OpenLDAP Foundation.
+## Copyright 1998-2010 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -79,7 +79,7 @@ if test $RC != 0 ; then
 fi
 
 echo "Filtering original ldif used to create database..."
-. $LDIFFILTER < $SEARCHOUT > $LDIFFLT
+$LDIFFILTER < $SEARCHOUT > $LDIFFLT
 
 if test "${RDBMSWRITE}" != "yes"; then
 	echo "write test disabled for ${RDBMS}; set SLAPD_USE_SQLWRITE=yes to enable"
@@ -124,7 +124,7 @@ if test $RC != 0 ; then
 fi
 
 echo "Filtering ldapsearch results..."
-. $LDIFFILTER < $SEARCHOUT > $SEARCHFLT
+$LDIFFILTER < $SEARCHOUT > $SEARCHFLT
 echo "Comparing filter output..."
 $CMP $SEARCHFLT $LDIFFLT > $CMPOUT
 

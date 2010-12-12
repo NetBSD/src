@@ -1,8 +1,8 @@
 #! /bin/sh
-# OpenLDAP: pkg/ldap/tests/scripts/test058-syncrepl-asymmetric,v 1.1.2.4 2009/12/07 19:22:32 quanah Exp
+# OpenLDAP: pkg/ldap/tests/scripts/test058-syncrepl-asymmetric,v 1.1.2.6 2010/04/19 19:14:36 quanah Exp
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 1998-2009 The OpenLDAP Foundation.
+## Copyright 1998-2010 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -111,13 +111,10 @@
 # environment variable RACE_TESTS can be set to the number of race test
 # iterations the script should perform.
 
-case "$BACKEND" in
-bdb|hdb)
-	;;
-*)
-	echo "This test does not support the $BACKEND backend"
-	exit 0;;
-esac
+if test "$BACKEND" = ldif ; then
+	echo "$backend backend does not support access controls, test skipped"
+	exit 0
+fi
 
 echo "running defines.sh"
 . $SRCDIR/scripts/defines.sh
@@ -405,12 +402,15 @@ EOF
 	fi
 fi
 
+nullExclude="" nullOK="" wantNoObj=32
+test $BACKEND = null && nullExclude="# " nullOK="OK" wantNoObj=0
+
 $LDAPADD -D cn=config -H $URI1 -y $CONFIGPWF <<EOF >> $TESTOUT 2>&1
 dn: olcDatabase={1}$BACKEND,cn=config
 objectClass: olcDatabaseConfig
-objectClass: olc${BACKEND}Config
+${nullExclude}objectClass: olc${BACKEND}Config
 olcDatabase: {1}$BACKEND
-olcDbDirectory: $SMC_DIR/db
+${nullExclude}olcDbDirectory: $SMC_DIR/db
 olcSuffix: $BASEDN
 olcRootDN: $MANAGERDN
 olcRootPW: $PASSWD
@@ -427,45 +427,45 @@ olcSpCheckpoint: 3 1
 
 dn: olcDatabase={1}$BACKEND,cn=config
 objectClass: olcDatabaseConfig
-objectClass: olc${BACKEND}Config
+${nullExclude}objectClass: olc${BACKEND}Config
 olcDatabase: {1}$BACKEND
-olcDbDirectory: $SMC_DIR/ou1
+${nullExclude}olcDbDirectory: $SMC_DIR/ou1
 olcSubordinate: TRUE
 olcSuffix: ou=ou1,$BASEDN
 olcRootDN: $MANAGERDN
 
 dn: olcDatabase={2}$BACKEND,cn=config
 objectClass: olcDatabaseConfig
-objectClass: olc${BACKEND}Config
+${nullExclude}objectClass: olc${BACKEND}Config
 olcDatabase: {2}$BACKEND
-olcDbDirectory: $SMC_DIR/ou2
+${nullExclude}olcDbDirectory: $SMC_DIR/ou2
 olcSubordinate: TRUE
 olcSuffix: ou=ou2,$BASEDN
 olcRootDN: $MANAGERDN
 
 dn: olcDatabase={3}$BACKEND,cn=config
 objectClass: olcDatabaseConfig
-objectClass: olc${BACKEND}Config
+${nullExclude}objectClass: olc${BACKEND}Config
 olcDatabase: {3}$BACKEND
-olcDbDirectory: $SMC_DIR/sm1ou1
+${nullExclude}olcDbDirectory: $SMC_DIR/sm1ou1
 olcSubordinate: TRUE
 olcSuffix: ou=sm1ou1,$BASEDN
 olcRootDN: $UPDATEDN
 
 dn: olcDatabase={4}$BACKEND,cn=config
 objectClass: olcDatabaseConfig
-objectClass: olc${BACKEND}Config
+${nullExclude}objectClass: olc${BACKEND}Config
 olcDatabase: {4}$BACKEND
-olcDbDirectory: $SMC_DIR/sm1ou2
+${nullExclude}olcDbDirectory: $SMC_DIR/sm1ou2
 olcSubordinate: TRUE
 olcSuffix: ou=sm1ou2,$BASEDN
 olcRootDN: $UPDATEDN
 
 dn: olcDatabase={5}$BACKEND,cn=config
 objectClass: olcDatabaseConfig
-objectClass: olc${BACKEND}Config
+${nullExclude}objectClass: olc${BACKEND}Config
 olcDatabase: {5}$BACKEND
-olcDbDirectory: $SMC_DIR/sm2ou1
+${nullExclude}olcDbDirectory: $SMC_DIR/sm2ou1
 olcSubordinate: TRUE
 olcSuffix: ou=sm2ou1,$BASEDN
 olcRootDN: $UPDATEDN
@@ -499,9 +499,9 @@ fi
 $LDAPADD -D cn=config -H $URI2 -y $CONFIGPWF <<EOF >> $TESTOUT 2>&1
 dn: olcDatabase={1}$BACKEND,cn=config
 objectClass: olcDatabaseConfig
-objectClass: olc${BACKEND}Config
+${nullExclude}objectClass: olc${BACKEND}Config
 olcDatabase: {1}$BACKEND
-olcDbDirectory: $SM1_DIR/db
+${nullExclude}olcDbDirectory: $SM1_DIR/db
 olcSuffix: $BASEDN
 olcRootDN: $UPDATEDN
 
@@ -516,18 +516,18 @@ olcOverlay: {1}syncprov
 
 dn: olcDatabase={1}$BACKEND,cn=config
 objectClass: olcDatabaseConfig
-objectClass: olc${BACKEND}Config
+${nullExclude}objectClass: olc${BACKEND}Config
 olcDatabase: {1}$BACKEND
-olcDbDirectory: $SM1_DIR/ou1
+${nullExclude}olcDbDirectory: $SM1_DIR/ou1
 olcSubordinate: TRUE
 olcSuffix: ou=ou1,$BASEDN
 olcRootDN: $UPDATEDN
 
 dn: olcDatabase={2}$BACKEND,cn=config
 objectClass: olcDatabaseConfig
-objectClass: olc${BACKEND}Config
+${nullExclude}objectClass: olc${BACKEND}Config
 olcDatabase: {2}$BACKEND
-olcDbDirectory: $SM1_DIR/sm1ou1
+${nullExclude}olcDbDirectory: $SM1_DIR/sm1ou1
 olcSubordinate: TRUE
 olcSuffix: ou=sm1ou1,$BASEDN
 olcRootDN: ou=sm1ou1,$BASEDN
@@ -535,9 +535,9 @@ olcRootPW: $PASSWD
 
 dn: olcDatabase={3}$BACKEND,cn=config
 objectClass: olcDatabaseConfig
-objectClass: olc${BACKEND}Config
+${nullExclude}objectClass: olc${BACKEND}Config
 olcDatabase: {3}$BACKEND
-olcDbDirectory: $SM1_DIR/sm1ou2
+${nullExclude}olcDbDirectory: $SM1_DIR/sm1ou2
 olcSubordinate: TRUE
 olcSuffix: ou=sm1ou2,$BASEDN
 olcRootDN: ou=sm1ou1,$BASEDN
@@ -572,9 +572,9 @@ fi
 $LDAPADD -D cn=config -H $URI3 -y $CONFIGPWF <<EOF >> $TESTOUT 2>&1
 dn: olcDatabase={1}$BACKEND,cn=config
 objectClass: olcDatabaseConfig
-objectClass: olc${BACKEND}Config
+${nullExclude}objectClass: olc${BACKEND}Config
 olcDatabase: {1}$BACKEND
-olcDbDirectory: $SM2_DIR/db
+${nullExclude}olcDbDirectory: $SM2_DIR/db
 olcSuffix: $BASEDN
 olcRootDN: $UPDATEDN
 
@@ -590,27 +590,27 @@ olcSpCheckpoint: 1 1
 
 dn: olcDatabase={1}$BACKEND,cn=config
 objectClass: olcDatabaseConfig
-objectClass: olc${BACKEND}Config
+${nullExclude}objectClass: olc${BACKEND}Config
 olcDatabase: {1}$BACKEND
-olcDbDirectory: $SM2_DIR/ou2
+${nullExclude}olcDbDirectory: $SM2_DIR/ou2
 olcSubordinate: TRUE
 olcSuffix: ou=ou2,$BASEDN
 olcRootDN: $UPDATEDN
 
 dn: olcDatabase={2}$BACKEND,cn=config
 objectClass: olcDatabaseConfig
-objectClass: olc${BACKEND}Config
+${nullExclude}objectClass: olc${BACKEND}Config
 olcDatabase: {2}$BACKEND
-olcDbDirectory: $SM2_DIR/sm1ou1
+${nullExclude}olcDbDirectory: $SM2_DIR/sm1ou1
 olcSubordinate: TRUE
 olcSuffix: ou=sm1ou1,$BASEDN
 olcRootDN: $UPDATEDN
 
 dn: olcDatabase={3}$BACKEND,cn=config
 objectClass: olcDatabaseConfig
-objectClass: olc${BACKEND}Config
+${nullExclude}objectClass: olc${BACKEND}Config
 olcDatabase: {3}$BACKEND
-olcDbDirectory: $SM2_DIR/sm2ou1
+${nullExclude}olcDbDirectory: $SM2_DIR/sm2ou1
 olcSubordinate: TRUE
 olcSuffix: ou=sm2ou1,$BASEDN
 olcRootDN: ou=sm2ou1,$BASEDN
@@ -618,9 +618,9 @@ olcRootPW: $PASSWD
 
 dn: olcDatabase={4}$BACKEND,cn=config
 objectClass: olcDatabaseConfig
-objectClass: olc${BACKEND}Config
+${nullExclude}objectClass: olc${BACKEND}Config
 olcDatabase: {4}$BACKEND
-olcDbDirectory: $SM2_DIR/sm2ou2
+${nullExclude}olcDbDirectory: $SM2_DIR/sm2ou2
 olcSubordinate: TRUE
 olcSuffix: ou=sm2ou2,$BASEDN
 olcRootDN: ou=sm2ou1,$BASEDN
@@ -722,9 +722,9 @@ echo "Adding database config on central search..."
 $LDAPADD -D cn=config -H $URI4 -y $CONFIGPWF <<EOF >> $TESTOUT 2>&1
 dn: olcDatabase={1}$BACKEND,cn=config
 objectClass: olcDatabaseConfig
-objectClass: olc${BACKEND}Config
+${nullExclude}objectClass: olc${BACKEND}Config
 olcDatabase: {1}$BACKEND
-olcDbDirectory: $SSC_DIR/db
+${nullExclude}olcDbDirectory: $SSC_DIR/db
 olcSuffix: $BASEDN
 olcRootDN: $UPDATEDN
 
@@ -740,9 +740,9 @@ echo "Adding database config on site1 search..."
 $LDAPADD -D cn=config -H $URI5 -y $CONFIGPWF <<EOF >> $TESTOUT 2>&1
 dn: olcDatabase={1}$BACKEND,cn=config
 objectClass: olcDatabaseConfig
-objectClass: olc${BACKEND}Config
+${nullExclude}objectClass: olc${BACKEND}Config
 olcDatabase: {1}$BACKEND
-olcDbDirectory: $SS1_DIR/db
+${nullExclude}olcDbDirectory: $SS1_DIR/db
 olcSuffix: $BASEDN
 olcRootDN: $UPDATEDN
 
@@ -758,9 +758,9 @@ echo "Adding database config on site2 search..."
 $LDAPADD -D cn=config -H $URI6 -y $CONFIGPWF <<EOF >> $TESTOUT 2>&1
 dn: olcDatabase={1}$BACKEND,cn=config
 objectClass: olcDatabaseConfig
-objectClass: olc${BACKEND}Config
+${nullExclude}objectClass: olc${BACKEND}Config
 olcDatabase: {1}$BACKEND
-olcDbDirectory: $SS2_DIR/db
+${nullExclude}olcDbDirectory: $SS2_DIR/db
 olcSuffix: $BASEDN
 olcRootDN: $UPDATEDN
 
@@ -843,7 +843,7 @@ for i in 1 2 3 4 5; do
 	RESULT=`$LDAPSEARCH -H $URI2 \
 		-s base -b "ou=ou1,$BASEDN" \
 		'(objectClass=*)' 2>&1 | awk '/^dn:/ {print "OK"}'`
-	if test "x$RESULT" = "xOK" ; then
+	if test "x$RESULT$nullOK" = "xOK" ; then
 		RC=0
 		break
 	fi
@@ -862,7 +862,7 @@ for i in 1 2 3 4 5; do
 	RESULT=`$LDAPSEARCH -H $URI3 \
 		-s base -b "ou=ou1,$BASEDN" \
 		'(objectClass=*)' 2>&1 | awk '/^dn:/ {print "OK"}'`
-	if test "x$RESULT" = "xOK" ; then
+	if test "x$RESULT$nullOK" = "xOK" ; then
 		RC=0
 		break
 	fi
@@ -963,7 +963,7 @@ for i in 1 2 3 4 5; do
 	RESULT=`$LDAPSEARCH -H $URI1 \
 		-s base -b "ou=sm2ou1,$BASEDN" \
 		'(objectClass=*)' 2>&1 | awk '/^dn:/ {print "OK"}'`
-	if test "x$RESULT" = "xOK" ; then
+	if test "x$RESULT$nullOK" = "xOK" ; then
 		RC=0
 		break
 	fi
@@ -1011,7 +1011,7 @@ for i in 1 2 3 4 5; do
 	RESULT=`$LDAPSEARCH -H $URI1 \
 		-s base -b "ou=sm1ou1,$BASEDN" \
 		'(objectClass=*)' 2>&1 | awk '/^dn:/ {print "OK"}'`
-	if test "x$RESULT" = "xOK" ; then
+	if test "x$RESULT$nullOK" = "xOK" ; then
 		RC=0
 		break
 	fi
@@ -1084,7 +1084,7 @@ for i in 1 2 3 4 5; do
 	RESULT=`$LDAPSEARCH -H $URI4 \
 		-s base -b "$BASEDN" \
 		'(objectClass=*)' 2>&1 | awk '/^dn:/ {print "OK"}'`
-	if test "x$RESULT" = "xOK" ; then
+	if test "x$RESULT$nullOK" = "xOK" ; then
 		RC=0
 		break
 	fi
@@ -1103,7 +1103,7 @@ for i in 1 2 3 4 5; do
 	RESULT=`$LDAPSEARCH -H $URI5 \
 		-s base -b "$BASEDN" \
 		'(objectClass=*)' 2>&1 | awk '/^dn:/ {print "OK"}'`
-	if test "x$RESULT" = "xOK" ; then
+	if test "x$RESULT$nullOK" = "xOK" ; then
 		RC=0
 		break
 	fi
@@ -1122,7 +1122,7 @@ for i in 1 2 3 4 5; do
 	RESULT=`$LDAPSEARCH -H $URI6 \
 		-s base -b "$BASEDN" \
 		'(objectClass=*)' 2>&1 | awk '/^dn:/ {print "OK"}'`
-	if test "x$RESULT" = "xOK" ; then
+	if test "x$RESULT$nullOK" = "xOK" ; then
 		RC=0
 		break
 	fi
@@ -1508,6 +1508,8 @@ ERRORS=`expr $ERRORS + $CSN_ERRORS`
 
 EOF
 
+test $BACKEND = null && echo : > $TESTDIR/checkcsn.sh
+
 chmod +x $TESTDIR/checkcsn.sh
 
 
@@ -1542,7 +1544,7 @@ for i in 1 2 3 4 5; do
 	RESULT=`$LDAPSEARCH -H $URI4 \
 		-s base -b "ou=ou1,$BASEDN" \
 		"(description=Modify$MNUM)" 2>&1 | awk '/^dn:/ {print "OK"}'`
-	if test "x$RESULT" = "xOK" ; then
+	if test "x$RESULT$nullOK" = "xOK" ; then
 		RC=0
 		break
 	fi
@@ -1561,7 +1563,7 @@ for i in 1 2 3 4 5; do
 	RESULT=`$LDAPSEARCH -H $URI5 \
 		-s base -b "ou=ou1,$BASEDN" \
 		"(description=Modify$MNUM)" 2>&1 | awk '/^dn:/ {print "OK"}'`
-	if test "x$RESULT" = "xOK" ; then
+	if test "x$RESULT$nullOK" = "xOK" ; then
 		RC=0
 		break
 	fi
@@ -1580,7 +1582,7 @@ for i in 1 2 3 4 5; do
 	RESULT=`$LDAPSEARCH -H $URI6 \
 		-s base -b "ou=ou1,$BASEDN" \
 		"(description=Modify$MNUM)" 2>&1 | awk '/^dn:/ {print "OK"}'`
-	if test "x$RESULT" = "xOK" ; then
+	if test "x$RESULT$nullOK" = "xOK" ; then
 		RC=0
 		break
 	fi
@@ -1623,7 +1625,7 @@ for i in 1 2 3 4 5; do
 	RESULT=`$LDAPSEARCH -H $URI6 \
 		-s base -b "ou=ou2,$BASEDN" \
 		"(description=Modify$MNUM)" 2>&1 | awk '/^dn:/ {print "OK"}'`
-	if test "x$RESULT" = "xOK" ; then
+	if test "x$RESULT$nullOK" = "xOK" ; then
 		RC=0
 		break
 	fi
@@ -1692,7 +1694,7 @@ for i in 1 2 3 4 5; do
 	RESULT=`$LDAPSEARCH -H $URI5 \
 		-s base -b "ou=sm1ou1,$BASEDN" \
 		"(description=Modify$MNUM)" 2>&1 | awk '/^dn:/ {print "OK"}'`
-	if test "x$RESULT" = "xOK" ; then
+	if test "x$RESULT$nullOK" = "xOK" ; then
 		RC=0
 		break
 	fi
@@ -1711,7 +1713,7 @@ for i in 1 2 3 4 5; do
 	RESULT=`$LDAPSEARCH -H $URI3 \
 		-s base -b "ou=sm1ou1,$BASEDN" \
 		"(description=Modify$MNUM)" 2>&1 | awk '/^dn:/ {print "OK"}'`
-	if test "x$RESULT" = "xOK" ; then
+	if test "x$RESULT$nullOK" = "xOK" ; then
 		RC=0
 		break
 	fi
@@ -1781,7 +1783,7 @@ for i in 1 2 3 4 5; do
 	RESULT=`$LDAPSEARCH -H $URI5 \
 		-s base -b "ou=sm1ou2,$BASEDN" \
 		"(description=Modify$MNUM)" 2>&1 | awk '/^dn:/ {print "OK"}'`
-	if test "x$RESULT" = "xOK" ; then
+	if test "x$RESULT$nullOK" = "xOK" ; then
 		RC=0
 		break
 	fi
@@ -1838,7 +1840,7 @@ for i in 1 2 3 4 5; do
 	RESULT=`$LDAPSEARCH -H $URI1 \
 		-s base -b "ou=sm2ou1,$BASEDN" \
 		"(description=Modify$MNUM)" 2>&1 | awk '/^dn:/ {print "OK"}'`
-	if test "x$RESULT" = "xOK" ; then
+	if test "x$RESULT$nullOK" = "xOK" ; then
 		RC=0
 		break
 	fi
@@ -1857,7 +1859,7 @@ for i in 1 2 3 4 5; do
 	RESULT=`$LDAPSEARCH -H $URI6 \
 		-s base -b "ou=sm2ou1,$BASEDN" \
 		"(description=Modify$MNUM)" 2>&1 | awk '/^dn:/ {print "OK"}'`
-	if test "x$RESULT" = "xOK" ; then
+	if test "x$RESULT$nullOK" = "xOK" ; then
 		RC=0
 		break
 	fi
@@ -1927,7 +1929,7 @@ for i in 1 2 3 4 5; do
 	RESULT=`$LDAPSEARCH -H $URI6 \
 		-s base -b "ou=sm2ou2,$BASEDN" \
 		"(description=Modify$MNUM)" 2>&1 | awk '/^dn:/ {print "OK"}'`
-	if test "x$RESULT" = "xOK" ; then
+	if test "x$RESULT$nullOK" = "xOK" ; then
 		RC=0
 		break
 	fi
@@ -2057,7 +2059,7 @@ for i in 1 2 3 4 5; do
 	RESULT=`$LDAPSEARCH -H $URI3 \
 		-s base -b "$BASEDN" \
 		'(objectClass=*)' 2>&1 | awk '/^dn:/ {print "OK"}'`
-	if test "x$RESULT" = "xOK" ; then
+	if test "x$RESULT$nullOK" = "xOK" ; then
 		RC=0
 		break
 	fi
@@ -2076,7 +2078,7 @@ for i in 1 2 3 4 5; do
 	RESULT=`$LDAPSEARCH -H $URI6 \
 		-s base -b "$BASEDN" \
 		'(objectClass=*)' 2>&1 | awk '/^dn:/ {print "OK"}'`
-	if test "x$RESULT" = "xOK" ; then
+	if test "x$RESULT$nullOK" = "xOK" ; then
 		RC=0
 		break
 	fi
@@ -2128,7 +2130,7 @@ for i in 1 2 3 4 5; do
 	RESULT=`$LDAPSEARCH -H $URI1 \
 		-s base -b "ou=sm1ou2,$BASEDN" \
 		'(objectClass=*)' 2>&1 | awk '/^dn:/ {print "OK"}'`
-	if test "x$RESULT" = "xOK" ; then
+	if test "x$RESULT$nullOK" = "xOK" ; then
 		RC=0
 		break
 	fi
@@ -2174,7 +2176,7 @@ if test $RC != 0 ; then
 		RESULT=`$LDAPSEARCH -H $URI1 \
 			-s base -b "ou=sm1ou2,$BASEDN" \
 			'(objectClass=*)' 2>&1 | awk '/^dn:/ {print "OK"}'`
-		if test "x$RESULT" = "xOK" ; then
+		if test "x$RESULT$nullOK" = "xOK" ; then
 			RC=0
 			break
 		fi
@@ -2194,7 +2196,7 @@ for i in 1 2 3 4 5; do
 	RESULT=`$LDAPSEARCH -H $URI4 \
 		-s base -b "ou=sm1ou2,$BASEDN" \
 		'(objectClass=*)' 2>&1 | awk '/^dn:/ {print "OK"}'`
-	if test "x$RESULT" = "xOK" ; then
+	if test "x$RESULT$nullOK" = "xOK" ; then
 		RC=0
 		break
 	fi
@@ -2240,7 +2242,7 @@ if test $RC != 0 ; then
 		RESULT=`$LDAPSEARCH -H $URI4 \
 			-s base -b "ou=sm1ou2,$BASEDN" \
 			'(objectClass=*)' 2>&1 | awk '/^dn:/ {print "OK"}'`
-		if test "x$RESULT" = "xOK" ; then
+		if test "x$RESULT$nullOK" = "xOK" ; then
 			RC=0
 			break
 		fi
@@ -2354,11 +2356,16 @@ EOF
 	for i in 1 2 3 4 5; do
 		$LDAPSEARCH -s base -b "$SUB_DN" -H $URI1 > /dev/null 2>&1
 		RC=$?
-		if test $RC != 0; then break; fi
+		if test $RC = $wantNoObj; then break; fi
 		sleep $i
 	done
 
-	if test $RC = 0; then
+	if test $RC != $wantNoObj; then
+		if test $RC != 0; then
+			echo "ldapsearch failed ($RC)!"
+			test $KILLSERVERS != no && kill -HUP $KILLPIDS
+			exit $RC
+		fi
 		echo "ERROR: Entry not removed on central master!"
 		RACE_ERROR=1
 		break
@@ -2373,8 +2380,8 @@ EOF
 		sleep $i
 	done
 
-	if test $RC = 0; then
-		echo "ERROR: Entry not removed on central search!"
+	if test $RC != $wantNoObj; then
+		echo "ERROR: Entry not removed on central search! (RC=$RC)"
 		RACE_ERROR=1
 		break
 	fi

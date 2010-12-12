@@ -1,8 +1,8 @@
 #! /bin/sh
-# OpenLDAP: pkg/ldap/tests/scripts/test019-syncreplication-cascade,v 1.19.2.9 2009/03/05 23:32:21 quanah Exp
+# OpenLDAP: pkg/ldap/tests/scripts/test019-syncreplication-cascade,v 1.19.2.11 2010/04/19 19:14:34 quanah Exp
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 1998-2009 The OpenLDAP Foundation.
+## Copyright 1998-2010 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -12,11 +12,6 @@
 ## A copy of this license is available in the file LICENSE in the
 ## top-level directory of the distribution or, alternatively, at
 ## <http://www.OpenLDAP.org/license.html>.
-
-if test "$BACKEND" != "bdb" && test "$BACKEND" != "hdb" ; then
-	echo "Test does not support $BACKEND"
-	exit 0
-fi
 
 echo "running defines.sh"
 . $SRCDIR/scripts/defines.sh
@@ -433,17 +428,17 @@ fi
 test $KILLSERVERS != no && kill -HUP $KILLPIDS
 
 echo "Filtering master ldapsearch results..."
-. $LDIFFILTER < $MASTEROUT > $MASTERFLT
+$LDIFFILTER < $MASTEROUT > $MASTERFLT
 echo "Filtering R1 slave ldapsearch results..."
-. $LDIFFILTER < $SERVER2OUT > $SERVER2FLT
+$LDIFFILTER < $SERVER2OUT > $SERVER2FLT
 echo "Filtering R2 slave ldapsearch results..."
-. $LDIFFILTER < $SERVER3OUT > $SERVER3FLT
+$LDIFFILTER < $SERVER3OUT > $SERVER3FLT
 echo "Filtering P1 slave ldapsearch results..."
-. $LDIFFILTER < $SERVER4OUT > $SERVER4FLT
+$LDIFFILTER < $SERVER4OUT > $SERVER4FLT
 echo "Filtering P2 slave ldapsearch results..."
-. $LDIFFILTER < $SERVER5OUT > $SERVER5FLT
+$LDIFFILTER < $SERVER5OUT > $SERVER5FLT
 echo "Filtering P3 slave ldapsearch results..."
-. $LDIFFILTER < $SERVER6OUT > $SERVER6FLT
+$LDIFFILTER < $SERVER6OUT > $SERVER6FLT
 
 echo "Comparing retrieved entries from master and R1 slave..."
 $CMP $MASTERFLT $SERVER2FLT > $CMPOUT
