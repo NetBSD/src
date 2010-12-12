@@ -1,10 +1,10 @@
-/*	$NetBSD: os-ip.c,v 1.3 2010/03/08 03:47:40 lukem Exp $	*/
+/*	$NetBSD: os-ip.c,v 1.4 2010/12/12 15:46:33 adam Exp $	*/
 
 /* os-ip.c -- platform-specific TCP & UDP related code */
-/* OpenLDAP: pkg/ldap/libraries/libldap/os-ip.c,v 1.118.2.19 2009/08/14 20:31:32 quanah Exp */
+/* OpenLDAP: pkg/ldap/libraries/libldap/os-ip.c,v 1.118.2.20 2010/04/13 20:22:58 kurt Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2009 The OpenLDAP Foundation.
+ * Copyright 1998-2010 The OpenLDAP Foundation.
  * Portions Copyright 1999 Lars Uffmann.
  * All rights reserved.
  *

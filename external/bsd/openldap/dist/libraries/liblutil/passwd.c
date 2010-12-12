@@ -1,9 +1,9 @@
-/*	$NetBSD: passwd.c,v 1.2 2010/03/08 04:58:18 lukem Exp $	*/
+/*	$NetBSD: passwd.c,v 1.3 2010/12/12 15:46:33 adam Exp $	*/
 
-/* OpenLDAP: pkg/ldap/libraries/liblutil/passwd.c,v 1.104.2.9 2009/08/30 22:55:47 quanah Exp */
+/* OpenLDAP: pkg/ldap/libraries/liblutil/passwd.c,v 1.104.2.10 2010/04/13 20:23:06 kurt Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2009 The OpenLDAP Foundation.
+ * Copyright 1998-2010 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
