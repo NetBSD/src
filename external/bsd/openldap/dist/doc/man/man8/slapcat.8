@@ -1,7 +1,7 @@
 .TH SLAPCAT 8C "RELEASEDATE" "OpenLDAP LDVERSION"
-.\" Copyright 1998-2009 The OpenLDAP Foundation All Rights Reserved.
+.\" Copyright 1998-2010 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
-.\" OpenLDAP: pkg/ldap/doc/man/man8/slapcat.8,v 1.28.2.12 2009/09/29 19:05:44 quanah Exp
+.\" OpenLDAP: pkg/ldap/doc/man/man8/slapcat.8,v 1.28.2.14 2010/04/14 22:59:08 quanah Exp
 .SH NAME
 slapcat \- SLAPD database to LDIF utility
 .SH SYNOPSIS
@@ -20,6 +20,8 @@ slapcat \- SLAPD database to LDIF utility
 .BI \-F confdir\fR]
 [\c
 .BR \-g ]
+[\c
+.BI \-H URI\fR]
 [\c
 .BI \-l ldif-file\fR]
 [\c
@@ -69,6 +71,7 @@ slapcat \-a \\
 
 will dump all but the "ou=People,dc=example,dc=com" subtree
 of the "dc=example,dc=com" database.
+Deprecated; use \fB-H\fP \fIldap:///???(filter)\fP instead.
 .TP
 .BI \-b \ suffix 
 Use the specified \fIsuffix\fR to determine which database to
@@ -109,6 +112,9 @@ default config file is ignored.
 disable subordinate gluing.  Only the specified database will be
 processed, and not its glued subordinates (if any).
 .TP
+.B \-H \ URI
+use dn, scope and filter from URI to only handle matching entries.
+.TP
 .BI \-l \ ldif-file
 Write LDIF to specified file instead of standard output.
 .TP
@@ -147,6 +153,7 @@ Implies \fB\-b\fP \fIsubtree-dn\fP if no
 or
 .B \-n
 option is given.
+Deprecated; use \fB-H\fP \fIldap:///subtree-dn\fP instead.
 .TP
 .B \-v
 Enable verbose mode.

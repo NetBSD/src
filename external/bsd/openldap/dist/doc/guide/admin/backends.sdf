@@ -1,9 +1,22 @@
-# OpenLDAP: pkg/openldap-guide/admin/backends.sdf,v 1.8.2.7 2009/01/22 00:00:47 kurt Exp
-# Copyright 2007-2009 The OpenLDAP Foundation, All Rights Reserved.
+# OpenLDAP: pkg/openldap-guide/admin/backends.sdf,v 1.8.2.9 2010/04/15 18:25:42 quanah Exp
+# Copyright 2007-2010 The OpenLDAP Foundation, All Rights Reserved.
 # COPYING RESTRICTIONS APPLY, see COPYRIGHT.
 
 H1: Backends
 
+Backends do the actual work of storing or retrieving data in response
+to LDAP requests. Backends may be compiled statically into {{slapd}},
+or when module support is enabled, they may be dynamically loaded.
+
+If your installation uses dynamic modules, you may need to add the
+relevant {{moduleload}} directives to the examples that follow. The
+name of the module for a backend is usually of the form:
+
+>	back_<backend name>.la
+
+So for example, if you need to load the {{hdb}} backend, you would configure
+
+>	moduleload back_hdb.la
 
 H2: Berkeley DB Backends
 
@@ -131,13 +144,6 @@ configuration lines:
 >	rootdn    "cn=LDIF,dc=suretecsystems,dc=com"
 >	rootpw    LDIF
 
-You'll notice that when compared to examples below, there is no:
-
->   moduleload  back_ldif.la
-
-directive. This is because {{back_ldif}} is always built in by default as it is
-used by {{slapd-config(5)}}, which again is built in by default.
-
 If we add the {{dcObject}} for {{dc=suretecsystems,dc=com}}, you can see how this
 is added behind the scenes on the file system:
 
@@ -237,9 +243,6 @@ You can however set a {{rootdn}} and {{rootpw}}. The following is all that is
 needed to instantiate a monitor backend:
 
 >	include ./schema/core.schema
->
->	modulepath  /usr/local/libexec/openldap
->	moduleload  back_monitor.la
 >	
 >	database monitor
 >	rootdn "cn=monitoring,cn=Monitor"
@@ -308,15 +311,9 @@ H3: back-null Configuration
 This has to be one of the shortest configurations you'll ever do. In order to 
 test this, your {{F: slapd.conf}} file would look like:
 
->	modulepath  /usr/local/libexec/openldap
->	moduleload  back_null.la
-
 >	database null
 >	suffix "cn=Nothing"
 >	bind on
-
-The first two directives are only applicable if you've enabled module support and
-haven't "built-in" {{slapd-null(5)}} support (why would you?).
 
 {{bind on}} means:
 
@@ -361,9 +358,6 @@ The configuration using {{F: slapd.conf}} a slightly longer, but not much. For
 example:
 
 >	include ./schema/core.schema
->	
->	modulepath  /usr/local/libexec/openldap
->	moduleload  back_passwd.la
 >	
 >	database passwd
 >	suffix "cn=passwd"

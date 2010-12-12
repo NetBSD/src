@@ -1,8 +1,8 @@
 #! /bin/sh
-# OpenLDAP: pkg/ldap/tests/scripts/test043-delta-syncrepl,v 1.4.2.5 2009/03/05 22:19:39 quanah Exp
+# OpenLDAP: pkg/ldap/tests/scripts/test043-delta-syncrepl,v 1.4.2.8 2010/06/10 17:28:50 quanah Exp
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 1998-2009 The OpenLDAP Foundation.
+## Copyright 1998-2010 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -12,11 +12,6 @@
 ## A copy of this license is available in the file LICENSE in the
 ## top-level directory of the distribution or, alternatively, at
 ## <http://www.OpenLDAP.org/license.html>.
-
-if test "$BACKEND" != "bdb" && test "$BACKEND" != "hdb" ; then
-	echo "Test does not support $BACKEND"
-	exit 0
-fi
 
 echo "running defines.sh"
 . $SRCDIR/scripts/defines.sh
@@ -29,6 +24,11 @@ if test $ACCESSLOG = accesslogno; then
 	echo "Accesslog overlay not available, test skipped"
 	exit 0
 fi 
+if test $BACKEND = ldif ; then
+	# Onelevel search does not return entries in order of creation or CSN.
+	echo "$BACKEND backend unsuitable for syncprov logdb, test skipped"
+	exit 0
+fi
 
 mkdir -p $TESTDIR $DBDIR1A $DBDIR1B $DBDIR2
 
@@ -339,9 +339,9 @@ fi
 test $KILLSERVERS != no && kill -HUP $KILLPIDS
 
 echo "Filtering producer results..."
-. $LDIFFILTER < $MASTEROUT | grep -iv "^auditcontext:" > $MASTERFLT
+$LDIFFILTER -s bdb=a,hdb=a < $MASTEROUT | grep -iv "^auditcontext:" > $MASTERFLT
 echo "Filtering consumer results..."
-. $LDIFFILTER < $SLAVEOUT | grep -iv "^auditcontext:" > $SLAVEFLT
+$LDIFFILTER -s bdb=a,hdb=a < $SLAVEOUT | grep -iv "^auditcontext:" > $SLAVEFLT
 
 echo "Comparing retrieved entries from producer and consumer..."
 $CMP $MASTERFLT $SLAVEFLT > $CMPOUT

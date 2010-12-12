@@ -1,7 +1,7 @@
 .TH SLAPO-NSSOV 5 "RELEASEDATE" "OpenLDAP LDVERSION"
-.\" Copyright 1998-2009 The OpenLDAP Foundation, All Rights Reserved.
+.\" Copyright 1998-2010 The OpenLDAP Foundation, All Rights Reserved.
 .\" Copying restrictions apply.  See the COPYRIGHT file.
-.\" OpenLDAP: pkg/ldap/contrib/slapd-modules/nssov/slapo-nssov.5,v 1.4.2.3 2009/06/04 18:15:49 quanah Exp
+.\" OpenLDAP: pkg/ldap/contrib/slapd-modules/nssov/slapo-nssov.5,v 1.4.2.5 2010/04/15 21:32:57 quanah Exp
 .SH NAME
 slapo-nssov \- NSS and PAM requests through a local Unix Domain socket
 .SH SYNOPSIS
@@ -21,7 +21,7 @@ libldap dependencies/clashes that the current pam_ldap/nss_ldap solutions
 all suffer from. Both the original nss-ldapd and this nssov solution
 are free from these library issues.
 .LP
-Unlike nss-ldapd, since this overlay executes inside slapd it allows for
+Unlike nss-pam-ldapd, since this overlay executes inside slapd it allows for
 the possibility of sophisticated caching, without any of the weaknesses of
 nscd and other related caching solutions. E.g., a remote LDAP database can
 be accessed using back-ldap with proxy caching (see
@@ -48,13 +48,15 @@ User authentication is performed by internal simple Binds. User authorization
 leverages the slapd ACL engine, which offers much more power and flexibility 
 than the simple group/hostname checks in the old pam_ldap code.
 .LP
-To use this code, you will need the client-side stub library from
-nss-ldapd (which resides in nss-ldapd/nss). You will not need the
-nslcd daemon; this overlay replaces that part. You should already
-be familiar with the [RFC2307] and [RFC2307bis] schema to use this
-overlay. See the 
-.B nss-ldapd/README 
-for more information on the schema and which features are supported.
+To use this code, you will need the client-side stuf library from
+nss-pam-ldapd.  You can get it from:
+http://arthurdejong.org/nss-pam-ldapd
+You will not need the nslcd daemon; this overlay replaces that part.
+To disable building of the nslcd daemon in nss-pam-ldapd, add the
+--disable-nslcd option to the nss-pam-ldapd configure script. You
+should already be familiar with the RFC2307 and RFC2307bis schema
+to use this overlay.  See the nss-pam-ldapd README for more information
+on the schema and which features are supported.
 .LP
 You will also need to include the nis.schema in your slapd configuration
 for RFC2307 support. If you wish to use RFC2307bis you will need a slightly

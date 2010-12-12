@@ -63,6 +63,7 @@ rfc4531.txt LDAP Turn Operation (E)
 rfc4532.txt LDAP Who am I? Operation (PS)
 rfc4533.txt LDAP Content Sync Operation (E)
 rfc5020.txt LDAP 'entryDN' operational attribute (PS)
+rfc5805.txt LDAP Transactions (E)
 
 Legend:
 STD	Standard
@@ -75,4 +76,4 @@ BCP	Best Common Practice
 
 Please see http://www.rfc-editor.org/ for up-to-date status information.
 
-OpenLDAP: pkg/ldap/doc/rfc/INDEX,v 1.42.2.3 2007/09/26 15:33:48 quanah Exp
+OpenLDAP: pkg/ldap/doc/rfc/INDEX,v 1.42.2.4 2010/04/15 19:58:21 quanah Exp

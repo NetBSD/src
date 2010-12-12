@@ -1,7 +1,7 @@
 .TH SLAPSCHEMA 8C "RELEASEDATE" "OpenLDAP LDVERSION"
-.\" Copyright 1998-2009 The OpenLDAP Foundation All Rights Reserved.
+.\" Copyright 1998-2010 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
-.\" OpenLDAP: pkg/ldap/doc/man/man8/slapschema.8,v 1.1.2.3 2009/06/03 01:42:01 quanah Exp
+.\" OpenLDAP: pkg/ldap/doc/man/man8/slapschema.8,v 1.1.2.5 2010/04/14 22:59:08 quanah Exp
 .SH NAME
 slapschema \- SLAPD in-database schema checking utility
 .SH SYNOPSIS
@@ -20,6 +20,8 @@ slapschema \- SLAPD in-database schema checking utility
 .BI \-F confdir\fR]
 [\c
 .BR \-g ]
+[\c
+.BI \-H URI\fR]
 [\c
 .BI \-l error-file\fR]
 [\c
@@ -72,6 +74,7 @@ slapschema \-a \\
 
 will check all but the "ou=People,dc=example,dc=com" subtree
 of the "dc=example,dc=com" database.
+Deprecated; use \fB-H\fP \fIldap:///???(filter)\fP instead.
 .TP
 .BI \-b \ suffix 
 Use the specified \fIsuffix\fR to determine which database to
@@ -112,6 +115,9 @@ default config file is ignored.
 disable subordinate gluing.  Only the specified database will be
 processed, and not its glued subordinates (if any).
 .TP
+.B \-H \ URI
+use dn, scope and filter from URI to only handle matching entries.
+.TP
 .BI \-l \ error-file
 Write errors to specified file instead of standard output.
 .TP
@@ -149,6 +155,7 @@ Implies \fB\-b\fP \fIsubtree-dn\fP if no
 nor
 .B \-n
 option is given.
+Deprecated; use \fB-H\fP \fIldap:///subtree-dn\fP instead.
 .TP
 .B \-v
 Enable verbose mode.

@@ -23,7 +23,7 @@
 <DIV CLASS="title">
 <H1 CLASS="doc-title">OpenLDAP Software 2.4 Administrator's Guide</H1>
 <ADDRESS CLASS="doc-author">The OpenLDAP Project &lt;<A HREF="http://www.openldap.org/">http://www.openldap.org/</A>&gt;</ADDRESS>
-<ADDRESS CLASS="doc-modified">20 December 2009</ADDRESS>
+<ADDRESS CLASS="doc-modified">29 June 2010</ADDRESS>
 <BR CLEAR="All">
 </DIV>
 <DIV CLASS="contents">
@@ -4527,6 +4527,15 @@ Members of a group
 <P></P>
 <HR>
 <H1><A NAME="Backends">11. Backends</A></H1>
+<P>Backends do the actual work of storing or retrieving data in response to LDAP requests. Backends may be compiled statically into <EM>slapd</EM>, or when module support is enabled, they may be dynamically loaded.</P>
+<P>If your installation uses dynamic modules, you may need to add the relevant <EM>moduleload</EM> directives to the examples that follow. The name of the module for a backend is usually of the form:</P>
+<PRE>
+        back_&lt;backend name&gt;.la
+</PRE>
+<P>So for example, if you need to load the <EM>hdb</EM> backend, you would configure</P>
+<PRE>
+        moduleload back_hdb.la
+</PRE>
 <H2><A NAME="Berkeley DB Backends">11.1. Berkeley DB Backends</A></H2>
 <H3><A NAME="Overview">11.1.1. Overview</A></H3>
 <P>The <EM>bdb</EM> backend to <EM>slapd</EM>(8) is the recommended primary backend for a normal <EM>slapd</EM> database.  It uses the Oracle Berkeley DB (<TERM>BDB</TERM>) package to store data. It makes extensive use of indexing and caching (see the <A HREF="#Tuning">Tuning</A> section) to speed data access.</P>
@@ -4577,11 +4586,6 @@ Members of a group
         rootdn    &quot;cn=LDIF,dc=suretecsystems,dc=com&quot;
         rootpw    LDIF
 </PRE>
-<P>You'll notice that when compared to examples below, there is no:</P>
-<PRE>
-   moduleload  back_ldif.la
-</PRE>
-<P>directive. This is because <EM>back_ldif</EM> is always built in by default as it is used by <EM>slapd-config(5)</EM>, which again is built in by default.</P>
 <P>If we add the <EM>dcObject</EM> for <EM>dc=suretecsystems,dc=com</EM>, you can see how this is added behind the scenes on the file system:</P>
 <PRE>
    dn: dc=suretecsystems,dc=com
@@ -4640,9 +4644,6 @@ Members of a group
 <PRE>
         include ./schema/core.schema
 
-        modulepath  /usr/local/libexec/openldap
-        moduleload  back_monitor.la
-
         database monitor
         rootdn &quot;cn=monitoring,cn=Monitor&quot;
         rootpw monitoring
@@ -4699,13 +4700,10 @@ Members of a group
 <H3><A NAME="back-null Configuration">11.6.2. back-null Configuration</A></H3>
 <P>This has to be one of the shortest configurations you'll ever do. In order to test this, your <TT>slapd.conf</TT> file would look like:</P>
 <PRE>
-        modulepath  /usr/local/libexec/openldap
-        moduleload  back_null.la
         database null
         suffix &quot;cn=Nothing&quot;
         bind on
 </PRE>
-<P>The first two directives are only applicable if you've enabled module support and haven't &quot;built-in&quot; <EM>slapd-null(5)</EM> support (why would you?).</P>
 <P><EM>bind on</EM> means:</P>
 <P><EM>&quot;Allow binds as any DN in this backend's suffix, with any password. The default is &quot;off&quot;.&quot;</EM></P>
 <P>To test this backend with <EM>ldapsearch</EM>:</P>
@@ -4735,9 +4733,6 @@ Members of a group
 <P>The configuration using <TT>slapd.conf</TT> a slightly longer, but not much. For example:</P>
 <PRE>
         include ./schema/core.schema
-
-        modulepath  /usr/local/libexec/openldap
-        moduleload  back_passwd.la
 
         database passwd
         suffix &quot;cn=passwd&quot;
@@ -5252,8 +5247,7 @@ Members of a group
 <PRE>
         include /usr/share/openldap/schema/core.schema
         include /usr/share/openldap/schema/cosine.schema
-        modulepath      /usr/lib/openldap
-        moduleload      memberof.la
+
         authz-regexp &quot;gidNumber=0\\\+uidNumber=0,cn=peercred,cn=external,cn=auth&quot;
                 &quot;cn=Manager,dc=example,dc=com&quot;
         database        bdb
@@ -5564,11 +5558,6 @@ Members of a group
 
        pidfile     ./slapd.pid
        argsfile    ./slapd.args
-
-       modulepath  /usr/local/libexec/openldap
-       moduleload  back_bdb.la
-       moduleload  back_ldap.la
-       moduleload  translucent.la
 
        database    bdb
        suffix      &quot;dc=suretecsystems,dc=com&quot;
@@ -5917,7 +5906,7 @@ x-my-ObjectClass
 </TABLE>
 
 <P>You are, of course, free to design a hierarchy suitable to your organizational needs under your organization's OID. No matter what hierarchy you choose, you should maintain a registry of assignments you make.  This can be a simple flat file or something more sophisticated such as the <EM>OpenLDAP OID Registry</EM> (<A HREF="http://www.openldap.org/faq/index.cgi?file=197">http://www.openldap.org/faq/index.cgi?file=197</A>).</P>
-<P>For more information about Object Identifiers (and a listing service) see <A HREF="http://www.alvestrand.no/harald/objectid/">http://www.alvestrand.no/harald/objectid/</A>.</P>
+<P>For more information about Object Identifiers (and a listing service) see <A HREF="http://www.alvestrand.no/objectid/">http://www.alvestrand.no/objectid/</A>.</P>
 <UL>
 <EM>Under no circumstances should you hijack OID namespace!</EM></UL>
 <P>To obtain a registered OID at <EM>no cost</EM>, apply for a OID under the <A HREF="http://www.iana.org/">Internet Assigned Numbers Authority</A> (ORG:IANA) maintained <EM>Private Enterprise</EM> arc. Any private enterprise (organization) may request a <TERM>Private Enterprise Number</TERM> (PEN) to be assigned under this arc. Just fill out the IANA form at <A HREF="http://pen.iana.org/pen/PenApplication.page">http://pen.iana.org/pen/PenApplication.page</A> and your official PEN will be sent to you usually within a few days. Your base OID will be something like <TT>1.3.6.1.4.1.X</TT> where <TT>X</TT> is an integer.</P>

@@ -1,10 +1,10 @@
-/*	$NetBSD: retcode.c,v 1.1.1.2 2010/03/08 02:14:20 lukem Exp $	*/
+/*	$NetBSD: retcode.c,v 1.1.1.3 2010/12/12 15:23:41 adam Exp $	*/
 
 /* retcode.c - customizable response for client testing purposes */
-/* OpenLDAP: pkg/ldap/servers/slapd/overlays/retcode.c,v 1.18.2.11 2009/11/22 19:39:43 quanah Exp */
+/* OpenLDAP: pkg/ldap/servers/slapd/overlays/retcode.c,v 1.18.2.12 2010/04/13 20:23:45 kurt Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2005-2009 The OpenLDAP Foundation.
+ * Copyright 2005-2010 The OpenLDAP Foundation.
  * Portions Copyright 2005 Pierangelo Masarati <ando@sys-net.it>
  * All rights reserved.
  *
