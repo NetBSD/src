@@ -1,4 +1,4 @@
-/*	$NetBSD: uturn.c,v 1.12 2010/11/12 13:18:57 uebayasi Exp $	*/
+/*	$NetBSD: uturn.c,v 1.13 2010/12/12 08:23:14 skrll Exp $	*/
 
 /*	$OpenBSD: uturn.c,v 1.6 2007/12/29 01:26:14 kettenis Exp $	*/
 
@@ -207,7 +207,7 @@ uturnattach(device_t parent, device_t self, void *aux)
 	pdc_scanbus(self, &nca, uturn_callback);
 
 	/* XXX On some machines, PDC doesn't tell us about all devices. */
-	switch (cpu_hvers) {
+	switch (cpu_modelno) {
 	case HPPA_BOARD_HP809:
 	case HPPA_BOARD_HP819:
 	case HPPA_BOARD_HP829:

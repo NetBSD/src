@@ -1,4 +1,4 @@
-/*	$NetBSD: power.c,v 1.4 2009/05/09 11:39:30 skrll Exp $	*/
+/*	$NetBSD: power.c,v 1.5 2010/12/12 08:23:14 skrll Exp $	*/
 
 /*
  * Copyright (c) 2004 Jochen Kunz.
@@ -141,7 +141,7 @@ powerattach(device_t parent, device_t self, void *aux)
 		ca->ca_hpa = pdc_power_info.addr;
 	}
 
-	switch (cpu_hvers) {
+	switch (cpu_modelno) {
 	case HPPA_BOARD_HP712_60:
 	case HPPA_BOARD_HP712_80:
 	case HPPA_BOARD_HP712_100:
