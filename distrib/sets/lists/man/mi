@@ -1,11 +1,11 @@
-# $NetBSD: mi,v 1.1263 2010/12/12 12:48:32 pooka Exp $
+# $NetBSD: mi,v 1.1264 2010/12/12 19:04:08 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	binutils,info
-./usr/share/info/awk.info			man-util-info		info
+./usr/share/info/awk.info			man-obsolete		obsolete
 ./usr/share/info/bfd.info			man-computil-info	binutils,info
 ./usr/share/info/binutils.info			man-computil-info	binutils,info
 ./usr/share/info/bzip2.info			man-obsolete		obsolete
