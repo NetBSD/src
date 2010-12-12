@@ -1,4 +1,4 @@
-# $NetBSD: t_grow.sh,v 1.3 2010/12/11 11:31:27 pooka Exp $
+# $NetBSD: t_grow.sh,v 1.4 2010/12/12 22:50:42 riz Exp $
 #
 # Copyright (c) 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -97,12 +97,12 @@ test_case grow_32M_v1_65536 grow_ffs 65536 8192 65536 131072 1 51
 test_case grow_48M_v1_4096 grow_ffs 4096 512 98304 131072 1 82
 test_case grow_48M_v1_8192 grow_ffs 8192 1024 98304 131072 1 84
 test_case grow_48M_v1_16384 grow_ffs 16384 2048 98304 131072 1 87
-test_case_xfail grow_48M_v1_32768 "PR bin/44209" grow_ffs 32768 4096 98304 131072 1 83
+test_case grow_48M_v1_32768 grow_ffs 32768 4096 98304 131072 1 83
 test_case grow_48M_v1_65536 grow_ffs 65536 8192 98304 131072 1 76
 test_case grow_64M_v1_4096 grow_ffs 4096 512 131072 262144 1 109
 test_case grow_64M_v1_8192 grow_ffs 8192 1024 131072 262144 1 111
 test_case grow_64M_v1_16384 grow_ffs 16384 2048 131072 262144 1 115
-test_case_xfail grow_64M_v1_32768 "PR bin/44209" grow_ffs 32768 4096 131072 262144 1 111
+test_case grow_64M_v1_32768 grow_ffs 32768 4096 131072 262144 1 111
 test_case grow_64M_v1_65536 grow_ffs 65536 8192 131072 262144 1 101
 test_case_xfail grow_64M_v1_65536_swapped "PR bin/44203" grow_ffs 65536 8192 131072 262144 1 101 swap
 test_case_xfail grow_64M_v2_65536 "PR bin/44205" grow_ffs 65536 8192 131072 262144 2 101
