@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.85 2010/12/11 10:41:12 rtr Exp $
+# $NetBSD: md.amd64,v 1.86 2010/12/12 00:19:44 rtr Exp $
 ./usr/include/amd64				comp-c-include
 ./usr/include/amd64/ansi.h			comp-c-include
 ./usr/include/amd64/aout_machdep.h		comp-c-include
@@ -356,6 +356,10 @@
 ./usr/lib/i386/i18n/libmapper_zone_g.a		comp-c-proflib		compat,debuglib
 ./usr/lib/i386/i18n/libmapper_zone_p.a		comp-obsolete		obsolete
 ./usr/lib/i386/i18n/libmapper_zone_pic.a	comp-obsolete		obsolete
+./usr/lib/i386/libamu.a				comp-obsolete		obsolete
+./usr/lib/i386/libamu_g.a			comp-obsolete		obsolete
+./usr/lib/i386/libamu_p.a			comp-obsolete		obsolete
+./usr/lib/i386/libamu_pic.a			comp-obsolete		obsolete
 ./usr/lib/i386/libarchive.a			comp-c-lib		compat
 ./usr/lib/i386/libarchive.so			comp-sys-shlib		compat,pic
 ./usr/lib/i386/libarchive_g.a			comp-c-proflib		compat,debuglib
