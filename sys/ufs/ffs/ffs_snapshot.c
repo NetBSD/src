@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_snapshot.c,v 1.100 2010/12/12 10:28:22 hannken Exp $	*/
+/*	$NetBSD: ffs_snapshot.c,v 1.101 2010/12/12 10:29:25 hannken Exp $	*/
 
 /*
  * Copyright 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.100 2010/12/12 10:28:22 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.101 2010/12/12 10:29:25 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -278,6 +278,7 @@ ffs_snapshot(struct mount *mp, struct vnode *vp, struct timespec *ctime)
 	fs->fs_snapinum[snaploc] = ip->i_number;
 
 	mutex_enter(&si->si_lock);
+	vref(vp);
 	if (is_active_snapshot(si, ip))
 		panic("ffs_snapshot: %"PRIu64" already on list", ip->i_number);
 	TAILQ_INSERT_TAIL(&si->si_snapshots, ip, i_nextsnap);
@@ -391,8 +392,7 @@ out:
 			(void) ffs_truncate(vp, (off_t)0, 0, NOCRED);
 			UFS_WAPBL_END(mp);
 		}
-	} else
-		vref(vp);
+	}
 	return (error);
 }
 
@@ -1269,10 +1269,8 @@ ffs_snapgone(struct inode *ip)
 		if (xp == ip)
 			break;
 	mutex_exit(&si->si_lock);
-	if (xp != NULL)
-		vrele(ITOV(ip));
 #ifdef DEBUG
-	else if (snapdebug)
+	if (snapdebug && xp == NULL)
 		printf("ffs_snapgone: lost snapshot vnode %llu\n",
 		    (unsigned long long)ip->i_number);
 #endif
@@ -1339,6 +1337,7 @@ ffs_snapremove(struct vnode *vp)
 			free(ip->i_snapblklist, M_UFSMNT);
 			ip->i_snapblklist = NULL;
 		}
+		vrele(vp);
 	} else
 		mutex_exit(&si->si_lock);
 	/*
@@ -1713,28 +1712,25 @@ void
 ffs_snapshot_unmount(struct mount *mp)
 {
 	struct vnode *devvp = VFSTOUFS(mp)->um_devvp;
-	struct inode *xp;
-	struct vnode *vp = NULL;
+	struct inode *ip;
 	struct snap_info *si;
+	bool list_empty = true;
 
 	si = VFSTOUFS(mp)->um_snapinfo;
 	mutex_enter(&si->si_lock);
-	while ((xp = TAILQ_FIRST(&si->si_snapshots)) != 0) {
-		vp = ITOV(xp);
-		TAILQ_REMOVE(&si->si_snapshots, xp, i_nextsnap);
-		if (xp->i_snapblklist == si->si_snapblklist)
+	while ((ip = TAILQ_FIRST(&si->si_snapshots)) != 0) {
+		list_empty = false;
+		TAILQ_REMOVE(&si->si_snapshots, ip, i_nextsnap);
+		if (ip->i_snapblklist == si->si_snapblklist)
 			si->si_snapblklist = NULL;
-		free(xp->i_snapblklist, M_UFSMNT);
-		if (xp->i_nlink > 0) {
-			si->si_gen++;
-			mutex_exit(&si->si_lock);
-			vrele(vp);
-			mutex_enter(&si->si_lock);
-		}
+		free(ip->i_snapblklist, M_UFSMNT);
+		si->si_gen++;
+		mutex_exit(&si->si_lock);
+		vrele(ITOV(ip));
+		mutex_enter(&si->si_lock);
 	}
-	si->si_gen++;
 	mutex_exit(&si->si_lock);
-	if (vp)
+	if (! list_empty)
 		fscow_disestablish(mp, ffs_copyonwrite, devvp);
 }
 
