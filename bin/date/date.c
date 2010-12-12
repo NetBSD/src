@@ -1,4 +1,4 @@
-/* $NetBSD: date.c,v 1.56 2010/12/11 16:57:51 christos Exp $ */
+/* $NetBSD: date.c,v 1.57 2010/12/12 17:30:23 christos Exp $ */
 
 /*
  * Copyright (c) 1985, 1987, 1988, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)date.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: date.c,v 1.56 2010/12/11 16:57:51 christos Exp $");
+__RCSID("$NetBSD: date.c,v 1.57 2010/12/12 17:30:23 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -80,6 +80,7 @@ main(int argc, char *argv[])
 	const char *format;
 	int ch;
 	long long val;
+	struct tm *tm;
 
 	setprogname(argv[0]);
 	(void)setlocale(LC_ALL, "");
@@ -145,10 +146,15 @@ badarg:				 errx(EXIT_FAILURE,
 
 	if ((buf = malloc(bufsiz = 1024)) == NULL)
 		goto bad;
-	while (strftime(buf, bufsiz, format, localtime(&tval)) == 0)
+
+	if ((tm = localtime(&tval)) == NULL)
+		err(EXIT_FAILURE, "localtime %lld failed", (long long)tval);
+
+	while (strftime(buf, bufsiz, format, tm) == 0)
 		if ((buf = realloc(buf, bufsiz <<= 1)) == NULL)
 			goto bad;
-	(void)printf("%s\n", buf+1);
+
+	(void)printf("%s\n", buf + 1);
 	free(buf);
 	return 0;
 bad:
@@ -198,7 +204,8 @@ setthetime(const char *p)
 		badformat();
 	}
 
-	lt = localtime(&tval);
+	if ((lt = localtime(&tval)) == NULL)
+		err(EXIT_FAILURE, "localtime %lld failed", (long long)tval);
 
 	lt->tm_isdst = -1;			/* Divine correct DST */
 
