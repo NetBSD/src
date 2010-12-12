@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpuser_sp.c,v 1.23 2010/12/12 13:48:55 pooka Exp $	*/
+/*      $NetBSD: rumpuser_sp.c,v 1.24 2010/12/12 17:10:36 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: rumpuser_sp.c,v 1.23 2010/12/12 13:48:55 pooka Exp $");
+__RCSID("$NetBSD: rumpuser_sp.c,v 1.24 2010/12/12 17:10:36 pooka Exp $");
 
 #include <sys/types.h>
 #include <sys/atomic.h>
@@ -77,6 +77,7 @@ int rumpsp_idleworker = IDLEWORKER;
 static struct pollfd pfdlist[MAXCLI];
 static struct spclient spclist[MAXCLI];
 static unsigned int disco;
+static volatile int spfini;
 
 static struct rumpuser_sp_ops spops;
 
@@ -376,6 +377,24 @@ serv_handledisco(unsigned int idx)
 	memset((char *)spc + SPC_ZEROFF, 0, sizeof(*spc) - SPC_ZEROFF);
 
 	spcrelease(spc);
+}
+
+static void
+serv_shutdown(void)
+{
+	struct spclient *spc;
+	unsigned int i;
+
+	for (i = 1; i < MAXCLI; i++) {
+		spc = &spclist[i];
+		if (spc->spc_fd == -1)
+			continue;
+
+		shutdown(spc->spc_fd, SHUT_RDWR);
+		serv_handledisco(i);
+
+		spcrelease(spc);
+	}
 }
 
 static unsigned
@@ -680,8 +699,9 @@ spserver(void *arg)
 		spc = &spclist[idx];
 		pthread_mutex_init(&spc->spc_mtx, NULL);
 		pthread_cond_init(&spc->spc_cv, NULL);
+		spc->spc_fd = -1;
 	}
-	pfdlist[0].fd = sarg->sps_sock;
+	pfdlist[0].fd = spclist[0].spc_fd = sarg->sps_sock;
 	pfdlist[0].events = POLLIN;
 	nfds = 1;
 	maxidx = 0;
@@ -765,6 +785,12 @@ spserver(void *arg)
 			} else {
 				DPRINTF(("rump_sp: mainloop new connection\n"));
 
+				if (__predict_false(spfini)) {
+					close(spclist[0].spc_fd);
+					serv_shutdown();
+					goto out;
+				}
+
 				idx = serv_handleconn(pfdlist[0].fd,
 				    sarg->sps_connhook, nfds == MAXCLI);
 				if (idx)
@@ -776,6 +802,7 @@ spserver(void *arg)
 		}
 	}
 
+ out:
 	return NULL;
 }
 
@@ -830,4 +857,14 @@ rumpuser_sp_init(const struct rumpuser_sp_ops *spopsp, const char *url)
 	pthread_detach(pt);
 
 	return 0;
+}
+
+void
+rumpuser_sp_fini()
+{
+
+	if (spclist[0].spc_fd) {
+		shutdown(spclist[0].spc_fd, SHUT_RDWR);
+		spfini = 1;
+	}
 }

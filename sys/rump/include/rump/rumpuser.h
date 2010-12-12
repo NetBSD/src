@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.h,v 1.57 2010/12/01 17:22:51 pooka Exp $	*/
+/*	$NetBSD: rumpuser.h,v 1.58 2010/12/12 17:10:36 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -226,5 +226,6 @@ int	rumpuser_sp_copyinstr(void *, const void *, void *, size_t *);
 int	rumpuser_sp_copyout(void *, const void *, void *, size_t);
 int	rumpuser_sp_copyoutstr(void *, const void *, void *, size_t *);
 int	rumpuser_sp_anonmmap(void *, size_t, void **);
+void	rumpuser_sp_fini(void);
 
 #endif /* _RUMP_RUMPUSER_H_ */
