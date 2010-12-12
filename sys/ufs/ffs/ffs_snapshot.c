@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_snapshot.c,v 1.99 2010/06/24 13:03:19 hannken Exp $	*/
+/*	$NetBSD: ffs_snapshot.c,v 1.100 2010/12/12 10:28:22 hannken Exp $	*/
 
 /*
  * Copyright 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.99 2010/06/24 13:03:19 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.100 2010/12/12 10:28:22 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -2081,9 +2081,14 @@ syncsnap(struct vnode *vp)
 
 	mutex_enter(&bufcache_lock);
 	while ((bp = LIST_FIRST(&vp->v_dirtyblkhd))) {
-		KASSERT((bp->b_cflags & BC_BUSY) == 0);
+		error = bbusy(bp, false, 0, NULL);
+		if (error == EPASSTHROUGH)
+			continue;
+		else if (error != 0) {
+			mutex_exit(&bufcache_lock);
+			return error;
+		}
 		KASSERT(bp->b_bcount == fs->fs_bsize);
-		bp->b_cflags |= BC_BUSY;
 		mutex_exit(&bufcache_lock);
 		error = rwfsblk(vp, B_WRITE, bp->b_data,
 		    fragstoblks(fs, dbtofsb(fs, bp->b_blkno)));
