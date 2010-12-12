@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.208 2010/12/01 14:59:38 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.209 2010/12/12 13:18:07 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.208 2010/12/01 14:59:38 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.209 2010/12/12 13:18:07 pooka Exp $");
 
 #include <sys/systm.h>
 #define ELFSIZE ARCH_ELFSIZE
@@ -452,11 +452,14 @@ rump_init_server(const char *url)
 void
 cpu_reboot(int howto, char *bootstr)
 {
+	int ruhow = 0;
+
+	printf("rump kernel halting...\n");
 
 	/* dump means we really take the dive here */
 	if ((howto & RB_DUMP) || panicstr) {
-		rumpuser_exit(RUMPUSER_PANIC);
-		/*NOTREACHED*/
+		ruhow = RUMPUSER_PANIC;
+		goto out;
 	}
 
 	/* try to sync */
@@ -476,7 +479,9 @@ cpu_reboot(int howto, char *bootstr)
 	}
 
 	/* this function is __dead, we must exit */
-	rumpuser_exit(0);
+ out:
+	printf("halted\n");
+	rumpuser_exit(ruhow);
 }
 
 struct uio *
