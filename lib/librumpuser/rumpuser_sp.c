@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpuser_sp.c,v 1.22 2010/11/30 22:32:01 pooka Exp $	*/
+/*      $NetBSD: rumpuser_sp.c,v 1.23 2010/12/12 13:48:55 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -32,13 +32,10 @@
  * machine or that they need to run the same version of the host OS,
  * just that they must agree on the data structures.  This even *might*
  * work correctly from one hardware architecture to another.
- *
- * Not finished yet, i.e. don't use in production.  Lacks locking plus
- * handling of multiple clients and unexpected connection closes.
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: rumpuser_sp.c,v 1.22 2010/11/30 22:32:01 pooka Exp $");
+__RCSID("$NetBSD: rumpuser_sp.c,v 1.23 2010/12/12 13:48:55 pooka Exp $");
 
 #include <sys/types.h>
 #include <sys/atomic.h>
