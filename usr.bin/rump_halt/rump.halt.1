@@ -1,4 +1,4 @@
-.\"	$NetBSD: rump.halt.1,v 1.1 2010/12/12 12:48:31 pooka Exp $
+.\"	$NetBSD: rump.halt.1,v 1.2 2010/12/12 17:15:16 pooka Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -71,3 +71,9 @@ The
 .Nm
 command appeared in
 .Nx 6.0 .
+.Sh CAVEATS
+While using
+.Fl h
+makes it impossible to issue further system calls, it does not necessarily
+stop all activity in a rump kernel.
+It is recommended this option is used only for debugging purposes.
