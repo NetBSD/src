@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.172 2010/09/26 02:26:59 yamt Exp $
+#	$NetBSD: Makefile.inc,v 1.173 2010/12/12 20:22:48 christos Exp $
 #	from: @(#)Makefile.inc	8.6 (Berkeley) 5/4/95
 
 # gen sources
@@ -162,3 +162,8 @@ CPPFLAGS.ctype_.c+=	-I${LIBCDIR}/locale
 CPPFLAGS.isctype.c+=	-I${LIBCDIR}/locale
 CPPFLAGS.tolower_.c+=	-I${LIBCDIR}/locale
 CPPFLAGS.toupper_.c+=	-I${LIBCDIR}/locale
+
+errlist.c: errlist.awk ${NETBSDSRCDIR}/sys/sys/errno.h
+	${TOOL_AWK} -f ${.ALLSRC} > ${.TARGET}
+
+CLEANFILES+= errlist.c
