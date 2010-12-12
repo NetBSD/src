@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.224 2010/11/02 15:09:52 pooka Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.225 2010/12/12 10:30:09 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -123,7 +123,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.224 2010/11/02 15:09:52 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.225 2010/12/12 10:30:09 hannken Exp $");
 
 #include "opt_bufcache.h"
 
@@ -982,6 +982,14 @@ brelsel(buf_t *bp, int set)
 	/* Wake up any proceeses waiting for _this_ buffer to become */
 	if (ISSET(bp->b_cflags, BC_WANTED))
 		CLR(bp->b_cflags, BC_WANTED|BC_AGE);
+
+	/* If it's clean clear the copy-on-write flag. */
+	if (ISSET(bp->b_flags, B_COWDONE)) {
+		mutex_enter(bp->b_objlock);
+		if (!ISSET(bp->b_oflags, BO_DELWRI))
+			CLR(bp->b_flags, B_COWDONE);
+		mutex_exit(bp->b_objlock);
+	}
 
 	/*
 	 * Determine which queue the buffer should be on, then put it there.
