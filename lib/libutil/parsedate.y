@@ -586,6 +586,12 @@ ToSeconds(
     /* NOTREACHED */
 }
 
+static int
+isLeap(int year)
+{
+    return year % 4 == 0 && (year % 100 != 0 || year % 400 == 0);
+}
+
 
 /* Year is either
    * A negative number, which means to use its absolute value (why?)
@@ -607,7 +613,7 @@ Convert(
 	31, 0, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31
     };
     time_t	tod;
-    time_t	Julian;
+    time_t	Julian, oJulian;
     int		i;
 
     if (Year < 0)
@@ -616,12 +622,8 @@ Convert(
 	Year += 2000;
     else if (Year < 100)
 	Year += 1900;
-    DaysInMonth[1] = Year % 4 == 0 && (Year % 100 != 0 || Year % 400 == 0)
-		    ? 29 : 28;
-    /* Checking for 2038 bogusly assumes that time_t is 32 bits.  But
-       I'm too lazy to try to check for time_t overflow in another way.  */
-    if (Year < EPOCH || Year > 2038
-     || Month < 1 || Month > 12
+    DaysInMonth[1] = isLeap(Year) ? 29 : 28;
+    if (Year < EPOCH || Month < 1 || Month > 12
      /* Lint fluff:  "conversion from long may lose accuracy" */
      || Day < 1 || Day > DaysInMonth[(int)--Month])
 	/* FIXME:
@@ -634,16 +636,39 @@ Convert(
 
     for (Julian = Day - 1, i = 0; i < Month; i++)
 	Julian += DaysInMonth[i];
-    for (i = EPOCH; i < Year; i++)
-	Julian += 365 + (i % 4 == 0);
+
+    oJulian = Julian;
+    for (i = EPOCH; i < Year; i++) {
+	Julian += 365 + isLeap(i);
+	if (oJulian > Julian)
+	    return -1;
+	oJulian = Julian;
+    }
+
     Julian *= SECSPERDAY;
+    if (oJulian > Julian)
+	return -1;
+    oJulian = Julian;
+
     Julian += yyTimezone * 60L;
+    if (oJulian > Julian)
+	return -1;
+    oJulian = Julian;
+
     if ((tod = ToSeconds(Hours, Minutes, Seconds, Meridian)) < 0)
 	return -1;
+
     Julian += tod;
-    if (DSTmode == DSTon
-     || (DSTmode == DSTmaybe && localtime(&Julian)->tm_isdst))
-	Julian -= 60 * 60;
+    if (oJulian > Julian)
+	return -1;
+
+    if (DSTmode == DSTon || (DSTmode == DSTmaybe)) {
+	struct tm  *tm;
+	if ((tm = localtime(&Julian)) == NULL)
+	    return -1;
+	if (tm->tm_isdst)
+	    Julian -= 60 * 60;
+    }
     return Julian;
 }
 
@@ -656,9 +681,16 @@ DSTcorrect(
 {
     time_t	StartDay;
     time_t	FutureDay;
+    struct tm  *tm;
 
-    StartDay = (localtime(&Start)->tm_hour + 1) % 24;
-    FutureDay = (localtime(&Future)->tm_hour + 1) % 24;
+    if ((tm = localtime(&Start)) == NULL)
+	return -1;
+    StartDay = (tm->tm_hour + 1) % 24;
+
+    if ((tm = localtime(&Future)) == NULL)
+	return -1;
+    FutureDay = (tm->tm_hour + 1) % 24;
+
     return (Future - Start) + (StartDay - FutureDay) * 60L * 60L;
 }
 
@@ -694,6 +726,8 @@ RelativeMonth(
     if (RelMonth == 0)
 	return 0;
     tm = localtime(&Start);
+    if (tm == NULL)
+	return -1;
     Month = 12 * (tm->tm_year + 1900) + tm->tm_mon + RelMonth;
     Year = Month / 12;
     Month = Month % 12 + 1;
@@ -869,7 +903,7 @@ yylex(void)
 #define TM_YEAR_ORIGIN 1900
 
 /* Yield A - B, measured in seconds.  */
-static long
+static time_t
 difftm (struct tm *a, struct tm *b)
 {
   int ay = a->tm_year + (TM_YEAR_ORIGIN - 1);
@@ -884,7 +918,7 @@ difftm (struct tm *a, struct tm *b)
 	      /* + difference in years * 365 */
 	      +  (long)(ay-by) * 365
 	      );
-  return (60*(60*(24*days + (a->tm_hour - b->tm_hour))
+  return ((time_t)60*(60*(24*days + (a->tm_hour - b->tm_hour))
 	      + (a->tm_min - b->tm_min))
 	  + (a->tm_sec - b->tm_sec));
 }
@@ -896,7 +930,7 @@ parsedate(const char *p, const time_t *now, const int *zone)
     time_t		nowt;
     int			zonet;
     time_t		Start;
-    time_t		tod;
+    time_t		tod, rm;
 
     yyInput = p;
     if (now == NULL || zone == NULL) {
@@ -958,16 +992,17 @@ parsedate(const char *p, const time_t *now, const int *zone)
     }
 
     Start += yyRelSeconds;
-    Start += RelativeMonth(Start, yyRelMonth);
+    rm = RelativeMonth(Start, yyRelMonth);
+    if (rm == -1)
+	return -1;
+    Start += rm;
 
     if (yyHaveDay && !yyHaveDate) {
 	tod = RelativeDate(Start, yyDayOrdinal, yyDayNumber);
 	Start += tod;
     }
 
-    /* Have to do *something* with a legitimate -1 so it's distinguishable
-     * from the error return value.  (Alternately could set errno on error.) */
-    return Start == -1 ? 0 : Start;
+    return Start;
 }
 
 
