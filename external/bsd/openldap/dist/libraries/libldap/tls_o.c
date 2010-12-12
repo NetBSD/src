@@ -1,10 +1,10 @@
-/*	$NetBSD: tls_o.c,v 1.2 2010/03/08 05:00:51 lukem Exp $	*/
+/*	$NetBSD: tls_o.c,v 1.3 2010/12/12 15:46:33 adam Exp $	*/
 
 /* tls_o.c - Handle tls/ssl using OpenSSL */
-/* OpenLDAP: pkg/ldap/libraries/libldap/tls_o.c,v 1.5.2.10 2009/10/30 17:55:19 quanah Exp */
+/* OpenLDAP: pkg/ldap/libraries/libldap/tls_o.c,v 1.5.2.12 2010/04/15 21:25:28 quanah Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2008-2009 The OpenLDAP Foundation.
+ * Copyright 2008-2010 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -1081,7 +1081,7 @@ tlso_tmp_rsa_cb( SSL *ssl, int is_export, int key_length )
 	RSA *tmp_rsa;
 	/* FIXME:  Pregenerate the key on startup */
 	/* FIXME:  Who frees the key? */
-#if OPENSSL_VERSION_NUMBER > 0x00908000
+#if OPENSSL_VERSION_NUMBER >= 0x00908000
 	BIGNUM *bn = BN_new();
 	tmp_rsa = NULL;
 	if ( bn ) {

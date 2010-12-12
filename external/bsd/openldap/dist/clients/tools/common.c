@@ -1,10 +1,10 @@
-/*	$NetBSD: common.c,v 1.2 2010/07/11 00:47:36 mrg Exp $	*/
+/*	$NetBSD: common.c,v 1.3 2010/12/12 15:46:28 adam Exp $	*/
 
 /* common.c - common routines for the ldap client tools */
-/* OpenLDAP: pkg/ldap/clients/tools/common.c,v 1.78.2.29 2009/09/29 21:47:37 quanah Exp */
+/* OpenLDAP: pkg/ldap/clients/tools/common.c,v 1.78.2.31 2010/04/15 22:16:49 quanah Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2009 The OpenLDAP Foundation.
+ * Copyright 1998-2010 The OpenLDAP Foundation.
  * Portions Copyright 2003 Kurt D. Zeilenga.
  * Portions Copyright 2003 IBM Corporation.
  * All rights reserved.
@@ -262,11 +262,13 @@ tool_destroy( void )
 		ber_memfree( binddn );
 	}
 
-#if 0	/* not yet */
 	if ( passwd.bv_val != NULL ) {
 		ber_memfree( passwd.bv_val );
 	}
-#endif
+
+	if ( infile != NULL ) {
+		ber_memfree( infile );
+	}
 }
 
 void
@@ -1360,6 +1362,23 @@ tool_bind( LDAP *ld )
 	}
 
 	assert( nsctrls < (int) (sizeof(sctrls)/sizeof(sctrls[0])) );
+
+	if ( pw_file || want_bindpw ) {
+		assert( passwd.bv_val == NULL && passwd.bv_len == 0 );
+
+		if ( pw_file ) {
+			if ( lutil_get_filed_password( pw_file, &passwd ) ) {
+				exit( EXIT_FAILURE );
+			}
+
+		} else {
+			char *pw = getpassphrase( _("Enter LDAP Password: ") );
+			if ( pw ) {
+				passwd.bv_val = ber_strdup( pw );
+				passwd.bv_len = strlen( passwd.bv_val );
+			}
+		}
+	}
 
 	if ( authmethod == LDAP_AUTH_SASL ) {
 #ifdef HAVE_CYRUS_SASL

@@ -1,10 +1,10 @@
-/*	$NetBSD: os-local.c,v 1.4 2010/03/08 03:47:40 lukem Exp $	*/
+/*	$NetBSD: os-local.c,v 1.5 2010/12/12 15:46:33 adam Exp $	*/
 
 /* os-local.c -- platform-specific domain socket code */
-/* OpenLDAP: pkg/ldap/libraries/libldap/os-local.c,v 1.44.2.9 2009/08/12 23:48:32 quanah Exp */
+/* OpenLDAP: pkg/ldap/libraries/libldap/os-local.c,v 1.44.2.10 2010/04/13 20:22:59 kurt Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2009 The OpenLDAP Foundation.
+ * Copyright 1998-2010 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
