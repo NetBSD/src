@@ -1,4 +1,4 @@
-#	$NetBSD: t_sp.sh,v 1.1 2010/11/30 22:09:15 pooka Exp $
+#	$NetBSD: t_sp.sh,v 1.2 2010/12/12 12:51:19 pooka Exp $
 #
 # Copyright (c) 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -76,7 +76,7 @@ stress_cleanup()
 
 docleanup()
 {
-	RUMP_SERVER=unix://commsock $(atf_get_srcdir)/h_client/h_reboot
+	RUMP_SERVER=unix://commsock rump.halt
 }
 
 atf_init_test_cases()
