@@ -1,4 +1,4 @@
-/*	$NetBSD: resize_ffs.c,v 1.20 2010/12/12 19:53:23 mhitch Exp $	*/
+/*	$NetBSD: resize_ffs.c,v 1.21 2010/12/12 22:48:59 riz Exp $	*/
 /* From sources sent on February 17, 2003 */
 /*-
  * As its sole author, I explicitly place this code in the public
@@ -1940,9 +1940,6 @@ main(int argc, char **argv)
 			continue;
 		if (oldsb->fs_magic == FS_UFS1_MAGIC)
 			break;
-		if (oldsb->fs_old_flags & FS_FLAGS_UPDATED)
-			err(EXIT_FAILURE,
-			    "Can't resize ffsv2 format superblock!");
 	}
 	if (where == (off_t)-1)
 		errx(EXIT_FAILURE, "Bad magic number");
