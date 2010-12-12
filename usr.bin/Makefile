@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.194 2010/12/05 17:45:08 pooka Exp $
+#	$NetBSD: Makefile,v 1.195 2010/12/12 12:48:30 pooka Exp $
 #	from: @(#)Makefile	8.3 (Berkeley) 1/7/94
 
 .include <bsd.own.mk>
@@ -22,7 +22,7 @@ SUBDIR= apply apropos asa at audio \
 	pagesize passwd paste patch pathchk pkill pmap pmc pr \
 	printenv printf progress pwhash qsubst quota radioctl rdist \
 	renice rev revoke rfcomm_sppd rlogin rpcgen rpcinfo rs rsh \
-	rump_allserver rup ruptime rusers rwall rwho \
+	rump_allserver rump_halt rup ruptime rusers rwall rwho \
 	script sdiff sdpquery sed seq shar shlock \
 	showmount shuffle sockstat soelim sort spell split stat su systat \
 	tabs tail talk tcopy tee telnet tftp tic time tip touch tput \
