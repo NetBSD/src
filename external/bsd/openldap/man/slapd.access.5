@@ -1,7 +1,7 @@
-.TH SLAPD.ACCESS 5 "2009/12/20" "OpenLDAP 2.4.21"
-.\" Copyright 1998-2009 The OpenLDAP Foundation All Rights Reserved.
+.TH SLAPD.ACCESS 5 "2010/06/30" "OpenLDAP 2.4.23"
+.\" Copyright 1998-2010 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
-.\" OpenLDAP: pkg/ldap/doc/man/man5/slapd.access.5,v 1.70.2.18 2009/06/27 18:00:32 quanah Exp
+.\" OpenLDAP: pkg/ldap/doc/man/man5/slapd.access.5,v 1.70.2.20 2010/04/19 22:25:07 quanah Exp
 .SH NAME
 slapd.access \- access configuration for slapd, the stand-alone LDAP daemon
 .SH SYNOPSIS
@@ -257,6 +257,24 @@ resulting in base, onelevel, subtree or children match, respectively.
 The dn, filter, and attrs statements are additive; they can be used in sequence 
 to select entities the access rule applies to based on naming context,
 value and attribute type simultaneously.
+Submatches resulting from
+.B regex
+matching can be dereferenced in the
+.B <who>
+field using the syntax
+.IR ${v<n>} ,
+where
+.I <n>
+is the submatch number.
+The default syntax,
+.IR $<n> ,
+is actually an alias for
+.IR ${d<n>} ,
+that corresponds to dereferencing submatches from the
+.B dnpattern
+portion of the
+.B <what>
+field.
 .SH THE <WHO> FIELD
 The field
 .B <who>
