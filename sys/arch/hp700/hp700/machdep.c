@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.93 2010/12/12 08:52:49 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.94 2010/12/12 08:54:25 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.93 2010/12/12 08:52:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.94 2010/12/12 08:54:25 skrll Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -663,7 +663,6 @@ cpuid(void)
 		    pdc_model.hv);
 #endif
 	}
-	/* XXXNH - check */
 	cpu_modelno = pdc_model.hwmodel;
 	model = hppa_mod_info(HPPA_TYPE_BOARD, cpu_modelno);
 #ifdef DEBUG
