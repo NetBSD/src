@@ -1,8 +1,8 @@
 #! /bin/sh
-# OpenLDAP: pkg/ldap/tests/scripts/test040-subtree-rename,v 1.4.2.5 2009/01/22 00:01:20 kurt Exp */
+# OpenLDAP: pkg/ldap/tests/scripts/test040-subtree-rename,v 1.4.2.7 2010/04/19 19:14:35 quanah Exp */
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 1998-2009 The OpenLDAP Foundation.
+## Copyright 1998-2010 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -16,13 +16,10 @@
 echo "running defines.sh"
 . $SRCDIR/scripts/defines.sh
 
-case $BACKEND in
-hdb | ldif)
-	;;
-*)
+if test $BACKEND = bdb ; then
 	echo "subtree rename not supported by back-$BACKEND"
 	exit 0
-esac
+fi
 
 mkdir -p $TESTDIR $DBDIR1
 
@@ -194,9 +191,9 @@ test $KILLSERVERS != no && kill -HUP $KILLPIDS
 LDIF=$SUBTREERENAMEOUT
 
 echo "Filtering ldapsearch results..."
-. $LDIFFILTER < $SEARCHOUT > $SEARCHFLT
+$LDIFFILTER < $SEARCHOUT > $SEARCHFLT
 echo "Filtering original ldif used to create database..."
-. $LDIFFILTER < $LDIF > $LDIFFLT
+$LDIFFILTER < $LDIF > $LDIFFLT
 echo "Comparing filter output..."
 $CMP $SEARCHFLT $LDIFFLT > $CMPOUT
 

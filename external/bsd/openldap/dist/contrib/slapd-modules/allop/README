@@ -20,7 +20,7 @@ gcc -shared -I../../../include -I../../../servers/slapd -Wall -g \
 to compile this overlay.
 
 ---
-Copyright 2004-2009 The OpenLDAP Foundation. All rights reserved.
+Copyright 2004-2010 The OpenLDAP Foundation. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted only as authorized by the OpenLDAP
