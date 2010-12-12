@@ -1077,7 +1077,9 @@
 
 /* Define to 1 if your processor stores words with the most significant byte
    first (like Motorola and SPARC, unlike Intel and VAX). */
-#undef WORDS_BIGENDIAN
+#if defined __BIG_ENDIAN__
+#  define WORDS_BIGENDIAN 1
+#endif
 
 /* Define to the type of arg 3 for `accept'. */
 #undef ber_socklen_t
