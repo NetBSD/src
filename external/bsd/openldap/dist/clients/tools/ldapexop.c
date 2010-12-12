@@ -1,10 +1,10 @@
-/*	$NetBSD: ldapexop.c,v 1.1.1.2 2010/03/08 02:14:14 lukem Exp $	*/
+/*	$NetBSD: ldapexop.c,v 1.1.1.3 2010/12/12 15:18:11 adam Exp $	*/
 
 /* ldapexop.c -- a tool for performing well-known extended operations */
-/* OpenLDAP: pkg/ldap/clients/tools/ldapexop.c,v 1.9.2.6 2009/08/14 20:51:14 quanah Exp */
+/* OpenLDAP: pkg/ldap/clients/tools/ldapexop.c,v 1.9.2.8 2010/04/15 22:16:50 quanah Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2005-2009 The OpenLDAP Foundation.
+ * Copyright 2005-2010 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -89,16 +89,6 @@ main( int argc, char *argv[] )
 
 	if ( argc - optind < 1 ) {
 		usage();
-	}
-
-	if ( pw_file || want_bindpw ) {
-		if ( pw_file ) {
-			rc = lutil_get_filed_password( pw_file, &passwd );
-			if( rc ) return EXIT_FAILURE;
-		} else {
-			passwd.bv_val = getpassphrase( _("Enter LDAP Password: ") );
-			passwd.bv_len = passwd.bv_val ? strlen( passwd.bv_val ) : 0;
-		}
 	}
 
 	ld = tool_conn_setup( 0, 0 );

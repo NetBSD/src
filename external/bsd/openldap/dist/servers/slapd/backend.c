@@ -1,10 +1,10 @@
-/*	$NetBSD: backend.c,v 1.1.1.2 2010/03/08 02:14:17 lukem Exp $	*/
+/*	$NetBSD: backend.c,v 1.1.1.3 2010/12/12 15:22:18 adam Exp $	*/
 
 /* backend.c - routines for dealing with back-end databases */
-/* OpenLDAP: pkg/ldap/servers/slapd/backend.c,v 1.362.2.30 2009/11/22 16:28:23 quanah Exp */
+/* OpenLDAP: pkg/ldap/servers/slapd/backend.c,v 1.362.2.32 2010/04/14 22:59:08 quanah Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2009 The OpenLDAP Foundation.
+ * Copyright 1998-2010 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -1967,3 +1967,12 @@ int backend_operational( Operation *op, SlapReply *rs )
 	return rc;
 }
 
+/* helper that calls the bi_tool_entry_first_x() variant with default args;
+ * use to initialize a backend's bi_tool_entry_first() when appropriate
+ */
+ID
+backend_tool_entry_first( BackendDB *be )
+{
+	return be->bd_info->bi_tool_entry_first_x( be,
+		NULL, LDAP_SCOPE_DEFAULT, NULL );
+}

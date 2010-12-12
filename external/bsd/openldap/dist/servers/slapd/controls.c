@@ -1,9 +1,9 @@
-/*	$NetBSD: controls.c,v 1.1.1.2 2010/03/08 02:14:17 lukem Exp $	*/
+/*	$NetBSD: controls.c,v 1.1.1.3 2010/12/12 15:22:27 adam Exp $	*/
 
-/* OpenLDAP: pkg/ldap/servers/slapd/controls.c,v 1.174.2.20 2009/07/27 20:19:18 quanah Exp */
+/* OpenLDAP: pkg/ldap/servers/slapd/controls.c,v 1.174.2.23 2010/04/15 20:15:19 quanah Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2009 The OpenLDAP Foundation.
+ * Copyright 1998-2010 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -1236,6 +1236,8 @@ static int parsePagedResults (
 	if ( !cookie.bv_len ) {
 		ps->ps_count = 0;
 		ps->ps_cookie = 0;
+		/* taint ps_cookie, to detect whether it's set */
+		op->o_conn->c_pagedresults_state.ps_cookie = NOID;
 	}
 
 	/* NOTE: according to RFC 2696 3.:
@@ -1673,6 +1675,24 @@ static int parseSearchOptions (
 		return LDAP_PROTOCOL_ERROR;
 	}
 
+	if ( search_flags & ~(LDAP_SEARCH_FLAG_DOMAIN_SCOPE) ) {
+		/* Search flags not recognised so far,
+		 * including:
+		 *		LDAP_SEARCH_FLAG_PHANTOM_ROOT
+		 */
+		if ( ctrl->ldctl_iscritical ) {
+			rs->sr_text = "searchOptions contained unrecognized flag";
+			return LDAP_UNWILLING_TO_PERFORM;
+		}
+
+		/* Ignore */
+		Debug( LDAP_DEBUG_TRACE,
+			"searchOptions: conn=%lu unrecognized flag(s) 0x%x (non-critical)\n", 
+			op->o_connid, (unsigned)search_flags, 0 );
+
+		return LDAP_SUCCESS;
+	}
+
 	if ( search_flags & LDAP_SEARCH_FLAG_DOMAIN_SCOPE ) {
 		if ( op->o_domain_scope != SLAP_CONTROL_NONE ) {
 			rs->sr_text = "searchOptions control specified multiple times "
@@ -1683,15 +1703,6 @@ static int parseSearchOptions (
 		op->o_domain_scope = ctrl->ldctl_iscritical
 			? SLAP_CONTROL_CRITICAL
 			: SLAP_CONTROL_NONCRITICAL;
-	}
-
-	if ( search_flags & ~(LDAP_SEARCH_FLAG_DOMAIN_SCOPE) ) {
-		/* Other search flags not recognised so far,
-		 * including:
-		 *		LDAP_SEARCH_FLAG_PHANTOM_ROOM
-		 */
-		rs->sr_text = "searchOptions contained unrecognized flag";
-		return LDAP_UNWILLING_TO_PERFORM;
 	}
 
 	return LDAP_SUCCESS;

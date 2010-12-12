@@ -1,10 +1,10 @@
-/*	$NetBSD: ldapsync.c,v 1.1.1.2 2010/03/08 02:14:17 lukem Exp $	*/
+/*	$NetBSD: ldapsync.c,v 1.1.1.3 2010/12/12 15:22:31 adam Exp $	*/
 
 /* ldapsync.c -- LDAP Content Sync Routines */
-/* OpenLDAP: pkg/ldap/servers/slapd/ldapsync.c,v 1.32.2.11 2009/07/08 03:29:16 quanah Exp */
+/* OpenLDAP: pkg/ldap/servers/slapd/ldapsync.c,v 1.32.2.13 2010/04/19 16:53:02 quanah Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2003-2009 The OpenLDAP Foundation.
+ * Copyright 2003-2010 The OpenLDAP Foundation.
  * Portions Copyright 2003 IBM Corporation.
  * All rights reserved.
  *
@@ -47,7 +47,7 @@ slap_compose_sync_cookie(
 	}
 
 	if ( numcsn == 0 || rid == -1 ) {
-		char cookiestr[ LDAP_LUTIL_CSNSTR_BUFSIZE + 20 ];
+		char cookiestr[ LDAP_PVT_CSNSTR_BUFSIZE + 20 ];
 		if ( rid == -1 ) {
 			cookiestr[0] = '\0';
 			len = 0;
@@ -291,14 +291,14 @@ slap_init_sync_cookie_ctxcsn(
 	struct sync_cookie *cookie
 )
 {
-	char csnbuf[ LDAP_LUTIL_CSNSTR_BUFSIZE + 4 ];
+	char csnbuf[ LDAP_PVT_CSNSTR_BUFSIZE + 4 ];
 	struct berval octet_str = BER_BVNULL;
 	struct berval ctxcsn = BER_BVNULL;
 
 	if ( cookie == NULL )
 		return -1;
 
-	octet_str.bv_len = snprintf( csnbuf, LDAP_LUTIL_CSNSTR_BUFSIZE + 4,
+	octet_str.bv_len = snprintf( csnbuf, LDAP_PVT_CSNSTR_BUFSIZE + 4,
 					"csn=%4d%02d%02d%02d%02d%02dZ#%06x#%02x#%06x",
 					1900, 1, 1, 0, 0, 0, 0, 0, 0 );
 	octet_str.bv_val = csnbuf;

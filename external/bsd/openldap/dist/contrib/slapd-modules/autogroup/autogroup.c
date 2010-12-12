@@ -1,10 +1,10 @@
-/*	$NetBSD: autogroup.c,v 1.1.1.2 2010/03/08 02:14:14 lukem Exp $	*/
+/*	$NetBSD: autogroup.c,v 1.1.1.3 2010/12/12 15:18:55 adam Exp $	*/
 
 /* autogroup.c - automatic group overlay */
-/* OpenLDAP: pkg/ldap/contrib/slapd-modules/autogroup/autogroup.c,v 1.2.2.5 2009/09/29 21:52:13 quanah Exp */
+/* OpenLDAP: pkg/ldap/contrib/slapd-modules/autogroup/autogroup.c,v 1.2.2.6 2010/04/13 20:22:26 kurt Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2007-2009 The OpenLDAP Foundation.
+ * Copyright 2007-2010 The OpenLDAP Foundation.
  * Portions Copyright 2007 Michał Szulczyński.
  * Portions Copyright 2009 Howard Chu.
  * All rights reserved.

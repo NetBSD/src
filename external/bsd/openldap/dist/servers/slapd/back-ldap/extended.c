@@ -1,10 +1,10 @@
-/*	$NetBSD: extended.c,v 1.1.1.2 2010/03/08 02:14:18 lukem Exp $	*/
+/*	$NetBSD: extended.c,v 1.1.1.3 2010/12/12 15:23:05 adam Exp $	*/
 
 /* extended.c - ldap backend extended routines */
-/* OpenLDAP: pkg/ldap/servers/slapd/back-ldap/extended.c,v 1.36.2.10 2009/09/29 21:47:37 quanah Exp */
+/* OpenLDAP: pkg/ldap/servers/slapd/back-ldap/extended.c,v 1.36.2.11 2010/04/13 20:23:28 kurt Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2003-2009 The OpenLDAP Foundation.
+ * Copyright 2003-2010 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

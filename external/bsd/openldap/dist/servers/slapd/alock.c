@@ -1,10 +1,10 @@
-/*	$NetBSD: alock.c,v 1.1.1.2 2010/03/08 02:14:17 lukem Exp $	*/
+/*	$NetBSD: alock.c,v 1.1.1.3 2010/12/12 15:22:17 adam Exp $	*/
 
 /* alock.c - access lock library */
-/* OpenLDAP: pkg/ldap/servers/slapd/alock.c,v 1.5.2.12 2009/11/18 20:49:24 quanah Exp */
+/* OpenLDAP: pkg/ldap/servers/slapd/alock.c,v 1.5.2.13 2010/04/13 20:23:10 kurt Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2005-2009 The OpenLDAP Foundation.
+ * Copyright 2005-2010 The OpenLDAP Foundation.
  * Portions Copyright 2004-2005 Symas Corporation.
  * All rights reserved.
  *

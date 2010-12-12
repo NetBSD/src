@@ -1,10 +1,10 @@
-/*	$NetBSD: init.c,v 1.1.1.2 2010/03/08 02:14:19 lukem Exp $	*/
+/*	$NetBSD: init.c,v 1.1.1.3 2010/12/12 15:23:15 adam Exp $	*/
 
 /* init.c - initialize monitor backend */
-/* OpenLDAP: pkg/ldap/servers/slapd/back-monitor/init.c,v 1.125.2.11 2009/11/18 01:25:49 quanah Exp */
+/* OpenLDAP: pkg/ldap/servers/slapd/back-monitor/init.c,v 1.125.2.14 2010/04/19 16:53:03 quanah Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2001-2009 The OpenLDAP Foundation.
+ * Copyright 2001-2010 The OpenLDAP Foundation.
  * Portions Copyright 2001-2003 Pierangelo Masarati.
  * All rights reserved.
  *
@@ -2063,6 +2063,7 @@ monitor_back_initialize(
 	bi->bi_tool_entry_open = 0;
 	bi->bi_tool_entry_close = 0;
 	bi->bi_tool_entry_first = 0;
+	bi->bi_tool_entry_first_x = 0;
 	bi->bi_tool_entry_next = 0;
 	bi->bi_tool_entry_get = 0;
 	bi->bi_tool_entry_put = 0;
@@ -2209,10 +2210,7 @@ monitor_back_db_open(
 	monitor_entry_t		*mp;
 	int			i;
 	struct berval		bv, rdn = BER_BVC(SLAPD_MONITOR_DN);
-	struct tm		*tms;
-#ifdef HAVE_GMTIME_R
-	struct tm		tm_buf;
-#endif
+	struct tm		tms;
 	static char		tmbuf[ LDAP_LUTIL_GENTIME_BUFSIZE ];
 	struct berval	desc[] = {
 		BER_BVC("This subtree contains monitoring/managing objects."),
@@ -2231,27 +2229,8 @@ monitor_back_db_open(
 	/*
 	 * Start
 	 */
-#ifndef HAVE_GMTIME_R
-	ldap_pvt_thread_mutex_lock( &gmtime_mutex );
-#endif
-#ifdef HACK_LOCAL_TIME
-# ifdef HAVE_LOCALTIME_R
-	tms = localtime_r( &starttime, &tm_buf );
-# else
-	tms = localtime( &starttime );
-# endif /* HAVE_LOCALTIME_R */
-	lutil_localtime( tmbuf, sizeof(tmbuf), tms, -timezone );
-#else /* !HACK_LOCAL_TIME */
-# ifdef HAVE_GMTIME_R
-	tms = gmtime_r( &starttime, &tm_buf );
-# else
-	tms = gmtime( &starttime );
-# endif /* HAVE_GMTIME_R */
-	lutil_gentime( tmbuf, sizeof(tmbuf), tms );
-#endif /* !HACK_LOCAL_TIME */
-#ifndef HAVE_GMTIME_R
-	ldap_pvt_thread_mutex_unlock( &gmtime_mutex );
-#endif
+	ldap_pvt_gmtime( &starttime, &tms );
+	lutil_gentime( tmbuf, sizeof(tmbuf), &tms );
 
 	mi->mi_startTime.bv_val = tmbuf;
 	mi->mi_startTime.bv_len = strlen( tmbuf );

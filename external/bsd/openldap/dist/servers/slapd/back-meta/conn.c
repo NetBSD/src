@@ -1,9 +1,9 @@
-/*	$NetBSD: conn.c,v 1.1.1.2 2010/03/08 02:14:19 lukem Exp $	*/
+/*	$NetBSD: conn.c,v 1.1.1.3 2010/12/12 15:23:10 adam Exp $	*/
 
-/* OpenLDAP: pkg/ldap/servers/slapd/back-meta/conn.c,v 1.86.2.19 2009/08/26 00:50:20 quanah Exp */
+/* OpenLDAP: pkg/ldap/servers/slapd/back-meta/conn.c,v 1.86.2.20 2010/04/13 20:23:30 kurt Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2009 The OpenLDAP Foundation.
+ * Copyright 1999-2010 The OpenLDAP Foundation.
  * Portions Copyright 2001-2003 Pierangelo Masarati.
  * Portions Copyright 1999-2003 Howard Chu.
  * All rights reserved.

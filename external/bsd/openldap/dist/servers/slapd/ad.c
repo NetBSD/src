@@ -1,10 +1,10 @@
-/*	$NetBSD: ad.c,v 1.1.1.2 2010/03/08 02:14:17 lukem Exp $	*/
+/*	$NetBSD: ad.c,v 1.1.1.3 2010/12/12 15:22:16 adam Exp $	*/
 
 /* ad.c - routines for dealing with attribute descriptions */
-/* OpenLDAP: pkg/ldap/servers/slapd/ad.c,v 1.95.2.9 2009/07/27 20:19:18 quanah Exp */
+/* OpenLDAP: pkg/ldap/servers/slapd/ad.c,v 1.95.2.10 2010/04/13 20:23:10 kurt Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2009 The OpenLDAP Foundation.
+ * Copyright 1998-2010 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

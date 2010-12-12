@@ -1,10 +1,10 @@
-/*	$NetBSD: opensock.c,v 1.1.1.2 2010/03/08 02:14:19 lukem Exp $	*/
+/*	$NetBSD: opensock.c,v 1.1.1.3 2010/12/12 15:23:22 adam Exp $	*/
 
 /* opensock.c - open a unix domain socket */
-/* OpenLDAP: pkg/ldap/servers/slapd/back-sock/opensock.c,v 1.3.2.3 2009/02/10 23:44:04 quanah Exp */
+/* OpenLDAP: pkg/ldap/servers/slapd/back-sock/opensock.c,v 1.3.2.4 2010/04/13 20:23:41 kurt Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2007-2009 The OpenLDAP Foundation.
+ * Copyright 2007-2010 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

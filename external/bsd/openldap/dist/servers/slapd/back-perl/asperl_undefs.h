@@ -1,9 +1,9 @@
-/*	$NetBSD: asperl_undefs.h,v 1.1.1.2 2010/03/08 02:14:19 lukem Exp $	*/
+/*	$NetBSD: asperl_undefs.h,v 1.1.1.3 2010/12/12 15:23:20 adam Exp $	*/
 
-/* OpenLDAP: pkg/ldap/servers/slapd/back-perl/asperl_undefs.h,v 1.7.2.4 2009/01/22 00:01:09 kurt Exp */
+/* OpenLDAP: pkg/ldap/servers/slapd/back-perl/asperl_undefs.h,v 1.7.2.5 2010/04/13 20:23:36 kurt Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2009 The OpenLDAP Foundation.
+ * Copyright 1999-2010 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

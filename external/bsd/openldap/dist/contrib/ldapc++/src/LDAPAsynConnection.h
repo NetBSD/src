@@ -1,6 +1,6 @@
-/*	$NetBSD: LDAPAsynConnection.h,v 1.1.1.2 2010/03/08 02:14:14 lukem Exp $	*/
+/*	$NetBSD: LDAPAsynConnection.h,v 1.1.1.3 2010/12/12 15:18:43 adam Exp $	*/
 
-// OpenLDAP: pkg/ldap/contrib/ldapc++/src/LDAPAsynConnection.h,v 1.11.2.4 2008/04/14 23:09:26 quanah Exp
+// OpenLDAP: pkg/ldap/contrib/ldapc++/src/LDAPAsynConnection.h,v 1.11.2.6 2010/04/14 23:50:44 quanah Exp
 /*
  * Copyright 2000, OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
@@ -14,7 +14,6 @@
 #include<string>
 
 #include<ldap.h>
-#include<lber.h>
 
 #include <LDAPEntry.h>
 #include <LDAPException.h>
@@ -25,6 +24,7 @@
 #include <LDAPUrl.h>
 #include <LDAPUrlList.h>
 #include <SaslInteractionHandler.h>
+#include <TlsOptions.h>
 
 //* Main class for an asynchronous LDAP connection 
 /**
@@ -75,7 +75,6 @@ class LDAPAsynConnection{
 
         //* Destructor
         virtual ~LDAPAsynConnection();
-
         /** 
          * Initializes a connection to a server. 
          * 
@@ -154,7 +153,7 @@ class LDAPAsynConnection{
                                  const StringList& attrs=StringList(), 
                                  bool attrsOnly=false,
                                  const LDAPConstraints *cons=0);
-        
+
         /** Delete an entry from the directory
          *
          * This method sends a delete request to the server
@@ -166,7 +165,7 @@ class LDAPAsynConnection{
          *              request
          */
         LDAPMessageQueue* del(const std::string& dn, const LDAPConstraints *cons=0);
-        
+
         /** 
          * Perform the COMPARE-operation on an attribute 
          *
@@ -227,7 +226,7 @@ class LDAPAsynConnection{
                 const std::string& newRDN,
                 bool delOldRDN=false, const std::string& newParentDN="",
                 const LDAPConstraints* cons=0);
-        
+
         /** Perform a LDAP extended Operation
          *
          * @throws LDAPException If the Request could not be sent to the
@@ -241,14 +240,14 @@ class LDAPAsynConnection{
          */
         LDAPMessageQueue* extOperation(const std::string& oid, 
                 const std::string& value="", const LDAPConstraints *cons=0);
-        
+
         /** End an outstanding request
          *
          * @param q All outstanding request related to this LDAPMessageQueue 
          *      will be abandoned
          */
         void abandon(LDAPMessageQueue *q);
-        
+
         /**
          * Performs the UNBIND-operation on the destination server
          * 
@@ -273,20 +272,20 @@ class LDAPAsynConnection{
          *      the remote server. 
          */
         int getPort() const;
-        
+
         /** Change the default constraints of the connection
          *
          * @parameter cons cons New LDAPConstraints to use with the connection
          */
         void setConstraints(LDAPConstraints *cons);
-        
+
         /** Get the default constraints of the connection
          *
          * @return Pointer to the LDAPConstraints-Object that is currently
          *      used with the Connection
          */
         const LDAPConstraints* getConstraints() const;
-
+        TlsOptions getTlsOptions() const;
         /**
          * This method is used internally for automatic referral chasing.
          * It tries to bind to a destination server of the URLs of a
@@ -311,7 +310,7 @@ class LDAPAsynConnection{
          * Private copy constructor. So nobody can call it.
          */
         LDAPAsynConnection(const LDAPAsynConnection& lc){};
-        
+
         /**
          * A pointer to the C-API LDAP-structure that is associated with
          * this connection
@@ -330,7 +329,7 @@ class LDAPAsynConnection{
          */
         LDAPUrl m_uri;
 
- protected:
+    protected:
         /**
          * Is caching enabled?
          */

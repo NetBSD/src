@@ -1,10 +1,10 @@
-/*	$NetBSD: deref.c,v 1.1.1.1 2010/03/08 02:14:19 lukem Exp $	*/
+/*	$NetBSD: deref.c,v 1.1.1.2 2010/12/12 15:23:34 adam Exp $	*/
 
 /* deref.c - dereference overlay */
-/* OpenLDAP: pkg/ldap/servers/slapd/overlays/deref.c,v 1.7.2.4 2009/04/29 01:55:18 quanah Exp */
+/* OpenLDAP: pkg/ldap/servers/slapd/overlays/deref.c,v 1.7.2.5 2010/04/13 20:23:44 kurt Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2009 The OpenLDAP Foundation.
+ * Copyright 1998-2010 The OpenLDAP Foundation.
  * Portions Copyright 2008 Pierangelo Masarati.
  * All rights reserved.
  *

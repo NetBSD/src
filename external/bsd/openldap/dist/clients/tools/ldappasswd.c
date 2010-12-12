@@ -1,10 +1,10 @@
-/*	$NetBSD: ldappasswd.c,v 1.1.1.2 2010/03/08 02:14:14 lukem Exp $	*/
+/*	$NetBSD: ldappasswd.c,v 1.1.1.3 2010/12/12 15:18:12 adam Exp $	*/
 
 /* ldappasswd -- a tool for change LDAP passwords */
-/* OpenLDAP: pkg/ldap/clients/tools/ldappasswd.c,v 1.136.2.8 2009/03/09 23:16:47 quanah Exp */
+/* OpenLDAP: pkg/ldap/clients/tools/ldappasswd.c,v 1.136.2.10 2010/04/15 22:16:50 quanah Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2009 The OpenLDAP Foundation.
+ * Copyright 1998-2010 The OpenLDAP Foundation.
  * Portions Copyright 1998-2003 Kurt D. Zeilenga.
  * Portions Copyright 1998-2001 Net Boolean Incorporated.
  * Portions Copyright 2001-2003 IBM Corporation.
@@ -245,18 +245,6 @@ main( int argc, char *argv[] )
 		}
 
 		newpw.bv_len = strlen( newpw.bv_val );
-	}
-
-	if ( pw_file ) {
-		rc = lutil_get_filed_password( pw_file, &passwd );
-		if( rc ) {
-			rc = EXIT_FAILURE;
-			goto done;
-		}
-
-	} else if ( want_bindpw ) {
-		passwd.bv_val = getpassphrase( _("Enter LDAP Password: ") );
-		passwd.bv_len = passwd.bv_val ? strlen( passwd.bv_val ) : 0;
 	}
 
 	ld = tool_conn_setup( 0, 0 );

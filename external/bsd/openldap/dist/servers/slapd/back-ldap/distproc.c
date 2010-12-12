@@ -1,10 +1,10 @@
-/*	$NetBSD: distproc.c,v 1.1.1.2 2010/03/08 02:14:18 lukem Exp $	*/
+/*	$NetBSD: distproc.c,v 1.1.1.3 2010/12/12 15:23:05 adam Exp $	*/
 
 /* distproc.c - implement distributed procedures */
-/* OpenLDAP: pkg/ldap/servers/slapd/back-ldap/distproc.c,v 1.3.2.8 2009/01/22 00:01:06 kurt Exp */
+/* OpenLDAP: pkg/ldap/servers/slapd/back-ldap/distproc.c,v 1.3.2.9 2010/04/13 20:23:28 kurt Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2005-2009 The OpenLDAP Foundation.
+ * Copyright 2005-2010 The OpenLDAP Foundation.
  * Portions Copyright 2003 Howard Chu.
  * All rights reserved.
  *

@@ -1,9 +1,9 @@
-/*	$NetBSD: back-sql.h,v 1.1.1.2 2010/03/08 02:14:19 lukem Exp $	*/
+/*	$NetBSD: back-sql.h,v 1.1.1.3 2010/12/12 15:23:23 adam Exp $	*/
 
-/* OpenLDAP: pkg/ldap/servers/slapd/back-sql/back-sql.h,v 1.49.2.5 2009/01/22 00:01:11 kurt Exp */
+/* OpenLDAP: pkg/ldap/servers/slapd/back-sql/back-sql.h,v 1.49.2.6 2010/04/13 20:23:42 kurt Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2009 The OpenLDAP Foundation.
+ * Copyright 1999-2010 The OpenLDAP Foundation.
  * Portions Copyright 1999 Dmitry Kovalev.
  * Portions Copyright 2002 Pierangelo Mararati.
  * Portions Copyright 2004 Mark Adamson.

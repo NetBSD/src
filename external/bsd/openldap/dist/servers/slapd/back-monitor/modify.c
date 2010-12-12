@@ -1,10 +1,10 @@
-/*	$NetBSD: modify.c,v 1.1.1.2 2010/03/08 02:14:19 lukem Exp $	*/
+/*	$NetBSD: modify.c,v 1.1.1.3 2010/12/12 15:23:16 adam Exp $	*/
 
 /* modify.c - monitor backend modify routine */
-/* OpenLDAP: pkg/ldap/servers/slapd/back-monitor/modify.c,v 1.24.2.5 2009/01/22 00:01:08 kurt Exp */
+/* OpenLDAP: pkg/ldap/servers/slapd/back-monitor/modify.c,v 1.24.2.6 2010/04/13 20:23:33 kurt Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2001-2009 The OpenLDAP Foundation.
+ * Copyright 2001-2010 The OpenLDAP Foundation.
  * Portions Copyright 2001-2003 Pierangelo Masarati.
  * All rights reserved.
  *

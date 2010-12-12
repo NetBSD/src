@@ -1,10 +1,10 @@
-/*	$NetBSD: conn.c,v 1.1.1.2 2010/03/08 02:14:19 lukem Exp $	*/
+/*	$NetBSD: conn.c,v 1.1.1.3 2010/12/12 15:23:14 adam Exp $	*/
 
 /* conn.c - deal with connection subsystem */
-/* OpenLDAP: pkg/ldap/servers/slapd/back-monitor/conn.c,v 1.72.2.9 2009/04/27 22:50:10 quanah Exp */
+/* OpenLDAP: pkg/ldap/servers/slapd/back-monitor/conn.c,v 1.72.2.11 2010/04/19 16:53:03 quanah Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2001-2009 The OpenLDAP Foundation.
+ * Copyright 2001-2010 The OpenLDAP Foundation.
  * Portions Copyright 2001-2003 Pierangelo Masarati.
  * All rights reserved.
  *
@@ -268,72 +268,27 @@ conn_create(
 	monitor_subsys_t	*ms )
 {
 	monitor_entry_t *mp;
-	struct tm	*tm;
+	struct tm	tm;
 	char		buf[ BACKMONITOR_BUFSIZE ];
 	char		buf2[ LDAP_LUTIL_GENTIME_BUFSIZE ];
 	char		buf3[ LDAP_LUTIL_GENTIME_BUFSIZE ];
 
-	struct berval bv, ctmbv, mtmbv, bv2, bv3;
+	struct berval bv, ctmbv, mtmbv;
 	struct berval bv_unknown= BER_BVC("unknown");
 
 	Entry		*e;
 
-#ifdef HACK_LOCAL_TIME
-	char		ctmbuf[ LDAP_LUTIL_GENTIME_BUFSIZE ];
-	char		mtmbuf[ LDAP_LUTIL_GENTIME_BUFSIZE ];
-#endif
-#ifdef HAVE_GMTIME_R
-	struct tm	tm_buf;
-#endif /* HAVE_GMTIME_R */
-
 	assert( c != NULL );
 	assert( ep != NULL );
 
-#ifndef HAVE_GMTIME_R
-	ldap_pvt_thread_mutex_lock( &gmtime_mutex );
-#endif
+	ldap_pvt_gmtime( &c->c_starttime, &tm );
 
-#ifdef HAVE_GMTIME_R
-	tm = gmtime_r( &c->c_starttime, &tm_buf );
-#else
-	tm = gmtime( &c->c_starttime );
-#endif
-	bv2.bv_len = lutil_gentime( buf2, sizeof( buf2 ), tm );
-	bv2.bv_val = buf2;
-#ifdef HACK_LOCAL_TIME
-# ifdef HAVE_LOCALTIME_R
-	tm = localtime_r( &c->c_starttime, &tm_buf );
-# else
-	tm = localtime( &c->c_starttime );
-# endif
-	ctmbv.bv_len = lutil_localtime( ctmbuf, sizeof( ctmbuf ), tm, -timezone );
-	ctmbv.bv_val = ctmbuf;
-#else /* !HACK_LOCAL_TIME */
-	ctmbv = bv2;
-#endif
+	ctmbv.bv_len = lutil_gentime( buf2, sizeof( buf2 ), &tm );
+	ctmbv.bv_val = buf2;
 
-#ifdef HAVE_GMTIME_R
-	tm = gmtime_r( &c->c_activitytime, &tm_buf );
-#else
-	tm = gmtime( &c->c_activitytime );
-#endif
-	bv3.bv_len = lutil_gentime( buf3, sizeof( buf3 ), tm );
-	bv3.bv_val = buf3;
-#ifdef HACK_LOCAL_TIME
-# ifdef HAVE_LOCALTIME_R
-	tm = localtime_r( &c->c_activitytime, &tm_buf );
-# else
-	tm = localtime( &c->c_activitytime );
-# endif /* HAVE_LOCALTIME_R */
-	mtmbv.bv_len = lutil_localtime( mtmbuf, sizeof( mtmbuf ), tm, -timezone );
-	mtmbv.bv_val = mtmbuf;
-#else /* !HACK_LOCAL_TIME */
-	mtmbv = bv3;
-#endif
-
-#ifndef HAVE_GMTIME_R
-	ldap_pvt_thread_mutex_unlock( &gmtime_mutex );
-#endif
+	ldap_pvt_gmtime( &c->c_activitytime, &tm );
+	mtmbv.bv_len = lutil_gentime( buf3, sizeof( buf3 ), &tm );
+	mtmbv.bv_val = buf3;
 
 	bv.bv_len = snprintf( buf, sizeof( buf ),
 		"cn=Connection %ld", c->c_connid );
@@ -452,9 +407,9 @@ conn_create(
 	attr_merge_normalize_one( e, mi->mi_ad_monitorConnectionLocalAddress,
 		&c->c_sock_name, NULL );
 
-	attr_merge_normalize_one( e, mi->mi_ad_monitorConnectionStartTime, &bv2, NULL );
+	attr_merge_normalize_one( e, mi->mi_ad_monitorConnectionStartTime, &ctmbv, NULL );
 
-	attr_merge_normalize_one( e, mi->mi_ad_monitorConnectionActivityTime, &bv3, NULL );
+	attr_merge_normalize_one( e, mi->mi_ad_monitorConnectionActivityTime, &mtmbv, NULL );
 
 	mp = monitor_entrypriv_create();
 	if ( mp == NULL ) {

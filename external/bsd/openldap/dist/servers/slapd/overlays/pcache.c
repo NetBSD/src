@@ -1,9 +1,9 @@
-/*	$NetBSD: pcache.c,v 1.1.1.3 2010/03/08 02:14:19 lukem Exp $	*/
+/*	$NetBSD: pcache.c,v 1.1.1.4 2010/12/12 15:23:39 adam Exp $	*/
 
-/* OpenLDAP: pkg/ldap/servers/slapd/overlays/pcache.c,v 1.88.2.47 2009/11/23 16:24:55 quanah Exp */
+/* OpenLDAP: pkg/ldap/servers/slapd/overlays/pcache.c,v 1.88.2.52 2010/04/15 19:59:56 quanah Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2003-2009 The OpenLDAP Foundation.
+ * Copyright 2003-2010 The OpenLDAP Foundation.
  * Portions Copyright 2003 IBM Corporation.
  * Portions Copyright 2003-2009 Symas Corporation.
  * All rights reserved.
@@ -3020,14 +3020,24 @@ pcache_op_search(
 				pbi->bi_cq = answerable;
 
 			op->o_bd = &cm->db;
-#if 0
 			if ( cm->response_cb == PCACHE_RESPONSE_CB_TAIL ) {
+				slap_callback cb;
 				/* The cached entry was already processed by any
 				 * other overlays, so don't let it get processed again.
+				 *
+				 * This loop removes over_back_response from the stack.
 				 */
-				op->o_callback = NULL;
+				if ( overlay_callback_after_backover( op, &cb, 0) == 0 ) {
+					slap_callback **scp;
+					for ( scp = &op->o_callback; *scp != NULL;
+						scp = &(*scp)->sc_next ) {
+						if ( (*scp)->sc_next == &cb ) {
+							*scp = cb.sc_next;
+							break;
+						}
+					}
+				}
 			}
-#endif
 			i = cm->db.bd_info->bi_op_search( op, rs );
 		}
 		ldap_pvt_thread_rdwr_runlock(&answerable->rwlock);
@@ -5103,6 +5113,10 @@ pcache_exop_query_delete(
 	op->o_req_dn = op->o_req_ndn;
 
 	op->o_bd = select_backend( &op->o_req_ndn, 0 );
+	if ( op->o_bd == NULL ) {
+		send_ldap_error( op, rs, LDAP_NO_SUCH_OBJECT,
+			"no global superior knowledge" );
+	}
 	rs->sr_err = backend_check_restrictions( op, rs,
 		(struct berval *)&pcache_exop_QUERY_DELETE );
 	if ( rs->sr_err != LDAP_SUCCESS ) {
@@ -5219,6 +5233,20 @@ pcache_op_extended( Operation *op, SlapReply *rs )
 		}
 	}
 	return SLAP_CB_CONTINUE;
+}
+
+static int
+pcache_entry_release( Operation  *op, Entry *e, int rw )
+{
+	slap_overinst	*on = (slap_overinst *)op->o_bd->bd_info;
+	cache_manager	*cm = on->on_bi.bi_private;
+	BackendDB *db = op->o_bd;
+	int rc;
+
+	op->o_bd = &cm->db;
+	rc = be_entry_release_rw( op, e, rw );
+	op->o_bd = db;
+	return rc;
 }
 
 #ifdef PCACHE_MONITOR
@@ -5607,6 +5635,7 @@ pcache_initialize()
 #endif /* PCACHE_CONTROL_PRIVDB */
 	pcache.on_bi.bi_extended = pcache_op_extended;
 
+	pcache.on_bi.bi_entry_release_rw = pcache_entry_release;
 	pcache.on_bi.bi_chk_controls = pcache_chk_controls;
 
 	pcache.on_bi.bi_cf_ocs = pcocs;

@@ -1,10 +1,10 @@
-/*	$NetBSD: log.c,v 1.1.1.2 2010/03/08 02:14:19 lukem Exp $	*/
+/*	$NetBSD: log.c,v 1.1.1.3 2010/12/12 15:23:15 adam Exp $	*/
 
 /* log.c - deal with log subsystem */
-/* OpenLDAP: pkg/ldap/servers/slapd/back-monitor/log.c,v 1.56.2.6 2009/02/05 19:35:54 quanah Exp */
+/* OpenLDAP: pkg/ldap/servers/slapd/back-monitor/log.c,v 1.56.2.7 2010/04/13 20:23:33 kurt Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2001-2009 The OpenLDAP Foundation.
+ * Copyright 2001-2010 The OpenLDAP Foundation.
  * Portions Copyright 2001-2003 Pierangelo Masarati.
  * All rights reserved.
  *

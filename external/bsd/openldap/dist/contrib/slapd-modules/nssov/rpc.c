@@ -1,10 +1,10 @@
-/*	$NetBSD: rpc.c,v 1.1.1.2 2010/03/08 02:14:15 lukem Exp $	*/
+/*	$NetBSD: rpc.c,v 1.1.1.3 2010/12/12 15:19:10 adam Exp $	*/
 
 /* rpc.c - rpc lookup routines */
-/* OpenLDAP: pkg/ldap/contrib/slapd-modules/nssov/rpc.c,v 1.1.2.4 2009/08/24 17:35:29 quanah Exp */
+/* OpenLDAP: pkg/ldap/contrib/slapd-modules/nssov/rpc.c,v 1.1.2.6 2010/04/15 21:32:57 quanah Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>. 
  *
- * Copyright 2008-2009 The OpenLDAP Foundation.
+ * Copyright 2008-2010 The OpenLDAP Foundation.
  * Portions Copyright 2008 by Howard Chu, Symas Corp.
  * All rights reserved.
  *
@@ -104,7 +104,7 @@ static int write_rpc(nssov_rpc_cbp *cbp,Entry *entry)
 		return 0;
 	}
 	/* write the entry */
-	WRITE_INT32(cbp->fp,NSLCD_RESULT_SUCCESS);
+	WRITE_INT32(cbp->fp,NSLCD_RESULT_BEGIN);
 	WRITE_BERVAL(cbp->fp,&name);
 	if ( dupname >= 0 ) {
 		WRITE_INT32(cbp->fp,numname-1);
@@ -127,7 +127,7 @@ NSSOV_HANDLE(
     struct berval filter = {sizeof(fbuf)};
     filter.bv_val = fbuf;
     BER_BVZERO(&cbp.numb);
-    READ_STRING_BUF2(fp,cbp.buf,sizeof(cbp.buf));
+    READ_STRING(fp,cbp.buf);
     cbp.name.bv_len = tmpint32;
     cbp.name.bv_val = cbp.buf;,
 	Debug(LDAP_DEBUG_TRACE,"nssov_rpc_byname(%s)\n",cbp.name.bv_val,0,0);,

@@ -1,9 +1,9 @@
-/*	$NetBSD: gssapi.c,v 1.1.1.1 2010/03/08 02:14:16 lukem Exp $	*/
+/*	$NetBSD: gssapi.c,v 1.1.1.2 2010/12/12 15:21:32 adam Exp $	*/
 
-/* OpenLDAP: pkg/ldap/libraries/libldap/gssapi.c,v 1.1.2.4 2009/04/29 01:53:02 quanah Exp */
+/* OpenLDAP: pkg/ldap/libraries/libldap/gssapi.c,v 1.1.2.6 2010/04/19 20:40:08 quanah Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2009 The OpenLDAP Foundation.
+ * Copyright 1998-2010 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Author: Stefan Metzmacher <metze@sernet.de>
@@ -544,12 +544,12 @@ guess_service_principal(
 
 	} else if (allow_remote && dnsHostName) {
 		principal_fmt = "ldap/%s";
-		svc_principal_size = strlen(dnsHostName) + strlen(principal_fmt);
+		svc_principal_size = STRLENOF("ldap/") + strlen(dnsHostName) + 1;
 		str = dnsHostName;
 
 	} else {
 		principal_fmt = "ldap/%s";
-		svc_principal_size = strlen(host) + strlen(principal_fmt);
+		svc_principal_size = STRLENOF("ldap/") + strlen(host) + 1;
 		str = host;
 	}
 
@@ -559,8 +559,8 @@ guess_service_principal(
 		return ld->ld_errno;
 	}
 
-	ret = snprintf( svc_principal, svc_principal_size - 1, principal_fmt, str);
-	if (ret < 0 || (size_t)ret + 1 >= svc_principal_size) {
+	ret = snprintf( svc_principal, svc_principal_size, principal_fmt, str );
+	if (ret < 0 || (size_t)ret >= svc_principal_size) {
 		ld->ld_errno = LDAP_LOCAL_ERROR;
 		return ld->ld_errno;
 	}
@@ -569,7 +569,7 @@ guess_service_principal(
 	       host, svc_principal, 0 );
 
 	input_name.value  = svc_principal;
-	input_name.length = strlen( svc_principal );
+	input_name.length = (size_t)ret;
 
 	gss_rc = gss_import_name( &minor_status, &input_name, &nt_principal, principal );
 	ldap_memfree( svc_principal );

@@ -1,10 +1,10 @@
-/*	$NetBSD: bind.c,v 1.1.1.2 2010/03/08 02:14:18 lukem Exp $	*/
+/*	$NetBSD: bind.c,v 1.1.1.3 2010/12/12 15:23:03 adam Exp $	*/
 
 /* bind.c - ldap backend bind function */
-/* OpenLDAP: pkg/ldap/servers/slapd/back-ldap/bind.c,v 1.162.2.25 2009/09/30 00:29:31 quanah Exp */
+/* OpenLDAP: pkg/ldap/servers/slapd/back-ldap/bind.c,v 1.162.2.29 2010/06/10 19:38:49 quanah Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2009 The OpenLDAP Foundation.
+ * Copyright 1999-2010 The OpenLDAP Foundation.
  * Portions Copyright 2000-2003 Pierangelo Masarati.
  * Portions Copyright 1999-2003 Howard Chu.
  * All rights reserved.
@@ -1300,6 +1300,7 @@ ldap_back_dobind_int(
 	ber_int_t	msgid;
 	ber_tag_t	o_tag = op->o_tag;
 	slap_callback cb = {0};
+	char		*tmp_dn;
 
 	assert( lcp != NULL );
 	assert( retries >= 0 );
@@ -1464,8 +1465,18 @@ retry_lock:;
 #endif /* HAVE_CYRUS_SASL */
 
 retry:;
+	if ( BER_BVISNULL( &lc->lc_cred ) ) {
+		tmp_dn = "";
+		if ( !BER_BVISNULL( &lc->lc_bound_ndn ) && !BER_BVISEMPTY( &lc->lc_bound_ndn ) ) {
+			Debug( LDAP_DEBUG_ANY, "%s ldap_back_dobind_int: DN=\"%s\" without creds, binding anonymously",
+				op->o_log_prefix, lc->lc_bound_ndn.bv_val, 0 );
+		}
+
+	} else {
+		tmp_dn = lc->lc_bound_ndn.bv_val;
+	}
 	rs->sr_err = ldap_sasl_bind( lc->lc_ld,
-			BER_BVISNULL( &lc->lc_cred ) ? "" : lc->lc_bound_ndn.bv_val,
+			tmp_dn,
 			LDAP_SASL_SIMPLE, &lc->lc_cred,
 			NULL, NULL, &msgid );
 
@@ -1877,19 +1888,12 @@ retry:;
 		send_ldap_result( op, rs );
 	}
 
-	if ( match ) {
-		if ( rs->sr_matched != match ) {
-			free( (char *)rs->sr_matched );
-		}
-		rs->sr_matched = NULL;
-		ldap_memfree( match );
-	}
-
 	if ( text ) {
 		ldap_memfree( text );
 	}
 	rs->sr_text = NULL;
 
+	/* there can't be refs with a (successful) bind */
 	if ( rs->sr_ref ) {
 		op->o_tmpfree( rs->sr_ref, op->o_tmpmemctx );
 		rs->sr_ref = NULL;
@@ -1899,10 +1903,50 @@ retry:;
 		ber_memvfree( (void **)refs );
 	}
 
-	if ( ctrls ) {
-		assert( rs->sr_ctrls != NULL );
+		/* match should not be possible with a successful bind */
+		if ( match ) {
+			if ( rs->sr_matched != match ) {
+				free( (char *)rs->sr_matched );
+			}
+			rs->sr_matched = NULL;
+			ldap_memfree( match );
+		}
+
+	if ( ctrls != NULL ) {
+		if ( op->o_tag == LDAP_REQ_BIND && rs->sr_err == LDAP_SUCCESS ) {
+			int i;
+
+			for ( i = 0; ctrls[i] != NULL; i++ );
+
+			rs->sr_ctrls = op->o_tmpalloc( sizeof( LDAPControl * )*( i + 1 ),
+				op->o_tmpmemctx );
+			for ( i = 0; ctrls[ i ] != NULL; i++ ) {
+				char *ptr;
+				ber_len_t oidlen = strlen( ctrls[i]->ldctl_oid );
+				ber_len_t size = sizeof( LDAPControl )
+					+ oidlen + 1
+					+ ctrls[i]->ldctl_value.bv_len + 1;
+	
+				rs->sr_ctrls[ i ] = op->o_tmpalloc( size, op->o_tmpmemctx );
+				rs->sr_ctrls[ i ]->ldctl_oid = (char *)&rs->sr_ctrls[ i ][ 1 ];
+				lutil_strcopy( rs->sr_ctrls[ i ]->ldctl_oid, ctrls[i]->ldctl_oid );
+				rs->sr_ctrls[ i ]->ldctl_value.bv_val
+						= (char *)&rs->sr_ctrls[ i ]->ldctl_oid[oidlen + 1];
+				rs->sr_ctrls[ i ]->ldctl_value.bv_len
+					= ctrls[i]->ldctl_value.bv_len;
+				ptr = lutil_memcopy( rs->sr_ctrls[ i ]->ldctl_value.bv_val,
+					ctrls[i]->ldctl_value.bv_val, ctrls[i]->ldctl_value.bv_len );
+				*ptr = '\0';
+			}
+			rs->sr_ctrls[ i ] = NULL;
+			rs->sr_flags |= REP_CTRLS_MUSTBEFREED;
+
+		} else {
+			assert( rs->sr_ctrls != NULL );
+			rs->sr_ctrls = NULL;
+		}
+
 		ldap_controls_free( ctrls );
-		rs->sr_ctrls = NULL;
 	}
 
 	return( LDAP_ERR_OK( rs->sr_err ) ? LDAP_SUCCESS : rs->sr_err );
@@ -2059,32 +2103,51 @@ ldap_back_is_proxy_authz( Operation *op, SlapReply *rs, ldap_back_send_t sendok,
 
 			goto done;
 
-		} else if ( li->li_idassert_authz && !be_isroot( op ) ) {
-			struct berval authcDN;
+		} else if ( !be_isroot( op ) ) {
+			if ( li->li_idassert_passthru ) {
+				struct berval authcDN;
 
-			if ( BER_BVISNULL( &ndn ) ) {
-				authcDN = slap_empty_bv;
-
-			} else {
-				authcDN = ndn;
-			}	
-			rs->sr_err = slap_sasl_matches( op, li->li_idassert_authz,
-					&authcDN, &authcDN );
-			if ( rs->sr_err != LDAP_SUCCESS ) {
-				if ( li->li_idassert_flags & LDAP_BACK_AUTH_PRESCRIPTIVE ) {
-					if ( sendok & LDAP_BACK_SENDERR ) {
-						send_ldap_result( op, rs );
-						dobind = -1;
-					}
+				if ( BER_BVISNULL( &ndn ) ) {
+					authcDN = slap_empty_bv;
 
 				} else {
-					rs->sr_err = LDAP_SUCCESS;
-					*binddn = slap_empty_bv;
-					*bindcred = slap_empty_bv;
+					authcDN = ndn;
+				}	
+				rs->sr_err = slap_sasl_matches( op, li->li_idassert_passthru,
+						&authcDN, &authcDN );
+				if ( rs->sr_err == LDAP_SUCCESS ) {
+					dobind = 0;
 					break;
 				}
+			}
 
-				goto done;
+			if ( li->li_idassert_authz ) {
+				struct berval authcDN;
+
+				if ( BER_BVISNULL( &ndn ) ) {
+					authcDN = slap_empty_bv;
+
+				} else {
+					authcDN = ndn;
+				}	
+				rs->sr_err = slap_sasl_matches( op, li->li_idassert_authz,
+						&authcDN, &authcDN );
+				if ( rs->sr_err != LDAP_SUCCESS ) {
+					if ( li->li_idassert_flags & LDAP_BACK_AUTH_PRESCRIPTIVE ) {
+						if ( sendok & LDAP_BACK_SENDERR ) {
+							send_ldap_result( op, rs );
+							dobind = -1;
+						}
+
+					} else {
+						rs->sr_err = LDAP_SUCCESS;
+						*binddn = slap_empty_bv;
+						*bindcred = slap_empty_bv;
+						break;
+					}
+
+					goto done;
+				}
 			}
 		}
 
@@ -2470,6 +2533,7 @@ ldap_back_proxy_authz_ctrl(
 	}
 
 	ctrl->ldctl_oid = LDAP_CONTROL_PROXY_AUTHZ;
+	ctrl->ldctl_iscritical = ( ( si->si_flags & LDAP_BACK_AUTH_PROXYAUTHZ_CRITICAL ) == LDAP_BACK_AUTH_PROXYAUTHZ_CRITICAL );
 
 	switch ( si->si_mode ) {
 	/* already in u:ID or dn:DN form */

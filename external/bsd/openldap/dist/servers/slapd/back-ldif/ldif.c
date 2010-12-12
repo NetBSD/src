@@ -1,10 +1,10 @@
-/*	$NetBSD: ldif.c,v 1.1.1.2 2010/03/08 02:14:18 lukem Exp $	*/
+/*	$NetBSD: ldif.c,v 1.1.1.3 2010/12/12 15:23:08 adam Exp $	*/
 
 /* ldif.c - the ldif backend */
-/* OpenLDAP: pkg/ldap/servers/slapd/back-ldif/ldif.c,v 1.48.2.21 2009/12/04 18:41:53 quanah Exp */
+/* OpenLDAP: pkg/ldap/servers/slapd/back-ldif/ldif.c,v 1.48.2.24 2010/04/19 16:53:03 quanah Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2005-2009 The OpenLDAP Foundation.
+ * Copyright 2005-2010 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -39,6 +39,9 @@ struct ldif_tool {
 	ID		ecount;				/* number of entries */
 	ID		ecurrent;			/* bi_tool_entry_next() position */
 #	define	ENTRY_BUFF_INCREMENT 500 /* initial entries[] length */
+	struct berval	*tl_base;
+	int		tl_scope;
+	Filter		*tl_filter;
 };
 
 /* Per-database data */
@@ -1323,7 +1326,7 @@ ldif_back_delete( Operation *op, SlapReply *rs )
 
 	if ( BER_BVISEMPTY( &op->o_csn )) {
 		struct berval csn;
-		char csnbuf[LDAP_LUTIL_CSNSTR_BUFSIZE];
+		char csnbuf[LDAP_PVT_CSNSTR_BUFSIZE];
 
 		csn.bv_val = csnbuf;
 		csn.bv_len = sizeof( csnbuf );
@@ -1583,16 +1586,37 @@ ldif_tool_entry_next( BackendDB *be )
 {
 	struct ldif_tool *tl = &((struct ldif_info *) be->be_private)->li_tool;
 
-	if ( tl->ecurrent >= tl->ecount )
-		return NOID;
-	else
-		return ++tl->ecurrent;
+	do {
+		Entry *e = tl->entries[ tl->ecurrent ];
+
+		if ( tl->ecurrent >= tl->ecount ) {
+			return NOID;
+		}
+
+		++tl->ecurrent;
+
+		if ( tl->tl_base && !dnIsSuffixScope( &e->e_nname, tl->tl_base, tl->tl_scope ) ) {
+			continue;
+		}
+
+		if ( tl->tl_filter && test_filter( NULL, e, tl->tl_filter  ) != LDAP_COMPARE_TRUE ) {
+			continue;
+		}
+
+		break;
+	} while ( 1 );
+
+	return tl->ecurrent;
 }
 
 static ID
-ldif_tool_entry_first( BackendDB *be )
+ldif_tool_entry_first_x( BackendDB *be, struct berval *base, int scope, Filter *f )
 {
 	struct ldif_tool *tl = &((struct ldif_info *) be->be_private)->li_tool;
+
+	tl->tl_base = base;
+	tl->tl_scope = scope;
+	tl->tl_filter = f;
 
 	if ( tl->entries == NULL ) {
 		Operation op = {0};
@@ -1742,7 +1766,8 @@ ldif_back_initialize( BackendInfo *bi )
 
 	bi->bi_tool_entry_open = ldif_tool_entry_open;
 	bi->bi_tool_entry_close = ldif_tool_entry_close;
-	bi->bi_tool_entry_first = ldif_tool_entry_first;
+	bi->bi_tool_entry_first = backend_tool_entry_first;
+	bi->bi_tool_entry_first_x = ldif_tool_entry_first_x;
 	bi->bi_tool_entry_next = ldif_tool_entry_next;
 	bi->bi_tool_entry_get = ldif_tool_entry_get;
 	bi->bi_tool_entry_put = ldif_tool_entry_put;

@@ -1,10 +1,10 @@
-/*	$NetBSD: tls_g.c,v 1.1.1.1 2010/03/08 02:14:16 lukem Exp $	*/
+/*	$NetBSD: tls_g.c,v 1.1.1.2 2010/12/12 15:21:39 adam Exp $	*/
 
 /* tls_g.c - Handle tls/ssl using GNUTLS. */
-/* OpenLDAP: pkg/ldap/libraries/libldap/tls_g.c,v 1.6.2.7 2009/10/30 17:48:17 quanah Exp */
+/* OpenLDAP: pkg/ldap/libraries/libldap/tls_g.c,v 1.6.2.9 2010/04/14 22:10:21 quanah Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2008-2009 The OpenLDAP Foundation.
+ * Copyright 2008-2010 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -547,7 +547,8 @@ tlsg_x509_cert_dn( struct berval *cert, struct berval *dn, int get_subject )
 	tag = ber_skip_tag( ber, &len );	/* Context + Constructed (version) */
 	if ( tag == 0xa0 )	/* Version is optional */
 		tag = ber_get_int( ber, &i );	/* Int: Version */
-	tag = ber_get_int( ber, &i );	/* Int: Serial */
+	tag = ber_skip_tag( ber, &len );	/* Int: Serial (can be longer than ber_int_t) */
+	ber_skip_data( ber, len );
 	tag = ber_skip_tag( ber, &len );	/* Sequence: Signature */
 	ber_skip_data( ber, len );
 	if ( !get_subject ) {

@@ -1,10 +1,10 @@
-/*	$NetBSD: value.c,v 1.1.1.2 2010/03/08 02:14:18 lukem Exp $	*/
+/*	$NetBSD: value.c,v 1.1.1.3 2010/12/12 15:22:52 adam Exp $	*/
 
 /* value.c - routines for dealing with values */
-/* OpenLDAP: pkg/ldap/servers/slapd/value.c,v 1.96.2.8 2009/01/22 00:01:04 kurt Exp */
+/* OpenLDAP: pkg/ldap/servers/slapd/value.c,v 1.96.2.9 2010/04/13 20:23:22 kurt Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2009 The OpenLDAP Foundation.
+ * Copyright 1998-2010 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

@@ -1,9 +1,9 @@
-/*	$NetBSD: rewrite-int.h,v 1.1.1.2 2010/03/08 02:14:17 lukem Exp $	*/
+/*	$NetBSD: rewrite-int.h,v 1.1.1.3 2010/12/12 15:22:13 adam Exp $	*/
 
-/* OpenLDAP: pkg/ldap/libraries/librewrite/rewrite-int.h,v 1.20.2.5 2009/03/09 23:16:48 quanah Exp */
+/* OpenLDAP: pkg/ldap/libraries/librewrite/rewrite-int.h,v 1.20.2.6 2010/04/13 20:23:08 kurt Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2009 The OpenLDAP Foundation.
+ * Copyright 2000-2010 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

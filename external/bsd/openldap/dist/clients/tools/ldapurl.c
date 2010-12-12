@@ -1,10 +1,10 @@
-/*	$NetBSD: ldapurl.c,v 1.1.1.1 2010/03/08 02:14:14 lukem Exp $	*/
+/*	$NetBSD: ldapurl.c,v 1.1.1.2 2010/12/12 15:18:13 adam Exp $	*/
 
 /* ldapurl -- a tool for generating LDAP URLs */
-/* OpenLDAP: pkg/ldap/clients/tools/ldapurl.c,v 1.1.2.2 2009/01/22 00:00:43 kurt Exp */
+/* OpenLDAP: pkg/ldap/clients/tools/ldapurl.c,v 1.1.2.3 2010/04/13 20:22:23 kurt Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2008-2009 The OpenLDAP Foundation.
+ * Copyright 2008-2010 The OpenLDAP Foundation.
  * Portions Copyright 2008 Pierangelo Masarati, SysNet
  * All rights reserved.
  *

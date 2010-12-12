@@ -1,6 +1,6 @@
-/*	$NetBSD: LDAPConnection.h,v 1.1.1.2 2010/03/08 02:14:14 lukem Exp $	*/
+/*	$NetBSD: LDAPConnection.h,v 1.1.1.3 2010/12/12 15:18:45 adam Exp $	*/
 
-// OpenLDAP: pkg/ldap/contrib/ldapc++/src/LDAPConnection.h,v 1.8.4.2 2008/04/14 23:28:11 quanah Exp
+// OpenLDAP: pkg/ldap/contrib/ldapc++/src/LDAPConnection.h,v 1.8.4.3 2010/04/14 23:50:44 quanah Exp
 /*
  * Copyright 2000, OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
@@ -237,6 +237,7 @@ class LDAPConnection : private LDAPAsynConnection {
         void setConstraints(LDAPConstraints *cons);
         
         const LDAPConstraints* getConstraints() const ;
+        TlsOptions getTlsOptions() const;
 };
 
 #endif //LDAP_CONNECTION_H

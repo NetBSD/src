@@ -1,10 +1,10 @@
-/*	$NetBSD: sort.c,v 1.1.1.2 2010/03/08 02:14:16 lukem Exp $	*/
+/*	$NetBSD: sort.c,v 1.1.1.3 2010/12/12 15:21:36 adam Exp $	*/
 
 /* sort.c -- LDAP library entry and value sort routines */
-/* OpenLDAP: pkg/ldap/libraries/libldap/sort.c,v 1.27.2.5 2009/01/22 00:00:55 kurt Exp */
+/* OpenLDAP: pkg/ldap/libraries/libldap/sort.c,v 1.27.2.6 2010/04/13 20:23:00 kurt Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2009 The OpenLDAP Foundation.
+ * Copyright 1998-2010 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

@@ -1,9 +1,9 @@
-/*	$NetBSD: main.c,v 1.1.1.3 2010/03/08 02:14:18 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.1.1.4 2010/12/12 15:22:32 adam Exp $	*/
 
-/* OpenLDAP: pkg/ldap/servers/slapd/main.c,v 1.239.2.20 2009/10/30 17:52:53 quanah Exp */
+/* OpenLDAP: pkg/ldap/servers/slapd/main.c,v 1.239.2.21 2010/04/13 20:23:16 kurt Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2009 The OpenLDAP Foundation.
+ * Copyright 1998-2010 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

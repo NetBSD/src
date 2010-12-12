@@ -1,8 +1,8 @@
-/*	$NetBSD: api.c,v 1.1.1.2 2010/03/08 02:14:19 lukem Exp $	*/
+/*	$NetBSD: api.c,v 1.1.1.3 2010/12/12 15:23:23 adam Exp $	*/
 
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2009 The OpenLDAP Foundation.
+ * Copyright 1999-2010 The OpenLDAP Foundation.
  * Portions Copyright 1999 Dmitry Kovalev.
  * Portions Copyright 2004 Pierangelo Masarati.
  * All rights reserved.

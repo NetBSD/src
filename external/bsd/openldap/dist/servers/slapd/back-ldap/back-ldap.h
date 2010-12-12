@@ -1,10 +1,10 @@
-/*	$NetBSD: back-ldap.h,v 1.1.1.3 2010/03/08 02:14:18 lukem Exp $	*/
+/*	$NetBSD: back-ldap.h,v 1.1.1.4 2010/12/12 15:23:02 adam Exp $	*/
 
 /* back-ldap.h - ldap backend header file */
-/* OpenLDAP: pkg/ldap/servers/slapd/back-ldap/back-ldap.h,v 1.88.2.15 2009/08/26 00:50:19 quanah Exp */
+/* OpenLDAP: pkg/ldap/servers/slapd/back-ldap/back-ldap.h,v 1.88.2.18 2010/04/19 19:28:14 quanah Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2009 The OpenLDAP Foundation.
+ * Copyright 1999-2010 The OpenLDAP Foundation.
  * Portions Copyright 2000-2003 Pierangelo Masarati.
  * Portions Copyright 1999-2003 Howard Chu.
  * All rights reserved.
@@ -236,10 +236,14 @@ typedef struct slap_idassert_t {
 #define	LDAP_BACK_AUTH_OBSOLETE_PROXY_AUTHZ		(0x08U)
 #define	LDAP_BACK_AUTH_OBSOLETE_ENCODING_WORKAROUND	(0x10U)
 #define	LDAP_BACK_AUTH_AUTHZ_ALL			(0x20U)
+#define	LDAP_BACK_AUTH_PROXYAUTHZ_CRITICAL		(0x40U)
 #define	li_idassert_flags	li_idassert.si_flags
 
 	BerVarray	si_authz;
 #define	li_idassert_authz	li_idassert.si_authz
+
+	BerVarray	si_passthru;
+#define	li_idassert_passthru	li_idassert.si_passthru
 } slap_idassert_t;
 
 /*
@@ -450,6 +454,7 @@ typedef struct ldap_extra_t {
 		int version, slap_idassert_t *si, LDAPControl	*ctrl );
 	int (*controls_free)( Operation *op, SlapReply *rs, LDAPControl ***pctrls );
 	int (*idassert_authzfrom_parse_cf)( const char *fname, int lineno, const char *arg, slap_idassert_t *si );
+	int (*idassert_passthru_parse_cf)( const char *fname, int lineno, const char *arg, slap_idassert_t *si );
 	int (*idassert_parse_cf)( const char *fname, int lineno, int argc, char *argv[], slap_idassert_t *si );
 	void (*retry_info_destroy)( slap_retry_info_t *ri );
 	int (*retry_info_parse)( char *in, slap_retry_info_t *ri, char *buf, ber_len_t buflen );

@@ -1,10 +1,10 @@
-/*	$NetBSD: null.c,v 1.1.1.2 2010/03/08 02:14:19 lukem Exp $	*/
+/*	$NetBSD: null.c,v 1.1.1.3 2010/12/12 15:23:20 adam Exp $	*/
 
 /* null.c - the null backend */
-/* OpenLDAP: pkg/ldap/servers/slapd/back-null/null.c,v 1.18.2.9 2009/12/16 19:09:37 quanah Exp */
+/* OpenLDAP: pkg/ldap/servers/slapd/back-null/null.c,v 1.18.2.11 2010/04/14 22:59:11 quanah Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2002-2009 The OpenLDAP Foundation.
+ * Copyright 2002-2010 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -257,6 +257,12 @@ null_tool_entry_close( BackendDB *be )
 }
 
 static ID
+null_tool_entry_first_x( BackendDB *be, struct berval *base, int scope, Filter *f )
+{
+	return NOID;
+}
+
+static ID
 null_tool_entry_next( BackendDB *be )
 {
 	return NOID;
@@ -394,7 +400,8 @@ null_back_initialize( BackendInfo *bi )
 
 	bi->bi_tool_entry_open = null_tool_entry_open;
 	bi->bi_tool_entry_close = null_tool_entry_close;
-	bi->bi_tool_entry_first = null_tool_entry_next;
+	bi->bi_tool_entry_first = backend_tool_entry_first;
+	bi->bi_tool_entry_first_x = null_tool_entry_first_x;
 	bi->bi_tool_entry_next = null_tool_entry_next;
 	bi->bi_tool_entry_get = null_tool_entry_get;
 	bi->bi_tool_entry_put = null_tool_entry_put;

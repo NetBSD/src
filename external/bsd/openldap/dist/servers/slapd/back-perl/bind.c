@@ -1,9 +1,9 @@
-/*	$NetBSD: bind.c,v 1.1.1.2 2010/03/08 02:14:19 lukem Exp $	*/
+/*	$NetBSD: bind.c,v 1.1.1.3 2010/12/12 15:23:20 adam Exp $	*/
 
-/* OpenLDAP: pkg/ldap/servers/slapd/back-perl/bind.c,v 1.24.2.5 2009/01/22 00:01:09 kurt Exp */
+/* OpenLDAP: pkg/ldap/servers/slapd/back-perl/bind.c,v 1.24.2.6 2010/04/13 20:23:37 kurt Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2009 The OpenLDAP Foundation.
+ * Copyright 1999-2010 The OpenLDAP Foundation.
  * Portions Copyright 1999 John C. Quillan.
  * Portions Copyright 2002 myinternet Limited.
  * All rights reserved.

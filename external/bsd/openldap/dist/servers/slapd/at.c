@@ -1,10 +1,10 @@
-/*	$NetBSD: at.c,v 1.1.1.3 2010/03/08 02:14:17 lukem Exp $	*/
+/*	$NetBSD: at.c,v 1.1.1.4 2010/12/12 15:22:17 adam Exp $	*/
 
 /* at.c - routines for dealing with attribute types */
-/* OpenLDAP: pkg/ldap/servers/slapd/at.c,v 1.84.2.10 2009/03/17 17:11:57 quanah Exp */
+/* OpenLDAP: pkg/ldap/servers/slapd/at.c,v 1.84.2.11 2010/04/13 20:23:10 kurt Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2009 The OpenLDAP Foundation.
+ * Copyright 1998-2010 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

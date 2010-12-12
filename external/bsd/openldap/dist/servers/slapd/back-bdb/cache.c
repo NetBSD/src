@@ -1,10 +1,10 @@
-/*	$NetBSD: cache.c,v 1.1.1.2 2010/03/08 02:14:18 lukem Exp $	*/
+/*	$NetBSD: cache.c,v 1.1.1.3 2010/12/12 15:22:53 adam Exp $	*/
 
 /* cache.c - routines to maintain an in-core cache of entries */
-/* OpenLDAP: pkg/ldap/servers/slapd/back-bdb/cache.c,v 1.120.2.35 2009/11/04 15:47:44 quanah Exp */
+/* OpenLDAP: pkg/ldap/servers/slapd/back-bdb/cache.c,v 1.120.2.37 2010/04/15 20:06:59 quanah Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2009 The OpenLDAP Foundation.
+ * Copyright 2000-2010 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -186,6 +186,7 @@ bdb_cache_entry_db_relock(
 
 	if ( !lock ) return 0;
 
+	DBTzero( &lockobj );
 	lockobj.data = &ei->bei_id;
 	lockobj.size = sizeof(ei->bei_id) + 1;
 
@@ -227,6 +228,7 @@ bdb_cache_entry_db_lock( struct bdb_info *bdb, DB_TXN *txn, EntryInfo *ei,
 	else
 		db_rw = DB_LOCK_READ;
 
+	DBTzero( &lockobj );
 	lockobj.data = &ei->bei_id;
 	lockobj.size = sizeof(ei->bei_id) + 1;
 

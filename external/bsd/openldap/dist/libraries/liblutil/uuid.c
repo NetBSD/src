@@ -1,10 +1,10 @@
-/*	$NetBSD: uuid.c,v 1.1.1.2 2010/03/08 02:14:17 lukem Exp $	*/
+/*	$NetBSD: uuid.c,v 1.1.1.3 2010/12/12 15:22:12 adam Exp $	*/
 
 /* uuid.c -- Universally Unique Identifier routines */
-/* OpenLDAP: pkg/ldap/libraries/liblutil/uuid.c,v 1.28.2.4 2009/01/22 00:00:58 kurt Exp */
+/* OpenLDAP: pkg/ldap/libraries/liblutil/uuid.c,v 1.28.2.5 2010/04/13 20:23:07 kurt Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2009 The OpenLDAP Foundation.
+ * Copyright 2000-2010 The OpenLDAP Foundation.
  * Portions Copyright 2000-2003 Kurt D. Zeilenga.
  * All rights reserved.
  *

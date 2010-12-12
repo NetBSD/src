@@ -1,10 +1,10 @@
-/*	$NetBSD: aclparse.c,v 1.1.1.2 2010/03/08 02:14:17 lukem Exp $	*/
+/*	$NetBSD: aclparse.c,v 1.1.1.3 2010/12/12 15:22:15 adam Exp $	*/
 
 /* aclparse.c - routines to parse and check acl's */
-/* OpenLDAP: pkg/ldap/servers/slapd/aclparse.c,v 1.198.2.11 2009/07/27 20:19:18 quanah Exp */
+/* OpenLDAP: pkg/ldap/servers/slapd/aclparse.c,v 1.198.2.13 2010/04/15 22:26:06 quanah Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2009 The OpenLDAP Foundation.
+ * Copyright 1998-2010 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -346,6 +346,7 @@ parse_acl(
 				goto fail;
 			}
 			a = (AccessControl *) ch_calloc( 1, sizeof(AccessControl) );
+			a->acl_attrval_style = ACL_STYLE_NONE;
 			for ( ++i; i < argc; i++ ) {
 				if ( strcasecmp( argv[i], "by" ) == 0 ) {
 					i--;

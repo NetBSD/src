@@ -1,8 +1,8 @@
 #! /bin/sh
-# OpenLDAP: pkg/ldap/tests/scripts/test016-subref,v 1.12.2.4 2009/01/22 00:01:19 kurt Exp
+# OpenLDAP: pkg/ldap/tests/scripts/test016-subref,v 1.12.2.6 2010/04/19 19:14:33 quanah Exp
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 1998-2009 The OpenLDAP Foundation.
+## Copyright 1998-2010 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -14,6 +14,7 @@
 ## <http://www.OpenLDAP.org/license.html>.
 
 RCODE=10
+test $BACKEND = null && RCODE=0
 
 echo "running defines.sh"
 . $SRCDIR/scripts/defines.sh
@@ -87,7 +88,7 @@ RC=$?
 if test $RC != $RCODE ; then
 	echo "ldapsearch: unexpected result ($RC)! (referral expected)"
 	test $KILLSERVERS != no && kill -HUP $KILLPIDS
-	exit $RC
+	exit 1
 fi
 
 XREFDN="$REFDN"
@@ -125,7 +126,7 @@ RC=$?
 if test $RC != $RCODE ; then
 	echo "ldapsearch: unexpected result ($RC)! (referral expected)"
 	test $KILLSERVERS != no && kill -HUP $KILLPIDS
-	exit $RC
+	exit 1
 fi
 
 echo "Testing one-level searching at $XREFDN..."
@@ -134,7 +135,7 @@ RC=$?
 if test $RC != $RCODE ; then
 	echo "ldapsearch: unexpected result ($RC)! (referral expected)"
 	test $KILLSERVERS != no && kill -HUP $KILLPIDS
-	exit $RC
+	exit 1
 fi
 
 echo "Testing subtree searching at $XREFDN..."
@@ -143,7 +144,7 @@ RC=$?
 if test $RC != $RCODE ; then
 	echo "ldapsearch: unexpected result ($RC)! (referral expected)"
 	test $KILLSERVERS != no && kill -HUP $KILLPIDS
-	exit $RC
+	exit 1
 fi
 
 XREFDN="uid=xxx,o=abc,$REFDN"
@@ -153,7 +154,7 @@ RC=$?
 if test $RC != $RCODE ; then
 	echo "ldapsearch: unexpected result ($RC)! (referral expected)"
 	test $KILLSERVERS != no && kill -HUP $KILLPIDS
-	exit $RC
+	exit 1
 fi
 
 echo "Testing one-level searching at $XREFDN..."
@@ -162,7 +163,7 @@ RC=$?
 if test $RC != $RCODE ; then
 	echo "ldapsearch: unexpected result ($RC)! (referral expected)"
 	test $KILLSERVERS != no && kill -HUP $KILLPIDS
-	exit $RC
+	exit 1
 fi
 
 echo "Testing subtree searching at $XREFDN..."
@@ -171,16 +172,16 @@ RC=$?
 if test $RC != $RCODE ; then
 	echo "ldapsearch: unexpected result ($RC)! (referral expected)"
 	test $KILLSERVERS != no && kill -HUP $KILLPIDS
-	exit $RC
+	exit 1
 fi
 
 test $KILLSERVERS != no && kill -HUP $KILLPIDS
 
 LDIF=$SEARCHOUTMASTER
 echo "Filtering ldapsearch results..."
-. $LDIFFILTER < $SEARCHOUT > $SEARCHFLT
+$LDIFFILTER < $SEARCHOUT > $SEARCHFLT
 echo "Filtering expected LDIF for comparison..."
-. $LDIFFILTER < $REFERRALOUT > $LDIFFLT
+$LDIFFILTER < $REFERRALOUT > $LDIFFLT
 echo "Comparing filter output..."
 $CMP $SEARCHFLT $LDIFFLT > $CMPOUT
 

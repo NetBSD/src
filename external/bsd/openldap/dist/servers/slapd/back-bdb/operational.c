@@ -1,10 +1,10 @@
-/*	$NetBSD: operational.c,v 1.1.1.2 2010/03/08 02:14:18 lukem Exp $	*/
+/*	$NetBSD: operational.c,v 1.1.1.3 2010/12/12 15:22:59 adam Exp $	*/
 
 /* operational.c - bdb backend operational attributes function */
-/* OpenLDAP: pkg/ldap/servers/slapd/back-bdb/operational.c,v 1.29.2.5 2009/03/05 22:24:29 quanah Exp */
+/* OpenLDAP: pkg/ldap/servers/slapd/back-bdb/operational.c,v 1.29.2.7 2010/06/10 17:25:02 quanah Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2009 The OpenLDAP Foundation.
+ * Copyright 2000-2010 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -41,6 +41,7 @@ bdb_hasSubordinates(
 	OpExtra *oex;
 	DB_TXN		*rtxn;
 	int		rc;
+	int		release = 0;
 	
 	assert( e != NULL );
 
@@ -50,7 +51,18 @@ bdb_hasSubordinates(
 	 * let's disable the hasSubordinate feature for back-relay.
 	 */
 	if ( BEI( e ) == NULL ) {
-		return LDAP_OTHER;
+		Entry *ee = NULL;
+		rc = be_entry_get_rw( op, &e->e_nname, NULL, NULL, 0, &ee );
+		if ( rc != LDAP_SUCCESS || ee == NULL ) {
+			rc = LDAP_OTHER;
+			goto done;
+		}
+		e = ee;
+		release = 1;
+		if ( BEI( ee ) == NULL ) {
+			rc = LDAP_OTHER;
+			goto done;
+		}
 	}
 
 	/* Check for a txn in a parent op, otherwise use reader txn */
@@ -63,7 +75,10 @@ bdb_hasSubordinates(
 		rtxn = opinfo->boi_txn;
 	} else {
 		rc = bdb_reader_get(op, bdb->bi_dbenv, &rtxn);
-		if ( rc ) return LDAP_OTHER;
+		if ( rc ) {
+			rc = LDAP_OTHER;
+			goto done;
+		}
 	}
 
 retry:
@@ -94,6 +109,8 @@ retry:
 		rc = LDAP_OTHER;
 	}
 
+done:;
+	if ( release && e != NULL ) be_entry_release_r( op, e );
 	return rc;
 }
 

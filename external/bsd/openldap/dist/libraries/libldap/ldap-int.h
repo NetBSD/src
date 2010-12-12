@@ -1,10 +1,10 @@
-/*	$NetBSD: ldap-int.h,v 1.1.1.2 2010/03/08 02:14:16 lukem Exp $	*/
+/*	$NetBSD: ldap-int.h,v 1.1.1.3 2010/12/12 15:21:32 adam Exp $	*/
 
 /*  ldap-int.h - defines & prototypes internal to the LDAP library */
-/* OpenLDAP: pkg/ldap/libraries/libldap/ldap-int.h,v 1.168.2.16 2009/08/12 23:40:55 quanah Exp */
+/* OpenLDAP: pkg/ldap/libraries/libldap/ldap-int.h,v 1.168.2.18 2010/04/19 16:53:01 quanah Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2009 The OpenLDAP Foundation.
+ * Copyright 1998-2010 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,6 +27,7 @@
 #endif
 
 #include "../liblber/lber-int.h"
+#include "lutil.h"
 
 #ifdef LDAP_R_COMPILE
 #include <ldap_pvt_thread.h>

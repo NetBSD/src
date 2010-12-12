@@ -1,10 +1,10 @@
-/*	$NetBSD: param.h,v 1.1.1.2 2010/03/08 02:14:15 lukem Exp $	*/
+/*	$NetBSD: param.h,v 1.1.1.3 2010/12/12 15:21:26 adam Exp $	*/
 
 /* Generic param.h */
-/* OpenLDAP: pkg/ldap/include/ac/param.h,v 1.13.2.5 2009/10/30 18:38:01 quanah Exp */
+/* OpenLDAP: pkg/ldap/include/ac/param.h,v 1.13.2.6 2010/04/13 20:22:51 kurt Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2009 The OpenLDAP Foundation.
+ * Copyright 1998-2010 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

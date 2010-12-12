@@ -1,9 +1,9 @@
-/*	$NetBSD: util-int.c,v 1.1.1.2 2010/03/08 02:14:16 lukem Exp $	*/
+/*	$NetBSD: util-int.c,v 1.1.1.3 2010/12/12 15:21:41 adam Exp $	*/
 
-/* OpenLDAP: pkg/ldap/libraries/libldap/util-int.c,v 1.57.2.5 2009/01/22 00:00:56 kurt Exp */
+/* OpenLDAP: pkg/ldap/libraries/libldap/util-int.c,v 1.57.2.7 2010/04/19 16:53:01 quanah Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2009 The OpenLDAP Foundation.
+ * Copyright 1998-2010 The OpenLDAP Foundation.
  * Portions Copyright 1998 A. Hartgers.
  * All rights reserved.
  *
@@ -68,6 +68,20 @@ extern int h_errno;
 	static ldap_pvt_thread_mutex_t ldap_int_ctime_mutex;
 # endif
 
+/* USE_GMTIME_R and USE_LOCALTIME_R defined in ldap_pvt.h */
+
+#ifdef LDAP_DEVEL
+	/* to be released with 2.5 */
+#if !defined( USE_GMTIME_R ) || !defined( USE_LOCALTIME_R )
+	/* we use the same mutex for gmtime(3) and localtime(3)
+	 * because implementations may use the same buffer
+	 * for both functions */
+	static ldap_pvt_thread_mutex_t ldap_int_gmtime_mutex;
+#endif
+#else /* ! LDAP_DEVEL */
+	ldap_pvt_thread_mutex_t ldap_int_gmtime_mutex;
+#endif /* ! LDAP_DEVEL */
+
 # if defined(HAVE_GETHOSTBYNAME_R) && \
 	(GETHOSTBYNAME_R_NARGS < 5) || (6 < GETHOSTBYNAME_R_NARGS)
 	/* Don't know how to handle this version, pretend it's not there */
@@ -107,6 +121,212 @@ char *ldap_pvt_ctime( const time_t *tp, char *buf )
 
 	return buf;
 #endif	
+}
+
+#if !defined( USE_GMTIME_R ) || !defined( USE_LOCALTIME_R )
+int
+ldap_pvt_gmtime_lock( void )
+{
+# ifndef LDAP_R_COMPILE
+	return 0;
+# else /* LDAP_R_COMPILE */
+	return ldap_pvt_thread_mutex_lock( &ldap_int_gmtime_mutex );
+# endif /* LDAP_R_COMPILE */
+}
+
+int
+ldap_pvt_gmtime_unlock( void )
+{
+# ifndef LDAP_R_COMPILE
+	return 0;
+# else /* LDAP_R_COMPILE */
+	return ldap_pvt_thread_mutex_unlock( &ldap_int_gmtime_mutex );
+# endif /* LDAP_R_COMPILE */
+}
+#endif /* !USE_GMTIME_R || !USE_LOCALTIME_R */
+
+#ifndef USE_GMTIME_R
+struct tm *
+ldap_pvt_gmtime( const time_t *timep, struct tm *result )
+{
+	struct tm *tm_ptr;
+
+# ifdef LDAP_R_COMPILE
+	ldap_pvt_thread_mutex_lock( &ldap_int_gmtime_mutex );
+# endif /* LDAP_R_COMPILE */
+
+	tm_ptr = gmtime( timep );
+	if ( tm_ptr == NULL ) {
+		result = NULL;
+
+	} else {
+		*result = *tm_ptr;
+	}
+
+# ifdef LDAP_R_COMPILE
+	ldap_pvt_thread_mutex_unlock( &ldap_int_gmtime_mutex );
+# endif /* LDAP_R_COMPILE */
+
+	return result;
+}
+#endif /* !USE_GMTIME_R */
+
+#ifndef USE_LOCALTIME_R
+struct tm *
+ldap_pvt_localtime( const time_t *timep, struct tm *result )
+{
+	struct tm *tm_ptr;
+
+# ifdef LDAP_R_COMPILE
+	ldap_pvt_thread_mutex_lock( &ldap_int_gmtime_mutex );
+# endif /* LDAP_R_COMPILE */
+
+	tm_ptr = localtime( timep );
+	if ( tm_ptr == NULL ) {
+		result = NULL;
+
+	} else {
+		*result = *tm_ptr;
+	}
+
+# ifdef LDAP_R_COMPILE
+	ldap_pvt_thread_mutex_unlock( &ldap_int_gmtime_mutex );
+# endif /* LDAP_R_COMPILE */
+
+	return result;
+}
+#endif /* !USE_LOCALTIME_R */
+
+/* return a broken out time, with microseconds
+ * Must be mutex-protected.
+ */
+#ifdef _WIN32
+/* Windows SYSTEMTIME only has 10 millisecond resolution, so we
+ * also need to use a high resolution timer to get microseconds.
+ * This is pretty clunky.
+ */
+void
+ldap_pvt_gettime( struct lutil_tm *tm )
+{
+	static LARGE_INTEGER cFreq;
+	static LARGE_INTEGER prevCount;
+	static int subs;
+	static int offset;
+	LARGE_INTEGER count;
+	SYSTEMTIME st;
+
+	GetSystemTime( &st );
+	QueryPerformanceCounter( &count );
+
+	/* It shouldn't ever go backwards, but multiple CPUs might
+	 * be able to hit in the same tick.
+	 */
+	if ( count.QuadPart <= prevCount.QuadPart ) {
+		subs++;
+	} else {
+		subs = 0;
+		prevCount = count;
+	}
+
+	/* We assume Windows has at least a vague idea of
+	 * when a second begins. So we align our microsecond count
+	 * with the Windows millisecond count using this offset.
+	 * We retain the submillisecond portion of our own count.
+	 *
+	 * Note - this also assumes that the relationship between
+	 * the PerformanceCouunter and SystemTime stays constant;
+	 * that assumption breaks if the SystemTime is adjusted by
+	 * an external action.
+	 */
+	if ( !cFreq.QuadPart ) {
+		long long t;
+		int usec;
+		QueryPerformanceFrequency( &cFreq );
+
+		/* just get sub-second portion of counter */
+		t = count.QuadPart % cFreq.QuadPart;
+
+		/* convert to microseconds */
+		t *= 1000000;
+		usec = t / cFreq.QuadPart;
+
+		offset = usec - st.wMilliseconds * 1000;
+	}
+
+	tm->tm_usub = subs;
+
+	/* convert to microseconds */
+	count.QuadPart %= cFreq.QuadPart;
+	count.QuadPart *= 1000000;
+	count.QuadPart /= cFreq.QuadPart;
+	count.QuadPart -= offset;
+
+	tm->tm_usec = count.QuadPart % 1000000;
+	if ( tm->tm_usec < 0 )
+		tm->tm_usec += 1000000;
+
+	/* any difference larger than microseconds is
+	 * already reflected in st
+	 */
+
+	tm->tm_sec = st.wSecond;
+	tm->tm_min = st.wMinute;
+	tm->tm_hour = st.wHour;
+	tm->tm_mday = st.wDay;
+	tm->tm_mon = st.wMonth - 1;
+	tm->tm_year = st.wYear - 1900;
+}
+#else
+void
+ldap_pvt_gettime( struct lutil_tm *ltm )
+{
+	struct timeval tv;
+	static struct timeval prevTv;
+	static int subs;
+
+	struct tm tm;
+	time_t t;
+
+	gettimeofday( &tv, NULL );
+	t = tv.tv_sec;
+
+	if ( tv.tv_sec < prevTv.tv_sec
+		|| ( tv.tv_sec == prevTv.tv_sec && tv.tv_usec == prevTv.tv_usec )) {
+		subs++;
+	} else {
+		subs = 0;
+		prevTv = tv;
+	}
+
+	ltm->tm_usub = subs;
+
+	ldap_pvt_gmtime( &t, &tm );
+
+	ltm->tm_sec = tm.tm_sec;
+	ltm->tm_min = tm.tm_min;
+	ltm->tm_hour = tm.tm_hour;
+	ltm->tm_mday = tm.tm_mday;
+	ltm->tm_mon = tm.tm_mon;
+	ltm->tm_year = tm.tm_year;
+	ltm->tm_usec = tv.tv_usec;
+}
+#endif
+
+size_t
+ldap_pvt_csnstr(char *buf, size_t len, unsigned int replica, unsigned int mod)
+{
+	struct lutil_tm tm;
+	int n;
+
+	ldap_pvt_gettime( &tm );
+
+	n = snprintf( buf, len,
+		"%4d%02d%02d%02d%02d%02d.%06dZ#%06x#%03x#%06x",
+		tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour,
+		tm.tm_min, tm.tm_sec, tm.tm_usec, tm.tm_usub, replica, mod );
+
+	if( n < 0 ) return 0;
+	return ( (size_t) n < len ) ? n : 0;
 }
 
 #define BUFSTART (1024-32)
@@ -407,6 +627,9 @@ void ldap_int_utils_init( void )
 #ifdef LDAP_R_COMPILE
 #if !defined( USE_CTIME_R ) && !defined( HAVE_REENTRANT_FUNCTIONS )
 	ldap_pvt_thread_mutex_init( &ldap_int_ctime_mutex );
+#endif
+#if !defined( USE_GMTIME_R ) && !defined( USE_LOCALTIME_R )
+	ldap_pvt_thread_mutex_init( &ldap_int_gmtime_mutex );
 #endif
 	ldap_pvt_thread_mutex_init( &ldap_int_resolv_mutex );
 

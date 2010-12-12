@@ -1,10 +1,10 @@
-/*	$NetBSD: tls_m.c,v 1.1.1.1 2010/03/08 02:14:16 lukem Exp $	*/
+/*	$NetBSD: tls_m.c,v 1.1.1.2 2010/12/12 15:21:39 adam Exp $	*/
 
 /* tls_m.c - Handle tls/ssl using Mozilla NSS. */
-/* OpenLDAP: pkg/ldap/libraries/libldap/tls_m.c,v 1.3.2.8 2009/10/30 17:48:17 quanah Exp */
+/* OpenLDAP: pkg/ldap/libraries/libldap/tls_m.c,v 1.3.2.11 2010/04/15 21:26:00 quanah Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2008-2009 The OpenLDAP Foundation.
+ * Copyright 2008-2010 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -66,6 +66,16 @@
 #include <nss/keyhi.h>
 #include <nss/secmod.h>
 
+/* NSS 3.12.5 and later have NSS_InitContext */
+#if NSS_VMAJOR <= 3 && NSS_VMINOR <= 12 && NSS_VPATCH < 5
+/* do nothing */
+#else
+#define HAVE_NSS_INITCONTEXT 1
+#endif
+
+/* InitContext does not currently work in server mode */
+/* #define INITCONTEXT_HACK 1 */
+
 typedef struct tlsm_ctx {
 	PRFileDesc *tc_model;
 	int tc_refcnt;
@@ -79,6 +89,11 @@ typedef struct tlsm_ctx {
 	PRCallOnceType tc_callonce;
 	PRBool tc_using_pem;
 	char *tc_slotname; /* if using pem */
+#ifdef HAVE_NSS_INITCONTEXT
+	NSSInitContext *tc_initctx; /* the NSS context */
+#endif
+	PK11GenericObject **tc_pem_objs; /* array of objects to free */
+	int tc_n_pem_objs; /* number of objects */
 #ifdef LDAP_R_COMPILE
 	ldap_pvt_thread_mutex_t tc_refmutex;
 #endif
@@ -90,10 +105,10 @@ static PRDescIdentity	tlsm_layer_id;
 
 static const PRIOMethods tlsm_PR_methods;
 
-static int tlsm_did_init;
+#define PEM_LIBRARY	"nsspem"
+#define PEM_MODULE	"PEM"
 
-static const char* pem_library = "nsspem";
-static SECMODModule* pemMod = NULL;
+static SECMODModule *pem_module;
 
 #define DEFAULT_TOKEN_NAME "default"
 /* sprintf format used to create token name */
@@ -927,12 +942,29 @@ tlsm_init_tokens( tlsm_ctx *ctx )
 	slotList = PK11_GetAllTokens( CKM_INVALID_MECHANISM, PR_FALSE, PR_TRUE, NULL );
 
 	for ( listEntry = PK11_GetFirstSafe( slotList ); !rc && listEntry;
-		  listEntry = listEntry->next) {
+		  listEntry = PK11_GetNextSafe( slotList, listEntry, PR_FALSE ) ) {
 		PK11SlotInfo *slot = listEntry->slot;
 		rc = tlsm_authenticate_to_slot( ctx, slot );
-		PK11_FreeSlot(slot);
 	}
 
+	PK11_FreeSlotList( slotList );
+
+	return rc;
+}
+
+static SECStatus
+tlsm_nss_shutdown_cb( void *appData, void *nssData )
+{
+	SECStatus rc = SECSuccess;
+
+	SSL_ShutdownServerSessionIDCache();
+	SSL_ClearSessionCache();
+
+	if ( pem_module ) {
+		SECMOD_UnloadUserModule( pem_module );
+		SECMOD_DestroyModule( pem_module );
+		pem_module = NULL;
+	}
 	return rc;
 }
 
@@ -943,24 +975,52 @@ tlsm_init_pem_module( void )
 	char *fullname = NULL;
 	char *configstring = NULL;
 
-	/* get the system dependent library name */
-	fullname = PR_GetLibraryName( NULL, pem_library );
-	/* Load our PKCS#11 module */
-	configstring = PR_smprintf( "library=%s name=PEM parameters=\"\"", fullname );
-	PR_smprintf_free( fullname );
+	if ( pem_module ) {
+		return rc;
+	}
 
-	pemMod = SECMOD_LoadUserModule( configstring, NULL, PR_FALSE );
+	/* not loaded - load it */
+	/* get the system dependent library name */
+	fullname = PR_GetLibraryName( NULL, PEM_LIBRARY );
+	/* Load our PKCS#11 module */
+	configstring = PR_smprintf( "library=%s name=" PEM_MODULE " parameters=\"\"", fullname );
+	PL_strfree( fullname );
+
+	pem_module = SECMOD_LoadUserModule( configstring, NULL, PR_FALSE );
 	PR_smprintf_free( configstring );
 
-	if ( !pemMod || !pemMod->loaded ) {
-		if ( pemMod ) {
-			SECMOD_DestroyModule( pemMod );
-			pemMod = NULL;
+	if ( !pem_module || !pem_module->loaded ) {
+		if ( pem_module ) {
+			SECMOD_DestroyModule( pem_module );
+			pem_module = NULL;
 		}
 		rc = -1;
 	}
 
 	return rc;
+}
+
+static void
+tlsm_add_pem_obj( tlsm_ctx *ctx, PK11GenericObject *obj )
+{
+	int idx = ctx->tc_n_pem_objs;
+	ctx->tc_n_pem_objs++;
+	ctx->tc_pem_objs = (PK11GenericObject **)
+		PORT_Realloc( ctx->tc_pem_objs, ctx->tc_n_pem_objs * sizeof( PK11GenericObject * ) );
+	ctx->tc_pem_objs[idx] = obj;														  
+}
+
+static void
+tlsm_free_pem_objs( tlsm_ctx *ctx )
+{
+	/* free in reverse order of allocation */
+	while ( ctx->tc_n_pem_objs-- ) {
+		PK11_DestroyGenericObject( ctx->tc_pem_objs[ctx->tc_n_pem_objs] );
+		ctx->tc_pem_objs[ctx->tc_n_pem_objs] = NULL;
+	}
+	PORT_Free(ctx->tc_pem_objs);
+	ctx->tc_pem_objs = NULL;
+	ctx->tc_n_pem_objs = 0;
 }
 
 static int
@@ -1034,6 +1094,8 @@ tlsm_add_cert_from_file( tlsm_ctx *ctx, const char *filename, PRBool isca )
 		return -1;
 	}
 
+	tlsm_add_pem_obj( ctx, rv );
+
 	return 0;
 }
 
@@ -1081,13 +1143,16 @@ tlsm_add_key_from_file( tlsm_ctx *ctx, const char *filename )
 	} else {
 		/* When adding an encrypted key the PKCS#11 will be set as removed */
 		/* This will force the token to be seen as re-inserted */
-		SECMOD_WaitForAnyTokenEvent( pemMod, 0, 0 );
+		SECMOD_WaitForAnyTokenEvent( pem_module, 0, 0 );
 		PK11_IsPresent( slot );
 		retcode = 0;
 	}
 
 	PK11_FreeSlot( slot );
 
+	if ( !retcode ) {
+		tlsm_add_pem_obj( ctx, rv );
+	}
 	return retcode;
 }
 
@@ -1180,11 +1245,20 @@ tlsm_deferred_init( void *arg )
 	int ii;
 	int nn;
 	PRErrorCode errcode = 1;
+#ifdef HAVE_NSS_INITCONTEXT
+	NSSInitParameters initParams;
+	NSSInitContext *initctx = NULL;
+#endif
+	SECStatus rc;
 
-	/* NSS support for multi-init is coming */
-#ifndef NSS_MULTI_INIT
+#ifdef HAVE_NSS_INITCONTEXT
+	memset( &initParams, 0, sizeof( initParams ) );
+	initParams.length = sizeof( initParams );
+#endif /* HAVE_NSS_INITCONTEXT */
+
+#ifndef HAVE_NSS_INITCONTEXT
 	if ( !NSS_IsInitialized() ) {
-#endif /* NSS_MULTI_INIT */
+#endif /* HAVE_NSS_INITCONTEXT */
 		/*
 		  MOZNSS_DIR will override everything else - you can
 		  always set MOZNSS_DIR to force the use of this
@@ -1199,12 +1273,30 @@ tlsm_deferred_init( void *arg )
 		securitydirs[nn++] = PR_GetEnv( "MOZNSS_DIR" );
 		securitydirs[nn++] = lt->lt_cacertdir;
 		securitydirs[nn++] = PR_GetEnv( "DEFAULT_MOZNSS_DIR" );
-		for (ii = 0; ii < nn; ++ii) {
+		for ( ii = 0; ii < nn; ++ii ) {
 			const char *securitydir = securitydirs[ii];
 			if ( NULL == securitydir ) {
 				continue;
 			}
-			if ( NSS_Initialize( securitydir, "", "", SECMOD_DB, NSS_INIT_READONLY ) ) {
+#ifdef HAVE_NSS_INITCONTEXT
+#ifdef INITCONTEXT_HACK
+			if ( !NSS_IsInitialized() && ctx->tc_is_server ) {
+				rc = NSS_Initialize( securitydir, "", "", SECMOD_DB, NSS_INIT_READONLY );
+			} else {
+				initctx = NSS_InitContext( securitydir, "", "", SECMOD_DB,
+										   &initParams, NSS_INIT_READONLY );
+				rc = (initctx == NULL) ? SECFailure : SECSuccess;
+			}
+#else
+			initctx = NSS_InitContext( securitydir, "", "", SECMOD_DB,
+									   &initParams, NSS_INIT_READONLY );
+			rc = (initctx == NULL) ? SECFailure : SECSuccess;
+#endif
+#else
+			rc = NSS_Initialize( securitydir, "", "", SECMOD_DB, NSS_INIT_READONLY );
+#endif
+
+			if ( rc != SECSuccess ) {
 				errcode = PORT_GetError();
 				Debug( LDAP_DEBUG_TRACE,
 					   "TLS: could not initialize moznss using security dir %s - error %d:%s.\n",
@@ -1219,13 +1311,35 @@ tlsm_deferred_init( void *arg )
 		}
 
 		if ( errcode ) { /* no moznss db found, or not using moznss db */
-			if ( NSS_NoDB_Init( NULL ) ) {
+#ifdef HAVE_NSS_INITCONTEXT
+			int flags = NSS_INIT_READONLY|NSS_INIT_NOCERTDB|NSS_INIT_NOMODDB;
+#ifdef INITCONTEXT_HACK
+			if ( !NSS_IsInitialized() && ctx->tc_is_server ) {
+				rc = NSS_NoDB_Init( NULL );
+			} else {
+				initctx = NSS_InitContext( "", "", "", SECMOD_DB,
+										   &initParams, flags );
+				rc = (initctx == NULL) ? SECFailure : SECSuccess;
+			}
+#else
+			initctx = NSS_InitContext( "", "", "", SECMOD_DB,
+									   &initParams, flags );
+			rc = (initctx == NULL) ? SECFailure : SECSuccess;
+#endif
+#else
+			rc = NSS_NoDB_Init( NULL );
+#endif
+			if ( rc != SECSuccess ) {
 				errcode = PORT_GetError();
 				Debug( LDAP_DEBUG_ANY,
 					   "TLS: could not initialize moznss - error %d:%s.\n",
 					   errcode, PR_ErrorToString( errcode, PR_LANGUAGE_I_DEFAULT ), 0 );
 				return -1;
 			}
+
+#ifdef HAVE_NSS_INITCONTEXT
+			ctx->tc_initctx = initctx;
+#endif
 
 			/* initialize the PEM module */
 			if ( tlsm_init_pem_module() ) {
@@ -1243,6 +1357,12 @@ tlsm_deferred_init( void *arg )
 			ctx->tc_using_pem = PR_TRUE;
 		}
 
+#ifdef HAVE_NSS_INITCONTEXT
+		if ( !ctx->tc_initctx ) {
+			ctx->tc_initctx = initctx;
+		}
+#endif
+
 		NSS_SetDomesticPolicy();
 
 		PK11_SetPasswordFunc( tlsm_pin_prompt );
@@ -1251,10 +1371,14 @@ tlsm_deferred_init( void *arg )
 			return -1;
 		}
 
-		tlsm_did_init = 1; /* we did the init - we should also clean up */
-#ifndef NSS_MULTI_INIT
+		/* register cleanup function */
+		/* delete the old one, if any */
+		NSS_UnregisterShutdown( tlsm_nss_shutdown_cb, NULL );
+		NSS_RegisterShutdown( tlsm_nss_shutdown_cb, NULL );
+
+#ifndef HAVE_NSS_INITCONTEXT
 	}
-#endif /* NSS_MULTI_INIT */
+#endif /* HAVE_NSS_INITCONTEXT */
 
 	return 0;
 }
@@ -1422,21 +1546,18 @@ tlsm_get_client_auth_data( void *arg, PRFileDesc *fd,
  * the database
 */
 static int
-tlsm_clientauth_init( tlsm_ctx *ctx, const char *certname )
+tlsm_clientauth_init( tlsm_ctx *ctx )
 {
 	SECStatus status = SECFailure;
 	int rc;
 
-	PL_strfree( ctx->tc_certname );
-	rc = tlsm_find_and_verify_cert_key( ctx, ctx->tc_model, certname, 0, NULL, NULL );
+	rc = tlsm_find_and_verify_cert_key( ctx, ctx->tc_model, ctx->tc_certname, 0, NULL, NULL );
 	if ( rc ) {
 		Debug( LDAP_DEBUG_ANY,
 			   "TLS: error: unable to set up client certificate authentication for "
-			   "certificate named %s\n", certname, 0, 0 );
+			   "certificate named %s\n", ctx->tc_certname, 0, 0 );
 		return -1;
 	}
-
-	ctx->tc_certname = PL_strdup( certname );
 
 	status = SSL_GetClientAuthDataHook( ctx->tc_model,
 										tlsm_get_client_auth_data,
@@ -1451,21 +1572,6 @@ tlsm_clientauth_init( tlsm_ctx *ctx, const char *certname )
 static void
 tlsm_destroy( void )
 {
-	if (pemMod) {
-		SECMOD_DestroyModule(pemMod);
-		pemMod = NULL;
-	}
-
-	/* Only if we did the actual initialization */
-	if ( tlsm_did_init ) {
-		tlsm_did_init = 0;
-
-		SSL_ShutdownServerSessionIDCache();
-		SSL_ClearSessionCache();
-		NSS_Shutdown();
-	}
-
-	PR_Cleanup();
 }
 
 static tls_ctx *
@@ -1489,6 +1595,11 @@ tlsm_ctx_new ( struct ldapoptions *lo )
 		ctx->tc_verify_cert = PR_FALSE;
 		ctx->tc_using_pem = PR_FALSE;
 		ctx->tc_slotname = NULL;
+#ifdef HAVE_NSS_INITCONTEXT
+		ctx->tc_initctx = NULL;
+#endif /* HAVE_NSS_INITCONTEXT */
+		ctx->tc_pem_objs = NULL;
+		ctx->tc_n_pem_objs = 0;
 	}
 	return (tls_ctx *)ctx;
 }
@@ -1530,7 +1641,13 @@ tlsm_ctx_free ( tls_ctx *ctx )
 	c->tc_certname = NULL;
 	PL_strfree( c->tc_pin_file );
 	c->tc_pin_file = NULL;
-	PL_strfree( c->tc_slotname );
+	PL_strfree( c->tc_slotname );		
+	tlsm_free_pem_objs( c );
+#ifdef HAVE_NSS_INITCONTEXT
+	if (c->tc_initctx)
+		NSS_ShutdownContext( c->tc_initctx );
+	c->tc_initctx = NULL;
+#endif /* HAVE_NSS_INITCONTEXT */
 #ifdef LDAP_R_COMPILE
 	ldap_pvt_thread_mutex_destroy( &c->tc_refmutex );
 #endif
@@ -1568,7 +1685,7 @@ tlsm_deferred_ctx_init( void *arg )
 	    return -1;
 	}
 
-	ctx->tc_certdb = CERT_GetDefaultCertDB(); /* replace with multi-init db call */
+	ctx->tc_certdb = CERT_GetDefaultCertDB(); /* If there is ever a per-context db, change this */
 
 	fd = PR_CreateIOLayerStub( tlsm_layer_id, &tlsm_PR_methods );
 	if ( fd ) {
@@ -1733,7 +1850,7 @@ tlsm_deferred_ctx_init( void *arg )
 				       ctx->tc_certname, 0, 0 );
 				return -1;
 			}
-			if ( tlsm_clientauth_init( ctx, ctx->tc_certname ) ) {
+			if ( tlsm_clientauth_init( ctx ) ) {
 				Debug( LDAP_DEBUG_ANY, 
 				       "TLS: error: unable to set up client certificate authentication using %s\n",
 				       ctx->tc_certname, 0, 0 );

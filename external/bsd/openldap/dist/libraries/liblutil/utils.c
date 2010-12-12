@@ -1,9 +1,9 @@
-/*	$NetBSD: utils.c,v 1.1.1.2 2010/03/08 02:14:17 lukem Exp $	*/
+/*	$NetBSD: utils.c,v 1.1.1.3 2010/12/12 15:22:11 adam Exp $	*/
 
-/* OpenLDAP: pkg/ldap/libraries/liblutil/utils.c,v 1.33.2.26 2009/12/02 18:34:37 hyc Exp */
+/* OpenLDAP: pkg/ldap/libraries/liblutil/utils.c,v 1.33.2.29 2010/06/10 17:23:20 quanah Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2009 The OpenLDAP Foundation.
+ * Copyright 1998-2010 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -149,7 +149,7 @@ size_t lutil_localtime( char *s, size_t smax, const struct tm *tm, long delta )
 	snprintf( p, smax - 15, "%02ld%02ld", delta / 3600,
 			( delta % 3600 ) / 60 );
 
-	return ret + 5;
+	return ret + 4;
 }
 
 int lutil_tm2time( struct lutil_tm *tm, struct lutil_timet *tt )
@@ -283,128 +283,6 @@ int lutil_parsetime( char *atm, struct lutil_tm *tm )
 	}
 	return -1;
 }
-
-/* return a broken out time, with microseconds
- * Must be mutex-protected.
- */
-#ifdef _WIN32
-/* Windows SYSTEMTIME only has 10 millisecond resolution, so we
- * also need to use a high resolution timer to get microseconds.
- * This is pretty clunky.
- */
-void
-lutil_gettime( struct lutil_tm *tm )
-{
-	static LARGE_INTEGER cFreq;
-	static LARGE_INTEGER prevCount;
-	static int subs;
-	static int offset;
-	LARGE_INTEGER count;
-	SYSTEMTIME st;
-
-	GetSystemTime( &st );
-	QueryPerformanceCounter( &count );
-
-	/* It shouldn't ever go backwards, but multiple CPUs might
-	 * be able to hit in the same tick.
-	 */
-	if ( count.QuadPart <= prevCount.QuadPart ) {
-		subs++;
-	} else {
-		subs = 0;
-		prevCount = count;
-	}
-
-	/* We assume Windows has at least a vague idea of
-	 * when a second begins. So we align our microsecond count
-	 * with the Windows millisecond count using this offset.
-	 * We retain the submillisecond portion of our own count.
-	 *
-	 * Note - this also assumes that the relationship between
-	 * the PerformanceCouunter and SystemTime stays constant;
-	 * that assumption breaks if the SystemTime is adjusted by
-	 * an external action.
-	 */
-	if ( !cFreq.QuadPart ) {
-		long long t;
-		int usec;
-		QueryPerformanceFrequency( &cFreq );
-
-		/* just get sub-second portion of counter */
-		t = count.QuadPart % cFreq.QuadPart;
-
-		/* convert to microseconds */
-		t *= 1000000;
-		usec = t / cFreq.QuadPart;
-
-		offset = usec - st.wMilliseconds * 1000;
-	}
-
-	tm->tm_usub = subs;
-
-	/* convert to microseconds */
-	count.QuadPart %= cFreq.QuadPart;
-	count.QuadPart *= 1000000;
-	count.QuadPart /= cFreq.QuadPart;
-	count.QuadPart -= offset;
-
-	tm->tm_usec = count.QuadPart % 1000000;
-	if ( tm->tm_usec < 0 )
-		tm->tm_usec += 1000000;
-
-	/* any difference larger than microseconds is
-	 * already reflected in st
-	 */
-
-	tm->tm_sec = st.wSecond;
-	tm->tm_min = st.wMinute;
-	tm->tm_hour = st.wHour;
-	tm->tm_mday = st.wDay;
-	tm->tm_mon = st.wMonth - 1;
-	tm->tm_year = st.wYear - 1900;
-}
-#else
-void
-lutil_gettime( struct lutil_tm *ltm )
-{
-	struct timeval tv;
-	static struct timeval prevTv;
-	static int subs;
-
-#ifdef HAVE_GMTIME_R
-	struct tm tm_buf;
-#endif
-	struct tm *tm;
-	time_t t;
-
-	gettimeofday( &tv, NULL );
-	t = tv.tv_sec;
-
-	if ( tv.tv_sec < prevTv.tv_sec
-		|| ( tv.tv_sec == prevTv.tv_sec && tv.tv_usec <= prevTv.tv_usec )) {
-		subs++;
-	} else {
-		subs = 0;
-		prevTv = tv;
-	}
-
-	ltm->tm_usub = subs;
-
-#ifdef HAVE_GMTIME_R
-	tm = gmtime_r( &t, &tm_buf );
-#else
-	tm = gmtime( &t );
-#endif
-
-	ltm->tm_sec = tm->tm_sec;
-	ltm->tm_min = tm->tm_min;
-	ltm->tm_hour = tm->tm_hour;
-	ltm->tm_mday = tm->tm_mday;
-	ltm->tm_mon = tm->tm_mon;
-	ltm->tm_year = tm->tm_year;
-	ltm->tm_usec = tv.tv_usec;
-}
-#endif
 
 /* strcopy is like strcpy except it returns a pointer to the trailing NUL of
  * the result string. This allows fast construction of catenated strings

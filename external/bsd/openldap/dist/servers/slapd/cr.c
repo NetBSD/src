@@ -1,10 +1,10 @@
-/*	$NetBSD: cr.c,v 1.1.1.2 2010/03/08 02:14:17 lukem Exp $	*/
+/*	$NetBSD: cr.c,v 1.1.1.3 2010/12/12 15:22:27 adam Exp $	*/
 
 /* cr.c - content rule routines */
-/* OpenLDAP: pkg/ldap/servers/slapd/cr.c,v 1.22.2.4 2009/01/22 00:01:01 kurt Exp */
+/* OpenLDAP: pkg/ldap/servers/slapd/cr.c,v 1.22.2.5 2010/04/13 20:23:13 kurt Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2009 The OpenLDAP Foundation.
+ * Copyright 1998-2010 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

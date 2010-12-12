@@ -1,10 +1,10 @@
-/*	$NetBSD: ctxcsn.c,v 1.1.1.2 2010/03/08 02:14:17 lukem Exp $	*/
+/*	$NetBSD: ctxcsn.c,v 1.1.1.3 2010/12/12 15:22:27 adam Exp $	*/
 
 /* ctxcsn.c -- Context CSN Management Routines */
-/* OpenLDAP: pkg/ldap/servers/slapd/ctxcsn.c,v 1.40.2.15 2009/11/18 01:16:16 quanah Exp */
+/* OpenLDAP: pkg/ldap/servers/slapd/ctxcsn.c,v 1.40.2.17 2010/04/19 16:53:02 quanah Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2003-2009 The OpenLDAP Foundation.
+ * Copyright 2003-2010 The OpenLDAP Foundation.
  * Portions Copyright 2003 IBM Corporation.
  * All rights reserved.
  *
@@ -32,7 +32,7 @@ const struct berval slap_ldapsync_bv = BER_BVC("ldapsync");
 const struct berval slap_ldapsync_cn_bv = BER_BVC("cn=ldapsync");
 int slap_serverID;
 
-/* maxcsn->bv_val must point to a char buf[LDAP_LUTIL_CSNSTR_BUFSIZE] */
+/* maxcsn->bv_val must point to a char buf[LDAP_PVT_CSNSTR_BUFSIZE] */
 void
 slap_get_commit_csn(
 	Operation *op,
@@ -46,7 +46,7 @@ slap_get_commit_csn(
 
 	if ( maxcsn ) {
 		assert( maxcsn->bv_val != NULL );
-		assert( maxcsn->bv_len >= LDAP_LUTIL_CSNSTR_BUFSIZE );
+		assert( maxcsn->bv_len >= LDAP_PVT_CSNSTR_BUFSIZE );
 	}
 	if ( foundit ) {
 		*foundit = 0;
@@ -211,13 +211,9 @@ slap_get_csn(
 {
 	if ( csn == NULL ) return LDAP_OTHER;
 
-	/* gmtime doesn't always need a mutex, but lutil_csnstr does */
-	ldap_pvt_thread_mutex_lock( &gmtime_mutex );
-	csn->bv_len = lutil_csnstr( csn->bv_val, csn->bv_len, slap_serverID, 0 );
+	csn->bv_len = ldap_pvt_csnstr( csn->bv_val, csn->bv_len, slap_serverID, 0 );
 	if ( manage_ctxcsn )
 		slap_queue_csn( op, csn );
-
-	ldap_pvt_thread_mutex_unlock( &gmtime_mutex );
 
 	return LDAP_SUCCESS;
 }

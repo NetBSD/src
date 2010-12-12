@@ -1,10 +1,10 @@
-/*	$NetBSD: url.c,v 1.1.1.2 2010/03/08 02:14:16 lukem Exp $	*/
+/*	$NetBSD: url.c,v 1.1.1.3 2010/12/12 15:21:41 adam Exp $	*/
 
 /* LIBLDAP url.c -- LDAP URL (RFC 4516) related routines */
-/* OpenLDAP: pkg/ldap/libraries/libldap/url.c,v 1.94.2.10 2009/01/22 00:00:56 kurt Exp */
+/* OpenLDAP: pkg/ldap/libraries/libldap/url.c,v 1.94.2.11 2010/04/13 20:23:01 kurt Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2009 The OpenLDAP Foundation.
+ * Copyright 1998-2010 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

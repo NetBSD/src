@@ -1,9 +1,9 @@
-/*	$NetBSD: unbind.c,v 1.1.1.2 2010/03/08 02:14:16 lukem Exp $	*/
+/*	$NetBSD: unbind.c,v 1.1.1.3 2010/12/12 15:21:40 adam Exp $	*/
 
-/* OpenLDAP: pkg/ldap/libraries/libldap/unbind.c,v 1.56.2.6 2009/01/22 00:00:56 kurt Exp */
+/* OpenLDAP: pkg/ldap/libraries/libldap/unbind.c,v 1.56.2.8 2010/06/10 17:39:48 quanah Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2009 The OpenLDAP Foundation.
+ * Copyright 1998-2010 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -155,6 +155,11 @@ ldap_ld_free(
 	if ( ld->ld_options.ldo_peer != NULL ) {
 		LDAP_FREE( ld->ld_options.ldo_peer );
 		ld->ld_options.ldo_peer = NULL;
+	}
+
+	if ( ld->ld_options.ldo_cldapdn != NULL ) {
+		LDAP_FREE( ld->ld_options.ldo_cldapdn );
+		ld->ld_options.ldo_cldapdn = NULL;
 	}
 #endif
 

@@ -1,10 +1,10 @@
-/*	$NetBSD: tls2.c,v 1.1.1.1 2010/03/08 02:14:16 lukem Exp $	*/
+/*	$NetBSD: tls2.c,v 1.1.1.2 2010/12/12 15:21:38 adam Exp $	*/
 
 /* tls.c - Handle tls/ssl. */
-/* OpenLDAP: pkg/ldap/libraries/libldap/tls2.c,v 1.4.2.9 2009/10/30 17:48:16 quanah Exp */
+/* OpenLDAP: pkg/ldap/libraries/libldap/tls2.c,v 1.4.2.10 2010/04/13 20:23:00 kurt Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2009 The OpenLDAP Foundation.
+ * Copyright 1998-2010 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

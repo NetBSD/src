@@ -1,10 +1,10 @@
-/*	$NetBSD: addpartial-overlay.c,v 1.1.1.2 2010/03/08 02:14:14 lukem Exp $	*/
+/*	$NetBSD: addpartial-overlay.c,v 1.1.1.3 2010/12/12 15:18:53 adam Exp $	*/
 
 /* addpartial-overlay.c */
-/* OpenLDAP: pkg/ldap/contrib/slapd-modules/addpartial/addpartial-overlay.c,v 1.1.2.5 2009/08/17 21:48:56 quanah Exp */
+/* OpenLDAP: pkg/ldap/contrib/slapd-modules/addpartial/addpartial-overlay.c,v 1.1.2.6 2010/04/13 20:22:25 kurt Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2004-2009 The OpenLDAP Foundation.
+ * Copyright 2004-2010 The OpenLDAP Foundation.
  * Portions Copyright (C) 2004 Virginia Tech, David Hawes.
  * All rights reserved.
  *

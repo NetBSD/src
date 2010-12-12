@@ -1,10 +1,10 @@
-/*	$NetBSD: schemaparse.c,v 1.1.1.2 2010/03/08 02:14:18 lukem Exp $	*/
+/*	$NetBSD: schemaparse.c,v 1.1.1.3 2010/12/12 15:22:45 adam Exp $	*/
 
 /* schemaparse.c - routines to parse config file objectclass definitions */
-/* OpenLDAP: pkg/ldap/servers/slapd/schemaparse.c,v 1.80.2.7 2009/01/22 00:01:03 kurt Exp */
+/* OpenLDAP: pkg/ldap/servers/slapd/schemaparse.c,v 1.80.2.8 2010/04/13 20:23:19 kurt Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2009 The OpenLDAP Foundation.
+ * Copyright 1998-2010 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

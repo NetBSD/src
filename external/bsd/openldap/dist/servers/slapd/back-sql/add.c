@@ -1,9 +1,9 @@
-/*	$NetBSD: add.c,v 1.1.1.2 2010/03/08 02:14:19 lukem Exp $	*/
+/*	$NetBSD: add.c,v 1.1.1.3 2010/12/12 15:23:23 adam Exp $	*/
 
-/* OpenLDAP: pkg/ldap/servers/slapd/back-sql/add.c,v 1.50.2.9 2009/02/05 19:35:54 quanah Exp */
+/* OpenLDAP: pkg/ldap/servers/slapd/back-sql/add.c,v 1.50.2.11 2010/04/19 16:53:03 quanah Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2009 The OpenLDAP Foundation.
+ * Copyright 1999-2010 The OpenLDAP Foundation.
  * Portions Copyright 1999 Dmitry Kovalev.
  * Portions Copyright 2002 Pierangelo Masarati.
  * Portions Copyright 2004 Mark Adamson.
@@ -941,7 +941,7 @@ backsql_add( Operation *op, SlapReply *rs )
 	 * NOTE: fake successful result to force contextCSN to be bumped up
 	 */
 	if ( op->o_sync ) {
-		char		buf[ LDAP_LUTIL_CSNSTR_BUFSIZE ];
+		char		buf[ LDAP_PVT_CSNSTR_BUFSIZE ];
 		struct berval	csn;
 
 		csn.bv_val = buf;

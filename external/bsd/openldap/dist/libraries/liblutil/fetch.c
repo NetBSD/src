@@ -1,10 +1,10 @@
-/*	$NetBSD: fetch.c,v 1.1.1.2 2010/03/08 02:14:17 lukem Exp $	*/
+/*	$NetBSD: fetch.c,v 1.1.1.3 2010/12/12 15:22:08 adam Exp $	*/
 
 /* fetch.c - routines for fetching data at URLs */
-/* OpenLDAP: pkg/ldap/libraries/liblutil/fetch.c,v 1.10.2.6 2009/01/22 00:00:58 kurt Exp */
+/* OpenLDAP: pkg/ldap/libraries/liblutil/fetch.c,v 1.10.2.7 2010/04/13 20:23:05 kurt Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2009 The OpenLDAP Foundation.
+ * Copyright 1999-2010 The OpenLDAP Foundation.
  * Portions Copyright 1999-2003 Kurt D. Zeilenga.
  * All rights reserved.
  *

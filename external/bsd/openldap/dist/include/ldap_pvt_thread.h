@@ -1,10 +1,10 @@
-/*	$NetBSD: ldap_pvt_thread.h,v 1.1.1.2 2010/03/08 02:14:16 lukem Exp $	*/
+/*	$NetBSD: ldap_pvt_thread.h,v 1.1.1.3 2010/12/12 15:21:23 adam Exp $	*/
 
 /* ldap_pvt_thread.h - ldap threads header file */
-/* OpenLDAP: pkg/ldap/include/ldap_pvt_thread.h,v 1.51.2.13 2009/06/11 21:53:23 quanah Exp */
+/* OpenLDAP: pkg/ldap/include/ldap_pvt_thread.h,v 1.51.2.14 2010/04/13 20:22:48 kurt Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  * 
- * Copyright 1998-2009 The OpenLDAP Foundation.
+ * Copyright 1998-2010 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

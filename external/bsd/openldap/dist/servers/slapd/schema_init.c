@@ -1,10 +1,10 @@
-/*	$NetBSD: schema_init.c,v 1.1.1.3 2010/03/08 02:14:18 lukem Exp $	*/
+/*	$NetBSD: schema_init.c,v 1.1.1.4 2010/12/12 15:22:44 adam Exp $	*/
 
 /* schema_init.c - init builtin schema */
-/* OpenLDAP: pkg/ldap/servers/slapd/schema_init.c,v 1.386.2.37 2009/11/17 17:18:11 quanah Exp */
+/* OpenLDAP: pkg/ldap/servers/slapd/schema_init.c,v 1.386.2.40 2010/06/10 17:48:07 quanah Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2009 The OpenLDAP Foundation.
+ * Copyright 1998-2010 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -328,9 +328,12 @@ certificateListValidate( Syntax *syntax, struct berval *in )
 	/* revokedCertificates - Sequence of Sequence, Optional */
 	if ( tag == LBER_SEQUENCE ) {
 		ber_len_t seqlen;
-		if ( ber_peek_tag( ber, &seqlen ) == LBER_SEQUENCE ) {
-			/* Should NOT be empty */
-			ber_skip_data( ber, len );
+		ber_tag_t stag;
+		stag = ber_peek_tag( ber, &seqlen );
+		if ( stag == LBER_SEQUENCE || !len ) {
+			/* RFC5280 requires non-empty, but X.509(2005) allows empty. */
+			if ( len )
+				ber_skip_data( ber, len );
 			tag = ber_skip_tag( ber, &len );
 		}
 	}
@@ -1734,8 +1737,9 @@ UTF8StringNormalize(
 		? LDAP_UTF8_APPROX : 0;
 
 	val = UTF8bvnormalize( val, &tmp, flags, ctx );
+	/* out of memory or syntax error, the former is unlikely */
 	if( val == NULL ) {
-		return LDAP_OTHER;
+		return LDAP_INVALID_SYNTAX;
 	}
 	
 	/* collapse spaces (in place) */

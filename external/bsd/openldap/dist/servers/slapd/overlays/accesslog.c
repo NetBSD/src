@@ -1,10 +1,10 @@
-/*	$NetBSD: accesslog.c,v 1.1.1.2 2010/03/08 02:14:19 lukem Exp $	*/
+/*	$NetBSD: accesslog.c,v 1.1.1.3 2010/12/12 15:23:32 adam Exp $	*/
 
 /* accesslog.c - log operations for audit/history purposes */
-/* OpenLDAP: pkg/ldap/servers/slapd/overlays/accesslog.c,v 1.37.2.25 2009/11/24 05:50:11 quanah Exp */
+/* OpenLDAP: pkg/ldap/servers/slapd/overlays/accesslog.c,v 1.37.2.30 2010/04/19 20:37:53 quanah Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2005-2009 The OpenLDAP Foundation.
+ * Copyright 2005-2010 The OpenLDAP Foundation.
  * Portions copyright 2004-2005 Symas Corporation.
  * All rights reserved.
  *
@@ -584,8 +584,8 @@ log_old_lookup( Operation *op, SlapReply *rs )
 	if ( a ) {
 		ber_len_t len = a->a_nvals[0].bv_len;
 		/* Paranoid len check, normalized CSNs are always the same length */
-		if ( len > LDAP_LUTIL_CSNSTR_BUFSIZE )
-			len = LDAP_LUTIL_CSNSTR_BUFSIZE;
+		if ( len > LDAP_PVT_CSNSTR_BUFSIZE )
+			len = LDAP_PVT_CSNSTR_BUFSIZE;
 		if ( memcmp( a->a_nvals[0].bv_val, pd->csn.bv_val, len ) > 0 ) {
 			AC_MEMCPY( pd->csn.bv_val, a->a_nvals[0].bv_val, len );
 			pd->csn.bv_len = len;
@@ -618,7 +618,7 @@ accesslog_purge( void *ctx, void *arg )
 	AttributeAssertion ava = ATTRIBUTEASSERTION_INIT;
 	purge_data pd = {0};
 	char timebuf[LDAP_LUTIL_GENTIME_BUFSIZE];
-	char csnbuf[LDAP_LUTIL_CSNSTR_BUFSIZE];
+	char csnbuf[LDAP_PVT_CSNSTR_BUFSIZE];
 	time_t old = slap_get_time();
 
 	connection_fake_init( &conn, &opbuf, ctx );
@@ -666,6 +666,7 @@ accesslog_purge( void *ctx, void *arg )
 		op->o_tag = LDAP_REQ_DELETE;
 		op->o_callback = &nullsc;
 		op->o_csn = pd.csn;
+		op->o_dont_replicate = 1;
 
 		for (i=0; i<pd.used; i++) {
 			op->o_req_dn = pd.dn[i];
@@ -1263,7 +1264,7 @@ static Entry *accesslog_entry( Operation *op, SlapReply *rs, int logop,
 	}
 
 	rdn.bv_len = snprintf( rdn.bv_val, sizeof( rdnbuf ), "%lu", op->o_connid );
-	if ( rdn.bv_len >= 0 || rdn.bv_len < sizeof( rdnbuf ) ) {
+	if ( rdn.bv_len < sizeof( rdnbuf ) ) {
 		attr_merge_one( e, ad_reqSession, &rdn, NULL );
 	} /* else? */
 

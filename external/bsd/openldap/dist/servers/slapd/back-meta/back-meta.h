@@ -1,9 +1,9 @@
-/*	$NetBSD: back-meta.h,v 1.1.1.3 2010/03/08 02:14:18 lukem Exp $	*/
+/*	$NetBSD: back-meta.h,v 1.1.1.4 2010/12/12 15:23:08 adam Exp $	*/
 
-/* OpenLDAP: pkg/ldap/servers/slapd/back-meta/back-meta.h,v 1.64.2.15 2009/08/26 00:50:20 quanah Exp */
+/* OpenLDAP: pkg/ldap/servers/slapd/back-meta/back-meta.h,v 1.64.2.17 2010/04/15 22:22:28 quanah Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2009 The OpenLDAP Foundation.
+ * Copyright 1999-2010 The OpenLDAP Foundation.
  * Portions Copyright 2001-2003 Pierangelo Masarati.
  * Portions Copyright 1999-2003 Howard Chu.
  * All rights reserved.
@@ -119,7 +119,8 @@ ldap_back_map_attrs(
 	struct ldapmap *at_map,
 	AttributeName *a,
 	int remap,
-	char ***mapped_attrs );
+	char ***mapped_attrs,
+	void *memctx );
 
 extern int ldap_back_map_config(
 	struct ldapmap	*oc_map,
@@ -134,7 +135,8 @@ ldap_back_filter_map_rewrite(
 	dncookie	*dc,
 	Filter		*f,
 	struct berval	*fstr,
-	int		remap );
+	int		remap,
+	void		*memctx );
 
 /* suffix massaging by means of librewrite */
 #ifdef ENABLE_REWRITE
@@ -148,7 +150,8 @@ suffix_massage_config( struct rewrite_info *info,
 extern int
 ldap_back_referral_result_rewrite(
 	dncookie	*dc,
-	BerVarray	a_vals );
+	BerVarray	a_vals,
+	void		*memctx );
 extern int
 ldap_dnattr_rewrite(
 	dncookie	*dc,

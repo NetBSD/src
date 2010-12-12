@@ -1,9 +1,9 @@
-/*	$NetBSD: slapauth.c,v 1.1.1.2 2010/03/08 02:14:18 lukem Exp $	*/
+/*	$NetBSD: slapauth.c,v 1.1.1.3 2010/12/12 15:22:48 adam Exp $	*/
 
-/* OpenLDAP: pkg/ldap/servers/slapd/slapauth.c,v 1.10.2.6 2009/07/22 20:28:47 quanah Exp */
+/* OpenLDAP: pkg/ldap/servers/slapd/slapauth.c,v 1.10.2.7 2010/04/13 20:23:20 kurt Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2004-2009 The OpenLDAP Foundation.
+ * Copyright 2004-2010 The OpenLDAP Foundation.
  * Portions Copyright 2004 Pierangelo Masarati.
  * All rights reserved.
  *

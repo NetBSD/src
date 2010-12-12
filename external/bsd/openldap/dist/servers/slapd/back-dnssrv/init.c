@@ -1,10 +1,10 @@
-/*	$NetBSD: init.c,v 1.1.1.2 2010/03/08 02:14:18 lukem Exp $	*/
+/*	$NetBSD: init.c,v 1.1.1.3 2010/12/12 15:23:01 adam Exp $	*/
 
 /* init.c - initialize ldap backend */
-/* OpenLDAP: pkg/ldap/servers/slapd/back-dnssrv/init.c,v 1.29.2.5 2009/01/22 00:01:06 kurt Exp */
+/* OpenLDAP: pkg/ldap/servers/slapd/back-dnssrv/init.c,v 1.29.2.7 2010/06/17 20:09:16 quanah Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2009 The OpenLDAP Foundation.
+ * Copyright 2000-2010 The OpenLDAP Foundation.
  * Portions Copyright 2000-2003 Kurt D. Zeilenga.
  * All rights reserved.
  *
@@ -51,7 +51,7 @@ dnssrv_back_initialize(
 
 	bi->bi_db_init = 0;
 	bi->bi_db_destroy = 0;
-	bi->bi_db_config = dnssrv_back_db_config;
+	bi->bi_db_config = 0 /* dnssrv_back_db_config */;
 	bi->bi_db_open = 0;
 	bi->bi_db_close = 0;
 

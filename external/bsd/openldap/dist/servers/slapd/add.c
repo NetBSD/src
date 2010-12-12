@@ -1,9 +1,9 @@
-/*	$NetBSD: add.c,v 1.1.1.2 2010/03/08 02:14:17 lukem Exp $	*/
+/*	$NetBSD: add.c,v 1.1.1.3 2010/12/12 15:22:16 adam Exp $	*/
 
-/* OpenLDAP: pkg/ldap/servers/slapd/add.c,v 1.244.2.8 2009/01/22 00:00:59 kurt Exp */
+/* OpenLDAP: pkg/ldap/servers/slapd/add.c,v 1.244.2.10 2010/04/19 16:53:01 quanah Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2009 The OpenLDAP Foundation.
+ * Copyright 1998-2010 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -594,7 +594,7 @@ int slap_add_opattrs(
 	struct berval name, timestamp, csn = BER_BVNULL;
 	struct berval nname, tmp;
 	char timebuf[ LDAP_LUTIL_GENTIME_BUFSIZE ];
-	char csnbuf[ LDAP_LUTIL_CSNSTR_BUFSIZE ];
+	char csnbuf[ LDAP_PVT_CSNSTR_BUFSIZE ];
 	Attribute *a;
 
 	if ( SLAP_LASTMOD( op->o_bd ) ) {

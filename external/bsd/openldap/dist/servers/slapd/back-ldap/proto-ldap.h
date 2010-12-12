@@ -1,9 +1,9 @@
-/*	$NetBSD: proto-ldap.h,v 1.1.1.3 2010/03/08 02:14:18 lukem Exp $	*/
+/*	$NetBSD: proto-ldap.h,v 1.1.1.4 2010/12/12 15:23:06 adam Exp $	*/
 
-/* OpenLDAP: pkg/ldap/servers/slapd/back-ldap/proto-ldap.h,v 1.15.2.9 2009/08/26 00:50:19 quanah Exp */
+/* OpenLDAP: pkg/ldap/servers/slapd/back-ldap/proto-ldap.h,v 1.15.2.12 2010/04/15 20:25:48 quanah Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2003-2009 The OpenLDAP Foundation.
+ * Copyright 2003-2010 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -57,6 +57,7 @@ int ldap_back_op_result( ldapconn_t *lc, Operation *op, SlapReply *rs,
 int ldap_back_cancel( ldapconn_t *lc, Operation *op, SlapReply *rs, ber_int_t msgid, ldap_back_send_t sendok );
 
 int ldap_back_init_cf( BackendInfo *bi );
+int ldap_pbind_init_cf( BackendInfo *bi );
 
 extern int ldap_back_conndn_cmp( const void *c1, const void *c2);
 extern int ldap_back_conn_cmp( const void *c1, const void *c2);
@@ -103,9 +104,11 @@ extern int slap_retry_info_parse( char *in, slap_retry_info_t *ri,
 extern int slap_retry_info_unparse( slap_retry_info_t *ri, struct berval *bvout );
 
 extern int slap_idassert_authzfrom_parse_cf( const char *fname, int lineno, const char *arg, slap_idassert_t *si );
+extern int slap_idassert_passthru_parse_cf( const char *fname, int lineno, const char *arg, slap_idassert_t *si );
 extern int slap_idassert_parse_cf( const char *fname, int lineno, int argc, char *argv[], slap_idassert_t *si );
 
 extern int chain_initialize( void );
+extern int pbind_initialize( void );
 #ifdef SLAP_DISTPROC
 extern int distproc_initialize( void );
 #endif

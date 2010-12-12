@@ -4,12 +4,15 @@ same IPC protocol as Arthur de Jong's nss-ldapd, and a complete
 copy of the nss-ldapd source is included here. It also handles
 PAM requests.
 
-To use this code, you will need the client-side stub library from
-nss-ldapd (which resides in nss-ldapd/nss). You will not need the
-nslcd daemon; this overlay replaces that part. You should already
-be familiar with the RFC2307 and RFC2307bis schema to use this
-overlay. See the nss-ldapd/README for more information on the
-schema and which features are supported.
+To use this code, you will need the client-side stuf library from
+nss-pam-ldapd.  You can get it from:
+http://arthurdejong.org/nss-pam-ldapd
+You will not need the nslcd daemon; this overlay replaces that part.
+To disable building of the nslcd daemon in nss-pam-ldapd, add the
+--disable-nslcd option to the nss-pam-ldapd configure script. You
+should already be familiar with the RFC2307 and RFC2307bis schema
+to use this overlay.  See the nss-pam-ldapd README for more information
+on the schema and which features are supported.
 
 To use the overlay, add:
 
@@ -118,7 +121,7 @@ in the server for the given user.
 ---
 This work is part of OpenLDAP Software <http://www.openldap.org/>.
 
-Copyright 1998-2009 The OpenLDAP Foundation.
+Copyright 1998-2010 The OpenLDAP Foundation.
 Portions Copyright 2008-2009 Howard Chu, Symas Corp. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without

@@ -1,10 +1,10 @@
-/*	$NetBSD: entry.c,v 1.1.1.2 2010/03/08 02:14:17 lukem Exp $	*/
+/*	$NetBSD: entry.c,v 1.1.1.3 2010/12/12 15:22:29 adam Exp $	*/
 
 /* entry.c - routines for dealing with entries */
-/* OpenLDAP: pkg/ldap/servers/slapd/entry.c,v 1.148.2.12 2009/08/14 21:04:55 quanah Exp */
+/* OpenLDAP: pkg/ldap/servers/slapd/entry.c,v 1.148.2.14 2010/04/16 15:03:36 quanah Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2009 The OpenLDAP Foundation.
+ * Copyright 1998-2010 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -820,6 +820,35 @@ int entry_header(EntryHeader *eh)
 	}
 	eh->data = (char *)ptr;
 	return LDAP_SUCCESS;
+}
+
+int
+entry_decode_dn( EntryHeader *eh, struct berval *dn, struct berval *ndn )
+{
+	int i;
+	unsigned char *ptr = (unsigned char *)eh->bv.bv_val;
+
+	assert( dn != NULL || ndn != NULL );
+
+	ptr = (unsigned char *)eh->data;
+	i = entry_getlen(&ptr);
+	if ( dn != NULL ) {
+		dn->bv_val = (char *) ptr;
+		dn->bv_len = i;
+	}
+
+	if ( ndn != NULL ) {
+		ptr += i + 1;
+		i = entry_getlen(&ptr);
+		ndn->bv_val = (char *) ptr;
+		ndn->bv_len = i;
+	}
+
+	Debug( LDAP_DEBUG_TRACE,
+		"entry_decode_dn: \"%s\"\n",
+		dn ? dn->bv_val : ndn->bv_val, 0, 0 );
+
+	return 0;
 }
 
 #ifdef SLAP_ZONE_ALLOC

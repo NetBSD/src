@@ -1,10 +1,10 @@
-/*	$NetBSD: sl_malloc.c,v 1.1.1.2 2010/03/08 02:14:18 lukem Exp $	*/
+/*	$NetBSD: sl_malloc.c,v 1.1.1.3 2010/12/12 15:22:45 adam Exp $	*/
 
 /* sl_malloc.c - malloc routines using a per-thread slab */
-/* OpenLDAP: pkg/ldap/servers/slapd/sl_malloc.c,v 1.39.2.10 2009/11/18 01:22:22 quanah Exp */
+/* OpenLDAP: pkg/ldap/servers/slapd/sl_malloc.c,v 1.39.2.13 2010/04/19 20:58:45 quanah Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2003-2009 The OpenLDAP Foundation.
+ * Copyright 2003-2010 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -368,7 +368,7 @@ slap_sl_malloc(
 			}
 		} else {
 			Debug( LDAP_DEBUG_TRACE,
-				"slap_sl_malloc of %lu bytes failed, using ch_malloc\n",
+				"sl_malloc %lu: ch_malloc\n",
 				(long)size, 0, 0);
 			return (void*)ch_malloc(size);
 		}

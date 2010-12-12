@@ -1,10 +1,10 @@
-/*	$NetBSD: result.c,v 1.1.1.3 2010/03/08 02:14:18 lukem Exp $	*/
+/*	$NetBSD: result.c,v 1.1.1.4 2010/12/12 15:22:38 adam Exp $	*/
 
 /* result.c - routines to send ldap results, errors, and referrals */
-/* OpenLDAP: pkg/ldap/servers/slapd/result.c,v 1.289.2.31 2009/11/22 16:29:34 quanah Exp */
+/* OpenLDAP: pkg/ldap/servers/slapd/result.c,v 1.289.2.33 2010/04/14 17:28:47 quanah Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2009 The OpenLDAP Foundation.
+ * Copyright 1998-2010 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -132,6 +132,50 @@ slap_req2res( ber_tag_t tag )
 	}
 
 	return tag;
+}
+
+#ifdef RS_ASSERT
+#elif 0 && defined LDAP_DEVEL /* FIXME: this should not crash. ITS#5340. */
+#define RS_ASSERT assert
+#else
+#define RS_ASSERT(cond) ((void) 0)
+#endif
+
+/* Set rs->sr_entry after obyeing and clearing sr_flags & REP_ENTRY_MASK. */
+void
+rs_replace_entry( Operation *op, SlapReply *rs, slap_overinst *on, Entry *e )
+{
+	slap_mask_t e_flags = rs->sr_flags & REP_ENTRY_MUSTFLUSH;
+
+	if ( e_flags && rs->sr_entry != NULL ) {
+		RS_ASSERT( e_flags != REP_ENTRY_MUSTFLUSH );
+		if ( !(e_flags & REP_ENTRY_MUSTRELEASE) ) {
+			entry_free( rs->sr_entry );
+		} else if ( on != NULL ) {
+			overlay_entry_release_ov( op, rs->sr_entry, 0, on );
+		} else {
+			be_entry_release_rw( op, rs->sr_entry, 0 );
+		}
+	}
+	rs->sr_flags &= ~REP_ENTRY_MASK;
+	rs->sr_entry = e;
+}
+
+/*
+ * Ensure rs->sr_entry is modifiable, by duplicating it if necessary.
+ * Obey sr_flags.  Set REP_ENTRY_<MODIFIABLE, and MUSTBEFREED if duplicated>.
+ * Return nonzero if rs->sr_entry was replaced.
+ */
+int
+rs_ensure_entry_modifiable( Operation *op, SlapReply *rs, slap_overinst *on )
+{
+	if ( rs->sr_flags & REP_ENTRY_MODIFIABLE ) {
+		RS_ASSERT((rs->sr_flags & REP_ENTRY_MUSTFLUSH)==REP_ENTRY_MUSTBEFREED);
+		return 0;
+	}
+	rs_replace_entry( op, rs, on, entry_dup( rs->sr_entry ));
+	rs->sr_flags |= REP_ENTRY_MODIFIABLE | REP_ENTRY_MUSTBEFREED;
+	return 1;
 }
 
 static long send_ldap_ber(

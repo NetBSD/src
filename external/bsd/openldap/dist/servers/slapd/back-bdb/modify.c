@@ -1,10 +1,10 @@
-/*	$NetBSD: modify.c,v 1.1.1.2 2010/03/08 02:14:18 lukem Exp $	*/
+/*	$NetBSD: modify.c,v 1.1.1.3 2010/12/12 15:22:58 adam Exp $	*/
 
 /* modify.c - bdb backend modify routine */
-/* OpenLDAP: pkg/ldap/servers/slapd/back-bdb/modify.c,v 1.156.2.17 2009/03/09 19:35:16 quanah Exp */
+/* OpenLDAP: pkg/ldap/servers/slapd/back-bdb/modify.c,v 1.156.2.19 2010/04/14 23:09:01 quanah Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2009 The OpenLDAP Foundation.
+ * Copyright 2000-2010 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -424,7 +424,13 @@ txnReturn:
 
 	ctrls[num_ctrls] = NULL;
 
-	slap_mods_opattrs( op, &op->orm_modlist, 1 );
+	/* Don't touch the opattrs, if this is a contextCSN update
+	 * initiated from updatedn */
+	if ( !be_isupdate(op) || !op->orm_modlist || op->orm_modlist->sml_next ||
+		 op->orm_modlist->sml_desc != slap_schema.si_ad_contextCSN ) {
+
+		slap_mods_opattrs( op, &op->orm_modlist, 1 );
+	}
 
 	if( 0 ) {
 retry:	/* transaction retry */

@@ -1,10 +1,10 @@
-/*	$NetBSD: chain.c,v 1.1.1.2 2010/03/08 02:14:18 lukem Exp $	*/
+/*	$NetBSD: chain.c,v 1.1.1.3 2010/12/12 15:23:04 adam Exp $	*/
 
 /* chain.c - chain LDAP operations */
-/* OpenLDAP: pkg/ldap/servers/slapd/back-ldap/chain.c,v 1.52.2.11 2009/08/26 00:50:19 quanah Exp */
+/* OpenLDAP: pkg/ldap/servers/slapd/back-ldap/chain.c,v 1.52.2.12 2010/04/13 20:23:28 kurt Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2003-2009 The OpenLDAP Foundation.
+ * Copyright 2003-2010 The OpenLDAP Foundation.
  * Portions Copyright 2003 Howard Chu.
  * All rights reserved.
  *

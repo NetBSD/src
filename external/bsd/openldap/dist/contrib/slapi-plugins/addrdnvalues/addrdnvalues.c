@@ -1,10 +1,10 @@
-/*	$NetBSD: addrdnvalues.c,v 1.1.1.2 2010/03/08 02:14:15 lukem Exp $	*/
+/*	$NetBSD: addrdnvalues.c,v 1.1.1.3 2010/12/12 15:19:16 adam Exp $	*/
 
 /* addrdnvalues.c */
-/* OpenLDAP: pkg/ldap/contrib/slapi-plugins/addrdnvalues/addrdnvalues.c,v 1.6.6.1 2009/08/17 21:49:00 quanah Exp */
+/* OpenLDAP: pkg/ldap/contrib/slapi-plugins/addrdnvalues/addrdnvalues.c,v 1.6.6.2 2010/04/13 20:22:31 kurt Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2003-2009 The OpenLDAP Foundation.
+ * Copyright 2003-2010 The OpenLDAP Foundation.
  * Copyright 2003-2004 PADL Software Pty Ltd.
  * All rights reserved.
  *

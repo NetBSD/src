@@ -1,8 +1,8 @@
 #! /bin/sh
-# OpenLDAP: pkg/ldap/tests/scripts/test056-monitor,v 1.2.2.5 2009/08/17 17:43:01 quanah Exp
+# OpenLDAP: pkg/ldap/tests/scripts/test056-monitor,v 1.2.2.7 2010/04/19 19:14:36 quanah Exp
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 1998-2008 The OpenLDAP Foundation.
+## Copyright 1998-2010 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -69,9 +69,9 @@ fi
 # Compare results, ignoring possible difference of IPv4/IPv6 localhost address
 localrewrite='s/=127\.0\.0\.1:/=LOCAL:/; s/=\[::1\]:/=LOCAL:/'
 echo "Filtering ldapsearch results..."
-sed -e "$localrewrite" < $SEARCHOUT   | . $LDIFFILTER > $SEARCHFLT
+sed -e "$localrewrite" < $SEARCHOUT | $LDIFFILTER > $SEARCHFLT
 echo "Filtering expected data..."
-. $CONFFILTER < $MONITOROUT1 | sed -e "$localrewrite" | . $LDIFFILTER > $LDIFFLT
+. $CONFFILTER < $MONITOROUT1 | sed -e "$localrewrite" | $LDIFFILTER > $LDIFFLT
 echo "Comparing filter output..."
 $CMP $SEARCHFLT $LDIFFLT > $CMPOUT
 
@@ -97,7 +97,7 @@ if test $RC != 0 ; then
 fi
 
 echo "Filtering ldapsearch results..."
-. $LDIFFILTER < $SEARCHOUT > $SEARCHFLT
+$LDIFFILTER -b monitor < $SEARCHOUT > $SEARCHFLT
 
 TMPMONITOROUT2=$MONITOROUT2
 case $BACKEND in
@@ -132,7 +132,7 @@ if test $RC != 0 ; then
 fi
 
 echo "Filtering ldapsearch results..."
-. $LDIFFILTER < $SEARCHOUT > $SEARCHFLT
+$LDIFFILTER -b monitor < $SEARCHOUT > $SEARCHFLT
 
 echo "Comparing filter output..."
 $CMP $SEARCHFLT $MONITOROUT3 > $CMPOUT
@@ -157,7 +157,7 @@ if test $RC != 0 ; then
 fi
 
 echo "Filtering ldapsearch results..."
-. $LDIFFILTER < $SEARCHOUT > $SEARCHFLT
+$LDIFFILTER -b monitor < $SEARCHOUT > $SEARCHFLT
 
 echo "Comparing filter output..."
 $CMP $SEARCHFLT $MONITOROUT4 > $CMPOUT

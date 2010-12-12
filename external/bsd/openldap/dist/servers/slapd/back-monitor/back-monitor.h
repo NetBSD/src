@@ -1,10 +1,10 @@
-/*	$NetBSD: back-monitor.h,v 1.1.1.2 2010/03/08 02:14:19 lukem Exp $	*/
+/*	$NetBSD: back-monitor.h,v 1.1.1.3 2010/12/12 15:23:13 adam Exp $	*/
 
 /* back-monitor.h - ldap monitor back-end header file */
-/* OpenLDAP: pkg/ldap/servers/slapd/back-monitor/back-monitor.h,v 1.52.2.8 2009/08/25 22:48:09 quanah Exp */
+/* OpenLDAP: pkg/ldap/servers/slapd/back-monitor/back-monitor.h,v 1.52.2.9 2010/04/13 20:23:32 kurt Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2001-2009 The OpenLDAP Foundation.
+ * Copyright 2001-2010 The OpenLDAP Foundation.
  * Portions Copyright 2001-2003 Pierangelo Masarati.
  * All rights reserved.
  *

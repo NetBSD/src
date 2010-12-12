@@ -1,10 +1,10 @@
-/*	$NetBSD: passwd.c,v 1.1.1.2 2010/03/08 02:14:15 lukem Exp $	*/
+/*	$NetBSD: passwd.c,v 1.1.1.3 2010/12/12 15:19:10 adam Exp $	*/
 
 /* passwd.c - password lookup routines */
-/* OpenLDAP: pkg/ldap/contrib/slapd-modules/nssov/passwd.c,v 1.1.2.5 2009/08/17 21:48:58 quanah Exp */
+/* OpenLDAP: pkg/ldap/contrib/slapd-modules/nssov/passwd.c,v 1.1.2.7 2010/04/15 21:32:56 quanah Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>. 
  *
- * Copyright 2008-2009 The OpenLDAP Foundation.
+ * Copyright 2008-2010 The OpenLDAP Foundation.
  * Portions Copyright 2008 by Howard Chu, Symas Corp.
  * All rights reserved.
  *
@@ -377,7 +377,7 @@ static int write_passwd(nssov_passwd_cbp *cbp,Entry *entry)
 						names[i].bv_val);
 					continue;
 				}
-				WRITE_INT32(cbp->fp,NSLCD_RESULT_SUCCESS);
+				WRITE_INT32(cbp->fp,NSLCD_RESULT_BEGIN);
 				WRITE_BERVAL(cbp->fp,&names[i]);
 				WRITE_BERVAL(cbp->fp,&passwd);
 				WRITE_TYPE(cbp->fp,uid,uid_t);
@@ -398,7 +398,7 @@ NSSOV_HANDLE(
 	char fbuf[1024];
 	struct berval filter = {sizeof(fbuf)};
 	filter.bv_val = fbuf;
-	READ_STRING_BUF2(fp,cbp.buf,sizeof(cbp.buf));
+	READ_STRING(fp,cbp.buf);
 	cbp.name.bv_len = tmpint32;
 	cbp.name.bv_val = cbp.buf;
 	if (!isvalidusername(&cbp.name)) {

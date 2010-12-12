@@ -1,10 +1,10 @@
-/*	$NetBSD: init.c,v 1.1.1.3 2010/03/08 02:14:18 lukem Exp $	*/
+/*	$NetBSD: init.c,v 1.1.1.4 2010/12/12 15:23:05 adam Exp $	*/
 
 /* init.c - initialize ldap backend */
-/* OpenLDAP: pkg/ldap/servers/slapd/back-ldap/init.c,v 1.99.2.12 2009/08/26 00:50:19 quanah Exp */
+/* OpenLDAP: pkg/ldap/servers/slapd/back-ldap/init.c,v 1.99.2.16 2010/04/15 20:25:48 quanah Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2003-2009 The OpenLDAP Foundation.
+ * Copyright 2003-2010 The OpenLDAP Foundation.
  * Portions Copyright 1999-2003 Howard Chu.
  * Portions Copyright 2000-2003 Pierangelo Masarati.
  * All rights reserved.
@@ -38,6 +38,7 @@ static const ldap_extra_t ldap_extra = {
 	ldap_back_proxy_authz_ctrl,
 	ldap_back_controls_free,
 	slap_idassert_authzfrom_parse_cf,
+	slap_idassert_passthru_parse_cf,
 	slap_idassert_parse_cf,
 	slap_retry_info_destroy,
 	slap_retry_info_parse,
@@ -102,6 +103,11 @@ ldap_back_initialize( BackendInfo *bi )
 	bi->bi_extra = (void *)&ldap_extra;
 
 	rc = chain_initialize();
+	if ( rc ) {
+		return rc;
+	}
+
+	rc = pbind_initialize();
 	if ( rc ) {
 		return rc;
 	}
@@ -300,50 +306,11 @@ ldap_back_db_destroy( Backend *be, ConfigReply *cr )
 			ber_bvarray_free( li->li_bvuri );
 			li->li_bvuri = NULL;
 		}
-		if ( !BER_BVISNULL( &li->li_acl_authcID ) ) {
-			ch_free( li->li_acl_authcID.bv_val );
-			BER_BVZERO( &li->li_acl_authcID );
-		}
-		if ( !BER_BVISNULL( &li->li_acl_authcDN ) ) {
-			ch_free( li->li_acl_authcDN.bv_val );
-			BER_BVZERO( &li->li_acl_authcDN );
-		}
-		if ( !BER_BVISNULL( &li->li_acl_passwd ) ) {
-			ch_free( li->li_acl_passwd.bv_val );
-			BER_BVZERO( &li->li_acl_passwd );
-		}
-		if ( !BER_BVISNULL( &li->li_acl_sasl_mech ) ) {
-			ch_free( li->li_acl_sasl_mech.bv_val );
-			BER_BVZERO( &li->li_acl_sasl_mech );
-		}
-		if ( !BER_BVISNULL( &li->li_acl_sasl_realm ) ) {
-			ch_free( li->li_acl_sasl_realm.bv_val );
-			BER_BVZERO( &li->li_acl_sasl_realm );
-		}
-		if ( !BER_BVISNULL( &li->li_idassert_authcID ) ) {
-			ch_free( li->li_idassert_authcID.bv_val );
-			BER_BVZERO( &li->li_idassert_authcID );
-		}
-		if ( !BER_BVISNULL( &li->li_idassert_authcDN ) ) {
-			ch_free( li->li_idassert_authcDN.bv_val );
-			BER_BVZERO( &li->li_idassert_authcDN );
-		}
-		if ( !BER_BVISNULL( &li->li_idassert_passwd ) ) {
-			ch_free( li->li_idassert_passwd.bv_val );
-			BER_BVZERO( &li->li_idassert_passwd );
-		}
-		if ( !BER_BVISNULL( &li->li_idassert_authzID ) ) {
-			ch_free( li->li_idassert_authzID.bv_val );
-			BER_BVZERO( &li->li_idassert_authzID );
-		}
-		if ( !BER_BVISNULL( &li->li_idassert_sasl_mech ) ) {
-			ch_free( li->li_idassert_sasl_mech.bv_val );
-			BER_BVZERO( &li->li_idassert_sasl_mech );
-		}
-		if ( !BER_BVISNULL( &li->li_idassert_sasl_realm ) ) {
-			ch_free( li->li_idassert_sasl_realm.bv_val );
-			BER_BVZERO( &li->li_idassert_sasl_realm );
-		}
+
+		bindconf_free( &li->li_tls );
+		bindconf_free( &li->li_acl );
+		bindconf_free( &li->li_idassert.si_bc );
+
 		if ( li->li_idassert_authz != NULL ) {
 			ber_bvarray_free( li->li_idassert_authz );
 			li->li_idassert_authz = NULL;

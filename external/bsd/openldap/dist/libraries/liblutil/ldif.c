@@ -1,10 +1,10 @@
-/*	$NetBSD: ldif.c,v 1.1.1.2 2010/03/08 02:14:17 lukem Exp $	*/
+/*	$NetBSD: ldif.c,v 1.1.1.3 2010/12/12 15:22:08 adam Exp $	*/
 
 /* ldif.c - routines for dealing with LDIF files */
-/* OpenLDAP: pkg/ldap/libraries/liblutil/ldif.c,v 1.15.2.8 2009/07/08 00:28:21 quanah Exp */
+/* OpenLDAP: pkg/ldap/libraries/liblutil/ldif.c,v 1.15.2.9 2010/04/13 20:23:06 kurt Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2009 The OpenLDAP Foundation.
+ * Copyright 1998-2010 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

@@ -1,10 +1,10 @@
-/*	$NetBSD: slapcommon.h,v 1.1.1.2 2010/03/08 02:14:18 lukem Exp $	*/
+/*	$NetBSD: slapcommon.h,v 1.1.1.3 2010/12/12 15:22:48 adam Exp $	*/
 
 /* slapcommon.h - common definitions for the slap tools */
-/* OpenLDAP: pkg/ldap/servers/slapd/slapcommon.h,v 1.14.2.8 2009/06/02 22:36:18 quanah Exp */
+/* OpenLDAP: pkg/ldap/servers/slapd/slapcommon.h,v 1.14.2.10 2010/04/14 22:59:10 quanah Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2009 The OpenLDAP Foundation.
+ * Copyright 1998-2010 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -45,8 +45,9 @@ typedef struct tool_vars {
 	int tv_nosubordinates;
 	int tv_dryrun;
 	int tv_jumpline;
-	Filter *tv_filter;
 	struct berval tv_sub_ndn;
+	int tv_scope;
+	Filter *tv_filter;
 	struct LDIFFP	*tv_ldiffp;
 	struct berval tv_baseDN;
 	struct berval tv_authcDN;
@@ -78,8 +79,9 @@ extern tool_vars tool_globals;
 #define continuemode tool_globals.tv_continuemode
 #define nosubordinates tool_globals.tv_nosubordinates
 #define dryrun tool_globals.tv_dryrun
-#define filter tool_globals.tv_filter
 #define sub_ndn tool_globals.tv_sub_ndn
+#define scope tool_globals.tv_scope
+#define filter tool_globals.tv_filter
 #define ldiffp tool_globals.tv_ldiffp
 #define baseDN tool_globals.tv_baseDN
 #define authcDN tool_globals.tv_authcDN

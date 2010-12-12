@@ -1,10 +1,10 @@
-/*	$NetBSD: thr_stub.c,v 1.1.1.3 2010/03/08 02:14:17 lukem Exp $	*/
+/*	$NetBSD: thr_stub.c,v 1.1.1.4 2010/12/12 15:21:43 adam Exp $	*/
 
 /* thr_stub.c - stubs for the threads */
-/* OpenLDAP: pkg/ldap/libraries/libldap_r/thr_stub.c,v 1.27.2.10 2009/06/27 18:47:17 quanah Exp */
+/* OpenLDAP: pkg/ldap/libraries/libldap_r/thr_stub.c,v 1.27.2.11 2010/04/13 20:23:03 kurt Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2009 The OpenLDAP Foundation.
+ * Copyright 1998-2010 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

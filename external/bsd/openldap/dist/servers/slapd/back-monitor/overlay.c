@@ -1,9 +1,9 @@
-/*	$NetBSD: overlay.c,v 1.1.1.2 2010/03/08 02:14:19 lukem Exp $	*/
+/*	$NetBSD: overlay.c,v 1.1.1.3 2010/12/12 15:23:16 adam Exp $	*/
 
 /* overlay.c - deals with overlay subsystem */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2001-2009 The OpenLDAP Foundation.
+ * Copyright 2001-2010 The OpenLDAP Foundation.
  * Portions Copyright 2001-2003 Pierangelo Masarati.
  * All rights reserved.
  *

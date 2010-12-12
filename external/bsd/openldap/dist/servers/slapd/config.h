@@ -1,10 +1,10 @@
-/*	$NetBSD: config.h,v 1.1.1.2 2010/03/08 02:14:17 lukem Exp $	*/
+/*	$NetBSD: config.h,v 1.1.1.3 2010/12/12 15:22:26 adam Exp $	*/
 
 /* config.h - configuration abstraction structure */
-/* OpenLDAP: pkg/ldap/servers/slapd/config.h,v 1.34.2.19 2009/08/25 22:44:25 quanah Exp */
+/* OpenLDAP: pkg/ldap/servers/slapd/config.h,v 1.34.2.20 2010/04/13 20:23:13 kurt Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2009 The OpenLDAP Foundation.
+ * Copyright 1998-2010 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

@@ -1,10 +1,10 @@
-/*	$NetBSD: pam.c,v 1.1.1.1 2010/03/08 02:14:15 lukem Exp $	*/
+/*	$NetBSD: pam.c,v 1.1.1.2 2010/12/12 15:19:10 adam Exp $	*/
 
 /* pam.c - pam processing routines */
-/* OpenLDAP: pkg/ldap/contrib/slapd-modules/nssov/pam.c,v 1.13.2.5 2009/10/03 19:40:03 hyc Exp */
+/* OpenLDAP: pkg/ldap/contrib/slapd-modules/nssov/pam.c,v 1.13.2.8 2010/04/15 21:32:56 quanah Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>. 
  *
- * Copyright 2008-2009 The OpenLDAP Foundation.
+ * Copyright 2008-2010 The OpenLDAP Foundation.
  * Portions Copyright 2008 by Howard Chu, Symas Corp.
  * All rights reserved.
  *
@@ -102,24 +102,17 @@ static int pam_bindcb(
 	return LDAP_SUCCESS;
 }
 
-int pam_do_bind(nssov_info *ni,TFILE *fp,Operation *op,
+static int pam_uid2dn(nssov_info *ni, Operation *op,
 	struct paminfo *pi)
 {
-	int rc;
-	slap_callback cb = {0};
-	SlapReply rs = {REP_RESULT};
 	struct berval sdn;
 
-	pi->msg.bv_val = pi->pwd.bv_val;
-	pi->msg.bv_len = 0;
-	pi->authz = NSLCD_PAM_SUCCESS;
 	BER_BVZERO(&pi->dn);
 
 	if (!isvalidusername(&pi->uid)) {
-		Debug(LDAP_DEBUG_ANY,"nssov_pam_do_bind(%s): invalid user name\n",
+		Debug(LDAP_DEBUG_ANY,"nssov_pam_uid2dn(%s): invalid user name\n",
 			pi->uid.bv_val,0,0);
-		rc = NSLCD_PAM_USER_UNKNOWN;
-		goto finish;
+		return NSLCD_PAM_USER_UNKNOWN;
 	}
 
 	if (ni->ni_pam_opts & NI_PAM_SASL2DN) {
@@ -143,11 +136,26 @@ int pam_do_bind(nssov_info *ni,TFILE *fp,Operation *op,
 			dnNormalize( 0, NULL, NULL, &sdn, &pi->dn, op->o_tmpmemctx );
 		}
 	}
-	BER_BVZERO(&sdn);
 	if (BER_BVISEMPTY(&pi->dn)) {
-		rc = NSLCD_PAM_USER_UNKNOWN;
-		goto finish;
+		return NSLCD_PAM_USER_UNKNOWN;
 	}
+	return 0;
+}
+
+int pam_do_bind(nssov_info *ni,TFILE *fp,Operation *op,
+	struct paminfo *pi)
+{
+	int rc;
+	slap_callback cb = {0};
+	SlapReply rs = {REP_RESULT};
+
+	pi->msg.bv_val = pi->pwd.bv_val;
+	pi->msg.bv_len = 0;
+	pi->authz = NSLCD_PAM_SUCCESS;
+	BER_BVZERO(&pi->dn);
+
+	rc = pam_uid2dn(ni, op, pi);
+	if (rc) goto finish;
 
 	if (BER_BVISEMPTY(&pi->pwd)) {
 		rc = NSLCD_PAM_IGNORE;
@@ -209,16 +217,16 @@ int pam_authc(nssov_info *ni,TFILE *fp,Operation *op)
 	struct paminfo pi;
 
 
-	READ_STRING_BUF2(fp,uidc,sizeof(uidc));
+	READ_STRING(fp,uidc);
 	pi.uid.bv_val = uidc;
 	pi.uid.bv_len = tmpint32;
-	READ_STRING_BUF2(fp,dnc,sizeof(dnc));
+	READ_STRING(fp,dnc);
 	pi.dn.bv_val = dnc;
 	pi.dn.bv_len = tmpint32;
-	READ_STRING_BUF2(fp,svcc,sizeof(svcc));
+	READ_STRING(fp,svcc);
 	pi.svc.bv_val = svcc;
 	pi.svc.bv_len = tmpint32;
-	READ_STRING_BUF2(fp,pwdc,sizeof(pwdc));
+	READ_STRING(fp,pwdc);
 	pi.pwd.bv_val = pwdc;
 	pi.pwd.bv_len = tmpint32;
 
@@ -229,7 +237,7 @@ int pam_authc(nssov_info *ni,TFILE *fp,Operation *op)
 finish:
 	WRITE_INT32(fp,NSLCD_VERSION);
 	WRITE_INT32(fp,NSLCD_ACTION_PAM_AUTHC);
-	WRITE_INT32(fp,NSLCD_RESULT_SUCCESS);
+	WRITE_INT32(fp,NSLCD_RESULT_BEGIN);
 	WRITE_BERVAL(fp,&pi.uid);
 	WRITE_BERVAL(fp,&pi.dn);
 	WRITE_INT32(fp,rc);
@@ -246,6 +254,13 @@ static struct berval svcmsg =
 	BER_BVC("Access denied for this service");
 static struct berval uidmsg =
 	BER_BVC("Access denied by UID check");
+
+static int pam_compare_cb(Operation *op, SlapReply *rs)
+{
+	if (rs->sr_err == LDAP_COMPARE_TRUE)
+		op->o_callback->sc_private = (void *)1;
+	return LDAP_SUCCESS;
+}
 
 int pam_authz(nssov_info *ni,TFILE *fp,Operation *op)
 {
@@ -264,31 +279,36 @@ int pam_authz(nssov_info *ni,TFILE *fp,Operation *op)
 	SlapReply rs = {REP_RESULT};
 	slap_callback cb = {0};
 
-	READ_STRING_BUF2(fp,uidc,sizeof(uidc));
+	READ_STRING(fp,uidc);
 	uid.bv_val = uidc;
 	uid.bv_len = tmpint32;
-	READ_STRING_BUF2(fp,dnc,sizeof(dnc));
+	READ_STRING(fp,dnc);
 	dn.bv_val = dnc;
 	dn.bv_len = tmpint32;
-	READ_STRING_BUF2(fp,svcc,sizeof(svcc));
+	READ_STRING(fp,svcc);
 	svc.bv_val = svcc;
 	svc.bv_len = tmpint32;
-	READ_STRING_BUF2(fp,svcc,sizeof(ruserc));
+	READ_STRING(fp,ruserc);
 	ruser.bv_val = ruserc;
 	ruser.bv_len = tmpint32;
-	READ_STRING_BUF2(fp,svcc,sizeof(rhostc));
+	READ_STRING(fp,rhostc);
 	rhost.bv_val = rhostc;
 	rhost.bv_len = tmpint32;
-	READ_STRING_BUF2(fp,svcc,sizeof(ttyc));
+	READ_STRING(fp,ttyc);
 	tty.bv_val = ttyc;
 	tty.bv_len = tmpint32;
 
 	Debug(LDAP_DEBUG_TRACE,"nssov_pam_authz(%s)\n",dn.bv_val,0,0);
 
-	/* We don't do authorization if they weren't authenticated by us */
+	/* If we didn't do authc, we don't have a DN yet */
 	if (BER_BVISEMPTY(&dn)) {
-		rc = NSLCD_PAM_USER_UNKNOWN;
-		goto finish;
+		struct paminfo pi;
+		pi.uid = uid;
+		pi.svc = svc;
+
+		rc = pam_uid2dn(ni, op, &pi);
+		if (rc) goto finish;
+		dn = pi.dn;
 	}
 
 	/* See if they have access to the host and service */
@@ -341,7 +361,7 @@ int pam_authz(nssov_info *ni,TFILE *fp,Operation *op)
 			}
 		}
 
-		cb.sc_response = slap_null_cb;
+		cb.sc_response = pam_compare_cb;
 		cb.sc_private = NULL;
 		op->o_tag = LDAP_REQ_COMPARE;
 		op->o_req_dn = hostdn;
@@ -350,7 +370,7 @@ int pam_authz(nssov_info *ni,TFILE *fp,Operation *op)
 		ava.aa_value = svc;
 		op->orc_ava = &ava;
 		rc = op->o_bd->be_compare( op, &rs );
-		if ( rs.sr_err != LDAP_COMPARE_TRUE ) {
+		if ( cb.sc_private == NULL ) {
 			authzmsg = svcmsg;
 			rc = NSLCD_PAM_PERM_DENIED;
 			goto finish;
@@ -452,7 +472,7 @@ int pam_authz(nssov_info *ni,TFILE *fp,Operation *op)
 finish:
 	WRITE_INT32(fp,NSLCD_VERSION);
 	WRITE_INT32(fp,NSLCD_ACTION_PAM_AUTHZ);
-	WRITE_INT32(fp,NSLCD_RESULT_SUCCESS);
+	WRITE_INT32(fp,NSLCD_RESULT_BEGIN);
 	WRITE_BERVAL(fp,&uid);
 	WRITE_BERVAL(fp,&dn);
 	WRITE_INT32(fp,rc);
@@ -480,22 +500,22 @@ static int pam_sess(nssov_info *ni,TFILE *fp,Operation *op,int action)
 	time_t stamp;
 	Modifications mod;
 
-	READ_STRING_BUF2(fp,uidc,sizeof(uidc));
+	READ_STRING(fp,uidc);
 	uid.bv_val = uidc;
 	uid.bv_len = tmpint32;
-	READ_STRING_BUF2(fp,dnc,sizeof(dnc));
+	READ_STRING(fp,dnc);
 	dn.bv_val = dnc;
 	dn.bv_len = tmpint32;
-	READ_STRING_BUF2(fp,svcc,sizeof(svcc));
+	READ_STRING(fp,svcc);
 	svc.bv_val = svcc;
 	svc.bv_len = tmpint32;
-	READ_STRING_BUF2(fp,ttyc,sizeof(ttyc));
+	READ_STRING(fp,ttyc);
 	tty.bv_val = ttyc;
 	tty.bv_len = tmpint32;
-	READ_STRING_BUF2(fp,rhostc,sizeof(rhostc));
+	READ_STRING(fp,rhostc);
 	rhost.bv_val = rhostc;
 	rhost.bv_len = tmpint32;
-	READ_STRING_BUF2(fp,ruserc,sizeof(ruserc));
+	READ_STRING(fp,ruserc);
 	ruser.bv_val = ruserc;
 	ruser.bv_len = tmpint32;
 	READ_INT32(fp,stamp);
@@ -559,7 +579,7 @@ static int pam_sess(nssov_info *ni,TFILE *fp,Operation *op,int action)
 
 	WRITE_INT32(fp,NSLCD_VERSION);
 	WRITE_INT32(fp,action);
-	WRITE_INT32(fp,NSLCD_RESULT_SUCCESS);
+	WRITE_INT32(fp,NSLCD_RESULT_BEGIN);
 	WRITE_INT32(fp,op->o_time);
 	return 0;
 }
@@ -586,19 +606,19 @@ int pam_pwmod(nssov_info *ni,TFILE *fp,Operation *op)
 	struct paminfo pi;
 	int rc;
 
-	READ_STRING_BUF2(fp,uidc,sizeof(uidc));
+	READ_STRING(fp,uidc);
 	pi.uid.bv_val = uidc;
 	pi.uid.bv_len = tmpint32;
-	READ_STRING_BUF2(fp,dnc,sizeof(dnc));
+	READ_STRING(fp,dnc);
 	pi.dn.bv_val = dnc;
 	pi.dn.bv_len = tmpint32;
-	READ_STRING_BUF2(fp,svcc,sizeof(svcc));
+	READ_STRING(fp,svcc);
 	pi.svc.bv_val = svcc;
 	pi.svc.bv_len = tmpint32;
-	READ_STRING_BUF2(fp,opwc,sizeof(opwc));
+	READ_STRING(fp,opwc);
 	pi.pwd.bv_val = opwc;
 	pi.pwd.bv_len = tmpint32;
-	READ_STRING_BUF2(fp,npwc,sizeof(npwc));
+	READ_STRING(fp,npwc);
 	npw.bv_val = npwc;
 	npw.bv_len = tmpint32;
 
@@ -648,7 +668,7 @@ int pam_pwmod(nssov_info *ni,TFILE *fp,Operation *op)
 	}
 	WRITE_INT32(fp,NSLCD_VERSION);
 	WRITE_INT32(fp,NSLCD_ACTION_PAM_PWMOD);
-	WRITE_INT32(fp,NSLCD_RESULT_SUCCESS);
+	WRITE_INT32(fp,NSLCD_RESULT_BEGIN);
 	WRITE_BERVAL(fp,&pi.uid);
 	WRITE_BERVAL(fp,&pi.dn);
 	WRITE_INT32(fp,rc);

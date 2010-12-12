@@ -1,10 +1,10 @@
-/*	$NetBSD: denyop.c,v 1.1.1.2 2010/03/08 02:14:14 lukem Exp $	*/
+/*	$NetBSD: denyop.c,v 1.1.1.3 2010/12/12 15:19:05 adam Exp $	*/
 
 /* denyop.c - Denies operations */
-/* OpenLDAP: pkg/ldap/contrib/slapd-modules/denyop/denyop.c,v 1.2.2.4 2009/01/22 00:00:45 kurt Exp */
+/* OpenLDAP: pkg/ldap/contrib/slapd-modules/denyop/denyop.c,v 1.2.2.5 2010/04/13 20:22:27 kurt Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2004-2009 The OpenLDAP Foundation.
+ * Copyright 2004-2010 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

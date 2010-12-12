@@ -1,10 +1,10 @@
-/*	$NetBSD: ldapcompare.c,v 1.1.1.2 2010/03/08 02:14:14 lukem Exp $	*/
+/*	$NetBSD: ldapcompare.c,v 1.1.1.3 2010/12/12 15:18:11 adam Exp $	*/
 
 /* ldapcompare.c -- LDAP compare tool */
-/* OpenLDAP: pkg/ldap/clients/tools/ldapcompare.c,v 1.43.2.7 2009/08/13 00:55:06 quanah Exp */
+/* OpenLDAP: pkg/ldap/clients/tools/ldapcompare.c,v 1.43.2.9 2010/04/15 22:16:49 quanah Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2009 The OpenLDAP Foundation.
+ * Copyright 1998-2010 The OpenLDAP Foundation.
  * Portions Copyright 1998-2003 Kurt D. Zeilenga.
  * Portions Copyright 1998-2001 Net Boolean Incorporated.
  * All rights reserved.
@@ -231,16 +231,6 @@ main( int argc, char **argv )
 	}
 
 	ld = tool_conn_setup( 0, 0 );
-
-	if ( pw_file || want_bindpw ) {
-		if ( pw_file ) {
-			rc = lutil_get_filed_password( pw_file, &passwd );
-			if( rc ) return EXIT_FAILURE;
-		} else {
-			passwd.bv_val = getpassphrase( _("Enter LDAP Password: ") );
-			passwd.bv_len = passwd.bv_val ? strlen( passwd.bv_val ) : 0;
-		}
-	}
 
 	tool_bind( ld );
 

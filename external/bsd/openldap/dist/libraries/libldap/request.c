@@ -1,9 +1,9 @@
-/*	$NetBSD: request.c,v 1.1.1.3 2010/03/08 02:14:16 lukem Exp $	*/
+/*	$NetBSD: request.c,v 1.1.1.4 2010/12/12 15:21:35 adam Exp $	*/
 
-/* OpenLDAP: pkg/ldap/libraries/libldap/request.c,v 1.125.2.15 2009/03/05 19:07:21 quanah Exp */
+/* OpenLDAP: pkg/ldap/libraries/libldap/request.c,v 1.125.2.17 2010/06/10 17:39:48 quanah Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2009 The OpenLDAP Foundation.
+ * Copyright 1998-2010 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -126,10 +126,14 @@ ldap_send_initial_request(
 			if (ld->ld_options.ldo_cldapdn)
 				ldap_memfree(ld->ld_options.ldo_cldapdn);
 			ld->ld_options.ldo_cldapdn = ldap_strdup(dn);
+			ber_free( ber, 1 );
 			return 0;
 		}
 		if (msgtype != LDAP_REQ_ABANDON && msgtype != LDAP_REQ_SEARCH)
+		{
+			ber_free( ber, 1 );
 			return LDAP_PARAM_ERROR;
+		}
 	}
 #endif
 #ifdef LDAP_R_COMPILE

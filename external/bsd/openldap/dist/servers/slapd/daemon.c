@@ -1,9 +1,9 @@
-/*	$NetBSD: daemon.c,v 1.1.1.3 2010/03/08 02:14:17 lukem Exp $	*/
+/*	$NetBSD: daemon.c,v 1.1.1.4 2010/12/12 15:22:28 adam Exp $	*/
 
-/* OpenLDAP: pkg/ldap/servers/slapd/daemon.c,v 1.380.2.33 2009/11/17 17:08:41 quanah Exp */
+/* OpenLDAP: pkg/ldap/servers/slapd/daemon.c,v 1.380.2.35 2010/04/13 20:23:14 kurt Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2009 The OpenLDAP Foundation.
+ * Copyright 1998-2010 The OpenLDAP Foundation.
  * Portions Copyright 2007 by Howard Chu, Symas Corporation.
  * All rights reserved.
  *
@@ -1722,9 +1722,12 @@ close_listeners(
 
 	for ( l = 0; slap_listeners[l] != NULL; l++ ) {
 		Listener *lr = slap_listeners[l];
+		slap_listeners[l] = NULL;
 
 		if ( lr->sl_sd != AC_SOCKET_INVALID ) {
-			if ( remove ) slapd_remove( lr->sl_sd, NULL, 0, 0, 0 );
+			int s = lr->sl_sd;
+			lr->sl_sd = AC_SOCKET_INVALID;
+			if ( remove ) slapd_remove( s, NULL, 0, 0, 0 );
 
 #ifdef LDAP_PF_LOCAL
 			if ( lr->sl_sa.sa_addr.sa_family == AF_LOCAL ) {
@@ -1732,7 +1735,7 @@ close_listeners(
 			}
 #endif /* LDAP_PF_LOCAL */
 
-			slapd_close( lr->sl_sd );
+			slapd_close( s );
 		}
 
 		if ( lr->sl_url.bv_val ) {
@@ -1744,7 +1747,6 @@ close_listeners(
 		}
 
 		free( lr );
-		slap_listeners[l] = NULL;
 	}
 }
 

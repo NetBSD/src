@@ -1,10 +1,10 @@
-/*	$NetBSD: init.c,v 1.1.1.2 2010/03/08 02:14:19 lukem Exp $	*/
+/*	$NetBSD: init.c,v 1.1.1.3 2010/12/12 15:23:21 adam Exp $	*/
 
 /* init.c - initialize relay backend */
-/* OpenLDAP: pkg/ldap/servers/slapd/back-relay/init.c,v 1.19.2.8 2009/08/12 23:57:40 quanah Exp */
+/* OpenLDAP: pkg/ldap/servers/slapd/back-relay/init.c,v 1.19.2.9 2010/04/13 20:23:38 kurt Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2004-2009 The OpenLDAP Foundation.
+ * Copyright 2004-2010 The OpenLDAP Foundation.
  * Portions Copyright 2004 Pierangelo Masarati.
  * All rights reserved.
  *

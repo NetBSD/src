@@ -1,9 +1,9 @@
-/*	$NetBSD: cyrus.c,v 1.1.1.2 2010/03/08 02:14:16 lukem Exp $	*/
+/*	$NetBSD: cyrus.c,v 1.1.1.3 2010/12/12 15:21:30 adam Exp $	*/
 
-/* OpenLDAP: pkg/ldap/libraries/libldap/cyrus.c,v 1.133.2.15 2009/08/25 23:04:13 quanah Exp */
+/* OpenLDAP: pkg/ldap/libraries/libldap/cyrus.c,v 1.133.2.18 2010/06/12 22:06:11 quanah Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2009 The OpenLDAP Foundation.
+ * Copyright 1998-2010 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -1044,6 +1044,25 @@ ldap_int_sasl_get_option( LDAP *ld, int option, void *arg )
 			/* this option is write only */
 			return -1;
 
+#ifdef SASL_GSS_CREDS
+		case LDAP_OPT_X_SASL_GSS_CREDS: {
+			sasl_conn_t *ctx;
+			int sc;
+
+			if ( ld->ld_defconn == NULL )
+				return -1;
+
+			ctx = ld->ld_defconn->lconn_sasl_authctx;
+			if ( ctx == NULL )
+				return -1;
+
+			sc = sasl_getprop( ctx, SASL_GSS_CREDS, arg );
+			if ( sc != SASL_OK )
+				return -1;
+			}
+			break;
+#endif
+
 		default:
 			return -1;
 	}
@@ -1125,6 +1144,25 @@ ldap_int_sasl_set_option( LDAP *ld, int option, void *arg )
 
 		return sc == LDAP_SUCCESS ? 0 : -1;
 		}
+
+#ifdef SASL_GSS_CREDS
+	case LDAP_OPT_X_SASL_GSS_CREDS: {
+		sasl_conn_t *ctx;
+		int sc;
+
+		if ( ld->ld_defconn == NULL )
+			return -1;
+
+		ctx = ld->ld_defconn->lconn_sasl_authctx;
+		if ( ctx == NULL )
+			return -1;
+
+		sc = sasl_setprop( ctx, SASL_GSS_CREDS, arg );
+		if ( sc != SASL_OK )
+			return -1;
+		}
+		break;
+#endif
 
 	default:
 		return -1;

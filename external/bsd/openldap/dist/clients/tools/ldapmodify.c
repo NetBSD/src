@@ -1,10 +1,10 @@
-/*	$NetBSD: ldapmodify.c,v 1.1.1.2 2010/03/08 02:14:14 lukem Exp $	*/
+/*	$NetBSD: ldapmodify.c,v 1.1.1.3 2010/12/12 15:18:12 adam Exp $	*/
 
 /* ldapmodify.c - generic program to modify or add entries using LDAP */
-/* OpenLDAP: pkg/ldap/clients/tools/ldapmodify.c,v 1.186.2.12 2009/08/13 00:55:07 quanah Exp */
+/* OpenLDAP: pkg/ldap/clients/tools/ldapmodify.c,v 1.186.2.14 2010/04/15 22:16:50 quanah Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2009 The OpenLDAP Foundation.
+ * Copyright 1998-2010 The OpenLDAP Foundation.
  * Portions Copyright 2006 Howard Chu.
  * Portions Copyright 1998-2003 Kurt D. Zeilenga.
  * Portions Copyright 1998-2001 Net Boolean Incorporated.
@@ -287,15 +287,6 @@ main( int argc, char **argv )
 	ld = tool_conn_setup( dont, 0 );
 
 	if ( !dont ) {
-		if ( pw_file || want_bindpw ) {
-			if ( pw_file ) {
-				rc = lutil_get_filed_password( pw_file, &passwd );
-				if( rc ) return EXIT_FAILURE;
-			} else {
-				passwd.bv_val = getpassphrase( _("Enter LDAP Password: ") );
-				passwd.bv_len = passwd.bv_val ? strlen( passwd.bv_val ) : 0;
-			}
-		}
 		tool_bind( ld );
 	}
 

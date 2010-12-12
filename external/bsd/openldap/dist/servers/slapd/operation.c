@@ -1,10 +1,10 @@
-/*	$NetBSD: operation.c,v 1.1.1.2 2010/03/08 02:14:18 lukem Exp $	*/
+/*	$NetBSD: operation.c,v 1.1.1.3 2010/12/12 15:22:34 adam Exp $	*/
 
 /* operation.c - routines to deal with pending ldap operations */
-/* OpenLDAP: pkg/ldap/servers/slapd/operation.c,v 1.75.2.10 2009/01/22 00:01:02 kurt Exp */
+/* OpenLDAP: pkg/ldap/servers/slapd/operation.c,v 1.75.2.11 2010/04/13 20:23:17 kurt Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2009 The OpenLDAP Foundation.
+ * Copyright 1998-2010 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

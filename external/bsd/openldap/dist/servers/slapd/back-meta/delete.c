@@ -1,9 +1,9 @@
-/*	$NetBSD: delete.c,v 1.1.1.2 2010/03/08 02:14:19 lukem Exp $	*/
+/*	$NetBSD: delete.c,v 1.1.1.3 2010/12/12 15:23:10 adam Exp $	*/
 
-/* OpenLDAP: pkg/ldap/servers/slapd/back-meta/delete.c,v 1.37.2.9 2009/01/22 00:01:07 kurt Exp */
+/* OpenLDAP: pkg/ldap/servers/slapd/back-meta/delete.c,v 1.37.2.10 2010/04/13 20:23:31 kurt Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2009 The OpenLDAP Foundation.
+ * Copyright 1999-2010 The OpenLDAP Foundation.
  * Portions Copyright 2001-2003 Pierangelo Masarati.
  * Portions Copyright 1999-2003 Howard Chu.
  * All rights reserved.

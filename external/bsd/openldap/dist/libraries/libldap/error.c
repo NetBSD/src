@@ -1,9 +1,9 @@
-/*	$NetBSD: error.c,v 1.1.1.2 2010/03/08 02:14:16 lukem Exp $	*/
+/*	$NetBSD: error.c,v 1.1.1.3 2010/12/12 15:21:30 adam Exp $	*/
 
-/* OpenLDAP: pkg/ldap/libraries/libldap/error.c,v 1.76.2.6 2009/08/12 23:54:21 quanah Exp */
+/* OpenLDAP: pkg/ldap/libraries/libldap/error.c,v 1.76.2.8 2010/04/15 20:03:50 quanah Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2009 The OpenLDAP Foundation.
+ * Copyright 1998-2010 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -283,11 +283,11 @@ ldap_parse_result(
 	}
 
 	if( lm == NULL ) {
-		ld->ld_errno = LDAP_NO_RESULTS_RETURNED;
+		errcode = ld->ld_errno = LDAP_NO_RESULTS_RETURNED;
 #ifdef LDAP_R_COMPILE
 		ldap_pvt_thread_mutex_unlock( &ld->ld_res_mutex );
 #endif
-		return ld->ld_errno;
+	    goto done;
 	}
 
 	if ( ld->ld_error ) {
@@ -393,12 +393,14 @@ ldap_parse_result(
 		}
 	}
 
-	if ( freeit ) {
-		ldap_msgfree( r );
-	}
 #ifdef LDAP_R_COMPILE
 	ldap_pvt_thread_mutex_unlock( &ld->ld_res_mutex );
 #endif
 
-	return( errcode );
+done:
+	if ( freeit ) {
+		ldap_msgfree( r );
+	}
+
+	return errcode;
 }

@@ -1,4 +1,4 @@
-// OpenLDAP: pkg/ldap/contrib/ldapc++/src/LDAPAsynConnection.cpp,v 1.13.2.6 2008/04/14 23:09:26 quanah Exp
+// OpenLDAP: pkg/ldap/contrib/ldapc++/src/LDAPAsynConnection.cpp,v 1.13.2.7 2010/04/14 23:50:44 quanah Exp
 /*
  * Copyright 2000-2006, OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
@@ -21,6 +21,7 @@
 #include "LDAPRebind.h"
 #include "LDAPRebindAuth.h"
 #include "LDAPSearchRequest.h"
+#include <lber.h>
 #include <sstream>
 
 using namespace std;
@@ -42,12 +43,7 @@ LDAPAsynConnection::LDAPAsynConnection(const string& url, int port,
     this->setConstraints(cons);
 }
 
-LDAPAsynConnection::~LDAPAsynConnection(){
-    DEBUG(LDAP_DEBUG_DESTROY,
-            "LDAPAsynConnection::~LDAPAsynConnection()" << endl);
-    unbind();
-    //delete m_constr;        
-}
+LDAPAsynConnection::~LDAPAsynConnection(){}
 
 void LDAPAsynConnection::init(const string& hostname, int port){
     DEBUG(LDAP_DEBUG_TRACE,"LDAPAsynConnection::init" << endl);
@@ -81,7 +77,8 @@ void LDAPAsynConnection::initialize(const std::string& uri){
 }
 
 void LDAPAsynConnection::start_tls(){
-    if( ldap_start_tls_s( cur_session, NULL, NULL ) != LDAP_SUCCESS ) {
+    int ret = ldap_start_tls_s( cur_session, NULL, NULL );
+    if( ret != LDAP_SUCCESS ) {
         throw LDAPException(this);
     }
 }
@@ -288,6 +285,10 @@ const LDAPConstraints* LDAPAsynConnection::getConstraints() const {
     return m_constr;
 }
  
+TlsOptions LDAPAsynConnection::getTlsOptions() const {
+    return TlsOptions( cur_session );
+}
+
 LDAP* LDAPAsynConnection::getSessionHandle() const{ 
     DEBUG(LDAP_DEBUG_TRACE,"LDAPAsynConnection::getSessionHandle()" << endl);
     return cur_session;

@@ -1,9 +1,9 @@
-/*	$NetBSD: util.c,v 1.1.1.2 2010/03/08 02:14:19 lukem Exp $	*/
+/*	$NetBSD: util.c,v 1.1.1.3 2010/12/12 15:23:27 adam Exp $	*/
 
-/* OpenLDAP: pkg/ldap/servers/slapd/back-sql/util.c,v 1.45.2.5 2009/01/22 00:01:12 kurt Exp */
+/* OpenLDAP: pkg/ldap/servers/slapd/back-sql/util.c,v 1.45.2.6 2010/04/13 20:23:43 kurt Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2009 The OpenLDAP Foundation.
+ * Copyright 1999-2010 The OpenLDAP Foundation.
  * Portions Copyright 1999 Dmitry Kovalev.
  * Portions Copyright 2002 Pierangelo Masarati.
  * All rights reserved.

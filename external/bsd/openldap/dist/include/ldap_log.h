@@ -1,9 +1,9 @@
-/*	$NetBSD: ldap_log.h,v 1.1.1.2 2010/03/08 02:14:16 lukem Exp $	*/
+/*	$NetBSD: ldap_log.h,v 1.1.1.3 2010/12/12 15:21:23 adam Exp $	*/
 
-/* OpenLDAP: pkg/ldap/include/ldap_log.h,v 1.40.2.7 2009/10/30 17:52:53 quanah Exp */
+/* OpenLDAP: pkg/ldap/include/ldap_log.h,v 1.40.2.8 2010/04/13 20:22:48 kurt Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  * 
- * Copyright 1998-2009 The OpenLDAP Foundation.
+ * Copyright 1998-2010 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

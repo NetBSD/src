@@ -1,10 +1,10 @@
-/*	$NetBSD: referral.c,v 1.1.1.2 2010/03/08 02:14:18 lukem Exp $	*/
+/*	$NetBSD: referral.c,v 1.1.1.3 2010/12/12 15:23:01 adam Exp $	*/
 
 /* referral.c - DNS SRV backend referral handler */
-/* OpenLDAP: pkg/ldap/servers/slapd/back-dnssrv/referral.c,v 1.26.2.5 2009/01/22 00:01:06 kurt Exp */
+/* OpenLDAP: pkg/ldap/servers/slapd/back-dnssrv/referral.c,v 1.26.2.6 2010/04/13 20:23:27 kurt Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2009 The OpenLDAP Foundation.
+ * Copyright 2000-2010 The OpenLDAP Foundation.
  * Portions Copyright 2000-2003 Kurt D. Zeilenga.
  * All rights reserved.
  *

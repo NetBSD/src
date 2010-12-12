@@ -1,10 +1,10 @@
-/*	$NetBSD: entropy.c,v 1.1.1.2 2010/03/08 02:14:17 lukem Exp $	*/
+/*	$NetBSD: entropy.c,v 1.1.1.3 2010/12/12 15:22:08 adam Exp $	*/
 
 /* entropy.c -- routines for providing pseudo-random data */
-/* OpenLDAP: pkg/ldap/libraries/liblutil/entropy.c,v 1.29.2.4 2009/01/22 00:00:58 kurt Exp */
+/* OpenLDAP: pkg/ldap/libraries/liblutil/entropy.c,v 1.29.2.5 2010/04/13 20:23:05 kurt Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2009 The OpenLDAP Foundation.
+ * Copyright 1999-2010 The OpenLDAP Foundation.
  * Portions Copyright 1999-2003 Kurt D. Zeilenga.
  * All rights reserved.
  *

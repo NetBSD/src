@@ -1,6 +1,6 @@
-/*	$NetBSD: LDAPConstraints.h,v 1.1.1.2 2010/03/08 02:14:14 lukem Exp $	*/
+/*	$NetBSD: LDAPConstraints.h,v 1.1.1.3 2010/12/12 15:18:45 adam Exp $	*/
 
-// OpenLDAP: pkg/ldap/contrib/ldapc++/src/LDAPConstraints.h,v 1.4.10.1 2008/04/14 23:09:26 quanah Exp
+// OpenLDAP: pkg/ldap/contrib/ldapc++/src/LDAPConstraints.h,v 1.4.10.2 2010/04/14 23:34:42 quanah Exp
 /*
  * Copyright 2000, OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
@@ -28,32 +28,32 @@
  */
 class LDAPConstraints{
         
-	public :
+    public :
         static const int DEREF_NEVER = 0x00;   
         static const int DEREF_SEARCHING = 0x01;   
         static const int DEREF_FINDING = 0x02;   
         static const int DEREF_ALWAYS = 0x04;   
         
-		//* Constructs a LDAPConstraints object with default values
-		LDAPConstraints();
+        //* Constructs a LDAPConstraints object with default values
+        LDAPConstraints();
 
-		//* Copy constructor
-		LDAPConstraints(const LDAPConstraints& c);
+        //* Copy constructor
+        LDAPConstraints(const LDAPConstraints& c);
 
         ~LDAPConstraints();
-		
-		void setAliasDeref(int deref);
+            
+        void setAliasDeref(int deref);
         void setMaxTime(int t);
-		void setSizeLimit(int s);
-		void setReferralChase(bool rc);
+        void setSizeLimit(int s);
+        void setReferralChase(bool rc);
         void setHopLimit(int hop);
         void setReferralRebind(const LDAPRebind* rebind);
         void setServerControls(const LDAPControlSet* ctrls);
         void setClientControls(const LDAPControlSet* ctrls);
         
-		int getAliasDeref() const;
+        int getAliasDeref() const;
         int getMaxTime() const ;
-		int getSizeLimit() const;
+        int getSizeLimit() const;
         const LDAPRebind* getReferralRebind() const;
         const LDAPControlSet* getServerControls() const;
         const LDAPControlSet* getClientControls() const;
@@ -66,20 +66,20 @@ class LDAPConstraints{
         
         //*for internal use only
         timeval* getTimeoutStruct() const;
-		bool getReferralChase() const ;
+        bool getReferralChase() const ;
         int getHopLimit() const;
-	
-	private :
+
+    private :
         int m_aliasDeref;
 
         //* max. time the server may spend for a search request
-		int m_maxTime;
+        int m_maxTime;
 
-		//* max number of entries to return from a search request
-		int m_maxSize;
-		
-		//* Flag for enabling automatic referral/reference chasing
-		bool m_referralChase;
+        //* max number of entries to return from a search request
+        int m_maxSize;
+
+        //* Flag for enabling automatic referral/reference chasing
+        bool m_referralChase;
 
         //* HopLimit for referral chasing
         int m_HopLimit;
@@ -90,11 +90,11 @@ class LDAPConstraints{
         //* Object used to do bind for Referral chasing
         const LDAPRebind* m_refRebind;
 
-		//* List of Client Controls that should be used for each request	
-		LDAPControlSet* m_clientControls;
+        //* List of Client Controls that should be used for each request	
+        LDAPControlSet* m_clientControls;
 
-		//* List of Server Controls that should be used for each request	
-		LDAPControlSet* m_serverControls;
+        //* List of Server Controls that should be used for each request	
+        LDAPControlSet* m_serverControls;
 
 };
 #endif //LDAP_CONSTRAINTS_H

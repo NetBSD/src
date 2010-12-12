@@ -1,10 +1,10 @@
-/*	$NetBSD: avl.c,v 1.1.1.2 2010/03/08 02:14:17 lukem Exp $	*/
+/*	$NetBSD: avl.c,v 1.1.1.3 2010/12/12 15:22:07 adam Exp $	*/
 
 /* avl.c - routines to implement an avl tree */
-/* OpenLDAP: pkg/ldap/libraries/liblutil/avl.c,v 1.9.2.5 2009/01/30 20:12:54 quanah Exp */
+/* OpenLDAP: pkg/ldap/libraries/liblutil/avl.c,v 1.9.2.6 2010/04/13 20:23:05 kurt Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2009 The OpenLDAP Foundation.
+ * Copyright 1998-2010 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

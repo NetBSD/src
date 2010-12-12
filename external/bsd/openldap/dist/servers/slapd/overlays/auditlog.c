@@ -1,10 +1,10 @@
-/*	$NetBSD: auditlog.c,v 1.1.1.2 2010/03/08 02:14:19 lukem Exp $	*/
+/*	$NetBSD: auditlog.c,v 1.1.1.3 2010/12/12 15:23:32 adam Exp $	*/
 
 /* auditlog.c - log modifications for audit/history purposes */
-/* OpenLDAP: pkg/ldap/servers/slapd/overlays/auditlog.c,v 1.7.2.9 2009/09/29 21:43:53 quanah Exp */
+/* OpenLDAP: pkg/ldap/servers/slapd/overlays/auditlog.c,v 1.7.2.10 2010/04/13 20:23:44 kurt Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2005-2009 The OpenLDAP Foundation.
+ * Copyright 2005-2010 The OpenLDAP Foundation.
  * Portions copyright 2004-2005 Symas Corporation.
  * All rights reserved.
  *

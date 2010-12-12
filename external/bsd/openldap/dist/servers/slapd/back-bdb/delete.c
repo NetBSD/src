@@ -1,10 +1,10 @@
-/*	$NetBSD: delete.c,v 1.1.1.2 2010/03/08 02:14:18 lukem Exp $	*/
+/*	$NetBSD: delete.c,v 1.1.1.3 2010/12/12 15:22:54 adam Exp $	*/
 
 /* delete.c - bdb backend delete routine */
-/* OpenLDAP: pkg/ldap/servers/slapd/back-bdb/delete.c,v 1.155.2.11 2009/01/22 00:01:05 kurt Exp */
+/* OpenLDAP: pkg/ldap/servers/slapd/back-bdb/delete.c,v 1.155.2.13 2010/04/19 16:53:03 quanah Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2009 The OpenLDAP Foundation.
+ * Copyright 2000-2010 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -103,7 +103,7 @@ txnReturn:
 	/* allocate CSN */
 	if ( BER_BVISNULL( &op->o_csn ) ) {
 		struct berval csn;
-		char csnbuf[LDAP_LUTIL_CSNSTR_BUFSIZE];
+		char csnbuf[LDAP_PVT_CSNSTR_BUFSIZE];
 
 		csn.bv_val = csnbuf;
 		csn.bv_len = sizeof(csnbuf);

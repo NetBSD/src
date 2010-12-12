@@ -1,10 +1,10 @@
-/*	$NetBSD: sent.c,v 1.1.1.2 2010/03/08 02:14:19 lukem Exp $	*/
+/*	$NetBSD: sent.c,v 1.1.1.3 2010/12/12 15:23:16 adam Exp $	*/
 
 /* sent.c - deal with data sent subsystem */
-/* OpenLDAP: pkg/ldap/servers/slapd/back-monitor/sent.c,v 1.42.2.6 2009/04/27 22:50:11 quanah Exp */
+/* OpenLDAP: pkg/ldap/servers/slapd/back-monitor/sent.c,v 1.42.2.7 2010/04/13 20:23:34 kurt Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2001-2009 The OpenLDAP Foundation.
+ * Copyright 2001-2010 The OpenLDAP Foundation.
  * Portions Copyright 2001-2003 Pierangelo Masarati.
  * All rights reserved.
  *

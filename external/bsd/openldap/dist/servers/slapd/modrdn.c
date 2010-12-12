@@ -1,9 +1,9 @@
-/*	$NetBSD: modrdn.c,v 1.1.1.2 2010/03/08 02:14:18 lukem Exp $	*/
+/*	$NetBSD: modrdn.c,v 1.1.1.3 2010/12/12 15:22:33 adam Exp $	*/
 
-/* OpenLDAP: pkg/ldap/servers/slapd/modrdn.c,v 1.170.2.6 2009/01/22 00:01:01 kurt Exp */
+/* OpenLDAP: pkg/ldap/servers/slapd/modrdn.c,v 1.170.2.8 2010/06/10 17:48:07 quanah Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2009 The OpenLDAP Foundation.
+ * Copyright 1998-2010 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -447,12 +447,19 @@ slap_modrdn2mods(
 		mod_tmp->sml_values[1].bv_val = NULL;
 		if( desc->ad_type->sat_equality->smr_normalize) {
 			mod_tmp->sml_nvalues = ( BerVarray )ch_malloc( 2 * sizeof( struct berval ) );
-			(void) (*desc->ad_type->sat_equality->smr_normalize)(
+			rs->sr_err = desc->ad_type->sat_equality->smr_normalize(
 				SLAP_MR_EQUALITY|SLAP_MR_VALUE_OF_ASSERTION_SYNTAX,
 				desc->ad_type->sat_syntax,
 				desc->ad_type->sat_equality,
 				&mod_tmp->sml_values[0],
 				&mod_tmp->sml_nvalues[0], NULL );
+			if (rs->sr_err != LDAP_SUCCESS) {
+				ch_free(mod_tmp->sml_nvalues);
+				ch_free(mod_tmp->sml_values[0].bv_val);
+				ch_free(mod_tmp->sml_values);
+				ch_free(mod_tmp);
+				goto done;
+			}
 			mod_tmp->sml_nvalues[1].bv_val = NULL;
 		} else {
 			mod_tmp->sml_nvalues = NULL;

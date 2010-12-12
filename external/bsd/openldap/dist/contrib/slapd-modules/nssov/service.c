@@ -1,10 +1,10 @@
-/*	$NetBSD: service.c,v 1.1.1.2 2010/03/08 02:14:15 lukem Exp $	*/
+/*	$NetBSD: service.c,v 1.1.1.3 2010/12/12 15:19:11 adam Exp $	*/
 
 /* service.c - service lookup routines */
-/* OpenLDAP: pkg/ldap/contrib/slapd-modules/nssov/service.c,v 1.1.2.4 2009/08/24 17:35:29 quanah Exp */
+/* OpenLDAP: pkg/ldap/contrib/slapd-modules/nssov/service.c,v 1.1.2.6 2010/04/15 21:32:57 quanah Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>. 
  *
- * Copyright 2008-2009 The OpenLDAP Foundation.
+ * Copyright 2008-2010 The OpenLDAP Foundation.
  * Portions Copyright 2008 by Howard Chu, Symas Corp.
  * All rights reserved.
  *
@@ -189,7 +189,7 @@ static int write_service(nssov_service_cbp *cbp,Entry *entry)
 	for (i=0;i<numprot;i++)
 	{
 		int j;
-		WRITE_INT32(cbp->fp,NSLCD_RESULT_SUCCESS);
+		WRITE_INT32(cbp->fp,NSLCD_RESULT_BEGIN);
 		WRITE_BERVAL(cbp->fp,&name);
 		if ( dupname >= 0 ) {
 			WRITE_INT32(cbp->fp,numname-1);
@@ -213,10 +213,10 @@ NSSOV_HANDLE(
 	char fbuf[1024];
 	struct berval filter = {sizeof(fbuf)};
 	filter.bv_val = fbuf;
-	READ_STRING_BUF2(fp,cbp.nbuf,sizeof(cbp.nbuf));
+	READ_STRING(fp,cbp.nbuf);
 	cbp.name.bv_len = tmpint32;
 	cbp.name.bv_val = cbp.nbuf;
-	READ_STRING_BUF2(fp,cbp.pbuf,sizeof(cbp.pbuf));
+	READ_STRING(fp,cbp.pbuf);
 	cbp.prot.bv_len = tmpint32;
 	cbp.prot.bv_val = tmpint32 ? cbp.pbuf : NULL;,
 	Debug(LDAP_DEBUG_TRACE,"nssov_service_byname(%s,%s)\n",cbp.name.bv_val,cbp.prot.bv_val,0);,
@@ -233,7 +233,7 @@ NSSOV_HANDLE(
 	READ_INT32(fp,number);
 	cbp.name.bv_val = cbp.nbuf;
 	cbp.name.bv_len = snprintf(cbp.nbuf,sizeof(cbp.nbuf),"%d",number);
-	READ_STRING_BUF2(fp,cbp.pbuf,sizeof(cbp.pbuf));
+	READ_STRING(fp,cbp.pbuf);
 	cbp.prot.bv_len = tmpint32;
 	cbp.prot.bv_val = tmpint32 ? cbp.pbuf : NULL;,
 	Debug(LDAP_DEBUG_TRACE,"nssov_service_bynumber(%s,%s)\n",cbp.name.bv_val,cbp.prot.bv_val,0);,

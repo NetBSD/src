@@ -1,10 +1,10 @@
-/*	$NetBSD: ldapwhoami.c,v 1.1.1.2 2010/03/08 02:14:14 lukem Exp $	*/
+/*	$NetBSD: ldapwhoami.c,v 1.1.1.3 2010/12/12 15:18:13 adam Exp $	*/
 
 /* ldapwhoami.c -- a tool for asking the directory "Who Am I?" */
-/* OpenLDAP: pkg/ldap/clients/tools/ldapwhoami.c,v 1.42.2.5 2009/01/22 00:00:43 kurt Exp */
+/* OpenLDAP: pkg/ldap/clients/tools/ldapwhoami.c,v 1.42.2.7 2010/04/15 22:16:50 quanah Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2009 The OpenLDAP Foundation.
+ * Copyright 1998-2010 The OpenLDAP Foundation.
  * Portions Copyright 1998-2003 Kurt D. Zeilenga.
  * Portions Copyright 1998-2001 Net Boolean Incorporated.
  * Portions Copyright 2001-2003 IBM Corporation.
@@ -129,16 +129,6 @@ main( int argc, char *argv[] )
 
 	if( argc - optind > 0 ) {
 		usage();
-	}
-
-	if ( pw_file || want_bindpw ) {
-		if ( pw_file ) {
-			rc = lutil_get_filed_password( pw_file, &passwd );
-			if( rc ) return EXIT_FAILURE;
-		} else {
-			passwd.bv_val = getpassphrase( _("Enter LDAP Password: ") );
-			passwd.bv_len = passwd.bv_val ? strlen( passwd.bv_val ) : 0;
-		}
 	}
 
 	ld = tool_conn_setup( 0, 0 );

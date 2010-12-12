@@ -1,10 +1,10 @@
-/*	$NetBSD: dynlist.c,v 1.1.1.3 2010/03/08 02:14:19 lukem Exp $	*/
+/*	$NetBSD: dynlist.c,v 1.1.1.4 2010/12/12 15:23:35 adam Exp $	*/
 
 /* dynlist.c - dynamic list overlay */
-/* OpenLDAP: pkg/ldap/servers/slapd/overlays/dynlist.c,v 1.20.2.30 2009/12/08 22:55:13 quanah Exp */
+/* OpenLDAP: pkg/ldap/servers/slapd/overlays/dynlist.c,v 1.20.2.33 2010/04/14 22:42:53 quanah Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2003-2009 The OpenLDAP Foundation.
+ * Copyright 2003-2010 The OpenLDAP Foundation.
  * Portions Copyright 2004-2005 Pierangelo Masarati.
  * Portions Copyright 2008 Emmanuel Dreyfus.
  * All rights reserved.
@@ -110,46 +110,12 @@ dynlist_is_dynlist_next( Operation *op, SlapReply *rs, dynlist_info_t *old_dli )
 	for ( ; dli; dli = dli->dli_next ) {
 		if ( dli->dli_lud != NULL ) {
 			/* check base and scope */
-			if ( !BER_BVISNULL( &dli->dli_uri_nbase ) ) {
-				int d = rs->sr_entry->e_nname.bv_len - dli->dli_uri_nbase.bv_len;
-
-				if ( d < 0 ) {
-					continue;
-				}
-
-				if ( !dnIsSuffix( &rs->sr_entry->e_nname, &dli->dli_uri_nbase ) ) {
-					continue;
-				}
-
-				switch ( dli->dli_lud->lud_scope ) {
-				case LDAP_SCOPE_BASE:
-					if ( d != 0 ) {
-						continue;
-					}
-					break;
-
-				case LDAP_SCOPE_ONELEVEL: {
-					struct berval pdn;
-
-					dnParent( &rs->sr_entry->e_nname, &pdn );
-					if ( pdn.bv_len != dli->dli_uri_nbase.bv_len ) {
-						continue;
-					}
-					} break;
-
-				case LDAP_SCOPE_SUBORDINATE:
-					if ( d == 0 ) {
-						continue;
-					}
-					break;
-
-				case LDAP_SCOPE_SUBTREE:
-				case LDAP_SCOPE_DEFAULT:
-					break;
-
-				default:
-					continue;
-				}
+			if ( !BER_BVISNULL( &dli->dli_uri_nbase )
+				&& !dnIsSuffixScope( &rs->sr_entry->e_nname,
+					&dli->dli_uri_nbase,
+					dli->dli_lud->lud_scope ) )
+			{
+				continue;
 			}
 
 			/* check filter */
@@ -467,6 +433,7 @@ dynlist_prepare_entry( Operation *op, SlapReply *rs, dynlist_info_t *dli )
 	if ( !( rs->sr_flags & REP_ENTRY_MODIFIABLE ) ) {
 		e = entry_dup( rs->sr_entry );
 		e_flags |= ( REP_ENTRY_MODIFIABLE | REP_ENTRY_MUSTBEFREED );
+		e_flags &= ~REP_ENTRY_MUSTRELEASE;
 	} else {
 		e = rs->sr_entry;
 	}

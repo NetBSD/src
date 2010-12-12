@@ -1,10 +1,10 @@
-/*	$NetBSD: slap.h,v 1.1.1.3 2010/03/08 02:14:18 lukem Exp $	*/
+/*	$NetBSD: slap.h,v 1.1.1.4 2010/12/12 15:22:47 adam Exp $	*/
 
 /* slap.h - stand alone ldap server include file */
-/* OpenLDAP: pkg/ldap/servers/slapd/slap.h,v 1.764.2.59 2009/12/12 06:18:53 hyc Exp */
+/* OpenLDAP: pkg/ldap/servers/slapd/slap.h,v 1.764.2.68 2010/04/16 20:03:05 quanah Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2009 The OpenLDAP Foundation.
+ * Copyright 1998-2010 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -67,6 +67,9 @@ LDAP_BEGIN_DECL
 #define SLAP_CONTROL_X_SESSION_TRACKING
 #define SLAP_CONTROL_X_WHATFAILED
 #define SLAP_CONFIG_DELETE
+#ifndef SLAP_SCHEMA_EXPOSE
+#define SLAP_SCHEMA_EXPOSE
+#endif
 #endif
 
 #define LDAP_DYNAMIC_OBJECTS
@@ -414,7 +417,7 @@ struct Syntax {
 #define SLAP_SYNTAX_BLOB	0x0001U /* syntax treated as blob (audio) */
 #define SLAP_SYNTAX_BINARY	0x0002U /* binary transfer required (certificate) */
 #define SLAP_SYNTAX_BER		0x0004U /* stored in BER encoding (certificate) */
-#ifdef LDAP_DEVEL
+#ifdef SLAP_SCHEMA_EXPOSE
 #define SLAP_SYNTAX_HIDE	0x0000U /* publish everything */
 #else
 #define SLAP_SYNTAX_HIDE	0x8000U /* hide (do not publish) */
@@ -521,7 +524,7 @@ struct MatchingRule {
 
 	slap_mask_t			smr_usage;
 
-#ifdef LDAP_DEVEL
+#ifdef SLAP_SCHEMA_EXPOSE
 #define SLAP_MR_HIDE			0x0000U
 #else
 #define SLAP_MR_HIDE			0x8000U
@@ -692,7 +695,7 @@ struct AttributeType {
 #define SLAP_AT_NONE			0x0000U
 #define SLAP_AT_ABSTRACT		0x0100U /* cannot be instantiated */
 #define SLAP_AT_FINAL			0x0200U /* cannot be subtyped */
-#ifdef LDAP_DEVEL
+#ifdef SLAP_SCHEMA_EXPOSE
 #define SLAP_AT_HIDE			0x0000U /* publish everything */
 #else
 #define SLAP_AT_HIDE			0x8000U /* hide attribute */
@@ -790,7 +793,7 @@ struct ObjectClass {
 #define	SLAP_OC__MASK		0x00FF
 #define	SLAP_OC__END		0x0100
 #define SLAP_OC_OPERATIONAL	0x4000
-#ifdef LDAP_DEVEL
+#ifdef SLAP_SCHEMA_EXPOSE
 #define SLAP_OC_HIDE		0x0000
 #else
 #define SLAP_OC_HIDE		0x8000
@@ -1284,7 +1287,9 @@ typedef enum slap_style_e {
 	ACL_STYLE_SELF,
 	ACL_STYLE_IP,
 	ACL_STYLE_IPV6,
-	ACL_STYLE_PATH
+	ACL_STYLE_PATH,
+
+	ACL_STYLE_NONE
 } slap_style_t;
 
 typedef struct AuthorizationInformation {
@@ -1589,6 +1594,12 @@ LDAP_SLAPD_V (int) slapMode;
 #define SB_TLS_ON		1
 #define SB_TLS_CRITICAL		2
 
+typedef struct slap_keepalive {
+	int sk_idle;
+	int sk_probes;
+	int sk_interval;
+} slap_keepalive;
+
 typedef struct slap_bindconf {
 	struct berval sb_uri;
 	int sb_version;
@@ -1603,6 +1614,7 @@ typedef struct slap_bindconf {
 	struct berval sb_realm;
 	struct berval sb_authcId;
 	struct berval sb_authzId;
+	slap_keepalive sb_keepalive;
 #ifdef HAVE_TLS
 	void *sb_tls_ctx;
 	char *sb_tls_cert;
@@ -1787,6 +1799,7 @@ struct BackendDB {
 #define		be_entry_open bd_info->bi_tool_entry_open
 #define		be_entry_close bd_info->bi_tool_entry_close
 #define		be_entry_first bd_info->bi_tool_entry_first
+#define		be_entry_first_x bd_info->bi_tool_entry_first_x
 #define		be_entry_next bd_info->bi_tool_entry_next
 #define		be_entry_reindex bd_info->bi_tool_entry_reindex
 #define		be_entry_get bd_info->bi_tool_entry_get
@@ -2013,7 +2026,7 @@ typedef struct req_abandon_s {
 	ber_int_t rs_msgid;
 } req_abandon_s;
 
-#ifdef LDAP_DEVEL
+#ifdef SLAP_SCHEMA_EXPOSE
 #define SLAP_EXOP_HIDE 0x0000
 #else
 #define SLAP_EXOP_HIDE 0x8000
@@ -2092,6 +2105,7 @@ struct SlapReply {
 #define REP_ENTRY_MUSTBEFREED	0x0002U
 #define REP_ENTRY_MUSTRELEASE	0x0004U
 #define	REP_ENTRY_MASK		(REP_ENTRY_MODIFIABLE|REP_ENTRY_MUSTBEFREED|REP_ENTRY_MUSTRELEASE)
+#define	REP_ENTRY_MUSTFLUSH	(REP_ENTRY_MUSTBEFREED|REP_ENTRY_MUSTRELEASE)
 
 #define REP_MATCHED_MUSTBEFREED	0x0010U
 #define	REP_MATCHED_MASK	(REP_MATCHED_MUSTBEFREED)
@@ -2156,6 +2170,7 @@ typedef BI_conn_func BI_connection_destroy;
 typedef int (BI_tool_entry_open) LDAP_P(( BackendDB *be, int mode ));
 typedef int (BI_tool_entry_close) LDAP_P(( BackendDB *be ));
 typedef ID (BI_tool_entry_first) LDAP_P(( BackendDB *be ));
+typedef ID (BI_tool_entry_first_x) LDAP_P(( BackendDB *be, struct berval *base, int scope, Filter *f ));
 typedef ID (BI_tool_entry_next) LDAP_P(( BackendDB *be ));
 typedef Entry* (BI_tool_entry_get) LDAP_P(( BackendDB *be, ID id ));
 typedef ID (BI_tool_entry_put) LDAP_P(( BackendDB *be, Entry *e, 
@@ -2255,7 +2270,8 @@ struct BackendInfo {
 	/* hooks for slap tools */
 	BI_tool_entry_open	*bi_tool_entry_open;
 	BI_tool_entry_close	*bi_tool_entry_close;
-	BI_tool_entry_first	*bi_tool_entry_first;
+	BI_tool_entry_first	*bi_tool_entry_first;	/* deprecated */
+	BI_tool_entry_first_x	*bi_tool_entry_first_x;
 	BI_tool_entry_next	*bi_tool_entry_next;
 	BI_tool_entry_get	*bi_tool_entry_get;
 	BI_tool_entry_put	*bi_tool_entry_put;
@@ -2971,7 +2987,7 @@ struct Listener {
 /* number of response controls supported */
 #define SLAP_MAX_RESPONSE_CONTROLS   6
 
-#ifdef LDAP_DEVEL
+#ifdef SLAP_SCHEMA_EXPOSE
 #define SLAP_CTRL_HIDE				0x00000000U
 #else
 #define SLAP_CTRL_HIDE				0x80000000U

@@ -1,9 +1,9 @@
-/*	$NetBSD: tpool.c,v 1.1.1.2 2010/03/08 02:14:17 lukem Exp $	*/
+/*	$NetBSD: tpool.c,v 1.1.1.3 2010/12/12 15:21:43 adam Exp $	*/
 
-/* OpenLDAP: pkg/ldap/libraries/libldap_r/tpool.c,v 1.52.2.18 2009/06/27 17:53:02 quanah Exp */
+/* OpenLDAP: pkg/ldap/libraries/libldap_r/tpool.c,v 1.52.2.19 2010/04/13 20:23:03 kurt Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2009 The OpenLDAP Foundation.
+ * Copyright 1998-2010 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

@@ -1,10 +1,10 @@
-/*	$NetBSD: entry.c,v 1.1.1.2 2010/03/08 02:14:19 lukem Exp $	*/
+/*	$NetBSD: entry.c,v 1.1.1.3 2010/12/12 15:23:14 adam Exp $	*/
 
 /* entry.c - monitor backend entry handling routines */
-/* OpenLDAP: pkg/ldap/servers/slapd/back-monitor/entry.c,v 1.21.2.6 2009/01/22 00:01:08 kurt Exp */
+/* OpenLDAP: pkg/ldap/servers/slapd/back-monitor/entry.c,v 1.21.2.7 2010/04/13 20:23:32 kurt Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2001-2009 The OpenLDAP Foundation.
+ * Copyright 2001-2010 The OpenLDAP Foundation.
  * Portions Copyright 2001-2003 Pierangelo Masarati.
  * All rights reserved.
  *

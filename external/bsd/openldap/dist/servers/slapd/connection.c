@@ -1,9 +1,9 @@
-/*	$NetBSD: connection.c,v 1.1.1.2 2010/03/08 02:14:17 lukem Exp $	*/
+/*	$NetBSD: connection.c,v 1.1.1.3 2010/12/12 15:22:27 adam Exp $	*/
 
-/* OpenLDAP: pkg/ldap/servers/slapd/connection.c,v 1.358.2.39 2009/12/04 15:44:37 quanah Exp */
+/* OpenLDAP: pkg/ldap/servers/slapd/connection.c,v 1.358.2.40 2010/04/13 20:23:13 kurt Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2009 The OpenLDAP Foundation.
+ * Copyright 1998-2010 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

@@ -1,9 +1,9 @@
-/*	$NetBSD: slapadd.c,v 1.1.1.2 2010/03/08 02:14:18 lukem Exp $	*/
+/*	$NetBSD: slapadd.c,v 1.1.1.3 2010/12/12 15:22:48 adam Exp $	*/
 
-/* OpenLDAP: pkg/ldap/servers/slapd/slapadd.c,v 1.36.2.15 2009/11/18 01:16:17 quanah Exp */
+/* OpenLDAP: pkg/ldap/servers/slapd/slapadd.c,v 1.36.2.17 2010/04/19 16:53:02 quanah Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2009 The OpenLDAP Foundation.
+ * Copyright 1998-2010 The OpenLDAP Foundation.
  * Portions Copyright 1998-2003 Kurt D. Zeilenga.
  * Portions Copyright 2003 IBM Corporation.
  * All rights reserved.
@@ -42,8 +42,8 @@
 
 #include "slapcommon.h"
 
-static char csnbuf[ LDAP_LUTIL_CSNSTR_BUFSIZE ];
-static char maxcsnbuf[ LDAP_LUTIL_CSNSTR_BUFSIZE * ( SLAP_SYNC_SID_MAX + 1 ) ];
+static char csnbuf[ LDAP_PVT_CSNSTR_BUFSIZE ];
+static char maxcsnbuf[ LDAP_PVT_CSNSTR_BUFSIZE * ( SLAP_SYNC_SID_MAX + 1 ) ];
 
 int
 slapadd( int argc, char **argv )
@@ -122,7 +122,7 @@ slapadd( int argc, char **argv )
 	if ( update_ctxcsn ) {
 		maxcsn[ 0 ].bv_val = maxcsnbuf;
 		for ( sid = 1; sid <= SLAP_SYNC_SID_MAX; sid++ ) {
-			maxcsn[ sid ].bv_val = maxcsn[ sid - 1 ].bv_val + LDAP_LUTIL_CSNSTR_BUFSIZE;
+			maxcsn[ sid ].bv_val = maxcsn[ sid - 1 ].bv_val + LDAP_PVT_CSNSTR_BUFSIZE;
 			maxcsn[ sid ].bv_len = 0;
 		}
 	}
@@ -295,7 +295,7 @@ slapadd( int argc, char **argv )
 			nvals[1].bv_len = 0;
 			nvals[1].bv_val = NULL;
 
-			csn.bv_len = lutil_csnstr( csnbuf, sizeof( csnbuf ), csnsid, 0 );
+			csn.bv_len = ldap_pvt_csnstr( csnbuf, sizeof( csnbuf ), csnsid, 0 );
 			csn.bv_val = csnbuf;
 
 			timestamp.bv_val = timebuf;

@@ -1,9 +1,9 @@
-/*	$NetBSD: search.c,v 1.1.1.2 2010/03/08 02:14:16 lukem Exp $	*/
+/*	$NetBSD: search.c,v 1.1.1.3 2010/12/12 15:21:36 adam Exp $	*/
 
-/* OpenLDAP: pkg/ldap/libraries/libldap/search.c,v 1.76.2.9 2009/02/20 00:28:32 quanah Exp */
+/* OpenLDAP: pkg/ldap/libraries/libldap/search.c,v 1.76.2.11 2010/04/14 18:08:23 quanah Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2009 The OpenLDAP Foundation.
+ * Copyright 1998-2010 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -170,6 +170,8 @@ ldap_pvt_search_s(
 {
 	int rc;
 	int	msgid;
+
+    *res = NULL;
 
 	rc = ldap_pvt_search( ld, base, scope, filter, attrs, attrsonly,
 		sctrls, cctrls, timeout, sizelimit, deref, &msgid );
@@ -395,6 +397,8 @@ ldap_search_st(
 {
 	int	msgid;
 
+    *res = NULL;
+
 	if ( (msgid = ldap_search( ld, base, scope, filter, attrs, attrsonly ))
 	    == -1 )
 		return( ld->ld_errno );
@@ -422,6 +426,8 @@ ldap_search_s(
 	LDAPMessage **res )
 {
 	int	msgid;
+
+    *res = NULL;
 
 	if ( (msgid = ldap_search( ld, base, scope, filter, attrs, attrsonly ))
 	    == -1 )

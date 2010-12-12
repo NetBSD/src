@@ -1,10 +1,10 @@
-/*	$NetBSD: config.c,v 1.1.1.2 2010/03/08 02:14:19 lukem Exp $	*/
+/*	$NetBSD: config.c,v 1.1.1.3 2010/12/12 15:23:21 adam Exp $	*/
 
 /* config.c - shell backend configuration file routine */
-/* OpenLDAP: pkg/ldap/servers/slapd/back-shell/config.c,v 1.18.2.4 2009/01/22 00:01:10 kurt Exp */
+/* OpenLDAP: pkg/ldap/servers/slapd/back-shell/config.c,v 1.18.2.5 2010/04/13 20:23:39 kurt Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2009 The OpenLDAP Foundation.
+ * Copyright 1998-2010 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

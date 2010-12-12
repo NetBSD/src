@@ -1,10 +1,10 @@
-/*	$NetBSD: netgroup.c,v 1.1.1.2 2010/03/08 02:14:15 lukem Exp $	*/
+/*	$NetBSD: netgroup.c,v 1.1.1.3 2010/12/12 15:19:08 adam Exp $	*/
 
 /* netgroup.c - netgroup lookup routines */
-/* OpenLDAP: pkg/ldap/contrib/slapd-modules/nssov/netgroup.c,v 1.1.2.3 2009/08/17 21:48:58 quanah Exp */
+/* OpenLDAP: pkg/ldap/contrib/slapd-modules/nssov/netgroup.c,v 1.1.2.5 2010/04/15 21:32:56 quanah Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>. 
  *
- * Copyright 2008-2009 The OpenLDAP Foundation.
+ * Copyright 2008-2010 The OpenLDAP Foundation.
  * Portions Copyright 2008 by Howard Chu, Symas Corp.
  * All rights reserved.
  *
@@ -142,8 +142,8 @@ static int write_netgroup_triple(TFILE *fp,const char *triple)
 		return 0;
 	}
 	/* write strings */
-	WRITE_INT32(fp,NSLCD_RESULT_SUCCESS);
-	WRITE_INT32(fp,NETGROUP_TYPE_TRIPLE);
+	WRITE_INT32(fp,NSLCD_RESULT_BEGIN);
+	WRITE_INT32(fp,NSLCD_NETGROUP_TYPE_TRIPLE);
 	WRITE_STRING_STRIPSPACE_LEN(fp,triple+hostb,hoste-hostb)
 	WRITE_STRING_STRIPSPACE_LEN(fp,triple+userb,usere-userb)
 	WRITE_STRING_STRIPSPACE_LEN(fp,triple+domainb,domaine-domainb)
@@ -173,9 +173,9 @@ static int write_netgroup(nssov_netgroup_cbp *cbp,Entry *entry)
 		for (i=0;i<a->a_numvals;i++)
 		{
 			/* write the result code */
-			WRITE_INT32(cbp->fp,NSLCD_RESULT_SUCCESS);
+			WRITE_INT32(cbp->fp,NSLCD_RESULT_BEGIN);
 			/* write triple indicator */
-			WRITE_INT32(cbp->fp,NETGROUP_TYPE_NETGROUP);
+			WRITE_INT32(cbp->fp,NSLCD_NETGROUP_TYPE_NETGROUP);
 			/* write netgroup name */
 			if (write_string_stripspace_len(cbp->fp,a->a_vals[i].bv_val,a->a_vals[i].bv_len))
 				return -1;
@@ -192,7 +192,7 @@ NSSOV_HANDLE(
 	char fbuf[1024];
 	struct berval filter = {sizeof(fbuf)};
 	filter.bv_val = fbuf;
-	READ_STRING_BUF2(fp,cbp.buf,sizeof(cbp.buf));,
+	READ_STRING(fp,cbp.buf);,
 	cbp.name.bv_len = tmpint32;
 	cbp.name.bv_val = cbp.buf;
 	Debug(LDAP_DEBUG_TRACE,"nssov_netgroup_byname(%s)\n",cbp.name.bv_val,0,0);,

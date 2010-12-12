@@ -1,9 +1,9 @@
-/*	$NetBSD: proto-bdb.h,v 1.1.1.2 2010/03/08 02:14:18 lukem Exp $	*/
+/*	$NetBSD: proto-bdb.h,v 1.1.1.3 2010/12/12 15:22:59 adam Exp $	*/
 
-/* OpenLDAP: pkg/ldap/servers/slapd/back-bdb/proto-bdb.h,v 1.137.2.15 2009/05/07 20:20:33 quanah Exp */
+/* OpenLDAP: pkg/ldap/servers/slapd/back-bdb/proto-bdb.h,v 1.137.2.17 2010/04/14 22:59:10 quanah Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2009 The OpenLDAP Foundation.
+ * Copyright 2000-2010 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -629,6 +629,7 @@ bdb_trans_backoff( int num_retries );
 #define bdb_hasSubordinates		BDB_SYMBOL(hasSubordinates)
 #define bdb_tool_entry_open		BDB_SYMBOL(tool_entry_open)
 #define bdb_tool_entry_close		BDB_SYMBOL(tool_entry_close)
+#define bdb_tool_entry_first_x		BDB_SYMBOL(tool_entry_first_x)
 #define bdb_tool_entry_next		BDB_SYMBOL(tool_entry_next)
 #define bdb_tool_entry_get		BDB_SYMBOL(tool_entry_get)
 #define bdb_tool_entry_put		BDB_SYMBOL(tool_entry_put)
@@ -659,6 +660,7 @@ extern BI_has_subordinates 		bdb_hasSubordinates;
 /* tools.c */
 extern BI_tool_entry_open		bdb_tool_entry_open;
 extern BI_tool_entry_close		bdb_tool_entry_close;
+extern BI_tool_entry_first_x		bdb_tool_entry_first_x;
 extern BI_tool_entry_next		bdb_tool_entry_next;
 extern BI_tool_entry_get		bdb_tool_entry_get;
 extern BI_tool_entry_put		bdb_tool_entry_put;
