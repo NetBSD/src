@@ -1,11 +1,11 @@
 #
-# $NetBSD: ATARITT,v 1.105 2010/11/23 11:16:59 hannken Exp $
+# $NetBSD: ATARITT,v 1.106 2010/12/12 09:58:29 tsutsui Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
 #
 # Created from:
-#		NetBSD: GENERIC.in,v 1.91 2010/11/23 11:13:54 hannken Exp $
+#		NetBSD: GENERIC.in,v 1.92 2010/12/12 09:56:15 tsutsui Exp $
 include "arch/atari/conf/std.atari"
 options INCLUDE_CONFIG_FILE # embed config file in kernel binary
 maxusers 16
@@ -114,7 +114,7 @@ vme0 at avmebus0
 le0 at vme0 irq 5 # Lance ethernet (Riebl/PAM).
 le0 at vme0 irq 4 # Lance ethernet (BVME410).
 we0 at vme0 irq 4 # SMC Elite Ultra with SMC_TT VME-ISA bridge
-et0 at vme0 # Crazy Dots II
+et4k0 at vme0 # Crazy Dots II
 scsibus* at scsi? # SCSI bus
 sd* at scsibus? target ? lun ? # SCSI disk drives
 cd* at scsibus? target ? lun ? # SCSI CD-ROM drives
