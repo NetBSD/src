@@ -1,7 +1,7 @@
-dnl OpenLDAP: pkg/ldap/configure.in,v 1.631.2.27 2009/09/30 00:24:39 hyc Exp
+dnl OpenLDAP: pkg/ldap/configure.in,v 1.631.2.29 2010/04/19 16:53:00 quanah Exp
 dnl This work is part of OpenLDAP Software <http://www.openldap.org/>.
 dnl
-dnl Copyright 1998-2009 The OpenLDAP Foundation.
+dnl Copyright 1998-2010 The OpenLDAP Foundation.
 dnl All rights reserved.
 dnl
 dnl Redistribution and use in source and binary forms, with or without
@@ -23,9 +23,9 @@ define([AC_LIBTOOL_LANG_F77_CONFIG], [:])dnl
 define([AC_LIBTOOL_LANG_GCJ_CONFIG], [:])dnl
 dnl ================================================================
 dnl Configure.in for OpenLDAP
-AC_COPYRIGHT([[Copyright 1998-2009 The OpenLDAP Foundation. All rights reserved.
+AC_COPYRIGHT([[Copyright 1998-2010 The OpenLDAP Foundation. All rights reserved.
 Restrictions apply, see COPYRIGHT and LICENSE files.]])
-AC_REVISION([OpenLDAP: pkg/ldap/configure.in,v 1.631.2.27 2009/09/30 00:24:39 hyc Exp])
+AC_REVISION([OpenLDAP: pkg/ldap/configure.in,v 1.631.2.29 2010/04/19 16:53:00 quanah Exp])
 AC_INIT([OpenLDAP],,[http://www.openldap.org/its/])
 m4_define([AC_PACKAGE_BUGREPORT],[<http://www.openldap.org/its/>])
 AC_CONFIG_SRCDIR(build/version.sh)dnl
@@ -96,7 +96,7 @@ AH_TOP([
 /* begin of portable.h.pre */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2009 The OpenLDAP Foundation
+ * Copyright 1998-2010 The OpenLDAP Foundation
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -1836,6 +1836,7 @@ dnl ----------------------------------------------------------------
 dnl Tests for reentrant functions necessary to build -lldap_r
 AC_CHECK_FUNCS(		\
 	ctime_r			\
+	gmtime_r localtime_r \
 	gethostbyname_r	gethostbyaddr_r \
 )
 
@@ -3178,7 +3179,7 @@ rm -f $BACKENDSC
 cat > $BACKENDSC << ENDX
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2009 The OpenLDAP Foundation.
+ * Copyright 1998-2010 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -3229,7 +3230,7 @@ rm -f $OVERLAYSC
 cat > $OVERLAYSC << ENDX
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2009 The OpenLDAP Foundation.
+ * Copyright 1998-2010 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

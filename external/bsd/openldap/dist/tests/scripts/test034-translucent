@@ -1,8 +1,8 @@
 #! /bin/sh
-# OpenLDAP: pkg/ldap/tests/scripts/test034-translucent,v 1.8.2.7 2009/01/22 00:01:19 kurt Exp
+# OpenLDAP: pkg/ldap/tests/scripts/test034-translucent,v 1.8.2.9 2010/04/19 19:14:35 quanah Exp
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 2004-2009 The OpenLDAP Foundation.
+## Copyright 2004-2010 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -156,8 +156,8 @@ if test $RC != 0 ; then
 	exit $RC
 fi
 
-. $LDIFFILTER < $SEARCHOUT > $SEARCHFLT
-. $LDIFFILTER < $LDIFTRANSLUCENTDATA > $LDIFFLT
+$LDIFFILTER < $SEARCHOUT > $SEARCHFLT
+$LDIFFILTER < $LDIFTRANSLUCENTDATA > $LDIFFLT
 $CMP $SEARCHFLT $LDIFFLT > $CMPOUT
 
 if test $? != 0 ; then
@@ -185,7 +185,7 @@ $LDAPADD -v -v -v -D "$TRANSLUCENTROOT" -H $URI2 \
 	-w $PASSWD < $LDIFTRANSLUCENTADD > $TESTOUT 2>&1
 
 RC=$?
-if test $RC != 32 ; then
+if test $RC != 32 && test $RC,$BACKEND != 0,null ; then
 	echo "ldapadd failed ($RC), expected NO SUCH OBJECT!"
 	grep "$FAILURE" $TESTOUT
 	test $KILLSERVERS != no && kill -HUP $KILLPIDS
@@ -198,7 +198,7 @@ $LDAPMODRDN -D "$TRANSLUCENTROOT" -H $URI2 -w $PASSWD > \
 	$TESTOUT 2>&1 'uid=fred,ou=users,o=translucent' 'uid=someguy'
 
 RC=$?
-if test $RC != 32 ; then
+if test $RC != 32 && test $RC,$BACKEND != 0,null ; then
 	echo "ldapmodrdn failed ($RC), expected NO SUCH OBJECT!"
 	grep "$FAILURE" $TESTOUT
 	test $KILLSERVERS != no && kill -HUP $KILLPIDS
@@ -244,8 +244,9 @@ if test $RC != 0 ; then
 	exit $RC
 fi
 
-. $LDIFFILTER < $SEARCHOUT > $SEARCHFLT
-$CMP $SEARCHFLT $LDIFTRANSLUCENTMERGED > $CMPOUT
+$LDIFFILTER < $SEARCHOUT > $SEARCHFLT
+$LDIFFILTER < $LDIFTRANSLUCENTMERGED > $LDIFFLT
+$CMP $SEARCHFLT $LDIFFLT > $CMPOUT
 
 if test $? != 0 ; then
 	echo "Comparison failed -- local data failed to merge with remote!"

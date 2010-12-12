@@ -74,11 +74,11 @@ CONTRIBUTING
     <http://www.openldap.org/its/> to be considered.
 
 ---
-OpenLDAP: pkg/ldap/README,v 1.40.2.13 2009/10/13 16:52:06 quanah Exp
+OpenLDAP: pkg/ldap/README,v 1.40.2.14 2010/04/13 20:22:14 kurt Exp
 
 This work is part of OpenLDAP Software <http://www.openldap.org/>.
 
-Copyright 1998-2009 The OpenLDAP Foundation.
+Copyright 1998-2010 The OpenLDAP Foundation.
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without

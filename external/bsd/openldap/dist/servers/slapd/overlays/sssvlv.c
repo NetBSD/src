@@ -1,10 +1,10 @@
-/*	$NetBSD: sssvlv.c,v 1.1.1.1 2010/03/08 02:14:20 lukem Exp $	*/
+/*	$NetBSD: sssvlv.c,v 1.1.1.2 2010/12/12 15:23:44 adam Exp $	*/
 
 /* sssvlv.c - server side sort / virtual list view */
-/* OpenLDAP: pkg/ldap/servers/slapd/overlays/sssvlv.c,v 1.9.2.4 2009/09/29 19:07:07 quanah Exp */
+/* OpenLDAP: pkg/ldap/servers/slapd/overlays/sssvlv.c,v 1.9.2.9 2010/06/10 17:37:40 quanah Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2009 The OpenLDAP Foundation.
+ * Copyright 2009-2010 The OpenLDAP Foundation.
  * Portions copyright 2009 Symas Corporation.
  * All rights reserved.
  *
@@ -115,6 +115,7 @@ typedef struct sort_op
 /* There is only one conn table for all overlay instances */
 static sort_op **sort_conns;
 static ldap_pvt_thread_mutex_t sort_conns_mutex;
+static int ov_count;
 static const char *debug_header = "sssvlv";
 
 static int sss_cid;
@@ -472,7 +473,9 @@ range_err:
 	be = op->o_bd;
 	for ( i=0; i<j; i++ ) {
 		sort_node *sn = cur_node->avl_data;
-		
+
+		if ( slapd_shutdown ) break;
+
 		op->o_bd = select_backend( &sn->sn_dn, 0 );
 		e = NULL;
 		rc = be_entry_get_rw( op, &sn->sn_dn, NULL, NULL, 0, &e );
@@ -503,6 +506,8 @@ static void send_page( Operation *op, SlapReply *rs, sort_op *so )
 
 	while ( cur_node && rs->sr_nentries < so->so_page_size ) {
 		sort_node *sn = cur_node->avl_data;
+
+		if ( slapd_shutdown ) break;
 
 		next_node = tavl_next( cur_node, TAVL_DIR_RIGHT );
 
@@ -823,6 +828,8 @@ static int sssvlv_op_search(
 					so->so_vlv = op->o_ctrlflag[vlv_cid];
 					so->so_vlv_target = 0;
 					so->so_vlv_rc = 0;
+				} else {
+					so->so_vlv = SLAP_CONTROL_NONE;
 				}
 			}
 			so->so_vcontext = (unsigned long)so;
@@ -1167,6 +1174,7 @@ static int sssvlv_db_init(
 		sort_conns = ch_calloc( sizeof(sort_op *), dtblsize + 1 );
 		sort_conns++;
 	}
+	ov_count++;
 
 	return LDAP_SUCCESS;
 }
@@ -1177,6 +1185,13 @@ static int sssvlv_db_destroy(
 {
 	slap_overinst	*on = (slap_overinst *)be->bd_info;
 	sssvlv_info *si = (sssvlv_info *)on->on_bi.bi_private;
+	
+	ov_count--;
+	if ( !ov_count && sort_conns) {
+		sort_conns--;
+		ch_free(sort_conns);
+		ldap_pvt_thread_mutex_destroy( &sort_conns_mutex );
+	}
 	
 	if ( si ) {
 		ch_free( si );
@@ -1223,11 +1238,11 @@ int sssvlv_initialize()
 	if ( rc == LDAP_SUCCESS ) {
 		rc = overlay_register( &sssvlv );
 		if ( rc != LDAP_SUCCESS ) {
-			fprintf( stderr, "Failed to register server side sort overlay\n" );
+			Debug( LDAP_DEBUG_ANY, "Failed to register server side sort overlay\n", 0, 0, 0 );
 		}
 	}
 	else {
-		fprintf( stderr, "Failed to register control %d\n", rc );
+		Debug( LDAP_DEBUG_ANY, "Failed to register control %d\n", rc, 0, 0 );
 	}
 
 	return rc;

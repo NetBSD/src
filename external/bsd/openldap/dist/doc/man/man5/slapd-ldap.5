@@ -1,7 +1,7 @@
 .TH SLAPD-LDAP 5 "RELEASEDATE" "OpenLDAP LDVERSION"
-.\" Copyright 1998-2009 The OpenLDAP Foundation All Rights Reserved.
+.\" Copyright 1998-2010 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
-.\" OpenLDAP: pkg/ldap/doc/man/man5/slapd-ldap.5,v 1.41.2.14 2009/06/03 01:41:56 quanah Exp
+.\" OpenLDAP: pkg/ldap/doc/man/man5/slapd-ldap.5,v 1.41.2.17 2010/04/19 19:28:14 quanah Exp
 .SH NAME
 slapd\-ldap \- LDAP backend to slapd
 .SH SYNOPSIS
@@ -341,7 +341,7 @@ useful when the asserted identities do not exist on the remote server.
 
 Flags can be
 
-\fBoverride,[non\-]prescriptive\fP
+\fBoverride,[non\-]prescriptive,proxy\-authz\-[non\-]critical\fP
 
 When the 
 .B override
@@ -365,6 +365,13 @@ whose assertion is not allowed by the
 .B idassert\-authzFrom
 patterns.
 
+When the
+.B proxy\-authz\-non\-critical
+flag is used (the default), the proxyAuthz control is not marked as critical,
+in violation of RFC 4370.  Use of
+.B proxy\-authz\-critical
+is recommended.
+
 The TLS settings default to the same as the main slapd TLS settings,
 except for
 .B tls_reqcert
@@ -381,6 +388,24 @@ This directive obsoletes
 and
 .BR idassert\-method .
 .RE
+
+.TP
+.B idassert-passthru <authz-regexp>
+if defined, selects what
+.I local
+identities bypass the identity assertion feature.
+Those identities need to be known by the remote host.
+The string
+.B <authz-regexp>
+follows the rules defined for the
+.I authzFrom
+attribute.
+See 
+.BR slapd.conf (5),
+section related to
+.BR authz\-policy ,
+for details on the syntax of this field.
+
 
 .TP
 .B idle\-timeout <time>

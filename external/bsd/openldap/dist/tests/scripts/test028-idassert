@@ -1,8 +1,8 @@
 #! /bin/sh
-# OpenLDAP: pkg/ldap/tests/scripts/test028-idassert,v 1.12.2.4 2009/01/22 00:01:19 kurt Exp
+# OpenLDAP: pkg/ldap/tests/scripts/test028-idassert,v 1.12.2.6 2010/04/19 19:14:34 quanah Exp
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 1998-2009 The OpenLDAP Foundation.
+## Copyright 1998-2010 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -106,7 +106,7 @@ AUTHZID="u:it/jaj"
 echo "Testing ldapwhoami as proxy US, $AUTHZID..."
 $LDAPWHOAMI -h $LOCALHOST -p $PORT1 -D "cn=proxy US,ou=Admin,dc=example,dc=com" -w proxy -e\!"authzid=$AUTHZID"
 RC=$?
-if test $RC != 0 ; then
+if test $RC != 0 && test $BACKEND != null ; then
 	echo "ldapwhoami failed ($RC)!"
 	test $KILLSERVERS != no && kill -HUP $KILLPIDS
 	exit $RC
@@ -119,7 +119,7 @@ RC=$?
 if test $RC != 1 ; then
 	echo "ldapwhoami should have failed ($RC)!"
 	test $KILLSERVERS != no && kill -HUP $KILLPIDS
-	exit $RC
+	exit 1
 fi
 
 AUTHZID="u:bjensen"
@@ -129,7 +129,7 @@ RC=$?
 if test $RC != 1 ; then
 	echo "ldapwhoami should have failed ($RC)!"
 	test $KILLSERVERS != no && kill -HUP $KILLPIDS
-	exit $RC
+	exit 1
 fi
 
 echo "Testing ldapwhoami as proxy IT..."
@@ -148,7 +148,7 @@ RC=$?
 if test $RC != 1 ; then
 	echo "ldapwhoami should have failed ($RC)!"
 	test $KILLSERVERS != no && kill -HUP $KILLPIDS
-	exit $RC
+	exit 1
 fi
 
 AUTHZID="u:bjorn"
@@ -158,14 +158,14 @@ RC=$?
 if test $RC != 1 ; then
 	echo "ldapwhoami should have failed ($RC)!"
 	test $KILLSERVERS != no && kill -HUP $KILLPIDS
-	exit $RC
+	exit 1
 fi
 
 AUTHZID="dn:cn=Sandbox,ou=Admin,dc=example,dc=com"
 echo "Testing ldapwhoami as proxy IT, $AUTHZID..."
 $LDAPWHOAMI -h $LOCALHOST -p $PORT1 -D "cn=proxy IT,ou=Admin,dc=example,dc=com" -w proxy -e\!"authzid=$AUTHZID"
 RC=$?
-if test $RC != 0 ; then
+if test $RC != 0 && test $BACKEND != null ; then
 	echo "ldapwhoami failed ($RC)!"
 	test $KILLSERVERS != no && kill -HUP $KILLPIDS
 	exit $RC
@@ -198,19 +198,19 @@ $LDAPSEARCH -h $LOCALHOST -p $PORT1 -b "$BASE" \
 	-D "$ID" -w jaj > $SEARCHOUT 2>&1
 
 RC=$?
-if test $RC != 0 ; then
+if test $RC != 0 && test $BACKEND != null ; then
 	echo "ldapsearch failed ($RC)!"
 	test $KILLSERVERS != no && kill -HUP $KILLPIDS
 	exit $RC
 fi
 
 echo "Filtering ldapsearch results..."
-. $LDIFFILTER < $SEARCHOUT > $SEARCHFLT
+$LDIFFILTER -s ldif=e < $SEARCHOUT > $SEARCHFLT
 echo "Filtering original ldif used to create database..."
-. $LDIFFILTER < $IDASSERTOUT > $LDIFFLT
+$LDIFFILTER -s ldif=e < $IDASSERTOUT > $LDIFFLT
 echo "Comparing filter output..."
 $CMP $SEARCHFLT $LDIFFLT > $CMPOUT
-	
+
 if test $? != 0 ; then
 	echo "comparison failed - search with identity assertion didn't succeed"
 	test $KILLSERVERS != no && kill -HUP $KILLPIDS
@@ -232,9 +232,9 @@ if test $USE_SASL != "no" ; then
 	fi
 
 	echo "Filtering ldapsearch results..."
-	. $LDIFFILTER < $SEARCHOUT > $SEARCHFLT
+	$LDIFFILTER < $SEARCHOUT > $SEARCHFLT
 	echo "Filtering original ldif used to create database..."
-	. $LDIFFILTER < $IDASSERTOUT > $LDIFFLT
+	$LDIFFILTER < $IDASSERTOUT > $LDIFFLT
 	echo "Comparing filter output..."
 	$CMP $SEARCHFLT $LDIFFLT > $CMPOUT
 	

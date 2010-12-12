@@ -1,5 +1,5 @@
-# OpenLDAP: pkg/openldap-guide/admin/replication.sdf,v 1.32.2.26 2009/04/28 00:57:46 quanah Exp
-# Copyright 1999-2009 The OpenLDAP Foundation, All Rights Reserved.
+# OpenLDAP: pkg/openldap-guide/admin/replication.sdf,v 1.32.2.27 2010/04/13 20:22:34 kurt Exp
+# Copyright 1999-2010 The OpenLDAP Foundation, All Rights Reserved.
 # COPYING RESTRICTIONS APPLY, see COPYRIGHT.
 
 H1: Replication

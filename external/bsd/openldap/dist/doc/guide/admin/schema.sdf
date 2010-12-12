@@ -1,5 +1,5 @@
-# OpenLDAP: pkg/openldap-guide/admin/schema.sdf,v 1.41.2.9 2009/01/22 00:00:47 kurt Exp
-# Copyright 1999-2009 The OpenLDAP Foundation, All Rights Reserved.
+# OpenLDAP: pkg/openldap-guide/admin/schema.sdf,v 1.41.2.11 2010/04/19 15:58:40 quanah Exp
+# Copyright 1999-2010 The OpenLDAP Foundation, All Rights Reserved.
 # COPYING RESTRICTIONS APPLY, see COPYRIGHT.
 
 H1: Schema Specification
@@ -105,7 +105,7 @@ You are, of course, free to design a hierarchy suitable to your
 organizational needs under your organization's OID. No matter what hierarchy you choose, you should maintain a registry of assignments you make.  This can be a simple flat file or something more sophisticated such as the {{OpenLDAP OID Registry}} ({{URL:http://www.openldap.org/faq/index.cgi?file=197}}).
 
 For more information about Object Identifiers (and a listing service)
-see {{URL:http://www.alvestrand.no/harald/objectid/}}.
+see {{URL:http://www.alvestrand.no/objectid/}}.
 
 .{{Under no circumstances should you hijack OID namespace!}}
 

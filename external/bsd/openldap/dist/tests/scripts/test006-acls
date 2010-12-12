@@ -1,8 +1,8 @@
 #! /bin/sh
-# OpenLDAP: pkg/ldap/tests/scripts/test006-acls,v 1.59.2.7 2009/01/30 19:02:54 quanah Exp
+# OpenLDAP: pkg/ldap/tests/scripts/test006-acls,v 1.59.2.9 2010/04/19 19:14:33 quanah Exp
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 1998-2009 The OpenLDAP Foundation.
+## Copyright 1998-2010 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -13,11 +13,8 @@
 ## top-level directory of the distribution or, alternatively, at
 ## <http://www.OpenLDAP.org/license.html>.
 
-case "$BACKEND" in
-bdb|hdb)
-	;;
-*)
-	echo "Test does not support $BACKEND backend"
+case "$BACKEND" in ldif | null)
+	echo "$BACKEND backend does not support access controls, test skipped"
 	exit 0
 esac
 
@@ -652,9 +649,9 @@ fi
 LDIF=$ACLOUTMASTER
 
 echo "Filtering ldapsearch results..."
-. $LDIFFILTER < $SEARCHOUT > $SEARCHFLT
+$LDIFFILTER < $SEARCHOUT > $SEARCHFLT
 echo "Filtering original ldif used to create database..."
-. $LDIFFILTER < $LDIF > $LDIFFLT
+$LDIFFILTER < $LDIF > $LDIFFLT
 echo "Comparing filter output..."
 $CMP $SEARCHFLT $LDIFFLT > $CMPOUT
 

@@ -1,7 +1,7 @@
 .TH SLAPO-CHAIN 5 "RELEASEDATE" "OpenLDAP LDVERSION"
-.\" Copyright 1998-2009 The OpenLDAP Foundation, All Rights Reserved.
+.\" Copyright 1998-2010 The OpenLDAP Foundation, All Rights Reserved.
 .\" Copying restrictions apply.  See the COPYRIGHT file.
-.\" OpenLDAP: pkg/ldap/doc/man/man5/slapo-chain.5,v 1.10.2.7 2009/06/03 01:41:58 quanah Exp
+.\" OpenLDAP: pkg/ldap/doc/man/man5/slapo-chain.5,v 1.10.2.9 2010/04/14 22:31:47 quanah Exp
 .SH NAME
 slapo\-chain \- chain overlay to slapd
 .SH SYNOPSIS
@@ -42,6 +42,10 @@ in conjunction with this overlay.  They are described in
 .BR slapd\-ldap (5),
 and they also need to be prefixed by
 .BR chain\- .
+
+Note: this overlay is built into the \fIldap\fP backend; it is not 
+a separate module.
+
 .TP
 .B overlay chain
 This directive adds the chain overlay to the current backend.

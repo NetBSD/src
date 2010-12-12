@@ -1,8 +1,8 @@
 # This is a sample Perl module for the OpenLDAP server slapd.
-# OpenLDAP: pkg/ldap/servers/slapd/back-perl/SampleLDAP.pm,v 1.10.2.4 2009/01/22 00:01:09 kurt Exp
+# OpenLDAP: pkg/ldap/servers/slapd/back-perl/SampleLDAP.pm,v 1.10.2.5 2010/04/13 20:23:36 kurt Exp
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 1998-2009 The OpenLDAP Foundation.
+## Copyright 1998-2010 The OpenLDAP Foundation.
 ## Portions Copyright 1999 John C. Quillan.
 ## All rights reserved.
 ##

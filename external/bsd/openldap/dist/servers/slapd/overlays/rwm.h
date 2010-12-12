@@ -1,10 +1,10 @@
-/*	$NetBSD: rwm.h,v 1.1.1.2 2010/03/08 02:14:20 lukem Exp $	*/
+/*	$NetBSD: rwm.h,v 1.1.1.3 2010/12/12 15:23:42 adam Exp $	*/
 
 /* rwm.h - dn rewrite/attribute mapping header file */
-/* OpenLDAP: pkg/ldap/servers/slapd/overlays/rwm.h,v 1.15.2.6 2009/05/01 19:18:10 quanah Exp */
+/* OpenLDAP: pkg/ldap/servers/slapd/overlays/rwm.h,v 1.15.2.8 2010/04/19 19:31:17 quanah Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2009 The OpenLDAP Foundation.
+ * Copyright 1999-2010 The OpenLDAP Foundation.
  * Portions Copyright 1999-2003 Howard Chu.
  * Portions Copyright 2000-2003 Pierangelo Masarati.
  * All rights reserved.
@@ -122,15 +122,18 @@ rwm_map_filter(
 		struct ldapmap *oc_map,
 		struct berval *f );
 
+#if 0 /* unused! */
 int
 rwm_map_attrs(
 		struct ldapmap *at_map,
 		AttributeName *a,
 		int remap,
 		char ***mapped_attrs );
+#endif
 
 int
 rwm_map_attrnames(
+		Operation *op,
 		struct ldapmap *at_map,
 		struct ldapmap *oc_map,
 		AttributeName *an,

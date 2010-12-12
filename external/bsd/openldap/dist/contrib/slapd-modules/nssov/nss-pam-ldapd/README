@@ -1,0 +1,7 @@
+These files were pulled from the nss-pam-ldapd project version 0.7.3.  Copyright notices are in the individual files.
+
+This is not the full distribution of nss-pam-ldapd, and does not
+include the client-side stub libraries.  Get the latest release of
+nss-pam-ldapd from http://arthurdejong.org/nss-pam-ldapd/ to use
+this overlay.
+

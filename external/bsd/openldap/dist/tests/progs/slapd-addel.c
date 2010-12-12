@@ -1,9 +1,9 @@
-/*	$NetBSD: slapd-addel.c,v 1.1.1.2 2010/03/08 02:14:20 lukem Exp $	*/
+/*	$NetBSD: slapd-addel.c,v 1.1.1.3 2010/12/12 15:24:16 adam Exp $	*/
 
-/* OpenLDAP: pkg/ldap/tests/progs/slapd-addel.c,v 1.41.2.8 2009/01/22 00:01:17 kurt Exp */
+/* OpenLDAP: pkg/ldap/tests/progs/slapd-addel.c,v 1.41.2.9 2010/04/13 20:23:58 kurt Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2009 The OpenLDAP Foundation.
+ * Copyright 1999-2010 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

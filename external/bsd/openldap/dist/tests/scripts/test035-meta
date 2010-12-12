@@ -1,8 +1,8 @@
 #! /bin/sh
-# OpenLDAP: pkg/ldap/tests/scripts/test035-meta,v 1.14.2.6 2009/01/22 00:01:19 kurt Exp
+# OpenLDAP: pkg/ldap/tests/scripts/test035-meta,v 1.14.2.8 2010/04/19 19:14:35 quanah Exp
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 1998-2009 The OpenLDAP Foundation.
+## Copyright 1998-2010 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -485,13 +485,13 @@ $LDAPSEARCH -S "" -h $LOCALHOST -p $PORT3 \
 	-b "$BASEDN" "(objectClass=*)" 1.1 \
 	>> $TESTOUT 2>&1
 RC=$?
-case $RC in 
-	0)
+case $RC,$BACKEND in
+	4,* | 0,null)
+	;;
+	0,*)
 		echo "Search should have failed ($RC)!"
 		test $KILLSERVERS != no && kill -HUP $KILLPIDS
 		exit -1
-	;;
-	4)
 	;;
 	*)
 		echo "Search failed ($RC)!"
@@ -509,13 +509,13 @@ $LDAPSEARCH -S "" -h $LOCALHOST -p $PORT3 \
 	-b "$BASEDN" -z 2 "(objectClass=*)" 1.1 \
 	>> $TESTOUT 2>&1
 RC=$?
-case $RC in 
-	0)
+case $RC,$BACKEND in
+	4,* | 0,null)
+	;;
+	0,*)
 		echo "Search should have failed ($RC)!"
 		test $KILLSERVERS != no && kill -HUP $KILLPIDS
 		exit -1
-	;;
-	4)
 	;;
 	*)
 		echo "Search failed ($RC)!"
@@ -525,9 +525,9 @@ case $RC in
 esac
 
 echo "Filtering ldapsearch results..."
-. $LDIFFILTER < $SEARCHOUT > $SEARCHFLT
+$LDIFFILTER < $SEARCHOUT > $SEARCHFLT
 echo "Filtering original ldif used to create database..."
-. $LDIFFILTER < $METAOUT > $LDIFFLT
+$LDIFFILTER < $METAOUT > $LDIFFLT
 echo "Comparing filter output..."
 $CMP $SEARCHFLT $LDIFFLT > $CMPOUT
 	
@@ -667,13 +667,15 @@ RC=$?
 #	test $KILLSERVERS != no && kill -HUP $KILLPIDS
 #	exit $RC
 #fi
-case $RC in 
-	0)
+case $RC,$BACKEND in
+	0,null)
+	;;
+	0,*)
 		echo "WhoAmI should have failed ($RC)!"
 		test $KILLSERVERS != no && kill -HUP $KILLPIDS
 		exit -1
 	;;
-	51)
+	51,*)
 		echo "### Hit LDAP_BUSY problem; you may want to re-run the test"
 	;;
 	*)
@@ -690,13 +692,15 @@ RC=$?
 #	test $KILLSERVERS != no && kill -HUP $KILLPIDS
 #	exit $RC
 #fi
-case $RC in 
-	0)
+case $RC,$BACKEND in
+	0,null)
+	;;
+	0,*)
 		echo "WhoAmI should have failed ($RC)!"
 		test $KILLSERVERS != no && kill -HUP $KILLPIDS
 		exit -1
 	;;
-	51)
+	51,*)
 		echo "### Hit LDAP_BUSY problem; you may want to re-run the test"
 	;;
 	*)
@@ -713,16 +717,16 @@ RC=$?
 #	test $KILLSERVERS != no && kill -HUP $KILLPIDS
 #	exit -1
 #fi
-case $RC in 
-	6)
+case $RC,$BACKEND in
+	6,* | 5,null)
 	;;
-	51)
+	51,*)
 		echo "### Hit LDAP_BUSY problem; you may want to re-run the test"
 	;;
 	*)
 		echo "Compare failed ($RC)!"
 		test $KILLSERVERS != no && kill -HUP $KILLPIDS
-		exit $RC
+		exit 1
 	;;
 esac
 

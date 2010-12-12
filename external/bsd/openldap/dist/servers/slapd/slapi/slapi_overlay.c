@@ -1,10 +1,10 @@
-/*	$NetBSD: slapi_overlay.c,v 1.1.1.3 2010/03/08 02:14:20 lukem Exp $	*/
+/*	$NetBSD: slapi_overlay.c,v 1.1.1.4 2010/12/12 15:23:52 adam Exp $	*/
 
 /* slapi_overlay.c - SLAPI overlay */
-/* OpenLDAP: pkg/ldap/servers/slapd/slapi/slapi_overlay.c,v 1.40.2.8 2009/01/22 00:01:15 kurt Exp */
+/* OpenLDAP: pkg/ldap/servers/slapd/slapi/slapi_overlay.c,v 1.40.2.9 2010/04/13 20:23:50 kurt Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2001-2009 The OpenLDAP Foundation.
+ * Copyright 2001-2010 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

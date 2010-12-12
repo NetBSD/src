@@ -1,8 +1,8 @@
 #! /bin/sh
-# OpenLDAP: pkg/ldap/tests/scripts/relay,v 1.13.2.6 2009/01/22 00:01:18 kurt Exp
+# OpenLDAP: pkg/ldap/tests/scripts/relay,v 1.13.2.8 2010/04/19 19:14:31 quanah Exp
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 1998-2009 The OpenLDAP Foundation.
+## Copyright 1998-2010 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -344,9 +344,9 @@ if test $RC != 0 ; then
 fi
 
 echo "Filtering ldapsearch results..."
-. $LDIFFILTER < $SEARCHOUT > $SEARCHFLT
+$LDIFFILTER < $SEARCHOUT > $SEARCHFLT
 echo "Filtering original ldif used to create database..."
-. $LDIFFILTER < $RELAYOUT > $LDIFFLT
+$LDIFFILTER < $RELAYOUT > $LDIFFLT
 echo "Comparing filter output..."
 $CMP $SEARCHFLT $LDIFFLT > $CMPOUT
 	
@@ -386,11 +386,10 @@ $LDAPCOMPARE -h $LOCALHOST -p $PORT1 \
 	"cn=Added User,ou=Alumni Association,ou=People,$BASEDN" \
 	"seeAlso:cn=All Staff,ou=Groups,$BASEDN" >> $TESTOUT 2>&1
 RC=$?
-if test $RC != 6 ; then
+if test $RC != 6 && test $RC,$BACKEND != 5,null ; then
 	echo "Compare failed ($RC)!"
 	test $KILLSERVERS != no && kill -HUP $KILLPIDS
-	exit $RC
+	exit 1
 fi
 
 test $KILLSERVERS != no && kill -HUP $KILLPIDS
-

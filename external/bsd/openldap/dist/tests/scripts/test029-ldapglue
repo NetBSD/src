@@ -1,8 +1,8 @@
 #! /bin/sh
-# OpenLDAP: pkg/ldap/tests/scripts/test029-ldapglue,v 1.8.2.4 2009/01/22 00:01:19 kurt Exp
+# OpenLDAP: pkg/ldap/tests/scripts/test029-ldapglue,v 1.8.2.6 2010/04/19 19:14:34 quanah Exp
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 1998-2009 The OpenLDAP Foundation.
+## Copyright 1998-2010 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -149,9 +149,9 @@ if test $RC != 0 ; then
 fi
 
 echo "Filtering ldapsearch results..."
-. $LDIFFILTER < $SEARCHOUT > $SEARCHFLT
+$LDIFFILTER -s ldif=e < $SEARCHOUT > $SEARCHFLT
 echo "Filtering original ldif used to create database..."
-. $LDIFFILTER < $LDAPGLUEOUT > $LDIFFLT
+$LDIFFILTER -s ldif=e < $LDAPGLUEOUT > $LDIFFLT
 echo "Comparing filter output..."
 $CMP $SEARCHFLT $LDIFFLT > $CMPOUT
 	
@@ -174,9 +174,9 @@ if test $RC != 0 ; then
 fi
 
 echo "Filtering ldapsearch results..."
-. $LDIFFILTER < $SEARCHOUT > $SEARCHFLT
+$LDIFFILTER < $SEARCHOUT > $SEARCHFLT
 echo "Filtering original ldif used to create database..."
-. $LDIFFILTER < $LDAPGLUEANONYMOUSOUT > $LDIFFLT
+$LDIFFILTER < $LDAPGLUEANONYMOUSOUT > $LDIFFLT
 echo "Comparing filter output..."
 $CMP $SEARCHFLT $LDIFFLT > $CMPOUT
 	
@@ -202,9 +202,9 @@ if test $USE_SASL != "no" ; then
 	fi
 
 	echo "Filtering ldapsearch results..."
-	. $LDIFFILTER < $SEARCHOUT > $SEARCHFLT
+	$LDIFFILTER < $SEARCHOUT > $SEARCHFLT
 	echo "Filtering original ldif used to create database..."
-	. $LDIFFILTER < $LDAPGLUEOUT > $LDIFFLT
+	$LDIFFILTER < $LDAPGLUEOUT > $LDIFFLT
 	echo "Comparing filter output..."
 	$CMP $SEARCHFLT $LDIFFLT > $CMPOUT
 	

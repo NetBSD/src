@@ -1,5 +1,5 @@
-# OpenLDAP: pkg/openldap-guide/admin/referrals.sdf,v 1.25.2.7 2009/02/02 22:46:51 quanah Exp
-# Copyright 1999-2009 The OpenLDAP Foundation, All Rights Reserved.
+# OpenLDAP: pkg/openldap-guide/admin/referrals.sdf,v 1.25.2.8 2010/04/13 20:22:34 kurt Exp
+# Copyright 1999-2010 The OpenLDAP Foundation, All Rights Reserved.
 # COPYING RESTRICTIONS APPLY, see COPYRIGHT.
 
 H1: Constructing a Distributed Directory Service

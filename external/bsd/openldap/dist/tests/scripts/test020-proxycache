@@ -1,8 +1,8 @@
 #! /bin/sh
-# OpenLDAP: pkg/ldap/tests/scripts/test020-proxycache,v 1.26.2.11 2009/08/25 21:24:47 quanah Exp
+# OpenLDAP: pkg/ldap/tests/scripts/test020-proxycache,v 1.26.2.13 2010/04/19 19:14:34 quanah Exp
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 1998-2009 The OpenLDAP Foundation.
+## Copyright 1998-2010 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -32,6 +32,13 @@ if test $BACKLDAP = "ldapno" ; then
 	echo "LDAP backend not available, test skipped"
 	exit 0
 fi 
+
+if test $BACKEND = ldif ; then
+	# The (mail=example.com*) queries hit a sizelimit, so which
+	# entry is returned depends on the ordering in the backend.
+	echo "Test does not support $BACKEND backend, test skipped"
+	exit 0
+fi
 
 mkdir -p $TESTDIR $DBDIR1 $DBDIR2
 
@@ -455,9 +462,9 @@ else
 fi
 
 echo "Filtering ldapsearch results..."
-. $LDIFFILTER < $SEARCHOUT > $SEARCHFLT
+$LDIFFILTER < $SEARCHOUT > $SEARCHFLT
 echo "Filtering original ldif..."
-. $LDIFFILTER < $PROXYCACHEOUT > $LDIFFLT
+$LDIFFILTER < $PROXYCACHEOUT > $LDIFFLT
 echo "Comparing filter output..."
 $CMP $SEARCHFLT $LDIFFLT > $CMPOUT
 

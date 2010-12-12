@@ -10,22 +10,14 @@ It adds to entries returned by search operations the value of attributes
 "allowedAttributesEffective"
 	<http://msdn.microsoft.com/en-us/library/ms675218(VS.85).aspx>
 
-No other use is made of those attributes: they cannot be compared,
-they cannot be used in search filters, they cannot be used in ACLs, ...
-
-    --- o --- o --- o ---
-
-Other attributes like
-
 "allowedChildClasses"
 	<http://msdn.microsoft.com/en-us/library/ms675219(VS.85).aspx>
+
 "allowedChildClassesEffective"
 	<http://msdn.microsoft.com/en-us/library/ms675220(VS.85).aspx>
 
-make little sense within OpenLDAP's slapd right now, since any AUXILIARY
-objectClass can be added to an entry, while no STRUCTURAL objectClass can.
-This may change when DIT structure rules are implemented, while ACLs may
-restrict what AUXILIARY objectClasses can be added to an entry.
+No other use is made of those attributes: they cannot be compared,
+they cannot be used in search filters, they cannot be used in ACLs, ...
 
     --- o --- o --- o ---
 
@@ -63,7 +55,7 @@ to compile this overlay, or even better use OpenLDAP's libtool as appropriate.
 ---
 This work is part of OpenLDAP Software <http://www.openldap.org/>.
 
-Copyright 2006-2009 The OpenLDAP Foundation. All rights reserved.
+Copyright 2006-2010 The OpenLDAP Foundation. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted only as authorized by the OpenLDAP

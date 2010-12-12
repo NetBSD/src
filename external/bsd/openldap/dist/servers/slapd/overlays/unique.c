@@ -1,10 +1,10 @@
-/*	$NetBSD: unique.c,v 1.1.1.3 2010/03/08 02:14:20 lukem Exp $	*/
+/*	$NetBSD: unique.c,v 1.1.1.4 2010/12/12 15:23:47 adam Exp $	*/
 
 /* unique.c - attribute uniqueness module */
-/* OpenLDAP: pkg/ldap/servers/slapd/overlays/unique.c,v 1.20.2.17 2009/12/02 16:52:10 quanah Exp */
+/* OpenLDAP: pkg/ldap/servers/slapd/overlays/unique.c,v 1.20.2.18 2010/04/13 20:23:47 kurt Exp */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2004-2009 The OpenLDAP Foundation.
+ * Copyright 2004-2010 The OpenLDAP Foundation.
  * Portions Copyright 2004,2006-2007 Symas Corporation.
  * All rights reserved.
  *

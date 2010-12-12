@@ -37,7 +37,18 @@ moduleload ...path/to/slapd-sha2.so
 
 5) Restart slapd.
 
-The {SHA512} scheme should now be recognised.
+
+Configuring
+-----------
+
+The {SHA256}, {SHA384} and {SHA512} password schemes should now be recognised.
+
+You can also tell OpenLDAP to use one of these new schemes when processing LDAP
+Password Modify Extended Operations, thanks to the password-hash option in
+slapd.conf. For example:
+
+password-hash	{SHA256}
+
 
 Testing
 -------
@@ -96,7 +107,7 @@ to see stderr:
 $ sudo /etc/init.d/slapd stop
 Stopping OpenLDAP: slapd.
 $ sudo /usr/sbin/slapd -f /etc/ldap/slapd.conf -h ldap://localhost:389 -d 256
-@(#) OpenLDAP: pkg/ldap/contrib/slapd-modules/passwd/sha2/README,v 1.1.2.2 2009/08/17 22:57:53 quanah Exp
+@(#) OpenLDAP: pkg/ldap/contrib/slapd-modules/passwd/sha2/README,v 1.1.2.4 2010/04/15 18:40:14 quanah Exp
         buildd@palmer:/build/buildd/openldap2.3-2.4.9/debian/build/servers/slapd
 /etc/ldap/slapd.conf: line 123: rootdn is always granted unlimited privileges.
 /etc/ldap/slapd.conf: line 140: rootdn is always granted unlimited privileges.
@@ -117,7 +128,7 @@ conn=0 fd=12 closed (connection lost)
 
 This work is part of OpenLDAP Software <http://www.openldap.org/>.
 
-Copyright 2009 The OpenLDAP Foundation.
+Copyright 2009-2010 The OpenLDAP Foundation.
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without

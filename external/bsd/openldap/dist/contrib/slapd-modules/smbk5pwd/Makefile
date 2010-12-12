@@ -1,7 +1,7 @@
-# OpenLDAP: pkg/ldap/contrib/slapd-modules/smbk5pwd/Makefile,v 1.1.6.4 2009/10/02 21:16:53 quanah Exp
+# OpenLDAP: pkg/ldap/contrib/slapd-modules/smbk5pwd/Makefile,v 1.1.6.5 2010/04/13 20:22:30 kurt Exp
 # This work is part of OpenLDAP Software <http://www.openldap.org/>.
 #
-# Copyright 1998-2009 The OpenLDAP Foundation.
+# Copyright 1998-2010 The OpenLDAP Foundation.
 # Copyright 2004 Howard Chu, Symas Corp. All Rights Reserved.
 #
 # Redistribution and use in source and binary forms, with or without
