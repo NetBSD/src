@@ -1,6 +1,6 @@
-.TH LDAP.CONF 5 "2009/12/20" "OpenLDAP 2.4.21"
-.\" OpenLDAP: pkg/ldap/doc/man/man5/ldap.conf.5,v 1.33.2.13 2009/11/18 20:41:15 quanah Exp
-.\" Copyright 1998-2009 The OpenLDAP Foundation All Rights Reserved.
+.TH LDAP.CONF 5 "2010/06/30" "OpenLDAP 2.4.23"
+.\" OpenLDAP: pkg/ldap/doc/man/man5/ldap.conf.5,v 1.33.2.14 2010/04/13 20:22:41 kurt Exp
+.\" Copyright 1998-2010 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
 .SH NAME
 ldap.conf, .ldaprc \- LDAP configuration file/environment variables
@@ -158,6 +158,7 @@ Aliases are only dereferenced when locating the base object of the search.
 Aliases are dereferenced both in searching and in locating the base object
 of the search.
 .RE
+.TP
 .TP
 .B HOST <name[:port] ...>
 Specifies the name(s) of an LDAP server(s) to which the
