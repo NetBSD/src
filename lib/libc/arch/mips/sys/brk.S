@@ -1,4 +1,4 @@
-/*	$NetBSD: brk.S,v 1.17 2009/12/14 01:07:42 matt Exp $	*/
+/*	$NetBSD: brk.S,v 1.18 2010/12/12 09:00:37 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 	RCSID("from: @(#)brk.s	8.1 (Berkeley) 6/4/93")
 #else
-	RCSID("$NetBSD: brk.S,v 1.17 2009/12/14 01:07:42 matt Exp $")
+	RCSID("$NetBSD: brk.S,v 1.18 2010/12/12 09:00:37 tsutsui Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -65,6 +65,7 @@ LEAF(_brk)
 	li		v0, SYS_break
 	syscall
 	bne		a3, zero, 2f
+	PTR_LA		t0, _C_LABEL(__curbrk)
 	PTR_S		a0, 0(t0)
 	move		v0, zero
 	PIC_RETURN()
