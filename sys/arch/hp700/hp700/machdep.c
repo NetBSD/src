@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.91 2010/12/09 10:19:23 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.92 2010/12/12 08:23:14 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.91 2010/12/09 10:19:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.92 2010/12/12 08:23:14 skrll Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -203,7 +203,7 @@ char	machine[] = MACHINE;
 char	cpu_model[128];
 const struct hppa_cpu_info *hppa_cpu_info;
 enum hppa_cpu_type cpu_type;
-int	cpu_hvers;
+int	cpu_modelno;
 int	cpu_revision;
 
 #if NLCD > 0
@@ -655,15 +655,16 @@ cpuid(void)
 #ifdef DEBUG
 		printf("WARNING: PDC_MODEL_INFO error %d\n", error);
 #endif
-		pdc_model.hvers = 0;
+		pdc_model.hwmodel = 0;
+		pdc_model.hv = 0;
 	} else {
 #ifdef DEBUG
 		printf("pdc_model.hvers %d\n", pdc_model.hvers);
 #endif
 	}
 	/* XXXNH - check */
-	cpu_hvers = pdc_model.hvers >> 4;
-	model = hppa_mod_info(HPPA_TYPE_BOARD, cpu_hvers);
+	cpu_modelno = pdc_model.hwmodel;
+	model = hppa_mod_info(HPPA_TYPE_BOARD, cpu_modelno);
 #ifdef DEBUG
 	printf("%s: model %s\n", __func__, model);
 #endif
@@ -673,9 +674,9 @@ cpuid(void)
 	   &pdc_cpuid, 0, 0, 0, 0)) < 0) {
 #ifdef DEBUG
 		printf("WARNING: PDC_MODEL_CPUID error %d. "
-		    "Using cpu_hvers based cpu_type.\n", error);
+		    "Using cpu_modelno based cpu_type.\n", error);
 #endif
-		cpu_type = cpu_model_cpuid(cpu_hvers);
+		cpu_type = cpu_model_cpuid(cpu_modelno);
 	} else {
 #ifdef DEBUG
 		printf("%s: cpuid.version  = %x\n", __func__,
@@ -797,7 +798,7 @@ cpuid(void)
 	hppa_cpu_info = p;
 
 	if (hppa_cpu_info->hci_chip_name == NULL)
-		panic("bad model string for 0x%x", pdc_model.hvers >> 4);
+		panic("bad model string for 0x%x", pdc_model.hwmodel);
 	else if (hppa_cpu_info->desidhash == NULL)
 		panic("no kernel support for %s",
 		    hppa_cpu_info->hci_chip_name);
@@ -835,9 +836,9 @@ cpuid(void)
 }
 
 enum hppa_cpu_type
-cpu_model_cpuid(int hvers)
+cpu_model_cpuid(int modelno)
 {
-	switch (hvers) {
+	switch (modelno) {
 	/* no supported HP8xx/9xx models with pcx */
 	case HPPA_BOARD_HP720:
 	case HPPA_BOARD_HP750_66:

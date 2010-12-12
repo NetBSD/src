@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.25 2010/06/03 22:34:26 skrll Exp $	*/
+/*	$NetBSD: mem.c,v 1.26 2010/12/12 08:23:14 skrll Exp $	*/
 
 /*	$OpenBSD: mem.c,v 1.30 2007/09/22 16:21:32 krw Exp $	*/
 /*
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.25 2010/06/03 22:34:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.26 2010/12/12 08:23:14 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -205,7 +205,7 @@ memattach(device_t parent, device_t self, void *aux)
 			uint32_t vic;
 			int s, settimeout;
 
-			switch (cpu_hvers) {
+			switch (cpu_modelno) {
 			case HPPA_BOARD_HP715_33:
 			case HPPA_BOARD_HP715S_33:
 			case HPPA_BOARD_HP715T_33:

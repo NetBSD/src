@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.73 2010/11/15 06:24:53 uebayasi Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.74 2010/12/12 08:23:14 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.73 2010/11/15 06:24:53 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.74 2010/12/12 08:23:14 skrll Exp $");
 
 #include "locators.h"
 #include "power.h"
@@ -1425,7 +1425,7 @@ mbattach(device_t parent, device_t self, void *aux)
 	}
 #endif	
 
-	switch (cpu_hvers) {
+	switch (cpu_modelno) {
 	case HPPA_BOARD_HPE23:
 	case HPPA_BOARD_HPE25:
 	case HPPA_BOARD_HPE35:

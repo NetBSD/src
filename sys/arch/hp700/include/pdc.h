@@ -1,4 +1,4 @@
-/*	$NetBSD: pdc.h,v 1.15 2010/12/04 16:04:45 skrll Exp $	*/
+/*	$NetBSD: pdc.h,v 1.16 2010/12/12 08:23:15 skrll Exp $	*/
 
 /*	$OpenBSD: pdc.h,v 1.35 2007/07/15 20:03:48 kettenis Exp $	*/
 
@@ -345,7 +345,9 @@ struct pdc_pim {	/* PDC_PIM */
 };
 
 struct pdc_model {	/* PDC_MODEL */
-	u_int	hvers;		/* hardware version */
+	u_int	res1 : 16;	/* reserved */
+	u_int	hwmodel : 12;	/* hardware model. */
+	u_int	hv : 4;
 	u_int	rev : 4;	/* zero for all native processors */
 	u_int	model : 20;	/* 4 for all native processors */
 	u_int	sh : 1;		/* shadow registers are present */
