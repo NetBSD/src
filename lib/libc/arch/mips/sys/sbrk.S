@@ -1,4 +1,4 @@
-/*	$NetBSD: sbrk.S,v 1.17 2009/12/14 01:07:42 matt Exp $	*/
+/*	$NetBSD: sbrk.S,v 1.18 2010/12/12 09:03:06 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 	RCSID("from: @(#)sbrk.s	8.1 (Berkeley) 6/4/93")
 #else
-	RCSID("$NetBSD: sbrk.S,v 1.17 2009/12/14 01:07:42 matt Exp $")
+	RCSID("$NetBSD: sbrk.S,v 1.18 2010/12/12 09:03:06 tsutsui Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -62,6 +62,7 @@ LEAF(_sbrk)
 	SYSTRAP(break)
 	bne		a3, zero, 1f
 	move		v0, v1		# return old val of curbrk from above
+	PTR_LA		t0, _C_LABEL(__curbrk)
 	PTR_S		a0, 0(t0)	# save current val of curbrk from above
 	PIC_RETURN()
 1:
