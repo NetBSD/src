@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_allserver.c,v 1.4 2010/12/12 18:32:47 pooka Exp $	*/
+/*	$NetBSD: rump_allserver.c,v 1.5 2010/12/12 18:33:44 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rump_allserver.c,v 1.4 2010/12/12 18:32:47 pooka Exp $");
+__RCSID("$NetBSD: rump_allserver.c,v 1.5 2010/12/12 18:33:44 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -121,5 +121,7 @@ main(int argc, char *argv[])
 	sem_wait(&sigsem);
 
 	rump_sys_reboot(0, NULL);
+	/*NOTREACHED*/
+
 	return 0;
 }
