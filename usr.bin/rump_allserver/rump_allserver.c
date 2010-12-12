@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_allserver.c,v 1.3 2010/12/12 12:49:37 pooka Exp $	*/
+/*	$NetBSD: rump_allserver.c,v 1.4 2010/12/12 18:32:47 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -27,15 +27,18 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rump_allserver.c,v 1.3 2010/12/12 12:49:37 pooka Exp $");
+__RCSID("$NetBSD: rump_allserver.c,v 1.4 2010/12/12 18:32:47 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
+#include <sys/signal.h>
 
 #include <rump/rump.h>
+#include <rump/rump_syscalls.h>
 
 #include <err.h>
 #include <errno.h>
+#include <semaphore.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -57,6 +60,14 @@ die(int sflag, int error, const char *reason)
 	if (!sflag)
 		rump_daemonize_done(error);
 	exit(1);
+}
+
+static sem_t sigsem;
+static void
+sigreboot(int sig)
+{
+
+	sem_post(&sigsem);
 }
 
 int
@@ -104,5 +115,11 @@ main(int argc, char *argv[])
 	if (!sflag)
 		rump_daemonize_done(RUMP_DAEMONIZE_SUCCESS);
 
-	pause();
+	sem_init(&sigsem, 0, 0);
+	signal(SIGTERM, sigreboot);
+	signal(SIGINT, sigreboot);
+	sem_wait(&sigsem);
+
+	rump_sys_reboot(0, NULL);
+	return 0;
 }
