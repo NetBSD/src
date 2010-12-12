@@ -1,4 +1,4 @@
-/*	$NetBSD: resize_ffs.c,v 1.19 2010/12/08 00:25:54 riz Exp $	*/
+/*	$NetBSD: resize_ffs.c,v 1.20 2010/12/12 19:53:23 mhitch Exp $	*/
 /* From sources sent on February 17, 2003 */
 /*-
  * As its sole author, I explicitly place this code in the public
@@ -449,14 +449,16 @@ initcg(int cgn)
          * mkfs do.
          */
 	bzero(cg, newsb->fs_cgsize);
-	cg->cg_time = newsb->fs_time;
+	cg->cg_old_time = newsb->fs_time;
+	if (newsb->fs_old_flags & FS_FLAGS_UPDATED)
+		cg->cg_time = newsb->fs_time;
 	cg->cg_magic = CG_MAGIC;
 	cg->cg_cgx = cgn;
 	cg->cg_old_ncyl = newsb->fs_old_cpg;
 	/* Update the cg_old_ncyl value for the last cylinder. */
-	if ((cgn == newsb->fs_ncg - 1) && 
-	    (newsb->fs_old_ncyl % newsb->fs_old_cpg) ) {
-		cg->cg_old_ncyl = newsb->fs_old_ncyl % newsb->fs_old_cpg;
+	if (cgn == newsb->fs_ncg - 1) {
+		if ((newsb->fs_old_flags & FS_FLAGS_UPDATED) == 0)
+			cg->cg_old_ncyl = newsb->fs_old_ncyl % newsb->fs_old_cpg;
 	}
 	cg->cg_old_niblk = newsb->fs_ipg;
 	cg->cg_ndblk = dmax;
@@ -945,8 +947,9 @@ grow(void)
 			newcgsize = newsb->fs_fpg;
 		oldcgsize = oldsb->fs_size % oldsb->fs_fpg;
 		set_bits(cg_blksfree(cg, 0), oldcgsize, newcgsize - oldcgsize);
-		cg->cg_old_ncyl = howmany(newcgsize * NSPF(newsb),
-		    newsb->fs_old_spc);
+		cg->cg_old_ncyl = oldsb->fs_old_cpg;
+		if ((newsb->fs_old_flags & FS_FLAGS_UPDATED) == 0)
+			cg->cg_old_ncyl = newsb->fs_old_ncyl % newsb->fs_old_cpg;
 		cg->cg_ndblk = newcgsize;
 	}
 	/* Fix up the csum info, if necessary. */
@@ -1626,9 +1629,9 @@ shrink(void)
 	for (i = 0; i < newsb->fs_ncg; i++)
 		cgflags[i] |= CGF_DIRTY | CGF_BLKMAPS | CGF_INOMAPS;
 	/* Update the cg_old_ncyl value for the last cylinder. */
-	if (newsb->fs_old_ncyl % newsb->fs_old_cpg)
+	if ((newsb->fs_old_flags & FS_FLAGS_UPDATED) == 0)
 		cgs[newsb->fs_ncg - 1]->cg_old_ncyl =
-	    	    newsb->fs_old_ncyl % newsb->fs_old_cpg;
+		    newsb->fs_old_ncyl % newsb->fs_old_cpg;
 	/* Make fs_dsize match the new reality. */
 	recompute_fs_dsize();
 }
@@ -1819,6 +1822,18 @@ write_sbs(void)
 {
 	int i;
 
+	if (newsb->fs_magic == FS_UFS1_MAGIC &&
+	    (newsb->fs_old_flags & FS_FLAGS_UPDATED) == 0) {
+		newsb->fs_old_time = newsb->fs_time;
+	    	newsb->fs_old_size = newsb->fs_size;
+	    	/* we don't update fs_csaddr */
+	    	newsb->fs_old_dsize = newsb->fs_dsize;
+		newsb->fs_old_cstotal.cs_ndir = newsb->fs_cstotal.cs_ndir;
+		newsb->fs_old_cstotal.cs_nbfree = newsb->fs_cstotal.cs_nbfree;
+		newsb->fs_old_cstotal.cs_nifree = newsb->fs_cstotal.cs_nifree;
+		newsb->fs_old_cstotal.cs_nffree = newsb->fs_cstotal.cs_nffree;
+		/* fill fs_old_postbl_start with 256 bytes of 0xff? */
+	}
 	writeat(where /  DEV_BSIZE, newsb, SBLOCKSIZE);
 	for (i = 0; i < newsb->fs_ncg; i++) {
 		writeat(fsbtodb(newsb, cgsblock(newsb, i)), newsb, SBLOCKSIZE);
@@ -1931,6 +1946,18 @@ main(int argc, char **argv)
 	}
 	if (where == (off_t)-1)
 		errx(EXIT_FAILURE, "Bad magic number");
+	if (oldsb->fs_magic == FS_UFS1_MAGIC &&
+	    (oldsb->fs_old_flags & FS_FLAGS_UPDATED) == 0) {
+		oldsb->fs_csaddr = oldsb->fs_old_csaddr;
+		oldsb->fs_size = oldsb->fs_old_size;
+		oldsb->fs_dsize = oldsb->fs_old_dsize;
+		oldsb->fs_cstotal.cs_ndir = oldsb->fs_old_cstotal.cs_ndir;
+		oldsb->fs_cstotal.cs_nbfree = oldsb->fs_old_cstotal.cs_nbfree;
+		oldsb->fs_cstotal.cs_nifree = oldsb->fs_old_cstotal.cs_nifree;
+		oldsb->fs_cstotal.cs_nffree = oldsb->fs_old_cstotal.cs_nffree;
+		/* any others? */
+		printf("Resizing with ffsv1 superblock\n");
+	}
 	oldsb->fs_qbmask = ~(int64_t) oldsb->fs_bmask;
 	oldsb->fs_qfmask = ~(int64_t) oldsb->fs_fmask;
 	if (oldsb->fs_ipg % INOPB(oldsb)) {
