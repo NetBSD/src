@@ -1,4 +1,4 @@
-/*      $NetBSD: sp_common.c,v 1.14 2010/11/30 20:33:43 pooka Exp $	*/
+/*      $NetBSD: sp_common.c,v 1.15 2010/12/12 17:58:28 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -36,6 +36,7 @@
 #include <sys/queue.h>
 #include <sys/socket.h>
 #include <sys/un.h>
+#include <sys/syslimits.h>
 
 #include <arpa/inet.h>
 #include <netinet/in.h>
@@ -156,6 +157,7 @@ struct spclient {
 
 typedef int (*addrparse_fn)(const char *, struct sockaddr **, int);
 typedef int (*connecthook_fn)(int);
+typedef void (*cleanup_fn)(struct sockaddr *);
 
 static int readframe(struct spclient *);
 static void handlereq(struct spclient *);
@@ -571,12 +573,29 @@ unix_parse(const char *addr, struct sockaddr **sa, int allow_wildcard)
 
 	/*
 	 * The pathname can be all kinds of spaghetti elementals,
-	 * so meek and obidient we accept everything.
+	 * so meek and obidient we accept everything.  However, use
+	 * full path for easy cleanup in case someone gives a relative
+	 * one and the server does a chdir() between now than the
+	 * cleanup.
 	 */
 	memset(&sun, 0, sizeof(sun));
 	sun.sun_family = AF_LOCAL;
-	strlcpy(sun.sun_path, addr, sizeof(sun.sun_path));
-	sun.sun_len = slen = SUN_LEN(&sun);
+	if (*addr != '/') {
+		char mywd[PATH_MAX];
+
+		if (getcwd(mywd, sizeof(mywd)) == NULL) {
+			fprintf(stderr, "warning: cannot determine cwd, "
+			    "omitting socket cleanup\n");
+		} else {
+			if (strlen(addr) + strlen(mywd) > sizeof(sun.sun_path))
+				return ENAMETOOLONG;
+			strlcpy(sun.sun_path, mywd, sizeof(sun.sun_path));
+			strlcat(sun.sun_path, "/", sizeof(sun.sun_path));
+		}
+	}
+	strlcat(sun.sun_path, addr, sizeof(sun.sun_path));
+	sun.sun_len = SUN_LEN(&sun);
+	slen = sun.sun_len+1; /* get the 0 too */
 
 	*sa = malloc(slen);
 	if (*sa == NULL)
@@ -584,6 +603,19 @@ unix_parse(const char *addr, struct sockaddr **sa, int allow_wildcard)
 	memcpy(*sa, &sun, slen);
 
 	return 0;
+}
+
+static void
+unix_cleanup(struct sockaddr *sa)
+{
+	struct sockaddr_un *sun = (void *)sa;
+
+	/*
+	 * cleanup only absolute paths.  see unix_parse() above
+	 */
+	if (*sun->sun_path == '/') {
+		unlink(sun->sun_path);
+	}
 }
 
 /*ARGSUSED*/
@@ -607,10 +639,12 @@ struct {
 	int domain;
 	addrparse_fn ap;
 	connecthook_fn connhook;
+	cleanup_fn cleanup;
 } parsetab[] = {
-	{ "tcp", PF_INET, tcp_parse, tcp_connecthook },
-	{ "unix", PF_LOCAL, unix_parse, (connecthook_fn)success },
-	{ "tcp6", PF_INET6, (addrparse_fn)notsupp, (connecthook_fn)success },
+	{ "tcp", PF_INET, tcp_parse, tcp_connecthook, (cleanup_fn)success },
+	{ "unix", PF_LOCAL, unix_parse, (connecthook_fn)success, unix_cleanup },
+	{ "tcp6", PF_INET6, (addrparse_fn)notsupp, (connecthook_fn)success,
+			    (cleanup_fn)success },
 };
 #define NPARSE (sizeof(parsetab)/sizeof(parsetab[0]))
 
