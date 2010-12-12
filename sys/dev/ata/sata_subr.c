@@ -1,4 +1,4 @@
-/*	$NetBSD: sata_subr.c,v 1.13 2010/12/11 22:45:31 matt Exp $	*/
+/*	$NetBSD: sata_subr.c,v 1.14 2010/12/12 00:38:07 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
  * Common functions for Serial ATA.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sata_subr.c,v 1.13 2010/12/11 22:45:31 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sata_subr.c,v 1.14 2010/12/12 00:38:07 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -85,7 +85,7 @@ sata_reset_interface(struct ata_channel *chp, bus_space_tag_t sata_t,
 	int i;
 
 	/* bring the PHYs online.
-	 * The work-around for errata #1 for the 3124 says that we must
+	 * The work-around for errata #1 of the Intel GD31244 says that we must
 	 * write 0 to the port first to be sure of correctly initializing
 	 * the device. It doesn't hurt for other devices.
 	 */
