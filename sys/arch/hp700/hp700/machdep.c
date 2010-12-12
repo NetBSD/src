@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.92 2010/12/12 08:23:14 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.93 2010/12/12 08:52:49 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.92 2010/12/12 08:23:14 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.93 2010/12/12 08:52:49 skrll Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -659,7 +659,8 @@ cpuid(void)
 		pdc_model.hv = 0;
 	} else {
 #ifdef DEBUG
-		printf("pdc_model.hvers %d\n", pdc_model.hvers);
+		printf("pdc_model.hwmodel/hv %x/%x\n", pdc_model.hwmodel,
+		    pdc_model.hv);
 #endif
 	}
 	/* XXXNH - check */
