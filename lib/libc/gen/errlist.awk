@@ -1,5 +1,5 @@
 #! /usr/bin/awk -f
-#	$NetBSD: errlist.awk,v 1.1 2010/12/12 20:08:27 christos Exp $
+#	$NetBSD: errlist.awk,v 1.2 2010/12/12 20:16:09 christos Exp $
 #
 # Copyright (c) 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -36,7 +36,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 function tabs(desc) {
-	l = length(desc) + 3;	/* 3 = ["",] */
+	l = length(desc) + 3;
 	if (l < 16)
 		return "\t\t\t\t";
 	else if (l < 24)
@@ -59,7 +59,7 @@ BEGIN {
 	printf("#if 0\n");
 	printf("static char sccsid[] = \"@(#)errlst.c	8.2 (Berkeley) 11/16/93\";\n");
 	printf("#else\n");
-	printf("__RCSID(\"$NetBSD: errlist.awk,v 1.1 2010/12/12 20:08:27 christos Exp $\");\n");
+	printf("__RCSID(\"$NetBSD: errlist.awk,v 1.2 2010/12/12 20:16:09 christos Exp $\");\n");
 	printf("#endif\n");
 	printf("#endif /* LIBC_SCCS and not lint */\n\n");
 	printf("#include <errno.h>\n");
