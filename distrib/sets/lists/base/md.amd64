@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.104 2010/12/05 20:11:22 pooka Exp $
+# $NetBSD: md.amd64,v 1.105 2010/12/12 16:27:25 adam Exp $
 ./dev/lms0					base-obsolete		obsolete
 ./dev/mms0					base-obsolete		obsolete
 ./libexec/ld.elf_so-i386			base-sys-shlib		compat,pic
@@ -133,11 +133,11 @@
 ./usr/lib/i386/libkvm.so.6			base-compat-shlib	compat,pic
 ./usr/lib/i386/libkvm.so.6.0			base-compat-shlib	compat,pic
 ./usr/lib/i386/liblber.so.3			base-compat-shlib	compat,pic,ldap
-./usr/lib/i386/liblber.so.3.1			base-compat-shlib	compat,pic,ldap
+./usr/lib/i386/liblber.so.3.2			base-compat-shlib	compat,pic,ldap
 ./usr/lib/i386/libldap.so.4			base-compat-shlib	compat,pic,ldap
-./usr/lib/i386/libldap.so.4.1			base-compat-shlib	compat,pic,ldap
+./usr/lib/i386/libldap.so.4.2			base-compat-shlib	compat,pic,ldap
 ./usr/lib/i386/libldap_r.so.4			base-compat-shlib	compat,pic,ldap
-./usr/lib/i386/libldap_r.so.4.1			base-compat-shlib	compat,pic,ldap
+./usr/lib/i386/libldap_r.so.4.2			base-compat-shlib	compat,pic,ldap
 ./usr/lib/i386/liblua.so			base-compat-shlib	compat,pic
 ./usr/lib/i386/liblua.so.1			base-compat-shlib	compat,pic
 ./usr/lib/i386/liblua.so.1.0			base-compat-shlib	compat,pic

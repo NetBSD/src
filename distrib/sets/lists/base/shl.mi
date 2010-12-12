@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.564 2010/12/08 20:23:12 pooka Exp $
+# $NetBSD: shl.mi,v 1.565 2010/12/12 16:27:25 adam Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -280,13 +280,13 @@
 ./usr/lib/libkvm.so.6.0				base-sys-shlib
 ./usr/lib/liblber.so				base-ldap-shlib		ldap
 ./usr/lib/liblber.so.3				base-ldap-shlib		ldap
-./usr/lib/liblber.so.3.1			base-ldap-shlib		ldap
+./usr/lib/liblber.so.3.2			base-ldap-shlib		ldap
 ./usr/lib/libldap.so				base-ldap-shlib		ldap
 ./usr/lib/libldap.so.4				base-ldap-shlib		ldap
-./usr/lib/libldap.so.4.1			base-ldap-shlib		ldap
+./usr/lib/libldap.so.4.2			base-ldap-shlib		ldap
 ./usr/lib/libldap_r.so				base-ldap-shlib		ldap
 ./usr/lib/libldap_r.so.4			base-ldap-shlib		ldap
-./usr/lib/libldap_r.so.4.1			base-ldap-shlib		ldap
+./usr/lib/libldap_r.so.4.2			base-ldap-shlib		ldap
 ./usr/lib/liblua.so				base-sys-shlib
 ./usr/lib/liblua.so.1				base-sys-shlib
 ./usr/lib/liblua.so.1.0				base-sys-shlib
