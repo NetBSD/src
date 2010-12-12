@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips64el,v 1.30 2010/12/05 20:11:22 pooka Exp $
+# $NetBSD: ad.mips64el,v 1.31 2010/12/12 16:27:25 adam Exp $
 ./libexec/ld.elf_so-64				base-compat-shlib	compat,pic
 ./libexec/ld.elf_so-o32				base-sysutil-bin	compat,pic
 ./usr/lib/64					base-compat-lib
@@ -128,11 +128,11 @@
 ./usr/lib/64/libkvm.so.6			base-compat-shlib	compat,pic
 ./usr/lib/64/libkvm.so.6.0			base-compat-shlib	compat,pic
 ./usr/lib/64/liblber.so.3			base-compat-shlib	compat,pic,ldap
-./usr/lib/64/liblber.so.3.1			base-compat-shlib	compat,pic,ldap
+./usr/lib/64/liblber.so.3.2			base-compat-shlib	compat,pic,ldap
 ./usr/lib/64/libldap.so.4			base-compat-shlib	compat,pic,ldap
-./usr/lib/64/libldap.so.4.1			base-compat-shlib	compat,pic,ldap
+./usr/lib/64/libldap.so.4.2			base-compat-shlib	compat,pic,ldap
 ./usr/lib/64/libldap_r.so.4			base-compat-shlib	compat,pic,ldap
-./usr/lib/64/libldap_r.so.4.1			base-compat-shlib	compat,pic,ldap
+./usr/lib/64/libldap_r.so.4.2			base-compat-shlib	compat,pic,ldap
 ./usr/lib/64/liblua.so.1			base-compat-shlib	compat,pic
 ./usr/lib/64/liblua.so.1.0			base-compat-shlib	compat,pic
 ./usr/lib/64/liblwres.so.5			base-compat-shlib	compat,pic
@@ -381,11 +381,11 @@
 ./usr/lib/o32/libkvm.so.6			base-compat-shlib	compat,pic
 ./usr/lib/o32/libkvm.so.6.0			base-compat-shlib	compat,pic
 ./usr/lib/o32/liblber.so.3			base-compat-shlib	compat,pic,ldap
-./usr/lib/o32/liblber.so.3.1			base-compat-shlib	compat,pic,ldap
+./usr/lib/o32/liblber.so.3.2			base-compat-shlib	compat,pic,ldap
 ./usr/lib/o32/libldap.so.4			base-compat-shlib	compat,pic,ldap
-./usr/lib/o32/libldap.so.4.1			base-compat-shlib	compat,pic,ldap
+./usr/lib/o32/libldap.so.4.2			base-compat-shlib	compat,pic,ldap
 ./usr/lib/o32/libldap_r.so.4			base-compat-shlib	compat,pic,ldap
-./usr/lib/o32/libldap_r.so.4.1			base-compat-shlib	compat,pic,ldap
+./usr/lib/o32/libldap_r.so.4.2			base-compat-shlib	compat,pic,ldap
 ./usr/lib/o32/liblua.so.1			base-compat-shlib	compat,pic
 ./usr/lib/o32/liblua.so.1.0			base-compat-shlib	compat,pic
 ./usr/lib/o32/liblwres.so.5			base-compat-shlib	compat,pic
