@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpuser_sp.c,v 1.24 2010/12/12 17:10:36 pooka Exp $	*/
+/*      $NetBSD: rumpuser_sp.c,v 1.25 2010/12/12 17:58:28 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: rumpuser_sp.c,v 1.24 2010/12/12 17:10:36 pooka Exp $");
+__RCSID("$NetBSD: rumpuser_sp.c,v 1.25 2010/12/12 17:58:28 pooka Exp $");
 
 #include <sys/types.h>
 #include <sys/atomic.h>
@@ -806,6 +806,8 @@ spserver(void *arg)
 	return NULL;
 }
 
+static unsigned cleanupidx;
+static struct sockaddr *cleanupsa;
 int
 rumpuser_sp_init(const struct rumpuser_sp_ops *spopsp, const char *url)
 {
@@ -838,6 +840,9 @@ rumpuser_sp_init(const struct rumpuser_sp_ops *spopsp, const char *url)
 	sarg->sps_sock = s;
 	sarg->sps_connhook = parsetab[idx].connhook;
 
+	cleanupidx = idx;
+	cleanupsa = sap;
+
 	/* sloppy error recovery */
 
 	/*LINTED*/
@@ -845,6 +850,7 @@ rumpuser_sp_init(const struct rumpuser_sp_ops *spopsp, const char *url)
 		fprintf(stderr, "rump_sp: server bind failed\n");
 		return errno;
 	}
+
 	if (listen(s, MAXCLI) == -1) {
 		fprintf(stderr, "rump_sp: server listen failed\n");
 		return errno;
@@ -864,6 +870,7 @@ rumpuser_sp_fini()
 {
 
 	if (spclist[0].spc_fd) {
+		parsetab[cleanupidx].cleanup(cleanupsa);
 		shutdown(spclist[0].spc_fd, SHUT_RDWR);
 		spfini = 1;
 	}
