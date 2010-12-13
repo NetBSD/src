@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1536 2010/12/12 12:48:31 pooka Exp $
+#	$NetBSD: mi,v 1.1537 2010/12/13 13:38:19 pooka Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3322,6 +3322,7 @@
 ./usr/libdata/debug/usr/bin/rs.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/rsh.debug		comp-netutil-debug	debug
 ./usr/libdata/debug/usr/bin/rump_allserver.debug		comp-util-debug		debug
+./usr/libdata/debug/usr/bin/rump_server.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/rump.halt.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/rup.debug		comp-netutil-debug	debug
 ./usr/libdata/debug/usr/bin/ruptime.debug	comp-netutil-debug	debug
