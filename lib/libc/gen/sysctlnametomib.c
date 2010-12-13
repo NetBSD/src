@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctlnametomib.c,v 1.4 2008/04/29 06:53:01 martin Exp $ */
+/*	$NetBSD: sysctlnametomib.c,v 1.5 2010/12/13 21:07:55 pooka Exp $ */
 
 /*-
  * Copyright (c) 2003,2004 The NetBSD Foundation, Inc.
@@ -31,16 +31,23 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: sysctlnametomib.c,v 1.4 2008/04/29 06:53:01 martin Exp $");
+__RCSID("$NetBSD: sysctlnametomib.c,v 1.5 2010/12/13 21:07:55 pooka Exp $");
 #endif /* LIBC_SCCS and not lint */
 
+#ifndef RUMP_ACTION
 #include "namespace.h"
+#endif
 #include <sys/param.h>
 #include <sys/sysctl.h>
 
 #ifdef __weak_alias
 __weak_alias(sysctlnametomib,_sysctlnametomib)
 #endif
+
+#ifdef RUMP_ACTION
+#include <rump/rump_syscalls.h>
+#define sysctl(a,b,c,d,e,f) rump_sys___sysctl(a,b,c,d,e,f)
+#endif /* RUMP_ACTION */
 
 /*
  * freebsd compatible sysctlnametomib() function, implemented as an
