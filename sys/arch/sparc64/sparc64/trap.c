@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.162 2010/08/08 18:19:56 chs Exp $ */
+/*	$NetBSD: trap.c,v 1.163 2010/12/13 06:35:03 mrg Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.162 2010/08/08 18:19:56 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.163 2010/12/13 06:35:03 mrg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -250,7 +250,8 @@ const char *trap_type[] = {
 	T, T, T,		/* 69..6b -- trap continues */
 	"+fast data access protection",/* 6c */
 	T, T, T,		/* 6d..6f -- trap continues */
-	T, T, T, T, T, T, T, T, /* 70..77 */
+	"+fast ECC error",	/* 70 */
+	T, T, T, T, T, T, T,	/* 71..77 */
 	T, T, T, T, T, T, T, T, /* 78..7f */
 	"spill 0 normal",	/* 80 */
 	T, T, T,		/* 81..83 -- trap continues */
