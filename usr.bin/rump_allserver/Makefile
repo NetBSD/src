@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.2 2010/12/05 20:12:55 pooka Exp $
+#	$NetBSD: Makefile,v 1.3 2010/12/13 19:36:34 pooka Exp $
 #
 
 PROG=	rump_allserver
-NOMAN=	for now
+MLINKS+=rump_allserver.1 rump_server.1
 
 RUMPTOP=${.CURDIR}/../../sys/rump
 
