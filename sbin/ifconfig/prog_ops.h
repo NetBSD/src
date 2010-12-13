@@ -1,4 +1,4 @@
-/*      $NetBSD: prog_ops.h,v 1.1 2010/12/13 17:35:08 pooka Exp $	*/
+/*      $NetBSD: prog_ops.h,v 1.2 2010/12/13 19:17:20 njoly Exp $	*/
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@ struct prog_ops {
 	int (*op_socket)(int, int, int);
 
 	int (*op_ioctl)(int, unsigned long, ...);
-	int (*op_read)(int, void *, size_t);
+	ssize_t (*op_read)(int, void *, size_t);
 
 	int (*op_close)(int);
 };
