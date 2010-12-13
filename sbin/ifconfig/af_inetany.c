@@ -1,4 +1,4 @@
-/*	$NetBSD: af_inetany.c,v 1.12 2008/07/02 07:44:14 dyoung Exp $	*/
+/*	$NetBSD: af_inetany.c,v 1.13 2010/12/13 17:35:08 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2008 David Young.  All rights reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: af_inetany.c,v 1.12 2008/07/02 07:44:14 dyoung Exp $");
+__RCSID("$NetBSD: af_inetany.c,v 1.13 2010/12/13 17:35:08 pooka Exp $");
 #endif /* not lint */
 
 #include <sys/param.h> 
@@ -54,6 +54,7 @@ __RCSID("$NetBSD: af_inetany.c,v 1.12 2008/07/02 07:44:14 dyoung Exp $");
 #include "env.h"
 #include "extern.h"
 #include "af_inetany.h"
+#include "prog_ops.h"
 
 static void *
 loadbuf(const struct apbuf *b, const struct paddr_prefix *pfx)
@@ -90,9 +91,9 @@ commit_address(prop_dictionary_t env, prop_dictionary_t oenv,
 	else if (!prop_dictionary_get_bool(env, "alias", &alias) || alias ||
 	    param->gifaddr.cmd == 0)
 		return;
-	else if (ioctl(s, param->gifaddr.cmd, param->dgreq.buf) == -1)
+	else if (prog_ioctl(s, param->gifaddr.cmd, param->dgreq.buf) == -1)
 		err(EXIT_FAILURE, param->gifaddr.desc);
-	else if (ioctl(s, param->difaddr.cmd, param->dgreq.buf) == -1)
+	else if (prog_ioctl(s, param->difaddr.cmd, param->dgreq.buf) == -1)
 		err(EXIT_FAILURE, param->difaddr.desc);
 	else
 		return;
@@ -153,8 +154,8 @@ commit_address(prop_dictionary_t env, prop_dictionary_t oenv,
 		    MIN(param->mask.buflen, param->defmask.buflen));
 	}
 	if (replace) {
-		if (ioctl(s, param->gifaddr.cmd, param->dgreq.buf) == 0) {
-			rc = ioctl(s, param->difaddr.cmd, param->dgreq.buf);
+		if (prog_ioctl(s, param->gifaddr.cmd, param->dgreq.buf) == 0) {
+			rc = prog_ioctl(s, param->difaddr.cmd, param->dgreq.buf);
 			if (rc == -1)
 				err(EXIT_FAILURE, param->difaddr.desc);
 		} else if (errno == EADDRNOTAVAIL)
@@ -163,13 +164,13 @@ commit_address(prop_dictionary_t env, prop_dictionary_t oenv,
 			err(EXIT_FAILURE, param->gifaddr.desc);
 	} else if (delete) {
 		loadbuf(&param->dgaddr, addr);
-		if (ioctl(s, param->difaddr.cmd, param->dgreq.buf) == -1)
+		if (prog_ioctl(s, param->difaddr.cmd, param->dgreq.buf) == -1)
 			err(EXIT_FAILURE, param->difaddr.desc);
 		return;
 	}
 	if (param->pre_aifaddr != NULL &&
 	    (*param->pre_aifaddr)(env, param) == -1)
 		err(EXIT_FAILURE, "pre-%s", param->aifaddr.desc);
-	if (ioctl(s, param->aifaddr.cmd, param->req.buf) == -1)
+	if (prog_ioctl(s, param->aifaddr.cmd, param->req.buf) == -1)
 		err(EXIT_FAILURE, param->aifaddr.desc);
 }
