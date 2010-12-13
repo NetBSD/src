@@ -1,4 +1,4 @@
-/* $NetBSD: pci_machdep.h,v 1.8 2008/04/28 20:23:32 martin Exp $ */
+/* $NetBSD: pci_machdep.h,v 1.9 2010/12/13 16:19:02 matt Exp $ */
 
 /*-
  * Copyright (c) 2002,2007 The NetBSD Foundation, Inc.
@@ -66,9 +66,9 @@ struct genppc_pci_chipset_businfo {
  */
 struct genppc_pci_chipset {
 	void		*pc_conf_v;
-	void		(*pc_attach_hook)(struct device *,
-			    struct device *, struct pcibus_attach_args *);
-	int		(*pc_bus_maxdevs)(pci_chipset_tag_t, int);
+	void		(*pc_attach_hook)(device_t, device_t,
+			    struct pcibus_attach_args *);
+	int		(*pc_bus_maxdevs)(void *, int);
 	pcitag_t	(*pc_make_tag)(void *, int, int, int);
 	pcireg_t	(*pc_conf_read)(void *, pcitag_t, int);
 	void		(*pc_conf_write)(void *, pcitag_t, int, pcireg_t);
@@ -135,7 +135,7 @@ struct genppc_pci_chipset {
  * Generic PowerPC PCI functions.  Override if necc.
  */
 
-int genppc_pci_bus_maxdevs(pci_chipset_tag_t, int);
+int genppc_pci_bus_maxdevs(void *, int);
 const char *genppc_pci_intr_string(void *, pci_intr_handle_t);
 const struct evcnt *genppc_pci_intr_evcnt(void *, pci_intr_handle_t);
 void *genppc_pci_intr_establish(void *, pci_intr_handle_t, int, int (*)(void *),
@@ -146,7 +146,7 @@ int genppc_pci_conf_hook(pci_chipset_tag_t, int, int, int, pcireg_t);
 int genppc_pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp);
 
 /* generic indirect PCI functions */
-void genppc_pci_indirect_attach_hook(struct device *, struct device *,
+void genppc_pci_indirect_attach_hook(device_t, device_t,
     struct pcibus_attach_args *);
 pcitag_t genppc_pci_indirect_make_tag(void *, int, int, int);
 pcireg_t genppc_pci_indirect_conf_read(void *, pcitag_t, int);
@@ -154,7 +154,7 @@ void genppc_pci_indirect_conf_write(void *, pcitag_t, int, pcireg_t);
 void genppc_pci_indirect_decompose_tag(void *, pcitag_t, int *, int *, int *);
 
 /* generic OFW method PCI functions */
-void genppc_pci_ofmethod_attach_hook(struct device *, struct device *,
+void genppc_pci_ofmethod_attach_hook(device_t, device_t,
     struct pcibus_attach_args *);
 pcitag_t genppc_pci_ofmethod_make_tag(void *, int, int, int);
 pcireg_t genppc_pci_ofmethod_conf_read(void *, pcitag_t, int);
