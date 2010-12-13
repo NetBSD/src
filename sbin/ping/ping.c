@@ -1,4 +1,4 @@
-/*	$NetBSD: ping.c,v 1.91 2010/11/11 22:56:38 pooka Exp $	*/
+/*	$NetBSD: ping.c,v 1.92 2010/12/13 17:42:17 pooka Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -58,7 +58,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ping.c,v 1.91 2010/11/11 22:56:38 pooka Exp $");
+__RCSID("$NetBSD: ping.c,v 1.92 2010/12/13 17:42:17 pooka Exp $");
 #endif
 
 #include <stdio.h>
@@ -92,12 +92,7 @@ __RCSID("$NetBSD: ping.c,v 1.91 2010/11/11 22:56:38 pooka Exp $");
 #include <netinet6/ipsec.h>
 #endif /*IPSEC*/
 
-#ifdef RUMP_ACTION
-#include <rump/rump.h>
-#include <rump/rump_syscalls.h>
-#include <rump/rumpclient.h>
-#define poll(a,b,c) rump_sys_poll(a,b,c)
-#endif
+#include "prog_ops.h"
 
 #define FLOOD_INTVL	0.01		/* default flood output interval */
 #define	MAXPACKET	(IP_MAXPACKET-60-8)	/* max packet size */
@@ -251,21 +246,19 @@ main(int argc, char *argv[])
 	struct sigaction sa;
 #endif
 
-#ifdef RUMP_ACTION
-	if (rumpclient_init() == -1)
-		err(1, "rumpclient init failed");
-#endif
+	if (prog_init && prog_init() == -1)
+		err(1, "init failed");
 
-	if ((s = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP)) < 0)
+	if ((s = prog_socket(AF_INET, SOCK_RAW, IPPROTO_ICMP)) < 0)
 		err(1, "Cannot create socket");
-	if ((sloop = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP)) < 0)
+	if ((sloop = prog_socket(AF_INET, SOCK_RAW, IPPROTO_ICMP)) < 0)
 		err(1, "Cannot create socket");
 
 	/*
 	 * sloop is never read on.  This prevents packets from
 	 * queueing in its recv buffer.
 	 */
-	if (shutdown(sloop, SHUT_RD) == -1)
+	if (prog_shutdown(sloop, SHUT_RD) == -1)
 		warn("Cannot shutdown for read");
 
 	if (setuid(getuid()) == -1)
@@ -472,23 +465,23 @@ main(int argc, char *argv[])
 	ident = arc4random() & 0xFFFF;
 
 	if (options & SO_DEBUG) {
-		if (setsockopt(s, SOL_SOCKET, SO_DEBUG,
+		if (prog_setsockopt(s, SOL_SOCKET, SO_DEBUG,
 			       (char *)&on, sizeof(on)) == -1)
 			warn("Can't turn on socket debugging");
 	}
 	if (options & SO_DONTROUTE) {
-		if (setsockopt(s, SOL_SOCKET, SO_DONTROUTE,
+		if (prog_setsockopt(s, SOL_SOCKET, SO_DONTROUTE,
 			       (char *)&on, sizeof(on)) == -1)
 			warn("SO_DONTROUTE");
 	}
 
 	if (options & SO_DEBUG) {
-		if (setsockopt(sloop, SOL_SOCKET, SO_DEBUG,
+		if (prog_setsockopt(sloop, SOL_SOCKET, SO_DEBUG,
 			       (char *)&on, sizeof(on)) == -1)
 			warn("Can't turn on socket debugging");
 	}
 	if (options & SO_DONTROUTE) {
-		if (setsockopt(sloop, SOL_SOCKET, SO_DONTROUTE,
+		if (prog_setsockopt(sloop, SOL_SOCKET, SO_DONTROUTE,
 			       (char *)&on, sizeof(on)) == -1)
 			warn("SO_DONTROUTE");
 	}
@@ -513,7 +506,8 @@ main(int argc, char *argv[])
 				 - optlen);
 	(void) memcpy(opack_ip + 1, optspace, optlen);
 
-	if (setsockopt(s,IPPROTO_IP,IP_HDRINCL, (char *) &on, sizeof(on)) < 0)
+	if (prog_setsockopt(s,IPPROTO_IP,IP_HDRINCL,
+	    (char *) &on, sizeof(on)) < 0)
 		err(1, "Can't set special IP header");
 
 	opack_ip->ip_v = IPVERSION;
@@ -528,24 +522,25 @@ main(int argc, char *argv[])
 	if (pingflags & F_MCAST) {
 		if (pingflags & F_MCAST_NOLOOP) {
 			u_char loop = 0;
-			if (setsockopt(s, IPPROTO_IP, IP_MULTICAST_LOOP,
+			if (prog_setsockopt(s, IPPROTO_IP,
+			    IP_MULTICAST_LOOP,
 			    (char *) &loop, 1) < 0)
 				err(1, "Can't disable multicast loopback");
 		}
 
 		if (ttl != 0
-		    && setsockopt(s, IPPROTO_IP, IP_MULTICAST_TTL,
+		    && prog_setsockopt(s, IPPROTO_IP, IP_MULTICAST_TTL,
 		    (char *) &ttl, 1) < 0)
 			err(1, "Can't set multicast time-to-live");
 
 		if ((pingflags & F_SOURCE_ADDR)
-		    && setsockopt(s, IPPROTO_IP, IP_MULTICAST_IF,
+		    && prog_setsockopt(s, IPPROTO_IP, IP_MULTICAST_IF,
 				  (char *) &src_addr.sin_addr,
 				  sizeof(src_addr.sin_addr)) < 0)
 			err(1, "Can't set multicast source interface");
 
 	} else if (pingflags & F_SOURCE_ADDR) {
-		if (setsockopt(s, IPPROTO_IP, IP_MULTICAST_IF,
+		if (prog_setsockopt(s, IPPROTO_IP, IP_MULTICAST_IF,
 			       (char *) &src_addr.sin_addr,
 			       sizeof(src_addr.sin_addr)) < 0)
 			err(1, "Can't set source interface/address");
@@ -559,7 +554,7 @@ main(int argc, char *argv[])
 			buf = ipsec_set_policy(policy_in, strlen(policy_in));
 			if (buf == NULL)
 				errx(1, "%s", ipsec_strerror());
-			if (setsockopt(s, IPPROTO_IP, IP_IPSEC_POLICY,
+			if (prog_setsockopt(s, IPPROTO_IP, IP_IPSEC_POLICY,
 					buf, ipsec_get_policylen(buf)) < 0) {
 				err(1, "ipsec policy cannot be configured");
 			}
@@ -569,7 +564,7 @@ main(int argc, char *argv[])
 			buf = ipsec_set_policy(policy_out, strlen(policy_out));
 			if (buf == NULL)
 				errx(1, "%s", ipsec_strerror());
-			if (setsockopt(s, IPPROTO_IP, IP_IPSEC_POLICY,
+			if (prog_setsockopt(s, IPPROTO_IP, IP_IPSEC_POLICY,
 					buf, ipsec_get_policylen(buf)) < 0) {
 				err(1, "ipsec policy cannot be configured");
 			}
@@ -579,7 +574,7 @@ main(int argc, char *argv[])
 	buf = ipsec_set_policy("out bypass", strlen("out bypass"));
 	if (buf == NULL)
 		errx(1, "%s", ipsec_strerror());
-	if (setsockopt(sloop, IPPROTO_IP, IP_IPSEC_POLICY,
+	if (prog_setsockopt(sloop, IPPROTO_IP, IP_IPSEC_POLICY,
 			buf, ipsec_get_policylen(buf)) < 0) {
 #if 0
 		warnx("ipsec is not configured");
@@ -595,27 +590,27 @@ main(int argc, char *argv[])
 	if (pingflags & F_AUTHHDR) {
 		optval = IPSEC_LEVEL_REQUIRE;
 #ifdef IP_AUTH_TRANS_LEVEL
-		(void)setsockopt(s, IPPROTO_IP, IP_AUTH_TRANS_LEVEL,
+		(void)prog_setsockopt(s, IPPROTO_IP, IP_AUTH_TRANS_LEVEL,
 			(char *)&optval, sizeof(optval));
 #else
-		(void)setsockopt(s, IPPROTO_IP, IP_AUTH_LEVEL,
+		(void)prog_setsockopt(s, IPPROTO_IP, IP_AUTH_LEVEL,
 			(char *)&optval, sizeof(optval));
 #endif
 	}
 	if (pingflags & F_ENCRYPT) {
 		optval = IPSEC_LEVEL_REQUIRE;
-		(void)setsockopt(s, IPPROTO_IP, IP_ESP_TRANS_LEVEL,
+		(void)prog_setsockopt(s, IPPROTO_IP, IP_ESP_TRANS_LEVEL,
 			(char *)&optval, sizeof(optval));
 	}
 	optval = IPSEC_LEVEL_BYPASS;
 #ifdef IP_AUTH_TRANS_LEVEL
-	(void)setsockopt(sloop, IPPROTO_IP, IP_AUTH_TRANS_LEVEL,
+	(void)prog_setsockopt(sloop, IPPROTO_IP, IP_AUTH_TRANS_LEVEL,
 		(char *)&optval, sizeof(optval));
 #else
-	(void)setsockopt(sloop, IPPROTO_IP, IP_AUTH_LEVEL,
+	(void)prog_setsockopt(sloop, IPPROTO_IP, IP_AUTH_LEVEL,
 		(char *)&optval, sizeof(optval));
 #endif
-	(void)setsockopt(sloop, IPPROTO_IP, IP_ESP_TRANS_LEVEL,
+	(void)prog_setsockopt(sloop, IPPROTO_IP, IP_ESP_TRANS_LEVEL,
 		(char *)&optval, sizeof(optval));
     }
 #endif /*IPSEC_POLICY_IPSEC*/
@@ -629,7 +624,7 @@ main(int argc, char *argv[])
 	 * are trying to stress the ethernet, or just want to
 	 * fill the arp cache to get some stuff for /etc/ethers.
 	 */
-	while (0 > setsockopt(s, SOL_SOCKET, SO_RCVBUF,
+	while (0 > prog_setsockopt(s, SOL_SOCKET, SO_RCVBUF,
 			      (char*)&bufspace, sizeof(bufspace))) {
 		if ((bufspace -= 4096) <= 0)
 			err(1, "Cannot set the receive buffer size");
@@ -638,7 +633,7 @@ main(int argc, char *argv[])
 	/* make it possible to send giant probes, but do not worry now
 	 * if it fails, since we probably won't send giant probes.
 	 */
-	(void)setsockopt(s, SOL_SOCKET, SO_SNDBUF,
+	(void)prog_setsockopt(s, SOL_SOCKET, SO_SNDBUF,
 			 (char*)&bufspace, sizeof(bufspace));
 
 	(void)signal(SIGINT, prefinish);
@@ -717,7 +712,7 @@ doit(void)
 
 		fdmaskp[0].fd = s;
 		fdmaskp[0].events = POLLIN;
-		cc = poll(fdmaskp, 1, (int)(sec * 1000));
+		cc = prog_poll(fdmaskp, 1, (int)(sec * 1000));
 		if (cc <= 0) {
 			if (cc < 0) {
 				if (errno == EINTR)
@@ -729,7 +724,7 @@ doit(void)
 		}
 
 		fromlen  = sizeof(from);
-		cc = recvfrom(s, (char *) packet, packlen,
+		cc = prog_recvfrom(s, (char *) packet, packlen,
 			      0, (struct sockaddr *)&from,
 			      &fromlen);
 		if (cc < 0) {
@@ -838,10 +833,11 @@ pinger(void)
 		opack_icmp.icmp_cksum = in_cksum((u_int16_t *)&opack_icmp,
 		    PHDR_LEN);
 		sw = 0;
-		if (setsockopt(sloop,IPPROTO_IP,IP_HDRINCL,
+		if (prog_setsockopt(sloop,IPPROTO_IP,IP_HDRINCL,
 			       (char *)&sw,sizeof(sw)) < 0)
 			err(1, "Can't turn off special IP header");
-		if (sendto(sloop, (char *) &opack_icmp, PHDR_LEN, MSG_DONTROUTE,
+		if (prog_sendto(sloop, (char *) &opack_icmp,
+			   PHDR_LEN, MSG_DONTROUTE,
 			   (struct sockaddr *)&loc_addr,
 			   sizeof(struct sockaddr_in)) < 0) {
 			/*
@@ -854,7 +850,7 @@ pinger(void)
 				warn("failed to clear cached route");
 		}
 		sw = 1;
-		if (setsockopt(sloop,IPPROTO_IP,IP_HDRINCL,
+		if (prog_setsockopt(sloop,IPPROTO_IP,IP_HDRINCL,
 			       (char *)&sw, sizeof(sw)) < 0)
 			err(1, "Can't set special IP header");
 		
@@ -873,7 +869,7 @@ pinger(void)
 
 	cc += opack_ip->ip_hl<<2;
 	opack_ip->ip_len = cc;
-	i = sendto(s, (char *) opack_ip, cc, 0,
+	i = prog_sendto(s, (char *) opack_ip, cc, 0,
 		   (struct sockaddr *)&send_addr, sizeof(struct sockaddr_in));
 	if (i != cc) {
 		jiggle_flush(1);

@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.132 2010/11/05 15:55:23 pooka Exp $ */
+/*	$NetBSD: sysctl.c,v 1.133 2010/12/13 17:47:40 pooka Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.132 2010/11/05 15:55:23 pooka Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.133 2010/12/13 17:47:40 pooka Exp $");
 #endif
 #endif /* not lint */
 
@@ -105,12 +105,7 @@ __RCSID("$NetBSD: sysctl.c,v 1.132 2010/11/05 15:55:23 pooka Exp $");
 #include <time.h>
 #include <unistd.h>
 
-#ifdef RUMP_ACTION
-#include <rump/rumpclient.h>
-#include <rump/rump_syscalls.h>
-
-#define sysctl(a,b,c,d,e,f) rump_sys___sysctl(a,b,c,d,e,f)
-#endif
+#include "prog_ops.h"
 
 /*
  * this needs to be able to do the printing and the setting
@@ -276,11 +271,6 @@ main(int argc, char *argv[])
 	int name[CTL_MAXNAME];
 	int ch;
 
-#ifdef RUMP_ACTION
-	if (rumpclient_init() == -1)
-		err(1, "rumpclient init failed");
-#endif
-
 	while ((ch = getopt(argc, argv, "Aabdef:Mnqrwx")) != -1) {
 		switch (ch) {
 		case 'A':
@@ -336,6 +326,9 @@ main(int argc, char *argv[])
 		usage(); */
 	if ((Aflag || Mflag || dflag) && argc == 0 && fn == NULL)
 		aflag = 1;
+
+	if (prog_init && prog_init() == -1)
+		err(1, "prog init failed");
 
 	if (Aflag)
 		warnfp = stdout;
@@ -667,7 +660,7 @@ print_tree(int *name, u_int namelen, struct sysctlnode *pnode, u_int type,
 	}
 
 	if (type != CTLTYPE_NODE && pnode->sysctl_size == 0) {
-		rc = sysctl(&name[0], namelen, NULL, &sz, NULL, 0);
+		rc = prog_sysctl(&name[0], namelen, NULL, &sz, NULL, 0);
 		if (rc == -1) {
 			sysctlerror(1);
 			*sp = *dp = '\0';
@@ -718,7 +711,7 @@ print_tree(int *name, u_int namelen, struct sysctlnode *pnode, u_int type,
 	}
 	case CTLTYPE_INT: {
 		int i;
-		rc = sysctl(name, namelen, &i, &sz, NULL, 0);
+		rc = prog_sysctl(name, namelen, &i, &sz, NULL, 0);
 		if (rc == -1) {
 			sysctlerror(1);
 			break;
@@ -728,7 +721,7 @@ print_tree(int *name, u_int namelen, struct sysctlnode *pnode, u_int type,
 	}
 	case CTLTYPE_BOOL: {
 		bool b;
-		rc = sysctl(name, namelen, &b, &sz, NULL, 0);
+		rc = prog_sysctl(name, namelen, &b, &sz, NULL, 0);
 		if (rc == -1) {
 			sysctlerror(1);
 			break;
@@ -740,14 +733,14 @@ print_tree(int *name, u_int namelen, struct sysctlnode *pnode, u_int type,
 		unsigned char buf[1024], *tbuf;
 		tbuf = buf;
 		sz = sizeof(buf);
-		rc = sysctl(&name[0], namelen, tbuf, &sz, NULL, 0);
+		rc = prog_sysctl(&name[0], namelen, tbuf, &sz, NULL, 0);
 		if (rc == -1 && errno == ENOMEM) {
 			tbuf = malloc(sz);
 			if (tbuf == NULL) {
 				sysctlerror(1);
 				break;
 			}
-			rc = sysctl(&name[0], namelen, tbuf, &sz, NULL, 0);
+			rc = prog_sysctl(&name[0], namelen, tbuf, &sz, NULL, 0);
 		}
 		if (rc == -1)
 			sysctlerror(1);
@@ -760,7 +753,7 @@ print_tree(int *name, u_int namelen, struct sysctlnode *pnode, u_int type,
 	case CTLTYPE_QUAD: {
 		u_quad_t q;
 		sz = sizeof(q);
-		rc = sysctl(&name[0], namelen, &q, &sz, NULL, 0);
+		rc = prog_sysctl(&name[0], namelen, &q, &sz, NULL, 0);
 		if (rc == -1) {
 			sysctlerror(1);
 			break;
@@ -780,7 +773,7 @@ print_tree(int *name, u_int namelen, struct sysctlnode *pnode, u_int type,
 			fprintf(warnfp, "%s: !malloc failed!\n", gsname);
 			break;
 		}
-		rc = sysctl(&name[0], namelen, d, &sz, NULL, 0);
+		rc = prog_sysctl(&name[0], namelen, d, &sz, NULL, 0);
 		if (rc == -1) {
 			sysctlerror(1);
 			break;
@@ -1023,7 +1016,7 @@ parse_create(char *l)
 		}
 
 		/*
-		 * note that we (mostly) let the invoker of sysctl(8)
+		 * note that we (mostly) let the invoker of prog_sysctl(8)
 		 * play rampant here and depend on the kernel to tell
 		 * them that they were wrong.  well...within reason.
 		 * we later check the various parameters against each
@@ -1417,7 +1410,7 @@ parse_create(char *l)
 		name[namelen++] = CTL_CREATE;
 
 	sz = sizeof(node);
-	rc = sysctl(&name[0], namelen, &node, &sz, &node, sizeof(node));
+	rc = prog_sysctl(&name[0], namelen, &node, &sz, &node, sizeof(node));
 
 	if (rc == -1) {
 		sysctlperror("%s: CTL_CREATE failed: %s\n",
@@ -1460,7 +1453,7 @@ parse_destroy(char *l)
 	name[namelen - 1] = CTL_DESTROY;
 
 	sz = sizeof(node);
-	rc = sysctl(&name[0], namelen, &node, &sz, &node, sizeof(node));
+	rc = prog_sysctl(&name[0], namelen, &node, &sz, &node, sizeof(node));
 
 	if (rc == -1) {
 		sysctlperror("%s: CTL_DESTROY failed: %s\n",
@@ -1509,7 +1502,7 @@ parse_describe(char *l)
 	newdesc.sysctl_num = name[namelen - 1];
 	newdesc.sysctl_desc = value;
 	name[namelen - 1] = CTL_DESCRIBE;
-	rc = sysctl(name, namelen, d, &sz, &newdesc, sizeof(newdesc));
+	rc = prog_sysctl(name, namelen, d, &sz, &newdesc, sizeof(newdesc));
 	if (rc == -1)
 		sysctlperror("%s: CTL_DESCRIBE failed: %s\n",
 			     gsname, strerror(errno));
@@ -1558,7 +1551,7 @@ getdesc1(int *name, u_int namelen, struct sysctlnode *pnode)
 	node.sysctl_flags = SYSCTL_VERSION;
 	node.sysctl_num = name[namelen - 1];
 	name[namelen - 1] = CTL_DESCRIBE;
-	rc = sysctl(name, namelen, d, &sz, &node, sizeof(node));
+	rc = prog_sysctl(name, namelen, d, &sz, &node, sizeof(node));
 
 	if (rc == -1 ||
 	    d->descr_len == 1 ||
@@ -1600,7 +1593,7 @@ getdesc(int *name, u_int namelen, struct sysctlnode *pnode)
 		d = malloc(sz);
 		if (d == NULL)
 			return;
-		rc = sysctl(name, namelen + 1, d, &sz, NULL, 0);
+		rc = prog_sysctl(name, namelen + 1, d, &sz, NULL, 0);
 		if (rc == -1) {
 			free(d);
 			d = NULL;
@@ -1764,7 +1757,7 @@ write_number(int *name, u_int namelen, struct sysctlnode *node, char *value)
 		break;
 	}
 
-	rc = sysctl(name, namelen, o, &so, i, si);
+	rc = prog_sysctl(name, namelen, o, &so, i, si);
 	if (rc == -1) {
 		sysctlerror(0);
 		return;
@@ -1806,7 +1799,7 @@ write_string(int *name, u_int namelen, struct sysctlnode *node, char *value)
 		exit(1);
 	}
 
-	rc = sysctl(name, namelen, o, &so, i, si);
+	rc = prog_sysctl(name, namelen, o, &so, i, si);
 	if (rc == -1) {
 		sysctlerror(0);
 		return;
@@ -2047,14 +2040,14 @@ printother(HANDLER_ARGS)
 	 * okay...you asked for it, so let's give it a go
 	 */
 	while (type != CTLTYPE_NODE && (xflag || rflag)) {
-		rc = sysctl(name, namelen, NULL, &sz1, NULL, 0);
+		rc = prog_sysctl(name, namelen, NULL, &sz1, NULL, 0);
 		if (rc == -1 || sz1 == 0)
 			break;
 		p = malloc(sz1);
 		if (p == NULL)
 			break;
 		sz2 = sz1;
-		rc = sysctl(name, namelen, p, &sz2, NULL, 0);
+		rc = prog_sysctl(name, namelen, p, &sz2, NULL, 0);
 		if (rc == -1 || sz1 != sz2) {
 			free(p);
 			break;
@@ -2106,7 +2099,7 @@ kern_clockrate(HANDLER_ARGS)
 	int rc;
 
 	sz = sizeof(clkinfo);
-	rc = sysctl(name, namelen, &clkinfo, &sz, NULL, 0);
+	rc = prog_sysctl(name, namelen, &clkinfo, &sz, NULL, 0);
 	if (rc == -1) {
 		sysctlerror(1);
 		return;
@@ -2136,7 +2129,7 @@ kern_boottime(HANDLER_ARGS)
 	int rc;
 
 	sz = sizeof(timeval);
-	rc = sysctl(name, namelen, &timeval, &sz, NULL, 0);
+	rc = prog_sysctl(name, namelen, &timeval, &sz, NULL, 0);
 	if (rc == -1) {
 		sysctlerror(1);
 		return;
@@ -2167,7 +2160,7 @@ kern_consdev(HANDLER_ARGS)
 	int rc;
 
 	sz = sizeof(cons);
-	rc = sysctl(name, namelen, &cons, &sz, NULL, 0);
+	rc = prog_sysctl(name, namelen, &cons, &sz, NULL, 0);
 	if (rc == -1) {
 		sysctlerror(1);
 		return;
@@ -2225,7 +2218,7 @@ kern_cp_time(HANDLER_ARGS)
 	}
 
 	osz = sz;
-	rc = sysctl(name, namelen, cp_time + (n != -1) * CPUSTATES, &osz,
+	rc = prog_sysctl(name, namelen, cp_time + (n != -1) * CPUSTATES, &osz,
 		    NULL, 0);
 
 	if (rc == -1) {
@@ -2301,7 +2294,7 @@ kern_drivers(HANDLER_ARGS)
 	int rc;
 	const char *comma;
 
-	rc = sysctl(name, namelen, NULL, &sz, NULL, 0);
+	rc = prog_sysctl(name, namelen, NULL, &sz, NULL, 0);
 	if (rc == -1) {
 		sysctlerror(1);
 		return;
@@ -2316,7 +2309,7 @@ kern_drivers(HANDLER_ARGS)
 		return;
 	}
 
-	rc = sysctl(name, namelen, kd, &sz, NULL, 0);
+	rc = prog_sysctl(name, namelen, kd, &sz, NULL, 0);
 	if (rc == -1) {
 		sysctlerror(1);
 		return;
@@ -2371,7 +2364,7 @@ kern_cp_id(HANDLER_ARGS)
 	}
 
 	osz = sz;
-	rc = sysctl(name, namelen, cp_id, &osz, NULL, 0);
+	rc = prog_sysctl(name, namelen, cp_id, &osz, NULL, 0);
 	if (rc == -1) {
 		sysctlerror(1);
 		free(cp_id);
@@ -2428,7 +2421,7 @@ vm_loadavg(HANDLER_ARGS)
 	int rc;
 
 	sz = sizeof(loadavg);
-	rc = sysctl(name, namelen, &loadavg, &sz, NULL, 0);
+	rc = prog_sysctl(name, namelen, &loadavg, &sz, NULL, 0);
 	if (rc == -1) {
 		sysctlerror(1);
 		return;
@@ -2482,7 +2475,7 @@ proc_limit(HANDLER_ARGS)
 		newp = NULL;
 	}
 
-	rc = sysctl(name, namelen, &olim, &osz, newp, nsz);
+	rc = prog_sysctl(name, namelen, &olim, &osz, newp, nsz);
 	if (rc == -1) {
 		sysctlerror(newp == NULL);
 		return;
@@ -2520,7 +2513,7 @@ machdep_diskinfo(HANDLER_ARGS)
 	size_t sz;
 	uint i, b, lim;
 
-	rc = sysctl(name, namelen, NULL, &sz, NULL, 0);
+	rc = prog_sysctl(name, namelen, NULL, &sz, NULL, 0);
 	if (rc == -1) {
 		sysctlerror(1);
 		return;
@@ -2530,7 +2523,7 @@ machdep_diskinfo(HANDLER_ARGS)
 		sysctlerror(1);
 		return;
 	}
-	rc = sysctl(name, namelen, dl, &sz, NULL, 0);
+	rc = prog_sysctl(name, namelen, dl, &sz, NULL, 0);
 	if (rc == -1) {
 		sysctlerror(1);
 		return;
@@ -2590,7 +2583,7 @@ mode_bits(HANDLER_ARGS)
 		nsz = sizeof(m);
 		newp = &m;
 		errno = 0;
-		rc = sysctl(name, namelen, &tt, &ttsz, NULL, 0);
+		rc = prog_sysctl(name, namelen, &tt, &ttsz, NULL, 0);
 		if (rc == -1) {
 			sysctlperror("%s: failed query\n", sname);
 			return;
@@ -2618,7 +2611,7 @@ mode_bits(HANDLER_ARGS)
 		newp = NULL;
 	}
 
-	rc = sysctl(name, namelen, &o, &osz, newp, nsz);
+	rc = prog_sysctl(name, namelen, &o, &osz, newp, nsz);
 	if (rc == -1) {
 		sysctlerror(newp == NULL);
 		return;
