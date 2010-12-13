@@ -1,4 +1,4 @@
-/*      $NetBSD: prog_ops.h,v 1.2 2010/12/13 19:17:20 njoly Exp $	*/
+/*      $NetBSD: prog_ops.h,v 1.3 2010/12/13 21:48:01 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include <sys/types.h>
 
 /* ifconfig is compiled outside of src/sbin/ifconfig too */
-#ifdef RUMP_ACTION
+#ifndef CRUNCHOPS
 struct prog_ops {
 	int (*op_init)(void);
 

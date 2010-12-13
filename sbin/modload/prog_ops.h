@@ -1,4 +1,4 @@
-/*      $NetBSD: prog_ops.h,v 1.1 2010/12/13 20:48:44 pooka Exp $	*/
+/*      $NetBSD: prog_ops.h,v 1.2 2010/12/13 21:48:01 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,6 +31,7 @@
 
 #include <sys/types.h>
 
+#ifndef CRUNCHOPS
 struct prog_ops {
 	int (*op_init)(void);
 
@@ -40,5 +41,9 @@ extern const struct prog_ops prog_ops;
 
 #define prog_init prog_ops.op_init
 #define prog_modctl prog_ops.op_modctl
+#else
+#define prog_init ((int (*)(void))NULL)
+#define prog_modctl modctl
+#endif
 
 #endif /* _PROG_OPS_H_ */
