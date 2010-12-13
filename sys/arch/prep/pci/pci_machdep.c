@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.32 2007/10/17 19:56:51 garbled Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.33 2010/12/13 16:19:02 matt Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.32 2007/10/17 19:56:51 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.33 2010/12/13 16:19:02 matt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -121,7 +121,7 @@ prep_pci_get_chipset_tag(pci_chipset_tag_t pc)
 }
 
 int
-prep_pci_bus_maxdevs(pci_chipset_tag_t pc, int busno)
+prep_pci_bus_maxdevs(void *v, int busno)
 {
 	struct genppc_pci_chipset_businfo *pbi;
 	prop_object_t busmax;
