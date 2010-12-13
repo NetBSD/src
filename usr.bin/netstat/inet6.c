@@ -1,4 +1,4 @@
-/*	$NetBSD: inet6.c,v 1.52 2009/04/12 16:08:37 lukem Exp $	*/
+/*	$NetBSD: inet6.c,v 1.53 2010/12/13 21:15:30 pooka Exp $	*/
 /*	BSDI inet.c,v 2.3 1995/10/24 02:19:29 prb Exp	*/
 
 /*
@@ -64,7 +64,7 @@
 #if 0
 static char sccsid[] = "@(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: inet6.c,v 1.52 2009/04/12 16:08:37 lukem Exp $");
+__RCSID("$NetBSD: inet6.c,v 1.53 2010/12/13 21:15:30 pooka Exp $");
 #endif
 #endif /* not lint */
 
@@ -129,6 +129,7 @@ extern const char * const tcpstates[];
 #include <string.h>
 #include <unistd.h>
 #include "netstat.h"
+#include "prog_ops.h"
 
 #ifdef INET6
 
@@ -252,8 +253,8 @@ ip6protopr(u_long off, const char *name)
 			err(1, "sysctlnametomib: %s", mibname);
 		}
 
-		if (sysctl(mib, sizeof(mib) / sizeof(*mib), NULL, &size,
-		    NULL, 0) == -1)
+		if (prog_sysctl(mib, sizeof(mib) / sizeof(*mib),
+		    NULL, &size, NULL, 0) == -1)
 			err(1, "sysctl (query)");
 		
 		if ((pcblist = malloc(size)) == NULL)
@@ -263,7 +264,7 @@ ip6protopr(u_long off, const char *name)
 		mib[6] = sizeof(*pcblist);
 		mib[7] = size / sizeof(*pcblist);
 
-		if (sysctl(mib, sizeof(mib) / sizeof(*mib), pcblist,
+		if (prog_sysctl(mib, sizeof(mib) / sizeof(*mib), pcblist,
 		    &size, NULL, 0) == -1)
 			err(1, "sysctl (copy)");
 
