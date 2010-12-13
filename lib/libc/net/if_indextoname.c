@@ -1,4 +1,4 @@
-/*	$NetBSD: if_indextoname.c,v 1.6 2010/12/13 21:07:54 pooka Exp $	*/
+/*	$NetBSD: if_indextoname.c,v 1.7 2010/12/13 23:10:12 pooka Exp $	*/
 /*	$KAME: if_indextoname.c,v 1.7 2000/11/08 03:09:30 itojun Exp $	*/
 
 /*-
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: if_indextoname.c,v 1.6 2010/12/13 21:07:54 pooka Exp $");
+__RCSID("$NetBSD: if_indextoname.c,v 1.7 2010/12/13 23:10:12 pooka Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #ifndef RUMP_ACTION
@@ -43,8 +43,10 @@ __RCSID("$NetBSD: if_indextoname.c,v 1.6 2010/12/13 21:07:54 pooka Exp $");
 #include <string.h>
 #include <errno.h>
 
+#ifndef RUMP_ACTION
 #ifdef __weak_alias
 __weak_alias(if_indextoname,_if_indextoname)
+#endif
 #endif
 
 /*
